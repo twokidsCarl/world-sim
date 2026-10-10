@@ -111,3 +111,29 @@ export function tablePair(t: PairTable): PairEval {
     },
   }
 }
+
+/** A pair interaction that may depend on the species of both particles. */
+export interface PairField {
+  rc2: number
+  /** g and u for the force on a particle of species si due to one of species sj. */
+  eval(r2: number, out: PairOut, si: number, sj: number): void
+}
+
+/**
+ * Per-species-pair tables: strength[si][sj] scales epsilon for the force on si from sj.
+ * A symmetric matrix gives reciprocal forces (Newton's third law); an asymmetric one
+ * does not, and then momentum and energy are no longer conserved.
+ */
+export function speciesTables(spec: PotentialSpec, strength: number[][], k = 2048): PairTable[][] {
+  return strength.map((row) => row.map((e) => buildTable({ ...spec, epsilon: spec.epsilon * e }, k)))
+}
+
+export function speciesField(tables: PairTable[][]): PairField {
+  const evals = tables.map((row) => row.map(tablePair))
+  return {
+    rc2: tables[0]![0]!.rc2,
+    eval(r2, out, si, sj) {
+      evals[si]![sj]!.eval(r2, out)
+    },
+  }
+}

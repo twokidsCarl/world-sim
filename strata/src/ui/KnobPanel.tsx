@@ -65,11 +65,12 @@ function KnobControl({ knob }: { knob: Knob }) {
         />
       )}
       {knob.note && <p className="note">{knob.note}</p>}
+      {knob.breaks && value !== knob.default && <p className="note broken">{knob.breaks}</p>}
     </div>
   )
 }
 
-export function KnobPanel({ children }: { children?: ReactNode }) {
+export function KnobPanel({ children, footer }: { children?: ReactNode; footer?: ReactNode }) {
   const params = useUi((s) => s.params)
   const knobs = engine.substrate.knobs.filter((k) => !k.when || k.when(params))
   return (
@@ -87,6 +88,7 @@ export function KnobPanel({ children }: { children?: ReactNode }) {
           </section>
         )
       })}
+      {footer && <section>{footer}</section>}
     </aside>
   )
 }

@@ -1,5 +1,5 @@
-import { gaussian } from '../../../core/rng'
-import type { PairEval } from '../potential'
+import { gaussian, uniform } from '../../../core/rng'
+import type { PairField } from '../potential'
 import { computeForces, createState, kineticEnergy, type MdState } from './step'
 
 export interface LatticeInit {
@@ -13,7 +13,7 @@ export interface LatticeInit {
 }
 
 /** Gaussian velocities with zero net momentum, rescaled to the exact temperature; then forces. */
-function thermalise(s: MdState, temperature: number, seed: number, pair: PairEval): MdState {
+function thermalise(s: MdState, temperature: number, seed: number, pair: PairField): MdState {
   const { dim, n } = s
   for (let k = 0; k < n * dim; k++) s.vel[k] = gaussian(seed, k)
   for (let d = 0; d < dim; d++) {
@@ -29,7 +29,7 @@ function thermalise(s: MdState, temperature: number, seed: number, pair: PairEva
 }
 
 /** Square/cubic lattice. */
-export function initLattice(o: LatticeInit, pair: PairEval): MdState {
+export function initLattice(o: LatticeInit, pair: PairField): MdState {
   const { dim, perSide } = o
   const n = Math.pow(perSide, dim)
   const L = Math.pow(n / o.density, 1 / dim)
@@ -50,8 +50,8 @@ export function initLattice(o: LatticeInit, pair: PairEval): MdState {
  * periodic box closest to square, so the lattice is commensurate with the box.
  */
 export function initTriangular(
-  o: { nx: number; density: number; temperature: number; seed: number },
-  pair: PairEval,
+  o: { nx: number; density: number; temperature: number; seed: number; fractionB?: number },
+  pair: PairField,
 ): MdState {
   const ny = 2 * Math.round(o.nx / Math.sqrt(3))
   const a = Math.sqrt(2 / (Math.sqrt(3) * o.density))
@@ -61,6 +61,8 @@ export function initTriangular(
       const i = row * o.nx + col
       s.pos[2 * i] = (col + 0.25 + 0.5 * (row % 2)) * a
       s.pos[2 * i + 1] = ((row + 0.5) * a * Math.sqrt(3)) / 2
+      // Species are assigned independently at random, so the start is an ideal mixture.
+      s.species[i] = uniform(o.seed ^ 0x51ec1e5, i) < (o.fractionB ?? 0) ? 1 : 0
     }
   }
   return thermalise(s, o.temperature, o.seed, pair)

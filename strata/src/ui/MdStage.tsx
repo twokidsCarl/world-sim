@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { fitCanvas, theme } from '../plot/plot'
-import { PointsRenderer, parseHex, viridis } from '../render/points'
+import { PointsRenderer, SPECIES_B, parseHex, viridis } from '../render/points'
 import { psi6 } from '../substrates/md/ref/reducers'
 import type { MdBackend, MdCpuBackend } from '../substrates/md/backend-cpu'
 import type { MdGpuBackend } from '../substrates/md/backend-gpu'
@@ -30,15 +30,18 @@ function CpuCanvas() {
         const r = Math.max(0.75, 0.45 * scale)
         // Draw in batches of one fill colour each: a single batch, or 16 bins of |ψ6|.
         const BINS = 16
-        const psi = engine.view.colour ? psi6(s) : null
-        for (let bin = 0; bin < (psi ? BINS : 1); bin++) {
+        const mode = engine.view.colour ?? 0
+        const psi = mode === 1 ? psi6(s) : null
+        const batches = mode === 1 ? BINS : mode === 2 ? 2 : 1
+        for (let bin = 0; bin < batches; bin++) {
           if (psi) {
             const [cr, cg, cb] = viridis((bin + 0.5) / BINS)
             ctx.fillStyle = `rgb(${Math.round(cr * 255)} ${Math.round(cg * 255)} ${Math.round(cb * 255)})`
-          } else ctx.fillStyle = theme().ink
+          } else ctx.fillStyle = bin === 1 ? SPECIES_B : theme().ink
           ctx.beginPath()
           for (let i = 0; i < s.n; i++) {
             if (psi && Math.min(BINS - 1, Math.floor(Math.hypot(psi[2 * i]!, psi[2 * i + 1]!) * BINS)) !== bin) continue
+            if (mode === 2 && s.species[i] !== bin) continue
             const x = s.pos[i * s.dim] * scale
             const y = s.pos[i * s.dim + 1] * scale
             ctx.moveTo(x + r, y)
@@ -78,11 +81,18 @@ function GpuCanvas() {
   return <canvas ref={ref} className="stage" />
 }
 
-const COLOURS = ['单色', '局域六角序 |ψ₆|']
+const COLOURS = ['单色', '局域六角序 |ψ₆|', '粒子种类']
 
 export function MdStage() {
   const kind = useUi((s) => s.backendKind)
   const [colour, setColour] = useState(engine.view.colour ?? 0)
+  const mixture = useUi((s) => s.params.fractionB! > 0)
+  // Show the species as soon as there are two of them.
+  useEffect(() => {
+    const next = mixture ? 2 : engine.view.colour === 2 ? 0 : (engine.view.colour ?? 0)
+    engine.view.colour = next
+    setColour(next)
+  }, [mixture])
   const infoRef = useRef<HTMLSpanElement>(null)
   useEffect(() => engine.onFrame(() => caption(infoRef.current)), [])
   return (

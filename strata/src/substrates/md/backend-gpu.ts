@@ -2,10 +2,10 @@ import type { Params } from '../../core/params'
 import type { GpuContext } from '../../gpu/device'
 import type { MdBackend, MdFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
-import { buildTable, tablePair, type PairTable, type PotentialSpec } from './potential'
+import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
 import { initTriangular } from './ref/init'
-import { rdfNormalise, type Hist } from './ref/reducers'
-import { potentialSpec } from './schema'
+import { demixing, rdfNormalise, type Hist } from './ref/reducers'
+import { fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 const CHUNK = 256
 const TABLE_K = 2048
@@ -53,6 +53,8 @@ export class MdGpuBackend implements MdBackend {
   private time = 0
   private chunks: number
   private table!: PairTable
+  private key: string
+  private fractionB = 0
   private cells = 0
   private nc: [number, number, number] = [1, 1, 1]
   private cap = 0
@@ -78,9 +80,10 @@ export class MdGpuBackend implements MdBackend {
     this.p = { ...p }
     this.lastT = p.temperature
     this.spec = potentialSpec(p)
+    this.key = fieldKey(p)
     const init = initTriangular(
-      { nx: p.nx, density: p.density, temperature: p.temperature, seed },
-      tablePair(buildTable(this.spec, TABLE_K)),
+      { nx: p.nx, density: p.density, temperature: p.temperature, seed, fractionB: p.fractionB },
+      speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K)),
     )
     this.n = init.n
     this.box = init.box
@@ -94,7 +97,7 @@ export class MdGpuBackend implements MdBackend {
     make(2, this.n * 16)
     make(3, this.n * 16)
     this.aux = make(4, this.n * 16)
-    make(7, (TABLE_K + 1) * 8)
+    make(7, 4 * (TABLE_K + 1) * 8)
     make(8, this.chunks * 48)
     make(9, HIST_WORDS * 4)
     make(10, this.chunks * 4)
@@ -104,6 +107,8 @@ export class MdGpuBackend implements MdBackend {
     for (let i = 0; i < this.n; i++) {
       pos[4 * i] = init.pos[2 * i]
       pos[4 * i + 1] = init.pos[2 * i + 1]
+      pos[4 * i + 3] = init.species[i]
+      this.fractionB += init.species[i] / this.n
       vel[4 * i] = init.vel[2 * i]
       vel[4 * i + 1] = init.vel[2 * i + 1]
     }
@@ -122,12 +127,21 @@ export class MdGpuBackend implements MdBackend {
     this.recomputeForces()
   }
 
+  /** Upload one table per ordered species pair; a one-component system repeats its only table. */
   private uploadTable(): void {
-    const t = (this.table = buildTable(this.spec, TABLE_K))
-    const data = new Float32Array((TABLE_K + 1) * 2)
-    for (let i = 0; i <= TABLE_K; i++) {
-      data[2 * i] = t.g[i]
-      data[2 * i + 1] = t.u[i]
+    const strength = strengthMatrix(this.p)
+    const tables = speciesTables(this.spec, strength, TABLE_K)
+    this.table = tables[0]![0]!
+    const stride = (TABLE_K + 1) * 2
+    const data = new Float32Array(4 * stride)
+    for (let si = 0; si < 2; si++) {
+      for (let sj = 0; sj < 2; sj++) {
+        const t = tables[si]?.[sj] ?? this.table
+        for (let i = 0; i <= TABLE_K; i++) {
+          data[(si * 2 + sj) * stride + 2 * i] = t.g[i]
+          data[(si * 2 + sj) * stride + 2 * i + 1] = t.u[i]
+        }
+      }
     }
     this.device.queue.writeBuffer(this.buffers[7]!, 0, data)
   }
@@ -208,11 +222,12 @@ export class MdGpuBackend implements MdBackend {
 
   setParams(p: Params): void {
     const spec = potentialSpec(p)
-    const tableChanged = JSON.stringify(spec) !== JSON.stringify(this.spec)
+    const tableChanged = fieldKey(p) !== this.key
     if (!p.thermostat && p.temperature !== this.p.temperature) this.pendingKick = p.temperature
     this.p = { ...p }
     if (tableChanged) {
       const gridChanged = spec.rc !== this.spec.rc
+      this.key = fieldKey(p)
       this.spec = spec
       this.uploadTable()
       if (gridChanged) this.configureGrid()
@@ -310,7 +325,11 @@ export class MdGpuBackend implements MdBackend {
     let psiRe = 0
     let psiIm = 0
     let psiAbs = 0
+    let bonds = 0
+    let unlike = 0
     for (let c = 0; c < this.chunks; c++) {
+      bonds += partial[12 * c + 3]!
+      unlike += partial[12 * c + 11]!
       ke += partial[12 * c]!
       pe += partial[12 * c + 1]!
       virial += partial[12 * c + 2]!
@@ -351,6 +370,8 @@ export class MdGpuBackend implements MdBackend {
         momentum: Math.hypot(px, py, pz) / n,
         psi6Local: psiAbs / n,
         psi6Global: Math.hypot(psiRe, psiIm) / n,
+        fractionB: this.fractionB,
+        demix: demixing(this.fractionB, { total: bonds, unlike }),
       },
     }
     if (wantSpeed) frame.speedHist = speedDensity(hist, n, vmax)
@@ -382,7 +403,7 @@ export class MdGpuBackend implements MdBackend {
   }
 
   /** Overwrite positions and velocities (n * dim, f64) and recompute forces. Harness only. */
-  writeState(pos: Float64Array, vel: Float64Array): void {
+  writeState(pos: Float64Array, vel: Float64Array, species?: Uint8Array): void {
     const p = new Float32Array(this.n * 4)
     const v = new Float32Array(this.n * 4)
     for (let i = 0; i < this.n; i++) {
@@ -390,6 +411,7 @@ export class MdGpuBackend implements MdBackend {
         p[4 * i + d] = pos[i * this.dim + d]!
         v[4 * i + d] = vel[i * this.dim + d]!
       }
+      p[4 * i + 3] = species?.[i] ?? 0
     }
     this.device.queue.writeBuffer(this.buffers[1]!, 0, p)
     this.device.queue.writeBuffer(this.buffers[2]!, 0, v)

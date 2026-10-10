@@ -6,7 +6,7 @@ struct View {
   color: vec4f,
   radius: vec2f,   // disc radius in NDC, per axis
   edge: f32,       // antialiasing width as a fraction of the radius
-  mode: f32,       // 0 = single colour, 1 = colour by |ψ6|
+  mode: f32,       // 0 = single colour, 1 = colour by |ψ6|, 2 = colour by species
 }
 
 @group(0) @binding(0) var<uniform> V: View;
@@ -41,7 +41,11 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> Out {
   out.clip = vec4f(p.x * 2 - 1 + uv.x * V.radius.x, 1 - p.y * 2 + uv.y * V.radius.y, 0, 1);
   out.uv = uv;
   out.color = V.color.rgb;
-  if (V.mode > 0.5) { out.color = viridis(clamp(length(aux[ii].yz), 0, 1)); }
+  if (V.mode > 1.5) {
+    if (pos[ii].w > 0.5) { out.color = vec3f(0.902, 0.624, 0.0); }
+  } else if (V.mode > 0.5) {
+    out.color = viridis(clamp(length(aux[ii].yz), 0, 1));
+  }
   return out;
 }
 
@@ -104,7 +108,7 @@ export class PointsRenderer {
     this.uniform = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST })
   }
 
-  /** color is straight RGB in 0..1; size is the target in device pixels; mode 1 colours by |ψ6|. */
+  /** color is straight RGB in 0..1; size is the target in device pixels; mode 1 colours by |ψ6|, mode 2 by species. */
   draw(
     view: GPUTextureView,
     buffers: { pos: GPUBuffer; aux: GPUBuffer },
@@ -145,6 +149,9 @@ export class PointsRenderer {
     this.device.queue.submit([encoder.finish()])
   }
 }
+
+/** Okabe–Ito orange, for species B. */
+export const SPECIES_B = '#e69f00'
 
 /** Parse #rgb or #rrggbb into straight RGB in 0..1. */
 export function parseHex(hex: string): [number, number, number] {

@@ -125,7 +125,8 @@ export class Engine {
 
   private record(id: string, s: Sample): void {
     const q = this.substrate.quantities.find((d) => d.id === id)!
-    this.agreements.set(id, agreement(q as never, s.value, s.theory))
+    // A voided conservation law has no theory to agree with.
+    this.agreements.set(id, q.voided?.(this.params) ? 'none' : agreement(q as never, s.value, s.theory))
     if (typeof s.value === 'number') {
       let t = this.scalars.get(id)
       if (!t) this.scalars.set(id, (t = { step: [], value: [], theory: [] }))
