@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { SUBSTRATES } from '../substrates'
 import { ConstantsPanel } from './ConstantsPanel'
 import { engine } from './engine'
+import { GravityStage } from './GravityStage'
 import { IsingStage } from './IsingStage'
 import { KnobPanel, PotentialPreview } from './KnobPanel'
 import { LevelCards } from './LevelCards'
@@ -13,6 +14,7 @@ import { useUi } from './store'
 const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: ReactNode }> = {
   md: { stage: <MdStage />, extras: <PotentialPreview />, footer: <ConstantsPanel /> },
   ising: { stage: <IsingStage /> },
+  gravity: { stage: <GravityStage /> },
 }
 
 export function App() {

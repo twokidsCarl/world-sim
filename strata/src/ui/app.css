@@ -323,3 +323,7 @@ dd {
 dd.broken {
   color: var(--accent);
 }
+
+.square .stage {
+  aspect-ratio: 1;
+}
