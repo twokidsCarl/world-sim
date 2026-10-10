@@ -15,6 +15,7 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     compute: (f) => Math.abs(f.levels[0]!.m),
     theory: (f, p) => (exact(p) ? onsagerMagnetisation(f.T) : null),
     theoryLabel: 'Onsager–Yang 精确解（无限大晶格，J₂=0，h=0）',
+    tolerance: { abs: 0.03 },
   },
   {
     id: 'energy',
@@ -25,6 +26,7 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     compute: (f, p) => -(2 * f.levels[0]!.nn + 2 * p.j2! * f.levels[0]!.nnn + p.h! * f.levels[0]!.m),
     theory: (f, p) => (exact(p) ? onsagerEnergy(f.T) : null),
     theoryLabel: 'Onsager 精确解（J₂=0，h=0）',
+    tolerance: { abs: 0.02 },
   },
   {
     id: 'rgMagnetisation',

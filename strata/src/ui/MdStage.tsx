@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fitCanvas, theme } from '../plot/plot'
-import { PointsRenderer, parseHex } from '../render/points'
+import { PointsRenderer, parseHex, viridis } from '../render/points'
+import { psi6 } from '../substrates/md/ref/reducers'
 import type { MdBackend, MdCpuBackend } from '../substrates/md/backend-cpu'
 import type { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { engine } from './engine'
@@ -25,17 +26,26 @@ function CpuCanvas() {
         canvas.style.aspectRatio = `${s.box[0]} / ${s.box[1]}`
         const { ctx, w } = fitCanvas(canvas)
         ctx.clearRect(0, 0, w, canvas.clientHeight)
-        ctx.fillStyle = theme().ink
         const scale = w / s.box[0]
         const r = Math.max(0.75, 0.45 * scale)
-        ctx.beginPath()
-        for (let i = 0; i < s.n; i++) {
-          const x = s.pos[i * s.dim] * scale
-          const y = s.pos[i * s.dim + 1] * scale
-          ctx.moveTo(x + r, y)
-          ctx.arc(x, y, r, 0, 2 * Math.PI)
+        // Draw in batches of one fill colour each: a single batch, or 16 bins of |ψ6|.
+        const BINS = 16
+        const psi = engine.view.colour ? psi6(s) : null
+        for (let bin = 0; bin < (psi ? BINS : 1); bin++) {
+          if (psi) {
+            const [cr, cg, cb] = viridis((bin + 0.5) / BINS)
+            ctx.fillStyle = `rgb(${Math.round(cr * 255)} ${Math.round(cg * 255)} ${Math.round(cb * 255)})`
+          } else ctx.fillStyle = theme().ink
+          ctx.beginPath()
+          for (let i = 0; i < s.n; i++) {
+            if (psi && Math.min(BINS - 1, Math.floor(Math.hypot(psi[2 * i]!, psi[2 * i + 1]!) * BINS)) !== bin) continue
+            const x = s.pos[i * s.dim] * scale
+            const y = s.pos[i * s.dim + 1] * scale
+            ctx.moveTo(x + r, y)
+            ctx.arc(x, y, r, 0, 2 * Math.PI)
+          }
+          ctx.fill()
         }
-        ctx.fill()
       }),
     [],
   )
@@ -62,20 +72,39 @@ function GpuCanvas() {
         canvas.width = w
         canvas.height = h
       }
-      renderer.draw(context.getCurrentTexture().createView(), b.pos, b.n, b.box, parseHex(theme().ink), [w, h])
+      renderer.draw(context.getCurrentTexture().createView(), b, b.n, b.box, parseHex(theme().ink), [w, h], engine.view.colour ?? 0)
     })
   }, [])
   return <canvas ref={ref} className="stage" />
 }
 
+const COLOURS = ['单色', '局域六角序 |ψ₆|']
+
 export function MdStage() {
   const kind = useUi((s) => s.backendKind)
+  const [colour, setColour] = useState(engine.view.colour ?? 0)
   const infoRef = useRef<HTMLSpanElement>(null)
   useEffect(() => engine.onFrame(() => caption(infoRef.current)), [])
   return (
     <section className="stage-wrap">
       {kind === 'gpu' ? <GpuCanvas /> : <CpuCanvas />}
       <span ref={infoRef} className="caption" />
+      <div className="segmented view-options">
+        <span className="caption">着色</span>
+        {COLOURS.map((label, i) => (
+          <button
+            key={label}
+            aria-pressed={i === colour}
+            onClick={() => {
+              engine.view.colour = i
+              setColour(i)
+            }}
+          >
+            {label}
+          </button>
+        ))}
+        {colour === 1 && <span className="colourbar" title="|ψ₆| 从 0 到 1" />}
+      </div>
     </section>
   )
 }

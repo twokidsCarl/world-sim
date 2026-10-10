@@ -45,6 +45,8 @@ export class MdGpuBackend implements MdBackend {
   spec: PotentialSpec
   /** Particle positions, for the renderer. */
   readonly pos: GPUBuffer
+  /** Per particle: virial share, Re ψ6, Im ψ6, neighbour count. */
+  readonly aux: GPUBuffer
 
   private device: GPUDevice
   private p: Params
@@ -91,9 +93,9 @@ export class MdGpuBackend implements MdBackend {
     this.pos = make(1, this.n * 16)
     make(2, this.n * 16)
     make(3, this.n * 16)
-    make(4, this.n * 16)
+    this.aux = make(4, this.n * 16)
     make(7, (TABLE_K + 1) * 8)
-    make(8, this.chunks * 32)
+    make(8, this.chunks * 48)
     make(9, HIST_WORDS * 4)
     make(10, this.chunks * 4)
 
@@ -264,7 +266,7 @@ export class MdGpuBackend implements MdBackend {
     this.lastReduceStep = step
     this.reducing++
 
-    const partialBytes = this.chunks * 32
+    const partialBytes = this.chunks * 48
     const histBytes = HIST_WORDS * 4
     const heatBytes = this.chunks * 4
     const staging = this.device.createBuffer({
@@ -293,7 +295,7 @@ export class MdGpuBackend implements MdBackend {
       this.reducing--
     }
     const raw = staging.getMappedRange()
-    const partial = new Float32Array(raw, 0, this.chunks * 8)
+    const partial = new Float32Array(raw, 0, this.chunks * 12)
     const hist = new Uint32Array(raw, partialBytes, HIST_WORDS)
     const heatPartial = new Float32Array(raw, partialBytes + histBytes, this.chunks)
 
@@ -305,13 +307,19 @@ export class MdGpuBackend implements MdBackend {
     let py = 0
     let pz = 0
     let heat = 0
+    let psiRe = 0
+    let psiIm = 0
+    let psiAbs = 0
     for (let c = 0; c < this.chunks; c++) {
-      ke += partial[8 * c]!
-      pe += partial[8 * c + 1]!
-      virial += partial[8 * c + 2]!
-      px += partial[8 * c + 4]!
-      py += partial[8 * c + 5]!
-      pz += partial[8 * c + 6]!
+      ke += partial[12 * c]!
+      pe += partial[12 * c + 1]!
+      virial += partial[12 * c + 2]!
+      px += partial[12 * c + 4]!
+      py += partial[12 * c + 5]!
+      pz += partial[12 * c + 6]!
+      psiRe += partial[12 * c + 8]!
+      psiIm += partial[12 * c + 9]!
+      psiAbs += partial[12 * c + 10]!
       heat += heatPartial[c]!
     }
     const n = this.n
@@ -341,6 +349,8 @@ export class MdGpuBackend implements MdBackend {
         temperature,
         pressure: (n * temperature + virial / this.dim) / volume,
         momentum: Math.hypot(px, py, pz) / n,
+        psi6Local: psiAbs / n,
+        psi6Global: Math.hypot(psiRe, psiIm) / n,
       },
     }
     if (wantSpeed) frame.speedHist = speedDensity(hist, n, vmax)
@@ -354,11 +364,11 @@ export class MdGpuBackend implements MdBackend {
   }
 
   /** Full state readback, for the cross-check harness only. */
-  async readState(): Promise<{ pos: Float32Array; vel: Float32Array; force: Float32Array }> {
+  async readState(): Promise<{ pos: Float32Array; vel: Float32Array; force: Float32Array; aux: Float32Array }> {
     const bytes = this.n * 16
-    const staging = this.device.createBuffer({ size: 3 * bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })
+    const staging = this.device.createBuffer({ size: 4 * bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })
     const encoder = this.device.createCommandEncoder()
-    for (let b = 0; b < 3; b++) encoder.copyBufferToBuffer(this.buffers[b + 1]!, 0, staging, b * bytes, bytes)
+    for (let b = 0; b < 4; b++) encoder.copyBufferToBuffer(this.buffers[b + 1]!, 0, staging, b * bytes, bytes)
     this.device.queue.submit([encoder.finish()])
     await staging.mapAsync(GPUMapMode.READ)
     const all = new Float32Array(staging.getMappedRange().slice(0))
@@ -367,6 +377,7 @@ export class MdGpuBackend implements MdBackend {
       pos: all.subarray(0, this.n * 4),
       vel: all.subarray(this.n * 4, this.n * 8),
       force: all.subarray(this.n * 8, this.n * 12),
+      aux: all.subarray(this.n * 12, this.n * 16),
     }
   }
 

@@ -86,6 +86,8 @@ export async function runHarness(): Promise<HarnessResult> {
   check('势能相对误差', Math.abs(g.pe - sc.pe) / Math.abs(sc.pe), 1e-4)
   check('压强相对误差', Math.abs(g.pressure - sc.pressure) / Math.abs(sc.pressure), 1e-3)
   check('每粒子动量', g.momentum, 1e-5)
+  check('局域六角序 ⟨|ψ₆|⟩ 差', Math.abs(g.psi6Local - sc.psi6Local), 1e-4)
+  check('全局六角序 |⟨ψ₆⟩| 差', Math.abs(g.psi6Global - sc.psi6Global), 1e-4)
   check('速率直方图 L1 差', l1(frame.speedHist!.y, speedHistogram(ref, 64, 4 * Math.sqrt(p.temperature)).y), 1e-3)
   const rdfMax = frame.rdf!.x[119]! + frame.rdf!.x[0]!
   check('g(r) 直方图 L1 差', l1(frame.rdf!.y, rdf(ref, 120, rdfMax).y), 1e-3)
