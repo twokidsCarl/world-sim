@@ -10,7 +10,7 @@ Posterior root of posterior femoral cutaneous nerve	-	as above
 Common palmar digital branches of ulnar nerve	Common palmar digital branch of ulnar nerve	FMA class is singular (FMA323341); used for the set
 Common plantar digital branches of medial plantar nerve	-	FMA names them individually (first to third common plantar digital nerve); 'Medial common plantar digital nerve' is a synonym of the FOURTH one, a branch of the lateral plantar nerve, so it is not used
 Common plantar digital branches of lateral plantar nerve	-	FMA names them individually (fourth/fifth common plantar digital nerve); no class for the set
-Deep branch of radial nerve	Deep branch of radial nerve	FMA lists it as a synonym of Posterior interosseous nerve (FMA77559)
+Deep branch of radial nerve	-	FMA has it only as a synonym of Posterior interosseous nerve (FMA77559), which is its continuation and a separate item here; no class of its own, left null
 Dorsal digital branches of ulnar nerve	Dorsal digital branch of ulnar nerve	FMA class is singular (FMA323340); used for the set
 Muscular branches of axillary nerve	Set of muscular branches of axillary nerve	FMA75503
 Muscular branches of deep fibular nerve	Set of muscular branches of deep fibular nerve	FMA75509
@@ -22,3 +22,25 @@ Sympathetic nerves	-	heterogeneous set of 19 branches (rami communicantes and ot
 Anterior division of middle trunk of brachial plexus	Middle anterior division of brachial plexus;Middle anterior division of brachial nerve plexus	FMA names the divisions 'Superior/Middle/Inferior anterior division of brachial plexus'; the superior and inferior ones resolve through TA2 -> Wikidata, the middle one has no Wikidata link
 Ganglia of sympathetic trunk	Ganglion of sympathetic trunk	FMA5891 Paravertebral ganglion (synonym 'Ganglion of sympathetic trunk'); singular class used for the set of 18 ganglia
 Dorsal digital branches of deep fibular nerve	-	TA2 -> Wikidata gives FMA75491 'Set of dorsal digital nerves of foot', which in TA denotes the superficial fibular set; not asserted for the deep fibular branches
+Acromioclavicular ligament	-	FMA has the name only as a synonym of FMA26026 'Articular capsule of acromioclavicular joint'; FMA322812 'Ligament of acromioclavicular joint' is a generic parent class; no exact class, left null
+Posterior talocalcaneal ligament	-	FMA has the name only as a synonym of FMA44291 'Posterior lamina of interosseous talocalcaneal ligament', a different structure; left null
+Ulnar collateral ligament	Ulnar collateral ligament of elbow joint	the bare TA term is the elbow ligament (TA2 -> Wikidata gives the same FMA38869); FMA's class labelled plain 'Ulnar collateral ligament' (FMA40005) is the WRIST ligament
+Ulnar collateral ligament of wrist joint	Ulnar collateral ligament	FMA40005 is labelled plain 'Ulnar collateral ligament' but its parent is 'Ligament of wrist joint' and it carries the synonym 'Ulnar collateral ligament of wrist joint': exact class, odd label
+Dorsal digital branches of superficial fibular nerve	-	FMA75491 'Set of dorsal digital nerves of foot' is generic (covers deep fibular branches too); no class for the superficial fibular set, left null
+Posterior segment of liver (I)	Caudate lobe of liver	Couinaud segment I; FMA13365 carries the synonyms 'Hepatovenous segment I' and 'Segment I of liver'. The plain label match went to 'Posterior segment of right lobe of liver', which is wrong
+Left posterior lateral segment of liver (II)	Hepatovenous segment II	by Couinaud numeral in the name
+Left anterior lateral segment of liver (III)	Hepatovenous segment III	by Couinaud numeral in the name
+Left medial segment of liver (IV)	Hepatovenous segment IV	by Couinaud numeral in the name
+Anterior medial segment of liver (V)	Hepatovenous segment V	by Couinaud numeral in the name
+Anterior lateral segment of liver (VI)	Hepatovenous segment VI	by Couinaud numeral in the name
+Posterior lateral segment of liver (VII)	Hepatovenous segment VII	by Couinaud numeral in the name
+Posterior medial segment of liver (VIII)	Hepatovenous segment VIII	by Couinaud numeral in the name
+Inferior tracheobronchial nodes	Inferior tracheobronchial nodes	FMA71768's preferred label is the odd 'Inferior tributary of tracheobronchial lymph node group', but the class carries the synonyms 'Inferior tracheobronchial nodes' / 'Inferior tracheobronchial lymph nodes' and sits beside FMA71767 (superior group): exact class, odd label
+Tendon sheath of extensor digitorum and extensor indicis	Synovial tendon sheath of extensor digitorum and extensor indicis	TA2 -> Wikidata pointed at the extensor digiti minimi sheath (wrong)
+Tendon sheath of extensor pollicis longus	Synovial tendon sheath of extensor pollicis longus	TA2 -> Wikidata pointed at the extensor digitorum sheath (wrong)
+Deltopectoral triangle	-	FMA synonym match went to 'Infraclavicular fossa', which is a separate Z-Anatomy object; left null
+Umbilical region	-	FMA synonym match went to 'Umbilicus', which is a separate Z-Anatomy object; left null
+Mammary region	-	FMA synonym match went to 'Breast' (the organ, not the surface region); left null
+Nasal region	-	TA2 -> Wikidata gave 'Subdivision of external nose'; not the region, left null
+Inferior basal vein of right lung	-	matched the unsided generic 'Inferior basal vein'; no right-lung class found, left null
+Superior basal vein of right lung	-	matched the unsided generic 'Superior basal vein'; no right-lung class found, left null

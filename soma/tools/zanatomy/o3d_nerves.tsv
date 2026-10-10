@@ -8,110 +8,110 @@ upper	C6 root	C6 root of brachial plexus	Anterior ramus of sixth cervical nerve;
 upper	C7 root	C7 root of brachial plexus	Anterior ramus of seventh cervical nerve;Seventh cervical nerve;Seventh cervical spinal nerve	-	as C5
 upper	C8 root	C8 root of brachial plexus	Anterior ramus of eighth cervical nerve;Eighth cervical nerve;Eighth cervical spinal nerve	-	as C5
 upper	T1 root	T1 root of brachial plexus	First thoracic nerve	-	FMA treats 'Anterior ramus of first thoracic nerve' as a synonym of First intercostal nerve, so the plexus root is mapped to the spinal nerve T1 (FMA6037) instead
-upper	Dorsal scapular nerve	Dorsal scapular nerve	Dorsal scapular nerve	Dorsal scapular nerve
-upper	Superior trunk of brachial plexus	Superior trunk of brachial plexus	Superior trunk of brachial nerve plexus	Superior trunk of brachial plexus
-upper	Middle trunk of brachial plexus	Middle trunk of brachial plexus	Middle trunk of brachial nerve plexus	Middle trunk of brachial plexus
-upper	Inferior trunk of brachial plexus	Inferior trunk of brachial plexus	Inferior trunk of brachial nerve plexus	Inferior trunk of brachial plexus
-upper	Lateral cord of brachial plexus	Lateral cord of brachial plexus	Lateral cord of brachial nerve plexus	-
-upper	Medial cord of brachial plexus	Medial cord of brachial plexus	Medial cord of brachial nerve plexus	-
-upper	Posterior cord of brachial plexus	Posterior cord of brachial plexus	Posterior cord of brachial nerve plexus	Posterior cord of brachial plexus
-upper	Lateral pectoral nerve	Lateral pectoral nerve	Lateral pectoral nerve	Lateral pectoral nerve
-upper	Medial pectoral nerve	Medial pectoral nerve	Medial pectoral nerve	Medial pectoral nerve
-upper	Lateral root of median nerve	Lateral root of median nerve	Lateral root of median nerve	-
-upper	Medial root of median nerve	Medial root of median nerve	Medial root of median nerve	-
-upper	Long thoracic nerve	Long thoracic nerve	Long thoracic nerve	Long thoracic nerve
-upper	Lower subscapular nerve	Inferior subscapular nerve	Inferior subscapular nerve	Inferior subscapular nerve
-upper	Upper subscapular nerve	Superior subscapular nerve	Superior subscapular nerve	Superior subscapular nerve
+upper	Dorsal scapular nerve	Dorsal scapular nerve	Dorsal scapular nerve	Dorsal scapular nerve	
+upper	Superior trunk of brachial plexus	Superior trunk of brachial plexus	Superior trunk of brachial nerve plexus	Superior trunk of brachial plexus	
+upper	Middle trunk of brachial plexus	Middle trunk of brachial plexus	Middle trunk of brachial nerve plexus	Middle trunk of brachial plexus	
+upper	Inferior trunk of brachial plexus	Inferior trunk of brachial plexus	Inferior trunk of brachial nerve plexus	Inferior trunk of brachial plexus	
+upper	Lateral cord of brachial plexus	Lateral cord of brachial plexus	Lateral cord of brachial nerve plexus	-	
+upper	Medial cord of brachial plexus	Medial cord of brachial plexus	Medial cord of brachial nerve plexus	-	
+upper	Posterior cord of brachial plexus	Posterior cord of brachial plexus	Posterior cord of brachial nerve plexus	Posterior cord of brachial plexus	
+upper	Lateral pectoral nerve	Lateral pectoral nerve	Lateral pectoral nerve	Lateral pectoral nerve	
+upper	Medial pectoral nerve	Medial pectoral nerve	Medial pectoral nerve	Medial pectoral nerve	
+upper	Lateral root of median nerve	Lateral root of median nerve	Lateral root of median nerve	-	
+upper	Medial root of median nerve	Medial root of median nerve	Medial root of median nerve	-	
+upper	Long thoracic nerve	Long thoracic nerve	Long thoracic nerve	Long thoracic nerve	
+upper	Lower subscapular nerve	Inferior subscapular nerve	Inferior subscapular nerve	Inferior subscapular nerve	
+upper	Upper subscapular nerve	Superior subscapular nerve	Superior subscapular nerve	Superior subscapular nerve	
 upper	Medial antebrachial cutaneous nerve	Medial antebrachial cutaneous nerve	Medial cutaneous nerve of forearm	Medial antebrachial cutaneous nerve;Anterior branch of medial antebrachial cutaneous nerve;Posterior branch of medial antebrachial cutaneous nerve	O3D object includes the anterior and posterior branches
-upper	Medial brachial cutaneous nerve	Medial brachial cutaneous nerve	Medial cutaneous nerve of arm	Medial brachial cutaneous nerve
-upper	Median nerve	Median nerve	Median nerve	Median nerve
+upper	Medial brachial cutaneous nerve	Medial brachial cutaneous nerve	Medial cutaneous nerve of arm	Medial brachial cutaneous nerve	
+upper	Median nerve	Median nerve	Median nerve	Median nerve	
 upper	Median nerve Common palmar digital nerve of the thumb	First common palmar digital branch of median nerve	First common palmar digital branch of median nerve	-	the common digital nerve to the thumb is the first common palmar digital nerve
 upper	Median nerve Common palmar digital nerves	Common palmar digital branches of median nerve	Common palmar digital branch of median nerve	Common palmar digital branches of median nerve	FMA class is singular; used for the set
-upper	Median nerve Palmar br	Palmar branch of median nerve	Palmar branch of median nerve	Palmar branch of median nerve
+upper	Median nerve Palmar br	Palmar branch of median nerve	Palmar branch of median nerve	Palmar branch of median nerve	
 upper	Median nerve Proper palmar digital nerves	Proper palmar digital branches of median nerve	Proper palmar digital branch of median nerve	Proper palmar digital branches of median nerve	FMA class is singular; used for the set
-upper	Median nerve Proper palmar digital nerves of the thumb	Proper palmar digital branches of median nerve to thumb	Proper palmar digital branch of median nerve to thumb	-
+upper	Median nerve Proper palmar digital nerves of the thumb	Proper palmar digital branches of median nerve to thumb	Proper palmar digital branch of median nerve to thumb	-	
 upper	Median nerve Recurrent br	Recurrent (thenar) branch of median nerve	-	-	no FMA 5.1.0 class found for the recurrent/thenar branch of the median nerve
-upper	Musculocutaneus nerve  - lateral antebrachial cutaneous nerve	Lateral antebrachial cutaneous nerve	Lateral antebrachial cutaneous nerve	Lateral antebrachial cutaneous nerve
-upper	Musculocutaneus nerve	Musculocutaneous nerve	Musculocutaneous nerve	Musculocutaneous nerve
-upper	Radial nerve	Radial nerve	Radial nerve	Radial nerve;Muscular branches of radial nerve
-upper	Radial nerve (deep branch)	Deep branch of radial nerve	Deep branch of radial nerve	Deep branch of radial nerve	FMA lists 'Deep branch of radial nerve' as a synonym of Posterior interosseous nerve, so this shares its id with the next row
-upper	Radial nerve (posterior interosseus n)	Posterior interosseous nerve of forearm	Posterior interosseous nerve	Posterior interosseous nerve of forearm
-upper	Radial nerve (dorsal digital nn)	Dorsal digital branches of radial nerve	Set of dorsal digital branches of radial nerve;Dorsal digital branches of radial nerve	Dorsal digital branches of radial nerve
-upper	Radial nerve (inferior lateral brachial cutaneous n)	Inferior lateral brachial cutaneous nerve	Inferior lateral brachial cutaneous nerve;Inferior lateral cutaneous nerve of arm	Inferior lateral brachial cutaneous nerve
-upper	Radial nerve (posterior antebrachial cutaneous n)	Posterior antebrachial cutaneous nerve	Posterior antebrachial cutaneous nerve	Posterior antebrachial cutaneous nerve
-upper	Radial nerve (posterior brachial cutaneous n)	Posterior brachial cutaneous nerve	Posterior brachial cutaneous nerve	-
-upper	Radial nerve (superficial br)	Superficial branch of radial nerve	Superficial branch of radial nerve	Superficial branch of radial nerve
-upper	Subclavian nerve	Subclavian nerve	Subclavian nerve	Subclavian nerve
-upper	Suprascapular nerve	Suprascapular nerve	Suprascapular nerve	Suprascapular nerve
-upper	Ulnar nerve	Ulnar nerve	Ulnar nerve	Ulnar nerve;Muscular branches of ulnar nerve
+upper	Musculocutaneus nerve  - lateral antebrachial cutaneous nerve	Lateral antebrachial cutaneous nerve	Lateral antebrachial cutaneous nerve	Lateral antebrachial cutaneous nerve	
+upper	Musculocutaneus nerve	Musculocutaneous nerve	Musculocutaneous nerve	Musculocutaneous nerve	
+upper	Radial nerve	Radial nerve	Radial nerve	Radial nerve;Muscular branches of radial nerve	
+upper	Radial nerve (deep branch)	Deep branch of radial nerve	-	Deep branch of radial nerve	FMA has 'Deep branch of radial nerve' only as a synonym of Posterior interosseous nerve (FMA77559), a separate item here; left null
+upper	Radial nerve (posterior interosseus n)	Posterior interosseous nerve of forearm	Posterior interosseous nerve	Posterior interosseous nerve of forearm	
+upper	Radial nerve (dorsal digital nn)	Dorsal digital branches of radial nerve	Set of dorsal digital branches of radial nerve;Dorsal digital branches of radial nerve	Dorsal digital branches of radial nerve	
+upper	Radial nerve (inferior lateral brachial cutaneous n)	Inferior lateral brachial cutaneous nerve	Inferior lateral brachial cutaneous nerve;Inferior lateral cutaneous nerve of arm	Inferior lateral brachial cutaneous nerve	
+upper	Radial nerve (posterior antebrachial cutaneous n)	Posterior antebrachial cutaneous nerve	Posterior antebrachial cutaneous nerve	Posterior antebrachial cutaneous nerve	
+upper	Radial nerve (posterior brachial cutaneous n)	Posterior brachial cutaneous nerve	Posterior brachial cutaneous nerve	-	
+upper	Radial nerve (superficial br)	Superficial branch of radial nerve	Superficial branch of radial nerve	Superficial branch of radial nerve	
+upper	Subclavian nerve	Subclavian nerve	Subclavian nerve	Subclavian nerve	
+upper	Suprascapular nerve	Suprascapular nerve	Suprascapular nerve	Suprascapular nerve	
+upper	Ulnar nerve	Ulnar nerve	Ulnar nerve	Ulnar nerve;Muscular branches of ulnar nerve	
 upper	Ulnar nerve Communicating br	Communicating branch of ulnar nerve with median nerve (palm)	-	-	palmar communicating branch; FMA326786 (variant forearm communication) and FMA44837 (anterior interosseous-ulnar) do not clearly denote it, left null
-upper	Ulnar nerve Deep br	Deep branch of ulnar nerve	Deep branch of ulnar nerve	Deep branch of ulnar nerve
+upper	Ulnar nerve Deep br	Deep branch of ulnar nerve	Deep branch of ulnar nerve	Deep branch of ulnar nerve	
 upper	Ulnar nerve Dorsal cutaneous br	Dorsal branch of ulnar nerve	Dorsal branch of ulnar nerve	Dorsal branch of ulnar nerve;Dorsal digital branches of ulnar nerve	O3D object includes the dorsal digital branches
-upper	Ulnar nerve Palmar cutaneous br	Palmar branch of ulnar nerve	Palmar cutaneous branch of ulnar nerve;Palmar branch of ulnar nerve	Palmar branch of ulnar nerve
-upper	Ulnar nerve Superficial br Common palmar digital n	Common palmar digital branch of ulnar nerve	Common palmar digital branch of ulnar nerve	Common palmar digital branches of ulnar nerve;Superficial branch of ulnar nerve
+upper	Ulnar nerve Palmar cutaneous br	Palmar branch of ulnar nerve	Palmar cutaneous branch of ulnar nerve;Palmar branch of ulnar nerve	Palmar branch of ulnar nerve	
+upper	Ulnar nerve Superficial br Common palmar digital n	Common palmar digital branch of ulnar nerve	Common palmar digital branch of ulnar nerve	Common palmar digital branches of ulnar nerve;Superficial branch of ulnar nerve	
 upper	Ulnar nerve Superficial br Proper palmar digital nn	Proper palmar digital branches of ulnar nerve	Proper palmar digital branch of ulnar nerve	Proper palmar digital branches of ulnar nerve	FMA class is singular; used for the set
-lower	Coccygeal nerve	Coccygeal nerve	Coccygeal nerve	-
-lower	Common fibular nerve	Common fibular nerve	Common fibular nerve	Common fibular nerve
+lower	Coccygeal nerve	Coccygeal nerve	Coccygeal nerve	-	
+lower	Common fibular nerve	Common fibular nerve	Common fibular nerve	Common fibular nerve	
 lower	Common plantar digital nerves	Common plantar digital nerves	Set of common plantar digital nerves	Common plantar digital branches of medial plantar nerve;Common plantar digital branches of lateral plantar nerve	one O3D object for the common plantar digital nerves of both plantar nerves
-lower	Deep branch of Lateral plantar nerve	Deep branch of lateral plantar nerve	Deep branch of lateral plantar nerve	-
-lower	Superficial branch of Lateral plantar nerve	Superficial branch of lateral plantar nerve	Superficial branch of lateral plantar nerve	-
-lower	Deep fibular nerve	Deep fibular nerve	Deep fibular nerve	Deep fibular nerve;Muscular branches of deep fibular nerve
+lower	Deep branch of Lateral plantar nerve	Deep branch of lateral plantar nerve	Deep branch of lateral plantar nerve	-	
+lower	Superficial branch of Lateral plantar nerve	Superficial branch of lateral plantar nerve	Superficial branch of lateral plantar nerve	-	
+lower	Deep fibular nerve	Deep fibular nerve	Deep fibular nerve	Deep fibular nerve;Muscular branches of deep fibular nerve	
 lower	Dorsal digital branches of deep fibular nerve	Dorsal digital branches of deep fibular nerve	-	Dorsal digital branches of deep fibular nerve	FMA75491 'Set of dorsal digital nerves of foot' denotes the superficial fibular set in TA; not asserted for the deep fibular branches
-lower	Dorsal digital branches of superficial fibular nerve	Dorsal digital branches of superficial fibular nerve	Set of dorsal digital nerves of foot	Dorsal digital branches of superficial fibular nerve	TA 'dorsal digital nerves of foot' are the branches of the superficial fibular nerve (same id as the Z-Anatomy item gets via TA2 -> Wikidata)
-lower	Femoral nerve, anterior cutaneous branches	Anterior cutaneous branches of femoral nerve	Set of anterior cutaneous branches of femoral nerve	Anterior cutaneous branches of femoral nerve
-lower	Femoral nerve, muscular branches	Muscular branches of femoral nerve	Set of muscular branches of femoral nerve	-
-lower	Femoral nerve	Femoral nerve	Femoral nerve	Femoral nerve
-lower	Genitofemoral nerve, femoral branch	Femoral branch of genitofemoral nerve	Femoral branch of genitofemoral nerve	Femoral branch of genitofemoral nerve
-lower	Genitofemoral nerve, genital branch	Genital branch of genitofemoral nerve	Genital branch of genitofemoral nerve	Genital branch of genitofemoral nerve
+lower	Dorsal digital branches of superficial fibular nerve	Dorsal digital branches of superficial fibular nerve	-	Dorsal digital branches of superficial fibular nerve	FMA75491 'Set of dorsal digital nerves of foot' is generic; no class for the superficial fibular set, left null
+lower	Femoral nerve, anterior cutaneous branches	Anterior cutaneous branches of femoral nerve	Set of anterior cutaneous branches of femoral nerve	Anterior cutaneous branches of femoral nerve	
+lower	Femoral nerve, muscular branches	Muscular branches of femoral nerve	Set of muscular branches of femoral nerve	-	
+lower	Femoral nerve	Femoral nerve	Femoral nerve	Femoral nerve	
+lower	Genitofemoral nerve, femoral branch	Femoral branch of genitofemoral nerve	Femoral branch of genitofemoral nerve	Femoral branch of genitofemoral nerve	
+lower	Genitofemoral nerve, genital branch	Genital branch of genitofemoral nerve	Genital branch of genitofemoral nerve	Genital branch of genitofemoral nerve	
 lower	Iliohypogastric nerve, anterior branch	Anterior cutaneous branch of iliohypogastric nerve	Anterior cutaneous branch of iliohypogastric nerve	Iliohypogastric nerve	Z-Anatomy has a single iliohypogastric object; O3D splits it into two branches
-lower	Iliohypogastric nerve, lateral cutaneous branch	Lateral cutaneous branch of iliohypogastric nerve	Lateral cutaneous branch of iliohypogastric nerve	Iliohypogastric nerve
-lower	Ilioinguinal nerve	Ilio-inguinal nerve	Ilioinguinal nerve	Ilio-inguinal nerve
-lower	Inferior clunial br. of Post. cutaneous nerve of the thigh	Inferior clunial nerves	Set of inferior clunial nerves	-
-lower	Inferior gluteal nerve	Inferior gluteal nerve	Inferior gluteal nerve	-
-lower	Superior gluteal nerve	Superior gluteal nerve	Superior gluteal nerve	Superior gluteal nerve
-lower	Infrapatellar branch of Saphenous nerve	Infrapatellar branch of saphenous nerve	Infrapatellar branch of saphenous nerve	Infrapatellar branch of saphenous nerve
+lower	Iliohypogastric nerve, lateral cutaneous branch	Lateral cutaneous branch of iliohypogastric nerve	Lateral cutaneous branch of iliohypogastric nerve	Iliohypogastric nerve	
+lower	Ilioinguinal nerve	Ilio-inguinal nerve	Ilioinguinal nerve	Ilio-inguinal nerve	
+lower	Inferior clunial br. of Post. cutaneous nerve of the thigh	Inferior clunial nerves	Set of inferior clunial nerves	-	
+lower	Inferior gluteal nerve	Inferior gluteal nerve	Inferior gluteal nerve	-	
+lower	Superior gluteal nerve	Superior gluteal nerve	Superior gluteal nerve	Superior gluteal nerve	
+lower	Infrapatellar branch of Saphenous nerve	Infrapatellar branch of saphenous nerve	Infrapatellar branch of saphenous nerve	Infrapatellar branch of saphenous nerve	
 lower	L1 root	L1 root of lumbar plexus	Anterior ramus of first lumbar nerve	-	plexus roots are the anterior rami
-lower	L2 root	L2 root of lumbar plexus	Anterior ramus of second lumbar nerve	-
-lower	L3 root	L3 root of lumbar plexus	Anterior ramus of third lumbar nerve	-
-lower	L4 root	L4 root of lumbosacral plexus	Anterior ramus of fourth lumbar nerve	-
-lower	L5 root	L5 root of sacral plexus	Anterior ramus of fifth lumbar nerve	-
-lower	S1 root	S1 root of sacral plexus	Anterior ramus of first sacral nerve	-
-lower	S2 root	S2 root of sacral plexus	Anterior ramus of second sacral nerve	-
-lower	S3 root	S3 root of sacral plexus	Anterior ramus of third sacral nerve	-
-lower	S4 root	S4 root of sacral plexus	Anterior ramus of fourth sacral nerve	-
-lower	S5 root	S5 root	Anterior ramus of fifth sacral nerve	-
-lower	Lateral branch of deep fibular nerve	Lateral terminal branch of deep fibular nerve	Lateral terminal branch of deep fibular nerve	-
-lower	Medial branch of deep fibular nerve	Medial terminal branch of deep fibular nerve	Medial terminal branch of deep fibular nerve	-
-lower	Lateral calcaneal nerves	Lateral calcaneal branches of sural nerve	Set of lateral calcaneal branches of sural nerve	-
-lower	Lateral dorsal cutaneous nerve	Lateral dorsal cutaneous nerve	Lateral dorsal cutaneous branch of sural nerve	-
-lower	Sural nerve, Lateral dorsal cutaneous nerve	Lateral dorsal cutaneous nerve (sural part)	Lateral dorsal cutaneous branch of sural nerve	-	second O3D object mapped to the same FMA class
-lower	Lateral femoral cuteneous nerve	Lateral femoral cutaneous nerve	Lateral femoral cutaneous nerve	Lateral femoral cutaneous nerve
-lower	Lateral plantar nerve	Lateral plantar nerve	Lateral plantar nerve	Lateral plantar nerve
-lower	Medial plantar nerve	Medial plantar nerve	Medial plantar nerve	Medial plantar nerve
+lower	L2 root	L2 root of lumbar plexus	Anterior ramus of second lumbar nerve	-	plexus roots are the anterior rami
+lower	L3 root	L3 root of lumbar plexus	Anterior ramus of third lumbar nerve	-	plexus roots are the anterior rami
+lower	L4 root	L4 root of lumbosacral plexus	Anterior ramus of fourth lumbar nerve	-	plexus roots are the anterior rami
+lower	L5 root	L5 root of sacral plexus	Anterior ramus of fifth lumbar nerve	-	plexus roots are the anterior rami
+lower	S1 root	S1 root of sacral plexus	Anterior ramus of first sacral nerve	-	plexus roots are the anterior rami
+lower	S2 root	S2 root of sacral plexus	Anterior ramus of second sacral nerve	-	plexus roots are the anterior rami
+lower	S3 root	S3 root of sacral plexus	Anterior ramus of third sacral nerve	-	plexus roots are the anterior rami
+lower	S4 root	S4 root of sacral plexus	Anterior ramus of fourth sacral nerve	-	plexus roots are the anterior rami
+lower	S5 root	S5 root (anterior ramus of S5)	Anterior ramus of fifth sacral nerve	-	mapped to the anterior ramus like L1-S4 (plexus roots are anterior rami)
+lower	Lateral branch of deep fibular nerve	Lateral terminal branch of deep fibular nerve	Lateral terminal branch of deep fibular nerve	-	
+lower	Medial branch of deep fibular nerve	Medial terminal branch of deep fibular nerve	Medial terminal branch of deep fibular nerve	-	
+lower	Lateral calcaneal nerves	Lateral calcaneal branches of sural nerve	Set of lateral calcaneal branches of sural nerve	-	
+lower	Lateral dorsal cutaneous nerve	Lateral dorsal cutaneous nerve	Lateral dorsal cutaneous branch of sural nerve	-	
+lower	Sural nerve, Lateral dorsal cutaneous nerve	Lateral dorsal cutaneous nerve (sural part)	-	-	second Open3DModel object of the lateral dorsal cutaneous nerve (its origin from the sural nerve); the object 'Lateral dorsal cutaneous nerve' carries FMA44694, this one is left null so the concept is not duplicated
+lower	Lateral femoral cuteneous nerve	Lateral femoral cutaneous nerve	Lateral femoral cutaneous nerve	Lateral femoral cutaneous nerve	
+lower	Lateral plantar nerve	Lateral plantar nerve	Lateral plantar nerve	Lateral plantar nerve	
+lower	Medial plantar nerve	Medial plantar nerve	Medial plantar nerve	Medial plantar nerve	
 lower	Lateral sural cutaneous nerve	Lateral sural cutaneous nerve	Lateral sural cutaneous nerve	Sural communicating branch of common fibular nerve	Z-Anatomy only has the communicating branch of this nerve
-lower	Medial sural cutaneous nerve	Medial sural cutaneous nerve	Medial sural cutaneous nerve	Medial sural cutaneous nerve
-lower	Lumbar plexus	Lumbar plexus	Lumbar nerve plexus	-
-lower	Sacral plexus	Sacral plexus	Sacral nerve plexus	-
-lower	Lumbosacral Trunk	Lumbosacral trunk	Lumbosacral trunk	-
-lower	Medial calcaneal branches of Tibial nerve	Medial calcaneal branches of tibial nerve	Set of medial calcaneal branches of tibial nerve	-
-lower	Medial dorsal cutaneous nerve	Medial dorsal cutaneous nerve of foot	Medial dorsal cutaneous nerve	Medial dorsal cutaneous nerve of foot
+lower	Medial sural cutaneous nerve	Medial sural cutaneous nerve	Medial sural cutaneous nerve	Medial sural cutaneous nerve	
+lower	Lumbar plexus	Lumbar plexus	Lumbar nerve plexus	-	
+lower	Sacral plexus	Sacral plexus	Sacral nerve plexus	-	
+lower	Lumbosacral Trunk	Lumbosacral trunk	Lumbosacral trunk	-	
+lower	Medial calcaneal branches of Tibial nerve	Medial calcaneal branches of tibial nerve	Set of medial calcaneal branches of tibial nerve	-	
+lower	Medial dorsal cutaneous nerve	Medial dorsal cutaneous nerve of foot	Medial dorsal cutaneous nerve	Medial dorsal cutaneous nerve of foot	
 lower	Nerve to Levator ani and coccygeus	Nerves to levator ani and coccygeus	-	-	object covers two nerves (FMA66048 Nerve to levator ani, FMA66049 Nerve to coccygeus); no single class
-lower	Nerve to obturator internus (and superior gemellus)	Nerve to obturator internus	Nerve to obturator internus	-
+lower	Nerve to obturator internus (and superior gemellus)	Nerve to obturator internus	Nerve to obturator internus	-	
 lower	Nerve to psoas major and iliacus	Nerves to psoas major and iliacus	-	-	object covers two nerves (FMA20580 Nerve to psoas major, FMA20581 Nerve to iliacus); no single class
-lower	Nerve to quadratus femoris	Nerve to quadratus femoris	Nerve to quadratus femoris	Nerve to quadratus femoris muscle
-lower	Obturator nerve, anterior br, cutaneous br	Cutaneous branch of anterior branch of obturator nerve	Cutaneous branch of anterior branch of obturator nerve	-
-lower	Obturator nerve, anterior branch	Anterior branch of obturator nerve	Anterior branch of obturator nerve	Anterior branch of obturator nerve
-lower	Obturator nerve, posterior branch	Posterior branch of obturator nerve	Posterior branch of obturator nerve	Posterior branch of obturator nerve
-lower	Obturator nerve	Obturator nerve	Obturator nerve	Obturator nerve
-lower	Posterior cutaneous nerve of the thigh	Posterior femoral cutaneous nerve	Posterior cutaneous nerve of thigh	Posterior femoral cutaneous nerve;Anterior root of posterior femoral cutaneous nerve;Posterior root of posterior femoral cutaneous nerve
+lower	Nerve to quadratus femoris	Nerve to quadratus femoris	Nerve to quadratus femoris	Nerve to quadratus femoris muscle	
+lower	Obturator nerve, anterior br, cutaneous br	Cutaneous branch of anterior branch of obturator nerve	Cutaneous branch of anterior branch of obturator nerve	-	
+lower	Obturator nerve, anterior branch	Anterior branch of obturator nerve	Anterior branch of obturator nerve	Anterior branch of obturator nerve	
+lower	Obturator nerve, posterior branch	Posterior branch of obturator nerve	Posterior branch of obturator nerve	Posterior branch of obturator nerve	
+lower	Obturator nerve	Obturator nerve	Obturator nerve	Obturator nerve	
+lower	Posterior cutaneous nerve of the thigh	Posterior femoral cutaneous nerve	Posterior cutaneous nerve of thigh	Posterior femoral cutaneous nerve;Anterior root of posterior femoral cutaneous nerve;Posterior root of posterior femoral cutaneous nerve	
 lower	Proper plantar digital branches (Lateral plantar nerve)	Proper plantar digital branches of lateral plantar nerve	-	Proper plantar digital branches of lateral plantar nerve	FMA has only the generic 'Set of proper plantar digital nerves' (FMA75493), not asserted
 lower	Proper plantar digital branches (Medial plantar nerve)	Proper plantar digital branches of medial plantar nerve	-	Proper plantar digital branches of medial plantar nerve	as above
-lower	Pudendal nerve	Pudendal nerve	Pudendal nerve	Pudendal nerve
-lower	Saphenous branch of Femoralis nerve	Saphenous nerve	Saphenous nerve	Saphenous nerve
-lower	Saphenous nerve (Medial crural cutaneous branches)	Medial crural cutaneous branches of saphenous nerve	Set of medial crural cutaneous branches of saphenous nerve	Medial crural cutaneous branches of saphenous nerve
-lower	Sciatic nerve	Sciatic nerve	Sciatic nerve	Sciatic nerve
-lower	Superficial fibular nerve	Superficial fibular nerve	Superficial fibular nerve	Superficial fibular nerve
-lower	Superior clunial nerve (posterior rami)	Superior clunial nerves	Set of superior clunial nerves	-
-lower	Sural nerve	Sural nerve	Sural nerve	Sural nerve
+lower	Pudendal nerve	Pudendal nerve	Pudendal nerve	Pudendal nerve	
+lower	Saphenous branch of Femoralis nerve	Saphenous nerve	Saphenous nerve	Saphenous nerve	
+lower	Saphenous nerve (Medial crural cutaneous branches)	Medial crural cutaneous branches of saphenous nerve	Set of medial crural cutaneous branches of saphenous nerve	Medial crural cutaneous branches of saphenous nerve	
+lower	Sciatic nerve	Sciatic nerve	Sciatic nerve	Sciatic nerve	
+lower	Superficial fibular nerve	Superficial fibular nerve	Superficial fibular nerve	Superficial fibular nerve	
+lower	Superior clunial nerve (posterior rami)	Superior clunial nerves	Set of superior clunial nerves	-	
+lower	Sural nerve	Sural nerve	Sural nerve	Sural nerve	
 lower	Sympathic trunk	Sympathetic trunk (lumbosacral part as modelled)	-	-	partial trunk in the lower-limb model; Z-Anatomy's full sympathetic trunk is kept as the primary item
-lower	Tibial nerve	Tibial nerve	Tibial nerve	Tibial nerve
+lower	Tibial nerve	Tibial nerve	Tibial nerve	Tibial nerve	
