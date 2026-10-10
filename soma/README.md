@@ -8,7 +8,7 @@
 
 ## 现在能做什么
 
-- 全身 3,179 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结，按系统分组。
+- 男女两个体型。男性 3,179 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结，按系统分组；女性 3,213 个（见下文，精度低得多）。
 - 按系统显示或隐藏、调透明度；从皮肤到骨骼逐层剥离。
 - 点选部件，查看中/英/拉丁名、FMA 编号、所属层级、相邻结构。
 - 肌肉的起点、止点、神经支配、血供等关系，每条带出处，可点击跳转；神经列出它支配的结构，可一次全选。
@@ -25,7 +25,7 @@ bun install
 bun run dev        # http://localhost:5183
 ```
 
-仓库里已经带了生成好的解剖数据（`public/anatomy/`），克隆后可以直接看。地址参数：`?body=male`（默认）、`?renderer=webgl`（强制用 WebGL2 后端）。
+仓库里已经带了生成好的解剖数据（`public/anatomy/`），克隆后可以直接看。地址参数：`?body=male`（默认）或 `?body=female`、`?renderer=webgl`（强制用 WebGL2 后端）。
 
 ## 测试
 
@@ -62,6 +62,7 @@ public/anatomy/        生成的运行时数据
 # BodyParts3D 4.0：把 LATEST/ 下的表格和两个 zip 下载到 data/raw/bodyparts3d/ 并解压
 #   https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/
 bun run pipeline                 # 生成 public/anatomy/male/
+bun run pipeline:female          # 生成 public/anatomy/female/，需要先有男性输出和女性锚点包（tools/register/run_anchors.sh）
 bun tools/knowledge/run.ts       # 从缓存生成名称和关系；加 --refresh 重新查询 Wikidata
 ```
 
@@ -77,6 +78,8 @@ bun tools/knowledge/run.ts       # 从缓存生成名称和关系；加 --refres
 | [Wikipedia](https://en.wikipedia.org) 肌肉信息框 | 部分肌肉的起止点和神经支配，每条带修订版链接 | CC BY-SA 4.0 |
 | [Z-Anatomy](https://github.com/Z-Anatomy) | 颅神经和躯干神经、脊神经根、韧带、筋膜、淋巴结群、甲状腺。手工建模，经配准并入，标记为 `curated` | CC BY-SA 4.0（"Z-Anatomy - The libre 3D atlas of anatomy"） |
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | 四肢神经（右侧建模，左侧为镜像）。手工建模，标记为 `curated` | CC BY-SA 4.0 |
+| [Visible Human Project](https://www.nlm.nih.gov/research/visible/visible_human.html) 女性 CT | 女性体型的骨骼和部分器官，由 TotalSegmentator 与 MOOSE 分割 | NLM 使用条款；Courtesy of the U.S. National Library of Medicine |
+| [HRA](https://humanatlas.io) 女性参考器官 | 子宫、卵巢、输卵管、阴道、盆腔韧带、乳腺。重新建模过的几何，标记为 `curated` | CC BY 4.0 |
 | [FMA](http://si.washington.edu/projects/fma) 5.1.0 | 新增部件在分类树里的位置 | 见其发布页 |
 
 名称数据里约六成中文名是按术语表机器生成的，没有出处，`names.json` 的 `zhSource` 字段逐条标明了来源，全部条目的状态都是 `unreviewed`。
@@ -88,13 +91,18 @@ bun tools/knowledge/run.ts       # 从缓存生成名称和关系；加 --refres
 - 膝关节的交叉韧带和半月板韧带因与本模型的关节间隙对不上而没有导入。
 - 仍然没有：腮腺、脊髓本体、胸膜、心包、半月板、乳腺、淋巴管。
 - 从 3.0 配准过来的部件位置误差：头部约 1–2 mm，胸部约 4 mm，腹部约 6 mm。腹横肌与内脏有明显穿插。
-- 只有成年男性一个体型；女性体型计划用真实的女性骨架和器官做锚点，把男性的精细结构配准过去。
+- 女性体型是一个初版：骨骼是 Visible Human 女性供体自己的（59 岁、肥胖、六节腰椎），86 个部件是实测，3,069 个是从男性模型配准变形来的，58 个取自 HRA。
+  - 骨与骨之间的软组织位置误差约 1–3 cm。
+  - 左卵巢和左输卵管埋在从男性变形过来的降结肠里；乳腺浮在皮肤外，因为皮肤是男性皮肤变形来的。
+  - 右前臂和右手在 CT 里被裁切，用的是左侧镜像。
+  - 没有外生殖器、会阴、女性尿道、卵巢和阴道血管。盆腔的血管神经带着男性的走行。
+  - 完整的说明在 `public/anatomy/female/pipeline-report.json` 的 `notes` 里。
 - 没有皮下脂肪层、淋巴管。
 - 触屏手势没有在真机上测过。
 
 ## 接下来
 
-1. 女性体型（进行中）。
+1. 改进女性体型：皮肤、盆腔脏器的避让、丹佛大学的女性下肢肌骨数据。
 2. 软组织物理：四面体化，XPBD，先在一个部位验证。
 3. 疼痛：沿神经通路的伤害感受模型，驱动生命体征、退缩反射和体表热力图。这是对疼痛生理的计算模型，模拟人并没有主观感受。
 4. 手术操作：切开、牵拉、出血、缝合。

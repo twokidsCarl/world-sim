@@ -9,6 +9,7 @@ import { createTranslator } from './translate.ts'
 export const ZH_SOURCES = [
   'wikidata', // zh-cn / zh-hans / zh label of the concept's own Wikidata item, already Simplified
   'wikidata:hant-converted', // own item's label, converted from Traditional characters
+  'wikidata:via-uberon-id', // label of the item found through Wikidata's UBERON ID (concept id "UBERON_...")
   'wikidata:generic-twin', // label of the species-neutral item ("heart") for a "human heart" item
   'derived:laterality', // 左/右 + the Wikidata zh label of the unlateralised concept
   'lexicon:mainland-over-wikidata', // exact lexicon term used instead of a differently worded Wikidata label
@@ -63,7 +64,7 @@ export function buildNames(m: Model): NamesResult {
     const ordered = primary ? [primary, ...items.map((i) => i.qid).filter((q) => q !== primary)] : items.map((i) => i.qid)
     for (const q of ordered) {
       const z = itemFits(q, fma) ? m.zhOf(q) : undefined
-      if (z) return { zh: z.text, source: z.converted ? 'wikidata:hant-converted' : 'wikidata' }
+      if (z) return { zh: z.text, source: m.viaUberon.has(fma) ? 'wikidata:via-uberon-id' : z.converted ? 'wikidata:hant-converted' : 'wikidata' }
     }
     for (const q of ordered) {
       const twin = m.twinOf.get(q)

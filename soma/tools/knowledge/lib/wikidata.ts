@@ -176,3 +176,21 @@ export async function fetchAllFmaLabels(opts: FetchOptions): Promise<Map<string,
   }
   return out
 }
+
+/** Items by UBERON ID (P1554, verified: values are bare digits such as "0000002"). */
+export async function fetchItemsByUberon(numbers: string[], opts: FetchOptions): Promise<{ uberon: string; qid: string; en?: string }[]> {
+  const out: { uberon: string; qid: string; en?: string }[] = []
+  for (const batch of chunk([...new Set(numbers)].sort(), 200)) {
+    const rows = await sparql(
+      'uberon',
+      `SELECT ?u ?item ?en WHERE {
+  VALUES ?u { ${batch.map((n) => `"${n}"`).join(' ')} }
+  ?item wdt:${P_UBERON} ?u .
+  OPTIONAL { ?item rdfs:label ?en . FILTER(LANG(?en) = "en") }
+}`,
+      opts,
+    )
+    for (const r of rows) out.push({ uberon: r.u!, qid: r.item!, en: r.en })
+  }
+  return out
+}

@@ -146,6 +146,8 @@ async function main() {
       datasetsRead: m.dataset.bodies,
       conceptsFromBodyParts3D40Lists: [...m.concepts.values()].filter((c) => !c.datasetOnly).length,
       conceptsOnlyInDatasets: [...m.concepts.values()].filter((c) => c.datasetOnly).length,
+      idsNamedForOneSideButUsedByBothSides: m.dataset.sharedSidedIds,
+      conceptsLinkedViaUberonId: [...m.viaUberon].sort(),
       partConceptsPerBody: Object.fromEntries([...m.dataset.partFmas].map(([b, s]) => [b, s.size])),
     },
     elementConcepts: { ...m.elementStats, distinctConcepts: m.elementConcepts.size },

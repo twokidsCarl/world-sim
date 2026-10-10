@@ -1117,6 +1117,7 @@ async function finish(input: FinishInput) {
     'Rib numbering comes from an automatic CT segmentation and is unreliable on the left side (ribs 5–9).',
     'Skin is the male skin deformed to her skeleton: it is not female body shape, and the breasts (Human Reference Atlas, standing shape) are separate parts that protrude through it.',
     'Uterus, ovaries, uterine tubes, vagina, pelvic ligaments and uterine vessels are artist-modelled (Human Reference Atlas) and were placed by a bone-driven fit; neighbouring bowel, vessels and nerves are deformed male anatomy pushed aside, not female pelvic anatomy.',
+    `Known overlaps in the pelvis: ${Object.entries((report.collisions as { hraInsideOthers: Record<string, { inside: number; in: string[] }> }).hraInsideOthers).filter(([, v]) => v.inside > 0.3).map(([k, v]) => `${k} (${(v.inside * 100).toFixed(0)}% inside ${v.in[0]!.replace(/ \d+%$/, '')})`).join(', ') || 'none above 30%'}. The male sigmoid colon was not reshaped around the left ovary and tube.`,
     'Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels, pelvic floor differences. Male-only parts were removed, including the testicular vessels.',
     'Her scanned organs (kidneys, spleen, pancreas, bladder, some trunk muscles) are in supine post-mortem position and do not always meet the warped vessels and ducts that should connect to them.',
     'Nerve tubes have schematic radii; a fifth of their length was moved out of bone or muscle bellies by an automatic clean-up.',

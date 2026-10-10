@@ -8,6 +8,8 @@
 //               which the BodyParts3D tree does not link C to
 //   (innervates: Wikidata P3190 on the nerve item goes through the same four routes; see also
 //    mirrorInnervation at the end of this file)
+//   whole       (also: C is a named body/fundus/wall/part/zone of an organ that is not itself in
+//               the dataset; then only arterial supply, venous drainage and innervation pass)
 //   whole       C is a named head/part/belly of muscle M ("long head of biceps brachii") and the
 //               statement is on M. Origin and insertion are then whole-muscle statements and may
 //               not hold for every head.
@@ -33,6 +35,9 @@ const MUSCLE_ONLY: RelationKind[] = ['origin', 'insertion', 'antagonist']
 const VIA_RANK: Record<Via, number> = { direct: 0, 'is-a': 1, laterality: 2, whole: 3, wikipedia: 4 }
 /** is-a ancestors with more BodyParts3D descendants than this do not propagate. */
 export const MAX_ISA_FANOUT = 100
+const ORGAN_PART = /^(?:.+ )?(?:body|fundus|wall|part|zone|segment|region|lobe) of (.+)$/
+/** Only these kinds pass from an organ to its named parts (lymphatic drainage differs by region). */
+const ORGAN_KINDS: RelationKind[] = ['arterialSupply', 'venousDrainage', 'innervatedBy']
 const PART_OF_WHOLE = /^(?:.+ )?(?:head|part|belly) of (.+)$/
 
 interface Stmt {
@@ -89,6 +94,14 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
     if (side) for (const parent of m.unsidedOf(c.fma)) if (!sidedChild.has(`${side}|${parent}`)) sidedChild.set(`${side}|${parent}`, c.fma)
   }
 
+  // dataset concepts by their exact (unique) English name, for objects whose Wikidata FMA id is
+  // a different class than the one the dataset uses for the same-named structure
+  const conceptByName = new Map<string, string | null>()
+  for (const c of m.concepts.values()) {
+    const k = c.en.toLowerCase().replace(/ muscle$/, '')
+    conceptByName.set(k, conceptByName.has(k) ? null : c.fma)
+  }
+
   const fanout = new Map<string, number>()
   const descendantCount = (fma: string) => {
     let n = fanout.get(fma)
@@ -132,11 +145,23 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
         add('whole', f)
       }
     }
+    // Named part of an organ that is not itself a concept of the dataset ("fundus of uterus" when
+    // there is no "uterus"): the organ's supply and innervation statements would otherwise be lost.
+    const organWholes = new Set<string>()
+    const organ = isPartOfMuscle ? undefined : ORGAN_PART.exec(bare)?.[1]
+    if (organ) {
+      for (const f of m.fmaByName.get(organ) ?? []) {
+        if (m.concepts.has(f) || conceptByName.has(organ) || m.muscleLike.has(f) || wikidataMuscles.has(f) || seen.has(f)) continue
+        organWholes.add(f)
+        add('whole', f)
+      }
+    }
     const muscle = m.muscleLike.has(c.fma) || isPartOfMuscle
 
     const picked = new Map<string, BuiltRelation>()
     for (const src of sources) {
       for (const s of byFma.get(src.fma) ?? []) {
+        if (organWholes.has(src.fma) && !ORGAN_KINDS.includes(s.kind)) continue
         if (MUSCLE_ONLY.includes(s.kind) && !muscle) {
           dropped.nonMuscleSubject++
           if (droppedExamples.length < 12 && src.via === 'direct') droppedExamples.push(`${c.en} —${s.kind}→ ${m.enOf(s.objectQid) ?? s.objectQid}`)
@@ -172,6 +197,14 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
             lateralised = true
           }
         }
+        let byName = false
+        if (en && !(object && m.concepts.has(object))) {
+          const hit = conceptByName.get(en.toLowerCase().replace(/ muscle$/, ''))
+          if (hit && hit !== c.fma) {
+            object = hit
+            byName = true
+          }
+        }
         if (!en) {
           dropped.noObjectLabel++
           continue
@@ -186,6 +219,7 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
           src.via === 'direct' ? 'Wikidata'
           : src.via === 'is-a' ? `Wikidata (propagated via BodyParts3D is-a from ${from})`
           : src.via === 'laterality' ? `Wikidata (propagated by laterality ${bySubclass.has(src.fma) ? 'via Wikidata subclass-of' : 'name match'} from ${from})`
+          : organWholes.has(src.fma) ? `Wikidata (propagated from whole organ ${from}, not itself in the dataset, to its named part)`
           : s.kind === 'origin' || s.kind === 'insertion'
             ? `Wikidata (propagated from whole muscle ${from} to its named part; whole-muscle ${s.kind}, may not apply to this part)`
             : `Wikidata (propagated from whole muscle ${from} to its named part)`
@@ -196,7 +230,7 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
           ...(object ? { object } : {}),
           objectLabel: { en, ...(zh ? { zh } : {}) },
           source: {
-            name: lateralised ? `${sourced}; object lateralised to the subject's side` : sourced,
+            name: `${sourced}${lateralised ? "; object lateralised to the subject's side" : ''}${byName ? '; object matched to the dataset concept of the same name' : ''}`,
             url: `https://www.wikidata.org/wiki/${s.subjectQid}#${s.prop}`,
             license: 'CC0 1.0',
           },

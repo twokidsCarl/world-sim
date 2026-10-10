@@ -1,0 +1,2038 @@
+{
+ "pose": {
+  "left": {
+   "femurDeg": 5.7,
+   "tibiaDeg": 12.3,
+   "footDeg": 42,
+   "fitRmsMm": [
+    4.7,
+    5.2,
+    3.1
+   ]
+  },
+  "right": {
+   "femurDeg": 14.3,
+   "tibiaDeg": 23.6,
+   "footDeg": 40.9,
+   "fitRmsMm": [
+    4.6,
+    3.8,
+    2.9
+   ]
+  },
+  "rightForearm": {
+   "method": "left radius, ulna and hand mirrored and attached by fitting the mirrored left humerus to the right humerus",
+   "humerusFitRmsMm": 1.55,
+   "rotationDeg": 6
+  },
+  "verticalShiftM": -0.14334
+ },
+ "registration": {
+  "anchors": 93,
+  "hard": 84,
+  "soft": 9,
+  "byRegion": [
+   {
+    "region": "head",
+    "n": 2,
+    "fitP95": "5.5 / 5.5 / 9.8",
+    "scale": "0.94 / 0.94 / 1.04",
+    "residual": "1.7 / 1.7 / 2.4",
+    "leaveOut": "6.2 / 6.2 / 6.9"
+   },
+   {
+    "region": "neck",
+    "n": 10,
+    "fitP95": "4.7 / 6.0 / 7.6",
+    "scale": "0.98 / 1.05 / 1.21",
+    "residual": "1.7 / 2.4 / 3.2",
+    "leaveOut": "2.9 / 4.9 / 5.3"
+   },
+   {
+    "region": "thorax",
+    "n": 40,
+    "fitP95": "6.9 / 23.4 / 52.5",
+    "scale": "0.90 / 1.00 / 1.03",
+    "residual": "3.3 / 4.5 / 5.1",
+    "leaveOut": "14.2 / 21.3 / 26.9"
+   },
+   {
+    "region": "abdomen",
+    "n": 5,
+    "fitP95": "5.0 / 5.2 / 6.0",
+    "scale": "1.04 / 1.04 / 1.07",
+    "residual": "2.0 / 2.0 / 4.8",
+    "leaveOut": "4.2 / 4.7 / 15.2"
+   },
+   {
+    "region": "pelvis",
+    "n": 3,
+    "fitP95": "7.8 / 7.8 / 9.3",
+    "scale": "1.00 / 1.00 / 1.04",
+    "residual": "2.4 / 2.4 / 3.2",
+    "leaveOut": "19.3 / 19.3 / 20.5"
+   },
+   {
+    "region": "arm",
+    "n": 6,
+    "fitP95": "6.2 / 6.8 / 7.8",
+    "scale": "0.94 / 0.95 / 0.97",
+    "residual": "2.1 / 2.6 / 2.6",
+    "leaveOut": "11.9 / 15.9 / 17.8"
+   },
+   {
+    "region": "hand",
+    "n": 4,
+    "fitP95": "6.7 / 6.9 / 7.1",
+    "scale": "0.96 / 1.15 / 1.16",
+    "residual": "2.1 / 3.2 / 3.5",
+    "leaveOut": "6.3 / 19.3 / 20.3"
+   },
+   {
+    "region": "leg",
+    "n": 8,
+    "fitP95": "5.9 / 9.6 / 9.7",
+    "scale": "0.92 / 1.24 / 1.25",
+    "residual": "2.2 / 6.1 / 6.2",
+    "leaveOut": "10.7 / 28.7 / 29.7"
+   },
+   {
+    "region": "foot",
+    "n": 6,
+    "fitP95": "6.8 / 9.9 / 10.0",
+    "scale": "0.96 / 1.09 / 1.09",
+    "residual": "2.3 / 2.9 / 3.0",
+    "leaveOut": "10.7 / 11.1 / 11.5"
+   },
+   {
+    "region": "all",
+    "n": 84,
+    "fitP95": "6.2 / 12.5 / 52.5",
+    "scale": "0.94 / 1.04 / 1.25",
+    "residual": "2.8 / 4.3 / 6.2",
+    "leaveOut": "11.9 / 20.5 / 29.7"
+   }
+  ],
+  "suspectRibs": [
+   {
+    "id": "VF_rib_left_9",
+    "offMm": 20.5
+   }
+  ],
+  "rejected": [],
+  "perAnchor": [
+   {
+    "id": "VF_vertebrae_C1",
+    "region": "neck",
+    "scale": 1.046,
+    "fitP95Mm": 3.87,
+    "residualMm": 1.58,
+    "leaveOutMm": 4.54
+   },
+   {
+    "id": "VF_vertebrae_C2",
+    "region": "neck",
+    "scale": 1.038,
+    "fitP95Mm": 4.73,
+    "residualMm": 1.8,
+    "leaveOutMm": 2.79
+   },
+   {
+    "id": "VF_vertebrae_C3",
+    "region": "neck",
+    "scale": 0.943,
+    "fitP95Mm": 4.05,
+    "residualMm": 1.65,
+    "leaveOutMm": 2.79
+   },
+   {
+    "id": "VF_vertebrae_C4",
+    "region": "neck",
+    "scale": 1.022,
+    "fitP95Mm": 3.49,
+    "residualMm": 1.68,
+    "leaveOutMm": 2.41
+   },
+   {
+    "id": "VF_vertebrae_C5",
+    "region": "neck",
+    "scale": 1.023,
+    "fitP95Mm": 7.55,
+    "residualMm": 1.71,
+    "leaveOutMm": 2.39
+   },
+   {
+    "id": "VF_vertebrae_C6",
+    "region": "neck",
+    "scale": 0.98,
+    "fitP95Mm": 4.75,
+    "residualMm": 1.86,
+    "leaveOutMm": 2.85
+   },
+   {
+    "id": "VF_vertebrae_C7",
+    "region": "neck",
+    "scale": 0.983,
+    "fitP95Mm": 3.83,
+    "residualMm": 1.7,
+    "leaveOutMm": 2.95
+   },
+   {
+    "id": "VF_vertebrae_T1",
+    "region": "thorax",
+    "scale": 0.995,
+    "fitP95Mm": 3.76,
+    "residualMm": 3.14,
+    "leaveOutMm": 5.22
+   },
+   {
+    "id": "VF_vertebrae_T2",
+    "region": "thorax",
+    "scale": 0.995,
+    "fitP95Mm": 3.38,
+    "residualMm": 3.12,
+    "leaveOutMm": 5.76
+   },
+   {
+    "id": "VF_vertebrae_T3",
+    "region": "thorax",
+    "scale": 0.977,
+    "fitP95Mm": 4.09,
+    "residualMm": 3.73,
+    "leaveOutMm": 8.32
+   },
+   {
+    "id": "VF_vertebrae_T4",
+    "region": "thorax",
+    "scale": 0.983,
+    "fitP95Mm": 3.51,
+    "residualMm": 3.18,
+    "leaveOutMm": 9.02
+   },
+   {
+    "id": "VF_vertebrae_T5",
+    "region": "thorax",
+    "scale": 0.956,
+    "fitP95Mm": 3.44,
+    "residualMm": 3.32,
+    "leaveOutMm": 10.16
+   },
+   {
+    "id": "VF_vertebrae_T6",
+    "region": "thorax",
+    "scale": 0.947,
+    "fitP95Mm": 3.55,
+    "residualMm": 3.53,
+    "leaveOutMm": 10.69
+   },
+   {
+    "id": "VF_vertebrae_T7",
+    "region": "thorax",
+    "scale": 0.906,
+    "fitP95Mm": 3.29,
+    "residualMm": 3.75,
+    "leaveOutMm": 9.6
+   },
+   {
+    "id": "VF_vertebrae_T8",
+    "region": "thorax",
+    "scale": 0.925,
+    "fitP95Mm": 3.9,
+    "residualMm": 2.95,
+    "leaveOutMm": 7.24
+   },
+   {
+    "id": "VF_vertebrae_T9",
+    "region": "thorax",
+    "scale": 0.894,
+    "fitP95Mm": 3.61,
+    "residualMm": 2.38,
+    "leaveOutMm": 5.86
+   },
+   {
+    "id": "VF_vertebrae_T10",
+    "region": "thorax",
+    "scale": 0.918,
+    "fitP95Mm": 4.08,
+    "residualMm": 2.57,
+    "leaveOutMm": 5.53
+   },
+   {
+    "id": "VF_vertebrae_T11",
+    "region": "thorax",
+    "scale": 0.912,
+    "fitP95Mm": 5.31,
+    "residualMm": 2.21,
+    "leaveOutMm": 3.67
+   },
+   {
+    "id": "VF_vertebrae_T12",
+    "region": "thorax",
+    "scale": 0.938,
+    "fitP95Mm": 5.6,
+    "residualMm": 4.71,
+    "leaveOutMm": 17.61
+   },
+   {
+    "id": "VF_vertebrae_L2",
+    "region": "abdomen",
+    "scale": 1.011,
+    "fitP95Mm": 5.98,
+    "residualMm": 4.76,
+    "leaveOutMm": 15.17
+   },
+   {
+    "id": "VF_vertebrae_L3",
+    "region": "abdomen",
+    "scale": 1.074,
+    "fitP95Mm": 4.25,
+    "residualMm": 1.84,
+    "leaveOutMm": 3.88
+   },
+   {
+    "id": "VF_vertebrae_L4",
+    "region": "abdomen",
+    "scale": 1.04,
+    "fitP95Mm": 5.17,
+    "residualMm": 2.04,
+    "leaveOutMm": 4.05
+   },
+   {
+    "id": "VF_vertebrae_L5",
+    "region": "abdomen",
+    "scale": 1.04,
+    "fitP95Mm": 4.99,
+    "residualMm": 2.01,
+    "leaveOutMm": 4.23
+   },
+   {
+    "id": "VF_vertebrae_L6",
+    "region": "abdomen",
+    "scale": 1.027,
+    "fitP95Mm": 4.3,
+    "residualMm": 1.74,
+    "leaveOutMm": 4.71
+   },
+   {
+    "id": "VF_sacrum",
+    "region": "pelvis",
+    "scale": 1.04,
+    "fitP95Mm": 7.29,
+    "residualMm": 3.19,
+    "leaveOutMm": 20.46
+   },
+   {
+    "id": "VF_sternum",
+    "region": "thorax",
+    "scale": 0.797,
+    "fitP95Mm": 7.9,
+    "residualMm": 2.13,
+    "leaveOutMm": 16.16
+   },
+   {
+    "id": "VF_cranium",
+    "region": "head",
+    "scale": 0.939,
+    "fitP95Mm": 9.78,
+    "residualMm": 2.41,
+    "leaveOutMm": 6.17
+   },
+   {
+    "id": "VF_mandible",
+    "region": "head",
+    "scale": 1.041,
+    "fitP95Mm": 5.51,
+    "residualMm": 1.69,
+    "leaveOutMm": 6.9
+   },
+   {
+    "id": "VF_hyoid",
+    "region": "neck",
+    "scale": 0.92,
+    "fitP95Mm": 5.37,
+    "residualMm": 2.03,
+    "leaveOutMm": 5.3
+   },
+   {
+    "id": "VF_thyroid_cartilage",
+    "region": "neck",
+    "scale": 0.961,
+    "fitP95Mm": 4.86,
+    "residualMm": 2.41,
+    "leaveOutMm": 4.86
+   },
+   {
+    "id": "VF_cricoid_cartilage",
+    "region": "neck",
+    "scale": 1.208,
+    "fitP95Mm": 6.03,
+    "residualMm": 3.19,
+    "leaveOutMm": 4.71
+   },
+   {
+    "id": "VF_clavicula_left",
+    "region": "thorax",
+    "scale": 0.868,
+    "fitP95Mm": 8.61,
+    "residualMm": 3.46,
+    "leaveOutMm": 21.97
+   },
+   {
+    "id": "VF_clavicula_right",
+    "region": "thorax",
+    "scale": 0.862,
+    "fitP95Mm": 10.86,
+    "residualMm": 4.07,
+    "leaveOutMm": 21.32
+   },
+   {
+    "id": "VF_scapula_left",
+    "region": "thorax",
+    "scale": 0.893,
+    "fitP95Mm": 8.05,
+    "residualMm": 4.93,
+    "leaveOutMm": 26.94
+   },
+   {
+    "id": "VF_scapula_right",
+    "region": "thorax",
+    "scale": 0.922,
+    "fitP95Mm": 6.91,
+    "residualMm": 3.8,
+    "leaveOutMm": 22.96
+   },
+   {
+    "id": "VF_humerus_left",
+    "region": "arm",
+    "scale": 0.946,
+    "fitP95Mm": 6.2,
+    "residualMm": 1.81,
+    "leaveOutMm": 17.81
+   },
+   {
+    "id": "VF_humerus_right",
+    "region": "arm",
+    "scale": 0.941,
+    "fitP95Mm": 7.85,
+    "residualMm": 1.97,
+    "leaveOutMm": 15.88
+   },
+   {
+    "id": "VF_hip_left",
+    "region": "pelvis",
+    "scale": 1.002,
+    "fitP95Mm": 7.78,
+    "residualMm": 2.11,
+    "leaveOutMm": 17.83
+   },
+   {
+    "id": "VF_hip_right",
+    "region": "pelvis",
+    "scale": 0.989,
+    "fitP95Mm": 9.35,
+    "residualMm": 2.38,
+    "leaveOutMm": 19.31
+   },
+   {
+    "id": "VF_femur_left",
+    "region": "leg",
+    "scale": 0.907,
+    "fitP95Mm": 9.73,
+    "residualMm": 2.18,
+    "leaveOutMm": 15.47
+   },
+   {
+    "id": "VF_femur_right",
+    "region": "leg",
+    "scale": 0.921,
+    "fitP95Mm": 9.01,
+    "residualMm": 2.14,
+    "leaveOutMm": 16.33
+   },
+   {
+    "id": "VF_patella_left",
+    "region": "leg",
+    "scale": 1.242,
+    "fitP95Mm": 3.07,
+    "residualMm": 6.06,
+    "leaveOutMm": 28.74
+   },
+   {
+    "id": "VF_patella_right",
+    "region": "leg",
+    "scale": 1.246,
+    "fitP95Mm": 3.6,
+    "residualMm": 6.21,
+    "leaveOutMm": 29.75
+   },
+   {
+    "id": "VF_tibia_left",
+    "region": "leg",
+    "scale": 0.897,
+    "fitP95Mm": 9.62,
+    "residualMm": 2.17,
+    "leaveOutMm": 9.98
+   },
+   {
+    "id": "VF_tibia_right",
+    "region": "leg",
+    "scale": 0.911,
+    "fitP95Mm": 9.29,
+    "residualMm": 2.16,
+    "leaveOutMm": 9.71
+   },
+   {
+    "id": "VF_fibula_left",
+    "region": "leg",
+    "scale": 0.919,
+    "fitP95Mm": 5.91,
+    "residualMm": 1.74,
+    "leaveOutMm": 10.23
+   },
+   {
+    "id": "VF_fibula_right",
+    "region": "leg",
+    "scale": 0.931,
+    "fitP95Mm": 5.56,
+    "residualMm": 1.62,
+    "leaveOutMm": 10.73
+   },
+   {
+    "id": "VF_radius_left",
+    "region": "arm",
+    "scale": 0.936,
+    "fitP95Mm": 6.37,
+    "residualMm": 2.11,
+    "leaveOutMm": 8.44
+   },
+   {
+    "id": "VF_radius_right",
+    "region": "arm",
+    "scale": 0.927,
+    "fitP95Mm": 6.8,
+    "residualMm": 2.5,
+    "leaveOutMm": 10.2
+   },
+   {
+    "id": "VF_ulna_left",
+    "region": "arm",
+    "scale": 0.94,
+    "fitP95Mm": 6.03,
+    "residualMm": 2.63,
+    "leaveOutMm": 11.94
+   },
+   {
+    "id": "VF_ulna_right",
+    "region": "arm",
+    "scale": 0.97,
+    "fitP95Mm": 5.89,
+    "residualMm": 2.63,
+    "leaveOutMm": 14.28
+   },
+   {
+    "id": "VF_carpal_left",
+    "region": "hand",
+    "scale": 1.155,
+    "fitP95Mm": 6.72,
+    "residualMm": 3.25,
+    "leaveOutMm": 6.16
+   },
+   {
+    "id": "VF_carpal_right",
+    "region": "hand",
+    "scale": 1.147,
+    "fitP95Mm": 6.87,
+    "residualMm": 3.54,
+    "leaveOutMm": 6.33
+   },
+   {
+    "id": "VF_metacarpal_left",
+    "region": "hand",
+    "scale": 0.949,
+    "fitP95Mm": 6.12,
+    "residualMm": 2.11,
+    "leaveOutMm": 20.3
+   },
+   {
+    "id": "VF_metacarpal_right",
+    "region": "hand",
+    "scale": 0.961,
+    "fitP95Mm": 7.06,
+    "residualMm": 1.98,
+    "leaveOutMm": 19.27
+   },
+   {
+    "id": "VF_tarsal_left",
+    "region": "foot",
+    "scale": 1.088,
+    "fitP95Mm": 9.92,
+    "residualMm": 3.01,
+    "leaveOutMm": 10.73
+   },
+   {
+    "id": "VF_tarsal_right",
+    "region": "foot",
+    "scale": 1.086,
+    "fitP95Mm": 9.97,
+    "residualMm": 2.94,
+    "leaveOutMm": 10.84
+   },
+   {
+    "id": "VF_metatarsal_left",
+    "region": "foot",
+    "scale": 0.964,
+    "fitP95Mm": 5.89,
+    "residualMm": 2.24,
+    "leaveOutMm": 6.49
+   },
+   {
+    "id": "VF_metatarsal_right",
+    "region": "foot",
+    "scale": 0.964,
+    "fitP95Mm": 6.2,
+    "residualMm": 2.14,
+    "leaveOutMm": 6.15
+   },
+   {
+    "id": "VF_toes_left",
+    "region": "foot",
+    "scale": 0.924,
+    "fitP95Mm": 7.14,
+    "residualMm": 2.49,
+    "leaveOutMm": 11.53
+   },
+   {
+    "id": "VF_toes_right",
+    "region": "foot",
+    "scale": 0.902,
+    "fitP95Mm": 6.78,
+    "residualMm": 2.29,
+    "leaveOutMm": 11.14
+   },
+   {
+    "id": "VF_rib_left_1",
+    "region": "thorax",
+    "scale": 0.916,
+    "fitP95Mm": 10.43,
+    "residualMm": 5.11,
+    "leaveOutMm": 22.83
+   },
+   {
+    "id": "VF_rib_right_1",
+    "region": "thorax",
+    "scale": 0.931,
+    "fitP95Mm": 8.71,
+    "residualMm": 4.72,
+    "leaveOutMm": 20.8
+   },
+   {
+    "id": "VF_rib_left_2",
+    "region": "thorax",
+    "scale": 0.9,
+    "fitP95Mm": 6.52,
+    "residualMm": 3.27,
+    "leaveOutMm": 13.51
+   },
+   {
+    "id": "VF_rib_right_2",
+    "region": "thorax",
+    "scale": 0.846,
+    "fitP95Mm": 9.46,
+    "residualMm": 3.07,
+    "leaveOutMm": 14.21
+   },
+   {
+    "id": "VF_rib_left_3",
+    "region": "thorax",
+    "scale": 0.894,
+    "fitP95Mm": 5.65,
+    "residualMm": 3.14,
+    "leaveOutMm": 13.91
+   },
+   {
+    "id": "VF_rib_right_3",
+    "region": "thorax",
+    "scale": 0.884,
+    "fitP95Mm": 4.49,
+    "residualMm": 3.23,
+    "leaveOutMm": 14.16
+   },
+   {
+    "id": "VF_rib_left_4",
+    "region": "thorax",
+    "scale": 0.884,
+    "fitP95Mm": 4.8,
+    "residualMm": 2.91,
+    "leaveOutMm": 14.47
+   },
+   {
+    "id": "VF_rib_right_4",
+    "region": "thorax",
+    "scale": 0.875,
+    "fitP95Mm": 5.04,
+    "residualMm": 2.81,
+    "leaveOutMm": 14.27
+   },
+   {
+    "id": "VF_rib_left_5",
+    "region": "thorax",
+    "scale": 0.899,
+    "fitP95Mm": 23.37,
+    "residualMm": 4.46,
+    "leaveOutMm": 19.76
+   },
+   {
+    "id": "VF_rib_right_5",
+    "region": "thorax",
+    "scale": 0.88,
+    "fitP95Mm": 5.6,
+    "residualMm": 3.36,
+    "leaveOutMm": 13.87
+   },
+   {
+    "id": "VF_rib_left_6",
+    "region": "thorax",
+    "scale": 0.883,
+    "fitP95Mm": 12.6,
+    "residualMm": 4.32,
+    "leaveOutMm": 16.26
+   },
+   {
+    "id": "VF_rib_right_6",
+    "region": "thorax",
+    "scale": 0.835,
+    "fitP95Mm": 5.82,
+    "residualMm": 3.25,
+    "leaveOutMm": 16.35
+   },
+   {
+    "id": "VF_rib_left_7",
+    "region": "thorax",
+    "scale": 0.882,
+    "fitP95Mm": 18.44,
+    "residualMm": 3.57,
+    "leaveOutMm": 14.75
+   },
+   {
+    "id": "VF_rib_right_7",
+    "region": "thorax",
+    "scale": 0.889,
+    "fitP95Mm": 26.72,
+    "residualMm": 4.37,
+    "leaveOutMm": 19.79
+   },
+   {
+    "id": "VF_rib_left_8",
+    "region": "thorax",
+    "scale": 0.79,
+    "fitP95Mm": 52.54,
+    "residualMm": 3.37,
+    "leaveOutMm": 18.69
+   },
+   {
+    "id": "VF_rib_right_8",
+    "region": "thorax",
+    "scale": 0.907,
+    "fitP95Mm": 7.18,
+    "residualMm": 2.65,
+    "leaveOutMm": 16.48
+   },
+   {
+    "id": "VF_rib_right_9",
+    "region": "thorax",
+    "scale": 1.009,
+    "fitP95Mm": 13.72,
+    "residualMm": 3.43,
+    "leaveOutMm": 19.15
+   },
+   {
+    "id": "VF_rib_left_10",
+    "region": "thorax",
+    "scale": 0.982,
+    "fitP95Mm": 11.03,
+    "residualMm": 3.02,
+    "leaveOutMm": 20.95
+   },
+   {
+    "id": "VF_rib_right_10",
+    "region": "thorax",
+    "scale": 1.034,
+    "fitP95Mm": 12.82,
+    "residualMm": 3.67,
+    "leaveOutMm": 15.26
+   },
+   {
+    "id": "VF_rib_left_11",
+    "region": "thorax",
+    "scale": 1.022,
+    "fitP95Mm": 10.7,
+    "residualMm": 2.86,
+    "leaveOutMm": 12.95
+   },
+   {
+    "id": "VF_rib_right_11",
+    "region": "thorax",
+    "scale": 1.029,
+    "fitP95Mm": 12.52,
+    "residualMm": 2.76,
+    "leaveOutMm": 11.9
+   },
+   {
+    "id": "VF_rib_left_12",
+    "region": "thorax",
+    "scale": 0.538,
+    "fitP95Mm": 33.47,
+    "residualMm": 3.38,
+    "leaveOutMm": 12.24
+   },
+   {
+    "id": "VF_rib_right_12",
+    "region": "thorax",
+    "scale": 0.528,
+    "fitP95Mm": 34.59,
+    "residualMm": 3.11,
+    "leaveOutMm": 12.57
+   }
+  ],
+  "sizeOutliers": [
+   "VF_sternum",
+   "VF_cricoid_cartilage",
+   "VF_patella_left",
+   "VF_patella_right",
+   "VF_carpal_left",
+   "VF_rib_right_2",
+   "VF_rib_right_6",
+   "VF_rib_left_8",
+   "VF_rib_left_12",
+   "VF_rib_right_12"
+  ]
+ },
+ "jacobian": {
+  "samples": 40437,
+  "min": -8.198,
+  "p01": 0.171,
+  "median": 0.951,
+  "p99": 2.249,
+  "max": 6.699,
+  "folded": 250,
+  "below02": 447,
+  "above4": 25,
+  "extremeByNearestBone": {
+   "Left tenth rib": 39,
+   "Right first rib": 31,
+   "Left first rib": 28,
+   "Sacrum": 25,
+   "Left ninth rib": 16,
+   "Left scapula": 16,
+   "Right eleventh rib": 15,
+   "Right sixth rib": 14,
+   "Right scapula": 13,
+   "Right tenth rib": 13
+  }
+ },
+ "realSoftPartOffsets": [
+  {
+   "id": "VF_spleen",
+   "name": "Spleen",
+   "offsetMm": 8.9
+  },
+  {
+   "id": "VF_kidney_left",
+   "name": "Left kidney",
+   "offsetMm": 8.6
+  },
+  {
+   "id": "VF_kidney_right",
+   "name": "Right kidney",
+   "offsetMm": 7.2
+  },
+  {
+   "id": "VF_adrenal_gland_left",
+   "name": "Left adrenal gland",
+   "offsetMm": 25.8
+  },
+  {
+   "id": "VF_adrenal_gland_right",
+   "name": "Right adrenal gland",
+   "offsetMm": 15
+  },
+  {
+   "id": "VF_pancreas",
+   "name": "Pancreas",
+   "offsetMm": 4.4
+  },
+  {
+   "id": "VF_gallbladder",
+   "name": "Gallbladder",
+   "offsetMm": 25.3
+  },
+  {
+   "id": "VF_urinary_bladder",
+   "name": "Urinary bladder",
+   "offsetMm": 8.3
+  },
+  {
+   "id": "VF_gluteus_maximus_left",
+   "name": "Left gluteus maximus",
+   "offsetMm": 19.5
+  },
+  {
+   "id": "VF_gluteus_maximus_right",
+   "name": "Right gluteus maximus",
+   "offsetMm": 23.9
+  },
+  {
+   "id": "VF_gluteus_medius_left",
+   "name": "Left gluteus medius",
+   "offsetMm": 17.6
+  },
+  {
+   "id": "VF_gluteus_medius_right",
+   "name": "Right gluteus medius",
+   "offsetMm": 18.2
+  },
+  {
+   "id": "VF_gluteus_minimus_left",
+   "name": "Left gluteus minimus",
+   "offsetMm": 22.8
+  },
+  {
+   "id": "VF_gluteus_minimus_right",
+   "name": "Right gluteus minimus",
+   "offsetMm": 16.6
+  },
+  {
+   "id": "VF_iliacus_left",
+   "name": "Left iliacus",
+   "offsetMm": 13.9
+  },
+  {
+   "id": "VF_iliacus_right",
+   "name": "Right iliacus",
+   "offsetMm": 15.8
+  },
+  {
+   "id": "VF_sternocleidomastoid_left",
+   "name": "Left sternocleidomastoid",
+   "offsetMm": 10.9
+  },
+  {
+   "id": "VF_sternocleidomastoid_right",
+   "name": "Right sternocleidomastoid",
+   "offsetMm": 12.8
+  },
+  {
+   "id": "VF_anterior_scalene_left",
+   "name": "Left scalenus anterior",
+   "offsetMm": 3.8
+  },
+  {
+   "id": "VF_anterior_scalene_right",
+   "name": "Right scalenus anterior",
+   "offsetMm": 2.8
+  },
+  {
+   "id": "VF_middle_scalene_left",
+   "name": "Left scalenus medius",
+   "offsetMm": 4.3
+  },
+  {
+   "id": "VF_middle_scalene_right",
+   "name": "Right scalenus medius",
+   "offsetMm": 5.9
+  }
+ ],
+ "collisions": {
+  "left ovary vs iliac vessels": {
+   "insideBefore": 0,
+   "vessel": null,
+   "movedMm": 0,
+   "insideAfter": 0
+  },
+  "right ovary vs iliac vessels": {
+   "insideBefore": 0,
+   "vessel": null,
+   "movedMm": 0,
+   "insideAfter": 0
+  },
+  "roomMade": {
+   "uterus": 34,
+   "left ovary": 4,
+   "right ovary": 7
+  },
+  "pelvicViscera": [
+   {
+    "name": "Urinary bladder",
+    "before": 0.0542,
+    "after": 0.0542,
+    "movable": false
+   },
+   {
+    "name": "Right internal pudendal vein",
+    "before": 0.0462,
+    "after": 0.057,
+    "movable": true
+   },
+   {
+    "name": "Left internal pudendal vein",
+    "before": 0.0303,
+    "after": 0.0384,
+    "movable": true
+   },
+   {
+    "name": "Right pubococcygeus",
+    "before": 0.0188,
+    "after": 0.0238,
+    "movable": true
+   },
+   {
+    "name": "Right puborectalis",
+    "before": 0.0167,
+    "after": 0.0151,
+    "movable": true
+   },
+   {
+    "name": "Descending colon",
+    "before": 0.0074,
+    "after": 0.0074,
+    "movable": true
+   },
+   {
+    "name": "Rectum",
+    "before": 0.0055,
+    "after": 0.0045,
+    "movable": true
+   }
+  ],
+  "hraInsideOthers": {
+   "Abdominal ostium of uterine tube": {
+    "inside": 0.4,
+    "in": [
+     "Descending colon 40%"
+    ]
+   },
+   "Ampulla of left uterine tube": {
+    "inside": 0.994,
+    "in": [
+     "Descending colon 99%"
+    ]
+   },
+   "Anterior wall of uterus": {
+    "inside": 0.178,
+    "in": [
+     "Descending colon 18%"
+    ]
+   },
+   "Body of uterus": {
+    "inside": 0.125,
+    "in": [
+     "Descending colon 12%"
+    ]
+   },
+   "Cervicovaginal junction": {
+    "inside": 0.082,
+    "in": [
+     "Urinary bladder 8%"
+    ]
+   },
+   "Cornua": {
+    "inside": 0.495,
+    "in": [
+     "Descending colon 50%"
+    ]
+   },
+   "Fimbria of left uterine tube": {
+    "inside": 1,
+    "in": [
+     "Descending colon 100%"
+    ]
+   },
+   "Fundus of uterus": {
+    "inside": 0.143,
+    "in": [
+     "Descending colon 14%"
+    ]
+   },
+   "Isthmus of left uterine tube": {
+    "inside": 1,
+    "in": [
+     "Descending colon 100%"
+    ]
+   },
+   "Left ovary": {
+    "inside": 1,
+    "in": [
+     "Descending colon 100%"
+    ]
+   },
+   "Posterior wall of uterus": {
+    "inside": 0.071,
+    "in": [
+     "Descending colon 7%"
+    ]
+   },
+   "Infundibulum of left uterine tube": {
+    "inside": 0.92,
+    "in": [
+     "Descending colon 92%"
+    ]
+   },
+   "Vagina": {
+    "inside": 0.086,
+    "in": [
+     "Urinary bladder 7%",
+     "Right pubococcygeus 1%",
+     "Right puborectalis 0%"
+    ]
+   }
+  }
+ },
+ "adjacency": {
+  "pairs": 27292,
+  "degree": {
+   "median": 13,
+   "p90": 33,
+   "p99": 77,
+   "max": 197
+  },
+  "envelopes": [
+   "Skin"
+  ]
+ },
+ "trees": {
+  "isa": {
+   "concepts": 4413,
+   "parts": 3213
+  },
+  "partOf": {
+   "concepts": 1489,
+   "parts": 1384
+  },
+  "hraIsaPlacement": {
+   "FMA is-a chain": 42,
+   "by hand": 16
+  }
+ },
+ "landmarks": [
+  {
+   "id": "median-wrist",
+   "side": "L",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "12.1 mm palmar of the distal radius centre (1.0 mm from its surface); 5.3 mm from the flexor retinaculum, 4.3 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 12.062871976709456,
+    "toRadius": 0.9839062730189647,
+    "toRetinaculum": 5.327009768493322,
+    "deepToRetinaculum": 4.318072621414756
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "L",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 6.4 mm from the epicondyle tip, 5.5 mm posterior to it",
+   "values": {
+    "toEpicondyle": 6.437021465740122,
+    "posterior": 5.517121404409409
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "L",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.2 mm, there 25.1 mm below the muscle's centroid (5.5 mm from its lower border); behind the muscle the nerve stays -0.2 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.23049010999356342,
+    "belowCentroid": 25.086654589907997,
+    "fromLowerBorder": 5.45579195022583
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "L",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 19.5 mm posterior to the shaft axis, ≤ 51.1 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.50…0.62",
+   "values": {
+    "posteriorMin": 19.507922594709694,
+    "fromShaftMax": 51.07946834918288,
+    "betweenMin": 0.4971539863457108,
+    "betweenMax": 0.6201913923562652
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "L",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 16.8 mm posterior to the shaft axis, 5.3 mm from the bone; 27.4 mm medial of the axis proximally, 5.0 mm lateral distally",
+   "values": {
+    "posterior": 16.76349130599466,
+    "toBone": 5.250590239723466,
+    "medialProximal": 27.435435030771337,
+    "lateralDistal": 4.9801061395555735
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "L",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.4 mm from the fibula 1–5 cm below its tip, 8.1 mm lateral and 15.0 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 4.448369949565891,
+    "lateral": 8.118544736310767,
+    "posterior": 15.015260340983085
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "L",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "21.2 mm lateral of the artery (21.6 mm apart), 16.7 mm from the ligament; artery 0.1 mm from the ligament",
+   "values": {
+    "lateral": 21.15222066640854,
+    "separation": 21.62655036185075,
+    "toLigament": 16.68011054802881
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "L",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.78 between medius (0) and anterior (1), 2.2 / 2.2 mm from them; C6: 0.32 between medius (0) and anterior (1), 0.4 / 1.2 mm from them; C7: 0.80 between medius (0) and anterior (1), 4.0 / 4.0 mm from them; C8: 0.36 between medius (0) and anterior (1), 6.8 / 6.6 mm from them; T1: 0.41 between medius (0) and anterior (1), 9.9 / 9.2 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 9.922280149879253
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "L",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 1.0 mm from rib 1 (median), 100% nearer it than rib 2, 71% below its nearest rib point; 2: 1.8 mm from rib 2 (median), 94% nearer it than rib 3, 96% below its nearest rib point; 3: 1.4 mm from rib 3 (median), 100% nearer it than rib 4, 97% below its nearest rib point; 4: 2.4 mm from rib 4 (median), 96% nearer it than rib 5, 93% below its nearest rib point; 5: 2.6 mm from rib 5 (median), 95% nearer it than rib 6, 78% below its nearest rib point; 6: 0.9 mm from rib 6 (median), 84% nearer it than rib 7, 78% below its nearest rib point; 7: 2.6 mm from rib 7 (median), 81% nearer it than rib 8, 93% below its nearest rib point; 8: 2.0 mm from rib 8 (median), 88% nearer it than rib 9, 85% below its nearest rib point; 9: 16.3 mm from rib 9 (median), 40% nearer it than rib 10, 100% below its nearest rib point; 10: 2.5 mm from rib 10 (median), 93% nearer it than rib 11, 100% below its nearest rib point; 11: 1.8 mm from rib 11 (median), 100% nearer it than rib 12, 77% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 10,
+    "worstMedianDistance": 16.26976913348955,
+    "meanBelow": 0.8788047827121207
+   }
+  },
+  {
+   "id": "median-wrist",
+   "side": "R",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "11.4 mm palmar of the distal radius centre (0.4 mm from its surface); 5.9 mm from the flexor retinaculum, 4.6 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 11.383205500490172,
+    "toRadius": 0.4077713988963204,
+    "toRetinaculum": 5.88619266217307,
+    "deepToRetinaculum": 4.57807342879855
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "R",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 9.4 mm from the epicondyle tip, 5.2 mm posterior to it",
+   "values": {
+    "toEpicondyle": 9.39149019397852,
+    "posterior": 5.158655345439911
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "R",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.3 mm, there 15.9 mm below the muscle's centroid (8.7 mm from its lower border); behind the muscle the nerve stays 0.6 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.31125784302124737,
+    "belowCentroid": 15.910949152294961,
+    "fromLowerBorder": 8.701205253601074
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "R",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 19.6 mm posterior to the shaft axis, ≤ 52.6 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.46…0.56",
+   "values": {
+    "posteriorMin": 19.602780230343342,
+    "fromShaftMax": 52.569412832516726,
+    "betweenMin": 0.46482338858554234,
+    "betweenMax": 0.5563130428074247
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "R",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 15.7 mm posterior to the shaft axis, 5.0 mm from the bone; 22.4 mm medial of the axis proximally, 8.5 mm lateral distally",
+   "values": {
+    "posterior": 15.720635079420529,
+    "toBone": 5.00382916302567,
+    "medialProximal": 22.434277264205548,
+    "lateralDistal": 8.47221009953078
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "R",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "3.9 mm from the fibula 1–5 cm below its tip, 8.5 mm lateral and 13.6 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 3.905541493248773,
+    "lateral": 8.48250808732523,
+    "posterior": 13.629914752343069
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "R",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "25.9 mm lateral of the artery (26.4 mm apart), 18.4 mm from the ligament; artery 1.6 mm from the ligament",
+   "values": {
+    "lateral": 25.917897267001013,
+    "separation": 26.366073542650767,
+    "toLigament": 18.436162377413012
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "R",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.56 between medius (0) and anterior (1), 1.9 / 2.1 mm from them; C6: 0.56 between medius (0) and anterior (1), 2.0 / 1.4 mm from them; C7: 0.53 between medius (0) and anterior (1), 5.2 / 5.4 mm from them; C8: 0.34 between medius (0) and anterior (1), 7.5 / 7.1 mm from them",
+   "values": {
+    "rootsBetween": 4,
+    "rootsEvaluated": 4,
+    "worstDistance": 7.501185732057375
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "R",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.9 mm from rib 1 (median), 94% nearer it than rib 2, 59% below its nearest rib point; 2: 1.1 mm from rib 2 (median), 95% nearer it than rib 3, 86% below its nearest rib point; 3: 1.4 mm from rib 3 (median), 100% nearer it than rib 4, 99% below its nearest rib point; 4: 2.0 mm from rib 4 (median), 96% nearer it than rib 5, 93% below its nearest rib point; 5: 2.2 mm from rib 5 (median), 100% nearer it than rib 6, 100% below its nearest rib point; 6: 1.0 mm from rib 6 (median), 86% nearer it than rib 7, 93% below its nearest rib point; 7: 2.8 mm from rib 7 (median), 81% nearer it than rib 8, 96% below its nearest rib point; 8: 2.6 mm from rib 8 (median), 95% nearer it than rib 9, 100% below its nearest rib point; 9: 1.8 mm from rib 9 (median), 90% nearer it than rib 10, 96% below its nearest rib point; 10: 2.6 mm from rib 10 (median), 91% nearer it than rib 11, 99% below its nearest rib point; 11: 1.8 mm from rib 11 (median), 100% nearer it than rib 12, 78% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 2.8099050520761937,
+    "meanBelow": 0.9084575012209871
+   }
+  }
+ ],
+ "attachments": [
+  {
+   "muscle": "Long head of left biceps femoris",
+   "end": "top",
+   "bone": "Left hip bone",
+   "maleMm": 1.1,
+   "femaleMm": 0.7,
+   "ok": true
+  },
+  {
+   "muscle": "Long head of left biceps femoris",
+   "end": "bottom",
+   "bone": "Left fibula",
+   "maleMm": 1.9,
+   "femaleMm": 0.9,
+   "ok": true
+  },
+  {
+   "muscle": "Left rectus femoris",
+   "end": "top",
+   "bone": "Left hip bone",
+   "maleMm": 5.5,
+   "femaleMm": 1.4,
+   "ok": true
+  },
+  {
+   "muscle": "Left rectus femoris",
+   "end": "bottom",
+   "bone": "Left patella",
+   "maleMm": 41.6,
+   "femaleMm": 53.5,
+   "ok": false
+  },
+  {
+   "muscle": "Acromial part of left deltoid",
+   "end": "top",
+   "bone": "Left scapula",
+   "maleMm": 2.2,
+   "femaleMm": 7.3,
+   "ok": false
+  },
+  {
+   "muscle": "Acromial part of left deltoid",
+   "end": "bottom",
+   "bone": "Left humerus",
+   "maleMm": 1.3,
+   "femaleMm": 0.7,
+   "ok": true
+  },
+  {
+   "muscle": "Medial head of left gastrocnemius",
+   "end": "top",
+   "bone": "Left femur",
+   "maleMm": 3.4,
+   "femaleMm": 1,
+   "ok": true
+  },
+  {
+   "muscle": "Left calcaneal tendon",
+   "end": "bottom",
+   "bone": "Left calcaneus",
+   "maleMm": 1.1,
+   "femaleMm": 1.2,
+   "ok": true
+  },
+  {
+   "muscle": "Left sartorius",
+   "end": "top",
+   "bone": "Left hip bone",
+   "maleMm": 1.5,
+   "femaleMm": 0.8,
+   "ok": true
+  },
+  {
+   "muscle": "Left sartorius",
+   "end": "bottom",
+   "bone": "Left tibia",
+   "maleMm": 10,
+   "femaleMm": 10.2,
+   "ok": true
+  },
+  {
+   "muscle": "Left semimembranosus",
+   "end": "top",
+   "bone": "Left hip bone",
+   "maleMm": 2.3,
+   "femaleMm": 1,
+   "ok": true
+  },
+  {
+   "muscle": "Left semimembranosus",
+   "end": "bottom",
+   "bone": "Left tibia",
+   "maleMm": 1.7,
+   "femaleMm": 1,
+   "ok": true
+  },
+  {
+   "muscle": "Long head of left triceps brachii",
+   "end": "top",
+   "bone": "Left scapula",
+   "maleMm": 1.1,
+   "femaleMm": 3.6,
+   "ok": true
+  },
+  {
+   "muscle": "Left brachioradialis",
+   "end": "bottom",
+   "bone": "Left radius",
+   "maleMm": 1.3,
+   "femaleMm": 3.7,
+   "ok": true
+  },
+  {
+   "muscle": "Long head of right biceps femoris",
+   "end": "top",
+   "bone": "Right hip bone",
+   "maleMm": 1.2,
+   "femaleMm": 0.9,
+   "ok": true
+  },
+  {
+   "muscle": "Long head of right biceps femoris",
+   "end": "bottom",
+   "bone": "Right fibula",
+   "maleMm": 1.4,
+   "femaleMm": 0.7,
+   "ok": true
+  },
+  {
+   "muscle": "Right rectus femoris",
+   "end": "top",
+   "bone": "Right hip bone",
+   "maleMm": 5.3,
+   "femaleMm": 1.2,
+   "ok": true
+  },
+  {
+   "muscle": "Right rectus femoris",
+   "end": "bottom",
+   "bone": "Right patella",
+   "maleMm": 35,
+   "femaleMm": 47.8,
+   "ok": false
+  },
+  {
+   "muscle": "Acromial part of right deltoid",
+   "end": "top",
+   "bone": "Right scapula",
+   "maleMm": 1.7,
+   "femaleMm": 3.6,
+   "ok": true
+  },
+  {
+   "muscle": "Acromial part of right deltoid",
+   "end": "bottom",
+   "bone": "Right humerus",
+   "maleMm": 1.3,
+   "femaleMm": 0.8,
+   "ok": true
+  },
+  {
+   "muscle": "Medial head of right gastrocnemius",
+   "end": "top",
+   "bone": "Right femur",
+   "maleMm": 3.3,
+   "femaleMm": 0.8,
+   "ok": true
+  },
+  {
+   "muscle": "Right calcaneal tendon",
+   "end": "bottom",
+   "bone": "Right calcaneus",
+   "maleMm": 1.2,
+   "femaleMm": 1.4,
+   "ok": true
+  },
+  {
+   "muscle": "Right sartorius",
+   "end": "top",
+   "bone": "Right hip bone",
+   "maleMm": 1.6,
+   "femaleMm": 2.6,
+   "ok": true
+  },
+  {
+   "muscle": "Right sartorius",
+   "end": "bottom",
+   "bone": "Right tibia",
+   "maleMm": 9.4,
+   "femaleMm": 10.1,
+   "ok": true
+  },
+  {
+   "muscle": "Right semimembranosus",
+   "end": "top",
+   "bone": "Right hip bone",
+   "maleMm": 1.7,
+   "femaleMm": 0.7,
+   "ok": true
+  },
+  {
+   "muscle": "Right semimembranosus",
+   "end": "bottom",
+   "bone": "Right tibia",
+   "maleMm": 1.7,
+   "femaleMm": 1.1,
+   "ok": true
+  },
+  {
+   "muscle": "Long head of right triceps brachii",
+   "end": "top",
+   "bone": "Right scapula",
+   "maleMm": 1.2,
+   "femaleMm": 0.9,
+   "ok": true
+  },
+  {
+   "muscle": "Right brachioradialis",
+   "end": "bottom",
+   "bone": "Right radius",
+   "maleMm": 0.9,
+   "femaleMm": 3,
+   "ok": true
+  }
+ ],
+ "sexChecks": {
+  "uterusBetweenBladderAndRectum": {
+   "pass": true,
+   "zMm": {
+    "bladder": 98.9,
+    "uterus": 92.9,
+    "rectum": 26.3
+   },
+   "bladderIs": "scanned",
+   "rectumIs": "warped"
+  },
+  "leftOvaryInPelvis": {
+   "pass": true,
+   "centroidMm": [
+    50.3,
+    786.4,
+    97.1
+   ]
+  },
+  "rightOvaryInPelvis": {
+   "pass": true,
+   "centroidMm": [
+    -58.6,
+    786,
+    96.5
+   ]
+  },
+  "leftBreastAnteriorToPectoralis": {
+   "pass": true,
+   "breastCentroidZMm": 179,
+   "pectoralisCentroidZMm": 129.7,
+   "pectoralisFrontZMm": 166.9,
+   "fractionOutsideWarpedSkin": 0.995
+  },
+  "rightBreastAnteriorToPectoralis": {
+   "pass": true,
+   "breastCentroidZMm": 178.4,
+   "pectoralisCentroidZMm": 126.3,
+   "pectoralisFrontZMm": 166.4,
+   "fractionOutsideWarpedSkin": 1
+  },
+  "noMaleOnlyParts": {
+   "pass": true,
+   "found": []
+  },
+  "leftRightPresence": {
+   "pass": true,
+   "unpairedOnlyInFemale": [],
+   "unpairedAlsoInMale": 208
+  }
+ },
+ "interpenetration": {
+  "warpedSoftParts": 2438,
+  "touchingBoneBefore": 687,
+  "meanInsideBefore": 0.0397,
+  "meanInsideAfter": 0.0136,
+  "over10pctBefore": 293,
+  "over10pctAfter": 94,
+  "partsWithVerticesMoved": 680,
+  "worstAfter": [
+   {
+    "name": "Left costoclavicular ligament",
+    "inside": 0.935
+   },
+   {
+    "name": "Right costoclavicular ligament",
+    "inside": 0.917
+   },
+   {
+    "name": "Inferior pubic ligament",
+    "inside": 0.564
+   },
+   {
+    "name": "Left palmar radio-ulnar ligament",
+    "inside": 0.556
+   },
+   {
+    "name": "Left thyroid nodes",
+    "inside": 0.556
+   },
+   {
+    "name": "Right thyroid nodes",
+    "inside": 0.545
+   },
+   {
+    "name": "Left meniscopatellar ligament",
+    "inside": 0.43
+   },
+   {
+    "name": "Right meniscopatellar ligament",
+    "inside": 0.423
+   },
+   {
+    "name": "Right sublingual gland",
+    "inside": 0.397
+   },
+   {
+    "name": "Thoracic rotator",
+    "inside": 0.377
+   }
+  ],
+  "nerves": {
+   "lengthM": 128.07,
+   "inBoneBefore": 0.019,
+   "inBoneAfter": 0.00165,
+   "inCanal": 0.01066,
+   "deepInRealMuscleBefore": 0.02426,
+   "deepInRealMuscleAfter": 0.00964,
+   "pointsMoved": 0.0449
+  }
+ },
+ "scannedBones": {
+  "parts": 70,
+  "maxNonRigidDeviationM": 1.210576058124894e-7
+ },
+ "notes": [
+  "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue (BodyParts3D, Z-Anatomy, Open3DModel) that was deformed to fit it. Only parts marked \"scanned\" are her own anatomy.",
+  "Warped parts (3069) are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, more in the abdomen and pelvis.",
+  "Pose: the donor was scanned supine with flexed elbows and plantar-flexed feet. Each bone was moved rigidly into the male model's standing pose; joint spaces (elbow, knee, ankle, shoulder girdle) are therefore approximate, and the scapulae and clavicles keep their supine position.",
+  "Right forearm and hand bones are mirrored copies of the left ones (the right ones are cut off by the CT field of view). Hands and feet: individual bones are warped male bones fitted to her segmented bone groups; her fingers were curled, the model's are extended.",
+  "She has six lumbar vertebrae. Her first one is shown as \"Supernumerary lumbar vertebra\"; her second to sixth carry the names of the male first to fifth.",
+  "Rib numbering comes from an automatic CT segmentation and is unreliable on the left side (ribs 5–9).",
+  "Skin is the male skin deformed to her skeleton: it is not female body shape, and the breasts (Human Reference Atlas, standing shape) are separate parts that protrude through it.",
+  "Uterus, ovaries, uterine tubes, vagina, pelvic ligaments and uterine vessels are artist-modelled (Human Reference Atlas) and were placed by a bone-driven fit; neighbouring bowel, vessels and nerves are deformed male anatomy pushed aside, not female pelvic anatomy.",
+  "Known overlaps in the pelvis: Abdominal ostium of uterine tube (40% inside Descending colon), Ampulla of left uterine tube (99% inside Descending colon), Cornua (50% inside Descending colon), Fimbria of left uterine tube (100% inside Descending colon), Isthmus of left uterine tube (100% inside Descending colon), Left ovary (100% inside Descending colon), Infundibulum of left uterine tube (92% inside Descending colon). The male sigmoid colon was not reshaped around the left ovary and tube.",
+  "Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels, pelvic floor differences. Male-only parts were removed, including the testicular vessels.",
+  "Her scanned organs (kidneys, spleen, pancreas, bladder, some trunk muscles) are in supine post-mortem position and do not always meet the warped vessels and ducts that should connect to them.",
+  "Nerve tubes have schematic radii; a fifth of their length was moved out of bone or muscle bellies by an automatic clean-up."
+ ],
+ "counts": {
+  "parts": 3213,
+  "byProvenance": {
+   "scanned": 86,
+   "warped": 3069,
+   "curated": 58
+  },
+  "bySource": {
+   "Visible Human Female CT": 96,
+   "BodyParts3D 4.0": 2100,
+   "BodyParts3D 3.0": 79,
+   "Z-Anatomy": 652,
+   "Open3DModel": 228,
+   "Human Reference Atlas": 58
+  },
+  "bySystem": {
+   "cardiovascular": {
+    "scanned": 0,
+    "warped": 1041,
+    "curated": 4
+   },
+   "digestive": {
+    "scanned": 2,
+    "warped": 135,
+    "curated": 0
+   },
+   "endocrine": {
+    "scanned": 2,
+    "warped": 5,
+    "curated": 0
+   },
+   "integumentary": {
+    "scanned": 0,
+    "warped": 9,
+    "curated": 16
+   },
+   "lymphatic": {
+    "scanned": 1,
+    "warped": 128,
+    "curated": 0
+   },
+   "muscular": {
+    "scanned": 6,
+    "warped": 561,
+    "curated": 0
+   },
+   "nervous": {
+    "scanned": 0,
+    "warped": 633,
+    "curated": 0
+   },
+   "reproductive": {
+    "scanned": 0,
+    "warped": 0,
+    "curated": 38
+   },
+   "respiratory": {
+    "scanned": 2,
+    "warped": 130,
+    "curated": 0
+   },
+   "skeletal": {
+    "scanned": 70,
+    "warped": 425,
+    "curated": 0
+   },
+   "urinary": {
+    "scanned": 3,
+    "warped": 2,
+    "curated": 0
+   }
+  },
+  "droppedMaleOnly": [
+   "Deep dorsal vein of penis",
+   "Superficial dorsal vein of penis",
+   "Corpus cavernosum of penis",
+   "Corpus spongiosum of penis",
+   "Glans penis",
+   "Left deferent duct",
+   "Left epididymis",
+   "Left seminal vesicle",
+   "Left testis",
+   "Prostate",
+   "Right deferent duct",
+   "Right epididymis",
+   "Right testis",
+   "Right seminal vesicle",
+   "Urethra",
+   "Left superficial dorsal vein of penis",
+   "Left dorsal artery of penis",
+   "Left dorsal artery of penis",
+   "Left testicular artery",
+   "Left testicular vein",
+   "Right dorsal artery of penis",
+   "Right dorsal artery of penis",
+   "Right testicular artery",
+   "Right testicular vein",
+   "Right superficial dorsal vein of penis"
+  ],
+  "realPartsAvailableButNotUsed": [
+   {
+    "id": "VF_psoas_major_left",
+    "reason": "44.8 mm from the warped male left psoas major, volume ratio 0.55"
+   },
+   {
+    "id": "VF_psoas_major_right",
+    "reason": "43.5 mm from the warped male right psoas major, volume ratio 0.47"
+   },
+   {
+    "id": "VF_rectus_abdominis_left",
+    "reason": "76.2 mm from the warped male left rectus abdominis, volume ratio 0.75"
+   },
+   {
+    "id": "VF_rectus_abdominis_right",
+    "reason": "46.4 mm from the warped male right rectus abdominis, volume ratio 0.44"
+   },
+   {
+    "id": "VF_serratus_anterior_left",
+    "reason": "44.8 mm from the warped male left serratus anterior, volume ratio 1.18"
+   },
+   {
+    "id": "VF_serratus_anterior_right",
+    "reason": "51.7 mm from the warped male right serratus anterior, volume ratio 1.07"
+   },
+   {
+    "id": "VF_internal_oblique_left",
+    "reason": "114.0 mm from the warped male left internal oblique, volume ratio 0.46"
+   },
+   {
+    "id": "VF_internal_oblique_right",
+    "reason": "81.0 mm from the warped male right internal oblique, volume ratio 0.39"
+   },
+   {
+    "id": "VF_quadratus_lumborum_left",
+    "reason": "20.9 mm from the warped male left quadratus lumborum, volume ratio 0.38"
+   },
+   {
+    "id": "VF_quadratus_lumborum_right",
+    "reason": "24.2 mm from the warped male right quadratus lumborum, volume ratio 0.30"
+   },
+   {
+    "id": "VF_levator_scapulae_left",
+    "reason": "18.2 mm from the warped male left levator scapulae, volume ratio 3.17"
+   },
+   {
+    "id": "VF_levator_scapulae_right",
+    "reason": "15.9 mm from the warped male right levator scapulae, volume ratio 2.79"
+   },
+   {
+    "id": "VF_lung_upper_lobe_left",
+    "reason": "quality poor: post-mortem lung: collapsed, fluid-filled, fragmented label"
+   },
+   {
+    "id": "VF_lung_lower_lobe_left",
+    "reason": "quality poor: post-mortem lung: collapsed, fluid-filled, fragmented label"
+   },
+   {
+    "id": "VF_lung_upper_lobe_right",
+    "reason": "quality poor: post-mortem lung: collapsed, fluid-filled, fragmented label"
+   },
+   {
+    "id": "VF_lung_middle_lobe_right",
+    "reason": "quality poor: post-mortem lung: collapsed, fluid-filled, fragmented label"
+   },
+   {
+    "id": "VF_lung_lower_lobe_right",
+    "reason": "quality poor: post-mortem lung: collapsed, fluid-filled, fragmented label"
+   },
+   {
+    "id": "VF_stomach",
+    "reason": "quality usable: hollow viscus in a supine cadaver; hands rest on the abdomen"
+   },
+   {
+    "id": "VF_esophagus",
+    "reason": "quality usable: collapsed lumen, fragmented label"
+   },
+   {
+    "id": "VF_duodenum",
+    "reason": "quality usable: hollow viscus in a supine cadaver; hands rest on the abdomen"
+   },
+   {
+    "id": "VF_trachea",
+    "reason": "quality usable: collapsed lumen, fragmented label"
+   },
+   {
+    "id": "VF_superior_vena_cava",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_brachiocephalic_trunk",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_subclavian_artery_left",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_subclavian_artery_right",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_common_carotid_artery_left",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_common_carotid_artery_right",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_brachiocephalic_vein_left",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_brachiocephalic_vein_right",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_iliac_artery_left",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_iliac_artery_right",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_iliac_vena_left",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_iliac_vena_right",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_internal_jugular_vein_left",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_internal_jugular_vein_right",
+    "reason": "vessel trunks are kept as one warped tree so that branches stay connected"
+   },
+   {
+    "id": "VF_latissimus_dorsi_left",
+    "reason": "quality usable: attaches to the re-posed humerus/scapula; shape is as scanned"
+   },
+   {
+    "id": "VF_latissimus_dorsi_right",
+    "reason": "quality usable: attaches to the re-posed humerus/scapula; shape is as scanned"
+   },
+   {
+    "id": "VF_external_oblique_left",
+    "reason": "quality usable: thin sheet muscle, fragmented label"
+   },
+   {
+    "id": "VF_external_oblique_right",
+    "reason": "quality usable: thin sheet muscle, fragmented label"
+   },
+   {
+    "id": "VF_posterior_scalene_left",
+    "reason": "quality usable: small thin muscle at 1 mm resolution"
+   },
+   {
+    "id": "VF_posterior_scalene_right",
+    "reason": "quality usable: small thin muscle at 1 mm resolution"
+   },
+   {
+    "id": "VF_platysma_left",
+    "reason": "quality usable: small thin muscle at 1 mm resolution"
+   },
+   {
+    "id": "VF_platysma_right",
+    "reason": "quality usable: small thin muscle at 1 mm resolution"
+   },
+   {
+    "id": "VF_sterno_thyroid_left",
+    "reason": "quality usable: small thin muscle at 1 mm resolution"
+   },
+   {
+    "id": "VF_sterno_thyroid_right",
+    "reason": "quality usable: small thin muscle at 1 mm resolution"
+   },
+   {
+    "id": "VF_body_surface",
+    "reason": "supine body surface"
+   }
+  ],
+  "realPartsNotes": {
+   "VF_radius_right": "mirrored left",
+   "VF_ulna_right": "mirrored left",
+   "VF_gluteus_maximus_left": "bent 4.5 mm by re-posing",
+   "VF_gluteus_maximus_right": "bent 9.7 mm by re-posing",
+   "VF_gluteus_medius_left": "bent 3.6 mm by re-posing",
+   "VF_gluteus_medius_right": "bent 7.5 mm by re-posing",
+   "VF_gluteus_minimus_left": "bent 3.1 mm by re-posing",
+   "VF_gluteus_minimus_right": "bent 7.4 mm by re-posing",
+   "VF_iliacus_left": "bent 3.3 mm by re-posing",
+   "VF_iliacus_right": "bent 6.4 mm by re-posing"
+  }
+ },
+ "output": {
+  "parts": 3213,
+  "triangles": 2228007,
+  "glbBytes": {
+   "integumentary.glb": 823172,
+   "muscular.glb": 5171036,
+   "skeletal.glb": 2032296,
+   "cardiovascular.glb": 4848120,
+   "nervous.glb": 3928348,
+   "respiratory.glb": 485036,
+   "digestive.glb": 710228,
+   "urinary.glb": 28724,
+   "reproductive.glb": 192868,
+   "endocrine.glb": 28112,
+   "lymphatic.glb": 570572
+  },
+  "anatomyJsonBytes": 2322117,
+  "nerves": 405,
+  "bounds": [
+   -0.3411,
+   -0.0761,
+   -0.0692,
+   0.3317,
+   1.6037,
+   0.2467
+  ]
+ }
+}

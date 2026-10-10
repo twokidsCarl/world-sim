@@ -63,12 +63,44 @@
  "scope": {
   "note": "Concepts = BodyParts3D 4.0 concept lists ∪ every part FMA id and tree concept of public/anatomy/<body>/anatomy.json.",
   "datasetsRead": [
-   "male"
+   "male",
+   "female"
   ],
   "conceptsFromBodyParts3D40Lists": 3432,
-  "conceptsOnlyInDatasets": 1447,
+  "conceptsOnlyInDatasets": 1540,
+  "idsNamedForOneSideButUsedByBothSides": [
+   {
+    "id": "FMA44885",
+    "name": "right fibular vein"
+   },
+   {
+    "id": "UBERON_0011828",
+    "name": "left areolar tubercle"
+   },
+   {
+    "id": "UBERON_0015134",
+    "name": "left main lactiferous duct"
+   },
+   {
+    "id": "UBERON_0018140",
+    "name": "left mammary lobe"
+   }
+  ],
+  "conceptsLinkedViaUberonId": [
+   "UBERON_0000002",
+   "UBERON_0000996",
+   "UBERON_0009853",
+   "UBERON_0011828",
+   "UBERON_0012332",
+   "UBERON_0013759",
+   "UBERON_0013760",
+   "UBERON_0013772",
+   "UBERON_0013773",
+   "UBERON_0015134"
+  ],
   "partConceptsPerBody": {
-   "male": 2547
+   "male": 2547,
+   "female": 2578
   }
  },
  "elementConcepts": {
@@ -76,7 +108,7 @@
   "fromHeader": 2217,
   "fromFallback": 0,
   "unresolved": 17,
-  "distinctConcepts": 2547
+  "distinctConcepts": 2601
  },
  "propagation": {
   "maxIsaFanout": 100,
@@ -94,27 +126,28 @@
  },
  "coverage": {
   "allConcepts": {
-   "concepts": 4879,
-   "wikidataMatch": "4642/4879 (95.1%)",
-   "zhFromWikidataOwnItem": "515/4879 (10.6%)",
-   "zhAny": "4879/4879 (100.0%)",
-   "la": "1161/4879 (23.8%)",
-   "ja": "1228/4879 (25.2%)",
+   "concepts": 4972,
+   "wikidataMatch": "4729/4972 (95.1%)",
+   "zhFromWikidataOwnItem": "530/4972 (10.7%)",
+   "zhAny": "4972/4972 (100.0%)",
+   "la": "1183/4972 (23.8%)",
+   "ja": "1244/4972 (25.0%)",
    "zhBySource": {
-    "machine-translation": 3122,
-    "wikidata": 336,
-    "wikidata:hant-converted": 178,
-    "lexicon:mainland-over-wikidata": 560,
-    "derived:laterality": 648,
+    "machine-translation": 3169,
+    "wikidata": 347,
+    "wikidata:hant-converted": 179,
+    "lexicon:mainland-over-wikidata": 575,
+    "derived:laterality": 664,
     "machine-translation:override": 34,
-    "wikidata:generic-twin": 1
+    "wikidata:generic-twin": 1,
+    "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 7966,
-    "subjectsWithAnyRelation": "1902/4879 (39.0%)",
-    "objectHasFma": "7536/7966 (94.6%)",
-    "objectInDataset": "4913/7966 (61.7%)",
-    "objectLabelHasZh": "6295/7966 (79.0%)",
+    "total": 8043,
+    "subjectsWithAnyRelation": "1939/4972 (39.0%)",
+    "objectHasFma": "7662/8043 (95.3%)",
+    "objectInDataset": "5007/8043 (62.3%)",
+    "objectLabelHasZh": "6421/8043 (79.8%)",
     "byKind": {
      "origin": {
       "total": 1048,
@@ -138,66 +171,66 @@
       "subjects": 542,
       "objectHasFma": 641,
       "objectInDataset": 298,
-      "objectIsPart": 185
+      "objectIsPart": 188
      },
      "innervatedBy": {
-      "total": 1186,
+      "total": 1184,
       "direct": 268,
       "is-a": 494,
       "laterality": 128,
-      "whole": 281,
+      "whole": 279,
       "wikipedia": 15,
-      "subjects": 677,
-      "objectHasFma": 1115,
-      "objectInDataset": 692,
+      "subjects": 678,
+      "objectHasFma": 1117,
+      "objectInDataset": 693,
       "objectIsPart": 463
      },
      "arterialSupply": {
-      "total": 595,
-      "direct": 160,
-      "is-a": 227,
-      "laterality": 76,
-      "whole": 132,
+      "total": 632,
+      "direct": 166,
+      "is-a": 231,
+      "laterality": 78,
+      "whole": 157,
       "wikipedia": 0,
-      "subjects": 440,
-      "objectHasFma": 588,
-      "objectInDataset": 385,
-      "objectIsPart": 249
+      "subjects": 468,
+      "objectHasFma": 625,
+      "objectInDataset": 406,
+      "objectIsPart": 259
      },
      "venousDrainage": {
-      "total": 407,
-      "direct": 144,
-      "is-a": 192,
-      "laterality": 34,
-      "whole": 37,
+      "total": 439,
+      "direct": 148,
+      "is-a": 194,
+      "laterality": 36,
+      "whole": 61,
       "wikipedia": 0,
-      "subjects": 344,
-      "objectHasFma": 396,
-      "objectInDataset": 298,
-      "objectIsPart": 175
+      "subjects": 374,
+      "objectHasFma": 428,
+      "objectInDataset": 315,
+      "objectIsPart": 178
      },
      "lymphaticDrainage": {
-      "total": 52,
-      "direct": 23,
-      "is-a": 25,
+      "total": 57,
+      "direct": 26,
+      "is-a": 27,
       "laterality": 4,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 50,
-      "objectHasFma": 30,
+      "subjects": 55,
+      "objectHasFma": 31,
       "objectInDataset": 18,
       "objectIsPart": 9
      },
      "connectsWith": {
-      "total": 2647,
-      "direct": 889,
+      "total": 2650,
+      "direct": 892,
       "is-a": 1710,
       "laterality": 36,
       "whole": 12,
       "wikipedia": 0,
-      "subjects": 761,
-      "objectHasFma": 2530,
-      "objectInDataset": 1784,
+      "subjects": 763,
+      "objectHasFma": 2582,
+      "objectInDataset": 1837,
       "objectIsPart": 1152
      },
      "antagonist": {
@@ -213,41 +246,42 @@
       "objectIsPart": 160
      },
      "innervates": {
-      "total": 950,
-      "direct": 279,
+      "total": 952,
+      "direct": 280,
       "is-a": 492,
       "laterality": 22,
-      "whole": 153,
+      "whole": 154,
       "wikipedia": 4,
       "subjects": 244,
-      "objectHasFma": 944,
-      "objectInDataset": 729,
+      "objectHasFma": 946,
+      "objectInDataset": 731,
       "objectIsPart": 491
      }
     }
    }
   },
   "elementConcepts": {
-   "concepts": 2547,
-   "wikidataMatch": "2398/2547 (94.1%)",
-   "zhFromWikidataOwnItem": "107/2547 (4.2%)",
-   "zhAny": "2547/2547 (100.0%)",
-   "la": "287/2547 (11.3%)",
-   "ja": "301/2547 (11.8%)",
+   "concepts": 2601,
+   "wikidataMatch": "2449/2601 (94.2%)",
+   "zhFromWikidataOwnItem": "114/2601 (4.4%)",
+   "zhAny": "2601/2601 (100.0%)",
+   "la": "295/2601 (11.3%)",
+   "ja": "306/2601 (11.8%)",
    "zhBySource": {
-    "machine-translation": 1494,
-    "derived:laterality": 595,
-    "lexicon:mainland-over-wikidata": 342,
-    "wikidata:hant-converted": 39,
-    "wikidata": 68,
-    "machine-translation:override": 9
+    "machine-translation": 1516,
+    "derived:laterality": 611,
+    "lexicon:mainland-over-wikidata": 351,
+    "wikidata:hant-converted": 40,
+    "wikidata": 71,
+    "machine-translation:override": 9,
+    "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 5284,
-    "subjectsWithAnyRelation": "1241/2547 (48.7%)",
-    "objectHasFma": "4980/5284 (94.2%)",
-    "objectInDataset": "3300/5284 (62.5%)",
-    "objectLabelHasZh": "4161/5284 (78.7%)",
+    "total": 5338,
+    "subjectsWithAnyRelation": "1264/2601 (48.6%)",
+    "objectHasFma": "5031/5338 (94.2%)",
+    "objectInDataset": "3332/5338 (62.4%)",
+    "objectLabelHasZh": "4213/5338 (78.9%)",
     "byKind": {
      "origin": {
       "total": 729,
@@ -271,7 +305,7 @@
       "subjects": 395,
       "objectHasFma": 433,
       "objectInDataset": 204,
-      "objectIsPart": 179
+      "objectIsPart": 182
      },
      "innervatedBy": {
       "total": 812,
@@ -286,51 +320,51 @@
       "objectIsPart": 448
      },
      "arterialSupply": {
-      "total": 367,
-      "direct": 36,
-      "is-a": 209,
-      "laterality": 30,
-      "whole": 92,
+      "total": 392,
+      "direct": 40,
+      "is-a": 213,
+      "laterality": 32,
+      "whole": 107,
       "wikipedia": 0,
-      "subjects": 277,
-      "objectHasFma": 363,
-      "objectInDataset": 237,
-      "objectIsPart": 213
+      "subjects": 296,
+      "objectHasFma": 388,
+      "objectInDataset": 253,
+      "objectIsPart": 223
      },
      "venousDrainage": {
-      "total": 250,
-      "direct": 51,
-      "is-a": 171,
-      "laterality": 2,
-      "whole": 26,
+      "total": 272,
+      "direct": 54,
+      "is-a": 173,
+      "laterality": 4,
+      "whole": 41,
       "wikipedia": 0,
-      "subjects": 209,
-      "objectHasFma": 242,
-      "objectInDataset": 187,
-      "objectIsPart": 141
+      "subjects": 229,
+      "objectHasFma": 264,
+      "objectInDataset": 200,
+      "objectIsPart": 144
      },
      "lymphaticDrainage": {
-      "total": 29,
-      "direct": 7,
-      "is-a": 22,
+      "total": 33,
+      "direct": 9,
+      "is-a": 24,
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 27,
-      "objectHasFma": 17,
+      "subjects": 31,
+      "objectHasFma": 18,
       "objectInDataset": 11,
       "objectIsPart": 6
      },
      "connectsWith": {
-      "total": 1730,
-      "direct": 217,
+      "total": 1733,
+      "direct": 220,
       "is-a": 1505,
       "laterality": 0,
       "whole": 8,
       "wikipedia": 0,
-      "subjects": 496,
-      "objectHasFma": 1685,
-      "objectInDataset": 1208,
+      "subjects": 498,
+      "objectHasFma": 1688,
+      "objectInDataset": 1211,
       "objectIsPart": 988
      },
      "antagonist": {
@@ -361,25 +395,26 @@
    }
   },
   "importedPartConcepts": {
-   "concepts": 884,
-   "wikidataMatch": "737/884 (83.4%)",
-   "zhFromWikidataOwnItem": "9/884 (1.0%)",
-   "zhAny": "884/884 (100.0%)",
-   "la": "47/884 (5.3%)",
-   "ja": "22/884 (2.5%)",
+   "concepts": 937,
+   "wikidataMatch": "787/937 (84.0%)",
+   "zhFromWikidataOwnItem": "15/937 (1.6%)",
+   "zhAny": "937/937 (100.0%)",
+   "la": "54/937 (5.8%)",
+   "ja": "26/937 (2.8%)",
    "zhBySource": {
-    "derived:laterality": 148,
-    "lexicon:mainland-over-wikidata": 83,
-    "machine-translation": 644,
-    "wikidata:hant-converted": 4,
-    "wikidata": 5
+    "derived:laterality": 164,
+    "lexicon:mainland-over-wikidata": 92,
+    "machine-translation": 666,
+    "wikidata:hant-converted": 5,
+    "wikidata": 7,
+    "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 1442,
-    "subjectsWithAnyRelation": "374/884 (42.3%)",
-    "objectHasFma": "1349/1442 (93.6%)",
-    "objectInDataset": "890/1442 (61.7%)",
-    "objectLabelHasZh": "1184/1442 (82.1%)",
+    "total": 1478,
+    "subjectsWithAnyRelation": "386/937 (41.2%)",
+    "objectHasFma": "1380/1478 (93.4%)",
+    "objectInDataset": "908/1478 (61.4%)",
+    "objectLabelHasZh": "1217/1478 (82.3%)",
     "byKind": {
      "origin": {
       "total": 85,
@@ -403,7 +438,7 @@
       "subjects": 57,
       "objectHasFma": 26,
       "objectInDataset": 16,
-      "objectIsPart": 10
+      "objectIsPart": 12
      },
      "innervatedBy": {
       "total": 179,
@@ -418,51 +453,51 @@
       "objectIsPart": 94
      },
      "arterialSupply": {
-      "total": 51,
-      "direct": 1,
-      "is-a": 6,
-      "laterality": 28,
-      "whole": 16,
+      "total": 69,
+      "direct": 5,
+      "is-a": 10,
+      "laterality": 30,
+      "whole": 24,
       "wikipedia": 0,
-      "subjects": 39,
-      "objectHasFma": 51,
-      "objectInDataset": 14,
-      "objectIsPart": 14
+      "subjects": 51,
+      "objectHasFma": 69,
+      "objectInDataset": 25,
+      "objectIsPart": 20
      },
      "venousDrainage": {
-      "total": 6,
-      "direct": 0,
-      "is-a": 2,
-      "laterality": 0,
-      "whole": 4,
+      "total": 17,
+      "direct": 3,
+      "is-a": 4,
+      "laterality": 2,
+      "whole": 8,
       "wikipedia": 0,
-      "subjects": 6,
-      "objectHasFma": 6,
-      "objectInDataset": 0,
-      "objectIsPart": 0
+      "subjects": 15,
+      "objectHasFma": 17,
+      "objectInDataset": 6,
+      "objectIsPart": 2
      },
      "lymphaticDrainage": {
-      "total": 12,
-      "direct": 0,
-      "is-a": 12,
+      "total": 16,
+      "direct": 2,
+      "is-a": 14,
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 12,
-      "objectHasFma": 10,
+      "subjects": 16,
+      "objectHasFma": 11,
       "objectInDataset": 6,
       "objectIsPart": 6
      },
      "connectsWith": {
-      "total": 440,
-      "direct": 69,
+      "total": 443,
+      "direct": 72,
       "is-a": 363,
       "laterality": 0,
       "whole": 8,
       "wikipedia": 0,
-      "subjects": 151,
-      "objectHasFma": 425,
-      "objectInDataset": 223,
+      "subjects": 153,
+      "objectHasFma": 426,
+      "objectInDataset": 224,
       "objectIsPart": 167
      },
      "antagonist": {
@@ -493,21 +528,23 @@
    }
   },
   "syntheticIdConcepts": {
-   "concepts": 136,
-   "wikidataMatch": "0/136 (0.0%)",
-   "zhFromWikidataOwnItem": "0/136 (0.0%)",
-   "zhAny": "136/136 (100.0%)",
-   "la": "0/136 (0.0%)",
-   "ja": "0/136 (0.0%)",
+   "concepts": 149,
+   "wikidataMatch": "10/149 (6.7%)",
+   "zhFromWikidataOwnItem": "3/149 (2.0%)",
+   "zhAny": "149/149 (100.0%)",
+   "la": "3/149 (2.0%)",
+   "ja": "3/149 (2.0%)",
    "zhBySource": {
-    "machine-translation": 136
+    "machine-translation": 144,
+    "wikidata:via-uberon-id": 3,
+    "derived:laterality": 2
    },
    "relations": {
-    "total": 0,
-    "subjectsWithAnyRelation": "0/136 (0.0%)",
-    "objectHasFma": "0/0 (0%)",
-    "objectInDataset": "0/0 (0%)",
-    "objectLabelHasZh": "0/0 (0%)",
+    "total": 10,
+    "subjectsWithAnyRelation": "3/149 (2.0%)",
+    "objectHasFma": "7/10 (70.0%)",
+    "objectInDataset": "3/10 (30.0%)",
+    "objectLabelHasZh": "10/10 (100.0%)",
     "byKind": {
      "origin": {
       "total": 0,
@@ -546,49 +583,49 @@
       "objectIsPart": 0
      },
      "arterialSupply": {
-      "total": 0,
-      "direct": 0,
+      "total": 4,
+      "direct": 2,
       "is-a": 0,
       "laterality": 0,
-      "whole": 0,
+      "whole": 2,
       "wikipedia": 0,
-      "subjects": 0,
-      "objectHasFma": 0,
-      "objectInDataset": 0,
+      "subjects": 3,
+      "objectHasFma": 4,
+      "objectInDataset": 2,
       "objectIsPart": 0
      },
      "venousDrainage": {
-      "total": 0,
-      "direct": 0,
+      "total": 2,
+      "direct": 1,
       "is-a": 0,
       "laterality": 0,
-      "whole": 0,
+      "whole": 1,
       "wikipedia": 0,
-      "subjects": 0,
-      "objectHasFma": 0,
-      "objectInDataset": 0,
+      "subjects": 2,
+      "objectHasFma": 2,
+      "objectInDataset": 1,
       "objectIsPart": 0
      },
      "lymphaticDrainage": {
-      "total": 0,
-      "direct": 0,
+      "total": 1,
+      "direct": 1,
       "is-a": 0,
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 0,
-      "objectHasFma": 0,
+      "subjects": 1,
+      "objectHasFma": 1,
       "objectInDataset": 0,
       "objectIsPart": 0
      },
      "connectsWith": {
-      "total": 0,
-      "direct": 0,
+      "total": 3,
+      "direct": 3,
       "is-a": 0,
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 0,
+      "subjects": 2,
       "objectHasFma": 0,
       "objectInDataset": 0,
       "objectIsPart": 0
@@ -624,9 +661,9 @@
  "innervates": {
   "note": "Kind \"innervates\" on nerves. direct = Wikidata P3190 statements on the nerve item (incl. propagated); mirrored = inverse of an innervatedBy relation whose object is a dataset concept.",
   "directFromP3190": 672,
-  "mirrored": 278,
-  "mirroredFromStructureSideStatements": 214,
-  "mirroredViaNamedBranchOfTheNerve": 14,
+  "mirrored": 280,
+  "mirroredFromStructureSideStatements": 215,
+  "mirroredViaNamedBranchOfTheNerve": 15,
   "mirroredFromP3190AfterPropagation": 50,
   "nerveSubjects": 244
  },
@@ -746,8 +783,14 @@
  },
  "zhMainlandOverWikidata": {
   "note": "Mainland wording policy: an exact lexicon term was used instead of the Wikidata label shown here (regional, colloquial or wrong wording). zhSource = lexicon:mainland-over-wikidata. For a reviewer.",
-  "count": 560,
+  "count": 575,
   "items": [
+   {
+    "id": "FMA3724",
+    "en": "anatomical orifice",
+    "wikidata": "身体孔口",
+    "lexicon": "解剖学孔口"
+   },
    {
     "id": "FMA3818",
     "en": "marginal branch of right coronary artery",
@@ -987,6 +1030,12 @@
     "en": "esophagus",
     "wikidata": "食道",
     "lexicon": "食管"
+   },
+   {
+    "id": "FMA7144",
+    "en": "mesentery",
+    "wikidata": "肠系膜",
+    "lexicon": "系膜"
    },
    {
     "id": "FMA7160",
@@ -1395,6 +1444,78 @@
     "en": "left colic vein",
     "wikidata": "结肠左静脉",
     "lexicon": "左结肠静脉"
+   },
+   {
+    "id": "FMA18305",
+    "en": "ampulla of uterine tube",
+    "wikidata": "输卵管壶腹",
+    "lexicon": "输卵管壶腹部"
+   },
+   {
+    "id": "FMA18306",
+    "en": "isthmus of uterine tube",
+    "wikidata": "输卵管峡",
+    "lexicon": "输卵管峡部"
+   },
+   {
+    "id": "FMA18307",
+    "en": "infundibulum of uterine tube",
+    "wikidata": "输卵管漏斗",
+    "lexicon": "输卵管漏斗部"
+   },
+   {
+    "id": "FMA18308",
+    "en": "fimbria of uterine tube",
+    "wikidata": "输卵管伞端",
+    "lexicon": "输卵管伞"
+   },
+   {
+    "id": "FMA18489",
+    "en": "infundibulum of right uterine tube",
+    "wikidata": "右输卵管漏斗",
+    "lexicon": "右输卵管漏斗部"
+   },
+   {
+    "id": "FMA18490",
+    "en": "infundibulum of left uterine tube",
+    "wikidata": "左输卵管漏斗",
+    "lexicon": "左输卵管漏斗部"
+   },
+   {
+    "id": "FMA18491",
+    "en": "ampulla of right uterine tube",
+    "wikidata": "右输卵管壶腹",
+    "lexicon": "右输卵管壶腹部"
+   },
+   {
+    "id": "FMA18492",
+    "en": "ampulla of left uterine tube",
+    "wikidata": "左输卵管壶腹",
+    "lexicon": "左输卵管壶腹部"
+   },
+   {
+    "id": "FMA18493",
+    "en": "isthmus of right uterine tube",
+    "wikidata": "右输卵管峡",
+    "lexicon": "右输卵管峡部"
+   },
+   {
+    "id": "FMA18494",
+    "en": "isthmus of left uterine tube",
+    "wikidata": "左输卵管峡",
+    "lexicon": "左输卵管峡部"
+   },
+   {
+    "id": "FMA18497",
+    "en": "fimbria of right uterine tube",
+    "wikidata": "右输卵管伞端",
+    "lexicon": "右输卵管伞"
+   },
+   {
+    "id": "FMA18498",
+    "en": "fimbria of left uterine tube",
+    "wikidata": "左输卵管伞端",
+    "lexicon": "左输卵管伞"
    },
    {
     "id": "FMA18805",
@@ -4083,6 +4204,12 @@
     "en": "mammillary body",
     "wikidata": "乳头状体",
     "lexicon": "乳头体"
+   },
+   {
+    "id": "FMA77049",
+    "en": "abdominal ostium of uterine tube",
+    "wikidata": "输卵管口",
+    "lexicon": "输卵管腹腔口"
    },
    {
     "id": "FMA77559",
