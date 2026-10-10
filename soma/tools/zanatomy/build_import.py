@@ -160,6 +160,38 @@ def sided_fma(unsided, side):
     return None
 
 
+def _n2(x):
+    x = norm(x).replace("-", " ")
+    for a_, b_ in SPELL:
+        x = x.replace(a_, b_)
+    x = re.sub(r"\b(muscle|bone|gland)$", "", x).strip().replace("brachial nerve plexus", "brachial plexus")
+    return re.sub(r"\s+", " ", x)
+
+
+FMA_SYN = defaultdict(list)
+for _row in csv.reader(open(f"{Z}/fma/fma_names.tsv", encoding="utf-8"), delimiter="\t", quoting=csv.QUOTE_NONE):
+    if _row[0] != "fmaid":
+        FMA_SYN[_row[0]] = [x for x in _row[2].split("|") if x]
+
+
+def match_class(name, unsided, generated=False):
+    """How the item name relates to the (unsided) FMA class it is mapped to."""
+    n = _n2(name)
+    pref = _n2(FMA_LABEL[unsided])
+    syn = {_n2(x) for x in FMA_SYN[unsided]}
+    if n == pref:
+        return "preferred-label"
+    if n in syn:
+        return "synonym"
+    if "set of " + n == pref or "set of " + n in syn:
+        return "set-class"
+    if n.endswith("s") and any(x in ({pref} | syn) for x in (n[:-1], re.sub(r"(nerve|branche|ligament|node|vein)s\b", lambda m: m.group(1).rstrip("e") if m.group(1) == "branche" else m.group(1), n))):
+        return "singular-class-for-set"
+    if generated:
+        return "generated-level-label"
+    return "curated-equivalent"
+
+
 MANUAL = {}
 for line in open(f"{TOOLS}/za_manual_fma.tsv", encoding="utf-8"):
     if line.startswith("#") or not line.strip():
@@ -208,7 +240,11 @@ def resolve_fma(name, side, ta2=None, labels=None, note=None, generated=False):
     if unsided:
         s = sided_fma(unsided, side)
         res.update(fma=s or unsided, fmaUnsided=unsided, fmaSource=src,
-                   fmaSided=bool(s) if side in ("L", "R") else None, fmaLabel=FMA_LABEL[s or unsided])
+                   fmaSided=bool(s) if side in ("L", "R") else None, fmaLabel=FMA_LABEL[s or unsided],
+                   fmaUnsidedLabel=FMA_LABEL[unsided], fmaMatch=match_class(name, unsided, generated))
+        if side in ("L", "R") and not s:
+            # lateralised item, FMA has no left/right class: `fma` is the UNSIDED concept; mint a sided id from fma + side
+            res["fmaIsUnsided"] = True
     if n:
         res["fmaNote"] = n
     return res
@@ -216,13 +252,28 @@ def resolve_fma(name, side, ta2=None, labels=None, note=None, generated=False):
 
 # ----------------------------------------------------------------------------- our model
 A = json.load(open(f"{ROOT}/public/anatomy/male/anatomy.json"))
-PARTS = A["parts"]
-OUR_FMA = {p["fma"] for p in PARTS} | {c["id"] for t in A["trees"].values() for c in t}
+# The live anatomy.json may already contain parts merged from this very package (ids "ZA..."). "Ours" here means
+# the BodyParts3D base only: non-ZA parts plus the tree concepts above them.
+PARTS = [p for p in A["parts"] if not p["id"].startswith("ZA")]
+_base_ids = {p["id"] for p in PARTS}
+OUR_FMA = {p["fma"] for p in PARTS}
+for _t in A["trees"].values():
+    _par = {c["id"]: c["parent"] for c in _t}
+    for c in _t:
+        if _base_ids & set(c["parts"]):
+            k = c["id"]
+            while k and k not in OUR_FMA | {None}:
+                OUR_FMA.add(k)
+                k = _par.get(k)
+            k = _par.get(c["id"])
+            while k:
+                OUR_FMA.add(k)
+                k = _par.get(k)
 PART_BY_NAME = defaultdict(list)
 for p in PARTS:
     PART_BY_NAME[p["name"].lower()].append(p)
-OUR_NAMES = set(PART_BY_NAME) | {c["name"].lower() for t in A["trees"].values() for c in t}
-log(f"our anatomy.json: {len(PARTS)} parts, {len(OUR_FMA)} FMA concepts (parts + tree nodes)")
+OUR_NAMES = set(PART_BY_NAME) | {c["name"].lower() for t in A["trees"].values() for c in t if c["id"] in OUR_FMA}
+log(f"our anatomy.json (BodyParts3D base only, {len(A['parts']) - len(PARTS)} already-merged ZA parts ignored): {len(PARTS)} parts, {len(OUR_FMA)} FMA concepts")
 
 FINGER_H = {"first": "thumb", "second": "index finger", "third": "middle finger", "fourth": "ring finger", "fifth": "little finger"}
 FINGER_F = {"first": "big toe", "second": "second toe", "third": "third toe", "fourth": "fourth toe", "fifth": "little toe"}
@@ -541,6 +592,9 @@ for n in range(1, 13):
         if nm in ZA:
             RIBS[(n, s)] = cKDTree(za_mesh(ZA[nm])[0])
 
+T1_NOTE = ("C5-C8 roots map to 'Anterior ramus of <n> cervical nerve'. FMA has no class of its own for the anterior ramus of T1: "
+           "'Anterior ramus of first thoracic nerve' is a synonym of FMA7645 'First intercostal nerve'. The T1 plexus root is therefore "
+           "mapped to the whole spinal nerve, FMA6037 'First thoracic nerve' (deliberate, broader than the C5-C8 mapping)")
 SPLIT_REPORT = {"rule": None, "units": [], "ambiguous": []}
 EXITS = {}
 
@@ -725,7 +779,8 @@ for s in "lr":
                 o, rg = lvl_words(lv)
                 unit_item(obj, lv, f"{lv} root of brachial plexus", S, v, f, [b],
                           [f"{o} {rg} nerve"] if lv == "T1" else [f"Anterior ramus of {o} {rg} nerve", f"{o} {rg} nerve"],
-                          lv, conf, ev, "Roots of brachial plexus")
+                          lv, conf, ev, "Roots of brachial plexus",
+                          extra={"fmaNoteRoot": T1_NOTE if lv == "T1" else "plexus root = anterior ramus of the spinal nerve"})
             else:
                 unit_item(obj, f"{lv}-contribution", f"{lv} contribution to brachial plexus roots", S, v, f, [b], [], lv, "medium",
                           ev + ["starts at a root exit but does not join a trunk"], "Roots of brachial plexus")
@@ -1105,6 +1160,14 @@ manifest = {
     "items": items,
     "anchors": anchors,
 }
+for it in items:
+    if it.get("fmaNoteRoot"):
+        it["fmaNote"] = it.pop("fmaNoteRoot")
+with open(f"{OUT}/unsided_fma_items.tsv", "w", encoding="utf-8") as fh:
+    fh.write("id\tkind\ttissue\tside\tname\tfma (unsided)\tfmaLabel\tcandidate\n")
+    for it in items:
+        if it.get("fmaIsUnsided"):
+            fh.write(f"{it['id']}\t{it['kind']}\t{it['tissue']}\t{it['side']}\t{it['name']}\t{it['fma']}\t{it['fmaLabel']}\t{bool(it.get('candidate'))}\n")
 json.dump(manifest, open(f"{OUT}/manifest.json", "w"), indent=1)
 json.dump(centre, open(f"{OUT}/centrelines.json", "w"))
 log(f"manifest: {len(items)} items ({sum(1 for i in items if i['files'])} with geometry), {len(anchors)} anchors, {len(excluded)} excluded objects")

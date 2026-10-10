@@ -402,3 +402,24 @@ brachial-root branches), 1 not applicable (central cauda equina bundle).
 - Candidates are a list only; nothing was exported for them.
 - Open3DModel left side is a mirror copy; BodyParts3D is not symmetric, so the pipeline must
   register each side with its own (mirrored) anchors.
+
+## Addendum 2: FMA mapping audit
+
+Trigger: items whose FMA concept read differently from their name. Cause in almost every case:
+the name matched an FMA *synonym* that FMA attaches to a different structure (for example
+"Acromioclavicular ligament" is a synonym of the joint capsule), or a bare name matched a class
+with an odd preferred label (FMA's plain "Ulnar collateral ligament" is the wrist ligament).
+
+- Every item with an FMA id now carries `fmaMatch` (how name and class relate) and
+  `fmaUnsidedLabel`. `tools/zanatomy/audit_fma.py --list` prints all non-preferred-label matches.
+- Exported items: 490 preferred-label, 277 synonym, 151 generated-level-label, 119
+  curated-equivalent, 14 singular-class-for-set, 1 set-class, 139 without an id. All synonym and
+  curated-equivalent pairs (212 distinct name/concept pairs exported, 189 among candidates) were
+  read through by hand; near-misses were nulled or corrected in `za_manual_fma.tsv` /
+  `o3d_nerves.tsv`. The per-item changes are in `out/import/fma_fix_diff.txt`.
+- Lateralised items whose `fma` is the unsided class have `fmaIsUnsided: true` and are listed in
+  `out/import/unsided_fma_items.tsv` (174 exported).
+- "Anterior cord of brachial nerve plexus" is not mapped to any item. It is FMA's own parent class
+  of the lateral and medial cords (FMA65385), so it appears when a tree is built from FMA parents.
+- The build now ignores already-merged `ZA…` parts in `anatomy.json`, so it is repeatable after a
+  merge.

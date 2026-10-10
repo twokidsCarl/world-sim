@@ -137,6 +137,13 @@ for label, sel in (("exported", exp), ("candidates", cand)):
         src = Counter(r["fmaSource"] for r in rs)
         print(f"  {k:22s} n={n:4d}  FMA {f:4d} ({f/n:4.0%})  sided id {sum(1 for r in sided if r.get('fmaSided')):4d}/{len(sided):4d}  "
               f"name-match {src['name-match']}, ta2-wikidata {src['ta2-wikidata']}, manual {src['manual']}, null {src[None]}")
+print("name vs FMA class (fmaMatch), exported:", dict(Counter(r.get("fmaMatch") or "no FMA id" for r in exp)))
+check(all(r.get("fmaMatch") for r in items if r["fma"]), "item with FMA id but no fmaMatch")
+uns = [r for r in exp if r.get("fmaIsUnsided")]
+check(all((r.get("fmaSided") is False) == bool(r.get("fmaIsUnsided")) for r in items if r["fma"] and r["side"] in "LR"), "fmaIsUnsided inconsistent with fmaSided")
+check(all(r["fma"] == r["fmaUnsided"] for r in items if r.get("fmaIsUnsided")), "fmaIsUnsided item whose fma is not the unsided id")
+print(f"lateralised exported items with an unsided FMA id (fmaIsUnsided: true; listed in unsided_fma_items.tsv): {len(uns)}",
+      dict(Counter(f"{r['kind']}/{r['tissue']}" for r in uns)))
 pn = [r for r in ner if r["preferred"]]
 print(f"preferred nerve items: {len(pn)}; with FMA {sum(1 for r in pn if r['fma'])}; unique FMA ids {len({r['fma'] for r in pn if r['fma']})}")
 dup = Counter(r["fma"] for r in pn if r["fma"])
