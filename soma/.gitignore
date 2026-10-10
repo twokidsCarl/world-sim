@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.venv/
+*.log
+.DS_Store
+
+# Downloaded source data and caches; fetched again by the tools.
+data/raw/
+
+# Generated dev-only datasets (bun tools/fixture/make-fixture.ts).
+public/anatomy/fixture/
+public/anatomy/stress/
+
+# Scratch output of the assessment/registration tools.
+tools/*/out/

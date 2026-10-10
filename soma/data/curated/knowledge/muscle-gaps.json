@@ -1,0 +1,676 @@
+{
+ "note": "Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. \"wholeMuscleOnly\" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray's Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0).",
+ "muscleElementConcepts": 380,
+ "complete": 280,
+ "withGaps": 100,
+ "unlateralisedGroups": 54,
+ "missingCounts": {
+  "origin": 42,
+  "insertion": 42,
+  "innervatedBy": 19
+ },
+ "muscles": [
+  {
+   "name": "abdominal part of pectoralis major",
+   "fma": [
+    "FMA45874",
+    "FMA45875"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "pectoralis major"
+  },
+  {
+   "name": "acromial part of deltoid",
+   "fma": [
+    "FMA34682",
+    "FMA34683"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "deltoid"
+  },
+  {
+   "name": "cervical rotator",
+   "fma": [
+    "FMA81752",
+    "FMA81753"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "clavicular part of deltoid",
+   "fma": [
+    "FMA34680",
+    "FMA34681"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "deltoid"
+  },
+  {
+   "name": "clavicular part of pectoralis major",
+   "fma": [
+    "FMA34690",
+    "FMA34691"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "pectoralis major"
+  },
+  {
+   "name": "external anal sphincter",
+   "fma": [
+    "FMA21930"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "external intercostal muscle",
+   "fma": [
+    "FMA9756"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "humeral head of flexor carpi ulnaris",
+   "fma": [
+    "FMA38617",
+    "FMA38618"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "flexor carpi ulnaris"
+  },
+  {
+   "name": "humeral head of pronator teres",
+   "fma": [
+    "FMA38560",
+    "FMA38561"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "pronator teres"
+  },
+  {
+   "name": "iliococcygeus",
+   "fma": [
+    "FMA45859",
+    "FMA45858"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "iliocostalis cervicis",
+   "fma": [
+    "FMA22744",
+    "FMA22745"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "iliocostalis lumborum",
+   "fma": [
+    "FMA22740",
+    "FMA22741"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "iliocostalis thoracis",
+   "fma": [
+    "FMA22742",
+    "FMA22743"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "inferior oblique part of longus colli",
+   "fma": [
+    "FMA46288"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "longus colli"
+  },
+  {
+   "name": "interspinalis thoracis",
+   "fma": [
+    "FMA22890",
+    "FMA22891"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "lateral head of flexor hallucis brevis",
+   "fma": [
+    "FMA45973",
+    "FMA45974"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "flexor hallucis brevis"
+  },
+  {
+   "name": "lateral head of gastrocnemius",
+   "fma": [
+    "FMA45960",
+    "FMA45961"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "gastrocnemius"
+  },
+  {
+   "name": "lateral head of triceps brachii",
+   "fma": [
+    "FMA37697",
+    "FMA37698"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "triceps brachii"
+  },
+  {
+   "name": "lateral lumbar intertransversarius",
+   "fma": [
+    "FMA22850"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "long head of biceps brachii",
+   "fma": [
+    "FMA37686",
+    "FMA37687"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "biceps brachii"
+  },
+  {
+   "name": "long head of biceps femoris",
+   "fma": [
+    "FMA45888",
+    "FMA45889"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "biceps femoris"
+  },
+  {
+   "name": "long head of triceps brachii",
+   "fma": [
+    "FMA37699",
+    "FMA37700"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "triceps brachii"
+  },
+  {
+   "name": "longissimus capitis",
+   "fma": [
+    "FMA22754",
+    "FMA22756"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "longissimus cervicis",
+   "fma": [
+    "FMA22757",
+    "FMA22758"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "longissimus thoracis",
+   "fma": [
+    "FMA22751",
+    "FMA22753"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "lumbar rotator",
+   "fma": [
+    "FMA23089",
+    "FMA23090"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "medial head of flexor hallucis brevis",
+   "fma": [
+    "FMA45971",
+    "FMA45972"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "flexor hallucis brevis"
+  },
+  {
+   "name": "medial head of gastrocnemius",
+   "fma": [
+    "FMA45957",
+    "FMA45958"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "gastrocnemius"
+  },
+  {
+   "name": "medial head of triceps brachii",
+   "fma": [
+    "FMA37695",
+    "FMA37696"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "triceps brachii"
+  },
+  {
+   "name": "medial lumbar intertransversarius",
+   "fma": [
+    "FMA22851"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "oblique arytenoid",
+   "fma": [
+    "FMA46585",
+    "FMA46584"
+   ],
+   "missing": [
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "oblique head of adductor hallucis",
+   "fma": [
+    "FMA46018",
+    "FMA46019"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "adductor hallucis"
+  },
+  {
+   "name": "oblique head of adductor pollicis",
+   "fma": [
+    "FMA46121",
+    "FMA46122"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "adductor pollicis"
+  },
+  {
+   "name": "oblique part of cricothyroid",
+   "fma": [
+    "FMA46614",
+    "FMA46613"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "cricothyroid"
+  },
+  {
+   "name": "pubococcygeus",
+   "fma": [
+    "FMA45855",
+    "FMA45854"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "puborectalis",
+   "fma": [
+    "FMA45857",
+    "FMA45856"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "semispinalis cervicis",
+   "fma": [
+    "FMA22874",
+    "FMA22875"
+   ],
+   "missing": [
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "semispinalis thoracis",
+   "fma": [
+    "FMA22872",
+    "FMA22873"
+   ],
+   "missing": [
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "short head of biceps brachii",
+   "fma": [
+    "FMA37684",
+    "FMA37685"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "biceps brachii"
+  },
+  {
+   "name": "short head of biceps femoris",
+   "fma": [
+    "FMA45891",
+    "FMA45892"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "biceps femoris"
+  },
+  {
+   "name": "spinal part of deltoid",
+   "fma": [
+    "FMA34684",
+    "FMA34685"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "deltoid"
+  },
+  {
+   "name": "spinalis thoracis",
+   "fma": [
+    "FMA22779",
+    "FMA22780"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "sternocostal part of pectoralis major",
+   "fma": [
+    "FMA79979",
+    "FMA79980"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "pectoralis major"
+  },
+  {
+   "name": "straight part of cricothyroid",
+   "fma": [
+    "FMA46612",
+    "FMA46611"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "cricothyroid"
+  },
+  {
+   "name": "superficial head of flexor pollicis brevis",
+   "fma": [
+    "FMA65198",
+    "FMA65199"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "flexor pollicis brevis"
+  },
+  {
+   "name": "superior oblique part of longus colli",
+   "fma": [
+    "FMA46284"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "longus colli"
+  },
+  {
+   "name": "thoracic rotator",
+   "fma": [
+    "FMA23083"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "transverse head of adductor hallucis",
+   "fma": [
+    "FMA46020",
+    "FMA46021"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "adductor hallucis"
+  },
+  {
+   "name": "transverse head of adductor pollicis",
+   "fma": [
+    "FMA46123",
+    "FMA46124"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "adductor pollicis"
+  },
+  {
+   "name": "transverse part of trapezius",
+   "fma": [
+    "FMA33584",
+    "FMA33585"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "trapezius"
+  },
+  {
+   "name": "ulnar head of flexor carpi ulnaris",
+   "fma": [
+    "FMA38619",
+    "FMA38620"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "insertion"
+   ],
+   "wholeMuscle": "flexor carpi ulnaris"
+  },
+  {
+   "name": "ulnar head of pronator teres",
+   "fma": [
+    "FMA38562",
+    "FMA38563"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "pronator teres"
+  },
+  {
+   "name": "vertical intermediate part of longus colli",
+   "fma": [
+    "FMA46286"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "longus colli"
+  },
+  {
+   "name": "vocalis",
+   "fma": [
+    "FMA46593",
+    "FMA46592"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  }
+ ]
+}
