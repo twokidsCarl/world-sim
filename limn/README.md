@@ -7,7 +7,7 @@
 | | 内容 | 状态 |
 |---|---|---|
 | M0 | 风格研究：分析 12 张 Goodsell 原图，写成风格准则 | 完成，见 [docs/style-guide.md](docs/style-guide.md) |
-| M1 | 渲染核心：移植 Illustrate 的描边、阴影算法到 WebGL2 | 完成，见 `src/render/`。尚未与原版 Illustrate 的输出逐像素对照 |
+| M1 | 渲染核心：移植 Illustrate 的描边、阴影算法到 WebGL2 | 完成，见 `src/render/`。已与原版 Illustrate 对照：它自带的 2hhb 示例，同一份 PDB、同一套参数，平均色差 2.8/255，见下文 |
 | M2 | 网页应用：旋转、调色、高分辨率导出 | 完成 |
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
@@ -64,6 +64,15 @@ uv run --no-project --with numpy --with scipy --with pillow python -I research/a
 ```
 
 结果写到 `research/out/`：`stats.json`（每张图的取色、色相区占比、明度与彩度范围、线宽）、预览图和色带图。
+
+与原版 Illustrate 对照（需要 gfortran，`brew install gcc`）：
+
+```sh
+research/illustrate/build.sh   # 下载并编译 Illustrate，渲染它自带的 2hhb 示例到 research/illustrate/build/（不入库）
+bun run dev                    # 然后打开 http://127.0.0.1:5184/research/illustrate/compare.html
+```
+
+页面用 limn 的渲染器按同样的输入卡片画同一个分子，并排显示两张图和差异图。当前结果（922×750）：平均色差 2.8/255，3.7% 的像素差异超过 32，分子的平均色调 (228,147,124) 对 (229,147,124)，纯黑墨线占比 4.3% 对 4.7%。剩下的差异集中在线条边缘：limn 做了 2 倍超采样，线条有灰度过渡，原版是硬边。
 
 重建“每月分子”对照表（`data/motm.json`，只存文章标题和 PDB 编号）：`bun server/tools/scrape_motm.ts`。
 

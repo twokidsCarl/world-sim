@@ -114,6 +114,10 @@ void main() {
     }
   }
   float lo = clamp((l - u_contour.x) / (u_contour.y - u_contour.x), 0.0, 1.0);
+  // Illustrate never clears its running count between pixels, so each one
+  // starts from its neighbour's line strength (0..1); the pixel's own strength
+  // stands in for the neighbour's here.
+  lo = clamp((l + lo - u_contour.x) / (u_contour.y - u_contour.x), 0.0, 1.0);
   float ro = clamp((r - u_subunit.x) / (u_subunit.y - u_subunit.x), 0.0, 1.0);
   // The silhouette keeps its full line; only lines between chains fade.
   if (atom0) ro *= u_subunit.z;
@@ -170,20 +174,12 @@ float noise(vec2 p) {
 
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
-  ivec2 size = textureSize(u_edge, 0);
   vec4 e = texelFetch(u_edge, p, 0);
 
-  // Illustrate's antialiasing of contour lines: where most of the 3x3
-  // neighbourhood is on a line, average it; otherwise keep the centre.
-  float sum = 0.0, cnt = 0.0;
-  for (int i = -1; i <= 1; i++) {
-    for (int j = -1; j <= 1; j++) {
-      float v = texelFetch(u_edge, clamp(p + ivec2(i, j), ivec2(0), size - 1), 0).r;
-      sum += v;
-      if (v > 0.0) cnt += 1.0;
-    }
-  }
-  float line = cnt >= 6.0 ? min(sum / 6.0, 1.0) : e.r;
+  // Illustrate means to smooth contour lines over a 3x3 neighbourhood, but
+  // as written (illustrate.f, kernel 4) all nine samples are the centre one,
+  // so what its pictures actually show is the line strength times 9/6.
+  float line = min(e.r * 1.5, 1.0);
   line = max(line, e.g);
 
   float d = texelFetch(u_depth, p, 0).r;
@@ -199,6 +195,7 @@ void main() {
   rgb = mix(rgb, u_ink, line);
   if (u_grain > 0.0) {
     // Paper tooth: two octaves of value noise, darkening only.
+    ivec2 size = textureSize(u_edge, 0);
     vec2 q = gl_FragCoord.xy / float(max(size.x, size.y)) * 1500.0;
     float n = noise(q * 0.9) * 0.6 + noise(q * 2.3) * 0.4;
     rgb *= 1.0 - u_grain * (n - 0.35);
