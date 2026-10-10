@@ -1,0 +1,22 @@
+# 依赖与构建产物
+node_modules/
+.venv/
+dist/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# 缓存、运行输出、原始数据
+.cache/
+runs/
+data/raw/
+*.log
+
+# 本机与密钥
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# 子项目并入本仓库前的旧独立仓库（改名保留在本地，不提交）
+.git-nested/
