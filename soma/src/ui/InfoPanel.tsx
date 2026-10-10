@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
-import type { AnatomyGraph, DisplayName, TreeKind } from '../anatomy/graph.ts'
-import { PROVENANCE_LABEL, RELATION_LABEL, SIDE_LABEL, TISSUE_LABEL } from '../anatomy/labels.ts'
+import { isFmaId, type AnatomyGraph, type DisplayName, type TreeKind } from '../anatomy/graph.ts'
+import { PROVENANCE_LABEL, RELATION_LABEL, SIDE_LABEL, TISSUE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import type { Concept, Part, Relation } from '../anatomy/types.ts'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
@@ -167,48 +167,104 @@ function PartList({ graph, ids }: { graph: AnatomyGraph; ids: readonly string[] 
   )
 }
 
+const REL_LIMIT = 6
+
+function IdRows({ id }: { id: string }) {
+  return isFmaId(id) ? (
+    <>
+      <dt>FMA 编号</dt>
+      <dd className="mono">{id}</dd>
+    </>
+  ) : (
+    <>
+      <dt>概念 ID</dt>
+      <dd>
+        <span className="mono">{id}</span>{' '}
+        <span className="tag" title="该结构在 FMA 中没有对应条目，使用数据管线生成的标识">
+          非 FMA
+        </span>
+      </dd>
+    </>
+  )
+}
+
+function RelationGroup({ graph, kind, list }: { graph: AnatomyGraph; kind: Relation['kind']; list: Relation[] }) {
+  const [all, setAll] = useState(false)
+  const app = useApp.getState()
+  const label = (r: Relation) => r.objectLabel.zh ?? r.objectLabel.en
+  // every part any target of this group resolves to, for "select all"
+  const union: string[] = []
+  const seen = new Set<string>()
+  let resolvable = 0
+  for (const r of list) {
+    const ids = r.object ? graph.resolveFma(r.object) : []
+    if (ids.length) resolvable++
+    for (const id of ids) if (!seen.has(id)) (seen.add(id), union.push(id))
+  }
+  const shown = all ? list : list.slice(0, REL_LIMIT)
+  return (
+    <div className="rel-group">
+      <h4>
+        {RELATION_LABEL[kind]?.zh ?? kind} <span className="en">{RELATION_LABEL[kind]?.en}</span>
+        <span className="count">{list.length}</span>
+        {resolvable >= 2 && (
+          <button
+            className="link-btn"
+            title="在模型中选中这一组里所有能对应到的结构"
+            onClick={() => {
+              app.selectParts(union)
+              app.requestFocus()
+            }}
+          >
+            全选 {union.length} 个结构
+          </button>
+        )}
+      </h4>
+      <ul>
+        {shown.map((r, i) => {
+          const targets = r.object ? graph.resolveFma(r.object) : []
+          return (
+            <li key={i}>
+              {targets.length > 0 ? (
+                <button
+                  className="rel-link"
+                  onClick={() => {
+                    if (app.selectFma(r.object!)) app.requestFocus()
+                  }}
+                  title={`${r.objectLabel.en} · ${r.object} — 点击在模型中选中${targets.length > 1 ? `（${targets.length} 个结构）` : ''}`}
+                >
+                  {label(r)}
+                </button>
+              ) : (
+                <span className="rel-text" title={r.object ? `${r.object}（此模型中无对应结构）` : '未解析到具体结构'}>
+                  {label(r)}
+                </span>
+              )}
+              {r.objectLabel.zh && <span className="en"> {r.objectLabel.en}</span>}
+              {r.status === 'unreviewed' && <span className="badge badge-review">待审校</span>}
+              <a className="src" href={r.source.url} target="_blank" rel="noreferrer noopener" title={`来源：${r.source.name}（${r.source.license}）`}>
+                {r.source.name}
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+      {list.length > REL_LIMIT && (
+        <button className="link-btn" onClick={() => setAll(!all)}>
+          {all ? '收起' : `显示全部 ${list.length} 条`}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Relations({ graph, fma }: { graph: AnatomyGraph; fma: string }) {
   const groups = graph.relationsByKind(fma)
-  const app = useApp.getState()
   if (groups.length === 0) return null
-  const label = (r: Relation) => r.objectLabel.zh ?? r.objectLabel.en
   return (
     <Section title="知识关系" en="Relations">
       {groups.map(([kind, list]) => (
-        <div className="rel-group" key={kind}>
-          <h4>
-            {RELATION_LABEL[kind]?.zh ?? kind} <span className="en">{RELATION_LABEL[kind]?.en}</span>
-          </h4>
-          <ul>
-            {list.map((r, i) => {
-              const targets = r.object ? graph.resolveFma(r.object) : []
-              return (
-                <li key={i}>
-                  {targets.length > 0 ? (
-                    <button
-                      className="rel-link"
-                      onClick={() => {
-                        if (app.selectFma(r.object!)) app.requestFocus()
-                      }}
-                      title={`${r.objectLabel.en} · ${r.object} — 点击在模型中选中`}
-                    >
-                      {label(r)}
-                    </button>
-                  ) : (
-                    <span className="rel-text" title={r.object ? `${r.object}（此模型中无对应结构）` : '未解析到具体结构'}>
-                      {label(r)}
-                    </span>
-                  )}
-                  {r.objectLabel.zh && <span className="en"> {r.objectLabel.en}</span>}
-                  {r.status === 'unreviewed' && <span className="badge badge-review">待审校</span>}
-                  <a className="src" href={r.source.url} target="_blank" rel="noreferrer noopener" title={`来源：${r.source.name}（${r.source.license}）`}>
-                    {r.source.name}
-                  </a>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+        <RelationGroup key={`${fma}:${kind}`} graph={graph} kind={kind} list={list} />
       ))}
     </Section>
   )
@@ -219,6 +275,7 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
   const sys = graph.data.systems.find((s) => s.id === part.system)
   const layer = graph.data.layers[part.depth]
   const prov = PROVENANCE_LABEL[part.provenance]
+  const source = graph.sourceOf(part)
   const adjacent = graph.adjacentParts(part.id)
   const wikidata = graph.names[part.fma]?.wikidata
   // the chain ends at the part's own concept; show only its ancestors there
@@ -231,8 +288,7 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
       <Names name={name} />
       <Actions />
       <dl className="props">
-        <dt>FMA 编号</dt>
-        <dd className="mono">{part.fma}</dd>
+        <IdRows id={part.fma} />
         <dt>部件 ID</dt>
         <dd className="mono">{part.id}</dd>
         <dt>系统</dt>
@@ -251,10 +307,22 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
         <dt>层次</dt>
         <dd>{layer ? `${layer.name.zh} ${layer.name.en}` : `第 ${part.depth} 层`}</dd>
         <dt>几何来源</dt>
-        <dd>
-          <span className={`badge badge-${part.provenance}`} title={prov?.hint}>
+        <dd className="prov">
+          <span className="swatch" style={{ background: provenanceColor(part.provenance, graph.sourceOrdinal(part)) }} />
+          <span className={`badge badge-${part.provenance}`}>
             {prov?.zh ?? part.provenance} {prov?.en}
           </span>
+          <span className="prov-src">
+            {source.url ? (
+              <a href={source.url} target="_blank" rel="noreferrer noopener">
+                {source.name}
+              </a>
+            ) : (
+              source.name
+            )}
+            {source.license && <span className="tag">{source.license}</span>}
+          </span>
+          {prov && <span className="hint">{prov.hint}</span>}
         </dd>
         <dt>体积</dt>
         <dd>{part.volume !== undefined ? `${formatVolume(part.volume)} cm³` : '—'}</dd>
@@ -292,8 +360,7 @@ function ConceptInfo({ graph, tree, concept, partIds }: { graph: AnatomyGraph; t
       <Names name={graph.conceptName(concept)} />
       <Actions />
       <dl className="props">
-        <dt>FMA 编号</dt>
-        <dd className="mono">{concept.id}</dd>
+        <IdRows id={concept.id} />
         <dt>类型</dt>
         <dd>概念（{tree === 'isa' ? '分类 is-a' : '组成 part-of'}）</dd>
         <dt>包含结构</dt>

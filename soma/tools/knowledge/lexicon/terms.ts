@@ -6,6 +6,8 @@
 // Note on the hallux: the standard character is 𧿹 (U+27FF9), which most fonts lack;
 // the common textbook substitute 踇 (U+8E07) is used here.
 
+import { MAINLAND_TERMS, NERVE_LIGAMENT_LYMPH_TERMS } from './terms-nerves-ligaments-lymph.ts'
+
 const GENERIC: Record<string, string> = {
   // head nouns used by the "A of B" rule
   branch: '支', segment: '段', subdivision: '分部', zone: '区', region: '区域',
@@ -360,4 +362,4 @@ const GENERIC: Record<string, string> = {
   'lingular bronchopulmonary segment': '舌段支气管肺段',
 }
 
-export const TERMS: Record<string, string> = GENERIC
+export const TERMS: Record<string, string> = { ...GENERIC, ...NERVE_LIGAMENT_LYMPH_TERMS, ...MAINLAND_TERMS }

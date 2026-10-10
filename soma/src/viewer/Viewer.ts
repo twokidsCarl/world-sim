@@ -6,32 +6,34 @@ import {
   ClippingGroup,
   Color,
   DirectionalLight,
+  DoubleSide,
+  FrontSide,
   HemisphereLight,
-  Matrix4,
-  Mesh,
+  Line3,
   Object3D,
   PerspectiveCamera,
   Plane,
+  Ray,
   Raycaster,
   Scene,
   Sphere,
   Vector2,
   Vector3,
   WebGPURenderer,
-  type BufferGeometry,
-  type Intersection,
-  type Material,
+  type Mesh,
 } from 'three/webgpu'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { MeshBVH } from 'three-mesh-bvh'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
+import { TISSUE_COLOR, TISSUE_OPACITY, provenanceColor } from '../anatomy/labels.ts'
 import type { Part, SystemId } from '../anatomy/types.ts'
 import {
   GHOST,
   HIDDEN,
   NORMAL,
+  THIN_RADIUS,
   clipRay,
   computeDisplay,
   computeExplode,
@@ -39,16 +41,23 @@ import {
   type PlaneEq,
 } from '../state/display.ts'
 import { useApp, type AppState } from '../state/store.ts'
-import { PICK_OPACITY, PartMaterials, type Variant } from './materials.ts'
+import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, type BakedPart, type PartRenderer } from './batches.ts'
+import { PartMeshes, centroidTransparentSort } from './meshes.ts'
 
-interface PartEntry {
-  meshes: Mesh[]
-  /** World matrix of each mesh as authored (before explode). */
-  base: Matrix4[]
-  bvh: (MeshBVH | null)[]
-  /** See-through selection tint, one child per mesh; created on first use. */
-  xray: Mesh[] | null
-}
+const GHOST_RGB = new Color('#8d99a6')
+const GHOST_OPACITY = 0.07
+/** Parts drawn more transparent than this are not pickable (the pointer passes through). */
+const PICK_OPACITY = 0.4
+const ACCENT_RGB = new Color(ACCENT)
+const WHITE = new Color(0xffffff)
+/** On-screen radius (CSS px) nerves are thickened to when the aid is on. */
+const NERVE_MIN_RADIUS_PX = 0.75
+/** How far from the pointer (CSS px) a thin part is still picked. */
+const THIN_PICK_PX = { mouse: 5, touch: 12 }
+/** A thin part may sit this far (m) behind the nearest surface on its own line of sight and still win (nerves lie half-embedded). */
+const THIN_DEPTH_SLACK = 0.004
+
+export type { BakedPart }
 
 export interface ViewerStats {
   backend: 'webgpu' | 'webgl2'
@@ -60,6 +69,7 @@ export interface ViewerStats {
   renderCpuMs: number
   drawCalls: number
   triangles: number
+  /** Parts that have geometry. */
   meshes: number
   bvhBuilt: number
   bvhTotal: number
@@ -98,16 +108,28 @@ export class Viewer {
 
   private readonly root = new ClippingGroup()
   private readonly plane = new Plane(new Vector3(0, -1, 0), 0)
-  private readonly materials: PartMaterials
-  private readonly entries: (PartEntry | null)[]
+  private batches: PartRenderer | null = null
+  /** 'batched' (WebGPU) or 'meshes' (WebGL2 fallback); see meshes.ts for why. */
+  scenePath: 'batched' | 'meshes' = 'batched'
+  /** Batch instance id per part (indexed like graph.parts), -1 when the part has no geometry. */
+  private readonly inst: Int32Array
+  private readonly bvh: (MeshBVH | null)[]
+  /** Equivalent tube radius per part, metres (0 when unknown). */
+  private readonly radius: Float32Array
+  /** Parts thin enough to get tolerant picking. */
+  private thinParts: number[] = []
+  private readonly baseColor: Color[]
   private display: Uint8Array
   private offsets: Float32Array
   private pickable: Uint8Array
+  /** 1 when the part is currently drawn opaque (so a section shows its filled back faces). */
+  private solid: Uint8Array
   private planeEq: PlaneEq | null = null
 
   private readonly raycaster = new Raycaster()
   private readonly ndc = new Vector2()
-  private readonly hits: Intersection[] = []
+  private readonly localRay = new Ray()
+  private lastPointerType: 'mouse' | 'touch' = 'mouse'
 
   private raf = 0
   private dirty = true
@@ -135,7 +157,7 @@ export class Viewer {
     toTarget: Vector3
   } | null = null
 
-  private bvhQueue: [number, number][] = []
+  private bvhQueue: number[] = []
   private bvhBuilt = 0
   private bvhTotal = 0
 
@@ -163,12 +185,15 @@ export class Viewer {
     canvas.className = 'viewer-canvas'
     container.appendChild(canvas)
 
-    this.materials = new PartMaterials(graph.data.systems)
     const n = graph.parts.length
-    this.entries = new Array<PartEntry | null>(n).fill(null)
+    this.inst = new Int32Array(n).fill(-1)
+    this.bvh = new Array<MeshBVH | null>(n).fill(null)
+    this.radius = new Float32Array(n)
+    this.baseColor = graph.parts.map(() => new Color())
     this.display = new Uint8Array(n)
     this.offsets = new Float32Array(n * 3)
     this.pickable = new Uint8Array(n)
+    this.solid = new Uint8Array(n)
 
     // lighting: soft sky/ground fill plus a key light that travels with the camera, so the
     // surface facing the viewer is always lit however the model is turned
@@ -197,7 +222,6 @@ export class Viewer {
     this.controls.addEventListener('start', () => {
       this.tween = null
     })
-    ;(this.raycaster as Raycaster & { firstHitOnly?: boolean }).firstHitOnly = true
     this.home(false)
   }
 
@@ -237,8 +261,7 @@ export class Viewer {
     el.removeEventListener('pointerleave', this.onPointerLeave)
     el.removeEventListener('contextmenu', this.onContextMenu)
     this.controls.dispose()
-    for (const e of this.entries) if (e) for (const m of e.meshes) m.geometry.dispose()
-    this.materials.dispose()
+    this.batches?.dispose()
     this.renderer.dispose()
     el.remove()
   }
@@ -246,14 +269,16 @@ export class Viewer {
   // ------------------------------------------------------------ geometry loading
 
   /**
-   * Load every system's GLB. Systems appear as they arrive; a missing or broken file is
-   * reported and skipped. Returns human-readable problems (empty when all went well).
+   * Load every system's GLB, bake each part to world space and build the batches. Nothing
+   * is drawn until all files are in (the batches need their final buffer sizes); a missing
+   * or broken file is reported and skipped. Returns human-readable problems.
    */
   async loadSystems(onProgress: (done: number, total: number) => void): Promise<string[]> {
     const loader = new GLTFLoader()
     loader.setMeshoptDecoder(MeshoptDecoder)
     const systems = this.graph.data.systems.filter((s) => s.glb)
     const problems: string[] = []
+    const baked = new Array<BakedPart | undefined>(this.graph.parts.length)
     let done = 0
     onProgress(0, systems.length)
     await Promise.all(
@@ -261,11 +286,9 @@ export class Viewer {
         try {
           const gltf = await loader.loadAsync(new URL(sys.glb!, new URL(this.baseUrl, location.href)).href)
           if (this.disposed) return
-          const attached = this.attach(gltf.scene)
+          const got = this.bake(gltf.scene, baked)
           const expected = this.graph.partsBySystem(sys.id).length
-          if (attached < expected) {
-            problems.push(`${sys.name.zh}：${expected - attached}/${expected} 个结构在 ${sys.glb} 中没有几何`)
-          }
+          if (got < expected) problems.push(`${sys.name.zh}：${expected - got}/${expected} 个结构在 ${sys.glb} 中没有几何`)
         } catch (err) {
           console.warn(`[soma] failed to load ${sys.glb}`, err)
           problems.push(`${sys.name.zh}：无法加载 ${sys.glb}`)
@@ -273,13 +296,14 @@ export class Viewer {
         onProgress(++done, systems.length)
       }),
     )
+    if (!this.disposed) this.build(baked)
     return problems
   }
 
-  /** Move a loaded GLB's meshes under the root, keyed by part id. Returns parts attached. */
-  private attach(gltfScene: Object3D): number {
+  /** Bake the parts found in one loaded GLB into `out`. Returns how many parts it held. */
+  private bake(gltfScene: Object3D, out: (BakedPart | undefined)[]): number {
     gltfScene.updateMatrixWorld(true)
-    const found: { mesh: Mesh; index: number }[] = []
+    const byPart = new Map<number, Mesh[]>()
     gltfScene.traverse((o) => {
       const mesh = o as Mesh
       if (!mesh.isMesh) return
@@ -287,44 +311,80 @@ export class Viewer {
       // several primitives was split into children by the loader
       let cur: Object3D | null = mesh
       while (cur) {
-        const name = (cur.userData.name as string | undefined) ?? cur.name
-        const index = this.graph.indexOf(name)
+        const index = this.graph.indexOf((cur.userData.name as string | undefined) ?? cur.name)
         if (index >= 0) {
-          found.push({ mesh, index })
+          const list = byPart.get(index)
+          if (list) list.push(mesh)
+          else byPart.set(index, [mesh])
           return
         }
         cur = cur.parent
       }
     })
-    const before = new Set<number>()
-    for (const { mesh, index } of found) {
-      const old = mesh.material as Material | Material[]
-      for (const m of Array.isArray(old) ? old : [old]) m.dispose()
-      const base = mesh.matrixWorld.clone()
-      mesh.removeFromParent()
-      mesh.matrixAutoUpdate = false
-      mesh.matrix.copy(base)
-      mesh.userData.part = index
-      let e = this.entries[index]
-      if (!e) {
-        e = { meshes: [], base: [], bvh: [], xray: null }
-        this.entries[index] = e
-        before.add(index)
+    let added = 0
+    for (const [index, meshes] of byPart) {
+      if (!out[index]) added++
+      out[index] = bakePart(meshes)
+      for (const m of meshes) {
+        m.geometry.dispose()
+        const mats = m.material
+        for (const mat of Array.isArray(mats) ? mats : [mats]) mat.dispose()
       }
-      e.meshes.push(mesh)
-      e.base.push(base)
-      e.bvh.push(null)
-      this.bvhQueue.push([index, e.meshes.length - 1])
-      this.bvhTotal++
-      this.root.add(mesh)
     }
-    this.forceFull = true // the new meshes must pick up the current state
+    return added
+  }
+
+  private build(baked: (BakedPart | undefined)[]): void {
+    let vertices = 0
+    let indices = 0
+    let count = 0
+    for (const b of baked) {
+      if (!b) continue
+      count++
+      vertices += b.geometry.getAttribute('position').count
+      indices += b.geometry.index!.count
+    }
+    const forced = new URLSearchParams(location.search).get('scene')
+    this.scenePath = forced === 'batched' || forced === 'meshes' ? forced : this.backend === 'webgpu' ? 'batched' : 'meshes'
+    const batches: PartRenderer = this.scenePath === 'batched' ? new PartBatches(count, vertices, indices) : new PartMeshes()
+    if (this.scenePath === 'meshes') this.renderer.setTransparentSort(centroidTransparentSort as never)
+    const parts = this.graph.parts
+    this.thinParts = []
+    for (let i = 0; i < parts.length; i++) {
+      const b = baked[i]
+      if (!b) continue
+      const part = parts[i]!
+      this.radius[i] = b.radius
+      if (b.radius > 0 && b.radius < THIN_RADIUS) this.thinParts.push(i)
+      this.inst[i] = batches.add(b, part.tissue === 'nerve' ? b.radius : null, part.bbox, part.centroid)
+      this.bvhQueue.push(i)
+    }
+    batches.finish()
+    for (const b of baked) b?.geometry.dispose()
+    this.bvhTotal = count
+    this.batches = batches
+    this.root.add(...batches.objects)
+    this.updateBoost()
+    this.forceFull = true
     this.syncNeeded = true
-    return before.size
   }
 
   hasGeometry(partIndex: number): boolean {
-    return !!this.entries[partIndex]
+    return (this.inst[partIndex] ?? -1) >= 0
+  }
+
+  /** Equivalent tube radius of a part in metres, as measured from its mesh (0 = no geometry). */
+  radiusOf(partId: string): number {
+    const i = this.graph.indexOf(partId)
+    return i < 0 ? 0 : this.radius[i]!
+  }
+
+  private updateBoost(): void {
+    const on = useApp.getState().nerveBoost
+    const h = Math.max(1, this.container.clientHeight)
+    // world size of one CSS pixel per metre of distance, times the wanted pixel radius
+    const perMetre = (2 * Math.tan((this.camera.fov * Math.PI) / 360)) / h
+    this.batches?.setBoost(on ? perMetre * NERVE_MIN_RADIUS_PX : 0)
   }
 
   // ------------------------------------------------------------ state → scene
@@ -347,6 +407,8 @@ export class Viewer {
       p.hidden !== s.hidden ||
       p.isolated !== s.isolated ||
       p.adjacentMode !== s.adjacentMode ||
+      p.provenanceHidden !== s.provenanceHidden ||
+      p.colorMode !== s.colorMode ||
       p.selection !== s.selection
     const explodeChanged =
       !p ||
@@ -355,12 +417,15 @@ export class Viewer {
       (s.explodeSelectionOnly && s.explode > 0 && p.selection !== s.selection)
     const sectionChanged = !p || p.section !== s.section
     const hoverChanged = !p || p.hover !== s.hover
-    if (!displayChanged && !explodeChanged && !sectionChanged && !hoverChanged) {
+    const boostChanged = !p || p.nerveBoost !== s.nerveBoost
+    if (!displayChanged && !explodeChanged && !sectionChanged && !hoverChanged && !boostChanged) {
       if (wantHome) this.home(true)
       if (wantFocus) this.focus(s.focusRequest.ids)
       return
     }
     this.dirty = true
+    const batches = this.batches
+    if (boostChanged) this.updateBoost()
 
     if (sectionChanged) {
       const sec = s.section
@@ -370,43 +435,40 @@ export class Viewer {
         this.plane.constant = this.planeEq.constant
       }
       this.root.enabled = sec.enabled
-      this.materials.setCapped(sec.enabled)
+      batches?.setCapped(sec.enabled)
     }
 
+    const parts = this.graph.parts
     if (explodeChanged) {
       computeExplode(this.graph, s.explode, s.explodeSelectionOnly ? s.selection.set : null, this.offsets)
-      for (let i = 0; i < this.entries.length; i++) {
-        const e = this.entries[i]
-        if (!e) continue
-        for (let k = 0; k < e.meshes.length; k++) {
-          const m = e.meshes[k]!
-          const b = e.base[k]!.elements
-          const el = m.matrix.elements
-          el[12] = b[12]! + this.offsets[i * 3]!
-          el[13] = b[13]! + this.offsets[i * 3 + 1]!
-          el[14] = b[14]! + this.offsets[i * 3 + 2]!
-          m.matrixWorldNeedsUpdate = true
+      if (batches) {
+        for (let i = 0; i < parts.length; i++) {
+          const id = this.inst[i]!
+          if (id < 0) continue
+          const c = parts[i]!.centroid
+          const x = this.offsets[i * 3]!
+          const y = this.offsets[i * 3 + 1]!
+          const z = this.offsets[i * 3 + 2]!
+          batches.setOffset(id, x, y, z, c[0] + x, c[1] + y, c[2] + z)
         }
       }
     }
 
     if (displayChanged) {
-      for (const sys of this.graph.data.systems) {
-        this.materials.setSystemOpacity(sys.id, s.systems[sys.id]?.opacity ?? 1)
-      }
+      if (!p || p.colorMode !== s.colorMode) this.computeBaseColors(s)
       computeDisplay(
         this.graph,
         {
           systems: s.systems,
           peel: s.peel,
           hidden: s.hidden,
+          provenanceHidden: s.provenanceHidden,
           isolated: s.isolated,
           adjacentMode: s.adjacentMode,
           selected: s.selection.set,
         },
         this.display,
       )
-      const parts = this.graph.parts
       for (let i = 0; i < parts.length; i++) this.applyPart(i, parts[i]!, s)
     } else if (hoverChanged) {
       for (const id of [p?.hover, s.hover]) {
@@ -420,50 +482,185 @@ export class Viewer {
     if (wantFocus) this.focus(s.focusRequest.ids)
   }
 
+  /** Colour each part is drawn with before hover / selection tinting. */
+  private computeBaseColors(s: AppState): void {
+    const systemColor = new Map<SystemId, string>(this.graph.data.systems.map((x) => [x.id, x.color]))
+    this.graph.parts.forEach((part, i) => {
+      const hex =
+        s.colorMode === 'source'
+          ? provenanceColor(part.provenance, this.graph.sourceOrdinal(part))
+          : (TISSUE_COLOR[part.tissue] ?? systemColor.get(part.system) ?? '#9aa3ad')
+      this.baseColor[i]!.set(hex)
+    })
+  }
+
+  private readonly tmpColor = new Color()
+
   private applyPart(i: number, part: Part, s: AppState): void {
-    const e = this.entries[i]
+    const id = this.inst[i]!
     const d = this.display[i]!
     const selected = s.selection.set.has(part.id)
-    this.pickable[i] =
-      e && d === NORMAL && (selected || this.materials.effectiveOpacity(part.system, part.tissue) >= PICK_OPACITY) ? 1 : 0
-    if (!e) return
-    let material: Material
-    if (d === GHOST) material = this.materials.ghost
-    else {
-      const variant: Variant = selected ? 'selected' : s.hover === part.id ? 'hover' : 'base'
-      material = this.materials.get(part.system, part.tissue, variant)
-    }
-    for (const m of e.meshes) {
-      m.visible = d !== HIDDEN
-      if (m.material !== material) m.material = material
+    // tissue default × the system's slider; in colour-by-source mode see-through tissues are
+    // lifted a little so their colour can be read
+    let opacity = (TISSUE_OPACITY[part.tissue] ?? 1) * (s.systems[part.system]?.opacity ?? 1)
+    if (s.colorMode === 'source' && TISSUE_OPACITY[part.tissue] !== undefined) opacity = Math.min(1, opacity * 1.6)
+    if (selected) opacity = 1 // a selected part is shown solid so it can be found
+    this.pickable[i] = id >= 0 && d === NORMAL && opacity >= PICK_OPACITY ? 1 : 0
+    this.solid[i] = d === NORMAL && opacity >= 0.999 ? 1 : 0
+    const batches = this.batches
+    if (id < 0 || !batches) return
+    if (d === HIDDEN) {
+      batches.setState(id, MODE_HIDDEN, 0, 0, 0, 0)
+    } else if (d === GHOST) {
+      batches.setState(id, MODE_BLEND, GHOST_RGB.r, GHOST_RGB.g, GHOST_RGB.b, GHOST_OPACITY)
+    } else {
+      const c = this.tmpColor.copy(this.baseColor[i]!)
+      if (selected) c.lerp(ACCENT_RGB, 0.6)
+      else if (s.hover === part.id) c.lerp(WHITE, 0.32)
+      batches.setState(id, opacity >= 0.999 ? MODE_OPAQUE : MODE_BLEND, c.r, c.g, c.b, opacity)
     }
     // selected parts also get a faint tint drawn through whatever covers them
-    const xray = selected && s.selection.ids.length <= XRAY_MAX
-    if (xray && !e.xray) {
-      e.xray = e.meshes.map((m) => {
-        const x = new Mesh(m.geometry, this.materials.xray)
-        x.renderOrder = 10
-        x.matrixAutoUpdate = false
-        m.add(x)
-        return x
-      })
-    }
-    if (e.xray) for (const x of e.xray) x.visible = xray
+    batches.setXray(id, d !== HIDDEN && selected && s.selection.ids.length <= XRAY_MAX)
   }
 
   // ------------------------------------------------------------ picking
 
-  /** Part under the given client coordinates, or null. Honours visibility and the section plane. */
-  pick(clientX: number, clientY: number): string | null {
+  /**
+   * Part under the given client coordinates, or null. Honours visibility and the section
+   * plane. Thin parts (nerves, small vessels) are picked within `tolerancePx` of the
+   * pointer when they are not hidden behind the surface under it; pass 0 for an exact pick.
+   */
+  pick(clientX: number, clientY: number, tolerancePx: number = THIN_PICK_PX[this.lastPointerType]): string | null {
     if (this.syncNeeded) this.sync()
     const rect = this.renderer.domElement.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return null
-    this.ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1)
     this.camera.updateMatrixWorld()
+    const parts = this.graph.parts
+    const exact = this.cast(clientX, clientY, rect, null)
+    if (tolerancePx <= 0 || this.thinParts.length === 0) return exact ? parts[exact.part]!.id : null
+    if (exact && this.radius[exact.part]! < THIN_RADIUS && this.radius[exact.part]! > 0) return parts[exact.part]!.id
+
+    // thin parts whose surface passes within the tolerance of the pointer, nearest on screen first
+    const near = this.nearThin(clientX, clientY, rect, tolerancePx)
+    for (let k = 0; k < near.length && k < 4; k++) {
+      const c = near[k]!
+      // it must be what is actually visible where it passes the pointer, not something behind a neighbour
+      this.tmpV.copy(c.point).project(this.camera)
+      const cx = rect.left + ((this.tmpV.x + 1) / 2) * rect.width
+      const cy = rect.top + ((1 - this.tmpV.y) / 2) * rect.height
+      const front = this.cast(cx, cy, rect, null)
+      if (!front || front.part === c.part || front.distance >= c.distance - THIN_DEPTH_SLACK) return parts[c.part]!.id
+    }
+    return exact ? parts[exact.part]!.id : null
+  }
+
+  private readonly tmpV = new Vector3()
+  private readonly tmpBox = new Box3()
+  private readonly tmpSeg = new Line3()
+  private readonly tmpOnTri = new Vector3()
+  private readonly tmpOnSeg = new Vector3()
+
+  /**
+   * Thin pickable parts whose surface comes within `tolerancePx` (on screen) of the ray
+   * through a pixel, sorted by that on-screen distance. This measures the true distance from
+   * the ray to the mesh (BVH shapecast), so a nerve half a pixel wide cannot slip between samples.
+   */
+  private nearThin(clientX: number, clientY: number, rect: DOMRect, tolerancePx: number): { part: number; px: number; distance: number; point: Vector3 }[] {
+    this.ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1)
     this.raycaster.setFromCamera(this.ndc, this.camera)
-    const ray = this.raycaster.ray
-    const o = ray.origin
-    const d = ray.direction
+    const o = this.raycaster.ray.origin.clone()
+    const d = this.raycaster.ray.direction.clone()
+    let near = 0
+    let far = 50
+    if (this.planeEq) {
+      const span = clipRay([o.x, o.y, o.z], [d.x, d.y, d.z], this.planeEq)
+      if (!span) return []
+      near = span[0]
+      far = Math.min(far, span[1])
+    }
+    // world size of one CSS pixel at one metre from the camera
+    const perMetre = (2 * Math.tan((this.camera.fov * Math.PI) / 360)) / rect.height
+    const parts = this.graph.parts
+    const out: { part: number; px: number; distance: number; point: Vector3 }[] = []
+    const ray = this.localRay
+    for (const i of this.thinParts) {
+      if (!this.pickable[i]) continue
+      const b = parts[i]!.bbox
+      const ox = this.offsets[i * 3]!
+      const oy = this.offsets[i * 3 + 1]!
+      const oz = this.offsets[i * 3 + 2]!
+      // broad phase: the ray against the part's box grown by the tolerance at the box's far side
+      const cxm = (b[0] + b[3]) / 2 + ox - o.x
+      const cym = (b[1] + b[4]) / 2 + oy - o.y
+      const czm = (b[2] + b[5]) / 2 + oz - o.z
+      const reach = Math.hypot(cxm, cym, czm) + Math.hypot(b[3] - b[0], b[4] - b[1], b[5] - b[2]) / 2
+      const pad = tolerancePx * perMetre * reach + 0.001
+      this.tmpBox.min.set(b[0] + ox - pad, b[1] + oy - pad, b[2] + oz - pad)
+      this.tmpBox.max.set(b[3] + ox + pad, b[4] + oy + pad, b[5] + oz + pad)
+      if (!this.raycaster.ray.intersectsBox(this.tmpBox)) continue
+
+      // exact phase in the part's frame (world minus its explode offset)
+      ray.origin.set(o.x - ox, o.y - oy, o.z - oz)
+      ray.direction.copy(d)
+      const t1 = Math.min(far, reach + pad)
+      if (t1 <= near) continue
+      this.tmpSeg.start.copy(ray.origin).addScaledVector(d, near)
+      this.tmpSeg.end.copy(ray.origin).addScaledVector(d, t1)
+      let bestPx = tolerancePx
+      let bestDist = 0
+      let found = false
+      const point = new Vector3()
+      this.bvhFor(i).shapecast({
+        intersectsBounds: (box) => {
+          const grow = bestPx * perMetre * reach
+          this.tmpBox.copy(box).expandByScalar(grow)
+          return ray.intersectsBox(this.tmpBox)
+        },
+        intersectsTriangle: (tri) => {
+          const gap = tri.closestPointToSegment(this.tmpSeg, this.tmpOnTri, this.tmpOnSeg)
+          const along = this.tmpOnSeg.distanceTo(ray.origin)
+          const px = gap / (perMetre * Math.max(along, 1e-4))
+          if (px < bestPx) {
+            bestPx = px
+            bestDist = this.tmpOnTri.distanceTo(ray.origin)
+            point.copy(this.tmpOnTri)
+            found = true
+          }
+          return false
+        },
+      })
+      if (found) out.push({ part: i, px: bestPx, distance: bestDist, point: point.set(point.x + ox, point.y + oy, point.z + oz) })
+    }
+    return out.sort((x, y) => x.px - y.px || x.distance - y.distance)
+  }
+
+  /** Exact hit under a pixel with its distance from the camera (debug / verification). */
+  probe(clientX: number, clientY: number): { id: string; distance: number } | null {
+    if (this.syncNeeded) this.sync()
+    this.camera.updateMatrixWorld()
+    const h = this.cast(clientX, clientY, this.renderer.domElement.getBoundingClientRect(), null)
+    return h ? { id: this.graph.parts[h.part]!.id, distance: h.distance } : null
+  }
+
+  /** Jump the camera to its focus target immediately (verification; normally it tweens). */
+  focusNow(ids: readonly string[] | null = null): void {
+    if (this.syncNeeded) this.sync()
+    this.focus(ids)
+    if (this.tween) {
+      this.camera.position.copy(this.tween.toPos)
+      this.controls.target.copy(this.tween.toTarget)
+      this.tween = null
+      this.controls.update()
+    }
+    this.camera.updateMatrixWorld()
+  }
+
+  /** Nearest hit along the ray through a pixel, among `only` (part indices) or all pickable parts. */
+  private cast(clientX: number, clientY: number, rect: DOMRect, only: readonly number[] | null): { part: number; distance: number } | null {
+    this.ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1)
+    this.raycaster.setFromCamera(this.ndc, this.camera)
+    const o = this.raycaster.ray.origin
+    const d = this.raycaster.ray.direction
     let near = 0
     let far = Infinity
     if (this.planeEq) {
@@ -471,25 +668,22 @@ export class Viewer {
       if (!span) return null
       ;[near, far] = span
     }
-    this.raycaster.near = near
-    this.raycaster.far = far
 
-    // broad phase: ray vs each pickable part's (exploded) bounding box
+    // broad phase: ray vs each candidate's (exploded) bounding box
     const parts = this.graph.parts
     const cand: number[] = []
     const candT: number[] = []
     const pad = 0.002
-    for (let i = 0; i < parts.length; i++) {
+    const n = only ? only.length : parts.length
+    for (let k = 0; k < n; k++) {
+      const i = only ? only[k]! : k
       if (!this.pickable[i]) continue
       const b = parts[i]!.bbox
-      const ox = this.offsets[i * 3]!
-      const oy = this.offsets[i * 3 + 1]!
-      const oz = this.offsets[i * 3 + 2]!
       let t0 = near
       let t1 = far
       let hit = true
       for (let a = 0; a < 3 && hit; a++) {
-        const off = a === 0 ? ox : a === 1 ? oy : oz
+        const off = this.offsets[i * 3 + a]!
         const oa = a === 0 ? o.x : a === 1 ? o.y : o.z
         const da = a === 0 ? d.x : a === 1 ? d.y : d.z
         const lo = b[a]! + off - pad
@@ -514,31 +708,29 @@ export class Viewer {
 
     let best = Infinity
     let bestPart = -1
+    const capped = this.batches?.isCapped ?? false
     for (const k of order) {
       if (candT[k]! > best) break
       const i = cand[k]!
-      const e = this.entries[i]!
-      for (let m = 0; m < e.meshes.length; m++) {
-        const mesh = e.meshes[m]!
-        mesh.updateMatrixWorld()
-        this.hits.length = 0
-        this.bvhFor(e, m).raycastObject3D(mesh, this.raycaster, this.hits)
-        const h = this.hits[0]
-        if (h && h.distance < best) {
-          best = h.distance
-          bestPart = i
-        }
+      // geometry is baked in world space, so the part's frame is just the explode translation
+      this.localRay.origin.set(o.x - this.offsets[i * 3]!, o.y - this.offsets[i * 3 + 1]!, o.z - this.offsets[i * 3 + 2]!)
+      this.localRay.direction.copy(d)
+      // with a section on, an opaque part's back faces are drawn (the filled cut), so they are pickable
+      const h = this.bvhFor(i).raycastFirst(this.localRay, capped && this.solid[i] ? DoubleSide : FrontSide, near, Math.min(far, best))
+      if (h && h.distance < best) {
+        best = h.distance
+        bestPart = i
       }
     }
-    return bestPart >= 0 ? parts[bestPart]!.id : null
+    return bestPart >= 0 ? { part: bestPart, distance: best } : null
   }
 
-  private bvhFor(e: PartEntry, m: number): MeshBVH {
-    let bvh = e.bvh[m]
+  private bvhFor(i: number): MeshBVH {
+    let bvh = this.bvh[i]
     if (!bvh) {
-      // indirect: leave the index buffer alone (it is already on the GPU, in cache order)
-      bvh = new MeshBVH(e.meshes[m]!.geometry as BufferGeometry, { indirect: true })
-      e.bvh[m] = bvh
+      // indirect: the index buffer is the batch's own (already on the GPU) and must not be reordered
+      bvh = new MeshBVH(this.batches!.pickGeometry(this.inst[i]!), { indirect: true })
+      this.bvh[i] = bvh
       this.bvhBuilt++
     }
     return bvh
@@ -548,9 +740,8 @@ export class Viewer {
   private buildBvhs(budgetMs: number): void {
     const t0 = performance.now()
     while (this.bvhQueue.length && performance.now() - t0 < budgetMs) {
-      const [i, m] = this.bvhQueue.pop()!
-      const e = this.entries[i]
-      if (e && !e.bvh[m]) this.bvhFor(e, m)
+      const i = this.bvhQueue.pop()!
+      if (!this.bvh[i]) this.bvhFor(i)
     }
   }
 
@@ -627,6 +818,7 @@ export class Viewer {
     this.renderer.setSize(w, h, false)
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
+    this.updateBoost()
     this.dirty = true
   }
 
@@ -635,6 +827,7 @@ export class Viewer {
   private onContextMenu = (e: Event): void => e.preventDefault()
 
   private onPointerDown = (e: PointerEvent): void => {
+    this.lastPointerType = e.pointerType === 'mouse' ? 'mouse' : 'touch'
     this.pointers.add(e.pointerId)
     this.onPointer?.(null)
     this.down =
@@ -674,6 +867,7 @@ export class Viewer {
 
   private onPointerMove = (e: PointerEvent): void => {
     if (e.pointerType !== 'mouse' || e.buttons !== 0) return
+    this.lastPointerType = 'mouse'
     this.hoverXY = { x: e.clientX, y: e.clientY }
     this.onPointer?.({ x: e.clientX, y: e.clientY })
   }
@@ -713,6 +907,7 @@ export class Viewer {
       this.dirty = false
       const r0 = performance.now()
       this.renderer.info.reset()
+      this.batches?.beforeRender(this.camera)
       this.renderer.render(this.scene, this.camera)
       const dt = performance.now() - r0
       this.statFrames++
@@ -755,7 +950,7 @@ export class Viewer {
       renderCpuMs: round(this.stat.renderCpuMs),
       drawCalls: info.drawCalls,
       triangles: info.triangles,
-      meshes: this.root.children.length,
+      meshes: this.batches?.size ?? 0,
       bvhBuilt: this.bvhBuilt,
       bvhTotal: this.bvhTotal,
     }
@@ -785,7 +980,7 @@ export class Viewer {
         const info = this.renderer.info.render as { drawCalls: number; triangles: number }
         const size = this.renderer.getSize(new Vector2())
         let visible = 0
-        for (let i = 0; i < this.display.length; i++) if (this.display[i] !== HIDDEN && this.entries[i]) visible++
+        for (let i = 0; i < this.display.length; i++) if (this.display[i] !== HIDDEN && this.inst[i]! >= 0) visible++
         resolve({
           backend: this.backend,
           seconds,
@@ -835,6 +1030,7 @@ export class Viewer {
       step()
       const t0 = performance.now()
       this.renderer.info.reset()
+      this.batches?.beforeRender(this.camera)
       this.renderer.render(this.scene, this.camera)
       cpu += performance.now() - t0
       await gpuDone()
@@ -846,7 +1042,7 @@ export class Viewer {
     const avg = times.reduce((a, b) => a + b, 0) / times.length
     const size = this.renderer.getDrawingBufferSize(new Vector2())
     let visible = 0
-    for (let i = 0; i < this.display.length; i++) if (this.display[i] !== HIDDEN && this.entries[i]) visible++
+    for (let i = 0; i < this.display.length; i++) if (this.display[i] !== HIDDEN && this.inst[i]! >= 0) visible++
     return {
       backend: this.backend,
       frames,
@@ -874,24 +1070,25 @@ export class Viewer {
   }
 
   /** Display state of a part as the scene currently has it. */
-  displayOf(partId: string): { state: 'hidden' | 'normal' | 'ghost'; pickable: boolean; hasGeometry: boolean; material: string } | null {
+  displayOf(partId: string): { state: 'hidden' | 'normal' | 'ghost'; pickable: boolean; hasGeometry: boolean; thin: boolean; radiusMm: number } | null {
     const i = this.graph.indexOf(partId)
     if (i < 0) return null
     if (this.syncNeeded) this.sync()
     const d = this.display[i]
-    const e = this.entries[i]
+    const r = this.radius[i]!
     return {
       state: d === HIDDEN ? 'hidden' : d === GHOST ? 'ghost' : 'normal',
       pickable: !!this.pickable[i],
-      hasGeometry: !!e,
-      material: e ? ((e.meshes[0]!.material as Material).name || 'ghost') : '',
+      hasGeometry: this.inst[i]! >= 0,
+      thin: r > 0 && r < THIN_RADIUS,
+      radiusMm: Math.round(r * 1e5) / 100,
     }
   }
 
   systemsLoaded(): SystemId[] {
     const seen = new Set<SystemId>()
     this.graph.parts.forEach((p, i) => {
-      if (this.entries[i]) seen.add(p.system)
+      if (this.inst[i]! >= 0) seen.add(p.system)
     })
     return [...seen]
   }

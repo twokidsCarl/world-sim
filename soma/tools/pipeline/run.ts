@@ -5,7 +5,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { AnatomyData, Part, Provenance, SourceInfo, SystemDef, SystemId, TissueId } from '../../src/anatomy/types.ts'
+import type { AnatomyData, NervePath, Part, Provenance, SourceInfo, SystemDef, SystemId, TissueId } from '../../src/anatomy/types.ts'
 import { computeAdjacency } from './adjacency.ts'
 import { classify, sideFromName, sideOf, type Classification } from './classify.ts'
 import { SIDE_OVERRIDES, SWAPPED_LABELS } from './corrections.ts'
@@ -13,7 +13,12 @@ import { computeExposure, type ExposureRole } from './exposure.ts'
 import { compareNormals, computeNormals, measure, rotateToRuntime, simplifyMesh, sourceToRuntime, weld, type Mesh, type MeshStats } from './geometry.ts'
 import { writeSystemGlb, type GlbPart } from './glb.ts'
 import { depthOf, EXPOSURE_MAX_DISTANCE, LAYERS, SUPERFICIAL_EXPOSURE, usesExposure } from './layers.ts'
-import { contentsInside, crossValidate, evaluateCandidates, IMPORT3_DEFAULTS, pairStructures, placeConcept, register3to4, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
+import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT3_DEFAULTS, overlapWith, pairStructures, placeConcept, pushOutOfSolids, register3to4, SOLID_TISSUES, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
+import { canalFor, isaPathFromFma, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type TreePath } from './importZa.ts'
+import { nerveAgreement, runLandmarkChecks, type LandmarkResult } from './landmarks.ts'
+import { InsideTester, surfacePoints, thinPoints } from './register.ts'
+import type { Polyline } from './tube.ts'
+import { displayName, hasZa, loadFmaNames, loadZa, type ZaItem } from './zanatomy.ts'
 import { parseObj } from './obj.ts'
 import { hasRelease3, loadRelease3, RAW3_DIR } from './release3.ts'
 import { listObjFiles, loadTables, RAW_DIR } from './source.ts'
@@ -75,6 +80,33 @@ const SOURCE3: SourceInfo = {
   license: 'CC BY-SA 2.1 JP',
   attribution: 'BodyParts3D, Copyright© The Database Center for Life Science licensed by CC Attribution-Share Alike 2.1 Japan',
 }
+const ZA_NOTE = ' Artist-modelled atlas geometry, non-rigidly registered to the BodyParts3D 4.0 body by this project (nerve tubes rebuilt from the registered centrelines); positions are approximate.'
+const SOURCE_ZA: SourceInfo = {
+  name: 'Z-Anatomy',
+  url: 'https://github.com/Z-Anatomy/Models-of-human-anatomy',
+  license: 'CC BY-SA 4.0',
+  attribution: 'Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0 (based on BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan).' + ZA_NOTE,
+}
+const SOURCE_O3D: SourceInfo = {
+  name: 'Open3DModel',
+  url: 'https://anatomytool.org/open3dmodel',
+  license: 'CC BY-SA 4.0',
+  attribution: 'Open3DModel, Open 3D Model project (LUMC, UMC Utrecht, Maastricht UMC+, KU Leuven KULAK), anatomytool.org - CC BY-SA 4.0; based on Z-Anatomy and BodyParts3D.' + ZA_NOTE,
+}
+/** A nerve is not shipped when, after clean-up, more than this share of its length is in bone it has no business in … */
+const NERVE_MAX_IN_BONE = 0.15
+/** … or deep inside muscle bellies. */
+const NERVE_MAX_DEEP_IN_MUSCLE = 0.4
+/** A Z-Anatomy mesh is not shipped with more than this share of its surface inside existing solids. */
+const ZA_MAX_INSIDE = 0.6
+/** IS-A concept (by name) for Z-Anatomy items whose FMA chain does not meet the 4.0 tree or that have no FMA id. */
+const ZA_FALLBACK_ISA: Record<string, string> = {
+  nerve: 'segment of neural tree organ',
+  ligament: 'ligament organ',
+  fascia: 'organ component',
+  gland: 'organ',
+  organ: 'organ component',
+}
 const SOURCE: SourceInfo = {
   name: 'BodyParts3D 4.0',
   url: 'https://dbarchive.biosciencedbc.jp/en/bodyparts3d/',
@@ -97,6 +129,14 @@ interface Element {
   provenance: Provenance
   /** set for parts imported from release 3.0 */
   placement?: Placement
+  /** `SourceInfo.name` when the geometry is not from the first source */
+  source?: string
+  /** tree positions of parts imported from the Z-Anatomy package */
+  tree?: { isa: TreePath; partOf: TreePath | null }
+  /** final centrelines of nerve parts (written to nerves.json) */
+  centrelines?: Polyline[]
+  /** geometry was built to measure (nerve tubes): do not run the simplifier over it */
+  keepGeometry?: boolean
 }
 
 const capitalise = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s)
@@ -111,7 +151,7 @@ async function main() {
   const classifyOnly = args.includes('--classify-only')
   const t0 = performance.now()
   const lap = (label: string) => console.log(`  [${((performance.now() - t0) / 1000).toFixed(1)}s] ${label}`)
-  const report: Record<string, unknown> = { generatedAt: new Date().toISOString() }
+  const report: Record<string, unknown> = {}
 
   // ── 1. Tables and files ─────────────────────────────────────────────────────────────────────
   const tables = loadTables()
@@ -369,7 +409,7 @@ async function main() {
       const pl = placements.get(c.part.id)!
       imported.push({
         id: R3_PREFIX + c.part.id, name: capitalise(c.part.name), fma: pl.fma, mesh: c.mesh, stats: c.stats, sourceTriangles: c.part.sourceTriangles,
-        cls: classOf.get(c.part.id)!, isa: pl.isa, partOf: pl.partOf, provenance: 'warped', placement: pl,
+        cls: classOf.get(c.part.id)!, isa: pl.isa, partOf: pl.partOf, provenance: 'warped', placement: pl, source: SOURCE3.name,
       })
     }
     const viaAncestor = imported.filter((e) => e.placement!.isaViaAncestor && !e.placement!.isaByHand)
@@ -393,6 +433,282 @@ async function main() {
       candidates: candidates.map((c) => ({ ...c.report, class: `${classOf.get(c.part.id)!.system}/${classOf.get(c.part.id)!.tissue}`, rule: classOf.get(c.part.id)!.rule })),
     }
     kept.push(...imported)
+  }
+
+  // ── 3c. Z-Anatomy / Open3DModel import (nerves, lymph nodes, thyroid, ligaments, fasciae) ────
+  const importedZa: Element[] = []
+  let landmarks: LandmarkResult[] = []
+  if (!hasZa()) {
+    console.log('\n  WARNING Z-Anatomy import package not found (data/raw/z-anatomy/out/import): no peripheral nerves, lymph nodes, thyroid or joint ligaments')
+    report.zAnatomy = { available: false }
+  } else {
+    const pkg = loadZa()
+    const fmaNames = loadFmaNames()
+    const existing: ExistingPart[] = kept.map((e) => ({ id: e.id, fma: e.fma, name: e.name, mesh: e.mesh, stats: e.stats, system: e.cls.system, tissue: e.cls.tissue }))
+    const field = new SurfaceField(existing)
+    const reg = registerZa(pkg, field)
+    const regStats = reg.stats()
+    const cv = reg.crossValidate()
+    lap(`Z-Anatomy package: ${pkg.items.filter((i) => !i.candidate).length} items, ${pkg.anchors.length} anchors (${reg.anchorsUsed} used); registered`)
+    const mm = (v: number) => (v * 1000).toFixed(1)
+    const q = (v: number[], p: number) => quantile([...v].sort((a, b) => a - b), p)
+    console.log('\nZ-Anatomy / Open3DModel registration (one deformation per source frame and body side; mm)')
+    console.log(`  ${pad('frame:side', 12)}${pad('anchors', 9)}${pad('own bone', 10)}${pad('own soft', 10)}${pad('from za', 9)}${pad('points', 9)}${pad('residual at anchors med/p90/max', 34)}leave-out error: bone med/p90/max | soft med/p90/max`)
+    const regRows: Record<string, unknown>[] = []
+    for (const [key, st] of Object.entries(regStats)) {
+      const [frame, side] = key.split(':') as [string, string]
+      const of = (cls: string) => cv.filter((x) => x.frame === frame && x.side === side && x.anchorClass === cls).map((x) => x.error)
+      const fmt = (v: number[]) => (v.length ? `${mm(q(v, 0.5))} / ${mm(q(v, 0.9))} / ${mm(Math.max(...v))} (n=${v.length})` : '-')
+      console.log(`  ${pad(key, 12)}${pad(st.structures, 9)}${pad(st.bone, 10)}${pad(st.soft, 10)}${pad(st.crossFrame, 9)}${pad(st.points, 9)}${pad(`${mm(st.residualMedian)} / ${mm(st.residualP90)} / ${mm(st.residualMax)}`, 34)}${fmt(of('bone'))} | ${fmt(of('soft'))}`)
+      regRows.push({ key, ...st, residualMedian: round(st.residualMedian), residualP90: round(st.residualP90), residualMax: round(st.residualMax), leaveOutBoneMm: fmt(of('bone')), leaveOutSoftMm: fmt(of('soft')) })
+    }
+    const worst = [...cv].sort((a, b) => b.error - a.error).slice(0, 8)
+    console.log(`  worst leave-out: ${worst.map((x) => `${x.frame}:${x.side} ${x.name} ${mm(x.error)}`).join(', ')}`)
+    if (reg.anchorsSkipped.length) console.log(`  anchors skipped: ${reg.anchorsSkipped.map((a) => `${a.name} ${a.side} (${a.reason})`).join('; ')}`)
+
+    const sourceName = (it: ZaItem) => (it.source === 'open3dmodel' ? SOURCE_O3D.name : SOURCE_ZA.name)
+    const fmaTaken = new Map<string, Element[]>()
+    for (const e of kept) fmaTaken.set(e.fma, [...(fmaTaken.get(e.fma) ?? []), e])
+    const nameTaken = new Map(kept.map((e) => [e.name.toLowerCase(), e]))
+    const isaIdByName = new Map<string, string>()
+    for (const [id, n] of tables.isa.name) if (!isaIdByName.has(n)) isaIdByName.set(n, id)
+    const dropped: { id: string; name: string; kind: string; reason: string }[] = []
+    const treeOf = (it: ZaItem, tissue: TissueId): { fma: string; tree: Element['tree'] } => {
+      const fallbackName = ZA_FALLBACK_ISA[tissue] ?? 'organ component'
+      const fallback = isaIdByName.get(fallbackName) ?? null
+      const inIsa = (id: string) => tables.isa.name.has(id)
+      let fma: string
+      let isa: TreePath
+      if (it.fma) {
+        fma = it.fma
+        isa = isaPathFromFma(fma, fmaNames?.label.get(fma) ?? it.fmaLabel ?? displayName(it.name, it.side), (id) => fmaNames?.parents.get(id), (id) => fmaNames?.label.get(id), inIsa, fallback)
+      } else {
+        // no FMA class: a synthetic concept, sided under an unsided one
+        fma = syntheticConceptId(it.name, it.side)
+        const path: [string, string][] = [[fma, displayName(it.name, it.side).replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase())]]
+        if (it.side !== 'M') path.push([syntheticConceptId(it.name, 'M'), displayName(it.name, 'M').replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase())])
+        isa = { path, anchor: fallback, how: 'by hand' }
+      }
+      const partOf: TreePath | null = tables.partOf.name.has(fma) ? { path: [], anchor: fma, how: 'own concept' } : null
+      return { fma, tree: { isa, partOf } }
+    }
+    const classOf = (it: ZaItem): { system: SystemId; tissue: TissueId } => {
+      if (it.kind === 'nerve') return { system: 'nervous', tissue: 'nerve' }
+      // the package files the meniscotibial / meniscopatellar ligaments as cartilage
+      if (it.category === 'ligament-bursa-fascia' && it.tissue === 'cartilage') return { system: 'skeletal', tissue: 'ligament' }
+      return { system: it.system as SystemId, tissue: it.tissue as TissueId }
+    }
+    const makeElement = (it: ZaItem, mesh: Mesh, extra: Partial<Element> = {}): Element => {
+      const cls = classOf(it)
+      const { fma, tree } = treeOf(it, cls.tissue)
+      return {
+        id: it.id, name: displayName(it.name, it.side), fma, mesh, stats: measure(mesh), sourceTriangles: it.triangles,
+        cls: { ...cls, rule: 'Z-Anatomy package', signal: 'isa' }, isa: [], partOf: [], provenance: 'curated', source: sourceName(it), tree, ...extra,
+      }
+    }
+
+    // nerves
+    const nerveItems = pkg.items.filter((i) => i.kind === 'nerve' && !i.candidate && i.preferred)
+    const nerveRows: Record<string, unknown>[] = []
+    const agreement: Record<string, unknown>[] = []
+    let lenAll = 0
+    let boneBefore = 0
+    let boneAfter = 0
+    let muscleBefore = 0
+    let muscleAfter = 0
+    let canalAll = 0
+    let ptsAll = 0
+    let ptsMoved = 0
+    let ptsBone = 0
+    let pushSum = 0
+    for (const it of nerveItems) {
+      const name = displayName(it.name, it.side)
+      const def = reg.deformation(it.frame, it.side)
+      const lines = pkg.centreline(it)
+      const warpedLines = lines && lines.length ? warpNerve(lines, def, field, { ...NERVE_BUILD_DEFAULTS, canal: canalFor(it.name) }) : null
+      // BodyParts3D already has this nerve: keep its part, drop the import, but measure agreement
+      const same = (it.fma ? fmaTaken.get(it.fma) : undefined) ?? (nameTaken.has(name.toLowerCase()) ? [nameTaken.get(name.toLowerCase())!] : undefined)
+      if (same && same.length) {
+        if (warpedLines) {
+          for (const e of same) {
+            const a = nerveAgreement(e.mesh, warpedLines.branches)
+            agreement.push({ imported: name, source: sourceName(it), existing: `${e.id} ${e.name}`, medianMm: round(a.median * 1000, 2), maxMm: round(a.max * 1000, 2), within5mm: round(a.overlap, 3) })
+          }
+        }
+        dropped.push({ id: it.id, name, kind: 'nerve', reason: `BodyParts3D 4.0 already has it (${same.map((e) => e.id).join(', ')})` })
+        continue
+      }
+      if (warpedLines && warpedLines.mesh && !it.centrelineIncomplete) {
+        const w = warpedLines
+        lenAll += w.before.length
+        boneBefore += w.before.inBone * w.before.length
+        boneAfter += w.after.inBone * w.after.length
+        muscleBefore += w.before.deepInMuscle * w.before.length
+        muscleAfter += w.after.deepInMuscle * w.after.length
+        canalAll += w.after.inCanal * w.after.length
+        ptsAll += w.points
+        ptsMoved += w.pushed
+        ptsBone += w.pushedOutOfBone
+        pushSum += w.meanPush * w.pushed
+        const row = {
+          id: it.id, name, source: sourceName(it), lengthMm: round(w.after.length * 1000, 1), inBoneBefore: round(w.before.inBone, 4), inBoneAfter: round(w.after.inBone, 4), inCanal: round(w.after.inCanal, 4),
+          deepInMuscleBefore: round(w.before.deepInMuscle, 4), deepInMuscleAfter: round(w.after.deepInMuscle, 4), pointsMoved: round(w.pushed / Math.max(1, w.points), 4), meanPushMm: round(w.meanPush * 1000, 2),
+          bones: w.after.bones.map(([n, l]) => [n, round(l * 1000, 1)]), muscles: w.after.muscles.map(([n, l]) => [n, round(l * 1000, 1)]),
+        }
+        nerveRows.push(row)
+        if (w.after.inBone > NERVE_MAX_IN_BONE || w.after.deepInMuscle > NERVE_MAX_DEEP_IN_MUSCLE) {
+          dropped.push({ id: it.id, name, kind: 'nerve', reason: `grossly misplaced: ${(w.after.inBone * 100).toFixed(0)}% of its length in bone (${w.after.bones.slice(0, 2).map(([n]) => n).join(', ') || '-'}), ${(w.after.deepInMuscle * 100).toFixed(0)}% deep in muscle (${w.after.muscles.slice(0, 2).map(([n]) => n).join(', ') || '-'})` })
+          continue
+        }
+        importedZa.push(makeElement(it, w.mesh!, { centrelines: w.branches, keepGeometry: true }))
+      } else {
+        // ganglia (no centreline) and the 8 nerves whose centrelines are incomplete: warp the mesh
+        if (!it.files?.mesh) continue
+        const src = pkg.mesh(it.files.mesh)
+        const w = weld(def.apply(src.positions), src.indices)
+        const mesh: Mesh = { positions: w.positions, indices: w.indices }
+        importedZa.push(makeElement(it, mesh, warpedLines ? { centrelines: warpedLines.branches } : {}))
+      }
+    }
+    lap(`warped ${nerveItems.length} nerves`)
+
+    // meshes
+    const isSolid = (i: number) => SOLID_TISSUES.includes(field.parts[i]!.tissue)
+    const isHard = (i: number) => HARD_TISSUES.includes(field.parts[i]!.tissue)
+    const warpMesh = (it: ZaItem) => {
+      const src = pkg.mesh(it.files!.mesh!)
+      const def = reg.deformation(it.frame, it.side)
+      const w = weld(def.apply(src.positions), src.indices)
+      const pre = measure({ positions: w.positions, indices: w.indices })
+      const push = pushOutOfSolids(w.positions, pre.bbox, field, isHard)
+      const mesh: Mesh = { positions: push.positions, indices: w.indices }
+      const stats = measure(mesh)
+      const ov = overlapWith(thinPoints(surfacePoints(mesh, 0.003), 0.002), stats.bbox, field, IMPORT3_DEFAULTS.nearDistance, IMPORT3_DEFAULTS.deepDistance, isSolid)
+      const byTissue: Record<string, number> = {}
+      for (const [i, f] of ov.inside) byTissue[field.parts[i]!.tissue] = round((byTissue[field.parts[i]!.tissue] ?? 0) + f, 4)
+      const top = [...ov.inside].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([i, f]) => `${field.parts[i]!.name} ${(f * 100).toFixed(0)}%`)
+      return { mesh, stats, inside: ov.insideAny, deep: ov.deepAny, byTissue, top, pushed: push.moved / Math.max(1, w.positions.length / 3), meanPush: push.meanPush }
+    }
+    const meshItems = pkg.items.filter((i) => i.kind === 'mesh' && !i.candidate && i.files?.mesh && ['endocrine', 'lymph', 'ligament-bursa-fascia'].includes(i.category ?? ''))
+    const meshRows: Record<string, unknown>[] = []
+    for (const it of meshItems) {
+      const name = displayName(it.name, it.side)
+      if (it.inBp3d40) {
+        dropped.push({ id: it.id, name, kind: it.category!, reason: 'flagged inBp3d40: the dataset already has this structure' })
+        continue
+      }
+      const same = (it.fma ? fmaTaken.get(it.fma) : undefined) ?? (nameTaken.has(name.toLowerCase()) ? [nameTaken.get(name.toLowerCase())!] : undefined)
+      if (same && same.length) {
+        dropped.push({ id: it.id, name, kind: it.category!, reason: `the dataset already has this concept (${same.map((e) => `${e.id} ${e.name}`).join(', ')})` })
+        continue
+      }
+      const w = warpMesh(it)
+      meshRows.push({ id: it.id, name, category: it.category, inside: round(w.inside, 4), deep: round(w.deep, 4), byTissue: w.byTissue, pushed: round(w.pushed, 4), top: w.top })
+      if (w.deep > IMPORT3_DEFAULTS.maxDeepInside || w.inside > ZA_MAX_INSIDE) {
+        dropped.push({ id: it.id, name, kind: it.category!, reason: `misplaced: ${(w.inside * 100).toFixed(0)}% of its surface inside existing solids, ${(w.deep * 100).toFixed(0)}% deeper than ${IMPORT3_DEFAULTS.deepDistance * 1000} mm (${w.top.join(', ')})` })
+        continue
+      }
+      importedZa.push(makeElement(it, w.mesh))
+    }
+    // twins share a verdict
+    {
+      const twin = (n: string) => n.replace(/^(Left|Right) /, (m) => (m === 'Left ' ? 'Right ' : 'Left '))
+      const gone = new Map(dropped.filter((d) => /misplaced/.test(d.reason)).map((d) => [d.name, d]))
+      for (let i = importedZa.length - 1; i >= 0; i--) {
+        const e = importedZa[i]!
+        const t = gone.get(twin(e.name))
+        if (!t || twin(e.name) === e.name) continue
+        dropped.push({ id: e.id, name: e.name, kind: t.kind, reason: `its twin "${t.name}" is misplaced` })
+        importedZa.splice(i, 1)
+      }
+    }
+    lap(`warped ${meshItems.length} Z-Anatomy meshes`)
+
+    // report
+    const pct = (v: number) => (v * 100).toFixed(2) + '%'
+    console.log(`\nNerves: ${nerveRows.length} tube nerves measured, ${(lenAll).toFixed(1)} m of centreline`)
+    console.log(`  in bone (canals/foramina excluded): ${pct(boneBefore / lenAll)} of length after registration → ${pct(boneAfter / lenAll)} after clean-up; in expected canals/foramina: ${pct(canalAll / lenAll)}`)
+    console.log(`  more than 3 mm deep in muscle: ${pct(muscleBefore / lenAll)} → ${pct(muscleAfter / lenAll)}`)
+    console.log(`  clean-up moved ${pct(ptsMoved / ptsAll)} of centreline points (${pct(ptsBone / ptsAll)} out of bone, the rest out of muscle bellies), mean ${mm(pushSum / Math.max(1, ptsMoved))} mm`)
+    const worstBone = [...nerveRows].sort((a, b) => (b.inBoneAfter as number) * (b.lengthMm as number) - (a.inBoneAfter as number) * (a.lengthMm as number)).slice(0, 8)
+    console.log(`  most bone left: ${worstBone.map((r) => `${r.name} ${((r.inBoneAfter as number) * 100).toFixed(0)}% (${(r.bones as [string, number][])[0]?.[0] ?? '-'})`).join('; ')}`)
+    const worstMuscle = [...nerveRows].sort((a, b) => (b.deepInMuscleAfter as number) - (a.deepInMuscleAfter as number)).slice(0, 8)
+    console.log(`  most muscle left: ${worstMuscle.map((r) => `${r.name} ${((r.deepInMuscleAfter as number) * 100).toFixed(0)}% (${(r.muscles as [string, number][])[0]?.[0] ?? '-'})`).join('; ')}`)
+    if (agreement.length) {
+      console.log('  imported nerves that BodyParts3D 4.0 already has (import dropped; distance from the BodyParts3D part to the imported centreline):')
+      for (const a of agreement) console.log(`    ${pad(a.imported as string, 34)}vs ${pad(a.existing as string, 30)}median ${a.medianMm} mm, max ${a.maxMm} mm, ${((a.within5mm as number) * 100).toFixed(0)}% within 5 mm`)
+    }
+
+    // fallback comparisons asked for: transversus abdominis (3.0 vs Z-Anatomy) and the pleura
+    const comparisons: Record<string, unknown>[] = []
+    console.log('\nZ-Anatomy fallbacks compared (not imported unless stated)')
+    for (const it of pkg.items.filter((i) => i.kind === 'mesh' && !i.candidate && i.files?.mesh && (/^Transversus abdominis/.test(i.name) || i.name === 'Pleura'))) {
+      const name = displayName(it.name, it.side)
+      // compare against everything except the 3.0 part it would replace
+      const w = warpMesh(it)
+      const r3 = kept.find((e) => e.id.startsWith(R3_PREFIX) && e.fma === it.fma)
+      const r3row = r3 ? (report.release3 as { candidates: { id: string; inside: number; deepInside: number; insideByTissue: Record<string, number> }[] }).candidates.find((c) => R3_PREFIX + c.id === r3.id) : undefined
+      console.log(`  ${pad(name, 34)}Z-Anatomy: inside ${(w.inside * 100).toFixed(1)}%, deep ${(w.deep * 100).toFixed(1)}%, by tissue ${JSON.stringify(w.byTissue)}, ${w.mesh.indices.length / 3} triangles${r3row ? ` | release 3.0 part: inside ${(r3row.inside * 100).toFixed(1)}%, deep ${(r3row.deepInside * 100).toFixed(1)}%, by tissue ${JSON.stringify(r3row.insideByTissue)}` : ''}`)
+      const row: Record<string, unknown> = { name, zAnatomy: { inside: round(w.inside, 4), deep: round(w.deep, 4), byTissue: w.byTissue, top: w.top }, release3: r3row ? { inside: r3row.inside, deep: r3row.deepInside, byTissue: r3row.insideByTissue } : null }
+      if (it.name === 'Pleura') {
+        const lobes = kept.filter((e) => /lobe of (left |right )?lung/i.test(e.name))
+        const tester = new InsideTester(w.mesh, 96)
+        let inside = 0
+        let total = 0
+        for (const l of lobes) {
+          const pts = thinPoints(surfacePoints(l.mesh, 0.004), 0.003)
+          inside += tester.fractionInside(pts) * pts.length
+          total += pts.length
+        }
+        const lungsInside = total ? inside / total : 0
+        console.log(`    lung lobes (${lobes.length}) inside the pleural surface: ${(lungsInside * 100).toFixed(1)}%`)
+        row.lungsInside = round(lungsInside, 4)
+      }
+      comparisons.push(row)
+    }
+
+    kept.push(...importedZa)
+    {
+      const meshByName = new Map<string, Mesh>()
+      const nerveByName = new Map<string, Polyline[]>()
+      for (const e of kept) {
+        if (!meshByName.has(e.name)) meshByName.set(e.name, e.mesh)
+        if (e.centrelines && !nerveByName.has(e.name)) nerveByName.set(e.name, e.centrelines)
+      }
+      landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null })
+      console.log('\nNerve landmark checks')
+      for (const r of landmarks) console.log(`  ${r.evaluated ? (r.pass ? 'PASS' : 'FAIL') : 'n/a '} ${r.side} ${pad(r.id, 20)}${r.measured}`)
+      console.log(`  ${landmarks.filter((r) => r.pass).length} pass, ${landmarks.filter((r) => r.evaluated && !r.pass).length} fail, ${landmarks.filter((r) => !r.evaluated).length} not evaluated`)
+      report.landmarks = landmarks
+    }
+    const kinds = new Map<string, number>()
+    for (const e of importedZa) {
+      const k = `${e.source} ${e.cls.system}/${e.cls.tissue}`
+      kinds.set(k, (kinds.get(k) ?? 0) + 1)
+    }
+    console.log(`\nImported from the Z-Anatomy package: ${importedZa.length} parts — ${[...kinds].sort().map(([k, v]) => `${k} ${v}`).join(', ')}`)
+    const reasons = new Map<string, string[]>()
+    for (const d of dropped) {
+      const key = d.reason.replace(/\(.*$/, '').replace(/:.*$/, '').trim()
+      reasons.set(key, [...(reasons.get(key) ?? []), d.name])
+    }
+    console.log(`  dropped ${dropped.length}:`)
+    for (const [k, v] of reasons) console.log(`    ${k} (${v.length}): ${v.slice(0, 40).join('; ')}${v.length > 40 ? '; …' : ''}`)
+    for (const d of dropped.filter((x) => /misplaced/.test(x.reason))) console.log(`      ${d.name}: ${d.reason}`)
+    const how = new Map<string, number>()
+    for (const e of importedZa) how.set(e.tree!.isa.how + (e.fma.startsWith('ZAC_') ? ' (synthetic id)' : ''), (how.get(e.tree!.isa.how + (e.fma.startsWith('ZAC_') ? ' (synthetic id)' : '')) ?? 0) + 1)
+    console.log(`  isa placement: ${[...how].map(([k, v]) => `${k} ${v}`).join(', ')}; partOf: ${importedZa.filter((e) => e.tree!.partOf).length} attached (own concept in the 4.0 partOf tree), ${importedZa.filter((e) => !e.tree!.partOf).length} not attached`)
+    report.zAnatomy = {
+      available: true, registration: regRows, anchorsUsed: reg.anchorsUsed, anchorsSkipped: reg.anchorsSkipped,
+      imported: Object.fromEntries([...kinds].sort()), dropped,
+      nerves: {
+        measured: nerveRows.length, lengthM: round(lenAll, 2), inBoneBefore: round(boneBefore / lenAll, 5), inBoneAfter: round(boneAfter / lenAll, 5), inCanal: round(canalAll / lenAll, 5),
+        deepInMuscleBefore: round(muscleBefore / lenAll, 5), deepInMuscleAfter: round(muscleAfter / lenAll, 5), pointsMoved: round(ptsMoved / ptsAll, 5), pointsMovedOutOfBone: round(ptsBone / ptsAll, 5), meanPushMm: round((pushSum / Math.max(1, ptsMoved)) * 1000, 2),
+        perNerve: nerveRows, agreementWithBodyParts3D: agreement,
+      },
+      meshes: meshRows, comparisons,
+      placement: importedZa.map((e) => ({ id: e.id, fma: e.fma, isaHow: e.tree!.isa.how, isaAnchor: e.tree!.isa.anchor ? tables.isa.name.get(e.tree!.isa.anchor) : null, isaPath: e.tree!.isa.path.map(([, n]) => n), partOf: !!e.tree!.partOf })),
+    }
   }
 
   // ── 4. Classification report ────────────────────────────────────────────────────────────────
@@ -452,6 +768,8 @@ async function main() {
   const roles: ExposureRole[] = kept.map((e) => {
     const { system, tissue } = e.cls
     if (system === 'integumentary') return e.isa.includes('skin') ? 'skin' : 'ignore'
+    // lymph nodes are too small to hide a muscle
+    if (system === 'lymphatic' && e.provenance === 'curated') return 'ignore'
     if (tissue === 'muscle' || tissue === 'bone' || tissue === 'cartilage' || tissue === 'organ' || tissue === 'brain' || tissue === 'heart' || tissue === 'gland' || tissue === 'tooth') return 'occluder'
     return 'ignore'
   })
@@ -530,7 +848,7 @@ async function main() {
     const thickness = e.stats.area > 0 ? (3 * Math.abs(e.stats.signedVolume)) / e.stats.area : 0
     const err = Math.min(SIMPLIFY_ERROR_MAX, Math.max(SIMPLIFY_ERROR_MIN, SIMPLIFY_ERROR_PER_THICKNESS * thickness))
     const floor = Math.max(SIMPLIFY_MIN_TRIANGLES, e.stats.area / (0.433 * SIMPLIFY_MAX_EDGE ** 2))
-    const simp = await simplifyMesh(e.mesh, err, floor)
+    const simp = e.keepGeometry ? { ...e.mesh, error: 0 } : await simplifyMesh(e.mesh, err, floor)
     const mesh: Mesh = { positions: simp.positions, indices: simp.indices }
     const stats = simp.indices.length === e.mesh.indices.length ? e.stats : measure(mesh)
     if (simp.indices.length < e.mesh.indices.length) {
@@ -556,6 +874,7 @@ async function main() {
       depth: depths[i]!,
       side: sides[i]!,
       provenance: e.provenance,
+      ...(e.source ? { source: e.source } : {}),
       bbox: stats.bbox.map((v) => round(v)) as Part['bbox'],
       centroid: stats.centroid.map((v) => round(v)) as Part['centroid'],
       ...(e.volume !== undefined ? { volume: e.volume } : {}),
@@ -608,6 +927,26 @@ async function main() {
         set.add(e.id)
       }
     }
+    // parts from the Z-Anatomy package: create the missing concepts of their path, child first
+    for (const e of importedZa) {
+      const t = which === 'isa' ? e.tree!.isa : e.tree!.partOf
+      if (!t) continue
+      const anchor = t.anchor ?? (which === 'isa' ? onto.root : null)
+      if (!anchor) continue
+      const chain = [...t.path.map(([id]) => id), anchor]
+      t.path.forEach(([id, label], k) => {
+        if (name.has(id)) return
+        const up = chain[k + 1]!
+        name.set(id, label)
+        parent.set(id, up)
+        children.set(up, [...(children.get(up) ?? []), id])
+      })
+      for (let c: string | null | undefined = chain[0]; c; c = parent.get(c)) {
+        let set = elementsMap.get(c)
+        if (!set) elementsMap.set(c, (set = new Set()))
+        set.add(e.id)
+      }
+    }
     return { ...onto, name, parent, children, elements: elementsMap }
   }
   const isaTree = emitConcepts(withAliases(tables.isa, 'isa'), keepIds)
@@ -643,7 +982,7 @@ async function main() {
   const data: AnatomyData = {
     schema: 1,
     body: 'male',
-    sources: imported.length ? [SOURCE, SOURCE3] : [SOURCE],
+    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : [])],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
     parts,
@@ -651,9 +990,16 @@ async function main() {
   }
   const json = JSON.stringify(data)
   writeFileSync(join(stage, 'anatomy.json'), json)
+  // nerves.json: the centrelines the nerve tubes were built from
+  const nervePaths: NervePath[] = kept
+    .filter((e) => e.centrelines && e.centrelines.length)
+    .map((e) => ({ part: e.id, branches: e.centrelines!.map((b) => ({ points: Array.from(b.points, (v) => round(v)), radius: Array.from(b.radius, (v) => round(v)) })) }))
+  const nervesJson = JSON.stringify(nervePaths)
+  if (nervePaths.length) writeFileSync(join(stage, 'nerves.json'), nervesJson)
   lap('wrote output')
   console.log(`\nOutput in ${outDir}`)
   console.log(`  anatomy.json ${(json.length / 1024).toFixed(0)} KB — ${parts.length} parts`)
+  if (nervePaths.length) console.log(`  nerves.json ${(nervesJson.length / 1024).toFixed(0)} KB — ${nervePaths.length} nerves, ${nervePaths.reduce((n, p) => n + p.branches.length, 0)} branches`)
   let glbTotal = 0
   for (const s of systems) {
     if (!s.glb) continue
@@ -672,7 +1018,7 @@ async function main() {
   writeFileSync(join(stage, 'pipeline-report.json'), JSON.stringify(report, null, 1))
   const staged = readdirSync(stage).sort((a, b) => Number(a === 'anatomy.json') - Number(b === 'anatomy.json') || a.localeCompare(b))
   for (const f of staged) renameSync(join(stage, f), join(outDir, f))
-  for (const f of readdirSync(outDir)) if (f.endsWith('.glb') && !staged.includes(f)) rmSync(join(outDir, f))
+  for (const f of readdirSync(outDir)) if ((f.endsWith('.glb') || f === 'nerves.json') && !staged.includes(f)) rmSync(join(outDir, f))
   rmSync(stage, { recursive: true, force: true })
   if (!existsSync(join(outDir, 'anatomy.json'))) throw new Error('output missing')
   lap('done')

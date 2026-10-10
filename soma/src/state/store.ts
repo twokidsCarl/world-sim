@@ -3,7 +3,7 @@
 
 import { create } from 'zustand'
 import type { AnatomyGraph, TreeKind } from '../anatomy/graph.ts'
-import type { SystemId } from '../anatomy/types.ts'
+import type { Provenance, SystemId } from '../anatomy/types.ts'
 import type { SectionState, SystemState } from './display.ts'
 
 export interface Selection {
@@ -17,6 +17,9 @@ export interface Selection {
 export const EMPTY_SELECTION: Selection = { ids: [], set: new Set(), concept: null }
 
 export type LeftTab = 'display' | 'tree'
+
+/** 'tissue': anatomical colours; 'source': colour by where the geometry came from. */
+export type ColorMode = 'tissue' | 'source'
 
 export interface LoadState {
   phase: 'loading' | 'ready' | 'error'
@@ -38,6 +41,10 @@ export interface AppState {
   hidden: ReadonlySet<string>
   isolated: ReadonlySet<string> | null
   adjacentMode: boolean
+  colorMode: ColorMode
+  provenanceHidden: ReadonlySet<Provenance>
+  /** Draw nerves at a minimum on-screen width so they can be seen at body scale. */
+  nerveBoost: boolean
   selection: Selection
   hover: string | null
   explode: number
@@ -78,6 +85,9 @@ export interface AppState {
   isolateSelection(): void
   clearIsolation(): void
   setAdjacentMode(on: boolean): void
+  setColorMode(mode: ColorMode): void
+  setProvenanceVisible(p: Provenance, visible: boolean): void
+  setNerveBoost(on: boolean): void
   showAll(): void
   setExplode(amount: number): void
   setExplodeSelectionOnly(on: boolean): void
@@ -117,6 +127,9 @@ export const useApp = create<AppState>()((set, get) => ({
   hidden: new Set(),
   isolated: null,
   adjacentMode: false,
+  colorMode: 'tissue',
+  provenanceHidden: new Set(),
+  nerveBoost: true,
   selection: EMPTY_SELECTION,
   hover: null,
   explode: 0,
@@ -154,6 +167,7 @@ export const useApp = create<AppState>()((set, get) => ({
       hidden: new Set(),
       isolated: null,
       adjacentMode: false,
+      provenanceHidden: new Set(),
       selection: EMPTY_SELECTION,
       hover: null,
     })
@@ -252,11 +266,20 @@ export const useApp = create<AppState>()((set, get) => ({
   },
   clearIsolation: () => set({ isolated: null }),
   setAdjacentMode: (on) => set({ adjacentMode: on }),
+  setColorMode: (colorMode) => set({ colorMode }),
+  setProvenanceVisible: (p, visible) =>
+    set((s) => {
+      const next = new Set(s.provenanceHidden)
+      if (visible) next.delete(p)
+      else next.add(p)
+      return { provenanceHidden: next }
+    }),
+  setNerveBoost: (nerveBoost) => set({ nerveBoost }),
   showAll: () =>
     set((s) => {
       const systems: Partial<Record<SystemId, SystemState>> = {}
       for (const [k, v] of Object.entries(s.systems) as [SystemId, SystemState][]) systems[k] = { ...v, visible: true }
-      return { systems, hidden: new Set(), isolated: null, adjacentMode: false, peel: 0 }
+      return { systems, hidden: new Set(), isolated: null, adjacentMode: false, peel: 0, provenanceHidden: new Set() }
     }),
 
   setExplode: (amount) => set({ explode: Math.min(1, Math.max(0, amount)) }),

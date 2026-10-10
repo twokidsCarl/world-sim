@@ -129,6 +129,22 @@ describe('store visibility', () => {
     expect([...S().hidden]).toEqual(['b'])
   })
 
+  it('provenance filter and colour mode; show-all clears the filter but keeps the colour mode', () => {
+    S().setProvenanceVisible('curated', false)
+    S().setProvenanceVisible('warped', false)
+    S().setProvenanceVisible('warped', true)
+    expect([...S().provenanceHidden]).toEqual(['curated'])
+    S().setColorMode('source')
+    S().showAll()
+    expect(S().provenanceHidden.size).toBe(0)
+    expect(S().colorMode).toBe('source')
+    S().setColorMode('tissue')
+    expect(S().nerveBoost).toBe(true)
+    S().setNerveBoost(false)
+    expect(S().nerveBoost).toBe(false)
+    S().setNerveBoost(true)
+  })
+
   it('focus requests bump a nonce', () => {
     const n = S().focusRequest.nonce
     S().requestFocus(['a'])

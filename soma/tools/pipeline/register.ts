@@ -311,6 +311,54 @@ export function fitRigid(from: Float32Array, to: Float32Array, weights?: Float32
   return { r, t }
 }
 
+/**
+ * Least-squares similarity transform (rotation, uniform scale, translation) mapping `from` onto
+ * `to`. Returned as a Rigid whose matrix carries the scale, so `applyRigid` applies it.
+ */
+export function fitSimilarity(from: Float32Array, to: Float32Array, weights?: Float32Array): Rigid & { scale: number } {
+  const rigid = fitRigid(from, to, weights)
+  const n = Math.min(from.length, to.length) / 3
+  let wSum = 0
+  const cf = [0, 0, 0]
+  const ct = [0, 0, 0]
+  for (let i = 0; i < n; i++) {
+    const w = weights ? weights[i]! : 1
+    wSum += w
+    for (let k = 0; k < 3; k++) {
+      cf[k] = cf[k]! + w * from[3 * i + k]!
+      ct[k] = ct[k]! + w * to[3 * i + k]!
+    }
+  }
+  if (wSum <= 0 || n < 3) return { ...rigid, scale: 1 }
+  for (let k = 0; k < 3; k++) {
+    cf[k] = cf[k]! / wSum
+    ct[k] = ct[k]! / wSum
+  }
+  // scale = Σ w (R f)·t / Σ w |f|², both centred
+  const r = rigid.r
+  let num = 0
+  let den = 0
+  for (let i = 0; i < n; i++) {
+    const w = weights ? weights[i]! : 1
+    const fx = from[3 * i]! - cf[0]!
+    const fy = from[3 * i + 1]! - cf[1]!
+    const fz = from[3 * i + 2]! - cf[2]!
+    const rx = r[0]! * fx + r[1]! * fy + r[2]! * fz
+    const ry = r[3]! * fx + r[4]! * fy + r[5]! * fz
+    const rz = r[6]! * fx + r[7]! * fy + r[8]! * fz
+    num += w * (rx * (to[3 * i]! - ct[0]!) + ry * (to[3 * i + 1]! - ct[1]!) + rz * (to[3 * i + 2]! - ct[2]!))
+    den += w * (fx * fx + fy * fy + fz * fz)
+  }
+  const scale = den > 0 && num > 0 ? num / den : 1
+  const rs = r.map((v) => v * scale)
+  const t: [number, number, number] = [
+    ct[0]! - (rs[0]! * cf[0]! + rs[1]! * cf[1]! + rs[2]! * cf[2]!),
+    ct[1]! - (rs[3]! * cf[0]! + rs[4]! * cf[1]! + rs[5]! * cf[2]!),
+    ct[2]! - (rs[6]! * cf[0]! + rs[7]! * cf[1]! + rs[8]! * cf[2]!),
+  ]
+  return { r: rs, t, scale }
+}
+
 export interface IcpResult {
   transform: Rigid
   /** RMS distance from the moved source points to their nearest target point. */
@@ -326,6 +374,8 @@ export interface IcpOptions {
   tolerance?: number
   /** Starting transform; default is the translation that aligns the centroids. */
   initial?: Rigid
+  /** Fit a similarity (uniform scale allowed) instead of a rigid transform. */
+  scale?: boolean
 }
 
 /** Point-to-point ICP of `source` onto the point set behind `target`. */
@@ -375,7 +425,7 @@ export function icp(source: Float32Array, target: PointIndex, opts: IcpOptions =
       break
     }
     rms = now
-    transform = fitRigid(source, matched, weights)
+    transform = opts.scale ? fitSimilarity(source, matched, weights) : fitRigid(source, matched, weights)
   }
   return { transform, rms, iterations: it }
 }
@@ -440,6 +490,73 @@ export function buildDeformation(from: Float32Array, to: Float32Array, opts: Def
       dz += wj * disp[a + 2]!
     }
     return [dx / w, dy / w, dz / w]
+  }
+  return {
+    anchors: n,
+    displacementAt,
+    apply(points) {
+      const out = new Float32Array(points.length)
+      for (let i = 0; i < points.length; i += 3) {
+        const d = displacementAt(points[i]!, points[i + 1]!, points[i + 2]!)
+        out[i] = points[i]! + d[0]
+        out[i + 1] = points[i + 1]! + d[1]
+        out[i + 2] = points[i + 2]! + d[2]
+      }
+      return out
+    },
+  }
+}
+
+export interface TwoLevelOptions {
+  /** coarse level: anchors thinned to this spacing, blended with a wide kernel */
+  coarseSpacing: number
+  coarseSigma: number
+  coarseK: number
+  /** fine level: what the coarse level leaves at each anchor, blended locally … */
+  fineSigma: number
+  fineK: number
+  /** … and faded out with distance from the nearest anchor (Gaussian of this width) */
+  fadeDistance: number
+  weights?: Float32Array
+}
+
+/**
+ * Two-level displacement field for anchors that leave large gaps between them (bones of a whole
+ * body): a wide-kernel field from thinned anchors carries the regional motion and stays smooth
+ * in the gaps; a local field of the remaining residuals makes the anchors themselves fit, and
+ * fades to zero away from them. A single k-nearest-neighbour kernel field switches abruptly
+ * between structures in the gaps, which folds space there.
+ */
+export function buildTwoLevelDeformation(from: Float32Array, to: Float32Array, opts: TwoLevelOptions): Deformation {
+  const n = from.length / 3
+  if (to.length !== from.length) throw new Error('anchor arrays differ in length')
+  if (n === 0) throw new Error('no anchors')
+  const keep = voxelSubsample(from, opts.coarseSpacing)
+  const cf = new Float32Array(keep.length * 3)
+  const ct = new Float32Array(keep.length * 3)
+  const cw = new Float32Array(keep.length)
+  keep.forEach((i, j) => {
+    for (let k = 0; k < 3; k++) {
+      cf[3 * j + k] = from[3 * i + k]!
+      ct[3 * j + k] = to[3 * i + k]!
+    }
+    cw[j] = opts.weights ? opts.weights[i]! : 1
+  })
+  const coarse = buildDeformation(cf, ct, { k: opts.coarseK, minSigma: opts.coarseSigma, weights: cw, cell: opts.coarseSpacing * 2 })
+  const mid = coarse.apply(from)
+  // residual anchors live in the source space; their targets are source + (to − coarse(from))
+  const rt = new Float32Array(from.length)
+  for (let i = 0; i < from.length; i++) rt[i] = from[i]! + (to[i]! - mid[i]!)
+  const fine = buildDeformation(from, rt, { k: opts.fineK, minSigma: opts.fineSigma, weights: opts.weights })
+  const index = new PointIndex(from, opts.fadeDistance)
+  const inv = 1 / (2 * opts.fadeDistance * opts.fadeDistance)
+  const displacementAt = (x: number, y: number, z: number): [number, number, number] => {
+    const g = coarse.displacementAt(x, y, z)
+    const d = index.distance(x, y, z, 4 * opts.fadeDistance)
+    if (!Number.isFinite(d)) return g
+    const fade = Math.exp(-d * d * inv)
+    const r = fine.displacementAt(x, y, z)
+    return [g[0] + fade * r[0], g[1] + fade * r[1], g[2] + fade * r[2]]
   }
   return {
     anchors: n,

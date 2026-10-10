@@ -6,13 +6,15 @@
 //   laterality  C is "left/right X" (the side may be embedded) and the statement is on the FMA
 //               concept named X, or on the unlateralised class Wikidata gives C's item (P279),
 //               which the BodyParts3D tree does not link C to
+//   (innervates: Wikidata P3190 on the nerve item goes through the same four routes; see also
+//    mirrorInnervation at the end of this file)
 //   whole       C is a named head/part/belly of muscle M ("long head of biceps brachii") and the
 //               statement is on M. Origin and insertion are then whole-muscle statements and may
 //               not hold for every head.
 import type { NameEntry, Relation, RelationKind } from '../../../src/anatomy/types.ts'
-import { ancestors, descendants } from './bp3d.ts'
+import { ancestors, compareIds, descendants } from './bp3d.ts'
 import { sideOf, stripSide, type Model } from './model.ts'
-import { RELATION_PROPS } from './wikidata.ts'
+import { P_INNERVATES, RELATION_PROPS } from './wikidata.ts'
 
 export type Via = 'direct' | 'is-a' | 'laterality' | 'whole' | 'wikipedia'
 
@@ -44,6 +46,19 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
   // statements grouped by the FMA id(s) of their subject (own id, or via the generic twin)
   const byFma = new Map<string, Stmt[]>()
   for (const s of m.statements) {
+    if (s.prop === P_INNERVATES) {
+      // "nerve innervates X" read from X's side; the citation stays on the nerve item
+      const targetQ = m.fmaByItem.has(s.object) ? s.object : m.twinFor.get(s.object)
+      for (const fma of (targetQ && m.fmaByItem.get(targetQ)) || []) {
+        ;(byFma.get(fma) ?? byFma.set(fma, []).get(fma)!).push({ subjectQid: s.subject, prop: s.prop, kind: 'innervatedBy', objectQid: s.subject })
+      }
+      // ... and as stated, on the nerve itself
+      const nerveQ = m.fmaByItem.has(s.subject) ? s.subject : m.twinFor.get(s.subject)
+      for (const fma of (nerveQ && m.fmaByItem.get(nerveQ)) || []) {
+        ;(byFma.get(fma) ?? byFma.set(fma, []).get(fma)!).push({ subjectQid: s.subject, prop: s.prop, kind: 'innervates', objectQid: s.object })
+      }
+      continue
+    }
     const def = RELATION_PROPS[s.prop]
     if (!def) continue
     const subjQ = m.fmaByItem.has(s.subject) ? s.subject : m.twinFor.get(s.subject)
@@ -67,6 +82,13 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
     if (side) sided.set(`${side}|${stripSide(c.en)}`, c.fma)
   }
 
+  // unlateralised FMA id -> its left/right concepts, from Wikidata subclass-of (names may differ)
+  const sidedChild = new Map<string, string>()
+  for (const c of m.concepts.values()) {
+    const side = sideOf(c.en)
+    if (side) for (const parent of m.unsidedOf(c.fma)) if (!sidedChild.has(`${side}|${parent}`)) sidedChild.set(`${side}|${parent}`, c.fma)
+  }
+
   const fanout = new Map<string, number>()
   const descendantCount = (fma: string) => {
     let n = fanout.get(fma)
@@ -78,7 +100,7 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
   const dropped = { nonMuscleSubject: 0, noObjectLabel: 0, selfReference: 0 }
   const droppedExamples: string[] = []
 
-  for (const c of [...m.concepts.values()].sort((a, b) => Number(a.fma.slice(3)) - Number(b.fma.slice(3)))) {
+  for (const c of [...m.concepts.values()].sort((a, b) => compareIds(a.fma, b.fma))) {
     const side = sideOf(c.en)
     const bare = stripSide(c.en)
     const sources: { via: Via; fma: string }[] = [{ via: 'direct', fma: c.fma }]
@@ -135,13 +157,19 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
           const candidates = [object && m.concepts.get(object)?.en, en, object && nameOfFma(object)].filter(Boolean) as string[]
           for (const n of candidates) {
             if (sideOf(n)) break
-            const hit = sided.get(`${side}|${n.toLowerCase()}`)
+            const hit = sided.get(`${side}|${n.toLowerCase()}`) ?? sided.get(`${side}|${n.toLowerCase().replace(/ muscle$/, '')}`)
             if (hit) {
               object = hit
               en = m.concepts.get(hit)!.en
               lateralised = true
               break
             }
+          }
+          const viaClass = !lateralised && object && !sideOf(m.concepts.get(object)?.en ?? en ?? '') ? sidedChild.get(`${side}|${object}`) : undefined
+          if (viaClass) {
+            object = viaClass
+            en = m.concepts.get(viaClass)!.en
+            lateralised = true
           }
         }
         if (!en) {
@@ -161,13 +189,14 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
           : s.kind === 'origin' || s.kind === 'insertion'
             ? `Wikidata (propagated from whole muscle ${from} to its named part; whole-muscle ${s.kind}, may not apply to this part)`
             : `Wikidata (propagated from whole muscle ${from} to its named part)`
+        const sourced = s.prop === P_INNERVATES && s.kind === 'innervatedBy' ? how.replace(/^Wikidata/, 'Wikidata [stated on the nerve item as "innervates"]') : how
         const rel: BuiltRelation = {
           subject: c.fma,
           kind: s.kind,
           ...(object ? { object } : {}),
           objectLabel: { en, ...(zh ? { zh } : {}) },
           source: {
-            name: lateralised ? `${how}; object lateralised to the subject's side` : how,
+            name: lateralised ? `${sourced}; object lateralised to the subject's side` : sourced,
             url: `https://www.wikidata.org/wiki/${s.subjectQid}#${s.prop}`,
             license: 'CC0 1.0',
           },
@@ -176,7 +205,8 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
         }
         const key = `${s.kind}|${object ?? s.objectQid}`
         const prev = picked.get(key)
-        if (!prev || VIA_RANK[rel.via] < VIA_RANK[prev.via]) picked.set(key, rel)
+        const fromNerve = (r: BuiltRelation) => r.source.url.endsWith(`#${P_INNERVATES}`)
+        if (!prev || VIA_RANK[rel.via] < VIA_RANK[prev.via] || (VIA_RANK[rel.via] === VIA_RANK[prev.via] && fromNerve(prev) && !fromNerve(rel))) picked.set(key, rel)
       }
     }
     // A part with its own origin/insertion statements does not also inherit the whole muscle's.
@@ -184,7 +214,75 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
       const all = [...picked.entries()].filter(([, r]) => r.kind === kind)
       if (all.some(([, r]) => r.via !== 'whole')) for (const [k, r] of all) if (r.via === 'whole') picked.delete(k)
     }
+    // A sided nerve: drop the unsided duplicate of a structure it also lists on its own side
+    // ("deltoid muscle" next to "left deltoid"), unless the unsided concept is in the dataset.
+    if (side) {
+      const base = (label: string) => stripSide(label).replace(/ muscle$/, '')
+      const sidedLabels = new Set([...picked.values()].filter((r) => r.kind === 'innervates' && sideOf(r.objectLabel.en)).map((r) => base(r.objectLabel.en)))
+      for (const [k, r] of picked) {
+        if (r.kind === 'innervates' && !sideOf(r.objectLabel.en) && !(r.object && m.concepts.has(r.object)) && sidedLabels.has(base(r.objectLabel.en))) picked.delete(k)
+      }
+    }
     out.push(...[...picked.values()].sort((a, b) => (a.kind + (a.object ?? a.objectLabel.en) < b.kind + (b.object ?? b.objectLabel.en) ? -1 : 1)))
   }
   return { relations: out, dropped, droppedExamples }
+}
+
+export const INVERSE_NOTE = 'inverse of a statement made on the innervated structure'
+/** Followed by the quoted branch label the original statement names. */
+export const BRANCH_NOTE = 'inverse of a statement made on the innervated structure, which names a branch of this nerve:'
+export const REATTACHED_NOTE = 're-attached to the nerve after propagation on the side of the innervated structure'
+
+/**
+ * `innervates` relations for nerves, mirrored from the `innervatedBy` relations whose object is a
+ * concept of the dataset. The source of the original statement is kept; source.name says that the
+ * relation is an inverse and carries every qualifier of the original (propagation, whole-muscle,
+ * lateralisation). Mirrors that duplicate an `innervates` relation already present (Wikidata
+ * P3190 on the nerve, however propagated) are dropped.
+ */
+export function mirrorInnervation(m: Model, names: Record<string, NameEntry>, all: BuiltRelation[]): BuiltRelation[] {
+  const have = new Set(all.filter((r) => r.kind === 'innervates').map((r) => `${r.subject}|${r.object ?? r.objectLabel.en}`))
+  const sided = new Map<string, string>()
+  for (const c of m.concepts.values()) {
+    const side = sideOf(c.en)
+    if (side) sided.set(`${side}|${stripSide(c.en)}`, c.fma)
+  }
+  /** Dataset concept of the nerve named `name`, on the side of `subject` when that is lateralised. */
+  const nerveByName = (name: string, subject: string): string | undefined => {
+    const side = sideOf(m.concepts.get(subject)!.en)
+    if (side) {
+      const hit = sided.get(`${side}|${name}`)
+      if (hit) return hit
+    }
+    const hits = [...(m.fmaByName.get(name) ?? [])].filter((f) => m.concepts.has(f))
+    return hits.length === 1 ? hits[0] : undefined
+  }
+
+  const out: BuiltRelation[] = []
+  for (const r of all) {
+    if (r.kind !== 'innervatedBy' || !m.concepts.has(r.subject)) continue
+    let nerve = r.object && m.concepts.has(r.object) ? r.object : undefined
+    let note = r.source.url.endsWith(`#${P_INNERVATES}`) ? REATTACHED_NOTE : INVERSE_NOTE
+    if (!nerve) {
+      // "rectus femoris branch of femoral nerve" is not a concept here, but the femoral nerve is
+      const parent = /^(?:.+ )?branch(?:es)? of (.+ nerve)$/.exec(stripSide(r.objectLabel.en))?.[1]
+      nerve = parent && nerveByName(parent, r.subject)
+      if (!nerve) continue
+      note = `${BRANCH_NOTE} "${r.objectLabel.en}"`
+    }
+    const key = `${nerve}|${r.subject}`
+    if (have.has(key)) continue
+    have.add(key)
+    const zh = names[r.subject]?.zh
+    out.push({
+      subject: nerve,
+      kind: 'innervates',
+      object: r.subject,
+      objectLabel: { en: m.concepts.get(r.subject)!.en, ...(zh ? { zh } : {}) },
+      source: { ...r.source, name: `${r.source.name}; ${note}` },
+      status: 'unreviewed',
+      via: r.via,
+    })
+  }
+  return out
 }

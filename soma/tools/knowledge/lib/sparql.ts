@@ -67,6 +67,7 @@ export async function sparql(group: string, query: string, opts: FetchOptions): 
     return JSON.parse(readFileSync(file, 'utf8')).rows as Row[]
   }
   if (opts.offline) throw new Error(`cache miss in --offline mode: ${file}`)
+  if (process.env.KNOWLEDGE_VERBOSE) console.error(`  sparql ${group} (${query.length} chars)`)
   const text = await politeFetch(
     ENDPOINT,
     {

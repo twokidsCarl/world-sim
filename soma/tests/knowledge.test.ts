@@ -11,10 +11,11 @@ const read = <T>(rel: string) => JSON.parse(readFileSync(resolve(root, rel), 'ut
 const names = read<Record<string, NameEntry>>('data/curated/knowledge/names.json')
 const relations = read<Relation[]>('data/curated/knowledge/relations.json')
 
-const FMA = /^FMA[1-9]\d*$/
+// Concept ids: FMA ids, or synthetic ids the dataset uses where FMA has no class.
+const ID = /^(FMA[1-9]\d*|ZAC_[A-Za-z0-9_]+)$/
 const QID = /^Q[1-9]\d*$/
-const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist']
-const ZH_SOURCES = ['wikidata', 'wikidata:hant-converted', 'wikidata:generic-twin', 'derived:laterality', 'machine-translation', 'machine-translation:override']
+const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'innervates', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist']
+const ZH_SOURCES = ['wikidata', 'wikidata:hant-converted', 'wikidata:generic-twin', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override']
 const NAME_KEYS = ['zh', 'la', 'ja', 'wikidata', 'zhSource', 'status']
 const hasHan = (s: string) => /[㐀-鿿\u{20000}-\u{2ffff}]/u.test(s)
 
@@ -35,10 +36,10 @@ function bp3dConcepts(): Set<string> | undefined {
 describe('names.json', () => {
   const entries = Object.entries(names)
 
-  it('is keyed by FMA ids and has only contract fields', () => {
+  it('is keyed by concept ids and has only contract fields', () => {
     expect(entries.length).toBeGreaterThan(3000)
     for (const [fma, e] of entries) {
-      expect(fma).toMatch(FMA)
+      expect(fma).toMatch(ID)
       for (const k of Object.keys(e)) expect(NAME_KEYS, `${fma}.${k}`).toContain(k)
       for (const k of ['zh', 'la', 'ja', 'wikidata', 'zhSource'] as const) {
         if (e[k] !== undefined) expect(typeof e[k] === 'string' && e[k]!.trim() === e[k] && e[k] !== '', `${fma}.${k}`).toBe(true)
@@ -115,6 +116,33 @@ describe('names.json', () => {
     expect(names.FMA3734).toMatchObject({ wikidata: 'Q101004', zh: '主动脉', zhSource: 'wikidata' })
   })
 
+  it('mainland wording wins over regional Wikidata labels, and says so', () => {
+    // Wikidata: 总颈动脉, 棘上肌, 食道, 骶棘韧带 (wrong ligament), 总腓骨神经
+    expect(names.FMA3939).toMatchObject({ zh: '颈总动脉', zhSource: 'lexicon:mainland-over-wikidata', wikidata: 'Q214275' })
+    expect(names.FMA9629).toMatchObject({ zh: '冈上肌', zhSource: 'lexicon:mainland-over-wikidata' })
+    expect(names.FMA7131).toMatchObject({ zh: '食管', zhSource: 'lexicon:mainland-over-wikidata' })
+    expect(names.FMA21479).toMatchObject({ zh: '骶结节韧带', zhSource: 'lexicon:mainland-over-wikidata' })
+    expect(names.FMA45358).toMatchObject({ zh: '左腓总神经', zhSource: 'lexicon:mainland-over-wikidata' })
+    // where Wikidata already has the mainland term it stays the source
+    expect(names.FMA14385).toMatchObject({ zh: '正中神经', zhSource: 'wikidata' })
+    expect(names.FMA37068).toMatchObject({ zh: '左正中神经', zhSource: 'derived:laterality' })
+    const regional = ['总颈动脉', '内颈动脉', '棘上肌', '棘下肌', '食道', '内翼肌', '上唇举肌', '鼻锥肌', '外展小指肌', '颜面神经', '总腓骨神经', '末梢神经', '副甲状腺']
+    for (const [id, e] of entries) for (const bad of regional) expect(e.zh?.includes(bad), `${id} ${e.zh}`).toBe(false)
+  })
+
+  it('names concepts with synthetic (non-FMA) ids without claiming a Wikidata source', () => {
+    const synthetic = entries.filter(([id]) => !id.startsWith('FMA'))
+    for (const [id, e] of synthetic) {
+      expect(e.zh && hasHan(e.zh), id).toBe(true)
+      expect(e.wikidata, id).toBeUndefined()
+      expect(e.zhSource, id).toBe('machine-translation')
+    }
+    if (synthetic.length) {
+      expect(names.ZAC_recurrent_thenar_branch_of_median_nerve_L?.zh).toBe('左正中神经返支（鱼际支）')
+      expect(names.ZAC_scapholunate_interosseous_ligament_R?.zh).toBe('右舟月骨间韧带')
+    }
+  })
+
   it('spot checks: generated names are labelled as generated', () => {
     expect(names.FMA37687).toMatchObject({ zh: '左肱二头肌长头', zhSource: 'machine-translation' }) // long head of left biceps brachii
     expect(names.FMA52748?.zhSource).toBe('machine-translation:override') // mandible: Wikidata says 上颚
@@ -128,9 +156,9 @@ describe('relations.json', () => {
     for (const [i, r] of relations.entries()) {
       const at = `relation #${i} (${r.subject} ${r.kind})`
       expect(Object.keys(r).filter((k) => !['subject', 'kind', 'object', 'objectLabel', 'source', 'status'].includes(k)), at).toEqual([])
-      expect(r.subject, at).toMatch(FMA)
+      expect(r.subject, at).toMatch(ID)
       expect(KINDS, at).toContain(r.kind)
-      if (r.object !== undefined) expect(r.object, at).toMatch(FMA)
+      if (r.object !== undefined) expect(r.object, at).toMatch(ID)
       expect(r.status, at).toBe('unreviewed')
     }
   })
@@ -188,8 +216,12 @@ describe('relations.json', () => {
     expect(nerve[0]).toMatchObject({ object: 'FMA37064', objectLabel: { en: 'musculocutaneous nerve' } })
     expect(nerve[0]!.source.url).toBe('https://www.wikidata.org/wiki/Q201363#P3189')
     expect(nerve[0]!.source.name).toContain('propagated from whole muscle FMA37670')
-    // and on the lateralised head
-    expect(find('FMA37687', 'innervatedBy').map((r) => r.object)).toEqual(['FMA37064'])
+    // on the lateralised head the object is the same-side nerve, which the dataset has as a part:
+    // FMA37066 "left musculocutaneous nerve"
+    const left = find('FMA37687', 'innervatedBy')
+    expect(left.map((r) => r.object)).toEqual(['FMA37066'])
+    expect(left[0]!.source.name).toContain("object lateralised to the subject's side")
+    expect(names.FMA37066?.zh).toBe('左肌皮神经')
   })
 
   it('spot check: the long head keeps its own origin, not the whole muscle’s', () => {
@@ -212,6 +244,78 @@ describe('relations.json', () => {
     const left = find('FMA24475', 'connectsWith')
     expect(left.map((r) => r.object)).toContain('FMA24478')
     expect(left.find((r) => r.object === 'FMA24478')!.source.name).toContain('propagated via BodyParts3D is-a from FMA9611')
+  })
+
+  describe('innervates (nerve -> structure)', () => {
+    const INVERSE = 'inverse of a statement made on the innervated structure'
+    const all = relations.filter((r) => r.kind === 'innervates')
+    const innervatedBy = new Map<string, Relation[]>()
+    for (const r of relations) if (r.kind === 'innervatedBy') innervatedBy.set(r.subject, [...(innervatedBy.get(r.subject) ?? []), r])
+    const targets = (nerve: string) => find(nerve, 'innervates').map((r) => r.object)
+
+    it('exists both as direct Wikidata statements and as mirrors, told apart by source.name', () => {
+      const mirrored = all.filter((r) => r.source.name.includes(INVERSE) || r.source.name.includes('re-attached to the nerve'))
+      expect(all.length - mirrored.length).toBeGreaterThan(300)
+      expect(mirrored.length).toBeGreaterThan(100)
+      for (const r of all) if (!mirrored.includes(r) && r.source.name.startsWith('Wikidata')) expect(r.source.url).toMatch(/#P3190$/)
+    })
+
+    it('symmetry: every mirrored relation has its innervatedBy counterpart with the same source', () => {
+      for (const r of all) {
+        const name = r.source.name
+        if (!name.includes(INVERSE) && !name.includes('re-attached to the nerve')) continue
+        expect(r.object, `${r.subject} innervates`).toBeDefined()
+        const back = (innervatedBy.get(r.object!) ?? []).filter((b) => b.source.url === r.source.url && name.startsWith(b.source.name))
+        expect(back.length, `${r.subject} innervates ${r.object}`).toBeGreaterThan(0)
+        if (name.includes('names a branch of this nerve')) {
+          // the original names a branch ("... branch of femoral nerve"), quoted in the note
+          expect(back.some((b) => name.endsWith(`"${b.objectLabel.en}"`)), name).toBe(true)
+        } else {
+          expect(back.some((b) => b.object === r.subject), `${r.subject} innervates ${r.object}`).toBe(true)
+        }
+      }
+    })
+
+    it('has no duplicate nerve/structure pair', () => {
+      const seen = new Set<string>()
+      for (const r of all) {
+        const key = `${r.subject}|${r.object ?? r.objectLabel.en}`
+        expect(seen.has(key), key).toBe(false)
+        seen.add(key)
+      }
+    })
+
+    // Spot checks verified by hand against wikidata.org (P3190 on the nerve / P3189 on the muscle).
+    it('spot check: median nerve -> pronator teres, flexor carpi radialis', () => {
+      // Q1364876 "median nerve" P3190 -> pronator teres muscle (FMA38450), flexor carpi radialis muscle (FMA38459)
+      expect(targets('FMA14385')).toEqual(expect.arrayContaining(['FMA38450', 'FMA38459']))
+      // left median nerve (FMA37068) lists the left muscles: left flexor carpi radialis, humeral head of left pronator teres
+      expect(targets('FMA37068')).toEqual(expect.arrayContaining(['FMA38461', 'FMA38561']))
+      expect(targets('FMA37068')).not.toContain('FMA38459')
+    })
+
+    it('spot check: musculocutaneous nerve -> heads of biceps brachii (mirrored, qualifiers kept)', () => {
+      // left musculocutaneous nerve FMA37066 -> short / long head of left biceps brachii
+      const heads = find('FMA37066', 'innervates').filter((r) => r.object === 'FMA37685' || r.object === 'FMA37687')
+      expect(heads).toHaveLength(2)
+      for (const r of heads) {
+        expect(r.source.name).toContain('propagated from whole muscle FMA37670')
+        expect(r.source.name).toContain(INVERSE)
+        expect(r.source.url).toBe('https://www.wikidata.org/wiki/Q201363#P3189')
+      }
+    })
+
+    it('spot check: femoral nerve -> quadriceps parts, axillary nerve -> deltoid parts', () => {
+      // left femoral nerve FMA16500 -> left rectus femoris, vastus lateralis, medialis, intermedius
+      expect(targets('FMA16500')).toEqual(expect.arrayContaining(['FMA38929', 'FMA38931', 'FMA38933', 'FMA38935']))
+      const rectus = find('FMA16500', 'innervates').find((r) => r.object === 'FMA38929')!
+      expect(rectus.source.name).toContain('names a branch of this nerve: "rectus femoris branch of femoral nerve"')
+      // left axillary nerve FMA37074 -> clavicular, acromial and spinal parts of left deltoid
+      expect(targets('FMA37074')).toEqual(expect.arrayContaining(['FMA34681', 'FMA34683', 'FMA34685']))
+      // right axillary nerve lists right-side parts only
+      expect(targets('FMA37073')).toEqual(expect.arrayContaining(['FMA34680', 'FMA34682', 'FMA34684']))
+      expect(targets('FMA37073')).not.toContain('FMA34681')
+    })
   })
 
   it('does not keep muscle-only statements on non-muscles', () => {

@@ -782,6 +782,47 @@ input[type='checkbox'] {
   color: var(--text);
 }
 
+
+.prov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prov-list > li.off > :not(.sys-row) {
+  opacity: 0.5;
+}
+
+.prov-list .hint {
+  margin: 2px 0 4px 21px;
+}
+
+.prov-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 21px;
+}
+
+.prov-sources li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.prov-sources .src-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------------------------------------------------------------- tree */
 
 .tree-panel {
@@ -1123,6 +1164,37 @@ input[type='checkbox'] {
   margin-top: 4px;
 }
 
+.props dd.prov {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.prov-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.props dd.prov .hint {
+  flex-basis: 100%;
+}
+
+.rel-group h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.rel-group h4 .link-btn {
+  margin-left: auto;
+}
+
+.rel-group > .link-btn {
+  margin: 2px 0 0 12px;
+}
+
 /* ---------------------------------------------------------------- dialog */
 
 .dialog-backdrop {
@@ -1191,6 +1263,31 @@ input[type='checkbox'] {
 
 .sources .tag {
   margin-left: 8px;
+}
+
+.src-use {
+  margin-left: 8px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.prov-legend {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.prov-legend > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+
+.prov-legend dd {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
 }
 
 .sources p {

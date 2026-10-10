@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AnatomyGraph, boundsCenter, normalizeText } from '../src/anatomy/graph.ts'
+import { AnatomyGraph, boundsCenter, isFmaId, normalizeText } from '../src/anatomy/graph.ts'
 import type { AnatomyData, Concept, NameEntry, Part, Relation } from '../src/anatomy/types.ts'
 
 function part(id: string, fma: string, name: string, over: Partial<Part> = {}): Part {
@@ -252,5 +252,91 @@ describe('AnatomyGraph search', () => {
     expect(g.search('   ')).toEqual([])
     expect(g.search('e', 2)).toHaveLength(2)
     expect(normalizeText('  ＦＭＡ１２ ')).toBe('fma12')
+  })
+})
+
+describe('AnatomyGraph sources, provenance and non-FMA ids', () => {
+  function mixed(): AnatomyGraph {
+    const d = makeData()
+    d.sources = [
+      { name: 'Scan A', url: 'https://example.org/a', license: 'CC BY 4.0', attribution: 'A' },
+      { name: 'Scan B', url: 'https://example.org/b', license: 'CC BY-SA 2.1 JP', attribution: 'B' },
+      { name: 'Atlas', url: 'https://example.org/c', license: 'CC BY-SA 4.0', attribution: 'C' },
+      { name: 'Models', url: 'https://example.org/d', license: 'CC BY-SA 4.0', attribution: 'D' },
+    ]
+    d.parts[1]!.provenance = 'warped'
+    d.parts[1]!.source = 'Scan B'
+    d.parts.push(
+      part('ZA3FD9F070', 'ZAC_ulnar_nerve', 'Left ulnar nerve', { side: 'L', system: 'nervous', tissue: 'nerve', provenance: 'curated', source: 'Atlas' }),
+      part('ZA56D02CAC', 'ZAC_ulnar_nerve', 'Right ulnar nerve', { side: 'R', system: 'nervous', tissue: 'nerve', provenance: 'curated', source: 'Atlas' }),
+      part('R3_FMA7163', 'ZAC_lymph_group_L', 'Left axillary lymph nodes', { side: 'L', provenance: 'curated', source: 'Models' }),
+      part('FJ9', 'FMA900', 'Left odd thing', { side: 'L', provenance: 'curated', source: 'Nowhere' }),
+    )
+    d.trees.isa.push(c('ZAC_nerves', 'Peripheral nerve', 'FMA1'), c('ZAC_ulnar_nerve', 'Ulnar nerve', 'ZAC_nerves', ['ZA3FD9F070', 'ZA56D02CAC']))
+    return new AnatomyGraph(
+      d,
+      { ...names, ZAC_ulnar_nerve: { zh: '尺神经', status: 'unreviewed' }, ZAC_lymph_group_L: { zh: '左腋淋巴结', status: 'reviewed' }, FMA12: { zh: '胫骨', status: 'reviewed' } },
+      [{ subject: 'FMA20', kind: 'innervatedBy', object: 'ZAC_nerves', objectLabel: { en: 'Peripheral nerve' }, source: src, status: 'unreviewed' }],
+    )
+  }
+
+  it('recognises real FMA ids only', () => {
+    expect(isFmaId('FMA59763')).toBe(true)
+    expect(isFmaId('ZAC_ulnar_nerve_L')).toBe(false)
+    expect(isFmaId('R3_FMA7163')).toBe(false)
+  })
+
+  it('resolves a part source, defaulting to the first and tolerating unknown names', () => {
+    const g = mixed()
+    expect(g.sourceOf(g.part('P1')!).name).toBe('Scan A')
+    expect(g.sourceOf(g.part('P2')!).license).toBe('CC BY-SA 2.1 JP')
+    expect(g.sourceOf(g.part('ZA3FD9F070')!).name).toBe('Atlas')
+    expect(g.sourceOf(g.part('FJ9')!).name).toBe('Scan A')
+    const empty = makeData()
+    empty.sources = []
+    expect(new AnatomyGraph(empty).sourceOf(empty.parts[0]!).name).toBe('未声明来源')
+  })
+
+  it('groups parts by provenance then source, in a fixed order', () => {
+    const g = mixed()
+    expect(g.provenanceGroups().map((x) => [x.provenance, x.count, x.sources.map((y) => [y.info.name, y.count, y.ordinal])])).toEqual([
+      ['scanned', 4, [['Scan A', 4, 0]]],
+      ['warped', 1, [['Scan B', 1, 0]]],
+      ['curated', 4, [['Scan A', 1, 0], ['Atlas', 2, 1], ['Models', 1, 2]]],
+    ])
+    expect(g.sourceOrdinal(g.part('ZA3FD9F070')!)).toBe(1)
+    expect(g.sourceOrdinal(g.part('P1')!)).toBe(0)
+  })
+
+  it('prefixes 左/右 when twins share an unsided concept name', () => {
+    const g = mixed()
+    expect(g.partName(g.part('ZA3FD9F070')!).primary).toBe('左尺神经')
+    expect(g.partName(g.part('ZA56D02CAC')!).zh).toBe('右尺神经')
+    // already sided, unsided English name, or no zh: left alone
+    expect(g.partName(g.part('R3_FMA7163')!).primary).toBe('左腋淋巴结')
+    expect(g.partName(g.part('P1')!).primary).toBe('左股骨')
+    expect(g.partName(g.part('P3')!).primary).toBe('左胫骨')
+    expect(g.partName(g.part('P4')!).primary).toBe('Right tibia')
+    // the concept itself stays unsided
+    expect(g.conceptName(g.concept('isa', 'ZAC_ulnar_nerve')!).primary).toBe('尺神经')
+  })
+
+  it('searches by synthetic ids, part ids of every shape and the sided zh name', () => {
+    const g = mixed()
+    expect(g.search('ZAC_ulnar_nerve').map((r) => r.id)).toEqual(expect.arrayContaining(['ZAC_ulnar_nerve', 'ZA3FD9F070', 'ZA56D02CAC']))
+    expect(g.search('za56d02cac')[0]).toMatchObject({ kind: 'part', id: 'ZA56D02CAC' })
+    expect(g.search('R3_FMA7163')[0]).toMatchObject({ kind: 'part', id: 'R3_FMA7163' })
+    expect(g.search('右尺神经')[0]).toMatchObject({ kind: 'part', id: 'ZA56D02CAC' })
+    expect(g.search('右尺神经')[0]!.name.primary).toBe('右尺神经')
+    expect(g.search('尺神经')[0]).toMatchObject({ kind: 'concept', id: 'ZAC_ulnar_nerve', partCount: 2 })
+    // a bare number still means an FMA id and does not match inside other ids
+    expect(g.search('7163').map((r) => r.id)).toEqual(['R3_FMA7163'])
+  })
+
+  it('resolves relation targets with non-FMA ids: shared part id, then concept', () => {
+    const g = mixed()
+    expect(g.resolveFma('ZAC_ulnar_nerve')).toEqual(['ZA3FD9F070', 'ZA56D02CAC'])
+    expect(g.resolveFma('ZAC_nerves')).toEqual(['ZA3FD9F070', 'ZA56D02CAC'])
+    expect(g.relationsByKind('FMA20')[0]![1][0]!.object).toBe('ZAC_nerves')
   })
 })

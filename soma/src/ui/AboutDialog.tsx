@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { PROVENANCE_LABEL } from '../anatomy/labels.ts'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
 
@@ -17,6 +18,21 @@ export function AboutDialog() {
     const s = new Set<string>()
     for (const n of Object.values(graph.names)) if (n.zhSource) s.add(n.zhSource)
     return [...s].sort()
+  }, [graph])
+  // which provenance and how many parts each declared source contributes
+  const usage = useMemo(() => {
+    const m = new Map<string, { count: number; provenance: Set<string> }>()
+    if (graph) {
+      for (const g of graph.provenanceGroups()) {
+        for (const src of g.sources) {
+          const e = m.get(src.info.name) ?? { count: 0, provenance: new Set<string>() }
+          e.count += src.count
+          e.provenance.add(PROVENANCE_LABEL[g.provenance]?.zh ?? g.provenance)
+          m.set(src.info.name, e)
+        }
+      }
+    }
+    return m
   }, [graph])
   if (!open) return null
   return (
@@ -43,6 +59,13 @@ export function AboutDialog() {
                     {s.name}
                   </a>
                   <span className="tag">{s.license}</span>
+                  {usage.get(s.name) ? (
+                    <span className="src-use">
+                      {usage.get(s.name)!.count} 个结构 · {[...usage.get(s.name)!.provenance].join(' / ')}
+                    </span>
+                  ) : (
+                    <span className="src-use">本体 / 参考数据</span>
+                  )}
                   <p>{s.attribution}</p>
                 </li>
               ))}
@@ -50,6 +73,18 @@ export function AboutDialog() {
           ) : (
             <p className="hint">数据文件未声明来源。</p>
           )}
+          <h3>几何来源的三种类型 <span className="en">Provenance</span></h3>
+          <dl className="prov-legend">
+            {(['scanned', 'warped', 'curated'] as const).map((k) => (
+              <div key={k}>
+                <dt>
+                  <span className={`badge badge-${k}`}>{PROVENANCE_LABEL[k].zh}</span>
+                </dt>
+                <dd>{PROVENANCE_LABEL[k].hint}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="hint">在“显示”面板中可按来源着色，或隐藏某一类来源的结构。</p>
           <h3>知识层 <span className="en">Knowledge layer</span></h3>
           {graph?.hasKnowledge ? (
             <>

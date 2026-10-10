@@ -40,3 +40,22 @@ export const ZH_OVERRIDES: Record<string, { zh: string; reason: string }> = {
   temporoparietalis: { zh: '颞顶肌', reason: 'Wikidata label 颞肌 is temporalis' },
   neurocranium: { zh: '脑颅', reason: 'Wikidata label 脑壳 is colloquial for skull' },
 }
+
+/**
+ * English names whose Wikidata zh label is acceptable mainland usage even though the lexicon
+ * holds a shorter form for use inside compounds (心脏 as a name, 心 in 心室/心壁). For these the
+ * Wikidata label is kept; everywhere else an exact lexicon entry wins (mainland wording policy).
+ * Keyed by the unlateralised English name.
+ */
+export const KEEP_WIKIDATA_LABEL = new Set<string>([
+  'heart', // 心脏 (lexicon: 心)
+  'liver', // 肝脏 (肝)
+  'head', // 头部 (头)
+  'mouth', // 口腔 (口)
+  'rib', // 肋骨 (肋)
+  'muscle organ', // 肌肉 (肌)
+  'hair', // 毛发 (毛)
+  'duct', // 导管 (管)
+  'parenchyma', // 实质组织 (实质)
+  'neuraxis', // 中枢神经系统 (神经轴)
+])

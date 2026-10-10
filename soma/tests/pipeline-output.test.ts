@@ -4,7 +4,10 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { AnatomyData, Concept, Part } from '../src/anatomy/types.ts'
+import type { AnatomyData, Concept, NervePath, Part } from '../src/anatomy/types.ts'
+import type { Mesh } from '../tools/pipeline/geometry.ts'
+import { runLandmarkChecks, type LandmarkResult } from '../tools/pipeline/landmarks.ts'
+import type { Polyline } from '../tools/pipeline/tube.ts'
 import { readGlb } from '../tools/pipeline/glb.ts'
 import { LAYERS } from '../tools/pipeline/layers.ts'
 
@@ -38,13 +41,17 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
   it('has unique part ids and well-formed parts', () => {
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
-      expect(p.id).toMatch(/^(FJ\d+M?|R3_FMA\d+)$/)
-      expect(p.fma, p.id).toMatch(/^FMA\d+$/)
+      expect(p.id).toMatch(/^(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8})$/)
+      // FMA ids, or a synthetic ZAC_… concept id for structures FMA has no class for
+      expect(p.fma, p.id).toMatch(/^(FMA\d+|ZAC_[a-z0-9_]+(_[LR])?)$/)
       expect(p.name.trim().length, p.id).toBeGreaterThan(0)
       expect(SYSTEMS, p.id).toContain(p.system)
       expect(TISSUES, p.id).toContain(p.tissue)
       expect(['L', 'R', 'M'], p.id).toContain(p.side)
-      expect(p.provenance, p.id).toBe(p.id.startsWith('R3_') ? 'warped' : 'scanned')
+      expect(p.provenance, p.id).toBe(p.id.startsWith('R3_') ? 'warped' : p.id.startsWith('ZA') ? 'curated' : 'scanned')
+      // every part names a source that exists; only first-source parts may leave it out
+      if (p.id.startsWith('FJ')) expect(p.source, p.id).toBeUndefined()
+      else expect(data.sources.slice(1).map((x) => x.name), p.id).toContain(p.source)
       expect(Number.isInteger(p.depth) && p.depth >= 0 && p.depth < data.layers.length, p.id).toBe(true)
       expect(p.triangles, p.id).toBeGreaterThan(3)
       if (p.volume !== undefined) expect(p.volume, p.id).toBeGreaterThan(0)
@@ -199,7 +206,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
   it('stays within the triangle budget', () => {
     const total = data.parts.reduce((s, p) => s + p.triangles, 0)
     expect(total).toBeGreaterThan(800_000)
-    expect(total).toBeLessThan(1_900_000)
+    expect(total).toBeLessThan(2_200_000)
   })
 
   it('gets the left femur right', () => {
@@ -330,12 +337,13 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     const LOBES = ['Upper lobe of right lung', 'Middle lobe of lung', 'Lower lobe of right lung', 'Upper lobe of left lung', 'Lower lobe of left lung']
 
     it('records the second source and marks imported parts as warped', () => {
-      expect(data.sources.map((s) => s.name)).toEqual(['BodyParts3D 4.0', 'BodyParts3D 3.0'])
+      expect(data.sources.slice(0, 2).map((s) => s.name)).toEqual(['BodyParts3D 4.0', 'BodyParts3D 3.0'])
       expect(data.sources[1]!.license).toBe('CC BY-SA 2.1 JP')
       expect(r3.length).toBeGreaterThan(50)
       expect(r3.length).toBeLessThan(120)
       for (const p of r3) {
         expect(p.provenance).toBe('warped')
+        expect(p.source).toBe('BodyParts3D 3.0')
         expect(p.id).toBe(`R3_${p.fma}`)
         // an imported concept never duplicates a concept 4.0 already has a part for
         expect(data.parts.filter((q) => q.fma === p.fma).length, p.name).toBe(1)
@@ -472,6 +480,234 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       const lobe = po.get(byName('Upper lobe of right lung').fma)!
       expect(lobe.parts).toContain(byName('Upper lobe of right lung').id)
       expect(po.get(lobe.parent!)!.name).toBe('right lung')
+    })
+  })
+
+  // ── parts imported from the Z-Anatomy / Open3DModel package ───────────────────────────────────
+  const za = present ? data.parts.filter((p) => p.id.startsWith('ZA')) : []
+  describe.skipIf(za.length === 0)('Z-Anatomy / Open3DModel import', () => {
+    const NERVES = join(DIR, 'nerves.json')
+    const nervePaths = (existsSync(NERVES) ? JSON.parse(readFileSync(NERVES, 'utf8')) : []) as NervePath[]
+    const names = (p: Part) => p.adjacent.map((id) => byId.get(id)!.name)
+
+    it('adds the two sources with share-alike licences and marks the parts as curated', () => {
+      const src = new Map(data.sources.map((s) => [s.name, s]))
+      for (const n of ['Z-Anatomy', 'Open3DModel']) {
+        expect(src.get(n)!.license).toBe('CC BY-SA 4.0')
+        expect(src.get(n)!.attribution).toMatch(/registered to the BodyParts3D 4\.0 body/)
+      }
+      expect(src.get('Z-Anatomy')!.attribution).toContain('Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0')
+      for (const p of za) {
+        expect(p.provenance).toBe('curated')
+        expect(['Z-Anatomy', 'Open3DModel'], p.id).toContain(p.source)
+      }
+      expect(za.filter((p) => p.source === 'Open3DModel').every((p) => p.tissue === 'nerve')).toBe(true)
+    })
+
+    it('classifies nerves, lymph nodes, glands, ligaments and fasciae', () => {
+      const count = (f: (p: Part) => boolean) => za.filter(f).length
+      expect(count((p) => p.system === 'nervous' && p.tissue === 'nerve')).toBeGreaterThan(400)
+      expect(count((p) => p.system === 'lymphatic')).toBeGreaterThan(100)
+      expect(count((p) => p.system === 'skeletal' && p.tissue === 'ligament')).toBeGreaterThan(200)
+      expect(count((p) => p.system === 'muscular' && p.tissue === 'fascia')).toBeGreaterThan(40)
+      expect(za.every((p) => ['nervous', 'lymphatic', 'endocrine', 'skeletal', 'muscular'].includes(p.system)), 'systems').toBe(true)
+      expect(byName('Left sciatic nerve')).toMatchObject({ system: 'nervous', tissue: 'nerve', side: 'L', source: 'Open3DModel' })
+      expect(byName('Right vagus nerve (X)')).toMatchObject({ system: 'nervous', tissue: 'nerve', source: 'Z-Anatomy' })
+      expect(byName('Left palatine tonsil')).toMatchObject({ system: 'lymphatic', side: 'L' })
+      expect(byName('Left fascia lata')).toMatchObject({ system: 'muscular', tissue: 'fascia' })
+      expect(LAYERS[byName('Left fascia lata').depth]!.key).toBe('fascia')
+      expect(LAYERS[byName('Left sciatic nerve').depth]!.key).toBe('neurovascular')
+      expect(LAYERS[byName('Left posterior cruciate ligament').depth]!.key).toBe('joints')
+      // BodyParts3D's own nerve parts win over imported duplicates
+      expect(data.parts.filter((p) => /^Left optic nerve/.test(p.name)).every((p) => p.id.startsWith('FJ'))).toBe(true)
+      expect(byName('Left oculomotor nerve (III)').source).toBe('Z-Anatomy')
+    })
+
+    it('puts the thyroid in front of the trachea, below the thyroid cartilage', () => {
+      const thyroid = byName('Thyroid gland')
+      expect(thyroid).toMatchObject({ system: 'endocrine', tissue: 'gland', side: 'M', source: 'Z-Anatomy' })
+      const trachea = byName('Trachea')
+      const cartilage = byName('Thyroid cartilage')
+      expect(Math.abs(thyroid.centroid[0])).toBeLessThan(0.008)
+      // wraps the upper trachea: overlaps it in height, its isthmus lies in front of it
+      expect(thyroid.bbox[1]).toBeGreaterThan(trachea.bbox[1])
+      expect(thyroid.bbox[1]).toBeLessThan(trachea.bbox[4])
+      expect(thyroid.bbox[5]).toBeGreaterThan(trachea.bbox[5] - 0.002)
+      // below the laryngeal prominence: centroid under the thyroid cartilage's centroid
+      expect(thyroid.centroid[1]).toBeLessThan(cartilage.centroid[1])
+      expect(cartilage.centroid[1] - thyroid.centroid[1]).toBeLessThan(0.06)
+      expect(names(thyroid)).toContain('Trachea')
+      // a thyroid is 4–6 cm wide
+      expect(thyroid.bbox[3] - thyroid.bbox[0]).toBeGreaterThan(0.03)
+      expect(thyroid.bbox[3] - thyroid.bbox[0]).toBeLessThan(0.075)
+      for (const side of ['Left', 'Right']) expect(Math.abs(byName(`${side} superior parathyroid gland`).centroid[1] - thyroid.centroid[1])).toBeLessThan(0.03)
+    })
+
+    it('has lymph nodes where their names say', () => {
+      const y = (n: string) => byName(n).centroid[1]
+      expect(y('Left submandibular nodes')).toBeGreaterThan(y('Left supraclavicular nodes'))
+      expect(y('Left supraclavicular nodes')).toBeGreaterThan(y('Left central axillary nodes'))
+      expect(y('Left central axillary nodes')).toBeGreaterThan(y('Left superomedial superficial inguinal nodes'))
+      expect(y('Left superomedial superficial inguinal nodes')).toBeGreaterThan(y('Left deep popliteal nodes'))
+      expect(Math.abs(byName('Left central axillary nodes').centroid[0])).toBeGreaterThan(0.1)
+      const hip = byName('Left hip bone')
+      const inguinal = byName('Left superomedial superficial inguinal nodes')
+      expect(inguinal.centroid[1]).toBeGreaterThan(hip.bbox[1] - 0.05)
+      expect(inguinal.centroid[1]).toBeLessThan(hip.bbox[4])
+      expect(inguinal.centroid[2]).toBeGreaterThan(hip.centroid[2])
+    })
+
+    it('has knee and ankle ligaments at their joints', () => {
+      const pcl = byName('Left posterior cruciate ligament')
+      const femur = byName('Left femur')
+      const tibia = byName('Left tibia')
+      expect(pcl.centroid[1]).toBeLessThan(femur.bbox[1] + 0.05)
+      expect(pcl.centroid[1]).toBeGreaterThan(tibia.bbox[4] - 0.03)
+      expect(names(pcl)).toEqual(expect.arrayContaining(['Left femur', 'Left tibia']))
+      const fib = byName('Left fibular collateral ligament')
+      expect(fib.centroid[0]).toBeGreaterThan(pcl.centroid[0])
+      expect(names(fib)).toContain('Left fibula')
+    })
+
+    it('ships nerves.json consistent with the nerve parts', () => {
+      expect(nervePaths.length).toBeGreaterThan(350)
+      const seen = new Set<string>()
+      for (const n of nervePaths) {
+        expect(seen.has(n.part), `${n.part} twice`).toBe(false)
+        seen.add(n.part)
+        const part = byId.get(n.part)
+        expect(part, n.part).toBeDefined()
+        expect(part!.tissue, n.part).toBe('nerve')
+        expect(n.branches.length, n.part).toBeGreaterThan(0)
+        for (const b of n.branches) {
+          expect(b.points.length % 3, n.part).toBe(0)
+          expect(b.radius.length, n.part).toBe(b.points.length / 3)
+          expect(b.radius.length, n.part).toBeGreaterThanOrEqual(2)
+          expect(b.points.every(Number.isFinite) && b.radius.every((r) => r > 0 && r < 0.01), n.part).toBe(true)
+          // the tube was built round this line: every point lies inside the part's bounds grown by its radius
+          for (let i = 0; i < b.points.length; i += 3) {
+            const r = b.radius[i / 3]! + 2e-4
+            for (let k = 0; k < 3; k++) {
+              expect(b.points[i + k]!, `${part!.name} point ${i / 3}`).toBeGreaterThanOrEqual(part!.bbox[k]! - r)
+              expect(b.points[i + k]!, `${part!.name} point ${i / 3}`).toBeLessThanOrEqual(part!.bbox[k + 3]! + r)
+            }
+          }
+        }
+      }
+      // every tube-built nerve has its centreline; ganglia (meshes) have none
+      const tubes = za.filter((p) => p.tissue === 'nerve' && !/ganglion|ganglia/i.test(p.name))
+      // … except the few whose source centreline could not be recovered (warped as meshes instead)
+      const without = tubes.filter((p) => !seen.has(p.id)).map((p) => p.name)
+      expect(without.length).toBeLessThanOrEqual(8)
+      expect(without.filter((n) => !/dorsal branch of ulnar nerve|lumbar plexus|lumbosacral trunk|sacral plexus/.test(n))).toEqual([])
+      expect(za.filter((p) => /spinal ganglion/.test(p.name) && seen.has(p.id))).toEqual([])
+      // long nerves are long
+      const length = (name: string) => {
+        const n = nervePaths.find((x) => x.part === byName(name).id)!
+        return Math.max(...n.branches.map((b) => {
+          let l = 0
+          for (let i = 3; i < b.points.length; i += 3) l += Math.hypot(b.points[i]! - b.points[i - 3]!, b.points[i + 1]! - b.points[i - 2]!, b.points[i + 2]! - b.points[i - 1]!)
+          return l
+        }))
+      }
+      expect(length('Left sciatic nerve')).toBeGreaterThan(0.25)
+      expect(length('Left median nerve')).toBeGreaterThan(0.4)
+      expect(length('Left ulnar nerve')).toBeGreaterThan(0.4)
+    })
+
+    it('passes the anatomical landmark checks on the shipped geometry', async () => {
+      // meshes straight from the GLBs (world space), centrelines from nerves.json
+      const wanted = new Set<string>()
+      for (const side of ['Left', 'Right']) {
+        const s = side.toLowerCase()
+        for (const n of [`${side} radius`, `Flexor retinaculum of ${s} wrist`, `${side} humerus`, `${side} piriformis`, `${side} femur`, `Long head of ${s} biceps femoris`, `${side} semimembranosus`, `${side} fibula`, `${side} inguinal ligament`, `${side} femoral artery`, `${side} scalenus anterior`, `${side} scalenus medius`]) wanted.add(n)
+        for (const o of ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth']) wanted.add(`${side} ${o} rib`)
+      }
+      const meshes = new Map<string, Mesh>()
+      const systems = new Set([...wanted].map((n) => byName(n).system))
+      for (const sys of systems) {
+        const doc = await readGlb(join(DIR, `${sys}.glb`))
+        for (const node of doc.getRoot().listNodes()) {
+          const part = byId.get(node.getName())
+          if (!part || !wanted.has(part.name)) continue
+          const prim = node.getMesh()!.listPrimitives()[0]!
+          const pos = prim.getAttribute('POSITION')!
+          const m = node.getWorldMatrix()
+          const positions = new Float32Array(pos.getCount() * 3)
+          const v = [0, 0, 0]
+          for (let i = 0; i < pos.getCount(); i++) {
+            pos.getElement(i, v)
+            for (let k = 0; k < 3; k++) positions[3 * i + k] = v[k]! * m[5 * k]! + m[12 + k]!
+          }
+          meshes.set(part.name, { positions, indices: Uint32Array.from(prim.getIndices()!.getArray()!) })
+        }
+      }
+      const lines = new Map<string, Polyline[]>(nervePaths.map((n) => [byId.get(n.part)!.name, n.branches.map((b) => ({ points: Float32Array.from(b.points), radius: Float32Array.from(b.radius) }))]))
+      const results = runLandmarkChecks({ mesh: (n) => meshes.get(n) ?? null, nerve: (n) => lines.get(n) ?? null })
+      const get = (id: string, side: 'L' | 'R'): LandmarkResult => results.find((r) => r.id === id && r.side === side)!
+      expect(results.length).toBe(18)
+      expect(results.filter((r) => !r.evaluated).map((r) => `${r.side} ${r.id}: ${r.measured}`)).toEqual([])
+      expect(results.filter((r) => !r.pass).map((r) => `${r.side} ${r.id}: ${r.measured}`)).toEqual([])
+      // the tolerances behind those verdicts, restated on the numbers (mm)
+      for (const side of ['L', 'R'] as const) {
+        const wrist = get('median-wrist', side).values
+        expect(wrist.palmarOfRadius!).toBeGreaterThan(3)
+        expect(wrist.toRadius!).toBeLessThan(20)
+        expect(wrist.toRetinaculum!).toBeLessThan(8)
+        const elbow = get('ulnar-epicondyle', side).values
+        expect(elbow.toEpicondyle!).toBeLessThan(15)
+        expect(elbow.posterior!).toBeGreaterThan(0)
+        const pir = get('sciatic-piriformis', side).values
+        expect(pir.toPiriformis!).toBeLessThan(12)
+        const thigh = get('sciatic-thigh', side).values
+        expect(thigh.posteriorMin!).toBeGreaterThan(5)
+        expect(thigh.betweenMin!).toBeGreaterThan(-0.35)
+        expect(thigh.betweenMax!).toBeLessThan(1.35)
+        const radial = get('radial-humerus', side).values
+        expect(radial.toBone!).toBeLessThan(15)
+        expect(radial.posterior!).toBeGreaterThan(3)
+        expect(radial.medialProximal!).toBeGreaterThan(0)
+        expect(radial.lateralDistal!).toBeGreaterThan(0)
+        expect(get('fibular-neck', side).values.toFibula!).toBeLessThan(8)
+        const fem = get('femoral-triangle', side).values
+        expect(fem.lateral!).toBeGreaterThan(2)
+        expect(fem.separation!).toBeLessThan(40)
+        const plexus = get('plexus-scalenes', side).values
+        expect(plexus.rootsEvaluated!).toBe(5)
+        expect(plexus.rootsBetween!).toBeGreaterThanOrEqual(3)
+        const ribs = get('intercostal-ribs', side).values
+        expect(ribs.nerves!).toBeGreaterThanOrEqual(10)
+        expect(ribs.worstMedianDistance!).toBeLessThan(6)
+        expect(ribs.meanBelow!).toBeGreaterThan(0.6)
+      }
+    }, 120_000)
+
+    it('keeps nerve adjacency lists in proportion', () => {
+      const nerves = za.filter((p) => p.tissue === 'nerve')
+      const deg = nerves.map((p) => p.adjacent.length).sort((a, b) => a - b)
+      expect(deg[Math.floor(deg.length / 2)]!).toBeLessThan(40)
+      expect(deg[deg.length - 1]!).toBeLessThanOrEqual(200)
+      const sciatic = names(byName('Left sciatic nerve'))
+      expect(sciatic.some((n) => /biceps femoris|semimembranosus|semitendinosus|adductor magnus/.test(n))).toBe(true)
+      expect(names(byName('Left median nerve')).some((n) => /flexor/.test(n))).toBe(true)
+    })
+
+    it('places imported concepts in the isa tree along the FMA is-a chain', () => {
+      const isa = new Map(data.trees.isa.map((c) => [c.id, c]))
+      const up = (id: string): string[] => {
+        const c = isa.get(id)
+        return c ? [c.name, ...(c.parent ? up(c.parent) : [])] : []
+      }
+      expect(up(byName('Right median nerve').fma).slice(0, 3)).toEqual(['right median nerve', 'median nerve', 'peripheral nerve'])
+      expect(up(byName('Thyroid gland').fma)).toEqual(expect.arrayContaining(['thyroid gland', 'lobular organ', 'organ']))
+      expect(up(byName('Left deep popliteal nodes').fma)).toEqual(expect.arrayContaining(['deep popliteal lymph node group', 'lymph node group']))
+      const synthetic = za.filter((p) => p.fma.startsWith('ZAC_'))
+      expect(synthetic.length).toBeGreaterThan(0)
+      for (const p of synthetic) {
+        const chain = up(p.fma)
+        expect(chain.length, p.name).toBeGreaterThan(1)
+        expect(chain[chain.length - 1], p.name).toBe('anatomical entity')
+      }
     })
   })
 })

@@ -23,13 +23,21 @@ const PLURALS: [RegExp, string][] = [
   [/parts$/, 'part'],
   [/regions$/, 'region'],
   [/clusters$/, 'cluster'],
+  [/nodes$/, 'node'],
+  [/nerves$/, 'nerve'],
+  [/ligaments$/, 'ligament'],
+  [/components$/, 'component'],
 ]
+
+const SIDED_PART_HEADS = /(branch|branches|trunk|lobe|cusp|leaflet|division|tributary|wall|side|limb|duct)$/
 
 export interface Translator {
   /** Returns undefined when any piece of the name is outside the lexicon and rules. */
   translate(name: string): string | undefined
   /** How the last successful top-level translation was obtained: pure lexicon hit or composed. */
   isLexiconTerm(name: string): boolean
+  /** See `exact` in the implementation: a whole-term lexicon hit, modulo side / set / ordinal. */
+  exact(name: string): string | undefined
 }
 
 /**
@@ -71,7 +79,9 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       const zhSide = sides[0] === 'left' ? '左' : '右'
       // "right branch of portal vein": the side belongs to the part, not the whole -> 门静脉右支
       const ofAt = name.indexOf(' of ')
-      if (ofAt > 0 && /\b(left|right)\b/.test(name.slice(0, ofAt))) {
+      // Only for parts that are themselves left/right within one whole (branch, lobe, cusp ...);
+      // "left superficial part of tibial collateral ligament" is the left ligament's part.
+      if (ofAt > 0 && /\b(left|right)\b/.test(name.slice(0, ofAt)) && SIDED_PART_HEADS.test(name.slice(0, ofAt))) {
         const a = norm(name.slice(0, ofAt).replace(/\b(left|right)\b/, ''))
         const tb = t(name.slice(ofAt + 4), d)
         const ta = tb && a ? (a === 'branch' ? '支' : a === 'trunk' ? '干' : headPhrase(a, d)) : undefined
@@ -95,6 +105,29 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       if (pos === 'lateral') return `${jaw}恒侧切牙`
       if (pos) return `${jaw}第${ZH_NUM[ORDINALS[pos]!]}恒${kind}`
       return `${jaw}恒${kind}`
+    }
+
+    // Numbered spinal ganglia: "eighth cervical spinal ganglion" -> 第8颈神经脊神经节
+    if ((m = /^(\w+) (cervical|thoracic|lumbar|sacral) spinal ganglion$/.exec(name)) && ORDINALS[m[1]!]) {
+      const seg = { cervical: '颈', thoracic: '胸', lumbar: '腰', sacral: '骶' }[m[2]!]!
+      return `第${ORDINALS[m[1]!]}${seg}神经脊神经节`
+    }
+
+    // "nerve(s) to X [and Y]" -> X[和Y]神经
+    if ((m = /^nerves? to (.+?)(?: and (.+))?$/.exec(name))) {
+      const a = t(m[1]!, d)
+      const b = m[2] ? t(m[2], d) : ''
+      return a && b !== undefined ? `${a}${b ? `和${b}` : ''}神经` : undefined
+    }
+
+    // Lymph node groups and the "X node(s)" shorthand
+    if ((m = /^(.+) lymph node group$/.exec(name))) {
+      const x = t(`${m[1]} lymph node`, d) ?? t(`${m[1]} lymph nodes`, d)
+      return x && `${x}群`
+    }
+    if ((m = /^(.+) nodes?$/.exec(name)) && !/lymph$/.test(m[1]!)) {
+      const x = t(`${m[1]} lymph node`, d)
+      if (x) return x
     }
 
     if ((m = /^set of (.+)$/.exec(name))) {
@@ -170,7 +203,13 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       return undefined
     }
 
-    return headPhrase(name, d)
+    const whole = headPhrase(name, d)
+    if (whole) return whole
+    if (name.endsWith(' muscle')) {
+      const x = t(name.slice(0, -7), d)
+      if (x?.endsWith('肌')) return x
+    }
+    return undefined
   }
 
   /** [ordinal] [modifiers...] noun-phrase, where the noun phrase is the longest lexicon suffix. */
@@ -193,7 +232,53 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
     return undefined
   }
 
+  /**
+   * A translation that rests on one whole lexicon term, allowing only wrappers that cannot change
+   * the term itself: a side word, "set of", an ordinal, or a numbered-level rule. This is what
+   * the mainland-wording policy treats as an "exact, confident" lexicon entry.
+   */
+  function exact(raw: string): string | undefined {
+    const direct = exactCore(norm(raw))
+    if (direct) return direct
+    // "right infraspinatus muscle": the lexicon lists muscles by their bare Latin-style name
+    const bare = norm(raw).replace(/ muscle$/, '')
+    const viaBare = bare !== norm(raw) ? exactCore(bare) : undefined
+    return viaBare?.endsWith('肌') ? viaBare : undefined
+  }
+
+  function exactCore(raw: string): string | undefined {
+    let name = raw
+    if (name in TERMS) return TERMS[name]
+    const sides = name.match(/\b(left|right)\b/g) ?? []
+    let prefix = ''
+    if (sides.length === 1) {
+      const stripped = norm(name.replace(/\b(left|right)\b/, ''))
+      // only when the side leads the name or the stripped name is itself a term
+      if (!(stripped in TERMS) && !/^(left|right) /.test(name) && !/^set of (left|right) /.test(name)) return undefined
+      prefix = sides[0] === 'left' ? '左' : '右'
+      name = stripped
+      if (name in TERMS) return prefix + TERMS[name]
+    } else if (sides.length > 1) return undefined
+    let m: RegExpExecArray | null
+    if ((m = /^set of (.+)$/.exec(name))) {
+      const inner = m[1]!
+      if (inner in TERMS) return prefix + TERMS[inner]
+      for (const [re, sing] of PLURALS) {
+        const one = inner.replace(re, sing)
+        if (one !== inner && !inner.includes(' of ') && one in TERMS) return prefix + TERMS[one]
+      }
+      return undefined
+    }
+    if ((m = /^(\w+) (cervical|thoracic|lumbar|sacral) spinal ganglion$/.exec(name)) && ORDINALS[m[1]!]) {
+      const g = structural(name, 1)
+      return g && prefix + g
+    }
+    if ((m = /^(\w+) (.+)$/.exec(name)) && ORDINALS[m[1]!] && m[2]! in TERMS) return `${prefix}第${ORDINALS[m[1]!]}${TERMS[m[2]!]}`
+    return undefined
+  }
+
   return {
+    exact,
     translate: (name) => t(name),
     isLexiconTerm: (name) => norm(name) in TERMS,
   }

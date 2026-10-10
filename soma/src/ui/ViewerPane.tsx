@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { debug } from '../debug.ts'
 import { useApp } from '../state/store.ts'
-import { Viewer } from '../viewer/Viewer.ts'
+import type { Viewer } from '../viewer/Viewer.ts'
 import { Icon } from './Icon.tsx'
 
 export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
@@ -18,6 +18,8 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   const hiddenCount = useApp((s) => s.hidden.size)
   const peel = useApp((s) => s.peel)
   const section = useApp((s) => s.section.enabled)
+  const colorMode = useApp((s) => s.colorMode)
+  const provenanceHiddenCount = useApp((s) => s.provenanceHidden.size)
   const selection = useApp((s) => s.selection)
   const hasSelection = selection.ids.length > 0
 
@@ -30,6 +32,9 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
     let cancelled = false
     ;(async () => {
       try {
+        // three.js and the loaders are a separate chunk, fetched while the UI is already up
+        const { Viewer } = await import('../viewer/Viewer.ts')
+        if (cancelled) return
         viewer = new Viewer(host, graph, `${import.meta.env.BASE_URL}anatomy/${dataset}/`, {
           forceWebGL: params.get('renderer') === 'webgl',
         })
@@ -112,6 +117,16 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
         {peel > 0 && !isolated && (
           <button className="chip chip-action" onClick={() => app.setPeel(0)}>
             已剥离 {peel} 层 <Icon name="close" size={12} />
+          </button>
+        )}
+        {colorMode === 'source' && (
+          <button className="chip chip-action" onClick={() => app.setColorMode('tissue')} title="绿：扫描重建　橙：配准变形　蓝 / 紫：人工建模">
+            按来源着色 <Icon name="close" size={12} />
+          </button>
+        )}
+        {provenanceHiddenCount > 0 && !isolated && (
+          <button className="chip chip-action" onClick={() => { for (const p of [...useApp.getState().provenanceHidden]) app.setProvenanceVisible(p, true) }}>
+            已按来源隐藏 {provenanceHiddenCount} 类 · 恢复
           </button>
         )}
         {section && (

@@ -2,7 +2,7 @@
 // rules can be unit-tested (tests/app*.test.ts) and reused by picking.
 
 import { boundsCenter, type AnatomyGraph, type Bounds } from '../anatomy/graph.ts'
-import type { SystemId, Vec3 } from '../anatomy/types.ts'
+import type { Provenance, SystemId, Vec3 } from '../anatomy/types.ts'
 
 export const HIDDEN = 0
 export const NORMAL = 1
@@ -18,6 +18,8 @@ export interface DisplayInput {
   /** Layers with depth < peel are peeled away. */
   peel: number
   hidden: ReadonlySet<string>
+  /** Provenance kinds filtered out (e.g. hide everything that was not scanned). */
+  provenanceHidden?: ReadonlySet<Provenance>
   /** When set, only these parts are shown (system toggles and peel are ignored). */
   isolated: ReadonlySet<string> | null
   /** Ghost everything except the selection and its adjacent parts. */
@@ -38,7 +40,7 @@ export function adjacentFocus(graph: AnatomyGraph, selected: ReadonlySet<string>
 /**
  * Display state per part (indexed like graph.parts).
  *  - a selected part is always shown, whatever the filters say;
- *  - isolation replaces the system / peel / hidden filters;
+ *  - isolation replaces the system / peel / hidden / provenance filters;
  *  - in adjacent mode the focus set is always shown and everything else that would be
  *    visible is ghosted.
  */
@@ -54,7 +56,10 @@ export function computeDisplay(graph: AnatomyGraph, s: DisplayInput, out?: Uint8
     }
     const visible = s.isolated
       ? s.isolated.has(p.id)
-      : (s.systems[p.system]?.visible ?? true) && p.depth >= s.peel && !s.hidden.has(p.id)
+      : (s.systems[p.system]?.visible ?? true) &&
+        p.depth >= s.peel &&
+        !s.hidden.has(p.id) &&
+        !(s.provenanceHidden?.has(p.provenance) ?? false)
     res[i] = !visible ? HIDDEN : focus ? GHOST : NORMAL
   }
   return res
@@ -139,3 +144,14 @@ export function clipRay(o: Vec3, d: Vec3, plane: PlaneEq): [number, number] | nu
   if (a > 0) return [Math.max(0, t), Infinity]
   return t < 0 ? null : [0, t]
 }
+
+/**
+ * Radius of the tube a closed mesh would be if it were one: 2·V/A is exact for a long
+ * cylinder and a good thinness measure for branching nerves and small vessels.
+ */
+export function tubeRadius(volume: number, area: number): number {
+  return area > 0 ? (2 * Math.abs(volume)) / area : 0
+}
+
+/** Parts whose equivalent tube radius is below this (metres) get tolerant picking. */
+export const THIN_RADIUS = 0.0015
