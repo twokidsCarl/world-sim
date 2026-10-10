@@ -12,10 +12,12 @@ export interface Placement {
   /** extra transform applied after the assembly operators (column-major 4x4) */
   matrix?: Float32Array
   molecule: number
+  /** world position of the molecule's centre, for depth layers */
+  center?: [number, number, number]
 }
 
 /** Turn a parsed structure into GPU-ready buffers and its draw list. */
-export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: Placement): RenderItem {
+export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: Placement | Placement[]): RenderItem {
   const radii = atomRadii(mol)
   const posr = new Float32Array(mol.atomCount * 4)
   const ids = new Uint32Array(mol.atomCount * 2)
@@ -27,7 +29,8 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
     ids[i * 2] = mol.chainOf[i]!
     ids[i * 2 + 1] = mol.residue[i]! + RESIDUE_OFFSET
   }
-  return { posr, color: atomColors(mol, coloring, tone), ids, draws: assemblyDraws(mol, place), subunitSize: subunitSize(mol) }
+  const draws = Array.isArray(place) ? place.flatMap((p) => assemblyDraws(mol, p)) : assemblyDraws(mol, place)
+  return { posr, color: atomColors(mol, coloring, tone), ids, draws, subunitSize: subunitSize(mol) }
 }
 
 export function assemblyDraws(mol: Molecule, place: Placement): Draw[] {
@@ -46,7 +49,7 @@ export function assemblyDraws(mol: Molecule, place: Placement): Draw[] {
     }
     for (const op of g.operators) {
       const matrix = place.matrix ? mul(place.matrix, op) : op
-      for (const r of runs) draws.push({ ...r, matrix, subunitBase: copy * mol.chains.length, molecule: place.molecule })
+      for (const r of runs) draws.push({ ...r, matrix, subunitBase: copy * mol.chains.length, molecule: place.molecule, center: place.center })
       copy++
     }
   }

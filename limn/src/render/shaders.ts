@@ -53,6 +53,7 @@ uniform vec2 u_z; // front, back (view-space Å)
 uniform uint u_subunitBase;
 uniform uint u_molecule;
 uniform bool u_outlineByMolecule;
+uniform float u_keep; // share of true colour this molecule keeps (depth layers)
 layout(location = 0) out vec4 o_color;
 layout(location = 1) out uvec4 o_ids;
 void main() {
@@ -60,7 +61,7 @@ void main() {
   if (d2 > 1.0) discard;
   float z = v_z + v_r * sqrt(1.0 - d2);
   gl_FragDepth = clamp((u_z.x - z) / (u_z.x - u_z.y), 0.0, 0.999999);
-  o_color = vec4(v_color, 1.0);
+  o_color = vec4(v_color, u_keep);
   uint subunit = u_outlineByMolecule ? u_molecule : u_subunitBase + v_ids.x;
   o_ids = uvec4(subunit + 1u, v_ids.y, u_molecule, 1u);
 }`
@@ -153,6 +154,7 @@ uniform vec3 u_fog;
 uniform vec2 u_fogAmt;  // share of true colour kept at the front and at the back
 uniform vec3 u_ink;
 uniform float u_grain;
+uniform bool u_layered; // depth fading was decided per molecule, in the colour's alpha
 out vec4 o;
 
 float hash(vec2 p) {
@@ -190,7 +192,9 @@ void main() {
     float z = mix(u_z.x, u_z.y, d);
     float t = clamp((u_zSpan.x - z) / max(u_zSpan.x - u_zSpan.y, 1.0e-3), 0.0, 1.0);
     float keep = mix(u_fogAmt.x, u_fogAmt.y, t);
-    rgb = mix(u_fog, texelFetch(u_color, p, 0).rgb * e.b, keep);
+    vec4 c = texelFetch(u_color, p, 0);
+    if (u_layered) keep = c.a;
+    rgb = mix(u_fog, c.rgb * e.b, keep);
   }
   rgb = mix(rgb, u_ink, line);
   if (u_grain > 0.0) {

@@ -37,8 +37,18 @@ export function describeContents(): string {
   const s = useStore.getState()
   const lines: string[] = []
   if (s.spec?.caption) lines.push(s.spec.caption, '')
+  const land = s.spec?.landscape
+  if (land) {
+    lines.push(
+      `A cross-section ${land.width / 10} x ${land.height / 10} nm, ${land.depth / 10} nm deep. ` +
+        (land.membrane ? `A membrane runs across the middle; above it: ${land.above}; below it: ${land.below}.` : `It shows: ${land.below}.`),
+      'Each "panel" below is one kind of molecule, scattered through the scene in the number of copies given.',
+      '',
+    )
+  }
   s.panels.forEach((p, i) => {
-    lines.push(`panel ${i}: ${p.spec.label} — ${p.spec.source.id}, ${p.spec.source.title}`)
+    const ing = land?.ingredients.find((x) => x.panel === i)
+    lines.push(`panel ${i}: ${p.spec.label} — ${p.spec.source.id}, ${p.spec.source.title}${ing ? ` — ${s.placed[i] ?? ing.copies} copies, ${ing.compartment === 'membrane' ? 'in the membrane' : ing.compartment + ' the membrane'}` : ''}`)
     p.mol.entities.forEach((e, k) => {
       const name = p.spec.entities.find((x) => x.entityId === e.id)?.name ?? e.description
       const chains = p.mol.chains.filter((c) => c.entity === k).length
@@ -138,7 +148,7 @@ export async function refine(opts: RefineOptions): Promise<void> {
         metrics: describeMetrics(measure(shot.px, shot.w, shot.h, look.style.background)),
         history: history.join('\n'),
         feedback: k === 0 ? opts.feedback : '',
-        mode: 'molecule',
+        mode: store.getState().spec?.landscape ? 'landscape' : 'molecule',
       })
       const edits: Edit[] = scoringOnly ? [] : sanitizeEdits(reply.edits, entityIds())
       push({ image, overall: reply.overall, scores: reply.scores, comment: reply.comment, edits, look })

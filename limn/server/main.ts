@@ -20,6 +20,12 @@ Bun.serve({
     const url = new URL(req.url)
     try {
       if (url.pathname === '/api/health') return json({ ok: true, claude: await available() })
+      // Ideal coordinates of a chemical component (used for the membrane lipid).
+      const lig = /^\/api\/ligand\/([A-Za-z0-9]{1,5})$/.exec(url.pathname)
+      if (lig) {
+        const res = await fetch(`https://files.rcsb.org/ligands/download/${lig[1]!.toUpperCase()}_ideal.sdf`)
+        return res.ok ? new Response(await res.text(), { headers: { 'Content-Type': 'text/plain' } }) : json({ error: `没有找到配体 ${lig[1]}` }, 404)
+      }
       if (req.method !== 'POST') return json({ error: 'not found' }, 404)
       const body = (await req.json()) as Record<string, unknown>
       if (url.pathname === '/api/resolve') {

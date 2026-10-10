@@ -4,13 +4,14 @@ import { loadMolecule } from '../mol/load'
 import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
-import { cloneStyle, STYLE_MOLECULE, type Style } from '../render/style'
+import { loadLipid } from '../landscape/lipid'
+import { cloneStyle, STYLE_LANDSCAPE, STYLE_MOLECULE, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
 import type { PanelSpec, SceneSpec } from '../scene/spec'
 import { defaultColoring, spreadHues, type Coloring } from '../style/assign'
 import { parseHex } from '../style/oklab'
-import type { Role } from '../style/palettes'
+import { ROLE_HUE, type Role } from '../style/palettes'
 
 export interface Panel {
   spec: PanelSpec
@@ -51,6 +52,13 @@ interface State extends Look {
   error: string
   rounds: Round[]
   refining: string
+  /** the membrane lipid, loaded when a landscape has a membrane */
+  lipid: Molecule | null
+  /** seed of the random arrangement of a landscape */
+  seed: number
+  /** per panel, copies placed in the landscape; set by the stage after packing */
+  placed: number[]
+  repack(): void
   resolveTopic(topic: string): Promise<void>
   loadId(id: string): Promise<void>
   setAssembly(panel: number, id: string): void
@@ -90,6 +98,13 @@ export const useStore = create<State>((set, get) => ({
   error: '',
   rounds: [],
   refining: '',
+  lipid: null,
+  seed: 1,
+  placed: [],
+
+  repack() {
+    set((s) => ({ seed: s.seed + 1, sceneRev: s.sceneRev + 1 }))
+  },
 
   async resolveTopic(topic) {
     set({ busy: '正在理解主题并检索结构数据库（约半分钟）…', error: '' })
@@ -97,6 +112,26 @@ export const useStore = create<State>((set, get) => ({
       const { spec } = await api.resolve(topic)
       set({ busy: `正在下载 ${spec.panels.map((p) => p.source.id).join('、')}…` })
       const panels = await Promise.all(spec.panels.map(loadPanel))
+      if (spec.landscape) {
+        const lipid = spec.landscape.membrane ? await loadLipid() : null
+        // Several kinds of molecule share a role in a crowded scene; fan
+        // them across the role's hue range so neighbours can be told apart.
+        const colorings = panels.map((p) => p.coloring)
+        const byRole = new Map<Role, number[]>()
+        panels.forEach((p, i) => {
+          const role = p.coloring.roles[p.mol.entities.findIndex((e) => e.kind === 'protein')] ?? p.coloring.roles[0]!
+          byRole.set(role, [...(byRole.get(role) ?? []), i])
+        })
+        for (const [role, idx] of byRole) {
+          const spread = Math.max(ROLE_HUE[role].spread, 18)
+          idx.forEach((pi, k) => {
+            const shift = idx.length === 1 ? 0 : -spread + (2 * spread * k) / (idx.length - 1)
+            colorings[pi] = { ...colorings[pi]!, hueShift: colorings[pi]!.hueShift.map(() => 0), nudge: colorings[pi]!.nudge.map(() => shift) }
+          })
+        }
+        set((s) => ({ spec, panels, colorings, lipid, ...freshLook(), style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
+        return
+      }
       // Panels of the same protein are turned to a common orientation, so
       // that what changes between them is the molecule and not the camera.
       const aligned: string[] = []
@@ -132,7 +167,7 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const scene: SceneSpec = { topic: clean, kind: 'molecule', title: mol.title || clean, caption: '', panels: [spec], notes: [] }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }

@@ -94,6 +94,17 @@ export function App() {
                     {[p.spec.source.method, p.spec.source.resolution ? `${p.spec.source.resolution.toFixed(2)} Å` : '', p.spec.source.year].filter(Boolean).join(' · ') || p.spec.source.title}
                   </div>
                   {p.spec.reason && <div className="muted">{p.spec.reason}</div>}
+                  {s.spec!.landscape &&
+                    (() => {
+                      const ing = s.spec!.landscape!.ingredients.find((x) => x.panel === pi)
+                      const placed = s.placed[pi]
+                      if (!ing) return null
+                      return (
+                        <div className="muted">
+                          {ing.abundance}（估计） → {ing.copies} 个{placed !== undefined && placed < ing.copies ? `，放下了 ${placed} 个` : ''}
+                        </div>
+                      )
+                    })()}
                   <div className="row" style={{ margin: '4px 0' }}>
                     <select value={p.spec.assembly} onChange={(e) => s.setAssembly(pi, e.target.value)} style={{ flex: 1 }}>
                       {p.mol.assemblies.map((a) => (
@@ -116,7 +127,15 @@ export function App() {
                   ))}
                 </div>
               ))}
-              <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && '各面板比例相同。'}</div>
+              <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && !s.spec.landscape && '各面板比例相同。'}</div>
+              {s.spec.landscape && (
+                <div className="row" style={{ margin: '6px 0' }}>
+                  <button disabled={working} onClick={() => s.repack()}>重新随机排布</button>
+                  <span className="muted">
+                    {s.spec.landscape.width / 10}×{s.spec.landscape.height / 10} nm，厚 {s.spec.landscape.depth / 10} nm
+                  </span>
+                </div>
+              )}
               {s.spec.notes.length > 0 && (
                 <ul className="notes">
                   {s.spec.notes.map((n, i) => (
@@ -130,7 +149,7 @@ export function App() {
               <h2>看图精修</h2>
               <textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="可选：你的要求，例如“让 DNA 更突出”“转到能看见结合界面的角度”" />
               <div className="row" style={{ marginTop: 6 }}>
-                <button className="primary" disabled={working || !canAsk} onClick={() => void refine({ maxRounds: 3, feedback, chooseView: s.rounds.length === 0 && !feedback.trim() })}>
+                <button className="primary" disabled={working || !canAsk} onClick={() => void refine({ maxRounds: 3, feedback, chooseView: s.rounds.length === 0 && !feedback.trim() && !s.spec!.landscape })}>
                   {s.refining ? '精修中…' : '让 Claude 看图并修改'}
                 </button>
               </div>
@@ -170,7 +189,7 @@ export function App() {
           </>
         )}
         <div className="muted" style={{ marginTop: 'auto' }}>
-          拖动旋转 · 滚轮缩放 · Shift 拖动平移
+          {s.spec?.landscape ? '拖动平移 · 滚轮缩放' : '拖动旋转 · 滚轮缩放 · Shift 拖动平移'}
           <br />
           画法致敬 David S. Goodsell；结构数据来自 RCSB PDB。
         </div>
