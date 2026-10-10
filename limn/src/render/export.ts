@@ -1,15 +1,35 @@
-import type { Renderer, View } from './Renderer'
-import type { Style } from './style'
+import type { Renderer } from './Renderer'
+import type { Look } from '../state/store'
+import { figureAspect, panelLabels, viewFor } from '../ui/Stage'
 
-/** Render at `longSide` pixels with the canvas's aspect ratio and return a PNG. */
-export async function exportPng(r: Renderer, view: View, style: Style, longSide: number): Promise<Blob> {
-  const aspect = r.canvas.width / r.canvas.height
+export interface Figure {
+  canvas: OffscreenCanvas
+  /** the rendered pixels before captions were drawn, for measuring */
+  pixels: Uint8ClampedArray
+  w: number
+  h: number
+}
+
+/**
+ * Render the scene as a finished figure: framed to the subject's own
+ * proportions, with a caption under each panel.
+ */
+export function renderFigure(r: Renderer, look: Look, longSide: number): Figure {
+  const aspect = figureAspect(r, look)
   const w = Math.round(aspect >= 1 ? longSide : longSide * aspect)
   const h = Math.round(aspect >= 1 ? longSide / aspect : longSide)
-  const pixels = r.renderPixels(view, style, w, h)
-  const c = new OffscreenCanvas(w, h)
-  c.getContext('2d')!.putImageData(new ImageData(pixels as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0)
-  return c.convertToBlob({ type: 'image/png' })
+  const view = viewFor(r, look, w / h)
+  const pixels = r.renderPixels(view, look.style, w, h)
+  const canvas = new OffscreenCanvas(w, h)
+  const ctx = canvas.getContext('2d')!
+  ctx.putImageData(new ImageData(pixels as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0)
+  const size = Math.max(11, Math.round(longSide / 62))
+  ctx.font = `${size}px -apple-system, "PingFang SC", "Helvetica Neue", sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#26241f'
+  for (const l of panelLabels(view, w, h)) ctx.fillText(l.text, l.x, l.y + size * 0.5)
+  return { canvas, pixels, w, h }
 }
 
 export function download(blob: Blob, name: string): void {

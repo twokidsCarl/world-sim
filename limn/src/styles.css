@@ -26,3 +26,17 @@ button:disabled { opacity: 0.5; cursor: default; }
 .entity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .muted { color: #77736a; }
 .caption { line-height: 1.5; }
+textarea { width: 100%; resize: vertical; min-height: 54px; }
+.panel-label { position: absolute; transform: translateX(-50%); max-width: 240px; text-align: center; color: #33312c; background: #ffffffd9; padding: 2px 8px; border-radius: 4px; pointer-events: none; line-height: 1.35; }
+.source { border-left: 3px solid #cfcbc0; padding: 2px 0 2px 8px; margin-bottom: 10px; line-height: 1.5; }
+.source b { font-variant-numeric: tabular-nums; }
+.notes { margin: 0; padding-left: 16px; line-height: 1.5; color: #55524b; }
+.rounds { display: flex; flex-direction: column; gap: 8px; }
+.round { display: grid; grid-template-columns: 76px 1fr; gap: 8px; padding: 6px; border: 1px solid #dedbd2; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; }
+.round:hover { border-color: #1d1d1b; }
+.round img { width: 76px; height: 56px; object-fit: cover; border-radius: 3px; border: 1px solid #0002; }
+.round .score { font-weight: 600; }
+.round p { margin: 2px 0 0; line-height: 1.45; color: #55524b; }
+.tabs { display: flex; gap: 4px; }
+.tabs button { flex: 1; }
+.tabs button.on { background: #1d1d1b; color: #fff; border-color: #1d1d1b; }

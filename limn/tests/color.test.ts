@@ -21,7 +21,7 @@ describe('oklch', () => {
 
 describe('spreadHues', () => {
   it('fans entities of one role across that role’s range and leaves singles alone', () => {
-    const c = spreadHues({ roles: ['soluble', 'soluble', 'soluble', 'nucleic'], hueShift: [0, 0, 0, 0], override: [null, null, null, null] })
+    const c = spreadHues({ roles: ['soluble', 'soluble', 'soluble', 'nucleic'], hueShift: [0, 0, 0, 0], nudge: [0, 0, 0, 0], override: [null, null, null, null] })
     const s = ROLE_HUE.soluble.spread
     expect(c.hueShift).toEqual([-s, 0, s, 0])
   })

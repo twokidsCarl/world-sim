@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { download, exportPng } from './render/export'
+import * as api from './api'
+import { refine } from './refine/loop'
+import { download, renderFigure } from './render/export'
 import { placedAtomCount } from './scene/build'
 import { useStore } from './state/store'
 import { entityLch } from './style/assign'
@@ -19,87 +21,159 @@ function Slider(p: { label: string; value: number; min: number; max: number; ste
 
 export function App() {
   const s = useStore()
-  const [id, setId] = useState(() => new URLSearchParams(location.search).get('id') ?? '2hhb')
+  const params = new URLSearchParams(location.search)
+  const [mode, setMode] = useState<'topic' | 'id'>(params.get('id') ? 'id' : 'topic')
+  const [topic, setTopic] = useState(params.get('topic') ?? '')
+  const [id, setId] = useState(params.get('id') ?? '')
+  const [feedback, setFeedback] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [server, setServer] = useState<{ ok: boolean; claude: boolean } | null>(null)
 
   useEffect(() => {
-    void s.load(id)
+    void api.health().then(setServer)
+    if (params.get('id')) void s.loadId(params.get('id')!)
+    else if (params.get('topic')) void s.resolveTopic(params.get('topic')!)
   }, [])
 
   const save = async (longSide: number) => {
-    if (!stage.renderer || !stage.view || !s.mol) return
+    const r = stage.renderer
+    if (!r || s.panels.length === 0) return
     setExporting(true)
     try {
-      download(await exportPng(stage.renderer, stage.view, s.style, longSide), `${s.mol.id}-${longSide}.png`)
+      const look = s.getLook()
+      const name = s.panels.map((p) => p.mol.id).join('-')
+      download(await renderFigure(r, look, longSide).canvas.convertToBlob({ type: 'image/png' }), `${name}-${longSide}.png`)
+      useStore.setState((x) => ({ drawRev: x.drawRev + 1 })) // the off-screen render laid the panels out for its own frame
     } finally {
       setExporting(false)
     }
   }
 
+  const canAsk = server?.ok && server.claude
+  const working = !!s.busy || !!s.refining
+
   return (
     <div className="app">
       <div className="side">
         <h1>limn</h1>
-        <form className="row" onSubmit={(e) => (e.preventDefault(), void s.load(id))}>
-          <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="PDB 编号" spellCheck={false} />
-          <button className="primary" disabled={!!s.busy}>载入</button>
-        </form>
+        <div className="tabs">
+          <button className={mode === 'topic' ? 'on' : ''} onClick={() => setMode('topic')}>按主题</button>
+          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>按 PDB 编号</button>
+        </div>
+        {mode === 'topic' ? (
+          <form onSubmit={(e) => (e.preventDefault(), void s.resolveTopic(topic))}>
+            <textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="一个病毒、基因、蛋白或机理，例如：CRISPR-Cas9 切割 DNA" />
+            <div className="row" style={{ marginTop: 6 }}>
+              <button className="primary" disabled={working || !canAsk || !topic.trim()}>生成</button>
+              {server && !canAsk && <span className="muted">{server.ok ? '本机没有找到 claude 命令' : '本地服务未启动（bun run dev）'}</span>}
+            </div>
+          </form>
+        ) : (
+          <form className="row" onSubmit={(e) => (e.preventDefault(), void s.loadId(id))}>
+            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="例如 2hhb" spellCheck={false} />
+            <button className="primary" disabled={working}>载入</button>
+          </form>
+        )}
         {s.error && <div className="error">{s.error}</div>}
 
-        {s.mol && s.coloring && (
+        {s.spec && s.panels.length > 0 && (
           <>
             <div className="caption">
-              <b>{s.mol.id}</b> <span className="muted">{s.mol.title}</span>
+              <b>{s.spec.title}</b>
+              {s.spec.caption && <div>{s.spec.caption}</div>}
             </div>
+
             <div>
-              <h2>组装体</h2>
-              <div className="row">
-                <select value={s.assembly} onChange={(e) => s.setAssembly(e.target.value)} style={{ flex: 1 }}>
-                  {s.mol.assemblies.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.id === 'asym' ? '非对称单元' : `组装体 ${a.id}`} · {placedAtomCount(s.mol!, a.id).toLocaleString()} 原子
-                    </option>
+              <h2>数据来源</h2>
+              {s.panels.map((p, pi) => (
+                <div className="source" key={pi}>
+                  <div>
+                    <b>{p.spec.source.id}</b> {p.spec.label !== p.spec.source.id && p.spec.label}
+                  </div>
+                  <div className="muted">
+                    {[p.spec.source.method, p.spec.source.resolution ? `${p.spec.source.resolution.toFixed(2)} Å` : '', p.spec.source.year].filter(Boolean).join(' · ') || p.spec.source.title}
+                  </div>
+                  {p.spec.reason && <div className="muted">{p.spec.reason}</div>}
+                  <div className="row" style={{ margin: '4px 0' }}>
+                    <select value={p.spec.assembly} onChange={(e) => s.setAssembly(pi, e.target.value)} style={{ flex: 1 }}>
+                      {p.mol.assemblies.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.id === 'asym' ? '非对称单元' : `组装体 ${a.id}`} · {placedAtomCount(p.mol, a.id).toLocaleString()} 原子
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {p.mol.entities.map((e, i) => (
+                    <div className="entity" key={e.id} title={e.description}>
+                      <div className="swatch" style={{ background: s.colorings[pi] ? hex(oklch(...entityLch(s.colorings[pi]!, i, TONE_MOLECULE))) : '#ccc' }} />
+                      <span>{p.spec.entities.find((x) => x.entityId === e.id)?.name || e.description || e.kind}</span>
+                      <select value={s.colorings[pi]?.roles[i]} onChange={(ev) => s.setRole(pi, i, ev.target.value as Role)}>
+                        {ROLES.map((r) => (
+                          <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                        ))}
+                      </select>
+                    </div>
                   ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <h2>成分与角色</h2>
-              {s.mol.entities.map((e, i) => (
-                <div className="entity" key={e.id} title={e.description}>
-                  <div className="swatch" style={{ background: hex(oklch(...entityLch(s.coloring!, i, TONE_MOLECULE))) }} />
-                  <span>{e.description || e.kind}</span>
-                  <select value={s.coloring!.roles[i]} onChange={(ev) => s.setRole(i, ev.target.value as Role)}>
-                    {ROLES.map((r) => (
-                      <option key={r} value={r}>{ROLE_LABEL[r]}</option>
-                    ))}
-                  </select>
                 </div>
               ))}
+              <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && '各面板比例相同。'}</div>
+              {s.spec.notes.length > 0 && (
+                <ul className="notes">
+                  {s.spec.notes.map((n, i) => (
+                    <li key={i}>{n}</li>
+                  ))}
+                </ul>
+              )}
             </div>
+
             <div>
-              <h2>线条</h2>
+              <h2>看图精修</h2>
+              <textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="可选：你的要求，例如“让 DNA 更突出”“转到能看见结合界面的角度”" />
+              <div className="row" style={{ marginTop: 6 }}>
+                <button className="primary" disabled={working || !canAsk} onClick={() => void refine({ maxRounds: 3, feedback, chooseView: s.rounds.length === 0 && !feedback.trim() })}>
+                  {s.refining ? '精修中…' : '让 Claude 看图并修改'}
+                </button>
+              </div>
+              {s.refining && <div className="muted" style={{ marginTop: 6 }}>{s.refining}</div>}
+              {s.rounds.length > 0 && (
+                <div className="rounds" style={{ marginTop: 8 }}>
+                  {s.rounds.map((r, i) => (
+                    <button className="round" key={i} title="回到这一版" onClick={() => s.setLook(structuredClone(r.look))}>
+                      <img src={r.image} alt="" />
+                      <div>
+                        <span className="score">{r.overall === null ? '选角度' : `${r.overall.toFixed(1)} 分`}</span>
+                        <p>{r.comment}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h2>线条与阴影</h2>
               <Slider label="线宽" value={s.style.lineWidth} min={0.5} max={3} step={0.1} onChange={(v) => s.setStyle((x) => (x.lineWidth = v))} />
-              <Slider label="内部轮廓" value={s.style.contour.diffMax} min={1} max={40} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />
-              <Slider label="残基间隔" value={s.style.residue.diff} min={1} max={6000} step={1} onChange={(v) => s.setStyle((x) => (x.residue.diff = v))} />
-            </div>
-            <div>
-              <h2>阴影与景深</h2>
+              <Slider label="内部轮廓" value={s.style.contour.diffMax} min={1} max={60} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />
               <Slider label="阴影强度" value={s.style.shadow.strength} min={0} max={0.006} step={0.0001} onChange={(v) => s.setStyle((x) => (x.shadow.strength = v))} />
-              <Slider label="最暗" value={s.style.shadow.floor} min={0.2} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.shadow.floor = v))} />
-              <Slider label="远处淡出" value={s.style.fog.back} min={0.3} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.fog.back = v))} />
+              <Slider label="最暗" value={s.style.shadow.floor} min={0.4} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.shadow.floor = v))} />
+              <Slider label="远处淡出" value={s.style.fog.back} min={0.4} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.fog.back = v))} />
             </div>
+
             <div>
               <h2>导出</h2>
               <div className="row">
                 <button disabled={exporting} onClick={() => void save(2400)}>PNG 2400</button>
                 <button disabled={exporting} onClick={() => void save(4800)}>PNG 4800</button>
-                <button onClick={() => s.setView(null)}>重置视角</button>
+                <button onClick={() => s.resetView()}>重置视角</button>
               </div>
             </div>
           </>
         )}
-        <div className="muted" style={{ marginTop: 'auto' }}>拖动旋转 · 滚轮缩放 · Shift 拖动平移</div>
+        <div className="muted" style={{ marginTop: 'auto' }}>
+          拖动旋转 · 滚轮缩放 · Shift 拖动平移
+          <br />
+          画法致敬 David S. Goodsell；结构数据来自 RCSB PDB。
+        </div>
       </div>
       <Stage />
     </div>
