@@ -8,6 +8,74 @@
 export interface Contract {}
 /**
  * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Beat".
+ */
+export interface Beat {
+  what: string;
+  who?: string[];
+}
+/**
+ * 一个可以拿来做输入和校准的故事：谁、什么关系、依次发生了什么。
+ *
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Case".
+ */
+export interface Case {
+  id: string;
+  title: string;
+  /**
+   * @minItems 1
+   */
+  sources: [Source, ...Source[]];
+  kind: "drama" | "novel" | "idiom" | "history";
+  setting: string;
+  summary: string;
+  people: Character[];
+  /**
+   * 原作或史料里的事件顺序
+   */
+  events: Beat[];
+  /**
+   * 结局；模拟要复现的就是它
+   */
+  outcome: string;
+  /**
+   * 这个故事体现了哪些理论卡，写 id
+   */
+  theories: string[];
+}
+/**
+ * 一条出处。verified 只有在打开过能证实它的页面之后才能为真，checked 写明看的是哪一页、证实了什么。
+ *
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Source".
+ */
+export interface Source {
+  work: string;
+  author: string;
+  year?: number | null;
+  /**
+   * 期刊卷期页码、章回、幕次
+   */
+  locator?: string;
+  url?: string;
+  verified?: boolean;
+  /**
+   * 核实方式：哪个页面证实了哪些信息
+   */
+  checked?: string;
+}
+/**
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Character".
+ */
+export interface Character {
+  name: string;
+  role: string;
+  traits?: string;
+}
+/**
+ * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "District".
  */
 export interface District {
@@ -57,6 +125,38 @@ export interface Event {
    * 文本或金额
    */
   x?: string | number | null;
+}
+/**
+ * 一条典型事实：研究里反复出现、模拟应当复现的定量或定性规律。
+ *
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Fact".
+ */
+export interface Fact {
+  id: string;
+  title: string;
+  /**
+   * @minItems 1
+   */
+  sources: [Source, ...Source[]];
+  statement: string;
+  kind: "quantitative" | "qualitative";
+  value?: number | null;
+  range?: [number, number] | null;
+  unit?: string;
+  /**
+   * 这个结果是在什么条件下得到的
+   */
+  conditions: string;
+  /**
+   * 复现争议、适用范围
+   */
+  caveats?: string;
+  theories?: string[];
+  /**
+   * polis 里对应的可计算指标；留空表示尚未定义
+   */
+  metric?: string;
 }
 /**
  * 对模拟世界的一次外部干预。
@@ -171,6 +271,14 @@ export interface Message {
   valence: 1 | -1;
   severity: number;
   text: string;
+}
+/**
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Parameter".
+ */
+export interface Parameter {
+  name: string;
+  meaning: string;
 }
 /**
  * 一个人的静态表征；随时间变化的心智状态在帧里。
@@ -295,4 +403,37 @@ export interface Series {
    */
   reserve: number[];
   fear: number[];
+}
+/**
+ * 一个机制：它说人群里会发生什么、为什么。
+ *
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Theory".
+ */
+export interface Theory {
+  id: string;
+  title: string;
+  /**
+   * @minItems 1
+   */
+  sources: [Source, ...Source[]];
+  title_en: string;
+  field: string;
+  /**
+   * 机制，用自己的话写
+   */
+  claim: string;
+  /**
+   * 公式或规则的文字表述
+   */
+  formal?: string;
+  parameters?: Parameter[];
+  /**
+   * 如果机制成立，应当观察到什么
+   */
+  predicts: string[];
+  /**
+   * polis 引擎里哪一处实现了它；留空表示尚未实现
+   */
+  in_engine?: string;
 }

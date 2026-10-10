@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from . import lab, trace
-from .cli import runs_dir
+from . import corpus, lab, trace
+from .cli import CALIBRATION, runs_dir
 from .model import Intervention
 
 app = FastAPI(title="polis")
@@ -33,6 +35,18 @@ def run_file(run_id: str, name: str):
     if name not in trace.SERVED or not path.is_file():
         raise HTTPException(404)
     return FileResponse(path)
+
+
+@app.get("/api/corpus")
+def corpus_all() -> dict:
+    """语料全文，每条附带 verified（出处是否全部核实）。"""
+    entries, _ = corpus.check()
+    return {kind: [e.model_dump() | {"verified": e.verified} for e in items] for kind, items in entries.items()}
+
+
+@app.get("/api/calibration")
+def calibration() -> dict | None:
+    return json.loads(CALIBRATION.read_text(encoding="utf-8")) if CALIBRATION.is_file() else None
 
 
 class BranchRequest(BaseModel):

@@ -66,7 +66,9 @@ def schema():
     """输出数据契约的 JSON Schema（供生成 TypeScript 类型）。"""
     from pydantic.json_schema import models_json_schema
 
-    kinds = [model.Manifest, model.Population, model.Message, model.Series, model.Event]
+    from . import corpus
+
+    kinds = [model.Manifest, model.Population, model.Message, model.Series, model.Event, corpus.Theory, corpus.Case, corpus.Fact]
     _, defs = models_json_schema([(k, "serialization") for k in kinds], ref_template="#/$defs/{model}")
     typer.echo(json.dumps({"title": "Contract", "type": "object", **_plain(defs)}, ensure_ascii=False, indent=2))
 

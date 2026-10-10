@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Stage } from '../stage/stage.ts'
 import { useApp } from '../state/store.ts'
+import { Library } from './Library.tsx'
 import { Side } from './Side.tsx'
 import { Timeline } from './Timeline.tsx'
 
@@ -11,12 +12,15 @@ export function App() {
   const runs = useApp((s) => s.runs)
   const run = useApp((s) => s.run)
   const theme = useApp((s) => s.theme)
+  const [library, setLibrary] = useState(false)
+  const closeLibrary = useCallback(() => setLibrary(false), [])
 
   useEffect(() => {
     void useApp.getState().boot()
     const stage = new Stage(canvas.current!)
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLButtonElement) return
+      if (document.querySelector('.library')) return
       const s = useApp.getState()
       if (e.key === ' ') s.toggle()
       else if (e.key === 'ArrowRight') s.seek(Math.floor(s.t) + 1)
@@ -53,7 +57,8 @@ export function App() {
             ))}
           </select>
         )}
-        <button onClick={() => useApp.getState().setTheme(theme === 'dark' ? 'light' : 'dark')}>
+        <button onClick={() => setLibrary(true)}>依据</button>
+        <button aria-label="切换明暗" onClick={() => useApp.getState().setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? '昼' : '夜'}
         </button>
       </header>
@@ -67,6 +72,7 @@ export function App() {
 
       <Side />
       <Timeline />
+      {library && <Library onClose={closeLibrary} />}
     </div>
   )
 }

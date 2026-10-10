@@ -51,3 +51,16 @@ def test_dangling_theory_reference_is_reported(tmp_path):
 def test_shipped_corpus_is_well_formed():
     _, problems = corpus.check()
     assert problems == []
+
+
+def test_api_serves_corpus_and_calibration():
+    from fastapi.testclient import TestClient
+
+    from polis.server import app
+
+    client = TestClient(app)
+    body = client.get("/api/corpus").json()
+    assert {len(body[k]) for k in ("theory", "cases", "facts")} == {12, 7, 10}
+    assert all("verified" in e and e["sources"] for kind in body.values() for e in kind)
+    cal = client.get("/api/calibration").json()
+    assert {t["metric"] for t in cal["targets"]} >= {"runner_share", "survived"}
