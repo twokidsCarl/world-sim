@@ -46,14 +46,16 @@ export function initLattice(o: LatticeInit, pair: PairField): MdState {
 }
 
 /**
- * 2D triangular lattice with nx columns. The row count is the even number that makes the
- * periodic box closest to square, so the lattice is commensurate with the box.
+ * 2D triangular lattice with nx columns. The row count is the even number that brings the
+ * periodic box closest to the requested aspect ratio (square by default), so the lattice
+ * is commensurate with the box.
  */
 export function initTriangular(
-  o: { nx: number; density: number; temperature: number; seed: number; fractionB?: number },
+  o: { nx: number; density: number; temperature: number; seed: number; fractionB?: number; aspect?: number },
   pair: PairField,
 ): MdState {
-  const ny = 2 * Math.round(o.nx / Math.sqrt(3))
+  // `aspect` is the box's width over its height.
+  const ny = Math.max(2, 2 * Math.round(o.nx / Math.sqrt(3) / (o.aspect ?? 1)))
   const a = Math.sqrt(2 / (Math.sqrt(3) * o.density))
   const s = createState(2, o.nx * ny, [o.nx * a, (ny * a * Math.sqrt(3)) / 2])
   for (let row = 0; row < ny; row++) {

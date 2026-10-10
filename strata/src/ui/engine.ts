@@ -2,7 +2,7 @@
 // frame callbacks, so nothing here triggers a React render per frame.
 
 import { defaults, type Params } from '../core/params'
-import { agreement, type Agreement, type Curve, type Sample } from '../core/quantity'
+import { agreement, isCurve, isField, type Agreement, type Curve, type Field, type Sample } from '../core/quantity'
 import { Scheduler } from '../core/scheduler'
 import type { Frame, RunBackend, Substrate } from '../core/substrate'
 import { getGpu, type GpuContext } from '../gpu/device'
@@ -36,6 +36,8 @@ export class Engine {
   overflow = false
   readonly scalars = new Map<string, ScalarTrace>()
   readonly curves = new Map<string, CurveTrace>()
+  /** Running averages of field quantities. */
+  readonly fields = new Map<string, Field & { data: Float64Array }>()
   /** Whether each watched quantity currently matches its theory. */
   readonly agreements = new Map<string, Agreement>()
   /** View options that do not affect the simulation, e.g. how particles are coloured. */
@@ -116,6 +118,7 @@ export class Engine {
   private invalidate(): void {
     this.scheduler.epoch++
     this.curves.clear()
+    this.fields.clear()
   }
 
   /** Keep a quantity computed while the returned function has not been called. */
@@ -140,15 +143,29 @@ export class Engine {
       }
       return
     }
-    const prev = this.curves.get(id)
-    const theory = s.theory !== null && typeof s.theory !== 'number' ? s.theory : null
-    if (!prev || prev.y.length !== s.value.y.length) {
-      this.curves.set(id, { x: s.value.x, y: Float64Array.from(s.value.y), theory })
+    const weight = q.smooth ?? 0.1
+    if (isField(s.value)) {
+      const prev = this.fields.get(id)
+      if (!prev || prev.data.length !== s.value.data.length) {
+        this.fields.set(id, { ...s.value, data: Float64Array.from(s.value.data) })
+      } else {
+        for (let i = 0; i < prev.data.length; i++) prev.data[i] = (1 - weight) * prev.data[i]! + weight * s.value.data[i]!
+      }
       return
     }
-    for (let i = 0; i < prev.y.length; i++) prev.y[i] = 0.9 * prev.y[i]! + 0.1 * s.value.y[i]!
-    prev.x = s.value.x
-    prev.theory = theory
+    if (!isCurve(s.value)) return
+    const prev = this.curves.get(id)
+    const theory = isCurve(s.theory) ? s.theory : null
+    if (!prev || prev.y.length !== s.value.y.length) {
+      this.curves.set(id, { x: s.value.x, y: Float64Array.from(s.value.y), theory })
+    } else {
+      for (let i = 0; i < prev.y.length; i++) prev.y[i] = (1 - weight) * prev.y[i]! + weight * s.value.y[i]!
+      prev.x = s.value.x
+      prev.theory = theory
+    }
+    // Agreement of a curve is judged on its running average, not on one noisy sample.
+    const averaged = this.curves.get(id)!
+    this.agreements.set(id, q.voided?.(this.params) ? 'none' : agreement(q as never, averaged, theory))
   }
 
   onFrame(fn: () => void): () => void {

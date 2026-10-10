@@ -1,6 +1,7 @@
 // CPU reference molecular dynamics in f64. This is the specification the GPU kernels
 // are checked against. Reduced units, unit mass, periodic box, dimension 2 or 3.
 
+import { gaussian, uniform } from '../../../core/rng'
 import type { PairField, PairOut } from '../potential'
 import { buildCells, makeGrid, type CellGrid } from './cells'
 
@@ -21,6 +22,15 @@ export interface MdState {
   virial: number
   step: number
   grid: CellGrid | null
+  /**
+   * Thermal walls at y = 0 and y = box[1] instead of a periodic y axis: a particle that
+   * crosses is put back and re-emitted with a velocity drawn from the wall temperature.
+   */
+  walls: boolean
+  wallTemperature: number
+  /** Uniform body force per particle along x. */
+  drive: number
+  seed: number
 }
 
 export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdState {
@@ -38,6 +48,10 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
     virial: 0,
     step: 0,
     grid: null,
+    walls: false,
+    wallTemperature: 1,
+    drive: 0,
+    seed: 0,
   }
 }
 
@@ -49,6 +63,8 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
   const { dim, n, pos, force, box, species } = s
   const bx = box[0]
   const by = box[1]
+  // With walls the y axis is not periodic, so no minimum image is taken along it.
+  const wrapY = !s.walls
   const bz = box[2]
   const rc2 = pair.rc2
   force.fill(0)
@@ -66,7 +82,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
         let dy = pos[i * dim + 1] - pos[j * dim + 1]
         let dz = dim === 3 ? pos[i * dim + 2] - pos[j * dim + 2] : 0
         dx -= bx * Math.round(dx / bx)
-        dy -= by * Math.round(dy / by)
+        if (wrapY) dy -= by * Math.round(dy / by)
         dz -= bz * Math.round(dz / bz)
         const r2 = dx * dx + dy * dy + dz * dz
         if (r2 >= rc2) continue
@@ -113,7 +129,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
               let dy = yi - pos[j * dim + 1]
               let dz = dim === 3 ? zi - pos[j * dim + 2] : 0
               dx -= bx * Math.round(dx / bx)
-              dy -= by * Math.round(dy / by)
+              if (wrapY) dy -= by * Math.round(dy / by)
               dz -= bz * Math.round(dz / bz)
               const r2 = dx * dx + dy * dy + dz * dz
               if (r2 >= rc2) continue
@@ -143,15 +159,37 @@ export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void 
   const half = 0.5 * dt
   for (let it = 0; it < nSteps; it++) {
     for (let k = 0; k < len; k++) {
-      vel[k] += half * force[k]
-      const L = box[k % dim]
+      const d = k % dim
+      vel[k] += half * (force[k] + (d === 0 ? s.drive : 0))
+      const L = box[d]
       const x = pos[k] + dt * vel[k]
-      pos[k] = x - L * Math.floor(x / L)
+      if (s.walls && d === 1) {
+        pos[k] = x
+        if (x < 0 || x >= L) hitWall(s, (k - 1) / dim, x < 0)
+      } else pos[k] = x - L * Math.floor(x / L)
     }
     computeForces(s, pair)
-    for (let k = 0; k < len; k++) vel[k] += half * force[k]
+    for (let k = 0; k < len; k++) vel[k] += half * (force[k] + (k % dim === 0 ? s.drive : 0))
     s.step++
   }
+}
+
+/**
+ * Diffuse reflection: mirror the particle back inside and draw a fresh velocity from the
+ * wall's Maxwellian (Rayleigh-distributed normal component, Gaussian tangential ones).
+ */
+function hitWall(s: MdState, i: number, lower: boolean): void {
+  const { dim, pos, vel, box } = s
+  const L = box[1]
+  const y = pos[i * dim + 1]
+  // Clamped so that an extreme overshoot still lands inside the box.
+  pos[i * dim + 1] = Math.min(Math.max(lower ? -y : 2 * L - y, 0), L * (1 - 1e-12))
+  const key = s.seed ^ Math.imul(s.step + 1, 0x632be5ab)
+  const sd = Math.sqrt(s.wallTemperature)
+  const normal = sd * Math.sqrt(-2 * Math.log(uniform(key, 4 * i)))
+  vel[i * dim] = sd * gaussian(key, 4 * i + 1)
+  vel[i * dim + 1] = lower ? normal : -normal
+  if (dim === 3) vel[i * dim + 2] = sd * gaussian(key, 4 * i + 3)
 }
 
 export function kineticEnergy(s: MdState): number {

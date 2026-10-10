@@ -100,13 +100,13 @@ class ScenarioPlayer {
       return
     }
     if (step.expect) {
-      const trace = engine.scalars.get(step.expect.quantity)
+      const { quantity, min, max, agree } = step.expect
+      const trace = engine.scalars.get(quantity)
       const recent = trace ? trace.value.slice(-10) : []
       const value = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : NaN
-      const pass =
-        Number.isFinite(value) &&
-        (step.expect.min === undefined || value >= step.expect.min) &&
-        (step.expect.max === undefined || value <= step.expect.max)
+      const pass = agree
+        ? engine.agreements.get(quantity) === 'agree'
+        : Number.isFinite(value) && (min === undefined || value >= min) && (max === undefined || value <= max)
       this.state = { ...state, results: [...state.results, { text: step.expect.text, value, pass }] }
     }
     this.enter(state.index + 1)

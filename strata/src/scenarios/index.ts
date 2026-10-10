@@ -7,6 +7,8 @@ export interface Expectation {
   quantity: string
   min?: number
   max?: number
+  /** Require the quantity to agree with its theory overlay instead of bounding its value. */
+  agree?: boolean
   /** What the user should see, in words. */
   text: string
 }
@@ -51,6 +53,24 @@ export const SCENARIOS: Scenario[] = [
         set: { temperature: 1.2 },
         run: 5000,
         expect: { quantity: 'psi6Local', max: 0.62, text: '回到液体：⟨|ψ₆|⟩ 低于 0.62' },
+      },
+    ],
+  },
+  {
+    id: 'poiseuille',
+    title: '粒子在管道里流成抛物线',
+    substrate: 'md',
+    steps: [
+      {
+        text: '上下两面热壁，中间是温度 1.0 的稠密流体。没有驱动力时，平均流速处处为零。',
+        set: { walls: 1, nx: 120, density: 0.7, temperature: 1, thermostat: 0, drive: 0, fractionB: 0 },
+        run: 4000,
+      },
+      {
+        text: '给每个粒子加一个沿管道的小力。粒子之间只有两体碰撞，没有人告诉它们粘性是什么；流速剖面自己长成 Navier–Stokes 方程预言的抛物线。',
+        set: { drive: 0.006 },
+        run: 30000,
+        expect: { quantity: 'flowProfile', agree: true, text: '流速剖面与抛物线吻合' },
       },
     ],
   },

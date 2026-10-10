@@ -20,13 +20,27 @@ export interface Curve {
   y: ArrayLike<number>
 }
 
-export type Value = number | Curve
+/** A scalar field on a regular grid, row-major with y as the row. */
+export interface Field {
+  nx: number
+  ny: number
+  data: ArrayLike<number>
+  /** Width over height of the region the grid covers. */
+  aspect: number
+}
+
+export type Value = number | Curve | Field
+
+export const isField = (v: Value | null): v is Field => v !== null && typeof v !== 'number' && 'data' in v
+export const isCurve = (v: Value | null): v is Curve => v !== null && typeof v !== 'number' && 'y' in v
 
 export interface QuantityDef<F> {
   id: string
   level: LevelId
   label: string
-  kind: 'scalar' | 'curve'
+  kind: 'scalar' | 'curve' | 'field'
+  /** Weight of each new sample in the running average of curves and fields; 0.1 by default. */
+  smooth?: number
   /** How a curve is drawn; bars by default. */
   mark?: 'bars' | 'line'
   /** Reducer outputs this quantity needs in the frame. */
@@ -57,7 +71,7 @@ export function agreement(q: QuantityDef<never>, value: Value, theory: Value | n
     if (!Number.isFinite(theory)) return 'none'
     return Math.abs(value - theory) <= abs + rel * Math.abs(theory) ? 'agree' : 'differ'
   }
-  if (typeof value === 'number' || typeof theory === 'number') return 'none'
+  if (!isCurve(value) || !isCurve(theory)) return 'none'
   let diff = 0
   let total = 0
   const n = Math.min(value.y.length, theory.y.length)

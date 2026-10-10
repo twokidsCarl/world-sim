@@ -4,11 +4,19 @@
 import type { QuantityDef } from '../core/quantity'
 import type { MdFrame } from '../substrates/md/backend-cpu'
 import { shiftedPotential } from '../substrates/md/potential'
+import { profiles } from '../substrates/md/ref/reducers'
 import { speedPdf } from '../theory/maxwell'
 import { virialPressure } from '../theory/virial'
 
+/** Why a conservation law of the isolated, reciprocal system does not apply, or null if it does. */
 const nonreciprocal = (p: Record<string, number>) =>
-  p.fractionB! > 0 && p.nonreciprocal! > 0 ? '作用力不再等于反作用力：这条守恒律已失效' : null
+  p.walls
+    ? '有壁面换热和外力做功：系统是开放的，这条守恒律不适用'
+    : p.fractionB! > 0 && p.nonreciprocal! > 0
+      ? '作用力不再等于反作用力：这条守恒律已失效'
+      : null
+
+const BINS = 24
 
 export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
   {
@@ -88,6 +96,77 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     theory: (f) => virialPressure(f.spec, f.scalars!.density, f.scalars!.temperature, f.scalars!.dim),
     theoryLabel: '维里展开 ρT(1 + B₂ρ)，仅低密度有效',
     tolerance: { abs: 1e-3, rel: 0.05 },
+  },
+  {
+    id: 'densityField',
+    level: 'hydro',
+    label: '密度场 ρ(x, y)',
+    kind: 'field',
+    reducers: ['field'],
+    compute: (f) => {
+      const { g, count } = f.field!
+      const cell = (f.box[0]! * f.box[1]!) / (g * g)
+      return { nx: g, ny: g, data: Float64Array.from(count, (c) => c / cell), aspect: f.box[0]! / f.box[1]! }
+    },
+  },
+  {
+    id: 'flowProfile',
+    level: 'hydro',
+    label: '流速剖面 uₓ(y)',
+    kind: 'curve',
+    mark: 'line',
+    smooth: 0.03,
+    xLabel: '横向位置 y / 管宽',
+    reducers: ['field'],
+    when: (p) => p.walls === 1,
+    compute: (f) => {
+      const pr = profiles(f.field!, f.box, BINS)
+      return { x: pr.y, y: pr.ux }
+    },
+    theory: (f) => {
+      const pr = profiles(f.field!, f.box, BINS)
+      let mean = 0
+      for (const u of pr.ux) mean += u / BINS
+      // Plane Poiseuille flow with no slip: u(s) = 6 ū s (1 - s).
+      return { x: pr.y, y: Float64Array.from(pr.y, (s) => 6 * mean * s * (1 - s)) }
+    },
+    theoryLabel: 'Navier–Stokes 无滑移解：抛物线（幅度取实测平均流速，只检验形状）',
+    tolerance: { rel: 0.12 },
+  },
+  {
+    id: 'viscosity',
+    level: 'hydro',
+    label: '粘度 η（由流量反推）',
+    kind: 'scalar',
+    reducers: ['field', 'scalars'],
+    when: (p) => p.walls === 1,
+    compute: (f, p) => {
+      const pr = profiles(f.field!, f.box, BINS)
+      let mean = 0
+      for (const u of pr.ux) mean += u / BINS
+      // ū = ρ g W² / (12 η) for plane Poiseuille flow of width W.
+      return mean > 0 ? (f.scalars!.density * p.drive! * f.box[1]! * f.box[1]!) / (12 * mean) : NaN
+    },
+  },
+  {
+    id: 'temperatureProfile',
+    level: 'hydro',
+    label: '温度剖面 T(y)',
+    kind: 'curve',
+    mark: 'line',
+    smooth: 0.03,
+    xLabel: '横向位置 y / 管宽',
+    reducers: ['field'],
+    when: (p) => p.walls === 1,
+    compute: (f) => {
+      const pr = profiles(f.field!, f.box, BINS)
+      return { x: pr.y, y: pr.temperature }
+    },
+    theory: (f, p) => {
+      const pr = profiles(f.field!, f.box, BINS)
+      return { x: pr.y, y: Float64Array.from(pr.y, () => p.temperature!) }
+    },
+    theoryLabel: '壁面温度（参照）：粘性生热使管道中央更热',
   },
   {
     id: 'psi6Local',

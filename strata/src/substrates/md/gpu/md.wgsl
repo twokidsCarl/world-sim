@@ -20,6 +20,10 @@ struct Params {
   rdfMax: f32,
   lambda: f32,          // velocity scale applied by `rescale`
   rdfReach: f32,        // stencil radius in cells for the g(r) pass
+  drive: f32,           // body force per particle along x
+  wallT: f32,           // wall temperature
+  walls: u32,           // 1: thermal walls at y = 0 and y = box.y instead of a periodic y axis
+  seed: u32,            // changes every submitted batch
 }
 
 const SPEED_BINS = 64u;
@@ -29,6 +33,10 @@ const MAX_CELL_SLOT = 192u;
 // Neighbours for the hexatic order parameter: within 1.5 σ, squared.
 const PSI_R2 = 2.25;
 const SPECIES = 2u;
+const FIELD_G = 48u;
+// Fixed-point scales for the field sums, which are accumulated in i32 atomics.
+const FIELD_V = 1024.0;
+const FIELD_V2 = 256.0;
 
 @group(0) @binding(0) var<uniform> P: Params;
 @group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;        // xyz position, w = species (0 or 1)
@@ -41,6 +49,7 @@ const SPECIES = 2u;
 @group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // three per chunk
 @group(0) @binding(9) var<storage, read_write> hist: array<atomic<u32>>;
 @group(0) @binding(10) var<storage, read_write> heat: array<f32>;        // one per chunk
+@group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>; // per cell: count, Σvx, Σvy, Σv²
 
 fn cellCoord(p: vec3f) -> vec3u {
   return min(vec3u(p / P.box.xyz * vec3f(P.nc.xyz)), P.nc.xyz - vec3u(1u));
@@ -56,16 +65,49 @@ fn wrapCell(c: vec3i) -> vec3u {
 }
 
 fn minImage(d: vec3f) -> vec3f {
-  return d - P.box.xyz * round(d / P.box.xyz);
+  var shift = P.box.xyz * round(d / P.box.xyz);
+  if (P.walls != 0u) { shift.y = 0.0; }
+  return d - shift;
+}
+
+// Must match hash32 in src/core/rng.ts.
+fn hash32(seed: u32, c: u32) -> u32 {
+  var h = seed ^ (c * 0x9e3779b1u);
+  h = (h ^ (h >> 16u)) * 0x85ebca6bu;
+  h = (h ^ (h >> 13u)) * 0xc2b2ae35u;
+  h = h ^ (h >> 16u);
+  h = (h + seed) * 0x27d4eb2fu;
+  h = h ^ (h >> 15u);
+  return h;
+}
+
+// Uniform in (0, 1).
+fn rand(key: u32, c: u32) -> f32 {
+  return (f32(hash32(key, c) >> 8u) + 0.5) / 16777216.0;
 }
 
 @compute @workgroup_size(256)
 fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
-  let v = vel[i].xyz + 0.5 * P.dt * force[i].xyz;
+  var v = vel[i].xyz + 0.5 * P.dt * (force[i].xyz + vec3f(P.drive, 0.0, 0.0));
   var x = pos[i].xyz + P.dt * v;
-  x = x - P.box.xyz * floor(x / P.box.xyz);
+  let wrapped = x - P.box.xyz * floor(x / P.box.xyz);
+  if (P.walls != 0u && (x.y < 0.0 || x.y >= P.box.y)) {
+    // Diffuse reflection from a thermal wall. Several substeps share one seed, so the
+    // position bits are mixed in to keep their draws independent.
+    let lower = x.y < 0.0;
+    let key = hash32(hash32(P.seed, i), bitcast<u32>(x.x));
+    let sd = sqrt(P.wallT);
+    let normal = sd * sqrt(-2.0 * log(rand(key, 0u)));
+    let tangent = sd * sqrt(-2.0 * log(rand(key, 1u))) * cos(6.2831853 * rand(key, 2u));
+    v = vec3f(tangent, select(-normal, normal, lower), 0.0);
+    x.y = clamp(select(2.0 * P.box.y - x.y, -x.y, lower), 0.0, P.box.y * 0.999999);
+  } else {
+    x.y = wrapped.y;
+  }
+  x.x = wrapped.x;
+  x.z = wrapped.z;
   vel[i] = vec4f(v, vel[i].w);
   pos[i] = vec4f(x, pos[i].w);
 }
@@ -74,7 +116,7 @@ fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
 fn kick(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
-  vel[i] = vec4f(vel[i].xyz + 0.5 * P.dt * force[i].xyz, vel[i].w);
+  vel[i] = vec4f(vel[i].xyz + 0.5 * P.dt * (force[i].xyz + vec3f(P.drive, 0.0, 0.0)), vel[i].w);
 }
 
 @compute @workgroup_size(256)
@@ -232,4 +274,23 @@ fn rdfHist(@builtin(global_invocation_id) id: vec3u) {
       }
     }
   }
+}
+
+@compute @workgroup_size(256)
+fn clearField(@builtin(global_invocation_id) id: vec3u) {
+  if (id.x < FIELD_G * FIELD_G * 4u) { atomicStore(&field[id.x], 0); }
+}
+
+// Top-hat coarse-graining onto a FIELD_G × FIELD_G grid.
+@compute @workgroup_size(256)
+fn fieldBin(@builtin(global_invocation_id) id: vec3u) {
+  let i = id.x;
+  if (i >= P.n) { return; }
+  let c = min(vec2u(pos[i].xy / P.box.xy * f32(FIELD_G)), vec2u(FIELD_G - 1u));
+  let base = 4u * (c.y * FIELD_G + c.x);
+  let v = vel[i].xy;
+  atomicAdd(&field[base], 1);
+  atomicAdd(&field[base + 1u], i32(round(v.x * FIELD_V)));
+  atomicAdd(&field[base + 2u], i32(round(v.y * FIELD_V)));
+  atomicAdd(&field[base + 3u], i32(round(dot(v, v) * FIELD_V2)));
 }

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 import type { Agreement } from '../core/quantity'
 import { LEVELS, type QuantityDef } from '../core/quantity'
-import { drawPlot, theme, type Series } from '../plot/plot'
+import { drawPlot, fitCanvas, theme, type Series } from '../plot/plot'
+import { viridis } from '../render/points'
 import type { Frame } from '../core/substrate'
 import { engine } from './engine'
 import { useUi } from './store'
@@ -12,6 +13,31 @@ function format(v: number): string {
   if (a === 0) return '0'
   return (a < 1e-3 || a >= 1e4) ? v.toExponential(2) : v.toFixed(4)
 }
+
+/** Heat map of a field, scaled between its own minimum and maximum. Returns that range. */
+function drawField(canvas: HTMLCanvasElement, f: { nx: number; ny: number; data: ArrayLike<number>; aspect: number }): [number, number] {
+  canvas.style.height = `${Math.min(220, canvas.clientWidth / f.aspect)}px`
+  const { ctx, w, h } = fitCanvas(canvas)
+  let lo = Infinity
+  let hi = -Infinity
+  for (let i = 0; i < f.data.length; i++) {
+    lo = Math.min(lo, f.data[i]!)
+    hi = Math.max(hi, f.data[i]!)
+  }
+  const image = new ImageData(f.nx, f.ny)
+  for (let i = 0; i < f.data.length; i++) {
+    const [r, g, b] = viridis(hi > lo ? (f.data[i]! - lo) / (hi - lo) : 0.5)
+    image.data.set([r * 255, g * 255, b * 255, 255], 4 * i)
+  }
+  const scratch = (drawField.scratch ??= document.createElement('canvas'))
+  scratch.width = f.nx
+  scratch.height = f.ny
+  scratch.getContext('2d')!.putImageData(image, 0, 0)
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(scratch, 0, 0, w, h)
+  return [lo, hi]
+}
+drawField.scratch = null as HTMLCanvasElement | null
 
 const AGREEMENT_TEXT: Record<Agreement, string> = { agree: '吻合', differ: '偏离', none: '' }
 
@@ -58,6 +84,11 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
           valueRef.current.textContent =
             format(trace.value[last]!) + (Number.isFinite(theory) ? `　理论 ${format(theory)}` : '')
         }
+      } else if (q.kind === 'field') {
+        const field = engine.fields.get(q.id)
+        if (!field) return
+        const [lo, hi] = drawField(canvas, field)
+        if (valueRef.current) valueRef.current.textContent = `${format(lo)} 到 ${format(hi)}`
       } else {
         const trace = engine.curves.get(q.id)
         if (!trace) return
