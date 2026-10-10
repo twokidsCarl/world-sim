@@ -4,8 +4,7 @@ import './styles.css'
 
 createRoot(document.getElementById('root')!).render(<App />)
 
-// Handle for poking at the app from the console and from tests.
-import { fit } from './render/camera'
+// Handle for poking at the app from the console.
 import { useStore } from './state/store'
 import { stage } from './ui/Stage'
-Object.assign(window, { limn: { stage, store: useStore, fit } })
+Object.assign(window, { limn: { stage, store: useStore } })

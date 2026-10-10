@@ -12,6 +12,7 @@ layout(location = 1) in vec4 a_posr;
 layout(location = 2) in vec4 a_color;
 layout(location = 3) in uvec2 a_ids;
 uniform mat4 u_model;
+uniform mat4 u_place;
 uniform mat3 u_rot;
 uniform vec3 u_center;
 uniform vec2 u_toClip;
@@ -23,7 +24,7 @@ out float v_z;
 out float v_r;
 flat out uvec2 v_ids;
 void main() {
-  vec3 world = (u_model * vec4(a_posr.xyz, 1.0)).xyz;
+  vec3 world = (u_place * u_model * vec4(a_posr.xyz, 1.0)).xyz;
   vec3 view = u_rot * (world - u_center);
   float r = a_posr.w * u_radiusScale;
   v_uv = a_corner;

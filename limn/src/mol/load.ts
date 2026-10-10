@@ -105,7 +105,16 @@ function readAssemblies(block: CifBlock, chains: Chain[]): Assembly[] {
   return [au, ...order.map((id) => byId.get(id)!).filter((a) => a.groups.length)]
 }
 
-export async function parseCif(data: Uint8Array | string, id: string): Promise<Molecule> {
+export interface ParseOptions {
+  /**
+   * Drop atoms whose B-factor is below this. AlphaFold files store the
+   * per-residue confidence (pLDDT) there; below about 50 the chain is not
+   * placed at all and would draw as meaningless loops.
+   */
+  minConfidence?: number
+}
+
+export async function parseCif(data: Uint8Array | string, id: string, opts: ParseOptions = {}): Promise<Molecule> {
   const parsed = await (typeof data === 'string' ? CIF.parseText(data) : CIF.parseBinary(data)).run()
   if (parsed.isError) throw new Error(`无法解析 ${id}: ${parsed.message}`)
   const block = parsed.result.blocks[0]
@@ -116,11 +125,14 @@ export async function parseCif(data: Uint8Array | string, id: string): Promise<M
   const entityInfo = entityKinds(block)
   const n = site.rowCount
   const x = col(site, 'Cartn_x').toFloatArray(), y = col(site, 'Cartn_y').toFloatArray(), z = col(site, 'Cartn_z').toFloatArray()
+  const atomName = site.getField('label_atom_id')
   const sym = col(site, 'type_symbol'), comp = col(site, 'label_comp_id'), asym = col(site, 'label_asym_id')
   const ent = col(site, 'label_entity_id'), seq = col(site, 'label_seq_id'), aseq = site.getField('auth_seq_id')
   const aasym = site.getField('auth_asym_id'), alt = site.getField('label_alt_id'), model = site.getField('pdbx_PDB_model_num')
   const firstModel = model ? model.int(0) : 1
+  const bfac = opts.minConfidence !== undefined ? site.getField('B_iso_or_equiv') : undefined
 
+  const isTrace = new Uint8Array(n)
   const pos = new Float32Array(n * 3), element = new Uint8Array(n), chainOf = new Uint32Array(n), residue = new Int32Array(n)
   const chains: Chain[] = []
   const entities: Entity[] = []
@@ -134,6 +146,7 @@ export async function parseCif(data: Uint8Array | string, id: string): Promise<M
     if (s === 'H' || s === 'D') continue
     const c = comp.str(i)
     if (WATER.has(c)) continue
+    if (bfac && bfac.float(i) < opts.minConfidence!) continue
     if (alt) {
       // Keep one conformer: the first alternate label seen in the file.
       const a = alt.str(i)
@@ -159,6 +172,10 @@ export async function parseCif(data: Uint8Array | string, id: string): Promise<M
     pos[count * 3 + 1] = y[i]!
     pos[count * 3 + 2] = z[i]!
     element[count] = elementOf(s)
+    if (atomName && (s === 'C' || s === 'P')) {
+      const nm = atomName.str(i)
+      if (nm === 'CA' || nm === 'P') isTrace[count] = 1
+    }
     chainOf[count] = chains.length - 1
     residue[count] = seq.valueKind(i) === 0 ? seq.int(i) : aseq ? aseq.int(i) : 0
     cur.count++
@@ -185,6 +202,7 @@ export async function parseCif(data: Uint8Array | string, id: string): Promise<M
     pos: pos.slice(0, count * 3),
     element: element.slice(0, count),
     chainOf: chainOf.slice(0, count),
+    isTrace: isTrace.slice(0, count),
     residue: residue.slice(0, count),
     chains,
     entities,
@@ -197,7 +215,7 @@ function findRow(site: CifCategory, asym: ReturnType<typeof col>, id: string): n
   return -1
 }
 
-export type Source = { kind: 'pdb'; id: string } | { kind: 'url'; url: string; id: string }
+export type Source = { kind: 'pdb'; id: string } | { kind: 'url'; url: string; id: string; minConfidence?: number }
 
 export async function loadMolecule(src: Source): Promise<Molecule> {
   const url = src.kind === 'pdb' ? `https://models.rcsb.org/${src.id.toLowerCase()}.bcif` : src.url
@@ -206,5 +224,5 @@ export async function loadMolecule(src: Source): Promise<Molecule> {
   const buf = new Uint8Array(await res.arrayBuffer())
   // BinaryCIF is MessagePack; text CIF starts with "data_".
   const isText = buf[0] === 0x64 && buf[1] === 0x61 && buf[2] === 0x74 && buf[3] === 0x61
-  return parseCif(isText ? new TextDecoder().decode(buf) : buf, src.id)
+  return parseCif(isText ? new TextDecoder().decode(buf) : buf, src.id, { minConfidence: src.kind === 'url' ? src.minConfidence : undefined })
 }

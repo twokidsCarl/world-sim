@@ -5,8 +5,10 @@ import { ROLE_HUE, TONE_MOLECULE, type Role, type Tone } from './palettes'
 /** How one structure is coloured: a role per entity, optional exact colours. */
 export interface Coloring {
   roles: Role[]
-  /** per-entity hue shift in degrees, added to the role's hue */
+  /** per-entity hue shift in degrees, added to the role's hue; set by spreadHues */
   hueShift: number[]
+  /** per-entity manual hue adjustment in degrees, kept when roles change */
+  nudge: number[]
   /** per-entity override as [L, C, h]; wins over role and shift */
   override: (null | [number, number, number])[]
 }
@@ -28,7 +30,7 @@ export function defaultColoring(mol: Molecule): Coloring {
         return proteinRoles[p++ % proteinRoles.length]!
     }
   })
-  return spreadHues({ roles, hueShift: roles.map(() => 0), override: roles.map(() => null) })
+  return spreadHues({ roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) })
 }
 
 /** Entities sharing a role are fanned out across that role's hue range. */
@@ -49,7 +51,7 @@ export function entityLch(c: Coloring, entity: number, tone: Tone): [number, num
   const o = c.override[entity]
   if (o) return o
   const r = ROLE_HUE[c.roles[entity] ?? 'soluble']
-  return [tone.L + r.L, tone.C * r.C, (r.h + (c.hueShift[entity] ?? 0) + 360) % 360]
+  return [tone.L + r.L, tone.C * r.C, (r.h + (c.hueShift[entity] ?? 0) + (c.nudge[entity] ?? 0) + 720) % 360]
 }
 
 /**

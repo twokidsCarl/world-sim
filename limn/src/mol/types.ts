@@ -45,6 +45,8 @@ export interface Molecule {
   pos: Float32Array
   element: Uint8Array
   chainOf: Uint32Array
+  /** 1 for backbone trace atoms: protein Cα and nucleic acid P */
+  isTrace: Uint8Array
   /** residue number within its chain, used only to find residue-level outlines */
   residue: Int32Array
   chains: Chain[]

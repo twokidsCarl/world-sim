@@ -62,7 +62,13 @@ interface GpuItem {
   ids: WebGLBuffer
   draws: Draw[]
   atoms: number
+  /** this item's own bounds, before its placement */
+  local: Bounds
+  /** column-major 4x4 applied after the draw matrices */
+  place: Float32Array
 }
+
+const IDENTITY4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
 
 export class Renderer {
   readonly gl: WebGL2RenderingContext
@@ -105,6 +111,9 @@ export class Renderer {
       gl.vertexAttribDivisor(loc, 1)
     }
     gl.bindVertexArray(null)
+    // an empty stage is paper, not a black hole
+    gl.clearColor(1, 1, 1, 1)
+    gl.clear(gl.COLOR_BUFFER_BIT)
   }
 
   private program(vs: string, fs: string): WebGLProgram {
@@ -143,9 +152,48 @@ export class Renderer {
         gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
         return b
       }
-      return { posr: mk(it.posr), color: mk(it.color), ids: mk(it.ids), draws: it.draws, atoms: it.posr.length / 4 }
+      return { posr: mk(it.posr), color: mk(it.color), ids: mk(it.ids), draws: it.draws, atoms: it.posr.length / 4, local: sceneBounds([it]), place: IDENTITY4 }
     })
-    this.bounds = sceneBounds(items)
+    this.bounds = this.placedBounds()
+  }
+
+  /** Bounds of item `i` on its own, ignoring where it is placed. */
+  localBounds(i: number): Bounds | undefined {
+    return this.items[i]?.local
+  }
+
+  /** Move whole items rigidly (one matrix per item) without re-uploading atoms. */
+  setPlacements(mats: Float32Array[]): void {
+    this.items.forEach((it, i) => (it.place = mats[i] ?? IDENTITY4))
+    this.bounds = this.placedBounds()
+  }
+
+  private placedBounds(): Bounds {
+    const all: number[] = []
+    let subunitSize = Infinity
+    for (const it of this.items) {
+      const s = it.local.spheres, m = it.place
+      subunitSize = Math.min(subunitSize, it.local.subunitSize)
+      for (let k = 0; k < s.length; k += 4) {
+        all.push(
+          m[0]! * s[k]! + m[4]! * s[k + 1]! + m[8]! * s[k + 2]! + m[12]!,
+          m[1]! * s[k]! + m[5]! * s[k + 1]! + m[9]! * s[k + 2]! + m[13]!,
+          m[2]! * s[k]! + m[6]! * s[k + 1]! + m[10]! * s[k + 2]! + m[14]!,
+          s[k + 3]!,
+        )
+      }
+    }
+    if (all.length === 0) return { center: [0, 0, 0], radius: 1, spheres: new Float32Array(0), subunitSize: 30 }
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity]
+    for (let k = 0; k < all.length; k += 4)
+      for (let a = 0; a < 3; a++) {
+        lo[a] = Math.min(lo[a]!, all[k + a]! - all[k + 3]!)
+        hi[a] = Math.max(hi[a]!, all[k + a]! + all[k + 3]!)
+      }
+    const center: [number, number, number] = [(lo[0]! + hi[0]!) / 2, (lo[1]! + hi[1]!) / 2, (lo[2]! + hi[2]!) / 2]
+    let radius = 0
+    for (let k = 0; k < all.length; k += 4) radius = Math.max(radius, Math.hypot(all[k]! - center[0], all[k + 1]! - center[1], all[k + 2]! - center[2]) + all[k + 3]!)
+    return { center, radius, spheres: new Float32Array(all), subunitSize }
   }
 
   setColors(item: number, color: Uint8Array): void {
@@ -232,6 +280,7 @@ export class Renderer {
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
     let atoms = 0
     for (const it of this.items) {
+      gl.uniformMatrix4fv(this.u(p, 'u_place'), false, it.place)
       for (const d of it.draws) {
         if (d.count <= 0) continue
         gl.bindBuffer(gl.ARRAY_BUFFER, it.posr)
