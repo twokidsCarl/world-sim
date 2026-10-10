@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "pipeline": "bun tools/pipeline/run.ts"
+    "pipeline": "bun tools/pipeline/run.ts",
+    "pipeline:female": "bun tools/pipeline/female.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

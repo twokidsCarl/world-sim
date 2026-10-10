@@ -12,10 +12,10 @@ const names = read<Record<string, NameEntry>>('data/curated/knowledge/names.json
 const relations = read<Relation[]>('data/curated/knowledge/relations.json')
 
 // Concept ids: FMA ids, or synthetic ids the dataset uses where FMA has no class.
-const ID = /^(FMA[1-9]\d*|ZAC_[A-Za-z0-9_]+)$/
+const ID = /^(FMA[1-9]\d*|[A-Z][A-Z0-9]*_[A-Za-z0-9_]+)$/
 const QID = /^Q[1-9]\d*$/
 const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'innervates', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist']
-const ZH_SOURCES = ['wikidata', 'wikidata:hant-converted', 'wikidata:generic-twin', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override']
+const ZH_SOURCES = ['wikidata', 'wikidata:hant-converted', 'wikidata:via-uberon-id', 'wikidata:generic-twin', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override']
 const NAME_KEYS = ['zh', 'la', 'ja', 'wikidata', 'zhSource', 'status']
 const hasHan = (s: string) => /[㐀-鿿\u{20000}-\u{2ffff}]/u.test(s)
 
@@ -127,20 +127,45 @@ describe('names.json', () => {
     expect(names.FMA14385).toMatchObject({ zh: '正中神经', zhSource: 'wikidata' })
     expect(names.FMA37068).toMatchObject({ zh: '左正中神经', zhSource: 'derived:laterality' })
     const regional = ['总颈动脉', '内颈动脉', '棘上肌', '棘下肌', '食道', '内翼肌', '上唇举肌', '鼻锥肌', '外展小指肌', '颜面神经', '总腓骨神经', '末梢神经', '副甲状腺']
-    for (const [id, e] of entries) for (const bad of regional) expect(e.zh?.includes(bad), `${id} ${e.zh}`).toBe(false)
+    for (const [id, e] of entries) for (const bad of regional) expect(e.zh?.includes(bad) ?? false, `${id} ${e.zh}`).toBe(false)
   })
 
-  it('names concepts with synthetic (non-FMA) ids without claiming a Wikidata source', () => {
-    const synthetic = entries.filter(([id]) => !id.startsWith('FMA'))
+  it('names concepts with synthetic (non-FMA) ids; only UBERON ids may carry a Wikidata link', () => {
+    const synthetic = entries.filter(([id]) => !/^FMA\d+$/.test(id))
     for (const [id, e] of synthetic) {
       expect(e.zh && hasHan(e.zh), id).toBe(true)
-      expect(e.wikidata, id).toBeUndefined()
-      expect(e.zhSource, id).toBe('machine-translation')
+      if (/^UBERON_\d+$/.test(id)) {
+        // resolved through Wikidata's UBERON ID property (P1554) when an item exists
+        if (e.wikidata) expect(['wikidata:via-uberon-id', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override'], id).toContain(e.zhSource)
+        else expect(e.zhSource, id).toBe('machine-translation')
+      } else {
+        expect(e.wikidata, id).toBeUndefined()
+        expect(e.zhSource, id).toBe('machine-translation')
+      }
     }
-    if (synthetic.length) {
-      expect(names.ZAC_recurrent_thenar_branch_of_median_nerve_L?.zh).toBe('左正中神经返支（鱼际支）')
+    for (const [id, e] of entries) if (e.zhSource === 'wikidata:via-uberon-id') expect(id).toMatch(/^UBERON_\d+$/)
+    if (names.ZAC_recurrent_thenar_branch_of_median_nerve_L) {
+      expect(names.ZAC_recurrent_thenar_branch_of_median_nerve_L.zh).toBe('左正中神经返支（鱼际支）')
       expect(names.ZAC_scapholunate_interosseous_ligament_R?.zh).toBe('右舟月骨间韧带')
     }
+  })
+
+  it('female reproductive system and breast use mainland terms', () => {
+    if (!names.UBERON_0000002) return // female dataset not part of this build
+    // UBERON:0000002 -> Q666412 "cervix" on Wikidata (P1554), which also carries FMA17740
+    expect(names.UBERON_0000002).toMatchObject({ zh: '子宫颈', wikidata: 'Q666412' })
+    expect(names.UBERON_0009853?.zh).toBe('子宫体')
+    expect(names.UBERON_0000996?.zh).toBe('阴道')
+    expect(names.UBERON_0012332?.zh).toBe('子宫阔韧带')
+    expect(names.FMA17561?.zh).toBe('子宫底')
+    expect(names.FMA18306?.zh).toBe('输卵管峡部')
+    expect(names.FMA55422?.zh).toBe('卵巢固有韧带')
+    expect(names.FMA19823?.zh).toBe('右卵巢悬韧带')
+    expect(names.FMA14729?.zh).toBe('膀胱子宫陷凹')
+    expect(names.HRAC_cornua?.zh).toBe('子宫角')
+    // ids shared by a left and a right part are named without a side
+    expect(names.UBERON_0018140?.zh).toBe('乳腺叶')
+    expect(names.FMA58088?.zh).toBe('输乳窦')
   })
 
   it('spot checks: generated names are labelled as generated', () => {
@@ -191,7 +216,7 @@ describe('relations.json', () => {
     const propagated = relations.filter((r) => r.source.name.startsWith('Wikidata (propagated'))
     expect(direct.length).toBeGreaterThan(500)
     expect(propagated.length).toBeGreaterThan(500)
-    for (const r of propagated) expect(r.source.name).toMatch(/from (whole muscle )?FMA\d+ "/)
+    for (const r of propagated) expect(r.source.name).toMatch(/from (whole muscle |whole organ )?FMA\d+ "/)
   })
 
   it('only has subjects that are named, and no self-references or duplicates', () => {
@@ -316,6 +341,22 @@ describe('relations.json', () => {
       expect(targets('FMA37073')).toEqual(expect.arrayContaining(['FMA34680', 'FMA34682', 'FMA34684']))
       expect(targets('FMA37073')).not.toContain('FMA34681')
     })
+  })
+
+  it('spot check: parts of the uterus inherit its blood supply, and the ovary has its own', () => {
+    if (!names.UBERON_0009853) return // female dataset not part of this build
+    // Q9612 "uterus" P2286 -> uterine artery (FMA18829), ovarian artery; P2289 -> uterine vein (FMA18896).
+    // The dataset has no "uterus" concept, so its body and fundus receive them, labelled as such.
+    for (const part of ['UBERON_0009853', 'FMA17561']) {
+      const supply = find(part, 'arterialSupply')
+      expect(supply.map((r) => r.object)).toContain('FMA18829')
+      expect(supply[0]!.source.name).toContain('propagated from whole organ FMA17558 "uterus"')
+      expect(find(part, 'venousDrainage').map((r) => r.object)).toContain('FMA18896')
+    }
+    // Q9631 "ovary" P2286 -> ovarian artery (FMA14761), stated on the ovary itself
+    expect(find('FMA7209', 'arterialSupply').map((r) => r.object)).toContain('FMA14761')
+    // cervix: reached through its UBERON id; Wikidata says vaginal artery (FMA18832)
+    expect(find('UBERON_0000002', 'arterialSupply').map((r) => r.object)).toContain('FMA18832')
   })
 
   it('does not keep muscle-only statements on non-muscles', () => {

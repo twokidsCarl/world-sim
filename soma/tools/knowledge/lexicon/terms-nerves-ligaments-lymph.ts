@@ -327,3 +327,33 @@ export const MAINLAND_TERMS: Record<string, string> = {
   'upper second secondary premolar tooth': '上颌第二前磨牙', 'lower first secondary premolar tooth': '下颌第一前磨牙',
   'lower second secondary premolar tooth': '下颌第二前磨牙',
 }
+
+// Female reproductive system and breast. Mainland usage; machine translation, unreviewed.
+export const FEMALE_TERMS: Record<string, string> = {
+  uterus: '子宫', 'body of uterus': '子宫体', 'fundus of uterus': '子宫底', 'uterine cervix': '子宫颈',
+  'cervix of uterus': '子宫颈', cervix: '子宫颈', 'vaginal part of cervix': '宫颈阴道部',
+  'supravaginal part of cervix': '宫颈阴道上部', 'lower uterine segment': '子宫下段',
+  'cervicovaginal junction': '宫颈阴道交界', cornua: '子宫角', 'internal cervical os': '宫颈内口',
+  'external cervical os': '宫颈外口', 'wall of uterus': '子宫壁', vagina: '阴道', ovary: '卵巢',
+  'uterine tube': '输卵管', 'isthmus of uterine tube': '输卵管峡部', 'ampulla of uterine tube': '输卵管壶腹部',
+  'infundibulum of uterine tube': '输卵管漏斗部', 'fimbria of uterine tube': '输卵管伞',
+  'abdominal ostium of uterine tube': '输卵管腹腔口', 'broad ligament of uterus': '子宫阔韧带',
+  'broad ligament': '阔韧带', 'round ligament of uterus': '子宫圆韧带', 'ovarian ligament': '卵巢固有韧带',
+  'suspensory ligament of ovary': '卵巢悬韧带', 'uterosacral ligament': '子宫骶韧带',
+  'cardinal ligament': '主韧带', mesosalpinx: '输卵管系膜', mesovarium: '卵巢系膜',
+  'rectouterine pouch': '直肠子宫陷凹', 'recto-uterine pouch': '直肠子宫陷凹',
+  'rectouterine fold': '直肠子宫襞', 'recto-uterine fold': '直肠子宫襞',
+  'uterovesical pouch': '膀胱子宫陷凹', 'vesicouterine pouch': '膀胱子宫陷凹',
+  'vesico-uterine pouch': '膀胱子宫陷凹', 'uterine artery': '子宫动脉', 'uterine vein': '子宫静脉',
+  'ovarian artery': '卵巢动脉', 'ovarian vein': '卵巢静脉', 'vaginal artery': '阴道动脉',
+  'endopelvic fascia': '盆内筋膜', 'dense endopelvic fascia': '致密盆内筋膜',
+  breast: '乳房', 'female breast': '女性乳房', 'mammary gland': '乳腺', 'mammary lobe': '乳腺叶',
+  'lobe of mammary gland': '乳腺叶', 'lactiferous duct': '输乳管', 'main lactiferous duct': '主输乳管',
+  'lactiferous sinus': '输乳窦', areola: '乳晕', 'areola of female breast': '乳晕', 'female areola': '乳晕',
+  nipple: '乳头', 'areolar tubercle': '乳晕结节', 'suspensory ligament of breast': '乳房悬韧带',
+  'interlobar adipose tissue of mammary gland': '乳腺叶间脂肪组织（乳房脂肪体）',
+  'adipose tissue': '脂肪组织', 'serous sac': '浆膜囊', 'peritoneal cavity': '腹膜腔',
+  'front of trunk': '躯干前面', 'anatomical orifice': '解剖学孔口',
+  // donor-specific finding in the Visible Human Female data
+  'supernumerary lumbar vertebra (first of six)': '额外腰椎（六节中的第一节，个体变异）',
+}

@@ -181,15 +181,18 @@ export interface Dataset {
   partFmas: Map<string, Set<string>>
   /** child -> parent edges of trees.isa */
   isaEdges: [string, string][]
+  /** Ids named for one side but used by parts of both sides; their side word was dropped. */
+  sharedSidedIds: { id: string; name: string }[]
 }
 
 export function loadDataset(): Dataset {
-  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [] }
+  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [], sharedSidedIds: [] }
+  const sides = new Map<string, Set<string>>()
   for (const body of BODIES) {
     const file = resolve(ANATOMY_DIR, body, 'anatomy.json')
     if (!existsSync(file)) continue
     const data = JSON.parse(readFileSync(file, 'utf8')) as {
-      parts: { fma: string; name: string }[]
+      parts: { fma: string; name: string; side?: string }[]
       trees: Record<'isa' | 'partOf', { id: string; name: string; parent: string | null }[]>
     }
     out.bodies.push(body)
@@ -202,8 +205,19 @@ export function loadDataset(): Dataset {
       if (!p.fma) continue
       fmas.add(p.fma)
       if (!out.names.has(p.fma)) out.names.set(p.fma, p.name.toLowerCase())
+      if (p.side) (sides.get(p.fma) ?? sides.set(p.fma, new Set()).get(p.fma)!).add(p.side)
     }
     out.partFmas.set(body, fmas)
+  }
+  // One id used by both a left and a right part cannot be named "left ...": drop the side word
+  // (the UI adds the side from Part.side) and remember the id for the report.
+  for (const [id, s] of sides) {
+    const name = out.names.get(id)
+    if (!name || !s.has('L') || !s.has('R')) continue
+    const hits = name.match(/\b(left|right)\b/gi) ?? []
+    if (hits.length !== 1) continue
+    out.sharedSidedIds.push({ id, name })
+    out.names.set(id, name.replace(/\b(left|right)\b/i, '').replace(/\s+/g, ' ').trim())
   }
   return out
 }

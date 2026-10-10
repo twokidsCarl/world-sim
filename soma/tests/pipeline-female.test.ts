@@ -1,0 +1,234 @@
+// Validates public/anatomy/female (built by `bun run pipeline:female` from the male body and the
+// female anchor package). Skipped when it has not been built.
+
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import type { AnatomyData, NervePath, Part } from '../src/anatomy/types.ts'
+import { loadBuiltBody } from '../tools/pipeline/body.ts'
+import { runLandmarkChecks } from '../tools/pipeline/landmarks.ts'
+import { LAYERS } from '../tools/pipeline/layers.ts'
+
+const DIR = join(import.meta.dirname, '../public/anatomy/female')
+const MALE = join(import.meta.dirname, '../public/anatomy/male/anatomy.json')
+const present = existsSync(join(DIR, 'anatomy.json')) && existsSync(MALE)
+
+describe.skipIf(!present)('female body (public/anatomy/female)', () => {
+  const data = (present ? JSON.parse(readFileSync(join(DIR, 'anatomy.json'), 'utf8')) : null) as AnatomyData
+  const male = (present ? JSON.parse(readFileSync(MALE, 'utf8')) : null) as AnatomyData
+  const report = (present ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : null) as Record<string, any>
+  const byId = new Map<string, Part>(present ? data.parts.map((p) => [p.id, p]) : [])
+  const maleById = new Map<string, Part>(present ? male.parts.map((p) => [p.id, p]) : [])
+  const maleByName = (n: string) => male.parts.find((p) => p.name === n)!
+  const byName = (name: string): Part => {
+    const hits = data.parts.filter((p) => p.name === name)
+    expect(hits.length, `parts named "${name}"`).toBe(1)
+    return hits[0]!
+  }
+  const len = (p: Part) => Math.hypot(p.bbox[3] - p.bbox[0], p.bbox[4] - p.bbox[1], p.bbox[5] - p.bbox[2])
+
+  it('is a female body with honest sources and provenance', () => {
+    expect(data.schema).toBe(1)
+    expect(data.body).toBe('female')
+    const names = data.sources.map((s) => s.name)
+    expect(names).toEqual(expect.arrayContaining(['BodyParts3D 4.0', 'Visible Human Female CT', 'Human Reference Atlas']))
+    expect(data.sources.find((s) => s.name === 'Visible Human Female CT')!.attribution).toContain('Courtesy of the U.S. National Library of Medicine')
+    expect(data.sources.find((s) => s.name === 'Human Reference Atlas')!.license).toBe('CC BY 4.0')
+    expect(byId.size).toBe(data.parts.length)
+    for (const p of data.parts) {
+      expect(names, p.id).toContain(p.source)
+      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8})|VF_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+)$/)
+      if (p.id.startsWith('W_')) {
+        // warped male part: keeps the male part's identity, names where its geometry came from
+        const m = maleById.get(p.id.slice(2))
+        expect(m, p.id).toBeDefined()
+        expect(p.provenance, p.id).toBe('warped')
+        expect(p.fma).toBe(m!.fma)
+        expect(p.name).toBe(m!.name)
+        expect(p.source).toBe(m!.source ?? 'BodyParts3D 4.0')
+      } else if (p.id.startsWith('HRA_')) {
+        expect(p.provenance, p.id).toBe('curated')
+        expect(p.source).toBe('Human Reference Atlas')
+      } else {
+        expect(['scanned', 'warped'], p.id).toContain(p.provenance)
+        expect(p.source).toBe('Visible Human Female CT')
+      }
+      expect(p.bbox.every(Number.isFinite) && p.centroid.every(Number.isFinite), p.id).toBe(true)
+      expect(Number.isInteger(p.depth) && p.depth >= 0 && p.depth < LAYERS.length, p.id).toBe(true)
+      expect(p.triangles, p.id).toBeGreaterThan(3)
+    }
+    expect(data.parts.filter((p) => p.system === 'other' || p.tissue === 'other')).toEqual([])
+    expect(Array.isArray(report.notes) && report.notes.length).toBeGreaterThan(5)
+  })
+
+  it('has no male-only part and has the female ones', () => {
+    const maleOnly = data.parts.filter((p) => /\bpenis\b|\btest(is|es|icular)\b|prostat|seminal vesicle|deferent|epididym/i.test(p.name) || p.name === 'Urethra')
+    expect(maleOnly.map((p) => p.name)).toEqual([])
+    expect(data.parts.filter((p) => p.system === 'reproductive').every((p) => p.provenance === 'curated')).toBe(true)
+    for (const n of ['Body of uterus', 'Fundus of uterus', 'Uterine cervix', 'Vagina', 'Left ovary', 'Right ovary', 'Left uterine artery', 'Right round ligament of uterus', 'Left mammary lobe', 'Right mammary lobe']) expect(byName(n).provenance, n).toBe('curated')
+    // what the male model has and she must still have
+    for (const n of ['Urinary bladder', 'Rectum', 'Left kidney', 'Stomach', 'Skin', 'Left sciatic nerve', 'Thyroid gland', 'Upper lobe of left lung']) expect(byName(n)).toBeDefined()
+    expect(report.sexChecks.noMaleOnlyParts.pass).toBe(true)
+    expect(report.sexChecks.leftRightPresence.pass).toBe(true)
+  })
+
+  it('stands on her own skeleton: real bones, her proportions', () => {
+    const bones = data.parts.filter((p) => p.tissue === 'bone')
+    const real = bones.filter((p) => p.provenance === 'scanned')
+    expect(real.length).toBeGreaterThanOrEqual(65)
+    expect(real.every((p) => p.id.startsWith('VF_'))).toBe(true)
+    expect(report.scannedBones.maxNonRigidDeviationM).toBeLessThan(1e-5)
+    // long bones 5–12 % shorter than the male's, pelvis as wide or wider
+    for (const n of ['Left femur', 'Right femur', 'Left tibia', 'Right tibia', 'Left humerus']) {
+      const r = len(byName(n)) / len(maleByName(n))
+      expect(r, n).toBeGreaterThan(0.86)
+      expect(r, n).toBeLessThan(0.98)
+      expect(byName(n).provenance, n).toBe('scanned')
+    }
+    const hipWidth = (parts: Part[]) => Math.max(...parts.map((p) => p.bbox[3])) - Math.min(...parts.map((p) => p.bbox[0]))
+    expect(hipWidth([byName('Left hip bone'), byName('Right hip bone')])).toBeGreaterThan(hipWidth([maleByName('Left hip bone'), maleByName('Right hip bone')]) - 0.002)
+    // six lumbar vertebrae, stacked in order between T12 and the sacrum
+    const extra = byName('Supernumerary lumbar vertebra (first of six)')
+    expect(extra).toMatchObject({ provenance: 'scanned', tissue: 'bone', side: 'M' })
+    const stack = ['Twelfth thoracic vertebra', 'Supernumerary lumbar vertebra (first of six)', 'First lumbar vertebra', 'Second lumbar vertebra', 'Third lumbar vertebra', 'Fourth lumbar vertebra', 'Fifth lumbar vertebra', 'Sacrum'].map((n) => byName(n).centroid[1])
+    for (let i = 1; i < stack.length; i++) expect(stack[i]!, `vertebra ${i}`).toBeLessThan(stack[i - 1]!)
+    // right forearm: mirrored left bones, marked as not hers
+    expect(byName('Right radius')).toMatchObject({ provenance: 'warped', source: 'Visible Human Female CT' })
+    expect(byName('Left radius').provenance).toBe('scanned')
+    expect(Math.abs(len(byName('Right radius')) - len(byName('Left radius')))).toBeLessThan(0.01)
+    // hands and feet: warped male bones
+    expect(byName('Left calcaneus').provenance).toBe('warped')
+    expect(byName('Left capitate').provenance).toBe('warped')
+  })
+
+  it('stands in the male pose on the same floor', () => {
+    const minY = Math.min(...data.parts.map((p) => p.bbox[1]))
+    const maxY = Math.max(...data.parts.map((p) => p.bbox[4]))
+    const maleMinY = Math.min(...male.parts.map((p) => p.bbox[1]))
+    expect(Math.abs(minY - maleMinY)).toBeLessThan(0.02)
+    expect(maxY - minY).toBeGreaterThan(1.5)
+    expect(maxY - minY).toBeLessThan(1.75)
+    // arms down beside the body, legs vertical and apart, as in the male
+    for (const [n, sign] of [['Left', 1], ['Right', -1]] as const) {
+      const hand = byName(`${n} capitate`)
+      const shoulder = byName(`${n} humerus`)
+      expect(hand.centroid[1]).toBeLessThan(shoulder.bbox[1])
+      expect(hand.centroid[0] * sign).toBeGreaterThan(0.15)
+      const femur = byName(`${n} femur`)
+      const tibia = byName(`${n} tibia`)
+      expect(Math.abs(femur.centroid[0] - tibia.centroid[0])).toBeLessThan(0.06)
+      expect(Math.abs(femur.centroid[2] - tibia.centroid[2])).toBeLessThan(0.06)
+      expect(byName(`${n} calcaneus`).centroid[1]).toBeLessThan(tibia.bbox[1] + 0.03)
+      expect(femur.centroid[0] * sign).toBeGreaterThan(0.05)
+    }
+    expect(byName('Frontal bone').centroid[1]).toBeGreaterThan(byName('Mandible').centroid[1])
+    expect(byName('Body of sternum').centroid[2]).toBeGreaterThan(byName('Sixth thoracic vertebra').centroid[2] + 0.06)
+  })
+
+  it('puts the female organs where they belong', () => {
+    const uterus = byName('Body of uterus')
+    expect(byName('Urinary bladder').centroid[2]).toBeGreaterThan(uterus.centroid[2])
+    expect(uterus.centroid[2]).toBeGreaterThan(byName('Rectum').centroid[2])
+    expect(Math.abs(uterus.centroid[0])).toBeLessThan(0.02)
+    const hips = [byName('Left hip bone'), byName('Right hip bone')]
+    for (const [n, sign] of [['Left ovary', 1], ['Right ovary', -1]] as const) {
+      const o = byName(n)
+      expect(o.centroid[0] * sign).toBeGreaterThan(0.02)
+      expect(o.centroid[0] * sign).toBeLessThan(0.09)
+      expect(o.centroid[1]).toBeGreaterThan(Math.min(...hips.map((h) => h.bbox[1])))
+      expect(o.centroid[1]).toBeLessThan(Math.max(...hips.map((h) => h.bbox[4])))
+      expect(o.centroid[2]).toBeGreaterThan(byName('Sacrum').bbox[2])
+    }
+    expect(byName('Vagina').centroid[1]).toBeLessThan(uterus.centroid[1])
+    for (const side of ['left', 'right']) {
+      const breast = byName(`${side[0]!.toUpperCase()}${side.slice(1)} mammary lobe`)
+      const pec = byName(`Sternocostal part of ${side} pectoralis major`)
+      expect(breast.centroid[2]).toBeGreaterThan(pec.centroid[2])
+      expect(breast.bbox[5]).toBeGreaterThan(pec.bbox[5])
+      expect(Math.abs(breast.centroid[1] - pec.centroid[1])).toBeLessThan(0.12)
+    }
+    for (const k of ['uterusBetweenBladderAndRectum', 'leftOvaryInPelvis', 'rightOvaryInPelvis', 'leftBreastAnteriorToPectoralis', 'rightBreastAnteriorToPectoralis']) expect(report.sexChecks[k].pass, k).toBe(true)
+  })
+
+  it('keeps the deformation in bounds and reports where it is not', () => {
+    const j = report.jacobian
+    expect(j.samples).toBeGreaterThan(20000)
+    // folded space: tolerated where neighbouring bones moved against each other, but rare
+    expect(j.folded / j.samples).toBeLessThan(0.01)
+    expect(j.median).toBeGreaterThan(0.8)
+    expect(j.median).toBeLessThan(1.1)
+    expect(j.p01).toBeGreaterThan(0)
+    expect(j.p99).toBeLessThan(3)
+    const all = report.registration.byRegion.find((r: any) => r.region === 'all')
+    expect(Number(all.residual.split(' / ')[0])).toBeLessThan(4) // median anchor residual, mm
+    expect(report.interpenetration.meanInsideAfter).toBeLessThan(0.03)
+    expect(report.interpenetration.nerves.inBoneAfter).toBeLessThan(0.01)
+    // long muscles still end on their bones
+    const att = report.attachments as { ok: boolean; femaleMm: number; muscle: string; end: string }[]
+    expect(att.length).toBeGreaterThanOrEqual(24)
+    expect(att.filter((a) => a.ok).length / att.length).toBeGreaterThan(0.85)
+    for (const a of att.filter((x) => /biceps femoris|semimembranosus|gastrocnemius|calcaneal tendon/.test(x.muscle))) expect(a.femaleMm, `${a.muscle} ${a.end}`).toBeLessThan(5)
+  })
+
+  it('puts every part in one GLB and passes the nerve landmark checks on the shipped geometry', async () => {
+    const body = await loadBuiltBody(DIR)
+    expect(body.meshes.size).toBe(data.parts.length)
+    for (const s of data.systems) expect(s.partCount, s.id).toBe(data.parts.filter((p) => p.system === s.id).length)
+    const meshes = new Map<string, any>()
+    const nerves = new Map<string, any>()
+    for (const p of data.parts) {
+      if (!meshes.has(p.name)) meshes.set(p.name, body.meshes.get(p.id))
+      if (body.nerves.has(p.id) && !nerves.has(p.name)) nerves.set(p.name, body.nerves.get(p.id))
+    }
+    const results = runLandmarkChecks({ mesh: (n) => meshes.get(n) ?? null, nerve: (n) => nerves.get(n) ?? null })
+    expect(results.length).toBe(18)
+    expect(results.filter((r) => !r.evaluated || !r.pass).map((r) => `${r.side} ${r.id}: ${r.measured}`)).toEqual([])
+  }, 120_000)
+
+  it('ships consistent nerves.json, adjacency and trees', () => {
+    const nerves = JSON.parse(readFileSync(join(DIR, 'nerves.json'), 'utf8')) as NervePath[]
+    expect(nerves.length).toBeGreaterThan(350)
+    for (const n of nerves) {
+      const part = byId.get(n.part)
+      expect(part?.tissue, n.part).toBe('nerve')
+      for (const b of n.branches) {
+        expect(b.radius.length, n.part).toBe(b.points.length / 3)
+        for (let i = 0; i < b.points.length; i += 3) for (let k = 0; k < 3; k++) {
+          expect(b.points[i + k]!, part!.name).toBeGreaterThanOrEqual(part!.bbox[k]! - b.radius[i / 3]! - 2e-4)
+          expect(b.points[i + k]!, part!.name).toBeLessThanOrEqual(part!.bbox[k + 3]! + b.radius[i / 3]! + 2e-4)
+        }
+      }
+    }
+    for (const p of data.parts) {
+      expect(p.adjacent.length, p.id).toBeLessThanOrEqual(200)
+      for (const q of p.adjacent) expect(byId.get(q)?.adjacent.includes(p.id), `${p.id} ↔ ${q}`).toBe(true)
+    }
+    expect(byName('Skin').adjacent).toEqual([])
+    for (const tree of [data.trees.isa, data.trees.partOf]) {
+      const ids = new Set<string>()
+      const kids = new Set<string>()
+      for (const c of tree) {
+        expect(ids.has(c.id), c.id).toBe(false)
+        if (c.parent !== null) {
+          expect(ids.has(c.parent), `${c.id}: parent first`).toBe(true)
+          kids.add(c.parent)
+        }
+        ids.add(c.id)
+        for (const p of c.parts) expect(byId.has(p), `${c.id} → ${p}`).toBe(true)
+      }
+      for (const c of tree) if (!kids.has(c.id)) expect(c.parts.length, `leaf ${c.name}`).toBeGreaterThan(0)
+    }
+    const reached = new Set(data.trees.isa.flatMap((c) => c.parts))
+    expect(data.parts.filter((p) => !reached.has(p.id)).map((p) => p.id)).toEqual([])
+    const isa = new Map(data.trees.isa.map((c) => [c.id, c]))
+    for (const p of data.parts) expect(isa.has(p.fma), `${p.id} ${p.fma}`).toBe(true)
+    // male-only concepts are gone, female ones are there
+    const names = new Set(data.trees.isa.map((c) => c.name))
+    expect(names.has('prostate')).toBe(false)
+    expect(names.has('testis')).toBe(false)
+    expect([...names].some((n) => /ovary/.test(n))).toBe(true)
+    const genital = data.trees.partOf.find((c) => c.name === 'genital system')!
+    const under = data.trees.partOf.filter((c) => c.parent === genital.id).flatMap((c) => c.parts)
+    expect(under).toContain('HRA_left_ovary')
+  })
+})

@@ -3,7 +3,7 @@ import { ancestors, descendants, loadConcepts, loadDataset, loadElementConcepts,
 import { loadT2S } from './hanzi.ts'
 import type { FetchOptions } from './sparql.ts'
 import {
-  fetchAllFmaItems, fetchAllFmaLabels, fetchExtras, fetchLabels, fetchStatements,
+  fetchAllFmaItems, fetchAllFmaLabels, fetchExtras, fetchItemsByUberon, fetchLabels, fetchStatements,
   type FmaItem, type ItemExtras, type Labels, type Statement,
 } from './wikidata.ts'
 
@@ -47,6 +47,8 @@ export interface Model {
    * Catches cases where the English names differ too much for a name match.
    */
   unsidedOf(fma: string): string[]
+  /** Concept ids ("UBERON_...") whose Wikidata item was found through the UBERON ID property. */
+  viaUberon: Set<string>
 }
 
 const ZH_PRIORITY = ['zh-cn', 'zh-hans', 'zh-sg', 'zh-my', 'zh', 'zh-hant', 'zh-tw', 'zh-hk', 'zh-mo']
@@ -107,6 +109,22 @@ export async function buildModel(opts: FetchOptions): Promise<Model> {
     if (it.en) enByItem.set(it.qid, it.en)
   }
   for (const v of fmaByItem.values()) v.sort()
+
+  // Concepts with a synthetic "UBERON_<digits>" id are linked through Wikidata's UBERON ID.
+  const viaUberon = new Set<string>()
+  const uberonIds = [...concepts.keys()].filter((id) => /^UBERON_\d+$/.test(id))
+  if (uberonIds.length) {
+    const found = await fetchItemsByUberon(uberonIds.map((id) => id.slice(7)), opts)
+    for (const f of found) {
+      const id = `UBERON_${f.uberon}`
+      ;(itemsByFma.get(id) ?? itemsByFma.set(id, []).get(id)!).push({ qid: f.qid, fma: id, en: f.en })
+      const ids = fmaByItem.get(f.qid) ?? fmaByItem.set(f.qid, []).get(f.qid)!
+      if (!ids.includes(id)) ids.push(id)
+      if (f.en && !enByItem.has(f.qid)) enByItem.set(f.qid, f.en)
+      viaUberon.add(id)
+    }
+    for (const [q, l] of await fetchLabels(found.map((f) => f.qid), opts)) labels.set(q, { ...l, ...labels.get(q) })
+  }
 
   const t2s = await loadT2S(opts)
 
@@ -196,7 +214,7 @@ export async function buildModel(opts: FetchOptions): Promise<Model> {
   }
 
   return {
-    unsidedOf,
+    unsidedOf, viaUberon,
     concepts, elementConcepts: el.concepts, dataset,
     elementStats: { files: el.fromHeader + el.fromFallback + el.unresolved, fromHeader: el.fromHeader, fromFallback: el.fromFallback, unresolved: el.unresolved },
     isa, muscleLike, itemsByFma, fmaByItem, primaryItem, labels, extras, twinOf, twinFor, statements, fmaByName, t2s, zhOf, enOf, rejectedZh,
