@@ -33,6 +33,8 @@ const MAX_CELL_SLOT = 192u;
 // Neighbours for the hexatic order parameter: within 1.5 σ, squared.
 const PSI_R2 = 2.25;
 const SPECIES = 2u;
+// Nearest neighbours for the coordination number: within 1.35 σ, squared.
+const COORD_R2 = 1.8225;
 const FIELD_G = 48u;
 // Fixed-point scales for the field sums, which are accumulated in i32 atomics.
 const FIELD_V = 1024.0;
@@ -42,7 +44,7 @@ const FIELD_V2 = 256.0;
 @group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;        // xyz position, w = species (0 or 1)
 @group(0) @binding(2) var<storage, read_write> vel: array<vec4f>;
 @group(0) @binding(3) var<storage, read_write> force: array<vec4f>;      // xyz force, w = potential energy share
-@group(0) @binding(4) var<storage, read_write> aux: array<vec4f>;        // virial share, Re ψ6, Im ψ6, neighbours + 32 * unlike neighbours
+@group(0) @binding(4) var<storage, read_write> aux: array<vec4f>;        // virial share, Re ψ6, Im ψ6, packed neighbour counts (see `forces`)
 @group(0) @binding(5) var<storage, read_write> cellCount: array<atomic<u32>>;
 @group(0) @binding(6) var<storage, read_write> cellTable: array<u32>;
 @group(0) @binding(7) var<storage, read> potTable: array<vec2f>;         // (f/r, u) on a uniform r² grid; one table per species pair
@@ -143,6 +145,7 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
   let ci = vec3i(cellCoord(xi));
   let zr = i32(P.dim == 3u);
   var unlike = 0.0;
+  var coord = 0.0;
   var f = vec3f(0.0);
   var pe = 0.0;
   var vir = 0.0;
@@ -161,14 +164,18 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
           let d = minImage(xi - pj.xyz);
           let r2 = dot(d, d);
           if (r2 >= P.rc2) { continue; }
+          coord += f32(r2 < COORD_R2);
           if (r2 < PSI_R2) {
             unlike += f32(si != sj);
+            nb += 1.0;
+          }
+          // The hexatic order parameter is defined in the plane only.
+          if (r2 < PSI_R2 && P.dim == 2u) {
             // exp(6 i θ) as the sixth power of the unit bond vector.
             let u = d.xy * inverseSqrt(r2);
             let u2 = vec2f(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);
             let u4 = vec2f(u2.x * u2.x - u2.y * u2.y, 2.0 * u2.x * u2.y);
             psi += vec2f(u4.x * u2.x - u4.y * u2.y, u4.x * u2.y + u4.y * u2.x);
-            nb += 1.0;
           }
           let t = max((r2 - P.r2min) * P.tableScale, 0.0);
           // Table for the force on species si from species sj.
@@ -182,7 +189,9 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
     }
   }
   force[i] = vec4f(f, pe);
-  aux[i] = vec4f(vir, psi / max(nb, 6.0), nb + 32.0 * unlike);
+  // Three small integer counts share one float exactly: neighbours within the ψ6 radius,
+  // those of the other species, and nearest neighbours within the coordination radius.
+  aux[i] = vec4f(vir, psi / max(nb, 6.0), nb + 64.0 * unlike + 4096.0 * coord);
 }
 
 // One invocation per chunk, so each chunk's sums are written without contention.
@@ -198,6 +207,7 @@ fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
   var psi = vec3f(0.0);
   var bonds = 0.0;
   var unlike = 0.0;
+  var coord = 0.0;
   for (var i = start; i < end; i++) {
     let v = vel[i].xyz;
     ke += 0.5 * dot(v, v);
@@ -205,12 +215,15 @@ fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
     vir += aux[i].x;
     p += v;
     psi += vec3f(aux[i].yz, length(aux[i].yz));
-    let u = floor(aux[i].w / 32.0);
+    let c = floor(aux[i].w / 4096.0);
+    let rest = aux[i].w - 4096.0 * c;
+    let u = floor(rest / 64.0);
+    coord += c;
     unlike += u;
-    bonds += aux[i].w - 32.0 * u;
+    bonds += rest - 64.0 * u;
   }
   partial[3u * id.x] = vec4f(ke, pe, vir, bonds);
-  partial[3u * id.x + 1u] = vec4f(p, 0.0);
+  partial[3u * id.x + 1u] = vec4f(p, coord);
   partial[3u * id.x + 2u] = vec4f(psi, unlike);
 }
 

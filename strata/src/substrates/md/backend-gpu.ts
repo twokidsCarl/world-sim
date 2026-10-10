@@ -4,9 +4,9 @@ import { PassTimer } from '../../gpu/timing'
 import type { MdBackend, MdFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
 import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
-import { initTriangular } from './ref/init'
+import { initFcc, initTriangular } from './ref/init'
 import { FIELD_G, demixing, rdfNormalise, type FieldSums, type Hist } from './ref/reducers'
-import { boxAspect, fieldKey, potentialSpec, strengthMatrix } from './schema'
+import { boxAspect, fccCells, fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 const CHUNK = 256
 const TABLE_K = 2048
@@ -45,7 +45,7 @@ type Entry = keyof typeof ENTRY_BINDINGS
 export class MdGpuBackend implements MdBackend {
   readonly kind = 'gpu'
   readonly n: number
-  readonly dim = 2 as const
+  readonly dim: 2 | 3
   readonly box: Float64Array
   stepCount = 0
   spec: PotentialSpec
@@ -92,18 +92,26 @@ export class MdGpuBackend implements MdBackend {
     this.lastT = p.temperature
     this.spec = potentialSpec(p)
     this.key = fieldKey(p)
-    const init = initTriangular(
-      {
-        nx: p.nx,
-        density: p.density,
-        temperature: p.temperature,
-        seed,
-        fractionB: p.fractionB,
-        aspect: boxAspect(p),
-        stripe: p.layoutB === 1,
-      },
-      speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K)),
-    )
+    const field = speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K))
+    this.dim = p.dim === 3 ? 3 : 2
+    const init =
+      this.dim === 3
+        ? initFcc(
+            { cells: fccCells(p.nx!), density: p.density!, temperature: p.temperature!, seed, fractionB: p.fractionB },
+            field,
+          )
+        : initTriangular(
+            {
+              nx: p.nx,
+              density: p.density,
+              temperature: p.temperature,
+              seed,
+              fractionB: p.fractionB,
+              aspect: boxAspect(p),
+              stripe: p.layoutB === 1,
+            },
+            field,
+          )
     this.n = init.n
     this.box = init.box
     this.chunks = Math.ceil(this.n / CHUNK)
@@ -126,12 +134,12 @@ export class MdGpuBackend implements MdBackend {
     const pos = new Float32Array(this.n * 4)
     const vel = new Float32Array(this.n * 4)
     for (let i = 0; i < this.n; i++) {
-      pos[4 * i] = init.pos[2 * i]
-      pos[4 * i + 1] = init.pos[2 * i + 1]
+      for (let d = 0; d < this.dim; d++) {
+        pos[4 * i + d] = init.pos[this.dim * i + d]
+        vel[4 * i + d] = init.vel[this.dim * i + d]
+      }
       pos[4 * i + 3] = init.species[i]
       this.fractionB += init.species[i] / this.n
-      vel[4 * i] = init.vel[2 * i]
-      vel[4 * i + 1] = init.vel[2 * i + 1]
     }
     this.device.queue.writeBuffer(this.buffers[1]!, 0, pos)
     this.device.queue.writeBuffer(this.buffers[2]!, 0, vel)
@@ -175,16 +183,22 @@ export class MdGpuBackend implements MdBackend {
       this.nc[d] = Math.max(3, Math.floor(this.box[d] / rc))
       cellVolume *= this.box[d] / this.nc[d]!
     }
-    if (this.box[0] / this.nc[0] < rc || this.box[1] / this.nc[1] < rc) {
-      throw new Error('box is smaller than three cutoff radii; use the CPU backend')
+    for (let d = 0; d < this.dim; d++) {
+      if (this.box[d]! / this.nc[d]! < rc) throw new Error('box is smaller than three cutoff radii; use the CPU backend')
     }
     this.cells = this.nc[0] * this.nc[1] * this.nc[2]
     this.cap = Math.ceil(PACKING_DENSITY * cellVolume) + 4
 
     // g(r) reaches as far as the stencil allows without wrapping onto itself.
-    const cellSize = Math.min(this.box[0] / this.nc[0], this.box[1] / this.nc[1])
-    const maxReach = Math.floor((Math.min(this.nc[0], this.nc[1]) - 1) / 2)
-    this.rdfReach = Math.min(maxReach, Math.ceil(4 / cellSize))
+    let cellSize = Infinity
+    let fewest = Infinity
+    for (let d = 0; d < this.dim; d++) {
+      cellSize = Math.min(cellSize, this.box[d]! / this.nc[d]!)
+      fewest = Math.min(fewest, this.nc[d]!)
+    }
+    const maxReach = Math.floor((fewest - 1) / 2)
+    // In 3D a wider stencil would visit 125 cells per particle, so g(r) stops at one cell.
+    this.rdfReach = this.dim === 3 ? 1 : Math.min(maxReach, Math.ceil(4 / cellSize))
     this.rdfMax = Math.min(4, this.rdfReach * cellSize)
 
     this.buffers[5]?.destroy()
@@ -210,8 +224,9 @@ export class MdGpuBackend implements MdBackend {
     u.set([this.n, this.dim, TABLE_K, CHUNK], 8)
     f.set([this.p.dt, t.rc2, t.r2min, t.k / (t.rc2 - t.r2min)], 12)
     f.set([vmax, this.rdfMax, this.lambda, this.rdfReach], 16)
-    f.set([this.p.walls ? this.p.drive! : 0, this.p.temperature!], 20)
-    u.set([this.p.walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
+    const walls = this.p.walls === 1 && this.dim === 2
+    f.set([walls ? this.p.drive! : 0, this.p.temperature!], 20)
+    u.set([walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
     this.device.queue.writeBuffer(this.buffers[0]!, 0, data)
   }
 
@@ -371,9 +386,11 @@ export class MdGpuBackend implements MdBackend {
     let psiAbs = 0
     let bonds = 0
     let unlike = 0
+    let neighbours = 0
     for (let c = 0; c < this.chunks; c++) {
       bonds += partial[12 * c + 3]!
       unlike += partial[12 * c + 11]!
+      neighbours += partial[12 * c + 7]!
       ke += partial[12 * c]!
       pe += partial[12 * c + 1]!
       virial += partial[12 * c + 2]!
@@ -415,6 +432,7 @@ export class MdGpuBackend implements MdBackend {
         momentum: Math.hypot(px, py, pz) / n,
         psi6Local: psiAbs / n,
         psi6Global: Math.hypot(psiRe, psiIm) / n,
+        coordination: neighbours / n,
         fractionB: this.fractionB,
         demix: demixing(this.fractionB, { total: bonds, unlike }),
       },

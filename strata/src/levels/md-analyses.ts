@@ -48,7 +48,7 @@ export function diffuse(c0: ArrayLike<number>, D: number, time: number, dy: numb
   return out
 }
 
-const mixture = (p: Record<string, number>) => p.fractionB! > 0 && p.layoutB === 1 && !p.walls
+const mixture = (p: Record<string, number>) => p.fractionB! > 0 && p.layoutB === 1 && !p.walls && p.dim !== 3
 
 export const MD_ANALYSES: AnalysisDef[] = [
   {
