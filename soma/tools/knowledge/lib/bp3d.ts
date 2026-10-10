@@ -2,7 +2,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, openSync, readSync, closeSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { BP3D_DIR, CACHE_DIR } from './paths.ts'
+import { ANATOMY_DIR, BODIES, BP3D_DIR, CACHE_DIR } from './paths.ts'
 
 export interface Bp3dConcept {
   fma: string
@@ -11,6 +11,8 @@ export interface Bp3dConcept {
   ja?: string
   inIsa: boolean
   inPartOf: boolean
+  /** True when the concept is absent from the BodyParts3D 4.0 lists and known only from an anatomy.json. */
+  datasetOnly?: boolean
 }
 
 function tsv(name: string): string[][] {
@@ -153,4 +155,44 @@ export function loadElementConcepts(): { concepts: Set<string>; fromHeader: numb
     } else unresolved++
   }
   return { concepts, fromHeader, fromFallback, unresolved }
+}
+
+/**
+ * What the generated datasets (public/anatomy/<body>/anatomy.json) actually contain: the FMA id
+ * of every part, and every concept of the two trees. The geometry pipeline imports structures
+ * from sources other than BodyParts3D 4.0, so this, not the 4.0 lists alone, defines the scope.
+ */
+export interface Dataset {
+  bodies: string[]
+  /** FMA id -> English name (tree name preferred: it is lower-case like the 4.0 lists). */
+  names: Map<string, string>
+  /** FMA ids that are a part's own concept, per body. */
+  partFmas: Map<string, Set<string>>
+  /** child -> parent edges of trees.isa */
+  isaEdges: [string, string][]
+}
+
+export function loadDataset(): Dataset {
+  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [] }
+  for (const body of BODIES) {
+    const file = resolve(ANATOMY_DIR, body, 'anatomy.json')
+    if (!existsSync(file)) continue
+    const data = JSON.parse(readFileSync(file, 'utf8')) as {
+      parts: { fma: string; name: string }[]
+      trees: Record<'isa' | 'partOf', { id: string; name: string; parent: string | null }[]>
+    }
+    out.bodies.push(body)
+    const fmas = new Set<string>()
+    for (const c of [...(data.trees.isa ?? []), ...(data.trees.partOf ?? [])]) {
+      if (/^FMA\d+$/.test(c.id) && c.name && !out.names.has(c.id)) out.names.set(c.id, c.name)
+    }
+    for (const c of data.trees.isa ?? []) if (c.parent && /^FMA\d+$/.test(c.id) && /^FMA\d+$/.test(c.parent)) out.isaEdges.push([c.id, c.parent])
+    for (const p of data.parts) {
+      if (!/^FMA\d+$/.test(p.fma)) continue
+      fmas.add(p.fma)
+      if (!out.names.has(p.fma)) out.names.set(p.fma, p.name.toLowerCase())
+    }
+    out.partFmas.set(body, fmas)
+  }
+  return out
 }

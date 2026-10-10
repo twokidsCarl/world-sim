@@ -122,7 +122,8 @@ export function buildNames(m: Model): NamesResult {
       if (side) {
         // (a) inherit from the unlateralised concept when Wikidata names it
         const base = stripSide(c.en)
-        for (const fma of [...(m.fmaByName.get(base) ?? [])].sort()) {
+        // an overridden base is not Wikidata-sourced: leave it to the translator below
+        for (const fma of ZH_OVERRIDES[base] ? [] : [...new Set([...[...(m.fmaByName.get(base) ?? [])].sort(), ...m.unsidedOf(c.fma)])]) {
           if (fma === c.fma || overridden(fma)) continue
           const z = wikidataZh(fma)
           if (z) {

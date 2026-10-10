@@ -1,13 +1,13 @@
 {
  "note": "Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. \"wholeMuscleOnly\" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray's Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0).",
- "muscleElementConcepts": 380,
- "complete": 280,
- "withGaps": 100,
- "unlateralisedGroups": 54,
+ "muscleElementConcepts": 451,
+ "complete": 333,
+ "withGaps": 118,
+ "unlateralisedGroups": 62,
  "missingCounts": {
-  "origin": 42,
-  "insertion": 42,
-  "innervatedBy": 19
+  "origin": 56,
+  "insertion": 56,
+  "innervatedBy": 21
  },
  "muscles": [
   {
@@ -74,6 +74,19 @@
     "insertion"
    ],
    "wholeMuscle": "pectoralis major"
+  },
+  {
+   "name": "deep part of masseter",
+   "fma": [
+    "FMA49004",
+    "FMA49005"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "masseter"
   },
   {
    "name": "external anal sphincter",
@@ -174,7 +187,8 @@
   {
    "name": "inferior oblique part of longus colli",
    "fma": [
-    "FMA46288"
+    "FMA46288",
+    "FMA46287"
    ],
    "missing": [
     "origin",
@@ -317,6 +331,19 @@
    "wholeMuscleOnly": []
   },
   {
+   "name": "lower head of lateral pterygoid",
+   "fma": [
+    "FMA49022",
+    "FMA49023"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "lateral pterygoid"
+  },
+  {
    "name": "lumbar rotator",
    "fma": [
     "FMA23089",
@@ -426,6 +453,32 @@
    "wholeMuscle": "cricothyroid"
   },
   {
+   "name": "orbital part of orbicularis oculi",
+   "fma": [
+    "FMA46782",
+    "FMA46783"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "orbicularis oculi"
+  },
+  {
+   "name": "palpebral part of orbicularis oculi",
+   "fma": [
+    "FMA46785",
+    "FMA46786"
+   ],
+   "missing": [],
+   "wholeMuscleOnly": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscle": "orbicularis oculi"
+  },
+  {
    "name": "pubococcygeus",
    "fma": [
     "FMA45855",
@@ -474,6 +527,19 @@
    "wholeMuscleOnly": []
   },
   {
+   "name": "set of dorsal interossei of foot",
+   "fma": [
+    "FMA74140",
+    "FMA74141"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
    "name": "short head of biceps brachii",
    "fma": [
     "FMA37684",
@@ -510,6 +576,18 @@
     "insertion"
    ],
    "wholeMuscle": "deltoid"
+  },
+  {
+   "name": "spinalis cervicis",
+   "fma": [
+    "FMA22781",
+    "FMA22782"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
   },
   {
    "name": "spinalis thoracis",
@@ -562,9 +640,23 @@
    "wholeMuscle": "flexor pollicis brevis"
   },
   {
+   "name": "superficial part of masseter",
+   "fma": [
+    "FMA49001",
+    "FMA49002"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "masseter"
+  },
+  {
    "name": "superior oblique part of longus colli",
    "fma": [
-    "FMA46284"
+    "FMA46284",
+    "FMA46283"
    ],
    "missing": [
     "origin",
@@ -646,6 +738,19 @@
     "insertion"
    ],
    "wholeMuscle": "pronator teres"
+  },
+  {
+   "name": "upper head of lateral pterygoid",
+   "fma": [
+    "FMA49024",
+    "FMA49025"
+   ],
+   "missing": [
+    "origin",
+    "insertion"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "lateral pterygoid"
   },
   {
    "name": "vertical intermediate part of longus colli",

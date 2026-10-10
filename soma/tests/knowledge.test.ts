@@ -79,11 +79,29 @@ describe('names.json', () => {
     }
   })
 
-  it('covers every BodyParts3D concept', () => {
+  it('covers every BodyParts3D 4.0 concept', () => {
     const concepts = bp3dConcepts()
     if (!concepts) return // raw data not present in this checkout
-    expect(Object.keys(names).sort()).toEqual([...concepts].sort())
-    for (const fma of concepts) expect(names[fma]!.zh, fma).toBeTruthy()
+    for (const fma of concepts) expect(names[fma]?.zh, fma).toBeTruthy()
+  })
+
+  // The dataset, not the BodyParts3D 4.0 lists, defines what must be named: the geometry pipeline
+  // also imports structures from other sources.
+  it.each(['male', 'female'])('names every part and tree concept of the %s anatomy.json in zh', (body) => {
+    const file = resolve(root, 'public/anatomy', body, 'anatomy.json')
+    if (!existsSync(file)) return // generated file, absent until the geometry pipeline has run
+    const data = JSON.parse(readFileSync(file, 'utf8')) as {
+      parts: { id: string; fma: string; name: string }[]
+      trees: Record<'isa' | 'partOf', { id: string; name: string }[]>
+    }
+    const missing: string[] = []
+    for (const p of data.parts) {
+      const e = names[p.fma]
+      if (!e?.zh || !e.zhSource || !hasHan(e.zh)) missing.push(`${p.id} ${p.fma} ${p.name}`)
+    }
+    expect(missing, 'parts without a zh name').toEqual([])
+    const unnamedConcepts = [...data.trees.isa, ...data.trees.partOf].filter((c) => !names[c.id]?.zh).map((c) => `${c.id} ${c.name}`)
+    expect(unnamedConcepts, 'tree concepts without a zh name').toEqual([])
   })
 
   // Spot checks verified by hand against wikidata.org on 2026-10-11.

@@ -6,3 +6,6 @@ export const BP3D_DIR = resolve(ROOT, 'data/raw/bodyparts3d')
 export const CACHE_DIR = resolve(ROOT, 'data/raw/knowledge')
 export const CURATED_DIR = resolve(ROOT, 'data/curated/knowledge')
 export const PUBLIC_DIR = resolve(ROOT, 'public/anatomy/knowledge')
+export const ANATOMY_DIR = resolve(ROOT, 'public/anatomy')
+/** Bodies whose anatomy.json drives the build when present. */
+export const BODIES = ['male', 'female'] as const

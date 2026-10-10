@@ -3,7 +3,8 @@
 //
 // Rules, chosen so nothing is guessed:
 //  - the article is the enwiki sitelink of the Wikidata item that carries the muscle's FMA id
-//    (or of that item's species-neutral twin); no title search;
+//    (found by exact name, or as the P279 class of the left/right item; or that item's
+//    species-neutral twin); no title search;
 //  - named parts of muscles ("long head of ...") are skipped: the infobox describes the whole;
 //  - one relation per infobox field, whose label is the field text with markup removed;
 //  - the object FMA id is set only when the whole field is a single wikilink whose target is,
@@ -90,9 +91,10 @@ export async function buildWikipediaFill(
 
   // group -> Wikidata items of the FMA concept that bears exactly this name
   const itemsOf = new Map<string, string[]>()
-  for (const name of groups.keys()) {
+  for (const [name, members] of groups) {
     const qids: string[] = []
-    for (const fma of m.fmaByName.get(name) ?? []) {
+    const fmas = new Set([...(m.fmaByName.get(name) ?? []), ...members.flatMap((f) => m.unsidedOf(f))])
+    for (const fma of fmas) {
       for (const it of m.itemsByFma.get(fma) ?? []) {
         qids.push(it.qid)
         const twin = m.twinOf.get(it.qid)
