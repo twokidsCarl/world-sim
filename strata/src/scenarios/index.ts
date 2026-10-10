@@ -75,6 +75,29 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'diffusion',
+    title: '让机器从粒子数据里发现扩散方程',
+    substrate: 'md',
+    steps: [
+      {
+        text: '两种粒子，相互作用完全相同，只是颜色不同。B 一开始集中在中间一条带里。右侧“元”一栏会从浓度剖面的时间序列里做稀疏回归：5 个候选项，看它留下哪几个。',
+        set: {
+          walls: 0,
+          nx: 180,
+          density: 0.6,
+          temperature: 2,
+          thermostat: 1,
+          fractionB: 0.3,
+          layoutB: 1,
+          epsAB: 1,
+          epsBB: 1,
+          nonreciprocal: 0,
+        },
+        run: 16000,
+      },
+    ],
+  },
+  {
     id: 'collapse',
     title: '一团静止的天体坍缩，然后自己找到平衡',
     substrate: 'gravity',

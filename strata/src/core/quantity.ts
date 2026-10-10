@@ -58,6 +58,8 @@ export interface QuantityDef<F> {
   tolerance?: { abs?: number; rel?: number }
   /** Hide the quantity unless this holds. */
   when?: (p: Params) => boolean
+  /** Keep the time series of this curve so analyses can use it. */
+  record?: boolean
   /** A reason the quantity's theory no longer applies under these parameters, or null. */
   voided?: (p: Params) => string | null
 }
@@ -84,8 +86,39 @@ export function agreement(q: QuantityDef<never>, value: Value, theory: Value | n
 
 export interface Sample {
   step: number
+  time: number
   /** Incremented whenever parameters change; consumers drop samples from older epochs. */
   epoch: number
   value: Value
   theory: Value | null
+}
+
+/** The recorded time series of a curve quantity: y[k] is the curve at time t[k]. */
+export interface History {
+  t: number[]
+  x: ArrayLike<number>
+  y: Float64Array[]
+}
+
+export interface AnalysisResult {
+  /** The finding in one line, e.g. a fitted equation. */
+  headline: string
+  detail?: string
+  curve?: Curve
+  theory?: Curve
+  xLabel?: string
+  theoryLabel?: string
+}
+
+/** A computation over the recorded history of one quantity. */
+export interface AnalysisDef {
+  id: string
+  level: LevelId
+  label: string
+  /** Id of the recorded quantity this reads. */
+  source: string
+  /** Fewest snapshots needed before running. */
+  minSamples: number
+  when?: (p: Params) => boolean
+  compute(h: History, p: Params): AnalysisResult | null
 }

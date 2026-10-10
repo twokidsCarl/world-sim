@@ -2,13 +2,24 @@
 // frame callbacks, so nothing here triggers a React render per frame.
 
 import { defaults, type Params } from '../core/params'
-import { agreement, isCurve, isField, type Agreement, type Curve, type Field, type Sample } from '../core/quantity'
+import {
+  agreement,
+  isCurve,
+  isField,
+  type Agreement,
+  type Curve,
+  type Field,
+  type History,
+  type Sample,
+} from '../core/quantity'
 import { Scheduler } from '../core/scheduler'
 import type { Frame, RunBackend, Substrate } from '../core/substrate'
 import { getGpu, type GpuContext } from '../gpu/device'
 import { SUBSTRATES } from '../substrates'
 
 const HISTORY = 400
+/** Snapshots kept per recorded curve; when full, every other one is dropped and the stride doubles. */
+const RECORD_LIMIT = 240
 const REDUCE_EVERY = 6
 const STEP_BUDGET_MS = 8
 const MAX_SUBSTEPS = 8
@@ -38,6 +49,8 @@ export class Engine {
   readonly curves = new Map<string, CurveTrace>()
   /** Running averages of field quantities. */
   readonly fields = new Map<string, Field & { data: Float64Array }>()
+  /** Time series of the curve quantities marked `record`. */
+  readonly histories = new Map<string, History & { stride: number; skipped: number }>()
   /** Whether each watched quantity currently matches its theory. */
   readonly agreements = new Map<string, Agreement>()
   /** View options that do not affect the simulation, e.g. how particles are coloured. */
@@ -119,6 +132,7 @@ export class Engine {
     this.scheduler.epoch++
     this.curves.clear()
     this.fields.clear()
+    this.histories.clear()
   }
 
   /** Keep a quantity computed while the returned function has not been called. */
@@ -156,6 +170,7 @@ export class Engine {
       return
     }
     if (!isCurve(s.value)) return
+    if (q.record) this.remember(id, s.time, s.value)
     const prev = this.curves.get(id)
     const theory = isCurve(s.theory) ? s.theory : null
     if (!prev || prev.y.length !== s.value.y.length) {
@@ -168,6 +183,20 @@ export class Engine {
     // Agreement of a curve is judged on its running average, not on one noisy sample.
     const averaged = this.curves.get(id)!
     this.agreements.set(id, q.voided?.(this.params) ? 'none' : agreement(q as never, averaged, theory))
+  }
+
+  private remember(id: string, time: number, curve: Curve): void {
+    let h = this.histories.get(id)
+    if (!h) this.histories.set(id, (h = { t: [], x: curve.x, y: [], stride: 1, skipped: 0 }))
+    if (++h.skipped < h.stride) return
+    h.skipped = 0
+    h.t.push(time)
+    h.y.push(Float64Array.from(curve.y))
+    if (h.t.length >= RECORD_LIMIT) {
+      h.t = h.t.filter((_, i) => i % 2 === 0)
+      h.y = h.y.filter((_, i) => i % 2 === 0)
+      h.stride *= 2
+    }
   }
 
   onFrame(fn: () => void): () => void {

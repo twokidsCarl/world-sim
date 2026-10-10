@@ -4,7 +4,7 @@ import { speciesField, speciesTables, type PairField, type PotentialSpec } from 
 import { initTriangular } from './ref/init'
 import { fieldSums, rdf, scalars, speedHistogram, type FieldSums, type Hist, type MdScalars } from './ref/reducers'
 import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
-import { fieldKey, potentialSpec, strengthMatrix } from './schema'
+import { boxAspect, fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 export interface MdFrame extends Frame {
   time: number
@@ -24,9 +24,6 @@ export interface MdFrame extends Frame {
   /** Box lengths, for turning cell sums into densities. */
   box: ArrayLike<number>
 }
-
-/** With walls the channel is four times longer than it is wide. */
-export const CHANNEL_ASPECT = 4
 
 export interface MdBackend extends RunBackend<MdFrame> {
   readonly n: number
@@ -62,7 +59,8 @@ export class MdCpuBackend implements MdBackend {
         temperature: p.temperature,
         seed,
         fractionB: p.fractionB,
-        aspect: p.walls ? CHANNEL_ASPECT : 1,
+        aspect: boxAspect(p),
+        stripe: p.layoutB === 1,
       },
       this.pair,
     )

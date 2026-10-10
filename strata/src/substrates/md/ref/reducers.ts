@@ -15,6 +15,8 @@ export interface FieldSums {
   vy: Float64Array
   /** Σ |v|² */
   v2: Float64Array
+  /** Number of species-B particles. */
+  countB: Float64Array
 }
 
 export interface MdScalars {
@@ -261,6 +263,7 @@ export function fieldSums(s: MdState, g = FIELD_G): FieldSums {
     vx: new Float64Array(g * g),
     vy: new Float64Array(g * g),
     v2: new Float64Array(g * g),
+    countB: new Float64Array(g * g),
   }
   const { dim, pos, vel, box } = s
   for (let i = 0; i < s.n; i++) {
@@ -273,22 +276,25 @@ export function fieldSums(s: MdState, g = FIELD_G): FieldSums {
     out.vx[c] += vx
     out.vy[c] += vy
     out.v2[c] += vx * vx + vy * vy
+    out.countB[c] += s.species[i]
   }
   return out
 }
 
-/** Profiles across y (averaged over x): number density, flow velocity u_x, and temperature. */
+/** Profiles across y (averaged over x): number density, flow velocity u_x, temperature, and the fraction of species B. */
 export function profiles(
   f: FieldSums,
   box: ArrayLike<number>,
   bins = 24,
-): { y: Float64Array; density: Float64Array; ux: Float64Array; temperature: Float64Array } {
+): { y: Float64Array; density: Float64Array; ux: Float64Array; temperature: Float64Array; fractionB: Float64Array } {
   const per = f.g / bins
   const y = new Float64Array(bins)
   const density = new Float64Array(bins)
   const ux = new Float64Array(bins)
   const temperature = new Float64Array(bins)
+  const fractionB = new Float64Array(bins)
   for (let b = 0; b < bins; b++) {
+    let nB = 0
     let n = 0
     let px = 0
     let py = 0
@@ -300,6 +306,7 @@ export function profiles(
         px += f.vx[c]
         py += f.vy[c]
         v2 += f.v2[c]
+        nB += f.countB[c]
       }
     }
     y[b] = (b + 0.5) / bins
@@ -307,6 +314,7 @@ export function profiles(
     ux[b] = n > 0 ? px / n : 0
     // Kinetic temperature of the motion relative to the local mean flow, in 2D.
     temperature[b] = n > 1 ? (v2 - (px * px + py * py) / n) / (2 * n) : 0
+    fractionB[b] = n > 0 ? nB / n : 0
   }
-  return { y, density, ux, temperature }
+  return { y, density, ux, temperature, fractionB }
 }

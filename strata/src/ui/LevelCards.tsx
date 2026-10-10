@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import type { Agreement } from '../core/quantity'
+import { useEffect, useRef, useState } from 'react'
+import type { Agreement, AnalysisDef, AnalysisResult } from '../core/quantity'
 import { LEVELS, type QuantityDef } from '../core/quantity'
 import { drawPlot, fitCanvas, theme, type Series } from '../plot/plot'
 import { viridis } from '../render/points'
@@ -127,12 +127,78 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
   )
 }
 
+/** Re-runs an analysis on the recorded history about once a second. */
+function AnalysisCard({ a }: { a: AnalysisDef }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [have, setHave] = useState(0)
+
+  useEffect(() => {
+    const unwatch = engine.watch(a.source)
+    let frame = 0
+    const unframe = engine.onFrame(() => {
+      if (frame++ % 60 !== 0) return
+      const h = engine.histories.get(a.source)
+      setHave(h ? h.t.length : 0)
+      if (!h || h.t.length < a.minSamples) {
+        setResult(null)
+        return
+      }
+      try {
+        setResult(a.compute(h, engine.params))
+      } catch {
+        // A singular fit on degenerate data is not an error worth surfacing.
+        setResult(null)
+      }
+    })
+    return () => {
+      unwatch()
+      unframe()
+    }
+  }, [a])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !result?.curve) return
+    const t = theme()
+    const series: Series[] = [{ x: result.curve.x, y: result.curve.y, color: t.data, mark: 'line' }]
+    if (result.theory) series.push({ x: result.theory.x, y: result.theory.y, color: t.ink, mark: 'dash' })
+    drawPlot(canvas, series, { xLabel: result.xLabel })
+  }, [result])
+
+  return (
+    <div className="card">
+      <h3>
+        <span className="label">{a.label}</span>
+      </h3>
+      {result ? (
+        <>
+          <p className="headline">{result.headline}</p>
+          {result.detail && <p className="note">{result.detail}</p>}
+          {result.curve && <canvas ref={canvasRef} className="plot" />}
+          {result.curve && result.theory && result.theoryLabel && (
+            <p className="note">
+              <i className="dash" />
+              {result.theoryLabel}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="note">
+          正在积累数据：{have} / {a.minSamples} 张剖面
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function LevelCards() {
   const params = useUi((s) => s.params)
   const levels = LEVELS.map((level) => ({
     ...level,
     quantities: engine.substrate.quantities.filter((q) => q.level === level.id && (!q.when || q.when(params))),
-  })).filter((l) => l.quantities.length > 0)
+    analyses: (engine.substrate.analyses ?? []).filter((a) => a.level === level.id && (!a.when || a.when(params))),
+  })).filter((l) => l.quantities.length + l.analyses.length > 0)
   const ladderRef = useRef<HTMLElement>(null)
 
   useEffect(
@@ -161,6 +227,9 @@ export function LevelCards() {
           <h2>{level.label}</h2>
           {level.quantities.map((q) => (
             <Card key={q.id} q={q} />
+          ))}
+          {level.analyses.map((a) => (
+            <AnalysisCard key={a.id} a={a} />
           ))}
         </section>
       ))}

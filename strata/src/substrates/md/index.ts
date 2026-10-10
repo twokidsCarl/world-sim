@@ -1,5 +1,6 @@
 import type { Substrate } from '../../core/substrate'
 import { MD_QUANTITIES } from '../../levels/md'
+import { MD_ANALYSES } from '../../levels/md-analyses'
 import { MdCpuBackend, type MdFrame } from './backend-cpu'
 import { MdGpuBackend } from './backend-gpu'
 import { MD_KNOBS } from './schema'
@@ -11,5 +12,6 @@ export const mdSubstrate: Substrate<MdFrame> = {
   stepLabel: '步数',
   knobs: MD_KNOBS,
   quantities: MD_QUANTITIES,
+  analyses: MD_ANALYSES,
   create: (p, seed, gpu) => (p.backend && gpu ? new MdGpuBackend(gpu, p, seed) : new MdCpuBackend(p, seed)),
 }

@@ -40,7 +40,7 @@ describe('scheduler', () => {
     const off = sched.subscribe('qa', (s) => got.push(s))
     await sched.tick(backend(log), {})
     expect(log).toEqual([['a']])
-    expect(got).toEqual([{ step: 5, epoch: 0, value: 10, theory: 1 }])
+    expect(got).toEqual([{ step: 5, time: 5, epoch: 0, value: 10, theory: 1 }])
     off()
     await sched.tick(backend(log), {})
     expect(log.length).toBe(1)
