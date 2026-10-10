@@ -4,7 +4,8 @@
 //   direct      the statement is on C's own Wikidata item (or its species-neutral twin)
 //   is-a        it is on an ancestor of C in the BodyParts3D is-a tree
 //   laterality  C is "left/right X" (the side may be embedded) and the statement is on the FMA
-//               concept named X, which BodyParts3D does not link C to
+//               concept named X, or on the unlateralised class Wikidata gives C's item (P279),
+//               which the BodyParts3D tree does not link C to
 //   whole       C is a named head/part/belly of muscle M ("long head of biceps brachii") and the
 //               statement is on M. Origin and insertion are then whole-muscle statements and may
 //               not hold for every head.
@@ -92,7 +93,14 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
       if (descendantCount(a) > MAX_ISA_FANOUT) seen.add(a)
       else add('is-a', a)
     }
-    if (side) for (const f of m.fmaByName.get(bare) ?? []) add('laterality', f)
+    const bySubclass = new Set<string>()
+    if (side) {
+      for (const f of m.fmaByName.get(bare) ?? []) add('laterality', f)
+      for (const f of m.unsidedOf(c.fma)) {
+        if (!seen.has(f)) bySubclass.add(f)
+        add('laterality', f)
+      }
+    }
     let isPartOfMuscle = false
     const whole = PART_OF_WHOLE.exec(bare)?.[1]
     if (whole) {
@@ -149,7 +157,7 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
         const how =
           src.via === 'direct' ? 'Wikidata'
           : src.via === 'is-a' ? `Wikidata (propagated via BodyParts3D is-a from ${from})`
-          : src.via === 'laterality' ? `Wikidata (propagated by laterality name match from ${from})`
+          : src.via === 'laterality' ? `Wikidata (propagated by laterality ${bySubclass.has(src.fma) ? 'via Wikidata subclass-of' : 'name match'} from ${from})`
           : s.kind === 'origin' || s.kind === 'insertion'
             ? `Wikidata (propagated from whole muscle ${from} to its named part; whole-muscle ${s.kind}, may not apply to this part)`
             : `Wikidata (propagated from whole muscle ${from} to its named part)`

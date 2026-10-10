@@ -37,5 +37,6 @@ export const ZH_OVERRIDES: Record<string, { zh: string; reason: string }> = {
   'alimentary system': { zh: '消化系统', reason: 'Wikidata label 排遗系统 means excretory system' },
   'integumentary system': { zh: '皮肤系统', reason: 'Wikidata label 表皮系统 means epidermal system' },
   integument: { zh: '体被', reason: 'Wikidata label 覆盖物 is the generic word for a covering' },
+  temporoparietalis: { zh: '颞顶肌', reason: 'Wikidata label 颞肌 is temporalis' },
   neurocranium: { zh: '脑颅', reason: 'Wikidata label 脑壳 is colloquial for skull' },
 }

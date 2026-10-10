@@ -1,5 +1,5 @@
 // Joins BodyParts3D concepts with what Wikidata knows about them.
-import { ancestors, descendants, loadConcepts, loadElementConcepts, loadTree, type Bp3dConcept, type Tree } from './bp3d.ts'
+import { ancestors, descendants, loadConcepts, loadDataset, loadElementConcepts, loadTree, type Bp3dConcept, type Dataset, type Tree } from './bp3d.ts'
 import { loadT2S } from './hanzi.ts'
 import type { FetchOptions } from './sparql.ts'
 import {
@@ -18,6 +18,7 @@ export interface ZhLabel {
 export interface Model {
   concepts: Map<string, Bp3dConcept>
   elementConcepts: Set<string>
+  dataset: Dataset
   elementStats: { files: number; fromHeader: number; fromFallback: number; unresolved: number }
   isa: Tree
   /** Concepts that are muscles or named parts of muscles in the BodyParts3D is-a tree. */
@@ -40,6 +41,12 @@ export interface Model {
   zhOf(qid: string): ZhLabel | undefined
   enOf(qid: string): string | undefined
   rejectedZh: Map<string, string>
+  /**
+   * For a lateralised concept, the FMA id(s) of its unlateralised class according to Wikidata:
+   * the single FMA-bearing P279 superclass of its item ("left temporalis" -> "temporal muscle").
+   * Catches cases where the English names differ too much for a name match.
+   */
+  unsidedOf(fma: string): string[]
 }
 
 const ZH_PRIORITY = ['zh-cn', 'zh-hans', 'zh-sg', 'zh-my', 'zh', 'zh-hant', 'zh-tw', 'zh-hk', 'zh-mo']
@@ -70,6 +77,19 @@ export async function buildModel(opts: FetchOptions): Promise<Model> {
   const concepts = loadConcepts()
   const el = loadElementConcepts()
   const isa = loadTree('isa')
+
+  // Scope = BodyParts3D 4.0 lists ∪ whatever the generated datasets contain.
+  const dataset = loadDataset()
+  for (const [fma, en] of dataset.names) {
+    if (!concepts.has(fma)) concepts.set(fma, { fma, en, inIsa: false, inPartOf: false, datasetOnly: true })
+  }
+  for (const [child, parent] of dataset.isaEdges) {
+    const ps = isa.parents.get(child) ?? isa.parents.set(child, []).get(child)!
+    if (ps.includes(parent)) continue
+    ps.push(parent)
+    ;(isa.children.get(parent) ?? isa.children.set(parent, []).get(parent)!).push(child)
+  }
+  for (const fmas of dataset.partFmas.values()) for (const f of fmas) el.concepts.add(f)
   const muscleLike = new Set<string>()
   for (const root of ['FMA5022', 'FMA85453', 'FMA10474']) {
     // muscle organ, head of muscle organ, zone of muscle organ
@@ -166,8 +186,18 @@ export async function buildModel(opts: FetchOptions): Promise<Model> {
   }
   for (const [q, twin] of twinOf) for (const f of fmaByItem.get(q) ?? []) addName(labels.get(twin)?.en, f)
 
+  const unsidedOf = (fma: string): string[] => {
+    const c = concepts.get(fma)
+    const q = primaryItem.get(fma)
+    if (!c || !q || !sideOf(c.en)) return []
+    const sups = (extras.get(q)?.superclasses ?? []).filter((s) => fmaByItem.has(s))
+    if (sups.length !== 1 || sideOf(enOf(sups[0]!) ?? '')) return []
+    return fmaByItem.get(sups[0]!)!.filter((f) => f !== fma)
+  }
+
   return {
-    concepts, elementConcepts: el.concepts,
+    unsidedOf,
+    concepts, elementConcepts: el.concepts, dataset,
     elementStats: { files: el.fromHeader + el.fromFallback + el.unresolved, fromHeader: el.fromHeader, fromFallback: el.fromFallback, unresolved: el.unresolved },
     isa, muscleLike, itemsByFma, fmaByItem, primaryItem, labels, extras, twinOf, twinFor, statements, fmaByName, t2s, zhOf, enOf, rejectedZh,
   }

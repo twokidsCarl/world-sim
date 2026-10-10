@@ -4,7 +4,8 @@
 //   bun tools/knowledge/run.ts --refresh  re-query Wikidata / Wikipedia and overwrite the cache
 //   bun tools/knowledge/run.ts --offline  fail instead of touching the network
 //
-// Inputs : data/raw/bodyparts3d/*  (read-only), tools/knowledge/lexicon/*
+// Inputs : data/raw/bodyparts3d/*  (read-only), public/anatomy/<body>/anatomy.json (read-only, when
+//          present: its part FMA ids and tree concepts are added to the scope), tools/knowledge/lexicon/*
 // Cache  : data/raw/knowledge/**   (gitignored raw responses)
 // Outputs: data/curated/knowledge/{names,relations,report,muscle-gaps}.json
 //          public/anatomy/knowledge/{names,relations}.json (copies)
@@ -54,7 +55,13 @@ async function main() {
   const relations: Relation[] = built.map(({ via: _via, ...r }) => r)
 
   // ---- coverage -------------------------------------------------------------------------
-  const scopes = { allConcepts: [...m.concepts.keys()], elementConcepts: [...m.elementConcepts].filter((f) => m.concepts.has(f)) }
+  const partFmas = new Set([...m.dataset.partFmas.values()].flatMap((s) => [...s]))
+  const scopes = {
+    allConcepts: [...m.concepts.keys()],
+    elementConcepts: [...m.elementConcepts].filter((f) => m.concepts.has(f)),
+    // parts whose concept is not in the BodyParts3D 4.0 lists (imported from other sources)
+    importedPartConcepts: [...partFmas].filter((f) => m.concepts.get(f)?.datasetOnly),
+  }
   const coverage: Record<string, unknown> = {}
   for (const [scope, ids] of Object.entries(scopes)) {
     const set = new Set(ids)
@@ -130,6 +137,13 @@ async function main() {
     wikidataProperties: propLabels,
     fmaIdFormatOnWikidata: 'bare digits (format constraint [1-9][0-9]{3,5}); "FMA" is prepended here',
     twins: [...m.twinOf].filter(([q]) => (m.fmaByItem.get(q) ?? []).some((f) => m.concepts.has(f))).map(([q, t]) => ({ item: q, en: m.enOf(q), twin: t, twinEn: m.enOf(t) })),
+    scope: {
+      note: 'Concepts = BodyParts3D 4.0 concept lists ∪ every part FMA id and tree concept of public/anatomy/<body>/anatomy.json.',
+      datasetsRead: m.dataset.bodies,
+      conceptsFromBodyParts3D40Lists: [...m.concepts.values()].filter((c) => !c.datasetOnly).length,
+      conceptsOnlyInDatasets: [...m.concepts.values()].filter((c) => c.datasetOnly).length,
+      partConceptsPerBody: Object.fromEntries([...m.dataset.partFmas].map(([b, s]) => [b, s.size])),
+    },
     elementConcepts: { ...m.elementStats, distinctConcepts: m.elementConcepts.size },
     propagation: { maxIsaFanout: MAX_ISA_FANOUT, dropped: wd.dropped, droppedExamples: wd.droppedExamples },
     coverage,
@@ -159,7 +173,7 @@ async function main() {
   console.log(`names: ${Object.keys(names).length}  relations: ${relations.length}`, viaCount)
   console.log(`muscle gaps: ${gaps.withGaps}/${gaps.muscleElementConcepts} element muscles in ${gaps.unlateralisedGroups} groups`)
   console.log(`cache hits: ${stats.cacheHits}  network requests: ${stats.networkRequests}`)
-  console.log(`wrote ${CURATED_DIR} and ${PUBLIC_DIR}`)
+  console.log('wrote data/curated/knowledge and public/anatomy/knowledge')
 }
 
 await main()
