@@ -1,0 +1,816 @@
+{
+  "title": "Contract",
+  "type": "object",
+  "$defs": {
+    "District": {
+      "properties": {
+        "idx": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "pos": {
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "radius": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "idx",
+        "name",
+        "pos",
+        "radius"
+      ],
+      "type": "object"
+    },
+    "Event": {
+      "description": "events.jsonl 的一行。键名取短，因为行数很多。",
+      "properties": {
+        "t": {
+          "type": "integer"
+        },
+        "k": {
+          "enum": [
+            "seed",
+            "tell",
+            "mutate",
+            "queue",
+            "withdraw",
+            "verify",
+            "broadcast",
+            "fail",
+            "thought"
+          ],
+          "type": "string"
+        },
+        "a": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "行动者"
+        },
+        "b": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "对象"
+        },
+        "m": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "消息 id"
+        },
+        "via": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "关系类型，或 venue:<idx>"
+        },
+        "p0": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "对象事前信念，百分数"
+        },
+        "p1": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "对象事后信念，百分数"
+        },
+        "x": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "文本或金额"
+        }
+      },
+      "required": [
+        "t",
+        "k"
+      ],
+      "type": "object"
+    },
+    "Intervention": {
+      "description": "对模拟世界的一次外部干预。",
+      "properties": {
+        "t": {
+          "type": "integer"
+        },
+        "kind": {
+          "const": "broadcast",
+          "default": "broadcast",
+          "type": "string"
+        },
+        "actor": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "text": {
+          "type": "string"
+        },
+        "valence": {
+          "default": -1,
+          "enum": [
+            1,
+            -1
+          ],
+          "type": "integer"
+        },
+        "strength": {
+          "default": 1.5,
+          "type": "number"
+        },
+        "reach": {
+          "default": 0.5,
+          "description": "触达的人口比例",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "t",
+        "text"
+      ],
+      "type": "object"
+    },
+    "Manifest": {
+      "properties": {
+        "schema": {
+          "default": 1,
+          "type": "integer"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "setting": {
+          "type": "string"
+        },
+        "params": {
+          "$ref": "#/$defs/Params"
+        },
+        "n": {
+          "type": "integer"
+        },
+        "ticks": {
+          "type": "integer"
+        },
+        "channels": {
+          "default": [
+            "belief",
+            "fear",
+            "expect",
+            "status"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "branch_t": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "summary": {
+          "$ref": "#/$defs/Summary"
+        }
+      },
+      "required": [
+        "run_id",
+        "title",
+        "setting",
+        "params",
+        "n",
+        "ticks",
+        "summary"
+      ],
+      "type": "object"
+    },
+    "Message": {
+      "description": "一条说法。转述变形时产生子消息，parent 连成谱系。",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "t": {
+          "type": "integer"
+        },
+        "author": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "valence": {
+          "description": "1 谣言，-1 辟谣",
+          "enum": [
+            1,
+            -1
+          ],
+          "type": "integer"
+        },
+        "severity": {
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "t",
+        "valence",
+        "severity",
+        "text"
+      ],
+      "type": "object"
+    },
+    "Params": {
+      "description": "一次运行的全部可调参数。相同参数必须产生相同记录。",
+      "properties": {
+        "scenario": {
+          "default": "rumor_run",
+          "type": "string"
+        },
+        "seed": {
+          "default": 1,
+          "type": "integer"
+        },
+        "n": {
+          "default": 1000,
+          "type": "integer"
+        },
+        "ticks": {
+          "default": 96,
+          "type": "integer"
+        },
+        "start_hour": {
+          "default": 20,
+          "type": "integer"
+        },
+        "prior": {
+          "default": 0.03,
+          "type": "number"
+        },
+        "w_tell": {
+          "default": 2.6,
+          "type": "number"
+        },
+        "w_seen": {
+          "default": 3.0,
+          "type": "number"
+        },
+        "novelty": {
+          "default": 0.6,
+          "type": "number"
+        },
+        "confirm": {
+          "default": 0.4,
+          "type": "number"
+        },
+        "forget": {
+          "default": 0.01,
+          "type": "number"
+        },
+        "share": {
+          "default": 0.16,
+          "type": "number"
+        },
+        "stifle": {
+          "default": 0.93,
+          "type": "number"
+        },
+        "mutate": {
+          "default": 0.08,
+          "type": "number"
+        },
+        "venue_share": {
+          "default": 0.25,
+          "type": "number"
+        },
+        "venue_audience": {
+          "default": 3,
+          "type": "integer"
+        },
+        "verify": {
+          "default": 0.02,
+          "type": "number"
+        },
+        "w_verify": {
+          "default": 2.5,
+          "type": "number"
+        },
+        "cost": {
+          "default": 0.12,
+          "type": "number"
+        },
+        "lam": {
+          "default": 12.0,
+          "type": "number"
+        },
+        "bias": {
+          "default": -5.0,
+          "type": "number"
+        },
+        "hazard": {
+          "default": 0.3,
+          "type": "number"
+        },
+        "perceived_reserve": {
+          "default": 0.35,
+          "type": "number"
+        },
+        "reserve_ratio": {
+          "default": 0.3,
+          "type": "number"
+        },
+        "tellers": {
+          "default": 0.02,
+          "type": "number"
+        },
+        "interventions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Intervention"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Person": {
+      "description": "一个人的静态表征；随时间变化的心智状态在帧里。",
+      "properties": {
+        "idx": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "protagonist": {
+          "default": false,
+          "type": "boolean"
+        },
+        "role": {
+          "default": "",
+          "type": "string"
+        },
+        "persona": {
+          "default": "",
+          "type": "string"
+        },
+        "age": {
+          "type": "integer"
+        },
+        "sex": {
+          "enum": [
+            "f",
+            "m"
+          ],
+          "type": "string"
+        },
+        "education": {
+          "description": "0 不识字 1 蒙学 2 中学 3 高等",
+          "maximum": 3,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "income": {
+          "description": "收入分位",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "trust_general": {
+          "type": "number"
+        },
+        "trust_institution": {
+          "type": "number"
+        },
+        "risk_aversion": {
+          "type": "number"
+        },
+        "conformity": {
+          "type": "number"
+        },
+        "media_use": {
+          "type": "number"
+        },
+        "depth": {
+          "description": "揣度他人的层数 k",
+          "maximum": 2,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "deposit": {
+          "description": "存款，单位：元",
+          "type": "number"
+        },
+        "stake": {
+          "description": "这笔存款对他有多要紧",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "household": {
+          "type": "integer"
+        },
+        "district": {
+          "type": "integer"
+        },
+        "workplace": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "venues": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "pos": {
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "required": [
+        "idx",
+        "name",
+        "age",
+        "sex",
+        "education",
+        "income",
+        "trust_general",
+        "trust_institution",
+        "risk_aversion",
+        "conformity",
+        "media_use",
+        "depth",
+        "deposit",
+        "stake",
+        "household",
+        "district",
+        "pos"
+      ],
+      "type": "object"
+    },
+    "Population": {
+      "properties": {
+        "schema": {
+          "default": 1,
+          "type": "integer"
+        },
+        "synthetic": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        },
+        "extent": {
+          "description": "坐标范围 [0, extent]",
+          "type": "number"
+        },
+        "bank": {
+          "description": "钱庄在 venues 里的下标",
+          "type": "integer"
+        },
+        "cast": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "主角的角色键 → persons 下标",
+          "type": "object"
+        },
+        "persons": {
+          "items": {
+            "$ref": "#/$defs/Person"
+          },
+          "type": "array"
+        },
+        "ties": {
+          "items": {
+            "$ref": "#/$defs/Tie"
+          },
+          "type": "array"
+        },
+        "venues": {
+          "items": {
+            "$ref": "#/$defs/Venue"
+          },
+          "type": "array"
+        },
+        "districts": {
+          "items": {
+            "$ref": "#/$defs/District"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "synthetic",
+        "note",
+        "extent",
+        "bank",
+        "cast",
+        "persons",
+        "ties",
+        "venues",
+        "districts"
+      ],
+      "type": "object"
+    },
+    "Series": {
+      "description": "每个 tick 的宏观量，长度都是 ticks + 1。",
+      "properties": {
+        "aware": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "believers": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "queue": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "withdrew": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "reserve": {
+          "description": "钱庄现银占初始存款的比例",
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "fear": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "aware",
+        "believers",
+        "queue",
+        "withdrew",
+        "reserve",
+        "fear"
+      ],
+      "type": "object"
+    },
+    "Summary": {
+      "properties": {
+        "peak_believers": {
+          "type": "integer"
+        },
+        "withdrew": {
+          "type": "integer"
+        },
+        "lost": {
+          "type": "integer"
+        },
+        "failed_at": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "messages": {
+          "type": "integer"
+        },
+        "events": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "peak_believers",
+        "withdrew",
+        "lost",
+        "failed_at",
+        "messages",
+        "events"
+      ],
+      "type": "object"
+    },
+    "Tie": {
+      "properties": {
+        "a": {
+          "type": "integer"
+        },
+        "b": {
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "kin",
+            "neighbor",
+            "colleague",
+            "friend"
+          ],
+          "type": "string"
+        },
+        "strength": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "a",
+        "b",
+        "kind",
+        "strength"
+      ],
+      "type": "object"
+    },
+    "Venue": {
+      "properties": {
+        "idx": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "bank",
+            "teahouse",
+            "market",
+            "temple",
+            "school"
+          ],
+          "type": "string"
+        },
+        "pos": {
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "hours": {
+          "description": "营业时段 [开, 关)，24 小时制",
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "items": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "required": [
+        "idx",
+        "name",
+        "kind",
+        "pos",
+        "hours"
+      ],
+      "type": "object"
+    }
+  }
+}
