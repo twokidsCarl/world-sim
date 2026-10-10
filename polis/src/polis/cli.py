@@ -13,6 +13,9 @@ from . import model, trace
 app = typer.Typer(add_completion=False, help="polis：平行社会模拟器")
 
 
+CALIBRATION = Path(__file__).resolve().parents[2] / "calibration.json"
+
+
 def runs_dir() -> Path:
     return Path(os.environ.get("POLIS_RUNS", Path(__file__).resolve().parents[2] / "runs"))
 
@@ -29,14 +32,25 @@ def run(
     seed: int = typer.Option(1, "--seed", "-s"),
     n: int = typer.Option(1000, "--n", "-n", help="人口"),
     ticks: int = typer.Option(96, "--ticks", "-t", help="模拟多少小时"),
-    quiet: bool = typer.Option(False, "--no-notice", help="掌柜不贴告示（去掉默认干预）"),
+    response: str = typer.Option("notice", "--response", "-r", help="谁出面回应：notice 掌柜贴告示 / guarantee 官银号担保 / none 无人回应"),
+    calibrated: bool = typer.Option(False, "--calibrated", "-c", help="用 calibration.json 里校准过的参数"),
     label: str = typer.Option("", "--label", "-l", help="记录名后缀"),
 ):
     """跑一次模拟，记录写入 runs/。"""
-    params = model.Params(scenario=scenario, seed=seed, n=n, ticks=ticks)
-    if not quiet:
-        params.interventions = trace.scenario_module(scenario).interventions(params.start_hour)
-    m = trace.simulate(params, runs_dir(), label or ("quiet" if quiet else ""))
+    from . import calibrate as cal
+
+    over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"] if calibrated else {}
+    params = model.Params(scenario=scenario, seed=seed, n=n, ticks=ticks, **over)
+    responses = {
+        "notice": trace.scenario_module(scenario).interventions,
+        "guarantee": cal.guarantee,
+        "none": lambda start_hour: [],
+    }
+    if response not in responses:
+        raise typer.BadParameter(f"只能是 {' / '.join(responses)}", param_hint="--response")
+    params.interventions = responses[response](params.start_hour)
+    parts = ["cal" if calibrated else "", "" if response == "notice" else response]
+    m = trace.simulate(params, runs_dir(), label or "-".join(x for x in parts if x))
     typer.echo(_line(m))
 
 
@@ -91,6 +105,36 @@ def corpus_check():
         typer.echo(f"  问题  {p}", err=True)
     if problems:
         raise typer.Exit(1)
+
+
+@app.command()
+def calibrate(
+    samples: int = typer.Option(60, "--samples", help="随机试多少组参数"),
+    seeds: int = typer.Option(3, "--seeds", help="每组参数跑几个种子"),
+    n: int = typer.Option(600, "--n", "-n", help="人口"),
+    save: bool = typer.Option(False, "--save", help="把找到的参数写入 calibration.json"),
+):
+    """对照语料里的典型事实，报告默认参数的偏差，并搜索更合的参数。"""
+    from . import calibrate as cal
+
+    ts, default, over, best = cal.search(samples, list(range(1, seeds + 1)), n, log=typer.echo)
+    typer.echo(f"\n{'指标':<22}{'目标范围':<16}{'默认参数':<12}{'校准后':<12}出处")
+    for t in ts:
+        row = [f"[{t.lo:g}, {t.hi:g}]", f"{default[1][t.metric]:.3f}", f"{best[1][t.metric]:.3f}"]
+        typer.echo(f"{t.metric:<22}{row[0]:<20}{row[1]:<16}{row[2]:<15}{t.source}")
+    typer.echo(f"总偏差：默认 {default[0]:.3f} → 校准后 {best[0]:.3f}")
+    typer.echo(f"参数：{over or '默认参数已是最好'}")
+    if save and over:
+        path = CALIBRATION
+        report = {
+            "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
+            "samples": samples, "seeds": seeds, "n": n,
+            "targets": [t.__dict__ for t in ts],
+            "default": {"miss": default[0], "metrics": default[1]},
+            "calibrated": {"miss": best[0], "metrics": best[1], "params": over},
+        }  # fmt: skip
+        path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        typer.echo(f"已写入 {path.name}")
 
 
 @app.command()

@@ -20,7 +20,7 @@ caveats: >-
   “宁可信其有”的代价不对称，而且辟谣者（银行、官方）正是利益相关方，实际残留有可能大于实验值（这是推断，不是来源的结论）。
   Chan 等的摘要还指出，受众自己为错误信息想过理由时，残留更强、辟谣更弱——这与熟人之间反复议论传言的情形相近。
 theories: []
-metric: ""
+metric: correction_residual
 sources:
   - work: "A Meta-Analytic Examination of the Continued Influence of Misinformation in the Face of Correction: How Powerful Is It, Why Does It Happen, and How to Stop It?"
     author: N. Walter, R. Tukachinsky

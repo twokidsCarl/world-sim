@@ -23,7 +23,7 @@ caveats: >-
   两年各郡挤兑比例的等级相关为 0.55。
   与小镇情境的差距较小（同城、熟人、邻里口耳相传），但一个是 2001 年有存款保险的印度城市，一个是 1850 年代纽约的移民社区。
 theories: [informational_cascade, diamond_dybvig_bank_run]
-metric: ""
+metric: neighbor_lift
 sources:
   - work: "Understanding Bank Runs: The Importance of Depositor-Bank Relationships and Networks"
     author: Rajkamal Iyer, Manju Puri
