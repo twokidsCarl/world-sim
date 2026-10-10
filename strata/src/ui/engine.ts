@@ -37,6 +37,26 @@ export interface CurveTrace {
   theory: Curve | null
 }
 
+export interface PerfSummary {
+  /** Whether the page was visible; a hidden tab has its animation frames throttled. */
+  visible: boolean
+  backend: 'cpu' | 'gpu'
+  /** Frames per second over the last 120 frames. */
+  fps: number
+  /** Median and 95th-percentile interval between frames, ms. */
+  frameMs: number
+  frameMsP95: number
+  /** Main-thread time spent in the engine per frame, ms. */
+  mainMs: number
+  /** Simulation steps requested per frame, and completed per second. */
+  stepsPerFrame: number
+  stepsPerSecond: number
+  /** GPU time of one step batch from timestamp queries, ms; null when unavailable. */
+  gpuStepMs: number | null
+}
+
+const PERF_FRAMES = 120
+
 export class Engine {
   substrate: Substrate<Frame> = SUBSTRATES[0]!
   params: Params = defaults(this.substrate.knobs)
@@ -64,6 +84,12 @@ export class Engine {
   private frame = 0
   private msPerStep = 1
   private raf = 0
+  private frameTimes = new Float64Array(PERF_FRAMES)
+  private frameSteps = new Float64Array(PERF_FRAMES)
+  private frameIndex = 0
+  private lastFrameAt = 0
+  private mainMs = 0
+  private lastN = 0
   private reducing = false
   private ready: Promise<void> | null = null
 
@@ -230,6 +256,7 @@ export class Engine {
       const cap = this.backend.maxStepsPerFrame ?? MAX_SUBSTEPS
       let n = Math.max(1, Math.min(cap, Math.floor(STEP_BUDGET_MS / this.msPerStep)))
       if (this.stopAt !== null) n = Math.max(0, Math.min(n, this.stopAt - this.backend.stepCount))
+      this.lastN = n
       if (n > 0) {
         const t0 = performance.now()
         this.backend.step(n)
@@ -244,9 +271,38 @@ export class Engine {
     return reduced
   }
 
+  /** Frame pacing over the last 120 animation frames. */
+  perf(): PerfSummary {
+    const count = Math.min(this.frameIndex, PERF_FRAMES)
+    const times = Array.from(this.frameTimes.subarray(0, count)).sort((a, b) => a - b)
+    const total = times.reduce((a, b) => a + b, 0)
+    let steps = 0
+    for (let i = 0; i < count; i++) steps += this.frameSteps[i]!
+    return {
+      visible: document.visibilityState === 'visible',
+      backend: this.backend.kind,
+      fps: total > 0 ? (1000 * count) / total : 0,
+      frameMs: times[Math.floor(count / 2)] ?? 0,
+      frameMsP95: times[Math.floor(count * 0.95)] ?? 0,
+      mainMs: this.mainMs,
+      stepsPerFrame: this.lastN,
+      stepsPerSecond: total > 0 ? (1000 * steps) / total : 0,
+      gpuStepMs: this.backend.gpuStepMs ?? null,
+    }
+  }
+
   start(): void {
     const tick = () => {
+      const now = performance.now()
+      const before = this.backend.stepCount
       void this.frameOnce()
+      if (this.lastFrameAt > 0) {
+        const slot = this.frameIndex++ % PERF_FRAMES
+        this.frameTimes[slot] = now - this.lastFrameAt
+        this.frameSteps[slot] = this.backend.stepCount - before
+      }
+      this.lastFrameAt = now
+      this.mainMs = 0.9 * this.mainMs + 0.1 * (performance.now() - now)
       this.raf = requestAnimationFrame(tick)
     }
     cancelAnimationFrame(this.raf)

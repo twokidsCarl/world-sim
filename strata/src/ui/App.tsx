@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { SUBSTRATES } from '../substrates'
 import { ConstantsPanel } from './ConstantsPanel'
 import { engine } from './engine'
@@ -7,8 +7,10 @@ import { IsingStage } from './IsingStage'
 import { KnobPanel, PotentialPreview } from './KnobPanel'
 import { LevelCards } from './LevelCards'
 import { MdStage } from './MdStage'
+import { PerfHud } from './PerfHud'
 import { ScenarioBar } from './ScenarioBar'
 import { useUi } from './store'
+import { applyTheme, storedTheme, type ThemeChoice } from './theme'
 
 /** Per-substrate views: the stage, and anything shown above the knobs. */
 const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: ReactNode }> = {
@@ -17,7 +19,17 @@ const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: Rea
   gravity: { stage: <GravityStage /> },
 }
 
+const THEMES: { id: ThemeChoice; label: string }[] = [
+  { id: 'system', label: '跟随系统' },
+  { id: 'light', label: '浅色' },
+  { id: 'dark', label: '深色' },
+]
+
+const SHOW_PERF = new URLSearchParams(location.search).has('perf')
+
 export function App() {
+  const [themeChoice, setThemeChoice] = useState<ThemeChoice>(storedTheme)
+  useEffect(() => applyTheme(themeChoice), [themeChoice])
   const running = useUi((s) => s.running)
   const toggle = useUi((s) => s.toggle)
   const substrateId = useUi((s) => s.substrateId)
@@ -51,6 +63,12 @@ export function App() {
           )}
           <button onClick={toggle}>{running ? '暂停' : '继续'}</button>
           <button onClick={() => engine.reset()}>重置</button>
+          <button
+            title="切换配色"
+            onClick={() => setThemeChoice(THEMES[(THEMES.findIndex((t) => t.id === themeChoice) + 1) % THEMES.length]!.id)}
+          >
+            {THEMES.find((t) => t.id === themeChoice)!.label}
+          </button>
         </div>
       </header>
       <main key={substrateId}>
@@ -59,6 +77,7 @@ export function App() {
         <LevelCards />
       </main>
       <ScenarioBar />
+      {SHOW_PERF && <PerfHud />}
     </div>
   )
 }

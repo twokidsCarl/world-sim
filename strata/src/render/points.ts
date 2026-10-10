@@ -2,7 +2,7 @@
 
 const SHADER = /* wgsl */ `
 struct View {
-  box: vec4f,
+  box: vec4f,     // xy = box lengths, w = top of the colour-map range in use
   color: vec4f,
   radius: vec2f,   // disc radius in NDC, per axis
   edge: f32,       // antialiasing width as a fraction of the radius
@@ -44,7 +44,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> Out {
   if (V.mode > 1.5) {
     if (pos[ii].w > 0.5) { out.color = vec3f(0.902, 0.624, 0.0); }
   } else if (V.mode > 0.5) {
-    out.color = viridis(clamp(length(aux[ii].yz), 0, 1));
+    out.color = viridis(clamp(length(aux[ii].yz), 0, 1) * V.box.w);
   }
   return out;
 }
@@ -117,6 +117,7 @@ export class PointsRenderer {
     color: [number, number, number],
     size: [number, number],
     mode: number,
+    mapTop = 1,
   ): void {
     if (this.bound !== buffers.pos) {
       this.bound = buffers.pos
@@ -136,7 +137,7 @@ export class PointsRenderer {
     this.device.queue.writeBuffer(
       this.uniform,
       0,
-      new Float32Array([box[0]!, box[1]!, 1, 0, ...color, 1, rx, ry, Math.min(1, 1.5 / radiusPx), mode]),
+      new Float32Array([box[0]!, box[1]!, 1, mapTop, ...color, 1, rx, ry, Math.min(1, 1.5 / radiusPx), mode]),
     )
     const encoder = this.device.createCommandEncoder()
     const pass = encoder.beginRenderPass({
@@ -148,6 +149,15 @@ export class PointsRenderer {
     pass.end()
     this.device.queue.submit([encoder.finish()])
   }
+}
+
+/**
+ * Top of the viridis range to use over the given background. Its brightest yellow has
+ * almost no contrast against a light page, so the range stops short of it there.
+ */
+export function mapTopFor(paper: string): number {
+  const [r, g, b] = parseHex(paper)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 ? 0.85 : 1
 }
 
 /** Okabe–Ito orange, for species B. */

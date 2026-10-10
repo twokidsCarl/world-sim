@@ -18,6 +18,7 @@ export interface PlotOptions {
 }
 
 export interface Theme {
+  paper: string
   ink: string
   muted: string
   rule: string
@@ -31,12 +32,17 @@ export function theme(): Theme {
   if (cached) return cached
   const css = getComputedStyle(document.documentElement)
   const v = (name: string) => css.getPropertyValue(name).trim()
-  cached = { ink: v('--ink'), muted: v('--muted'), rule: v('--rule'), accent: v('--accent'), data: v('--data') }
+  cached = { paper: v('--paper'), ink: v('--ink'), muted: v('--muted'), rule: v('--rule'), accent: v('--accent'), data: v('--data') }
   return cached
 }
 
+/** Forget the cached colours; call after the theme changes. */
+export function invalidateTheme(): void {
+  cached = null
+}
+
 if (typeof window !== 'undefined') {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => (cached = null))
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', invalidateTheme)
 }
 
 /** Match the backing store to the CSS size; returns a context scaled to CSS pixels. */

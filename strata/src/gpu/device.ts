@@ -11,7 +11,9 @@ export function getGpu(): Promise<GpuContext | null> {
     if (typeof navigator === 'undefined' || !navigator.gpu) return null
     const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })
     if (!adapter) return null
-    const device = await adapter.requestDevice()
+    // Timestamp queries let the performance readout report true GPU time per pass.
+    const requiredFeatures: GPUFeatureName[] = adapter.features.has('timestamp-query') ? ['timestamp-query'] : []
+    const device = await adapter.requestDevice({ requiredFeatures })
     return { device, format: navigator.gpu.getPreferredCanvasFormat() }
   })()
   return pending

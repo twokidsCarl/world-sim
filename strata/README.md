@@ -37,6 +37,8 @@ bun install
 bun run dev        # http://localhost:5188
 ```
 
+页头最右的按钮在“跟随系统 / 浅色 / 深色”之间切换配色。加上 `?perf` 会在右下角显示帧率、帧间隔、主线程耗时、每秒步数和 GPU 每批耗时（来自 timestamp query），同样的数字写入 `window.__strataPerf`；页面在后台时浏览器会降帧，读数会标为无效。
+
 ## 测试
 
 ```sh
