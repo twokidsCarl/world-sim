@@ -1,0 +1,30 @@
+title: 信息级联与羊群行为
+title_en: Informational cascades and herd behavior
+field: 经济学
+claim: 人们依次做决定，每个人既有自己的私人信息，又能看到前面的人做了什么。前人的行动透露了他们的信息，所以参考它是理性的；但一旦前面的行动足够一致，后来者的最优选择就是不管自己的信息、直接跟随。此后的行动不再透露任何新信息，整个群体可能锁定在错误选择上，而且这种一致性很脆弱，少量新的公开信息就能把它掀翻。两篇 1992 年的论文各自独立提出了这一机制：Banerjee 称之为羊群行为并证明均衡无效率，Bikhchandani、Hirshleifer 与 Welch 称之为信息级联。
+formal: 顺序决策：第 n 个人观察到前 n−1 人的行动序列和自己的私人信号，按贝叶斯法则选择期望收益更高的行动。当公共历史所含的证据压过任何单个私人信号时，级联开始：此后每个人的行动与自己的信号无关。
+parameters:
+- name: 私人信号
+  meaning: 每个人独自得到的、关于哪个选项更好的带噪声信息
+- name: 行动历史
+  meaning: 可被后来者观察到的前人选择序列（只见行动，不见信号）
+predicts:
+- 排在前面的少数人的选择对最终结局有不成比例的影响，结局依赖顺序。
+- 群体会在局部形成高度一致的行为，但其中汇集的信息很少，错误的一致并不罕见。
+- 一致行为是脆弱的：一条新的公开信息或一个明显更知情者的反向行动就可能让潮流逆转。
+in_engine: 部分实现。engine.Sim._observe：亲眼看见别人去取钱会直接抬高自己的信念（w_seen），即从别人的行动里推断信息。不是原模型的依次贝叶斯决策，私人信号也没有单独建模。
+sources:
+- work: A Theory of Fads, Fashion, Custom, and Cultural Change as Informational Cascades
+  author: Sushil Bikhchandani; David Hirshleifer; Ivo Welch
+  year: 1992
+  locator: 'Journal of Political Economy 100(5): 992–1026；DOI 10.1086/261849'
+  url: https://api.crossref.org/works/10.1086/261849
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。
+- work: A Simple Model of Herd Behavior
+  author: Abhijit V. Banerjee
+  year: 1992
+  locator: 'The Quarterly Journal of Economics 107(3): 797–817；DOI 10.2307/2118364'
+  url: https://api.crossref.org/works/10.2307/2118364
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码（作者记作 A. V. Banerjee）；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。

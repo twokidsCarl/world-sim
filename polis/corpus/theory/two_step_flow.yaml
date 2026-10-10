@@ -1,0 +1,37 @@
+title: 两级传播
+title_en: Two-step flow of communication
+field: 传播学 / 社会学
+claim: 大众媒体的影响多半不是直接到达每个人，而是先到达一小部分更关注媒体的“意见领袖”，再由他们在日常交谈中解读并转给不那么关注的人；对多数人的决定而言，熟人之间的口头影响比媒体本身更重要。归属上要更正一点：这个假说最早出自 Lazarsfeld、Berelson 与 Gaudet 对 1940 年美国总统选举选民的研究《The People's Choice》，Katz 与 Lazarsfeld 1955 年的《Personal Influence》是在伊利诺伊州迪凯特所做的后续检验与展开，而不是首次提出。Katz 1957 年的回顾认为，几项后续研究大体印证并明显细化了原假说。
+formal: ''
+parameters:
+- name: 意见领袖
+  meaning: 在某一话题上媒体接触更多、并被身边人咨询的人
+- name: 人际渠道
+  meaning: 家人、朋友、同事之间的面对面交谈
+predicts:
+- 意见领袖的媒体接触量高于他们所影响的人。
+- 人们改变决定时，更常把原因归于与熟人的交谈而不是媒体内容。
+- 意见领袖分散在各个社会群体内部，并且因话题而异（公共事务、时尚、电影、购物各有各的领袖）。
+in_engine: 只体现在结构上：population.build 给部分主角额外的人脉（hub），场所让常客之间互通消息。没有区分大众媒介与人际两步，engine.Sim._broadcast 的告示直接触达个人。
+sources:
+- work: 'The People''s Choice: How the Voter Makes Up His Mind in a Presidential Campaign'
+  author: Paul F. Lazarsfeld; Bernard Berelson; Hazel Gaudet
+  year: 1944
+  locator: 'New York: Duell, Sloan and Pearce（第二版 1948 年起由 Columbia University Press 出版）'
+  url: https://cup.columbia.edu/book/the-peoples-choice/9780231197953
+  verified: true
+  checked: 哥伦比亚大学出版社 Legacy Edition 页面确认书名、副标题、三位作者，并描述了“媒体先到达少数人、再由他们转述给不太关注新闻的人”这一发现；该页把原版年份写作 1948（实为哥大版/第二版）。初版 1944 年、Duell, Sloan and Pearce 依据 Open Library 检索记录（openlibrary.org/works/OL3915963W，first_publish_year 1944）。两页合起来证实，初版年份没有一手出版社页面可查。
+- work: 'Personal Influence: The Part Played by People in the Flow of Mass Communications'
+  author: Elihu Katz; Paul F. Lazarsfeld
+  year: 1955
+  locator: 'Glencoe, IL: Free Press（2006 年 Transaction/Routledge 五十周年版）'
+  url: https://www.routledge.com/Personal-Influence-The-Part-Played-by-People-in-the-Flow-of-Mass-Communications/Katz-Lazarsfeld-Roper/p/book/9781412805070
+  verified: true
+  checked: Routledge 的图书页面确认书名、副标题、作者 Katz 与 Lazarsfeld（另列序言作者 Elmo Roper）、“1955 年初版”、迪凯特研究以及目录中“The Two-Step Flow of Communication”一章；原出版社 Free Press 依据 Open Library 检索记录（openlibrary.org/works/OL6318019W），出版地 Glencoe 未在所查页面出现。
+- work: 'The Two-Step Flow of Communication: An Up-To-Date Report on an Hypothesis'
+  author: Elihu Katz
+  year: 1957
+  locator: 'Public Opinion Quarterly 21(1): 61 起（末页未在所查页面出现）；DOI 10.1086/266687'
+  url: https://api.crossref.org/works/10.1086/266687
+  verified: true
+  checked: Crossref 的 DOI 元数据记录确认标题、作者、Public Opinion Quarterly、1957 年、第 21 卷第 1 期（创刊二十周年纪念号）、起始页 61；记录未给出末页。OpenAlex 同一 DOI 记录给出摘要，其中引述了原假说并称后续研究大体印证。

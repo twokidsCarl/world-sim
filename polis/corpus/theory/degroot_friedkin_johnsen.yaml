@@ -1,0 +1,32 @@
+title: 德格鲁特共识与弗里德金–约翰森社会影响模型
+title_en: DeGroot consensus and Friedkin–Johnsen social influence
+field: 统计学 / 数理社会学
+claim: DeGroot 描述一个必须共同行动的小组如何达成一致：每个成员反复把自己的看法更新为全体成员当前看法的加权平均，权重反映他对各人的信任；论文明确给出了这个过程以及最终达成的共同看法。Friedkin 与 Johnsen 从社会过程而非均衡出发，把人际影响网络与个人意见内容联系起来，并把文献中已有的若干社会影响模型作为特例推出；在其后通行的写法里，每个人在受他人影响的同时始终保留对自己初始意见的一份坚持，因此群体通常停在持续的分歧上而不是共识。
+formal: DeGroot：x(t+1) = W x(t)，W 为行随机的信任权重矩阵；满足适当条件时 x(t) 收敛到所有分量相同的共识值，它是初始意见的加权平均。Friedkin–Johnsen（后续文献通行的记法，未核对 1990 年原文符号）：x(t+1) = Λ W x(t) + (I − Λ) x(0)，Λ = diag(λ_i)，λ_i ∈ [0,1]；Λ = I 时退化为 DeGroot；稳态 x* = (I − ΛW)^(-1) (I − Λ) x(0)。
+parameters:
+- name: W
+  meaning: 人际影响（信任）权重矩阵，每行和为 1
+- name: x(0)
+  meaning: 各人的初始意见
+- name: λ_i
+  meaning: 个人 i 对他人影响的易感度；1 − λ_i 是对自己初始意见的坚持程度
+predicts:
+- 在纯加权平均的群体里，意见分歧随讨论轮次缩小并趋于共识，共识位置由谁被信任得多决定。
+- 只要有人对初始立场有所坚持，长期结果是意见靠拢但不重合。
+- 最终意见是各人初始意见的线性组合，网络中被更多人看重的人占的权重更大。
+in_engine: ''
+sources:
+- work: Reaching a Consensus
+  author: Morris H. DeGroot
+  year: 1974
+  locator: 'Journal of the American Statistical Association 69(345): 118–121；DOI 10.1080/01621459.1974.10480137'
+  url: https://api.crossref.org/works/10.1080/01621459.1974.10480137
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。
+- work: Social Influence and Opinions
+  author: Noah E. Friedkin; Eugene C. Johnsen
+  year: 1990
+  locator: 'The Journal of Mathematical Sociology 15(3–4): 193–206；DOI 10.1080/0022250X.1990.9990069'
+  url: https://api.crossref.org/works/10.1080/0022250X.1990.9990069
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。摘要没有给出公式；formal 中的 Friedkin–Johnsen 更新式取自检索到的后续综述（如 arXiv:1701.06307 的检索摘要）中的通行记法，1990 年原文未读。

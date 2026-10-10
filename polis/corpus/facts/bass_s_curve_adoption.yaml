@@ -1,0 +1,39 @@
+title: 创新扩散的 S 形曲线与 Bass 模型参数
+statement: >-
+  新事物的累计采纳量随时间呈 S 形：起初缓慢，中段靠人传人加速，最后饱和。
+  用 Bass 模型拟合时，对 15 篇论文中 213 组参数的元分析得到平均创新系数 p≈0.03、平均模仿系数 q≈0.38，
+  即人际模仿的作用比自发采纳大一个数量级，但各案例之间差别很大。
+kind: quantitative
+value: 0.38
+unit: 模仿系数 q 的平均值（同一元分析中创新系数 p 的平均值为 0.03；通常按年度数据估计）
+conditions: >-
+  Sultan、Farley、Lehmann 1990 的元分析，汇总 1950 至 1980 年代发表的 15 篇论文中 213 次扩散模型应用，
+  对象主要是耐用消费品等新产品的市场扩散，数据是年度销量这类总量数据。
+caveats: >-
+  p=0.03、q=0.38 这两个数字本次没有在原论文里看到，只在一篇转述它的会议论文里看到（见 sources），原文付费墙未能打开，
+  因此本条按“未核实”处理；哥伦比亚商学院的论文页面本次也打不开（403），“213 次应用、15 篇论文”来自搜索结果摘录和上述转述。
+  系数依赖时间单位（按年估计），不能直接搬到以小时或天为步长的传言模拟里。
+  S 形累计曲线与多种机制都相容（人传人、大众媒体、异质阈值），Goel 等 2012 明确指出总量曲线无法区分这些机制，
+  所以“模拟出了 S 形”只是必要条件，不能证明传播机制正确。
+  与小镇情境的差距：这是全国市场、以年计的产品采纳；一场挤兑是几天之内的恐慌行为，只宜借用曲线形状。
+theories: []
+metric: ""
+sources:
+  - work: A Meta-Analysis of Applications of Diffusion Models
+    author: Fareena Sultan, John Farley, Donald Lehmann
+    year: 1990
+    locator: "Journal of Marketing Research 27(1): 70–77"
+    url: https://doi.org/10.2307/3172552
+    verified: false
+    checked: >-
+      只确认了书目：Crossref（DOI 10.2307/3172552）给出标题、三位作者、期刊、27 卷 1 期、1990 年 2 月、起始页 70（终页 77 来自搜索结果摘录）。
+      论文正文和摘要都没能打开，p=0.03、q=0.38 没有在原文中看到。
+  - work: The Bass Diffusion Model does not explain diffusion
+    author: Ashish Kumar, Ravi Shankar, Kirankumar S. Momaya
+    year: 2015
+    locator: System Dynamics Society 会议论文集（年份和编号 P1233 据网址），论文首页未印会议届次
+    url: https://proceedings.systemdynamics.org/2015/proceed/papers/P1233.pdf
+    verified: true
+    checked: >-
+      二手来源。打开了这篇会议论文的 PDF，其文献综述一节转述 Sultan 等 1990：研究了 15 篇论文中的 213 组参数，
+      p 和 q 的平均值分别为 0.03 和 0.38，且取值差异很大。数字出自这段转述，不是原始论文。

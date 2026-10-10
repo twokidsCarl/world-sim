@@ -1,0 +1,59 @@
+title: 人民公敌（En folkefiende）
+kind: drama
+setting: 19世纪80年代挪威南部一座靠温泉浴场吃饭的海滨小城，前后几天。
+summary: >-
+  浴场医官斯多克芒查出浴场水源被污染，起初报纸编辑和小业主代表都表示支持，他以为全城会感谢他。
+  市长（他的哥哥）把同一件事换了一个说法讲给这些人听：整改要花大钱、浴场要关两年、费用要落到纳税人头上；
+  支持者于是逐个倒戈，报纸改登市长的安抚声明，医生的报告没有地方发表。
+  到市民大会上，主持人和发言者已经把议题从“水有没有毒”换成了“这个人是不是在害本城”，
+  医生被激怒后转而攻击“多数派”，会场当场通过决议宣布他是人民公敌，随后是砸窗、解约、退租、女儿被辞退。
+  这是一个真实信息输给利益框架的案例：改变众人态度的不是新证据，而是谁先向谁说明了“这件事对你意味着什么”。
+people:
+  - {name: 托马斯·斯多克芒, role: 浴场医官，发现污染的人, traits: 天真、急躁，相信事实一公布大家自然会站在他这边；受挫后言辞越来越激烈}
+  - {name: 彼得·斯多克芒, role: 市长、警察局长、浴场董事会主席，医生的哥哥, traits: 谨慎、重权威；擅长分别找人谈话，把问题改述成对方的切身损失}
+  - {name: 霍夫斯塔, role: 《人民先驱报》编辑, traits: 以进步自居，实际跟着订户和风向走；先支持后倒戈}
+  - {name: 毕凌, role: 报纸副编辑, traits: 口头激进，私下正在谋市政职位}
+  - {name: 阿斯拉克森, role: 印刷所老板，房主联合会主席，自称代表“结实的多数”, traits: 口头禅是“温和”；谁代表纳税人的钱袋他就站在谁一边，大会上任主席}
+  - {name: 摩登·基尔, role: 制革厂主，医生妻子的养父, traits: 起初当成恶作剧；自己的厂就是污染源，后来用遗产和股票向医生施压}
+  - {name: 霍斯特船长, role: 医生的朋友, traits: 不关心本地政治，是唯一肯借出场地、事后仍然帮忙的人，因此丢了船}
+  - {name: 凯瑟琳与佩特拉, role: 医生的妻子和女儿（教师）, traits: 妻子担心生计但最终站在丈夫一边；女儿坚定支持父亲并因此被学校辞退}
+events:
+  - {what: 医生收到化验结果，证实浴场的水受污染。在场的报纸编辑当即表示愿意刊登他的报告，医生很高兴自己为本城立了功。, who: [托马斯·斯多克芒, 霍夫斯塔, 毕凌, 凯瑟琳与佩特拉]}
+  - {what: 基尔来访，把这事当作捉弄市长的玩笑。霍夫斯塔和阿斯拉克森分别上门表示支持，后者保证“结实的多数”站在医生一边。, who: [摩登·基尔, 霍夫斯塔, 阿斯拉克森, 托马斯·斯多克芒]}
+  - {what: 市长要求弟弟收回报告、私下处理，并警告公开会毁掉全城和他自己的家；医生拒绝，市长以解职相威胁。, who: [彼得·斯多克芒, 托马斯·斯多克芒]}
+  - {what: 市长到报馆向编辑和印刷商说明整改的费用和对本城生意的打击。霍夫斯塔、毕凌、阿斯拉克森当场改变立场，报纸改登市长的声明，拒登医生的报告。, who: [彼得·斯多克芒, 霍夫斯塔, 毕凌, 阿斯拉克森]}
+  - {what: 医生决定自己召集市民大会；只有霍斯特船长肯借出房子。, who: [托马斯·斯多克芒, 霍斯特船长]}
+  - {what: 大会上阿斯拉克森被推为主席，会场先议的是要不要让医生讲浴场的事。医生转而痛斥“结实的自由派多数”，听众被激怒。, who: [阿斯拉克森, 彼得·斯多克芒, 霍夫斯塔, 托马斯·斯多克芒]}
+  - {what: 人群高喊他是人民公敌；会议付诸表决，通过决议宣布医官斯多克芒为“人民公敌”。散场时有人扬言去砸他家窗户。, who: [阿斯拉克森, 霍夫斯塔, 托马斯·斯多克芒]}
+  - {what: 次日：窗户被砸，房东要他搬家，佩特拉被学校辞退，市长送来解职通知和一份号召全城不再请他看病的决议；霍斯特也被船东解雇。, who: [托马斯·斯多克芒, 凯瑟琳与佩特拉, 彼得·斯多克芒, 霍斯特船长]}
+  - {what: 基尔告知已用本该留给医生妻儿的钱买进浴场股票，逼他改口；医生拒绝，也拒绝离开本城。, who: [摩登·基尔, 托马斯·斯多克芒]}
+outcome: 说出真相的人被市民大会正式宣布为“人民公敌”，失去职位、住所和病人，污染问题没有被处理；他决定留下，自称最孤立的人最有力量。
+theories: [asch_conformity, preference_falsification, two_step_flow]
+sources:
+  - work: En folkefiende（英译 An Enemy of the People，R. Farquharson Sharp 译）
+    author: Henrik Ibsen（易卜生）
+    year: 1882
+    locator: 五幕剧全文；第三幕（报馆倒戈）、第四幕（市民大会与决议）、第五幕（次日的后果）
+    url: https://www.gutenberg.org/cache/epub/2446/pg2446.txt
+    verified: true
+    checked: >-
+      取回 Project Gutenberg #2446 全文，核对了：第四幕群众喊“He is an enemy of the people!”，
+      主席提出决议“This meeting declares that it considers Dr. Thomas Stockmann, Medical Officer of the Baths, to be an enemy of the people”，
+      以及散场时人群的呼喊；第五幕佩特拉说收到“notice of dismissal”；第二幕市长提出解职（dismissed）。
+  - work: An Enemy of the People（维基百科条目）
+    author: English Wikipedia
+    year:
+    locator: Characters 与 Plot（Act I–V）两节
+    url: https://en.wikipedia.org/wiki/An_Enemy_of_the_People
+    verified: true
+    checked: >-
+      条目证实：易卜生1882年剧作，原名 En folkefiende；人物表与各人身份；逐幕梗概中的化验结果、基尔当成恶作剧、霍夫斯塔与阿斯拉克森先支持、
+      市长警告、第三幕报馆改登市长声明、霍斯特借出房子、阿斯拉克森任主席、“compact liberal majority”、砸窗威胁、退租、佩特拉失业、
+      解约信与抵制决议、基尔买股票施压、医生决定留下。该条目信息框只写首演年份1883。
+  - work: En folkefiende（挪威语维基百科条目）
+    author: Norsk Wikipedia（bokmål）
+    year:
+    locator: 导言
+    url: https://no.wikipedia.org/wiki/En_folkefiende
+    verified: true
+    checked: 条目导言写明该剧1882年写成，1883年1月13日在 Christiania Theater 首演（条目引 Store norske leksikon）；人物表与英文条目一致。

@@ -1,0 +1,47 @@
+title: 挤兑沿熟人和邻里网络传染
+statement: >-
+  储户会不会跑，很大程度上取决于他的熟人和邻居有没有跑。印度一场挤兑的逐分钟取款数据显示，
+  与一个已经挤兑的人接触后跟着跑的平均概率，经开户介绍人网络约为 3%，经邻里约为 5%，社会网络的传染在危机第二天达到高峰；
+  与银行关系久、有贷款往来的储户明显更不容易跑。1850 年代纽约的两次恐慌中，爱尔兰移民储户跑不跑主要由原籍郡（即其社交圈）决定。
+kind: quantitative
+value: 0.03
+range: [0.03, 0.052]
+unit: 每次接触的传染概率（value 为经介绍人网络的均值 0.030，range 上端为经邻里的均值 0.052；按一分钟为一个时间间隔估计）
+conditions: >-
+  Iyer 与 Puri：2001 年 3 月 13–15 日印度古吉拉特邦一家健康合作银行的挤兑，逐分钟取款记录；
+  社会网络用两种方式刻画——开户时的介绍人（真实相识关系）和居住的街区（样本共 71 个街区）；
+  借用流行病学的传播概率模型，假设每个时间间隔（一分钟）接触一人，只对网络中已有人挤兑的储户估计。
+  Kelly 与 Ó Gráda：纽约 Emigrant Industrial Savings Bank 的爱尔兰移民储户，1854 年和 1857 年两次恐慌，
+  用原籍郡和在纽约的住址代表社交网络。
+caveats: >-
+  3% 和 5% 是在“每分钟接触一人”这一人为假定下得到的模型参数，并且随时间变化很大（标准差 0.040 和 0.076，
+  最大值分别达 0.213 和 0.520），不能当作“每听一个熟人说就有 3% 的概率去取款”直接写进模拟，只宜作量级和相对大小的参考。
+  这两个数字取自 2008 年 FDIC 工作论文版；2012 年《美国经济评论》正式发表版的正文本次没能打开，不确定正式版是否保留了同样的估计。
+  邻里效应无法与共同的本地消息来源完全区分（论文自己提到反射问题，并用介绍人网络来缓解）。
+  Kelly 与 Ó Gráda 给出的各郡挤兑比例（1857 年样本中多尼戈尔 17%、卡文 26%，米斯 67%、凯里 74%，样本整体 52%）
+  是在“全部挤兑者加十分之一未挤兑者”的样本里算的，高估了总体比例，只能用来比较郡与郡之间的差异；
+  两年各郡挤兑比例的等级相关为 0.55。
+  与小镇情境的差距较小（同城、熟人、邻里口耳相传），但一个是 2001 年有存款保险的印度城市，一个是 1850 年代纽约的移民社区。
+theories: [informational_cascade, diamond_dybvig_bank_run]
+metric: ""
+sources:
+  - work: "Understanding Bank Runs: The Importance of Depositor-Bank Relationships and Networks"
+    author: Rajkamal Iyer, Manju Puri
+    year: 2008
+    locator: FDIC Center for Financial Research Working Paper No. 2008-11（2008 年 8 月）
+    url: https://www.fdic.gov/analysis/cfr/working-papers/2008/2008-11.pdf
+    verified: true
+    checked: >-
+      打开了 FDIC 网站上的工作论文全文 PDF：引言写明平均传播概率经社会群体（介绍人网络）为 3%、经邻里为 5%，
+      且社会网络传染在危机第二天达到高峰；“传播概率估计”一表给出均值 0.030 与 0.052 及其标准差、最小值、最大值；
+      正文说明介绍人网络和 71 个街区的构造方式，以及账户年龄和贷款往来降低挤兑风险。
+  - work: "Market Contagion: Evidence from the Panics of 1854 and 1857"
+    author: Morgan Kelly, Cormac Ó Gráda
+    year: 2000
+    locator: "American Economic Review 90(5): 1110–1124"
+    url: https://beyondragstoriches.omeka.net/files/original/1e6669daa285d46185dcea862a4cba51.pdf
+    verified: true
+    checked: >-
+      打开了论文全文的 JSTOR 扫描件 PDF：摘要写明两次恐慌中社交网络（原籍地和在纽约的住处）是行为的首要决定因素；
+      正文围绕表 5 写明 1857 年样本中 52% 销户，多尼戈尔 17%、卡文 26%、米斯 67%、凯里 74%，各郡比例相等的假设被拒绝，
+      两年等级相关 0.55；样本为全部挤兑者加十分之一其他储户也在正文。本条的 value 和 range 不来自这篇论文。

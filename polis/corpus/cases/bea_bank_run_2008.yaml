@@ -1,0 +1,79 @@
+title: 东亚银行挤兑事件（2008年9月，香港）
+kind: history
+setting: 2008年9月22日至27日的香港，雷曼兄弟破产、AIG告急之后一周左右；东亚银行在全港的分行。
+summary: >-
+  雷曼倒闭后的紧张气氛里，关于东亚银行出问题的传闻先在市面上流传，随后通过匿名群发的手机短信迅速扩散，内容是该行在雷曼和AIG上有风险敞口、甚至直接说“已经在挤兑了，快去取钱”。
+  储户看到分行门口的队伍后把排队本身当成了证据，于是加入排队，一天之内全港多家分行大排长龙，股价单日下跌约百分之七。
+  银行公开否认并延长营业、照单兑付，金管局当天声明传闻毫无根据并提醒存款保障，次日向银行体系注资，富商李嘉诚公开买入该行股票，队伍在不到两天内散去。
+  来源之间有出入：弗吉尼亚大学 Bruner 的记述说储户周二下午已大量出现，金管局新闻稿和《基督教科学箴言报》则把挤兑记在周三；
+  被提走的规模，Bruner 引银行公布的数字为20亿港元、占存款0.67%，而东亚银行主席李国宝事后对《机构投资者》说“不到2%的存款受影响”。
+people:
+  - {name: 匿名短信发送者, role: 群发手机短信散布传闻的人, traits: 身份不明；用“已经在挤兑”这样的说法制造紧迫感，催人立刻行动}
+  - {name: 储户们, role: 东亚银行在香港的存款人, traits: 无法自行判断银行是否稳健；看到别人排队就跟着排，图的是“今晚睡得安心”}
+  - {name: 东亚银行管理层, role: 被传闻针对的银行；主席为李国宝, traits: 反复公开否认、向媒体出示流动性数据，并用“照付、延长营业”来证明有钱}
+  - {name: 香港金融管理局, role: 银行监管机构兼货币当局, traits: 当天表态支持并提醒存款保障，次日用注资行动而不只是言辞来稳定市场}
+  - {name: 李嘉诚, role: 香港富商, traits: 以公开买入股票的方式表态，发出一个代价高昂因而可信的信号}
+  - {name: 香港警方, role: 商业罪案调查部门, traits: 追查短信来源}
+events:
+  - {what: 9月中旬，雷曼兄弟破产和AIG危机引发对香港银行相关敞口的担忧；东亚银行又修订业绩，披露一名交易员在股票衍生品上造成9300万港元亏损。该行对雷曼和AIG的未偿敞口分别为4.228亿和4990万港元。, who: [东亚银行管理层]}
+  - {what: 9月22日（周一），关于东亚银行偿付能力的传闻开始流传。, who: [储户们]}
+  - {what: 9月23日（周二），匿名来源群发的大量手机短信使传闻迅速升温，其中一条称东亚银行正遭挤兑、有存款的人应赶快去取。, who: [匿名短信发送者, 储户们]}
+  - {what: 9月24日（周三），数以千计的储户到东亚银行各分行排队提款，有人说看到队伍才觉得一定出了事；该行股价当天下跌约7%。, who: [储户们]}
+  - {what: 东亚银行称传闻毫无根据，向媒体说明现金储备足以应付全部提款、资本充足率约为法定最低要求的两倍，对所有提款照付并延长营业时间。警方商业罪案调查部门开始追查传闻来源。, who: [东亚银行管理层, 香港警方]}
+  - {what: 同日（24日），金管局发言人表示质疑东亚银行稳健性的传闻毫无根据，该行资本充足率和流动资金比率远高于监管要求；金管局有贴现窗和最后贷款人安排可随时提供流动性，但至今没有银行提出要求；并提醒存款保障计划保障上限为10万港元，呼吁储户保持冷静。, who: [香港金融管理局, 储户们]}
+  - {what: 9月25日（周四）上午，金管局向银行体系总结余注入38.83亿港元，说明这是缓解同业流动性的一般措施、不针对个别机构；李嘉诚公开表示已“个人投资”买入东亚银行股票，股价回升超过3%。, who: [香港金融管理局, 李嘉诚]}
+  - {what: 同日，金管局表示银行体系全日运作正常，公众对东亚银行的忧虑已大致消退。银行公布这次短暂挤兑中被提走的存款为20亿港元，占其存款总额的0.67%。, who: [香港金融管理局, 东亚银行管理层, 储户们]}
+  - {what: 9月27日（周六），警方宣布拘捕一名涉嫌群发有关短信的人。, who: [香港警方, 匿名短信发送者]}
+outcome: 东亚银行没有倒闭：挤兑在不到两天内被平息，被提走的存款只占总额的很小一部分（按银行公布为0.67%），银行称这些存款到年底已全部回流还有余。
+theories: [informational_cascade, granovetter_threshold, diamond_dybvig_bank_run, global_games_runs]
+sources:
+  - work: HKMA says Hong Kong banking system is sound
+    author: Hong Kong Monetary Authority（香港金融管理局）
+    year: 2008
+    locator: 新闻稿，2008年9月24日
+    url: https://www.hkma.gov.hk/eng/news-and-media/press-releases/2008/09/20080924-4/
+    verified: true
+    checked: >-
+      直接取回该新闻稿全文：发言人“today (Wednesday)”称质疑东亚银行稳定性的传闻“unfounded”；资本充足率与流动资金比率远高于监管要求；
+      贴现窗与最后贷款人安排、“none of them have asked for this so far”；存款保障计划上限“$100,000”；呼吁“stay calm”。
+  - work: Hong Kong's banking system operating normally today
+    author: Hong Kong Monetary Authority（香港金融管理局）
+    year: 2008
+    locator: 新闻稿，2008年9月25日
+    url: https://www.hkma.gov.hk/eng/news-and-media/press-releases/2008/09/20080925-3/
+    verified: true
+    checked: >-
+      直接取回该新闻稿：公众对东亚银行的忧虑由“unfounded rumours spread yesterday”引起并已大致消退；该行财务状况良好；
+      当日上午按货币发行局原则买入美元，向银行体系总结余注入“HK$3,883 million”，不针对个别机构。
+  - work: Anatomy of a Run on the Bank
+    author: Robert F. Bruner（Darden School of Business, University of Virginia）
+    year: 2008
+    locator: 院长博客，2008年9月28日
+    url: https://blogs.darden.virginia.edu/brunerblog/?p=329
+    verified: true
+    checked: >-
+      直接取回该文。作者当周身在香港，文中给出：敞口HK$422.8 million（雷曼）与HK$49.9 million（AIG）、交易员亏损HK$93 million；
+      9月22日周一传闻开始、周二匿名群发短信及其中一条的内容；储户引语；银行CEO称传闻“unfounded”、资本充足率为最低要求两倍、照付并延长营业；
+      金管局注资“nearly HK$3.9 billion”；警方商业罪案调查科追查来源；25日挤兑结束，银行公布提走HK$2 billion即存款的0.67%；27日警方宣布拘捕一人。
+      该文的细节注明出自《金融时报》2008年9月25日头版（Lau 与 Mitchell）和《南华早报》同日A3版的三篇报道，这些报纸原文本次未能打开。
+      注意两处问题：文中说储户“on Tuesday afternoon”已大量到分行，同时又说挤兑发生在24日周三；文中把李嘉诚称作东亚银行董事会主席，
+      这与《机构投资者》所载主席为 David Li（李国宝）不符，应为笔误。拘捕一事只见于此文。
+  - work: Hong Kong billionaire follows Buffett
+    author: The Christian Science Monitor
+    year: 2008
+    locator: Global credit crisis 栏目，2008年9月25日，发自北京
+    url: https://csmonitor.com/Business/global-credit-crisis/2008/0925/hong-kong-billionaire-follows-buffet
+    verified: true
+    checked: >-
+      直接取回该报道：东亚银行周三被“thousands of frightened customers”包围，为该地区自金融危机以来首次大规模挤兑；
+      该行为香港第五大银行；股价一天内跌7%；李嘉诚周四表示作了“a personal investment”，当天上午买入，股价回升超过3%。
+  - work: Asia's Banks Are Crisis Ready
+    author: Matthew Miller（Institutional Investor）
+    year: 2009
+    locator: Institutional Investor，2009年4月7日
+    url: https://www.institutionalinvestor.com/article/2btg2qpqjvz3t0kq6pqf4/home/asias-banks-are-crisis-ready
+    verified: true
+    checked: >-
+      直接取回该文：储户涌向全港分行，担心该行缺钱并将被政府接管；传闻经手机短信传播，称该行对AIG和雷曼有敞口；
+      金管局公开称该行稳健并向同业市场注入5亿美元（与金管局所载38.83亿港元折算相符）；香港1997年以来首次挤兑“in less than two days”被平息；
+      主席 David Li 说“less than 2 percent of deposits were affected”，并称到年底已收回这些现金且有余。

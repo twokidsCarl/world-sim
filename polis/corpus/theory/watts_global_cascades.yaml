@@ -1,0 +1,25 @@
+title: 随机网络上的全局级联
+title_en: Global cascades on random networks (Watts)
+field: 网络科学
+claim: 把阈值规则放到稀疏随机网络上：每个节点只看自己的邻居，当邻居中已转变的比例达到自己的阈值就跟着转变。于是极小的初始扰动偶尔会引发席卷全网的级联，但这种事很少发生。网络太稀时级联受连通性限制，规模呈幂律分布；网络很密时级联受节点自身稳定性限制，规模呈双峰分布（要么几乎不动，要么全网翻转），因而更难预料。
+formal: 节点 i 有阈值 φ_i 与度 k_i；若其邻居中处于状态 1 的比例 ≥ φ_i，则 i 转为状态 1。从单个（或极少数）种子节点开始，在给定度分布的随机图上迭代。
+parameters:
+- name: φ
+  meaning: 节点阈值：邻居中已转变比例达到多少才跟随
+- name: k
+  meaning: 节点度（邻居数）
+- name: z
+  meaning: 网络平均度
+predicts:
+- 同样的小扰动绝大多数时候无事发生，极少数时候引发全局级联；只在平均度的一个中间区间内才可能出现全局级联。
+- 在低连通一侧，级联规模服从幂律，连接最多的节点比普通节点更容易触发级联；在高连通一侧，规模分布双峰，枢纽节点不再有此优势。
+- 阈值越不均一，系统越容易发生全局级联；度分布越不均一，系统反而越不容易。
+in_engine: 部分实现。engine.Sim._observe 按关系强度算出身边已行动者的比例（seen），它进入信念与决策；但没有按原模型设定固定阈值分布，也没有做脆弱节点簇的分析。
+sources:
+- work: A simple model of global cascades on random networks
+  author: Duncan J. Watts
+  year: 2002
+  locator: 'Proceedings of the National Academy of Sciences 99(9): 5766–5771；DOI 10.1073/pnas.082090499'
+  url: https://api.crossref.org/works/10.1073/pnas.082090499
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。PNAS 出版社落地页对抓取返回 403/验证页，未能直接打开。

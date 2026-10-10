@@ -1,0 +1,43 @@
+title: 线上传播级联绝大多数极小
+statement: >-
+  线上内容的传播级联规模极度偏斜：超过 99% 的级联很小，在第一代就终止；
+  在七个不同的线上平台上，73%–96% 的级联根本没有传出去（只有发起者一个人），不到 1% 的级联超过 7 个节点。
+  达到 100 人以上的级联大约每四千个才有一个（0.025%），真正的“病毒式”爆发约为百万分之一。
+kind: quantitative
+value: 0.99
+unit: 比例（在一代以内终止的小级联占全部级联的份额，来源写的是“超过 99%”）
+conditions: >-
+  Goel 等 2016：2011 年 7 月至 2012 年 7 月推特上约 10 亿个传播事件（新闻、视频、图片、请愿），平均级联规模 1.3，
+  约 99% 的采纳来自发起者本人或其直接粉丝；深入分析的是其中至少 100 个节点的 219,855 个级联。
+  Goel、Watts、Goldstein 2012：七个线上场景（Yahoo! Kindness、Yahoo! Zync、The Secretary Game、Twitter News Stories、Twitter Videos、Friend Sense、Yahoo! Voice），
+  各场景单节点级联占比 73%–96%，平均级联规模 1.1–1.4，94%–99% 的采纳发生在距发起者一步之内。
+caveats: >-
+  2012 年论文正文说“73% 到 95%”的级联完全没有扩散，但同一论文表 I 中推特视频一项是 96%，本条区间按表取 73%–96%。
+  “超过 99%”在 2016 年论文中是引述 2012 年论文的概括性说法；“千分之一”“四千分之一”“百万分之一”分别对应
+  “中等流行”“至少 100 个节点”“病毒式爆款”三个不同门槛，不要混用。级联规模分布是重尾的，但两篇论文都没有把它当作严格的幂律来检验。
+  与小镇情境的差距：线上平台的“发起”门槛极低，绝大多数帖子本来就无人理会，所以小级联占比极高；
+  小镇里一条关于银行的传言，听到的人有切身利害，再传一次的概率远高于线上转发率，级联规模分布未必同样偏斜。
+  这条事实更适合用来检验“大多数传言起不来、少数才爆发”的定性形状，而不是直接比对 99% 这个数。
+theories: [granovetter_threshold, watts_global_cascades]
+metric: ""
+sources:
+  - work: The Structural Virality of Online Diffusion
+    author: Sharad Goel, Ashton Anderson, Jake Hofman, Duncan J. Watts
+    year: 2016
+    locator: "Management Science 62(1): 180–196"
+    url: https://www.5harad.com/papers/twiral.pdf
+    verified: true
+    checked: >-
+      打开了第一作者个人网站上的期刊版全文 PDF（首页印有 Management Science 62(1), 2016, pp. 180–196）：
+      引言写明超过 99% 的级联很小且在一代内终止、中等流行事件约千分之一、病毒式爆款约百万分之一；
+      数据一节写明平均级联规模 1.3、约 99% 的采纳来自根节点或其直接粉丝、至少 100 个节点的占 0.025%（约四千分之一，共 219,855 个）。
+  - work: The Structure of Online Diffusion Networks
+    author: Sharad Goel, Duncan J. Watts, Daniel G. Goldstein
+    year: 2012
+    locator: "Proceedings of the 13th ACM Conference on Electronic Commerce (EC '12): 623–638"
+    url: https://5harad.com/papers/diffusion.pdf
+    verified: true
+    checked: >-
+      打开了第一作者个人网站上的论文全文 PDF：正文写明各场景 73%–95% 的级联没有任何扩散、不到 1% 的级联超过 7 个节点、
+      不到 4% 延伸到一步以外；表 I 列出七个场景的单节点级联占比（73%–96%）、平均规模（1.1–1.4）和一步之内采纳占比（94%–99%）。
+      会议名称和页码由 Crossref（DOI 10.1145/2229012.2229058）确认。
