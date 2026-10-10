@@ -99,8 +99,8 @@ Problems found while assembling (`vhf_ct_to_nifti.py`, `out/vhf_ct_slices.tsv`):
 |---|---|---|
 | Two exams | 370 (head-first, head → mid-thigh, files 1001–1985) and 371 (feet-first, "FEMUR-TOES", 1986–2734) with different table landmarks | Header table position is unusable as global z; I stack by file number |
 | Bad headers | 131 slices carry a bogus location (file 1448, and 2236–2365 all say 3.0 mm) | Same; pixel size/FOV in those headers look right |
-| Seam at mid-thigh | Femur cross-sections jump by about **+6 mm lateral, −4 mm AP** between files 1985 and 1986 | Small rigid correction needed; not yet applied |
-| FOV clipping | Body is 468–478 mm wide in a 480 mm FOV; right elbow touches the edge (MOOSE right radius/ulna flagged `x-border`, right ulna 25 mL vs left 50 mL) | Arm skin and right proximal forearm are truncated |
+| Seam at mid-thigh | Femur cortex centres jump by 4.8–5.7 mm lateral and 2.9–4.6 mm AP between files 1986 and 1985 | **Fixed** in the anchor build: rigid in-plane move of the leg exam (0.42° + 5.3/−3.8 mm); bone residual 0.09 mm, skin 0.75 mm |
+| FOV clipping | Body is 468–478 mm wide in a 480 mm FOV. **Both** elbows touch the reconstruction circle: left humerus/radius/ulna on 20–36 % of their slices, right on 28–44 %; the right ulna is cut lengthwise (25 mL vs 50 mL left) | Arm skin truncated; left elbow shaved, right proximal forearm unusable |
 | Leg FOV | 370 mm FOV below mid-thigh | Fine for bones; whether thigh skin is clipped there was not checked |
 | Pose | Supine, arms at sides with hands lying on the lower abdomen/pelvis; soft tissue and breasts flattened by gravity | Skin and arm pose differ from BodyParts3D and from HRA |
 
@@ -131,12 +131,15 @@ pictures in `out/preview/` (`vhf_mip_coronal.png`, `vhf_skeleton_ts_plus_moose.p
 Caveats that matter for registration:
 
 1. **Lumbar labels are wrong.** The subject has six lumbar vertebrae (HRA models L1–L6). TotalSegmentator's five-lumbar
-   scheme yields an 84 mm "L1" and an "L2" spanning 171 mm; its `sacrum` has 43 components. Vertebra identity from T12
-   down must be fixed by hand. BodyParts3D has five lumbar vertebrae, so one female vertebra has no male counterpart.
+   scheme yields an 84 mm "L1" and an "L2" spanning 171 mm; its `sacrum` has 43 components. **Fixed** in the anchor
+   build (`fix_volume.py`): discs located from the endplates, L1–L6 reassigned by watershed, S1 merged into the sacrum.
+   The male has five lumbar vertebrae; female L2–L6 map to male L1–L5 and female L1 has no counterpart.
 2. **Hand and foot bones are groups, not bones.** BodyParts3D has every carpal, tarsal and phalanx separately.
-3. **Plain thresholding does not solve (2)** (`limb_bones_threshold.py`): HU > 220 gives one fused blob per lower
+3. TotalSegmentator's humerus and MOOSE's ulna overlap by 1.8 mL at the left elbow (two models, one joint); the anchor
+   build gives such voxels to MOOSE.
+4. **Plain thresholding does not solve (2)** (`limb_bones_threshold.py`): HU > 220 gives one fused blob per lower
    leg + foot (≈ 370 mL) and per forearm + hand; only the patellae separate.
-4. `TotalSegmentator` sends anonymous usage statistics by default; it ran that way here (7 predictions).
+5. `TotalSegmentator` sends anonymous usage statistics by default; it ran that way here (7 predictions).
 
 ### Segmentation model licences
 
@@ -243,18 +246,45 @@ whole-body deformation, densest in the trunk and weakest in forearms, hands, low
    organs only and treat skin separately, or normalise with a second, healthier torso (TS dataset s0790).
 2. **Three different poses** (BP3D arms down; CT hands on pelvis; HRA A-pose). The arms need an articulated
    (per-bone rigid) pre-alignment before any smooth non-rigid warp; a single global TPS will tear the forearms.
-3. **Licence mix.** BodyParts3D is CC BY-SA 2.1 JP, so warped male structures stay share-alike; HRA and Denver are
-   CC BY 4.0; NLM needs its courtesy line; MOOSE weights CC BY 4.0. The combined female model should be published
-   as BY-SA with a per-part attribution table. This is my reading, not legal advice.
+3. **Licence mix.** The BodyParts3D OBJ headers say CC BY-SA 2.1 JP (the male model's own source list now gives
+   4.0 as CC BY 4.0 and 3.0 as BY-SA 2.1 JP); HRA and Denver are CC BY 4.0; NLM needs its courtesy line; MOOSE weights
+   CC BY 4.0. Decision taken: the dataset ships as CC BY-SA 4.0 with per-source attribution, which the anchor
+   manifest carries per item. This is my reading, not legal advice.
 4. **Automatic labels are unreviewed.** Nothing here was checked by an anatomist; previews look right at the scale of
    whole bones, and that is all I can claim.
 5. **Segmentation of an unenhanced cadaver** gives fragmented hollow organs and only the largest vessels.
 
 ### Not done
 
-- Seam correction, lumbar relabelling, decimation to web budgets, and any actual registration.
+- The male→female registration itself (the anchor package below is its input). Seam correction, lumbar relabelling and
+  decimation are done there.
 - Denver STLs (blocked download); Visible Human cryosection RGB images (tens of GB, not needed for anchors).
 - `run_inventory.sh` collects the exact commands I ran, but the script as a whole has not been executed end to end.
+  `run_anchors.sh` has been (2.5 minutes).
+
+## Anchor package (built 2026-10-11)
+
+`sh tools/register/run_anchors.sh` writes `data/raw/female/out/anchors/` (gitignored): `manifest.json`, `scanned.bin`,
+`reposed.bin`, `README.md` (format), `SANITY.md` (all numbers), `preview/`. Metres, +X left, +Y up, +Z anterior.
+
+| | |
+|---|---|
+| Items | 182 scanned (VHF CT) + 58 curated (HRA) = 240; 1.25 M triangles |
+| CT items by kind | 74 bones, 12 bone groups, 3 cartilages, 1 tooth group, 24 organs, 18 vessel trunks, 47 muscles, 3 surfaces |
+| Quality | CT: 123 good, 52 usable, 7 poor (5 lung lobes, right radius, right ulna). HRA: all `usable` by definition |
+| Correspondence | 141 one-to-one, 36 group, 5 none (female L1, spinal cord, thyroid, 2 breasts) |
+| Meshing | marching cubes on a blurred mask, 12 Taubin iterations, quadric decimation, sub-voxel normal offset restoring the voxel volume (median mesh/voxel volume 1.000; without the offset ribs lost 18 %) |
+| Seam | see table above |
+| Lumbar | six lumbar bodies confirmed two ways: endplate detection, and HRA's L1–L6 each fitting its CT counterpart at 0.8–0.9 mm RMS |
+| Re-posing | per-bone rigid transforms about estimated joint centres to the male's arms-down pose; left arm usable (radial head 3 mm off the capitulum), right arm poor (clipped elbow); hands rigid, fingers still curled |
+| HRA placement | 37 bone pairs, median ICP RMS 0.74 mm; thin-plate-spline field; uterus between bladder (0.7 mm gap) and rectum (4 mm), ovaries inside the pelvic hull; right ovary collides with the scanned right common iliac vein |
+| Breasts | HRA (standing) sit ~45 mm anterior and ~33 mm below the donor's supine ones; two thirds of their volume is outside the supine skin |
+| Size check | long bones 5–12 % shorter than the male, hip-joint centres 13 % farther apart |
+| Coverage | 550 of 3,179 male parts named by an anchor; limbs are bone-only |
+| Denver | hook only (`data/raw/female/denver/`); import not written |
+
+Not verified: every label is automatic. Unexplained size outliers (patellae +16 %, ribs 11–12 +20 %, hyoid and thyroid
+cartilage +20 %, cranium −13 %) are listed in `SANITY.md`.
 
 ## Scripts (`tools/register/`)
 
@@ -269,3 +299,10 @@ whole-body deformation, densest in the trunk and weakest in forearms, hands, low
 | `labels_to_meshes.py` | Label map → per-structure meshes + stats |
 | `limb_bones_threshold.py` | Threshold baseline for distal limb bones (negative result) |
 | `ts_dataset_female_candidates.py` | Coverage survey of the TotalSegmentator dataset by range requests |
+| `run_anchors.sh` | Anchor package, all steps |
+| `fix_volume.py` | Seam correction and six-lumbar relabelling |
+| `anchor_spec.py` | Which structures become anchors; male-part regexes; quality overrides |
+| `build_meshes.py` | Clean, smooth, decimate, volume-restore each structure |
+| `build_package.py`, `anchorlib.py` | Frame, joint centres, re-posing, correspondences, manifest, binaries, previews |
+| `hra_place.py` | HRA bones → CT bones, displacement field, organ placement checks |
+| `write_reports.py` | `README.md` and `SANITY.md` from the manifest |
