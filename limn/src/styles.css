@@ -1,0 +1,28 @@
+:root { color-scheme: light; font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; font-size: 13px; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: #f3f2ee; color: #1d1d1b; }
+.app { display: grid; grid-template-columns: 300px 1fr; height: 100%; }
+.side { background: #fbfaf7; border-right: 1px solid #dedbd2; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.side h1 { font-size: 18px; margin: 0; letter-spacing: 0.02em; }
+.side h2 { font-size: 11px; margin: 0 0 6px; color: #77736a; font-weight: 600; letter-spacing: 0.06em; }
+.row { display: flex; gap: 6px; align-items: center; }
+.row > label { flex: 0 0 84px; color: #55524b; }
+.row > input[type='range'] { flex: 1; min-width: 0; }
+.row > output { flex: 0 0 38px; text-align: right; font-variant-numeric: tabular-nums; color: #77736a; }
+input[type='text'], select, button, textarea { font: inherit; padding: 5px 8px; border: 1px solid #cfcbc0; border-radius: 5px; background: #fff; color: inherit; }
+input[type='text'] { flex: 1; min-width: 0; }
+button { cursor: pointer; }
+button:hover { background: #f1efe8; }
+button.primary { background: #1d1d1b; color: #fff; border-color: #1d1d1b; }
+button:disabled { opacity: 0.5; cursor: default; }
+.stage { position: relative; min-width: 0; min-height: 0; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.stage canvas:active { cursor: grabbing; }
+.status { position: absolute; left: 12px; bottom: 10px; color: #55524b; background: #ffffffcc; padding: 3px 8px; border-radius: 4px; pointer-events: none; }
+.error { color: #a3261c; }
+.entity { display: grid; grid-template-columns: 14px 1fr 104px; gap: 6px; align-items: center; margin-bottom: 4px; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #0003; }
+.entity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.muted { color: #77736a; }
+.caption { line-height: 1.5; }

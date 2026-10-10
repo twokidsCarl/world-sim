@@ -1,0 +1,94 @@
+import { El, type Molecule } from '../mol/types'
+import { oklch, type RGB } from './oklab'
+import { ROLE_HUE, TONE_MOLECULE, type Role, type Tone } from './palettes'
+
+/** How one structure is coloured: a role per entity, optional exact colours. */
+export interface Coloring {
+  roles: Role[]
+  /** per-entity hue shift in degrees, added to the role's hue */
+  hueShift: number[]
+  /** per-entity override as [L, C, h]; wins over role and shift */
+  override: (null | [number, number, number])[]
+}
+
+/** A reasonable colouring with no outside knowledge of what the structure is. */
+export function defaultColoring(mol: Molecule): Coloring {
+  const proteinRoles: Role[] = ['soluble', 'membrane', 'focus', 'extracellular']
+  let p = 0
+  const hasNucleic = mol.entities.some((e) => e.kind === 'dna' || e.kind === 'rna')
+  const roles = mol.entities.map((e): Role => {
+    switch (e.kind) {
+      case 'dna': case 'rna': return 'nucleic'
+      case 'glycan': return 'glycan'
+      case 'ion': return 'ion'
+      case 'lipid': return 'membrane'
+      case 'ligand': return 'ligand'
+      default:
+        if (hasNucleic) return p++ === 0 ? 'soluble' : proteinRoles[p % proteinRoles.length]!
+        return proteinRoles[p++ % proteinRoles.length]!
+    }
+  })
+  return spreadHues({ roles, hueShift: roles.map(() => 0), override: roles.map(() => null) })
+}
+
+/** Entities sharing a role are fanned out across that role's hue range. */
+export function spreadHues(c: Coloring): Coloring {
+  const byRole = new Map<Role, number[]>()
+  c.roles.forEach((r, i) => byRole.set(r, [...(byRole.get(r) ?? []), i]))
+  const hueShift = c.hueShift.slice()
+  for (const [role, idx] of byRole) {
+    const spread = ROLE_HUE[role].spread
+    idx.forEach((e, k) => {
+      hueShift[e] = idx.length === 1 ? 0 : -spread + (2 * spread * k) / (idx.length - 1)
+    })
+  }
+  return { ...c, hueShift }
+}
+
+export function entityLch(c: Coloring, entity: number, tone: Tone): [number, number, number] {
+  const o = c.override[entity]
+  if (o) return o
+  const r = ROLE_HUE[c.roles[entity] ?? 'soluble']
+  return [tone.L + r.L, tone.C * r.C, (r.h + (c.hueShift[entity] ?? 0) + 360) % 360]
+}
+
+/**
+ * Per-atom RGBA8. Chains of one entity alternate slightly in hue and
+ * lightness so that neighbouring copies can be told apart; carbons are a
+ * little greyer than the other atoms of their chain.
+ */
+export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECULE): Uint8Array {
+  const out = new Uint8Array(mol.atomCount * 4)
+  const seen = new Map<number, number>()
+  for (const ch of mol.chains) {
+    const k = seen.get(ch.entity) ?? 0
+    seen.set(ch.entity, k + 1)
+    const [L, C, h] = entityLch(c, ch.entity, tone)
+    // 0, +1, -1, +2, -2 ... steps of 9 degrees, wrapping after five chains
+    const step = ((k % 5) + 1) >> 1
+    const dh = (k % 5) % 2 === 1 ? step * 9 : -step * 9
+    const dL = (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
+    const other = to8(oklch(L + dL, C, h + dh))
+    const carbon = to8(oklch(L + dL + tone.carbonLift, Math.max(0, C - tone.carbonDrop), h + dh))
+    for (let i = ch.start; i < ch.start + ch.count; i++) {
+      const col = mol.element[i] === El.C ? carbon : other
+      out[i * 4] = col[0]
+      out[i * 4 + 1] = col[1]
+      out[i * 4 + 2] = col[2]
+      out[i * 4 + 3] = 255
+    }
+  }
+  return out
+}
+
+const to8 = (c: RGB): RGB => [Math.round(c[0] * 255), Math.round(c[1] * 255), Math.round(c[2] * 255)]
+
+/** Illustrate's radii: carbon 1.6, sulfur and phosphorus 1.8, others 1.5 Å. */
+export function atomRadii(mol: Molecule): Float32Array {
+  const r = new Float32Array(mol.atomCount)
+  for (let i = 0; i < mol.atomCount; i++) {
+    const e = mol.element[i]
+    r[i] = e === El.C ? 1.6 : e === El.S || e === El.P ? 1.8 : e === El.Other ? 1.8 : 1.5
+  }
+  return r
+}
