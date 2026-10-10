@@ -1,5 +1,6 @@
 import type { Params } from '../../core/params'
 import type { GpuContext } from '../../gpu/device'
+import { PassTimer } from '../../gpu/timing'
 import type { MdBackend, MdFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
 import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
@@ -80,11 +81,13 @@ export class MdGpuBackend implements MdBackend {
   private rebaseEpoch = 1
   private rebasedAt = 0
   private disposed = false
+  private timer: PassTimer
   private seed = 0
   private batch = 0
 
   constructor(gpu: GpuContext, p: Params, seed: number) {
     this.device = gpu.device
+    this.timer = new PassTimer(gpu.device)
     this.p = { ...p }
     this.lastT = p.temperature
     this.spec = potentialSpec(p)
@@ -279,7 +282,7 @@ export class MdGpuBackend implements MdBackend {
     }
     this.writeParams(4 * Math.sqrt(this.lastT))
     const encoder = this.device.createCommandEncoder()
-    const pass = encoder.beginComputePass()
+    const pass = encoder.beginComputePass(this.timer.descriptor())
     if (rescale) this.dispatch(pass, 'rescale', this.chunks, 64)
     for (let i = 0; i < n; i++) {
       this.dispatch(pass, 'kickDrift', this.n)
@@ -287,7 +290,9 @@ export class MdGpuBackend implements MdBackend {
       this.dispatch(pass, 'kick', this.n)
     }
     pass.end()
+    this.timer.resolve(encoder)
     this.submit(encoder)
+    this.timer.collect()
     this.stepCount += n
     this.time += n * dt
     // The thermostat needs a current temperature even when no view is subscribed.
@@ -459,6 +464,10 @@ export class MdGpuBackend implements MdBackend {
     this.recomputeForces()
   }
 
+  get gpuStepMs(): number | null {
+    return this.timer.ms
+  }
+
   /** Resolves once all submitted work has finished. */
   idle(): Promise<void> {
     return this.device.queue.onSubmittedWorkDone()
@@ -466,6 +475,7 @@ export class MdGpuBackend implements MdBackend {
 
   dispose(): void {
     this.disposed = true
+    this.timer.destroy()
     for (const b of Object.values(this.buffers)) b.destroy()
   }
 }

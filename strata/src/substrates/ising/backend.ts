@@ -1,6 +1,7 @@
 import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
 import type { GpuContext } from '../../gpu/device'
+import { PassTimer } from '../../gpu/timing'
 import code from './ising.wgsl?raw'
 import {
   blockSpins,
@@ -107,9 +108,11 @@ export class IsingGpuBackend implements IsingBackend {
   private reduceGroups: GPUBindGroup[] = []
   private inFlight = 0
   private disposed = false
+  private timer: PassTimer
 
   constructor(gpu: GpuContext, p: Params, seed: number) {
     this.device = gpu.device
+    this.timer = new PassTimer(gpu.device)
     this.p = { ...p }
     this.L = 1 << p.L
     this.levels = pyramidLevels(this.L)
@@ -179,7 +182,7 @@ export class IsingGpuBackend implements IsingBackend {
   step(n: number): void {
     if (this.inFlight >= 2 || this.disposed) return
     const encoder = this.device.createCommandEncoder()
-    const pass = encoder.beginComputePass()
+    const pass = encoder.beginComputePass(this.timer.descriptor())
     const groups = Math.ceil(this.L / 16)
     for (let i = 0; i < 4 * n; i++) {
       pass.setPipeline(this.pipelines.metropolis)
@@ -190,8 +193,14 @@ export class IsingGpuBackend implements IsingBackend {
       pass.dispatchWorkgroups(1)
     }
     pass.end()
+    this.timer.resolve(encoder)
     this.submit(encoder)
+    this.timer.collect()
     this.stepCount += n
+  }
+
+  get gpuStepMs(): number | null {
+    return this.timer.ms
   }
 
   /** Bring the coarse levels up to date with the simulated lattice. */
@@ -265,6 +274,7 @@ export class IsingGpuBackend implements IsingBackend {
 
   dispose(): void {
     this.disposed = true
+    this.timer.destroy()
     for (const b of [...this.spins, ...this.partial, this.thr]) b.destroy()
   }
 }

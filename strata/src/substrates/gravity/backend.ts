@@ -1,6 +1,7 @@
 import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
 import type { GpuContext } from '../../gpu/device'
+import { PassTimer } from '../../gpu/timing'
 import code from './gravity.wgsl?raw'
 import {
   boundVirial,
@@ -129,9 +130,11 @@ export class GravityGpuBackend implements GravityBackend {
   private inFlight = 0
   private e0: number
   private disposed = false
+  private timer: PassTimer
 
   constructor(gpu: GpuContext, p: Params, seed: number) {
     this.device = gpu.device
+    this.timer = new PassTimer(gpu.device)
     this.p = { ...p }
     const init = initialState(p, seed, 1 << p.n!)
     this.n = init.n
@@ -200,14 +203,16 @@ export class GravityGpuBackend implements GravityBackend {
   step(n: number): void {
     if (this.inFlight >= 2 || this.disposed) return
     const encoder = this.device.createCommandEncoder()
-    const pass = encoder.beginComputePass()
+    const pass = encoder.beginComputePass(this.timer.descriptor())
     for (let i = 0; i < n; i++) {
       this.dispatch(pass, 'kickDrift', this.n, 256)
       this.dispatch(pass, 'accel', this.n, 64)
       this.dispatch(pass, 'kick', this.n, 256)
     }
     pass.end()
+    this.timer.resolve(encoder)
     this.submit(encoder)
+    this.timer.collect()
     this.stepCount += n
     this.time += n * this.p.dt!
   }
@@ -291,12 +296,17 @@ export class GravityGpuBackend implements GravityBackend {
     return out
   }
 
+  get gpuStepMs(): number | null {
+    return this.timer.ms
+  }
+
   idle(): Promise<void> {
     return this.device.queue.onSubmittedWorkDone()
   }
 
   dispose(): void {
     this.disposed = true
+    this.timer.destroy()
     for (const b of this.buffers) b.destroy()
   }
 }

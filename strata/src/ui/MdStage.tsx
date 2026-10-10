@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { fitCanvas, theme } from '../plot/plot'
-import { PointsRenderer, SPECIES_B, parseHex, viridis } from '../render/points'
+import { PointsRenderer, SPECIES_B, mapTopFor, parseHex, viridis } from '../render/points'
 import { psi6 } from '../substrates/md/ref/reducers'
 import type { MdBackend, MdCpuBackend } from '../substrates/md/backend-cpu'
 import type { MdGpuBackend } from '../substrates/md/backend-gpu'
@@ -35,7 +35,7 @@ function CpuCanvas() {
         const batches = mode === 1 ? BINS : mode === 2 ? 2 : 1
         for (let bin = 0; bin < batches; bin++) {
           if (psi) {
-            const [cr, cg, cb] = viridis((bin + 0.5) / BINS)
+            const [cr, cg, cb] = viridis(((bin + 0.5) / BINS) * mapTopFor(theme().paper))
             ctx.fillStyle = `rgb(${Math.round(cr * 255)} ${Math.round(cg * 255)} ${Math.round(cb * 255)})`
           } else ctx.fillStyle = bin === 1 ? SPECIES_B : theme().ink
           ctx.beginPath()
@@ -75,7 +75,7 @@ function GpuCanvas() {
         canvas.width = w
         canvas.height = h
       }
-      renderer.draw(context.getCurrentTexture().createView(), b, b.n, b.box, parseHex(theme().ink), [w, h], engine.view.colour ?? 0)
+      renderer.draw(context.getCurrentTexture().createView(), b, b.n, b.box, parseHex(theme().ink), [w, h], engine.view.colour ?? 0, mapTopFor(theme().paper))
     })
   }, [])
   return <canvas ref={ref} className="stage" />
