@@ -1,0 +1,49 @@
+title: 格赖斯的推荐信
+hook: 通篇都是好话，读完却知道这人不行
+summary: >
+  一位教授给申请哲学教职的学生写推荐信，全信只说「此君英语极佳，上课从不缺席」。
+  信里没有一句坏话，读信的人却立刻明白：该夸的学术能力一字未提，
+  是因为没什么可夸，而教授又不便把坏话落在纸上。
+source:
+  work: Logic and Conversation
+  author: H. P. Grice
+  year: "1975"
+  locator: "Syntax and Semantics 3: Speech Acts（1975），pp. 41–58；违反「量的准则」的推荐信一例"
+  quote: "Mr. X's command of English is excellent, and his attendance at tutorials has been regular."
+  verified: true
+  url: "https://en.wikipedia.org/wiki/Cooperative_principle"
+a:
+  name: 写信的教授
+  persona: 学生的导师，不愿说谎，也不愿在白纸黑字上说学生坏话；他相信同行读得懂。
+  goal: 让对方别错招一个平庸的人，又不必亲口说他平庸。
+b:
+  name: 读信的系主任
+  persona: 招聘委员会主席，读过上百封推荐信，知道同行落笔时的顾忌。
+  goal: 招到强的，筛掉平庸的。
+lam: 1.0
+game:
+  kind: signaling
+  states: [学生平庸, 学生很强]
+  prior: [0.4, 0.6]       # 能拿到推荐信的，略多是好学生
+  true_state: 0
+  messages:
+    - {text: 只夸英语和出勤}
+    - {text: 盛赞学术能力}
+    - {text: 直说他不行, cost: 12}   # 推荐信里写坏话：伤学生、坏规矩，代价极高
+  actions: [录用, 不录用]
+  literal:           # [话][状态]
+    - [1, 0.8]       # 英语好、出勤好：对谁都可能是实话，只是用来形容强学生稍嫌不够
+    - [0.1, 1]       # 盛赞学术：只对强学生是实话
+    - [0.8, 0]
+  u_a:               # 利益一致：教授也不想让对方招错人
+    - [-10, 3]       # 平庸：录用了是坑人
+    - [10, -3]       # 很强：没录用是可惜
+  u_b:
+    - [-10, 3]
+    - [10, -3]
+canonical:
+  depth_a: 3
+  depth_b: 2
+  choice_a: 只夸英语和出勤
+  choice_b: 不录用
+  note: 只看字面的读者（第 0、1 层）会把这封信当好话而录用；系主任想到第 2 层（真强他早就夸学术了），教授想到第 3 层（我知道他读得出来）。

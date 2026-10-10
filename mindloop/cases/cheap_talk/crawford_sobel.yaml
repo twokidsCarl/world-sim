@@ -1,0 +1,53 @@
+title: 有私心的专家
+hook: 私心越大，话越不值钱
+summary: >
+  知情的一方（卖家、顾问、下属）想让对方的估计比真相高一点；
+  听的一方知道这一点。克劳福德与索贝尔证明：说话者的偏向越大，
+  均衡里能传递的信息就越粗，大到一定程度，说什么都等于没说（胡言均衡）。
+  在层级推理里，这表现为「通货膨胀」：你夸大一级，我打一折，你再夸大一级……
+source:
+  work: Strategic Information Transmission
+  author: Vincent P. Crawford & Joel Sobel
+  year: "1982"
+  locator: Econometrica 50(6), pp. 1431–1451
+  quote: ""
+  verified: true
+  url: "https://doi.org/10.2307/1913390"
+a:
+  name: 卖家
+  persona: 清楚货的真实成色，希望买家估得比实际高一点——高多少，取决于他的私心有多大。
+  goal: 让买家的估计略高于真实质量。
+b:
+  name: 买家
+  persona: 只能听卖家怎么说，知道对方有夸大的动机，要自己决定打几折。
+  goal: 估计得尽量接近真实质量。
+theory: true
+lam: 3.0
+game:
+  kind: signaling
+  states: [质量1, 质量2, 质量3, 质量4, 质量5]
+  prior: [0.2, 0.2, 0.2, 0.2, 0.2]
+  true_state: 2
+  messages:
+    - {text: 质量是1}
+    - {text: 质量是2}
+    - {text: 质量是3}
+    - {text: 质量是4}
+    - {text: 质量是5}
+  actions: [估1, 估2, 估3, 估4, 估5]
+  literal:           # 字面上一句话只对应一个质量
+    - [1, 0, 0, 0, 0]
+    - [0, 1, 0, 0, 0]
+    - [0, 0, 1, 0, 0]
+    - [0, 0, 0, 1, 0]
+    - [0, 0, 0, 0, 1]
+  quadratic:         # u_b = -(估计-质量)²，u_a = -(估计-质量-bias)²
+    state_values: [1, 2, 3, 4, 5]
+    action_values: [1, 2, 3, 4, 5]
+    bias: 0.7
+canonical:
+  depth_a: 1
+  depth_b: 2
+  choice_a: 质量是4
+  choice_b: 估3
+  note: 卖家想 1 层就会虚报一级；买家想 2 层就会打回原形。把 bias 调大，层数越深话越往顶上挤，信息量趋于 0；调到 0 则句句实话。

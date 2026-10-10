@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mindloop · 我知道你知道我知道</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div>
+        <div class="brand-name">mindloop</div>
+        <div class="brand-sub">我知道你知道我知道</div>
+      </div>
+    </div>
+    <nav id="library" aria-label="案例库"></nav>
+    <div id="health-note" class="health-note" hidden>离线：只显示推理结论</div>
+  </aside>
+  <main id="main">
+    <div id="view"><p class="empty">正在读取案例库…</p></div>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="bubbles.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

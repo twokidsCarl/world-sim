@@ -1,0 +1,47 @@
+title: 凯恩斯选美
+hook: 不是选你觉得最美的，是选大家觉得大家会选的
+summary: >
+  凯恩斯把炒股比作报纸选美：猜中「得票最多的脸」才有奖，于是人人都在猜别人怎么猜。
+  后人把它做成数字游戏：每人报一个 0–100 的数，最接近平均数三分之二者胜。
+  凭直觉报 50；想一层报 33；再想一层报 22……每多想一层就再往下走一步，直到 0。
+source:
+  work: The General Theory of Employment, Interest and Money（就业、利息和货币通论）
+  author: John Maynard Keynes（数字版见 Nagel, AER 1995）
+  year: "1936"
+  locator: "第十二章 The State of Long-Term Expectation"
+  quote: We have reached the third degree where we devote our intelligences to anticipating what average opinion expects the average opinion to be.
+  verified: true
+  url: "https://www.marxists.org/reference/subject/economics/keynes/general-theory/ch12.htm"
+a:
+  name: 职业投资者
+  persona: 凯恩斯笔下的行家，不关心哪张脸真的美，只琢磨别人以为别人会选哪张。
+  goal: 报出最接近「别人所报之数的三分之二」的数。
+b:
+  name: 普通参赛者
+  persona: 大多数人的缩影：会动一点脑筋，也知道别人会动脑筋，但想不了太深。
+  goal: 报出最接近「别人所报之数的三分之二」的数。
+lam: 0.5
+game:
+  kind: simultaneous
+  actions_a: [报50, 报33, 报22, 报15, 报10]
+  actions_b: [报50, 报33, 报22, 报15, 报10]
+  salience_a: [0.6, 0.2, 0.1, 0.05, 0.05]   # 不动脑筋：0 到 100 的中间
+  salience_b: [0.6, 0.2, 0.1, 0.05, 0.05]
+  u_a:               # [自己][对方] = -|自己的数 - 对方的数×2/3|
+    - [-16.7, -28, -35.3, -40, -43.3]
+    - [-0.3, -11, -18.3, -23, -26.3]
+    - [-11.3, 0, -7.3, -12, -15.3]
+    - [-18.3, -7, -0.3, -5, -8.3]
+    - [-23.3, -12, -4.7, 0, -3.3]
+  u_b:               # 对称：[对方][自己]
+    - [-16.7, -0.3, -11.3, -18.3, -23.3]
+    - [-28, -11, 0, -7, -12]
+    - [-35.3, -18.3, -7.3, -0.3, -4.7]
+    - [-40, -23, -12, -5, 0]
+    - [-43.3, -26.3, -15.3, -8.3, -3.3]
+canonical:
+  depth_a: 3
+  depth_b: 2
+  choice_a: 报15
+  choice_b: 报22
+  note: 凯恩斯说行家已到「第三级」，还有人练到第四、第五级；实验里多数人停在第 1–2 层（33 或 22）。这里只留了五档，真实游戏会一路降到 0。
