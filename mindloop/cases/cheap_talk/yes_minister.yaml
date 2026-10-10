@@ -1,0 +1,28 @@
+title: 「大臣，这是个很有勇气的决定」
+hook: 公务员的夸奖要查字典：勇气 = 丢选票
+summary: >
+  常务次官汉弗莱爵士从不对大臣说「不」。他想拦下一项决定时，只是赞叹一句「很有勇气」。
+  在白厅的行话里，「有争议」是说会丢选票，「有勇气」是说会丢掉大选。
+  大臣哈克起初听成恭维，后来学会了翻译，一听到这个词就改主意。
+source:
+  work: Yes Minister（是，大臣）
+  author: Antony Jay & Jonathan Lynn（BBC）
+  year: "1980"
+  locator: "第一季第 6 集 The Right to Know"
+  quote: "'Controversial' only means 'this will lose you votes'. 'Courageous' means 'this will lose you the election'!"
+  verified: true
+  url: "https://en.wikiquote.org/wiki/Yes,_Minister"
+a:
+  name: 汉弗莱爵士
+  persona: 行政事务部常务次官，牛津出身，长句连篇，最大的本事是不留下一句可被引用的反对。
+  goal: 让大臣放弃决定，同时让记录上只留下自己的赞同。
+b:
+  name: 哈克大臣
+  persona: 新上任的行政事务大臣，想做点事，更想连任；对文官的话将信将疑。
+  goal: 听懂文官们真正的意思，别在不知不觉中葬送政治前途。
+layers:
+  - 第 0 层（字面）：「有勇气的决定」是一句称赞——大臣果断、敢担当。
+  - 第 1 层：哈克学会了翻译：文官从不白白夸人，他说「有勇气」，意思是这会让我丢掉大选。
+  - 第 2 层：汉弗莱知道哈克会这样翻译，所以他根本不必反对，只需要「称赞」——警告送到了，记录上却只有赞同。
+  - 第 3 层：哈克知道汉弗莱是故意用这个词来吓他，于是要问：是真有危险，还是文官只是不想让这件事办成？这句话既可能是忠告，也可能是私心。
+  - 第 4 层：汉弗莱知道哈克分不清这两者——只要大臣赌不起，这个词就永远有效。

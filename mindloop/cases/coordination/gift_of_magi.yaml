@@ -1,0 +1,41 @@
+title: 麦琪的礼物
+hook: 两个人都为对方多想了一层，于是恰好错开
+summary: >
+  圣诞前夜，德拉卖掉引以为傲的长发，给吉姆的祖传金表配了一条表链；
+  吉姆卖掉金表，给德拉的长发买了一套发梳。两人都以为对方会留着最珍爱的东西，
+  都瞒着对方做了牺牲，结果两件礼物都用不上了。
+source:
+  work: The Gift of the Magi（麦琪的礼物）
+  author: O. Henry
+  year: "1905"
+  locator: "1905 年 12 月首发；收入 The Four Million（1906）"
+  quote: "two foolish children in a flat who most unwisely sacrificed for each other the greatest treasures of their house."
+  verified: true
+  url: "https://www.gutenberg.org/ebooks/2776"
+a:
+  name: 德拉
+  persona: 年轻的妻子，手头只有一元八角七分，一心想送吉姆一件配得上他金表的礼物。
+  goal: 送一件对方真正用得上的礼物。
+b:
+  name: 吉姆
+  persona: 周薪二十块的丈夫，最宝贝祖传的金表，更宝贝妻子那头长发。
+  goal: 送一件对方真正用得上的礼物。
+lam: 0.5
+game:
+  kind: simultaneous
+  actions_a: [卖发买表链, 留着长发]
+  actions_b: [留着金表, 卖表买发梳]
+  salience_a: [0.1, 0.9]    # 不动脑筋：最珍爱的东西当然留着
+  salience_b: [0.9, 0.1]
+  u_a:               # [德拉][吉姆]：对角线上礼物用得上，一人牺牲就够
+    - [8, -2]        # 卖了头发：表还在则表链正好；表也卖了则两头落空
+    - [0, 8]         # 留着头发：相安无事；或收到正合用的发梳
+  u_b:               # 两人一条心，收益相同
+    - [8, -2]
+    - [0, 8]
+canonical:
+  depth_a: 1
+  depth_b: 1
+  choice_a: 卖发买表链
+  choice_b: 卖表买发梳
+  note: 两人都恰好想了 1 层（「他/她一定留着宝贝」），于是双双牺牲、礼物落空；若都想 2 层又会双双不送。只有层数错开才协调得上——欧·亨利说，他们才是最聪明的。

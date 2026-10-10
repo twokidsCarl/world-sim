@@ -1,0 +1,40 @@
+title: 两杯酒的斗智
+hook: 「所以我绝不能喝你面前那杯」——可以一直推下去
+summary: >
+  黑衣人把一种无色无味的毒药下在两杯酒中的一杯里，让西西里人维齐尼选一杯喝。
+  维齐尼滔滔不绝：聪明人会把毒放在自己杯里，因为只有傻瓜才喝递到面前的；
+  可你一定料到我不是傻瓜……层层翻转之后，他趁对方回头调换了酒杯，喝下，大笑，倒地而死。
+source:
+  work: The Princess Bride（公主新娘）
+  author: William Goldman
+  year: "1973"
+  locator: "1987 年同名电影中的斗智一场（小说 1973 年出版，章节未核对）"
+  quote: "I am not a great fool, so I can clearly not choose the wine in front of you."
+  verified: true
+  url: "https://en.wikiquote.org/wiki/The_Princess_Bride_(film)"
+a:
+  name: 黑衣人
+  persona: 蒙面的剑客，话极少，只是微笑着看对方推理；他早已为这一刻做了多年的准备。
+  goal: 让维齐尼喝下有毒的那杯。
+b:
+  name: 维齐尼
+  persona: 自封天下第一聪明人的西西里人，说话飞快，坚信自己永远比对手多想一层。
+  goal: 喝到没毒的那杯。
+lam: 2.0
+game:
+  kind: simultaneous
+  actions_a: [毒下在自己面前, 毒下在对方面前]
+  actions_b: [喝自己面前那杯, 喝对方面前那杯]
+  salience_a: [0.3, 0.7]    # 不动脑筋：毒当然下在敌人杯里
+  salience_b: [0.7, 0.3]    # 不动脑筋：端起面前的就喝
+  u_a:                      # [黑衣人][维齐尼]：喝到毒酒则黑衣人胜
+    - [-1, 1]
+    - [1, -1]
+  u_b:
+    - [1, -1]
+    - [-1, 1]
+canonical:
+  depth_a: 7
+  depth_b: 6
+  choice_b: 喝对方面前那杯
+  note: 维齐尼的独白一路翻到第 6 层，最后喝的是原本摆在黑衣人面前的那杯。无论他停在哪一层都会死——原作中两杯都有毒，黑衣人早已练出抗药性；他根本没在这张收益表里玩，这里用「永远比你多一层」来近似。

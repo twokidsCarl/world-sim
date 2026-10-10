@@ -1,0 +1,42 @@
+title: 福尔摩斯在坎特伯雷下车
+hook: 冯·诺依曼拿它当教材：最优解是掷骰子
+summary: >
+  福尔摩斯乘开往多佛的火车逃往欧陆，莫里亚蒂包了专列在后面追。
+  中途只有坎特伯雷一站：福尔摩斯可以在此下车，也可以直达多佛；莫里亚蒂同样二选一。
+  福尔摩斯下了车，看着莫里亚蒂的专列呼啸而过。冯·诺依曼与摩根斯特恩算出，
+  双方的最优策略都是按比例随机。
+source:
+  work: The Final Problem（最后一案）
+  author: Arthur Conan Doyle；分析见 von Neumann & Morgenstern, Theory of Games and Economic Behavior (1944)
+  year: "1893"
+  locator: "维多利亚站至多佛的列车一段；《博弈论与经济行为》§18.4.4，pp. 176–178"
+  quote: "We shall get out at Canterbury."
+  verified: true
+  url: "https://www.gutenberg.org/ebooks/834"
+a:
+  name: 福尔摩斯
+  persona: 被追杀的侦探，冷静到近乎冷酷；他相信对手和自己一样聪明，所以问的是「换了我会怎么追」。
+  goal: 别和莫里亚蒂在同一站下车，最好能渡海脱身。
+b:
+  name: 莫里亚蒂
+  persona: 犯罪界的拿破仑，数学教授，把追杀当成一道推理题来解。
+  goal: 和福尔摩斯在同一站下车，截住他。
+lam: 2.0
+game:
+  kind: simultaneous
+  actions_a: [在坎特伯雷下车, 直达多佛]
+  actions_b: [在坎特伯雷截, 直追多佛]
+  salience_a: [0.2, 0.8]    # 不动脑筋：票买到多佛，目的地是欧陆
+  salience_b: [0.2, 0.8]    # 不动脑筋：他要去多佛，就追到多佛
+  u_a:                      # [福尔摩斯][莫里亚蒂]，取自冯·诺依曼的数值（÷50）
+    - [-2, 0]               # 坎特伯雷下车：被截住则死；他扑空则暂时平手
+    - [1, -2]               # 直达多佛：他在中途停下则顺利渡海；他也到多佛则死
+  u_b:
+    - [2, 0]
+    - [-1, 2]
+canonical:
+  depth_a: 1
+  depth_b: 1
+  choice_a: 在坎特伯雷下车
+  choice_b: 直追多佛
+  note: 两人都只比「直觉」多想一层：莫里亚蒂认定他去多佛，福尔摩斯料到这一点而中途下车。再往下想就开始循环，无限层的极限是混合策略（福尔摩斯六成下车，莫里亚蒂六成追到多佛）。

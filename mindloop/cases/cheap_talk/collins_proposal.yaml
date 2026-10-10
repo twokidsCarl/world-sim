@@ -1,0 +1,49 @@
+title: 柯林斯先生求婚
+hook: 她说的是「不」，他听到的是「再求一次」
+summary: >
+  柯林斯先生向伊丽莎白求婚，被明确拒绝。他毫不气馁：据他所知，
+  高雅的小姐头一回总要拒绝心里其实想嫁的人，这是规矩。伊丽莎白越是认真地说不，
+  他越当作欲迎还拒。她最后只好去找父亲，让一个他没法曲解的人来说这个「不」。
+source:
+  work: Pride and Prejudice（傲慢与偏见）
+  author: Jane Austen
+  year: "1813"
+  locator: "第一卷第十九章"
+  quote: "I shall choose to attribute it to your wish of increasing my love by suspense, according to the usual practice of elegant females."
+  verified: true
+  url: "https://en.wikisource.org/wiki/Pride_and_Prejudice_(1817)/Chapter_19"
+a:
+  name: 伊丽莎白
+  persona: 班纳特家的二女儿，聪明直率，说不就是不，没想到真话也会被当成客套。
+  goal: 让柯林斯先生相信她是真心拒绝，就此作罢。
+b:
+  name: 柯林斯先生
+  persona: 自命不凡的牧师，深信自己的条件无可挑剔，也深信自己懂得淑女的心思。
+  goal: 她若只是矜持就继续求婚；她若真不愿意就体面收场。
+lam: 1.0
+game:
+  kind: signaling
+  states: [真心拒绝, 欲迎还拒]
+  prior: [0.3, 0.7]       # 柯林斯眼里：以我的条件，她多半只是矜持
+  true_state: 0
+  messages:
+    - {text: 婉言谢绝}
+    - {text: 欣然答应, cost: 3}        # 一口答应：有失淑女的矜持
+    - {text: 请父亲出面回绝, cost: 2}  # 惊动长辈：把事情闹大
+  actions: [继续求婚, 就此作罢]
+  literal:           # [话][状态]：在柯林斯信奉的「规矩」里，头一回谢绝对两种心思都说得通
+    - [1, 0.7]
+    - [0, 0.3]
+    - [0.5, 0]
+  u_a:
+    - [-5, 5]        # 真心拒绝：只盼他作罢
+    - [5, -5]        # 欲迎还拒：盼他再求
+  u_b:
+    - [-5, 0]        # 她真不愿意：再求是自取其辱
+    - [5, -3]        # 她只是矜持：作罢就错过了
+canonical:
+  depth_a: 0
+  depth_b: 1
+  choice_a: 婉言谢绝
+  choice_b: 继续求婚
+  note: 伊丽莎白只是照实说（第 0 层）；柯林斯想了 1 层（淑女照例先拒绝），把真话打了折。伊丽莎白多想一层就会换一句他没法打折的话——原作里她正是转身去找父亲。

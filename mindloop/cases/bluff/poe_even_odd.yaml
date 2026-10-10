@@ -1,0 +1,37 @@
+title: 猜单双的小学生
+hook: 文学里最早的「你想到第几层」
+summary: >
+  杜宾讲起一个八岁男孩，他玩猜弹珠单双百战百胜：先判断对手有多聪明，
+  再决定自己比他多想一层。笨的对手输了会简单换边，稍聪明的会想到
+  「他以为我要换」而偏不换。
+source:
+  work: The Purloined Letter（失窃的信）
+  author: Edgar Allan Poe
+  year: "1844"
+  locator: 杜宾对「单双游戏」的讲述
+  quote: "I knew one about eight years of age, whose success at guessing in the game of 'even and odd' attracted universal admiration."
+  verified: true
+  url: "https://en.wikisource.org/wiki/The_Purloined_Letter"
+a:
+  name: 藏弹珠的孩子
+  persona: 上一轮出了「双」并且赢了。头脑简单的孩子这时会想换成「单」。
+  goal: 不让对方猜中。
+b:
+  name: 猜的男孩
+  persona: 八岁，擅长揣摩对手有多聪明，然后只比对方多想一层。
+  goal: 猜中对方手里是单是双。
+lam: 2.0
+game:
+  kind: simultaneous
+  actions_a: [出单, 出双]
+  actions_b: [猜单, 猜双]
+  salience_a: [0.7, 0.3]    # 不动脑筋：上轮出双，这轮换单
+  salience_b: [0.3, 0.7]    # 不动脑筋：上轮是双，就还猜双
+  u_a: [[-1, 1], [1, -1]]
+  u_b: [[1, -1], [-1, 1]]
+canonical:
+  depth_a: 0
+  depth_b: 1
+  choice_a: 出单
+  choice_b: 猜单
+  note: 面对「十足的笨蛋」，男孩只需想 1 层；面对稍聪明的（第 2 层），他想第 3 层。

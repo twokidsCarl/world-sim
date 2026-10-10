@@ -1,0 +1,47 @@
+title: 「有些」就是「不是全部」
+hook: 没说出口的那半句，是听的人自己推出来的
+summary: >
+  「有些同学及格了」字面上并不排除「全部及格」，可人人都听成「没有全部及格」。
+  理性言语行为（RSA）模型把这种言外之意算成一层层的互相揣摩：听者想，
+  他要是知道全部及格，为什么不直接说「全部」？格赖斯称之为「量的准则」。
+source:
+  work: Predicting Pragmatic Reasoning in Language Games
+  author: Michael C. Frank & Noah D. Goodman（思想源自 H. P. Grice, Logic and Conversation, 1975）
+  year: "2012"
+  locator: Science 336(6084), p. 998
+  quote: ""
+  verified: false
+a:
+  name: 说话者
+  persona: 刚改完卷子的老师，清楚到底有多少人及格，想用最省事的一句话让对方明白。
+  goal: 让听者对「是不是全部」得出正确结论。
+b:
+  name: 听者
+  persona: 等成绩的家长，只听到一句话，要自己判断话里没说的那一半。
+  goal: 判断到底是不是全部；实在拿不准就再问一句。
+theory: true
+lam: 1.0
+game:
+  kind: signaling
+  states: [有些但不是全部, 全部]
+  prior: [0.5, 0.5]
+  true_state: 0
+  messages:
+    - {text: 有些及格了}
+    - {text: 全部及格了}
+  actions: [认定不是全部, 再问一句, 认定是全部]
+  literal:           # [话][状态]：「有些」字面上两种情况都成立，「全部」只在全部时成立
+    - [1, 1]
+    - [0, 1]
+  u_a:               # 利益一致：听者猜对两人都得 10，多问一句也能弄清但费事
+    - [10, 7.5, 0]
+    - [0, 7.5, 10]
+  u_b:
+    - [10, 7.5, 0]
+    - [0, 7.5, 10]
+canonical:
+  depth_a: 1
+  depth_b: 2
+  choice_a: 有些及格了
+  choice_b: 认定不是全部
+  note: 只按字面听的人（第 0、1 层）听到「有些」只有六七成把握，宁可再问一句；第 2 层的听者想到「真是全部他就会说全部」，直接读出「不是全部」。
