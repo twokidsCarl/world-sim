@@ -84,6 +84,8 @@ class Sim:
         self.verified = np.zeros(n, dtype=bool)
         self.believed = np.zeros(n, dtype=bool)
         self.verified[self.banker] = True
+        self.silenced = np.zeros(n, dtype=bool)
+        self.closed_until = np.zeros(len(pop.venues), dtype=int)  # 场所关到第几个小时
 
         # 钱庄
         self.total = float(self.deposit.sum())
@@ -167,13 +169,36 @@ class Sim:
             self.held[iv.actor] = m
             self._think(iv.actor, "notice")
 
+    def _intervene(self, iv: Intervention) -> None:
+        if iv.kind == "broadcast":
+            self._broadcast(iv)
+        elif iv.kind == "close_venue":
+            v = self.pop.venues[iv.target]
+            self.closed_until[v.idx] = iv.t + iv.duration if iv.duration else self.p.ticks + 1
+            self._emit("intervene", b=v.idx, x=f"{v.name}被勒令关门" + (f" {iv.duration} 小时" if iv.duration else ""))
+        elif iv.kind == "silence":
+            self.silenced[iv.target] = True
+            self._emit("intervene", a=iv.target, x="被带走问话，不再开口")
+        elif iv.kind == "convince":
+            i = iv.target
+            self.L[i] = mind.logit(0.03)
+            self.verified[i] = True
+            self.zeal[i] = 1.0
+            self.status[i] = max(self.status[i], AWARE)
+            parent = int(self.held[i]) if self.held[i] >= 0 else None
+            self.held[i] = self._message(parent, i, -1, 1.0, self.sc.REBUTTAL[0])
+            self._emit("intervene", a=i, m=int(self.held[i]), x="被请到柜上看了库银，回去替钱庄说话")
+        elif iv.kind == "insurance":
+            self.stake *= 1 - iv.value
+            self._emit("intervene", x=f"官府宣布：存款若有损失，赔付 {round(iv.value * 100)}%")
+
     # ---- 一个 tick 的各步 ----
 
     def _spread(self, hour: int) -> None:
         p = self.p
         belief = mind.sigmoid(self.L)
         drive = np.where(self.verified, 0.5, mind.share_drive(belief, self.fear, self.stake)) * self.zeal
-        drive = np.where(self.held >= 0, drive, 0.0)
+        drive = np.where((self.held >= 0) & ~self.silenced, drive, 0.0)
 
         prob = p.share * _activity(hour)[self.kind] * self.strength * drive[self.src]
         for e in np.flatnonzero(self.rng.random(len(prob)) < prob):
@@ -182,7 +207,7 @@ class Sim:
 
         for v in self.pop.venues:
             who = self.members[v.idx]
-            if not (v.hours[0] <= hour < v.hours[1]) or len(who) < 2:
+            if not (v.hours[0] <= hour < v.hours[1]) or len(who) < 2 or self.t < self.closed_until[v.idx]:
                 continue
             present = who[self.rng.random(len(who)) < VENUE_ATTEND]
             speaking = present[self.rng.random(len(present)) < p.venue_share * drive[present]]
@@ -302,7 +327,7 @@ class Sim:
             if self.failed_at is None:
                 for iv in p.interventions:
                     if iv.t == t:
-                        self._broadcast(iv)
+                        self._intervene(iv)
                 pub = min(1.0, len(self.queue) / (QUEUE_FULL * self.n))
                 if awake:
                     self._spread(hour)

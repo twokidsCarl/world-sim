@@ -103,12 +103,15 @@ class Intervention(BaseModel):
     """对模拟世界的一次外部干预。"""
 
     t: int
-    kind: Literal["broadcast"] = "broadcast"
-    actor: Optional[int] = None
-    text: str
+    kind: Literal["broadcast", "close_venue", "silence", "convince", "insurance"] = "broadcast"
+    actor: Optional[int] = Field(None, description="broadcast：出面的人")
+    target: Optional[int] = Field(None, description="close_venue：场所下标；silence / convince：人的下标")
+    text: str = ""
     valence: Literal[1, -1] = -1
     strength: float = 1.5
-    reach: float = Field(0.5, ge=0, le=1, description="触达的人口比例")
+    reach: float = Field(0.5, ge=0, le=1, description="broadcast：触达的人口比例")
+    duration: int = Field(0, ge=0, description="close_venue：关几个小时，0 为一直关")
+    value: float = Field(0.0, ge=0, le=1, description="insurance：存款保险赔付比例")
 
 
 class Params(BaseModel):
@@ -151,7 +154,7 @@ class Event(BaseModel):
     """events.jsonl 的一行。键名取短，因为行数很多。"""
 
     t: int
-    k: Literal["seed", "tell", "mutate", "queue", "withdraw", "verify", "broadcast", "fail", "thought"]
+    k: Literal["seed", "tell", "mutate", "queue", "withdraw", "verify", "broadcast", "intervene", "fail", "thought"]
     a: Optional[int] = Field(None, description="行动者")
     b: Optional[int] = Field(None, description="对象")
     m: Optional[int] = Field(None, description="消息 id")

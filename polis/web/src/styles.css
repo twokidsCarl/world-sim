@@ -128,3 +128,17 @@ h1, h2, h3 { font-family: var(--serif); margin: 0; font-weight: 600; }
   .series { margin-left: 0; }
   .hint, .legend .item { display: none; }
 }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: -4px 0 0; }
+.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 12px; color: var(--ink-2); font-family: var(--serif); font-size: 15px; }
+.tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--rumor); }
+.fields { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.fields input[type='range'] { flex: 1; accent-color: var(--rumor); }
+.pending { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pending button { padding: 0 8px; }
+button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 600; }
+button:disabled { opacity: 0.45; cursor: default; }
+.error { color: var(--rumor); }
+.compare { border-collapse: collapse; width: 100%; font-size: 13px; }
+.compare th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 12px; padding: 4px 6px 4px 0; }
+.compare td { padding: 4px 6px 4px 0; border-top: 1px solid var(--line); }

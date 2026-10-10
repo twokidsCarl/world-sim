@@ -5,6 +5,7 @@ import {
   AWARE, BELIEF, EXPECT, FEAR, STATUS, STATUS_NAMES, clockText, personLog, value, type RunData, type SimEvent,
 } from '../state/derive.ts' // prettier-ignore
 import { useApp } from '../state/store.ts'
+import { Lab } from './Lab.tsx'
 
 const EDUCATION = ['不识字', '读过蒙学', '中学', '读过大学']
 const TIE: Record<string, string> = { kin: '家人', neighbor: '邻居', colleague: '同事', friend: '朋友' }
@@ -20,10 +21,24 @@ export function Side() {
   const run = useApp((s) => s.run)
   const selected = useApp((s) => s.selected)
   const k = useApp((s) => Math.floor(s.t))
+  const tab = useApp((s) => s.tab)
   if (!run) return <aside className="side" />
   return (
     <aside className="side">
-      {selected == null ? <Overview run={run} k={k} /> : <PersonView run={run} k={k} person={run.population.persons[selected]!} />}
+      <nav className="tabs" role="tablist">
+        {(['city', 'lab'] as const).map((key) => (
+          <button key={key} role="tab" aria-selected={tab === key} onClick={() => useApp.getState().setTab(key)}>
+            {key === 'city' ? '观察' : '实验台'}
+          </button>
+        ))}
+      </nav>
+      {tab === 'lab' ? (
+        <Lab run={run} />
+      ) : selected == null ? (
+        <Overview run={run} k={k} />
+      ) : (
+        <PersonView run={run} k={k} person={run.population.persons[selected]!} />
+      )}
     </aside>
   )
 }
@@ -38,7 +53,7 @@ function Overview({ run, k }: { run: RunData; k: number }) {
     const out: SimEvent[] = []
     for (let i = run.tickStart[k + 1]! - 1; i >= 0 && out.length < 9; i--) {
       const e = run.events[i]!
-      if (e.k === 'thought' || e.k === 'mutate' || e.k === 'broadcast' || e.k === 'fail') out.push(e)
+      if (e.k === 'thought' || e.k === 'mutate' || e.k === 'broadcast' || e.k === 'intervene' || e.k === 'fail') out.push(e)
     }
     return out
   }, [run, k])
@@ -263,6 +278,14 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
           <q>{msg?.text}</q>
           <span className="muted">（{Math.round(Number(e.x) * 100)}% 的人看到了）</span>
         </span>
+      )
+      break
+    case 'intervene':
+      body = (
+        <b>
+          {e.a != null && (e.a === self ? me : run.population.persons[e.a]!.name)}
+          {String(e.x)}
+        </b>
       )
       break
     case 'fail':

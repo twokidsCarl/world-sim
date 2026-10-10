@@ -50,6 +50,7 @@
             "withdraw",
             "verify",
             "broadcast",
+            "intervene",
             "fail",
             "thought"
           ],
@@ -156,8 +157,14 @@
           "type": "integer"
         },
         "kind": {
-          "const": "broadcast",
           "default": "broadcast",
+          "enum": [
+            "broadcast",
+            "close_venue",
+            "silence",
+            "convince",
+            "insurance"
+          ],
           "type": "string"
         },
         "actor": {
@@ -169,9 +176,23 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "broadcast：出面的人"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "close_venue：场所下标；silence / convince：人的下标"
         },
         "text": {
+          "default": "",
           "type": "string"
         },
         "valence": {
@@ -188,15 +209,27 @@
         },
         "reach": {
           "default": 0.5,
-          "description": "触达的人口比例",
+          "description": "broadcast：触达的人口比例",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "duration": {
+          "default": 0,
+          "description": "close_venue：关几个小时，0 为一直关",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "value": {
+          "default": 0.0,
+          "description": "insurance：存款保险赔付比例",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
         }
       },
       "required": [
-        "t",
-        "text"
+        "t"
       ],
       "type": "object"
     },

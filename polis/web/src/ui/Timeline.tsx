@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { clock, clockText, type RunData } from '../state/derive.ts'
 import { useApp } from '../state/store.ts'
+import { describe } from './Lab.tsx'
 
 const SERIES = [
   { key: 'aware', name: '听说了', color: 'var(--s-aware)' },
@@ -109,10 +110,31 @@ function Chart(props: {
     if (c.hour === 0) days.push({ k, day: c.day })
   }
 
-  const marks: { k: number; text: string }[] = []
-  for (const e of run.events) {
-    if (e.k === 'broadcast') marks.push({ k: e.t, text: '告示' })
-    if (e.k === 'fail') marks.push({ k: e.t, text: '倒闭' })
+  const compare = useApp((st) => st.compare)
+  const ensemble = useApp((st) => st.ensemble)
+  const marks: { k: number; text: string }[] = (run.manifest.params.interventions ?? []).map((iv) => ({
+    k: iv.t,
+    text: describe(run, iv).split('，')[0]!.slice(0, 5),
+  }))
+  if (run.manifest.summary.failed_at != null) marks.push({ k: run.manifest.summary.failed_at, text: '倒闭' })
+
+  // 集成的中间八成：上沿从左到右，下沿从右到左，围成一条带；倒闭后没有值的时刻断开
+  const band = (b: { lo: (number | null)[]; hi: (number | null)[] }, y: (v: number) => number): string => {
+    let d = ''
+    let from = -1
+    const close = (to: number) => {
+      if (from < 0) return
+      for (let k = from; k <= to; k++) d += `${k === from ? 'M' : 'L'}${x(k).toFixed(1)},${y(b.hi[k]!).toFixed(1)}`
+      for (let k = to; k >= from; k--) d += `L${x(k).toFixed(1)},${y(b.lo[k]!).toFixed(1)}`
+      d += 'Z'
+      from = -1
+    }
+    for (let k = 0; k <= ticks; k++) {
+      if (b.lo[k] == null) close(k - 1)
+      else if (from < 0) from = k
+    }
+    close(ticks)
+    return d
   }
 
   const scrub = (e: React.PointerEvent<SVGSVGElement>): number => {
@@ -162,13 +184,28 @@ function Chart(props: {
         <line key={d.k} x1={x(d.k)} x2={x(d.k)} y1={height - AXIS} y2={height - 2} stroke="var(--line)" />
       ))}
 
+      {ensemble && (
+        <g opacity={0.16}>
+          <path d={band(ensemble.bands.believers, y1)} fill="var(--s-believe)" />
+          <path d={band(ensemble.bands.withdrew, y1)} fill="var(--s-withdrew)" />
+          <path d={band(ensemble.bands.reserve, y2)} fill="var(--ink)" />
+        </g>
+      )}
+      {compare && (
+        <g strokeDasharray="5 4" opacity={0.75} fill="none" strokeWidth={1.5}>
+          <path d={line(compare.series.reserve, y2)} stroke="var(--ink)" />
+          {SERIES.map((d) => (
+            <path key={d.key} d={line(compare.series[d.key], y1)} stroke={d.color} />
+          ))}
+        </g>
+      )}
       <path d={line(s.reserve, y2)} fill="none" stroke="var(--ink)" strokeWidth={2} strokeLinejoin="round" />
       {SERIES.map((d) => (
         <path key={d.key} d={line(s[d.key], y1)} fill="none" stroke={d.color} strokeWidth={2} strokeLinejoin="round" />
       ))}
 
-      {marks.map((m) => (
-        <g key={m.text + m.k}>
+      {marks.map((m, i) => (
+        <g key={i}>
           <line x1={x(m.k)} x2={x(m.k)} y1={M.t - 2} y2={height - AXIS} stroke="var(--ink-2)" strokeDasharray="3 3" />
           <text className="mark-label" x={x(m.k)} y={M.t - 5} textAnchor="middle">
             {m.text}
