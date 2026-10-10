@@ -1,9 +1,17 @@
 // 全局状态。React 经 useApp 读；舞台渲染器订阅它并镜像到画布。
 import { create } from 'zustand'
-import type { Manifest, Message, Population, Series } from '../contract/types.gen.ts'
+import type { Intervention, Manifest, Message, Population, Series } from '../contract/types.gen.ts'
 import { assemble, parseEvents, type RunData } from './derive.ts'
 
 export type Theme = 'light' | 'dark'
+export type Tab = 'city' | 'lab'
+
+type Band = { lo: (number | null)[]; mid: (number | null)[]; hi: (number | null)[] }
+export interface Ensemble {
+  k: number
+  failed: number
+  bands: { believers: Band; withdrew: Band; reserve: Band }
+}
 
 export interface AppState {
   runs: Manifest[]
@@ -18,9 +26,22 @@ export interface AppState {
   selected: number | null
   hovered: number | null
   theme: Theme
+  tab: Tab
+  /** 分叉记录的父记录，画成虚线作对比 */
+  compare: { manifest: Manifest; series: Series } | null
+  ensemble: Ensemble | null
+  /** 实验台里已选好、还没重跑的干预 */
+  pending: Intervention[]
+  busy: '' | 'branch' | 'ensemble'
+  labError: string
 
   boot: () => Promise<void>
-  open: (runId: string) => Promise<void>
+  open: (runId: string, keepTime?: boolean) => Promise<void>
+  setTab: (tab: Tab) => void
+  addPending: (iv: Intervention) => void
+  removePending: (index: number) => void
+  branch: () => Promise<void>
+  runEnsemble: () => Promise<void>
   seek: (t: number) => void
   toggle: () => void
   setSpeed: (speed: number) => void
@@ -50,6 +71,12 @@ export const useApp = create<AppState>((set, getState) => ({
   selected: null,
   hovered: null,
   theme: initialTheme,
+  tab: 'city',
+  compare: null,
+  ensemble: null,
+  pending: [],
+  busy: '',
+  labError: '',
 
   boot: async () => {
     try {
@@ -62,7 +89,7 @@ export const useApp = create<AppState>((set, getState) => ({
     }
   },
 
-  open: async (runId) => {
+  open: async (runId, keepTime = false) => {
     set({ phase: 'loading', playing: false })
     try {
       const base = `/api/runs/${runId}`
@@ -75,9 +102,66 @@ export const useApp = create<AppState>((set, getState) => ({
         get(`${base}/frames.bin`).then((r) => r.arrayBuffer()),
       ])
       const run = assemble(manifest, population, messages, series, parseEvents(events), new Uint8Array(frames))
-      set({ run, phase: 'ready', t: 0, selected: null, hovered: null })
+      const json = <T,>(path: string) => get(path).then((r) => r.json() as Promise<T>)
+      const parent = manifest.parent
+      const compare = parent
+        ? await Promise.all([json<Manifest>(`/api/runs/${parent}/manifest.json`), json<Series>(`/api/runs/${parent}/series.json`)])
+            .then(([m, s]) => ({ manifest: m, series: s }))
+            .catch(() => null)
+        : null
+      // 集成结果是按需算的，没算过时接口返回 null
+      const ensemble = await json<Ensemble | null>(`${base}/ensemble.json`).catch(() => null)
+      const s = getState()
+      set({
+        run, compare, ensemble, phase: 'ready', pending: [], labError: '',
+        t: keepTime ? Math.min(s.t, manifest.ticks) : 0,
+        selected: keepTime ? s.selected : null,
+        hovered: null,
+      }) // prettier-ignore
     } catch (e) {
       set({ phase: 'error', error: `读取记录失败：${String(e)}` })
+    }
+  },
+
+  setTab: (tab) => set({ tab }),
+  addPending: (iv) => set({ pending: [...getState().pending, iv] }),
+  removePending: (index) => set({ pending: getState().pending.filter((_, i) => i !== index) }),
+
+  branch: async () => {
+    const s = getState()
+    if (!s.run || s.pending.length === 0) return
+    set({ busy: 'branch', labError: '' })
+    try {
+      const res = await fetch(`/api/runs/${s.run.manifest.run_id}/branch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interventions: s.pending }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? String(res.status))
+      const made = (await res.json()) as Manifest
+      set({ runs: (await (await get('/api/runs')).json()) as Manifest[] })
+      await getState().open(made.run_id, true)
+    } catch (e) {
+      set({ labError: `分叉失败：${e instanceof Error ? e.message : String(e)}` })
+    } finally {
+      set({ busy: '' })
+    }
+  },
+
+  runEnsemble: async () => {
+    const s = getState()
+    if (!s.run) return
+    const id = s.run.manifest.run_id
+    set({ busy: 'ensemble', labError: '' })
+    try {
+      const res = await fetch(`/api/runs/${id}/ensemble?k=20`, { method: 'POST' })
+      if (!res.ok) throw new Error(String(res.status))
+      const ensemble = (await res.json()) as Ensemble
+      if (getState().run?.manifest.run_id === id) set({ ensemble })
+    } catch (e) {
+      set({ labError: `集成失败：${e instanceof Error ? e.message : String(e)}` })
+    } finally {
+      set({ busy: '' })
     }
   },
 

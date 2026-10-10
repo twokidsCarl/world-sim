@@ -154,7 +154,7 @@ export class Stage {
 
   private fitView(): void {
     const extent = this.run?.population.extent ?? 1000
-    this.fit = Math.min(this.w, this.h) / (extent * 0.8)
+    this.fit = Math.min(this.w, this.h) / (extent * 0.88)
     this.scale = this.fit
     this.ox = (this.w - extent * this.scale) / 2
     this.oy = (this.h - extent * this.scale) / 2

@@ -28,7 +28,7 @@ export interface District {
  */
 export interface Event {
   t: number;
-  k: "seed" | "tell" | "mutate" | "queue" | "withdraw" | "verify" | "broadcast" | "fail" | "thought";
+  k: "seed" | "tell" | "mutate" | "queue" | "withdraw" | "verify" | "broadcast" | "intervene" | "fail" | "thought";
   /**
    * 行动者
    */
@@ -66,15 +66,30 @@ export interface Event {
  */
 export interface Intervention {
   t: number;
-  kind?: "broadcast";
+  kind?: "broadcast" | "close_venue" | "silence" | "convince" | "insurance";
+  /**
+   * broadcast：出面的人
+   */
   actor?: number | null;
-  text: string;
+  /**
+   * close_venue：场所下标；silence / convince：人的下标
+   */
+  target?: number | null;
+  text?: string;
   valence?: 1 | -1;
   strength?: number;
   /**
-   * 触达的人口比例
+   * broadcast：触达的人口比例
    */
   reach?: number;
+  /**
+   * close_venue：关几个小时，0 为一直关
+   */
+  duration?: number;
+  /**
+   * insurance：存款保险赔付比例
+   */
+  value?: number;
 }
 /**
  * This interface was referenced by `Contract`'s JSON-Schema
