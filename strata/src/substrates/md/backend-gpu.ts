@@ -74,6 +74,7 @@ export class MdGpuBackend implements MdBackend {
   private lastT: number
   private lambda = 1
   private pendingKick: number | null = null
+  private pendingReverse = false
   private heat = 0
   private e0 = 0
   private rebaseEpoch = 1
@@ -259,7 +260,12 @@ export class MdGpuBackend implements MdBackend {
     if (this.inFlight >= 2 || this.disposed) return
     const { dt, thermostat, temperature: target } = this.p
     let rescale = false
-    if (this.pendingKick !== null) {
+    if (this.pendingReverse) {
+      // Scaling every velocity by -1 reverses time; it adds no kinetic energy.
+      this.pendingReverse = false
+      this.lambda = -1
+      rescale = true
+    } else if (this.pendingKick !== null) {
       this.lambda = Math.sqrt(this.pendingKick / Math.max(this.lastT, 1e-9))
       this.lastT = this.pendingKick
       this.pendingKick = null
@@ -286,6 +292,11 @@ export class MdGpuBackend implements MdBackend {
     this.time += n * dt
     // The thermostat needs a current temperature even when no view is subscribed.
     if (thermostat && this.reducing === 0 && this.stepCount - this.lastReduceStep >= 48) void this.reduce([])
+  }
+
+  /** Reverse time by negating velocities; f32 rounding means the path back is only approximate. */
+  reverse(): void {
+    this.pendingReverse = true
   }
 
   async reduce(ids: readonly string[]): Promise<MdFrame> {

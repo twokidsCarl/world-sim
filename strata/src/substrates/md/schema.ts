@@ -182,6 +182,22 @@ export const MD_KNOBS: Knob[] = [
     ],
   },
   {
+    id: 'integrator',
+    label: '积分器',
+    tag: 'numerical',
+    min: 0,
+    max: 1,
+    step: 1,
+    default: 0,
+    rebuild: 'state',
+    options: [
+      { value: 0, label: '浮点 Verlet' },
+      { value: 1, label: '整数坐标（逐位可逆）' },
+    ],
+    note: '牛顿力学在微观上是时间可逆的。浮点运算的舍入会破坏这一点；把坐标取成整数后，倒放能一位不差地回到起点。整数积分器不支持恒温器、壁面和驱动力。',
+    when: (p) => p.backend === 0,
+  },
+  {
     id: 'backend',
     label: '计算后端',
     tag: 'numerical',

@@ -3,6 +3,7 @@ import type { Frame, RunBackend } from '../../core/substrate'
 import { speciesField, speciesTables, type PairField, type PotentialSpec } from './potential'
 import { initTriangular } from './ref/init'
 import { fieldSums, rdf, scalars, speedHistogram, type FieldSums, type Hist, type MdScalars } from './ref/reducers'
+import { reverseTime, stepReversible, toReversible, type ReversibleState } from './ref/reversible'
 import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
 import { boxAspect, fieldKey, potentialSpec, strengthMatrix } from './schema'
 
@@ -21,6 +22,10 @@ export interface MdFrame extends Frame {
   speedHist?: Hist
   rdf?: Hist
   field?: FieldSums
+  /** Steps since the start, counted backwards while time is reversed. */
+  clock?: number
+  /** Largest displacement of any particle from where it started, in σ. CPU backend only. */
+  distance?: number
   /** Box lengths, for turning cell sums into densities. */
   box: ArrayLike<number>
 }
@@ -46,6 +51,10 @@ export class MdCpuBackend implements MdBackend {
   private time = 0
   private heat = 0
   private e0 = 0
+  private reversible: ReversibleState | null = null
+  private start: Float64Array
+  private direction = 1
+  private clock = 0
 
   constructor(p: Params, seed: number) {
     this.p = { ...p }
@@ -69,6 +78,8 @@ export class MdCpuBackend implements MdBackend {
     this.applyDrive()
     // Forces were computed before the walls were switched on.
     if (this.state.walls) computeForces(this.state, this.pair)
+    if (p.integrator === 1 && !p.walls) this.reversible = toReversible(this.state, this.pair, p.dt)
+    this.start = this.state.pos.slice()
     this.rebase()
   }
 
@@ -122,8 +133,33 @@ export class MdCpuBackend implements MdBackend {
     this.applyDrive()
   }
 
+  /** Reverse time: exactly with the integer integrator, by negating velocities otherwise. */
+  reverse(): void {
+    if (this.reversible) reverseTime(this.reversible, this.pair, this.p.dt)
+    else for (let k = 0; k < this.state.vel.length; k++) this.state.vel[k] *= -1
+    this.direction *= -1
+  }
+
+  /** Largest minimum-image displacement of any particle from its starting position. */
+  private distance(): number {
+    const { pos, box, dim, walls } = this.state
+    let worst = 0
+    for (let k = 0; k < pos.length; k++) {
+      let d = pos[k] - this.start[k]
+      if (!(walls && k % dim === 1)) d -= box[k % dim] * Math.round(d / box[k % dim])
+      worst = Math.max(worst, Math.abs(d))
+    }
+    return worst
+  }
+
   step(n: number): void {
     const { dt, thermostat, temperature: target } = this.p
+    this.clock += n * this.direction
+    if (this.reversible) {
+      stepReversible(this.reversible, this.pair, dt, n)
+      this.time += n * dt
+      return
+    }
     for (let i = 0; i < n; i++) {
       step(this.state, this.pair, dt)
       this.time += dt
@@ -145,6 +181,7 @@ export class MdCpuBackend implements MdBackend {
       time: this.time,
       spec: this.spec,
       box: s.box,
+      clock: this.clock,
       drift: (this.energy() - this.heat - this.e0) / s.n,
     }
     const sc = scalars(s)
@@ -152,6 +189,7 @@ export class MdCpuBackend implements MdBackend {
     if (ids.includes('speedHist')) frame.speedHist = speedHistogram(s, 40, 4 * Math.sqrt(sc.temperature))
     if (ids.includes('rdf')) frame.rdf = rdf(s, 120, 4)
     if (ids.includes('field')) frame.field = fieldSums(s)
+    if (ids.includes('distance')) frame.distance = this.distance()
     return frame
   }
 

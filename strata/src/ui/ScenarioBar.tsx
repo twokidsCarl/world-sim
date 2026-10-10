@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SCENARIOS } from '../scenarios'
+import { engine } from './engine'
 import { scenarioPlayer, type ScenarioState } from './scenario'
 
 export function ScenarioBar() {
@@ -7,7 +8,8 @@ export function ScenarioBar() {
   useEffect(() => scenarioPlayer.subscribe(setState), [])
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('scenario')
-    if (id) scenarioPlayer.start(id)
+    // Wait for the backend choice to settle, or it would override the scenario's settings.
+    if (id) void engine.init().then(() => scenarioPlayer.start(id))
   }, [])
 
   if (!state) {

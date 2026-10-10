@@ -25,6 +25,8 @@ export interface RunBackend<F extends Frame> extends Backend<F> {
   readonly stepCount: number
   /** Cap on simulation steps per display frame, for backends whose step is expensive. */
   readonly maxStepsPerFrame?: number
+  /** Reverse the direction of time, where the dynamics allow it. */
+  reverse?(): void
 }
 
 export interface Substrate<F extends Frame> {

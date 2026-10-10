@@ -44,6 +44,11 @@ export function App() {
               </button>
             ))}
           </div>
+          {substrateId === 'md' && (
+            <button onClick={() => engine.reverse()} title="把时间方向反过来">
+              倒放
+            </button>
+          )}
           <button onClick={toggle}>{running ? '暂停' : '继续'}</button>
           <button onClick={() => engine.reset()}>重置</button>
         </div>
