@@ -1,0 +1,24 @@
+# Manual FMA assignments for Z-Anatomy names that neither an FMA label/synonym match nor TA2 -> Wikidata -> FMA resolves.
+# zaName (unsided)	fmaLabels (exact FMA 5.1.0 label or synonym, ';' = tried in order; '-' = leave null)	basis / note
+(Communicating branch of median nerve with ulnar nerve)	Ulnar nerve-median nerve communicating branch	Z-Anatomy marks it inconstant (parentheses); FMA326786 is the median-ulnar communicating branch, a 'Variant anatomical structure'
+Anterior branch of medial antebrachial cutaneous nerve	-	no FMA 5.1.0 class for the anterior branch (only FMA39079 Medial cutaneous nerve of forearm and its trunk)
+Posterior branch of medial antebrachial cutaneous nerve	-	no FMA 5.1.0 class for the posterior branch
+Anterior division of mandibular nerve	Anterior trunk of mandibular nerve	TA 'anterior division' of the mandibular nerve is the anterior trunk (FMA53059, child of 'Trunk of mandibular nerve')
+Posterior division of mandibular nerve	Posterior trunk of mandibular nerve	TA 'posterior division' of the mandibular nerve is the posterior trunk (FMA53061)
+Anterior root of posterior femoral cutaneous nerve	-	FMA names the roots by segment (S1/S2/S3 root of posterior femoral cutaneous nerve), not anterior/posterior
+Posterior root of posterior femoral cutaneous nerve	-	as above
+Common palmar digital branches of ulnar nerve	Common palmar digital branch of ulnar nerve	FMA class is singular (FMA323341); used for the set
+Common plantar digital branches of medial plantar nerve	-	FMA names them individually (first to third common plantar digital nerve); 'Medial common plantar digital nerve' is a synonym of the FOURTH one, a branch of the lateral plantar nerve, so it is not used
+Common plantar digital branches of lateral plantar nerve	-	FMA names them individually (fourth/fifth common plantar digital nerve); no class for the set
+Deep branch of radial nerve	Deep branch of radial nerve	FMA lists it as a synonym of Posterior interosseous nerve (FMA77559)
+Dorsal digital branches of ulnar nerve	Dorsal digital branch of ulnar nerve	FMA class is singular (FMA323340); used for the set
+Muscular branches of axillary nerve	Set of muscular branches of axillary nerve	FMA75503
+Muscular branches of deep fibular nerve	Set of muscular branches of deep fibular nerve	FMA75509
+Proper palmar digital branches of median nerve	Proper palmar digital branch of median nerve	FMA class is singular (FMA44853); used for the set
+Proper palmar digital branches of ulnar nerve	Proper palmar digital branch of ulnar nerve	FMA class is singular (FMA272344); used for the set
+Proper plantar digital branches of lateral plantar nerve	-	FMA has only the generic 'Set of proper plantar digital nerves' (FMA75493); not asserted
+Proper plantar digital branches of medial plantar nerve	-	as above
+Sympathetic nerves	-	heterogeneous set of 19 branches (rami communicantes and others); no single FMA class
+Anterior division of middle trunk of brachial plexus	Middle anterior division of brachial plexus;Middle anterior division of brachial nerve plexus	FMA names the divisions 'Superior/Middle/Inferior anterior division of brachial plexus'; the superior and inferior ones resolve through TA2 -> Wikidata, the middle one has no Wikidata link
+Ganglia of sympathetic trunk	Ganglion of sympathetic trunk	FMA5891 Paravertebral ganglion (synonym 'Ganglion of sympathetic trunk'); singular class used for the set of 18 ganglia
+Dorsal digital branches of deep fibular nerve	-	TA2 -> Wikidata gives FMA75491 'Set of dorsal digital nerves of foot', which in TA denotes the superficial fibular set; not asserted for the deep fibular branches
