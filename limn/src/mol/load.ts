@@ -3,6 +3,7 @@ import { mul4, parseOperExpression } from './assembly'
 import { El, IDENTITY, type Assembly, type Chain, type Entity, type EntityKind, type Molecule } from './types'
 
 const WATER = new Set(['HOH', 'DOD', 'WAT'])
+const SUGAR = new Set(['NAG', 'NDG', 'MAN', 'BMA', 'FUC', 'FUL', 'GAL', 'GLA', 'GLC', 'BGC', 'SIA', 'XYP', 'A2G'])
 const LIPID = new Set(['POV', 'PCW', 'CLR', 'PLM', 'OLC', 'LHG', 'CDL', 'PEE', 'PGV', 'Y01', 'LMT', 'POPC'])
 
 function elementOf(sym: string): El {
@@ -171,7 +172,8 @@ export async function parseCif(data: Uint8Array | string, id: string): Promise<M
     if (e.kind !== 'ligand') continue
     const row = findRow(site, asym, ch.asymId)
     const name = row >= 0 ? comp.str(row) : ''
-    if (LIPID.has(name)) e.kind = 'lipid'
+    if (SUGAR.has(name)) e.kind = 'glycan'
+    else if (LIPID.has(name)) e.kind = 'lipid'
     else if (ch.count === 1) e.kind = 'ion'
   }
 

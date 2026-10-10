@@ -9,8 +9,8 @@
 | | 内容 | 状态 |
 |---|---|---|
 | M0 | 风格研究：分析 12 张 Goodsell 原图，写成风格准则 | 完成，见 [docs/style-guide.md](docs/style-guide.md) |
-| M1 | 渲染核心：移植 Illustrate 的描边、阴影算法到 WebGL2 | 进行中（结构解析与组装体展开已完成，在 `src/mol/`） |
-| M2 | 网页应用：旋转、调色、高分辨率导出 | 未开始 |
+| M1 | 渲染核心：移植 Illustrate 的描边、阴影算法到 WebGL2 | 完成，见 `src/render/`。尚未与原版 Illustrate 的输出逐像素对照 |
+| M2 | 网页应用：旋转、调色、高分辨率导出 | 基本可用：按 PDB 编号载入、选组装体、改角色、调线条与阴影、导出 PNG |
 | M3 | 主题解析：自由文本 → 真实结构（RCSB / UniProt / SIFTS / AlphaFold） | 未开始 |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 未开始 |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 未开始 |
@@ -23,7 +23,13 @@ bun run typecheck
 bun run test
 ```
 
-网页应用和本地服务（`bun run dev`，端口 5184）要到 M2 才可用。
+```sh
+bun run dev:web               # http://127.0.0.1:5184/?id=2hhb
+```
+
+输入 4 位 PDB 编号载入结构。拖动旋转，滚轮缩放，Shift 拖动平移。试过的例子：`2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
+
+本地服务（主题解析、看图精修）要到 M3 才有，`bun run dev` 现在还不能用。
 
 重做风格分析：
 
