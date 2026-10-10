@@ -1,0 +1,14 @@
+[
+  { "id": "integumentary", "name": { "en": "Integumentary system", "zh": "皮肤系统" }, "color": "#E3B291" },
+  { "id": "muscular", "name": { "en": "Muscular system", "zh": "肌肉系统" }, "color": "#A8463F" },
+  { "id": "skeletal", "name": { "en": "Skeletal system", "zh": "骨骼系统" }, "color": "#E8E0C8" },
+  { "id": "cardiovascular", "name": { "en": "Cardiovascular system", "zh": "心血管系统" }, "color": "#E0243B" },
+  { "id": "nervous", "name": { "en": "Nervous system", "zh": "神经系统" }, "color": "#F2CC3D" },
+  { "id": "respiratory", "name": { "en": "Respiratory system", "zh": "呼吸系统" }, "color": "#62B6E0" },
+  { "id": "digestive", "name": { "en": "Digestive system", "zh": "消化系统" }, "color": "#D98A3C" },
+  { "id": "urinary", "name": { "en": "Urinary system", "zh": "泌尿系统" }, "color": "#2F8F8C" },
+  { "id": "reproductive", "name": { "en": "Reproductive system", "zh": "生殖系统" }, "color": "#D277B5" },
+  { "id": "endocrine", "name": { "en": "Endocrine system", "zh": "内分泌系统" }, "color": "#8A68C4" },
+  { "id": "lymphatic", "name": { "en": "Lymphatic system", "zh": "淋巴系统" }, "color": "#79C46A" },
+  { "id": "other", "name": { "en": "Other", "zh": "其他" }, "color": "#9AA0A6" }
+]
