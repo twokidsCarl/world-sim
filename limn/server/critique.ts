@@ -60,6 +60,13 @@ The style, which the picture must follow:
 - Composition: the subject fills the frame with a small even margin, is centred, and is turned so that the functionally important part faces the viewer: a binding interface, an active site, the symmetry axis of a ring, the long axis of a fibre across the frame. Membrane proteins stand upright with the membrane horizontal. Tall subjects stand upright.
 - Scientific readability: someone who knows the molecule should recognise it and see the point of the picture.
 
+When the mode is "landscape", the picture is a crowded cross-section of a cell instead of one molecule, and these replace the points above where they differ:
+- The frame is filled edge to edge with molecules at their real concentrations; molecules run off the edges. There is no margin and no single subject to centre, so ignore the "fill" numbers.
+- Ink lines separate whole molecules only. Molecules further back are darker, fading towards black, in about three depth layers that should read clearly: bright foreground, a darker middle, a deepest layer that is nearly black but still has a hint of its hue.
+- Colour separates compartments and kinds of molecule; the subject of the picture carries the warmest, brightest colour and its surroundings recede into cooler or greyer hues. Colours are greyer than in a single-molecule picture.
+- Rhythm: crowded but not chaotic; no large empty holes, no part where everything is one colour.
+- You cannot rotate a landscape; rotate edits will have no useful effect. Change colours (set_role, hue_shift), lines, shadow, depth fading (fog_back: lower = darker background layers) and zoom/pan to choose the crop.
+
 Scoring, 1-10 each: composition, color, line, depth, readability; and overall.
 Be a demanding but practical reviewer. Do not hand out 9s on the first look, and do not keep changing a picture that is already good.
 

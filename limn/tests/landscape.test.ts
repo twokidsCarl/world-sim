@@ -1,0 +1,162 @@
+import { describe, expect, it } from 'vitest'
+import { packScene } from '../src/landscape/build'
+import { parseSdf } from '../src/landscape/lipid'
+import { rng } from '../src/landscape/pack'
+import { IDENTITY, type Molecule } from '../src/mol/types'
+import type { LandscapeSpec } from '../src/scene/spec'
+import { BOX, resolveLandscape } from '../server/landscape'
+import type { Deps } from '../server/resolve'
+import type { EntryInfo } from '../server/sources/rcsb'
+
+const entry = (id: string, atoms: number): EntryInfo => ({
+  id, title: id, method: 'X-RAY DIFFRACTION', resolution: 2, year: 2010, atoms,
+  assemblies: [{ id: '1', atoms, chains: 1, symmetry: 'C1' }],
+  entities: [{ entityId: '1', kind: 'protein', description: 'protein ' + id, organism: 'Escherichia coli', chains: 1, length: atoms / 8, uniprot: [] }],
+})
+
+function deps(recipe: any, picks: any): Deps {
+  let call = 0
+  const known = new Map([['1AAA', entry('1AAA', 3000)], ['2BBB', entry('2BBB', 6000)], ['3CCC', entry('3CCC', 150000)]])
+  return {
+    ask: (async () => (call++ === 0 ? recipe : picks)) as Deps['ask'],
+    searchText: async (q) => (q === 'small' ? ['1AAA'] : q === 'medium' ? ['2BBB'] : q === 'big' ? ['3CCC'] : []),
+    entryInfo: async (ids) => ids.map((i) => known.get(i)).filter((x): x is EntryInfo => !!x),
+    findProtein: async () => [], bestStructures: async () => [], alphafold: async () => null,
+  }
+}
+
+const ing = (name: string, query: string, uM: number, over: any = {}) => ({
+  name, compartment: 'below', concentration_uM: uM, per_square_micron: 0, feature: false, role: 'soluble', queries: [query], suggested_pdb_ids: [], ...over,
+})
+const recipe = (ingredients: any[], over: any = {}) => ({
+  title: 't', caption: 'c', membrane: false, above: '', below: 'cytoplasm', density_above_g_per_L: 0, density_below_g_per_L: 300, notes: [], ingredients, ...over,
+})
+const pick = (...ids: string[]) => ({ picks: ids.map((id, i) => ({ ingredient: i, source_id: id, assembly_id: '1' })) })
+
+describe('resolveLandscape', () => {
+  it('scales ordinary ingredients so the mass drawn matches the stated density', async () => {
+    const spec = await resolveLandscape('x', deps(recipe([ing('a', 'small', 100), ing('b', 'medium', 50)]), pick('1AAA', '2BBB')))
+    const L = spec.landscape!
+    const volume = BOX.width * BOX.height * BOX.depth
+    const mass = L.ingredients.reduce((s, x) => s + x.copies * [3000, 6000][x.panel]! * 13.7, 0)
+    const gPerL = mass / (volume * 6.022e-4)
+    expect(gPerL).toBeGreaterThan(280)
+    expect(gPerL).toBeLessThan(320)
+    // proportions kept: 100 µM against 50 µM
+    expect(L.ingredients[0]!.copies / L.ingredients[1]!.copies).toBeCloseTo(2, 0)
+  })
+
+  it('shows a featured molecule once without scaling it, and says the numbers are estimates', async () => {
+    const spec = await resolveLandscape('x', deps(recipe([ing('rare', 'big', 0.01, { feature: true, role: 'focus' }), ing('a', 'small', 100)]), pick('3CCC', '1AAA')))
+    expect(spec.landscape!.ingredients[0]).toMatchObject({ copies: 1, feature: true })
+    expect(spec.notes.join(' ')).toMatch(/估计/)
+    expect(spec.notes.join(' ')).toMatch(/随机排布/)
+  })
+
+  it('only accepts a structure found for that very ingredient', async () => {
+    // the model assigns ingredient 0 a structure that was found for ingredient 1
+    const spec = await resolveLandscape('x', deps(recipe([ing('a', 'small', 100), ing('b', 'medium', 50)]), pick('2BBB', '2BBB')))
+    expect(spec.panels.map((p) => p.source.id)).toEqual(['2BBB'])
+    expect(spec.notes.join(' ')).toContain('未能画出：a')
+  })
+
+  it('uses area, not volume, for membrane proteins', async () => {
+    const r = recipe([ing('channel', 'medium', 0, { compartment: 'membrane', per_square_micron: 5000, role: 'membrane' }), ing('a', 'small', 100)], { membrane: true, above: 'outside', density_above_g_per_L: 0 })
+    const spec = await resolveLandscape('x', deps(r, pick('2BBB', '1AAA')))
+    const m = spec.landscape!.ingredients.find((x) => x.compartment === 'membrane')!
+    expect(m.copies).toBe(Math.round(5000 * BOX.width * BOX.depth * 1e-8))
+  })
+})
+
+/** A chain of `n` points in a lumpy ball, standing in for a protein. */
+function fakeProtein(id: string, n: number, size: number, seed: number): Molecule {
+  const r = rng(seed)
+  const pos = new Float32Array(n * 3)
+  for (let i = 0; i < n * 3; i++) pos[i] = (r() - 0.5) * size
+  return {
+    id, title: id, atomCount: n, pos, element: new Uint8Array(n), chainOf: new Uint32Array(n), isTrace: new Uint8Array(n), residue: new Int32Array(n),
+    chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count: n }],
+    entities: [{ id: '1', description: id, kind: 'protein' }],
+    assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
+  }
+}
+
+const centreOf = (m: Float32Array, mol: Molecule) => {
+  let c = [0, 0, 0]
+  for (let i = 0; i < mol.atomCount; i++) for (let a = 0; a < 3; a++) c[a]! += mol.pos[i * 3 + a]! / mol.atomCount
+  return [0, 1, 2].map((a) => m[a]! * c[0]! + m[4 + a]! * c[1]! + m[8 + a]! * c[2]! + m[12 + a]!)
+}
+
+describe('packScene', () => {
+  const lipid = parseSdf(['POV', '', '', '  3  0  0  0  0  0  0  0  0  0999 V2000',
+    '    0.0000   12.0000    0.0000 P   0  0', '    0.0000    0.0000    0.0000 C   0  0', '    0.0000  -12.0000    0.0000 C   0  0', 'M  END'].join('\n'), 'POV')
+  const spec: LandscapeSpec = {
+    width: 400, height: 400, depth: 120, membrane: true, above: 'out', below: 'in',
+    ingredients: [
+      { panel: 0, compartment: 'above', copies: 12, abundance: '', feature: false },
+      { panel: 1, compartment: 'below', copies: 12, abundance: '', feature: false },
+      { panel: 2, compartment: 'membrane', copies: 2, abundance: '', feature: true },
+    ],
+  }
+  const mols = [fakeProtein('OUT', 600, 40, 1), fakeProtein('IN', 600, 40, 2), fakeProtein('MEM', 900, 50, 3)]
+  const packed = packScene(mols.map((mol) => ({ mol, assembly: 'asym' })), spec, lipid, 5)
+
+  it('keeps each kind of molecule on its own side of the membrane', () => {
+    expect(packed.places[0]!.length).toBeGreaterThan(6)
+    for (const m of packed.places[0]!) expect(centreOf(m, mols[0]!)[1]!).toBeGreaterThan(20)
+    for (const m of packed.places[1]!) expect(centreOf(m, mols[1]!)[1]!).toBeLessThan(-20)
+    for (const m of packed.places[2]!) expect(Math.abs(centreOf(m, mols[2]!)[1]!)).toBeLessThan(1)
+  })
+
+  it('lays two leaflets of lipid, heads outward, leaving room for membrane proteins', () => {
+    expect(packed.lipids.length).toBeGreaterThan(500)
+    let up = 0, down = 0
+    for (const m of packed.lipids) {
+      // the phosphorus (first atom) is the head
+      const headY = m[1]! * 0 + m[5]! * 12 + m[13]!
+      const tailY = m[1]! * 0 + m[5]! * -12 + m[13]!
+      expect(Math.abs(headY)).toBeGreaterThan(Math.abs(tailY))
+      headY > 0 ? up++ : down++
+    }
+    expect(Math.abs(up - down)).toBeLessThan(0.1 * packed.lipids.length)
+    // fewer lipids than a bare membrane of this size would hold
+    const bare = packScene(mols.map((mol) => ({ mol, assembly: 'asym' })), { ...spec, ingredients: spec.ingredients.slice(0, 2) }, lipid, 5)
+    expect(packed.lipids.length).toBeLessThan(bare.lipids.length)
+  })
+
+  it('keeps every molecule behind the cut face', () => {
+    packed.places.forEach((list, p) => list.forEach((m) => expect(centreOf(m, mols[p]!)[2]!).toBeLessThan(0)))
+  })
+})
+
+describe('membrane proteins that are only an ectodomain', () => {
+  // a rod along x: N-terminus at x = 0, C-terminus at x = 80
+  const n = 80
+  const rod: Molecule = {
+    ...fakeProtein('ROD', n, 1, 1),
+    pos: new Float32Array(Array.from({ length: n }, (_, i) => [i, Math.sin(i) * 3, Math.cos(i) * 3]).flat()),
+    isTrace: new Uint8Array(n).fill(1),
+    residue: new Int32Array(Array.from({ length: n }, (_, i) => i + 1)),
+  }
+  const scene = (anchor: 'above' | 'below', terminus: 'N' | 'C'): LandscapeSpec => ({
+    width: 300, height: 400, depth: 120, membrane: true, above: 'out', below: 'in',
+    ingredients: [{ panel: 0, compartment: 'membrane', copies: 3, abundance: '', feature: true, anchor, terminus }],
+  })
+  const at = (m: Float32Array, i: number) => m[1]! * rod.pos[i * 3]! + m[5]! * rod.pos[i * 3 + 1]! + m[9]! * rod.pos[i * 3 + 2]! + m[13]!
+
+  it('stands on the stated face with the stated end of the chain at the membrane', () => {
+    for (const [anchor, terminus] of [['above', 'C'], ['above', 'N'], ['below', 'C'], ['below', 'N']] as const) {
+      const packed = packScene([{ mol: rod, assembly: 'asym' }], scene(anchor, terminus), null, 3)
+      expect(packed.places[0]!.length).toBe(3)
+      for (const m of packed.places[0]!) {
+        const near = at(m, terminus === 'N' ? 0 : n - 1), far = at(m, terminus === 'N' ? n - 1 : 0)
+        const side = anchor === 'above' ? 1 : -1
+        // the whole molecule is outside the membrane, on the right side...
+        expect(near * side).toBeGreaterThan(15)
+        // ...and the anchored end is the one nearer the membrane
+        expect(Math.abs(near)).toBeLessThan(Math.abs(far))
+        expect(Math.abs(near)).toBeLessThan(40)
+      }
+    }
+  })
+})

@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { dragRotate, fit, type Mat3 } from '../render/camera'
+import { packScene, placedCenter } from '../landscape/build'
+import { dragRotate, fit, identity3, type Mat3 } from '../render/camera'
 import { Renderer, type View } from '../render/Renderer'
 import { buildItem } from '../scene/build'
 import { gridLayout, type Slot } from '../scene/layout'
 import { useStore, type Look } from '../state/store'
-import { atomColors } from '../style/assign'
-import { TONE_MOLECULE } from '../style/palettes'
+import { atomColors, type Coloring } from '../style/assign'
+import { TONE_LANDSCAPE, TONE_MOLECULE } from '../style/palettes'
+
+/** The bilayer is one pale yellow-green wash, as in Goodsell's membranes. */
+const LIPID_COLORING: Coloring = { roles: ['membrane'], hueShift: [0], nudge: [0], override: [[0.8, 0.085, 112]] }
 
 /** The renderer of the visible canvas, shared with export and the review loop. */
 export const stage: { renderer: Renderer | null; slots: Slot[] } = { renderer: null, slots: [] }
@@ -16,6 +20,17 @@ export const stage: { renderer: Renderer | null; slots: Slot[] } = { renderer: n
  * the shape of the frame.
  */
 export function viewFor(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'>, aspect: number): View {
+  const land = useStore.getState().spec?.landscape
+  if (land) {
+    // A landscape is a fixed slab seen face-on; the frame is cropped inside
+    // it so that molecules run off every edge.
+    stage.slots = []
+    const height = Math.min(land.height, land.width / aspect) / look.zoom
+    const width = height * aspect
+    const cx = Math.max(-(land.width - width) / 2, Math.min((land.width - width) / 2, -look.shift[0] * width))
+    const cy = Math.max(-(land.height - height) / 2, Math.min((land.height - height) / 2, -look.shift[1] * height))
+    return { rot: identity3(), center: [cx, cy, -land.depth / 2], height, clipFront: Infinity, fogSpan: [-8, -land.depth - 30] }
+  }
   const n = useStore.getState().panels.length
   if (n > 1) {
     const locals = Array.from({ length: n }, (_, i) => r.localBounds(i)!).filter(Boolean)
@@ -40,6 +55,8 @@ export function viewFor(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'>,
 
 /** The frame shape that suits the subject: its own proportions, within reason. */
 export function figureAspect(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'>): number {
+  const land = useStore.getState().spec?.landscape
+  if (land) return land.width / land.height
   const n = useStore.getState().panels.length
   if (n > 1) {
     const locals = Array.from({ length: n }, (_, i) => r.localBounds(i)!).filter(Boolean)
@@ -97,7 +114,14 @@ export function Stage() {
     pending.current = requestAnimationFrame(() => {
       const r = stage.renderer
       const s = useStore.getState()
-      if (!r || s.panels.length === 0) return
+      if (!r) return
+      if (s.panels.length === 0) {
+        // resizing a canvas clears it to black; an empty stage should be paper
+        r.gl.bindFramebuffer(r.gl.FRAMEBUFFER, null)
+        r.gl.clearColor(1, 1, 1, 1)
+        r.gl.clear(r.gl.COLOR_BUFFER_BIT)
+        return
+      }
       const aspect = r.canvas.width / r.canvas.height
       const v = viewFor(r, s, aspect)
       const t0 = performance.now()
@@ -141,8 +165,27 @@ export function Stage() {
   useEffect(() => {
     const r = stage.renderer
     if (!r || panels.length === 0) return
-    const cs = useStore.getState().colorings
-    r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined })))
+    const st = useStore.getState()
+    const cs = st.colorings
+    const land = st.spec?.landscape
+    if (land) {
+      const packed = packScene(panels.map((p) => ({ mol: p.mol, assembly: p.spec.assembly })), land, st.lipid, st.seed)
+      let molecule = 0
+      const items = panels.map((p, i) =>
+        buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, packed.places[i]!.map((matrix) => ({ assembly: p.spec.assembly, matrix, molecule: molecule++, center: placedCenter(matrix, packed.centers[i]!) }))),
+      )
+      if (st.lipid && packed.lipids.length) {
+        // the bilayer is outlined as one sheet (all lipids share an id); each lipid
+        // takes the depth layer of its own position
+        const lc: [number, number, number] = [0, 0, 0]
+        for (let a = 0; a < st.lipid.atomCount; a++) for (let k = 0; k < 3; k++) lc[k]! += st.lipid.pos[a * 3 + k]! / st.lipid.atomCount
+        items.push(buildItem(st.lipid, LIPID_COLORING, TONE_LANDSCAPE, packed.lipids.map((matrix) => ({ assembly: 'asym', matrix, molecule, center: placedCenter(matrix, lc) }))))
+      }
+      r.setScene(items)
+      useStore.setState({ placed: packed.places.map((p) => p.length) })
+    } else {
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined })))
+    }
     draw(false)
   }, [sceneRev])
 
@@ -150,7 +193,8 @@ export function Stage() {
   useEffect(() => {
     const r = stage.renderer
     if (!r) return
-    panels.forEach((p, i) => colorings[i] && r.setColors(i, atomColors(p.mol, colorings[i]!, TONE_MOLECULE)))
+    const tone = useStore.getState().spec?.landscape ? TONE_LANDSCAPE : TONE_MOLECULE
+    panels.forEach((p, i) => colorings[i] && r.setColors(i, atomColors(p.mol, colorings[i]!, tone)))
     draw(false)
   }, [colorings])
 
@@ -169,14 +213,15 @@ export function Stage() {
       const dx = e.clientX - last.x, dy = e.clientY - last.y
       last = { x: e.clientX, y: e.clientY }
       const s = useStore.getState()
-      if (e.shiftKey) s.setLook({ shift: [s.shift[0] + dx / canvas.clientWidth, s.shift[1] - dy / canvas.clientHeight] })
+      if (e.shiftKey || s.spec?.landscape) s.setLook({ shift: [s.shift[0] + dx / canvas.clientWidth, s.shift[1] - dy / canvas.clientHeight] })
       else s.setLook({ rot: dragRotate(s.rot, dx, dy, canvas.clientHeight) })
     }
     const up = () => (last = null)
     const wheel = (e: WheelEvent) => {
       e.preventDefault()
       const s = useStore.getState()
-      s.setLook({ zoom: Math.min(8, Math.max(0.2, s.zoom * Math.exp(-e.deltaY * 0.0015))) })
+      const min = s.spec?.landscape ? 1 : 0.2 // a landscape cannot be zoomed out past its slab
+      s.setLook({ zoom: Math.min(8, Math.max(min, s.zoom * Math.exp(-e.deltaY * 0.0015))) })
     }
     canvas.addEventListener('pointerdown', down)
     canvas.addEventListener('pointermove', move)

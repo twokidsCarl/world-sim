@@ -6,6 +6,7 @@
  */
 import type { EntitySpec, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
 import { ROLES, type Role } from '../src/style/palettes'
+import { resolveLandscape } from './landscape'
 import { ask as realAsk, type AskOptions } from './llm'
 import { matchArticles } from './motm'
 import { entryInfo, searchText, type EntryInfo } from './sources/rcsb'
@@ -154,6 +155,8 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
 
   log('理解主题')
   const intent = await deps.ask<Intent>({ system: INTENT_SYSTEM, prompt: `Topic: ${topic}`, schema: INTENT_SCHEMA })
+
+  if (intent.kind === 'landscape') return resolveLandscape(topic, deps, log)
 
   log('检索结构数据库')
   const found = new Map<string, string[]>()

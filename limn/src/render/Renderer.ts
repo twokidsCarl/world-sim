@@ -10,6 +10,8 @@ export interface Draw {
   /** added to each atom's chain index so every placed copy outlines separately */
   subunitBase: number
   molecule: number
+  /** world position of the whole molecule's centre, for depth layers */
+  center?: [number, number, number]
 }
 
 /** Atoms sharing one set of GPU buffers, drawn one or more times. */
@@ -33,6 +35,8 @@ export interface View {
   height: number
   /** atoms nearer than this view-space z are dropped; Infinity = no cut */
   clipFront: number
+  /** view-space z where depth fading starts and ends; default: the scene's bounding sphere */
+  fogSpan?: [number, number]
 }
 
 export interface Bounds {
@@ -279,6 +283,10 @@ export class Renderer {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad)
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
     let atoms = 0
+    const layers = style.fog.layers
+    const span = view.fogSpan ?? [Math.min(zc + b.radius, zFront), zc - b.radius]
+    const r = view.rot, vc = view.center
+    gl.uniform1f(this.u(p, 'u_keep'), 1)
     for (const it of this.items) {
       gl.uniformMatrix4fv(this.u(p, 'u_place'), false, it.place)
       for (const d of it.draws) {
@@ -292,6 +300,13 @@ export class Renderer {
         gl.uniformMatrix4fv(this.u(p, 'u_model'), false, d.matrix)
         gl.uniform1ui(this.u(p, 'u_subunitBase'), d.subunitBase)
         gl.uniform1ui(this.u(p, 'u_molecule'), d.molecule)
+        if (layers > 0 && d.center) {
+          // the whole molecule takes the tone of the layer its centre is in
+          const z = r[2]! * (d.center[0] - vc[0]) + r[5]! * (d.center[1] - vc[1]) + r[8]! * (d.center[2] - vc[2])
+          const t = Math.min(0.999, Math.max(0, (span[0] - z) / Math.max(span[0] - span[1], 1e-3)))
+          const step = layers === 1 ? 0 : Math.floor(t * layers) / (layers - 1)
+          gl.uniform1f(this.u(p, 'u_keep'), style.fog.front + (style.fog.back - style.fog.front) * step)
+        }
         gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, d.count)
         atoms += d.count
       }
@@ -318,7 +333,8 @@ export class Renderer {
     // Lines between chains need room: they fade out as a chain shrinks from
     // 40 to 12 pen widths across, which is what Goodsell does by hand.
     const subunitPens = (b.subunitSize * pxPerA) / pen
-    const subunitFade = Math.min(1, Math.max(0, (subunitPens - 12) / 28))
+    // (lines between whole molecules, in a landscape, never fade)
+    const subunitFade = style.outlineBy === 'molecule' ? 1 : Math.min(1, Math.max(0, (subunitPens - 12) / 28))
 
     const e = this.edgeProg
     gl.bindFramebuffer(gl.FRAMEBUFFER, t.edgeFbo)
@@ -343,12 +359,14 @@ export class Renderer {
     bind(c, 1, 'u_edge', t.edge)
     bind(c, 2, 'u_depth', t.depth)
     gl.uniform2f(this.u(c, 'u_z'), zFront, zBack)
-    gl.uniform2f(this.u(c, 'u_zSpan'), Math.min(zc + b.radius, zFront), zc - b.radius)
+    if (view.fogSpan) gl.uniform2f(this.u(c, 'u_zSpan'), view.fogSpan[0], view.fogSpan[1])
+    else gl.uniform2f(this.u(c, 'u_zSpan'), Math.min(zc + b.radius, zFront), zc - b.radius)
     gl.uniform3fv(this.u(c, 'u_bg'), style.background)
     gl.uniform3fv(this.u(c, 'u_fog'), style.fog.color)
     gl.uniform2f(this.u(c, 'u_fogAmt'), style.fog.front, style.fog.back)
     gl.uniform3fv(this.u(c, 'u_ink'), style.ink)
     gl.uniform1f(this.u(c, 'u_grain'), style.grain)
+    gl.uniform1i(this.u(c, 'u_layered'), layers > 0 ? 1 : 0)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     gl.bindVertexArray(null)
     return t
