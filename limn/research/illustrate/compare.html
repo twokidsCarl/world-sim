@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <title>limn 对照 Illustrate</title>
+    <style>
+      body { font: 13px -apple-system, "PingFang SC", sans-serif; margin: 16px; background: #eee; color: #222; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; }
+      figure { margin: 0; }
+      canvas { display: block; width: 461px; background: #fff; }
+      figcaption { padding: 4px 0; }
+      pre { font: 12px ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <figure><canvas id="ours"></canvas><figcaption>limn</figcaption></figure>
+      <figure><canvas id="ref"></canvas><figcaption>Illustrate 原版</figcaption></figure>
+      <figure><canvas id="diff"></canvas><figcaption>差异（越黑差得越多）</figcaption></figure>
+    </div>
+    <pre id="out">渲染中…</pre>
+    <script type="module" src="./compare.ts"></script>
+  </body>
+</html>
