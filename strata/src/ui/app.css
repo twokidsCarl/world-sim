@@ -1,0 +1,198 @@
+:root {
+  --paper: #f7f6f2;
+  --ink: #1b1b1a;
+  --muted: #77756e;
+  --rule: #dcdad2;
+  --accent: #c2410c;
+  --data: #0072b2;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141413;
+    --ink: #ecebe6;
+    --muted: #8f8d85;
+    --rule: #2e2d2a;
+    --accent: #fb923c;
+    --data: #56b4e9;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 13px/1.5 Inter, 'PingFang SC', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.app {
+  padding: 16px;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+header p {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+main {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr) 330px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+h3 .value {
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+section + section,
+.card + section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+
+.card + .card {
+  margin-top: 16px;
+}
+
+.stage-wrap {
+  position: sticky;
+  top: 16px;
+}
+
+.stage {
+  width: 100%;
+  max-height: calc(100vh - 140px);
+  display: block;
+  border: 1px solid var(--rule);
+}
+
+.caption {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.plot {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+.note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.note .dash {
+  display: inline-block;
+  width: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 1.5px dashed var(--muted);
+}
+
+.controls,
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--ink);
+}
+
+button[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.knob + .knob {
+  margin-top: 12px;
+}
+
+.knob label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.knob output {
+  color: var(--muted);
+}
+
+input[type='range'] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.stage.wide {
+  aspect-ratio: 4 / 3;
+}
+
+header .controls {
+  align-items: center;
+}
