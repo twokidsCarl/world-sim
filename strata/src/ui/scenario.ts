@@ -61,6 +61,7 @@ class ScenarioPlayer {
   stop(): void {
     for (const off of this.unwatch) off()
     this.unwatch = []
+    engine.stopAt = null
     this.scenario = null
     this.state = null
     this.emit()
@@ -69,6 +70,7 @@ class ScenarioPlayer {
   private enter(index: number): void {
     const step = this.scenario!.steps[index]
     if (!step) {
+      engine.stopAt = null
       this.state = { ...this.state!, index, stepText: '', progress: 1, done: true }
       this.emit()
       return
@@ -80,7 +82,10 @@ class ScenarioPlayer {
         Number(knobs.find((k) => k.id === b)?.rebuild === 'state') - Number(knobs.find((k) => k.id === a)?.rebuild === 'state'),
     )
     for (const [id, value] of entries) if (engine.params[id] !== value) engine.setParam(id, value)
+    if (step.action === 'reverse') engine.reverse()
     this.startedAt = engine.backend.stepCount
+    // Run exactly this many steps: reversing must happen at a known step count.
+    engine.stopAt = this.startedAt + step.run
     this.state = { ...this.state!, index, stepText: step.text, progress: 0 }
     this.emit()
   }
@@ -100,9 +105,11 @@ class ScenarioPlayer {
       return
     }
     if (step.expect) {
-      const { quantity, min, max, agree } = step.expect
+      const { quantity, min, max, agree, latest } = step.expect
       const trace = engine.scalars.get(quantity)
-      const recent = trace ? trace.value.slice(-10) : []
+      // Wait for a measurement taken after the last step of this stage.
+      if (!agree && (!trace || trace.step[trace.step.length - 1]! < engine.backend.stepCount)) return
+      const recent = trace ? trace.value.slice(latest ? -1 : -10) : []
       const value = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : NaN
       const pass = agree
         ? engine.agreements.get(quantity) === 'agree'

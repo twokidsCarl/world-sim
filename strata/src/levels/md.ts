@@ -44,6 +44,18 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     voided: nonreciprocal,
   },
   {
+    id: 'distance',
+    level: 'micro',
+    label: '时间可逆性：离起点的最大位移（σ）',
+    kind: 'scalar',
+    reducers: ['distance'],
+    when: (p) => p.backend === 0,
+    compute: (f) => f.distance ?? NaN,
+    theory: (f) => (f.clock === 0 && f.step > 0 ? 0 : null),
+    theoryLabel: '倒放回到第 0 步时：应当恰好为 0',
+    tolerance: { abs: 0 },
+  },
+  {
     id: 'speedDist',
     level: 'kinetic',
     label: '速率分布',

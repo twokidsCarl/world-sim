@@ -43,6 +43,8 @@ export class Engine {
   backend: RunBackend<Frame>
   gpu: GpuContext | null = null
   running = true
+  /** When set, stepping stops exactly at this backend step count (scenarios need exact counts). */
+  stopAt: number | null = null
   /** Set when the last frame reported that the backend could not represent the state. */
   overflow = false
   readonly scalars = new Map<string, ScalarTrace>()
@@ -63,7 +65,7 @@ export class Engine {
   private msPerStep = 1
   private raf = 0
   private reducing = false
-  private initialised = false
+  private ready: Promise<void> | null = null
 
   constructor() {
     this.backend = this.substrate.create(this.params, this.seed, null)
@@ -75,12 +77,16 @@ export class Engine {
     this.scheduler.onFrame = (f) => (this.overflow = f.overflow === true)
   }
 
-  /** Acquire the GPU device and switch to the GPU backend where one is available. */
-  async init(): Promise<void> {
-    if (this.initialised) return
-    this.initialised = true
-    this.gpu = await getGpu()
-    if (this.gpu) this.setParam('backend', 1)
+  /**
+   * Acquire the GPU device and switch to the GPU backend where one is available. Safe to
+   * call repeatedly; every call returns the same promise.
+   */
+  init(): Promise<void> {
+    this.ready ??= getGpu().then((gpu) => {
+      this.gpu = gpu
+      if (gpu) this.setParam('backend', 1)
+    })
+    return this.ready
   }
 
   /** Called after parameters, the backend or the substrate change. */
@@ -110,6 +116,15 @@ export class Engine {
     }
   }
 
+  /** Reverse the direction of time, if the running backend can. */
+  reverse(): void {
+    this.backend.reverse?.()
+  }
+
+  get canReverse(): boolean {
+    return typeof this.backend.reverse === 'function'
+  }
+
   reset(): void {
     this.seed++
     this.rebuild()
@@ -120,6 +135,7 @@ export class Engine {
     this.backend = this.substrate.create(this.params, this.seed, this.gpu)
     // The step counter restarts, so earlier scalar history no longer shares an x axis.
     this.scalars.clear()
+    this.stopAt = null
     this.agreements.clear()
     this.overflow = false
     this.msPerStep = 1
@@ -212,10 +228,13 @@ export class Engine {
     let reduced: Promise<void> = Promise.resolve()
     if (this.running) {
       const cap = this.backend.maxStepsPerFrame ?? MAX_SUBSTEPS
-      const n = Math.max(1, Math.min(cap, Math.floor(STEP_BUDGET_MS / this.msPerStep)))
-      const t0 = performance.now()
-      this.backend.step(n)
-      this.msPerStep = 0.9 * this.msPerStep + (0.1 * (performance.now() - t0)) / n
+      let n = Math.max(1, Math.min(cap, Math.floor(STEP_BUDGET_MS / this.msPerStep)))
+      if (this.stopAt !== null) n = Math.max(0, Math.min(n, this.stopAt - this.backend.stepCount))
+      if (n > 0) {
+        const t0 = performance.now()
+        this.backend.step(n)
+        this.msPerStep = 0.9 * this.msPerStep + (0.1 * (performance.now() - t0)) / n
+      }
       if (this.frame++ % REDUCE_EVERY === 0 && !this.reducing) {
         this.reducing = true
         reduced = this.scheduler.tick(this.backend, this.params).finally(() => (this.reducing = false))

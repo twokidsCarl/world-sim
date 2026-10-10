@@ -9,6 +9,8 @@ export interface Expectation {
   max?: number
   /** Require the quantity to agree with its theory overlay instead of bounding its value. */
   agree?: boolean
+  /** Judge the single latest sample instead of the average of the last ten. */
+  latest?: boolean
   /** What the user should see, in words. */
   text: string
 }
@@ -18,6 +20,8 @@ export interface ScenarioStep {
   set?: Params
   /** Simulation steps (or sweeps) to run before moving on. */
   run: number
+  /** Something to do on entering the step, after `set`. */
+  action?: 'reverse'
   expect?: Expectation
 }
 
@@ -94,6 +98,45 @@ export const SCENARIOS: Scenario[] = [
           nonreciprocal: 0,
         },
         run: 16000,
+      },
+    ],
+  },
+  {
+    id: 'reverse',
+    title: '把时间倒过来：晶体熔化，再自己拼回去',
+    substrate: 'md',
+    steps: [
+      {
+        text: '整数坐标的积分器，从一块完美的晶格出发。温度够高，它很快熔成无序的液体：熵增加了。',
+        set: {
+          backend: 0,
+          integrator: 1,
+          nx: 30,
+          density: 0.7,
+          temperature: 1.2,
+          thermostat: 0,
+          walls: 0,
+          fractionB: 0,
+        },
+        run: 3000,
+        expect: { quantity: 'psi6Local', max: 0.62, text: '已经熔化：⟨|ψ₆|⟩ 低于 0.62' },
+      },
+      {
+        text: '现在把时间方向反过来。运动方程本身不分过去和未来，所以每个粒子沿原路退回，液体自己重新拼成晶格。',
+        action: 'reverse',
+        run: 3000,
+        expect: { quantity: 'distance', max: 0, latest: true, text: '回到第 0 步：每个粒子都恰好在起点' },
+      },
+      {
+        text: '换成普通的浮点积分器重做一遍：熔化 3000 步后倒放。',
+        set: { integrator: 0 },
+        run: 3000,
+      },
+      {
+        text: '这一次回不去。舍入误差只有 10⁻¹⁶，但混沌把它每个时间单位放大好几倍。宏观上的不可逆，就藏在对初始条件的这种敏感里。',
+        action: 'reverse',
+        run: 3000,
+        expect: { quantity: 'distance', min: 0.1, latest: true, text: '回不到起点：最大偏离超过 0.1 σ' },
       },
     ],
   },
