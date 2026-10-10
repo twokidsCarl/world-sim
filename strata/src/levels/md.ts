@@ -7,6 +7,9 @@ import { shiftedPotential } from '../substrates/md/potential'
 import { speedPdf } from '../theory/maxwell'
 import { virialPressure } from '../theory/virial'
 
+const nonreciprocal = (p: Record<string, number>) =>
+  p.fractionB! > 0 && p.nonreciprocal! > 0 ? '作用力不再等于反作用力：这条守恒律已失效' : null
+
 export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
   {
     id: 'drift',
@@ -18,6 +21,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     theory: () => 0,
     theoryLabel: '守恒律：0',
     tolerance: { abs: 5e-3 },
+    voided: nonreciprocal,
   },
   {
     id: 'momentum',
@@ -29,6 +33,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     theory: () => 0,
     theoryLabel: '守恒律：0',
     tolerance: { abs: 1e-5 },
+    voided: nonreciprocal,
   },
   {
     id: 'speedDist',
@@ -103,5 +108,16 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f) => f.scalars!.psi6Global,
     theory: () => 1,
     theoryLabel: '单一取向的完美晶体：1（参照）；多晶或液体趋于 0',
+  },
+  {
+    id: 'demix',
+    level: 'structure',
+    label: '分相程度',
+    kind: 'scalar',
+    reducers: ['scalars'],
+    when: (p) => p.fractionB! > 0,
+    compute: (f) => f.scalars!.demix,
+    theory: () => 0,
+    theoryLabel: '随机混合：0（参照）；两种粒子完全分开时趋于 1',
   },
 ]

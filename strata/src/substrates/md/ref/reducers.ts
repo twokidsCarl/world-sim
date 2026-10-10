@@ -18,6 +18,13 @@ export interface MdScalars {
   psi6Local: number
   /** |mean of ψ6|: hexatic order coherent across the whole box. */
   psi6Global: number
+  /** Fraction of particles that are species B. */
+  fractionB: number
+  /**
+   * Demixing order parameter: 1 - (fraction of unlike neighbour bonds) / (2 xA xB).
+   * 0 for a random mixture, approaching 1 as the species separate; 0 for one component.
+   */
+  demix: number
 }
 
 /** Neighbours for the hexatic order parameter lie within this distance. */
@@ -62,6 +69,23 @@ export function psi6(s: MdState): Float64Array {
   return out
 }
 
+/** Neighbour bonds within PSI_RADIUS: total, and those joining different species. */
+export function bondCounts(s: MdState): { total: number; unlike: number } {
+  let total = 0
+  let unlike = 0
+  forEachPair(s, PSI_RADIUS, (i, j) => {
+    total++
+    if (s.species[i] !== s.species[j]) unlike++
+  })
+  return { total, unlike }
+}
+
+export function demixing(fractionB: number, bonds: { total: number; unlike: number }): number {
+  const random = 2 * fractionB * (1 - fractionB)
+  if (random === 0 || bonds.total === 0) return 0
+  return 1 - bonds.unlike / bonds.total / random
+}
+
 export function scalars(s: MdState): MdScalars {
   const p = momentum(s)
   let psiRe = 0
@@ -75,6 +99,9 @@ export function scalars(s: MdState): MdScalars {
       psiAbs += Math.hypot(psi[2 * i], psi[2 * i + 1])
     }
   }
+  let nB = 0
+  for (let i = 0; i < s.n; i++) nB += s.species[i]
+  const fractionB = nB / s.n
   return {
     n: s.n,
     dim: s.dim,
@@ -86,6 +113,8 @@ export function scalars(s: MdState): MdScalars {
     momentum: Math.hypot(...p) / s.n,
     psi6Local: psiAbs / s.n,
     psi6Global: Math.hypot(psiRe, psiIm) / s.n,
+    fractionB,
+    demix: nB > 0 ? demixing(fractionB, bondCounts(s)) : 0,
   }
 }
 

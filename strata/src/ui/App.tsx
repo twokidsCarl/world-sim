@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { SUBSTRATES } from '../substrates'
+import { ConstantsPanel } from './ConstantsPanel'
 import { engine } from './engine'
 import { IsingStage } from './IsingStage'
 import { KnobPanel, PotentialPreview } from './KnobPanel'
@@ -9,8 +10,8 @@ import { ScenarioBar } from './ScenarioBar'
 import { useUi } from './store'
 
 /** Per-substrate views: the stage, and anything shown above the knobs. */
-const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode }> = {
-  md: { stage: <MdStage />, extras: <PotentialPreview /> },
+const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: ReactNode }> = {
+  md: { stage: <MdStage />, extras: <PotentialPreview />, footer: <ConstantsPanel /> },
   ising: { stage: <IsingStage /> },
 }
 
@@ -46,7 +47,7 @@ export function App() {
         </div>
       </header>
       <main key={substrateId}>
-        <KnobPanel>{view.extras}</KnobPanel>
+        <KnobPanel footer={view.footer}>{view.extras}</KnobPanel>
         {view.stage}
         <LevelCards />
       </main>

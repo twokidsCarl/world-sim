@@ -4,6 +4,7 @@ import { LEVELS, type QuantityDef } from '../core/quantity'
 import { drawPlot, theme, type Series } from '../plot/plot'
 import type { Frame } from '../core/substrate'
 import { engine } from './engine'
+import { useUi } from './store'
 
 function format(v: number): string {
   if (!Number.isFinite(v)) return '—'
@@ -32,6 +33,7 @@ function setChip(el: HTMLElement | null, a: Agreement): void {
 }
 
 function Card({ q }: { q: QuantityDef<Frame> }) {
+  const voided = useUi((s) => q.voided?.(s.params) ?? null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const valueRef = useRef<HTMLSpanElement>(null)
   const chipRef = useRef<HTMLSpanElement>(null)
@@ -71,29 +73,34 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
   }, [q])
 
   return (
-    <div className="card">
+    <div className={voided ? 'card voided' : 'card'}>
       <h3>
         <span>
-          {q.label}
+          <span className="label">{q.label}</span>
           <span ref={chipRef} className="chip" />
         </span>
         <span ref={valueRef} className="value" />
       </h3>
       <canvas ref={canvasRef} className="plot" />
-      {q.theoryLabel && (
-        <p className="note">
-          <i className="dash" />
-          {q.theoryLabel}
-        </p>
+      {voided ? (
+        <p className="note broken">{voided}</p>
+      ) : (
+        q.theoryLabel && (
+          <p className="note">
+            <i className="dash" />
+            {q.theoryLabel}
+          </p>
+        )
       )}
     </div>
   )
 }
 
 export function LevelCards() {
+  const params = useUi((s) => s.params)
   const levels = LEVELS.map((level) => ({
     ...level,
-    quantities: engine.substrate.quantities.filter((q) => q.level === level.id),
+    quantities: engine.substrate.quantities.filter((q) => q.level === level.id && (!q.when || q.when(params))),
   })).filter((l) => l.quantities.length > 0)
   const ladderRef = useRef<HTMLElement>(null)
 

@@ -24,6 +24,8 @@ export interface Knob {
   /** What must be rebuilt when this changes: nothing, derived tables, or the whole state. */
   rebuild: 'none' | 'table' | 'state'
   note?: string
+  /** Conservation laws that stop holding once this knob leaves its default. */
+  breaks?: string
   /** Discrete choices; when present the knob renders as a segmented control. */
   options?: { value: number; label: string }[]
   /** Hide the knob unless this holds. */

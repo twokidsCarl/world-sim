@@ -6,11 +6,11 @@ import { getGpu } from '../gpu/device'
 import { IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
 import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
-import { buildTable, tablePair } from '../substrates/md/potential'
+import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
 import { initTriangular } from '../substrates/md/ref/init'
 import { rdf, scalars, speedHistogram } from '../substrates/md/ref/reducers'
 import { computeForces, step } from '../substrates/md/ref/step'
-import { MD_KNOBS, potentialSpec } from '../substrates/md/schema'
+import { MD_KNOBS, potentialSpec, strengthMatrix } from '../substrates/md/schema'
 
 export interface HarnessRow {
   name: string
@@ -123,6 +123,32 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`${big.n} 粒子：邻居表溢出`, bigFrame.overflow ? 1 : 0, 0)
   check(`${big.n} 粒子：2000 步每粒子能量漂移（ε）`, Math.abs(bigFrame.drift), 1e-3)
   big.dispose()
+
+  // A two-species mixture with a non-reciprocal matrix exercises every per-pair table.
+  const mp: Params = { ...p, fractionB: 0.4, epsAB: 0.5, epsBB: 1.4, nonreciprocal: 0.3 }
+  const field = speciesField(speciesTables(potentialSpec(mp), strengthMatrix(mp)))
+  const mixRef = initTriangular({ nx: mp.nx!, density: mp.density!, temperature: 1, seed: 2, fractionB: 0.4 }, field)
+  step(mixRef, field, mp.dt!, 300)
+  for (let k = 0; k < mixRef.pos.length; k++) {
+    mixRef.pos[k] = Math.fround(mixRef.pos[k]!)
+    mixRef.vel[k] = Math.fround(mixRef.vel[k]!)
+  }
+  computeForces(mixRef, field)
+  const mixGpu = new MdGpuBackend(gpu, mp, 2)
+  mixGpu.writeState(mixRef.pos, mixRef.vel, mixRef.species)
+  const mixState = await mixGpu.readState()
+  let mixMax = 0
+  let mixErr = 0
+  for (let i = 0; i < mixRef.n; i++) {
+    for (let d = 0; d < 2; d++) {
+      mixMax = Math.max(mixMax, Math.abs(mixRef.force[2 * i + d]!))
+      mixErr = Math.max(mixErr, Math.abs(mixRef.force[2 * i + d]! - mixState.force[4 * i + d]!))
+    }
+  }
+  check('两种粒子、非互易：受力最大误差 / 最大受力', mixErr / mixMax, 1e-4)
+  const mixFrame = (await mixGpu.reduce(['scalars'])).scalars!
+  check('两种粒子：分相程度差', Math.abs(mixFrame.demix - scalars(mixRef).demix), 1e-6)
+  mixGpu.dispose()
 
   // Ising: every flip decision is integer arithmetic, so the lattices must agree exactly.
   const ip: Params = { ...defaults(ISING_KNOBS), L: 7, T: 2.3, j2: 0.2, h: 0.05 }

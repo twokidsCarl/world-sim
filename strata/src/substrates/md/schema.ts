@@ -64,6 +64,53 @@ export const MD_KNOBS: Knob[] = [
     rebuild: 'table',
     note: '截断会移动相图，但不改变短程作用的普适类。',
   },
+  {
+    id: 'epsBB',
+    label: 'B–B 吸引强度 ε_BB',
+    tag: 'value',
+    min: 0.2,
+    max: 2,
+    step: 0.05,
+    default: 1,
+    rebuild: 'table',
+    when: (p) => p.fractionB > 0,
+  },
+  {
+    id: 'epsAB',
+    label: 'A–B 吸引强度 ε_AB',
+    tag: 'value',
+    min: 0,
+    max: 2,
+    step: 0.05,
+    default: 0.3,
+    rebuild: 'table',
+    note: '低于同种吸引时，两种粒子在低温下分相。A–A 强度固定为 1。',
+    when: (p) => p.fractionB > 0,
+  },
+  {
+    id: 'nonreciprocal',
+    label: '打破作用力与反作用力 δ',
+    tag: 'toy',
+    min: 0,
+    max: 1,
+    step: 0.05,
+    default: 0,
+    rebuild: 'table',
+    breaks: '动量和能量不再守恒',
+    note: 'A 受 B 的力乘 (1+δ)，B 受 A 的力乘 (1−δ)。δ>0 时不存在势能函数：这是“粒子生命”一类玩具规则的做法，不是封闭系统的物理。',
+    when: (p) => p.fractionB > 0,
+  },
+  {
+    id: 'fractionB',
+    label: 'B 粒子比例',
+    tag: 'state',
+    min: 0,
+    max: 0.5,
+    step: 0.05,
+    default: 0,
+    rebuild: 'state',
+    note: '大于 0 时出现第二种粒子，以及它与 A 的相互作用矩阵。',
+  },
   { id: 'density', label: '数密度 ρ', tag: 'state', min: 0.02, max: 1.0, step: 0.01, default: 0.6, rebuild: 'state' },
   {
     id: 'temperature',
@@ -128,4 +175,18 @@ export function potentialSpec(p: Params): PotentialSpec {
     case 'soft':
       return { kind: 'soft', epsilon: 1, sigma: 1, n: p.n, rc: p.rc }
   }
+}
+
+/** strength[si][sj] scales epsilon for the force on species si from species sj. */
+export function strengthMatrix(p: Params): number[][] {
+  if (!p.fractionB) return [[1]]
+  return [
+    [1, p.epsAB * (1 + p.nonreciprocal)],
+    [p.epsAB * (1 - p.nonreciprocal), p.epsBB],
+  ]
+}
+
+/** Changes whenever the pair interaction does. */
+export function fieldKey(p: Params): string {
+  return JSON.stringify([potentialSpec(p), strengthMatrix(p)])
 }

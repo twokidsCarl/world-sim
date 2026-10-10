@@ -1,10 +1,10 @@
 import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
-import { buildTable, tablePair, type PairEval, type PotentialSpec } from './potential'
+import { speciesField, speciesTables, type PairField, type PotentialSpec } from './potential'
 import { initTriangular } from './ref/init'
 import { rdf, scalars, speedHistogram, type Hist, type MdScalars } from './ref/reducers'
 import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
-import { potentialSpec } from './schema'
+import { fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 export interface MdFrame extends Frame {
   time: number
@@ -37,7 +37,8 @@ export class MdCpuBackend implements MdBackend {
   readonly kind = 'cpu'
   state: MdState
   spec: PotentialSpec
-  private pair: PairEval
+  private pair: PairField
+  private key: string
   private p: Params
   private time = 0
   private heat = 0
@@ -46,8 +47,12 @@ export class MdCpuBackend implements MdBackend {
   constructor(p: Params, seed: number) {
     this.p = { ...p }
     this.spec = potentialSpec(p)
-    this.pair = tablePair(buildTable(this.spec))
-    this.state = initTriangular({ nx: Math.min(p.nx, CPU_MAX_NX), density: p.density, temperature: p.temperature, seed }, this.pair)
+    this.key = fieldKey(p)
+    this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p)))
+    this.state = initTriangular(
+      { nx: Math.min(p.nx, CPU_MAX_NX), density: p.density, temperature: p.temperature, seed, fractionB: p.fractionB },
+      this.pair,
+    )
     this.rebase()
   }
 
@@ -78,10 +83,10 @@ export class MdCpuBackend implements MdBackend {
   }
 
   setParams(p: Params): void {
-    const spec = potentialSpec(p)
-    if (JSON.stringify(spec) !== JSON.stringify(this.spec)) {
-      this.spec = spec
-      this.pair = tablePair(buildTable(spec))
+    if (fieldKey(p) !== this.key) {
+      this.key = fieldKey(p)
+      this.spec = potentialSpec(p)
+      this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p)))
       computeForces(this.state, this.pair)
       this.rebase()
     }

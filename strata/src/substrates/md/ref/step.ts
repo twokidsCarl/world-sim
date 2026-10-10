@@ -1,7 +1,7 @@
 // CPU reference molecular dynamics in f64. This is the specification the GPU kernels
 // are checked against. Reduced units, unit mass, periodic box, dimension 2 or 3.
 
-import type { PairEval, PairOut } from '../potential'
+import type { PairField, PairOut } from '../potential'
 import { buildCells, makeGrid, type CellGrid } from './cells'
 
 export interface MdState {
@@ -13,6 +13,8 @@ export interface MdState {
   pos: Float64Array
   vel: Float64Array
   force: Float64Array
+  /** Species index per particle; all zero for a one-component system. */
+  species: Uint8Array
   /** Total potential energy for the current positions. */
   pe: number
   /** Sum over pairs of r · f, for the virial pressure. */
@@ -31,6 +33,7 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
     pos: new Float64Array(n * dim),
     vel: new Float64Array(n * dim),
     force: new Float64Array(n * dim),
+    species: new Uint8Array(n),
     pe: 0,
     virial: 0,
     step: 0,
@@ -39,10 +42,11 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
 }
 
 const out: PairOut = { g: 0, u: 0 }
+const back: PairOut = { g: 0, u: 0 }
 
 /** Recompute forces, potential energy and virial. Each particle scans the full 3^dim stencil. */
-export function computeForces(s: MdState, pair: PairEval, allPairs = false): void {
-  const { dim, n, pos, force, box } = s
+export function computeForces(s: MdState, pair: PairField, allPairs = false): void {
+  const { dim, n, pos, force, box, species } = s
   const bx = box[0]
   const by = box[1]
   const bz = box[2]
@@ -66,17 +70,19 @@ export function computeForces(s: MdState, pair: PairEval, allPairs = false): voi
         dz -= bz * Math.round(dz / bz)
         const r2 = dx * dx + dy * dy + dz * dz
         if (r2 >= rc2) continue
-        pair.eval(r2, out)
+        // The force on j is evaluated separately: it differs when the interaction is not reciprocal.
+        pair.eval(r2, out, species[i], species[j])
+        pair.eval(r2, back, species[j], species[i])
         force[i * dim] += out.g * dx
         force[i * dim + 1] += out.g * dy
-        force[j * dim] -= out.g * dx
-        force[j * dim + 1] -= out.g * dy
+        force[j * dim] -= back.g * dx
+        force[j * dim + 1] -= back.g * dy
         if (dim === 3) {
           force[i * dim + 2] += out.g * dz
-          force[j * dim + 2] -= out.g * dz
+          force[j * dim + 2] -= back.g * dz
         }
-        pe += out.u
-        virial += out.g * r2
+        pe += 0.5 * (out.u + back.u)
+        virial += 0.5 * (out.g + back.g) * r2
       }
     }
   } else {
@@ -92,6 +98,7 @@ export function computeForces(s: MdState, pair: PairEval, allPairs = false): voi
       const xi = pos[i * dim]
       const yi = pos[i * dim + 1]
       const zi = dim === 3 ? pos[i * dim + 2] : 0
+      const si = species[i]
       let fx = 0
       let fy = 0
       let fz = 0
@@ -110,7 +117,7 @@ export function computeForces(s: MdState, pair: PairEval, allPairs = false): voi
               dz -= bz * Math.round(dz / bz)
               const r2 = dx * dx + dy * dy + dz * dz
               if (r2 >= rc2) continue
-              pair.eval(r2, out)
+              pair.eval(r2, out, si, species[j])
               fx += out.g * dx
               fy += out.g * dy
               fz += out.g * dz
@@ -130,7 +137,7 @@ export function computeForces(s: MdState, pair: PairEval, allPairs = false): voi
 }
 
 /** Velocity Verlet. Forces must be current on entry and are current on exit. */
-export function step(s: MdState, pair: PairEval, dt: number, nSteps = 1): void {
+export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void {
   const { dim, n, pos, vel, force, box } = s
   const len = n * dim
   const half = 0.5 * dt

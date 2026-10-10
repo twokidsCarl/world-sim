@@ -294,3 +294,32 @@ li.differ {
   height: 100%;
   background: var(--ink);
 }
+
+.card.voided .label {
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
+}
+
+.note.broken {
+  color: var(--accent);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 12px 0 0;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+  text-align: right;
+}
+
+dd.broken {
+  color: var(--accent);
+}

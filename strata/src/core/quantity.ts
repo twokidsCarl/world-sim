@@ -42,6 +42,10 @@ export interface QuantityDef<F> {
    * must be within rel.
    */
   tolerance?: { abs?: number; rel?: number }
+  /** Hide the quantity unless this holds. */
+  when?: (p: Params) => boolean
+  /** A reason the quantity's theory no longer applies under these parameters, or null. */
+  voided?: (p: Params) => string | null
 }
 
 export type Agreement = 'agree' | 'differ' | 'none'
