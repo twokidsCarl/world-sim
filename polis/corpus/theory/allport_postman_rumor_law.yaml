@@ -1,0 +1,32 @@
+title: 谣言基本律
+title_en: Basic law of rumor (Allport & Postman)
+field: 社会心理学
+claim: 一条谣言流传的多少，取决于话题对当事人有多重要，以及相关证据有多含糊，两者是相乘关系：任一项为零，谣言就传不起来。谣言在逐人转述中还会系统性变形：细节脱落、越传越短（磨平），少数细节被挑出来强调（锐化），内容被改得更合乎转述者的预设与利害（同化）。需要注意：该式是作者提出的概括，二手综述指出这一精确的乘法关系从未被实证确立；本卡只核到公式载于 1947 年专著第 33–34 页，未能打开 1946 年期刊文章全文确认其中是否也有此式。
+formal: R ~ i × a（R 谣言流通量，i 重要性，a 含糊度；乘法关系，i=0 或 a=0 时 R=0）
+parameters:
+- name: R
+  meaning: 谣言的流通量或强度
+- name: i
+  meaning: 话题对相关个人的重要性
+- name: a
+  meaning: 与话题有关的证据的含糊程度
+predicts:
+- 事关切身利益而官方信息又缺失或矛盾时，谣言量最大；澄清信息降低含糊度后谣言量随之下降。
+- 对当事人无关紧要的话题，即使信息含糊也传不开。
+- 同一条消息经多人接力转述后变短，保留下来的少数细节被放大，并朝转述者既有的成见方向偏移。
+in_engine: mind.share_drive：想讲的冲动 = 事情要紧 × 真假难辨，再加上怕。engine.Sim._tell 里转述会走样，但只做了越传越重（锐化），磨平与同化尚未实现。
+sources:
+- work: The Psychology of Rumor
+  author: Gordon W. Allport; Leo Postman
+  year: 1947
+  locator: 'New York: Henry Holt；公式见 pp. 33–34'
+  url: https://www.encyclopedia.com/social-sciences/applied-and-social-sciences-magazines/rumor
+  verified: true
+  checked: 'encyclopedia.com 转载的《International Encyclopedia of the Social Sciences》“Rumor”条目确认作者、书名、1947 年、New York: Holt，并把公式 R ~ i × a 标注在该书 pp. 33–34，同时说明磨平/锐化/同化及后人批评；Open Library 检索记录（openlibrary.org/works/OL3420402W）另列出 1947 年 Henry Holt 版。未见出版社原始页面。'
+- work: An Analysis of Rumor
+  author: Gordon W. Allport; Leo Postman
+  year: 1946
+  locator: 'Public Opinion Quarterly 10(4): 501–517（1946–47 年冬季号）；DOI 10.1086/265813（另有别名 DOI 10.1093/poq/10.4.501）'
+  url: https://api.crossref.org/works/10.1086/265813
+  verified: true
+  checked: Crossref 记录确认标题、两位作者、期刊、第 10 卷第 4 期、起始页 501、年份 1946；OpenAlex 同一文章记录给出页码 501–517。牛津学术落地页返回验证页，未读到全文，故无法确认公式是否也出现在这篇文章里。

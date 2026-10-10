@@ -1,0 +1,42 @@
+title: 辟谣有效但消不干净
+statement: >-
+  对错误信息的更正能显著降低人们对它的相信程度，但不能把影响完全消除：一项汇总 32 项研究（N=6,527）的元分析发现，
+  更正之后错误信息仍留有虽小但显著的残余影响（r=−0.05，p=0.045）。更正来自原始信源、内容连贯、与受众世界观相容时效果较好；
+  错误信息来自可信信源、在更正前被重复多次、或更正来得较晚时，效果较差。
+kind: quantitative
+value: -0.05
+unit: 相关系数 r（更正后错误信息的残余影响；摘要只给出 r=−.05，负号的编码方向需读正文确认）
+conditions: >-
+  Walter 与 Tukachinsky 的元分析：32 项关于“错误信息被更正后是否仍有影响”的研究，共 6,527 名被试
+  （摘要没有说明各研究的具体实验范式和国别）。
+  另一项元分析（Chan 等 2017，k=52，N=6,878）用不同口径报告：错误信息本身的效应 d=2.41–3.08，
+  辟谣效应 d=1.14–1.33，辟谣后错误信息的残留 d=0.75–1.06。
+caveats: >-
+  两项元分析的数字看上去差别很大（r=−0.05 对 d=0.75–1.06），原因是比较基准不同，不能互相换算后当作同一个量：
+  本次只读了两篇的摘要，没有读正文中各效应量的具体定义，使用前应回到原文确认比较的是哪两组。
+  r=−0.05 的 p 值为 0.045，刚过显著性门槛，残余影响“存在但很小”这一结论并不稳固。
+  “辟谣适得其反（逆火效应）”不在这两篇摘要的结论之内，本条不支持该说法。
+  与小镇情境的差距：这些是受控实验里的信念测量，不是真实行为；挤兑传言事关自己的存款，
+  “宁可信其有”的代价不对称，而且辟谣者（银行、官方）正是利益相关方，实际残留有可能大于实验值（这是推断，不是来源的结论）。
+  Chan 等的摘要还指出，受众自己为错误信息想过理由时，残留更强、辟谣更弱——这与熟人之间反复议论传言的情形相近。
+theories: []
+metric: ""
+sources:
+  - work: "A Meta-Analytic Examination of the Continued Influence of Misinformation in the Face of Correction: How Powerful Is It, Why Does It Happen, and How to Stop It?"
+    author: N. Walter, R. Tukachinsky
+    year: 2020
+    locator: "Communication Research 47(2): 155–177（2019 年 6 月在线发表）"
+    url: https://digitalcommons.chapman.edu/comm_articles/61
+    verified: true
+    checked: >-
+      打开了查普曼大学机构库中该文的条目页面，页面上的论文摘要写明 k=32、N=6,527、更正不能完全消除错误信息的影响（r=−.05，p=.045），
+      以及各调节因素的方向。卷期页码由 Crossref（DOI 10.1177/0093650219854600）确认；出版社页面返回 403，正文未读。
+  - work: "Debunking: A Meta-Analysis of the Psychological Efficacy of Messages Countering Misinformation"
+    author: M. S. Chan, C. R. Jones, K. Hall Jamieson, D. Albarracín
+    year: 2017
+    locator: "Psychological Science 28(11): 1531–1546"
+    url: https://europepmc.org/article/MED/28895452
+    verified: true
+    checked: >-
+      通过 Europe PMC 的接口读到该文条目和摘要（PMCID PMC5673564）：摘要写明 k=52、N=6,878，错误信息效应 d=2.41–3.08、
+      辟谣效应 d=1.14–1.33、辟谣后残留 d=0.75–1.06，以及“受众自己生成支持理由时残留更强”。卷期页码由 Crossref（DOI 10.1177/0956797617714579）确认。

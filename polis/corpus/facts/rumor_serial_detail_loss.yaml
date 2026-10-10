@@ -1,0 +1,47 @@
+title: 传言在连续转述中迅速丢失细节
+statement: >-
+  一段描述经人依次口头转述时会迅速变短：据转述，在最初五六次转述中约 70% 的细节丢失，之后趋于稳定。
+  同时剩下的少数细节被突出（锐化），内容被改得更符合转述者的预期和成见（同化）。
+kind: quantitative
+value: 0.7
+unit: 比例（最初 5–6 次转述中丢失的细节占比）
+conditions: >-
+  Allport 与 Postman 1940 年代在美国做的实验室连续转述实验：第一名被试看一幅图，凭记忆讲给没看过图的第二人，
+  第二人再讲给第三人，如此接力；转述者不能提问，也没有利害关系。
+caveats: >-
+  70% 这个数字本次只在维基百科“Rumor”条目里看到（该条目注明出自《The Psychology of Rumor》1951 年重印本第 75 页），
+  没有打开原书或 1946 年的期刊论文核对，因此本条按“未核实”处理，数值只能当作量级参考。
+  更重要的是适用范围：Shibutani 在《国际社会科学百科全书》“Rumor”条目中指出，实验室接力与真实传言差别很大——
+  Caplow 1947 发现二战太平洋战区美军中的传言在传播中反而变得更准确（人们会互相核对），
+  Schachter 与 Burdick 1955 在一所女校投放的传言没有出现失真，Peterson 与 Gist 1951 发现细节是围绕主题不断增加而不是减少。
+  小镇里的人可以反问、可以从多个熟人处反复听到同一件事、而且事关自己的存款，更接近这些实地研究而不是单向接力实验；
+  模拟若复现出“细节单调丢失 70%”反而可能说明缺少了相互核对的机制。
+theories: [allport_postman_rumor_law]
+metric: ""
+sources:
+  - work: The Psychology of Rumor
+    author: Gordon W. Allport, Leo Postman
+    year: 1947
+    locator: 维基百科引用的是 Russell & Russell 1951 年重印本第 75 页；初版出版信息本次未核对
+    url: https://en.wikipedia.org/wiki/Rumor
+    verified: false
+    checked: >-
+      没有打开原书。70% 和“最初 5–6 次转述”只在维基百科 Rumor 条目中看到（三手来源，注明出自 1951 年重印本第 75 页）；
+      1947 这个年份取自维基百科条目的表述，初版出版社未核对。牛津学术网站上两位作者 1946 年论文的页面只说明该文部分取材于即将出版的同名书。
+  - work: An Analysis of Rumor
+    author: Gordon W. Allport, Leo Postman
+    year: 1946
+    locator: "Public Opinion Quarterly 10(4): 501–517"
+    url: https://academic.oup.com/poq/article-abstract/10/4/501/1905770
+    verified: false
+    checked: >-
+      只确认了书目：牛津学术网站的文章页面给出作者、期刊、10 卷 4 期（1946 年冬季号）、501–517 页、DOI 10.1093/poq/10.4.501。
+      页面上的摘要不含任何数字，全文在付费墙后，未能确认 70% 是否出现在这篇论文里。
+  - work: Rumor (entry in International Encyclopedia of the Social Sciences)
+    author: Tamotsu Shibutani
+    locator: Encyclopedia.com 转载的《International Encyclopedia of the Social Sciences》条目
+    url: https://www.encyclopedia.com/social-sciences/applied-and-social-sciences-magazines/rumor
+    verified: false
+    checked: >-
+      二手来源，只证实定性结论，不含 70% 这个数字：打开了该条目页面，其中说明连续转述时报告变短、变不准，定义了平化、锐化、同化，
+      并列出 Caplow 1947、Schachter 与 Burdick 1955、Peterson 与 Gist 1951 三项与实验室结论相反的实地研究。百科全书的出版年份页面上未核对。

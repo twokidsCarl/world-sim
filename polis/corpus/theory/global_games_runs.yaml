@@ -1,0 +1,41 @@
+title: 全局博弈下的挤兑与货币攻击
+title_en: Global games of runs and currency attacks
+field: 经济学（博弈论 / 金融）
+claim: 在共同知识下，挤兑或货币攻击这类协调博弈有多个自我实现的均衡，无法说哪一个会发生。全局博弈的思路是：让每个参与者对基本面只有一个带少量噪声的私人观察。这点噪声破坏了共同知识，使均衡变成唯一的——基本面低于某个临界值就发生攻击或挤兑，高于它就不发生。于是可以谈论挤兑的概率，并分析它如何随合约条款、投机成本、热钱规模等变化。概念出自 Carlsson 与 van Damme（1993）；Morris 与 Shin（1998）用于货币攻击；Goldstein 与 Pauzner（2005）用于 Diamond–Dybvig 式银行挤兑。
+formal: 基本面 θ 不为共同知识；参与者 i 观察到 x_i = θ + ε_i（ε_i 为小噪声）。唯一均衡为临界策略：x_i 低于 x* 时攻击/取款；对应存在基本面临界值 θ*，θ < θ* 时攻击成功或挤兑发生。
+parameters:
+- name: θ
+  meaning: 基本面（银行资产质量或央行守汇率的能力）
+- name: x_i
+  meaning: 参与者 i 对基本面的带噪声私人信号
+- name: ε
+  meaning: 信号噪声，趋于零时仍保持均衡唯一
+- name: θ*
+  meaning: 基本面临界值，低于它则挤兑或攻击发生
+predicts:
+- 挤兑是否发生由基本面决定，但在一段基本面区间内，银行本可存活却仍被恐慌挤垮。
+- 挤兑概率可以事前算出，并随合约给提前取款者的承诺越慷慨而上升。
+- 货币攻击的发生不只取决于基本面，还取决于热钱规模和投机交易成本。
+in_engine: ''
+sources:
+- work: Unique Equilibrium in a Model of Self-Fulfilling Currency Attacks
+  author: Stephen Morris; Hyun Song Shin
+  year: 1998
+  locator: 'American Economic Review 88(3): 587–597'
+  url: https://ideas.repec.org/a/aea/aecrev/v88y1998i3p587-97.html
+  verified: true
+  checked: IDEAS/RePEc 的文章页面确认标题、两位作者、American Economic Review、1998 年 6 月、第 88 卷第 3 期、587–597 页，并给出摘要。未打开 AEA 或 JSTOR 原始页面。
+- work: Demand–Deposit Contracts and the Probability of Bank Runs
+  author: Itay Goldstein; Ady Pauzner
+  year: 2005
+  locator: 'The Journal of Finance 60(3): 1293–1327；DOI 10.1111/j.1540-6261.2005.00762.x'
+  url: https://api.crossref.org/works/10.1111/j.1540-6261.2005.00762.x
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。Wiley 出版社落地页对抓取返回 403/验证页，未能直接打开。
+- work: Global Games and Equilibrium Selection
+  author: Hans Carlsson; Eric van Damme
+  year: 1993
+  locator: 'Econometrica 61(5): 989 起（末页未在所查页面出现）；DOI 10.2307/2951491'
+  url: https://api.crossref.org/works/10.2307/2951491
+  verified: true
+  checked: Crossref 的 DOI 元数据记录确认标题、两位作者、Econometrica、1993 年 9 月、第 61 卷第 5 期、起始页 989；记录未给出末页。OpenAlex 同一 DOI 记录给出摘要。

@@ -1,0 +1,39 @@
+title: 偏好伪装
+title_en: Preference falsification (Kuran)
+field: 经济学 / 政治学
+claim: 人在感到社会压力时会公开表达与内心不同的偏好。当很多人都这样做，公开舆论就系统性地偏离私下的真实想法：广受厌恶的制度得以维持，并且显得稳固，连身处其中的人也被误导，看不出变革的可能。可是这种支持是装出来的，一旦有足够多的人不再害怕表露真实想法，公开反对就会像滚雪球一样爆发，一件小事便能触发事前无人预料的剧变。时间久了，伪装还会扭曲公共讨论和人们实际所知，使原本靠伪装维持的东西逐渐获得真心接受。
+formal: 每个人有私下偏好和公开偏好；是否公开反对取决于已公开反对的人数是否达到其个人的“革命阈值”（Kuran 1989、1991 的阈值式表述，本卡仅见 1991 年文摘要，未读正文公式）。公开反对人数的小幅上升可越过下一批人的阈值，形成连锁。
+parameters:
+- name: 私下偏好
+  meaning: 个人内心真正想要的
+- name: 公开偏好
+  meaning: 个人在他人面前表达的立场
+- name: 革命阈值
+  meaning: 个人愿意公开表露真实偏好所需的已公开反对者规模
+predicts:
+- 匿名调查与公开表态之间存在系统性差距，压力越大差距越大。
+- 看似稳固的政权或规范可以在很短时间内崩塌，且事前连参与者自己也料不到。
+- 事后回看，剧变显得容易解释甚至必然，但同一理论预言下一次仍会出人意料。
+in_engine: ''
+sources:
+- work: 'Private Truths, Public Lies: The Social Consequences of Preference Falsification'
+  author: Timur Kuran
+  year: 1995
+  locator: 'Cambridge, MA: Harvard University Press（ISBN 9780674707580）'
+  url: https://www.hup.harvard.edu/books/9780674707580
+  verified: true
+  checked: 哈佛大学出版社的图书页面确认书名、作者与出版社，并给出内容简介（偏好伪装的定义、维持不受欢迎的结构、突然崩塌、扭曲知识）；1995 年依据 Open Library 检索记录（openlibrary.org/works/OL3527602W）。副标题与出版地未在抓到的页面元数据中出现，按通行著录填写。
+- work: 'Sparks and prairie fires: A theory of unanticipated political revolution'
+  author: Timur Kuran
+  year: 1989
+  locator: 'Public Choice 61(1): 41–74；DOI 10.1007/BF00116762'
+  url: https://api.crossref.org/works/10.1007/BF00116762
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码。Springer 落地页要求 cookie，未读到摘要。
+- work: 'Now out of Never: The Element of Surprise in the East European Revolution of 1989'
+  author: Timur Kuran
+  year: 1991
+  locator: 'World Politics 44(1): 7–48；DOI 10.2307/2010422'
+  url: https://api.crossref.org/works/10.2307/2010422
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。

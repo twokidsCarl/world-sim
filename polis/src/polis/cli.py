@@ -69,6 +69,30 @@ def _plain(node, top: bool = True):
     return out
 
 
+@app.command("corpus")
+def corpus_check():
+    """检查语料：格式、交叉引用，并列出还没核实出处的条目。"""
+    from . import corpus
+
+    try:
+        entries, problems = corpus.check()
+    except ValueError as e:  # 含 pydantic 的校验错误
+        typer.echo(f"语料格式有误：{e}", err=True)
+        raise typer.Exit(1)
+    names = {"theory": "理论卡", "cases": "案例", "facts": "典型事实"}
+    for kind, items in entries.items():
+        ok = sum(e.verified for e in items)
+        typer.echo(f"{names[kind]}：{len(items)} 条，其中 {ok} 条出处全部核实")
+        for e in items:
+            for s in e.sources:
+                if not s.verified:
+                    typer.echo(f"  未核实  {kind}/{e.id}  {s.author}《{s.work}》")
+    for p in problems:
+        typer.echo(f"  问题  {p}", err=True)
+    if problems:
+        raise typer.Exit(1)
+
+
 @app.command()
 def serve(port: int = typer.Option(8766, "--port", "-p")):
     """启动 API，供 web/ 读取运行记录。"""

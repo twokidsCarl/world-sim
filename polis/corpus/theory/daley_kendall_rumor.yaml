@@ -1,0 +1,41 @@
+title: 戴利–肯德尔随机谣言模型
+title_en: Daley–Kendall stochastic rumour model (and the Maki–Thompson variant)
+field: 应用概率 / 数学流行病学
+claim: 把封闭且均匀混合的人群分成三类：没听过谣言的（无知者）、正在传的（传播者）、听过但不再传的（沉默者）。传播者遇到无知者就把对方变成传播者；传播者遇到已经知情的人（另一个传播者或沉默者）则觉得消息已不新鲜而停止传播。与传染病模型不同，“痊愈”不是自发发生，而是由知情者之间的相遇触发，所以定性结论不能直接照搬流行病类比——这正是两位作者在 1964 年短讯里强调的。Maki 与 Thompson 1973 年教材中的变体改为有向接触：两个传播者相遇时只有主动联系的一方变为沉默者。
+formal: 状态 (X 无知者, Y 传播者, Z 沉默者)，X+Y+Z=N，成对随机相遇。Y+X → 2Y；Y+Y → 2Z（Daley–Kendall）或仅发起方 Y → Z（Maki–Thompson）；Y+Z → 2Z。过程在 Y=0 时终止。
+parameters:
+- name: X
+  meaning: 无知者人数（未听到谣言）
+- name: Y
+  meaning: 传播者人数
+- name: Z
+  meaning: 沉默者人数（知情但不再传）
+- name: N
+  meaning: 总人数
+predicts:
+- 谣言总会自行熄灭：传播者人数先升后降至零。
+- 熄灭时仍有一部分人始终没听到谣言，即使人群充分混合；二手文献（Sudbury 的分析，本卡未核实原文）称 Maki–Thompson 版本中该比例在大人群极限下约为 0.203。
+- 不存在流行病模型那样的传播阈值：只要有一个传播者，谣言就会扩散到相当比例的人。
+in_engine: engine.Sim._tell：把话讲给一个早已知道的人，讲的兴致（zeal）就按 stifle 打折。这是软化了的 Maki–Thompson 规则——只有开口的一方降温，且是逐渐降温而非一次变成沉默者。
+sources:
+- work: Epidemics and Rumours
+  author: D. J. Daley; D. G. Kendall
+  year: 1964
+  locator: 'Nature 204(4963): 1118；DOI 10.1038/2041118a0'
+  url: https://www.nature.com/articles/2041118a0
+  verified: true
+  checked: Nature 文章页面的 citation 元数据确认标题、两位作者（剑桥大学统计实验室）、第 204 卷第 4963 期、第 1118 页、1964 年 12 月；页面首段说明这是简讯，细节另文发表，并强调谣言模型的定性结果未必与流行病类比一致。
+- work: Stochastic Rumours
+  author: D. J. Daley; D. G. Kendall
+  year: 1965
+  locator: 'Journal of the Institute of Mathematics and Its Applications 1(1): 42–55（该刊现名 IMA Journal of Applied Mathematics）；DOI 10.1093/imamat/1.1.42'
+  url: https://api.crossref.org/works/10.1093/imamat/1.1.42
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码（Crossref 用的是期刊现名）。牛津学术落地页返回验证页，全文未读；三类人群与转移规则的表述依据英文维基百科“Rumor spread in social network”条目及检索到的综述摘要，属二手来源。
+- work: Mathematical Models and Applications, with Emphasis on the Social, Life, and Management Sciences
+  author: Daniel P. Maki; Maynard Thompson
+  year: 1973
+  locator: 'Englewood Cliffs, NJ: Prentice-Hall（xv, 492 p.；LCCN 73004471）'
+  url: https://openlibrary.org/books/OL5413217M
+  verified: true
+  checked: Open Library 版本记录确认书名、副标题、署名“Daniel P. Maki [and] Maynard Thompson”、Prentice-Hall、Englewood Cliffs、1973、页数与 LCCN。只核实了书目信息；该书中谣言模型的具体写法未见原文，变体规则依据二手综述。

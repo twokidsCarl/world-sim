@@ -1,0 +1,23 @@
+title: 戴蒙德–迪布维格银行挤兑
+title_en: Diamond–Dybvig bank runs
+field: 经济学（银行理论）
+claim: 储户各自面临只有自己知道的流动性风险，因此需要随时可取的资产；银行的活期存款合约能提供比直接市场交易更好的风险分担，这解释了为什么会挤兑的银行仍能吸引存款。但同一份合约有多个均衡：如果大家相信别人不会提前取款，就没人挤兑；如果大家相信别人会取，那么抢先取款就成了每个人的最优反应，挤兑自我实现。模型里的挤兑本身造成真实的经济损失，而不只是别的问题的表象；存款保险之类的安排可以消除坏均衡。
+formal: 活期存款合约下的协调博弈，存在两个纯策略均衡：(1) 只有真正需要流动性的人提前取款；(2) 所有人都提前取款（挤兑）。哪个均衡出现，模型本身不作决定。（本卡仅据摘要写成，未展开原文的三期设定与收益参数。）
+parameters:
+- name: 流动性需求
+  meaning: 储户是否需要提前消费，属私人信息
+- name: 对他人取款的预期
+  meaning: 储户认为其他人会不会提前取款；它决定落在哪个均衡
+predicts:
+- 基本面完全健康的银行也可能仅因预期改变而被挤垮。
+- 挤兑一旦开始会自我加强：别人取得越多，自己留下的理由越少。
+- 可信的存款保险或暂停兑付承诺能让挤兑均衡消失，而且实际上不必动用。
+in_engine: mind.fail_probability：钱庄会倒，或者因为它本来亏空，或者因为大家都去取；engine.Sim._serve：先到先兑，现银按 reserve_ratio 计，兑不出即倒闭。
+sources:
+- work: Bank Runs, Deposit Insurance, and Liquidity
+  author: Douglas W. Diamond; Philip H. Dybvig
+  year: 1983
+  locator: 'Journal of Political Economy 91(3): 401–419；DOI 10.1086/261155'
+  url: https://api.crossref.org/works/10.1086/261155
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。芝加哥大学出版社出版社落地页对抓取返回 403/验证页，未能直接打开。

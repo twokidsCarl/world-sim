@@ -1,0 +1,33 @@
+title: 复杂传染
+title_en: Complex contagion
+field: 社会学 / 网络科学
+claim: 信息或疾病接触一次就能传上，是简单传染；而有风险、有代价或有争议的行为，往往要从多个不同的熟人那里得到印证才会被采纳，这是复杂传染。对简单传染有利的长程“弱关系”捷径，对复杂传染反而可能成为障碍，因为一条孤立的长关系只能带来一次接触；复杂传染依赖的是两个群落之间桥的“宽度”，也就是多条关系并行。Centola 2010 年在人为构造的线上社群里做的实验支持这一点：从多个邻居处得到社会强化的人更可能采纳，行为在高聚类的格状网络里比在对应的随机网络里传得更远更快。
+formal: 节点在其已采纳的邻居数 ≥ a 时采纳（a = 1 为简单传染，a ≥ 2 为复杂传染）。传播能否跨越两个邻域，取决于连接它们的桥的宽度（并行关系的条数）是否 ≥ a。
+parameters:
+- name: a
+  meaning: 采纳阈值：需要多少个已采纳的邻居
+- name: 桥宽
+  meaning: 连接两个邻域的并行关系条数
+- name: 重连比例
+  meaning: 把局部冗余关系改成长程捷径的比例
+predicts:
+- 随着采纳阈值升高，往规则网络里加入长程捷径不再加速、反而阻碍扩散。
+- 同样规模和度数下，高聚类网络中需要社会强化的行为比随机网络中传得更远更快。
+- 个人的采纳概率随已采纳邻居数增加而上升，第二、第三个信号仍有增量作用。
+- 高风险社会运动之类的行为倾向于沿地理空间逐片扩散。
+in_engine: 部分实现。mind.tell_delta 里同一方向的话听得越多新增越少（novelty），单一来源通常不足以让人相信，需要多个来源叠加；没有显式的“至少 k 个邻居”规则。
+sources:
+- work: Complex Contagions and the Weakness of Long Ties
+  author: Damon Centola; Michael Macy
+  year: 2007
+  locator: 'American Journal of Sociology 113(3): 702–734；DOI 10.1086/521848'
+  url: https://api.crossref.org/works/10.1086/521848
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。
+- work: The Spread of Behavior in an Online Social Network Experiment
+  author: Damon Centola
+  year: 2010
+  locator: 'Science 329(5996): 1194–1197；DOI 10.1126/science.1185231'
+  url: https://api.crossref.org/works/10.1126/science.1185231
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；OpenAlex 同一 DOI 记录给出摘要，机制表述据此摘要写成。PubMed 页面要求 cookie，未能读取。

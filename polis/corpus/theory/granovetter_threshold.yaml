@@ -1,0 +1,25 @@
+title: 集体行为的阈值模型
+title_en: Threshold models of collective behavior (Granovetter)
+field: 社会学
+claim: 每个人面对“做/不做”的二选一，其得失取决于已经有多少人做了。个人的阈值是指：需要先有多少人（或多大比例）行动，他才觉得行动的净收益超过净成本。给定人群的阈值分布，就能推出最终有多少人行动；而结果对分布的精确形状极其敏感，平均倾向相近的两群人可以得到完全不同的结局，所以不能从集体结果倒推个人意愿。作者列举的应用包括骚乱、创新与谣言扩散、罢工、投票和迁移。
+formal: 设 F 为阈值的累积分布，r(t) 为 t 时刻已行动的比例，则 r(t+1) = F(r(t))；均衡是 r* = F(r*) 的不动点，从 r(0) 出发迭代到达。（这是对摘要所述“由阈值分布计算均衡人数”的通行写法。）
+parameters:
+- name: θ_i
+  meaning: 个人 i 的阈值：使其行动所需的已行动者人数或比例
+- name: F
+  meaning: 人群阈值的累积分布函数
+- name: r(t)
+  meaning: t 时刻已行动者的比例
+predicts:
+- 阈值分布的微小改动（例如拿走一个低阈值的人）可以让结局从全体参与变成几乎无人参与。
+- 平均态度相同的两个群体，可能一个爆发、一个平静。
+- 行动人数随时间呈连锁式增长，在分布出现“缺口”处停住。
+in_engine: mind.withdraw_hazard：估计会去取钱的人越多（expect），自己去取的概率越高。是随个人特质变化的软阈值，不是原模型里的硬阈值。
+sources:
+- work: Threshold Models of Collective Behavior
+  author: Mark Granovetter
+  year: 1978
+  locator: 'American Journal of Sociology 83(6): 1420–1443；DOI 10.1086/226707'
+  url: https://api.crossref.org/works/10.1086/226707
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码；Semantic Scholar API 的同一 DOI 记录给出摘要，机制表述据此摘要写成。芝加哥大学出版社出版社落地页对抓取返回 403/验证页，未能直接打开。

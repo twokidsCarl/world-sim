@@ -1,0 +1,38 @@
+title: 阿希从众实验
+title_en: Asch conformity
+field: 社会心理学
+claim: 即使答案一目了然，一个人面对一致给出错误答案的多数时，也常常放弃自己的判断而附和。Asch 让一名真被试与若干事先串通的假被试一起公开回答线段长短的比较题，假被试在关键轮次一致答错。从众不是因为题目难，而是来自与一致多数公开相左的压力；只要多数的一致性被打破，压力就大幅减弱。本卡的具体数字取自英文维基百科对 1951–1956 年各篇报告的转述，未能对照原文。
+formal: ''
+parameters:
+- name: 多数人数
+  meaning: 一致给出错误答案的同伴数量
+- name: 一致性
+  meaning: 多数是否全体一致；是否存在一个答对的同伴
+predicts:
+- 无人施压时这类题几乎不出错（转述的对照组错误率低于 1%）；面对一致的错误多数时，约三分之一的关键回答跟随多数。
+- 个体差异很大：转述称约四分之三的被试至少附和一次，约四分之一始终不附和。
+- 只有一个反对者时压力很小，增加到三人左右效果显著上升，再增加人数几乎没有额外效果。
+- 多数中只要出现一个给出正确答案的同伴，附和率就大幅下降。
+in_engine: mind.withdraw_hazard 里的 conformity 项：随大流的人更受“别人都在取”的估计左右。只作用于行动，不作用于信念本身。
+sources:
+- work: Effects of group pressure upon the modification and distortion of judgments
+  author: Solomon E. Asch
+  year: 1951
+  locator: '收于 Harold Guetzkow (ed.), Groups, Leadership and Men: Research in Human Relations. Pittsburgh: Carnegie Press, pp. 177–190'
+  url: https://openlibrary.org/works/OL190721W
+  verified: false
+  checked: Open Library 记录只确认了文集本身：Groups, leadership and men，Carnegie Press，Pittsburgh，1951，ix+293 页（记录未单列编者，检索结果的 contributor 字段列有 Guetzkow, Harold Steere, ed.）。章节标题与页码 177–190 仅见于英文维基百科“Asch conformity experiments”的参考文献和检索摘要，没有找到一手页面；gwern.net 上有一份重印本扫描件，但本机无法解析其文字。APA PsycNet 页面需脚本渲染，未读到。
+- work: 'Studies of independence and conformity: I. A minority of one against a unanimous majority'
+  author: Solomon E. Asch
+  year: 1956
+  locator: 'Psychological Monographs: General and Applied 70(9): 1–70；DOI 10.1037/h0093718'
+  url: https://api.crossref.org/works/10.1037/h0093718
+  verified: true
+  checked: Crossref 的 DOI 元数据记录（出版社提交）确认标题、作者、期刊、年份、卷期与页码。无摘要可读；实验结果的表述依据英文维基百科“Asch conformity experiments”条目的转述。
+- work: Opinions and Social Pressure
+  author: Solomon E. Asch
+  year: 1955
+  locator: 'Scientific American 193(5): 31 起（1955 年 11 月；末页未在所查页面出现）；DOI 10.1038/scientificamerican1155-31'
+  url: https://www.scientificamerican.com/article/opinions-and-social-pressure/
+  verified: true
+  checked: Scientific American 网站的文章页面确认标题、作者、1955 年 11 月 1 日、第 193 卷第 5 期、第 31 页起以及 DOI；页面只显示导语，未读全文。

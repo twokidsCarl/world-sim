@@ -1,0 +1,48 @@
+title: 挤兑中真正跑去取款的储户只占少数
+statement: >-
+  有储户级数据的两场挤兑里，在恐慌的几天内真正“跑”的储户都只是少数：
+  2001 年印度一家合作银行约为 3%（活期类账户）到 5%（定期存款账户），
+  1850 年代纽约一家移民储蓄银行在 1854 年和 1857 年两次恐慌中分别为 6% 和 8.7%。
+  跑掉的人几乎不回来：印度那家银行取款储户中只有约一成在半年后余额恢复到危机前水平。
+kind: quantitative
+range: [0.029, 0.087]
+unit: 比例（恐慌期间挤兑的储户占全部储户的份额；不同研究、不同口径的范围，未给单一点估计）
+conditions: >-
+  Iyer 与 Puri：印度古吉拉特邦一家基本面健康的合作银行，因当地最大合作银行 2001 年 3 月 13 日倒闭而被波及，
+  挤兑窗口为 3 月 13–15 日；总部 4,574 名定期存款储户中 249 人提前支取（约 5.4%），10,691 名活期类储户中 307 人取走余额的
+  75% 以上（约 2.9%）；有存款保险，仅 6.6%（定期）和 1%（活期）的储户余额超过保险上限。
+  Kelly 与 Ó Gráda：纽约 Emigrant Industrial Savings Bank 的爱尔兰移民储户，
+  1854 年 12 月 11–30 日与 1857 年 9 月 28 日–10 月 13 日两次恐慌，“跑”定义为在此期间销户。
+caveats: >-
+  5.4% 和 2.9% 是我用工作论文表 1B 的人数（249/4574、307/10691）算出来的，论文正文没有直接印这两个百分比；
+  6% 和 8.7% 则是 Kelly 与 Ó Gráda 正文直接给出的。各研究对“跑”的定义不同（提前支取任何定期存款 / 取走 75% 以上活期余额 / 销户），
+  比例不可直接相加或比较，所以本条只给范围不给点估计。Iyer 与 Puri 的数字取自 2008 年 FDIC 工作论文版；
+  2012 年《美国经济评论》正式发表版的正文本次没能打开，表中人数是否有改动未核对。
+  印度那家银行基本面健康且挺过了挤兑，纽约 1857 年的恐慌以各储蓄银行限制取款（每次最多取余额的 10%）收场，
+  因此这些比例是“被止住的挤兑”的规模，不是失控挤兑的上限；按人数算比例小，但印度案例中跑的人余额明显更大
+  （表 1B），按金额算的流失会更高（本条未收录金额口径）。
+  与小镇情境的差距相对较小：两项研究都是一座城市里的一家银行、储户之间靠邻里和熟人传话；
+  但一个是有存款保险的 2001 年印度城市，一个是 1850 年代纽约的移民社区（当时没有存款保险，这一点是常识性背景，未在论文中核对）。
+theories: [diamond_dybvig_bank_run, global_games_runs]
+metric: ""
+sources:
+  - work: "Understanding Bank Runs: The Importance of Depositor-Bank Relationships and Networks"
+    author: Rajkamal Iyer, Manju Puri
+    year: 2008
+    locator: FDIC Center for Financial Research Working Paper No. 2008-11（2008 年 8 月）
+    url: https://www.fdic.gov/analysis/cfr/working-papers/2008/2008-11.pdf
+    verified: true
+    checked: >-
+      打开了 FDIC 网站上的工作论文全文 PDF：正文第 5 节和表 1A 给出 4,574 名定期储户、10,691 名活期类储户、超保险上限的比例；
+      表 1B 给出 runners 与 stayers 的人数（定期 249 对 4,325，活期 307 对 10,384）和“跑”的定义（3 月 13–15 日，活期为取走 75% 以上）；
+      引言写明取款储户中只有 10% 在 6 个月后余额恢复到危机前水平。百分比 5.4% 和 2.9% 由这些人数相除得到。
+  - work: "Market Contagion: Evidence from the Panics of 1854 and 1857"
+    author: Morgan Kelly, Cormac Ó Gráda
+    year: 2000
+    locator: "American Economic Review 90(5): 1110–1124"
+    url: https://beyondragstoriches.omeka.net/files/original/1e6669daa285d46185dcea862a4cba51.pdf
+    verified: true
+    checked: >-
+      打开了论文全文的 JSTOR 扫描件 PDF（托管在 beyondragstoriches.omeka.net，首页印有期刊卷期页码）：第 II 节正文写明两次恐慌的起止日期、
+      “跑”的定义为期间销户、样本为 1854 年 598 个账户（235 个销户）和 1857 年 1,035 个账户（505 个销户），
+      并直接写明只有 6%（1854）和 8.7%（1857）的储户销户。书目另由 Crossref（DOI 10.1257/aer.90.5.1110）确认。
