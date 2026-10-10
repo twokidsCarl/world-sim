@@ -24,7 +24,7 @@ caveats: >-
   与小镇情境的差距相对较小：两项研究都是一座城市里的一家银行、储户之间靠邻里和熟人传话；
   但一个是有存款保险的 2001 年印度城市，一个是 1850 年代纽约的移民社区（当时没有存款保险，这一点是常识性背景，未在论文中核对）。
 theories: [diamond_dybvig_bank_run, global_games_runs]
-metric: ""
+metric: runner_share
 sources:
   - work: "Understanding Bank Runs: The Importance of Depositor-Bank Relationships and Networks"
     author: Rajkamal Iyer, Manju Puri

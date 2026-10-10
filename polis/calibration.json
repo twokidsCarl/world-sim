@@ -1,0 +1,62 @@
+{
+  "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
+  "samples": 80,
+  "seeds": 4,
+  "n": 1000,
+  "targets": [
+    {
+      "metric": "runner_share",
+      "source": "facts/bank_run_depositor_share",
+      "lo": 0.029,
+      "hi": 0.087,
+      "why": "有储户级数据的挤兑里，去取款的储户所占比例"
+    },
+    {
+      "metric": "neighbor_lift",
+      "source": "facts/bank_run_network_contagion",
+      "lo": 1.0,
+      "hi": 99.0,
+      "why": "熟人跑了，自己更可能跑"
+    },
+    {
+      "metric": "correction_residual",
+      "source": "facts/correction_continued_influence",
+      "lo": 0.0,
+      "hi": 1.0,
+      "why": "辟谣有效，但消不干净"
+    },
+    {
+      "metric": "survived",
+      "source": "cases/toyokawa_shinkin_1973, cases/bea_bank_run_2008",
+      "lo": 1.0,
+      "hi": 1.0,
+      "why": "两家银行都在当局公开担保之后撑住了"
+    }
+  ],
+  "default": {
+    "miss": 14.108140506458955,
+    "metrics": {
+      "runner_share": 0.3040810270595276,
+      "neighbor_lift": 2.8940981183406276,
+      "correction_residual": 0.839466504016015,
+      "survived": 0.5
+    }
+  },
+  "calibrated": {
+    "miss": 0.0,
+    "metrics": {
+      "runner_share": 0.045647584654369945,
+      "neighbor_lift": 2.3358863092272006,
+      "correction_residual": 0.6112165249707682,
+      "survived": 1.0
+    },
+    "params": {
+      "w_tell": 2.883,
+      "w_seen": 2.037,
+      "share": 0.164,
+      "lam": 5.528,
+      "bias": -4.369,
+      "hazard": 0.176
+    }
+  }
+}

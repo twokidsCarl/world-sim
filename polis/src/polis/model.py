@@ -16,6 +16,7 @@ UNAWARE, AWARE, QUEUEING, WITHDREW, LOST = 0, 1, 2, 3, 4
 STATUS_NAMES = ["未闻", "知情", "排队", "已取", "受损"]
 
 FRAME_CHANNELS = ["belief", "fear", "expect", "status"]
+BELIEF_CHANNEL = 0
 
 
 class Person(BaseModel):
