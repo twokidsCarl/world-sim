@@ -30,3 +30,13 @@ export function onsagerEnergy(T: number): number {
   const second = Math.abs(2 * t2 - 1) < 1e-12 ? 0 : (2 / Math.PI) * (2 * t2 - 1) * ellipticK(Math.min(kappa, 1 - 1e-15))
   return (-1 / Math.tanh(2 * b)) * (1 + second)
 }
+
+/**
+ * Binder cumulant at the critical point in the limit of large lattices, for the isotropic
+ * nearest-neighbour square lattice with periodic boundaries: 0.61069…, as quoted by
+ * W. Selke, Eur. Phys. J. B 51, 223 (2006), arXiv:cond-mat/0603411. It is the same for
+ * every lattice size, which is why curves for different sizes cross there, but it depends
+ * on the boundary conditions and on the anisotropy of the couplings, so it is not one
+ * number for the whole 2D Ising universality class.
+ */
+export const BINDER_CRITICAL = 0.61069

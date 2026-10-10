@@ -1,6 +1,6 @@
 import type { QuantityDef } from '../core/quantity'
 import type { IsingFrame } from '../substrates/ising/backend'
-import { onsagerEnergy, onsagerMagnetisation } from '../theory/onsager'
+import { BINDER_CRITICAL, onsagerEnergy, onsagerMagnetisation } from '../theory/onsager'
 
 /** The exact solution applies only to the nearest-neighbour model in zero field. */
 const exact = (p: Record<string, number>) => p.j2 === 0 && p.h === 0
@@ -27,6 +27,17 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     theory: (f, p) => (exact(p) ? onsagerEnergy(f.T) : null),
     theoryLabel: 'Onsager 精确解（J₂=0，h=0）',
     tolerance: { abs: 0.02 },
+  },
+  {
+    id: 'binder',
+    level: 'meta',
+    label: 'Binder 累积量 U₄ = 1 − ⟨m⁴⟩ / 3⟨m²⟩²',
+    kind: 'scalar',
+    reducers: ['pyramid'],
+    compute: (f) => f.binder,
+    theory: (_f, p) => (exact(p) ? BINDER_CRITICAL : null),
+    theoryLabel:
+      '临界点上的值 0.6107（各向同性方格、周期边界）。有序相趋于 2/3，无序相趋于 0；只有在 Tc，它才与晶格大小无关。自参数上次改动起累计。',
   },
   {
     id: 'rgMagnetisation',

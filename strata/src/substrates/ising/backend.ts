@@ -4,6 +4,7 @@ import type { GpuContext } from '../../gpu/device'
 import { PassTimer } from '../../gpu/timing'
 import code from './ising.wgsl?raw'
 import {
+  binderCumulant,
   blockSpins,
   createIsing,
   latticeSums,
@@ -28,10 +29,30 @@ export interface IsingFrame extends Frame {
   T: number
   /** levels[0] is the simulated lattice; each next one is a 2×2 majority-rule coarsening. */
   levels: IsingLevel[]
+  /** Binder cumulant of the magnetisation, from every frame since the parameters last changed. */
+  binder: number
 }
 
 export interface IsingBackend extends RunBackend<IsingFrame> {
   readonly L: number
+}
+
+/** Running sums of m² and m⁴ over the frames reduced since the last parameter change. */
+class Moments {
+  private m2 = 0
+  private m4 = 0
+  private samples = 0
+
+  reset(): void {
+    this.m2 = this.m4 = this.samples = 0
+  }
+
+  add(m: number): number {
+    this.m2 += m * m
+    this.m4 += m ** 4
+    this.samples++
+    return binderCumulant(this.m2, this.m4, this.samples)
+  }
 }
 
 function toLevel(size: number, sums: LatticeSums): IsingLevel {
@@ -44,6 +65,7 @@ export class IsingCpuBackend implements IsingBackend {
   state: IsingState
   private thr: Uint32Array
   private p: Params
+  private moments = new Moments()
 
   constructor(p: Params, seed: number) {
     this.p = { ...p }
@@ -62,6 +84,7 @@ export class IsingCpuBackend implements IsingBackend {
   setParams(p: Params): void {
     this.p = { ...p }
     this.thr = thresholds(p.T, p.j2, p.h)
+    this.moments.reset()
   }
 
   step(n: number): void {
@@ -81,7 +104,7 @@ export class IsingCpuBackend implements IsingBackend {
 
   reduce(): IsingFrame {
     const levels = this.pyramid().map((spins, k) => toLevel(this.L >> k, latticeSums(spins, this.L >> k)))
-    return { step: this.stepCount, T: this.p.T, levels }
+    return { step: this.stepCount, T: this.p.T, levels, binder: this.moments.add(levels[0]!.m) }
   }
 
   dispose(): void {}
@@ -109,6 +132,8 @@ export class IsingGpuBackend implements IsingBackend {
   private inFlight = 0
   private disposed = false
   private timer: PassTimer
+  private moments = new Moments()
+  private epoch = 0
 
   constructor(gpu: GpuContext, p: Params, seed: number) {
     this.device = gpu.device
@@ -171,6 +196,8 @@ export class IsingGpuBackend implements IsingBackend {
   setParams(p: Params): void {
     this.p = { ...p }
     this.device.queue.writeBuffer(this.thr, 0, thresholds(p.T, p.j2, p.h))
+    this.moments.reset()
+    this.epoch++
   }
 
   private submit(encoder: GPUCommandEncoder): void {
@@ -218,6 +245,7 @@ export class IsingGpuBackend implements IsingBackend {
   async reduce(): Promise<IsingFrame> {
     const step = this.stepCount
     const T = this.p.T
+    const epoch = this.epoch
     const encoder = this.device.createCommandEncoder()
     this.encodePyramid(encoder)
     const pass = encoder.beginComputePass()
@@ -252,7 +280,9 @@ export class IsingGpuBackend implements IsingBackend {
     }
     staging.unmap()
     staging.destroy()
-    return { step, T, levels }
+    // A frame submitted before the parameters changed must not enter the new average.
+    const binder = epoch === this.epoch ? this.moments.add(levels[0]!.m) : NaN
+    return { step, T, levels, binder }
   }
 
   /** Full readback of the simulated lattice, for the cross-check harness only. */

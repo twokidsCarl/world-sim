@@ -2,7 +2,7 @@
 // and a field h, updated by Metropolis on four interleaved sublattices. Everything that
 // decides a flip is integer arithmetic, so the GPU kernel reproduces it bit for bit.
 
-import { hash32 } from '../../core/rng'
+import { hash32, uniform } from '../../core/rng'
 
 export const TIE_KEY = 0x40000000
 const ALWAYS = 0xffffffff
@@ -115,4 +115,57 @@ export function pyramidLevels(L: number): number {
   let levels = 1
   for (let size = L; size >= 16 && size % 2 === 0; size >>= 1) levels++
   return levels
+}
+
+/**
+ * One Wolff cluster flip (Wolff 1989) in zero field, with nearest (J = 1) and diagonal
+ * (J2 >= 0) couplings. Grow a cluster of aligned spins from a random seed site, adding
+ * each aligned neighbour with probability 1 - exp(-2 J / T), and flip it whole. Unlike
+ * single-spin Metropolis it does not slow down at the critical point, so it is what the
+ * critical-behaviour tests use; it is not part of the simulated dynamics. `rng` holds the
+ * stream position and is advanced. Returns the cluster size.
+ */
+export function wolffStep(s: IsingState, T: number, j2: number, rng: { seed: number; counter: number }): number {
+  const { L, spins } = s
+  const next = () => uniform(rng.seed, rng.counter++)
+  const pNear = 1 - Math.exp(-2 / T)
+  const pDiagonal = j2 > 0 ? 1 - Math.exp((-2 * j2) / T) : 0
+  const start = Math.floor(next() * L * L)
+  const value = spins[start]
+  const stack = [start]
+  spins[start] ^= 1
+  let size = 1
+  const visit = (site: number, p: number) => {
+    if (spins[site] === value && next() < p) {
+      spins[site] ^= 1
+      stack.push(site)
+      size++
+    }
+  }
+  while (stack.length > 0) {
+    const site = stack.pop()!
+    const x = site % L
+    const y = (site - x) / L
+    const l = (x + L - 1) % L
+    const r = (x + 1) % L
+    const up = ((y + L - 1) % L) * L
+    const down = ((y + 1) % L) * L
+    visit(y * L + l, pNear)
+    visit(y * L + r, pNear)
+    visit(up + x, pNear)
+    visit(down + x, pNear)
+    if (pDiagonal > 0) {
+      visit(up + l, pDiagonal)
+      visit(up + r, pDiagonal)
+      visit(down + l, pDiagonal)
+      visit(down + r, pDiagonal)
+    }
+  }
+  return size
+}
+
+/** Binder's fourth-order cumulant U4 = 1 - <m⁴> / (3 <m²>²) from accumulated moments. */
+export function binderCumulant(m2: number, m4: number, samples: number): number {
+  if (samples === 0 || m2 === 0) return NaN
+  return 1 - m4 / samples / (3 * (m2 / samples) ** 2)
 }
