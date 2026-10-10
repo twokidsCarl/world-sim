@@ -6,9 +6,11 @@ import type {
   Concept,
   NameEntry,
   Part,
+  Provenance,
   Relation,
   RelationKind,
   ReviewStatus,
+  SourceInfo,
   SystemId,
   Vec3,
 } from './types.ts'
@@ -62,6 +64,23 @@ interface SearchEntry {
   partCount: number
 }
 
+/** Parts of one provenance kind, broken down by the dataset their geometry came from. */
+export interface ProvenanceGroup {
+  provenance: Provenance
+  count: number
+  /** `ordinal` numbers the sources within this provenance (used to pick a colour shade). */
+  sources: { info: SourceInfo; count: number; ordinal: number }[]
+}
+
+export const PROVENANCE_ORDER: readonly Provenance[] = ['scanned', 'warped', 'curated']
+
+const UNKNOWN_SOURCE: SourceInfo = { name: '未声明来源', url: '', license: '', attribution: '' }
+
+/** True for a real FMA identifier ("FMA59763"); pipelines also mint synthetic concept ids. */
+export function isFmaId(id: string): boolean {
+  return /^FMA\d+$/.test(id)
+}
+
 const EMPTY: readonly string[] = Object.freeze([])
 
 export function normalizeText(s: string): string {
@@ -82,6 +101,7 @@ export class AnatomyGraph {
   private readonly relBySubject = new Map<string, Relation[]>()
   private searchEntries: SearchEntry[] | null = null
   private _bodyBounds: Bounds | null = null
+  private _provenance: ProvenanceGroup[] | null = null
 
   constructor(data: AnatomyData, names?: Record<string, NameEntry> | null, relations?: Relation[] | null) {
     this.data = data
@@ -120,6 +140,45 @@ export class AnatomyGraph {
 
   partsByFma(fma: string): readonly Part[] {
     return this.byFma.get(fma) ?? []
+  }
+
+  /** The dataset a part's geometry came from (`Part.source`, defaulting to the first source). */
+  sourceOf(p: Part): SourceInfo {
+    const sources = this.data.sources
+    return (p.source !== undefined ? sources.find((s) => s.name === p.source) : sources[0]) ?? sources[0] ?? UNKNOWN_SOURCE
+  }
+
+  /** Ordinal of the part's source among the sources sharing its provenance. */
+  sourceOrdinal(p: Part): number {
+    const g = this.provenanceGroups().find((x) => x.provenance === p.provenance)
+    const name = this.sourceOf(p).name
+    return g?.sources.find((x) => x.info.name === name)?.ordinal ?? 0
+  }
+
+  /** Part counts by provenance and source, in a fixed order (scanned, warped, curated). */
+  provenanceGroups(): readonly ProvenanceGroup[] {
+    if (this._provenance) return this._provenance
+    const groups = new Map<Provenance, Map<string, { info: SourceInfo; count: number }>>()
+    for (const p of this.parts) {
+      let g = groups.get(p.provenance)
+      if (!g) groups.set(p.provenance, (g = new Map()))
+      const info = this.sourceOf(p)
+      const e = g.get(info.name)
+      if (e) e.count++
+      else g.set(info.name, { info, count: 1 })
+    }
+    const order = this.data.sources.map((x) => x.name)
+    const rank = (n: string) => (order.indexOf(n) < 0 ? order.length : order.indexOf(n))
+    const out: ProvenanceGroup[] = []
+    for (const prov of [...PROVENANCE_ORDER, ...[...groups.keys()].filter((k) => !PROVENANCE_ORDER.includes(k))]) {
+      const g = groups.get(prov)
+      if (!g) continue
+      const sources = [...g.values()]
+        .sort((a, b) => rank(a.info.name) - rank(b.info.name))
+        .map((x, ordinal) => ({ ...x, ordinal }))
+      out.push({ provenance: prov, count: sources.reduce((a, x) => a + x.count, 0), sources })
+    }
+    return (this._provenance = out)
   }
 
   /** Adjacent parts that actually exist in this body (dangling ids are dropped). */
@@ -272,8 +331,17 @@ export class AnatomyGraph {
     return { primary: zh ?? en, en, zh, la: n?.la || undefined, status: n?.status }
   }
 
+  /**
+   * Name of a part. Left/right parts that share one unsided concept id get their zh name
+   * from that concept, so it lacks 左/右; the side is then prefixed from `Part.side`.
+   */
   partName(p: Part): DisplayName {
-    return this.nameOf(p.fma, p.name)
+    const n = this.nameOf(p.fma, p.name)
+    if (!n.zh || p.side === 'M' || /^[左右]/.test(n.zh)) return n
+    const sided = /\b(left|right)\b/i.test(p.name) || (this.byFma.get(p.fma)?.length ?? 0) > 1
+    if (!sided) return n
+    const zh = (p.side === 'L' ? '左' : '右') + n.zh
+    return { ...n, zh, primary: zh }
   }
 
   conceptName(c: Concept): DisplayName {
@@ -328,7 +396,7 @@ export class AnatomyGraph {
       id: e.id,
       tree: e.tree,
       fma: e.fma,
-      name: this.nameOf(e.fma, e.en),
+      name: e.kind === 'part' ? this.partName(this.part(e.id)!) : this.nameOf(e.fma, e.en),
       partCount: e.partCount,
       score,
     }))
@@ -394,17 +462,17 @@ export class AnatomyGraph {
 
   private buildSearch(): SearchEntry[] {
     const out: SearchEntry[] = []
-    const fields = (en: string, fma: string, extra?: string): string[] => {
+    const fields = (en: string, fma: string, extra?: string, zh?: string): string[] => {
       const n = this.names[fma]
       const f = [normalizeText(en)]
-      if (n?.zh) f.push(normalizeText(n.zh))
+      if (zh ?? n?.zh) f.push(normalizeText((zh ?? n?.zh)!))
       if (n?.la) f.push(normalizeText(n.la))
       f.push(fma.toLowerCase())
       if (extra) f.push(extra.toLowerCase())
       return f
     }
     for (const p of this.parts) {
-      out.push({ kind: 'part', id: p.id, fma: p.fma, en: p.name, fields: fields(p.name, p.fma, p.id), partCount: 1 })
+      out.push({ kind: 'part', id: p.id, fma: p.fma, en: p.name, fields: fields(p.name, p.fma, p.id, this.partName(p).zh), partCount: 1 })
     }
     const seen = new Set<string>()
     for (const tree of TREE_KINDS) {

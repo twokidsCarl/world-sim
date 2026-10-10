@@ -1,6 +1,7 @@
 // names.json: one NameEntry per BodyParts3D concept, with the origin of every zh name recorded.
 import type { NameEntry } from '../../../src/anatomy/types.ts'
-import { ZH_OVERRIDES } from '../lexicon/overrides.ts'
+import { compareIds } from './bp3d.ts'
+import { KEEP_WIKIDATA_LABEL, ZH_OVERRIDES } from '../lexicon/overrides.ts'
 import { sideOf, stripSide, type Model } from './model.ts'
 import { createTranslator } from './translate.ts'
 
@@ -10,14 +11,17 @@ export const ZH_SOURCES = [
   'wikidata:hant-converted', // own item's label, converted from Traditional characters
   'wikidata:generic-twin', // label of the species-neutral item ("heart") for a "human heart" item
   'derived:laterality', // 左/右 + the Wikidata zh label of the unlateralised concept
+  'lexicon:mainland-over-wikidata', // exact lexicon term used instead of a differently worded Wikidata label
   'machine-translation', // tools/knowledge lexicon + rules; not from any source
   'machine-translation:override', // hand-written replacement for a Wikidata label judged wrong
 ] as const
 
 export interface NamesResult {
   names: Record<string, NameEntry>
-  /** Wikidata zh labels that differ from the lexicon's own rendering, for a reviewer. */
+  /** Wikidata zh labels kept although the lexicon composes the name differently, for a reviewer. */
   disagreements: { fma: string; en: string; wikidata: string; lexicon: string; zhSource: string }[]
+  /** Wikidata labels replaced by an exact lexicon term under the mainland-wording policy. */
+  replaced: { id: string; en: string; wikidata: string; lexicon: string }[]
 }
 
 const LATIN_ABBREVIATIONS: Record<string, string> = {
@@ -89,8 +93,9 @@ export function buildNames(m: Model): NamesResult {
 
   const names: Record<string, NameEntry> = {}
   const disagreements: NamesResult['disagreements'] = []
+  const replaced: NamesResult['replaced'] = []
 
-  for (const c of [...m.concepts.values()].sort((a, b) => Number(a.fma.slice(3)) - Number(b.fma.slice(3)))) {
+  for (const c of [...m.concepts.values()].sort((a, b) => compareIds(a.fma, b.fma))) {
     const entry: NameEntry = { status: 'unreviewed' }
     // an item that also carries another FMA id and is named after that other concept is not ours
     const primary = m.primaryItem.get(c.fma)
@@ -110,32 +115,47 @@ export function buildNames(m: Model): NamesResult {
 
     const own = wikidataZh(c.fma)
     const override = overridden(c.fma)
+    const side = sideOf(c.en)
+    const bare = stripSide(c.en)
+    const zhSide = side === 'left' ? '左' : '右'
+    const keepWikidata = KEEP_WIKIDATA_LABEL.has(bare)
+    /** Wikidata label of the unlateralised concept, for a lateralised one. */
+    const baseLabel = (): string | undefined => {
+      if (!side || ZH_OVERRIDES[bare]) return undefined
+      for (const fma of new Set([...[...(m.fmaByName.get(bare) ?? [])].sort(), ...m.unsidedOf(c.fma)])) {
+        if (fma === c.fma || overridden(fma)) continue
+        const z = wikidataZh(fma)
+        if (z) return z.zh
+      }
+      return undefined
+    }
+    // Mainland wording policy: an exact lexicon term beats a differently worded Wikidata label.
+    const lex = keepWikidata ? undefined : lexiconOnly.exact(c.en)
+
     if (override) {
       entry.zh = override.zh
       entry.zhSource = 'machine-translation:override'
+    } else if (lex) {
+      const base = own ? undefined : baseLabel()
+      const wd = own?.zh ?? (base && zhSide + base)
+      entry.zh = lex
+      if (own && own.zh === lex) entry.zhSource = own.source
+      else if (!own && wd === lex) entry.zhSource = 'derived:laterality'
+      else if (wd) {
+        entry.zhSource = 'lexicon:mainland-over-wikidata'
+        replaced.push({ id: c.fma, en: c.en, wikidata: wd, lexicon: lex })
+      } else entry.zhSource = 'machine-translation'
     } else if (own) {
       entry.zh = own.zh
       entry.zhSource = own.source
     } else {
-      const side = sideOf(c.en)
-      let done = false
-      if (side) {
-        // (a) inherit from the unlateralised concept when Wikidata names it
-        const base = stripSide(c.en)
-        // an overridden base is not Wikidata-sourced: leave it to the translator below
-        for (const fma of ZH_OVERRIDES[base] ? [] : [...new Set([...[...(m.fmaByName.get(base) ?? [])].sort(), ...m.unsidedOf(c.fma)])]) {
-          if (fma === c.fma || overridden(fma)) continue
-          const z = wikidataZh(fma)
-          if (z) {
-            entry.zh = (side === 'left' ? '左' : '右') + z.zh
-            entry.zhSource = 'derived:laterality'
-            done = true
-            break
-          }
-        }
-      }
-      if (!done) {
-        const z = translator.translate(c.en)
+      const base = baseLabel()
+      if (base) {
+        entry.zh = zhSide + base
+        entry.zhSource = 'derived:laterality'
+      } else {
+        // pure lexicon + rules first; Wikidata labels of sub-terms only for what that cannot reach
+        const z = lexiconOnly.translate(c.en) ?? translator.translate(c.en)
         if (z) {
           entry.zh = z
           entry.zhSource = 'machine-translation'
@@ -149,5 +169,5 @@ export function buildNames(m: Model): NamesResult {
     }
     names[c.fma] = entry
   }
-  return { names, disagreements }
+  return { names, disagreements, replaced }
 }

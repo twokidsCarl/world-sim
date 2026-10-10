@@ -4,7 +4,18 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, openSy
 import { resolve } from 'node:path'
 import { ANATOMY_DIR, BODIES, BP3D_DIR, CACHE_DIR } from './paths.ts'
 
+/** Orders concept ids: FMA ids numerically, then synthetic ids (e.g. "ZAC_...") alphabetically. */
+export function compareIds(a: string, b: string): number {
+  const na = /^FMA(\d+)$/.exec(a)
+  const nb = /^FMA(\d+)$/.exec(b)
+  if (na && nb) return Number(na[1]) - Number(nb[1])
+  if (na) return -1
+  if (nb) return 1
+  return a < b ? -1 : a > b ? 1 : 0
+}
+
 export interface Bp3dConcept {
+  /** Concept id. Usually an FMA id; datasets may also carry synthetic ids where FMA has no class. */
   fma: string
   en: string
   /** Japanese name (kanji), when the source really has one (it echoes the English otherwise). */
@@ -184,11 +195,11 @@ export function loadDataset(): Dataset {
     out.bodies.push(body)
     const fmas = new Set<string>()
     for (const c of [...(data.trees.isa ?? []), ...(data.trees.partOf ?? [])]) {
-      if (/^FMA\d+$/.test(c.id) && c.name && !out.names.has(c.id)) out.names.set(c.id, c.name)
+      if (c.id && c.name && !out.names.has(c.id)) out.names.set(c.id, c.name)
     }
-    for (const c of data.trees.isa ?? []) if (c.parent && /^FMA\d+$/.test(c.id) && /^FMA\d+$/.test(c.parent)) out.isaEdges.push([c.id, c.parent])
+    for (const c of data.trees.isa ?? []) if (c.parent && c.id) out.isaEdges.push([c.id, c.parent])
     for (const p of data.parts) {
-      if (!/^FMA\d+$/.test(p.fma)) continue
+      if (!p.fma) continue
       fmas.add(p.fma)
       if (!out.names.has(p.fma)) out.names.set(p.fma, p.name.toLowerCase())
     }

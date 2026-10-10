@@ -151,6 +151,8 @@ export type RelationKind =
   | 'origin'
   | 'insertion'
   | 'innervatedBy'
+  /** Inverse of innervatedBy, stated on the nerve: the structures this nerve supplies. */
+  | 'innervates'
   | 'arterialSupply'
   | 'venousDrainage'
   | 'lymphaticDrainage'

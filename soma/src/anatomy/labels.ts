@@ -70,15 +70,31 @@ export const SIDE_LABEL: Record<Side, { zh: string; en: string }> = {
 }
 
 export const PROVENANCE_LABEL: Record<Provenance, { zh: string; en: string; hint: string }> = {
-  scanned: { zh: '扫描数据', en: 'Scanned', hint: '几何来自原始数据集的分割结果' },
-  warped: { zh: '配准变形', en: 'Warped', hint: '几何由其他来源配准、变形或镜像得到' },
-  curated: { zh: '人工整理', en: 'Curated', hint: '几何经人工建模或修订' },
+  scanned: { zh: '扫描重建', en: 'Scanned', hint: '由真人断层影像分割、重建得到的实测形状。' },
+  warped: { zh: '配准变形', en: 'Warped', hint: '取自另一数据集，经配准变形对齐到本人体；位置和形状为推算，非实测。' },
+  curated: { zh: '人工建模', en: 'Curated', hint: '由建模师参照解剖图谱手工绘制；形状和走行为示意，非实测。' },
+}
+
+/**
+ * Colours for the "colour by source" mode: one hue per provenance, a second shade when
+ * several datasets share a provenance. Green = measured, amber = inferred, blue/violet = drawn.
+ */
+const PROVENANCE_COLORS: Record<Provenance, string[]> = {
+  scanned: ['#86b89c', '#5f9f8f'],
+  warped: ['#e0a13c', '#d07a3a'],
+  curated: ['#6f9be8', '#a884e0', '#5fb8d8'],
+}
+
+export function provenanceColor(provenance: Provenance, sourceOrdinal = 0): string {
+  const shades = PROVENANCE_COLORS[provenance] ?? ['#9aa3ad']
+  return shades[Math.min(sourceOrdinal, shades.length - 1)]!
 }
 
 export const RELATION_LABEL: Record<RelationKind, { zh: string; en: string }> = {
   origin: { zh: '起点', en: 'Origin' },
   insertion: { zh: '止点', en: 'Insertion' },
-  innervatedBy: { zh: '神经支配', en: 'Innervation' },
+  innervatedBy: { zh: '神经支配', en: 'Innervated by' },
+  innervates: { zh: '支配', en: 'Innervates' },
   arterialSupply: { zh: '动脉供应', en: 'Arterial supply' },
   venousDrainage: { zh: '静脉回流', en: 'Venous drainage' },
   lymphaticDrainage: { zh: '淋巴回流', en: 'Lymphatic drainage' },

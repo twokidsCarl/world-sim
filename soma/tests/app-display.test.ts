@@ -11,6 +11,7 @@ import {
   computeDisplay,
   computeExplode,
   sectionPlane,
+  tubeRadius,
   type DisplayInput,
 } from '../src/state/display.ts'
 
@@ -94,6 +95,14 @@ describe('computeDisplay', () => {
     expect(run({ adjacentMode: true })).toEqual([NORMAL, NORMAL, NORMAL, NORMAL])
   })
 
+  it('filters by provenance, but not selected parts or an isolated set', () => {
+    const g2 = new AnatomyGraph({ ...data, parts: data.parts.map((p, i) => ({ ...p, provenance: i < 2 ? 'scanned' : 'curated' })) })
+    const off = new Set(['curated'] as const)
+    expect([...computeDisplay(g2, { ...base, provenanceHidden: off })]).toEqual([NORMAL, NORMAL, HIDDEN, HIDDEN])
+    expect([...computeDisplay(g2, { ...base, provenanceHidden: off, selected: new Set(['bone']) })]).toEqual([NORMAL, NORMAL, NORMAL, HIDDEN])
+    expect([...computeDisplay(g2, { ...base, provenanceHidden: off, isolated: new Set(['vessel']) })]).toEqual([HIDDEN, HIDDEN, HIDDEN, NORMAL])
+  })
+
   it('reuses the output buffer when it fits', () => {
     const out = new Uint8Array(4)
     expect(computeDisplay(graph, base, out)).toBe(out)
@@ -172,5 +181,15 @@ describe('section plane', () => {
     // parallel rays are all-or-nothing
     expect(clipRay([0, 0.5, 0], [1, 0, 0], p)).toEqual([0, Infinity])
     expect(clipRay([0, 1.5, 0], [1, 0, 0], p)).toBeNull()
+  })
+})
+
+describe('thin-part picking helpers', () => {
+  it('estimates a tube radius from volume and area', () => {
+    const r = 0.00035
+    const L = 0.3
+    expect(tubeRadius(Math.PI * r * r * L, 2 * Math.PI * r * L)).toBeCloseTo(r, 9)
+    expect(tubeRadius(-1e-6, 0.01)).toBeGreaterThan(0)
+    expect(tubeRadius(1, 0)).toBe(0)
   })
 })

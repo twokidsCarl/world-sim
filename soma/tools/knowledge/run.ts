@@ -12,17 +12,18 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { NameEntry, Relation, RelationKind } from '../../src/anatomy/types.ts'
+import { compareIds } from './lib/bp3d.ts'
 import { buildModel, sideOf, stripSide } from './lib/model.ts'
 import { buildNames } from './lib/names.ts'
 import { CURATED_DIR, PUBLIC_DIR } from './lib/paths.ts'
-import { buildRelations, MAX_ISA_FANOUT, type BuiltRelation, type Via } from './lib/relations.ts'
+import { BRANCH_NOTE, buildRelations, INVERSE_NOTE, MAX_ISA_FANOUT, mirrorInnervation, REATTACHED_NOTE, type BuiltRelation, type Via } from './lib/relations.ts'
 import { stats } from './lib/sparql.ts'
-import { fetchPropertyLabels, P_FMA, P_TA98, P_TA98_LATIN, P_UBERON, RELATION_PROPS } from './lib/wikidata.ts'
+import { fetchPropertyLabels, P_FMA, P_INNERVATES, P_TA98, P_TA98_LATIN, P_UBERON, RELATION_PROPS } from './lib/wikidata.ts'
 import { buildWikipediaFill } from './lib/wikipedia.ts'
 
 const opts = { refresh: process.argv.includes('--refresh'), offline: process.argv.includes('--offline') }
 
-const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist']
+const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist', 'innervates']
 const pct = (n: number, d: number) => `${n}/${d} (${d ? ((100 * n) / d).toFixed(1) : '0'}%)`
 
 function linesJson(entries: [string, unknown][] | unknown[], isObject: boolean): string {
@@ -38,7 +39,7 @@ async function main() {
   const propLabels = await fetchPropertyLabels(opts)
   const expected: Record<string, string> = {
     [P_FMA]: 'Foundational Model of Anatomy ID', [P_TA98]: 'Terminologia Anatomica 98 ID',
-    [P_TA98_LATIN]: 'TA98 Latin term', [P_UBERON]: 'UBERON ID',
+    [P_TA98_LATIN]: 'TA98 Latin term', [P_UBERON]: 'UBERON ID', [P_INNERVATES]: 'innervates',
     ...Object.fromEntries(Object.entries(RELATION_PROPS).map(([p, d]) => [p, d.label])),
   }
   for (const [p, label] of Object.entries(expected)) {
@@ -46,12 +47,13 @@ async function main() {
   }
 
   const m = await buildModel(opts)
-  const { names, disagreements } = buildNames(m)
+  const { names, disagreements, replaced } = buildNames(m)
   const wd = buildRelations(m, names)
   const wp = await buildWikipediaFill(m, names, wd.relations, opts)
-  const built: BuiltRelation[] = [...wd.relations, ...wp.relations]
-  const subjectOrder = new Map([...m.concepts.keys()].map((f) => [f, Number(f.slice(3))]))
-  built.sort((a, b) => subjectOrder.get(a.subject)! - subjectOrder.get(b.subject)! || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind))
+  const forward: BuiltRelation[] = [...wd.relations, ...wp.relations]
+  const mirrored = mirrorInnervation(m, names, forward)
+  const built: BuiltRelation[] = [...forward, ...mirrored]
+  built.sort((a, b) => compareIds(a.subject, b.subject) || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind))
   const relations: Relation[] = built.map(({ via: _via, ...r }) => r)
 
   // ---- coverage -------------------------------------------------------------------------
@@ -61,6 +63,8 @@ async function main() {
     elementConcepts: [...m.elementConcepts].filter((f) => m.concepts.has(f)),
     // parts whose concept is not in the BodyParts3D 4.0 lists (imported from other sources)
     importedPartConcepts: [...partFmas].filter((f) => m.concepts.get(f)?.datasetOnly),
+    // concepts with a synthetic (non-FMA) id
+    syntheticIdConcepts: [...m.concepts.keys()].filter((f) => !/^FMA\d+$/.test(f)),
   }
   const coverage: Record<string, unknown> = {}
   for (const [scope, ids] of Object.entries(scopes)) {
@@ -76,8 +80,8 @@ async function main() {
       for (const r of of) row[r.via]!++
       row.subjects = new Set(of.map((r) => r.subject)).size
       row.objectHasFma = of.filter((r) => r.object).length
-      row.objectInBodyParts3D = of.filter((r) => r.object && m.concepts.has(r.object)).length
-      row.objectIsElement = of.filter((r) => r.object && m.elementConcepts.has(r.object)).length
+      row.objectInDataset = of.filter((r) => r.object && m.concepts.has(r.object)).length
+      row.objectIsPart = of.filter((r) => r.object && m.elementConcepts.has(r.object)).length
       kinds[k] = row
     }
     const wdZh = e.filter((x) => x.zhSource?.startsWith('wikidata')).length
@@ -93,7 +97,7 @@ async function main() {
         total: rel.length,
         subjectsWithAnyRelation: pct(new Set(rel.map((r) => r.subject)).size, ids.length),
         objectHasFma: pct(rel.filter((r) => r.object).length, rel.length),
-        objectInBodyParts3D: pct(rel.filter((r) => r.object && m.concepts.has(r.object)).length, rel.length),
+        objectInDataset: pct(rel.filter((r) => r.object && m.concepts.has(r.object)).length, rel.length),
         objectLabelHasZh: pct(rel.filter((r) => r.objectLabel.zh).length, rel.length),
         byKind: kinds,
       },
@@ -147,11 +151,25 @@ async function main() {
     elementConcepts: { ...m.elementStats, distinctConcepts: m.elementConcepts.size },
     propagation: { maxIsaFanout: MAX_ISA_FANOUT, dropped: wd.dropped, droppedExamples: wd.droppedExamples },
     coverage,
+    innervates: {
+      note: 'Kind "innervates" on nerves. direct = Wikidata P3190 statements on the nerve item (incl. propagated); mirrored = inverse of an innervatedBy relation whose object is a dataset concept.',
+      directFromP3190: forward.filter((r) => r.kind === 'innervates').length,
+      mirrored: mirrored.length,
+      mirroredFromStructureSideStatements: mirrored.filter((r) => r.source.name.endsWith(INVERSE_NOTE)).length,
+      mirroredViaNamedBranchOfTheNerve: mirrored.filter((r) => r.source.name.includes(BRANCH_NOTE)).length,
+      mirroredFromP3190AfterPropagation: mirrored.filter((r) => r.source.name.endsWith(REATTACHED_NOTE)).length,
+      nerveSubjects: new Set(built.filter((r) => r.kind === 'innervates').map((r) => r.subject)).size,
+    },
     wikipedia: wp.report,
     muscleGaps: { muscleElementConcepts: gaps.muscleElementConcepts, complete: gaps.complete, withGaps: gaps.withGaps, unlateralisedGroups: gaps.unlateralisedGroups, missingCounts: gaps.missingCounts },
     zhRejectedWikidataLabels: { note: 'Wikidata zh labels discarded because their structure type contradicts the English label.', items: [...m.rejectedZh.values()].sort() },
+    zhMainlandOverWikidata: {
+      note: 'Mainland wording policy: an exact lexicon term was used instead of the Wikidata label shown here (regional, colloquial or wrong wording). zhSource = lexicon:mainland-over-wikidata. For a reviewer.',
+      count: replaced.length,
+      items: replaced,
+    },
     zhWikidataVsLexicon: {
-      note: 'Wikidata zh labels kept as-is although the project lexicon renders the term differently (often regional or colloquial wording). For a reviewer.',
+      note: 'Wikidata zh labels kept because the lexicon has no exact term for the whole name; its word-by-word composition differs. For a reviewer.',
       count: disagreements.length,
       items: disagreements,
     },

@@ -1,4 +1,5 @@
 import type { AnatomyGraph } from '../anatomy/graph.ts'
+import { PROVENANCE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import type { SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
@@ -16,6 +17,10 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const explodeSelectionOnly = useApp((s) => s.explodeSelectionOnly)
   const section = useApp((s) => s.section)
   const selectionCount = useApp((s) => s.selection.ids.length)
+  const colorMode = useApp((s) => s.colorMode)
+  const provenanceHidden = useApp((s) => s.provenanceHidden)
+  const nerveBoost = useApp((s) => s.nerveBoost)
+  const hasNerves = graph.parts.some((p) => p.tissue === 'nerve')
   const app = useApp.getState()
   const layers = graph.data.layers
   const maxPeel = Math.max(0, layers.length - 1)
@@ -67,6 +72,53 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                 </li>
               )
             })}
+        </ul>
+        {hasNerves && (
+          <label className="check" title="神经很细，在全身视图下几乎看不见。开启后神经至少按固定的屏幕宽度绘制，放大后恢复真实粗细。">
+            <input type="checkbox" checked={nerveBoost} onChange={(e) => app.setNerveBoost(e.target.checked)} />
+            加粗神经（远看时保持可见）
+          </label>
+        )}
+      </section>
+
+      <section className="group">
+        <h3>
+          数据来源 <span className="en">Provenance</span>
+          <label className="switch">
+            <input type="checkbox" checked={colorMode === 'source'} onChange={(e) => app.setColorMode(e.target.checked ? 'source' : 'tissue')} />
+            按来源着色
+          </label>
+        </h3>
+        <ul className="prov-list">
+          {graph.provenanceGroups().map((g) => {
+            const label = PROVENANCE_LABEL[g.provenance]
+            const visible = !provenanceHidden.has(g.provenance)
+            return (
+              <li key={g.provenance} className={visible ? '' : 'off'}>
+                <div className="sys-row">
+                  <label className="sys-name">
+                    <input type="checkbox" checked={visible} onChange={(e) => app.setProvenanceVisible(g.provenance, e.target.checked)} />
+                    <span className="swatch" style={{ background: provenanceColor(g.provenance, 0) }} />
+                    <span>
+                      {label?.zh ?? g.provenance} <span className="en">{label?.en}</span>
+                    </span>
+                  </label>
+                  <span className="count">{g.count}</span>
+                </div>
+                <p className="hint">{label?.hint}</p>
+                <ul className="prov-sources">
+                  {g.sources.map((src) => (
+                    <li key={src.info.name}>
+                      <span className="swatch" style={{ background: provenanceColor(g.provenance, src.ordinal) }} />
+                      <span className="src-name">{src.info.name}</span>
+                      {src.info.license && <span className="tag">{src.info.license}</span>}
+                      <span className="count">{src.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            )
+          })}
         </ul>
       </section>
 

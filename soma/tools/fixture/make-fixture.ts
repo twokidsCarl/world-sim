@@ -20,6 +20,7 @@ import type {
   AnatomyData,
   Concept,
   NameEntry,
+  NervePath,
   Part,
   Relation,
   RelationKind,
@@ -51,7 +52,14 @@ interface Draft {
   isa: string[]
   /** partOf region name, or null when the part is not covered by the partOf tree. */
   region: string | null
+  /** Dataset the geometry "came from"; absent = the first source. */
+  source?: string
+  /** Centreline, for parts that get an entry in nerves.json. */
+  path?: { points: Vec3[]; radius: number }
 }
+
+const SRC_WARPED = 'soma fixture (warped set)'
+const SRC_DRAWN = 'soma fixture (drawn set)'
 
 // ---------------------------------------------------------------- geometry helpers
 
@@ -381,6 +389,46 @@ function buildBody(): void {
   pair(nv('Sciatic nerve', '坐骨神经', 'Nervus ischiadicus', 'nerve', C.nerve, null), null, (s) =>
     tube([s * 0.06, 0.95, -0.06], [s * 0.105, 0.5, -0.035], 0.005, 0.004, 8))
 
+  // --- thin "drawn" nerves: 0.35 mm tubes with synthetic non-FMA ids, like the Z-Anatomy parts.
+  // Left and right share ONE unsided concept id (so their zh name has no 左/右), and the
+  // id of that concept is not an FMA id.
+  zhOfClass.set('Musculocutaneous nerve', '肌皮神经')
+  zhOfClass.set('Ulnar nerve', '尺神经')
+  let hex = 0x3fd9f070
+  for (const [name, zh, slug, dx, dz] of [
+    ['Musculocutaneous nerve', '肌皮神经', 'musculocutaneous_nerve', 0.012, 0.026],
+    ['Ulnar nerve', '尺神经', 'ulnar_nerve', -0.012, -0.02],
+  ] as const) {
+    fmaByName.set(name, `ZAC_${slug}`)
+    for (const [s, side, en] of [[1, 'L', 'Left'], [-1, 'R', 'Right']] as const) {
+      const pts: Vec3[] = [
+        [s * 0.2, 1.43, 0.0],
+        [s * (0.222 + dx), 1.3, dz],
+        [s * (0.238 + dx), 1.16, dz],
+        [s * (0.262 + dx * 0.5), 0.9, 0.02 + dz * 0.5],
+      ]
+      const r = 0.00035
+      const partName = `${en} ${name.toLowerCase()}`
+      fmaByName.set(partName, `ZAC_${slug}`) // shared, unsided
+      drafts.push({
+        id: `ZA${(hex += 0x1111).toString(16).toUpperCase().padStart(8, '0')}`,
+        fma: `ZAC_${slug}`,
+        name: partName,
+        zh,
+        la: undefined,
+        system: 'nervous',
+        tissue: 'nerve',
+        depth: 3,
+        side,
+        geo: merge(...pts.slice(1).map((p, i) => tube(pts[i]!, p, r, r, 6))),
+        isa: [...C.nerve],
+        region: null,
+        source: SRC_DRAWN,
+        path: { points: pts, radius: r },
+      })
+    }
+  }
+
   // --- respiratory
   const rs = (name: string, zh: string, la: string, region: string | null): Spec => ({
     name, zh, la, system: 'respiratory', tissue: 'organ', depth: 3, isa: C.viscus, region,
@@ -492,7 +540,9 @@ function buildTrees(): AnatomyData['trees'] {
   for (const d of drafts) {
     let parent: string | null = null
     for (const name of d.isa) parent = ensure(isa, name, parent).id
-    ensure(isa, d.name, parent).parts.push(d.id)
+    // twins sharing an unsided concept id hang off that one concept, named without the side
+    const own = d.fma !== fmaByName.get(d.name) || !d.fma.startsWith('ZAC_') ? d.name : d.name.replace(/^(Left|Right) (.)/, (_m, _s, c: string) => c.toUpperCase())
+    ensure(isa, own, parent).parts.push(d.id)
   }
 
   const partOf = new Map<string, Concept>()
@@ -544,7 +594,11 @@ function buildKnowledge(): { names: Record<string, NameEntry>; relations: Relati
     : [
         rel('Left biceps brachii', 'origin', null, 'Scapula (coracoid process, supraglenoid tubercle)', '肩胛骨（喙突、盂上结节）'),
         rel('Left biceps brachii', 'insertion', 'Left radius', 'Radial tuberosity', '桡骨粗隆'),
-        rel('Left biceps brachii', 'innervatedBy', null, 'Musculocutaneous nerve', '肌皮神经'),
+        rel('Left biceps brachii', 'innervatedBy', 'Musculocutaneous nerve', 'Musculocutaneous nerve', '肌皮神经'),
+        rel('Right biceps brachii', 'innervatedBy', 'Musculocutaneous nerve', 'Musculocutaneous nerve', '肌皮神经'),
+        rel('Musculocutaneous nerve', 'innervates', 'Left biceps brachii', 'Biceps brachii (left)', '左肱二头肌'),
+        rel('Musculocutaneous nerve', 'innervates', 'Right biceps brachii', 'Biceps brachii (right)', '右肱二头肌'),
+        rel('Musculocutaneous nerve', 'innervates', null, 'Coracobrachialis', '喙肱肌'),
         rel('Right biceps brachii', 'insertion', 'Right radius', 'Radial tuberosity', '桡骨粗隆'),
         rel('Left quadriceps femoris', 'origin', 'Left femur', 'Femur (shaft)', '股骨体'),
         rel('Left quadriceps femoris', 'insertion', 'Left tibia', 'Tibial tuberosity', '胫骨粗隆'),
@@ -600,7 +654,8 @@ async function main(): Promise<void> {
     tissue: d.tissue,
     depth: d.depth,
     side: d.side,
-    provenance: d.side === 'R' ? 'warped' : d.tissue === 'nerve' ? 'curated' : 'scanned',
+    provenance: d.source === SRC_DRAWN || d.tissue === 'nerve' ? 'curated' : d.side === 'R' ? 'warped' : 'scanned',
+    ...(d.source === SRC_DRAWN || d.tissue === 'nerve' ? { source: SRC_DRAWN } : d.side === 'R' ? { source: SRC_WARPED } : {}),
     ...measure(d.geo),
     adjacent: [],
   }))
@@ -626,6 +681,18 @@ async function main(): Promise<void> {
         license: 'CC0-1.0',
         attribution: 'Synthetic primitive shapes generated by tools/fixture/make-fixture.ts. Not anatomical data.',
       },
+      {
+        name: SRC_WARPED,
+        url: 'https://example.org/soma-fixture/warped',
+        license: 'CC BY-SA 4.0',
+        attribution: 'Synthetic. Stands in for geometry registered from a second dataset.',
+      },
+      {
+        name: SRC_DRAWN,
+        url: 'https://example.org/soma-fixture/drawn',
+        license: 'CC BY-SA 4.0',
+        attribution: 'Synthetic. Stands in for artist-modelled structures (nerves).',
+      },
     ],
     systems,
     layers: LAYERS,
@@ -634,6 +701,10 @@ async function main(): Promise<void> {
   }
   const k = buildKnowledge()
   await writeFile(join(outDir, 'anatomy.json'), JSON.stringify(data))
+  const nerves: NervePath[] = drafts
+    .filter((d) => d.path)
+    .map((d) => ({ part: d.id, branches: [{ points: d.path!.points.flat(), radius: d.path!.points.map(() => d.path!.radius) }] }))
+  await writeFile(join(outDir, 'nerves.json'), JSON.stringify(nerves))
   await writeFile(join(outDir, 'knowledge/names.json'), JSON.stringify(k.names, null, 1))
   await writeFile(join(outDir, 'knowledge/relations.json'), JSON.stringify(k.relations, null, 1))
 

@@ -22,6 +22,9 @@ export const RELATION_PROPS: Record<string, { kind: RelationKind; label: string 
   P2329: { kind: 'antagonist', label: 'antagonist muscle' },
 }
 
+/** Verified: P3190 "innervates" — "anatomical structures innervated by this nerve". Used only as the sourced inverse of P3189. */
+export const P_INNERVATES = 'P3190'
+
 export const LABEL_LANGS = ['en', 'la', 'ja', 'zh-cn', 'zh-hans', 'zh-sg', 'zh-my', 'zh', 'zh-hant', 'zh-tw', 'zh-hk', 'zh-mo']
 
 export interface FmaItem {
@@ -125,6 +128,8 @@ export async function fetchStatements(connectSubjects: string[], opts: FetchOpti
     if (p === 'P2789') continue
     push(await sparql('statements', `SELECT ?s ?p ?o WHERE { VALUES ?p { wdt:${p} } ?s ?p ?o . }`, opts))
   }
+  // P3190 "innervates" (verified live): the same fact as P3189, stated on the nerve item.
+  push(await sparql('statements', `SELECT ?s ?p ?o WHERE { VALUES ?p { wdt:${P_INNERVATES} } ?s ?p ?o . }`, opts))
   for (const batch of chunk([...new Set(connectSubjects)].sort(), 300)) {
     push(
       await sparql(
@@ -140,7 +145,7 @@ export async function fetchStatements(connectSubjects: string[], opts: FetchOpti
 
 /** Sanity check used by `run.ts --verify-props`: the live label of every property we rely on. */
 export async function fetchPropertyLabels(opts: FetchOptions): Promise<Record<string, string>> {
-  const ids = [P_FMA, P_TA98, P_TA98_LATIN, P_UBERON, ...Object.keys(RELATION_PROPS)]
+  const ids = [P_FMA, P_TA98, P_TA98_LATIN, P_UBERON, P_INNERVATES, ...Object.keys(RELATION_PROPS)]
   const rows = await sparql(
     'props',
     `SELECT ?p ?l WHERE { VALUES ?p { ${values(ids)} } ?p rdfs:label ?l . FILTER(LANG(?l) = "en") }`,

@@ -21,7 +21,26 @@ describe('compositional zh translator', () => {
     ['trunk of superior mesenteric artery', '肠系膜上动脉干'],
     ['set of thoracic vertebrae', '胸椎'],
     ['tibialis anterior', '胫骨前肌'],
+    ['anterior root of left eighth cervical nerve', '左第8颈神经前根'],
+    ['eighth cervical spinal ganglion', '第8颈神经脊神经节'],
+    ['fifth intercostal nerve', '第5肋间神经'],
+    ['superior trunk of left brachial nerve plexus', '左臂丛上干'],
+    ['nerves to levator ani and coccygeus', '肛提肌和尾骨肌神经'],
+    ['superficial inguinal lymph node group', '腹股沟浅淋巴结群'],
+    ['set of axillary lymph nodes', '腋淋巴结'],
+    ['retrocaval nodes', '腔静脉后淋巴结'],
+    ['left anterior talofibular ligament', '左距腓前韧带'],
+    ['ligament of knee joint', '膝关节韧带'],
   ])('%s -> %s', (en, zh) => expect(t.translate(en)).toBe(zh))
+
+  it('exact() accepts whole lexicon terms only (plus side, set-of, ordinal)', () => {
+    expect(t.exact('common carotid artery')).toBe('颈总动脉')
+    expect(t.exact('left medial pterygoid')).toBe('左翼内肌')
+    expect(t.exact('set of axillary lymph nodes')).toBe('腋淋巴结')
+    expect(t.exact('first thoracic nerve')).toBe('第1胸神经')
+    expect(t.exact('branch of median nerve')).toBeUndefined() // composed, not exact
+    expect(t.exact('zone of deltoid')).toBeUndefined()
+  })
 
   it('gives up instead of guessing when a word is unknown', () => {
     expect(t.translate('zygapophyseal frobnicator of thorax')).toBeUndefined()
