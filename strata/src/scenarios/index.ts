@@ -79,6 +79,56 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'dimension',
+    title: '同一条势，换一个维度',
+    substrate: 'md',
+    steps: [
+      {
+        text: '二维的稀薄气体。速率分布是 v·exp(−v²/2T) 的形状：小速率的粒子很少，因为平面上速率为 v 的状态数正比于 v。',
+        set: {
+          dim: 2,
+          nx: 120,
+          density: 0.03,
+          temperature: 2.5,
+          thermostat: 0,
+          walls: 0,
+          fractionB: 0,
+          integrator: 0,
+        },
+        run: 3000,
+        expect: { quantity: 'speedDist', agree: true, text: '二维：速率分布与理论吻合' },
+      },
+      {
+        text: '压强对理想气体的偏离由第二维里系数给出，它是对两体势在平面上的积分。',
+        run: 1500,
+        expect: { quantity: 'pressure', agree: true, text: '二维：压强与 ρT(1 + B₂ρ) 吻合' },
+      },
+      {
+        text: '势、温度、密度都不变，只把空间换成三维。速率分布变成 v²·exp(−v²/2T)：状态数现在正比于 v²。',
+        set: { dim: 3, nx: 96 },
+        run: 3000,
+        expect: { quantity: 'speedDist', agree: true, text: '三维：速率分布与理论吻合' },
+      },
+      {
+        text: '同一条势的第二维里系数，在三维里是另一个数（积分的体积元变了）。',
+        run: 1500,
+        expect: { quantity: 'pressure', agree: true, text: '三维：压强与 ρT(1 + B₂ρ) 吻合' },
+      },
+      {
+        text: '压密、降温：三维的密堆积是面心立方，每个粒子有 12 个近邻；二维的三角晶格只有 6 个。',
+        set: { nx: 64, density: 0.95, temperature: 0.3, thermostat: 1 },
+        run: 1500,
+        expect: { quantity: 'coordination', min: 11.5, text: '三维晶体：配位数接近 12' },
+      },
+      {
+        text: '加热到 2.5，晶体熔化，第一近邻壳层散开。',
+        set: { temperature: 2.5 },
+        run: 4000,
+        expect: { quantity: 'coordination', max: 11, text: '三维液体：配位数降到 11 以下' },
+      },
+    ],
+  },
+  {
     id: 'diffusion',
     title: '让机器从粒子数据里发现扩散方程',
     substrate: 'md',

@@ -1,11 +1,11 @@
 import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
 import { speciesField, speciesTables, type PairField, type PotentialSpec } from './potential'
-import { initTriangular } from './ref/init'
+import { initFcc, initTriangular } from './ref/init'
 import { fieldSums, rdf, scalars, speedHistogram, type FieldSums, type Hist, type MdScalars } from './ref/reducers'
 import { reverseTime, stepReversible, toReversible, type ReversibleState } from './ref/reversible'
 import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
-import { boxAspect, fieldKey, potentialSpec, strengthMatrix } from './schema'
+import { boxAspect, fccCells, fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 export interface MdFrame extends Frame {
   time: number
@@ -38,6 +38,8 @@ export interface MdBackend extends RunBackend<MdFrame> {
 
 /** The reference implementation is single-threaded; larger systems belong on the GPU backend. */
 export const CPU_MAX_NX = 70
+/** In 3D: at most this many fcc cells per side (2048 particles). */
+export const CPU_MAX_CELLS = 8
 
 const THERMOSTAT_TAU = 0.5
 
@@ -61,24 +63,36 @@ export class MdCpuBackend implements MdBackend {
     this.spec = potentialSpec(p)
     this.key = fieldKey(p)
     this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p)))
-    this.state = initTriangular(
-      {
-        nx: Math.min(p.nx, CPU_MAX_NX),
-        density: p.density,
-        temperature: p.temperature,
-        seed,
-        fractionB: p.fractionB,
-        aspect: boxAspect(p),
-        stripe: p.layoutB === 1,
-      },
-      this.pair,
-    )
-    this.state.walls = p.walls === 1
+    this.state =
+      p.dim === 3
+        ? initFcc(
+            {
+              cells: Math.min(fccCells(p.nx), CPU_MAX_CELLS),
+              density: p.density,
+              temperature: p.temperature,
+              seed,
+              fractionB: p.fractionB,
+            },
+            this.pair,
+          )
+        : initTriangular(
+            {
+              nx: Math.min(p.nx, CPU_MAX_NX),
+              density: p.density,
+              temperature: p.temperature,
+              seed,
+              fractionB: p.fractionB,
+              aspect: boxAspect(p),
+              stripe: p.layoutB === 1,
+            },
+            this.pair,
+          )
+    this.state.walls = p.walls === 1 && p.dim !== 3
     this.state.seed = seed
     this.applyDrive()
     // Forces were computed before the walls were switched on.
     if (this.state.walls) computeForces(this.state, this.pair)
-    if (p.integrator === 1 && !p.walls) this.reversible = toReversible(this.state, this.pair, p.dt)
+    if (p.integrator === 1 && !this.state.walls) this.reversible = toReversible(this.state, this.pair, p.dt)
     this.start = this.state.pos.slice()
     this.rebase()
   }
@@ -100,7 +114,7 @@ export class MdCpuBackend implements MdBackend {
   }
 
   private applyDrive(): void {
-    this.state.drive = this.p.walls ? this.p.drive : 0
+    this.state.drive = this.state.walls ? this.p.drive : 0
     this.state.wallTemperature = this.p.temperature
   }
 

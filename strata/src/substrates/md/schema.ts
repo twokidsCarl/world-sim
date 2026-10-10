@@ -3,7 +3,25 @@ import type { PotentialSpec } from './potential'
 
 export const POTENTIAL_KINDS = ['mie', 'morse', 'soft'] as const
 
+/** Conventional fcc cells per side for the 3D box, from the `nx` knob. */
+export const fccCells = (nx: number) => Math.max(4, Math.round(nx / 4))
+
 export const MD_KNOBS: Knob[] = [
+  {
+    id: 'dim',
+    label: '空间维度',
+    tag: 'class',
+    min: 2,
+    max: 3,
+    step: 1,
+    default: 2,
+    rebuild: 'state',
+    options: [
+      { value: 2, label: '二维' },
+      { value: 3, label: '三维' },
+    ],
+    note: '同一条势，换一个维度：速率分布的形状、密堆积的配位数（6 对 12）、维里系数都随之改变，二维里也没有真正的长程晶体序。壁面、条带和六角序只在二维下提供。',
+  },
   {
     id: 'kind',
     label: '势的形式',
@@ -125,7 +143,7 @@ export const MD_KNOBS: Knob[] = [
       { value: 1, label: '中间一条带' },
     ],
     note: '条带：盒子变成扁长形，B 从中间向两侧扩散，可以从浓度剖面里发现扩散方程。',
-    when: (p) => p.fractionB > 0,
+    when: (p) => p.fractionB > 0 && p.dim === 2,
   },
   {
     id: 'walls',
@@ -142,6 +160,7 @@ export const MD_KNOBS: Knob[] = [
       { value: 1, label: '上下热壁（管道）' },
     ],
     note: '热壁：撞到壁面的粒子按壁面温度重新发射，速度方向随机，因此流体贴壁处流速为零。壁面温度取上面的温度 T。',
+    when: (p) => p.dim === 2,
   },
   {
     id: 'drive',
@@ -220,7 +239,7 @@ export const MD_KNOBS: Knob[] = [
     step: 4,
     default: 40,
     rebuild: 'state',
-    note: '粒子总数约为该值的平方乘 1.15。CPU 参考实现最多取 70。',
+    note: '二维：粒子总数约为该值的平方乘 1.15，CPU 参考实现最多取 70。三维：每边 nx/4 个面心立方晶胞，共 4(nx/4)³ 个粒子，CPU 最多 2048 个。',
   },
   { id: 'dt', label: '时间步长 dt', tag: 'numerical', min: 0.001, max: 0.01, step: 0.001, default: 0.005, rebuild: 'none' },
 ]
@@ -252,6 +271,7 @@ export function fieldKey(p: Params): string {
 
 /** Width over height of the box: square, except for the channel and the diffusion band. */
 export function boxAspect(p: Params): number {
+  if (p.dim === 3) return 1
   if (p.walls) return 4
   return p.fractionB > 0 && p.layoutB ? 6 : 1
 }

@@ -33,6 +33,8 @@ export interface MdScalars {
   psi6Local: number
   /** |mean of ψ6|: hexatic order coherent across the whole box. */
   psi6Global: number
+  /** Mean number of neighbours within COORDINATION_RADIUS: 6 for a triangular lattice, 12 for fcc. */
+  coordination: number
   /** Fraction of particles that are species B. */
   fractionB: number
   /**
@@ -44,6 +46,12 @@ export interface MdScalars {
 
 /** Neighbours for the hexatic order parameter lie within this distance. */
 export const PSI_RADIUS = 1.5
+
+/**
+ * Nearest neighbours for the coordination number lie within this distance: beyond the
+ * first shell of a close-packed solid and short of the second, in 2D and in 3D.
+ */
+export const COORDINATION_RADIUS = 1.35
 
 export interface Hist {
   /** Bin centres. */
@@ -95,6 +103,13 @@ export function bondCounts(s: MdState): { total: number; unlike: number } {
   return { total, unlike }
 }
 
+/** Mean number of neighbours within COORDINATION_RADIUS. */
+export function coordination(s: MdState): number {
+  let bonds = 0
+  forEachPair(s, COORDINATION_RADIUS, () => bonds++)
+  return (2 * bonds) / s.n
+}
+
 export function demixing(fractionB: number, bonds: { total: number; unlike: number }): number {
   const random = 2 * fractionB * (1 - fractionB)
   if (random === 0 || bonds.total === 0) return 0
@@ -128,6 +143,7 @@ export function scalars(s: MdState): MdScalars {
     momentum: Math.hypot(...p) / s.n,
     psi6Local: psiAbs / s.n,
     psi6Global: Math.hypot(psiRe, psiIm) / s.n,
+    coordination: coordination(s),
     fractionB,
     demix: nB > 0 ? demixing(fractionB, bondCounts(s)) : 0,
   }

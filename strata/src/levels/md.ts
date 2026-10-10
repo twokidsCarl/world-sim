@@ -10,7 +10,7 @@ import { virialPressure } from '../theory/virial'
 
 /** Why a conservation law of the isolated, reciprocal system does not apply, or null if it does. */
 const nonreciprocal = (p: Record<string, number>) =>
-  p.walls
+  p.walls && p.dim !== 3
     ? '有壁面换热和外力做功：系统是开放的，这条守恒律不适用'
     : p.fractionB! > 0 && p.nonreciprocal! > 0
       ? '作用力不再等于反作用力：这条守恒律已失效'
@@ -112,7 +112,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
   {
     id: 'densityField',
     level: 'hydro',
-    label: '密度场 ρ(x, y)',
+    label: '密度场 ρ(x, y)（三维时沿 z 累加）',
     kind: 'field',
     reducers: ['field'],
     compute: (f) => {
@@ -131,7 +131,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     record: true,
     xLabel: '横向位置 y / σ',
     reducers: ['field'],
-    when: (p) => p.fractionB! > 0,
+    when: (p) => p.fractionB! > 0 && p.dim !== 3,
     compute: (f) => {
       const pr = profiles(f.field!, f.box, BINS)
       return { x: Float64Array.from(pr.y, (s) => s * f.box[1]!), y: pr.fractionB }
@@ -146,7 +146,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     smooth: 0.03,
     xLabel: '横向位置 y / 管宽',
     reducers: ['field'],
-    when: (p) => p.walls === 1,
+    when: (p) => p.walls === 1 && p.dim !== 3,
     compute: (f) => {
       const pr = profiles(f.field!, f.box, BINS)
       return { x: pr.y, y: pr.ux }
@@ -167,7 +167,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     label: '粘度 η（由流量反推）',
     kind: 'scalar',
     reducers: ['field', 'scalars'],
-    when: (p) => p.walls === 1,
+    when: (p) => p.walls === 1 && p.dim !== 3,
     compute: (f, p) => {
       const pr = profiles(f.field!, f.box, BINS)
       let mean = 0
@@ -185,7 +185,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     smooth: 0.03,
     xLabel: '横向位置 y / 管宽',
     reducers: ['field'],
-    when: (p) => p.walls === 1,
+    when: (p) => p.walls === 1 && p.dim !== 3,
     compute: (f) => {
       const pr = profiles(f.field!, f.box, BINS)
       return { x: pr.y, y: pr.temperature }
@@ -197,11 +197,22 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     theoryLabel: '壁面温度（参照）：粘性生热使管道中央更热',
   },
   {
+    id: 'coordination',
+    level: 'structure',
+    label: '配位数（1.35σ 内的近邻数）',
+    kind: 'scalar',
+    reducers: ['scalars'],
+    compute: (f) => f.scalars!.coordination,
+    theory: (f) => (f.scalars!.dim === 3 ? 12 : 6),
+    theoryLabel: '密堆积晶体：二维三角晶格 6，三维面心立方 12（参照）',
+  },
+  {
     id: 'psi6Local',
     level: 'structure',
     label: '局域六角序 ⟨|ψ₆|⟩',
     kind: 'scalar',
     reducers: ['scalars'],
+    when: (p) => p.dim !== 3,
     compute: (f) => f.scalars!.psi6Local,
     theory: () => 1,
     theoryLabel: '完美三角晶格：1（参照，不是预言）',
@@ -212,6 +223,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     label: '全局六角序 |⟨ψ₆⟩|',
     kind: 'scalar',
     reducers: ['scalars'],
+    when: (p) => p.dim !== 3,
     compute: (f) => f.scalars!.psi6Global,
     theory: () => 1,
     theoryLabel: '单一取向的完美晶体：1（参照）；多晶或液体趋于 0',

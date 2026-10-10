@@ -79,3 +79,38 @@ export function initTriangular(
   }
   return thermalise(s, o.temperature, o.seed, pair)
 }
+
+/**
+ * 3D face-centred cubic lattice of `cells` conventional cells per side (4 particles each)
+ * in a cubic periodic box.
+ */
+export function initFcc(
+  o: { cells: number; density: number; temperature: number; seed: number; fractionB?: number },
+  pair: PairField,
+): MdState {
+  const n = 4 * o.cells ** 3
+  const L = Math.cbrt(n / o.density)
+  const a = L / o.cells
+  const s = createState(3, n, [L, L, L])
+  const basis = [
+    [0, 0, 0],
+    [0.5, 0.5, 0],
+    [0.5, 0, 0.5],
+    [0, 0.5, 0.5],
+  ]
+  let i = 0
+  for (let z = 0; z < o.cells; z++) {
+    for (let y = 0; y < o.cells; y++) {
+      for (let x = 0; x < o.cells; x++) {
+        for (const b of basis) {
+          s.pos[3 * i] = (x + b[0]! + 0.25) * a
+          s.pos[3 * i + 1] = (y + b[1]! + 0.25) * a
+          s.pos[3 * i + 2] = (z + b[2]! + 0.25) * a
+          s.species[i] = uniform(o.seed ^ 0x51ec1e5, i) < (o.fractionB ?? 0) ? 1 : 0
+          i++
+        }
+      }
+    }
+  }
+  return thermalise(s, o.temperature, o.seed, pair)
+}

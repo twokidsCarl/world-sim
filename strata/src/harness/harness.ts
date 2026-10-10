@@ -10,10 +10,10 @@ import { IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
 import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
-import { initTriangular } from '../substrates/md/ref/init'
+import { initFcc, initTriangular } from '../substrates/md/ref/init'
 import { rdf, scalars, speedHistogram } from '../substrates/md/ref/reducers'
 import { computeForces, step } from '../substrates/md/ref/step'
-import { MD_KNOBS, potentialSpec, strengthMatrix } from '../substrates/md/schema'
+import { MD_KNOBS, fccCells, potentialSpec, strengthMatrix } from '../substrates/md/schema'
 
 export interface HarnessRow {
   name: string
@@ -91,6 +91,7 @@ export async function runHarness(): Promise<HarnessResult> {
   check('每粒子动量', g.momentum, 1e-5)
   check('局域六角序 ⟨|ψ₆|⟩ 差', Math.abs(g.psi6Local - sc.psi6Local), 1e-4)
   check('全局六角序 |⟨ψ₆⟩| 差', Math.abs(g.psi6Global - sc.psi6Global), 1e-4)
+  check('配位数差', Math.abs(g.coordination - sc.coordination), 1e-6)
   check('速率直方图 L1 差', l1(frame.speedHist!.y, speedHistogram(ref, 64, 4 * Math.sqrt(p.temperature)).y), 1e-3)
   const rdfMax = frame.rdf!.x[119]! + frame.rdf!.x[0]!
   check('g(r) 直方图 L1 差', l1(frame.rdf!.y, rdf(ref, 120, rdfMax).y), 1e-3)
@@ -126,6 +127,53 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`${big.n} 粒子：邻居表溢出`, bigFrame.overflow ? 1 : 0, 0)
   check(`${big.n} 粒子：2000 步每粒子能量漂移（ε）`, Math.abs(bigFrame.drift), 1e-3)
   big.dispose()
+
+  // Three dimensions: the same kernels with a z axis.
+  const p3: Params = { ...p, dim: 3, nx: 32, density: 0.8, temperature: 1.5 }
+  const ref3 = initFcc({ cells: fccCells(p3.nx!), density: 0.8, temperature: 1.5, seed: 1 }, pair)
+  step(ref3, pair, p3.dt!, 300)
+  for (let k = 0; k < ref3.pos.length; k++) {
+    ref3.pos[k] = Math.fround(ref3.pos[k]!)
+    ref3.vel[k] = Math.fround(ref3.vel[k]!)
+  }
+  computeForces(ref3, pair)
+  const gpu3 = new MdGpuBackend(gpu, p3, 1)
+  gpu3.writeState(ref3.pos, ref3.vel)
+  const state3 = await gpu3.readState()
+  let fmax3 = 0
+  let ferr3 = 0
+  for (let i = 0; i < ref3.n; i++) {
+    for (let d = 0; d < 3; d++) {
+      fmax3 = Math.max(fmax3, Math.abs(ref3.force[3 * i + d]!))
+      ferr3 = Math.max(ferr3, Math.abs(ref3.force[3 * i + d]! - state3.force[4 * i + d]!))
+    }
+  }
+  check('三维：受力最大误差 / 最大受力', ferr3 / fmax3, 1e-4)
+  const frame3 = await gpu3.reduce(['scalars', 'rdf', 'speedHist'])
+  const sc3 = scalars(ref3)
+  check('三维：动能相对误差', Math.abs(frame3.scalars!.ke - sc3.ke) / sc3.ke, 1e-5)
+  check('三维：势能相对误差', Math.abs(frame3.scalars!.pe - sc3.pe) / Math.abs(sc3.pe), 1e-4)
+  check('三维：压强相对误差', Math.abs(frame3.scalars!.pressure - sc3.pressure) / Math.abs(sc3.pressure), 1e-3)
+  check('三维：配位数差', Math.abs(frame3.scalars!.coordination - sc3.coordination), 1e-6)
+  const rdfMax3 = frame3.rdf!.x[119]! + frame3.rdf!.x[0]!
+  check('三维：g(r) 直方图 L1 差', l1(frame3.rdf!.y, rdf(ref3, 120, rdfMax3).y), 1e-3)
+  check('三维：速率直方图 L1 差', l1(frame3.speedHist!.y, speedHistogram(ref3, 64, 4 * Math.sqrt(1.5)).y), 1e-3)
+  check('三维：邻居表溢出', frame3.overflow ? 1 : 0, 0)
+  gpu3.step(200)
+  step(ref3, pair, p3.dt!, 200)
+  check('三维：200 步后温度差', Math.abs((await gpu3.reduce(['scalars'])).scalars!.temperature - scalars(ref3).temperature), 2e-3)
+  gpu3.dispose()
+
+  const big3 = new MdGpuBackend(gpu, { ...p3, nx: 128 }, 1)
+  await big3.reduce([])
+  const t3 = performance.now()
+  for (let i = 0; i < 50; i++) {
+    big3.step(4)
+    await big3.idle()
+  }
+  check(`三维 ${big3.n} 粒子：每步毫秒`, (performance.now() - t3) / 200, null)
+  check(`三维 ${big3.n} 粒子：邻居表溢出`, (await big3.reduce(['scalars'])).overflow ? 1 : 0, 0)
+  big3.dispose()
 
   // A two-species mixture with a non-reciprocal matrix exercises every per-pair table.
   const mp: Params = { ...p, fractionB: 0.4, epsAB: 0.5, epsBB: 1.4, nonreciprocal: 0.3 }
