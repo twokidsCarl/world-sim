@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.venv/
+.cache/
+research/gallery/
+research/out/
+research/illustrate/build/
+*.log
+.DS_Store
