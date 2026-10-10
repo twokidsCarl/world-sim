@@ -7,6 +7,7 @@
 //                                    whose node name is the Part.id. Positions are in metres,
 //                                    Y up, anterior +Z, the body's left at +X. Normals included.
 //                                    EXT_meshopt_compression + KHR_mesh_quantization.
+//   /anatomy/<body>/nerves.json       NervePath[]  (optional) centrelines of nerve parts
 //   /anatomy/knowledge/names.json    Record<fmaId, NameEntry>      (optional, shared by bodies)
 //   /anatomy/knowledge/relations.json Relation[]                   (optional, shared by bodies)
 
@@ -66,6 +67,8 @@ export interface Part {
   depth: number
   side: Side
   provenance: Provenance
+  /** `SourceInfo.name` of the dataset this part's geometry came from. Absent = the first source. */
+  source?: string
   /** Axis-aligned bounds in metres: [minX, minY, minZ, maxX, maxY, maxZ]. */
   bbox: [number, number, number, number, number, number]
   /** Area-weighted surface centroid in metres. */
@@ -83,7 +86,10 @@ export interface Concept {
   id: string
   name: string
   parent: string | null
-  /** Part ids attached directly to this concept (not to any child). */
+  /**
+   * Part ids attached directly to this concept (not to any child). In the partOf tree the same
+   * part may be listed under more than one concept (e.g. a limb region and a system branch).
+   */
   parts: string[]
 }
 
@@ -118,6 +124,14 @@ export interface AnatomyData {
     /** Structural hierarchy; may cover only a subset of parts. */
     partOf: Concept[]
   }
+}
+
+/** Centreline of a nerve part, in the same frame as the meshes. Used by the innervation model. */
+export interface NervePath {
+  /** Part.id of the nerve. */
+  part: string
+  /** One polyline per branch. `points` is flat xyz in metres; `radius` has one value per point. */
+  branches: { points: number[]; radius: number[] }[]
 }
 
 export type ReviewStatus = 'unreviewed' | 'reviewed'
