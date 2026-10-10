@@ -21,6 +21,8 @@ export interface Backend<F> {
 export interface RunBackend<F extends Frame> extends Backend<F> {
   readonly kind: 'cpu' | 'gpu'
   readonly stepCount: number
+  /** Cap on simulation steps per display frame, for backends whose step is expensive. */
+  readonly maxStepsPerFrame?: number
 }
 
 export interface Substrate<F extends Frame> {

@@ -3,6 +3,9 @@
 
 import { defaults, type Params } from '../core/params'
 import { getGpu } from '../gpu/device'
+import { GravityGpuBackend } from '../substrates/gravity/backend'
+import { gravityScalars, leapfrog, uniformSphere } from '../substrates/gravity/ref'
+import { GRAVITY_KNOBS } from '../substrates/gravity/schema'
 import { IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
 import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
@@ -172,6 +175,35 @@ export async function runHarness(): Promise<HarnessResult> {
   })
   check(`Ising ${cpuLevels.length} 层金字塔统计量差`, levelDiff, 0)
   isingGpu.dispose()
+
+  // Gravity: accelerations and potentials by direct summation, then a short trajectory.
+  const gp: Params = { ...defaults(GRAVITY_KNOBS), n: 10, virial0: 0.5, eps: 0.03 }
+  const gravRef = uniformSphere(1024, 0.5, 0.03, 1)
+  const gravGpu = new GravityGpuBackend(gpu, gp, 1)
+  gravGpu.step(1)
+  leapfrog(gravRef, 0.03, gp.dt!, 1)
+  const gravAcc = await gravGpu.readAccelerations()
+  let amax = 0
+  let aerr = 0
+  for (let i = 0; i < gravRef.n; i++) {
+    for (let d = 0; d < 3; d++) {
+      amax = Math.max(amax, Math.abs(gravRef.acc[3 * i + d]!))
+      aerr = Math.max(aerr, Math.abs(gravRef.acc[3 * i + d]! - gravAcc[4 * i + d]!))
+    }
+  }
+  check('引力：加速度最大误差 / 最大加速度', aerr / amax, 1e-4)
+  const gravFrame = await gravGpu.reduce()
+  const gravSc = gravityScalars(gravRef)
+  check('引力：动能相对误差', Math.abs(gravFrame.ke - gravSc.ke) / gravSc.ke, 1e-4)
+  check('引力：势能相对误差', Math.abs(gravFrame.pe - gravSc.pe) / Math.abs(gravSc.pe), 1e-4)
+  check('引力：束缚部分位力比差', Math.abs(gravFrame.virialBound - gravSc.virialBound), 1e-3)
+  check('引力：束缚比例差', Math.abs(gravFrame.boundFraction - gravSc.boundFraction), 0)
+  for (let i = 0; i < 100; i++) {
+    gravGpu.step(4)
+    await gravGpu.idle()
+  }
+  check('引力 400 步能量相对漂移', Math.abs((await gravGpu.reduce()).drift), 1e-2)
+  gravGpu.dispose()
 
   const error = await gpu.device.popErrorScope()
   if (error) result.error = error.message

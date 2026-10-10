@@ -123,6 +123,8 @@ export class Engine {
 
   /** Keep a quantity computed while the returned function has not been called. */
   watch(id: string): () => void {
+    // A view from the previous substrate may still be mounted for one render; ignore it.
+    if (!this.substrate.quantities.some((q) => q.id === id)) return () => {}
     return this.scheduler.subscribe(id, (s) => this.record(id, s))
   }
 
@@ -180,7 +182,8 @@ export class Engine {
   frameOnce(): Promise<void> {
     let reduced: Promise<void> = Promise.resolve()
     if (this.running) {
-      const n = Math.max(1, Math.min(MAX_SUBSTEPS, Math.floor(STEP_BUDGET_MS / this.msPerStep)))
+      const cap = this.backend.maxStepsPerFrame ?? MAX_SUBSTEPS
+      const n = Math.max(1, Math.min(cap, Math.floor(STEP_BUDGET_MS / this.msPerStep)))
       const t0 = performance.now()
       this.backend.step(n)
       this.msPerStep = 0.9 * this.msPerStep + (0.1 * (performance.now() - t0)) / n

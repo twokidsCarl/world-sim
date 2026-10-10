@@ -75,6 +75,23 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'collapse',
+    title: '一团静止的天体坍缩，然后自己找到平衡',
+    substrate: 'gravity',
+    steps: [
+      {
+        text: '均匀的球，所有天体静止。没有压强撑着，整团物质向中心下落；位力比从 0 开始上升。',
+        set: { initial: 0, virial0: 0, n: 12, eps: 0.03, dt: 0.002 },
+        run: 700,
+      },
+      {
+        text: '穿过中心后反弹、振荡几次。没有碰撞，也没有摩擦，但系统仍然弛豫到一个稳定的核与晕，同时把一部分天体甩了出去。留下来的那部分满足位力定理：两倍动能等于力的位力。',
+        run: 2800,
+        expect: { quantity: 'virial', min: 0.85, max: 1.15, text: '束缚部分的位力比回到 1 附近' },
+      },
+    ],
+  },
+  {
     id: 'quench',
     title: '把 Ising 晶格淬火穿过临界温度',
     substrate: 'ising',
