@@ -27,6 +27,10 @@ export interface ZaItem {
   fma: string | null
   fmaUnsided?: string | null
   fmaSided?: boolean
+  /** lateralised item whose `fma` is the unsided class */
+  fmaIsUnsided?: boolean
+  fmaMatch?: string
+  fmaUnsidedLabel?: string
   fmaLabel?: string
   system: string
   tissue: string

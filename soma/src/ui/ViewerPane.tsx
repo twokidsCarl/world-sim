@@ -3,7 +3,12 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { debug } from '../debug.ts'
 import { useApp } from '../state/store.ts'
 import type { Viewer } from '../viewer/Viewer.ts'
+import { ComparePane } from './ComparePane.tsx'
 import { Icon } from './Icon.tsx'
+
+function bodyUrl(dataset: string): string {
+  return `${import.meta.env.BASE_URL}anatomy/${dataset}/`
+}
 
 export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -21,8 +26,14 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   const colorMode = useApp((s) => s.colorMode)
   const provenanceHiddenCount = useApp((s) => s.provenanceHidden.size)
   const selection = useApp((s) => s.selection)
+  const compare = useApp((s) => s.compare)
   const hasSelection = selection.ids.length > 0
 
+  const viewerRef = useRef<Viewer | null>(null)
+  const [ready, setReady] = useState(false)
+  const firstGraph = useRef(graph)
+
+  // one renderer for the life of the page; bodies are swapped into it
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
@@ -35,11 +46,12 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
         // three.js and the loaders are a separate chunk, fetched while the UI is already up
         const { Viewer } = await import('../viewer/Viewer.ts')
         if (cancelled) return
-        viewer = new Viewer(host, graph, `${import.meta.env.BASE_URL}anatomy/${dataset}/`, {
+        viewer = new Viewer(host, firstGraph.current, bodyUrl(app.dataset), {
           forceWebGL: params.get('renderer') === 'webgl',
         })
         await viewer.init()
         if (cancelled) return viewer.dispose()
+        viewerRef.current = viewer
         debug.viewer = viewer
         debug.backend = viewer.backend
         setBackend(viewer.backend)
@@ -51,12 +63,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
           tip.dataset.on = xy ? '1' : '0'
           if (xy) tip.style.transform = `translate(${xy.x + 14}px, ${xy.y + 16}px)`
         }
-        const problems = await viewer.loadSystems((done, total) =>
-          app.setLoad({ progress: 0.1 + 0.9 * (total ? done / total : 1), message: `加载模型… ${done}/${total}` }),
-        )
-        if (cancelled) return
-        for (const p of problems) app.addNotice(p)
-        app.setLoad({ phase: 'ready', progress: 1, message: '' })
+        setReady(true)
       } catch (err) {
         console.error('[soma] viewer failed', err)
         if (!cancelled) app.setLoad({ phase: 'error', message: `渲染器初始化失败：${err instanceof Error ? err.message : String(err)}` })
@@ -65,9 +72,35 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
     return () => {
       cancelled = true
       if (debug.viewer === viewer) debug.viewer = null
+      viewerRef.current = null
       viewer?.dispose()
     }
-  }, [graph, dataset])
+  }, [])
+
+  // load the current body's geometry; a body switch frees the old one and keeps the camera
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!ready || !viewer) return
+    const app = useApp.getState()
+    let cancelled = false
+    if (viewer.isStale(graph)) viewer.setBody(graph, bodyUrl(app.dataset), { keepCamera: true })
+    viewer
+      .loadSystems((p) =>
+        app.setLoad({ phase: 'loading', progress: 0.1 + 0.9 * (p.total ? p.done / p.total : 1), message: `加载模型… ${p.done}/${p.total}`, loaded: [...p.loaded] }),
+      )
+      .then((problems) => {
+        if (cancelled || viewer.isStale(graph)) return
+        for (const p of problems) app.addNotice(p)
+        app.setLoad({ phase: 'ready', progress: 1, message: '' })
+      })
+      .catch((err: unknown) => {
+        console.error('[soma] geometry load failed', err)
+        if (!cancelled) app.setLoad({ phase: 'error', message: `模型加载失败：${err instanceof Error ? err.message : String(err)}` })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [ready, graph])
 
   const app = useApp.getState()
   const hoverPart = hover ? graph.part(hover) : undefined
@@ -83,8 +116,9 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   } else if (selection.ids.length > 1) selectionLabel = `已选择 ${selection.ids.length} 个结构`
 
   return (
-    <div className="viewer">
+    <div className={`viewer${compare ? ' comparing' : ''}`}>
       <div className="viewer-host" ref={hostRef} />
+      {compare && ready && <ComparePane graph={graph} dataset={dataset} system={compare.system} />}
 
       <div className="viewer-tools">
         <button className="tool-btn" onClick={() => app.requestHome()} title="复位视角 Reset view">
@@ -154,6 +188,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
           <>
             <strong>{hoverName.primary}</strong>
             {hoverName.zh && <span>{hoverName.en}</span>}
+            {hoverName.broader && <span>所属概念：{hoverName.broader.zh ?? hoverName.broader.en}</span>}
           </>
         )}
       </div>
@@ -164,6 +199,15 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
             <div style={{ width: `${Math.round(load.progress * 100)}%` }} />
           </div>
           <span>{load.message}</span>
+          <ul className="loading-systems">
+            {graph.data.systems
+              .filter((sys) => sys.glb)
+              .map((sys) => (
+                <li key={sys.id} className={load.loaded.includes(sys.id) ? 'done' : ''}>
+                  {sys.name.zh}
+                </li>
+              ))}
+          </ul>
         </div>
       )}
 

@@ -43,7 +43,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     for (const p of data.parts) {
       expect(p.id).toMatch(/^(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8})$/)
       // FMA ids, or a synthetic ZAC_… concept id for structures FMA has no class for
-      expect(p.fma, p.id).toMatch(/^(FMA\d+|ZAC_[a-z0-9_]+(_[LR])?)$/)
+      expect(p.fma, p.id).toMatch(/^(FMA\d+(_[LR])?|ZAC_[a-z0-9_]+(_[LR])?)$/)
       expect(p.name.trim().length, p.id).toBeGreaterThan(0)
       expect(SYSTEMS, p.id).toContain(p.system)
       expect(TISSUES, p.id).toContain(p.tissue)
@@ -308,7 +308,46 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     expect(wrong.map((p) => `${p.id} ${p.name}`)).toEqual([])
   })
 
+  it('lists cautions in both languages, most important first', () => {
+    expect(data.cautions!.length).toBeGreaterThanOrEqual(6)
+    for (const c of data.cautions!) {
+      expect(c.en.length, c.en).toBeGreaterThan(40)
+      expect(c.zh, c.en).toMatch(/[\u4e00-\u9fff]/)
+      expect(c.zh.length).toBeLessThan(260)
+    }
+    const all = data.cautions!.map((c) => c.en).join(' ')
+    for (const w of ['not a scan of one person', 'Z-Anatomy', 'BodyParts3D 3.0', 'Transversus abdominis', 'phrenic nerve', 'Left/right labels']) expect(all).toContain(w)
+  })
+
+  it('gives each side its own concept where a lateralised part was filed under an unsided class', () => {
+    // no concept is shared by a left and a right part that came from the Z-Anatomy package
+    const sides = new Map<string, Set<string>>()
+    for (const p of data.parts) if (p.id.startsWith('ZA') && p.side !== 'M') sides.set(p.fma, (sides.get(p.fma) ?? new Set()).add(p.side))
+    expect([...sides].filter(([, v]) => v.size > 1).map(([k]) => k)).toEqual([])
+    const minted = data.parts.filter((p) => /^FMA\d+_[LR]$/.test(p.fma))
+    expect(minted.length).toBeGreaterThan(100)
+    const isa = new Map(data.trees.isa.map((c) => [c.id, c]))
+    for (const p of minted) {
+      const c = isa.get(p.fma)!
+      expect(c.parent, p.name).toBe(p.fma.replace(/_[LR]$/, ''))
+      expect(p.fma.endsWith(`_${p.side}`), p.name).toBe(true)
+      expect(c.name.toLowerCase(), p.name).toBe(p.name.toLowerCase())
+      expect(c.parts).toEqual([p.id])
+    }
+  })
+
   it('applies the source label corrections', () => {
+    // FJ2190 was "Right fibular vein" on the left leg: now the left concept, not a right-side class on a left part
+    const fj = byId.get('FJ2190')!
+    expect(fj).toMatchObject({ name: 'Left fibular vein', fma: 'FMA44886', side: 'L' })
+    expect(fj.centroid[0]).toBeGreaterThan(0.03)
+    expect(data.trees.isa.find((c) => c.id === 'FMA44886')!.parts).toContain('FJ2190')
+    expect(data.trees.isa.find((c) => c.id === 'FMA44885')?.parts ?? []).not.toContain('FJ2190')
+    for (const p of data.parts) {
+      const c = data.trees.isa.find((x) => x.id === p.fma)!
+      if (/^right /.test(c.name)) expect(p.side, `${p.id} ${p.name} under "${c.name}"`).not.toBe('L')
+      if (/^left /.test(c.name)) expect(p.side, `${p.id} ${p.name} under "${c.name}"`).not.toBe('R')
+    }
     // label pairs that are swapped in BodyParts3D (tools/pipeline/corrections.ts)
     for (const name of ['flexor pollicis brevis', 'middle pharyngeal constrictor', 'ascending lumbar vein']) {
       const l = byName(`Left ${name}`)
@@ -699,6 +738,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
         return c ? [c.name, ...(c.parent ? up(c.parent) : [])] : []
       }
       expect(up(byName('Right median nerve').fma).slice(0, 3)).toEqual(['right median nerve', 'median nerve', 'peripheral nerve'])
+      expect(up(byName('Left fascia lata').fma).slice(0, 2)).toEqual(['left fascia lata', 'fascia lata'])
       expect(up(byName('Thyroid gland').fma)).toEqual(expect.arrayContaining(['thyroid gland', 'lobular organ', 'organ']))
       expect(up(byName('Left deep popliteal nodes').fma)).toEqual(expect.arrayContaining(['deep popliteal lymph node group', 'lymph node group']))
       const synthetic = za.filter((p) => p.fma.startsWith('ZAC_'))

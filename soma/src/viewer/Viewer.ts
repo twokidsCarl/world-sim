@@ -44,6 +44,7 @@ import { useApp, type AppState } from '../state/store.ts'
 import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, type BakedPart, type PartRenderer } from './batches.ts'
 import { PartMeshes, centroidTransparentSort } from './meshes.ts'
 
+const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
 const GHOST_RGB = new Color('#8d99a6')
 const GHOST_OPACITY = 0.07
 /** Parts drawn more transparent than this are not pickable (the pointer passes through). */
@@ -93,6 +94,48 @@ export interface BenchResult {
 
 /** Above this many selected parts the see-through tint is skipped (it doubles their draw calls). */
 const XRAY_MAX = 300
+/** The slice of app state the scene mirrors. A compare pane supplies its own. */
+export type ViewState = Pick<
+  AppState,
+  | 'systems'
+  | 'peel'
+  | 'hidden'
+  | 'isolated'
+  | 'adjacentMode'
+  | 'provenanceHidden'
+  | 'colorMode'
+  | 'selection'
+  | 'hover'
+  | 'explode'
+  | 'explodeSelectionOnly'
+  | 'section'
+  | 'nerveBoost'
+  | 'focusRequest'
+  | 'homeRequest'
+>
+
+export interface ViewerOptions {
+  forceWebGL?: boolean
+  /** Where display state comes from; defaults to the app store. */
+  state?: () => ViewState
+  /** false: orbit only — no hover, no selection (compare pane). */
+  interactive?: boolean
+}
+
+export interface CameraPose {
+  /** Camera position relative to the orbit target. */
+  offset: [number, number, number]
+  /** Orbit target relative to the viewer's anchor (see `setAnchor`). */
+  target: [number, number, number]
+}
+
+export interface LoadProgress {
+  done: number
+  total: number
+  /** Systems whose geometry has arrived, in arrival order. */
+  loaded: SystemId[]
+}
+
 const TAP_MAX_MOVE = 6
 const TAP_MAX_MS = 450
 const DOUBLE_TAP_MS = 350
@@ -112,13 +155,13 @@ export class Viewer {
   /** 'batched' (WebGPU) or 'meshes' (WebGL2 fallback); see meshes.ts for why. */
   scenePath: 'batched' | 'meshes' = 'batched'
   /** Batch instance id per part (indexed like graph.parts), -1 when the part has no geometry. */
-  private readonly inst: Int32Array
-  private readonly bvh: (MeshBVH | null)[]
+  private inst: Int32Array
+  private bvh: (MeshBVH | null)[]
   /** Equivalent tube radius per part, metres (0 when unknown). */
-  private readonly radius: Float32Array
+  private radius: Float32Array
   /** Parts thin enough to get tolerant picking. */
   private thinParts: number[] = []
-  private readonly baseColor: Color[]
+  private baseColor: Color[]
   private display: Uint8Array
   private offsets: Float32Array
   private pickable: Uint8Array
@@ -134,7 +177,18 @@ export class Viewer {
   private raf = 0
   private dirty = true
   private syncNeeded = true
-  private prev: AppState | null = null
+  private prev: ViewState | null = null
+  private graph: AnatomyGraph
+  private baseUrl: string
+  /** Bumped by setBody so loads of a previous body stop touching the scene. */
+  private bodyToken = 0
+  private bvhVersion = 0
+  private readonly source: () => ViewState
+  private readonly interactive: boolean
+  private readonly anchor = new Vector3()
+  private applyingPose = false
+  /** Called when the camera moves (not when a pose is applied through setPose). */
+  onCamera: ((pose: CameraPose) => void) | null = null
   private forceFull = false
   private focusNonce = 0
   private homeNonce = 0
@@ -173,10 +227,14 @@ export class Viewer {
 
   constructor(
     private readonly container: HTMLElement,
-    private readonly graph: AnatomyGraph,
-    private readonly baseUrl: string,
-    opts: { forceWebGL?: boolean } = {},
+    graph: AnatomyGraph,
+    baseUrl: string,
+    opts: ViewerOptions = {},
   ) {
+    this.graph = graph
+    this.baseUrl = baseUrl
+    this.source = opts.state ?? useApp.getState
+    this.interactive = opts.interactive ?? true
     this.renderer = new WebGPURenderer({ antialias: true, forceWebGL: opts.forceWebGL ?? false })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     this.renderer.setClearColor(new Color('#15181d'), 1)
@@ -185,15 +243,15 @@ export class Viewer {
     canvas.className = 'viewer-canvas'
     container.appendChild(canvas)
 
-    const n = graph.parts.length
-    this.inst = new Int32Array(n).fill(-1)
-    this.bvh = new Array<MeshBVH | null>(n).fill(null)
-    this.radius = new Float32Array(n)
-    this.baseColor = graph.parts.map(() => new Color())
-    this.display = new Uint8Array(n)
-    this.offsets = new Float32Array(n * 3)
-    this.pickable = new Uint8Array(n)
-    this.solid = new Uint8Array(n)
+    this.inst = new Int32Array(0)
+    this.bvh = []
+    this.radius = new Float32Array(0)
+    this.baseColor = []
+    this.display = new Uint8Array(0)
+    this.offsets = new Float32Array(0)
+    this.pickable = new Uint8Array(0)
+    this.solid = new Uint8Array(0)
+    this.allocate()
 
     // lighting: soft sky/ground fill plus a key light that travels with the camera, so the
     // surface facing the viewer is always lit however the model is turned
@@ -218,6 +276,7 @@ export class Viewer {
     this.controls.maxDistance = 9
     this.controls.addEventListener('change', () => {
       this.dirty = true
+      if (!this.applyingPose) this.onCamera?.(this.getPose())
     })
     this.controls.addEventListener('start', () => {
       this.tween = null
@@ -242,9 +301,11 @@ export class Viewer {
     el.addEventListener('pointerleave', this.onPointerLeave)
     el.addEventListener('contextmenu', this.onContextMenu)
 
-    this.unsubscribe = useApp.subscribe(() => {
-      this.syncNeeded = true
-    })
+    if (this.source === useApp.getState) {
+      this.unsubscribe = useApp.subscribe(() => {
+        this.syncNeeded = true
+      })
+    }
     this.raf = requestAnimationFrame(this.tick)
   }
 
@@ -268,40 +329,116 @@ export class Viewer {
 
   // ------------------------------------------------------------ geometry loading
 
+  private allocate(): void {
+    const n = this.graph.parts.length
+    this.inst = new Int32Array(n).fill(-1)
+    this.bvh = new Array<MeshBVH | null>(n).fill(null)
+    this.radius = new Float32Array(n)
+    this.baseColor = this.graph.parts.map(() => new Color())
+    this.display = new Uint8Array(n)
+    this.offsets = new Float32Array(n * 3)
+    this.pickable = new Uint8Array(n)
+    this.solid = new Uint8Array(n)
+    this.thinParts = []
+    this.bvhQueue = []
+    this.bvhBuilt = 0
+    this.bvhTotal = 0
+  }
+
   /**
-   * Load every system's GLB, bake each part to world space and build the batches. Nothing
-   * is drawn until all files are in (the batches need their final buffer sizes); a missing
-   * or broken file is reported and skipped. Returns human-readable problems.
+   * Replace the body on show: frees the old body's GPU buffers and BVHs and keeps the
+   * renderer, camera and controls. Follow with `loadSystems`.
    */
-  async loadSystems(onProgress: (done: number, total: number) => void): Promise<string[]> {
+  setBody(graph: AnatomyGraph, baseUrl: string, opts: { keepCamera?: boolean } = {}): void {
+    this.bodyToken++
+    if (this.batches) {
+      this.root.remove(...this.batches.objects)
+      this.batches.dispose()
+      this.batches = null
+    }
+    this.graph = graph
+    this.baseUrl = baseUrl
+    this.allocate()
+    this.hoverXY = null
+    this.forceFull = true
+    this.syncNeeded = true
+    this.dirty = true
+    if (!opts.keepCamera) this.home(false)
+  }
+
+  /**
+   * Load the systems' GLBs (all, or just `only`), baking each part to world space. Each
+   * system appears as soon as its file has arrived; a missing or broken file is reported
+   * and skipped. Returns human-readable problems.
+   */
+  async loadSystems(onProgress: (p: LoadProgress) => void, only?: readonly SystemId[]): Promise<string[]> {
+    const token = this.bodyToken
+    const graph = this.graph
     const loader = new GLTFLoader()
     loader.setMeshoptDecoder(MeshoptDecoder)
-    const systems = this.graph.data.systems.filter((s) => s.glb)
+    const systems = graph.data.systems.filter((s) => s.glb && (!only || only.includes(s.id)))
     const problems: string[] = []
-    const baked = new Array<BakedPart | undefined>(this.graph.parts.length)
+    const loaded: SystemId[] = []
     let done = 0
-    onProgress(0, systems.length)
+
+    // The index count is known from the data file; the vertex count is not, so it starts
+    // from an estimate and the batch grows if a body needs more.
+    let triangles = 0
+    let partCount = 0
+    for (const sys of systems) {
+      for (const p of graph.partsBySystem(sys.id)) {
+        triangles += p.triangles
+        partCount++
+      }
+    }
+    const forced = new URLSearchParams(location.search).get('scene')
+    this.scenePath = forced === 'batched' || forced === 'meshes' ? forced : this.backend === 'webgpu' ? 'batched' : 'meshes'
+    const batches: PartRenderer =
+      this.scenePath === 'batched' ? new PartBatches(partCount, Math.ceil(triangles * 0.62) + 2000, triangles * 3 + 3000) : new PartMeshes()
+    if (this.scenePath === 'meshes') this.renderer.setTransparentSort(centroidTransparentSort as never)
+    this.batches = batches
+    this.updateBoost()
+    let attached = 0
+
+    onProgress({ done, total: systems.length, loaded })
     await Promise.all(
       systems.map(async (sys) => {
         try {
           const gltf = await loader.loadAsync(new URL(sys.glb!, new URL(this.baseUrl, location.href)).href)
-          if (this.disposed) return
-          const got = this.bake(gltf.scene, baked)
-          const expected = this.graph.partsBySystem(sys.id).length
-          if (got < expected) problems.push(`${sys.name.zh}：${expected - got}/${expected} 个结构在 ${sys.glb} 中没有几何`)
+          if (this.disposed || token !== this.bodyToken) return
+          const baked = this.bake(gltf.scene)
+          for (const [i, b] of baked) {
+            if (this.inst[i]! >= 0) continue
+            const part = graph.parts[i]!
+            this.radius[i] = b.radius
+            if (b.radius > 0 && b.radius < THIN_RADIUS) this.thinParts.push(i)
+            this.inst[i] = batches.add(b, part.tissue === 'nerve' ? b.radius : null, part.bbox, part.centroid)
+            this.bvhQueue.push(i)
+            this.bvhTotal++
+          }
+          batches.finish()
+          for (const b of baked.values()) b.geometry.dispose()
+          const objects = batches.objects
+          if (objects.length > attached) this.root.add(...objects.slice(attached))
+          attached = objects.length
+          loaded.push(sys.id)
+          this.forceFull = true
+          this.syncNeeded = true
+          const expected = graph.partsBySystem(sys.id).length
+          if (baked.size < expected) problems.push(`${sys.name.zh}：${expected - baked.size}/${expected} 个结构在 ${sys.glb} 中没有几何`)
         } catch (err) {
+          if (this.disposed || token !== this.bodyToken) return
           console.warn(`[soma] failed to load ${sys.glb}`, err)
           problems.push(`${sys.name.zh}：无法加载 ${sys.glb}`)
         }
-        onProgress(++done, systems.length)
+        if (token === this.bodyToken) onProgress({ done: ++done, total: systems.length, loaded })
       }),
     )
-    if (!this.disposed) this.build(baked)
     return problems
   }
 
-  /** Bake the parts found in one loaded GLB into `out`. Returns how many parts it held. */
-  private bake(gltfScene: Object3D, out: (BakedPart | undefined)[]): number {
+  /** Bake the parts found in one loaded GLB, keyed by part index. */
+  private bake(gltfScene: Object3D): Map<number, BakedPart> {
     gltfScene.updateMatrixWorld(true)
     const byPart = new Map<number, Mesh[]>()
     gltfScene.traverse((o) => {
@@ -321,52 +458,21 @@ export class Viewer {
         cur = cur.parent
       }
     })
-    let added = 0
+    const out = new Map<number, BakedPart>()
     for (const [index, meshes] of byPart) {
-      if (!out[index]) added++
-      out[index] = bakePart(meshes)
+      out.set(index, bakePart(meshes))
       for (const m of meshes) {
         m.geometry.dispose()
         const mats = m.material
         for (const mat of Array.isArray(mats) ? mats : [mats]) mat.dispose()
       }
     }
-    return added
+    return out
   }
 
-  private build(baked: (BakedPart | undefined)[]): void {
-    let vertices = 0
-    let indices = 0
-    let count = 0
-    for (const b of baked) {
-      if (!b) continue
-      count++
-      vertices += b.geometry.getAttribute('position').count
-      indices += b.geometry.index!.count
-    }
-    const forced = new URLSearchParams(location.search).get('scene')
-    this.scenePath = forced === 'batched' || forced === 'meshes' ? forced : this.backend === 'webgpu' ? 'batched' : 'meshes'
-    const batches: PartRenderer = this.scenePath === 'batched' ? new PartBatches(count, vertices, indices) : new PartMeshes()
-    if (this.scenePath === 'meshes') this.renderer.setTransparentSort(centroidTransparentSort as never)
-    const parts = this.graph.parts
-    this.thinParts = []
-    for (let i = 0; i < parts.length; i++) {
-      const b = baked[i]
-      if (!b) continue
-      const part = parts[i]!
-      this.radius[i] = b.radius
-      if (b.radius > 0 && b.radius < THIN_RADIUS) this.thinParts.push(i)
-      this.inst[i] = batches.add(b, part.tissue === 'nerve' ? b.radius : null, part.bbox, part.centroid)
-      this.bvhQueue.push(i)
-    }
-    batches.finish()
-    for (const b of baked) b?.geometry.dispose()
-    this.bvhTotal = count
-    this.batches = batches
-    this.root.add(...batches.objects)
-    this.updateBoost()
-    this.forceFull = true
-    this.syncNeeded = true
+  /** True once this viewer shows a different body than `graph` (or is disposed). */
+  isStale(graph: AnatomyGraph): boolean {
+    return this.disposed || this.graph !== graph
   }
 
   hasGeometry(partIndex: number): boolean {
@@ -380,7 +486,7 @@ export class Viewer {
   }
 
   private updateBoost(): void {
-    const on = useApp.getState().nerveBoost
+    const on = this.source().nerveBoost
     const h = Math.max(1, this.container.clientHeight)
     // world size of one CSS pixel per metre of distance, times the wanted pixel radius
     const perMetre = (2 * Math.tan((this.camera.fov * Math.PI) / 360)) / h
@@ -389,8 +495,13 @@ export class Viewer {
 
   // ------------------------------------------------------------ state → scene
 
+  /** Tell a viewer with its own state source that the state changed. */
+  invalidateState(): void {
+    this.syncNeeded = true
+  }
+
   private sync(): void {
-    const s = useApp.getState()
+    const s = this.source()
     const p = this.forceFull ? null : this.prev
     this.prev = s
     this.forceFull = false
@@ -450,6 +561,11 @@ export class Viewer {
           const y = this.offsets[i * 3 + 1]!
           const z = this.offsets[i * 3 + 2]!
           batches.setOffset(id, x, y, z, c[0] + x, c[1] + y, c[2] + z)
+          if (LEGACY_SORT) {
+            // verification only: sort the way the unbatched build did, by the mesh origin (a bbox corner)
+            const bb = parts[i]!.bbox
+            batches.setOffset(id, x, y, z, bb[0] + x, bb[1] + y, bb[2] + z)
+          }
         }
       }
     }
@@ -483,7 +599,7 @@ export class Viewer {
   }
 
   /** Colour each part is drawn with before hover / selection tinting. */
-  private computeBaseColors(s: AppState): void {
+  private computeBaseColors(s: ViewState): void {
     const systemColor = new Map<SystemId, string>(this.graph.data.systems.map((x) => [x.id, x.color]))
     this.graph.parts.forEach((part, i) => {
       const hex =
@@ -496,7 +612,7 @@ export class Viewer {
 
   private readonly tmpColor = new Color()
 
-  private applyPart(i: number, part: Part, s: AppState): void {
+  private applyPart(i: number, part: Part, s: ViewState): void {
     const id = this.inst[i]!
     const d = this.display[i]!
     const selected = s.selection.set.has(part.id)
@@ -726,6 +842,15 @@ export class Viewer {
   }
 
   private bvhFor(i: number): MeshBVH {
+    const version = this.batches!.geometryVersion
+    if (version !== this.bvhVersion) {
+      // the shared buffers were reallocated (the batch grew): every BVH points at the old ones
+      this.bvhVersion = version
+      this.bvh.fill(null)
+      this.bvhBuilt = 0
+      this.bvhQueue = []
+      for (let k = 0; k < this.inst.length; k++) if (this.inst[k]! >= 0) this.bvhQueue.push(k)
+    }
     let bvh = this.bvh[i]
     if (!bvh) {
       // indirect: the index buffer is the batch's own (already on the GPU) and must not be reordered
@@ -798,7 +923,7 @@ export class Viewer {
 
   /** Frame the given parts, or the selection, or everything visible. Keeps the view direction. */
   focus(ids: readonly string[] | null = null): void {
-    const sel = useApp.getState().selection.ids
+    const sel = this.source().selection.ids
     const box = this.boundsOf(ids ?? (sel.length ? sel : null))
     if (!box) return
     const dir = this.camera.position.clone().sub(this.controls.target).normalize()
@@ -810,6 +935,35 @@ export class Viewer {
     const b = this.graph.bodyBounds
     const box = new Box3(new Vector3(b[0], b[1], b[2]), new Vector3(b[3], b[4], b[5]))
     this.frame(box, new Vector3(0, 0.08, 1).normalize(), animate)
+  }
+
+  /** Point the linked-camera pose is expressed relative to (e.g. the shown system's centre). */
+  setAnchor(x: number, y: number, z: number): void {
+    this.anchor.set(x, y, z)
+  }
+
+  getPose(): CameraPose {
+    const t = this.controls.target
+    const p = this.camera.position
+    return { offset: [p.x - t.x, p.y - t.y, p.z - t.z], target: [t.x - this.anchor.x, t.y - this.anchor.y, t.z - this.anchor.z] }
+  }
+
+  /** Apply a pose from a linked viewer without echoing it back. */
+  setPose(pose: CameraPose): void {
+    this.tween = null
+    this.applyingPose = true
+    this.controls.target.set(this.anchor.x + pose.target[0], this.anchor.y + pose.target[1], this.anchor.z + pose.target[2])
+    this.camera.position.set(this.controls.target.x + pose.offset[0], this.controls.target.y + pose.offset[1], this.controls.target.z + pose.offset[2])
+    this.camera.lookAt(this.controls.target)
+    this.controls.update()
+    this.applyingPose = false
+    this.dirty = true
+  }
+
+  /** Counts from the renderer, for leak checks. */
+  memory(): { geometries: number; attributes: number; textures: number; programs: number } {
+    const m = this.renderer.info.memory as unknown as Record<string, number>
+    return { geometries: m.geometries ?? 0, attributes: (m.attributes ?? 0) + (m.indexAttributes ?? 0), textures: m.textures ?? 0, programs: m.programs ?? 0 }
   }
 
   private resize(): void {
@@ -839,7 +993,7 @@ export class Viewer {
     this.pointers.delete(e.pointerId)
     const d = this.down
     this.down = null
-    if (!d || d.id !== e.pointerId) return
+    if (!d || d.id !== e.pointerId || !this.interactive) return
     const now = performance.now()
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > TAP_MAX_MOVE || now - d.t > TAP_MAX_MS) return
     const app = useApp.getState()
@@ -866,7 +1020,7 @@ export class Viewer {
   }
 
   private onPointerMove = (e: PointerEvent): void => {
-    if (e.pointerType !== 'mouse' || e.buttons !== 0) return
+    if (e.pointerType !== 'mouse' || e.buttons !== 0 || !this.interactive) return
     this.lastPointerType = 'mouse'
     this.hoverXY = { x: e.clientX, y: e.clientY }
     this.onPointer?.({ x: e.clientX, y: e.clientY })
@@ -875,7 +1029,7 @@ export class Viewer {
   private onPointerLeave = (): void => {
     this.hoverXY = null
     this.onPointer?.(null)
-    useApp.getState().setHover(null)
+    if (this.interactive) useApp.getState().setHover(null)
   }
 
   // ------------------------------------------------------------ loop

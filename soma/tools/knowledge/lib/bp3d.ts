@@ -183,10 +183,12 @@ export interface Dataset {
   isaEdges: [string, string][]
   /** Ids named for one side but used by parts of both sides; their side word was dropped. */
   sharedSidedIds: { id: string; name: string }[]
+  /** Every left/right part with the concept id it uses. */
+  sidedParts: { body: string; id: string; side: 'L' | 'R' }[]
 }
 
 export function loadDataset(): Dataset {
-  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [], sharedSidedIds: [] }
+  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [], sharedSidedIds: [], sidedParts: [] }
   const sides = new Map<string, Set<string>>()
   for (const body of BODIES) {
     const file = resolve(ANATOMY_DIR, body, 'anatomy.json')
@@ -206,6 +208,7 @@ export function loadDataset(): Dataset {
       fmas.add(p.fma)
       if (!out.names.has(p.fma)) out.names.set(p.fma, p.name.toLowerCase())
       if (p.side) (sides.get(p.fma) ?? sides.set(p.fma, new Set()).get(p.fma)!).add(p.side)
+      if (p.side === 'L' || p.side === 'R') out.sidedParts.push({ body, id: p.fma, side: p.side })
     }
     out.partFmas.set(body, fmas)
   }

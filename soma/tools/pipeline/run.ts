@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import type { AnatomyData, NervePath, Part, Provenance, SourceInfo, SystemDef, SystemId, TissueId } from '../../src/anatomy/types.ts'
 import { computeAdjacency } from './adjacency.ts'
 import { classify, sideFromName, sideOf, type Classification } from './classify.ts'
-import { SIDE_OVERRIDES, SWAPPED_LABELS } from './corrections.ts'
+import { RELABELLED, SIDE_OVERRIDES, SWAPPED_LABELS } from './corrections.ts'
 import { computeExposure, type ExposureRole } from './exposure.ts'
 import { compareNormals, computeNormals, measure, rotateToRuntime, simplifyMesh, sourceToRuntime, weld, type Mesh, type MeshStats } from './geometry.ts'
 import { writeSystemGlb, type GlbPart } from './glb.ts'
@@ -233,8 +233,17 @@ async function main() {
     if (h.name) e.name = h.name
     if (h.conceptId) e.fma = h.conceptId
   }
+  const relabelledFrom = new Map<string, string>()
+  for (const e of elements) {
+    const fix = RELABELLED[e.id]
+    if (!fix) continue
+    relabelledFrom.set(e.id, e.fma)
+    e.name = fix.name
+    e.fma = fix.fma
+    e.cls = classify({ name: e.name, isa: e.isa, partOf: e.partOf })
+  }
   if (swap.size) console.log(`  source label corrections: swapped ${SWAPPED_LABELS.map(([a, b]) => `${a}↔${b}`).join(', ')}; side forced for ${Object.entries(SIDE_OVERRIDES).map(([k, v]) => `${k}=${v}`).join(', ')}`)
-  report.corrections = { swappedLabels: SWAPPED_LABELS, sideOverrides: SIDE_OVERRIDES }
+  report.corrections = { swappedLabels: SWAPPED_LABELS, relabelled: RELABELLED, sideOverrides: SIDE_OVERRIDES }
   normalDots.sort((a, b) => a - b)
   console.log(`  source normals vs recomputed: mean dot min ${normalDots[0]?.toFixed(3)}, median ${quantile(normalDots, 0.5).toFixed(3)} (source normals are sound; normals are recomputed after simplification anyway)`)
   report.source = { triangles: sourceTriangles, vertices: sourceVertices, weldedVertices, weldDroppedTriangles, normalAgreementMin: normalDots[0], blankHeaders, notInIsa }
@@ -473,6 +482,18 @@ async function main() {
     const isaIdByName = new Map<string, string>()
     for (const [id, n] of tables.isa.name) if (!isaIdByName.has(n)) isaIdByName.set(n, id)
     const dropped: { id: string; name: string; kind: string; reason: string }[] = []
+    // FMA ids used by imported items of both sides
+    const sharedAcrossSides = new Set<string>()
+    {
+      const sides = new Map<string, Set<string>>()
+      for (const it of pkg.items) {
+        if (it.candidate || !it.fma || it.side === 'M') continue
+        if (it.kind === 'nerve' && !it.preferred) continue
+        sides.set(it.fma, (sides.get(it.fma) ?? new Set()).add(it.side))
+      }
+      for (const [k, v] of sides) if (v.size > 1) sharedAcrossSides.add(k)
+    }
+    let mintedSided = 0
     const treeOf = (it: ZaItem, tissue: TissueId): { fma: string; tree: Element['tree'] } => {
       const fallbackName = ZA_FALLBACK_ISA[tissue] ?? 'organ component'
       const fallback = isaIdByName.get(fallbackName) ?? null
@@ -482,6 +503,16 @@ async function main() {
       if (it.fma) {
         fma = it.fma
         isa = isaPathFromFma(fma, fmaNames?.label.get(fma) ?? it.fmaLabel ?? displayName(it.name, it.side), (id) => fmaNames?.parents.get(id), (id) => fmaNames?.label.get(id), inIsa, fallback)
+        // A lateralised item filed under an unsided class (FMA has no left/right class for it,
+        // or both sides were mapped to one id): each side gets its own concept, `<id>_L` /
+        // `<id>_R`, as a child of the unsided one, so that names can be keyed per side.
+        if (it.side !== 'M' && (it.fmaIsUnsided || sharedAcrossSides.has(fma))) {
+          const sided = `${fma}_${it.side}`
+          const own = displayName(it.name, it.side)
+          isa = { ...isa, path: [[sided, own.replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase())], ...(isa.path.length ? isa.path : [])], anchor: isa.path.length ? isa.anchor : fma, how: isa.how === 'own concept' ? 'FMA is-a chain' : isa.how }
+          fma = sided
+          mintedSided++
+        }
       } else {
         // no FMA class: a synthetic concept, sided under an unsided one
         fma = syntheticConceptId(it.name, it.side)
@@ -697,6 +728,7 @@ async function main() {
     for (const d of dropped.filter((x) => /misplaced/.test(x.reason))) console.log(`      ${d.name}: ${d.reason}`)
     const how = new Map<string, number>()
     for (const e of importedZa) how.set(e.tree!.isa.how + (e.fma.startsWith('ZAC_') ? ' (synthetic id)' : ''), (how.get(e.tree!.isa.how + (e.fma.startsWith('ZAC_') ? ' (synthetic id)' : '')) ?? 0) + 1)
+    console.log(`  sided concept ids minted for lateralised parts filed under an unsided class: ${importedZa.filter((e) => /_(L|R)$/.test(e.fma) && e.fma.startsWith('FMA')).length}`)
     console.log(`  isa placement: ${[...how].map(([k, v]) => `${k} ${v}`).join(', ')}; partOf: ${importedZa.filter((e) => e.tree!.partOf).length} attached (own concept in the 4.0 partOf tree), ${importedZa.filter((e) => !e.tree!.partOf).length} not attached`)
     report.zAnatomy = {
       available: true, registration: regRows, anchorsUsed: reg.anchorsUsed, anchorsSkipped: reg.anchorsSkipped,
@@ -903,6 +935,15 @@ async function main() {
   const withAliases = (onto: Ontology, which: 'isa' | 'partOf'): Ontology => {
     const elementsMap = new Map<string, Set<string>>()
     for (const [c, set] of onto.elements) elementsMap.set(c, new Set([...set].map(resolve)))
+    // relabelled elements leave their old concept for the right one (same ancestors above)
+    for (const [id, oldFma] of relabelledFrom) {
+      const next = RELABELLED[id]!.fma
+      if (!elementsMap.has(next) && !onto.name.has(next)) continue
+      elementsMap.get(oldFma)?.delete(id)
+      let set = elementsMap.get(next)
+      if (!set) elementsMap.set(next, (set = new Set()))
+      set.add(id)
+    }
     const name = new Map(onto.name)
     const parent = new Map(onto.parent)
     const children = new Map([...onto.children].map(([k, v]) => [k, [...v]]))
@@ -979,9 +1020,29 @@ async function main() {
     systems.push({ id: def.id, name: def.name, color: def.color, glb, partCount: list.length })
   }
   for (const s of glbParts.keys()) if (!systemDefs.some((d) => d.id === s)) throw new Error(`system ${s} missing from data/curated/systems.json`)
+  // concept audit: parts whose concept cannot describe them alone
+  {
+    const groups = new Map<string, Set<string>>()
+    for (const p of parts) groups.set(`${p.fma}|${p.side}`, (groups.get(`${p.fma}|${p.side}`) ?? new Set()).add(p.name))
+    const multi = [...groups].filter(([, v]) => v.size > 1)
+    const bothSides = new Map<string, Set<string>>()
+    for (const p of parts) if (p.side !== 'M') bothSides.set(p.fma, (bothSides.get(p.fma) ?? new Set()).add(p.side))
+    const shared = [...bothSides].filter(([, v]) => v.size > 1).map(([k]) => k)
+    const audit = {
+      conceptsSharedByLeftAndRightParts: shared.length,
+      partsUnderThem: parts.filter((p) => shared.includes(p.fma)).length,
+      ofWhichFromBodyParts3D: parts.filter((p) => shared.includes(p.fma) && !p.source).length,
+      conceptsWithDifferentlyNamedPartsOnOneSide: multi.length,
+      examples: multi.slice(0, 12).map(([k, v]) => ({ concept: k.split('|')[0], names: [...v] })),
+    }
+    console.log(`\nConcept audit: ${audit.conceptsSharedByLeftAndRightParts} concepts are shared by left and right parts (${audit.partsUnderThem} parts, ${audit.ofWhichFromBodyParts3D} of them BodyParts3D's own unlateralised concepts); ${audit.conceptsWithDifferentlyNamedPartsOnOneSide} concepts carry differently named parts on one side, e.g. ${audit.examples.slice(0, 4).map((e) => `${e.concept}: ${e.names.join(' / ')}`).join('; ')}`)
+    report.conceptAudit = audit
+  }
+  const cautions = maleCautions(report, imported.length, importedZa.length)
   const data: AnatomyData = {
     schema: 1,
     body: 'male',
+    cautions,
     sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : [])],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
@@ -1022,6 +1083,54 @@ async function main() {
   rmSync(stage, { recursive: true, force: true })
   if (!existsSync(join(outDir, 'anatomy.json'))) throw new Error('output missing')
   lap('done')
+}
+
+/** What a user should not trust in the male body, most important first. */
+function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts: number): { zh: string; en: string }[] {
+  const out: { zh: string; en: string }[] = []
+  out.push({
+    en: 'This is a teaching model assembled from several atlases, not a scan of one person, and no anatomist has reviewed it. BodyParts3D itself warns that organs may overlap or leave gaps and that vessels and airways are modelled as solid tubes.',
+    zh: '本模型由多套图谱数据拼合而成，并非某一个人的扫描结果，也未经解剖学专家审校。BodyParts3D 原始数据自身说明：器官之间可能相互重叠或留有空隙，血管和气道以实心管表示。',
+  })
+  const z = report.zAnatomy as { available: boolean; nerves?: { pointsMoved: number; inBoneAfter: number; deepInMuscleAfter: number } } | undefined
+  if (z?.available && z.nerves) {
+    const moved = Math.round(z.nerves.pointsMoved * 100)
+    out.push({
+      en: `Peripheral nerves, joint ligaments, fasciae, lymph nodes and the thyroid (${zaParts} parts from Z-Anatomy and Open3DModel) are artist-modelled and were fitted to this body by a non-rigid registration: expect about 2 mm error typically and 7–8 mm in one case out of ten, more in the thigh and leg.`,
+      zh: `周围神经、关节韧带、筋膜、淋巴结和甲状腺（共 ${zaParts} 个部件，来自 Z-Anatomy 与 Open3DModel）为美术建模，经非刚性配准贴合到本模型：位置误差一般约 2 mm，约十分之一的情况达 7–8 mm，大腿和小腿处更大。`,
+    })
+    out.push({
+      en: `Nerve courses were corrected automatically: ${moved}% of nerve centreline points were pushed out of bone or muscle bellies (3.6 mm on average), ${(z.nerves.deepInMuscleAfter * 100).toFixed(0)}% of nerve length still runs deep inside muscle, and tube thickness is schematic.`,
+      zh: `神经走行经过自动修正：约 ${moved}% 的神经中心线点被从骨或肌腹内推出（平均 3.6 mm），仍有约 ${(z.nerves.deepInMuscleAfter * 100).toFixed(0)}% 的神经长度位于肌腹深部；神经粗细仅为示意。`,
+    })
+  }
+  if (r3Parts) {
+    out.push({
+      en: `${r3Parts} parts (lung lobes, abdominal wall muscles, latissimus dorsi, muscles of mastication and facial expression) come from the older BodyParts3D 3.0 body and were warped into this one: about 1.4 mm error in the head, 3.6 mm in the thorax and 6.4 mm in the abdomen (medians). Thin facial muscles were flattened onto the skull.`,
+      zh: `有 ${r3Parts} 个部件（肺叶、腹壁肌、背阔肌、咀嚼肌和表情肌）取自较早的 BodyParts3D 3.0 人体，经形变移入本模型：位置误差中位数在头部约 1.4 mm、胸部约 3.6 mm、腹部约 6.4 mm；较薄的表情肌被压贴在颅骨表面。`,
+    })
+    out.push({
+      en: 'Transversus abdominis is the worst-fitting muscle: about a third of its surface lies inside neighbouring organs and muscles (stomach, colon, diaphragm), 5% of it deeper than 4 mm. The right lung base sits too high for the bronchi drawn inside it.',
+      zh: '腹横肌贴合最差：约三分之一的表面嵌入相邻器官和肌肉（胃、结肠、膈），其中 5% 深度超过 4 mm。右肺底位置偏高，与其内部的支气管不完全吻合。',
+    })
+  }
+  out.push({
+    en: 'Missing structures: phrenic nerve, cervical plexus branches, great auricular and occipital nerves, splanchnic nerves; the spinal cord itself (only its central canal); pleura, pericardium and most peritoneum; cruciate ligaments and menisci of the knee; parotid gland; inferior parathyroids; middle and inner ear; fat. The liver exists only as its eight segments, the heart only as chamber walls and valves.',
+    zh: '缺失的结构：膈神经、颈丛分支、耳大神经和枕神经、内脏神经；脊髓本体（仅有中央管）；胸膜、心包和大部分腹膜；膝关节交叉韧带和半月板；腮腺；下甲状旁腺；中耳和内耳；脂肪。肝脏只以肝段形式存在，心脏只有心腔壁和瓣膜。',
+  })
+  out.push({
+    en: 'Left/right labels of five structures were wrong in the source and corrected here from their position: flexor pollicis brevis, brachium of superior colliculus, middle pharyngeal constrictor, ascending lumbar vein (labels swapped) and one fibular vein. For heart, liver and coronary structures "left/right" in a name refers to the organ, not the side of the body.',
+    zh: '原始数据中有五处结构的左右标注有误，已按实际位置更正：拇短屈肌、上丘臂、咽中缩肌、腰升静脉（左右互换）以及一条腓静脉。心、肝及冠状血管名称中的“左/右”指器官自身的左右，而非身体的左右侧。',
+  })
+  out.push({
+    en: 'The "superficial" and "deep" muscle layers are computed geometrically (how much of a muscle faces the skin uncovered), not taken from a textbook: rectus abdominis, for example, counts as deep because the external oblique aponeurosis covers it in this model.',
+    zh: '肌肉的“浅层/深层”是按几何关系自动计算的（肌肉表面有多少直接朝向皮肤而未被遮盖），并非取自教科书分层：例如腹直肌在本模型中被腹外斜肌腱膜覆盖，因而归入深层。',
+  })
+  out.push({
+    en: 'Meshes were simplified (largest deviation 0.8 mm) and the feet point downwards as in the scanner; lower-limb lymph nodes and several knee, shoulder and ankle ligaments were left out because they did not fit this body.',
+    zh: '网格经过简化（最大偏差 0.8 mm）；双足呈扫描时的跖屈姿势。下肢部分淋巴结以及膝、肩、踝的若干韧带因无法贴合本模型而未收录。',
+  })
+  return out
 }
 
 if (import.meta.main) await main()

@@ -33,6 +33,10 @@ export const ACCENT = '#3ec7d6'
 const NOT_BOOSTED = 1000
 /** Thickened nerves never grow by more than this (metres), however far the camera is. */
 const BOOST_MAX = 0.004
+/** A nerve of this radius (m) gets exactly the configured minimum; thinner ones get less, thicker more. */
+const BOOST_FULL_RADIUS = 0.0011
+const BOOST_MIN_WEIGHT = 0.4
+const BOOST_MAX_WEIGHT = 1.3
 
 export interface BakedPart {
   geometry: BufferGeometry
@@ -134,8 +138,10 @@ export interface PartRenderer {
   readonly objects: Object3D[]
   readonly size: number
   readonly isCapped: boolean
+  /** Changes whenever the shared buffers are reallocated (BVHs built on them are then stale). */
+  readonly geometryVersion: number
   add(baked: BakedPart, boostRadius: number | null, bbox: readonly number[], centroid: readonly number[]): number
-  /** Called once after the last `add`. */
+  /** Called after each group of `add` calls (once per loaded system). */
   finish(): void
   /** A geometry holding just this part's triangles in world space (for a BVH). */
   pickGeometry(id: number): BufferGeometry
@@ -164,7 +170,9 @@ export interface PartMaterialSet {
 export function makePartMaterials(colorNode: unknown = null): PartMaterialSet {
   const boost = uniform(0)
   const thin = attribute('aThin', 'float')
-  const grow = positionLocal.sub(cameraPosition).length().mul(boost).sub(thin).clamp(0, BOOST_MAX)
+  // the guaranteed on-screen radius scales with calibre, so trunks read stronger than twigs
+  const weight = thin.div(BOOST_FULL_RADIUS).clamp(BOOST_MIN_WEIGHT, BOOST_MAX_WEIGHT)
+  const grow = positionLocal.sub(cameraPosition).length().mul(boost).mul(weight).sub(thin).clamp(0, BOOST_MAX)
   const boosted = positionLocal.add(normalLocal.mul(grow))
 
   const solid = new MeshStandardNodeMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0 })
@@ -216,11 +224,18 @@ export class PartBatches implements PartRenderer {
   private readonly sortCenters: Float32Array
   private count = 0
   private capped = false
+  private maxVertices: number
+  private maxIndices: number
+  private usedVertices = 0
+  private usedIndices = 0
+  geometryVersion = 0
   private readonly m4 = new Matrix4()
   private readonly rgba = new Vector4()
 
   constructor(maxParts: number, vertexCount: number, indexCount: number) {
     const n = Math.max(1, maxParts)
+    this.maxVertices = Math.max(3, vertexCount)
+    this.maxIndices = Math.max(3, indexCount)
     const { solid, blended, tint } = (this.materials = makePartMaterials())
 
     this.opaque = new BatchedMesh(n, Math.max(3, vertexCount), Math.max(3, indexCount), solid)
@@ -264,6 +279,24 @@ export class PartBatches implements PartRenderer {
     const g = baked.geometry
     const thin = new Float32Array(g.getAttribute('position').count).fill(boostRadius ?? NOT_BOOSTED)
     g.setAttribute('aThin', new BufferAttribute(thin, 1))
+    const nv = thin.length
+    const ni = g.index!.count
+    if (this.usedVertices + nv > this.maxVertices || this.usedIndices + ni > this.maxIndices) {
+      // the vertex estimate was too small for this body: reallocate with headroom
+      this.maxVertices = Math.max(this.usedVertices + nv, Math.ceil(this.maxVertices * 1.3))
+      this.maxIndices = Math.max(this.usedIndices + ni, this.maxIndices)
+      if (this.count > 0) {
+        this.opaque.setGeometrySize(this.maxVertices, this.maxIndices)
+        this.shareGeometry()
+        this.geometryVersion++
+      } else {
+        const o = this.opaque as unknown as { _maxVertexCount: number; _maxIndexCount: number }
+        o._maxVertexCount = this.maxVertices
+        o._maxIndexCount = this.maxIndices
+      }
+    }
+    this.usedVertices += nv
+    this.usedIndices += ni
     const gid = this.opaque.addGeometry(g)
     if (this.count === 0) this.shareGeometry()
     for (const b of [this.blend, this.xray]) (b as unknown as BatchInternals)._geometryCount = gid + 1
@@ -291,7 +324,7 @@ export class PartBatches implements PartRenderer {
   private shareGeometry(): void {
     const src = this.opaque as unknown as BatchInternals
     for (const b of [this.blend, this.xray]) {
-      b.geometry.dispose()
+      if (b.geometry !== this.opaque.geometry) b.geometry.dispose()
       b.geometry = this.opaque.geometry
       const dst = b as unknown as BatchInternals
       dst._geometryInfo = src._geometryInfo
@@ -304,6 +337,11 @@ export class PartBatches implements PartRenderer {
   }
 
   finish(): void {}
+
+  /** Fill of the shared buffers, for diagnostics. */
+  usage(): { vertices: number; maxVertices: number; indices: number; maxIndices: number; grown: number } {
+    return { vertices: this.usedVertices, maxVertices: this.maxVertices, indices: this.usedIndices, maxIndices: this.maxIndices, grown: this.geometryVersion }
+  }
 
   beforeRender(): void {}
 

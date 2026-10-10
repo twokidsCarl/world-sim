@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AnatomyGraph } from '../src/anatomy/graph.ts'
 import type { AnatomyData, Part, SystemId } from '../src/anatomy/types.ts'
-import { isSolo, useApp } from '../src/state/store.ts'
+import { cautionsSeenKey, isSolo, useApp } from '../src/state/store.ts'
 
 const p = (id: string, system: SystemId, adjacent: string[] = []): Part => ({
   id,
@@ -149,5 +149,99 @@ describe('store visibility', () => {
     const n = S().focusRequest.nonce
     S().requestFocus(['a'])
     expect(S().focusRequest).toEqual({ nonce: n + 1, ids: ['a'] })
+  })
+})
+
+describe('switching bodies, cautions and compare', () => {
+  const other: AnatomyData = {
+    ...data,
+    body: 'female',
+    cautions: [{ zh: '甲', en: 'A' }, { zh: '乙', en: 'B' }],
+    parts: [p('W_a', 'skeletal'), p('W_c', 'muscular'), p('x', 'skeletal')].map((q) => ({ ...q, fma: q.id === 'x' ? 'FMAx' : `FMA${q.id.slice(2)}` })),
+    trees: {
+      isa: [
+        { id: 'ROOT', name: 'Root', parent: null, parts: [] },
+        { id: 'BONES', name: 'Bones', parent: 'ROOT', parts: ['W_a', 'x'] },
+      ],
+      partOf: [],
+    },
+  }
+
+  it('carries selection, hidden parts, toggles and peel across by concept', () => {
+    S().selectParts(['a', 'b'])
+    S().hideParts(['c'])
+    S().setSystemVisible('muscular', false)
+    S().setSystemOpacity('skeletal', 0.5)
+    S().setColorMode('source')
+    S().init(new AnatomyGraph(other), 'female')
+    expect(S().dataset).toBe('female')
+    expect(S().selection.ids).toEqual(['W_a']) // "b" has no counterpart
+    expect([...S().hidden]).toEqual(['W_c'])
+    expect(S().systems.muscular).toEqual({ visible: false, opacity: 1 })
+    expect(S().systems.skeletal).toEqual({ visible: true, opacity: 0.5 })
+    expect(S().colorMode).toBe('source')
+    S().setColorMode('tissue')
+  })
+
+  it('re-selects a concept by id in the new body', () => {
+    S().selectConcept('isa', 'BONES')
+    S().init(new AnatomyGraph(other), 'female')
+    expect(S().selection.concept).toEqual({ tree: 'isa', id: 'BONES' })
+    expect(S().selection.ids).toEqual(['W_a', 'x'])
+  })
+
+  it('opens the caution list for a body that has one, and dismissing closes it', () => {
+    expect(S().cautionsOpen).toBe(false) // the base fixture has none
+    S().init(new AnatomyGraph(other), 'female')
+    expect(S().cautionsOpen).toBe(true)
+    S().dismissCautions()
+    expect(S().cautionsOpen).toBe(false)
+    S().setCautionsOpen(true)
+    expect(S().cautionsOpen).toBe(true)
+    expect(cautionsSeenKey('female', 2)).toBe('soma.cautions.female.2')
+  })
+
+  it('remembers a dismissal per body when storage works, and survives storage that throws', () => {
+    const mem = new Map<string, string>()
+    const g = globalThis as { localStorage?: unknown }
+    const before = g.localStorage
+    g.localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v) }
+    S().init(new AnatomyGraph(other), 'female')
+    S().dismissCautions()
+    expect(mem.get('soma.cautions.female.2')).toBe('1')
+    S().init(new AnatomyGraph(other), 'female')
+    expect(S().cautionsOpen).toBe(false)
+    g.localStorage = {
+      getItem: () => {
+        throw new Error('blocked')
+      },
+      setItem: () => {
+        throw new Error('blocked')
+      },
+    }
+    S().init(new AnatomyGraph(other), 'female')
+    expect(S().cautionsOpen).toBe(true)
+    expect(() => S().dismissCautions()).not.toThrow()
+    g.localStorage = before
+  })
+
+  it('compare solos a system and restores the toggles on exit', () => {
+    S().setSystemVisible('muscular', false)
+    S().setCompare('skeletal')
+    expect(S().compare).toEqual({ system: 'skeletal' })
+    expect(S().systems.skeletal?.visible).toBe(true)
+    S().setCompare('muscular')
+    expect(S().systems.skeletal?.visible).toBe(false)
+    expect(S().systems.muscular?.visible).toBe(true)
+    S().setCompare(null)
+    expect(S().compare).toBeNull()
+    expect(S().systems.skeletal?.visible).toBe(true)
+    expect(S().systems.muscular?.visible).toBe(false)
+  })
+
+  it('switchBody only records the request; the app loads it', () => {
+    useApp.setState({ requestedBody: 'male' })
+    S().switchBody('female')
+    expect(S().requestedBody).toBe('female')
   })
 })

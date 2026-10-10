@@ -40,6 +40,7 @@ export class PartMeshes implements PartRenderer {
   private readonly centers: number[] = []
   private readonly mode: number[] = []
   private capped = false
+  readonly geometryVersion = 0
   private readonly fwd = new Vector3()
   private readonly cam = new Vector3()
 
@@ -48,7 +49,7 @@ export class PartMeshes implements PartRenderer {
   }
 
   get size(): number {
-    return this.pending.length || this.meshes.length
+    return this.pending.length + this.meshes.length
   }
 
   get isCapped(): boolean {
@@ -57,11 +58,15 @@ export class PartMeshes implements PartRenderer {
 
   add(baked: BakedPart, boostRadius: number | null, bbox: readonly number[], centroid: readonly number[]): number {
     this.pending.push({ baked, boost: boostRadius ?? NOT_BOOSTED, bbox, centroid })
-    return this.pending.length - 1
+    return this.meshes.length + this.pending.length - 1
   }
 
-  /** Concatenate every part's vertices into shared buffers and create the meshes. */
+  /**
+   * Concatenate the vertices of the parts added since the last call into shared buffers
+   * (one set per loaded system) and create their meshes.
+   */
   finish(): void {
+    if (this.pending.length === 0) return
     let vertices = 0
     for (const e of this.pending) vertices += e.baked.geometry.getAttribute('position').count
     const position = new BufferAttribute(new Float32Array(vertices * 3), 3)
@@ -164,6 +169,7 @@ export class PartMeshes implements PartRenderer {
   }
 
   dispose(): void {
+    // vertex attributes are shared per system; disposing each geometry releases them once all users are gone
     for (const m of this.meshes) m.geometry.dispose()
     this.materials.solid.dispose()
     this.materials.blended.dispose()

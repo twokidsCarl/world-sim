@@ -1,8 +1,8 @@
 // names.json: one NameEntry per BodyParts3D concept, with the origin of every zh name recorded.
 import type { NameEntry } from '../../../src/anatomy/types.ts'
-import { compareIds } from './bp3d.ts'
-import { KEEP_WIKIDATA_LABEL, ZH_OVERRIDES } from '../lexicon/overrides.ts'
-import { sideOf, stripSide, type Model } from './model.ts'
+import { compareIds, type Bp3dConcept } from './bp3d.ts'
+import { KEEP_WIKIDATA_LABEL, ZH_ID_OVERRIDES, ZH_OVERRIDES } from '../lexicon/overrides.ts'
+import { sideOf, sidedDerivative, stripSide, type Model } from './model.ts'
 import { createTranslator } from './translate.ts'
 
 /** Values that may appear in NameEntry.zhSource. */
@@ -96,7 +96,7 @@ export function buildNames(m: Model): NamesResult {
   const disagreements: NamesResult['disagreements'] = []
   const replaced: NamesResult['replaced'] = []
 
-  for (const c of [...m.concepts.values()].sort((a, b) => compareIds(a.fma, b.fma))) {
+  const nameConcept = (c: Bp3dConcept): NameEntry => {
     const entry: NameEntry = { status: 'unreviewed' }
     // an item that also carries another FMA id and is named after that other concept is not ours
     const primary = m.primaryItem.get(c.fma)
@@ -133,7 +133,10 @@ export function buildNames(m: Model): NamesResult {
     // Mainland wording policy: an exact lexicon term beats a differently worded Wikidata label.
     const lex = keepWikidata ? undefined : lexiconOnly.exact(c.en)
 
-    if (override) {
+    if (ZH_ID_OVERRIDES[c.fma]) {
+      entry.zh = ZH_ID_OVERRIDES[c.fma]!.zh
+      entry.zhSource = 'machine-translation:override'
+    } else if (override) {
       entry.zh = override.zh
       entry.zhSource = 'machine-translation:override'
     } else if (lex) {
@@ -167,6 +170,26 @@ export function buildNames(m: Model): NamesResult {
     if (entry.zhSource?.startsWith('wikidata') && entry.zh) {
       const mine = lexiconOnly.translate(c.en)
       if (mine && mine !== entry.zh) disagreements.push({ fma: c.fma, en: c.en, wikidata: entry.zh, lexicon: mine, zhSource: entry.zhSource })
+    }
+    return entry
+  }
+
+  for (const c of [...m.concepts.values()].sort((a, b) => compareIds(a.fma, b.fma))) {
+    const d = sidedDerivative(c.fma)
+    if (!d) {
+      names[c.fma] = nameConcept(c)
+      continue
+    }
+    // "<base>_L/_R": name the base concept as usual, then add the side word exactly once.
+    // The base's Wikidata item is kept; zhSource is derived:laterality when the base name is
+    // Wikidata-sourced, otherwise the base's own (generated) source, so nothing generated is
+    // presented as sourced.
+    const base = names[d.base] ?? nameConcept(m.concepts.get(d.base) ?? { fma: d.base, en: stripSide(c.en), inIsa: false, inPartOf: false })
+    const entry: NameEntry = { status: 'unreviewed' }
+    if (base.wikidata) entry.wikidata = base.wikidata
+    if (base.zh) {
+      entry.zh = (d.side === 'left' ? '左' : '右') + base.zh
+      entry.zhSource = base.zhSource?.startsWith('wikidata') ? 'derived:laterality' : base.zhSource
     }
     names[c.fma] = entry
   }

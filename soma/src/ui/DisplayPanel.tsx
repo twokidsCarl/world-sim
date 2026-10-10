@@ -111,7 +111,11 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
                     <li key={src.info.name}>
                       <span className="swatch" style={{ background: provenanceColor(g.provenance, src.ordinal) }} />
                       <span className="src-name">{src.info.name}</span>
-                      {src.info.license && <span className="tag">{src.info.license}</span>}
+                      {src.info.license && (
+                        <span className="tag" title={src.info.license}>
+                          {src.info.license}
+                        </span>
+                      )}
                       <span className="count">{src.count}</span>
                     </li>
                   ))}

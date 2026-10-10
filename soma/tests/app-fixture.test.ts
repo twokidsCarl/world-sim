@@ -18,6 +18,8 @@ describe.skipIf(!existsSync(resolve(dir, 'anatomy.json')))('generated fixture', 
   it('is self-consistent', () => {
     const { data, graph } = load()
     expect(data.schema).toBe(1)
+    expect(graph.cautions.length).toBeGreaterThanOrEqual(2)
+    for (const c of graph.cautions) expect(c.zh.length * c.en.length).toBeGreaterThan(0)
     expect(new Set(data.parts.map((p) => p.id)).size).toBe(data.parts.length)
     expect(graph.coverage('isa')).toBe(data.parts.length)
     expect(graph.coverage('partOf')).toBeLessThan(data.parts.length)

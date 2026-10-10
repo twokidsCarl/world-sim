@@ -114,6 +114,8 @@ export interface AnatomyData {
   schema: 1
   body: BodyId
   sources: SourceInfo[]
+  /** What a user should not trust in this body, most important first. Shown in the UI. */
+  cautions?: { zh: string; en: string }[]
   systems: SystemDef[]
   /** Peel layers, superficial to deep; Part.depth indexes into this. */
   layers: { name: { en: string; zh: string } }[]

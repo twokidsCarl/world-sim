@@ -89,7 +89,11 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(hipWidth([byName('Left hip bone'), byName('Right hip bone')])).toBeGreaterThan(hipWidth([maleByName('Left hip bone'), maleByName('Right hip bone')]) - 0.002)
     // six lumbar vertebrae, stacked in order between T12 and the sacrum
     const extra = byName('Supernumerary lumbar vertebra (first of six)')
-    expect(extra).toMatchObject({ provenance: 'scanned', tissue: 'bone', side: 'M' })
+    expect(extra).toMatchObject({ provenance: 'scanned', tissue: 'bone', side: 'M', fma: 'VFC_supernumerary_lumbar_vertebra' })
+    // its own concept, under "lumbar vertebra", so that it can carry its own name
+    const own = data.trees.isa.find((c) => c.id === extra.fma)!
+    expect(own.parts).toEqual([extra.id])
+    expect(data.trees.isa.find((c) => c.id === own.parent)!.name).toBe('lumbar vertebra')
     const stack = ['Twelfth thoracic vertebra', 'Supernumerary lumbar vertebra (first of six)', 'First lumbar vertebra', 'Second lumbar vertebra', 'Third lumbar vertebra', 'Fourth lumbar vertebra', 'Fifth lumbar vertebra', 'Sacrum'].map((n) => byName(n).centroid[1])
     for (let i = 1; i < stack.length; i++) expect(stack[i]!, `vertebra ${i}`).toBeLessThan(stack[i - 1]!)
     // right forearm: mirrored left bones, marked as not hers
@@ -148,6 +152,52 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       expect(Math.abs(breast.centroid[1] - pec.centroid[1])).toBeLessThan(0.12)
     }
     for (const k of ['uterusBetweenBladderAndRectum', 'leftOvaryInPelvis', 'rightOvaryInPelvis', 'leftBreastAnteriorToPectoralis', 'rightBreastAnteriorToPectoralis']) expect(report.sexChecks[k].pass, k).toBe(true)
+  })
+
+  it('lists cautions in both languages and keeps left and right concepts apart', () => {
+    expect(data.cautions!.length).toBeGreaterThanOrEqual(8)
+    for (const c of data.cautions!) {
+      expect(c.en.length).toBeGreaterThan(40)
+      expect(c.zh).toMatch(/[\u4e00-\u9fff]/)
+    }
+    expect(data.cautions![0]!.en).toContain('not a scan of one person')
+    expect(data.cautions!.map((c) => c.en).join(' ')).toMatch(/body surface is synthetic/i)
+    const sides = new Map<string, Set<string>>()
+    for (const p of data.parts) if (p.id.startsWith('HRA_') && p.side !== 'M') sides.set(p.fma, (sides.get(p.fma) ?? new Set()).add(p.side))
+    expect([...sides].filter(([, v]) => v.size > 1).map(([k]) => k)).toEqual([])
+    expect(byName('Left mammary lobe').fma).not.toBe(byName('Right mammary lobe').fma)
+  })
+
+  it('clears the uterus, ovaries and tubes from the bowel and the bladder', () => {
+    const pelvis = report.collisions.pelvis
+    // was: left ovary 100 %, left tube 98 %, uterus 30 % inside the warped sigmoid colon
+    for (const k of ['uterus', 'left ovary', 'left uterine tube', 'right ovary', 'right uterine tube']) {
+      expect(pelvis.insideDescendingColon.after[k], k).toBeLessThan(0.02)
+      expect(pelvis.insideBladder.after[k], k).toBeLessThan(0.02)
+    }
+    expect(pelvis.insideDescendingColon.before['left ovary']).toBeGreaterThan(0.9)
+    expect(pelvis.insideBladder.after.vagina).toBeLessThan(0.03)
+    // the bowel stayed a tube of about the same size, outside her bones and bladder
+    expect(pelvis.colon.volumeMlAfter / pelvis.colon.volumeMlBefore).toBeGreaterThan(0.75)
+    expect(pelvis.colon.surfaceInsideBone).toBeLessThan(0.02)
+    expect(pelvis.colon.surfaceInsideBladder).toBeLessThan(0.02)
+    expect(report.collisions.hraSetMovedPosteriorMm).toBeLessThanOrEqual(12)
+    // nothing reproductive is mostly inside another organ any more
+    const worst = Math.max(0, ...Object.values(report.collisions.hraInsideOthers as Record<string, { inside: number }>).map((v) => v.inside))
+    expect(worst).toBeLessThan(0.3)
+  })
+
+  it('wraps the skin over the breasts', () => {
+    const s = report.skin.breastSurfaceInFrontOfSkin
+    expect(s.before.left).toBeGreaterThan(0.3)
+    expect(s.after.left).toBeLessThan(0.02)
+    expect(s.after.right).toBeLessThan(0.02)
+    const skin = byName('Skin')
+    expect(skin.provenance).toBe('warped')
+    for (const n of ['Left mammary lobe', 'Right mammary lobe']) expect(byName(n).bbox[5]).toBeLessThan(skin.bbox[5] + 1e-6)
+    // the envelope is local: the skin is no wider or taller than before, only deeper at the chest
+    expect(report.skin.verticesRaised / report.skin.ofVertices).toBeLessThan(0.1)
+    expect(report.shoulder.left.differenceMm).toBeDefined()
   })
 
   it('keeps the deformation in bounds and reports where it is not', () => {

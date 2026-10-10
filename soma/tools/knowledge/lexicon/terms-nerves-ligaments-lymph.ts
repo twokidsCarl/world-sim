@@ -282,7 +282,10 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'organ components': '器官组成部分',
 
   // ---- further exact terms (complete names) -----------------------------------------------
-  'mental nerve': '颏神经', 'posterior femoral cutaneous nerve': '股后皮神经',
+  'mental nerve': '颏神经',
+  'dorsal digital branches of superficial fibular nerve': '腓浅神经趾背神经',
+  'lateral dorsal cutaneous nerve (sural part)': '足背外侧皮神经（腓肠神经部）',
+  'deep branch of radial nerve': '桡神经深支', 'supernumerary lumbar vertebra': '额外腰椎（个体变异）', 'posterior femoral cutaneous nerve': '股后皮神经',
   'lateral cord of brachial nerve plexus': '臂丛外侧束', 'medial cord of brachial nerve plexus': '臂丛内侧束',
   'posterior cord of brachial nerve plexus': '臂丛后束', 'anterior root of spinal nerve': '脊神经前根',
   'posterior root of spinal nerve': '脊神经后根', 'genital branch of genitofemoral nerve': '生殖股神经生殖支',

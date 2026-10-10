@@ -955,144 +955,189 @@
    "movedMm": 0,
    "insideAfter": 0
   },
+  "hraSetMovedPosteriorMm": 4,
+  "bowelShifts": [
+   {
+    "organ": "left adnexa",
+    "bowel": "Descending colon",
+    "insideBefore": 1,
+    "insideAfter": 0,
+    "shiftMm": 36,
+    "direction": [
+     -0.49,
+     0.7,
+     0.49
+    ],
+    "bowelInBoneOrBladder": 0
+   },
+   {
+    "organ": "uterus",
+    "bowel": "Descending colon",
+    "insideBefore": 0.128,
+    "insideAfter": 0,
+    "shiftMm": 12,
+    "direction": [
+     0.49,
+     0.7,
+     0.49
+    ],
+    "bowelInBoneOrBladder": 0
+   },
+   {
+    "organ": "uterus",
+    "bowel": "Rectum",
+    "insideBefore": 0.135,
+    "insideAfter": 0.008,
+    "shiftMm": 24,
+    "direction": [
+     1,
+     0,
+     0
+    ],
+    "bowelInBoneOrBladder": 0.058
+   },
+   {
+    "organ": "left adnexa",
+    "bowel": "Descending colon",
+    "insideBefore": 0.412,
+    "insideAfter": 0,
+    "shiftMm": 16,
+    "direction": [
+     0,
+     0.7,
+     0.7
+    ],
+    "bowelInBoneOrBladder": 0
+   }
+  ],
   "roomMade": {
-   "uterus": 34,
+   "uterus": 19,
    "left ovary": 4,
-   "right ovary": 7
+   "right ovary": 3
+  },
+  "pelvis": {
+   "insideDescendingColon": {
+    "before": {
+     "uterus": 0.299,
+     "left ovary": 1,
+     "left uterine tube": 0.977,
+     "right ovary": 0,
+     "right uterine tube": 0,
+     "vagina": 0
+    },
+    "after": {
+     "uterus": 0,
+     "left ovary": 0,
+     "left uterine tube": 0,
+     "right ovary": 0,
+     "right uterine tube": 0,
+     "vagina": 0
+    }
+   },
+   "insideBladder": {
+    "before": {
+     "uterus": 0,
+     "left ovary": 0,
+     "left uterine tube": 0,
+     "right ovary": 0,
+     "right uterine tube": 0,
+     "vagina": 0.072
+    },
+    "after": {
+     "uterus": 0,
+     "left ovary": 0,
+     "left uterine tube": 0,
+     "right ovary": 0,
+     "right uterine tube": 0,
+     "vagina": 0.007
+    }
+   },
+   "colon": {
+    "volumeMlBefore": 535.6,
+    "volumeMlAfter": 448.5,
+    "surfaceInsideBone": 0,
+    "surfaceInsideBladder": 0
+   }
   },
   "pelvicViscera": [
    {
-    "name": "Urinary bladder",
-    "before": 0.0542,
-    "after": 0.0542,
-    "movable": false
-   },
-   {
-    "name": "Right internal pudendal vein",
-    "before": 0.0462,
-    "after": 0.057,
+    "name": "Right puborectalis",
+    "before": 0.1091,
+    "after": 0.1084,
     "movable": true
    },
    {
     "name": "Left internal pudendal vein",
-    "before": 0.0303,
-    "after": 0.0384,
+    "before": 0.0441,
+    "after": 0.0622,
     "movable": true
+   },
+   {
+    "name": "Right internal pudendal vein",
+    "before": 0.0231,
+    "after": 0.0117,
+    "movable": true
+   },
+   {
+    "name": "Urinary bladder",
+    "before": 0.0174,
+    "after": 0.0174,
+    "movable": false
    },
    {
     "name": "Right pubococcygeus",
-    "before": 0.0188,
-    "after": 0.0238,
-    "movable": true
-   },
-   {
-    "name": "Right puborectalis",
-    "before": 0.0167,
-    "after": 0.0151,
-    "movable": true
-   },
-   {
-    "name": "Descending colon",
-    "before": 0.0074,
-    "after": 0.0074,
+    "before": 0.0097,
+    "after": 0.0084,
     "movable": true
    },
    {
     "name": "Rectum",
-    "before": 0.0055,
-    "after": 0.0045,
+    "before": 0.0077,
+    "after": 0.0074,
     "movable": true
    }
   ],
   "hraInsideOthers": {
-   "Abdominal ostium of uterine tube": {
-    "inside": 0.4,
-    "in": [
-     "Descending colon 40%"
-    ]
-   },
-   "Ampulla of left uterine tube": {
-    "inside": 0.994,
-    "in": [
-     "Descending colon 99%"
-    ]
-   },
-   "Anterior wall of uterus": {
-    "inside": 0.178,
-    "in": [
-     "Descending colon 18%"
-    ]
-   },
-   "Body of uterus": {
-    "inside": 0.125,
-    "in": [
-     "Descending colon 12%"
-    ]
-   },
    "Cervicovaginal junction": {
-    "inside": 0.082,
+    "inside": 0.099,
     "in": [
-     "Urinary bladder 8%"
-    ]
-   },
-   "Cornua": {
-    "inside": 0.495,
-    "in": [
-     "Descending colon 50%"
-    ]
-   },
-   "Fimbria of left uterine tube": {
-    "inside": 1,
-    "in": [
-     "Descending colon 100%"
-    ]
-   },
-   "Fundus of uterus": {
-    "inside": 0.143,
-    "in": [
-     "Descending colon 14%"
-    ]
-   },
-   "Isthmus of left uterine tube": {
-    "inside": 1,
-    "in": [
-     "Descending colon 100%"
-    ]
-   },
-   "Left ovary": {
-    "inside": 1,
-    "in": [
-     "Descending colon 100%"
-    ]
-   },
-   "Posterior wall of uterus": {
-    "inside": 0.071,
-    "in": [
-     "Descending colon 7%"
-    ]
-   },
-   "Infundibulum of left uterine tube": {
-    "inside": 0.92,
-    "in": [
-     "Descending colon 92%"
+     "Rectum 8%",
+     "Right puborectalis 2%",
+     "Urinary bladder 0%"
     ]
    },
    "Vagina": {
-    "inside": 0.086,
+    "inside": 0.15,
     "in": [
-     "Urinary bladder 7%",
-     "Right pubococcygeus 1%",
-     "Right puborectalis 0%"
+     "Right puborectalis 10%",
+     "Rectum 3%",
+     "Right pubococcygeus 1%"
     ]
    }
   }
  },
+ "skin": {
+  "method": "radial envelope over the HRA breasts with a smooth skirt",
+  "verticesRaised": 2112,
+  "ofVertices": 42234,
+  "maxLiftMm": 81.4,
+  "breastSurfaceInFrontOfSkin": {
+   "before": {
+    "left": 0.731,
+    "right": 0.745
+   },
+   "after": {
+    "left": 0,
+    "right": 0
+   }
+  }
+ },
  "adjacency": {
-  "pairs": 27292,
+  "pairs": 27297,
   "degree": {
    "median": 13,
    "p90": 33,
-   "p99": 77,
+   "p99": 79,
    "max": 197
   },
   "envelopes": [
@@ -1101,11 +1146,11 @@
  },
  "trees": {
   "isa": {
-   "concepts": 4413,
+   "concepts": 4559,
    "parts": 3213
   },
   "partOf": {
-   "concepts": 1489,
+   "concepts": 1495,
    "parts": 1384
   },
   "hraIsaPlacement": {
@@ -1586,8 +1631,8 @@
    "pass": true,
    "zMm": {
     "bladder": 98.9,
-    "uterus": 92.9,
-    "rectum": 26.3
+    "uterus": 88.9,
+    "rectum": 42.7
    },
    "bladderIs": "scanned",
    "rectumIs": "warped"
@@ -1597,7 +1642,7 @@
    "centroidMm": [
     50.3,
     786.4,
-    97.1
+    93.1
    ]
   },
   "rightOvaryInPelvis": {
@@ -1605,7 +1650,7 @@
    "centroidMm": [
     -58.6,
     786,
-    96.5
+    92.5
    ]
   },
   "leftBreastAnteriorToPectoralis": {
@@ -1613,14 +1658,14 @@
    "breastCentroidZMm": 179,
    "pectoralisCentroidZMm": 129.7,
    "pectoralisFrontZMm": 166.9,
-   "fractionOutsideWarpedSkin": 0.995
+   "fractionInFrontOfSkin": 0
   },
   "rightBreastAnteriorToPectoralis": {
    "pass": true,
    "breastCentroidZMm": 178.4,
    "pectoralisCentroidZMm": 126.3,
    "pectoralisFrontZMm": 166.4,
-   "fractionOutsideWarpedSkin": 1
+   "fractionInFrontOfSkin": 0
   },
   "noMaleOnlyParts": {
    "pass": true,
@@ -1696,19 +1741,87 @@
   "parts": 70,
   "maxNonRigidDeviationM": 1.210576058124894e-7
  },
+ "shoulder": {
+  "left": {
+   "female": {
+    "headRadiusMm": 19.5,
+    "centreToScapulaMm": 25.4,
+    "gapMm": 6
+   },
+   "male": {
+    "headRadiusMm": 17.2,
+    "centreToScapulaMm": 23.6,
+    "gapMm": 6.4
+   },
+   "differenceMm": -0.4
+  },
+  "right": {
+   "female": {
+    "headRadiusMm": 19.4,
+    "centreToScapulaMm": 25.6,
+    "gapMm": 6.2
+   },
+   "male": {
+    "headRadiusMm": 17.4,
+    "centreToScapulaMm": 24.2,
+    "gapMm": 6.8
+   },
+   "differenceMm": -0.6
+  }
+ },
+ "cautions": [
+  {
+   "en": "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the 86 parts marked \"scanned\" are her own anatomy; 3069 parts are warped male anatomy.",
+   "zh": "本模型是拼合构建的，并非某一位女性的完整扫描：骨骼来自女性真实 CT（Visible Human Female），其上的软组织则由男性模型形变贴合而成。只有标为“扫描”的 86 个部件是她本人的解剖结构，另有 3069 个部件是形变后的男性结构。"
+  },
+  {
+   "en": "Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.",
+   "zh": "形变部件仅以骨骼为锚点，骨与骨之间的位置靠外推得到：四肢的肌肉、血管和神经误差约 1–3 cm，腹部和盆腔更大。"
+  },
+  {
+   "en": "Pelvic soft tissue is not female anatomy: the uterus, ovaries, tubes and vagina are artist-modelled (Human Reference Atlas), while the bowel, vessels, nerves and pelvic floor around them are male structures moved aside. The sigmoid colon was shifted up to 5 cm to clear the uterus and left ovary; still overlapping: Cervicovaginal junction 10% (Rectum), Vagina 15% (Right puborectalis).",
+   "zh": "盆腔软组织并非真实的女性解剖：子宫、卵巢、输卵管和阴道为美术建模（Human Reference Atlas），其周围的肠管、血管、神经和盆底肌则是被推移开的男性结构。乙状结肠为避让子宫和左卵巢被移动了最多约 5 cm；目前仍有重叠：Cervicovaginal junction 10% (Rectum)、Vagina 15% (Right puborectalis)。"
+  },
+  {
+   "en": "The body surface is synthetic: male skin deformed to her skeleton and raised into a smooth envelope over the breasts. It does not show female body shape or fat distribution. The breasts themselves are a standing-shape artist model.",
+   "zh": "体表是合成的：男性皮肤按她的骨骼形变后，再在乳房处抬高成平滑包络，并不反映女性的体形和脂肪分布。乳房本身是站立位形态的美术模型。"
+  },
+  {
+   "en": "Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.",
+   "zh": "缺失：外生殖器和会阴、女性尿道、卵巢血管和阴道血管。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）已删除，但未以对应的女性结构替代。"
+  },
+  {
+   "en": "Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.",
+   "zh": "姿势是重建的：供体扫描时为仰卧、屈肘、足跖屈，各骨被逐一刚性移动到站立姿势。肘、膝、踝、肩的关节间隙只是近似，肩胛骨和锁骨仍保持仰卧时的位置。"
+  },
+  {
+   "en": "Right radius, ulna and the bones of both hands and feet are not her scanned bones: the right forearm is a mirrored copy of the left (the scan cut it off), and hand and foot bones are warped male bones with extended fingers.",
+   "zh": "右侧桡骨、尺骨以及双手、双足的骨并非她的扫描骨：右前臂是左前臂的镜像（扫描视野将其截断），手骨和足骨是形变后的男性骨，手指呈伸直状。"
+  },
+  {
+   "en": "She has six lumbar vertebrae. The first is shown as \"Supernumerary lumbar vertebra\"; her second to sixth carry the names of the first to fifth. Rib numbering comes from automatic segmentation and is unreliable for left ribs 5–9.",
+   "zh": "她有六节腰椎：第一节显示为“额外腰椎”，第二至第六节沿用第一至第五腰椎的名称。肋骨编号来自自动分割，左侧第 5–9 肋的编号不可靠。"
+  },
+  {
+   "en": "Her scanned organs (kidneys, spleen, pancreas, adrenals, gallbladder, bladder, gluteal muscles) are in lying-down, post-mortem position and do not always meet the warped vessels and ducts that should connect to them. Lungs, heart, liver, stomach and bowel are warped male organs.",
+   "zh": "她的扫描器官（肾、脾、胰、肾上腺、胆囊、膀胱、臀肌）处于仰卧、死后的位置，与本应相连的形变血管和管道不一定对得上。肺、心、肝、胃和肠是形变后的男性器官。"
+  },
+  {
+   "en": "Everything said about the male model also applies to the warped parts: nerves, ligaments and lymph nodes are artist-modelled with schematic nerve thickness; phrenic nerve, pleura, pericardium, spinal cord, menisci and cruciate ligaments are absent.",
+   "zh": "男性模型的各项注意事项同样适用于形变部件：神经、韧带和淋巴结为美术建模，神经粗细仅为示意；膈神经、胸膜、心包、脊髓、半月板和交叉韧带缺失。"
+  }
+ ],
  "notes": [
-  "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue (BodyParts3D, Z-Anatomy, Open3DModel) that was deformed to fit it. Only parts marked \"scanned\" are her own anatomy.",
-  "Warped parts (3069) are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, more in the abdomen and pelvis.",
-  "Pose: the donor was scanned supine with flexed elbows and plantar-flexed feet. Each bone was moved rigidly into the male model's standing pose; joint spaces (elbow, knee, ankle, shoulder girdle) are therefore approximate, and the scapulae and clavicles keep their supine position.",
-  "Right forearm and hand bones are mirrored copies of the left ones (the right ones are cut off by the CT field of view). Hands and feet: individual bones are warped male bones fitted to her segmented bone groups; her fingers were curled, the model's are extended.",
-  "She has six lumbar vertebrae. Her first one is shown as \"Supernumerary lumbar vertebra\"; her second to sixth carry the names of the male first to fifth.",
-  "Rib numbering comes from an automatic CT segmentation and is unreliable on the left side (ribs 5–9).",
-  "Skin is the male skin deformed to her skeleton: it is not female body shape, and the breasts (Human Reference Atlas, standing shape) are separate parts that protrude through it.",
-  "Uterus, ovaries, uterine tubes, vagina, pelvic ligaments and uterine vessels are artist-modelled (Human Reference Atlas) and were placed by a bone-driven fit; neighbouring bowel, vessels and nerves are deformed male anatomy pushed aside, not female pelvic anatomy.",
-  "Known overlaps in the pelvis: Abdominal ostium of uterine tube (40% inside Descending colon), Ampulla of left uterine tube (99% inside Descending colon), Cornua (50% inside Descending colon), Fimbria of left uterine tube (100% inside Descending colon), Isthmus of left uterine tube (100% inside Descending colon), Left ovary (100% inside Descending colon), Infundibulum of left uterine tube (92% inside Descending colon). The male sigmoid colon was not reshaped around the left ovary and tube.",
-  "Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels, pelvic floor differences. Male-only parts were removed, including the testicular vessels.",
-  "Her scanned organs (kidneys, spleen, pancreas, bladder, some trunk muscles) are in supine post-mortem position and do not always meet the warped vessels and ducts that should connect to them.",
-  "Nerve tubes have schematic radii; a fifth of their length was moved out of bone or muscle bellies by an automatic clean-up."
+  "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the 86 parts marked \"scanned\" are her own anatomy; 3069 parts are warped male anatomy.",
+  "Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.",
+  "Pelvic soft tissue is not female anatomy: the uterus, ovaries, tubes and vagina are artist-modelled (Human Reference Atlas), while the bowel, vessels, nerves and pelvic floor around them are male structures moved aside. The sigmoid colon was shifted up to 5 cm to clear the uterus and left ovary; still overlapping: Cervicovaginal junction 10% (Rectum), Vagina 15% (Right puborectalis).",
+  "The body surface is synthetic: male skin deformed to her skeleton and raised into a smooth envelope over the breasts. It does not show female body shape or fat distribution. The breasts themselves are a standing-shape artist model.",
+  "Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.",
+  "Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.",
+  "Right radius, ulna and the bones of both hands and feet are not her scanned bones: the right forearm is a mirrored copy of the left (the scan cut it off), and hand and foot bones are warped male bones with extended fingers.",
+  "She has six lumbar vertebrae. The first is shown as \"Supernumerary lumbar vertebra\"; her second to sixth carry the names of the first to fifth. Rib numbering comes from automatic segmentation and is unreliable for left ribs 5–9.",
+  "Her scanned organs (kidneys, spleen, pancreas, adrenals, gallbladder, bladder, gluteal muscles) are in lying-down, post-mortem position and do not always meet the warped vessels and ducts that should connect to them. Lungs, heart, liver, stomach and bowel are warped male organs.",
+  "Everything said about the male model also applies to the warped parts: nerves, ligaments and lymph nodes are artist-modelled with schematic nerve thickness; phrenic nerve, pleura, pericardium, spinal cord, menisci and cruciate ligaments are absent."
  ],
  "counts": {
   "parts": 3213,
@@ -2010,21 +2123,21 @@
  },
  "output": {
   "parts": 3213,
-  "triangles": 2228007,
+  "triangles": 2228038,
   "glbBytes": {
-   "integumentary.glb": 823172,
-   "muscular.glb": 5171036,
-   "skeletal.glb": 2032296,
-   "cardiovascular.glb": 4848120,
+   "integumentary.glb": 823824,
+   "muscular.glb": 5171044,
+   "skeletal.glb": 2032292,
+   "cardiovascular.glb": 4848460,
    "nervous.glb": 3928348,
    "respiratory.glb": 485036,
-   "digestive.glb": 710228,
-   "urinary.glb": 28724,
-   "reproductive.glb": 192868,
+   "digestive.glb": 710652,
+   "urinary.glb": 28720,
+   "reproductive.glb": 193168,
    "endocrine.glb": 28112,
-   "lymphatic.glb": 570572
+   "lymphatic.glb": 570484
   },
-  "anatomyJsonBytes": 2322117,
+  "anatomyJsonBytes": 2341870,
   "nerves": 405,
   "bounds": [
    -0.3411,

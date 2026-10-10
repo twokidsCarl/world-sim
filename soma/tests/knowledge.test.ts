@@ -12,7 +12,8 @@ const names = read<Record<string, NameEntry>>('data/curated/knowledge/names.json
 const relations = read<Relation[]>('data/curated/knowledge/relations.json')
 
 // Concept ids: FMA ids, or synthetic ids the dataset uses where FMA has no class.
-const ID = /^(FMA[1-9]\d*|[A-Z][A-Z0-9]*_[A-Za-z0-9_]+)$/
+// ... each optionally side-qualified with _L / _R (a minted sided child of the base concept).
+const ID = /^(FMA[1-9]\d*(_[LR])?|[A-Z][A-Z0-9]*_[A-Za-z0-9_]+)$/
 const QID = /^Q[1-9]\d*$/
 const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'innervates', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist']
 const ZH_SOURCES = ['wikidata', 'wikidata:hant-converted', 'wikidata:via-uberon-id', 'wikidata:generic-twin', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override']
@@ -131,10 +132,10 @@ describe('names.json', () => {
   })
 
   it('names concepts with synthetic (non-FMA) ids; only UBERON ids may carry a Wikidata link', () => {
-    const synthetic = entries.filter(([id]) => !/^FMA\d+$/.test(id))
+    const synthetic = entries.filter(([id]) => !/^FMA\d+(_[LR])?$/.test(id))
     for (const [id, e] of synthetic) {
       expect(e.zh && hasHan(e.zh), id).toBe(true)
-      if (/^UBERON_\d+$/.test(id)) {
+      if (/^UBERON_\d+(_[LR])?$/.test(id)) {
         // resolved through Wikidata's UBERON ID property (P1554) when an item exists
         if (e.wikidata) expect(['wikidata:via-uberon-id', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override'], id).toContain(e.zhSource)
         else expect(e.zhSource, id).toBe('machine-translation')
@@ -144,6 +145,36 @@ describe('names.json', () => {
       }
     }
     for (const [id, e] of entries) if (e.zhSource === 'wikidata:via-uberon-id') expect(id).toMatch(/^UBERON_\d+$/)
+  })
+
+  it('side-qualified ids (<base>_L/_R) carry 左/右 exactly once and keep the base concept’s Wikidata item', () => {
+    const sided = entries.filter(([id]) => /_[LR]$/.test(id))
+    for (const [id, e] of sided) {
+      const mark = id.endsWith('_L') ? '左' : '右'
+      expect(e.zh, id).toBeTruthy()
+      expect(e.zh!.startsWith(mark), `${id} ${e.zh}`).toBe(true)
+      expect(/^[左右]{2}/.test(e.zh!), `${id} ${e.zh}`).toBe(false)
+      const base = names[id.slice(0, -2)]
+      if (base) {
+        expect(e.zh, id).toBe(mark + base.zh)
+        expect(e.wikidata, id).toBe(base.wikidata)
+        // never more "sourced" than the base name it is built from
+        if (e.zhSource === 'derived:laterality') expect(base.zhSource?.startsWith('wikidata'), id).toBe(true)
+        else expect(e.zhSource, id).toBe(base.zhSource)
+      }
+    }
+    if (names.FMA272344_L) {
+      // proper palmar digital branch of ulnar nerve (FMA272344)
+      expect(names.FMA272344_L.zh).toBe('左尺神经指掌侧固有神经')
+      expect(names.FMA5891_R).toMatchObject({ zh: '右椎旁神经节', zhSource: 'derived:laterality' })
+      expect(names.ZAC_acromioclavicular_ligament_L?.zh).toBe('左肩锁韧带')
+      expect(names.ZAC_deep_branch_of_radial_nerve_R?.zh).toBe('右桡神经深支')
+      expect(names.ZAC_posterior_talocalcaneal_ligament_L?.zh).toBe('左距跟后韧带')
+      // the wrist ligament must not read as the bare (elbow) term
+      expect(names.FMA40005?.zh).toBe('腕尺侧副韧带')
+      expect(names.FMA40005_L?.zh).toBe('左腕尺侧副韧带')
+      if (names.FMA38869) expect(names.FMA38869.zh).toBe('肘关节尺侧副韧带')
+    }
     if (names.ZAC_recurrent_thenar_branch_of_median_nerve_L) {
       expect(names.ZAC_recurrent_thenar_branch_of_median_nerve_L.zh).toBe('左正中神经返支（鱼际支）')
       expect(names.ZAC_scapholunate_interosseous_ligament_R?.zh).toBe('右舟月骨间韧带')
@@ -163,9 +194,9 @@ describe('names.json', () => {
     expect(names.FMA19823?.zh).toBe('右卵巢悬韧带')
     expect(names.FMA14729?.zh).toBe('膀胱子宫陷凹')
     expect(names.HRAC_cornua?.zh).toBe('子宫角')
-    // ids shared by a left and a right part are named without a side
-    expect(names.UBERON_0018140?.zh).toBe('乳腺叶')
-    expect(names.FMA58088?.zh).toBe('输乳窦')
+    // sided children minted for parts that used to share an unsided id
+    expect(names.UBERON_0018140_L?.zh).toBe('左乳腺叶')
+    expect(names.FMA58088_R?.zh).toBe('右输乳窦')
   })
 
   it('spot checks: generated names are labelled as generated', () => {
@@ -216,7 +247,7 @@ describe('relations.json', () => {
     const propagated = relations.filter((r) => r.source.name.startsWith('Wikidata (propagated'))
     expect(direct.length).toBeGreaterThan(500)
     expect(propagated.length).toBeGreaterThan(500)
-    for (const r of propagated) expect(r.source.name).toMatch(/from (whole muscle |whole organ )?FMA\d+ "/)
+    for (const r of propagated) expect(r.source.name).toMatch(/from (the unsided concept |whole muscle |whole organ )?[A-Z][A-Za-z0-9_]* "/)
   })
 
   it('only has subjects that are named, and no self-references or duplicates', () => {
@@ -357,6 +388,18 @@ describe('relations.json', () => {
     expect(find('FMA7209', 'arterialSupply').map((r) => r.object)).toContain('FMA14761')
     // cervix: reached through its UBERON id; Wikidata says vaginal artery (FMA18832)
     expect(find('UBERON_0000002', 'arterialSupply').map((r) => r.object)).toContain('FMA18832')
+  })
+
+  it('a minted sided concept inherits its base concept’s relations, lateralised', () => {
+    if (!names.FMA5891_L) return
+    for (const r of relations) {
+      if (!/_[LR]$/.test(r.subject) || !r.source.name.includes('from the unsided concept')) continue
+      expect(r.source.name).toContain(`from the unsided concept ${r.subject.slice(0, -2)} "`)
+      // an object that was moved to a side is on the subject's side
+      if (r.object && /_[LR]$/.test(r.object)) expect(r.object.slice(-2), `${r.subject} ${r.kind}`).toBe(r.subject.slice(-2))
+    }
+    const viaBase = relations.filter((r) => r.source.name.includes('from the unsided concept'))
+    expect(viaBase.length).toBeGreaterThan(20)
   })
 
   it('does not keep muscle-only statements on non-muscles', () => {

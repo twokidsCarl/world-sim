@@ -22,7 +22,14 @@ export const SWAPPED_LABELS: [string, string][] = [
 ]
 
 /**
- * Side forced from geometry where the name is wrong but there is no twin to swap with.
- * FJ2190 "Right fibular vein" lies in the left lower limb (x ≈ +0.08 m).
+ * Elements filed under the wrong concept with no twin to swap with: given the right name and
+ * concept (and moved in the trees).
+ * FJ2190 is labelled "Right fibular vein" (FMA44885) but lies in the left lower limb
+ * (x ≈ +0.08 m); FMA has "left fibular vein" (FMA44886).
  */
-export const SIDE_OVERRIDES: Record<string, 'L' | 'R' | 'M'> = { FJ2190: 'L' }
+export const RELABELLED: Record<string, { name: string; fma: string }> = {
+  FJ2190: { name: 'Left fibular vein', fma: 'FMA44886' },
+}
+
+/** Side forced from geometry where the name is wrong and nothing above applies. Currently none. */
+export const SIDE_OVERRIDES: Record<string, 'L' | 'R' | 'M'> = {}
