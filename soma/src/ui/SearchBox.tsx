@@ -79,6 +79,7 @@ export function SearchBox({ graph }: { graph: AnatomyGraph }) {
               <span className="sr-main">
                 <span className="sr-name">{r.name.primary}</span>
                 {r.name.zh && <span className="sr-en">{r.name.en}</span>}
+                {r.name.broader && <span className="sr-en">（{r.name.broader.zh ?? r.name.broader.en}）</span>}
                 {r.name.la && <span className="sr-la">{r.name.la}</span>}
               </span>
               <span className="sr-meta">

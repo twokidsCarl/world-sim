@@ -15,7 +15,7 @@
 //               not hold for every head.
 import type { NameEntry, Relation, RelationKind } from '../../../src/anatomy/types.ts'
 import { ancestors, compareIds, descendants } from './bp3d.ts'
-import { sideOf, stripSide, type Model } from './model.ts'
+import { sideOf, sideOfConcept, sidedDerivative, stripSide, type Model } from './model.ts'
 import { P_INNERVATES, RELATION_PROPS } from './wikidata.ts'
 
 export type Via = 'direct' | 'is-a' | 'laterality' | 'whole' | 'wikipedia'
@@ -92,6 +92,8 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
   for (const c of m.concepts.values()) {
     const side = sideOf(c.en)
     if (side) for (const parent of m.unsidedOf(c.fma)) if (!sidedChild.has(`${side}|${parent}`)) sidedChild.set(`${side}|${parent}`, c.fma)
+    const d = sidedDerivative(c.fma)
+    if (d) sidedChild.set(`${d.side}|${d.base}`, c.fma) // minted sided ids win
   }
 
   // dataset concepts by their exact (unique) English name, for objects whose Wikidata FMA id is
@@ -114,7 +116,8 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
   const droppedExamples: string[] = []
 
   for (const c of [...m.concepts.values()].sort((a, b) => compareIds(a.fma, b.fma))) {
-    const side = sideOf(c.en)
+    const side = sideOfConcept(c.fma, c.en)
+    const derivative = sidedDerivative(c.fma)
     const bare = stripSide(c.en)
     const sources: { via: Via; fma: string }[] = [{ via: 'direct', fma: c.fma }]
     const seen = new Set([c.fma])
@@ -122,6 +125,8 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
       if (!seen.has(fma) && byFma.has(fma)) sources.push({ via, fma })
       seen.add(fma)
     }
+    // a minted sided id inherits from its base concept as laterality, not as is-a
+    if (derivative) add('laterality', derivative.base)
     for (const a of ancestors(m.isa, c.fma)) {
       // Statements on very broad classes ("artery connects with heart") are not worth repeating
       // on every descendant; they stay on the class itself.
@@ -218,7 +223,7 @@ export function buildRelations(m: Model, names: Record<string, NameEntry>): Rela
         const how =
           src.via === 'direct' ? 'Wikidata'
           : src.via === 'is-a' ? `Wikidata (propagated via BodyParts3D is-a from ${from})`
-          : src.via === 'laterality' ? `Wikidata (propagated by laterality ${bySubclass.has(src.fma) ? 'via Wikidata subclass-of' : 'name match'} from ${from})`
+          : src.via === 'laterality' ? `Wikidata (propagated by laterality ${derivative?.base === src.fma ? 'from the unsided concept' : bySubclass.has(src.fma) ? 'via Wikidata subclass-of from' : 'name match from'} ${from})`
           : organWholes.has(src.fma) ? `Wikidata (propagated from whole organ ${from}, not itself in the dataset, to its named part)`
           : s.kind === 'origin' || s.kind === 'insertion'
             ? `Wikidata (propagated from whole muscle ${from} to its named part; whole-muscle ${s.kind}, may not apply to this part)`

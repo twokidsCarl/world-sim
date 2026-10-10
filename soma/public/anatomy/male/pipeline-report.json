@@ -22,9 +22,13 @@
     "FJ3589"
    ]
   ],
-  "sideOverrides": {
-   "FJ2190": "L"
-  }
+  "relabelled": {
+   "FJ2190": {
+    "name": "Left fibular vein",
+    "fma": "FMA44886"
+   }
+  },
+  "sideOverrides": {}
  },
  "source": {
   "triangles": 6681030,
@@ -31303,7 +31307,7 @@
     },
     {
      "id": "ZA742A6D8D",
-     "name": "Right S5 root",
+     "name": "Right S5 root (anterior ramus of S5)",
      "source": "Open3DModel",
      "lengthMm": 312.1,
      "inBoneBefore": 0,
@@ -31318,7 +31322,7 @@
     },
     {
      "id": "ZA8BF8C0A0",
-     "name": "Left S5 root",
+     "name": "Left S5 root (anterior ramus of S5)",
      "source": "Open3DModel",
      "lengthMm": 311.7,
      "inBoneBefore": 0,
@@ -41509,10 +41513,11 @@
    },
    {
     "id": "ZA9E247801",
-    "fma": "FMA326786",
+    "fma": "FMA326786_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "material anatomical entity",
     "isaPath": [
+     "left communicating branch of median nerve with ulnar nerve",
      "ulnar nerve-median nerve communicating branch",
      "variant anatomical structure",
      "anatomical structure"
@@ -41521,10 +41526,11 @@
    },
    {
     "id": "ZAD7DF8179",
-    "fma": "FMA326786",
+    "fma": "FMA326786_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "material anatomical entity",
     "isaPath": [
+     "right communicating branch of median nerve with ulnar nerve",
      "ulnar nerve-median nerve communicating branch",
      "variant anatomical structure",
      "anatomical structure"
@@ -41701,10 +41707,11 @@
    },
    {
     "id": "ZA21DB0BEF",
-    "fma": "FMA5891",
+    "fma": "FMA5891_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "autonomic ganglion",
     "isaPath": [
+     "left ganglia of sympathetic trunk",
      "paravertebral ganglion",
      "sympathetic ganglion"
     ],
@@ -41712,10 +41719,11 @@
    },
    {
     "id": "ZA01FF0681",
-    "fma": "FMA5891",
+    "fma": "FMA5891_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "autonomic ganglion",
     "isaPath": [
+     "right ganglia of sympathetic trunk",
      "paravertebral ganglion",
      "sympathetic ganglion"
     ],
@@ -41947,10 +41955,11 @@
    },
    {
     "id": "ZAB78AF2DF",
-    "fma": "FMA44821",
+    "fma": "FMA44821_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "left muscular branches of median nerve",
      "muscular branch of median nerve",
      "branch of median nerve",
      "branch of peripheral nerve"
@@ -41959,10 +41968,11 @@
    },
    {
     "id": "ZA79D72446",
-    "fma": "FMA44821",
+    "fma": "FMA44821_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "right muscular branches of median nerve",
      "muscular branch of median nerve",
      "branch of median nerve",
      "branch of peripheral nerve"
@@ -42233,10 +42243,11 @@
    },
    {
     "id": "ZA55D3D8F1",
-    "fma": "FMA77549",
+    "fma": "FMA77549_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right anterior divisions of brachial plexus",
      "set of anterior divisions of brachial plexus",
      "set of nerves"
     ],
@@ -42244,10 +42255,11 @@
    },
    {
     "id": "ZA3C63B6E6",
-    "fma": "FMA77549",
+    "fma": "FMA77549_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left anterior divisions of brachial plexus",
      "set of anterior divisions of brachial plexus",
      "set of nerves"
     ],
@@ -42747,10 +42759,11 @@
    },
    {
     "id": "ZA2149C89E",
-    "fma": "FMA44840",
+    "fma": "FMA44840_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "right common palmar digital branches of median nerve",
      "common palmar digital branch of median nerve",
      "branch of median nerve",
      "branch of peripheral nerve"
@@ -42759,10 +42772,11 @@
    },
    {
     "id": "ZAD9F1EBFB",
-    "fma": "FMA44840",
+    "fma": "FMA44840_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "left common palmar digital branches of median nerve",
      "common palmar digital branch of median nerve",
      "branch of median nerve",
      "branch of peripheral nerve"
@@ -42797,10 +42811,11 @@
    },
    {
     "id": "ZAC48B6A86",
-    "fma": "FMA44853",
+    "fma": "FMA44853_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "right proper palmar digital branches of median nerve",
      "proper palmar digital branch of median nerve",
      "branch of median nerve",
      "branch of peripheral nerve"
@@ -42809,10 +42824,11 @@
    },
    {
     "id": "ZAFDD05AB2",
-    "fma": "FMA44853",
+    "fma": "FMA44853_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "left proper palmar digital branches of median nerve",
      "proper palmar digital branch of median nerve",
      "branch of median nerve",
      "branch of peripheral nerve"
@@ -42821,10 +42837,11 @@
    },
    {
     "id": "ZA70CC3069",
-    "fma": "FMA44854",
+    "fma": "FMA44854_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "right proper palmar digital branches of median nerve to thumb",
      "proper palmar digital branch of median nerve to thumb",
      "proper palmar digital branch of median nerve",
      "branch of median nerve",
@@ -42834,10 +42851,11 @@
    },
    {
     "id": "ZA9E8A2074",
-    "fma": "FMA44854",
+    "fma": "FMA44854_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "left proper palmar digital branches of median nerve to thumb",
      "proper palmar digital branch of median nerve to thumb",
      "proper palmar digital branch of median nerve",
      "branch of median nerve",
@@ -42999,10 +43017,11 @@
    },
    {
     "id": "ZA9DE4BC41",
-    "fma": "FMA77550",
+    "fma": "FMA77550_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right posterior divisions of brachial plexus",
      "set of posterior divisions of brachial plexus",
      "set of nerves"
     ],
@@ -43010,10 +43029,11 @@
    },
    {
     "id": "ZA7B6E5224",
-    "fma": "FMA77550",
+    "fma": "FMA77550_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left posterior divisions of brachial plexus",
      "set of posterior divisions of brachial plexus",
      "set of nerves"
     ],
@@ -43021,36 +43041,33 @@
    },
    {
     "id": "ZAC00A5985",
-    "fma": "FMA65335",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "nerve",
+    "fma": "ZAC_deep_branch_of_radial_nerve_R",
+    "isaHow": "by hand",
+    "isaAnchor": "segment of neural tree organ",
     "isaPath": [
-     "right posterior interosseous nerve",
-     "posterior interosseous nerve",
-     "branch of radial nerve",
-     "branch of peripheral nerve"
+     "right deep branch of radial nerve",
+     "deep branch of radial nerve"
     ],
     "partOf": false
    },
    {
     "id": "ZA95AB701E",
-    "fma": "FMA65336",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "nerve",
+    "fma": "ZAC_deep_branch_of_radial_nerve_L",
+    "isaHow": "by hand",
+    "isaAnchor": "segment of neural tree organ",
     "isaPath": [
-     "left posterior interosseous nerve",
-     "posterior interosseous nerve",
-     "branch of radial nerve",
-     "branch of peripheral nerve"
+     "left deep branch of radial nerve",
+     "deep branch of radial nerve"
     ],
     "partOf": false
    },
    {
     "id": "ZA8C5324BA",
-    "fma": "FMA75490",
+    "fma": "FMA75490_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right dorsal digital branches of radial nerve",
      "set of dorsal digital branches of radial nerve",
      "set of nerves"
     ],
@@ -43058,10 +43075,11 @@
    },
    {
     "id": "ZA26CBCD39",
-    "fma": "FMA75490",
+    "fma": "FMA75490_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left dorsal digital branches of radial nerve",
      "set of dorsal digital branches of radial nerve",
      "set of nerves"
     ],
@@ -43429,10 +43447,11 @@
    },
    {
     "id": "ZA1D63275E",
-    "fma": "FMA323341",
+    "fma": "FMA323341_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "right common palmar digital branch of ulnar nerve",
      "common palmar digital branch of ulnar nerve",
      "branch of superficial branch of ulnar nerve",
      "branch of ulnar nerve",
@@ -43442,10 +43461,11 @@
    },
    {
     "id": "ZAF613AD17",
-    "fma": "FMA323341",
+    "fma": "FMA323341_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "left common palmar digital branch of ulnar nerve",
      "common palmar digital branch of ulnar nerve",
      "branch of superficial branch of ulnar nerve",
      "branch of ulnar nerve",
@@ -43455,10 +43475,11 @@
    },
    {
     "id": "ZA6D4AFB8C",
-    "fma": "FMA272344",
+    "fma": "FMA272344_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "right proper palmar digital branches of ulnar nerve",
      "proper palmar digital branch of ulnar nerve",
      "branch of superficial branch of ulnar nerve",
      "branch of ulnar nerve",
@@ -43468,10 +43489,11 @@
    },
    {
     "id": "ZA5BBA9B3D",
-    "fma": "FMA272344",
+    "fma": "FMA272344_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "nerve",
     "isaPath": [
+     "left proper palmar digital branches of ulnar nerve",
      "proper palmar digital branch of ulnar nerve",
      "branch of superficial branch of ulnar nerve",
      "branch of ulnar nerve",
@@ -43581,10 +43603,11 @@
    },
    {
     "id": "ZA110700F8",
-    "fma": "FMA75492",
+    "fma": "FMA75492_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right common plantar digital nerves",
      "set of common plantar digital nerves",
      "set of nerves"
     ],
@@ -43592,10 +43615,11 @@
    },
    {
     "id": "ZAD7DBF970",
-    "fma": "FMA75492",
+    "fma": "FMA75492_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left common plantar digital nerves",
      "set of common plantar digital nerves",
      "set of nerves"
     ],
@@ -43683,32 +43707,33 @@
    },
    {
     "id": "ZA3F6EE377",
-    "fma": "FMA75491",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "set of organ regions",
+    "fma": "ZAC_dorsal_digital_branches_of_superficial_fibular_nerve_R",
+    "isaHow": "by hand",
+    "isaAnchor": "segment of neural tree organ",
     "isaPath": [
-     "set of dorsal digital nerves of foot",
-     "set of nerves"
+     "right dorsal digital branches of superficial fibular nerve",
+     "dorsal digital branches of superficial fibular nerve"
     ],
     "partOf": false
    },
    {
     "id": "ZAFC66FDD6",
-    "fma": "FMA75491",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "set of organ regions",
+    "fma": "ZAC_dorsal_digital_branches_of_superficial_fibular_nerve_L",
+    "isaHow": "by hand",
+    "isaAnchor": "segment of neural tree organ",
     "isaPath": [
-     "set of dorsal digital nerves of foot",
-     "set of nerves"
+     "left dorsal digital branches of superficial fibular nerve",
+     "dorsal digital branches of superficial fibular nerve"
     ],
     "partOf": false
    },
    {
     "id": "ZA0416B7AA",
-    "fma": "FMA75558",
+    "fma": "FMA75558_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right anterior cutaneous branches of femoral nerve",
      "set of anterior cutaneous branches of femoral nerve",
      "set of nerves"
     ],
@@ -43716,10 +43741,11 @@
    },
    {
     "id": "ZAF3A9F106",
-    "fma": "FMA75558",
+    "fma": "FMA75558_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left anterior cutaneous branches of femoral nerve",
      "set of anterior cutaneous branches of femoral nerve",
      "set of nerves"
     ],
@@ -43727,10 +43753,11 @@
    },
    {
     "id": "ZA8C967A4A",
-    "fma": "FMA75506",
+    "fma": "FMA75506_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right muscular branches of femoral nerve",
      "set of muscular branches of femoral nerve",
      "set of nerves"
     ],
@@ -43738,10 +43765,11 @@
    },
    {
     "id": "ZAD250CB8C",
-    "fma": "FMA75506",
+    "fma": "FMA75506_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left muscular branches of femoral nerve",
      "set of muscular branches of femoral nerve",
      "set of nerves"
     ],
@@ -43909,10 +43937,11 @@
    },
    {
     "id": "ZA39545C97",
-    "fma": "FMA75470",
+    "fma": "FMA75470_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right inferior clunial nerves",
      "set of inferior clunial nerves",
      "set of nerves"
     ],
@@ -43920,10 +43949,11 @@
    },
    {
     "id": "ZA09021930",
-    "fma": "FMA75470",
+    "fma": "FMA75470_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left inferior clunial nerves",
      "set of inferior clunial nerves",
      "set of nerves"
     ],
@@ -44163,10 +44193,11 @@
    },
    {
     "id": "ZA43421118",
-    "fma": "FMA75561",
+    "fma": "FMA75561_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right lateral calcaneal branches of sural nerve",
      "set of lateral calcaneal branches of sural nerve",
      "set of nerves"
     ],
@@ -44174,10 +44205,11 @@
    },
    {
     "id": "ZA31434EB1",
-    "fma": "FMA75561",
+    "fma": "FMA75561_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left lateral calcaneal branches of sural nerve",
      "set of lateral calcaneal branches of sural nerve",
      "set of nerves"
     ],
@@ -44379,10 +44411,11 @@
    },
    {
     "id": "ZA6328E204",
-    "fma": "FMA75562",
+    "fma": "FMA75562_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right medial calcaneal branches of tibial nerve",
      "set of medial calcaneal branches of tibial nerve",
      "set of nerves"
     ],
@@ -44390,10 +44423,11 @@
    },
    {
     "id": "ZADFCC177F",
-    "fma": "FMA75562",
+    "fma": "FMA75562_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left medial calcaneal branches of tibial nerve",
      "set of medial calcaneal branches of tibial nerve",
      "set of nerves"
     ],
@@ -44993,10 +45027,11 @@
    },
    {
     "id": "ZA81E13E9A",
-    "fma": "FMA75559",
+    "fma": "FMA75559_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right medial crural cutaneous branches of saphenous nerve",
      "set of medial crural cutaneous branches of saphenous nerve",
      "set of nerves"
     ],
@@ -45004,10 +45039,11 @@
    },
    {
     "id": "ZACEB07384",
-    "fma": "FMA75559",
+    "fma": "FMA75559_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left medial crural cutaneous branches of saphenous nerve",
      "set of medial crural cutaneous branches of saphenous nerve",
      "set of nerves"
     ],
@@ -45099,10 +45135,11 @@
    },
    {
     "id": "ZAD76BC089",
-    "fma": "FMA75468",
+    "fma": "FMA75468_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "right superior clunial nerves",
      "set of superior clunial nerves",
      "set of nerves"
     ],
@@ -45110,10 +45147,11 @@
    },
    {
     "id": "ZA0D1E1318",
-    "fma": "FMA75468",
+    "fma": "FMA75468_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ regions",
     "isaPath": [
+     "left superior clunial nerves",
      "set of superior clunial nerves",
      "set of nerves"
     ],
@@ -45147,31 +45185,23 @@
    },
    {
     "id": "ZAD8DBB93D",
-    "fma": "FMA45426",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "nerve",
+    "fma": "ZAC_lateral_dorsal_cutaneous_nerve_sural_part_R",
+    "isaHow": "by hand",
+    "isaAnchor": "segment of neural tree organ",
     "isaPath": [
-     "lateral dorsal cutaneous branch of right sural nerve",
-     "lateral dorsal cutaneous branch of sural nerve",
-     "branch of sural nerve",
-     "branch of tibial nerve",
-     "branch of sciatic nerve",
-     "branch of peripheral nerve"
+     "right lateral dorsal cutaneous nerve (sural part)",
+     "lateral dorsal cutaneous nerve (sural part)"
     ],
     "partOf": false
    },
    {
     "id": "ZA0C9ED8A2",
-    "fma": "FMA45427",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "nerve",
+    "fma": "ZAC_lateral_dorsal_cutaneous_nerve_sural_part_L",
+    "isaHow": "by hand",
+    "isaAnchor": "segment of neural tree organ",
     "isaPath": [
-     "lateral dorsal cutaneous branch of left sural nerve",
-     "lateral dorsal cutaneous branch of sural nerve",
-     "branch of sural nerve",
-     "branch of tibial nerve",
-     "branch of sciatic nerve",
-     "branch of peripheral nerve"
+     "left lateral dorsal cutaneous nerve (sural part)",
+     "lateral dorsal cutaneous nerve (sural part)"
     ],
     "partOf": false
    },
@@ -45309,10 +45339,11 @@
    },
    {
     "id": "ZAB93FA267",
-    "fma": "FMA77165",
+    "fma": "FMA77165_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component",
     "isaPath": [
+     "left medial lacunar node",
      "medial lacunar lymph node",
      "external iliac lymph node",
      "parietal lymph node of pelvis",
@@ -45327,10 +45358,11 @@
    },
    {
     "id": "ZAF49EEEB3",
-    "fma": "FMA77165",
+    "fma": "FMA77165_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component",
     "isaPath": [
+     "right medial lacunar node",
      "medial lacunar lymph node",
      "external iliac lymph node",
      "parietal lymph node of pelvis",
@@ -45464,27 +45496,23 @@
    },
    {
     "id": "ZAF6563441",
-    "fma": "FMA26043",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "membrane organ",
+    "fma": "ZAC_acromioclavicular_ligament_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
     "isaPath": [
-     "articular capsule of left acromioclavicular joint",
-     "articular capsule of acromioclavicular joint",
-     "articular capsule",
-     "skeletal membrane organ"
+     "left acromioclavicular ligament",
+     "acromioclavicular ligament"
     ],
     "partOf": false
    },
    {
     "id": "ZAEE982B46",
-    "fma": "FMA26042",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "membrane organ",
+    "fma": "ZAC_acromioclavicular_ligament_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
     "isaPath": [
-     "articular capsule of right acromioclavicular joint",
-     "articular capsule of acromioclavicular joint",
-     "articular capsule",
-     "skeletal membrane organ"
+     "right acromioclavicular ligament",
+     "acromioclavicular ligament"
     ],
     "partOf": false
    },
@@ -45566,10 +45594,11 @@
    },
    {
     "id": "ZA6C0D1AAA",
-    "fma": "FMA18107",
+    "fma": "FMA18107_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "zone of investing fascia",
     "isaPath": [
+     "left anterior layer of thoracolumbar fascia",
      "anterior layer of thoracolumbar fascia",
      "zone of thoracolumbar fascia"
     ],
@@ -45577,10 +45606,11 @@
    },
    {
     "id": "ZAE2F82EAD",
-    "fma": "FMA18107",
+    "fma": "FMA18107_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "zone of investing fascia",
     "isaPath": [
+     "right anterior layer of thoracolumbar fascia",
      "anterior layer of thoracolumbar fascia",
      "zone of thoracolumbar fascia"
     ],
@@ -45719,10 +45749,11 @@
    },
    {
     "id": "ZA6119A1A0",
-    "fma": "FMA71742",
+    "fma": "FMA71742_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left apical axillary nodes",
      "set of apical axillary lymph nodes",
      "set of axillary lymph nodes",
      "lymph node group of upper limb",
@@ -45733,10 +45764,11 @@
    },
    {
     "id": "ZA75454EE5",
-    "fma": "FMA71742",
+    "fma": "FMA71742_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right apical axillary nodes",
      "set of apical axillary lymph nodes",
      "set of axillary lymph nodes",
      "lymph node group of upper limb",
@@ -46052,10 +46084,11 @@
    },
    {
     "id": "ZA801BFE94",
-    "fma": "FMA71426",
+    "fma": "FMA71426_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left collateral interphalangeal ligaments of foot",
      "set of collateral ligaments of interphalangeal joints of foot",
      "set of ligaments"
     ],
@@ -46063,10 +46096,11 @@
    },
    {
     "id": "ZA4A5317CB",
-    "fma": "FMA71426",
+    "fma": "FMA71426_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right collateral interphalangeal ligaments of foot",
      "set of collateral ligaments of interphalangeal joints of foot",
      "set of ligaments"
     ],
@@ -46074,10 +46108,11 @@
    },
    {
     "id": "ZAE3AEE93C",
-    "fma": "FMA71409",
+    "fma": "FMA71409_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left collateral interphalangeal ligaments of hand",
      "set of collateral ligaments of interphalangeal joints of hand",
      "set of ligaments"
     ],
@@ -46085,10 +46120,11 @@
    },
    {
     "id": "ZABEEA80EB",
-    "fma": "FMA71409",
+    "fma": "FMA71409_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right collateral interphalangeal ligaments of hand",
      "set of collateral ligaments of interphalangeal joints of hand",
      "set of ligaments"
     ],
@@ -46096,10 +46132,11 @@
    },
    {
     "id": "ZAEB18E1E7",
-    "fma": "FMA71407",
+    "fma": "FMA71407_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left collateral metacarpophalangeal ligaments",
      "set of collateral ligaments of metacarpophalangeal joints",
      "set of ligaments"
     ],
@@ -46107,10 +46144,11 @@
    },
    {
     "id": "ZAD73B30CA",
-    "fma": "FMA71407",
+    "fma": "FMA71407_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right collateral metacarpophalangeal ligaments",
      "set of collateral ligaments of metacarpophalangeal joints",
      "set of ligaments"
     ],
@@ -46194,10 +46232,11 @@
    },
    {
     "id": "ZAF7D44756",
-    "fma": "FMA12163",
+    "fma": "FMA12163_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "skeletal ligament",
     "isaPath": [
+     "left costotransverse ligament",
      "costotransverse ligament",
      "ligament of costotransverse joint"
     ],
@@ -46205,10 +46244,11 @@
    },
    {
     "id": "ZA9681E6DF",
-    "fma": "FMA12163",
+    "fma": "FMA12163_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "skeletal ligament",
     "isaPath": [
+     "right costotransverse ligament",
      "costotransverse ligament",
      "ligament of costotransverse joint"
     ],
@@ -46290,10 +46330,11 @@
    },
    {
     "id": "ZAE9FBDD60",
-    "fma": "FMA71420",
+    "fma": "FMA71420_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left cuneometatarsal interosseous ligaments",
      "set of cuneometatarsal interosseous ligaments",
      "set of ligaments"
     ],
@@ -46301,10 +46342,11 @@
    },
    {
     "id": "ZA25C21A11",
-    "fma": "FMA71420",
+    "fma": "FMA71420_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right cuneometatarsal interosseous ligaments",
      "set of cuneometatarsal interosseous ligaments",
      "set of ligaments"
     ],
@@ -46354,10 +46396,11 @@
    },
    {
     "id": "ZAD08A5E3B",
-    "fma": "FMA71853",
+    "fma": "FMA71853_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left deep popliteal nodes",
      "deep popliteal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -46367,10 +46410,11 @@
    },
    {
     "id": "ZA9D221BEA",
-    "fma": "FMA71853",
+    "fma": "FMA71853_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right deep popliteal nodes",
      "deep popliteal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -46520,10 +46564,11 @@
    },
    {
     "id": "ZAC02A7E84",
-    "fma": "FMA71402",
+    "fma": "FMA71402_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left dorsal carpometacarpal ligaments",
      "set of dorsal carpometacarpal ligaments",
      "set of ligaments"
     ],
@@ -46531,10 +46576,11 @@
    },
    {
     "id": "ZAF7761E66",
-    "fma": "FMA71402",
+    "fma": "FMA71402_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right dorsal carpometacarpal ligaments",
      "set of dorsal carpometacarpal ligaments",
      "set of ligaments"
     ],
@@ -46616,10 +46662,11 @@
    },
    {
     "id": "ZAC0D9FA5F",
-    "fma": "FMA71399",
+    "fma": "FMA71399_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left dorsal intercarpal ligaments",
      "set of dorsal intercarpal ligaments",
      "set of ligaments"
     ],
@@ -46627,10 +46674,11 @@
    },
    {
     "id": "ZAEABF364B",
-    "fma": "FMA71399",
+    "fma": "FMA71399_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right dorsal intercarpal ligaments",
      "set of dorsal intercarpal ligaments",
      "set of ligaments"
     ],
@@ -46662,10 +46710,11 @@
    },
    {
     "id": "ZAA09820C3",
-    "fma": "FMA71404",
+    "fma": "FMA71404_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left dorsal metacarpal ligaments",
      "set of dorsal metacarpal ligaments",
      "set of ligaments"
     ],
@@ -46673,10 +46722,11 @@
    },
    {
     "id": "ZA379C1D65",
-    "fma": "FMA71404",
+    "fma": "FMA71404_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right dorsal metacarpal ligaments",
      "set of dorsal metacarpal ligaments",
      "set of ligaments"
     ],
@@ -46684,10 +46734,11 @@
    },
    {
     "id": "ZAB6E891B5",
-    "fma": "FMA71422",
+    "fma": "FMA71422_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left dorsal metatarsal ligaments",
      "set of dorsal metatarsal ligaments",
      "set of ligaments"
     ],
@@ -46695,10 +46746,11 @@
    },
    {
     "id": "ZA46F8BF99",
-    "fma": "FMA71422",
+    "fma": "FMA71422_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right dorsal metatarsal ligaments",
      "set of dorsal metatarsal ligaments",
      "set of ligaments"
     ],
@@ -46778,10 +46830,11 @@
    },
    {
     "id": "ZAFA236D39",
-    "fma": "FMA71418",
+    "fma": "FMA71418_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left dorsal tarsometatarsal ligaments",
      "set of dorsal tarsometatarsal ligaments",
      "set of ligaments"
     ],
@@ -46789,10 +46842,11 @@
    },
    {
     "id": "ZA770A1659",
-    "fma": "FMA71418",
+    "fma": "FMA71418_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right dorsal tarsometatarsal ligaments",
      "set of dorsal tarsometatarsal ligaments",
      "set of ligaments"
     ],
@@ -46852,20 +46906,22 @@
    },
    {
     "id": "ZAE8457450",
-    "fma": "FMA13902",
+    "fma": "FMA13902_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "zone of investing fascia of thigh",
     "isaPath": [
+     "left fascia lata",
      "fascia lata"
     ],
     "partOf": false
    },
    {
     "id": "ZA38D8A0B1",
-    "fma": "FMA13902",
+    "fma": "FMA13902_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "zone of investing fascia of thigh",
     "isaPath": [
+     "right fascia lata",
      "fascia lata"
     ],
     "partOf": false
@@ -47006,10 +47062,11 @@
    },
    {
     "id": "ZAE4E3505E",
-    "fma": "FMA71785",
+    "fma": "FMA71785_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left inferior epigastric nodes",
      "inferior epigastric lymph node group",
      "parietal lymph node group of abdomen proper",
      "lymph node group of abdomen proper",
@@ -47023,10 +47080,11 @@
    },
    {
     "id": "ZAA50D862B",
-    "fma": "FMA71785",
+    "fma": "FMA71785_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right inferior epigastric nodes",
      "inferior epigastric lymph node group",
      "parietal lymph node group of abdomen proper",
      "lymph node group of abdomen proper",
@@ -47086,10 +47144,11 @@
    },
    {
     "id": "ZA98BCF7E2",
-    "fma": "FMA71834",
+    "fma": "FMA71834_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left inferior gluteal nodes",
      "set of inferior gluteal lymph nodes",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -47102,10 +47161,11 @@
    },
    {
     "id": "ZA07A45B09",
-    "fma": "FMA71834",
+    "fma": "FMA71834_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right inferior gluteal nodes",
      "set of inferior gluteal lymph nodes",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -47129,10 +47189,11 @@
    },
    {
     "id": "ZAF1981143",
-    "fma": "FMA71849",
+    "fma": "FMA71849_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left inferior superficial inguinal nodes",
      "inferior superficial inguinal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -47142,10 +47203,11 @@
    },
    {
     "id": "ZA4337140C",
-    "fma": "FMA71849",
+    "fma": "FMA71849_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right inferior superficial inguinal nodes",
      "inferior superficial inguinal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -47252,10 +47314,11 @@
    },
    {
     "id": "ZAD618553F",
-    "fma": "FMA26013",
+    "fma": "FMA26013_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "skeletal ligament",
     "isaPath": [
+     "left interclavicular ligament",
      "interclavicular ligament",
      "ligament of sternoclavicular joint"
     ],
@@ -47263,10 +47326,11 @@
    },
    {
     "id": "ZA0480D4A1",
-    "fma": "FMA26013",
+    "fma": "FMA26013_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "skeletal ligament",
     "isaPath": [
+     "right interclavicular ligament",
      "interclavicular ligament",
      "ligament of sternoclavicular joint"
     ],
@@ -47298,10 +47362,11 @@
    },
    {
     "id": "ZACE5300D7",
-    "fma": "FMA71761",
+    "fma": "FMA71761_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left intercostal nodes",
      "intercostal lymph node group",
      "lymph node group of thorax",
      "lymph node group of trunk",
@@ -47313,10 +47378,11 @@
    },
    {
     "id": "ZA76A92079",
-    "fma": "FMA71761",
+    "fma": "FMA71761_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right intercostal nodes",
      "intercostal lymph node group",
      "lymph node group of thorax",
      "lymph node group of trunk",
@@ -47328,10 +47394,11 @@
    },
    {
     "id": "ZAA31A3244",
-    "fma": "FMA71413",
+    "fma": "FMA71413_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left intercuneiform interosseous ligaments",
      "set of intercuneiform interosseous ligaments",
      "set of ligaments"
     ],
@@ -47339,10 +47406,11 @@
    },
    {
     "id": "ZA20BF4F14",
-    "fma": "FMA71413",
+    "fma": "FMA71413_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right intercuneiform interosseous ligaments",
      "set of intercuneiform interosseous ligaments",
      "set of ligaments"
     ],
@@ -47383,10 +47451,11 @@
    },
    {
     "id": "ZABBE474B7",
-    "fma": "FMA71406",
+    "fma": "FMA71406_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left interosseous metacarpal ligaments",
      "set of interosseous metacarpal ligaments",
      "set of ligaments"
     ],
@@ -47394,10 +47463,11 @@
    },
    {
     "id": "ZA35C62690",
-    "fma": "FMA71406",
+    "fma": "FMA71406_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right interosseous metacarpal ligaments",
      "set of interosseous metacarpal ligaments",
      "set of ligaments"
     ],
@@ -47429,10 +47499,11 @@
    },
    {
     "id": "ZA233D9159",
-    "fma": "FMA71393",
+    "fma": "FMA71393_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left intertransverse ligaments",
      "set of intertransverse ligaments",
      "set of ligaments"
     ],
@@ -47440,10 +47511,11 @@
    },
    {
     "id": "ZAE05B584D",
-    "fma": "FMA71393",
+    "fma": "FMA71393_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right intertransverse ligaments",
      "set of intertransverse ligaments",
      "set of ligaments"
     ],
@@ -47473,10 +47545,11 @@
    },
    {
     "id": "ZAACCC4854",
-    "fma": "FMA76760",
+    "fma": "FMA76760_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ zone",
     "isaPath": [
+     "left investing abdominal fascia",
      "investing abdominal fascia",
      "zone of abdominal fascia",
      "zone of internal fascia"
@@ -47485,10 +47558,11 @@
    },
    {
     "id": "ZAAFB06D34",
-    "fma": "FMA76760",
+    "fma": "FMA76760_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ zone",
     "isaPath": [
+     "right investing abdominal fascia",
      "investing abdominal fascia",
      "zone of abdominal fascia",
      "zone of internal fascia"
@@ -47730,10 +47804,11 @@
    },
    {
     "id": "ZA471ECB59",
-    "fma": "FMA71840",
+    "fma": "FMA71840_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left lateral vesical nodes",
      "lateral vesical lymph node group",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -47746,10 +47821,11 @@
    },
    {
     "id": "ZAA0F10D59",
-    "fma": "FMA71840",
+    "fma": "FMA71840_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right lateral vesical nodes",
      "lateral vesical lymph node group",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -47867,10 +47943,11 @@
    },
    {
     "id": "ZADA526CFD",
-    "fma": "FMA76861",
+    "fma": "FMA76861_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component",
     "isaPath": [
+     "left masseteric fascia",
      "masseteric fascia",
      "fascia organ component"
     ],
@@ -47878,10 +47955,11 @@
    },
    {
     "id": "ZA4E1D9390",
-    "fma": "FMA76861",
+    "fma": "FMA76861_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component",
     "isaPath": [
+     "right masseteric fascia",
      "masseteric fascia",
      "fascia organ component"
     ],
@@ -48013,10 +48091,11 @@
    },
    {
     "id": "ZA6603F99A",
-    "fma": "FMA71421",
+    "fma": "FMA71421_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left metatarsal interosseous ligaments",
      "set of metatarsal interosseous ligaments",
      "set of ligaments"
     ],
@@ -48024,10 +48103,11 @@
    },
    {
     "id": "ZA2E4A1F00",
-    "fma": "FMA71421",
+    "fma": "FMA71421_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right metatarsal interosseous ligaments",
      "set of metatarsal interosseous ligaments",
      "set of ligaments"
     ],
@@ -48175,10 +48255,11 @@
    },
    {
     "id": "ZAB5495661",
-    "fma": "FMA71830",
+    "fma": "FMA71830_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left obturator nodes",
      "obturator lymph node group",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -48191,10 +48272,11 @@
    },
    {
     "id": "ZA27074508",
-    "fma": "FMA71830",
+    "fma": "FMA71830_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right obturator nodes",
      "obturator lymph node group",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -48321,10 +48403,11 @@
    },
    {
     "id": "ZA2D23B926",
-    "fma": "FMA71403",
+    "fma": "FMA71403_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left palmar carpometacarpal ligaments",
      "set of palmar carpometacarpal ligaments",
      "set of ligaments"
     ],
@@ -48332,10 +48415,11 @@
    },
    {
     "id": "ZA71B588B3",
-    "fma": "FMA71403",
+    "fma": "FMA71403_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right palmar carpometacarpal ligaments",
      "set of palmar carpometacarpal ligaments",
      "set of ligaments"
     ],
@@ -48343,10 +48427,11 @@
    },
    {
     "id": "ZAF91046A6",
-    "fma": "FMA71410",
+    "fma": "FMA71410_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left palmar interphalangeal ligaments",
      "set of palmar ligaments of interphalangeal joints of hand",
      "set of ligaments"
     ],
@@ -48354,10 +48439,11 @@
    },
    {
     "id": "ZAEF48F468",
-    "fma": "FMA71410",
+    "fma": "FMA71410_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right palmar interphalangeal ligaments",
      "set of palmar ligaments of interphalangeal joints of hand",
      "set of ligaments"
     ],
@@ -48387,10 +48473,11 @@
    },
    {
     "id": "ZAAF052FB8",
-    "fma": "FMA71405",
+    "fma": "FMA71405_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left palmar metacarpal ligaments",
      "set of palmar metacarpal ligaments",
      "set of ligaments"
     ],
@@ -48398,10 +48485,11 @@
    },
    {
     "id": "ZAC37383E7",
-    "fma": "FMA71405",
+    "fma": "FMA71405_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right palmar metacarpal ligaments",
      "set of palmar metacarpal ligaments",
      "set of ligaments"
     ],
@@ -48475,10 +48563,11 @@
    },
    {
     "id": "ZA5A1147F3",
-    "fma": "FMA71760",
+    "fma": "FMA71760_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left parasternal nodes",
      "parasternal lymph node group",
      "lymph node group of thorax",
      "lymph node group of trunk",
@@ -48490,10 +48579,11 @@
    },
    {
     "id": "ZAE54161D0",
-    "fma": "FMA71760",
+    "fma": "FMA71760_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right parasternal nodes",
      "parasternal lymph node group",
      "lymph node group of thorax",
      "lymph node group of trunk",
@@ -48549,10 +48639,11 @@
    },
    {
     "id": "ZA626ADD37",
-    "fma": "FMA19134",
+    "fma": "FMA19134_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ zone",
     "isaPath": [
+     "left piriformis fascia",
      "piriformis fascia",
      "zone of parietal fascia of pelvis",
      "zone of pelvic fascia",
@@ -48563,10 +48654,11 @@
    },
    {
     "id": "ZAED92F56C",
-    "fma": "FMA19134",
+    "fma": "FMA19134_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ zone",
     "isaPath": [
+     "right piriformis fascia",
      "piriformis fascia",
      "zone of parietal fascia of pelvis",
      "zone of pelvic fascia",
@@ -48723,10 +48815,11 @@
    },
    {
     "id": "ZAE123D9F6",
-    "fma": "FMA71416",
+    "fma": "FMA71416_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left plantar cuneonavicular ligaments",
      "set of plantar cuneonavicular ligaments",
      "set of ligaments"
     ],
@@ -48734,10 +48827,11 @@
    },
    {
     "id": "ZA702E5A9A",
-    "fma": "FMA71416",
+    "fma": "FMA71416_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right plantar cuneonavicular ligaments",
      "set of plantar cuneonavicular ligaments",
      "set of ligaments"
     ],
@@ -48745,10 +48839,11 @@
    },
    {
     "id": "ZA64573C58",
-    "fma": "FMA71417",
+    "fma": "FMA71417_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left plantar intercuneiform ligaments",
      "set of plantar intercuneiform ligaments",
      "set of ligaments"
     ],
@@ -48756,10 +48851,11 @@
    },
    {
     "id": "ZA751C658F",
-    "fma": "FMA71417",
+    "fma": "FMA71417_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right plantar intercuneiform ligaments",
      "set of plantar intercuneiform ligaments",
      "set of ligaments"
     ],
@@ -48789,10 +48885,11 @@
    },
    {
     "id": "ZA1A225722",
-    "fma": "FMA71423",
+    "fma": "FMA71423_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "left plantar metatarsal ligaments",
      "set of plantar metatarsal ligaments",
      "set of ligaments"
     ],
@@ -48800,10 +48897,11 @@
    },
    {
     "id": "ZA52EA9B67",
-    "fma": "FMA71423",
+    "fma": "FMA71423_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organs",
     "isaPath": [
+     "right plantar metatarsal ligaments",
      "set of plantar metatarsal ligaments",
      "set of ligaments"
     ],
@@ -48919,10 +49017,11 @@
    },
    {
     "id": "ZA20636ED0",
-    "fma": "FMA25074",
+    "fma": "FMA25074_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "zone of investing fascia",
     "isaPath": [
+     "left posterior layer of thoracolumbar fascia",
      "posterior layer of thoracolumbar fascia",
      "zone of thoracolumbar fascia"
     ],
@@ -48930,10 +49029,11 @@
    },
    {
     "id": "ZAEC934451",
-    "fma": "FMA25074",
+    "fma": "FMA25074_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "zone of investing fascia",
     "isaPath": [
+     "right posterior layer of thoracolumbar fascia",
      "posterior layer of thoracolumbar fascia",
      "zone of thoracolumbar fascia"
     ],
@@ -49000,29 +49100,23 @@
    },
    {
     "id": "ZA05ED7B45",
-    "fma": "FMA44293",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "ligament of lower limb",
+    "fma": "ZAC_posterior_talocalcaneal_ligament_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
     "isaPath": [
-     "posterior lamina of left interosseous talocalcaneal ligament",
-     "posterior lamina of interosseous talocalcaneal ligament",
-     "interosseous talocalcaneal ligament",
-     "ligament of talocalcaneal joint",
-     "ligament of ankle joint"
+     "left posterior talocalcaneal ligament",
+     "posterior talocalcaneal ligament"
     ],
     "partOf": false
    },
    {
     "id": "ZAC423AB24",
-    "fma": "FMA44292",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "ligament of lower limb",
+    "fma": "ZAC_posterior_talocalcaneal_ligament_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
     "isaPath": [
-     "posterior lamina of right interosseous talocalcaneal ligament",
-     "posterior lamina of interosseous talocalcaneal ligament",
-     "interosseous talocalcaneal ligament",
-     "ligament of talocalcaneal joint",
-     "ligament of ankle joint"
+     "right posterior talocalcaneal ligament",
+     "posterior talocalcaneal ligament"
     ],
     "partOf": false
    },
@@ -49230,10 +49324,11 @@
    },
    {
     "id": "ZA1900D863",
-    "fma": "FMA323754",
+    "fma": "FMA323754_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "ligament of limb",
     "isaPath": [
+     "left radioscaphocapitate ligament",
      "radioscaphocapitate ligament",
      "palmar radiocarpal ligament",
      "extrinsic ligament of wrist",
@@ -49244,10 +49339,11 @@
    },
    {
     "id": "ZAFFC86226",
-    "fma": "FMA323754",
+    "fma": "FMA323754_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "ligament of limb",
     "isaPath": [
+     "right radioscaphocapitate ligament",
      "radioscaphocapitate ligament",
      "palmar radiocarpal ligament",
      "extrinsic ligament of wrist",
@@ -49753,10 +49849,11 @@
    },
    {
     "id": "ZA31BF88E4",
-    "fma": "FMA57805",
+    "fma": "FMA57805_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component layer",
     "isaPath": [
+     "left superficial investing cervical fascia",
      "superficial layer of cervical fascia",
      "layer of cervical fascia"
     ],
@@ -49764,10 +49861,11 @@
    },
    {
     "id": "ZAA2D808E8",
-    "fma": "FMA57805",
+    "fma": "FMA57805_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component layer",
     "isaPath": [
+     "right superficial investing cervical fascia",
      "superficial layer of cervical fascia",
      "layer of cervical fascia"
     ],
@@ -49805,10 +49903,11 @@
    },
    {
     "id": "ZAD4E868C6",
-    "fma": "FMA76864",
+    "fma": "FMA76864_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component",
     "isaPath": [
+     "left superficial layer of temporal fascia",
      "superficial layer of temporal fascia",
      "fascia organ component"
     ],
@@ -49816,10 +49915,11 @@
    },
    {
     "id": "ZAB2732365",
-    "fma": "FMA76864",
+    "fma": "FMA76864_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "organ component",
     "isaPath": [
+     "right superficial layer of temporal fascia",
      "superficial layer of temporal fascia",
      "fascia organ component"
     ],
@@ -49877,10 +49977,11 @@
    },
    {
     "id": "ZAAA75C2F2",
-    "fma": "FMA71852",
+    "fma": "FMA71852_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left superficial popliteal nodes",
      "superficial popliteal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -49890,10 +49991,11 @@
    },
    {
     "id": "ZA70B7C8CF",
-    "fma": "FMA71852",
+    "fma": "FMA71852_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right superficial popliteal nodes",
      "superficial popliteal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -49994,10 +50096,11 @@
    },
    {
     "id": "ZA2B565C4D",
-    "fma": "FMA71833",
+    "fma": "FMA71833_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left superior gluteal nodes",
      "superior gluteal lymph node group",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -50010,10 +50113,11 @@
    },
    {
     "id": "ZAF6627D16",
-    "fma": "FMA71833",
+    "fma": "FMA71833_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right superior gluteal nodes",
      "superior gluteal lymph node group",
      "lymph node group of pelvis",
      "lymph node group of abdomen",
@@ -50138,10 +50242,11 @@
    },
    {
     "id": "ZAD25AB484",
-    "fma": "FMA71847",
+    "fma": "FMA71847_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left superolateral superficial inguinal nodes",
      "superolateral superficial inguinal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -50151,10 +50256,11 @@
    },
    {
     "id": "ZA9E0C36F9",
-    "fma": "FMA71847",
+    "fma": "FMA71847_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right superolateral superficial inguinal nodes",
      "superolateral superficial inguinal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -50164,10 +50270,11 @@
    },
    {
     "id": "ZA2D8973DA",
-    "fma": "FMA71846",
+    "fma": "FMA71846_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "left superomedial superficial inguinal nodes",
      "superomedial superficial inguinal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -50177,10 +50284,11 @@
    },
    {
     "id": "ZADC400577",
-    "fma": "FMA71846",
+    "fma": "FMA71846_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "set of organ parts",
     "isaPath": [
+     "right superomedial superficial inguinal nodes",
      "superomedial superficial inguinal lymph node group",
      "lymph node group of lower limb",
      "lymph node group",
@@ -50560,10 +50668,11 @@
    },
    {
     "id": "ZA13EDBE1F",
-    "fma": "FMA40005",
+    "fma": "FMA40005_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "ligament of limb",
     "isaPath": [
+     "left ulnar collateral ligament of wrist joint",
      "ulnar collateral ligament",
      "ligament of wrist joint",
      "ligament of upper limb"
@@ -50572,10 +50681,11 @@
    },
    {
     "id": "ZA5787903E",
-    "fma": "FMA40005",
+    "fma": "FMA40005_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "ligament of limb",
     "isaPath": [
+     "right ulnar collateral ligament of wrist joint",
      "ulnar collateral ligament",
      "ligament of wrist joint",
      "ligament of upper limb"
@@ -50606,10 +50716,11 @@
    },
    {
     "id": "ZAE0E13219",
-    "fma": "FMA323751",
+    "fma": "FMA323751_L",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "ligament of limb",
     "isaPath": [
+     "left ulnolunate ligament",
      "ulnolunate ligament",
      "palmar ulnocarpal ligament",
      "extrinsic ligament of wrist",
@@ -50620,10 +50731,11 @@
    },
    {
     "id": "ZA35C2B91E",
-    "fma": "FMA323751",
+    "fma": "FMA323751_R",
     "isaHow": "FMA is-a chain",
     "isaAnchor": "ligament of limb",
     "isaPath": [
+     "right ulnolunate ligament",
      "ulnolunate ligament",
      "palmar ulnocarpal ligament",
      "extrinsic ligament of wrist",
@@ -51677,7 +51789,7 @@
  },
  "trees": {
   "isa": {
-   "concepts": 4357,
+   "concepts": 4492,
    "parts": 3179
   },
   "partOf": {
@@ -51685,9 +51797,16 @@
    "parts": 1331
   }
  },
+ "conceptAudit": {
+  "conceptsSharedByLeftAndRightParts": 41,
+  "partsUnderThem": 127,
+  "ofWhichFromBodyParts3D": 127,
+  "conceptsWithDifferentlyNamedPartsOnOneSide": 0,
+  "examples": []
+ },
  "output": {
   "parts": 3179,
-  "anatomyJsonBytes": 2100517,
+  "anatomyJsonBytes": 2118697,
   "glbBytes": {
    "integumentary.glb": 575568,
    "muscular.glb": 5153084,

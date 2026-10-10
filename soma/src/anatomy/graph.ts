@@ -28,6 +28,11 @@ export interface DisplayName {
   la?: string
   /** Review status of the knowledge-layer name; undefined when there is no entry. */
   status?: ReviewStatus
+  /**
+   * Set when the knowledge-layer name belongs to a broader concept than the part (see
+   * `AnatomyGraph.partName`): the part then keeps its own name and this is shown beneath it.
+   */
+  broader?: { zh?: string; en: string }
 }
 
 export interface SearchResult {
@@ -332,16 +337,47 @@ export class AnatomyGraph {
   }
 
   /**
-   * Name of a part. Left/right parts that share one unsided concept id get their zh name
-   * from that concept, so it lacks 左/右; the side is then prefixed from `Part.side`.
+   * Name of a part.
+   *  - Names are keyed by concept. When the part's concept is a broader class than the part
+   *    itself (its English name is the part's name minus some qualifying words, and it has
+   *    sub-concepts — e.g. a supernumerary lumbar vertebra filed under "lumbar vertebra"),
+   *    the part keeps its own English name and the concept's name is returned as `broader`,
+   *    so a per-part name is never silently replaced by a class name.
+   *  - Left/right parts that share one unsided concept id get a zh name without 左/右; the
+   *    side is then prefixed from `Part.side`.
    */
   partName(p: Part): DisplayName {
     const n = this.nameOf(p.fma, p.name)
-    if (!n.zh || p.side === 'M' || /^[左右]/.test(n.zh)) return n
+    if (!n.zh) return n
+    const concept = this.trees.isa.byId.get(p.fma) ?? this.trees.partOf.byId.get(p.fma)
+    if (concept && this.isBroaderConcept(p, concept)) {
+      return { primary: p.name, en: p.name, status: n.status, broader: { zh: n.zh, en: concept.name } }
+    }
+    if (p.side === 'M' || /^[左右]/.test(n.zh)) return n
     const sided = /\b(left|right)\b/i.test(p.name) || (this.byFma.get(p.fma)?.length ?? 0) > 1
     if (!sided) return n
     const zh = (p.side === 'L' ? '左' : '右') + n.zh
     return { ...n, zh, primary: zh }
+  }
+
+  /** Parts whose concept is a broader class (see `partName`). */
+  broaderNamedParts(): Part[] {
+    return this.parts.filter((p) => !!this.partName(p).broader)
+  }
+
+  private isBroaderConcept(p: Part, concept: Concept): boolean {
+    const hasSubConcepts = (this.trees.isa.children.get(concept.id)?.length ?? 0) > 0
+    if (!hasSubConcepts) return false
+    const pt = nameTokens(p.name)
+    const ct = nameTokens(concept.name)
+    if (pt.size <= ct.size) return false
+    for (const t of ct) if (!pt.has(t)) return false
+    return true
+  }
+
+  /** What a user should not trust in this body, most important first. */
+  get cautions(): readonly { zh: string; en: string }[] {
+    return Array.isArray(this.data.cautions) ? this.data.cautions : []
   }
 
   conceptName(c: Concept): DisplayName {
@@ -472,7 +508,7 @@ export class AnatomyGraph {
       return f
     }
     for (const p of this.parts) {
-      out.push({ kind: 'part', id: p.id, fma: p.fma, en: p.name, fields: fields(p.name, p.fma, p.id, this.partName(p).zh), partCount: 1 })
+      out.push({ kind: 'part', id: p.id, fma: p.fma, en: p.name, fields: fields(p.name, p.fma, p.id, this.partName(p).zh ?? this.partName(p).broader?.zh), partCount: 1 })
     }
     const seen = new Set<string>()
     for (const tree of TREE_KINDS) {
@@ -501,6 +537,43 @@ export class AnatomyGraph {
   }
 }
 
+const NAME_STOPWORDS = new Set(['of', 'the', 'set', 'left', 'right', 'a', 'and'])
+
+/** Content words of an English anatomical name: lower-cased, singularised, side and filler words dropped. */
+export function nameTokens(name: string): Set<string> {
+  const out = new Set<string>()
+  for (const t of name.toLowerCase().replace(/\([ivx]+\)/g, ' ').split(/[^a-z0-9]+/)) {
+    if (t && !NAME_STOPWORDS.has(t)) out.add(t.replace(/s$/, ''))
+  }
+  return out
+}
+
+/**
+ * Carry a set of parts from one body to another: same concept id and side where the other
+ * body has one, else the same part id with or without the warped-copy prefix ("W_").
+ */
+export function mapPartsBetween(from: AnatomyGraph, to: AnatomyGraph, ids: Iterable<string>): string[] {
+  const out = new Set<string>()
+  for (const id of ids) {
+    const p = from.part(id)
+    if (!p) continue
+    const same = to.partsByFma(p.fma)
+    const sided = same.filter((q) => q.side === p.side)
+    const hits = sided.length ? sided : same
+    if (hits.length) {
+      for (const q of hits) out.add(q.id)
+      continue
+    }
+    for (const alt of [id, `W_${id}`, id.replace(/^W_/, '')]) {
+      if (to.part(alt)) {
+        out.add(alt)
+        break
+      }
+    }
+  }
+  return [...out]
+}
+
 function push<K, V>(m: Map<K, V[]>, k: K, v: V): void {
   const l = m.get(k)
   if (l) l.push(v)
@@ -512,8 +585,13 @@ function scoreField(fields: string[], q: string): number {
   const digits = /^\d+$/.test(q)
   for (const f of fields) {
     let s = 0
+    // a leading 左/右 is a side marker, not part of the name: "乳头" should find "左乳头"
+    // ahead of "乳头体"
+    const unsided = /^[左右]/.test(f) && !/^[左右]/.test(q) ? f.slice(1) : null
     if (f === q) s = 100
+    else if (unsided === q) s = 95
     else if (f.startsWith(q)) s = 80
+    else if (unsided?.startsWith(q)) s = 78
     else {
       const i = f.indexOf(q)
       if (i > 0) s = /[\s\-_(/,]/.test(f[i - 1]!) ? 60 : 40

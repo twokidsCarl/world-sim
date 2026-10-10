@@ -67,25 +67,387 @@
    "female"
   ],
   "conceptsFromBodyParts3D40Lists": 3432,
-  "conceptsOnlyInDatasets": 1540,
-  "idsNamedForOneSideButUsedByBothSides": [
-   {
-    "id": "FMA44885",
-    "name": "right fibular vein"
+  "conceptsOnlyInDatasets": 1686,
+  "idsNamedForOneSideButUsedByBothSides": [],
+  "sidedPartsOnUnsidedConcepts": {
+   "note": "Concepts used by both a left and a right part of one body: the zh name has no 左/右, so the UI must add it from Part.side. Exactly these ids.",
+   "concepts": 41,
+   "partsPerBody": {
+    "male": 116,
+    "female": 116
    },
-   {
-    "id": "UBERON_0011828",
-    "name": "left areolar tubercle"
-   },
-   {
-    "id": "UBERON_0015134",
-    "name": "left main lactiferous duct"
-   },
-   {
-    "id": "UBERON_0018140",
-    "name": "left mammary lobe"
-   }
-  ],
+   "items": [
+    {
+     "id": "FMA7041",
+     "en": "short ciliary nerve",
+     "zh": "睫状短神经",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA9756",
+     "en": "external intercostal muscle",
+     "zh": "肋间外肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA9757",
+     "en": "internal intercostal muscle",
+     "zh": "肋间内肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA9758",
+     "en": "innermost intercostal muscle",
+     "zh": "肋间最内肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA14964",
+     "en": "proximal part of ileum",
+     "zh": "回肠近侧部",
+     "parts": {
+      "male": 9,
+      "female": 9
+     }
+    },
+    {
+     "id": "FMA14965",
+     "en": "middle part of ileum",
+     "zh": "回肠中部",
+     "parts": {
+      "male": 7,
+      "female": 7
+     }
+    },
+    {
+     "id": "FMA14966",
+     "en": "distal part of ileum",
+     "zh": "回肠远侧部",
+     "parts": {
+      "male": 9,
+      "female": 9
+     }
+    },
+    {
+     "id": "FMA15370",
+     "en": "lumbar vein",
+     "zh": "腰静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA16983",
+     "en": "distal part of jejunum",
+     "zh": "空肠远侧部",
+     "parts": {
+      "male": 5,
+      "female": 5
+     }
+    },
+    {
+     "id": "FMA21930",
+     "en": "external anal sphincter",
+     "zh": "肛门外括约肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA22850",
+     "en": "lateral lumbar intertransversarius",
+     "zh": "腰外侧横突间肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA22851",
+     "en": "medial lumbar intertransversarius",
+     "zh": "腰内侧横突间肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA22923",
+     "en": "common palmar digital vein",
+     "zh": "指掌侧总静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA22954",
+     "en": "dorsal metacarpal vein",
+     "zh": "掌背静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA23083",
+     "en": "thoracic rotator",
+     "zh": "胸回旋肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA43956",
+     "en": "plantar metatarsal artery",
+     "zh": "跖足底动脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA44499",
+     "en": "tributary of plantar venous arch",
+     "zh": "足底静脉弓属支",
+     "parts": {
+      "male": 4,
+      "female": 4
+     }
+    },
+    {
+     "id": "FMA44504",
+     "en": "plantar metatarsal vein",
+     "zh": "跖足底静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA44660",
+     "en": "dorsal digital artery of foot",
+     "zh": "足趾背动脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA46442",
+     "en": "tendinous arch of levator ani",
+     "zh": "肛提肌腱弓",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA50544",
+     "en": "anterior inferior cerebellar artery",
+     "zh": "小脑前下动脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA61934",
+     "en": "choroid plexus of cerebral hemisphere",
+     "zh": "脉络丛",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA62394",
+     "en": "peduncle of midbrain",
+     "zh": "中脑脚",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA67943",
+     "en": "pons",
+     "zh": "脑桥",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA67944",
+     "en": "cerebellum",
+     "zh": "小脑",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA69517",
+     "en": "distal perforating artery",
+     "zh": "远侧穿动脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA70800",
+     "en": "set of dorsal metacarpal arteries",
+     "zh": "掌背动脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA70801",
+     "en": "set of dorsal digital arteries",
+     "zh": "趾背动脉",
+     "parts": {
+      "male": 4,
+      "female": 4
+     }
+    },
+    {
+     "id": "FMA70815",
+     "en": "set of perforating arteries",
+     "zh": "穿动脉",
+     "parts": {
+      "male": 4,
+      "female": 4
+     }
+    },
+    {
+     "id": "FMA70821",
+     "en": "set of common plantar digital arteries",
+     "zh": "趾足底总动脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA70839",
+     "en": "set of anterior intercostal veins",
+     "zh": "肋间前静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA70917",
+     "en": "set of dorsal digital veins",
+     "zh": "指背静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA70919",
+     "en": "set of plantar digital veins",
+     "zh": "趾足底静脉",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA70922",
+     "en": "set of perforating veins",
+     "zh": "穿支静脉",
+     "parts": {
+      "male": 5,
+      "female": 5
+     }
+    },
+    {
+     "id": "FMA71442",
+     "en": "set of anterior cervical intertransversarii",
+     "zh": "颈横突间前肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA71443",
+     "en": "set of posterior cervical intertransversarii",
+     "zh": "颈横突间后肌",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA71502",
+     "en": "set of posterior temporal branches of lateral occipital artery",
+     "zh": "枕外侧动脉颞后支",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA71562",
+     "en": "set of calcaneal branches of posterior tibial artery",
+     "zh": "胫后动脉跟支",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    },
+    {
+     "id": "FMA71564",
+     "en": "set of plantar digital arteries proper",
+     "zh": "趾足底固有动脉",
+     "parts": {
+      "male": 3,
+      "female": 3
+     }
+    },
+    {
+     "id": "FMA77439",
+     "en": "artery of central sulcus",
+     "zh": "中央沟动脉",
+     "parts": {
+      "male": 4,
+      "female": 4
+     }
+    },
+    {
+     "id": "FMA256194",
+     "en": "orbital gyrus",
+     "zh": "眶回",
+     "parts": {
+      "male": 2,
+      "female": 2
+     }
+    }
+   ]
+  },
   "conceptsLinkedViaUberonId": [
    "UBERON_0000002",
    "UBERON_0000996",
@@ -99,8 +461,8 @@
    "UBERON_0015134"
   ],
   "partConceptsPerBody": {
-   "male": 2547,
-   "female": 2578
+   "male": 2617,
+   "female": 2653
   }
  },
  "elementConcepts": {
@@ -108,7 +470,7 @@
   "fromHeader": 2217,
   "fromFallback": 0,
   "unresolved": 17,
-  "distinctConcepts": 2601
+  "distinctConcepts": 2676
  },
  "propagation": {
   "maxIsaFanout": 100,
@@ -126,28 +488,28 @@
  },
  "coverage": {
   "allConcepts": {
-   "concepts": 4972,
-   "wikidataMatch": "4729/4972 (95.1%)",
-   "zhFromWikidataOwnItem": "530/4972 (10.7%)",
-   "zhAny": "4972/4972 (100.0%)",
-   "la": "1183/4972 (23.8%)",
-   "ja": "1244/4972 (25.0%)",
+   "concepts": 5118,
+   "wikidataMatch": "4849/5118 (94.7%)",
+   "zhFromWikidataOwnItem": "529/5118 (10.3%)",
+   "zhAny": "5118/5118 (100.0%)",
+   "la": "1179/5118 (23.0%)",
+   "ja": "1241/5118 (24.2%)",
    "zhBySource": {
-    "machine-translation": 3169,
-    "wikidata": 347,
+    "machine-translation": 3311,
+    "wikidata": 346,
     "wikidata:hant-converted": 179,
     "lexicon:mainland-over-wikidata": 575,
-    "derived:laterality": 664,
-    "machine-translation:override": 34,
+    "derived:laterality": 666,
+    "machine-translation:override": 37,
     "wikidata:generic-twin": 1,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 8043,
-    "subjectsWithAnyRelation": "1939/4972 (39.0%)",
-    "objectHasFma": "7662/8043 (95.3%)",
-    "objectInDataset": "5007/8043 (62.3%)",
-    "objectLabelHasZh": "6421/8043 (79.8%)",
+    "total": 8157,
+    "subjectsWithAnyRelation": "1967/5118 (38.4%)",
+    "objectHasFma": "7782/8157 (95.4%)",
+    "objectInDataset": "5147/8157 (63.1%)",
+    "objectLabelHasZh": "6571/8157 (80.6%)",
     "byKind": {
      "origin": {
       "total": 1048,
@@ -171,7 +533,7 @@
       "subjects": 542,
       "objectHasFma": 641,
       "objectInDataset": 298,
-      "objectIsPart": 188
+      "objectIsPart": 185
      },
      "innervatedBy": {
       "total": 1184,
@@ -181,9 +543,9 @@
       "whole": 279,
       "wikipedia": 15,
       "subjects": 678,
-      "objectHasFma": 1117,
-      "objectInDataset": 693,
-      "objectIsPart": 463
+      "objectHasFma": 1120,
+      "objectInDataset": 696,
+      "objectIsPart": 465
      },
      "arterialSupply": {
       "total": 632,
@@ -219,19 +581,19 @@
       "subjects": 55,
       "objectHasFma": 31,
       "objectInDataset": 18,
-      "objectIsPart": 9
+      "objectIsPart": 8
      },
      "connectsWith": {
-      "total": 2650,
-      "direct": 892,
-      "is-a": 1710,
-      "laterality": 36,
+      "total": 2760,
+      "direct": 886,
+      "is-a": 1714,
+      "laterality": 148,
       "whole": 12,
       "wikipedia": 0,
-      "subjects": 763,
-      "objectHasFma": 2582,
-      "objectInDataset": 1837,
-      "objectIsPart": 1152
+      "subjects": 786,
+      "objectHasFma": 2695,
+      "objectInDataset": 1974,
+      "objectIsPart": 1181
      },
      "antagonist": {
       "total": 330,
@@ -246,14 +608,14 @@
       "objectIsPart": 160
      },
      "innervates": {
-      "total": 952,
+      "total": 956,
       "direct": 280,
       "is-a": 492,
-      "laterality": 22,
+      "laterality": 26,
       "whole": 154,
       "wikipedia": 4,
-      "subjects": 244,
-      "objectHasFma": 946,
+      "subjects": 249,
+      "objectHasFma": 950,
       "objectInDataset": 731,
       "objectIsPart": 491
      }
@@ -261,27 +623,27 @@
    }
   },
   "elementConcepts": {
-   "concepts": 2601,
-   "wikidataMatch": "2449/2601 (94.2%)",
-   "zhFromWikidataOwnItem": "114/2601 (4.4%)",
-   "zhAny": "2601/2601 (100.0%)",
-   "la": "295/2601 (11.3%)",
-   "ja": "306/2601 (11.8%)",
+   "concepts": 2676,
+   "wikidataMatch": "2507/2676 (93.7%)",
+   "zhFromWikidataOwnItem": "111/2676 (4.1%)",
+   "zhAny": "2676/2676 (100.0%)",
+   "la": "261/2676 (9.8%)",
+   "ja": "291/2676 (10.9%)",
    "zhBySource": {
-    "machine-translation": 1516,
-    "derived:laterality": 611,
+    "machine-translation": 1590,
+    "derived:laterality": 613,
     "lexicon:mainland-over-wikidata": 351,
     "wikidata:hant-converted": 40,
-    "wikidata": 71,
-    "machine-translation:override": 9,
+    "wikidata": 68,
+    "machine-translation:override": 11,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 5338,
-    "subjectsWithAnyRelation": "1264/2601 (48.6%)",
-    "objectHasFma": "5031/5338 (94.2%)",
-    "objectInDataset": "3332/5338 (62.4%)",
-    "objectLabelHasZh": "4213/5338 (78.9%)",
+    "total": 5393,
+    "subjectsWithAnyRelation": "1278/2676 (47.8%)",
+    "objectHasFma": "5090/5393 (94.4%)",
+    "objectInDataset": "3425/5393 (63.5%)",
+    "objectLabelHasZh": "4309/5393 (79.9%)",
     "byKind": {
      "origin": {
       "total": 729,
@@ -305,7 +667,7 @@
       "subjects": 395,
       "objectHasFma": 433,
       "objectInDataset": 204,
-      "objectIsPart": 182
+      "objectIsPart": 179
      },
      "innervatedBy": {
       "total": 812,
@@ -315,9 +677,9 @@
       "whole": 184,
       "wikipedia": 15,
       "subjects": 464,
-      "objectHasFma": 765,
-      "objectInDataset": 477,
-      "objectIsPart": 448
+      "objectHasFma": 767,
+      "objectInDataset": 479,
+      "objectIsPart": 450
      },
      "arterialSupply": {
       "total": 392,
@@ -356,16 +718,16 @@
       "objectIsPart": 6
      },
      "connectsWith": {
-      "total": 1733,
-      "direct": 220,
-      "is-a": 1505,
-      "laterality": 0,
+      "total": 1786,
+      "direct": 164,
+      "is-a": 1502,
+      "laterality": 112,
       "whole": 8,
       "wikipedia": 0,
-      "subjects": 498,
-      "objectHasFma": 1688,
-      "objectInDataset": 1211,
-      "objectIsPart": 988
+      "subjects": 509,
+      "objectHasFma": 1743,
+      "objectInDataset": 1302,
+      "objectIsPart": 1120
      },
      "antagonist": {
       "total": 222,
@@ -380,14 +742,14 @@
       "objectIsPart": 160
      },
      "innervates": {
-      "total": 610,
-      "direct": 42,
+      "total": 612,
+      "direct": 40,
       "is-a": 454,
-      "laterality": 14,
+      "laterality": 18,
       "whole": 100,
       "wikipedia": 0,
-      "subjects": 158,
-      "objectHasFma": 606,
+      "subjects": 161,
+      "objectHasFma": 608,
       "objectInDataset": 493,
       "objectIsPart": 462
      }
@@ -395,26 +757,27 @@
    }
   },
   "importedPartConcepts": {
-   "concepts": 937,
-   "wikidataMatch": "787/937 (84.0%)",
-   "zhFromWikidataOwnItem": "15/937 (1.6%)",
-   "zhAny": "937/937 (100.0%)",
-   "la": "54/937 (5.8%)",
-   "ja": "26/937 (2.8%)",
+   "concepts": 1013,
+   "wikidataMatch": "846/1013 (83.5%)",
+   "zhFromWikidataOwnItem": "13/1013 (1.3%)",
+   "zhAny": "1013/1013 (100.0%)",
+   "la": "21/1013 (2.1%)",
+   "ja": "12/1013 (1.2%)",
    "zhBySource": {
-    "derived:laterality": 164,
+    "derived:laterality": 166,
     "lexicon:mainland-over-wikidata": 92,
-    "machine-translation": 666,
+    "machine-translation": 740,
     "wikidata:hant-converted": 5,
-    "wikidata": 7,
+    "wikidata": 5,
+    "machine-translation:override": 2,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 1478,
-    "subjectsWithAnyRelation": "386/937 (41.2%)",
-    "objectHasFma": "1380/1478 (93.4%)",
-    "objectInDataset": "908/1478 (61.4%)",
-    "objectLabelHasZh": "1217/1478 (82.3%)",
+    "total": 1533,
+    "subjectsWithAnyRelation": "400/1013 (39.5%)",
+    "objectHasFma": "1437/1533 (93.7%)",
+    "objectInDataset": "955/1533 (62.3%)",
+    "objectLabelHasZh": "1269/1533 (82.8%)",
     "byKind": {
      "origin": {
       "total": 85,
@@ -438,7 +801,7 @@
       "subjects": 57,
       "objectHasFma": 26,
       "objectInDataset": 16,
-      "objectIsPart": 12
+      "objectIsPart": 10
      },
      "innervatedBy": {
       "total": 179,
@@ -489,16 +852,16 @@
       "objectIsPart": 6
      },
      "connectsWith": {
-      "total": 443,
-      "direct": 72,
-      "is-a": 363,
-      "laterality": 0,
+      "total": 496,
+      "direct": 16,
+      "is-a": 360,
+      "laterality": 112,
       "whole": 8,
       "wikipedia": 0,
-      "subjects": 153,
-      "objectHasFma": 426,
-      "objectInDataset": 224,
-      "objectIsPart": 167
+      "subjects": 164,
+      "objectHasFma": 481,
+      "objectInDataset": 271,
+      "objectIsPart": 255
      },
      "antagonist": {
       "total": 18,
@@ -513,14 +876,14 @@
       "objectIsPart": 10
      },
      "innervates": {
-      "total": 588,
-      "direct": 40,
+      "total": 590,
+      "direct": 38,
       "is-a": 434,
-      "laterality": 14,
+      "laterality": 18,
       "whole": 100,
       "wikipedia": 0,
-      "subjects": 139,
-      "objectHasFma": 584,
+      "subjects": 142,
+      "objectHasFma": 586,
       "objectInDataset": 482,
       "objectIsPart": 458
      }
@@ -528,23 +891,24 @@
    }
   },
   "syntheticIdConcepts": {
-   "concepts": 149,
-   "wikidataMatch": "10/149 (6.7%)",
-   "zhFromWikidataOwnItem": "3/149 (2.0%)",
-   "zhAny": "149/149 (100.0%)",
-   "la": "3/149 (2.0%)",
-   "ja": "3/149 (2.0%)",
+   "concepts": 305,
+   "wikidataMatch": "138/305 (45.2%)",
+   "zhFromWikidataOwnItem": "3/305 (1.0%)",
+   "zhAny": "305/305 (100.0%)",
+   "la": "3/305 (1.0%)",
+   "ja": "3/305 (1.0%)",
    "zhBySource": {
-    "machine-translation": 144,
-    "wikidata:via-uberon-id": 3,
-    "derived:laterality": 2
+    "machine-translation": 296,
+    "derived:laterality": 4,
+    "machine-translation:override": 2,
+    "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 10,
-    "subjectsWithAnyRelation": "3/149 (2.0%)",
-    "objectHasFma": "7/10 (70.0%)",
-    "objectInDataset": "3/10 (30.0%)",
-    "objectLabelHasZh": "10/10 (100.0%)",
+    "total": 147,
+    "subjectsWithAnyRelation": "38/305 (12.5%)",
+    "objectHasFma": "144/147 (98.0%)",
+    "objectInDataset": "102/147 (69.4%)",
+    "objectLabelHasZh": "125/147 (85.0%)",
     "byKind": {
      "origin": {
       "total": 0,
@@ -619,16 +983,16 @@
       "objectIsPart": 0
      },
      "connectsWith": {
-      "total": 3,
+      "total": 133,
       "direct": 3,
-      "is-a": 0,
-      "laterality": 0,
+      "is-a": 18,
+      "laterality": 112,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 2,
-      "objectHasFma": 0,
-      "objectInDataset": 0,
-      "objectIsPart": 0
+      "subjects": 32,
+      "objectHasFma": 130,
+      "objectInDataset": 96,
+      "objectIsPart": 86
      },
      "antagonist": {
       "total": 0,
@@ -643,16 +1007,16 @@
       "objectIsPart": 0
      },
      "innervates": {
-      "total": 0,
-      "direct": 0,
-      "is-a": 0,
-      "laterality": 0,
+      "total": 7,
+      "direct": 1,
+      "is-a": 2,
+      "laterality": 4,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 0,
-      "objectHasFma": 0,
-      "objectInDataset": 0,
-      "objectIsPart": 0
+      "subjects": 5,
+      "objectHasFma": 7,
+      "objectInDataset": 3,
+      "objectIsPart": 2
      }
     }
    }
@@ -660,12 +1024,12 @@
  },
  "innervates": {
   "note": "Kind \"innervates\" on nerves. direct = Wikidata P3190 statements on the nerve item (incl. propagated); mirrored = inverse of an innervatedBy relation whose object is a dataset concept.",
-  "directFromP3190": 672,
+  "directFromP3190": 676,
   "mirrored": 280,
-  "mirroredFromStructureSideStatements": 215,
-  "mirroredViaNamedBranchOfTheNerve": 15,
+  "mirroredFromStructureSideStatements": 218,
+  "mirroredViaNamedBranchOfTheNerve": 12,
   "mirroredFromP3190AfterPropagation": 50,
-  "nerveSubjects": 244
+  "nerveSubjects": 249
  },
  "wikipedia": {
   "groupsWithGaps": 80,

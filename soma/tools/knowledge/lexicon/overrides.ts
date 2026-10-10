@@ -59,3 +59,12 @@ export const KEEP_WIKIDATA_LABEL = new Set<string>([
   'parenchyma', // 实质组织 (实质)
   'neuraxis', // 中枢神经系统 (神经轴)
 ])
+
+/**
+ * Names fixed per concept id, for classes whose English label is ambiguous on its own.
+ * zhSource "machine-translation:override"; unreviewed like everything else.
+ */
+export const ZH_ID_OVERRIDES: Record<string, { zh: string; reason: string }> = {
+  FMA40005: { zh: '腕尺侧副韧带', reason: 'FMA label is the bare "ulnar collateral ligament"; the class is the wrist ligament (Wikidata: Ligamentum collaterale carpi ulnare)' },
+  FMA38869: { zh: '肘关节尺侧副韧带', reason: 'ulnar collateral ligament of the elbow joint; kept distinct from the wrist ligament FMA40005' },
+}

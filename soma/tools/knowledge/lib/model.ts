@@ -59,6 +59,16 @@ export function sideOf(name: string): 'left' | 'right' | undefined {
   const m = name.toLowerCase().match(/\b(left|right)\b/g)
   return m && m.length === 1 ? (m[0] as 'left' | 'right') : undefined
 }
+/**
+ * Ids of the form "<base>_L" / "<base>_R": a side-qualified derivative that the dataset mints for
+ * a lateralised part of a concept that has no sided class of its own (FMA, UBERON or synthetic).
+ */
+export function sidedDerivative(id: string): { base: string; side: 'left' | 'right' } | undefined {
+  const m = /^(.+)_([LR])$/.exec(id)
+  return m ? { base: m[1]!, side: m[2] === 'L' ? 'left' : 'right' } : undefined
+}
+/** Side of a concept: from a derivative id when it has one, else from its English name. */
+export const sideOfConcept = (id: string, en: string) => sidedDerivative(id)?.side ?? sideOf(en)
 export const stripSide = (name: string) => name.toLowerCase().replace(SIDE_RE, '').replace(/\s+/g, ' ').trim()
 
 const TYPE_WORDS: [RegExp, RegExp][] = [
@@ -112,7 +122,7 @@ export async function buildModel(opts: FetchOptions): Promise<Model> {
 
   // Concepts with a synthetic "UBERON_<digits>" id are linked through Wikidata's UBERON ID.
   const viaUberon = new Set<string>()
-  const uberonIds = [...concepts.keys()].filter((id) => /^UBERON_\d+$/.test(id))
+  const uberonIds = [...new Set([...concepts.keys()].map((id) => /^(UBERON_\d+)(_[LR])?$/.exec(id)?.[1]).filter((x): x is string => !!x))]
   if (uberonIds.length) {
     const found = await fetchItemsByUberon(uberonIds.map((id) => id.slice(7)), opts)
     for (const f of found) {

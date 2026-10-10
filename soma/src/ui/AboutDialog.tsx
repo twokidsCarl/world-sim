@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { PROVENANCE_LABEL } from '../anatomy/labels.ts'
 import { useApp } from '../state/store.ts'
+import { CautionList } from './CautionsDialog.tsx'
 import { Icon } from './Icon.tsx'
 
 export function AboutDialog() {
@@ -50,6 +51,12 @@ export function AboutDialog() {
             本工具展示的模型、名称与关系用于解剖学学习，可能存在错误或遗漏，不得用于诊断、治疗或手术决策。
             <span className="en"> For education only — not a basis for clinical decisions.</span>
           </p>
+          {graph && graph.cautions.length > 0 && (
+            <>
+              <h3>此人体模型的注意事项 <span className="en">Known limitations</span></h3>
+              <CautionList items={graph.cautions} />
+            </>
+          )}
           <h3>几何与本体数据 <span className="en">Geometry &amp; ontology</span></h3>
           {graph && graph.data.sources.length > 0 ? (
             <ul className="sources">

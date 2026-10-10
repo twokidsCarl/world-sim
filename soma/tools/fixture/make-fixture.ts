@@ -694,6 +694,11 @@ async function main(): Promise<void> {
         attribution: 'Synthetic. Stands in for artist-modelled structures (nerves).',
       },
     ],
+    cautions: [
+      { zh: '这是由几何基本体拼成的示例数据，不是人体解剖。', en: 'Synthetic primitives for development — not anatomy.' },
+      { zh: '右侧结构标为“配准变形”，神经标为“人工建模”，仅用于演示来源标注。', en: 'Right-side parts are tagged warped and nerves curated only to exercise the provenance UI.' },
+      { zh: 'FMA 编号与 ZAC 标识均为虚构。', en: 'All FMA and ZAC identifiers are made up.' },
+    ],
     systems,
     layers: LAYERS,
     parts,

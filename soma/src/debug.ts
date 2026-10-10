@@ -8,6 +8,8 @@ export interface SomaDebug {
   store: typeof useApp
   graph: AnatomyGraph | null
   viewer: Viewer | null
+  /** The second renderer while the compare view is open. */
+  compareViewer: Viewer | null
   /** 'webgpu' | 'webgl2' once the renderer is initialised. */
   backend: string | null
   /** Backend, fps counters, draw calls, triangle count, BVH progress. */
@@ -28,6 +30,7 @@ export const debug: SomaDebug = {
   store: useApp,
   graph: null,
   viewer: null,
+  compareViewer: null,
   backend: null,
   stats: () => debug.viewer?.stats() ?? null,
   bench: (seconds) => debug.viewer?.bench(seconds) ?? Promise.resolve(null),

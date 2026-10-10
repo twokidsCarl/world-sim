@@ -63,6 +63,9 @@ const SIMPLIFY = { perThickness: 0.08, min: 0.08e-3, max: 0.8e-3, minTriangles: 
 const MALE_ONLY_NAME = /\bpenis\b|\btest(is|es|icular)\b|prostat|seminal|deferent|epididym|scrot|spermat|cremaster|^urethra$/i
 const isMaleOnly = (p: Part) => p.system === 'reproductive' || MALE_ONLY_NAME.test(p.name)
 
+/** Her extra lumbar vertebra has no FMA class of its own: a synthetic concept under "lumbar vertebra". */
+const SUPERNUMERARY_CONCEPT = 'VFC_supernumerary_lumbar_vertebra'
+
 const SOURCE_VHF: SourceInfo = {
   name: 'Visible Human Female CT',
   url: 'https://data.lhncbc.nlm.nih.gov/public/Visible-Human/Female-Images/radiological/normalCT/',
@@ -570,7 +573,7 @@ async function main() {
     const mirrored = it.side === 'R' && MIRRORED.some((b) => it.id === `VF_${b}_right`)
     if (it.id === 'VF_vertebrae_L1') {
       // six lumbar vertebrae: her first one has no male counterpart
-      parts.push({ id: it.id, fma: lumbarConcept, name: 'Supernumerary lumbar vertebra (first of six)', system: 'skeletal', tissue: 'bone', depth: depthOf('skeletal', 'bone'), side: 'M', provenance: 'scanned', source: SOURCE_VHF.name, mesh: target.get(it.id)!, volume: it.volume_ml })
+      parts.push({ id: it.id, fma: SUPERNUMERARY_CONCEPT, name: 'Supernumerary lumbar vertebra (first of six)', system: 'skeletal', tissue: 'bone', depth: depthOf('skeletal', 'bone'), side: 'M', provenance: 'scanned', source: SOURCE_VHF.name, mesh: target.get(it.id)!, volume: it.volume_ml })
       continue
     }
     if (it.correspondence !== 'one-to-one') continue
@@ -683,16 +686,21 @@ async function main() {
     const sided = /\b(left|right)\b/i.test(n) || it.side === 'M' ? n : `${it.side === 'L' ? 'left' : 'right'} ${n}`
     return sided[0]!.toUpperCase() + sided.slice(1)
   }
+  // concept ids used by HRA items of both sides get a sided child each (`<id>_L` / `<id>_R`)
+  const hraConcept = (it: FemaleItem) => it.fma ?? (it.ontology_id ? it.ontology_id.replace(':', '_') : `HRAC_${it.id.replace(/^HRA_/, '').replace(/_[LR]$/, '').toLowerCase()}`)
+  const hraSides = new Map<string, Set<string>>()
+  for (const it of fa.items) if (it.source === 'hra' && it.side !== 'M') hraSides.set(hraConcept(it), (hraSides.get(hraConcept(it)) ?? new Set()).add(it.side))
   for (const it of fa.items) {
     if (it.source !== 'hra') continue
     const cls = hraClass(it)
-    const fma = it.fma ?? (it.ontology_id ? it.ontology_id.replace(':', '_') : `HRAC_${it.id.replace(/^HRA_/, '').toLowerCase()}`)
+    const base = hraConcept(it)
+    const fma = it.side !== 'M' && (hraSides.get(base)?.size ?? 0) > 1 ? `${base}_${it.side}` : base
     const w = weld(posed(it).positions, fa.scanned(it).indices)
     parts.push({ id: it.id, fma, name: hraName(it), system: cls.system, tissue: cls.tissue, depth: depthOf(cls.system, cls.tissue), side: it.side, provenance: 'curated', source: SOURCE_HRA.name, mesh: { positions: w.positions, indices: w.indices }, volume: it.volume_ml || undefined })
   }
   const hra = parts.filter((p) => p.provenance === 'curated')
   lap(`${hra.length} HRA parts added`)
-  await finish({ parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed })
+  await finish({ parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed, lumbarConcept, dy })
 }
 
 interface FinishInput {
@@ -711,10 +719,12 @@ interface FinishInput {
   nerveStats: { length: number; boneBefore: number; boneAfter: number; canal: number; muscleBefore: number; muscleAfter: number; points: number; moved: number }
   hra: FPart[]
   notUsed: { id: string; reason: string }[]
+  lumbarConcept: string
+  dy: number
 }
 
 async function finish(input: FinishInput) {
-  const { parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed } = input
+  const { parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed, dy } = input
   const byName = (name: string) => parts.find((p) => p.name === name)
   const samplesOf = (m: Mesh, spacing = 0.003) => thinPoints(surfacePoints(m, spacing), spacing * 0.8)
 
@@ -770,8 +780,128 @@ async function finish(input: FinishInput) {
       const after = insideAny(ovary.mesh)
       collisions[`${side} ovary vs iliac vessels`] = { insideBefore: round(before.inside, 3), vessel: before.worst || null, movedMm: moved, insideAfter: round(after.inside, 3) }
     }
-    // uterus, vagina, ovaries against the warped male pelvic viscera: slide the viscera's vertices out
     const female = parts.filter((p) => p.provenance === 'curated' && p.system === 'reproductive' && (p.tissue === 'organ' || p.tissue === 'gland'))
+    const insideOf = (container: Mesh, m: Mesh) => new InsideTester(container, 96).fractionInside(samplesOf(m, 0.002))
+    const measureGroup = (re: RegExp, container: FPart | undefined) => {
+      const ms = female.filter((p) => re.test(p.name))
+      if (!container || !ms.length) return 0
+      const pts = concat(ms.map((p) => samplesOf(p.mesh, 0.002)))
+      return new InsideTester(container.mesh, 96).fractionInside(pts)
+    }
+    const GROUPS: [string, RegExp][] = [
+      ['uterus', /uterus|cervix|cornua|cervical os|uterine segment/i],
+      ['left ovary', /^Left ovary$/],
+      ['left uterine tube', /left uterine tube|left fallopian tube/i],
+      ['right ovary', /^Right ovary$/],
+      ['right uterine tube', /right uterine tube|right fallopian tube/i],
+      ['vagina', /^Vagina$|cervicovaginal/i],
+    ]
+    const isGroup = (re: RegExp) => (p: FPart) => re.test(p.name) && !/ligament|meso/i.test(p.name)
+    const colon = () => parts.find((p) => p.name === 'Descending colon')
+    const bladder = parts.find((p) => p.name === 'Urinary bladder')
+    const beforeColon = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, colon()), 3)]))
+    const beforeBladder = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, bladder), 3)]))
+
+    // (1) HRA organs against her scanned bladder: the bladder is measured, the HRA organs are an
+    // artist's model placed by a bone-driven fit, so the HRA set gives way. The whole internal
+    // genital set (uterus, vagina, tubes, ovaries, their ligaments and vessels) is moved back
+    // as one rigid piece until the vagina and cervix clear the bladder.
+    const genital = parts.filter((p) => p.provenance === 'curated' && (p.system === 'reproductive' || p.system === 'cardiovascular'))
+    let nudge = 0
+    if (bladder) {
+      const front = female.filter((p) => /^Vagina$|cervicovaginal|cervix|wall of uterus|Body of uterus/i.test(p.name))
+      const overlap = (dz: number) => {
+        const pts = concat(front.map((p) => samplesOf(p.mesh, 0.002)))
+        for (let i = 2; i < pts.length; i += 3) pts[i] = pts[i]! + dz
+        return new InsideTester(bladder.mesh, 96).fractionInside(pts)
+      }
+      while (nudge < 0.012 && overlap(-nudge) > 0.005) nudge += 0.001
+      if (nudge > 0) for (const p of genital) p.mesh = { positions: Float32Array.from(p.mesh.positions, (v, i) => (i % 3 === 2 ? v - nudge : v)), indices: p.mesh.indices }
+    }
+    collisions.hraSetMovedPosteriorMm = round(nudge * 1000, 1)
+
+    // (2) The warped male sigmoid colon runs through her left adnexa and uterus. A closed tube
+    // that contains an organ cannot be cleared by pushing its surface outward, so the bowel is
+    // shifted sideways instead: a smooth translation field centred on the organ, pointing from
+    // the organ to the bowel's local centre, grown until the organ is outside. Every warped
+    // digestive part goes through the same field, so the colon, its taeniae and the mesocolon
+    // stay together.
+    const shifts: Record<string, unknown>[] = []
+    // what the bowel must not be pushed into: her pelvic bones, lumbar spine and bladder
+    const pelvicObstacles = parts.filter((p) => p.provenance === 'scanned' && (/hip bone|Sacrum|lumbar vertebra/i.test(p.name) || p.name === 'Urinary bladder')).map((p) => new InsideTester(p.mesh, 64))
+    const colonVolumeBefore = colon() ? Math.abs(measure(colon()!.mesh).signedVolume) : 0
+    const bowel = () => parts.filter((p) => p.provenance === 'warped' && p.system === 'digestive' && p.tissue !== 'tooth')
+    // moving the bowel off one organ can bring it onto the next: repeat until nothing changes
+    for (let pass = 0; pass < 4; pass++) {
+    const done = shifts.length
+    for (const [name, re] of [['left adnexa', /^Left ovary$|left uterine tube|left fallopian tube/i], ['right adnexa', /^Right ovary$|right uterine tube|right fallopian tube/i], ['uterus', GROUPS[0]![1]]] as [string, RegExp][]) {
+      const members = female.filter(isGroup(re))
+      if (!members.length) continue
+      const pts = concat(members.map((p) => samplesOf(p.mesh, 0.002)))
+      const c = [0, 0, 0]
+      for (let i = 0; i < pts.length; i++) c[i % 3] = c[i % 3]! + pts[i]! / (pts.length / 3)
+      let ro = 0
+      for (let i = 0; i < pts.length; i += 3) ro = Math.max(ro, Math.hypot(pts[i]! - c[0]!, pts[i + 1]! - c[1]!, pts[i + 2]! - c[2]!))
+      for (const container of bowel()) {
+        const tester = () => new InsideTester(container.mesh, 96)
+        const before = tester().fractionInside(pts)
+        if (before < 0.03) continue
+        // Which way? Try the horizontal directions, upwards and the diagonals between; for each,
+        // grow the shift until the organ is outside, and score it by how far the bowel had to
+        // move and how much of it ends up in her bones or bladder. The cheapest wins.
+        const sigma = ro + 0.03
+        const movedBy = (arr: Float32Array, d: number[], sft: number) => {
+          const out = Float32Array.from(arr)
+          for (let i = 0; i < out.length; i += 3) {
+            const w = Math.exp(-((out[i]! - c[0]!) ** 2 + (out[i + 1]! - c[1]!) ** 2 + (out[i + 2]! - c[2]!) ** 2) / (2 * sigma * sigma))
+            out[i] = out[i]! + d[0]! * sft * w
+            out[i + 1] = out[i + 1]! + d[1]! * sft * w
+            out[i + 2] = out[i + 2]! + d[2]! * sft * w
+          }
+          return out
+        }
+        const dirs: number[][] = []
+        for (let a8 = 0; a8 < 8; a8++) {
+          const ang = (a8 * Math.PI) / 4
+          dirs.push([Math.cos(ang), 0, Math.sin(ang)], [Math.cos(ang) * 0.7, 0.7, Math.sin(ang) * 0.7])
+        }
+        dirs.push([0, 1, 0])
+        const obstacles = pelvicObstacles
+        let best: { d: number[]; shift: number; after: number; cost: number; inBone: number } | null = null
+        for (const d of dirs) {
+          let shift = 0
+          let after = before
+          while (after > 0.01 && shift < 0.06) {
+            shift += 0.004
+            after = new InsideTester({ positions: movedBy(container.mesh.positions, d, shift), indices: container.mesh.indices }, 96).fractionInside(pts)
+          }
+          const trial: Mesh = { positions: movedBy(container.mesh.positions, d, shift), indices: container.mesh.indices }
+          const sp = samplesOf(trial, 0.004)
+          let inBone = 0
+          for (const o of obstacles) inBone += o.fractionInside(sp)
+          const cost = shift + 0.5 * inBone + 0.2 * after
+          if (!best || cost < best.cost) best = { d, shift, after, cost, inBone }
+        }
+        const d = best!.d
+        const shift = best!.shift
+        const after = best!.after
+        const moved = (arr: Float32Array, sft: number) => movedBy(arr, d, sft)
+        for (const p of bowel()) {
+          p.mesh = { positions: moved(p.mesh.positions, shift), indices: p.mesh.indices }
+        }
+        // what hangs on the bowel moves with it: colic and rectal vessels, their nodes
+        for (const p of parts) {
+          if (p.provenance !== 'warped' || p.system === 'digestive') continue
+          if (!/colic|sigmoid|rectal|mesenteric|colon/i.test(p.name)) continue
+          p.mesh = { positions: moved(p.mesh.positions, shift), indices: p.mesh.indices }
+          if (p.centrelines) p.centrelines = p.centrelines.map((l) => ({ points: moved(l.points, shift), radius: l.radius }))
+        }
+        shifts.push({ organ: name, bowel: container.name, insideBefore: round(before, 3), insideAfter: round(after, 3), shiftMm: round(shift * 1000, 0), direction: d.map((v) => round(v, 2)), bowelInBoneOrBladder: round(best!.inBone, 3) })
+      }
+    }
+    if (shifts.length === done) break
+    }
+    collisions.bowelShifts = shifts
     const solids: ExistingPart[] = female.map((p) => ({ id: p.id, fma: p.fma, name: p.name, mesh: p.mesh, stats: measure(p.mesh), system: p.system, tissue: 'bone' as TissueId }))
     const field = new SurfaceField(solids)
     const fb = solids.reduce((b, s) => [Math.min(b[0]!, s.stats.bbox[0]), Math.min(b[1]!, s.stats.bbox[1]), Math.min(b[2]!, s.stats.bbox[2]), Math.max(b[3]!, s.stats.bbox[3]), Math.max(b[4]!, s.stats.bbox[4]), Math.max(b[5]!, s.stats.bbox[5])], [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity])
@@ -820,6 +950,26 @@ async function finish(input: FinishInput) {
       roomFor[g.name] = movedParts
     }
     collisions.roomMade = roomFor
+    // the colon must still be a sensible tube somewhere sensible
+    {
+      const col = colon()
+      const afterColon = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, col), 3)]))
+      const afterBladder = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, bladder), 3)]))
+      let inBone = 0
+      let inBladder = 0
+      if (col) {
+        const pts = samplesOf(col.mesh, 0.004)
+        const bones = parts.filter((p) => p.provenance === 'scanned' && p.tissue === 'bone' && /hip bone|Sacrum|lumbar|femur/i.test(p.name))
+        for (const b of bones) inBone += new InsideTester(b.mesh, 64).fractionInside(pts)
+        if (bladder) inBladder = insideOf(bladder.mesh, col.mesh)
+      }
+      const vol = col ? Math.abs(measure(col.mesh).signedVolume) : 0
+      collisions.pelvis = { insideDescendingColon: { before: beforeColon, after: afterColon }, insideBladder: { before: beforeBladder, after: afterBladder }, colon: { volumeMlBefore: round(colonVolumeBefore * 1e6, 1), volumeMlAfter: round(vol * 1e6, 1), surfaceInsideBone: round(inBone, 4), surfaceInsideBladder: round(inBladder, 4) } }
+      console.log(`\nPelvis: HRA genital set moved ${mm(nudge)} mm posteriorly off her scanned bladder; bowel shifts ${JSON.stringify(shifts)}`)
+      console.log(`  share of surface inside the warped descending/sigmoid colon, before → after: ${GROUPS.map(([n]) => `${n} ${(beforeColon[n]! * 100).toFixed(0)}% → ${(afterColon[n]! * 100).toFixed(0)}%`).join(', ')}`)
+      console.log(`  share of surface inside her scanned bladder, before → after: ${GROUPS.map(([n]) => `${n} ${(beforeBladder[n]! * 100).toFixed(0)}% → ${(afterBladder[n]! * 100).toFixed(0)}%`).join(', ')}`)
+      console.log(`  colon after the shift: volume ${(colonVolumeBefore * 1e6).toFixed(0)} → ${(vol * 1e6).toFixed(0)} ml, ${(inBone * 100).toFixed(1)}% of its surface inside her pelvic bones, ${(inBladder * 100).toFixed(1)}% inside her bladder`)
+    }
     const rows: { name: string; before: number; after: number; movable: boolean }[] = []
     for (const p of parts) {
       if (p.provenance === 'curated' || p.tissue === 'skin' || HARD_TISSUES.includes(p.tissue) || p.tissue === 'nerve') continue
@@ -852,6 +1002,131 @@ async function finish(input: FinishInput) {
     report.collisions = collisions
   }
   lap('sex-specific collisions')
+
+  // ── 5b. Skin: the warped male surface, raised into a smooth envelope over the breasts ───────
+  // The skin is a thin double-walled shell, so "inside the body" cannot be tested by ray parity.
+  // A point is counted as in front of the skin when a ray from it straight forwards (+Z) meets
+  // no skin triangle at all.
+  const inFrontOfSkin = (skin: Mesh, pts: Float32Array): number => {
+    const p = skin.positions
+    const idx = skin.indices
+    let b = [Infinity, Infinity, -Infinity, -Infinity]
+    for (let i = 0; i < pts.length; i += 3) b = [Math.min(b[0]!, pts[i]!), Math.min(b[1]!, pts[i + 1]!), Math.max(b[2]!, pts[i]!), Math.max(b[3]!, pts[i + 1]!)]
+    const tris: number[] = []
+    for (let t = 0; t < idx.length; t += 3) {
+      const a = 3 * idx[t]!
+      const c = 3 * idx[t + 1]!
+      const d = 3 * idx[t + 2]!
+      if (Math.max(p[a]!, p[c]!, p[d]!) < b[0]! || Math.min(p[a]!, p[c]!, p[d]!) > b[2]! || Math.max(p[a + 1]!, p[c + 1]!, p[d + 1]!) < b[1]! || Math.min(p[a + 1]!, p[c + 1]!, p[d + 1]!) > b[3]!) continue
+      tris.push(a, c, d)
+    }
+    let front = 0
+    for (let i = 0; i < pts.length; i += 3) {
+      const x = pts[i]! + 1.3e-7
+      const y = pts[i + 1]! + 0.7e-7
+      const z = pts[i + 2]!
+      let hit = false
+      for (let t = 0; t < tris.length && !hit; t += 3) {
+        const a = tris[t]!
+        const c = tris[t + 1]!
+        const d = tris[t + 2]!
+        const w0 = (p[c]! - x) * (p[d + 1]! - y) - (p[c + 1]! - y) * (p[d]! - x)
+        const w1 = (p[d]! - x) * (p[a + 1]! - y) - (p[d + 1]! - y) * (p[a]! - x)
+        const w2 = (p[a]! - x) * (p[c + 1]! - y) - (p[a + 1]! - y) * (p[c]! - x)
+        if (!((w0 > 0 && w1 > 0 && w2 > 0) || (w0 < 0 && w1 < 0 && w2 < 0))) continue
+        const hz = (w0 * p[a + 2]! + w1 * p[c + 2]! + w2 * p[d + 2]!) / (w0 + w1 + w2)
+        if (hz > z) hit = true
+      }
+      if (!hit) front++
+    }
+    return pts.length ? front / (pts.length / 3) : 0
+  }
+  {
+    const skin = parts.find((p) => p.name === 'Skin' && p.tissue === 'skin')
+    const breastParts = (side: 'L' | 'R') => parts.filter((p) => p.provenance === 'curated' && p.system === 'integumentary' && p.side === side)
+    const skinReport: Record<string, unknown> = {}
+    if (skin && breastParts('L').length) {
+      const pos = Float32Array.from(skin.mesh.positions)
+      const idx = skin.mesh.indices
+      const nv = pos.length / 3
+      const before = { L: inFrontOfSkin(skin.mesh, concat(breastParts('L').map((p) => samplesOf(p.mesh, 0.004)))), R: inFrontOfSkin(skin.mesh, concat(breastParts('R').map((p) => samplesOf(p.mesh, 0.004)))) }
+      // vertex neighbours
+      const nb: number[][] = Array.from({ length: nv }, () => [])
+      for (let t = 0; t < idx.length; t += 3) for (let k = 0; k < 3; k++) {
+        const a = idx[t + k]!
+        const c = idx[t + ((k + 1) % 3)]!
+        if (!nb[a]!.includes(c)) nb[a]!.push(c)
+        if (!nb[c]!.includes(a)) nb[c]!.push(a)
+      }
+      const MARGIN = 0.003
+      let raised = 0
+      let maxLift = 0
+      for (const side of ['L', 'R'] as const) {
+        const bp = thinPoints(concat(breastParts(side).map((p) => samplesOf(p.mesh, 0.003))), 0.003)
+        const c = [0, 0, 0]
+        let zMin = Infinity
+        for (let i = 0; i < bp.length; i += 3) {
+          c[0] = c[0]! + bp[i]! / (bp.length / 3)
+          c[1] = c[1]! + bp[i + 1]! / (bp.length / 3)
+          zMin = Math.min(zMin, bp[i + 2]!)
+        }
+        // pole behind the breast, on the chest wall: the envelope is radial from here
+        const base = [c[0]!, c[1]!, zMin - 0.02]
+        const dirs: number[][] = []
+        const radii: number[] = []
+        let rMax = 0
+        for (let i = 0; i < bp.length; i += 3) {
+          const d = [bp[i]! - base[0]!, bp[i + 1]! - base[1]!, bp[i + 2]! - base[2]!]
+          const r = Math.hypot(d[0]!, d[1]!, d[2]!)
+          dirs.push([d[0]! / r, d[1]! / r, d[2]! / r])
+          radii.push(r)
+          rMax = Math.max(rMax, r)
+        }
+        const COS = Math.cos((8 * Math.PI) / 180)
+        const lift = new Float32Array(nv)
+        const dirOf = new Float32Array(nv * 3)
+        for (let v = 0; v < nv; v++) {
+          const d = [pos[3 * v]! - base[0]!, pos[3 * v + 1]! - base[1]!, pos[3 * v + 2]! - base[2]!]
+          const r = Math.hypot(d[0]!, d[1]!, d[2]!)
+          if (r > rMax + 0.12 || d[2]! < -0.01) continue
+          const u = [d[0]! / r, d[1]! / r, d[2]! / r]
+          dirOf.set(u, 3 * v)
+          let rb = 0
+          for (let k = 0; k < dirs.length; k++) {
+            const q = dirs[k]!
+            if (q[0]! * u[0]! + q[1]! * u[1]! + q[2]! * u[2]! >= COS && radii[k]! > rb) rb = radii[k]!
+          }
+          if (rb > 0 && rb + MARGIN > r) lift[v] = rb + MARGIN - r
+        }
+        // smooth skirt: every vertex is lifted at least 0.8 × the mean lift of its neighbours
+        for (let it = 0; it < 30; it++) {
+          for (let v = 0; v < nv; v++) {
+            if (dirOf[3 * v] === 0 && dirOf[3 * v + 1] === 0 && dirOf[3 * v + 2] === 0) continue
+            const n = nb[v]!
+            if (!n.length) continue
+            let m = 0
+            for (const j of n) m += lift[j]!
+            const want = (0.8 * m) / n.length
+            if (want > lift[v]!) lift[v] = want
+          }
+        }
+        for (let v = 0; v < nv; v++) {
+          if (lift[v]! < 1e-4) continue
+          pos[3 * v] = pos[3 * v]! + dirOf[3 * v]! * lift[v]!
+          pos[3 * v + 1] = pos[3 * v + 1]! + dirOf[3 * v + 1]! * lift[v]!
+          pos[3 * v + 2] = pos[3 * v + 2]! + dirOf[3 * v + 2]! * lift[v]!
+          raised++
+          maxLift = Math.max(maxLift, lift[v]!)
+        }
+      }
+      skin.mesh = { positions: pos, indices: idx }
+      skin.note = 'male skin deformed to her skeleton, then raised into a smooth envelope over the breasts: a synthetic surface'
+      const after = { L: inFrontOfSkin(skin.mesh, concat(breastParts('L').map((p) => samplesOf(p.mesh, 0.004)))), R: inFrontOfSkin(skin.mesh, concat(breastParts('R').map((p) => samplesOf(p.mesh, 0.004)))) }
+      Object.assign(skinReport, { method: 'radial envelope over the HRA breasts with a smooth skirt', verticesRaised: raised, ofVertices: nv, maxLiftMm: round(maxLift * 1000, 1), breastSurfaceInFrontOfSkin: { before: { left: round(before.L, 3), right: round(before.R, 3) }, after: { left: round(after.L, 3), right: round(after.R, 3) } } })
+      console.log(`\nSkin: ${raised} of ${nv} vertices raised (max ${mm(maxLift)} mm) to enclose the breasts; breast surface in front of the skin: left ${(before.L * 100).toFixed(0)}% → ${(after.L * 100).toFixed(0)}%, right ${(before.R * 100).toFixed(0)}% → ${(after.R * 100).toFixed(0)}%`)
+    }
+    report.skin = skinReport
+  }
 
   // ── 6. Final geometry ───────────────────────────────────────────────────────────────────────
   const final: { p: FPart; mesh: Mesh; stats: MeshStats }[] = []
@@ -955,20 +1230,25 @@ async function finish(input: FinishInput) {
   for (const p of parts) {
     if (p.male) continue
     if (p.id === 'VF_vertebrae_L1') {
-      isaExtras.push({ part: p.id, path: [], anchor: p.fma })
-      partOfExtras.push({ part: p.id, path: [], anchor: partOfByName('vertebral column') ?? partOfByName('skeletal system') })
+      const own: [string, string][] = [[p.fma, 'supernumerary lumbar vertebra (first of six)']]
+      isaExtras.push({ part: p.id, path: own, anchor: input.lumbarConcept })
+      partOfExtras.push({ part: p.id, path: own, anchor: partOfByName('vertebral column') ?? partOfByName('skeletal system') })
       continue
     }
     // HRA
     const fallback = fallbackIsa(p.tissue === 'artery' ? 'artery' : p.tissue === 'vein' ? 'vein' : 'anatomical structure')
     let tp
-    if (/^FMA\d+$/.test(p.fma) && fmaNames) tp = isaPathFromFma(p.fma, fmaNames.label.get(p.fma) ?? p.name, (id) => fmaNames.parents.get(id), (id) => fmaNames.label.get(id), (id) => inIsa.has(id), fallback)
-    else tp = { path: [[p.fma, p.name[0]!.toLowerCase() + p.name.slice(1)]] as [string, string][], anchor: fallback, how: 'by hand' as const }
+    const lower = p.name[0]!.toLowerCase() + p.name.slice(1)
+    const sidedOf = /^(.*)_[LR]$/.exec(p.fma)
+    const base = sidedOf ? sidedOf[1]! : p.fma
+    if (/^FMA\d+$/.test(base) && fmaNames) tp = isaPathFromFma(base, fmaNames.label.get(base) ?? p.name, (id) => fmaNames.parents.get(id), (id) => fmaNames.label.get(id), (id) => inIsa.has(id), fallback)
+    else tp = { path: [[base, lower.replace(/^(left|right) /, '')]] as [string, string][], anchor: fallback, how: 'by hand' as const }
+    if (sidedOf) tp = { ...tp, path: [[p.fma, lower], ...tp.path] as [string, string][], anchor: tp.path.length ? tp.anchor : base }
     placement[tp.how] = (placement[tp.how] ?? 0) + 1
     isaExtras.push({ part: p.id, path: tp.path, anchor: tp.anchor })
     // part-of: by hand, under the system the part belongs to
     const sys = p.system === 'reproductive' ? partOfByName('genital system') : p.system === 'integumentary' ? (partOfByName('integument') ?? partOfByName('integumentary system')) : partOfByName('cardiovascular system')
-    partOfExtras.push({ part: p.id, path: [[p.fma, p.name[0]!.toLowerCase() + p.name.slice(1)]], anchor: sys })
+    partOfExtras.push({ part: p.id, path: [[p.fma, lower]], anchor: sys })
   }
   // the male-only "genital system" branch would be pruned before the female parts are attached: keep the node
   const isaTree = rebuild(male.data.trees.isa, isaExtras)
@@ -1060,8 +1340,8 @@ async function finish(input: FinishInput) {
       const b = measure(breast.mesh)
       const pm = measure(pec.mesh)
       const skin = parts.find((p) => p.tissue === 'skin' && p.name === 'Skin')
-      const outside = skin ? 1 - new InsideTester(skin.mesh, 96).fractionInside(samplesOf(breast.mesh, 0.004)) : NaN
-      sexChecks[`${S}BreastAnteriorToPectoralis`] = { pass: b.centroid[2] > pm.centroid[2] && b.bbox[5] > pm.bbox[5], breastCentroidZMm: round(b.centroid[2] * 1000, 1), pectoralisCentroidZMm: round(pm.centroid[2] * 1000, 1), pectoralisFrontZMm: round(pm.bbox[5] * 1000, 1), fractionOutsideWarpedSkin: round(outside, 3) }
+      const outside = skin ? inFrontOfSkin(skin.mesh, samplesOf(breast.mesh, 0.004)) : NaN
+      sexChecks[`${S}BreastAnteriorToPectoralis`] = { pass: b.centroid[2] > pm.centroid[2] && b.bbox[5] > pm.bbox[5], breastCentroidZMm: round(b.centroid[2] * 1000, 1), pectoralisCentroidZMm: round(pm.centroid[2] * 1000, 1), pectoralisFrontZMm: round(pm.bbox[5] * 1000, 1), fractionInFrontOfSkin: round(outside, 3) }
     }
     const maleOnly = parts.filter((p) => p.provenance === 'warped' && (p.system === 'reproductive' || MALE_ONLY_NAME.test(p.name)))
     sexChecks.noMaleOnlyParts = { pass: maleOnly.length === 0, found: maleOnly.map((p) => p.name) }
@@ -1108,20 +1388,70 @@ async function finish(input: FinishInput) {
   // ── 9. Notes and output ─────────────────────────────────────────────────────────────────────
   const count = (f: (p: FPart) => boolean) => parts.filter(f).length
   const maleNamesDropped = dropped.map((p) => p.name)
-  notes.push(
-    'This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue (BodyParts3D, Z-Anatomy, Open3DModel) that was deformed to fit it. Only parts marked "scanned" are her own anatomy.',
-    `Warped parts (${count((p) => p.provenance === 'warped')}) are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, more in the abdomen and pelvis.`,
-    'Pose: the donor was scanned supine with flexed elbows and plantar-flexed feet. Each bone was moved rigidly into the male model\'s standing pose; joint spaces (elbow, knee, ankle, shoulder girdle) are therefore approximate, and the scapulae and clavicles keep their supine position.',
-    'Right forearm and hand bones are mirrored copies of the left ones (the right ones are cut off by the CT field of view). Hands and feet: individual bones are warped male bones fitted to her segmented bone groups; her fingers were curled, the model\'s are extended.',
-    'She has six lumbar vertebrae. Her first one is shown as "Supernumerary lumbar vertebra"; her second to sixth carry the names of the male first to fifth.',
-    'Rib numbering comes from an automatic CT segmentation and is unreliable on the left side (ribs 5–9).',
-    'Skin is the male skin deformed to her skeleton: it is not female body shape, and the breasts (Human Reference Atlas, standing shape) are separate parts that protrude through it.',
-    'Uterus, ovaries, uterine tubes, vagina, pelvic ligaments and uterine vessels are artist-modelled (Human Reference Atlas) and were placed by a bone-driven fit; neighbouring bowel, vessels and nerves are deformed male anatomy pushed aside, not female pelvic anatomy.',
-    `Known overlaps in the pelvis: ${Object.entries((report.collisions as { hraInsideOthers: Record<string, { inside: number; in: string[] }> }).hraInsideOthers).filter(([, v]) => v.inside > 0.3).map(([k, v]) => `${k} (${(v.inside * 100).toFixed(0)}% inside ${v.in[0]!.replace(/ \d+%$/, '')})`).join(', ') || 'none above 30%'}. The male sigmoid colon was not reshaped around the left ovary and tube.`,
-    'Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels, pelvic floor differences. Male-only parts were removed, including the testicular vessels.',
-    'Her scanned organs (kidneys, spleen, pancreas, bladder, some trunk muscles) are in supine post-mortem position and do not always meet the warped vessels and ducts that should connect to them.',
-    'Nerve tubes have schematic radii; a fifth of their length was moved out of bone or muscle bellies by an automatic clean-up.',
-  )
+  // glenohumeral congruency: the humeri were re-posed about the head centre, the scapulae not at all
+  const shoulder: Record<string, unknown> = {}
+  for (const side of ['left', 'right'] as const) {
+    const S = side === 'left' ? 'Left' : 'Right'
+    const jc = fa.jointCentres[`shoulder_${side}`]!
+    const her = [jc.reposed[0], jc.reposed[1] + dy, jc.reposed[2]]
+    const gap = (centre: number[], scapula: Mesh, humerus: Mesh) => {
+      const r = new PointIndex(samplesOf(humerus, 0.002), 0.01).distance(centre[0]!, centre[1]!, centre[2]!)
+      const d = new PointIndex(samplesOf(scapula, 0.002), 0.01).distance(centre[0]!, centre[1]!, centre[2]!)
+      return { headRadiusMm: round(r * 1000, 1), centreToScapulaMm: round(d * 1000, 1), gapMm: round((d - r) * 1000, 1) }
+    }
+    const f = gap(her, byName(`${S} scapula`)!.mesh, byName(`${S} humerus`)!.mesh)
+    const m = gap(jc.male, maleMeshByName.get(`${S} scapula`)!, maleMeshByName.get(`${S} humerus`)!)
+    shoulder[side] = { female: f, male: m, differenceMm: round(f.gapMm - m.gapMm, 1) }
+  }
+  console.log(`\nGlenohumeral joint (distance from the humeral head centre to the scapula minus head radius): ${JSON.stringify(shoulder)}`)
+  report.shoulder = shoulder
+
+  const overlaps = Object.entries((report.collisions as { hraInsideOthers: Record<string, { inside: number; in: string[] }> }).hraInsideOthers).filter(([, v]) => v.inside > 0.05).map(([k, v]) => `${k} ${(v.inside * 100).toFixed(0)}% (${v.in[0]!.replace(/ \d+%$/, '')})`)
+  const nWarped = count((p) => p.provenance === 'warped')
+  const cautions: { zh: string; en: string }[] = [
+    {
+      en: `This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the ${count((p) => p.provenance === 'scanned')} parts marked "scanned" are her own anatomy; ${nWarped} parts are warped male anatomy.`,
+      zh: `本模型是拼合构建的，并非某一位女性的完整扫描：骨骼来自女性真实 CT（Visible Human Female），其上的软组织则由男性模型形变贴合而成。只有标为“扫描”的 ${count((p) => p.provenance === 'scanned')} 个部件是她本人的解剖结构，另有 ${nWarped} 个部件是形变后的男性结构。`,
+    },
+    {
+      en: 'Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.',
+      zh: '形变部件仅以骨骼为锚点，骨与骨之间的位置靠外推得到：四肢的肌肉、血管和神经误差约 1–3 cm，腹部和盆腔更大。',
+    },
+    {
+      en: 'Pelvic soft tissue is not female anatomy: the uterus, ovaries, tubes and vagina are artist-modelled (Human Reference Atlas), while the bowel, vessels, nerves and pelvic floor around them are male structures moved aside. The sigmoid colon was shifted up to 5 cm to clear the uterus and left ovary' + (overlaps.length ? `; still overlapping: ${overlaps.join(', ')}.` : '.'),
+      zh: '盆腔软组织并非真实的女性解剖：子宫、卵巢、输卵管和阴道为美术建模（Human Reference Atlas），其周围的肠管、血管、神经和盆底肌则是被推移开的男性结构。乙状结肠为避让子宫和左卵巢被移动了最多约 5 cm' + (overlaps.length ? `；目前仍有重叠：${overlaps.join('、')}。` : '。'),
+    },
+    {
+      en: 'The body surface is synthetic: male skin deformed to her skeleton and raised into a smooth envelope over the breasts. It does not show female body shape or fat distribution. The breasts themselves are a standing-shape artist model.',
+      zh: '体表是合成的：男性皮肤按她的骨骼形变后，再在乳房处抬高成平滑包络，并不反映女性的体形和脂肪分布。乳房本身是站立位形态的美术模型。',
+    },
+    {
+      en: 'Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.',
+      zh: '缺失：外生殖器和会阴、女性尿道、卵巢血管和阴道血管。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）已删除，但未以对应的女性结构替代。',
+    },
+    {
+      en: 'Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.',
+      zh: '姿势是重建的：供体扫描时为仰卧、屈肘、足跖屈，各骨被逐一刚性移动到站立姿势。肘、膝、踝、肩的关节间隙只是近似，肩胛骨和锁骨仍保持仰卧时的位置。',
+    },
+    {
+      en: 'Right radius, ulna and the bones of both hands and feet are not her scanned bones: the right forearm is a mirrored copy of the left (the scan cut it off), and hand and foot bones are warped male bones with extended fingers.',
+      zh: '右侧桡骨、尺骨以及双手、双足的骨并非她的扫描骨：右前臂是左前臂的镜像（扫描视野将其截断），手骨和足骨是形变后的男性骨，手指呈伸直状。',
+    },
+    {
+      en: 'She has six lumbar vertebrae. The first is shown as "Supernumerary lumbar vertebra"; her second to sixth carry the names of the first to fifth. Rib numbering comes from automatic segmentation and is unreliable for left ribs 5–9.',
+      zh: '她有六节腰椎：第一节显示为“额外腰椎”，第二至第六节沿用第一至第五腰椎的名称。肋骨编号来自自动分割，左侧第 5–9 肋的编号不可靠。',
+    },
+    {
+      en: 'Her scanned organs (kidneys, spleen, pancreas, adrenals, gallbladder, bladder, gluteal muscles) are in lying-down, post-mortem position and do not always meet the warped vessels and ducts that should connect to them. Lungs, heart, liver, stomach and bowel are warped male organs.',
+      zh: '她的扫描器官（肾、脾、胰、肾上腺、胆囊、膀胱、臀肌）处于仰卧、死后的位置，与本应相连的形变血管和管道不一定对得上。肺、心、肝、胃和肠是形变后的男性器官。',
+    },
+    {
+      en: 'Everything said about the male model also applies to the warped parts: nerves, ligaments and lymph nodes are artist-modelled with schematic nerve thickness; phrenic nerve, pleura, pericardium, spinal cord, menisci and cruciate ligaments are absent.',
+      zh: '男性模型的各项注意事项同样适用于形变部件：神经、韧带和淋巴结为美术建模，神经粗细仅为示意；膈神经、胸膜、心包、脊髓、半月板和交叉韧带缺失。',
+    },
+  ]
+  notes.push(...cautions.map((c) => c.en))
+  report.cautions = cautions
   report.notes = notes
   report.counts = {
     parts: parts.length,
@@ -1158,6 +1488,7 @@ async function finish(input: FinishInput) {
   const data: AnatomyData = {
     schema: 1,
     body: 'female',
+    cautions: report.cautions as { zh: string; en: string }[],
     sources: [...male.data.sources.filter((s) => usedSources.has(s.name)), SOURCE_VHF, SOURCE_HRA],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),

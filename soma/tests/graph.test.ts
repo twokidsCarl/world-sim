@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AnatomyGraph, boundsCenter, isFmaId, normalizeText } from '../src/anatomy/graph.ts'
+import { AnatomyGraph, boundsCenter, isFmaId, mapPartsBetween, nameTokens, normalizeText } from '../src/anatomy/graph.ts'
 import type { AnatomyData, Concept, NameEntry, Part, Relation } from '../src/anatomy/types.ts'
 
 function part(id: string, fma: string, name: string, over: Partial<Part> = {}): Part {
@@ -338,5 +338,83 @@ describe('AnatomyGraph sources, provenance and non-FMA ids', () => {
     expect(g.resolveFma('ZAC_ulnar_nerve')).toEqual(['ZA3FD9F070', 'ZA56D02CAC'])
     expect(g.resolveFma('ZAC_nerves')).toEqual(['ZA3FD9F070', 'ZA56D02CAC'])
     expect(g.relationsByKind('FMA20')[0]![1][0]!.object).toBe('ZAC_nerves')
+  })
+})
+
+describe('per-part names vs broader concepts, cautions, and mapping between bodies', () => {
+  function female(): AnatomyGraph {
+    const d = makeData()
+    d.body = 'female'
+    d.cautions = [{ zh: '软组织位置有 1–3 厘米误差', en: 'Soft tissue is off by 1–3 cm' }, { zh: '无外生殖器', en: 'No external genitalia' }]
+    d.parts = [
+      part('W_P1', 'FMA10', 'Left femur', { side: 'L', provenance: 'warped' }),
+      part('W_P2', 'FMA11', 'Right femur', { side: 'R', provenance: 'warped' }),
+      part('VF_L1', 'FMA4', 'Supernumerary tibia (first of three)', { provenance: 'scanned' }),
+      part('VF_T', 'FMA3', 'Femur', { provenance: 'scanned' }),
+      part('W_Q9', 'FMA777', 'Left ovary', { side: 'L' }),
+      part('W_Q8', 'FMA777', 'Right ovary', { side: 'R' }),
+      part('W_P5', 'FMA20', 'Left quadriceps femoris muscle', { side: 'L' }),
+    ]
+    d.trees.isa = [
+      c('FMA1', 'Anatomical structure', null),
+      c('FMA3', 'Femur', 'FMA1', ['VF_T']),
+      c('FMA10', 'Left femur', 'FMA3', ['W_P1']),
+      c('FMA11', 'Right femur', 'FMA3', ['W_P2']),
+      c('FMA4', 'Tibia', 'FMA1', ['VF_L1']),
+      c('FMA12', 'Left tibia', 'FMA4'),
+      c('FMA777', 'Ovary', 'FMA1', ['W_Q9', 'W_Q8']),
+      c('FMA20', 'Left quadriceps femoris', 'FMA1', ['W_P5']),
+    ]
+    d.trees.partOf = []
+    return new AnatomyGraph(d, { ...names, FMA4: { zh: '胫骨', status: 'reviewed' }, FMA777: { zh: '卵巢', status: 'reviewed' } })
+  }
+
+  it('tokenises names for comparison', () => {
+    expect([...nameTokens('Left abducens nerve (VI)')]).toEqual(['abducen', 'nerve'])
+    expect([...nameTokens('Set of dorsal metatarsal ligaments')]).toEqual(['dorsal', 'metatarsal', 'ligament'])
+  })
+
+  it('keeps a part name when its concept is a broader class with sub-concepts', () => {
+    const g = female()
+    const n = g.partName(g.part('VF_L1')!)
+    expect(n.primary).toBe('Supernumerary tibia (first of three)')
+    expect(n.zh).toBeUndefined()
+    expect(n.broader).toEqual({ zh: '胫骨', en: 'Tibia' })
+    expect(g.broaderNamedParts().map((p) => p.id)).toEqual(['VF_L1'])
+    // the broader zh name still finds it
+    expect(g.search('胫骨').map((r) => r.id)).toContain('VF_L1')
+  })
+
+  it('does not second-guess exact matches, leaf concepts or mere rewording', () => {
+    const g = female()
+    expect(g.partName(g.part('VF_T')!).primary).toBe('股骨') // same name as its (non-leaf) concept
+    expect(g.partName(g.part('W_P5')!).primary).toBe('左股四头肌') // extra word, but a leaf concept
+    expect(g.partName(g.part('W_Q8')!).primary).toBe('右卵巢') // sided twins on a leaf concept
+  })
+
+  it('ranks a sided zh name as a near-exact match for the unsided query', () => {
+    const d = makeData()
+    d.parts.push(part('N1', 'U1', 'Left nipple', { side: 'L' }), part('N2', 'U2', 'Right nipple', { side: 'R' }), part('M1', 'U3', 'Mammillary body'))
+    const g = new AnatomyGraph(d, { U1: { zh: '左乳头', status: 'reviewed' }, U2: { zh: '右乳头', status: 'reviewed' }, U3: { zh: '乳头体', status: 'reviewed' } })
+    expect(g.search('乳头').map((r) => r.id)).toEqual(['N1', 'N2', 'M1'])
+    expect(g.search('左乳头')[0]!.id).toBe('N1')
+  })
+
+  it('exposes cautions, empty when the field is absent', () => {
+    expect(female().cautions).toHaveLength(2)
+    expect(graph().cautions).toEqual([])
+  })
+
+  it('maps parts between bodies by concept and side, then by warped-copy id', () => {
+    const m = graph()
+    const f = female()
+    expect(mapPartsBetween(m, f, ['P1'])).toEqual(['W_P1'])
+    expect(mapPartsBetween(f, m, ['W_P2', 'W_P1'])).toEqual(['P2', 'P1'])
+    // different concept id on the other side, but the id is the warped copy
+    expect(mapPartsBetween(m, f, ['P5'])).toEqual(['W_P5'])
+    // nothing comparable: dropped; unknown ids ignored
+    expect(mapPartsBetween(f, m, ['W_Q9', 'nope'])).toEqual([])
+    // an unsided match is used when the side has no counterpart
+    expect(mapPartsBetween(m, f, ['P3'])).toEqual([])
   })
 })

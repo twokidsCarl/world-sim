@@ -45,6 +45,13 @@ export function InfoPanel({ graph }: { graph: AnatomyGraph }) {
           <dd>
             is-a {graph.conceptCount('isa')} · part-of {graph.conceptCount('partOf')}
           </dd>
+          <dt>几何来源</dt>
+          <dd>
+            {graph
+              .provenanceGroups()
+              .map((g) => `${PROVENANCE_LABEL[g.provenance]?.zh ?? g.provenance} ${g.count}`)
+              .join(' · ')}
+          </dd>
           <dt>知识层</dt>
           <dd>{graph.hasKnowledge ? `名称 ${Object.keys(graph.names).length} · 关系 ${graph.relations.length}` : '未加载'}</dd>
         </dl>
@@ -70,6 +77,11 @@ function Names({ name }: { name: DisplayName }) {
         )}
       </h2>
       {name.zh && <div className="name-en">{name.en}</div>}
+      {name.broader && (
+        <div className="name-broader" title="中文名称按概念提供；此结构比它所属的概念更具体，因此保留它自己的名称">
+          所属概念：{name.broader.zh ?? name.broader.en} <span className="en">{name.broader.en}</span>
+        </div>
+      )}
       {name.la && (
         <div className="name-la" lang="la">
           {name.la}

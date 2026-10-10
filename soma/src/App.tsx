@@ -4,6 +4,7 @@ import { loadDataset, requestedDataset } from './anatomy/load.ts'
 import { debug } from './debug.ts'
 import { useApp } from './state/store.ts'
 import { AboutDialog } from './ui/AboutDialog.tsx'
+import { CautionsDialog } from './ui/CautionsDialog.tsx'
 import { DisplayPanel } from './ui/DisplayPanel.tsx'
 import { Icon } from './ui/Icon.tsx'
 import { InfoPanel } from './ui/InfoPanel.tsx'
@@ -22,18 +23,34 @@ export function App() {
   const setLeftOpen = useApp((s) => s.setLeftOpen)
   const setRightOpen = useApp((s) => s.setRightOpen)
 
+  const requestedBody = useApp((s) => s.requestedBody)
+
+  // the URL names the first body; after that the top-bar switch drives `requestedBody`
   useEffect(() => {
+    useApp.setState({ requestedBody: requestedDataset(location.search) })
+  }, [])
+
+  useEffect(() => {
+    if (!requestedBody) return
     let cancelled = false
     const app = useApp.getState()
-    app.setLoad({ phase: 'loading', progress: 0.02, message: '读取解剖数据…' })
-    loadDataset(requestedDataset(location.search))
+    if (app.graph && app.dataset === requestedBody) return
+    app.setLoad({ phase: 'loading', progress: 0.02, message: '读取解剖数据…', loaded: [] })
+    loadDataset(requestedBody)
       .then((ds) => {
         if (cancelled) return
         const g = new AnatomyGraph(ds.data, ds.names, ds.relations)
         debug.graph = g
         for (const n of ds.notices) app.addNotice(n)
         app.init(g, ds.dataset)
+        // a missing body falls back to the fixture; the switch then shows what is really loaded
+        useApp.setState({ requestedBody: ds.dataset })
         app.setLoad({ progress: 0.1, message: '加载模型…' })
+        // keep the address shareable without reloading the page
+        const url = new URL(location.href)
+        if (ds.dataset === 'male') url.searchParams.delete('body')
+        else url.searchParams.set('body', ds.dataset)
+        history.replaceState(null, '', url)
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -43,7 +60,7 @@ export function App() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [requestedBody])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -51,7 +68,8 @@ export function App() {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return
       const app = useApp.getState()
       if (e.key === 'Escape') {
-        if (app.aboutOpen) app.setAboutOpen(false)
+        if (app.cautionsOpen) app.dismissCautions()
+        else if (app.aboutOpen) app.setAboutOpen(false)
         else app.clearSelection()
       } else if (e.key === 'f' || e.key === 'F') app.requestFocus()
     }
@@ -106,6 +124,7 @@ export function App() {
         {leftOpen && <div className="backdrop" onClick={() => setLeftOpen(false)} />}
       </div>
       <AboutDialog />
+      <CautionsDialog />
     </div>
   )
 }

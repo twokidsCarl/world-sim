@@ -2,7 +2,7 @@
 // React components read it through `useApp`.
 
 import { create } from 'zustand'
-import type { AnatomyGraph, TreeKind } from '../anatomy/graph.ts'
+import { mapPartsBetween, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
 import type { SectionState, SystemState } from './display.ts'
 
@@ -26,12 +26,41 @@ export interface LoadState {
   /** 0..1 */
   progress: number
   message: string
+  /** Systems whose geometry has arrived (for the per-system loading status). */
+  loaded: readonly SystemId[]
+}
+
+/** Remembers, per body, that its caution list has been read. Storage may be unavailable. */
+export function cautionsSeenKey(dataset: string, count: number): string {
+  return `soma.cautions.${dataset}.${count}`
+}
+
+function storageGet(key: string): string | null {
+  try {
+    return globalThis.localStorage?.getItem(key) ?? null
+  } catch {
+    return null
+  }
+}
+
+function storageSet(key: string, value: string): void {
+  try {
+    globalThis.localStorage?.setItem(key, value)
+  } catch {
+    // private mode / blocked storage: the list simply shows again next time
+  }
 }
 
 export interface AppState {
   load: LoadState
   /** Dataset directory actually in use ("male", "fixture", …). */
   dataset: string
+  /** Dataset the user asked for; the app loads it and then `dataset` follows. */
+  requestedBody: string
+  cautionsOpen: boolean
+  /** Side-by-side comparison with the other body, restricted to one system. */
+  compare: { system: SystemId } | null
+  systemsBeforeCompare: Partial<Record<SystemId, SystemState>> | null
   /** Non-fatal notices shown in a dismissible banner (fallbacks, missing files). */
   notices: string[]
   graph: AnatomyGraph | null
@@ -68,6 +97,12 @@ export interface AppState {
   addNotice(text: string): void
   dismissNotices(): void
   init(graph: AnatomyGraph, dataset: string): void
+  /** Switch to another body, carrying over selection, toggles and the camera. */
+  switchBody(body: string): void
+  setCautionsOpen(open: boolean): void
+  /** Close the caution list and remember that this body's list has been read. */
+  dismissCautions(): void
+  setCompare(system: SystemId | null): void
 
   selectParts(ids: readonly string[], opts?: { additive?: boolean }): void
   selectConcept(tree: TreeKind, id: string, opts?: { reveal?: boolean }): void
@@ -117,8 +152,12 @@ export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: Syst
 }
 
 export const useApp = create<AppState>()((set, get) => ({
-  load: { phase: 'loading', progress: 0, message: '' },
+  load: { phase: 'loading', progress: 0, message: '', loaded: [] },
   dataset: '',
+  requestedBody: '',
+  cautionsOpen: false,
+  compare: null,
+  systemsBeforeCompare: null,
   notices: [],
   graph: null,
 
@@ -151,27 +190,76 @@ export const useApp = create<AppState>()((set, get) => ({
   dismissNotices: () => set({ notices: [] }),
 
   init: (graph, dataset) => {
+    const prev = get()
+    const from = prev.graph
+    // switching bodies keeps what the user set up; a first load starts clean
+    const carry = !!from && from !== graph
     const systems: Partial<Record<SystemId, SystemState>> = {}
-    for (const sys of graph.data.systems) systems[sys.id] = { visible: true, opacity: 1 }
+    for (const sys of graph.data.systems) {
+      systems[sys.id] = (carry && prev.systemsBeforeCompare?.[sys.id]) || (carry && prev.systems[sys.id]) || { visible: true, opacity: 1 }
+    }
     // open the first level of each tree so the panel is not a single collapsed row
     const expanded = {
       isa: new Set(graph.roots('isa').map((c) => c.id)),
       partOf: new Set(graph.roots('partOf').map((c) => c.id)),
     }
+    let selection = EMPTY_SELECTION
+    let hidden = new Set<string>()
+    let isolated: Set<string> | null = null
+    if (carry && from) {
+      const c = prev.selection.concept
+      if (c && graph.concept(c.tree, c.id)) {
+        const ids = graph.descendantParts(c.tree, c.id)
+        selection = ids.length ? makeSelection(ids, c) : { ids: [], set: new Set(), concept: c }
+      } else {
+        selection = makeSelection(mapPartsBetween(from, graph, prev.selection.ids))
+      }
+      hidden = new Set(mapPartsBetween(from, graph, prev.hidden))
+      if (prev.isolated) {
+        const mapped = mapPartsBetween(from, graph, prev.isolated)
+        isolated = mapped.length ? new Set(mapped) : null
+      }
+    }
+    const cautions = graph.cautions.length
     set({
       graph,
       dataset,
+      requestedBody: prev.requestedBody || dataset,
       systems,
       expanded,
-      peel: 0,
-      hidden: new Set(),
-      isolated: null,
-      adjacentMode: false,
-      provenanceHidden: new Set(),
-      selection: EMPTY_SELECTION,
+      peel: carry ? Math.min(prev.peel, Math.max(0, graph.data.layers.length - 1)) : 0,
+      hidden,
+      isolated,
+      adjacentMode: carry ? prev.adjacentMode : false,
+      provenanceHidden: carry ? prev.provenanceHidden : new Set(),
+      selection,
       hover: null,
+      compare: null,
+      systemsBeforeCompare: null,
+      cautionsOpen: cautions > 0 && storageGet(cautionsSeenKey(dataset, cautions)) === null,
     })
   },
+
+  switchBody: (body) => {
+    if (body === get().requestedBody) return
+    set({ requestedBody: body })
+  },
+
+  setCautionsOpen: (cautionsOpen) => set({ cautionsOpen }),
+  dismissCautions: () => {
+    const { graph, dataset } = get()
+    if (graph?.cautions.length) storageSet(cautionsSeenKey(dataset, graph.cautions.length), '1')
+    set({ cautionsOpen: false })
+  },
+
+  setCompare: (system) =>
+    set((s) => {
+      const base = s.systemsBeforeCompare ?? s.systems
+      if (system === null) return { compare: null, systems: base, systemsBeforeCompare: null }
+      const systems: Partial<Record<SystemId, SystemState>> = {}
+      for (const [k, v] of Object.entries(base) as [SystemId, SystemState][]) systems[k] = { ...v, visible: k === system }
+      return { compare: { system }, systems, systemsBeforeCompare: base, isolated: null }
+    }),
 
   selectParts: (ids, opts) => {
     const { graph, selection } = get()
