@@ -4,6 +4,19 @@
 import { buildCells, makeGrid } from './cells'
 import { kineticEnergy, momentum, pressure, temperature, volume, type MdState } from './step'
 
+/** Cells per axis of the coarse-grained fields. */
+export const FIELD_G = 48
+
+/** Per-cell sums over the particles in each cell of a g × g grid, row-major with y as the row. */
+export interface FieldSums {
+  g: number
+  count: Float64Array
+  vx: Float64Array
+  vy: Float64Array
+  /** Σ |v|² */
+  v2: Float64Array
+}
+
 export interface MdScalars {
   n: number
   dim: 2 | 3
@@ -49,7 +62,7 @@ export function psi6(s: MdState): Float64Array {
     let dx = pos[i * dim] - pos[j * dim]
     let dy = pos[i * dim + 1] - pos[j * dim + 1]
     dx -= box[0] * Math.round(dx / box[0])
-    dy -= box[1] * Math.round(dy / box[1])
+    if (!s.walls) dy -= box[1] * Math.round(dy / box[1])
     // exp(6 i θ) is the same for the bond seen from either end.
     const theta = 6 * Math.atan2(dy, dx)
     const re = Math.cos(theta)
@@ -155,7 +168,7 @@ export function forEachPair(s: MdState, r: number, fn: (i: number, j: number, r2
     let r2 = 0
     for (let d = 0; d < dim; d++) {
       let dx = pos[i * dim + d] - pos[j * dim + d]
-      dx -= box[d] * Math.round(dx / box[d])
+      if (!(s.walls && d === 1)) dx -= box[d] * Math.round(dx / box[d])
       r2 += dx * dx
     }
     return r2
@@ -234,4 +247,66 @@ export function rdf(s: MdState, bins: number, rmax: number): Hist {
   const counts = new Float64Array(bins)
   const used = rdfCounts(s, rmax, counts)
   return rdfNormalise(counts, used, s.n, volume(s), s.dim)
+}
+
+/**
+ * Coarse-grain the particles onto a grid with a top-hat kernel: the simplest case of the
+ * Irving–Kirkwood/Hardy construction, in which mass and momentum of the fields equal
+ * those of the particles exactly.
+ */
+export function fieldSums(s: MdState, g = FIELD_G): FieldSums {
+  const out: FieldSums = {
+    g,
+    count: new Float64Array(g * g),
+    vx: new Float64Array(g * g),
+    vy: new Float64Array(g * g),
+    v2: new Float64Array(g * g),
+  }
+  const { dim, pos, vel, box } = s
+  for (let i = 0; i < s.n; i++) {
+    const cx = Math.min(g - 1, Math.floor((pos[i * dim] / box[0]) * g))
+    const cy = Math.min(g - 1, Math.floor((pos[i * dim + 1] / box[1]) * g))
+    const c = cy * g + cx
+    const vx = vel[i * dim]
+    const vy = vel[i * dim + 1]
+    out.count[c]++
+    out.vx[c] += vx
+    out.vy[c] += vy
+    out.v2[c] += vx * vx + vy * vy
+  }
+  return out
+}
+
+/** Profiles across y (averaged over x): number density, flow velocity u_x, and temperature. */
+export function profiles(
+  f: FieldSums,
+  box: ArrayLike<number>,
+  bins = 24,
+): { y: Float64Array; density: Float64Array; ux: Float64Array; temperature: Float64Array } {
+  const per = f.g / bins
+  const y = new Float64Array(bins)
+  const density = new Float64Array(bins)
+  const ux = new Float64Array(bins)
+  const temperature = new Float64Array(bins)
+  for (let b = 0; b < bins; b++) {
+    let n = 0
+    let px = 0
+    let py = 0
+    let v2 = 0
+    for (let row = b * per; row < (b + 1) * per; row++) {
+      for (let cx = 0; cx < f.g; cx++) {
+        const c = row * f.g + cx
+        n += f.count[c]
+        px += f.vx[c]
+        py += f.vy[c]
+        v2 += f.v2[c]
+      }
+    }
+    y[b] = (b + 0.5) / bins
+    density[b] = n / ((box[0]! * box[1]!) / bins)
+    ux[b] = n > 0 ? px / n : 0
+    // Kinetic temperature of the motion relative to the local mean flow, in 2D.
+    temperature[b] = n > 1 ? (v2 - (px * px + py * py) / n) / (2 * n) : 0
+  }
+  return { y, density, ux, temperature }
 }

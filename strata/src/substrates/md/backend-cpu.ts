@@ -2,7 +2,7 @@ import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
 import { speciesField, speciesTables, type PairField, type PotentialSpec } from './potential'
 import { initTriangular } from './ref/init'
-import { rdf, scalars, speedHistogram, type Hist, type MdScalars } from './ref/reducers'
+import { fieldSums, rdf, scalars, speedHistogram, type FieldSums, type Hist, type MdScalars } from './ref/reducers'
 import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
 import { fieldKey, potentialSpec, strengthMatrix } from './schema'
 
@@ -20,7 +20,13 @@ export interface MdFrame extends Frame {
   scalars?: MdScalars
   speedHist?: Hist
   rdf?: Hist
+  field?: FieldSums
+  /** Box lengths, for turning cell sums into densities. */
+  box: ArrayLike<number>
 }
+
+/** With walls the channel is four times longer than it is wide. */
+export const CHANNEL_ASPECT = 4
 
 export interface MdBackend extends RunBackend<MdFrame> {
   readonly n: number
@@ -50,9 +56,21 @@ export class MdCpuBackend implements MdBackend {
     this.key = fieldKey(p)
     this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p)))
     this.state = initTriangular(
-      { nx: Math.min(p.nx, CPU_MAX_NX), density: p.density, temperature: p.temperature, seed, fractionB: p.fractionB },
+      {
+        nx: Math.min(p.nx, CPU_MAX_NX),
+        density: p.density,
+        temperature: p.temperature,
+        seed,
+        fractionB: p.fractionB,
+        aspect: p.walls ? CHANNEL_ASPECT : 1,
+      },
       this.pair,
     )
+    this.state.walls = p.walls === 1
+    this.state.seed = seed
+    this.applyDrive()
+    // Forces were computed before the walls were switched on.
+    if (this.state.walls) computeForces(this.state, this.pair)
     this.rebase()
   }
 
@@ -70,6 +88,11 @@ export class MdCpuBackend implements MdBackend {
 
   get stepCount(): number {
     return this.state.step
+  }
+
+  private applyDrive(): void {
+    this.state.drive = this.p.walls ? this.p.drive : 0
+    this.state.wallTemperature = this.p.temperature
   }
 
   private energy(): number {
@@ -98,6 +121,7 @@ export class MdCpuBackend implements MdBackend {
       this.rebase()
     }
     this.p = { ...p }
+    this.applyDrive()
   }
 
   step(n: number): void {
@@ -122,12 +146,14 @@ export class MdCpuBackend implements MdBackend {
       step: s.step,
       time: this.time,
       spec: this.spec,
+      box: s.box,
       drift: (this.energy() - this.heat - this.e0) / s.n,
     }
     const sc = scalars(s)
     if (ids.includes('scalars')) frame.scalars = sc
     if (ids.includes('speedHist')) frame.speedHist = speedHistogram(s, 40, 4 * Math.sqrt(sc.temperature))
     if (ids.includes('rdf')) frame.rdf = rdf(s, 120, 4)
+    if (ids.includes('field')) frame.field = fieldSums(s)
     return frame
   }
 

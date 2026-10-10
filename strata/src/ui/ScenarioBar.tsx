@@ -44,7 +44,8 @@ export function ScenarioBar() {
         <ul>
           {state.results.map((r, i) => (
             <li key={i} className={r.pass ? 'agree' : 'differ'}>
-              {r.pass ? '符合' : '不符'}　{r.text}　实测 {r.value.toFixed(3)}
+              {r.pass ? '符合' : '不符'}　{r.text}
+              {Number.isFinite(r.value) && `　实测 ${r.value.toFixed(3)}`}
             </li>
           ))}
         </ul>

@@ -1,10 +1,10 @@
 import type { Params } from '../../core/params'
 import type { GpuContext } from '../../gpu/device'
-import type { MdBackend, MdFrame } from './backend-cpu'
+import { CHANNEL_ASPECT, type MdBackend, type MdFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
 import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
 import { initTriangular } from './ref/init'
-import { demixing, rdfNormalise, type Hist } from './ref/reducers'
+import { FIELD_G, demixing, rdfNormalise, type FieldSums, type Hist } from './ref/reducers'
 import { fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 const CHUNK = 256
@@ -15,7 +15,10 @@ const RDF_OFFSET = 64
 const MAX_CELL_SLOT = 192
 const HIST_WORDS = 196
 const THERMOSTAT_TAU = 0.5
-const PARAM_BYTES = 80
+const PARAM_BYTES = 96
+const FIELD_WORDS = FIELD_G * FIELD_G * 4
+const FIELD_V = 1024
+const FIELD_V2 = 256
 /** Close-packed number density the cell capacity is sized for, per unit cell volume. */
 const PACKING_DENSITY = 1.6
 
@@ -32,6 +35,8 @@ const ENTRY_BINDINGS = {
   clearHist: [9],
   speedHist: [0, 2, 9],
   rdfHist: [0, 1, 5, 6, 9],
+  clearField: [11],
+  fieldBin: [0, 1, 2, 11],
 } as const
 
 type Entry = keyof typeof ENTRY_BINDINGS
@@ -74,6 +79,8 @@ export class MdGpuBackend implements MdBackend {
   private rebaseEpoch = 1
   private rebasedAt = 0
   private disposed = false
+  private seed = 0
+  private batch = 0
 
   constructor(gpu: GpuContext, p: Params, seed: number) {
     this.device = gpu.device
@@ -82,7 +89,14 @@ export class MdGpuBackend implements MdBackend {
     this.spec = potentialSpec(p)
     this.key = fieldKey(p)
     const init = initTriangular(
-      { nx: p.nx, density: p.density, temperature: p.temperature, seed, fractionB: p.fractionB },
+      {
+        nx: p.nx,
+        density: p.density,
+        temperature: p.temperature,
+        seed,
+        fractionB: p.fractionB,
+        aspect: p.walls ? CHANNEL_ASPECT : 1,
+      },
       speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K)),
     )
     this.n = init.n
@@ -101,6 +115,8 @@ export class MdGpuBackend implements MdBackend {
     make(8, this.chunks * 48)
     make(9, HIST_WORDS * 4)
     make(10, this.chunks * 4)
+    make(11, FIELD_WORDS * 4)
+    this.seed = seed
 
     const pos = new Float32Array(this.n * 4)
     const vel = new Float32Array(this.n * 4)
@@ -189,6 +205,8 @@ export class MdGpuBackend implements MdBackend {
     u.set([this.n, this.dim, TABLE_K, CHUNK], 8)
     f.set([this.p.dt, t.rc2, t.r2min, t.k / (t.rc2 - t.r2min)], 12)
     f.set([vmax, this.rdfMax, this.lambda, this.rdfReach], 16)
+    f.set([this.p.walls ? this.p.drive! : 0, this.p.temperature!], 20)
+    u.set([this.p.walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
     this.device.queue.writeBuffer(this.buffers[0]!, 0, data)
   }
 
@@ -278,14 +296,16 @@ export class MdGpuBackend implements MdBackend {
     const rdfMax = this.rdfMax
     const wantSpeed = ids.includes('speedHist')
     const wantRdf = ids.includes('rdf')
+    const wantField = ids.includes('field')
     this.lastReduceStep = step
     this.reducing++
 
     const partialBytes = this.chunks * 48
     const histBytes = HIST_WORDS * 4
     const heatBytes = this.chunks * 4
+    const fieldBytes = wantField ? FIELD_WORDS * 4 : 0
     const staging = this.device.createBuffer({
-      size: partialBytes + histBytes + heatBytes,
+      size: partialBytes + histBytes + heatBytes + fieldBytes,
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
     })
     this.writeParams(vmax)
@@ -293,11 +313,18 @@ export class MdGpuBackend implements MdBackend {
     let pass = encoder.beginComputePass()
     if (wantSpeed) this.dispatch(pass, 'speedHist', this.n)
     if (wantRdf) this.dispatch(pass, 'rdfHist', this.n)
+    if (wantField) {
+      this.dispatch(pass, 'clearField', FIELD_WORDS)
+      this.dispatch(pass, 'fieldBin', this.n)
+    }
     this.dispatch(pass, 'reduceChunks', this.chunks, 64)
     pass.end()
     encoder.copyBufferToBuffer(this.buffers[8]!, 0, staging, 0, partialBytes)
     encoder.copyBufferToBuffer(this.buffers[9]!, 0, staging, partialBytes, histBytes)
     encoder.copyBufferToBuffer(this.buffers[10]!, 0, staging, partialBytes + histBytes, heatBytes)
+    if (wantField) {
+      encoder.copyBufferToBuffer(this.buffers[11]!, 0, staging, partialBytes + histBytes + heatBytes, fieldBytes)
+    }
     pass = encoder.beginComputePass()
     this.dispatch(pass, 'clearHist', HIST_WORDS)
     this.dispatch(pass, 'clearHeat', this.chunks, 64)
@@ -357,6 +384,7 @@ export class MdGpuBackend implements MdBackend {
       step,
       time,
       spec,
+      box: this.box,
       drift: (ke + pe - this.heat - this.e0) / n,
       overflow: hist[MAX_CELL_SLOT]! > this.cap,
       scalars: {
@@ -375,6 +403,7 @@ export class MdGpuBackend implements MdBackend {
       },
     }
     if (wantSpeed) frame.speedHist = speedDensity(hist, n, vmax)
+    if (wantField) frame.field = fieldFromFixed(new Int32Array(raw, partialBytes + histBytes + heatBytes, FIELD_WORDS))
     if (wantRdf) {
       const counts = Float64Array.from(hist.subarray(RDF_OFFSET, RDF_OFFSET + RDF_BINS))
       frame.rdf = rdfNormalise(counts, rdfMax, n, volume, this.dim)
@@ -438,4 +467,23 @@ function speedDensity(hist: Uint32Array, n: number, vmax: number): Hist {
     y[b] = hist[b]! / (n * w)
   }
   return { x, y }
+}
+
+/** Decode the fixed-point i32 cell sums written by the fieldBin kernel. */
+function fieldFromFixed(words: Int32Array): FieldSums {
+  const cells = FIELD_G * FIELD_G
+  const out: FieldSums = {
+    g: FIELD_G,
+    count: new Float64Array(cells),
+    vx: new Float64Array(cells),
+    vy: new Float64Array(cells),
+    v2: new Float64Array(cells),
+  }
+  for (let c = 0; c < cells; c++) {
+    out.count[c] = words[4 * c]!
+    out.vx[c] = words[4 * c + 1]! / FIELD_V
+    out.vy[c] = words[4 * c + 2]! / FIELD_V
+    out.v2[c] = words[4 * c + 3]! / FIELD_V2
+  }
+  return out
 }
