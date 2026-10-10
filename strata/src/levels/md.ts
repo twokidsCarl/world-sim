@@ -110,6 +110,22 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     },
   },
   {
+    id: 'concentration',
+    level: 'hydro',
+    label: 'B 的浓度剖面 c(y)',
+    kind: 'curve',
+    mark: 'line',
+    smooth: 1,
+    record: true,
+    xLabel: '横向位置 y / σ',
+    reducers: ['field'],
+    when: (p) => p.fractionB! > 0,
+    compute: (f) => {
+      const pr = profiles(f.field!, f.box, BINS)
+      return { x: Float64Array.from(pr.y, (s) => s * f.box[1]!), y: pr.fractionB }
+    },
+  },
+  {
     id: 'flowProfile',
     level: 'hydro',
     label: '流速剖面 uₓ(y)',

@@ -51,7 +51,16 @@ export function initLattice(o: LatticeInit, pair: PairField): MdState {
  * is commensurate with the box.
  */
 export function initTriangular(
-  o: { nx: number; density: number; temperature: number; seed: number; fractionB?: number; aspect?: number },
+  o: {
+    nx: number
+    density: number
+    temperature: number
+    seed: number
+    fractionB?: number
+    aspect?: number
+    /** Put species B in a band across the middle of the box instead of mixing it at random. */
+    stripe?: boolean
+  },
   pair: PairField,
 ): MdState {
   // `aspect` is the box's width over its height.
@@ -63,8 +72,9 @@ export function initTriangular(
       const i = row * o.nx + col
       s.pos[2 * i] = (col + 0.25 + 0.5 * (row % 2)) * a
       s.pos[2 * i + 1] = ((row + 0.5) * a * Math.sqrt(3)) / 2
-      // Species are assigned independently at random, so the start is an ideal mixture.
-      s.species[i] = uniform(o.seed ^ 0x51ec1e5, i) < (o.fractionB ?? 0) ? 1 : 0
+      const fractionB = o.fractionB ?? 0
+      // Either a band across the middle, or independently at random (an ideal mixture).
+      s.species[i] = (o.stripe ? Math.abs((row + 0.5) / ny - 0.5) < fractionB / 2 : uniform(o.seed ^ 0x51ec1e5, i) < fractionB) ? 1 : 0
     }
   }
   return thermalise(s, o.temperature, o.seed, pair)

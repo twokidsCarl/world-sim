@@ -1,11 +1,11 @@
 import type { Params } from '../../core/params'
 import type { GpuContext } from '../../gpu/device'
-import { CHANNEL_ASPECT, type MdBackend, type MdFrame } from './backend-cpu'
+import type { MdBackend, MdFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
 import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
 import { initTriangular } from './ref/init'
 import { FIELD_G, demixing, rdfNormalise, type FieldSums, type Hist } from './ref/reducers'
-import { fieldKey, potentialSpec, strengthMatrix } from './schema'
+import { boxAspect, fieldKey, potentialSpec, strengthMatrix } from './schema'
 
 const CHUNK = 256
 const TABLE_K = 2048
@@ -16,7 +16,7 @@ const MAX_CELL_SLOT = 192
 const HIST_WORDS = 196
 const THERMOSTAT_TAU = 0.5
 const PARAM_BYTES = 96
-const FIELD_WORDS = FIELD_G * FIELD_G * 4
+const FIELD_WORDS = FIELD_G * FIELD_G * 5
 const FIELD_V = 1024
 const FIELD_V2 = 256
 /** Close-packed number density the cell capacity is sized for, per unit cell volume. */
@@ -95,7 +95,8 @@ export class MdGpuBackend implements MdBackend {
         temperature: p.temperature,
         seed,
         fractionB: p.fractionB,
-        aspect: p.walls ? CHANNEL_ASPECT : 1,
+        aspect: boxAspect(p),
+        stripe: p.layoutB === 1,
       },
       speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K)),
     )
@@ -478,12 +479,14 @@ function fieldFromFixed(words: Int32Array): FieldSums {
     vx: new Float64Array(cells),
     vy: new Float64Array(cells),
     v2: new Float64Array(cells),
+    countB: new Float64Array(cells),
   }
   for (let c = 0; c < cells; c++) {
-    out.count[c] = words[4 * c]!
-    out.vx[c] = words[4 * c + 1]! / FIELD_V
-    out.vy[c] = words[4 * c + 2]! / FIELD_V
-    out.v2[c] = words[4 * c + 3]! / FIELD_V2
+    out.count[c] = words[5 * c]!
+    out.vx[c] = words[5 * c + 1]! / FIELD_V
+    out.vy[c] = words[5 * c + 2]! / FIELD_V
+    out.v2[c] = words[5 * c + 3]! / FIELD_V2
+    out.countB[c] = words[5 * c + 4]!
   }
   return out
 }

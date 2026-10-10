@@ -7,7 +7,7 @@ import type { Backend } from './substrate'
 
 type Listener = (s: Sample) => void
 
-export class Scheduler<F extends { step: number }> {
+export class Scheduler<F extends { step: number; time?: number }> {
   epoch = 0
   private byId = new Map<string, QuantityDef<F>>()
   private listeners = new Map<string, Set<Listener>>()
@@ -46,6 +46,7 @@ export class Scheduler<F extends { step: number }> {
       const q = this.byId.get(id)!
       const sample: Sample = {
         step: frame.step,
+        time: frame.time ?? frame.step,
         epoch,
         value: q.compute(frame, p),
         theory: q.theory ? q.theory(frame, p) : null,

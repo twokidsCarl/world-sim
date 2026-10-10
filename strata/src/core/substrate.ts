@@ -1,9 +1,11 @@
 import type { GpuContext } from '../gpu/device'
 import type { Knob, Params } from './params'
-import type { QuantityDef } from './quantity'
+import type { AnalysisDef, QuantityDef } from './quantity'
 
 export interface Frame {
   step: number
+  /** Simulated time, where it differs from the step count. */
+  time?: number
   /** The backend could not represent the state faithfully (for example a full neighbour table). */
   overflow?: boolean
 }
@@ -34,6 +36,8 @@ export interface Substrate<F extends Frame> {
   stepLabel: string
   knobs: Knob[]
   quantities: QuantityDef<F>[]
+  /** Analyses run on the recorded history of a quantity rather than on single frames. */
+  analyses?: AnalysisDef[]
   /** Uses the GPU backend when the `backend` knob selects it and a device is available. */
   create(p: Params, seed: number, gpu: GpuContext | null): RunBackend<F>
 }

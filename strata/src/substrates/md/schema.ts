@@ -112,6 +112,22 @@ export const MD_KNOBS: Knob[] = [
     note: '大于 0 时出现第二种粒子，以及它与 A 的相互作用矩阵。',
   },
   {
+    id: 'layoutB',
+    label: 'B 的初始分布',
+    tag: 'state',
+    min: 0,
+    max: 1,
+    step: 1,
+    default: 0,
+    rebuild: 'state',
+    options: [
+      { value: 0, label: '随机混合' },
+      { value: 1, label: '中间一条带' },
+    ],
+    note: '条带：盒子变成扁长形，B 从中间向两侧扩散，可以从浓度剖面里发现扩散方程。',
+    when: (p) => p.fractionB > 0,
+  },
+  {
     id: 'walls',
     label: '边界',
     tag: 'state',
@@ -216,4 +232,10 @@ export function strengthMatrix(p: Params): number[][] {
 /** Changes whenever the pair interaction does. */
 export function fieldKey(p: Params): string {
   return JSON.stringify([potentialSpec(p), strengthMatrix(p)])
+}
+
+/** Width over height of the box: square, except for the channel and the diffusion band. */
+export function boxAspect(p: Params): number {
+  if (p.walls) return 4
+  return p.fractionB > 0 && p.layoutB ? 6 : 1
 }

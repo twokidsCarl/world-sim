@@ -49,7 +49,7 @@ const FIELD_V2 = 256.0;
 @group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // three per chunk
 @group(0) @binding(9) var<storage, read_write> hist: array<atomic<u32>>;
 @group(0) @binding(10) var<storage, read_write> heat: array<f32>;        // one per chunk
-@group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>; // per cell: count, Σvx, Σvy, Σv²
+@group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>; // per cell: count, Σvx, Σvy, Σv², count of species B
 
 fn cellCoord(p: vec3f) -> vec3u {
   return min(vec3u(p / P.box.xyz * vec3f(P.nc.xyz)), P.nc.xyz - vec3u(1u));
@@ -278,7 +278,7 @@ fn rdfHist(@builtin(global_invocation_id) id: vec3u) {
 
 @compute @workgroup_size(256)
 fn clearField(@builtin(global_invocation_id) id: vec3u) {
-  if (id.x < FIELD_G * FIELD_G * 4u) { atomicStore(&field[id.x], 0); }
+  if (id.x < FIELD_G * FIELD_G * 5u) { atomicStore(&field[id.x], 0); }
 }
 
 // Top-hat coarse-graining onto a FIELD_G × FIELD_G grid.
@@ -287,10 +287,11 @@ fn fieldBin(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
   let c = min(vec2u(pos[i].xy / P.box.xy * f32(FIELD_G)), vec2u(FIELD_G - 1u));
-  let base = 4u * (c.y * FIELD_G + c.x);
+  let base = 5u * (c.y * FIELD_G + c.x);
   let v = vel[i].xy;
   atomicAdd(&field[base], 1);
   atomicAdd(&field[base + 1u], i32(round(v.x * FIELD_V)));
   atomicAdd(&field[base + 2u], i32(round(v.y * FIELD_V)));
   atomicAdd(&field[base + 3u], i32(round(dot(v, v) * FIELD_V2)));
+  atomicAdd(&field[base + 4u], i32(pos[i].w > 0.5));
 }

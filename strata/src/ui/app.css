@@ -327,3 +327,9 @@ dd.broken {
 .square .stage {
   aspect-ratio: 1;
 }
+
+.headline {
+  margin: 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
