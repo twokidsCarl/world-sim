@@ -2,7 +2,7 @@
 // frame callbacks, so nothing here triggers a React render per frame.
 
 import { defaults, type Params } from '../core/params'
-import type { Curve, Sample } from '../core/quantity'
+import { agreement, type Agreement, type Curve, type Sample } from '../core/quantity'
 import { Scheduler } from '../core/scheduler'
 import type { Frame, RunBackend, Substrate } from '../core/substrate'
 import { getGpu, type GpuContext } from '../gpu/device'
@@ -36,6 +36,10 @@ export class Engine {
   overflow = false
   readonly scalars = new Map<string, ScalarTrace>()
   readonly curves = new Map<string, CurveTrace>()
+  /** Whether each watched quantity currently matches its theory. */
+  readonly agreements = new Map<string, Agreement>()
+  /** View options that do not affect the simulation, e.g. how particles are coloured. */
+  view: Record<string, number> = { colour: 0 }
   private scheduler!: Scheduler<Frame>
   private frameListeners = new Set<() => void>()
   private changeListeners = new Set<() => void>()
@@ -101,6 +105,7 @@ export class Engine {
     this.backend = this.substrate.create(this.params, this.seed, this.gpu)
     // The step counter restarts, so earlier scalar history no longer shares an x axis.
     this.scalars.clear()
+    this.agreements.clear()
     this.overflow = false
     this.msPerStep = 1
     this.invalidate()
@@ -119,6 +124,8 @@ export class Engine {
   }
 
   private record(id: string, s: Sample): void {
+    const q = this.substrate.quantities.find((d) => d.id === id)!
+    this.agreements.set(id, agreement(q as never, s.value, s.theory))
     if (typeof s.value === 'number') {
       let t = this.scalars.get(id)
       if (!t) this.scalars.set(id, (t = { step: [], value: [], theory: [] }))

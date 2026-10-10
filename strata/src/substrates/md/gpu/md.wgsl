@@ -26,16 +26,18 @@ const SPEED_BINS = 64u;
 const RDF_BINS = 120u;
 const RDF_OFFSET = 64u;
 const MAX_CELL_SLOT = 192u;
+// Neighbours for the hexatic order parameter: within 1.5 σ, squared.
+const PSI_R2 = 2.25;
 
 @group(0) @binding(0) var<uniform> P: Params;
 @group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;
 @group(0) @binding(2) var<storage, read_write> vel: array<vec4f>;
 @group(0) @binding(3) var<storage, read_write> force: array<vec4f>;      // xyz force, w = potential energy share
-@group(0) @binding(4) var<storage, read_write> aux: array<vec4f>;        // x = virial share
+@group(0) @binding(4) var<storage, read_write> aux: array<vec4f>;        // virial share, Re ψ6, Im ψ6, neighbours
 @group(0) @binding(5) var<storage, read_write> cellCount: array<atomic<u32>>;
 @group(0) @binding(6) var<storage, read_write> cellTable: array<u32>;
 @group(0) @binding(7) var<storage, read> potTable: array<vec2f>;         // (f/r, u) on a uniform r² grid
-@group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // two per chunk
+@group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // three per chunk
 @group(0) @binding(9) var<storage, read_write> hist: array<atomic<u32>>;
 @group(0) @binding(10) var<storage, read_write> heat: array<f32>;        // one per chunk
 
@@ -99,6 +101,8 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
   var f = vec3f(0.0);
   var pe = 0.0;
   var vir = 0.0;
+  var psi = vec2f(0.0);
+  var nb = 0.0;
   for (var oz = -zr; oz <= zr; oz++) {
     for (var oy = -1; oy <= 1; oy++) {
       for (var ox = -1; ox <= 1; ox++) {
@@ -110,6 +114,14 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
           let d = minImage(xi - pos[j].xyz);
           let r2 = dot(d, d);
           if (r2 >= P.rc2) { continue; }
+          if (r2 < PSI_R2) {
+            // exp(6 i θ) as the sixth power of the unit bond vector.
+            let u = d.xy * inverseSqrt(r2);
+            let u2 = vec2f(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);
+            let u4 = vec2f(u2.x * u2.x - u2.y * u2.y, 2.0 * u2.x * u2.y);
+            psi += vec2f(u4.x * u2.x - u4.y * u2.y, u4.x * u2.y + u4.y * u2.x);
+            nb += 1.0;
+          }
           let t = max((r2 - P.r2min) * P.tableScale, 0.0);
           let k0 = min(u32(t), P.tableK - 1u);
           let e = mix(potTable[k0], potTable[k0 + 1u], min(t - f32(k0), 1.0));
@@ -121,7 +133,7 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
     }
   }
   force[i] = vec4f(f, pe);
-  aux[i] = vec4f(vir, 0.0, 0.0, 0.0);
+  aux[i] = vec4f(vir, psi / max(nb, 6.0), nb);
 }
 
 // One invocation per chunk, so each chunk's sums are written without contention.
@@ -134,15 +146,18 @@ fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
   var pe = 0.0;
   var vir = 0.0;
   var p = vec3f(0.0);
+  var psi = vec3f(0.0);
   for (var i = start; i < end; i++) {
     let v = vel[i].xyz;
     ke += 0.5 * dot(v, v);
     pe += force[i].w;
     vir += aux[i].x;
     p += v;
+    psi += vec3f(aux[i].yz, length(aux[i].yz));
   }
-  partial[2u * id.x] = vec4f(ke, pe, vir, 0.0);
-  partial[2u * id.x + 1u] = vec4f(p, 0.0);
+  partial[3u * id.x] = vec4f(ke, pe, vir, 0.0);
+  partial[3u * id.x + 1u] = vec4f(p, 0.0);
+  partial[3u * id.x + 2u] = vec4f(psi, 0.0);
 }
 
 // Scale velocities by lambda and record the kinetic energy this adds, per chunk.

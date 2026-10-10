@@ -36,6 +36,32 @@ export interface QuantityDef<F> {
   /** Prediction from theory, or null where no theory applies. */
   theory?(frame: F, p: Params): Value | null
   theoryLabel?: string
+  /**
+   * When measurement and theory count as agreeing: |value - theory| <= abs + rel * |theory|
+   * for scalars; for curves, the summed absolute difference relative to the summed theory
+   * must be within rel.
+   */
+  tolerance?: { abs?: number; rel?: number }
+}
+
+export type Agreement = 'agree' | 'differ' | 'none'
+
+export function agreement(q: QuantityDef<never>, value: Value, theory: Value | null): Agreement {
+  if (theory === null || !q.tolerance) return 'none'
+  const { abs = 0, rel = 0 } = q.tolerance
+  if (typeof value === 'number' && typeof theory === 'number') {
+    if (!Number.isFinite(theory)) return 'none'
+    return Math.abs(value - theory) <= abs + rel * Math.abs(theory) ? 'agree' : 'differ'
+  }
+  if (typeof value === 'number' || typeof theory === 'number') return 'none'
+  let diff = 0
+  let total = 0
+  const n = Math.min(value.y.length, theory.y.length)
+  for (let i = 0; i < n; i++) {
+    diff += Math.abs(value.y[i]! - theory.y[i]!)
+    total += Math.abs(theory.y[i]!)
+  }
+  return total > 0 && diff / total <= rel ? 'agree' : 'differ'
 }
 
 export interface Sample {

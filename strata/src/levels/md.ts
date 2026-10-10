@@ -17,6 +17,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f) => f.drift,
     theory: () => 0,
     theoryLabel: '守恒律：0',
+    tolerance: { abs: 5e-3 },
   },
   {
     id: 'momentum',
@@ -27,6 +28,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f) => f.scalars!.momentum,
     theory: () => 0,
     theoryLabel: '守恒律：0',
+    tolerance: { abs: 1e-5 },
   },
   {
     id: 'speedDist',
@@ -42,6 +44,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       return { x, y: Float64Array.from(x, (v) => speedPdf(dim, temperature, v)) }
     },
     theoryLabel: '麦克斯韦–玻尔兹曼分布（取实测温度）',
+    tolerance: { rel: 0.08 },
   },
   {
     id: 'rdf',
@@ -57,6 +60,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       return { x, y: Float64Array.from(x, (r) => Math.exp(-shiftedPotential(f.spec, r).u / T)) }
     },
     theoryLabel: '低密度极限 exp(−u(r)/T)',
+    tolerance: { rel: 0.1 },
   },
   {
     id: 'temperature',
@@ -67,6 +71,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f) => f.scalars!.temperature,
     theory: (_f, p) => (p.thermostat ? p.temperature : null),
     theoryLabel: '热浴温度',
+    tolerance: { abs: 0.02, rel: 0.03 },
   },
   {
     id: 'pressure',
@@ -77,5 +82,26 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f) => f.scalars!.pressure,
     theory: (f) => virialPressure(f.spec, f.scalars!.density, f.scalars!.temperature, f.scalars!.dim),
     theoryLabel: '维里展开 ρT(1 + B₂ρ)，仅低密度有效',
+    tolerance: { abs: 1e-3, rel: 0.05 },
+  },
+  {
+    id: 'psi6Local',
+    level: 'structure',
+    label: '局域六角序 ⟨|ψ₆|⟩',
+    kind: 'scalar',
+    reducers: ['scalars'],
+    compute: (f) => f.scalars!.psi6Local,
+    theory: () => 1,
+    theoryLabel: '完美三角晶格：1（参照，不是预言）',
+  },
+  {
+    id: 'psi6Global',
+    level: 'structure',
+    label: '全局六角序 |⟨ψ₆⟩|',
+    kind: 'scalar',
+    reducers: ['scalars'],
+    compute: (f) => f.scalars!.psi6Global,
+    theory: () => 1,
+    theoryLabel: '单一取向的完美晶体：1（参照）；多晶或液体趋于 0',
   },
 ]

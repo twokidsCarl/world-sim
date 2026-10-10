@@ -5,6 +5,7 @@ import { IsingStage } from './IsingStage'
 import { KnobPanel, PotentialPreview } from './KnobPanel'
 import { LevelCards } from './LevelCards'
 import { MdStage } from './MdStage'
+import { ScenarioBar } from './ScenarioBar'
 import { useUi } from './store'
 
 /** Per-substrate views: the stage, and anything shown above the knobs. */
@@ -49,6 +50,7 @@ export function App() {
         {view.stage}
         <LevelCards />
       </main>
+      <ScenarioBar />
     </div>
   )
 }
