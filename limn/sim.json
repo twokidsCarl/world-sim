@@ -126,6 +126,19 @@
       "url": "/?model=mycoplasma-genitalium"
     },
     {
+      "id": "syn3a-envelope",
+      "title": {
+        "zh": "最小细胞 syn3A 的膜：一个 200 纳米的球和上面的近千个蛋白",
+        "en": "The membrane of the minimal cell syn3A: a 200-nanometre sphere and nearly a thousand proteins on it"
+      },
+      "hint": {
+        "zh": "拖动旋转，用“剖开”滑杆看里面。只有膜和膜蛋白，细胞里面的东西不在数据里。第一次打开时本机要从 Zenodo 取 170 MB 并处理，需要联网，约五分钟；之后直接用存下来的结果",
+        "en": "Drag to rotate; use the cut slider to look inside. Membrane and membrane proteins only: what is inside the cell is not in the data. The first time, 170 MB is fetched from Zenodo and processed on this machine, which needs a network connection and takes about five minutes; afterwards the stored result is used"
+      },
+      "idea": "2.1",
+      "url": "/?model=syn3a-envelope"
+    },
+    {
       "id": "machinery-of-life",
       "title": {
         "zh": "《生命的机器》里的分子，按同一比例排开",

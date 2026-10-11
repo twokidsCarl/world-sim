@@ -20,14 +20,12 @@
  * 也可以单独运行 / it can also be run on its own:
  *   bun server/tools/petworld.ts <模型的 .cif.gz 地址 / URL of the model's .cif.gz> [球数预算 / sphere budget]
  */
-import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { mkdir, rename, stat, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createGunzip } from 'node:zlib'
 import { MAGIC, decode, encode, type PreparedChain, type PreparedHeader, type PreparedObject } from '../../src/mol/prepared'
-import { cached, stateDir } from '../structures'
+import { cached } from '../structures'
+import { preparedFile } from './prepared'
 
 /** 默认的球数预算 / the default budget of placed spheres */
 export const SPHERE_BUDGET = 30_000_000
@@ -189,56 +187,18 @@ export function pack(objects: RawObject[], ops: Float32Array, source: string, bu
   }
 }
 
-const pending = new Map<string, Promise<string>>()
-
-/**
- * 预处理过的文件的路径；没有就先下载原文件并转换。同一个地址同时只做一次。
- * Path of the prepared file, downloading and converting the original first if needed. One URL is
- * prepared only once at a time.
- */
-export function prepared(url: string, budget = SPHERE_BUDGET): Promise<string> {
-  const dir = join(stateDir(), 'prepared')
-  const path = join(dir, createHash('sha256').update(`${url}|${budget}|${MAGIC}`).digest('hex').slice(0, 32))
-  const running = pending.get(path)
-  if (running) return running
-  const job = (async () => {
-    if (await stat(path).then((s) => s.size > 0, () => false)) return path
-    const raw = await cached(url)
-    const lines = createInterface({ input: createReadStream(raw).pipe(createGunzip()), crlfDelay: Infinity })
-    const { objects, ops } = await readPetworld(lines)
-    if (objects.length === 0 || ops.length === 0) throw new Error(`没有读到对象或变换 / no objects or transforms were read: ${url}`)
-    const { header, spheres } = pack(objects, ops, url, budget)
-    await mkdir(dir, { recursive: true })
-    const tmp = `${path}.${process.pid}.tmp`
-    await writeFile(tmp, encode(header, spheres, ops))
-    await rename(tmp, path)
-    return path
-  })().finally(() => pending.delete(path))
-  pending.set(path, job)
-  return job
+/** 下载一个 PetWorld 模型并转换，返回要存下来的文件内容 / download a PetWorld model and convert it, returning the file to keep */
+export async function makePetworld(url: string, budget = SPHERE_BUDGET): Promise<Uint8Array> {
+  const raw = await cached(url)
+  const lines = createInterface({ input: createReadStream(raw).pipe(createGunzip()), crlfDelay: Infinity })
+  const { objects, ops } = await readPetworld(lines)
+  if (objects.length === 0 || ops.length === 0) throw new Error(`没有读到对象或变换 / no objects or transforms were read: ${url}`)
+  const { header, spheres } = pack(objects, ops, url, budget)
+  return encode(header, spheres, ops)
 }
 
-const failed = new Map<string, string>()
-
-/**
- * 不等它做完：已经有了就给路径，否则在后台开始做并说“还在准备”。转换要一两分钟，比一次请求能等的时间长。
- * 上次失败的原因只报一次，之后再问会重新开始。
- * Without waiting for it: the path if the file is there, otherwise start the work in the
- * background and say it is still being prepared. Converting takes a minute or two, longer than
- * one request can wait. A failure is reported once, and asking again starts over.
- */
-export async function poll(url: string, budget = SPHERE_BUDGET): Promise<{ path: string } | { preparing: true }> {
-  const key = `${url}|${budget}`
-  const error = failed.get(key)
-  if (error) {
-    failed.delete(key)
-    throw new Error(error)
-  }
-  const job = prepared(url, budget)
-  job.catch((e) => failed.set(key, e instanceof Error ? e.message : String(e)))
-  const done = await Promise.race([job.then((path) => ({ path })).catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), 1500))])
-  return done ?? { preparing: true }
-}
+/** 存放结果用的键 / the key its result is kept under */
+export const petworldKey = (url: string, budget = SPHERE_BUDGET) => `${url}|${budget}|${MAGIC}`
 
 if (import.meta.main) {
   const [url, budget] = process.argv.slice(2)
@@ -247,7 +207,8 @@ if (import.meta.main) {
     process.exit(1)
   }
   const t0 = performance.now()
-  const path = await prepared(url, budget ? Number(budget) : SPHERE_BUDGET)
+  const b = budget ? Number(budget) : SPHERE_BUDGET
+  const path = await preparedFile(petworldKey(url, b), () => makePetworld(url, b))
   const { header } = decode(new Uint8Array(await Bun.file(path).arrayBuffer()))
   console.log(JSON.stringify({ path, seconds: Math.round((performance.now() - t0) / 1000), megabytes: Math.round(Bun.file(path).size / 1e6), ...header, objects: header.objects.length }, null, 1))
 }

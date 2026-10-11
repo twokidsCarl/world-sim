@@ -113,3 +113,94 @@ describe('instanced all-atom models', () => {
     expect(allowed('http://download.yasara.org.evil.example/x')).toBe(false)
   })
 })
+
+describe('a Martini coordinate file inside an archive', () => {
+  /** 一个只有名字、大小和内容的 tar 条目 / a tar entry with just a name, a size and its content */
+  const entry = (name: string, content: string) => {
+    const body = new TextEncoder().encode(content)
+    const head = new Uint8Array(512)
+    head.set(new TextEncoder().encode(name))
+    head.set(new TextEncoder().encode(body.length.toString(8).padStart(11, '0') + '\0'), 124)
+    const padded = new Uint8Array(Math.ceil(body.length / 512) * 512)
+    padded.set(body)
+    return [head, padded]
+  }
+  const bead = (resid: number, resname: string, n: number, x: number) => `${String(resid).padStart(5)}${resname.padEnd(5)}${'BB'.padStart(5)}${String(n).padStart(5)}${x.toFixed(3).padStart(8)}${(0).toFixed(3).padStart(8)}${(1).toFixed(3).padStart(8)}`
+  // 两条蛋白链（3 个和 2 个残基，残基编号往回跳处分开），然后两个 POPC、一个 CHOL
+  // two protein chains (3 and 2 residues, split where the residue number jumps back), then two POPC and one CHOL
+  const beads = [
+    bead(1, 'MET', 1, 0), bead(1, 'MET', 2, 0.1), bead(2, 'ALA', 3, 0.2), bead(3, 'LYS', 4, 0.3),
+    bead(1, 'MET', 5, 5), bead(2, 'GLY', 6, 5.1),
+    bead(3, 'POPC', 7, 10), bead(3, 'POPC', 8, 10.1), bead(3, 'POPC', 9, 10.2), bead(4, 'POPC', 10, 11),
+    bead(5, 'CHOL', 11, 12),
+  ]
+  const GRO = ['a title', String(beads.length), ...beads, '   20.00000  20.00000  20.00000'].join('\n') + '\n'
+
+  async function* chunked(parts: Uint8Array[], size: number) {
+    const all = new Uint8Array(parts.reduce((s, p) => s + p.length, 0))
+    let at = 0
+    for (const p of parts) {
+      all.set(p, at)
+      at += p.length
+    }
+    for (let i = 0; i < all.length; i += size) yield all.subarray(i, Math.min(all.length, i + size))
+  }
+
+  it('finds the file in the archive whatever the chunking, and does not need what follows it', async () => {
+    const { tarMemberLines } = await import('../server/tools/gro')
+    // 后面跟着一个被截断的大文件 / followed by a large file that is cut off
+    const cut = entry('big/trajectory.xtc', 'x'.repeat(5000)).map((p, i) => (i === 1 ? p.subarray(0, 700) : p))
+    const parts = [...entry('dir/', ''), ...entry('dir/readme.txt', 'skip me\n'.repeat(100)), ...entry('dir/initial.gro', GRO), ...cut]
+    for (const size of [7, 512, 513, 4096, 1 << 20]) {
+      const lines: string[] = []
+      for await (const l of tarMemberLines(chunked(parts, size), 'dir/initial.gro')) lines.push(l)
+      expect(lines.join('\n') + '\n', `chunks of ${size}`).toBe(GRO)
+    }
+    await expect((async () => {
+      for await (const _ of tarMemberLines(chunked(parts, 512), 'dir/missing.gro')) void _
+    })()).rejects.toThrow(/missing\.gro/)
+  })
+
+  it('splits beads into protein chains and lipid molecules, in ångströms', async () => {
+    const { readGro } = await import('../server/tools/gro')
+    async function* lines() {
+      for (const l of GRO.split('\n')) yield l
+    }
+    const m = await readGro(lines())
+    expect(m.beads).toBe(11)
+    expect(m.proteins.map((p) => [p.sequence, p.xyz.length / 3])).toEqual([['MAK', 4], ['MG', 2]])
+    expect([...m.others.entries()].map(([k, v]) => [k, v.map((x) => x.xyz.length / 3)])).toEqual([['POPC', [3, 1]], ['CHOL', [1]]])
+    // 纳米换成埃 / nanometres become ångströms
+    expect(m.proteins[1]!.xyz.slice(0, 3)).toEqual([50, 0, 10])
+    async function* short() {
+      for (const l of GRO.split('\n').slice(0, 6)) yield l
+    }
+    await expect(readGro(short())).rejects.toThrow(/11/)
+  })
+
+  it('merges beads within a molecule only, and keeps lipid spheres large enough to close the membrane', async () => {
+    const { readGro, packGro } = await import('../server/tools/gro')
+    async function* lines() {
+      for (const l of GRO.split('\n')) yield l
+    }
+    const m = await readGro(lines())
+    const full = packGro(m, 'x', 100)
+    expect(full.header.atomsPerSphere).toBe(1)
+    expect(full.header.spheres).toBe(11)
+    const half = packGro(m, 'x', 7)
+    // 每 2 个珠子一个球，但不跨分子：4→2，2→1，3→2，1→1，1→1 / a sphere per 2 beads, never across molecules: 4→2, 2→1, 3→2, 1→1, 1→1
+    expect(half.header.atomsPerSphere).toBe(2)
+    expect(half.header.spheres).toBe(7)
+    expect(half.header.unit).toBe('beads')
+    expect(half.header.atomsPlaced).toBe(11)
+    const lipid = half.header.objects.find((o) => o.name === 'POPC')!.chains[0]!
+    expect(lipid.lipid).toBe(true)
+    for (let i = lipid.start; i < lipid.start + lipid.count; i++) expect(half.spheres[i * 4 + 3]).toBeGreaterThanOrEqual(5)
+    // 两条蛋白链是两种（长度不同），各自一个对象；脂质归到膜 / the two protein chains are two kinds (different lengths), an object each; lipids go to the membrane
+    const { mol } = preparedMolecule(encode(half.header, half.spheres, half.ops), 'id', 'title')
+    expect(mol.entities.map((e) => e.kind)).toEqual(['lipid', 'protein', 'protein'])
+    expect(mol.assemblies[0]!.groups.length).toBe(4)
+    // 并出来的球之间没有残基的分界可画 / there is no residue boundary to draw between merged spheres
+    expect(new Set(mol.residue).size).toBe(1)
+  })
+})

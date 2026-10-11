@@ -275,6 +275,38 @@
       "link": "https://ccsb.scripps.edu/gallery/mycoplasma_model/"
     },
     {
+      "id": "syn3a-envelope",
+      "title": "最小细胞 JCVI-syn3A 的膜包层",
+      "titleEn": "The membrane envelope of the minimal cell JCVI-syn3A",
+      "keywords": [
+        "syn3A",
+        "最小细胞",
+        "minimal cell",
+        "膜包层",
+        "envelope"
+      ],
+      "source": {
+        "kind": "prepared",
+        "format": "gro",
+        "url": "https://zenodo.org/api/records/21173344/files/syn3A_envelope_simulation_data.tar.gz/content",
+        "member": "syn3A_envelope_simulation_data/spherical_envelopes_200nm/minimal/initial.gro",
+        "head": 170000000,
+        "budget": 4000000
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        [".", "focus"]
+      ],
+      "caption": "人工合成的最小细胞 JCVI-syn3A 的膜包层，从中间剖开：一个直径约 200 nm 的球形膜，上面嵌着 998 条膜蛋白链。这是一次粗粒度分子动力学模拟的起始构型，只有膜和膜蛋白，细胞里面的东西不在其中。",
+      "captionEn": "The membrane envelope of the synthetic minimal cell JCVI-syn3A, cut through the middle: a spherical membrane about 200 nm across with 998 membrane protein chains set in it. This is the starting configuration of a coarse-grained molecular dynamics simulation; it holds the membrane and its proteins only, and nothing of what is inside the cell.",
+      "tier": "curated",
+      "licence": "CC BY 4.0",
+      "attribution": "Mert Bozoflu, Jan Adriaan Stevens, Marco van Tilburg, Bart Bruininks, Chelsea Brown, Siewert Marrink",
+      "citation": "Bozoflu et al., simulation data for \"Lipid Composition Directs Membrane Organization in Minimal Cells\", Zenodo 2026, doi:10.5281/zenodo.21173344",
+      "link": "https://zenodo.org/records/21173344"
+    },
+    {
       "id": "hiv-capsid",
       "title": "完整的 HIV-1 衣壳",
       "titleEn": "The entire HIV-1 capsid",
