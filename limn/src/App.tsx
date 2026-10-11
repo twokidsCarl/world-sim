@@ -6,6 +6,7 @@ import { placedAtomCount } from './scene/build'
 import { CATALOG, useStore } from './state/store'
 import { TIER_LABEL } from './scene/spec'
 import { entityLch } from './style/assign'
+import { COLOR_MODE_LABEL, COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
 import { hex, oklch } from './style/oklab'
 import { ROLE_LABEL, ROLES, TONE_MOLECULE, type Role } from './style/palettes'
 import { Stage, stage } from './ui/Stage'
@@ -19,6 +20,67 @@ function Slider(p: { label: string; value: number; min: number; max: number; ste
       <label>{p.label}</label>
       <input type="range" min={p.min} max={p.max} step={p.step} value={p.value} onChange={(e) => p.onChange(Number(e.target.value))} />
       <output>{p.value}</output>
+    </div>
+  )
+}
+
+const sw = (lch: [number, number, number]) => <span className="swatch" style={{ background: hex(oklch(...lch)), display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} />
+
+/** 按残基上色时的图例：颜色各代表什么，数据从哪来 / the legend for per-residue colouring: what each colour means and where the data is from */
+function Legend() {
+  const s = useStore()
+  const mode = s.colorings[0]?.mode ?? 'role'
+  if (mode === 'role') return null
+  if (mode === 'confidence') {
+    const any = s.panels.some((p) => p.mol.confidence)
+    return (
+      <div className="muted legend">
+        {any ? (
+          <>
+            {sw(confidenceLch(95))}很高（≥90） {sw(confidenceLch(80))}较高（70–90） {sw(confidenceLch(60))}低（50–70）
+            <br />
+            pLDDT 是 AlphaFold 对每个残基位置的置信度；低于 50 的没有画。
+          </>
+        ) : (
+          '置信度只有预测模型才有；这是实验结构，颜色不变。'
+        )}
+      </div>
+    )
+  }
+  const proteins = s.panels.flatMap((p) => Object.values(p.annotation?.proteins ?? {}))
+  if (proteins.length === 0) return <div className="muted legend">没有查到这个结构的注释（或本地服务没有启动），颜色不变。</div>
+  if (mode === 'domains')
+    return (
+      <div className="muted legend">
+        {proteins.map((p) => (
+          <div key={p.accession}>
+            <b>{p.name}</b>（UniProt {p.accession}）
+            {domainsOf(p).length === 0 && ' 没有标注结构域'}
+            {domainsOf(p).map((d, k) => (
+              <div key={k}>{sw(domainLch(k))}{d.name} {d.start}–{d.end}</div>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  if (mode === 'sites')
+    return (
+      <div className="muted legend">
+        {sw(SITE_LCH.active)}活性位点 {sw(SITE_LCH.binding)}结合位点 {sw(SITE_LCH.site)}其他位点
+        {proteins.map((p) => (
+          <div key={p.accession}>
+            <b>{p.name}</b>：{p.features.filter((f) => f.kind !== 'domain').slice(0, 12).map((f) => `${f.name} ${f.start}${f.end > f.start ? '–' + f.end : ''}`).join('；') || '没有标注位点'}
+          </div>
+        ))}
+        <div>来源：UniProt。</div>
+      </div>
+    )
+  return (
+    <div className="muted legend">
+      {sw(pathogenicityLch(0.05))}多半无害 {sw(pathogenicityLch(0.5))}不确定 {sw(pathogenicityLch(0.95))}多半致病
+      <br />
+      每个位置上 19 种氨基酸替换的 AlphaMissense 预测值的平均。这是预测，不是临床结论。
+      {proteins.some((p) => !p.pathogenicity) && ' 有的蛋白没有这项数据（只覆盖人类蛋白），颜色不变。'}
     </div>
   )
 }
@@ -91,7 +153,7 @@ export function App() {
         <div className="tabs">
           <button className={mode === 'topic' ? 'on' : ''} onClick={() => setMode('topic')}>按主题</button>
           <button className={mode === 'model' ? 'on' : ''} onClick={() => setMode('model')}>现成模型</button>
-          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>PDB 编号</button>
+          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>按编号</button>
         </div>
         {mode === 'topic' ? (
           <form onSubmit={(e) => (e.preventDefault(), void s.resolveTopic(topic))}>
@@ -111,7 +173,7 @@ export function App() {
           </div>
         ) : (
           <form className="row" onSubmit={(e) => (e.preventDefault(), void s.loadId(id))}>
-            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="例如 2hhb" spellCheck={false} />
+            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="例如 2hhb，或 AF-P04637" spellCheck={false} />
             <button className="primary" disabled={working}>载入</button>
           </form>
         )}
@@ -185,6 +247,19 @@ export function App() {
                   ))}
                 </div>
               ))}
+              {!s.spec.landscape && !s.spec.mesoscale && (
+                <div style={{ margin: '6px 0' }}>
+                  <div className="row">
+                    <label>上色</label>
+                    <select value={s.colorings[0]?.mode ?? 'role'} disabled={working} style={{ flex: 1 }} onChange={(e) => void s.setColorMode(e.target.value as ColorMode)}>
+                      {COLOR_MODES.map((m) => (
+                        <option key={m} value={m}>{COLOR_MODE_LABEL[m]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <Legend />
+                </div>
+              )}
               <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && !s.spec.landscape && '各面板比例相同。'}</div>
               {s.spec.landscape && (
                 <div className="row" style={{ margin: '6px 0' }}>

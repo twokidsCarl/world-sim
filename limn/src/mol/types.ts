@@ -66,6 +66,11 @@ export interface Molecule {
    * outside data such as OPM use; absent when the same as `residue`.
    */
   authResidue?: Int32Array
+  /**
+   * 预测模型每个原子的置信度（pLDDT，0-100），存在文件的 B 因子一栏里；实验结构没有。
+   * Per-atom confidence of a predicted model (pLDDT, 0-100), which such files keep in the B-factor column; absent for experimental structures.
+   */
+  confidence?: Float32Array
   chains: Chain[]
   entities: Entity[]
   /** assemblies[0] 始终是存档时的非对称单元 / assemblies[0] is always the asymmetric unit as deposited */

@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·3a | 逐残基上色：结构域、活性与结合位点、AlphaFold 置信度、AlphaMissense 致病性；按 `AF-<UniProt 编号>` 直接载入预测模型 | 完成，见 `src/style/annotate.ts`、`server/sources/annotations.ts` |
 | 二期·2e | 冷冻电镜断层扫描里粒子的实测位置：一片支原体细胞里 331 个核糖体 | 完成，见 `src/mol/points.ts` 和目录里的 `mycoplasma-ribosomes-in-situ` |
 | 二期·2c | 全景图里的 DNA 长链（程序生成的双螺旋） | 完成，见 `src/landscape/fiber.ts`、`data/bdna.json` |
 | 二期·2b | 膜蛋白按 OPM 的取向嵌进膜里 | 完成，见 `server/sources/opm.ts`、`src/landscape/orient.ts` |
@@ -34,11 +35,13 @@ bun run typecheck
 三种用法：
 
 - **按主题**：输入“CRISPR-Cas9 切割 DNA”“新冠刺突蛋白结合 ACE2”“TP53”这样的话。需要本机装有并登录了 [Claude Code](https://claude.com/claude-code)（用 `claude -p` 调用，不需要 API key）。一次解析约半分钟。
-- **按 PDB 编号**：直接输入 4 位编号，不需要 `claude`。例如 `2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
+- **按编号**：直接输入 4 位 PDB 编号，或 `AF-` 加 UniProt 编号（如 `AF-P04637`）载入 AlphaFold 预测模型。不需要 `claude`。例如 `2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
 
 - **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
 
 拖动旋转，滚轮缩放，Shift 拖动平移。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
+
+单个分子的图可以换“上色”方式：按功能角色（默认）、按结构域、标出活性与结合位点（都来自 UniProt，PDB 的残基号经 PDBe SIFTS 对应过去）、按 AlphaFold 置信度（只对预测模型）、按 AlphaMissense 预测的突变致病性（只覆盖人类蛋白；是预测，不是临床结论）。图例里写明每种颜色的含义和数据来源。
 
 主题如果是一个拥挤的细胞场景（“大肠杆菌细胞质的拥挤场景”“流感病毒包膜表面的横截面全景”），会画成全景：80×56 nm、厚 30 nm 的一片截面，可以带一层水平的膜。
 
@@ -140,6 +143,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 3a | Per-residue colouring: domains, active and binding sites, AlphaFold confidence, AlphaMissense pathogenicity; predicted models load directly as `AF-<UniProt accession>` | Done, see `src/style/annotate.ts`, `server/sources/annotations.ts` |
 | Round 2, phase 2e | Measured particle positions from a cryo-electron tomogram: 331 ribosomes in a slice of mycoplasma cells | Done, see `src/mol/points.ts` and `mycoplasma-ribosomes-in-situ` in the catalogue |
 | Round 2, phase 2c | Long DNA in landscapes, as a generated double helix | Done, see `src/landscape/fiber.ts`, `data/bdna.json` |
 | Round 2, phase 2b | Membrane proteins sit in the membrane as OPM orients them | Done, see `server/sources/opm.ts`, `src/landscape/orient.ts` |
@@ -160,10 +164,12 @@ bun run typecheck
 Three ways in:
 
 - **By topic**: type something like "CRISPR-Cas9 cutting DNA", "the SARS-CoV-2 spike bound to ACE2" or "TP53". This needs [Claude Code](https://claude.com/claude-code) installed and signed in on the machine (it is called as `claude -p`; no API key is needed). One resolution takes about half a minute.
-- **By PDB id**: type a four-character id; `claude` is not needed. Examples: `2hhb` (haemoglobin), `6vxx` (the SARS-CoV-2 spike), `1m4x` (the PBCV-1 capsid, 16 million atoms).
+- **By id**: type a four-character PDB id, or `AF-` followed by a UniProt accession (`AF-P04637`) for an AlphaFold predicted model; `claude` is not needed. Examples: `2hhb` (haemoglobin), `6vxx` (the SARS-CoV-2 spike), `1m4x` (the PBCV-1 capsid, 16 million atoms).
 - **Ready-made models**: pick a published whole model from the list; `claude` is not needed. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
 
 Drag to rotate, scroll to zoom, shift-drag to pan. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
+
+A picture of a single molecule can be recoloured: by functional role (the default), by domain, with active and binding sites picked out (both from UniProt, with PDB residue numbers mapped through PDBe SIFTS), by AlphaFold confidence (predicted models only), or by AlphaMissense's predicted pathogenicity of mutations (human proteins only; a prediction, not a clinical finding). The legend says what each colour means and where the data is from.
 
 A topic that asks for a crowded cellular scene ("the crowded cytoplasm of E. coli", "a cross-section of the influenza envelope") is drawn as a landscape: a slab 80 × 56 nm and 30 nm thick, optionally with a horizontal membrane.
 

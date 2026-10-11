@@ -1,6 +1,7 @@
 import type { Molecule } from '../mol/types'
 import type { Draw, RenderItem } from '../render/Renderer'
 import { atomColors, atomRadii, type Coloring } from '../style/assign'
+import type { Annotation } from '../style/annotate'
 import type { Tone } from '../style/palettes'
 
 /** 残基编号可以为负；而 id 缓冲是无符号的 / Residue numbers can be negative; the id buffer is unsigned. */
@@ -98,7 +99,7 @@ function assemblyGroups(mol: Molecule, assembly: string, merge?: RegExp): Group[
 }
 
 /** 把解析后的结构变成可直接上 GPU 的缓冲和它的绘制列表 / Turn a parsed structure into GPU-ready buffers and its draw list. */
-export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: Placement | Placement[]): RenderItem {
+export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: Placement | Placement[], annotation?: Annotation | null): RenderItem {
   const radii = atomRadii(mol)
   const posr = new Float32Array(mol.atomCount * 4)
   const ids = new Uint32Array(mol.atomCount * 2)
@@ -161,7 +162,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
       }
     for (const r of g.runs) draws.push({ ...r, opStart: first, opCount: o - first })
   }
-  return { posr, color: atomColors(mol, coloring, tone), ids, draws, instances: { count: total, data, ids: iids }, subunitSize: subunitSize(mol) }
+  return { posr, color: atomColors(mol, coloring, tone, annotation), ids, draws, instances: { count: total, data, ids: iids }, subunitSize: subunitSize(mol) }
 }
 
 /**
