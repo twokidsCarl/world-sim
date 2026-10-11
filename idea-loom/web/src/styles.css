@@ -234,6 +234,34 @@ a.button { display: block; text-align: center; padding: 6px 10px; border: 1px so
 a.button:hover { background: var(--sunken); }
 a.button.inline { display: inline-block; }
 .wish-command { align-items: center; margin-bottom: 12px; }
+/* 会话：网页里的 Claude Code / sessions: Claude Code in the page */
+.sessions { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
+.sessions-list { display: grid; gap: 12px; }
+.session-pick { display: grid; gap: 2px; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.session-pick.on { border-color: var(--accent); background: var(--accent-soft); }
+.session-pick strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-needs { color: var(--accent); font-weight: 600; }
+.session { display: grid; gap: 10px; min-width: 0; }
+.session-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.session-status.waiting { border-color: var(--accent); color: var(--accent); }
+.session-log { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; max-height: 68vh; overflow-y: auto; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow-wrap: anywhere; }
+.session-step { font-size: 13px; color: var(--ink-2); }
+.session-step summary { cursor: pointer; }
+.session-step.failed summary { color: var(--bad); }
+.session-step pre, .session-diff pre { margin: 6px 0 0; padding: 8px 10px; border-radius: 6px; font: 12px/1.5 'SF Mono', Menlo, monospace; white-space: pre-wrap; max-height: 260px; overflow: auto; background: var(--sunken); }
+.session-diff pre.del { border-left: 3px solid var(--bad); }
+.session-diff pre.add { border-left: 3px solid var(--good); }
+.session-card { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--accent); border-left-width: 4px; border-radius: 10px; background: var(--paper); }
+.session-card.settled { border-color: var(--line-2); opacity: 0.85; }
+.session-card h4 { margin: 0; font-size: 14px; }
+.session-card textarea, .session-card input { width: 100%; }
+.session-question { display: grid; gap: 6px; }
+.session-compose { border-top: 0; padding: 0; }
+@media (max-width: 720px) {
+  .sessions { grid-template-columns: minmax(0, 1fr); }
+  .session-log { max-height: none; }
+  .session-card .row button { flex: 1 1 auto; min-height: 44px; }
+}
 .wish-command code { padding: 6px 10px; border-radius: 6px; background: var(--sunken); font-size: 14px; }
 .plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .visitor-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }

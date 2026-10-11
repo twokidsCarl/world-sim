@@ -8,6 +8,7 @@ import { MapPage } from '../pages/MapPage'
 import { PlayPage } from '../pages/PlayPage'
 import { PoolPage } from '../pages/PoolPage'
 import { ConnectPage } from '../pages/ConnectPage'
+import { SessionsPage } from '../pages/SessionsPage'
 import { StatsPage } from '../pages/StatsPage'
 import { SuggestPage } from '../pages/SuggestPage'
 import { WorkPage } from '../pages/WorkPage'
@@ -28,6 +29,8 @@ const NAV = [
   { to: '/lineage', zh: '血缘', en: 'Lineage', end: false, owner: false },
   { to: '/work', zh: '开发', en: 'Work', end: false, owner: true },
   { to: '/wishes', zh: '许愿池', en: 'Wish pool', end: false, owner: true },
+  // 会话只在本机有：它能在这台机器上执行命令。 / Sessions exist locally only: they can run commands on this machine.
+  { to: '/sessions', zh: '会话', en: 'Sessions', end: false, owner: true },
   { to: '/stats', zh: '统计', en: 'Statistics', end: false, owner: true },
   { to: '/connect', zh: '接入', en: 'Connect', end: false, owner: true },
 ]
@@ -70,7 +73,7 @@ export function App() {
         <div className="mark">
           idea-loom<small>{t('想法池', 'Idea pool')}</small>
         </div>
-        {NAV.filter((n) => owner || !n.owner).map((n) => (
+        {NAV.filter((n) => (owner || !n.owner) && (n.to !== '/sessions' || me?.auth_enabled === false)).map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className="nav-item">
             {t(n.zh, n.en)}
             {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
@@ -192,6 +195,8 @@ export function App() {
             <Route path="/wishes/:id" element={gate(<WishPage />)} />
             <Route path="/new" element={gate(<NewIdeaPage state={state} />)} />
             <Route path="/suggest" element={<SuggestPage />} />
+            <Route path="/sessions" element={gate(<SessionsPage />)} />
+            <Route path="/sessions/:id" element={gate(<SessionsPage />)} />
             <Route path="/connect" element={gate(<ConnectPage />)} />
             <Route path="*" element={<p className="pad">{t('没有这个页面。', 'There is no such page.')}</p>} />
           </Routes>

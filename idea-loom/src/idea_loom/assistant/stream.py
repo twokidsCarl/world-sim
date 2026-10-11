@@ -23,6 +23,17 @@ def step_label(name: str, args: dict[str, Any], repo: str = "") -> str:
         return f"在找「{str(args.get('pattern', ''))[:40]}」"
     if short == "Glob":
         return f"在找文件 {str(args.get('pattern', ''))[:40]}"
+    if short in ("Edit", "Write", "NotebookEdit"):
+        path = str(args.get("file_path") or args.get("notebook_path") or "")
+        if repo and path.startswith(repo):
+            path = os.path.relpath(path, repo)
+        return f"在{'写' if short == 'Write' else '改'} {path}" if path else "在改文件"
+    if short == "Bash":
+        return f"在跑 {str(args.get('command', ''))[:80]}"
+    if short in ("Agent", "Task"):
+        return f"派了一个子 Agent：{str(args.get('description', ''))[:60]}"
+    if short in ("WebSearch", "WebFetch"):
+        return f"在上网查 {str(args.get('query') or args.get('url') or '')[:60]}"
     if short == "loom_get":
         return f"在查 {str(args.get('path', ''))[:60]}"
     return {"record_wish": "在记愿望", "propose_idea": "在写一条候选", "point_at": "在页面上指给你看"}.get(short, f"在用 {short}")
