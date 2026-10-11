@@ -264,3 +264,18 @@ def test_cloud_bootstrap_clones_once_and_seeds_only_missing_data(repo, tmp_path,
     assert (data / "ideas.jsonl").read_bytes() == (repo / "idea-loom" / "data" / "ideas.jsonl").read_bytes()
     (data / "ideas.jsonl").write_text("云端后来写的\n")
     assert cloud.seed_data() == [] and (data / "ideas.jsonl").read_text() == "云端后来写的\n"
+
+
+def test_client_routes_with_a_dot_fall_back_to_the_page_but_missing_files_do_not(tmp_path):
+    """idea 的编号里有点：/ideas/2.1 是页面，不是文件。 / Idea ids contain a dot: /ideas/2.1 is a page, not a file."""
+    from idea_loom.play import host
+
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<p>app</p>")
+    (tmp_path / "assets" / "app.js").write_text("1")
+    for path in ("/ideas/2.1", "/ideas/10.12", "/ideas/纵 1", "/wishes/wish-20261011T072251Z-1ae6", "/play"):
+        r = host._static(tmp_path, path)
+        assert r.status_code == 200 and str(r.path).endswith("index.html"), path
+    assert str(host._static(tmp_path, "/assets/app.js").path).endswith("app.js")
+    for path in ("/assets/missing.js", "/icon.png", "/old/style.css", "/../secret.txt"):
+        assert host._static(tmp_path, path).status_code == 404, path
