@@ -1,13 +1,14 @@
 import { effectiveInformation } from '../analysis/ei'
 import type { QuantityDef } from '../core/quantity'
 import type { IsingFrame } from '../substrates/ising/backend'
+import { BINDER3D_CRITICAL } from '../substrates/ising/ref3d'
 import { BINDER_CRITICAL, onsagerEnergy, onsagerMagnetisation } from '../theory/onsager'
 
 /**
  * 严格解只适用于零外场下的最近邻模型。
  * The exact solution applies only to the nearest-neighbour model in zero field.
  */
-const exact = (p: Record<string, number>) => p.j2 === 0 && p.h === 0
+const exact = (p: Record<string, number>) => p.dim !== 3 && p.j2 === 0 && p.h === 0
 
 export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
   {
@@ -27,7 +28,12 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     label: '每自旋能量',
     kind: 'scalar',
     reducers: ['pyramid'],
-    compute: (f, p) => -(2 * f.levels[0]!.nn + 2 * p.j2! * f.levels[0]!.nnn + p.h! * f.levels[0]!.m),
+    // 每个格点的键数：二维 2 条最近邻（另有 2 条对角），三维 3 条。
+    // Bonds per site: 2 nearest-neighbour (plus 2 diagonal) in 2D, 3 in 3D.
+    compute: (f, p) =>
+      f.dim === 3
+        ? -(3 * f.levels[0]!.nn + p.h! * f.levels[0]!.m)
+        : -(2 * f.levels[0]!.nn + 2 * p.j2! * f.levels[0]!.nnn + p.h! * f.levels[0]!.m),
     theory: (f, p) => (exact(p) ? onsagerEnergy(f.T) : null),
     theoryLabel: 'Onsager 精确解（J₂=0，h=0）',
     tolerance: { abs: 0.02 },
@@ -39,9 +45,9 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     kind: 'scalar',
     reducers: ['pyramid'],
     compute: (f) => f.binder,
-    theory: (_f, p) => (exact(p) ? BINDER_CRITICAL : null),
+    theory: (f, p) => (f.dim === 3 ? (p.h === 0 ? BINDER3D_CRITICAL : null) : exact(p) ? BINDER_CRITICAL : null),
     theoryLabel:
-      '临界点上的值 0.6107（各向同性方格、周期边界）。有序相趋于 2/3，无序相趋于 0；只有在 Tc，它才与晶格大小无关。自参数上次改动起累计。',
+      '临界点上的值：二维 0.6107（各向同性方格、周期边界），三维 0.465（周期立方体，数值结果）。有序相趋于 2/3，无序相趋于 0；只有在 Tc，它才与晶格大小无关。自参数上次改动起累计。',
   },
   {
     id: 'effectiveInformation',
@@ -53,6 +59,7 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     smooth: 1,
     xLabel: '粗粒化次数 k（块边长 2ᵏ）',
     reducers: ['pyramid', 'transitions'],
+    when: (p) => p.dim !== 3,
     compute: (f) => ({
       x: f.transitions!.map((_, k) => k),
       y: f.transitions!.map((counts) => effectiveInformation(counts, 10)),

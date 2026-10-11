@@ -351,6 +351,25 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'isingDimension',
+    title: '同一个模型，同一个温度，换一个维度',
+    substrate: 'ising',
+    steps: [
+      {
+        text: '二维晶格，温度 4.0。它远高于二维的临界温度 2.27：每个自旋只有四个邻居，拉不住彼此，没有净磁化。',
+        set: { dim: 2, L: 8, T: 4, h: 0, j2: 0 },
+        run: 400,
+        expect: { quantity: 'magnetisation', max: 0.1, text: '二维、T = 4：无序，|m| 低于 0.1' },
+      },
+      {
+        text: '规则和温度都不变，只把晶格换成三维：现在每个自旋有六个邻居，同样的 4.0 落在三维的临界温度 4.51 之下。畴开始长大，最后一种取向胜出。',
+        set: { dim: 3, L3: 5 },
+        run: 4000,
+        expect: { quantity: 'magnetisation', min: 0.5, text: '三维、T = 4：有序，|m| 高于 0.5' },
+      },
+    ],
+  },
+  {
     id: 'quench',
     title: '把 Ising 晶格淬火穿过临界温度',
     substrate: 'ising',
