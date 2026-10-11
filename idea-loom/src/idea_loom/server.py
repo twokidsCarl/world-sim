@@ -137,9 +137,24 @@ class Proposals(BaseModel):
     model_ready: bool
 
 
+# 进程启动的时刻，整个进程里不变；打开着的页面用它看出后端重启过。
+# The moment this process started, fixed for its lifetime; an open page uses it to notice a backend restart.
+_STARTED = str(time.time_ns())
+
+
 @app.get("/api/health")
 def health() -> dict[str, object]:
-    return {"ok": True}
+    """活着就回 ok；另带两个版本记号，页面据此发现自己过时了。
+    Replies ok while alive, plus two version marks that let a page notice it is out of date.
+
+    started：进程启动的时刻。ui：磁盘上界面构建的 index.html 的修改时间（毫秒），没有构建时是 None。
+    started: when the process started. ui: modification time in milliseconds of the built index.html on disk, None when there is no build.
+    """
+    try:
+        ui: Optional[int] = int(play_host.ui_dist().joinpath("index.html").stat().st_mtime * 1000)
+    except OSError:
+        ui = None
+    return {"ok": True, "started": _STARTED, "ui": ui}
 
 
 @app.get("/api/state", response_model=State)
@@ -272,17 +287,40 @@ class WishEditBody(BaseModel):
     suggestion: Optional[str] = None
 
 
+def _wish_jobs() -> dict[str, jobs.Job]:
+    """每条愿望上正在做的那个作业（还在出方案、等批准、执行、测试、等合并，或者在排队）。做完、失败、取消的不算。
+
+    The job currently working on each wish (planning, waiting for approval, running, testing, waiting for the merge, or queued). Finished, failed and cancelled ones do not count.
+    """
+    out: dict[str, jobs.Job] = {}
+    for job in jobs.listing():  # 新的在前，同一条愿望取最新的 / newest first, so the newest one wins for a wish
+        if job.kind == "wish" and job.phase in jobs.HOLDING and job.ref not in out:
+            out[job.ref] = job
+    return out
+
+
+def _with_job(wish, job: Optional[jobs.Job]):
+    """把作业的阶段标到愿望上；愿望自己的状态不动。 / Mark the job's stage on the wish; the wish's own status is left alone."""
+    if job is None:
+        return wish
+    return wish.model_copy(update={"job_id": job.job_id, "job_phase": job.phase, "job_label": job.phase_label, "job_queued": bool(job.queued)})
+
+
 @app.get("/api/wishes", response_model=wishes.WishList)
 def list_wishes(status: Optional[str] = None) -> wishes.WishList:
-    return wishes.listing(status)
+    out = wishes.listing(status)
+    working = _wish_jobs() if out.wishes else {}
+    out.wishes = [_with_job(w, working.get(w.wish_id)) for w in out.wishes]
+    return out
 
 
 @app.get("/api/wishes/{wish_id}", response_model=wishes.WishDetail)
 def get_wish(wish_id: str) -> wishes.WishDetail:
     try:
-        return wishes.get(wish_id)
+        wish = wishes.get(wish_id)
     except wishes.WishError as e:
         raise HTTPException(404, str(e))
+    return _with_job(wish, _wish_jobs().get(wish_id))
 
 
 @app.post("/api/wishes/{wish_id}/edit", response_model=wishes.WishDetail)

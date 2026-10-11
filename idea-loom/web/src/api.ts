@@ -51,6 +51,9 @@ export type Wish = {
   wish_id: string; title: string; kind: string; kind_label: string; stuck: string; suggestion: string
   where: { url: string; title: string } | null; status: string; status_label: string; status_note: string | null
   pr: number | null; source: string; occurrences: number; created_at: string; updated_at: string
+  // 正在做这条愿望的作业走到哪一步；没有作业在做时为空。
+  // Where the job working on this wish has got to; empty when no job is.
+  job_id?: string | null; job_phase?: string | null; job_label?: string | null; job_queued?: boolean
 }
 export type WishDetail = Wish & {
   copy_text: string

@@ -277,3 +277,28 @@ def test_a_passing_error_while_submitting_is_retried_not_fatal(repo, wish, monke
     assert (job.phase, job.pr) == ("merged", 12) and (repo / "tools" / "n").read_text().strip() == "3"
     assert len([e for e in jobs.events(job.job_id) if "一闪而过" in e.get("text", "")]) == 2
     assert jobs.transient("fatal: unable to access: Operation timed out") and not jobs.transient("error: 测试没过") and not jobs.transient("还没有合并（状态: OPEN）。")
+
+
+def test_the_wish_list_shows_the_stage_of_the_job_working_on_it(repo, wish):
+    """愿望自己的状态要到方案批准才变；在那之前，列表靠作业的阶段告诉人它已经有人在做了。
+
+    A wish's own status only changes once the plan is approved; until then the list relies on the job's stage to say that it is being worked on.
+    """
+    def row(wish_id):
+        return next(w for w in client.get("/api/wishes").json()["wishes"] if w["wish_id"] == wish_id)
+
+    idle = wishes.record(title="没人在做的一条", kind="other", stuck="", suggestion="")
+    assert (row(wish)["job_phase"], row(wish)["job_label"], row(wish)["job_id"]) == (None, None, None)
+    job = jobs.start("wish", wish)
+    got = row(wish)
+    assert (got["status"], got["job_phase"], got["job_label"], got["job_id"], got["job_queued"]) == ("open", "plan_ready", "方案待批", job.job_id, False)
+    assert row(idle)["job_phase"] is None
+    one = client.get(f"/api/wishes/{wish}").json()
+    assert (one["job_phase"], one["job_label"]) == ("plan_ready", "方案待批")
+    jobs.cancel(job.job_id)
+    assert (row(wish)["job_phase"], row(wish)["job_label"]) == (None, None)
+    again = jobs.start("wish", wish)
+    jobs.approve(again.job_id)
+    assert jobs.get(again.job_id).phase == "merged"
+    done = client.get(f"/api/wishes/{wish}").json()
+    assert (done["status"], done["job_phase"], done["job_id"]) == ("done", None, None)
