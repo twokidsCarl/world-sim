@@ -1,0 +1,53 @@
+{
+  "about": "神经元形态重建的目录：只存 NeuroMorpho.Org 上的名字、档案和出处，重建文件（SWC）运行时下载。NeuroMorpho.Org 的内容以 CC BY 4.0 发布，使用时要引用每个重建的原始论文。 / A catalogue of neuron reconstructions: names, archives and sources on NeuroMorpho.Org only; the reconstruction files (SWC) are downloaded at run time. NeuroMorpho.Org is released under CC BY 4.0, and the original paper of each reconstruction is to be cited.",
+  "neurons": [
+    {
+      "id": "human-pyramidal",
+      "title": "人大脑皮层第 5 层的锥体细胞",
+      "titleEn": "A layer 5 pyramidal cell of the human neocortex",
+      "name": "02a_pyramidal2aFI",
+      "archive": "Allman",
+      "species": "human",
+      "region": "neocortex, fronto-insula, layer 5",
+      "has": "胞体和树突，没有重建轴突",
+      "hasEn": "soma and dendrites; the axon was not reconstructed",
+      "doi": "10.1016/j.neuroscience.2006.04.084"
+    },
+    {
+      "id": "mouse-purkinje",
+      "title": "小鼠小脑的浦肯野细胞",
+      "titleEn": "A Purkinje cell of the mouse cerebellum",
+      "name": "Purkinje-slice-ageP43-6",
+      "archive": "Dusart",
+      "species": "mouse",
+      "region": "cerebellum, Purkinje layer",
+      "has": "胞体和树突，没有重建轴突",
+      "hasEn": "soma and dendrites; the axon was not reconstructed",
+      "doi": "10.1523/JNEUROSCI.2977-12.2013"
+    },
+    {
+      "id": "rat-ca1-pyramidal",
+      "title": "大鼠海马 CA1 区的锥体细胞",
+      "titleEn": "A CA1 pyramidal cell of the rat hippocampus",
+      "name": "n419",
+      "archive": "Turner",
+      "species": "rat",
+      "region": "hippocampus, CA1",
+      "has": "胞体、基树突和顶树突，没有重建轴突",
+      "hasEn": "soma, basal and apical dendrites; the axon was not reconstructed",
+      "doi": "10.1002/(SICI)1096-9861(19980216)391:3<335::AID-CNE4>3.0.CO;2-2"
+    },
+    {
+      "id": "mouse-retinal-ganglion",
+      "title": "小鼠视网膜的方向选择性神经节细胞",
+      "titleEn": "A direction-selective ganglion cell of the mouse retina",
+      "name": "160427_pair1dsgc",
+      "archive": "Feller",
+      "species": "mouse",
+      "region": "retina",
+      "has": "胞体和树突，没有重建轴突",
+      "hasEn": "soma and dendrites; the axon was not reconstructed",
+      "doi": "10.1016/j.cub.2018.03.001"
+    }
+  ]
+}

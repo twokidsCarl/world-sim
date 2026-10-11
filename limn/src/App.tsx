@@ -5,6 +5,7 @@ import { download, renderFigure } from './render/export'
 import { placedAtomCount } from './scene/build'
 import { CATALOG, useStore } from './state/store'
 import neuro from '../data/neuro.json'
+import neurons from '../data/neurons.json'
 import { TIER_LABEL } from './scene/spec'
 import { entityLch } from './style/assign'
 import { COLOR_MODE_LABEL, COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
@@ -166,7 +167,8 @@ export function App() {
 
   useEffect(() => {
     void api.health().then(setServer)
-    if (embed && !params.get('model') && !params.get('id') && !params.get('topic')) void s.loadCatalog(DEFAULT_MODEL)
+    if (embed && !params.get('model') && !params.get('id') && !params.get('topic') && !params.get('neuron')) void s.loadCatalog(DEFAULT_MODEL)
+    else if (params.get('neuron')) void s.loadNeuron(params.get('neuron')!)
     else if (params.get('model')) void s.loadCatalog(params.get('model')!)
     else if (params.get('id')) void s.loadId(params.get('id')!)
     else if (params.get('topic')) void s.resolveTopic(params.get('topic')!)
@@ -236,6 +238,12 @@ export function App() {
             {CATALOG.map((m) => (
               <button key={m.id} disabled={working} className={s.spec?.topic === m.title ? 'on' : ''} title={m.titleEn} onClick={() => void s.loadCatalog(m.id)}>
                 {m.title}
+              </button>
+            ))}
+            <h2>神经元的形态</h2>
+            {neurons.neurons.map((n) => (
+              <button key={n.id} disabled={working} title={`${n.titleEn} (NeuroMorpho.Org: ${n.name})`} onClick={() => void s.loadNeuron(n.id)}>
+                {n.title}
               </button>
             ))}
             <h2>神经系统的分子</h2>
@@ -346,7 +354,7 @@ export function App() {
                   ))}
                 </div>
               ))}
-              {!s.spec.landscape && !s.spec.mesoscale && (
+              {!s.spec.landscape && !s.spec.mesoscale && s.spec.kind !== 'neuron' && (
                 <div style={{ margin: '6px 0' }}>
                   <div className="row">
                     <label>上色</label>
@@ -359,7 +367,7 @@ export function App() {
                   <Legend />
                 </div>
               )}
-              <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && !s.spec.landscape && '各面板比例相同。'}</div>
+              {s.spec.kind !== 'neuron' && <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && !s.spec.landscape && '各面板比例相同。'}</div>}
               {s.spec.landscape && (
                 <div className="row" style={{ margin: '6px 0' }}>
                   <button disabled={working} onClick={() => s.repack()}>重新随机排布</button>

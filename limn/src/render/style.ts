@@ -102,3 +102,16 @@ export const STYLE_MESOSCALE: Style = {
   fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0.5, layers: 3 },
   grain: 0,
 }
+
+/**
+ * 神经元形态：尺寸以微米计，分支很细，所以保证最小宽度；阴影调轻，免得密集的树突丛发黑。
+ * Neuron morphologies: sizes are in microns and branches are thin, so a minimum width is kept;
+ * shadows are lighter, so that a dense dendritic arbor does not go dark.
+ */
+export const STYLE_NEURON: Style = {
+  ...structuredClone(STYLE_MOLECULE),
+  shadow: { strength: 0.0012, cone: 2, floor: 0.8, radius: 0 },
+  // 小于这个宽度的分支会整条被描边盖住 / a branch narrower than this would be covered by its own outline from side to side
+  minRadius: 2.8,
+  lineWidth: 0.8,
+}

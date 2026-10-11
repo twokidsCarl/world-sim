@@ -148,7 +148,7 @@ export function Stage() {
         // 读一个像素是等待 GPU 的唯一可靠办法
         // reading a pixel is the only reliable way to wait for the GPU
         r.gl.readPixels(0, 0, 1, 1, r.gl.RGBA, r.gl.UNSIGNED_BYTE, new Uint8Array(4))
-        setInfo(`${s.panels.map((p) => p.mol.id).join(' · ')} · ${r.lastAtoms.toLocaleString()} 个原子 · ${Math.round(performance.now() - t0)} ms`)
+        setInfo(`${s.panels.map((p) => p.mol.id).join(' · ')} · ${r.lastAtoms.toLocaleString()} 个${s.spec?.kind === 'neuron' ? '球' : '原子'} · ${Math.round(performance.now() - t0)} ms`)
       }
     })
     clearTimeout(settle.current)
