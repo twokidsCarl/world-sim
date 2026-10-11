@@ -22,7 +22,7 @@ import trimesh
 from scipy.interpolate import RBFInterpolator
 from scipy.spatial import cKDTree
 
-from anchorlib import apply, decimate, icp, kabsch, pca_axis, rot_angle_deg, sample_surface, signed_volume
+from anchorlib import apply, ct_edge_offset, decimate, icp, kabsch, pca_axis, rot_angle_deg, sample_surface, signed_volume
 
 SUBDIR = "Final 3D STL Models-stl"
 ATTR = ("University of Denver Center for Orthopaedic Biomechanics, Visible Human lower-extremity geometry, CC BY 4.0: "
@@ -337,26 +337,9 @@ def place(denver_dir, items, work, V2A, male, raw_seg_dir=None):
 
     # where is the bone edge in the CT itself? mean HU profile along the outward normal of each surface;
     # the edge is the half-height crossing between the cortical peak and the soft tissue outside
-    from scipy import ndimage as ndi
-
-    def edge_offset(v, f, n=6000):
-        m = trimesh.Trimesh(v, f, process=False)
-        pts, fid = trimesh.sample.sample_surface(m, n, seed=2)
-        nrm = m.face_normals[fid]
-        steps = np.arange(-4.0, 4.01, 0.25) / 1000.0
-        prof = []
-        for t_ in steps:
-            q = apply(A2V, pts + t_ * nrm)
-            prof.append(ndi.map_coordinates(ct, q.T, order=1, mode="nearest"))
-        prof = np.array(prof)                                    # steps x points
-        mean = prof.mean(1)
-        k = int(np.argmax(mean))
-        outside = mean[-4:].mean()
-        half = (mean[k] + outside) / 2
-        for j in range(k, len(steps) - 1):
-            if mean[j] >= half > mean[j + 1]:
-                return round(float((steps[j] + (mean[j] - half) / (mean[j] - mean[j + 1]) * 0.00025) * 1000), 2)
-        return None
+    def edge_offset(v, f):
+        e = ct_edge_offset(ct, A2V, v, f)
+        return None if e is None else round(e, 2)
 
     edges = []
     for folder, (s, side) in SIDE.items():

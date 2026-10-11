@@ -168,6 +168,23 @@ def icp(src, dst, iters=40, trim=0.85, init=None):
     return T, float(np.sqrt((d[keep] ** 2).mean()))
 
 
+def ct_edge_offset(ct, A2V, v, f, n=6000):
+    """Where is the bone edge in the CT relative to this surface? Mean HU profile along the outward
+    normal (-4..+4 mm); the edge is the half-height crossing between the cortical peak and the soft
+    tissue outside. Returns millimetres, positive = edge outside the surface; None if no clear edge."""
+    m = trimesh.Trimesh(v, f, process=False)
+    pts, fid = trimesh.sample.sample_surface(m, n, seed=2)
+    nrm = m.face_normals[fid]
+    steps = np.arange(-4.0, 4.01, 0.25) / 1000.0
+    mean = np.array([ndi.map_coordinates(ct, apply(A2V, pts + t * nrm).T, order=1, mode="nearest").mean() for t in steps])
+    k = int(np.argmax(mean))
+    half = (mean[k] + mean[-4:].mean()) / 2
+    for j in range(k, len(steps) - 1):
+        if mean[j] >= half > mean[j + 1]:
+            return float((steps[j] + (mean[j] - half) / (mean[j] - mean[j + 1]) * 0.00025) * 1000)
+    return None
+
+
 # ── male reference meshes (BodyParts3D OBJ, millimetres, x = left, y = posterior, z = up) ─────
 
 
