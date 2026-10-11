@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { NowRunning } from '../ui/NowRunning'
 import { Link, useSearchParams } from 'react-router'
 import { type ProjectView, type Task, api } from '../api'
 import type { State } from '../contract'
@@ -31,6 +32,8 @@ export function WorkPage({ state }: { state: State }) {
   const [busy, setBusy] = useState(false)
   const [openJob, setOpenJob] = useState<string | null>(params.get('job'))
   const [advancing, setAdvancing] = useState<string | null>(null)
+  // 连续推进由云端的 worker 来做，本地没有。 / Chains are run by the worker in the cloud; there is none locally.
+  const cloud = useStore((s) => s.me?.auth_enabled === true)
   const start = (task: Task) =>
     void api.startJob('task', task.task_id).then((j) => (setOpenJob(j.job_id), void load()), (e: Error) => setError(e.message))
   const advance = (dir: string) => {
@@ -72,6 +75,7 @@ export function WorkPage({ state }: { state: State }) {
       )}
     >
       {error && <div className="notice bad" role="alert">{error}</div>}
+      <NowRunning onOpen={setOpenJob} />
 
       <Section
         title={t('任务', 'Tasks')}
@@ -216,6 +220,14 @@ export function WorkPage({ state }: { state: State }) {
                   <button disabled={advancing !== null} onClick={() => advance(p.dir)} title={t('让模型读它的 README 和最近的 PR，提议下一个里程碑，建成一个待开工的任务', 'The model reads its README and recent PRs, proposes the next milestone and creates a task ready to start')}>
                     {advancing === p.dir ? t('正在想下一步…', 'Thinking about the next step…') : t('推进：提议下一步', 'Advance: propose the next step')}
                   </button>
+                  {cloud && (
+                    <button
+                      title={t('事先批准接下来最多三步：每一步仍然出方案、跑测试、走 PR，只是方案不再等你批。哪一步没做成就停下并通知你。', 'Approve up to three more steps in advance: each still plans, runs the tests and goes through a PR, only the plan no longer waits for you. A step that fails stops the chain and notifies you.')}
+                      onClick={() => void api.chain(p.dir, 3).then(() => setError(null), (e: Error) => setError(e.message))}
+                    >
+                      {t('连续推进三步', 'Run three steps')}
+                    </button>
+                  )}
                 </div>
                 {p.ideas.length > 0 && (
                   <div className="small">

@@ -309,6 +309,8 @@ src/idea_loom/
   play/         统一入口：名片、快照与构建、后端进程、按主机名分发 / the single entry point: card files, snapshots and builds, backend processes, routing by host
   jobs.py       作业：出方案、批准、执行、测试、PR / jobs: plan, approve, execute, test, PR
   worker.py     云端跑作业的进程：队列、每个作业的工作区、推分支开 PR / the process that runs jobs in the cloud: the queue, per-job workspaces, pushing and opening PRs
+  maintenance.py 定时维护：提交少时自动做一件小事，结果分两档 / scheduled maintenance: one small thing when commits are few, in two tiers
+  chains.py     连续推进：事先批准一个子项目接下来的几步 / chains: steps of a subproject approved in advance
   gates.py      闸门：每天的上限、订阅额度的暂停线 / gates: the daily cap and the allowance pause
   calls.py      云端：hub 把模型调用交给 worker（只给数据，不给命令）/ in the cloud: the hub hands model calls to the worker (data only, never a command)
   review.py     回看操作轨迹 / review of the action trail

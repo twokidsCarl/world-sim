@@ -121,7 +121,7 @@ def prepare(job: jobs.Job, phase: str) -> jobs.Job:
 
 
 def publish(ws: Path, branch: str, paths: list[str], title: str, commit_body: str, pr_body: str,
-            existing_pr: Optional[str] = None, say: Callable[[str], None] = lambda text: None) -> tuple[Optional[str], Optional[str]]:
+            existing_pr: Optional[str] = None, say: Callable[[str], None] = lambda text: None, draft: bool = False) -> tuple[Optional[str], Optional[str]]:
     """提交工作区里这几个路径的改动、推分支、开 PR、等合并。返回（PR 地址，出了什么问题）。
 
     Commit the changes under these paths in the workspace, push the branch, open the PR and
@@ -153,11 +153,13 @@ def publish(ws: Path, branch: str, paths: list[str], title: str, commit_body: st
     # When resuming, a PR opened last time that is still open is reused instead of opening another.
     url = existing_pr if existing_pr and pr_state(existing_pr) == "OPEN" else None
     if url is None:
-        created = subprocess.run(["gh", "pr", "create", "--base", "main", "--head", branch, "--title", title, "--body", pr_body],
+        created = subprocess.run(["gh", "pr", "create", "--base", "main", "--head", branch, "--title", title, "--body", pr_body, *(["--draft"] if draft else [])],
                                  cwd=ws, capture_output=True, text=True, env=with_token, timeout=120)
         url = next((line.strip() for line in created.stdout.splitlines() if line.strip().startswith("http")), None)
         if created.returncode != 0 or not url:
             return url, f"开 PR 失败：{(created.stdout + created.stderr).strip()[-300:]}"
+    if draft:  # 草稿不会被自动合并，不用等 / a draft is not merged automatically, so there is nothing to wait for
+        return url, None
     say(f"PR 已开：{url}，等它合并。")
     deadline = time.monotonic() + MERGE_WAIT_SECONDS
     state = ""
@@ -171,10 +173,10 @@ def publish(ws: Path, branch: str, paths: list[str], title: str, commit_body: st
     return url, f"等了 {MERGE_WAIT_SECONDS // 60} 分钟还没有合并（状态：{state or '不知道'}）"
 
 
-def submit(job: jobs.Job, title: str, commit_body: str, pr_body: str) -> tuple[Optional[str], Optional[str]]:
+def submit(job: jobs.Job, title: str, commit_body: str, pr_body: str, draft: bool = False) -> tuple[Optional[str], Optional[str]]:
     """作业做完之后：只提交它那个目录。 / After a job: submit its directory only."""
     return publish(Path(job.workspace or ""), str(job.branch), [job.directory], title, commit_body, pr_body,
-                   existing_pr=job.pr_url, say=lambda text: jobs._say(job.job_id, text))
+                   existing_pr=job.pr_url, say=lambda text: jobs._say(job.job_id, text), draft=draft)
 
 
 EXPORT_EVERY = 900.0
@@ -236,6 +238,7 @@ class Worker:
     def __init__(self) -> None:
         self.running: dict[str, int] = {}  # 作业编号 → 进程号 / job id → pid
         self.calls: list[threading.Thread] = []  # 正在替 hub 做的模型调用 / model calls being served for the hub
+        self.maintained_at = 0.0
         self.exporting: Optional[threading.Thread] = None
         self.exported_at = time.monotonic()  # 启动后过一个间隔再导第一次 / the first export comes one interval after start
 
@@ -280,11 +283,22 @@ class Worker:
             if not job.workspace or job.job_id in self.running or job.queued:
                 continue
             age = time.time() - datetime.fromisoformat(job.updated_at).timestamp()
-            if job.phase in ("merged", "cancelled", "declined") or (job.phase == "failed" and age > KEEP_FAILED_SECONDS):
+            if job.phase in ("merged", "cancelled", "declined", "review", "clean") or (job.phase == "failed" and age > KEEP_FAILED_SECONDS):
                 remove_workspace(job)
                 job.workspace = None
                 jobs.save(job)
-        # 3. 排着队的，按先来后到 / the queued, first come first served
+        # 3. 方案不等人批的那些（定时维护、连续推进）：出完方案直接动手。
+        #    Those whose plan does not wait for approval (maintenance, chains): go straight from the plan to the work.
+        for job in all_jobs:
+            if job.phase == "plan_ready" and jobs.auto(job) and not job.queued:
+                try:
+                    jobs.approve(job.job_id)
+                except jobs.JobError:
+                    pass
+        self.advance_chains(all_jobs)
+        self.maybe_maintain(all_jobs)
+        all_jobs = jobs.listing()
+        # 4. 排着队的，按先来后到 / the queued, first come first served
         started: list[str] = []
         for job in sorted((j for j in all_jobs if j.queued and j.phase != "cancelled"), key=lambda j: j.updated_at):
             reason = self._hold(job, all_jobs)
@@ -308,6 +322,62 @@ class Worker:
             jobs._spawn(job, phase)
             self.running[job.job_id] = int(jobs.get(job.job_id).pid or 0)
             started.append(job.job_id)
+        return started
+
+    def maybe_maintain(self, all_jobs: list[jobs.Job]) -> Optional[str]:
+        """提交少、没有别的作业、闸门没拦的时候，开一次定时维护。返回开的作业编号。
+
+        Start one maintenance run when commits are few, no other job exists and the gates are open. Returns the job id.
+        """
+        from . import maintenance
+
+        if not maintenance.enabled() or time.monotonic() - self.maintained_at < 60:
+            return None
+        self.maintained_at = time.monotonic()
+        if any(j.phase in jobs.HOLDING for j in all_jobs) or gates.may_start():
+            return None
+        ensure_clone()
+        if maintenance.due(clone()) is not None:
+            return None
+        ref = maintenance.pick(clone())
+        if ref is None:
+            return None
+        job = jobs.start("maintenance", ref)
+        maintenance.record(ref.split(":")[0], job.directory, job.job_id)
+        return job.job_id
+
+    def advance_chains(self, all_jobs: list[jobs.Job]) -> list[str]:
+        """连续推进：主人给一个子项目批准了"接下来最多 N 步"。上一步合并了就提议下一个里程碑并开工；
+        上一步失败了就停掉这条线并通知。
+
+        Chains: the owner approved "at most N more steps" for a subproject. When the previous step
+        has merged, the next milestone is proposed and started; when it failed, the chain stops and
+        the owner is notified.
+        """
+        from . import chains
+
+        started = []
+        for directory, left in chains.load().items():
+            mine = [j for j in all_jobs if j.directory == directory]
+            if any(j.phase in jobs.HOLDING for j in mine):
+                continue
+            last = max((j for j in mine if j.chain), key=lambda j: j.created_at, default=None)
+            if last is not None and last.phase in ("failed", "cancelled"):
+                chains.stop(directory)
+                notify.send(f"连续推进停了：{directory}", f"上一步没做成（{last.title}），剩下的 {left} 步没有做。", url="/work", tag=f"chain-{directory}")
+                continue
+            if left <= 0:  # 步数用完，最后一步也有了结果：这条线结束 / the steps are used up and the last one has its result: the chain is over
+                chains.stop(directory)
+                continue
+            if gates.may_start():
+                continue
+            try:
+                task_id = chains.propose(directory)
+                chains.use(directory)
+                started.append(jobs.start("task", task_id, chain=True).job_id)
+            except Exception as e:  # noqa: BLE001 — 提议不出来就停掉这条线，别每几秒试一次 / stop the chain instead of retrying every few seconds
+                chains.stop(directory)
+                notify.send(f"连续推进停了：{directory}", f"提议下一步时出错：{e}"[:200], url="/work", tag=f"chain-{directory}")
         return started
 
     def serve_calls(self) -> int:
@@ -360,9 +430,14 @@ class Worker:
 
 def status() -> dict[str, object]:
     """给"现在在跑什么"用。 / For the "what is running now" view."""
+    from . import chains, maintenance
+
     listed = jobs.listing()
     return {
         "queued": [{"job_id": j.job_id, "title": j.title, "step": j.queued, "waiting": j.waiting} for j in listed if j.queued],
         "active": [{"job_id": j.job_id, "title": j.title, "phase": j.phase} for j in listed if j.phase in jobs.ACTIVE and not j.queued],
         "started_today": gates.started_today(), "per_day": gates.per_day(), "paused": gates.paused(), "usage": gates.usage(),
+        "worker_alive": calls.worker_alive(), "chains": chains.load(),
+        "maintenance": {"enabled": maintenance.enabled(), "below": maintenance.below(), "recent": maintenance.history()[-10:][::-1]},
+        "review": [{"job_id": j.job_id, "title": j.title, "pr_url": j.pr_url} for j in listed if j.phase == "review"],
     }
