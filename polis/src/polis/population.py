@@ -18,6 +18,9 @@ SURNAMES = "王李张刘陈杨黄赵吴周徐孙马朱胡郭何高林罗郑梁�
 GIVEN_M = "福贵顺发财旺根生水木金土山海林森明亮德仁义礼智信忠孝勇刚强平安康宁"
 GIVEN_F = "秀英兰芳桂珍凤翠梅菊莲荷云霞月娥巧慧淑贞玉珠银香春秋冬雪琴素"
 
+# 各类场所：一个成年人成为常客的概率（学校只收读书的年轻人）
+JOIN = {"teahouse": 0.18, "market": 0.40, "temple": 0.15, "school": 0.5, "salon": 0.12, "shop": 0.2, "station": 0.25}
+
 KIN, NEIGHBOR, COLLEAGUE, FRIEND = "kin", "neighbor", "colleague", "friend"
 STRENGTH = {KIN: 0.9, NEIGHBOR: 0.45, COLLEAGUE: 0.5, FRIEND: 0.6}
 
@@ -71,8 +74,10 @@ def build(params: Params, scenario: ModuleType) -> Population:
 
     # 场所的常客
     member: list[list[int]] = [[] for _ in range(n)]
-    for kind, p_join in (("teahouse", 0.18), ("market", 0.40), ("temple", 0.15), ("school", 0.5)):
+    for kind, p_join in JOIN.items():
         places = [v for v in venues if v.kind == kind]
+        if not places:
+            continue
         for i in range(n):
             if kind == "school" and not (age[i] < 22 and education[i] >= 1):
                 continue

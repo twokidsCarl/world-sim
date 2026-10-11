@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 SCHEMA = 1
 
 TieKind = Literal["kin", "neighbor", "colleague", "friend"]
-VenueKind = Literal["bank", "teahouse", "market", "temple", "school"]
+VenueKind = Literal["bank", "teahouse", "market", "temple", "school", "salon", "shop", "station"]
 
 # 帧里 status 通道的取值
 UNAWARE, AWARE, QUEUEING, WITHDREW, LOST = 0, 1, 2, 3, 4
@@ -127,6 +127,7 @@ class Params(BaseModel):
     w_tell: float = 2.6
     w_seen: float = 3.0
     novelty: float = 0.6
+    corroborate: float = 0.5
     confirm: float = 0.4
     forget: float = 0.01
     # 传播

@@ -8,6 +8,7 @@ from __future__ import annotations
 from ..model import Intervention
 
 TITLE = "通和钱庄挤兑"
+DEFAULTS: dict = {}  # 这个场景对 Params 缺省值的改动
 SETTING = (
     "民国年间的一座县城，千余口人。城中只有一家钱庄——通和。"
     "头一天夜里，更夫老周看见钱庄后门往外抬箱子。钱庄其实并不亏空。"
@@ -90,6 +91,8 @@ RUMOR = [
     (9.99, ["通和明天就关门，存的钱一个子儿也拿不回来！", "官府明天就来封通和的门，快去取钱！"]),
 ]
 ORIGIN = "我昨夜亲眼看见，通和钱庄后门往外抬箱子。"
+ORIGIN_SEVERITY = 1.0  # 最初那句话有多重
+ORIGIN_BELIEF = 0.6  # 说出它的人自己信几分
 QUEUE_SEEN = "我看见有人急着去通和取钱。"
 REBUTTAL = [
     "我亲自去柜上看了，通和照常兑付。",

@@ -79,7 +79,8 @@ class Sim:
         self.seen = np.zeros(n)
         self.status = np.full(n, UNAWARE)
         self.held = np.full(n, -1)
-        self.heard = np.zeros((n, 2), dtype=int)  # [辟谣, 谣言] 各听过几次
+        self.heard = np.zeros((n, 2), dtype=int)  # [辟谣, 谣言] 各从几个不同的人那里听过
+        self.told: dict[tuple[int, int, int], int] = {}  # (谁, 对谁, 哪一类话) 说过几次
         self.zeal = np.ones(n)
         self.verified = np.zeros(n, dtype=bool)
         self.believed = np.zeros(n, dtype=bool)
@@ -137,10 +138,14 @@ class Sim:
 
         was_aware = self.status[dst] != UNAWARE
         p0 = float(mind.sigmoid(self.L[dst]))
+        side = (msg.valence + 1) // 2
+        repeats = self.told.get((src, dst, side), 0)
+        others = int(self.heard[dst, side]) - (repeats > 0)
         if dst != self.banker:  # 掌柜知道库里有多少银子，谁说什么都一样
-            self.L[dst] += mind.tell_delta(msg.valence, msg.severity, trust, int(self.heard[dst, (msg.valence + 1) // 2]),
+            self.L[dst] += mind.tell_delta(msg.valence, msg.severity, trust, repeats, others,
                                            float(self.L[dst]), int(self.education[dst]), p)  # fmt: skip
-        self.heard[dst, (msg.valence + 1) // 2] += 1
+        self.told[(src, dst, side)] = repeats + 1
+        self.heard[dst, side] += repeats == 0
         p1 = float(mind.sigmoid(self.L[dst]))
         self._emit("tell", a=src, b=dst, m=m, via=via, p0=round(p0 * 100), p1=round(p1 * 100))
 
@@ -163,7 +168,16 @@ class Sim:
         confirm = 1.0 + self.p.confirm * iv.valence * np.tanh(self.L[reached] / 2.0)
         self.L[reached] += iv.valence * iv.strength * (0.3 + self.trust_institution[reached]) * confirm
         # 告示也让原本不知情的人知道了有这回事
+        # A notice also tells people who had not heard that there is something to hear about
         self.status[reached] = np.maximum(self.status[reached], AWARE)
+        if iv.valence < 0:
+            # 被说服的人会把辟谣接着往下传；看到告示的人传谣的兴致也按告示的分量减退
+            # Those it convinces pass the correction on; everyone it reaches loses appetite for the rumour in proportion to its weight
+            won = reached[(mind.sigmoid(self.L[reached]) < 0.3) & (self.status[reached] <= AWARE)]
+            self.held[won] = m
+            self.zeal[won] = 1.0
+            others = np.setdiff1d(reached, won)
+            self.zeal[others] *= max(0.0, 1 - iv.strength / 4)
         self._emit("broadcast", a=iv.actor, m=m, x=round(len(reached) / self.n, 3))
         if iv.actor is not None:
             self.held[iv.actor] = m
@@ -308,8 +322,8 @@ class Sim:
         p = self.p
         witness = self.pop.cast["witness"]
         self.status[witness] = AWARE
-        self.L[witness] = mind.logit(0.6)
-        self.held[witness] = self._message(None, witness, 1, 1.0, self.sc.ORIGIN)
+        self.L[witness] = mind.logit(self.sc.ORIGIN_BELIEF)
+        self.held[witness] = self._message(None, witness, 1, self.sc.ORIGIN_SEVERITY, self.sc.ORIGIN)
         self._emit("seed", a=witness, m=0)
         self._think(witness, "seed")
         self.believed = self.L > 0

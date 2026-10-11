@@ -15,16 +15,18 @@ def logit(p):
     return np.log(p / (1.0 - p))
 
 
-def tell_delta(valence: int, severity: float, trust: float, heard: int, L: float, education: int, p: Params) -> float:
+def tell_delta(valence: int, severity: float, trust: float, repeats: int, others: int, L: float, education: int, p: Params) -> float:
     """听到一句话后信念对数几率的变化。
 
-    来源越可信、说法越重，变化越大；同一方向听得越多，新增越少；
+    来源越可信、说法越重，变化越大；同一个人翻来覆去地说（repeats），新增越来越少；
+    但已经从别的人那里听过同样的话（others），这一次就更有分量——三人成虎；
     与自己已有倾向一致的话更容易听进去（确认偏误）；读书多的人对谣言打折扣。
     """
-    novelty = 1.0 / (1.0 + p.novelty * heard)
+    novelty = 1.0 / (1.0 + p.novelty * repeats)
+    corroborate = 1.0 + p.corroborate * min(others, 3)
     confirm = 1.0 + p.confirm * valence * np.tanh(L / 2.0)
     skeptic = 1.0 - 0.15 * education if valence > 0 else 1.0
-    return float(valence * p.w_tell * severity * trust * novelty * confirm * skeptic)
+    return float(valence * p.w_tell * severity * trust * novelty * corroborate * confirm * skeptic)
 
 
 def expectation(seen, talk, depth):

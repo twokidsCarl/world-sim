@@ -67,3 +67,23 @@ def test_saved_calibration_still_hits_its_targets():
     saved = json.loads(CALIBRATION.read_text(encoding="utf-8"))
     score, _ = cal.evaluate(saved["calibrated"]["params"], [1, 2], saved["n"], cal.targets())
     assert score < 0.5
+
+
+def test_three_men_make_a_tiger_under_saved_calibration():
+    import json
+
+    from polis.cli import CALIBRATION
+
+    params = Params(**json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"])
+    one, two, three = cal.sanren_chenghu(params)
+    assert one < 0.2 <= two < 0.5 <= three
+
+
+def test_same_voice_repeating_counts_less_than_a_new_voice():
+    from polis import mind
+
+    p = Params()
+    again = mind.tell_delta(1, 1.0, 0.5, repeats=1, others=0, L=-2.0, education=0, p=p)
+    another = mind.tell_delta(1, 1.0, 0.5, repeats=0, others=1, L=-2.0, education=0, p=p)
+    first = mind.tell_delta(1, 1.0, 0.5, repeats=0, others=0, L=-2.0, education=0, p=p)
+    assert again < first < another
