@@ -2,7 +2,7 @@
 
 ## 中文
 
-我把 Goodsell Gallery 的 49 幅画（`gallery/`）和他给每幅写的说明（`gallery/index.json`）看了一遍。下面是他反复使用的做法，以及 limn 现在做到了哪一条。说明很有用：他逐个写了每种颜色画的是什么，比如流感那幅：“lipid bilayer membrane (light purple) … hemagglutinin (purple), neuraminidase (magenta) … M1 matrix protein (blue) lines the inner side of the membrane. RNA-dependent RNA polymerase (red) is bound to the genomic RNA strands (yellow), which are protected in a helical complex with nucleoprotein (orange).”
+我把 Goodsell Gallery 的 49 幅画（`gallery/`）看了一遍，也读了他在各幅页面上写的说明。下面是他反复使用的做法，以及 limn 现在做到了哪一条。说明很有用：他逐个写了每种颜色画的是什么，比如流感那幅：“lipid bilayer membrane (light purple) … hemagglutinin (purple), neuraminidase (magenta) … M1 matrix protein (blue) lines the inner side of the membrane. RNA-dependent RNA polymerase (red) is bound to the genomic RNA strands (yellow), which are protected in a helical complex with nucleoprotein (orange).”
 
 | 他的做法 | 在哪些画里看得最清楚 | limn |
 |---|---|---|
@@ -17,6 +17,17 @@
 | **环境铺满整张纸**：病毒周围是拥挤的血浆、黏液或细胞质，底色是该区室颜色的最深一号。只有“肖像”式的画（流感、埃博拉、支原体、syn3A）留白。 | coronavirus、hiv-in-blood-plasma、zika-virus、biosites-* | 没做 |
 | **外面的刺排得很整齐**：等间隔、垂直于膜，前一圈的空隙里露出后一圈。他画的是理想化的排布，不是某一个瞬间的样子。 | influenza-virus、coronavirus、ebola-virus、hiv-in-blood-plasma | 流感已做（`src/infer/idealise.ts`）：种类、数量、结构照模拟，位置和朝向排成一圈圈，说明里写明；切到 Illustrate 画法看原样的数据 |
 | **小分子、离子、水都不画。** | 图集首页的说明 | 一直如此 |
+
+### 把图集看全之后补的几条（共 50 幅，这次全部看过缩略图）
+
+上面那张表是只看了约 30 幅时归纳的。看全之后，原来的十一条没有被推翻的，另外看到：
+
+- **“肖像”和“场景”是两种构图。** 肖像（influenza-virus、ebola-virus、measles-virus-proteins、mycoplasma-mycoides、jcvi-syn3a-minimal-cell、model-of-a-mycoplasma-cell）是一个完整的对象摆在白纸上，对称、居中。场景（其余四十多幅）铺满整张纸，膜斜着或弯着穿过画面，把画面分成两三个颜色不同的区室。limn 现在所有的图都是肖像式的；场景式的还没有。
+- **细胞里的 DNA 是很长的线，绕成一团或穿过整个画面**（escherichia-coli、mycoplasma-mycoides、jcvi-syn3a-minimal-cell、reca-and-dna），粗细均匀，上面串着蛋白。我们的支原体里 DNA 仍是团块，这是和他差得最明显的一处。
+- **病毒里面的核酸有三种画法**：流感是蛋白裹着的粗杆，新冠和寨卡是珠子串在线上绕成一团，mRNA 疫苗里是一根裸的线团。
+- **膜**：几乎每一幅都画了中线的虚线或两排短纹（immunological-synapse、insulin-release、lipid-droplets、coronavirus 都很清楚），蛋白穿过的地方断开。这一条我们还没做。
+- **底色**：场景的缝隙里是该区室颜色的最深一号，或者近黑；从来不是白。肖像才用白纸。
+- **用黑底的只有三幅**（bacteriophage-t4-infection、hiv-infected-cell、respiratory-droplet），都是比例尺很大的图。
 
 ### 第四轮（g4）：切片，流感的内部，按他的画配色
 
@@ -110,7 +121,7 @@ limn 这一轮的数：
 
 ## English
 
-I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and the description he gives each (`gallery/index.json`). The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
+I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
 
 In order, the rows of the table are:
 
@@ -125,6 +136,17 @@ In order, the rows of the table are:
 9. **The environment fills the sheet**: a virus is surrounded by crowded plasma, mucus or cytoplasm, on a ground of that compartment's deepest shade. Only "portraits" (influenza, Ebola, mycoplasma, syn3A) are left on white. Not done.
 10. **The spikes outside stand in good order**: evenly spaced and straight up from the membrane, the ring behind showing in the gaps of the ring in front. What he paints is an idealised arrangement, not one instant. Done for influenza (`src/infer/idealise.ts`): kinds, numbers and structures as in the simulation, positions and orientations set in rings, with the notes saying so; switch to Illustrate to see the data as it is.
 11. **Small molecules, ions and water are left out.** Always the case.
+
+### What seeing the whole gallery added (50 paintings, all now seen as thumbnails)
+
+The table above was drawn up after seeing about 30. With all of them seen, none of the eleven points is overturned, and there is this besides:
+
+- **"Portraits" and "scenes" are two compositions.** A portrait (influenza-virus, ebola-virus, measles-virus-proteins, mycoplasma-mycoides, jcvi-syn3a-minimal-cell, model-of-a-mycoplasma-cell) is one whole object on white paper, symmetrical and centred. A scene (the other forty-odd) fills the sheet, with a membrane crossing it at a slant or in a curve and dividing it into two or three compartments of different colour. Everything limn draws now is a portrait; it has no scenes yet.
+- **DNA in a cell is a very long strand, wound into a tangle or crossing the whole picture** (escherichia-coli, mycoplasma-mycoides, jcvi-syn3a-minimal-cell, reca-and-dna), of even width, with proteins strung along it. In our mycoplasma the DNA is still lumps, which is where we differ from him most plainly.
+- **Nucleic acid inside a virus is painted three ways**: thick protein-clad rods in influenza, beads on a strand wound into a ball in the coronavirus and Zika, a bare tangle of strand in the mRNA vaccine.
+- **Membranes**: nearly every painting has the dashed mid-line or two rows of short strokes (plain in immunological-synapse, insulin-release, lipid-droplets, coronavirus), broken where a protein passes through. We have not done this.
+- **Ground**: in a scene the gaps show the deepest shade of that compartment's colour, or near-black, never white. Only portraits use white paper.
+- **Only three have a black ground** (bacteriophage-t4-infection, hiv-infected-cell, respiratory-droplet), all at very large scale.
 
 ### Round 4 (g4): the slab, the inside of the influenza virion, colours after his painting
 

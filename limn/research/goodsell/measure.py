@@ -106,16 +106,18 @@ def measure(rgb):
 def main():
     rnd = sys.argv[1] if len(sys.argv) > 1 else 'g0'
     pairs = json.load(open(os.path.join(HERE, 'pairs.json')))['pairs']
+    # 第二个参数只量一种画法的对照：painted 或 illustrate / a second argument restricts to pairs of one drawing: painted or illustrate
+    if len(sys.argv) > 2:
+        pairs = [p for p in pairs if p.get('drawing', 'painted') == sys.argv[2]]
     os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
     keys = ['paper', 'ink', 'ink_L', 'ink_C', 'bumps', 'flat', 'L', 'C']
     print('| ' + ' | '.join(['pair', 'which'] + keys + ['palette']) + ' |')
     print('|' + '---|' * (len(keys) + 3))
     rows = {}
     for p in pairs:
-        ref = load(os.path.join(HERE, 'gallery', p['ref']))
+        ref = load(os.path.join(HERE, p['ref']))
         mine_path = os.path.join(ROOT, '.cache', 'snapshots', f"{rnd}-{p['name']}.png")
         if not os.path.exists(mine_path):
-            print(f"| {p['name']} | (no picture for round {rnd}) |")
             continue
         mine = load(mine_path)
         (mr, labr, subr), (mm, labm, subm) = measure(ref), measure(mine)

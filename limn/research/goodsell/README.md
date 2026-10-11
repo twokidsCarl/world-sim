@@ -2,6 +2,9 @@
 
 > 从整个图集归纳出的做法、limn 做到了哪几条、以及第四轮的记录，在 [`STYLE.md`](STYLE.md)。
 > The practices drawn from the whole gallery, which of them limn follows, and the record of round 4 are in [`STYLE.md`](STYLE.md).
+>
+> 手里一共有哪些他的图、各自的许可、看过多少，在 [`CATALOGUE.md`](CATALOGUE.md)；取图用 `fetch.py`。
+> What pictures of his are in hand, under which licences, and how many have been looked at is in [`CATALOGUE.md`](CATALOGUE.md); `fetch.py` fetches them.
 
 ## 中文
 
@@ -9,7 +12,7 @@ limn 以前对齐的是 Goodsell 的电脑出图程序 Illustrate（见 `../illu
 
 ### 参考图
 
-取自 PDB-101 的 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery)，页面写明 “These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration.” `gallery/` 里是整个图集 800 像素宽的版本（转成了 JPEG），`gallery/index.json` 是每幅的标题、署名和他自己写的说明；原尺寸在 `https://cdn.rcsb.org/pdb101/goodsell/tif/<名字>.tif`。各幅的署名：
+取自 PDB-101 的 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery)，页面写明 “These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration.” `gallery/` 里是整个图集 800 像素宽的版本（转成了 JPEG），`gallery/index.json` 是每幅的标题和署名；原尺寸在 `https://cdn.rcsb.org/pdb101/goodsell/tif/<名字>.tif`。各幅的署名：
 
 | 文件 | 署名 |
 |---|---|
@@ -116,7 +119,7 @@ limn used to be matched against Illustrate, Goodsell's own program (see `../illu
 
 ### References
 
-From PDB-101's [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery), whose page states: "These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration." `gallery/` holds the whole gallery at 800 pixels (converted to JPEG), and `gallery/index.json` each painting's title, acknowledgement and his own description; full size is at `https://cdn.rcsb.org/pdb101/goodsell/tif/<name>.tif`. The acknowledgement of each is in the table above.
+From PDB-101's [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery), whose page states: "These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration." `gallery/` holds the whole gallery at 800 pixels (converted to JPEG), and `gallery/index.json` each painting's title and acknowledgement; full size is at `https://cdn.rcsb.org/pdb101/goodsell/tif/<name>.tif`. The acknowledgement of each is in the table above.
 
 The pairs are in `pairs.json`. Three paintings (`jcvi-syn3a-minimal-cell`, `escherichia-coli`, `biosites-cytoplasm`) have been fetched but not yet paired with a scene.
 

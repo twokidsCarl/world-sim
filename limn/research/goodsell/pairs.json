@@ -1,11 +1,89 @@
 {
-  "about": "每一对：Goodsell 的一幅画，和 limn 里同一个对象的场景。 / Each pair: one of Goodsell's paintings, and the scene of the same subject in limn.",
+  "about": "每一对：Goodsell 的一幅图，和 limn 里同一个对象的场景。drawing 是对照时用的画法：painted 对他的水彩全景（gallery/），illustrate 对他的“每月分子”插图（motm/refs/，CC-BY-4.0，署名 David S. Goodsell 和 RCSB PDB；source 是原图地址）。有的“每月分子”图里画的不止这一个结构，只能比画法。 / Each pair: one of Goodsell's pictures, and the scene of the same subject in limn. `drawing` is the way of drawing used for the comparison: painted against his watercolour landscapes (gallery/), illustrate against his Molecule of the Month illustrations (motm/refs/, CC-BY-4.0, attributed to David S. Goodsell and the RCSB PDB; `source` is the original's address). Some Molecule of the Month pictures show more than this one structure, and only the way of drawing can be compared.",
   "pairs": [
-    { "name": "influenza", "ref": "influenza-virus.jpg", "scene": "/?model=influenza-virion" },
-    { "name": "zika", "ref": "zika-virus.jpg", "scene": "/?model=zika-virus" },
-    { "name": "coronavirus", "ref": "coronavirus.jpg", "scene": "/?model=sars-cov-2-virion" },
-    { "name": "hiv", "ref": "hiv-in-blood-plasma.jpg", "scene": "/?model=hiv-virion-petworld" },
-    { "name": "synapse", "ref": "excitatory-and-inhibitory-synapses.jpg", "scene": "/?model=presynaptic-bouton" },
-    { "name": "mycoplasma", "ref": "mycoplasma-mycoides.jpg", "scene": "/?model=mycoplasma-genitalium" }
+    {
+      "name": "influenza",
+      "ref": "gallery/influenza-virus.jpg",
+      "scene": "/?model=influenza-virion",
+      "drawing": "painted"
+    },
+    {
+      "name": "zika",
+      "ref": "gallery/zika-virus.jpg",
+      "scene": "/?model=zika-virus",
+      "drawing": "painted"
+    },
+    {
+      "name": "coronavirus",
+      "ref": "gallery/coronavirus.jpg",
+      "scene": "/?model=sars-cov-2-virion",
+      "drawing": "painted"
+    },
+    {
+      "name": "hiv",
+      "ref": "gallery/hiv-in-blood-plasma.jpg",
+      "scene": "/?model=hiv-virion-petworld",
+      "drawing": "painted"
+    },
+    {
+      "name": "synapse",
+      "ref": "gallery/excitatory-and-inhibitory-synapses.jpg",
+      "scene": "/?model=presynaptic-bouton",
+      "drawing": "painted"
+    },
+    {
+      "name": "mycoplasma",
+      "ref": "gallery/mycoplasma-mycoides.jpg",
+      "scene": "/?model=mycoplasma-genitalium",
+      "drawing": "painted"
+    },
+    {
+      "name": "syn3a",
+      "ref": "gallery/jcvi-syn3a-minimal-cell.jpg",
+      "scene": "/?model=syn3a-envelope",
+      "drawing": "painted"
+    },
+    {
+      "name": "nucleosome",
+      "ref": "motm/refs/nucleosome.jpg",
+      "scene": "/?id=1AOI&style=illustrate",
+      "drawing": "illustrate",
+      "source": "https://cdn.rcsb.org/pdb101/motm/314/1aoi_5t5k.png"
+    },
+    {
+      "name": "spike",
+      "ref": "motm/refs/spike.jpg",
+      "scene": "/?id=6VXX&style=illustrate",
+      "drawing": "illustrate",
+      "source": "https://cdn.rcsb.org/pdb101/motm/246/246-SARSCoV2_Spike-6crz_6vxx3.jpg"
+    },
+    {
+      "name": "hemoglobin",
+      "ref": "motm/refs/hemoglobin.jpg",
+      "scene": "/?id=2HHB&style=illustrate",
+      "drawing": "illustrate",
+      "source": "https://cdn.rcsb.org/pdb101/motm/257/257-Fetal_Hemoglobin-1fdh_4hhb.jpg"
+    },
+    {
+      "name": "antibody",
+      "ref": "motm/refs/antibody.jpg",
+      "scene": "/?id=1IGT&style=illustrate",
+      "drawing": "illustrate",
+      "source": "https://cdn.rcsb.org/pdb101/motm/21/1igt.gif"
+    },
+    {
+      "name": "zika-capsid",
+      "ref": "motm/refs/zika-capsid.jpg",
+      "scene": "/?id=5IRE&style=illustrate",
+      "drawing": "illustrate",
+      "source": "https://cdn.rcsb.org/pdb101/motm/197/197-Zika_Virus-5ire_glyc.jpg"
+    },
+    {
+      "name": "ribosome",
+      "ref": "motm/refs/ribosome.jpg",
+      "scene": "/?id=7K00&style=illustrate",
+      "drawing": "illustrate",
+      "source": "https://cdn.rcsb.org/pdb101/motm/121/2wdk_2wdl_front.jpg"
+    }
   ]
 }
