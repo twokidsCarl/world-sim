@@ -10,7 +10,14 @@ export interface Text { zh: string; en: string }
 
 export interface CheckDef {
   name: Text
-  at: SkinExpr
+  /**
+   * 皮肤上的一点；或 { over: 部件名 }：该部件正前方的皮肤，取其中面积最大的分区
+   * （单个顶点恰好落在分界线上时，换一套网格就会翻转）。
+   * A point on the skin; or { over: part name }: the skin in front of that part, taking the
+   * region with the largest share of it (a single vertex sitting on a boundary flips whenever
+   * the mesh changes).
+   */
+  at: SkinExpr | { over: string }
   /** 可接受的分区 key（任一即可）/ Region keys that are acceptable (any one). */
   expect: string[]
   source: string
@@ -42,7 +49,29 @@ export function areas(skin: Skin, labels: Uint8Array, regions: RegionDef[]): Are
   })
 }
 
-export interface PointResult { name: string; side: SideLR; got: string; expect: string[]; ok: boolean; source?: string }
+export interface PointResult { name: string; side: SideLR; got: string; expect: string[]; ok: boolean; source?: string; shares?: Record<string, number> }
+
+/**
+ * 某部件正前方（其包围盒在冠状面上的投影内、本侧一半）皮肤的分区面积构成。
+ * Area shares of the regions on the skin in front of a part (inside the frontal projection of its bounding box, this side's half).
+ */
+export function regionsOver(lm: Landmarks, labels: Uint8Array, regions: RegionDef[], partName: string, side: SideLR): Record<string, number> {
+  const skin = lm.skin
+  const part = lm.body.byId.get(lm.partId(partName, side))!
+  const [x0, y0, z0, x1, y1] = part.bbox
+  const area = new Map<string, number>()
+  let total = 0
+  for (let i = 0; i < skin.n; i++) {
+    if (!skin.outer[i] || labels[i] === 255 || isLeft(skin, i) !== (side === 'L')) continue
+    const x = skin.positions[i * 3]!, y = skin.positions[i * 3 + 1]!, z = skin.positions[i * 3 + 2]!
+    // 左右各放宽 5 mm，窄小的部件前方也能取到皮肤顶点 / 5 mm of slack sideways so that a narrow part still has skin vertices in front of it.
+    if (x < x0 - 0.005 || x > x1 + 0.005 || y < y0 || y > y1 || z < z0 || skin.normals[i * 3 + 2]! <= 0) continue
+    const k = regions[labels[i]!]!.key
+    area.set(k, (area.get(k) ?? 0) + skin.area[i]!)
+    total += skin.area[i]!
+  }
+  return Object.fromEntries([...area].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([k, v]) => [k, +(v / total).toFixed(3)]))
+}
 
 /** 标志点所在的分区 / The region a landmark's skin vertex lies in. */
 export function regionAt(lm: Landmarks, labels: Uint8Array, regions: RegionDef[], at: SkinExpr, side: SideLR): string {
@@ -69,6 +98,12 @@ export function checks(lm: Landmarks, labels: Uint8Array, def: MapDef, list: Che
   const out: PointResult[] = []
   for (const c of list)
     for (const side of ['L', 'R'] as SideLR[]) {
+      if (typeof c.at === 'object' && 'over' in c.at) {
+        const shares = regionsOver(lm, labels, def.regions, c.at.over, side)
+        const got = Object.keys(shares)[0] ?? '(no skin)'
+        out.push({ name: c.name.en, side, got, expect: c.expect, ok: c.expect.includes(got), source: c.source, shares })
+        continue
+      }
       const got = regionAt(lm, labels, def.regions, c.at, side)
       out.push({ name: c.name.en, side, got, expect: c.expect, ok: c.expect.includes(got), source: c.source })
     }

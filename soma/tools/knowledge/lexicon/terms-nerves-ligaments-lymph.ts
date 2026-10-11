@@ -475,4 +475,16 @@ export const CARTILAGE_PELVIC_FLOOR_TERMS: Record<string, string> = {
   perineum: '会阴', 'skin of perineum': '会阴皮肤', 'perineal skin': '会阴皮肤', 'anal canal': '肛管',
   anus: '肛门', rectum: '直肠', pubovaginalis: '耻骨阴道肌', puboanalis: '耻骨肛门肌',
   puboperinealis: '耻骨会阴肌', 'tibial collateral ligament of knee joint': '胫侧副韧带',
+  // ---- Wu 等 2015 盆底数据用到的其余词 / remaining words used by the Wu et al. 2015 pelvic floor data
+  lumen: '腔', raphe: '缝', 'female urethra': '女性尿道', 'male urethra': '男性尿道',
+  'submucous layer': '黏膜下层', 'anal intermuscular septum': '肛门肌间隔',
+  'longitudinal muscle layer': '纵肌层', 'circular muscle layer': '环肌层',
+  'muscle layer of anal canal viewed anatomically': '肛管肌层（解剖学划分）',
+  'fascial septum': '筋膜隔', 'pelvic connective tissue': '盆腔结缔组织',
+  'peritoneoperineal fascia': '腹膜会阴筋膜', 'vestibular gland': '前庭腺', 'corpus cavernosum': '海绵体',
+  // 以下三条是数据作者划分的结构，没有标准术语，这里是按字面给出的描述性名称
+  // the next three are structures as delimited by the data's authors; no standard term exists,
+  // so these are literal descriptive names
+  'uterine and vaginal lumen': '子宫腔和阴道腔', 'raphe of urethral sphincter': '尿道括约肌缝',
+  'urethral sphincter proper': '尿道括约肌固有部',
 }

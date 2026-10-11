@@ -10,7 +10,7 @@
 
 ## 现在能做什么
 
-- 男女两个体型。男性 3,332 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,366 个（见下文，精度低得多）。
+- 男女两个体型。男性 3,332 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,369 个（见下文，精度低得多）。
 - 按系统显示或隐藏、调透明度；从皮肤到骨骼逐层剥离。
 - 点选部件，查看中/英/拉丁名、FMA 编号、所属层级、相邻结构。
 - 肌肉的起点、止点、神经支配、血供等关系，每条带出处，可点击跳转；神经列出它支配的结构，可一次全选。
@@ -30,7 +30,37 @@ bun install
 bun run dev        # http://localhost:5183
 ```
 
-仓库里已经带了生成好的解剖数据（`public/anatomy/`），克隆后可以直接看。地址参数：`?body=male`（默认）或 `?body=female`、`?renderer=webgl`（强制用 WebGL2 后端）。
+仓库里已经带了生成好的解剖数据（`public/anatomy/`），克隆后可以直接看。
+
+### 地址参数
+
+视图状态都写在地址的查询参数里，所以任何一个画面都可以用一个链接直接打开。参数都可省略，省略即默认值；无效的值会被忽略并在控制台给出警告。
+
+| 参数 | 取值示例 | 含义 |
+|---|---|---|
+| `body` | `male`（默认）、`female` | 体型 |
+| `embed` | `1` | 嵌入模式：只留舞台和必要控件，不弹对话框 |
+| `tab` | `d`、`t`、`p` | 左侧面板：显示、结构树、姿势 |
+| `sys` | `ske,ner:60` | 可见的系统，可带不透明度百分数；未列出的隐藏。代码：`int mus ske cv ner res dig uri rep end lym oth` |
+| `peel` | `2` | 剥离层数 |
+| `iso` | `FMA7088,FJ1234` | 隔离显示：部件编号或概念编号（概念展开为其下全部部件） |
+| `hide` | 同 `iso` | 隐藏 |
+| `sel` | `FMA9611` 或 `FJ3259,FJ3260` | 选中：一个概念编号，或若干部件编号 |
+| `adj` | `1` | 显示相邻结构 |
+| `focus` | `1` | 加载后把相机对准所选（或隔离、可见）的结构 |
+| `cam` | `px,py,pz,tx,ty,tz` | 相机位置与目标，单位米 |
+| `cut` | `a620`、`c500f`、`s250` | 剖切：轴（`a` 横断、`c` 冠状、`s` 矢状）+ 位置千分比 + 可选的 `f` 翻转 |
+| `xp` | `40` | 爆炸视图百分数 |
+| `pose` | `squat` 或 `elbow_L.0:90,elbow_R.0:90` | 姿势：预设名，或"关节.自由度:角度"（度，相对静止姿势） |
+| `breath` | `1` | 呼吸演示 |
+| `map` | `d`、`n` | 体表图：皮节、皮神经分布区 |
+| `reg` | `14,15` | 体表图中高亮的区域下标 |
+| `see` | `1` | 显示体表图时皮肤半透明，露出其下的神经 |
+| `src` | `1` | 按数据来源着色 |
+| `cmp` | `ske` | 对照视图及其显示的系统 |
+| `renderer` | `webgl` | 强制用 WebGL2 后端 |
+
+例：`/?body=male&sys=ske,ner&sel=FMA9611&focus=1`。完整定义见 `src/state/urlState.ts`。
 
 ## 测试
 
@@ -87,7 +117,9 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | 四肢神经（右侧建模，左侧为镜像）、膝关节交叉韧带和半月板。手工建模，标记为 `curated` | CC BY-SA 4.0 |
 | soma（推导） | 皮下脂肪、脏胸膜、心包囊：由本项目从相邻结构计算得出，标记为 `curated` | CC BY-SA 4.0 |
 | [Visible Human Project](https://www.nlm.nih.gov/research/visible/visible_human.html) 女性 CT | 女性体型的骨骼和部分器官，由 TotalSegmentator 与 MOOSE 分割 | NLM 使用条款；Courtesy of the U.S. National Library of Medicine |
-| [HRA](https://humanatlas.io) 女性参考器官 | 子宫、卵巢、输卵管、阴道、盆腔韧带、乳腺。重新建模过的几何，标记为 `curated` | CC BY 4.0 |
+| [HRA](https://humanatlas.io) 女性参考器官 | 乳腺，以及子宫动静脉、卵巢系膜、卵巢悬韧带、膀胱子宫陷凹。重新建模过的几何，标记为 `curated` | CC BY 4.0 |
+| Wu 等 2015 女性盆底（[doi:10.1371/journal.pone.0132226](https://doi.org/10.1371/journal.pone.0132226)，更正 [10.1371/journal.pone.0140736](https://doi.org/10.1371/journal.pone.0140736)） | 女性体型的盆底肌、肛门和尿道括约肌、会阴体、阴蒂和前庭球、阴道、子宫、输卵管、卵巢、直肠，共 51 个部件。来自另一位女性的标本，放大并按骨配准，标记为 `curated` | CC BY 4.0 |
+| [丹佛大学 Visible Human 女性下肢模型](https://doi.org/10.1038/s41597-022-01905-2) | 女性体型的下肢肌肉、膝关节韧带、关节软骨、跗骨，共 100 个部件 | CC BY 4.0 |
 | [FMA](http://si.washington.edu/projects/fma) 5.1.0 | 新增部件在分类树里的位置 | 见其发布页 |
 | [Wikidata](https://www.wikidata.org) | 名称、功能关系、编号对照 | CC0 |
 | [Wikipedia](https://en.wikipedia.org) 肌肉信息框 | 部分肌肉的起止点和神经支配，每条带修订版链接 | CC BY-SA 4.0 |
@@ -104,19 +136,21 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 - 没有壁胸膜、淋巴管、黄韧带、颅内脑膜；心包只是心脏的外包络；降结肠包含乙状结肠；脊髓是程序化生成的表面，止于 L2/L3。
 - 皮下脂肪是从皮肤内壁和深层结构之间推导出来的，厚度按 3 mm 量化。
 - 男性皮肤网格的上臂与胸壁粘连，腋部和臂内侧几乎没有皮肤；体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
-- 女性体型是一个初版：骨骼是 Visible Human 女性供体自己的（59 岁、肥胖、六节腰椎），86 个部件是实测，其余从男性模型配准变形而来或取自 HRA。
-  - 骨与骨之间的软组织位置误差约 1–3 cm；从男性带过去的关节韧带与她的骨对不上。
-  - 盆腔里的肠管被整体移开以避让子宫和附件，乙状结肠的位置不是真实解剖；阴道和宫颈与男性的盆底肌重叠。
-  - 皮肤是男性皮肤变形来的，只在胸部抬高包住乳腺。
+- 男性的肩带姿势被校正过：原始扫描是仰卧耸肩的姿势，锁骨下降约 10°、肩胛骨沿胸廓转动，上肢整体平移。148 个跨越肩部的肌肉、血管和皮肤因此由 `scanned` 改标为 `warped`。两肩关节中心间距 338 mm，没有达到 350 mm 的目标；肩胛骨内旋仍比文献均值小约 2 个标准差。
+- 女性体型是第二版，仍比男性粗糙得多：
+  - 骨架来自 Visible Human 女性供体（59 岁、肥胖、六节腰椎），已按标准比例缩放到身高 1.606 m、五节腰椎，所以她的部件都不再标为 `scanned`。缩放系数记在 `pipeline-report.json` 里。踝仍偏高约 17 mm。
+  - 下肢的肌肉和膝关节韧带是她自己的（丹佛数据），53 块肌腹接上了从男性肌切下的腱；14 块肌没有接好，仍用男性的。约 4.9% 的神经长度深埋在她的肌肉里。
+  - 盆底、阴道、子宫、附件和直肠来自另一位女性的标本（Wu 等 2015），放大 1.096 倍后按骨配准。结构之间仍有少量穿插（最差的一对 3.8%）；阴道与直肠壁局部相贴；膀胱（她自己的，空虚）与子宫（按充盈膀胱的位置）之间有 16.6 mm 空隙；乙状结肠与直肠的连接是构造出来的。
+  - 没有阴唇和外阴皮肤、尿道腔、阔韧带、主韧带、宫骶韧带、输卵管系膜、卵巢固有韧带、卵巢和阴道血管、自主神经丛。
+  - 皮肤是男性皮肤变形来的，只在胸部抬高包住乳腺，还没有换成按女性体型拟合的皮肤。
   - 右前臂和右手在 CT 里被裁切，用的是左侧镜像。
-  - 没有外生殖器、会阴、女性尿道、卵巢和阴道血管。
 - 触屏手势没有在真机上测过。
 
 ## 接下来
 
-1. 身体可动：从骨骼几何拟合关节，肌肉和其他组织随骨骼位置变形。
-2. 体型可调：身高、比例、胖瘦，依据实测人体测量数据。
-3. 改进女性体型：标准体表、盆底、她自己的下肢肌肉和膝关节韧带。
+1. 两个体型的新皮肤：按各自内部结构拟合的参数化体表，替换现在的占位皮肤。
+2. 体型可调：身高、比例、胖瘦，依据实测人体测量数据（模型已有，界面未接）。
+3. 对照视图里的姿势、女性体型的直达卡片。
 4. 软组织物理：四面体化，XPBD，先在一个部位验证。
 5. 疼痛：沿神经通路的伤害感受模型，驱动生命体征、退缩反射和体表热力图。这是对疼痛生理的计算模型，模拟人并没有主观感受。
 6. 手术操作：切开、牵拉、出血、缝合。
@@ -135,7 +169,7 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 
 ## What it does
 
-- Two bodies. Male: 3,332 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,366 (far less accurate; see below).
+- Two bodies. Male: 3,332 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,369 (far less accurate; see below).
 - Show, hide and fade systems; peel layers from skin to skeleton.
 - Select a part to see its Chinese / English / Latin names, FMA id, place in the hierarchies and adjacent structures.
 - Origin, insertion, innervation, blood supply and other relations, each with its source, clickable; a nerve lists what it supplies and can select all of it at once.
@@ -155,7 +189,37 @@ bun install
 bun run dev        # http://localhost:5183
 ```
 
-The generated anatomy data (`public/anatomy/`) is in the repository, so a fresh clone runs as is. URL parameters: `?body=male` (default) or `?body=female`; `?renderer=webgl` forces the WebGL2 backend.
+The generated anatomy data (`public/anatomy/`) is in the repository, so a fresh clone runs as is.
+
+### URL parameters
+
+The whole view state lives in the query string, so any view can be opened by one link. Every parameter is optional and absent means the default; invalid values are ignored with a console warning.
+
+| Parameter | Example values | Meaning |
+|---|---|---|
+| `body` | `male` (default), `female` | Which body |
+| `embed` | `1` | Embed mode: stage and essential controls only, no dialogs |
+| `tab` | `d`, `t`, `p` | Left panel: display, tree, pose |
+| `sys` | `ske,ner:60` | Visible systems, each optionally with an opacity percent; unlisted ones are hidden. Codes: `int mus ske cv ner res dig uri rep end lym oth` |
+| `peel` | `2` | Peel depth |
+| `iso` | `FMA7088,FJ1234` | Isolate: part ids or concept ids (a concept expands to all its parts) |
+| `hide` | as `iso` | Hide |
+| `sel` | `FMA9611` or `FJ3259,FJ3260` | Selection: one concept id, or several part ids |
+| `adj` | `1` | Show adjacent structures |
+| `focus` | `1` | Frame the selected (or isolated, or visible) structures on load |
+| `cam` | `px,py,pz,tx,ty,tz` | Camera position and target, in metres |
+| `cut` | `a620`, `c500f`, `s250` | Section: axis (`a` axial, `c` coronal, `s` sagittal) + position per mille + optional `f` to flip |
+| `xp` | `40` | Explode percent |
+| `pose` | `squat` or `elbow_L.0:90,elbow_R.0:90` | Pose: a preset name, or `joint.dof:degrees` relative to rest |
+| `breath` | `1` | Breathing demonstration |
+| `map` | `d`, `n` | Skin map: dermatomes, cutaneous nerve territories |
+| `reg` | `14,15` | Highlighted region indices of the skin map |
+| `see` | `1` | Draw the skin see-through under a skin map, to reveal the nerves beneath |
+| `src` | `1` | Colour by data source |
+| `cmp` | `ske` | Compare view and the system it shows |
+| `renderer` | `webgl` | Force the WebGL2 backend |
+
+Example: `/?body=male&sys=ske,ner&sel=FMA9611&focus=1`. The full definition is in `src/state/urlState.ts`.
 
 ## Test
 
@@ -212,7 +276,9 @@ Apart from the code, the anatomy data in this directory (`public/anatomy/`, `dat
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | Limb nerves (right side modelled, left mirrored), cruciate ligaments and menisci. Artist-modelled, marked `curated` | CC BY-SA 4.0 |
 | soma (derived) | Subcutaneous fat, visceral pleura, pericardial sac: computed by this project from neighbouring structures, marked `curated` | CC BY-SA 4.0 |
 | [Visible Human Project](https://www.nlm.nih.gov/research/visible/visible_human.html) female CT | Skeleton and some organs of the female body, segmented with TotalSegmentator and MOOSE | NLM terms; Courtesy of the U.S. National Library of Medicine |
-| [HRA](https://humanatlas.io) female reference organs | Uterus, ovaries, uterine tubes, vagina, pelvic ligaments, mammary glands. Remodelled geometry, marked `curated` | CC BY 4.0 |
+| [HRA](https://humanatlas.io) female reference organs | Mammary glands, plus uterine artery and vein, mesovarium, suspensory ligament of ovary, uterovesical pouch. Remodelled geometry, marked `curated` | CC BY 4.0 |
+| Wu et al. 2015 female pelvic floor ([doi:10.1371/journal.pone.0132226](https://doi.org/10.1371/journal.pone.0132226), correction [10.1371/journal.pone.0140736](https://doi.org/10.1371/journal.pone.0140736)) | The female body's pelvic floor muscles, anal and urethral sphincters, perineal body, clitoris and vestibular bulbs, vagina, uterus, uterine tubes, ovaries and rectum: 51 parts. From another woman's specimen, enlarged and fitted by bone, marked `curated` | CC BY 4.0 |
+| [University of Denver Visible Human Female lower extremity](https://doi.org/10.1038/s41597-022-01905-2) | The female body's leg muscles, knee ligaments, articular cartilage and tarsal bones: 100 parts | CC BY 4.0 |
 | [FMA](http://si.washington.edu/projects/fma) 5.1.0 | Placement of added parts in the is-a hierarchy | see its release page |
 | [Wikidata](https://www.wikidata.org) | Names, functional relations, id crosswalks | CC0 |
 | [Wikipedia](https://en.wikipedia.org) muscle infoboxes | Origin, insertion and innervation of some muscles, each with a revision link | CC BY-SA 4.0 |
@@ -229,19 +295,21 @@ The full list is in each body's `cautions`. The main ones:
 - No parietal pleura, lymphatic vessels, ligamenta flava or cranial meninges; the pericardium is only an envelope of the heart; the descending colon includes the sigmoid; the spinal cord is a procedurally generated surface ending at L2/L3.
 - Subcutaneous fat is derived from the space between the skin's inner wall and the deep structures; thickness is quantised to 3 mm.
 - The male skin mesh fuses the upper arm to the chest wall, leaving almost no axillary or medial-arm skin; skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
-- The female body is a first version: the skeleton is the Visible Human Female donor's own (59 years old, obese, six lumbar vertebrae); 86 parts are measured, the rest are warped from the male model or taken from HRA.
-  - Soft tissue between bones is off by about 1–3 cm; joint ligaments carried over from the male do not fit her bones.
-  - The bowel in the pelvis was shifted as a whole to clear the uterus and adnexa, so the sigmoid colon is not where it really lies; vagina and cervix overlap the male pelvic floor.
-  - The skin is a warped male skin, raised only over the chest to enclose the breasts.
+- The male shoulder girdle was re-posed: the scan is supine with shrugged shoulders, so the clavicles were lowered by about 10°, the scapulae turned round the rib cage and each upper limb translated. 148 muscles, vessels and the skin that span the shoulder changed from `scanned` to `warped`. The glenohumeral centres are 338 mm apart, short of the 350 mm target, and scapular internal rotation is still about 2 SD below the literature mean.
+- The female body is a second version and still far coarser than the male:
+  - The skeleton is from the Visible Human Female donor (59 years old, obese, six lumbar vertebrae), rescaled to standard proportions at 1.606 m with five lumbar vertebrae, so none of her parts is marked `scanned` any more. The scale factors are in `pipeline-report.json`. The ankle is still about 17 mm too high.
+  - Leg muscles and knee ligaments are her own (Denver data); 53 bellies carry tendons cut from the male muscles, and 14 muscles could not be spliced and remain male. About 4.9% of nerve length lies deep inside her muscles.
+  - Pelvic floor, vagina, uterus, adnexa and rectum come from another woman's specimen (Wu et al. 2015), enlarged 1.096× and fitted by bone. Some interpenetration remains (worst pair 3.8%); the vaginal and rectal walls touch in places; there is a 16.6 mm gap between the bladder (her own, empty) and the uterus (positioned for a full bladder); the join between sigmoid colon and rectum is constructed.
+  - Missing: labia and vulvar skin, urethral lumen, broad, cardinal, uterosacral and ovarian ligaments, mesosalpinx, ovarian and vaginal vessels, autonomic plexuses.
+  - The skin is a warped male skin, raised only over the chest to enclose the breasts; a skin fitted to a female body has not been installed yet.
   - The right forearm and hand were clipped in the CT and are a mirrored left.
-  - No external genitalia, perineum, female urethra, ovarian or vaginal vessels.
 - Touch gestures have not been tested on a real device.
 
 ## Next
 
-1. A movable body: joints fitted from bone geometry; muscles and other tissue deform with the position of the bones.
-2. Adjustable body shape: stature, proportions, fatness, based on measured anthropometry.
-3. A better female body: a standard body surface, the pelvic floor, her own leg muscles and knee ligaments.
+1. New skins for both bodies: parametric body surfaces fitted to each body's internals, replacing the present placeholders.
+2. Adjustable body shape: stature, proportions, fatness, based on measured anthropometry (the model exists; the UI is not wired yet).
+3. Posing in the compare view, and deep-link cards for the female body.
 4. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
 5. Pain: a nociception model along nerve pathways that drives vital signs, withdrawal reflexes and a heat map on the skin. This is a computational model of pain physiology; the simulated body has no subjective experience.
 6. Surgical actions: incision, retraction, bleeding, suturing.

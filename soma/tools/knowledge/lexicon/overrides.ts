@@ -1,8 +1,12 @@
+// 对该 FMA 概念而言错误的 Wikidata 中文标签（其实是别的结构、乱码或不是中文），在此手工替换。
+// 以 BodyParts3D 的英文名为键。这些条目的 zhSource 为 "machine-translation:override"：没有出处，也未经审核。
+// 仅仅是地区性或口语化的标签不在这里处理，而由“大陆用语优先”策略用词表词条替换（见 names.ts）。
+//
 // Wikidata zh labels that are wrong for the FMA concept (label of a different structure, garbled,
 // or not Chinese), replaced by hand. Keyed by the BodyParts3D English name.
-// Entries get zhSource "machine-translation:override" — they are NOT sourced, and unreviewed.
-// Merely regional or colloquial labels (e.g. 棘上肌 for 冈上肌, 食道 for 食管) are left alone;
-// they are listed for the reviewer in data/curated/knowledge/report.json instead.
+// Entries get zhSource "machine-translation:override": they are NOT sourced, and unreviewed.
+// Merely regional or colloquial labels are not handled here; the mainland-wording policy replaces
+// them with exact lexicon terms (see names.ts).
 export const ZH_OVERRIDES: Record<string, { zh: string; reason: string }> = {
   'mitral valve': { zh: '二尖瓣', reason: 'Wikidata label 二瓣膜 is garbled' },
   vertebra: { zh: '椎骨', reason: 'Wikidata label 椎骨切迹 means vertebral notch' },
@@ -42,6 +46,10 @@ export const ZH_OVERRIDES: Record<string, { zh: string; reason: string }> = {
 }
 
 /**
+ * 这些英文名的 Wikidata 中文标签本身就是可接受的大陆用法，尽管词表里为构词保留了更短的形式
+ * （作名称用 心脏，构词用 心：心室/心壁）。对它们保留 Wikidata 标签；其余情况下词表的整词词条优先。
+ * 以不带侧别的英文名为键。
+ *
  * English names whose Wikidata zh label is acceptable mainland usage even though the lexicon
  * holds a shorter form for use inside compounds (心脏 as a name, 心 in 心室/心壁). For these the
  * Wikidata label is kept; everywhere else an exact lexicon entry wins (mainland wording policy).
@@ -61,10 +69,14 @@ export const KEEP_WIKIDATA_LABEL = new Set<string>([
 ])
 
 /**
+ * 按概念 id 固定的名称，用于英文标签本身有歧义的类。
+ * zhSource 为 "machine-translation:override"；与其他内容一样未经审核。
+ *
  * Names fixed per concept id, for classes whose English label is ambiguous on its own.
  * zhSource "machine-translation:override"; unreviewed like everything else.
  */
 export const ZH_ID_OVERRIDES: Record<string, { zh: string; reason: string }> = {
   FMA40005: { zh: '腕尺侧副韧带', reason: 'FMA label is the bare "ulnar collateral ligament"; the class is the wrist ligament (Wikidata: Ligamentum collaterale carpi ulnare)' },
+  FMA20273: { zh: '肛尾韧带', reason: 'the dataset part is the anococcygeal ligament; FMA also labels the class "anococcygeal body" (肛尾体)' },
   FMA38869: { zh: '肘关节尺侧副韧带', reason: 'ulnar collateral ligament of the elbow joint; kept distinct from the wrist ligament FMA40005' },
 }

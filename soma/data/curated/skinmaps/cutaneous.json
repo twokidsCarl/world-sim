@@ -1536,8 +1536,8 @@
          "iliacCrestTop",
          [
           0.0,
-          -0.03,
-          0.03
+          -0.035,
+          0.05
          ]
         ]
        },
@@ -1550,7 +1550,7 @@
          [
           0,
           0.03,
-          0.02
+          0.035
          ]
         ]
        },
@@ -2345,7 +2345,59 @@
      "nerve": [
       "{side} dorsal digital branches of radial nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "facing": {
+      "frame": "hand",
+      "deg": 180
+     },
+     "note": {
+      "zh": "只取投影到手背侧皮肤的点：手指很细，指背神经的中心线（配准误差数毫米）有时离掌侧皮肤更近。",
+      "en": "Only points that project onto dorsal skin: the fingers are thin, and the dorsal digital nerves' centrelines (registered to a few millimetres) sometimes lie nearer the palmar skin."
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} third metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "lerp": [
+         "mc3Head",
+         {
+          "part": "{side} fourth metacarpal bone",
+          "pick": {
+           "slice": {
+            "axis": "inf",
+            "frac": [
+             0,
+             0.15
+            ]
+           }
+          }
+         },
+         0.6
+        ]
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 150
+      }
+     ],
+     "note": {
+      "zh": "自手背经第 3、4 掌骨头之间至环指近节背面桡侧：模型中指背神经到达环指，但其分布区在指根处被隔断，按 Gray 所述（中指与环指相邻缘）以标志曲线连通。",
+      "en": "From the back of the hand between the heads of the third and fourth metacarpals to the radial side of the back of the ring finger's proximal phalanx: the modelled dorsal digital nerve reaches the ring finger but its territory was cut off at the root of the finger; joined by a landmark curve as Gray describes (adjacent sides of middle and ring fingers)."
+     }
     }
    ]
   },

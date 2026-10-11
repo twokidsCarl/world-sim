@@ -29,6 +29,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     return hits[0]!
   }
   const layerOf = (p: Part) => LAYERS[p.depth]!.key
+  const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? ((JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as { shoulderGirdle?: { provenance?: { relabelledIds?: string[] } } }).shoulderGirdle?.provenance?.relabelledIds ?? []) : [])
 
   it('has the contract header', () => {
     expect(data.schema).toBe(1)
@@ -51,7 +52,10 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       expect(SYSTEMS, p.id).toContain(p.system)
       expect(TISSUES, p.id).toContain(p.tissue)
       expect(['L', 'R', 'M'], p.id).toContain(p.side)
-      expect(p.provenance, p.id).toBe(p.id.startsWith('R3_') ? 'warped' : p.id.startsWith('ZA') || p.id.startsWith('SOMA_') ? 'curated' : 'scanned')
+      // BodyParts3D 4.0 的部件是 scanned；肩带姿势校正中被非刚性形变的那些改标为 warped（见 pipeline-shoulder.test.ts）
+      // BodyParts3D 4.0 parts are scanned; those deformed non-rigidly by the shoulder posture correction are relabelled warped (see pipeline-shoulder.test.ts)
+      if (p.id.startsWith('FJ')) expect(p.provenance, p.id).toBe(shoulderWarped.has(p.id) ? 'warped' : 'scanned')
+      else expect(p.provenance, p.id).toBe(p.id.startsWith('R3_') ? 'warped' : 'curated')
       // 每个部件所指的数据源都存在；只有来自第一个数据源的部件可以省略它
       // every part names a source that exists; only first-source parts may leave it out
       if (p.id.startsWith('FJ')) expect(p.source, p.id).toBeUndefined()
@@ -325,7 +329,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       expect(c.zh.length).toBeLessThan(260)
     }
     const all = data.cautions!.map((c) => c.en).join(' ')
-    for (const w of ['not a scan of one person', 'Z-Anatomy', 'BodyParts3D 3.0', 'Transversus abdominis', 'phrenic nerve', 'Left/right labels']) expect(all).toContain(w)
+    for (const w of ['not a scan of one person', 'supine', 'marked as warped', 'Z-Anatomy', 'BodyParts3D 3.0', 'Transversus abdominis', 'phrenic nerve', 'Left/right labels']) expect(all).toContain(w)
   })
 
   it('gives each side its own concept where a lateralised part was filed under an unsided class', () => {

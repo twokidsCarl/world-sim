@@ -6,7 +6,8 @@
 // 哪些是真实的、哪些不是（同时写入 pipeline-report.json 的 `notes`）：
 //   scanned  她自己的骨（Visible Human Female CT），逐块骨做刚性移动，从仰卧扫描姿势变到
 //            男性的站立姿势；以及来自同一 CT 的少数质量好的器官和躯干肌
-//   curated  子宫、卵巢、输卵管、阴道、盆腔韧带、子宫血管、乳房（HRA）
+//   curated  盆底、括约肌、会阴、尿道、阴道、肛门直肠、子宫和附件（Wu 等 2015，另一位女性）；
+//            子宫血管、卵巢悬韧带、乳房（HRA）
 //   warped   其余一切：男性几何经过一个把男性骨骼映射到她的骨骼上的平滑形变场带过来
 //
 // 步骤
@@ -29,7 +30,8 @@
 //   scanned  her own bones (Visible Human Female CT), moved rigidly, bone by bone, from the
 //            supine scan pose into the male's standing pose; a few good-quality organs and trunk
 //            muscles from the same CT
-//   curated  uterus, ovaries, tubes, vagina, pelvic ligaments, uterine vessels, breasts (HRA)
+//   curated  pelvic floor, sphincters, perineum, urethra, vagina, anorectum, uterus and adnexa (Wu et al.
+//            2015, another woman); uterine vessels, suspensory ligaments of ovary, breasts (HRA)
 //   warped   everything else: male geometry carried through a smooth deformation that maps the
 //            male skeleton onto hers
 //
@@ -58,7 +60,7 @@ import { canalFor, isaPathFromFma, NERVE_BUILD_DEFAULTS, warpNerveLines } from '
 import { deriveFat, FAT_DEEP_TISSUES, FAT_OPTIONS, FAT_REGIONS, fatRegionOfBone, isFatPart } from './fat.ts'
 import { jointLocalWarp, type JointBone } from './jointFit.ts'
 import { runLandmarkChecks, slabCentroid } from './landmarks.ts'
-import { buildTunnel } from './pelvis.ts'
+import { buildWuParts, HRA_REPLACED_BY_WU, pelvisChecks, perineumAgainstSkin, reconcilePelvis, SOURCE_WU, WU_NOT_SHIPPED, WU_SPECS, type WuBuildRow, type WuSpec } from './pelvis.ts'
 import { spliceTendons } from './splice.ts'
 import { depthOf, LAYERS } from './layers.ts'
 import { applyRigid, buildDeformation, buildTwoLevelDeformation, fitRigid, fitSimilarity, icp, InsideTester, PointIndex, surfaceDistance, surfacePoints, thinPoints, type Deformation, type Rigid } from './register.ts'
@@ -124,8 +126,6 @@ const SOURCE_VHF: SourceInfo = {
 }
 /** 关节局部配准结果在骨内的表面比例上限 / cap on the share of surface in bone for a joint-local result */
 const JOINT_MAX_IN_BONE = 0.25
-/** 阴道表面与周围形变结构之间保留的间隙（米） / gap kept between the vaginal surface and the warped structures round it (m) */
-const HIATUS_CLEARANCE = 0.002
 /** 神经、血管被推出她真实肌腹的最大距离（米） / how far a nerve or a vessel may be pushed out of her real muscle bellies (m) */
 const NERVE_MUSCLE_PUSH = 0.04
 const VESSEL_MUSCLE_PUSH = 0.03
@@ -205,6 +205,8 @@ interface FPart {
    */
   male?: string
   centrelines?: Polyline[]
+  /** Wu 盆底结构的目录项（概念的父类、part-of 分组） / catalogue entry of a Wu pelvic-floor structure (concept parent, part-of group) */
+  wu?: WuSpec
   /**
    * 几何已是最终形态（已简化的男性网格、重建的神经管）
    * geometry is final (already simplified male mesh, rebuilt nerve tube)
@@ -383,11 +385,16 @@ async function main() {
   // in their `follows`, never rigid anchors; the HRA skin is not used (same obese donor; a
   // parametric standard skin replaces it).
   const denver = fa.items.filter((i) => i.source === 'denver' && i.preferred !== false)
+  // Wu 等（2015）的女性盆底：另一个体，已配准到供体骨盆上；按 pelvis.ts 的目录输出，其余条目不用
+  // the female pelvic floor of Wu et al. 2015: another individual, registered to the donor's pelvis; shipped per the catalogue in pelvis.ts, the other items are not used
+  const wuItems = fa.items.filter((i) => i.source === 'wu2015')
+  if (!wuItems.length) throw new Error('the anchor package has no WU_* items (Wu et al. 2015 pelvic floor): rerun tools/register/run_anchors.sh')
+  const wuShipped = new Set(WU_SPECS.map((sp) => `WU_${sp.item}`))
   {
     const usable = (i: FemaleItem) => i.id.startsWith('VF_') || (i.id.startsWith('HRA_') && !/skin/i.test(i.name) && i.kind !== 'surface')
-    const unused = fa.items.filter((i) => !usable(i) && !denver.includes(i))
+    const unused = fa.items.filter((i) => !usable(i) && !denver.includes(i) && !(wuItems.includes(i) && wuShipped.has(i.id)))
     console.log(`  anchor package: ${denver.length} Denver items used as parts; ${unused.length} items not used (${unused.filter((i) => i.source === 'denver').length} Denver bones that duplicate CT bones, ${unused.filter((i) => i.source !== 'denver').map((i) => i.id).join(', ')})`)
-    report.anchorItems = { denverUsed: denver.length, unused: unused.map((i) => i.id) }
+    report.anchorItems = { denverUsed: denver.length, wuUsed: wuItems.filter((i) => wuShipped.has(i.id)).length, unused: unused.map((i) => i.id), wuNotShipped: Object.fromEntries(wuItems.filter((i) => !wuShipped.has(i.id)).map((i) => [i.id, WU_NOT_SHIPPED[i.id.slice(3)] ?? 'not in the catalogue'])) }
     fa.items = fa.items.filter(usable)
   }
   // 标准五腰椎：她多出的那块腰椎（六块中的第一块）不输出，其上方的全部结构下移一个椎节，
@@ -1029,6 +1036,7 @@ async function main() {
   // transforms by 1/d² of its distance to each bone's surface (in the scan pose), so an end lying
   // on a bone follows that bone exactly and the span in between passes from one end to the other.
   const denverRows: Record<string, unknown>[] = []
+  let followBones!: (mesh: Mesh, boneIds: string[]) => Mesh
   {
     const boneIndex = new Map<string, PointIndex>()
     const indexOfBone = (id: string) => {
@@ -1065,6 +1073,7 @@ async function main() {
       }
       return { positions: out, indices: mesh.indices }
     }
+    followBones = follow
     const gapTo = (mesh: Mesh, bones: Mesh[]): number => {
       if (!bones.length) return NaN
       const ix = new PointIndex(concat(bones.map((b) => thinPoints(surfacePoints(b, 0.002), 0.0015))), 0.006)
@@ -1173,6 +1182,55 @@ async function main() {
       report.denverTendons = { maleMuscleKept: keptMale, endsAttached: attached.length, muscles: withT.filter((r) => r.tendons.some((t) => t.attached)).length, attached, notAttached: refused }
     }
     report.denver = denverRows
+  }
+  // ── Wu 盆底：与 Denver 条目一样随 `follows.bones`（左右髋骨和骶骨）走，即同样的摆姿势和骨架标准化 ──
+  // ── Wu pelvic floor: carried like the Denver items with the bones in `follows.bones` (both hip bones and the sacrum), i.e. through the same posing and skeleton standardisation
+  const wuExtras = new Map<string, Mesh>()
+  let wuRows: WuBuildRow[] = []
+  const wuReplacedMale: { id: string; name: string; by: string }[] = []
+  if (wuItems.length) {
+    const carried = new Map<string, Mesh>()
+    let dMean = 0
+    let dMax = 0
+    let dN = 0
+    for (const it of wuItems) {
+      const src = fa.scanned(it)
+      const m = followBones(src, it.follows?.bones ?? ['VF_hip_left', 'VF_hip_right', 'VF_sacrum'])
+      carried.set(it.id.slice(3), m)
+      // 与摆姿势场（HRA 器官所用）给出的位置相比 / against where the posing field (used for the HRA organs) would put it
+      if (!wuShipped.has(it.id)) continue
+      const alt = fieldP.apply(src.positions)
+      for (let i = 0; i < alt.length; i += 3) {
+        const d = Math.hypot(alt[i]! - m.positions[i]!, alt[i + 1]! - m.positions[i + 1]!, alt[i + 2]! - m.positions[i + 2]!)
+        dMean += d
+        dMax = Math.max(dMax, d)
+        dN++
+      }
+    }
+    // 正中矢状面：中线结构（尿道、肛门内外括约肌、会阴体）质心 x 的中位数
+    // midsagittal plane: median x of the centroids of midline structures (urethra, anal sphincters, perineal body)
+    const mids = ['submucous_layer_of_urethra', 'internal_anal_sphincter', 'external_anal_sphincter', 'perineal_body', 'urethral_sphincter_proper'].map((k) => carried.get(k)).filter((m): m is Mesh => !!m).map((m) => measure(m).centroid[0])
+    const xMid = quantile(mids, 0.5)
+    const built = buildWuParts((k) => carried.get(k) ?? null, xMid)
+    wuRows = built.rows
+    for (const w of built.parts) {
+      const m = w.male ? male.parts.get(w.male) : undefined
+      const depth = m?.depth ?? depthOf(w.spec.system, w.spec.tissue)
+      parts.push({ id: w.id, fma: m?.fma ?? w.concept, name: w.name, system: m?.system ?? w.spec.system, tissue: m?.tissue ?? w.spec.tissue, depth, side: w.side, provenance: 'curated', source: SOURCE_WU.name, mesh: w.mesh, male: m?.id, wu: w.spec, keepGeometry: true, note: w.spec.note })
+      if (m) replaced.add(m.id)
+    }
+    for (const sp of WU_SPECS) for (const id of [...(sp.replaces ?? []), ...(sp.male ?? [])]) {
+      const m = id ? male.parts.get(id) : undefined
+      if (!m) continue
+      replaced.add(m.id)
+      wuReplacedMale.push({ id: m.id, name: m.name, by: `WU_${sp.item}` })
+    }
+    for (const [k, m] of carried) if (!wuShipped.has(`WU_${k}`)) wuExtras.set(k, m)
+    // 被取代的男性直肠（经形变场）：只用来找乙状结肠的下端 / the replaced male rectum (through the field): only to locate the lower end of the sigmoid colon
+    if (male.parts.has('FJ2571')) wuExtras.set('male_rectum', { positions: fieldD.apply(maleMesh('FJ2571').positions), indices: maleMesh('FJ2571').indices })
+    const closed = built.parts.filter((w) => w.watertight).length
+    console.log(`\nWu pelvic floor: ${built.parts.length} parts from ${built.rows.length} structures (${closed} closed manifolds); midsagittal plane at x = ${mm(xMid)} mm; carried with the pelvic bones — ${mm(dMean / dN)} mm mean, ${mm(dMax)} mm max from where the posing field would put them; male parts replaced: ${wuReplacedMale.map((r) => r.name).join(', ')}`)
+    report.wu = { parts: built.parts.length, structures: built.rows.length, closedManifolds: closed, midsagittalXmm: round(xMid * 1000, 2), carriage: { method: 'blend of the rigid pose and standardisation maps of both hip bones and the sacrum (as the Denver items)', vsPosingFieldMeanMm: round((dMean / dN) * 1000, 2), vsPosingFieldMaxMm: round(dMax * 1000, 2) }, repair: wuRows, maleReplaced: wuReplacedMale }
   }
   const real = parts.length
   console.log(`\nHer real soft parts vs where the field puts the male counterpart (centroid distance, mm): ${softOffsets.map((o) => `${o.name} ${o.offsetMm}`).join(', ')}`)
@@ -1340,17 +1398,22 @@ async function main() {
   const hraConcept = (it: FemaleItem) => it.fma ?? (it.ontology_id ? it.ontology_id.replace(':', '_') : `HRAC_${it.id.replace(/^HRA_/, '').replace(/_[LR]$/, '').toLowerCase()}`)
   const hraSides = new Map<string, Set<string>>()
   for (const it of fa.items) if (it.source === 'hra' && it.side !== 'M') hraSides.set(hraConcept(it), (hraSides.get(hraConcept(it)) ?? new Set()).add(it.side))
+  const hraReplaced: FPart[] = []
   for (const it of fa.items) {
     if (it.source !== 'hra') continue
     const cls = hraClass(it)
     const base = hraConcept(it)
     const fma = it.side !== 'M' && (hraSides.get(base)?.size ?? 0) > 1 ? `${base}_${it.side}` : base
     const w = weld(posed(it).positions, fa.scanned(it).indices)
-    parts.push({ id: it.id, fma, name: hraName(it), system: cls.system, tissue: cls.tissue, depth: depthOf(cls.system, cls.tissue), side: it.side, provenance: 'curated', source: SOURCE_HRA.name, mesh: { positions: w.positions, indices: w.indices }, volume: it.volume_ml || undefined })
+    const part: FPart = { id: it.id, fma, name: hraName(it), system: cls.system, tissue: cls.tissue, depth: depthOf(cls.system, cls.tissue), side: it.side, provenance: 'curated', source: SOURCE_HRA.name, mesh: { positions: w.positions, indices: w.indices }, volume: it.volume_ml || undefined }
+    // Wu 的子宫、附件和阴道取代 HRA 的同名器官；被取代的只留作数值对比
+    // the Wu uterus, adnexa and vagina replace the HRA organs of the same name; the replaced ones are kept for the numeric comparison only
+    if (wuItems.length && HRA_REPLACED_BY_WU.test(it.id)) hraReplaced.push(part)
+    else parts.push(part)
   }
-  const hra = parts.filter((p) => p.provenance === 'curated')
+  const hra = parts.filter((p) => p.source === SOURCE_HRA.name)
   lap(`${hra.length} HRA parts added`)
-  await finish({ parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed, lumbarConcept, dy, standard, restack: RESTACK })
+  await finish({ parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed, lumbarConcept, dy, standard, restack: RESTACK, wuExtras, hraReplaced })
 }
 
 interface FinishInput {
@@ -1373,401 +1436,46 @@ interface FinishInput {
   dy: number
   standard: Standardised | null
   restack: Rigid
+  /** 不输出、但用于对接和对比的 Wu 条目（膀胱壁、皮肤等），已带到她的骨盆上 / Wu items that are not shipped but serve joins and comparisons (bladder wall, skin, …), carried onto her pelvis */
+  wuExtras: Map<string, Mesh>
+  /** 被 Wu 结构取代的 HRA 器官，仅用于数值对比 / HRA organs replaced by Wu structures, for the numeric comparison only */
+  hraReplaced: FPart[]
 }
 
 async function finish(input: FinishInput) {
   const { parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed, dy, standard, restack } = input
   const byName = (name: string) => parts.find((p) => p.name === name)
   const samplesOf = (m: Mesh, spacing = 0.003) => thinPoints(surfacePoints(m, spacing), spacing * 0.8)
-
-  // ── 5. 性别特有的碰撞 / 5. Sex-specific collisions ──────────────────────────────────────────────────────────────
-  const collisions: Record<string, unknown> = {}
-  {
-    // 右卵巢与髂血管：（刚性地）移动卵巢，直到两者不再相交
-    // right ovary against the iliac vessels: move the ovary (rigidly) until it is clear
-    for (const side of ['left', 'right']) {
-      const ovary = parts.find((p) => p.id === `HRA_${side}_ovary`)
-      if (!ovary) continue
-      const vessels = parts.filter((p) => (p.tissue === 'artery' || p.tissue === 'vein') && /iliac/i.test(p.name))
-      const insideAny = (m: Mesh) => {
-        const pts = samplesOf(m, 0.002)
-        const b = measure(m).bbox
-        let inside = 0
-        let worst = ''
-        let worstN = 0
-        for (const v of vessels) {
-          const vb = measure(v.mesh).bbox
-          if (vb[0] > b[3] || vb[3] < b[0] || vb[1] > b[4] || vb[4] < b[1] || vb[2] > b[5] || vb[5] < b[2]) continue
-          const n = new InsideTester(v.mesh).fractionInside(pts)
-          inside += n
-          if (n > worstN) {
-            worstN = n
-            worst = v.name
-          }
-        }
-        return { inside, worst }
-      }
-      const before = insideAny(ovary.mesh)
-      let moved = 0
-      if (before.inside > 0.02) {
-        const vein = parts.find((p) => p.name === before.worst)!
-        const oc = measure(ovary.mesh).centroid
-        const idx = new PointIndex(samplesOf(vein.mesh, 0.002), 0.006)
-        const I = new Int32Array(1)
-        const D = new Float64Array(1)
-        idx.nearest(oc[0], oc[1], oc[2], 1, I, D)
-        // 离开血管上的最近点，水平地朝向盆腔（向内侧）
-        // away from the nearest point of the vessel, horizontally towards the pelvic cavity (medially)
-        let dir = [oc[0] - idx.points[3 * I[0]!]!, oc[1] - idx.points[3 * I[0]! + 1]!, oc[2] - idx.points[3 * I[0]! + 2]!]
-        const len = Math.hypot(dir[0]!, dir[1]!, dir[2]!)
-        dir = len > 1e-6 ? dir.map((v) => v / len) : [side === 'left' ? -1 : 1, 0, 0]
-        for (let step = 1; step <= 25; step++) {
-          const trial: Mesh = { positions: Float32Array.from(ovary.mesh.positions, (v, i) => v + dir[i % 3]! * 0.001 * step), indices: ovary.mesh.indices }
-          moved = step
-          if (insideAny(trial).inside <= 0.02) {
-            ovary.mesh = trial
-            break
-          }
-          if (step === 25) ovary.mesh = trial
-        }
-      }
-      const after = insideAny(ovary.mesh)
-      collisions[`${side} ovary vs iliac vessels`] = { insideBefore: round(before.inside, 3), vessel: before.worst || null, movedMm: moved, insideAfter: round(after.inside, 3) }
+  // 调试用：把进入盆腔协调之前的全部部件存盘（SOMA_PELVIS_SNAPSHOT=<目录>），便于单独重跑这一步；构建到此为止，不写输出
+  // debugging aid: all parts as they enter the pelvic reconciliation are dumped (SOMA_PELVIS_SNAPSHOT=<dir>), so that this step can be rerun alone; the build stops there and writes no output
+  if (process.env.SOMA_PELVIS_SNAPSHOT) {
+    const dir = process.env.SOMA_PELVIS_SNAPSHOT
+    mkdirSync(dir, { recursive: true })
+    const all = [...parts.map((p) => ({ p, kind: 'part' })), ...input.hraReplaced.map((p) => ({ p, kind: 'hraReplaced' })), ...[...input.wuExtras].map(([k, mesh]) => ({ p: { id: `WUX_${k}`, name: k, mesh } as FPart, kind: 'wuExtra' }))]
+    const chunks: Uint8Array[] = []
+    let off = 0
+    const put = (a: Float32Array | Uint32Array) => {
+      const u = new Uint8Array(a.buffer, a.byteOffset, a.byteLength)
+      chunks.push(Uint8Array.from(u))
+      off += u.byteLength
+      return off - u.byteLength
     }
-    const female = parts.filter((p) => p.provenance === 'curated' && p.system === 'reproductive' && (p.tissue === 'organ' || p.tissue === 'gland'))
-    const insideOf = (container: Mesh, m: Mesh) => new InsideTester(container, 96).fractionInside(samplesOf(m, 0.002))
-    const measureGroup = (re: RegExp, container: FPart | undefined) => {
-      const ms = female.filter((p) => re.test(p.name))
-      if (!container || !ms.length) return 0
-      const pts = concat(ms.map((p) => samplesOf(p.mesh, 0.002)))
-      return new InsideTester(container.mesh, 96).fractionInside(pts)
-    }
-    const GROUPS: [string, RegExp][] = [
-      ['uterus', /uterus|cervix|cornua|cervical os|uterine segment/i],
-      ['left ovary', /^Left ovary$/],
-      ['left uterine tube', /left uterine tube|left fallopian tube/i],
-      ['right ovary', /^Right ovary$/],
-      ['right uterine tube', /right uterine tube|right fallopian tube/i],
-      ['vagina', /^Vagina$|cervicovaginal/i],
-    ]
-    const isGroup = (re: RegExp) => (p: FPart) => re.test(p.name) && !/ligament|meso/i.test(p.name)
-    const colon = () => parts.find((p) => p.name === 'Descending colon')
-    const bladder = parts.find((p) => p.name === 'Urinary bladder')
-    const beforeColon = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, colon()), 3)]))
-    const beforeBladder = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, bladder), 3)]))
-
-    // (1) HRA 器官与她扫描得到的膀胱：膀胱是实测的，HRA 器官则是由骨驱动的拟合放置的
-    // 美术模型，所以由 HRA 这一组让位。整套内生殖器（子宫、阴道、输卵管、卵巢及其韧带和血管）
-    // 作为一个刚体整体向后移动，直到阴道和子宫颈离开膀胱。
-    // (1) HRA organs against her scanned bladder: the bladder is measured, the HRA organs are an
-    // artist's model placed by a bone-driven fit, so the HRA set gives way. The whole internal
-    // genital set (uterus, vagina, tubes, ovaries, their ligaments and vessels) is moved back
-    // as one rigid piece until the vagina and cervix clear the bladder.
-    const genital = parts.filter((p) => p.provenance === 'curated' && (p.system === 'reproductive' || p.system === 'cardiovascular'))
-    let nudge = 0
-    if (bladder) {
-      const front = female.filter((p) => /^Vagina$|cervicovaginal|cervix|wall of uterus|Body of uterus/i.test(p.name))
-      const overlap = (dz: number) => {
-        const pts = concat(front.map((p) => samplesOf(p.mesh, 0.002)))
-        for (let i = 2; i < pts.length; i += 3) pts[i] = pts[i]! + dz
-        return new InsideTester(bladder.mesh, 96).fractionInside(pts)
-      }
-      while (nudge < 0.012 && overlap(-nudge) > 0.005) nudge += 0.001
-      if (nudge > 0) for (const p of genital) p.mesh = { positions: Float32Array.from(p.mesh.positions, (v, i) => (i % 3 === 2 ? v - nudge : v)), indices: p.mesh.indices }
-    }
-    collisions.hraSetMovedPosteriorMm = round(nudge * 1000, 1)
-
-    // (2) 形变后的男性乙状结肠穿过她的左侧附件和子宫。一个包住了器官的封闭管，无法靠把
-    // 管壁向外推来解除相交，所以改为把肠管横向移开：一个以该器官为中心的平滑平移场，方向
-    // 从器官指向肠管的局部中心，逐步增大直到器官位于管外。所有形变后的消化系统部件都经过
-    // 同一个场，所以结肠、结肠带和结肠系膜保持在一起。
-    // (2) The warped male sigmoid colon runs through her left adnexa and uterus. A closed tube
-    // that contains an organ cannot be cleared by pushing its surface outward, so the bowel is
-    // shifted sideways instead: a smooth translation field centred on the organ, pointing from
-    // the organ to the bowel's local centre, grown until the organ is outside. Every warped
-    // digestive part goes through the same field, so the colon, its taeniae and the mesocolon
-    // stay together.
-    const shifts: Record<string, unknown>[] = []
-    // 肠管不得被推入的结构：她的盆骨、腰椎和膀胱
-    // what the bowel must not be pushed into: her pelvic bones, lumbar spine and bladder
-    const pelvicObstacles = parts.filter((p) => p.provenance === 'scanned' && (/hip bone|Sacrum|lumbar vertebra/i.test(p.name) || p.name === 'Urinary bladder')).map((p) => new InsideTester(p.mesh, 64))
-    const colonVolumeBefore = colon() ? Math.abs(measure(colon()!.mesh).signedVolume) : 0
-    // 容器只考虑实体肠管（organ）；网膜等薄膜不是封闭实体 / containers are solid bowel only; omenta are open sheets
-    const bowelAll = () => parts.filter((p) => p.provenance === 'warped' && p.system === 'digestive' && p.tissue !== 'tooth')
-    const bowel = () => bowelAll().filter((p) => p.tissue === 'organ')
-    // 把肠管从一个器官上移开，可能使它压到下一个器官上：重复直到不再有变化
-    // moving the bowel off one organ can bring it onto the next: repeat until nothing changes
-    for (let pass = 0; pass < 4; pass++) {
-    const done = shifts.length
-    for (const [name, re] of [['left adnexa', /^Left ovary$|left uterine tube|left fallopian tube/i], ['right adnexa', /^Right ovary$|right uterine tube|right fallopian tube/i], ['uterus', GROUPS[0]![1]]] as [string, RegExp][]) {
-      const members = female.filter(isGroup(re))
-      if (!members.length) continue
-      const pts = concat(members.map((p) => samplesOf(p.mesh, 0.002)))
-      const c = [0, 0, 0]
-      for (let i = 0; i < pts.length; i++) c[i % 3] = c[i % 3]! + pts[i]! / (pts.length / 3)
-      let ro = 0
-      for (let i = 0; i < pts.length; i += 3) ro = Math.max(ro, Math.hypot(pts[i]! - c[0]!, pts[i + 1]! - c[1]!, pts[i + 2]! - c[2]!))
-      for (const container of bowel()) {
-        const tester = () => new InsideTester(container.mesh, 96)
-        const before = tester().fractionInside(pts)
-        if (before < 0.03) continue
-        // 往哪个方向？尝试各水平方向、向上以及它们之间的斜向；对每个方向，逐步增大位移直到
-        // 器官位于管外，并按肠管需要移动多远、最终有多少落入她的骨或膀胱来打分。代价最小者胜出。
-        // Which way? Try the horizontal directions, upwards and the diagonals between; for each,
-        // grow the shift until the organ is outside, and score it by how far the bowel had to
-        // move and how much of it ends up in her bones or bladder. The cheapest wins.
-        const sigma = ro + 0.03
-        const movedBy = (arr: Float32Array, d: number[], sft: number) => {
-          const out = Float32Array.from(arr)
-          for (let i = 0; i < out.length; i += 3) {
-            const w = Math.exp(-((out[i]! - c[0]!) ** 2 + (out[i + 1]! - c[1]!) ** 2 + (out[i + 2]! - c[2]!) ** 2) / (2 * sigma * sigma))
-            out[i] = out[i]! + d[0]! * sft * w
-            out[i + 1] = out[i + 1]! + d[1]! * sft * w
-            out[i + 2] = out[i + 2]! + d[2]! * sft * w
-          }
-          return out
-        }
-        const dirs: number[][] = []
-        for (let a8 = 0; a8 < 8; a8++) {
-          const ang = (a8 * Math.PI) / 4
-          dirs.push([Math.cos(ang), 0, Math.sin(ang)], [Math.cos(ang) * 0.7, 0.7, Math.sin(ang) * 0.7])
-        }
-        dirs.push([0, 1, 0])
-        const obstacles = pelvicObstacles
-        let best: { d: number[]; shift: number; after: number; cost: number; inBone: number } | null = null
-        for (const d of dirs) {
-          let shift = 0
-          let after = before
-          while (after > 0.01 && shift < 0.06) {
-            shift += 0.004
-            after = new InsideTester({ positions: movedBy(container.mesh.positions, d, shift), indices: container.mesh.indices }, 96).fractionInside(pts)
-          }
-          const trial: Mesh = { positions: movedBy(container.mesh.positions, d, shift), indices: container.mesh.indices }
-          const sp = samplesOf(trial, 0.004)
-          let inBone = 0
-          for (const o of obstacles) inBone += o.fractionInside(sp)
-          const cost = shift + 0.5 * inBone + 0.2 * after
-          if (!best || cost < best.cost) best = { d, shift, after, cost, inBone }
-        }
-        const d = best!.d
-        const shift = best!.shift
-        const after = best!.after
-        const moved = (arr: Float32Array, sft: number) => movedBy(arr, d, sft)
-        for (const p of bowelAll()) {
-          p.mesh = { positions: moved(p.mesh.positions, shift), indices: p.mesh.indices }
-        }
-        // 挂在肠管上的结构随它一起移动：结肠血管和直肠血管及其淋巴结
-        // what hangs on the bowel moves with it: colic and rectal vessels, their nodes
-        for (const p of parts) {
-          if (p.provenance !== 'warped' || p.system === 'digestive') continue
-          if (!/colic|sigmoid|rectal|mesenteric|colon/i.test(p.name)) continue
-          p.mesh = { positions: moved(p.mesh.positions, shift), indices: p.mesh.indices }
-          if (p.centrelines) p.centrelines = p.centrelines.map((l) => ({ points: moved(l.points, shift), radius: l.radius }))
-        }
-        shifts.push({ organ: name, bowel: container.name, insideBefore: round(before, 3), insideAfter: round(after, 3), shiftMm: round(shift * 1000, 0), direction: d.map((v) => round(v, 2)), bowelInBoneOrBladder: round(best!.inBone, 3) })
-      }
-    }
-    if (shifts.length === done) break
-    }
-    collisions.bowelShifts = shifts
-    const solids: ExistingPart[] = female.map((p) => ({ id: p.id, fma: p.fma, name: p.name, mesh: p.mesh, stats: measure(p.mesh), system: p.system, tissue: 'bone' as TissueId }))
-    const field = new SurfaceField(solids)
-    const fb = solids.reduce((b, s) => [Math.min(b[0]!, s.stats.bbox[0]), Math.min(b[1]!, s.stats.bbox[1]), Math.min(b[2]!, s.stats.bbox[2]), Math.max(b[3]!, s.stats.bbox[3]), Math.max(b[4]!, s.stats.bbox[4]), Math.max(b[5]!, s.stats.bbox[5])], [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity])
-    // 先腾出空间：男性盆腔中，她的子宫和卵巢所在之处是肠管。每个器官附近的形变部件沿径向
-    // 移出包围该器官的椭球（半轴 = 包围盒的一半 + 3 mm）；位移在 1.7 倍半轴处衰减到零，
-    // 所以不会撕裂。
-    // Make room first: the male pelvis has bowel where her uterus and ovaries are. Warped parts
-    // near each organ are moved radially out of an ellipsoid around it (semi-axes = half its
-    // bounds + 3 mm); the displacement fades to zero at 1.7 semi-axes, so nothing tears.
-    const groups: { name: string; members: FPart[] }[] = [
-      { name: 'uterus', members: female.filter((p) => /uterus|cervix|cornua|cervical os|uterine segment/i.test(p.name) && !/tube|ligament/i.test(p.name)) },
-      { name: 'left ovary', members: female.filter((p) => p.id === 'HRA_left_ovary') },
-      { name: 'right ovary', members: female.filter((p) => p.id === 'HRA_right_ovary') },
-    ]
-    const roomFor: Record<string, number> = {}
-    for (const g of groups) {
-      if (!g.members.length) continue
-      const b = g.members.map((p) => measure(p.mesh).bbox).reduce((a, c) => [Math.min(a[0]!, c[0]), Math.min(a[1]!, c[1]), Math.min(a[2]!, c[2]), Math.max(a[3]!, c[3]), Math.max(a[4]!, c[4]), Math.max(a[5]!, c[5])], [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity])
-      const c = [(b[0]! + b[3]!) / 2, (b[1]! + b[4]!) / 2, (b[2]! + b[5]!) / 2]
-      const r = [(b[3]! - b[0]!) / 2 + 0.003, (b[4]! - b[1]!) / 2 + 0.003, (b[5]! - b[2]!) / 2 + 0.003]
-      const OUTER = 1.7
-      let movedParts = 0
-      for (const p of parts) {
-        if (p.provenance !== 'warped' || p.tissue === 'skin' || HARD_TISSUES.includes(p.tissue) || p.tissue === 'muscle') continue
-        const pos = p.mesh.positions
-        let out: Float32Array | null = null
-        const moveAll = (arr: Float32Array): Float32Array | null => {
-          let res: Float32Array | null = null
-          for (let i = 0; i < arr.length; i += 3) {
-            const d = [(arr[i]! - c[0]!) / r[0]!, (arr[i + 1]! - c[1]!) / r[1]!, (arr[i + 2]! - c[2]!) / r[2]!]
-            const rho = Math.hypot(d[0]!, d[1]!, d[2]!)
-            if (rho >= OUTER || rho < 1e-6) continue
-            // 单调映射 [0, OUTER] → [1.05, OUTER]
-            // monotone map [0, OUTER] → [1.05, OUTER]
-            const k = (1.05 + (rho * (OUTER - 1.05)) / OUTER) / rho
-            if (!res) res = Float32Array.from(arr)
-            res[i] = c[0]! + d[0]! * k * r[0]!
-            res[i + 1] = c[1]! + d[1]! * k * r[1]!
-            res[i + 2] = c[2]! + d[2]! * k * r[2]!
-          }
-          return res
-        }
-        out = moveAll(pos)
-        if (out) {
-          p.mesh = { positions: out, indices: p.mesh.indices }
-          movedParts++
-        }
-        if (p.centrelines) p.centrelines = p.centrelines.map((l) => ({ points: moveAll(l.points) ?? l.points, radius: l.radius }))
-      }
-      roomFor[g.name] = movedParts
-    }
-    collisions.roomMade = roomFor
-    // 结肠必须仍是一条位置合理、形状合理的管
-    // the colon must still be a sensible tube somewhere sensible
-    {
-      const col = colon()
-      const afterColon = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, col), 3)]))
-      const afterBladder = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, bladder), 3)]))
-      let inBone = 0
-      let inBladder = 0
-      if (col) {
-        const pts = samplesOf(col.mesh, 0.004)
-        const bones = parts.filter((p) => p.provenance === 'scanned' && p.tissue === 'bone' && /hip bone|Sacrum|lumbar|femur/i.test(p.name))
-        for (const b of bones) inBone += new InsideTester(b.mesh, 64).fractionInside(pts)
-        if (bladder) inBladder = insideOf(bladder.mesh, col.mesh)
-      }
-      const vol = col ? Math.abs(measure(col.mesh).signedVolume) : 0
-      collisions.pelvis = { insideDescendingColon: { before: beforeColon, after: afterColon }, insideBladder: { before: beforeBladder, after: afterBladder }, colon: { volumeMlBefore: round(colonVolumeBefore * 1e6, 1), volumeMlAfter: round(vol * 1e6, 1), surfaceInsideBone: round(inBone, 4), surfaceInsideBladder: round(inBladder, 4) } }
-      console.log(`\nPelvis: HRA genital set moved ${mm(nudge)} mm posteriorly off her scanned bladder; bowel shifts ${JSON.stringify(shifts)}`)
-      console.log(`  share of surface inside the warped descending/sigmoid colon, before → after: ${GROUPS.map(([n]) => `${n} ${(beforeColon[n]! * 100).toFixed(0)}% → ${(afterColon[n]! * 100).toFixed(0)}%`).join(', ')}`)
-      console.log(`  share of surface inside her scanned bladder, before → after: ${GROUPS.map(([n]) => `${n} ${(beforeBladder[n]! * 100).toFixed(0)}% → ${(afterBladder[n]! * 100).toFixed(0)}%`).join(', ')}`)
-      console.log(`  colon after the shift: volume ${(colonVolumeBefore * 1e6).toFixed(0)} → ${(vol * 1e6).toFixed(0)} ml, ${(inBone * 100).toFixed(1)}% of its surface inside her pelvic bones, ${(inBladder * 100).toFixed(1)}% inside her bladder`)
-    }
-    const rows: { name: string; before: number; after: number; movable: boolean }[] = []
-    for (const p of parts) {
-      if (p.provenance === 'curated' || p.tissue === 'skin' || HARD_TISSUES.includes(p.tissue) || p.tissue === 'nerve') continue
-      const st = measure(p.mesh)
-      if (st.bbox[0] > fb[3]! || st.bbox[3] < fb[0]! || st.bbox[1] > fb[4]! || st.bbox[4] < fb[1]! || st.bbox[2] > fb[5]! || st.bbox[5] < fb[2]!) continue
-      const frac = (m: Mesh) => overlapWith(samplesOf(m, 0.003), measure(m).bbox, field, 0.002, 0.004, () => true).insideAny
-      const before = frac(p.mesh)
-      if (before < 0.005) continue
-      // 她自己扫描得到的器官（膀胱）不改变形状；形变后的男性部件则会
-      // her own scanned organs (bladder) are not reshaped; warped male parts are
-      const movable = p.provenance === 'warped'
-      if (movable) p.mesh = { positions: pushOutOfSolids(p.mesh.positions, st.bbox, field, () => true, { clearance: 0.0005, maxPush: 0.03, radius: 0.012, step: 0.0005 }).positions, indices: p.mesh.indices }
-      rows.push({ name: p.name, before, after: movable ? frac(p.mesh) : before, movable })
-    }
-    rows.sort((a, b) => b.before - a.before)
-    console.log(`\nFemale pelvic organs (HRA) against other parts: ${rows.length} parts had surface inside the uterus, vagina, tubes or ovaries; warped ones were slid out (≤ 30 mm)`)
-    for (const r of rows.slice(0, 14)) console.log(`  ${pad(r.name, 44)}${(r.before * 100).toFixed(1)}% → ${(r.after * 100).toFixed(1)}%${r.movable ? '' : '  (her scanned part: not moved)'}`)
-    for (const [k, v] of Object.entries(collisions)) console.log(`  ${k}: ${JSON.stringify(v)}`)
-    collisions.pelvicViscera = rows.map((r) => ({ ...r, before: round(r.before, 4), after: round(r.after, 4) }))
-    // (3) 泌尿生殖裂孔：男性的肛提肌、直肠和盆腔血管神经里没有阴道的位置。围绕阴道建立一个径向通道场
-    // （见 pelvis.ts），把这些形变来的男性结构推到阴道表面 2 mm 之外；她扫描得到的膀胱不动。
-    // 肌的体积、裂孔的横径和前后径、阴道的长度和轴向都写入报告。这是为了几何上自洽而做的构造，不是测量。
-    // (3) Urogenital hiatus: the male levator ani, rectum and pelvic vessels and nerves leave no room
-    // for a vagina. A radial tunnel field round the vagina (see pelvis.ts) moves these warped male
-    // structures to 2 mm outside the vaginal surface; her scanned bladder is not touched. Muscle
-    // volumes, the transverse and anteroposterior size of the hiatus and the length and direction of
-    // the vagina go into the report. This is a construction for geometric consistency, not a measurement.
-    {
-      const vagina = parts.find((p) => p.name === 'Vagina' && p.provenance === 'curated')
-      if (vagina && !process.env.SOMA_NO_HIATUS) {
-        const NEIGHBOURS = /puborectalis|pubococcygeus|iliococcygeus|coccygeus|External anal sphincter|Tendinous arch of levator ani|^Rectum$|^Urinary bladder$/
-        const pair = () => {
-          const pts = samplesOf(vagina.mesh, 0.002)
-          const out: Record<string, number> = {}
-          for (const p of parts) if (NEIGHBOURS.test(p.name)) out[p.name] = round((out[p.name] ?? 0) + new InsideTester(p.mesh, 96).fractionInside(pts), 4)
-          return out
-        }
-        const vol = () => Object.fromEntries(parts.filter((p) => NEIGHBOURS.test(p.name) && p.name !== 'Urinary bladder').map((p) => [`${p.name} (${p.id})`, round(Math.abs(measure(p.mesh).signedVolume) * 1e6, 1)]))
-        const insideBefore = pair()
-        const volBefore = vol()
-        // 阴道前壁与她的膀胱：膀胱是她自己的、不动；阴道是美术模型，把陷入膀胱的那部分壁面沿最近的出口方向推出（留 1.5 mm 间隙）
-        // anterior vaginal wall against her bladder: the bladder is hers and stays; the vagina is an artist's model, and the part of its wall sunk into the bladder is slid out along the nearest way out (1.5 mm gap)
-        const bladderPart = parts.find((p) => p.name === 'Urinary bladder')
-        let vaginaReshapedMm = 0
-        if (bladderPart) {
-          const bf = new SurfaceField([{ id: bladderPart.id, fma: bladderPart.fma, name: bladderPart.name, mesh: bladderPart.mesh, stats: measure(bladderPart.mesh), system: bladderPart.system, tissue: bladderPart.tissue }])
-          for (const p of parts) {
-            if (p.provenance !== 'curated' || !/^Vagina$|Cervicovaginal junction/.test(p.name)) continue
-            const res = pushOutOfSolids(p.mesh.positions, measure(p.mesh).bbox, bf, () => true, { clearance: 0.0015, maxPush: 0.012, radius: 0.012, step: 0.0005 })
-            for (let i = 0; i < res.positions.length; i += 3) vaginaReshapedMm = Math.max(vaginaReshapedMm, Math.hypot(res.positions[i]! - p.mesh.positions[i]!, res.positions[i + 1]! - p.mesh.positions[i + 1]!, res.positions[i + 2]! - p.mesh.positions[i + 2]!) * 1000)
-            p.mesh = { positions: res.positions, indices: p.mesh.indices }
-          }
-        }
-        const tunnel = buildTunnel(vagina.mesh, HIATUS_CLEARANCE)
-        const vb = measure(vagina.mesh).bbox
-        let moved = 0
-        let maxMove = 0
-        for (const p of parts) {
-          // 只动形变来的男性软组织；她自己的部件（膀胱）、HRA 器官、骨和皮肤不动
-          // only warped male soft tissue moves; her own parts (bladder), the HRA organs, bones and skin stay
-          if (!p.id.startsWith('W_') || HARD_TISSUES.includes(p.tissue) || p.tissue === 'skin' || isFatPart(p.id)) continue
-          const b = measure(p.mesh).bbox
-          if (b[0] > vb[3] + 0.03 || b[3] < vb[0] - 0.03 || b[1] > vb[4] + 0.03 || b[4] < vb[1] - 0.03 || b[2] > vb[5] + 0.03 || b[5] < vb[2] - 0.03) continue
-          // 分侧的肛提肌各部只向自己一侧让开（否则越过中线的那一块会被撑成一个套住阴道的环）
-          // the sided parts of levator ani give way to their own side only (a part lying across the midline would otherwise be blown up into a ring round the vagina)
-          const sided = /^(Left|Right) (puborectalis|pubococcygeus|iliococcygeus|coccygeus)$/.exec(p.name)
-          const move = (q: Float32Array) => (sided ? tunnel.applyLateral(q, sided[1] === 'Left' ? 1 : -1) : tunnel.apply(q))
-          const out = move(p.mesh.positions)
-          let d = 0
-          for (let i = 0; i < out.length; i += 3) d = Math.max(d, Math.hypot(out[i]! - p.mesh.positions[i]!, out[i + 1]! - p.mesh.positions[i + 1]!, out[i + 2]! - p.mesh.positions[i + 2]!))
-          if (d < 1e-5) continue
-          p.mesh = { positions: out, indices: p.mesh.indices }
-          if (p.centrelines) p.centrelines = p.centrelines.map((l) => ({ points: move(l.points), radius: l.radius }))
-          moved++
-          maxMove = Math.max(maxMove, d)
-        }
-        // 裂孔尺寸：在阴道下 40 % 的高度范围内，左右肛提肌内侧缘之间的横径；耻骨联合后缘到直肠前壁的前后径
-        // hiatus size: within the height of the lower 40 % of the vagina, the transverse distance between the medial borders of the left and right levator parts; anteroposterior from the back of the pubic symphysis to the anterior wall of the rectum
-        const y0 = vb[1]
-        const y1 = vb[1] + 0.4 * (vb[4] - vb[1])
-        const ext = (rx: RegExp, k: number, pick: (a: number, b: number) => number, start: number, keep: (x: number) => boolean = () => true) => {
-          let v = start
-          for (const p of parts) {
-            if (!rx.test(p.name)) continue
-            const q = p.mesh.positions
-            for (let i = 0; i < q.length; i += 3) if (q[i + 1]! >= y0 && q[i + 1]! <= y1 && keep(q[i]!)) v = pick(v, q[i + k]!)
-          }
-          return v
-        }
-        const xL = ext(/^Left (puborectalis|pubococcygeus)$/, 0, Math.min, Infinity)
-        const xR = ext(/^Right (puborectalis|pubococcygeus)$/, 0, Math.max, -Infinity)
-        const zPubis = ext(/hip bone$/, 2, Math.min, Infinity, (x) => Math.abs(x) < 0.012)
-        const zRectum = ext(/^Rectum$/, 2, Math.max, -Infinity)
-        const a = tunnel.axis
-        const row = {
-          clearanceMm: HIATUS_CLEARANCE * 1000,
-          vaginalWallMovedOffBladderMm: round(vaginaReshapedMm, 1),
-          vaginaInside: { before: insideBefore, after: pair() },
-          volumesMl: { before: volBefore, after: vol() },
-          partsMoved: moved,
-          maxDisplacementMm: round(maxMove * 1000, 1),
-          hiatus: { transverseMm: Number.isFinite(xL - xR) ? round((xL - xR) * 1000, 1) : null, pubisToRectumMm: Number.isFinite(zPubis - zRectum) ? round((zPubis - zRectum) * 1000, 1) : null, levelMm: [round(y0 * 1000, 0), round(y1 * 1000, 0)] },
-          vagina: { lengthMm: round(tunnel.length * 1000, 1), axisToHorizontalDeg: round((Math.atan2(Math.abs(a[1]), Math.hypot(a[0], a[2])) * 180) / Math.PI, 1), upperEndIsPosterior: a[2] < 0 },
-          norms: 'not opened in this work (assumptions from memory, to be verified): vaginal length about 6–9 cm; levator hiatus at rest in nulliparous women about 3.5–4.5 cm transverse and 4.5–5.5 cm anteroposterior',
-        }
-        console.log(`\nUrogenital hiatus: ${moved} warped parts moved off the vagina (≤ ${mm(maxMove)} mm, clearance ${HIATUS_CLEARANCE * 1000} mm); vagina surface inside neighbours before → after: ${Object.keys(insideBefore).map((k) => `${k} ${(insideBefore[k]! * 100).toFixed(1)}% → ${(row.vaginaInside.after[k]! * 100).toFixed(1)}%`).join(', ')}`)
-        console.log(`  hiatus ${JSON.stringify(row.hiatus)}; vagina ${JSON.stringify(row.vagina)}; volumes ml ${Object.keys(volBefore).map((k) => `${k} ${volBefore[k]} → ${row.volumesMl.after[k]}`).join(', ')}`)
-        collisions.hiatus = row
-      }
-    }
-    // 反过来也要看：之后子宫有多少位于其他软组织器官内
-    // and the other way round: how much of the uterus is inside other soft organs afterwards
-    const others: ExistingPart[] = parts.filter((p) => p.provenance !== 'curated' && SOLID_TISSUES.includes(p.tissue)).map((p) => ({ id: p.id, fma: p.fma, name: p.name, mesh: p.mesh, stats: measure(p.mesh), system: p.system, tissue: p.tissue }))
-    const near = others.filter((o) => !(o.stats.bbox[0] > fb[3]! || o.stats.bbox[3] < fb[0]! || o.stats.bbox[1] > fb[4]! || o.stats.bbox[4] < fb[1]! || o.stats.bbox[2] > fb[5]! || o.stats.bbox[5] < fb[2]!))
-    const of = new SurfaceField(near)
-    const uterine: Record<string, unknown> = {}
-    for (const p of female) {
-      const ov = overlapWith(samplesOf(p.mesh, 0.002), measure(p.mesh).bbox, of, 0.002, 0.004, () => true)
-      if (ov.insideAny > 0.02) uterine[p.name] = { inside: round(ov.insideAny, 3), in: [...ov.inside].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([i, f]) => `${near[i]!.name} ${(f * 100).toFixed(0)}%`) }
-    }
-    console.log(`  HRA organs still inside other solids (> 2% of surface): ${Object.entries(uterine).map(([k, v]) => `${k} ${((v as { inside: number }).inside * 100).toFixed(0)}% (${(v as { in: string[] }).in.join(', ')})`).join('; ') || 'none'}`)
-    collisions.hraInsideOthers = uterine
-    report.collisions = collisions
+    const meta = all.map(({ p, kind }) => ({ kind, id: p.id, fma: p.fma, name: p.name, system: p.system, tissue: p.tissue, side: p.side, provenance: p.provenance, source: p.source, male: p.male, nv: p.mesh.positions.length / 3, ni: p.mesh.indices.length, po: put(p.mesh.positions), io: put(p.mesh.indices), lines: (p.centrelines ?? []).map((l) => ({ n: l.radius.length, po: put(l.points), ro: put(l.radius) })) }))
+    writeFileSync(join(dir, 'parts.json'), JSON.stringify(meta))
+    writeFileSync(join(dir, 'parts.bin'), Buffer.concat(chunks))
+    console.log(`  pelvis snapshot written to ${dir}; stopping here`)
+    return
   }
-  lap('sex-specific collisions')
+
+  // ── 5. 女性小骨盆：以 Wu 的盆底为骨架，把其余结构接上去（见 pelvis.ts） / 5. The female lesser pelvis: the Wu pelvic floor as backbone, everything else joined to it (see pelvis.ts)
+  {
+    console.log('\nFemale lesser pelvis (Wu et al. 2015 backbone)')
+    const pelvis = reconcilePelvis({ parts, extras: input.wuExtras, hraReplaced: input.hraReplaced, log: (l) => console.log(`  ${l}`) })
+    const gone: { id: string; name: string }[] = []
+    for (let i = parts.length - 1; i >= 0; i--) if (pelvis.drop.has(parts[i]!.id)) gone.push(...parts.splice(i, 1).map((p) => ({ id: p.id, name: p.name })))
+    report.pelvis = { ...pelvis.report, dropped: gone.sort((a, b) => a.id.localeCompare(b.id)) }
+  }
+  lap('female lesser pelvis reconciled')
 
   // ── 5b. 皮肤：形变后的男性表面，在乳房处抬升为平滑包络 / 5b. Skin: the warped male surface, raised into a smooth envelope over the breasts ───────
   // 皮肤是一层薄的双壁壳，所以“在体内”不能用射线奇偶性来判断。
@@ -2269,20 +1977,53 @@ async function finish(input: FinishInput) {
   const inIsa = new Set(male.data.trees.isa.map((c) => c.id))
   const placement: Record<string, number> = {}
   const partOfByName = (n: string) => male.data.trees.partOf.find((c) => c.name === n)?.id ?? null
+  const inMalePartOf = new Set(male.data.trees.partOf.flatMap((c) => c.parts))
   for (const p of parts) {
-    if (p.male) continue
+    // 沿用男性部件身份的 Wu 部件在 is-a 树里随它走；若该男性部件不在 part-of 树里，仍按目录的分组挂上
+    // a Wu part with a male part's identity follows it in the is-a tree; when that male part is not in the part-of tree it is still attached by its catalogue group
+    if (p.male && !(p.wu && !inMalePartOf.has(p.male))) continue
     if (p.id === 'VF_vertebrae_L1') {
       const own: [string, string][] = [[p.fma, 'supernumerary lumbar vertebra (first of six)']]
       isaExtras.push({ part: p.id, path: own, anchor: input.lumbarConcept })
       partOfExtras.push({ part: p.id, path: own, anchor: partOfByName('vertebral column') ?? partOfByName('skeletal system') })
       continue
     }
-    // HRA 器官 / HRA
+    // HRA 器官和 Wu 盆底结构 / HRA organs and Wu pelvic-floor structures
     const fallback = (p.tissue === 'cartilage' ? fallbackIsa('articular cartilage') : p.tissue === 'ligament' ? fallbackIsa('ligament') : null) ?? fallbackIsa(p.tissue === 'artery' ? 'artery' : p.tissue === 'vein' ? 'vein' : 'anatomical structure')
     let tp
     const lower = p.name[0]!.toLowerCase() + p.name.slice(1)
     const sidedOf = /^(.*)_[LR]$/.exec(p.fma)
     const base = sidedOf ? sidedOf[1]! : p.fma
+    if (p.wu) {
+      // 分侧部件：自己的（分侧）概念挂在不分侧的概念之下；不分侧的概念是 FMA 类时沿 FMA is-a 链上溯，
+      // 是合成概念时挂在目录给出的 FMA 父类之下（没有则挂在兜底节点下）
+      // a sided part: its own (sided) concept under the unsided one; the unsided concept follows the FMA
+      // is-a chain when it is an FMA class, and hangs under the FMA parent named in the catalogue when it
+      // is synthetic (under the fallback when none is given)
+      const spec = p.wu
+      const chainOf = (id: string, label: string) => isaPathFromFma(id, fmaNames?.label.get(id) ?? label, (x) => fmaNames?.parents.get(x), (x) => fmaNames?.label.get(x), (x) => inIsa.has(x), fallback)
+      const up = /^FMA\d+$/.test(spec.concept) ? chainOf(spec.concept, spec.name) : spec.isaParent ? chainOf(spec.isaParent, spec.isaParent) : { path: [] as [string, string][], anchor: fallback, how: 'by hand' as const }
+      const unsided: [string, string][] = /^FMA\d+$/.test(spec.concept) ? [] : [[spec.concept, spec.name[0]!.toLowerCase() + spec.name.slice(1)]]
+      const own: [string, string][] = p.side === 'M' ? [] : [[p.fma, lower]]
+      const path = [...own, ...unsided, ...up.path]
+      const how = /^FMA\d+$/.test(spec.concept) ? up.how : 'by hand'
+      if (!p.male) {
+        placement[`Wu: ${how}`] = (placement[`Wu: ${how}`] ?? 0) + 1
+        isaExtras.push({ part: p.id, path, anchor: up.anchor })
+      }
+      const perineum = male.data.trees.partOf.find((c) => c.name === 'perineum')
+      const holderOf = (maleId: string) => male.data.trees.partOf.find((c) => c.parts.includes(maleId))?.id ?? null
+      const me: [string, string] = [p.fma, lower]
+      const po: { path: [string, string][]; anchor: string | null } =
+        spec.group === 'pelvicDiaphragm' ? { path: [me, ['FMA19726', 'pelvic diaphragm']], anchor: perineum?.parent ?? partOfByName('muscular system') }
+        : spec.group === 'analPerineum' ? { path: [me, ['FMA20347', 'anal part of perineum']], anchor: perineum?.id ?? null }
+        : spec.group === 'urogenitalPerineum' ? { path: [me, ['FMA20348', 'urogenital part of perineum']], anchor: perineum?.id ?? null }
+        : spec.group === 'urethra' ? { path: [me, ['FMA19669', 'female urethra']], anchor: partOfByName('urinary system') }
+        : spec.group === 'rectum' ? { path: [me], anchor: holderOf('FJ2571') ?? partOfByName('large intestine') }
+        : { path: [me], anchor: partOfByName('genital system') }
+      partOfExtras.push({ part: p.id, ...po })
+      continue
+    }
     if (/^FMA\d+$/.test(base) && fmaNames) tp = isaPathFromFma(base, fmaNames.label.get(base) ?? p.name, (id) => fmaNames.parents.get(id), (id) => fmaNames.label.get(id), (id) => inIsa.has(id), fallback)
     else tp = { path: [[base, lower.replace(/^(left|right) /, '')]] as [string, string][], anchor: fallback, how: 'by hand' as const }
     if (sidedOf) tp = { ...tp, path: [[p.fma, lower], ...tp.path] as [string, string][], anchor: tp.path.length ? tp.anchor : base }
@@ -2396,7 +2137,7 @@ async function finish(input: FinishInput) {
   const cz = (n: string) => measure(byName(n)!.mesh).centroid
   const sexChecks: Record<string, unknown> = {}
   {
-    const uterus = byName('Body of uterus') ?? parts.find((p) => /uterus/i.test(p.name) && p.provenance === 'curated')!
+    const uterus = byName('Uterus') ?? byName('Body of uterus') ?? parts.find((p) => /uterus/i.test(p.name) && p.provenance === 'curated')!
     const u = measure(uterus.mesh).centroid
     const bladder = cz('Urinary bladder')
     const rectum = cz('Rectum')
@@ -2404,7 +2145,7 @@ async function finish(input: FinishInput) {
     const hips = ['Left hip bone', 'Right hip bone'].map((n) => measure(byName(n)!.mesh).bbox)
     const sac = measure(byName('Sacrum')!.mesh).bbox
     for (const side of ['left', 'right']) {
-      const o = measure(parts.find((p) => p.id === `HRA_${side}_ovary`)!.mesh).centroid
+      const o = measure((byName(`${side === 'left' ? 'Left' : 'Right'} ovary`) ?? parts.find((p) => p.id === `HRA_${side}_ovary`)!).mesh).centroid
       const insideBox = o[0] > Math.min(hips[0]![0], hips[1]![0]) && o[0] < Math.max(hips[0]![3], hips[1]![3]) && o[1] > Math.min(hips[0]![1], hips[1]![1]) && o[1] < Math.max(hips[0]![4], hips[1]![4]) && o[2] > sac[2] && o[2] < Math.max(hips[0]![5], hips[1]![5])
       sexChecks[`${side}OvaryInPelvis`] = { pass: insideBox && (side === 'left' ? o[0] > 0.01 : o[0] < -0.01) && Math.abs(o[0]) < 0.09, centroidMm: o.map((v) => round(v * 1000, 1)) }
     }
@@ -2428,6 +2169,27 @@ async function finish(input: FinishInput) {
     console.log('\nSex-specific checks')
     for (const [k, v] of Object.entries(sexChecks)) console.log(`  ${(v as { pass: boolean }).pass ? 'PASS' : 'FAIL'} ${k}: ${JSON.stringify(v).slice(0, 260)}`)
     report.sexChecks = sexChecks
+  }
+  // 盆腔检查：对最终（简化后）的几何，与测试对输出 GLB 所做的是同一套（见 pelvis.ts）
+  // pelvic checks: on the final (simplified) geometry, the same set the tests run on the written GLBs (see pelvis.ts)
+  {
+    const byKey = new Map<string, Mesh>()
+    for (const f of final) {
+      byKey.set(f.p.id, f.mesh)
+      if (!byKey.has(f.p.name)) byKey.set(f.p.name, f.mesh)
+    }
+    const get = (k: string) => byKey.get(k) ?? null
+    const ids = final.map((f) => f.p.id)
+    const pc = pelvisChecks(get, ids)
+    console.log('\nPelvic checks (final geometry)')
+    for (const c of pc.checks) console.log(`  ${c.pass ? 'PASS' : 'FAIL'} ${c.id}: ${JSON.stringify(c.measured).slice(0, 420)}`)
+    console.log(`  minimum gaps (mm): ${Object.entries(pc.gapsMm).map(([k, v]) => `${k} ${v}`).join(', ')}`)
+    report.pelvisChecks = { checks: pc.checks, gapsMm: pc.gapsMm, pairs: pc.pairs }
+    const skin = final.find((f) => f.p.tissue === 'skin' && f.p.name === 'Skin')
+    const sk = perineumAgainstSkin(get, ids, skin?.mesh ?? null, input.wuExtras.get('skin') ?? null)
+    report.perineumAgainstSkin = { skin: skin ? (skin.p.id === EXTERNAL_SKIN_ID ? 'external skin package' : 'placeholder (warped male skin)') : null, ...sk }
+    const st = (sk.structures ?? {}) as Record<string, { closestToPresentSkinMm: number | null; lowestPointBelowOutletPlaneMm: number }>
+    console.log(`  perineal structures against the present skin (${(report.perineumAgainstSkin as { skin: string }).skin}): ${Object.keys(st).length} structures, ${sk.structuresWithNoSkinBelow} with no skin below their lowest point; lowest reach below the outlet plane ${Math.max(...Object.values(st).map((x) => x.lowestPointBelowOutletPlaneMm))} mm; specimen outline vs present skin ${JSON.stringify(sk.specimenPerinealOutline)}`)
   }
 
   // 形变后的部件与她的骨的关系
@@ -2486,10 +2248,20 @@ async function finish(input: FinishInput) {
   console.log(`\nGlenohumeral joint (distance from the humeral head centre to the scapula minus head radius): ${JSON.stringify(shoulder)}`)
   report.shoulder = shoulder
 
-  const overlaps = Object.entries((report.collisions as { hraInsideOthers: Record<string, { inside: number; in: string[] }> }).hraInsideOthers).filter(([, v]) => v.inside > 0.05).map(([k, v]) => `${k} ${(v.inside * 100).toFixed(0)}% (${v.in[0]!.replace(/ \d+%$/, '')})`)
   const nWarped = count((p) => p.provenance === 'warped')
   const nOwn = count((p) => p.source === SOURCE_VHF.name || p.source === SOURCE_DENVER.name)
   const nMale = count((p) => p.id.startsWith('W_') && !isFatPart(p.id))
+  const nWu = count((p) => p.source === SOURCE_WU.name)
+  const pv = (report.pelvis ?? {}) as { bladder?: { volumeMl: { before: number }; neckMovedMm: number; baseToVaginaMm: { before: number; after: number } }; rectosigmoid?: { lowerEndOfSigmoidMovedMm?: number }; bowel?: { shifts: { shiftMm: number }[] }; warpedDropped?: { parts: string[] } }
+  const HRA_ZH: [RegExp, string][] = [[/uterine artery/i, '子宫动脉'], [/uterine vein/i, '子宫静脉'], [/suspensory ligament of .*ovary/i, '卵巢悬韧带'], [/uterovesical pouch/i, '膀胱子宫陷凹'], [/uterosacral/i, '骶子宫韧带'], [/cardinal/i, '主韧带'], [/broad ligament/i, '子宫阔韧带'], [/mesosalpinx/i, '输卵管系膜'], [/mesovarium/i, '卵巢系膜'], [/ovarian ligament/i, '卵巢固有韧带']]
+  const hraPelvic = parts.filter((p) => p.source === SOURCE_HRA.name && p.system !== 'integumentary').map((p) => p.name.replace(/^(Left|Right) /i, '').replace(/ of (left|right) /i, ' of '))
+  const hraKept = [...new Set(hraPelvic.map((n) => n[0]!.toUpperCase() + n.slice(1)))]
+  const hraKeptZh = [...new Set(hraPelvic.map((n) => HRA_ZH.find(([rx]) => rx.test(n))?.[1] ?? n))].join('、')
+  const bare = (n: string) => n.replace(/^(Left|Right) /i, '').replace(/ of (left|right) /i, ' of ')
+  const hraGoneNames = [...new Set(((report.pelvis as { dropped?: { id: string; name: string }[] } | undefined)?.dropped ?? []).filter((x) => x.id.startsWith('HRA_')).map((x) => bare(x.name)))]
+  const hraGone = hraGoneNames.map((n) => n[0]!.toUpperCase() + n.slice(1))
+  const hraGoneZh = [...new Set(hraGoneNames.map((n) => HRA_ZH.find(([rx]) => rx.test(n))?.[1] ?? n))].join('、')
+  const warpedGone = [...new Set((pv.warpedDropped?.parts ?? []).map((n) => n.replace(/^(Left|Right) /, '').toLowerCase()))]
   const cautions: { zh: string; en: string }[] = [
     {
       en: standard
@@ -2511,12 +2283,12 @@ async function finish(input: FinishInput) {
       zh: '形变部件仅以骨骼为锚点，骨与骨之间的位置靠外推得到：四肢的肌肉、血管和神经误差约 1–3 cm，腹部和盆腔更大。',
     },
     {
-      en: 'The arrangement of the pelvic organs is constructed, not measured: a passage for the vagina was opened in the male-derived levator ani by moving its medial borders sideways (the right puborectalis lost about a third of its volume in the process), the rectum and nearby vessels and nerves were moved off the vagina, and the anterior vaginal wall was reshaped against the bladder; the vagina still overlaps the bladder slightly. There is no female urethra, perineal body, perineal muscle or external genitalia.',
-      zh: '盆腔器官的排列是构造出来的，不是测量所得：在由男性形变来的肛提肌上，把内侧缘向两侧推开，为阴道开出通道（右侧耻骨直肠肌因此损失约三分之一体积）；直肠及附近的血管神经被推离阴道，阴道前壁按膀胱重新塑形，但阴道与膀胱仍有少量重叠。没有女性尿道、会阴体、会阴肌和外生殖器。',
+      en: `The pelvic floor, the anal and urethral sphincters, the perineal muscles, clitoris and vestibular bulbs, the urethra, vagina, rectum and anal canal, uterus, tubes and ovaries (${nWu} parts) are real female anatomy, but of ANOTHER woman, not of the donor of the skeleton (Wu et al. 2015: a young adult of the Chinese Visible Human series). Her structures were reconstructed from cryosections and smoothed by the authors of that study, enlarged 1.096 times and fitted to this pelvis by its bones (to about 2 mm), then narrowed by 11 % together with the pelvis. Left and right halves were separated by this project, and where neighbouring structures overlapped the less important one was reshaped by up to 8 mm. Do not read sizes, exact positions or left–right differences from these parts.`,
+      zh: `盆底肌、肛门括约肌和尿道括约肌、会阴肌、阴蒂和前庭球、尿道、阴道、直肠和肛管、子宫、输卵管和卵巢（共 ${nWu} 个部件）是真实的女性解剖结构，但来自另一位女性，不是这副骨架的供体（Wu 等 2015 年的研究：中国可视化人体数据集中的一位年轻成年女性）。这些结构由该研究的作者根据冰冻切片重建并做过平滑，本模型把它们放大 1.096 倍，按骨性标志配准到这个骨盆上（误差约 2 mm），又随骨盆一起横向收窄 11 %。左右两半是本项目切分的；相邻结构有重叠的地方，次要的一方被重新塑形，最多移动 8 mm。不要据此判断这些结构的大小、精确位置或左右差异。`,
     },
     {
-      en: 'Pelvic soft tissue is not female anatomy: the uterus, ovaries, tubes and vagina are artist-modelled (Human Reference Atlas), while the bowel, vessels, nerves and pelvic floor around them are male structures moved aside. The sigmoid colon was shifted up to 5 cm to clear the uterus and left ovary' + (overlaps.length ? `; still overlapping: ${overlaps.join(', ')}.` : '.'),
-      zh: '盆腔软组织并非真实的女性解剖：子宫、卵巢、输卵管和阴道为美术建模（Human Reference Atlas），其周围的肠管、血管、神经和盆底肌则是被推移开的男性结构。乙状结肠为避让子宫和左卵巢被移动了最多约 5 cm' + (overlaps.length ? `；目前仍有重叠：${overlaps.join('、')}。` : '。'),
+      en: `Three sources meet in the lesser pelvis, and where they meet the model is a join, not anatomy. The bladder, bones and obturator internus are the donor's; her bladder is almost empty (${pv.bladder?.volumeMl?.before ?? '?'} ml), its neck was drawn ${pv.bladder?.neckMovedMm ?? '?'} mm onto the upper end of the other woman's urethra and its base ${pv.bladder ? round(pv.bladder.baseToVaginaMm.before - pv.bladder.baseToVaginaMm.after, 0) : '?'} mm back onto the anterior vaginal wall. The uterus stands as it did in the other woman, whose bladder was full, so an unnatural gap remains between bladder and uterus. The sigmoid colon, ureters, vessels, nerves and lymph nodes are male structures: the end of the sigmoid colon was moved ${pv.rectosigmoid?.lowerEndOfSigmoidMovedMm ?? '?'} mm to meet the upper end of the rectum (which is cut off at the top of the specimen), the bowel was shifted by up to ${Math.max(0, ...(pv.bowel?.shifts ?? []).map((x) => x.shiftMm))} mm to clear the uterus, left tube and left ovary, and vessels that ran through these organs were pushed to their surface; some still cut through them.${hraKept.length ? ` ${hraKept.join(', ')} are artist models (Human Reference Atlas) moved 2–4 cm onto these organs.` : ''}`,
+      zh: `小骨盆里有三个来源的结构，它们相接的地方是拼接出来的，不是真实解剖。膀胱、骨和闭孔内肌来自骨架的供体；她的膀胱几乎是空的（${pv.bladder?.volumeMl?.before ?? '?'} ml），膀胱颈被拉动 ${pv.bladder?.neckMovedMm ?? '?'} mm 接到另一位女性的尿道上端，膀胱底向后移了 ${pv.bladder ? round(pv.bladder.baseToVaginaMm.before - pv.bladder.baseToVaginaMm.after, 0) : '?'} mm 贴近阴道前壁。子宫保持它在另一位女性体内的位置，而那位女性的膀胱是充盈的，所以膀胱与子宫之间留有一段不自然的空隙。乙状结肠、输尿管、血管、神经和淋巴结是男性结构：乙状结肠末端被移动 ${pv.rectosigmoid?.lowerEndOfSigmoidMovedMm ?? '?'} mm 去对接直肠上端（直肠在标本上缘处被截断），肠管整体移动了最多 ${Math.max(0, ...(pv.bowel?.shifts ?? []).map((x) => x.shiftMm))} mm 以避开子宫、左输卵管和左卵巢，原本穿过这些器官的血管被推到器官表面，仍有少数从中穿过。${hraKept.length ? `${hraKeptZh}是美术建模（Human Reference Atlas），被移动 2–4 cm 贴到这些器官上。` : ''}`,
     },
     {
       en: installedSkin
@@ -2531,8 +2303,8 @@ async function finish(input: FinishInput) {
       en: 'The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution.',
     }] : []),
     {
-      en: 'Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.',
-      zh: '缺失：外生殖器和会阴、女性尿道、卵巢血管和阴道血管。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）已删除，但未以对应的女性结构替代。',
+      en: `Absent from the pelvis: labia, vestibule and the skin of the vulva (the body surface there is not female); the mucosa and lumen of the urethra; ${hraGone.length ? `${hraGone.join(', ').toLowerCase()} (the artist models of these did not fit the organs shown and were left out); ` : ''}ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a "pubovisceral muscle" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed${warpedGone.length ? `, as were male structures that would lie inside the female organs (${warpedGone.join(', ')})` : ''}.`,
+      zh: `盆腔中缺失的结构：阴唇、阴道前庭和外阴皮肤（该处的体表不是女性的）；尿道的黏膜和管腔；${hraGone.length ? `${hraGoneZh}（这些结构的美术模型与这里显示的器官对不上，没有采用）；` : ''}卵巢血管和阴道血管；盆腔自主神经丛。髂尾肌不是单独的部件：数据来源把耻尾肌和髂尾肌合称“耻骨内脏肌”，分为内层和外层。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）以及男性的盆底肌和直肠已删除${warpedGone.length ? `，落在女性器官内部的男性结构（${warpedGone.join('、')}）也已删除` : ''}。`,
     },
     {
       en: 'Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.',
@@ -2598,7 +2370,7 @@ async function finish(input: FinishInput) {
     schema: 1,
     body: 'female',
     cautions: report.cautions as { zh: string; en: string }[],
-    sources: [...male.data.sources.filter((s) => usedSources.has(s.name)), SOURCE_VHF, ...(usedSources.has(SOURCE_DENVER.name) ? [SOURCE_DENVER] : []), SOURCE_HRA, ...(installedSkin ? [(installedSkin as SkinPackage).source] : [])],
+    sources: [...male.data.sources.filter((s) => usedSources.has(s.name)), SOURCE_VHF, ...(usedSources.has(SOURCE_DENVER.name) ? [SOURCE_DENVER] : []), ...(usedSources.has(SOURCE_HRA.name) ? [SOURCE_HRA] : []), ...(usedSources.has(SOURCE_WU.name) ? [SOURCE_WU] : []), ...(installedSkin ? [(installedSkin as SkinPackage).source] : [])],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
     parts: outParts,

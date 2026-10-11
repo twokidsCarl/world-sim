@@ -26,6 +26,7 @@
   沿某方向最远的顶点；`within` 先把部件限制在沿 `axis` 的一段（0 为该方向最远端）；`half` 只取本侧一半（用于正中的骨）
 - `{ "part": …, "pick": { "slice": { "axis": 方向, "frac": [a, b] } } }`：该段顶点的平均位置
 - `{ "lerp": [A, B, t] }`、`{ "xyz": [A, B, C] }`（x 取自 A，y 取自 B，z 取自 C）、`{ "offset": [A, [外, 上, 前]] }`
+- `{ "shift": [A, from, to] }`：把 A 平移 (to − from)，用于把一处量得的位移照搬到另一处
 - `{ "frame": 坐标架, "t": t }`：坐标架轴线上的点（0 起点，1 终点）
 - `{ "nervePoint": 神经部件名, "x": A, "back": true }`：神经中心线与过 A 的矢状面的交点
 
@@ -43,6 +44,10 @@
 - `{ "curve": [SkinExpr 或 { "nerve": 名称, "project": "trunkRadial", "clip": … }, …] }`：依次相连的曲线
 - `{ "nerve": [名称…], "maxDepthMm": 15, "where": { "frame": …, "t": [a, b] } }`：神经中心线距皮肤不超过给定深度的部分
 - 可选：`"pin": true`（关键点，保持标签）、`"widthMm"`（带宽度的种子）、`"offsetMm"`（让先/让后）
+- 神经种子可加 `"facing": { "frame": …, "deg": … }`：只取投影到朝向该方向的皮肤上的点（如手的 180 = 手背）
+
+`dermatomes.json` 的 `checks`（独立检查点）中，`at` 可以是皮肤上的一点，也可以是 `{ "over": 部件名 }`：
+取该部件正前方皮肤中面积最大的皮节。`landmarks.json` 的 `notes` 说明个别标志的取法。
 
 `barriers` 是标签扩散不能越过的曲线（肢体的腹侧、背侧轴线）。
 
@@ -80,6 +85,7 @@ and neighbouring areas really overlap; nothing here has been reviewed by a clini
   `axis` (0 = far end in that direction); `half` keeps this side's half only (midline bones)
 - `{ "part": …, "pick": { "slice": { "axis": dir, "frac": [a, b] } } }`: mean position of that stretch
 - `{ "lerp": [A, B, t] }`, `{ "xyz": [A, B, C] }` (x from A, y from B, z from C), `{ "offset": [A, [lat, sup, ant]] }`
+- `{ "shift": [A, from, to] }`: A moved by (to − from), to carry a displacement measured in one place over to another
 - `{ "frame": frame, "t": t }`: point on a frame's axis (0 origin, 1 end)
 - `{ "nervePoint": nerve part, "x": A, "back": true }`: where a nerve's centreline crosses the sagittal plane through A
 
@@ -98,5 +104,10 @@ Seeds (`seeds` of every region):
 - `{ "curve": [SkinExpr or { "nerve": name, "project": "trunkRadial", "clip": … }, …] }`: a curve through the items in order
 - `{ "nerve": [names…], "maxDepthMm": 15, "where": { "frame": …, "t": [a, b] } }`: the part of the nerves' centrelines within the given depth of the skin
 - optional: `"pin": true` (key point, keeps its label), `"widthMm"` (seed with width), `"offsetMm"` (head start / handicap)
+- a nerve seed may carry `"facing": { "frame": …, "deg": … }`: only points that project onto skin facing that direction (e.g. 180 on the hand = dorsal)
+
+In the `checks` of `dermatomes.json` (independent checkpoints) `at` is a point on the skin or
+`{ "over": part name }`: the dermatome with the largest share of the skin in front of that part.
+`notes` in `landmarks.json` explains how particular landmarks are taken.
 
 `barriers` are curves that labels cannot spread across (the ventral and dorsal axial lines of the limbs).

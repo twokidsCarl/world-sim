@@ -24231,10 +24231,10 @@
    "evaluated": true,
    "measured": "15.3 mm palmar of the distal radius centre (1.9 mm from its surface); 5.7 mm from the flexor retinaculum, 6.3 mm deep to its centre",
    "values": {
-    "palmarOfRadius": 15.261922700651816,
+    "palmarOfRadius": 15.261925931410362,
     "toRadius": 1.8928309237165553,
     "toRetinaculum": 5.690445268258687,
-    "deepToRetinaculum": 6.346231438992527
+    "deepToRetinaculum": 6.346231028303614
    }
   },
   {
@@ -24282,11 +24282,11 @@
    "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
    "pass": true,
    "evaluated": true,
-   "measured": "mid-shaft: up to 20.6 mm posterior to the shaft axis, 5.0 mm from the bone; 29.5 mm medial of the axis proximally, 5.3 mm lateral distally",
+   "measured": "mid-shaft: up to 20.6 mm posterior to the shaft axis, 5.0 mm from the bone; 30.4 mm medial of the axis proximally, 5.3 mm lateral distally",
    "values": {
-    "posterior": 20.642839648105483,
-    "toBone": 4.992418350752745,
-    "medialProximal": 29.508176225203048,
+    "posterior": 20.644448973514418,
+    "toBone": 4.994059593211631,
+    "medialProximal": 30.397059736044508,
     "lateralDistal": 5.34559369592344
    }
   },
@@ -24322,11 +24322,11 @@
    "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
    "pass": true,
    "evaluated": true,
-   "measured": "C5: 0.66 between medius (0) and anterior (1), 1.4 / 1.9 mm from them; C6: 0.60 between medius (0) and anterior (1), 2.0 / 1.8 mm from them; C7: 0.39 between medius (0) and anterior (1), 4.1 / 4.1 mm from them; C8: 0.59 between medius (0) and anterior (1), 3.3 / 3.5 mm from them; T1: 0.63 between medius (0) and anterior (1), 3.3 / 3.2 mm from them",
+   "measured": "C5: 0.66 between medius (0) and anterior (1), 1.4 / 1.9 mm from them; C6: 0.61 between medius (0) and anterior (1), 2.0 / 1.8 mm from them; C7: 0.40 between medius (0) and anterior (1), 4.1 / 4.1 mm from them; C8: 0.63 between medius (0) and anterior (1), 3.3 / 3.3 mm from them; T1: 0.66 between medius (0) and anterior (1), 3.8 / 2.7 mm from them",
    "values": {
     "rootsBetween": 5,
     "rootsEvaluated": 5,
-    "worstDistance": 4.09897374702846
+    "worstDistance": 4.059743832533372
    }
   },
   {
@@ -24335,12 +24335,12 @@
    "claim": "each intercostal nerve follows the inferior border of its own rib",
    "pass": true,
    "evaluated": true,
-   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 81% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 100% below its nearest rib point; 3: 1.1 mm from rib 3 (median), 97% nearer it than rib 4, 98% below its nearest rib point; 4: 1.4 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 0.9 mm from rib 6 (median), 88% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 91% nearer it than rib 8, 96% below its nearest rib point; 8: 0.9 mm from rib 8 (median), 97% nearer it than rib 9, 95% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 89% below its nearest rib point; 10: 1.1 mm from rib 10 (median), 96% nearer it than rib 11, 85% below its nearest rib point; 11: 1.3 mm from rib 11 (median), 100% nearer it than rib 12, 77% below its nearest rib point",
+   "measured": "1: 0.7 mm from rib 1 (median), 93% nearer it than rib 2, 79% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 100% below its nearest rib point; 3: 1.1 mm from rib 3 (median), 97% nearer it than rib 4, 98% below its nearest rib point; 4: 1.6 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 90% below its nearest rib point; 6: 1.0 mm from rib 6 (median), 88% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 91% nearer it than rib 8, 96% below its nearest rib point; 8: 0.9 mm from rib 8 (median), 97% nearer it than rib 9, 95% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 89% below its nearest rib point; 10: 1.1 mm from rib 10 (median), 96% nearer it than rib 11, 85% below its nearest rib point; 11: 1.3 mm from rib 11 (median), 100% nearer it than rib 12, 77% below its nearest rib point",
    "values": {
     "nerves": 11,
     "ok": 11,
-    "worstMedianDistance": 1.429477216640686,
-    "meanBelow": 0.9161195110692089
+    "worstMedianDistance": 1.5920717299200722,
+    "meanBelow": 0.9138733237653671
    }
   },
   {
@@ -24351,10 +24351,10 @@
    "evaluated": true,
    "measured": "14.7 mm palmar of the distal radius centre (3.1 mm from its surface); 5.6 mm from the flexor retinaculum, 7.2 mm deep to its centre",
    "values": {
-    "palmarOfRadius": 14.740752888051889,
+    "palmarOfRadius": 14.74075531234318,
     "toRadius": 3.0647823064963102,
     "toRetinaculum": 5.5677454133025375,
-    "deepToRetinaculum": 7.179620525754466
+    "deepToRetinaculum": 7.179620698219961
    }
   },
   {
@@ -24365,8 +24365,8 @@
    "evaluated": true,
    "measured": "closest approach 11.1 mm from the epicondyle tip, 6.9 mm posterior to it",
    "values": {
-    "toEpicondyle": 11.078960924200123,
-    "posterior": 6.901968270540237
+    "toEpicondyle": 11.078963244980914,
+    "posterior": 6.901971995830536
    }
   },
   {
@@ -24402,11 +24402,11 @@
    "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
    "pass": true,
    "evaluated": true,
-   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.1 mm from the bone; 31.4 mm medial of the axis proximally, 6.9 mm lateral distally",
+   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.1 mm from the bone; 30.7 mm medial of the axis proximally, 6.9 mm lateral distally",
    "values": {
-    "posterior": 20.88802016299704,
-    "toBone": 5.060226192571234,
-    "medialProximal": 31.44442041714987,
+    "posterior": 20.88901109021643,
+    "toBone": 5.061239815715619,
+    "medialProximal": 30.731626919337675,
     "lateralDistal": 6.8906245424467105
    }
   },
@@ -24442,11 +24442,11 @@
    "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
    "pass": true,
    "evaluated": true,
-   "measured": "C5: 0.70 between medius (0) and anterior (1), 2.0 / 1.9 mm from them; C6: 0.52 between medius (0) and anterior (1), 1.9 / 2.1 mm from them; C7: 0.40 between medius (0) and anterior (1), 4.0 / 4.2 mm from them; C8: 0.56 between medius (0) and anterior (1), 3.2 / 3.6 mm from them; T1: 0.61 between medius (0) and anterior (1), 3.2 / 3.3 mm from them",
+   "measured": "C5: 0.70 between medius (0) and anterior (1), 2.0 / 1.9 mm from them; C6: 0.52 between medius (0) and anterior (1), 1.9 / 2.1 mm from them; C7: 0.41 between medius (0) and anterior (1), 4.0 / 4.2 mm from them; C8: 0.62 between medius (0) and anterior (1), 3.2 / 3.2 mm from them; T1: 0.65 between medius (0) and anterior (1), 3.6 / 2.9 mm from them",
    "values": {
     "rootsBetween": 5,
     "rootsEvaluated": 5,
-    "worstDistance": 4.248265943461434
+    "worstDistance": 4.197818753252023
    }
   },
   {
@@ -24455,12 +24455,12 @@
    "claim": "each intercostal nerve follows the inferior border of its own rib",
    "pass": true,
    "evaluated": true,
-   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 91% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 99% below its nearest rib point; 3: 1.3 mm from rib 3 (median), 98% nearer it than rib 4, 97% below its nearest rib point; 4: 1.4 mm from rib 4 (median), 94% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 1.0 mm from rib 6 (median), 86% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 89% nearer it than rib 8, 97% below its nearest rib point; 8: 1.0 mm from rib 8 (median), 97% nearer it than rib 9, 96% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 90% below its nearest rib point; 10: 0.9 mm from rib 10 (median), 96% nearer it than rib 11, 88% below its nearest rib point; 11: 1.2 mm from rib 11 (median), 100% nearer it than rib 12, 79% below its nearest rib point",
+   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 91% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 99% below its nearest rib point; 3: 1.3 mm from rib 3 (median), 98% nearer it than rib 4, 97% below its nearest rib point; 4: 1.6 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.4 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 1.1 mm from rib 6 (median), 86% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 89% nearer it than rib 8, 97% below its nearest rib point; 8: 1.0 mm from rib 8 (median), 97% nearer it than rib 9, 96% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 90% below its nearest rib point; 10: 0.9 mm from rib 10 (median), 96% nearer it than rib 11, 88% below its nearest rib point; 11: 1.2 mm from rib 11 (median), 100% nearer it than rib 12, 79% below its nearest rib point",
    "values": {
     "nerves": 11,
     "ok": 11,
-    "worstMedianDistance": 1.435950186231332,
-    "meanBelow": 0.9318017547211493
+    "worstMedianDistance": 1.640056623610592,
+    "meanBelow": 0.9322908329650861
    }
   }
  ],
@@ -56097,6 +56097,8684 @@
    }
   ]
  },
+ "landmarksAsScanned": [
+  {
+   "id": "median-wrist",
+   "side": "L",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "15.3 mm palmar of the distal radius centre (1.9 mm from its surface); 5.7 mm from the flexor retinaculum, 6.3 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 15.261922700651816,
+    "toRadius": 1.8928309237165553,
+    "toRetinaculum": 5.690445268258687,
+    "deepToRetinaculum": 6.346231438992527
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "L",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 10.8 mm from the epicondyle tip, 6.4 mm posterior to it",
+   "values": {
+    "toEpicondyle": 10.813440471462302,
+    "posterior": 6.443440914154053
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "L",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.2 mm, there 23.9 mm below the muscle's centroid (6.6 mm from its lower border); behind the muscle the nerve stays -4.6 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.1926915603949233,
+    "belowCentroid": 23.878959542147136,
+    "fromLowerBorder": 6.560146808624268
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "L",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 20.6 mm posterior to the shaft axis, ≤ 49.3 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.41…0.55",
+   "values": {
+    "posteriorMin": 20.6265648206075,
+    "fromShaftMax": 49.25945757763905,
+    "betweenMin": 0.41464808267933356,
+    "betweenMax": 0.549095842272761
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "L",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 20.6 mm posterior to the shaft axis, 5.0 mm from the bone; 29.5 mm medial of the axis proximally, 5.3 mm lateral distally",
+   "values": {
+    "posterior": 20.642839648105483,
+    "toBone": 4.992418350752745,
+    "medialProximal": 29.508176225203048,
+    "lateralDistal": 5.34559369592344
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "L",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.7 mm from the fibula 1–5 cm below its tip, 6.2 mm lateral and 14.1 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 4.687796334222193,
+    "lateral": 6.1637129235480455,
+    "posterior": 14.097223390958133
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "L",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "21.2 mm lateral of the artery (22.6 mm apart), 18.9 mm from the ligament; artery 0.2 mm from the ligament",
+   "values": {
+    "lateral": 21.176783740520477,
+    "separation": 22.620594736797994,
+    "toLigament": 18.851688794599717
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "L",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.66 between medius (0) and anterior (1), 1.4 / 1.9 mm from them; C6: 0.60 between medius (0) and anterior (1), 2.0 / 1.8 mm from them; C7: 0.39 between medius (0) and anterior (1), 4.1 / 4.1 mm from them; C8: 0.59 between medius (0) and anterior (1), 3.3 / 3.5 mm from them; T1: 0.63 between medius (0) and anterior (1), 3.3 / 3.2 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 4.09897374702846
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "L",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 81% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 100% below its nearest rib point; 3: 1.1 mm from rib 3 (median), 97% nearer it than rib 4, 98% below its nearest rib point; 4: 1.4 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 0.9 mm from rib 6 (median), 88% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 91% nearer it than rib 8, 96% below its nearest rib point; 8: 0.9 mm from rib 8 (median), 97% nearer it than rib 9, 95% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 89% below its nearest rib point; 10: 1.1 mm from rib 10 (median), 96% nearer it than rib 11, 85% below its nearest rib point; 11: 1.3 mm from rib 11 (median), 100% nearer it than rib 12, 77% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 1.429477216640686,
+    "meanBelow": 0.9161195110692089
+   }
+  },
+  {
+   "id": "median-wrist",
+   "side": "R",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "14.7 mm palmar of the distal radius centre (3.1 mm from its surface); 5.6 mm from the flexor retinaculum, 7.2 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 14.740752888051889,
+    "toRadius": 3.0647823064963102,
+    "toRetinaculum": 5.5677454133025375,
+    "deepToRetinaculum": 7.179620525754466
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "R",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 11.1 mm from the epicondyle tip, 6.9 mm posterior to it",
+   "values": {
+    "toEpicondyle": 11.078960924200123,
+    "posterior": 6.901968270540237
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "R",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.3 mm, there 11.6 mm below the muscle's centroid (7.7 mm from its lower border); behind the muscle the nerve stays -3.9 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.32537746069570245,
+    "belowCentroid": 11.58836666857721,
+    "fromLowerBorder": 7.675766944885254
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "R",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 19.9 mm posterior to the shaft axis, ≤ 51.0 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.40…0.54",
+   "values": {
+    "posteriorMin": 19.941842293038082,
+    "fromShaftMax": 50.97571673459503,
+    "betweenMin": 0.40081794046033487,
+    "betweenMax": 0.5353341507844723
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "R",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.1 mm from the bone; 31.4 mm medial of the axis proximally, 6.9 mm lateral distally",
+   "values": {
+    "posterior": 20.88802016299704,
+    "toBone": 5.060226192571234,
+    "medialProximal": 31.44442041714987,
+    "lateralDistal": 6.8906245424467105
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "R",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.0 mm from the fibula 1–5 cm below its tip, 5.5 mm lateral and 14.7 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 3.9982190241739475,
+    "lateral": 5.467592409023878,
+    "posterior": 14.657930599955419
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "R",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "23.1 mm lateral of the artery (24.1 mm apart), 13.2 mm from the ligament; artery 0.2 mm from the ligament",
+   "values": {
+    "lateral": 23.105772336324055,
+    "separation": 24.120513759417864,
+    "toLigament": 13.225022500941273
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "R",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.70 between medius (0) and anterior (1), 2.0 / 1.9 mm from them; C6: 0.52 between medius (0) and anterior (1), 1.9 / 2.1 mm from them; C7: 0.40 between medius (0) and anterior (1), 4.0 / 4.2 mm from them; C8: 0.56 between medius (0) and anterior (1), 3.2 / 3.6 mm from them; T1: 0.61 between medius (0) and anterior (1), 3.2 / 3.3 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 4.248265943461434
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "R",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 91% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 99% below its nearest rib point; 3: 1.3 mm from rib 3 (median), 98% nearer it than rib 4, 97% below its nearest rib point; 4: 1.4 mm from rib 4 (median), 94% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 1.0 mm from rib 6 (median), 86% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 89% nearer it than rib 8, 97% below its nearest rib point; 8: 1.0 mm from rib 8 (median), 97% nearer it than rib 9, 96% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 90% below its nearest rib point; 10: 0.9 mm from rib 10 (median), 96% nearer it than rib 11, 88% below its nearest rib point; 11: 1.2 mm from rib 11 (median), 100% nearer it than rib 12, 79% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 1.435950186231332,
+    "meanBelow": 0.9318017547211493
+   }
+  }
+ ],
+ "shoulderGirdle": {
+  "applied": true,
+  "method": "closed-chain solve per side (clavicle about the sternoclavicular centre, scapula about the acromioclavicular centre gliding on the chest wall, limb translated with the humeral head centre); soft tissue by bone-group attachment blending and a kernel displacement field",
+  "restingPostureReference": {
+   "name": "Ludewig PM, Phadke V, Braman JP, Hassett DR, Cieminski CJ, LaPrade RF. Motion of the shoulder complex during multiplanar humeral elevation. J Bone Joint Surg Am 2009;91(2):378–389, table I",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2657311",
+   "meanAndSdDeg": {
+    "clavicleRetraction": [
+     19.2,
+     6.9
+    ],
+    "clavicleElevation": [
+     5.9,
+     3.5
+    ],
+    "scapulaInternalRotation": [
+     41.1,
+     6.9
+    ],
+    "scapulaUpwardRotation": [
+     5.4,
+     3.5
+    ],
+    "scapulaAnteriorTilt": [
+     13.5,
+     6.9
+    ]
+   }
+  },
+  "thoraxLandmarksM": {
+   "ij": [
+    0.0001,
+    1.3222,
+    0.1393
+   ],
+   "px": [
+    -0.0013,
+    1.164,
+    0.2059
+   ],
+   "c7": [
+    -0.0035,
+    1.3684,
+    0.0213
+   ],
+   "t8": [
+    -0.0003,
+    1.1628,
+    0.0009
+   ]
+  },
+  "glenohumeralSeparationMm": {
+   "before": 324.3,
+   "target": 350,
+   "withoutLateralTarget": 336.5,
+   "after": 337.9
+  },
+  "targetsTried": [
+   {
+    "separationMm": 325,
+    "accepted": true,
+    "reason": null,
+    "standOffRmsMm": [
+     1.94,
+     2.02
+    ]
+   },
+   {
+    "separationMm": 337,
+    "accepted": true,
+    "reason": null,
+    "standOffRmsMm": [
+     2.09,
+     2.1
+    ]
+   },
+   {
+    "separationMm": 338,
+    "accepted": true,
+    "reason": null,
+    "standOffRmsMm": [
+     2.19,
+     2.21
+    ]
+   },
+   {
+    "separationMm": 339,
+    "accepted": false,
+    "reason": "scapula closer to the chest wall than at rest (min 1.6 → 1.4 mm, p10 4.1 → 5.7 mm)",
+    "standOffRmsMm": [
+     2.3,
+     2.32
+    ]
+   },
+   {
+    "separationMm": 340,
+    "accepted": false,
+    "reason": "scapula closer to the chest wall than at rest (min 1.7 → 1.5 mm, p10 4.8 → 6.5 mm)",
+    "standOffRmsMm": [
+     2.47,
+     2.49
+    ]
+   },
+   {
+    "separationMm": 343,
+    "accepted": false,
+    "reason": "scapulothoracic stand-off changes by 3.15 mm RMS (limit 2.5)",
+    "standOffRmsMm": [
+     3.15,
+     3.17
+    ]
+   },
+   {
+    "separationMm": 350,
+    "accepted": false,
+    "reason": "scapulothoracic stand-off changes by 5.39 mm RMS (limit 2.5)",
+    "standOffRmsMm": [
+     5.39,
+     5.39
+    ]
+   }
+  ],
+  "sides": {
+   "left": {
+    "anglesDeg": {
+     "clavicleRetraction": {
+      "before": 26.1,
+      "after": 16.4,
+      "sdFromRestingMean": [
+       1,
+       -0.4
+      ]
+     },
+     "clavicleElevation": {
+      "before": 15,
+      "after": 5.1,
+      "sdFromRestingMean": [
+       2.62,
+       -0.22
+      ]
+     },
+     "scapulaInternalRotation": {
+      "before": 16.8,
+      "after": 28.7,
+      "sdFromRestingMean": [
+       -3.51,
+       -1.79
+      ]
+     },
+     "scapulaUpwardRotation": {
+      "before": 16,
+      "after": 5.9,
+      "sdFromRestingMean": [
+       3.07,
+       0.15
+      ]
+     },
+     "scapulaAnteriorTilt": {
+      "before": 14.1,
+      "after": 13.6,
+      "sdFromRestingMean": [
+       0.09,
+       0.01
+      ]
+     }
+    },
+    "clavicleLengthMm": 148.7,
+    "sternoclavicularRotationDeg": 13.7,
+    "acromioclavicularRotationDeg": 6,
+    "glenohumeralRotationDeg": 15.7,
+    "humeralHeadCentreMovedMm": [
+     6.8,
+     -25.1,
+     25.9
+    ],
+    "humeralHeadRadiusMm": 21.7,
+    "solver": {
+     "iterations": 11,
+     "cost": 27.76
+    },
+    "scapulothoracic": {
+     "standOffChangeMm": {
+      "rms": 2.19,
+      "maxCloser": 3.08,
+      "maxFurther": 4.7
+     },
+     "costalSurfaceToChestWall": {
+      "before": {
+       "minMm": 1.7,
+       "p2Mm": 2.9,
+       "p10Mm": 4.8,
+       "medianMm": 11.4
+      },
+      "after": {
+       "minMm": 2,
+       "p2Mm": 4.1,
+       "p10Mm": 6.4,
+       "medianMm": 13
+      }
+     },
+     "wholeScapulaToRibs": {
+      "before": {
+       "minMm": 1.4,
+       "p2Mm": 3.8,
+       "p10Mm": 6.9,
+       "medianMm": 18.5
+      },
+      "after": {
+       "minMm": 2.5,
+       "p2Mm": 5.5,
+       "p10Mm": 8.5,
+       "medianMm": 20.3
+      }
+     },
+     "scapulaSurfaceInsideRibs": {
+      "before": 0,
+      "after": 0
+     }
+    },
+    "jointGaps": {
+     "glenohumeral": {
+      "before": {
+       "minMm": 0.61,
+       "medianMm": 2.13,
+       "points": 4196
+      },
+      "after": {
+       "minMm": 1.01,
+       "medianMm": 2.39,
+       "points": 4598
+      }
+     },
+     "acromioclavicular": {
+      "before": {
+       "minMm": 2.28,
+       "medianMm": 3.98,
+       "points": 891
+      },
+      "after": {
+       "minMm": 2.24,
+       "medianMm": 4.01,
+       "points": 846
+      }
+     },
+     "sternoclavicular": {
+      "before": {
+       "minMm": 0.05,
+       "medianMm": 1.79,
+       "points": 3328
+      },
+      "after": {
+       "minMm": 0.05,
+       "medianMm": 1.62,
+       "points": 3254
+      }
+     },
+     "clavicleToFirstRib": {
+      "before": {
+       "minMm": 5.75,
+       "medianMm": 7.89,
+       "points": 2576
+      },
+      "after": {
+       "minMm": 6.83,
+       "medianMm": 8.38,
+       "points": 1807
+      }
+     }
+    },
+    "arm": {
+     "bones": 30,
+     "shaftDirection": {
+      "before": [
+       0.1495,
+       -0.979,
+       -0.1386
+      ],
+      "after": [
+       0.1495,
+       -0.979,
+       -0.1386
+      ],
+      "changeDeg": 0
+     },
+     "elbowRelativeToPelvisMm": {
+      "before": [
+       190.5,
+       174.2,
+       5.5
+      ],
+      "after": [
+       197.3,
+       149.1,
+       31.4
+      ],
+      "note": "lateral, up, forwards; elbow = centre of the distal end of the humerus, pelvis = centre of the hip bones"
+     }
+    }
+   },
+   "right": {
+    "anglesDeg": {
+     "clavicleRetraction": {
+      "before": 29.8,
+      "after": 20,
+      "sdFromRestingMean": [
+       1.52,
+       0.12
+      ]
+     },
+     "clavicleElevation": {
+      "before": 15.4,
+      "after": 5.6,
+      "sdFromRestingMean": [
+       2.76,
+       -0.09
+      ]
+     },
+     "scapulaInternalRotation": {
+      "before": 13.6,
+      "after": 25.3,
+      "sdFromRestingMean": [
+       -3.97,
+       -2.27
+      ]
+     },
+     "scapulaUpwardRotation": {
+      "before": 16.8,
+      "after": 6.6,
+      "sdFromRestingMean": [
+       3.29,
+       0.36
+      ]
+     },
+     "scapulaAnteriorTilt": {
+      "before": 14.3,
+      "after": 13.7,
+      "sdFromRestingMean": [
+       0.11,
+       0.03
+      ]
+     }
+    },
+    "clavicleLengthMm": 148.7,
+    "sternoclavicularRotationDeg": 13.7,
+    "acromioclavicularRotationDeg": 6,
+    "glenohumeralRotationDeg": 15.6,
+    "humeralHeadCentreMovedMm": [
+     -6.8,
+     -25.1,
+     25.6
+    ],
+    "humeralHeadRadiusMm": 21.7,
+    "solver": {
+     "iterations": 11,
+     "cost": 27.76
+    },
+    "scapulothoracic": {
+     "standOffChangeMm": {
+      "rms": 2.21,
+      "maxCloser": 4.44,
+      "maxFurther": 4.73
+     },
+     "costalSurfaceToChestWall": {
+      "before": {
+       "minMm": 1.6,
+       "p2Mm": 2.7,
+       "p10Mm": 4.1,
+       "medianMm": 10.4
+      },
+      "after": {
+       "minMm": 2.2,
+       "p2Mm": 3.7,
+       "p10Mm": 5.5,
+       "medianMm": 12.1
+      }
+     },
+     "wholeScapulaToRibs": {
+      "before": {
+       "minMm": 1.4,
+       "p2Mm": 3.3,
+       "p10Mm": 6,
+       "medianMm": 16.4
+      },
+      "after": {
+       "minMm": 1.7,
+       "p2Mm": 4.5,
+       "p10Mm": 7.4,
+       "medianMm": 18
+      }
+     },
+     "scapulaSurfaceInsideRibs": {
+      "before": 0,
+      "after": 0
+     }
+    },
+    "jointGaps": {
+     "glenohumeral": {
+      "before": {
+       "minMm": 0.7,
+       "medianMm": 2.14,
+       "points": 4302
+      },
+      "after": {
+       "minMm": 0.94,
+       "medianMm": 2.43,
+       "points": 4429
+      }
+     },
+     "acromioclavicular": {
+      "before": {
+       "minMm": 1.13,
+       "medianMm": 2.87,
+       "points": 898
+      },
+      "after": {
+       "minMm": 1.09,
+       "medianMm": 2.91,
+       "points": 853
+      }
+     },
+     "sternoclavicular": {
+      "before": {
+       "minMm": 0.06,
+       "medianMm": 1.3,
+       "points": 3229
+      },
+      "after": {
+       "minMm": 0.04,
+       "medianMm": 1.36,
+       "points": 3175
+      }
+     },
+     "clavicleToFirstRib": {
+      "before": {
+       "minMm": 5.78,
+       "medianMm": 7.9,
+       "points": 2782
+      },
+      "after": {
+       "minMm": 6.83,
+       "medianMm": 8.49,
+       "points": 2071
+      }
+     }
+    },
+    "arm": {
+     "bones": 30,
+     "shaftDirection": {
+      "before": [
+       -0.1834,
+       -0.9752,
+       -0.1237
+      ],
+      "after": [
+       -0.1834,
+       -0.9752,
+       -0.1237
+      ],
+      "changeDeg": 0
+     },
+     "elbowRelativeToPelvisMm": {
+      "before": [
+       190.4,
+       174.2,
+       5.5
+      ],
+      "after": [
+       197.2,
+       149.1,
+       31.1
+      ],
+      "note": "lateral, up, forwards; elbow = centre of the distal end of the humerus, pelvis = centre of the hip bones"
+     }
+    }
+   }
+  },
+  "transforms": {
+   "note": "x ↦ rotation·x + translation (row-major, metres, runtime frame); `inverse` takes the corrected posture back to the as-scanned one. arm_* applies to the humerus and every bone distal to it.",
+   "clavicle_L": {
+    "rotation": [
+     0.97217561,
+     0.15007983,
+     -0.17986278,
+     -0.14288153,
+     0.98835145,
+     0.05240488,
+     0.18563256,
+     -0.02524767,
+     0.98229482
+    ],
+    "translationM": [
+     -0.1723084,
+     0.0103708,
+     0.0327337
+    ],
+    "inverse": {
+     "rotation": [
+      0.97217561,
+      -0.14288153,
+      0.18563256,
+      0.15007983,
+      0.98835145,
+      -0.02524767,
+      -0.17986278,
+      0.05240488,
+      0.98229482
+     ],
+     "translationM": [
+      0.1629194,
+      0.0164365,
+      -0.0636895
+     ]
+    }
+   },
+   "scapula_L": {
+    "rotation": [
+     0.96439979,
+     0.1326737,
+     -0.22875912,
+     -0.14519505,
+     0.98864488,
+     -0.03872593,
+     0.22102362,
+     0.07056197,
+     0.97271248
+    ],
+    "translationM": [
+     -0.1445356,
+     0.0163278,
+     -0.1006625
+    ],
+    "inverse": {
+     "rotation": [
+      0.96439979,
+      -0.14519505,
+      0.22102362,
+      0.1326737,
+      0.98864488,
+      0.07056197,
+      -0.22875912,
+      -0.03872593,
+      0.97271248
+     ],
+     "translationM": [
+      0.1640096,
+      0.0101366,
+      0.0654842
+     ]
+    }
+   },
+   "arm_L": {
+    "rotation": [
+     1,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     1
+    ],
+    "translationM": [
+     0.0068229,
+     -0.0250699,
+     0.0258779
+    ],
+    "inverse": {
+     "rotation": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ],
+     "translationM": [
+      -0.0068229,
+      0.0250699,
+      -0.0258779
+     ]
+    }
+   },
+   "clavicle_R": {
+    "rotation": [
+     0.97222402,
+     -0.15072019,
+     0.17906387,
+     0.14332587,
+     0.9882223,
+     0.05361326,
+     -0.18503551,
+     -0.02645962,
+     0.98237556
+    ],
+    "translationM": [
+     0.1732387,
+     0.0105114,
+     0.0341597
+    ],
+    "inverse": {
+     "rotation": [
+      0.97222402,
+      0.14332587,
+      -0.18503551,
+      -0.15072019,
+      0.9882223,
+      -0.02645962,
+      0.17906387,
+      0.05361326,
+      0.98237556
+     ],
+     "translationM": [
+      -0.1636127,
+      0.0166268,
+      -0.065142
+     ]
+    }
+   },
+   "scapula_R": {
+    "rotation": [
+     0.9644857,
+     -0.13337501,
+     0.22798781,
+     0.14558316,
+     0.98863436,
+     -0.03751849,
+     -0.22039256,
+     0.06937723,
+     0.97294086
+    ],
+    "translationM": [
+     0.1455549,
+     0.0162858,
+     -0.0993046
+    ],
+    "inverse": {
+     "rotation": [
+      0.9644857,
+      0.14558316,
+      -0.22039256,
+      -0.13337501,
+      0.98863436,
+      0.06937723,
+      0.22798781,
+      -0.03751849,
+      0.97294086
+     ],
+     "translationM": [
+      -0.1646426,
+      0.0102022,
+      0.0640438
+     ]
+    }
+   },
+   "arm_R": {
+    "rotation": [
+     1,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     1
+    ],
+    "translationM": [
+     -0.0068082,
+     -0.0251043,
+     0.0256082
+    ],
+    "inverse": {
+     "rotation": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ],
+     "translationM": [
+      0.0068082,
+      0.0251043,
+      -0.0256082
+     ]
+    }
+   }
+  },
+  "jointCentresM": {
+   "note": "after the correction; sternoclavicular and acromioclavicular = centres of the contact zones, glenohumeral = centre of the sphere fitted to the humeral head, the others by the simple definitions of limbJointCentres (shoulder.ts); rig.json, once rebuilt on this geometry, has the exact centres and axes",
+   "hip_L": [
+    0.08694,
+    0.81146,
+    0.07877
+   ],
+   "knee_L": [
+    0.07175,
+    0.39257,
+    0.08038
+   ],
+   "ankle_L": [
+    0.07131,
+    -0.01442,
+    0.07695
+   ],
+   "elbow_L": [
+    0.21634,
+    1.01846,
+    0.09441
+   ],
+   "wrist_L": [
+    0.26244,
+    0.7765,
+    0.14644
+   ],
+   "sternoclavicular_L": [
+    0.01576,
+    1.31589,
+    0.13756
+   ],
+   "acromioclavicular_L": [
+    0.1565,
+    1.32401,
+    0.09013
+   ],
+   "glenohumeral_L": [
+    0.16893,
+    1.28973,
+    0.10154
+   ],
+   "hip_R": [
+    -0.08695,
+    0.81149,
+    0.07875
+   ],
+   "knee_R": [
+    -0.07193,
+    0.39271,
+    0.08063
+   ],
+   "ankle_R": [
+    -0.07124,
+    -0.01418,
+    0.07761
+   ],
+   "elbow_R": [
+    -0.21675,
+    1.01843,
+    0.09403
+   ],
+   "wrist_R": [
+    -0.26254,
+    0.77658,
+    0.14602
+   ],
+   "sternoclavicular_R": [
+    -0.0167,
+    1.31609,
+    0.13771
+   ],
+   "acromioclavicular_R": [
+    -0.15722,
+    1.32387,
+    0.0898
+   ],
+   "glenohumeral_R": [
+    -0.16896,
+    1.28977,
+    0.10127
+   ]
+  },
+  "symmetry": {
+   "glenohumeralCentreMm": 1,
+   "acromioclavicularCentreMm": 0.4,
+   "humeralHeadDisplacementMm": 0.3,
+   "anglesDeg": {
+    "clavicleRetraction": 3.6,
+    "clavicleElevation": 0.5,
+    "scapulaInternalRotation": 3.3,
+    "scapulaUpwardRotation": 0.7,
+    "scapulaAnteriorTilt": 0.2
+   },
+   "beforeGlenohumeralCentreMm": 0.9
+  },
+  "field": {
+   "anchors": 618049,
+   "options": {
+    "epsilon": 0.002,
+    "power": 3,
+    "sharpPower": 6,
+    "radiusFactor": 4,
+    "radiusOffset": 0.004,
+    "maxRadius": 0.1,
+    "switchRadius": 0.04,
+    "coarseSpacing": 0.01,
+    "maxDistance": 0.08
+   },
+   "regionM": [
+    -0.384,
+    0.595,
+    -0.084,
+    0.384,
+    1.531,
+    0.277
+   ],
+   "largestDisplacementNearBoundaryMm": 0,
+   "jacobian": {
+    "samples": 76624,
+    "min": -2.515,
+    "p1": 0.659,
+    "median": 1,
+    "p99": 1.36,
+    "max": 4.336,
+    "nonPositive": 106,
+    "nonPositiveByLevel": {
+     "R y 1.20–1.25": 19,
+     "R y 1.15–1.20": 10,
+     "R y 1.10–1.15": 1,
+     "R y 1.25–1.30": 8,
+     "R y 1.30–1.35": 7,
+     "R y 1.35–1.40": 3,
+     "L y 1.20–1.25": 26,
+     "L y 1.30–1.35": 8,
+     "L y 1.35–1.40": 2,
+     "L y 1.15–1.20": 10,
+     "L y 1.10–1.15": 3,
+     "L y 1.25–1.30": 9
+    }
+   }
+  },
+  "parts": {
+   "moved": 720,
+   "rigid": 418,
+   "deformed": 302,
+   "byVia": {
+    "attachment/deformed": 84,
+    "attachment/rigid": 176,
+    "field/rigid": 178,
+    "field/deformed": 136,
+    "bone/rigid": 64,
+    "nerve/deformed": 82
+   },
+   "byTissue": {
+    "muscle": {
+     "rigid": 78,
+     "deformed": 58
+    },
+    "fascia": {
+     "rigid": 10,
+     "deformed": 13
+    },
+    "ligament": {
+     "rigid": 108,
+     "deformed": 28
+    },
+    "artery": {
+     "rigid": 66,
+     "deformed": 57
+    },
+    "vein": {
+     "rigid": 40,
+     "deformed": 34
+    },
+    "skin": {
+     "rigid": 4,
+     "deformed": 1
+    },
+    "bone": {
+     "rigid": 64,
+     "deformed": 0
+    },
+    "nerve": {
+     "rigid": 44,
+     "deformed": 82
+    },
+    "organ": {
+     "rigid": 4,
+     "deformed": 29
+    }
+   },
+   "attached": {
+    "parts": 521,
+    "untouched": 261,
+    "rigid": 176,
+    "deformed": 84
+   },
+   "mapJacobianAtVertices": {
+    "samples": 24292,
+    "min": -0.518,
+    "p1": 0.663,
+    "median": 1,
+    "p99": 1.408,
+    "nonPositive": 10,
+    "partsWithFolds": [
+     {
+      "id": "FJ1459",
+      "name": "Right serratus anterior",
+      "via": "attachment",
+      "samples": 300,
+      "nonPositive": 4,
+      "min": -0.388
+     },
+     {
+      "id": "FJ1459M",
+      "name": "Left serratus anterior",
+      "via": "attachment",
+      "samples": 300,
+      "nonPositive": 3,
+      "min": -0.518
+     },
+     {
+      "id": "FJ1460",
+      "name": "Right subclavius",
+      "via": "attachment",
+      "samples": 415,
+      "nonPositive": 2,
+      "min": -0.12
+     },
+     {
+      "id": "FJ1460M",
+      "name": "Left subclavius",
+      "via": "attachment",
+      "samples": 415,
+      "nonPositive": 1,
+      "min": -0.008
+     }
+    ]
+   },
+   "thinStructures": {
+    "parts": 267,
+    "triangles": 453285,
+    "reversedTriangles": 850,
+    "partsWithReversedTriangles": [
+     {
+      "id": "FJ2285",
+      "name": "Right lateral thoracic vein",
+      "triangles": 3650,
+      "reversed": 109
+     },
+     {
+      "id": "FJ2233",
+      "name": "Left lateral thoracic vein",
+      "triangles": 3640,
+      "reversed": 85
+     },
+     {
+      "id": "FJ2232",
+      "name": "Left dorsal scapular artery",
+      "triangles": 4532,
+      "reversed": 59
+     },
+     {
+      "id": "FJ2284",
+      "name": "Right dorsal scapular artery",
+      "triangles": 4446,
+      "reversed": 52
+     },
+     {
+      "id": "FJ2218",
+      "name": "Left basilic vein",
+      "triangles": 18338,
+      "reversed": 41
+     },
+     {
+      "id": "ZAAFB06D34",
+      "name": "Right investing abdominal fascia",
+      "triangles": 11106,
+      "reversed": 34
+     },
+     {
+      "id": "ZAACCC4854",
+      "name": "Left investing abdominal fascia",
+      "triangles": 11106,
+      "reversed": 33
+     },
+     {
+      "id": "ZA4C2A62DC",
+      "name": "Right clavipectoral fascia",
+      "triangles": 1280,
+      "reversed": 31
+     },
+     {
+      "id": "ZA0A93A6B4",
+      "name": "Left pectoral fascia",
+      "triangles": 2709,
+      "reversed": 26
+     },
+     {
+      "id": "ZA9DD0D4AA",
+      "name": "Left clavipectoral fascia",
+      "triangles": 1280,
+      "reversed": 26
+     },
+     {
+      "id": "FJ2303",
+      "name": "Right suprascapular artery",
+      "triangles": 1912,
+      "reversed": 23
+     },
+     {
+      "id": "FJ2251",
+      "name": "Left suprascapular artery",
+      "triangles": 1928,
+      "reversed": 22
+     },
+     {
+      "id": "FJ2254",
+      "name": "Left thoracodorsal vein",
+      "triangles": 1688,
+      "reversed": 22
+     },
+     {
+      "id": "FJ2270",
+      "name": "Right basilic vein",
+      "triangles": 18150,
+      "reversed": 20
+     },
+     {
+      "id": "ZA85EB9FD9",
+      "name": "Right pectoral fascia",
+      "triangles": 2709,
+      "reversed": 20
+     },
+     {
+      "id": "FJ2246",
+      "name": "Left subscapular artery",
+      "triangles": 790,
+      "reversed": 19
+     },
+     {
+      "id": "FJ2252",
+      "name": "Trunk of left thoraco-acromial artery",
+      "triangles": 468,
+      "reversed": 19
+     },
+     {
+      "id": "FJ1938",
+      "name": "Right lateral thoracic artery",
+      "triangles": 2350,
+      "reversed": 17
+     },
+     {
+      "id": "FJ2274",
+      "name": "Right circumflex scapular vein",
+      "triangles": 960,
+      "reversed": 17
+     },
+     {
+      "id": "FJ2222",
+      "name": "Left circumflex scapular vein",
+      "triangles": 950,
+      "reversed": 16
+     },
+     {
+      "id": "FJ2298",
+      "name": "Right subscapular artery",
+      "triangles": 786,
+      "reversed": 13
+     },
+     {
+      "id": "FJ2304",
+      "name": "Trunk of right thoraco-acromial artery",
+      "triangles": 472,
+      "reversed": 13
+     },
+     {
+      "id": "FJ2306",
+      "name": "Right thoracodorsal vein",
+      "triangles": 1692,
+      "reversed": 11
+     },
+     {
+      "id": "FJ1976",
+      "name": "Left lateral thoracic artery",
+      "triangles": 2350,
+      "reversed": 10
+     },
+     {
+      "id": "FJ2250",
+      "name": "Left suprascapular vein",
+      "triangles": 1974,
+      "reversed": 10
+     },
+     {
+      "id": "FJ2299",
+      "name": "Right subscapular vein",
+      "triangles": 526,
+      "reversed": 10
+     },
+     {
+      "id": "FJ2361",
+      "name": "Pectoral branch of right thoraco-acromial artery",
+      "triangles": 3400,
+      "reversed": 10
+     },
+     {
+      "id": "FJ2247",
+      "name": "Left subscapular vein",
+      "triangles": 520,
+      "reversed": 9
+     },
+     {
+      "id": "FJ1587",
+      "name": "Right platysma",
+      "triangles": 13780,
+      "reversed": 8
+     },
+     {
+      "id": "FJ2305",
+      "name": "Right thoracodorsal artery",
+      "triangles": 2108,
+      "reversed": 8
+     },
+     {
+      "id": "FJ2216",
+      "name": "Left axillary artery",
+      "triangles": 1800,
+      "reversed": 7
+     },
+     {
+      "id": "FJ1558",
+      "name": "Left platysma",
+      "triangles": 13396,
+      "reversed": 5
+     },
+     {
+      "id": "FJ2253",
+      "name": "Left thoracodorsal artery",
+      "triangles": 2104,
+      "reversed": 5
+     },
+     {
+      "id": "FJ2226",
+      "name": "Left deep cervical artery",
+      "triangles": 1100,
+      "reversed": 4
+     },
+     {
+      "id": "FJ2268",
+      "name": "Right axillary artery",
+      "triangles": 1826,
+      "reversed": 4
+     },
+     {
+      "id": "FJ2302",
+      "name": "Right suprascapular vein",
+      "triangles": 1986,
+      "reversed": 4
+     },
+     {
+      "id": "FJ2330",
+      "name": "Pectoral branch of left thoraco-acromial artery",
+      "triangles": 3376,
+      "reversed": 4
+     },
+     {
+      "id": "FJ1961",
+      "name": "Posterior intercostal arteries",
+      "triangles": 37964,
+      "reversed": 3
+     },
+     {
+      "id": "ZAA2D808E8",
+      "name": "Right superficial investing cervical fascia",
+      "triangles": 3336,
+      "reversed": 3
+     },
+     {
+      "id": "FJ2230",
+      "name": "Deltoid branch of left thoraco-acromial artery",
+      "triangles": 788,
+      "reversed": 2
+     },
+     {
+      "id": "FJ2257",
+      "name": "Left transverse cervical artery",
+      "triangles": 366,
+      "reversed": 2
+     },
+     {
+      "id": "FJ2278",
+      "name": "Right deep cervical artery",
+      "triangles": 1104,
+      "reversed": 2
+     },
+     {
+      "id": "ZA31BF88E4",
+      "name": "Left superficial investing cervical fascia",
+      "triangles": 3336,
+      "reversed": 2
+     },
+     {
+      "id": "FJ1937",
+      "name": "Right internal thoracic artery",
+      "triangles": 3546,
+      "reversed": 1
+     },
+     {
+      "id": "FJ1985",
+      "name": "Set of anterior intercostal veins",
+      "triangles": 37874,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2209",
+      "name": "Right inferior thyroid artery",
+      "triangles": 482,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2211",
+      "name": "Acromial branch of left thoraco-acromial artery",
+      "triangles": 974,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2220",
+      "name": "Left cephalic vein",
+      "triangles": 22874,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2256",
+      "name": "Left superficial cervical artery",
+      "triangles": 646,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2263",
+      "name": "Acromial branch of right thoraco-acromial artery",
+      "triangles": 996,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2272",
+      "name": "Right cephalic vein",
+      "triangles": 22622,
+      "reversed": 1
+     },
+     {
+      "id": "FJ2292",
+      "name": "Right posterior circumflex humeral artery",
+      "triangles": 1126,
+      "reversed": 1
+     },
+     {
+      "id": "FJ3486",
+      "name": "Left subclavian vein",
+      "triangles": 434,
+      "reversed": 1
+     }
+    ]
+   }
+  },
+  "attachments": {
+   "note": "closest approach of every deformed attached part to each bone group it attaches to, before and after (mm)",
+   "checked": 170,
+   "movedOffBoneByMoreThan1Mm": 2,
+   "largestIncrease": {
+    "id": "ZA84389368",
+    "name": "Left inferior glenohumeral ligament",
+    "group": "scapula_L",
+    "mm": 1.3
+   },
+   "perPart": [
+    {
+     "id": "FJ1446",
+     "name": "Abdominal part of right pectoralis major",
+     "static": {
+      "closestMm": [
+       0.31,
+       0.31
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.58,
+       0.58
+      ]
+     }
+    },
+    {
+     "id": "FJ1446M",
+     "name": "Abdominal part of left pectoralis major",
+     "static": {
+      "closestMm": [
+       0.19,
+       0.19
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.35,
+       0.35
+      ]
+     }
+    },
+    {
+     "id": "FJ1447",
+     "name": "Clavicular part of right pectoralis major",
+     "clavicle_R": {
+      "closestMm": [
+       0.22,
+       0.22
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.44,
+       0.44
+      ]
+     }
+    },
+    {
+     "id": "FJ1447M",
+     "name": "Clavicular part of left pectoralis major",
+     "clavicle_L": {
+      "closestMm": [
+       0.29,
+       0.29
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.65,
+       0.65
+      ]
+     }
+    },
+    {
+     "id": "FJ1456",
+     "name": "Right pectoralis minor",
+     "static": {
+      "closestMm": [
+       0.12,
+       0.12
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.24,
+       0.24
+      ]
+     }
+    },
+    {
+     "id": "FJ1456M",
+     "name": "Left pectoralis minor",
+     "static": {
+      "closestMm": [
+       0.17,
+       0.17
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.15,
+       0.15
+      ]
+     }
+    },
+    {
+     "id": "FJ1459",
+     "name": "Right serratus anterior",
+     "static": {
+      "closestMm": [
+       0.12,
+       0.12
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.06,
+       0.15
+      ]
+     }
+    },
+    {
+     "id": "FJ1459M",
+     "name": "Left serratus anterior",
+     "static": {
+      "closestMm": [
+       0.2,
+       0.16
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.09,
+       0.1
+      ]
+     }
+    },
+    {
+     "id": "FJ1460",
+     "name": "Right subclavius",
+     "static": {
+      "closestMm": [
+       0.12,
+       0.24
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.13,
+       0.13
+      ]
+     }
+    },
+    {
+     "id": "FJ1460M",
+     "name": "Left subclavius",
+     "static": {
+      "closestMm": [
+       0.17,
+       0.26
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.18,
+       0.17
+      ]
+     }
+    },
+    {
+     "id": "FJ1464",
+     "name": "Sternocostal part of right pectoralis major",
+     "static": {
+      "closestMm": [
+       0.17,
+       0.17
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.2,
+       0.2
+      ]
+     }
+    },
+    {
+     "id": "FJ1464M",
+     "name": "Sternocostal part of left pectoralis major",
+     "static": {
+      "closestMm": [
+       0.22,
+       0.22
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.44,
+       0.44
+      ]
+     }
+    },
+    {
+     "id": "FJ1467",
+     "name": "Acromial part of right deltoid",
+     "scapula_R": {
+      "closestMm": [
+       0.1,
+       0.42
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.14,
+       0.14
+      ]
+     }
+    },
+    {
+     "id": "FJ1467M",
+     "name": "Acromial part of left deltoid",
+     "scapula_L": {
+      "closestMm": [
+       0.28,
+       0.41
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.53,
+       0.53
+      ]
+     }
+    },
+    {
+     "id": "FJ1468",
+     "name": "Clavicular part of right deltoid",
+     "clavicle_R": {
+      "closestMm": [
+       0.12,
+       0.12
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.21,
+       0.21
+      ]
+     }
+    },
+    {
+     "id": "FJ1468M",
+     "name": "Clavicular part of left deltoid",
+     "clavicle_L": {
+      "closestMm": [
+       0.08,
+       0.11
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.29,
+       0.29
+      ]
+     }
+    },
+    {
+     "id": "FJ1478",
+     "name": "Long head of right biceps brachii",
+     "scapula_R": {
+      "closestMm": [
+       0.66,
+       0.74
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.26,
+       0.26
+      ]
+     }
+    },
+    {
+     "id": "FJ1478M",
+     "name": "Long head of left biceps brachii",
+     "scapula_L": {
+      "closestMm": [
+       0.46,
+       0.89
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.17,
+       0.17
+      ]
+     }
+    },
+    {
+     "id": "FJ1479",
+     "name": "Long head of right triceps brachii",
+     "scapula_R": {
+      "closestMm": [
+       0.41,
+       0.47
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.61,
+       0.61
+      ]
+     }
+    },
+    {
+     "id": "FJ1479M",
+     "name": "Long head of left triceps brachii",
+     "scapula_L": {
+      "closestMm": [
+       0.19,
+       0.29
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.26,
+       0.26
+      ]
+     }
+    },
+    {
+     "id": "FJ1488",
+     "name": "Right coracobrachialis",
+     "scapula_R": {
+      "closestMm": [
+       0.47,
+       0.46
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.31,
+       0.31
+      ]
+     }
+    },
+    {
+     "id": "FJ1488M",
+     "name": "Left coracobrachialis",
+     "scapula_L": {
+      "closestMm": [
+       0.68,
+       0.8
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.28,
+       0.28
+      ]
+     }
+    },
+    {
+     "id": "FJ1500",
+     "name": "Right infraspinatus muscle",
+     "scapula_R": {
+      "closestMm": [
+       0.1,
+       0.1
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.15,
+       0.15
+      ]
+     }
+    },
+    {
+     "id": "FJ1500M",
+     "name": "Left infraspinatus muscle",
+     "scapula_L": {
+      "closestMm": [
+       0.22,
+       0.22
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.12,
+       0.12
+      ]
+     }
+    },
+    {
+     "id": "FJ1504",
+     "name": "Right subscapularis",
+     "scapula_R": {
+      "closestMm": [
+       1.06,
+       1.06
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.26,
+       0.06
+      ]
+     }
+    },
+    {
+     "id": "FJ1504M",
+     "name": "Left subscapularis",
+     "scapula_L": {
+      "closestMm": [
+       1.02,
+       1.02
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.36,
+       0.39
+      ]
+     }
+    },
+    {
+     "id": "FJ1506",
+     "name": "Right supraspinatus",
+     "scapula_R": {
+      "closestMm": [
+       0.27,
+       0.27
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.26,
+       0.26
+      ]
+     }
+    },
+    {
+     "id": "FJ1506M",
+     "name": "Left supraspinatus",
+     "scapula_L": {
+      "closestMm": [
+       0.27,
+       0.27
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.17,
+       0.17
+      ]
+     }
+    },
+    {
+     "id": "FJ1507",
+     "name": "Right teres major",
+     "scapula_R": {
+      "closestMm": [
+       0.7,
+       0.7
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.23,
+       0.23
+      ]
+     }
+    },
+    {
+     "id": "FJ1507M",
+     "name": "Left teres major",
+     "scapula_L": {
+      "closestMm": [
+       0.62,
+       0.62
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.19,
+       0.19
+      ]
+     }
+    },
+    {
+     "id": "FJ1508",
+     "name": "Right teres minor",
+     "scapula_R": {
+      "closestMm": [
+       0.24,
+       0.24
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.33,
+       0.31
+      ]
+     }
+    },
+    {
+     "id": "FJ1508M",
+     "name": "Left teres minor",
+     "scapula_L": {
+      "closestMm": [
+       0.25,
+       0.25
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.4,
+       0.4
+      ]
+     }
+    },
+    {
+     "id": "FJ1512",
+     "name": "Short head of right biceps brachii",
+     "scapula_R": {
+      "closestMm": [
+       0.58,
+       0.55
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.48,
+       0.48
+      ]
+     }
+    },
+    {
+     "id": "FJ1512M",
+     "name": "Short head of left biceps brachii",
+     "scapula_L": {
+      "closestMm": [
+       0.34,
+       0.34
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.43,
+       0.43
+      ]
+     }
+    },
+    {
+     "id": "FJ1513",
+     "name": "Spinal part of right deltoid",
+     "scapula_R": {
+      "closestMm": [
+       0.38,
+       0.33
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.28,
+       0.28
+      ]
+     }
+    },
+    {
+     "id": "FJ1513M",
+     "name": "Spinal part of left deltoid",
+     "scapula_L": {
+      "closestMm": [
+       0.36,
+       0.36
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.18,
+       0.18
+      ]
+     }
+    },
+    {
+     "id": "FJ1520",
+     "name": "Ascending part of right trapezius",
+     "static": {
+      "closestMm": [
+       0.36,
+       0.36
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.13,
+       0.13
+      ]
+     }
+    },
+    {
+     "id": "FJ1520M",
+     "name": "Ascending part of left trapezius",
+     "static": {
+      "closestMm": [
+       0.19,
+       0.19
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.18,
+       0.18
+      ]
+     }
+    },
+    {
+     "id": "FJ1521",
+     "name": "Descending part of right trapezius",
+     "static": {
+      "closestMm": [
+       0.22,
+       0.22
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.2,
+       0.28
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       11.58,
+       11.56
+      ]
+     }
+    },
+    {
+     "id": "FJ1521M",
+     "name": "Descending part of left trapezius",
+     "static": {
+      "closestMm": [
+       0.21,
+       0.21
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.18,
+       0.26
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       11.61,
+       11.63
+      ]
+     }
+    },
+    {
+     "id": "FJ1532",
+     "name": "Right levator scapulae",
+     "static": {
+      "closestMm": [
+       0.26,
+       0.26
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.05,
+       0.05
+      ]
+     }
+    },
+    {
+     "id": "FJ1532M",
+     "name": "Left levator scapulae",
+     "static": {
+      "closestMm": [
+       0.1,
+       0.1
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.14,
+       0.13
+      ]
+     }
+    },
+    {
+     "id": "FJ1536",
+     "name": "Right rhomboid major",
+     "static": {
+      "closestMm": [
+       0.27,
+       0.27
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.12,
+       0.11
+      ]
+     }
+    },
+    {
+     "id": "FJ1536M",
+     "name": "Left rhomboid major",
+     "static": {
+      "closestMm": [
+       0.49,
+       0.35
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.06,
+       0.06
+      ]
+     }
+    },
+    {
+     "id": "FJ1537",
+     "name": "Right rhomboid minor",
+     "static": {
+      "closestMm": [
+       0.21,
+       0.21
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.44,
+       0.44
+      ]
+     }
+    },
+    {
+     "id": "FJ1537M",
+     "name": "Left rhomboid minor",
+     "static": {
+      "closestMm": [
+       0.49,
+       0.49
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.55,
+       0.55
+      ]
+     }
+    },
+    {
+     "id": "FJ1554",
+     "name": "Transverse part of right trapezius",
+     "static": {
+      "closestMm": [
+       2.88,
+       2.88
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.08,
+       0.08
+      ]
+     }
+    },
+    {
+     "id": "FJ1554M",
+     "name": "Transverse part of left trapezius",
+     "static": {
+      "closestMm": [
+       2.9,
+       2.9
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.12,
+       0.12
+      ]
+     }
+    },
+    {
+     "id": "FJ1565",
+     "name": "Left omohyoid",
+     "static": {
+      "closestMm": [
+       0.43,
+       0.43
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       4.81,
+       4.81
+      ]
+     }
+    },
+    {
+     "id": "FJ1573",
+     "name": "Left sternocleidomastoid",
+     "static": {
+      "closestMm": [
+       0.12,
+       0.14
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.12,
+       0.11
+      ]
+     }
+    },
+    {
+     "id": "FJ1574",
+     "name": "Left sternohyoid",
+     "static": {
+      "closestMm": [
+       0.32,
+       0.38
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.32,
+       0.28
+      ]
+     }
+    },
+    {
+     "id": "FJ1586",
+     "name": "Right omohyoid",
+     "static": {
+      "closestMm": [
+       0.47,
+       0.47
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       5.42,
+       5.42
+      ]
+     }
+    },
+    {
+     "id": "FJ1595",
+     "name": "Right sternocleidomastoid",
+     "static": {
+      "closestMm": [
+       0.11,
+       0.11
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.24,
+       0.24
+      ]
+     }
+    },
+    {
+     "id": "FJ1596",
+     "name": "Right sternohyoid",
+     "static": {
+      "closestMm": [
+       0.25,
+       0.25
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.32,
+       0.31
+      ]
+     }
+    },
+    {
+     "id": "R3_FMA13358",
+     "name": "Right latissimus dorsi",
+     "static": {
+      "closestMm": [
+       0.28,
+       0.28
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.18,
+       0.18
+      ]
+     }
+    },
+    {
+     "id": "R3_FMA13359",
+     "name": "Left latissimus dorsi",
+     "static": {
+      "closestMm": [
+       0.11,
+       0.11
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.08,
+       0.08
+      ]
+     }
+    },
+    {
+     "id": "ZAF6563441",
+     "name": "Left acromioclavicular ligament",
+     "clavicle_L": {
+      "closestMm": [
+       0.64,
+       0.66
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.37,
+       0.4
+      ]
+     }
+    },
+    {
+     "id": "ZAEE982B46",
+     "name": "Right acromioclavicular ligament",
+     "clavicle_R": {
+      "closestMm": [
+       0.28,
+       0.3
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.42,
+       0.41
+      ]
+     }
+    },
+    {
+     "id": "ZA5E75EB94",
+     "name": "Left anterior sternoclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.43,
+       0.45
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.93,
+       0.97
+      ]
+     }
+    },
+    {
+     "id": "ZA57AE777A",
+     "name": "Right anterior sternoclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.42,
+       0.41
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.78,
+       0.82
+      ]
+     }
+    },
+    {
+     "id": "ZA6AF7A6E9",
+     "name": "Left articular capsule of acromioclavicular joint",
+     "clavicle_L": {
+      "closestMm": [
+       0.26,
+       0.26
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.26,
+       0.16
+      ]
+     }
+    },
+    {
+     "id": "ZA06E3F891",
+     "name": "Right articular capsule of acromioclavicular joint",
+     "clavicle_R": {
+      "closestMm": [
+       0.24,
+       0.18
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.29,
+       0.24
+      ]
+     }
+    },
+    {
+     "id": "ZA27BD8E99",
+     "name": "Left articular capsule of glenohumeral joint",
+     "scapula_L": {
+      "closestMm": [
+       0.16,
+       0.28
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.15,
+       0.09
+      ]
+     }
+    },
+    {
+     "id": "ZA205F5350",
+     "name": "Right articular capsule of glenohumeral joint",
+     "scapula_R": {
+      "closestMm": [
+       0.2,
+       0.41
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.26,
+       0.12
+      ]
+     }
+    },
+    {
+     "id": "ZA172B267E",
+     "name": "Left articular capsule of sternoclavicular joint",
+     "static": {
+      "closestMm": [
+       0.49,
+       0.23
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.16,
+       0.2
+      ]
+     }
+    },
+    {
+     "id": "ZA0EF31A6F",
+     "name": "Right articular capsule of sternoclavicular joint",
+     "static": {
+      "closestMm": [
+       0.37,
+       0.27
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.1,
+       0.12
+      ]
+     }
+    },
+    {
+     "id": "ZAF31C2F33",
+     "name": "Left conoid ligament",
+     "clavicle_L": {
+      "closestMm": [
+       0.28,
+       0.36
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.38,
+       0.36
+      ]
+     }
+    },
+    {
+     "id": "ZAFBB4935F",
+     "name": "Right conoid ligament",
+     "clavicle_R": {
+      "closestMm": [
+       0.36,
+       0.23
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.41,
+       0.33
+      ]
+     }
+    },
+    {
+     "id": "ZA8BB2028D",
+     "name": "Left coracohumeral ligament",
+     "scapula_L": {
+      "closestMm": [
+       0.57,
+       0.85
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.4,
+       0.4
+      ]
+     }
+    },
+    {
+     "id": "ZADA77DB9E",
+     "name": "Right coracohumeral ligament",
+     "scapula_R": {
+      "closestMm": [
+       0.58,
+       0.62
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.31,
+       0.31
+      ]
+     }
+    },
+    {
+     "id": "ZAF516475C",
+     "name": "Left costoclavicular ligament",
+     "static": {
+      "closestMm": [
+       1.13,
+       1.02
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.66,
+       0.83
+      ]
+     }
+    },
+    {
+     "id": "ZA012E4045",
+     "name": "Right costoclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.61,
+       0.73
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.69,
+       0.41
+      ]
+     }
+    },
+    {
+     "id": "ZA84389368",
+     "name": "Left inferior glenohumeral ligament",
+     "scapula_L": {
+      "closestMm": [
+       0.47,
+       1.78
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.85,
+       0.78
+      ]
+     }
+    },
+    {
+     "id": "ZADCB4F842",
+     "name": "Right inferior glenohumeral ligament",
+     "scapula_R": {
+      "closestMm": [
+       0.39,
+       1.53
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.58,
+       0.58
+      ]
+     }
+    },
+    {
+     "id": "ZAD618553F",
+     "name": "Left interclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.56,
+       1.01
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.49,
+       0.91
+      ]
+     }
+    },
+    {
+     "id": "ZA0480D4A1",
+     "name": "Right interclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.51,
+       0.93
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.45,
+       1.16
+      ]
+     }
+    },
+    {
+     "id": "ZAEFB33410",
+     "name": "Left middle glenohumeral ligament",
+     "scapula_L": {
+      "closestMm": [
+       0.86,
+       1.2
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.39,
+       0.39
+      ]
+     }
+    },
+    {
+     "id": "ZA0097D3B5",
+     "name": "Right middle glenohumeral ligament",
+     "scapula_R": {
+      "closestMm": [
+       0.72,
+       1.46
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.34,
+       0.34
+      ]
+     }
+    },
+    {
+     "id": "ZAC4BF3B34",
+     "name": "Left posterior sternoclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.94,
+       0.94
+      ]
+     },
+     "clavicle_L": {
+      "closestMm": [
+       0.6,
+       0.29
+      ]
+     }
+    },
+    {
+     "id": "ZA03634898",
+     "name": "Right posterior sternoclavicular ligament",
+     "static": {
+      "closestMm": [
+       0.6,
+       0.15
+      ]
+     },
+     "clavicle_R": {
+      "closestMm": [
+       0.2,
+       0.21
+      ]
+     }
+    },
+    {
+     "id": "ZAA8B611C5",
+     "name": "Left superior glenohumeral ligament",
+     "scapula_L": {
+      "closestMm": [
+       0.72,
+       0.6
+      ]
+     },
+     "arm_L": {
+      "closestMm": [
+       0.6,
+       0.6
+      ]
+     }
+    },
+    {
+     "id": "ZA1B122A1F",
+     "name": "Right superior glenohumeral ligament",
+     "scapula_R": {
+      "closestMm": [
+       0.68,
+       0.54
+      ]
+     },
+     "arm_R": {
+      "closestMm": [
+       0.38,
+       0.38
+      ]
+     }
+    },
+    {
+     "id": "ZA1ED6D225",
+     "name": "Left trapezoid ligament",
+     "clavicle_L": {
+      "closestMm": [
+       0.41,
+       0.41
+      ]
+     },
+     "scapula_L": {
+      "closestMm": [
+       0.16,
+       0.25
+      ]
+     }
+    },
+    {
+     "id": "ZAA4952AD9",
+     "name": "Right trapezoid ligament",
+     "clavicle_R": {
+      "closestMm": [
+       0.79,
+       0.75
+      ]
+     },
+     "scapula_R": {
+      "closestMm": [
+       0.57,
+       0.61
+      ]
+     }
+    }
+   ]
+  },
+  "insideBone": {
+   "samples": 430439,
+   "before": 0.04484,
+   "after": 0.04393,
+   "largestIncreases": [
+    {
+     "id": "ZA8CA358EB",
+     "name": "Right infraclavicular nodes",
+     "before": 0,
+     "after": 0.2174,
+     "samples": 24
+    },
+    {
+     "id": "ZA012E4045",
+     "name": "Right costoclavicular ligament",
+     "before": 0.3333,
+     "after": 0.4783,
+     "samples": 21
+    },
+    {
+     "id": "ZAF516475C",
+     "name": "Left costoclavicular ligament",
+     "before": 0.1,
+     "after": 0.1875,
+     "samples": 30
+    },
+    {
+     "id": "ZA1417D037",
+     "name": "Left infraclavicular nodes",
+     "before": 0,
+     "after": 0.0769,
+     "samples": 23
+    },
+    {
+     "id": "ZA0EF31A6F",
+     "name": "Right articular capsule of sternoclavicular joint",
+     "before": 0.0355,
+     "after": 0.0923,
+     "samples": 197
+    },
+    {
+     "id": "FJ1460",
+     "name": "Right subclavius",
+     "before": 0.2905,
+     "after": 0.3286,
+     "samples": 296
+    },
+    {
+     "id": "FJ1970",
+     "name": "Left superior intercostal artery",
+     "before": 0.0769,
+     "after": 0.1111,
+     "samples": 13
+    },
+    {
+     "id": "ZAC4BF3B34",
+     "name": "Left posterior sternoclavicular ligament",
+     "before": 0.1556,
+     "after": 0.186,
+     "samples": 45
+    },
+    {
+     "id": "ZA172B267E",
+     "name": "Left articular capsule of sternoclavicular joint",
+     "before": 0.0442,
+     "after": 0.0737,
+     "samples": 181
+    },
+    {
+     "id": "FJ1460M",
+     "name": "Left subclavius",
+     "before": 0.2881,
+     "after": 0.3143,
+     "samples": 295
+    },
+    {
+     "id": "ZA06E3F891",
+     "name": "Right articular capsule of acromioclavicular joint",
+     "before": 0.0051,
+     "after": 0.0308,
+     "samples": 195
+    },
+    {
+     "id": "FJ2222",
+     "name": "Left circumflex scapular vein",
+     "before": 0.0357,
+     "after": 0.06,
+     "samples": 56
+    }
+   ],
+   "largestDecreases": [
+    {
+     "id": "FJ2251",
+     "name": "Left suprascapular artery",
+     "before": 0.5344,
+     "after": 0.4354,
+     "samples": 131
+    },
+    {
+     "id": "FJ2250",
+     "name": "Left suprascapular vein",
+     "before": 0.6769,
+     "after": 0.5826,
+     "samples": 130
+    },
+    {
+     "id": "ZA02A9C180",
+     "name": "Right coraco-acromial ligament",
+     "before": 0.2143,
+     "after": 0.1538,
+     "samples": 70
+    },
+    {
+     "id": "FJ2303",
+     "name": "Right suprascapular artery",
+     "before": 0.4609,
+     "after": 0.4091,
+     "samples": 128
+    },
+    {
+     "id": "FJ2273",
+     "name": "Right circumflex scapular artery",
+     "before": 0.2895,
+     "after": 0.2381,
+     "samples": 38
+    },
+    {
+     "id": "FJ2232",
+     "name": "Left dorsal scapular artery",
+     "before": 0.13,
+     "after": 0.079,
+     "samples": 277
+    }
+   ]
+  },
+  "nerves": {
+   "rebuilt": 82,
+   "lengthM": 28.24,
+   "inBone": {
+    "before": 0.00315,
+    "afterField": 0.00849,
+    "afterCleanUp": 0.00306
+   },
+   "deepInMuscle": {
+    "before": 0.04823,
+    "after": 0.05132
+   },
+   "perNerve": [
+    {
+     "id": "ZAB587BAFE",
+     "name": "Left third intercostal nerve",
+     "lengthMm": 291.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA4218B484",
+     "name": "Left fourth intercostal nerve",
+     "lengthMm": 329.6,
+     "inBone": [
+      0.027,
+      0.027,
+      0.0027
+     ],
+     "deepInMuscle": [
+      0.0143,
+      0.0142
+     ],
+     "pointsPushed": 8
+    },
+    {
+     "id": "ZA391FEA1B",
+     "name": "Left fifth intercostal nerve",
+     "lengthMm": 379.9,
+     "inBone": [
+      0.0159,
+      0.0159,
+      0.0035
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 6
+    },
+    {
+     "id": "ZA7C382C1C",
+     "name": "Left sixth intercostal nerve",
+     "lengthMm": 381.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA7CB83097",
+     "name": "Left first intercostal nerve",
+     "lengthMm": 172.3,
+     "inBone": [
+      0.0667,
+      0.0607,
+      0.0209
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 9
+    },
+    {
+     "id": "ZA3FD9F070",
+     "name": "Left C4 contribution to brachial plexus roots",
+     "lengthMm": 28.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA0213B474",
+     "name": "Right third intercostal nerve",
+     "lengthMm": 292.9,
+     "inBone": [
+      0.0027,
+      0.0027,
+      0.0025
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 1
+    },
+    {
+     "id": "ZAFE88188E",
+     "name": "Right fourth intercostal nerve",
+     "lengthMm": 329.3,
+     "inBone": [
+      0.028,
+      0.028,
+      0.0374
+     ],
+     "deepInMuscle": [
+      0.0346,
+      0.0342
+     ],
+     "pointsPushed": 8
+    },
+    {
+     "id": "ZAD96415A2",
+     "name": "Right fifth intercostal nerve",
+     "lengthMm": 377.2,
+     "inBone": [
+      0.0121,
+      0.0121,
+      0.0069
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 5
+    },
+    {
+     "id": "ZA52FB7906",
+     "name": "Right sixth intercostal nerve",
+     "lengthMm": 380.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAA32303E3",
+     "name": "Right first intercostal nerve",
+     "lengthMm": 175.9,
+     "inBone": [
+      0.0245,
+      0.0364,
+      0.0364
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA56D02CAC",
+     "name": "Right C4 contribution to brachial plexus roots",
+     "lengthMm": 28.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA5F46190A",
+     "name": "Left accessory nerve (XI)",
+     "lengthMm": 483,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0.0426
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA5E2E6A5F",
+     "name": "Right accessory nerve (XI)",
+     "lengthMm": 485.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0.038
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA9D8A41AB",
+     "name": "Left facial nerve (VII)",
+     "lengthMm": 641.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZADE656720",
+     "name": "Right facial nerve (VII)",
+     "lengthMm": 637.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAC762B568",
+     "name": "Left glossopharyngeal nerve (IX)",
+     "lengthMm": 289.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA3A472CEE",
+     "name": "Right glossopharyngeal nerve (IX)",
+     "lengthMm": 288.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZACB67E3C5",
+     "name": "Right thoracodorsal nerve",
+     "lengthMm": 401.5,
+     "inBone": [
+      0,
+      0.0332,
+      0
+     ],
+     "deepInMuscle": [
+      0.071,
+      0.0279
+     ],
+     "pointsPushed": 10
+    },
+    {
+     "id": "ZA8CC2F9A4",
+     "name": "Left thoracodorsal nerve",
+     "lengthMm": 399,
+     "inBone": [
+      0,
+      0.0384,
+      0
+     ],
+     "deepInMuscle": [
+      0.0926,
+      0.0792
+     ],
+     "pointsPushed": 12
+    },
+    {
+     "id": "ZA935C0CF5",
+     "name": "Left vagus nerve (X)",
+     "lengthMm": 409.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAA65B7021",
+     "name": "Right vagus nerve (X)",
+     "lengthMm": 1233.5,
+     "inBone": [
+      0.0354,
+      0.0353,
+      0.0459
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 34
+    },
+    {
+     "id": "ZA55D3D8F1",
+     "name": "Right anterior divisions of brachial plexus",
+     "lengthMm": 117.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA3C63B6E6",
+     "name": "Left anterior divisions of brachial plexus",
+     "lengthMm": 124.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAEF6006D4",
+     "name": "Right axillary nerve (with superior lateral brachial cutaneous nerve)",
+     "lengthMm": 674.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0061,
+      0.005
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA9986E674",
+     "name": "Left axillary nerve (with superior lateral brachial cutaneous nerve)",
+     "lengthMm": 673.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0051,
+      0.0052
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA757A78BF",
+     "name": "Right C6 root of brachial plexus",
+     "lengthMm": 61.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA31D2598B",
+     "name": "Left C6 root of brachial plexus",
+     "lengthMm": 61.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAC6AB9877",
+     "name": "Right C7 root of brachial plexus",
+     "lengthMm": 50.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAAAE6F6C0",
+     "name": "Left C7 root of brachial plexus",
+     "lengthMm": 51.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAAB9054FD",
+     "name": "Right C8 root of brachial plexus",
+     "lengthMm": 44.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAE114515F",
+     "name": "Left C8 root of brachial plexus",
+     "lengthMm": 44.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAB5EE0199",
+     "name": "Right dorsal scapular nerve",
+     "lengthMm": 528.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0.0305
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA3C85840C",
+     "name": "Left dorsal scapular nerve",
+     "lengthMm": 517.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0073,
+      0.0212
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA773A247D",
+     "name": "Right inferior trunk of brachial plexus",
+     "lengthMm": 31.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA7FAAF3C7",
+     "name": "Left inferior trunk of brachial plexus",
+     "lengthMm": 30.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAB247A349",
+     "name": "Right lateral cord of brachial plexus",
+     "lengthMm": 34.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0272,
+      0.0229
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAED9B410E",
+     "name": "Left lateral cord of brachial plexus",
+     "lengthMm": 33.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAFE3C76C8",
+     "name": "Right lateral pectoral nerve",
+     "lengthMm": 612.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2638,
+      0.321
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZADF998971",
+     "name": "Left lateral pectoral nerve",
+     "lengthMm": 598.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2239,
+      0.229
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA91C34B3C",
+     "name": "Right lateral root of median nerve",
+     "lengthMm": 23.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD8EA5836",
+     "name": "Left lateral root of median nerve",
+     "lengthMm": 22.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA432D8423",
+     "name": "Right long thoracic nerve",
+     "lengthMm": 670.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.042,
+      0.0485
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA84961D45",
+     "name": "Left long thoracic nerve",
+     "lengthMm": 686.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0427,
+      0.0466
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA15CC488D",
+     "name": "Right inferior subscapular nerve",
+     "lengthMm": 434.5,
+     "inBone": [
+      0,
+      0.0192,
+      0
+     ],
+     "deepInMuscle": [
+      0.0748,
+      0.0037
+     ],
+     "pointsPushed": 8
+    },
+    {
+     "id": "ZA0C51FB57",
+     "name": "Left inferior subscapular nerve",
+     "lengthMm": 430,
+     "inBone": [
+      0,
+      0.0101,
+      0
+     ],
+     "deepInMuscle": [
+      0.0889,
+      0
+     ],
+     "pointsPushed": 4
+    },
+    {
+     "id": "ZA0AE22AEA",
+     "name": "Right medial antebrachial cutaneous nerve",
+     "lengthMm": 1456.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZADAC92190",
+     "name": "Left medial antebrachial cutaneous nerve",
+     "lengthMm": 1452.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA57B0A98D",
+     "name": "Right medial brachial cutaneous nerve",
+     "lengthMm": 605.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA64D01A00",
+     "name": "Left medial brachial cutaneous nerve",
+     "lengthMm": 624.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA18C17C97",
+     "name": "Right medial cord of brachial plexus",
+     "lengthMm": 43.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD5C4F5B9",
+     "name": "Left medial cord of brachial plexus",
+     "lengthMm": 47.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA75568326",
+     "name": "Right medial pectoral nerve",
+     "lengthMm": 464.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0282,
+      0.0278
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAF0B6FC80",
+     "name": "Left medial pectoral nerve",
+     "lengthMm": 422.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0204,
+      0.0227
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA9585DB96",
+     "name": "Right medial root of median nerve",
+     "lengthMm": 16.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAFECEA6B0",
+     "name": "Left medial root of median nerve",
+     "lengthMm": 14.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAE8AEBCDA",
+     "name": "Right median nerve",
+     "lengthMm": 660,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.019,
+      0.0189
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZABB5BBCEC",
+     "name": "Left median nerve",
+     "lengthMm": 662,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0197,
+      0.0197
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA8DD32B72",
+     "name": "Right middle trunk of brachial plexus",
+     "lengthMm": 29.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZABBDAFC52",
+     "name": "Left middle trunk of brachial plexus",
+     "lengthMm": 29.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA2CB1B22F",
+     "name": "Right musculocutaneous nerve",
+     "lengthMm": 509.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2531,
+      0.252
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA44C11326",
+     "name": "Left musculocutaneous nerve",
+     "lengthMm": 517.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2483,
+      0.2473
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAE89EEDD3",
+     "name": "Right posterior cord of brachial plexus",
+     "lengthMm": 42.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA22127EEC",
+     "name": "Left posterior cord of brachial plexus",
+     "lengthMm": 43.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA9DE4BC41",
+     "name": "Right posterior divisions of brachial plexus",
+     "lengthMm": 119.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA7B6E5224",
+     "name": "Left posterior divisions of brachial plexus",
+     "lengthMm": 125,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA413CAA20",
+     "name": "Right posterior brachial cutaneous nerve",
+     "lengthMm": 301.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0062,
+      0.0062
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAAD407384",
+     "name": "Left posterior brachial cutaneous nerve",
+     "lengthMm": 328.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAEBDEA8DE",
+     "name": "Right radial nerve",
+     "lengthMm": 789,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0531,
+      0.0529
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAB1853041",
+     "name": "Left radial nerve",
+     "lengthMm": 787.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0512,
+      0.0507
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA42D6E22F",
+     "name": "Right subclavian nerve",
+     "lengthMm": 83.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA7313DDC4",
+     "name": "Left subclavian nerve",
+     "lengthMm": 82.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD37CE681",
+     "name": "Right superior trunk of brachial plexus",
+     "lengthMm": 31.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA7BEC1894",
+     "name": "Left superior trunk of brachial plexus",
+     "lengthMm": 30.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA501A7623",
+     "name": "Right suprascapular nerve",
+     "lengthMm": 693.5,
+     "inBone": [
+      0,
+      0.0806,
+      0
+     ],
+     "deepInMuscle": [
+      0.3182,
+      0.2938
+     ],
+     "pointsPushed": 47
+    },
+    {
+     "id": "ZA7135DD27",
+     "name": "Left suprascapular nerve",
+     "lengthMm": 692.9,
+     "inBone": [
+      0,
+      0.0655,
+      0
+     ],
+     "deepInMuscle": [
+      0.3186,
+      0.3076
+     ],
+     "pointsPushed": 23
+    },
+    {
+     "id": "ZA064FE882",
+     "name": "Right T1 root of brachial plexus",
+     "lengthMm": 38.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAC23FC33D",
+     "name": "Left T1 root of brachial plexus",
+     "lengthMm": 39.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAFE2CC37B",
+     "name": "Right ulnar nerve",
+     "lengthMm": 562.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA001074B3",
+     "name": "Left ulnar nerve",
+     "lengthMm": 562.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA8FF1C04E",
+     "name": "Right superior subscapular nerve",
+     "lengthMm": 164.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0429,
+      0.2128
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD5F3F977",
+     "name": "Left superior subscapular nerve",
+     "lengthMm": 167.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0418,
+      0.1494
+     ],
+     "pointsPushed": 0
+    }
+   ]
+  },
+  "partMotion": [
+   {
+    "id": "FJ1395",
+    "name": "Long head of right biceps femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1395M",
+    "name": "Long head of left biceps femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1401",
+    "name": "Right adductor brevis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1401M",
+    "name": "Left adductor brevis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1402",
+    "name": "Right adductor longus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1402M",
+    "name": "Left adductor longus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1403",
+    "name": "Right adductor magnus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1403M",
+    "name": "Left adductor magnus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1404",
+    "name": "Right adductor minimus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1404M",
+    "name": "Left adductor minimus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1416",
+    "name": "Right gemellus inferior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1416M",
+    "name": "Left gemellus inferior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1417",
+    "name": "Right gemellus superior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1417M",
+    "name": "Left gemellus superior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1418",
+    "name": "Right gluteus maximus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1418M",
+    "name": "Left gluteus maximus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1419",
+    "name": "Right gluteus medius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1419M",
+    "name": "Left gluteus medius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1420",
+    "name": "Right gluteus minimus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1420M",
+    "name": "Left gluteus minimus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1421",
+    "name": "Right gracilis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1421M",
+    "name": "Left gracilis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1422",
+    "name": "Right iliacus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1422M",
+    "name": "Left iliacus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1425",
+    "name": "Right obturator externus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1425M",
+    "name": "Left obturator externus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1426",
+    "name": "Right obturator internus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1426M",
+    "name": "Left obturator internus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1427",
+    "name": "Right pectineus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1427M",
+    "name": "Left pectineus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1428",
+    "name": "Right piriformis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1428M",
+    "name": "Left piriformis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1431",
+    "name": "Right psoas major",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1431M",
+    "name": "Left psoas major",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1432",
+    "name": "Right quadratus femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1432M",
+    "name": "Left quadratus femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1433",
+    "name": "Right rectus femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1433M",
+    "name": "Left rectus femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1434",
+    "name": "Right sartorius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1434M",
+    "name": "Left sartorius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1435",
+    "name": "Right semimembranosus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1435M",
+    "name": "Left semimembranosus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1436",
+    "name": "Right semitendinosus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1436M",
+    "name": "Left semitendinosus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1438",
+    "name": "Right tensor fasciae latae",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1438M",
+    "name": "Left tensor fasciae latae",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1441",
+    "name": "Right vastus intermedius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1441M",
+    "name": "Left vastus intermedius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1442",
+    "name": "Right vastus lateralis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1442M",
+    "name": "Left vastus lateralis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1443",
+    "name": "Right vastus medialis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1443M",
+    "name": "Left vastus medialis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1444",
+    "name": "Short head of right biceps femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1444M",
+    "name": "Short head of left biceps femoris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1446",
+    "name": "Abdominal part of right pectoralis major",
+    "groups": [
+     "static",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1446M",
+    "name": "Abdominal part of left pectoralis major",
+    "groups": [
+     "static",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1447",
+    "name": "Clavicular part of right pectoralis major",
+    "groups": [
+     "clavicle_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1447M",
+    "name": "Clavicular part of left pectoralis major",
+    "groups": [
+     "clavicle_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1448",
+    "name": "Linea alba",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1449M",
+    "name": "Left coccygeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1451",
+    "name": "External intercostal muscle",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1451M",
+    "name": "External intercostal muscle",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1452",
+    "name": "Right external oblique",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1452M",
+    "name": "Left external oblique",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1453M",
+    "name": "Left iliococcygeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1454",
+    "name": "Innermost intercostal muscle",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1454M",
+    "name": "Innermost intercostal muscle",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1455",
+    "name": "Internal intercostal muscle",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1455M",
+    "name": "Internal intercostal muscle",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1456",
+    "name": "Right pectoralis minor",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1456M",
+    "name": "Left pectoralis minor",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1458M",
+    "name": "Left puborectalis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1459",
+    "name": "Right serratus anterior",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1459M",
+    "name": "Left serratus anterior",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1460",
+    "name": "Right subclavius",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1460M",
+    "name": "Left subclavius",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1461",
+    "name": "Right transversus thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1461M",
+    "name": "Left transversus thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1462",
+    "name": "Set of right levatores costarum breves",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1462M",
+    "name": "Set of left levatores costarum breves",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1463",
+    "name": "Set of right levatores costarum longi",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1463M",
+    "name": "Set of left levatores costarum longi",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1464",
+    "name": "Sternocostal part of right pectoralis major",
+    "groups": [
+     "static",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1464M",
+    "name": "Sternocostal part of left pectoralis major",
+    "groups": [
+     "static",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1465",
+    "name": "Tendinous arch of levator ani",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1465M",
+    "name": "Tendinous arch of levator ani",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1466",
+    "name": "Abductor digiti minimi of right hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1466M",
+    "name": "Abductor digiti minimi of left hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1467",
+    "name": "Acromial part of right deltoid",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1467M",
+    "name": "Acromial part of left deltoid",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1468",
+    "name": "Clavicular part of right deltoid",
+    "groups": [
+     "clavicle_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1468M",
+    "name": "Clavicular part of left deltoid",
+    "groups": [
+     "clavicle_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1469",
+    "name": "Right flexor pollicis brevis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1469M",
+    "name": "Left flexor pollicis brevis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1470",
+    "name": "Flexor digiti minimi brevis of right hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1470M",
+    "name": "Flexor digiti minimi brevis of left hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1472",
+    "name": "Right extensor carpi ulnaris",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1472M",
+    "name": "Left extensor carpi ulnaris",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1473",
+    "name": "Humeral head of right flexor carpi ulnaris",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1473M",
+    "name": "Humeral head of left flexor carpi ulnaris",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1474",
+    "name": "Humeral head of right pronator teres",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1474M",
+    "name": "Humeral head of left pronator teres",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1475",
+    "name": "Right flexor digitorum superficialis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1475M",
+    "name": "Left flexor digitorum superficialis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1476",
+    "name": "Interosseous membrane of right forearm",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1476M",
+    "name": "Interosseous membrane of left forearm",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1477",
+    "name": "Lateral head of right triceps brachii",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1477M",
+    "name": "Lateral head of left triceps brachii",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1478",
+    "name": "Long head of right biceps brachii",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1478M",
+    "name": "Long head of left biceps brachii",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1479",
+    "name": "Long head of right triceps brachii",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1479M",
+    "name": "Long head of left triceps brachii",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1480",
+    "name": "Medial head of right triceps brachii",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1480M",
+    "name": "Medial head of left triceps brachii",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1481",
+    "name": "Oblique head of right adductor pollicis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1481M",
+    "name": "Oblique head of left adductor pollicis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1482",
+    "name": "Opponens digiti minimi of right hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1482M",
+    "name": "Opponens digiti minimi of left hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1483",
+    "name": "Right abductor pollicis brevis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1483M",
+    "name": "Left abductor pollicis brevis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1484",
+    "name": "Right abductor pollicis longus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1484M",
+    "name": "Left abductor pollicis longus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1485",
+    "name": "Right anconeus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1485M",
+    "name": "Left anconeus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1486",
+    "name": "Right brachialis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1486M",
+    "name": "Left brachialis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1487",
+    "name": "Right brachioradialis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1487M",
+    "name": "Left brachioradialis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1488",
+    "name": "Right coracobrachialis",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1488M",
+    "name": "Left coracobrachialis",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1489",
+    "name": "Right extensor carpi radialis brevis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1489M",
+    "name": "Left extensor carpi radialis brevis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1490",
+    "name": "Right extensor carpi radialis longus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1490M",
+    "name": "Left extensor carpi radialis longus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1491",
+    "name": "Right extensor digiti minimi",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1491M",
+    "name": "Left extensor digiti minimi",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1492",
+    "name": "Right extensor digitorum",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1492M",
+    "name": "Left extensor digitorum",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1493",
+    "name": "Right extensor indicis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1493M",
+    "name": "Left extensor indicis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1494",
+    "name": "Right extensor pollicis brevis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1494M",
+    "name": "Left extensor pollicis brevis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1495",
+    "name": "Right extensor pollicis longus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1495M",
+    "name": "Left extensor pollicis longus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1496",
+    "name": "Right flexor carpi radialis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1496M",
+    "name": "Left flexor carpi radialis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1497",
+    "name": "Right flexor digitorum profundus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1497M",
+    "name": "Left flexor digitorum profundus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1498",
+    "name": "Right flexor pollicis longus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1498M",
+    "name": "Left flexor pollicis longus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1499",
+    "name": "Right flexor digitorum superficialis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1499M",
+    "name": "Left flexor digitorum superficialis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1500",
+    "name": "Right infraspinatus muscle",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1500M",
+    "name": "Left infraspinatus muscle",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1501",
+    "name": "Right opponens pollicis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1501M",
+    "name": "Left opponens pollicis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1502",
+    "name": "Right palmaris longus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1502M",
+    "name": "Left palmaris longus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1503",
+    "name": "Right pronator quadratus",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1503M",
+    "name": "Left pronator quadratus",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1504",
+    "name": "Right subscapularis",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1504M",
+    "name": "Left subscapularis",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1505",
+    "name": "Right supinator",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1505M",
+    "name": "Left supinator",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1506",
+    "name": "Right supraspinatus",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1506M",
+    "name": "Left supraspinatus",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1507",
+    "name": "Right teres major",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1507M",
+    "name": "Left teres major",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1508",
+    "name": "Right teres minor",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1508M",
+    "name": "Left teres minor",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1509",
+    "name": "Set of dorsal interossei of right hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1509M",
+    "name": "Set of dorsal interossei of left hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1510",
+    "name": "Set of lumbricals of right hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1510M",
+    "name": "Set of lumbricals of left hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1511",
+    "name": "Set of palmar interossei of right hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1511M",
+    "name": "Set of palmar interossei of left hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1512",
+    "name": "Short head of right biceps brachii",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1512M",
+    "name": "Short head of left biceps brachii",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1513",
+    "name": "Spinal part of right deltoid",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1513M",
+    "name": "Spinal part of left deltoid",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1514",
+    "name": "Superficial head of right flexor pollicis brevis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1514M",
+    "name": "Superficial head of left flexor pollicis brevis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1515",
+    "name": "Transverse head of right adductor pollicis",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1515M",
+    "name": "Transverse head of left adductor pollicis",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1516",
+    "name": "Ulnar head of right pronator teres",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1516M",
+    "name": "Ulnar head of left pronator teres",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1517",
+    "name": "Right extensor carpi ulnaris",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1517M",
+    "name": "Left extensor carpi ulnaris",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1518",
+    "name": "Ulnar head of right flexor carpi ulnaris",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1518M",
+    "name": "Ulnar head of left flexor carpi ulnaris",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "FJ1520",
+    "name": "Ascending part of right trapezius",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1520M",
+    "name": "Ascending part of left trapezius",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1521",
+    "name": "Descending part of right trapezius",
+    "groups": [
+     "static",
+     "clavicle_R",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1521M",
+    "name": "Descending part of left trapezius",
+    "groups": [
+     "static",
+     "clavicle_L",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1522",
+    "name": "Right lumbar rotator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1522M",
+    "name": "Left lumbar rotator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1524",
+    "name": "Right cervical rotator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1524M",
+    "name": "Left cervical rotator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1525",
+    "name": "Thoracic rotator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1525M",
+    "name": "Thoracic rotator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1526",
+    "name": "Right iliocostalis cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1526M",
+    "name": "Left iliocostalis cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1527",
+    "name": "Right iliocostalis lumborum",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1527M",
+    "name": "Left iliocostalis lumborum",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1528",
+    "name": "Right iliocostalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1528M",
+    "name": "Left iliocostalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1532",
+    "name": "Right levator scapulae",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1532M",
+    "name": "Left levator scapulae",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1533",
+    "name": "Right longissimus capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1533M",
+    "name": "Left longissimus capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1534",
+    "name": "Right longissimus cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1534M",
+    "name": "Left longissimus cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1535",
+    "name": "Right longissimus thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1535M",
+    "name": "Left longissimus thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1536",
+    "name": "Right rhomboid major",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1536M",
+    "name": "Left rhomboid major",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1537",
+    "name": "Right rhomboid minor",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1537M",
+    "name": "Left rhomboid minor",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1538",
+    "name": "Right semispinalis capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1538M",
+    "name": "Left semispinalis capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1539",
+    "name": "Right semispinalis cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1539M",
+    "name": "Left semispinalis cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1540",
+    "name": "Right semispinalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1540M",
+    "name": "Left semispinalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1541",
+    "name": "Right serratus posterior inferior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1541M",
+    "name": "Left serratus posterior inferior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1542",
+    "name": "Right serratus posterior superior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1542M",
+    "name": "Left serratus posterior superior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1543",
+    "name": "Spinalis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1543M",
+    "name": "Spinalis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1544",
+    "name": "Right spinalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1544M",
+    "name": "Left spinalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1545",
+    "name": "Right splenius capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1545M",
+    "name": "Left splenius capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1546",
+    "name": "Right splenius cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1546M",
+    "name": "Left splenius cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1547",
+    "name": "Lateral lumbar intertransversarius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1547M",
+    "name": "Lateral lumbar intertransversarius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1548",
+    "name": "Medial lumbar intertransversarius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1548M",
+    "name": "Medial lumbar intertransversarius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1549",
+    "name": "Set of anterior cervical intertransversarii",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1549M",
+    "name": "Set of anterior cervical intertransversarii",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1550",
+    "name": "Set of interspinales lumborum",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1550M",
+    "name": "Set of interspinales lumborum",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1551",
+    "name": "Right interspinalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1551M",
+    "name": "Left interspinalis thoracis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1552",
+    "name": "Set of interspinales cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1552M",
+    "name": "Set of interspinales cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1553",
+    "name": "Set of posterior cervical intertransversarii",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1553M",
+    "name": "Set of posterior cervical intertransversarii",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1554",
+    "name": "Transverse part of right trapezius",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1554M",
+    "name": "Transverse part of left trapezius",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1555",
+    "name": "Left digastric",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1556",
+    "name": "Right digastric",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1557",
+    "name": "Inferior oblique part of left longus colli",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1559",
+    "name": "Left geniohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1560",
+    "name": "Left digastric",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1561",
+    "name": "Left longus capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1562",
+    "name": "Left mylohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1563",
+    "name": "Left obliquus capitis inferior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1565",
+    "name": "Left omohyoid",
+    "groups": [
+     "static",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1567",
+    "name": "Left rectus capitis posterior major",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1570",
+    "name": "Left scalenus anterior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1571",
+    "name": "Left scalenus medius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1572",
+    "name": "Left scalenus posterior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1573",
+    "name": "Left sternocleidomastoid",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1574",
+    "name": "Left sternohyoid",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1575",
+    "name": "Left sternothyroid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1576",
+    "name": "Left stylohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1577",
+    "name": "Left thyrohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1578",
+    "name": "Left digastric",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1579",
+    "name": "Right digastric",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1580",
+    "name": "Right geniohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1581",
+    "name": "Right intermediate tendon",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1582",
+    "name": "Right longus capitis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1583",
+    "name": "Right mylohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1584",
+    "name": "Right obliquus capitis inferior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1586",
+    "name": "Right omohyoid",
+    "groups": [
+     "static",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1589",
+    "name": "Right rectus capitis posterior major",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1592",
+    "name": "Right scalenus anterior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1593",
+    "name": "Right scalenus medius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1594",
+    "name": "Right scalenus posterior",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1595",
+    "name": "Right sternocleidomastoid",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1596",
+    "name": "Right sternohyoid",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "FJ1597",
+    "name": "Right sternothyroid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1598",
+    "name": "Right stylohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1599",
+    "name": "Right thyrohyoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1600",
+    "name": "Superior oblique part of left longus colli",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ1601",
+    "name": "Vertical intermediate part of left longus colli",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2545",
+    "name": "Left pubococcygeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2547",
+    "name": "Right coccygeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2549",
+    "name": "Right iliococcygeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2550",
+    "name": "Right pubococcygeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2551",
+    "name": "Right puborectalis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2738",
+    "name": "Left genioglossus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2739",
+    "name": "Left hyoglossus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2740",
+    "name": "Left inferior pharyngeal constrictor",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2742",
+    "name": "Left middle pharyngeal constrictor",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2743",
+    "name": "Left palatopharyngeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2746",
+    "name": "Left stylopharyngeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2747",
+    "name": "Left superior pharyngeal constrictor",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2749",
+    "name": "Pharyngeal raphe",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2750",
+    "name": "Right genioglossus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2751",
+    "name": "Right hyoglossus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2752",
+    "name": "Right inferior pharyngeal constrictor",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2754",
+    "name": "Right middle pharyngeal constrictor",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2755",
+    "name": "Right palatopharyngeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2758",
+    "name": "Right stylopharyngeus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2759",
+    "name": "Right superior pharyngeal constrictor",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2763",
+    "name": "Left stylohyoid ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2764",
+    "name": "Right stylohyoid ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2771",
+    "name": "Hyo-epiglottic ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2779",
+    "name": "Left lateral thyrohyoid ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2786",
+    "name": "Left thyrohyoid membrane",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2790",
+    "name": "Median thyrohyoid ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2797",
+    "name": "Right lateral thyrohyoid ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ2804",
+    "name": "Right thyrohyoid membrane",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "FJ3131",
+    "name": "Diaphragm",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA13358",
+    "name": "Right latissimus dorsi",
+    "groups": [
+     "static",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "R3_FMA13359",
+    "name": "Left latissimus dorsi",
+    "groups": [
+     "static",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "R3_FMA13377",
+    "name": "Right rectus abdominis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA13378",
+    "name": "Left rectus abdominis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA13892",
+    "name": "Right internal oblique",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA13893",
+    "name": "Left internal oblique",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA21964",
+    "name": "Right inguinal ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA21965",
+    "name": "Left inguinal ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22344",
+    "name": "Right transversus abdominis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22345",
+    "name": "Left transversus abdominis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22348",
+    "name": "Right quadratus lumborum",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22349",
+    "name": "Left quadratus lumborum",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22781",
+    "name": "Right spinalis cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22782",
+    "name": "Left spinalis cervicis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22878",
+    "name": "Right multifidus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA22879",
+    "name": "Left multifidus",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46283",
+    "name": "Superior oblique part of right longus colli",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46287",
+    "name": "Inferior oblique part of right longus colli",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46812",
+    "name": "Right zygomaticus major",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46813",
+    "name": "Left zygomaticus major",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46817",
+    "name": "Right depressor labii inferioris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46818",
+    "name": "Left depressor labii inferioris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46826",
+    "name": "Right mentalis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46827",
+    "name": "Left mentalis",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46829",
+    "name": "Right depressor anguli oris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46830",
+    "name": "Left depressor anguli oris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46835",
+    "name": "Right buccinator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46836",
+    "name": "Left buccinator",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46839",
+    "name": "Right risorius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46840",
+    "name": "Left risorius",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA46841",
+    "name": "Orbicularis oris",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA49001",
+    "name": "Superficial part of right masseter",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA49002",
+    "name": "Superficial part of left masseter",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA49004",
+    "name": "Deep part of right masseter",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA49005",
+    "name": "Deep part of left masseter",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA49012",
+    "name": "Right medial pterygoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "R3_FMA49013",
+    "name": "Left medial pterygoid",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAF6563441",
+    "name": "Left acromioclavicular ligament",
+    "groups": [
+     "clavicle_L",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAEE982B46",
+    "name": "Right acromioclavicular ligament",
+    "groups": [
+     "clavicle_R",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAF3CBB045",
+    "name": "Left annular ligament of radius",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA9E993B94",
+    "name": "Right annular ligament of radius",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA934E4140",
+    "name": "Anterior longitudinal ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA65A0A839",
+    "name": "Left anterior sacro-iliac ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA731DCFA8",
+    "name": "Right anterior sacro-iliac ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA5E75EB94",
+    "name": "Left anterior sternoclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA57AE777A",
+    "name": "Right anterior sternoclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA6AF7A6E9",
+    "name": "Left articular capsule of acromioclavicular joint",
+    "groups": [
+     "clavicle_L",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA06E3F891",
+    "name": "Right articular capsule of acromioclavicular joint",
+    "groups": [
+     "clavicle_R",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA364ED89A",
+    "name": "Left articular capsule of elbow joint",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA3BA78F3A",
+    "name": "Right articular capsule of elbow joint",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA27BD8E99",
+    "name": "Left articular capsule of glenohumeral joint",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA205F5350",
+    "name": "Right articular capsule of glenohumeral joint",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA94E0BA7D",
+    "name": "Left articular capsule of radiocarpal joint",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAB3597A83",
+    "name": "Right articular capsule of radiocarpal joint",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA172B267E",
+    "name": "Left articular capsule of sternoclavicular joint",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA0EF31A6F",
+    "name": "Right articular capsule of sternoclavicular joint",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAAB1A9D64",
+    "name": "Left articular capsules of distal interphalangeal joints",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA8327915A",
+    "name": "Right articular capsules of distal interphalangeal joints",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA42265BB4",
+    "name": "Left articular capsules of metacarpophalangeal joints",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAA7946A55",
+    "name": "Right articular capsules of metacarpophalangeal joints",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA4975BEBC",
+    "name": "Left articular capsules of proximal interphalangeal joints",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA0252F487",
+    "name": "Right articular capsules of proximal interphalangeal joints",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAE3AEE93C",
+    "name": "Left collateral interphalangeal ligaments of hand",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZABEEA80EB",
+    "name": "Right collateral interphalangeal ligaments of hand",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAEB18E1E7",
+    "name": "Left collateral metacarpophalangeal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAD73B30CA",
+    "name": "Right collateral metacarpophalangeal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAF31C2F33",
+    "name": "Left conoid ligament",
+    "groups": [
+     "clavicle_L",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAFBB4935F",
+    "name": "Right conoid ligament",
+    "groups": [
+     "clavicle_R",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA39981AF0",
+    "name": "Left coraco-acromial ligament",
+    "groups": [
+     "scapula_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA02A9C180",
+    "name": "Right coraco-acromial ligament",
+    "groups": [
+     "scapula_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA8BB2028D",
+    "name": "Left coracohumeral ligament",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZADA77DB9E",
+    "name": "Right coracohumeral ligament",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAF516475C",
+    "name": "Left costoclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA012E4045",
+    "name": "Right costoclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAF7D44756",
+    "name": "Left costotransverse ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA9681E6DF",
+    "name": "Right costotransverse ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA2B33F17E",
+    "name": "Left deep transverse metacarpal ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA20D2E60D",
+    "name": "Right deep transverse metacarpal ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA82568894",
+    "name": "Left descending part of iliofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA98AF5389",
+    "name": "Right descending part of iliofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAC02A7E84",
+    "name": "Left dorsal carpometacarpal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAF7761E66",
+    "name": "Right dorsal carpometacarpal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAC0D9FA5F",
+    "name": "Left dorsal intercarpal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAEABF364B",
+    "name": "Right dorsal intercarpal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAA09820C3",
+    "name": "Left dorsal metacarpal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA379C1D65",
+    "name": "Right dorsal metacarpal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAA590799D",
+    "name": "Left dorsal radio-ulnar ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA665A09D4",
+    "name": "Right dorsal radio-ulnar ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAAA7612E3",
+    "name": "Left dorsal radiocarpal ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAC9C85F12",
+    "name": "Right dorsal radiocarpal ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA1C6ABDD3",
+    "name": "Left dorsal scaphotriquetral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA68E35B94",
+    "name": "Right dorsal scaphotriquetral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAE2456F1B",
+    "name": "Left dorsal ulnocarpal ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA6B75D63D",
+    "name": "Right dorsal ulnocarpal ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAD63F0F84",
+    "name": "Left iliolumbar ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAC55CEB46",
+    "name": "Right iliolumbar ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA84389368",
+    "name": "Left inferior glenohumeral ligament",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZADCB4F842",
+    "name": "Right inferior glenohumeral ligament",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA83F6A447",
+    "name": "Inferior pubic ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZABC2DE5C4",
+    "name": "Left inferior transverse scapular ligament",
+    "groups": [
+     "scapula_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAA89496C3",
+    "name": "Right inferior transverse scapular ligament",
+    "groups": [
+     "scapula_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAD618553F",
+    "name": "Left interclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA0480D4A1",
+    "name": "Right interclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA1DD4AADA",
+    "name": "Left intercornual ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAB071EFB8",
+    "name": "Right intercornual ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZABBE474B7",
+    "name": "Left interosseous metacarpal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA35C62690",
+    "name": "Right interosseous metacarpal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA06E38CFE",
+    "name": "Left interosseous sacro-iliac ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA28B797D3",
+    "name": "Right interosseous sacro-iliac ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA233D9159",
+    "name": "Left intertransverse ligaments",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAE05B584D",
+    "name": "Right intertransverse ligaments",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAC4F904BC",
+    "name": "Left ischiofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAB6B57A5F",
+    "name": "Right ischiofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAEE544645",
+    "name": "Left ligament of head of femur",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA49AC4AF3",
+    "name": "Right ligament of head of femur",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA2BCBAC87",
+    "name": "Ligamenta flava",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAEFB33410",
+    "name": "Left middle glenohumeral ligament",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA0097D3B5",
+    "name": "Right middle glenohumeral ligament",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAE480A584",
+    "name": "Nuchal ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA3EF65481",
+    "name": "Left palmar capitohamate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA31A62203",
+    "name": "Right palmar capitohamate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA2D23B926",
+    "name": "Left palmar carpometacarpal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA71B588B3",
+    "name": "Right palmar carpometacarpal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAF91046A6",
+    "name": "Left palmar interphalangeal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAEF48F468",
+    "name": "Right palmar interphalangeal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA1AA84034",
+    "name": "Left palmar lunotriquetral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA5A1AF999",
+    "name": "Right palmar lunotriquetral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAAF052FB8",
+    "name": "Left palmar metacarpal ligaments",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAC37383E7",
+    "name": "Right palmar metacarpal ligaments",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA4184C00E",
+    "name": "Left palmar radio-ulnar ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA3C6F2431",
+    "name": "Right palmar radio-ulnar ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAB1B37A82",
+    "name": "Left palmar scaphotriquetral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA6E002933",
+    "name": "Right palmar scaphotriquetral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAB0AEBEFB",
+    "name": "Left palmar trapezoideocapitate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA7A92A3B9",
+    "name": "Right palmar trapezoideocapitate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAAE1A9CE0",
+    "name": "Left pisohamate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA64C15E9E",
+    "name": "Right pisohamate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAF728398A",
+    "name": "Left pisometacarpal ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA1A60F5EF",
+    "name": "Right pisometacarpal ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAC53C7450",
+    "name": "Left pisotriquetral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA60FE391E",
+    "name": "Right pisotriquetral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZABF069852",
+    "name": "Posterior longitudinal ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAEFE09B07",
+    "name": "Left posterior sacro-iliac ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAD03AFDD2",
+    "name": "Right posterior sacro-iliac ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAC4BF3B34",
+    "name": "Left posterior sternoclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA03634898",
+    "name": "Right posterior sternoclavicular ligament",
+    "groups": [
+     "static",
+     "clavicle_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAB00CC261",
+    "name": "Left pubofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAF0AF75F3",
+    "name": "Right pubofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAD816C531",
+    "name": "Left quadrate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZACC0E80C1",
+    "name": "Right quadrate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA4EAA745F",
+    "name": "Left radial collateral ligament of wrist joint",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA363E3EA4",
+    "name": "Right radial collateral ligament of wrist joint",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA1618BF8C",
+    "name": "Left radial collateral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAF4D497C8",
+    "name": "Right radial collateral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZADA5D31A8",
+    "name": "Left radiate carpal ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA883C3214",
+    "name": "Right radiate carpal ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA1900D863",
+    "name": "Left radioscaphocapitate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAFFC86226",
+    "name": "Right radioscaphocapitate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA4CD65618",
+    "name": "Left sacrospinous ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA07F2DBB2",
+    "name": "Right sacrospinous ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA41B11FF1",
+    "name": "Left sacrotuberous ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAC8F6DDEC",
+    "name": "Right sacrotuberous ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA28F11150",
+    "name": "Left scaphocapitate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZADD51A896",
+    "name": "Right scaphocapitate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA680F9B6E",
+    "name": "Left scaphotrapeziotrapezoidal ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZABD55616D",
+    "name": "Right scaphotrapeziotrapezoidal ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA60274C55",
+    "name": "Left radiate ligament of head of rib",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA25C0F62B",
+    "name": "Right radiate ligament of head of rib",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA406D0257",
+    "name": "Left radiocapitate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAE7837B12",
+    "name": "Right radiocapitate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA65485C89",
+    "name": "Right stylomandibular ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAA8B611C5",
+    "name": "Left superior glenohumeral ligament",
+    "groups": [
+     "scapula_L",
+     "arm_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZA1B122A1F",
+    "name": "Right superior glenohumeral ligament",
+    "groups": [
+     "scapula_R",
+     "arm_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAD71C8421",
+    "name": "Superior pubic ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA861B99FC",
+    "name": "Left superior transverse scapular ligament",
+    "groups": [
+     "scapula_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA251A2C08",
+    "name": "Right superior transverse scapular ligament",
+    "groups": [
+     "scapula_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA2D843DDF",
+    "name": "Supraspinous ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAC625ADBA",
+    "name": "Left transverse acetabular ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA228593EB",
+    "name": "Right transverse acetabular ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA095AD654",
+    "name": "Left transverse humeral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA70435B76",
+    "name": "Right transverse humeral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA8391F3CA",
+    "name": "Left transverse part of iliofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA735E3E69",
+    "name": "Right transverse part of iliofemoral ligament",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZA1ED6D225",
+    "name": "Left trapezoid ligament",
+    "groups": [
+     "clavicle_L",
+     "scapula_L"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAA4952AD9",
+    "name": "Right trapezoid ligament",
+    "groups": [
+     "clavicle_R",
+     "scapula_R"
+    ],
+    "motion": "deformed"
+   },
+   {
+    "id": "ZAB34277B4",
+    "name": "Left triquetrocapitate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAC3ABBBE2",
+    "name": "Right triquetrocapitate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAE598657F",
+    "name": "Left triquetrohamate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAB39FCB67",
+    "name": "Right triquetrohamate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA13EDBE1F",
+    "name": "Left ulnar collateral ligament of wrist joint",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA5787903E",
+    "name": "Right ulnar collateral ligament of wrist joint",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA805CE94D",
+    "name": "Left ulnar collateral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA94A29B50",
+    "name": "Right ulnar collateral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA160BC178",
+    "name": "Left ulnocapitate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA57297B5C",
+    "name": "Right ulnocapitate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZAE0E13219",
+    "name": "Left ulnolunate ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA35C2B91E",
+    "name": "Right ulnolunate ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA9D52DD6F",
+    "name": "Right ulnopisiform ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA82305380",
+    "name": "Left ulnopisiform ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA5604A88D",
+    "name": "Left ulnotriquetral ligament",
+    "groups": [
+     "arm_L"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA0693BDD0",
+    "name": "Right ulnotriquetral ligament",
+    "groups": [
+     "arm_R"
+    ],
+    "motion": "rigid"
+   },
+   {
+    "id": "ZA4F3ABD3B",
+    "name": "Right articular capsule of hip joint",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   },
+   {
+    "id": "ZAD8D6B197",
+    "name": "Left articular capsule of hip joint",
+    "groups": [
+     "static"
+    ],
+    "motion": "none"
+   }
+  ],
+  "provenance": {
+   "scannedBefore": 2220,
+   "scannedAfter": 2072,
+   "relabelledToWarped": 148,
+   "relabelledByTissue": {
+    "muscle": 56,
+    "artery": 57,
+    "vein": 34,
+    "skin": 1
+   },
+   "scannedMovedRigidly": {
+    "muscle": 78,
+    "fascia": 2,
+    "ligament": 2,
+    "artery": 66,
+    "vein": 40,
+    "bone": 64
+   },
+   "relabelledIds": [
+    "FJ1446",
+    "FJ1446M",
+    "FJ1447",
+    "FJ1447M",
+    "FJ1456",
+    "FJ1456M",
+    "FJ1459",
+    "FJ1459M",
+    "FJ1460",
+    "FJ1460M",
+    "FJ1464",
+    "FJ1464M",
+    "FJ1467",
+    "FJ1467M",
+    "FJ1468",
+    "FJ1468M",
+    "FJ1478",
+    "FJ1478M",
+    "FJ1479",
+    "FJ1479M",
+    "FJ1488",
+    "FJ1488M",
+    "FJ1500",
+    "FJ1500M",
+    "FJ1504",
+    "FJ1504M",
+    "FJ1506",
+    "FJ1506M",
+    "FJ1507",
+    "FJ1507M",
+    "FJ1508",
+    "FJ1508M",
+    "FJ1512",
+    "FJ1512M",
+    "FJ1513",
+    "FJ1513M",
+    "FJ1520",
+    "FJ1520M",
+    "FJ1521",
+    "FJ1521M",
+    "FJ1532",
+    "FJ1532M",
+    "FJ1536",
+    "FJ1536M",
+    "FJ1537",
+    "FJ1537M",
+    "FJ1554",
+    "FJ1554M",
+    "FJ1558",
+    "FJ1565",
+    "FJ1573",
+    "FJ1574",
+    "FJ1586",
+    "FJ1587",
+    "FJ1595",
+    "FJ1596",
+    "FJ1682",
+    "FJ1682M",
+    "FJ1937",
+    "FJ1938",
+    "FJ1939",
+    "FJ1950",
+    "FJ1961",
+    "FJ1970",
+    "FJ1974",
+    "FJ1975",
+    "FJ1976",
+    "FJ1981",
+    "FJ1985",
+    "FJ1993",
+    "FJ1994",
+    "FJ2209",
+    "FJ2210",
+    "FJ2211",
+    "FJ2212",
+    "FJ2213",
+    "FJ2216",
+    "FJ2217",
+    "FJ2218",
+    "FJ2219",
+    "FJ2220",
+    "FJ2221",
+    "FJ2222",
+    "FJ2224",
+    "FJ2226",
+    "FJ2230",
+    "FJ2232",
+    "FJ2233",
+    "FJ2239",
+    "FJ2240",
+    "FJ2246",
+    "FJ2247",
+    "FJ2250",
+    "FJ2251",
+    "FJ2252",
+    "FJ2253",
+    "FJ2254",
+    "FJ2255",
+    "FJ2256",
+    "FJ2257",
+    "FJ2263",
+    "FJ2264",
+    "FJ2265",
+    "FJ2268",
+    "FJ2269",
+    "FJ2270",
+    "FJ2271",
+    "FJ2272",
+    "FJ2273",
+    "FJ2274",
+    "FJ2276",
+    "FJ2278",
+    "FJ2282",
+    "FJ2284",
+    "FJ2285",
+    "FJ2291",
+    "FJ2292",
+    "FJ2298",
+    "FJ2299",
+    "FJ2302",
+    "FJ2303",
+    "FJ2304",
+    "FJ2305",
+    "FJ2306",
+    "FJ2307",
+    "FJ2308",
+    "FJ2309",
+    "FJ2313",
+    "FJ2330",
+    "FJ2341",
+    "FJ2361",
+    "FJ2810",
+    "FJ2890",
+    "FJ2927",
+    "FJ3025",
+    "FJ3026",
+    "FJ3070",
+    "FJ3417",
+    "FJ3479",
+    "FJ3482",
+    "FJ3483",
+    "FJ3485",
+    "FJ3486",
+    "FJ3564",
+    "FJ3579",
+    "FJ3583",
+    "FJ3585",
+    "FJ3587"
+   ]
+  }
+ },
  "derived": [
   {
    "id": "SOMA_visceral_pleura_L",
@@ -56125,7 +64803,7 @@
    "areaCm2": 1227,
    "volumeMl": 1962,
    "contentInside": 0.992,
-   "surfaceInBone": 0.091
+   "surfaceInBone": 0.0911
   },
   {
    "id": "SOMA_pericardium",
@@ -56149,7 +64827,7 @@
  ],
  "skinPackage": {
   "dir": "data/raw/bodyshape/out/male-skin",
-  "internalsKey": "e9d0219ab13a3818",
+  "internalsKey": "4bf4e6e4b29d70ad",
   "present": true,
   "fittedTo": null,
   "installed": false,
@@ -56199,105 +64877,105 @@
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
     "fma": "FMA53659",
-    "sourceTriangles": 13844,
-    "areaCm2": 368,
-    "volumeMl": 219,
+    "sourceTriangles": 14104,
+    "areaCm2": 376,
+    "volumeMl": 221,
     "thicknessMm": {
      "p10": 3,
      "median": 3,
      "p90": 9,
      "max": 18
     },
-    "skinCovered": 0.577,
+    "skinCovered": 0.583,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
     "fma": "FMA53660",
-    "sourceTriangles": 12384,
-    "areaCm2": 362,
-    "volumeMl": 190,
+    "sourceTriangles": 12288,
+    "areaCm2": 354,
+    "volumeMl": 177,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
      "p90": 18,
      "max": 24
     },
-    "skinCovered": 0.83,
+    "skinCovered": 0.825,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
     "fma": "FMA50257",
-    "sourceTriangles": 269928,
-    "areaCm2": 8107,
-    "volumeMl": 5464,
+    "sourceTriangles": 273576,
+    "areaCm2": 8166,
+    "volumeMl": 5462,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
      "p90": 24,
      "max": 30
     },
-    "skinCovered": 0.88,
-    "verticesPulledIn": 0.0015
+    "skinCovered": 0.881,
+    "verticesPulledIn": 0.0027
    },
    {
     "id": "SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
     "fma": "FMA58392",
-    "sourceTriangles": 68072,
-    "areaCm2": 2017,
-    "volumeMl": 1125,
+    "sourceTriangles": 68244,
+    "areaCm2": 2026,
+    "volumeMl": 1128,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.905,
+    "skinCovered": 0.906,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
     "fma": "FMA58391",
-    "sourceTriangles": 69264,
-    "areaCm2": 2057,
-    "volumeMl": 1156,
+    "sourceTriangles": 69356,
+    "areaCm2": 2070,
+    "volumeMl": 1159,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.895,
-    "verticesPulledIn": 0
+    "skinCovered": 0.892,
+    "verticesPulledIn": 0.0001
    },
    {
     "id": "SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
     "fma": "FMA58396",
-    "sourceTriangles": 146124,
-    "areaCm2": 4479,
-    "volumeMl": 2812,
+    "sourceTriangles": 146888,
+    "areaCm2": 4498,
+    "volumeMl": 2816,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.882,
-    "verticesPulledIn": 0.0003
+    "skinCovered": 0.887,
+    "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
     "fma": "FMA58395",
-    "sourceTriangles": 145972,
-    "areaCm2": 4458,
-    "volumeMl": 2861,
+    "sourceTriangles": 145700,
+    "areaCm2": 4468,
+    "volumeMl": 2865,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
@@ -56305,7 +64983,7 @@
      "max": 30
     },
     "skinCovered": 0.881,
-    "verticesPulledIn": 0.0004
+    "verticesPulledIn": 0.0001
    }
   ]
  },
@@ -56621,7 +65299,7 @@
    {
     "id": "ZAA65B7021",
     "name": "Right vagus nerve (X)",
-    "x": 0.01473
+    "x": 0.01434
    }
   ]
  },
@@ -56644,12 +65322,12 @@
   {
    "depth": 3,
    "name": "Superficial muscles",
-   "parts": 135
+   "parts": 141
   },
   {
    "depth": 4,
    "name": "Deep muscles",
-   "parts": 372
+   "parts": 366
   },
   {
    "depth": 5,
@@ -56686,7 +65364,7 @@
   "FJ1334": 0,
   "FJ1335": 0,
   "FJ1342": 0,
-  "FJ1343": 0.001,
+  "FJ1343": 0,
   "FJ1345": 0,
   "FJ1346": 0,
   "FJ1355": 0,
@@ -56694,266 +65372,266 @@
   "FJ1359": 0,
   "FJ1373": 0,
   "FJ1374": 0,
-  "FJ1383": 0.146,
-  "FJ1383M": 0.146,
+  "FJ1383": 0.157,
+  "FJ1383M": 0.157,
   "FJ1384": 0,
   "FJ1384M": 0,
-  "FJ1385": 0.021,
-  "FJ1385M": 0.021,
+  "FJ1385": 0.016,
+  "FJ1385M": 0.016,
   "FJ1386": 0,
   "FJ1386M": 0,
-  "FJ1387": 0.007,
-  "FJ1387M": 0.007,
-  "FJ1388": 0.001,
-  "FJ1388M": 0.001,
-  "FJ1389": 0.018,
-  "FJ1389M": 0.018,
-  "FJ1390": 0.321,
-  "FJ1390M": 0.321,
-  "FJ1391": 0.177,
-  "FJ1391M": 0.177,
-  "FJ1393": 0.062,
-  "FJ1393M": 0.062,
-  "FJ1394": 0.477,
-  "FJ1394M": 0.477,
-  "FJ1395": 0.434,
-  "FJ1395M": 0.434,
-  "FJ1396": 0.068,
-  "FJ1396M": 0.068,
-  "FJ1397": 0.417,
-  "FJ1397M": 0.417,
+  "FJ1387": 0.018,
+  "FJ1387M": 0.018,
+  "FJ1388": 0.002,
+  "FJ1388M": 0.002,
+  "FJ1389": 0.022,
+  "FJ1389M": 0.022,
+  "FJ1390": 0.316,
+  "FJ1390M": 0.316,
+  "FJ1391": 0.167,
+  "FJ1391M": 0.167,
+  "FJ1393": 0.077,
+  "FJ1393M": 0.077,
+  "FJ1394": 0.475,
+  "FJ1394M": 0.475,
+  "FJ1395": 0.438,
+  "FJ1395M": 0.438,
+  "FJ1396": 0.08,
+  "FJ1396M": 0.08,
+  "FJ1397": 0.414,
+  "FJ1397M": 0.414,
   "FJ1398": 0,
   "FJ1398M": 0,
-  "FJ1399": 0.015,
-  "FJ1399M": 0.015,
-  "FJ1400": 0.436,
-  "FJ1400M": 0.436,
+  "FJ1399": 0.008,
+  "FJ1399M": 0.008,
+  "FJ1400": 0.432,
+  "FJ1400M": 0.432,
   "FJ1401": 0,
   "FJ1401M": 0,
-  "FJ1402": 0.141,
-  "FJ1402M": 0.141,
-  "FJ1403": 0.037,
-  "FJ1403M": 0.037,
+  "FJ1402": 0.144,
+  "FJ1402M": 0.144,
+  "FJ1403": 0.038,
+  "FJ1403M": 0.038,
   "FJ1404": 0,
   "FJ1404M": 0,
-  "FJ1405": 0.416,
-  "FJ1405M": 0.416,
-  "FJ1406": 0.294,
-  "FJ1406M": 0.294,
-  "FJ1407": 0.061,
-  "FJ1407M": 0.061,
-  "FJ1408": 0.146,
-  "FJ1408M": 0.146,
-  "FJ1409": 0.152,
-  "FJ1409M": 0.152,
-  "FJ1410": 0.387,
-  "FJ1410M": 0.387,
-  "FJ1411": 0.186,
-  "FJ1411M": 0.186,
-  "FJ1412": 0.001,
-  "FJ1412M": 0.001,
-  "FJ1413": 0.46,
-  "FJ1413M": 0.46,
-  "FJ1414": 0.139,
-  "FJ1414M": 0.139,
-  "FJ1415": 0.069,
-  "FJ1415M": 0.069,
+  "FJ1405": 0.419,
+  "FJ1405M": 0.419,
+  "FJ1406": 0.296,
+  "FJ1406M": 0.296,
+  "FJ1407": 0.074,
+  "FJ1407M": 0.074,
+  "FJ1408": 0.159,
+  "FJ1408M": 0.159,
+  "FJ1409": 0.17,
+  "FJ1409M": 0.17,
+  "FJ1410": 0.398,
+  "FJ1410M": 0.398,
+  "FJ1411": 0.199,
+  "FJ1411M": 0.199,
+  "FJ1412": 0.003,
+  "FJ1412M": 0.003,
+  "FJ1413": 0.456,
+  "FJ1413M": 0.456,
+  "FJ1414": 0.14,
+  "FJ1414M": 0.14,
+  "FJ1415": 0.073,
+  "FJ1415M": 0.073,
   "FJ1416": 0,
   "FJ1416M": 0,
   "FJ1417": 0,
   "FJ1417M": 0,
-  "FJ1418": 0.483,
-  "FJ1418M": 0.483,
-  "FJ1419": 0.287,
-  "FJ1419M": 0.287,
-  "FJ1420": 0.025,
-  "FJ1420M": 0.025,
-  "FJ1421": 0.347,
-  "FJ1421M": 0.347,
-  "FJ1422": 0.031,
-  "FJ1422M": 0.031,
+  "FJ1418": 0.482,
+  "FJ1418M": 0.482,
+  "FJ1419": 0.278,
+  "FJ1419M": 0.278,
+  "FJ1420": 0.026,
+  "FJ1420M": 0.026,
+  "FJ1421": 0.334,
+  "FJ1421M": 0.334,
+  "FJ1422": 0.033,
+  "FJ1422M": 0.033,
   "FJ1425": 0,
   "FJ1425M": 0,
   "FJ1426": 0,
   "FJ1426M": 0,
-  "FJ1427": 0.186,
-  "FJ1427M": 0.186,
+  "FJ1427": 0.189,
+  "FJ1427M": 0.189,
   "FJ1428": 0,
   "FJ1428M": 0,
-  "FJ1429": 0.13,
-  "FJ1429M": 0.13,
-  "FJ1430": 0.013,
-  "FJ1430M": 0.013,
+  "FJ1429": 0.117,
+  "FJ1429M": 0.117,
+  "FJ1430": 0.007,
+  "FJ1430M": 0.007,
   "FJ1431": 0.002,
   "FJ1431M": 0.002,
   "FJ1432": 0,
   "FJ1432M": 0,
-  "FJ1433": 0.385,
-  "FJ1433M": 0.385,
-  "FJ1434": 0.438,
-  "FJ1434M": 0.438,
-  "FJ1435": 0.219,
-  "FJ1435M": 0.219,
-  "FJ1436": 0.43,
-  "FJ1436M": 0.43,
-  "FJ1437": 0.168,
-  "FJ1437M": 0.168,
-  "FJ1438": 0.53,
-  "FJ1438M": 0.53,
-  "FJ1439": 0.413,
-  "FJ1439M": 0.413,
-  "FJ1440": 0.04,
-  "FJ1440M": 0.04,
-  "FJ1441": 0,
-  "FJ1441M": 0,
-  "FJ1442": 0.426,
-  "FJ1442M": 0.426,
-  "FJ1443": 0.223,
-  "FJ1443M": 0.223,
-  "FJ1444": 0.048,
-  "FJ1444M": 0.048,
-  "FJ1445": 0,
-  "FJ1445M": 0,
-  "FJ1446": 0.096,
-  "FJ1446M": 0.096,
-  "FJ1447": 0.274,
-  "FJ1447M": 0.274,
-  "FJ1448": 0.186,
+  "FJ1433": 0.379,
+  "FJ1433M": 0.379,
+  "FJ1434": 0.448,
+  "FJ1434M": 0.448,
+  "FJ1435": 0.224,
+  "FJ1435M": 0.224,
+  "FJ1436": 0.431,
+  "FJ1436M": 0.431,
+  "FJ1437": 0.167,
+  "FJ1437M": 0.167,
+  "FJ1438": 0.534,
+  "FJ1438M": 0.534,
+  "FJ1439": 0.422,
+  "FJ1439M": 0.422,
+  "FJ1440": 0.041,
+  "FJ1440M": 0.041,
+  "FJ1441": 0.002,
+  "FJ1441M": 0.002,
+  "FJ1442": 0.427,
+  "FJ1442M": 0.427,
+  "FJ1443": 0.22,
+  "FJ1443M": 0.22,
+  "FJ1444": 0.045,
+  "FJ1444M": 0.045,
+  "FJ1445": 0.008,
+  "FJ1445M": 0.008,
+  "FJ1446": 0.149,
+  "FJ1446M": 0.149,
+  "FJ1447": 0.277,
+  "FJ1447M": 0.277,
+  "FJ1448": 0.183,
   "FJ1449M": 0,
-  "FJ1450": 0.209,
-  "FJ1450M": 0.209,
+  "FJ1450": 0.215,
+  "FJ1450M": 0.215,
   "FJ1451": 0,
   "FJ1451M": 0,
-  "FJ1452": 0.4,
-  "FJ1452M": 0.4,
+  "FJ1452": 0.392,
+  "FJ1452M": 0.392,
   "FJ1453M": 0,
   "FJ1454": 0,
   "FJ1454M": 0,
   "FJ1455": 0,
   "FJ1455M": 0,
-  "FJ1456": 0.001,
-  "FJ1456M": 0.001,
+  "FJ1456": 0,
+  "FJ1456M": 0,
   "FJ1458M": 0.006,
-  "FJ1459": 0.058,
-  "FJ1459M": 0.058,
+  "FJ1459": 0.021,
+  "FJ1459M": 0.021,
   "FJ1460": 0,
   "FJ1460M": 0,
-  "FJ1461": 0.001,
-  "FJ1461M": 0.001,
+  "FJ1461": 0,
+  "FJ1461M": 0,
   "FJ1462": 0,
   "FJ1462M": 0,
   "FJ1463": 0,
   "FJ1463M": 0,
-  "FJ1464": 0.436,
-  "FJ1464M": 0.436,
+  "FJ1464": 0.395,
+  "FJ1464M": 0.395,
   "FJ1465": 0,
   "FJ1465M": 0,
-  "FJ1466": 0.537,
-  "FJ1466M": 0.537,
-  "FJ1467": 0.486,
-  "FJ1467M": 0.486,
-  "FJ1468": 0.428,
-  "FJ1468M": 0.428,
-  "FJ1469": 0.027,
-  "FJ1469M": 0.027,
-  "FJ1470": 0.05,
-  "FJ1470M": 0.05,
-  "FJ1472": 0.125,
-  "FJ1472M": 0.125,
-  "FJ1473": 0.448,
-  "FJ1473M": 0.448,
-  "FJ1474": 0.147,
-  "FJ1474M": 0.147,
-  "FJ1475": 0.109,
-  "FJ1475M": 0.109,
-  "FJ1477": 0.319,
-  "FJ1477M": 0.319,
-  "FJ1478": 0.302,
-  "FJ1478M": 0.302,
-  "FJ1479": 0.291,
-  "FJ1479M": 0.291,
-  "FJ1480": 0.116,
-  "FJ1480M": 0.116,
-  "FJ1481": 0.035,
-  "FJ1481M": 0.035,
-  "FJ1482": 0.032,
-  "FJ1482M": 0.032,
-  "FJ1483": 0.411,
-  "FJ1483M": 0.411,
-  "FJ1484": 0.081,
-  "FJ1484M": 0.081,
-  "FJ1485": 0.402,
-  "FJ1485M": 0.402,
-  "FJ1486": 0.163,
-  "FJ1486M": 0.163,
-  "FJ1487": 0.485,
-  "FJ1487M": 0.485,
+  "FJ1466": 0.524,
+  "FJ1466M": 0.524,
+  "FJ1467": 0.477,
+  "FJ1467M": 0.477,
+  "FJ1468": 0.437,
+  "FJ1468M": 0.437,
+  "FJ1469": 0.028,
+  "FJ1469M": 0.028,
+  "FJ1470": 0.04,
+  "FJ1470M": 0.04,
+  "FJ1472": 0.109,
+  "FJ1472M": 0.109,
+  "FJ1473": 0.45,
+  "FJ1473M": 0.45,
+  "FJ1474": 0.145,
+  "FJ1474M": 0.145,
+  "FJ1475": 0.11,
+  "FJ1475M": 0.11,
+  "FJ1477": 0.318,
+  "FJ1477M": 0.318,
+  "FJ1478": 0.31,
+  "FJ1478M": 0.31,
+  "FJ1479": 0.298,
+  "FJ1479M": 0.298,
+  "FJ1480": 0.121,
+  "FJ1480M": 0.121,
+  "FJ1481": 0.036,
+  "FJ1481M": 0.036,
+  "FJ1482": 0.073,
+  "FJ1482M": 0.073,
+  "FJ1483": 0.413,
+  "FJ1483M": 0.413,
+  "FJ1484": 0.077,
+  "FJ1484M": 0.077,
+  "FJ1485": 0.395,
+  "FJ1485M": 0.395,
+  "FJ1486": 0.158,
+  "FJ1486M": 0.158,
+  "FJ1487": 0.482,
+  "FJ1487M": 0.482,
   "FJ1488": 0,
   "FJ1488M": 0,
-  "FJ1489": 0.073,
-  "FJ1489M": 0.073,
-  "FJ1490": 0.346,
-  "FJ1490M": 0.346,
-  "FJ1491": 0.099,
-  "FJ1491M": 0.099,
-  "FJ1492": 0.434,
-  "FJ1492M": 0.434,
-  "FJ1493": 0.037,
-  "FJ1493M": 0.037,
-  "FJ1494": 0.164,
-  "FJ1494M": 0.164,
-  "FJ1495": 0.097,
-  "FJ1495M": 0.097,
-  "FJ1496": 0.359,
-  "FJ1496M": 0.359,
-  "FJ1497": 0.022,
-  "FJ1497M": 0.022,
-  "FJ1498": 0.089,
-  "FJ1498M": 0.089,
-  "FJ1499": 0.109,
-  "FJ1499M": 0.109,
-  "FJ1500": 0.126,
-  "FJ1500M": 0.126,
-  "FJ1501": 0.082,
-  "FJ1501M": 0.082,
-  "FJ1502": 0.45,
-  "FJ1502M": 0.45,
-  "FJ1503": 0.053,
-  "FJ1503M": 0.053,
+  "FJ1489": 0.062,
+  "FJ1489M": 0.062,
+  "FJ1490": 0.355,
+  "FJ1490M": 0.355,
+  "FJ1491": 0.091,
+  "FJ1491M": 0.091,
+  "FJ1492": 0.435,
+  "FJ1492M": 0.435,
+  "FJ1493": 0.032,
+  "FJ1493M": 0.032,
+  "FJ1494": 0.152,
+  "FJ1494M": 0.152,
+  "FJ1495": 0.095,
+  "FJ1495M": 0.095,
+  "FJ1496": 0.358,
+  "FJ1496M": 0.358,
+  "FJ1497": 0.024,
+  "FJ1497M": 0.024,
+  "FJ1498": 0.085,
+  "FJ1498M": 0.085,
+  "FJ1499": 0.11,
+  "FJ1499M": 0.11,
+  "FJ1500": 0.127,
+  "FJ1500M": 0.127,
+  "FJ1501": 0.079,
+  "FJ1501M": 0.079,
+  "FJ1502": 0.46,
+  "FJ1502M": 0.46,
+  "FJ1503": 0.058,
+  "FJ1503M": 0.058,
   "FJ1504": 0,
   "FJ1504M": 0,
   "FJ1505": 0,
   "FJ1505M": 0,
-  "FJ1506": 0,
-  "FJ1506M": 0,
-  "FJ1507": 0.098,
-  "FJ1507M": 0.098,
-  "FJ1508": 0.045,
-  "FJ1508M": 0.045,
+  "FJ1506": 0.001,
+  "FJ1506M": 0.001,
+  "FJ1507": 0.167,
+  "FJ1507M": 0.167,
+  "FJ1508": 0.027,
+  "FJ1508M": 0.027,
   "FJ1509": 0.239,
   "FJ1509M": 0.239,
-  "FJ1510": 0.066,
-  "FJ1510M": 0.066,
-  "FJ1511": 0.002,
-  "FJ1511M": 0.002,
-  "FJ1512": 0.282,
-  "FJ1512M": 0.282,
-  "FJ1513": 0.408,
-  "FJ1513M": 0.408,
-  "FJ1514": 0.237,
-  "FJ1514M": 0.237,
-  "FJ1515": 0.118,
-  "FJ1515M": 0.118,
+  "FJ1510": 0.063,
+  "FJ1510M": 0.063,
+  "FJ1511": 0.003,
+  "FJ1511M": 0.003,
+  "FJ1512": 0.324,
+  "FJ1512M": 0.324,
+  "FJ1513": 0.403,
+  "FJ1513M": 0.403,
+  "FJ1514": 0.256,
+  "FJ1514M": 0.256,
+  "FJ1515": 0.113,
+  "FJ1515M": 0.113,
   "FJ1516": 0,
   "FJ1516M": 0,
-  "FJ1517": 0.125,
-  "FJ1517M": 0.125,
-  "FJ1518": 0.37,
-  "FJ1518M": 0.37,
-  "FJ1520": 0.418,
-  "FJ1520M": 0.418,
-  "FJ1521": 0.359,
-  "FJ1521M": 0.359,
+  "FJ1517": 0.109,
+  "FJ1517M": 0.109,
+  "FJ1518": 0.365,
+  "FJ1518M": 0.365,
+  "FJ1520": 0.437,
+  "FJ1520M": 0.437,
+  "FJ1521": 0.358,
+  "FJ1521M": 0.358,
   "FJ1522": 0,
   "FJ1522M": 0,
   "FJ1524": 0,
@@ -56966,16 +65644,16 @@
   "FJ1527M": 0.071,
   "FJ1528": 0,
   "FJ1528M": 0,
-  "FJ1532": 0.013,
-  "FJ1532M": 0.013,
+  "FJ1532": 0.015,
+  "FJ1532M": 0.015,
   "FJ1533": 0,
   "FJ1533M": 0,
   "FJ1534": 0,
   "FJ1534M": 0,
   "FJ1535": 0,
   "FJ1535M": 0,
-  "FJ1536": 0,
-  "FJ1536M": 0,
+  "FJ1536": 0.007,
+  "FJ1536M": 0.007,
   "FJ1537": 0,
   "FJ1537M": 0,
   "FJ1538": 0.016,
@@ -56984,18 +65662,18 @@
   "FJ1539M": 0,
   "FJ1540": 0,
   "FJ1540M": 0,
-  "FJ1541": 0.018,
-  "FJ1541M": 0.018,
+  "FJ1541": 0.025,
+  "FJ1541M": 0.025,
   "FJ1542": 0,
   "FJ1542M": 0,
   "FJ1543": 0,
   "FJ1543M": 0,
   "FJ1544": 0,
   "FJ1544M": 0,
-  "FJ1545": 0.054,
-  "FJ1545M": 0.054,
-  "FJ1546": 0.006,
-  "FJ1546M": 0.006,
+  "FJ1545": 0.05,
+  "FJ1545M": 0.05,
+  "FJ1546": 0.004,
+  "FJ1546M": 0.004,
   "FJ1547": 0,
   "FJ1547M": 0,
   "FJ1548": 0,
@@ -57010,49 +65688,49 @@
   "FJ1552M": 0,
   "FJ1553": 0,
   "FJ1553M": 0,
-  "FJ1554": 0.334,
-  "FJ1554M": 0.334,
-  "FJ1555": 0.008,
-  "FJ1556": 0.008,
+  "FJ1554": 0.352,
+  "FJ1554M": 0.352,
+  "FJ1555": 0.006,
+  "FJ1556": 0.006,
   "FJ1557": 0,
-  "FJ1558": 0.346,
+  "FJ1558": 0.34,
   "FJ1559": 0,
-  "FJ1560": 0.008,
-  "FJ1561": 0,
+  "FJ1560": 0.006,
+  "FJ1561": 0.001,
   "FJ1562": 0,
   "FJ1563": 0,
-  "FJ1564": 0.018,
-  "FJ1565": 0.002,
+  "FJ1564": 0.012,
+  "FJ1565": 0.006,
   "FJ1566": 0,
-  "FJ1567": 0.045,
+  "FJ1567": 0.048,
   "FJ1568": 0,
   "FJ1569": 0,
-  "FJ1570": 0,
-  "FJ1571": 0.018,
+  "FJ1570": 0.006,
+  "FJ1571": 0.028,
   "FJ1572": 0,
-  "FJ1573": 0.158,
+  "FJ1573": 0.16,
   "FJ1574": 0.003,
   "FJ1575": 0,
   "FJ1576": 0,
   "FJ1577": 0,
-  "FJ1578": 0.008,
-  "FJ1579": 0.008,
+  "FJ1578": 0.006,
+  "FJ1579": 0.006,
   "FJ1580": 0,
   "FJ1581": 0,
-  "FJ1582": 0,
+  "FJ1582": 0.001,
   "FJ1583": 0,
   "FJ1584": 0,
-  "FJ1585": 0.018,
-  "FJ1586": 0.002,
-  "FJ1587": 0.346,
+  "FJ1585": 0.012,
+  "FJ1586": 0.006,
+  "FJ1587": 0.34,
   "FJ1588": 0,
-  "FJ1589": 0.045,
+  "FJ1589": 0.048,
   "FJ1590": 0,
   "FJ1591": 0,
-  "FJ1592": 0,
-  "FJ1593": 0.018,
+  "FJ1592": 0.006,
+  "FJ1593": 0.028,
   "FJ1594": 0,
-  "FJ1595": 0.158,
+  "FJ1595": 0.16,
   "FJ1596": 0.003,
   "FJ1597": 0,
   "FJ1598": 0,
@@ -57108,16 +65786,16 @@
   "FJ2806": 0,
   "FJ2809": 0,
   "FJ3131": 0,
-  "R3_FMA13358": 0.333,
-  "R3_FMA13359": 0.333,
-  "R3_FMA13377": 0.013,
-  "R3_FMA13378": 0.013,
+  "R3_FMA13358": 0.32,
+  "R3_FMA13359": 0.32,
+  "R3_FMA13377": 0.012,
+  "R3_FMA13378": 0.012,
   "R3_FMA13892": 0.021,
   "R3_FMA13893": 0.021,
   "R3_FMA22344": 0.001,
   "R3_FMA22345": 0.001,
-  "R3_FMA22346": 0.023,
-  "R3_FMA22347": 0.023,
+  "R3_FMA22346": 0.019,
+  "R3_FMA22347": 0.019,
   "R3_FMA22348": 0,
   "R3_FMA22349": 0,
   "R3_FMA22781": 0,
@@ -57126,106 +65804,106 @@
   "R3_FMA22879": 0,
   "R3_FMA46283": 0,
   "R3_FMA46287": 0,
-  "R3_FMA46759": 0.299,
-  "R3_FMA46760": 0.299,
-  "R3_FMA46761": 0.25,
-  "R3_FMA46762": 0.25,
-  "R3_FMA46763": 0.288,
-  "R3_FMA46764": 0.288,
-  "R3_FMA46768": 0.377,
-  "R3_FMA46782": 0.267,
-  "R3_FMA46783": 0.267,
-  "R3_FMA46785": 0.269,
-  "R3_FMA46786": 0.269,
-  "R3_FMA46796": 0.006,
-  "R3_FMA46797": 0.006,
-  "R3_FMA46803": 0.053,
-  "R3_FMA46804": 0.053,
-  "R3_FMA46806": 0.12,
-  "R3_FMA46807": 0.12,
-  "R3_FMA46812": 0.238,
-  "R3_FMA46813": 0.238,
-  "R3_FMA46814": 0.202,
-  "R3_FMA46815": 0.202,
+  "R3_FMA46759": 0.292,
+  "R3_FMA46760": 0.292,
+  "R3_FMA46761": 0.258,
+  "R3_FMA46762": 0.258,
+  "R3_FMA46763": 0.274,
+  "R3_FMA46764": 0.274,
+  "R3_FMA46768": 0.382,
+  "R3_FMA46782": 0.288,
+  "R3_FMA46783": 0.288,
+  "R3_FMA46785": 0.244,
+  "R3_FMA46786": 0.244,
+  "R3_FMA46796": 0,
+  "R3_FMA46797": 0,
+  "R3_FMA46803": 0.09,
+  "R3_FMA46804": 0.09,
+  "R3_FMA46806": 0.067,
+  "R3_FMA46807": 0.067,
+  "R3_FMA46812": 0.25,
+  "R3_FMA46813": 0.25,
+  "R3_FMA46814": 0.182,
+  "R3_FMA46815": 0.182,
   "R3_FMA46817": 0.083,
   "R3_FMA46818": 0.083,
-  "R3_FMA46823": 0.128,
-  "R3_FMA46824": 0.128,
-  "R3_FMA46826": 0.07,
-  "R3_FMA46827": 0.07,
-  "R3_FMA46829": 0.187,
-  "R3_FMA46830": 0.187,
-  "R3_FMA46835": 0.006,
-  "R3_FMA46836": 0.006,
-  "R3_FMA46839": 0.257,
-  "R3_FMA46840": 0.257,
-  "R3_FMA46841": 0.248,
-  "R3_FMA49001": 0.013,
-  "R3_FMA49002": 0.013,
-  "R3_FMA49004": 0.118,
-  "R3_FMA49005": 0.118,
-  "R3_FMA49007": 0.103,
-  "R3_FMA49008": 0.103,
+  "R3_FMA46823": 0.094,
+  "R3_FMA46824": 0.094,
+  "R3_FMA46826": 0.061,
+  "R3_FMA46827": 0.061,
+  "R3_FMA46829": 0.151,
+  "R3_FMA46830": 0.151,
+  "R3_FMA46835": 0.001,
+  "R3_FMA46836": 0.001,
+  "R3_FMA46839": 0.264,
+  "R3_FMA46840": 0.264,
+  "R3_FMA46841": 0.258,
+  "R3_FMA49001": 0.011,
+  "R3_FMA49002": 0.011,
+  "R3_FMA49004": 0.139,
+  "R3_FMA49005": 0.139,
+  "R3_FMA49007": 0.107,
+  "R3_FMA49008": 0.107,
   "R3_FMA49012": 0,
   "R3_FMA49013": 0,
   "R3_FMA49022": 0,
   "R3_FMA49023": 0,
   "R3_FMA49024": 0,
   "R3_FMA49025": 0,
-  "R3_FMA51142": 0.13,
-  "R3_FMA51143": 0.13,
-  "R3_FMA55606": 0.242,
-  "R3_FMA55607": 0.242,
-  "R3_FMA55610": 0.118,
-  "R3_FMA55611": 0.118,
-  "R3_FMA74140": 0.059,
-  "R3_FMA74141": 0.059
+  "R3_FMA51142": 0.128,
+  "R3_FMA51143": 0.128,
+  "R3_FMA55606": 0.237,
+  "R3_FMA55607": 0.237,
+  "R3_FMA55610": 0.143,
+  "R3_FMA55611": 0.143,
+  "R3_FMA74140": 0.056,
+  "R3_FMA74141": 0.056
  },
  "adjacency": {
   "thresholdM": 0.002,
   "spacingM": 0.002,
-  "samples": 51162703,
-  "pairs": 30226,
+  "samples": 51330919,
+  "pairs": 30195,
   "envelopes": [
    {
     "id": "FJ2810",
     "name": "Skin",
-    "rawDegree": 566
+    "rawDegree": 565
    },
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "rawDegree": 105
+    "rawDegree": 106
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
-    "rawDegree": 35
+    "rawDegree": 32
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
-    "rawDegree": 257
+    "rawDegree": 253
    },
    {
     "id": "SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
-    "rawDegree": 171
+    "rawDegree": 174
    },
    {
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
-    "rawDegree": 175
+    "rawDegree": 174
    },
    {
     "id": "SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
-    "rawDegree": 215
+    "rawDegree": 216
    },
    {
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
-    "rawDegree": 216
+    "rawDegree": 218
    }
   ],
   "degree": {
@@ -57235,7 +65913,7 @@
    "p90": 36,
    "p99": 83,
    "max": 211,
-   "isolated": 6
+   "isolated": 4
   },
   "highest": [
    {
@@ -57244,18 +65922,18 @@
    },
    {
     "name": "Left visceral pleura",
-    "degree": 208
+    "degree": 209
    },
    {
     "name": "Diaphragm",
     "degree": 196
    },
    {
-    "name": "Transversalis fascia",
-    "degree": 172
+    "name": "Right visceral pleura",
+    "degree": 174
    },
    {
-    "name": "Right visceral pleura",
+    "name": "Transversalis fascia",
     "degree": 172
    },
    {
@@ -57275,10 +65953,10 @@
  "triangles": {
   "source": 6681030,
   "importedFromRelease3": 821404,
-  "afterWeldAndMerge": 9518453,
-  "written": 2315415,
+  "afterWeldAndMerge": 9526347,
+  "written": 2325961,
   "simplifiedParts": 2001,
-  "maxErrorM": 0.0007999273366294801,
+  "maxErrorM": 0.0007999090012162924,
   "worstVolumeChange": {
    "id": "FJ2093",
    "name": "Set of dorsal digital arteries",
@@ -57287,19 +65965,19 @@
   "byTissue": {
    "organ": {
     "source": 765324,
-    "written": 194926
+    "written": 194928
    },
    "tooth": {
     "source": 39744,
     "written": 11200
    },
    "nerve": {
-    "source": 458926,
-    "written": 349297
+    "source": 462252,
+    "written": 352617
    },
    "ligament": {
     "source": 295530,
-    "written": 156818
+    "written": 156801
    },
    "tendon": {
     "source": 113972,
@@ -57307,7 +65985,7 @@
    },
    "muscle": {
     "source": 3083888,
-    "written": 592124
+    "written": 594864
    },
    "gland": {
     "source": 29988,
@@ -57319,11 +65997,11 @@
    },
    "fascia": {
     "source": 612239,
-    "written": 123039
+    "written": 122992
    },
    "artery": {
     "source": 975594,
-    "written": 308926
+    "written": 310412
    },
    "brain": {
     "source": 503678,
@@ -57331,7 +66009,7 @@
    },
    "vein": {
     "source": 945916,
-    "written": 204562
+    "written": 206464
    },
    "heart": {
     "source": 101562,
@@ -57343,15 +66021,15 @@
    },
    "bone": {
     "source": 512450,
-    "written": 92414
+    "written": 92348
    },
    "skin": {
     "source": 248712,
-    "written": 94536
+    "written": 95132
    },
    "fat": {
-    "source": 731432,
-    "written": 42132
+    "source": 736000,
+    "written": 42762
    }
   }
  },
@@ -57374,25 +66052,25 @@
  },
  "output": {
   "parts": 3332,
-  "anatomyJsonBytes": 2279883,
+  "anatomyJsonBytes": 2280866,
   "glbBytes": {
-   "integumentary.glb": 886960,
-   "muscular.glb": 5153084,
-   "skeletal.glb": 2533004,
-   "cardiovascular.glb": 4912688,
-   "nervous.glb": 3820788,
+   "integumentary.glb": 895348,
+   "muscular.glb": 5171236,
+   "skeletal.glb": 2532184,
+   "cardiovascular.glb": 4934712,
+   "nervous.glb": 3840188,
    "respiratory.glb": 514096,
    "digestive.glb": 885332,
    "urinary.glb": 28060,
    "reproductive.glb": 48848,
    "endocrine.glb": 28168,
-   "lymphatic.glb": 710404
+   "lymphatic.glb": 710312
   },
   "bounds": [
-   -0.334,
+   -0.3408,
    -0.0781,
-   -0.0452,
-   0.3328,
+   -0.0421,
+   0.3394,
    1.6512,
    0.2468
   ]

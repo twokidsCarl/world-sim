@@ -90,21 +90,11 @@
   },
   {
    "name": {
-    "zh": "剑突表面",
-    "en": "Over the xiphoid process"
+    "zh": "剑突表面（剑突前方皮肤中面积最大的皮节）",
+    "en": "Over the xiphoid process (dermatome with the largest share of the skin in front of the process)"
    },
    "at": {
-    "at": {
-     "offset": [
-      "xiphisternum",
-      [
-       0.012,
-       -0.01,
-       -0.05
-      ]
-     ]
-    },
-    "to": "ant"
+    "over": "Xiphoid process"
    },
    "expect": [
     "T6",
@@ -1734,7 +1724,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T2FrontMid"
      ],
      "note": {
       "zh": "沿第 2 肋间神经的条带；背部按其平面水平延至中线",
@@ -1821,7 +1812,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T3FrontMid"
      ],
      "note": {
       "zh": "沿第 3 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -1871,7 +1863,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T4FrontMid"
      ],
      "note": {
       "zh": "沿第 4 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -1921,7 +1914,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T5FrontMid"
      ],
      "note": {
       "zh": "沿第 5 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -1971,7 +1965,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T6FrontMid"
      ],
      "note": {
       "zh": "沿第 6 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -2021,7 +2016,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T7FrontMid"
      ],
      "note": {
       "zh": "沿第 7 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -2071,7 +2067,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T8FrontMid"
      ],
      "note": {
       "zh": "沿第 8 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -2121,7 +2118,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T9FrontMid"
      ],
      "note": {
       "zh": "沿第 9 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -2171,7 +2169,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T10FrontMid"
      ],
      "note": {
       "zh": "沿第 10 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -2221,7 +2220,8 @@
         "dir": "lat+2*ant",
         "beyond": "backLat"
        }
-      }
+      },
+      "T11FrontMid"
      ],
      "note": {
       "zh": "沿第 11 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
@@ -2263,7 +2263,7 @@
     },
     {
      "curve": [
-      "sp_T12",
+      "T12BackMid",
       {
        "at": {
         "offset": [
@@ -2306,8 +2306,8 @@
       }
      ],
      "note": {
-      "zh": "模型中无肋下神经：自 T12 棘突经髂嵴上方至腹股沟韧带的连线",
-      "en": "no subcostal nerve in the model: line from the T12 spinous process above the iliac crest to the inguinal ligament"
+      "zh": "模型中无肋下神经：自后正中线旁（T12 椎间孔平面，按 T11 的下移量下移）经髂嵴上方至腹股沟韧带的连线",
+      "en": "no subcostal nerve in the model: line from beside the posterior midline (level of the T12 foramen lowered as the T11 nerve is) above the iliac crest to the inguinal ligament"
      }
     }
    ]
@@ -2324,8 +2324,8 @@
     "en": "Midway between the T12 and L2 key points."
    },
    "rule": {
-    "zh": "腹股沟和股最上部，绕髋至 L1 棘突。",
-    "en": "Groin and uppermost thigh, round the hip to the L1 spinous process."
+    "zh": "腹股沟和股最上部，绕髋至后正中线旁 L1 平面。",
+    "en": "Groin and uppermost thigh, round the hip to the L1 level beside the posterior midline."
    },
    "cite": [
     "isncsci2011",
@@ -2344,7 +2344,7 @@
     },
     {
      "curve": [
-      "sp_L1",
+      "L1BackMid",
       {
        "at": {
         "offset": [
@@ -2426,7 +2426,7 @@
     },
     {
      "curve": [
-      "sp_L2",
+      "L2BackMid",
       {
        "at": {
         "offset": [
@@ -2497,7 +2497,7 @@
     },
     {
      "curve": [
-      "sp_L3",
+      "L3BackMid",
       {
        "at": {
         "offset": [
@@ -3166,12 +3166,13 @@
         ]
        },
        "to": "post"
-      }
+      },
+      "K_S45"
      ],
-     "widthMm": 15,
+     "widthMm": 12,
      "note": {
-      "zh": "尾骨表面的臀裂",
-      "en": "natal cleft over the coccyx"
+      "zh": "自尾骨表面沿臀裂至肛周，连成一片",
+      "en": "natal cleft from over the coccyx down to the perianal skin, in one piece"
      }
     }
    ],
