@@ -128,3 +128,25 @@ export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxS
 export function neuromorphoUrl(archive: string, name: string): string {
   return `https://neuromorpho.org/dableFiles/${encodeURIComponent(archive.toLowerCase())}/CNG%20version/${encodeURIComponent(name)}.CNG.swc`
 }
+
+/**
+ * MICrONS（小鼠视皮层一立方毫米的电镜连接组）里一个细胞骨架的 SWC 地址。和 NeuroMorpho 的重建不同，
+ * 这些骨架都在同一个坐标系里（微米），所以几个细胞可以按它们在脑里的真实相对位置叠在一起画。
+ * Where the SWC skeleton of one cell of MICrONS (the electron-microscopy connectome of a cubic
+ * millimetre of mouse visual cortex) is kept. Unlike NeuroMorpho reconstructions these skeletons
+ * share one coordinate frame (microns), so several cells can be drawn where they really lie
+ * relative to one another.
+ */
+export function micronsUrl(id: string): string {
+  if (!/^\d+_\d+$/.test(id)) throw noteError('error.swc.empty', { id })
+  return `https://bossdb-open-data.s3.amazonaws.com/iarpa_microns/minnie/minnie65/skeletons/v661/skeletons/${id}.swc`
+}
+
+/**
+ * 只留离某一点不超过 radius 的节点；父节点被去掉的节点成为新的起点（它到父节点的那一段不画）。
+ * Keep only the nodes within `radius` of a point; a node whose parent is dropped becomes a new
+ * start (the segment up to its parent is not drawn).
+ */
+export function within(nodes: SwcNode[], centre: [number, number, number], radius: number): SwcNode[] {
+  return nodes.filter((n) => Math.hypot(n.x - centre[0], n.y - centre[1], n.z - centre[2]) <= radius)
+}

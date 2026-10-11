@@ -14,7 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
-| 三期 | 界面实测与版面修正；比例尺；界面中英双语（`?lang=en`）；AlphaFold 预测复合物；BFVD 病毒蛋白预测；Complex Portal 复合物配比；NeuroMorpho 检索与多神经元并排；自备拷贝数表的导入口 | 完成。MICrONS 等连接组数据没有接入（没查到许可声明） |
+| 三期 | 界面实测与版面修正；比例尺；界面中英双语（`?lang=en`）；AlphaFold 预测复合物；BFVD 病毒蛋白预测；Complex Portal 复合物配比；NeuroMorpho 检索与多神经元并排；自备拷贝数表的导入口 | 完成。MICrONS 在四期接入 |
 | 二期·7 | 整个细胞的细胞器：OpenOrganelle 的电镜分割（HeLa 细胞的细胞核、内质网、线粒体、高尔基体、内体） | 第一版完成，见 `src/volume/n5.ts`、`data/cells.json` |
 | 二期·8 | 电镜密度图：按 `EMD-编号` 载入 EMDB 的图，画作者建议阈值处的等值面，拟合的原子模型叠在里面 | 第一版完成，见 `src/volume/mrc.ts`、`server/sources/emdb.ts` |
 | 二期·6 | 神经元形态：NeuroMorpho.Org 的显微重建（锥体细胞、浦肯野细胞等），按胞体、树突、轴突分色 | 第一版完成，见 `src/neuro/swc.ts`、`data/neurons.json` |
@@ -107,7 +107,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 - 目录里四个重建都没有轴突（原作者没有描），界面上写明了。
 - “检索 NeuroMorpho.Org”可以按物种、脑区、细胞类型（用英文，如 mouse、cerebellum、Purkinje）查它的三十万个重建。点名字单独画，点 “+” 并排加入，最多四个，同一比例。
 - 并排不等于相邻：NeuroMorpho 的标准化文件把每个神经元的胞体都放在原点，它们在脑里的相对位置不在数据里，所以只能比较形状和大小。
-- 没有接入 MICrONS、H01 这类连接组数据（那里的神经元才有共同的坐标系）：我查了 MICrONS 的主页、数据页、服务条款页和 BossDB 的项目页，都没有找到许可声明，所以没有接。
+- **连接组里相邻的细胞**：列表最后一项“小鼠视皮层里五个相邻的神经元”来自 [MICrONS](https://www.microns-explorer.org/cortical-mm3)（一立方毫米小鼠视皮层的电镜连接组，minnie65 数据集的 v661 版骨架，[doi:10.1038/s41586-025-08790-w](https://doi.org/10.1038/s41586-025-08790-w)）。这些骨架在同一个坐标系里，所以五个细胞按它们在脑里的真实相对位置叠在一起画，每个细胞一个色相，皮层表面朝上。细胞是这样挑的：在骨架文件大小 150–900 KB 的前 500 个里，取胞体彼此最近的五个（相距不到 20 微米）；只画离它们 260 微米以内的部分，伸得更远的轴突在边界截断，图下的说明里写了。**许可**：我查了 MICrONS 的主页、数据页、服务条款页和 BossDB 的项目页，都没有找到许可声明。所以骨架只在使用时从 BossDB 的公开存储下载，不入库；界面上的来源一栏写着“没有找到许可声明”。H01 没有接。
 
 ## 全景图里什么是真的，什么不是
 
@@ -150,7 +150,7 @@ bun run dev                    # 然后打开 http://127.0.0.1:5184/research/ill
 - **结构数据**：运行时从 RCSB PDB（`models.rcsb.org`，CC0）按编号下载，不入库。检索还用到 UniProt、PDBe SIFTS 和 AlphaFold DB 的公开接口。
 - **`data/cells.json`**：整细胞分割数据在 OpenOrganelle 上的地址和出处（Heinrich 等，*Nature* 2021；Xu 等，*Nature* 2021；CC BY 4.0）；数据运行时下载。
 - **电镜密度图**：运行时按编号从 EMDB 下载（CC0），经本地服务缓存。
-- **`data/neurons.json`**：四个神经元重建在 NeuroMorpho.Org 上的名字、档案和原始论文的 DOI；重建文件运行时下载，不入库。NeuroMorpho.Org 以 CC BY 4.0 发布。
+- **`data/neurons.json`**：四个神经元重建在 NeuroMorpho.Org 上的名字、档案和原始论文的 DOI；重建文件运行时下载，不入库。NeuroMorpho.Org 以 CC BY 4.0 发布。另有一组 MICrONS 连接组细胞的编号，骨架运行时从 BossDB 的公开存储下载，不入库；没有找到这份数据的许可声明。
 - **`data/neuro.json`**：38 个神经相关结构的 PDB 编号和一句说明，每个编号都对过 RCSB 的标题。
 - **膜蛋白取向（后备）**：运行时查询 [PDBTM](https://pdbtm.unitmp.org/)；它的条款只允许非营利使用且不得修改，所以只在运行时取用、注明来源，不入库。
 - **膜蛋白取向**：运行时从 [OPM](https://opm.phar.umich.edu/) 下载预先定向的坐标，只取 Cα 位置和膜的半厚度，缓存在本机，不入库。OPM 的许可条款我没有查到原文，所以只在运行时取用、标明来源。
@@ -273,7 +273,7 @@ Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and 
 - None of the four reconstructions in the catalogue has an axon (the original authors did not trace it), and the interface says so.
 - "Search NeuroMorpho.Org" queries its three hundred thousand reconstructions by species, region and cell type (in English: mouse, cerebellum, Purkinje). Click a name to draw it alone, or "+" to add it alongside, up to four at one scale.
 - Side by side is not next to each other: NeuroMorpho's standardised files put every neuron's soma at the origin, and where neurons lie relative to one another in the brain is not in the data, so only shape and size can be compared.
-- Connectome datasets such as MICrONS and H01, where neurons do share a coordinate frame, are not connected: I looked at MICrONS's home page, data page and terms page and at BossDB's project page and found no licence statement, so it was left out.
+- **Neighbouring cells of a connectome**: the last item of the list, "Five neighbouring neurons of the mouse visual cortex", comes from [MICrONS](https://www.microns-explorer.org/cortical-mm3) (the electron-microscopy connectome of a cubic millimetre of mouse visual cortex; skeletons v661 of the minnie65 dataset, [doi:10.1038/s41586-025-08790-w](https://doi.org/10.1038/s41586-025-08790-w)). These skeletons share one coordinate frame, so the five cells are drawn where they really lie relative to one another, one hue per cell, with the cortical surface at the top. The cells were chosen like this: among the first 500 skeleton files of 150–900 KB, the five whose somas are closest together (within 20 microns). Only the parts within 260 microns of them are drawn; axons that run further are cut at that boundary, and the notes under the picture say so. **Licence**: I looked at MICrONS's home page, data page and terms page and at BossDB's project page and found no licence statement. The skeletons are therefore downloaded from BossDB's open storage only when used and are not in this repository, and the source panel reads "no licence statement found". H01 is not connected.
 
 ## What is real in a landscape, and what is not
 
@@ -316,7 +316,7 @@ Rebuilding the Molecule of the Month table (`data/motm.json`, article titles and
 - **Structures**: downloaded by id at run time from the RCSB PDB (`models.rcsb.org`, CC0); none are in this repository. Lookups also use the public interfaces of UniProt, PDBe SIFTS and the AlphaFold DB.
 - **`data/cells.json`**: where the whole-cell segmentations are on OpenOrganelle, and their sources (Heinrich et al., *Nature* 2021; Xu et al., *Nature* 2021; CC BY 4.0); the data is downloaded at run time.
 - **Electron-microscopy density maps**: downloaded by id from the EMDB at run time (CC0) and cached by the local service.
-- **`data/neurons.json`**: the names, archives and original papers' DOIs of four neuron reconstructions on NeuroMorpho.Org; the reconstruction files are downloaded at run time and are not in this repository. NeuroMorpho.Org is released under CC BY 4.0.
+- **`data/neurons.json`**: the names, archives and original papers' DOIs of four neuron reconstructions on NeuroMorpho.Org; the reconstruction files are downloaded at run time and are not in this repository. NeuroMorpho.Org is released under CC BY 4.0. It also holds the ids of one set of MICrONS connectome cells, whose skeletons are downloaded at run time from BossDB's open storage and are not in this repository; no licence statement was found for that data.
 - **`data/neuro.json`**: the PDB ids of 38 structures of the nervous system with a line each, every id checked against its RCSB title.
 - **Membrane protein orientation (fallback)**: [PDBTM](https://pdbtm.unitmp.org/) is queried at run time; its terms allow non-profit use without modification only, so it is fetched at run time and credited, and nothing of it is in the repository.
 - **Membrane protein orientation**: pre-oriented coordinates are downloaded from [OPM](https://opm.phar.umich.edu/) at run time; only Cα positions and the membrane half-thickness are used, cached locally, and none of it is in this repository. I could not find the text of OPM's licence, so the data is only fetched at run time and credited.

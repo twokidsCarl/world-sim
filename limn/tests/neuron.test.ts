@@ -65,3 +65,34 @@ describe('SWC', () => {
     }
   })
 })
+
+describe('connectome cells in a shared frame', () => {
+  it('builds the address of a MICrONS skeleton and refuses anything else', async () => {
+    const { micronsUrl } = await import('../src/neuro/swc')
+    expect(micronsUrl('864691135122934055_294557')).toBe('https://bossdb-open-data.s3.amazonaws.com/iarpa_microns/minnie/minnie65/skeletons/v661/skeletons/864691135122934055_294557.swc')
+    expect(() => micronsUrl('../secret')).toThrow()
+  })
+
+  it('crops to a sphere, and a node whose parent is gone draws no segment back to it', async () => {
+    const { within, neuronMolecule, parseSwc } = await import('../src/neuro/swc')
+    const nodes = parseSwc('0 1 0 0 0 5 -1\n1 3 10 0 0 1 0\n2 3 300 0 0 1 1\n3 3 20 0 0 1 2\n')
+    const kept = within(nodes, [0, 0, 0], 100)
+    expect(kept.map((n) => n.id)).toEqual([0, 1, 3])
+    const mol = neuronMolecule(kept, 'x', 'x')
+    // 没有任何球落在 20 和 300 之间 / no sphere lies between 20 and 300
+    let far = 0
+    for (let i = 0; i < mol.atomCount; i++) if (mol.pos[i * 3]! > 21) far++
+    expect(far).toBe(0)
+  })
+
+  it('lists catalogue groups whose ids are well formed, and the host is on the allowlist', async () => {
+    const table = (await import('../data/neurons.json')).default
+    const { micronsUrl } = await import('../src/neuro/swc')
+    const { allowed } = await import('../server/structures')
+    for (const g of table.groups) {
+      expect(g.cells.length).toBeGreaterThan(1)
+      expect(g.radius).toBeGreaterThan(0)
+      for (const c of g.cells) expect(allowed(micronsUrl(c))).toBe(true)
+    }
+  })
+})

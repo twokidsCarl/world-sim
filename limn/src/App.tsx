@@ -308,6 +308,11 @@ export function App() {
                 {pick(n.title, n.titleEn)}
               </button>
             ))}
+            {neurons.groups.map((g) => (
+              <button key={g.id} disabled={working} title={`${other(g.title, g.titleEn)} (MICrONS)`} onClick={() => void s.loadNeuronGroup(g.id)}>
+                {pick(g.title, g.titleEn)}
+              </button>
+            ))}
             <NeuronSearch disabled={working} />
             <h2>{t('catalog.neuro')}</h2>
             {neuro.groups.map((g) => (
