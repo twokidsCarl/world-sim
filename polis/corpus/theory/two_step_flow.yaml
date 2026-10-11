@@ -13,6 +13,33 @@ predicts:
 - 人们改变决定时，更常把原因归于与熟人的交谈而不是媒体内容。
 - 意见领袖分散在各个社会群体内部，并且因话题而异（公共事务、时尚、电影、购物各有各的领袖）。
 in_engine: 只体现在结构上：population.build 给部分主角额外的人脉（hub），场所让常客之间互通消息。没有区分大众媒介与人际两步，engine.Sim._broadcast 的告示直接触达个人。
+en:
+  field: >-
+    Communication studies / sociology
+  claim: >-
+    The influence of the mass media for the most part does not reach each person directly, but first reaches a small group of "opinion leaders" who pay more attention to the media, who then interpret it in everyday conversation and pass it on to those who pay less attention; for most people's decisions, word-of-mouth influence among acquaintances matters more than the media themselves. One correction on attribution: the hypothesis first came from The People's Choice, the study by Lazarsfeld, Berelson and Gaudet of voters in the 1940 United States presidential election, and Katz and Lazarsfeld's Personal Influence of 1955 is a follow-up test and elaboration carried out in Decatur, Illinois, not the first statement of it. Katz's 1957 review holds that several follow-up studies largely corroborated and markedly refined the original hypothesis.
+  formal: ''
+  parameters:
+  - >-
+    A person who, on a given topic, has more media exposure and is consulted by the people around them
+  - >-
+    Face-to-face conversation among family members, friends and colleagues
+  predicts:
+  - >-
+    Opinion leaders' media exposure is higher than that of the people they influence.
+  - >-
+    When people change a decision, they more often attribute the reason to conversations with acquaintances than to media content.
+  - >-
+    Opinion leaders are dispersed within each social group and differ by topic (public affairs, fashion, films and shopping each have their own leaders).
+  in_engine: >-
+    Reflected only in the structure: population.build gives some of the protagonists extra connections (hub), and venues let regulars exchange news with one another. No distinction is made between the two steps of mass media and interpersonal contact, and the notices of engine.Sim._broadcast reach individuals directly.
+  checked:
+  - >-
+    The Columbia University Press Legacy Edition page confirms the title, the subtitle and the three authors, and describes the finding that "the media first reach a few people, who then relay it to those who pay less attention to the news"; that page gives the year of the original edition as 1948 (in fact the Columbia edition / second edition). The first edition of 1944 and Duell, Sloan and Pearce rely on an Open Library search record (openlibrary.org/works/OL3915963W, first_publish_year 1944). The two pages taken together bear it out; no first-hand publisher page could be consulted for the year of the first edition.
+  - >-
+    The Routledge book page confirms the title, the subtitle, the authors Katz and Lazarsfeld (also listing Elmo Roper as author of the foreword), "first published in 1955", the Decatur study, and the chapter "The Two-Step Flow of Communication" in the table of contents; the original publisher Free Press relies on an Open Library search record (openlibrary.org/works/OL6318019W), and the place of publication Glencoe did not appear on the pages consulted.
+  - >-
+    The Crossref DOI metadata record confirms the title, the author, Public Opinion Quarterly, the year 1957, volume 21 issue 1 (the twentieth-anniversary commemorative issue), first page 61; the record does not give the last page. The OpenAlex record for the same DOI gives the abstract, which quotes the original hypothesis and says that follow-up studies largely corroborated it.
 sources:
 - work: 'The People''s Choice: How the Voter Makes Up His Mind in a Presidential Campaign'
   author: Paul F. Lazarsfeld; Bernard Berelson; Hazel Gaudet

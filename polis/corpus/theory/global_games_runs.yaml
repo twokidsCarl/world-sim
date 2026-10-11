@@ -17,6 +17,37 @@ predicts:
 - 挤兑概率可以事前算出，并随合约给提前取款者的承诺越慷慨而上升。
 - 货币攻击的发生不只取决于基本面，还取决于热钱规模和投机交易成本。
 in_engine: ''
+en:
+  field: >-
+    Economics (game theory / finance)
+  claim: >-
+    Under common knowledge, coordination games such as runs or currency attacks have multiple self-fulfilling equilibria, and it cannot be said which one will occur. The idea of global games is to let each player have only a private observation of the fundamentals with a small amount of noise. This bit of noise destroys common knowledge and makes the equilibrium unique — an attack or run occurs if the fundamentals are below a certain critical value, and does not occur if they are above it. One can then speak of the probability of a run and analyse how it varies with contract terms, the cost of speculation, the size of hot money and so on. The concept comes from Carlsson and van Damme (1993); Morris and Shin (1998) applied it to currency attacks; Goldstein and Pauzner (2005) applied it to Diamond–Dybvig-style bank runs.
+  formal: >-
+    The fundamentals θ are not common knowledge; player i observes x_i = θ + ε_i (ε_i being small noise). The unique equilibrium is a cutoff strategy: attack/withdraw when x_i is below x*; correspondingly there is a critical value of the fundamentals θ*, and when θ < θ* the attack succeeds or the run occurs.
+  parameters:
+  - >-
+    The fundamentals (the quality of the bank's assets or the central bank's ability to defend the exchange rate)
+  - >-
+    Player i's noisy private signal of the fundamentals
+  - >-
+    The signal noise; the equilibrium remains unique as it tends to zero
+  - >-
+    The critical value of the fundamentals, below which a run or attack occurs
+  predicts:
+  - >-
+    Whether a run occurs is determined by the fundamentals, but within a range of fundamentals the bank could have survived and is nevertheless brought down by panic.
+  - >-
+    The probability of a run can be calculated ex ante, and rises the more generous the contract's promise to early withdrawers.
+  - >-
+    The occurrence of a currency attack depends not only on the fundamentals but also on the size of hot money and the transaction costs of speculation.
+  in_engine: ''
+  checked:
+  - >-
+    The IDEAS/RePEc article page confirms the title, the two authors, American Economic Review, June 1998, volume 88 issue 3, pages 587–597, and gives the abstract. The original AEA or JSTOR pages were not opened.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, authors, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract. The Wiley publisher landing page returned a 403/verification page to scraping and could not be opened directly.
+  - >-
+    The Crossref DOI metadata record confirms the title, the two authors, Econometrica, September 1993, volume 61 issue 5, first page 989; the record does not give the last page. The OpenAlex record for the same DOI gives the abstract.
 sources:
 - work: Unique Equilibrium in a Model of Self-Fulfilling Currency Attacks
   author: Stephen Morris; Hyun Song Shin

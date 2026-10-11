@@ -28,6 +28,112 @@ events:
   - {what: 7月交割前的决战中，杜竹斋倒向赵伯韬一方；做空头的吴荪甫被做多头的赵、杜联手击败。, who: [杜竹斋, 赵伯韬, 吴荪甫]}
 outcome: 吴荪甫在公债市场上破产，下令丝厂全厂停工，带妻子离开上海去庐山；益中公司下属各厂被迫出顶。
 theories: [allport_postman_rumor_law, informational_cascade]
+en:
+  title: "Midnight"
+  setting: >-
+    Shanghai from May to July 1930, during the Central Plains War; the Wu mansion, the government bond exchange, and Wu Sunfu's silk factory.
+  summary: >-
+    In the novel the rise and fall of government bonds depends on news of the fighting at the front, and who knows the news first, and who is able to
+    manufacture news, decides who gains and who loses: the speculators divide into "bulls" betting on the central army's victory and "bears" betting on
+    its defeat. The comprador financier Zhao Botao does not merely seek out news; he also pays for troops to lose deliberately on the battlefield and puts
+    out false news, luring small investors such as Feng Yunqing into the trap. Feng Yunqing tries to get inside information out of Zhao Botao's circle
+    through his daughter; the daughter does not understand bull and bear and the information she brings back is wrong, he places his bets on it and loses
+    everything he has — a chain of news passed along through personal ties and distorted in the passing. Zhao Botao also spreads the rumour that Wu Sunfu
+    is short of funds; Wu's brother-in-law Du Zhuzhai therefore pulls his capital out of the Yizhong company, and the rumour in part becomes fact. In the
+    final decisive battle Wu Sunfu stakes his factory and his house on the bear side, Du Zhuzhai goes over to the opponent, and Wu is utterly defeated.
+    What this case corresponds to is "a news-driven market + a manipulator + betrayal by an ally"; no scene of depositors running on a bank appears in the
+    novel.
+  people:
+    - name: "Wu Sunfu"
+      role: "National industrial capitalist, owner of the Yuhua Silk Factory, founder of the Yizhong Trust Company"
+      traits: >-
+        Headstrong and forceful; at first suspects that going in together on the bull side is a trap, later sinks deeper and deeper and stakes everything he
+        owns on one judgement of the news.
+    - name: "Zhao Botao"
+      role: "Comprador financial capitalist, a big player in the government bond market, backed by American capital"
+      traits: >-
+        Well informed, and an active manufacturer of news; uses bribery, false news and rumour to manipulate both the market and his opponent's credit at
+        once.
+    - name: "Du Zhuzhai"
+      role: "A figure in financial circles, Wu Sunfu's brother-in-law (his elder sister's husband)"
+      traits: >-
+        Cautious, recognising nothing but money; withdraws his capital first at any unfavourable word, and at the last moment goes over to the stronger side.
+    - name: "Feng Yunqing"
+      role: "A landlord who has moved from the countryside to Shanghai, a small investor in government bonds, nicknamed the \"Smiling Tiger\""
+      traits: >-
+        Having lost money and anxious to win it back, trusts inside information as more reliable than the market itself.
+    - name: "Feng Meiqing"
+      role: "Feng Yunqing's daughter"
+      traits: >-
+        Naive, does not understand bulls and bears; sent by her father to get close to Zhao Botao, but brings back wrong information.
+    - name: "He Shen'an"
+      role: "A government bond speculator, formerly a county magistrate under the Qing"
+      traits: >-
+        Like Feng Yunqing places his bets by chasing rumours, and likewise falls into the trap.
+    - name: "Sun Jiren and Wang Hefu"
+      role: "Owners of a shipping company and a coal-mining company, Wu Sunfu's partners in the Yizhong company"
+      traits: >-
+        Act on Wu Sunfu's judgement and share the consequences.
+    - name: "Shang Zhongli"
+      role: "Chairman of the board of a trust company, Zhao Botao's partner"
+      traits: >-
+        Acts as the front man for Zhao Botao in drawing people into partnerships in government bonds.
+  events:
+    - >-
+      Old Mr Wu dies on the night he arrives in Shanghai. At the funeral the guests gather in the Wu mansion and talk of the fighting at the front, the bond
+      market and their own businesses, not of the dead man.
+    - >-
+      Zhao Botao and Shang Zhongli draw Wu Sunfu and Du Zhuzhai into a partnership in government bonds; already in May, the first time he joins Zhao on the
+      bull side, Wu Sunfu suspects this is a trap. At the same time Wu, with Sun Jiren and Wang Hefu, sets about founding the Yizhong Trust Company.
+    - >-
+      Zhao Botao pays to buy the army's defeat in key battles so as to sway bond prices, and manufactures false news; small investors such as Feng Yunqing
+      and He Shen'an buy and sell on the rumours and fall into the trap.
+    - >-
+      Feng Yunqing, having lost money and knowing Zhao Botao's weakness for women, persuades his only daughter to get close to Zhao in order to pry out
+      inside information; the daughter cannot tell bull from bear, the news she brings back is mistaken, and Feng Yunqing places his bets on it and is
+      completely ruined.
+    - >-
+      Wu Sunfu twice switches to the bear side, in June and in July, and is irreconcilably at odds with Zhao Botao on the bull side; Zhao at the same time
+      imposes a financial blockade on the Yizhong company, intending to swallow up Wu's enterprises.
+    - >-
+      Zhao Botao spreads the rumour that Wu Sunfu's funds are in trouble; Du Zhuzhai, hearing it, withdraws his own capital from the Yizhong company, and
+      Wu's funds do indeed become tight.
+    - >-
+      Wu Sunfu mortgages both the silk factory and his house and stakes everything on going short in the government bond market.
+    - >-
+      In the decisive battle before the July settlement, Du Zhuzhai goes over to Zhao Botao's side; Wu Sunfu, on the bear side, is defeated by Zhao and Du
+      acting together on the bull side.
+  outcome: >-
+    Wu Sunfu is bankrupted in the government bond market, orders the whole silk factory to stop work, and leaves Shanghai with his wife for Lushan; the
+    factories under the Yizhong company are forced to be made over to others.
+  checked:
+    - >-
+      The article confirms: the author is Mao Dun; the original title was Twilight (《夕阳》); begun in October 1931 and completed on 5 December 1932, nineteen
+      chapters in all, published in January 1933 by the Kaiming Bookstore in Shanghai; the plot section says that Zhao Botao draws Wu Sunfu and Du Zhuzhai
+      into speculation in government bonds, that Wu also forms the Yizhong Trust Company with Sun Jiren and Wang Hefu, and that he fails in the end; the
+      characters section lists the identities of Du Zhuzhai (Wu Sunfu's brother-in-law), Zhao Botao (a big player in government bonds), Feng Yunqing (the
+      "Smiling Tiger"), Feng Meiqing, He Shen'an, Shang Zhongli, Sun Jiren and Wang Hefu. The article carries a "needs more sources" tag and its plot is
+      very brief, so the details were checked separately against the two articles below.
+    - >-
+      Marked as unverified: the text of the novel itself was not opened directly (the work is still in copyright). The plot was checked against Tuo
+      Jianing's (妥佳宁) article 《重读〈子夜〉：资产阶级何以民族、经济危机何以世界》 (Rereading Midnight: how the bourgeoisie is national and how the economic crisis is global), as
+      reprinted by China Writer (中国作家网) (originally published in the Journal of Sichuan University (Philosophy and Social Sciences Edition); put online on
+      15 May 2024): Wu Sunfu caught between three lines of fire; bulls and bears betting respectively on the central army's victory and defeat; Wu already
+      suspecting a trap in May, the first time he joined Zhao Botao on the bull side, and twice switching to the bear side, in June and July; Zhao imposing
+      a financial blockade on him and scheming to swallow him up; the ending being that, because of the betrayal of his brother-in-law Du Zhuzhai, Wu Sunfu
+      on the bear side is defeated by Zhao Botao and Du Zhuzhai together on the bull side, Wu ordering the silk factory to stop all work the next day, and
+      Yizhong's small factories being forced to be made over to others; the novel goes only as far as just before the July bond settlement date. For the
+      chapter location (chapters 2 and 3, where the people at the funeral talk of how government bonds are affected by news of the fighting), see also China
+      Writer at https://www.chinawriter.com.cn/n1/2023/0113/c419384-32605953.html .
+    - >-
+      The article's synopsis confirms: at the funeral the guests take the opportunity to exchange news, talking of the war, the market and business; Zhao
+      Botao and Shang Zhongli urge Wu Sunfu and his brother-in-law to go into partnership in government bonds; Zhao is backed by American capital, will
+      "bribe the army to lose strategic battles" and "creates false news", so that small investors such as Feng Yunqing and He Shen'an are trapped; Feng
+      Yunqing has his only daughter get close to Zhao to obtain inside information, the daughter does not understand bull/bear, and her misunderstanding
+      leads to her father's complete ruin; Zhao spreads the rumour that Wu's finances are in trouble, and Du Zhuzhai therefore withdraws his capital from
+      the trust company; Wu mortgages the silk factory and his house to take a gamble in the government bond market; Du Zhuzhai in the end defeats him; Wu
+      decides to close the factory and go to Lushan with his wife. This is a synopsis on a secondary literary reference site, not an academic journal; it
+      agrees with the previous entry on the ending.
 sources:
   - work: 子夜（维基百科条目）
     author: 中文维基百科

@@ -28,7 +28,54 @@ en:
     spreading by word of mouth and some text messages. On Tuesday about 5,000 customers (ten times a normal day) withdrew about $5 million, 1% of deposits by the
     bank's account. On Wednesday the central bank president denied the rumour on television; about $9 million had gone by that afternoon. By Thursday about
     $5 million had been redeposited.
+  people:
+    - name: "Depositors"
+      role: "Depositors of BAC San José"
+      traits: >-
+        Had just seen a brokerage and another bank frozen; went to withdraw on hearing that "this one is going to be frozen too"; some received the text
+        message but paid it no heed.
+    - name: "Gerardo Corrales"
+      role: "General manager of BAC San José"
+      traits: >-
+        Stocked the branches with ample cash in advance and extended opening hours; said publicly that the rumour was entirely groundless and that withdrawals
+        were falling.
+    - name: "Francisco de Paula Gutiérrez"
+      role: "President of the Central Bank of Costa Rica"
+      traits: >-
+        Denied the rumour at a televised press conference, saying the bank was solvent and had ample liquidity.
+    - name: "Financial regulators"
+      role: "Luis Diego Vargas, president of the financial supervision council (CONASSIF), and Oscar Rodríguez, head of the superintendency of financial institutions (SUGEF)"
+      traits: >-
+        At first took the rumour for a joke; afterwards urged the public to be discerning about financial news and demanded that the source be traced.
+  events:
+    - >-
+      In early August the securities regulator temporarily froze the funds of the brokerage Financorp; in early July regulators had also frozen about $80
+      million of Banco Elca's assets.
+    - >-
+      On 9 August (Monday), rumours began to circulate that the government might freeze BAC San José's funds and that the regulator was about to step in.
+    - >-
+      On 10 August (Tuesday), about 5,000 customers withdrew about $5 million (about 500 people on a normal day), which the bank said was 1% of total
+      deposits; the head office in San José stayed open until 3 a.m. on Wednesday, and some branches ran out of cash and paid with cashier's cheques drawn
+      on the central bank.
+    - >-
+      On 11 August (Wednesday), the central bank president said at a televised press conference that the rumour was untrue and that taking measures against
+      the bank had never been discussed; by that afternoon about $9 million had been withdrawn in total.
+    - >-
+      On 12 August (Thursday), about $5 million had already been redeposited. On 13 August (Friday) it was reported that the bank was back to normal.
   outcome: The bank neither failed nor was taken over. The run was confined to Monday and Tuesday and subsided after the central bank's denial; about 2% of deposits left in total, more than half of which was back by Thursday.
+  checked:
+    - >-
+      Fetched the article. Checked: 32 branches; the rumour starting on Monday; on Tuesday about 5,000 customers (about 500 on a normal day) withdrawing
+      about $5 million, which the bank put at 1% of total deposits, the head office staying open until 3 a.m. on Wednesday, and some branches paying in
+      cashier's cheques; on Wednesday the central bank president Francisco de Paula Gutiérrez denying the rumour at a televised press conference, with about
+      $9 million in total by that afternoon; about $5 million redeposited by Thursday; the statements of general manager Gerardo Corrales and of the
+      regulators; the earlier freezes of Financorp and Banco Elca. The "about 2% in total" is my own calculation, 9 million ÷ (5 million ÷ 1%); the article
+      does not print this ratio directly. The article gives no total number of customers, so there is no per-head share.
+    - >-
+      Fetched the summary paragraph of the page. The summary states that depositors ran on BAC San José on 9 and 10 August, set off by a rumour that the
+      regulator SUGEF was about to step in, that the rumour spread purely by word of mouth, and that calm returned after several prominent bankers came
+      forward to reassure the public. The full text requires a subscription and was not read. Discrepancy with the Tico Times: the latter mentions that some
+      people received text messages.
 sources:
   - work: Bank Back to Normal after Rumors, Chaos
     author: The Tico Times

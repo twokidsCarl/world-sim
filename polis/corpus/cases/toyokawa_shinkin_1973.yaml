@@ -30,6 +30,129 @@ events:
   - {what: 12月16日，警方查清并公布了谣言的传播路径，当晚NHK播出；17日各报早刊跟进报道。直到12月22日，仍有人认为金库已经倒闭，或认为警方的说法背后另有阴谋。, who: [女高中生A, 女高中生B与C, 储户们]}
 outcome: 丰川信用金库没有倒闭：媒体辟谣、日本银行与财务当局公开担保并当众堆出现金之后，挤兑在几天内平息；警方认定事件源于自然发生的流言，没有犯罪行为，但谣言并未立即消失。
 theories: [allport_postman_rumor_law, daley_kendall_rumor, complex_contagion, informational_cascade, diamond_dybvig_bank_run]
+en:
+  title: "The Toyokawa Shinkin Bank run (豊川信用金庫事件)"
+  setting: >-
+    From 8 to about 17 December 1973, in and around the town of Kozakai, Hoi District, Aichi Prefecture, Japan (now part of Toyokawa City); amid the
+    social unease that followed the first oil crisis.
+  summary: >-
+    A soundly run shinkin bank (credit association) suffered a run within about a week because of a joking remark among three high-school girls on a
+    commuter train. The joke was first taken seriously by the person it was addressed to, then relayed layer by layer through relatives, a beauty salon
+    and a laundry, turning from a question into an assertion; what really turned the rumour into action was that the wife of the laundry owner happened to
+    overhear a customer, who knew nothing of it, giving instructions over the telephone for a withdrawal, and took this as confirmation. After she
+    withdrew her money and told people all around, dozens of people came to the counters to withdraw that same day, and within the day the wording of the
+    rumour escalated from "it seems to be in danger" to "it will not open tomorrow". The bank's clarifying statement was misconstrued, the police keeping
+    order were taken to have come to search the premises, and new rumours sprang up of staff making off with money and of the chairman's suicide; only
+    when the newspapers reported in concert that "it is a rumour", and the Bank of Japan gave a public guarantee and had piles of cash placed where they
+    could be seen from the counters, did the situation ease, and the police then published the complete path of transmission. The sources differ on the
+    total withdrawn: Japanese Wikipedia gives about 1.4 billion yen, while English Wikipedia and the Kansai University paper give about 2 billion yen.
+  people:
+    - name: "Student A"
+      role: "A high-school girl with an informal offer of a job at Toyokawa Shinkin Bank"
+      traits: >-
+        Took her classmates' joke seriously and asked a relative about it that evening; in asking, did not say which shinkin bank in particular.
+    - name: "Students B and C"
+      role: "A's classmates, the ones who made the joke on the train"
+      traits: >-
+        A throwaway remark; what they meant was "a shinkin bank is dangerous because it will be robbed", nothing to do with the state of its business.
+    - name: "Relative D"
+      role: "A relative of A"
+      traits: >-
+        On their own initiative filled in "shinkin bank" as "Toyokawa Shinkin Bank", and telephoned relative E, who lived near the head office, to check.
+    - name: "Relative E"
+      role: "A person living near the bank's head office"
+      traits: >-
+        After being asked, went on to ask others, turning the question into a rumour.
+    - name: "Beauty salon owner F"
+      role: "Proprietor of a beauty salon in Kozakai"
+      traits: >-
+        With people coming and going in the salon, repeated what had been heard to relative G and was overheard by a bystander.
+    - name: "Laundry owner H and wife I"
+      role: "The couple running a laundry in Kozakai"
+      traits: >-
+        H had suffered a loss in 1966 when a non-bank financial institution in the neighbouring city of Toyohashi collapsed (the English article says both
+        husband and wife were victims), and was especially sensitive to news of this kind; I acted at once on seeing that "other people are withdrawing money"
+        and told people everywhere.
+    - name: "Customer J"
+      role: "A business person who borrowed the telephone at the laundry"
+      traits: >-
+        Knew nothing at all of the rumour; simply gave instructions to withdraw 1.2 million yen because a payment for goods was due.
+    - name: "Amateur radio operator"
+      role: "A person who heard the news from H and I"
+      traits: >-
+        Used radio to pass the news in one go to people over a wide area.
+    - name: "Depositors"
+      role: "Depositors in Kozakai and the surrounding area"
+      traits: >-
+        Took the story for true after hearing the same thing repeatedly from different people, and became more certain on seeing the queues and the police.
+    - name: "Bank of Japan and Tokai Local Finance Bureau"
+      role: "The central bank (its Examination Bureau and Nagoya branch) and a regional office of the Ministry of Finance"
+      traits: >-
+        Publicly guaranteed that the bank was soundly run and arranged shipments of cash.
+  events:
+    - >-
+      On 8 December (Saturday), on a Japanese National Railways Iida Line train on the way to school, B and C joked to A, who had just been taken on by
+      Toyokawa Shinkin Bank, that "a shinkin bank is dangerous". A took it seriously and asked relative D that evening; D decided unprompted that Toyokawa
+      Shinkin Bank was meant and telephoned relative E, who lived near the head office, to ask.
+    - >-
+      On 9 December, E told beauty salon owner F that Toyokawa Shinkin Bank seemed to be in danger. On 10 December, when F repeated this to relative G,
+      laundry owner H, who was present, heard it and went back and told his wife I.
+    - >-
+      On 11 December the rumour became a topic of talk among housewives in Kozakai, and residents passing by heard it too; the wording changed from a
+      question into the assertion "Toyokawa Shinkin Bank is in danger".
+    - >-
+      On 13 December, J borrowed the telephone in H's shop and instructed the other party to withdraw 1.2 million yen from Toyokawa Shinkin Bank to pay for
+      goods. I, hearing this, thought that even other people were rushing to withdraw, and hurried to withdraw 1.8 million yen; H and I told acquaintances
+      about it, and an amateur radio operator then spread it widely by radio.
+    - >-
+      The same day, 59 depositors rushed to the counters and withdrew about 50 million yen in all. As recalled by a taxi driver who took passengers to the
+      Kozakai branch, what the passengers said changed within one day from "it seems to be in danger" at midday to "it is going under" at about 16:30, and
+      by night had become "the shutters will not open again tomorrow".
+    - >-
+      On 14 December, the statement the bank issued to calm the situation was misconstrued, and stories went round such as "odd amounts under 10,000 yen
+      will be written off"; the police on the scene keeping order were said to have come to carry out a compulsory search; and new rumours appeared of staff
+      embezzling funds, of staff making off with 500 million yen, and of the chairman's suicide.
+    - >-
+      At the bank's request, the media reported in concert from the evening of the 14th to the morning of the 15th that this was a rumour; the director of
+      the Bank of Japan's Examination Bureau held a press conference saying there was nothing wrong with the bank's management, and cash was shipped in
+      through the Nagoya branch, so that cash was piled about 1 metre high and about 5 metres wide in front of the main vault at the head office, visible
+      from the counters.
+    - >-
+      On 15 December, every branch posted a notice in the joint names of the national federation of shinkin banks (全国信用金库连合会) and the national association
+      of shinkin banks (全国信用金库协会), senior figures of the bank came forward to explain to depositors, and the commotion began to subside; but there were also
+      people who learned of the affair for the first time from the newspapers and came to withdraw.
+    - >-
+      On 16 December the police established and published the path by which the rumour had spread, and NHK broadcast it that evening; on the 17th the
+      newspapers' morning editions followed up. As late as 22 December there were still people who believed the bank had already failed, or who believed
+      there was some other plot behind the police account.
+  outcome: >-
+    Toyokawa Shinkin Bank did not fail: after the media refuted the rumour, and the Bank of Japan and the finance authorities gave a public guarantee and
+    piled up cash in public view, the run subsided within a few days; the police concluded that the incident arose from a rumour that had occurred
+    spontaneously, with no criminal act, but the rumour did not disappear at once.
+  checked:
+    - >-
+      Fetched the raw text of the article and checked day by day all the dates, days of the week, amounts and numbers of people in this file's events (1.2
+      million, 1.8 million, 59 people and about 50 million, the times given by the taxi driver, the rumour of 500 million yen made off with, the cash pile 1
+      metre high and 5 metres wide, the reporting from the evening of the 14th to the morning of the 15th, the joint notice of the 15th, the police
+      announcement and NHK report of the 16th, the morning editions of the 17th, people still not believing on the 22nd). The article's lead gives the total
+      as “約14億円” (about 1.4 billion yen) and the duration as under two weeks, and states that the police, after investigating on suspicion of damage to
+      credit and obstruction of business, found no criminality. The article rests mainly on two field-survey reports by Ito Yoichi (伊藤陽一), Ogawa Koichi
+      (小川浩一) and Sakaki Hirofumi (榊博文) in 『総合ジャーナリズム研究』 in 1974 and on a 1989 paper by Numata Kenya (沼田健哉); these original works were not opened this time
+      and are cited only indirectly, through the article's item-by-item footnotes.
+    - >-
+      Fetched the raw text of the article; the chain of dates (8, 9, 10, 11, 13, 14, 15, 16 and 17 December), the 1.2 million and 1.8 million yen, the 59
+      people and 50 million yen, and the cash pile of 1 metre × 5 metres agree with the Japanese article. Differences: the lead gives the total as "about 2
+      billion yen" (about 1.4 billion yen in the Japanese article); as to who came forward on the 15th to persuade depositors, the English article says it
+      was the chairman who had been rumoured to have killed himself, and the Japanese article says “常務理事” (managing director), which is why this file says
+      only "senior figures of the bank". The two articles cite the same body of original sources and cannot be counted as independent of each other.
+    - >-
+      Downloaded the PDF and extracted the text to check. Following Hayashi (2007), the paper says: the bank was in fact soundly run; the high-school girls'
+      joke turned into a reputation for poor management; the Aichi Prefectural Police investigated the process of transmission; the run came five days after
+      the rumour appeared; the total loss was about 2 billion yen ("around 2 billion yen"), and at the Kozakai branch alone 490 million yen was withdrawn in
+      1,650 transactions; the run subsided after the director of the Tokai Local Finance Bureau and the manager of the Bank of Japan's Nagoya branch jointly
+      guaranteed that the bank was soundly run. This is a second line of evidence independent of the literature cited by the Wikipedia articles, but it is
+      only one paragraph long and has no day-by-day timeline. The two figures of 490 million and 1,650 transactions appear only in this paper and have not
+      been written into events.
 sources:
   - work: 豊川信用金庫事件（维基百科条目）
     author: 日本語版ウィキペディア

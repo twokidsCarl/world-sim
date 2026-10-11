@@ -15,6 +15,7 @@ from . import population
 from .engine import Sim
 from .model import Manifest, Params, Population, Summary
 from .protagonist import Director
+from .scenarios import names_en
 
 FILES = ["manifest.json", "population.json", "messages.json", "series.json", "events.jsonl", "frames.bin"]  # 后者是实验台按需算出来的 / the latter is computed on demand by the lab
 
@@ -50,6 +51,8 @@ def simulate(
         run_id=run_id or default_run_id(params, label),
         title=scenario.TITLE,
         setting=scenario.SETTING,
+        title_en=names_en.TITLE.get(params.scenario, ""),
+        setting_en=names_en.SETTING.get(params.scenario, ""),
         params=params,
         n=len(pop.persons),
         ticks=params.ticks,

@@ -15,6 +15,32 @@ predicts:
 - 平均态度相同的两个群体，可能一个爆发、一个平静。
 - 行动人数随时间呈连锁式增长，在分布出现“缺口”处停住。
 in_engine: mind.withdraw_hazard：估计会去取钱的人越多（expect），自己去取的概率越高。是随个人特质变化的软阈值，不是原模型里的硬阈值。
+en:
+  field: >-
+    Sociology
+  claim: >-
+    Each person faces a binary choice of "do / don't", whose gains and losses depend on how many people have already done it. An individual's threshold is the number (or proportion) of people who must act first before they feel that the net benefit of acting exceeds the net cost. Given the distribution of thresholds in a population, one can derive how many people act in the end; but the outcome is extremely sensitive to the exact shape of the distribution, and two groups with similar average inclinations can arrive at completely different outcomes, so individual willingness cannot be inferred back from the collective outcome. The applications listed by the author include riots, the diffusion of innovations and rumours, strikes, voting and migration.
+  formal: >-
+    Let F be the cumulative distribution of thresholds and r(t) the proportion who have acted at time t; then r(t+1) = F(r(t)); the equilibrium is a fixed point of r* = F(r*), reached by iterating from r(0). (This is the standard way of writing what the abstract describes as "calculating the equilibrium number from the distribution of thresholds".)
+  parameters:
+  - >-
+    The threshold of individual i: the number or proportion of people who have already acted that is needed for them to act
+  - >-
+    The cumulative distribution function of the population's thresholds
+  - >-
+    The proportion of people who have acted at time t
+  predicts:
+  - >-
+    A tiny change to the threshold distribution (for example, taking away one low-threshold person) can turn the outcome from everyone taking part into almost nobody taking part.
+  - >-
+    Of two groups with the same average attitude, one may erupt and the other stay calm.
+  - >-
+    The number of people acting grows over time in chain-reaction fashion and stops where a "gap" appears in the distribution.
+  in_engine: >-
+    mind.withdraw_hazard: the more people one estimates will go to withdraw money (expect), the higher the probability of going to withdraw oneself. It is a soft threshold that varies with personal traits, not the hard threshold of the original model.
+  checked:
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages; the Semantic Scholar API record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract. The University of Chicago Press publisher landing page returned a 403/verification page to scraping and could not be opened directly.
 sources:
 - work: Threshold Models of Collective Behavior
   author: Mark Granovetter

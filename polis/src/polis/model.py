@@ -68,6 +68,7 @@ class Tie(BaseModel):
 class Venue(BaseModel):
     idx: int
     name: str
+    name_en: str = ""
     kind: VenueKind
     pos: tuple[float, float]
     hours: tuple[int, int] = Field(description="营业时段 [开, 关)，24 小时制 / opening hours [open, close), 24-hour clock")
@@ -76,6 +77,7 @@ class Venue(BaseModel):
 class District(BaseModel):
     idx: int
     name: str
+    name_en: str = ""
     pos: tuple[float, float]
     radius: float
 
@@ -84,6 +86,7 @@ class Population(BaseModel):
     schema_: int = Field(SCHEMA, alias="schema")
     synthetic: bool
     note: str
+    note_en: str = ""
     extent: float = Field(description="坐标范围 [0, extent] / coordinates run over [0, extent]")
     bank: int = Field(description="钱庄在 venues 里的下标 / index of the bank in venues")
     cast: dict[str, int] = Field(description="主角的角色键 → persons 下标 / protagonist role key → index into persons")
@@ -214,6 +217,8 @@ class Manifest(BaseModel):
     run_id: str
     title: str
     setting: str
+    title_en: str = ""
+    setting_en: str = ""
     params: Params
     n: int
     ticks: int

@@ -1,10 +1,11 @@
 // 舞台：把回放位置 t 画成一座城。命令式 Canvas 渲染器，订阅 store，自己不持有业务状态。
 // Stage: draws replay position t as a town. An imperative Canvas renderer that subscribes to the store and holds no domain state of its own.
 import {
-  AWARE, BELIEF, FEAR, LOST, QUEUEING, STATUS, STATUS_NAMES, UNAWARE, WITHDREW,
-  channel, clock, eventsAt, queueRanks, queueSlot, type RunData,
+  AWARE, BELIEF, FEAR, LOST, QUEUEING, STATUS, UNAWARE, WITHDREW,
+  channel, clock, eventsAt, queueRanks, queueSlot, statusName, type RunData,
 } from '../state/derive.ts' // prettier-ignore
 import { useApp } from '../state/store.ts'
+import { loc, tr } from '../state/lang.ts'
 
 interface Palette {
   paper: string
@@ -23,6 +24,10 @@ interface Palette {
 const SERIF = '"Songti SC", "Noto Serif SC", STSong, serif'
 const VENUE_GLYPH: Record<string, string> = {
   bank: '钱', teahouse: '茶', market: '市', temple: '庙', school: '学', salon: '发', shop: '店', station: '站',
+} // prettier-ignore
+// 英文界面下场所图标里的字母 / the letter inside a venue's marker in the English interface
+const VENUE_LETTER: Record<string, string> = {
+  bank: 'B', teahouse: 'T', market: 'M', temple: 'S', school: 'E', salon: 'H', shop: 'L', station: 'R',
 } // prettier-ignore
 
 function cssVar(name: string): string {
@@ -438,7 +443,7 @@ export class Stage {
       }
       ctx.fillStyle = failed ? pal.paper : pal.ink
       ctx.font = `${Math.round(size * 1.25)}px ${SERIF}`
-      ctx.fillText(VENUE_GLYPH[v.kind] ?? '', x, y + 1)
+      ctx.fillText(tr(VENUE_GLYPH[v.kind] ?? '', VENUE_LETTER[v.kind] ?? ''), x, y + 1)
       if (isBank && !failed) {
         // 钱庄外的一圈：库里还剩多少现银 / Ring around the bank: how much cash is left in the vault
         const left = run.series.reserve[k]! + (run.series.reserve[k1]! - run.series.reserve[k]!) * frac
@@ -466,11 +471,11 @@ export class Stage {
       ctx.globalAlpha = 1
     }
     for (const d of pop.districts) {
-      label(d.name, this.sx(d.pos[0]), this.sy(d.pos[1] - d.radius * 1.08), `600 15px ${SERIF}`, pal.ink2, 0.9)
+      label(loc(d.name, d.name_en), this.sx(d.pos[0]), this.sy(d.pos[1] - d.radius * 1.08), `600 15px ${SERIF}`, pal.ink2, 0.9)
     }
     for (const v of pop.venues) {
       const size = (v.idx === pop.bank ? 13 : 9) * zoom
-      label(v.name, this.sx(v.pos[0]), this.sy(v.pos[1]) + size * (v.idx === pop.bank ? 1.75 : 1) + 11, `12px ${SERIF}`, pal.ink) // prettier-ignore
+      label(loc(v.name, v.name_en), this.sx(v.pos[0]), this.sy(v.pos[1]) + size * (v.idx === pop.bank ? 1.75 : 1) + 11, `12px ${SERIF}`, pal.ink) // prettier-ignore
     }
     ctx.textAlign = 'left'
     for (const p of run.cast) {
@@ -491,7 +496,7 @@ export class Stage {
       const p = pop.persons[s.hovered]!
       if (!p.protagonist) {
         const pct = Math.round((b0[p.idx]! / 255) * 100)
-        const text = `${p.name} · ${STATUS_NAMES[st0[p.idx]!]}${st0[p.idx] === AWARE ? ` · 信${pct}%` : ''}`
+        const text = `${p.name} · ${statusName(st0[p.idx]!)}${st0[p.idx] === AWARE ? tr(` · 信${pct}%`, ` · believes ${pct}%`) : ''}`
         label(text, this.px[p.idx]! + 12 * zoom, this.py[p.idx]!, `12.5px ${SERIF}`, pal.ink)
       }
     }

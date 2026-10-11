@@ -47,7 +47,21 @@ def test_dangling_theory_reference_is_reported(tmp_path):
     fact = dict(title="S 形", statement="……", kind="qualitative", conditions="……", theories=["threshold", "nope"], sources=[SOURCE])
     write(tmp_path, "facts", "s_curve", fact)
     _, problems = corpus.check(tmp_path)
-    assert problems == ["facts/s_curve: 引用了不存在的理论卡 nope"]
+    assert problems[0] == "facts/s_curve: 引用了不存在的理论卡 nope"
+    # 这两条都没写英文，也要报出来 / neither entry has English, which is reported too
+    assert sorted(x.split(":")[0] for x in problems[1:]) == ["facts/s_curve", "theory/threshold"]
+    assert all("缺英文" in x for x in problems[1:])
+
+
+def test_english_lists_must_match_the_chinese_ones(tmp_path):
+    en = dict(field="", claim="", formal="", parameters=[], predicts=["one too few"], in_engine="", checked=[""])
+    write(tmp_path, "theory", "threshold", THEORY | {"en": en})
+    (tmp_path / "cases").mkdir(exist_ok=True), (tmp_path / "facts").mkdir(exist_ok=True)
+    entries, problems = corpus.check(tmp_path)
+    theory = entries["theory"][0]
+    assert (problems == []) == (len(theory.predicts) == 1 and len(theory.parameters) == 0)
+    if problems:
+        assert "条数" in problems[0]
 
 
 def test_shipped_corpus_is_well_formed():

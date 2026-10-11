@@ -14,6 +14,35 @@ predicts:
 - 只有一个反对者时压力很小，增加到三人左右效果显著上升，再增加人数几乎没有额外效果。
 - 多数中只要出现一个给出正确答案的同伴，附和率就大幅下降。
 in_engine: mind.withdraw_hazard 里的 conformity 项：随大流的人更受“别人都在取”的估计左右。只作用于行动，不作用于信念本身。
+en:
+  field: >-
+    Social psychology
+  claim: >-
+    Even when the answer is obvious at a glance, a person facing a majority that unanimously gives the wrong answer often abandons their own judgement and goes along. Asch had one real subject answer line-length comparison questions in public together with several confederates who had been briefed in advance, and the confederates unanimously answered wrongly on the critical trials. Conformity arises not because the question is hard but from the pressure of publicly disagreeing with a unanimous majority; as soon as the majority's unanimity is broken, the pressure weakens sharply. The specific figures on this card are taken from English Wikipedia's paraphrase of the various reports of 1951–1956 and could not be checked against the originals.
+  formal: ''
+  parameters:
+  - >-
+    The number of peers unanimously giving the wrong answer
+  - >-
+    Whether the majority is wholly unanimous; whether there is one peer who answers correctly
+  predicts:
+  - >-
+    With nobody applying pressure, almost no errors are made on questions of this kind (the control-group error rate as paraphrased is below 1%); facing a unanimous wrong majority, about one third of the critical responses follow the majority.
+  - >-
+    Individual differences are large: the paraphrase says about three quarters of the subjects went along at least once and about one quarter never went along.
+  - >-
+    With only one opponent the pressure is very small, the effect rises markedly on increasing to about three, and adding further people has almost no additional effect.
+  - >-
+    As soon as one peer giving the correct answer appears in the majority, the rate of going along falls sharply.
+  in_engine: >-
+    The conformity term in mind.withdraw_hazard: people who go with the crowd are more swayed by their estimate that "everyone else is withdrawing". It acts only on action, not on belief itself.
+  checked:
+  - >-
+    The Open Library record confirms only the collection itself: Groups, leadership and men, Carnegie Press, Pittsburgh, 1951, ix+293 pages (the record does not list the editor separately; the contributor field of the search result lists Guetzkow, Harold Steere, ed.). The chapter title and the pages 177–190 are seen only in the references of English Wikipedia's "Asch conformity experiments" and in search snippets, and no first-hand page was found; gwern.net has a scan of a reprint, but its text could not be parsed on this machine. The APA PsycNet page requires script rendering and was not read.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages. There is no abstract to read; the statement of the experimental results relies on the paraphrase in English Wikipedia's "Asch conformity experiments" entry.
+  - >-
+    The article page on the Scientific American website confirms the title, the author, 1 November 1955, volume 193 issue 5, starting at page 31, and the DOI; the page shows only the lead-in and the full text was not read.
 sources:
 - work: Effects of group pressure upon the modification and distortion of judgments
   author: Solomon E. Asch

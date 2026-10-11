@@ -37,6 +37,7 @@ class Entry(BaseModel):
     id: str
     title: str
     sources: list[Source] = Field(min_length=1)
+    en: dict = Field({}, description="正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts")
 
     @property
     def verified(self) -> bool:
@@ -103,6 +104,25 @@ class Fact(Entry):
 
 KINDS: dict[str, type[Entry]] = {"theory": Theory, "cases": Case, "facts": Fact}
 
+# en 里该有的键；值是与它等长的中文列表字段，没有对应列表的是 None
+# Keys expected in en; the value names the Chinese list it must match in length, or None when it is not a list
+EN_KEYS: dict[str, dict[str, str | None]] = {
+    "theory": {"field": None, "claim": None, "formal": None, "parameters": "parameters", "predicts": "predicts", "in_engine": None, "checked": "sources"},
+    "cases": {"title": None, "setting": None, "summary": None, "people": "people", "events": "events", "outcome": None, "checked": "sources"},
+    "facts": {"title": None, "statement": None, "unit": None, "conditions": None, "caveats": None, "checked": "sources"},
+}  # fmt: skip
+
+
+def missing_english(kind: str, e: Entry) -> list[str]:
+    """这一条缺哪些英文。/ Which pieces of English this entry lacks."""
+    out = []
+    for key, same_as in EN_KEYS[kind].items():
+        if key not in e.en:
+            out.append(key)
+        elif same_as and len(e.en[key]) != len(getattr(e, same_as)):
+            out.append(f"{key}（条数与 {same_as} 不一致）")
+    return out
+
 
 def load(kind: str, root: Path = ROOT) -> list[Entry]:
     out = []
@@ -127,4 +147,8 @@ def check(root: Path = ROOT) -> tuple[dict[str, list[Entry]], list[str]]:
             for ref in e.theories:  # type: ignore[attr-defined]
                 if ref not in known:
                     problems.append(f"{kind}/{e.id}: 引用了不存在的理论卡 {ref}")
+    for kind, es in entries.items():
+        for e in es:
+            if lack := missing_english(kind, e):
+                problems.append(f"{kind}/{e.id}: 缺英文 {'、'.join(lack)}")
     return entries, problems

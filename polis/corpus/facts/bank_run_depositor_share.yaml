@@ -25,6 +25,60 @@ caveats: >-
   但一个是有存款保险的 2001 年印度城市，一个是 1850 年代纽约的移民社区（当时没有存款保险，这一点是常识性背景，未在论文中核对）。
 theories: [diamond_dybvig_bank_run, global_games_runs]
 metric: runner_share
+en:
+  title: Only a minority of depositors actually go and withdraw in a bank run
+  statement: >-
+    In the two runs for which depositor-level data exist, the depositors who actually "ran" during the few days of
+    panic were only a minority in both cases: at a cooperative bank in India in 2001, about 3% (transaction-type
+    accounts) to 5% (term deposit accounts); at an immigrant savings bank in New York in the 1850s, 6% and 8.7%
+    respectively in the two panics of 1854 and 1857.
+    Those who ran hardly ever came back: at the Indian bank only about one in ten of the withdrawing depositors
+    had balances restored to the pre-crisis level half a year later.
+  unit: >-
+    proportion (share of all depositors who ran during the panic; a range across different studies and different
+    definitions, with no single point estimate given)
+  conditions: >-
+    Iyer and Puri: a fundamentally sound cooperative bank in the Indian state of Gujarat, affected by the failure
+    of the largest local cooperative bank on 13 March 2001, with the run window being 13–15 March; at the head
+    office, 249 of 4,574 term deposit holders withdrew early (about 5.4%) and 307 of 10,691 transaction-type
+    depositors withdrew more than 75% of their balance (about 2.9%); there was deposit insurance, and only 6.6%
+    (term) and 1% (transaction) of depositors had balances above the insurance limit.
+    Kelly and Ó Gráda: Irish immigrant depositors of the Emigrant Industrial Savings Bank in New York, in the two
+    panics of 11–30 December 1854 and 28 September–13 October 1857, with "running" defined as closing the account
+    during this period.
+  caveats: >-
+    5.4% and 2.9% were calculated by me from the head counts in Table 1B of the working paper (249/4574,
+    307/10691); the body of the paper does not print these two percentages directly; 6% and 8.7%, by contrast, are
+    given directly in the body text of Kelly and Ó Gráda. The studies define "running" differently (early
+    withdrawal of any term deposit / withdrawing more than 75% of the transaction balance / closing the account),
+    so the proportions cannot be directly added or compared, which is why this entry gives only a range and no
+    point estimate. The Iyer and Puri figures are taken from the 2008 FDIC working paper version; the body text of
+    the version formally published in the American Economic Review in 2012 could not be opened this time, and
+    whether the head counts in the tables were changed has not been checked.
+    The Indian bank was fundamentally sound and survived the run, and the New York panic of 1857 ended with the
+    savings banks restricting withdrawals (at most 10% of the balance per withdrawal), so these proportions are the
+    size of "runs that were stopped", not an upper bound for a run out of control; the proportion is small when
+    counted by head, but in the Indian case those who ran had markedly larger balances (Table 1B), so the outflow
+    measured by amount would be higher (this entry does not include a measure by amount).
+    The gap from the small-town setting is relatively small: both studies concern one bank in one city, with word
+    passing among depositors through neighbours and acquaintances; but one is an Indian city in 2001 with deposit
+    insurance and the other an immigrant community in 1850s New York (there was no deposit insurance at the time;
+    this is common background knowledge and was not checked in the papers).
+  checked:
+    - >-
+      Opened the full-text PDF of the working paper on the FDIC website: Section 5 of the body text and Table 1A
+      give 4,574 term depositors, 10,691 transaction-type depositors and the proportions above the insurance
+      limit; Table 1B gives the numbers of runners and stayers (term 249 versus 4,325, transaction 307 versus
+      10,384) and the definition of "running" (13–15 March; for transaction accounts, withdrawing more than 75%);
+      the introduction states that only 10% of the withdrawing depositors had balances restored to the pre-crisis
+      level 6 months later. The percentages 5.4% and 2.9% were obtained by dividing these head counts.
+    - >-
+      Opened the JSTOR scan PDF of the full paper (hosted at beyondragstoriches.omeka.net, with the journal volume,
+      issue and page numbers printed on the first page): the body text of Section II states the start and end
+      dates of the two panics, the definition of "running" as closing the account during the period, and the
+      samples of 598 accounts in 1854 (235 closed) and 1,035 accounts in 1857 (505 closed), and states directly
+      that only 6% (1854) and 8.7% (1857) of depositors closed their accounts. Bibliographic details separately
+      confirmed via Crossref (DOI 10.1257/aer.90.5.1110).
 sources:
   - work: "Understanding Bank Runs: The Importance of Depositor-Bank Relationships and Networks"
     author: Rajkamal Iyer, Manju Puri

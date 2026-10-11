@@ -17,6 +17,38 @@ predicts:
 - 熄灭时仍有一部分人始终没听到谣言，即使人群充分混合；二手文献（Sudbury 的分析，本卡未核实原文）称 Maki–Thompson 版本中该比例在大人群极限下约为 0.203。
 - 不存在流行病模型那样的传播阈值：只要有一个传播者，谣言就会扩散到相当比例的人。
 in_engine: engine.Sim._tell：把话讲给一个早已知道的人，讲的兴致（zeal）就按 stifle 打折。这是软化了的 Maki–Thompson 规则——只有开口的一方降温，且是逐渐降温而非一次变成沉默者。
+en:
+  field: >-
+    Applied probability / mathematical epidemiology
+  claim: >-
+    A closed and homogeneously mixing population is divided into three classes: those who have not heard the rumour (ignorants), those who are spreading it (spreaders), and those who have heard it but no longer spread it (stiflers). A spreader who meets an ignorant turns the other into a spreader; a spreader who meets someone already informed (another spreader or a stifler) feels that the news is no longer fresh and stops spreading. Unlike in epidemic models, "recovery" does not happen spontaneously but is triggered by encounters between informed people, so the qualitative conclusions cannot simply be carried over from the epidemic analogy — which is exactly what the two authors stressed in their 1964 short communication. The variant in Maki and Thompson's 1973 textbook changes to directed contact: when two spreaders meet, only the one who initiated the contact becomes a stifler.
+  formal: >-
+    State (X ignorants, Y spreaders, Z stiflers), X+Y+Z=N, random pairwise encounters. Y+X → 2Y; Y+Y → 2Z (Daley–Kendall) or only the initiating party Y → Z (Maki–Thompson); Y+Z → 2Z. The process terminates when Y=0.
+  parameters:
+  - >-
+    The number of ignorants (have not heard the rumour)
+  - >-
+    The number of spreaders
+  - >-
+    The number of stiflers (informed but no longer spreading)
+  - >-
+    The total population
+  predicts:
+  - >-
+    The rumour always dies out by itself: the number of spreaders first rises and then falls to zero.
+  - >-
+    When it dies out there is still a share of people who never heard the rumour, even if the population mixes thoroughly; the secondary literature (Sudbury's analysis, whose original text this card has not verified) says that in the Maki–Thompson version this proportion is about 0.203 in the large-population limit.
+  - >-
+    There is no transmission threshold of the kind found in epidemic models: as long as there is one spreader, the rumour will spread to a substantial proportion of people.
+  in_engine: >-
+    engine.Sim._tell: on telling it to someone who already knew, the eagerness to tell (zeal) is discounted by stifle. This is a softened Maki–Thompson rule — only the party who speaks cools down, and cools gradually rather than becoming a stifler in one step.
+  checked:
+  - >-
+    The citation metadata of the Nature article page confirms the title, the two authors (Statistical Laboratory, University of Cambridge), volume 204 issue 4963, page 1118, December 1964; the first paragraph of the page explains that this is a short communication with the details published elsewhere, and stresses that the qualitative results of the rumour model need not agree with the epidemic analogy.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, authors, journal, year, volume and issue, and pages (Crossref uses the journal's current name). The Oxford Academic landing page returned a verification page and the full text was not read; the statement of the three classes of people and the transition rules relies on English Wikipedia's "Rumor spread in social network" entry and on abstracts of reviews found by search, which are secondary sources.
+  - >-
+    The Open Library edition record confirms the title, the subtitle, the attribution "Daniel P. Maki [and] Maynard Thompson", Prentice-Hall, Englewood Cliffs, 1973, the page count and the LCCN. Only the bibliographic information was verified; the specific formulation of the rumour model in the book was not seen in the original, and the variant rule relies on secondary reviews.
 sources:
 - work: Epidemics and Rumours
   author: D. J. Daley; D. G. Kendall

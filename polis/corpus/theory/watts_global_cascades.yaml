@@ -15,6 +15,32 @@ predicts:
 - 在低连通一侧，级联规模服从幂律，连接最多的节点比普通节点更容易触发级联；在高连通一侧，规模分布双峰，枢纽节点不再有此优势。
 - 阈值越不均一，系统越容易发生全局级联；度分布越不均一，系统反而越不容易。
 in_engine: 部分实现。engine.Sim._observe 按关系强度算出身边已行动者的比例（seen），它进入信念与决策；但没有按原模型设定固定阈值分布，也没有做脆弱节点簇的分析。
+en:
+  field: >-
+    Network science
+  claim: >-
+    Put the threshold rule on a sparse random network: each node looks only at its own neighbours, and switches along with them when the proportion of its neighbours that have already switched reaches its own threshold. Then a tiny initial perturbation will occasionally set off a cascade that sweeps the whole network, but this happens rarely. When the network is too sparse, cascades are limited by connectivity and their sizes follow a power-law distribution; when the network is very dense, cascades are limited by the stability of the nodes themselves and their sizes follow a bimodal distribution (either almost nothing moves, or the whole network flips), and so are harder to anticipate.
+  formal: >-
+    Node i has threshold φ_i and degree k_i; if the proportion of its neighbours in state 1 is ≥ φ_i, then i switches to state 1. Starting from a single seed node (or a very few), iterate on a random graph with a given degree distribution.
+  parameters:
+  - >-
+    Node threshold: what proportion of neighbours must have switched before it follows
+  - >-
+    Node degree (number of neighbours)
+  - >-
+    The average degree of the network
+  predicts:
+  - >-
+    The same small perturbation leads to nothing in the great majority of cases and to a global cascade in a very few; global cascades are possible only within an intermediate range of the average degree.
+  - >-
+    On the low-connectivity side, cascade sizes follow a power law, and the most connected nodes trigger cascades more easily than ordinary nodes; on the high-connectivity side, the size distribution is bimodal and hub nodes no longer have this advantage.
+  - >-
+    The more heterogeneous the thresholds, the more prone the system is to global cascades; the more heterogeneous the degree distribution, the less prone the system is, by contrast.
+  in_engine: >-
+    Partly implemented. engine.Sim._observe works out, weighted by tie strength, the proportion of those around one who have already acted (seen), which enters belief and decision; but no fixed threshold distribution is set as in the original model, and no analysis of vulnerable clusters of nodes is done.
+  checked:
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract. The PNAS publisher landing page returned a 403/verification page to scraping and could not be opened directly.
 sources:
 - work: A simple model of global cascades on random networks
   author: Duncan J. Watts

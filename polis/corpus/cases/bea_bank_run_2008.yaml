@@ -26,6 +26,115 @@ events:
   - {what: 9月27日（周六），警方宣布拘捕一名涉嫌群发有关短信的人。, who: [香港警方, 匿名短信发送者]}
 outcome: 东亚银行没有倒闭：挤兑在不到两天内被平息，被提走的存款只占总额的很小一部分（按银行公布为0.67%），银行称这些存款到年底已全部回流还有余。
 theories: [informational_cascade, granovetter_threshold, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: >-
+    The run on the Bank of East Asia (Hong Kong, September 2008)
+  setting: >-
+    Hong Kong, 22–27 September 2008, about a week after the bankruptcy of Lehman Brothers and the emergency at AIG; the Bank of East Asia's branches
+    across Hong Kong.
+  summary: >-
+    In the tense atmosphere after Lehman's collapse, rumours that the Bank of East Asia was in trouble first circulated in the market and then spread
+    rapidly through anonymous mass text messages, which said the bank had exposure to Lehman and AIG, or even stated outright that "there is already a
+    run, hurry and get your money out". Depositors who saw the queues outside branches took the queuing itself as evidence and joined in; within one day
+    there were long queues at many branches across Hong Kong, and the share price fell about 7% in a single day. The bank denied the rumours publicly,
+    extended its opening hours and paid every withdrawal in full; the HKMA stated the same day that the rumours were unfounded and reminded the public of
+    deposit protection, and the next day injected funds into the banking system; the tycoon Li Ka-shing publicly bought the bank's shares, and the queues
+    dispersed in under two days. The sources disagree: the account by Bruner of the University of Virginia says depositors were already turning up in
+    large numbers on Tuesday afternoon, while the HKMA press release and The Christian Science Monitor place the run on Wednesday; as to the scale of
+    withdrawals, Bruner cites the bank's published figure of HK$2 billion, 0.67% of deposits, whereas the Bank of East Asia's chairman David Li afterwards
+    told Institutional Investor that "less than 2 percent of deposits were affected".
+  people:
+    - name: "Anonymous text-message sender"
+      role: "The person or persons who spread the rumour by mass text message"
+      traits: >-
+        Identity unknown; created urgency with wording such as "there is already a run", pressing people to act at once.
+    - name: "Depositors"
+      role: "The Bank of East Asia's depositors in Hong Kong"
+      traits: >-
+        Unable to judge for themselves whether the bank was sound; queued because they saw others queuing, wanting to "sleep soundly tonight".
+    - name: "Bank of East Asia management"
+      role: "The bank targeted by the rumours; its chairman was David Li (Li Kwok-po)"
+      traits: >-
+        Denied the rumours publicly again and again, showed the media its liquidity figures, and proved it had the money by "paying in full and extending
+        opening hours".
+    - name: "Hong Kong Monetary Authority"
+      role: "Banking regulator and monetary authority"
+      traits: >-
+        Voiced its support the same day and reminded the public of deposit protection; the next day steadied the market with an injection of funds and not
+        with words alone.
+    - name: "Li Ka-shing"
+      role: "Hong Kong tycoon"
+      traits: >-
+        Showed where he stood by buying shares publicly, sending a signal that was costly and therefore credible.
+    - name: "Hong Kong Police"
+      role: "Commercial crime investigation unit"
+      traits: >-
+        Traced the source of the text messages.
+  events:
+    - >-
+      In mid-September the bankruptcy of Lehman Brothers and the AIG crisis raised concerns about Hong Kong banks' related exposures; the Bank of East Asia
+      had also restated its results, disclosing a loss of HK$93 million caused by a trader in equity derivatives. The bank's outstanding exposures to Lehman
+      and AIG were HK$422.8 million and HK$49.9 million respectively.
+    - >-
+      On 22 September (Monday), rumours about the Bank of East Asia's solvency began to circulate.
+    - >-
+      On 23 September (Tuesday), a flood of mass text messages from anonymous sources made the rumours heat up rapidly; one of them said the Bank of East
+      Asia was suffering a run and that people with deposits there should hurry to withdraw them.
+    - >-
+      On 24 September (Wednesday), thousands of depositors queued at Bank of East Asia branches to withdraw; some said it was only on seeing the queues that
+      they felt something must be wrong; the bank's share price fell about 7% that day.
+    - >-
+      The Bank of East Asia called the rumours unfounded, told the media that its cash reserves were enough to meet all withdrawals and that its capital
+      adequacy ratio was about twice the statutory minimum, paid all withdrawals in full and extended its opening hours. The police commercial crime
+      investigation unit began tracing the source of the rumours.
+    - >-
+      The same day (the 24th), an HKMA spokesperson said the rumours questioning the soundness of the Bank of East Asia were unfounded and that the bank's
+      capital adequacy ratio and liquidity ratio were well above regulatory requirements; that the HKMA had the discount window and lender-of-last-resort
+      arrangements available to provide liquidity at any time, but no bank had so far asked for this; and reminded the public that the Deposit Protection
+      Scheme covered up to HK$100,000, calling on depositors to stay calm.
+    - >-
+      On the morning of 25 September (Thursday), the HKMA injected HK$3,883 million into the aggregate balance of the banking system, explaining that this
+      was a general measure to ease interbank liquidity and was not directed at any individual institution; Li Ka-shing said publicly that he had bought
+      Bank of East Asia shares as a "personal investment", and the share price recovered by more than 3%.
+    - >-
+      The same day, the HKMA said the banking system had operated normally throughout the day and that public concern about the Bank of East Asia had
+      largely subsided. The bank announced that the deposits withdrawn in this brief run came to HK$2 billion, 0.67% of its total deposits.
+    - >-
+      On 27 September (Saturday), the police announced the arrest of one person suspected of mass-sending the text messages in question.
+  outcome: >-
+    The Bank of East Asia did not fail: the run was quelled in under two days, the deposits withdrawn were only a very small part of the total (0.67% by
+    the bank's published figure), and the bank said that by the end of the year these deposits had all flowed back, and more.
+  checked:
+    - >-
+      Fetched the full text of the press release directly: a spokesperson said "today (Wednesday)" that the rumours questioning the stability of the Bank of
+      East Asia were "unfounded"; capital adequacy ratio and liquidity ratio well above regulatory requirements; the discount window and
+      lender-of-last-resort arrangements, and "none of them have asked for this so far"; the Deposit Protection Scheme limit of "$100,000"; the call to
+      "stay calm".
+    - >-
+      Fetched the press release directly: public concern about the Bank of East Asia was caused by "unfounded rumours spread yesterday" and had largely
+      subsided; the bank's financial condition was sound; that morning US dollars were bought under Currency Board principles, injecting "HK$3,883 million"
+      into the aggregate balance of the banking system, not directed at any individual institution.
+    - >-
+      Fetched the post directly. The author was in Hong Kong that week, and the post gives: exposures of HK$422.8 million (Lehman) and HK$49.9 million
+      (AIG), and the trader's loss of HK$93 million; the rumours starting on Monday 22 September, the anonymous mass text messages on Tuesday and the
+      content of one of them; quotations from depositors; the bank's CEO calling the rumours "unfounded", a capital adequacy ratio twice the minimum
+      requirement, paying in full and extending opening hours; the HKMA's injection of "nearly HK$3.9 billion"; the police commercial crime investigation
+      unit tracing the source; the run ending on the 25th, with the bank announcing HK$2 billion withdrawn, that is 0.67% of deposits; the police announcing
+      one arrest on the 27th. The post states that its details come from the front page of the Financial Times of 25 September 2008 (Lau and Mitchell) and
+      from three reports on page A3 of the South China Morning Post of the same day; the original newspaper texts could not be opened this time. Note two
+      problems: the post says depositors were already arriving at branches in large numbers "on Tuesday afternoon", while also saying the run took place on
+      Wednesday the 24th; and the post calls Li Ka-shing the chairman of the Bank of East Asia's board, which does not agree with Institutional Investor,
+      where the chairman is David Li (李国宝), and should be a slip of the pen. The arrest appears only in this post.
+    - >-
+      Fetched the report directly: the Bank of East Asia was besieged on Wednesday by "thousands of frightened customers", the first large-scale bank run in
+      the region since the financial crisis; the bank is Hong Kong's fifth largest; the share price fell 7% in one day; Li Ka-shing said on Thursday that he
+      had made "a personal investment", buying that morning, and the share price recovered by more than 3%.
+    - >-
+      Fetched the article directly: depositors flocked to branches across Hong Kong, worried that the bank was short of money and would be taken over by the
+      government; the rumours spread by mobile text message and said the bank had exposure to AIG and Lehman; the HKMA publicly called the bank sound and
+      injected US$500 million into the interbank market (which agrees, on conversion, with the HK$3,883 million recorded by the HKMA); Hong Kong's first
+      bank run since 1997 was quelled "in less than two days"; chairman David Li said "less than 2 percent of deposits were affected" and said that by the
+      end of the year this cash had been recovered, and more.
 sources:
   - work: HKMA says Hong Kong banking system is sound
     author: Hong Kong Monetary Authority（香港金融管理局）

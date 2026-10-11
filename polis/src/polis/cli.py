@@ -21,7 +21,7 @@ runs_dir = trace.runs_dir
 # 统一入口的卡片要用的几次运行：(场景, 种子, 回应)。都用校准后的参数，引擎按种子确定，所以不必进 git。
 # The runs the shared host's cards point at: (scenario, seed, response). All use the calibrated parameters and the
 # engine is deterministic per seed, so they need not be in git.
-SHOWCASE = [("rumor_run", 7, "guarantee"), ("rumor_run", 7, "none"), ("toyokawa", 7, "notice"), ("bea", 7, "notice")]
+SHOWCASE = [("rumor_run", 7, "guarantee"), ("rumor_run", 7, "none"), ("toyokawa", 1, "notice"), ("bea", 12, "notice")]
 
 
 def _line(m: model.Manifest) -> str:
@@ -152,7 +152,8 @@ def calibrate(
     if save and over:
         path = CALIBRATION
         report = {
-            "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。 / A parameter set found by random search that does not contradict the targets; with few targets and many parameters it is not unique.",
+            "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
+            "note_en": "A parameter set found by random search that does not contradict the targets; with few targets and many parameters it is not unique.",
             "samples": samples, "seeds": seeds, "n": n,
             "targets": [t.__dict__ for t in ts],
             "default": {"miss": default[0], "metrics": default[1]},

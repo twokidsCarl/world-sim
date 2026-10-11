@@ -13,6 +13,32 @@ predicts:
 - 群体会在局部形成高度一致的行为，但其中汇集的信息很少，错误的一致并不罕见。
 - 一致行为是脆弱的：一条新的公开信息或一个明显更知情者的反向行动就可能让潮流逆转。
 in_engine: 部分实现。engine.Sim._observe：亲眼看见别人去取钱会直接抬高自己的信念（w_seen），即从别人的行动里推断信息。不是原模型的依次贝叶斯决策，私人信号也没有单独建模。
+en:
+  field: >-
+    Economics
+  claim: >-
+    People make decisions in turn, and each has their own private information and can also see what those before them did. The actions of predecessors reveal their information, so taking them into account is rational; but once the earlier actions are sufficiently uniform, the best choice for those who come later is to disregard their own information and simply follow. Actions after that no longer reveal any new information, the whole group may lock in on a wrong choice, and this uniformity is fragile, so that a small amount of new public information can overturn it. Two 1992 papers proposed this mechanism independently: Banerjee calls it herd behaviour and proves that the equilibrium is inefficient, while Bikhchandani, Hirshleifer and Welch call it an informational cascade.
+  formal: >-
+    Sequential decision-making: the n-th person observes the sequence of actions of the previous n−1 people and their own private signal, and chooses by Bayes' rule the action with the higher expected payoff. When the evidence contained in the public history outweighs any single private signal, a cascade begins: from then on each person's action is independent of their own signal.
+  parameters:
+  - >-
+    The noisy information that each person obtains alone about which option is better
+  - >-
+    The sequence of predecessors' choices observable by those who come later (only actions are seen, not signals)
+  predicts:
+  - >-
+    The choices of the few people at the front of the queue have a disproportionate influence on the final outcome, and the outcome depends on the order.
+  - >-
+    A group will form highly uniform behaviour locally, but very little information is aggregated in it, and uniformity in error is not rare.
+  - >-
+    Uniform behaviour is fragile: one new piece of public information, or one contrary action by someone evidently better informed, may reverse the trend.
+  in_engine: >-
+    Partly implemented. engine.Sim._observe: seeing others go to withdraw money with one's own eyes directly raises one's own belief (w_seen), that is, information is inferred from others' actions. It is not the sequential Bayesian decision-making of the original model, and private signals are not modelled separately either.
+  checked:
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, authors, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages (the author is recorded as A. V. Banerjee); the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract.
 sources:
 - work: A Theory of Fads, Fashion, Custom, and Cultural Change as Informational Cascades
   author: Sushil Bikhchandani; David Hirshleifer; Ivo Welch

@@ -29,6 +29,101 @@ events:
   - {what: 基尔告知已用本该留给医生妻儿的钱买进浴场股票，逼他改口；医生拒绝，也拒绝离开本城。, who: [摩登·基尔, 托马斯·斯多克芒]}
 outcome: 说出真相的人被市民大会正式宣布为“人民公敌”，失去职位、住所和病人，污染问题没有被处理；他决定留下，自称最孤立的人最有力量。
 theories: [asch_conformity, preference_falsification, two_step_flow]
+en:
+  title: "An Enemy of the People (En folkefiende)"
+  setting: >-
+    A seaside town in southern Norway in the 1880s that lives off its spa baths, over a few days.
+  summary: >-
+    Stockmann, the medical officer of the Baths, finds that the Baths' water supply is contaminated; at first the newspaper editor and the spokesman of
+    the small householders both express support, and he supposes the whole town will thank him. The Mayor (his elder brother) puts the same matter to
+    these people in other terms: the remedy will cost a great deal, the Baths will have to close for two years, and the cost will fall on the ratepayers;
+    the supporters then change sides one by one, the paper prints the Mayor's reassuring statement instead, and the doctor's report has nowhere to be
+    published. By the time of the public meeting, the chairman and the speakers have already replaced the question "is the water poisoned" with "is this
+    man harming the town"; the doctor, provoked, turns to attacking "the majority", the meeting passes a resolution on the spot declaring him an enemy of
+    the people, and what follows is smashed windows, dismissal, notice to quit his house, and his daughter losing her post. This is a case of true
+    information losing to a framing in terms of interests: what changed people's attitudes was not new evidence, but who first explained to whom "what
+    this means for you".
+  people:
+    - name: "Thomas Stockmann"
+      role: "Medical officer of the Baths, the man who discovers the contamination"
+      traits: >-
+        Naive and impetuous, believing that once the facts are published everyone will naturally take his side; after the setback his language grows ever more
+        violent.
+    - name: "Peter Stockmann"
+      role: "Mayor, chief of police and chairman of the Baths' board; the doctor's elder brother"
+      traits: >-
+        Cautious, a respecter of authority; good at talking to people one at a time and restating the problem as the listener's own direct loss.
+    - name: "Hovstad"
+      role: "Editor of the People's Messenger"
+      traits: >-
+        Styles himself a progressive, but in fact follows his subscribers and the way the wind blows; supports first, then changes sides.
+    - name: "Billing"
+      role: "Sub-editor of the paper"
+      traits: >-
+        Radical in words, privately angling for a municipal post.
+    - name: "Aslaksen"
+      role: "Printer, chairman of the Householders' Association, self-declared representative of the \"compact majority\""
+      traits: >-
+        His watchword is "moderation"; stands with whoever speaks for the ratepayers' purse; takes the chair at the meeting.
+    - name: "Morten Kiil"
+      role: "Tannery owner, foster-father of the doctor's wife"
+      traits: >-
+        At first takes it for a prank; his own tannery is the very source of the contamination, and he later uses the inheritance and shares to put pressure
+        on the doctor.
+    - name: "Captain Horster"
+      role: "The doctor's friend"
+      traits: >-
+        Takes no interest in local politics; the only one willing to lend a place for the meeting and who still helps afterwards, and loses his ship for it.
+    - name: "Katherine and Petra"
+      role: "The doctor's wife and daughter (a teacher)"
+      traits: >-
+        The wife worries about their livelihood but in the end stands by her husband; the daughter firmly supports her father and is dismissed by her school
+        for it.
+  events:
+    - >-
+      The doctor receives the results of the analysis, confirming that the Baths' water is contaminated. The newspaper editors who are present at once say
+      they are willing to print his report, and the doctor is delighted to have done the town a service.
+    - >-
+      Kiil calls and treats the affair as a joke played on the Mayor. Hovstad and Aslaksen each come to the house to express support, the latter
+      guaranteeing that the "compact majority" stands behind the doctor.
+    - >-
+      The Mayor demands that his brother withdraw the report and deal with the matter privately, and warns that making it public would ruin the whole town
+      and his own family; the doctor refuses, and the Mayor threatens him with dismissal.
+    - >-
+      The Mayor goes to the newspaper office and explains to the editor and the printer what the remedy will cost and the blow it will deal to the town's
+      business. Hovstad, Billing and Aslaksen change their position on the spot; the paper prints the Mayor's statement instead and refuses the doctor's
+      report.
+    - >-
+      The doctor decides to call a public meeting himself; only Captain Horster is willing to lend his house.
+    - >-
+      At the meeting Aslaksen is chosen as chairman, and the first thing debated is whether the doctor should be allowed to speak about the Baths at all.
+      The doctor turns instead to denouncing the "compact liberal majority", and the audience is enraged.
+    - >-
+      The crowd shouts that he is an enemy of the people; the meeting puts it to the vote and passes a resolution declaring Medical Officer Stockmann an
+      "enemy of the people". As the meeting breaks up some people threaten to go and smash the windows of his house.
+    - >-
+      The next day: the windows have been smashed, the landlord wants him to move out, Petra has been dismissed by her school, and the Mayor brings notice
+      of his dismissal and a resolution calling on the whole town to stop consulting him as a doctor; Horster too has been dismissed by the ship's owner.
+    - >-
+      Kiil tells him he has used the money that should have been left to the doctor's wife and children to buy up shares in the Baths, to force him to take
+      back what he said; the doctor refuses, and also refuses to leave the town.
+  outcome: >-
+    The man who told the truth is formally declared an "enemy of the people" by a public meeting and loses his post, his home and his patients, and the
+    contamination is not dealt with; he decides to stay, declaring that the most isolated man is the strongest.
+  checked:
+    - >-
+      Fetched the full text of Project Gutenberg #2446 and checked: in Act IV the crowd shouts "He is an enemy of the people!", the chairman moves the
+      resolution "This meeting declares that it considers Dr. Thomas Stockmann, Medical Officer of the Baths, to be an enemy of the people", and the crowd's
+      shouts as the meeting breaks up; in Act V Petra says she has received "notice of dismissal"; in Act II the Mayor raises dismissal (dismissed).
+    - >-
+      The article confirms: Ibsen's play of 1882, original title En folkefiende; the list of characters and each one's position; and, in the act-by-act
+      synopsis, the results of the analysis, Kiil taking it for a prank, Hovstad and Aslaksen supporting at first, the Mayor's warning, the newspaper office
+      printing the Mayor's statement instead in Act III, Horster lending his house, Aslaksen taking the chair, the "compact liberal majority", the threat to
+      smash windows, the notice to quit, Petra losing her job, the letter of dismissal and the boycott resolution, Kiil buying shares to apply pressure, and
+      the doctor deciding to stay. The article's infobox gives only the year of the premiere, 1883.
+    - >-
+      The article's lead states that the play was written in 1882 and premiered at the Christiania Theater on 13 January 1883 (the article cites Store
+      norske leksikon); the list of characters agrees with the English article.
 sources:
   - work: En folkefiende（英译 An Enemy of the People，R. Farquharson Sharp 译）
     author: Henrik Ibsen（易卜生）

@@ -16,6 +16,36 @@ predicts:
 - 个人的采纳概率随已采纳邻居数增加而上升，第二、第三个信号仍有增量作用。
 - 高风险社会运动之类的行为倾向于沿地理空间逐片扩散。
 in_engine: 部分实现。mind.tell_delta 里同一方向的话听得越多新增越少（novelty），单一来源通常不足以让人相信，需要多个来源叠加；没有显式的“至少 k 个邻居”规则。
+en:
+  field: >-
+    Sociology / network science
+  claim: >-
+    Information or a disease that is passed on by a single contact is a simple contagion; whereas behaviours that are risky, costly or controversial often have to be corroborated by several different acquaintances before they are adopted, and this is complex contagion. Long-range "weak tie" shortcuts, which favour simple contagion, may instead become an obstacle to complex contagion, because an isolated long tie can bring only one contact; what complex contagion depends on is the "width" of the bridge between two communities, that is, several ties running in parallel. An experiment by Centola in 2010 in artificially constructed online communities supports this: people who received social reinforcement from several neighbours were more likely to adopt, and the behaviour spread farther and faster in highly clustered lattice networks than in the corresponding random networks.
+  formal: >-
+    A node adopts when the number of its neighbours who have already adopted is ≥ a (a = 1 is simple contagion, a ≥ 2 is complex contagion). Whether the spread can cross between two neighbourhoods depends on whether the width of the bridge connecting them (the number of parallel ties) is ≥ a.
+  parameters:
+  - >-
+    Adoption threshold: how many neighbours who have already adopted are needed
+  - >-
+    The number of parallel ties connecting two neighbourhoods
+  - >-
+    The proportion of locally redundant ties changed into long-range shortcuts
+  predicts:
+  - >-
+    As the adoption threshold rises, adding long-range shortcuts to a regular network no longer speeds up diffusion and instead hinders it.
+  - >-
+    At the same size and degree, a behaviour that needs social reinforcement spreads farther and faster in a highly clustered network than in a random network.
+  - >-
+    An individual's probability of adoption rises with the number of neighbours who have already adopted, and the second and third signals still have an incremental effect.
+  - >-
+    Behaviours such as high-risk social movements tend to spread patch by patch through geographical space.
+  in_engine: >-
+    Partly implemented. In mind.tell_delta, the more one has heard said in the same direction the less each new telling adds (novelty); a single source is usually not enough to make a person believe, and several sources have to add up; there is no explicit "at least k neighbours" rule.
+  checked:
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, authors, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract. The PubMed page requires cookies and could not be read.
 sources:
 - work: Complex Contagions and the Weakness of Long Ties
   author: Damon Centola; Michael Macy

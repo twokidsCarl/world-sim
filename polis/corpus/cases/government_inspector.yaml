@@ -28,6 +28,95 @@ events:
   - {what: 众人追究是谁最先说他是钦差，矛头指向两位地主。此时宪兵进来通报：奉旨从彼得堡来的官员已到，要市长立刻去见。全场僵住。, who: [鲍勃钦斯基与多勃钦斯基, 市长（安东·安东诺维奇）]}
 outcome: 假钦差带着全城的贿赂离开之后，误信才被一封截获的信戳破；紧接着真钦差到达的消息传来，所有人僵立当场（“哑场”）。
 theories: [allport_postman_rumor_law, informational_cascade]
+en:
+  title: "The Government Inspector (Ревизор)"
+  setting: >-
+    A small provincial town in Russia in the 1830s, over no more than a day or two; the Mayor's house and the town's small inn.
+  summary: >-
+    The Mayor learns from a private letter that a government inspector is coming incognito to investigate; the town's officials had guilty consciences to
+    begin with, and so live in the tension of "someone may push the door open at any moment". Two landowners who love carrying tales see at the inn a
+    young man from Petersburg who has stayed two weeks without paying his bill or leaving, and on these few clues alone conclude that he is the inspector;
+    the Mayor believes it as soon as he hears it, and the other officials follow; from then on every word the young man says is read on the footing that
+    "he is the inspector", and even the truth he tells is taken for disguise. Once the false belief has become the consensus, the officials vie with one
+    another to bribe him, the merchants vie with one another to lodge complaints, and the Mayor even betroths his daughter to him. What corrects the
+    belief is not anyone's doubt, but a letter opened on the sly by the Postmaster, and the announcement that the real inspector has arrived.
+  people:
+    - name: "The Mayor (Anton Antonovich)"
+      role: "The town's highest official, corrupt and a taker of bribes"
+      traits: >-
+        Seasoned and suspicious, but because of his guilty conscience the first, and the most thorough, to accept that "the inspector has arrived".
+    - name: "Khlestakov"
+      role: "A minor civil servant from Petersburg, passing through and having gambled away all his money"
+      traits: >-
+        Frivolous, boasting whatever comes into his head; at first has no idea he has been mistaken for someone else, later goes along with it.
+    - name: "Bobchinsky and Dobchinsky"
+      role: "Two landowners of the town, inseparable"
+      traits: >-
+        Race to bring the news and to talk over each other; the source of the false belief, piecing a few words from the innkeeper together into "he is the
+        inspector".
+    - name: "Osip"
+      role: "Khlestakov's servant"
+      traits: >-
+        More clear-headed than his master; sees that carrying on is dangerous and urges his master to leave quickly.
+    - name: "The Postmaster (Shpekin)"
+      role: "In charge of the mail, in the habit of opening letters"
+      traits: >-
+        Very curious; holds the only hard information that can disprove the belief.
+    - name: "Anna and Marya"
+      role: "The Mayor's wife and daughter"
+      traits: >-
+        Vain, glad to believe in the guest's exalted rank; become the objects of Khlestakov's flirting and proposal.
+    - name: "The Judge, the Warden of Charities and the Inspector of Schools"
+      role: "The town's other officials"
+      traits: >-
+        Each has something to hide, and they watch one another; once they see the Mayor believes, they follow with bribes.
+    - name: "The merchants"
+      role: "Local merchants squeezed by the Mayor"
+      traits: >-
+        Treat the "inspector" as a chance to lodge complaints, likewise without checking.
+  events:
+    - >-
+      The Mayor summons the officials and announces that he has learned from a friend's letter that a government inspector is coming incognito from
+      Petersburg and may already have arrived. They hurriedly discuss how to cover up their various misdeeds.
+    - >-
+      The two landowners rush in, each trying to be first with the report: staying at the inn is a young official from Petersburg who says he is going to
+      Saratov but has stayed two weeks without leaving, does not pay his bill, and looks about everywhere — they conclude that this man is the inspector.
+    - >-
+      The Mayor, greatly alarmed, believes it at once and hurries to the inn. Khlestakov thinks they have come to arrest him over his unpaid bill; the
+      Mayor, for his part, hears each of his excuses as the inspector keeping up a pretence.
+    - >-
+      Khlestakov is invited to the Mayor's house and, after drinking, boasts extravagantly of his standing in Petersburg; the more the officials hear, the
+      more frightened they become.
+    - >-
+      The officials call one by one to "lend" him money; the merchants come to complain about the Mayor, and he takes their money just the same.
+    - >-
+      Khlestakov flirts with the Mayor's wife and daughter in turn and becomes engaged to the daughter; he writes to a friend in Petersburg mocking everyone
+      in the town.
+    - >-
+      Osip urges his master to leave while he can, and the two drive off. The Mayor, believing he has made a grand connection, turns to dealing with the
+      merchants who complained, and accepts the whole town's congratulations.
+    - >-
+      The Postmaster bursts in with the letter he has opened and reads it aloud before everyone: Khlestakov is no inspector at all, and the letter ridicules
+      each of them in turn.
+    - >-
+      They try to establish who first said he was the inspector, and the blame falls on the two landowners. At this moment a gendarme comes in and
+      announces: the official sent from Petersburg by imperial order has arrived and requires the Mayor to come to him at once. The whole company freezes.
+  outcome: >-
+    Only after the false inspector has left with the whole town's bribes is the false belief punctured by an intercepted letter; immediately afterwards
+    comes the news that the real inspector has arrived, and everyone stands frozen on the spot (the "dumb scene").
+  checked:
+    - >-
+      Fetched the full text of Project Gutenberg #3735 and checked: the list of characters (Governor, Khlestakov, Osip, Bobchinsky, Dobchinsky, Postmaster
+      Shpekin, Anna, Marya and others); in Act I the Mayor announces "an Inspector from St. Petersburg, incognito"; Bobchinsky relays the innkeeper's words
+      (going to Saratov, staying into a second week, not paying his bill) and says "the Inspector"; Dobchinsky says "doesn't pay his bills and he doesn't
+      leave. Who else can it be?"; in Act V the Postmaster comes on holding an "unsealed letter"; at the end the Gendarme announces "An official from St.
+      Petersburg sent by imperial order has arrived". This translation renders городничий as Governor; the usual Chinese rendering is 市长 (mayor).
+    - >-
+      The article confirms: the author is Gogol; first published in 1836 and revised in 1842; premiered at the Alexandrinsky Theatre in St Petersburg. The
+      date of the premiere is written two ways in the same article — 19 April 1836 in the body and 1 May 1836 in the infobox (this should be the difference
+      between the Russian calendar and the Gregorian calendar; the article itself does not explain it). The plot summary confirms the officials "lending"
+      money, the merchants' complaints, the engagement to the Mayor's daughter, Osip urging departure, the Postmaster intercepting the letter, the Mayor
+      addressing the audience, and the final "dumb scene" (немая сцена).
 sources:
   - work: Ревизор（英译 The Inspector-General，Thomas Seltzer 译）
     author: Николай Гоголь（果戈理）

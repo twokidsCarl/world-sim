@@ -29,7 +29,65 @@ en:
     The rumours intensified on Friday; on Sunday afternoon demand for cash rose tenfold, first in the provinces and then in Riga. That night the bank and the
     regulator rejected the rumours; on Monday morning 126 of 298 machines were empty and the prime minister called the rumours deliberate. Operations returned to
     normal early in the week. The bank said about 30 million lats, 1.5% of its deposits, had been withdrawn since Sunday.
+  people:
+    - name: "Depositors"
+      role: "Swedbank's depositors in Latvia"
+      traits: >-
+        Had just lived through the takeover of a local bank; on seeing the rumours on social networks and in text messages went to cash machines to draw cash,
+        moving on to the next machine when one was emptied.
+    - name: "Swedbank management"
+      role: "Māris Mančinskis, chief executive of Swedbank in Latvia, and a spokesperson"
+      traits: >-
+        Said some of the rumours were simply untrue and some quite absurd; stepped up the refilling of cash machines and guaranteed business as usual.
+    - name: "Financial and Capital Market Commission"
+      role: "Latvia's financial regulator (FKTK)"
+      traits: >-
+        Joined the bank in denying the rumours on Sunday night.
+    - name: "Valdis Dombrovskis"
+      role: "Prime Minister of Latvia"
+      traits: >-
+        Said at a government meeting on Monday that the rumours were groundless and deliberately spread, and that the banking system was stable.
+    - name: "Local governments"
+      role: "The Jelgava district and municipal authorities"
+      traits: >-
+        On Saturday moved the money in their accounts from Swedbank to the Treasury; afterwards summoned by the Security Police.
+  events:
+    - >-
+      In late November the authorities took over Latvijas Krajbanka, and rumours about banks began to appear. On 9 December (Friday) the rumours
+      intensified.
+    - >-
+      On 10 December (Saturday), the Jelgava district government transferred more than 1 million lats from its Swedbank account to the Treasury, and Jelgava
+      city council also withdrew its funds.
+    - >-
+      From the afternoon of 11 December (Sunday), demand for cash rose to ten times the normal level; long queues formed at cash machines in Zemgale,
+      Jelgava, Ventspils and elsewhere, then spread to Riga. By Sunday evening about a third of Swedbank's cash machines had been emptied; more than 10
+      million lats was withdrawn that day.
+    - >-
+      On Sunday night the Financial and Capital Market Commission and Swedbank's management publicly denied the rumours; the bank said cash machines would
+      be refilled within a few hours of being emptied.
+    - >-
+      On the morning of 12 December (Monday), 126 of 298 cash machines were empty; the prime minister said at a government meeting that the rumours were
+      groundless and deliberately spread. The Security Police opened a case over the spreading of false information. Early in the week the bank's operations
+      returned to normal.
+    - >-
+      A bank spokesperson said that since Sunday customers had withdrawn about 30 million lats, equal to 1.5% of the bank's total deposits.
   outcome: The bank did not fail. The run was confined to one Sunday and subsided after the denials that night and the prime minister's statement the next day; about 1.5% of deposits left.
+  checked:
+    - >-
+      Fetched the article. Checked: the rumours dating from the takeover of Krajbanka, intensifying on Friday and spreading via social media; on Sunday
+      hundreds of people gathering at cash machines in the provinces and then in Riga, with about a third of cash machines emptied by Sunday evening; on
+      Saturday the Jelgava district government transferring out more than 1 million lats; the prime minister's statement of 12 December and the Security
+      Police opening a case; spokesperson Kristine Jakubovska saying that about 30 million lats had been withdrawn since Sunday, 1.5% of total deposits; and
+      that the bank's operations returned to normal early in the week.
+    - >-
+      Fetched the article. Checked: the Financial and Capital Market Commission and Swedbank's management denying the rumours on Sunday night; customers
+      withdrawing more than 10 million lats on Sunday (LETA); the longest queues being in Zemgale, Jelgava and Ventspils; cash machines being refilled
+      within a few hours of being emptied; the chief executive calling the rumours outright lies.
+    - >-
+      Fetched the article. Checked: demand for cash rising tenfold from Sunday afternoon; 126 of 298 cash machines empty on Monday morning; the prime
+      minister saying more than 10 million lats ($19 million) was withdrawn on Sunday; the head of the regulator saying the rumours appeared to have spread
+      via social media and text messages; Swedbank holding about a fifth of the Latvian market; about 20 people queuing outside a branch in Riga at midday
+      on Monday.
 sources:
   - work: Rumors hit Swedbank
     author: The Baltic Times（据通讯社报道 / from wire reports）

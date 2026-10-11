@@ -15,6 +15,33 @@ predicts:
 - 只要有人对初始立场有所坚持，长期结果是意见靠拢但不重合。
 - 最终意见是各人初始意见的线性组合，网络中被更多人看重的人占的权重更大。
 in_engine: ''
+en:
+  field: >-
+    Statistics / mathematical sociology
+  claim: >-
+    DeGroot describes how a small group that must act together reaches agreement: each member repeatedly updates their own view to a weighted average of the current views of all members, the weights reflecting their trust in each person; the paper gives this process and the common view finally reached explicitly. Friedkin and Johnsen start from the social process rather than from equilibrium, link the network of interpersonal influence to the content of individual opinions, and derive several social influence models already in the literature as special cases; in the formulation that later became standard, each person, while being influenced by others, always retains a measure of attachment to their own initial opinion, so the group usually comes to rest at persistent disagreement rather than consensus.
+  formal: >-
+    DeGroot: x(t+1) = W x(t), where W is a row-stochastic matrix of trust weights; under suitable conditions x(t) converges to a consensus value with all components equal, which is a weighted average of the initial opinions. Friedkin–Johnsen (the notation standard in the later literature, not checked against the symbols of the 1990 original): x(t+1) = Λ W x(t) + (I − Λ) x(0), Λ = diag(λ_i), λ_i ∈ [0,1]; when Λ = I it reduces to DeGroot; steady state x* = (I − ΛW)^(-1) (I − Λ) x(0).
+  parameters:
+  - >-
+    The matrix of interpersonal influence (trust) weights, each row summing to 1
+  - >-
+    Each person's initial opinion
+  - >-
+    The susceptibility of individual i to the influence of others; 1 − λ_i is the degree of attachment to their own initial opinion
+  predicts:
+  - >-
+    In a group of pure weighted averaging, disagreement in opinion shrinks with the rounds of discussion and tends to consensus, and the position of the consensus is determined by who is trusted more.
+  - >-
+    As long as someone holds to their initial position to some extent, the long-run result is that opinions draw closer but do not coincide.
+  - >-
+    The final opinions are linear combinations of the individuals' initial opinions, and people who are valued by more people in the network carry greater weight.
+  in_engine: ''
+  checked:
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, authors, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract. The abstract gives no formula; the Friedkin–Johnsen update equation in formal is taken from the standard notation in later reviews found by search (such as the search snippet for arXiv:1701.06307), and the 1990 original was not read.
 sources:
 - work: Reaching a Consensus
   author: Morris H. DeGroot

@@ -18,6 +18,40 @@ caveats: >-
   “同伴答对时错误降到四分之一”这一常见说法本次没有在原文中核对到具体数字，故未写入。
 theories: [asch_conformity]
 metric: ""
+en:
+  title: The effect of majority size saturates at three people
+  statement: >-
+    When only 1 person held the opposing view, participants were almost unaffected (3.6% errors); with 2 people
+    errors rose to 13.6%; with 3 they jumped to 31.8%; adding more people after that (4 to 15) left the error rate
+    between 31% and 37% throughout, with no further marked rise.
+    As soon as one partner gave the correct answer, the majority's influence was greatly weakened.
+  unit: >-
+    proportion (error rate on critical trials; value is for a majority of 3, range is the minimum and maximum
+    across the conditions from 1 to 15 people)
+  conditions: >-
+    A variant of Asch's line-judgement experiment (published 1955), US male undergraduates; the number of
+    confederates unanimously answering wrongly was 1, 2, 3, 4, 6, 7, 9 or 15; the error rates at these sizes were,
+    in order, 3.6%, 13.6%, 31.8%, 35.1%, 35.2%, 37.1%, 35.1% and 31.2%.
+  caveats: >-
+    The figures come from the figure caption and body text of a 1955 popular-science article; the number of
+    participants in each condition was small and the article gives no confidence intervals, so the fluctuations
+    among the conditions with 4 or more people should be regarded as noise.
+    "Saturation at three" refers to a majority that is face to face, present at the same time and completely
+    unanimous; in a small town information is heard successively from different acquaintances, and "having heard
+    several people say it" is not equivalent to "several people sitting in the room at the same time", so it is
+    acceptable to use it as a reference for the shape of a threshold model but not appropriate to use it directly
+    as a threshold value.
+    On the point that errors fall sharply when a partner gives support, one specific figure the article gives is
+    that when the partner chose a more extreme wrong answer, participants' errors fell to 9%; for the common claim
+    that "errors fall to a quarter when the partner answers correctly", no specific figure was found in the
+    original on this check, so it has not been included.
+  checked:
+    - >-
+      Opened the OCR full text of the scan of this article on the Internet Archive (reprint): the figure caption
+      lists one by one the error rates when the opposition numbered 1, 2, 3, 4, 6, 7, 9 and 15 people (3.6%,
+      13.6%, 31.8%, 35.1%, 35.2%, 37.1%, 35.1%, 31.2%); the body text repeats 13.6% and 31.8% and states that
+      adding further people did not noticeably increase the pressure; "an extreme dissenter reduced errors to 9%"
+      is also in the body text. Volume, issue and page numbers confirmed via Crossref.
 sources:
   - work: Opinions and Social Pressure
     author: Solomon E. Asch

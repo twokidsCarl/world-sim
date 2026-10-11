@@ -18,6 +18,47 @@ caveats: >-
   与小镇情境的差距：这是全国市场、以年计的产品采纳；一场挤兑是几天之内的恐慌行为，只宜借用曲线形状。
 theories: []
 metric: ""
+en:
+  title: The S-shaped curve of innovation diffusion and the Bass model parameters
+  statement: >-
+    The cumulative adoption of something new follows an S shape over time: slow at first, accelerating in the
+    middle through person-to-person transmission, and finally saturating.
+    When fitted with the Bass model, a meta-analysis of 213 sets of parameters from 15 papers obtained an average
+    coefficient of innovation p≈0.03 and an average coefficient of imitation q≈0.38, that is, the role of
+    interpersonal imitation is an order of magnitude larger than that of spontaneous adoption, but the differences
+    between cases are large.
+  unit: >-
+    mean of the coefficient of imitation q (the mean of the coefficient of innovation p in the same meta-analysis
+    is 0.03; usually estimated on annual data)
+  conditions: >-
+    The meta-analysis of Sultan, Farley and Lehmann 1990, pooling 213 applications of diffusion models in 15
+    papers published from the 1950s to the 1980s; the subject is mainly the market diffusion of new products such
+    as consumer durables, and the data are aggregate data of the annual-sales kind.
+  caveats: >-
+    The two figures p=0.03 and q=0.38 were not seen in the original paper this time, only in a conference paper
+    that reports them at second hand (see sources); the original could not be opened because of a paywall, so this
+    entry is treated as "unverified"; the Columbia Business School page for the paper could not be opened this time
+    either (403), and "213 applications, 15 papers" comes from a search-result snippet and the second-hand report
+    mentioned above.
+    The coefficients depend on the time unit (estimated per year) and cannot be carried over directly to a rumour
+    simulation with a step of hours or days.
+    An S-shaped cumulative curve is compatible with several mechanisms (person-to-person transmission, mass media,
+    heterogeneous thresholds), and Goel et al. 2012 state explicitly that aggregate curves cannot distinguish
+    between these mechanisms, so "the simulation produced an S shape" is only a necessary condition and cannot
+    prove that the transmission mechanism is correct.
+    Gap from the small-town setting: this is product adoption in a national market, measured in years; a bank run
+    is panic behaviour within a few days, so only the shape of the curve should be borrowed.
+  checked:
+    - >-
+      Only the bibliographic details were confirmed: Crossref (DOI 10.2307/3172552) gives the title, the three
+      authors, the journal, volume 27 issue 1, February 1990 and first page 70 (the last page, 77, comes from a
+      search-result snippet). Neither the body text nor the abstract of the paper could be opened, and p=0.03 and
+      q=0.38 were not seen in the original.
+    - >-
+      Secondary source. Opened the PDF of this conference paper, whose literature review section reports Sultan et
+      al. 1990 at second hand: 213 sets of parameters from 15 papers were studied, the mean values of p and q were
+      0.03 and 0.38 respectively, and the values varied widely. The figures come from this second-hand passage, not
+      from the original paper.
 sources:
   - work: A Meta-Analysis of Applications of Diffusion Models
     author: Fareena Sultan, John Farley, Donald Lehmann

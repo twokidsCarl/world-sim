@@ -1,0 +1,20 @@
+# 各场景所在地、所在年份的年龄结构（人数）。只有汇总数，没有个体记录。
+# Age structure (head counts) for the place and year of each scenario. Aggregates only; no individual records.
+#
+# 来源 / Source: United Nations, Department of Economic and Social Affairs, Population Division,
+#   World Population Prospects 2024 — https://population.un.org/wpp/
+# 许可 / Licence: CC BY 3.0 IGO — https://creativecommons.org/licenses/by/3.0/igo/
+# 取得方式 / Obtained via: Our World in Data, "Population by age group"
+#   https://ourworldindata.org/grapher/population-by-age-group （2026-10-11 下载 / downloaded 2026-10-11）
+#   五个年龄组是 Our World in Data 把联合国的单岁数据加总得到的，这里没有再改动。
+#   The five age groups are Our World in Data's sums of the UN's single-year figures; nothing was altered here.
+#
+# 通和钱庄场景是虚构的，没有对应的地方和年份，不在此列。
+# The fictional Tonghe scenario has no place or year and is not listed.
+groups: ["0-4", "5-14", "15-24", "25-64", "65+"]
+profiles:
+  toyokawa: {place: Japan, year: 1973, counts: [9990801, 16112461, 18594141, 57543658, 8373155]}
+  bea: {place: Hong Kong, year: 2008, counts: [245719, 672359, 927213, 4277951, 895832]}
+  bac: {place: Costa Rica, year: 2004, counts: [377711, 813848, 797183, 1951454, 259792]}
+  swedbank: {place: Latvia, year: 2011, counts: [106096, 187256, 269007, 1117000, 380424]}
+  kaspi: {place: Kazakhstan, year: 2014, counts: [1914224, 2926275, 2731937, 9068509, 1175080]}
