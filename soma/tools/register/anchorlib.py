@@ -196,6 +196,13 @@ class BinWriter:
         self.f = open(path, "wb")
         self.off = 0
 
+    def add_array(self, a, dtype="<f4"):
+        a = np.ascontiguousarray(a, dtype=dtype)
+        rec = {"byteOffset": self.off, "count": int(a.size)}
+        self.f.write(a.tobytes())
+        self.off += a.nbytes
+        return rec
+
     def add(self, v, faces):
         v = np.ascontiguousarray(v, dtype="<f4")
         faces = np.ascontiguousarray(faces, dtype="<u4")

@@ -264,6 +264,90 @@ def place(hra_dir, items, work, V2A):
             "nipple_inside_ct_body": bool(len(nv) and body[nv[0, 0], nv[0, 1], nv[0, 2]] > 0),
             "hra_volume_ml": round(sum(abs(signed_volume(*placed[k])) for k in keys if re.search(r"_fat_", k)) * 1e6, 0),
             "ct_breast_volume_ml": items[f"VF_breast_{side}"]["stats"]["volume_voxel_ml"]}
+    # ── HRA skin: bone-driven field where HRA has bones, plain global fit elsewhere ───────────
+    warp_all, _, Ca, _ = field(list(pairs), proximal_femur=False, per=110)
+    sv, sf, _ = nodes["VH_F_skin"]
+    sm = trimesh.Trimesh(sv, sf, process=False)
+    sm.merge_vertices()
+    sm = decimate(sm, 120000)
+    v0, f0 = np.asarray(sm.vertices), np.asarray(sm.faces)
+    dctrl = cKDTree(Ca).query(v0)[0]
+    w = np.clip(1 - (dctrl - 0.20) / 0.10, 0, 1)             # 1 within 20 cm of an HRA bone, 0 beyond 30 cm
+    vg = apply(T0, v0)
+    vw = np.vstack([warp_all(v0[i:i + 20000]) for i in range(0, len(v0), 20000)])
+    v1 = w[:, None] * vw + (1 - w)[:, None] * vg
+    if signed_volume(v1, f0) < 0:
+        f0 = f0[:, ::-1]
+    skin_mesh = trimesh.Trimesh(v1, f0, process=False)
+    nrm = np.asarray(skin_mesh.vertex_normals)
+    Yb = lambda iid: (items[iid]["v"][:, 1].min(), items[iid]["v"][:, 1].max())
+    tib, fem, hipb = Yb("VF_tibia_left"), Yb("VF_femur_left"), Yb("VF_hip_left")
+    yT12, yC7 = items["VF_vertebrae_T12"]["v"][:, 1].mean(), items["VF_vertebrae_C7"]["v"][:, 1].mean()
+    bands = {"foot": (-1, tib[0]), "leg": (tib[0], tib[1]), "thigh": (fem[0] + 0.03, fem[1] - 0.06), "pelvis": (fem[1] - 0.06, hipb[1]),
+             "abdomen": (hipb[1], yT12), "thorax": (yT12, yC7), "head and neck": (yC7, 9)}
+    ct_skin = S("VF_body_surface", 400000)
+    dist = cKDTree(ct_skin).query(v1)[0]
+    ijk = np.rint(apply(A2V, v1)).astype(int)
+    okv = np.all((ijk >= 0) & (ijk < np.array(body.shape)), axis=1)
+    inside = np.zeros(len(v1), dtype=bool)
+    inside[okv] = body[ijk[okv, 0], ijk[okv, 1], ijk[okv, 2]] > 0
+    signed = np.where(inside, -dist, dist) * 1000                # mm; negative = HRA skin lies inside the CT body (slimmer)
+    femx = abs(items["VF_femur_left"]["v"][:, 0].mean())
+    skin_fit = {}
+    for name, (lo, hi) in bands.items():
+        sel = (v1[:, 1] >= lo) & (v1[:, 1] < hi) & (w >= 0.999)
+        if name in ("abdomen", "thorax", "pelvis"):
+            sel &= (np.abs(v1[:, 0]) < 0.15) & (np.abs(nrm[:, 2]) > 0.6)        # front and back only: the CT arms are fused to the flanks
+        elif name in ("thigh", "leg"):
+            sel &= (np.abs(v1[:, 0]) > femx) | (np.abs(nrm[:, 2]) > 0.6)         # not the inner thigh, where the CT legs touch
+        if sel.sum() < 50:
+            skin_fit[name] = {"vertices": int(sel.sum())}
+            continue
+        q = lambda a: [round(float(x), 1) for x in np.quantile(a, [0.1, 0.5, 0.9])]
+        skin_fit[name] = {"vertices": int(sel.sum()), "signed_mm_p10_median_p90": q(signed[sel])}
+        if name in ("abdomen", "thorax", "pelvis"):
+            ant = sel & (nrm[:, 2] > 0.6)
+            post = sel & (nrm[:, 2] < -0.6)
+            skin_fit[name]["anterior_signed_mm_p10_median_p90"] = q(signed[ant]) if ant.sum() > 20 else None
+            skin_fit[name]["posterior_signed_mm_p10_median_p90"] = q(signed[post]) if post.sum() > 20 else None
+    # cross-sections: HRA skin against the CT body at four heights
+    yL4 = items["VF_vertebrae_L4"]["v"][:, 1].mean()
+    levels = {"mid calf": (tib[0] + tib[1]) / 2, "mid thigh": (fem[0] + fem[1]) / 2 - 0.02, "hip joints": fem[1] - 0.03, "L4 (waist)": yL4}
+    girth = {}
+    for name, y in levels.items():
+        k = int(round(y * 1000))
+        sl = body[:, :, k]
+        ct_area = float((sl == 1).sum() if name in ("hip joints", "L4 (waist)") else (sl > 0).sum())        # mm^2; label 1 = trunk only
+        if name == "hip joints":
+            ct_area = float((sl > 0).sum())      # thighs/buttocks are 'extremities' here; hands may add a little
+        try:
+            sec = skin_mesh.section(plane_origin=[0, y, 0], plane_normal=[0, 1, 0])
+            planar, to3d = sec.to_planar()
+            area = 0.0
+            for poly in planar.polygons_full:
+                c = np.array([poly.centroid.x, poly.centroid.y, 0, 1.0])
+                if abs((to3d @ c)[0]) < 0.21:
+                    area += poly.area
+            hra_area = area * 1e6
+        except Exception:  # noqa: BLE001
+            hra_area = float("nan")
+        girth[name] = {"ct_area_cm2": round(ct_area / 100, 1), "hra_area_cm2": round(hra_area / 100, 1),
+                       "area_ratio_hra_over_ct": round(hra_area / ct_area, 3), "equivalent_girth_ratio": round(float(np.sqrt(hra_area / ct_area)), 3)}
+    recs.append({
+        "id": "HRA_skin", "name": "skin (HRA female, remodelled, A-pose arms)", "side": "M", "kind": "surface", "provenance": "curated", "source": "hra",
+        "hra_node": "VH_F_skin", "hra_path": nodes["VH_F_skin"][2], "segmentation": None, "ontology_id": "UBERON:0002097", "fma": "FMA7163",
+        "male_parts": [], "correspondence": "none", "quality": "usable",
+        "quality_reasons": ["artist-remodelled skin, much slimmer than the donor", "arms, hands and distal feet are NOT registered (no HRA bones there): "
+                            "they keep the HRA A-pose under the global rigid fit; see mesh.scanned.vertex_weight (1 = bone-driven field, 0 = global fit only)"],
+        "note": "whole-skeleton field", "triangles": int(len(f0)), "bbox": np.r_[v1.min(0), v1.max(0)].round(5).tolist(),
+        "centroid": v1.mean(0).round(5).tolist(), "volume_ml": round(abs(signed_volume(v1, f0)) * 1e6, 0), "volume_voxel_ml": None,
+        "pose": "scanned-only", "repose": None, "license": "CC BY 4.0", "attribution": HRA_ATTR, "_v": v1, "_f": f0, "_T": None, "_w": w.astype(np.float32)})
+    skin_report = {"vertices": int(len(v1)), "fully_registered_fraction": round(float((w >= 0.999).mean()), 3),
+                   "unregistered_fraction (weight 0)": round(float((w <= 0.001).mean()), 3),
+                   "sign": "negative = HRA skin inside the CT body surface (slimmer)", "fit_vs_ct_body_surface": skin_fit,
+                   "cross_sections": girth, "hra_volume_l": round(abs(signed_volume(v1, f0)) * 1000, 1),
+                   "ct_body_volume_l": round(items["VF_body_surface"]["stats"]["volume_voxel_ml"] / 1000, 1)}
+
     nr = lambda a: {"mean_mm": round(float(np.concatenate(a).mean()) * 1000, 1), "max_mm": round(float(np.concatenate(a).max()) * 1000, 1)}
     # what else HRA has that is in neither the CT anchors nor BodyParts3D (candidates, not exported)
     groups = Counter()
@@ -282,6 +366,7 @@ def place(hra_dir, items, work, V2A):
                    "chest": {"control_bones": chest_keys, "control_points": int(len(Cc)), "residual_vs_bone_fits": ctrl_res(warp_c, chest_keys),
                              "deviation_from_single_rigid_at_organs": nr(nonrigid["chest"])}},
         "checks": rep,
+        "skin": skin_report,
         "not_exported_candidates": dict(sorted(groups.items(), key=lambda kv: -kv[1])),
         "summary": {"exported": len(recs), "by_kind": dict(Counter(r["kind"] for r in recs)),
                     "bone_icp_rms_mm": {"median": round(float(np.median(rms)), 2), "max": round(float(rms.max()), 2),

@@ -162,15 +162,17 @@ Caveats that matter for registration:
 
 ## 4. Alternatives
 
-### University of Denver VHF lower extremity **[read only — download blocked]**
+### University of Denver VHF lower extremity **[inspected; imported into the anchor package]**
 
-- `https://digitalcommons.du.edu/visiblehuman/1` (female, DOI 10.56902/COB.vh.2022.1). "This work is licensed under a
-  Creative Commons Attribution 4.0 International License." Cite Andreassen et al., *Sci Data* 10, 34 (2023).
-- Per subject: 76 muscles, 28 bones (incl. **pelvis with pubis and ischium**, individual tarsals), 16 cartilages,
-  8 ligaments, as STL. "Final 3D STL Models" is 87.8 MB; an aligned whole-body CT DICOM (302 MB) is also offered.
-- **Blocker:** every file URL returns a Cloudflare JavaScript challenge to `curl`; no mirror on Zenodo/SimTK/GitHub.
-  Needs one manual browser download. Frame is presumably the aligned cryosection image frame in mm — unverified.
-- Same donor as HRA and the CT, so it is the best source for individual female pelvis/leg muscles. Highest-value follow-up.
+- `https://digitalcommons.du.edu/visiblehuman/1` (DOI 10.56902/COB.vh.2022.1), "Final 3D STL Models" archive, fetched by hand
+  (Cloudflare blocks `curl`). README: "free to use under the Creative Commons Attribution 4.0 license"; cite Andreassen
+  et al., *Sci Data* 10, 34 (2023).
+- 128 STL files, millimetres, cryosection frame: 76 muscles, 28 bones, 16 cartilages, 8 knee ligaments.
+- **Not in this archive**, contrary to the dataset description: the two fat components (so no cryosection skin),
+  and menisci. The hip bone is one mesh (no separate pubis / ischium / ilium); metatarsals and phalanges are one mesh
+  per foot. The fat masks exist only in the multi-gigabyte segmentation archives.
+- Same donor confirmed: per-bone rigid fits to the CT bones at 0.6–1.8 mm RMS (3.2 mm for the seven tarsals moved as one
+  block); the posture differs by 1–2° at hip and knee between cryosectioning and CT.
 
 ### Everything else **[read only]**
 
@@ -204,7 +206,7 @@ Caveats that matter for registration:
 | Skeleton, complete | VHF CT → TotalSegmentator `total` + `craniofacial_structures` + `headneck_bones_vessels` + MOOSE peripheral bones | scanned |
 | Organs shared with the male, trunk vessels, muscle groups | Same CT, TotalSegmentator free tasks | scanned (anchors); fine structures warped |
 | Uterus, ovaries, tubes, vagina, pelvic ligaments, uterine vessels, breasts | HRA united female, rigidly + non-rigidly fitted into the CT frame via shared bones (25 vertebrae, sacrum, coccyx, ilia, sternum, femur/tibia/fibula/patella) and bladder/kidneys | curated (HRA is modelled, not scanned) |
-| Pelvis + leg muscles, individual tarsals, pubis/ischium | Denver VHF STLs, once downloaded | scanned |
+| Pelvis + leg muscles, individual tarsals, knee ligaments and cartilage | Denver VHF STLs (imported; no pubis/ischium split, no fat) | scanned |
 | Skin | Decide: CT `body` surface (true but supine, clipped, hands fused) vs. HRA skin (clean A-pose, same person, remodelled) | scanned vs. curated |
 
 All three female sources are the **same donor**, which is what makes this combination work: bone-to-bone alignment
@@ -258,7 +260,7 @@ whole-body deformation, densest in the trunk and weakest in forearms, hands, low
 
 - The male→female registration itself (the anchor package below is its input). Seam correction, lumbar relabelling and
   decimation are done there.
-- Denver STLs (blocked download); Visible Human cryosection RGB images (tens of GB, not needed for anchors).
+- Visible Human cryosection RGB images (tens of GB, not needed for anchors); Denver fat masks (multi-gigabyte archives).
 - `run_inventory.sh` collects the exact commands I ran, but the script as a whole has not been executed end to end.
   `run_anchors.sh` has been (2.5 minutes).
 
@@ -269,22 +271,69 @@ whole-body deformation, densest in the trunk and weakest in forearms, hands, low
 
 | | |
 |---|---|
-| Items | 182 scanned (VHF CT) + 58 curated (HRA) = 240; 1.25 M triangles |
-| CT items by kind | 74 bones, 12 bone groups, 3 cartilages, 1 tooth group, 24 organs, 18 vessel trunks, 47 muscles, 3 surfaces |
-| Quality | CT: 123 good, 52 usable, 7 poor (5 lung lobes, right radius, right ulna). HRA: all `usable` by definition |
-| Correspondence | 141 one-to-one, 36 group, 5 none (female L1, spinal cord, thyroid, 2 breasts) |
-| Meshing | marching cubes on a blurred mask, 12 Taubin iterations, quadric decimation, sub-voxel normal offset restoring the voxel volume (median mesh/voxel volume 1.000; without the offset ribs lost 18 %) |
-| Seam | see table above |
-| Lumbar | six lumbar bodies confirmed two ways: endplate detection, and HRA's L1–L6 each fitting its CT counterpart at 0.8–0.9 mm RMS |
-| Re-posing | per-bone rigid transforms about estimated joint centres to the male's arms-down pose; left arm usable (radial head 3 mm off the capitulum), right arm poor (clipped elbow); hands rigid, fingers still curled |
-| HRA placement | 37 bone pairs, median ICP RMS 0.74 mm; thin-plate-spline field; uterus between bladder (0.7 mm gap) and rectum (4 mm), ovaries inside the pelvic hull; right ovary collides with the scanned right common iliac vein |
-| Breasts | HRA (standing) sit ~45 mm anterior and ~33 mm below the donor's supine ones; two thirds of their volume is outside the supine skin |
-| Size check | long bones 5–12 % shorter than the male, hip-joint centres 13 % farther apart |
-| Coverage | 550 of 3,179 male parts named by an anchor; limbs are bone-only |
-| Denver | hook only (`data/raw/female/denver/`); import not written |
+| Items | 182 CT (`VF_`) + 128 Denver (`VD_`) + 59 HRA (`HRA_`) = 369; 1.9 M triangles |
+| CT items | 74 bones, 12 bone groups, 3 cartilages, 1 tooth group, 24 organs, 18 vessel trunks, 47 muscles, 3 surfaces; 123 good, 52 usable, 7 poor |
+| Denver items | 76 muscles, 26 bones + 2 forefoot groups, 16 cartilages, 8 ligaments; scanned pose; each with the bones it follows (`follows`: origin / insertion) |
+| HRA items | 38 organ parts, 16 ligaments, 4 uterine vessels, 1 skin (with a per-vertex registration weight) |
+| Duplicates | `preferred` / `alternatives` per item. Preferred: Denver's 7 individual tarsals over the CT tarsal group, Denver's gluteals / psoas / iliacus over TotalSegmentator's; CT for every other bone |
+| Meshing | marching cubes on a blurred mask, 12 Taubin iterations, quadric decimation, sub-voxel normal offset restoring the voxel volume |
+| Seam | CT leg exam moved 0.42° + 5.3/−3.8 mm. Cross-checked with the Denver femur: step at the seam 7–9 mm before, 1.3–1.8 mm after |
+| Lumbar | six lumbar bodies confirmed two ways (endplates; HRA L1–L6 fit at 0.8–0.9 mm RMS). Female L2–L6 ↔ male L1–L5, female L1 has no counterpart |
+| Bone surfaces | CT label surfaces lie 0.3–1.0 mm outside the CT's own cortical edge, Denver surfaces 0.3–1.1 mm inside it. Not corrected |
+| Re-posing | arms only, per-bone rigid transforms; left arm usable, right arm poor (clipped elbow); Denver items are not re-posed here |
+| HRA placement | 37 bone pairs, median ICP RMS 0.74 mm; uterus between bladder and rectum; right ovary collides with the scanned right common iliac vein |
+| Coverage | 631 of 3,325 male parts named by an anchor (550 before Denver); thigh 38 and leg 36 parts now anchored (4 each before) |
 
-Not verified: every label is automatic. Unexplained size outliers (patellae +16 %, ribs 11–12 +20 %, hyoid and thyroid
-cartilage +20 %, cranium −13 %) are listed in `SANITY.md`.
+### Skin and fat
+
+- **CT body surface** (`VF_body_surface`): the donor's real skin, supine, arms fused to the trunk, clipped at the flanks.
+- **HRA skin** (`HRA_skin`): registered with a whole-skeleton field; arms and hands are left in the HRA A-pose (no HRA
+  arm bones) and flagged by vertex weight. It is **not a slim reference**: girth against the CT is 0.90 at mid-calf,
+  0.99 at mid-thigh, 0.95 at the hips, 0.91 at the waist. Same obese donor, tidied.
+- **Denver outer fat**: not available (see above).
+- **Subcutaneous fat from the CT** (median / 90th percentile, mm): calf 12 / 16, thigh 23 / 42, hip 30 / 53,
+  abdomen anterior 33 / 81, chest 24 / 38. Adipose tissue is 46 % of body volume. Mass from CT density ≥ 80.7 kg and
+  BMI ≥ 29.6 (both lower bounds: the trunk is clipped); the Denver paper states 88 kg and BMI 36.
+
+Proposal for a normal-BMI surface (not applied). Keep the lean envelope (outer surface of muscle and bone, which the CT
+and the Denver muscles give directly) and rebuild the skin as lean envelope + a prescribed subcutaneous thickness:
+
+1. Per body region, scale the donor's measured thickness map by one factor so that the regional girth hits a target,
+   preserving her own distribution pattern (thicker posteriorly at the calf, anteriorly at the abdomen).
+2. Targets: female circumferences (neck, chest, waist, hip, thigh, calf, upper arm, forearm) at her stature for BMI
+   about 22, from an open anthropometric survey — ANSUR II (US Army, public release) is the obvious candidate; its
+   licence and its fit to a civilian 59-year-old need checking. An alternative reference is subcutaneous thickness
+   measured the same way on normal-BMI female CTs from the TotalSegmentator dataset (CC BY 4.0, includes sex and age),
+   which would give thickness directly instead of girth.
+3. Not addressed by this: visceral fat (the abdominal wall and organs are displaced by it), intramuscular fat
+   (her gluteus maximus is 20 % fat density), breast size, and the supine shape. Those need the same decision for
+   the lean envelope itself and cannot be derived from one donor.
+
+### Pelvic floor and perineum
+
+None of the three sources contains a female pelvic floor, urethra, perineum or external genitalia:
+
+| Structure | CT tasks | Denver | HRA | Male model |
+|---|---|---|---|---|
+| Obturator internus / externus, piriformis, gemelli, quadratus femoris | – | yes | – | yes |
+| Levator ani parts, coccygeus, external anal sphincter | – | – | – | yes (male, Z-Anatomy) |
+| Urethra and sphincters | – | – | bladder neck only | male urethra |
+| Perineal muscles, perineal body, clitoris, vestibular bulbs, labia | – | – | – | – |
+
+External references (licences as found; the first two were downloaded and opened, the rest come from a research
+sub-agent and are not re-verified):
+
+| Candidate | Licence | Content | Status |
+|---|---|---|---|
+| Wu et al., *PLoS ONE* 10(8): e0132226 (2015), interactive 3D-PDF of the female pelvic floor, S3 Fig of the correction (doi:10.1371/journal.pone.0140736.s004) | "Creative Commons Attribution License" (PLOS) | Young adult female (Chinese Visible Human specimen CVH5, cryosections, remodelled). **Inspected:** 10.4 MB U3D stream with 45 named structures, including pubovisceral and puborectal muscle (two parts each), coccygeal muscle, external and internal anal sphincter, urethral sphincter proper, urethral compressor, urethro-vaginal sphincter, deep and superficial transverse perineal muscle, bulbospongiosus, ischiocavernosus, perineal body, **cavernous body of clitoris, vestibular bulb, Bartholin gland**, vaginal and uterine wall, bladder, rectum, pelvic bone | Best candidate. Geometry not extracted: U3D needs a converter this machine does not have. Scale and frame unknown; pelvic bone and sacrum are in the file, so it can be registered like HRA |
+| Routzong et al., Mendeley Data doi:10.17632/75vnsc24wk.1 | CC BY 4.0 (per DataCite) | Mean shape of the levator / coccygeus / perineal / anal sphincter complex from MRI of 48 women, as **one fused surface**. **Inspected:** VTK, 8,327 points, extent 138 × 113 × 91 (millimetre-like; Procrustes-aligned, so scale is not guaranteed) | Shape and position check only; no separate muscles |
+| Wu et al., *Clin Anat* 33:275 (2020), female pelvic floor 3D-PDF | CC BY 4.0 per PMC | Same specimen, teaching model | Download blocked by a captcha; same content family as the first row |
+| Oklahoma State University "Pelvic Organs from MRI" (Sketchfab) | CC BY 4.0 per Sketchfab | 25-year-old living woman: uterus, tubes, ovaries, vagina, **vulva**, bladder, rectum; no muscles | Not downloaded (login). Only real-data vulva found |
+| Clitoris STL (Fillod / Carrefour numérique) on Wikimedia Commons | CC0 per Commons; not confirmed at the original source | Artist-modelled from measurements | Unconfirmed licence |
+| Geneva MRI clitoris models (Thingiverse) | mixed: some "Attribution", some NC-SA | MRI of four women | Unconfirmed licence |
+
+Rejected: Wu et al. 2018 *J Anat* (CC BY-NC), UBC and Lyon models (NC), VIVA+ (LGPL, no pelvic floor anatomy),
+Open3DAnatomy pelvic floor (male, no download). No public female pelvic MRI with pelvic-floor labels was found.
 
 ## Scripts (`tools/register/`)
 
@@ -306,3 +355,6 @@ cartilage +20 %, cranium −13 %) are listed in `SANITY.md`.
 | `build_package.py`, `anchorlib.py` | Frame, joint centres, re-posing, correspondences, manifest, binaries, previews |
 | `hra_place.py` | HRA bones → CT bones, displacement field, organ placement checks |
 | `write_reports.py` | `README.md` and `SANITY.md` from the manifest |
+| `denver_import.py` | Denver STLs → CT frame (per-bone fits, soft-tissue field), seam and bone-edge checks, origin / insertion bones |
+| `fat_thickness.py` | Subcutaneous fat thickness and body composition from the CT |
+| `pelvic_floor_refs.py` | Fetches and lists the two pelvic-floor reference candidates (not part of the package) |
