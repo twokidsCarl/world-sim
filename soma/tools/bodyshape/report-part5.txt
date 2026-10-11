@@ -1,0 +1,174 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第五部分：女性目标皮肤与深层包络；男性皮肤重做（手指缩放、手、腋下）
+
+### 0. 还不对的地方（先说）
+
+女性目标（data/raw/bodyshape/out/female-target/，不是可安装的皮肤包）：
+1. 体积 BMI 是 22.07，不是 21.6。放松前正好 21.60；为了让骨留在皮肤下而做的局部放松加了约 0.5 个 BMI 点。我没有把目标 BMI 改掉，也没有再减脂去凑数：这是骨与女性体型的冲突，如实报告。
+2. 身高 1613 mm（名义 1606；按我的量法她的骨架是 1611）。身高由骨架决定。
+3. 围度没有全部到位（目标 → 得到，mm）：髂嵴腰围 799 → 748，脐腰围 759 → 732，臀围 928 → 976，大腿中段 456 → 481，大腿根 556 → 523，小腿 338 → 322，上臂 267 → 257，胸围 864 → 884，大腿下段 366 → 362，踝 205 → 204，腕 149 → 151。即：腰偏细、臀和大腿中段偏粗，是 MHR 女性体型的固有比例加上她骨盆的缩放，6 个身份系数调不掉。
+4. 头。MHR 的头比她的颅骨小，且没有头的缩放参数：只对齐眼球时两侧顶骨 65 % 露在皮肤外（最远 22 mm）。我对眼以上的颅部做了绕两眼中点的缩放 x 1.09 / y 1.15 / z 1.12（7 cm 宽的平滑过渡，面部不动）。结果颅骨 0 % 在皮肤外，颅盖上头皮 p5 / p50 / p95 = 3.5 / 8.0 / 21.3 mm：中位数合理，枕部偏厚（21 mm）。眼关节到她眼球中心 4.1 / 3.6 mm。我看图：头是正的，但脸偏长、颅顶偏高，不像一张自然的女性面孔；鼻、口、眼睑是 MHR 的，没有与她的面部软组织逐一对应。
+5. 关节没有全部落在 rig.json 的中心上（mm）：盂肱 2.4 / 1.8，肘 7.1 / 9.0，腕 2.1 / 1.8，髋 3.8 / 5.8，踝 3.0 / 2.7，膝 27.1 / 27.0。膝是有意只给小权重（MHR 的膝关节点不在解剖学屈伸轴上，硬对上会把膝部皮肤带偏）；第一版把所有关节硬对上时有 192 块骨贴近或穿出皮肤。指关节多数 0.2–4 mm，左拇指末节 11 mm。
+6. 骨的硬冲突没有全部解决：放松后仍有 15 块骨或软骨有一部分在深层包络之外（见 §2）。最大的是右桡骨（5 % 的面，最远 10.1 mm）和左脚第 1、2 趾远节（60 %、65 %，8.0 / 6.6 mm）。原因是前臂的旋前角度和脚趾的长度与 MHR 不符，不是脂肪厚度。
+7. 乳房：左右各 370 mL 是按文献缩放出来的，但 MHR 在这个姿势下右侧原始体积只有 294 mL（左 369），右侧放大了 1.26 倍；这个不对称来自姿势（肩胛、锁骨）而不是数据。乳房的位置（乳头高度、间距）这次没有量，按你说的留到最后的拟合。
+8. 目标没有做形状场（shape-fat / shape-sex / shape-limit），也没有可安装的 female-skin/：等管线把她的软组织改形、给出新的键以后再做。
+9. 乳房体积的文献值（Steele 2020）是子任务摘录的，我没有重新核对原文。
+
+男性（data/raw/bodyshape/out/male-skin/，已在磁盘上更换，见 §3）：
+10. 腋下只解决了一部分。原因在内部结构：上臂肌与躯干肌从肩到肱骨约 40 % 处是贴着的（间距 0），40–50 % 处只有 3.6 mm，50–60 % 处 8–12 mm。在骨骼决定姿势的前提下，40 % 以上没有任何只改皮肤的可行解；40–50 % 只能留很小的间隙。现在的结果（上臂皮肤在对面躯干皮肤之内的面积，cm2，左 / 右）：25–40 %：3.0 / 7.6 → 1.6 / 4.4；40–50 %：25.2 / 21.5 → 15.3 / 14.8；50–60 %：15.0 / 15.0 → 1.8 / 2.9；60–85 %：2.8 / 1.0 → 0 / 0（最小间隙 7.5 / 8.0 mm）。合计每侧约 46 → 19 cm2。要真正打开腋下，需要内部结构本身外展几度，这是你那边的决定。
+11. 这个量法是我自己的（按蒙皮权重分上臂 / 躯干，法线相对的最近顶点对），不是皮肤图那边的量法；我没有用他们的工具复核。
+12. 男性体积 BMI 是 24.1（目标 23.6，参数化拟合 23.9）：外推包住深部结构加的体积，和上一版一样。
+13. 两大腿内侧皮肤相贴 21.7 / 28.2 cm2（最小间距 0.1 mm），这次没有处理。
+14. 面部：2 块面肌仍有不到 1 % 的采样点在皮肤外 0.4–0.6 mm；腋下整形后肱三头肌长头、背阔肌各有 0.1–0.2 mm 的点在外（0.11 %、0.01 %）。
+
+### 1. 女性目标：做了什么
+
+- 身份系数：由 1606 mm、BMI 21.6 的女性围度目标解出（6 个系数），姿势定了以后再解一次（骨架缩放会改围度），共两轮。
+- 姿势：关节对到 rig.json 的中心（权重为蒙皮拟合时的一半，膝用小权重），同时要求骨在皮肤下 3 mm 以上；手指用逐节长度缩放。骨盆高度、脊柱长度、骨盆深度三个缩放限幅 ±0.6：不限幅时前两个一起跑到 1.5，把会阴拉低约 7 cm、大腿根变细（上一版的图里看得见）。
+- 头：颈、头姿势加头部身份系数，对颅盖、7 个皮下点和两个眼球中心拟合。只用颅盖时头后仰约 25 度、眼高出 41 mm（颅盖近似球面，定不住俯仰）；加眼球后解决。
+- 乳房：每侧按 370 mL 缩放（Steele 2020，BMI 18.5–25 组均值 367 / 378 mL，n = 163）。结果：胸围 884 mm，下胸围 704 mm，自胸壁基面的突出 38.6 / 41.0 mm，体积 371 / 378 mL。
+- 没有为包住内部结构而外推；只为骨做了放松（§2）。
+- 深层包络：皮肤向内偏移“标准皮下脂肪 + 2 mm 皮肤”，名义值（mm）：头 6，颈 6，肩 8.5，胸前 8.0，胸后 7.2，腹前 18.2，腹后 7.2，骨盆 18.7，大腿 12.5，膝 6，小腿 5，足 5，上臂 10.7，前臂 4，手 4.5。头、颈、膝、手、足是假定值，不是文献值。薄的部位不超过局部厚度的 40 %；骨更近处减到骨面外 0.5 mm。乳房下方包络贴着胸壁基面。
+- skin.obj 和 deep-envelope.obj 都是封闭的（每条边恰被两个三角形共用），同拓扑同顶点序。manifest.json：kind = target，basedOn.key = 031ce88117d19693，没有 fittedTo。旧的 female-skin/ 已改名为 female-skin-envelope-v2/，其 fittedTo 改成了 wasFittedTo。
+
+### 2. 冲突图（conflict-map.json / .txt；build.log 里有全表）
+
+现有深部结构对深层包络，按区域（在包络外的表面采样点比例；在外者的 p50 / p95 / max，mm）：
+
+  区域      软组织比例   p50    p95    max  |  骨比例     max
+  头          15.0 %     1.1    4.4   29.3  |  0.00 %    -0.5
+  颈          22.0 %     5.0   15.5   30.1  |  0.00 %    -0.8
+  肩          19.4 %     5.4   19.4   25.9  |  0.00 %    -0.5
+  胸           5.0 %     4.7   19.6   23.1  |  0.00 %    -0.5
+  腹          18.7 %     6.1   19.5   28.8  |  0.51 %     4.5
+  骨盆         4.8 %     6.4   18.7   28.4  |  0.00 %    -0.9
+  大腿        21.6 %    10.7   26.1   32.2  |  0.00 %   -11.4
+  膝          24.4 %     6.6   16.9   23.6  |  0.00 %    -0.7
+  小腿        25.2 %     6.8   20.7   28.6  |  0.00 %    -0.8
+  足          18.3 %     2.1    8.2   14.5  |  2.82 %     8.0
+  上臂        18.5 %     5.7   16.3   25.1  |  0.00 %    -0.5
+  前臂        35.9 %     3.9   13.6   20.8  |  3.70 %    10.1
+  手          21.6 %     1.1    4.2    6.4  |  0.66 %     4.1
+  全部        11.9 %     4.3   18.2   32.2  |  0.52 %    10.1
+
+软组织：1075 个部件里 396 个有部分在包络外。按“比例 × p95”排前面的：右胸锁乳突肌（96 %，p95 23.5 mm，77 % 也在皮肤外）、左右股薄肌（81 %，27 mm）、胸肌间淋巴结（100 %，21–22 mm）、三角肌肩胛棘部（71–81 %，23 mm）、腓肠肌内侧头（64–67 %，22–25 mm）、腹外斜肌（71 %，22 mm）、桡侧腕长伸肌、半膜肌、半腱肌、腹内斜肌、空肠中段等。前 40 名在 conflict-map.txt。
+
+骨（硬冲突）。放松前有 170 块骨或软骨贴近皮肤不足 3 mm 或穿出：右桡骨 +20.9 mm（31 % 在皮肤外），左第 1、2 趾远节 +18.7 / +17.2（100 %），左桡骨 +14.9，第 2 腰椎 +14.8（5 %），右尺骨 +14.4，等等。
+放松的做法：只把骨上方的皮肤沿法线外移到至少盖住骨 3 mm，然后把位移向四周铺开并抹平（缓坡，不是尖包）；两个 OBJ 都用了。上限：手 6 mm，头、前臂、足 12 mm，其余 15 mm。各区域移动超过 0.5 mm 的顶点比例 / 中位数 / 最大（mm）：头 14 % / 2.0 / 11.9；颈 15 % / 2.2 / 10.4；肩 37 % / 2.3 / 12.2；胸 42 % / 2.7 / 11.7；腹 47 % / 3.4 / 14.7；骨盆 1.5 % / 0.8 / 2.7；大腿 3 % / 1.0 / 3.3；膝 49 % / 4.1 / 14.9；小腿 18 % / 1.6 / 12.4；足 46 % / 2.6 / 12.0；上臂 23 % / 2.3 / 14.2；前臂 54 % / 2.7 / 12.0；手 50 % / 1.3 / 6.0。
+放松后仍在包络外的 15 块（在外比例，最远 mm）：左第 1 趾远节 60.6 % / 8.0；左第 2 趾远节 64.6 % / 6.6；左拇指远节 43.9 % / 4.1；右第 2 趾远节 30.0 % / 3.7；左第 3 趾远节 32.0 % / 2.6；左第 7 肋软骨 14.3 % / 4.5；右第 3 趾远节 25.5 % / 2.1；右桡骨 5.1 % / 10.1；右第 1 趾远节 9.6 % / 2.3；右尺骨 7.6 % / 3.6；左第 1 趾近节 8.6 % / 2.3；左第 2 趾中节 8.6 % / 1.8；左桡骨 2.2 % / 4.1；第 2 腰椎 1.1 % / 1.9；左第 6 肋软骨 1.4 % / 1.5。这些地方 3 mm 的最小覆盖没有达到；其余的骨都在包络内至少 0.5 mm。
+
+### 3. 男性皮肤包在磁盘上换了
+
+data/raw/bodyshape/out/male-skin/ 已换成新的一版（文件写于 16:59，目录于 17:07 换入，manifest 里一句说明于 17:33 改过；本地时间）。fittedTo.key 仍是 4bf4e6e4b29d70ad。旧的一版留在 male-skin-prev/。下一次男性构建会取到它，rig 和皮肤图要跟着重做。data/curated/bodyshape/shape-model.json 和 rig-shape.json 已重新生成。
+
+- 手指：用了逐节长度缩放和指尖节点。指尖残差 0.5–2.3 mm，指关节多数 1–5 mm（左拇指第 1 节 8.4 mm）；膝 16.7 mm（有意的小权重）。
+- (a) 手上的重叠皮肤：手部“皮肤贴着皮肤”的面积现在左 1.7 / 右 1.5 cm2（对称）；手部外推最大 3.9 mm。旧包里左 119 / 右 71 cm2 是皮肤图那边量的，我的量法不同，请他们复核。
+- (b) 腋下：见 §0 第 10 条。做法（tools/bodyshape/axilla.py）：不改姿势；在肱骨 36–90 % 范围内，对每个皮肤顶点算“到躯干深部结构的距离 − 到上臂深部结构的距离”，上臂皮肤要求 ≥ 6 mm，躯干皮肤要求 ≤ −6 mm，不满足的各自朝自己一侧的深部结构收进去，单个顶点最多 22 mm，深部结构上至少留 1.5 mm（两侧肌肉相距不足 3 mm 处更少）；位移场抹平两遍；之后再做一小遍包住检查。
+- 包住：1359 个深部部件的 86 万个采样点，在皮肤外的比例 0.0 %（见 §0 第 14 条的 4 个部件）；外生殖器上最少覆盖 3.0 mm（皮肤在那里外推 40.7 mm 成一个隆起，和上一版一样）。
+- 围度（mm）：胸 918（标准 968），髂嵴腰 773（883），臀 902（944），大腿中段 514（483），小腿 392（358），上臂 329（303）。他比标准人群腰细、四肢粗，是他的肌肉决定的。
+
+### 4. 我看图看到的
+
+- female-target/preview-skin.png（正、侧、背）：读作女性：窄肩、腰收、臀宽、有乳房；腿与躯干比例正常。侧面下腹前凸明显，臀后凸。膝前有髌骨的缓包；右前臂背面和左前臂有浅的棱（桡骨、尺骨的放松）；手没有明显的包。头正，但脸长、颅顶高（§0 第 4 条）。背面肩胛下角水平有一条浅的横向明暗交界，是渲染的面片明暗，不是折痕。
+- closeup-head-chest.png：额部和胸骨区是平滑的（上一版这两处是成片的毛刺，放松铺开并抹平后消失）；颈后第 7 颈椎处有一个小突起；右肩后有肩胛冈的小包。
+- preview-skin-conflicts.png：在目标皮肤外的现有深部结构几乎全是肌肉（红）：胸大肌上部、三角肌、斜方肌上部和胸锁乳突肌、背阔肌一整条带、腹外斜肌、前臂伸肌群、腓肠肌和大腿后内侧；臀、乳房、下腹没有。骨（白）只在脚趾处看得到一点。这与表一致：是“男性的肌肉外形 对 女性的皮肤”，不是姿势错位。
+- male-skin/preview-skin.png 和 closeup-axilla-skin.png：腋窝从上臂中段起是开的，没有锯齿（第一次试的做法在腋顶撕出了锯齿状的缺口，已改）；手正常；眼睑处粗糙，和上一版一样。
+
+### 5. 重新生成
+
+  bun tools/bodyshape/export-parts.ts male female
+  python tools/bodyshape/build_target.py --bmi 21.6            # 女性目标；加 --reuse-pose 复用上次的姿势和头
+  python tools/bodyshape/fit_skin.py male --out male-skin-next
+  python tools/bodyshape/enclose_skin.py male --dir male-skin-next    # 含腋下整形；--no-separate 关掉
+  python tools/bodyshape/shape_fields.py male --dir male-skin-next
+  python tools/bodyshape/build_shape_model.py
+
+（python 指 data/raw/bodyshape/.venv 里的解释器。）新文件：tools/bodyshape/axilla.py；改过：build_target.py、enclose_skin.py。build_target.py 的起始姿势取自 female-skin-envelope-v2/fit-state-envelope.npz，只要骨的键不变就可用。
+
+
+## Part 5: the female target skin and deep envelope; the male skin redone (finger scales, hands, axilla)
+
+### 0. What is still wrong (first)
+
+Female target (data/raw/bodyshape/out/female-target/, not an installable skin package):
+1. BMI by volume is 22.07, not 21.6. It was exactly 21.60 before the relaxation; the local relaxation that keeps bone under the skin added about 0.5 BMI points. I did not change the target BMI and did not take fat off to make the number: this is a conflict between her bones and the female shape, reported as it is.
+2. Stature is 1613 mm (nominal 1606; her skeleton is 1611 by my measure). The skeleton sets the stature.
+3. Not every girth is met (target -> got, mm): waist at the iliac crest 799 -> 748, waist at the navel 759 -> 732, buttock 928 -> 976, mid thigh 456 -> 481, proximal thigh 556 -> 523, calf 338 -> 322, upper arm 267 -> 257, chest 864 -> 884, lower thigh 366 -> 362, ankle 205 -> 204, wrist 149 -> 151. So the waist is narrow and the buttock and mid thigh full: the proportions of MHR's female shape plus the scaling of her pelvis, which six identity coefficients cannot remove.
+4. The head. MHR's head is smaller than her skull and has no head scale: with only the eyeballs aligned, 65 % of each parietal bone lay outside the skin (up to 22 mm). I scaled the cranium above the eyes about the midpoint of the eyes by x 1.09 / y 1.15 / z 1.12 (a smooth 7 cm transition; the face is not scaled). Result: 0 % of the skull outside the skin; scalp over the vault p5 / p50 / p95 = 3.5 / 8.0 / 21.3 mm, a plausible median and too thick at the occiput (21 mm). Eye joints lie 4.1 / 3.6 mm from her eyeball centres. In the picture the head is upright, but the face is long and the crown high; it does not read as a natural female face, and nose, mouth and eyelids are MHR's, not matched to her facial soft tissue.
+5. Not every joint sits on its rig.json centre (mm): glenohumeral 2.4 / 1.8, elbow 7.1 / 9.0, wrist 2.1 / 1.8, hip 3.8 / 5.8, ankle 3.0 / 2.7, knee 27.1 / 27.0. The knee has a small weight on purpose (MHR's knee joint is not on the anatomical flexion axis, and pinning it drags the knee skin off); the first version, with every joint pinned, had 192 bones against or through the skin. Finger joints are mostly 0.2-4 mm; the distal joint of the left thumb is 11 mm off.
+6. The hard conflicts with bone are not all resolved: after the relaxation 15 bones or cartilages still have part of their surface outside the deep envelope (section 2). The largest are the right radius (5 % of its surface, up to 10.1 mm) and the distal phalanges of the left first and second toes (60 % and 65 %, 8.0 / 6.6 mm). The cause is the pronation of the forearm and the length of the toes against MHR, not fat thickness.
+7. Breasts: 370 mL on each side is scaled from the literature, but in this pose MHR's own shape had only 294 mL on the right (369 on the left), so the right was enlarged by 1.26. That asymmetry comes from the pose (scapula, clavicle), not from data. Breast placement (nipple height, spacing) was not measured this time; as you said, it belongs to the final fit.
+8. The target has no shape fields (shape-fat / shape-sex / shape-limit), and there is no installable female-skin/: both wait until the pipeline has reshaped her soft tissue and there is a new key.
+9. The breast-volume figure (Steele 2020) was extracted by a sub-task; I have not re-checked it against the paper.
+
+Male (data/raw/bodyshape/out/male-skin/, replaced on disk, see section 3):
+10. The axilla is only partly solved, and the reason is in the internals: the muscles of the arm and of the trunk touch (0 mm apart) from the shoulder to about 40 % down the humerus, lie 3.6 mm apart at 40-50 % and 8-12 mm apart at 50-60 %. With the bones defining the pose there is no skin-only answer above 40 %, and only a very small gap is possible at 40-50 %. Result now (area of arm skin lying inside the trunk skin facing it, cm2, left / right): 25-40 %: 3.0 / 7.6 -> 1.6 / 4.4; 40-50 %: 25.2 / 21.5 -> 15.3 / 14.8; 50-60 %: 15.0 / 15.0 -> 1.8 / 2.9; 60-85 %: 2.8 / 1.0 -> 0 / 0 (least gap 7.5 / 8.0 mm). In total about 46 -> 19 cm2 per side. Really opening the axilla needs the internals themselves abducted by a few degrees, which is your decision.
+11. That measure is my own (arm and trunk separated by skin weights, nearest vertex pairs with opposing normals), not the skin-map agent's; I have not checked the result with their tool.
+12. The male BMI by volume is 24.1 (target 23.6, parametric fit 23.9): the volume added by pushing the skin out to enclose the deep parts, as in the previous version.
+13. Skin of the two medial thighs lies against each other over 21.7 / 28.2 cm2 (least distance 0.1 mm); not addressed this time.
+14. Face: two facial muscles still have under 1 % of their samples 0.4-0.6 mm outside the skin; after the axilla step the long head of triceps and latissimus dorsi each have points 0.1-0.2 mm outside (0.11 % and 0.01 %).
+
+### 1. The female target: what was done
+
+- Identity: solved from the female girth targets at 1606 mm and BMI 21.6 (six coefficients), and solved again after the pose (skeleton scales change the girths), two rounds.
+- Pose: joints to the rig.json centres (half the weight of the skin fit, small weight on the knee) while bone must stay 3 mm under the skin; fingers with per-segment length scales. The hip-height, spine-length and hip-depth scales are bounded at +/-0.6: unbounded, the first two ran off together to 1.5, which pulled the perineum about 7 cm down and thinned the top of the thigh (visible in the previous render).
+- Head: neck and head pose plus the head identity, fitted to the vault, seven subcutaneous points and the two eyeball centres. With the vault alone the head came out pitched back about 25 degrees with the eyes 41 mm high (the vault is nearly a sphere and cannot fix the pitch); the eyeballs fixed that.
+- Breasts: scaled to 370 mL per side (Steele 2020, class mean 367 / 378 mL at BMI 18.5-25, n = 163). Result: bust girth 884 mm, underbust 704 mm, projection from the chest-wall base 38.6 / 41.0 mm, volume 371 / 378 mL.
+- No push-out to enclose the internals; relaxation for bone only (section 2).
+- Deep envelope: the skin offset inwards by "standard subcutaneous fat + 2 mm of skin"; nominal values (mm): head 6, neck 6, shoulder 8.5, chest front 8.0, chest back 7.2, abdomen front 18.2, abdomen back 7.2, pelvis 18.7, thigh 12.5, knee 6, calf 5, foot 5, upper arm 10.7, forearm 4, hand 4.5. Head, neck, knee, hand and foot are assumed values, not from the literature. In thin parts at most 40 % of the local thickness; where bone is closer, reduced to 0.5 mm outside the bone. Under the breasts the envelope follows the chest-wall base.
+- skin.obj and deep-envelope.obj are both closed (every edge shared by exactly two triangles), with the same topology and vertex order. manifest.json: kind = target, basedOn.key = 031ce88117d19693, no fittedTo. The old female-skin/ is renamed female-skin-envelope-v2/ and its fittedTo is now wasFittedTo.
+
+### 2. Conflict map (conflict-map.json / .txt; the full table is in build.log)
+
+Present deep parts against the deep envelope, by region (share of surface samples outside; of those outside p50 / p95 / max, mm):
+
+  region      SOFT share   p50    p95    max  |  BONE share   max
+  head          15.0 %     1.1    4.4   29.3  |   0.00 %     -0.5
+  neck          22.0 %     5.0   15.5   30.1  |   0.00 %     -0.8
+  shoulder      19.4 %     5.4   19.4   25.9  |   0.00 %     -0.5
+  chest          5.0 %     4.7   19.6   23.1  |   0.00 %     -0.5
+  abdomen       18.7 %     6.1   19.5   28.8  |   0.51 %      4.5
+  pelvis         4.8 %     6.4   18.7   28.4  |   0.00 %     -0.9
+  thigh         21.6 %    10.7   26.1   32.2  |   0.00 %    -11.4
+  knee          24.4 %     6.6   16.9   23.6  |   0.00 %     -0.7
+  calf          25.2 %     6.8   20.7   28.6  |   0.00 %     -0.8
+  foot          18.3 %     2.1    8.2   14.5  |   2.82 %      8.0
+  upper arm     18.5 %     5.7   16.3   25.1  |   0.00 %     -0.5
+  forearm       35.9 %     3.9   13.6   20.8  |   3.70 %     10.1
+  hand          21.6 %     1.1    4.2    6.4  |   0.66 %      4.1
+  all           11.9 %     4.3   18.2   32.2  |   0.52 %     10.1
+
+Soft: 396 of 1075 parts have some surface outside the envelope. Leading by "share x p95": right sternocleidomastoid (96 %, p95 23.5 mm, 77 % also outside the skin), left and right gracilis (81 %, 27 mm), interpectoral nodes (100 %, 21-22 mm), spinal part of deltoid (71-81 %, 23 mm), medial head of gastrocnemius (64-67 %, 22-25 mm), external oblique (71 %, 22 mm), extensor carpi radialis longus, semimembranosus, semitendinosus, internal oblique, middle jejunum and so on. The top 40 are in conflict-map.txt.
+
+Bone (hard conflicts). Before the relaxation 170 bones or cartilages came within 3 mm of the skin or crossed it: right radius +20.9 mm (31 % outside the skin), distal phalanges of the left first and second toes +18.7 / +17.2 (100 %), left radius +14.9, second lumbar vertebra +14.8 (5 %), right ulna +14.4, and so on.
+The relaxation: only the skin over a bone is moved out along its normal until the bone has at least 3 mm of cover, then the displacement is spread and smoothed (a gentle mound, not a sharp lump); it is applied to both OBJ files. Caps: hand 6 mm; head, forearm and foot 12 mm; elsewhere 15 mm. Share of vertices moved more than 0.5 mm / their median / maximum (mm) by region: head 14 % / 2.0 / 11.9; neck 15 % / 2.2 / 10.4; shoulder 37 % / 2.3 / 12.2; chest 42 % / 2.7 / 11.7; abdomen 47 % / 3.4 / 14.7; pelvis 1.5 % / 0.8 / 2.7; thigh 3 % / 1.0 / 3.3; knee 49 % / 4.1 / 14.9; calf 18 % / 1.6 / 12.4; foot 46 % / 2.6 / 12.0; upper arm 23 % / 2.3 / 14.2; forearm 54 % / 2.7 / 12.0; hand 50 % / 1.3 / 6.0.
+Still outside the envelope after the relaxation, 15 parts (share outside, furthest mm): distal phalanx of left big toe 60.6 % / 8.0; of left second toe 64.6 % / 6.6; of left thumb 43.9 % / 4.1; of right second toe 30.0 % / 3.7; of left third toe 32.0 % / 2.6; left seventh costal cartilage 14.3 % / 4.5; distal phalanx of right third toe 25.5 % / 2.1; right radius 5.1 % / 10.1; distal phalanx of right big toe 9.6 % / 2.3; right ulna 7.6 % / 3.6; proximal phalanx of left big toe 8.6 % / 2.3; middle phalanx of left second toe 8.6 % / 1.8; left radius 2.2 % / 4.1; second lumbar vertebra 1.1 % / 1.9; left sixth costal cartilage 1.4 % / 1.5. At these places the 3 mm minimum cover is not met; every other bone lies at least 0.5 mm inside the envelope.
+
+### 3. The male skin package changed on disk
+
+data/raw/bodyshape/out/male-skin/ now holds the new version (files written at 16:59, directory swapped in at 17:07, one sentence of the manifest edited at 17:33; local time). fittedTo.key is still 4bf4e6e4b29d70ad. The previous version is kept in male-skin-prev/. The next male build will pick it up, and rig and skin maps must follow. data/curated/bodyshape/shape-model.json and rig-shape.json were regenerated.
+
+- Fingers: per-segment length scales and fingertip nodes are used. Fingertip residuals 0.5-2.3 mm, finger joints mostly 1-5 mm (first joint of the left thumb 8.4 mm); knee 16.7 mm (small weight on purpose).
+- (a) Overlapping sheets on the hand: skin lying against skin on the hands is now 1.7 cm2 left / 1.5 cm2 right (symmetric); the largest push-out on the hand is 3.9 mm. The 119 / 71 cm2 of the old package were measured by the skin-map agent with a different measure, so please have them check.
+- (b) Axilla: see item 10 of section 0. Method (tools/bodyshape/axilla.py): the pose is untouched; over 36-90 % of the humerus, "distance to the deep parts of the trunk minus distance to the deep parts of the arm" is computed for every skin vertex; arm skin must have at least +6 mm and trunk skin at most -6 mm, and vertices that fail are drawn towards the deep parts of their own side, by at most 22 mm each, leaving at least 1.5 mm over the deep parts (less where the muscles of the two sides are under 3 mm apart); the displacement field is smoothed twice, and a short enclosure pass follows.
+- Enclosure: of 860 thousand samples on 1359 deep parts, 0.0 % outside the skin (the four parts of item 14); least cover over the external genitalia 3.0 mm (the skin is pushed out 40.7 mm into a mound there, as before).
+- Girths (mm): chest 918 (standard 968), waist at the iliac crest 773 (883), buttock 902 (944), mid thigh 514 (483), calf 392 (358), upper arm 329 (303). He has a narrower waist and thicker limbs than the standard population, which is his musculature.
+
+### 4. What I saw in the renders
+
+- female-target/preview-skin.png (front, side, back): it reads as female: narrow shoulders, a waist, wide hips, breasts; legs and trunk are in proportion. From the side the lower abdomen comes forward clearly and the buttock stands out behind. There is a gentle mound over each patella; the back of the right forearm and the left forearm show shallow ridges (relaxation over radius and ulna); the hands have no obvious lumps. The head is upright but the face is long and the crown high (item 4 of section 0). On the back a faint horizontal change of shade at the level of the lower scapula is facet shading in the render, not a crease.
+- closeup-head-chest.png: forehead and sternum are smooth (in the previous version both were patches of roughness, gone after the relaxation was spread and smoothed); a small prominence at the seventh cervical vertebra; a small bump over the spine of the right scapula.
+- preview-skin-conflicts.png: the present deep parts outside the target skin are almost all muscle (red): upper pectoralis major, deltoid, upper trapezius and sternocleidomastoid, a whole band of latissimus dorsi, external oblique, the forearm extensors, gastrocnemius and the posteromedial thigh; none at the buttock, breast or lower abdomen. Bone (white) shows only a little at the toes. This agrees with the table: a male muscle shape against a female skin, not a misplaced pose.
+- male-skin/preview-skin.png and closeup-axilla-skin.png: the axilla is open from mid-arm down with no jagged edge (the first method I tried tore a jagged notch at the top of the armpit; changed); hands look normal; the eyelids are rough, as before.
+
+### 5. Regenerating
+
+  bun tools/bodyshape/export-parts.ts male female
+  python tools/bodyshape/build_target.py --bmi 21.6            # female target; add --reuse-pose to reuse the pose and head of the last run
+  python tools/bodyshape/fit_skin.py male --out male-skin-next
+  python tools/bodyshape/enclose_skin.py male --dir male-skin-next    # includes the axilla step; --no-separate turns it off
+  python tools/bodyshape/shape_fields.py male --dir male-skin-next
+  python tools/bodyshape/build_shape_model.py
+
+(python is the interpreter in data/raw/bodyshape/.venv.) New file: tools/bodyshape/axilla.py; changed: build_target.py, enclose_skin.py. build_target.py takes its starting pose from female-skin-envelope-v2/fit-state-envelope.npz, which stays usable while the bone key is unchanged.

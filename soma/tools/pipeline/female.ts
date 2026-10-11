@@ -47,6 +47,7 @@
 //   5. clean-up  collisions with her bones, nerve tubes rebuilt from warped centrelines
 //   6. checks, adjacency, trees, output
 
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { AnatomyData, Concept, NervePath, Part, Provenance, SourceInfo, SystemDef, SystemId, TissueId } from '../../src/anatomy/types.ts'
@@ -63,8 +64,10 @@ import { runLandmarkChecks, slabCentroid } from './landmarks.ts'
 import { buildWuParts, HRA_REPLACED_BY_WU, pelvisChecks, perineumAgainstSkin, reconcilePelvis, SOURCE_WU, WU_NOT_SHIPPED, WU_SPECS, type WuBuildRow, type WuSpec } from './pelvis.ts'
 import { spliceTendons } from './splice.ts'
 import { depthOf, LAYERS } from './layers.ts'
+import { signedVolume } from './meshRepair.ts'
 import { applyRigid, buildDeformation, buildTwoLevelDeformation, fitRigid, fitSimilarity, icp, InsideTester, PointIndex, surfaceDistance, surfacePoints, thinPoints, type Deformation, type Rigid } from './register.ts'
 import { checkSkinFit, internalsKey, loadSkinPackage, type SkinPackage } from './skinPackage.ts'
+import { loadShapeTarget, medianDistanceToBone, reshapeIntoEnvelope, type ShapeRole } from './shape.ts'
 import { buildSlimmer, sectionGirth, type SlimSegment } from './slim.ts'
 import { anthro, anthroNhanes, anthroSd, boneLandmarks, mapPoints, planStandard, skeletalMeasures, type AnthroModel, type PointMap, type StandardPlan, type StandardTargets, type Vec3 } from './standard.ts'
 import type { Polyline } from './tube.ts'
@@ -148,6 +151,27 @@ const SOLE_PAD = 0.008
 /** 外部皮肤包的位置（相对项目根）和装入后皮肤部件的 id / where the external skin package lives (relative to the project root) and the skin part's id once installed */
 const SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/female-skin'
 const EXTERNAL_SKIN_ID = 'SOMA_skin'
+/**
+ * 体形目标包的位置（相对项目根）：目标体表和深层包络，见 shape.ts。不存在时跳过体形重塑。
+ * Where the body-shape target package lives (relative to the project root): target skin and deep envelope, see shape.ts. Without it the body-shape stage is skipped.
+ */
+const SHAPE_TARGET_DIR = 'data/raw/bodyshape/out/female-target'
+/** 表面到骨的距离中位数超过它的韧带算“游离”的，随软组织移动 / a ligament whose surface lies further than this from bone (median) spans free and moves with the soft tissue */
+const FREE_LIGAMENT = 0.008
+/**
+ * 女性与男性骨骼肌量之比，用作由男性形变而来的肌的体积下限（她自己的肌不受此限）。
+ * 出处：Janssen I, Heymsfield SB, Wang ZM, Ross R. Skeletal muscle mass and distribution in 468 men and women aged 18–88 yr.
+ * J Appl Physiol 2000;89(1):81–88, doi:10.1152/jappl.2000.89.1.81。摘要原文：全身 MRI，男性骨骼肌 33.0 kg、女性 21.0 kg；
+ * “性别差异上半身（40 %）大于下半身（33 %）”。只核对了摘要；上、下半身的分界在正文里，没有核对，这里取髂嵴最高点。
+ * Ratio of female to male skeletal muscle mass, used as the volume floor of muscles warped from the male (her own muscles are not bound by it).
+ * Source: Janssen I, Heymsfield SB, Wang ZM, Ross R. Skeletal muscle mass and distribution in 468 men and women aged 18–88 yr.
+ * J Appl Physiol 2000;89(1):81–88, doi:10.1152/jappl.2000.89.1.81. From the abstract: whole-body MRI, skeletal muscle 33.0 kg in men and
+ * 21.0 kg in women; "the gender differences were greater in the upper (40%) than lower (33%) body". Only the abstract was checked; where
+ * the paper divides upper from lower body is in its full text and was not checked, so the top of the iliac crest is used here.
+ */
+const MUSCLE_SEX_RATIO = { source: 'Janssen et al. 2000, J Appl Physiol 89(1):81-88, doi:10.1152/jappl.2000.89.1.81 (abstract)', upperBody: 0.6, lowerBody: 0.67, division: 'top of the iliac crest (assumed; not taken from the paper)' }
+/** 体形重塑的版本号：算法或参数一改就加一，内部结构指纹随之改变 / version of the body-shape stage: raised whenever the algorithm or its parameters change, which changes the internals fingerprint */
+const SHAPE_STAGE_VERSION = 2
 const SCALP = 0.006
 const FOOT_BONE = /calcane|talus|cuboid|cuneiform|navicular|metatarsal/i
 const HAND_BONE = /scaphoid|lunate|triquetr|pisiform|trapezi|trapezoid|capitate|hamate|metacarpal|finger|thumb/i
@@ -1416,6 +1440,25 @@ async function main() {
   await finish({ parts, male, fa, fmaNames, report, notes, outDir, lap, dropped, realNotes, insideBone, pushedParts, nerveStats, hra, notUsed, lumbarConcept, dy, standard, restack: RESTACK, wuExtras, hraReplaced })
 }
 
+/**
+ * 调试用的部件快照：parts.json（元数据和偏移）+ parts.bin（顶点、索引、中心线）。
+ * Debugging snapshot of parts: parts.json (metadata and offsets) + parts.bin (vertices, indices, centrelines).
+ */
+function writePartSnapshot(dir: string, all: { p: FPart; kind: string }[]): void {
+  mkdirSync(dir, { recursive: true })
+  const chunks: Uint8Array[] = []
+  let off = 0
+  const put = (a: Float32Array | Uint32Array) => {
+    const u = new Uint8Array(a.buffer, a.byteOffset, a.byteLength)
+    chunks.push(Uint8Array.from(u))
+    off += u.byteLength
+    return off - u.byteLength
+  }
+  const meta = all.map(({ p, kind }) => ({ kind, id: p.id, fma: p.fma, name: p.name, system: p.system, tissue: p.tissue, side: p.side, provenance: p.provenance, source: p.source, male: p.male, nv: p.mesh.positions.length / 3, ni: p.mesh.indices.length, po: put(p.mesh.positions), io: put(p.mesh.indices), lines: (p.centrelines ?? []).map((l) => ({ n: l.radius.length, po: put(l.points), ro: put(l.radius) })) }))
+  writeFileSync(join(dir, 'parts.json'), JSON.stringify(meta))
+  writeFileSync(join(dir, 'parts.bin'), Buffer.concat(chunks))
+}
+
 interface FinishInput {
   parts: FPart[]
   male: Awaited<ReturnType<typeof loadBuiltBody>>
@@ -1450,19 +1493,7 @@ async function finish(input: FinishInput) {
   // debugging aid: all parts as they enter the pelvic reconciliation are dumped (SOMA_PELVIS_SNAPSHOT=<dir>), so that this step can be rerun alone; the build stops there and writes no output
   if (process.env.SOMA_PELVIS_SNAPSHOT) {
     const dir = process.env.SOMA_PELVIS_SNAPSHOT
-    mkdirSync(dir, { recursive: true })
-    const all = [...parts.map((p) => ({ p, kind: 'part' })), ...input.hraReplaced.map((p) => ({ p, kind: 'hraReplaced' })), ...[...input.wuExtras].map(([k, mesh]) => ({ p: { id: `WUX_${k}`, name: k, mesh } as FPart, kind: 'wuExtra' }))]
-    const chunks: Uint8Array[] = []
-    let off = 0
-    const put = (a: Float32Array | Uint32Array) => {
-      const u = new Uint8Array(a.buffer, a.byteOffset, a.byteLength)
-      chunks.push(Uint8Array.from(u))
-      off += u.byteLength
-      return off - u.byteLength
-    }
-    const meta = all.map(({ p, kind }) => ({ kind, id: p.id, fma: p.fma, name: p.name, system: p.system, tissue: p.tissue, side: p.side, provenance: p.provenance, source: p.source, male: p.male, nv: p.mesh.positions.length / 3, ni: p.mesh.indices.length, po: put(p.mesh.positions), io: put(p.mesh.indices), lines: (p.centrelines ?? []).map((l) => ({ n: l.radius.length, po: put(l.points), ro: put(l.radius) })) }))
-    writeFileSync(join(dir, 'parts.json'), JSON.stringify(meta))
-    writeFileSync(join(dir, 'parts.bin'), Buffer.concat(chunks))
+    writePartSnapshot(dir, [...parts.map((p) => ({ p, kind: 'part' })), ...input.hraReplaced.map((p) => ({ p, kind: 'hraReplaced' })), ...[...input.wuExtras].map(([k, mesh]) => ({ p: { id: `WUX_${k}`, name: k, mesh } as FPart, kind: 'wuExtra' }))])
     console.log(`  pelvis snapshot written to ${dir}; stopping here`)
     return
   }
@@ -1811,15 +1842,94 @@ async function finish(input: FinishInput) {
     lap('muscle envelope slimmed')
   }
 
+  // 调试用：把进入体形重塑之前的全部部件存盘（SOMA_SHAPE_SNAPSHOT=<目录>），便于单独重跑这一步；构建到此为止，不写输出
+  // debugging aid: all parts as they enter the body-shape stage are dumped (SOMA_SHAPE_SNAPSHOT=<dir>), so that this step can be rerun alone; the build stops there and writes no output
+  if (process.env.SOMA_SHAPE_SNAPSHOT) {
+    writePartSnapshot(process.env.SOMA_SHAPE_SNAPSHOT, parts.map((p) => ({ p, kind: 'part' })))
+    console.log(`  shape snapshot written to ${process.env.SOMA_SHAPE_SNAPSHOT}; stopping here`)
+    return
+  }
+
+  // ── 5g. 体形：把软的深部结构收进目标体表之下的深层包络（见 shape.ts）
+  // 目标包存在、且是按本次的骨架做的，才执行；否则什么都不做，构建结果与没有这一步时完全一样。
+  // 不动的：骨、软骨、牙；贴着关节的韧带；Wu 的盆底各部；HRA 的器官；她自己 CT 里的内脏；眼球和脑。
+  // 决定位移场的：肌、腱和形变来的器官（含淋巴结）。跟着场走的：血管、神经（连同中心线）、筋膜、游离的韧带。
+  // 占位皮肤、乳腺不动：最终的皮肤要按这一步之后的内部结构另行拟合。
+  // ── 5g. Body shape: the soft deep parts brought inside the deep envelope under the target body surface (see shape.ts)
+  // Runs only when the target package is there and was made for this skeleton; otherwise nothing
+  // happens and the build is exactly what it is without this step.
+  // Not moved: bone, cartilage, teeth; ligaments lying on joints; the Wu pelvic parts; the HRA organs;
+  // viscera from her own CT; the eyes and the brain. Driving the field: muscles, tendons and warped
+  // organs (lymph nodes included). Carried by it: vessels, nerves (centrelines too), fasciae, ligaments
+  // that span free. The placeholder skin and the breasts stay: the final skin is to be fitted to the
+  // internals as they are after this step.
+  if (!process.env.SOMA_NO_SHAPE) {
+    const target = loadShapeTarget(join(ROOT, SHAPE_TARGET_DIR))
+    if (target) {
+      const key = internalsKey(parts.filter((p) => p.tissue === 'bone').map((p) => ({ name: p.name, bbox: measure(p.mesh).bbox })))
+      const head = { dir: SHAPE_TARGET_DIR, basedOn: target.basedOn, internalsKeyBeforeShape: key, envelopeSha1: target.envelopeSha1 }
+      if (target.basedOn?.body !== 'female' || target.basedOn.key !== key) {
+        const reason = !target.basedOn ? 'the package does not say which internals it was made for (manifest.basedOn missing)' : 'made for other internals'
+        console.log(`\nBody shape: target package ${SHAPE_TARGET_DIR} not used (${reason}); this build's internals key is ${key}`)
+        report.bodyShape = { ...head, applied: false, reason }
+      } else {
+        console.log(`\nBody shape: soft deep parts into the deep envelope of ${SHAPE_TARGET_DIR} (envelope ${target.envelopeSha1})`)
+        const hard = (p: FPart) => p.tissue === 'bone' || p.tissue === 'tooth' || p.tissue === 'cartilage'
+        const DRIVING = new Set<string>(['muscle', 'tendon', 'organ', 'gland', 'heart', 'brain'])
+        const toBone = medianDistanceToBone(parts.filter((p) => p.tissue === 'ligament' && p.system !== 'integumentary' && p.source !== SOURCE_WU.name && p.source !== SOURCE_HRA.name), parts.filter(hard))
+        const freeLigaments = parts.filter((p) => (toBone.get(p.id) ?? 0) > FREE_LIGAMENT).map((p) => p.name).sort()
+        const byId = new Map(parts.map((p) => [p.id, p]))
+        const roleOf = (q: { id: string }): ShapeRole => {
+          const p = byId.get(q.id)!
+          if (hard(p)) return 'bone'
+          if (p.system === 'integumentary') return 'ignored'
+          if (p.source === SOURCE_WU.name || p.source === SOURCE_HRA.name) return 'fixed'
+          if (p.tissue === 'ligament') return (toBone.get(p.id) ?? 0) > FREE_LIGAMENT ? 'follower' : 'fixed'
+          if (p.source === SOURCE_VHF.name && p.tissue !== 'muscle' && p.tissue !== 'tendon') return 'fixed'
+          if (p.system === 'nervous' && p.tissue !== 'nerve') return 'fixed'
+          // 淋巴结随场走，每个结整体平移，不参与决定位移场 / lymph nodes go with the field, each translated whole, and do not drive it
+          if (p.system === 'lymphatic' && /\bnodes?\b/i.test(p.name)) return 'rigid'
+          return DRIVING.has(p.tissue) ? 'driver' : 'follower'
+        }
+        // 体积下限：由男性形变而来的肌，按部位合计不低于“性别比 × 男性原肌体积”
+        // volume floor: muscles warped from the male keep, summed per region, at least "sex ratio × the male muscle's volume"
+        const crestTop = Math.max(...parts.filter((p) => /hip bone/i.test(p.name) && p.tissue === 'bone').map((p) => measure(p.mesh).bbox[4]))
+        const referenceVolumeMl = (q: { id: string }): number | null => {
+          const p = byId.get(q.id)!
+          if (!p.male || p.source === SOURCE_VHF.name || p.source === SOURCE_DENVER.name || p.source === SOURCE_WU.name) return null
+          const m = male.meshes.get(p.male)
+          if (!m) return null
+          return (measure(p.mesh).centroid[1] > crestTop ? MUSCLE_SEX_RATIO.upperBody : MUSCLE_SEX_RATIO.lowerBody) * Math.abs(signedVolume(m)) * 1e6
+        }
+        const shape = reshapeIntoEnvelope(parts, roleOf, target.envelope, { referenceVolumeMl }, (l) => console.log(`  ${l}`))
+        console.log(`  ${pad('region', 10)}${pad('outside before', 16)}${pad('after', 8)}${pad('p95 mm before', 15)}${pad('after', 8)}muscle volume ml before → after`)
+        for (const [k, b] of Object.entries(shape.outside.before)) {
+          const a = shape.outside.after[k]!
+          const v = shape.volume.byRegion[k]
+          console.log(`  ${pad(k, 10)}${pad(`${(b.outside * 100).toFixed(1)} %`, 16)}${pad(`${(a.outside * 100).toFixed(1)} %`, 8)}${pad(b.p95Mm, 15)}${pad(a.p95Mm, 8)}${v ? `${v.beforeMl} → ${v.afterMl} (${(v.change * 100).toFixed(1)} %)` : ''}`)
+        }
+        console.log(`  worst after: ${shape.worstAfter.slice(0, 8).map((w) => `${w.name} ${(w.outside * 100).toFixed(0)} % (p95 ${w.p95Mm} mm)`).join(', ')}`)
+        console.log(`  muscles that lost more than 25 % of their volume (${shape.volume.flagged.length}; kept, noted in the report): ${shape.volume.flagged.slice(0, 12).map((m) => `${m.name} ${(m.change * 100).toFixed(0)} %`).join(', ')}${shape.volume.flagged.length > 12 ? ', …' : ''}`)
+        console.log(`  not moved, outside the envelope: bone ${((shape.notMoved.bone.byRegion.all?.outside ?? 0) * 100).toFixed(2)} % of surface (${shape.notMoved.bone.parts.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(0)} %, ${w.maxMm} mm`).join('; ')}); other fixed parts ${(shape.notMoved.fixed.all.outside * 100).toFixed(2)} % (${shape.notMoved.fixed.parts.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(0)} %`).join('; ')})`)
+        report.bodyShape = { ...head, applied: true, stageVersion: SHAPE_STAGE_VERSION, muscleSexRatio: MUSCLE_SEX_RATIO, freeLigaments, ...shape }
+        lap('soft deep parts reshaped into the target envelope')
+      }
+    }
+  }
+
   // ── 5e. 外部皮肤包：与本次内部结构匹配时装入，替换占位皮肤（见 skinPackage.ts）
   // ── 5e. External skin package: installed when it matches these internals, replacing the placeholder skin (see skinPackage.ts)
   let installedSkin: SkinPackage | null = null
   {
-    const key = internalsKey(parts.filter((p) => p.tissue === 'bone').map((p) => ({ name: p.name, bbox: measure(p.mesh).bbox })))
+    // 指纹：骨的名称和包围盒；做过体形重塑时再并入它的版本、所用包络和参数——软组织变了，按旧软组织拟合的皮肤也就失效
+    // fingerprint: names and bounding boxes of the bones; when the body-shape stage ran, its version, the envelope it used and its options are mixed in — the soft tissue changed, and a skin fitted to the old one is no longer valid
+    const boneKey = internalsKey(parts.filter((p) => p.tissue === 'bone').map((p) => ({ name: p.name, bbox: measure(p.mesh).bbox })))
+    const shaped = report.bodyShape as { applied?: boolean; envelopeSha1?: string; options?: unknown } | undefined
+    const key = shaped?.applied ? createHash('sha1').update(`${boneKey}\nbody-shape v${SHAPE_STAGE_VERSION}\n${shaped.envelopeSha1}\n${JSON.stringify(shaped.options)}\n${JSON.stringify(MUSCLE_SEX_RATIO)}`).digest('hex').slice(0, 16) : boneKey
     const pkg = loadSkinPackage(join(ROOT, SKIN_PACKAGE_DIR))
     const skin = parts.find((p) => p.name === 'Skin' && p.tissue === 'skin')
     const deepOf = () => parts.filter((p) => FAT_DEEP_TISSUES.has(p.tissue) && p.system !== 'integumentary').map((p) => ({ name: p.name, mesh: p.mesh }))
-    const row: Record<string, unknown> = { dir: SKIN_PACKAGE_DIR, internalsKey: key, present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false }
+    const row: Record<string, unknown> = { dir: SKIN_PACKAGE_DIR, internalsKey: key, ...(shaped?.applied ? { internalsKeyBeforeShape: boneKey } : {}), present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false }
     if (pkg && skin && pkg.fittedTo?.body === 'female' && pkg.fittedTo.key === key) {
       skin.mesh = pkg.mesh
       skin.id = EXTERNAL_SKIN_ID
@@ -2319,6 +2429,10 @@ async function finish(input: FinishInput) {
         ? `体表是按这副骨架和肌肉包络拟合的参数化模型皮肤（${(installedSkin as SkinPackage).source.name}），不是扫描所得。其内的乳房是站立位形态的美术模型。`
         : '体表是占位用的：男性皮肤按这副骨架形变后，再在乳房处抬高成平滑包络，仍带有男性外生殖器，并不反映女性的体形和脂肪分布，之后将换成标准女性皮肤。乳房本身是站立位形态的美术模型。',
     },
+    ...((report.bodyShape as { applied?: boolean } | undefined)?.applied ? [{
+      en: `Muscle bulk and position were then changed again to fit a target body surface: a parametric female skin (stature ${(STANDARD.statureMm / 10).toFixed(1)} cm, BMI ${STANDARD.bmi}) less the subcutaneous fat expected at each place. Muscles, tendons, warped organs, vessels and nerves were pushed in, and in places pulled out, by up to ${(report.bodyShape as { displacementMm: { max: number } }).displacementMm.max} mm with one smooth field that is zero on bone; ${(report.bodyShape as { volume: { flagged: unknown[] } }).volume.flagged.length} muscles lost more than a quarter of their volume (calf, abdominal wall, forearm extensors, neck). ${(((report.bodyShape as { outside: { after: { all: { outside: number } } } }).outside.after.all.outside) * 100).toFixed(0)} % of the muscle and organ surface still lies outside that target, mostly thin muscle lying directly on bone. Muscle thickness, cross-section and volume in this model are therefore not anatomical data.`,
+      zh: `之后又按一个目标体表改动了肌肉的粗细和位置：目标是参数化的女性皮肤（身高 ${(STANDARD.statureMm / 10).toFixed(1)} cm，BMI ${STANDARD.bmi}）向内减去各处应有的皮下脂肪。肌、腱、形变来的器官、血管和神经被一个在骨面上为零的平滑位移场推入（个别地方拉出），最多 ${(report.bodyShape as { displacementMm: { max: number } }).displacementMm.max} mm；${(report.bodyShape as { volume: { flagged: unknown[] } }).volume.flagged.length} 块肌的体积减少了四分之一以上（小腿、腹壁、前臂伸肌、颈部）。仍有 ${(((report.bodyShape as { outside: { after: { all: { outside: number } } } }).outside.after.all.outside) * 100).toFixed(0)} % 的肌和器官表面在目标之外，主要是直接贴在骨上的薄肌。因此本模型中肌肉的厚度、横截面和体积都不是解剖数据。`,
+    }] : []),
     ...(parts.some((p) => isFatPart(p.id)) ? [{
       zh: '皮下脂肪层是在上述合成体表与她的肌肉、骨骼、器官外包络之间按 3 mm 体素填充得到的（最深只算到皮下 3 cm），并非扫描所得；其厚度取决于合成的皮肤，不代表女性真实的脂肪分布。',
       en: 'The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution.',

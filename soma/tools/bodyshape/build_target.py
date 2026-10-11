@@ -34,6 +34,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import enclose_skin as ES  # noqa: E402
+import fit_skin as FS  # noqa: E402
 import mhrlib  # noqa: E402
 from bodylib import CUR, RAW, Body, render_closeup, render_views  # noqa: E402
 from fit_check import REGIONS, classify, signed_distance  # noqa: E402
@@ -47,7 +48,8 @@ SCALP = 0.006          # 颅盖外的头皮厚度 / scalp over the vault
 BONE_COVER = 0.003     # 骨上最少的皮肤覆盖 / least cover of skin over bone
 BREAST_ML = 370.0      # 单侧乳房体积，BMI 18.5–25（Steele 2020，见 fat-literature.json；由子任务摘录，未复核）
                        # per-breast volume at BMI 18.5-25 (Steele 2020, see fat-literature.json; extracted by a sub-task, not re-verified)
-HEAD_PARAMS = ['neck_twist', 'neck_lean', 'neck_bend', 'head_twist', 'head_lean', 'head_bend', 'scale_neck_length']
+HEAD_PARAMS = ['neck_twist', 'neck_lean', 'neck_bend', 'head_twist', 'head_lean', 'head_bend', 'scale_neck_length', 'scale_eye_width', 'scale_eye_height', 'scale_eye_depth']
+EYE_WEIGHT = 30.0      # 眼球中心对应点的权重（颅盖近似球面，单靠它定不住头的俯仰）/ weight of the eyeball centres (the vault is nearly a sphere and cannot fix the pitch of the head alone)
 
 
 def joints_of(P, jn):
@@ -82,15 +84,19 @@ def fit_head(ident, mp, fb, L, log):
         return np.where(ok)[0], (c + SCALP * e)[ok], e[ok]
 
     sub = subcutaneous_points(fb)[:7]   # 额、枕、两顶、颏、两颧的皮下点 / subcutaneous points of forehead, occiput, parietals, chin, zygomata
+    # 眼球中心：她的玻璃体的中心 对 MHR 的眼关节。第一次只用颅盖时头后仰了约 25 度，眼高出 41 mm。
+    # Eyeball centres: the centroid of her vitreous bodies against MHR's eye joints. With the vault alone the head came out pitched back about 25 degrees and the eyes 41 mm high.
+    jn1 = mhrlib.joint_names(1)
+    eyes = [(jn1.index(j), fb.verts(n).mean(0)) for j, n in (('l_eye', 'Left vitreous body'), ('r_eye', 'Right vitreous body'))]
     x = np.r_[mp[pidx], ident[20:40]]
     lam = 1e-2
     for it in range(8):
         idx, cp, e = corr(x)
 
         def resid(y):
-            Vall = mhrlib.run(*unpack(y), 1, True)[0]
-            # 姿势已由骨骼拟合定下，这里只允许小幅调整（强约束）/ the pose is set by the bone fit; only small changes are allowed here
-            return np.r_[np.einsum('ij,ij->i', e, Vall[idx] - cp), 3.0 * signed_distance(sub, Vall, F1), 0.0006 * y[len(pidx):], 0.05 * (y[:len(pidx)] - mp[pidx])]
+            Vall, Pall, _ = mhrlib.run(*unpack(y), 1, True)
+            return np.r_[np.einsum('ij,ij->i', e, Vall[idx] - cp), 3.0 * signed_distance(sub, Vall, F1), np.concatenate([EYE_WEIGHT * (Pall[j] - q) for j, q in eyes]),
+                         0.0006 * y[len(pidx):], 0.01 * (y[:len(pidx)] - mp[pidx])]
 
         r0 = resid(x)
         J = np.zeros((len(r0), len(x)))
@@ -109,7 +115,46 @@ def fit_head(ident, mp, fb, L, log):
                 break
             lam *= 10
         log.append(f'  head fit iteration {it}: {len(idx)} vertices over the vault, RMS distance to "vault + 6 mm" {np.sqrt(np.mean(r0[:len(idx)] ** 2)) * 1000:.2f} mm')
+    Pall = mhrlib.run(*unpack(x), 1, True)[1]
+    log.append('  head fit: eye joints to her eyeball centres (mm) ' + ', '.join(f'{np.linalg.norm(Pall[j] - q) * 1000:.1f}' for j, q in eyes)
+               + '; head and neck parameters ' + json.dumps({n: round(float(v), 3) for n, v in zip(HEAD_PARAMS, x)}))
     return unpack(x)
+
+
+def head_scale(V, F, P, jn, lod, fb, log):
+    """头的大小：MHR 没有头的缩放参数，身份系数也撑不到她的颅骨那么大（只对齐眼球时两侧顶骨有 65 % 露在皮肤外，最远 22 mm）。
+    这里对头部顶点（按头、下颌、眼的蒙皮权重混合）绕两眼中点做三个轴向的缩放，使颅盖外的皮肤落在“颅盖 + 6 mm”上。
+    返回一个把这一缩放施加到顶点上的函数。
+    Head size: MHR has no head scale and its identity cannot reach the size of her skull (with only the eyeballs aligned,
+    65 % of each parietal bone lay outside the skin, by up to 22 mm). The head vertices (blended by the skin weights of
+    head, jaw and eyes) are scaled along three axes about the midpoint of the eyes so that the skin over the vault lands
+    on "vault + 6 mm". Returns a function that applies this scaling to vertices."""
+    import igl
+    vi, ji, w, _ = mhrlib.skin_weights(lod)
+    hj = np.array([n.startswith(('c_head', 'c_jaw', 'c_teeth', 'c_tongue', 'l_eye', 'r_eye')) for n in jn])
+    wh = np.zeros(len(V))
+    np.add.at(wh, vi, w * hj[ji])
+    wh = np.clip(wh, 0, 1)
+    pivot = 0.5 * (P[jn.index('l_eye')] + P[jn.index('r_eye')])
+    # 只缩放眼以上的颅部，面部不动（整头缩放会把脸拉长）/ only the cranium above the eyes is scaled; the face stays (scaling the whole head stretches the face)
+    ramp = np.clip((V[:, 1] - pivot[1] + 0.02) / 0.07, 0, 1)   # 7 cm 宽的平滑过渡，免得后脑出现一道棱 / a smooth 7 cm transition, so no ridge shows on the back of the head
+    wh = wh * ramp * ramp * (3 - 2 * ramp)
+    BV, BF = fb.merged(lambda p: p['name'] in VAULT)
+    BV, BF = np.ascontiguousarray(BV), np.ascontiguousarray(BF)
+    ear = min(fb.verts('Left temporal bone')[:, 1].min(), fb.verts('Right temporal bone')[:, 1].min())
+    sc = np.ones(3)
+    for _ in range(6):
+        W = V + wh[:, None] * (sc - 1) * (V - pivot)
+        d2, _, c = igl.point_mesh_squared_distance(np.ascontiguousarray(W), BV, BF)[:3]
+        d = np.sqrt(d2)
+        e = (W - c) / np.maximum(d, 1e-9)[:, None]
+        ok = (d < 0.04) & (np.einsum('ij,ij->i', vertex_normals(W, F), e) > 0.5) & (W[:, 1] > ear + 0.03) & (wh > 0.9)
+        # e.(V + wh (s-1)(V-pivot) - cp) = 0，对 s 线性 / linear in s
+        M = e[ok] * (wh[ok, None] * (V[ok] - pivot))
+        rhs = np.einsum('ij,ij->i', e[ok], (c + SCALP * e)[ok] - V[ok]) + M.sum(1)
+        sc = np.clip(np.linalg.lstsq(M, rhs, rcond=None)[0], 0.9, 1.2)
+    log.append(f'  head scale about the midpoint of the eyes (x, y, z): {np.round(sc, 3).tolist()}, from {int(ok.sum())} vertices over the vault')
+    return lambda X: X + wh[:, None] * (sc - 1) * (X - pivot)
 
 
 def breast_base(V, F, L, A):
@@ -162,39 +207,59 @@ def main():
     sur = surrogate()
     F1, jn1 = mhrlib.faces(1), mhrlib.joint_names(1)
     ilio = 0.5 * (L['iliocristale_L'][1] + L['iliocristale_R'][1]) - L['floor'][1]
-    idc, offset = solve_identity(sur, tg, 'F'), {}
-    for it in range(5):
-        V1, P1, _ = mhrlib.run(np.r_[idc, np.zeros(45 - NCOMP)], mp, 1, True)
-        meas = surface_measures(V1, F1, joints_of(P1, jn1), levels={'iliocristale': ilio})
-        if it == 4:
-            break
-        for k in tg:
-            offset[k] = offset.get(k, 0.0) + 0.7 * (meas[k] - (sur[k][0] + sur[k][1:] @ idc + offset.get(k, 0.0)))
-        idc = solve_identity(sur, tg, 'F', offset)
-    ident = np.r_[idc, np.zeros(45 - NCOMP)]
-    log.append(f'body identity {np.round(idc, 2).tolist()}: ' + ', '.join(f'{k} {meas[k]:.0f} (target {v[0]:.0f}, {(meas[k] - v[0]) / v[2]:+.1f} sd)' for k, v in tg.items()))
+    def identity_for(mp):
+        """在给定姿势和骨架缩放下解身份系数，使各围度达到目标 / identity that meets the girth targets under the given pose and skeleton scales"""
+        idc, offset = solve_identity(sur, tg, 'F'), {}
+        for it in range(5):
+            V1, P1, _ = mhrlib.run(np.r_[idc, np.zeros(45 - NCOMP)], mp, 1, True)
+            meas = surface_measures(V1, F1, joints_of(P1, jn1), levels={'iliocristale': ilio})
+            if it == 4:
+                break
+            for k in tg:
+                offset[k] = offset.get(k, 0.0) + 0.7 * (meas[k] - (sur[k][0] + sur[k][1:] @ idc + offset.get(k, 0.0)))
+            idc = solve_identity(sur, tg, 'F', offset)
+        log.append(f'body identity {np.round(idc, 2).tolist()}: ' + ', '.join(f'{k} {meas[k]:.0f} (target {v[0]:.0f}, {(meas[k] - v[0]) / v[2]:+.1f} sd)' for k, v in tg.items()))
+        return np.r_[idc, np.zeros(45 - NCOMP)]
 
-    # ---- 1b 姿势：身份系数固定为女性体型，重新解姿势和骨架缩放，使她的骨骼居中留在皮肤内。
-    #         关节对应点只给小权重：MHR 的肘、膝等关节点离解剖学关节中心 1–2 cm，硬对上会把皮肤带偏、骨从另一侧露出。
-    # ---- 1b pose: with the identity fixed at the female shape, pose and skeleton scales are solved again so that her
-    #         bones sit centred inside the skin. Joint correspondences get a small weight only: MHR's elbow, knee and
-    #         other joints lie 1-2 cm from the anatomical centres, and pinning them drags the skin until bone shows on the other side.
-    jt, jsrc = joint_targets('female', fb, L)
-    main = ('uparm', 'lowarm', 'wrist', 'upleg', 'lowleg', 'foot')
-    jt = [(j, p, (1.0 if j[2:] in main else w)) for j, p, w in jt]
-    Pb_ = fb.merged(lambda p: p['tissue'] == 'bone')[0]
-    Pb_ = Pb_[~np.isin(classify(Pb_, L), ['hand', 'foot'])]
-    Pb_ = Pb_[np.random.default_rng(3).choice(len(Pb_), 4000, replace=False)]
-    fit = Fit('female', 'targets', fb, L, jt, bone_pts=Pb_, top_floor=(L['vertex'][1], L['floor'][1]), subcut=subcutaneous_points(fb))
-    fit.identity = ident.copy()
-    fit.bone_weight = 2.0
-    x = fit.solve(12, log, mp[fit.pidx].copy())
-    mp = mp.copy()
-    mp[fit.pidx] = x
-    log.append('  joint residuals after the bone-centred pose fit (mm): ' + json.dumps(fit.joint_residuals(x)))
+    # ---- 1b 姿势：身份系数固定为女性体型，重新解姿势和骨架缩放。关节对到 rig.json 的中心（权重为蒙皮拟合时的一半，
+    #         膝仍用小权重），同时要求骨在皮肤下 3 mm 以上。骨盆高度和脊柱长度两个缩放限幅：上一版里它们一起跑到 1.5，
+    #         把会阴拉低了约 7 cm、大腿根变细。姿势定了以后再解一次身份系数（骨架缩放会改变围度），如此交替两轮。
+    # ---- 1b pose: with the identity fixed at the female shape, pose and skeleton scales are solved again. Joints go to the
+    #         rig.json centres (half the weight of the skin fit; the knee keeps its small weight) while bone must stay 3 mm
+    #         under the skin. The hip-height and spine-length scales are bounded: in the previous version they ran off
+    #         together to 1.5, which pulled the perineum about 7 cm down and thinned the top of the thigh. The identity is
+    #         solved again after the pose (skeleton scales change the girths), two rounds in all.
+    # --reuse-pose：复用上一次算出的姿势和头（只改后面几步时省去约十分钟）
+    # --reuse-pose: reuse the pose and head of the previous run (saves about ten minutes when only the later steps change)
+    cache = os.path.join(OUT, 'pose-cache.npz')
+    if '--reuse-pose' in sys.argv and os.path.exists(cache):
+        cz = np.load(cache)
+        ident, mp = cz['identity'].copy(), cz['mp'].copy()
+        log.append('  pose and head reused from pose-cache.npz')
+    else:
+        FS.BOUNDS.update({'scale_hip_height': 0.6, 'scale_spine_length': 0.6, 'scale_hip_depth': 0.6})
+        jt, jsrc = joint_targets('female', fb, L)
+        main = {'uparm': 4.0, 'lowarm': 4.0, 'wrist': 4.0, 'upleg': 4.0, 'lowleg': FS.KW, 'foot': 4.0}
+        jt = [(j, p, main.get(j[2:], w)) for j, p, w in jt]
+        Pb_ = fb.merged(lambda p: p['tissue'] == 'bone')[0]
+        Pb_ = Pb_[~np.isin(classify(Pb_, L), ['hand', 'foot'])]
+        Pb_ = Pb_[np.random.default_rng(3).choice(len(Pb_), 4000, replace=False)]
+        mp = mp.copy()
+        mp[[mhrlib.param_names().index(n) for n in ('scale_hip_height', 'scale_spine_length', 'scale_hip_depth')]] = np.clip(mp[[mhrlib.param_names().index(n) for n in ('scale_hip_height', 'scale_spine_length', 'scale_hip_depth')]], -0.6, 0.6)
+        ident = identity_for(mp)
+        for rnd, iters in enumerate((10, 5)):
+            fit = Fit('female', 'targets', fb, L, jt, bone_pts=Pb_, top_floor=(L['vertex'][1], L['floor'][1]), subcut=subcutaneous_points(fb))
+            fit.identity = ident.copy()
+            fit.bone_weight = 1.0
+            x = fit.solve(iters, log, mp[fit.pidx].copy())
+            mp[fit.pidx] = x
+            log.append(f'  round {rnd}: joint residuals after the pose fit (mm): ' + json.dumps(fit.joint_residuals(x)))
+            ident = identity_for(mp)
+        log.append('  skeleton scales: ' + json.dumps({n: round(float(mp[mhrlib.param_names().index(n)]), 3) for n in FS.SCALES}))
 
-    # ---- 2 头 / head
-    ident, mp = fit_head(ident, mp, fb, L, log)
+        # ---- 2 头 / head
+        ident, mp = fit_head(ident, mp, fb, L, log)
+        np.savez(cache, identity=ident, mp=mp)
 
     F = mhrlib.faces(lod)
     jn = mhrlib.joint_names(lod)
@@ -203,8 +268,12 @@ def main():
     bmi_of = lambda W: mesh_volume(W, F) * 1010.0 / H(W) ** 2
 
     # ---- 3, 4 乳房体积与 BMI / breast volume and BMI
+    head_s = None
     for it in range(3):
-        Vm, P, sk = mhrlib.run(ident, mp, lod, True)
+        Vm0, P, sk = mhrlib.run(ident, mp, lod, True)
+        if head_s is None:
+            head_s = head_scale(Vm0, F, P, jn, lod, fb, log)
+        Vm = head_s(Vm0)
         mask, B, apex = breast_base(Vm, F, L, A)
         vols = {S: patch_volume(Vm, B, F, mask, S) * 1e6 for S in 'LR'}
         fac = {S: float(np.clip(BREAST_ML / max(vols[S], 1.0), 0.5, 2.5)) for S in 'LR'}
@@ -236,10 +305,36 @@ def main():
     for h in hard[:25]:
         log.append(f'   {h["maxMm"]:+6.1f}  {100 * h["shareOutsideSkin"]:5.1f} %  {h["name"]} [{h["tissue"]}]')
     ES.MARGIN = BONE_COVER
-    V = ES.enclose(V_raw, F, Pd[bone], log, np.full(len(V_raw), 0.025))
-    ES.MARGIN = 0.0025
-    relax = np.linalg.norm(V - V_raw, axis=1) * 1000
+    # 放松的上限按区域给：手 6 mm，头、前臂、足 12 mm，其余 15 mm。超出上限仍露在外面的骨是姿势或比例的问题，
+    # 如实列在冲突表里，不靠把皮肤顶成一个包来掩盖。
+    # The relaxation is capped by region: hand 6 mm; head, forearm and foot 12 mm; elsewhere 15 mm. Bone that still
+    # shows beyond the cap is a matter of pose or proportion and is listed as it is, not hidden under a lump of skin.
     regV = classify(V_raw, L)
+    capv = np.full(len(V_raw), 0.015)
+    capv[np.isin(regV, ['head', 'forearm', 'foot'])] = 0.012
+    capv[regV == 'hand'] = 0.006
+    V = ES.enclose(V_raw, F, Pd[bone], log, capv)
+    ES.MARGIN = 0.0025
+    # 把放松量铺开：先向四周扩 3 圈，再抹平 8 遍，取与原放松量的较大者，这样骨上的皮肤是一个缓坡而不是一个尖包。
+    # Spread the relaxation: dilate it by 3 rings, smooth it 8 times and keep the larger of that and the original, so the skin over a bone rises as a gentle mound instead of a sharp lump.
+    dv = V - V_raw
+    d0 = np.linalg.norm(dv, axis=1)
+    nrm = vertex_normals(V_raw, F)
+    for _ in range(3):
+        nrm = 0.5 * nrm + 0.5 * (A @ nrm)
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=1), 1e-12)[:, None]
+    ds = d0.copy()
+    for _ in range(3):
+        ds = np.maximum(ds, 0.8 * (A @ ds))
+    for _ in range(8):
+        ds = 0.5 * ds + 0.5 * (A @ ds)
+    ds = np.maximum(d0, ds)
+    for _ in range(3):   # 最后再抹三遍，去掉逐顶点的毛刺 / three final passes to take off the per-vertex roughness
+        ds = 0.5 * ds + 0.5 * (A @ ds)
+    ds = np.minimum(ds, capv)
+    dirv = np.where((d0 > 1e-5)[:, None], dv / np.maximum(d0, 1e-9)[:, None], nrm)
+    V = V_raw + ds[:, None] * dirv
+    relax = np.linalg.norm(V - V_raw, axis=1) * 1000
     relax_by = {}
     for rid, _, _ in REGIONS:
         m = regV == rid
@@ -363,7 +458,7 @@ def main():
     # ---- 输出 / outputs
     write_obj(os.path.join(OUT, 'skin.obj'), V, F, 'female TARGET skin (not an installable skin package); MHR LOD0 topology (Apache-2.0); metres, Y up, +Z anterior, +X left')
     write_obj(os.path.join(OUT, 'deep-envelope.obj'), E, F, 'female TARGET deep envelope: deep parts should lie inside; same topology and vertex order as skin.obj')
-    np.savez(os.path.join(OUT, 'target-state.npz'), identity=ident, mp=mp, offsets=V - Vm, lod=lod)
+    np.savez(os.path.join(OUT, 'target-state.npz'), identity=ident, mp=mp, offsets=V - Vm0, lod=lod)
     vi, ji, w, parents = mhrlib.skin_weights(lod)
     rec = np.zeros(len(vi), dtype=[('v', '<u4'), ('j', '<u4'), ('w', '<f4')])
     rec['v'], rec['j'], rec['w'] = vi, ji, w
