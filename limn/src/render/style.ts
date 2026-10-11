@@ -144,7 +144,7 @@ export const STYLE_MESOSCALE: Style = {
   // 形状靠平滑来变光滑，球就按真实大小画 / shapes are made smooth by the smoothing pass, so spheres are drawn at their true size
   smooth: 7,
   radiusScale: 1,
-  slab: 0.16,
+  slab: 0.24,
 }
 
 /**
