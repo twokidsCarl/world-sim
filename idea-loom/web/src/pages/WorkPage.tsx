@@ -5,6 +5,7 @@ import type { State } from '../contract'
 import { formatTime } from '../state/derive'
 import { useStore } from '../state/store'
 import { Empty, Page, Section } from '../ui/Page'
+import { JobPanel } from '../ui/JobPanel'
 import { IdeaLink } from '../ui/bits'
 
 const COLUMNS: [string, string[]][] = [
@@ -24,6 +25,14 @@ export function WorkPage({ state }: { state: State }) {
   const ideaParam = params.get('idea') ?? ''
   const [draft, setDraft] = useState({ idea_id: ideaParam, project: '', title: '', brief: '' })
   const [busy, setBusy] = useState(false)
+  const [openJob, setOpenJob] = useState<string | null>(params.get('job'))
+  const [advancing, setAdvancing] = useState<string | null>(null)
+  const start = (task: Task) =>
+    void api.startJob('task', task.task_id).then((j) => (setOpenJob(j.job_id), void load()), (e: Error) => setError(e.message))
+  const advance = (dir: string) => {
+    setAdvancing(dir)
+    void api.advance(dir).then(() => (setAdvancing(null), void load(), void reloadState()), (e: Error) => (setAdvancing(null), setError(e.message)))
+  }
 
   const load = () =>
     Promise.all([api.projects(), api.tasks()]).then(
@@ -51,7 +60,7 @@ export function WorkPage({ state }: { state: State }) {
     <Page title="开发" lead="把一条 idea 交给一个子项目去做，看它走到哪一步。每个子项目的进度来自它在 GitHub 上的合并请求。">
       {error && <div className="notice bad" role="alert">{error}</div>}
 
-      <Section title="任务" note="现在状态要手动改；从这里触发 Claude Code 还没有做好">
+      <Section title="任务" note="点「开工」让 Claude Code 先出方案，你批准之后它才动手；也可以自己开会话做，再手动改状态">
         <div className="board">
           {COLUMNS.map(([label, statuses]) => {
             const mine = shown.filter((t) => statuses.includes(t.status))
@@ -75,6 +84,18 @@ export function WorkPage({ state }: { state: State }) {
                     )}
                     {t.status === 'failed' && <div className="err small">失败：{t.notes[0]?.text}</div>}
                     <div className="row">
+                      {(t.status === 'todo' || t.status === 'failed') && (
+                        <button className="primary" onClick={() => start(t)}>
+                          开工
+                        </button>
+                      )}
+                      {t.job_id && (
+                        <button aria-expanded={openJob === t.job_id} onClick={() => setOpenJob(openJob === t.job_id ? null : t.job_id)}>
+                          {openJob === t.job_id ? '收起作业' : '看作业'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="row">
                       <select aria-label="状态" value={t.status} onChange={(e) => move(t, e.target.value)}>
                         {!STATUSES.some(([s]) => s === t.status) && <option value={t.status}>{t.status_label}</option>}
                         {STATUSES.map(([s, l]) => (
@@ -89,6 +110,11 @@ export function WorkPage({ state }: { state: State }) {
             )
           })}
         </div>
+        {openJob && (
+          <div className="job-wrap">
+            <JobPanel jobId={openJob} onChange={() => void load()} />
+          </div>
+        )}
         {tasks && shown.length === 0 && <Empty>还没有任务。在下面建一个，或者去某条 idea 的页面点"交给一个子项目"。</Empty>}
       </Section>
 
@@ -161,6 +187,11 @@ export function WorkPage({ state }: { state: State }) {
                     ) : (
                       <span className="muted">它的开发服务没在跑（{p.ui_url.replace('http://', '')}）</span>
                     ))}
+                </div>
+                <div className="row">
+                  <button disabled={advancing !== null} onClick={() => advance(p.dir)} title="让模型读它的 README 和最近的 PR，提议下一个里程碑，建成一个待开工的任务">
+                    {advancing === p.dir ? '正在想下一步…' : '推进：提议下一步'}
+                  </button>
                 </div>
                 {p.ideas.length > 0 && (
                   <div className="small">

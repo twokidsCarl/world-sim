@@ -83,9 +83,45 @@ generated from it.
   in; anything unclear is listed as unassigned and can be pinned in `data/sessions.json`
   as `{"<session id>": "<project dir>"}`.
 
-还没有的：从许愿池和任务触发 Claude Code（先出方案、批准后再动手）。
+- **作业 / Jobs**：在愿望页或任务上点"开工"，从界面触发 Claude Code。
+  Press "start" on a wish or a task to trigger Claude Code from the UI.
 
-Not yet: triggering Claude Code from a wish or a task (plan first, act after approval).
+  ```
+  出方案中 → 方案待批 →（你批准）→ 执行中 → 测试 → PR → 已合并
+                      ↘ 提意见重写 / 不做          ↘ 失败（可以还原）
+  ```
+
+  - 出方案时 Claude 只有读文件的工具，方案显示在界面里；你可以批准、提意见让它重写，或标为不做。批准之前不改任何文件。
+    While planning, Claude only has read tools and the plan is shown in the UI; you can
+    approve it, send feedback for a rewrite, or decline. Nothing is changed before approval.
+  - 批准后另起一次：它只能改这次作业所属的目录（愿望是 `idea-loom/`，任务是那个子项目的目录），可以跑该目录的测试命令，不能运行 git 和 gh。没有明确允许的操作一律被拒绝。
+    After approval a second run starts: it may only edit the job's directory
+    (`idea-loom/` for a wish, the subproject's directory for a task) and run that
+    directory's test commands, never git or gh. Anything not explicitly allowed is denied.
+  - 它结束后由程序自己：检查有没有改到目录外面的文件（有就判失败，不开 PR）→ 把测试重跑一遍（不过就停）→ 调用 `tools/pr.sh` → 合并后把愿望标为已做完、任务标为已合并。
+    When it finishes the runner itself checks that nothing outside the directory changed
+    (if anything did, the job fails with no PR), re-runs the tests (stopping on a
+    failure), calls `tools/pr.sh`, and after the merge marks the wish done or the task merged.
+  - 同一个目录同时只跑一个作业。开工前该目录的代码必须没有未提交的改动，这样失败或取消后可以一键还原。
+    One job per directory at a time. The directory's code must have no uncommitted changes
+    before a job starts, so a failed or cancelled job can be reverted with one click.
+  - 每个阶段在独立的进程里跑，状态写在 `runs/jobs/` 下，后端重启不影响它。
+    Each phase runs in its own process with its state under `runs/jobs/`, unaffected by a
+    backend restart.
+
+  已知的边界：目录限制管的是 Claude 的写文件工具。测试命令会执行这个目录里的代码，那些代码在技术上能写到别处；所以另有"改到目录外就判失败"的检查，而且 PR 只包含这个目录。PR 合并前没有人工审查——你审的是方案。
+
+  A known limit: the directory restriction applies to Claude's file-writing tools. The
+  test commands execute code from that directory, which could technically write
+  elsewhere; hence the separate check that fails a job on any change outside the
+  directory, and the PR only ever contains that directory. No human reviews the PR before
+  it merges — what you review is the plan.
+- **推进 / Advance**：在开发页对一个子项目点"推进"，模型读它的 README 和最近的 PR，提议下一个里程碑，建成一个待开工的任务。
+  Press "advance" on a subproject and the model reads its README and recent PRs, proposes
+  the next milestone and files it as a todo task.
+- **回看 / Review**：在许愿池页点"回看我最近的使用"，模型读一遍操作轨迹，提出最多三条愿望，由你决定记不记。
+  Press "review my recent use" on the wish page and the model reads the action trail and
+  proposes up to three wishes for you to keep or drop.
 
 ## 运行 / Run
 
@@ -103,6 +139,8 @@ uv run idea-loom serve
 # 界面 / UI — http://localhost:5187
 cd web && bun install && bun run dev
 ```
+
+环境变量（都可以不设）/ Environment (all optional)：`IDEA_LOOM_MODEL`（缺省 `sonnet`，生成、细化、翻译用 / default `sonnet`, for generate, refine, translate）、`IDEA_LOOM_ASSISTANT_MODEL`（小助手 / the assistant）、`IDEA_LOOM_JOB_MODEL`（作业 / jobs）。
 
 ## 测试 / Test
 
@@ -128,11 +166,11 @@ the world-sim git history and skips itself without it.
 | `data/wishes.jsonl` | 愿望的事件 / wish events |
 | `data/tasks.jsonl` | 开发任务的事件 / development task events |
 
-`runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl` 和小助手的对话 `assistant/`。
+`runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl`、小助手的对话 `assistant/` 和作业 `jobs/`。
 
 `runs/` (not in git) holds the model's proposals in `proposals.jsonl`, the usage of
-every call in `llm.jsonl`, the action trail in `trail.jsonl` and the assistant's
-conversations under `assistant/`.
+every call in `llm.jsonl`, the action trail in `trail.jsonl`, the assistant's
+conversations under `assistant/` and the jobs under `jobs/`.
 
 愿望进 git，也就是公开的。如果不想公开，把 `data/wishes.jsonl` 移到 `runs/` 下并改 `wishes.py` 里的路径。
 
@@ -182,6 +220,8 @@ src/idea_loom/
   tasks.py      开发任务 / development tasks
   github.py     读合并请求 / read pull requests
   stats.py      统计 / statistics
+  jobs.py       作业：出方案、批准、执行、测试、PR / jobs: plan, approve, execute, test, PR
+  review.py     回看操作轨迹 / review of the action trail
   wishes.py     许愿池 / the wish pool
   trail.py      操作轨迹 / the action trail
   assistant/    小助手：提示词、回合、事件流、工具服务 / the assistant: prompt, turns, event stream, tool server

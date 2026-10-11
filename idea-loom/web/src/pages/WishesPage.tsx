@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
-import { type WishDetail, type WishList, api } from '../api'
+import { type Job, type Suggestion, type WishDetail, type WishList, api } from '../api'
+import { JobPanel } from '../ui/JobPanel'
 import { useAssistant } from '../assistant/store'
 import { formatTime } from '../state/derive'
 import { Empty, Page, Section } from '../ui/Page'
@@ -38,6 +39,7 @@ export function WishesPage() {
           <button onClick={() => setParams({})}>知道了</button>
         </div>
       )}
+      <Review onRecorded={() => api.wishes(status).then(setList, () => undefined)} />
       {list && (
         <>
           <div className="wish-counts" role="group" aria-label="按状态筛选">
@@ -114,18 +116,23 @@ export function WishPage() {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState({ title: '', stuck: '', suggestion: '' })
   const [copied, setCopied] = useState(false)
+  const [job, setJob] = useState<Job | null>(null)
+  const [starting, setStarting] = useState(false)
+  const loadJob = () => api.jobs().then((all) => setJob(all.find((j) => j.kind === 'wish' && j.ref === id) ?? null), () => undefined)
 
   const reload = () => api.wish(id).then(setWish, (e: Error) => setError(e.message))
   useEffect(() => {
     setWish(null)
     setError(null)
     void reload()
+    void loadJob()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   if (error && !wish) return <Page title="愿望"><div className="notice bad" role="alert">{error}</div></Page>
   if (!wish) return <Page title="愿望"><p className="muted">正在读取…</p></Page>
   const open = wish.status === 'open'
+  const canStart = ['open', 'accepted'].includes(wish.status) && (!job || ['failed', 'cancelled', 'declined'].includes(job.phase))
 
   return (
     <Page
@@ -249,26 +256,49 @@ export function WishPage() {
         </Section>
       </div>
 
-      <Section title="交给 Claude 去做">
-        <p className="muted">
-          以后可以在这里点"开工"让 Claude Code 先出方案、你批准后再动手（还没有做好）。现在可以把下面这句话贴到一个新的 Claude Code 会话里，
-          它用命令 <code>idea-loom wishes</code> 把采纳、做完、不做标回来。
-        </p>
-        <figure className="prompt small-prompt">
-          <blockquote className="pre">{wish.copy_text}</blockquote>
-          <figcaption>
+      <Section title="交给 Claude 去做" note="先出方案，你批准之后它才动手">
+        {job ? (
+          <JobPanel jobId={job.job_id} onChange={() => (void reload(), void refresh(), void loadJob())} />
+        ) : null}
+        {canStart && (
+          <div className="row">
             <button
-              onClick={() =>
-                void navigator.clipboard.writeText(wish.copy_text).then(() => {
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 1600)
-                }, () => undefined)
-              }
+              className="primary"
+              disabled={starting}
+              onClick={() => {
+                setStarting(true)
+                void api.startJob('wish', wish.wish_id).then(
+                  () => (setStarting(false), void loadJob(), void reload()),
+                  (e: Error) => (setStarting(false), setError(e.message)),
+                )
+              }}
             >
-              {copied ? '已复制' : '复制这句话'}
+              {starting ? '正在启动…' : job ? '再来一次：重新出方案' : '开工：让 Claude 先出方案'}
             </button>
-          </figcaption>
-        </figure>
+            <span className="muted small">它先只读代码、写一份方案给你看，不改任何东西。</span>
+          </div>
+        )}
+        <details className="table-view">
+          <summary>想自己开一个 Claude Code 会话去做</summary>
+          <p className="muted small">
+            把下面这句话贴进去。它用命令 <code>idea-loom wishes</code> 把采纳、做完、不做标回来。
+          </p>
+          <figure className="prompt small-prompt">
+            <blockquote className="pre">{wish.copy_text}</blockquote>
+            <figcaption>
+              <button
+                onClick={() =>
+                  void navigator.clipboard.writeText(wish.copy_text).then(() => {
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 1600)
+                  }, () => undefined)
+                }
+              >
+                {copied ? '已复制' : '复制这句话'}
+              </button>
+            </figcaption>
+          </figure>
+        </details>
       </Section>
 
       <Section title="遇到的每一次" note={`${wish.seen.length} 次`}>
@@ -297,5 +327,64 @@ export function WishPage() {
         </ol>
       </Section>
     </Page>
+  )
+}
+
+// 回看：让模型读一遍最近的操作，提出最多三条愿望，由你取舍。
+// Review: the model reads your recent actions and proposes up to three wishes for you to keep or drop.
+function Review({ onRecorded }: { onRecorded: () => void }) {
+  const refresh = useAssistant((s) => s.refresh)
+  const [status, setStatus] = useState<{ actions_since: number; due: boolean; last_at: string | null } | null>(null)
+  const [items, setItems] = useState<Suggestion[] | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    api.reviewStatus().then(setStatus, () => undefined)
+  }, [items])
+  const run = () => {
+    setBusy(true)
+    setError(null)
+    api.review().then(
+      (found) => (setItems(found), setBusy(false)),
+      (e: Error) => (setError(e.message), setBusy(false)),
+    )
+  }
+  const drop = (s: Suggestion) => setItems((old) => (old ?? []).filter((x) => x !== s))
+  return (
+    <div className="review">
+      <div className="row wrap">
+        <button disabled={busy} onClick={run}>
+          {busy ? '正在回看，大约二十秒…' : '回看我最近的使用'}
+        </button>
+        <span className="muted small">
+          让模型读一遍你最近在界面里的操作（不含输入的文字），自己提出最多三条愿望，记不记由你定。
+          {status && ` 上次回看之后攒了 ${status.actions_since} 条操作。`}
+          {status?.due && ' 可以回看一次了。'}
+        </span>
+      </div>
+      {error && <p className="err" role="alert">{error}</p>}
+      {items && items.length === 0 && <p className="muted">这次没看出什么值得记的。</p>}
+      {items && items.length > 0 && (
+        <div className="proposals">
+          {items.map((s) => (
+            <article key={s.title} className="proposal">
+              <h3>{s.title}</h3>
+              <p><span className="muted small">卡在哪</span> {s.stuck}</p>
+              <p><span className="muted small">建议</span> {s.suggestion}</p>
+              <p className="muted small p-why">它的依据：{s.evidence}</p>
+              <div className="row">
+                <button
+                  className="primary"
+                  onClick={() => void api.recordWish(s).then(() => (drop(s), onRecorded(), void refresh()), (e: Error) => setError(e.message))}
+                >
+                  记进许愿池
+                </button>
+                <button onClick={() => drop(s)}>不要</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

@@ -10,7 +10,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import edits, github, ideas, llm, ops, stats, sync, tasks, trail, wishes
+from . import edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .model import IdeaDetail, State
 
@@ -63,7 +63,7 @@ def _detail(idea_id: str) -> IdeaDetail:
 def _do(fn, *args, **kw):
     try:
         return fn(*args, **kw)
-    except (edits.EditError, ops.OpError, wishes.WishError, turns.TurnError, tasks.TaskError) as e:
+    except (edits.EditError, ops.OpError, wishes.WishError, turns.TurnError, tasks.TaskError, jobs.JobError) as e:
         raise HTTPException(409, str(e))
     except llm.LLMError as e:
         raise HTTPException(502, f"模型调用失败：{e}")
@@ -447,3 +447,119 @@ def task_status(task_id: str, body: TaskStatusBody) -> tasks.Task:
 @app.get("/api/stats", response_model=stats.Stats)
 def get_stats(refresh: bool = False) -> stats.Stats:
     return stats.compute(force=refresh)
+
+
+# ---------- 作业：触发 Claude Code / jobs: triggering Claude Code ----------
+
+
+class JobStartBody(BaseModel):
+    kind: str
+    ref: str
+
+
+class TextBody(BaseModel):
+    text: str = ""
+
+
+class JobView(BaseModel):
+    job: jobs.Job
+    events: list[dict[str, object]]
+
+
+@app.get("/api/jobs", response_model=list[jobs.Job])
+def list_jobs() -> list[jobs.Job]:
+    return jobs.listing()
+
+
+@app.post("/api/jobs", response_model=jobs.Job)
+def start_job(body: JobStartBody) -> jobs.Job:
+    return _do(jobs.start, body.kind, body.ref)
+
+
+@app.get("/api/jobs/{job_id}", response_model=JobView)
+def get_job(job_id: str, after: int = 0) -> JobView:
+    job = _do(jobs.get, job_id)
+    return JobView(job=jobs.reap(job), events=jobs.events(job_id, after))
+
+
+@app.post("/api/jobs/{job_id}/approve", response_model=jobs.Job)
+def approve_job(job_id: str) -> jobs.Job:
+    return _do(jobs.approve, job_id)
+
+
+@app.post("/api/jobs/{job_id}/revise", response_model=jobs.Job)
+def revise_job(job_id: str, body: TextBody) -> jobs.Job:
+    return _do(jobs.revise, job_id, body.text)
+
+
+@app.post("/api/jobs/{job_id}/decline", response_model=jobs.Job)
+def decline_job(job_id: str, body: TextBody) -> jobs.Job:
+    return _do(jobs.decline, job_id, body.text)
+
+
+@app.post("/api/jobs/{job_id}/cancel", response_model=jobs.Job)
+def cancel_job(job_id: str) -> jobs.Job:
+    return _do(jobs.cancel, job_id)
+
+
+@app.post("/api/jobs/{job_id}/revert")
+def revert_job(job_id: str) -> dict[str, list[str]]:
+    return {"reverted": _do(jobs.revert, job_id)}
+
+
+# ---------- 回看与推进 / review and advance ----------
+
+
+class WishFromReview(BaseModel):
+    title: str
+    kind: str
+    stuck: str = ""
+    suggestion: str = ""
+
+
+@app.get("/api/review", response_model=review.ReviewStatus)
+def review_status() -> review.ReviewStatus:
+    return review.status()
+
+
+@app.post("/api/review", response_model=list[review.Suggestion])
+def review_run() -> list[review.Suggestion]:
+    try:
+        return _do(review.run)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/api/wishes", response_model=wishes.WishDetail)
+def record_wish_from_review(body: WishFromReview) -> wishes.WishDetail:
+    """只给"回看"用：把一条你接受了的提议记进许愿池。 / For the review only: record a suggestion you accepted."""
+    wish_id = _do(wishes.record, title=body.title, kind=body.kind, stuck=body.stuck, suggestion=body.suggestion, by="review",
+                  question="（回看操作轨迹时提出的）")
+    return wishes.get(wish_id)
+
+
+@app.post("/api/projects/{project_dir}/advance", response_model=tasks.Task)
+def advance_project(project_dir: str) -> tasks.Task:
+    """推进：让模型读这个子项目的 README 和最近的合并请求，提议下一个里程碑，建成一个待开工的任务。
+
+    Advance: the model reads the subproject's README and recent PRs, proposes the next
+    milestone, and it becomes a todo task.
+    """
+    from . import store
+
+    project = next((p for p in ideas.load_projects() if p.dir == project_dir), None)
+    if project is None:
+        raise HTTPException(404, "没有这个子项目")
+    readme = store.repo_root() / project_dir / "README.md"
+    text = readme.read_text(encoding="utf-8")[:9000] if readme.exists() else "（还没有 README）"
+    recent = [p for p in github.pull_requests() if p.scope == project_dir][-15:]
+    pool, _, _, _ = ideas.current()
+    linked = [pool[i] for i in project.ideas if i in pool]
+    prompt = (f"子项目 `{project_dir}`（{project.tagline}）。\n\n它的 README：\n{text}\n\n最近合并的 PR（从早到晚）：\n"
+              + ("\n".join(f"- #{p.number} {p.title}" for p in recent) or "（还没有）")
+              + ("\n\n它对应的 idea：\n" + "\n\n".join(ops.idea_text(i) for i in linked) if linked else "")
+              + "\n\n请提议它的下一个里程碑：一件一次能做完、做完能看出差别的事。title 一句话；brief 三五句，说清做什么、做到什么算完、不做什么。用中文。")
+    schema = {"type": "object", "properties": {"title": {"type": "string"}, "brief": {"type": "string"}}, "required": ["title", "brief"]}
+    value = _do(llm.ask, prompt, system="你在帮一个人决定一个模拟项目下一步做什么。只依据给你的材料，不要编造项目里没有的东西。", schema=schema, use_cache=False, purpose="advance")
+    task_id = _do(tasks.create, project=project_dir, title=str(value["title"]), brief=str(value["brief"]), idea_id=linked[0].id if linked else None)
+    return tasks.get(task_id)

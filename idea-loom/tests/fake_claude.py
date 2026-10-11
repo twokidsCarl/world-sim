@@ -78,7 +78,12 @@ import json, os, sys, time
 stdin = sys.stdin.read()
 with open(os.environ["FAKE_LOG"], "a") as f:
     f.write(json.dumps({{"argv": sys.argv[1:], "stdin": stdin, "cwd": os.getcwd()}}) + "\n")
-for obj in json.loads(os.environ.get("FAKE_STREAM", "[]")):
+executing = "--tools" in sys.argv and "Edit" in sys.argv[sys.argv.index("--tools") + 1]
+if executing:
+    for rel, content in json.loads(os.environ.get("FAKE_WRITES", "{{}}")).items():
+        os.makedirs(os.path.dirname(rel) or ".", exist_ok=True)
+        open(rel, "w").write(content)
+for obj in json.loads(os.environ.get("FAKE_STREAM_EXEC" if executing and "FAKE_STREAM_EXEC" in os.environ else "FAKE_STREAM", "[]")):
     if obj.get("type") == "sleep":
         time.sleep(obj["seconds"])
         continue
