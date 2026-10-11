@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { type Attached, MAX_IMAGES, canCapture, captureTab, fromFile, imagesIn } from './images'
 import { Link, useLocation } from 'react-router'
 import { api } from '../api'
 import { plural } from '../i18n'
@@ -108,13 +109,32 @@ export function AssistantDock() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastStatus, a.turns.length])
 
+  const [attached, setAttached] = useState<Attached[]>([])
+  const [imageNote, setImageNote] = useState<string | null>(null)
+  const picker = useRef<HTMLInputElement>(null)
+  const addImages = async (files: File[]) => {
+    const made = (await Promise.all(files.map(fromFile))).filter((x): x is Attached => x !== null)
+    setAttached((now) => {
+      const next = [...now, ...made].slice(0, MAX_IMAGES)
+      setImageNote(now.length + made.length > MAX_IMAGES ? t(`一次最多带 ${MAX_IMAGES} 张图`, `At most ${MAX_IMAGES} images at a time`) : files.length > made.length ? t('有的文件不是图片，没有加上', 'Some files were not images and were left out') : null)
+      return next
+    })
+  }
+  const capture = async () => {
+    const shot = await captureTab(t('当前页面的截屏', 'capture of the current page'))
+    if (shot) setAttached((now) => [...now, shot].slice(0, MAX_IMAGES))
+    else setImageNote(t('没有截到（取消了，或者浏览器不支持）。也可以直接把截图粘贴进来。', 'Nothing was captured (cancelled, or the browser lacks support). You can also paste a screenshot in.'))
+  }
   const ask = (question: string) => {
-    if (!question.trim() || a.running) return
+    if ((!question.trim() && attached.length === 0) || a.running) return
     const main = document.querySelector('main.main')
     const snap = snapshot(main, page, url)
     follow.current = true
     setDraft('')
-    void a.ask(question, snap, page.idea ?? ideaIdFrom(location.pathname))
+    const images = attached
+    setAttached([])
+    setImageNote(null)
+    void a.ask(question.trim() || t('看这张图。', 'Look at this image.'), snap, page.idea ?? ideaIdFrom(location.pathname), images)
   }
 
   const startDrag = (e: React.PointerEvent) => {
@@ -254,7 +274,7 @@ export function AssistantDock() {
             </div>
           )}
           {a.turns.map((t, i) => (
-            <Turn key={i} turn={t} last={i === a.turns.length - 1} />
+            <Turn key={i} turn={t} last={i === a.turns.length - 1} imageBase={a.conversationId ? `/api/assistant/conversations/${a.conversationId}/turns/${i + 1}/images/` : ''} />
           ))}
           {a.error && <p className="err" role="alert">{a.error}</p>}
         </div>
@@ -266,13 +286,39 @@ export function AssistantDock() {
           e.preventDefault()
           ask(draft)
         }}
+        onDragOver={(e) => e.dataTransfer.types.includes('Files') && e.preventDefault()}
+        onDrop={(e) => {
+          const files = imagesIn(e.dataTransfer.items)
+          if (files.length) {
+            e.preventDefault()
+            void addImages(files)
+          }
+        }}
       >
+        {attached.length > 0 && (
+          <div className="a-thumbs">
+            {attached.map((image, i) => (
+              <span key={i} className="a-thumb">
+                <img src={image.url} alt={image.name || t('附的图', 'attached image')} />
+                <button type="button" aria-label={t('去掉这张图', 'Remove this image')} onClick={() => setAttached(attached.filter((_, j) => j !== i))}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
+        {imageNote && <p className="muted small" role="status">{imageNote}</p>}
         <textarea
           aria-label={t('问小助手', 'Ask the assistant')}
           rows={2}
           value={draft}
           placeholder={t('问点什么…', 'Ask something…')}
           onChange={(e) => setDraft(e.target.value)}
+          onPaste={(e) => {
+            const files = imagesIn(e.clipboardData.items)
+            if (files.length) {
+              e.preventDefault()
+              void addImages(files)
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
@@ -281,13 +327,20 @@ export function AssistantDock() {
           }}
         />
         <div className="a-compose-foot">
-          <span className="muted small">{t('Enter 发出 · 会带上这一页的内容', 'Enter to send · the content of this page goes along')}</span>
+          <span className="a-attach">
+            <input ref={picker} type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden onChange={(e) => (void addImages([...(e.target.files ?? [])]), (e.target.value = ''))} />
+            <button type="button" title={t('附一张图（也可以直接粘贴或拖进来）', 'Attach an image (you can also paste or drop one in)')} aria-label={t('附一张图', 'Attach an image')} onClick={() => picker.current?.click()}>＋{t('图', 'Image')}</button>
+            {canCapture() && (
+              <button type="button" title={t('把当前这一页截下来带上，嵌着的模拟也截得到；浏览器会问一次要不要共享这个标签页', 'Capture this page and send it along, embedded simulations included; the browser asks once whether to share this tab')} onClick={() => void capture()}>{t('截这一页', 'Capture page')}</button>
+            )}
+          </span>
+          <span className="muted small a-hint">{t('Enter 发出 · 会带上这一页的内容', 'Enter to send · the content of this page goes along')}</span>
           {a.running ? (
             <button type="button" onClick={() => void a.stop()}>
               {t('停', 'Stop')}
             </button>
           ) : (
-            <button type="submit" className="primary" disabled={!draft.trim() || !a.ready}>
+            <button type="submit" className="primary" disabled={(!draft.trim() && attached.length === 0) || !a.ready}>
               {t('发出', 'Send')}
             </button>
           )}
@@ -297,13 +350,22 @@ export function AssistantDock() {
   )
 }
 
-function Turn({ turn, last }: { turn: TurnView; last: boolean }) {
+function Turn({ turn, last, imageBase }: { turn: TurnView; last: boolean; imageBase: string }) {
+  // 刚发的用本地的图；回看以前的对话时从服务器取。 / A fresh turn uses the local images; older conversations fetch them from the server.
+  const images = turn.images.length ? turn.images : imageBase ? Array.from({ length: turn.imageCount }, (_, i) => `${imageBase}${i}`) : []
   const running = turn.status === 'running'
   const t = useT()
   const refused = turn.steps.filter((s) => s.state === 'refused')
   return (
     <div className="a-turn">
       <div className="a-q">
+        {images.length > 0 && (
+          <div className="a-thumbs sent">
+            {images.map((src, i) => (
+              <a key={i} href={src} target="_blank" rel="noreferrer" className="a-thumb"><img src={src} alt="" /></a>
+            ))}
+          </div>
+        )}
         <div className="a-bubble">{turn.question}</div>
         {turn.page_title && <div className="muted small">{t(`在"${turn.page_title}"这一页问的`, `Asked on the "${turn.page_title}" page`)}</div>}
       </div>

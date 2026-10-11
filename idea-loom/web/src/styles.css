@@ -305,6 +305,42 @@ a.button.inline { display: inline-block; }
 .a-log pre { max-width: 100%; overflow-x: auto; }
 .a-log table { display: block; max-width: 100%; overflow-x: auto; }
 .a-log img, .a-log svg { max-width: 100%; height: auto; }
+/* 附的图 / attached images */
+.a-thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.a-thumbs.sent { justify-content: flex-end; }
+.a-thumb { position: relative; display: block; width: 64px; height: 64px; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--sunken); }
+.a-thumbs.sent .a-thumb { width: 96px; height: 72px; }
+.a-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.a-thumb button { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; min-height: 0; padding: 0; line-height: 1; font-size: 13px; border-radius: 50%; border: 0; background: var(--ink); color: var(--paper); }
+.a-attach { display: flex; gap: 6px; }
+.a-attach button { padding: 3px 8px; font-size: 12px; }
+.a-compose-foot { flex-wrap: wrap; gap: 6px; }
+.a-hint { flex: 1 1 120px; min-width: 0; }
+/* 回答里画出来的东西：图表、表格、内嵌的模拟。文字都用墨色，颜色只给标记。
+   What an answer draws: charts, tables, embedded simulations. Text stays in ink; colour is for marks only. */
+.rich-chart, .rich-card { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.rich-chart figcaption, .rich-card figcaption { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.rich-bars { display: grid; gap: 5px; }
+.rich-bar-row { display: grid; grid-template-columns: minmax(40px, 32%) minmax(0, 1fr); gap: 8px; align-items: center; font-size: 12px; }
+.rich-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); text-align: right; }
+.rich-bar-track { display: grid; gap: 2px; }
+.rich-bar { display: block; min-width: 2px; height: 12px; border-radius: 0 4px 4px 0; background: var(--c); position: relative; }
+.rich-bar em { position: absolute; left: calc(100% + 5px); top: -3px; font-style: normal; font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.rich-bar-track:has(em) { padding-right: 44px; }
+.rich-plot { display: block; width: 100%; height: auto; }
+.rich-grid { stroke: var(--line); stroke-width: 1; }
+.rich-tick { font-size: 9px; fill: var(--ink-3); }
+.rich-tip { font-size: 10px; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+.rich-line { fill: none; stroke: var(--c); stroke-width: 2; stroke-linejoin: round; }
+.rich-dot { fill: var(--c); stroke: var(--paper); stroke-width: 1.5; }
+.rich-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 12px; color: var(--ink-2); }
+.rich-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; background: var(--c); margin-right: 4px; }
+.rich-table { margin: 8px 0; max-width: 100%; overflow-x: auto; }
+.rich-table table { display: table; width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.rich-table th, .rich-table td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.rich-table td.r { text-align: right; }
+.rich-raw { margin: 8px 0; padding: 8px 10px; background: var(--sunken); border-radius: 6px; font: 12px/1.5 'SF Mono', Menlo, monospace; white-space: pre; overflow-x: auto; }
+.rich-card-frame { display: block; width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); }
 .a-steps { gap: 2px; font-size: 12.5px; color: var(--ink-2); }
 .a-steps .s-refused { color: var(--bad); }
 .a-steps-done summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }

@@ -64,6 +64,8 @@ generated from it.
   are on an idea page. It can read the repository and this tool's API, record wishes,
   propose ideas (into the candidates) and point at elements on the page; it cannot
   change anything. On a narrow window it floats.
+  **看图、画图。** 提问时可以附图（最多 4 张）：点"＋图"选文件、直接粘贴、拖进来，或者点"截这一页"把当前标签页截下来——浏览器会问一次要不要共享，嵌着的模拟也截得到。回答里除了文字，还能直接画出条形图、折线图、散点图、表格，以及一张嵌在对话里、可以当场玩的模拟卡片。
+  **It reads and draws images.** A question can carry images (up to 4): pick files with "＋Image", paste, drop them in, or "Capture page" to grab the current tab — the browser asks once whether to share it, and embedded simulations are captured too. Besides text, an answer can draw bar, line and scatter charts, tables, and a simulation card embedded in the conversation that can be played on the spot.
 - **许愿池 / Wish pool**：对这个工具本身的改进愿望。愿望只从和小助手的对话里来，同一个问题再遇到是给原来那条加一次。未处理时可以改写和撤销，采纳之后冻结。
   Wishes for improving this tool itself. They only come out of conversations with the
   assistant, and meeting the same problem again bumps the existing wish. A wish can be
