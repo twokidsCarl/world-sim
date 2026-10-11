@@ -18,6 +18,22 @@ struct View {
 
 @group(0) @binding(0) var<uniform> V: View;
 @group(0) @binding(1) var<storage, read> pos: array<vec4f>;
+// 每粒子 16 个浮点的标量表；着色用其中第 14 个（q̄₆）。
+// A table of 16 floats per particle; colouring uses number 14 of each (q̄₆).
+@group(0) @binding(2) var<storage, read> scalar: array<f32>;
+
+// viridis 色图的多项式拟合（Matt Zucker，公有领域），与 render/points.ts 相同。
+// Polynomial fit to the viridis colour map (Matt Zucker, public domain), as in render/points.ts.
+fn viridis(t: f32) -> vec3f {
+  let c0 = vec3f(0.2777273272234177, 0.005407344544966578, 0.3340998053353061);
+  let c1 = vec3f(0.1050930431085774, 1.404613529898575, 1.384590162594685);
+  let c2 = vec3f(-0.3308618287255563, 0.214847559468213, 0.09509516302823659);
+  let c3 = vec3f(-4.634230498983486, -5.799100973351585, -19.33244095627987);
+  let c4 = vec3f(6.228269936347081, 14.17993336680509, 56.69055260068105);
+  let c5 = vec3f(4.776384997670288, -13.74514537774601, -65.35303263337234);
+  let c6 = vec3f(-5.435455855934631, 4.645852612178535, 26.3124352495832);
+  return c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6)))));
+}
 
 struct Out {
   @builtin(position) clip: vec4f,
@@ -40,7 +56,13 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> Out {
   if (V.slab > 0 && abs(depth) > V.slab) { out.clip = vec4f(2, 2, 0, 1); }
   out.uv = uv;
   out.color = V.color.rgb;
-  if (V.species > 0.5 && pos[ii].w > 0.5) { out.color = V.second.rgb; }
+  if (V.species > 1.5) {
+    // 按 q̄₆ 着色：0 到 0.6 映到色图，second.w 是色图用到的上限。
+    // Colour by q̄₆: 0 to 0.6 mapped onto the colour map; second.w is the top of the map in use.
+    out.color = viridis(clamp(scalar[ii * 16u + 14u] / 0.6, 0.0, 1.0) * V.second.w);
+  } else if (V.species > 0.5 && pos[ii].w > 0.5) {
+    out.color = V.second.rgb;
+  }
   return out;
 }
 
@@ -56,6 +78,8 @@ export class Points3dRenderer {
   private uniform: GPUBuffer
   private group: GPUBindGroup | null = null
   private bound: GPUBuffer | null = null
+  private boundScalar: GPUBuffer | null = null
+  private placeholder: GPUBuffer
 
   constructor(
     private device: GPUDevice,
@@ -79,6 +103,8 @@ export class Points3dRenderer {
         ],
       },
     })
+    // 不按标量着色时绑定的占位缓冲。 / Placeholder bound when not colouring by a scalar.
+    this.placeholder = device.createBuffer({ size: 64, usage: GPUBufferUsage.STORAGE })
     this.uniform = device.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST })
   }
 
@@ -99,15 +125,25 @@ export class Points3dRenderer {
     angle: number,
     color: [number, number, number],
     size: [number, number],
-    style: { radius?: number; alpha?: number; slab?: number; second?: [number, number, number] } = {},
+    style: {
+      radius?: number
+      alpha?: number
+      slab?: number
+      second?: [number, number, number]
+      /** 按这张表里每粒子的第 14 个浮点（q̄₆）着色；mapTop 是色图用到的上限。 / Colour by float 14 of each particle in this table (q̄₆); mapTop is the top of the colour map in use. */
+      scalar?: { buffer: GPUBuffer; mapTop: number }
+    } = {},
   ): void {
-    if (this.bound !== pos) {
+    const scalar = style.scalar?.buffer ?? this.placeholder
+    if (this.bound !== pos || this.boundScalar !== scalar) {
       this.bound = pos
+      this.boundScalar = scalar
       this.group = this.device.createBindGroup({
         layout: this.pipeline.getBindGroupLayout(0),
         entries: [
           { binding: 0, resource: { buffer: this.uniform } },
           { binding: 1, resource: { buffer: pos } },
+          { binding: 2, resource: { buffer: scalar } },
         ],
       })
     }
@@ -131,13 +167,13 @@ export class Points3dRenderer {
         angle,
         style.alpha ?? 0.55,
         style.slab ?? 0,
-        style.second ? 1 : 0,
+        style.scalar ? 2 : style.second ? 1 : 0,
         centre[0]!,
         centre[1]!,
         centre[2]!,
         0,
         ...(style.second ?? [0, 0, 0]),
-        0,
+        style.scalar?.mapTop ?? 1,
       ]),
     )
     const encoder = this.device.createCommandEncoder()

@@ -124,7 +124,13 @@ function GpuCanvas() {
           viewAngle(),
           parseHex(theme().ink),
           [w, h],
-          { radius: 0.45, alpha: 0.8, slab: engine.view.slab ? SLAB_HALF : 0, second: parseHex(SPECIES_B) },
+          {
+            radius: 0.45,
+            alpha: 0.8,
+            slab: engine.view.slab ? SLAB_HALF : 0,
+            second: parseHex(SPECIES_B),
+            scalar: engine.view.colour3d ? { buffer: b.q6, mapTop: mapTopFor(theme().paper) } : undefined,
+          },
         )
         return
       }
@@ -254,6 +260,7 @@ export function MdStage() {
   const three = useUi((s) => s.params.dim === 3)
   const hasRegion = useUi((s) => s.hasRegion)
   const [slab, setSlab] = useState(engine.view.slab ?? 0)
+  const [colour3d, setColour3d] = useState(engine.view.colour3d ?? 0)
   // 一旦有两种粒子就显示粒子种类。 / Show the species as soon as there are two of them.
   useEffect(() => {
     const next = mixture ? 2 : engine.view.colour === 2 ? 0 : (engine.view.colour ?? 0)
@@ -277,6 +284,20 @@ export function MdStage() {
       )}
       {three ? (
         <div className="segmented view-options">
+          <span className="caption">着色</span>
+          {['单色', '键取向序 q̄₆'].map((label, i) => (
+            <button
+              key={label}
+              aria-pressed={i === colour3d}
+              onClick={() => {
+                engine.view.colour3d = i
+                setColour3d(i)
+              }}
+            >
+              {label}
+            </button>
+          ))}
+          {colour3d === 1 && <span className="colourbar" title="q̄₆ 从 0 到 0.6" />}
           <span className="caption">显示</span>
           {['整个盒子', '中间 3σ 厚的切片'].map((label, i) => (
             <button
