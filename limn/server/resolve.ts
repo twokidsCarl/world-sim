@@ -1,4 +1,6 @@
 /**
+ * 主题 -> 场景：模型说要找什么，代码到真实的数据库里去查，然后模型在查到的结果里选。
+ * 选择被限制在数据库返回的 id 之内，所以结构 id 绝不可能是编造的。
  * Topic -> scene: the model says what to look for, code looks it up in the
  * real databases, and the model then chooses among what was found. The
  * choice is constrained to the ids that came back from the databases, so a
@@ -9,12 +11,13 @@ import { ROLES, type Role } from '../src/style/palettes'
 import { resolveLandscape } from './landscape'
 import { ask as realAsk, type AskOptions } from './llm'
 import { matchArticles } from './motm'
+import catalog from '../data/catalog.json'
 import { entryInfo, searchText, type EntryInfo } from './sources/rcsb'
 import { alphafold, bestStructures, findProtein } from './sources/uniprot'
 
 type Ask = <T>(o: AskOptions) => Promise<T>
 
-/** Everything that touches the network or the model, so tests can replace it. */
+/** 所有接触网络或模型的东西，以便测试可以替换 / Everything that touches the network or the model, so tests can replace it. */
 export interface Deps {
   ask: Ask
   searchText: typeof searchText
@@ -31,12 +34,15 @@ interface Intent {
   name_en: string
   steps: { label: string; queries: string[]; suggested_pdb_ids: string[] }[]
   genes: { symbol: string; organism: string }[]
+  /** 目录里一个现成模型的 id，或空字符串 / id of a ready-made model in the catalogue, or an empty string */
+  whole_model?: string
 }
 
 const INTENT_SCHEMA = {
   type: 'object',
-  required: ['kind', 'name_en', 'steps', 'genes'],
+  required: ['kind', 'name_en', 'steps', 'genes', 'whole_model'],
   properties: {
+    whole_model: { type: 'string', enum: ['', ...catalog.models.map((m) => m.id)], description: 'id of a ready-made whole model from the list given, when the topic asks for exactly that thing as a whole; otherwise an empty string' },
     kind: { type: 'string', enum: ['molecule', 'complex', 'virus', 'gene', 'mechanism', 'landscape'] },
     name_en: { type: 'string', description: 'the topic as a short English noun phrase' },
     steps: {
@@ -65,12 +71,16 @@ The picture will be rendered from real atomic coordinates in the Protein Data Ba
 - "mechanism": a process with distinct structural states that are each worth a panel (before/after, bound/unbound). Use at most 4 states. If one complex tells the story, it is a "complex", not a mechanism.
 - "virus": a whole capsid or virion, or a viral protein as the subject.
 - "landscape": the user wants a crowded cellular scene (cytoplasm, blood plasma, a synapse) rather than one assembly.
-Write queries as a structural biologist would search: protein and organism names, ligands, states. Do not invent PDB ids.`
+Write queries as a structural biologist would search: protein and organism names, ligands, states. Do not invent PDB ids.
+
+Some subjects exist as ready-made whole models (an entire virion, vesicle or cell, already assembled from many structures). If the topic asks for one of these as a whole, set "whole_model" to its id. If the topic is about one protein of it, a mechanism, or anything narrower or different, leave "whole_model" empty.
+Ready-made whole models:
+${catalog.models.map((m) => `- ${m.id}: ${m.titleEn}`).join('\n')}`
 
 interface Candidate {
   ref: SourceRef
   info: EntryInfo
-  /** how it was found, shown to the model as evidence of relevance */
+  /** 它是怎么找到的，作为相关性的证据给模型看 / how it was found, shown to the model as evidence of relevance */
   via: string[]
 }
 
@@ -156,6 +166,14 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
   log('理解主题')
   const intent = await deps.ask<Intent>({ system: INTENT_SYSTEM, prompt: `Topic: ${topic}`, schema: INTENT_SCHEMA })
 
+  // 现成的整体模型：只返回它在目录里的 id，由网页端按目录加载
+  // a ready-made whole model: only its catalogue id is returned, and the web app loads it from the catalogue
+  const whole = catalog.models.find((m) => m.id === intent.whole_model)
+  if (whole) {
+    log(`使用现成模型：${whole.title}`)
+    return { topic, kind: 'model', title: whole.title, caption: whole.caption, panels: [], notes: [], catalog: whole.id }
+  }
+
   if (intent.kind === 'landscape') return resolveLandscape(topic, deps, log)
 
   log('检索结构数据库')
@@ -186,6 +204,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
         if (!p) return
         const best = await deps.bestStructures(p.accession, 5)
         for (const b of best) add(b.pdbId, `best coverage of ${p.gene} (${p.accession}), ${Math.round(b.coverage * 100)}%`)
+        // 只有当实验对该蛋白质覆盖很差时，才提供预测模型。
         // A predicted model is offered only when experiments cover the protein poorly.
         if (best.length === 0 || Math.max(...best.map((b) => b.coverage)) < 0.5) {
           const af = await deps.alphafold(p.accession)
@@ -207,6 +226,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
   }
   await Promise.all(jobs)
 
+  // 保留被最多途径找到的候选，然后逐个用 RCSB 核实。
   // Keep the candidates found by the most routes, then verify each against RCSB.
   const ranked = [...found.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 24)
   const infos = await deps.entryInfo(ranked.map(([id]) => id))
@@ -214,7 +234,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
   const candidates: Candidate[] = [...predictions]
   for (const [id, via] of ranked) {
     const info = byId.get(id)
-    if (!info) continue // a recalled id that does not exist
+    if (!info) continue // 回忆出的 id 并不存在 / a recalled id that does not exist
     candidates.push({ via, info, ref: { id, kind: 'pdb', title: info.title, method: info.method, resolution: info.resolution, year: info.year } })
   }
   if (candidates.length === 0) throw new Error(`没有找到和“${topic}”对应的结构。换个更具体的说法试试，例如蛋白名加物种。`)
@@ -234,7 +254,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
   const notes = (choice.notes ?? []).filter((n) => typeof n === 'string' && n.trim())
   for (const p of choice.panels ?? []) {
     const c = candidates.find((x) => x.ref.id === String(p.source_id).toUpperCase())
-    if (!c) continue // not one of the candidates: dropped, never trusted
+    if (!c) continue // 不在候选之列：丢弃，绝不信任 / not one of the candidates: dropped, never trusted
     const assembly = c.info.assemblies.some((a) => a.id === p.assembly_id) ? p.assembly_id : (c.info.assemblies[0]?.id ?? 'asym')
     const picked = new Map((p.entities ?? []).map((e) => [String(e.entity_id), e]))
     const entities: EntitySpec[] = c.info.entities.map((e) => {

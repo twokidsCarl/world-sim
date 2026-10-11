@@ -1,9 +1,11 @@
 /**
+ * 用 limn 的渲染器渲染 Illustrate 自带的 2hhb 示例，使用同一个 PDB 文件和同样的输入卡片，
+ * 并度量它与原程序所出图片的差异（build.sh 把两者都放进 build/）。
  * Renders Illustrate's own 2hhb example with limn's renderer, from the same
  * PDB file and the same input cards, and measures the difference against the
  * picture the original program made (build.sh puts both in build/).
  */
-import { Renderer, type RenderItem, type View } from '../../src/render/Renderer'
+import { Renderer, identityInstances, type RenderItem, type View } from '../../src/render/Renderer'
 import { STYLE_MOLECULE, cloneStyle, type Style } from '../../src/render/style'
 
 interface Rule {
@@ -55,7 +57,10 @@ function parseCards(text: string): Cards {
   }
 }
 
-/** Illustrate's atom selection: the first matching card decides, radius 0 drops the atom. */
+/**
+ * Illustrate 的原子选择：第一张匹配的卡片说了算，半径为 0 则丢弃该原子。
+ * Illustrate's atom selection: the first matching card decides, radius 0 drops the atom.
+ */
 function parsePdb(text: string, rules: Rule[]): { item: RenderItem; center: [number, number, number] } {
   const posr: number[] = [], color: number[] = [], ids: number[] = []
   let subunit = -1, lastChain = ''
@@ -88,7 +93,8 @@ function parsePdb(text: string, rules: Rule[]): { item: RenderItem; center: [num
       posr: new Float32Array(posr),
       color: new Uint8Array(color),
       ids: new Uint32Array(ids),
-      draws: [{ start: 0, count: n, matrix: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), subunitBase: 0, molecule: 0 }],
+      draws: [{ start: 0, count: n, opStart: 0, opCount: 1 }],
+      instances: identityInstances(),
       subunitSize: 40,
     },
     center: [(lo[0]! + hi[0]!) / 2, (lo[1]! + hi[1]!) / 2, (lo[2]! + hi[2]!) / 2],
@@ -104,15 +110,18 @@ function parsePnm(text: string): { w: number; h: number; rgb: Uint8Array } {
 }
 
 interface Score {
-  /** mean absolute difference, 0–255, over all pixels and channels */
+  /** 平均绝对差，0–255，对所有像素和通道取平均 / mean absolute difference, 0–255, over all pixels and channels */
   mean: number
-  /** share of pixels whose largest channel difference exceeds 32 */
+  /** 最大通道差超过 32 的像素所占比例 / share of pixels whose largest channel difference exceeds 32 */
   off: number
   dx: number
   dy: number
 }
 
-/** Best match over small shifts: the two programs put pixel centres half a pixel apart. */
+/**
+ * 在小位移范围内取最佳匹配：两个程序的像素中心相差半个像素。
+ * Best match over small shifts: the two programs put pixel centres half a pixel apart.
+ */
 function compare(ours: Uint8ClampedArray, ref: Uint8Array, w: number, h: number): Score {
   let best: Score = { mean: Infinity, off: 1, dx: 0, dy: 0 }
   for (let dy = -2; dy <= 2; dy++)
@@ -131,7 +140,7 @@ function compare(ours: Uint8ClampedArray, ref: Uint8Array, w: number, h: number)
   return best
 }
 
-/** What a picture is made of: paper, ink, and the mean tone of everything else. */
+/** 一张图由什么组成：纸、墨，以及其余一切的平均色调 / What a picture is made of: paper, ink, and the mean tone of everything else. */
 function census(px: ArrayLike<number>, stride: number): { paper: number; ink: number; tone: number[] } {
   let paper = 0, ink = 0, n = 0
   const tone = [0, 0, 0]
@@ -172,6 +181,7 @@ async function main(): Promise<void> {
 
   const style: Style = cloneStyle(STYLE_MOLECULE)
   style.background = cards.background
+  // 无论图像多大，Illustrate 的卷积核步长始终是一个像素
   // Illustrate's kernel step is always one pixel, whatever the image size
   style.lineWidth = 1500 / Math.max(w, h)
   style.contour = cards.contour
@@ -182,6 +192,8 @@ async function main(): Promise<void> {
 
   const renderer = new Renderer(new OffscreenCanvas(4, 4))
   renderer.setScene([item])
+  // 示例里的 "zrot 90" 抵消了 Illustrate 对调的图像坐标轴：
+  // 画面沿 z 轴向下看，x 向右，y 向上。
   // The example's "zrot 90" undoes Illustrate's swapped image axes: the
   // picture looks down z with x to the right and y up.
   const view: View = { rot: new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]), center, height: h / cards.scale, clipFront: Infinity }

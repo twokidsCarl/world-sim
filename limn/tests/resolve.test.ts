@@ -14,7 +14,7 @@ const entry = (id: string, over: Partial<EntryInfo> = {}): EntryInfo => ({
   ...over,
 })
 
-/** A model that answers from a script, and databases that know three entries. */
+/** 按脚本作答的模型，以及只认识三个条目的数据库 / A model that answers from a script, and databases that know three entries. */
 function fakeDeps(choice: unknown, over: Partial<Deps> = {}): { deps: Deps; prompts: string[]; schemas: any[] } {
   const prompts: string[] = [], schemas: any[] = []
   const known = new Map([['1AAA', entry('1AAA')], ['2BBB', entry('2BBB')], ['3CCC', entry('3CCC')]])
@@ -48,7 +48,7 @@ describe('resolveTopic', () => {
     const spec = await resolveTopic('test', deps)
     const allowed = schemas[1].properties.panels.items.properties.source_id.enum as string[]
     expect(allowed.sort()).toEqual(['1AAA', '2BBB', '3CCC'])
-    expect(prompts[1]).not.toContain('9ZZZ') // recalled, but RCSB does not know it
+    expect(prompts[1]).not.toContain('9ZZZ') // 回忆出来了，但 RCSB 不认识它 / recalled, but RCSB does not know it
     expect(spec.panels[0]!.source.id).toBe('2BBB')
     expect(spec.panels[0]!.entities.map((e) => e.role)).toEqual(['focus', 'nucleic'])
   })
@@ -80,6 +80,7 @@ describe('resolveTopic', () => {
         throw new Error('search is down')
       },
     })
+    // 3CCC 是回忆出来的，并得到 data API 的确认，所以它仍是候选
     // 3CCC was recalled and is confirmed by the data API, so it is still a candidate
     const spec = await resolveTopic('test', fakeDeps({ ...goodChoice, panels: [{ ...goodChoice.panels[0], source_id: '3CCC' }] }, { searchText: deps.searchText }).deps)
     expect(spec.panels[0]!.source.id).toBe('3CCC')
@@ -117,6 +118,30 @@ describe('matchArticles', () => {
   })
   it('does not match on a shared common word', () => {
     expect(matchArticles(['a protein complex of the human virus'])).toEqual([])
+  })
+})
+
+// 现成的整体模型 / ready-made whole models
+describe('resolveTopic with the catalogue', () => {
+  const intent = (whole_model: string) => ({ kind: 'virus', name_en: 'SARS-CoV-2 virion', genes: [], steps: [{ label: 'x', queries: ['q'], suggested_pdb_ids: [] }], whole_model })
+
+  it('hands back a catalogue id and looks nothing else up', async () => {
+    const { deps, prompts, schemas } = fakeDeps(goodChoice)
+    const spec = await resolveTopic('新冠病毒', { ...deps, ask: (async (o: any) => (prompts.push(o.prompt), schemas.push(o.schema), intent('sars-cov-2-virion'))) as Deps['ask'] })
+    expect(spec.catalog).toBe('sars-cov-2-virion')
+    expect(spec.kind).toBe('model')
+    expect(prompts.length).toBe(1)
+    // 模型只能在目录里的 id 中选 / the model can only choose among ids in the catalogue
+    expect(schemas[0].properties.whole_model.enum).toContain('sars-cov-2-virion')
+    expect(schemas[0].properties.whole_model.enum).toContain('')
+  })
+
+  it('ignores an id that is not in the catalogue', async () => {
+    const { deps } = fakeDeps(goodChoice)
+    let n = 0
+    const spec = await resolveTopic('x', { ...deps, ask: (async () => (n++ === 0 ? intent('made-up-model') : goodChoice)) as Deps['ask'] })
+    expect(spec.catalog).toBeUndefined()
+    expect(spec.panels[0]!.source.id).toBe('2BBB')
   })
 })
 

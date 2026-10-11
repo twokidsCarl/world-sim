@@ -1,4 +1,6 @@
 /**
+ * 看、评、调、再来：评审（claude，经本地服务器）看到的是实际的渲染结果，
+ * 并以呈现方式的编辑作答。场景里的结构在这里绝不会被改动。
  * Look, judge, adjust, repeat: the reviewer (claude, through the local
  * server) is shown the actual render and answers with presentation edits.
  * The scene's structures are never touched here.
@@ -26,13 +28,13 @@ function blobToDataUrl(b: Blob): Promise<string> {
   })
 }
 
-/** Render the current look as the finished figure, at review size. */
+/** 按评审尺寸把当前外观渲染成成品图 / Render the current look as the finished figure, at review size. */
 async function capture(r: Renderer, look: Look): Promise<{ px: Uint8ClampedArray; w: number; h: number; image: string }> {
   const f = renderFigure(r, look, REVIEW_SIDE)
   return { px: f.pixels, w: f.w, h: f.h, image: await blobToDataUrl(await f.canvas.convertToBlob({ type: 'image/png' })) }
 }
 
-/** What is in the picture, for the reviewer: panels and entities with ids. */
+/** 给评审看的画面内容：带 id 的面板和实体 / What is in the picture, for the reviewer: panels and entities with ids. */
 export function describeContents(): string {
   const s = useStore.getState()
   const lines: string[] = []
@@ -46,10 +48,24 @@ export function describeContents(): string {
       '',
     )
   }
+  if (s.spec?.mesoscale) {
+    // 介观模型：说明它是什么、现在切了多少 / a mesoscale model: say what it is and how far it is cut open
+    lines.push(
+      'This is a published whole model (an entire virion, vesicle or cell) built from many structures. Every copy of every molecule is outlined on its own; the membrane is one sheet.',
+      s.cut > 0 ? `It is drawn cut open: the front ${Math.round(s.cut * 100)}% of its depth is removed (edit "cut", 0 = whole).` : 'It is drawn whole (edit "cut" to open it, e.g. 0.5 for a section through the middle).',
+      '',
+    )
+  }
   s.panels.forEach((p, i) => {
     const ing = land?.ingredients.find((x) => x.panel === i)
     lines.push(`panel ${i}: ${p.spec.label} — ${p.spec.source.id}, ${p.spec.source.title}${ing ? ` — ${s.placed[i] ?? ing.copies} copies, ${ing.compartment === 'membrane' ? 'in the membrane' : ing.compartment + ' the membrane'}` : ''}`)
+    // 整细胞模型有几百种分子，只列原子最多的那些 / a whole-cell model has hundreds of kinds; list only the largest
+    const size = p.mol.entities.map(() => 0)
+    for (const c of p.mol.chains) size[c.entity]! += c.count
+    const shown = new Set(size.map((n, k) => [n, k] as const).sort((a, b) => b[0] - a[0]).slice(0, 40).map(([, k]) => k))
+    if (shown.size < p.mol.entities.length) lines.push(`  (${p.mol.entities.length} kinds of molecule; the ${shown.size} largest are listed)`)
     p.mol.entities.forEach((e, k) => {
+      if (!shown.has(k)) return
       const name = p.spec.entities.find((x) => x.entityId === e.id)?.name ?? e.description
       const chains = p.mol.chains.filter((c) => c.entity === k).length
       lines.push(`  entity ${e.id}: ${name} (${e.kind}, ${chains} chain${chains === 1 ? '' : 's'}) — role ${s.colorings[i]?.roles[k]}`)
@@ -71,7 +87,7 @@ function describeSettings(look: Look): string {
   ].join('\n')
 }
 
-/** Show the reviewer twelve directions at once and take its pick. */
+/** 一次给评审看十二个方向，取它选中的那个 / Show the reviewer twelve directions at once and take its pick. */
 async function chooseView(r: Renderer, look: Look, title: string): Promise<{ rot: Mat3; reason: string; sheet: string }> {
   const views = candidateViews(r.bounds)
   const cols = 4, cell = 300
@@ -99,13 +115,15 @@ async function chooseView(r: Renderer, look: Look, title: string): Promise<{ rot
 
 export interface RefineOptions {
   maxRounds: number
-  /** the user's own request; applied in the first round */
+  /** 用户自己的要求；在第一轮应用 / the user's own request; applied in the first round */
   feedback: string
-  /** start by choosing a viewing direction from a contact sheet */
+  /** 先从缩略图拼版中选一个观察方向 / start by choosing a viewing direction from a contact sheet */
   chooseView: boolean
 }
 
 /**
+ * 运行循环，最后让 store 停在得分最高的外观上。每一轮都记在 `rounds` 里，
+ * 用户可以退回到任意一轮。
  * Runs the loop and leaves the store on the best-scoring look. Each round is
  * recorded in `rounds` so the user can step back to any of them.
  */
@@ -159,6 +177,7 @@ export async function refine(opts: RefineOptions): Promise<void> {
       store.getState().applyEdits(edits)
     }
 
+    // 让画面停在见过的最好版本上，不一定是最后一个。
     // Leave the picture on the best version seen, not necessarily the last.
     const scored = rounds.filter((x) => x.overall !== null)
     const best = scored.reduce<Round | null>((a, b) => (!a || b.overall! > a.overall! ? b : a), null)
@@ -167,6 +186,7 @@ export async function refine(opts: RefineOptions): Promise<void> {
     store.setState({ error: e instanceof Error ? e.message : String(e) })
   } finally {
     say('')
+    // 离屏渲染按它们自己的画幅排布了面板；重画舞台
     // off-screen renders laid the panels out for their own frame; redraw the stage
     store.setState((x) => ({ drawRev: x.drawRev + 1 }))
   }

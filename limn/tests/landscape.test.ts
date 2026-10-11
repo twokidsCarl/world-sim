@@ -42,7 +42,7 @@ describe('resolveLandscape', () => {
     const gPerL = mass / (volume * 6.022e-4)
     expect(gPerL).toBeGreaterThan(280)
     expect(gPerL).toBeLessThan(320)
-    // proportions kept: 100 µM against 50 µM
+    // 比例保持：100 µM 对 50 µM / proportions kept: 100 µM against 50 µM
     expect(L.ingredients[0]!.copies / L.ingredients[1]!.copies).toBeCloseTo(2, 0)
   })
 
@@ -54,6 +54,7 @@ describe('resolveLandscape', () => {
   })
 
   it('only accepts a structure found for that very ingredient', async () => {
+    // 模型给成分 0 指定了一个为成分 1 找到的结构
     // the model assigns ingredient 0 a structure that was found for ingredient 1
     const spec = await resolveLandscape('x', deps(recipe([ing('a', 'small', 100), ing('b', 'medium', 50)]), pick('2BBB', '2BBB')))
     expect(spec.panels.map((p) => p.source.id)).toEqual(['2BBB'])
@@ -68,14 +69,14 @@ describe('resolveLandscape', () => {
   })
 })
 
-/** A chain of `n` points in a lumpy ball, standing in for a protein. */
+/** 由 `n` 个点组成的一条链，团成凹凸不平的球，充当蛋白质 / A chain of `n` points in a lumpy ball, standing in for a protein. */
 function fakeProtein(id: string, n: number, size: number, seed: number): Molecule {
   const r = rng(seed)
   const pos = new Float32Array(n * 3)
   for (let i = 0; i < n * 3; i++) pos[i] = (r() - 0.5) * size
   return {
     id, title: id, atomCount: n, pos, element: new Uint8Array(n), chainOf: new Uint32Array(n), isTrace: new Uint8Array(n), residue: new Int32Array(n),
-    chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count: n }],
+    chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count: n, model: 1 }],
     entities: [{ id: '1', description: id, kind: 'protein' }],
     assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
   }
@@ -112,13 +113,14 @@ describe('packScene', () => {
     expect(packed.lipids.length).toBeGreaterThan(500)
     let up = 0, down = 0
     for (const m of packed.lipids) {
-      // the phosphorus (first atom) is the head
+      // 磷原子（第一个原子）是头部 / the phosphorus (first atom) is the head
       const headY = m[1]! * 0 + m[5]! * 12 + m[13]!
       const tailY = m[1]! * 0 + m[5]! * -12 + m[13]!
       expect(Math.abs(headY)).toBeGreaterThan(Math.abs(tailY))
       headY > 0 ? up++ : down++
     }
     expect(Math.abs(up - down)).toBeLessThan(0.1 * packed.lipids.length)
+    // 比同样大小的裸膜能容纳的脂质少
     // fewer lipids than a bare membrane of this size would hold
     const bare = packScene(mols.map((mol) => ({ mol, assembly: 'asym' })), { ...spec, ingredients: spec.ingredients.slice(0, 2) }, lipid, 5)
     expect(packed.lipids.length).toBeLessThan(bare.lipids.length)
@@ -130,6 +132,7 @@ describe('packScene', () => {
 })
 
 describe('membrane proteins that are only an ectodomain', () => {
+  // 沿 x 的一根杆：N 端在 x = 0，C 端在 x = 80
   // a rod along x: N-terminus at x = 0, C-terminus at x = 80
   const n = 80
   const rod: Molecule = {
@@ -151,8 +154,10 @@ describe('membrane proteins that are only an ectodomain', () => {
       for (const m of packed.places[0]!) {
         const near = at(m, terminus === 'N' ? 0 : n - 1), far = at(m, terminus === 'N' ? n - 1 : 0)
         const side = anchor === 'above' ? 1 : -1
+        // 整个分子都在膜外，在正确的一侧……
         // the whole molecule is outside the membrane, on the right side...
         expect(near * side).toBeGreaterThan(15)
+        // ……并且被锚定的一端是离膜更近的那端
         // ...and the anchored end is the one nearer the membrane
         expect(Math.abs(near)).toBeLessThan(Math.abs(far))
         expect(Math.abs(near)).toBeLessThan(40)

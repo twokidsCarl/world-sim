@@ -3,7 +3,8 @@ import * as api from './api'
 import { refine } from './refine/loop'
 import { download, renderFigure } from './render/export'
 import { placedAtomCount } from './scene/build'
-import { useStore } from './state/store'
+import { CATALOG, useStore } from './state/store'
+import { TIER_LABEL } from './scene/spec'
 import { entityLch } from './style/assign'
 import { hex, oklch } from './style/oklab'
 import { ROLE_LABEL, ROLES, TONE_MOLECULE, type Role } from './style/palettes'
@@ -22,7 +23,7 @@ function Slider(p: { label: string; value: number; min: number; max: number; ste
 export function App() {
   const s = useStore()
   const params = new URLSearchParams(location.search)
-  const [mode, setMode] = useState<'topic' | 'id'>(params.get('id') ? 'id' : 'topic')
+  const [mode, setMode] = useState<'topic' | 'id' | 'model'>(params.get('id') ? 'id' : params.get('model') ? 'model' : 'topic')
   const [topic, setTopic] = useState(params.get('topic') ?? '')
   const [id, setId] = useState(params.get('id') ?? '')
   const [feedback, setFeedback] = useState('')
@@ -31,7 +32,8 @@ export function App() {
 
   useEffect(() => {
     void api.health().then(setServer)
-    if (params.get('id')) void s.loadId(params.get('id')!)
+    if (params.get('model')) void s.loadCatalog(params.get('model')!)
+    else if (params.get('id')) void s.loadId(params.get('id')!)
     else if (params.get('topic')) void s.resolveTopic(params.get('topic')!)
   }, [])
 
@@ -43,6 +45,7 @@ export function App() {
       const look = s.getLook()
       const name = s.panels.map((p) => p.mol.id).join('-')
       download(await renderFigure(r, look, longSide).canvas.convertToBlob({ type: 'image/png' }), `${name}-${longSide}.png`)
+      // 离屏渲染按它自己的画幅排布了面板
       useStore.setState((x) => ({ drawRev: x.drawRev + 1 })) // the off-screen render laid the panels out for its own frame
     } finally {
       setExporting(false)
@@ -58,7 +61,8 @@ export function App() {
         <h1>limn</h1>
         <div className="tabs">
           <button className={mode === 'topic' ? 'on' : ''} onClick={() => setMode('topic')}>按主题</button>
-          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>按 PDB 编号</button>
+          <button className={mode === 'model' ? 'on' : ''} onClick={() => setMode('model')}>现成模型</button>
+          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>PDB 编号</button>
         </div>
         {mode === 'topic' ? (
           <form onSubmit={(e) => (e.preventDefault(), void s.resolveTopic(topic))}>
@@ -68,6 +72,14 @@ export function App() {
               {server && !canAsk && <span className="muted">{server.ok ? '本机没有找到 claude 命令' : '本地服务未启动（bun run dev）'}</span>}
             </div>
           </form>
+        ) : mode === 'model' ? (
+          <div className="catalog">
+            {CATALOG.map((m) => (
+              <button key={m.id} disabled={working} className={s.spec?.topic === m.title ? 'on' : ''} title={m.titleEn} onClick={() => void s.loadCatalog(m.id)}>
+                {m.title}
+              </button>
+            ))}
+          </div>
         ) : (
           <form className="row" onSubmit={(e) => (e.preventDefault(), void s.loadId(id))}>
             <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="例如 2hhb" spellCheck={false} />
@@ -94,6 +106,22 @@ export function App() {
                     {[p.spec.source.method, p.spec.source.resolution ? `${p.spec.source.resolution.toFixed(2)} Å` : '', p.spec.source.year].filter(Boolean).join(' · ') || p.spec.source.title}
                   </div>
                   {p.spec.reason && <div className="muted">{p.spec.reason}</div>}
+                  {p.spec.source.attribution && (
+                    <div className="muted">
+                      {p.spec.source.tier && `${TIER_LABEL[p.spec.source.tier]} · `}
+                      {p.spec.source.attribution}
+                      <br />
+                      {p.spec.source.citation}
+                      <br />
+                      许可：{p.spec.source.licence}
+                      {p.spec.source.link && (
+                        <>
+                          {' · '}
+                          <a href={p.spec.source.link} target="_blank" rel="noreferrer">来源</a>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {s.spec!.landscape &&
                     (() => {
                       const ing = s.spec!.landscape!.ingredients.find((x) => x.panel === pi)
@@ -171,6 +199,7 @@ export function App() {
 
             <div>
               <h2>线条与阴影</h2>
+              {!s.spec.landscape && <Slider label="剖开" value={s.cut} min={0} max={0.9} step={0.01} onChange={(v) => s.setLook({ cut: v })} />}
               <Slider label="线宽" value={s.style.lineWidth} min={0.5} max={3} step={0.1} onChange={(v) => s.setStyle((x) => (x.lineWidth = v))} />
               <Slider label="内部轮廓" value={s.style.contour.diffMax} min={1} max={60} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />
               <Slider label="阴影强度" value={s.style.shadow.strength} min={0} max={0.006} step={0.0001} onChange={(v) => s.setStyle((x) => (x.shadow.strength = v))} />
@@ -191,7 +220,7 @@ export function App() {
         <div className="muted" style={{ marginTop: 'auto' }}>
           {s.spec?.landscape ? '拖动平移 · 滚轮缩放' : '拖动旋转 · 滚轮缩放 · Shift 拖动平移'}
           <br />
-          画法致敬 David S. Goodsell；结构数据来自 RCSB PDB。
+          画法致敬 David S. Goodsell；数据来源和许可见上方各条。
         </div>
       </div>
       <Stage />

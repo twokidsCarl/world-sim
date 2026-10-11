@@ -1,6 +1,6 @@
 import { El, IDENTITY, type Molecule } from '../mol/types'
 
-/** Read heavy atoms from an MDL molfile/SDF (V2000) as a one-chain molecule. */
+/** 从 MDL molfile/SDF（V2000）读重原子，作为单链分子 / Read heavy atoms from an MDL molfile/SDF (V2000) as a one-chain molecule. */
 export function parseSdf(text: string, id: string): Molecule {
   const lines = text.split(/\r?\n/)
   const counts = lines[3] ?? ''
@@ -25,13 +25,13 @@ export function parseSdf(text: string, id: string): Molecule {
     chainOf: new Uint32Array(count),
     isTrace: new Uint8Array(count),
     residue: new Int32Array(count).fill(1),
-    chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count }],
+    chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count, model: 1 }],
     entities: [{ id: '1', description: 'phospholipid', kind: 'lipid' }],
     assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
   }
 }
 
-/** POPC (PDB chemical component POV), ideal coordinates, via the local server. */
+/** POPC（PDB 化学组分 POV），理想坐标，经本地服务器获取 / POPC (PDB chemical component POV), ideal coordinates, via the local server. */
 export async function loadLipid(): Promise<Molecule> {
   const res = await fetch('/api/ligand/POV')
   if (!res.ok) throw new Error('下载脂质坐标失败')

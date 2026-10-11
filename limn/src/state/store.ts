@@ -5,10 +5,13 @@ import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
 import { loadLipid } from '../landscape/lipid'
-import { cloneStyle, STYLE_LANDSCAPE, STYLE_MOLECULE, type Style } from '../render/style'
+import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
-import type { PanelSpec, SceneSpec } from '../scene/spec'
+import type { PanelSpec, SceneSpec, Tier } from '../scene/spec'
+import catalog from '../../data/catalog.json'
+import { coarsen } from '../mol/coarse'
+import { placedAtomCount } from '../scene/build'
 import { defaultColoring, spreadHues, type Coloring } from '../style/assign'
 import { parseHex } from '../style/oklab'
 import { ROLE_HUE, type Role } from '../style/palettes'
@@ -17,19 +20,24 @@ export interface Panel {
   spec: PanelSpec
   mol: Molecule
   coloring: Coloring
-  /** turns this panel to match the first one, when they share a protein */
+  /** 当两个面板共有一种蛋白质时，把本面板转到与第一个一致 / turns this panel to match the first one, when they share a protein */
   align: Float32Array | null
 }
 
-/** Everything a reviewer or the user can change about how the scene looks. */
+/** 评审或用户能改变的、关于场景外观的一切 / Everything a reviewer or the user can change about how the scene looks. */
 export interface Look {
   rot: Mat3
-  /** 1 = subject framed with the standard margin */
+  /** 1 = 以标准边距给主体取景 / 1 = subject framed with the standard margin */
   zoom: number
-  /** subject moved right/up by this share of the frame */
+  /** 主体向右/向上移动画幅的这个比例 / subject moved right/up by this share of the frame */
   shift: [number, number]
   style: Style
   colorings: Coloring[]
+  /**
+   * 从前面切掉的深度比例：0 = 不切，0.5 = 从正中剖开。
+   * Share of the depth cut away from the front: 0 = whole, 0.5 = cut through the middle.
+   */
+  cut: number
 }
 
 export interface Round {
@@ -44,23 +52,24 @@ export interface Round {
 interface State extends Look {
   spec: SceneSpec | null
   panels: Panel[]
-  /** bumped whenever the atoms on the GPU must be rebuilt */
+  /** 每当 GPU 上的原子必须重建时加一 / bumped whenever the atoms on the GPU must be rebuilt */
   sceneRev: number
-  /** bumped to ask the stage to draw again */
+  /** 加一以要求舞台重画 / bumped to ask the stage to draw again */
   drawRev: number
   busy: string
   error: string
   rounds: Round[]
   refining: string
-  /** the membrane lipid, loaded when a landscape has a membrane */
+  /** 膜脂质，全景有膜时加载 / the membrane lipid, loaded when a landscape has a membrane */
   lipid: Molecule | null
-  /** seed of the random arrangement of a landscape */
+  /** 全景随机排布的种子 / seed of the random arrangement of a landscape */
   seed: number
-  /** per panel, copies placed in the landscape; set by the stage after packing */
+  /** 每个面板在全景里放了多少拷贝；由舞台在排布完成后设置 / per panel, copies placed in the landscape; set by the stage after packing */
   placed: number[]
   repack(): void
   resolveTopic(topic: string): Promise<void>
   loadId(id: string): Promise<void>
+  loadCatalog(id: string): Promise<void>
   setAssembly(panel: number, id: string): void
   setRole(panel: number, entity: number, role: Role): void
   setStyle(patch: (s: Style) => void): void
@@ -84,12 +93,51 @@ async function loadPanel(spec: PanelSpec): Promise<Panel> {
   return { spec: full, mol, coloring: coloringFor(mol, full), align: null }
 }
 
+/** 一次能流畅画出的球数上限 / how many spheres can be drawn comfortably at once */
+const ATOM_BUDGET = 45_000_000
+
+export interface CatalogEntry {
+  id: string
+  title: string
+  titleEn: string
+  keywords: string[]
+  source: { kind: string; url?: string; id?: string }
+  perCopy?: boolean
+  merge?: string
+  cut?: number
+  roles?: string[][]
+  caption: string
+  tier: string
+  licence: string
+  attribution: string
+  citation: string
+  link: string
+}
+
+/** 膜的颜色：淡黄绿，取自 Goodsell 的膜 / the membrane wash: pale yellow-green, as in Goodsell's membranes */
+export const MEMBRANE_LCH: [number, number, number] = [0.8, 0.085, 112]
+
+export const CATALOG = catalog.models as CatalogEntry[]
+
 const freshLook = (): Pick<Look, 'rot' | 'zoom' | 'shift'> => ({ rot: identity3(), zoom: 1, shift: [0, 0] })
+
+/** 下载进度写到状态栏，每秒最多几次 / download progress for the status line, a few times a second at most */
+function progress(name: string): (received: number, total: number) => void {
+  let last = 0
+  return (received, total) => {
+    const now = performance.now()
+    if (now - last < 250) return
+    last = now
+    const mb = (n: number) => (n / 1e6).toFixed(1)
+    useStore.setState({ busy: `正在下载 ${name}… ${mb(received)}${total ? ' / ' + mb(total) : ''} MB` })
+  }
+}
 
 export const useStore = create<State>((set, get) => ({
   spec: null,
   panels: [],
   ...freshLook(),
+  cut: 0,
   style: cloneStyle(STYLE_MOLECULE),
   colorings: [],
   sceneRev: 0,
@@ -110,10 +158,13 @@ export const useStore = create<State>((set, get) => ({
     set({ busy: '正在理解主题并检索结构数据库（约半分钟）…', error: '' })
     try {
       const { spec } = await api.resolve(topic)
+      if (spec.catalog) return await get().loadCatalog(spec.catalog)
       set({ busy: `正在下载 ${spec.panels.map((p) => p.source.id).join('、')}…` })
       const panels = await Promise.all(spec.panels.map(loadPanel))
       if (spec.landscape) {
         const lipid = spec.landscape.membrane ? await loadLipid() : null
+        // 拥挤场景里几种分子共用一个角色；把它们在该角色的色相范围内展开，
+        // 以便分清相邻的分子。
         // Several kinds of molecule share a role in a crowded scene; fan
         // them across the role's hue range so neighbours can be told apart.
         const colorings = panels.map((p) => p.coloring)
@@ -129,9 +180,11 @@ export const useStore = create<State>((set, get) => ({
             colorings[pi] = { ...colorings[pi]!, hueShift: colorings[pi]!.hueShift.map(() => 0), nudge: colorings[pi]!.nudge.map(() => shift) }
           })
         }
-        set((s) => ({ spec, panels, colorings, lipid, ...freshLook(), style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
+        set((s) => ({ spec, panels, colorings, lipid, ...freshLook(), cut: 0, style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
         return
       }
+      // 同一蛋白质的各个面板转到共同的朝向，
+      // 这样它们之间变化的是分子而不是相机。
       // Panels of the same protein are turned to a common orientation, so
       // that what changes between them is the molecule and not the camera.
       const aligned: string[] = []
@@ -143,7 +196,7 @@ export const useStore = create<State>((set, get) => ({
         }
       }
       if (aligned.length) spec.notes = [...spec.notes, `为便于比较，已按共同的蛋白链把 ${aligned.join('、')} 叠合到 ${panels[0]!.mol.id} 的朝向。`]
-      set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }
@@ -157,7 +210,7 @@ export const useStore = create<State>((set, get) => ({
     }
     set({ busy: `正在下载 ${clean}…`, error: '' })
     try {
-      const mol = await loadMolecule({ kind: 'pdb', id: clean })
+      const mol = await loadMolecule({ kind: 'pdb', id: clean }, progress(clean))
       const coloring = defaultColoring(mol)
       const spec: PanelSpec = {
         label: clean,
@@ -167,7 +220,74 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const scene: SceneSpec = { topic: clean, kind: 'molecule', title: mol.title || clean, caption: '', panels: [spec], notes: [] }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+    } catch (e) {
+      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+    }
+  },
+
+  async loadCatalog(id) {
+    const entry = (catalog.models as CatalogEntry[]).find((m) => m.id === id)
+    if (!entry) {
+      set({ error: `目录里没有 ${id}` })
+      return
+    }
+    set({ busy: `正在下载 ${entry.title}…`, error: '' })
+    try {
+      const src = entry.source
+      let mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(entry.title))
+      const notes: string[] = []
+      const assembly = defaultAssembly(mol)
+      // 原子太多就改画每个残基一个球 / with too many atoms, draw one sphere per residue instead
+      const full = placedAtomCount(mol, assembly)
+      if (full > ATOM_BUDGET) {
+        mol = coarsen(mol)
+        notes.push(`完整模型有 ${(full / 1e6).toFixed(0)} 百万个原子，超出了能流畅绘制的范围，这里每个残基只画一个球（脂质每个分子画三个球）。`)
+      }
+      const roles: Role[] = mol.entities.map((e) => {
+        if (e.kind === 'lipid') return 'membrane'
+        for (const [pattern, role] of entry.roles ?? []) if (new RegExp(pattern!, 'i').test(e.description)) return role as Role
+        return entry.roles ? 'soluble' : (undefined as unknown as Role)
+      })
+      const base = defaultColoring(mol)
+      const coloring = spreadHues({ ...base, roles: roles.map((r, i) => r ?? base.roles[i]!) })
+      // 整张膜一个颜色，不按来源的拼块分色 / the whole membrane is one colour, not a patchwork of where its lipids came from
+      if (entry.perCopy) mol.entities.forEach((e, i) => e.kind === 'lipid' && (coloring.override[i] = MEMBRANE_LCH))
+      const short = (d: string) => d.split('.').pop()!.replace(/_/g, ' ')
+      const spec: PanelSpec = {
+        label: entry.title,
+        source: {
+          id: src.kind === 'pdb' ? src.id! : entry.id,
+          kind: src.kind === 'pdb' ? 'pdb' : 'model',
+          url: src.url,
+          title: entry.titleEn,
+          method: '',
+          resolution: null,
+          year: null,
+          licence: entry.licence,
+          attribution: entry.attribution,
+          citation: entry.citation,
+          link: entry.link,
+          tier: entry.tier as Tier,
+        },
+        assembly,
+        entities: mol.entities.map((e, i) => ({ entityId: e.id, role: coloring.roles[i]!, name: short(e.description) || e.kind, description: e.description, organism: '' })),
+        reason: '',
+      }
+      const mesoscale = !!entry.perCopy
+      if (mesoscale) notes.push('这是别人已发表的整体模型：其中每个分子是真实结构，位置和数量由模型作者依据实验数据排布，不是直接观测到的。')
+      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, caption: entry.caption, panels: [spec], notes, mesoscale, merge: entry.merge }
+      set((s) => ({
+        spec: scene,
+        panels: [{ spec, mol, coloring, align: null }],
+        colorings: [coloring],
+        ...freshLook(),
+        cut: entry.cut ?? 0,
+        style: cloneStyle(mesoscale ? STYLE_MESOSCALE : STYLE_MOLECULE),
+        rounds: [],
+        busy: '',
+        sceneRev: s.sceneRev + 1,
+      }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }
@@ -205,7 +325,7 @@ export const useStore = create<State>((set, get) => ({
 
   getLook() {
     const s = get()
-    return structuredClone({ rot: s.rot, zoom: s.zoom, shift: s.shift, style: s.style, colorings: s.colorings })
+    return structuredClone({ rot: s.rot, zoom: s.zoom, shift: s.shift, style: s.style, colorings: s.colorings, cut: s.cut })
   },
 
   resetView() {
@@ -214,7 +334,7 @@ export const useStore = create<State>((set, get) => ({
 
   applyEdits(edits) {
     const s = get()
-    let rot = s.rot, zoom = s.zoom
+    let rot = s.rot, zoom = s.zoom, cut = s.cut
     let shift: [number, number] = [...s.shift]
     const style = cloneStyle(s.style)
     const colorings = structuredClone(s.colorings)
@@ -238,6 +358,7 @@ export const useStore = create<State>((set, get) => ({
           } else c.nudge[idx] = Math.max(-60, Math.min(60, (c.nudge[idx] ?? 0) + e.degrees))
           break
         }
+        case 'cut': cut = e.value; break
         case 'line_width': style.lineWidth = e.value; break
         case 'inner_lines': style.contour.diffMax = e.value; break
         case 'shadow_strength': style.shadow.strength = e.value; break
@@ -246,6 +367,6 @@ export const useStore = create<State>((set, get) => ({
         case 'background': style.background = parseHex(e.hex); break
       }
     }
-    set({ rot, zoom, shift, style, colorings })
+    set({ rot, zoom, shift, style, colorings, cut })
   },
 }))

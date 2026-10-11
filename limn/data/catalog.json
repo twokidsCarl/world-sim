@@ -1,0 +1,349 @@
+{
+  "about": "现成模型的目录：只存指针、出处和许可，不存数据本身；模型在运行时从原地址下载。 / A catalogue of ready-made models: pointers, provenance and licences only, never the data; models are downloaded from their home at run time.",
+  "models": [
+    {
+      "id": "sars-cov-2-virion",
+      "title": "新冠病毒颗粒",
+      "titleEn": "SARS-CoV-2 virion",
+      "keywords": [
+        "新冠",
+        "冠状病毒",
+        "sars-cov-2",
+        "covid",
+        "coronavirus virion"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/sarscov2_2-no_bonds.bcif"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["^(S|E|M|M2)$", "focus"],
+        ["Nest|Pyramid", "nucleic-binding"]
+      ],
+      "caption": "整颗病毒的原子模型，从中间剖开：包膜上的刺突蛋白（S）、膜蛋白（M）和包膜蛋白（E），内部是核衣壳蛋白与 RNA 组成的核糖核蛋白。",
+      "tier": "curated",
+      "licence": "CC BY-SA 4.0",
+      "attribution": "Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
+      "citation": "Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
+      "link": "http://download.yasara.org/petworld/sarscov2/index.html"
+    },
+    {
+      "id": "hiv-virion-petworld",
+      "title": "HIV-1 病毒颗粒",
+      "titleEn": "HIV-1 virion",
+      "keywords": [
+        "hiv",
+        "艾滋病毒",
+        "人类免疫缺陷病毒",
+        "hiv virion"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/hiv_2-no_bonds.bcif"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["gp160|Vpu|^MA$|Capsid|Nef|Vpr|Vif|P6|SP1|SP2|Tat", "focus"],
+        ["gRNA", "nucleic"],
+        ["^(RT|IN|NC|PR)$", "nucleic-binding"]
+      ],
+      "caption": "成熟 HIV-1 病毒颗粒的原子模型，从中间剖开：包膜上的 gp160 刺突，膜下的基质蛋白，锥形衣壳里是两条基因组 RNA 和逆转录酶、整合酶。",
+      "tier": "curated",
+      "licence": "CC BY-SA 4.0",
+      "attribution": "Kornel Ozvoldik, Elmar Krieger and the cellPACK team (YASARA PetWorld)",
+      "citation": "Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
+      "link": "http://download.yasara.org/petworld/hiv/index.html"
+    },
+    {
+      "id": "synaptic-vesicle",
+      "title": "突触小泡",
+      "titleEn": "Synaptic vesicle",
+      "keywords": [
+        "突触小泡",
+        "突触囊泡",
+        "synaptic vesicle",
+        "神经递质"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/synvesicle_2-no_bonds.bcif"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["VATPase", "focus"],
+        ["Glutamate", "ligand"],
+        ["RAB|Synapsin|CSP|SNAP", "soluble"],
+        [".", "membrane"]
+      ],
+      "caption": "一个突触小泡的原子模型，从中间剖开：膜上有质子泵 V-ATPase、谷氨酸转运体 VGLUT、SNARE 蛋白和突触结合蛋白，里面装着谷氨酸。",
+      "tier": "curated",
+      "licence": "CC BY-SA 4.0",
+      "attribution": "Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
+      "citation": "Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
+      "link": "http://download.yasara.org/petworld/synvesicle/index.html",
+      "merge": "Glutamate"
+    },
+    {
+      "id": "hiv-virion-cellpack",
+      "title": "HIV-1 病毒颗粒（cellPACK 模型）",
+      "titleEn": "HIV-1 virion (cellPACK model)",
+      "keywords": [
+        "hiv cellpack"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/hiv1_cellpack_atom_instances.bcif"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["gRNA|fibers", "nucleic"],
+        ["\\.(RT|IN|NC|PR|RT_capsid|IN_capsid|NC_capsid)$", "nucleic-binding"],
+        ["HLA|Cyclophilin", "soluble"],
+        [".", "focus"]
+      ],
+      "caption": "cellPACK 组装的成熟 HIV-1 病毒颗粒，从中间剖开。",
+      "tier": "curated",
+      "licence": "文件未附许可声明；cellPACK 的数据仓库为 MIT / no licence stated with the file; the cellPACK data repository is MIT",
+      "attribution": "Ludovic Autin et al. (cellPACK)",
+      "citation": "Johnson et al., Nature Methods 2015, doi:10.1038/nmeth.3204",
+      "link": "https://mesoscope.scripps.edu/explorer/"
+    },
+    {
+      "id": "exosome",
+      "title": "外泌体",
+      "titleEn": "Exosome",
+      "keywords": [
+        "外泌体",
+        "exosome",
+        "细胞外囊泡"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/cellpack_apr2024_instances.bcif"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["fibers|RNA|ADN|DNA", "nucleic"],
+        ["\\.surface\\.", "membrane"],
+        ["EEF|EIF", "nucleic-binding"],
+        [".", "soluble"]
+      ],
+      "caption": "cellPACK 组装的外泌体，从中间剖开：膜上有四跨膜蛋白 CD9、CD63、CD81 和整合素，里面是细胞质蛋白和 RNA。",
+      "tier": "curated",
+      "licence": "文件未附许可声明；cellPACK 的数据仓库为 MIT / no licence stated with the file; the cellPACK data repository is MIT",
+      "attribution": "Julia Jimenez, Ludovic Autin et al. (cellPACK)",
+      "citation": "Jimenez et al., J. Biocommunication 2019, doi:10.5210/jbc.v43i2.10331",
+      "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9139774/"
+    },
+    {
+      "id": "machinery-of-life",
+      "title": "生命的机器（Goodsell 与 Autin）",
+      "titleEn": "Machinery of Life (Goodsell and Autin)",
+      "keywords": [
+        "生命的机器",
+        "machinery of life",
+        "分子机器全景"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/machineryoflife.bcif"
+      },
+      "perCopy": true,
+      "cut": 0,
+      "roles": [
+        ["\\.surface\\.", "membrane"],
+        ["Ribosome|tRNA|RNA|DNA|Polymerase|Nucleosome|Helicase|Topoisomerase|Repressor|Synthetase", "nucleic-binding"],
+        ["Virus|virus|Antibody", "focus"],
+        ["Albumin|Fibrin|Thrombin|Factor|Insulin|Glucagon|Growth|Amylase|Pepsin|Trypsin|Lysozyme|Collagen", "extracellular"],
+        [".", "soluble"]
+      ],
+      "caption": "David Goodsell 与 Ludovic Autin 把《生命的机器》里的分子放进同一个三维场景：按比例排在一起的上百种蛋白、核酸和膜。",
+      "tier": "curated",
+      "licence": "文件未附许可声明 / no licence stated with the file",
+      "attribution": "David S. Goodsell, Ludovic Autin",
+      "citation": "Mesoscale Explorer, Protein Science 2024, doi:10.1002/pro.5177",
+      "link": "https://cdn.rcsb.org/pdb101/molecular-machinery/"
+    },
+    {
+      "id": "mycoplasma-genitalium",
+      "title": "生殖支原体整细胞",
+      "titleEn": "Whole Mycoplasma genitalium cell",
+      "keywords": [
+        "支原体",
+        "mycoplasma",
+        "整细胞",
+        "whole cell",
+        "最小细胞"
+      ],
+      "source": {
+        "kind": "url",
+        "url": "https://mesoscope.scripps.edu/explorer/examples/MG_1184_cellpack_atom_instances.bcif"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["fibers|RNA|DNA", "nucleic"],
+        ["RIBOSOME|POLYMERASE|GYRASE", "nucleic-binding"],
+        ["\\.surface\\.", "membrane"],
+        [".", "soluble"]
+      ],
+      "caption": "一整只生殖支原体细胞的模型，从中间剖开：膜、核糖体、基因组 DNA 和几百种蛋白，数量来自全细胞模拟的一个时刻。",
+      "tier": "curated",
+      "licence": "MIT",
+      "attribution": "Martina Maritan, Ludovic Autin, Jonathan Karr, Markus Covert, Arthur Olson, David Goodsell",
+      "citation": "Maritan et al., J. Mol. Biol. 2022, doi:10.1016/j.jmb.2021.167351",
+      "link": "https://ccsb.scripps.edu/gallery/mycoplasma_model/"
+    },
+    {
+      "id": "hiv-capsid",
+      "title": "完整的 HIV-1 衣壳",
+      "titleEn": "The entire HIV-1 capsid",
+      "keywords": [
+        "hiv 衣壳",
+        "hiv capsid",
+        "3j3q"
+      ],
+      "source": {
+        "kind": "pdb",
+        "id": "3J3Q"
+      },
+      "caption": "由 1356 条衣壳蛋白链围成的锥形衣壳（186 个六聚体、12 个五聚体），冷冻电镜与全原子模拟得到的模型。",
+      "tier": "measured",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB",
+      "citation": "Zhao et al., Nature 2013, doi:10.1038/nature12162",
+      "link": "https://www.rcsb.org/structure/3J3Q",
+      "roles": [
+        [".", "focus"]
+      ]
+    },
+    {
+      "id": "zika-virus",
+      "title": "寨卡病毒",
+      "titleEn": "Zika virus",
+      "keywords": ["寨卡", "zika"],
+      "source": {
+        "kind": "pdb",
+        "id": "5IRE"
+      },
+      "caption": "成熟寨卡病毒颗粒的外壳：180 份包膜蛋白 E 和膜蛋白 M 按二十面体对称铺满表面。",
+      "tier": "measured",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB",
+      "citation": "Sirohi et al., Science 2016, doi:10.1126/science.aaf5316",
+      "link": "https://www.rcsb.org/structure/5IRE",
+      "roles": [
+        [".", "focus"]
+      ]
+    },
+    {
+      "id": "dengue-virus",
+      "title": "登革病毒",
+      "titleEn": "Dengue virus",
+      "keywords": ["登革", "dengue"],
+      "source": {
+        "kind": "pdb",
+        "id": "3J27"
+      },
+      "caption": "成熟登革病毒颗粒的外壳，冷冻电镜结构。",
+      "tier": "measured",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB",
+      "citation": "Zhang et al., Nat. Struct. Mol. Biol. 2012, doi:10.1038/nsmb.2463",
+      "link": "https://www.rcsb.org/structure/3J27",
+      "roles": [
+        [".", "focus"]
+      ]
+    },
+    {
+      "id": "pbcv-capsid",
+      "title": "小球藻病毒 PBCV-1 的衣壳",
+      "titleEn": "Capsid of Paramecium bursaria Chlorella virus 1",
+      "keywords": [
+        "pbcv",
+        "小球藻病毒",
+        "巨型病毒",
+        "1m4x"
+      ],
+      "source": {
+        "kind": "pdb",
+        "id": "1M4X"
+      },
+      "caption": "由 5040 份主要衣壳蛋白组成的二十面体外壳，直径约 190 nm，1600 万个原子。",
+      "tier": "measured",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB",
+      "citation": "Nandhagopal et al., PNAS 2002, doi:10.1073/pnas.232580699",
+      "link": "https://www.rcsb.org/structure/1M4X",
+      "roles": [
+        [".", "focus"]
+      ]
+    },
+    {
+      "id": "human-npc",
+      "title": "人的核孔复合体",
+      "titleEn": "Human nuclear pore complex",
+      "keywords": [
+        "核孔",
+        "nuclear pore",
+        "npc"
+      ],
+      "source": {
+        "kind": "pdb",
+        "id": "7R5K"
+      },
+      "caption": "人核孔复合体的骨架（收缩态），由冷冻电镜断层扫描和结构预测整合得到。",
+      "tier": "curated",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB",
+      "citation": "Mosalaganti et al., Science 2022, doi:10.1126/science.abm9506",
+      "link": "https://www.rcsb.org/structure/7R5K"
+    },
+    {
+      "id": "yeast-npc-integrative",
+      "title": "裂殖酵母的核孔复合体（整合模型）",
+      "titleEn": "Fission yeast nuclear pore complex (integrative model)",
+      "keywords": [
+        "酵母核孔",
+        "yeast nuclear pore",
+        "9a1m"
+      ],
+      "source": {
+        "kind": "pdb",
+        "id": "9A1M"
+      },
+      "caption": "裂殖酵母核孔复合体的整合结构模型，189 万个原子。",
+      "tier": "curated",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB / PDB-IHM",
+      "citation": "Zimmerli et al., Science 2021, doi:10.1126/science.abd9776",
+      "link": "https://www.rcsb.org/structure/9A1M"
+    },
+    {
+      "id": "nup84-beads",
+      "title": "核孔的 Nup84 亚复合体（粗粒度整合模型）",
+      "titleEn": "Nup84 subcomplex of the nuclear pore (coarse integrative model)",
+      "keywords": [
+        "nup84",
+        "8zz1",
+        "粗粒度"
+      ],
+      "source": {
+        "kind": "pdb",
+        "id": "8ZZ1"
+      },
+      "caption": "七种蛋白组成的 Y 形复合体。每个小球代表一段残基，位置由交联质谱和电镜数据整合确定，不是原子坐标。",
+      "tier": "curated",
+      "licence": "CC0 1.0",
+      "attribution": "wwPDB / PDB-IHM",
+      "citation": "Shi et al., Mol. Cell. Proteomics 2014, doi:10.1074/mcp.M114.041673",
+      "link": "https://www.rcsb.org/structure/8ZZ1"
+    }
+  ]
+}

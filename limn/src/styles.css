@@ -40,3 +40,7 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .tabs { display: flex; gap: 4px; }
 .tabs button { flex: 1; }
 .tabs button.on { background: #1d1d1b; color: #fff; border-color: #1d1d1b; }
+
+.catalog { display: flex; flex-direction: column; gap: 4px; }
+.catalog button { text-align: left; }
+.source a { color: inherit; }

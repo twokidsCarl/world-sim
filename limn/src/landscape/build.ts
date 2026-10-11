@@ -2,18 +2,18 @@ import type { Molecule } from '../mol/types'
 import { El } from '../mol/types'
 import { axisAngle, mul3 } from '../render/camera'
 import { principalFrame } from '../refine/views'
-import { assemblyDraws } from '../scene/build'
+import { assemblyCopies } from '../scene/build'
 import type { LandscapeSpec } from '../scene/spec'
 import { coarsen, collides, Occupied, placement, randomRotation, rng, scatter, type Coarse, type Region } from './pack'
 
-/** Half the thickness of the bilayer between its head-group planes, Å. */
+/** 双层膜两个头基平面之间厚度的一半，Å / Half the thickness of the bilayer between its head-group planes, Å. */
 const MEMBRANE_HALF = 20
-/** Molecules are placed a little beyond the frame so its edges are filled. */
+/** 分子放到略超出画幅的位置，让画幅边缘被填满 / Molecules are placed a little beyond the frame so its edges are filled. */
 const OVERHANG = 40
 
-/** Atom centres of a molecule's assembly, thinned for speed. */
+/** 分子组装体的原子中心，为了速度做了抽稀 / Atom centres of a molecule's assembly, thinned for speed. */
 function assemblyPoints(mol: Molecule, assembly: string): Float32Array {
-  const draws = assemblyDraws(mol, { assembly, molecule: 0 })
+  const draws = assemblyCopies(mol, assembly)
   const total = draws.reduce((s, d) => s + d.count, 0)
   const step = Math.max(1, Math.floor(total / 60_000))
   const out: number[] = []
@@ -27,22 +27,22 @@ function assemblyPoints(mol: Molecule, assembly: string): Float32Array {
   return new Float32Array(out)
 }
 
-/** Rotation (column-major 3x3) that stands the molecule's long axis along y. */
+/** 把分子长轴立到 y 方向的旋转（列主序 3x3） / Rotation (column-major 3x3) that stands the molecule's long axis along y. */
 function upright(c: Coarse): Float32Array {
   return principalFrame({ center: [0, 0, 0], radius: c.radius, spheres: c.spheres, subunitSize: 30 })
 }
 
 export interface Packed {
-  /** per panel: one column-major 4x4 per placed copy */
+  /** 每个面板：每个放置的拷贝一个列主序 4x4 / per panel: one column-major 4x4 per placed copy */
   places: Float32Array[][]
   lipids: Float32Array[]
-  /** per panel: copies asked for and copies that fitted */
+  /** 每个面板：要求的拷贝数和放得下的拷贝数 / per panel: copies asked for and copies that fitted */
   wanted: number[]
-  /** per panel: the molecule's own centre, which each placement moves into the scene */
+  /** 每个面板：分子自身的中心，每次放置把它移进场景 / per panel: the molecule's own centre, which each placement moves into the scene */
   centers: [number, number, number][]
 }
 
-/** Where a placement puts a molecule's centre. */
+/** 一次放置把分子的中心放到哪里 / Where a placement puts a molecule's centre. */
 export function placedCenter(m: Float32Array, c: [number, number, number]): [number, number, number] {
   return [m[0]! * c[0] + m[4]! * c[1] + m[8]! * c[2] + m[12]!, m[1]! * c[0] + m[5]! * c[1] + m[9]! * c[2] + m[13]!, m[2]! * c[0] + m[6]! * c[1] + m[10]! * c[2] + m[14]!]
 }
@@ -53,12 +53,14 @@ export interface PackInput {
 }
 
 /**
+ * 组装体里蛋白质链某一端的平均位置：每条链最前（N 端）或最后（C 端）的几个主链原子。
+ * 对于各链并排走向的对称寡聚体，这标出了分子的一端。
  * Mean position of one end of the protein chains in an assembly: the first
  * (N) or last (C) few backbone atoms of every chain. For a symmetric
  * oligomer whose chains run side by side this marks one end of the molecule.
  */
 export function terminusPoint(mol: Molecule, assembly: string, which: 'N' | 'C'): [number, number, number] | null {
-  const draws = assemblyDraws(mol, { assembly, molecule: 0 })
+  const draws = assemblyCopies(mol, assembly)
   const sum = [0, 0, 0]
   let n = 0
   for (const d of draws) {
@@ -81,6 +83,8 @@ export function terminusPoint(mol: Molecule, assembly: string, which: 'N' | 'C')
 }
 
 /**
+ * 排布场景。厚片的 x 在 ±width/2，y 在 ±height/2，z 从 -depth（远）到 0
+ * （离观察者最近的切面）。如果有膜，它位于 y = 0 平面。
  * Lay out the scene. The slab spans x in ±width/2, y in ±height/2 and z from
  * -depth (far) to 0 (the cut face nearest the viewer). A membrane, if any,
  * lies in the y = 0 plane.
@@ -92,6 +96,7 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
   const places: Float32Array[][] = inputs.map(() => [])
   const wanted = inputs.map(() => 0)
   const W = spec.width / 2 + OVERHANG, H = spec.height / 2 + OVERHANG
+  // 把整个分子都留在切面之后，这样没有东西被切开
   // keep whole molecules behind the cut face, so nothing is sliced
   const zRange = (c: Coarse): [number, number] => {
     const front = -Math.min(c.radius * 0.75, spec.depth * 0.5)
@@ -100,7 +105,7 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
   const bySize = (a: number, b: number) => coarse[spec.ingredients[b]!.panel]!.radius - coarse[spec.ingredients[a]!.panel]!.radius
   const order = spec.ingredients.map((_, i) => i)
 
-  // 1. membrane proteins, standing in the membrane plane
+  // 1. 膜蛋白，立在膜平面上 / 1. membrane proteins, standing in the membrane plane
   const lipids: Float32Array[] = []
   if (spec.membrane) {
     for (const i of order.filter((i) => spec.ingredients[i]!.compartment === 'membrane').sort(bySize)) {
@@ -109,6 +114,7 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
       let y = 0
       if (ing.anchor === 'above' || ing.anchor === 'below') {
         const side = ing.anchor === 'above' ? 1 : -1
+        // 把链上与膜相接的那一端转向膜
         // turn the end of the chain that joins the membrane towards it
         const end = ing.terminus ? terminusPoint(inputs[ing.panel]!.mol, inputs[ing.panel]!.assembly, ing.terminus) : null
         if (end) {
@@ -116,6 +122,7 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
           const endY = base[1]! * d[0]! + base[4]! * d[1]! + base[7]! * d[2]!
           if (endY * side > 0) base = mul3(axisAngle(1, 0, 0, Math.PI), base)
         }
+        // 把它立在膜面上：最低点（朝膜的方向）刚好接触
         // stand it on the membrane face: its lowest point (towards the membrane) just touching
         let reach = 0
         for (let k = 0; k < c.spheres.length; k += 4) {
@@ -130,10 +137,12 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
       places[ing.panel] = scatter(occ, c, ing.copies, { min: [-W, y, z0], max: [W, y, z1] }, rand, (r) => mul3(axisAngle(0, 1, 0, r() * 2 * Math.PI), stand), 200)
     }
 
+    // 2. 双层膜：脂质放在带抖动的网格上，分两个小叶，跳过蛋白质
     // 2. the bilayer: lipids on a jittered grid in two leaflets, skipping protein
     if (lipid) {
       const lc = coarsen(lipid.pos, 7)
       const stand = upright(lc)
+      // 头基朝哪边？磷原子标出它
       // which way is the head group? the phosphorus atom marks it
       let headY = 0, lo = Infinity, hi = -Infinity
       for (let a = 0; a < lipid.atomCount; a++) {
@@ -146,9 +155,9 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
       const headUp = headY >= 0 ? stand : mul3(axisAngle(1, 0, 0, Math.PI), stand)
       const headDown = mul3(axisAngle(1, 0, 0, Math.PI), headUp)
       const half = (hi - lo) / 2
-      // tails meet at the middle of the membrane
+      // 尾部在膜的正中相接 / tails meet at the middle of the membrane
       const offset = Math.min(half, MEMBRANE_HALF) * 0.92
-      const pitch = 8.4 // about 70 Å² per lipid
+      const pitch = 8.4 // 每个脂质约 70 Å² / about 70 Å² per lipid
       for (const [dir, y] of [[headUp, offset], [headDown, -offset]] as const) {
         for (let x = -W; x <= W; x += pitch) {
           for (let z = -spec.depth - 10; z <= -4; z += pitch) {
@@ -159,12 +168,16 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
           }
         }
       }
+      // 脂质之间互不排斥（网格已经把它们隔开），
+      // 但之后放置的一切都必须避开双层膜
       // lipids do not exclude one another (the grid already spaces them),
       // but everything placed later must stay out of the bilayer
       for (let x = -W; x <= W; x += 14) for (let z = -spec.depth - 10; z <= 0; z += 14) for (const y of [-14, 0, 14]) occ.add(x, y, z, 11)
     }
   }
 
+  // 3. 可溶性分子。主角先放，放在前景且远离边缘，让画面的主体完整可见；
+  // 然后是其余的，从大到小，让小的去填空隙。
   // 3. soluble molecules. The featured ones go first, in the foreground and
   // away from the edges, so that the subject of the picture is whole and in
   // view; then the rest, largest first, so the small ones fill the gaps.
