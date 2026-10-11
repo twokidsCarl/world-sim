@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·6 | 神经元形态：NeuroMorpho.Org 的显微重建（锥体细胞、浦肯野细胞等），按胞体、树突、轴突分色 | 第一版完成，见 `src/neuro/swc.ts`、`data/neurons.json` |
 | 二期·5 | 分子尺度的脑神经：38 个神经相关的地标结构（突触前、突触后、轴突、髓鞘、病理纤维）；膜蛋白取向增加 PDBTM 后备 | 完成，见 `data/neuro.json`、`server/sources/pdbtm.ts` |
 | 二期·4 | 最新发表：按期刊（Nature、Science、Cell 等）列出最近公开的结构，点一下出图；出处里显示论文 | 完成，见 `server/sources/literature.ts` |
 | 二期·2d | 膜的真实脂质组成（八类膜，分小叶混排），脂质尾链转到同一侧 | 完成，见 `data/membranes.json`、`src/landscape/lipid.ts` |
@@ -82,6 +83,15 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 
 目录只存指针、出处和许可，模型在运行时从原地址下载，不入库。各模型的许可不同（CC0、MIT、CC BY-SA 4.0，有几个文件没有附许可声明），界面上逐条列出；用这些图时请按原作者的许可署名。
 
+## 神经元形态图
+
+“现成模型”页里的“神经元的形态”画的不是原子，而是从显微图像描出来的整个神经元（[NeuroMorpho.Org](https://neuromorpho.org/)，CC BY 4.0），单位是微米。画法和分子图是同一套：每一段分支用一串紧挨着的球表示（球心间距是半径的三分之一，轮廓起伏不到半径的 2%），所以不需要新的图元。
+
+- 分支的走向是重建数据；粗细也来自重建，但重建里的粗细常常不如走向可靠。
+- 比线还细的分支画粗了一点，否则会整条被描边盖住。
+- 目录里四个重建都没有轴突（原作者没有描），界面上写明了。
+- 目前只能从目录里选，一次画一个；还不能按物种和细胞类型检索，也没有接入 MICrONS、H01 这类连接组数据。
+
 ## 全景图里什么是真的，什么不是
 
 真的：每个分子都是 PDB 里的实验结构，按同一比例画；分子之间不重叠；各区室画出的大分子总质量与该区室的总浓度相符。
@@ -120,6 +130,7 @@ bun run dev                    # 然后打开 http://127.0.0.1:5184/research/ill
 ## 数据与参考图
 
 - **结构数据**：运行时从 RCSB PDB（`models.rcsb.org`，CC0）按编号下载，不入库。检索还用到 UniProt、PDBe SIFTS 和 AlphaFold DB 的公开接口。
+- **`data/neurons.json`**：四个神经元重建在 NeuroMorpho.Org 上的名字、档案和原始论文的 DOI；重建文件运行时下载，不入库。NeuroMorpho.Org 以 CC BY 4.0 发布。
 - **`data/neuro.json`**：38 个神经相关结构的 PDB 编号和一句说明，每个编号都对过 RCSB 的标题。
 - **膜蛋白取向（后备）**：运行时查询 [PDBTM](https://pdbtm.unitmp.org/)；它的条款只允许非营利使用且不得修改，所以只在运行时取用、注明来源，不入库。
 - **膜蛋白取向**：运行时从 [OPM](https://opm.phar.umich.edu/) 下载预先定向的坐标，只取 Cα 位置和膜的半厚度，缓存在本机，不入库。OPM 的许可条款我没有查到原文，所以只在运行时取用、标明来源。
@@ -150,6 +161,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 6 | Neuron morphologies: microscopy reconstructions from NeuroMorpho.Org (pyramidal cells, a Purkinje cell and others), coloured by soma, dendrite and axon | First version done, see `src/neuro/swc.ts`, `data/neurons.json` |
 | Round 2, phase 5 | The nervous system at molecular scale: 38 landmark structures (presynaptic, postsynaptic, axon, myelin, fibrils of disease); a PDBTM fallback for membrane protein orientation | Done, see `data/neuro.json`, `server/sources/pdbtm.ts` |
 | Round 2, phase 4 | Recently published: the structures most recently released for a journal (Nature, Science, Cell and others), one click to draw; the provenance shows the paper | Done, see `server/sources/literature.ts` |
 | Round 2, phase 2d | Real lipid compositions of membranes (eight kinds, mixed per leaflet), with lipid tails turned to one side | Done, see `data/membranes.json`, `src/landscape/lipid.ts` |
@@ -217,6 +229,15 @@ Three things about how they are drawn:
 
 The catalogue stores pointers, provenance and licences only; models are downloaded from their home at run time and are not in this repository. Licences differ (CC0, MIT, CC BY-SA 4.0, and a few files carry no licence statement) and are listed per model in the interface. If you use the pictures, credit the original authors as their licence requires.
 
+## Neuron morphology pictures
+
+"Shapes of neurons", on the ready-made models tab, draws not atoms but whole neurons traced from microscope images ([NeuroMorpho.Org](https://neuromorpho.org/), CC BY 4.0), in microns. The drawing method is the one used for molecules: each stretch of a branch is a run of closely spaced spheres (centres a third of a radius apart, so the outline ripples by less than 2% of the radius), and no new primitive is needed.
+
+- Where a branch runs is the reconstruction's data; so is its thickness, though thickness in reconstructions is often less reliable than course.
+- A branch thinner than the line is drawn a little fatter, or its outline would cover it from side to side.
+- None of the four reconstructions in the catalogue has an axon (the original authors did not trace it), and the interface says so.
+- For now a neuron can only be chosen from the catalogue, one at a time; there is no search by species and cell type yet, and connectome datasets such as MICrONS and H01 are not connected.
+
 ## What is real in a landscape, and what is not
 
 Real: every molecule is an experimental structure from the PDB, drawn at one scale; molecules do not overlap; the total mass of macromolecules drawn in each compartment matches that compartment's overall concentration.
@@ -255,6 +276,7 @@ Rebuilding the Molecule of the Month table (`data/motm.json`, article titles and
 ## Data and reference pictures
 
 - **Structures**: downloaded by id at run time from the RCSB PDB (`models.rcsb.org`, CC0); none are in this repository. Lookups also use the public interfaces of UniProt, PDBe SIFTS and the AlphaFold DB.
+- **`data/neurons.json`**: the names, archives and original papers' DOIs of four neuron reconstructions on NeuroMorpho.Org; the reconstruction files are downloaded at run time and are not in this repository. NeuroMorpho.Org is released under CC BY 4.0.
 - **`data/neuro.json`**: the PDB ids of 38 structures of the nervous system with a line each, every id checked against its RCSB title.
 - **Membrane protein orientation (fallback)**: [PDBTM](https://pdbtm.unitmp.org/) is queried at run time; its terms allow non-profit use without modification only, so it is fetched at run time and credited, and nothing of it is in the repository.
 - **Membrane protein orientation**: pre-oriented coordinates are downloaded from [OPM](https://opm.phar.umich.edu/) at run time; only Cα positions and the membrane half-thickness are used, cached locally, and none of it is in this repository. I could not find the text of OPM's licence, so the data is only fetched at run time and credited.

@@ -17,7 +17,7 @@ export interface SourceRef {
    */
   id: string
   /** 'model'：目录里的现成介观模型 / 'model': a ready-made mesoscale model from the catalogue */
-  kind: 'pdb' | 'alphafold' | 'model'
+  kind: 'pdb' | 'alphafold' | 'model' | 'neuron'
   /**
    * AlphaFold 和目录模型的下载 URL；PDB 条目按 id 获取
    * download URL for AlphaFold and catalogue models; PDB entries are fetched by id
@@ -105,7 +105,7 @@ export interface LandscapeSpec {
 
 export interface SceneSpec {
   topic: string
-  kind: 'molecule' | 'complex' | 'virus' | 'gene' | 'mechanism' | 'landscape' | 'model'
+  kind: 'molecule' | 'complex' | 'virus' | 'gene' | 'mechanism' | 'landscape' | 'model' | 'neuron'
   title: string
   caption: string
   panels: PanelSpec[]

@@ -7,11 +7,13 @@ import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
 import { loadLipids, type LipidSet } from '../landscape/lipid'
 import { fitFromPdbtm, fitToMembrane, type MembraneFit } from '../landscape/orient'
 import type { Annotation, ColorMode } from '../style/annotate'
-import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, type Style } from '../render/style'
+import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, STYLE_NEURON, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
 import type { PanelSpec, SceneSpec, Tier } from '../scene/spec'
 import catalog from '../../data/catalog.json'
+import neuronTable from '../../data/neurons.json'
+import { neuromorphoUrl, neuronMolecule, parseSwc } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { assemblyAtPoints, parsePicks } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -83,6 +85,8 @@ interface State extends Look {
   /** `title`：目录里给这个结构起的名字，有就用它作标题 / `title`: the name a catalogue gives the structure, used as the title when given */
   loadId(id: string, title?: string): Promise<void>
   loadCatalog(id: string): Promise<void>
+  /** 载入目录里的一个神经元形态重建 / load a neuron reconstruction from the catalogue */
+  loadNeuron(id: string): Promise<void>
   setAssembly(panel: number, id: string): void
   setRole(panel: number, entity: number, role: Role): void
   /** 换上色方式；需要时先去取注释 / change the colour mode, fetching annotation first when it is needed */
@@ -350,6 +354,51 @@ export const useStore = create<State>((set, get) => ({
         busy: '',
         sceneRev: s.sceneRev + 1,
       }))
+    } catch (e) {
+      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+    }
+  },
+
+  async loadNeuron(id) {
+    const entry = neuronTable.neurons.find((n) => n.id === id)
+    if (!entry) {
+      set({ error: `目录里没有 ${id}` })
+      return
+    }
+    set({ busy: `正在下载 ${entry.title}…`, error: '' })
+    try {
+      const url = neuromorphoUrl(entry.archive, entry.name)
+      // 先走本地服务的缓存，不行再直接取 / through the local service's cache first, then directly
+      let text = ''
+      for (const u of [`/api/structure?url=${encodeURIComponent(url)}`, url]) {
+        const res = await fetch(u).catch(() => null)
+        if (res?.ok) {
+          text = await res.text()
+          break
+        }
+      }
+      if (!text) throw new Error(`没能取到 ${entry.title}：它要从 neuromorpho.org 现取，请检查网络后重试。`)
+      const mol = neuronMolecule(parseSwc(text), entry.name, entry.titleEn)
+      // 胞体是主角；轴突、基树突、顶树突各用一个色相区 / the soma is the subject; axon, basal and apical dendrites each take a hue sector
+      const roleOf: Record<string, Role> = { '1': 'focus', '2': 'nucleic-binding', '3': 'soluble', '4': 'membrane', '0': 'extracellular' }
+      const roles = mol.entities.map((e) => roleOf[e.id] ?? 'soluble')
+      const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
+      const spec: PanelSpec = {
+        label: entry.title,
+        source: {
+          id: entry.name, kind: 'neuron', url, title: entry.titleEn, method: '显微重建', resolution: null, year: null, tier: 'measured',
+          licence: 'CC BY 4.0', attribution: `NeuroMorpho.Org，${entry.archive} 档案`, citation: `doi:${entry.doi}`, link: `https://neuromorpho.org/neuron_info.jsp?neuron_name=${encodeURIComponent(entry.name)}`,
+        },
+        assembly: 'asym',
+        entities: mol.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, description: e.description, organism: entry.species })),
+        reason: '',
+      }
+      const notes = [
+        `这是从显微图像描出来的神经元形态（${entry.species}，${entry.region}）：${entry.has}。坐标和粗细的单位是微米，不是原子图。`,
+        '比线还细的分支画粗了一点，否则看不见；每一段按两端的半径线性过渡。重建本身的粗细常常不如走向可靠。',
+      ]
+      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: '', panels: [spec], notes }
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }

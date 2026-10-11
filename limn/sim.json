@@ -126,6 +126,32 @@
       "url": "/?model=mycoplasma-ribosomes-in-situ"
     },
     {
+      "id": "purkinje",
+      "title": {
+        "zh": "小脑的浦肯野细胞：一个神经元的树突",
+        "en": "A Purkinje cell of the cerebellum: one neuron's dendrites"
+      },
+      "hint": {
+        "zh": "拖动旋转，看它其实是扁的。这是显微重建，单位是微米，不是原子。需要联网，取过一次后会缓存在本机",
+        "en": "Drag to rotate and see that it is flat. This is a microscopy reconstruction in microns, not atoms. It needs a network connection and is cached locally after the first time"
+      },
+      "idea": "2.1",
+      "url": "/?neuron=mouse-purkinje"
+    },
+    {
+      "id": "ca1-pyramidal",
+      "title": {
+        "zh": "海马的锥体细胞",
+        "en": "A pyramidal cell of the hippocampus"
+      },
+      "hint": {
+        "zh": "粉色是胞体，绿色是顶树突，蓝色是基树突。这是显微重建，单位是微米。需要联网，取过一次后会缓存在本机",
+        "en": "Pink is the soma, green the apical dendrite, blue the basal dendrites. A microscopy reconstruction in microns. It needs a network connection and is cached locally after the first time"
+      },
+      "idea": "2.1",
+      "url": "/?neuron=rat-ca1-pyramidal"
+    },
+    {
       "id": "nuclear-pore",
       "title": {
         "zh": "人的核孔复合体",
