@@ -8,6 +8,7 @@ import { JOINT_GROUPS, jointGroup, mirrorJointId, posePresets, poseIsRest, ribJo
 import type { Joint, JointDof } from '../anatomy/types.ts'
 import { useApp } from '../state/store.ts'
 import { CautionList } from './CautionsDialog.tsx'
+import { ShapeControls } from './ShapeControls.tsx'
 
 const deg = (r: number): number => (r * 180) / Math.PI
 const fmt = (r: number): string => `${Math.round(deg(r))}°`
@@ -87,7 +88,6 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
   const mirror = useApp((s) => s.poseMirror)
   const breathing = useApp((s) => s.breathing)
   const poseJoint = useApp((s) => s.poseJoint)
-  const shape = useApp((s) => s.shapeDev)
   const explode = useApp((s) => s.explode)
   const [open, setOpen] = useState<JointGroupId | null>('arm')
   const [cautionsOpen, setCautionsOpen] = useState(false)
@@ -127,6 +127,8 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
             </p>
           )}
         </section>
+        {/* BMI 不需要骨架绑定，绑定没到也能用 / BMI needs no rig, so the shape section works before it arrives */}
+        <ShapeControls graph={graph} />
       </div>
     )
   }
@@ -169,6 +171,8 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
         {explode > 0 && !atRest && <p className="hint">摆姿势时爆炸视图暂停。 Explode is suspended while posed.</p>}
         <p className="hint">点击模型上的骨可选中带动它的关节，再拖动彩色圆环转动。 Click a bone to pick its joint, then drag a coloured ring.</p>
       </section>
+
+      <ShapeControls graph={graph} />
 
       {selected && (
         <section className="group">
@@ -213,26 +217,6 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
         )
       })}
 
-      <section className="group">
-        <h3>
-          体型（开发中） <span className="en">Body shape (dev)</span>
-        </h3>
-        <div className="dof-row">
-          <label>
-            <span className="dof-name">整体身高缩放</span>
-            <span className="value">{shape.stature.toFixed(2)}</span>
-          </label>
-          <input type="range" min={0.85} max={1.15} step={0.01} value={shape.stature} aria-label="整体身高缩放" onChange={(e) => app.setShapeDev(Number(e.target.value), shape.legRatio)} />
-        </div>
-        <div className="dof-row">
-          <label>
-            <span className="dof-name">腿长比例</span>
-            <span className="value">{shape.legRatio.toFixed(2)}</span>
-          </label>
-          <input type="range" min={0.85} max={1.15} step={0.01} value={shape.legRatio} aria-label="腿长比例" onChange={(e) => app.setShapeDev(shape.stature, Number(e.target.value))} />
-        </div>
-        <p className="hint">临时控件，用来验证体型缩放的渲染路径；正式的体型参数以后接入。 Temporary controls exercising the shape path. {graph.data.body}</p>
-      </section>
     </div>
   )
 }

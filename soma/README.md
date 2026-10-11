@@ -21,9 +21,15 @@
 - 男女切换保留视角和选中的结构；对照视图把两个体型的同一系统并排显示，视角联动。
 - 每个体型带一份"使用前请注意"，首次加载时显示。
 
+### 体型
+
+"姿势"页的"体型"一节有四个滑块：身高、BMI、腿长比例、体型分布。BMI 只改变皮肤和皮下脂肪（肌肉、骨、内脏不变，内脏脂肪和乳房没有模拟）；身高和比例通过各关节的节段缩放实现。每个滑块只能在这副身体上可用的范围内移动，到头时会写明原因（例如男性不能低于 BMI 21.5，否则肌肉穿出皮肤）。回归公式来自人群测量数据，给出的是平均体型，不是对某个人的预测。
+
+已知问题：缩短身高或改变比例时，皮下脂肪最多会穿出皮肤约 12 mm；"体型分布"的效果很弱；女性模型的默认 BMI 在数据中有 22.0 和 23.7 两个值，读数只是近似。
+
 ### 疼痛反应（表情与发声）
 
-左侧"疼痛"面板演示疼痛行为：设定强度（0–10）和起病方式，点"触发"，面部动作单元按时间过程出现并消退，未静音时同时发声，张口与声音同步。"保持表情"把表情停在所设强度；"单个动作单元"可以逐个演示 AU。
+左侧"疼痛"面板演示疼痛行为：设定强度（0–10）和起病方式，点"触发"，面部动作单元按时间过程出现并消退，未静音时同时发声，张口与声音同步。"保持表情"把表情停在所设强度；"每次触发都出声"（默认关）让低强度时也发声；"单个动作单元"可以逐个演示 AU。
 
 这是疼痛**行为**的计算模型，用于教学：被模拟的身体没有主观体验；"强度 → 表情"的数值是本项目的假设；声音是演员按指令表演的录音（没有录音包时改用参数合成）。表情由模型里的表情肌驱动（`tools/face/`、`data/curated/face/`）；现在的皮肤没有眼裂和口裂，所以面板默认用肌肉视图。
 
@@ -66,6 +72,7 @@ bun run dev        # http://localhost:5183
 | `see` | `1` | 显示体表图时皮肤半透明，露出其下的神经 |
 | `src` | `1` | 按数据来源着色 |
 | `cmp` | `ske` | 对照视图及其显示的系统 |
+| `shape` | `h1.80,b28,l0,c0` | 体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 体型分布（SD）；只写不在默认值的项，超出可用范围的值会被截断 |
 | `pain` | `7` | 把疼痛表情保持在该强度（0–10）；不会自动出声 |
 | `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5） |
 | `skin` | `1` | 不透明皮肤视图 |
@@ -170,12 +177,11 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 
 ## 接下来
 
-1. 体型可调：身高、比例、胖瘦，依据实测人体测量数据（模型已有，运行时数据和界面在做）。
-2. 皮肤的修正：女性乳房位置和面部缺陷，带眼裂和口裂的面部拓扑，头发等附属结构贴合新皮肤。
-3. 疼痛的输入端：刺激体表某处，按皮节和皮神经得到位置和强度，驱动表情和发声。
-4. 软组织物理：四面体化，XPBD，先在一个部位验证。
-5. 疼痛：沿神经通路的伤害感受模型，驱动生命体征、退缩反射和体表热力图。这是对疼痛生理的计算模型，模拟人并没有主观感受。
-6. 手术操作：切开、牵拉、出血、缝合。
+1. 皮肤的修正：女性乳房位置和面部缺陷，带眼裂和口裂的面部拓扑，头发等附属结构贴合新皮肤。
+2. 疼痛的输入端：刺激体表某处，按皮节和皮神经得到位置和强度，驱动表情和发声。
+3. 软组织物理：四面体化，XPBD，先在一个部位验证。
+4. 疼痛：沿神经通路的伤害感受模型，驱动生命体征、退缩反射和体表热力图。这是对疼痛生理的计算模型，模拟人并没有主观感受。
+5. 手术操作：切开、牵拉、出血、缝合。
 
 ---
 
@@ -202,9 +208,15 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 - Switching between male and female keeps the camera and the selection; the compare view shows one system of both bodies side by side with linked cameras.
 - Each body carries a list of cautions, shown on first load.
 
+### Body shape
+
+The "Body shape" section of the Pose tab has four sliders: stature, BMI, relative leg length and mass distribution. BMI changes only the skin and the fat under it (muscles, bones and viscera stay; visceral fat and the breasts are not modelled); stature and proportions are realised by per-joint segment scales. Each slider moves only within the range valid on this body and states the reason at its limit (the male, for example, cannot go below BMI 21.5 because muscle would come through the skin). The regressions come from population surveys and give average builds, not a prediction for a person.
+
+Known problems: when the body is shortened or re-proportioned, subcutaneous fat comes through the skin by up to about 12 mm; "mass distribution" has only a weak effect; the female body's default BMI has two values in the data (22.0 and 23.7), so its readout is approximate.
+
 ### Pain response (expression and voice)
 
-The "Pain" panel on the left demonstrates pain behaviour: set an intensity (0–10) and an onset, press Trigger, and the facial action units rise and fade over time, with a vocalisation unless muted and the mouth in step with the sound. "Hold" keeps the expression at the set intensity; "Single action units" shows one AU at a time.
+The "Pain" panel on the left demonstrates pain behaviour: set an intensity (0–10) and an onset, press Trigger, and the facial action units rise and fade over time, with a vocalisation unless muted and the mouth in step with the sound. "Hold" keeps the expression at the set intensity; "Always vocalise" (off by default) makes a sound at low intensities too; "Single action units" shows one AU at a time.
 
 This is a computational model of pain **behaviour** for teaching: the simulated body has no subjective experience; the intensity-to-expression numbers are assumptions of this project; the sounds are recordings acted on instruction (or parametric synthesis when the pack is absent). The expression is driven by the facial muscles of the model (`tools/face/`, `data/curated/face/`); the present skin has no eye or mouth opening, so the panel defaults to the muscle view.
 
@@ -247,6 +259,7 @@ The whole view state lives in the query string, so any view can be opened by one
 | `see` | `1` | Draw the skin see-through under a skin map, to reveal the nerves beneath |
 | `src` | `1` | Colour by data source |
 | `cmp` | `ske` | Compare view and the system it shows |
+| `shape` | `h1.80,b28,l0,c0` | Body shape: h stature (m), b BMI, l leg length (SD), c mass distribution (SD); only non-default items are written and values outside the valid range are clamped |
 | `pain` | `7` | Hold the pain expression at this level (0–10); never plays sound by itself |
 | `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5) |
 | `skin` | `1` | Opaque-skin view |
@@ -351,9 +364,8 @@ The full list is in each body's `cautions`. The main ones:
 
 ## Next
 
-1. Adjustable body shape: stature, proportions, fatness, based on measured anthropometry (the model exists; run-time data and UI are in progress).
-2. Skin corrections: female breast level and facial defects, a facial topology with eye and mouth openings, hair and other appendages fitted to the new skins.
-3. The input side of pain: a stimulus on the skin giving location and intensity through dermatomes and cutaneous nerves, driving expression and voice.
-4. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
-5. Pain: a nociception model along nerve pathways that drives vital signs, withdrawal reflexes and a heat map on the skin. This is a computational model of pain physiology; the simulated body has no subjective experience.
-6. Surgical actions: incision, retraction, bleeding, suturing.
+1. Skin corrections: female breast level and facial defects, a facial topology with eye and mouth openings, hair and other appendages fitted to the new skins.
+2. The input side of pain: a stimulus on the skin giving location and intensity through dermatomes and cutaneous nerves, driving expression and voice.
+3. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
+4. Pain: a nociception model along nerve pathways that drives vital signs, withdrawal reflexes and a heat map on the skin. This is a computational model of pain physiology; the simulated body has no subjective experience.
+5. Surgical actions: incision, retraction, bleeding, suturing.

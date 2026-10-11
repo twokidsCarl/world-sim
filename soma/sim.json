@@ -236,6 +236,42 @@
         "en": "Drag the intensity, press Trigger; “看皮肤” compares the expression on muscle and on skin. A computational model of behaviour — the simulated body feels nothing; sound is off by default"
       },
       "url": "/?body=female&sys=mus,ske&pain=7&cam=0.062,1.412,0.668,0.002,1.392,0.148"
+    },
+    {
+      "id": "shape-bmi",
+      "title": {
+        "zh": "胖瘦：只有皮肤和皮下脂肪在变",
+        "en": "Fatness: only the skin and the fat under it change"
+      },
+      "hint": {
+        "zh": "拖动 BMI 滑块。肌肉、骨和内脏不变，内脏脂肪没有模拟；到下限时会说明原因。回归公式给出的是人群平均，不是对某个人的预测",
+        "en": "Drag the BMI slider. Muscles, bones and viscera stay as they are and visceral fat is not modelled; at the lower limit the reason is shown. The regressions give population averages, not a prediction for a person"
+      },
+      "url": "/?sys=int&skin=1&shape=b31"
+    },
+    {
+      "id": "shape-stature",
+      "title": {
+        "zh": "身高与比例：骨和肌肉一起变长",
+        "en": "Stature and proportions: bones and muscles lengthen together"
+      },
+      "hint": {
+        "zh": "拖动身高滑块，看各节段按人体测量回归的比例缩放。缩短时皮下脂肪最多会穿出皮肤约 12 毫米",
+        "en": "Drag the stature slider and watch the segments scale by anthropometric regressions. When shortened, subcutaneous fat comes through the skin by up to about 12 mm"
+      },
+      "url": "/?sys=int,ske,mus&shape=h1.88,l0.5"
+    },
+    {
+      "id": "f-shape",
+      "title": {
+        "zh": "女性：胖瘦与身高",
+        "en": "Female: fatness and stature"
+      },
+      "hint": {
+        "zh": "拖动 BMI 和身高滑块。乳房和内脏脂肪不随 BMI 变；女性模型的 BMI 读数只是近似",
+        "en": "Drag the BMI and stature sliders. The breasts and visceral fat do not follow BMI; the BMI readout of the female body is approximate"
+      },
+      "url": "/?body=female&sys=int&skin=1&shape=b30"
     }
   ],
   "agent": {

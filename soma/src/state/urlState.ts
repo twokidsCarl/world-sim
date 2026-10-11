@@ -30,6 +30,10 @@
 //                                                 pain response: the expression held at this intensity (0–10); never plays sound by itself
 //   au     4:3,43:5                               手动设定的 FACS 动作单元强度（AU 编号:0–5）/ manually set FACS action units (AU number:0–5)
 //   skin   1                                      皮肤画成不透明（看表情）/ skin drawn opaque (to read the expression)
+//   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
+//                                                 超出该人体可用范围的值会被截断
+//                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
+//                                                 items are written, and values outside the body's valid range are cut
 //   src    1                                      按来源着色 / colour by source
 //   cmp    ske                                    对照视图及其系统 / compare view and its system
 //
@@ -38,6 +42,7 @@
 // invalid values are ignored with a warning.
 
 import type { SystemId } from '../anatomy/types.ts'
+import { formatShapeParam, parseShapeParam, type ShapeControls } from '../anatomy/shape.ts'
 import type { SectionAxis } from './display.ts'
 
 export const SYSTEM_CODES: Record<SystemId, string> = {
@@ -62,7 +67,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'skin', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'skin', 'shape', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -92,6 +97,8 @@ export interface UrlState {
   /** AU id（如 "AU4"）→ 强度 0–5 / AU id (e.g. "AU4") → intensity 0–5. */
   au?: Record<string, number>
   skin?: boolean
+  /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
+  shape?: ShapeControls
   src?: boolean
   cmp?: SystemId
 }
@@ -245,6 +252,12 @@ export function parseUrl(search: string): ParsedUrl {
         if (Object.keys(au).length) state.au = au
         break
       }
+      case 'shape': {
+        const r = parseShapeParam(value)
+        if (r.bad) warn('shape: 忽略了无法解析的项（形式为 h1.80,b28,l0,c0）/ ignored entries that could not be parsed (form h1.80,b28,l0,c0)')
+        if (Object.keys(r.controls).length) state.shape = r.controls
+        break
+      }
       case 'cmp': {
         const id = CODE_TO_SYSTEM.get(value)
         if (id) state.cmp = id
@@ -305,6 +318,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
     if (items.length) put('au', items.join(','))
   }
   if (state.skin) put('skin', '1')
+  if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.src) put('src', '1')
   if (state.cmp) put('cmp', SYSTEM_CODES[state.cmp])
   // 逗号、冒号在查询串里是安全的，不转义更易读 / commas and colons are safe in a query and read better unescaped

@@ -42,7 +42,7 @@ import {
   type PlaneEq,
 } from '../state/display.ts'
 import { useApp, type AppState } from '../state/store.ts'
-import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, type BakedPart, type PartRenderer } from './batches.ts'
+import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, type BakedPart, type PartBuffers, type PartRenderer } from './batches.ts'
 import { PartMeshes, centroidTransparentSort } from './meshes.ts'
 import { JointGizmo } from './gizmo.ts'
 import { PoseRuntime } from './posing.ts'
@@ -64,6 +64,8 @@ import {
 import { mergePoses } from '../../tools/rig/pose.ts'
 import { painFrame, setPainPaused } from '../pain/controller.ts'
 import { activations, displacePart, sameAUs, type AUs, type LoadedFace } from '../pain/face.ts'
+import { Shaper } from '../../tools/rig/shape.ts'
+import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -164,6 +166,8 @@ export type ViewState = Pick<
   | 'cameraRequest'
   | 'face'
   | 'skinOpaque'
+  | 'shape'
+  | 'shapeControls'
 >
 
 export interface ViewerOptions {
@@ -255,7 +259,18 @@ export class Viewer {
   private posedApplied = false
   /** 已应用到顶点缓冲的表情数据，以及被它改写的部件的原始静止位置 / The face data applied to the vertex buffers, and the original rest positions of the parts it rewrote. */
   private appliedFace: LoadedFace | null = null
-  private faceRest = new Map<number, Float32Array>()
+  private mainSkin: string | null = null
+  /** 被改写过静止几何的部件：原始的位置与法线 / Parts whose rest geometry was rewritten: their original positions and normals. */
+  private restOrig = new Map<number, { position: Float32Array; normal: Float32Array }>()
+  /** 施加体型位移之后、表情位移之前的静止位置 / Rest positions after the shape displacement, before the face displacement. */
+  private shaped = new Map<number, Float32Array>()
+  private appliedShape: LoadedShape | null = null
+  private appliedControls: ShapeControls | null = null
+  private shapeForce = false
+  /** 这些部件的缓冲需要按当前体型与表情重写 / Parts whose buffers must be rewritten for the current shape and expression. */
+  private restDirty = new Set<number>()
+  /** 被改写的部件当前的包围盒（拾取的粗筛用）/ Current bounds of rewritten parts (for the pick broad phase). */
+  private boxOverride = new Map<number, [number, number, number, number, number, number]>()
   private faceDisplaced = new Set<number>()
   private faceAUs: AUs = {}
   private faceJaw = 0
@@ -552,6 +567,7 @@ export class Viewer {
   // ------------------------------------------------------------ 几何加载 / geometry loading
 
   private allocate(): void {
+    this.mainSkin = this.graph.mainSkinId()
     const n = this.graph.parts.length
     this.inst = new Int32Array(n).fill(-1)
     this.bvh = new Array<MeshBVH | null>(n).fill(null)
@@ -588,7 +604,12 @@ export class Viewer {
     this.gizmo.clear()
     this.gizmoDrag = null
     this.appliedFace = null
-    this.faceRest = new Map()
+    this.restOrig = new Map()
+    this.shaped = new Map()
+    this.appliedShape = null
+    this.appliedControls = null
+    this.restDirty = new Set()
+    this.boxOverride = new Map()
     this.faceDisplaced = new Set()
     this.faceAUs = {}
     this.faceJaw = 0
@@ -710,6 +731,7 @@ export class Viewer {
           this.loadedOrder.push(sys.id)
           // 绑定已经写入时，后到的部件补写它们的影响 / with a rig already applied, late parts get their influences now
           if (this.appliedRig && this.poseRt) this.writeRigParts(this.appliedRig, fresh)
+          this.shapeForce = true
           this.faceForce = true // 新到的部件也要套上当前的表情 / parts that just arrived take the current expression too
           this.forceFull = true
           this.syncNeeded = true
@@ -1148,70 +1170,144 @@ export class Viewer {
     return { [joint]: j.dofs.map((_, k) => (k === dof ? add : 0)) }
   }
 
+  /** 第一次改写某个部件之前，留下它原始的位置与法线 / Keep a part's original positions and normals before first rewriting it. */
+  private origOf(i: number, buf: PartBuffers): { position: Float32Array; normal: Float32Array } {
+    let o = this.restOrig.get(i)
+    if (!o) this.restOrig.set(i, (o = { position: new Float32Array(buf.position), normal: new Float32Array(buf.normal) }))
+    return o
+  }
+
   /**
-   * 面部表情：按当前 AU 强度改写受影响部件的静止位置（先位移、后蒙皮），只上传改动的那几段。
-   * 返回表情是否还在变化。
-   * Facial expression: rewrite the rest positions of the affected parts for the current AU
-   * intensities (displacement first, skinning after) and upload just those ranges. Returns
-   * whether the expression is still changing.
+   * 体型：控制量变化时，算出皮肤和"跟随皮肤"的部件在静止空间里的位移（参考实现 Shaper），缓存下来。
+   * 关节的节段缩放另由蒙皮路径施加（store 的 jointScales）。返回是否有变化。
+   * Body shape: when the controls change, compute the rest-space displacement of the skin and of
+   * the parts that follow it (the reference Shaper) and cache it. The joints' segment scales are
+   * applied separately by the skinning path (the store's jointScales). Returns whether anything changed.
+   */
+  private stepShape(s: ViewState): boolean {
+    if (this.source !== useApp.getState) return false
+    if (s.shape === this.appliedShape && s.shapeControls === this.appliedControls && !this.shapeForce) return false
+    this.appliedShape = s.shape
+    this.appliedControls = s.shapeControls
+    this.shapeForce = false
+    const batches = this.batches
+    if (!batches) return false
+    const active = !!s.shape && !shapeIsDefault(s.shape.data, s.shapeControls)
+    for (const i of this.shaped.keys()) this.restDirty.add(i)
+    this.shaped.clear()
+    // 只有 BMI 会移动静止空间里的顶点；身高和比例只走关节缩放，此时不必改写几何（也就保留原有法线）
+    // only BMI moves rest-space vertices; stature and proportions go through the joint scales alone, so the geometry (and its authored normals) is left as it is
+    const shaper = active && s.shape ? new Shaper(s.shape.data, s.shape.bin, s.shapeControls) : null
+    if (shaper && s.shape && shaper.skin.some((x) => x !== 0)) {
+      const targets = [{ part: s.shape.data.skin.part, vertexCount: s.shape.data.skin.vertexCount }, ...s.shape.data.followers]
+      for (const t of targets) {
+        const i = this.graph.indexOf(t.part)
+        const id = i >= 0 ? this.inst[i]! : -1
+        if (id < 0) continue
+        const buf = batches.partBuffers(id)
+        if (buf.position.length !== t.vertexCount * 3) {
+          // 顶点数对不上：体型数据是为另一版几何生成的 / vertex counts differ: the shape data was built for other geometry
+          console.warn(`[soma] shape data rejected: ${t.part} has ${buf.position.length / 3} vertices, shape.json says ${t.vertexCount}`)
+          this.shaped.clear()
+          useApp.getState().rejectShape(`体型数据与部件 ${t.part} 的网格不符，需要重新生成 / the shape data does not match the mesh of ${t.part} and must be rebuilt`)
+          return true
+        }
+        this.shaped.set(i, shaper.shapedRest(t.part, this.origOf(i, buf).position))
+        this.restDirty.add(i)
+      }
+    }
+    return true
+  }
+
+  /**
+   * 静止空间的位移：体型（已缓存）之上叠加面部表情，写回顶点缓冲并只上传改动的那几段；
+   * 之后才是蒙皮。被改写的部件重算法线和包围盒，建在旧几何上的拾取结构作废。返回表情是否还在变化。
+   * Rest-space displacement: the facial expression on top of the (cached) shape, written back to
+   * the vertex buffers with only the changed ranges uploaded; skinning comes after. Rewritten
+   * parts get new normals and bounds, and pick structures built on the old geometry are dropped.
+   * Returns whether the expression is still changing.
    */
   private stepFace(t: number): boolean {
     if (this.source !== useApp.getState) return false
     const s = this.source()
     const batches = this.batches
-    const parts = this.graph.parts
     if (s.face !== this.appliedFace) {
-      // 换了（或没有了）表情数据：先把改写过的部件恢复原状 / the face data changed (or went away): restore what was rewritten
-      if (batches) {
-        for (const [i, rest] of this.faceRest) {
-          const id = this.inst[i]!
-          if (id < 0) continue
-          batches.partBuffers(id).position.set(rest)
-          batches.markPositions(id)
-        }
-      }
-      this.faceRest.clear()
+      // 换了（或没有了）表情数据：受它影响的部件都要重写 / the face data changed (or went away): everything it touched is rewritten
+      for (const i of this.faceDisplaced) this.restDirty.add(i)
       this.faceDisplaced.clear()
       this.appliedFace = s.face
       this.faceAUs = {}
       this.faceJaw = 0
       this.faceForce = true
-      this.dirty = true
     }
+    if (this.stepShape(s)) this.faceForce = true
     const face = this.appliedFace
-    if (!face || !batches) return false
-    const frame = painFrame(t)
-    if (!this.faceForce && sameAUs(frame.aus, this.faceAUs)) return frame.animating
+    if (!batches) return false
+    const frame = face ? painFrame(t) : { aus: {}, animating: false, airflow: 0 }
+    if (!this.faceForce && this.restDirty.size === 0 && sameAUs(frame.aus, this.faceAUs)) return frame.animating
     this.faceForce = false
     this.faceAUs = frame.aus
-    const act = activations(face.data, frame.aus)
-    for (const [partId, fields] of face.fields) {
-      const i = this.graph.indexOf(partId)
-      const id = i >= 0 ? this.inst[i]! : -1
+    const act = face ? activations(face.data, frame.aus) : { channels: {}, jaw: 0 }
+    const todo = new Set(this.restDirty)
+    this.restDirty.clear()
+    const activeParts = new Set<number>()
+    if (face) {
+      for (const [partId, fields] of face.fields) {
+        const i = this.graph.indexOf(partId)
+        if (i < 0 || this.inst[i]! < 0) continue
+        const active = fields.some((f) => (act.channels[f.channel] ?? 0) > 0)
+        if (active) activeParts.add(i)
+        if (active || this.faceDisplaced.has(i)) todo.add(i)
+      }
+    }
+    for (const i of todo) {
+      const id = this.inst[i]!
       if (id < 0) continue
-      const active = fields.some((f) => (act.channels[f.channel] ?? 0) > 0)
-      if (!active && !this.faceDisplaced.has(i)) continue
+      const partId = this.graph.parts[i]!.id
       const buf = batches.partBuffers(id)
-      if (buf.position.length !== face.vertexCount.get(partId)! * 3) {
+      if (face && activeParts.has(i) && buf.position.length !== face.vertexCount.get(partId)! * 3) {
         // 顶点数对不上：表情数据是为另一版几何生成的 / vertex counts differ: the face data was built for other geometry
         console.warn(`[soma] face data rejected: ${partId} has ${buf.position.length / 3} vertices, face.json says ${face.vertexCount.get(partId)}`)
         useApp.getState().rejectFace(`表情数据与部件 ${partId} 的网格不符，需要重新生成 / the face data does not match the mesh of ${partId} and must be rebuilt`)
         return false
       }
-      let rest = this.faceRest.get(i)
-      if (!rest) this.faceRest.set(i, (rest = new Float32Array(buf.position)))
-      displacePart(face, partId, rest, act.channels, buf.position)
-      batches.markPositions(id)
-      if (active) this.faceDisplaced.add(i)
+      const orig = this.origOf(i, buf)
+      const base = this.shaped.get(i) ?? orig.position
+      const facing = !!face && activeParts.has(i)
+      if (facing) displacePart(face!, partId, base, act.channels, buf.position)
+      else buf.position.set(base)
+      if (facing) this.faceDisplaced.add(i)
       else this.faceDisplaced.delete(i)
+      const displaced = facing || this.shaped.has(i)
+      if (displaced) {
+        // 位移改变了曲面的朝向：重算法线，明暗才对 / the displacement turns the surface: recompute normals so shading is right
+        recomputeNormals(buf.position, buf.index, buf.indexBase, buf.normal)
+        this.boxOverride.set(i, boundsOf(buf.position))
+      } else {
+        buf.normal.set(orig.normal)
+        this.boxOverride.delete(i)
+      }
+      batches.markPositions(id)
+      // 建在旧几何上的 BVH 作废，下次拾取时按新几何重建 / the BVH on the old geometry is dropped and rebuilt on the next pick
+      if (this.bvh[i]) {
+        this.bvh[i] = null
+        this.bvhBuilt = Math.max(0, this.bvhBuilt - 1)
+      }
       if (i === this.skinLayerPart && this.skinLayer && this.skinIndex >= 0) this.skinLayer.setPositions(buf.position)
     }
     this.faceJaw = act.jaw
-    // 静止几何变了：按旧几何算出的拾取缓存作废 / the rest geometry changed: pick caches computed from the old one are stale
-    this.poseRt?.invalidate()
-    this.prewarmNext = 0
-    this.dirty = true
-    return true
+    if (todo.size) {
+      // 静止几何变了：按旧几何算出的拾取缓存作废 / the rest geometry changed: pick caches computed from the old one are stale
+      this.poseRt?.invalidate()
+      this.prewarmNext = 0
+      this.dirty = true
+    }
+    return frame.animating || todo.size > 0
+  }
+
+  /** 当前体型位移涉及的部件数（验证用）/ Number of parts the current shape displacement touches (verification). */
+  shapeState(): { parts: number; rewritten: number } {
+    return { parts: this.shaped.size, rewritten: this.restOrig.size }
   }
 
   /** 当前应用的 AU 强度与下颌角（验证用）/ The AU intensities and jaw angle currently applied (verification). */
@@ -1353,7 +1449,7 @@ export class Viewer {
     let opacity = (TISSUE_OPACITY[part.tissue] ?? 1) * (s.systems[part.system]?.opacity ?? 1)
     if (s.colorMode === 'source' && TISSUE_OPACITY[part.tissue] !== undefined) opacity = Math.min(1, opacity * 1.6)
     // 看表情时把皮肤画成不透明 / the skin is drawn opaque to read the expression
-    if (s.skinOpaque && part.tissue === 'skin') opacity = 1
+    if (s.skinOpaque && part.id === this.mainSkin) opacity = 1
     if (selected) opacity = 1 // a selected part is shown solid so it can be found
     this.pickable[i] = id >= 0 && d === NORMAL && opacity >= PICK_OPACITY ? 1 : 0
     this.solid[i] = d === NORMAL && opacity >= 0.999 ? 1 : 0
@@ -1616,7 +1712,7 @@ export class Viewer {
 
   /** 部件的包围盒：摆姿势时用保守的变形后包围盒 / A part's bounds: the conservative posed box while posed. */
   private boxOf(i: number): [number, number, number, number, number, number] {
-    const rest = this.graph.parts[i]!.bbox
+    const rest = this.boxOverride.get(i) ?? this.graph.parts[i]!.bbox
     return this.posed && this.poseRt ? this.poseRt.box(i, rest) : rest
   }
 
@@ -2120,4 +2216,41 @@ interface GPUDeviceLike {
 
 function round(v: number): number {
   return Math.round(v * 100) / 100
+}
+
+/** 按面积加权重算一个部件的顶点法线（索引值减去 base 得到部件内的顶点号）。 */
+/** Recompute a part's vertex normals, area-weighted (index values minus `base` are part-local vertex numbers). */
+function recomputeNormals(position: Float32Array, index: ArrayLike<number>, base: number, normal: Float32Array): void {
+  normal.fill(0)
+  for (let t = 0; t < index.length; t += 3) {
+    const a = (index[t]! - base) * 3
+    const b = (index[t + 1]! - base) * 3
+    const c = (index[t + 2]! - base) * 3
+    const ux = position[b]! - position[a]!, uy = position[b + 1]! - position[a + 1]!, uz = position[b + 2]! - position[a + 2]!
+    const vx = position[c]! - position[a]!, vy = position[c + 1]! - position[a + 1]!, vz = position[c + 2]! - position[a + 2]!
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx
+    for (const o of [a, b, c]) {
+      normal[o] = normal[o]! + nx
+      normal[o + 1] = normal[o + 1]! + ny
+      normal[o + 2] = normal[o + 2]! + nz
+    }
+  }
+  for (let i = 0; i < normal.length; i += 3) {
+    const l = Math.hypot(normal[i]!, normal[i + 1]!, normal[i + 2]!) || 1
+    normal[i] = normal[i]! / l
+    normal[i + 1] = normal[i + 1]! / l
+    normal[i + 2] = normal[i + 2]! / l
+  }
+}
+
+function boundsOf(position: Float32Array): [number, number, number, number, number, number] {
+  const b: [number, number, number, number, number, number] = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity]
+  for (let i = 0; i < position.length; i += 3) {
+    for (let c = 0; c < 3; c++) {
+      const v = position[i + c]!
+      if (v < b[c]!) b[c] = v
+      if (v > b[c + 3]!) b[c + 3] = v
+    }
+  }
+  return b
 }

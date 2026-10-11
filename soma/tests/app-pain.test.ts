@@ -152,7 +152,7 @@ describe('time course and store flows', () => {
     const { data, bin } = tinyFace()
     setFaceLoader(async () => indexFace(data, bin))
     setRigLoader(async () => ({ ok: false, reason: 'missing', message: '' }))
-    useApp.setState({ graph: null, embed: false, pain: { level: 5, onset: 'sudden', hold: false, muted: false }, aus: {}, skinOpaque: false, leftTab: 'display' })
+    useApp.setState({ graph: null, embed: false, pain: { level: 5, onset: 'sudden', hold: false, muted: false, always: false }, aus: {}, skinOpaque: false, leftTab: 'display' })
     S().init(new AnatomyGraph(body), 'male')
   })
 

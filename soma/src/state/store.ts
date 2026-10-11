@@ -4,7 +4,8 @@
 
 import { create } from 'zustand'
 import { mapPartsBetween, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
-import { devShapeScales, loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
+import { clampControl, loadShape, shapeScales, type LoadedShape, type ShapeControlId, type ShapeControls } from '../anatomy/shape.ts'
+import { loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
@@ -31,6 +32,8 @@ export interface PainSettings {
   onset: 'sudden' | 'sustained'
   hold: boolean
   muted: boolean
+  /** 每次触发都出声（跳过模型里"这一次不出声"的概率）/ Vocalise on every trigger (skip the model's chance of staying silent). */
+  always: boolean
 }
 
 /** 'tissue'：按组织着色；'source'：按几何来源着色。 */
@@ -132,7 +135,14 @@ export interface AppState {
   /** 正在操作的关节（显示操纵环和关节信息）/ The joint being manipulated (gizmo and joint info). */
   poseJoint: string | null
   jointScales: Scales | null
-  shapeDev: { stature: number; legRatio: number }
+  /** 当前人体的体型数据；首次使用体型控制时才加载 / This body's shape data, loaded when the shape controls are first used. */
+  shape: LoadedShape | null
+  shapeStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
+  shapeMessage: string
+  /** 体型控制量；缺省的取该人体的默认值（身体保持原样）/ Shape control values; a missing one is the body's default (as built). */
+  shapeControls: ShapeControls
+  /** 最近一次被可用范围截断的控制量（界面据此显示原因）/ The control last cut by its valid range (the UI shows why). */
+  shapeLimit: { id: ShapeControlId; side: 'min' | 'max' } | null
   /** 当前人体的面部表情数据；首次使用"疼痛反应"时才加载 / This body's facial expression data, loaded when the pain response is first used. */
   face: LoadedFace | null
   faceStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
@@ -221,7 +231,12 @@ export interface AppState {
   setPoseMirror(on: boolean): void
   setBreathing(on: boolean): void
   selectJoint(id: string | null): void
-  setShapeDev(stature: number, legRatio: number): void
+  /** 加载当前人体的体型数据（已加载则直接返回）/ Load this body's shape data (no-op when loaded). */
+  ensureShape(): Promise<LoadedShape | null>
+  rejectShape(message: string): void
+  /** 设定一个体型控制量；超出该人体可用范围的值会被截断 / Set one shape control; values outside the body's valid range are cut. */
+  setShapeControl(id: ShapeControlId, value: number): void
+  resetShape(): void
   /** 打开 / 关闭体表图；首次打开时加载数据 / Turn a skin map on or off; loads the data on first use. */
   setSkinMapMode(mode: 'off' | SkinMapId): void
   /** 加载当前人体的体表图（已加载则直接返回）/ Load this body's skin maps (no-op when loaded). */
@@ -272,6 +287,15 @@ export function setFaceLoader(loader: typeof faceLoader): void {
   pendingFace = null
 }
 
+let pendingShape: { graph: AnatomyGraph; promise: Promise<LoadedShape | null> } | null = null
+let shapeLoader = (dataset: string) => loadShape(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
+
+/** 测试用：替换体型数据的加载方式 / For tests: replace how the shape data is fetched. */
+export function setShapeLoader(loader: typeof shapeLoader): void {
+  shapeLoader = loader
+  pendingShape = null
+}
+
 let pendingRig: { graph: AnatomyGraph; promise: Promise<LoadedRig | null> } | null = null
 let rigLoader = (dataset: string, onProgress: (f: number) => void) => loadRig(`${import.meta.env.BASE_URL}anatomy/${dataset}/`, onProgress)
 
@@ -315,7 +339,7 @@ export const useApp = create<AppState>()((set, get) => ({
   face: null,
   faceStatus: 'idle',
   faceMessage: '',
-  pain: { level: 5, onset: 'sudden', hold: false, muted: false },
+  pain: { level: 5, onset: 'sudden', hold: false, muted: false, always: false },
   aus: {},
   painNonce: 0,
   voiceStatus: 'idle',
@@ -332,7 +356,11 @@ export const useApp = create<AppState>()((set, get) => ({
   breathing: false,
   poseJoint: null,
   jointScales: null,
-  shapeDev: { stature: 1, legRatio: 1 },
+  shape: null,
+  shapeStatus: 'idle',
+  shapeMessage: '',
+  shapeControls: {},
+  shapeLimit: null,
   skinMapMode: 'off',
   skinMaps: null,
   skinMapsStatus: 'idle',
@@ -430,10 +458,16 @@ export const useApp = create<AppState>()((set, get) => ({
       pain: { ...prev.pain, muted: prev.embed ? true : prev.pain.muted },
       poseJoint: null,
       jointScales: null,
-      shapeDev: { stature: 1, legRatio: 1 },
+      // 体型的默认值因人体而异：换人体后回到原样 / shape defaults differ between bodies: back to as-built after a switch
+      shape: null,
+      shapeStatus: 'idle',
+      shapeMessage: '',
+      shapeControls: {},
+      shapeLimit: null,
     })
     if (get().skinMapMode !== 'off') void get().ensureSkinMaps()
     if (get().leftTab === 'pose' || !poseIsRest(get().pose) || get().breathing) void get().ensureRig()
+    if (get().leftTab === 'pose') void get().ensureShape()
     if (get().leftTab === 'pain' || get().pain.hold || Object.keys(get().aus).length > 0) void get().ensureFace()
   },
 
@@ -612,7 +646,15 @@ export const useApp = create<AppState>()((set, get) => ({
       const systems: Partial<Record<SystemId, SystemState>> = {}
       const show: SystemId[] = view === 'muscle' ? ['muscular', 'skeletal'] : ['integumentary']
       for (const [k, v] of Object.entries(s.systems) as [SystemId, SystemState][]) systems[k] = { ...v, visible: show.includes(k) }
-      return { systems, skinOpaque: view === 'skin', isolated: null, peel: 0, skinMapMode: 'off' }
+      // 皮肤视图：头发、眉毛、阴毛的网格并不贴在新皮肤上（会从皮肤里翘出来），默认隐藏；耳、指甲照常显示
+      // skin view: the hair, eyebrow and pubic-hair meshes do not sit on the new skins (they poke out of them), so they are hidden; ears and nails stay
+      const hidden = new Set(s.hidden)
+      for (const p of s.graph?.partsBySystem('integumentary') ?? []) {
+        if (!/hair|eyebrow/i.test(p.name)) continue
+        if (view === 'skin') hidden.add(p.id)
+        else hidden.delete(p.id)
+      }
+      return { systems, hidden, skinOpaque: view === 'skin', isolated: null, peel: 0, skinMapMode: 'off' }
     }),
 
   ensureRig: async () => {
@@ -676,10 +718,57 @@ export const useApp = create<AppState>()((set, get) => ({
     const ids = rig.rig.bindings.filter((b) => b.joint === id && graph.part(b.part)).map((b) => b.part)
     set({ poseJoint: id, selection: makeSelection(ids) })
   },
-  setShapeDev: (stature, legRatio) => {
-    const { rig } = get()
-    set({ shapeDev: { stature, legRatio }, jointScales: rig ? devShapeScales(rig.rig.joints, stature, legRatio) : null })
+  ensureShape: async () => {
+    const { shape, shapeStatus, graph, dataset } = get()
+    if (shape || !graph) return shape
+    if (shapeStatus === 'missing' || shapeStatus === 'error') return null
+    if (pendingShape && pendingShape.graph === graph) return pendingShape.promise
+    set({ shapeStatus: 'loading', shapeMessage: '' })
+    const promise = shapeLoader(dataset)
+      .then((loaded) => {
+        if (get().graph !== graph) return null // 已换人体 / the body changed meanwhile
+        if (loaded && !graph.part(loaded.data.skin.part)) throw new Error(`体型数据指向的皮肤部件 ${loaded.data.skin.part} 不在此人体中 / skin part ${loaded.data.skin.part} is not in this body`)
+        set({ shape: loaded, shapeStatus: loaded ? 'ready' : 'missing' })
+        // 控制量可能先于数据到达（深链接）：数据到了再算关节缩放
+        // controls can arrive before the data (deep links): the joint scales are computed once it is here
+        if (loaded) {
+          const jointScales = shapeScales(loaded.data, get().shapeControls)
+          set({ jointScales })
+          if (jointScales) void get().ensureRig()
+        }
+        return loaded
+      })
+      .catch((err: unknown) => {
+        console.warn('[soma] shape data failed to load', err)
+        if (get().graph === graph) set({ shapeStatus: 'error', shapeMessage: err instanceof Error ? err.message : String(err) })
+        return null
+      })
+      .finally(() => {
+        if (pendingShape?.graph === graph) pendingShape = null
+      })
+    pendingShape = { graph, promise }
+    return promise
   },
+  rejectShape: (message) => set({ shape: null, shapeStatus: 'error', shapeMessage: message, jointScales: null }),
+  setShapeControl: (id, value) => {
+    const { shape } = get()
+    const control = shape?.data.controls.find((c) => c.id === id)
+    if (!shape || !control) {
+      // 数据还没到：先记下，加载后再限幅 / data not here yet: remember it, clamp after loading
+      set((s) => ({ shapeControls: { ...s.shapeControls, [id]: value } }))
+      void get().ensureShape()
+      return
+    }
+    const c = clampControl(control, value)
+    const shapeControls = { ...get().shapeControls, [id]: c.value }
+    if (Math.abs(c.value - control.default) < 1e-9) delete shapeControls[id]
+    const jointScales = shapeScales(shape.data, shapeControls)
+    set({ shapeControls, shapeLimit: c.limited ? { id, side: c.limited } : null, jointScales })
+    // 身高和比例靠关节缩放实现，需要绑定；只改 BMI 不需要（省下十几 MB 的下载）
+    // stature and proportions act through joint scales, which need the rig; BMI alone does not (saving a download of over ten MB)
+    if (jointScales) void get().ensureRig()
+  },
+  resetShape: () => set({ shapeControls: {}, shapeLimit: null, jointScales: null }),
 
   setSkinMapMode: (mode) => {
     if (get().skinMapMode === mode) return
@@ -769,7 +858,10 @@ export const useApp = create<AppState>()((set, get) => ({
 
   setLeftTab: (leftTab) => {
     set({ leftTab })
-    if (leftTab === 'pose') void get().ensureRig()
+    if (leftTab === 'pose') {
+      void get().ensureRig()
+      void get().ensureShape()
+    }
     if (leftTab === 'pain') void get().ensureFace()
   },
   setTreeTab: (treeTab) => set({ treeTab }),

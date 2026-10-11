@@ -11,6 +11,7 @@ import { currentLink } from '../state/urlSync.ts'
 import { CautionList } from './CautionsDialog.tsx'
 import { Icon } from './Icon.tsx'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
+import { ShapeSlider } from './ShapeControls.tsx'
 
 /** 卡片 URL 带了哪些参数，就显示哪些控件（见 App 中的 embedKeys）。 */
 /** Which controls appear follows from which parameters the card URL carried (see embedKeys in App). */
@@ -38,12 +39,14 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const voiceProgress = useApp((s) => s.voiceProgress)
   const skinOpaque = useApp((s) => s.skinOpaque)
   const painCard = embedKeys.has('pain') || embedKeys.has('au')
+  const shape = useApp((s) => s.shape)
+  const shapeCard = embedKeys.has('shape')
   const app = useApp.getState()
   const layers = graph.data.layers
   const cautions = graph.cautions
   const rigCautions = rig && (embedKeys.has('pose') || embedKeys.has('breath')) ? rig.rig.cautions : []
   // 疼痛卡片：把"这是什么模型"的说明放在最前 / pain cards: the statement of what this model is comes first
-  const all = [...(painCard ? PAIN_STATEMENT : []), ...cautions, ...rigCautions, ...(painCard && face ? face.data.cautions : [])]
+  const all = [...(painCard ? PAIN_STATEMENT : []), ...cautions, ...rigCautions, ...(painCard && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
   // 姿势按钮：静止、卡片指定的预设，再加几个常用的 / pose buttons: rest, the card's preset, and a few common ones
   const presets = useMemo(() => {
     if (!rig) return []
@@ -137,6 +140,16 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
           </>
         )}
         {painCard && !face && <span className="embed-note">加载表情数据…</span>}
+        {shapeCard &&
+          shape &&
+          shape.data.controls
+            .filter((c) => c.id === 'stature' || c.id === 'bmi')
+            .map((c) => <ShapeSlider key={c.id} control={c} compact approximate={graph.data.body === 'female' && c.id === 'bmi'} />)}
+        {shapeCard && shape && (
+          <button className="tool-btn" onClick={() => app.resetShape()}>
+            原样
+          </button>
+        )}
         <a className="tool-btn embed-open" href={currentLink({ embed: false })} target="_blank" rel="noreferrer noopener" onClick={(e) => (e.currentTarget.href = currentLink({ embed: false }))}>
           在完整界面中打开 <span className="en">Open full UI</span>
         </a>
