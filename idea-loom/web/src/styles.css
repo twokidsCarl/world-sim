@@ -243,3 +243,21 @@ button:disabled { opacity: 0.45; cursor: default; }
 .batch-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 22px; }
 .batch-level .muted { margin-bottom: 3px; }
 .rel { white-space: nowrap; }
+
+/* 提议 / proposals */
+.proposals { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; margin-top: 12px; }
+.proposal { display: grid; gap: 8px; align-content: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.proposal header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.proposal .p-body { font: 15px/1.8 var(--serif); }
+.proposal .p-where { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.proposal .p-why { border-top: 1px dashed var(--line-2); padding-top: 8px; }
+.proposal.p-dismissed { opacity: 0.6; }
+.proposal .row { flex-wrap: wrap; }
+.tools { align-items: center; }
+.refine input { flex: 1; min-width: 180px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 6px; padding: 5px 9px; }
+.nav-item .count.pill { background: var(--accent); color: var(--paper); border-radius: 999px; padding: 0 7px; }
+.picked { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent-soft); }
+.idea-li { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; border-bottom: 1px solid var(--line); }
+.idea-li .idea-row { border-bottom: 0; }
+.idea-li input { margin: 0 0 0 4px; }
+.cell a.none { text-decoration: none; }

@@ -82,7 +82,9 @@ export function MapPage({ state }: { state: State }) {
                                   </span>
                                 </Link>
                               ) : (
-                                <span className="none" aria-label={`${level.id} ${t}：空`}>—</span>
+                                <Link className="none" to={`/inbox?level=${level.id}&thread=${t}`} aria-label={`${level.id} ${t}：空，去生成`} title="这一格是空的，去生成">
+                                  —
+                                </Link>
                               )}
                             </td>
                           )

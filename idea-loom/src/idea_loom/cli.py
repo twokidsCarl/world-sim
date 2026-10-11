@@ -8,7 +8,7 @@ from typing import Optional
 
 import typer
 
-from . import ideas, importer, render, store, sync
+from . import ideas, importer, ops, render, store, sync
 
 app = typer.Typer(help="idea-loom：world-sim 的想法池", no_args_is_help=True)
 
@@ -70,7 +70,7 @@ def schema() -> None:
 
     from .model import IdeaDetail, State
 
-    _, defs = models_json_schema([(State, "serialization"), (IdeaDetail, "serialization"), (sync.SyncStatus, "serialization"), (sync.SyncResult, "serialization")])
+    _, defs = models_json_schema([(State, "serialization"), (IdeaDetail, "serialization"), (sync.SyncStatus, "serialization"), (sync.SyncResult, "serialization"), (ops.Proposal, "serialization")])
     # 后端序列化时每个字段都会写出来，所以在类型里全部标成必有。
     # The backend always serialises every field, so mark them all required in the types.
     for definition in defs["$defs"].values():

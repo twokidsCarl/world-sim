@@ -89,6 +89,7 @@
             "refined_from",
             "fused_from",
             "split_from",
+            "inspired_by",
             "merged_into"
           ],
           "title": "Kind",
@@ -877,6 +878,196 @@
         "ui_url"
       ],
       "title": "Project",
+      "type": "object"
+    },
+    "Proposal": {
+      "description": "模型的一条提议。 / One proposal from the model.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "at": {
+          "title": "At",
+          "type": "string"
+        },
+        "op": {
+          "title": "Op",
+          "type": "string"
+        },
+        "op_label": {
+          "default": "",
+          "title": "Op Label",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "idea",
+            "rewrite",
+            "position",
+            "merge"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "kind_label": {
+          "default": "",
+          "title": "Kind Label",
+          "type": "string"
+        },
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "accepted",
+            "dismissed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "request": {
+          "default": "",
+          "title": "Request",
+          "type": "string"
+        },
+        "why": {
+          "default": "",
+          "title": "Why",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body"
+        },
+        "level": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Level"
+        },
+        "threads": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Threads",
+          "type": "array"
+        },
+        "kernel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kernel"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Direction"
+        },
+        "idea_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idea Id"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        },
+        "sources": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "result_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Id"
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "op",
+        "op_label",
+        "kind",
+        "kind_label",
+        "status",
+        "request",
+        "why",
+        "title",
+        "body",
+        "level",
+        "threads",
+        "kernel",
+        "direction",
+        "idea_id",
+        "target",
+        "sources",
+        "result_id"
+      ],
+      "title": "Proposal",
       "type": "object"
     },
     "State": {

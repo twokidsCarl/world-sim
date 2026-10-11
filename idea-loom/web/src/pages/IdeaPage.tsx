@@ -4,6 +4,8 @@ import { api } from '../api'
 import type { HistoryItem, IdeaDetail, Link as Edge, State } from '../contract'
 import { formatTime } from '../state/derive'
 import { EditText, IdeaActions, PositionEditor } from '../ui/IdeaActions'
+import { ProposalCard } from '../ui/ProposalCard'
+import { useStore } from '../state/store'
 import { Empty, Page, Section } from '../ui/Page'
 import { IdeaLink, StatusBadge, ThreadChips, levelName } from '../ui/bits'
 
@@ -56,6 +58,8 @@ export function IdeaPage({ state }: { state: State }) {
             {editing ? <EditText idea={idea} onDone={() => setEditing(false)} /> : <Prompt text={idea.prompt_text} />}
             {!editing && <IdeaActions idea={idea} state={state} onEdit={() => setEditing(true)} />}
           </Section>
+
+          <Refine idea={idea} state={state} />
 
           <Section title="血缘" note="它从哪来，谁接着它">
             <Lineage idea={idea} state={state} />
@@ -147,8 +151,8 @@ function Prompt({ text }: { text: string }) {
   )
 }
 
-const UP: Record<string, string> = { merged_into: '并入了它的', mentions: '它提到的', refined_from: '细化自', fused_from: '融合自', split_from: '拆分自' }
-const DOWN: Record<string, string> = { merged_into: '它并入了', mentions: '提到它的', refined_from: '细化出的', fused_from: '融合成了', split_from: '拆分出的' }
+const UP: Record<string, string> = { merged_into: '并入了它的', mentions: '它提到的', refined_from: '细化自', fused_from: '融合自', split_from: '拆分自', inspired_by: '由它想到' }
+const DOWN: Record<string, string> = { merged_into: '它并入了', mentions: '提到它的', refined_from: '细化出的', fused_from: '融合成了', split_from: '拆分出的', inspired_by: '由它想到的' }
 
 function Lineage({ idea, state }: { idea: IdeaDetail; state: State }) {
   const group = (edges: Edge[], pick: (e: Edge) => string) => {
@@ -236,5 +240,49 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         </details>
       )}
     </li>
+  )
+}
+
+function Refine({ idea, state }: { idea: IdeaDetail; state: State }) {
+  const { proposals, load } = useStore()
+  const [hint, setHint] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const mine = (proposals?.proposals ?? []).filter((p) => p.status === 'open' && (p.idea_id === idea.id || p.target === idea.id || p.sources.includes(idea.id)))
+  const live = ['pool', 'building', 'built', 'draft'].includes(idea.status)
+  if (!live && mine.length === 0) return null
+  const run = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await api.refine(idea.id, hint)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+    setBusy(false)
+  }
+  return (
+    <Section title="细化" note="让模型给几个改写的方向；接受之前这条 idea 不变">
+      {live && (
+        <div className="row refine">
+          <input aria-label="想往哪个方向改" value={hint} onChange={(e) => setHint(e.target.value)} placeholder="想往哪个方向改（可以不填）" />
+          <button disabled={busy || proposals?.model_ready === false} onClick={() => void run()}>
+            {busy ? '正在想，大约十几秒…' : '给我几个改写'}
+          </button>
+          <Link to={`/inbox?like=${encodeURIComponent(idea.id)}`} className="small">
+            从它出发生成新的
+          </Link>
+        </div>
+      )}
+      {error && <p className="err" role="alert">{error}</p>}
+      {mine.length > 0 && (
+        <div className="proposals">
+          {mine.map((p) => (
+            <ProposalCard key={p.id} proposal={p} state={state} />
+          ))}
+        </div>
+      )}
+    </Section>
   )
 }

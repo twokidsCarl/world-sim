@@ -36,7 +36,7 @@ export type Threads1 = ("A" | "B" | "C" | "D" | "E")[];
 export type Kernel = string | null;
 export type Status = "draft" | "pool" | "building" | "built" | "merged" | "discarded";
 export type StatusLabel = string;
-export type Kind1 = "refined_from" | "fused_from" | "split_from" | "merged_into";
+export type Kind1 = "refined_from" | "fused_from" | "split_from" | "inspired_by" | "merged_into";
 export type Target = string;
 export type Edges = Edge[];
 export type MergedInto = string | null;
@@ -97,6 +97,25 @@ export type Body2 = string;
 export type History = HistoryItem[];
 export type LinksOut = Link[];
 export type LinksIn = Link[];
+export type Id4 = string;
+export type At2 = string;
+export type Op = string;
+export type OpLabel = string;
+export type Kind3 = "idea" | "rewrite" | "position" | "merge";
+export type KindLabel = string;
+export type Status2 = "open" | "accepted" | "dismissed";
+export type Request = string;
+export type Why = string;
+export type Title3 = string | null;
+export type Body3 = string | null;
+export type Level3 = string | null;
+export type Threads3 = string[];
+export type Kernel2 = string | null;
+export type Direction = string | null;
+export type IdeaId = string | null;
+export type Target2 = string | null;
+export type Sources = string[];
+export type ResultId = string | null;
 export type Ok = boolean;
 export type PrUrl = string | null;
 export type Message = string;
@@ -333,6 +352,33 @@ export interface Version {
   by: By1;
   title: Title2;
   body: Body2;
+}
+/**
+ * 模型的一条提议。 / One proposal from the model.
+ *
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "Proposal".
+ */
+export interface Proposal {
+  id: Id4;
+  at: At2;
+  op: Op;
+  op_label: OpLabel;
+  kind: Kind3;
+  kind_label: KindLabel;
+  status: Status2;
+  request: Request;
+  why: Why;
+  title: Title3;
+  body: Body3;
+  level: Level3;
+  threads: Threads3;
+  kernel: Kernel2;
+  direction: Direction;
+  idea_id: IdeaId;
+  target: Target2;
+  sources: Sources;
+  result_id: ResultId;
 }
 /**
  * This interface was referenced by `Contract`'s JSON-Schema

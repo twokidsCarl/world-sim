@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { NavLink, Route, Routes } from 'react-router'
 import { IdeaPage } from '../pages/IdeaPage'
+import { InboxPage } from '../pages/InboxPage'
 import { LineagePage } from '../pages/LineagePage'
 import { NewIdeaPage } from '../pages/NewIdeaPage'
 import { MapPage } from '../pages/MapPage'
@@ -10,11 +11,12 @@ import { useStore } from '../state/store'
 const NAV = [
   { to: '/', label: '地图', end: true },
   { to: '/ideas', label: '想法池', end: false },
+  { to: '/inbox', label: '生成与候选', end: false },
   { to: '/lineage', label: '血缘', end: false },
 ]
 
 export function App() {
-  const { state, error, load, theme, toggleTheme, sync, syncing, syncResult, runSync, clearSyncResult } = useStore()
+  const { state, error, load, theme, toggleTheme, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
   useEffect(() => {
     void load()
   }, [load])
@@ -32,6 +34,7 @@ export function App() {
           <NavLink key={n.to} to={n.to} end={n.end} className="nav-item">
             {n.label}
             {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
+            {n.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </NavLink>
         ))}
         <NavLink to="/new" className="nav-item nav-new">
@@ -86,6 +89,7 @@ export function App() {
             <Route path="/" element={<MapPage state={state} />} />
             <Route path="/ideas" element={<PoolPage state={state} />} />
             <Route path="/ideas/:id" element={<IdeaPage state={state} />} />
+            <Route path="/inbox" element={<InboxPage state={state} />} />
             <Route path="/lineage" element={<LineagePage state={state} />} />
             <Route path="/new" element={<NewIdeaPage state={state} />} />
             <Route path="*" element={<p className="pad">没有这个页面。</p>} />
