@@ -3,15 +3,19 @@
 //    没有时沿用已入库的那一份。
 // 2. 对校准目标拟合控制层的映射，写出 src/voice/fitted.ts（--no-fit 跳过）。
 // 3. 打印并保存「目标 vs 合成」对照表（tools/voice/out/report.json、report.txt，不入库）。
-// 4. 渲染试听材料到 tools/voice/out/（--no-examples 跳过）。
+// 4. 本机有录音包（public/voice/vivae-pain/，用 bun tools/voice/pack.ts 生成）时，度量在录音上做变化带来的失真
+//    （tools/voice/out/artefacts.txt；--no-artefacts 跳过）。
+// 5. 渲染试听材料到 tools/voice/out/（--no-examples 跳过）。
 // Entry point: bun tools/voice/run.ts [--no-fit] [--no-examples]
 // 1. Re-analyse the VIVAE corpus when it is present locally (data/raw/voice/, not committed) and write
 //    data/curated/voice/calibration.json; otherwise reuse the committed file.
 // 2. Fit the control mapping to the calibration targets and write src/voice/fitted.ts (skip with --no-fit).
 // 3. Print and save the target-versus-synthesis table (tools/voice/out/report.json and report.txt, not committed).
-// 4. Render the listening material into tools/voice/out/ (skip with --no-examples).
+// 4. When the sound pack is present (public/voice/vivae-pain/, built by bun tools/voice/pack.ts), measure the
+//    distortion that varying the recordings introduces (tools/voice/out/artefacts.txt; skip with --no-artefacts).
+// 5. Render the listening material into tools/voice/out/ (skip with --no-examples).
 
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { DEFAULT_ANALYSIS } from './analysis.ts'
 import { analyseCorpus, buildCalibration, CALIBRATION_PATH, corpusPresent, LEVELS, loadCalibration, ROOT, summarise } from './corpus.ts'
@@ -68,10 +72,19 @@ console.log(sideLines.join('\n'))
 writeFileSync(join(out, 'report.json'), JSON.stringify({ knots: FITTED, rows, side }, null, 1))
 writeFileSync(join(out, 'report.txt'), `${table}\n\n${sideLines.join('\n')}\n`)
 
+const packDir = join(ROOT, 'public/voice/vivae-pain')
+if (!args.has('--no-artefacts') && existsSync(join(packDir, 'manifest.json'))) {
+  const { measureArtefacts, formatArtefacts } = await import('./artefacts.ts')
+  const text = formatArtefacts(measureArtefacts(packDir))
+  console.log('\ndistortion of the variations applied to the recordings (all clips of the pack; definitions in tools/voice/metrics.ts):')
+  console.log(text)
+  writeFileSync(join(out, 'artefacts.txt'), text + '\n')
+}
+
 if (!args.has('--no-examples')) {
   const { writeExamples } = await import('./examples.ts')
-  const examples = writeExamples(out)
-  console.log(`\nwrote ${examples.length} examples (WAV + PNG), 4 overview sheets and index.html to tools/voice/out/`)
+  const count = writeExamples(out, packDir)
+  console.log(`\nwrote ${count} examples (WAV + PNG) and index.html to tools/voice/out/`)
 }
 
 // 合成的计算开销 / CPU cost of synthesis

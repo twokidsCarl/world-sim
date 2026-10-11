@@ -6,3 +6,8 @@ export { computeTimeline, formants, renderVocalisation, TIMELINE_FRAME_RATE } fr
 export { schedulePainVocalisation, toAudioBuffer } from './webaudio.ts'
 export type { ScheduledVocalisation } from './webaudio.ts'
 export type * from './types.ts'
+export { assemblePack, loadVoicePack, MALE_FORMANT_RATIO, PainVoice, renderPainVocalisation, VARIATION } from './recorded.ts'
+export type { PainVoiceInput, VoicePack } from './recorded.ts'
+export { transformClip } from './psola.ts'
+export type { TransformOptions } from './psola.ts'
+export type { PackClip, PackLevel, PackManifest } from './pack.ts'

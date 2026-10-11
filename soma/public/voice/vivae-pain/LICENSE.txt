@@ -1,0 +1,26 @@
+Everything in this directory (the audio files and manifest.json, including the
+per-clip analysis derived from the recordings) is licensed under the
+
+    Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+
+Licence deed:  https://creativecommons.org/licenses/by-nc/4.0/
+Legal code:    https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+NON-COMMERCIAL USE ONLY. You may copy, redistribute and adapt this material for
+non-commercial purposes, provided you give appropriate credit (see ATTRIBUTION.txt),
+provide a link to the licence, and indicate if changes were made. You may not add
+terms or technological measures that restrict others from doing anything the
+licence permits.
+
+The material is offered as-is, without warranties of any kind; see Section 5 of the
+legal code (Disclaimer of Warranties and Limitation of Liability).
+
+This directory is a separate collection. It is NOT part of the CC BY-SA 4.0 anatomy
+dataset in this repository and NOT covered by the MIT licence of the code. A build or
+deployment for commercial use must delete this directory; the application then falls
+back to its parametric synthesizer.
+
+本目录中的全部内容（音频文件和 manifest.json，包括由录音导出的逐条分析）按
+知识共享 署名-非商业性使用 4.0 国际许可协议（CC BY-NC 4.0）授权，仅限非商业使用。
+本目录是独立的集合，不属于本仓库的 CC BY-SA 4.0 解剖数据集，也不适用代码的 MIT 许可；
+用于商业用途的构建或部署必须删除本目录，应用会改用参数合成器。
