@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import * as api from '../api'
 import { download, loadMolecule } from '../mol/load'
-import { bin, dilate, pad, parseMrc, surfaceMesh, voxelIndex } from '../volume/mrc'
+import { bin, pad, parseMrc, surfaceMesh } from '../volume/mrc'
 import { El, IDENTITY } from '../mol/types'
 import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
@@ -17,7 +17,7 @@ import { getLang, listParams, noteKey, pick, saveLang, syncLang, t, tIn, type La
 import catalog from '../../data/catalog.json'
 import neuronTable from '../../data/neurons.json'
 import cellTable from '../../data/cells.json'
-import { readN5Mask } from '../volume/n5'
+import { buildCell, decodeCell, type CellGeometry } from '../volume/cell'
 import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
@@ -184,10 +184,10 @@ export const CATALOG = catalog.models as CatalogEntry[]
 const DENSE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('prim') === 'spheres'
 
 /** 向本地服务要一个预处理过的模型；还在准备就隔几秒再问 / ask the local service for a prepared model, asking again every few seconds while it is being prepared */
-async function fetchPrepared(id: string, waiting: () => void): Promise<Uint8Array> {
+async function fetchPrepared(path: string, waiting: () => void): Promise<Uint8Array> {
   // 每 3 秒问一次，最多等一小时（最大的一个要下载 640 MB）/ asking every 3 seconds for up to an hour (the largest needs a 640 MB download)
   for (let tries = 0; tries < 1200; tries++) {
-    const res = await fetch(`/api/prepared?id=${encodeURIComponent(id)}`).catch(() => null)
+    const res = await fetch(path).catch(() => null)
     if (!res) throw noteError('error.preparedNoServer')
     if (res.status === 202) {
       waiting()
@@ -374,7 +374,7 @@ export const useStore = create<State>((set, get) => ({
       if (src.kind === 'prepared') {
         // 几十亿个原子的模型：本地服务先把它粗化成球（第一次要一两分钟），这里取粗化后的小文件
         // a model of billions of atoms: the local service coarsens it into spheres first (a minute or two the first time), and the small result is fetched here
-        const buf = await fetchPrepared(entry.id, () => set({ busy: say('busy.preparing', { name: pick(entry.title, entry.titleEn) }) }))
+        const buf = await fetchPrepared(`/api/prepared?id=${encodeURIComponent(entry.id)}`, () => set({ busy: say('busy.preparing', { name: pick(entry.title, entry.titleEn) }) }))
         const made = preparedMolecule(buf, entry.id, entry.titleEn)
         mol = made.mol
         const h = made.header
@@ -548,80 +548,37 @@ export const useStore = create<State>((set, get) => ({
     }
     set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
-      const pos: number[] = [], radius: number[] = [], triangles: number[] = []
+      const nameOf = new Map(entry.organelles.map((o) => [o.label, o]))
+      // 平常读本地服务预先做好的那一个文件；没有服务（或在用小球的对照画法）时，在页面里逐块取、现算
+      // normally the one file the local service prepared ahead of time is read; without the service (or in the sphere drawing kept for comparison) the page fetches block by block and computes it
+      let geo: CellGeometry | null = null
+      if (!DENSE) geo = await fetchPrepared(`/api/cell?id=${encodeURIComponent(entry.id)}`, () => set({ busy: say('busy.preparing', { name: pick(entry.title, entry.titleEn) }) })).then(decodeCell, () => null)
+      if (!geo)
+        geo = await buildCell(entry, DENSE, {
+          fetching: (label, done, total) => set({ busy: say('busy.segmentation', { name: nameOf.get(label)!.name, nameEn: nameOf.get(label)!.nameEn, done, total }) }),
+          surfacing: async (label) => {
+            set({ busy: say('busy.surface', { name: nameOf.get(label)!.name, nameEn: nameOf.get(label)!.nameEn }) })
+            await new Promise((r) => setTimeout(r, 20))
+          },
+        })
+      const count = geo.positions.length / 3
+      if (count === 0) throw noteError('error.cellFetch', { title: entry.title, titleEn: entry.titleEn })
+      const voxel = geo.voxel
+      const missing = geo.missing.map((label) => nameOf.get(label)!)
       const chains: Molecule['chains'] = [], entities: Molecule['entities'] = []
       const roles: Role[] = []
-      const missing: { name: string; nameEn: string }[] = []
-      let voxel = [0, 0, 0]
-      let nearNucleus: { vol: Awaited<ReturnType<typeof readN5Mask>>; mask: Uint8Array } | null = null
-      for (const o of entry.organelles) {
-        const vol = await readN5Mask(`${entry.base}/${o.label}/${entry.scale}`, (done, total) => set({ busy: say('busy.segmentation', { name: o.name, nameEn: o.nameEn, done, total }) })).catch(() => null)
-        if (!vol) {
-          missing.push(o)
-          continue
-        }
-        voxel = vol.voxel
-        set({ busy: say('busy.surface', { name: o.name, nameEn: o.nameEn }) })
-        await new Promise((r) => setTimeout(r, 20))
-        // 核膜算在内质网的分割里，紧贴着细胞核的表面；两层表面叠在一起会互相抢，所以别的细胞器贴着细胞核的那部分不画。
-        // 画网格时在取表面之前就把这些体素去掉，表面仍是封闭的，剖开时才能画出实心的断面；四周也补一层空体素。
-        // the nuclear envelope belongs to the ER segmentation and lies right on the nucleus's surface; two coincident surfaces fight over every pixel, so the part of any other organelle that hugs the nucleus is not drawn.
-        // For the mesh those voxels are removed before the surface is taken, which keeps it closed, as a solid section at a cut requires; a layer of empty voxels is added all round as well.
-        if (!DENSE && nearNucleus && o.label !== 'nucleus_seg') {
-          const nn = nearNucleus
-          for (let z = 0, i = 0; z < vol.nz; z++)
-            for (let y = 0; y < vol.ny; y++)
-              for (let x = 0; x < vol.nx; x++, i++) {
-                if (!vol.data[i]) continue
-                const k = voxelIndex(nn.vol, vol.origin[0] + x * vol.voxel[0], vol.origin[1] + y * vol.voxel[1], vol.origin[2] + z * vol.voxel[2])
-                if (k >= 0 && nn.mask[k]) vol.data[i] = 0
-              }
-        }
-        const surface = surfaceMesh(DENSE ? vol : pad(vol), 0.5)
-        const pts = surface.positions
-        if (pts.length === 0) {
-          missing.push(o)
-          continue
-        }
-        const start = pos.length / 3
-        // 每个表面点一个球，半径略小于一个体素 / a sphere on every surface point, a little under a voxel in radius
-        const r = Math.min(...vol.voxel) * 0.95
-        // 核膜算在内质网的分割里，紧贴着细胞核的表面；两层表面叠在一起会互相抢，所以别的细胞器贴着细胞核的那部分不画
-        // the nuclear envelope belongs to the ER segmentation and lies right on the nucleus's surface; two coincident surfaces fight over every pixel, so the part of any other organelle that hugs the nucleus is not drawn
-        if (o.label === 'nucleus_seg') nearNucleus = { vol, mask: dilate(vol, 2) }
-        const near = DENSE && o.label !== 'nucleus_seg' ? nearNucleus : null
-        // 表面的每个点在总表里排第几；没画的是 -1 / where each point of this surface lands in the whole list, -1 if it is not drawn
-        const placed = new Int32Array(pts.length / 3).fill(-1)
-        for (let i = 0; i < pts.length; i += 3) {
-          if (near) {
-            const k = voxelIndex(near.vol, pts[i]!, pts[i + 1]!, pts[i + 2]!)
-            if (k >= 0 && near.mask[k]) continue
-          }
-          placed[i / 3] = pos.length / 3
-          pos.push(pts[i]!, pts[i + 1]!, pts[i + 2]!)
-          radius.push(r)
-        }
-        // 三个顶点都还在的三角形才留下 / a triangle is kept only when all three of its vertices are
-        for (let t = 0; t < surface.triangles.length; t += 3) {
-          const a = placed[surface.triangles[t]!]!, b = placed[surface.triangles[t + 1]!]!, c = placed[surface.triangles[t + 2]!]!
-          if (a >= 0 && b >= 0 && c >= 0) triangles.push(a, b, c)
-        }
-        if (pos.length / 3 === start) {
-          missing.push(o)
-          continue
-        }
+      for (const part of geo.parts) {
+        const o = nameOf.get(part.label)!
         entities.push({ id: o.label, description: `${o.name} / ${o.nameEn}`, kind: 'protein' })
-        chains.push({ asymId: o.label, authAsymId: o.label, entity: entities.length - 1, start, count: pos.length / 3 - start, model: 1 })
+        chains.push({ asymId: o.label, authAsymId: o.label, entity: entities.length - 1, start: part.start, count: part.count, model: 1 })
         roles.push(o.role as Role)
       }
-      const count = pos.length / 3
-      if (count === 0) throw noteError('error.cellFetch', { title: entry.title, titleEn: entry.titleEn })
       const chainOf = new Uint32Array(count)
       chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
       const mol: Molecule = {
-        id: entry.id, title: entry.titleEn, atomCount: count, pos: new Float32Array(pos), element: new Uint8Array(count).fill(El.N), radius: new Float32Array(radius),
+        id: entry.id, title: entry.titleEn, atomCount: count, pos: geo.positions, element: new Uint8Array(count).fill(El.N), radius: new Float32Array(count).fill(geo.radius),
         chainOf, isTrace: new Uint8Array(count), residue: new Int32Array(count).fill(1), chains, entities,
-        ...(DENSE ? {} : { triangles: new Uint32Array(triangles), solid: true }),
+        ...(DENSE ? {} : { triangles: geo.triangles, solid: true }),
         assemblies: [{ id: 'asym', groups: [{ chains: chains.map((_, i) => i), operators: [IDENTITY] }] }],
       }
       const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
