@@ -9,6 +9,7 @@ import { orientation } from './sources/opm'
 import { pdbtm, topology } from './sources/pdbtm'
 import { cached, stateDir } from './structures'
 import catalog from '../data/catalog.json'
+import { bigPdbKey, makeBigPdb, type BigPdbSource } from './tools/bigpdb'
 import { groKey, makeGro } from './tools/gro'
 import { makePetworld, petworldKey } from './tools/petworld'
 import { poll } from './tools/prepared'
@@ -54,7 +55,9 @@ Bun.serve({
         const src = (catalog.models as { id: string; source: { kind: string; url?: string; format?: string; member?: string; head?: number; budget?: number } }[]).find((m) => m.id === url.searchParams.get('id') && m.source.kind === 'prepared')?.source
         if (!src?.url) return fail(new Error('目录里没有这个预处理模型 / no such prepared model in the catalogue'), 404)
         const state =
-          src.format === 'gro'
+          src.format === 'pdb'
+            ? await poll(bigPdbKey(src as unknown as BigPdbSource), () => makeBigPdb(src as unknown as BigPdbSource))
+            : src.format === 'gro'
             ? await poll(groKey(src.url, src.member!, src.head!, src.budget ?? 4_000_000), () => makeGro(src.url!, src.member!, src.head!, src.budget ?? 4_000_000))
             : await poll(petworldKey(src.url), () => makePetworld(src.url!))
         if ('preparing' in state) return json(state, 202)

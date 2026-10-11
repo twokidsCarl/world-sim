@@ -204,3 +204,53 @@ describe('a Martini coordinate file inside an archive', () => {
     expect(new Set(mol.residue).size).toBe(1)
   })
 })
+
+describe('a very large PDB', () => {
+  // 列是定宽的；原子编号溢出成十六进制或星号，分子只能按段名（第 73-76 列）来分
+  // columns are fixed-width; atom numbers overflow into hexadecimal or asterisks, and only the segment name (columns 73-76) tells molecules apart
+  const atom = (serial: string, name: string, res: string, chain: string, x: number, seg: string) =>
+    `ATOM  ${serial.padStart(5)} ${name.padEnd(4)} ${res.padEnd(4)}${chain}${'1'.padStart(4)}    ${x.toFixed(3).padStart(8)}${(2).toFixed(3).padStart(8)}${(-3.5).toFixed(3).padStart(8)}  1.00  0.00      ${seg.padEnd(4)}`
+  const PDB = [
+    'CRYST1 1137.660 1189.315 1150.543  90.00  90.00  90.00 P 1           1',
+    atom('1', 'N', 'MET', 'H', 1, 'H1'), atom('2', 'HT1', 'MET', 'H', 1.1, 'H1'), atom('3', 'CA', 'MET', 'H', 2, 'H1'),
+    atom('186a0', 'N', 'MET', 'H', 10, 'H2'), atom('186a1', '1HB', 'MET', 'H', 10.1, 'H2'),
+    atom('*****', 'C1', 'BGLN', '1', 20, '11'), atom('*****', 'O5', 'BGLN', '1', 21, '11'),
+    atom('*****', 'N', 'SER', 'M', 30, 'M829'),
+    atom('*****', 'P', 'POPC', 'D', 40, 'DAAA'), atom('*****', 'H15Y', 'POPC', 'D', 40.5, 'DAAA'), atom('*****', 'C316', 'POPC', 'D', 41, 'DAAA'),
+    atom('*****', 'P', 'POPC', 'D', 50, 'DAAB'),
+    // 脂质也会用上蛋白的链字母 / lipids reuse the proteins' chain letters too
+    atom('*****', 'P', 'POPC', 'H', 60, 'HXYZ'),
+    'END',
+  ]
+  async function* lines() {
+    for (const l of PDB) yield l
+  }
+  const opts = { chains: { H: 'hemagglutinin', M: 'M2 proton channel' }, lipids: ['POPC'] }
+
+  it('drops hydrogens and splits by segment into chains, glycans and one part per lipid', async () => {
+    const { readBigPdb } = await import('../server/tools/bigpdb')
+    const m = await readBigPdb(lines(), opts)
+    expect([m.atoms, m.heavy]).toEqual([13, 10])
+    expect(m.parts.map((p) => [p.kind, p.lipid, p.molecules.map((x) => x.xyz.length / 3)])).toEqual([
+      ['hemagglutinin', false, [2]],
+      ['hemagglutinin', false, [1]],
+      ['glycan', false, [2]],
+      ['M2 proton channel', false, [1]],
+      ['POPC', true, [2, 1, 1]],
+    ])
+    expect(m.parts[0]!.molecules[0]!.xyz).toEqual([1, 2, -3.5, 2, 2, -3.5])
+  })
+
+  it('keeps every heavy atom as a sphere when they fit the budget', async () => {
+    const { readBigPdb } = await import('../server/tools/bigpdb')
+    const { packParts } = await import('../server/tools/pack')
+    const m = await readBigPdb(lines(), opts)
+    const { header, spheres, ops } = packParts(m.parts, 'x', 100, 'atoms', 1, m.atoms)
+    expect([header.atomsPlaced, header.heavyPlaced, header.atomsPerSphere, header.spheres]).toEqual([13, 10, 1, 10])
+    expect(Array.from(new Set(Array.from({ length: 10 }, (_, i) => Math.round(spheres[i * 4 + 3]! * 100) / 100)))).toEqual([1.7])
+    const { mol } = preparedMolecule(encode(header, spheres, ops), 'id', 'title')
+    // 图例：膜、血凝素（两条链是一项）、糖链、M2 / the legend: membrane, hemagglutinin (two chains, one item), glycan, M2
+    expect(mol.entities.map((e) => e.description)).toEqual(['membrane', 'hemagglutinin', 'glycan', 'M2 proton channel'])
+    expect(mol.assemblies[0]!.groups.length).toBe(5)
+  })
+})

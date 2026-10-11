@@ -21,7 +21,7 @@ export function stateDir(): string {
 }
 
 /** 允许代为下载的主机 / hosts this server will download from on the page's behalf */
-const ALLOWED = new Set(['models.rcsb.org', 'files.rcsb.org', 'mesoscope.scripps.edu', 'alphafold.ebi.ac.uk', 'raw.githubusercontent.com', 'neuromorpho.org', 'ftp.ebi.ac.uk', 'bossdb-open-data.s3.amazonaws.com', 'zenodo.org'])
+const ALLOWED = new Set(['models.rcsb.org', 'files.rcsb.org', 'mesoscope.scripps.edu', 'alphafold.ebi.ac.uk', 'raw.githubusercontent.com', 'neuromorpho.org', 'ftp.ebi.ac.uk', 'bossdb-open-data.s3.amazonaws.com', 'zenodo.org', 'g-7e3643.2af3b.36fe.data.globus.org'])
 /**
  * 只提供 http、没有 https 的主机（YASARA 的下载站）。从这里取的只是坐标文本，解析之外不做别的；仍然只限这一个主机。
  * Hosts that serve http only and have no https (YASARA's download site). What is fetched there is

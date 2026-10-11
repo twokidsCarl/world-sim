@@ -26,21 +26,13 @@
  */
 import { createReadStream } from 'node:fs'
 import { createGunzip } from 'node:zlib'
-import { MAGIC, decode, encode, type PreparedHeader, type PreparedObject } from '../../src/mol/prepared'
+import { MAGIC, decode, encode, type PreparedHeader } from '../../src/mol/prepared'
 import { cached } from '../structures'
+import { packParts, type Part } from './pack'
 import { preparedFile } from './prepared'
 
 const AMINO = new Set('ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL'.split(' '))
 const ONE: Record<string, string> = { ALA: 'A', ARG: 'R', ASN: 'N', ASP: 'D', CYS: 'C', GLN: 'Q', GLU: 'E', GLY: 'G', HIS: 'H', ILE: 'I', LEU: 'L', LYS: 'K', MET: 'M', PHE: 'F', PRO: 'P', SER: 'S', THR: 'T', TRP: 'W', TYR: 'Y', VAL: 'V' }
-
-/** 一个 Martini 珠子大约相当于 4 个重原子；半径的算法和 petworld.ts 一致 / a Martini bead stands for about 4 heavy atoms; the radius rule matches petworld.ts */
-const radiusOf = (beads: number) => 3.4 * Math.cbrt((beads * 4) / 8)
-/**
- * 脂质的球至少这么大（Å）。膜里相邻的脂质相距约 8 Å，球再小就连不成一张膜，会从缝里看到对面。
- * Lipid spheres are at least this large (Å). Neighbouring lipids in a membrane are about 8 Å
- * apart, and smaller spheres would not join into a sheet: the far side would show through the gaps.
- */
-const LIPID_MIN_RADIUS = 5
 
 /**
  * 从一个 tar 的字节流里取出一个文件的各行。流可以在这个文件之后被截断。
@@ -167,26 +159,8 @@ export async function readGro(lines: AsyncIterable<string>): Promise<GroModel> {
   return model
 }
 
-/** 把模型粗化并打包；g 取使球数不超过预算的最小整数 / coarsen and pack the model, with g the smallest whole number that keeps the spheres within the budget */
+/** 把模型粗化并打包 / coarsen and pack the model */
 export function packGro(model: GroModel, source: string, budget: number): { header: PreparedHeader; spheres: Float32Array; ops: Float32Array } {
-  const all: Molecule[] = [...model.proteins, ...[...model.others.values()].flat()]
-  const count = (g: number) => all.reduce((s, m) => s + Math.ceil(m.xyz.length / 3 / g), 0)
-  let g = 1
-  while (count(g) > budget && g < 1e6) g++
-  const spheres: number[] = []
-  const add = (m: Molecule, minRadius = 0) => {
-    const n = m.xyz.length / 3, parts = Math.ceil(n / g)
-    for (let p = 0; p < parts; p++) {
-      const a = Math.floor((p * n) / parts), b = Math.floor(((p + 1) * n) / parts)
-      let x = 0, y = 0, z = 0
-      for (let i = a; i < b; i++) {
-        x += m.xyz[i * 3]!
-        y += m.xyz[i * 3 + 1]!
-        z += m.xyz[i * 3 + 2]!
-      }
-      spheres.push(x / (b - a), y / (b - a), z / (b - a), Math.max(minRadius, radiusOf(b - a)))
-    }
-  }
   // 蛋白的种类：长度加开头 16 个残基；按拷贝数从多到少编号 / kinds of protein: length plus the first 16 residues, numbered from the most copies down
   const kinds = new Map<string, number>()
   for (const p of model.proteins) {
@@ -195,27 +169,15 @@ export function packGro(model: GroModel, source: string, budget: number): { head
   }
   const order = [...kinds.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
   const label = new Map(order.map(([k, copies], i) => [k, `membrane protein ${i + 1} (${k.split(':')[0]} residues, ${copies} ${copies === 1 ? 'copy' : 'copies'})`]))
-  const objects: PreparedObject[] = []
-  model.proteins.forEach((p, i) => {
-    const start = spheres.length / 4
-    add(p)
-    const n = p.xyz.length / 3
-    objects.push({ name: `chain ${i + 1}`, kind: label.get(`${p.sequence.length}:${p.sequence.slice(0, 16)}`)!, instances: 1, opStart: 0, atoms: n, heavy: n, chains: [{ id: 'A', lipid: false, start, count: spheres.length / 4 - start }] })
-  })
-  for (const [name, mols] of model.others) {
-    const start = spheres.length / 4
-    let n = 0
-    for (const m of mols) {
-      add(m, LIPID_MIN_RADIUS)
-      n += m.xyz.length / 3
-    }
-    objects.push({ name, kind: name, instances: 1, opStart: 0, atoms: n, heavy: n, chains: [{ id: name, lipid: true, start, count: spheres.length / 4 - start }] })
-  }
-  const header: PreparedHeader = { source, unit: 'beads', atomsPlaced: model.beads, heavyPlaced: model.beads, atomsPerSphere: g, spheres: spheres.length / 4, spheresPlaced: spheres.length / 4, ops: 1, objects }
-  return { header, spheres: new Float32Array(spheres), ops: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0]) }
+  const parts: Part[] = [
+    ...model.proteins.map((p, i) => ({ name: `chain ${i + 1}`, kind: label.get(`${p.sequence.length}:${p.sequence.slice(0, 16)}`)!, lipid: false, molecules: [p] })),
+    ...[...model.others.entries()].map(([name, molecules]) => ({ name, kind: name, lipid: true, molecules })),
+  ]
+  // 一个 Martini 珠子大约相当于 4 个重原子 / a Martini bead stands for about 4 heavy atoms
+  return packParts(parts, source, budget, 'beads', 4, model.beads)
 }
 
-async function* gunzipped(path: string): AsyncGenerator<Uint8Array> {
+export async function* gunzipped(path: string): AsyncGenerator<Uint8Array> {
   const stream = createReadStream(path).pipe(createGunzip())
   try {
     for await (const chunk of stream) yield chunk as Uint8Array
