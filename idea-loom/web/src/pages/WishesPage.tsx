@@ -7,6 +7,7 @@ import { useAssistant } from '../assistant/store'
 import { label, plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { useLang, useT } from '../state/store'
+import { SessionView } from '../sessions/SessionView'
 import { Empty, Page, Section } from '../ui/Page'
 
 const TONE: Record<string, string> = { open: 'w-open', accepted: 'w-accepted', done: 'w-done', declined: 'w-quiet', withdrawn: 'w-quiet' }
@@ -77,6 +78,7 @@ export function WishesPage() {
           <button onClick={() => setParams({})}>{t('知道了', 'Got it')}</button>
         </div>
       )}
+      <HandleAll />
       <VisitorQueue onAccepted={() => api.wishes(status).then(setList, () => undefined)} />
       <Review onRecorded={() => api.wishes(status).then(setList, () => undefined)} />
       {list && (
@@ -309,6 +311,7 @@ export function WishPage() {
       </div>
 
       <Section title={t('在 Claude Code 里处理', 'Handle it in Claude Code')} note={t('它拿到这条愿望的数据，先出计划，你批准之后才动手', 'It fetches this wish, plans first and only acts after you approve')}>
+        <WishSession wishId={wish.wish_id} title={wish.title} />
         <WishCommand id={wish.wish_id} />
         {job ? (
           <JobPanel jobId={job.job_id} onChange={() => (void reload(), void refresh(), void loadJob())} />
@@ -472,6 +475,76 @@ function WishCommand({ id }: { id: string }) {
       <span className="muted small">
         {t('贴进在这个仓库里开着的 Claude Code。不带编号的 /wishes 会先把全部待处理的愿望分一遍诊。', 'Paste it into a Claude Code session opened in this repository. /wishes without an id first triages every pending wish.')}
       </span>
+    </div>
+  )
+}
+
+
+// 在这一页里直接和 Claude Code 一起处理这条愿望：开一个会话，第一句话是 /wishes <编号>，以计划模式起步。
+// 只在本机有（它能在这台机器上执行命令）；云端这个按钮不出现。
+// Handle this wish with Claude Code right on this page: a session opens whose first message is /wishes <id>, starting in plan mode.
+// Local only (it can run commands on this machine); in the cloud the button does not appear.
+function WishSession({ wishId, title }: { wishId: string; title: string }) {
+  const t = useT()
+  const [session, setSession] = useState<string | null>(null)
+  const [offered, setOffered] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    let live = true
+    api.sessions().then(
+      (list) => {
+        if (!live) return
+        setOffered(!list.unavailable)
+        // 这条愿望已经有一个没结束的会话，就接着用它。 / If this wish already has a session that has not ended, carry on with it.
+        setSession(list.sessions.find((s) => s.wish_id === wishId && s.status !== 'closed')?.id ?? null)
+      },
+      () => setOffered(false),
+    )
+    return () => {
+      live = false
+    }
+  }, [wishId])
+  if (!offered) return null
+  if (session) return <SessionView id={session} />
+  return (
+    <div className="row wish-command">
+      <button
+        className="primary"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true)
+          setError(null)
+          api.startSession({ text: `/wishes ${wishId.slice(-4)}`, mode: 'plan', wish_id: wishId, title: t(`愿望：${title}`, `Wish: ${title}`) }).then(
+            (made) => (setBusy(false), setSession(made.id)),
+            (e: Error) => (setBusy(false), setError(e.message)),
+          )
+        }}
+      >
+        {busy ? t('正在开会话…', 'Opening a session…') : t('在这里和 Claude Code 一起处理', 'Handle it here with Claude Code')}
+      </button>
+      <span className="muted small">{t('它先读代码、出计划；计划、改文件、跑命令都等你在这里点头。', 'It reads the code and plans first; the plan, file edits and commands all wait for your nod here.')}</span>
+      {error && <span className="err">{error}</span>}
+    </div>
+  )
+}
+
+// 列表页：让 Claude Code 把全部待处理的愿望分一遍诊。 / On the list page: have Claude Code triage every pending wish.
+function HandleAll() {
+  const t = useT()
+  const navigate = useNavigate()
+  const [offered, setOffered] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    api.sessions().then((list) => setOffered(!list.unavailable), () => setOffered(false))
+  }, [])
+  if (!offered) return null
+  return (
+    <div className="row wish-command">
+      <button onClick={() => void api.startSession({ text: '/wishes', mode: 'plan', title: t('许愿池：分诊', 'Wish pool: triage') }).then((made) => navigate(`/sessions/${made.id}`), (e: Error) => setError(e.message))}>
+        {t('让 Claude Code 看一遍全部待处理的', 'Have Claude Code go over everything pending')}
+      </button>
+      {error && <span className="err">{error}</span>}
     </div>
   )
 }

@@ -1167,3 +1167,122 @@ def revoke_agent_token(token_id: str) -> dict:
     from .agentapi import tokens
 
     return {"revoked": tokens.revoke(token_id)}
+
+
+# ---------- 网页里的 Claude Code 会话（只在本机，只有主人）/ Claude Code sessions in the page (local only, owner only) ----------
+
+from . import sessions as code_sessions  # noqa: E402
+
+
+def _session_guard(request: Request) -> None:
+    """这些会话能在这台机器上执行命令：只在本机模式开放，而且只接受从本机回环地址来的请求。
+
+    These sessions can run commands on this machine: offered in local mode only, and only to requests from the loopback address.
+    """
+    if not config.is_local() or config.role() != "all":
+        raise HTTPException(404, "这里没有这个功能")
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1", "localhost", "testclient"):
+        raise HTTPException(403, "只能从这台机器上使用")
+
+
+async def _session(fn, *args, **kw):
+    try:
+        return await fn(*args, **kw)
+    except code_sessions.SessionError as e:
+        raise HTTPException(422, str(e))
+
+
+class SayBody(BaseModel):
+    text: str
+    images: list[dict[str, str]] = []
+
+
+class AnswerBody(BaseModel):
+    request_id: str
+    decision: str
+    note: str = ""
+    answers: dict = {}
+
+
+class ModeBody(BaseModel):
+    mode: str
+
+
+@app.get("/api/sessions")
+def list_sessions(request: Request) -> dict:
+    _session_guard(request)
+    return {"sessions": [m.model_dump() for m in code_sessions.listing()], "unavailable": code_sessions.available(), "billing": code_sessions.billing(), "modes": list(code_sessions.MODES)}
+
+
+@app.post("/api/sessions")
+async def new_session(body: code_sessions.NewSession, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.start, body)).model_dump()
+
+
+@app.get("/api/sessions/{session_id}")
+def one_session(session_id: str, request: Request) -> dict:
+    _session_guard(request)
+    try:
+        return code_sessions.get(session_id).model_dump()
+    except code_sessions.SessionError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.get("/api/sessions/{session_id}/events")
+async def session_events(session_id: str, request: Request, after: int = 0) -> StreamingResponse:
+    _session_guard(request)
+    try:
+        code_sessions.get(session_id)
+    except code_sessions.SessionError as e:
+        raise HTTPException(404, str(e))
+
+    async def lines():
+        import asyncio
+
+        seen, quiet = after, 0.0
+        while True:
+            batch = code_sessions.events(session_id, seen)
+            for event in batch:
+                seen = event["seq"]
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            if await request.is_disconnected():
+                return
+            quiet = 0.0 if batch else quiet + 0.3
+            if quiet >= 15:  # 没动静时发一个心跳，连接不会被中间的代理掐掉 / a heartbeat when quiet, so no proxy cuts the connection
+                quiet = 0.0
+                yield ": keep-alive\n\n"
+            await asyncio.sleep(0.3)
+
+    return StreamingResponse(lines(), media_type="text/event-stream", headers={"cache-control": "no-cache", "x-accel-buffering": "no"})
+
+
+@app.post("/api/sessions/{session_id}/message")
+async def session_message(session_id: str, body: SayBody, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.say, session_id, body.text, body.images)).model_dump()
+
+
+@app.post("/api/sessions/{session_id}/answer")
+async def session_answer(session_id: str, body: AnswerBody, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.answer, session_id, body.request_id, body.decision, body.note, body.answers)).model_dump()
+
+
+@app.post("/api/sessions/{session_id}/interrupt")
+async def session_interrupt(session_id: str, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.interrupt, session_id)).model_dump()
+
+
+@app.post("/api/sessions/{session_id}/mode")
+async def session_mode(session_id: str, body: ModeBody, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.set_mode, session_id, body.mode)).model_dump()
+
+
+@app.post("/api/sessions/{session_id}/close")
+async def session_close(session_id: str, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.close, session_id)).model_dump()
