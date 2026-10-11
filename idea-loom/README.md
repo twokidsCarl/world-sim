@@ -30,17 +30,25 @@ generated from it.
 - **同步到仓库 / Sync**：重新生成 `IDEAS.md` 里的三块，用 `tools/pr.sh` 开一个 PR。
   Regenerates the three blocks of `IDEAS.md` and opens a PR through `tools/pr.sh`.
 
-还没有的（按顺序做）：用模型生成和细化、右侧小助手和许愿池、开发任务与统计、从许愿池触发 Claude Code。
+- **生成与候选 / Generate and candidates**：让模型为一个格子、一种内核，或从某一条出发写新的 idea；给还没归类的定位置；在一层或一种内核里查重。在 idea 页上细化，在想法池里勾选几条融合。模型给的都只是候选，接受之前想法池不变。
+  Ask the model for new ideas for a cell, a kernel, or starting from an existing
+  idea; classify the unclassified; look for duplicates within a level or kernel.
+  Refine on the idea page; tick several ideas in the pool to fuse them. Everything
+  the model returns is a candidate, and the pool does not change until you accept.
 
-Not yet (in this order): generating and refining with a model, the assistant sidebar
-and the wish pool, development tasks and statistics, triggering Claude Code from the
-wish pool.
+还没有的（按顺序做）：右侧小助手和许愿池、开发任务与统计、从许愿池触发 Claude Code。
+
+Not yet (in this order): the assistant sidebar and the wish pool, development tasks
+and statistics, triggering Claude Code from the wish pool.
 
 ## 运行 / Run
 
-需要 [uv](https://docs.astral.sh/uv/) 和 [bun](https://bun.sh)。两个进程：
+需要 [uv](https://docs.astral.sh/uv/) 和 [bun](https://bun.sh)；用模型的功能还需要本机装有并登录了
+`claude` 命令行（不需要 API key）。两个进程：
 
-Needs [uv](https://docs.astral.sh/uv/) and [bun](https://bun.sh). Two processes:
+Needs [uv](https://docs.astral.sh/uv/) and [bun](https://bun.sh); the model-backed
+features also need the `claude` CLI installed and logged in on this machine (no API
+key). Two processes:
 
 ```sh
 # 后端 / backend — http://127.0.0.1:8767
@@ -71,6 +79,11 @@ the world-sim git history and skips itself without it.
 | `data/ideas.jsonl` | idea 的事件，只追加；当前状态由它折叠得出 / idea events, append-only; the current state is folded from them |
 | `data/frame.json` | 层、横线、内核 / levels, threads, kernels |
 | `data/projects.json` | 子项目和它们对应的层 / subprojects and their levels |
+
+`runs/`（不进 git）里是模型的提议 `proposals.jsonl` 和每次调用的用量 `llm.jsonl`。
+
+`runs/` (not in git) holds the model's proposals in `proposals.jsonl` and the usage of
+every call in `llm.jsonl`.
 
 事件有这几种 / Event kinds：`created`、`edited`、`moved`、`status`、`merged_into`、`discarded`、
 `restored`、`noted`。编号永不复用，合并和丢弃的条目留在日志里。
@@ -106,6 +119,9 @@ src/idea_loom/
   markdown.py   读 IDEAS.md / parse IDEAS.md
   importer.py   从 git 历史导入 / import from git history
   render.py     生成 IDEAS.md 的三块 / render the generated blocks
+  llm.py        claude -p 封装，带缓存和用量记录 / claude -p wrapper with cache and usage log
+  ops.py        生成、细化、融合、归类、查重 / generate, refine, fuse, classify, dedupe
+  prompts/      提示词 / prompts
   edits.py      手动改动，先检查再写事件 / manual changes, validated then appended
   sync.py       同步到仓库 / sync to the repository
   server.py     HTTP 接口 / HTTP API

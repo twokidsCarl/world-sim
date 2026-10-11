@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api } from '../api'
+import { type Proposals, api } from '../api'
 import type { State, SyncResult, SyncStatus } from '../contract'
 
 type Theme = 'light' | 'dark'
@@ -16,6 +16,7 @@ type Store = {
   theme: Theme
   page: PageIdentity
   sync: SyncStatus | null
+  proposals: Proposals | null
   syncing: boolean
   syncResult: SyncResult | null
   runSync: () => Promise<void>
@@ -42,6 +43,7 @@ export const useStore = create<Store>((set, get) => ({
   theme: initialTheme(),
   page: { title: '', lead: '' },
   sync: null,
+  proposals: null,
   syncing: false,
   syncResult: null,
   runSync: async () => {
@@ -58,8 +60,8 @@ export const useStore = create<Store>((set, get) => ({
   load: async () => {
     set({ loading: true })
     try {
-      const [state, sync] = await Promise.all([api.state(), api.syncStatus().catch(() => null)])
-      set({ state, sync, error: null, loading: false })
+      const [state, sync, proposals] = await Promise.all([api.state(), api.syncStatus().catch(() => null), api.proposals().catch(() => null)])
+      set({ state, sync, proposals, error: null, loading: false })
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e), loading: false })
     }

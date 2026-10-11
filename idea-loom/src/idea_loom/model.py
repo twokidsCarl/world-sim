@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 Level = Literal["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "纵", "造", "规"]
 Thread = Literal["A", "B", "C", "D", "E"]
 Status = Literal["draft", "pool", "building", "built", "merged", "discarded"]
-EdgeKind = Literal["refined_from", "fused_from", "split_from", "merged_into"]
+EdgeKind = Literal["refined_from", "fused_from", "split_from", "inspired_by", "merged_into"]
 EventKind = Literal[
     "created", "edited", "moved", "status", "merged_into", "discarded", "restored", "noted"
 ]
@@ -33,6 +33,7 @@ EDGE_LABELS: dict[str, str] = {
     "refined_from": "细化自",
     "fused_from": "融合自",
     "split_from": "拆分自",
+    "inspired_by": "由它想到",
     "merged_into": "并入",
     "mentions": "提到",
 }
@@ -50,7 +51,7 @@ BY_LABELS: dict[str, str] = {
     "import": "导入",
     "human": "手动",
     "assistant": "小助手",
-    "generator": "生成",
+    "generator": "模型",
     "claude-code": "Claude Code",
 }
 

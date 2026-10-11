@@ -1,4 +1,4 @@
-import type { IdeaDetail, State, SyncResult, SyncStatus } from './contract'
+import type { IdeaDetail, Proposal, State, SyncResult, SyncStatus } from './contract'
 
 export class ApiError extends Error {
   constructor(
@@ -28,6 +28,8 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
 
 const idea = (id: string, action = '') => `/api/ideas/${encodeURIComponent(id)}${action && `/${action}`}`
 
+export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
+export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type NewIdea = { title: string; body: string; level: string; threads: string[]; kernel: string | null }
 
 export const api = {
@@ -40,6 +42,14 @@ export const api = {
   discard: (id: string, reason: string) => call<IdeaDetail>(idea(id, 'discard'), { reason }),
   restore: (id: string) => call<IdeaDetail>(idea(id, 'restore'), {}),
   setStatus: (id: string, status: string) => call<IdeaDetail>(idea(id, 'status'), { status }),
+  proposals: () => call<Proposals>('/api/proposals'),
+  generate: (target: GenTarget, n: number) => call<Proposal[]>('/api/ops/generate', { target, n }),
+  refine: (idea_id: string, hint: string, n = 3) => call<Proposal[]>('/api/ops/refine', { idea_id, hint, n }),
+  fuse: (idea_ids: string[]) => call<Proposal>('/api/ops/fuse', { idea_ids }),
+  classify: (idea_ids?: string[]) => call<Proposal[]>('/api/ops/classify', { idea_ids: idea_ids ?? null }),
+  dedupe: (scope: { level?: string; kernel?: string }) => call<Proposal[]>('/api/ops/dedupe', scope),
+  accept: (id: string, body: { as_new?: boolean; title?: string; body?: string } = {}) => call<Proposal>(`/api/proposals/${id}/accept`, body),
+  dismiss: (id: string) => call<Proposal>(`/api/proposals/${id}/dismiss`, {}),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),
 }

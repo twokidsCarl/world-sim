@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
+import { api } from '../api'
+import { useStore } from '../state/store'
 import type { State, ThreadId } from '../contract'
 import { type Filters, NO_FILTERS, activeFilterCount, filterIdeas, filtersFromQuery, firstLine, queryFromFilters } from '../state/derive'
 import { Empty, Page } from '../ui/Page'
@@ -13,6 +16,23 @@ export function PoolPage({ state }: { state: State }) {
   const set = (patch: Partial<Filters>) => navigate(`/ideas${queryFromFilters({ ...filters, ...patch })}`, { replace: true })
   const shown = filterIdeas(state, filters)
   const active = activeFilterCount(filters)
+  const load = useStore((st) => st.load)
+  const [picked, setPicked] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id])
+  const fuse = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await api.fuse(picked)
+      await load()
+      navigate('/inbox')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+      setBusy(false)
+    }
+  }
 
   return (
     <Page title="想法池" lead="每一条都是可以直接交给 Claude 开工的一段输入。">
@@ -69,6 +89,19 @@ export function PoolPage({ state }: { state: State }) {
         </select>
         {active > 0 && <button onClick={() => navigate('/ideas', { replace: true })}>清空筛选</button>}
       </div>
+      {picked.length > 0 && (
+        <div className="picked" role="status">
+          <span>
+            选了 {picked.length} 条：{picked.join('、')}
+          </span>
+          <button className="primary" disabled={busy || picked.length < 2} onClick={() => void fuse()}>
+            {busy ? '正在写融合稿…' : '让模型融合成一条'}
+          </button>
+          <button onClick={() => setPicked([])}>不选了</button>
+          {picked.length < 2 && <span className="muted small">融合至少要两条</span>}
+          {error && <span className="err">{error}</span>}
+        </div>
+      )}
       <p className="muted small result-count">
         {shown.length} 条{active > 0 && `（共 ${filterIdeas(state, NO_FILTERS).length} 条在池）`}
         {filters.project && ` · 提到 ${filters.project} 的`}
@@ -78,7 +111,8 @@ export function PoolPage({ state }: { state: State }) {
       ) : (
         <ul className="idea-list">
           {shown.map((idea) => (
-            <li key={idea.id}>
+            <li key={idea.id} className="idea-li">
+              <input type="checkbox" aria-label={`选中 ${idea.id} ${idea.title}`} checked={picked.includes(idea.id)} onChange={() => toggle(idea.id)} />
               <Link to={`/ideas/${encodeURIComponent(idea.id)}`} className="idea-row">
                 <span className="id num">{idea.id}</span>
                 <span className="what">

@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from . import edits, ideas, sync
+from . import edits, ideas, llm, ops, sync
 from .model import IdeaDetail, State
 
 app = FastAPI(title="idea-loom")
@@ -59,8 +59,46 @@ def _detail(idea_id: str) -> IdeaDetail:
 def _do(fn, *args, **kw):
     try:
         return fn(*args, **kw)
-    except edits.EditError as e:
+    except (edits.EditError, ops.OpError) as e:
         raise HTTPException(409, str(e))
+    except llm.LLMError as e:
+        raise HTTPException(502, f"模型调用失败：{e}")
+
+
+class GenerateBody(BaseModel):
+    target: ops.Target = ops.Target()
+    n: int = 3
+
+
+class RefineBody(BaseModel):
+    idea_id: str
+    n: int = 3
+    hint: str = ""
+
+
+class FuseBody(BaseModel):
+    idea_ids: list[str]
+
+
+class ClassifyBody(BaseModel):
+    idea_ids: Optional[list[str]] = None
+
+
+class DedupeBody(BaseModel):
+    level: Optional[str] = None
+    kernel: Optional[str] = None
+
+
+class AcceptBody(BaseModel):
+    as_new: bool = False
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+
+class Proposals(BaseModel):
+    proposals: list[ops.Proposal]
+    open: int
+    model_ready: bool
 
 
 @app.get("/api/health")
@@ -128,3 +166,44 @@ def sync_status() -> sync.SyncStatus:
 @app.post("/api/sync", response_model=sync.SyncResult)
 def sync_run(body: SyncBody) -> sync.SyncResult:
     return sync.run(body.title)
+
+
+@app.get("/api/proposals", response_model=Proposals)
+def list_proposals() -> Proposals:
+    items = ops.load()
+    return Proposals(proposals=items, open=sum(p.status == "open" for p in items), model_ready=llm.available())
+
+
+@app.post("/api/ops/generate", response_model=list[ops.Proposal])
+def op_generate(body: GenerateBody) -> list[ops.Proposal]:
+    return _do(ops.generate, body.target, body.n)
+
+
+@app.post("/api/ops/refine", response_model=list[ops.Proposal])
+def op_refine(body: RefineBody) -> list[ops.Proposal]:
+    return _do(ops.refine, body.idea_id, body.n, body.hint)
+
+
+@app.post("/api/ops/fuse", response_model=ops.Proposal)
+def op_fuse(body: FuseBody) -> ops.Proposal:
+    return _do(ops.fuse, body.idea_ids)
+
+
+@app.post("/api/ops/classify", response_model=list[ops.Proposal])
+def op_classify(body: ClassifyBody) -> list[ops.Proposal]:
+    return _do(ops.classify, body.idea_ids)
+
+
+@app.post("/api/ops/dedupe", response_model=list[ops.Proposal])
+def op_dedupe(body: DedupeBody) -> list[ops.Proposal]:
+    return _do(ops.dedupe, body.level, body.kernel)
+
+
+@app.post("/api/proposals/{proposal_id}/accept", response_model=ops.Proposal)
+def accept_proposal(proposal_id: str, body: AcceptBody) -> ops.Proposal:
+    return _do(ops.accept, proposal_id, as_new=body.as_new, title=body.title, body=body.body)
+
+
+@app.post("/api/proposals/{proposal_id}/dismiss", response_model=ops.Proposal)
+def dismiss_proposal(proposal_id: str) -> ops.Proposal:
+    return _do(ops.dismiss, proposal_id)
