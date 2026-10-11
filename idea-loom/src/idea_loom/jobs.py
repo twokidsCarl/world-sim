@@ -43,10 +43,11 @@ from pydantic import BaseModel, Field
 from . import config, gates, llm, notify, ops, store, tasks, wishes
 from .assistant.stream import StreamParser
 
-Phase = Literal["planning", "plan_ready", "running", "testing", "pr", "merged", "failed", "cancelled", "declined"]
+Phase = Literal["planning", "plan_ready", "running", "testing", "pr", "merged", "failed", "cancelled", "declined", "review", "clean"]
 PHASE_LABELS: dict[str, str] = {
     "planning": "出方案中", "plan_ready": "方案待批", "running": "执行中", "testing": "跑测试", "pr": "开 PR、等合并",
     "merged": "已合并", "failed": "失败", "cancelled": "取消", "declined": "不做",
+    "review": "草稿 PR 等你看", "clean": "查过了，没有要改的",
 }
 ACTIVE = ("planning", "running", "testing", "pr")
 HOLDING = ACTIVE + ("plan_ready",)  # 占着目录的阶段 / phases that hold the directory
@@ -60,7 +61,7 @@ class JobError(ValueError):
 
 class Job(BaseModel):
     job_id: str
-    kind: Literal["wish", "task"]
+    kind: Literal["wish", "task", "maintenance"]
     ref: str
     directory: str
     title: str
@@ -84,6 +85,8 @@ class Job(BaseModel):
     waiting: Optional[str] = None  # 为什么还没轮到它，给人看 / why it has not started yet, for a person
     workspace: Optional[str] = None  # 云端：这个作业自己的工作区 / in the cloud: this job's own workspace
     branch: Optional[str] = None
+    chain: bool = False  # 是"连续推进"里的一步：方案不等人批 / a step of a pre-approved chain: its plan does not wait for approval
+    tier: Optional[str] = None  # 定时维护的结果分档：A 自动合并，B 开成草稿等主人 / the tier of a maintenance result: A merges, B is a draft waiting for the owner
     created_at: str
     updated_at: str
 
@@ -193,6 +196,13 @@ def _brief(kind: str, ref: str) -> tuple[str, str, str]:
                     f"**{wish.title}**\n\n卡在哪：{wish.stuck}\n\n建议：{wish.suggestion}\n\n"
                     + (f"出在页面：{wish.where.title} {wish.where.url}\n" if wish.where else ""))
         return "idea-loom", wish.title, what
+    if kind == "maintenance":
+        from . import maintenance
+
+        try:
+            return maintenance.brief(ref)
+        except ValueError as e:
+            raise JobError(str(e)) from e
     if kind == "task":
         task = tasks.get(ref)
         if task.status in ("merged", "cancelled"):
@@ -239,9 +249,19 @@ def _tree(job: Job) -> Optional[Path]:
     return Path(job.workspace) if job.workspace else None
 
 
+def _cloud() -> bool:
+    """是不是云端的进程（hub 或 worker）：作业排队、在各自的工作区里做。 / Whether this is a cloud process (hub or worker): jobs are queued and run in their own workspaces."""
+    return config.role() in ("hub", "worker")
+
+
+def auto(job: Job) -> bool:
+    """方案不等人批的作业：定时维护，和主人事先批准过的连续推进。 / Jobs whose plan does not wait for approval: maintenance, and chains the owner approved in advance."""
+    return job.kind == "maintenance" or job.chain
+
+
 def _dispatch(job: Job, phase: str) -> None:
     """本地直接起进程；hub 上只排队，由 worker 来做。 / Locally start the process; on the hub only queue it for the worker."""
-    if config.role() == "hub":
+    if _cloud():
         job.queued, job.pid = phase, None
         save(job)
         _say(job.job_id, "已排队，等 worker 来做。")
@@ -257,19 +277,19 @@ def secret_free_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "IDEA_LOOM_INTERNAL_TOKEN")}
 
 
-def start(kind: str, ref: str) -> Job:
-    if config.role() != "hub" and llm.claude_bin() is None:
+def start(kind: str, ref: str, chain: bool = False) -> Job:
+    if not _cloud() and llm.claude_bin() is None:
         raise JobError("这台机器上找不到 claude 命令")
     directory, title, what = _brief(kind, ref)
     holder = _holder(directory)
     if holder is not None:
         raise JobError(f"`{directory}/` 上已经有一个作业（{holder.title}，{holder.phase_label}），同一个目录同时只跑一个")
     job = Job(job_id=f"job-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}", kind=kind, ref=ref, directory=directory,  # type: ignore[arg-type]
-              title=title, what=what, created_at=now(), updated_at=now())
+              title=title, what=what, chain=chain, created_at=now(), updated_at=now())
     save(job)
     if kind == "wish":
         wishes.add_link(ref, "job", title="出方案", url=f"/work/jobs/{job.job_id}", by="claude-code")
-    else:
+    elif kind == "task":
         tasks.attach_job(ref, job.job_id)
         tasks.set_status(ref, "planning", by="claude-code")
     _say(job.job_id, "开始出方案。这一步 Claude 只读不写。")
@@ -317,7 +337,7 @@ def approve(job_id: str) -> Job:
         raise JobError("只有方案待批的时候才能批准")
     # 云端每个作业有自己干净的工作区，不存在"共用目录里有没提交的改动"。
     # In the cloud every job has its own clean workspace, so there are no uncommitted changes in a shared directory to worry about.
-    changed = [] if config.role() == "hub" else dirty(job.directory)
+    changed = [] if _cloud() else dirty(job.directory)
     if changed:
         raise JobError(f"`{job.directory}/` 里有还没提交的改动（{'、'.join(changed[:4])}{' 等' if len(changed) > 4 else ''}）。先把它们提交或还原，这样作业失败时才能干净地还原。")
     job.phase = "running"
@@ -325,9 +345,9 @@ def approve(job_id: str) -> Job:
     if job.kind == "wish":
         if wishes.get(job.ref).status == "open":
             wishes.set_status(job.ref, "accepted", note="方案已批准，开始动手")
-    else:
+    elif job.kind == "task":
         tasks.set_status(job.ref, "running", by="claude-code")
-    _say(job_id, "方案已批准，开始动手。")
+    _say(job_id, "这一类作业的方案是事先批准过的，直接动手。" if auto(job) else "方案已批准，开始动手。")
     _dispatch(job, "execute")
     return job
 
@@ -353,7 +373,7 @@ def cancel(job_id: str) -> Job:
             os.killpg(job.pid, 15)
         except (ProcessLookupError, PermissionError):
             pass
-    was_running = job.phase != "plan_ready" and job.phase != "planning" and not job.workspace and config.role() != "hub"
+    was_running = job.phase != "plan_ready" and job.phase != "planning" and not job.workspace and not _cloud()
     job.phase, job.queued, job.waiting = "cancelled", None, None
     save(job)
     if job.kind == "task":
@@ -370,7 +390,7 @@ def resume(job_id: str) -> Job:
     job = get(job_id)
     if job.phase != "failed":
         raise JobError("只有失败了的作业才能接着做")
-    if config.role() != "hub" and not dirty(job.directory, _root(job)):
+    if not _cloud() and not dirty(job.directory, _root(job)):
         raise JobError("它没有留下改动，没有可以接着做的。重新出方案吧。")
     holder = _holder(job.directory)
     if holder is not None:
@@ -393,7 +413,7 @@ def revert(job_id: str) -> list[str]:
     job = get(job_id)
     if job.phase not in ("failed", "cancelled"):
         raise JobError("只有失败或取消了的作业才能还原")
-    if job.workspace or config.role() == "hub":
+    if job.workspace or _cloud():
         raise JobError("云端的作业在自己的工作区里做，没有动过别的地方，不需要还原。")
     repo = store.repo_root()
     done = []
@@ -480,7 +500,7 @@ def _fail(job: Job, message: str) -> None:
     notify.send(f"作业没做成：{job.title}", job.error[:200], url=_page(job), tag=job.job_id, wait=True)
     if job.kind == "task":
         tasks.set_status(job.ref, "failed", note=job.error[:300], by="claude-code")
-    else:
+    elif job.kind == "wish":
         wishes.add_note(job.ref, f"作业失败：{job.error[:300]}", by="claude-code")
 
 
@@ -506,7 +526,8 @@ def run_plan(job_id: str) -> None:
     if job.kind == "task":
         tasks.set_status(job.ref, "plan_ready", by="claude-code")
     _emit(job_id, {"type": "plan", "text": job.plan})
-    notify.send(f"方案出来了，等你批准：{job.title}", job.plan[:200], url=_page(job), tag=job.job_id, wait=True)
+    if not auto(job):
+        notify.send(f"方案出来了，等你批准：{job.title}", job.plan[:200], url=_page(job), tag=job.job_id, wait=True)
 
 
 def run_execute(job_id: str) -> None:
@@ -579,6 +600,13 @@ def _finish(job_id: str) -> None:
     job = get(job_id)
     repo = _root(job)
     job.changed = dirty(job.directory, repo)
+    if not job.changed and job.kind == "maintenance":
+        # 定时维护查过了、没有要改的，是正常的结果，不算失败。
+        # A maintenance run that looked and found nothing to change is a normal result, not a failure.
+        job.phase = "clean"
+        save(job)
+        _emit(job_id, {"type": "note", "text": "查过了，没有要改的。" + str(job.summary.get("not_done") or "")})
+        return
     if not job.changed:
         return _fail(job, "Claude 结束了，但没有改任何文件。" + str(job.summary.get("not_done") or ""))
 
@@ -610,18 +638,31 @@ def _finish(job_id: str) -> None:
     zh = str(job.summary.get("title_zh") or job.title).strip()
     en = str(job.summary.get("title_en") or "").strip()
     title = f"{job.directory}: {zh}" + (f" / {en}" if en else "")
-    ref_line = f"愿望 {job.ref}" if job.kind == "wish" else f"任务 {job.ref}"
+    ref_line = {"wish": f"愿望 {job.ref}", "task": f"任务 {job.ref}", "maintenance": f"定时维护 {job.ref}"}[job.kind]
     left = str(job.summary.get("not_done") or "").strip()
-    body_zh = f"{job.summary.get('summary_zh') or zh}" + (f"\n\n它说没做的部分：{left}" if left else "") + f"\n\n由 idea-loom 的作业 {job.job_id} 完成（{ref_line}）。方案经仓库主人批准后执行，测试由作业程序在提交前重新跑过。"
-    body_en = (f"{job.summary.get('summary_en') or en}\n\nDone by idea-loom job {job.job_id} ({'wish' if job.kind == 'wish' else 'task'} {job.ref}). "
-               "The plan was approved by the repository owner before execution, and the job runner re-ran the tests before submitting.")
+    draft = False
+    if job.kind == "maintenance":
+        from . import maintenance
+
+        job.tier = maintenance.tier(job.changed)
+        draft = job.tier == "B"
+        how_zh = ("这是无人值守的定时维护，方案没有经人逐个批准。" + ("它改了文档以外的文件，所以开成草稿，等仓库主人看过再合并。" if draft else "它只改了文档，测试通过后自动合并。"))
+        how_en = ("This is unattended scheduled maintenance; its plan was not approved individually. "
+                  + ("It changed files other than documents, so it is opened as a draft for the repository owner to review before merging." if draft else "It changed documents only and merges automatically once the tests pass."))
+    elif job.chain:
+        how_zh, how_en = "这是仓库主人事先批准的连续推进里的一步，方案没有单独批准。", "This is one step of a chain the repository owner approved in advance; its plan was not approved individually."
+    else:
+        how_zh, how_en = "方案经仓库主人批准后执行。", "The plan was approved by the repository owner before execution."
+    body_zh = f"{job.summary.get('summary_zh') or zh}" + (f"\n\n它说没做的部分：{left}" if left else "") + f"\n\n由 idea-loom 的作业 {job.job_id} 完成（{ref_line}）。{how_zh}测试由作业程序在提交前重新跑过。"
+    body_en = (f"{job.summary.get('summary_en') or en}\n\nDone by idea-loom job {job.job_id} ({job.kind} {job.ref}). "
+               f"{how_en} The job runner re-ran the tests before submitting.")
     commit_body = f"{body_zh}\n\n{body_en}"
-    pr_body = f"## 中文\n\n{body_zh}\n\n### 批准的方案\n\n{job.plan}\n\n## English\n\n{body_en}\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+    pr_body = f"## 中文\n\n{body_zh}\n\n### {'方案' if auto(job) else '批准的方案'}\n\n{job.plan}\n\n## English\n\n{body_en}\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
     _say(job_id, "测试通过，开 PR。")
     if job.workspace:
         from . import worker
 
-        job.pr_url, problem = worker.submit(job, title, commit_body, pr_body)
+        job.pr_url, problem = worker.submit(job, title, commit_body, pr_body, draft=draft)
     else:
         env = {**os.environ, "COMMIT_BODY": commit_body, "PR_BODY": pr_body}
         proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, job.directory], cwd=repo, env=env, capture_output=True, text=True, timeout=600)
@@ -632,13 +673,19 @@ def _finish(job_id: str) -> None:
         job.pr = int(job.pr_url.rstrip("/").split("/")[-1])
     if problem:
         return _fail(job, f"PR 没有合并：{problem}")
+    if draft:
+        job.phase = "review"
+        save(job)
+        _emit(job_id, {"type": "note", "text": f"开成了草稿 PR，等你看：{job.pr_url}"})
+        notify.send(f"定时维护改了代码，等你看：{job.title}", str(job.summary.get("summary_zh") or job.pr_url)[:200], url="/work", tag=job.job_id, wait=True)
+        return
     job.phase = "merged"
     job.restart_needed = not job.workspace and job.directory == "idea-loom" and any("/src/" in f for f in job.changed)
     save(job)
     if job.kind == "wish":
         wishes.add_link(job.ref, "pr", title=zh, url=job.pr_url, pr=job.pr, by="claude-code")
         wishes.set_status(job.ref, "done", note=str(job.summary.get("summary_zh") or ""), pr=job.pr)
-    else:
+    elif job.kind == "task":
         tasks.set_status(job.ref, "merged", note=str(job.summary.get("summary_zh") or ""), pr=job.pr, pr_url=job.pr_url, by="claude-code")
     _emit(job_id, {"type": "merged", "pr": job.pr, "url": job.pr_url})
     notify.send(f"做完并合并了：{job.title}", str(job.summary.get("summary_zh") or f"PR #{job.pr}")[:200], url=_page(job), tag=job.job_id, wait=True)

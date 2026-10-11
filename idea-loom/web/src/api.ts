@@ -35,6 +35,15 @@ const idea = (id: string, action = '') => `/api/ideas/${encodeURIComponent(id)}$
 // Who is using it now. auth_enabled false means local mode: no sign-in, you are the owner.
 export type Me = { role: 'guest' | 'member' | 'owner'; login: string; name: string; avatar: string; auth_enabled: boolean }
 export type VisitorWish = { id: string; by: string; title: string; stuck: string; where_url: string; where_title: string; status: 'waiting' | 'accepted' | 'dismissed'; wish_id: string | null; note: string; created_at: string; updated_at: string }
+export type WorkerStatus = {
+  queued: { job_id: string; title: string; step: string | null; waiting: string | null }[]
+  active: { job_id: string; title: string; phase: string }[]
+  review: { job_id: string; title: string; pr_url: string | null }[]
+  started_today: number; per_day: number; paused: string | null; worker_alive: boolean
+  usage: { windows?: Record<string, { utilization: number | null; resets_at: number | null }> }
+  chains: Record<string, number>
+  maintenance: { enabled: boolean; below: number; recent: { at: number; item: string; directory: string; job_id: string }[] }
+}
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type Wish = {
@@ -131,6 +140,8 @@ export const api = {
   startJob: (kind: 'wish' | 'task', ref: string) => call<Job>('/api/jobs', { kind, ref }),
   jobAction: (id: string, action: 'approve' | 'cancel' | 'revert' | 'resume') => call<unknown>(`/api/jobs/${id}/${action}`, {}),
   jobText: (id: string, action: 'revise' | 'decline', text: string) => call<Job>(`/api/jobs/${id}/${action}`, { text }),
+  worker: () => call<WorkerStatus>('/api/worker'),
+  chain: (directory: string, steps: number) => call<Record<string, number>>('/api/chains', { directory, steps }),
   advance: (dir: string) => call<Task>(`/api/projects/${dir}/advance`, {}),
   reviewStatus: () => call<{ actions_since: number; due: boolean; last_at: string | null }>('/api/review'),
   review: () => call<Suggestion[]>('/api/review', {}),

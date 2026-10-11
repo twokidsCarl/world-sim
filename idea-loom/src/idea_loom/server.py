@@ -594,23 +594,12 @@ def advance_project(project_dir: str) -> tasks.Task:
     Advance: the model reads the subproject's README and recent PRs, proposes the next
     milestone, and it becomes a todo task.
     """
-    from . import store
+    from . import chains
 
-    project = next((p for p in ideas.load_projects() if p.dir == project_dir), None)
-    if project is None:
-        raise HTTPException(404, "没有这个子项目")
-    readme = store.repo_root() / project_dir / "README.md"
-    text = readme.read_text(encoding="utf-8")[:9000] if readme.exists() else "（还没有 README）"
-    recent = [p for p in github.pull_requests() if p.scope == project_dir][-15:]
-    pool, _, _, _ = ideas.current()
-    linked = [pool[i] for i in project.ideas if i in pool]
-    prompt = (f"子项目 `{project_dir}`（{project.tagline}）。\n\n它的 README：\n{text}\n\n最近合并的 PR（从早到晚）：\n"
-              + ("\n".join(f"- #{p.number} {p.title}" for p in recent) or "（还没有）")
-              + ("\n\n它对应的 idea：\n" + "\n\n".join(ops.idea_text(i) for i in linked) if linked else "")
-              + "\n\n请提议它的下一个里程碑：一件一次能做完、做完能看出差别的事。title 一句话；brief 三五句，说清做什么、做到什么算完、不做什么。用中文。")
-    schema = {"type": "object", "properties": {"title": {"type": "string"}, "brief": {"type": "string"}}, "required": ["title", "brief"]}
-    value = _do(llm.ask, prompt, system="你在帮一个人决定一个模拟项目下一步做什么。只依据给你的材料，不要编造项目里没有的东西。", schema=schema, use_cache=False, purpose="advance")
-    task_id = _do(tasks.create, project=project_dir, title=str(value["title"]), brief=str(value["brief"]), idea_id=linked[0].id if linked else None)
+    try:
+        task_id = _do(chains.propose, project_dir)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
     return tasks.get(task_id)
 
 
@@ -879,3 +868,22 @@ def push_unsubscribe(body: PushOffBody) -> dict[str, int]:
 @app.post("/api/push/test")
 def push_test() -> dict[str, int]:
     return {"sent": notify.send("idea-loom", "通知是通的。 / Notifications work.", url="/work", tag="test")}
+
+
+# ---------- 连续推进 / chains ----------
+
+
+class ChainBody(BaseModel):
+    directory: str
+    steps: int
+
+
+@app.post("/api/chains")
+def approve_chain(body: ChainBody) -> dict[str, int]:
+    """给一个子项目事先批准"接下来最多做几步"；0 是停。 / Approve in advance at most this many more steps for a subproject; 0 stops it."""
+    from . import chains
+
+    try:
+        return chains.approve(body.directory, body.steps)
+    except ValueError as e:
+        raise HTTPException(422, str(e))

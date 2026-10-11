@@ -5,9 +5,9 @@
 Put world-sim on one cloud host: idea-loom is the single entry point and every simulation
 lives on its own subdomain.
 
-> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"、"登录与权限"、"数据库"、"云端作业"四期（合并前的自动测试除外），下面"还没有的"一节列了没做的部分。
+> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。方案里的七期都写完了（合并前的自动测试目前只报告、不拦合并），下面"还没有的"一节列了没做的部分。
 >
-> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed", "sign-in and roles", "database" and "jobs in the cloud" stages are done so far (except tests before merging); see "not there yet" below.
+> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. All seven stages of the plan are written (tests before merging only report for now and do not gate merges); see "not there yet" below.
 
 ## 结构 / Layout
 
@@ -196,6 +196,42 @@ Every 15 minutes the worker first merges events other sessions committed to `mai
 database, then exports the ideas, wishes and tasks; if they differ from `main` it regenerates
 `IDEAS.md` / `IDEAS.en.md` and opens a PR.
 
+## 人不在的时候 / While you are away
+
+**连续推进 / Chains.** 在"开发"页给一个子项目点"连续推进三步"：worker 让模型提议下一个里程碑、建成任务、出方案、动手、跑测试、开 PR，合并后接着下一步。方案不再等你批；范围靠这几样限制——Claude 只能改这个子项目的目录，测试修了两轮还没过就失败，哪一步没做成这条线就停下并通知你，步数用完就停，每天的上限和额度的暂停线照样管着它。它不会发现"这一步加了新的依赖"这类事，那要看 PR。
+
+On the Work page, "run three steps" for a subproject makes the worker have the model propose
+the next milestone, create the task, plan, execute, run the tests and open the PR, then go on
+to the next step after the merge. Plans no longer wait for you; the scope is bounded by
+these: Claude can edit that subproject's directory only, tests still failing after two repair
+rounds fail the step, a failed step stops the chain and notifies you, the chain ends when its
+steps run out, and the daily cap and the allowance pause still apply. It does not notice
+things like a step adding a new dependency; that is for the PR to show.
+
+**定时维护 / Scheduled maintenance**（`MAINTENANCE=1` 才开 / on only with `MAINTENANCE=1`）。worker 每小时看一次：过去 24 小时 `main` 上的提交少于 `MAINTENANCE_BELOW` 次、没有别的作业、闸门没拦，就做一件事。清单轮着来——文档一致性、代码审查、清理、测试补缺、加固、排查——并且只碰最近六小时没人提交的子项目。"查过了，没有要改的"是正常的结果。
+
+Checked hourly: with fewer than `MAINTENANCE_BELOW` commits on `main` in the past 24 hours,
+no other job and the gates open, the worker does one thing. The list rotates — documentation
+consistency, code review, cleanup, missing tests, hardening, triage — and only subprojects
+nobody committed to in the last six hours are touched. "Looked, nothing to change" is a normal
+result.
+
+| 档 / Tier | 条件 / When | 怎么处理 / What happens |
+|---|---|---|
+| 甲 / A | 只改了 `*.md`，测试全过 / only `*.md` changed and the tests pass | 照常开 PR，自动合并 / a normal PR that merges automatically |
+| 乙 / B | 改了别的任何东西 / anything else changed | 开成**草稿 PR**，不会自动合并，推送通知你；你在 GitHub 上点 "Ready for review" 才合并 / opened as a **draft PR**, which is not merged automatically, and you are notified; it merges when you mark it ready for review on GitHub |
+
+只改了代码里的注释也算乙档：程序没法便宜地确认"只动了注释"，所以保守处理。
+
+A change to code comments alone is tier B too: the program cannot cheaply confirm that only
+comments moved, so it errs on the side of caution.
+
+"开发"页最上面的"现在在跑什么"显示队列、在跑的作业、今天开工了几个、订阅额度用了多少、等你看的草稿 PR、连续推进还剩几步、定时维护最近做过什么。
+
+"What is running now" at the top of the Work page shows the queue, running jobs, how many
+started today, how much of the allowance is used, draft PRs waiting for you, how many steps
+each chain has left, and what maintenance did recently.
+
 ## 还没有的 / Not there yet
 
 按顺序做 / In this order:
@@ -204,8 +240,6 @@ database, then exports the ideas, wishes and tasks; if they differ from `main` i
    The repository's auto-merge does not look at tests yet. The worker re-runs the tests before opening its PR, but PRs from other sources have no such gate.
 2. **作业的出站网络 / Outbound network for jobs**。作业的进程能访问任何地址，还没有只放行模型接口、GitHub 和包管理源的名单。
    A job's processes can reach any address; there is no allow-list yet limiting them to the model API, GitHub and the package registries.
-3. 持续运行与自动维护。
-   Unattended running and automatic maintenance.
 
 ## 已知的风险 / Known risks
 
@@ -215,6 +249,8 @@ database, then exports the ideas, wishes and tasks; if they differ from `main` i
   Jobs were tested locally with a fake `claude`, a fake `gh` and a local remote (queueing, the workspace, a commit holding only that directory, pushing, opening the PR, waiting for the merge, the gates, cancelling, resuming), but **have not been run in the container against the real GitHub**. The effect of `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` has not been verified separately.
 - 手机布局只在电脑上用 390 像素宽的窗口看过（玩、想法池、许愿池三页），**没有在真机上试过**；装到主屏幕和推送通知没有端到端试过（推送的服务器端用假的发送函数测过）。
   The phone layout was only looked at in a 390-pixel-wide frame on a computer (the play, idea pool and wish pool pages) and **not on a real phone**; installing to the home screen and push notifications were not tried end to end (the server side of push is tested with a fake delivery function).
+- 连续推进和定时维护用假的 `claude`、假的 `gh` 测过（两档的分法、草稿 PR、没有要改的、给别的作业和闸门让路、哪一步没做成就停），**没有用真的模型跑过一次**。尤其是定时维护的六条提示写得好不好、会不会改出没用的东西，只有真的跑几次才知道——所以它默认是关的。
+  Chains and maintenance were tested with a fake `claude` and a fake `gh` (the two tiers, the draft PR, nothing to change, giving way to other jobs and to the gates, stopping when a step fails) and **have never been run with the real model**. Whether the six maintenance prompts are any good, or produce pointless changes, can only be learned from real runs — which is why it is off by default.
 - 登录这一段在本机测过（三种身份逐个调接口、伪造和过期的 cookie、回调的 state 校验），但**没有对着真的 GitHub 走过一遍**，因为还没有域名和 OAuth 应用。
   Sign-in was tested locally (every route as each of the three roles, forged and expired cookies, the callback's state check) but **has not been run against the real GitHub**, since there is no domain or OAuth app yet.
 - 模拟的子域名不需要登录，任何人都能玩；它们的后端只有限流这一道。
