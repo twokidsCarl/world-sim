@@ -20,7 +20,9 @@ interface Palette {
 }
 
 const SERIF = '"Songti SC", "Noto Serif SC", STSong, serif'
-const VENUE_GLYPH: Record<string, string> = { bank: '钱', teahouse: '茶', market: '市', temple: '庙', school: '学' }
+const VENUE_GLYPH: Record<string, string> = {
+  bank: '钱', teahouse: '茶', market: '市', temple: '庙', school: '学', salon: '发', shop: '店', station: '站',
+} // prettier-ignore
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()

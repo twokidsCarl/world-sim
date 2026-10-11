@@ -10,13 +10,16 @@ from typing import Callable
 
 import numpy as np
 
-from . import corpus, population, trace
-from .engine import Result, Sim
+from . import corpus, mind, trace
+from .engine import Result
 from .model import BELIEF_CHANNEL, Intervention, Params, Population
 
-# 搜索范围：只动决定"信不信、取不取、传不传"的几个量
+# 搜索范围：只动决定"信不信、取不取、传不传"的几个量。
+# bias 的下限不放得更低：再低会落进"人人都信却没人去取"的解，目标对得上，道理却不对。
+# Search space. The floor on bias is deliberate: below it the search finds fits where nearly everyone believes and nobody acts.
 SPACE: dict[str, tuple[float, float]] = {
     "w_tell": (1.0, 3.5),
+    "corroborate": (0.0, 1.5),
     "w_seen": (0.5, 4.0),
     "share": (0.04, 0.25),
     "lam": (4.0, 16.0),
@@ -61,11 +64,14 @@ def neighbor_lift(pop: Population, result: Result) -> float:
     return float(min(99.0, a.mean() / max(b.mean(), 1e-9)))
 
 
-def correction_residual(pop: Population, result: Result, params: Params) -> float:
-    """辟谣之后还剩多少：辟谣前已经相信的人，六小时后的平均信念占辟谣前的比例。"""
+def correction_residual(pop: Population, result: Result, params: Params, t: int | None = None) -> float:
+    """辟谣之后还剩多少：辟谣前已经相信的人，六小时后的平均信念占辟谣前的比例。
+    What survives a correction: mean belief six hours later, as a share of before, among those who believed.
+    t 缺省取最早的一次干预。/ t defaults to the earliest intervention.
+    """
     if not params.interventions:
         return float("nan")
-    t = min(iv.t for iv in params.interventions)
+    t = min(iv.t for iv in params.interventions) if t is None else t
     belief = result.frames[:, BELIEF_CHANNEL].astype(float) / 255
     before, after = belief[t - 1], belief[min(t + 6, len(belief) - 1)]
     was = before > 0.5
@@ -74,6 +80,29 @@ def correction_residual(pop: Population, result: Result, params: Params) -> floa
 
 def survived(pop: Population, result: Result) -> float:
     return float(result.failed_at is None)
+
+
+def sanren_chenghu(params: Params) -> list[float]:
+    """三人成虎：一位不轻信的听者，先后从三个同僚口中听到同一件离奇的事，每次之后信了几分。
+
+    只用 mind.tell_delta，不跑模拟。听者的设定是这里定的：事前只信 3%，对同僚是寻常的信任。
+    """
+    L = float(mind.logit(0.03))
+    trust = 0.5 * (0.4 + 0.6 * 0.5)
+    out = []
+    for others in range(3):
+        L += mind.tell_delta(1, 1.0, trust, 0, others, L, 1, params)
+        out.append(float(mind.sigmoid(L)))
+    return out
+
+
+def sanren_steps(params: Params) -> float:
+    """《战国策》里魏王的三句回答对上了几句：一人言——否；二人言——疑之；三人言——信之。
+
+    "否 / 疑 / 信"与信念数值的对应是这里定的：不到两成、两成到五成、过半。
+    """
+    one, two, three = sanren_chenghu(params)
+    return float((one < 0.2) + (0.2 <= two < 0.5) + (three >= 0.5))
 
 
 @dataclass(frozen=True)
@@ -101,6 +130,8 @@ def targets() -> list[Target]:
     if {"toyokawa_shinkin_1973", "bea_bank_run_2008"} <= cases.keys():
         out.append(Target("survived", "cases/toyokawa_shinkin_1973, cases/bea_bank_run_2008", 1.0, 1.0,
                           "两家银行都在当局公开担保之后撑住了"))  # fmt: skip
+    if "sanren_chenghu" in cases:
+        out.append(Target("sanren_steps", "cases/sanren_chenghu", 3.0, 3.0, "一人说不信，两人说起疑，三人说就信了"))
     return out
 
 
@@ -110,15 +141,48 @@ def guarantee(start_hour: int) -> list[Intervention]:
     return [Intervention(t=t, text="官银号告示：通和钱庄银根充足，本号担保照常兑付。现银已运抵柜上。", strength=3.0, reach=0.9)]
 
 
-def measure(params: Params) -> dict[str, float]:
-    sc = trace.scenario_module(params.scenario)
-    pop = population.build(params, sc)
-    result = Sim(pop, params, sc).run()
+def run_day(pop: Population, result: Result, params: Params) -> float:
+    """挤兑从第几天开始：累计去排队的人达到储户的 1% 的那一天（开场当天算第 1 天）。没发生则为 nan。"""
+    depositors = sum(p.deposit > 0 for p in pop.persons)
+    at = np.sort(_queued_at(result, len(pop.persons)))
+    at = at[at >= 0]
+    need = max(1, round(0.01 * depositors))
+    return float((at[need - 1] + params.start_hour) // 24 + 1) if len(at) >= need else float("nan")
+
+
+def late_share(result: Result, n: int, after: int) -> float:
+    """去排队的人里，有多大比例是在 after 这个时刻之后才去的。没人排队则为 0。
+    Share of all runners who joined the queue later than tick `after`; 0 if nobody ran.
+    """
+    at = _queued_at(result, n)
+    at = at[at >= 0]
+    return float((at > after).mean()) if len(at) else 0.0
+
+
+def toyokawa(over: dict[str, float], seed: int, n: int):
+    """按史料的回应时间跑一遍丰川场景。"""
+    sc = trace.scenario_module("toyokawa")
+    params = Params(scenario="toyokawa", seed=seed, n=n, **(sc.DEFAULTS | over))
+    params.interventions = sc.interventions(params.start_hour)
+    return params, *trace.run_only(params)
+
+
+def measure(over: dict[str, float], seed: int, n: int) -> dict[str, float]:
+    """一组参数、一个种子下的全部校准指标，都在通和场景加可信担保的情形下量。
+    All calibration metrics for one parameter set and one seed, measured on the fictional scenario with a credible guarantee.
+
+    丰川场景不参与校准：它留作校准之外的检验，见 canon.py。
+    The Toyokawa replay is deliberately left out: it is the out-of-sample test, see canon.py.
+    """
+    base = Params(seed=seed, n=n)
+    params = base.model_copy(update=over | {"interventions": guarantee(base.start_hour)})
+    pop, result = trace.run_only(params)
     return {
         "runner_share": runner_share(pop, result),
         "neighbor_lift": neighbor_lift(pop, result),
         "correction_residual": correction_residual(pop, result, params),
         "survived": survived(pop, result),
+        "sanren_steps": sanren_steps(params),
     }
 
 
@@ -132,10 +196,7 @@ def miss(value: float, t: Target) -> float:
 
 def evaluate(over: dict[str, float], seeds: list[int], n: int, ts: list[Target]) -> tuple[float, dict[str, float]]:
     """一组参数在几个种子上的平均表现：(总偏差, 各指标均值)。"""
-    runs = []
-    for seed in seeds:
-        base = Params(seed=seed, n=n)
-        runs.append(measure(base.model_copy(update=over | {"interventions": guarantee(base.start_hour)})))
+    runs = [measure(over, seed, n) for seed in seeds]
     mean = {k: float(np.nanmean([r[k] for r in runs])) if not all(np.isnan(r[k]) for r in runs) else float("nan") for k in runs[0]}
     score = float(np.mean([sum(miss(r[t.metric], t) for t in ts) for r in runs]))
     return score, mean
@@ -149,7 +210,16 @@ def search(samples: int, seeds: list[int], n: int, rng_seed: int = 0, log: Calla
     best_over: dict[str, float] = {}
     best = default
     for i in range(samples):
-        over = {k: round(float(rng.uniform(lo, hi)), 3) for k, (lo, hi) in SPACE.items()}
+        # 前一半在整个范围里撒点，后一半在当前最好的一组附近微调
+        local = i >= samples // 2 and best_over
+        # 只看参数就能判的目标先过一遍筛，省下跑模拟的时间
+        for _ in range(2000):
+            over = {
+                k: round(float(np.clip(rng.normal(best_over[k], 0.08 * (hi - lo)), lo, hi) if local else rng.uniform(lo, hi)), 3)
+                for k, (lo, hi) in SPACE.items()
+            }
+            if sanren_steps(Params(**over)) == 3:
+                break
         got = evaluate(over, seeds, n, ts)
         if got[0] < best[0]:
             best_over, best = over, got

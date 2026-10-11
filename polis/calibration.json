@@ -1,6 +1,6 @@
 {
   "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
-  "samples": 80,
+  "samples": 300,
   "seeds": 4,
   "n": 1000,
   "targets": [
@@ -31,32 +31,42 @@
       "lo": 1.0,
       "hi": 1.0,
       "why": "两家银行都在当局公开担保之后撑住了"
+    },
+    {
+      "metric": "sanren_steps",
+      "source": "cases/sanren_chenghu",
+      "lo": 3.0,
+      "hi": 3.0,
+      "why": "一人说不信，两人说起疑，三人说就信了"
     }
   ],
   "default": {
-    "miss": 14.108140506458955,
+    "miss": 36.94222741053587,
     "metrics": {
-      "runner_share": 0.3040810270595276,
-      "neighbor_lift": 2.8940981183406276,
-      "correction_residual": 0.839466504016015,
-      "survived": 0.5
+      "runner_share": 0.5769153958126784,
+      "neighbor_lift": 2.044987198239511,
+      "correction_residual": 0.8581857210202324,
+      "survived": 0.25,
+      "sanren_steps": 1.0
     }
   },
   "calibrated": {
     "miss": 0.0,
     "metrics": {
-      "runner_share": 0.045647584654369945,
-      "neighbor_lift": 2.3358863092272006,
-      "correction_residual": 0.6112165249707682,
-      "survived": 1.0
+      "runner_share": 0.05503356591779168,
+      "neighbor_lift": 3.359611666843305,
+      "correction_residual": 0.7618327955077768,
+      "survived": 1.0,
+      "sanren_steps": 3.0
     },
     "params": {
-      "w_tell": 2.883,
-      "w_seen": 2.037,
-      "share": 0.164,
-      "lam": 5.528,
-      "bias": -4.369,
-      "hazard": 0.176
+      "w_tell": 3.462,
+      "corroborate": 1.309,
+      "w_seen": 1.68,
+      "share": 0.116,
+      "lam": 6.889,
+      "bias": -3.806,
+      "hazard": 0.179
     }
   }
 }

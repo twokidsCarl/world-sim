@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -31,8 +32,8 @@ def run(
     scenario: str = typer.Argument("rumor_run"),
     seed: int = typer.Option(1, "--seed", "-s"),
     n: int = typer.Option(1000, "--n", "-n", help="人口"),
-    ticks: int = typer.Option(96, "--ticks", "-t", help="模拟多少小时"),
-    response: str = typer.Option("notice", "--response", "-r", help="谁出面回应：notice 掌柜贴告示 / guarantee 官银号担保 / none 无人回应"),
+    ticks: Optional[int] = typer.Option(None, "--ticks", "-t", help="模拟多少小时（缺省由场景决定）"),
+    response: str = typer.Option("notice", "--response", "-r", help="谁出面回应：notice 场景里原有的回应 / guarantee 可信一方担保 / none 无人回应"),
     calibrated: bool = typer.Option(False, "--calibrated", "-c", help="用 calibration.json 里校准过的参数"),
     label: str = typer.Option("", "--label", "-l", help="记录名后缀"),
 ):
@@ -40,9 +41,10 @@ def run(
     from . import calibrate as cal
 
     over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"] if calibrated else {}
-    params = model.Params(scenario=scenario, seed=seed, n=n, ticks=ticks, **over)
+    sc = trace.scenario_module(scenario)
+    params = model.Params(scenario=scenario, seed=seed, n=n, **(sc.DEFAULTS | over | ({"ticks": ticks} if ticks else {})))
     responses = {
-        "notice": trace.scenario_module(scenario).interventions,
+        "notice": sc.interventions,
         "guarantee": cal.guarantee,
         "none": lambda start_hour: [],
     }
@@ -137,6 +139,21 @@ def calibrate(
         }  # fmt: skip
         path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         typer.echo(f"已写入 {path.name}")
+
+
+@app.command()
+def canon(seeds: int = typer.Option(5, "--seeds", help="丰川场景跑几个种子 / seeds for the Toyokawa replay")):
+    """对照原作与史料，逐条看模拟对上了没有。/ Check the simulation against the source texts and records."""
+    from . import canon as cn
+
+    over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"] if CALIBRATION.is_file() else {}
+    checks = cn.sanren(model.Params(**over)) + cn.toyokawa(over, list(range(1, seeds + 1)))
+    for c in checks:
+        mark = "对上" if c.passed == c.runs else ("部分" if c.passed else "没对上")
+        kind = "校准过" if c.fitted else "未参与校准"
+        typer.echo(f"[{mark}] {c.case}  {c.what}  →  {c.got}  （{kind}）")
+    held = [c for c in checks if not c.fitted]
+    typer.echo(f"未参与校准的检验：{sum(c.passed for c in held)}/{sum(c.runs for c in held)} 次对上")
 
 
 @app.command()
