@@ -541,6 +541,8 @@ export class Renderer {
     gl.uniform3fv(this.u(c, 'u_ink'), style.ink)
     gl.uniform1f(this.u(c, 'u_grain'), style.grain)
     gl.uniform1i(this.u(c, 'u_layered'), layers > 0 ? 1 : 0)
+    gl.uniform3f(this.u(c, 'u_inkTint'), style.inkTint ?? 0, style.inkShade ?? 0.35, pen)
+    gl.uniform1f(this.u(c, 'u_fogShade'), style.fog.shade ?? 0)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     gl.bindVertexArray(null)
     return t
