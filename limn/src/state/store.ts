@@ -245,7 +245,11 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
   const bundle = rnpBundle(rnp, pol, membrane.centre, cavity, [0, 1, 0], nt || 616, undefined, idealise)
   const filled = idealise ? clipToCavity(rnp, bundle.stretches, membrane.centre, cavity, [0, 1, 0], bundle.tops, spec.rnp) : null
   const make = (mol: Molecule, id: string, title: string, titleEn: string, operators: Float32Array[], colors: (e: Molecule['entities'][number]) => [number, number, number], names: (e: Molecule['entities'][number]) => [string, string]): Panel => {
-    mol.assemblies.push({ id: 'inferred', groups: [{ chains: mol.chains.map((_, i) => i), operators }] })
+    // 糖链单独成组：它们共用一个编号、彼此不描边；和蛋白放在一组的话，整个刺都会被当成“不单独描边”的东西
+    // glycans form a group of their own: they share one id and are not outlined one by one; grouped with the protein, the whole spike would be taken for something not outlined separately
+    const sugar = mol.chains.map((_, i) => i).filter((i) => /glycan/i.test(mol.entities[mol.chains[i]!.entity]!.description))
+    const rest = mol.chains.map((_, i) => i).filter((i) => !sugar.includes(i))
+    mol.assemblies.push({ id: 'inferred', groups: [...(rest.length ? [{ chains: rest, operators }] : []), ...(sugar.length ? [{ chains: sugar, operators }] : [])] })
     const roles: Role[] = mol.entities.map((e) => (e.kind === 'rna' || e.kind === 'dna' ? 'nucleic' : 'soluble'))
     const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: mol.entities.map((e) => colors(e)) }
     const panelSpec: PanelSpec = {
