@@ -6,7 +6,7 @@ import { note } from '../assistant/trail'
 import type { State } from '../contract'
 import { pick } from '../i18n'
 import { type Ranked, type Reason, rank } from '../play/feed'
-import { useLang, useT } from '../state/store'
+import { useLang, useStore, useT } from '../state/store'
 import { Page } from '../ui/Page'
 import { SimFrame, embedUrl } from '../ui/SimFrame'
 import { IdeaLink, levelName } from '../ui/bits'
@@ -28,6 +28,8 @@ export function PlayPage({ state }: { state: State }) {
   const lang = useLang()
   const [params, setParams] = useSearchParams()
   const openAssistant = useAssistant((a) => a.setOpen)
+  const me = useStore((s) => s.me)
+  const owner = me?.role === 'owner'
   const [view, setView] = useState<PlayView | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [order, setOrder] = useState<Ranked<CardView>[]>([])
@@ -171,7 +173,7 @@ export function PlayPage({ state }: { state: State }) {
               <div className="play-wait">
                 <h3>{sim.status === 'failed' ? t(`${sim.name} 构建失败`, `${sim.name} failed to build`) : t(`${sim.name} 正在构建…`, `${sim.name} is building…`)}</h3>
                 <pre className="job-pre">{sim.log}</pre>
-                {sim.status === 'failed' && (
+                {owner && sim.status === 'failed' && (
                   <button onClick={() => void api.rebuildSim(sim.name).then(() => load())}>{t('重新构建', 'Rebuild')}</button>
                 )}
               </div>
@@ -185,13 +187,14 @@ export function PlayPage({ state }: { state: State }) {
             <button className="primary" onClick={() => go(1)} disabled={index >= order.length - 1} title={t('下一张（↓ 或 j）', 'Next (↓ or j)')} aria-label={t('下一张', 'Next')}>
               ↓
             </button>
-            <button onClick={toggleLike} aria-pressed={!!liked[card.key]} title={t('收藏：以后多推同一条 idea、同一层的卡', 'Like: more cards of the same idea and level later')}>
+            {/* 收藏要记到人头上，游客没有；小助手只为主人调用模型。 / A like is recorded per person, so a guest has none; the assistant calls the model for the owner only. */}
+            {me?.role !== 'guest' && <button onClick={toggleLike} aria-pressed={!!liked[card.key]} title={t('收藏：以后多推同一条 idea、同一层的卡', 'Like: more cards of the same idea and level later')}>
               {liked[card.key] ? '♥' : '♡'}
               <span className="small">{liked[card.key] ? t('已收藏', 'Liked') : t('收藏', 'Like')}</span>
-            </button>
-            <button onClick={() => openAssistant(true)} title={t('问小助手：它会带上这张卡和它的 idea', 'Ask the assistant: it gets this card and its idea')}>
+            </button>}
+            {owner && <button onClick={() => openAssistant(true)} title={t('问小助手：它会带上这张卡和它的 idea', 'Ask the assistant: it gets this card and its idea')}>
               ✦<span className="small">{t('问', 'Ask')}</span>
-            </button>
+            </button>}
             <button onClick={() => setReload(reload + 1)} title={t('重来：把这个模拟重新加载一遍', 'Restart: reload this simulation')}>
               ↻<span className="small">{t('重来', 'Restart')}</span>
             </button>
@@ -257,7 +260,7 @@ export function PlayPage({ state }: { state: State }) {
                   <td className="r num">{s.cards}</td>
                   <td className="small">{s.has_api ? (s.api_running ? t('在跑', 'running') : t('用到时启动', 'starts on demand')) : t('不需要', 'none')}</td>
                   <td>
-                    <button onClick={() => void api.rebuildSim(s.name).then(() => load())}>{t('重新构建', 'Rebuild')}</button>
+                    {owner && <button onClick={() => void api.rebuildSim(s.name).then(() => load())}>{t('重新构建', 'Rebuild')}</button>}
                   </td>
                 </tr>
               ))}

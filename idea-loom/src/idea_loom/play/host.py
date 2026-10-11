@@ -25,8 +25,19 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from .. import config, store
+from .. import auth, config, store
 from . import manifest, snapshot, supervisor
+
+# 云端的限流：每个地址每分钟，对模拟的后端 120 次、对 idea-loom 的接口 600 次。本地不限。
+# Rate limits in the cloud, per address per minute: 120 to a simulation's backend and 600 to
+# idea-loom's API. Nothing is limited locally.
+SIM_API_LIMIT = auth.Limiter(120, 60)
+HUB_API_LIMIT = auth.Limiter(600, 60)
+
+
+def client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
 
 HOP = {"connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade", "proxy-authorization", "proxy-authenticate", "host", "content-length"}
 
@@ -125,6 +136,8 @@ async def serve_sim(name: str, request: Request) -> Response:
             return JSONResponse({"detail": f"{name} 还没准备好（{state.status}）"}, status_code=503)
         return _status_page(name, state, sim.title.zh)
     if is_api:
+        if not config.is_local() and not SIM_API_LIMIT.allow(f"{name}|{client_ip(request)}"):
+            return JSONResponse({"detail": "请求太频繁，过一会儿再试"}, status_code=429)
         try:
             port = await run_in_threadpool(supervisor.ensure, sim, version)
         except supervisor.ApiError as e:
@@ -160,6 +173,18 @@ class HostRouter:
         if path.startswith(("/api/", "/internal/")) or path in ("/api", "/docs", "/openapi.json", "/healthz"):
             if not origin_allowed(request.headers.get("origin")):
                 return await JSONResponse({"detail": "只接受来自 idea-loom 自己页面的请求"}, status_code=403)(scope, receive, send)
+            if path.startswith("/api/"):
+                if not config.is_local() and not HUB_API_LIMIT.allow(client_ip(request)):
+                    return await JSONResponse({"detail": "请求太频繁，过一会儿再试"}, status_code=429)(scope, receive, send)
+                # 每个接口要什么身份，集中在 auth.required_role 里；没列出的默认只有主人能用。
+                # Which role each route needs is decided in auth.required_role; anything unlisted is owner-only.
+                user = auth.user_from_cookie(request.cookies.get(auth.COOKIE))
+                scope.setdefault("state", {})["user"] = user
+                if not auth.allowed(user, request.method, path):
+                    code, detail = (401, "请先登录") if user.role == "guest" else (403, "这一步只有主人能做")
+                    return await JSONResponse({"detail": detail}, status_code=code)(scope, receive, send)
+            return await self.app(scope, receive, send)
+        if path.startswith("/auth/"):
             return await self.app(scope, receive, send)
         dist = ui_dist()
         if request.method in ("GET", "HEAD") and (dist / "index.html").is_file():

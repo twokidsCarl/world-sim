@@ -26,8 +26,6 @@ services:
       HUB_DOMAIN: ${HUB_DOMAIN}
       SIM_DOMAIN: ${SIM_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
-      GATE_USER: ${GATE_USER}
-      GATE_HASH: ${GATE_HASH}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -36,6 +34,13 @@ services:
   hub:
     <<: *loom
     build: { context: .., dockerfile: deploy/Dockerfile, target: hub }
+    # 登录用的密钥只给 hub。 / The sign-in secrets go to the hub only.
+    environment:
+      <<: *loom-env
+      IDEA_LOOM_OWNER: ${OWNER_GITHUB:?先在 .env 里填 OWNER_GITHUB / set OWNER_GITHUB in .env first}
+      IDEA_LOOM_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      IDEA_LOOM_GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      IDEA_LOOM_SESSION_SECRET: ${SESSION_SECRET}
     volumes:
       - repo:/srv/repo:ro          # 只读：读名片和版本号 / read-only: card files and versions
       - state:/srv/state           # 数据库和运行数据 / the database and run data

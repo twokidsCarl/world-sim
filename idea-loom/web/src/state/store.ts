@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { create } from 'zustand'
-import { type Proposals, api } from '../api'
+import { type Me, type Proposals, api } from '../api'
 import type { State, SyncResult, SyncStatus } from '../contract'
 import { type Lang, type T, applyLang, initialLang } from '../i18n'
 
@@ -12,6 +12,7 @@ type Theme = 'light' | 'dark'
 export type PageIdentity = { title: string; lead: string; idea?: string }
 
 type Store = {
+  me: Me | null
   state: State | null
   error: string | null
   loading: boolean
@@ -41,6 +42,7 @@ function initialTheme(): Theme {
 }
 
 export const useStore = create<Store>((set, get) => ({
+  me: null,
   state: null,
   error: null,
   loading: false,
@@ -65,8 +67,12 @@ export const useStore = create<Store>((set, get) => ({
   load: async () => {
     set({ loading: true })
     try {
-      const [state, sync, proposals] = await Promise.all([api.state(), api.syncStatus().catch(() => null), api.proposals().catch(() => null)])
-      set({ state, sync, proposals, error: null, loading: false })
+      // 先问清是谁：同步状态和候选只有主人能看，别人就不去要了。
+      // Ask who this is first: sync status and candidates are owner-only, so nobody else requests them.
+      const me = get().me ?? (await api.me())
+      const owner = me.role === 'owner'
+      const [state, sync, proposals] = await Promise.all([api.state(), owner ? api.syncStatus().catch(() => null) : null, owner ? api.proposals().catch(() => null) : null])
+      set({ me, state, sync, proposals, error: null, loading: false })
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e), loading: false })
     }
@@ -95,3 +101,7 @@ export function useT(): T {
   const lang = useLang()
   return useCallback((zh: string, en: string) => (lang === 'en' ? en : zh), [lang])
 }
+
+// 是不是主人。身份还没取回来时按"不是"算，免得先闪出一批用不了的按钮。
+// Whether this is the owner. Until the identity has loaded it counts as "no", so buttons that would not work never flash up.
+export const useOwner = (): boolean => useStore((s) => s.me?.role === 'owner')

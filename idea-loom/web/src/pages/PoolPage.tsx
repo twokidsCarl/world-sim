@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { api } from '../api'
 import { label, pick, plural } from '../i18n'
-import { useLang, useStore, useT } from '../state/store'
+import { useLang, useOwner, useStore, useT } from '../state/store'
 import type { State, ThreadId } from '../contract'
 import { type Filters, NO_FILTERS, activeFilterCount, filterIdeas, filtersFromQuery, firstLine, queryFromFilters } from '../state/derive'
 import { Empty, Page } from '../ui/Page'
@@ -21,6 +21,7 @@ export function PoolPage({ state }: { state: State }) {
   const active = activeFilterCount(filters)
   const load = useStore((st) => st.load)
   const [picked, setPicked] = useState<string[]>([])
+  const owner = useOwner()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id])
@@ -116,7 +117,7 @@ export function PoolPage({ state }: { state: State }) {
         <ul className="idea-list">
           {shown.map((idea) => (
             <li key={idea.id} className="idea-li">
-              <input type="checkbox" aria-label={t(`选中 ${idea.id} ${idea.title}`, `Select ${idea.id} ${ideaTitle(lang, idea)}`)} checked={picked.includes(idea.id)} onChange={() => toggle(idea.id)} />
+              {owner && <input type="checkbox" aria-label={t(`选中 ${idea.id} ${idea.title}`, `Select ${idea.id} ${ideaTitle(lang, idea)}`)} checked={picked.includes(idea.id)} onChange={() => toggle(idea.id)} />}
               <Link to={`/ideas/${encodeURIComponent(idea.id)}`} className="idea-row">
                 <span className="id num">{idea.id}</span>
                 <span className="what">

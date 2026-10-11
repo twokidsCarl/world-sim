@@ -23,6 +23,7 @@ class Action(BaseModel):
     text: str = Field(default="", max_length=160)
     seconds: float = 0  # 只有 dwell 用：在这一页前台且有操作的时长 / dwell only: active foreground time on the page
     idea: str = ""  # 这一页是哪条 idea 的页面 / the idea this page belongs to, if any
+    user: str = ""  # 谁的操作；空的是主人 / whose action; empty means the owner
     card: str = ""  # play 页的卡片：<项目>/<卡片编号> / a card on the play page: <project>/<card id>
 
 
@@ -34,8 +35,12 @@ def append(actions: list[Action]) -> int:
     return store.append(path(), [a.model_dump() for a in actions[:200]])
 
 
-def load() -> list[dict[str, Any]]:
-    return store.read_lines(path())[0]
+def load(user: str = "") -> list[dict[str, Any]]:
+    """某个人的操作，默认是主人的。统计、推荐顺序、回看都只看一个人的。
+
+    One person's actions, the owner's by default. Statistics, the feed order and reviews each look at one person only.
+    """
+    return [row for row in store.read_lines(path())[0] if str(row.get("user") or "") == user]
 
 
 class CardHistory(BaseModel):
@@ -51,9 +56,9 @@ class CardHistory(BaseModel):
 QUICK_SKIP_SECONDS = 5.0
 
 
-def card_history(actions: list[dict[str, Any]] | None = None) -> dict[str, CardHistory]:
+def card_history(actions: list[dict[str, Any]] | None = None, user: str = "") -> dict[str, CardHistory]:
     out: dict[str, CardHistory] = {}
-    for a in actions if actions is not None else load():
+    for a in actions if actions is not None else load(user):
         key, kind = str(a.get("card") or ""), a.get("kind")
         if not key or kind not in ("play", "like", "unlike"):
             continue

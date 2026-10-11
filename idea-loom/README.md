@@ -204,6 +204,14 @@ split into processes are set by a few environment variables (see
 `src/idea_loom/config.py`); the containers and the reverse proxy are configured under
 [`deploy/`](../deploy) at the repository root.
 
+本地不用登录，你就是主人。云端设了 `IDEA_LOOM_OWNER`（主人的 GitHub 用户名）之后用 GitHub 登录认人，分三档：游客能看能玩，登录的访客再加上记自己的观看和收藏，其余只有主人能做。哪个接口要什么身份集中写在 `src/idea_loom/auth.py`，没列出的默认只有主人能用。
+
+Locally nobody signs in and you are the owner. In the cloud, once `IDEA_LOOM_OWNER` (the
+owner's GitHub login) is set, GitHub sign-in tells people apart in three roles: a guest can
+browse and play, a signed-in member can also record their own watching and likes, and
+everything else is the owner's. Which role each route needs is written in one place,
+`src/idea_loom/auth.py`; anything unlisted is owner-only.
+
 环境变量（都可以不设）/ Environment (all optional)：`IDEA_LOOM_MODEL`（缺省 `sonnet`，生成、细化、翻译用 / default `sonnet`, for generate, refine, translate）、`IDEA_LOOM_ASSISTANT_MODEL`（小助手 / the assistant）、`IDEA_LOOM_JOB_MODEL`（作业 / jobs）。
 
 ## 测试 / Test
@@ -286,6 +294,7 @@ src/idea_loom/
   github.py     读合并请求 / read pull requests
   stats.py      统计 / statistics
   config.py     部署配置：域名、角色 / deployment configuration: domain, roles
+  auth.py       登录与权限：三档身份、签名的会话、限流 / sign-in and roles: three roles, the signed session, rate limits
   cloud.py      云端启动：克隆仓库、第一次取数据 / cloud start-up: clone the repository, seed the data once
   play/         统一入口：名片、快照与构建、后端进程、按主机名分发 / the single entry point: card files, snapshots and builds, backend processes, routing by host
   jobs.py       作业：出方案、批准、执行、测试、PR / jobs: plan, approve, execute, test, PR

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { NavLink, Route, Routes } from 'react-router'
 import { IdeaPage } from '../pages/IdeaPage'
 import { InboxPage } from '../pages/InboxPage'
@@ -12,24 +12,33 @@ import { WorkPage } from '../pages/WorkPage'
 import { WishPage, WishesPage } from '../pages/WishesPage'
 import { AssistantDock } from '../assistant/AssistantDock'
 import { useAssistant } from '../assistant/store'
+import { install as installTrail } from '../assistant/trail'
 import { applyLang, plural } from '../i18n'
 import { useStore, useT } from '../state/store'
 
 const NAV = [
-  { to: '/play', zh: '玩', en: 'Play', end: false },
-  { to: '/', zh: '地图', en: 'Map', end: true },
-  { to: '/ideas', zh: '想法池', en: 'Idea pool', end: false },
-  { to: '/inbox', zh: '生成与候选', en: 'Generate & candidates', end: false },
-  { to: '/lineage', zh: '血缘', en: 'Lineage', end: false },
-  { to: '/work', zh: '开发', en: 'Work', end: false },
-  { to: '/wishes', zh: '许愿池', en: 'Wish pool', end: false },
-  { to: '/stats', zh: '统计', en: 'Statistics', end: false },
+  { to: '/play', zh: '玩', en: 'Play', end: false, owner: false },
+  { to: '/', zh: '地图', en: 'Map', end: true, owner: false },
+  { to: '/ideas', zh: '想法池', en: 'Idea pool', end: false, owner: false },
+  { to: '/inbox', zh: '生成与候选', en: 'Generate & candidates', end: false, owner: true },
+  { to: '/lineage', zh: '血缘', en: 'Lineage', end: false, owner: false },
+  { to: '/work', zh: '开发', en: 'Work', end: false, owner: true },
+  { to: '/wishes', zh: '许愿池', en: 'Wish pool', end: false, owner: true },
+  { to: '/stats', zh: '统计', en: 'Statistics', end: false, owner: true },
 ]
 
 export function App() {
-  const { state, error, load, theme, toggleTheme, lang, toggleLang, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
+  const { me, state, error, load, theme, toggleTheme, lang, toggleLang, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
   const t = useT()
   const openWishes = useAssistant((a) => a.openWishes)
+  const owner = me?.role === 'owner'
+  // 主人的操作轨迹由小助手装上；登录的访客没有小助手，在这里装，记的是他自己的观看和收藏。
+  // The assistant installs the owner's action trail; a signed-in member has no assistant, so it is installed here and records their own watching and likes.
+  useEffect(() => {
+    if (me?.role === 'member') installTrail()
+  }, [me?.role])
+  // 只有主人能用的页面，别人看到的是一句说明。 / Pages only the owner can use show everyone else one line of explanation.
+  const gate = (page: ReactNode) => (owner ? page : <p className="pad">{t('这一页只有主人能用。', 'Only the owner can use this page.')}</p>)
   useEffect(() => {
     void load()
   }, [load])
@@ -47,7 +56,7 @@ export function App() {
         <div className="mark">
           idea-loom<small>{t('想法池', 'Idea pool')}</small>
         </div>
-        {NAV.map((n) => (
+        {NAV.filter((n) => owner || !n.owner).map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className="nav-item">
             {t(n.zh, n.en)}
             {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
@@ -55,9 +64,11 @@ export function App() {
             {n.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </NavLink>
         ))}
-        <NavLink to="/new" className="nav-item nav-new">
-          {t('＋ 手写一条', '＋ Write one')}
-        </NavLink>
+        {owner && (
+          <NavLink to="/new" className="nav-item nav-new">
+            {t('＋ 手写一条', '＋ Write one')}
+          </NavLink>
+        )}
         <div className="nav-foot">
           {sync && (
             <div className="sync">
@@ -76,6 +87,22 @@ export function App() {
                 </>
               ) : (
                 <div className="muted small">{sync.reason ?? t('已和仓库同步', 'In sync with the repository')}</div>
+              )}
+            </div>
+          )}
+          {me?.auth_enabled && (
+            <div className="who">
+              {me.role === 'guest' ? (
+                <a className="button" href="/auth/login">
+                  {t('用 GitHub 登录', 'Sign in with GitHub')}
+                </a>
+              ) : (
+                <form method="post" action="/auth/logout" className="row">
+                  <span className="small who-name" title={me.role === 'owner' ? t('主人', 'Owner') : t('访客', 'Member')}>
+                    {me.name || me.login}
+                  </span>
+                  <button type="submit">{t('退出', 'Sign out')}</button>
+                </form>
               )}
             </div>
           )}
@@ -121,19 +148,19 @@ export function App() {
             <Route path="/" element={<MapPage state={state} />} />
             <Route path="/ideas" element={<PoolPage state={state} />} />
             <Route path="/ideas/:id" element={<IdeaPage state={state} />} />
-            <Route path="/inbox" element={<InboxPage state={state} />} />
+            <Route path="/inbox" element={gate(<InboxPage state={state} />)} />
             <Route path="/lineage" element={<LineagePage state={state} />} />
             <Route path="/play" element={<PlayPage state={state} />} />
-            <Route path="/work" element={<WorkPage state={state} />} />
-            <Route path="/stats" element={<StatsPage state={state} />} />
-            <Route path="/wishes" element={<WishesPage />} />
-            <Route path="/wishes/:id" element={<WishPage />} />
-            <Route path="/new" element={<NewIdeaPage state={state} />} />
+            <Route path="/work" element={gate(<WorkPage state={state} />)} />
+            <Route path="/stats" element={gate(<StatsPage state={state} />)} />
+            <Route path="/wishes" element={gate(<WishesPage />)} />
+            <Route path="/wishes/:id" element={gate(<WishPage />)} />
+            <Route path="/new" element={gate(<NewIdeaPage state={state} />)} />
             <Route path="*" element={<p className="pad">{t('没有这个页面。', 'There is no such page.')}</p>} />
           </Routes>
         )}
       </main>
-      <AssistantDock />
+      {owner && <AssistantDock />}
     </div>
   )
 }

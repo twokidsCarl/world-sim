@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import type { State, ThreadId } from '../contract'
 import { pick, plural } from '../i18n'
 import { maxCell, shade } from '../state/derive'
-import { useLang, useT } from '../state/store'
+import { useLang, useOwner, useT } from '../state/store'
 import { Page, Section } from '../ui/Page'
 import { ideaTitle } from '../ui/bits'
 
@@ -12,6 +12,7 @@ const THREADS: ThreadId[] = ['A', 'B', 'C', 'D', 'E']
 export function MapPage({ state }: { state: State }) {
   const [view, setView] = useState<'grid' | 'kernels'>('grid')
   const lang = useLang()
+  const owner = useOwner()
   const t = useT()
   const max = maxCell(state)
   const title = new Map(state.ideas.map((i) => [i.id, ideaTitle(lang, i)]))
@@ -92,6 +93,8 @@ export function MapPage({ state }: { state: State }) {
                                     {ids.length > 3 && <span className="more">{t(`还有 ${ids.length - 3} 条`, `${ids.length - 3} more`)}</span>}
                                   </span>
                                 </Link>
+                              ) : !owner ? (
+                                <span className="none">—</span>
                               ) : (
                                 <Link
                                   className="none"

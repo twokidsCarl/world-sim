@@ -13,11 +13,8 @@
 
 {$HUB_DOMAIN} {
 	encode zstd gzip
-	# 登录和权限（K2）做好之前，整个站点挡在一道口令后面。做好之后删掉这一段。
-	# Until sign-in and roles (K2) exist the whole site sits behind one password. Remove this block afterwards.
-	basic_auth {
-		{$GATE_USER} {$GATE_HASH}
-	}
+	# 谁能做什么由 hub 自己管（GitHub 登录，三档身份），这里不再另设口令。
+	# Who may do what is decided by the hub itself (GitHub sign-in, three roles); there is no separate password here.
 	# 内部接口不对外。 / Internal routes are not exposed.
 	@internal path /internal/*
 	respond @internal 404
