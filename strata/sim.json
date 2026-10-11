@@ -346,5 +346,177 @@
       "idea": "1.6",
       "url": "/?scenario=pancake"
     }
-  ]
+  ],
+  "agent": {
+    "summary": {
+      "zh": "从微观规则到涌现：只模拟最底层（粒子的对势、格点自旋、引力），温度、压强、粘度、相变、晶体序这些更高层的量都从微观数据算出，并与已知理论对照。五种底座：分子动力学（md）、Ising 自旋（ising）、Potts 模型（potts）、引力 N 体（gravity）、粒子网格法的引力成团（mesh）。这里给出的是数据：每个底座有哪些可改的假设（knobs）、能量出哪些量（quantities）、19 个引导实验（scenarios）、拿来对照的理论数值和出处（references）。先看 substrates，再按 substrate 字段查另外几份。模拟本身在浏览器里用 WebGPU 跑，这里暂时没有可以调用的计算；knobs 和 scenarios 里的 url 可以交给人在浏览器里打开。",
+      "en": "From microscopic rules to emergence: only the bottom level is simulated (a pair potential between particles, lattice spins, gravity), and higher-level quantities such as temperature, pressure, viscosity, phase transitions and crystalline order are computed from the microscopic data and compared with known theory. Five substrates: molecular dynamics (md), Ising spins (ising), the Potts model (potts), gravitational N-body (gravity) and particle-mesh gravitational clustering (mesh). What is offered here is data: the assumptions each substrate lets you change (knobs), the quantities it measures (quantities), 19 guided experiments (scenarios), and the theoretical values they are compared with, with sources (references). Start with substrates, then query the others by their `substrate` field. The simulations themselves run in a browser on WebGPU and there is no callable computation here yet; the `url` fields in knobs and scenarios can be given to a person to open."
+    },
+    "datasets": [
+      {
+        "id": "substrates",
+        "title": {
+          "zh": "底座",
+          "en": "Substrates"
+        },
+        "description": {
+          "zh": "五种被模拟的微观系统：名称、一句话说明、时间的单位（步数或扫描数）、打开它的地址。",
+          "en": "The five microscopic systems that are simulated: name, a one-sentence description, the unit of time (steps or sweeps) and the URL that opens it."
+        },
+        "path": "agent/substrates.json",
+        "key": "id",
+        "search": [
+          "id",
+          "label",
+          "label_en",
+          "blurb",
+          "blurb_en"
+        ],
+        "fields": [],
+        "licence": "MIT",
+        "provenance": {
+          "zh": "由源码里的定义生成（bun run agent），有一条测试保证它与源码一致。英文是为这份数据写的，界面本身是中文的。",
+          "en": "Generated from the definitions in the source (bun run agent); a test keeps it in step with the source. The English was written for this dataset; the UI itself is in Chinese."
+        }
+      },
+      {
+        "id": "knobs",
+        "title": {
+          "zh": "旋钮：可以改的假设",
+          "en": "Knobs: the assumptions you can change"
+        },
+        "description": {
+          "zh": "每个底座的每个旋钮：取值范围、默认值、离散选项、它属于哪一类假设（tag：class 改变普适类，value 只改变数值，state 状态变量，numerical 数值方法，toy 玩具规则）、改动后要重建什么（rebuild）、偏离默认值会打破哪条守恒律（breaks）。id 是 底座.旋钮。地址栏里写 ?substrate=<底座>&<旋钮>=<值> 就能直达，url 字段是一个例子。shown_by_default 为 false 的旋钮只在别的旋钮取某些值时才出现在界面上。note 和 breaks 只有中文。",
+          "en": "Every knob of every substrate: range, default, discrete options, the kind of assumption it is (`tag`: class changes the universality class, value changes numbers only, state is a state variable, numerical is the numerical method, toy is a toy rule), what must be rebuilt when it changes (`rebuild`) and which conservation law breaks once it leaves its default (`breaks`). `id` is substrate.knob. Writing ?substrate=<substrate>&<knob>=<value> in the address bar opens that state directly; the `url` field is an example. A knob with `shown_by_default` false only appears in the UI for certain values of other knobs. `note` and `breaks` are in Chinese only."
+        },
+        "path": "agent/knobs.json",
+        "key": "id",
+        "search": [
+          "id",
+          "label",
+          "label_en",
+          "tag_en",
+          "note"
+        ],
+        "fields": [
+          "id",
+          "substrate",
+          "name",
+          "label",
+          "label_en",
+          "tag",
+          "min",
+          "max",
+          "step",
+          "default",
+          "options",
+          "rebuild",
+          "shown_by_default",
+          "url"
+        ],
+        "licence": "MIT",
+        "provenance": {
+          "zh": "由源码里的定义生成（bun run agent），有一条测试保证它与源码一致。范围和默认值就是界面用的那一份。英文名是为这份数据写的。",
+          "en": "Generated from the definitions in the source (bun run agent); a test keeps it in step with the source. Ranges and defaults are the very ones the UI uses. The English names were written for this dataset."
+        }
+      },
+      {
+        "id": "quantities",
+        "title": {
+          "zh": "派生量：从微观数据算出的量",
+          "en": "Quantities: what is computed from the microscopic data"
+        },
+        "description": {
+          "zh": "每个底座能算出的量和分析：属于阶梯的哪一层（level：micro、kinetic、thermo、hydro、structure、meta）、是标量、曲线、场还是对历史记录的分析（kind）、有没有理论对照（has_theory）、理论说明（theory_note，只有中文）、算作相符的容差（tolerance）。id 是 底座.量。shown_by_default 为 false 的量只在某些旋钮取值下才有。",
+          "en": "The quantities and analyses each substrate can compute: its rung on the ladder (`level`: micro, kinetic, thermo, hydro, structure, meta), whether it is a scalar, a curve, a field or an analysis over a recorded history (`kind`), whether it has a theory to compare with (`has_theory`), a note on that theory (`theory_note`, Chinese only) and the tolerance for counting as agreement (`tolerance`). `id` is substrate.quantity. A quantity with `shown_by_default` false exists only for certain knob settings."
+        },
+        "path": "agent/quantities.json",
+        "key": "id",
+        "search": [
+          "id",
+          "label",
+          "label_en",
+          "level_en",
+          "theory_note"
+        ],
+        "fields": [
+          "id",
+          "substrate",
+          "name",
+          "kind",
+          "level",
+          "label",
+          "label_en",
+          "has_theory",
+          "theory_note",
+          "shown_by_default"
+        ],
+        "licence": "MIT",
+        "provenance": {
+          "zh": "由源码里的定义生成（bun run agent），有一条测试保证它与源码一致。has_theory 只说明代码里有一条理论线，不说明实测与它相符；相符与否、差多少见 references 的 measured 字段和项目的 README。",
+          "en": "Generated from the definitions in the source (bun run agent); a test keeps it in step with the source. `has_theory` only says the code carries a theory line, not that the measurement agrees with it; for agreement and its size see the `measured` field of references and the project README."
+        }
+      },
+      {
+        "id": "scenarios",
+        "title": {
+          "zh": "引导实验",
+          "en": "Guided experiments"
+        },
+        "description": {
+          "zh": "19 个一步步演示的实验：每一步设哪些旋钮（set）、跑多少步（run）、做什么动作（action）、预期看到什么以及按哪个量检验（expect）。url 在浏览器里直接打开并自动播放。步骤的文字只有中文，标题有英文（title_en）。步数是按 GPU 后端定的，有的实验在 CPU 上要跑很久。",
+          "en": "19 experiments played step by step: which knobs each step sets (`set`), how many steps it runs (`run`), what it does (`action`), and what should be seen and which quantity checks it (`expect`). The `url` opens one in a browser and plays it. The step texts are in Chinese only; the title also has English (`title_en`). Step counts were chosen for the GPU backend, so some experiments would take very long on a CPU."
+        },
+        "path": "agent/scenarios.json",
+        "key": "id",
+        "search": [
+          "id",
+          "title",
+          "title_en",
+          "substrate"
+        ],
+        "fields": [
+          "id",
+          "substrate",
+          "title",
+          "title_en",
+          "url",
+          "total_run",
+          "steps"
+        ],
+        "licence": "MIT",
+        "provenance": {
+          "zh": "由源码里的定义生成（bun run agent），有一条测试保证它与源码一致。expect 里的阈值是在这个项目自己的运行里定的，不是文献值。每个实验都在 GPU 上播放检验过，但不是每次改动后都重跑全部。",
+          "en": "Generated from the definitions in the source (bun run agent); a test keeps it in step with the source. The thresholds under `expect` were set from this project's own runs and are not literature values. Every experiment was played and checked on a GPU, though not all are replayed after every change."
+        }
+      },
+      {
+        "id": "references",
+        "title": {
+          "zh": "理论参照",
+          "en": "Reference values"
+        },
+        "description": {
+          "zh": "模拟结果拿来对照的数：临界温度、临界指数、潜热、增长率等。status 说明它是严格结果（exact）、拟合（fit）、数值结果（numerical）还是理想结构的参照值（reference）；formula 是公式和适用条件；source 是出处；measured 是这个项目自己量到的结果（有记录的才有）；有的条目带一张表（table）。单位：粒子体系用 Lennard-Jones 约化单位，自旋模型取 J = 1，引力取 G = 1。",
+          "en": "The numbers simulation results are compared with: critical temperatures, critical exponents, latent heats, growth rates and so on. `status` says whether a value is exact, a fit, a numerical result or a reference value for an ideal structure; `formula` gives the formula and where it holds; `source` the origin; `measured` what this project itself measured (only where on record); some entries carry a `table`. Units: Lennard-Jones reduced units for particles, J = 1 for spin models, G = 1 for gravity."
+        },
+        "path": "agent/references.json",
+        "key": "id",
+        "search": [
+          "id",
+          "title",
+          "title_en",
+          "formula",
+          "source",
+          "substrate"
+        ],
+        "fields": [],
+        "licence": "MIT (values computed by this repository's code from published formulas; cited works keep their own copyright)",
+        "provenance": {
+          "zh": "数值由 src/theory 里的函数现算，四舍五入到十位有效数字。出处一栏：二维 LJ 状态方程（Homes 等 2025）对照过它公开的原始数据；Baxter 的潜热（q = 8 为 0.486358）与文献里的数值对过；Selke (2006) 和 Wu (1982) 是代码注释里当时记下的出处；其余的期刊卷页是凭记忆写的，没有逐条核对。三维 Ising 的三个数值和三态 Potts 的指数在 source 里写明了没有出处记录。measured 里的数来自这个项目自己的测试，只在一台机器上跑过。",
+          "en": "Values are computed by the functions in src/theory and rounded to ten significant digits. On the sources: the 2D LJ equation of state (Homes et al. 2025) was compared with its published raw data; Baxter's latent heat (0.486358 for q = 8) was compared with numbers in the literature; Selke (2006) and Wu (1982) are the sources noted in the code comments when the values were added; the remaining journal references were written from memory and not checked one by one. The three 3D Ising values and the three-state Potts exponent say in `source` that no citation is on record. The numbers under `measured` come from this project's own tests, run on one machine only."
+        }
+      }
+    ]
+  }
 }

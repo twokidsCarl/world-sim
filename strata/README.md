@@ -88,10 +88,34 @@ src/scenarios/    引导实验（数据）
 src/render/       WebGPU 粒子与晶格渲染
 src/plot/         Canvas2D 绘图
 src/harness/      GPU 与 CPU 交叉校验
+src/agent/        给外面的 AI Agent 的数据：由上面的定义生成，另有英文名对照表
+agent/            生成出来的 JSON（提交进仓库）
 tests/            analytic/（解析）与 slow/（统计）
 ```
 
 CPU 参考实现先写，是规范；WGSL 内核是它的优化，并用同一份势表、同一个整数哈希。
+
+## 给 AI Agent
+
+按仓库根目录的“Agent 约定”，`sim.json` 的 `agent` 一节把五份数据接给外面的 Agent（经 idea-loom 的 `/llms.txt`、`/api/v1` 和 MCP）：
+
+| 数据集 | 内容 | 条数 |
+|---|---|---|
+| `substrates` | 五种底座 | 5 |
+| `knobs` | 每个旋钮的范围、默认值、选项、属于哪一类假设 | 49 |
+| `quantities` | 每个派生量和分析：在哪一层、有没有理论对照 | 64 |
+| `scenarios` | 引导实验的每一步：设什么、跑多久、预期什么 | 19 |
+| `references` | 拿来对照的理论数值、公式、出处，以及这个项目自己量到的结果 | 28 |
+
+它们由源码生成，不手改：
+
+```sh
+bun run agent      # 重新生成 agent/*.json
+```
+
+`tests/analytic/agent.test.ts` 检查提交进仓库的文件与源码生成的一致，所以改了旋钮、派生量、引导实验或理论之后要重新生成。界面是中文的；英文名在 `src/agent/english.ts`，新增旋钮或派生量时漏了英文名，测试会报出是哪一项。
+
+没做到的：旋钮的说明（`note`）、理论说明（`theory_note`）和引导实验每一步的文字只有中文。`references` 里一部分期刊卷页是凭记忆写的，没有逐条核对，数据集的 `provenance` 里写明了是哪些。还没有可以调用的计算，模拟只能在浏览器里跑。
 
 ## 已知边界
 
@@ -213,10 +237,34 @@ src/scenarios/    guided experiments (data)
 src/render/       WebGPU particle and lattice rendering
 src/plot/         Canvas2D plotting
 src/harness/      GPU versus CPU cross-check
+src/agent/        the data offered to outside AI agents: generated from the definitions above, plus a table of English names
+agent/            the generated JSON (committed)
 tests/            analytic/ (analytic) and slow/ (statistical)
 ```
 
 The CPU reference implementation is written first and is the specification; the WGSL kernels are an optimization of it, and use the same potential table and the same integer hash.
+
+## For AI agents
+
+Following the agent contract at the repository root, the `agent` section of `sim.json` offers five datasets to outside agents (through idea-loom's `/llms.txt`, `/api/v1` and MCP):
+
+| Dataset | Content | Records |
+|---|---|---|
+| `substrates` | the five substrates | 5 |
+| `knobs` | range, default, options and kind of assumption of every knob | 49 |
+| `quantities` | every derived quantity and analysis: its level, and whether it has a theory to compare with | 64 |
+| `scenarios` | each step of the guided experiments: what it sets, how long it runs, what to expect | 19 |
+| `references` | the theoretical values compared against, with formulas and sources, and what this project itself measured | 28 |
+
+They are generated from the source and not edited by hand:
+
+```sh
+bun run agent      # regenerate agent/*.json
+```
+
+`tests/analytic/agent.test.ts` checks that the committed files match what the source generates, so regenerate after changing a knob, a quantity, a guided experiment or the theory. The UI is in Chinese; the English names live in `src/agent/english.ts`, and when a new knob or quantity lacks one the test names it.
+
+Not done: knob notes (`note`), theory notes (`theory_note`) and the text of each guided-experiment step are in Chinese only. Some journal references in `references` were written from memory and not checked one by one; the dataset's `provenance` says which. There is no callable computation yet; the simulations only run in a browser.
 
 ## Known limits
 

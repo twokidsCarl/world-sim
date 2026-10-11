@@ -1,0 +1,52 @@
+[
+ {
+  "id": "md",
+  "label": "分子动力学",
+  "label_en": "Molecular dynamics",
+  "blurb": "只模拟最底层：牛顿定律加一条两体势。右侧各层由粒子数据算出，虚线是理论预言。",
+  "blurb_en": "Particles with a pair potential and nothing else; every higher-level quantity is computed from their positions and velocities.",
+  "step_unit": "步数",
+  "step_unit_en": "steps",
+  "url": "/?substrate=md"
+ },
+ {
+  "id": "ising",
+  "label": "Ising 自旋",
+  "label_en": "Ising spins",
+  "blurb": "只模拟最底层：每个自旋按近邻取向随机翻转。右侧各层由自旋数据算出，虚线是精确解。",
+  "blurb_en": "Spins on a lattice flipped at random according to their neighbours; magnetisation, the Binder cumulant and the renormalisation flow are computed from the spins.",
+  "step_unit": "扫描数",
+  "step_unit_en": "sweeps",
+  "url": "/?substrate=ising"
+ },
+ {
+  "id": "potts",
+  "label": "Potts 模型",
+  "label_en": "Potts model",
+  "blurb": "只模拟最底层：每个格点有 q 种状态，按与近邻是否同态随机改变。右侧各层由格点数据算出，虚线是严格结果。",
+  "blurb_en": "Each lattice site takes one of q states and changes at random according to whether its neighbours share its state.",
+  "step_unit": "扫描数",
+  "step_unit_en": "sweeps",
+  "url": "/?substrate=potts"
+ },
+ {
+  "id": "gravity",
+  "label": "引力 N 体",
+  "label_en": "Gravitational N-body",
+  "blurb": "只模拟最底层：每两个天体之间的牛顿引力。这是独立的场景，尺度与分子相差约 38 个数量级。",
+  "blurb_en": "Point masses attracting one another by softened Newtonian gravity, summed directly over every pair.",
+  "step_unit": "步数",
+  "step_unit_en": "steps",
+  "url": "/?substrate=gravity"
+ },
+ {
+  "id": "mesh",
+  "label": "引力成团",
+  "label_en": "Gravitational clustering",
+  "blurb": "只模拟最底层：周期盒子里几十万个只受引力的粒子，几乎均匀地出发。右侧各层由粒子数据算出，虚线是理论预言。",
+  "blurb_en": "Cold matter in a periodic box under its own gravity, computed with the particle-mesh method on a static uniform background.",
+  "step_unit": "步数",
+  "step_unit_en": "steps",
+  "url": "/?substrate=mesh"
+ }
+]

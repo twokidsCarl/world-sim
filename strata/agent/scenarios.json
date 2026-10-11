@@ -1,0 +1,890 @@
+[
+ {
+  "id": "freeze",
+  "substrate": "md",
+  "title": "冷却液体直到结晶，再把它熔化",
+  "title_en": "Cool a liquid until it crystallises, then melt it",
+  "url": "/?scenario=freeze",
+  "total_run": 16000,
+  "steps": [
+   {
+    "text": "稠密液体接上热浴，温度 1.0。粒子挤在一起但没有固定位置，局域六角序低。",
+    "set": {
+     "nx": 120,
+     "density": 0.8,
+     "temperature": 1,
+     "thermostat": 1
+    },
+    "run": 3000,
+    "expect": {
+     "quantity": "psi6Local",
+     "max": 0.62,
+     "text": "液体：⟨|ψ₆|⟩ 低于 0.62"
+    }
+   },
+   {
+    "text": "把热浴降到 0.3。规则没有变，只是能量被抽走：粒子自己排成三角晶格。",
+    "set": {
+     "temperature": 0.3
+    },
+    "run": 8000,
+    "expect": {
+     "quantity": "psi6Local",
+     "min": 0.7,
+     "text": "晶体：⟨|ψ₆|⟩ 高于 0.7"
+    }
+   },
+   {
+    "text": "再把热浴升到 1.2，晶体熔化，六角序消失。",
+    "set": {
+     "temperature": 1.2
+    },
+    "run": 5000,
+    "expect": {
+     "quantity": "psi6Local",
+     "max": 0.62,
+     "text": "回到液体：⟨|ψ₆|⟩ 低于 0.62"
+    }
+   }
+  ]
+ },
+ {
+  "id": "poiseuille",
+  "substrate": "md",
+  "title": "粒子在管道里流成抛物线",
+  "title_en": "Particles in a pipe settle into a parabola",
+  "url": "/?scenario=poiseuille",
+  "total_run": 34000,
+  "steps": [
+   {
+    "text": "上下两面热壁，中间是温度 1.0 的稠密流体。没有驱动力时，平均流速处处为零。",
+    "set": {
+     "walls": 1,
+     "nx": 120,
+     "density": 0.7,
+     "temperature": 1,
+     "thermostat": 0,
+     "drive": 0,
+     "fractionB": 0
+    },
+    "run": 4000
+   },
+   {
+    "text": "给每个粒子加一个沿管道的小力。粒子之间只有两体碰撞，没有人告诉它们粘性是什么；流速剖面自己长成 Navier–Stokes 方程预言的抛物线。",
+    "set": {
+     "drive": 0.006
+    },
+    "run": 30000,
+    "expect": {
+     "quantity": "flowProfile",
+     "agree": true,
+     "text": "流速剖面与抛物线吻合"
+    }
+   }
+  ]
+ },
+ {
+  "id": "poiseuille3d",
+  "substrate": "md",
+  "title": "三维里的管道流：同一条抛物线",
+  "title_en": "Channel flow in 3D: the same parabola",
+  "url": "/?scenario=poiseuille3d",
+  "total_run": 64000,
+  "steps": [
+   {
+    "text": "五万多个粒子的三维流体，夹在垂直于 y 的两面热壁之间，x 和 z 方向是周期的。先不加驱动力。",
+    "set": {
+     "dim": 3,
+     "walls": 1,
+     "nx": 96,
+     "density": 0.7,
+     "temperature": 1.3,
+     "thermostat": 0,
+     "drive": 0,
+     "deltaT": 0,
+     "fractionB": 0
+    },
+    "run": 4000
+   },
+   {
+    "text": "给每个粒子加一个沿 x 的小力。和二维一样，流速剖面自己长成抛物线；右侧的粘度由流量反推。",
+    "set": {
+     "drive": 0.004
+    },
+    "run": 60000,
+    "expect": {
+     "quantity": "flowProfile",
+     "agree": true,
+     "text": "三维的流速剖面与抛物线吻合"
+    }
+   }
+  ]
+ },
+ {
+  "id": "nucleation",
+  "substrate": "md",
+  "title": "三维过冷液体：等一个晶核",
+  "title_en": "A supercooled 3D liquid: waiting for one nucleus",
+  "url": "/?scenario=nucleation",
+  "total_run": 86000,
+  "steps": [
+   {
+    "text": "一万六千多个粒子的三维稠密流体，温度 2.5，远在熔点之上。“处在晶体环境里的粒子比例”几乎是零。",
+    "set": {
+     "dim": 3,
+     "nx": 64,
+     "density": 0.95,
+     "temperature": 2.5,
+     "thermostat": 1,
+     "walls": 0,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "run": 4000,
+    "expect": {
+     "quantity": "crystalFraction",
+     "max": 0.05,
+     "text": "熔体：晶体比例低于 0.05"
+    }
+   },
+   {
+    "text": "把热浴骤降到 0.5，远低于熔点。配位数立刻就和晶体差不多了（约 11.3），但粒子还是乱的：液体被过冷，在等一个足够大的晶核偶然出现。把着色切到“键取向序 q̄₆”、显示切到“切片”来看。",
+    "set": {
+     "temperature": 0.5
+    },
+    "run": 12000
+   },
+   {
+    "text": "晶核一旦出现就长得很快，几万步之内吞掉整个盒子，留下几块取向不同的晶粒和它们之间的晶界。何时成核是随机的，每次重置都不一样。",
+    "run": 70000,
+    "expect": {
+     "quantity": "crystalFraction",
+     "min": 0.6,
+     "text": "结晶：晶体比例超过 0.6"
+    }
+   }
+  ]
+ },
+ {
+  "id": "dimension",
+  "substrate": "md",
+  "title": "同一条势，换一个维度",
+  "title_en": "The same potential in another dimension",
+  "url": "/?scenario=dimension",
+  "total_run": 14500,
+  "steps": [
+   {
+    "text": "二维的稀薄气体。速率分布是 v·exp(−v²/2T) 的形状：小速率的粒子很少，因为平面上速率为 v 的状态数正比于 v。",
+    "set": {
+     "dim": 2,
+     "nx": 120,
+     "density": 0.03,
+     "temperature": 2.5,
+     "thermostat": 0,
+     "walls": 0,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "run": 3000,
+    "expect": {
+     "quantity": "speedDist",
+     "agree": true,
+     "text": "二维：速率分布与理论吻合"
+    }
+   },
+   {
+    "text": "压强对理想气体的偏离由第二维里系数给出，它是对两体势在平面上的积分。",
+    "run": 1500,
+    "expect": {
+     "quantity": "pressure",
+     "agree": true,
+     "text": "二维：压强与 ρT(1 + B₂ρ) 吻合"
+    }
+   },
+   {
+    "text": "势、温度、密度都不变，只把空间换成三维。速率分布变成 v²·exp(−v²/2T)：状态数现在正比于 v²。",
+    "set": {
+     "dim": 3,
+     "nx": 96
+    },
+    "run": 3000,
+    "expect": {
+     "quantity": "speedDist",
+     "agree": true,
+     "text": "三维：速率分布与理论吻合"
+    }
+   },
+   {
+    "text": "同一条势的第二维里系数，在三维里是另一个数（积分的体积元变了）。",
+    "run": 1500,
+    "expect": {
+     "quantity": "pressure",
+     "agree": true,
+     "text": "三维：压强与 ρT(1 + B₂ρ) 吻合"
+    }
+   },
+   {
+    "text": "压密、降温：三维的密堆积是面心立方，每个粒子有 12 个近邻；二维的三角晶格只有 6 个。",
+    "set": {
+     "nx": 64,
+     "density": 0.95,
+     "temperature": 0.3,
+     "thermostat": 1
+    },
+    "run": 1500,
+    "expect": {
+     "quantity": "coordination",
+     "min": 11.5,
+     "text": "三维晶体：配位数接近 12"
+    }
+   },
+   {
+    "text": "加热到 2.5，晶体熔化，第一近邻壳层散开。",
+    "set": {
+     "temperature": 2.5
+    },
+    "run": 4000,
+    "expect": {
+     "quantity": "coordination",
+     "max": 11,
+     "text": "三维液体：配位数降到 11 以下"
+    }
+   }
+  ]
+ },
+ {
+  "id": "sound",
+  "substrate": "md",
+  "title": "敲一下，量声速",
+  "title_en": "Tap it and measure the speed of sound",
+  "url": "/?scenario=sound",
+  "total_run": 63000,
+  "steps": [
+   {
+    "text": "一盒稀薄的气体，先让它平衡。粒子之间只有两体碰撞，没有人规定声音怎么传。",
+    "set": {
+     "dim": 2,
+     "nx": 120,
+     "density": 0.1,
+     "temperature": 2,
+     "thermostat": 0,
+     "walls": 0,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "run": 3000
+   },
+   {
+    "text": "给所有粒子加一个沿 x 的小速度，大小按盒子里最长的正弦波变化。密度随即来回晃动：这就是一列驻波，它的频率除以波数就是声速。",
+    "action": "perturb",
+    "run": 60000,
+    "expect": {
+     "quantity": "soundMode",
+     "analysis": "sound",
+     "text": "声速与维里展开的绝热声速相差不到一成"
+    }
+   }
+  ]
+ },
+ {
+  "id": "wake",
+  "substrate": "md",
+  "title": "流过一个圆盘：背后出现回流",
+  "title_en": "Flow past a disc: backflow appears behind it",
+  "url": "/?scenario=wake",
+  "total_run": 90000,
+  "steps": [
+   {
+    "text": "十一万多个粒子在管道里流过一个固定的圆盘，流速约为声速的一半。粒子只知道两两相撞和被圆盘、壁面弹开。先让流动建立起来，这一步在 GPU 上约一分钟。",
+    "set": {
+     "dim": 2,
+     "walls": 1,
+     "nx": 640,
+     "density": 0.5,
+     "temperature": 1,
+     "thermostat": 0,
+     "obstacle": 30,
+     "drive": 0.001,
+     "gravity": 0,
+     "deltaT": 0,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "action": "push",
+    "velocity": 1.4,
+    "run": 50000
+   },
+   {
+    "text": "看右侧“沿管道的流速场”：圆盘背后拖着一条尾迹，紧贴圆盘的地方流速为负——流体在那里打转。再往下游，尾迹左右摆动，“横向流速场”里出现正负交替的斑块。",
+    "run": 40000,
+    "expect": {
+     "quantity": "wakeVelocity",
+     "analysis": "wake",
+     "text": "圆盘背风面的时间平均流速为负（有回流）"
+    }
+   }
+  ]
+ },
+ {
+  "id": "shedding",
+  "substrate": "md",
+  "title": "圆盘后面的尾迹有没有周期",
+  "title_en": "Does the wake behind the disc have a period",
+  "url": "/?scenario=shedding",
+  "total_run": 260000,
+  "steps": [
+   {
+    "text": "和“流过一个圆盘”同样的设置。这次在圆盘下游放一个探测区，记录那里的横向流速，等它摆动几个来回。这一步很长，GPU 上要几分钟。",
+    "set": {
+     "dim": 2,
+     "walls": 1,
+     "nx": 640,
+     "density": 0.5,
+     "temperature": 1,
+     "thermostat": 0,
+     "obstacle": 30,
+     "drive": 0.001,
+     "gravity": 0,
+     "deltaT": 0,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "action": "push",
+    "velocity": 1.4,
+    "run": 260000,
+    "expect": {
+     "quantity": "wakeProbe",
+     "analysis": "shedding",
+     "text": "探测区的横向流速有清晰的周期（周期性脱落）"
+    }
+   }
+  ]
+ },
+ {
+  "id": "convectionOnset",
+  "substrate": "md",
+  "title": "对流从多强的重力开始",
+  "title_en": "How strong must gravity be for convection to start",
+  "url": "/?scenario=convectionOnset",
+  "total_run": 250000,
+  "steps": [
+   {
+    "text": "下壁温度是上壁的十倍，重力从弱到强分六档，每档等它稳定后记下“对流强度”。没有对流时读数约为 0.12（热噪声）；明显高出它，才算有对流。",
+    "set": {
+     "dim": 2,
+     "walls": 1,
+     "nx": 320,
+     "density": 0.3,
+     "temperature": 1,
+     "thermostat": 0,
+     "obstacle": 0,
+     "drive": 0,
+     "gravity": 0.01,
+     "deltaT": 9,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "run": 50000,
+    "expect": {
+     "quantity": "convection",
+     "max": 0.2,
+     "text": "重力 0.01：与热噪声同量级（没有对流）"
+    }
+   },
+   {
+    "text": "重力加到 0.02。",
+    "set": {
+     "gravity": 0.02
+    },
+    "run": 40000,
+    "expect": {
+     "quantity": "convection",
+     "max": 0.2,
+     "text": "重力 0.02：与热噪声同量级（没有对流）"
+    }
+   },
+   {
+    "text": "重力加到 0.03。",
+    "set": {
+     "gravity": 0.03
+    },
+    "run": 40000,
+    "expect": {
+     "quantity": "convection",
+     "min": 0,
+     "text": "重力 0.03 时的对流强度（起始点附近，仅记录）"
+    }
+   },
+   {
+    "text": "重力加到 0.04。",
+    "set": {
+     "gravity": 0.04
+    },
+    "run": 40000,
+    "expect": {
+     "quantity": "convection",
+     "min": 0,
+     "text": "重力 0.04 时的对流强度（起始点附近，仅记录）"
+    }
+   },
+   {
+    "text": "重力加到 0.05。",
+    "set": {
+     "gravity": 0.05
+    },
+    "run": 40000,
+    "expect": {
+     "quantity": "convection",
+     "min": 0.3,
+     "text": "重力 0.05：是热噪声的数倍（对流）"
+    }
+   },
+   {
+    "text": "重力加到 0.06。",
+    "set": {
+     "gravity": 0.06
+    },
+    "run": 40000,
+    "expect": {
+     "quantity": "convection",
+     "min": 0.3,
+     "text": "重力 0.06：是热噪声的数倍（对流）"
+    }
+   }
+  ]
+ },
+ {
+  "id": "convection",
+  "substrate": "md",
+  "title": "从下面加热：对流卷",
+  "title_en": "Heat from below: convection rolls",
+  "url": "/?scenario=convection",
+  "total_run": 110000,
+  "steps": [
+   {
+    "text": "上冷下热的两面壁之间是一层气体，下壁的温度是上壁的十倍，重力很弱。热量只靠分子碰撞一层层往上传：竖直方向的流速在热噪声里看不出规律。",
+    "set": {
+     "dim": 2,
+     "walls": 1,
+     "nx": 320,
+     "density": 0.3,
+     "temperature": 1,
+     "thermostat": 0,
+     "obstacle": 0,
+     "drive": 0,
+     "gravity": 0.02,
+     "deltaT": 9,
+     "fractionB": 0,
+     "integrator": 0
+    },
+    "run": 50000,
+    "expect": {
+     "quantity": "convection",
+     "max": 0.2,
+     "text": "弱重力：竖直流速的起伏与热噪声同量级（纯导热）"
+    }
+   },
+   {
+    "text": "把重力加大到三倍。贴近下壁的热气体更轻，现在浮力足以克服粘性：气体自己分成几对一上一下的对流卷。看右侧“横向流速场”里红蓝相间的条带。",
+    "set": {
+     "gravity": 0.06
+    },
+    "run": 60000,
+    "expect": {
+     "quantity": "convection",
+     "min": 0.3,
+     "text": "强重力：竖直流速的起伏是热噪声的数倍（对流）"
+    }
+   }
+  ]
+ },
+ {
+  "id": "diffusion",
+  "substrate": "md",
+  "title": "让机器从粒子数据里发现扩散方程",
+  "title_en": "Let the machine find the diffusion equation in particle data",
+  "url": "/?scenario=diffusion",
+  "total_run": 16000,
+  "steps": [
+   {
+    "text": "两种粒子，相互作用完全相同，只是颜色不同。B 一开始集中在中间一条带里。右侧“元”一栏会从浓度剖面的时间序列里做稀疏回归：5 个候选项，看它留下哪几个。",
+    "set": {
+     "walls": 0,
+     "nx": 180,
+     "density": 0.6,
+     "temperature": 2,
+     "thermostat": 1,
+     "fractionB": 0.3,
+     "layoutB": 1,
+     "epsAB": 1,
+     "epsBB": 1,
+     "nonreciprocal": 0
+    },
+    "run": 16000
+   }
+  ]
+ },
+ {
+  "id": "reverse",
+  "substrate": "md",
+  "title": "把时间倒过来：晶体熔化，再自己拼回去",
+  "title_en": "Run time backwards: a crystal melts, then reassembles itself",
+  "url": "/?scenario=reverse",
+  "total_run": 12000,
+  "steps": [
+   {
+    "text": "整数坐标的积分器，从一块完美的晶格出发。温度够高，它很快熔成无序的液体：熵增加了。",
+    "set": {
+     "backend": 0,
+     "integrator": 1,
+     "nx": 30,
+     "density": 0.7,
+     "temperature": 1.2,
+     "thermostat": 0,
+     "walls": 0,
+     "fractionB": 0
+    },
+    "run": 3000,
+    "expect": {
+     "quantity": "psi6Local",
+     "max": 0.62,
+     "text": "已经熔化：⟨|ψ₆|⟩ 低于 0.62"
+    }
+   },
+   {
+    "text": "现在把时间方向反过来。运动方程本身不分过去和未来，所以每个粒子沿原路退回，液体自己重新拼成晶格。",
+    "action": "reverse",
+    "run": 3000,
+    "expect": {
+     "quantity": "distance",
+     "max": 0,
+     "latest": true,
+     "text": "回到第 0 步：每个粒子都恰好在起点"
+    }
+   },
+   {
+    "text": "换成普通的浮点积分器重做一遍：熔化 3000 步后倒放。",
+    "set": {
+     "integrator": 0
+    },
+    "run": 3000
+   },
+   {
+    "text": "这一次回不去。舍入误差只有 10⁻¹⁶，但混沌把它每个时间单位放大好几倍。宏观上的不可逆，就藏在对初始条件的这种敏感里。",
+    "action": "reverse",
+    "run": 3000,
+    "expect": {
+     "quantity": "distance",
+     "min": 0.1,
+     "latest": true,
+     "text": "回不到起点：最大偏离超过 0.1 σ"
+    }
+   }
+  ]
+ },
+ {
+  "id": "collapse",
+  "substrate": "gravity",
+  "title": "一团静止的天体坍缩，然后自己找到平衡",
+  "title_en": "A cloud of bodies at rest collapses, then finds its own balance",
+  "url": "/?scenario=collapse",
+  "total_run": 3500,
+  "steps": [
+   {
+    "text": "均匀的球，所有天体静止。没有压强撑着，整团物质向中心下落；位力比从 0 开始上升。",
+    "set": {
+     "initial": 0,
+     "virial0": 0,
+     "n": 12,
+     "eps": 0.03,
+     "dt": 0.002
+    },
+    "run": 700
+   },
+   {
+    "text": "穿过中心后反弹、振荡几次。没有碰撞，也没有摩擦，但系统仍然弛豫到一个稳定的核与晕，同时把一部分天体甩了出去。留下来的那部分满足位力定理：两倍动能等于力的位力。",
+    "run": 2800,
+    "expect": {
+     "quantity": "virial",
+     "min": 0.85,
+     "max": 1.15,
+     "text": "束缚部分的位力比回到 1 附近"
+    }
+   }
+  ]
+ },
+ {
+  "id": "isingDimension",
+  "substrate": "ising",
+  "title": "同一个模型，同一个温度，换一个维度",
+  "title_en": "The same model at the same temperature in another dimension",
+  "url": "/?scenario=isingDimension",
+  "total_run": 4400,
+  "steps": [
+   {
+    "text": "二维晶格，温度 4.0。它远高于二维的临界温度 2.27：每个自旋只有四个邻居，拉不住彼此，没有净磁化。",
+    "set": {
+     "dim": 2,
+     "L": 8,
+     "T": 4,
+     "h": 0,
+     "j2": 0
+    },
+    "run": 400,
+    "expect": {
+     "quantity": "magnetisation",
+     "max": 0.1,
+     "text": "二维、T = 4：无序，|m| 低于 0.1"
+    }
+   },
+   {
+    "text": "规则和温度都不变，只把晶格换成三维：现在每个自旋有六个邻居，同样的 4.0 落在三维的临界温度 4.51 之下。畴开始长大，最后一种取向胜出。",
+    "set": {
+     "dim": 3,
+     "L3": 5
+    },
+    "run": 4000,
+    "expect": {
+     "quantity": "magnetisation",
+     "min": 0.5,
+     "text": "三维、T = 4：有序，|m| 高于 0.5"
+    }
+   }
+  ]
+ },
+ {
+  "id": "quench",
+  "substrate": "ising",
+  "title": "把 Ising 晶格淬火穿过临界温度",
+  "title_en": "Quench an Ising lattice through the critical temperature",
+  "url": "/?scenario=quench",
+  "total_run": 7400,
+  "steps": [
+   {
+    "text": "高温 T = 3.0：自旋几乎独立翻转，没有净磁化。",
+    "set": {
+     "L": 8,
+     "T": 3,
+     "h": 0,
+     "j2": 0
+    },
+    "run": 400,
+    "expect": {
+     "quantity": "magnetisation",
+     "max": 0.1,
+     "text": "无序：|m| 低于 0.1"
+    }
+   },
+   {
+    "text": "停在临界温度 T = 2.27：各种大小的团簇同时存在，粗粒化后的图看起来和原图一样。",
+    "set": {
+     "T": 2.27
+    },
+    "run": 3000
+   },
+   {
+    "text": "降到 T = 1.8：上下对称被自发打破，畴不断长大；能量先接近精确解，磁化强度要等畴壁消失。",
+    "set": {
+     "T": 1.8
+    },
+    "run": 4000,
+    "expect": {
+     "quantity": "energy",
+     "max": -1.8,
+     "text": "能量降到 −1.8 以下（Onsager 精确解为 −1.86）"
+    }
+   }
+  ]
+ },
+ {
+  "id": "pottsOrder",
+  "substrate": "potts",
+  "title": "多一种状态，相变就换一种：连续的变成不连续的",
+  "title_en": "More states, a different transition: continuous turns discontinuous",
+  "url": "/?scenario=pottsOrder",
+  "total_run": 184000,
+  "steps": [
+   {
+    "text": "三种状态的 Potts 模型，停在它的相变点上，从全同（有序）的状态出发。等能量稳定下来。",
+    "set": {
+     "q": 3,
+     "L": 8,
+     "tau": 1,
+     "start": 1
+    },
+    "run": 80000,
+    "expect": {
+     "quantity": "energy",
+     "agree": true,
+     "text": "q = 3，有序出发：能量到达严格值 −(1 + 1/√3) ≈ −1.577"
+    }
+   },
+   {
+    "text": "同一个 q、同一个温度，改从随机（无序）的状态出发。",
+    "set": {
+     "start": 0
+    },
+    "run": 80000,
+    "expect": {
+     "quantity": "energy",
+     "agree": true,
+     "text": "q = 3，无序出发：到达同一个能量（连续相变，没有潜热）"
+    }
+   },
+   {
+    "text": "把状态数加到八种，仍停在相变点上，从有序出发。",
+    "set": {
+     "q": 8,
+     "L": 9,
+     "tau": 1,
+     "start": 1
+    },
+    "run": 12000,
+    "expect": {
+     "quantity": "energy",
+     "agree": true,
+     "text": "q = 8，有序出发：停在有序相的能量 ≈ −1.597"
+    }
+   },
+   {
+    "text": "同一个温度，从无序出发。这一次它停在另一个能量上：两相在同一个温度共存，相差的就是潜热。",
+    "set": {
+     "start": 0
+    },
+    "run": 12000,
+    "expect": {
+     "quantity": "energy",
+     "agree": true,
+     "text": "q = 8，无序出发：停在无序相的能量 ≈ −1.110（比有序相高 0.486）"
+    }
+   }
+  ]
+ },
+ {
+  "id": "pancake",
+  "substrate": "mesh",
+  "title": "一个密度波自己塌成一张薄片",
+  "title_en": "A density wave collapses into a sheet by itself",
+  "url": "/?scenario=pancake",
+  "total_run": 640,
+  "steps": [
+   {
+    "text": "二十六万个粒子几乎均匀地铺满周期盒子，只沿 x 有一个幅度 2% 的密度波。粒子之间只有引力。密的地方引力更强，于是更密：幅度按 e^{γt} 增长，γ = √(4πG)。壳层交叉之前这有严格解。",
+    "set": {
+     "G": 1,
+     "initial": 0,
+     "amplitude": 0.02,
+     "side": 6,
+     "grid": 6,
+     "dt": 0.002
+    },
+    "run": 500,
+    "expect": {
+     "quantity": "mode",
+     "agree": true,
+     "text": "基频模的幅度沿 Zel’dovich 严格解增长（到壳层交叉时刻的九成）"
+    }
+   },
+   {
+    "text": "再往前走，过了理论预言的壳层交叉时刻（t ≈ 1.10）：密度波的波峰塌成一张垂直于 x 的薄片，粒子流从两侧穿过它。",
+    "run": 140,
+    "expect": {
+     "quantity": "peak",
+     "min": 5,
+     "text": "薄片处的密度是平均密度的好几倍"
+    }
+   }
+  ]
+ },
+ {
+  "id": "web",
+  "substrate": "mesh",
+  "title": "几乎均匀的物质自己长出丝和团块",
+  "title_en": "Nearly uniform matter grows filaments and clumps by itself",
+  "url": "/?scenario=web",
+  "total_run": 750,
+  "steps": [
+   {
+    "text": "这一次的初始扰动是随机的，密度涨落的均方根只有 3%。先看线性阶段：所有波长按同一个速率 γ = √(4πG) 增长。",
+    "set": {
+     "G": 1,
+     "initial": 1,
+     "amplitude": 0.03,
+     "side": 6,
+     "grid": 6,
+     "dt": 0.002
+    },
+    "run": 250,
+    "expect": {
+     "quantity": "sigma",
+     "agree": true,
+     "text": "密度涨落按 e^{γt} 增长（线性理论）"
+    }
+   },
+   {
+    "text": "继续走。涨落长到 1 的量级之后不再是线性的：先塌成薄片，薄片相交成丝，丝的交点长出团块。把显示切到“中间的薄片”看得最清楚。",
+    "run": 500,
+    "expect": {
+     "quantity": "peak",
+     "min": 30,
+     "text": "团块里的密度是平均密度的几十倍以上"
+    }
+   }
+  ]
+ },
+ {
+  "id": "micelles",
+  "substrate": "md",
+  "title": "一头亲水一头疏水的分子自己聚成小团",
+  "title_en": "Molecules with a water-loving head and water-hating tails gather into small clusters",
+  "url": "/?scenario=micelles",
+  "total_run": 52000,
+  "steps": [
+   {
+    "text": "四千八百个三珠分子：一个头（深色）拖着两个尾（橙色）。尾与尾相吸，头只会把别的珠子推开。温度很高时热运动占上风，大多数分子各走各的。",
+    "set": {
+     "dim": 2,
+     "walls": 0,
+     "chain": 3,
+     "nx": 120,
+     "density": 0.15,
+     "temperature": 3,
+     "epsBB": 3,
+     "thermostat": 1,
+     "integrator": 0,
+     "obstacle": 0,
+     "drive": 0,
+     "gravity": 0,
+     "deltaT": 0
+    },
+    "run": 8000,
+    "expect": {
+     "quantity": "freeFraction",
+     "min": 0.5,
+     "text": "高温：一半以上的分子落单"
+    }
+   },
+   {
+    "text": "把温度降到 0.7。尾巴一旦碰到一起就不容易分开，分子聚成一个个小团：尾朝里，头朝外。头挡在外面，所以小团长到十来个分子就停下，而不是并成一整块。",
+    "set": {
+     "temperature": 0.7
+    },
+    "run": 40000,
+    "expect": {
+     "quantity": "freeFraction",
+     "max": 0.1,
+     "text": "低温：几乎没有落单的分子"
+    }
+   },
+   {
+    "text": "看右侧“聚集数的分布”：它在几个到十几个分子处有一个峰。",
+    "run": 4000,
+    "expect": {
+     "quantity": "aggregation",
+     "min": 5,
+     "text": "平均聚集数在 5 以上"
+    }
+   }
+  ]
+ }
+]
