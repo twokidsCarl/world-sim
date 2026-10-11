@@ -149,6 +149,11 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
 
       {(job.phase === 'failed' || job.phase === 'cancelled') && job.changed.length + (job.phase === 'cancelled' ? 1 : 0) > 0 && (
         <div className="row">
+          {job.phase === 'failed' && job.changed.length > 0 && (
+            <button className="primary" disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'resume'))} title="不重来：用它已经改好的文件，从跑测试接着走到开 PR">
+              接着做：重跑测试并提交
+            </button>
+          )}
           <button disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'revert'))}>
             还原它改过的文件
           </button>
@@ -156,7 +161,7 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
         </div>
       )}
 
-      {(job.changed.length > 0 || job.test_log || notes.length > 0) && (
+      {(job.changed.length > 0 || job.test_log || notes.length > 0 || job.denied.length > 0) && (
         <details className="job-log">
           <summary>经过{job.changed.length > 0 && `，改了 ${job.changed.length} 个文件`}</summary>
           {job.changed.length > 0 && (
@@ -173,6 +178,17 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
               </li>
             ))}
           </ol>
+          {job.repairs > 0 && <p className="small">测试没过之后，让它修了 {job.repairs} 轮。</p>}
+          {job.denied.length > 0 && (
+            <>
+              <p className="small">这些操作被拒绝了（不在放行的范围里）：</p>
+              <ul className="plain small">
+                {job.denied.map((d) => (
+                  <li key={d}><code>{d}</code></li>
+                ))}
+              </ul>
+            </>
+          )}
           {job.test_log && <pre className="job-pre">{job.test_log}</pre>}
         </details>
       )}

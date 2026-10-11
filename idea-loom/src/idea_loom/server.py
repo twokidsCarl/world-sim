@@ -502,6 +502,11 @@ def cancel_job(job_id: str) -> jobs.Job:
     return _do(jobs.cancel, job_id)
 
 
+@app.post("/api/jobs/{job_id}/resume", response_model=jobs.Job)
+def resume_job(job_id: str) -> jobs.Job:
+    return _do(jobs.resume, job_id)
+
+
 @app.post("/api/jobs/{job_id}/revert")
 def revert_job(job_id: str) -> dict[str, list[str]]:
     return {"reverted": _do(jobs.revert, job_id)}

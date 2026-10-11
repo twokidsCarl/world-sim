@@ -102,6 +102,13 @@ generated from it.
     When it finishes the runner itself checks that nothing outside the directory changed
     (if anything did, the job fails with no PR), re-runs the tests (stopping on a
     failure), calls `tools/pr.sh`, and after the merge marks the wish done or the task merged.
+  - 以程序重跑的测试为准，不以 Claude 自己说"做完了"为准。测试没过会把输出交回给它修，最多两轮。它被拒绝的操作会记下来显示在作业的"经过"里。
+    The tests re-run by the runner decide the outcome, not the agent's own "done". Failing
+    output is handed back to it for repair, twice at most. Operations it was denied are
+    recorded and shown in the job's log.
+  - 失败的作业如果已经改了文件，可以点"接着做"直接从跑测试走到开 PR，不用重来；也可以一键还原。
+    A failed job that already changed files can be continued from the tests to the PR
+    without starting over, or reverted in one click.
   - 同一个目录同时只跑一个作业。开工前该目录的代码必须没有未提交的改动，这样失败或取消后可以一键还原。
     One job per directory at a time. The directory's code must have no uncommitted changes
     before a job starts, so a failed or cancelled job can be reverted with one click.
