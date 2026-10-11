@@ -48,6 +48,15 @@ world-sim 的 `idea-loom` 一个进程托管所有模拟，mindloop 在 `http://
 - 嵌入时不会一进来就调用模型，等有人点了才生成独白（一页上可能同时排着很多张卡）。
 - 页面看不见时，播放和轮询都停下。
 
+## 给外面的 AI Agent
+
+`sim.json` 的 `agent` 一节把两样东西接给外来的 Agent（经 idea-loom 的文档、`/api/v1` 和 MCP）：
+
+- 数据集 `cases`：`cases/*/*.yaml`，每个文件一条。标题和看点有英文（`title_en`、`hook_en`），其余只有中文。
+- 计算 `compute`：`POST /api/compute`，确定、不调用模型。`Params` 的全部参数都开放；参数不对时回 400，写明哪个字段、允许什么值。
+
+调用 `claude` 的接口（独白、估计一句话的字面含义）不对外。给 `Params` 加了或改了参数，要同时改 `sim.json` 里的输入说明，测试会核对两边一致。
+
 ## 环境变量
 
 `MINDLOOP_MODEL`（默认 sonnet）、`MINDLOOP_CLAUDE_BIN`、`MINDLOOP_CACHE`、`MINDLOOP_TIMEOUT`、`MINDLOOP_CASES`。
@@ -111,6 +120,15 @@ world-sim's `idea-loom` hosts every simulation in one process; mindloop is at `h
 - With `?embed=1` only the stage remains: no library, summary folded away; on arrival it plays by itself from level 0 up to the source depths.
 - When embedded it does not call the model on arrival; monologues are generated once someone interacts (a page may show many cards at once).
 - While the page is hidden, playback and polling stop.
+
+## For outside AI agents
+
+The `agent` section of `sim.json` offers two things to outside agents (through idea-loom's documents, `/api/v1` and MCP):
+
+- The `cases` dataset: `cases/*/*.yaml`, one record per file. Title and hook also exist in English (`title_en`, `hook_en`); the rest is Chinese only.
+- The `compute` computation: `POST /api/compute`, deterministic, no model call. Every field of `Params` is open; a bad parameter gets a 400 naming the field and the allowed values.
+
+Routes that call `claude` (monologues, estimating a message's literal meaning) are not offered. Adding or changing a field of `Params` means updating the input schema in `sim.json` too; a test checks that the two agree.
 
 ## Environment variables
 

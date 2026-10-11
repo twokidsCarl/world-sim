@@ -1,4 +1,4 @@
-"""案例库加载：cases/<类别>/<id>.yaml。"""
+"""案例库加载：cases/<类别>/<id>.yaml。 / Loads the case library: cases/<category>/<id>.yaml."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def _load_all(root: str) -> dict[str, Case]:
         data.setdefault("category", path.parent.name)
         try:
             case = Case.model_validate(data)
-        except Exception as e:  # 让出错的文件一眼可见
+        except Exception as e:  # 让出错的文件一眼可见 / make the faulty file obvious
             raise ValueError(f"案例文件有误 {path}: {e}") from e
         if case.id in out:
             raise ValueError(f"案例 id 重复: {case.id}")
@@ -40,5 +40,5 @@ def all_cases() -> dict[str, Case]:
 def get_case(case_id: str) -> Case:
     cases = all_cases()
     if case_id not in cases:
-        raise KeyError(f"没有这个案例: {case_id}（可用: {', '.join(cases)}）")
-    return cases[case_id].model_copy(deep=True)  # 调用方可以放心改参数
+        raise KeyError(f"case_id：没有这个案例 {case_id}（可用: {', '.join(cases)}） / case_id: no such case")
+    return cases[case_id].model_copy(deep=True)  # 调用方可以放心改参数 / callers may modify it freely

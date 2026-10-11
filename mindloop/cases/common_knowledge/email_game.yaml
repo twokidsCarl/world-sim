@@ -1,5 +1,7 @@
 title: 电子邮件博弈
+title_en: "The electronic mail game"
 hook: 确认了一万次，仍然不敢动手
+hook_en: "Reader · Ten thousand confirmations, and still neither dares to move"
 summary: >
   两人想协同行动，但只有在某种状态下才值得，且只有甲知道状态。甲的电脑自动发信告知乙，
   乙的电脑自动回执，甲的再回执……每封信都有极小的概率丢失，直到某一封丢了为止。

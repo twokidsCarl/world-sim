@@ -114,8 +114,10 @@ class Canonical(BaseModel):
 class Case(BaseModel):
     id: str
     title: str
+    title_en: str = ""  # 标题和看点的英文；其余文字只有中文 / English title and hook; the rest is Chinese only
     category: Literal["implicature", "bluff", "coordination", "cheap_talk", "common_knowledge"]
-    hook: str = ""  # 一句话看点
+    hook: str = ""  # 一句话看点 / the one-line hook
+    hook_en: str = ""
     summary: str = ""
     source: Source
     a: Person

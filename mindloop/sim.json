@@ -359,5 +359,231 @@
       "idea": null,
       "url": "/#c=muddy_children"
     }
-  ]
+  ],
+  "agent": {
+    "summary": {
+      "zh": "两个人互相猜：我知道你知道我知道。25 个有出处的案例（空城计、福尔摩斯与莫里亚蒂、爱伦·坡的猜单双……）。其中 16 个带博弈（记录里有 game 字段），能按“双方各想几层”算出结果；另外 9 个是读本，只有分层的文字讲解。先在 cases 里找案例的编号，再用 compute 跑。",
+      "en": "Two people guessing each other: I know that you know that I know. 25 sourced cases (the Empty Fort, Holmes and Moriarty, Poe's odd-or-even…). 16 of them carry a game (the record has a `game` field) and can be computed for \"how many levels each side reasons\"; the other 9 are readers with a level-by-level prose account only. Find a case id in `cases`, then run `compute`."
+    },
+    "datasets": [
+      {
+        "id": "cases",
+        "title": {
+          "zh": "案例",
+          "en": "Cases"
+        },
+        "description": {
+          "zh": "每个案例：故事梗概、两个人物、出处、原作里两人各想到第几层（canonical）；可运行的案例还有博弈的结构（game：状态、话、行动、字面相容度、双方收益），读本则有分层讲解（layers）。_id 就是 compute 要的 case_id，_group 是类别（bluff、cheap_talk、common_knowledge、coordination、implicature）。没有 game 字段的案例不能交给 compute。",
+          "en": "Each case: the story, the two characters, the source and how many levels each reasons in the original (`canonical`); a runnable case also has the structure of the game (`game`: states, messages, actions, literal fit, both payoffs), and a reader has a level-by-level account (`layers`). `_id` is the case_id that `compute` takes and `_group` the category (bluff, cheap_talk, common_knowledge, coordination, implicature). A case without a `game` field cannot be passed to `compute`."
+        },
+        "path": "cases/*/*.yaml",
+        "search": [
+          "_id",
+          "title",
+          "title_en",
+          "hook",
+          "hook_en",
+          "summary",
+          "source"
+        ],
+        "fields": [
+          "_id",
+          "_group",
+          "title",
+          "title_en",
+          "hook",
+          "hook_en",
+          "summary",
+          "source",
+          "a",
+          "b",
+          "canonical",
+          "game"
+        ],
+        "licence": "MIT (summaries written for this repository; quoted works keep their own copyright)",
+        "provenance": {
+          "zh": "梗概和博弈的数值（先验、收益、字面相容度）是为这个仓库写的，是对故事的一种建模，不是原作里的数。source 字段写明作品、作者、位置、引文和网址；verified 为 true 的 22 个是对着原文核对过回目和引文的，其余 3 个（schelling_nyc、muddy_children、scalar_some）没有核对。标题和看点有英文（title_en、hook_en），其余文字只有中文。",
+          "en": "The summaries and the numbers of each game (priors, payoffs, literal fit) were written for this repository; they are one way of modelling the story, not figures from the original. `source` gives the work, author, locator, quotation and URL; the 22 cases with `verified: true` had chapter and quotation checked against the original, and the other 3 (schelling_nyc, muddy_children, scalar_some) were not checked. Title and hook also exist in English (`title_en`, `hook_en`); everything else is Chinese only."
+        }
+      }
+    ],
+    "capabilities": [
+      {
+        "id": "compute",
+        "title": {
+          "zh": "算一个案例",
+          "en": "Compute a case"
+        },
+        "description": {
+          "zh": "给定案例和双方各想几层，算出每个人脑中每一层怎么想、最后各自怎么选、结果如何。第 0 层照字面或凭直觉，第 d 层针对对方的第 d-1 层做软最优回应。还可以做反事实：换实情、调理性度、替某一方选、把某一层的结论钉成别的、加一句自己的话。确定性，不调用模型。只有文字讲解的读本会返回 400。",
+          "en": "Given a case and how many levels each side reasons, compute what each thinks at every level, what each finally chooses and the outcome. Level 0 reads literally or goes by gut; level d soft-best-responds to the other side's level d-1. Counterfactuals are available: change the true state, tune rationality, choose for one side, pin a level's conclusion to something else, add a message of your own. Deterministic; no model is called. A prose-only reader returns 400."
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/compute"
+        },
+        "input": {
+          "type": "object",
+          "required": [
+            "case_id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "case_id": {
+              "type": "string",
+              "description": "cases 数据集里的 _id，要是带 game 字段的案例，例如 kongchengji / the _id from the `cases` dataset; must be a case with a `game` field, e.g. kongchengji"
+            },
+            "depth_a": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "a（说话的一方 / 甲）想几层；不给就用原作里的 / levels a (the speaker, or player A) reasons; the original story's when omitted"
+            },
+            "depth_b": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "b（听的一方 / 乙）想几层；不给就用原作里的 / levels b (the listener, or player B) reasons; the original story's when omitted"
+            },
+            "lam_a": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 50,
+              "description": "a 的理性度：0 是乱选，越大越接近最优回应；不给就用案例自带的（0.5–3） / a's rationality: 0 is uniform random, higher is closer to best response; the case's own value (0.5–3) when omitted"
+            },
+            "lam_b": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 50,
+              "description": "b 的理性度 / b's rationality"
+            },
+            "true_state": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15,
+              "description": "只用于信号博弈：真实的状态是 game.states 里的第几个（从 0 数） / signaling games only: index into game.states of the true state (from 0)"
+            },
+            "bias": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "只用于二次收益的案例（game.quadratic 不为空，目前是 crawford_sobel）：说话者的私心有多大 / quadratic-payoff cases only (game.quadratic is set; currently crawford_sobel): the size of the speaker's bias"
+            },
+            "forced_a": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 31,
+              "description": "替 a 选：信号博弈里是 game.messages 的下标，同时博弈里是 game.actions_a 的下标。返回里的 played.a 说这个选择相当于想了几层 / choose for a: an index into game.messages (signaling) or game.actions_a (simultaneous). `played.a` in the reply says how many levels of thought the choice equals"
+            },
+            "forced_b": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 31,
+              "description": "替 b 选：game.actions（信号博弈）或 game.actions_b（同时博弈）的下标 / choose for b: an index into game.actions (signaling) or game.actions_b (simultaneous)"
+            },
+            "pins": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "把某一层的结论钉死，外层据此重算：{谁脑中的塔 a|b: {层号: {行: 列}}}。行和列是那一层 rows、cols 的下标（见返回的 towers）；同时博弈只有第 0 行。比塔还深的层会被忽略 / pin a level's conclusion and let the outer levels recompute: {whose tower, a|b: {level: {row: column}}}. Row and column index that level's `rows` and `cols` (see `towers` in the reply); a simultaneous game has row 0 only. Levels deeper than the tower are ignored",
+              "properties": {
+                "a": {
+                  "type": "object",
+                  "maxProperties": 13,
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^(0|[1-9]|1[0-2])$": {
+                      "type": "object",
+                      "maxProperties": 16,
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^[0-9]{1,2}$": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 31
+                        }
+                      }
+                    }
+                  }
+                },
+                "b": {
+                  "type": "object",
+                  "maxProperties": 13,
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^(0|[1-9]|1[0-2])$": {
+                      "type": "object",
+                      "maxProperties": 16,
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^[0-9]{1,2}$": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 31
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "extra_messages": {
+              "type": "array",
+              "maxItems": 8,
+              "description": "只用于信号博弈：给说话者多加几句可说的话，排在 game.messages 后面 / signaling games only: extra messages the speaker may use, appended to game.messages",
+              "items": {
+                "type": "object",
+                "required": [
+                  "text",
+                  "literal"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "这句话 / the message"
+                  },
+                  "cost": {
+                    "type": "number",
+                    "minimum": -100,
+                    "maximum": 100,
+                    "description": "说这句话的代价，从说话者的收益里扣；缺省 0 / cost of saying it, subtracted from the speaker's payoff; 0 when omitted"
+                  },
+                  "literal": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 16,
+                    "items": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "description": "字面上这句话与每个状态有多相容，每个状态一个数，不能全是 0 / how well the message literally fits each state, one number per state, not all 0"
+                  }
+                }
+              }
+            },
+            "ladder_depth": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 12,
+              "description": "返回里 analysis 的阶梯算到几层，缺省 12 / how many levels the `analysis` ladder in the reply covers; 12 when omitted"
+            }
+          }
+        },
+        "output": {
+          "zh": "一个对象：case（案例的说明）、game（实际用的博弈）、depth 和 lam（实际用的层数和理性度）、towers.a / towers.b（每个人脑中从第 0 层到最高层：role、policy[行][列]、rows、cols、choice、belief、一句中文结论 line）、outcome（各自的选择、收益，信号博弈还有听者猜对没有）、analysis（两人同步加深时每层的结论和指标，走向是 converged、cycle 还是 unsettled）、equilibrium（无限层的极限）、canonical_match（与原作是否一致）、played（用了 forced 时，这个选择相当于几层）。",
+          "en": "An object: `case` (the case description), `game` (the game actually used), `depth` and `lam` (the depths and rationalities actually used), `towers.a` / `towers.b` (each person's tower from level 0 to the top: role, policy[row][column], rows, cols, choice, belief and a one-line conclusion `line` in Chinese), `outcome` (both choices and payoffs; for signaling games also whether the listener guessed right), `analysis` (conclusions and metrics per level as both deepen together, with a verdict of converged, cycle or unsettled), `equilibrium` (the infinite-depth limit), `canonical_match` (whether it agrees with the original) and `played` (with a forced choice, the depth it is equivalent to)."
+        },
+        "deterministic": true,
+        "seconds": 5,
+        "example": {
+          "case_id": "kongchengji",
+          "depth_a": 3,
+          "depth_b": 2
+        }
+      }
+    ]
+  }
 }
