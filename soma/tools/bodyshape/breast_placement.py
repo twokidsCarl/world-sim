@@ -33,11 +33,12 @@ def main():
     V = mhrlib.run(st['identity'], st['mp'], lod, True)[0] + st['offsets']
     F = mhrlib.faces(lod)
     fb = Body('female')
-    DV, DF = fb.merged(lambda p: p['tissue'] in Body.DEEP and p['system'] != 'integumentary')
+    # 胸壁 = 除 HRA 乳腺部件以外的深部结构 / chest wall = the deep parts other than the HRA mammary parts
+    DV, DF = fb.merged(lambda p: p['tissue'] in Body.DEEP and p['system'] != 'integumentary' and not p['id'].startswith('HRA_'))
     import igl
     out, lines = {}, []
     for S, sg in (('L', 1), ('R', -1)):
-        parts = [p for p in fb.parts if p['id'].startswith('HRA_') and p['id'].endswith('_' + S)]
+        parts = [p for p in fb.parts if p['id'].startswith('HRA_') and p['id'].endswith('_' + S) and p['system'] == 'integumentary']   # 只取乳腺部件（HRA 还有卵巢韧带等）/ mammary parts only (HRA also has ovarian ligaments and the like)
         inner = np.vstack([fb.mesh(p)[0] for p in parts if p['tissue'] != 'skin'])
         nip = np.vstack([fb.mesh(p)[0] for p in parts if 'nipple' in p['id']])
         fat = np.vstack([fb.mesh(p)[0] for p in parts if p['id'].startswith('HRA_fat')])
@@ -61,19 +62,39 @@ def main():
                 best = (float(sc), float(np.percentile(dg, 99)), float(dg.max()))
                 break
         dg0 = signed_distance(A + T + s_n * (inner - A), V, F) * 1000
-        tip_new = A + T + (best[0] if best else s_n) * (tip - A)
+        sc_use = best[0] if best else s_n
+        tip_new = A + T + sc_use * (tip - A)
         tip_sd = float(signed_distance(tip_new[None], V, F)[0] * 1000)
+        # 乳头、乳晕部件另给一个平移：缩小后它们落在皮肤下面；把乳晕移到皮肤面上（乳晕各点到皮肤的有符号距离中位数为 0），乳头随之露出。
+        # A separate translation for the nipple and areola parts: after the reduced scale they lie under the skin; the
+        # areola is moved onto the skin (median signed distance of its points 0) and the nipple then stands out of it.
+        sk_parts = [p for p in parts if p['tissue'] == 'skin' or 'nipple' in p['id'] or 'areola' in p['id']]
+        sv = A + T + sc_use * (np.vstack([fb.mesh(p)[0] for p in sk_parts]) - A)
+        ar = [p for p in parts if 'areola' in p['id']] or sk_parts
+        av = A + T + sc_use * (np.vstack([fb.mesh(p)[0] for p in ar]) - A)
+        c2 = igl.point_mesh_squared_distance(np.ascontiguousarray(tip_new[None]), np.ascontiguousarray(V), np.ascontiguousarray(F))[2][0]
+        dirn = (c2 - tip_new) / max(np.linalg.norm(c2 - tip_new), 1e-9) * (1.0 if tip_sd < 0 else -1.0)
+        noff = -float(np.median(signed_distance(av, V, F))) * dirn
+        for _ in range(3):
+            noff = noff - float(np.median(signed_distance(av + noff, V, F))) * dirn
+        sd_ar = signed_distance(av + noff, V, F) * 1000
+        sd_tip = float(signed_distance((tip_new + noff)[None], V, F)[0] * 1000)
+        nip_info = {'parts': [p['id'] for p in sk_parts], 'extraTranslationM': [round(float(x), 4) for x in noff],
+                    'areolaToSkinMm': {'median': round(float(np.median(sd_ar)), 1), 'p5': round(float(np.percentile(sd_ar, 5)), 1), 'p95': round(float(np.percentile(sd_ar, 95)), 1)},
+                    'nippleTipOutsideSkinMm': round(sd_tip, 1)}
         out[S] = {'aboutPoint': [round(float(x), 4) for x in A], 'translationM': [round(float(x), 4) for x in T],
                   'scaleNippleOnApex': round(s_n, 3), 'glandAtThatScale': {'p99Mm': round(float(np.percentile(dg0, 99)), 1), 'maxMm': round(float(dg0.max()), 1)},
                   'scale': round(best[0], 3) if best else None, 'glandAtScale': {'p99Mm': round(best[1], 1), 'maxMm': round(best[2], 1)} if best else None,
                   'nippleTipAfterMm': {'position': [round(float(x), 4) for x in tip_new], 'signedDistanceToSkin': round(tip_sd, 1)},
+                  'nippleAndAreola': nip_info,
                   'skinApex': [round(float(x), 4) for x in apex], 'chestWallBehindApex': [round(float(x), 4) for x in wall],
                   'skinBreastProjectionMm': round(float((apex[2] - wall[2]) * 1000), 1), 'hraProjectionMm': round(float((tip[2] - A[2]) * 1000), 1)}
         o = out[S]
         lines.append(f'breast {S}: about A = {o["aboutPoint"]} m; translation T = {o["translationM"]} m; skin breast projects {o["skinBreastProjectionMm"]} mm from the chest wall, '
                      f'the HRA breast {o["hraProjectionMm"]} mm; scale {o["scaleNippleOnApex"]} puts the nipple tip on the apex (gland p99 {o["glandAtThatScale"]["p99Mm"]:+.1f} mm, max {o["glandAtThatScale"]["maxMm"]:+.1f} mm); '
-                     f'recommended scale {o["scale"]} gives gland p99 {o["glandAtScale"]["p99Mm"] if best else "n/a"} mm, nipple tip {tip_sd:+.1f} mm from the skin')
-    json.dump({'transform': "p' = aboutPoint + translationM + scale * (p - aboutPoint), applied to every HRA part of that side",
+                     f'recommended scale {o["scale"]} gives gland p99 {o["glandAtScale"]["p99Mm"] if best else "n/a"} mm, nipple tip {tip_sd:+.1f} mm from the skin; '
+                     f'nipple and areola parts {nip_info["parts"]} get the extra translation {nip_info["extraTranslationM"]} m: areola median {nip_info["areolaToSkinMm"]["median"]:+.1f} mm from the skin, nipple tip {sd_tip:+.1f} mm outside')
+    json.dump({'transform': "p' = aboutPoint + translationM + scale * (p - aboutPoint), applied to every HRA part of that side; the parts listed under nippleAndAreola.parts then also get + extraTranslationM",
                'note': {'zh': '有符号距离：正 = 在皮肤外。skin 为 female-skin/skin.obj。', 'en': 'signed distances: positive = outside the skin. The skin is female-skin/skin.obj.'},
                'sides': out}, open(os.path.join(d, 'breast-placement.json'), 'w'), ensure_ascii=False, indent=1)
     open(os.path.join(d, 'breast-placement.txt'), 'w').write('\n'.join(lines))

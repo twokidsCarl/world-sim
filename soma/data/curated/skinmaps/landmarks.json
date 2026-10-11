@@ -44,7 +44,7 @@
      ]
     }
    ],
-   "armLimit": "shoulder",
+   "armLimit": "armSkinTop",
    "armLimitAbove": "armSkinTop"
   },
   "arm": {
@@ -532,7 +532,9 @@
       ]
      },
      "to": "ant"
-    }
+    },
+    "near": "umbilicusLevel",
+    "withinMm": 50
    }
   },
   "eop": {
@@ -644,32 +646,15 @@
    "deg": 320
   },
   "K_T2": {
-   "first": [
-    {
-     "frameScan": {
-      "frame": "arm",
-      "deg": 270,
-      "t": [
-       0.1,
-       0.5
-      ],
-      "maxMm": 80
-     }
-    },
-    {
-     "at": {
-      "offset": [
-       "shoulder",
-       [
-        -0.035,
-        -0.06,
-        0
-       ]
-      ]
-     },
-     "to": "nearestAny"
-    }
-   ]
+   "frameScan": {
+    "frame": "arm",
+    "deg": 270,
+    "t": [
+     0.1,
+     0.5
+    ],
+    "maxMm": 80
+   }
   },
   "mcl": "clavicleMid",
   "ics3": {
@@ -1242,40 +1227,121 @@
    ]
   },
   "K_T3": {
-   "nerveCross": "{side} third intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} third intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T4": {
-   "nerveCross": "{side} fourth intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} fourth intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T5": {
-   "nerveCross": "{side} fifth intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} fifth intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T6": {
-   "nerveCross": "{side} sixth intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} sixth intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T7": {
-   "nerveCross": "{side} seventh intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} seventh intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T8": {
-   "nerveCross": "{side} eighth intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} eighth intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T9": {
-   "nerveCross": "{side} ninth intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} ninth intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T10": {
-   "nerveCross": "{side} tenth intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} tenth intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "K_T11": {
-   "nerveCross": "{side} eleventh intercostal nerve",
-   "x": "mcl"
+   "at": {
+    "xyz": [
+     "mcl",
+     {
+      "nervePoint": "{side} eleventh intercostal nerve",
+      "x": "mcl"
+     },
+     "core"
+    ]
+   },
+   "to": "ant"
   },
   "nippleLevelRibs": {
    "at": {
@@ -2046,12 +2112,12 @@
    "en": "Where the T2–T11 bands end beside the anterior midline: the height of the intercostal nerve's anterior end (its point nearest the midline), carried horizontally to the midline. Skin over the sternum and between the breasts then follows the level of the nerve ends instead of the distance round the surface."
   },
   "umbilicus": {
-   "zh": "皮肤上有脐凹（深度 ≥ 5 mm）时取脐凹；没有做出脐的皮肤，按常用的体表投影取 L3–L4 椎间盘平面的前正中线旁。",
-   "en": "The umbilical dimple when the skin has one (at least 5 mm deep); on a skin without a modelled umbilicus, the point beside the anterior midline at the level of the L3–L4 disc, its usual surface projection."
+   "zh": "皮肤上有脐凹（深度 ≥ 5 mm，且高度在 L3–L4 椎间盘平面上下 5 cm 以内）时取脐凹；否则按常用的体表投影取 L3–L4 椎间盘平面的前正中线旁。",
+   "en": "The umbilical dimple when the skin has one (at least 5 mm deep and within 5 cm of the level of the L3–L4 disc); otherwise the point beside the anterior midline at the level of the L3–L4 disc, its usual surface projection."
   },
   "K_T2": {
-   "zh": "腋窝顶：沿肱骨轴线自近端向远端（至中点为止），第一个向内侧 8 cm 内有皮肤的位置，即上臂内侧皮肤的最上端。上臂与胸壁粘连到肱骨中点以下、没有腋窝的皮肤上，退回到按肩关节偏移取最近皮肤点的旧规则。",
-   "en": "Apex of the axilla: going distally along the humeral axis (as far as its middle), the first position with skin within 8 cm medially, i.e. the top of the medial arm skin. On a skin whose arm is fused to the chest to below the middle of the humerus (no axilla) the old rule is used: the skin nearest to a point offset from the shoulder joint."
+   "zh": "腋窝顶：沿肱骨轴线自近端向远端（至中点为止），第一个向内侧 8 cm 内有皮肤的位置，即上臂内侧皮肤的最上端。（原先为上臂与胸壁粘连、没有腋窝的占位皮肤保留的退路规则已删去：两个人体现在都有腋窝。）",
+   "en": "Apex of the axilla: going distally along the humeral axis (as far as its middle), the first position with skin within 8 cm medially, i.e. the top of the medial arm skin. (The fallback rule kept for the placeholder skin whose arm was fused to the chest has been removed: both bodies now have an axilla.)"
   },
   "perineum": {
    "zh": "会阴：尾骨尖与耻骨联合连线上 55% 处下方 8.5 cm 的点所对应的最近皮肤。不用向下的射线：两股内侧皮肤在中线贴合或穿插时，射线会从股内侧远处穿出。",
@@ -2060,6 +2126,14 @@
   "armSkinTop": {
    "zh": "上臂内侧皮肤的最上端：其上方躯干与上臂连成一体。有腋窝的皮肤上即腋窝顶；上臂与胸壁粘连的皮肤上位置更低。臂内侧的种子（T2、肋间臂神经）相对此点定位。",
    "en": "Top of the medial arm skin: above it the trunk and the arm are one mass. The apex of the axilla on a skin that has one; lower on a skin whose arm is fused to the chest. The seeds of the medial arm (T2, intercostobrachial) are placed relative to it."
+  },
+  "trunk.armLimit": {
+   "zh": "腋窝顶以上，比上臂内侧皮肤最上端更靠外侧（留 12 mm 余量）的皮肤算上肢而非躯干：胸神经带的神经投影到腋后襞、腋前襞为止。原先以肩关节为界，界线恰好压在腋后襞上，左右两侧因一两个投影点之差而结果不同。",
+   "en": "Above the apex of the axilla, skin lateral to the top of the medial arm skin (less a 12 mm margin) counts as limb, not trunk: the nerve projections of the thoracic bands stop at the axillary folds. The shoulder joint used before put the limit right on the posterior fold, and one or two projected points more or less made the two sides come out differently."
+  },
+  "K_T3 … K_T11": {
+   "zh": "锁骨中线第 n 肋间隙的关键感觉点：取第 n 肋间神经中心线与锁骨中线矢状面交点的高度（在中心线两点间插值），在锁骨中线上向前投影到皮肤。原先取“神经径向投影中 X 最接近锁骨中线的皮肤顶点”，在粗网格上会偏离 1–2 cm 且左右不一，使 T8–T10 等带左右面积不等。",
+   "en": "Key sensory point in the nth intercostal space at the midclavicular line: the height at which the nth intercostal nerve's centreline crosses the sagittal plane of the midclavicular line (interpolated between centreline points), projected forwards onto the skin on that line. The earlier rule took the skin vertex of the nerve's radial projection whose X came nearest the line, which on a coarse mesh was 1–2 cm off and different on the two sides, making bands such as T8–T10 unequal left and right."
   }
  }
 }

@@ -12,9 +12,9 @@ Writes data/raw/bodyshape/out/female-skin/fit-state.npz (MHR identity, parameter
   1 姿势：取目标的姿势，把肘、腕的权重提到与其余大关节相同的两倍（肘落到 rig.json 的中心上），再解几步。
     pose: the pose of the target, solved a few more steps with elbow and wrist at twice the weight of the other large
     joints, so the elbow lands on its rig.json centre.
-  2 头：不再只缩放颅顶。头颈姿势 + 头部身份系数（20–39）+ 整个头的等比缩放，对“颅骨 + 软组织厚度”的面和两个眼球中心拟合。
-    head: no cranium-only scaling any more. Head and neck pose + the head identity (20-39) + one isotropic scale of the
-    whole head are fitted to the surface "skull + soft-tissue thickness" and to the two eyeball centres.
+  2 头：头颈姿势 + 整个头的等比缩放，对“颅骨 + 软组织厚度”的面和两个眼球中心拟合；头部身份系数固定为 0；眼以上再做颅顶缩放。
+    head: head and neck pose + one isotropic scale of the whole head are fitted to the surface "skull + soft-tissue
+    thickness" and to the two eyeball centres; the head identity is held at 0; the cranium above the eyes is then scaled.
   3 乳房体积、BMI（与目标相同的做法）。breast volume and BMI, as for the target.
   4 骨上的放松（与目标相同）。relaxation over bone, as for the target.
   5 软组织：肌肉仍在皮肤外或贴着皮肤的地方，把皮肤外移到盖住它并留出标准脂肪厚度；位移场铺开、抹平（低通），不是逐顶点顶出去。
@@ -84,7 +84,7 @@ def fit_head(ident, mp, fb, log):
         m = mp.copy()
         m[pidx] = x[:npose]
         c = ident.copy()
-        c[20:40] = x[npose:npose + 20]
+        c[20:40] = ident[20:40] + x[npose:npose + 20]   # 在传入的头部身份系数上加（女性传入的是 0）/ added to the incoming head identity (0 for the female)
         V, P, _ = mhrlib.run(c, m, 1, True)
         return scale_head(V, P, jn1, wh, x[-1]), P, c, m
 
@@ -128,8 +128,19 @@ def fit_head(ident, mp, fb, log):
         A, g = J.T @ J, J.T @ r0
         for _ in range(6):
             xn = x + np.linalg.solve(A + lam * (np.diag(np.diag(A)) + 1e-9 * np.eye(len(x))), -g)
-            xn[npose:npose + 20] = np.clip(xn[npose:npose + 20], -2.5, 2.5)
-            xn[-1] = np.clip(xn[-1], 0.85, 1.12)
+            # 头部身份系数固定为 0：放开它们（即使限幅 2.5）拟合会把多数系数顶到边界，脸被拉长到眼–颏 148 mm（她的颅骨是 93 + 软组织）。
+            # 目标那一版“脸长”就是这么来的。MHR 的平均脸在水平方向与她的颅骨相配，差的只是眼以上的高度（见下面的颅顶缩放）。
+            # The head identity is held at 0: set free (even bounded at 2.5) the fit drives most coefficients to their bounds
+            # and stretches the face to 148 mm from eye to chin (her skull has 93 + soft tissue). That is where the long
+            # face of the target came from. MHR's average face matches her skull horizontally; only the height above
+            # the eyes is short (see the cranium scale below).
+            xn[npose:npose + 20] = 0.0
+            # 整头等比缩放固定为 1：MHR 平均头的宽、长（158 / 187 mm）与她的颅骨加软组织（约 151 / 189）相配；放开它会缩到 0.97，
+            # 颅顶就更不够高。差的是眼以上的高度：MHR 眼到头顶 101 mm，她的颅骨 109 mm 加头皮。
+            # The isotropic scale of the whole head is held at 1: breadth and length of MHR's average head (158 / 187 mm)
+            # match her skull plus soft tissue (about 151 / 189); set free it shrinks to 0.97 and the crown is shorter
+            # still. What is missing is height above the eyes: 101 mm from eye to top in MHR, 109 mm of skull plus scalp in her.
+            xn[-1] = 1.0
             rn = resid(xn)
             if rn @ rn < r0 @ r0:
                 x, lam = xn, max(lam * 0.3, 1e-6)
@@ -141,6 +152,78 @@ def fit_head(ident, mp, fb, log):
             'headIdentity20to39': np.round(x[npose:npose + 20], 2).tolist(), 'pose': {n: round(float(v), 3) for n, v in zip(HEAD_POSE, x[:npose])}}
     log.append('  head: ' + json.dumps(info))
     return c, m, float(x[-1]), info
+
+
+def face_landmarks(ident, lod):
+    """MHR 网格（给定身份系数、中性姿势）正中矢状轮廓上的两个标志点，在眼球中心以下的高度（m）：口裂、颏下点。
+    口裂取上下唇相贴处那道褶里被埋住的顶点的平均高度；颏下点取正中轮廓上、比颏前点后退不超过 12 mm 的最低处。
+    身份系数为 0 时是 69 mm 和 119 mm。
+    Two landmarks on the midsagittal profile of the MHR mesh (given identity, neutral pose), as height below the eyeball
+    centres (m): stomion and menton. Stomion is the mean height of the vertices buried in the crease where the lips
+    meet; menton the lowest point of the midline profile that is no more than 12 mm behind the pogonion. For identity 0
+    they are 69 mm and 119 mm."""
+    import igl
+    V, P, _ = mhrlib.run(ident, np.zeros(204), lod, True)
+    jn, F = mhrlib.joint_names(lod), mhrlib.faces(lod)
+    e = 0.5 * (P[jn.index('l_eye')] + P[jn.index('r_eye')])
+    n = vertex_normals(V, F)
+    w = igl.fast_winding_number(np.ascontiguousarray(V), np.ascontiguousarray(F), np.ascontiguousarray(V + 0.002 * n))
+    lips = (w > 0.5) & (np.abs(V[:, 0]) < 0.03) & (V[:, 1] < e[1] - 0.04) & (V[:, 1] > e[1] - 0.10) & (V[:, 2] > e[2])
+    sto = float(e[1] - V[lips, 1].mean()) if lips.sum() > 10 else 0.069
+    mid = (np.abs(V[:, 0]) < 0.003) & (V[:, 2] > e[2] - 0.02) & (V[:, 1] < e[1] - sto - 0.02) & (V[:, 1] > e[1] - 0.16)
+    W = V[mid]
+    pog = W[:, 2].max()
+    men = float(e[1] - W[W[:, 2] > pog - 0.012][:, 1].min())
+    return sto, men
+
+
+CHIN_SOFT = 0.007     # 颏下点处的软组织厚度（假定值）/ soft tissue under the menton (assumption)
+
+
+def face_scale(V, F, pivot, wh, fb, log, marks):
+    """下半张脸的高度：MHR 平均脸眼以下比她的颅骨长（只对齐眼和颅盖时下颌上覆盖中位数 22 mm，颏肌上 31 mm，下巴成了“双下巴”）。
+    按两个标志点对眼以下的头部顶点做分段线性的高度重映射：口裂对到她上中切牙切缘上方 2 mm，颏下点对到她下颌骨最低点下方 7 mm；
+    颏以下整体上移，由头的蒙皮权重过渡到颈。前后方向不动（颏前点的前后位置本来就对得上）。返回施加这一重映射的函数。
+    Height of the lower face: below the eyes MHR's average face is longer than her skull (with only eyes and vault
+    aligned the median cover was 22 mm over the mandible and 31 mm over mentalis, a double chin). The head vertices below
+    the eyes get a piecewise-linear remap of height through two landmarks: stomion goes 2 mm above the edge of her upper
+    central incisors, menton 7 mm below the lowest point of her mandible; everything below the chin moves up with it and
+    blends into the neck by the head skin weight. Nothing moves front to back (the pogonion already agrees). Returns a
+    function that applies the remap."""
+    MHR_STOMION, MHR_MENTON = marks
+    inc = np.vstack([fb.verts(n) for n in ('Left upper central secondary incisor tooth', 'Right upper central secondary incisor tooth')])
+    sto = pivot[1] - (inc[:, 1].min() + 0.002)
+    men = pivot[1] - (fb.verts('Mandible')[:, 1].min() - CHIN_SOFT)
+    xs, ys = [0.0, MHR_STOMION, MHR_MENTON, 0.40], [0.0, sto, men, men + 0.40 - MHR_MENTON]
+    log.append(f'  lower face: stomion {MHR_STOMION * 1000:.0f} -> {sto * 1000:.1f} mm below the eyes, menton {MHR_MENTON * 1000:.0f} -> {men * 1000:.1f} mm '
+               f'(factors {sto / MHR_STOMION:.2f} above the mouth, {(men - sto) / (MHR_MENTON - MHR_STOMION):.2f} below it)')
+
+    def remap(X, zk=None):
+        d = pivot[1] - X[:, 1]
+        Y = X.copy()
+        Y[:, 1] = X[:, 1] + wh * np.where(d > 0, d - np.interp(d, xs, ys), 0.0)
+        if zk is not None:
+            Y[:, 2] = X[:, 2] + wh * np.where(d > 0, np.interp(d, xs_z, zk), 0.0)
+        return Y
+
+    # 前后方向：高度对上以后，她的唇（Lip 部件）还在 MHR 唇面后方约 9 mm，颏部骨面上的覆盖也偏厚。按高度分段把下半张脸向后移：
+    # 鼻根到鼻尖不动，口裂处移到“她的唇面在皮肤上”，颏下点处移到“颏前骨面上 10 mm”。鼻软骨仍在包住集合里，鼻尖由它们定。
+    # Front to back: with the heights matched her lips (the part "Lip") still lie about 9 mm behind MHR's lip surface and
+    # the cover over the bony chin is thick. The lower face moves back piecewise by height: nothing from nasion to the tip
+    # of the nose, at the stomion as far as puts her lip surface on the skin, at the menton as far as leaves 10 mm over
+    # the front of the bony chin. The nasal cartilages stay in the enclosure set and decide the tip of the nose.
+    xs_z = [0.0, 0.040, MHR_STOMION, MHR_MENTON, 0.40]
+    Y0 = remap(V)
+    lipv = fb.verts('Lip')
+    lipv = lipv[lipv[:, 2] > np.percentile(lipv[:, 2], 70)]
+    lip_cover = float(np.percentile(-signed_distance(lipv, Y0, F), 10))
+    man = fb.verts('Mandible')
+    chin = man[(np.abs(man[:, 0]) < 0.015) & (man[:, 2] > man[:, 2].max() - 0.006)]
+    chin_cover = float(np.min(-signed_distance(chin, Y0, F)))
+    zk = [0.0, 0.0, -max(lip_cover, 0.0), -max(chin_cover - 0.010, 0.0), -max(chin_cover - 0.010, 0.0)]
+    log.append(f'  lower face, front to back: the lips (part "Lip") lay {lip_cover * 1000:.1f} mm under the skin of the lips and the front of the bony chin had {chin_cover * 1000:.1f} mm of cover; '
+               f'moved back {-zk[2] * 1000:.1f} mm at the mouth and {-zk[3] * 1000:.1f} mm at the chin')
+    return lambda X: remap(X, zk)
 
 
 def spread(d, A, cap, rings=3, smooth=8, final=3):
@@ -178,8 +261,10 @@ def main():
     cache = os.path.join(OUT, 'pose-cache.npz')
     if '--reuse-pose' in sys.argv and os.path.exists(cache):
         cz = np.load(cache)
-        ident, mp, hs, head_info = cz['identity'].copy(), cz['mp'].copy(), float(cz['head_scale']), json.loads(str(cz['head_info']))
-        log.append('  pose and head reused from pose-cache.npz')
+        ident, mp = cz['identity'].copy(), cz['mp'].copy()
+        ident[20:40] = 0.0
+        log.append('  body pose reused from pose-cache.npz; head fitted again')
+        ident, mp, hs, head_info = fit_head(ident, mp, fb, log)
     else:
         tz = np.load(os.path.join(TARGET, 'pose-cache.npz'))
         ident, mp = tz['identity'].copy(), tz['mp'].copy()
@@ -207,9 +292,17 @@ def main():
     bmi_of = lambda W: mesh_volume(W, F) * 1010.0 / H(W) ** 2
 
     # ---- 3 乳房体积与 BMI / breast volume and BMI
+    crown = None
     for it in range(3):
         Vm0, P, _ = mhrlib.run(ident, mp, lod, True)
         Vm = scale_head(Vm0, P, jn, wh, hs)
+        if crown is None:
+            Pe = P.copy()
+            for j in ('l_eye', 'r_eye'):
+                Pe[jn.index(j)] = P[jn.index('c_head')] + hs * (P[jn.index(j)] - P[jn.index('c_head')])
+            crown = BT.head_scale(Vm, F, Pe, jn, lod, fb, log)
+            face = face_scale(crown(Vm), F, 0.5 * (Pe[jn.index('l_eye')] + Pe[jn.index('r_eye')]), wh, fb, log, face_landmarks(ident, lod))
+        Vm = face(crown(Vm))
         mask, B, apex = BT.breast_base(Vm, F, L, A)
         vols = {S: BT.patch_volume(Vm, B, F, mask, S) * 1e6 for S in 'LR'}
         fac = {S: float(np.clip(BT.BREAST_ML / max(vols[S], 1.0), 0.5, 2.5)) for S in 'LR'}
@@ -239,6 +332,8 @@ def main():
         nrm = 0.5 * nrm + 0.5 * (A @ nrm)
     nrm /= np.maximum(np.linalg.norm(nrm, axis=1), 1e-12)[:, None]
     d_bone = spread(np.einsum('ij,ij->i', Vb - V_shape, nrm).clip(0), A, capv)
+    pw = ES.face_protect(lod)[0]     # 眼睑和唇保留 MHR 自己的面 / lids and lips keep MHR's own surface
+    d_bone = d_bone * (1 - pw)
     Vb = V_shape + d_bone[:, None] * nrm
 
     # ---- 5 软组织：盖住仍在外面的肌肉，并留出标准脂肪厚度 / soft tissue: cover the muscle still outside, with standard fat over it
@@ -261,7 +356,10 @@ def main():
         m = 0.5 * m + 0.5 * (A @ m)
     extra = np.clip(t_fat - room, 0, 0.012) * np.clip(m, 0, 1)
     extra[np.isin(regV, ['head', 'hand', 'foot'])] = 0     # 头、手、足只包住，不另加厚度 / head, hand and foot are only enclosed
-    d_soft = spread(d0 + extra, A, cap_s)
+    fat_f = float(sys.argv[sys.argv.index('--fat-cover') + 1]) if '--fat-cover' in sys.argv else 1.0
+    bmi_enclose_only = bmi_of(Vb + spread(d0, A, cap_s)[:, None] * nrm)
+    d_soft = spread(d0 + fat_f * extra, A, cap_s)
+    d_soft = d_soft * (1 - pw)
     V = Vb + d_soft[:, None] * nrm
 
     # ---- 6 两大腿内侧不互穿 / the medial thighs do not interpenetrate
@@ -282,7 +380,7 @@ def main():
     mm = np.linalg.norm(V - V_shape, axis=1) * 1000
     rep = {'internalsKey': key, 'head': head_info, 'bmiByVolume': {'shape': round(bmi_of(V_shape), 2), 'afterBone': round(bmi_of(Vb), 2), 'afterSoft': round(bmi_of(V), 2)},
            'movedFromTargetShapeMm': by_region(mm, regV), 'boneRelaxationMm': by_region(d_bone * 1000, regV), 'softRelaxationMm': by_region(d_soft * 1000, regV)}
-    log.append('BMI by volume: target shape %.2f, after bone relaxation %.2f, after soft relaxation %.2f' % (bmi_of(V_shape), bmi_of(Vb), bmi_of(V)))
+    log.append('BMI by volume: target shape %.2f, after bone relaxation %.2f, after soft relaxation %.2f (%.2f if the skin only enclosed the muscle, without the standard fat over it; fat-cover factor %.2f)' % (bmi_of(V_shape), bmi_of(Vb), bmi_of(V), bmi_enclose_only, fat_f))
     log.append('skin moved from the target shape, by region (share moved > 0.5 mm, median / p95 / max mm):')
     for rid, v in rep['movedFromTargetShapeMm'].items():
         log.append(f'   {rid:10s} {100 * v["shareMoved"]:5.1f} %  {v["medianMm"]:5.1f} {v["p95Mm"]:5.1f} {v["maxMm"]:5.1f}')

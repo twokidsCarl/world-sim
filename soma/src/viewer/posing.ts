@@ -62,6 +62,12 @@ export class PoseRuntime {
     return { joints: this.jointData, muscles: this.muscleData }
   }
 
+  /** 静止几何被改写（面部表情）之后调用：丢弃按旧几何算出的缓存 / Call after the rest geometry was rewritten (facial expression): drops caches computed from the old one. */
+  invalidate(): void {
+    this.version++
+    this.posed.clear()
+  }
+
   private jointsOf(part: number, id: string, vertexCount: number): number[] {
     let j = this.joints.get(part)
     if (!j) this.joints.set(part, (j = partJoints(this.rig, id, vertexCount)))

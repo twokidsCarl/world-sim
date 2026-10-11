@@ -119,8 +119,8 @@
  "mapping": {
   "source": null,
   "note": {
-   "zh": "假设。构造原则：强度越高，PSPI 各项不减；先出现降眉和睑收紧，再出现提颊和提上唇，高强度时才皱鼻、张口、闭眼；强度 10 时 PSPI 达到上限 16。关键帧之间线性插值。",
-   "en": "Assumption. Constructed so that no PSPI term decreases with intensity; brow lowering and lid tightening appear first, then cheek raising and upper-lip raising, and nose wrinkling, mouth opening and eye closure only at high intensity; the PSPI reaches its maximum of 16 at intensity 10. Linear between keyframes."
+   "zh": "假设。构造原则：强度越高，PSPI 各项不减；先出现降眉和睑收紧，再出现提颊和提上唇，高强度时才皱鼻、张口、闭眼；强度 10 时 PSPI 达到上限 16。关键帧之间线性插值。低强度没有调高：出处只说明 PSPI ≥ 3 已属强表情、多数帧为 0（见 datasetFacts），没有给出“疼痛评分 → AU 强度”的数值；AU 强度 1（A 级，微量）对应全幅位移的 1/5 也是假设。",
+   "en": "Assumption. Constructed so that no PSPI term decreases with intensity; brow lowering and lid tightening appear first, then cheek raising and upper-lip raising, and nose wrinkling, mouth opening and eye closure only at high intensity; the PSPI reaches its maximum of 16 at intensity 10. Linear between keyframes. The low levels were not raised: the sources only say that a PSPI ≥ 3 already is a strong expression and that most frames are 0 (see datasetFacts), and give no numbers from a pain rating to AU intensities; that AU intensity 1 (level A, trace) equals one fifth of the full displacement is an assumption too."
   }
  },
  "timing": {
@@ -150,6 +150,14 @@
    "note": {
     "zh": "即使在有肩痛的病人做活动度测试时，绝大多数时间面部也没有疼痛表情；所以本映射在低强度时表情很弱。",
     "en": "Even in shoulder-pain patients during range-of-motion tests the face shows no pain expression most of the time; hence this mapping stays weak at low intensity."
+   }
+  },
+  {
+   "value": "none (PSPI = 0), trace (PSPI = 1), weak (PSPI = 2), strong (PSPI ≥ 3)",
+   "source": "prkachin2021",
+   "note": {
+    "zh": "prkachin2021 转述的一种把 PSPI 分级的做法：PSPI 达到 3 就已经算“强”的疼痛表情。可见实际观察到的 PSPI 多数很低；本映射在强度 2 时 PSPI = 2（弱）、强度 4 时 PSPI = 5，并不偏低。轻度疼痛在脸上几乎看不出来，与这些出处是一致的。",
+    "en": "A grading of the PSPI reported by prkachin2021: a PSPI of 3 already counts as a strong pain expression. Observed PSPI values are thus mostly very low; this mapping gives PSPI = 2 (weak) at intensity 2 and PSPI = 5 at intensity 4, which is not on the low side. That mild pain hardly shows on the face is consistent with these sources."
    }
   }
  ]

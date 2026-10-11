@@ -21,6 +21,14 @@
 - 男女切换保留视角和选中的结构；对照视图把两个体型的同一系统并排显示，视角联动。
 - 每个体型带一份"使用前请注意"，首次加载时显示。
 
+### 疼痛反应（表情与发声）
+
+左侧"疼痛"面板演示疼痛行为：设定强度（0–10）和起病方式，点"触发"，面部动作单元按时间过程出现并消退，未静音时同时发声，张口与声音同步。"保持表情"把表情停在所设强度；"单个动作单元"可以逐个演示 AU。
+
+这是疼痛**行为**的计算模型，用于教学：被模拟的身体没有主观体验；"强度 → 表情"的数值是本项目的假设；声音是演员按指令表演的录音（没有录音包时改用参数合成）。表情由模型里的表情肌驱动（`tools/face/`、`data/curated/face/`）；现在的皮肤没有眼裂和口裂，所以面板默认用肌肉视图。
+
+声音素材的许可见下文"疼痛声音包"。嵌入模式默认静音，任何声音都需要用户点击才会播放。
+
 ## 运行
 
 需要 [Bun](https://bun.sh)。
@@ -40,7 +48,7 @@ bun run dev        # http://localhost:5183
 |---|---|---|
 | `body` | `male`（默认）、`female` | 体型 |
 | `embed` | `1` | 嵌入模式：只留舞台和必要控件，不弹对话框 |
-| `tab` | `d`、`t`、`p` | 左侧面板：显示、结构树、姿势 |
+| `tab` | `d`、`t`、`p`、`n` | 左侧面板：显示、结构树、姿势、疼痛 |
 | `sys` | `ske,ner:60` | 可见的系统，可带不透明度百分数；未列出的隐藏。代码：`int mus ske cv ner res dig uri rep end lym oth` |
 | `peel` | `2` | 剥离层数 |
 | `iso` | `FMA7088,FJ1234` | 隔离显示：部件编号或概念编号（概念展开为其下全部部件） |
@@ -58,6 +66,9 @@ bun run dev        # http://localhost:5183
 | `see` | `1` | 显示体表图时皮肤半透明，露出其下的神经 |
 | `src` | `1` | 按数据来源着色 |
 | `cmp` | `ske` | 对照视图及其显示的系统 |
+| `pain` | `7` | 把疼痛表情保持在该强度（0–10）；不会自动出声 |
+| `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5） |
+| `skin` | `1` | 不透明皮肤视图 |
 | `renderer` | `webgl` | 强制用 WebGL2 后端 |
 
 例：`/?body=male&sys=ske,ner&sel=FMA9611&focus=1`。完整定义见 `src/state/urlState.ts`。
@@ -144,7 +155,7 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 - 没有的神经：膈神经、颈丛、肋下神经、内脏神经、自主神经丛、喉神经。
 - 没有壁胸膜、淋巴管、黄韧带、颅内脑膜；心包只是心脏的外包络；降结肠包含乙状结肠；脊髓是程序化生成的表面，止于 L2/L3。
 - 皮下脂肪是从皮肤内壁和深层结构之间推导出来的，厚度按 3 mm 量化。
-- 男性皮肤是按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤：生殖器处只是一块隆起，脚趾连成一块，没有乳头和脐，指尖和眼周有突起；腋窝内侧的皮肤贴着胸壁。大幅度姿势下（肩前屈 160°、深蹲）皮肤仍有明显拉伸，深部结构会穿出皮肤最多约 4 cm；呼吸演示时胸部皮肤不随肋骨动。皮肤包不在仓库里，由 `tools/bodyshape/` 的脚本生成到 `data/raw/bodyshape/out/`。
+- 男性皮肤是按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤：生殖器处只是一块隆起，脚趾连成一块，没有乳头和脐，鼻子偏大、鼻孔边缘粗糙，外眦处各有一根皮肤尖刺；皮肤是一整张闭合的面，没有眼裂和口裂；腋窝内侧的皮肤贴着胸壁；筋膜、皮神经和浅静脉有约 1.7% 的表面穿出皮肤（最多 4 mm）；头发、眉毛、耳廓、指甲是按旧皮肤做的，与新皮肤对不上。大幅度姿势下（肩前屈 160°、深蹲）皮肤仍有明显拉伸，深部结构会穿出皮肤最多约 4 cm；呼吸演示时胸部皮肤不随肋骨动。皮肤包不在仓库里，由 `tools/bodyshape/` 的脚本生成到 `data/raw/bodyshape/out/`。
 - 体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
 - 男性的肩带姿势被校正过：原始扫描是仰卧耸肩的姿势，锁骨下降约 10°、肩胛骨沿胸廓转动，上肢整体平移。148 个跨越肩部的肌肉、血管和皮肤因此由 `scanned` 改标为 `warped`。两肩关节中心间距 338 mm，没有达到 350 mm 的目标；肩胛骨内旋仍比文献均值小约 2 个标准差。
 - 女性体型是第二版，仍比男性粗糙得多：
@@ -152,15 +163,16 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
   - 下肢的肌肉和膝关节韧带是她自己的（丹佛数据），53 块肌腹接上了从男性肌切下的腱；14 块肌没有接好，仍用男性的。约 4.9% 的神经长度深埋在她的肌肉里。
   - 盆底、阴道、子宫、附件和直肠来自另一位女性的标本（Wu 等 2015），放大 1.096 倍后按骨配准。结构之间仍有少量穿插（最差的一对 3.8%）；阴道与直肠壁局部相贴；膀胱（她自己的，空虚）与子宫（按充盈膀胱的位置）之间有 16.6 mm 空隙；乙状结肠与直肠的连接是构造出来的。
   - 没有阴唇和外阴皮肤、尿道腔、阔韧带、主韧带、宫骶韧带、输卵管系膜、卵巢固有韧带、卵巢和阴道血管、自主神经丛。
-  - 皮肤是男性皮肤变形来的，只在胸部抬高包住乳腺，还没有换成按女性体型拟合的皮肤。
+  - 皮肤是参数化体表（Meta MHR）：先取标准女性体型（身高 1.606 m、BMI 21.6），再在肌肉仍超出的地方放宽，所以按体积算的 BMI 约 23.65，肩和上臂比标准目标饱满（两肩最宽处 467 mm，目标 443 mm）。头是模型的平均头按她的颅骨放大的，下面部偏厚，两眼每侧偏外约 5 mm，内眦有皱缩，面部有横向台阶。右腋窝的上臂皮肤嵌进躯干皮肤。会阴处是光滑的闭合面，没有外阴形态。
+  - 乳房取皮肤模型的形状（每侧约 370 mL），解剖数据里的乳腺部件缩到约 0.4–0.5 倍并下移以放进去；位置偏低，乳头在剑突下约 7 cm，两项"乳房高度"检查目前不通过。
   - 右前臂和右手在 CT 里被裁切，用的是左侧镜像。
 - 触屏手势没有在真机上测过。
 
 ## 接下来
 
-1. 两个体型的新皮肤：按各自内部结构拟合的参数化体表，替换现在的占位皮肤。
-2. 体型可调：身高、比例、胖瘦，依据实测人体测量数据（模型已有，界面未接）。
-3. 对照视图里的姿势、女性体型的直达卡片。
+1. 体型可调：身高、比例、胖瘦，依据实测人体测量数据（模型已有，运行时数据和界面在做）。
+2. 皮肤的修正：女性乳房位置和面部缺陷，带眼裂和口裂的面部拓扑，头发等附属结构贴合新皮肤。
+3. 疼痛的输入端：刺激体表某处，按皮节和皮神经得到位置和强度，驱动表情和发声。
 4. 软组织物理：四面体化，XPBD，先在一个部位验证。
 5. 疼痛：沿神经通路的伤害感受模型，驱动生命体征、退缩反射和体表热力图。这是对疼痛生理的计算模型，模拟人并没有主观感受。
 6. 手术操作：切开、牵拉、出血、缝合。
@@ -190,6 +202,14 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 - Switching between male and female keeps the camera and the selection; the compare view shows one system of both bodies side by side with linked cameras.
 - Each body carries a list of cautions, shown on first load.
 
+### Pain response (expression and voice)
+
+The "Pain" panel on the left demonstrates pain behaviour: set an intensity (0–10) and an onset, press Trigger, and the facial action units rise and fade over time, with a vocalisation unless muted and the mouth in step with the sound. "Hold" keeps the expression at the set intensity; "Single action units" shows one AU at a time.
+
+This is a computational model of pain **behaviour** for teaching: the simulated body has no subjective experience; the intensity-to-expression numbers are assumptions of this project; the sounds are recordings acted on instruction (or parametric synthesis when the pack is absent). The expression is driven by the facial muscles of the model (`tools/face/`, `data/curated/face/`); the present skin has no eye or mouth opening, so the panel defaults to the muscle view.
+
+For the licence of the sound material see "Pain sound pack" below. Embed mode is muted by default and any sound needs a click.
+
 ## Run
 
 Requires [Bun](https://bun.sh).
@@ -209,7 +229,7 @@ The whole view state lives in the query string, so any view can be opened by one
 |---|---|---|
 | `body` | `male` (default), `female` | Which body |
 | `embed` | `1` | Embed mode: stage and essential controls only, no dialogs |
-| `tab` | `d`, `t`, `p` | Left panel: display, tree, pose |
+| `tab` | `d`, `t`, `p`, `n` | Left panel: display, tree, pose, pain |
 | `sys` | `ske,ner:60` | Visible systems, each optionally with an opacity percent; unlisted ones are hidden. Codes: `int mus ske cv ner res dig uri rep end lym oth` |
 | `peel` | `2` | Peel depth |
 | `iso` | `FMA7088,FJ1234` | Isolate: part ids or concept ids (a concept expands to all its parts) |
@@ -227,6 +247,9 @@ The whole view state lives in the query string, so any view can be opened by one
 | `see` | `1` | Draw the skin see-through under a skin map, to reveal the nerves beneath |
 | `src` | `1` | Colour by data source |
 | `cmp` | `ske` | Compare view and the system it shows |
+| `pain` | `7` | Hold the pain expression at this level (0–10); never plays sound by itself |
+| `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5) |
+| `skin` | `1` | Opaque-skin view |
 | `renderer` | `webgl` | Force the WebGL2 backend |
 
 Example: `/?body=male&sys=ske,ner&sel=FMA9611&focus=1`. The full definition is in `src/state/urlState.ts`.
@@ -313,7 +336,7 @@ The full list is in each body's `cautions`. The main ones:
 - Missing nerves: phrenic, cervical plexus, subcostal, splanchnic, autonomic plexuses, laryngeal.
 - No parietal pleura, lymphatic vessels, ligamenta flava or cranial meninges; the pericardium is only an envelope of the heart; the descending colon includes the sigmoid; the spinal cord is a procedurally generated surface ending at L2/L3.
 - Subcutaneous fat is derived from the space between the skin's inner wall and the deep structures; thickness is quantised to 3 mm.
-- The male skin is a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin: the genital region is only a mound, the toes are one block, there are no nipples or navel, and there are bumps at the fingertips and round the eyes; medial axillary skin lies against the chest wall. In large poses (shoulder flexion 160°, deep squat) the skin still stretches visibly and deep parts come through it by up to about 4 cm; in the breathing demonstration the chest skin does not follow the ribs. The skin package is not in the repository; the scripts in `tools/bodyshape/` write it to `data/raw/bodyshape/out/`.
+- The male skin is a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin: the genital region is only a mound, the toes are one block, there are no nipples or navel, the nose is large with rough nostril rims and a spike of skin stands at each outer canthus; the skin is one closed surface with no eye or mouth opening; medial axillary skin lies against the chest wall; about 1.7% of the surface of fasciae, cutaneous nerves and superficial veins comes through the skin (up to 4 mm); hair, eyebrows, external ears and nails were made for the old skin and do not sit on the new one. In large poses (shoulder flexion 160°, deep squat) the skin still stretches visibly and deep parts come through it by up to about 4 cm; in the breathing demonstration the chest skin does not follow the ribs. The skin package is not in the repository; the scripts in `tools/bodyshape/` write it to `data/raw/bodyshape/out/`.
 - Skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
 - The male shoulder girdle was re-posed: the scan is supine with shrugged shoulders, so the clavicles were lowered by about 10°, the scapulae turned round the rib cage and each upper limb translated. 148 muscles, vessels and the skin that span the shoulder changed from `scanned` to `warped`. The glenohumeral centres are 338 mm apart, short of the 350 mm target, and scapular internal rotation is still about 2 SD below the literature mean.
 - The female body is a second version and still far coarser than the male:
@@ -321,15 +344,16 @@ The full list is in each body's `cautions`. The main ones:
   - Leg muscles and knee ligaments are her own (Denver data); 53 bellies carry tendons cut from the male muscles, and 14 muscles could not be spliced and remain male. About 4.9% of nerve length lies deep inside her muscles.
   - Pelvic floor, vagina, uterus, adnexa and rectum come from another woman's specimen (Wu et al. 2015), enlarged 1.096× and fitted by bone. Some interpenetration remains (worst pair 3.8%); the vaginal and rectal walls touch in places; there is a 16.6 mm gap between the bladder (her own, empty) and the uterus (positioned for a full bladder); the join between sigmoid colon and rectum is constructed.
   - Missing: labia and vulvar skin, urethral lumen, broad, cardinal, uterosacral and ovarian ligaments, mesosalpinx, ovarian and vaginal vessels, autonomic plexuses.
-  - The skin is a warped male skin, raised only over the chest to enclose the breasts; a skin fitted to a female body has not been installed yet.
+  - The skin is a parametric surface (Meta MHR): a standard female shape (1.606 m, BMI 21.6) relaxed where muscle still lay outside it, so the volume BMI is about 23.65 and shoulders and upper arms are fuller than the target (bideltoid 467 mm against 443 mm). The head is the model's average head scaled to her skull; the lower face is thick, the eyes sit about 5 mm too far lateral on each side, the inner canthi are crumpled and there are horizontal steps across the face. On the right, upper-arm skin runs into trunk skin in the axilla. The perineum is a smooth closed surface without vulvar anatomy.
+  - The breasts take the skin model's shape (about 370 mL a side); the gland parts of the anatomy data are scaled to about 0.4–0.5 and moved down to fit. They sit too low — the nipple about 7 cm below the xiphoid — and two breast-level checks currently fail.
   - The right forearm and hand were clipped in the CT and are a mirrored left.
 - Touch gestures have not been tested on a real device.
 
 ## Next
 
-1. New skins for both bodies: parametric body surfaces fitted to each body's internals, replacing the present placeholders.
-2. Adjustable body shape: stature, proportions, fatness, based on measured anthropometry (the model exists; the UI is not wired yet).
-3. Posing in the compare view, and deep-link cards for the female body.
+1. Adjustable body shape: stature, proportions, fatness, based on measured anthropometry (the model exists; run-time data and UI are in progress).
+2. Skin corrections: female breast level and facial defects, a facial topology with eye and mouth openings, hair and other appendages fitted to the new skins.
+3. The input side of pain: a stimulus on the skin giving location and intensity through dermatomes and cutaneous nerves, driving expression and voice.
 4. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
 5. Pain: a nociception model along nerve pathways that drives vital signs, withdrawal reflexes and a heat map on the skin. This is a computational model of pain physiology; the simulated body has no subjective experience.
 6. Surgical actions: incision, retraction, bleeding, suturing.

@@ -50,6 +50,14 @@ export type FaceChannelKind =
   | 'sphincter'
   /** 眼睑：上睑下落或下睑上抬，沿眼球表面滑动 / eyelid: the upper lid comes down or the lower lid up, sliding over the globe. */
   | 'lid'
+  /**
+   * 口裂内陷（只作用于皮肤）：皮肤是一张闭合的面，唇不能分开；张口时把两唇相贴的那道褶向口内推，
+   * 让被拉开的皮肤成为一个凹陷而不是一张平的膜。这是几何上的替代，不是肌肉；parts 为空。
+   * Oral recess (skin only): the skin is one closed surface and the lips cannot part; on mouth opening the crease where the lips
+   * meet is pushed into the mouth, so that the stretched skin becomes a hollow instead of a flat membrane. A geometric stand-in,
+   * not a muscle; `parts` is empty.
+   */
+  | 'recess'
 
 /** 一个通道在一个部件上的稀疏位移场。 The sparse displacement field of one channel on one part. */
 export interface FaceField {
@@ -75,7 +83,7 @@ export interface FaceChannel {
   name: Bilingual
   kind: FaceChannelKind
   side: Side
-  /** 驱动该通道的肌肉部件 / the muscle parts that drive this channel. */
+  /** 驱动该通道的肌肉部件；kind 为 'recess' 时为空 / the muscle parts that drive this channel; empty for kind 'recess'. */
   parts: string[]
   /**
    * 作用线（静止姿势，米）：origin 是固定端（骨或筋膜），insertion 是活动端（皮肤）。
@@ -86,7 +94,7 @@ export interface FaceChannel {
   line: { origin: Vec3; insertion: Vec3; /** 两端在皮肤上的投影 / both ends projected onto the skin. */ originOnSkin: Vec3; insertionOnSkin: Vec3 }
   /** 作用线是怎样得到的 / how the line was obtained. */
   basis: 'geometry' | 'geometry+override' | 'landmarks'
-  /** 激活为 1 时皮肤的最大位移，米 / largest skin displacement at activation 1, metres. */
+  /** 激活为 1 时的最大位移（含沿法线的厚度变化），米 / largest displacement at activation 1 (thickness change along the normal included), metres. */
   excursion: number
   fields: FaceField[]
 }
@@ -151,7 +159,15 @@ export interface FaceData {
     midX: number
     /** 口裂（两唇之间）的高度：皮肤上的和深层唇部件上的 / height of the oral fissure on the skin and on the deep lip part. */
     stomionY: { skin: number; deep: number | null }
-    eyes: { side: Side; globe: Vec3; radius: number; /** 睑裂：内外眦的 x、最大开度（米）/ palpebral fissure: x of both canthi, largest aperture (metres). */ fissure: { x0: number; x1: number; aperture: number } | null }[]
+    eyes: {
+      side: Side
+      globe: Vec3
+      radius: number
+      /** 深层睑裂（睑部肌肉网格上量得）：内外眦的 x、最大开度（米）/ the deep palpebral fissure (measured on the lid muscle meshes): x of both canthi, largest aperture (metres). */
+      fissure: { x0: number; x1: number; aperture: number; /** 下睑缘最低处、上睑缘最高处的 y / y of the lowest point of the lower margin and the highest of the upper. */ lowerY?: number; upperY?: number } | null
+      /** 皮肤上的睑裂形状（皮肤没有开口）：同上 / the shape of the fissure on the skin (which has no opening): as above. */
+      skinFissure?: { x0: number; x1: number; aperture: number; lowerY?: number; upperY?: number } | null
+    }[]
   }
   sources: FaceSource[]
   /** 模型没有做到的事，供显示 / what the model does not do, for display. */

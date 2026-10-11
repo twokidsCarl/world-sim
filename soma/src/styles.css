@@ -1080,6 +1080,54 @@ input[type='checkbox'] {
   bottom: 52px;
 }
 
+/* 疼痛反应面板 / pain response panel */
+.pain-statement {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: rgba(217, 164, 65, 0.08);
+  border: 1px solid rgba(217, 164, 65, 0.4);
+  border-radius: var(--radius);
+  font-size: 12px;
+}
+
+.pain-statement p + p {
+  margin-top: 4px;
+}
+
+.pain-panel .actions button:disabled,
+.tool-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.voice-attrib {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+div.voice-attrib {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+div.voice-attrib p + p {
+  margin-top: 4px;
+}
+
+.embed-attrib {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 46px;
+  padding: 4px 8px;
+  background: rgba(21, 24, 29, 0.85);
+  border-radius: 4px;
+  font-size: 11px;
+  z-index: 4;
+}
+
 /* 姿势面板 / pose panel */
 .preset-grid {
   display: flex;

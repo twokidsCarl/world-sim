@@ -47,13 +47,33 @@ export interface HingeBlend {
   proximal?: 'parent' | 'straight'
 }
 
+/**
+ * 权重变陡：在口周把关节 joint（下颌）与 to（颅骨）之间逐渐过渡的份额变成陡的分界，使上唇不跟下颌。
+ * 作用区域以 above、below 所指部件（上牙、下牙）的中心为圆心。
+ * Weight steepening: around the mouth the gradual split between `joint` (the jaw) and `to` (the skull)
+ * is turned into a steep one, so that the upper lip does not follow the jaw. The region is centred on
+ * the parts matching `above` and `below` (upper and lower teeth).
+ */
+export interface WeightCap {
+  joint: string
+  to: string
+  /** 部件英文名的正则。 Regular expressions on part names. */
+  above: string
+  below: string
+  /** 作用半径（米，距 above 与 below 全部部件的中心）；外半圈淡出。 Radius of action (metres, from the centre of all `above` and `below` parts), fading over its outer half. */
+  radius: number
+  /** [lo, hi]：joint 在 (joint + to) 中的份额 ≤ lo 时全归 to，≥ hi 时全归 joint，其间平滑过渡。 [lo, hi]: where the share of `joint` in (joint + to) is ≤ lo all of it goes to `to`, ≥ hi all to `joint`, blending in between. */
+  sharpen: [number, number]
+  why?: { zh: string; en: string }
+}
+
 export interface BindRules {
   defaults: Record<string, Policy>
   rules: (Policy & { match: string })[]
   attachmentExcludes?: AttachmentExclude[]
   hingeBlend?: HingeBlend[]
   /** 自带外部蒙皮权重的皮肤（见 external.ts）：部件的 Part.source 与权重包 manifest 的 source.name 一致时采用。 Skins that come with external weights (see external.ts): used when the part's Part.source equals source.name of the package manifest. */
-  externalWeights?: { body: string; dir: string; map?: ExternalRule[]; generic?: string; genericWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
+  externalWeights?: { body: string; dir: string; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
 }
 
 export interface BoundPart {
@@ -909,12 +929,46 @@ export function bindAll(ctx: BindContext): BindResult {
           blended++
         })
       }
+      // 权重上限（上唇不跟下颌）/ weight caps (the upper lip does not follow the jaw)
+      let capped = 0
+      for (const cap of cfg?.caps ?? []) {
+        const jf = jointIndex.get(cap.joint), jt = jointIndex.get(cap.to)
+        const ra = new RegExp(cap.above, 'i'), rb = new RegExp(cap.below, 'i')
+        const A = body.data.parts.filter((q) => ra.test(q.name) && body.meshes.has(q.id)), B = body.data.parts.filter((q) => rb.test(q.name) && body.meshes.has(q.id))
+        if (jf === undefined || jt === undefined || !A.length || !B.length) continue
+        const c: V3 = [0, 0, 0]
+        for (const q of [...A, ...B]) (c[0] += q.centroid[0]), (c[1] += q.centroid[1]), (c[2] += q.centroid[2])
+        const nAB = A.length + B.length
+        ;(c[0] /= nAB), (c[1] /= nAB), (c[2] /= nAB)
+        t.rows.forEach((row, i) => {
+          const w = row.get(jf)
+          if (!w) return
+          const x = mesh.pos[i * 3]!, y = mesh.pos[i * 3 + 1]!, z = mesh.pos[i * 3 + 2]!
+          const r = Math.hypot(x - c[0], y - c[1], z - c[2])
+          if (r >= cap.radius) return
+          // 把 joint 与 to 之间的份额变陡：份额 ≤ lo 的归 to，≥ hi 的归 joint
+          // steepen the split between `joint` and `to`: a share ≤ lo goes to `to`, ≥ hi to `joint`
+          const wt = row.get(jt) ?? 0
+          const share = w / (w + wt)
+          let k = (share - cap.sharpen[0]) / (cap.sharpen[1] - cap.sharpen[0])
+          k = k < 0 ? 0 : k > 1 ? 1 : k
+          k = k * k * (3 - 2 * k)
+          let zf = (r - cap.radius / 2) / (cap.radius / 2)
+          zf = zf < 0 ? 0 : zf
+          const zone = 1 - zf * zf * (3 - 2 * zf)
+          const target = share + zone * (k - share)
+          if (Math.abs(target - share) < 0.004) return
+          row.set(jf, (w + wt) * target)
+          row.set(jt, (w + wt) * (1 - target))
+          capped++
+        })
+      }
       const d = densify(t.rows)
       // 不做整体平滑：外部权重本身是连续的，按 m 的混合也连续；只有个别顶点没取到权重时才由邻居填充
       // no overall smoothing: the external weights are continuous as they are and so is the blend by m; neighbours only fill vertices that got no weight
       smooth(d, mesh, t.rows.some((r) => r.size === 0) ? 2 : 0)
       finish(p, 'external', mesh, d, nv)
-      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}`)
+      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}`)
       if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
       continue
     }

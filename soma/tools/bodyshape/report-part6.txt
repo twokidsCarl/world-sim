@@ -1,0 +1,200 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第六部分：女性最终皮肤包；两个身体的眼、口区
+
+### 0. 还不对的地方（先说）
+
+女性（data/raw/bodyshape/out/female-skin/，fittedTo.key = d8e55b8725377511）：
+1. 体积 BMI 23.65，目标 21.6。分解：目标体型 21.60；骨上放松后 22.08；只把仍在外面的肌肉包住 23.15；再在这些地方补上标准脂肪厚度 23.64。也就是说，女性比例的肌肉加她的骨架本身就比 BMI 21.6 的女性皮肤大 1.5 个 BMI 点。我没有改目标，也没有靠减别处的脂肪去凑。若要更接近 21.6，可用 final_female.py --fat-cover 0（只包住，不补脂肪）得到约 23.2。
+2. 右腋下比男性差：右上臂皮肤在躯干皮肤之内的面积，肱骨 25–40 % 处 33 cm2（最深 30 mm），40–50 % 处 12 cm2，50–60 % 处 3 cm2；左侧 15 / 5 / 0 cm2。肩、上臂、胸侧的皮肤为包住肌肉各自外移后在腋下相互挤进去了；腋下整形只在 36 % 以下起作用。
+3. 左手：皮肤贴着皮肤 23 cm2（右 1.6）；左拇指姿势仍差约 11 mm，左手有小的包。
+4. 乳房的位置与 HRA 部件相差很大：把 HRA 乳腺移到皮肤的乳房里要向下平移约 70 mm（左 T = [-36, -70, +28] mm，右 [+34, -69, +20] mm），并缩小到 0.41 / 0.52。从叠加图看，HRA 乳腺现在在胸大肌上部。按我的估计（胸骨上切迹到乳头的垂直距离成年女性约 17–20 cm；这是凭记忆的量级，没有核对文献），皮肤的乳房偏低约 2 cm，HRA 现在的位置偏高约 5 cm；两者都不能算准。左右不对称（突出 36 / 48 mm）来自右侧被放大 1.26 倍。
+5. 脸：上半张脸对得上（见 §2），下半张脸仍偏厚：口轮匝肌上的覆盖中位数 15 mm（男性 9），颊肌 23 mm，咬肌 17 mm，颧大肌 17 mm。她的唇（Lip 部件）在皮肤唇面下 2.5–5.7 mm。MHR 的两眼间距 64 mm，她是 56.5 mm：每只眼的 MHR 眼关节在她眼球中心外侧 3.7–3.9 mm，眼睑相对眼球整体偏外这么多。scale_eye_width 等参数对关节位置没有作用，我没有另做横向缩放。
+6. 鼻：鼻软骨仍在“必须包住”的集合里，鼻尖、鼻翼被外推并抹平后偏大、鼻孔下缘粗糙；内眦处有小的折痕。
+7. 关节到 rig 中心（mm）：肘 3.9 / 5.1（原 7.1 / 9.0，没有完全到位），腕 2.0 / 1.7，盂肱 3.1 / 1.2，髋 5.5 / 9.0，膝 27.8 / 27.9（有意的小权重）。
+8. 颈围量出来 388 mm（标准 312）：我没有核对这个量的截面是否切到了肩，先当作不可靠。
+9. 仍有极少量采样点在皮肤外：左、右背阔肌 1.2 / 0.6 mm（0.08 % / 0.02 %）。
+10. 颏肌上的覆盖中位数两个身体都是 31–34 mm，与它旁边的下颌骨（10–16 mm）不相称；我怀疑是这个部件的网格伸到了深处，没有查。
+
+男性（data/raw/bodyshape/out/male-skin/，fittedTo.key = 4bf4e6e4b29d70ad；磁盘上又换了一次，写于 21:58）：
+11. 这次不只是把眼、唇从包住集合里拿掉：必须重做头的位置。原因见 §2。头以外的拟合没有动（腋下、手、围度的数字与上一版相同：BMI 24.05，腋下每侧约 19 cm2），但头和颈的皮肤整体变了，rig 和皮肤图需要跟着重做。原来安装的那一版我没有另存副本（只留了 fit-state-before-head.npz，可由它重新生成）。
+12. 鼻：同女性，鼻翼、鼻尖偏大，鼻孔下缘粗糙。下颌下仍有一点“双下巴”。
+13. 睑缘处的眼轮匝肌内环有一部分在皮肤外（最远 1.9 mm），角膜最前点在皮肤外 0.4 mm：这是把它们排除出包住集合的直接结果。
+
+两个身体：
+14. MHR LOD0 没有睑裂、口裂的开口（§3），所以给不出睑缘、唇缘的顶点环；manifest 里给的是眼睑区、唇区的顶点下标。要让眼睑、嘴唇能张合，需要另一套带开口的面部拓扑或在别处剪开网格，这不是我该自己做的。
+
+### 1. 女性最终皮肤：做了什么，移动了多少
+
+做法（tools/bodyshape/final_female.py，然后 enclose_skin.py female）：目标的身份系数；姿势再解几步，肘、腕权重加倍；头重做（§2）；乳房每侧 370 mL；骨上的放松；然后软组织：先算出把仍在外面的肌肉包住所需的外移，在这些地方再补到标准脂肪厚度（最多补 12 mm），整个位移场扩 3 圈、抹平 8 遍再抹 3 遍（低通），最后才是一小遍逐顶点的包住（最大 7.5 mm，头面部的这一遍也抹平）。
+
+相对目标体型（同一姿势和头）的位移，中位数 / p95 / 最大（mm）：头 0.0 / 8.4 / 13.0；颈 0.0 / 9.6 / 16.0；肩 1.6 / 20.3 / 26.6；胸 2.7 / 16.7 / 19.9；腹 1.4 / 19.9 / 26.8；骨盆 0.0 / 5.4 / 17.1；大腿 0.1 / 16.3 / 22.6；膝 2.1 / 16.8 / 21.1；小腿 0.7 / 12.7 / 18.7；足 1.7 / 14.6 / 21.6；上臂 2.5 / 22.2 / 26.6；前臂 2.3 / 21.1 / 29.7；手 0.7 / 5.4 / 11.7。
+
+肩和上臂比目标饱满多少：两侧三角肌处的肩宽 442.5 → 466.7 mm（+24 mm）；上臂围（凸包，沿肱骨 0.3 / 0.5 / 0.7 处）左 377 → 398、355 → 375、315 → 356，右 388 → 402、363 → 380、300 → 364 mm。图：female-skin/preview-skin.png 对 preview-target-shape.png（同一取景）。
+
+前臂：皮肤截面形心相对桡骨 + 尺骨形心（负 = 朝正中；前后为正 = 向前），目标 → 最终：
+  左 0.2：-18.6 → -14.0，前 12.1 → 7.8；0.3：-19.9 → -16.3，前 12.3 → 8.6；0.5：-13.4 → -11.0；0.8：-1.1 → -0.1，前 7.8 → 5.5
+  右 0.2：-23.0 → -16.6，前 15.2 → 10.2；0.3：-22.4 → -17.3，前 12.7 → 8.5；0.5：-16.7 → -13.7；0.8：-4.9 → -3.6，前 7.9 → 5.8
+即近段向外 4–6 mm、远段 1 mm、向后 2–5 mm。近段达到了你要的约 5 mm；远段没有到 3 mm，向后比你要的 1–2 mm 多。前臂围 199 → 239（0.2 处）等，因为包住了伸肌群。
+
+最终围度（mm，括号内为标准）：髂嵴腰 750（799），脐腰 732（761），臀 969（928），大腿根 529（555），大腿中段 498（456），大腿下段 385（367），小腿 352（338），踝 214（208），上臂 284（267），前臂 256（245），腕 164（149），胸 905（868）。身高 1616 mm。
+
+脂肪空间（皮肤到最近深部结构，p10 / p50 / p90，mm）：头 3.0 / 6.7 / 18.9；颈 5.5 / 9.6 / 15.2；肩 7.7 / 11.4 / 23.0；胸 3.7 / 7.8 / 16.4；腹 8.6 / 16.4 / 27.4；骨盆 15.1 / 20.7 / 38.6；大腿 11.6 / 16.0 / 30.1；膝 5.4 / 9.4 / 16.6；小腿 5.0 / 8.9 / 16.6；足 3.6 / 7.4 / 16.7；上臂 9.2 / 12.3 / 23.2；前臂 3.8 / 5.6 / 9.8；手 3.2 / 4.1 / 6.7。
+
+大腿内侧与股薄肌：改形后的股薄肌离正中面最近 11.9 / 12.1 mm，在软组织放松之后已全部在皮肤内（最浅处皮下 3.4 mm），不需要把大腿皮肤向正中推。代码里有一道限制（大腿皮肤各自留在正中面自己一侧 1.5 mm 以外），这次一个顶点也没有碰到。两大腿皮肤之间最小间距 0.1 mm，相贴面积 2.0 / 1.5 cm2，没有互穿。
+
+乳房（breast-placement.json，格式同前，p' = A + T + s·(p − A)）：左 A = [0.0996, 1.1143, 0.1391]，T = [-0.0361, -0.0700, 0.0280]，s = 0.413（腺体 99 % 在皮下 3.8 mm 以上）；右 A = [-0.0896, 1.1164, 0.1362]，T = [0.0337, -0.0686, 0.0198]，s = 0.518（3.8 mm）。乳头、乳晕部件（HRA_areola_*、HRA_areolar_tubercles_*、HRA_nipple_*）另加一个平移 nippleAndAreola.extraTranslationM：左 [0.0000, -0.0012, 0.0051]，右 [0.0004, -0.0028, 0.0046] m；之后乳晕各点到皮肤的距离中位数为 0，乳头尖在皮肤外 2.5 / 3.1 mm。需要管线支持这个附加平移。脚本原来把 HRA 的卵巢韧带等也当成了乳腺部件，已改为只取皮肤系统的 HRA 部件。
+
+形状场和曲面模型：female-skin/shape-fat.f32、shape-sex.f32、shape-limit.f32、shape-fields.json 已在最终皮肤上生成；rig-shape.json、shape-model.json 已重新生成。shape_fields.py 现在从包里的 fit-state-final.npz 取身份系数和参数（原来取 fit.json，是最初拟合时的值）。
+
+### 2. 头和脸
+
+量到的事实：MHR 平均头（身份系数 0）从眼球中心到头顶是 101 mm；她的颅骨是 109 mm 加头皮，他的是 118 mm 加头皮。MHR 没有头的缩放参数。所以只要头顶对上，眼就高了：男性原来的拟合（对他旧皮肤的外形）里眼关节比眼球中心高 14.5 / 15.0 mm；女性目标那一版是另一种错法（放开头部身份系数，脸被拉到眼–颏 148 mm）。
+
+现在两个身体用同一做法：
+- 头颈姿势对“颅骨 + 软组织厚度”的面和两个眼球中心拟合，头部身份系数不动（女性为 0，男性保留他原来的）。眼关节到眼球中心：女性 3.9 / 4.2 mm（几乎全在左右方向），男性 2.5 / 2.7 mm。
+- 眼以上的颅部绕两眼中点缩放：女性 x 1.09 / y 1.20（到了我设的上限）/ z 1.04；男性 1.12 / 1.17 / 1.07。
+- 眼以下按两个标志点做高度的分段重映射：口裂对到上中切牙切缘上方 2 mm，颏下点对到下颌骨最低点下方 7 mm。女性：口裂 69 → 63 mm，颏下点 116 → 100.5 mm；男性：61 → 65，113 → 105 mm。女性另外把下半张脸向后移（口裂处 9.1 mm，颏处 4.9 mm），使她的唇落到皮肤的唇面上；男性不需要（0）。
+- 我没有用头部身份系数或表情分量去拟合面部标志点：放开身份系数（限幅 2.5）时多数系数顶到边界、RMS 不降，结果不可用。MHR 缺的是：头的整体和分区缩放、两眼间距、以及可以定位的面部标志点（睑缘、口角等）。
+
+软组织厚度用的是假定值（法医面部复原常用厚度表的量级，没有逐点核对文献）：颅盖 6 mm、颧 7、鼻骨 4、颏 10、颏下 7。
+
+覆盖（皮下深度，min / p5 / 中位数，mm）：
+  女性：颅盖 3.4 / 4.5 / 6.3；颧骨 5.5 / 6.4 / 9.7；鼻骨 3.5 / 3.6 / 4.4；下颌骨 9.9 / 10.5 / 16.4；额肌 2.7 / 3.2 / 5.4；眼轮匝肌外环 2.2 / 3.1 / 6.0，内环 -1.7 / 0.2 / 3.9；皱眉肌 3.8 / 4.2 / 5.5；提上唇肌 3.6 / 4.4 / 9.1；颧小肌 5.8 / 6.7 / 11.9；颧大肌 6.5 / 7.9 / 17.4；口轮匝肌 7.8 / 9.7 / 15.4；鼻肌 2.8 / 3.1 / 4.3；角膜 0.1 / 0.8 / 3.2；唇 2.5 / 3.5 / 5.7。
+  男性：颅盖 3.5 / 5.1 / 8.1；颧骨 2.1 / 3.4 / 5.4；鼻骨 2.5 / 3.0 / 4.1；下颌骨 9.6 / 10.3 / 12.4；额肌 2.8 / 3.2 / 7.0；眼轮匝肌外环 0.9 / 2.3 / 5.5，内环 -1.9 / 0.2 / 3.4；皱眉肌 4.9 / 5.1 / 9.0；提上唇肌 3.1 / 3.5 / 4.9；颧小肌 2.8 / 3.5 / 5.2；颧大肌 3.3 / 3.7 / 11.2；口轮匝肌 2.9 / 5.2 / 8.9；鼻肌 2.7 / 3.0 / 3.9；角膜 -0.4 / 0.4 / 2.6；唇 -1.2 / -0.9 / 1.9。
+面部的包住余量仍是 2.5 mm（全身同一个值），所以面肌上最薄处约 2–3 mm，在你说的 1–3 mm 之内偏上。
+
+### 3. 是什么把眼、口区顶出去的；MHR 的拓扑
+
+查证（face_diag.py；男性上一版的结果存在 male-skin/face-diag-before.txt）：
+- 男性上一版：眼睑区（每侧 1073 个顶点）外推 p95 15–16 mm，最大 29.5 / 30.2 mm；唇区 p95 5.4，最大 16.4 mm。顶出去的部件：睑缘处的眼轮匝肌内环（数据里叫“Orbital part”，露出 4.2 / 3.5 mm）、角膜（+1.4 mm）、前房、巩膜、脉络膜、虹膜；唇区是唇（+1.5 mm）和鼻软骨（大翼软骨 +10.6 / +10.2，侧鼻软骨 +9.5 / +9.0，鼻中隔软骨 +9.1 mm）。根子是 §2 说的眼高 14–15 mm：眼球整个在 MHR 眼睑的下方。所以你的推测对了一半：是这些部件在顶，但光把它们排除不够，必须把头对到眼上。
+- 女性：改动前眼睑区、唇区没有外推（最大 0.1 mm），但放松阶段在眼睑区留有最多 9.6 mm 的位移；上一版女性包没有安装过。
+
+现在两个身体都：把眼球各部、结膜、泪器、睑板、唇、牙、舌、牙龈，以及每侧离眼球中心近的那个眼轮匝肌环（按几何选，不按名字）排除出包住集合，共 78 个部件，id 列在 manifest.face.notEnclosed.partIds；眼睑区、唇区的顶点不做任何外推（边缘两圈过渡）；头面部其余地方的外推做低通。男性现在眼睑区、唇区的外推为 0，眼睑区相对纯 MHR 曲面的偏移最多 1.4 mm（来自颅部缩放的过渡）。
+
+MHR LOD0 的拓扑：73,639 个顶点是一张封闭的单连通曲面。睑裂、口裂都不是开口；没有单独的眼球（皮肤离眼关节最近 15.3 mm，是一片连续的眼睑面）、没有口腔内面（离舌、牙关节最近的皮肤顶点在 24–54 mm 外）；上下唇在口裂处相贴成一道褶（有约 600 个顶点埋在褶里）。所以没有上下睑缘、唇缘的顶点环；我没有剪开网格。manifest.face.regions 给的是区域：lidsL / lidsR（各约 1070 个顶点）和 lips（2049 个），顶点下标按 skin.obj 的顺序，与姿势无关。
+
+### 4. 我看图看到的
+
+- female-skin/preview-skin.png：读作女性；肩和上臂比目标圆、粗，腰仍收，臀宽。头的比例自然了，不再是长脸；颅顶偏高。前臂背面有浅棱，左手有小包，脚趾是一团（MHR 没有分开的脚趾）。
+- female-skin/closeup-face-skin.png：眼是平滑的眼睑和睑裂，不再是一个包；内眦处有小折痕；眉间有两道浅沟（皱眉肌上的放松）；鼻翼粗糙偏大；嘴唇平滑、闭合。侧面下巴后缩，颏下到颈的过渡平顺。
+- female-skin/closeup-face-muscles.png：她的唇（蓝）正在皮肤唇的位置；眼球在睑裂后面，略偏内；面肌都在皮肤内，下半张脸的皮肤离肌肉较远。
+- male-skin/closeup-face-skin.png：眼睑平滑，睑裂清楚；鼻大而圆，鼻孔下缘粗糙；唇平滑；下颌下有一道浅的双下巴褶。第一次重做时外眦有向外的尖刺、鼻子全是棱角，对头面部的外推做低通后消失。
+- male-skin/preview-skin.png：身体与上一版一样；头从侧面看颅顶高。
+- female-skin/closeup-axilla-skin.png：左腋从上臂中段起是开的，腋前襞平顺；看不到右侧（数字见 §0 第 2 条）。
+- female-skin/closeup-perineum-below-skin.png：会阴平滑，两大腿根之间没有互穿；没有外阴的形状（MHR 没有）。
+- female-skin/preview-overlay.png：全身的肌肉、骨都在皮肤内，肩、臂、小腿处皮肤贴得较紧，臀、大腿、下腹处脂肪空间大；HRA 乳腺（粉色）在皮肤乳房的上方，位置差得一眼可见。
+
+### 5. 重新生成
+
+  bun tools/bodyshape/export-parts.ts male female
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose] [--fat-cover 1.0]
+  python tools/bodyshape/enclose_skin.py female
+  python tools/bodyshape/final_checks.py ; python tools/bodyshape/face_checks.py female ; python tools/bodyshape/breast_placement.py
+  python tools/bodyshape/shape_fields.py female
+  python tools/bodyshape/refit_head.py male ; python tools/bodyshape/enclose_skin.py male ; python tools/bodyshape/face_checks.py male ; python tools/bodyshape/shape_fields.py male
+  python tools/bodyshape/build_shape_model.py
+  python tools/bodyshape/face_diag.py male|female
+
+新文件：final_female.py、final_checks.py、face_checks.py、face_diag.py、refit_head.py。改过：enclose_skin.py（面部排除与保护、头面部低通、manifest.face）、breast_placement.py、shape_fields.py、build_target.py。
+data/raw/bodyshape/out/ 下留有几个运行日志（*.log）和 male-skin-prev/、female-skin-envelope*/ 等旧目录，我没有删。
+
+
+## Part 6: the final female skin package; the eye and mouth regions of both bodies
+
+### 0. What is still wrong (first)
+
+Female (data/raw/bodyshape/out/female-skin/, fittedTo.key = d8e55b8725377511):
+1. BMI by volume is 23.65 against a target of 21.6. Broken down: target shape 21.60; after the relaxation over bone 22.08; with the muscle still outside merely enclosed 23.15; with the standard fat thickness added there 23.64. So muscle at the female ratio plus her skeleton is by itself 1.5 BMI points larger than a female skin at 21.6. I did not change the target and did not take fat off elsewhere to make the number. If you want it nearer 21.6, final_female.py --fat-cover 0 (enclose only, no added fat) gives about 23.2.
+2. The right axilla is worse than the male's: arm skin lying inside the trunk skin is 33 cm2 at 25-40 % of the humerus (up to 30 mm deep), 12 cm2 at 40-50 %, 3 cm2 at 50-60 %; on the left 15 / 5 / 0 cm2. Skin of shoulder, upper arm and side of the chest each moved out to cover muscle and ran into each other in the axilla; the axilla step only acts below 36 %.
+3. Left hand: 23 cm2 of skin against skin (1.6 on the right); the left thumb pose is still about 11 mm off and the hand has small lumps.
+4. Breast position disagrees strongly with the HRA parts: bringing the HRA gland into the breast of the skin takes a translation of about 70 mm downwards (left T = [-36, -70, +28] mm, right [+34, -69, +20] mm) and a scale of 0.41 / 0.52. In the overlay the HRA gland now sits over the upper pectoralis. By my estimate (vertical distance from the jugular notch to the nipple in adult women about 17-20 cm; an order of magnitude from memory, not checked against a source) the breast of the skin is about 2 cm low and the present HRA position about 5 cm high; neither can be called right. The left-right asymmetry (projection 36 / 48 mm) comes from the right side having been enlarged by 1.26.
+5. Face: the upper face agrees (section 2), the lower face is still thick: median cover 15 mm over orbicularis oris (9 in the male), 23 mm over buccinator, 17 mm over masseter and zygomaticus major. Her lips (the part "Lip") lie 2.5-5.7 mm under the lip surface of the skin. MHR's eyes are 64 mm apart, hers 56.5 mm: each MHR eye joint is 3.7-3.9 mm lateral of the centre of her eyeball, and the lids sit that much lateral of the globe. The scale_eye_width parameters have no effect on the joints, and I did not add a transverse scale of my own.
+6. Nose: the nasal cartilages are still in the set that must be enclosed; tip and alae come out large after the push and its smoothing, and the lower rim of the nostrils is rough. There are small creases at the inner canthi.
+7. Joints to the rig centres (mm): elbow 3.9 / 5.1 (from 7.1 / 9.0; not fully there), wrist 2.0 / 1.7, glenohumeral 3.1 / 1.2, hip 5.5 / 9.0, knee 27.8 / 27.9 (small weight on purpose).
+8. The neck girth measures 388 mm (standard 312): I have not checked whether that section cuts into the shoulders, so treat it as unreliable.
+9. A very few samples are still outside the skin: left and right latissimus dorsi by 1.2 / 0.6 mm (0.08 % / 0.02 %).
+10. The median cover over mentalis is 31-34 mm in both bodies, out of proportion with the mandible beside it (10-16 mm); I suspect the mesh of that part reaches deep and did not look into it.
+
+Male (data/raw/bodyshape/out/male-skin/, fittedTo.key = 4bf4e6e4b29d70ad; changed on disk again, written at 21:58):
+11. This is more than taking eyes and lips out of the enclosure set: the head had to be placed again, for the reason in section 2. The fit outside the head is untouched (axilla, hands and girths give the same numbers as before: BMI 24.05, about 19 cm2 per side in the axilla), but the skin of head and neck changed as a whole, and rig and skin maps must follow. I kept no separate copy of the version that was installed (only fit-state-before-head.npz, from which it can be regenerated).
+12. Nose: as for the female, alae and tip are large and the lower rim of the nostrils is rough. A little double chin remains under the mandible.
+13. Part of the inner ring of orbicularis oculi at the lid margins lies outside the skin (up to 1.9 mm) and the front of the cornea 0.4 mm outside: the direct consequence of leaving them out of the enclosure set.
+
+Both bodies:
+14. MHR LOD0 has no opening at the palpebral or the oral fissure (section 3), so there are no lid-margin or lip-margin vertex loops to give; the manifest lists the vertices of the lid and lip regions instead. Lids and lips that open and close need a different facial topology with openings, or a cut made elsewhere, which is not mine to make.
+
+### 1. The final female skin: what was done and how far it moved
+
+Method (tools/bodyshape/final_female.py, then enclose_skin.py female): the identity of the target; the pose solved a few more steps with doubled weight on elbow and wrist; the head redone (section 2); breasts at 370 mL per side; relaxation over bone; then soft tissue: the outward move needed to cover the muscle still outside is computed, the standard fat thickness is added there (at most 12 mm more), and the whole displacement field is dilated by 3 rings, smoothed 8 times and 3 times again (low-pass); only then a short per-vertex enclosure (at most 7.5 mm, itself low-passed on head and face).
+
+Displacement from the target shape (same pose and head), median / p95 / max (mm): head 0.0 / 8.4 / 13.0; neck 0.0 / 9.6 / 16.0; shoulder 1.6 / 20.3 / 26.6; chest 2.7 / 16.7 / 19.9; abdomen 1.4 / 19.9 / 26.8; pelvis 0.0 / 5.4 / 17.1; thigh 0.1 / 16.3 / 22.6; knee 2.1 / 16.8 / 21.1; calf 0.7 / 12.7 / 18.7; foot 1.7 / 14.6 / 21.6; upper arm 2.5 / 22.2 / 26.6; forearm 2.3 / 21.1 / 29.7; hand 0.7 / 5.4 / 11.7.
+
+How much fuller shoulders and upper arms are than the target: breadth across the deltoids 442.5 -> 466.7 mm (+24 mm); upper-arm girth (convex hull, at 0.3 / 0.5 / 0.7 along the humerus) left 377 -> 398, 355 -> 375, 315 -> 356, right 388 -> 402, 363 -> 380, 300 -> 364 mm. Pictures: female-skin/preview-skin.png against preview-target-shape.png (same framing).
+
+Forearm: centroid of the skin section relative to the centroid of radius + ulna (negative = toward the midline; anterior positive), target -> final:
+  left 0.2: -18.6 -> -14.0, anterior 12.1 -> 7.8; 0.3: -19.9 -> -16.3, anterior 12.3 -> 8.6; 0.5: -13.4 -> -11.0; 0.8: -1.1 -> -0.1, anterior 7.8 -> 5.5
+  right 0.2: -23.0 -> -16.6, anterior 15.2 -> 10.2; 0.3: -22.4 -> -17.3, anterior 12.7 -> 8.5; 0.5: -16.7 -> -13.7; 0.8: -4.9 -> -3.6, anterior 7.9 -> 5.8
+So 4-6 mm laterally in the proximal part, 1 mm distally, and 2-5 mm posteriorly. The proximal figure meets the roughly 5 mm you asked for; the distal one falls short of 3 mm, and the posterior move is more than the 1-2 mm asked. Forearm girth went 199 -> 239 (at 0.2) and so on, because the extensors are now covered.
+
+Final girths (mm, standard in brackets): waist at the iliac crest 750 (799), at the navel 732 (761), buttock 969 (928), proximal thigh 529 (555), mid thigh 498 (456), lower thigh 385 (367), calf 352 (338), ankle 214 (208), upper arm 284 (267), forearm 256 (245), wrist 164 (149), chest 905 (868). Stature 1616 mm.
+
+Fat room (skin to the nearest deep surface, p10 / p50 / p90, mm): head 3.0 / 6.7 / 18.9; neck 5.5 / 9.6 / 15.2; shoulder 7.7 / 11.4 / 23.0; chest 3.7 / 7.8 / 16.4; abdomen 8.6 / 16.4 / 27.4; pelvis 15.1 / 20.7 / 38.6; thigh 11.6 / 16.0 / 30.1; knee 5.4 / 9.4 / 16.6; calf 5.0 / 8.9 / 16.6; foot 3.6 / 7.4 / 16.7; upper arm 9.2 / 12.3 / 23.2; forearm 3.8 / 5.6 / 9.8; hand 3.2 / 4.1 / 6.7.
+
+Medial thighs and gracilis: the reshaped gracilis comes no nearer the midplane than 11.9 / 12.1 mm and after the soft relaxation lies wholly inside the skin (3.4 mm under it at the shallowest), so no thigh skin had to move toward the midline. The code holds each thigh skin 1.5 mm on its own side of the midplane; no vertex reached that limit this time. The two thigh skins come within 0.1 mm of each other, lie against each other over 2.0 / 1.5 cm2 and do not interpenetrate.
+
+Breasts (breast-placement.json, same format, p' = A + T + s·(p − A)): left A = [0.0996, 1.1143, 0.1391], T = [-0.0361, -0.0700, 0.0280], s = 0.413 (99 % of the gland at least 3.8 mm under the skin); right A = [-0.0896, 1.1164, 0.1362], T = [0.0337, -0.0686, 0.0198], s = 0.518 (3.8 mm). The nipple and areola parts (HRA_areola_*, HRA_areolar_tubercles_*, HRA_nipple_*) get one more translation, nippleAndAreola.extraTranslationM: left [0.0000, -0.0012, 0.0051], right [0.0004, -0.0028, 0.0046] m; the areola then has a median distance of 0 to the skin and the nipple tip stands 2.5 / 3.1 mm outside it. The pipeline needs to support that extra translation. The script used to count HRA's ovarian ligaments and the like as mammary parts; it now takes only the HRA parts of the integumentary system.
+
+Shape fields and shape model: female-skin/shape-fat.f32, shape-sex.f32, shape-limit.f32 and shape-fields.json are generated on the final skin; rig-shape.json and shape-model.json are regenerated. shape_fields.py now takes identity and parameters from fit-state-final.npz in the package (it used fit.json, which holds the values of the first fit).
+
+### 2. Head and face
+
+Measured: MHR's average head (identity 0) is 101 mm from the centre of the eyeball to the top; her skull is 109 mm plus scalp, his 118 mm plus scalp. MHR has no head scale. So when the crown agrees the eyes are high: in the male's original fit (to the outline of his old skin) the eye joints sat 14.5 / 15.0 mm above the centres of his eyeballs; the female target went wrong differently (the head identity was set free and stretched the face to 148 mm from eye to chin).
+
+Both bodies now use the same method:
+- Head and neck pose are fitted to the surface "skull + soft-tissue thickness" and to the two eyeball centres; the head identity is not touched (0 for the female, his own for the male). Eye joint to eyeball centre: female 3.9 / 4.2 mm (almost all of it left-right), male 2.5 / 2.7 mm.
+- The cranium above the eyes is scaled about the midpoint of the eyes: female x 1.09 / y 1.20 (my upper bound) / z 1.04; male 1.12 / 1.17 / 1.07.
+- Below the eyes the height is remapped piecewise through two landmarks: the stomion goes 2 mm above the edge of the upper central incisors, the menton 7 mm below the lowest point of the mandible. Female: stomion 69 -> 63 mm, menton 116 -> 100.5 mm; male: 61 -> 65, 113 -> 105 mm. The female's lower face is also moved back (9.1 mm at the mouth, 4.9 mm at the chin) so that her lips meet the lip surface of the skin; the male needed none (0).
+- I did not fit head identity or expression components to facial landmarks: with the identity free (bounded at 2.5) most coefficients ran to their bounds, the RMS did not fall and the result was unusable. What MHR lacks: a scale of the head as a whole and by region, the distance between the eyes, and facial landmarks that can be located (lid margins, mouth corners and so on).
+
+Soft-tissue thicknesses are assumptions (the order of magnitude of the tables used in forensic facial approximation, not checked point by point against a source): vault 6 mm, zygoma 7, nasal bones 4, chin 10, under the menton 7.
+
+Cover (depth under the skin, min / p5 / median, mm):
+  Female: vault 3.4 / 4.5 / 6.3; zygomatic bones 5.5 / 6.4 / 9.7; nasal bones 3.5 / 3.6 / 4.4; mandible 9.9 / 10.5 / 16.4; frontalis 2.7 / 3.2 / 5.4; orbicularis oculi outer ring 2.2 / 3.1 / 6.0, inner ring -1.7 / 0.2 / 3.9; corrugator 3.8 / 4.2 / 5.5; levator labii 3.6 / 4.4 / 9.1; zygomaticus minor 5.8 / 6.7 / 11.9; zygomaticus major 6.5 / 7.9 / 17.4; orbicularis oris 7.8 / 9.7 / 15.4; nasalis 2.8 / 3.1 / 4.3; cornea 0.1 / 0.8 / 3.2; lips 2.5 / 3.5 / 5.7.
+  Male: vault 3.5 / 5.1 / 8.1; zygomatic bones 2.1 / 3.4 / 5.4; nasal bones 2.5 / 3.0 / 4.1; mandible 9.6 / 10.3 / 12.4; frontalis 2.8 / 3.2 / 7.0; orbicularis oculi outer ring 0.9 / 2.3 / 5.5, inner ring -1.9 / 0.2 / 3.4; corrugator 4.9 / 5.1 / 9.0; levator labii 3.1 / 3.5 / 4.9; zygomaticus minor 2.8 / 3.5 / 5.2; zygomaticus major 3.3 / 3.7 / 11.2; orbicularis oris 2.9 / 5.2 / 8.9; nasalis 2.7 / 3.0 / 3.9; cornea -0.4 / 0.4 / 2.6; lips -1.2 / -0.9 / 1.9.
+The enclosure margin on the face is still 2.5 mm (one value for the whole body), so the thinnest cover over the facial muscles is about 2-3 mm, at the upper end of the 1-3 mm you named.
+
+### 3. What pushed the eye and mouth regions out; MHR's topology
+
+Verified (face_diag.py; the result for the previous male package is kept as male-skin/face-diag-before.txt):
+- Previous male package: push in the lid region (1073 vertices per side) p95 15-16 mm, max 29.5 / 30.2 mm; in the lip region p95 5.4, max 16.4 mm. The parts pushing: the inner ring of orbicularis oculi at the lid margins (named "Orbital part" in the data; 4.2 / 3.5 mm outside), cornea (+1.4 mm), anterior chamber, sclera, choroid, iris; in the lip region the lips (+1.5 mm) and the nasal cartilages (major alar +10.6 / +10.2, lateral nasal +9.5 / +9.0, septal +9.1 mm). The root is the 14-15 mm of section 2: the whole globe lay below MHR's lids. So your guess was half right: those parts did the pushing, but leaving them out is not enough; the head has to be placed on the eyes.
+- Female: before this change there was no enclosure push on lids or lips (max 0.1 mm), but the relaxation stage left up to 9.6 mm of displacement in the lid region; that version was never installed.
+
+Both bodies now: the parts of the eyeball, conjunctiva, lacrimal parts, tarsal plates, lips, teeth, tongue and gingiva, and on each side the ring of orbicularis oculi nearer the centre of the eyeball (chosen by geometry, not by name), are left out of the enclosure set, 78 parts in all, ids listed in manifest.face.notEnclosed.partIds; the vertices of the lid and lip regions get no push at all (two rings of transition at the rim); the push elsewhere on head and face is low-passed. In the male the push on lids and lips is now 0, and the lid region departs from the pure MHR surface by at most 1.4 mm (the transition of the cranium scale).
+
+Topology of MHR LOD0: 73,639 vertices in one closed, singly connected surface. Neither the palpebral nor the oral fissure is an opening; there is no separate eyeball (the skin comes no nearer an eye joint than 15.3 mm: one continuous sheet of lid) and no mouth interior (the skin vertices nearest the tongue and teeth joints are 24-54 mm away); the lips meet in a crease at the oral fissure (about 600 vertices are buried in it). So there are no upper or lower lid-margin or lip-margin loops, and I did not cut the mesh. manifest.face.regions gives regions: lidsL / lidsR (about 1070 vertices each) and lips (2049), vertex indices in the order of skin.obj, independent of pose.
+
+### 4. What I saw in the renders
+
+- female-skin/preview-skin.png: reads as female; shoulders and upper arms are rounder and thicker than the target, the waist still narrows, the hips are wide. The head is in natural proportion and no longer a long face; the crown is high. Shallow ridges on the back of the forearms, small lumps on the left hand, toes as one mass (MHR has no separate toes).
+- female-skin/closeup-face-skin.png: the eyes are smooth lids with a fissure, not a lump; small creases at the inner canthi; two shallow furrows between the brows (relaxation over corrugator); the alae are rough and large; the lips are smooth and closed. In profile the chin is set back and runs smoothly into the neck.
+- female-skin/closeup-face-muscles.png: her lips (blue) sit at the lips of the skin; the globes are behind the fissures, slightly medial; all facial muscles are inside the skin, and the skin of the lower face stands well off them.
+- male-skin/closeup-face-skin.png: smooth lids, clear fissures; a large round nose with a rough lower rim of the nostrils; smooth lips; a shallow double-chin crease under the mandible. On the first attempt there were spikes pointing sideways from the outer canthi and the nose was all facets; both went when the push on head and face was low-passed.
+- male-skin/preview-skin.png: the body is as before; from the side the crown is high.
+- female-skin/closeup-axilla-skin.png: the left axilla is open from mid-arm down and the anterior fold is smooth; the right side is not in view (numbers in item 2 of section 0).
+- female-skin/closeup-perineum-below-skin.png: a smooth perineum with no interpenetration between the tops of the thighs; no vulvar form (MHR has none).
+- female-skin/preview-overlay.png: muscle and bone are inside the skin everywhere; the skin lies close at shoulder, arm and calf and has much fat room at buttock, thigh and lower abdomen; the HRA gland (pink) sits above the breast of the skin, a difference visible at a glance.
+
+### 5. Regenerating
+
+  bun tools/bodyshape/export-parts.ts male female
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose] [--fat-cover 1.0]
+  python tools/bodyshape/enclose_skin.py female
+  python tools/bodyshape/final_checks.py ; python tools/bodyshape/face_checks.py female ; python tools/bodyshape/breast_placement.py
+  python tools/bodyshape/shape_fields.py female
+  python tools/bodyshape/refit_head.py male ; python tools/bodyshape/enclose_skin.py male ; python tools/bodyshape/face_checks.py male ; python tools/bodyshape/shape_fields.py male
+  python tools/bodyshape/build_shape_model.py
+  python tools/bodyshape/face_diag.py male|female
+
+New files: final_female.py, final_checks.py, face_checks.py, face_diag.py, refit_head.py. Changed: enclose_skin.py (facial exclusion and protection, low-pass on head and face, manifest.face), breast_placement.py, shape_fields.py, build_target.py.
+A few run logs (*.log) and old directories (male-skin-prev/, female-skin-envelope*/) remain under data/raw/bodyshape/out/; I did not delete them.

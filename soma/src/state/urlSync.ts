@@ -90,6 +90,9 @@ export function snapshot(s: AppState): UrlState {
     if (s.skinRegions.length) out.reg = [...s.skinRegions]
     if (s.skinSeeThrough) out.see = true
   }
+  if (s.pain.hold && s.pain.level > 0) out.pain = s.pain.level
+  if (Object.keys(s.aus).length) out.au = { ...s.aus }
+  if (s.skinOpaque) out.skin = true
   if (s.colorMode === 'source') out.src = true
   return out
 }
@@ -159,6 +162,20 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.cut) app.setSection({ enabled: true, ...state.cut })
   if (state.xp !== undefined) app.setExplode(state.xp)
   if (state.src) app.setColorMode('source')
+  if (state.skin) app.setSkinOpaque(true)
+  if (state.pain !== undefined || state.au) {
+    // 只恢复表情（保持在给定强度）；声音必须由用户手势触发，这里绝不出声
+    // only the expression is restored (held at the given level); sound needs a user gesture and is never started here
+    if (state.pain !== undefined) useApp.getState().setPain({ level: state.pain, hold: state.pain > 0 })
+    const face = await useApp.getState().ensureFace()
+    if (!face) warnings.push('pain: 此人体没有表情数据 / this body has no facial expression data')
+    else if (state.au) {
+      for (const [id, v] of Object.entries(state.au)) {
+        if (face.data.aus.some((a) => a.id === id)) useApp.getState().setAU(id, v)
+        else warnings.push(`au: 模型里没有 ${id} / the model has no ${id}`)
+      }
+    }
+  }
   if (state.tab) app.setLeftTab(state.tab)
   if (state.cmp) {
     if (graph.data.systems.some((x) => x.id === state.cmp && x.partCount > 0)) app.setCompare(state.cmp)
@@ -244,7 +261,7 @@ export function readLocation(): { state: UrlState; keys: string[]; begin: () => 
       active = true
       const unsubscribe = useApp.subscribe((s, p) => {
         // 悬停等高频、与 URL 无关的变化不触发写回 / high-frequency changes the URL does not carry (hover…) do not trigger a write
-        if (s.hover !== p.hover || s.skinHover !== p.skinHover || s.load !== p.load || s.rigProgress !== p.rigProgress) return
+        if (s.hover !== p.hover || s.skinHover !== p.skinHover || s.load !== p.load || s.rigProgress !== p.rigProgress || s.voiceProgress !== p.voiceProgress) return
         schedule()
       })
       schedule()

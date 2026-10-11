@@ -902,18 +902,18 @@
   ]
  },
  "jacobian": {
-  "samples": 47412,
+  "samples": 47617,
   "min": -7.518,
   "p01": 0.123,
   "median": 0.902,
-  "p99": 1.826,
+  "p99": 1.825,
   "max": 5.067,
   "folded": 311,
   "below02": 632,
   "above4": 5,
   "extremeByNearestBone": {
    "Left scapula": 68,
-   "Left eighth rib": 34,
+   "Left eighth rib": 33,
    "Left clavicle": 25,
    "Left first rib": 24,
    "Right scapula": 21,
@@ -10350,22 +10350,6 @@
    }
   ]
  },
- "skin": {
-  "method": "radial envelope over the HRA breasts with a smooth skirt",
-  "verticesRaised": 833,
-  "ofVertices": 14442,
-  "maxLiftMm": 80,
-  "breastSurfaceInFrontOfSkin": {
-   "before": {
-    "left": 0.747,
-    "right": 0.748
-   },
-   "after": {
-    "left": 0,
-    "right": 0
-   }
-  }
- },
  "standard": {
   "targetsFrom": "data/curated/bodyshape/rig-shape.json (sexes.F.segments[].standardLengthMm)",
   "legLengthFactor": -1,
@@ -17826,33 +17810,33 @@
      "id": "W_R3_FMA46782",
      "name": "Orbital part of right orbicularis oculi",
      "region": "head",
-     "beforeMl": 0.59,
-     "afterMl": 0.48,
-     "change": -0.1946
-    },
-    {
-     "id": "W_R3_FMA46783",
-     "name": "Orbital part of left orbicularis oculi",
-     "region": "head",
-     "beforeMl": 0.58,
-     "afterMl": 0.47,
-     "change": -0.182
-    },
-    {
-     "id": "W_R3_FMA46785",
-     "name": "Palpebral part of right orbicularis oculi",
-     "region": "head",
      "beforeMl": 2.81,
      "afterMl": 2.34,
      "change": -0.1665
     },
     {
-     "id": "W_R3_FMA46786",
-     "name": "Palpebral part of left orbicularis oculi",
+     "id": "W_R3_FMA46783",
+     "name": "Orbital part of left orbicularis oculi",
      "region": "head",
      "beforeMl": 3.08,
      "afterMl": 2.71,
      "change": -0.1199
+    },
+    {
+     "id": "W_R3_FMA46785",
+     "name": "Palpebral part of right orbicularis oculi",
+     "region": "head",
+     "beforeMl": 0.59,
+     "afterMl": 0.48,
+     "change": -0.1946
+    },
+    {
+     "id": "W_R3_FMA46786",
+     "name": "Palpebral part of left orbicularis oculi",
+     "region": "head",
+     "beforeMl": 0.58,
+     "afterMl": 0.47,
+     "change": -0.182
     },
     {
      "id": "W_R3_FMA46796",
@@ -18384,14 +18368,509 @@
    ]
   }
  },
+ "skin": {
+  "method": "external skin package",
+  "placeholderDiscarded": true,
+  "chestRaise": false
+ },
  "skinPackage": {
   "dir": "data/raw/bodyshape/out/female-skin",
   "internalsKey": "d8e55b8725377511",
   "internalsKeyBeforeShape": "031ce88117d19693",
-  "present": false,
-  "fittedTo": null,
-  "installed": false,
-  "reason": "no package"
+  "present": true,
+  "fittedTo": {
+   "body": "female",
+   "key": "d8e55b8725377511"
+  },
+  "installed": true,
+  "faceRegion": {
+   "rule": "skin vertices within 30 mm of the surface of a muscle of facial expression",
+   "radiusM": 0.03,
+   "muscles": 33
+  },
+  "breastPlacement": {
+   "file": "data/raw/bodyshape/out/female-skin/breast-placement.json",
+   "signedDistances": "mm from the installed skin at source resolution; positive = outside",
+   "sides": {
+    "L": {
+     "parts": 8,
+     "aboutPoint": [
+      0.0996,
+      1.1143,
+      0.1391
+     ],
+     "translationM": [
+      -0.0361,
+      -0.07,
+      0.028
+     ],
+     "scale": 0.413,
+     "nippleAndAreola": {
+      "parts": [
+       "HRA_areola_L",
+       "HRA_areolar_tubercles_L",
+       "HRA_nipple_L"
+      ],
+      "extraTranslationM": [
+       0,
+       -0.0012,
+       0.0051
+      ],
+      "ignoredIds": []
+     },
+     "againstSkin": {
+      "mammaryLobes": {
+       "outside": 0,
+       "minMm": -30,
+       "medianMm": -18.1,
+       "p99Mm": -8.9,
+       "maxMm": -7.8
+      },
+      "allPartsButNippleAndAreola": {
+       "outside": 0,
+       "minMm": -41.8,
+       "medianMm": -17.7,
+       "p99Mm": -4.4,
+       "maxMm": -2.8
+      },
+      "areola": {
+       "outside": 0.5704,
+       "minMm": -2.7,
+       "medianMm": 0.3,
+       "p99Mm": 1.9,
+       "maxMm": 2
+      },
+      "nipple": {
+       "outside": 0.9602,
+       "minMm": -0.1,
+       "medianMm": 1.2,
+       "p99Mm": 2.6,
+       "maxMm": 2.6
+      },
+      "nippleTip": {
+       "position": [
+        0.0678,
+        1.0247,
+        0.205
+       ],
+       "signedDistanceMm": 2.6
+      }
+     }
+    },
+    "R": {
+     "parts": 8,
+     "aboutPoint": [
+      -0.0896,
+      1.1164,
+      0.1362
+     ],
+     "translationM": [
+      0.0337,
+      -0.0686,
+      0.0198
+     ],
+     "scale": 0.518,
+     "nippleAndAreola": {
+      "parts": [
+       "HRA_areola_R",
+       "HRA_areolar_tubercles_R",
+       "HRA_nipple_R"
+      ],
+      "extraTranslationM": [
+       0.0004,
+       -0.0028,
+       0.0046
+      ],
+      "ignoredIds": []
+     },
+     "againstSkin": {
+      "mammaryLobes": {
+       "outside": 0,
+       "minMm": -39.2,
+       "medianMm": -18.7,
+       "p99Mm": -5.4,
+       "maxMm": -3.6
+      },
+      "allPartsButNippleAndAreola": {
+       "outside": 0.0001,
+       "minMm": -51,
+       "medianMm": -18.7,
+       "p99Mm": -2.7,
+       "maxMm": 0.1
+      },
+      "areola": {
+       "outside": 0.5254,
+       "minMm": -4.4,
+       "medianMm": 0.2,
+       "p99Mm": 4.2,
+       "maxMm": 4.5
+      },
+      "nipple": {
+       "outside": 0.8676,
+       "minMm": -0.8,
+       "medianMm": 1.4,
+       "p99Mm": 3.2,
+       "maxMm": 3.3
+      },
+      "nippleTip": {
+       "position": [
+        -0.0617,
+        1.0201,
+        0.2029
+       ],
+       "signedDistanceMm": 3.1
+      }
+     }
+    }
+   }
+  },
+  "face": {
+   "cover": {
+    "palpebralOrbicularisOculi": {
+     "minMm": -2.1,
+     "medianMm": 3.7,
+     "parts": 2
+    },
+    "orbitalOrbicularisOculi": {
+     "minMm": 2.2,
+     "medianMm": 5.9,
+     "parts": 2
+    },
+    "cornea": {
+     "minMm": 0.1,
+     "medianMm": 3,
+     "parts": 2
+    },
+    "lip": {
+     "minMm": 2.5,
+     "medianMm": 5.6,
+     "parts": 1
+    },
+    "orbicularisOris": {
+     "minMm": 7.8,
+     "medianMm": 14.9,
+     "parts": 1
+    },
+    "mandible": {
+     "minMm": 10.5,
+     "medianMm": 23.4,
+     "parts": 1
+    }
+   },
+   "eyeJoint": {
+    "L": {
+     "distanceMm": 4.5,
+     "lateralMm": 4.4,
+     "offsetMm": [
+      4.4,
+      0.5,
+      0.4
+     ]
+    },
+    "R": {
+     "distanceMm": 5,
+     "lateralMm": 5,
+     "offsetMm": [
+      -5,
+      0.6,
+      0.2
+     ]
+    }
+   }
+  },
+  "author": {
+   "bmiByVolume": 23.65,
+   "targetBmi": 21.6,
+   "bideltoidMm": {
+    "target": 442.5,
+    "final": 466.7
+   }
+  },
+  "triangles": 147274,
+  "fit": {
+   "closed": true,
+   "nonManifoldEdges": 0,
+   "outside": 0.0002947888697549076,
+   "outside5mm": 0.000024565739146242303,
+   "worst": [
+    {
+     "name": "Left lacrimal canaliculus",
+     "outside": 0.5,
+     "maxMm": 0.2
+    },
+    {
+     "name": "Distal phalanx of left thumb",
+     "outside": 0.4,
+     "maxMm": 1.8
+    },
+    {
+     "name": "Palpebral part of left orbicularis oculi",
+     "outside": 0.07272727272727272,
+     "maxMm": 1.7
+    },
+    {
+     "name": "Right latissimus dorsi",
+     "outside": 0.013365735115431349,
+     "maxMm": 8.2
+    },
+    {
+     "name": "Left first metatarsal bone",
+     "outside": 0.0106951871657754,
+     "maxMm": 0.5
+    },
+    {
+     "name": "Left extensor pollicis longus",
+     "outside": 0.006097560975609756,
+     "maxMm": 0.1
+    },
+    {
+     "name": "Long head of right triceps brachii",
+     "outside": 0.0059594755661501785,
+     "maxMm": 1
+    },
+    {
+     "name": "Short head of right biceps brachii",
+     "outside": 0.0051813471502590676,
+     "maxMm": 0.6
+    },
+    {
+     "name": "Left latissimus dorsi",
+     "outside": 0.004805591961555264,
+     "maxMm": 1.3
+    },
+    {
+     "name": "Right serratus anterior",
+     "outside": 0.0036978341257263604,
+     "maxMm": 2.3
+    }
+   ]
+  },
+  "resolution": {
+   "source": {
+    "vertices": 73639,
+    "triangles": 147274,
+    "face": {
+     "vertices": 15987,
+     "triangles": 31674,
+     "meanEdgeMm": 1.87,
+     "p95EdgeMm": 3.78,
+     "maxEdgeMm": 10.21
+    },
+    "rest": {
+     "vertices": 57652,
+     "meanEdgeMm": 5.13
+    }
+   },
+   "simplifiedWhole": {
+    "vertices": 12937,
+    "triangles": 25870,
+    "face": {
+     "vertices": 950,
+     "triangles": 1796,
+     "meanEdgeMm": 7.88,
+     "p95EdgeMm": 18.84,
+     "maxEdgeMm": 35.81
+    },
+    "rest": {
+     "vertices": 11987,
+     "meanEdgeMm": 13.89
+    }
+   },
+   "shipped": {
+    "vertices": 28391,
+    "triangles": 56778,
+    "face": {
+     "vertices": 15987,
+     "triangles": 31777,
+     "meanEdgeMm": 1.88,
+     "p95EdgeMm": 3.81,
+     "maxEdgeMm": 19.53
+    },
+    "rest": {
+     "vertices": 12404,
+     "meanEdgeMm": 13.58
+    }
+   },
+   "shippedTopology": {
+    "boundaryEdges": 0,
+    "nonManifoldEdges": 3
+   }
+  },
+  "fitShipped": {
+   "closed": true,
+   "nonManifoldEdges": 3,
+   "outside": 0.0002874191480110349,
+   "outside5mm": 0.000024565739146242303,
+   "worst": [
+    {
+     "name": "Left lacrimal canaliculus",
+     "outside": 0.5,
+     "maxMm": 0.2
+    },
+    {
+     "name": "Distal phalanx of left thumb",
+     "outside": 0.35,
+     "maxMm": 1.8
+    },
+    {
+     "name": "Palpebral part of left orbicularis oculi",
+     "outside": 0.07272727272727272,
+     "maxMm": 1.7
+    },
+    {
+     "name": "Right latissimus dorsi",
+     "outside": 0.013365735115431349,
+     "maxMm": 8.2
+    },
+    {
+     "name": "Left first metatarsal bone",
+     "outside": 0.0106951871657754,
+     "maxMm": 0.6
+    },
+    {
+     "name": "Long head of right triceps brachii",
+     "outside": 0.0059594755661501785,
+     "maxMm": 1.1
+    },
+    {
+     "name": "Left latissimus dorsi",
+     "outside": 0.004805591961555264,
+     "maxMm": 1.2
+    },
+    {
+     "name": "Short head of right biceps brachii",
+     "outside": 0.0038860103626943004,
+     "maxMm": 0.6
+    },
+    {
+     "name": "Right serratus anterior",
+     "outside": 0.0036978341257263604,
+     "maxMm": 2.3
+    }
+   ]
+  },
+  "notFitted": {
+   "thin": {
+    "closed": true,
+    "nonManifoldEdges": 3,
+    "outside": 0.013542393579902303,
+    "outside5mm": 0.0009246336357292393,
+    "worst": [
+     {
+      "name": "Right dorsal digital branches of radial nerve",
+      "outside": 0.6778242677824268,
+      "maxMm": 4
+     },
+     {
+      "name": "Left dorsal digital branches of radial nerve",
+      "outside": 0.6260162601626016,
+      "maxMm": 4.3
+     },
+     {
+      "name": "Right fibular vein",
+      "outside": 0.5454545454545454,
+      "maxMm": 5.3
+     },
+     {
+      "name": "Left dorsal branch of ulnar nerve",
+      "outside": 0.49523809523809526,
+      "maxMm": 3
+     },
+     {
+      "name": "Left medial sural cutaneous nerve",
+      "outside": 0.44339622641509435,
+      "maxMm": 5.2
+     },
+     {
+      "name": "Left palmar metacarpal vein",
+      "outside": 0.4318181818181818,
+      "maxMm": 2.5
+     },
+     {
+      "name": "Right dorsal branch of ulnar nerve",
+      "outside": 0.42342342342342343,
+      "maxMm": 3.7
+     },
+     {
+      "name": "Right medial sural cutaneous nerve",
+      "outside": 0.3669724770642202,
+      "maxMm": 6.3
+     },
+     {
+      "name": "Left fibular vein",
+      "outside": 0.35714285714285715,
+      "maxMm": 4.6
+     },
+     {
+      "name": "Right palmar metacarpal vein",
+      "outside": 0.3111111111111111,
+      "maxMm": 3.9
+     }
+    ]
+   },
+   "surfaceParts": {
+    "closed": true,
+    "nonManifoldEdges": 3,
+    "outside": 0.4215022091310751,
+    "outside5mm": 0.22547864506627394,
+    "worst": [
+     {
+      "name": "Pubic hair",
+      "outside": 1,
+      "maxMm": 21.8
+     },
+     {
+      "name": "Eyebrow",
+      "outside": 0.9545454545454546,
+      "maxMm": 8.3
+     },
+     {
+      "name": "Right perionyx (foot)",
+      "outside": 0.8461538461538461,
+      "maxMm": 3.3
+     },
+     {
+      "name": "Right nail plate (foot)",
+      "outside": 0.8253968253968254,
+      "maxMm": 6.5
+     },
+     {
+      "name": "Hair of head",
+      "outside": 0.4043904208998549,
+      "maxMm": 13.5
+     },
+     {
+      "name": "Right nail plate",
+      "outside": 0.1774193548387097,
+      "maxMm": 3.7
+     },
+     {
+      "name": "Right perionyx",
+      "outside": 0.15,
+      "maxMm": 1.8
+     },
+     {
+      "name": "Left nail plate",
+      "outside": 0.1323529411764706,
+      "maxMm": 3.7
+     },
+     {
+      "name": "Left nail plate (foot)",
+      "outside": 0.11320754716981132,
+      "maxMm": 3.4
+     },
+     {
+      "name": "Left perionyx",
+      "outside": 0.07142857142857142,
+      "maxMm": 0.4
+     }
+    ]
+   },
+   "caution": {
+    "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 1.4% of their surface comes through the skin, by up to 6 mm (medial sural cutaneous nerve). Surface parts made for the earlier skin do not sit on this one: pubic hair, eyebrow, perionyx (foot), nail plate (foot), hair of head, nail plate, perionyx.",
+    "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 1.4% 露在皮肤之外，最多 6 mm。为旧皮肤制作的体表部件（头发、眉、外耳、甲、阴毛等）与这层皮肤对不上。"
+   }
+  }
  },
  "fat": {
   "options": {
@@ -18400,97 +18879,98 @@
    "maxDepth": 0.03,
    "smooth": 2
   },
-  "bodyVolumeL": 56.9,
-  "fatVolumeL": 15.4,
+  "skinSingleWalled": true,
+  "bodyVolumeL": 57.5,
+  "fatVolumeL": 16.3,
   "regions": [
    {
     "id": "W_SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "volumeMl": 428,
+    "volumeMl": 891,
     "thicknessMm": {
      "p10": 3,
-     "median": 6,
-     "p90": 9,
+     "median": 9,
+     "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.971
+    "skinCovered": 0.978
    },
    {
     "id": "W_SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
-    "volumeMl": 225,
+    "volumeMl": 176,
     "thicknessMm": {
      "p10": 6,
-     "median": 15,
-     "p90": 27,
+     "median": 12,
+     "p90": 24,
      "max": 30
     },
-    "skinCovered": 0.912
+    "skinCovered": 1
    },
    {
     "id": "W_SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
-    "volumeMl": 6764,
+    "volumeMl": 6750,
     "thicknessMm": {
      "p10": 6,
      "median": 12,
-     "p90": 27,
+     "p90": 24,
      "max": 30
     },
-    "skinCovered": 0.945
+    "skinCovered": 0.988
    },
    {
     "id": "W_SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
-    "volumeMl": 1049,
+    "volumeMl": 910,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 15,
+     "max": 30
+    },
+    "skinCovered": 0.98
+   },
+   {
+    "id": "W_SOMA_fat_upper_limb_R",
+    "name": "Subcutaneous tissue of right upper limb",
+    "volumeMl": 1067,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.932
-   },
-   {
-    "id": "W_SOMA_fat_upper_limb_R",
-    "name": "Subcutaneous tissue of right upper limb",
-    "volumeMl": 1090,
-    "thicknessMm": {
-     "p10": 3,
-     "median": 12,
-     "p90": 18,
-     "max": 30
-    },
-    "skinCovered": 0.929
+    "skinCovered": 0.978
    },
    {
     "id": "W_SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
-    "volumeMl": 2932,
+    "volumeMl": 3276,
     "thicknessMm": {
      "p10": 3,
-     "median": 12,
-     "p90": 21,
+     "median": 9,
+     "p90": 24,
      "max": 30
     },
-    "skinCovered": 0.936
+    "skinCovered": 0.968
    },
    {
     "id": "W_SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
-    "volumeMl": 2922,
+    "volumeMl": 3271,
     "thicknessMm": {
      "p10": 3,
-     "median": 12,
+     "median": 9,
      "p90": 24,
      "max": 30
     },
-    "skinCovered": 0.927
+    "skinCovered": 0.961
    }
   ]
  },
  "adjacency": {
-  "pairs": 32254,
+  "pairs": 32213,
   "degree": {
    "median": 14,
    "p90": 37,
@@ -18575,8 +19055,8 @@
    "values": {
     "posteriorMin": 7.840511884461055,
     "fromShaftMax": 40.64032796984775,
-    "betweenMin": 0.2952860208543449,
-    "betweenMax": 0.38608502710535403
+    "betweenMin": 0.29528602072178667,
+    "betweenMax": 0.38608502701855785
    }
   },
   {
@@ -18695,8 +19175,8 @@
    "values": {
     "posteriorMin": 19.304353185818577,
     "fromShaftMax": 49.13748971169039,
-    "betweenMin": 0.2947686806468525,
-    "betweenMax": 0.3432004939612959
+    "betweenMin": 0.29476867725053696,
+    "betweenMax": 0.34320049408838
    }
   },
   {
@@ -19030,17 +19510,51 @@
   },
   "leftBreastAnteriorToPectoralis": {
    "pass": true,
-   "breastCentroidZMm": 176.8,
+   "breastCentroidZMm": 182.7,
    "pectoralisCentroidZMm": 130.1,
    "pectoralisFrontZMm": 163,
    "fractionInFrontOfSkin": 0
   },
+  "leftBreastLevel": {
+   "pass": false,
+   "glandYMm": [
+    1012.5,
+    1057.9
+   ],
+   "glandCentroidYMm": 1030.1,
+   "pectoralisSternocostalYMm": [
+    1061.5,
+    1230.1
+   ],
+   "pectoralisCentroidYMm": 1157.8,
+   "glandCentroidBelowPectoralisCentroidMm": 127.7,
+   "glandCentroidBelowPectoralisLowerBorderMm": 31.4,
+   "glandTopBelowPectoralisLowerBorderMm": 3.7,
+   "nippleBelowXiphoidLowerEndMm": 66.4
+  },
   "rightBreastAnteriorToPectoralis": {
    "pass": true,
-   "breastCentroidZMm": 176.5,
+   "breastCentroidZMm": 176.9,
    "pectoralisCentroidZMm": 128.2,
    "pectoralisFrontZMm": 163.9,
    "fractionInFrontOfSkin": 0
+  },
+  "rightBreastLevel": {
+   "pass": false,
+   "glandYMm": [
+    1006.7,
+    1063
+   ],
+   "glandCentroidYMm": 1029,
+   "pectoralisSternocostalYMm": [
+    1055,
+    1221.9
+   ],
+   "pectoralisCentroidYMm": 1148.3,
+   "glandCentroidBelowPectoralisCentroidMm": 119.3,
+   "glandCentroidBelowPectoralisLowerBorderMm": 26,
+   "glandTopBelowPectoralisLowerBorderMm": -8,
+   "nippleBelowXiphoidLowerEndMm": 70.3
   },
   "noMaleOnlyParts": {
    "pass": true,
@@ -20372,7 +20886,7 @@
   ]
  },
  "perineumAgainstSkin": {
-  "skin": "placeholder (warped male skin)",
+  "skin": "external skin package",
   "note": "for shaping the future skin: the skin must pass below (outside) every structure listed here; the specimen outline is the skin of a slimmer individual scaled 1.096 with thighs apart as in the specimen, not a target surface",
   "outletPlane": {
    "symphysisLowerBorderMm": [
@@ -20394,8 +20908,8 @@
      30
     ],
     "lowestPointBelowOutletPlaneMm": 0.5,
-    "closestToPresentSkinMm": 0.2,
-    "presentSkinBelowLowestPoint": false,
+    "closestToPresentSkinMm": 32,
+    "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 1.6
    },
    "WU_vaginal_wall": {
@@ -20405,7 +20919,7 @@
      61
     ],
     "lowestPointBelowOutletPlaneMm": 2.8,
-    "closestToPresentSkinMm": 23.3,
+    "closestToPresentSkinMm": 45,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 11.7
    },
@@ -20416,7 +20930,7 @@
      50
     ],
     "lowestPointBelowOutletPlaneMm": 8.2,
-    "closestToPresentSkinMm": 9,
+    "closestToPresentSkinMm": 40.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 3.4
    },
@@ -20427,7 +20941,7 @@
      39
     ],
     "lowestPointBelowOutletPlaneMm": 0.2,
-    "closestToPresentSkinMm": 2.9,
+    "closestToPresentSkinMm": 43.2,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 7.3
    },
@@ -20438,7 +20952,7 @@
      40
     ],
     "lowestPointBelowOutletPlaneMm": 0.9,
-    "closestToPresentSkinMm": 5.5,
+    "closestToPresentSkinMm": 44.7,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 7.3
    },
@@ -20449,7 +20963,7 @@
      39
     ],
     "lowestPointBelowOutletPlaneMm": -1,
-    "closestToPresentSkinMm": 2.9,
+    "closestToPresentSkinMm": 43,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 6.5
    },
@@ -20460,7 +20974,7 @@
      39
     ],
     "lowestPointBelowOutletPlaneMm": -1.1,
-    "closestToPresentSkinMm": 4.6,
+    "closestToPresentSkinMm": 44.6,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 6.9
    },
@@ -20471,7 +20985,7 @@
      40
     ],
     "lowestPointBelowOutletPlaneMm": -3.4,
-    "closestToPresentSkinMm": 8.6,
+    "closestToPresentSkinMm": 32.4,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 10.1
    },
@@ -20482,7 +20996,7 @@
      41
     ],
     "lowestPointBelowOutletPlaneMm": -1.1,
-    "closestToPresentSkinMm": 7.8,
+    "closestToPresentSkinMm": 31.5,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 9.5
    },
@@ -20493,7 +21007,7 @@
      57
     ],
     "lowestPointBelowOutletPlaneMm": -2.9,
-    "closestToPresentSkinMm": 32.3,
+    "closestToPresentSkinMm": 50.8,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 20
    },
@@ -20504,7 +21018,7 @@
      59
     ],
     "lowestPointBelowOutletPlaneMm": -2,
-    "closestToPresentSkinMm": 31.1,
+    "closestToPresentSkinMm": 52.4,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 24.7
    },
@@ -20515,7 +21029,7 @@
      72
     ],
     "lowestPointBelowOutletPlaneMm": 8.1,
-    "closestToPresentSkinMm": 36.3,
+    "closestToPresentSkinMm": 34.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 14.1
    },
@@ -20526,7 +21040,7 @@
      73
     ],
     "lowestPointBelowOutletPlaneMm": 9.9,
-    "closestToPresentSkinMm": 37,
+    "closestToPresentSkinMm": 35.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 15.9
    },
@@ -20537,7 +21051,7 @@
      63
     ],
     "lowestPointBelowOutletPlaneMm": 6.3,
-    "closestToPresentSkinMm": 25.8,
+    "closestToPresentSkinMm": 50.3,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 12.5
    },
@@ -20548,7 +21062,7 @@
      66
     ],
     "lowestPointBelowOutletPlaneMm": 7.4,
-    "closestToPresentSkinMm": 29.9,
+    "closestToPresentSkinMm": 50.6,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 16
    },
@@ -20559,7 +21073,7 @@
      103
     ],
     "lowestPointBelowOutletPlaneMm": 29.8,
-    "closestToPresentSkinMm": 43,
+    "closestToPresentSkinMm": 17.4,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 8.4
    },
@@ -20570,7 +21084,7 @@
      80
     ],
     "lowestPointBelowOutletPlaneMm": 12.8,
-    "closestToPresentSkinMm": 39.7,
+    "closestToPresentSkinMm": 38.7,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 10.7
    },
@@ -20581,18 +21095,18 @@
      56
     ],
     "lowestPointBelowOutletPlaneMm": 1.8,
-    "closestToPresentSkinMm": 21.8,
+    "closestToPresentSkinMm": 47.2,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 10.8
    }
   },
-  "structuresWithNoSkinBelow": 1,
+  "structuresWithNoSkinBelow": 0,
   "specimenPerinealOutline": {
    "samples": 3600,
    "toPresentSkinMm": {
-    "median": 29.8,
-    "p90": 43.2,
-    "max": 54.5
+    "median": 24.1,
+    "p90": 36.6,
+    "max": 49.7
    },
    "belowOutletPlaneMm": {
     "median": 35.7,
@@ -20691,8 +21205,8 @@
  },
  "cautions": [
   {
-   "en": "This is a constructed standard female, not a scan of one person. Bones, leg and pelvis muscles and some organs come from one donor (Visible Human Female: CT and the University of Denver cryosection models, 184 parts), but they were re-posed and then scaled segment by segment to the proportions of an average young woman (stature 160.6 cm), so no part keeps the donor's true size or proportions; all are labelled \"warped\". The other 3102 parts are male anatomy deformed onto that skeleton.",
-   "zh": "本模型是构建出来的“标准女性”，并非某一位女性的扫描。骨骼、下肢和骨盆的肌以及部分器官来自同一位供体（Visible Human Female：CT 和丹佛大学的冰冻切片模型，共 184 个部件），但都重新摆过姿势，并逐肢段缩放到年轻女性的平均比例（身高 160.6 cm），因此没有任何部件保留供体的真实大小和比例，一律标为“形变”。其余 3102 个部件是形变贴合到这副骨架上的男性结构。"
+   "en": "This is a constructed standard female, not a scan of one person. Bones, leg and pelvis muscles and some organs come from one donor (Visible Human Female: CT and the University of Denver cryosection models, 184 parts), but they were re-posed and then scaled segment by segment to the proportions of an average young woman (stature 160.6 cm), so no part keeps the donor's true size or proportions; all are labelled \"warped\". The other 3101 parts are male anatomy deformed onto that skeleton.",
+   "zh": "本模型是构建出来的“标准女性”，并非某一位女性的扫描。骨骼、下肢和骨盆的肌以及部分器官来自同一位供体（Visible Human Female：CT 和丹佛大学的冰冻切片模型，共 184 个部件），但都重新摆过姿势，并逐肢段缩放到年轻女性的平均比例（身高 160.6 cm），因此没有任何部件保留供体的真实大小和比例，一律标为“形变”。其余 3101 个部件是形变贴合到这副骨架上的男性结构。"
   },
   {
    "en": "Proportions are imposed, not measured: segment lengths follow regressions fitted to US Army and US civilian surveys, evaluated at the mean stature of Chinese women aged 20–24. The trunk was shortened, the shoulder girdle lowered by about 7 cm, the forearms and lower legs lengthened, the pelvis narrowed by about 11 % and the feet flattened by about 20 %; the muscle envelope of the arms, chest wall, thighs and calves was thinned to fit the girths of a woman of BMI 21.6. Do not read individual bone shape, joint congruency or muscle bulk from this model.",
@@ -20715,8 +21229,20 @@
    "zh": "小骨盆里有三个来源的结构，它们相接的地方是拼接出来的，不是真实解剖。膀胱、骨和闭孔内肌来自骨架的供体；她的膀胱几乎是空的（35.7 ml），膀胱颈被拉动 12.1 mm 接到另一位女性的尿道上端，膀胱底向后移了 13 mm 贴近阴道前壁。子宫保持它在另一位女性体内的位置，而那位女性的膀胱是充盈的，所以膀胱与子宫之间留有一段不自然的空隙。乙状结肠、输尿管、血管、神经和淋巴结是男性结构：乙状结肠末端被移动 20.2 mm 去对接直肠上端（直肠在标本上缘处被截断），肠管整体移动了最多 32 mm 以避开子宫、左输卵管和左卵巢，原本穿过这些器官的血管被推到器官表面，仍有少数从中穿过。子宫动脉、子宫静脉、卵巢系膜、卵巢悬韧带、膀胱子宫陷凹是美术建模（Human Reference Atlas），被移动 2–4 cm 贴到这些器官上。"
   },
   {
-   "en": "The body surface is a PLACEHOLDER: male skin deformed to this skeleton and raised into a smooth envelope over the breasts. It still carries male external genitalia and does not show female body shape or fat distribution; a standard female skin is to replace it. The breasts themselves are a standing-shape artist model.",
-   "zh": "体表是占位用的：男性皮肤按这副骨架形变后，再在乳房处抬高成平滑包络，仍带有男性外生殖器，并不反映女性的体形和脂肪分布，之后将换成标准女性皮肤。乳房本身是站立位形态的美术模型。"
+   "en": "The body surface is a parametric model skin (Momentum Human Rig (MHR) v1.0.1), not a scan and not her own skin: a surface shaped as a standard female body and then relaxed outwards over her muscles until it encloses them. It is heavier than intended: BMI 23.65 by enclosed volume against a target of 21.6. The shoulders and upper arms are fuller than the target (bideltoid breadth 467 mm against 443 mm). Under the right arm the skin of the axilla runs into the skin of the trunk (about 33 cm² between 25 % and 40 % of the length of the humerus). The toes are one block, and the perineum is a smooth surface without vulvar anatomy.",
+   "zh": "体表是参数化模型皮肤（Momentum Human Rig (MHR) v1.0.1），不是扫描所得，也不是她本人的皮肤：先做成标准女性体形的表面，再向外松弛到把她的肌肉包住。它比设定的要胖：按所围体积算 BMI 为 23.65，目标是 21.6。肩部和上臂比目标粗（两侧三角肌间宽 467 mm，目标 443 mm）。右腋窝处上臂内侧的皮肤穿入了躯干的皮肤（肱骨长度 25–40 % 处约 33 cm²）。足趾连成一块；会阴是一片光滑的表面，没有外阴的解剖结构。"
+  },
+  {
+   "en": "Her head is the skin model's average head scaled to her skull, not a face of her own; the surface there has faults of its own: horizontal steps across the face at the level of the nose, the mouth and the chin, a crumpled knot of skin at the inner corner of each eye and a rough rim round the nostrils. The soft tissue of the lower face is too thick (about 15 mm of cover over orbicularis oris). The model's eyes sit about 5 mm further from the midline on each side than her eyeballs. The eyes and the mouth are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease; there the skin was deliberately not pushed out, and what lies under it comes through: the inner (palpebral) ring of orbicularis oculi by up to 2.1 mm. The face keeps the full resolution of the surface (15987 vertices, mean edge 1.88 mm); the rest of the skin is simplified.",
+   "zh": "她的头是皮肤模型的平均头按她的颅骨缩放得到的，不是她本人的面孔；这块表面自身也有毛病：面部在鼻、口、颏的高度各有一道横向的台阶，两眼内眦处各有一团皱起的皮肤，鼻孔缘粗糙。下面部的软组织偏厚（口轮匝肌外约有 15 mm 的覆盖）。模型的眼比她的眼球每侧偏外约 5 mm。眼和口都不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶；这些地方的皮肤有意不外推，因此有结构露出皮肤：眼轮匝肌内环（睑部）最多 2.1 mm。面部保留体表的原始分辨率（15987 个顶点，平均边长 1.88 mm），其余皮肤经过简化。"
+  },
+  {
+   "en": "The breasts on the surface are the skin model's. The gland, ducts, fat, areola and nipple inside them are an artist model (Human Reference Atlas) of a larger breast in standing shape, scaled to 0.41 (left) and 0.52 (right) of its size and moved about 7 cm down to fit under that skin. They sit too low: the centre of the gland is 31 and 26 mm below the lower border of the sternocostal part of pectoralis major (it lies over the abdominal part of the muscle only), and the nipple about 7 cm below the tip of the xiphoid process. Their size, their place on the chest wall and the difference between left and right are therefore not anatomical data.",
+   "zh": "体表上的乳房是皮肤模型的。其内的腺体、导管、脂肪、乳晕和乳头是美术模型（Human Reference Atlas），原本是更大的站立位乳房，被缩小到原大小的 0.41（左）和 0.52（右），并下移约 7 cm，才放得进这层皮肤。它们的位置偏低：腺体中心在胸大肌胸肋部下缘以下 31 和 26 mm（只盖在该肌的腹部之上）；乳头在剑突尖以下约 7 cm。因此它们的大小、在胸壁上的位置和左右差别都不是解剖数据。"
+  },
+  {
+   "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 1.4% of their surface comes through the skin, by up to 6 mm (medial sural cutaneous nerve). Surface parts made for the earlier skin do not sit on this one: pubic hair, eyebrow, perionyx (foot), nail plate (foot), hair of head, nail plate, perionyx.",
+   "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 1.4% 露在皮肤之外，最多 6 mm。为旧皮肤制作的体表部件（头发、眉、外耳、甲、阴毛等）与这层皮肤对不上。"
   },
   {
    "en": "Muscle bulk and position were then changed again to fit a target body surface: a parametric female skin (stature 160.6 cm, BMI 21.6) less the subcutaneous fat expected at each place. Muscles, tendons, warped organs, vessels and nerves were pushed in, and in places pulled out, by up to 29 mm with one smooth field that is zero on bone; 69 muscles lost more than a quarter of their volume (calf, abdominal wall, forearm extensors, neck). 12 % of the muscle and organ surface still lies outside that target, mostly thin muscle lying directly on bone. Muscle thickness, cross-section and volume in this model are therefore not anatomical data.",
@@ -20727,8 +21253,8 @@
    "en": "The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution."
   },
   {
-   "en": "Absent from the pelvis: labia, vestibule and the skin of the vulva (the body surface there is not female); the mucosa and lumen of the urethra; broad ligament of uterus, cardinal ligament, uterosacral ligament, mesosalpinx, ovarian ligament (the artist models of these did not fit the organs shown and were left out); ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a \"pubovisceral muscle\" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed, as were male structures that would lie inside the female organs (postvesical nodes).",
-   "zh": "盆腔中缺失的结构：阴唇、阴道前庭和外阴皮肤（该处的体表不是女性的）；尿道的黏膜和管腔；子宫阔韧带、主韧带、骶子宫韧带、输卵管系膜、卵巢固有韧带（这些结构的美术模型与这里显示的器官对不上，没有采用）；卵巢血管和阴道血管；盆腔自主神经丛。髂尾肌不是单独的部件：数据来源把耻尾肌和髂尾肌合称“耻骨内脏肌”，分为内层和外层。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）以及男性的盆底肌和直肠已删除，落在女性器官内部的男性结构（postvesical nodes）也已删除。"
+   "en": "Absent from the pelvis: labia, vestibule and the skin of the vulva (the body surface there is smooth); the mucosa and lumen of the urethra; broad ligament of uterus, cardinal ligament, uterosacral ligament, mesosalpinx, ovarian ligament (the artist models of these did not fit the organs shown and were left out); ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a \"pubovisceral muscle\" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed, as were male structures that would lie inside the female organs (postvesical nodes).",
+   "zh": "盆腔中缺失的结构：阴唇、阴道前庭和外阴皮肤（该处的体表是光滑的）；尿道的黏膜和管腔；子宫阔韧带、主韧带、骶子宫韧带、输卵管系膜、卵巢固有韧带（这些结构的美术模型与这里显示的器官对不上，没有采用）；卵巢血管和阴道血管；盆腔自主神经丛。髂尾肌不是单独的部件：数据来源把耻尾肌和髂尾肌合称“耻骨内脏肌”，分为内层和外层。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）以及男性的盆底肌和直肠已删除，落在女性器官内部的男性结构（postvesical nodes）也已删除。"
   },
   {
    "en": "Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.",
@@ -20752,16 +21278,19 @@
   }
  ],
  "notes": [
-  "This is a constructed standard female, not a scan of one person. Bones, leg and pelvis muscles and some organs come from one donor (Visible Human Female: CT and the University of Denver cryosection models, 184 parts), but they were re-posed and then scaled segment by segment to the proportions of an average young woman (stature 160.6 cm), so no part keeps the donor's true size or proportions; all are labelled \"warped\". The other 3102 parts are male anatomy deformed onto that skeleton.",
+  "This is a constructed standard female, not a scan of one person. Bones, leg and pelvis muscles and some organs come from one donor (Visible Human Female: CT and the University of Denver cryosection models, 184 parts), but they were re-posed and then scaled segment by segment to the proportions of an average young woman (stature 160.6 cm), so no part keeps the donor's true size or proportions; all are labelled \"warped\". The other 3101 parts are male anatomy deformed onto that skeleton.",
   "Proportions are imposed, not measured: segment lengths follow regressions fitted to US Army and US civilian surveys, evaluated at the mean stature of Chinese women aged 20–24. The trunk was shortened, the shoulder girdle lowered by about 7 cm, the forearms and lower legs lengthened, the pelvis narrowed by about 11 % and the feet flattened by about 20 %; the muscle envelope of the arms, chest wall, thighs and calves was thinned to fit the girths of a woman of BMI 21.6. Do not read individual bone shape, joint congruency or muscle bulk from this model.",
   "Most leg and pelvis muscles are spliced: the belly is the donor's (Denver cryosection model, bellies only) and the tendons are cut from the male muscle and moved to meet it, so the junction between belly and tendon is a join, not anatomy. Where no clean join was possible (gastrocnemius, gracilis, sartorius, semimembranosus, semitendinosus, gluteus minimus) the male muscle is shown instead. Vessels and nerves of the leg are male structures pushed out of these muscles afterwards; some still run through them.",
   "Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.",
   "The pelvic floor, the anal and urethral sphincters, the perineal muscles, clitoris and vestibular bulbs, the urethra, vagina, rectum and anal canal, uterus, tubes and ovaries (51 parts) are real female anatomy, but of ANOTHER woman, not of the donor of the skeleton (Wu et al. 2015: a young adult of the Chinese Visible Human series). Her structures were reconstructed from cryosections and smoothed by the authors of that study, enlarged 1.096 times and fitted to this pelvis by its bones (to about 2 mm), then narrowed by 11 % together with the pelvis. Left and right halves were separated by this project, and where neighbouring structures overlapped the less important one was reshaped by up to 8 mm. Do not read sizes, exact positions or left–right differences from these parts.",
   "Three sources meet in the lesser pelvis, and where they meet the model is a join, not anatomy. The bladder, bones and obturator internus are the donor's; her bladder is almost empty (35.7 ml), its neck was drawn 12.1 mm onto the upper end of the other woman's urethra and its base 13 mm back onto the anterior vaginal wall. The uterus stands as it did in the other woman, whose bladder was full, so an unnatural gap remains between bladder and uterus. The sigmoid colon, ureters, vessels, nerves and lymph nodes are male structures: the end of the sigmoid colon was moved 20.2 mm to meet the upper end of the rectum (which is cut off at the top of the specimen), the bowel was shifted by up to 32 mm to clear the uterus, left tube and left ovary, and vessels that ran through these organs were pushed to their surface; some still cut through them. Uterine artery, Uterine vein, Mesovarium, Suspensory ligament of ovary, Uterovesical pouch are artist models (Human Reference Atlas) moved 2–4 cm onto these organs.",
-  "The body surface is a PLACEHOLDER: male skin deformed to this skeleton and raised into a smooth envelope over the breasts. It still carries male external genitalia and does not show female body shape or fat distribution; a standard female skin is to replace it. The breasts themselves are a standing-shape artist model.",
+  "The body surface is a parametric model skin (Momentum Human Rig (MHR) v1.0.1), not a scan and not her own skin: a surface shaped as a standard female body and then relaxed outwards over her muscles until it encloses them. It is heavier than intended: BMI 23.65 by enclosed volume against a target of 21.6. The shoulders and upper arms are fuller than the target (bideltoid breadth 467 mm against 443 mm). Under the right arm the skin of the axilla runs into the skin of the trunk (about 33 cm² between 25 % and 40 % of the length of the humerus). The toes are one block, and the perineum is a smooth surface without vulvar anatomy.",
+  "Her head is the skin model's average head scaled to her skull, not a face of her own; the surface there has faults of its own: horizontal steps across the face at the level of the nose, the mouth and the chin, a crumpled knot of skin at the inner corner of each eye and a rough rim round the nostrils. The soft tissue of the lower face is too thick (about 15 mm of cover over orbicularis oris). The model's eyes sit about 5 mm further from the midline on each side than her eyeballs. The eyes and the mouth are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease; there the skin was deliberately not pushed out, and what lies under it comes through: the inner (palpebral) ring of orbicularis oculi by up to 2.1 mm. The face keeps the full resolution of the surface (15987 vertices, mean edge 1.88 mm); the rest of the skin is simplified.",
+  "The breasts on the surface are the skin model's. The gland, ducts, fat, areola and nipple inside them are an artist model (Human Reference Atlas) of a larger breast in standing shape, scaled to 0.41 (left) and 0.52 (right) of its size and moved about 7 cm down to fit under that skin. They sit too low: the centre of the gland is 31 and 26 mm below the lower border of the sternocostal part of pectoralis major (it lies over the abdominal part of the muscle only), and the nipple about 7 cm below the tip of the xiphoid process. Their size, their place on the chest wall and the difference between left and right are therefore not anatomical data.",
+  "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 1.4% of their surface comes through the skin, by up to 6 mm (medial sural cutaneous nerve). Surface parts made for the earlier skin do not sit on this one: pubic hair, eyebrow, perionyx (foot), nail plate (foot), hair of head, nail plate, perionyx.",
   "Muscle bulk and position were then changed again to fit a target body surface: a parametric female skin (stature 160.6 cm, BMI 21.6) less the subcutaneous fat expected at each place. Muscles, tendons, warped organs, vessels and nerves were pushed in, and in places pulled out, by up to 29 mm with one smooth field that is zero on bone; 69 muscles lost more than a quarter of their volume (calf, abdominal wall, forearm extensors, neck). 12 % of the muscle and organ surface still lies outside that target, mostly thin muscle lying directly on bone. Muscle thickness, cross-section and volume in this model are therefore not anatomical data.",
   "The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution.",
-  "Absent from the pelvis: labia, vestibule and the skin of the vulva (the body surface there is not female); the mucosa and lumen of the urethra; broad ligament of uterus, cardinal ligament, uterosacral ligament, mesosalpinx, ovarian ligament (the artist models of these did not fit the organs shown and were left out); ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a \"pubovisceral muscle\" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed, as were male structures that would lie inside the female organs (postvesical nodes).",
+  "Absent from the pelvis: labia, vestibule and the skin of the vulva (the body surface there is smooth); the mucosa and lumen of the urethra; broad ligament of uterus, cardinal ligament, uterosacral ligament, mesosalpinx, ovarian ligament (the artist models of these did not fit the organs shown and were left out); ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a \"pubovisceral muscle\" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed, as were male structures that would lie inside the female organs (postvesical nodes).",
   "Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.",
   "Right radius, ulna and the bones of both hands and feet are not her scanned bones: the right forearm is a mirrored copy of the left (the scan cut it off), and hand and foot bones are warped male bones with extended fingers.",
   "The donor had six lumbar vertebrae. A standard five-lumbar spine is shown: her first lumbar vertebra was removed and everything above it moved down by one segment, so the thoracolumbar junction is a join, not anatomy. Rib numbering comes from automatic segmentation and is unreliable for left ribs 5–9.",
@@ -20772,8 +21301,8 @@
   "parts": 3369,
   "byProvenance": {
    "scanned": 169,
-   "warped": 3117,
-   "curated": 83
+   "warped": 3116,
+   "curated": 84
   },
   "bySource": {
    "Visible Human Female CT": 84,
@@ -20805,8 +21334,8 @@
    },
    "integumentary": {
     "scanned": 0,
-    "warped": 17,
-    "curated": 23
+    "warped": 16,
+    "curated": 24
    },
    "lymphatic": {
     "scanned": 1,
@@ -21121,12 +21650,12 @@
  },
  "output": {
   "parts": 3369,
-  "triangles": 3607252,
+  "triangles": 3627300,
   "glbBytes": {
-   "integumentary.glb": 834028,
-   "muscular.glb": 7971756,
+   "integumentary.glb": 934676,
+   "muscular.glb": 7971624,
    "skeletal.glb": 2762696,
-   "cardiovascular.glb": 5045984,
+   "cardiovascular.glb": 5045980,
    "nervous.glb": 4258908,
    "respiratory.glb": 514840,
    "digestive.glb": 3542208,
@@ -21135,15 +21664,15 @@
    "endocrine.glb": 28220,
    "lymphatic.glb": 703044
   },
-  "anatomyJsonBytes": 2629490,
+  "anatomyJsonBytes": 2631267,
   "nerves": 405,
   "bounds": [
-   -0.3501,
-   -0.0785,
-   -0.054,
-   0.3376,
+   -0.3498,
+   -0.0841,
+   -0.0657,
+   0.3358,
    1.5417,
-   0.2476
+   0.2459
   ]
  }
 }

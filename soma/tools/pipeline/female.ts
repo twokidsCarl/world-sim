@@ -66,7 +66,7 @@ import { spliceTendons } from './splice.ts'
 import { depthOf, LAYERS } from './layers.ts'
 import { signedVolume } from './meshRepair.ts'
 import { applyRigid, buildDeformation, buildTwoLevelDeformation, fitRigid, fitSimilarity, icp, InsideTester, PointIndex, surfaceDistance, surfacePoints, thinPoints, type Deformation, type Rigid } from './register.ts'
-import { checkSkinFit, internalsKey, loadSkinPackage, type SkinPackage } from './skinPackage.ts'
+import { checkSkinFit, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, loadSkinPackage, notFittedAgainstSkin, signedDistanceToSkin, simplifySkinKeepingFace, skinResolution, SurfaceDistance, usedVertices, type SkinPackage } from './skinPackage.ts'
 import { loadShapeTarget, medianDistanceToBone, reshapeIntoEnvelope, type ShapeRole } from './shape.ts'
 import { buildSlimmer, sectionGirth, type SlimSegment } from './slim.ts'
 import { anthro, anthroNhanes, anthroSd, boneLandmarks, mapPoints, planStandard, skeletalMeasures, type AnthroModel, type PointMap, type StandardPlan, type StandardTargets, type Vec3 } from './standard.ts'
@@ -152,6 +152,20 @@ const SOLE_PAD = 0.008
 const SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/female-skin'
 const EXTERNAL_SKIN_ID = 'SOMA_skin'
 /**
+ * 皮肤作者报告、而管线自己量不出来的缺陷，按皮肤包所拟合的内部结构指纹登记（换了一版内部结构就不再引用）。
+ * 出处：皮肤包里的 enclosure.txt “arm skin against the trunk skin facing it” 一节，右侧肱骨 0.25–0.40 段 insideCm2 = 33.3。
+ * Defects reported by the skin's author that the pipeline cannot measure itself, filed under the
+ * fingerprint of the internals the package was fitted to (not quoted for any other version).
+ * Source: the section "arm skin against the trunk skin facing it" of enclosure.txt in the skin
+ * package, right side, 0.25–0.40 of the humerus, insideCm2 = 33.3.
+ */
+const SKIN_AUTHOR_NOTES: Record<string, { zh: string; en: string }> = {
+  d8e55b8725377511: {
+    en: ' Under the right arm the skin of the axilla runs into the skin of the trunk (about 33 cm² between 25 % and 40 % of the length of the humerus).',
+    zh: '右腋窝处上臂内侧的皮肤穿入了躯干的皮肤（肱骨长度 25–40 % 处约 33 cm²）。',
+  },
+}
+/**
  * 体形目标包的位置（相对项目根）：目标体表和深层包络，见 shape.ts。不存在时跳过体形重塑。
  * Where the body-shape target package lives (relative to the project root): target skin and deep envelope, see shape.ts. Without it the body-shape stage is skipped.
  */
@@ -236,6 +250,11 @@ interface FPart {
    * geometry is final (already simplified male mesh, rebuilt nerve tube)
    */
   keepGeometry?: boolean
+  /**
+   * 简化时必须原样保留的顶点（1 = 保留）；用于装入的皮肤的面部区域，见 skinPackage.ts
+   * vertices the simplifier must leave as they are (1 = keep): the face region of an installed skin, see skinPackage.ts
+   */
+  lockVertices?: Uint8Array
   note?: string
 }
 
@@ -1548,7 +1567,13 @@ async function finish(input: FinishInput) {
     }
     return pts.length ? front / (pts.length / 3) : 0
   }
-  {
+  // 皮肤包只读一次。包若声明是为女性体拟合的，占位皮肤多半会被换掉：胸部抬升先不做，
+  // 等到 5e 确认指纹不符、占位皮肤要留下时再做。
+  // The skin package is read once. When it says it was fitted to the female body the placeholder will
+  // most likely be replaced, so the chest raise is put off until step 5e finds that the fingerprint
+  // does not match and the placeholder stays.
+  const skinPackage = loadSkinPackage(join(ROOT, SKIN_PACKAGE_DIR))
+  const raiseSkinOverBreasts = () => {
     const skin = parts.find((p) => p.name === 'Skin' && p.tissue === 'skin')
     const breastParts = (side: 'L' | 'R') => parts.filter((p) => p.provenance === 'curated' && p.system === 'integumentary' && p.side === side)
     const skinReport: Record<string, unknown> = {}
@@ -1636,6 +1661,8 @@ async function finish(input: FinishInput) {
     }
     report.skin = skinReport
   }
+  const raiseDeferred = skinPackage?.fittedTo?.body === 'female'
+  if (!raiseDeferred) raiseSkinOverBreasts()
 
   // ── 5d. 手：男性的手经形变场贴到她成组的手骨上，手指偏长；绕腕中心均匀缩放到目标手长
   // ── 5d. Hands: the male hands, carried by the field onto her grouped hand bones, come out long in
@@ -1926,43 +1953,89 @@ async function finish(input: FinishInput) {
     const boneKey = internalsKey(parts.filter((p) => p.tissue === 'bone').map((p) => ({ name: p.name, bbox: measure(p.mesh).bbox })))
     const shaped = report.bodyShape as { applied?: boolean; envelopeSha1?: string; options?: unknown } | undefined
     const key = shaped?.applied ? createHash('sha1').update(`${boneKey}\nbody-shape v${SHAPE_STAGE_VERSION}\n${shaped.envelopeSha1}\n${JSON.stringify(shaped.options)}\n${JSON.stringify(MUSCLE_SEX_RATIO)}`).digest('hex').slice(0, 16) : boneKey
-    const pkg = loadSkinPackage(join(ROOT, SKIN_PACKAGE_DIR))
+    const pkg = skinPackage
     const skin = parts.find((p) => p.name === 'Skin' && p.tissue === 'skin')
     const deepOf = () => parts.filter((p) => FAT_DEEP_TISSUES.has(p.tissue) && p.system !== 'integumentary').map((p) => ({ name: p.name, mesh: p.mesh }))
     const row: Record<string, unknown> = { dir: SKIN_PACKAGE_DIR, internalsKey: key, ...(shaped?.applied ? { internalsKeyBeforeShape: boneKey } : {}), present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false }
     if (pkg && skin && pkg.fittedTo?.body === 'female' && pkg.fittedTo.key === key) {
+      // 占位皮肤（形变来的男性皮肤）整个换掉，胸部抬升也不再做
+      // the placeholder (the warped male skin) is replaced outright, and the chest raise is not made
       skin.mesh = pkg.mesh
       skin.id = EXTERNAL_SKIN_ID
       skin.provenance = 'curated'
       skin.source = pkg.source.name
-      skin.keepGeometry = true
       skin.note = 'external skin package fitted to these internals'
       installedSkin = pkg
-      // 乳房的摆放（可选）：皮肤包里的 breast-placement.json 给出每侧 HRA 乳房部件的变换 p' = A + T + s·(p − A)
-      // breast placement (optional): breast-placement.json in the skin package gives, per side, the transform p' = A + T + s·(p − A) of the HRA breast parts
+      report.skin = { method: 'external skin package', placeholderDiscarded: true, chestRaise: false }
+      // 面部区域（距表情肌 ≤ FACE_REGION_RADIUS 的皮肤顶点）在简化时原样保留，见第 6 步
+      // the face region (skin vertices within FACE_REGION_RADIUS of a muscle of facial expression) is left as it is by the simplifier, see step 6
+      const facial = parts.filter((p) => p.tissue === 'muscle' && FACE_MUSCLE_NAME.test(p.name))
+      skin.lockVertices = faceRegionOfSkin(pkg.mesh, facial.map((p) => p.mesh))
+      row.faceRegion = { rule: `skin vertices within ${FACE_REGION_RADIUS * 1000} mm of the surface of a muscle of facial expression`, radiusM: FACE_REGION_RADIUS, muscles: facial.length }
+      // 乳房的摆放（可选）：皮肤包里的 breast-placement.json 给出每侧 HRA 乳房部件的变换 p' = A + T + s·(p − A)；
+      // nippleAndAreola.parts 所列的部件（乳晕、乳晕腺、乳头）再加一个平移 extraTranslationM
+      // breast placement (optional): breast-placement.json in the skin package gives, per side, the transform p' = A + T + s·(p − A) of the HRA breast parts;
+      // the parts listed under nippleAndAreola.parts (areola, areolar tubercles, nipple) then get one more translation, extraTranslationM
       const bpFile = join(ROOT, SKIN_PACKAGE_DIR, 'breast-placement.json')
       if (existsSync(bpFile)) {
-        const bp = JSON.parse(readFileSync(bpFile, 'utf8')) as { sides?: Record<string, { aboutPoint?: number[]; translationM?: number[]; scale?: number }> }
+        const bp = JSON.parse(readFileSync(bpFile, 'utf8')) as { sides?: Record<string, { aboutPoint?: number[]; translationM?: number[]; scale?: number; nippleAndAreola?: { parts?: string[]; extraTranslationM?: number[] } }> }
+        const vec3 = (v: unknown): v is number[] => Array.isArray(v) && v.length === 3 && v.every((x) => typeof x === 'number' && Number.isFinite(x))
+        const tester = new InsideTester(pkg.mesh, 256)
+        const surface = new SurfaceDistance(pkg.mesh)
         const placed: Record<string, unknown> = {}
         for (const side of ['L', 'R'] as const) {
           const t = bp.sides?.[side]
           const A = t?.aboutPoint
           const T = t?.translationM
           const sc = t?.scale
-          if (!A || !T || A.length !== 3 || T.length !== 3 || typeof sc !== 'number' || !(sc > 0) || ![...A, ...T, sc].every(Number.isFinite)) continue
+          if (!vec3(A) || !vec3(T) || typeof sc !== 'number' || !(sc > 0) || !Number.isFinite(sc)) continue
           const list = parts.filter((p) => p.source === SOURCE_HRA.name && p.system === 'integumentary' && p.side === side)
           for (const p of list) p.mesh = { positions: Float32Array.from(p.mesh.positions, (v, i) => A[i % 3]! + T[i % 3]! + sc * (v - A[i % 3]!)), indices: p.mesh.indices }
-          placed[side] = { parts: list.length, aboutPoint: A, translationM: T, scale: sc }
+          // 只接受本侧的乳晕、乳晕腺、乳头；别的 id 一律不动并记入报告
+          // only this side's areola, areolar tubercles and nipple are accepted; any other id is left alone and reported
+          const E = t?.nippleAndAreola?.extraTranslationM
+          const wanted = t?.nippleAndAreola?.parts ?? []
+          const NIPPLE_AREOLA = new RegExp(`^HRA_(areola|areolar_tubercles|nipple)_${side}$`)
+          const extra = vec3(E) ? list.filter((p) => wanted.includes(p.id) && NIPPLE_AREOLA.test(p.id)) : []
+          if (vec3(E)) for (const p of extra) p.mesh = { positions: Float32Array.from(p.mesh.positions, (v, i) => v + E[i % 3]!), indices: p.mesh.indices }
+          // 摆放后相对于皮肤的位置（有符号距离，正 = 在皮肤外）
+          // where the parts end up against the skin (signed distance, positive = outside)
+          const isNA = (p: FPart) => NIPPLE_AREOLA.test(p.id)
+          const against = (ps: FPart[]) => signedDistanceToSkin(tester, surface, concat(ps.map((p) => concat([usedVertices(p.mesh), samplesOf(p.mesh, 0.002)]))))
+          const lobes = list.filter((p) => p.id === `HRA_mammary_lobes_${side}`)
+          const nipple = list.find((p) => p.id === `HRA_nipple_${side}`)
+          let tip: number[] | null = null
+          if (nipple) {
+            const nv = usedVertices(nipple.mesh)
+            for (let i = 0; i < nv.length; i += 3) if (!tip || nv[i + 2]! > tip[2]!) tip = [nv[i]!, nv[i + 1]!, nv[i + 2]!]
+          }
+          placed[side] = {
+            parts: list.length, aboutPoint: A, translationM: T, scale: sc,
+            nippleAndAreola: { parts: extra.map((p) => p.id), extraTranslationM: vec3(E) ? E : null, ignoredIds: wanted.filter((id) => !extra.some((p) => p.id === id)) },
+            againstSkin: {
+              mammaryLobes: against(lobes),
+              allPartsButNippleAndAreola: against(list.filter((p) => !isNA(p))),
+              areola: against(list.filter((p) => p.id === `HRA_areola_${side}`)),
+              nipple: nipple ? against([nipple]) : null,
+              nippleTip: tip ? { position: tip.map((v) => round(v, 4)), signedDistanceMm: signedDistanceToSkin(tester, surface, Float32Array.from(tip)).maxMm } : null,
+            },
+          }
         }
-        row.breastPlacement = { file: `${SKIN_PACKAGE_DIR}/breast-placement.json`, sides: placed }
+        row.breastPlacement = { file: `${SKIN_PACKAGE_DIR}/breast-placement.json`, signedDistances: 'mm from the installed skin at source resolution; positive = outside', sides: placed }
         console.log(`  breast placement from the skin package: ${JSON.stringify(placed)}`)
       }
       const fit = checkSkinFit(pkg.mesh, deepOf())
+      // 面部几处结构在皮肤下的深度，以及皮肤模型的眼关节与眼球中心的偏差
+      // how deep a few facial structures lie under the skin, and how far the skin model's eye joints are from the centres of the globes
+      row.face = faceAgainstSkin(pkg.mesh, parts.map((p) => ({ name: p.name, mesh: p.mesh })), pkg.eyeJoints)
+      row.author = pkg.author
       Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit })
-      console.log(`\nSkin package ${SKIN_PACKAGE_DIR} installed (${pkg.source.name}, ${pkg.mesh.indices.length / 3} triangles, ${fit.closed ? 'closed' : 'NOT closed'}); deep-part surface outside the skin ${(fit.outside * 100).toFixed(1)}% (${(fit.outside5mm * 100).toFixed(1)}% by more than 5 mm); worst: ${fit.worst.slice(0, 5).map((w) => `${w.name} ${(w.outside * 100).toFixed(0)}%`).join(', ') || '-'}`)
+      console.log(`\nSkin package ${SKIN_PACKAGE_DIR} installed (${pkg.source.name}, ${pkg.mesh.indices.length / 3} triangles, ${fit.closed ? 'closed' : 'NOT closed'}); deep-part surface outside the skin ${(fit.outside * 100).toFixed(2)}% (${(fit.outside5mm * 100).toFixed(2)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
     } else {
       row.reason = !pkg ? 'no package' : !pkg.fittedTo ? 'the package does not say which internals it was fitted to (manifest.fittedTo missing)' : 'fitted to other internals'
       console.log(`\nSkin: placeholder kept (${row.reason}); a skin package for these internals must carry "fittedTo": {"body": "female", "key": "${key}"} in its manifest.json`)
+      // 占位皮肤留下：补做先前推迟的胸部抬升 / the placeholder stays: the chest raise that was put off is made now
+      if (raiseDeferred) raiseSkinOverBreasts()
     }
     report.skinPackage = row
   }
@@ -1990,12 +2063,12 @@ async function finish(input: FinishInput) {
         parts.push({ id: `W_${m.id}`, fma: m.fma, name: m.name, system: m.system, tissue: m.tissue, depth: m.depth, side: m.side, provenance: 'curated', source: m.source ?? 'soma (derived)', male: m.id, mesh: r.mesh, note: 'derived from her own skin and deep parts, not warped from the male' })
         rows.push({ id: `W_${m.id}`, name: m.name, volumeMl: round(r.volume * 1e6, 0), thicknessMm: { p10: round(r.thickness.p10 * 1000, 0), median: round(r.thickness.median * 1000, 0), p90: round(r.thickness.p90 * 1000, 0), max: round(r.thickness.max * 1000, 0) }, skinCovered: round(r.skinCovered, 3) })
       }
-      console.log(`\nSubcutaneous fat (derived on her body): volume inside the skin ${(fat.bodyVolume * 1000).toFixed(1)} l, fat ${(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000).toFixed(1)} l`)
+      console.log(`\nSubcutaneous fat (derived on her body; skin taken as ${fat.skinSingleWalled ? 'single-walled' : 'double-walled'}): volume inside the skin ${(fat.bodyVolume * 1000).toFixed(1)} l, fat ${(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000).toFixed(1)} l`)
       for (const r of rows) {
         const t = r.thicknessMm as Record<string, number>
         console.log(`  ${pad(r.name as string, 44)}${pad(`${r.volumeMl} ml`, 10)}thickness p10 ${t.p10} / median ${t.median} / p90 ${t.p90} / max ${t.max} mm; fat under ${((r.skinCovered as number) * 100).toFixed(0)}% of the region's skin`)
       }
-      report.fat = { options: FAT_OPTIONS, bodyVolumeL: round(fat.bodyVolume * 1000, 1), fatVolumeL: round(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000, 1), regions: rows }
+      report.fat = { options: FAT_OPTIONS, skinSingleWalled: fat.skinSingleWalled, bodyVolumeL: round(fat.bodyVolume * 1000, 1), fatVolumeL: round(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000, 1), regions: rows }
       lap('subcutaneous fat')
     }
   }
@@ -2006,7 +2079,32 @@ async function finish(input: FinishInput) {
   for (const p of parts) {
     let mesh = p.mesh
     trianglesIn += mesh.indices.length / 3
-    if (!p.keepGeometry) {
+    if (p.lockVertices) {
+      // 装入的皮肤：面部区域保持原始分辨率，其余按与其他部件相同的规则简化（不焊接：包里的网格已是封闭流形，
+      // 焊接会打乱掩码所依的顶点次序）；同时记下整张简化时面部会剩下多少
+      // the installed skin: the face region keeps its source resolution and the rest is simplified by the rule every other part gets
+      // (no welding: the package mesh is already a closed manifold, and welding would upset the vertex order the mask relies on);
+      // what a simplification of the whole would leave in the face is recorded too
+      const st = measure(mesh)
+      const thickness = st.area > 0 ? (3 * Math.abs(st.signedVolume)) / st.area : 0
+      const err = Math.min(SIMPLIFY.max, Math.max(SIMPLIFY.min, SIMPLIFY.perThickness * thickness))
+      const facial = parts.filter((q) => q.tissue === 'muscle' && FACE_MUSCLE_NAME.test(q.name)).map((q) => q.mesh)
+      const plain = await simplifyMesh(mesh, err, Math.max(SIMPLIFY.minTriangles, st.area / (0.433 * SIMPLIFY.maxEdge ** 2)))
+      const whole: Mesh = { positions: plain.positions, indices: plain.indices }
+      const kf = await simplifySkinKeepingFace(mesh, p.lockVertices, err, SIMPLIFY.maxEdge, SIMPLIFY.minTriangles)
+      const row = report.skinPackage as Record<string, unknown>
+      row.resolution = { source: skinResolution(mesh, p.lockVertices), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, kf.inFace), shippedTopology: edgeTopology(kf.mesh) }
+      row.fitShipped = checkSkinFit(kf.mesh, parts.filter((q) => FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ name: q.name, mesh: q.mesh })))
+      // 不在拟合之列的薄结构和旧体表部件露出多少（见 skinPackage.ts） / how far the thin structures and old surface parts that the fit did not cover come through (see skinPackage.ts)
+      row.notFitted = notFittedAgainstSkin(
+        kf.mesh,
+        parts.filter((q) => !FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ name: q.name, mesh: q.mesh })),
+        parts.filter((q) => q.system === 'integumentary' && q !== p && !isFatPart(q.id) && q.source !== SOURCE_HRA.name).map((q) => ({ name: q.name, mesh: q.mesh })),
+      )
+      const rs = row.resolution as { simplifiedWhole: { face: { vertices: number; meanEdgeMm: number } }; shipped: { vertices: number; triangles: number; face: { vertices: number; meanEdgeMm: number } }; shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } }
+      console.log(`\nSkin: face region kept at source resolution — ${rs.shipped.face.vertices} vertices, mean edge ${rs.shipped.face.meanEdgeMm} mm (simplified as a whole it would keep ${rs.simplifiedWhole.face.vertices} vertices, mean edge ${rs.simplifiedWhole.face.meanEdgeMm} mm); shipped skin ${rs.shipped.vertices} vertices, ${rs.shipped.triangles} triangles, boundary edges ${rs.shippedTopology.boundaryEdges}, non-manifold edges ${rs.shippedTopology.nonManifoldEdges}; deep-part surface outside the shipped skin ${((row.fitShipped as { outside: number }).outside * 100).toFixed(2)}%`)
+      mesh = kf.mesh
+    } else if (!p.keepGeometry) {
       const w = weld(mesh.positions, mesh.indices)
       mesh = { positions: w.positions, indices: w.indices }
       const st = measure(mesh)
@@ -2288,6 +2386,24 @@ async function finish(input: FinishInput) {
       const skin = parts.find((p) => p.tissue === 'skin' && p.name === 'Skin')
       const outside = skin ? inFrontOfSkin(skin.mesh, samplesOf(breast.mesh, 0.004)) : NaN
       sexChecks[`${S}BreastAnteriorToPectoralis`] = { pass: b.centroid[2] > pm.centroid[2] && b.bbox[5] > pm.bbox[5], breastCentroidZMm: round(b.centroid[2] * 1000, 1), pectoralisCentroidZMm: round(pm.centroid[2] * 1000, 1), pectoralisFrontZMm: round(pm.bbox[5] * 1000, 1), fractionInFrontOfSkin: round(outside, 3) }
+      // 高度：乳腺应盖在胸大肌上（腺体中心落在胸肋部的上下缘之间），乳头不低于剑突下端太多。
+      // 按皮肤包摆放后的乳腺通不过这一项（皮肤模型的乳房位置偏低）：如实记为不通过，并写进说明。
+      // Level: the gland should lie over pectoralis major (its centre between the upper and lower border of the
+      // sternocostal part), the nipple not far below the lower end of the xiphoid process. The gland as placed
+      // by the skin package fails this (the skin model's breasts sit low): recorded as a failure and stated in the cautions.
+      const xiphoid = byName('Xiphoid process')
+      const nipple = parts.find((p) => p.id === `HRA_nipple_${side}`)
+      const xLow = xiphoid ? measure(xiphoid.mesh).bbox[1] : NaN
+      const nY = nipple ? measure(nipple.mesh).centroid[1] : NaN
+      sexChecks[`${S}BreastLevel`] = {
+        pass: b.centroid[1] > pm.bbox[1] && b.centroid[1] < pm.bbox[4],
+        glandYMm: [round(b.bbox[1] * 1000, 1), round(b.bbox[4] * 1000, 1)], glandCentroidYMm: round(b.centroid[1] * 1000, 1),
+        pectoralisSternocostalYMm: [round(pm.bbox[1] * 1000, 1), round(pm.bbox[4] * 1000, 1)], pectoralisCentroidYMm: round(pm.centroid[1] * 1000, 1),
+        glandCentroidBelowPectoralisCentroidMm: round((pm.centroid[1] - b.centroid[1]) * 1000, 1),
+        glandCentroidBelowPectoralisLowerBorderMm: round((pm.bbox[1] - b.centroid[1]) * 1000, 1),
+        glandTopBelowPectoralisLowerBorderMm: round((pm.bbox[1] - b.bbox[4]) * 1000, 1),
+        nippleBelowXiphoidLowerEndMm: round((xLow - nY) * 1000, 1),
+      }
     }
     const maleOnly = parts.filter((p) => p.provenance === 'warped' && (p.system === 'reproductive' || MALE_ONLY_NAME.test(p.name)))
     sexChecks.noMaleOnlyParts = { pass: maleOnly.length === 0, found: maleOnly.map((p) => p.name) }
@@ -2393,6 +2509,68 @@ async function finish(input: FinishInput) {
   const hraGone = hraGoneNames.map((n) => n[0]!.toUpperCase() + n.slice(1))
   const hraGoneZh = [...new Set(hraGoneNames.map((n) => HRA_ZH.find(([rx]) => rx.test(n))?.[1] ?? n))].join('、')
   const warpedGone = [...new Set((pv.warpedDropped?.parts ?? []).map((n) => n.replace(/^(Left|Right) /, '').toLowerCase()))]
+  // 体表的说明：装入了皮肤包时，数值取自本次构建的测量（report.skinPackage）；量不了的（BMI、肩宽、腋窝处皮肤相穿）引用皮肤作者的数
+  // cautions about the body surface: with a skin package installed the figures are this build's measurements (report.skinPackage);
+  // what cannot be measured here (BMI, shoulder breadth, skin running into skin at the axilla) quotes the skin's author
+  const skinCautions: { zh: string; en: string }[] = []
+  if (installedSkin) {
+    const pkg = installedSkin as SkinPackage
+    const row = report.skinPackage as {
+      face?: { cover: Record<string, { minMm: number; medianMm: number } | null>; eyeJoint: Record<'L' | 'R', { lateralMm: number }> | null }
+      resolution?: { shipped: { face: { vertices: number; meanEdgeMm: number } } }
+      breastPlacement?: { sides: Record<string, { scale: number; translationM: number[] } | undefined> }
+    }
+    const au = pkg.author
+    const bmi = au.bmiByVolume !== null && au.targetBmi !== null ? { en: ` It is heavier than intended: BMI ${au.bmiByVolume} by enclosed volume against a target of ${au.targetBmi}.`, zh: `它比设定的要胖：按所围体积算 BMI 为 ${au.bmiByVolume}，目标是 ${au.targetBmi}。` } : { en: '', zh: '' }
+    const bd = au.bideltoidMm ? { en: ` The shoulders and upper arms are fuller than the target (bideltoid breadth ${Math.round(au.bideltoidMm.final)} mm against ${Math.round(au.bideltoidMm.target)} mm).`, zh: `肩部和上臂比目标粗（两侧三角肌间宽 ${Math.round(au.bideltoidMm.final)} mm，目标 ${Math.round(au.bideltoidMm.target)} mm）。` } : { en: '', zh: '' }
+    const ax = SKIN_AUTHOR_NOTES[pkg.fittedTo?.key ?? ''] ?? { en: '', zh: '' }
+    skinCautions.push({
+      en: `The body surface is a parametric model skin (${pkg.source.name}), not a scan and not her own skin: a surface shaped as a standard female body and then relaxed outwards over her muscles until it encloses them.${bmi.en}${bd.en}${ax.en} The toes are one block, and the perineum is a smooth surface without vulvar anatomy.`,
+      zh: `体表是参数化模型皮肤（${pkg.source.name}），不是扫描所得，也不是她本人的皮肤：先做成标准女性体形的表面，再向外松弛到把她的肌肉包住。${bmi.zh}${bd.zh}${ax.zh}足趾连成一块；会阴是一片光滑的表面，没有外阴的解剖结构。`,
+    })
+    const cov = row.face?.cover ?? {}
+    const through = (k: string) => (cov[k] && cov[k]!.minMm < 0 ? (-cov[k]!.minMm).toFixed(1) : null)
+    const ring = through('palpebralOrbicularisOculi')
+    const cornea = through('cornea')
+    const lip = through('lip')
+    const thr = [ring ? `the inner (palpebral) ring of orbicularis oculi by up to ${ring} mm` : '', cornea ? `the cornea by ${cornea} mm` : '', lip ? `the lips by ${lip} mm` : ''].filter(Boolean)
+    const thrZh = [ring ? `眼轮匝肌内环（睑部）最多 ${ring} mm` : '', cornea ? `角膜 ${cornea} mm` : '', lip ? `唇 ${lip} mm` : ''].filter(Boolean)
+    const oris = cov.orbicularisOris ? Math.round(cov.orbicularisOris.medianMm) : null
+    const eye = row.face?.eyeJoint ? (row.face.eyeJoint.L.lateralMm + row.face.eyeJoint.R.lateralMm) / 2 : null
+    const fv = row.resolution?.shipped.face
+    skinCautions.push({
+      en: `Her head is the skin model's average head scaled to her skull, not a face of her own; the surface there has faults of its own: horizontal steps across the face at the level of the nose, the mouth and the chin, a crumpled knot of skin at the inner corner of each eye and a rough rim round the nostrils.${oris !== null ? ` The soft tissue of the lower face is too thick (about ${oris} mm of cover over orbicularis oris).` : ''}${eye !== null && Math.abs(eye) >= 1 ? ` The model's eyes sit about ${Math.abs(eye).toFixed(0)} mm ${eye > 0 ? 'further from' : 'nearer to'} the midline on each side than her eyeballs.` : ''} The eyes and the mouth are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease; there the skin was deliberately not pushed out${thr.length ? `, and what lies under it comes through: ${thr.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm); the rest of the skin is simplified.` : ''}`,
+      zh: `她的头是皮肤模型的平均头按她的颅骨缩放得到的，不是她本人的面孔；这块表面自身也有毛病：面部在鼻、口、颏的高度各有一道横向的台阶，两眼内眦处各有一团皱起的皮肤，鼻孔缘粗糙。${oris !== null ? `下面部的软组织偏厚（口轮匝肌外约有 ${oris} mm 的覆盖）。` : ''}${eye !== null && Math.abs(eye) >= 1 ? `模型的眼比她的眼球每侧${eye > 0 ? '偏外' : '偏内'}约 ${Math.abs(eye).toFixed(0)} mm。` : ''}眼和口都不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶；这些地方的皮肤有意不外推${thrZh.length ? `，因此有结构露出皮肤：${thrZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
+    })
+    const bl = row.breastPlacement?.sides.L
+    const br = row.breastPlacement?.sides.R
+    if (bl && br) {
+      const down = Math.round((-(bl.translationM[1]! + br.translationM[1]!) / 2) * 100)
+      // 高度检查不通过时如实说明（数值取自 sexChecks） / when the level check fails it is said so (figures from sexChecks)
+      type Level = { pass: boolean; glandCentroidBelowPectoralisLowerBorderMm: number; nippleBelowXiphoidLowerEndMm: number }
+      const lv = ['left', 'right'].map((k) => (report.sexChecks as Record<string, Level | undefined>)[`${k}BreastLevel`]).filter((x): x is Level => !!x && !x.pass)
+      const low = lv.length ? {
+        en: ` They sit too low: the centre of the gland is ${lv.map((x) => Math.round(x.glandCentroidBelowPectoralisLowerBorderMm)).join(' and ')} mm below the lower border of the sternocostal part of pectoralis major (it lies over the abdominal part of the muscle only), and the nipple about ${Math.round(lv.reduce((a, x) => a + x.nippleBelowXiphoidLowerEndMm, 0) / lv.length / 10)} cm below the tip of the xiphoid process.`,
+        zh: `它们的位置偏低：腺体中心在胸大肌胸肋部下缘以下 ${lv.map((x) => Math.round(x.glandCentroidBelowPectoralisLowerBorderMm)).join(' 和 ')} mm（只盖在该肌的腹部之上）；乳头在剑突尖以下约 ${Math.round(lv.reduce((a, x) => a + x.nippleBelowXiphoidLowerEndMm, 0) / lv.length / 10)} cm。`,
+      } : { en: '', zh: '' }
+      skinCautions.push({
+        en: `The breasts on the surface are the skin model's. The gland, ducts, fat, areola and nipple inside them are an artist model (Human Reference Atlas) of a larger breast in standing shape, scaled to ${bl.scale.toFixed(2)} (left) and ${br.scale.toFixed(2)} (right) of its size and moved about ${down} cm down to fit under that skin.${low.en} Their size, their place on the chest wall and the difference between left and right are therefore not anatomical data.`,
+        zh: `体表上的乳房是皮肤模型的。其内的腺体、导管、脂肪、乳晕和乳头是美术模型（Human Reference Atlas），原本是更大的站立位乳房，被缩小到原大小的 ${bl.scale.toFixed(2)}（左）和 ${br.scale.toFixed(2)}（右），并下移约 ${down} cm，才放得进这层皮肤。${low.zh}因此它们的大小、在胸壁上的位置和左右差别都不是解剖数据。`,
+      })
+    } else {
+      skinCautions.push({
+        en: 'The breasts on the surface are the skin model\'s; the gland parts inside them are a standing-shape artist model (Human Reference Atlas) that was not fitted to that skin.',
+        zh: '体表上的乳房是皮肤模型的；其内的腺体各部是站立位形态的美术模型（Human Reference Atlas），没有按这层皮肤调整过。',
+      })
+    }
+    const nf = (report.skinPackage as { notFitted?: { caution: { zh: string; en: string } } }).notFitted
+    if (nf) skinCautions.push(nf.caution)
+  } else {
+    skinCautions.push({
+      en: 'The body surface is a PLACEHOLDER: male skin deformed to this skeleton and raised into a smooth envelope over the breasts. It still carries male external genitalia and does not show female body shape or fat distribution; a standard female skin is to replace it. The breasts themselves are a standing-shape artist model.',
+      zh: '体表是占位用的：男性皮肤按这副骨架形变后，再在乳房处抬高成平滑包络，仍带有男性外生殖器，并不反映女性的体形和脂肪分布，之后将换成标准女性皮肤。乳房本身是站立位形态的美术模型。',
+    })
+  }
   const cautions: { zh: string; en: string }[] = [
     {
       en: standard
@@ -2421,14 +2599,7 @@ async function finish(input: FinishInput) {
       en: `Three sources meet in the lesser pelvis, and where they meet the model is a join, not anatomy. The bladder, bones and obturator internus are the donor's; her bladder is almost empty (${pv.bladder?.volumeMl?.before ?? '?'} ml), its neck was drawn ${pv.bladder?.neckMovedMm ?? '?'} mm onto the upper end of the other woman's urethra and its base ${pv.bladder ? round(pv.bladder.baseToVaginaMm.before - pv.bladder.baseToVaginaMm.after, 0) : '?'} mm back onto the anterior vaginal wall. The uterus stands as it did in the other woman, whose bladder was full, so an unnatural gap remains between bladder and uterus. The sigmoid colon, ureters, vessels, nerves and lymph nodes are male structures: the end of the sigmoid colon was moved ${pv.rectosigmoid?.lowerEndOfSigmoidMovedMm ?? '?'} mm to meet the upper end of the rectum (which is cut off at the top of the specimen), the bowel was shifted by up to ${Math.max(0, ...(pv.bowel?.shifts ?? []).map((x) => x.shiftMm))} mm to clear the uterus, left tube and left ovary, and vessels that ran through these organs were pushed to their surface; some still cut through them.${hraKept.length ? ` ${hraKept.join(', ')} are artist models (Human Reference Atlas) moved 2–4 cm onto these organs.` : ''}`,
       zh: `小骨盆里有三个来源的结构，它们相接的地方是拼接出来的，不是真实解剖。膀胱、骨和闭孔内肌来自骨架的供体；她的膀胱几乎是空的（${pv.bladder?.volumeMl?.before ?? '?'} ml），膀胱颈被拉动 ${pv.bladder?.neckMovedMm ?? '?'} mm 接到另一位女性的尿道上端，膀胱底向后移了 ${pv.bladder ? round(pv.bladder.baseToVaginaMm.before - pv.bladder.baseToVaginaMm.after, 0) : '?'} mm 贴近阴道前壁。子宫保持它在另一位女性体内的位置，而那位女性的膀胱是充盈的，所以膀胱与子宫之间留有一段不自然的空隙。乙状结肠、输尿管、血管、神经和淋巴结是男性结构：乙状结肠末端被移动 ${pv.rectosigmoid?.lowerEndOfSigmoidMovedMm ?? '?'} mm 去对接直肠上端（直肠在标本上缘处被截断），肠管整体移动了最多 ${Math.max(0, ...(pv.bowel?.shifts ?? []).map((x) => x.shiftMm))} mm 以避开子宫、左输卵管和左卵巢，原本穿过这些器官的血管被推到器官表面，仍有少数从中穿过。${hraKept.length ? `${hraKeptZh}是美术建模（Human Reference Atlas），被移动 2–4 cm 贴到这些器官上。` : ''}`,
     },
-    {
-      en: installedSkin
-        ? `The body surface is a parametric model skin (${(installedSkin as SkinPackage).source.name}) fitted to this skeleton and muscle envelope; it is not a scan. The breasts inside it are a standing-shape artist model.`
-        : 'The body surface is a PLACEHOLDER: male skin deformed to this skeleton and raised into a smooth envelope over the breasts. It still carries male external genitalia and does not show female body shape or fat distribution; a standard female skin is to replace it. The breasts themselves are a standing-shape artist model.',
-      zh: installedSkin
-        ? `体表是按这副骨架和肌肉包络拟合的参数化模型皮肤（${(installedSkin as SkinPackage).source.name}），不是扫描所得。其内的乳房是站立位形态的美术模型。`
-        : '体表是占位用的：男性皮肤按这副骨架形变后，再在乳房处抬高成平滑包络，仍带有男性外生殖器，并不反映女性的体形和脂肪分布，之后将换成标准女性皮肤。乳房本身是站立位形态的美术模型。',
-    },
+    ...skinCautions,
     ...((report.bodyShape as { applied?: boolean } | undefined)?.applied ? [{
       en: `Muscle bulk and position were then changed again to fit a target body surface: a parametric female skin (stature ${(STANDARD.statureMm / 10).toFixed(1)} cm, BMI ${STANDARD.bmi}) less the subcutaneous fat expected at each place. Muscles, tendons, warped organs, vessels and nerves were pushed in, and in places pulled out, by up to ${(report.bodyShape as { displacementMm: { max: number } }).displacementMm.max} mm with one smooth field that is zero on bone; ${(report.bodyShape as { volume: { flagged: unknown[] } }).volume.flagged.length} muscles lost more than a quarter of their volume (calf, abdominal wall, forearm extensors, neck). ${(((report.bodyShape as { outside: { after: { all: { outside: number } } } }).outside.after.all.outside) * 100).toFixed(0)} % of the muscle and organ surface still lies outside that target, mostly thin muscle lying directly on bone. Muscle thickness, cross-section and volume in this model are therefore not anatomical data.`,
       zh: `之后又按一个目标体表改动了肌肉的粗细和位置：目标是参数化的女性皮肤（身高 ${(STANDARD.statureMm / 10).toFixed(1)} cm，BMI ${STANDARD.bmi}）向内减去各处应有的皮下脂肪。肌、腱、形变来的器官、血管和神经被一个在骨面上为零的平滑位移场推入（个别地方拉出），最多 ${(report.bodyShape as { displacementMm: { max: number } }).displacementMm.max} mm；${(report.bodyShape as { volume: { flagged: unknown[] } }).volume.flagged.length} 块肌的体积减少了四分之一以上（小腿、腹壁、前臂伸肌、颈部）。仍有 ${(((report.bodyShape as { outside: { after: { all: { outside: number } } } }).outside.after.all.outside) * 100).toFixed(0)} % 的肌和器官表面在目标之外，主要是直接贴在骨上的薄肌。因此本模型中肌肉的厚度、横截面和体积都不是解剖数据。`,
@@ -2438,8 +2609,8 @@ async function finish(input: FinishInput) {
       en: 'The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution.',
     }] : []),
     {
-      en: `Absent from the pelvis: labia, vestibule and the skin of the vulva (the body surface there is not female); the mucosa and lumen of the urethra; ${hraGone.length ? `${hraGone.join(', ').toLowerCase()} (the artist models of these did not fit the organs shown and were left out); ` : ''}ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a "pubovisceral muscle" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed${warpedGone.length ? `, as were male structures that would lie inside the female organs (${warpedGone.join(', ')})` : ''}.`,
-      zh: `盆腔中缺失的结构：阴唇、阴道前庭和外阴皮肤（该处的体表不是女性的）；尿道的黏膜和管腔；${hraGone.length ? `${hraGoneZh}（这些结构的美术模型与这里显示的器官对不上，没有采用）；` : ''}卵巢血管和阴道血管；盆腔自主神经丛。髂尾肌不是单独的部件：数据来源把耻尾肌和髂尾肌合称“耻骨内脏肌”，分为内层和外层。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）以及男性的盆底肌和直肠已删除${warpedGone.length ? `，落在女性器官内部的男性结构（${warpedGone.join('、')}）也已删除` : ''}。`,
+      en: `Absent from the pelvis: labia, vestibule and the skin of the vulva (${installedSkin ? 'the body surface there is smooth' : 'the body surface there is not female'}); the mucosa and lumen of the urethra; ${hraGone.length ? `${hraGone.join(', ').toLowerCase()} (the artist models of these did not fit the organs shown and were left out); ` : ''}ovarian and vaginal vessels; the autonomic pelvic plexuses. The iliococcygeus is not a separate part: the source describes the pubococcygeus and iliococcygeus together as a "pubovisceral muscle" with an inner and an external layer. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) and the male pelvic floor and rectum were removed${warpedGone.length ? `, as were male structures that would lie inside the female organs (${warpedGone.join(', ')})` : ''}.`,
+      zh: `盆腔中缺失的结构：阴唇、阴道前庭和外阴皮肤（${installedSkin ? '该处的体表是光滑的' : '该处的体表不是女性的'}）；尿道的黏膜和管腔；${hraGone.length ? `${hraGoneZh}（这些结构的美术模型与这里显示的器官对不上，没有采用）；` : ''}卵巢血管和阴道血管；盆腔自主神经丛。髂尾肌不是单独的部件：数据来源把耻尾肌和髂尾肌合称“耻骨内脏肌”，分为内层和外层。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）以及男性的盆底肌和直肠已删除${warpedGone.length ? `，落在女性器官内部的男性结构（${warpedGone.join('、')}）也已删除` : ''}。`,
     },
     {
       en: 'Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.',
@@ -2505,7 +2676,7 @@ async function finish(input: FinishInput) {
     schema: 1,
     body: 'female',
     cautions: report.cautions as { zh: string; en: string }[],
-    sources: [...male.data.sources.filter((s) => usedSources.has(s.name)), SOURCE_VHF, ...(usedSources.has(SOURCE_DENVER.name) ? [SOURCE_DENVER] : []), ...(usedSources.has(SOURCE_HRA.name) ? [SOURCE_HRA] : []), ...(usedSources.has(SOURCE_WU.name) ? [SOURCE_WU] : []), ...(installedSkin ? [(installedSkin as SkinPackage).source] : [])],
+    sources: [...male.data.sources.filter((s) => usedSources.has(s.name)), SOURCE_VHF, ...(usedSources.has(SOURCE_DENVER.name) ? [SOURCE_DENVER] : []), ...(usedSources.has(SOURCE_HRA.name) ? [SOURCE_HRA] : []), ...(usedSources.has(SOURCE_WU.name) ? [SOURCE_WU] : []), ...(installedSkin ? [(installedSkin as SkinPackage).source] : [])].filter((x, i, all) => all.findIndex((y) => y.name === x.name) === i),
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
     parts: outParts,

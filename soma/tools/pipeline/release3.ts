@@ -4,6 +4,7 @@
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { RELEASE3_SWAPPED_GEOMETRY } from './corrections.ts'
 import { measure, sourceToRuntime, weld, type Mesh, type MeshStats } from './geometry.ts'
 import { parseObj } from './obj.ts'
 import { parseTsv } from './tables.ts'
@@ -64,6 +65,15 @@ export function loadRelease3(dir = RAW3_DIR): Release3 {
     const w = weld(sourceToRuntime(obj.positions), obj.indices)
     const mesh: Mesh = { positions: w.positions, indices: w.indices }
     parts.set(id, { id, name: tables.names.get(id) ?? id, mesh, stats: measure(mesh), sourceTriangles: obj.indices.length / 3 })
+  }
+  // 源数据里几何互相放错文件的概念对：互换网格，id 和名称不动（证据见 corrections.ts）
+  // concept pairs whose files hold each other's geometry in the source: the meshes are swapped, ids and names stay (evidence in corrections.ts)
+  for (const [a, b] of RELEASE3_SWAPPED_GEOMETRY) {
+    const pa = parts.get(a)
+    const pb = parts.get(b)
+    if (!pa || !pb) continue
+    parts.set(a, { ...pa, mesh: pb.mesh, stats: pb.stats, sourceTriangles: pb.sourceTriangles })
+    parts.set(b, { ...pb, mesh: pa.mesh, stats: pa.stats, sourceTriangles: pa.sourceTriangles })
   }
   return { parts, ...tables }
 }

@@ -28,7 +28,17 @@
     "fma": "FMA44886"
    }
   },
-  "sideOverrides": {}
+  "sideOverrides": {},
+  "release3SwappedGeometry": [
+   [
+    "FMA46782",
+    "FMA46785"
+   ],
+   [
+    "FMA46783",
+    "FMA46786"
+   ]
+  ]
  },
  "source": {
   "triangles": 6681030,
@@ -18532,114 +18542,6 @@
    {
     "id": "FMA46782",
     "name": "orbital part of right orbicularis oculi",
-    "triangles": 1664,
-    "displacement": 0.011016138745290598,
-    "pushedOut": {
-     "inside": 0,
-     "moved": 0,
-     "meanPush": 0,
-     "maxPush": 0
-    },
-    "onSameSystem": 0.11470588235294119,
-    "onAny": 0.8941176470588236,
-    "inside": 0.03529411764705882,
-    "deepInside": 0,
-    "insideByTissue": {
-     "muscle": 0.0206,
-     "organ": 0.0147
-    },
-    "insideTop": [
-     [
-      "Right levator palpebrae superioris",
-      0.021,
-      0
-     ],
-     [
-      "Right lacrimal sac",
-      0.015,
-      0
-     ]
-    ],
-    "top": [
-     [
-      "Skin",
-      0.547
-     ],
-     [
-      "Tarsal plate of right lower eyelid",
-      0.118
-     ],
-     [
-      "Right levator palpebrae superioris",
-      0.074
-     ],
-     [
-      "Tendon of right levator palpebrae superioris",
-      0.041
-     ]
-    ],
-    "decision": "import",
-    "reason": "",
-    "class": "muscular/muscle",
-    "rule": "muscle"
-   },
-   {
-    "id": "FMA46783",
-    "name": "orbital part of left orbicularis oculi",
-    "triangles": 1656,
-    "displacement": 0.011135554222439595,
-    "pushedOut": {
-     "inside": 0,
-     "moved": 0,
-     "meanPush": 0,
-     "maxPush": 0
-    },
-    "onSameSystem": 0.07204610951008646,
-    "onAny": 0.899135446685879,
-    "inside": 0.040345821325648415,
-    "deepInside": 0,
-    "insideByTissue": {
-     "organ": 0.0202,
-     "muscle": 0.0202
-    },
-    "insideTop": [
-     [
-      "Left lacrimal sac",
-      0.02,
-      0
-     ],
-     [
-      "Left levator palpebrae superioris",
-      0.02,
-      0
-     ]
-    ],
-    "top": [
-     [
-      "Skin",
-      0.594
-     ],
-     [
-      "Tarsal plate of left lower eyelid",
-      0.121
-     ],
-     [
-      "Left levator palpebrae superioris",
-      0.072
-     ],
-     [
-      "Left lacrimal sac",
-      0.043
-     ]
-    ],
-    "decision": "import",
-    "reason": "",
-    "class": "muscular/muscle",
-    "rule": "muscle"
-   },
-   {
-    "id": "FMA46785",
-    "name": "palpebral part of right orbicularis oculi",
     "triangles": 4780,
     "displacement": 0.01064760584923312,
     "pushedOut": {
@@ -18704,8 +18606,8 @@
     "rule": "muscle"
    },
    {
-    "id": "FMA46786",
-    "name": "palpebral part of left orbicularis oculi",
+    "id": "FMA46783",
+    "name": "orbital part of left orbicularis oculi",
     "triangles": 4608,
     "displacement": 0.010768664496615454,
     "pushedOut": {
@@ -18762,6 +18664,114 @@
      [
       "Left maxilla",
       0.094
+     ]
+    ],
+    "decision": "import",
+    "reason": "",
+    "class": "muscular/muscle",
+    "rule": "muscle"
+   },
+   {
+    "id": "FMA46785",
+    "name": "palpebral part of right orbicularis oculi",
+    "triangles": 1664,
+    "displacement": 0.011016138745290598,
+    "pushedOut": {
+     "inside": 0,
+     "moved": 0,
+     "meanPush": 0,
+     "maxPush": 0
+    },
+    "onSameSystem": 0.11470588235294119,
+    "onAny": 0.8941176470588236,
+    "inside": 0.03529411764705882,
+    "deepInside": 0,
+    "insideByTissue": {
+     "muscle": 0.0206,
+     "organ": 0.0147
+    },
+    "insideTop": [
+     [
+      "Right levator palpebrae superioris",
+      0.021,
+      0
+     ],
+     [
+      "Right lacrimal sac",
+      0.015,
+      0
+     ]
+    ],
+    "top": [
+     [
+      "Skin",
+      0.547
+     ],
+     [
+      "Tarsal plate of right lower eyelid",
+      0.118
+     ],
+     [
+      "Right levator palpebrae superioris",
+      0.074
+     ],
+     [
+      "Tendon of right levator palpebrae superioris",
+      0.041
+     ]
+    ],
+    "decision": "import",
+    "reason": "",
+    "class": "muscular/muscle",
+    "rule": "muscle"
+   },
+   {
+    "id": "FMA46786",
+    "name": "palpebral part of left orbicularis oculi",
+    "triangles": 1656,
+    "displacement": 0.011135554222439595,
+    "pushedOut": {
+     "inside": 0,
+     "moved": 0,
+     "meanPush": 0,
+     "maxPush": 0
+    },
+    "onSameSystem": 0.07204610951008646,
+    "onAny": 0.899135446685879,
+    "inside": 0.040345821325648415,
+    "deepInside": 0,
+    "insideByTissue": {
+     "organ": 0.0202,
+     "muscle": 0.0202
+    },
+    "insideTop": [
+     [
+      "Left lacrimal sac",
+      0.02,
+      0
+     ],
+     [
+      "Left levator palpebrae superioris",
+      0.02,
+      0
+     ]
+    ],
+    "top": [
+     [
+      "Skin",
+      0.594
+     ],
+     [
+      "Tarsal plate of left lower eyelid",
+      0.121
+     ],
+     [
+      "Left levator palpebrae superioris",
+      0.072
+     ],
+     [
+      "Left lacrimal sac",
+      0.043
      ]
     ],
     "decision": "import",
@@ -64835,45 +64845,118 @@
    "key": "4bf4e6e4b29d70ad"
   },
   "installed": true,
+  "face": {
+   "cover": {
+    "palpebralOrbicularisOculi": {
+     "minMm": -2,
+     "medianMm": 3.4,
+     "parts": 2
+    },
+    "orbitalOrbicularisOculi": {
+     "minMm": 0.5,
+     "medianMm": 5.6,
+     "parts": 2
+    },
+    "cornea": {
+     "minMm": -0.4,
+     "medianMm": 2.7,
+     "parts": 2
+    },
+    "lip": {
+     "minMm": -1.6,
+     "medianMm": 0.9,
+     "parts": 1
+    },
+    "orbicularisOris": {
+     "minMm": 2.8,
+     "medianMm": 8.5,
+     "parts": 1
+    },
+    "mandible": {
+     "minMm": 9.3,
+     "medianMm": 20.4,
+     "parts": 1
+    }
+   },
+   "eyeJoint": {
+    "L": {
+     "distanceMm": 2.6,
+     "lateralMm": 2.2,
+     "offsetMm": [
+      2.2,
+      1.3,
+      0.5
+     ]
+    },
+    "R": {
+     "distanceMm": 2.8,
+     "lateralMm": 2.4,
+     "offsetMm": [
+      -2.4,
+      1.3,
+      0.5
+     ]
+    }
+   }
+  },
   "triangles": 147274,
   "fit": {
    "closed": true,
-   "outside": 0.00014937412242703075,
+   "nonManifoldEdges": 0,
+   "outside": 0.0002048559393284993,
    "outside5mm": 0,
    "worst": [
     {
-     "name": "Left lateral nasal cartilage",
-     "outside": 0.046511627906976744
-    },
-    {
-     "name": "Septal nasal cartilage",
-     "outside": 0.022222222222222223
-    },
-    {
-     "name": "Orbital part of right orbicularis oculi",
-     "outside": 0.016666666666666666
-    },
-    {
-     "name": "Long head of right triceps brachii",
-     "outside": 0.008294930875576038
-    },
-    {
-     "name": "Long head of left triceps brachii",
-     "outside": 0.0065116279069767444
+     "name": "Lip",
+     "outside": 0.2982456140350877,
+     "maxMm": 0.8
     },
     {
      "name": "Palpebral part of left orbicularis oculi",
-     "outside": 0.005917159763313609
+     "outside": 0.09836065573770492,
+     "maxMm": 1.9
+    },
+    {
+     "name": "Palpebral part of right orbicularis oculi",
+     "outside": 0.06666666666666667,
+     "maxMm": 1.2
+    },
+    {
+     "name": "Left major alar cartilage",
+     "outside": 0.047619047619047616,
+     "maxMm": 0.4
+    },
+    {
+     "name": "Right major alar cartilage",
+     "outside": 0.02564102564102564,
+     "maxMm": 0.6
+    },
+    {
+     "name": "Long head of right triceps brachii",
+     "outside": 0.008294930875576038,
+     "maxMm": 1.6
+    },
+    {
+     "name": "Long head of left triceps brachii",
+     "outside": 0.0065116279069767444,
+     "maxMm": 1.5
     },
     {
      "name": "Right latissimus dorsi",
-     "outside": 0.005172106295701802
+     "outside": 0.005350454788657036,
+     "maxMm": 1.9
     },
     {
      "name": "Left latissimus dorsi",
-     "outside": 0.003683241252302026
+     "outside": 0.003683241252302026,
+     "maxMm": 2.3
     }
    ]
+  },
+  "faceRegion": {
+   "rule": "skin vertices within 30 mm of the surface of a muscle of facial expression",
+   "radiusM": 0.03,
+   "muscles": 33
   },
   "externalGenitalia": {
    "parts": [
@@ -64903,6 +64986,232 @@
    ],
    "reachInFrontOfPubisMm": 61.8,
    "lowestBelowPubicSymphysisMm": 62.2
+  },
+  "resolution": {
+   "source": {
+    "vertices": 73639,
+    "triangles": 147274,
+    "face": {
+     "vertices": 16230,
+     "triangles": 32210,
+     "meanEdgeMm": 1.91,
+     "p95EdgeMm": 3.96,
+     "maxEdgeMm": 10.6
+    },
+    "rest": {
+     "vertices": 57409,
+     "meanEdgeMm": 5.4
+    }
+   },
+   "simplifiedWhole": {
+    "vertices": 14431,
+    "triangles": 28858,
+    "face": {
+     "vertices": 1433,
+     "triangles": 2770,
+     "meanEdgeMm": 6.62,
+     "p95EdgeMm": 16.61,
+     "maxEdgeMm": 36.4
+    },
+    "rest": {
+     "vertices": 12998,
+     "meanEdgeMm": 14.17
+    }
+   },
+   "shipped": {
+    "vertices": 30124,
+    "triangles": 60244,
+    "face": {
+     "vertices": 16230,
+     "triangles": 32298,
+     "meanEdgeMm": 1.92,
+     "p95EdgeMm": 3.99,
+     "maxEdgeMm": 18.3
+    },
+    "rest": {
+     "vertices": 13894,
+     "meanEdgeMm": 13.62
+    }
+   },
+   "shippedTopology": {
+    "boundaryEdges": 0,
+    "nonManifoldEdges": 1
+   }
+  },
+  "fitShipped": {
+   "closed": true,
+   "nonManifoldEdges": 1,
+   "outside": 0.0002048559393284993,
+   "outside5mm": 0,
+   "worst": [
+    {
+     "name": "Lip",
+     "outside": 0.2982456140350877,
+     "maxMm": 0.8
+    },
+    {
+     "name": "Palpebral part of left orbicularis oculi",
+     "outside": 0.09836065573770492,
+     "maxMm": 1.9
+    },
+    {
+     "name": "Palpebral part of right orbicularis oculi",
+     "outside": 0.06666666666666667,
+     "maxMm": 1.2
+    },
+    {
+     "name": "Left major alar cartilage",
+     "outside": 0.047619047619047616,
+     "maxMm": 0.4
+    },
+    {
+     "name": "Right major alar cartilage",
+     "outside": 0.02564102564102564,
+     "maxMm": 0.6
+    },
+    {
+     "name": "Long head of right triceps brachii",
+     "outside": 0.008294930875576038,
+     "maxMm": 1.6
+    },
+    {
+     "name": "Long head of left triceps brachii",
+     "outside": 0.0065116279069767444,
+     "maxMm": 1.5
+    },
+    {
+     "name": "Right latissimus dorsi",
+     "outside": 0.005350454788657036,
+     "maxMm": 1.9
+    },
+    {
+     "name": "Left latissimus dorsi",
+     "outside": 0.003683241252302026,
+     "maxMm": 2.3
+    }
+   ]
+  },
+  "notFitted": {
+   "thin": {
+    "closed": true,
+    "nonManifoldEdges": 1,
+    "outside": 0.01697097616728941,
+    "outside5mm": 0.0002648531694775058,
+    "worst": [
+     {
+      "name": "Left dorsal branch of ulnar nerve",
+      "outside": 0.35833333333333334,
+      "maxMm": 3.2
+     },
+     {
+      "name": "Left dorsal digital branches of radial nerve",
+      "outside": 0.3516483516483517,
+      "maxMm": 3.8
+     },
+     {
+      "name": "Right dorsal digital branches of radial nerve",
+      "outside": 0.35039370078740156,
+      "maxMm": 3.7
+     },
+     {
+      "name": "Right dorsal branch of ulnar nerve",
+      "outside": 0.3125,
+      "maxMm": 2.7
+     },
+     {
+      "name": "Left iliotibial tract",
+      "outside": 0.21636085626911314,
+      "maxMm": 4.2
+     },
+     {
+      "name": "Right medial antebrachial cutaneous nerve",
+      "outside": 0.20581113801452786,
+      "maxMm": 3
+     },
+     {
+      "name": "Left medial antebrachial cutaneous nerve",
+      "outside": 0.19951338199513383,
+      "maxMm": 2.8
+     },
+     {
+      "name": "Left superior clunial nerves",
+      "outside": 0.18258426966292135,
+      "maxMm": 3.5
+     },
+     {
+      "name": "Left medial brachial cutaneous nerve",
+      "outside": 0.18235294117647058,
+      "maxMm": 1.3
+     },
+     {
+      "name": "Right iliotibial tract",
+      "outside": 0.180566182096404,
+      "maxMm": 3.7
+     }
+    ]
+   },
+   "surfaceParts": {
+    "closed": true,
+    "nonManifoldEdges": 1,
+    "outside": 0.43832020997375326,
+    "outside5mm": 0.13635795525559305,
+    "worst": [
+     {
+      "name": "Eyebrow",
+      "outside": 0.8072289156626506,
+      "maxMm": 7.3
+     },
+     {
+      "name": "Pubic hair",
+      "outside": 0.5920502092050209,
+      "maxMm": 5.5
+     },
+     {
+      "name": "Hair of head",
+      "outside": 0.4546009461315428,
+      "maxMm": 10.7
+     },
+     {
+      "name": "External ear",
+      "outside": 0.30751708428246016,
+      "maxMm": 9
+     },
+     {
+      "name": "Left perionyx (foot)",
+      "outside": 0.2,
+      "maxMm": 0.6
+     },
+     {
+      "name": "Left nail plate (foot)",
+      "outside": 0.15714285714285714,
+      "maxMm": 1.8
+     },
+     {
+      "name": "Left perionyx",
+      "outside": 0.13636363636363635,
+      "maxMm": 1.4
+     },
+     {
+      "name": "Left nail plate",
+      "outside": 0.12162162162162163,
+      "maxMm": 2
+     },
+     {
+      "name": "Right perionyx",
+      "outside": 0.1,
+      "maxMm": 1.3
+     },
+     {
+      "name": "Right nail plate (foot)",
+      "outside": 0.0958904109589041,
+      "maxMm": 1.7
+     }
+    ]
+   },
+   "caution": {
+    "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 1.7% of their surface comes through the skin, by up to 4 mm (iliotibial tract). Surface parts made for the earlier skin do not sit on this one: eyebrow, pubic hair, hair of head, external ear, perionyx (foot), nail plate (foot), perionyx, nail plate.",
+    "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 1.7% 露在皮肤之外，最多 4 mm。为旧皮肤制作的体表部件（头发、眉、外耳、甲、阴毛等）与这层皮肤对不上。"
+   }
   }
  },
  "fat": {
@@ -64913,49 +65222,49 @@
    "smooth": 2
   },
   "skinSingleWalled": true,
-  "bodyVolumeL": 66.5,
-  "fatVolumeL": 16.6,
+  "bodyVolumeL": 66.6,
+  "fatVolumeL": 16.8,
   "deepParts": 1359,
   "regions": [
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
     "fma": "FMA53659",
-    "sourceTriangles": 31524,
-    "areaCm2": 840,
-    "volumeMl": 454,
+    "sourceTriangles": 45332,
+    "areaCm2": 1286,
+    "volumeMl": 635,
     "thicknessMm": {
      "p10": 3,
-     "median": 3,
-     "p90": 9,
-     "max": 21
+     "median": 6,
+     "p90": 12,
+     "max": 30
     },
-    "skinCovered": 0.97,
-    "verticesPulledIn": 0.0002
+    "skinCovered": 0.959,
+    "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
     "fma": "FMA53660",
-    "sourceTriangles": 13828,
-    "areaCm2": 395,
+    "sourceTriangles": 13940,
+    "areaCm2": 397,
     "volumeMl": 224,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
      "p90": 18,
-     "max": 27
+     "max": 30
     },
-    "skinCovered": 0.995,
-    "verticesPulledIn": 0
+    "skinCovered": 0.997,
+    "verticesPulledIn": 0.0003
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
     "fma": "FMA50257",
-    "sourceTriangles": 304536,
-    "areaCm2": 9116,
-    "volumeMl": 6207,
+    "sourceTriangles": 304784,
+    "areaCm2": 9128,
+    "volumeMl": 6193,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
@@ -64963,14 +65272,14 @@
      "max": 30
     },
     "skinCovered": 0.982,
-    "verticesPulledIn": 0.0028
+    "verticesPulledIn": 0.0029
    },
    {
     "id": "SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
     "fma": "FMA58392",
-    "sourceTriangles": 81136,
-    "areaCm2": 2422,
+    "sourceTriangles": 81112,
+    "areaCm2": 2421,
     "volumeMl": 1386,
     "thicknessMm": {
      "p10": 3,
@@ -64985,25 +65294,25 @@
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
     "fma": "FMA58391",
-    "sourceTriangles": 81168,
-    "areaCm2": 2428,
-    "volumeMl": 1425,
+    "sourceTriangles": 81176,
+    "areaCm2": 2425,
+    "volumeMl": 1424,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.977,
+    "skinCovered": 0.978,
     "verticesPulledIn": 0.0007
    },
    {
     "id": "SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
     "fma": "FMA58396",
-    "sourceTriangles": 177144,
-    "areaCm2": 5492,
-    "volumeMl": 3445,
+    "sourceTriangles": 177236,
+    "areaCm2": 5494,
+    "volumeMl": 3450,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
@@ -65011,15 +65320,15 @@
      "max": 30
     },
     "skinCovered": 0.99,
-    "verticesPulledIn": 0.0007
+    "verticesPulledIn": 0.0008
    },
    {
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
     "fma": "FMA58395",
-    "sourceTriangles": 177592,
-    "areaCm2": 5492,
-    "volumeMl": 3491,
+    "sourceTriangles": 177464,
+    "areaCm2": 5491,
+    "volumeMl": 3496,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
@@ -65027,7 +65336,7 @@
      "max": 30
     },
     "skinCovered": 0.992,
-    "verticesPulledIn": 0.0006
+    "verticesPulledIn": 0.0004
    }
   ]
  },
@@ -65366,12 +65675,12 @@
   {
    "depth": 3,
    "name": "Superficial muscles",
-   "parts": 133
+   "parts": 135
   },
   {
    "depth": 4,
    "name": "Deep muscles",
-   "parts": 374
+   "parts": 372
   },
   {
    "depth": 5,
@@ -65408,7 +65717,7 @@
   "FJ1334": 0,
   "FJ1335": 0,
   "FJ1342": 0,
-  "FJ1343": 0.001,
+  "FJ1343": 0,
   "FJ1345": 0,
   "FJ1346": 0,
   "FJ1355": 0,
@@ -65416,12 +65725,12 @@
   "FJ1359": 0,
   "FJ1373": 0,
   "FJ1374": 0,
-  "FJ1383": 0.148,
-  "FJ1383M": 0.148,
+  "FJ1383": 0.15,
+  "FJ1383M": 0.15,
   "FJ1384": 0.001,
   "FJ1384M": 0.001,
-  "FJ1385": 0.018,
-  "FJ1385M": 0.018,
+  "FJ1385": 0.017,
+  "FJ1385M": 0.017,
   "FJ1386": 0,
   "FJ1386M": 0,
   "FJ1387": 0.01,
@@ -65432,22 +65741,22 @@
   "FJ1389M": 0.012,
   "FJ1390": 0.328,
   "FJ1390M": 0.328,
-  "FJ1391": 0.167,
-  "FJ1391M": 0.167,
+  "FJ1391": 0.171,
+  "FJ1391M": 0.171,
   "FJ1393": 0.069,
   "FJ1393M": 0.069,
-  "FJ1394": 0.463,
-  "FJ1394M": 0.463,
+  "FJ1394": 0.465,
+  "FJ1394M": 0.465,
   "FJ1395": 0.433,
   "FJ1395M": 0.433,
-  "FJ1396": 0.083,
-  "FJ1396M": 0.083,
+  "FJ1396": 0.085,
+  "FJ1396M": 0.085,
   "FJ1397": 0.515,
   "FJ1397M": 0.515,
   "FJ1398": 0,
   "FJ1398M": 0,
-  "FJ1399": 0.013,
-  "FJ1399M": 0.013,
+  "FJ1399": 0.019,
+  "FJ1399M": 0.019,
   "FJ1400": 0.426,
   "FJ1400M": 0.426,
   "FJ1401": 0,
@@ -65458,40 +65767,40 @@
   "FJ1403M": 0.029,
   "FJ1404": 0,
   "FJ1404M": 0,
-  "FJ1405": 0.408,
-  "FJ1405M": 0.408,
-  "FJ1406": 0.29,
-  "FJ1406M": 0.29,
-  "FJ1407": 0.074,
-  "FJ1407M": 0.074,
-  "FJ1408": 0.144,
-  "FJ1408M": 0.144,
-  "FJ1409": 0.145,
-  "FJ1409M": 0.145,
-  "FJ1410": 0.393,
-  "FJ1410M": 0.393,
+  "FJ1405": 0.412,
+  "FJ1405M": 0.412,
+  "FJ1406": 0.291,
+  "FJ1406M": 0.291,
+  "FJ1407": 0.075,
+  "FJ1407M": 0.075,
+  "FJ1408": 0.141,
+  "FJ1408M": 0.141,
+  "FJ1409": 0.149,
+  "FJ1409M": 0.149,
+  "FJ1410": 0.394,
+  "FJ1410M": 0.394,
   "FJ1411": 0.168,
   "FJ1411M": 0.168,
   "FJ1412": 0.003,
   "FJ1412M": 0.003,
   "FJ1413": 0.437,
   "FJ1413M": 0.437,
-  "FJ1414": 0.133,
-  "FJ1414M": 0.133,
+  "FJ1414": 0.134,
+  "FJ1414M": 0.134,
   "FJ1415": 0.069,
   "FJ1415M": 0.069,
   "FJ1416": 0,
   "FJ1416M": 0,
   "FJ1417": 0,
   "FJ1417M": 0,
-  "FJ1418": 0.479,
-  "FJ1418M": 0.479,
-  "FJ1419": 0.283,
-  "FJ1419M": 0.283,
+  "FJ1418": 0.48,
+  "FJ1418M": 0.48,
+  "FJ1419": 0.282,
+  "FJ1419M": 0.282,
   "FJ1420": 0.023,
   "FJ1420M": 0.023,
-  "FJ1421": 0.313,
-  "FJ1421M": 0.313,
+  "FJ1421": 0.312,
+  "FJ1421M": 0.312,
   "FJ1422": 0.032,
   "FJ1422M": 0.032,
   "FJ1425": 0,
@@ -65510,44 +65819,44 @@
   "FJ1431M": 0.002,
   "FJ1432": 0,
   "FJ1432M": 0,
-  "FJ1433": 0.378,
-  "FJ1433M": 0.378,
-  "FJ1434": 0.451,
-  "FJ1434M": 0.451,
+  "FJ1433": 0.379,
+  "FJ1433M": 0.379,
+  "FJ1434": 0.452,
+  "FJ1434M": 0.452,
   "FJ1435": 0.209,
   "FJ1435M": 0.209,
   "FJ1436": 0.423,
   "FJ1436M": 0.423,
-  "FJ1437": 0.149,
-  "FJ1437M": 0.149,
+  "FJ1437": 0.147,
+  "FJ1437M": 0.147,
   "FJ1438": 0.532,
   "FJ1438M": 0.532,
-  "FJ1439": 0.417,
-  "FJ1439M": 0.417,
-  "FJ1440": 0.039,
-  "FJ1440M": 0.039,
+  "FJ1439": 0.415,
+  "FJ1439M": 0.415,
+  "FJ1440": 0.04,
+  "FJ1440M": 0.04,
   "FJ1441": 0,
   "FJ1441M": 0,
   "FJ1442": 0.436,
   "FJ1442M": 0.436,
-  "FJ1443": 0.217,
-  "FJ1443M": 0.217,
-  "FJ1444": 0.051,
-  "FJ1444M": 0.051,
+  "FJ1443": 0.218,
+  "FJ1443M": 0.218,
+  "FJ1444": 0.052,
+  "FJ1444M": 0.052,
   "FJ1445": 0,
   "FJ1445M": 0,
   "FJ1446": 0.158,
   "FJ1446M": 0.158,
-  "FJ1447": 0.268,
-  "FJ1447M": 0.268,
+  "FJ1447": 0.27,
+  "FJ1447M": 0.27,
   "FJ1448": 0.184,
   "FJ1449M": 0.001,
-  "FJ1450": 0.184,
-  "FJ1450M": 0.184,
+  "FJ1450": 0.185,
+  "FJ1450M": 0.185,
   "FJ1451": 0,
   "FJ1451M": 0,
-  "FJ1452": 0.39,
-  "FJ1452M": 0.39,
+  "FJ1452": 0.391,
+  "FJ1452M": 0.391,
   "FJ1453M": 0,
   "FJ1454": 0,
   "FJ1454M": 0,
@@ -65566,66 +65875,66 @@
   "FJ1462M": 0,
   "FJ1463": 0,
   "FJ1463M": 0,
-  "FJ1464": 0.387,
-  "FJ1464M": 0.387,
+  "FJ1464": 0.389,
+  "FJ1464M": 0.389,
   "FJ1465": 0,
   "FJ1465M": 0,
-  "FJ1466": 0.51,
-  "FJ1466M": 0.51,
-  "FJ1467": 0.469,
-  "FJ1467M": 0.469,
-  "FJ1468": 0.428,
-  "FJ1468M": 0.428,
+  "FJ1466": 0.525,
+  "FJ1466M": 0.525,
+  "FJ1467": 0.474,
+  "FJ1467M": 0.474,
+  "FJ1468": 0.426,
+  "FJ1468M": 0.426,
   "FJ1469": 0.037,
   "FJ1469M": 0.037,
-  "FJ1470": 0.039,
-  "FJ1470M": 0.039,
-  "FJ1472": 0.129,
-  "FJ1472M": 0.129,
+  "FJ1470": 0.038,
+  "FJ1470M": 0.038,
+  "FJ1472": 0.134,
+  "FJ1472M": 0.134,
   "FJ1473": 0.45,
   "FJ1473M": 0.45,
-  "FJ1474": 0.141,
-  "FJ1474M": 0.141,
+  "FJ1474": 0.139,
+  "FJ1474M": 0.139,
   "FJ1475": 0.104,
   "FJ1475M": 0.104,
-  "FJ1477": 0.313,
-  "FJ1477M": 0.313,
-  "FJ1478": 0.306,
-  "FJ1478M": 0.306,
-  "FJ1479": 0.354,
-  "FJ1479M": 0.354,
+  "FJ1477": 0.316,
+  "FJ1477M": 0.316,
+  "FJ1478": 0.309,
+  "FJ1478M": 0.309,
+  "FJ1479": 0.352,
+  "FJ1479M": 0.352,
   "FJ1480": 0.141,
   "FJ1480M": 0.141,
   "FJ1481": 0.032,
   "FJ1481M": 0.032,
-  "FJ1482": 0.078,
-  "FJ1482M": 0.078,
+  "FJ1482": 0.079,
+  "FJ1482M": 0.079,
   "FJ1483": 0.423,
   "FJ1483M": 0.423,
-  "FJ1484": 0.078,
-  "FJ1484M": 0.078,
-  "FJ1485": 0.396,
-  "FJ1485M": 0.396,
+  "FJ1484": 0.077,
+  "FJ1484M": 0.077,
+  "FJ1485": 0.401,
+  "FJ1485M": 0.401,
   "FJ1486": 0.159,
   "FJ1486M": 0.159,
-  "FJ1487": 0.478,
-  "FJ1487M": 0.478,
+  "FJ1487": 0.477,
+  "FJ1487M": 0.477,
   "FJ1488": 0.002,
   "FJ1488M": 0.002,
-  "FJ1489": 0.068,
-  "FJ1489M": 0.068,
-  "FJ1490": 0.351,
-  "FJ1490M": 0.351,
+  "FJ1489": 0.065,
+  "FJ1489M": 0.065,
+  "FJ1490": 0.35,
+  "FJ1490M": 0.35,
   "FJ1491": 0.085,
   "FJ1491M": 0.085,
-  "FJ1492": 0.438,
-  "FJ1492M": 0.438,
-  "FJ1493": 0.041,
-  "FJ1493M": 0.041,
+  "FJ1492": 0.439,
+  "FJ1492M": 0.439,
+  "FJ1493": 0.037,
+  "FJ1493M": 0.037,
   "FJ1494": 0.149,
   "FJ1494M": 0.149,
-  "FJ1495": 0.089,
-  "FJ1495M": 0.089,
+  "FJ1495": 0.091,
+  "FJ1495M": 0.091,
   "FJ1496": 0.348,
   "FJ1496M": 0.348,
   "FJ1497": 0.025,
@@ -65636,46 +65945,46 @@
   "FJ1499M": 0.104,
   "FJ1500": 0.124,
   "FJ1500M": 0.124,
-  "FJ1501": 0.055,
-  "FJ1501M": 0.055,
-  "FJ1502": 0.449,
-  "FJ1502M": 0.449,
-  "FJ1503": 0.054,
-  "FJ1503M": 0.054,
+  "FJ1501": 0.056,
+  "FJ1501M": 0.056,
+  "FJ1502": 0.448,
+  "FJ1502M": 0.448,
+  "FJ1503": 0.052,
+  "FJ1503M": 0.052,
   "FJ1504": 0,
   "FJ1504M": 0,
   "FJ1505": 0,
   "FJ1505M": 0,
   "FJ1506": 0,
   "FJ1506M": 0,
-  "FJ1507": 0.163,
-  "FJ1507M": 0.163,
+  "FJ1507": 0.159,
+  "FJ1507M": 0.159,
   "FJ1508": 0.032,
   "FJ1508M": 0.032,
-  "FJ1509": 0.246,
-  "FJ1509M": 0.246,
-  "FJ1510": 0.063,
-  "FJ1510M": 0.063,
-  "FJ1511": 0.002,
-  "FJ1511M": 0.002,
-  "FJ1512": 0.363,
-  "FJ1512M": 0.363,
+  "FJ1509": 0.247,
+  "FJ1509M": 0.247,
+  "FJ1510": 0.062,
+  "FJ1510M": 0.062,
+  "FJ1511": 0.003,
+  "FJ1511M": 0.003,
+  "FJ1512": 0.364,
+  "FJ1512M": 0.364,
   "FJ1513": 0.407,
   "FJ1513M": 0.407,
-  "FJ1514": 0.27,
-  "FJ1514M": 0.27,
-  "FJ1515": 0.108,
-  "FJ1515M": 0.108,
+  "FJ1514": 0.281,
+  "FJ1514M": 0.281,
+  "FJ1515": 0.109,
+  "FJ1515M": 0.109,
   "FJ1516": 0,
   "FJ1516M": 0,
-  "FJ1517": 0.129,
-  "FJ1517M": 0.129,
-  "FJ1518": 0.371,
-  "FJ1518M": 0.371,
+  "FJ1517": 0.134,
+  "FJ1517M": 0.134,
+  "FJ1518": 0.372,
+  "FJ1518M": 0.372,
   "FJ1520": 0.434,
   "FJ1520M": 0.434,
-  "FJ1521": 0.358,
-  "FJ1521M": 0.358,
+  "FJ1521": 0.357,
+  "FJ1521M": 0.357,
   "FJ1522": 0,
   "FJ1522M": 0,
   "FJ1524": 0,
@@ -65716,8 +66025,8 @@
   "FJ1544M": 0,
   "FJ1545": 0.051,
   "FJ1545M": 0.051,
-  "FJ1546": 0.004,
-  "FJ1546M": 0.004,
+  "FJ1546": 0.005,
+  "FJ1546M": 0.005,
   "FJ1547": 0,
   "FJ1547M": 0,
   "FJ1548": 0,
@@ -65732,19 +66041,19 @@
   "FJ1552M": 0,
   "FJ1553": 0,
   "FJ1553M": 0,
-  "FJ1554": 0.351,
-  "FJ1554M": 0.351,
-  "FJ1555": 0.009,
-  "FJ1556": 0.009,
+  "FJ1554": 0.349,
+  "FJ1554M": 0.349,
+  "FJ1555": 0.01,
+  "FJ1556": 0.01,
   "FJ1557": 0,
-  "FJ1558": 0.352,
+  "FJ1558": 0.351,
   "FJ1559": 0,
-  "FJ1560": 0.009,
-  "FJ1561": 0,
+  "FJ1560": 0.01,
+  "FJ1561": 0.001,
   "FJ1562": 0,
   "FJ1563": 0,
-  "FJ1564": 0.012,
-  "FJ1565": 0.003,
+  "FJ1564": 0.008,
+  "FJ1565": 0.004,
   "FJ1566": 0,
   "FJ1567": 0.052,
   "FJ1568": 0,
@@ -65757,16 +66066,16 @@
   "FJ1575": 0,
   "FJ1576": 0,
   "FJ1577": 0,
-  "FJ1578": 0.009,
-  "FJ1579": 0.009,
+  "FJ1578": 0.01,
+  "FJ1579": 0.01,
   "FJ1580": 0,
   "FJ1581": 0,
-  "FJ1582": 0,
+  "FJ1582": 0.001,
   "FJ1583": 0,
   "FJ1584": 0,
-  "FJ1585": 0.012,
-  "FJ1586": 0.003,
-  "FJ1587": 0.352,
+  "FJ1585": 0.008,
+  "FJ1586": 0.004,
+  "FJ1587": 0.351,
   "FJ1588": 0,
   "FJ1589": 0.052,
   "FJ1590": 0,
@@ -65830,8 +66139,8 @@
   "FJ2806": 0,
   "FJ2809": 0,
   "FJ3131": 0,
-  "R3_FMA13358": 0.362,
-  "R3_FMA13359": 0.362,
+  "R3_FMA13358": 0.363,
+  "R3_FMA13359": 0.363,
   "R3_FMA13377": 0.011,
   "R3_FMA13378": 0.011,
   "R3_FMA13892": 0.024,
@@ -65848,44 +66157,44 @@
   "R3_FMA22879": 0,
   "R3_FMA46283": 0,
   "R3_FMA46287": 0,
-  "R3_FMA46759": 0.303,
-  "R3_FMA46760": 0.303,
-  "R3_FMA46761": 0.25,
-  "R3_FMA46762": 0.25,
-  "R3_FMA46763": 0.442,
-  "R3_FMA46764": 0.442,
-  "R3_FMA46768": 0.372,
-  "R3_FMA46782": 0.316,
-  "R3_FMA46783": 0.316,
-  "R3_FMA46785": 0.269,
-  "R3_FMA46786": 0.269,
+  "R3_FMA46759": 0.305,
+  "R3_FMA46760": 0.305,
+  "R3_FMA46761": 0.249,
+  "R3_FMA46762": 0.249,
+  "R3_FMA46763": 0.443,
+  "R3_FMA46764": 0.443,
+  "R3_FMA46768": 0.373,
+  "R3_FMA46782": 0.254,
+  "R3_FMA46783": 0.254,
+  "R3_FMA46785": 0.301,
+  "R3_FMA46786": 0.301,
   "R3_FMA46796": 0.002,
   "R3_FMA46797": 0.002,
-  "R3_FMA46803": 0.092,
-  "R3_FMA46804": 0.092,
+  "R3_FMA46803": 0.098,
+  "R3_FMA46804": 0.098,
   "R3_FMA46806": 0.086,
   "R3_FMA46807": 0.086,
-  "R3_FMA46812": 0.243,
-  "R3_FMA46813": 0.243,
-  "R3_FMA46814": 0.21,
-  "R3_FMA46815": 0.21,
+  "R3_FMA46812": 0.246,
+  "R3_FMA46813": 0.246,
+  "R3_FMA46814": 0.207,
+  "R3_FMA46815": 0.207,
   "R3_FMA46817": 0.062,
   "R3_FMA46818": 0.062,
-  "R3_FMA46823": 0.065,
-  "R3_FMA46824": 0.065,
-  "R3_FMA46826": 0.078,
-  "R3_FMA46827": 0.078,
-  "R3_FMA46829": 0.169,
-  "R3_FMA46830": 0.169,
+  "R3_FMA46823": 0.063,
+  "R3_FMA46824": 0.063,
+  "R3_FMA46826": 0.084,
+  "R3_FMA46827": 0.084,
+  "R3_FMA46829": 0.166,
+  "R3_FMA46830": 0.166,
   "R3_FMA46835": 0.001,
   "R3_FMA46836": 0.001,
-  "R3_FMA46839": 0.294,
-  "R3_FMA46840": 0.294,
-  "R3_FMA46841": 0.25,
-  "R3_FMA49001": 0.009,
-  "R3_FMA49002": 0.009,
-  "R3_FMA49004": 0.131,
-  "R3_FMA49005": 0.131,
+  "R3_FMA46839": 0.304,
+  "R3_FMA46840": 0.304,
+  "R3_FMA46841": 0.254,
+  "R3_FMA49001": 0.01,
+  "R3_FMA49002": 0.01,
+  "R3_FMA49004": 0.129,
+  "R3_FMA49005": 0.129,
   "R3_FMA49007": 0.105,
   "R3_FMA49008": 0.105,
   "R3_FMA49012": 0,
@@ -65894,40 +66203,40 @@
   "R3_FMA49023": 0,
   "R3_FMA49024": 0,
   "R3_FMA49025": 0,
-  "R3_FMA51142": 0.117,
-  "R3_FMA51143": 0.117,
-  "R3_FMA55606": 0.223,
-  "R3_FMA55607": 0.223,
-  "R3_FMA55610": 0.126,
-  "R3_FMA55611": 0.126,
+  "R3_FMA51142": 0.116,
+  "R3_FMA51143": 0.116,
+  "R3_FMA55606": 0.225,
+  "R3_FMA55607": 0.225,
+  "R3_FMA55610": 0.111,
+  "R3_FMA55611": 0.111,
   "R3_FMA74140": 0.065,
   "R3_FMA74141": 0.065
  },
  "adjacency": {
   "thresholdM": 0.002,
   "spacingM": 0.002,
-  "samples": 49036789,
+  "samples": 49109393,
   "pairs": 30195,
   "envelopes": [
    {
     "id": "FJ2810",
     "name": "Skin",
-    "rawDegree": 209
+    "rawDegree": 206
    },
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "rawDegree": 136
+    "rawDegree": 135
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
-    "rawDegree": 32
+    "rawDegree": 31
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
-    "rawDegree": 276
+    "rawDegree": 279
    },
    {
     "id": "SOMA_fat_upper_limb_L",
@@ -65997,8 +66306,8 @@
  "triangles": {
   "source": 6681030,
   "importedFromRelease3": 821404,
-  "afterWeldAndMerge": 9607011,
-  "written": 2278291,
+  "afterWeldAndMerge": 9621127,
+  "written": 2308369,
   "simplifiedParts": 2001,
   "maxErrorM": 0.0007999090012162924,
   "worstVolumeChange": {
@@ -66069,11 +66378,11 @@
    },
    "skin": {
     "source": 192604,
-    "written": 38942
+    "written": 70306
    },
    "fat": {
-    "source": 872772,
-    "written": 51282
+    "source": 886888,
+    "written": 49996
    }
   }
  },
@@ -66096,9 +66405,9 @@
  },
  "output": {
   "parts": 3332,
-  "anatomyJsonBytes": 2281956,
+  "anatomyJsonBytes": 2283287,
   "glbBytes": {
-   "integumentary.glb": 606832,
+   "integumentary.glb": 772520,
    "muscular.glb": 5171236,
    "skeletal.glb": 2532184,
    "cardiovascular.glb": 4934712,
@@ -66112,8 +66421,8 @@
   },
   "bounds": [
    -0.337,
-   -0.0779,
-   -0.0409,
+   -0.0776,
+   -0.041,
    0.338,
    1.6512,
    0.2463

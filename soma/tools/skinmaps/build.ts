@@ -27,6 +27,8 @@ export type CurveItem =
    */
   | { nerveEnd: string; dir: Dir; project: 'trunkRadial' | 'beneath' }
 
+export interface Clip { dir: Dir; beyond?: PointExpr; before?: PointExpr }
+
 export interface SeedDef {
   /**
    * 以皮肤上最短路径相连的体表标志；只有一项时为点状种子。
@@ -62,7 +64,7 @@ export interface SeedDef {
    * terminal stretch and not a place where it merely passes close under the skin on its way
    * (e.g. the anterior cutaneous branch of the iliohypogastric nerve at the anterior superior iliac spine).
    */
-  clip?: { dir: Dir; beyond?: PointExpr; before?: PointExpr }
+  clip?: Clip | Clip[]
   /**
    * 神经在两段够浅的走行之间一度变深（建模、配准的深度误差）时，仍沿其走行连成一条种子线，
    * 免得分布区断成两块。只用于穿出深筋膜后一直走在皮下的皮神经（如腓肠神经）。
@@ -336,10 +338,10 @@ export class Builder {
         // A cutaneous nerve does reach the skin: when the whole nerve lies deeper than maxDepthMm
         // (thick subcutaneous fat, or another skin), the limit is relaxed to its own smallest
         // depth + 5 mm, i.e. the stretch where it comes closest to the skin is used.
-        if (def.clip) {
-          const d = this.lm.dir(def.clip.dir, side)
-          const lo = def.clip.beyond ? dot(this.lm.point(def.clip.beyond, side), d) : -Infinity
-          const hi = def.clip.before ? dot(this.lm.point(def.clip.before, side), d) : Infinity
+        for (const clip of def.clip ? (Array.isArray(def.clip) ? def.clip : [def.clip]) : []) {
+          const d = this.lm.dir(clip.dir, side)
+          const lo = clip.beyond ? dot(this.lm.point(clip.beyond, side), d) : -Infinity
+          const hi = clip.before ? dot(this.lm.point(clip.before, side), d) : Infinity
           br = br.map((b) => b.filter((q) => dot(q, d) >= lo && dot(q, d) <= hi))
         }
         let depth = (def.maxDepthMm ?? 15) / 1000
