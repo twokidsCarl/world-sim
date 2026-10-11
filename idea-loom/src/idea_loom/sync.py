@@ -21,6 +21,7 @@ DATA_FILES = ("ideas.jsonl", "frame.json", "projects.json", "wishes.jsonl", "tas
 class SyncStatus(BaseModel):
     pending: int  # 还没进仓库的事件数 / events not yet in the repository
     ideas_md_stale: bool  # IDEAS.md 和当前状态对不上 / IDEAS.md differs from the current state
+    other_data: bool = False  # 愿望、任务等别的数据文件有改动 / other data files (wishes, tasks) changed
     can_sync: bool
     reason: Optional[str] = None  # 不能同步时的原因 / why syncing is not possible
 
@@ -82,7 +83,9 @@ def status(repo: Optional[Path] = None) -> SyncStatus:
     changed, reason = rendered(repo)
     if reason:
         return SyncStatus(pending=pending, ideas_md_stale=False, can_sync=False, reason=reason)
-    return SyncStatus(pending=pending, ideas_md_stale=bool(changed), can_sync=pending > 0 or bool(changed))
+    # 愿望、任务这些数据文件改了，也要同步。 / Wishes, tasks and the other data files count too.
+    other = _git(repo, "status", "--porcelain", "--", _rel(repo, data)).stdout.strip() != ""
+    return SyncStatus(pending=pending, ideas_md_stale=bool(changed), other_data=other and pending == 0, can_sync=pending > 0 or bool(changed) or other)
 
 
 def run(title: Optional[str] = None, repo: Optional[Path] = None) -> SyncResult:
@@ -96,9 +99,12 @@ def run(title: Optional[str] = None, repo: Optional[Path] = None) -> SyncResult:
     data = store.data_dir()
     paths = [_rel(repo, data / name) for name in DATA_FILES if (data / name).exists()] + _generated_files(repo)
     n = st.pending
+    title_given = title
     title = title or f"ideas: 同步想法池（{n} 处改动）/ sync the idea pool ({n} change{'s' if n != 1 else ''})"
-    summary_zh = f"由 idea-loom 同步：{n} 条新事件，并重新生成 IDEAS.md 和 IDEAS.en.md 里的想法池、内核表和覆盖表。"
-    summary_en = f"Synced by idea-loom: {n} new event{'s' if n != 1 else ''}, and the pool, kernel table and coverage table in IDEAS.md and IDEAS.en.md regenerated."
+    if n == 0:
+        title = title_given or "ideas: 同步想法池的数据 / sync the idea pool data"
+    summary_zh = f"由 idea-loom 同步：{n} 条新的 idea 事件（以及愿望、任务等数据的改动），并重新生成 IDEAS.md 和 IDEAS.en.md 里的想法池、内核表和覆盖表。"
+    summary_en = f"Synced by idea-loom: {n} new idea event{'s' if n != 1 else ''} (plus any changes to wishes, tasks and other data), and the pool, kernel table and coverage table in IDEAS.md and IDEAS.en.md regenerated."
     env = {**os.environ, "COMMIT_BODY": f"{summary_zh}\n\n{summary_en}", "PR_BODY": f"## 中文\n\n{summary_zh}\n\n## English\n\n{summary_en}"}
     proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, *paths], cwd=repo, env=env, capture_output=True, text=True, timeout=300)
     out = (proc.stdout + proc.stderr).strip()

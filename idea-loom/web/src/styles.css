@@ -406,7 +406,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .task-title { font: 600 14.5px var(--serif); }
 .task select { font-size: 12.5px; padding: 2px 6px; }
 .projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
-.project { padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); display: grid; gap: 8px; align-content: start; }
+.project-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); display: grid; gap: 8px; align-content: start; }
 .project-head { display: flex; align-items: baseline; gap: 10px; }
 .project-head .n { margin-left: auto; font: 600 20px var(--serif); }
 .pr-list { font-size: 13px; }
