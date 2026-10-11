@@ -28,6 +28,7 @@ from . import manifest
 
 Status = Literal["missing", "building", "ready", "failed"]
 _last_fetch = 0.0
+RETRY_AFTER = (300.0, 900.0, 3600.0)  # 失败后第 1、2、3 次起的等待秒数，之后都用最后一个 / seconds to wait after the 1st, 2nd, 3rd failure; the last one repeats
 
 
 class State(BaseModel):
@@ -38,6 +39,9 @@ class State(BaseModel):
     pid: Optional[int] = None
     stale: bool = False  # main 上有更新的版本，正在等重新构建 / a newer version exists on main
     serving: str = ""  # 上一个构建成功的版本；新版本在构建或失败时继续用它 / the last good build, kept in use while a newer one builds or fails
+    attempts: int = 0  # 同一个版本连续失败的次数 / consecutive failures of this version
+    failed_at: Optional[float] = None
+    next_retry: Optional[str] = None  # 下次自动重试的时间（ISO），给界面显示 / when the next automatic retry is due (ISO), for display
 
 
 def base(name: str) -> Path:
@@ -88,6 +92,17 @@ def _write(name: str, state: State) -> State:
     return state
 
 
+def retry_delay(attempts: int) -> float:
+    return RETRY_AFTER[min(max(attempts, 1), len(RETRY_AFTER)) - 1]
+
+
+def _failed(state: State, now: Optional[float] = None) -> None:
+    """记一次失败，并定下下次重试的时间。 / Record one failure and set when to retry."""
+    now = time.time() if now is None else now
+    state.status, state.attempts, state.failed_at = "failed", state.attempts + 1, now
+    state.next_retry = time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime(now + retry_delay(state.attempts)))
+
+
 def status(name: str) -> State:
     """现在的状态。构建的进程不在了却还显示在构建，就改成失败。
 
@@ -95,15 +110,21 @@ def status(name: str) -> State:
     """
     state = read(name)
     if state.status == "building" and not _alive(state.pid):
-        state.status, state.log = "failed", (state.log + "\n构建的进程不在了，没有做完。").strip()
+        _failed(state)
+        state.log = (state.log + "\n构建的进程不在了，没有做完。").strip()
         _write(name, state)
     current = version(name)
     state.stale = bool(current) and state.version != current
     return state
 
 
-def ensure(name: str, force: bool = False) -> State:
-    """需要的话启动一次构建，马上返回。 / Start a build if one is needed, and return at once."""
+def ensure(name: str, force: bool = False, now: Optional[float] = None) -> State:
+    """需要的话启动一次构建，马上返回。同一个版本失败后，按退避的间隔自动重试。
+
+    Start a build if one is needed, and return at once. After a failure of the same version
+    it retries by itself, backing off between attempts.
+    """
+    now = time.time() if now is None else now
     state = status(name)
     current = version(name)
     if not current:
@@ -112,12 +133,13 @@ def ensure(name: str, force: bool = False) -> State:
         return state
     if state.status == "ready" and state.version == current and not force:
         return state
-    if state.status == "failed" and state.version == current and not force:
-        return state  # 同一个版本失败过，不自动重试；等新版本或手动重建 / do not retry the same version automatically
+    if state.status == "failed" and state.version == current and not force and state.failed_at is not None and now < state.failed_at + retry_delay(state.attempts):
+        return state  # 还没到重试的时间 / not yet time to retry
     base(name).mkdir(parents=True, exist_ok=True)
     proc = subprocess.Popen([sys.executable, "-m", "idea_loom.play.snapshot", name], start_new_session=True,
                             stdout=subprocess.DEVNULL, stderr=(base(name) / "builder.log").open("ab"), cwd=store.repo_root())
-    return _write(name, State(version=current, status="building", log="开始构建…", pid=proc.pid, serving=state.serving))
+    return _write(name, State(version=current, status="building", log="开始构建…", pid=proc.pid, serving=state.serving,
+                                   attempts=state.attempts if state.version == current else 0))
 
 
 def extract(name: str, target: Path, ref: str = manifest.REF) -> None:
@@ -132,7 +154,7 @@ def build(name: str) -> State:
     """取快照、跑构建命令。在独立进程里调用。 / Take the snapshot and run the build commands; called in its own process."""
     sim = manifest.load(name)
     current = version(name)
-    state = State(version=current, status="building", log="", pid=os.getpid(), serving=read(name).serving)
+    state = State(version=current, status="building", log="", pid=os.getpid(), serving=read(name).serving, attempts=read(name).attempts)
     log: list[str] = []
 
     def say(text: str) -> None:
@@ -163,10 +185,11 @@ def build(name: str) -> State:
         if not (web_root(sim, current) / "index.html").exists():
             raise RuntimeError(f"构建完了，但在 {web_root(sim, current).relative_to(target)} 下没有 index.html")
     except Exception as e:  # noqa: BLE001 — 失败的原因要留给人看 / the reason must reach a person
-        state.status = "failed"
+        _failed(state)
         say(f"失败：{e}")
         return state
     state.status, state.built_at, state.serving = "ready", time.strftime("%Y-%m-%dT%H:%M:%S%z"), current
+    state.attempts, state.failed_at, state.next_retry = 0, None, None
     say("就绪")
     for old in base(name).glob("src-*"):
         if old != target:

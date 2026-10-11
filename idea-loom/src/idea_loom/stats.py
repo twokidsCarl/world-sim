@@ -17,6 +17,7 @@ import json
 import os
 import re
 import subprocess
+import threading
 import time
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -473,4 +474,61 @@ def compute(force: bool = False) -> Stats:
         own=own_calls(), transcripts_found=bool(sessions), notes=notes,
     )
     _cache[str(repo)] = (time.time(), result)
+    try:
+        store.write_json(_disk_cache(), {"repo": str(repo), "at": time.time(), "stats": result.model_dump()})
+    except OSError:
+        pass  # 缓存写不了不影响结果 / a failed cache write does not affect the result
     return result
+
+
+# ---------- 一点就出来：先给上一次的结果，后台再算新的 / instant: serve the last result, recompute in the background ----------
+
+FRESH_SECONDS = 60
+_refreshing = threading.Lock()
+
+
+def _disk_cache():
+    from . import llm
+
+    return llm.runs_dir() / "stats-cache.json"
+
+
+def _refresh_in_background() -> None:
+    if not _refreshing.acquire(blocking=False):
+        return  # 已经有一次在算了 / one is already running
+
+    def run() -> None:
+        try:
+            compute(force=True)
+        except Exception:  # noqa: BLE001 — 后台刷新失败就留着旧的 / a failed background refresh keeps the old result
+            pass
+        finally:
+            _refreshing.release()
+
+    threading.Thread(target=run, daemon=True, name="stats-refresh").start()
+
+
+def cached() -> Stats:
+    """统计页用的：立刻返回手上最新的一份（内存里的，或者上次存在盘上的），旧了就在后台重新算。
+
+    算一遍要读本机全部的会话记录和合并请求，要几秒；不该让人每次点开都等。只有从来没算过时才当场算。
+
+    For the statistics page: return the latest result at hand at once (from memory, or the one
+    saved to disk last time) and recompute in the background when it is old. A full computation
+    reads every session record on this machine and the pull requests, which takes seconds; nobody
+    should wait for that on every visit. Only when nothing was ever computed is it done on the spot.
+    """
+    repo = str(store.repo_root())
+    hit = _cache.get(repo)
+    if hit is None:
+        saved = store.read_json(_disk_cache(), None)
+        if isinstance(saved, dict) and saved.get("repo") == repo:
+            try:
+                hit = _cache[repo] = (float(saved.get("at") or 0), Stats.model_validate(saved["stats"]))
+            except (ValueError, KeyError):
+                hit = None
+    if hit is None:
+        return compute(force=True)
+    if time.time() - hit[0] >= FRESH_SECONDS:
+        _refresh_in_background()
+    return hit[1]

@@ -148,3 +148,21 @@ def test_api(repo):
     assert client.post("/api/projects/strata/link", json={"idea_id": "1.3"}).status_code == 200
     assert client.post("/api/projects/strata/link", json={"idea_id": "9.9"}).status_code == 409
     assert client.get("/api/stats?refresh=true").json()["totals"]["output"] == 1357
+
+
+def test_the_page_gets_the_last_result_at_once_and_a_refresh_happens_behind_it(repo, monkeypatch):
+    stats._cache.clear()
+    calls = []
+    real = stats.compute
+    monkeypatch.setattr(stats, "compute", lambda force=False: (calls.append(force), real(force=force))[1])
+    first = stats.cached()                      # 从来没算过：当场算 / never computed: done on the spot
+    assert calls == [True] and stats._disk_cache().exists()
+    assert stats.cached() is first and calls == [True]            # 新鲜的：直接给 / fresh: served as is
+    stats._cache.clear()                                           # 像是重启了 / as after a restart
+    again = stats.cached()
+    assert again.generated_at == first.generated_at and calls == [True]   # 从盘上拿，不重算 / taken from disk, not recomputed
+    key = next(iter(stats._cache))
+    stats._cache[key] = (0.0, again)                               # 旧了 / it is old now
+    started = []
+    monkeypatch.setattr(stats, "_refresh_in_background", lambda: started.append(1))
+    assert stats.cached() is again and started == [1] and calls == [True]  # 立刻给旧的，后台去算新的 / the old one at once, a new one computed behind it

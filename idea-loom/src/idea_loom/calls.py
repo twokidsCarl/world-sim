@@ -162,7 +162,9 @@ def _command(request: dict[str, Any], binary: str) -> tuple[list[str], str, str,
         from .assistant import turns
 
         worker.ensure_clone()
-        return turns.build_argv(binary, str(request.get("token") or "")), str(request.get("prompt") or ""), str(worker.clone()), float(turns.TURN_LIMIT_SECONDS)
+        images = [i for i in (request.get("images") or []) if isinstance(i, dict)][:turns.MAX_IMAGES]
+        stdin = turns.stdin_message(str(request.get("prompt") or ""), images).decode("utf-8")
+        return turns.build_argv(binary, str(request.get("token") or "")), stdin, str(worker.clone()), float(turns.TURN_LIMIT_SECONDS)
     raise ValueError(f"不认识的调用：{kind}")
 
 

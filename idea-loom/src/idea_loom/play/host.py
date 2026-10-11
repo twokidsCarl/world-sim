@@ -82,7 +82,7 @@ def _status_page(name: str, state: snapshot.State, title: str) -> HTMLResponse:
 @media (prefers-color-scheme:dark){{body{{background:#191714;color:#ece6d8}}pre{{background:#141210}}}}
 main{{max-width:720px;padding:24px}}h1{{font:600 20px 'Songti SC',serif;margin:0 0 6px}}pre{{background:#ece5d6;padding:12px;border-radius:6px;white-space:pre-wrap;font:12px/1.5 Menlo,monospace;max-height:50vh;overflow:auto}}</style>
 </head><body><main><h1>{html.escape(title)}</h1><p>{head}</p><pre>{html.escape(state.log[-3000:])}</pre>
-<p style="color:#8f8675">{"这一页会自己刷新。 / This page refreshes by itself." if building else "修好之后在 idea-loom 里点重新构建。 / Rebuild from idea-loom once it is fixed."}</p></main></body></html>"""
+<p style="color:#8f8675">{"这一页会自己刷新。 / This page refreshes by itself." if building else "会自动重试。 / It will be retried automatically."}</p></main></body></html>"""
     return HTMLResponse(body, status_code=503 if building else 500, headers={"cache-control": "no-store"})
 
 

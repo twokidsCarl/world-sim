@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 
 from typing import Optional
@@ -23,6 +24,11 @@ from .model import IdeaDetail, State
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
+    if config.role() != "play":
+        # 启动时就在后台把统计算好，第一次点开也不用等。 / Compute the statistics in the background at start, so even the first visit does not wait.
+        import threading as _threading
+
+        _threading.Thread(target=lambda: stats.cached(), daemon=True, name="stats-warm").start()
     if config.role() == "play":
         from . import cloud
         from .play import keeper
@@ -362,6 +368,15 @@ def assistant_stop(conversation_id: str) -> dict[str, bool]:
     return {"stopped": turns.stop(conversation_id)}
 
 
+@app.get("/api/assistant/conversations/{conversation_id}/turns/{turn}/images/{index}")
+def assistant_image(conversation_id: str, turn: int, index: int) -> Response:
+    """对话里附过的一张图，给界面回看。 / An image attached in a conversation, for the UI to show again."""
+    found = turns.image_path(conversation_id, turn, index) if re.fullmatch(r"[A-Za-z0-9-]{1,60}", conversation_id) else None
+    if found is None:
+        raise HTTPException(404, "没有这张图")
+    return Response(found[0].read_bytes(), media_type=found[1], headers={"cache-control": "private, max-age=3600"})
+
+
 @app.post("/internal/assistant/tools/{name}", response_class=PlainTextResponse)
 async def assistant_tool(name: str, request: Request, x_assistant_turn: str = Header(default="")) -> PlainTextResponse:
     """只给小助手的工具服务用：必须带着正在进行的回合的令牌。
@@ -482,7 +497,9 @@ def task_status(task_id: str, body: TaskStatusBody) -> tasks.Task:
 
 @app.get("/api/stats", response_model=stats.Stats)
 def get_stats(refresh: bool = False) -> stats.Stats:
-    return stats.compute(force=refresh)
+    # 平时立刻给上一次的结果、后台刷新；点"重新统计"才当场算。
+    # Normally the last result is returned at once and refreshed in the background; only "recount" computes on the spot.
+    return stats.compute(force=True) if refresh else stats.cached()
 
 
 # ---------- 作业：触发 Claude Code / jobs: triggering Claude Code ----------
@@ -619,6 +636,8 @@ class SimView(BaseModel):
     version: str
     log: str
     built_at: Optional[str]
+    attempts: int
+    next_retry: Optional[str]  # 失败后下次自动重试的时间 / when a failed build is retried next
     has_api: bool
     api_running: bool
     cards: int
@@ -645,14 +664,15 @@ class PlayView(BaseModel):
 
 
 @app.get("/api/play", response_model=PlayView)
-def play_view(request: Request) -> PlayView:
-    """所有托管的模拟和它们的卡片。读这个接口会顺带：取一次远端、给需要的项目启动构建、停掉空闲的后端。
+def play_view(request: Request, fresh: bool = False) -> PlayView:
+    """所有托管的模拟和它们的卡片。读这个接口会顺带：取一次远端、给需要的项目启动构建、停掉空闲的后端。带 fresh 时不管刚取过没有，都再取一次。
 
     All hosted simulations and their cards. Reading this also fetches the remote, starts
-    builds that are needed and stops idle backends.
+    builds that are needed and stops idle backends. With `fresh` it fetches even if it
+    did a moment ago.
     """
     if config.serves_sims():
-        play_snapshot.fetch()
+        play_snapshot.fetch(max_age=0 if fresh else 60.0)
         play_supervisor.reap_idle()
     sims, problems = play_manifest.load_all()
     pool, _, _, _ = ideas.current()
@@ -663,7 +683,7 @@ def play_view(request: Request) -> PlayView:
         origin = config.sim_origin(sim.name, port)
         sim_views.append(SimView(
             name=sim.name, title=sim.title, level=sim.level, ready=sim.ready, source=sim.source, origin=origin, status=state.status,
-            playable=state.status == "ready" or bool(state.serving), stale=state.stale, version=state.version[:12], log=state.log[-2000:], built_at=state.built_at, has_api=sim.api is not None,
+            playable=state.status == "ready" or bool(state.serving), stale=state.stale, version=state.version[:12], log=state.log[-2000:], built_at=state.built_at, attempts=state.attempts, next_retry=state.next_retry if state.status == "failed" else None, has_api=sim.api is not None,
             api_running=play_supervisor.running(sim.name) is not None, cards=len(sim.cards),
         ))
         if not sim.ready:
