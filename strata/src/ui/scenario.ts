@@ -65,6 +65,10 @@ class ScenarioPlayer {
     // 即使对应的卡片没有挂载，也保持对预期量的计算。
     // Keep the expected quantities computed even if their cards are not mounted.
     const ids = new Set(scenario.steps.flatMap((s) => (s.expect ? [s.expect.quantity] : [])))
+    for (const step of scenario.steps) {
+      const analysis = engine.substrate.analyses?.find((a) => a.id === step.expect?.analysis)
+      for (const q of analysis?.needs ?? []) ids.add(q)
+    }
     this.unwatch = [...ids].map((q) => engine.watch(q))
     this.state = { id, title: scenario.title, index: -1, stepText: '', progress: 0, results: [], done: false }
     this.enter(0)

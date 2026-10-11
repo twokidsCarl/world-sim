@@ -112,6 +112,43 @@ export function compressibilityLimit(p: Record<string, number>, T: number): numb
 
 export const MD_ANALYSES: AnalysisDef[] = [
   {
+    id: 'shedding',
+    level: 'hydro',
+    label: '尾迹有没有周期：脱落频率',
+    source: 'wakeProbe',
+    needs: ['meanFlow'],
+    minSamples: 80,
+    when: (p) => p.walls === 1 && p.obstacle! > 0 && p.dim !== 3,
+    compute(h, p, latest) {
+      // 只用记录的后一半：前一半里流动还在建立。至少要看到两个整周期才报频率。
+      // Only the second half of the record is used: the flow is still developing in the
+      // first. At least two full periods must be seen before a frequency is reported.
+      const from = Math.floor(h.t.length / 2)
+      const fit = dominantFrequency(
+        h.t.slice(from),
+        h.y.slice(from).map((y) => y[0]!),
+        2,
+      )
+      if (!fit || fit.quality < 0.3) {
+        return {
+          headline: '没有清晰的周期',
+          detail: `探测区里的横向流速没有稳定的振荡${fit ? `（最好的正弦拟合只解释了 ${(100 * fit.quality).toFixed(0)}% 的起伏）` : '（或记录还不到两个周期）'}。尾迹是定常的，或者只是在无规地摆动。`,
+          agree: false,
+        }
+      }
+      const U = latest('meanFlow')
+      const diameter = 2 * p.obstacle!
+      const frequency = fit.omega / (2 * Math.PI)
+      return {
+        headline: `脱落频率 f = ${frequency.toPrecision(3)}，周期 ${(1 / frequency).toFixed(0)}`,
+        detail:
+          (U ? `斯特劳哈尔数 St = f D / U = ${((frequency * diameter) / U).toFixed(3)}（D = ${diameter}，U = ${U.toFixed(2)}）。` : '') +
+          `正弦拟合解释了 ${(100 * fit.quality).toFixed(0)}% 的起伏。这里管道只有四个直径宽、流动可压缩，St 不必等于无界不可压流动的教科书值（约 0.2）。`,
+        agree: true,
+      }
+    },
+  },
+  {
     id: 'selfDiffusion',
     level: 'kinetic',
     label: '自扩散系数：由均方位移的斜率',
