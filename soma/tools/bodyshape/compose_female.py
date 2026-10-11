@@ -93,7 +93,15 @@ def main():
         w_br = np.maximum(w_br, np.clip((0.085 - dxy) / 0.03, 0, 1) * (Vf[:, 2] > zc) * (np.abs(Vf[:, 1] - ap[1]) < 0.12))
     for _ in range(4):
         w_br = A @ w_br
-    V = Vb + (1 - w_head)[:, None] * (Venv - Vb) + w_br[:, None] * (Vf - Vb - (Venv - Vb) * 0.0)
+    # 包络拟合的逐顶点修正先做低通（12 次邻域平均）：皮下脂肪会抹平肌肉的起伏，不该把每条肌束都印在皮肤上；
+    # 抹平后个别地方深部结构会贴近或略出皮肤，由 enclose_skin.py 再局部外推
+    # low-pass the envelope fit's per-vertex correction (12 neighbour averages): subcutaneous fat evens out muscle relief
+    # and single bundles should not print through; where deep parts then touch or cross the skin, enclose_skin.py pushes it out locally
+    off_env = Venv - mhrlib.run(st['identity'], mp, lod, True)[0]
+    for _ in range(12):
+        off_env = A @ off_env
+    Venv = mhrlib.run(st['identity'], mp, lod, True)[0] + off_env
+    V = Vb + (1 - w_head)[:, None] * (Venv - Vb) + w_br[:, None] * (Vf - Vb)
     # 乳房区：用女性体型 MHR 的形状，但保持与包络皮肤在乳房边缘处连续（上式在 w_br=1 处为 Venv + (Vf - Vb)）
     # breast zone: the female MHR's shape, kept continuous with the envelope skin at the rim (where w_br = 1 the result is Venv + (Vf - Vb))
     lines.append(f'breast apex of the female-shaped MHR (m): L {np.round(apex["L"], 3).tolist()}, R {np.round(apex["R"], 3).tolist()}; '

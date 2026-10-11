@@ -225,12 +225,24 @@ class Envelope:
         return c + t[:, None] * e, e, ok
 
 
+def reference_skin(b):
+    """“他自己的皮肤”：管线装入我们的 MHR 皮肤之后，public/anatomy/male 里的 Skin 就不再是 BodyParts3D 的皮肤了，
+    所以把装入之前（同一内部结构指纹）的那张皮肤存了一份，拟合时用它。
+    "His own skin": once the pipeline has installed our MHR skin, the Skin part in public/anatomy/male is no longer
+    the BodyParts3D skin, so a copy taken before the installation (same internals fingerprint) is kept and used for the fit."""
+    ref = os.path.join(RAW, 'out', f'{b.name}-reference-skin.npz')
+    if os.path.exists(ref):
+        z = np.load(ref)
+        return z['V'].astype(np.float64), z['F'].astype(np.int64)
+    return b.skin()
+
+
 def outer_skin(b):
     """现有皮肤的外表面：法线背离最近内部结构的那些三角形（我们的皮肤是带内壁的薄壳）。
     Outer wall of the existing skin: triangles whose normal points away from the nearest internal
     structure (our skin is a thin shell with an inner wall)."""
     from scipy.spatial import cKDTree
-    V, F = b.skin()
+    V, F = reference_skin(b)
     P = np.vstack([internal_points(b, 'muscle'), internal_points(b, 'bone')])
     c = V[F].mean(1)
     n = np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]])
@@ -331,6 +343,7 @@ class Fit:
         self.step = np.full(n, 5e-3)
         self.step[:self.nid] = 2e-2
         self.corr = None
+        self.bone_weight = 0.6
 
     def unpack(self, x):
         ident = np.array(x[:self.nid]) if self.nid else self.identity
@@ -363,7 +376,7 @@ class Fit:
             r.append(wgt * np.einsum('ij,ij->i', nt, V - cp))
         if self.bone_pts is not None:
             # 骨点应在皮肤下至少 3 mm / bone points should lie at least 3 mm under the skin
-            r.append(0.6 * np.maximum(signed_distance(self.bone_pts, V, self.F) + 0.003, 0))
+            r.append(self.bone_weight * np.maximum(signed_distance(self.bone_pts, V, self.F) + 0.003, 0))
         if self.subcut is not None:
             r.append(1.5 * signed_distance(self.subcut, V, self.F))
         if self.top_floor is not None:
@@ -544,7 +557,7 @@ def main():
     oskin = outer_skin(fb)
     ilio = 0.5 * (L['iliocristale_L'][1] + L['iliocristale_R'][1]) - L['floor'][1]
     Jm = {k: L[k] for k in JOINT_KEYS}
-    old_meas = surface_measures(*fb.skin(), Jm, levels={'iliocristale': ilio})
+    old_meas = surface_measures(*reference_skin(fb), Jm, levels={'iliocristale': ilio})
 
     env = None
     if mode == 'skin':
