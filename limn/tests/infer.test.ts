@@ -228,3 +228,30 @@ describe('rods run up to the wall and are cut there', () => {
     expect(clipped.chains.reduce((s, c) => s + c.count, 0)).toBe(clipped.atomCount)
   })
 })
+
+describe('catalogue entries that infer or recolour', () => {
+  it('carry valid patterns, plausible numbers and a source for every inferred count', async () => {
+    const catalog = (await import('../data/catalog.json')).default as { models: { id: string; lining?: string; respike?: { pattern: string; count: number; source: string }; hues?: Record<string, number[]>; membrane?: number[] }[] }
+    const { ROLES } = await import('../src/style/palettes')
+    let respiked = 0
+    for (const m of catalog.models) {
+      if (m.lining) expect(() => new RegExp(m.lining!)).not.toThrow()
+      if (m.respike) {
+        respiked++
+        expect(() => new RegExp(m.respike!.pattern)).not.toThrow()
+        expect(m.respike.count).toBeGreaterThan(10)
+        expect(m.respike.count).toBeLessThan(200)
+        // 推断的数量必须写明出处 / an inferred number must name where it comes from
+        expect(m.respike.source).toMatch(/doi:10\.\d+\//)
+      }
+      for (const [role, lch] of Object.entries(m.hues ?? {})) {
+        expect(ROLES as string[], `${m.id}.${role}`).toContain(role)
+        expect(lch.length).toBe(3)
+        expect(lch[0]!).toBeGreaterThan(0.4)
+        expect(lch[0]!).toBeLessThan(0.95)
+      }
+      if (m.membrane) expect(m.membrane.length).toBe(3)
+    }
+    expect(respiked).toBeGreaterThan(0)
+  })
+})

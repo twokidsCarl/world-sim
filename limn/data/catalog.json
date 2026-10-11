@@ -29,6 +29,8 @@
         ["(^|[^A-Za-z])E$", [0.74, 0.12, 320]],
         ["Nest|Pyramid", [0.75, 0.104, 297]]
       ],
+      "lining": "Nest|Pyramid",
+      "respike": {"pattern": "(^|[^A-Za-z])S$", "count": 74, "source": "Neuman et al., J. Struct. Biol. 2011, doi:10.1016/j.jsb.2010.11.021 (74 on average for coronavirus particles); Klein et al., Nat. Commun. 2020, doi:10.1038/s41467-020-19619-7 (48 on average, range 25-127, for SARS-CoV-2)"},
       "caption": "整颗病毒的原子模型，从中间剖开：包膜上的刺突蛋白（S）、膜蛋白（M）和包膜蛋白（E），内部是核衣壳蛋白与 RNA 组成的核糖核蛋白。",
       "captionEn": "An atomic model of the whole virus, cut through the middle: the spike (S), membrane (M) and envelope (E) proteins in the envelope, and inside it the ribonucleoprotein of nucleocapsid protein and RNA.",
       "tier": "curated",
@@ -58,6 +60,8 @@
         ["gRNA", "nucleic"],
         ["^(RT|IN|NC|PR)$", "nucleic-binding"]
       ],
+      "hues": {"focus": [0.74, 0.14, 8], "nucleic-binding": [0.68, 0.13, 345], "nucleic": [0.86, 0.15, 90], "soluble": [0.78, 0.11, 25]},
+      "membrane": [0.91, 0.04, 350],
       "caption": "成熟 HIV-1 病毒颗粒的原子模型，从中间剖开：包膜上的 gp160 刺突，膜下的基质蛋白，锥形衣壳里是两条基因组 RNA 和逆转录酶、整合酶。",
       "captionEn": "An atomic model of the mature HIV-1 virion, cut through the middle: gp160 spikes in the envelope, matrix protein beneath the membrane, and a conical capsid holding the two genomic RNAs with reverse transcriptase and integrase.",
       "tier": "curated",

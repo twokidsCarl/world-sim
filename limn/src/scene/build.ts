@@ -52,6 +52,8 @@ export interface Placement {
   strand?: boolean
   /** 切片的背面不切它：衬在里面的一层，空隙里露出的是它而不是白纸 / not cut at the back of a slab: a layer lining the inside, so that gaps show it and not paper */
   keepBack?: boolean
+  /** 名字匹配的实体衬在后面（同 keepBack，但只对这些实体）/ entities whose name matches line the back (as keepBack, for those entities only) */
+  lining?: RegExp
   /** 剖开时不切它（叠在密度图里的原子模型）/ left whole by a cut (an atomic model shown inside a density map) */
   noCut?: boolean
 }
@@ -79,6 +81,8 @@ interface Group {
    * A crowd of small molecules (the glutamates in a vesicle, say): besides sharing an id, no depth contours are drawn among them, only the outline of the crowd.
    */
   fine: boolean
+  /** 衬在后面：切片的背面不切它 / lines the back: not cut at the back of a slab */
+  lined: boolean
 }
 
 /**
@@ -86,7 +90,7 @@ interface Group {
  * An assembly grouped by which atoms are drawn: rows listing the same chains are merged
  * and their operators concatenated.
  */
-function assemblyGroups(mol: Molecule, assembly: string, merge?: RegExp): Group[] {
+function assemblyGroups(mol: Molecule, assembly: string, merge?: RegExp, lining?: RegExp): Group[] {
   const asm = mol.assemblies.find((a) => a.id === assembly) ?? mol.assemblies[0]!
   const byKey = new Map<string, Group>()
   const isLipid = (ci: number) => mol.entities[mol.chains[ci]!.entity]!.kind === 'lipid'
@@ -118,6 +122,7 @@ function assemblyGroups(mol: Molecule, assembly: string, merge?: RegExp): Group[
       byKey.set(key, {
         runs, operators: g.operators.slice(), lipid: g.chains.every(isLipid),
         merged: g.chains.every((ci) => mol.chains[ci]!.count < 40) || g.chains.some((ci) => /\.fibers?\./i.test(mol.entities[mol.chains[ci]!.entity]!.description) || !!merge?.test(mol.entities[mol.chains[ci]!.entity]!.description)),
+        lined: !!lining && g.chains.some((ci) => lining.test(mol.entities[mol.chains[ci]!.entity]!.description)),
         fine: g.chains.every((ci) => mol.chains[ci]!.count < 40) || g.chains.some((ci) => !!merge?.test(mol.entities[mol.chains[ci]!.entity]!.description)),
       })
   }
@@ -144,7 +149,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
   let total = 0
   const plan: { g: Group; ps: Placement[] }[] = []
   for (const [assembly, ps] of byAssembly)
-    for (const g of assemblyGroups(mol, assembly, ps[0]!.merge)) {
+    for (const g of assemblyGroups(mol, assembly, ps[0]!.merge, ps[0]!.lining)) {
       plan.push({ g, ps })
       total += g.operators.length * ps.length
     }
@@ -186,7 +191,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
           // 膜总是衬在后面：切片的背面不切它，里面的空处露出的是膜的内壁（按深度取深一号的色调），不是白纸
           // a membrane always lines the back: it is not cut at the back of a slab, so empty space inside shows its inner wall (in the deeper tone of its depth) and not paper
-          data[k + 15] = p.keepBack || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
+          data[k + 15] = p.keepBack || g.lined || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : p.molecule + 1 + (g.merged ? groupCopy : copy)
