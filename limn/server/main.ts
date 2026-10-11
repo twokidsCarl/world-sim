@@ -2,6 +2,7 @@
 import { critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
+import { cached, stateDir } from './structures'
 
 const PORT = Number(process.env.LIMN_PORT || 5185)
 
@@ -27,6 +28,13 @@ Bun.serve({
         const res = await fetch(`https://files.rcsb.org/ligands/download/${lig[1]!.toUpperCase()}_ideal.sdf`)
         return res.ok ? new Response(await res.text(), { headers: { 'Content-Type': 'text/plain' } }) : json({ error: `没有找到配体 ${lig[1]}` }, 404)
       }
+      // 结构文件：从白名单主机取一次，之后读本机缓存
+      // structure files: fetched once from an allowlisted host, then served from the local cache
+      if (url.pathname === '/api/structure') {
+        const target = url.searchParams.get('url') ?? ''
+        const file = Bun.file(await cached(target))
+        return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })
+      }
       if (req.method !== 'POST') return json({ error: 'not found' }, 404)
       const body = (await req.json()) as Record<string, unknown>
       if (url.pathname === '/api/resolve') {
@@ -42,7 +50,7 @@ Bun.serve({
       // Save a rendered picture under the cache directory so it can be inspected outside the browser (local only).
       if (url.pathname === '/api/snapshot') {
         const name = String(body.name ?? 'snapshot').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 60) || 'snapshot'
-        const path = `${process.env.LIMN_CACHE || '.cache'}/snapshots/${name}.png`
+        const path = `${stateDir()}/snapshots/${name}.png`
         await Bun.write(path, png(body.image))
         return json({ path })
       }

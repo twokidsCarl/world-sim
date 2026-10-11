@@ -4,6 +4,7 @@
  * empty temporary directory with no tools, or with read-only file access
  * when images are attached so the model can look at them.
  */
+import { stateDir } from './structures'
 import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -25,7 +26,8 @@ export interface AskOptions {
 
 const bin = () => process.env.LIMN_CLAUDE_BIN || 'claude'
 const defaultModel = () => process.env.LIMN_MODEL || 'sonnet'
-const cacheDir = () => process.env.LIMN_CACHE || join(import.meta.dir, '..', '.cache', 'llm')
+// 模型回答的缓存放在状态目录下 / the cache of model answers lives under the state directory
+const cacheDir = () => join(stateDir(), 'llm')
 
 export function buildArgv(o: AskOptions): string[] {
   const look = (o.images?.length ?? 0) > 0

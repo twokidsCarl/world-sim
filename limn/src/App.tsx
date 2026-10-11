@@ -10,6 +10,9 @@ import { hex, oklch } from './style/oklab'
 import { ROLE_LABEL, ROLES, TONE_MOLECULE, type Role } from './style/palettes'
 import { Stage, stage } from './ui/Stage'
 
+/** 嵌入模式下不带参数打开时画的模型 / the model drawn when embed mode is opened with no parameters */
+const DEFAULT_MODEL = 'sars-cov-2-virion'
+
 function Slider(p: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
   return (
     <div className="row">
@@ -30,9 +33,14 @@ export function App() {
   const [exporting, setExporting] = useState(false)
   const [server, setServer] = useState<{ ok: boolean; claude: boolean } | null>(null)
 
+  // 嵌入模式（?embed=1）：只留画面和几个必要的控件；不带参数时给一个默认画面
+  // embed mode (?embed=1): the stage and a few essential controls only; with no parameters, a default scene
+  const embed = params.get('embed') === '1'
+
   useEffect(() => {
     void api.health().then(setServer)
-    if (params.get('model')) void s.loadCatalog(params.get('model')!)
+    if (embed && !params.get('model') && !params.get('id') && !params.get('topic')) void s.loadCatalog(DEFAULT_MODEL)
+    else if (params.get('model')) void s.loadCatalog(params.get('model')!)
     else if (params.get('id')) void s.loadId(params.get('id')!)
     else if (params.get('topic')) void s.resolveTopic(params.get('topic')!)
   }, [])
@@ -54,6 +62,27 @@ export function App() {
 
   const canAsk = server?.ok && server.claude
   const working = !!s.busy || !!s.refining
+
+  if (embed) {
+    const src = s.panels[0]?.spec.source
+    return (
+      <div className="app embed">
+        <Stage />
+        {s.spec && s.panels.length > 0 && (
+          <div className="embed-info">
+            <b>{s.spec.title}</b>
+            {src && <span className="muted">{[src.kind === 'pdb' ? `PDB ${src.id}` : '', src.attribution, src.licence].filter(Boolean).join(' · ')}</span>}
+            {!s.spec.landscape && (
+              <label className="embed-cut">
+                剖开 / Cut
+                <input type="range" min={0} max={0.9} step={0.01} value={s.cut} onChange={(e) => s.setLook({ cut: Number(e.target.value) })} />
+              </label>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="app">

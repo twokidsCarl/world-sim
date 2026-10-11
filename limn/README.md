@@ -38,7 +38,13 @@ bun run typecheck
 
 主题如果是一个拥挤的细胞场景（“大肠杆菌细胞质的拥挤场景”“流感病毒包膜表面的横截面全景”），会画成全景：80×56 nm、厚 30 nm 的一片截面，可以带一层水平的膜。
 
-可调的环境变量：`LIMN_MODEL`（默认 `sonnet`）、`LIMN_CLAUDE_BIN`、`LIMN_CACHE`、`LIMN_PORT`。
+可调的环境变量：`LIMN_MODEL`（默认 `sonnet`）、`LIMN_CLAUDE_BIN`、`LIMN_PORT`、`LIMN_CACHE`（运行时写数据的目录；不设时用 `WORLD_SIM_STATE`，再不然是源码旁的 `.cache/`）。
+
+本地服务会把取过的结构文件缓存在这个目录的 `structures/` 下（只从白名单里的几个公共数据库主机下载），下次打开不用再联网。服务没启动时，网页直接从原地址取。
+
+### 在 idea-loom 里
+
+world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767/`），卡片列表在 `sim.json`。每张卡是一个直达链接：`/?model=<目录 id>` 或 `/?id=<PDB 编号>`。加上 `?embed=1` 时只留画面、标题、出处和“剖开”滑杆；不带其他参数时画新冠病毒颗粒。
 
 ## 它怎么保证画的是真的
 
@@ -148,7 +154,13 @@ Drag to rotate, scroll to zoom, shift-drag to pan. The "cut" slider removes the 
 
 A topic that asks for a crowded cellular scene ("the crowded cytoplasm of E. coli", "a cross-section of the influenza envelope") is drawn as a landscape: a slab 80 × 56 nm and 30 nm thick, optionally with a horizontal membrane.
 
-Environment variables: `LIMN_MODEL` (default `sonnet`), `LIMN_CLAUDE_BIN`, `LIMN_CACHE`, `LIMN_PORT`.
+Environment variables: `LIMN_MODEL` (default `sonnet`), `LIMN_CLAUDE_BIN`, `LIMN_PORT`, and `LIMN_CACHE` (where run-time data is written; when unset, `WORLD_SIM_STATE` is used, and failing that `.cache/` next to the source).
+
+The local service caches every structure file it has fetched under `structures/` in that directory (it downloads only from a short allowlist of public database hosts), so opening the same thing again needs no network. When the service is not running, the page fetches straight from the source.
+
+### Inside idea-loom
+
+idea-loom, the single entry point of world-sim, hosts limn at `http://limn.localhost:8767/`; the cards are listed in `sim.json`. Each card is a deep link: `/?model=<catalogue id>` or `/?id=<PDB id>`. With `?embed=1` only the stage, the title, the provenance and the cut slider remain; with no other parameter it draws the SARS-CoV-2 virion.
 
 ## How it keeps the picture true
 
