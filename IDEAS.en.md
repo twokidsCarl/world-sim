@@ -742,7 +742,9 @@ The two directions off the ladder that used to be empty each have a branch now, 
 
 ## 9. A sketch: how a hundred simulations might one day connect
 
-**This section is only a sketch and is not being carried out.** The present decision is to build more subprojects, each on its own, and to come back to unification once enough has been built. What follows records directions worth considering then; it places no requirement on any project.
+**Most of this section is still a sketch.** The present decision is to build more subprojects, each on its own, and to come back to unification once enough has been built. What follows records directions worth considering then.
+
+Two pieces now exist in a minimal form: each project's "card" (`sim.json`, which so far only declares how it is hosted and which cards it offers, without the "hands upward / needs from below" fields), and the single entry point within "one shell" — idea-loom hosts every simulation and its play page lays the cards out in one column. The contract is in the root `CLAUDE.md` under "the single entry point and the embed contract"; that section does place requirements on the projects, while the rest of this one still does not.
 
 The starting point is the clustering in section 7: a hundred ideas use only a dozen or so kinds of computation. So the end state should not be a hundred unrelated projects but a dozen engines, one shared record format, one shell, and a hundred pieces of "content". mindloop is already an early form of this: one engine and a couple of dozen case files.
 
