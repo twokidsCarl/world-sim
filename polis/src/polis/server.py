@@ -18,10 +18,15 @@ app = FastAPI(title="polis")
 
 
 def _run_dir(run_id: str):
-    path = runs_dir() / run_id
-    if run_id.startswith(".") or "/" in run_id or not (path / "manifest.json").is_file():
+    path = trace.find(run_id, runs_dir())
+    if path is None:
         raise HTTPException(404)
     return path
+
+
+@app.get("/api/health")
+def health() -> dict:
+    return {"ok": True}
 
 
 @app.get("/api/runs")
@@ -31,19 +36,19 @@ def runs() -> list[dict]:
 
 @app.get("/api/runs/{run_id}/{name}")
 def run_file(run_id: str, name: str):
-    path = _run_dir(run_id) / name
-    if name == "ensemble.json" and not path.is_file():
-        return None  # 还没算过集成，不是错误 / no ensemble has been computed yet, which is not an error
-    if name not in trace.SERVED or not path.is_file():
+    run = _run_dir(run_id)
+    if name == "ensemble.json":
+        # 没算过集成不是错误 / an ensemble that has not been computed is not an error
+        cached = lab.ensemble_path(runs_dir(), run_id)
+        return json.loads(cached.read_text(encoding="utf-8")) if cached.is_file() else None
+    if name not in trace.FILES or not (run / name).is_file():
         raise HTTPException(404)
-    return FileResponse(path)
+    return FileResponse(run / name)
 
 
 @app.get("/api/corpus")
 def corpus_all() -> dict:
-    """语料全文，每条附带 verified（出处是否全部核实）。
-    The whole corpus; each entry carries verified (whether all of its sources have been checked).
-    """
+    """语料全文，每条附带 verified（出处是否全部核实）。/ The full corpus; each entry carries verified (whether all its sources are checked)."""
     entries, _ = corpus.check()
     return {kind: [e.model_dump() | {"verified": e.verified} for e in items] for kind, items in entries.items()}
 

@@ -19,13 +19,16 @@ from .model import Intervention, Manifest
 
 
 def branch(root: Path, parent_id: str, added: list[Intervention]) -> Manifest:
-    parent = trace.load_manifest(root / parent_id)
+    where = trace.find(parent_id, root)
+    if where is None:
+        raise ValueError(f"没有这条记录：{parent_id}")
+    parent = trace.load_manifest(where)
     if not added:
         raise ValueError("分叉至少要有一条干预")
     for iv in added:
         if not 1 <= iv.t <= parent.ticks:
             raise ValueError(f"干预时刻 {iv.t} 不在 1..{parent.ticks} 之内")
-        limit = {"close_venue": len(trace.load_population(root / parent_id).venues), "silence": parent.n, "convince": parent.n}.get(iv.kind)
+        limit = {"close_venue": len(trace.load_population(where).venues), "silence": parent.n, "convince": parent.n}.get(iv.kind)
         if limit is not None and not (iv.target is not None and 0 <= iv.target < limit):
             raise ValueError(f"{iv.kind} 需要一个有效的对象")
     interventions = sorted(parent.params.interventions + added, key=lambda iv: iv.t)
@@ -35,16 +38,23 @@ def branch(root: Path, parent_id: str, added: list[Intervention]) -> Manifest:
     return trace.simulate(params, root, run_id=f"{root_id}~{digest}", parent=parent_id, branch_t=min(iv.t for iv in added))
 
 
-def ensemble(root: Path, run_id: str, k: int = 20) -> dict:
-    """同一设定跑 k 个种子，给出各时刻的分位带和倒闭次数。结果缓存在记录目录里。
-    Run k seeds under the same settings and return the quantile bands at each tick and the number of failures. The result is cached in the run directory.
+def ensemble_path(root: Path, run_id: str) -> Path:
+    """集成结果放在可写目录里，不放进记录自己的目录：随项目带着的记录是只读的。
+    Ensemble results live in the writable directory rather than inside the run, because bundled runs are read-only.
     """
-    path = root / run_id / "ensemble.json"
+    return root / "_ensemble" / f"{run_id}.json"
+
+
+def ensemble(root: Path, run_id: str, k: int = 20) -> dict:
+    """同一设定跑 k 个种子，给出各时刻的分位带和倒闭次数。结果有缓存。
+    Run k seeds under the same settings and return the quantile bands at each tick and the number of failures. The result is cached.
+    """
+    path = ensemble_path(root, run_id)
     if path.exists():
         cached = json.loads(path.read_text(encoding="utf-8"))
         if cached["k"] == k:
             return cached
-    m = trace.load_manifest(root / run_id)
+    m = trace.load_manifest(trace.find(run_id, root))
     seeds = list(range(1, k + 1))
     series = {"believers": [], "withdrew": [], "reserve": []}
     failed_at = []
@@ -62,6 +72,7 @@ def ensemble(root: Path, run_id: str, k: int = 20) -> dict:
             warnings.simplefilter("ignore", RuntimeWarning)
             lo, mid, hi = np.nanquantile(np.array(runs), [0.1, 0.5, 0.9], axis=0)
         out["bands"][name] = {"lo": _clean(lo), "mid": _clean(mid), "hi": _clean(hi)}
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     return out
 

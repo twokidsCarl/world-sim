@@ -5,6 +5,13 @@ import type { Intervention, Manifest, Message, Population, Series } from '../con
 import { assemble, parseEvents, type RunData } from './derive.ts'
 
 export type Theme = 'light' | 'dark'
+
+// 直达链接：?run=<记录>&t=<小时>&person=<主角的角色键或下标>&tab=lab&view=library&embed=1&play=1
+// Deep links: ?run=<run id>&t=<hour>&person=<cast key or index>&tab=lab&view=library&embed=1&play=1
+const query = new URLSearchParams(window.location.search)
+/** 嵌在别的页面里：只留城和时间轴，进来就播 / Embedded in another page: stage and timeline only, and it starts by itself */
+export const EMBED = query.get('embed') === '1'
+export const OPEN_LIBRARY = query.get('view') === 'library'
 export type Tab = 'city' | 'lab'
 
 type Band = { lo: (number | null)[]; mid: (number | null)[]; hi: (number | null)[] }
@@ -90,8 +97,24 @@ export const useApp = create<AppState>((set, getState) => ({
     try {
       const runs = (await (await get('/api/runs')).json()) as Manifest[]
       set({ runs })
-      if (runs[0]) await getState().open(runs[0].run_id)
-      else set({ phase: 'error', error: '还没有运行记录。先在 polis/ 下执行 uv run polis run' })
+      if (!runs[0]) {
+        set({ phase: 'error', error: '还没有运行记录。先在 polis/ 下执行 uv run polis run' })
+        return
+      }
+      const wanted = query.get('run')
+      // 没指定时先开虚构的通和场景，它是入门的那一个 / with nothing named, open the fictional scenario, which is the introduction
+      const first = runs.find((m) => m.run_id.startsWith('rumor_run')) ?? runs[0]
+      await getState().open(runs.some((m) => m.run_id === wanted) ? wanted! : first.run_id)
+      const run = getState().run
+      if (!run) return
+      // 链接里带的时刻、人物、标签页 / the moment, person and tab named in the link
+      const who = query.get('person')
+      const person = who == null ? null : (run.population.cast[who] ?? (/^\d+$/.test(who) && Number(who) < run.manifest.n ? Number(who) : null))
+      const lab = query.get('tab') === 'lab'
+      set({ t: Math.max(0, Math.min(run.manifest.ticks, Number(query.get('t')) || 0)), selected: person, tab: lab ? 'lab' : 'city' })
+      // 嵌入时不等人按播放；实验台和依据页是给人操作的，不自动播
+      // When embedded do not wait for a key press; the lab and the evidence page are for interacting, so they do not auto-play
+      if (query.get('play') === '1' || (EMBED && !lab && !OPEN_LIBRARY && query.get('play') !== '0')) set({ playing: true })
     } catch (e) {
       set({ phase: 'error', error: `连不上 API（${String(e)}）。先在 polis/ 下执行 uv run polis serve` })
     }
@@ -121,6 +144,13 @@ export const useApp = create<AppState>((set, getState) => ({
       // Ensemble results are computed on demand; the API returns null until they have been
       const ensemble = await json<Ensemble | null>(`${base}/ensemble.json`).catch(() => null)
       const s = getState()
+      if (!EMBED) {
+        // 地址栏跟着当前记录走，复制下来就是直达链接 / keep the address bar on the current run so it can be copied as a deep link
+        const url = new URL(window.location.href)
+        url.searchParams.set('run', runId)
+        for (const key of ['t', 'person', 'play']) url.searchParams.delete(key)
+        window.history.replaceState(null, '', url)
+      }
       set({
         run, compare, ensemble, phase: 'ready', pending: [], labError: '',
         t: keepTime ? Math.min(s.t, manifest.ticks) : 0,

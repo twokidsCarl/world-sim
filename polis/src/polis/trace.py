@@ -5,6 +5,7 @@ Run records: write one simulation out as a set of files the UI can replay, and r
 from __future__ import annotations
 
 import importlib
+import os
 import json
 from pathlib import Path
 
@@ -15,8 +16,7 @@ from .engine import Sim
 from .model import Manifest, Params, Population, Summary
 from .protagonist import Director
 
-FILES = ["manifest.json", "population.json", "messages.json", "series.json", "events.jsonl", "frames.bin"]
-SERVED = FILES + ["ensemble.json"]  # 后者是实验台按需算出来的 / the latter is computed on demand by the lab
+FILES = ["manifest.json", "population.json", "messages.json", "series.json", "events.jsonl", "frames.bin"]  # 后者是实验台按需算出来的 / the latter is computed on demand by the lab
 
 
 def _dump(obj) -> str:
@@ -80,8 +80,48 @@ def simulate(
     return manifest
 
 
+PROJECT = Path(__file__).resolve().parents[2]
+
+
+def runs_dir() -> Path:
+    """新记录写到哪里：POLIS_RUNS，其次是统一入口给的 WORLD_SIM_STATE，再其次是项目下的 runs/。
+    Where new runs are written: POLIS_RUNS, else the WORLD_SIM_STATE directory given by the shared host, else runs/ in the project.
+    """
+    if os.environ.get("POLIS_RUNS"):
+        return Path(os.environ["POLIS_RUNS"])
+    if os.environ.get("WORLD_SIM_STATE"):
+        return Path(os.environ["WORLD_SIM_STATE"]) / "runs"
+    return PROJECT / "runs"
+
+
+def bundled() -> list[Path]:
+    """随项目带着的只读记录：samples/ 在 git 里，built/ 由 `polis prepare` 生成。POLIS_BUNDLED 可以改掉或清空。
+    Read-only runs that ship with the project: samples/ is in git and built/ is produced by `polis prepare`.
+    POLIS_BUNDLED overrides the list, and an empty value disables it.
+    """
+    env = os.environ.get("POLIS_BUNDLED")
+    dirs = [Path(d) for d in env.split(os.pathsep) if d] if env is not None else [PROJECT / "built", PROJECT / "samples"]
+    return [d for d in dirs if d.is_dir()]
+
+
+def find(run_id: str, root: Path) -> Path | None:
+    """一条记录所在的目录：先看可写的 root，再看随项目带着的。/ The directory holding a run: the writable root first, then the bundled ones."""
+    if not run_id or run_id.startswith((".", "_")) or "/" in run_id or os.sep in run_id:
+        return None
+    for d in [root, *bundled()]:
+        if (d / run_id / "manifest.json").is_file():
+            return d / run_id
+    return None
+
+
 def list_runs(root: Path) -> list[Manifest]:
-    return [load_manifest(d) for d in sorted(root.glob("*")) if (d / "manifest.json").exists()]
+    """root 和随项目带着的全部记录，同名的以 root 里的为准。/ Every run in root and the bundled directories; root wins on a clash."""
+    seen: dict[str, Manifest] = {}
+    for d in [root, *bundled()]:
+        for run in sorted(d.glob("*")):
+            if (run / "manifest.json").exists() and run.name not in seen:
+                seen[run.name] = load_manifest(run)
+    return [seen[k] for k in sorted(seen)]
 
 
 def load_manifest(run: Path) -> Manifest:
