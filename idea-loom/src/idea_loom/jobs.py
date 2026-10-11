@@ -9,12 +9,26 @@
 范围靠写文件的权限规则和"PR 只含这个目录"来保证。
 每个阶段在一个独立的进程里跑，状态都写在 runs/jobs/<编号>/ 下，所以后端重启不影响它。
 
-云端不一样的地方（见 worker.py）：hub 不跑作业，只把它排进队列；worker 有自己的一份仓库，
-每个作业一个独立的工作区和分支，做完推分支、开 PR，失败了直接丢掉，不需要"还原"。
+每个作业在自己的工作区里做（见 worker.py）：从最新的 main 开一个分支和一棵单独的工作树，
+Claude 在里面改、测试在里面跑，做完推分支、开 PR，失败了直接丢掉，不需要"还原"。
+这样它和同时在仓库目录里工作的别的会话互不干扰——原来在共用目录里就地改，会把别人没提交的
+改动算成自己的，别人的提交也会把它改到一半的文件带走。
+本机多一步：合并之后把它的改动同步回共用的目录（那个目录不会自己更新，不同步的话，下一次
+从那里提交就会把它的改动改回去）；两边都改了同一个文件就做三方合并，合不了的留着不动并说明。
+云端 hub 不跑作业，只把它排进队列，由 worker 来做。
+设 IDEA_LOOM_JOBS_INPLACE=1 可以回到原来在共用目录里就地改的做法。
 
-In the cloud (see worker.py) the hub does not run jobs, it only queues them; the worker has
-its own clone and gives every job its own workspace and branch, pushes the branch and opens
-the PR when done, and simply discards the workspace on failure, so nothing needs reverting.
+Every job works in its own workspace (see worker.py): a branch and a separate worktree cut
+from the latest main, where Claude edits and the tests run; when done the branch is pushed
+and the PR opened, and on failure the workspace is simply discarded, so nothing needs
+reverting. It and the other sessions working in the repository directory at the same time
+no longer interfere — editing in place in the shared directory counted other people's
+uncommitted changes as its own, and their commits carried its half-finished files away.
+Locally there is one more step: after the merge its changes are synced back into the shared
+directory (which never updates by itself; without this the next commit from there would
+undo them); a file changed on both sides is three-way merged, and what cannot be merged is
+left alone and reported. In the cloud the hub does not run jobs, it queues them for the
+worker. IDEA_LOOM_JOBS_INPLACE=1 restores the old in-place behaviour.
 
 Jobs: trigger Claude Code from the UI to do a wish or a development task. While
 planning, Claude only has read tools. Only after approval does a second run get write
@@ -95,6 +109,8 @@ class Job(BaseModel):
     waiting: Optional[str] = None  # 为什么还没轮到它，给人看 / why it has not started yet, for a person
     workspace: Optional[str] = None  # 云端：这个作业自己的工作区 / in the cloud: this job's own workspace
     branch: Optional[str] = None
+    base: Optional[str] = None  # 工作区是从 main 的哪个提交开的 / the commit on main the workspace was cut from
+    conflicts: list[str] = Field(default_factory=list)  # 同步回共用目录时合不了的文件 / files that could not be merged back into the shared directory
     chain: bool = False  # 是"连续推进"里的一步：方案不等人批 / a step of a pre-approved chain: its plan does not wait for approval
     tier: Optional[str] = None  # 定时维护的结果分档：A 自动合并，B 开成草稿等主人 / the tier of a maintenance result: A merges, B is a draft waiting for the owner
     created_at: str
@@ -269,14 +285,26 @@ def auto(job: Job) -> bool:
     return job.kind == "maintenance" or job.chain
 
 
+def isolated() -> bool:
+    """本机的作业是不是在各自的工作区里做（默认是）。 / Whether local jobs work in their own workspaces (the default)."""
+    return os.environ.get("IDEA_LOOM_JOBS_INPLACE", "") != "1"
+
+
 def _dispatch(job: Job, phase: str) -> None:
     """本地直接起进程；hub 上只排队，由 worker 来做。 / Locally start the process; on the hub only queue it for the worker."""
     if _cloud():
         job.queued, job.pid = phase, None
         save(job)
         _say(job.job_id, "已排队，等 worker 来做。")
-    else:
-        _spawn(job, phase)
+        return
+    if isolated():
+        from . import worker
+
+        try:
+            job = worker.prepare(job, phase)
+        except Exception as e:  # noqa: BLE001 — 工作区准备不了就让作业失败并说明 / fail the job with the reason when the workspace cannot be prepared
+            return _fail(job, f"准备工作区时出错：{e}")
+    _spawn(job, phase)
 
 
 def secret_free_env() -> dict[str, str]:
@@ -347,7 +375,7 @@ def approve(job_id: str) -> Job:
         raise JobError("只有方案待批的时候才能批准")
     # 云端每个作业有自己干净的工作区，不存在"共用目录里有没提交的改动"。
     # In the cloud every job has its own clean workspace, so there are no uncommitted changes in a shared directory to worry about.
-    changed = [] if _cloud() else dirty(job.directory)
+    changed = [] if _cloud() or isolated() else dirty(job.directory)
     if changed:
         raise JobError(f"`{job.directory}/` 里有还没提交的改动（{'、'.join(changed[:4])}{' 等' if len(changed) > 4 else ''}）。先把它们提交或还原，这样作业失败时才能干净地还原。")
     job.phase = "running"
@@ -386,6 +414,10 @@ def cancel(job_id: str) -> Job:
     was_running = job.phase != "plan_ready" and job.phase != "planning" and not job.workspace and not _cloud()
     job.phase, job.queued, job.waiting = "cancelled", None, None
     save(job)
+    if job.workspace and not _cloud():
+        from . import worker
+
+        worker.remove_workspace(job)
     if job.kind == "task":
         tasks.set_status(job.ref, "todo", note="作业取消了", by="claude-code")
     _say(job_id, "已取消。" + ("它改过的文件还在，可以点「还原改动」。" if was_running else ""))
@@ -700,7 +732,15 @@ def _finish(job_id: str) -> None:
         notify.send(f"定时维护改了代码，等你看：{job.title}", str(job.summary.get("summary_zh") or job.pr_url)[:200], url="/work", tag=job.job_id, wait=True)
         return
     job.phase = "merged"
-    job.restart_needed = not job.workspace and job.directory == "idea-loom" and any("/src/" in f for f in job.changed)
+    if job.workspace and not _cloud():
+        from . import worker
+
+        job.conflicts = worker.sync_back(job)
+        _say(job_id, "已把改动同步回仓库目录。" if not job.conflicts else
+             f"合并了，但有 {len(job.conflicts)} 个文件在仓库目录里被别人同时改过、合不到一起，那里保留了原样：{'、'.join(job.conflicts[:5])}。从那个目录提交前先处理它们。")
+        worker.remove_workspace(job)
+        job.workspace = None
+    job.restart_needed = not _cloud() and job.directory == "idea-loom" and any("/src/" in f for f in job.changed)
     save(job)
     if job.kind == "wish":
         wishes.add_link(job.ref, "pr", title=zh, url=job.pr_url, pr=job.pr, by="claude-code")

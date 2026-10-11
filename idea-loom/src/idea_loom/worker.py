@@ -35,6 +35,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 import threading
 import time
 from datetime import datetime
@@ -50,15 +51,32 @@ MERGE_WAIT_SECONDS = 1800
 CREDENTIAL_HELPER = '!f() { echo username=x-access-token; echo "password=$GH_TOKEN"; }; f'
 
 
+def local() -> bool:
+    """是不是本机（不是云端的 worker）：工作区直接从你所在的仓库里开。 / Whether this is the local machine rather than the cloud worker: workspaces are cut straight from the repository you are in."""
+    from . import config
+
+    return config.role() == "all" and not os.environ.get("IDEA_LOOM_WORK")
+
+
 def work_dir() -> Path:
+    """工作区放在哪。本机放在仓库目录**外面**（缓存目录下，按仓库路径分开）：放在里面的话，工作树的
+    .git 会被 tools/pr.sh 当成嵌套仓库而拒绝提交。
+
+    Where workspaces live. Locally that is **outside** the repository directory (under the cache
+    directory, one per repository path): inside it, a worktree's .git would be taken for a nested
+    repository by tools/pr.sh, which would then refuse to submit.
+    """
     value = os.environ.get("IDEA_LOOM_WORK", "")
-    if not value:
-        raise RuntimeError("没有设置 IDEA_LOOM_WORK")
-    return Path(value)
+    if value:
+        return Path(value)
+    import hashlib
+
+    cache = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    return cache / "world-sim" / "work" / hashlib.sha256(str(store.repo_root().resolve()).encode("utf-8")).hexdigest()[:12]
 
 
 def clone() -> Path:
-    return work_dir() / "repo"
+    return store.repo_root() if local() else work_dir() / "repo"
 
 
 def parallel() -> int:
@@ -79,8 +97,14 @@ def ensure_clone() -> None:
         done = subprocess.run(["git", "clone", "--quiet", url, str(repo)], capture_output=True, text=True, timeout=1800, env=jobs.secret_free_env())
         if done.returncode != 0:
             raise RuntimeError(f"克隆仓库失败：{done.stderr.strip()[-300:]}")
-    fetched = _git("fetch", "--quiet", "origin", "main")
-    if fetched.returncode != 0:
+    # 别的会话可能正好也在取：git 会报锁冲突。等一下重试；实在不行，手上有 origin/main 就先用它。
+    # Another session may be fetching at the same moment and git reports a lock conflict. Wait and retry; failing that, use the origin/main at hand.
+    for attempt in range(4):
+        fetched = _git("fetch", "--quiet", "origin", "main")
+        if fetched.returncode == 0:
+            return
+        time.sleep(2.0 * (attempt + 1) * float(os.environ.get("IDEA_LOOM_RETRY_SCALE", "1")))
+    if _git("rev-parse", "--verify", "-q", "origin/main").returncode != 0:
         raise RuntimeError(f"取不到 main：{fetched.stderr.strip()[-300:]}")
 
 
@@ -110,6 +134,8 @@ def prepare(job: jobs.Job, phase: str) -> jobs.Job:
     added = _git("worktree", "add", "--force", "-B", job.branch, job.workspace, "origin/main")
     if added.returncode != 0:
         raise RuntimeError(f"建不了工作区：{added.stderr.strip()[-300:]}")
+    job.base = _git("rev-parse", "origin/main").stdout.strip() or None
+    jobs.save(job)
     if phase == "execute":
         # 新开的工作树里没有依赖：先装好，Claude 和后面的测试才跑得起来。
         # A fresh worktree has no dependencies: install them so Claude and the tests can run.
@@ -128,7 +154,10 @@ def publish(ws: Path, branch: str, paths: list[str], title: str, commit_body: st
     wait for the merge. Returns (the PR URL, what went wrong).
     """
     plain = jobs.secret_free_env()
-    identity = [] if plain.get("GIT_AUTHOR_NAME") and plain.get("GIT_AUTHOR_EMAIL") else ["-c", "user.name=idea-loom", "-c", "user.email=idea-loom@users.noreply.github.com"]
+    # 提交用的名字和邮箱：环境变量里有就用，否则用这台机器上 git 配好的；都没有才用一个占位的。
+    # The name and email to commit with: the environment's if set, else what git has configured on this machine; a placeholder only when neither exists.
+    configured = bool(_git("config", "user.email", cwd=ws).stdout.strip())
+    identity = [] if configured or (plain.get("GIT_AUTHOR_NAME") and plain.get("GIT_AUTHOR_EMAIL")) else ["-c", "user.name=idea-loom", "-c", "user.email=idea-loom@users.noreply.github.com"]
     if _git("add", "-A", "--", *paths, cwd=ws).returncode != 0:
         return None, "git add 失败"
     if _git("diff", "--cached", "--quiet", cwd=ws).returncode != 0:  # 有东西要提交 / there is something to commit
@@ -138,7 +167,15 @@ def publish(ws: Path, branch: str, paths: list[str], title: str, commit_body: st
     if _git("rev-list", "--count", "origin/main..HEAD", cwd=ws).stdout.strip() in ("", "0"):
         return None, "没有可以提交的改动"
     with_token = {**plain, **{k: os.environ[k] for k in ("GH_TOKEN",) if k in os.environ}}
-    pushed = _git("-c", f"credential.helper={CREDENTIAL_HELPER}", "push", "--quiet", "--force", "origin", f"{branch}:{branch}", cwd=ws, env=with_token)
+    # 有令牌（云端）就用它；本机没有令牌，用这台机器上已经登录好的 git 和 gh。推送遇到一闪而过的错误会重试。
+    # A token (in the cloud) is used when present; locally there is none and the git and gh already signed in on this machine are used. Pushing retries on passing errors.
+    helper = ["-c", f"credential.helper={CREDENTIAL_HELPER}"] if with_token.get("GH_TOKEN") else []
+    for attempt in range(4):
+        pushed = _git(*helper, "push", "--quiet", "--force", "origin", f"{branch}:{branch}", cwd=ws, env=with_token)
+        if pushed.returncode == 0 or not jobs.transient(pushed.stderr) or attempt == 3:
+            break
+        say(f"推分支时遇到一个一闪而过的错误，等一下重试：{pushed.stderr.strip()[-160:]}")
+        time.sleep(jobs.SUBMIT_WAIT * (attempt + 1))
     if pushed.returncode != 0:
         return None, f"推分支失败：{pushed.stderr.strip()[-300:]}"
 
@@ -177,6 +214,55 @@ def submit(job: jobs.Job, title: str, commit_body: str, pr_body: str, draft: boo
     """作业做完之后：只提交它那个目录。 / After a job: submit its directory only."""
     return publish(Path(job.workspace or ""), str(job.branch), [job.directory], title, commit_body, pr_body,
                    existing_pr=job.pr_url, say=lambda text: jobs._say(job.job_id, text), draft=draft)
+
+
+def sync_back(job: jobs.Job) -> list[str]:
+    """本机用：作业合并之后，把它改过的文件同步回共用的仓库目录。返回合不了的文件。
+
+    那个目录不会自己更新（多个会话共用，谁都不切分支）。不同步的话，它里面还是旧文件，下一次从那里
+    提交就会把这个作业的改动改回去。每个文件三种情况：目录里的还是作业开工时的样子——直接换成新的；
+    别人同时改过——三方合并；合不了——留着目录里的不动，报告出来。
+
+    Local only: after a job merges, sync the files it changed back into the shared repository
+    directory. Returns the files that could not be merged. That directory never updates by itself
+    (several sessions share it and nobody switches branches); left alone it keeps the old files
+    and the next commit from there would undo this job's changes. Three cases per file: still as it
+    was when the job started — replaced with the new one; changed by someone meanwhile — three-way
+    merged; unmergeable — the shared copy is left alone and reported.
+    """
+    ws, shared = Path(job.workspace or ""), store.repo_root()
+    if not job.workspace or not job.base or ws.resolve() == shared.resolve():
+        return []
+    conflicts = []
+    for rel in job.changed:
+        theirs_path, ours_path = ws / rel, shared / rel
+        shown = subprocess.run(["git", "-C", str(shared), "show", f"{job.base}:{rel}"], capture_output=True)
+        base = shown.stdout if shown.returncode == 0 else None
+        theirs = theirs_path.read_bytes() if theirs_path.is_file() else None
+        ours = ours_path.read_bytes() if ours_path.is_file() else None
+        if ours == theirs:
+            continue
+        if ours == base:  # 目录里的没人动过 / untouched in the shared directory
+            if theirs is None:
+                ours_path.unlink(missing_ok=True)
+            else:
+                ours_path.parent.mkdir(parents=True, exist_ok=True)
+                ours_path.write_bytes(theirs)
+            continue
+        if ours is None or theirs is None or base is None:
+            conflicts.append(rel)
+            continue
+        scratch = Path(tempfile.mkdtemp(prefix="loom-merge-"))
+        try:
+            (scratch / "ours").write_bytes(ours), (scratch / "base").write_bytes(base), (scratch / "theirs").write_bytes(theirs)
+            merged = subprocess.run(["git", "merge-file", "-p", str(scratch / "ours"), str(scratch / "base"), str(scratch / "theirs")], capture_output=True)
+            if merged.returncode == 0:
+                ours_path.write_bytes(merged.stdout)
+            else:
+                conflicts.append(rel)
+        finally:
+            shutil.rmtree(scratch, ignore_errors=True)
+    return conflicts
 
 
 EXPORT_EVERY = 900.0

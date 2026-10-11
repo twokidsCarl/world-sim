@@ -222,6 +222,17 @@ everything else is the owner's. Which role each route needs is written in one pl
 
 环境变量（都可以不设）/ Environment (all optional)：`IDEA_LOOM_MODEL`（缺省 `sonnet`，生成、细化、翻译用 / default `sonnet`, for generate, refine, translate）、`IDEA_LOOM_ASSISTANT_MODEL`（小助手 / the assistant）、`IDEA_LOOM_JOB_MODEL`（作业 / jobs）。
 
+**作业在自己的工作区里做。** 从界面交给 Claude 的作业不在这个目录里就地改：它从最新的 `main` 开一个分支和一棵单独的工作树（放在仓库目录外面的缓存目录下），在里面改、跑测试，然后推分支、开 PR。这样它和同时在这个目录里工作的别的会话互不干扰。合并之后，它的改动会同步回这个目录；别人同时改过的同一个文件做三方合并，合不了的保留原样并在作业里写明。提交时遇到一闪而过的错误（git 的锁、网络超时）会自动重试。`IDEA_LOOM_JOBS_INPLACE=1` 回到原来就地改的做法。
+
+**Jobs work in their own workspace.** A job handed to Claude from the UI does not edit this
+directory in place: it cuts a branch and a separate worktree from the latest `main` (under the
+cache directory, outside the repository), edits and runs the tests there, then pushes the
+branch and opens the PR. It and the other sessions working in this directory no longer
+interfere. After the merge its changes are synced back here; a file someone else changed
+meanwhile is three-way merged, and what cannot be merged is left as it was and stated in the
+job. Passing errors while submitting (git locks, network timeouts) are retried automatically.
+`IDEA_LOOM_JOBS_INPLACE=1` restores editing in place.
+
 ## 给 AI Agent / For AI agents
 
 仓库里的数据和计算可以直接接给外面的 AI Agent，三个出口，都从各项目 `sim.json` 的 `agent` 一节生成（还没有这一节的项目用 `data/agent/<项目>.json` 里的临时说明）：

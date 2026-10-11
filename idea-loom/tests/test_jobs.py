@@ -42,6 +42,7 @@ def repo(tmp_path, monkeypatch, seeded):
     git(root, "update-ref", "refs/remotes/origin/main", "HEAD")
     monkeypatch.setenv("IDEA_LOOM_DATA", str(data))
     monkeypatch.setenv("IDEA_LOOM_REPO", str(root))
+    monkeypatch.setenv("IDEA_LOOM_JOBS_INPLACE", "1")  # 这些测试测的是就地改的老做法；工作区的做法在 test_worker.py / these test the old in-place path; workspaces are covered in test_worker.py
     monkeypatch.setattr(jobs, "_spawn", lambda job, phase: jobs.main([phase, job.job_id]))  # 同步跑，测试才确定 / run in-process for determinism
     monkeypatch.setattr(jobs, "_commands", lambda directory: [])
     fc.install_stream(tmp_path, monkeypatch, [fc.tool_use("t1", "Read", {"file_path": "x"}), fc.tool_result("t1"), fc.text_delta("1. 理解：空格不显眼。\n2. 改 `idea-loom/src/a.py`。"), fc.result()])
