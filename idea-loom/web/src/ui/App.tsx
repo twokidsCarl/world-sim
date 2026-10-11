@@ -6,6 +6,9 @@ import { LineagePage } from '../pages/LineagePage'
 import { NewIdeaPage } from '../pages/NewIdeaPage'
 import { MapPage } from '../pages/MapPage'
 import { PoolPage } from '../pages/PoolPage'
+import { WishPage, WishesPage } from '../pages/WishesPage'
+import { AssistantDock } from '../assistant/AssistantDock'
+import { useAssistant } from '../assistant/store'
 import { useStore } from '../state/store'
 
 const NAV = [
@@ -13,10 +16,12 @@ const NAV = [
   { to: '/ideas', label: '想法池', end: false },
   { to: '/inbox', label: '生成与候选', end: false },
   { to: '/lineage', label: '血缘', end: false },
+  { to: '/wishes', label: '许愿池', end: false },
 ]
 
 export function App() {
   const { state, error, load, theme, toggleTheme, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
+  const openWishes = useAssistant((a) => a.openWishes)
   useEffect(() => {
     void load()
   }, [load])
@@ -34,6 +39,7 @@ export function App() {
           <NavLink key={n.to} to={n.to} end={n.end} className="nav-item">
             {n.label}
             {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
+            {n.to === '/wishes' && openWishes > 0 && <span className="count pill num">{openWishes}</span>}
             {n.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </NavLink>
         ))}
@@ -91,11 +97,14 @@ export function App() {
             <Route path="/ideas/:id" element={<IdeaPage state={state} />} />
             <Route path="/inbox" element={<InboxPage state={state} />} />
             <Route path="/lineage" element={<LineagePage state={state} />} />
+            <Route path="/wishes" element={<WishesPage />} />
+            <Route path="/wishes/:id" element={<WishPage />} />
             <Route path="/new" element={<NewIdeaPage state={state} />} />
             <Route path="*" element={<p className="pad">没有这个页面。</p>} />
           </Routes>
         )}
       </main>
+      <AssistantDock />
     </div>
   )
 }

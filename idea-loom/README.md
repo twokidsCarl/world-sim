@@ -41,10 +41,27 @@ generated from it.
   a rewrite marks the English stale until it is translated again). A sync regenerates
   both `IDEAS.md` and `IDEAS.en.md`.
 
-还没有的（按顺序做）：右侧小助手和许愿池、开发任务与统计、从许愿池触发 Claude Code。
+- **小助手 / Assistant**：右侧的边栏，随时可以问。每次提问自动带上当前页面的文字提纲、最近的操作和许愿池里已有的愿望；在 idea 页时带上那条 idea。它能读仓库、读本工具的接口、记愿望、提议 idea（进候选）、在页面上圈出元素；它不能改任何东西。窗口窄时变成浮层。
+  A sidebar on the right, always there to ask. Each question carries a text outline of
+  the current page, your recent actions and the existing wishes, plus the idea when you
+  are on an idea page. It can read the repository and this tool's API, record wishes,
+  propose ideas (into the candidates) and point at elements on the page; it cannot
+  change anything. On a narrow window it floats.
+- **许愿池 / Wish pool**：对这个工具本身的改进愿望。愿望只从和小助手的对话里来，同一个问题再遇到是给原来那条加一次。未处理时可以改写和撤销，采纳之后冻结。
+  Wishes for improving this tool itself. They only come out of conversations with the
+  assistant, and meeting the same problem again bumps the existing wish. A wish can be
+  edited or withdrawn while open and is frozen once accepted.
+- **观察 / Watching**：记下你换页、点了什么、每页停留多久（只算窗口在前台且最近有操作的时间），存在本机 `runs/trail.jsonl`，不进 git，不记输入的文字。来回跳、连续报错、原地反复点时，小助手的按钮亮一个点问要不要解释这一页，同一页只问一次。
+  Records navigation, clicks and the dwell time on each page (foreground time with
+  recent activity only) in `runs/trail.jsonl` on this machine, never in git and never
+  including typed text. When you bounce between two pages, hit repeated errors or click
+  around in place, the assistant button lights a dot offering to explain the page, once
+  per page.
 
-Not yet (in this order): the assistant sidebar and the wish pool, development tasks
-and statistics, triggering Claude Code from the wish pool.
+还没有的（按顺序做）：开发任务与统计、从许愿池触发 Claude Code。
+
+Not yet (in this order): development tasks and statistics, triggering Claude Code from
+the wish pool.
 
 ## 运行 / Run
 
@@ -84,11 +101,18 @@ the world-sim git history and skips itself without it.
 | `data/ideas.jsonl` | idea 的事件，只追加；当前状态由它折叠得出 / idea events, append-only; the current state is folded from them |
 | `data/frame.json` | 层、横线、内核 / levels, threads, kernels |
 | `data/projects.json` | 子项目和它们对应的层 / subprojects and their levels |
+| `data/wishes.jsonl` | 愿望的事件 / wish events |
 
-`runs/`（不进 git）里是模型的提议 `proposals.jsonl` 和每次调用的用量 `llm.jsonl`。
+`runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl` 和小助手的对话 `assistant/`。
 
-`runs/` (not in git) holds the model's proposals in `proposals.jsonl` and the usage of
-every call in `llm.jsonl`.
+`runs/` (not in git) holds the model's proposals in `proposals.jsonl`, the usage of
+every call in `llm.jsonl`, the action trail in `trail.jsonl` and the assistant's
+conversations under `assistant/`.
+
+愿望进 git，也就是公开的。如果不想公开，把 `data/wishes.jsonl` 移到 `runs/` 下并改 `wishes.py` 里的路径。
+
+Wishes are in git and therefore public. To keep them private, move `data/wishes.jsonl`
+under `runs/` and change the path in `wishes.py`.
 
 事件有这几种 / Event kinds：`created`、`edited`、`moved`、`status`、`merged_into`、`discarded`、
 `restored`、`noted`。编号永不复用，合并和丢弃的条目留在日志里。
@@ -112,6 +136,8 @@ uv run idea-loom translate          # 把还没有英文的译成英文 / transl
 uv run idea-loom sync               # 生成并开 PR / regenerate and open a PR
 uv run idea-loom import --force     # 重新导入 / re-import from git history
 uv run idea-loom schema             # 数据契约的 JSON Schema / JSON Schema of the contract
+uv run idea-loom wishes list        # 许愿池（给处理愿望的 Claude Code 用）/ the wish pool, for a Claude Code session
+uv run idea-loom wishes accept <id> # 另有 show、note、link、done、decline / also show, note, link, done, decline
 cd web && bun run gen:types         # 重新生成前端类型 / regenerate the TS types
 ```
 
@@ -128,6 +154,9 @@ src/idea_loom/
   llm.py        claude -p 封装，带缓存和用量记录 / claude -p wrapper with cache and usage log
   ops.py        生成、细化、融合、归类、查重 / generate, refine, fuse, classify, dedupe
   prompts/      提示词 / prompts
+  wishes.py     许愿池 / the wish pool
+  trail.py      操作轨迹 / the action trail
+  assistant/    小助手：提示词、回合、事件流、工具服务 / the assistant: prompt, turns, event stream, tool server
   edits.py      手动改动，先检查再写事件 / manual changes, validated then appended
   sync.py       同步到仓库 / sync to the repository
   server.py     HTTP 接口 / HTTP API

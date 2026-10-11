@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+import json
+
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.responses import PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import edits, ideas, llm, ops, sync
+from . import edits, ideas, llm, ops, sync, trail, wishes
+from .assistant import turns
 from .model import IdeaDetail, State
 
 app = FastAPI(title="idea-loom")
@@ -59,7 +63,7 @@ def _detail(idea_id: str) -> IdeaDetail:
 def _do(fn, *args, **kw):
     try:
         return fn(*args, **kw)
-    except (edits.EditError, ops.OpError) as e:
+    except (edits.EditError, ops.OpError, wishes.WishError, turns.TurnError) as e:
         raise HTTPException(409, str(e))
     except llm.LLMError as e:
         raise HTTPException(502, f"模型调用失败：{e}")
@@ -224,3 +228,124 @@ def op_translate(body: ClassifyBody) -> dict[str, object]:
 def english_idea(idea_id: str, body: EnglishBody) -> IdeaDetail:
     _do(edits.set_english, idea_id, title_en=body.title_en, body_en=body.body_en)
     return _detail(idea_id)
+
+
+# ---------- 许愿池 / wish pool ----------
+
+
+class WishEditBody(BaseModel):
+    title: Optional[str] = None
+    kind: Optional[str] = None
+    stuck: Optional[str] = None
+    suggestion: Optional[str] = None
+
+
+@app.get("/api/wishes", response_model=wishes.WishList)
+def list_wishes(status: Optional[str] = None) -> wishes.WishList:
+    return wishes.listing(status)
+
+
+@app.get("/api/wishes/{wish_id}", response_model=wishes.WishDetail)
+def get_wish(wish_id: str) -> wishes.WishDetail:
+    try:
+        return wishes.get(wish_id)
+    except wishes.WishError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.post("/api/wishes/{wish_id}/edit", response_model=wishes.WishDetail)
+def edit_wish(wish_id: str, body: WishEditBody) -> wishes.WishDetail:
+    _do(wishes.edit, wish_id, title=body.title, kind=body.kind, stuck=body.stuck, suggestion=body.suggestion)
+    return wishes.get(wish_id)
+
+
+@app.post("/api/wishes/{wish_id}/withdraw", response_model=wishes.WishDetail)
+def withdraw_wish(wish_id: str) -> wishes.WishDetail:
+    _do(wishes.withdraw, wish_id)
+    return wishes.get(wish_id)
+
+
+@app.post("/api/wishes/{wish_id}/restore", response_model=wishes.WishDetail)
+def restore_wish(wish_id: str) -> wishes.WishDetail:
+    _do(wishes.restore, wish_id)
+    return wishes.get(wish_id)
+
+
+# ---------- 操作轨迹 / action trail ----------
+
+
+class TrailBody(BaseModel):
+    actions: list[trail.Action]
+
+
+@app.post("/api/trail")
+def post_trail(body: TrailBody) -> dict[str, int]:
+    return {"saved": trail.append(body.actions)}
+
+
+# ---------- 小助手 / assistant ----------
+
+
+@app.get("/api/assistant")
+def assistant_status() -> dict[str, object]:
+    ready = llm.available()
+    return {"ready": ready, "not_ready_reason": None if ready else "这台机器上找不到 claude 命令",
+            "open_wishes": wishes.listing().counts["open"]}
+
+
+@app.get("/api/assistant/conversations")
+def assistant_conversations() -> list[dict[str, object]]:
+    return turns.conversations()
+
+
+@app.post("/api/assistant/conversations")
+def assistant_new() -> dict[str, str]:
+    return {"id": turns.new_conversation()}
+
+
+@app.get("/api/assistant/conversations/{conversation_id}")
+def assistant_conversation(conversation_id: str) -> dict[str, object]:
+    return _do(turns.conversation, conversation_id)
+
+
+def _sse(conversation_id: str, turn: int, after: int) -> StreamingResponse:
+    def lines():
+        yield f"event: turn\ndata: {json.dumps({'turn': turn})}\n\n"
+        for event in turns.follow(conversation_id, turn, after):
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(lines(), media_type="text/event-stream", headers={"cache-control": "no-cache", "x-accel-buffering": "no"})
+
+
+@app.post("/api/assistant/conversations/{conversation_id}/turns")
+def assistant_ask(conversation_id: str, body: turns.TurnRequest) -> StreamingResponse:
+    turn = _do(turns.start, conversation_id, body)
+    return _sse(conversation_id, turn, 0)
+
+
+@app.get("/api/assistant/conversations/{conversation_id}/turns/{turn}/events")
+def assistant_events(conversation_id: str, turn: int, after: int = 0) -> StreamingResponse:
+    return _sse(conversation_id, turn, after)
+
+
+@app.post("/api/assistant/conversations/{conversation_id}/stop")
+def assistant_stop(conversation_id: str) -> dict[str, bool]:
+    return {"stopped": turns.stop(conversation_id)}
+
+
+@app.post("/internal/assistant/tools/{name}", response_class=PlainTextResponse)
+async def assistant_tool(name: str, request: Request, x_assistant_turn: str = Header(default="")) -> PlainTextResponse:
+    """只给小助手的工具服务用：必须带着正在进行的回合的令牌。
+
+    For the assistant's tool server only: it must carry the token of a turn in progress.
+    """
+    try:
+        args = await request.json()
+    except ValueError:
+        args = {}
+    try:
+        import anyio
+
+        return PlainTextResponse(await anyio.to_thread.run_sync(turns.call_tool, name, x_assistant_turn, args if isinstance(args, dict) else {}))
+    except turns.ToolError as e:
+        return PlainTextResponse(str(e), status_code=403)

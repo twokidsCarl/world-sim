@@ -1,3 +1,4 @@
+import { note } from './assistant/trail'
 import type { IdeaDetail, Proposal, State, SyncResult, SyncStatus } from './contract'
 
 export class ApiError extends Error {
@@ -21,6 +22,7 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
       (b: { detail?: unknown }) => (typeof b.detail === 'string' ? b.detail : undefined),
       () => undefined,
     )
+    note('error', `${path.split('?')[0]}：${detail ?? res.status}`)
     throw new ApiError(res.status, detail ?? `请求失败（${res.status}）`)
   }
   return (await res.json()) as T
@@ -30,6 +32,19 @@ const idea = (id: string, action = '') => `/api/ideas/${encodeURIComponent(id)}$
 
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
+export type Wish = {
+  wish_id: string; title: string; kind: string; kind_label: string; stuck: string; suggestion: string
+  where: { url: string; title: string } | null; status: string; status_label: string; status_note: string | null
+  pr: number | null; source: string; occurrences: number; created_at: string; updated_at: string
+}
+export type WishDetail = Wish & {
+  copy_text: string
+  seen: { at: string; question: string }[]
+  notes: { at: string; by_label: string; text: string }[]
+  links: { at: string; kind: string; pr: number | null; url: string | null; title: string }[]
+  history: { at: string; event_label: string; by_label: string; text: string }[]
+}
+export type WishList = { wishes: Wish[]; counts: Record<string, number>; kinds: Record<string, number>; statuses: Record<string, string>; kind_labels: Record<string, string>; unreadable: number }
 export type NewIdea = { title: string; body: string; level: string; threads: string[]; kernel: string | null }
 
 export const api = {
@@ -51,6 +66,11 @@ export const api = {
   translate: () => call<{ translated: string[] }>('/api/ops/translate', { idea_ids: null }),
   accept: (id: string, body: { as_new?: boolean; title?: string; body?: string } = {}) => call<Proposal>(`/api/proposals/${id}/accept`, body),
   dismiss: (id: string) => call<Proposal>(`/api/proposals/${id}/dismiss`, {}),
+  wishes: (status = '') => call<WishList>(`/api/wishes${status && `?status=${status}`}`),
+  wish: (id: string) => call<WishDetail>(`/api/wishes/${id}`),
+  editWish: (id: string, body: { title?: string; kind?: string; stuck?: string; suggestion?: string }) => call<WishDetail>(`/api/wishes/${id}/edit`, body),
+  withdrawWish: (id: string) => call<WishDetail>(`/api/wishes/${id}/withdraw`, {}),
+  restoreWish: (id: string) => call<WishDetail>(`/api/wishes/${id}/restore`, {}),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),
 }
