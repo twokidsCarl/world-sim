@@ -246,6 +246,14 @@ export async function runHarness(): Promise<HarnessResult> {
     levelDiff += Math.abs(l.m - g.m) + Math.abs(l.nn - g.nn) + Math.abs(l.nnn - g.nnn)
   })
   check(`Ising ${cpuLevels.length} 层金字塔统计量差`, levelDiff, 0)
+  // 有效信息用的转移计数：两边从同一状态各走一次扫描，计数必须完全相同。
+  // Transition counts for effective information: both sides take one sweep from the same
+  // state, so the counts must be identical.
+  const cpuCounts = isingCpu.reduce(['transitions']).transitions!
+  const gpuCounts = (await isingGpu.reduce(['transitions'])).transitions!
+  let countDiff = 0
+  cpuCounts.forEach((counts, k) => counts.forEach((c, i) => (countDiff += Math.abs(c - gpuCounts[k]![i]!))))
+  check(`Ising ${cpuCounts.length} 层转移计数差`, countDiff, 0)
   isingGpu.dispose()
 
   // 引力：先用直接求和计算加速度和势，再跑一段短轨迹。
