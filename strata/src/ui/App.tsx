@@ -8,6 +8,7 @@ import { IsingStage, PottsStage } from './IsingStage'
 import { KnobPanel, PotentialPreview } from './KnobPanel'
 import { LevelCards } from './LevelCards'
 import { MdStage } from './MdStage'
+import { MeshStage } from './MeshStage'
 import { PerfHud } from './PerfHud'
 import { SOUND_KICK } from './scenario'
 import { ScenarioBar } from './ScenarioBar'
@@ -24,6 +25,7 @@ const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: Rea
   ising: { stage: <IsingStage /> },
   potts: { stage: <PottsStage /> },
   gravity: { stage: <GravityStage /> },
+  mesh: { stage: <MeshStage /> },
 }
 
 const THEMES: { id: ThemeChoice; label: string }[] = [
