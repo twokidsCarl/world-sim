@@ -30,6 +30,8 @@ export interface Panel {
   membrane?: MembraneFit | null
   /** 逐残基注释，第一次用到按残基上色时才取；null 表示取过但没有 / per-residue annotation, fetched the first time a per-residue colour mode is used; null means fetched and absent */
   annotation?: Annotation | null
+  /** 这个结构的主要引文，载入后异步取来 / the structure's primary citation, fetched after loading */
+  paper?: { citation: api.Citation; open: boolean; licence: string; abstract: string } | null
 }
 
 /** 评审或用户能改变的、关于场景外观的一切 / Everything a reviewer or the user can change about how the scene looks. */
@@ -147,6 +149,19 @@ function progress(name: string): (received: number, total: number) => void {
   }
 }
 
+/** 载入 PDB 结构之后去取它的论文信息，取到再补进面板 / after a PDB structure loads, fetch its paper and add it to the panel when it arrives */
+function fetchPapers(): void {
+  for (const p of useStore.getState().panels) {
+    if (p.paper !== undefined || p.spec.source.kind !== 'pdb') continue
+    const id = p.spec.source.id
+    void api.citation(id).then((r) => {
+      const c = r?.entry?.citation
+      const paper = c ? { citation: c, open: !!r?.paper?.open, licence: r?.paper?.licence ?? '', abstract: r?.paper?.abstract ?? '' } : null
+      useStore.setState((s) => ({ panels: s.panels.map((x) => (x.spec.source.id === id && x.paper === undefined ? { ...x, paper } : x)) }))
+    })
+  }
+}
+
 export const useStore = create<State>((set, get) => ({
   spec: null,
   panels: [],
@@ -226,6 +241,7 @@ export const useStore = create<State>((set, get) => ({
       }
       if (aligned.length) spec.notes = [...spec.notes, `为便于比较，已按共同的蛋白链把 ${aligned.join('、')} 叠合到 ${panels[0]!.mol.id} 的朝向。`]
       set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      fetchPapers()
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }
@@ -254,6 +270,7 @@ export const useStore = create<State>((set, get) => ({
       }
       const scene: SceneSpec = { topic: clean, kind: 'molecule', title: mol.title || clean, caption: '', panels: [spec], notes: prediction ? [`这是 AlphaFold 预测模型，不是实验结构；置信度低于 50 的区域没有画（${Math.round(prediction.confident * 100)}% 的残基置信度在 70 以上）。`] : [] }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      fetchPapers()
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }

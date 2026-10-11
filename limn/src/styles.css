@@ -53,3 +53,10 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .embed-cut input { width: 120px; }
 
 .legend { margin-top: 4px; line-height: 1.6; }
+
+.recent { display: flex; flex-direction: column; gap: 8px; }
+.paper-group { border-left: 3px solid #cfcbc0; padding-left: 8px; line-height: 1.45; }
+.paper-group .ids { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; align-items: center; }
+.paper-group .ids button { padding: 1px 6px; font-family: ui-monospace, monospace; }
+.paper { margin-top: 2px; }
+.paper details { margin-top: 2px; }
