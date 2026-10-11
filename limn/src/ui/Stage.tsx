@@ -186,18 +186,18 @@ export function Stage() {
     const cs = st.colorings
     const land = st.spec?.landscape
     if (land) {
-      const packed = packScene(panels.map((p) => ({ mol: p.mol, assembly: p.spec.assembly, membrane: p.membrane })), land, st.lipid, st.seed)
+      const packed = packScene(panels.map((p) => ({ mol: p.mol, assembly: p.spec.assembly, membrane: p.membrane })), land, st.lipids, st.seed)
       let molecule = 0
       const items = panels.map((p, i) =>
         buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, packed.places[i]!.map((matrix) => ({ assembly: p.spec.assembly, matrix, molecule: molecule++, center: placedCenter(matrix, packed.centers[i]!) }))),
       )
-      if (st.lipid && packed.lipids.length) {
-        // 双层膜作为一整片描边（所有脂质共用一个 id）；每个脂质取自身位置所在的景深层
+      for (const { mol: lm, places } of packed.lipids) {
+        // 双层膜画成一整片（所有脂质共用一个编号）；每个脂质各自归入它所在位置的景深层
         // the bilayer is outlined as one sheet (all lipids share an id); each lipid
         // takes the depth layer of its own position
         const lc: [number, number, number] = [0, 0, 0]
-        for (let a = 0; a < st.lipid.atomCount; a++) for (let k = 0; k < 3; k++) lc[k]! += st.lipid.pos[a * 3 + k]! / st.lipid.atomCount
-        items.push(buildItem(st.lipid, LIPID_COLORING, TONE_LANDSCAPE, packed.lipids.map((matrix) => ({ assembly: 'asym', matrix, molecule, center: placedCenter(matrix, lc) }))))
+        for (let a = 0; a < lm.atomCount; a++) for (let k = 0; k < 3; k++) lc[k]! += lm.pos[a * 3 + k]! / lm.atomCount
+        items.push(buildItem(lm, LIPID_COLORING, TONE_LANDSCAPE, places.map((matrix) => ({ assembly: 'asym', matrix, molecule, center: placedCenter(matrix, lc) }))))
       }
       if (packed.dna) {
         // 生成的 DNA：每条一个编号，画成连续的一条 / generated DNA: one id per strand, each drawn as one continuous strand

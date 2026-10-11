@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { packScene } from '../src/landscape/build'
-import { parseSdf } from '../src/landscape/lipid'
+import membraneTable from '../data/membranes.json'
+import { parseLipid, parseSdf } from '../src/landscape/lipid'
 import { rng } from '../src/landscape/pack'
 import { IDENTITY, type Molecule } from '../src/mol/types'
 import type { LandscapeSpec } from '../src/scene/spec'
@@ -153,20 +154,21 @@ describe('packScene', () => {
   })
 
   it('lays two leaflets of lipid, heads outward, leaving room for membrane proteins', () => {
-    expect(packed.lipids.length).toBeGreaterThan(500)
+    const placed = packed.lipids.flatMap((l) => l.places)
+    expect(placed.length).toBeGreaterThan(500)
     let up = 0, down = 0
-    for (const m of packed.lipids) {
+    for (const m of placed) {
       // 磷原子（第一个原子）是头部 / the phosphorus (first atom) is the head
       const headY = m[1]! * 0 + m[5]! * 12 + m[13]!
       const tailY = m[1]! * 0 + m[5]! * -12 + m[13]!
       expect(Math.abs(headY)).toBeGreaterThan(Math.abs(tailY))
       headY > 0 ? up++ : down++
     }
-    expect(Math.abs(up - down)).toBeLessThan(0.1 * packed.lipids.length)
+    expect(Math.abs(up - down)).toBeLessThan(0.1 * placed.length)
     // 比同样大小的裸膜能容纳的脂质少
     // fewer lipids than a bare membrane of this size would hold
     const bare = packScene(mols.map((mol) => ({ mol, assembly: 'asym' })), { ...spec, ingredients: spec.ingredients.slice(0, 2) }, lipid, 5)
-    expect(packed.lipids.length).toBeLessThan(bare.lipids.length)
+    expect(placed.length).toBeLessThan(bare.lipids.flatMap((l) => l.places).length)
   })
 
   it('keeps every molecule behind the cut face', () => {
@@ -272,6 +274,83 @@ describe('OPM orientation', () => {
       for (const m of packed.places[0]!) {
         const top = [0, 0, 30], y = m[1]! * top[0]! + m[5]! * top[1]! + m[9]! * top[2]! + m[13]!
         expect(outer === 'above' ? y : -y).toBeCloseTo(30, 3)
+      }
+    }
+  })
+})
+
+// 脂质：尾链的摆法和按组成混排 / lipids: how tails are posed, and mixing to a composition
+describe('lipids', () => {
+  /** 一个示意的双链脂质：头基朝 +y，两条 9 个碳的尾链分别朝 +x 和 -x 伸出去（像数据库里的理想构象）/ a schematic two-chained lipid: head towards +y, two nine-carbon tails stretched towards +x and -x, like a database ideal conformer */
+  const sdf = () => {
+    const atoms: [string, number, number, number][] = [['N', 0, 4.5, 0], ['P', 0, 3, 0], ['O', 0, 1.5, 0], ['C', 0, 0, 0], ['O', 1.4, 0, 0], ['O', -1.4, 0, 0]]
+    const bonds: [number, number][] = [[1, 2], [2, 3], [3, 4], [4, 5], [4, 6]]
+    for (const [side, anchor] of [[1, 5], [-1, 6]] as const) {
+      let prev: number = anchor
+      for (let k = 1; k <= 9; k++) {
+        atoms.push(['C', side * (1.4 + k * 1.5), 0, 0])
+        bonds.push([prev, atoms.length])
+        prev = atoms.length
+      }
+    }
+    const f = (v: number) => v.toFixed(4).padStart(10)
+    return ['L', '', '', `${String(atoms.length).padStart(3)}${String(bonds.length).padStart(3)}  0  0  0  0  0  0  0  0999 V2000`,
+      ...atoms.map(([el, x, y, z]) => `${f(x)}${f(y)}${f(z)} ${el.padEnd(3)} 0  0`), ...bonds.map(([a, b]) => `${String(a).padStart(3)}${String(b).padStart(3)}  1  0`), 'M  END'].join('\n')
+  }
+
+  it('turns both tails away from the head without changing any bond length', () => {
+    const before = parseSdf(sdf(), 'L')
+    const { mol, tails } = parseLipid(sdf(), 'L')
+    expect(tails).toBe(2)
+    const y = (i: number) => mol.pos[i * 3 + 1]!
+    // 两条尾链的末端（第 15 和第 24 个原子）都到了头基的另一侧 / both tail tips (atoms 15 and 24) are now on the far side from the head
+    expect(y(14)).toBeLessThan(-10)
+    expect(y(23)).toBeLessThan(-10)
+    expect(y(0)).toBeCloseTo(4.5, 5)
+    const d = (m: typeof mol, a: number, b: number) => Math.hypot(m.pos[a * 3]! - m.pos[b * 3]!, m.pos[a * 3 + 1]! - m.pos[b * 3 + 1]!, m.pos[a * 3 + 2]! - m.pos[b * 3 + 2]!)
+    const bonds: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 4], [3, 5], [4, 6], [5, 15]]
+    for (let k = 6; k < 14; k++) bonds.push([k, k + 1] as [number, number])
+    for (let k = 15; k < 23; k++) bonds.push([k, k + 1] as [number, number])
+    for (const [a, b] of bonds) expect(d(mol, a, b)).toBeCloseTo(d(before, a, b), 4)
+    // 两条尾链并排，相距几 Å / the two tails lie side by side, a few Å apart
+    expect(d(mol, 14, 23)).toBeLessThan(9)
+    expect(d(mol, 14, 23)).toBeGreaterThan(3)
+  })
+
+  it('leaves a molecule with no tails alone', () => {
+    const ring = ['S', '', '', '  3  3  0  0  0  0  0  0  0  0999 V2000', '    0.0000    0.0000    0.0000 C   0  0', '    1.5000    0.0000    0.0000 C   0  0', '    0.7500    1.3000    0.0000 O   0  0', '  1  2  1  0', '  2  3  1  0', '  1  3  1  0', 'M  END'].join('\n')
+    const { mol, tails } = parseLipid(ring, 'S')
+    expect(tails).toBe(0)
+    expect(Array.from(mol.pos)).toEqual(Array.from(parseSdf(ring, 'S').pos))
+  })
+
+  it('mixes each leaflet to its own composition, with the outer leaflet on the outer side', () => {
+    const a = parseLipid(sdf(), 'A').mol, b = parseLipid(sdf(), 'B').mol
+    const set = { outer: [{ cls: 'A', mol: a, fraction: 1, tails: 2 }], inner: [{ cls: 'A', mol: a, fraction: 0.25, tails: 2 }, { cls: 'B', mol: b, fraction: 0.75, tails: 2 }] }
+    const scene = (outer: 'above' | 'below'): LandscapeSpec => ({ width: 500, height: 300, depth: 200, membrane: true, outer, above: '', below: '', ingredients: [] })
+    for (const outer of ['above', 'below'] as const) {
+      const packed = packScene([], scene(outer), set, 2)
+      const of = (m: Molecule) => packed.lipids.find((l) => l.mol === m)!.places
+      const side = (m: Float32Array) => (m[13]! > 0 ? 'above' : 'below')
+      // B 只在内叶 / B is in the inner leaflet only
+      expect(of(b).every((m) => side(m) !== outer)).toBe(true)
+      const innerA = of(a).filter((m) => side(m) !== outer).length
+      const share = of(b).length / (of(b).length + innerA)
+      expect(share).toBeGreaterThan(0.7)
+      expect(share).toBeLessThan(0.8)
+    }
+  })
+
+  it('has a source and known lipid classes for every membrane in the table', () => {
+    for (const m of membraneTable.membranes) {
+      expect(m.citation).toMatch(/doi:10\./)
+      expect(m.basis.length).toBeGreaterThan(20)
+      expect(m.basisEn.length).toBeGreaterThan(20)
+      for (const leaflet of [m.outer, m.inner]) {
+        const sum = (Object.values(leaflet) as (number | undefined)[]).reduce<number>((s, v) => s + (v ?? 0), 0)
+        expect(sum).toBeGreaterThan(94)
+        expect(sum).toBeLessThan(103)
+        for (const cls of Object.keys(leaflet)) expect(Object.keys(membraneTable.lipids)).toContain(cls)
       }
     }
   })

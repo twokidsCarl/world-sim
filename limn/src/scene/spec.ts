@@ -91,6 +91,8 @@ export interface LandscapeSpec {
   membrane: boolean
   /** 膜的外侧（胞外、周质、腔内）在场景的上方还是下方 / whether the membrane's outer side (extracellular, periplasmic, lumenal) is up or down in the scene */
   outer?: 'above' | 'below'
+  /** 膜的类型（data/membranes.json 里的 id），决定脂质组成 / the kind of membrane (an id in data/membranes.json), which sets its lipid composition */
+  membraneType?: string
   above: string
   below: string
   ingredients: Ingredient[]
