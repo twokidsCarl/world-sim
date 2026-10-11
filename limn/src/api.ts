@@ -87,3 +87,15 @@ export async function citation(id: string): Promise<{ entry: Released | null; pa
     return null
   }
 }
+
+export interface EmdbEntry { id: string; title: string; contour: number | null; voxel: number; dims: [number, number, number]; megabytes: number; pdb: string[]; resolution: number | null; url: string }
+
+/** 一张电镜密度图的基本信息 / the basics of an electron-microscopy density map */
+export async function emdb(n: string): Promise<EmdbEntry | null> {
+  try {
+    const res = await fetch(`/api/emdb/${n}`)
+    return res.ok ? ((await res.json()) as { entry: EmdbEntry | null }).entry : null
+  } catch {
+    return null
+  }
+}

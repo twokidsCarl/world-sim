@@ -335,7 +335,7 @@ export type Source = { kind: 'pdb'; id: string } | { kind: 'url'; url: string; i
  * Download a file, reporting progress as it arrives; gzipped content (detected by its magic
  * number) is unpacked on the way.
  */
-async function download(url: string, onProgress?: (received: number, total: number) => void): Promise<Uint8Array | null> {
+export async function download(url: string, onProgress?: (received: number, total: number) => void): Promise<Uint8Array | null> {
   const res = await fetch(url)
   if (!res.ok || !res.body) return null
   const total = Number(res.headers.get('content-length') ?? 0)

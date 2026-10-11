@@ -34,6 +34,8 @@ export interface Placement {
    * but each takes the depth layer of its own position.
    */
   strand?: boolean
+  /** 剖开时不切它（叠在密度图里的原子模型）/ left whole by a cut (an atomic model shown inside a density map) */
+  noCut?: boolean
 }
 
 /** 一段原子在一个算符下的一份拷贝 / one run of atoms under one operator */
@@ -148,7 +150,8 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         const k = o * 16
         for (let r = 0; r < 3; r++) for (let col = 0; col < 4; col++) data[k + r * 4 + col] = m[col * 4 + r]!
         const centre = p.center ?? (p.perCopy || p.strand ? ([m[0]! * c[0]! + m[4]! * c[1]! + m[8]! * c[2]! + m[12]!, m[1]! * c[0]! + m[5]! * c[1]! + m[9]! * c[2]! + m[13]!, m[2]! * c[0]! + m[6]! * c[1]! + m[10]! * c[2]! + m[14]!] as const) : null)
-        if (centre) {
+        if (p.noCut) data[k + 15] = 3
+        else if (centre) {
           data[k + 12] = centre[0]
           data[k + 13] = centre[1]
           data[k + 14] = centre[2]

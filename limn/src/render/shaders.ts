@@ -53,7 +53,7 @@ void main() {
   vec3 view = u_rot * ((u_place * vec4(local, 1.0)).xyz - u_center);
   // 纤维的各股至少取最小半径的两倍，这样缠成一团时仍看得出是一股一股的
   // strands of a fibre are held to twice the minimum, so a tangle still reads as strands
-  float r = posr.w <= 0.0 ? 0.0 : max(posr.w * u_radiusScale, u_minRadius * (mc.w > 1.5 ? 2.0 : 1.0));
+  float r = posr.w <= 0.0 ? 0.0 : max(posr.w * u_radiusScale, u_minRadius * (mc.w > 1.5 && mc.w < 2.5 ? 2.0 : 1.0));
   v_uv = a_corner;
   v_color = texelFetch(u_color, at, 0).rgb;
   v_z = view.z;
@@ -67,7 +67,10 @@ void main() {
   // cross-section never shows sliced spheres. A molecule whose centre is
   // known is kept or dropped as a whole, so none is sliced either.
   float zcut = view.z;
-  if (mc.w > 0.5) {
+  // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
+  if (mc.w > 2.5) {
+    zcut = -1.0e30;
+  } else if (mc.w > 0.5) {
     float zc = (u_rot * ((u_place * vec4(mc.xyz, 1.0)).xyz - u_center)).z;
     zcut = zc;
     if (u_layer.x > 0.0) {

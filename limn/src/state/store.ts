@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import * as api from '../api'
-import { loadMolecule } from '../mol/load'
+import { download, loadMolecule } from '../mol/load'
+import { bin, dilate, parseMrc, surfacePoints, voxelIndex } from '../volume/mrc'
+import { El, IDENTITY } from '../mol/types'
 import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
@@ -13,6 +15,8 @@ import { defaultAssembly } from '../scene/build'
 import type { PanelSpec, SceneSpec, Tier } from '../scene/spec'
 import catalog from '../../data/catalog.json'
 import neuronTable from '../../data/neurons.json'
+import cellTable from '../../data/cells.json'
+import { readN5Mask } from '../volume/n5'
 import { neuromorphoUrl, neuronMolecule, parseSwc } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { assemblyAtPoints, parsePicks } from '../mol/points'
@@ -33,6 +37,8 @@ export interface Panel {
   /** 逐残基注释，第一次用到按残基上色时才取；null 表示取过但没有 / per-residue annotation, fetched the first time a per-residue colour mode is used; null means fetched and absent */
   annotation?: Annotation | null
   /** 这个结构的主要引文，载入后异步取来 / the structure's primary citation, fetched after loading */
+  /** 剖开时不切这个面板（密度图里的原子模型）/ this panel is left whole by a cut (the atomic model inside a density map) */
+  noCut?: boolean
   paper?: { citation: api.Citation; open: boolean; licence: string; abstract: string } | null
 }
 
@@ -87,6 +93,10 @@ interface State extends Look {
   loadCatalog(id: string): Promise<void>
   /** 载入目录里的一个神经元形态重建 / load a neuron reconstruction from the catalogue */
   loadNeuron(id: string): Promise<void>
+  /** 载入一张 EMDB 密度图（编号的数字部分），有拟合的原子模型就叠在里面 / load an EMDB density map (the digits of its id), with its fitted atomic model inside when there is one */
+  loadEmdb(n: string): Promise<void>
+  /** 载入一个细胞的细胞器分割（目录里的 id）/ load the organelle segmentation of a cell (an id in the catalogue) */
+  loadCell(id: string): Promise<void>
   setAssembly(panel: number, id: string): void
   setRole(panel: number, entity: number, role: Role): void
   /** 换上色方式；需要时先去取注释 / change the colour mode, fetching annotation first when it is needed */
@@ -255,9 +265,12 @@ export const useStore = create<State>((set, get) => ({
   async loadId(id, title) {
     const clean = id.trim().toUpperCase()
     // "AF-P04637"：AlphaFold 数据库里这个 UniProt 编号的预测模型 / "AF-P04637": the AlphaFold DB model for that UniProt accession
+    // "EMD-21317"：EMDB 里的一张密度图 / "EMD-21317": a density map in the EMDB
+    const em = /^EMD-?(\d{4,6})$/.exec(clean)
+    if (em) return get().loadEmdb(em[1]!)
     const af = /^AF-([A-Z0-9]{6,10})$/.exec(clean)
     if (!af && !/^[0-9][A-Z0-9]{3}$/.test(clean)) {
-      set({ error: 'PDB 编号是 4 位，以数字开头，例如 2HHB；AlphaFold 预测模型写成 AF-加 UniProt 编号，例如 AF-P04637' })
+      set({ error: 'PDB 编号是 4 位，以数字开头，例如 2HHB；AlphaFold 预测模型写成 AF-加 UniProt 编号，例如 AF-P04637；电镜密度图写成 EMD-加数字，例如 EMD-1080' })
       return
     }
     set({ busy: `正在下载 ${clean}…`, error: '' })
@@ -354,6 +367,165 @@ export const useStore = create<State>((set, get) => ({
         busy: '',
         sceneRev: s.sceneRev + 1,
       }))
+    } catch (e) {
+      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+    }
+  },
+
+  async loadEmdb(n) {
+    set({ busy: `正在查询 EMD-${n}…`, error: '' })
+    try {
+      const info = await api.emdb(n)
+      if (!info) throw new Error(`没有找到 EMD-${n}（或本地服务没有启动）`)
+      if (info.contour === null) throw new Error(`EMD-${n} 没有给出等值面阈值，画不了`)
+      if (info.megabytes > 420) throw new Error(`EMD-${n} 的密度图有 ${info.megabytes} MB，太大了`)
+      const report = progress(`${info.id} 的密度图（共约 ${info.megabytes} MB，压缩后更小）`)
+      let buf: Uint8Array | null = null
+      for (const u of [`/api/structure?url=${encodeURIComponent(info.url)}`, info.url]) {
+        buf = await download(u, report).catch(() => null)
+        if (buf) break
+      }
+      if (!buf) throw new Error(`没能取到 ${info.id} 的密度图：它要从 ftp.ebi.ac.uk 现取，请检查网络后重试。`)
+      set({ busy: `正在从 ${info.id} 的密度图取等值面…` })
+      await new Promise((r) => setTimeout(r, 30))
+      const full = parseMrc(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer)
+      // 最长边合并到 200 个体素以内，够画，也不至于太慢 / bin to at most 200 voxels a side: enough to draw, and not too slow
+      const vol = bin(full, 200)
+      const pts = surfacePoints(vol, info.contour)
+      if (pts.length === 0) throw new Error(`${info.id} 在阈值 ${info.contour} 处没有等值面`)
+      const count = pts.length / 3
+      const map: Molecule = {
+        id: info.id, title: info.title, atomCount: count, pos: pts,
+        element: new Uint8Array(count).fill(El.N),
+        // 每个点一个球，半径略小于一个体素，相邻的球正好连成面 / a sphere per point, a little under a voxel in radius, so that neighbours just join into a surface
+        radius: new Float32Array(count).fill(vol.voxel[0] * 0.9),
+        chainOf: new Uint32Array(count), isTrace: new Uint8Array(count), residue: new Int32Array(count).fill(1),
+        chains: [{ asymId: 'map', authAsymId: 'map', entity: 0, start: 0, count, model: 1 }],
+        entities: [{ id: 'map', description: '密度图的等值面 / isosurface of the density map', kind: 'protein' }],
+        assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
+      }
+      const binned = vol.voxel[0] / full.voxel[0]
+      const mapColoring: Coloring = { roles: ['soluble'], hueShift: [0], nudge: [0], override: [[0.87, 0.035, 250]] }
+      const mapSpec: PanelSpec = {
+        label: info.id,
+        source: { id: info.id, kind: 'emdb', url: info.url, title: info.title, method: '电镜密度图', resolution: info.resolution, year: null, tier: 'measured', licence: 'CC0 1.0', attribution: 'EMDB', citation: info.id, link: `https://www.ebi.ac.uk/emdb/${info.id}` },
+        assembly: 'asym',
+        entities: [{ entityId: 'map', role: 'soluble', name: '密度图的等值面', description: info.title, organism: '' }],
+        reason: '',
+      }
+      const panels: Panel[] = [{ spec: mapSpec, mol: map, coloring: mapColoring, align: null, paper: null, annotation: null }]
+      const notes = [
+        `这是电镜实验得到的三维密度图（${info.dims.join('×')} 个体素，每个 ${info.voxel.toFixed(2)} Å），画的是作者建议的阈值 ${info.contour} 处的等值面${binned > 1 ? `；为了画得动，体素按 ${binned} 倍合并过` : ''}。`,
+        '表面是用一个个小球拼出来的（每个被等值面穿过的小格一个球），不是三角网格；阈值取得高一点或低一点，表面会瘦一点或胖一点。',
+      ]
+      // 拟合进这张图的原子模型和它在同一个坐标系里，直接叠进去 / the atomic model fitted into this map shares its coordinate frame and goes straight in
+      const pdbId = info.pdb[0]
+      if (pdbId) {
+        set({ busy: `正在下载拟合的原子模型 ${pdbId}…` })
+        const mol = await loadMolecule({ kind: 'pdb', id: pdbId }, progress(pdbId)).catch(() => null)
+        if (mol) {
+          const coloring = defaultColoring(mol)
+          const spec: PanelSpec = {
+            label: pdbId,
+            source: { id: pdbId, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
+            assembly: 'asym',
+            entities: mol.entities.map((e, i) => ({ entityId: e.id, role: coloring.roles[i]!, name: e.description || e.kind, description: e.description, organism: '' })),
+            reason: '',
+          }
+          panels.push({ spec, mol, coloring, align: null, noCut: true })
+          notes.push(`里面是拟合进这张图的原子模型 ${pdbId}。密度图从正中剖开（“剖开”滑杆可调），原子模型不切，这样能看到模型怎样填在密度里。`)
+        }
+      }
+      const overlay = panels.length > 1
+      const scene: SceneSpec = { topic: info.id, kind: 'molecule', title: info.title || info.id, caption: '', panels: panels.map((p) => p.spec), notes, overlay }
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: overlay ? 0.5 : 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      fetchPapers()
+    } catch (e) {
+      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+    }
+  },
+
+  async loadCell(id) {
+    const entry = cellTable.cells.find((c) => c.id === id)
+    if (!entry) {
+      set({ error: `目录里没有 ${id}` })
+      return
+    }
+    set({ busy: `正在下载 ${entry.title}…`, error: '' })
+    try {
+      const pos: number[] = [], radius: number[] = []
+      const chains: Molecule['chains'] = [], entities: Molecule['entities'] = []
+      const roles: Role[] = []
+      const missing: string[] = []
+      let voxel = [0, 0, 0]
+      let nearNucleus: { vol: Awaited<ReturnType<typeof readN5Mask>>; mask: Uint8Array } | null = null
+      for (const o of entry.organelles) {
+        const vol = await readN5Mask(`${entry.base}/${o.label}/${entry.scale}`, (done, total) => set({ busy: `正在下载 ${o.name}的分割数据… ${done}/${total} 块` })).catch(() => null)
+        if (!vol) {
+          missing.push(o.name)
+          continue
+        }
+        voxel = vol.voxel
+        set({ busy: `正在取 ${o.name}的表面…` })
+        await new Promise((r) => setTimeout(r, 20))
+        const pts = surfacePoints(vol, 0.5)
+        if (pts.length === 0) {
+          missing.push(o.name)
+          continue
+        }
+        const start = pos.length / 3
+        // 每个表面点一个球，半径略小于一个体素 / a sphere on every surface point, a little under a voxel in radius
+        const r = Math.min(...vol.voxel) * 0.95
+        // 核膜算在内质网的分割里，紧贴着细胞核的表面；两层表面叠在一起会互相抢，所以别的细胞器贴着细胞核的那部分不画
+        // the nuclear envelope belongs to the ER segmentation and lies right on the nucleus's surface; two coincident surfaces fight over every pixel, so the part of any other organelle that hugs the nucleus is not drawn
+        if (o.label === 'nucleus_seg') nearNucleus = { vol, mask: dilate(vol, 2) }
+        const near = o.label !== 'nucleus_seg' ? nearNucleus : null
+        for (let i = 0; i < pts.length; i += 3) {
+          if (near) {
+            const k = voxelIndex(near.vol, pts[i]!, pts[i + 1]!, pts[i + 2]!)
+            if (k >= 0 && near.mask[k]) continue
+          }
+          pos.push(pts[i]!, pts[i + 1]!, pts[i + 2]!)
+          radius.push(r)
+        }
+        if (pos.length / 3 === start) {
+          missing.push(o.name)
+          continue
+        }
+        entities.push({ id: o.label, description: `${o.name} / ${o.nameEn}`, kind: 'protein' })
+        chains.push({ asymId: o.label, authAsymId: o.label, entity: entities.length - 1, start, count: pos.length / 3 - start, model: 1 })
+        roles.push(o.role as Role)
+      }
+      const count = pos.length / 3
+      if (count === 0) throw new Error(`没能取到 ${entry.title} 的数据：它要从 OpenOrganelle（亚马逊云存储）现取，请检查网络后重试。`)
+      const chainOf = new Uint32Array(count)
+      chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
+      const mol: Molecule = {
+        id: entry.id, title: entry.titleEn, atomCount: count, pos: new Float32Array(pos), element: new Uint8Array(count).fill(El.N), radius: new Float32Array(radius),
+        chainOf, isTrace: new Uint8Array(count), residue: new Int32Array(count).fill(1), chains, entities,
+        assemblies: [{ id: 'asym', groups: [{ chains: chains.map((_, i) => i), operators: [IDENTITY] }] }],
+      }
+      const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
+      const spec: PanelSpec = {
+        label: entry.title,
+        source: { id: entry.id, kind: 'cell', url: entry.base, title: entry.titleEn, method: '聚焦离子束扫描电镜 + 机器学习分割', resolution: null, year: null, tier: 'measured', licence: entry.licence, attribution: entry.attribution, citation: entry.citation, link: entry.link },
+        assembly: 'asym',
+        entities: entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, description: e.description, organism: 'Homo sapiens' })),
+        reason: '',
+      }
+      const notes = [
+        `这不是原子图，是电镜下一整个细胞的细胞器轮廓，长度单位是纳米。用的是原数据缩小 16 倍的版本：每个体素约 ${voxel.map((v) => Math.round(v)).join('×')} nm，比它细的结构（细的内质网小管、小泡）看不出来或者断开。`,
+        '细胞器的边界是机器学习模型逐个体素判断出来的，不是人工描的，局部会有错。表面是用一个个小球拼出来的。',
+        '核膜在数据里算作内质网，紧贴着细胞核；贴着细胞核两个体素以内的内质网等没有画，免得和细胞核的表面叠在一起。',
+        ...(missing.length ? [`没能取到：${missing.join('、')}。`] : []),
+      ]
+      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: entry.caption, panels: [spec], notes }
+      // 贴壁的细胞是扁的：从上往下看，在半高处剖开；结构很碎，线画细一些
+      // a cell grown on a surface is flat: look down on it, cut at mid-height; the structures are fine-grained, so lines are drawn thinner
+      const thin = cloneStyle(STYLE_MOLECULE)
+      thin.lineWidth = 0.6
+      thin.shadow.floor = 0.8
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), rot: axisAngle(1, 0, 0, Math.PI / 2), cut: 0.45, style: thin, rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }

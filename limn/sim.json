@@ -152,6 +152,32 @@
       "url": "/?neuron=rat-ca1-pyramidal"
     },
     {
+      "id": "hela-organelles",
+      "title": {
+        "zh": "一个 HeLa 细胞里的细胞器（电镜）",
+        "en": "The organelles of a HeLa cell (electron microscopy)"
+      },
+      "hint": {
+        "zh": "从上往下看，在半高处剖开：细胞核、内质网（绿）、线粒体（粉）。第一次要下载几百个小文件，约一分钟",
+        "en": "Seen from above and cut at mid-height: the nucleus, endoplasmic reticulum (green), mitochondria (pink). The first load fetches a few hundred small files and takes about a minute"
+      },
+      "idea": "2.1",
+      "url": "/?cell=hela-organelles"
+    },
+    {
+      "id": "groel-map",
+      "title": {
+        "zh": "一张电镜密度图：伴侣蛋白 GroEL",
+        "en": "An electron-microscopy density map: the chaperonin GroEL"
+      },
+      "hint": {
+        "zh": "这是实验直接得到的三维密度，不是原子模型。拖动旋转，用“剖开”滑杆看里面的空腔",
+        "en": "This is the three-dimensional density the experiment gives, not an atomic model. Drag to rotate; use the cut slider to see the cavity inside"
+      },
+      "idea": "2.1",
+      "url": "/?id=EMD-1080"
+    },
+    {
       "id": "nuclear-pore",
       "title": {
         "zh": "人的核孔复合体",
