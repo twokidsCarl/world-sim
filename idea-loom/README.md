@@ -154,12 +154,17 @@ generated from it.
 Needs [uv](https://docs.astral.sh/uv/) and [bun](https://bun.sh); the model-backed
 features also need the `claude` CLI installed and logged in on this machine (no API key).
 
-日常使用只要一个进程 / For everyday use, one process:
+日常使用只要一个命令 / For everyday use, one command:
 
 ```sh
-uv run idea-loom build-ui     # 第一次，或者界面的代码变了之后 / the first time, or after the UI code changes
 uv run idea-loom serve        # 然后打开 / then open  http://localhost:8767
 ```
+
+它启动时自己判断界面要不要构建（还没构建过，或者界面的代码比上次构建新），需要就先构建。已经有一个在运行时，它会直接告诉你地址而不是报端口被占。
+
+On start it decides by itself whether the UI needs building (never built, or the UI code is
+newer than the last build) and builds it first if so. When one is already running it tells
+you the address instead of failing on the port.
 
 这一个进程同时托管所有模拟，见下面"统一入口"。开发 idea-loom 自己时，另开一个终端跑 `cd web && bun install && bun run dev`（http://localhost:5187，带热更新，接口转给 8767）。
 
