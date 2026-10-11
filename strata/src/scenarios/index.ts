@@ -240,6 +240,73 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'shedding',
+    title: '圆盘后面的尾迹有没有周期',
+    substrate: 'md',
+    steps: [
+      {
+        text: '和“流过一个圆盘”同样的设置。这次在圆盘下游放一个探测区，记录那里的横向流速，等它摆动几个来回。这一步很长，GPU 上要几分钟。',
+        set: {
+          dim: 2,
+          walls: 1,
+          nx: 640,
+          density: 0.5,
+          temperature: 1,
+          thermostat: 0,
+          obstacle: 30,
+          drive: 0.001,
+          gravity: 0,
+          deltaT: 0,
+          fractionB: 0,
+          integrator: 0,
+        },
+        action: 'push',
+        velocity: 1.4,
+        run: 260000,
+        expect: { quantity: 'wakeProbe', analysis: 'shedding', text: '探测区的横向流速有清晰的周期（周期性脱落）' },
+      },
+    ],
+  },
+  {
+    id: 'convectionOnset',
+    title: '对流从多强的重力开始',
+    substrate: 'md',
+    steps: [
+      {
+        text: '下壁温度是上壁的十倍，重力从弱到强分六档，每档等它稳定后记下“对流强度”。没有对流时读数约为 0.12（热噪声）；明显高出它，才算有对流。',
+        set: {
+          dim: 2,
+          walls: 1,
+          nx: 320,
+          density: 0.3,
+          temperature: 1,
+          thermostat: 0,
+          obstacle: 0,
+          drive: 0,
+          gravity: 0.01,
+          deltaT: 9,
+          fractionB: 0,
+          integrator: 0,
+        },
+        run: 50000,
+        expect: { quantity: 'convection', max: 0.2, text: '重力 0.01：与热噪声同量级（没有对流）' },
+      },
+      ...[0.02, 0.03, 0.04, 0.05, 0.06].map((gravity) => ({
+        text: `重力加到 ${gravity}。`,
+        set: { gravity },
+        run: 40000,
+        // 0.03 和 0.04 两档在起始点附近，只记录读数，不设预期。
+        // The 0.03 and 0.04 steps sit near the onset: their readings are recorded without an expectation.
+        expect:
+          gravity <= 0.02
+            ? { quantity: 'convection', max: 0.2, text: `重力 ${gravity}：与热噪声同量级（没有对流）` }
+            : gravity >= 0.05
+              ? { quantity: 'convection', min: 0.3, text: `重力 ${gravity}：是热噪声的数倍（对流）` }
+              : { quantity: 'convection', min: 0, text: `重力 ${gravity} 时的对流强度（起始点附近，仅记录）` },
+      })),
+    ],
+  },
+  {
     id: 'convection',
     title: '从下面加热：对流卷',
     substrate: 'md',

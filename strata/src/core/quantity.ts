@@ -168,6 +168,11 @@ export interface AnalysisDef {
   minSamples: number
   when?: (p: Params) => boolean
   /**
+   * 计算时要用到最新值的其他标量；播放场景时会保持对它们的计算。
+   * Other scalars whose latest value the computation uses; kept computed while a scenario plays.
+   */
+  needs?: string[]
+  /**
    * `latest` 返回某个标量量的最新值（如果它正在被计算）。
    * `latest` returns the most recent value of a scalar quantity, if it is being computed.
    */

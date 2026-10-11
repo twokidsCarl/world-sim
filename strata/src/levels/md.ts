@@ -35,18 +35,29 @@ const BINS = 24
  * The obstacle sits mid-height, a quarter of the way along the channel.
  */
 function wakeVelocity(f: MdFrame, radius: number): number {
-  const { gx, gy, count, vx } = f.field!
+  return boxMean(f, radius, [1.15, 1.9], 0.35, 'vx')
+}
+
+/**
+ * 圆盘下游一个矩形里的平均流速分量。矩形沿流向从圆心后 along[0] 到 along[1] 个半径，
+ * 横向 ± across 个半径。
+ * Mean of one velocity component in a rectangle downstream of the disc, running from
+ * along[0] to along[1] radii behind its centre and ± across radii to either side.
+ */
+function boxMean(f: MdFrame, radius: number, along: [number, number], across: number, component: 'vx' | 'vy'): number {
+  const { gx, gy, count } = f.field!
+  const v = f.field![component]
   const [lx, ly] = [f.box[0]!, f.box[1]!]
   let n = 0
   let sum = 0
   for (let cy = 0; cy < gy; cy++) {
     const y = ((cy + 0.5) / gy) * ly - 0.5 * ly
-    if (Math.abs(y) > 0.35 * radius) continue
+    if (Math.abs(y) > across * radius) continue
     for (let cx = 0; cx < gx; cx++) {
       const x = ((cx + 0.5) / gx) * lx - 0.25 * lx
-      if (x < 1.15 * radius || x > 1.9 * radius) continue
+      if (x < along[0] * radius || x > along[1] * radius) continue
       n += count[cy * gx + cx]!
-      sum += vx[cy * gx + cx]!
+      sum += v[cy * gx + cx]!
     }
   }
   return n > 0 ? sum / n : NaN
@@ -325,6 +336,36 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f, p) => wakeVelocity(f, p.obstacle!),
     theory: () => 0,
     theoryLabel: '0：时间平均后低于它，说明圆盘后面有回流；见下面的分析卡片',
+  },
+  {
+    id: 'wakeProbe',
+    level: 'hydro',
+    label: '尾迹里一个探测区的横向流速（瞬时值）',
+    kind: 'scalar',
+    record: true,
+    reducers: ['field'],
+    when: (p) => p.walls === 1 && p.obstacle! > 0 && p.dim !== 3,
+    compute: (f, p) => boxMean(f, p.obstacle!, [2.5, 3.5], 0.5, 'vy'),
+    theory: () => 0,
+    theoryLabel: '0：定常的尾迹里它只在 0 附近涨落；周期性脱落时它来回摆动',
+  },
+  {
+    id: 'meanFlow',
+    level: 'hydro',
+    label: '管道里的平均流速',
+    kind: 'scalar',
+    reducers: ['field'],
+    when: (p) => p.walls === 1 && p.dim !== 3,
+    compute: (f) => {
+      const { count, vx } = f.field!
+      let n = 0
+      let sum = 0
+      for (let c = 0; c < count.length; c++) {
+        n += count[c]!
+        sum += vx[c]!
+      }
+      return n > 0 ? sum / n : NaN
+    },
   },
   {
     id: 'convection',
