@@ -95,6 +95,13 @@ limn 这一轮的数：
 | g10 | 外面乱：刺后面叠了四五圈，有的地方对齐、有的地方重叠；刺上有一块块浅斑 | 各圈的刺数目不同，错开的半步绕一圈会漂移；切片太厚；糖链另上了浅色 | 赤道一圈和它前后各一圈取同样的数目；切片改回画幅高度的 20%；糖链和所在蛋白同色；线略收细 | 外圈成了一亮一暗交替的两层，干净了 |
 | L1 | 里面露出带格子的蓝色“碗底”；切面上品红的神经氨酸酶太少；刺被抹成平板 | 切片薄了以后后面只剩基质蛋白的内壁；神经氨酸酶是均匀撒在整个球面上的；平滑的探针偏大 | 核糖核蛋白衬在后面；先在切面那一圈上等间隔放八个神经氨酸酶；探针从 7 减到 5 像素 | 神经氨酸酶对了；里面更糟：出现白洞，核糖核蛋白成了参差的碎块 |
 | L2 | 白洞；碎块 | 切面正好从杆的中间劈开，削掉了每条杆的前半边，露出螺旋的内部 | 八条杆整条排在切面后面：前排四条并排，后面两排错开；基质蛋白和核糖核蛋白都衬在后面 | 里面是并排的几列橙色珠子，上面露着黄色的 RNA 线，顶上是聚合酶，没有白洞 |
+| L3 | 后面的层太暗，发脏；核蛋白的橙色偏褐 | 最远一层压到本色的 0.5；核蛋白的明度取低了 | 最远一层改成 0.64（他的三层是 0.76、0.60、0.45）；核蛋白 L 0.79、C 0.15 | 流感主色距离 0.077→0.062 |
+| L4 | 核糖核蛋白上有许多透出蓝色的小洞 | 螺旋里原子之间的缝 | 这一层的原子半径画成 2.9 Å | 小洞少了，没有全消；主色距离 0.070 |
+| L5 | 新冠切开后里面是白的（L4 时第一次看其余模型才发现） | 切片背面把膜的后半个也切掉了，模型里核蛋白又稀 | 膜总是衬在后面 | 新冠里面露出膜内壁的深粉色，不再露白 |
+| L6 | 突触里到处是暗灰色的碎片，线满纸都是 | 几百个小泡的膜都被留在后面；分子小而线粗 | 只有单个病毒颗粒（拷贝数不超过两万）才把膜衬在后面；密的模型线宽 0.9 | 碎片没了，但到处露白 |
+| L7 | 突触、支原体到处露白 | 密的模型里一个分子只有画幅的百分之几，20% 的切片太薄 | 密的模型切片取 50%，线宽 0.7 | 突触铺满了，白纸占比 0.10→0.00 |
+
+**循环到这里的状态。** 流感在结构和配色上接近他的画。我自己看仍然不对的：新冠只有 30 个刺、里面稀（数据如此）；HIV、支原体、突触一个区室里还是好几族颜色，线又黑又密，他的很柔和；支原体里的核酸是团块，不是线；所有的画都没有周围的环境。
 
 ## English
 
@@ -180,3 +187,10 @@ The user asked that problems no longer be pointed out by a person: I compare wit
 - **g10.** Seen: disorder outside, four or five rings of spikes piled up, aligned in places and overlapping in others, with pale patches on the spikes. Cause: rings held different numbers of spikes, so the half-step offset drifted round the ring; the slab was too thick; glycans had a pale colour of their own. Change: the equatorial ring and the one either side take the same count; the slab goes back to 20% of the frame height; glycans take their protein's colour; lines a little thinner. Result: the outside is two clean layers, bright and dark in alternation.
 - **L1.** Seen: a blue latticed "bowl" inside; too few magenta neuraminidases in the cut; spikes wiped flat. Cause: with a thin slab only the inner wall of matrix protein was left behind; neuraminidase was spread evenly over the whole sphere; the smoothing probe was too large. Change: the ribonucleoproteins line the back; eight neuraminidases go evenly round the cut ring first; the probe drops from 7 pixels to 5. Result: neuraminidase is right, but the inside got worse, with white holes and ribonucleoproteins as ragged fragments.
 - **L2.** Seen: white holes and fragments. Cause: the cut plane split the rods down their middle, taking the front half of each and exposing the inside of the helix. Change: the eight rods lie whole behind the cut, four side by side in the front row and two staggered rows behind; both matrix protein and ribonucleoproteins line the back. Result: the inside is columns of orange beads side by side with the yellow line of the RNA on them and the polymerases on top, and no white holes.
+- **L3.** Seen: back layers too dark and muddy; nucleoprotein orange leaning brown. Change: the farthest layer goes to 0.64 of the fill instead of 0.5 (his three layers measure 0.76, 0.60, 0.45); nucleoprotein at L 0.79, C 0.15. Result: influenza colour distance 0.077→0.062.
+- **L4.** Seen: many small holes in the ribonucleoproteins showing blue. Cause: gaps between atoms inside the helix. Change: atoms of that layer drawn at 2.9 Å. Result: fewer holes, not none; colour distance 0.070.
+- **L5.** Seen: the coronavirus was white inside once cut (found only at L4, the first time the other models were looked at). Cause: the back of the slab cut away the far half of the membrane, and the model is sparse in nucleoprotein. Change: a membrane always lines the back. Result: the inside shows the deep pink of the membrane's inner wall, not paper.
+- **L6.** Seen: dark grey fragments all over the synapse, and line everywhere. Cause: the membranes of hundreds of vesicles were all kept behind; small molecules, heavy lines. Change: only a single virion (no more than twenty thousand copies) has its membrane line the back; dense models get a line width of 0.9. Result: the fragments are gone, but paper shows everywhere.
+- **L7.** Seen: paper showing all over the synapse and the mycoplasma. Cause: in a dense model a molecule is a few percent of the frame and a 20% slab is too thin. Change: dense models get a 50% slab and a line width of 0.7. Result: the synapse is filled, blank paper 0.10→0.00.
+
+**Where the loop stands.** Influenza is close to his painting in structure and colour. Still wrong, by my own eye: the coronavirus has only 30 spikes and a thin inside (the data); HIV, mycoplasma and synapse still mix several hue families in one compartment and have black, dense line where his are soft; nucleic acids in the mycoplasma are lumps, not strands; no painting has its surrounding environment.

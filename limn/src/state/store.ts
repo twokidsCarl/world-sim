@@ -347,9 +347,12 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     chainOf: new Uint32Array(np), isTrace: new Uint8Array(np).fill(1), residue: new Int32Array(np).fill(1), segments: path.segments,
     chains: [{ asymId: 'RNA', authAsymId: 'RNA', entity: 0, start: 0, count: np, model: 1 }], entities: [{ id: 'rna', description: 'genomic RNA', kind: 'rna' }], assemblies: [],
   }
-  const rnpPanel = make(filled?.mol ?? rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', filled ? [IDENTITY] : bundle.stretches, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.72, 0.135, 62]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP']))
+  const rnpPanel = make(filled?.mol ?? rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', filled ? [IDENTITY] : bundle.stretches, (e) => (isRna(e) ? [0.88, 0.16, 92] : [0.79, 0.15, 68]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP']))
   // 填满时每个核蛋白单独描边：他画里的核糖核蛋白是一串看得出一个个核蛋白的珠子
   // when filled, every nucleoprotein is outlined on its own: in his painting a ribonucleoprotein is a string of beads in which each nucleoprotein can be told
+  // 原子画胖一些（2.9 Å）：螺旋里的小孔合上，每个核蛋白读成一个完整的瓣，而不是带着透出后面颜色的小洞
+  // atoms are drawn fatter (2.9 Å): the small holes in the helix close, and each nucleoprotein reads as one whole lobe instead of showing specks of what lies behind
+  if (filled) filled.mol.radius = new Float32Array(filled.mol.atomCount).fill(2.9)
   if (filled) filled.mol.assemblies[filled.mol.assemblies.length - 1]!.groups = filled.mol.chains.map((_, i) => ({ chains: [i], operators: [IDENTITY] }))
   // 基质蛋白层衬在里面：核糖核蛋白之间的空隙里露出的是它的深色，不是白纸
   // the matrix layer lines the inside: gaps between ribonucleoproteins show its deep tone, not paper
@@ -362,7 +365,7 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     // the ribonucleoproteins line the inside: those behind the slab are still drawn (in a deeper orange), so gaps show them and neither paper nor the inner wall of matrix protein
     filled ? lining(rnpPanel) : rnpPanel,
     ...(np > 1 ? [make(strand, spec.rnp, '基因组 RNA 的走向', 'The course of the genomic RNA', [IDENTITY], () => [0.88, 0.16, 92], () => ['基因组 RNA', 'genomic RNA'])] : []),
-    make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.66, 0.13, 25]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
+    make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.88, 0.16, 92] : [0.72, 0.12, 22]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
   ]
 }
 
@@ -625,7 +628,18 @@ export const useStore = create<State>((set, get) => ({
         zoom: entry.zoom ?? 1,
         cut: entry.cut ?? 0,
         cutDefault: entry.cut ?? 0,
-        style: styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing),
+        style: (() => {
+          const st = styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing)
+          // 很密的模型（几万份拷贝以上）线收细，否则满纸都是黑线 / a very dense model (tens of thousands of copies or more) gets thinner lines, or the sheet is all black line
+          const copies = mol.assemblies.find((a) => a.id === assembly)?.groups.reduce((n, g) => n + g.operators.length, 0) ?? 0
+          if (mesoscale && copies > 20_000) {
+            st.lineWidth = Math.min(st.lineWidth, 0.7)
+            // 密的模型里一个分子只有画幅的百分之几，切片要厚些才连得成片，否则到处露白
+            // in a dense model a molecule is a few percent of the frame, and the slab has to be thicker for the picture to hold together, or paper shows everywhere
+            if (st.slab) st.slab = 0.5
+          }
+          return st
+        })(),
         rounds: [],
         busy: '',
         sceneRev: s.sceneRev + 1,
