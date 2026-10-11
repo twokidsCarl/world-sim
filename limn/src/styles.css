@@ -45,12 +45,17 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .catalog button { text-align: left; }
 .source a { color: inherit; }
 
-/* 嵌入模式：画面占满，信息条浮在上方 / embed mode: the stage fills the frame, with an info strip on top */
-.app.embed { grid-template-columns: 1fr; position: relative; }
-.embed-info { position: absolute; left: 12px; top: 10px; right: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; pointer-events: none; }
-.embed-info > * { background: #ffffffd9; padding: 2px 8px; border-radius: 4px; }
-.embed-cut { display: flex; align-items: center; gap: 6px; pointer-events: auto; margin-left: auto; }
-.embed-cut input { width: 120px; }
+/* 嵌入模式：上面一条标题，下面是画面 / embed mode: a title strip on top, the stage below */
+.app.embed { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+.embed-info { display: flex; gap: 10px; align-items: center; padding: 6px 12px; min-height: 30px; border-bottom: 1px solid #e6e3da; background: #fbfaf7; min-width: 0; }
+.embed-info > b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.embed-info > span { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.embed-cut { display: flex; align-items: center; gap: 6px; margin-left: auto; flex: none; white-space: nowrap; }
+.embed-cut input { width: 90px; }
+/* 标签页再多也排在一行 / however many tabs, they stay on one line */
+.tabs button { flex: 1; padding: 5px 2px; white-space: nowrap; font-size: 12px; }
+/* 长列表自己滚动，下面的出处和控件不被挤到屏幕外 / long lists scroll by themselves, so the provenance and controls below are not pushed off screen */
+.catalog, .recent { max-height: 46vh; overflow-y: auto; }
 
 .legend { margin-top: 4px; line-height: 1.6; }
 
@@ -64,3 +69,6 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .catalog details { display: flex; flex-direction: column; }
 .catalog details button { display: block; width: 100%; margin-top: 4px; }
 .catalog summary { cursor: pointer; padding: 2px 0; }
+/* 下拉框的选项文字再长，也不撑出侧栏 / however long its options, a select never pushes past the sidebar */
+.side select { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.side .row > label { flex: none; }
