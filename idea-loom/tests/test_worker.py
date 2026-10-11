@@ -39,6 +39,12 @@ def cloud(repo, tmp_path, monkeypatch):  # noqa: F811
     monkeypatch.setenv("IDEA_LOOM_REPO_URL", str(repo))
     monkeypatch.setenv("GH_TOKEN", "push-credential")
     monkeypatch.setenv("IDEA_LOOM_MERGE_POLL", "0")
+    monkeypatch.delenv("IDEA_LOOM_JOBS_INPLACE", raising=False)
+    monkeypatch.setenv("IDEA_LOOM_RETRY_SCALE", "0")
+    # 不读这台机器上的 git 配置，测试才和谁在跑无关。 / Do not read this machine's git configuration, so the tests do not depend on who runs them.
+    (tmp_path / "gitconfig").write_text("")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "gitconfig"))
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     monkeypatch.setattr(jobs, "_commands", lambda directory, repo=None: [])
 
     def spawn(job, phase):  # 同步跑 / run in-process
@@ -201,3 +207,55 @@ def test_the_worker_exports_the_database_to_the_repository_and_keeps_what_others
     assert w.maybe_export() is True
     w.exporting.join(timeout=20)
     assert bootstrap.import_from_main(repo=worker.clone()) == {"ideas": 0}
+
+
+def test_a_local_job_works_in_its_own_worktree_and_syncs_back_into_the_shared_directory(cloud, repo, wish, tmp_path, monkeypatch):  # noqa: F811
+    """本机：作业不在共用目录里改。别人同时在那里改的文件不算它的；合并后它的改动回到那里，同一个文件两边都改了就合并。
+
+    Locally a job does not edit in the shared directory. Files others change there meanwhile are not counted as its own; after the merge its changes return there, and a file changed on both sides is merged.
+    """
+    monkeypatch.delenv("IDEA_LOOM_ROLE")          # 本机：一个进程什么都做 / local: one process does everything
+    monkeypatch.delenv("IDEA_LOOM_WORK")
+    monkeypatch.delenv("GH_TOKEN")
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    origin = tmp_path / "origin.git"
+    subprocess.run(["git", "clone", "-q", "--bare", str(repo), str(origin)], check=True)
+    git(repo, "remote", "add", "origin", str(origin))
+    git(repo, "fetch", "-q", "origin")
+    (repo / "idea-loom" / "src" / "c.py").write_text("line 1\nline 2\nline 3\nline 4\nline 5\n")
+    (repo / "idea-loom" / "src" / "d.py").write_text("d = 1\n")
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "more")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    git(repo, "fetch", "-q", "origin")
+    monkeypatch.setenv("FAKE_WRITES", json.dumps({"idea-loom/src/a.py": "x = 2\n", "idea-loom/src/b.py": "y = 1\n",
+                                                  "idea-loom/src/c.py": "line 1\nline 2\nline 3\nline 4\nline 5 (job)\n", "idea-loom/src/d.py": "d = 2\n"}))
+    job = jobs.start("wish", wish)
+    job = jobs.get(job.job_id)
+    workspace = worker.work_dir() / "jobs" / job.job_id
+    assert job.phase == "plan_ready" and job.workspace == str(workspace) and str(workspace).startswith(str(tmp_path / "cache")) and str(repo) not in str(workspace)   # 在仓库目录外面 / outside the repository directory
+    assert os.path.realpath(fc.calls(tmp_path / "calls.jsonl")[0]["cwd"]) == os.path.realpath(workspace)
+
+    # 作业在跑的时候，别的会话在共用目录里改东西。 / While the job runs, other sessions edit the shared directory.
+    (repo / "other.txt").write_text("别的项目改到一半\n")
+    (repo / "idea-loom" / "src" / "mine.py").write_text("别的会话的新文件\n")
+    (repo / "idea-loom" / "src" / "c.py").write_text("line 1 (me)\nline 2\nline 3\nline 4\nline 5\n")   # 同一个文件，不同的地方 / the same file, a different place
+    (repo / "idea-loom" / "src" / "d.py").write_text("d = 3\n")                                              # 同一行 / the same line
+    jobs.approve(job.job_id)                      # 共用目录里有没提交的改动也不再拦着 / uncommitted changes in the shared directory no longer block it
+    job = jobs.get(job.job_id)
+    assert (job.phase, job.pr) == ("merged", 34)
+    assert sorted(job.changed) == ["idea-loom/src/a.py", "idea-loom/src/b.py", "idea-loom/src/c.py", "idea-loom/src/d.py"]     # 没有 mine.py，没有 other.txt / neither mine.py nor other.txt
+    pushed = subprocess.run(["git", "-C", str(origin), "show", "--stat", "--format=%s", f"job/{job.job_id}"], capture_output=True, text=True).stdout
+    assert "mine.py" not in pushed and "other.txt" not in pushed and "idea-loom/src/b.py" in pushed
+    create = [c for c in gh_calls(tmp_path) if c["argv"][:2] == ["pr", "create"]][0]
+    assert create["has_token"] is False           # 本机用已经登录好的 gh，不需要令牌 / locally the signed-in gh is used; no token needed
+
+    # 同步回共用目录。 / Synced back into the shared directory.
+    src = repo / "idea-loom" / "src"
+    assert (src / "a.py").read_text() == "x = 2\n" and (src / "b.py").read_text() == "y = 1\n"
+    assert (src / "c.py").read_text() == "line 1 (me)\nline 2\nline 3\nline 4\nline 5 (job)\n"               # 两边的改动都在 / both sides' changes are there
+    assert (src / "d.py").read_text() == "d = 3\n" and job.conflicts == ["idea-loom/src/d.py"]                   # 合不了：留着原样并报告 / unmergeable: left alone and reported
+    assert (src / "mine.py").exists() and (repo / "other.txt").read_text() == "别的项目改到一半\n"
+    assert any("合不到一起" in e.get("text", "") for e in jobs.events(job.job_id))
+    assert not workspace.exists() and jobs.get(job.job_id).workspace is None and job.restart_needed is True
+
