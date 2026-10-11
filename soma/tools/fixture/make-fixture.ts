@@ -10,6 +10,7 @@
 // knowledge/names.json and knowledge/relations.json inside the dataset directory.
 // FMA ids are synthetic ("FMA9xxxxx") and must not be mistaken for real FMA concepts.
 
+import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { Document, NodeIO } from '@gltf-transform/core'
@@ -22,6 +23,7 @@ import type {
   Concept,
   NameEntry,
   NervePath,
+  Rig,
   Part,
   Relation,
   RelationKind,
@@ -721,6 +723,123 @@ async function buildSkinMaps(glbPath: string, skinId: string): Promise<{ json: S
   return { json, bin }
 }
 
+/** 读回某个 GLB 里一个部件解码后的顶点（世界坐标）。 */
+/** Read one part's decoded vertices (world space) back from a GLB. */
+async function decodedPositions(glbPath: string, partId: string): Promise<THREE.Vector3[]> {
+  await MeshoptDecoder.ready
+  const io = new NodeIO()
+    .registerExtensions([EXTMeshoptCompression, KHRMeshQuantization])
+    .registerDependencies({ 'meshopt.decoder': MeshoptDecoder })
+  const doc = await io.read(glbPath)
+  const node = doc.getRoot().listNodes().find((n) => n.getName() === partId)
+  const pos = node?.getMesh()?.listPrimitives()[0]?.getAttribute('POSITION')
+  if (!node || !pos) throw new Error(`fixture: node ${partId} not found in ${glbPath}`)
+  const m = new THREE.Matrix4().fromArray(node.getWorldMatrix())
+  const el: number[] = []
+  return Array.from({ length: pos.getCount() }, (_, i) => {
+    pos.getElement(i, el)
+    return new THREE.Vector3(el[0]!, el[1]!, el[2]!).applyMatrix4(m)
+  })
+}
+
+/**
+ * 示例绑定：骨盆（根）、左肩、左肘、左右第五肋四类关节；左肱骨、左桡骨和肋骨刚性绑定，
+ * 皮肤和左肱二头肌按顶点蒙皮，肱二头肌带一条肌肉作用线。测试因此不依赖 12 MB 的真实文件。
+ * Fixture rig: pelvis (root), left shoulder, left elbow and the fifth ribs; left humerus, left
+ * radius and the ribs are rigid, the skin and the left biceps are skinned per vertex, and the
+ * biceps has a muscle line. Tests therefore do not need the real 12 MB file.
+ */
+async function buildRig(outDir: string, anatomyText: string): Promise<{ rig: Rig; bin: Uint8Array; report: unknown }> {
+  const idOf = (name: string): string => drafts.find((d) => d.name === name)!.id
+  const src = { name: 'soma fixture (synthetic)', url: 'https://example.org/soma-fixture', license: 'CC0-1.0' }
+  const basis = (zh: string, en: string) => ({ zh, en })
+  const X: [number, number, number] = [1, 0, 0]
+  const Y: [number, number, number] = [0, 1, 0]
+  const Z: [number, number, number] = [0, 0, 1]
+  const rig: Rig = {
+    joints: [
+      { id: 'pelvis', name: { zh: '骨盆', en: 'Pelvis' }, parent: null, center: [0, 0.95, 0], tail: [0, 1.45, 0], axes: [X, Y, Z], dofs: [], basis: basis('根关节，不动。', 'Root; does not move.') },
+      {
+        id: 'gh_L', name: { zh: '左肩关节', en: 'Left shoulder' }, parent: 'pelvis', center: [0.21, 1.42, 0], tail: [0.243, 1.14, 0], axes: [X, [0, 0, -1], Y],
+        dofs: [
+          { axis: 0, name: { zh: '前屈 / 后伸', en: 'flexion / extension' }, min: -0.8, max: 2.8, neutral: 0.1, source: src },
+          { axis: 1, name: { zh: '外展 / 内收', en: 'abduction / adduction' }, min: -0.3, max: 2.6, sourced: false, source: src },
+        ],
+        basis: basis('示例数据：球心取肱骨近端。', 'Fixture: centre at the proximal end of the humerus.'),
+      },
+      {
+        id: 'elbow_L', name: { zh: '左肘关节', en: 'Left elbow' }, parent: 'gh_L', center: [0.243, 1.14, 0], tail: [0.268, 0.87, 0.022], axes: [[-1, 0, 0], Z, Y],
+        dofs: [{ axis: 0, name: { zh: '屈 / 伸', en: 'flexion / extension' }, min: -0.1, max: 2.4, neutral: 0.05, source: src }],
+        basis: basis('示例数据：铰链轴沿左右方向。', 'Fixture: hinge axis along the left–right direction.'),
+      },
+      ...(['L', 'R'] as const).map((s) => ({
+        id: `rib5_${s}`, name: { zh: `${s === 'L' ? '左' : '右'}第五肋`, en: `${s === 'L' ? 'Left' : 'Right'} fifth rib` }, parent: 'pelvis',
+        center: [0, 1.3, -0.06] as [number, number, number], tail: [(s === 'L' ? 1 : -1) * 0.13, 1.3, 0.02] as [number, number, number],
+        axes: [[s === 'L' ? 1 : -1, 0, 0], Y, Z] as [[number, number, number], [number, number, number], [number, number, number]],
+        dofs: [{ axis: 0 as const, name: { zh: '上提 / 下降', en: 'elevation / depression' }, min: -0.05, max: 0.3, sourced: false, source: src }],
+        basis: basis('示例数据：绕过肋头的横轴转动。', 'Fixture: turns about a transverse axis through the rib head.'),
+      })),
+    ],
+    bindings: [],
+    muscles: [{ part: idOf('Left biceps brachii'), origin: { point: [0.225, 1.4, 0.02], joint: 'gh_L' }, insertion: { point: [0.25, 1.1, 0.012], joint: 'elbow_L' }, gain: 0.8 }],
+    shape: [],
+    cautions: [
+      { zh: '示例绑定：只有肩、肘和第五肋能动，权重按高度粗略给出。', en: 'Fixture rig: only shoulder, elbow and the fifth ribs move; weights are a crude function of height.' },
+      { zh: '纯运动学：没有接触、重力和肌肉收缩。', en: 'Kinematic only: no contact, gravity or muscle activation.' },
+    ],
+  }
+  const jointIndex = new Map(rig.joints.map((j, i) => [j.id, i]))
+  const rigid: Record<string, string> = {
+    'Left humerus': 'gh_L', 'Left radius': 'elbow_L', 'Left fifth rib': 'rib5_L', 'Right fifth rib': 'rib5_R',
+    'Left deltoid': 'gh_L', 'Left ulnar nerve': 'gh_L', 'Left musculocutaneous nerve': 'gh_L',
+  }
+  const skinned = new Map<string, string>([[idOf('Skin'), 'integumentary.glb'], [idOf('Left biceps brachii'), 'muscular.glb']])
+  const blocks: Uint8Array[] = []
+  let offset = 0
+  for (const d of drafts) {
+    const glb = skinned.get(d.id)
+    if (!glb) {
+      rig.bindings.push({ part: d.id, joint: rigid[d.name] ?? 'pelvis' })
+      continue
+    }
+    const pts = await decodedPositions(join(outDir, glb), d.id)
+    const block = new Uint8Array(pts.length * 12)
+    const dv = new DataView(block.buffer)
+    pts.forEach((p, i) => {
+      // 左臂：肘上下 4 厘米内在肩与肘之间过渡；其余跟随骨盆
+      // left arm: blends between shoulder and elbow within 4 cm of the elbow; everything else follows the pelvis
+      let inf: [string, number][]
+      if (p.x > 0.17 && p.y < 1.47) {
+        const t = Math.min(1, Math.max(0, (1.18 - p.y) / 0.08))
+        const toTrunk = Math.min(1, Math.max(0, (p.y - 1.4) / 0.07))
+        inf = [['elbow_L', t * (1 - toTrunk)], ['gh_L', (1 - t) * (1 - toTrunk)], ['pelvis', toTrunk]]
+      } else inf = [['pelvis', 1]]
+      const q = inf.map(([j, w]) => [jointIndex.get(j)!, Math.round(w * 255)] as [number, number]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])
+      q[0]![1] += 255 - q.reduce((a, x) => a + x[1], 0)
+      for (let k = 0; k < 4; k++) {
+        dv.setUint16(i * 12 + k * 2, q[k]?.[0] ?? 0, true)
+        block[i * 12 + 8 + k] = q[k]?.[1] ?? 0
+      }
+    })
+    rig.bindings.push({ part: d.id, offset, vertexCount: pts.length })
+    blocks.push(block)
+    offset += block.length
+  }
+  const bin = new Uint8Array(offset)
+  let o = 0
+  for (const b of blocks) {
+    bin.set(b, o)
+    o += b.length
+  }
+  const report = {
+    schema: 1,
+    body: 'male',
+    inputs: { 'anatomy.json': createHash('sha256').update(anatomyText).digest('hex').slice(0, 16) },
+    joints: [{ id: 'elbow_L', fits: [{ what: 'fixture hinge axis', rmsMm: 0.5, samples: 100 }] }],
+  }
+  return { rig, bin, report }
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2)
   const si = args.indexOf('--stress')
@@ -789,7 +908,8 @@ async function main(): Promise<void> {
     trees: buildTrees(),
   }
   const k = buildKnowledge()
-  await writeFile(join(outDir, 'anatomy.json'), JSON.stringify(data))
+  const anatomyText = JSON.stringify(data)
+  await writeFile(join(outDir, 'anatomy.json'), anatomyText)
   const nerves: NervePath[] = drafts
     .filter((d) => d.path)
     .map((d) => ({ part: d.id, branches: [{ points: d.path!.points.flat(), radius: d.path!.points.map(() => d.path!.radius) }] }))
@@ -798,6 +918,12 @@ async function main(): Promise<void> {
   const skinMaps = await buildSkinMaps(join(outDir, 'integumentary.glb'), skin.id)
   await writeFile(join(outDir, 'skinmaps.json'), JSON.stringify(skinMaps.json))
   await writeFile(join(outDir, 'skinmaps.bin'), skinMaps.bin)
+  if (!stress) {
+    const r = await buildRig(outDir, anatomyText)
+    await writeFile(join(outDir, 'rig.json'), JSON.stringify(r.rig))
+    await writeFile(join(outDir, 'rig.bin'), r.bin)
+    await writeFile(join(outDir, 'rig-report.json'), JSON.stringify(r.report))
+  }
   await writeFile(join(outDir, 'knowledge/names.json'), JSON.stringify(k.names, null, 1))
   await writeFile(join(outDir, 'knowledge/relations.json'), JSON.stringify(k.relations, null, 1))
 

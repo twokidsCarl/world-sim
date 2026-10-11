@@ -16,6 +16,7 @@
 import { BufferAttribute, BufferGeometry, Color, DoubleSide, FrontSide, Mesh, MeshStandardNodeMaterial } from 'three/webgpu'
 import { attribute, diffuseColor, frontFacing, output, select, vec4 } from 'three/tsl'
 import { SKIN_UNASSIGNED, triangleRegions, type LoadedSkinMap } from '../anatomy/skinmaps.ts'
+import { positionNodeFor, type SkinningData, type SkinningMode } from './skinning.ts'
 
 /** 皮肤部件烘焙后的几何（世界坐标，顶点顺序与 GLB 解码顺序一致）。 */
 /** A skin part's baked geometry (world space, vertices in GLB decode order). */
@@ -47,7 +48,13 @@ export class SkinLayer {
   private regionsOf: LoadedSkinMap | null = null
   private capped = false
 
-  constructor(private readonly source: SkinGeometry) {
+  private readonly skinIndex: BufferAttribute
+  private readonly skinWeight: BufferAttribute
+
+  constructor(
+    private readonly source: SkinGeometry,
+    private readonly skinning: SkinningData,
+  ) {
     const tris = Math.floor(source.index.length / 3)
     this.triangleCount = tris
     const position = new Float32Array(tris * 9)
@@ -66,6 +73,12 @@ export class SkinLayer {
     geometry.setAttribute('position', new BufferAttribute(position, 3))
     geometry.setAttribute('normal', new BufferAttribute(normal, 3))
     geometry.setAttribute('color', this.color)
+    // 蒙皮属性（展开到不共享的顶点）；绑定加载后由 setInfluences 填入
+    // skin attributes (expanded to the unshared vertices); filled by setInfluences once a rig is loaded
+    this.skinIndex = new BufferAttribute(new Uint16Array(tris * 12), 4, true)
+    this.skinWeight = new BufferAttribute(new Uint8Array(tris * 12), 4, true)
+    geometry.setAttribute('skinIndex', this.skinIndex)
+    geometry.setAttribute('skinWeight', this.skinWeight)
     geometry.computeBoundingSphere()
 
     const rgba = attribute('color', 'vec4')
@@ -138,6 +151,34 @@ export class SkinLayer {
     const material = seeThrough ? this.clear : this.opaque
     if (this.mesh.material !== material) this.mesh.material = material
     this.mesh.visible = true
+  }
+
+  /**
+   * 写入皮肤部件的逐顶点影响（按原始顶点顺序给出，这里展开到每个三角形的三个顶点）。
+   * Write the skin part's per-vertex influences (given in original vertex order, expanded here
+   * to the three vertices of every triangle).
+   */
+  setInfluences(index: Uint16Array, weight: Uint8Array): void {
+    const di = this.skinIndex.array as Uint16Array
+    const dw = this.skinWeight.array as Uint8Array
+    for (let i = 0; i < this.triangleCount * 3; i++) {
+      const v = this.source.index[i]! * 4
+      for (let k = 0; k < 4; k++) {
+        di[i * 4 + k] = index[v + k]!
+        dw[i * 4 + k] = weight[v + k]!
+      }
+    }
+    this.skinIndex.needsUpdate = true
+    this.skinWeight.needsUpdate = true
+  }
+
+  /** 与部件材质同步切换蒙皮方式 / Switch skinning in step with the part materials. */
+  setSkinning(mode: SkinningMode): void {
+    const node = positionNodeFor(this.skinning, mode, false)
+    for (const m of [this.opaque, this.clear]) {
+      m.positionNode = node as typeof m.positionNode
+      m.needsUpdate = true
+    }
   }
 
   setOffset(x: number, y: number, z: number): void {

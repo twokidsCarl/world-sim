@@ -44,6 +44,24 @@ import {
 import { useApp, type AppState } from '../state/store.ts'
 import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, type BakedPart, type PartRenderer } from './batches.ts'
 import { PartMeshes, centroidTransparentSort } from './meshes.ts'
+import { JointGizmo } from './gizmo.ts'
+import { PoseRuntime } from './posing.ts'
+import { probeSkinnedPositions } from './skinProbe.ts'
+import { SkinningData, type SkinningMode } from './skinning.ts'
+import {
+  breathingPose,
+  dofAxisWorld,
+  jointFrames,
+  lerpPose,
+  poseIsRest,
+  scalesAreIdentity,
+  validateRig,
+  writeInfluences,
+  type LoadedRig,
+  type Pose,
+  type Scales,
+} from '../anatomy/rig.ts'
+import { mergePoses } from '../../tools/rig/pose.ts'
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -129,6 +147,13 @@ export type ViewState = Pick<
   | 'skinRegions'
   | 'skinHover'
   | 'skinSeeThrough'
+  | 'rig'
+  | 'pose'
+  | 'poseAnimate'
+  | 'breathing'
+  | 'poseJoint'
+  | 'jointScales'
+  | 'leftTab'
 >
 
 export interface ViewerOptions {
@@ -203,6 +228,33 @@ export class Viewer {
   private skinIndex = -1
   private skinPickable = false
   private lastFace = -1
+  private posedApplied = false
+  private poseDirty = false
+  private prewarmVersion = -1
+  private prewarmNext = 0
+  private skinLayerPart = -1
+
+  /** 关节纹理最多容纳的行数（关节数 + 1）和肌肉作用线数 / Capacity of the joint texture (joints + 1) and of the muscle texture. */
+  private static readonly MAX_JOINT_ROWS = 512
+  private static readonly MAX_MUSCLES = 1024
+  readonly skinning = new SkinningData(Viewer.MAX_JOINT_ROWS, Viewer.MAX_MUSCLES)
+  private poseRt: PoseRuntime | null = null
+  /** 已写入顶点属性的绑定（与 store 中的不同则需重新写入）/ The rig whose influences are in the vertex attributes. */
+  private appliedRig: LoadedRig | null = null
+  private loadComplete = false
+  /** 屏幕上实际显示的姿势（过渡动画中的中间值）/ The pose actually on screen (mid-transition values included). */
+  private displayPose: Pose = {}
+  private poseTween: { from: Pose; to: Pose; t0: number; ms: number } | null = null
+  private poseTarget: Pose = {}
+  private poseScales: Scales | null = null
+  private breathing = false
+  private breathT0 = 0
+  /** 当前是否处于摆姿势状态（着色器走蒙皮分支）/ Whether the scene is currently posed (shaders on the skinning branch). */
+  private posed = false
+  private skinMode: SkinningMode = 'off'
+  private readonly gizmo = new JointGizmo()
+  private gizmoJoint: string | null = null
+  private gizmoDrag: { dof: number; last: { x: number; y: number }; angle: number; id: number } | null = null
 
   private readonly raycaster = new Raycaster()
   private readonly ndc = new Vector2()
@@ -303,7 +355,7 @@ export class Viewer {
     key.target = keyTarget
     const rim = new DirectionalLight(0xdfe8ff, 0.7)
     rim.position.set(0.6, 1.2, -1.5)
-    this.scene.add(rim, this.camera, this.root)
+    this.scene.add(rim, this.camera, this.root, this.gizmo.group)
     this.root.clippingPlanes = [this.plane]
     this.root.enabled = false
 
@@ -333,6 +385,7 @@ export class Viewer {
     this.resizeObserver.observe(this.container)
 
     const el = this.renderer.domElement
+    el.addEventListener('pointerdown', this.onGizmoDown, { capture: true })
     el.addEventListener('pointerdown', this.onPointerDown)
     el.addEventListener('pointerup', this.onPointerUp)
     el.addEventListener('pointercancel', this.onPointerCancel)
@@ -354,6 +407,8 @@ export class Viewer {
     this.unsubscribe?.()
     this.resizeObserver?.disconnect()
     const el = this.renderer.domElement
+    el.removeEventListener('pointerdown', this.onGizmoDown, { capture: true })
+    this.onGizmoUp({ pointerId: this.gizmoDrag?.id ?? -1 } as PointerEvent)
     el.removeEventListener('pointerdown', this.onPointerDown)
     el.removeEventListener('pointerup', this.onPointerUp)
     el.removeEventListener('pointercancel', this.onPointerCancel)
@@ -363,6 +418,8 @@ export class Viewer {
     this.controls.dispose()
     this.batches?.dispose()
     this.skinLayer?.dispose()
+    this.gizmo.dispose()
+    this.skinning.dispose()
     this.renderer.dispose()
     el.remove()
   }
@@ -391,6 +448,15 @@ export class Viewer {
     }
     this.skinIndex = -1
     this.skinPickable = false
+    this.poseRt = null
+    this.appliedRig = null
+    this.loadComplete = false
+    this.poseTween = null
+    this.displayPose = {}
+    this.posed = false
+    this.skinMode = 'off'
+    this.gizmo.clear()
+    this.gizmoDrag = null
   }
 
   /**
@@ -445,7 +511,7 @@ export class Viewer {
     const forced = new URLSearchParams(location.search).get('scene')
     this.scenePath = forced === 'batched' || forced === 'meshes' ? forced : this.backend === 'webgpu' ? 'batched' : 'meshes'
     const batches: PartRenderer =
-      this.scenePath === 'batched' ? new PartBatches(partCount, Math.ceil(triangles * 0.62) + 2000, triangles * 3 + 3000) : new PartMeshes()
+      this.scenePath === 'batched' ? new PartBatches(partCount, Math.ceil(triangles * 0.62) + 2000, triangles * 3 + 3000, this.skinning) : new PartMeshes(this.skinning)
     if (this.scenePath === 'meshes') this.renderer.setTransparentSort(centroidTransparentSort as never)
     this.batches = batches
     this.updateBoost()
@@ -494,6 +560,10 @@ export class Viewer {
         if (token === this.bodyToken) onProgress({ done: ++done, total: systems.length, loaded })
       }),
     )
+    if (token === this.bodyToken) {
+      this.loadComplete = true
+      this.syncNeeded = true
+    }
     return problems
   }
 
@@ -595,6 +665,13 @@ export class Viewer {
     const sectionChanged = !p || p.section !== s.section
     const hoverChanged = !p || p.hover !== s.hover
     const boostChanged = !p || p.nerveBoost !== s.nerveBoost
+    this.syncPose(s, p)
+    // 摆姿势时不做爆炸视图（部件各自平移会与关节运动冲突）
+    // no explode while posed (per-part translation would fight the joint motion)
+    const explodeAmount = this.posed ? 0 : s.explode
+    const posedFlipped = this.posedApplied !== this.posed
+    this.posedApplied = this.posed
+    const explodeNow = explodeChanged || posedFlipped
     const skinChanged =
       !p ||
       p.skinMapMode !== s.skinMapMode ||
@@ -602,7 +679,7 @@ export class Viewer {
       p.skinRegions !== s.skinRegions ||
       p.skinHover !== s.skinHover ||
       p.skinSeeThrough !== s.skinSeeThrough
-    if (!displayChanged && !explodeChanged && !sectionChanged && !hoverChanged && !boostChanged && !skinChanged) {
+    if (!displayChanged && !explodeNow && !sectionChanged && !hoverChanged && !boostChanged && !skinChanged) {
       if (wantHome) this.home(true)
       if (wantFocus) this.focus(s.focusRequest.ids)
       return
@@ -624,8 +701,8 @@ export class Viewer {
     }
 
     const parts = this.graph.parts
-    if (explodeChanged) {
-      computeExplode(this.graph, s.explode, s.explodeSelectionOnly ? s.selection.set : null, this.offsets)
+    if (explodeNow) {
+      computeExplode(this.graph, explodeAmount, s.explodeSelectionOnly ? s.selection.set : null, this.offsets)
       if (batches) {
         for (let i = 0; i < parts.length; i++) {
           const id = this.inst[i]!
@@ -648,7 +725,7 @@ export class Viewer {
     // 体表图图层先于部件状态更新：皮肤部件是否交给图层绘制取决于它
     // the skin layer is settled before part states: it decides whether the skin part hands over to it
     const skinIndexBefore = this.skinIndex
-    if (skinChanged || explodeChanged || sectionChanged) this.updateSkinLayer(s)
+    if (skinChanged || explodeNow || sectionChanged) this.updateSkinLayer(s)
     if (!displayChanged && this.skinIndex !== skinIndexBefore) {
       for (const i of [skinIndexBefore, this.skinIndex]) if (i >= 0) this.applyPart(i, parts[i]!, s)
     } else if (!displayChanged && skinChanged && this.skinIndex >= 0) this.applyPart(this.skinIndex, parts[this.skinIndex]!, s)
@@ -682,6 +759,211 @@ export class Viewer {
     if (wantFocus) this.focus(s.focusRequest.ids)
   }
 
+  // ------------------------------------------------------------ 姿势 / posing
+
+  /** 把 store 里的绑定、目标姿势、体型和呼吸开关同步到查看器 / Mirror rig, target pose, shape and breathing from the store. */
+  private syncPose(s: ViewState, p: ViewState | null): void {
+    let rigChanged = false
+    if (this.loadComplete && s.rig !== this.appliedRig) {
+      this.applyRig(s.rig)
+      rigChanged = true
+    }
+    if (!p || rigChanged || s.pose !== p.pose || s.jointScales !== p.jointScales) {
+      this.poseScales = s.jointScales
+      if (p && !rigChanged && s.poseAnimate !== p.poseAnimate && this.poseRt) {
+        this.poseTween = { from: this.poseTween ? this.displayPose : this.poseTarget, to: s.pose, t0: performance.now(), ms: 600 }
+      } else this.poseTween = null
+      this.poseTarget = s.pose
+      this.poseDirty = true
+    }
+    const breathing = s.breathing && !!this.poseRt
+    if (breathing !== this.breathing) {
+      this.breathing = breathing
+      this.breathT0 = performance.now()
+      this.poseDirty = true
+    }
+    this.gizmoJoint = s.leftTab === 'pose' && this.poseRt ? s.poseJoint : null
+    if (!this.gizmoJoint) this.gizmo.clear()
+  }
+
+  /**
+   * 把绑定写进顶点属性。与已加载网格不符的绑定被拒绝（store 里标记为"此人体暂不能摆姿势"）。
+   * Write a rig into the vertex attributes. A rig that does not match the loaded meshes is
+   * rejected (the store then marks posing unavailable for this body).
+   */
+  private applyRig(rig: LoadedRig | null): void {
+    this.appliedRig = rig
+    this.poseRt = null
+    const batches = this.batches
+    if (!rig || !batches) {
+      this.setDisplayPose({})
+      return
+    }
+    const parts = this.graph.parts
+    const count = (id: string): number | undefined => {
+      const i = this.graph.indexOf(id)
+      return i >= 0 && this.inst[i]! >= 0 ? batches.partBuffers(this.inst[i]!).position.length / 3 : undefined
+    }
+    const problems = validateRig(rig, count)
+    if (rig.rig.joints.length + 1 > Viewer.MAX_JOINT_ROWS || rig.rig.muscles.length > Viewer.MAX_MUSCLES) {
+      problems.push('绑定的关节或肌肉作用线数量超出查看器上限 / the rig has more joints or muscle lines than the viewer supports')
+    }
+    if (problems.length) {
+      console.warn('[soma] rig rejected', problems)
+      this.appliedRig = null
+      useApp.getState().rejectRig(problems.slice(0, 3).join('；'))
+      return
+    }
+    for (let i = 0; i < parts.length; i++) {
+      const id = this.inst[i]!
+      if (id < 0) continue
+      const b = batches.partBuffers(id)
+      writeInfluences(rig, parts[i]!.id, b.position.length / 3, b.skinIndex, b.skinWeight, 0)
+      const line = rig.muscleOf.get(parts[i]!.id)
+      // 肌肉部件：aThin 记作 −(作用线下标 + 1)，着色器据此做体积修正
+      // muscle parts: aThin holds −(line index + 1), which the shader uses for the volume correction
+      if (line !== undefined) b.aux.fill(-(line + 1))
+    }
+    batches.flushSkinAttributes()
+    this.poseRt = new PoseRuntime(rig, (i) => (this.inst[i]! >= 0 ? { id: parts[i]!.id, buffers: batches.partBuffers(this.inst[i]!) } : null))
+    this.applyRigToSkinLayer()
+    this.poseDirty = true
+  }
+
+  private applyRigToSkinLayer(): void {
+    const rig = this.appliedRig
+    const part = this.skinLayerPart
+    const geo = part >= 0 ? this.skinGeometry.get(part) : undefined
+    if (!rig || !this.skinLayer || !geo) return
+    const n = geo.position.length / 3
+    const index = new Uint16Array(n * 4)
+    const weight = new Uint8Array(n * 4)
+    writeInfluences(rig, this.graph.parts[part]!.id, n, index, weight, 0)
+    this.skinLayer.setInfluences(index, weight)
+  }
+
+  /** 应用一个要显示的姿势：更新关节 / 肌肉纹理，并在静止与摆姿势之间切换着色器分支。 */
+  /** Apply a pose for display: update the joint / muscle textures and switch shader branch between rest and posed. */
+  private setDisplayPose(pose: Pose): void {
+    this.displayPose = pose
+    const rt = this.poseRt
+    const active = !!rt && (!poseIsRest(pose) || !scalesAreIdentity(this.poseScales))
+    if (rt && active) {
+      const d = rt.set(pose, this.poseScales)
+      this.skinning.update(d.joints, d.muscles)
+      this.prewarmNext = 0
+    }
+    const mode: SkinningMode = !active ? 'off' : scalesAreIdentity(this.poseScales) ? 'pose' : 'pose+shape'
+    if (mode !== this.skinMode) {
+      this.skinMode = mode
+      this.batches?.setSkinning(mode)
+      this.skinLayer?.setSkinning(mode)
+    }
+    if (this.posed !== active) {
+      this.posed = active
+      this.syncNeeded = true // 爆炸位移与可拾取几何随之切换 / explode offsets and pick geometry follow
+    }
+    this.dirty = true
+  }
+
+  /** 推进姿势过渡与呼吸动画；返回这一帧是否改了姿势 / Advance the pose transition and breathing; true when the pose changed this frame. */
+  private stepPose(t: number): boolean {
+    if (!this.poseRt) {
+      if (this.poseDirty) {
+        this.poseDirty = false
+        this.setDisplayPose({})
+      }
+      return false
+    }
+    let pose = this.poseTarget
+    let changed = this.poseDirty
+    this.poseDirty = false
+    if (this.poseTween) {
+      const k = Math.min(1, (performance.now() - this.poseTween.t0) / this.poseTween.ms)
+      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2
+      pose = lerpPose(this.poseTween.from, this.poseTween.to, e)
+      if (k >= 1) {
+        pose = this.poseTween.to
+        this.poseTween = null
+      }
+      changed = true
+    }
+    if (this.breathing) {
+      // 4 秒一个周期，在呼气末与深吸气之间往返 / a 4 s cycle between end-expiration and deep inspiration
+      const phase = 0.5 - 0.5 * Math.cos(((t - this.breathT0) / 4000) * Math.PI * 2)
+      pose = mergePoses(pose, breathingPose(this.poseRt.rig.rig.joints, phase))
+      changed = true
+    }
+    if (changed) this.setDisplayPose(pose)
+    return changed
+  }
+
+  private updateGizmo(): void {
+    const rt = this.poseRt
+    const id = this.gizmoJoint
+    if (!rt || !id) return
+    const joint = rt.rig.rig.joints[rt.rig.jointIndex.get(id) ?? -1]
+    if (!joint) return this.gizmo.clear()
+    const frames = this.posed ? rt.frames : jointFrames(rt.rig.rig.joints, this.displayPose)
+    const dofs: { axis: [number, number, number] }[] = []
+    let center: [number, number, number] | null = null
+    joint.dofs.forEach((_, k) => {
+      const a = dofAxisWorld(rt.rig, frames, this.displayPose, id, k)
+      if (a) {
+        dofs.push({ axis: a.axis })
+        center = a.center
+      }
+    })
+    if (!center) return this.gizmo.clear()
+    this.gizmo.update(center, dofs, this.camera, Math.max(1, this.container.clientHeight))
+  }
+
+  /**
+   * 空闲帧里预先算好可见部件的变形顶点，这样姿势停下后不久，拾取用的包围盒就都是精确的。
+   * In idle frames, pre-compute the posed vertices of visible parts so that shortly after a
+   * pose settles every pick uses exact bounds.
+   */
+  private prewarmPosed(budgetMs: number): void {
+    const rt = this.poseRt
+    if (!rt || this.prewarmVersion === rt.version) return
+    const t0 = performance.now()
+    const n = this.graph.parts.length
+    while (this.prewarmNext < n && performance.now() - t0 < budgetMs) {
+      const i = this.prewarmNext++
+      if (this.inst[i]! >= 0 && this.pickable[i] && !rt.has(i)) rt.positions(i)
+    }
+    if (this.prewarmNext >= n) {
+      this.prewarmVersion = rt.version
+      this.prewarmNext = 0
+    }
+  }
+
+  /** GPU 着色器算出的顶点位置（验证用）/ Vertex positions as computed by the GPU shader (verification). */
+  async probePositions(partId: string, vertexIds: readonly number[]): Promise<Float32Array | null> {
+    if (this.syncNeeded) this.sync()
+    const i = this.graph.indexOf(partId)
+    if (i < 0 || this.inst[i]! < 0 || !this.batches) return null
+    return probeSkinnedPositions(this.renderer, this.skinning, this.skinMode, this.batches.partBuffers(this.inst[i]!), vertexIds)
+  }
+
+  /** CPU 参考实现在当前姿势下的顶点位置；静止时为 null（验证用）。 */
+  /** The CPU reference's vertex positions in the current pose; null at rest (verification). */
+  referencePositions(partId: string): Float32Array | null {
+    const i = this.graph.indexOf(partId)
+    return i >= 0 && this.posed && this.poseRt ? this.poseRt.positions(i) : null
+  }
+
+  /** 当前蒙皮方式与显示的姿势（验证用）/ Current skinning mode and displayed pose (verification). */
+  poseState(): { mode: SkinningMode; posed: boolean; pose: Pose; rig: boolean } {
+    return { mode: this.skinMode, posed: this.posed, pose: this.displayPose, rig: !!this.poseRt }
+  }
+
+  /** 体型挂钩：逐关节的节段缩放（null 为不缩放）。正式的体型控件以后接到这里。 */
+  /** Body-shape hook: per-joint segment scales (null = none). The real shape controls will plug in here. */
+  setJointScales(scales: Scales | null): void {
+    useApp.setState({ jointScales: scales })
+  }
+
   /**
    * 按状态显示或隐藏体表图图层。打开体表图时皮肤层强制可见（不受剥离、系统开关影响）。
    * Show or hide the skin map layer from state. A map that is on forces the skin layer
@@ -698,7 +980,10 @@ export class Viewer {
       return
     }
     if (!this.skinLayer) {
-      this.skinLayer = new SkinLayer(geo)
+      this.skinLayer = new SkinLayer(geo, this.skinning)
+      this.skinLayerPart = index
+      this.applyRigToSkinLayer()
+      this.skinLayer.setSkinning(this.skinMode)
       this.skinLayer.setCapped(this.batches?.isCapped ?? false)
       this.root.add(this.skinLayer.mesh)
     }
@@ -842,7 +1127,7 @@ export class Viewer {
     const ray = this.localRay
     for (const i of this.thinParts) {
       if (!this.pickable[i]) continue
-      const b = parts[i]!.bbox
+      const b = this.boxOf(i)
       const ox = this.offsets[i * 3]!
       const oy = this.offsets[i * 3 + 1]!
       const oz = this.offsets[i * 3 + 2]!
@@ -956,7 +1241,7 @@ export class Viewer {
     for (let k = 0; k < n; k++) {
       const i = only ? only[k]! : k
       if (!this.pickable[i]) continue
-      const b = parts[i]!.bbox
+      const b = this.boxOf(i)
       let t0 = near
       let t1 = far
       let hit = true
@@ -1006,7 +1291,19 @@ export class Viewer {
     return bestPart >= 0 ? { part: bestPart, distance: best } : null
   }
 
+  /** 部件的包围盒：摆姿势时用保守的变形后包围盒 / A part's bounds: the conservative posed box while posed. */
+  private boxOf(i: number): [number, number, number, number, number, number] {
+    const rest = this.graph.parts[i]!.bbox
+    return this.posed && this.poseRt ? this.poseRt.box(i, rest) : rest
+  }
+
   private bvhFor(i: number): MeshBVH {
+    if (this.posed && this.poseRt) {
+      // 摆姿势时在变形后的几何上拾取（按需计算并缓存）
+      // while posed, pick on the deformed geometry (computed on demand and cached)
+      const posed = this.poseRt.bvh(i)
+      if (posed) return posed
+    }
     const version = this.batches!.geometryVersion
     if (version !== this.bvhVersion) {
       // 共享缓冲被重新分配了（批次扩容）：所有 BVH 都指向旧缓冲
@@ -1044,7 +1341,7 @@ export class Viewer {
     const box = new Box3()
     const parts = this.graph.parts
     const add = (i: number) => {
-      const b = parts[i]!.bbox
+      const b = this.boxOf(i)
       const ox = this.offsets[i * 3]!
       const oy = this.offsets[i * 3 + 1]!
       const oz = this.offsets[i * 3 + 2]!
@@ -1185,9 +1482,50 @@ export class Viewer {
       }
       return
     }
+    const joint = id && app.leftTab === 'pose' && !additive ? app.rig?.bindingOf.get(id)?.joint : undefined
     if (hit && hit.region !== null) app.selectSkinRegions([hit.region], { additive })
+    // "姿势"面板打开时，点骨即选中带动它的关节 / with the Pose panel open, clicking a bone selects the joint that moves it
+    else if (joint) app.selectJoint(joint)
     else if (id) app.selectParts([id], { additive })
     else if (!additive) app.clearSelection()
+  }
+
+  /** 捕获阶段：按在操纵环上时接管这次拖动，不让相机控制器收到 / Capture phase: a press on a gizmo ring takes the drag away from the camera controls. */
+  private onGizmoDown = (e: PointerEvent): void => {
+    if (!this.interactive || e.button !== 0 || !this.gizmoJoint) return
+    const rect = this.renderer.domElement.getBoundingClientRect()
+    const dof = this.gizmo.hit(e.clientX, e.clientY, this.camera, rect)
+    if (dof < 0) return
+    e.stopImmediatePropagation()
+    e.preventDefault()
+    const angle = useApp.getState().pose[this.gizmoJoint]?.[dof] ?? 0
+    this.gizmoDrag = { dof, last: { x: e.clientX, y: e.clientY }, angle, id: e.pointerId }
+    window.addEventListener('pointermove', this.onGizmoMove)
+    window.addEventListener('pointerup', this.onGizmoUp)
+    window.addEventListener('pointercancel', this.onGizmoUp)
+  }
+
+  private onGizmoMove = (e: PointerEvent): void => {
+    const g = this.gizmoDrag
+    const joint = this.gizmoJoint
+    if (!g || !joint || e.pointerId !== g.id) return
+    const rect = this.renderer.domElement.getBoundingClientRect()
+    const to = { x: e.clientX, y: e.clientY }
+    g.angle += this.gizmo.dragDelta(g.dof, g.last, to, this.camera, rect)
+    g.last = to
+    // setDof 会把角度限制在活动范围内；这里也夹住累计值，免得越过极限后要拖回很远
+    // setDof clamps to the range of motion; clamp the running value too so a drag past the limit does not need unwinding
+    const d = this.poseRt?.rig.rig.joints[this.poseRt.rig.jointIndex.get(joint) ?? -1]?.dofs[g.dof]
+    if (d) g.angle = Math.min(d.max, Math.max(d.min, g.angle))
+    useApp.getState().setDof(joint, g.dof, g.angle)
+  }
+
+  private onGizmoUp = (e: PointerEvent): void => {
+    if (this.gizmoDrag && e.pointerId !== this.gizmoDrag.id) return
+    this.gizmoDrag = null
+    window.removeEventListener('pointermove', this.onGizmoMove)
+    window.removeEventListener('pointerup', this.onGizmoUp)
+    window.removeEventListener('pointercancel', this.onGizmoUp)
   }
 
   private onPointerCancel = (e: PointerEvent): void => {
@@ -1226,7 +1564,13 @@ export class Viewer {
       this.dirty = true
     }
     this.controls.update()
+    if (this.syncNeeded) this.sync()
+    const posing = this.stepPose(t)
+    if (this.gizmoJoint) this.updateGizmo()
 
+    // 姿势在动时不做悬停拾取（每帧都要重算变形后的几何）
+    // no hover picking while the pose is moving (posed geometry would be recomputed every frame)
+    if (posing) this.hoverXY = null
     if (this.hoverXY && !this.dirty) {
       const { x, y } = this.hoverXY
       this.hoverXY = null
@@ -1254,7 +1598,8 @@ export class Viewer {
       this.lastFrameT = t
     } else {
       this.lastFrameT = 0
-      if (this.bvhQueue.length) this.buildBvhs(5)
+      if (this.posed && this.poseRt) this.prewarmPosed(6)
+      else if (this.bvhQueue.length) this.buildBvhs(5)
     }
 
     if (t - this.statT >= 1000) {
