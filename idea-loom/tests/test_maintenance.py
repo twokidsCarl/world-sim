@@ -42,11 +42,31 @@ def test_it_stays_off_unless_switched_on_and_waits_for_a_quiet_repository(quiet,
     monkeypatch.setenv("IDEA_LOOM_MAINTENANCE", "1")
     monkeypatch.setenv("IDEA_LOOM_MAINTENANCE_BELOW", "0")
     assert "不算少" in maintenance.due(worker.clone())
-    monkeypatch.setenv("IDEA_LOOM_MAINTENANCE_BELOW", "5")
+    monkeypatch.setenv("IDEA_LOOM_MAINTENANCE_BELOW", "2")
     assert maintenance.due(worker.clone()) is None
+    assert "草稿 PR 在等你看" in maintenance.due(worker.clone(), waiting_drafts=3)
     assert maintenance.pick(worker.clone()) == "docs:idea-loom"          # 清单的第一项，最久没维护的目录 / first item, the directory maintained longest ago
     maintenance.record("docs", "idea-loom", "j1")
-    assert maintenance.due(worker.clone()) == "上一次维护还不到一小时"
+    assert maintenance.due(worker.clone()) == "离上一次维护还不到 30 分钟"
+    monkeypatch.setenv("IDEA_LOOM_MAINTENANCE_GAP", "0")
+    monkeypatch.setenv("IDEA_LOOM_MAINTENANCE_PER_DAY", "1")
+    assert maintenance.due(worker.clone()) == "今天已经维护了 1 次，到上限了"
+    monkeypatch.setenv("IDEA_LOOM_MAINTENANCE_PER_DAY", "4")
+    assert maintenance.due(worker.clone()) is None
+
+    # 实时的：有人刚提交，下一次看就不做；看的间隔是几分钟，不是一晚上。
+    # Real time: a commit just landed, so the next look does nothing; looks are minutes apart, not a night.
+    from test_jobs import git
+    import subprocess
+    origin = subprocess.run(["git", "-C", str(worker.clone()), "remote", "get-url", "origin"], capture_output=True, text=True).stdout.strip()
+    for n in range(2):
+        git(origin, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "--allow-empty", "-m", f"busy {n}")
+    w.maintained_at = 0.0
+    assert w.maybe_maintain([]) is None and w.maintenance_note == "最近 60 分钟有 2 次提交，不算少"
+    assert maintenance.check_seconds() == 300 and worker.status()["maintenance"]["last_check"]["why_not"] == w.maintenance_note
+    import time as _t
+    w.maintained_at = _t.monotonic()
+    assert w.maybe_maintain([]) is None and w.maintenance_note == "最近 60 分钟有 2 次提交，不算少"   # 还没到下一次看的时间 / not time for the next look yet
     assert maintenance.pick(worker.clone()).split(":")[0] == "review"     # 清单轮着来 / the list rotates
 
 
@@ -65,7 +85,7 @@ def test_documents_only_is_tier_a_and_merges_by_itself(quiet, tmp_path, monkeypa
     assert [e["text"] for e in jobs.events(job.job_id) if e["type"] == "note" and "事先批准" in e["text"]]   # 没等人批 / it did not wait for approval
     assert [r["item"] for r in maintenance.history()] == ["docs"]
     run_until_idle(w)
-    assert len(jobs.listing()) == 1                                       # 一小时内不会再开一次 / no second run within the hour
+    assert len(jobs.listing()) == 1                                       # 两次之间要隔够时间 / runs keep their distance
 
 
 def test_anything_else_is_tier_b_a_draft_that_waits_for_the_owner(quiet, tmp_path):

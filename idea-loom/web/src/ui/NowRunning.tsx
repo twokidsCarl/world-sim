@@ -59,8 +59,12 @@ export function NowRunning({ onOpen }: { onOpen: (jobId: string) => void }) {
       )}
       <p className="small muted">
         {status.maintenance.enabled
-          ? t(`定时维护开着：过去 24 小时提交少于 ${status.maintenance.below} 次、又没有别的作业时，自动做一件小事。`, `Scheduled maintenance is on: with fewer than ${status.maintenance.below} commits in 24 hours and no other job, it does one small thing by itself.`)
-          : t('定时维护没有打开。', 'Scheduled maintenance is off.')}
+          ? t(
+              `自动维护开着：每 ${Math.round(status.maintenance.check_seconds / 60)} 分钟看一次，最近 ${status.maintenance.window_minutes} 分钟提交少于 ${status.maintenance.below} 次、又没有别的作业时，自动做一件小事（每天最多 ${status.maintenance.per_day} 次）。`,
+              `Automatic maintenance is on: checked every ${Math.round(status.maintenance.check_seconds / 60)} minutes; with fewer than ${status.maintenance.below} commits in the last ${status.maintenance.window_minutes} minutes and no other job, it does one small thing by itself (at most ${status.maintenance.per_day} a day).`,
+            )
+          : t('自动维护没有打开。', 'Automatic maintenance is off.')}
+        {status.maintenance.enabled && status.maintenance.last_check.why_not && t(` 上一次看的时候没做：${status.maintenance.last_check.why_not}。`, ` Not started at the last check: ${status.maintenance.last_check.why_not}.`)}
         {status.maintenance.recent.length > 0 && t(` 最近做过：${status.maintenance.recent.slice(0, 3).map((r) => `${r.item}（${r.directory}）`).join('、')}`, ` Recently: ${status.maintenance.recent.slice(0, 3).map((r) => `${r.item} (${r.directory})`).join(', ')}`)}
       </p>
     </Section>

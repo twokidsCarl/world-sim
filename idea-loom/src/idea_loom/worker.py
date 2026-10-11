@@ -239,6 +239,7 @@ class Worker:
         self.running: dict[str, int] = {}  # 作业编号 → 进程号 / job id → pid
         self.calls: list[threading.Thread] = []  # 正在替 hub 做的模型调用 / model calls being served for the hub
         self.maintained_at = 0.0
+        self.maintenance_note: Optional[str] = None
         self.exporting: Optional[threading.Thread] = None
         self.exported_at = time.monotonic()  # 启动后过一个间隔再导第一次 / the first export comes one interval after start
 
@@ -331,13 +332,15 @@ class Worker:
         """
         from . import maintenance
 
-        if not maintenance.enabled() or time.monotonic() - self.maintained_at < 60:
+        if not maintenance.enabled() or time.monotonic() - self.maintained_at < maintenance.check_seconds():
             return None
         self.maintained_at = time.monotonic()
         if any(j.phase in jobs.HOLDING for j in all_jobs) or gates.may_start():
             return None
-        ensure_clone()
-        if maintenance.due(clone()) is not None:
+        ensure_clone()  # 顺带取一次 main，数到的是最新的提交 / this also fetches main, so the count is current
+        self.maintenance_note = maintenance.due(clone(), waiting_drafts=sum(1 for j in all_jobs if j.phase == "review"))
+        store.write_json(store.runs_dir() / "worker" / "maintenance_state.json", {"at": time.time(), "why_not": self.maintenance_note})
+        if self.maintenance_note is not None:
             return None
         ref = maintenance.pick(clone())
         if ref is None:
@@ -441,6 +444,9 @@ def status() -> dict[str, object]:
         "active": [{"job_id": j.job_id, "title": j.title, "phase": j.phase} for j in listed if j.phase in jobs.ACTIVE and not j.queued],
         "started_today": gates.started_today(), "per_day": gates.per_day(), "paused": gates.paused(), "usage": gates.usage(),
         "worker_alive": calls.worker_alive(), "chains": chains.load(),
-        "maintenance": {"enabled": maintenance.enabled(), "below": maintenance.below(), "recent": maintenance.history()[-10:][::-1]},
+        "maintenance": {"enabled": maintenance.enabled(), "below": maintenance.below(), "window_minutes": maintenance.window_minutes(),
+                        "check_seconds": maintenance.check_seconds(), "per_day": maintenance.per_day(),
+                        "last_check": store.read_json(store.runs_dir() / "worker" / "maintenance_state.json", {}),
+                        "recent": maintenance.history()[-10:][::-1]},
         "review": [{"job_id": j.job_id, "title": j.title, "pr_url": j.pr_url} for j in listed if j.phase == "review"],
     }
