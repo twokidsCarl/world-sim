@@ -22,6 +22,13 @@
         ["^(S|E|M|M2)$", "focus"],
         ["Nest|Pyramid", "nucleic-binding"]
       ],
+      "colors": [
+        ["lipids", [0.87, 0.06, 345]],
+        ["(^|[^A-Za-z])S$", [0.72, 0.155, 336]],
+        ["(^|[^A-Za-z])M2?$", [0.8, 0.1, 350]],
+        ["(^|[^A-Za-z])E$", [0.74, 0.12, 320]],
+        ["Nest|Pyramid", [0.75, 0.104, 297]]
+      ],
       "caption": "整颗病毒的原子模型，从中间剖开：包膜上的刺突蛋白（S）、膜蛋白（M）和包膜蛋白（E），内部是核衣壳蛋白与 RNA 组成的核糖核蛋白。",
       "captionEn": "An atomic model of the whole virus, cut through the middle: the spike (S), membrane (M) and envelope (E) proteins in the envelope, and inside it the ribonucleoprotein of nucleocapsid protein and RNA.",
       "tier": "curated",

@@ -55,6 +55,15 @@ limn 这一轮的数：
 
 新冠没有照这样处理：PetWorld 的模型里刺只有 30 个，本来就稀；他 2020 年那幅画得密得多。这一处是数据和他的画不一致，我没有改数量。
 
+### 第七轮（g7）：RNA 画成线，新冠按他的画配色
+
+- **流感的基因组 RNA** 画成一条黄线：走向取自 RNP 结构（PDB 4BBL）里 RNA 链上的磷原子，每三个取一个、略作平滑，推到杆的表面上（否则埋在核蛋白的沟里看不见），用圆台图元连起来。线是真实的走向，“推到表面”是为了看得见做的处理。
+- 圆台图元现在也遵守切片的背面。
+- **新冠**按他 2020 年那幅量出的颜色配：膜浅粉（L 0.87、C 0.06、h 345），刺品红（h 336），M 蛋白粉，核蛋白淡紫（h 297）。
+- **没有做“弯着填满”**，算过之后放弃了：这个模拟里的病毒颗粒内腔半径约 31 nm，按 RNP 真实的粗细，再怎么弯也只装得下九到十段螺旋（现在直着放了八段），而按基因组长度该有二十三段。他画里填得那么满，是因为他画的颗粒更大。要填满只能把 RNP 画细或者把数量画少，那就不是推断而是编了，所以没做。
+- 并排图：`out/g7-influenza.jpg`、`out/g7-coronavirus.jpg`。
+- 还差：流感的 RNA 线在中间缠成一团，不像他那样一条条清楚的波浪；新冠里面仍然偏空，刺只有 30 个（数据如此）；刺的颜色在后面几层偏暗。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and the description he gives each (`gallery/index.json`). The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -100,3 +109,12 @@ Following him (`src/infer/idealise.ts`):
 Lines are a little heavier too (his are thin, but firmer than ours were last round). The side-by-side image is `out/g5-influenza.jpg`.
 
 The coronavirus was not treated this way: the PetWorld model has only 30 spikes and is sparse to begin with, whereas his painting of 2020 shows many more. There the data and his painting disagree, and the number was left alone.
+
+### Round 7 (g7): RNA as a line, and the coronavirus in his colours
+
+- **The influenza genome RNA** is drawn as a yellow line: its course comes from the phosphorus atoms of the RNA chains in the RNP structure (PDB 4BBL), one in three and lightly smoothed, pushed onto the surface of the rod (otherwise it lies hidden in the nucleoprotein's groove) and joined with round cones. The course is the real one; pushing it to the surface is a treatment for visibility.
+- Round cones now obey the back of the slab as well.
+- **The coronavirus** takes the colours measured on his painting of 2020: a pale pink membrane (L 0.87, C 0.06, h 345), magenta spikes (h 336), pink M protein, lavender nucleoprotein (h 297).
+- **"Bending the rods to fill the space" was not done**, having been worked out and dropped: the cavity of the virion in this simulation is about 31 nm in radius, and at the true thickness of an RNP no amount of bending fits more than nine or ten helical stretches (eight stand straight now), where the genome's length calls for twenty-three. His is so full because the virion he paints is larger. Filling ours would mean drawing RNPs thinner or fewer than they are, which would be invention rather than inference, so it was left.
+- Side by side: `out/g7-influenza.jpg`, `out/g7-coronavirus.jpg`.
+- Still short: the influenza RNA line tangles in the middle instead of running in clear separate waves like his; the coronavirus is still rather empty inside, with only 30 spikes (as the data has it); spike colour is dark in the layers behind.

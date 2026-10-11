@@ -160,3 +160,41 @@ describe('an orderly arrangement of membrane proteins', () => {
     expect(at(ops[1]!, t0.origin)[1]! / t0.distance).toBeCloseTo(-1, 5)
   })
 })
+
+describe('the course of an RNA strand', () => {
+  it('follows the phosphorus atoms, lifted onto the rod surface, once per stretch', async () => {
+    const { rnaPath } = await import('../src/infer/influenza')
+    // 一根沿 z 的杆：蛋白的球在半径 40 处，RNA 的磷原子在半径 20 处绕着走
+    // a rod along z: protein spheres at radius 40, and RNA phosphorus atoms winding at radius 20
+    const pos: number[] = [], isTrace: number[] = []
+    for (let i = 0; i < 400; i++) {
+      pos.push(Math.cos(i) * 40, Math.sin(i) * 40, i)
+      isTrace.push(0)
+    }
+    const p0 = pos.length / 3
+    for (let i = 0; i < 60; i++) {
+      pos.push(Math.cos(i * 0.2) * 20, Math.sin(i * 0.2) * 20, i * 6)
+      isTrace.push(1)
+    }
+    const n = pos.length / 3
+    const m: Molecule = {
+      id: 'r', title: 'r', atomCount: n, pos: new Float32Array(pos), element: new Uint8Array(n).fill(El.C), chainOf: new Uint32Array(n), isTrace: new Uint8Array(isTrace), residue: new Int32Array(n).fill(1),
+      chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count: p0, model: 1 }, { asymId: 'R', authAsymId: 'R', entity: 1, start: p0, count: 60, model: 1 }],
+      entities: [{ id: '1', description: 'NP', kind: 'protein' }, { id: '2', description: 'RNA', kind: 'rna' }], assemblies: [],
+    }
+    const shift = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1000, 0, 0, 1])
+    const path = rnaPath(m, [IDENTITY, shift], 5)
+    const per = Math.ceil(60 / 3)
+    expect(path.pos.length / 3).toBe(per * 2)
+    // 每一段内部相邻的点相连，两段之间不连 / neighbours are joined within a stretch, and the two stretches are not joined to each other
+    expect(path.segments.length / 2).toBe((per - 1) * 2)
+    expect(Array.from(path.segments).some((v, i) => i % 2 === 0 && v === per - 1)).toBe(false)
+    // 推到了杆的表面附近（半径约 40），第二段平移了 1000 / lifted to about the rod's surface (radius about 40); the second stretch is shifted by 1000
+    for (let i = 0; i < per; i++) {
+      const r = Math.hypot(path.pos[i * 3]!, path.pos[i * 3 + 1]!)
+      expect(r).toBeGreaterThan(36)
+      expect(r).toBeLessThan(44)
+      expect(path.pos[(per + i) * 3]! - path.pos[i * 3]!).toBeCloseTo(1000, 3)
+    }
+  })
+})

@@ -21,7 +21,7 @@ import { buildCell, decodeCell, type CellGeometry } from '../volume/cell'
 import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
-import { fibonacciSphere, helicalLayer, layerOnSphere, rnpBundle, shell } from '../infer/influenza'
+import { fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
 import { chainCentre, complexes, placeTemplate, ringSites, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -305,10 +305,19 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     tilts.sort((a, b) => a - b)
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
   }
+  // 基因组 RNA 画成一条线：走向取自 RNP 结构里的 RNA 链 / the genomic RNA as a line, its course taken from the RNA chains of the RNP structure
+  const path = rnaPath(rnp, bundle.stretches, 9)
+  const np = path.pos.length / 3
+  const strand: Molecule = {
+    id: `${spec.rnp}:RNA`, title: 'genomic RNA', atomCount: np, pos: path.pos, element: new Uint8Array(np).fill(El.N), radius: new Float32Array(np).fill(5.5),
+    chainOf: new Uint32Array(np), isTrace: new Uint8Array(np).fill(1), residue: new Int32Array(np).fill(1), segments: path.segments,
+    chains: [{ asymId: 'RNA', authAsymId: 'RNA', entity: 0, start: 0, count: np, model: 1 }], entities: [{ id: 'rna', description: 'genomic RNA', kind: 'rna' }], assemblies: [],
+  }
   return [
     ...outside,
     make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1']),
     make(rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', bundle.stretches, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.72, 0.135, 62]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP'])),
+    ...(np > 1 ? [make(strand, spec.rnp, '基因组 RNA 的走向', 'The course of the genomic RNA', [IDENTITY], () => [0.88, 0.16, 92], () => ['基因组 RNA', 'genomic RNA'])] : []),
     make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.66, 0.13, 25]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
   ]
 }
