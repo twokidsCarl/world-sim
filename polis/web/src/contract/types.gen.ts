@@ -252,7 +252,19 @@ export interface Params {
   bias?: number;
   hazard?: number;
   perceived_reserve?: number;
+  /**
+   * 各人门槛的离散程度：0 表示人人一样 / how far individual thresholds differ; 0 means everyone is alike
+   */
+  spread?: number;
+  /**
+   * 与银行的往来把门槛抬高多少 / how much ties to the bank raise the threshold
+   */
+  attach?: number;
   reserve_ratio?: number;
+  /**
+   * 存款总额中属于企业和机构的比例；它们不在传话网里，也不来排队 / share of all deposits held by firms and institutions, which are outside the rumour network and do not queue
+   */
+  institutional?: number;
   tellers?: number;
   interventions?: Intervention[];
   /**
@@ -341,6 +353,22 @@ export interface Person {
    * 这笔存款对他有多要紧 / how much this deposit matters to them
    */
   stake: number;
+  /**
+   * 与这家银行往来的年数 / years this person has banked here
+   */
+  tenure?: number;
+  /**
+   * 是否在这家银行有贷款 / whether they also borrow from this bank
+   */
+  borrower?: boolean;
+  /**
+   * 存款中受存款保险保障的比例 / share of the deposit covered by deposit insurance
+   */
+  insured?: number;
+  /**
+   * 沉得住气的程度，标准正态的一次抽样；越大越不容易去取 / steadiness, one standard-normal draw; the larger, the less readily they withdraw
+   */
+  resolve?: number;
   household: number;
   district: number;
   workplace?: number | null;

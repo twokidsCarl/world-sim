@@ -112,6 +112,7 @@ function PersonView({ run, k, person: p }: { run: RunData; k: number; person: Pe
   const fear = value(run, k, FEAR, p.idx) / 255
   const expect = value(run, k, EXPECT, p.idx) / 255
   const district = run.population.districts[p.district]!.name
+  const bank = run.population.venues[run.population.bank]!.name
 
   return (
     <>
@@ -130,7 +131,11 @@ function PersonView({ run, k, person: p }: { run: RunData; k: number; person: Pe
           </span>
           <span className="chip">{EDUCATION[p.education]}</span>
           <span className="chip">住{district}</span>
-          <span className="chip">{p.deposit > 0 ? `在通和存了 ${p.deposit} 元` : '在通和没有存款'}</span>
+          <span className="chip">{p.deposit > 0 ? `在${bank}存了 ${p.deposit} 元` : `在${bank}没有存款`}</span>
+          {/* 旧记录里没有这三项 / records made before these fields existed lack them */}
+          {p.deposit > 0 && p.tenure != null && <span className="chip">往来 {Math.round(p.tenure)} 年</span>}
+          {p.borrower && <span className="chip">有贷款</span>}
+          {p.deposit > 0 && (p.insured ?? 0) > 0 && <span className="chip">{(p.insured ?? 0) >= 1 ? '存款全额受保' : `存款 ${Math.round((p.insured ?? 0) * 100)}% 受保`}</span>}
         </div>
       </section>
 

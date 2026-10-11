@@ -104,3 +104,61 @@ def test_api_serves_runs(tmp_path, monkeypatch):
     assert len(client.get(f"/api/runs/{m.run_id}/frames.bin").content) == (m.ticks + 1) * 4 * m.n
     assert client.get(f"/api/runs/{m.run_id}/secrets.txt").status_code == 404
     assert client.get("/api/runs/nope/manifest.json").status_code == 404
+
+
+def test_nobody_withdraws_when_every_threshold_is_out_of_reach():
+    # attach 抬高的是有往来的人的门槛；bias 压到极低，等于人人的门槛都够不着
+    # attach raises thresholds for people with ties to the bank; a very low bias puts every threshold out of reach
+    _, r = simulate(bias=-99.0)
+    assert not any(e["k"] == "queue" for e in r.events)
+    assert r.failed_at is None
+
+
+def test_threshold_is_fixed_per_person_and_ties_to_the_bank_raise_it():
+    from polis import mind
+
+    p = Params()
+    loyal = mind.threshold(0.0, mind.attachment(20, True), p)
+    new = mind.threshold(0.0, mind.attachment(0, False), p)
+    assert loyal - new == pytest.approx(p.attach)
+    args = (0.9, 1.0, 0.5, 0.8, 0.9, 0.8, 0.8, p)
+    assert mind.withdraw_hazard(*args, thresh=-99.0) > 0
+    assert mind.withdraw_hazard(*args, thresh=99.0) == 0
+
+
+def test_insurance_shrinks_what_is_withdrawn_and_money_still_adds_up():
+    from polis import mind
+
+    assert mind.withdraw_fraction(0.0, 0.2) == 1.0
+    assert mind.withdraw_fraction(0.8, 0.0) == pytest.approx(0.2)
+    assert mind.withdraw_fraction(0.8, 1.0) == 1.0
+    sc = trace.scenario_module("bea")
+    # 压低门槛，保证有人去取 / thresholds lowered so that somebody does withdraw
+    p = Params(scenario="bea", n=300, bias=-2.0, **sc.DEFAULTS)
+    p.interventions = sc.interventions(p.start_hour)
+    pop = population.build(p, sc)
+    deposit = np.array([x.deposit for x in pop.persons])
+    insured = np.array([x.insured for x in pop.persons])
+    assert (insured[deposit > 0] > 0).all() and 0.02 < (insured[deposit > 0] < 1).mean() < 0.1
+    r = Sim(pop, p, sc).run()
+    paid = {e["a"]: e["x"] for e in r.events if e["k"] == "withdraw"}
+    assert paid and all(0 < x <= deposit[i] + 0.01 for i, x in paid.items())
+    assert any(x < deposit[i] - 0.01 for i, x in paid.items())  # 有人只取了一部分 / somebody took only part
+    if r.failed_at is None:
+        cash = sum(iv.cash for iv in p.interventions)  # 当局运来的现金 / cash brought in by the authorities
+        assert r.series.reserve[-1] == pytest.approx(0.30 + cash - sum(paid.values()) / deposit.sum(), abs=1e-3)
+
+
+def test_institutional_deposits_sit_outside_the_run():
+    pop, r = simulate(institutional=0.5)
+    deposit = np.array([x.deposit for x in pop.persons])
+    paid = sum(e["x"] for e in r.events if e["k"] == "withdraw")
+    # 总额翻倍，准备金也翻倍 / the total doubles, and so does the reserve
+    assert r.series.reserve[-1] == pytest.approx(0.30 - paid / (2 * deposit.sum()), abs=1e-3) or r.failed_at is not None
+
+
+def test_new_person_fields_do_not_disturb_the_old_ones():
+    pop, _ = simulate()
+    x = pop.persons[pop.cast["widow"]]
+    assert (x.name, x.deposit, x.stake) == ("何寡妇", 260.0, 1.0)
+    assert all(p.tenure == 0 and not p.borrower for p in pop.persons if p.deposit == 0 and not p.protagonist)

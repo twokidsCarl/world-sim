@@ -43,11 +43,13 @@ def test_witness_is_asked_and_its_words_enter_the_world():
 
 
 def test_withdraw_decision_puts_them_in_the_queue_and_only_models_decide_for_them():
-    pop, r = run(Scripted({}, Decision("取出来才安心。", "withdraw")))
+    d = Scripted({}, Decision("取出来才安心。", "withdraw"))
+    pop, r = run(d)
     cast = {i for i in pop.cast.values() if pop.persons[i].deposit > 0 and i != pop.cast["banker"]}
     queued = {e["a"] for e in r.events if e["k"] == "queue"}
-    aware = {i for i in cast if r.frames[:, 3, i].max() > 0}
-    assert aware and aware <= queued
+    # 被问到过的主角：钱庄倒了之后才知情的人没机会被问 / the protagonists who were asked; those who only heard once the bank had failed never were
+    asked = {i for i in cast if any(c.name == pop.persons[i].name for c in d.seen)}
+    assert asked and asked <= queued
     pop, r = run(Scripted({}))  # 人人都说再看看 / everyone waits
     assert not any(r.frames[:, 3, i].max() in (QUEUEING, WITHDREW) for i in cast)
 
@@ -99,7 +101,7 @@ def fake_claude(tmp_path, monkeypatch):
 
 def context(**over) -> Context:
     base = dict(setting="县城。", bank="通和钱庄", clock="第 2 天 8 点", name="何寡妇", role="浆洗度日", age=55, persona="棺材本全在通和。",
-                deposit=260, stake=1.0, risk_aversion=0.95, conformity=0.7, trust_institution=0.5, depth=0, belief=0.4, fear=0.5,
+                deposit=260, stake=1.0, tenure=12.0, borrower=False, covered=0.0, risk_aversion=0.95, conformity=0.7, trust_institution=0.5, depth=0, belief=0.4, fear=0.5,
                 heard=["阿福（朋友）说：「通和要倒了。」"], queue=12, acquaintances_ran=0.2, can_withdraw=True)  # fmt: skip
     return Context(**(base | over))
 

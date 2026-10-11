@@ -24,6 +24,9 @@ SETTING = (
 )
 PUBLIC = "2008 年 9 月的香港，雷曼兄弟上周刚刚倒闭，人人都在担心自己的钱。很多人的存款在东亚银行。"
 DEFAULTS = dict(ticks=120, start_hour=8)  # 周一 08:00 起，共五天 / from Monday 08:00, five days
+# 香港有存款保障计划，当时上限 10 万港元（金管局 2008 年 9 月 24 日新闻稿，见案例文件）。
+# Hong Kong had a Deposit Protection Scheme, capped at HK$100,000 at the time (HKMA press release of 24 September 2008; see the case file).
+DEPOSIT_INSURANCE = True
 
 DISTRICTS = [
     ("中环", None),

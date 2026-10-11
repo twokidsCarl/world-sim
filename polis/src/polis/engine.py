@@ -68,6 +68,8 @@ class Sim:
         self.depth = col("depth", int)
         self.deposit = col("deposit")
         self.stake = col("stake")
+        self.thresh = mind.threshold(col("resolve"), mind.attachment(col("tenure"), col("borrower", bool)), params)
+        self.covered = mind.cover(col("insured"), self.trust_institution)
         self.protagonist = col("protagonist", bool)
         self.near_bank = col("district", int) == ps[pop.cast["banker"]].district
         self.banker = pop.cast["banker"]
@@ -110,7 +112,10 @@ class Sim:
         self.closed_until = np.zeros(len(pop.venues), dtype=int)  # 场所关到第几个小时 / the tick until which each venue stays closed
 
         # 钱庄 / the bank
-        self.total = float(self.deposit.sum())
+        self.left = self.deposit.copy()  # 每人还存在这里的钱 / what each person still has on deposit here
+        # 机构存款算进总额和准备金，但不在传话网里，也不来排队
+        # Institutional deposits count towards the total and the reserve, but sit outside the rumour network and never queue
+        self.total = float(self.deposit.sum()) / (1.0 - params.institutional)
         self.reserve = params.reserve_ratio * self.total
         self.queue: list[int] = []
         self.failed_at: int | None = None
@@ -336,7 +341,8 @@ class Sim:
     def _decide(self) -> None:
         belief = mind.sigmoid(self.L)
         ok = (self.status == AWARE) & (self.deposit > 0) & ~self.directed
-        hazard = mind.withdraw_hazard(belief, self._urgent(), self.expect, self.fear, self.stake, self.risk_aversion, self.conformity, self.p)
+        hazard = mind.withdraw_hazard(belief, self._urgent(), self.expect, self.fear, self.stake, self.risk_aversion, self.conformity, self.p,
+                                      self.thresh, self.covered)  # fmt: skip
         for i in np.flatnonzero(ok & (self.rng.random(self.n) < hazard)):
             self._join_queue(int(i))
 
@@ -365,7 +371,8 @@ class Sim:
             if d is None:
                 # 模型没答上来：这一次按数值规则办 / no answer from the model: fall back to the numeric rule this once
                 b = float(mind.sigmoid(self.L[i]))
-                h = mind.withdraw_hazard(b, self._urgent()[i], self.expect[i], self.fear[i], self.stake[i], self.risk_aversion[i], self.conformity[i], self.p)
+                h = mind.withdraw_hazard(b, self._urgent()[i], self.expect[i], self.fear[i], self.stake[i], self.risk_aversion[i], self.conformity[i], self.p,
+                                         self.thresh[i], self.covered[i])  # fmt: skip
                 if self.deposit[i] > 0 and self.rng.random() < h * 8:  # 一天只问一次，所以把一天的机会并在一起 / asked only once a day, so the whole day's chances are pooled into this one draw
                     self._join_queue(i)
                 continue
@@ -393,6 +400,7 @@ class Sim:
         return Context(
             setting=self.sc.PUBLIC, bank=self.pop.venues[self.pop.bank].name, clock=f"第 {day} 天 {hour} 点",
             name=x.name, role=x.role, age=x.age, persona=x.persona, deposit=x.deposit, stake=float(self.stake[i]),
+            tenure=x.tenure, borrower=x.borrower, covered=float(self.covered[i]),
             risk_aversion=x.risk_aversion, conformity=x.conformity, trust_institution=x.trust_institution, depth=x.depth,
             belief=float(mind.sigmoid(self.L[i])), fear=float(self.fear[i]), heard=self.memory.get(i, [])[-6:],
             queue=len(self.queue), acquaintances_ran=float(self.seen[i]), can_withdraw=x.deposit > 0,
@@ -401,13 +409,15 @@ class Sim:
     def _serve(self) -> None:
         for _ in range(min(len(self.queue), max(1, round(self.p.tellers * self.n)))):
             i = self.queue[0]
-            if self.deposit[i] > self.reserve:
+            amount = float(round(self.deposit[i] * mind.withdraw_fraction(self.covered[i], self.fear[i]), 2))
+            if amount > self.reserve:
                 self._fail()
                 return
             self.queue.pop(0)
-            self.reserve -= self.deposit[i]
+            self.reserve -= amount
+            self.left[i] -= amount
             self.status[i] = WITHDREW
-            self._emit("withdraw", a=i, x=float(self.deposit[i]))
+            self._emit("withdraw", a=i, x=amount)
             self._think(i, "withdraw")
 
     def _fail(self) -> None:
@@ -419,7 +429,7 @@ class Sim:
         self.L[:] = mind.logit(0.99)
         self.zeal[:] = 0
         self._message(None, None, 1, 2.5, self.sc.FAILED)
-        self._emit("fail", x=float(round(self.deposit[lost].sum())))
+        self._emit("fail", x=float(round(self.left.sum())))  # 居民还没取走的钱 / what residents had not yet taken out
         self._think(self.banker, "failed")
         for i in np.flatnonzero(self.protagonist & lost):
             self._think(int(i), "lost")

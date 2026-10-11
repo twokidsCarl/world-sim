@@ -68,6 +68,19 @@ def build(params: Params, scenario: ModuleType) -> Population:
     deposit = np.where(has_account, np.round(30 * np.exp(2.2 * income + rng.normal(0, 0.5, n))), 0.0)
     stake = np.where(has_account, np.clip(0.3 + 0.5 * (1 - income) + rng.normal(0, 0.12, n), 0.05, 1), 0.0)
 
+    # 与银行的关系，用单独的随机流，所以不改变上面任何一项 / ties to the bank, on a stream of their own so nothing above changes
+    # 这三项的分布是占位假设 / the distributions of these three are placeholder assumptions
+    bank_rng = np.random.default_rng([params.seed, 2])
+    tenure = np.where(has_account, np.minimum(age - 18, bank_rng.gamma(2.0, 5.0, n)), 0.0).clip(0)
+    borrower = has_account & (bank_rng.random(n) < 0.15)
+    resolve = bank_rng.normal(0, 1, n)
+    # 有存款保险的场景：上限定在储户存款的 95 分位，即约 5% 的储户余额超过上限
+    # 这个比例取自 Iyer 与 Puri 的量级（定期 6.6%、活期 1% 的储户超过上限），见 corpus/facts/bank_run_depositor_share.yaml
+    # Where the scenario has deposit insurance, the cap sits at the 95th percentile of deposits, so about 5% of
+    # depositors hold more than it. The order of magnitude is Iyer and Puri's (6.6% of term and 1% of transaction
+    # depositors above the limit); see corpus/facts/bank_run_depositor_share.yaml
+    cap = np.quantile(deposit[has_account], 0.95) if getattr(scenario, "DEPOSIT_INSURANCE", False) and has_account.any() else 0.0
+
     n_work = max(1, n // 25)
     weights = 1.0 / np.arange(1, n_work + 1) ** 0.6
     works = (age >= 16) & (age <= 65) & (rng.random(n) < 0.7)
@@ -158,11 +171,16 @@ def build(params: Params, scenario: ModuleType) -> Population:
             income=_r(income[i]), trust_general=_r(trust_general[i]), trust_institution=_r(trust_institution[i]),
             risk_aversion=_r(risk_aversion[i]), conformity=_r(conformity[i]), media_use=_r(media_use[i]),
             depth=int(depth[i]), deposit=float(deposit[i]), stake=_r(stake[i]),
+            tenure=round(float(tenure[i]), 1), borrower=bool(borrower[i]), resolve=_r(resolve[i]),
             household=int(household[i]), district=int(district_of[i]),
             workplace=int(workplace[i]) if workplace[i] >= 0 else None,
             venues=sorted(member[i]), pos=(round(float(pos[i, 0]), 1), round(float(pos[i, 1]), 1)),
         )  # fmt: skip
-        persons.append(Person(**(fields | overrides.get(i, {}))))
+        fields |= overrides.get(i, {})
+        # 保险按最终的存款算，主角被覆写过的存款也一样 / insurance follows the final deposit, including a protagonist's overridden one
+        if fields["deposit"] > 0:
+            fields.setdefault("insured", _r(min(1.0, cap / fields["deposit"])))
+        persons.append(Person(**fields))
 
     return Population(
         synthetic=True,
