@@ -2,6 +2,7 @@
 import { critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
+import { orientation } from './sources/opm'
 import { cached, stateDir } from './structures'
 
 const PORT = Number(process.env.LIMN_PORT || 5185)
@@ -35,6 +36,10 @@ Bun.serve({
         const file = Bun.file(await cached(target))
         return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })
       }
+      // 膜蛋白在膜里的取向（OPM）；没有收录时返回 null
+      // a membrane protein's orientation in the membrane (OPM); null when OPM does not have it
+      const mem = /^\/api\/membrane\/([0-9][A-Za-z0-9]{3})$/.exec(url.pathname)
+      if (mem) return json({ orientation: await orientation(mem[1]!) })
       if (req.method !== 'POST') return json({ error: 'not found' }, 404)
       const body = (await req.json()) as Record<string, unknown>
       if (url.pathname === '/api/resolve') {

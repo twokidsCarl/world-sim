@@ -36,3 +36,13 @@ export const critique = (body: {
 }) => post<CritiqueReply>('/api/critique', body)
 
 export const pickView = (body: { image: string; count: number; title: string; contents: string }) => post<{ index: number; reason: string }>('/api/pick-view', body)
+
+/** 膜蛋白的 OPM 取向；没有或服务不可用时为 null / a membrane protein's OPM orientation; null when there is none or the service is down */
+export async function membrane(pdbId: string): Promise<import('./landscape/orient').OpmData | null> {
+  try {
+    const res = await fetch(`/api/membrane/${pdbId}`)
+    return res.ok ? ((await res.json()) as { orientation: import('./landscape/orient').OpmData | null }).orientation : null
+  } catch {
+    return null
+  }
+}

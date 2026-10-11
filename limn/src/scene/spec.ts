@@ -89,6 +89,8 @@ export interface LandscapeSpec {
   height: number
   depth: number
   membrane: boolean
+  /** 膜的外侧（胞外、周质、腔内）在场景的上方还是下方 / whether the membrane's outer side (extracellular, periplasmic, lumenal) is up or down in the scene */
+  outer?: 'above' | 'below'
   above: string
   below: string
   ingredients: Ingredient[]

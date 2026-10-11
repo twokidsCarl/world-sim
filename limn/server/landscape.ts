@@ -23,6 +23,7 @@ interface Recipe {
   title: string
   caption: string
   membrane: boolean
+  membrane_outer_side: string
   above: string
   below: string
   density_above_g_per_L: number
@@ -50,11 +51,12 @@ const TISSUES = ['WHOLE_ORGANISM', 'BRAIN', 'CEREBRAL_CORTEX', 'PLASMA', 'SERUM'
 
 const RECIPE_SCHEMA = {
   type: 'object',
-  required: ['title', 'caption', 'membrane', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'notes', 'ingredients'],
+  required: ['title', 'caption', 'membrane', 'membrane_outer_side', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'notes', 'ingredients'],
   properties: {
     title: { type: 'string', description: 'language of the topic' },
     caption: { type: 'string', description: '2-4 sentences, language of the topic: where in the cell this is and what is going on. Name parts by what they are.' },
     membrane: { type: 'boolean', description: 'true if a lipid bilayer crosses the scene horizontally' },
+    membrane_outer_side: { type: 'string', enum: ['above', 'below', 'none'], description: 'which side of the membrane, as drawn, is its outer face: the extracellular side of a plasma membrane or viral envelope, the periplasmic side of a bacterial inner membrane, the lumen of an organelle or vesicle. "none" if there is no membrane.' },
     above: { type: 'string', description: 'what is above the membrane (e.g. extracellular space, blood plasma); empty if no membrane' },
     below: { type: 'string', description: 'what is below the membrane, or the whole scene if there is no membrane (e.g. cytoplasm)' },
     density_above_g_per_L: { type: 'number', description: 'total macromolecule concentration above the membrane, grams per litre (blood plasma is about 70-80); 0 if no membrane' },
@@ -264,7 +266,8 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   }
   if (panels.length === 0) throw new Error('配方里的成分都没有找到可用的结构')
 
-  const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
+  const outer = recipe.membrane_outer_side === 'below' ? ('below' as const) : ('above' as const)
+  const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, ...(recipe.membrane ? { outer } : {}), above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
   const notes = [
     '分子是真实结构，按比例绘制；它们的位置和朝向是程序随机排布的，不是观测结果。',
     pax && measured.size

@@ -60,6 +60,12 @@ export interface Molecule {
   isTrace: Uint8Array
   /** 链内的残基编号，只用来找残基级的描边 / residue number within its chain, used only to find residue-level outlines */
   residue: Int32Array
+  /**
+   * 作者给的残基号（auth_seq_id），和文献、OPM 等外部数据对得上；没有时用 residue。
+   * Residue numbers as the authors gave them (auth_seq_id), which is what the literature and
+   * outside data such as OPM use; absent when the same as `residue`.
+   */
+  authResidue?: Int32Array
   chains: Chain[]
   entities: Entity[]
   /** assemblies[0] 始终是存档时的非对称单元 / assemblies[0] is always the asymmetric unit as deposited */

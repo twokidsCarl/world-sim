@@ -5,6 +5,7 @@ import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
 import { loadLipid } from '../landscape/lipid'
+import { fitToMembrane, type MembraneFit } from '../landscape/orient'
 import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
@@ -22,6 +23,8 @@ export interface Panel {
   coloring: Coloring
   /** 当两个面板共有一种蛋白质时，把本面板转到与第一个一致 / turns this panel to match the first one, when they share a protein */
   align: Float32Array | null
+  /** 全景里的膜蛋白：OPM 给出的膜内取向 / for a membrane protein in a landscape: its orientation in the membrane from OPM */
+  membrane?: MembraneFit | null
 }
 
 /** 评审或用户能改变的、关于场景外观的一切 / Everything a reviewer or the user can change about how the scene looks. */
@@ -163,6 +166,19 @@ export const useStore = create<State>((set, get) => ({
       const panels = await Promise.all(spec.panels.map(loadPanel))
       if (spec.landscape) {
         const lipid = spec.landscape.membrane ? await loadLipid() : null
+        // 膜蛋白：向 OPM 要它在膜里的取向，叠合到我们手上的坐标
+        // membrane proteins: ask OPM how each sits in the membrane and fit that to the coordinates in hand
+        const oriented: string[] = []
+        await Promise.all(
+          spec.landscape.ingredients.filter((g) => g.compartment === 'membrane').map(async (g) => {
+            const p = panels[g.panel]!
+            if (p.spec.source.kind !== 'pdb') return
+            const opm = await api.membrane(p.spec.source.id)
+            p.membrane = opm ? fitToMembrane(p.mol, opm) : null
+            if (p.membrane) oriented.push(p.spec.label)
+          }),
+        )
+        if (oriented.length) spec.notes = [`${oriented.join('、')} 在膜里的位置和朝向取自 OPM 数据库（由实验结构计算得到，不是直接测量）。`, ...spec.notes.filter((n) => !/^膜蛋白按分子长轴/.test(n) || oriented.length < spec.landscape!.ingredients.filter((g) => g.compartment === 'membrane').length)]
         // 拥挤场景里几种分子共用一个角色；把它们在该角色的色相范围内展开，
         // 以便分清相邻的分子。
         // Several kinds of molecule share a role in a crowded scene; fan
