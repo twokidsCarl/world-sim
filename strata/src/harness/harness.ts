@@ -13,7 +13,7 @@ import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
 import { initFcc, initTriangular } from '../substrates/md/ref/init'
-import { densityModes, rdf, scalars, speedHistogram } from '../substrates/md/ref/reducers'
+import { densityModes, rdf, regionFrame, scalars, speedHistogram } from '../substrates/md/ref/reducers'
 import { computeForces, step } from '../substrates/md/ref/step'
 import { MD_KNOBS, fccCells, potentialSpec, strengthMatrix } from '../substrates/md/schema'
 
@@ -106,6 +106,17 @@ export async function runHarness(): Promise<HarnessResult> {
   let modeErr = 0
   for (let k = 0; k < refModes.length; k++) modeErr = Math.max(modeErr, Math.abs(frame.modes!.data[k]! - refModes[k]!))
   check('密度傅里叶模：最大误差 / 粒子数', modeErr / ref.n, 1e-5)
+
+  // 选区统计：GPU 对 CPU，取盒子左下四分之一。
+  // Region statistics, GPU against CPU, on the lower-left quarter of the box.
+  const quarter: [number, number, number, number] = [0, 0, ref.box[0]! / 2, ref.box[1]! / 2]
+  const regionGpu = (await gpuBackend.reduce(['scalars', 'speedHist', 'rdf'], quarter)).region!
+  const regionRef = regionFrame(ref, quarter, ['rdf'], 4)
+  check('选区：粒子数差', Math.abs(regionGpu.n - regionRef.n), 0)
+  check('选区：温度相对误差', Math.abs(regionGpu.temperature / regionRef.temperature - 1), 1e-5)
+  check('选区：局域六角序差', Math.abs(regionGpu.psi6Local - regionRef.psi6Local), 1e-5)
+  check('选区：配位数差', Math.abs(regionGpu.coordination - regionRef.coordination), 1e-6)
+  check('选区：g(r) L1 差', l1(regionGpu.rdf!.y, regionRef.rdf!.y), 1e-3)
 
   // 短轨迹保持接近：一个时间单位太短，混沌来不及放大 f32 的舍入误差。
   // Short trajectories stay close: one time unit is too brief for chaos to amplify f32 rounding.

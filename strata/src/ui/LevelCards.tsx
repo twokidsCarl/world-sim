@@ -83,6 +83,8 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
         if (!trace || trace.step.length === 0) return
         series.push({ x: trace.step, y: trace.value, color: t.data, mark: 'line' })
         series.push({ x: trace.step, y: trace.theory, color: t.muted, mark: 'dash' })
+        const inRegion = engine.scalars.get(`${q.id}@region`)
+        if (inRegion) series.push({ x: inRegion.step, y: inRegion.value, color: t.accent, mark: 'line' })
         drawPlot(canvas, series, { xLabel: engine.substrate.stepLabel })
         if (valueRef.current) {
           const last = trace.value.length - 1
@@ -100,6 +102,8 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
         if (!trace) return
         series.push({ x: trace.x, y: trace.y, color: t.data, mark: q.mark ?? 'bars' })
         if (trace.theory) series.push({ x: trace.theory.x, y: trace.theory.y, color: t.ink, mark: 'dash' })
+        const inRegion = engine.curves.get(`${q.id}@region`)
+        if (inRegion) series.push({ x: inRegion.x, y: inRegion.y, color: t.accent, mark: 'line' })
         drawPlot(canvas, series, { xLabel: q.xLabel, yClip: [-6, 6] })
       }
     })

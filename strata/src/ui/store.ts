@@ -11,6 +11,8 @@ interface UiState {
    * Which backend is actually running; may differ from the knob when no GPU is available.
    */
   backendKind: 'cpu' | 'gpu'
+  /** 是否框了选区 / Whether a region is selected */
+  hasRegion: boolean
   toggle(): void
 }
 
@@ -23,6 +25,7 @@ export const useUi = create<UiState>((set) => ({
   params: engine.params,
   running: engine.running,
   backendKind: engine.backend.kind,
+  hasRegion: false,
   toggle() {
     engine.running = !engine.running
     set({ running: engine.running })
@@ -30,5 +33,5 @@ export const useUi = create<UiState>((set) => ({
 }))
 
 engine.onChange(() =>
-  useUi.setState({ substrateId: engine.substrate.id, params: engine.params, backendKind: engine.backend.kind }),
+  useUi.setState({ substrateId: engine.substrate.id, params: engine.params, backendKind: engine.backend.kind, hasRegion: engine.region !== null }),
 )

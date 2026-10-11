@@ -4,6 +4,7 @@ import { speciesField, speciesTables, type PairField, type PotentialSpec } from 
 import { initFcc, initTriangular } from './ref/init'
 import {
   densityModes,
+  regionFrame,
   fieldSums,
   rdf,
   scalars,
@@ -38,6 +39,8 @@ export interface MdFrame extends Frame {
   rdf?: Hist
   field?: FieldSums
   modes?: DensityModes
+  /** 设了选区时才有 / Present only while a region is set */
+  region?: RegionFrame
   /**
    * 自开始以来的步数，时间反演期间倒着计数。
    * Steps since the start, counted backwards while time is reversed.
@@ -50,6 +53,23 @@ export interface MdFrame extends Frame {
   distance?: number
   /** 盒子边长，用于把单元内的求和换算成密度。 / Box lengths, for turning cell sums into densities. */
   box: ArrayLike<number>
+}
+
+/** 选区：盒子坐标下的矩形 [x0, y0, x1, y1]。 / A region: a rectangle [x0, y0, x1, y1] in box coordinates. */
+export type Region = [number, number, number, number]
+
+/**
+ * 只对选区内粒子做的统计，与全体的同名量一一对应。
+ * Statistics over the particles inside the region only, mirroring the whole-system quantities.
+ */
+export interface RegionFrame {
+  n: number
+  density: number
+  temperature: number
+  psi6Local: number
+  coordination: number
+  speedHist?: Hist
+  rdf?: Hist
 }
 
 export interface MdBackend extends RunBackend<MdFrame> {
@@ -236,7 +256,7 @@ export class MdCpuBackend implements MdBackend {
     }
   }
 
-  reduce(ids: readonly string[]): MdFrame {
+  reduce(ids: readonly string[], region?: Region | null): MdFrame {
     const s = this.state
     const frame: MdFrame = {
       step: s.step,
@@ -253,6 +273,7 @@ export class MdCpuBackend implements MdBackend {
     if (ids.includes('field')) frame.field = fieldSums(s)
     if (ids.includes('distance')) frame.distance = this.distance()
     if (ids.includes('modes')) frame.modes = densityModes(s)
+    if (region && s.dim === 2) frame.region = regionFrame(s, region, ids, 4 * Math.sqrt(sc.temperature))
     return frame
   }
 

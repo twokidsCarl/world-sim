@@ -33,6 +33,7 @@ function CpuCanvas() {
         if (!canvas || engine.backend.kind !== 'cpu') return
         const s = (engine.backend as MdCpuBackend).state
         canvas.style.aspectRatio = s.dim === 3 ? '1' : `${s.box[0]} / ${s.box[1]}`
+        canvas.parentElement?.style.setProperty('--aspect', String(s.dim === 3 ? 1 : s.box[0] / s.box[1]))
         const { ctx, w } = fitCanvas(canvas)
         ctx.clearRect(0, 0, w, canvas.clientHeight)
         if (s.dim === 3) {
@@ -105,6 +106,7 @@ function GpuCanvas() {
       if (engine.backend.kind !== 'gpu') return
       const b = engine.backend as MdGpuBackend
       canvas.style.aspectRatio = b.dim === 3 ? '1' : `${b.box[0]} / ${b.box[1]}`
+      canvas.parentElement?.style.setProperty('--aspect', String(b.dim === 3 ? 1 : b.box[0]! / b.box[1]!))
       const dpr = window.devicePixelRatio || 1
       const w = Math.max(1, Math.round(canvas.clientWidth * dpr))
       const h = Math.max(1, Math.round(canvas.clientHeight * dpr))
@@ -139,11 +141,88 @@ const COLOURS = ['单色', '局域六角序 |ψ₆|', '粒子种类']
  */
 const SLAB_HALF = 1.5
 
+/**
+ * 在舞台上拖出一个矩形选区；右侧各层会同时画出选区内的取值。仅二维。
+ * Drag a rectangle on the stage; the level cards then also draw the values inside it. 2D only.
+ */
+function RegionBrush() {
+  type Rect = { x0: number; y0: number; x1: number; y1: number }
+  const [drag, setDragState] = useState<Rect | null>(null)
+  // 拖动的当前值另存一份在 ref 里：事件可能在下一次渲染之前接连到来，闭包里的 state 会是旧的。
+  // The live drag is also kept in a ref: events can arrive back to back before the next
+  // render, when the state captured by the handlers would be stale.
+  const live = useRef<Rect | null>(null)
+  const setDrag = (r: Rect | null) => {
+    live.current = r
+    setDragState(r)
+  }
+  const hasRegion = useUi((s) => s.hasRegion)
+  const ref = useRef<HTMLDivElement>(null)
+  // 鼠标位置换成 0..1 的相对坐标 / Pointer position as fractions 0..1 of the stage
+  const at = (e: React.PointerEvent) => {
+    const r = ref.current!.getBoundingClientRect()
+    return {
+      x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+      y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+    }
+  }
+  const box = () => (engine.backend as MdBackend).box
+  // 已定下的选区，换回相对坐标来画 / The committed region, back in fractions for drawing
+  const committed = engine.region && {
+    x0: engine.region[0] / box()[0]!,
+    y0: engine.region[1] / box()[1]!,
+    x1: engine.region[2] / box()[0]!,
+    y1: engine.region[3] / box()[1]!,
+  }
+  const shown = drag ?? (hasRegion ? committed : null)
+  return (
+    <div
+      ref={ref}
+      className="brush"
+      onPointerDown={(e) => {
+        const p = at(e)
+        e.currentTarget.setPointerCapture(e.pointerId)
+        setDrag({ x0: p.x, y0: p.y, x1: p.x, y1: p.y })
+      }}
+      onPointerMove={(e) => {
+        if (!live.current) return
+        const p = at(e)
+        setDrag({ ...live.current, x1: p.x, y1: p.y })
+      }}
+      onPointerUp={(e) => {
+        if (!live.current) return
+        const end = at(e)
+        const d = { ...live.current, x1: end.x, y1: end.y }
+        const x0 = Math.min(d.x0, d.x1)
+        const x1 = Math.max(d.x0, d.x1)
+        const y0 = Math.min(d.y0, d.y1)
+        const y1 = Math.max(d.y0, d.y1)
+        setDrag(null)
+        // 太小的拖动当作点击：清除选区 / A tiny drag is a click: clear the region
+        if (x1 - x0 < 0.01 || y1 - y0 < 0.01) engine.setRegion(null)
+        else engine.setRegion([x0 * box()[0]!, y0 * box()[1]!, x1 * box()[0]!, y1 * box()[1]!])
+      }}
+    >
+      {shown && (
+        <i
+          style={{
+            left: `${Math.min(shown.x0, shown.x1) * 100}%`,
+            top: `${Math.min(shown.y0, shown.y1) * 100}%`,
+            width: `${Math.abs(shown.x1 - shown.x0) * 100}%`,
+            height: `${Math.abs(shown.y1 - shown.y0) * 100}%`,
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
 export function MdStage() {
   const kind = useUi((s) => s.backendKind)
   const [colour, setColour] = useState(engine.view.colour ?? 0)
   const mixture = useUi((s) => s.params.fractionB! > 0)
   const three = useUi((s) => s.params.dim === 3)
+  const hasRegion = useUi((s) => s.hasRegion)
   const [slab, setSlab] = useState(engine.view.slab ?? 0)
   // 一旦有两种粒子就显示粒子种类。 / Show the species as soon as there are two of them.
   useEffect(() => {
@@ -155,8 +234,16 @@ export function MdStage() {
   useEffect(() => engine.onFrame(() => caption(infoRef.current)), [])
   return (
     <section className="stage-wrap">
-      {kind === 'gpu' ? <GpuCanvas /> : <CpuCanvas />}
+      <div className="stage-frame">
+        {kind === 'gpu' ? <GpuCanvas /> : <CpuCanvas />}
+        {!three && <RegionBrush />}
+      </div>
       <span ref={infoRef} className="caption" />
+      {!three && (
+        <span className="caption">
+          {hasRegion ? '橙色线是选区内的取值；在舞台上单击可清除选区。' : '在舞台上拖出一个矩形，可单独统计那一块区域。'}
+        </span>
+      )}
       {three ? (
         <div className="segmented view-options">
           <span className="caption">显示</span>

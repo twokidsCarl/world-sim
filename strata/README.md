@@ -28,6 +28,8 @@ English version below / 英文版见下文。
   - 热力学：束缚部分的位力比 2K / |Σ m x·a| 对位力定理的 1。
   - 结构：束缚比例、半质量半径、径向密度（Plummer 初始状态下对 Plummer 模型）。径向量都以势阱最深处为中心。
 
+分子动力学（二维）的舞台上可以拖出一个矩形选区：温度、速率分布、g(r)、六角序、配位数会同时画出选区内的取值（橙色线），用来比较晶粒内部与晶界、液滴与蒸气。在舞台上单击清除选区。
+
 每个可调参数都带标签，说明它是改变普适类、仅改变数值、状态变量还是数值方法。每个带理论的量旁边实时标出“吻合”或“偏离”。
 
 页面底部有引导实验（敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
@@ -119,6 +121,8 @@ Three substrates, switched at the top right of the interface:
   - Microscopic: energy and momentum conservation.
   - Thermodynamic: the virial ratio 2K / |Σ m x·a| of the bound part against the value 1 of the virial theorem.
   - Structure: bound fraction, half-mass radius, radial density (against the Plummer model when the initial state is Plummer). All radial quantities are centred on the deepest point of the potential well.
+
+On the molecular dynamics stage (2D) you can drag a rectangle to select a region: temperature, the speed distribution, g(r), hexatic order and the coordination number are then also drawn for the particles inside it (orange lines), to compare the inside of a grain with a grain boundary, or a droplet with its vapour. Click on the stage to clear the region.
 
 Every adjustable parameter carries a label saying whether it changes the universality class, only changes numerical values, is a state variable, or is a numerical method. Next to every quantity that has a theory, "agrees" or "deviates" is shown in real time.
 

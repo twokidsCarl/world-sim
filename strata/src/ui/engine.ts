@@ -90,6 +90,11 @@ export class Engine {
    */
   stopAt: number | null = null
   /**
+   * 舞台上框出的选区（盒子坐标），没有则为 null。
+   * The region selected on the stage (box coordinates), or null.
+   */
+  region: [number, number, number, number] | null = null
+  /**
    * 上一帧报告后端无法表示当前状态时置位。
    * Set when the last frame reported that the backend could not represent the state.
    */
@@ -230,6 +235,7 @@ export class Engine {
     // 步数计数器重新开始，因此之前的标量历史不再共用同一条 x 轴。
     // The step counter restarts, so earlier scalar history no longer shares an x axis.
     this.scalars.clear()
+    this.region = null
     this.stopAt = null
     this.agreements.clear()
     this.overflow = false
@@ -268,6 +274,7 @@ export class Engine {
       let t = this.scalars.get(id)
       if (!t) this.scalars.set(id, (t = { step: [], value: [], theory: [] }))
       if (q.record) this.remember(id, s.time, { x: [0], y: [s.value] })
+      this.recordRegional(id, s)
       t.step.push(s.step)
       t.value.push(s.value)
       t.theory.push(typeof s.theory === 'number' ? s.theory : NaN)
@@ -289,6 +296,7 @@ export class Engine {
       return
     }
     if (!isCurve(s.value)) return
+    this.recordRegional(id, s)
     if (q.record) this.remember(id, s.time, s.value)
     const prev = this.curves.get(id)
     const theory = isCurve(s.theory) ? s.theory : null
@@ -303,6 +311,52 @@ export class Engine {
     // Agreement of a curve is judged on its running average, not on one noisy sample.
     const averaged = this.curves.get(id)!
     this.agreements.set(id, q.voided?.(this.params) ? 'none' : agreement(q as never, averaged, theory))
+  }
+
+  /**
+   * 选区内的取值记在以 "@region" 结尾的同名条目里，与全体的那条并排画出。
+   * The value inside the region is kept under the same id with "@region" appended, and
+   * drawn beside the whole-system one.
+   */
+  private recordRegional(id: string, s: Sample): void {
+    const key = `${id}@region`
+    if (s.regional === null) {
+      this.scalars.delete(key)
+      this.curves.delete(key)
+      return
+    }
+    if (typeof s.regional === 'number') {
+      let t = this.scalars.get(key)
+      if (!t) this.scalars.set(key, (t = { step: [], value: [], theory: [] }))
+      t.step.push(s.step)
+      t.value.push(s.regional)
+      t.theory.push(NaN)
+      if (t.step.length > HISTORY) {
+        t.step.shift()
+        t.value.shift()
+        t.theory.shift()
+      }
+    } else if (isCurve(s.regional)) {
+      const prev = this.curves.get(key)
+      if (!prev || prev.y.length !== s.regional.y.length) {
+        this.curves.set(key, { x: s.regional.x, y: Float64Array.from(s.regional.y), theory: null })
+      } else {
+        for (let i = 0; i < prev.y.length; i++) prev.y[i] = 0.9 * prev.y[i]! + 0.1 * s.regional.y[i]!
+        prev.x = s.regional.x
+      }
+    }
+  }
+
+  /** 设置或清除选区。 / Set or clear the selected region. */
+  setRegion(region: [number, number, number, number] | null): void {
+    this.region = region
+    for (const key of [...this.scalars.keys(), ...this.curves.keys()]) {
+      if (key.endsWith('@region')) {
+        this.scalars.delete(key)
+        this.curves.delete(key)
+      }
+    }
+    for (const fn of this.changeListeners) fn()
   }
 
   private remember(id: string, time: number, curve: Curve): void {
@@ -344,7 +398,7 @@ export class Engine {
       }
       if (this.frame++ % REDUCE_EVERY === 0 && !this.reducing) {
         this.reducing = true
-        reduced = this.scheduler.tick(this.backend, this.params).finally(() => (this.reducing = false))
+        reduced = this.scheduler.tick(this.backend, this.params, this.region).finally(() => (this.reducing = false))
       }
     }
     for (const fn of this.frameListeners) fn()

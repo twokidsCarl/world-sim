@@ -41,10 +41,10 @@ export class Scheduler<F extends { step: number; time?: number }> {
     return [...ids]
   }
 
-  async tick(backend: Backend<F>, p: Params): Promise<void> {
+  async tick(backend: Backend<F>, p: Params, region: [number, number, number, number] | null = null): Promise<void> {
     if (this.listeners.size === 0) return
     const epoch = this.epoch
-    const frame = await backend.reduce(this.activeReducers())
+    const frame = await backend.reduce(this.activeReducers(), region)
     if (epoch !== this.epoch) return
     this.onFrame?.(frame)
     for (const [id, set] of this.listeners) {
@@ -55,6 +55,7 @@ export class Scheduler<F extends { step: number; time?: number }> {
         epoch,
         value: q.compute(frame, p),
         theory: q.theory ? q.theory(frame, p) : null,
+        regional: q.regional ? q.regional(frame, p) : null,
       }
       for (const fn of set) fn(sample)
     }

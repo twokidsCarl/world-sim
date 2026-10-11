@@ -140,7 +140,6 @@ section + section,
 
 .stage {
   width: 100%;
-  max-height: calc(100vh - 140px);
   display: block;
   border: 1px solid var(--rule);
 }
@@ -219,6 +218,8 @@ input[type='range'] {
 
 .stage.wide {
   aspect-ratio: 4 / 3;
+  /* 限宽而不是限高，画面才不会被压扁 / Limit the width, not the height, so the picture is never squashed */
+  max-width: calc((100vh - 140px) * 4 / 3);
 }
 
 header .controls {
@@ -352,6 +353,7 @@ dd.broken {
 
 .square .stage {
   aspect-ratio: 1;
+  max-width: calc(100vh - 140px);
 }
 
 .headline {
@@ -373,4 +375,25 @@ dd.broken {
 
 .perf dl {
   margin: 0;
+}
+
+/* 舞台与叠在上面的选区层 / The stage and the selection layer over it */
+.stage-frame {
+  position: relative;
+  /* --aspect 是盒子的宽高比，由舞台每帧写入 / --aspect is the box's width over height, written by the stage each frame */
+  max-width: calc((100vh - 140px) * var(--aspect, 1));
+}
+
+.brush {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.brush i {
+  position: absolute;
+  border: 1.5px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  pointer-events: none;
 }

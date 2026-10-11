@@ -68,6 +68,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     xLabel: '速率 v',
     reducers: ['scalars', 'speedHist'],
     compute: (f) => f.speedHist!,
+    regional: (f) => f.region?.speedHist ?? null,
     theory: (f) => {
       const { x } = f.speedHist!
       const { dim, temperature } = f.scalars!
@@ -84,6 +85,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     xLabel: '距离 r',
     reducers: ['scalars', 'rdf'],
     compute: (f) => f.rdf!,
+    regional: (f) => f.region?.rdf ?? null,
     theory: (f) => {
       const { x } = f.rdf!
       const T = f.scalars!.temperature
@@ -99,6 +101,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'scalar',
     reducers: ['scalars'],
     compute: (f) => f.scalars!.temperature,
+    regional: (f) => f.region?.temperature ?? null,
     theory: (_f, p) => (p.thermostat ? p.temperature : null),
     theoryLabel: '热浴温度',
     tolerance: { abs: 0.02, rel: 0.03 },
@@ -256,6 +259,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'scalar',
     reducers: ['scalars'],
     compute: (f) => f.scalars!.coordination,
+    regional: (f) => f.region?.coordination ?? null,
     theory: (f) => (f.scalars!.dim === 3 ? 12 : 6),
     theoryLabel: '密堆积晶体：二维三角晶格 6，三维面心立方 12（参照）',
   },
@@ -267,6 +271,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     reducers: ['scalars'],
     when: (p) => p.dim !== 3,
     compute: (f) => f.scalars!.psi6Local,
+    regional: (f) => f.region?.psi6Local ?? null,
     theory: () => 1,
     theoryLabel: '完美三角晶格：1（参照，不是预言）',
   },
