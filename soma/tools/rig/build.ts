@@ -34,6 +34,8 @@ export interface BuildResult {
   calibration: Calibration[]
   /** 标定前建立的全部作用线（含被去掉的）。 Every line of action established before calibration (dropped ones included). */
   allLines: MuscleLine[]
+  /** 用到的外部权重包及其关节映射。 External weight packages used, with their joint mapping. */
+  external: { dir: string; source: string; vertices: number; mapping: ExternalWeights['mapped'] }[]
   /** 整理好的输入文件哈希（含 data/curated/rig 下的定义）。 Hashes of every input, the curated definitions included. */
   inputs: Record<string, string>
 }
@@ -94,6 +96,11 @@ const CAUTIONS: { zh: string; en: string }[] = [
   },
 ]
 
+const EXTERNAL_SKIN_CAUTION = {
+  zh: '皮肤采用 MHR 自带的蒙皮权重（手指除外），关节换成了本骨架的关节：胸部皮肤只随椎骨、不随肋骨，深吸气时肋骨和腹直肌会顶出皮肤；足趾皮肤只随跖趾关节；肩前屈超过约 120° 和深蹲时，腋部与腹股沟的皮肤仍被明显拉长，背阔肌、三角肌等深部结构会局部穿出皮肤（最深约 3–5 cm）。',
+  en: 'The skin uses MHR’s own skinning weights (except on the fingers) with this rig’s joints: chest skin follows the vertebrae, not the ribs, so in deep inspiration ribs and rectus abdominis come through it; toe skin follows the metatarsophalangeal joints only; beyond about 120° of shoulder flexion and in a deep squat the skin of the axilla and groin is still stretched markedly, and deep parts such as latissimus dorsi and deltoid come through the skin locally (by up to about 3–5 cm).',
+}
+
 export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJointDefs>; rom: Record<string, RomEntry>; rules: BindRules; overrides: Record<string, Override>; hashes: Record<string, string> } {
   const hashes: Record<string, string> = {}
   const read = <T>(name: string): T => {
@@ -114,7 +121,12 @@ export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJoi
   return { defs: expandJointDefs(jf), rom, rules, overrides: ov[bodyId] ?? {}, hashes }
 }
 
-export function buildRig(body: Body, log: (m: string) => void = () => {}): BuildResult {
+export interface BuildOptions {
+  /** 不用外部蒙皮权重，皮肤也按距离场绑定（用于对比）。 Ignore external skin weights and bind the skin by the distance field too (for comparison). */
+  genericSkin?: boolean
+}
+
+export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: BuildOptions = {}): BuildResult {
   const cur = loadCurated(body.data.body)
   const t0 = performance.now()
   const { joints: built, skeleton } = buildJoints(body, cur.defs, cur.overrides)
@@ -136,17 +148,18 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}): Build
   const t1 = performance.now()
   // 外部蒙皮权重（如 MHR 拓扑的新皮肤）：目录存在就读入，并把它的文件计入输入哈希
   // external skin weights (e.g. the replacement skin in MHR topology): read when the directory exists, its files added to the input hashes
-  const external = new Map<string, ExternalWeights>()
+  const external: ExternalWeights[] = []
   const extHashes: Record<string, string> = {}
-  for (const e of cur.rules.externalWeights ?? []) {
+  for (const e of opts.genericSkin ? [] : (cur.rules.externalWeights ?? [])) {
     if (e.body !== body.data.body) continue
     const dir = join(CURATED, '..', '..', '..', e.dir)
-    const w = loadExternalWeights(dir, built.map((j) => j.def.id))
+    const w = loadExternalWeights(dir, built.map((j) => ({ id: j.def.id, center: j.center, tail: j.tail })), e.map ?? [])
     if (!w) continue
     w.dir = e.dir
-    external.set(e.tissue, w)
-    for (const f of ['weights.bin', 'joints.json']) extHashes[`${e.dir}/${f}`] = createHash('sha256').update(new Uint8Array(readFileSync(join(dir, f)))).digest('hex').slice(0, 16)
-    log(`external weights for ${e.tissue}: ${w.vertexCount} vertices from ${e.dir}`)
+    if (w.body !== null && w.body !== body.data.body) continue
+    external.push(w)
+    for (const f of ['weights.bin', 'joints.json', 'skin.obj', 'manifest.json']) extHashes[`${e.dir}/${f}`] = createHash('sha256').update(new Uint8Array(readFileSync(join(dir, f)))).digest('hex').slice(0, 16)
+    log(`external skin weights: ${w.vertexCount} vertices from ${e.dir} (${w.sourceName})`)
   }
   const res = bindAll({ body, joints: built, field, radius, rules: cur.rules, patches: body.patches as AttachmentPatch[], external, log })
   log(`bindings: ${res.parts.length} parts in ${Math.round(performance.now() - t1)} ms`)
@@ -173,14 +186,18 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}): Build
     }
     off += n * BYTES_PER_VERTEX
   }
-  const rig: RigExt = { joints, bindings, muscles: res.muscles, shape: [], cautions: CAUTIONS }
+  // 皮肤相关的注意事项取决于这副身体用的是哪种皮肤
+  // the caution about the skin depends on which skin this body has
+  const cautions = CAUTIONS.filter((c) => external.length === 0 || !c.en.startsWith('In this model the skin joins the upper arm'))
+  if (external.length) cautions.splice(1, 0, EXTERNAL_SKIN_CAUTION)
+  const rig: RigExt = { joints, bindings, muscles: res.muscles, shape: [], cautions }
   const allLines = [...res.muscles]
   const t2 = performance.now()
   const calibration = calibrateMuscles(rig, bin, body)
   log(`muscle lines: ${res.muscles.length} established, ${rig.muscles.length} kept after volume calibration in ${Math.round(performance.now() - t2)} ms`)
   return {
-    rig, bin, built, skeleton, field, calibration, allLines, fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
-    notes: [...romNotes, ...res.notes, ...[...external.values()].flatMap((w) => w.notes), ...built.flatMap((j) => j.warnings.map((w) => `${j.def.id}: ${w}`))],
+    rig, bin, built, skeleton, field, calibration, allLines, external: external.map((w) => ({ dir: w.dir, source: w.sourceName, vertices: w.vertexCount, mapping: w.mapped })), fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
+    notes: [...romNotes, ...res.notes, ...external.flatMap((w) => w.notes), ...built.flatMap((j) => j.warnings.map((w) => `${j.def.id}: ${w}`))],
     inputs: { ...body.inputs, ...cur.hashes, ...extHashes },
   }
 }

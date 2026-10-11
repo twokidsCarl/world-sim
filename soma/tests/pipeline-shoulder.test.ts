@@ -47,14 +47,15 @@ interface ShoulderReport {
   attachments: { checked: number; movedOffBoneByMoreThan1Mm: number; largestIncrease: { mm: number } }
   insideBone: { before: number; after: number }
   nerves: { rebuilt: number; inBone: { before: number; afterCleanUp: number }; deepInMuscle: { before: number; after: number } }
-  provenance: { scannedBefore: number; scannedAfter: number; relabelledToWarped: number; relabelledByTissue: Record<string, number>; relabelledIds: string[] }
+  provenance: { scannedBefore: number; scannedAfter: number; relabelledToWarped: number; relabelledByTissue: Record<string, number>; relabelledIds: string[]; replacedBySkinPackage?: string[] }
 }
 
 describe.skipIf(!present)('male shoulder girdle posture correction (public/anatomy/male)', () => {
   const data = (present ? JSON.parse(readFileSync(join(DIR, 'anatomy.json'), 'utf8')) : null) as AnatomyData
-  const report = (present ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : null) as { shoulderGirdle: ShoulderReport; landmarks: LandmarkResult[]; landmarksAsScanned: LandmarkResult[]; skinPackage: { internalsKey: string; externalGenitalia: { parts: string[]; bbox: number[]; reachInFrontOfPubisMm: number } } }
+  const report = (present ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : null) as { shoulderGirdle: ShoulderReport; landmarks: LandmarkResult[]; landmarksAsScanned: LandmarkResult[]; skinPackage: { installed?: boolean; internalsKey: string; externalGenitalia: { parts: string[]; bbox: number[]; reachInFrontOfPubisMm: number } } }
   const sg = present ? report.shoulderGirdle : (null as unknown as ShoulderReport)
   const sides = () => [sg.sides.left, sg.sides.right]
+  const skinInstalled = present && !!report.skinPackage.installed
   const part = (name: string): Part => data.parts.find((p) => p.name === name)!
 
   it('is applied, and widens the glenohumeral separation as far as the constraints allow', () => {
@@ -254,18 +255,22 @@ describe.skipIf(!present)('male shoulder girdle posture correction (public/anato
     expect(pv.scannedBefore).toBe(2220)
     expect(pv.relabelledToWarped).toBe(pv.relabelledIds.length)
     expect(pv.relabelledToWarped).toBeLessThanOrEqual(160)
-    expect(pv.scannedAfter).toBe(pv.scannedBefore - pv.relabelledToWarped)
+    // 装入外部皮肤包时，被形变过的旧皮肤已被换掉：它既不算 warped，也不再是 scanned
+    // with an external skin package installed, the old skin that had been deformed is gone: neither warped nor scanned any more
+    const replaced = pv.replacedBySkinPackage ?? []
+    expect(replaced.length).toBe(skinInstalled ? 1 : 0)
+    expect(pv.scannedAfter).toBe(pv.scannedBefore - pv.relabelledToWarped - replaced.length)
     expect(data.parts.filter((p) => p.provenance === 'scanned').length).toBe(pv.scannedAfter)
     expect(data.parts.filter((p) => p.id.startsWith('FJ') && p.provenance === 'warped').map((p) => p.id).sort()).toEqual([...pv.relabelledIds].sort())
     // 只有肌、动脉、静脉和皮肤被改标；骨一块也没有 / only muscles, arteries, veins and the skin are relabelled; not one bone
-    expect(Object.keys(pv.relabelledByTissue).sort()).toEqual(['artery', 'muscle', 'skin', 'vein'])
+    expect(Object.keys(pv.relabelledByTissue).sort()).toEqual(skinInstalled ? ['artery', 'muscle', 'vein'] : ['artery', 'muscle', 'skin', 'vein'])
     expect(data.parts.filter((p) => p.tissue === 'bone' && p.provenance !== 'scanned')).toEqual([])
     for (const S of ['Left', 'Right']) {
       const s = S.toLowerCase()
       for (const n of [`${S} clavicle`, `${S} scapula`, `${S} humerus`, `${S} radius`, `${S} ulna`, `${S} brachialis`, `${S} brachioradialis`, `Lateral head of ${s} triceps brachii`, `Medial head of ${s} triceps brachii`, `${S} radial artery`]) expect(part(n)?.provenance, n).toBe('scanned')
       for (const n of [`Acromial part of ${s} deltoid`, `${S} serratus anterior`, `${S} pectoralis minor`, `${S} subscapularis`, `${S} levator scapulae`, `${S} axillary artery`]) expect(part(n)?.provenance, n).toBe('warped')
     }
-    expect(part('Skin').provenance).toBe('warped')
+    expect(part('Skin').provenance).toBe(skinInstalled ? 'curated' : 'warped')
     // 躯干深部和下肢不受影响 / the deep trunk and the lower limbs are untouched
     for (const n of ['Left femur', 'Left psoas major', 'Trachea', 'Left external oblique']) expect(part(n)?.provenance, n).toBe('scanned')
   })

@@ -29,6 +29,7 @@ export interface FieldStats {
   plug: number
   /** 中心落在体外空气里而被剔除的壁体素数；因跨到另一片皮肤而被关闭的体素间通路数。 Wall voxels removed because their centre lies in the air outside; steps between voxels closed because they cross onto another sheet of skin. */
   airVoxelsRemoved: number
+  skinWalls: number
   stepsClosed: number
   voxel: number
   dims: [number, number, number]
@@ -55,6 +56,8 @@ export class BodyField {
   /** 体素中心的类别：0 = 体外，1 = 皮肤两层壁之间，2 = 肉。 Class of the voxel centre: 0 = outside, 1 = between the two walls of the skin, 2 = flesh. */
   private readonly cls: Uint8Array
   private readonly nearWall: Uint8Array
+  /** 皮肤的层数：1 = 单层闭合曲面，2 = 双层壳。 Walls of the skin: 1 = a closed single surface, 2 = a double-walled shell. */
+  walls: 1 | 2 = 2
   private readonly count: Uint8Array
   private readonly labJoint: Int16Array
   private readonly labDist: Float32Array
@@ -205,13 +208,26 @@ export class BodyField {
     let removed = 0, closed = 0
     if (!leaked && skinS) {
       const dirs: V3[] = [[0.8165, 0.4082, 0.4082], [-0.5774, 0.5774, -0.5774], [0.2673, -0.5345, 0.8018]]
+      // 皮肤是单层还是双层：从体内一点（第一个关节的骨的包围盒中心）向外引射线，交点数为奇数即单层闭合曲面
+      // single- or double-walled skin: rays from a point inside the body (the centre of the first joint's bone box); an odd crossing count means a closed single wall
+      const bb = sources[0]?.surface.bbox
+      if (bb) {
+        const c0: V3 = [(bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, (bb[2] + bb[5]) / 2]
+        let odd = 0
+        for (const d of dirs) if (skinS.crossings(c0, [c0[0] + d[0] * 3, c0[1] + d[1] * 3, c0[2] + d[2] * 3]) % 2 === 1) odd++
+        this.walls = odd >= 2 ? 1 : 2
+      }
+      const single = this.walls === 1
       for (let v = 0; v < N; v++) {
         if (!wall[v] || !inside[v]) continue
         const c = centre(v)
         const votes = [0, 0, 0]
         for (const d of dirs) {
-          const n = skinS.crossings(c, [c[0] + d[0] * 3, c[1] + d[1] * 3, c[2] + d[2] * 3]) % 4
-          votes[n === 0 ? 0 : n === 2 ? 2 : 1] = votes[n === 0 ? 0 : n === 2 ? 2 : 1]! + 1
+          const cnt = skinS.crossings(c, [c[0] + d[0] * 3, c[1] + d[1] * 3, c[2] + d[2] * 3])
+          // 单层：奇数 = 肉，偶数 = 空气。双层：模 4 为 2 = 肉，0 = 空气，奇数 = 两层壁之间
+          // single wall: odd = flesh, even = air. Double wall: 2 mod 4 = flesh, 0 = air, odd = between the walls
+          const k2 = single ? (cnt % 2 === 1 ? 2 : 0) : cnt % 4 === 0 ? 0 : cnt % 4 === 2 ? 2 : 1
+          votes[k2] = votes[k2]! + 1
         }
         const k = votes[2]! >= votes[1]! && votes[2]! >= votes[0]! ? 2 : votes[1]! >= votes[0]! ? 1 : 0
         cls[v] = k
@@ -238,7 +254,7 @@ export class BodyField {
           if (X < 0 || Y < 0 || Z < 0 || X >= nx || Y >= ny || Z >= nz) continue
           const u = X + nx * (Y + ny * Z)
           if (u < v || !inside[u] || !nearWall[u]) continue
-          if (skinS.crossings(cv, centre(u)) >= 2) {
+          if (skinS.crossings(cv, centre(u)) >= (single ? 1 : 2)) {
             blocked[v] = blocked[v]! | (1 << n)
             blocked[u] = blocked[u]! | (1 << (25 - n))
             closed++
@@ -342,7 +358,7 @@ export class BodyField {
       }
     }
     if (process.env.RIG_DEBUG) console.error('field dijkstra', Math.round(performance.now() - t0), 'ms')
-    this.stats = { airVoxelsRemoved: removed, stepsClosed: closed, plug, voxel: h, dims: [nx, ny, nz], insideVoxels: nIn, labelledVoxels: labelled, meanLabels: labelled ? total / labelled : 0, leaked, buildMs: Math.round(performance.now() - t0) }
+    this.stats = { skinWalls: this.walls, airVoxelsRemoved: removed, stepsClosed: closed, plug, voxel: h, dims: [nx, ny, nz], insideVoxels: nIn, labelledVoxels: labelled, meanLabels: labelled ? total / labelled : 0, leaked, buildMs: Math.round(performance.now() - t0) }
   }
 
   /** 网格上的测地距离候选（上界）：周围体素的标号各加上到该体素中心的距离，取最小。 Grid geodesic candidates (upper bounds): labels of the surrounding voxels plus the distance to each voxel centre, minimised. */
@@ -369,13 +385,16 @@ export class BodyField {
       }
       return true
     }
+    // 双层皮肤：p 与肉之间可以隔着自己那片皮肤的内壁；单层皮肤：不能隔任何壁
+    // double-walled skin: the inner wall of p's own sheet may lie between p and flesh; single wall: no wall may
+    const own = this.walls === 1 ? 0 : 1
     let any = false
     // 先取“肉”里的体素（中间至多隔一层壁：p 自己所在皮肤的内壁）；没有则取两层壁之间、且中间不隔壁的体素
     // flesh voxels first (at most one wall in between: the inner wall of p's own skin); failing that, voxels between the walls with no wall in between
-    for (let dz = 0; dz <= 1; dz++) for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) if (visit(x0 + dx, y0 + dy, z0 + dz, 2, 1)) any = true
+    for (let dz = 0; dz <= 1; dz++) for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) if (visit(x0 + dx, y0 + dy, z0 + dz, 2, own)) any = true
     if (!any) for (let dz = 0; dz <= 1; dz++) for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) if (visit(x0 + dx, y0 + dy, z0 + dz, 1, 0)) any = true
     for (let r = 2; !any && r <= 3; r++) {
-      for (let dz = -r + 1; dz <= r; dz++) for (let dy = -r + 1; dy <= r; dy++) for (let dx = -r + 1; dx <= r; dx++) if (visit(x0 + dx, y0 + dy, z0 + dz, 2, 1)) any = true
+      for (let dz = -r + 1; dz <= r; dz++) for (let dy = -r + 1; dy <= r; dy++) for (let dx = -r + 1; dx <= r; dx++) if (visit(x0 + dx, y0 + dy, z0 + dz, 2, own)) any = true
     }
     // 点在皮肤之外（头发、突出皮肤的结构）：向外扩大搜索，不再检查隔壁
     // point outside the skin (hair, parts poking through): widen the search without the wall test

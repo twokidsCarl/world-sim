@@ -19,7 +19,7 @@
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
   "data/curated/rig/joints.json": "b03190c864e48d38",
   "data/curated/rig/rom.json": "a0d8466cdd47055e",
-  "data/curated/rig/bindings.json": "9403ee3e41e28d7a",
+  "data/curated/rig/bindings.json": "0e9bdd402426e032",
   "data/curated/rig/overrides.json": "7eaa2f8ae3b733ad"
  },
  "binBytes": 19863864,
@@ -3423,6 +3423,7 @@
   }
  ],
  "field": {
+  "skinWalls": 2,
   "airVoxelsRemoved": 44961,
   "stepsClosed": 6614,
   "plug": 1,
@@ -3436,7 +3437,7 @@
   "labelledVoxels": 479939,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 11727
+  "buildMs": 9098
  },
  "bindings": {
   "bone": {
@@ -8899,6 +8900,7 @@
    "kept": false
   }
  ],
+ "externalSkin": [],
  "fieldQueries": {
   "direct": 10138812,
   "tested": 368185,
@@ -27488,8 +27490,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 1,
-     "maxEdgeStretch": 1
+     "maxEdgeStretch": 1,
+     "stretchedAreaCm2": 0
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -27720,8 +27724,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 0.01,
-     "maxEdgeStretch": 3.78
+     "maxEdgeStretch": 3.78,
+     "stretchedAreaCm2": 83.9
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -27952,8 +27958,10 @@
      "collapsedPct": 0.1,
      "selfInsidePct": 0.3,
      "minAreaRatio": 0.01,
-     "maxEdgeStretch": 6.52
+     "maxEdgeStretch": 6.52,
+     "stretchedAreaCm2": 358
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28220,8 +28228,10 @@
      "collapsedPct": 0.1,
      "selfInsidePct": 0.6,
      "minAreaRatio": 0.04,
-     "maxEdgeStretch": 10.29
+     "maxEdgeStretch": 10.29,
+     "stretchedAreaCm2": 1075.2
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28488,8 +28498,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 0.01,
-     "maxEdgeStretch": 3.78
+     "maxEdgeStretch": 3.78,
+     "stretchedAreaCm2": 83.5
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28747,8 +28759,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
      "minAreaRatio": 0.02,
-     "maxEdgeStretch": 25.25
+     "maxEdgeStretch": 25.25,
+     "stretchedAreaCm2": 1848.9
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29006,8 +29020,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 1.9,
      "minAreaRatio": 0.04,
-     "maxEdgeStretch": 48.69
+     "maxEdgeStretch": 48.69,
+     "stretchedAreaCm2": 5608.7
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29229,8 +29245,10 @@
      "collapsedPct": 0.1,
      "selfInsidePct": 0.6,
      "minAreaRatio": 0.01,
-     "maxEdgeStretch": 14.26
+     "maxEdgeStretch": 14.26,
+     "stretchedAreaCm2": 1253.1
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29470,8 +29488,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.2,
      "minAreaRatio": 0.01,
-     "maxEdgeStretch": 8.27
+     "maxEdgeStretch": 8.27,
+     "stretchedAreaCm2": 402
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29711,8 +29731,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.3,
      "minAreaRatio": 0.07,
-     "maxEdgeStretch": 12.29
+     "maxEdgeStretch": 12.29,
+     "stretchedAreaCm2": 826.4
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29997,8 +30019,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 0.58,
-     "maxEdgeStretch": 1.99
+     "maxEdgeStretch": 1.99,
+     "stretchedAreaCm2": 0
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30283,8 +30307,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
      "minAreaRatio": 0,
-     "maxEdgeStretch": 5.31
+     "maxEdgeStretch": 5.31,
+     "stretchedAreaCm2": 22.4
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30569,8 +30595,10 @@
      "collapsedPct": 0.1,
      "selfInsidePct": 1.4,
      "minAreaRatio": 0.03,
-     "maxEdgeStretch": 4.88
+     "maxEdgeStretch": 4.88,
+     "stretchedAreaCm2": 73.8
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30819,8 +30847,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
      "minAreaRatio": 0.04,
-     "maxEdgeStretch": 4.3
+     "maxEdgeStretch": 4.3,
+     "stretchedAreaCm2": 76
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31087,8 +31117,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.4,
      "minAreaRatio": 0.03,
-     "maxEdgeStretch": 6.93
+     "maxEdgeStretch": 6.93,
+     "stretchedAreaCm2": 96.6
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31355,8 +31387,10 @@
      "collapsedPct": 0.2,
      "selfInsidePct": 2.3,
      "minAreaRatio": 0,
-     "maxEdgeStretch": 22.95
+     "maxEdgeStretch": 22.95,
+     "stretchedAreaCm2": 5245.4
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31605,8 +31639,10 @@
      "collapsedPct": 0.3,
      "selfInsidePct": 1.5,
      "minAreaRatio": 0.01,
-     "maxEdgeStretch": 17.72
+     "maxEdgeStretch": 17.72,
+     "stretchedAreaCm2": 3193.5
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31819,8 +31855,10 @@
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
      "minAreaRatio": 0.04,
-     "maxEdgeStretch": 6.71
+     "maxEdgeStretch": 6.71,
+     "stretchedAreaCm2": 204.5
     },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",

@@ -37,7 +37,13 @@
 - `{ "frame": 坐标架, "t": t, "deg": 角度 }`：自肢体轴线向外的射线；0° 前（屈侧；手为掌侧、足为足背），
   90° 外侧，180° 后，270° 内侧。`{ "at": 点, "frame": …, "deg": … }` 以给定点为起点
 - `{ "nerveCross": 神经部件名, "x": A }`：神经的体表投影与过 A 的矢状面在躯干前面的交点
-- `{ "dimple": { "between": [A, B] } }`：前正中线上 A、B 之间最深的凹点（脐）
+- `{ "dimple": { "between": [A, B], "minDepthMm": 5, "fallback": SkinExpr } }`：前正中线上 A、B 之间最深的凹点（脐）；凹陷不足 minDepthMm（皮肤上没有做出脐）时用 fallback
+- `{ "frameScan": { "frame": …, "deg": …, "t": [a, b], "maxMm": 80 } }`：沿轴线自 a 向 b，第一个沿该方向 maxMm 内有皮肤的位置（如腋窝顶）
+- `{ "first": [SkinExpr, …] }`：依次尝试，取第一个能求出的
+- 坐标架表达式中的 `t` 也可写成 `{ "from": 标志点, "plus": 0.06 }`：相对某标志点沿轴的位置
+
+射线自体内发出，取的是它穿出皮肤的那一点（皮肤法线与射线同向）；两处皮肤互相贴合或穿插时（上臂内侧对胸壁），先碰到的另一处皮肤的背面会被跳过。
+躯干坐标架的 `armLimit` / `armLimitAbove`：在 armLimitAbove 的高度以上（躯干与上臂连成一体），径向投影落在 armLimit 以外侧的不算躯干皮肤。
 
 种子（每个分区的 `seeds`）：
 
@@ -45,6 +51,7 @@
 - `{ "nerve": [名称…], "maxDepthMm": 15, "where": { "frame": …, "t": [a, b] } }`：神经中心线距皮肤不超过给定深度的部分
 - 可选：`"pin": true`（关键点，保持标签）、`"widthMm"`（带宽度的种子）、`"offsetMm"`（让先/让后）
 - 神经种子可加 `"facing": { "frame": …, "deg": … }`：只取投影到朝向该方向的皮肤上的点（如手的 180 = 手背）
+- 神经种子可加 `"clip": { "dir": 方向, "beyond": 点 }`：只取神经的终末段；`maxDepthMm` 在整条神经都更深时自动放宽到其最浅处 + 5 mm
 
 `dermatomes.json` 的 `checks`（独立检查点）中，`at` 可以是皮肤上的一点，也可以是 `{ "over": 部件名 }`：
 取该部件正前方皮肤中面积最大的皮节。`landmarks.json` 的 `notes` 说明个别标志的取法。
@@ -97,7 +104,13 @@ Points on the skin (SkinExpr):
   side; palmar on the hand, dorsal on the foot), 90° lateral, 180° posterior, 270° medial.
   `{ "at": point, "frame": …, "deg": … }` starts from a given point
 - `{ "nerveCross": nerve part, "x": A }`: where a nerve's skin projection crosses the sagittal plane through A on the front of the trunk
-- `{ "dimple": { "between": [A, B] } }`: deepest dimple of the anterior midline between A and B (umbilicus)
+- `{ "dimple": { "between": [A, B], "minDepthMm": 5, "fallback": SkinExpr } }`: deepest dimple of the anterior midline between A and B (umbilicus); the fallback is used when it is shallower than minDepthMm (a skin without a modelled umbilicus)
+- `{ "frameScan": { "frame": …, "deg": …, "t": [a, b], "maxMm": 80 } }`: going along the axis from a to b, the first position with skin within maxMm in that direction (e.g. the apex of the axilla)
+- `{ "first": [SkinExpr, …] }`: tried in order, the first that can be evaluated is taken
+- `t` in a frame expression may also be `{ "from": landmark, "plus": 0.06 }`: a position along the axis relative to a landmark
+
+A ray starts inside the body and the point taken is where it leaves the skin (skin normal along the ray); where two stretches of skin touch or interpenetrate (medial arm against chest wall) the back of the other one, met first, is skipped.
+`armLimit` / `armLimitAbove` of the trunk frame: above the height of armLimitAbove (where trunk and arm are one mass) a radial projection landing lateral to armLimit is not trunk skin.
 
 Seeds (`seeds` of every region):
 
@@ -105,6 +118,7 @@ Seeds (`seeds` of every region):
 - `{ "nerve": [names…], "maxDepthMm": 15, "where": { "frame": …, "t": [a, b] } }`: the part of the nerves' centrelines within the given depth of the skin
 - optional: `"pin": true` (key point, keeps its label), `"widthMm"` (seed with width), `"offsetMm"` (head start / handicap)
 - a nerve seed may carry `"facing": { "frame": …, "deg": … }`: only points that project onto skin facing that direction (e.g. 180 on the hand = dorsal)
+- a nerve seed may carry `"clip": { "dir": dir, "beyond": point }`: only the nerve's terminal stretch; `maxDepthMm` is relaxed to the nerve's own smallest depth + 5 mm when the whole nerve lies deeper
 
 In the `checks` of `dermatomes.json` (independent checkpoints) `at` is a point on the skin or
 `{ "over": part name }`: the dermatome with the largest share of the skin in front of that part.

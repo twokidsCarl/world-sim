@@ -39,8 +39,9 @@ export interface SeedDef {
    */
   nerve?: string | string[]
   /**
-   * 只保留距皮肤不超过此深度的中心线点（默认 15 mm）。
-   * Keep only centreline points at most this deep under the skin (default 15 mm).
+   * 只保留距皮肤不超过此深度的中心线点（默认 15 mm）。整条神经都更深时，放宽到其最浅处深度 + 5 mm。
+   * Keep only centreline points at most this deep under the skin (default 15 mm). When the whole
+   * nerve lies deeper, the limit becomes its own smallest depth + 5 mm.
    */
   maxDepthMm?: number
   /**
@@ -54,6 +55,14 @@ export interface SeedDef {
    * 180 on the hand = dorsal): a dorsal digital nerve's centreline may lie nearer the palmar skin.
    */
   facing?: { frame: string; deg: number }
+  /**
+   * 只保留沿某方向位于某点远侧（beyond）或近侧（before）的中心线点：用来只取神经的终末段，
+   * 不取它途中恰好贴近皮肤的地方（如髂腹下神经前皮支经过髂前上棘处）。
+   * Keep only centreline points beyond / before a point along a direction: takes a nerve's
+   * terminal stretch and not a place where it merely passes close under the skin on its way
+   * (e.g. the anterior cutaneous branch of the iliohypogastric nerve at the anterior superior iliac spine).
+   */
+  clip?: { dir: Dir; beyond?: PointExpr; before?: PointExpr }
   /**
    * 距种子测地距离在此值以内的皮肤，起始距离均为 0（有宽度的种子）。
    * All skin within this geodesic distance of the seed starts at distance 0 (a seed with width).
@@ -120,6 +129,13 @@ export interface BuiltMap {
 }
 
 export class Builder {
+  /**
+   * 其他分区的种子链已占用的顶点：连线时尽量绕开，免得两条相邻的链在粗网格上共用顶点而互相截断。
+   * Vertices already on another region's seed chain: paths steer round them, so that two
+   * neighbouring chains do not share vertices on a coarse mesh and cut each other.
+   */
+  private avoid: Uint8Array | undefined
+
   private readonly nerveByPart = new Map<string, V3[][]>()
   constructor(readonly body: Body, readonly skin: Skin, readonly lm: Landmarks) {
     for (const n of body.nerves) {
@@ -134,8 +150,7 @@ export class Builder {
   private sameSide(side: SideLR) {
     const s = this.skin
     return (a: number, b: number) => {
-      const xa = s.positions[a * 3]! - s.midX, xb = s.positions[b * 3]! - s.midX
-      return side === 'L' ? xa >= 0 && xb >= 0 : xa < 0 && xb < 0
+      return side === 'L' ? s.left[a] === 1 && s.left[b] === 1 : s.left[a] === 0 && s.left[b] === 0
     }
   }
 
@@ -170,7 +185,7 @@ export class Builder {
         const c = this.skin.outerBvh.closest(p)
         if (this.skin.outerBvh.faceVerts(c.face).includes(v)) q = c.point
       }
-      if ((side === 'L') !== this.skin.positions[v * 3]! >= this.skin.midX) continue
+      if ((side === 'L') !== (this.skin.left[v] === 1)) continue
       if (facing && dot(nrm(this.skin, v), this.lm.frameDir(facing.frame, this.lm.frameT(facing.frame, p, side), facing.deg, side)) < 0) continue
       if (out.verts[out.verts.length - 1] === v) continue
       out.verts.push(v)
@@ -233,7 +248,7 @@ export class Builder {
           // (arm fused to the chest): leave a gap instead of bridging it over the shoulder.
           gap = i > 0 && dist(out.pts[out.pts.length - 1]!, seq.pts[i]!) > 0.05
           if (!gap) {
-            const p = path(this.skin, from, v, ok, [out.pts[out.pts.length - 1]!, seq.pts[i]!])
+            const p = path(this.skin, from, v, ok, [out.pts[out.pts.length - 1]!, seq.pts[i]!], this.avoid)
             for (const u of p.slice(1, -1)) { out.verts.push(u); out.pts.push(pos(this.skin, u)); out.gap!.push(false) }
           }
         }
@@ -306,15 +321,41 @@ export class Builder {
       core.push(...line.verts)
     } else if (def.nerve) {
       for (const pattern of Array.isArray(def.nerve) ? def.nerve : [def.nerve]) {
-        const br = this.nerveBranches(pattern, side)
+        let br = this.nerveBranches(pattern, side)
         if (!br) { notes.push(`${region}: nerve "${this.lm.partName(pattern, side)}" has no centreline; seed skipped`); continue }
+        // 皮神经必然到达皮肤：若整条神经都比 maxDepthMm 深（皮下脂肪厚的部位或另一套皮肤），
+        // 则放宽到“该神经距皮肤最近处的深度 + 5 mm”，即取它最接近皮肤的那一段。
+        // A cutaneous nerve does reach the skin: when the whole nerve lies deeper than maxDepthMm
+        // (thick subcutaneous fat, or another skin), the limit is relaxed to its own smallest
+        // depth + 5 mm, i.e. the stretch where it comes closest to the skin is used.
+        if (def.clip) {
+          const d = this.lm.dir(def.clip.dir, side)
+          const lo = def.clip.beyond ? dot(this.lm.point(def.clip.beyond, side), d) : -Infinity
+          const hi = def.clip.before ? dot(this.lm.point(def.clip.before, side), d) : Infinity
+          br = br.map((b) => b.filter((q) => dot(q, d) >= lo && dot(q, d) <= hi))
+        }
+        let depth = (def.maxDepthMm ?? 15) / 1000
+        let nearest = Infinity
+        for (const b of br)
+          for (const q of b) {
+            if (def.where) {
+              const t = this.lm.frameT(def.where.frame, q, side)
+              if (t < def.where.t[0] || t > def.where.t[1]) continue
+            }
+            const v = this.lm.nearestVertex(q, true, Math.min(nearest, 0.08))
+            if (v >= 0) nearest = Math.min(nearest, dist(pos(this.skin, v), q))
+          }
+        if (nearest < Infinity && nearest + 0.005 > depth) {
+          if (nearest > depth) notes.push(`${region}: nerve "${this.lm.partName(pattern, side)}" comes no closer than ${(nearest * 1000).toFixed(0)} mm to the skin; seeded from its part within ${((nearest + 0.005) * 1000).toFixed(0)} mm instead of ${(depth * 1000).toFixed(0)} mm`)
+          depth = Math.max(depth, nearest + 0.005)
+        }
         let used = 0
         for (const b of br) {
-          const raw = this.projectNerve(b, 'beneath', side, (def.maxDepthMm ?? 15) / 1000, def.where, def.facing)
+          const raw = this.projectNerve(b, 'beneath', side, depth, def.where, def.facing)
           used += raw.verts.length
           const line: Line = { verts: [], pts: [], gap: [] }
           for (let i = 0; i < raw.verts.length; i++) {
-            const joined = i > 0 && dist(raw.pts[i - 1]!, raw.pts[i]!) < 0.04
+            const joined = i > 0 && dist(raw.pts[i - 1]!, raw.pts[i]!) < 0.06
             if (joined)
               for (const u of path(this.skin, raw.verts[i - 1]!, raw.verts[i]!, ok, [raw.pts[i - 1]!, raw.pts[i]!]).slice(1, -1)) { line.verts.push(u); line.pts.push(pos(this.skin, u)); line.gap!.push(false) }
             line.verts.push(raw.verts[i]!)
@@ -324,7 +365,7 @@ export class Builder {
           this.lineField(line, side, blocked, field)
           core.push(...line.verts)
         }
-        if (!used) notes.push(`${region}: nerve "${this.lm.partName(pattern, side)}" never comes within ${def.maxDepthMm ?? 15} mm of the skin${def.where ? ' in the requested range' : ''}; seed skipped`)
+        if (!used) notes.push(`${region}: nerve "${this.lm.partName(pattern, side)}" never comes within 80 mm of the skin${def.where ? ' in the requested range' : ''}; seed skipped`)
       }
     }
     if (def.widthMm && core.length) {
@@ -362,8 +403,10 @@ export class Builder {
       }
       const seeds: Seed[] = []
       const isCore = new Uint8Array(skin.n)
+      const taken = new Uint8Array(skin.n)
       def.regions.forEach((r, ri) => {
         const mine: number[] = []
+        this.avoid = taken
         for (const s of r.seeds) {
           if (s.sides && !s.sides.includes(side)) continue
           const { field, core } = this.seedField(s, side, blocked, notes, r.key)
@@ -373,6 +416,8 @@ export class Builder {
           if (s.curve) for (const v of core) if (coreOf[v]! < 0) coreOf[v] = ri
           mine.push(...core)
         }
+        for (const v of mine) taken[v] = 1
+        this.avoid = undefined
         seedVerts.set(`${r.key}|${side}`, mine)
       })
       // 种子与屏障落在同一顶点时，种子优先。
@@ -386,7 +431,24 @@ export class Builder {
       const g = grow(skin, rest, undefined, ok)
       for (let i = 0; i < skin.n; i++) {
         if (!skin.outer[i] || g.label[i]! < 0) continue
-        if ((side === 'L') === skin.positions[i * 3]! >= skin.midX) label[i] = g.label[i]!
+        if ((side === 'L') === (skin.left[i] === 1)) label[i] = g.label[i]!
+      }
+    }
+    // 恰在正中面上、与两侧都只隔着跨中线的边的顶点（如会阴缝上的顶点）此时仍无标签：不分侧别取最近的已标注皮肤。
+    // Vertices lying on the median plane itself, joined to either side only by edges that cross
+    // it (e.g. along a perineal seam), are still unlabelled: they take the nearest labelled skin
+    // regardless of side.
+    {
+      const have: Seed[] = []
+      let missing = false
+      for (let i = 0; i < skin.n; i++) {
+        if (!skin.outer[i]) continue
+        if (label[i]! >= 0) have.push({ vertex: i, label: label[i]!, d0: 0 })
+        else missing = true
+      }
+      if (missing) {
+        const g = grow(skin, have)
+        for (let i = 0; i < skin.n; i++) if (skin.outer[i] && label[i]! < 0 && g.label[i]! >= 0) label[i] = g.label[i]!
       }
     }
     for (const p of pinned) label[p.vertex] = p.region
@@ -407,7 +469,7 @@ export class Builder {
         for (let k = skin.adjStart[i]!; k < skin.adjStart[i + 1]!; k++) {
           const u = skin.adj[k]!
           if (!skin.outer[u] || label[u]! < 0) continue
-          if ((skin.positions[u * 3]! >= skin.midX) !== (skin.positions[i * 3]! >= skin.midX)) continue
+          if (skin.left[u] !== skin.left[i]) continue
           total++
           if (label[u] === label[i]) same++
           count.set(label[u]!, (count.get(label[u]!) ?? 0) + 1)
@@ -429,7 +491,7 @@ export class Builder {
       const comps: { label: number; side: SideLR; verts: number[]; area: number }[] = []
       for (let i = 0; i < skin.n; i++) {
         if (!skin.outer[i] || comp[i]! >= 0 || label[i]! < 0) continue
-        const side: SideLR = skin.positions[i * 3]! >= skin.midX ? 'L' : 'R'
+        const side: SideLR = skin.left[i] ? 'L' : 'R'
         const c = { label: label[i]!, side, verts: [i], area: 0 }
         comp[i] = comps.length
         for (let h = 0; h < c.verts.length; h++) {
@@ -438,7 +500,7 @@ export class Builder {
           for (let k = skin.adjStart[v]!; k < skin.adjStart[v + 1]!; k++) {
             const u = skin.adj[k]!
             if (!skin.outer[u] || comp[u]! >= 0 || label[u] !== c.label) continue
-            if ((skin.positions[u * 3]! >= skin.midX) !== (side === 'L')) continue
+            if ((skin.left[u] === 1) !== (side === 'L')) continue
             comp[u] = comps.length
             c.verts.push(u)
           }
@@ -459,7 +521,7 @@ export class Builder {
           for (const v of c.verts)
             for (let kk = skin.adjStart[v]!; kk < skin.adjStart[v + 1]!; kk++) {
               const u = skin.adj[kk]!
-              if (skin.outer[u] && label[u]! >= 0 && label[u] !== c.label && (skin.positions[u * 3]! >= skin.midX) === (c.side === 'L')) votes.set(label[u]!, (votes.get(label[u]!) ?? 0) + 1)
+              if (skin.outer[u] && label[u]! >= 0 && label[u] !== c.label && (skin.left[u] === 1) === (c.side === 'L')) votes.set(label[u]!, (votes.get(label[u]!) ?? 0) + 1)
             }
           const win = [...votes].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]
           if (win) { for (const v of c.verts) label[v] = win[0]; changed = true; continue }

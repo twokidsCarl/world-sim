@@ -1,0 +1,177 @@
+# 第三部分（中文）
+
+## 16. 按最终内部结构拟合的皮肤包（男 4bf4e6e4b29d70ad，女 031ce88117d19693）
+
+两个包在 `data/raw/bodyshape/out/male-skin/` 和 `data/raw/bodyshape/out/female-skin/`，格式按 `tools/pipeline/skinPackage.ts`：`manifest.json`（`source` 四项、`fittedTo{body,key}`）和 `skin.obj`（MHR LOD0，73639 顶点、147274 三角形，单层，每条边恰为两个三角形共用）。
+
+做法分两步：`fit_skin.py` 做参数拟合（男性贴合他原来的皮肤，女性按 1.606 m / BMI 21.6 的围度目标），`enclose_skin.py` 再把皮肤沿法线局部外推，直到全部深部结构（管线的 FAT_DEEP_TISSUES，不含皮肤系统）都在皮肤下至少 2.5 mm。
+
+### 仍然不对的地方
+
+- 女性：内部结构装不进 BMI 21.6 的皮肤。局部外推之后皮肤包住了一切，但体积 BMI 从 21.6 升到 24.7，颈、锁骨区、前臂、膝、手、眼眶周围能看到肌肉轮廓印出来的凹凸。这不是可以当成品的体表。
+- 女性头仍后仰（随她的颅骨位置）。
+- 女性乳房：HRA 部件不在深部结构之列，皮肤没有去包它们；现在 44–53 % 的腺体/脂肪/韧带采样点在皮肤外，乳头尖在皮肤外 25–29 mm。
+- 男性：外生殖器被一个由光滑皮肤外推出的隆起盖住，外形是带棱面的鼓包，不是阴茎和阴囊的皮肤。
+- 两者：足趾是一整块（MHR 没有分开的足趾）；手指末节处皮肤被外推了最多 39–44 mm。
+- 修正后仍在皮肤外的采样点：男性 3 个部件（眼轮匝肌，最多 0.4 mm），女性 2 个（额肌，0.1 mm）。
+- 我的胸围测量在这两张网格上不稳定（男性前后给出 1059 和 918 mm），不要用。
+- 指纹无法由 anatomy.json 的包围盒复算（管线用的是未量化的骨网格）；`fittedTo.key` 是从 `pipeline-report.json` 照抄的，并检查了导出文件比 anatomy.json 新。
+
+### 女性：目标与内部结构的冲突
+
+参数拟合达到了目标：身高 1.615 m（现建骨架按我的量法是 1.611 m，不是 1.606），体积 BMI 21.55，各围度在目标的 1.5 个标准差内。此时在皮肤之外的深部结构采样点：
+
+| 区域 | 肌肉在外 | 骨在外 | 器官在外 |
+|---|---|---|---|
+| 前臂 | 48.8 %（最远 37 mm） | 45.1 % | 0 |
+| 腹 | 26.8 %（最远 42 mm） | 14.5 % | 0.4 % |
+| 膝 | 25.0 % | 16.0 % | 0 |
+| 足 | 18.8 % | 19.4 % | — |
+| 上臂 | 17.9 % | 13.6 % | 0.1 % |
+| 肩 | 16.5 % | 8.6 % | 11.0 % |
+| 颈 | 15.7 % | 0.9 % | 4.2 % |
+| 小腿 | 15.4 % | 7.2 % | 0 |
+| 手 | 13.6 % | 12.1 % | — |
+| 大腿 | 9.7 % | 0 | — |
+| 头 | 4.8 % | 0.4 % | 0.1 % |
+| 胸 | 4.6 % | 3.3 % | 1.1 % |
+| 骨盆 | 0.1 % | 0 | 0 |
+| 全身 | 10.4 % | 8.5 % | 0.4 % |
+
+最靠外的部件（第 95 百分位）：右桡侧腕长伸肌 33 mm、右指伸肌 31 mm、右肘肌 31 mm、两侧下后锯肌 29–30 mm、桡侧腕短伸肌 28 mm、尺侧腕伸肌 26 mm、背阔肌最远 38–42 mm。
+
+局部外推之后（全身在外比例 0.0 %）：
+
+| 量 | 外推前 | 外推后 | 标准（默认人群） |
+|---|---|---|---|
+| 体积 BMI | 21.6 | 24.7 | 21.6 |
+| 前臂围 | 217 | 291 | 245 |
+| 上臂围 | 265 | 343 | 267 |
+| 小腿围 | 330 | 372 | 338 |
+| 大腿下部围 | 363 | 400 | 367 |
+| 大腿中部围 | 481 | 513 | 456 |
+| 踝围 | 199 | 230 | 208 |
+| 腕围 | 146 | 171 | 149 |
+| 腰围（髂嵴） | 787 | 800 | 799 |
+| 臀围 | 987 | 992 | 928 |
+| 颈围 | 372 | 424 | 312 |
+
+皮肤位移（被移动超过 1 mm 的顶点比例 / 其中位数 / 最大）：腹 71 % / 11 mm / 45 mm；上臂 66 % / 9 / 45；前臂 57 % / 10 / 40；膝 55 % / 13 / 29；颈 58 % / 11 / 25；骨盆只有 16 % / 2 / 15。
+
+脂肪空间（皮肤到最近深部结构的距离，中位，外推前 → 后）：腹 5.1 → 9.8 mm，前臂 5.0 → 7.0，上臂 9.5 → 11.1，小腿 9.3 → 9.9，大腿 16.3 → 17.4，骨盆 23.2 → 23.5。外推前有 34–38 % 的腹、颈、前臂皮肤离深部结构不足 2 mm；外推后不足 4 %。BMI 21.6 女性应有的皮下脂肪是腹 16 mm、上臂 11 mm、大腿 10.5 mm、小腿 3 mm——腹部即使外推后也只有一半。
+
+建议的取舍：先装这张包得住的皮肤（否则肌肉露在外面），并把它如实标为体积 BMI 约 24.7、外形有凹凸；真正的修正在内部结构一侧——把前臂伸肌群、肘肌、下后锯肌和背阔肌、上臂、小腿、膝周围的肌肉包络缩小（前臂 25–33 mm，其余 15–25 mm），然后重跑 `reference_female.py` 和 `enclose_skin.py female`，外推量就会降到几毫米。我没有悄悄提高目标 BMI。
+
+### 女性乳房与会阴
+
+- 乳房：皮肤是 MHR 在 BMI 21.6 的乳房，没有改动。HRA 部件要绕胸壁附着点等比缩放才能放进去：
+  - 左：附着点 (0.100, 1.114, 0.139) m；缩放 0.36 时 99 % 的腺体/脂肪/韧带点在皮肤下 ≥ 3 mm（乳头尖在皮肤下 3.1 mm）；缩放 0.42 时乳头尖正好在皮肤上。
+  - 右：附着点 (−0.090, 1.116, 0.136) m；缩放 0.48（乳头尖皮下 3.0 mm）；缩放 0.54 时乳头尖在皮肤上。
+  - 左右相差很大，说明 HRA 部件相对胸壁的摆放不对称；只缩放不够，还应把两侧对称地重新摆放。缩放到 0.4–0.5 意味着 HRA 乳房比 MHR 在这个 BMI 的乳房大得多。
+- 会阴：皮肤在会阴下方是闭合的光滑曲面，没有阴唇、前庭或肛门的几何，我没有编造。Wu 的结构全部在皮肤内：肛门外括约肌覆盖 3.0 mm（最薄），直肠联合纵肌 8.1 mm，肛门内括约肌 8.9 mm，会阴浅横肌和深横肌 12–14 mm，会阴体 15.8 mm，球海绵体肌 16 mm，阴蒂海绵体 15.3 mm。这些在参数拟合后就已在皮肤内（最靠外的是肛门外括约肌，皮下 0.4 mm）。两大腿内侧间隙 0.2 mm（几乎相贴）。
+
+### 男性
+
+- 参数拟合贴合他重摆肩带后的皮肤，再沿 MHR 胖瘦分量从 BMI 23.86 调到 23.60；身高 1.719 m。
+- 外推前在外：肌肉 0.7 %、骨 1.6 %（主要是手指末节，最远 22 mm）、器官 0.9 %（外生殖器，最远 38 mm）。躯干、肩、上臂、前臂为 0。
+- 外推后：全身 0.0 %；体积 BMI 24.1（+1.5 L，主要是腹股沟的隆起）。围度变化不超过 8 mm（腰 770 → 773，臀 901 → 902，大腿中部 512 → 514，上臂 330 不变）。
+- 外生殖器：7 个属于深部结构的部件（阴茎头、阴茎海绵体、尿道海绵体、两侧睾丸和附睾）用局部外推包住，覆盖至少 3.0 mm，皮肤最大位移 41 mm。其余 8 个是血管，不在深部结构之列，未检验。
+- 腋窝：上臂到躯干的间隙 9.0 / 9.1 mm，前臂到躯干 42 mm；上臂皮肤几乎没有被外推（1.3 % 的顶点）。两大腿之间间隙为 0（相贴）。
+- 脂肪空间中位：腹 7.3 mm，上臂 14.9，大腿 13.5，小腿 9.2，骨盆 15.1。
+
+### 其他交付
+
+- `rig-shape.json` 的 asBuilt 预设已重算：女性取 `standard.donorMm`（身高 1.636 m；头颈 1.058、躯干 0.987、大腿 1.006、小腿 0.919、踝高 1.369、上臂 0.968、前臂 0.999、肩宽 0.902、骨盆宽 1.114；没有手、足），男性取现建模型（肩宽由 0.833 变为 0.913）。
+- 关节映射：MHR 的 `ball` 现在对应 `mtp2_L/R`（MHR 只有一个跖趾关节，位于 mtp2 与 mtp3 之间）。肢段的 `from/to` 现在都是骨架关节 id；`ankleHeight` 的 `to` 为 null，表示地面。
+- 体型场已按最终皮肤重算。注意：场里的 `restBmi` 是外推后皮肤的体积 BMI（男 24.12，女 24.67），而 `controls` 的静止 BMI 是 23.6 / 21.6；女性这两者不一致，正是上面那个冲突。
+- 渲染（每个包目录内）：`preview-skin.png`、`preview-overlay.png`、`preview-pokes.png`、`preview-pokes-before.png`；特写 `closeup-axilla-skin/overlay.png`、`closeup-chest-skin/overlay.png`、`closeup-groin-skin/overlay.png`、`closeup-perineum-below-skin.png`、`closeup-perineum-below-internals.png`。
+
+---
+
+# Part 3 (English)
+
+## 16. Skin packages fitted to the final internals (male 4bf4e6e4b29d70ad, female 031ce88117d19693)
+
+The two packages are in `data/raw/bodyshape/out/male-skin/` and `data/raw/bodyshape/out/female-skin/`, in the format of `tools/pipeline/skinPackage.ts`: `manifest.json` (the four `source` fields and `fittedTo{body,key}`) and `skin.obj` (MHR LOD 0, 73,639 vertices, 147,274 triangles, single wall, every edge shared by exactly two triangles).
+
+Two steps: `fit_skin.py` does the parametric fit (the male to his own skin, the female to girth targets at 1.606 m / BMI 21.6); `enclose_skin.py` then pushes the skin out locally along its normals until every deep part (the pipeline's FAT_DEEP_TISSUES, integumentary system excluded) lies at least 2.5 mm under it.
+
+### What is still wrong
+
+- Female: her internals do not fit inside a BMI 21.6 skin. After the local push the skin encloses everything, but volume BMI rises from 21.6 to 24.7, and muscle outlines print through as lumps at the neck, clavicular region, forearms, knees, hands and around the orbits. This is not a finished body surface.
+- The female's head is still tilted back (it follows her skull position).
+- Female breasts: the HRA parts are not deep parts and the skin was not made to enclose them; 44–53 % of gland/fat/ligament samples are outside the skin and the nipple tips are 25–29 mm outside.
+- Male: the external genitalia are covered by a mound pushed out of the smooth skin; it is a faceted bulge, not penile or scrotal skin.
+- Both: the toes are one block (MHR has no separate toes); at the distal phalanges of the fingers the skin was pushed out by up to 39–44 mm.
+- Samples still outside after the correction: three parts on the male (orbicularis oculi, at most 0.4 mm), two on the female (frontalis, 0.1 mm).
+- My chest-girth measure is unstable on these two meshes (1059 and 918 mm on the male before and after); do not use it.
+- The fingerprint cannot be recomputed from the bounding boxes in anatomy.json (the pipeline uses unquantised bone meshes); `fittedTo.key` is copied from `pipeline-report.json`, with a check that the export is newer than anatomy.json.
+
+### Female: the conflict between target and internals
+
+The parametric fit met the targets: stature 1.615 m (the skeleton as built measures 1.611 m by my method, not 1.606), volume BMI 21.55, girths within 1.5 SD of target. Deep-part surface samples outside that skin:
+
+| Region | Muscle outside | Bone outside | Organ outside |
+|---|---|---|---|
+| Forearm | 48.8 % (furthest 37 mm) | 45.1 % | 0 |
+| Abdomen | 26.8 % (furthest 42 mm) | 14.5 % | 0.4 % |
+| Knee | 25.0 % | 16.0 % | 0 |
+| Foot | 18.8 % | 19.4 % | — |
+| Upper arm | 17.9 % | 13.6 % | 0.1 % |
+| Shoulder | 16.5 % | 8.6 % | 11.0 % |
+| Neck | 15.7 % | 0.9 % | 4.2 % |
+| Lower leg | 15.4 % | 7.2 % | 0 |
+| Hand | 13.6 % | 12.1 % | — |
+| Thigh | 9.7 % | 0 | — |
+| Head | 4.8 % | 0.4 % | 0.1 % |
+| Chest | 4.6 % | 3.3 % | 1.1 % |
+| Pelvis | 0.1 % | 0 | 0 |
+| Whole body | 10.4 % | 8.5 % | 0.4 % |
+
+Parts furthest outside (95th percentile): right extensor carpi radialis longus 33 mm, right extensor digitorum 31 mm, right anconeus 31 mm, serratus posterior inferior 29–30 mm on both sides, extensor carpi radialis brevis 28 mm, extensor carpi ulnaris 26 mm; latissimus dorsi reaches 38–42 mm at its furthest.
+
+After the local push (0.0 % outside overall):
+
+| Quantity | Before | After | Standard (default population) |
+|---|---|---|---|
+| Volume BMI | 21.6 | 24.7 | 21.6 |
+| Forearm girth | 217 | 291 | 245 |
+| Upper-arm girth | 265 | 343 | 267 |
+| Calf girth | 330 | 372 | 338 |
+| Lower-thigh girth | 363 | 400 | 367 |
+| Mid-thigh girth | 481 | 513 | 456 |
+| Ankle girth | 199 | 230 | 208 |
+| Wrist girth | 146 | 171 | 149 |
+| Waist (iliac) | 787 | 800 | 799 |
+| Hip | 987 | 992 | 928 |
+| Neck girth | 372 | 424 | 312 |
+
+Skin displacement (share of vertices moved more than 1 mm / their median / maximum): abdomen 71 % / 11 mm / 45 mm; upper arm 66 % / 9 / 45; forearm 57 % / 10 / 40; knee 55 % / 13 / 29; neck 58 % / 11 / 25; pelvis only 16 % / 2 / 15.
+
+Fat room (skin to nearest deep surface, median, before → after): abdomen 5.1 → 9.8 mm, forearm 5.0 → 7.0, upper arm 9.5 → 11.1, lower leg 9.3 → 9.9, thigh 16.3 → 17.4, pelvis 23.2 → 23.5. Before the push 34–38 % of the skin of abdomen, neck and forearm lay under 2 mm from a deep part; after it under 4 %. A BMI 21.6 woman should have about 16 mm of subcutaneous fat at the abdomen, 11 mm at the arm, 10.5 mm at the thigh and 3 mm at the calf — the abdomen has half of that even after the push.
+
+Recommended trade-off: install this enclosing skin for now (otherwise muscle shows through), and label it truthfully as volume BMI about 24.7 with a lumpy surface; the real correction is on the internals — shrink the muscle envelope of the forearm extensors, anconeus, serratus posterior inferior and latissimus dorsi, upper arm, calf and around the knee (25–33 mm at the forearm, 15–25 mm elsewhere), then rerun `reference_female.py` and `enclose_skin.py female`, after which the push drops to a few millimetres. I did not quietly raise the target BMI.
+
+### Female breasts and perineum
+
+- Breasts: the skin carries MHR's breast at BMI 21.6, unchanged. The HRA parts need a uniform scaling about their chest-wall attachment to fit inside:
+  - Left: attachment (0.100, 1.114, 0.139) m; at scale 0.36, 99 % of gland/fat/ligament samples are at least 3 mm under the skin (nipple tip 3.1 mm under); at scale 0.42 the nipple tip is on the skin.
+  - Right: attachment (−0.090, 1.116, 0.136) m; scale 0.48 (nipple tip 3.0 mm under); at scale 0.54 the nipple tip is on the skin.
+  - The two sides differ a lot, which says the HRA parts are placed asymmetrically on the chest wall; scaling alone is not enough, they should also be re-placed symmetrically. A scale of 0.4–0.5 means the HRA breast is much larger than MHR's at this BMI.
+- Perineum: the skin is a closed smooth surface under the perineum, with no labial, vestibular or anal geometry; none was fabricated. All Wu structures are inside the skin: external anal sphincter 3.0 mm of cover (the thinnest), conjoint longitudinal muscle 8.1 mm, internal anal sphincter 8.9 mm, superficial and deep transverse perineal muscles 12–14 mm, perineal body 15.8 mm, bulbospongiosi 16 mm, cavernous body of clitoris 15.3 mm. They were already inside after the parametric fit (the most exposed was the external anal sphincter, 0.4 mm under the skin). The gap between the thighs is 0.2 mm (almost touching).
+
+### Male
+
+- The parametric fit matches his skin after the shoulder re-pose and is then moved along MHR's fatness component from BMI 23.86 to 23.60; stature 1.719 m.
+- Outside before the push: muscle 0.7 %, bone 1.6 % (mainly the distal phalanges of the fingers, furthest 22 mm), organ 0.9 % (external genitalia, furthest 38 mm). Trunk, shoulder, upper arm and forearm 0.
+- After: 0.0 % overall; volume BMI 24.1 (+1.5 L, mostly the mound at the groin). Girths change by at most 8 mm (waist 770 → 773, hip 901 → 902, mid-thigh 512 → 514, upper arm 330 unchanged).
+- External genitalia: the 7 parts that are deep parts (glans, corpus cavernosum, corpus spongiosum, both testes and epididymides) are enclosed by the local push with at least 3.0 mm of cover; largest skin displacement 41 mm. The other 8 are vessels, not deep parts, and were not tested.
+- Axilla: gap upper arm to trunk 9.0 / 9.1 mm, forearm to trunk 42 mm; the upper-arm skin was hardly pushed (1.3 % of vertices). The gap between the thighs is 0 (touching).
+- Fat room, medians: abdomen 7.3 mm, upper arm 14.9, thigh 13.5, lower leg 9.2, pelvis 15.1.
+
+### Other deliverables
+
+- The asBuilt presets in `rig-shape.json` are regenerated: the female from `standard.donorMm` (stature 1.636 m; head and neck 1.058, trunk 0.987, thigh 1.006, lower leg 0.919, ankle height 1.369, upper arm 0.968, forearm 0.999, shoulder width 0.902, pelvis width 1.114; no hand or foot), the male from the body as now built (shoulder width went from 0.833 to 0.913).
+- Joint mapping: MHR's `ball` now maps to `mtp2_L/R` (MHR has a single metatarsophalangeal joint, lying between mtp2 and mtp3). Segment `from/to` are now all rig joint ids; `ankleHeight` has `to` = null, meaning the floor.
+- The shape fields are recomputed on the final skins. Note: `restBmi` in the fields is the volume BMI of the pushed-out skin (male 24.12, female 24.67), while the rest BMI in `controls` is 23.6 / 21.6; for the female the two disagree, which is the conflict above.
+- Renders (inside each package directory): `preview-skin.png`, `preview-overlay.png`, `preview-pokes.png`, `preview-pokes-before.png`; close-ups `closeup-axilla-skin/overlay.png`, `closeup-chest-skin/overlay.png`, `closeup-groin-skin/overlay.png`, `closeup-perineum-below-skin.png`, `closeup-perineum-below-internals.png`.

@@ -65,6 +65,10 @@ SIDE = ['clavicle_ry', 'clavicle_rz', 'uparm_twist', 'uparm_ry', 'uparm_rz', 'el
         'upleg_twist', 'upleg_ry', 'upleg_rz', 'knee_bend', 'foot_bend', 'foot_lean0', 'foot_lean1', 'ball_bend',
         'thumb0_ry', 'thumb0_rz', 'thumb1_rx', 'thumb1_ry', 'thumb1_rz', 'thumb2_rz', 'thumb3_rz'] + \
        [f'{f}{k}' for f, _ in FINGERS for k in ('1_ry', '1_rz', '2_rz', '3_rz')]
+# 手指各节长度的缩放和指尖节点的位置：让 MHR 的手指与指骨一样长（否则指骨末节会顶出指尖 2 cm）
+# finger segment length scales and fingertip node offsets: make MHR's fingers as long as the phalanges
+# (otherwise the distal phalanges stick 2 cm out of the fingertips)
+FINGER_SCALES = [f'scale_{s}_{f}{k}' for s in 'lr' for f in ('index', 'middle', 'ring', 'pinky', 'thumb') for k in ('1_length', '2_length', '3_length', '_null_tx')]
 # 只由少数对应点约束、容易把皮肤拧坏的扭转量：限幅 / twists that few correspondences constrain: bounded
 BOUNDS = {'upleg_twist': 0.35, 'uparm_twist': 0.9, 'spine_twist0': 0.2, 'spine_twist1': 0.2, 'neck_twist': 0.3, 'head_twist': 0.3,
           'root_rx': 0.3, 'root_ry': 0.3, 'root_rz': 0.3, 'foot_lean0': 0.5, 'foot_lean1': 0.5}
@@ -103,6 +107,19 @@ def joint_targets(name, fb, L):
                         out.append((f'{s}_{f}{k}', R[f'{a}{n}_{S}'], 2))
             if f'mtp2_{S}' in R and f'mtp3_{S}' in R:
                 out.append((f'{s}_ball', 0.5 * (R[f'mtp2_{S}'] + R[f'mtp3_{S}']), 1))
+            # 指尖：末节指骨的远端再向外 3 mm（指腹）-> MHR 的指尖节点
+            # fingertips: far end of the distal phalanx plus 3 mm of pulp -> MHR's fingertip node
+            nm = 'left' if S == 'L' else 'right'
+            for f, bone, prox in (('index', 'index finger', f'dip2_{S}'), ('middle', 'middle finger', f'dip3_{S}'), ('ring', 'ring finger', f'dip4_{S}'),
+                                  ('pinky', 'little finger', f'dip5_{S}'), ('thumb', 'thumb', f'ip1_{S}')):
+                try:
+                    v = fb.verts(f'Distal phalanx of {nm} {bone}')
+                except KeyError:
+                    continue
+                if prox in R:
+                    far = v[np.argsort(-np.linalg.norm(v - R[prox], axis=1))[:8]].mean(0)
+                    dirn = (far - R[prox]) / np.linalg.norm(far - R[prox])
+                    out.append((f'{s}_{f}_null', far + 0.003 * dirn, 2))
         return out, 'rig.json'
     for S, s in (('L', 'l'), ('R', 'r')):
         for m, a in (('uparm', 'shoulder'), ('lowarm', 'elbow'), ('wrist', 'wrist'), ('upleg', 'hip'), ('lowleg', 'knee'), ('foot', 'ankle')):
@@ -149,6 +166,63 @@ def subcutaneous_points(fb):
         n = np.array(n, float)
         pts.append(v[np.argmax(v @ n)] + n * t / 1000.0)
     return np.array(pts)
+
+
+# ------------------------------------------------------------------ 以深部结构包络为准的目标面 / target surface from the deep envelope
+
+def fat_cover(sex):
+    """各区域皮肤到深部结构的应有距离（米）= 皮下脂肪标准厚度（rig-shape.json）+ 2 mm 皮肤。
+    Intended skin-to-deep distance per region (m) = standard subcutaneous fat (rig-shape.json) + 2 mm of skin."""
+    f = {g['id']: g['standardMm'] for g in json.load(open(os.path.join(CUR, 'rig-shape.json')))['sexes'][sex]['fat']}
+    mm = {'head': 4.0, 'neck': 4.0, 'shoulder': f['deltoid'], 'chestFront': f['chestAnterior'], 'chestBack': f['back'], 'abdomenFront': f['abdomen'],
+          'abdomenBack': f['back'], 'pelvis': f['buttock'], 'thigh': f['thighAnterior'], 'knee': 4.0, 'calf': f['calf'], 'foot': 3.0,
+          'upperArm': 0.5 * (f['upperArmPosterior'] + f['deltoid']), 'forearm': f['forearm'], 'hand': 2.5}
+    return {k: (v + 2.0) / 1000.0 for k, v in mm.items()}
+
+
+class Envelope:
+    """给出每个皮肤顶点在“深部结构包络 + 应有软组织厚度”这张目标面上的对应点。
+    Gives every skin vertex its correspondence on the target surface "deep envelope + intended soft-tissue cover"."""
+
+    def __init__(self, fb, L, sex):
+        self.DV, self.DF = fb.merged(lambda p: p['tissue'] in Body.DEEP and p['system'] != 'integumentary')
+        self.DV, self.DF = np.ascontiguousarray(self.DV), np.ascontiguousarray(self.DF)
+        self.L, self.cover, self.factor = L, fat_cover(sex), 1.0
+        self.zc = 0.25 * (L['hip_L'][2] + L['hip_R'][2] + L['shoulder_L'][2] + L['shoulder_R'][2])
+        # 乳房区不约束（那里没有深部结构，乳房由体型模型给出）/ no constraint over the breasts (no deep parts there; the shape model supplies them)
+        self.breast = []
+        for S in 'LR':
+            fat = [fb.mesh(p)[0] for p in fb.parts if p['id'] == f'HRA_fat_{S}']
+            if fat:
+                self.breast.append(fat[0][fat[0][:, 2] <= np.percentile(fat[0][:, 2], 15)].mean(0))
+
+    def thickness(self, V):
+        reg = classify(V, self.L)
+        front = np.clip((V[:, 2] - self.zc) / 0.08 * 0.5 + 0.5, 0, 1)
+        t = np.zeros(len(V))
+        for r in np.unique(reg):
+            m = reg == r
+            if r in ('chest', 'abdomen'):
+                t[m] = self.cover[r + 'Back'] + front[m] * (self.cover[r + 'Front'] - self.cover[r + 'Back'])
+            else:
+                t[m] = self.cover.get(r, 0.006)
+        # 皮肤 2 mm 不随脂肪系数变 / the 2 mm of skin does not scale with the fat factor
+        return 0.002 + self.factor * (t - 0.002)
+
+    def __call__(self, V, Fm, max_dist, min_dot=0.4):
+        import igl
+        V = np.ascontiguousarray(V)
+        d2, _, c = igl.point_mesh_squared_distance(V, self.DV, self.DF)[:3]
+        d = np.sqrt(d2)
+        inside = igl.fast_winding_number(self.DV, self.DF, V) > 0.5
+        e = (V - c) / np.maximum(d, 1e-9)[:, None]
+        e[inside] *= -1
+        s = np.where(inside, -d, d)
+        t = self.thickness(V)
+        ok = (np.einsum('ij,ij->i', vertex_normals(V, Fm), e) > min_dot) & (np.abs(s - t) < max_dist)
+        for A in self.breast:
+            ok &= ~((np.linalg.norm(V[:, :2] - A[:2], axis=1) < 0.085) & (V[:, 2] > self.zc))
+        return c + t[:, None] * e, e, ok
 
 
 def outer_skin(b):
@@ -235,12 +309,13 @@ def solve_identity(fit, tg, sex, offset=None, ridge=0.6):
 # ------------------------------------------------------------------ 拟合 / the fit
 
 class Fit:
-    def __init__(self, name, mode, fb, L, jt, skin=None, bone_pts=None, top_floor=None, subcut=None):
+    def __init__(self, name, mode, fb, L, jt, skin=None, bone_pts=None, top_floor=None, subcut=None, env=None):
         self.name, self.mode, self.fb, self.L = name, mode, fb, L
         names = mhrlib.param_names()
-        self.pnames = [n for n in AXIAL + SCALES + [s + '_' + p for s in 'lr' for p in SIDE] if n in names]
+        self.pnames = [n for n in AXIAL + SCALES + FINGER_SCALES + [s + '_' + p for s in 'lr' for p in SIDE] if n in names]
         self.pidx = np.array([names.index(n) for n in self.pnames])
-        self.nid = 45 if mode == 'skin' else 0
+        self.nid = 45 if mode in ('skin', 'envelope') else 0
+        self.env = env
         self.jn = mhrlib.joint_names(1)
         self.jt = [(self.jn.index(j), np.asarray(p, float), w) for j, p, w in jt if j in self.jn]
         self.skin, self.bone_pts, self.top_floor, self.subcut = skin, bone_pts, top_floor, subcut
@@ -323,10 +398,10 @@ class Fit:
         x = self.x0() if x is None else x
         lam = 1e-2
         for it in range(iters):
-            if self.skin is not None:
+            if self.skin is not None or self.env is not None:
                 V, _, _ = self.run(x)
                 md = 0.06 if it < 3 else (0.04 if it < 8 else 0.025)
-                cp, nt, ok = correspond(V, self.F, *self.skin, max_dist=md)
+                cp, nt, ok = correspond(V, self.F, *self.skin, max_dist=md) if self.skin is not None else self.env(V, self.F, md)
                 self.corr = (cp, nt, 0.35 * ok.astype(float))
             x, lam, c = self.lm_step(x, lam)
             jr = self.joint_residuals(x)
@@ -339,7 +414,7 @@ class Fit:
         return {self.jn[j]: round(float(np.linalg.norm(P[j] - p) * 1000), 1) for j, p, _ in self.jt}
 
 
-def refine(V, F, skinmesh, rounds=4, cap=0.02):
+def refine(V, F, skinmesh, rounds=4, cap=0.02, provider=None):
     """平滑的逐顶点修正：可信处朝现有皮肤移动，不可信处由邻域调和插值。
     Smooth per-vertex correction: move towards the existing skin where the correspondence is
     trusted, harmonic fill elsewhere."""
@@ -352,7 +427,7 @@ def refine(V, F, skinmesh, rounds=4, cap=0.02):
     off = np.zeros_like(V)
     trusted = np.zeros(n, bool)
     for _ in range(rounds):
-        cp, nt, ok = correspond(V + off, F, *skinmesh, max_dist=0.012, min_dot=0.6)
+        cp, nt, ok = correspond(V + off, F, *skinmesh, max_dist=0.012, min_dot=0.6) if provider is None else provider(V + off, F, 0.03, 0.6)
         raw = off + np.einsum('ij,ij->i', nt, cp - (V + off))[:, None] * nt
         raw[~ok] = 0
         o = np.where(ok[:, None], raw, off)
@@ -454,7 +529,7 @@ def stale_guard(name):
 def main():
     name = sys.argv[1]
     arg = lambda k, d: (sys.argv[sys.argv.index(k) + 1] if k in sys.argv else d)
-    mode = arg('--mode', 'skin' if name == 'male' else 'targets')
+    mode = arg('--mode', 'skin' if name == 'male' else 'envelope')
     lod = int(arg('--lod', 0))
     sex = 'F' if name == 'female' else 'M'
     out = os.path.join(RAW, 'out', arg('--out', f'{name}-skin'))
@@ -471,9 +546,20 @@ def main():
     Jm = {k: L[k] for k in JOINT_KEYS}
     old_meas = surface_measures(*fb.skin(), Jm, levels={'iliocristale': ilio})
 
+    env = None
     if mode == 'skin':
         fit = Fit(name, mode, fb, L, jt, skin=oskin)
         x = fit.solve(16, log)
+        ident, mp = fit.unpack(x)
+    elif mode == 'envelope':
+        # 目标面 = 她的深部结构包络 + 各部位应有的皮下脂肪和皮肤；关节对 rig.json。这样皮肤居中包在内部结构外面，
+        # 围度 = 包络围度 + 标准脂肪。之后调一个统一的脂肪系数，使体积 BMI 等于目标。
+        # target surface = her deep envelope + the intended fat and skin of each region; joints to rig.json. The skin is
+        # then centred on the internals and girths = envelope girth + standard fat. A single fat factor is tuned afterwards
+        # so that the volume BMI meets the target.
+        env = Envelope(fb, L, sex)
+        fit = Fit(name, mode, fb, L, jt, env=env)
+        x = fit.solve(18, log)
         ident, mp = fit.unpack(x)
     else:
         bmi = float(arg('--bmi', 22.0))
@@ -515,6 +601,24 @@ def main():
     jn = mhrlib.joint_names(lod)
     Vmhr = V.copy()
     off = np.zeros_like(V)
+    if mode == 'envelope':
+        from measure import mesh_volume
+        tb = float(arg('--bmi', 21.6))
+        Hh = lambda W: W[:, 1].max() - W[:, 1].min()
+        bmi_of = lambda W: mesh_volume(W, F) * 1010.0 / Hh(W) ** 2
+        tried = []
+        for fac in (1.0, 1.4):
+            env.factor = fac
+            off, trusted = refine(Vmhr, F, None, provider=env)
+            tried.append((fac, bmi_of(Vmhr + off)))
+        k_ = (tried[1][1] - tried[0][1]) / 0.4
+        fac = float(np.clip(1.0 + (tb - tried[0][1]) / k_, 0.3, 2.5)) if abs(k_) > 1e-6 else 1.0
+        env.factor = fac
+        off, trusted = refine(Vmhr, F, None, provider=env)
+        V = Vmhr + off
+        log.append(f'fat factor: volume BMI {tried[0][1]:.2f} at standard fat thickness, {tried[1][1]:.2f} at 1.4 x; factor {fac:.2f} gives {bmi_of(V):.2f} (target {tb})')
+        log.append(f'per-vertex correction: median {np.median(np.linalg.norm(off, axis=1)) * 1000:.1f} mm, 95th percentile '
+                   f'{np.percentile(np.linalg.norm(off, axis=1), 95) * 1000:.1f} mm, vertices with a usable correspondence {trusted.mean() * 100:.0f} %')
     if mode == 'skin':
         off, trusted = refine(V, F, oskin)
         V = V + off
@@ -571,6 +675,8 @@ def main():
 
     # 参数拟合的结果存盘，供 enclose_skin.py 做包裹修正和打包 / state of the parametric fit, for enclose_skin.py
     np.savez(os.path.join(out, 'fit-state.npz'), identity=ident, mp=mp, offsets=off, lod=lod)
+    if mode == 'envelope':  # compose_female.py 读这一份 / compose_female.py reads this copy
+        np.savez(os.path.join(out, 'fit-state-envelope.npz'), identity=ident, mp=mp, offsets=off, lod=lod)
     write_obj(os.path.join(out, 'skin.obj'), V, F, f'{name} skin, MHR LOD{lod} topology (Apache-2.0); metres, Y up, +Z anterior, +X left')
     Vr, Pr, _ = mhrlib.run(ident, mp, lod, False)
     np.asarray(Vr + off, np.float32).tofile(os.path.join(out, 'skin-no-pose-correctives.f32'))

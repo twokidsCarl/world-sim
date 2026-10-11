@@ -72,6 +72,10 @@ export interface Skin {
    * 1 = vertex on the outer wall (the surface one can touch), 0 = inner wall of the shell.
    */
   outer: Uint8Array
+  /** 1 = 单层皮肤上被另一处皮肤盖住的顶点（双层壳恒为 0）/ 1 = vertex of a single-surface skin covered by other skin (always 0 on a shell). */
+  covered: Uint8Array
+  /** 皮肤是否为内外两层壁的壳 / Whether the skin is a shell with an inner and an outer wall. */
+  doubleWalled: boolean
   /**
    * 分摊到每个顶点的面积（m²，取其相邻三角形面积的三分之一）。
    * Area in m² attributed to each vertex (a third of its triangles).
@@ -107,6 +111,8 @@ export interface Skin {
    * X of the median plane.
    */
   midX: number
+  /** 1 = 顶点属身体左侧（+X），0 = 右侧 / 1 = vertex on the body's left (+X), 0 = on its right. */
+  left: Uint8Array
 }
 
 export const pos = (s: { positions: Float32Array }, i: number): V3 => [s.positions[i * 3]!, s.positions[i * 3 + 1]!, s.positions[i * 3 + 2]!]
@@ -164,41 +170,73 @@ export function buildSkin(raw: RawMesh, midX = 0): Skin {
     for (let k = 0; k < na.length; k++) { adj[s + k] = na[k]!; adjLen[s + k] = nl[k]! }
   }
 
-  // 外壁判定：沿法线稍离表面的一点，若向无穷远的射线穿过的壁数为 4 的倍数，则位于体外空气中（每穿过一段肢体或躯干依次经过外、内、内、外四层壁）；若除以 4 余 2，则位于体内空腔。
-  // Outer wall: a point just off the surface on the normal side is in the air outside the body
-  // when a ray from it to infinity crosses a multiple of four walls (each limb or the trunk it
-  // passes adds outer+inner+inner+outer); it is in the hollow inside when the count is 2 mod 4.
   const all = new Bvh(positions, indices)
-  const dirs: V3[] = [norm([0.31, 0.11, 0.94]), norm([-0.87, 0.23, -0.43]), norm([0.42, 0.9, 0.11]), norm([0.2, -0.95, 0.24]), norm([-0.5, -0.3, 0.81])]
-  const vote = new Int8Array(n)
-  for (let i = 0; i < n; i++) {
-    const o = add(P(i), mul([normals[i * 3]!, normals[i * 3 + 1]!, normals[i * 3 + 2]!], 2e-4))
-    let s = 0
-    for (const d of dirs) {
-      const c = all.hits(o, d).length % 4
-      if (c === 0) s++
-      else if (c === 2) s--
-    }
-    vote[i] = s
+  // 皮肤是双层壳还是单层闭合面：自各顶点沿法线反方向（向皮肤内部）到下一层壁的距离，
+  // 双层壳的中位数只有几毫米（皮肤厚度），单层面则是肢体的粗细。
+  // Is the skin a double-walled shell or a single closed surface? The distance from a vertex
+  // inwards (against its normal) to the next wall has a median of a few millimetres on a shell
+  // (the skin's thickness) and of a limb's width on a single surface.
+  const thickness: number[] = []
+  for (let i = 0; i < n; i += 7) {
+    const nn: V3 = [normals[i * 3]!, normals[i * 3 + 1]!, normals[i * 3 + 2]!]
+    const h = all.hits(add(P(i), mul(nn, -2e-4)), mul(nn, -1))[0]
+    thickness.push(h ? h.t : Infinity)
   }
+  thickness.sort((x, y) => x - y)
+  const doubleWalled = thickness[thickness.length >> 1]! < 0.008
+  // 双层壳的外壁判定：沿法线稍离表面的一点向无穷远发出射线，穿过的壁数为 4 的倍数则位于体外空气中
+  // （每穿过一段肢体或躯干依次经过外、内、内、外四层壁），除以 4 余 2 则位于体内空腔。
+  // 单层面没有内壁：全部顶点都是体表。其中互相贴合或略有穿插的部分（腋窝处上臂与胸壁、指间、会阴）
+  // 同样是皮肤，照常参与分区。
+  // Outer wall of a shell: a point just off the surface on the normal side is in the air outside
+  // when a ray from it to infinity crosses a multiple of four walls (each limb or the trunk it
+  // passes adds outer+inner+inner+outer), and in the hollow inside when the count is 2 mod 4.
+  // A single surface has no inner wall: every vertex is body surface. Where parts of it touch or
+  // slightly interpenetrate (arm against chest in the axilla, between fingers, perineum) it is
+  // skin all the same and is partitioned like the rest.
   const outer = new Uint8Array(n)
-  for (let i = 0; i < n; i++) outer[i] = vote[i]! > 0 ? 1 : 0
-  // 清除个别误判（射线擦边所致）：两轮邻点多数表决。
-  // Clean isolated misclassifications (grazing rays): two rounds of neighbour majority.
-  for (let round = 0; round < 2; round++) {
-    const next = outer.slice()
+  const covered = new Uint8Array(n)
+  const dirs: V3[] = [norm([0.31, 0.11, 0.94]), norm([-0.87, 0.23, -0.43]), norm([0.42, 0.9, 0.11]), norm([0.2, -0.95, 0.24]), norm([-0.5, -0.3, 0.81])]
+  if (!doubleWalled) {
+    outer.fill(1)
+    // 单层面上被盖住的皮肤：沿法线稍离表面的点位于体内（射线穿过奇数层壁），即此处皮肤贴在或插进了另一处皮肤里
+    //（腋窝处上臂对胸壁、并拢的手指之间、会阴、手指上重叠的网格层）。它照常分区，但不计入面积统计。
+    // Covered skin on a single surface: a point just off it on the normal side is inside the body
+    // (the ray crosses an odd number of walls), i.e. this skin lies against or inside another
+    // stretch of skin (arm against chest in the axilla, between closed fingers, perineum,
+    // overlapping mesh sheets on the fingers). It is partitioned like the rest but left out of
+    // the area statistics.
     for (let i = 0; i < n; i++) {
-      let o = 0, c = 0
-      for (let k = adjStart[i]!; k < adjStart[i + 1]!; k++) { o += outer[adj[k]!]!; c++ }
-      if (c && o * 2 > c + 1) next[i] = 1
-      else if (c && o * 2 < c - 1) next[i] = 0
+      const o = add(P(i), mul([normals[i * 3]!, normals[i * 3 + 1]!, normals[i * 3 + 2]!], 2e-4))
+      let odd = 0
+      for (const d of dirs) if (all.hits(o, d).length % 2 === 1) odd++
+      covered[i] = odd >= 3 ? 1 : 0
     }
-    outer.set(next)
-  }
-
-  // 把被另一类包围的小岛翻转（残余的擦边误差）。
-  // Flip small islands of one class enclosed in the other (leftover grazing-ray errors).
-  {
+  } else {
+    for (let i = 0; i < n; i++) {
+      const o = add(P(i), mul([normals[i * 3]!, normals[i * 3 + 1]!, normals[i * 3 + 2]!], 2e-4))
+      let s = 0
+      for (const d of dirs) {
+        const c = all.hits(o, d).length % 4
+        if (c === 0) s++
+        else if (c === 2) s--
+      }
+      outer[i] = s > 0 ? 1 : 0
+    }
+    // 清除个别误判（射线擦边所致）：两轮邻点多数表决。
+    // Clean isolated misclassifications (grazing rays): two rounds of neighbour majority.
+    for (let round = 0; round < 2; round++) {
+      const next = outer.slice()
+      for (let i = 0; i < n; i++) {
+        let o = 0, c = 0
+        for (let k = adjStart[i]!; k < adjStart[i + 1]!; k++) { o += outer[adj[k]!]!; c++ }
+        if (c && o * 2 > c + 1) next[i] = 1
+        else if (c && o * 2 < c - 1) next[i] = 0
+      }
+      outer.set(next)
+    }
+    // 把被另一类包围的小岛翻转（残余的擦边误差）。
+    // Flip small islands of one class enclosed in the other (leftover grazing-ray errors).
     const seen = new Uint8Array(n)
     for (let i = 0; i < n; i++) {
       if (seen[i]) continue
@@ -258,7 +296,50 @@ export function buildSkin(raw: RawMesh, midX = 0): Skin {
       geoLen[geoStart[i]! + k] = dist(P(i), P(l[k]!))
     }
   }
-  return { n, positions, indices, normals, outer, area, adjStart, adj, adjLen, geoStart, geo, geoLen, outerOf, outerBvh, midX }
+  // 侧别：按 X 与正中面比较；紧贴正中面（2.5 mm 以内）的顶点改随其带外邻点中的多数，
+  // 否则沿中线的一列顶点（如会阴缝）会被算作某一侧的孤立小块。
+  // Side: by X against the median plane; a vertex within 2.5 mm of the plane follows the majority
+  // of its neighbours outside that band, or a row of vertices along the midline (a perineal seam)
+  // would count as an isolated piece of one side.
+  const left = new Uint8Array(n)
+  for (let i = 0; i < n; i++) left[i] = positions[i * 3]! >= midX ? 1 : 0
+  const nearMid = (i: number) => Math.abs(positions[i * 3]! - midX) < 0.0025
+  for (let round = 0; round < 3; round++) {
+    const next = left.slice()
+    for (let i = 0; i < n; i++) {
+      if (!nearMid(i)) continue
+      let l = 0, r = 0
+      for (let k = adjStart[i]!; k < adjStart[i + 1]!; k++) {
+        const u = adj[k]!
+        if (round === 0 && nearMid(u)) continue
+        if (left[u]) l++
+        else r++
+      }
+      if (l !== r) next[i] = l > r ? 1 : 0
+    }
+    left.set(next)
+  }
+  // 仍与本侧主体不相连的零星顶点（中线上的残余）归入对侧。
+  // Stray vertices still not connected to the bulk of their side (leftovers on the midline) go to the other side.
+  {
+    const seen = new Uint8Array(n)
+    const comps: number[][] = []
+    for (let i = 0; i < n; i++) {
+      if (seen[i]) continue
+      const comp = [i]
+      seen[i] = 1
+      for (let h = 0; h < comp.length; h++) {
+        const v = comp[h]!
+        for (let k = adjStart[v]!; k < adjStart[v + 1]!; k++) {
+          const u = adj[k]!
+          if (!seen[u] && left[u] === left[i]) { seen[u] = 1; comp.push(u) }
+        }
+      }
+      comps.push(comp)
+    }
+    for (const comp of comps) if (comp.length < 100) for (const v of comp) left[v] = left[v] ? 0 : 1
+  }
+  return { n, positions, indices, normals, outer, covered, doubleWalled, area, adjStart, adj, adjLen, geoStart, geo, geoLen, outerOf, outerBvh, midX, left }
 }
 
-export const sideOf = (s: Skin, i: number): 'L' | 'R' => (s.positions[i * 3]! >= s.midX ? 'L' : 'R')
+export const sideOf = (s: Skin, i: number): 'L' | 'R' => (s.left[i] ? 'L' : 'R')

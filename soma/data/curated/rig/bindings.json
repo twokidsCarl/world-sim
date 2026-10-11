@@ -262,12 +262,149 @@
   ],
   "externalWeights": [
     {
-      "tissue": "skin",
       "body": "male",
       "dir": "data/raw/bodyshape/out/male-skin",
       "why": {
-        "zh": "原男性皮肤把上臂和胸壁连在一起，任何权重都摆不好。换用 MHR 拓扑的单层皮肤后，直接采用 MHR 学到的蒙皮权重（关节按 joints.json 的 mapping 对应到本骨架）。只有当皮肤部件的顶点数与该目录的权重一致时才生效；否则仍按距离场绑定。",
-        "en": "The original male skin joins the upper arm to the chest wall and cannot be posed well with any weights. Once the single-walled skin in MHR topology replaces it, MHR's learned skin weights are used directly (joints mapped onto this rig by `mapping` in joints.json). This takes effect only when the skin part has as many vertices as the weights in that directory; otherwise the skin is bound by the distance field as before."
+        "zh": "男性皮肤换成了 MHR 拓扑的单层皮肤，上臂与胸壁之间只隔约 9 mm、两腿相贴，按“最近的骨”无法把这样靠近的两片皮肤分开。这里直接采用 MHR 自带的蒙皮权重：先把 MHR 的关节按下面的规则对应到本骨架的关节，再按原始表面上的最近点把权重传给发布的（简化过的）皮肤顶点。",
+        "en": "The male skin is now a single-walled skin in MHR topology with only about 9 mm between upper arm and chest wall and the thighs touching; nearest-bone weighting cannot separate two sheets that close. MHR's own skin weights are used instead: MHR joints are mapped onto this rig's joints by the rules below, and the weights are handed to the shipped (simplified) skin vertices by closest point on the original surface."
+      },
+      "map": [
+        {
+          "match": "^(?:root|c_spine[0-3])$",
+          "axial": {
+            "mhrChain": [
+              "root",
+              "c_spine0",
+              "c_spine1",
+              "c_spine2",
+              "c_spine3",
+              "c_neck",
+              "c_head"
+            ],
+            "rigChain": [
+              "pelvis",
+              "L5",
+              "L4",
+              "L3",
+              "L2",
+              "L1",
+              "T12",
+              "T11",
+              "T10",
+              "T9",
+              "T8",
+              "T7",
+              "T6",
+              "T5",
+              "T4",
+              "T3",
+              "T2",
+              "T1",
+              "C7",
+              "C6",
+              "C5",
+              "C4",
+              "C3",
+              "C2",
+              "C1",
+              "skull"
+            ]
+          },
+          "why": {
+            "zh": "MHR 的躯干只有骨盆加 4 个脊柱关节，本骨架每个椎间关节各一个：把每个 MHR 脊柱关节的权重按顶点高度分给它所管高度范围内相邻的两个椎间关节。",
+            "en": "MHR's trunk has the pelvis and four spine joints, this rig one joint per motion segment: the weight on each MHR spine joint goes, by vertex height, to the two neighbouring segment joints within the heights that MHR joint covers."
+          }
+        },
+        {
+          "match": "^c_neck(?:_twist[01]_proc)?$",
+          "axial": {
+            "mhrChain": [
+              "root",
+              "c_spine0",
+              "c_spine1",
+              "c_spine2",
+              "c_spine3",
+              "c_neck",
+              "c_head"
+            ],
+            "rigChain": [
+              "pelvis",
+              "L5",
+              "L4",
+              "L3",
+              "L2",
+              "L1",
+              "T12",
+              "T11",
+              "T10",
+              "T9",
+              "T8",
+              "T7",
+              "T6",
+              "T5",
+              "T4",
+              "T3",
+              "T2",
+              "T1",
+              "C7",
+              "C6",
+              "C5",
+              "C4",
+              "C3",
+              "C2",
+              "C1",
+              "skull"
+            ],
+            "as": "c_neck"
+          },
+          "why": {
+            "zh": "颈部同理：分给 C7…C1。",
+            "en": "The neck likewise: spread over C7…C1."
+          }
+        },
+        {
+          "match": "^([lr])_lowarm_twist([1-4])_proc$",
+          "to": [
+            {
+              "joint": "elbow_{S}",
+              "share": "1-n/5"
+            },
+            {
+              "joint": "radioulnar_{S}",
+              "share": "n/5"
+            }
+          ],
+          "why": {
+            "zh": "前臂扭转辅助骨 1–4：旋前的 1/5…4/5，在尺骨（不转）和桡骨（全转）之间按份额分。",
+            "en": "Forearm twist helpers 1–4 carry 1/5…4/5 of pronation: shared between the ulna (no twist) and the radius (full twist)."
+          }
+        },
+        {
+          "match": "^([lr])_wrist_twist$",
+          "to": [
+            {
+              "joint": "radioulnar_{S}",
+              "share": 1
+            }
+          ],
+          "why": {
+            "zh": "腕部扭转骨随桡骨。",
+            "en": "The wrist twist joint goes with the radius."
+          }
+        },
+        {
+          "match": "^([lr])_ball$",
+          "nearest": "^mtp[1-5]_{S}$",
+          "why": {
+            "zh": "MHR 的足趾只有一个“前掌”关节；本骨架每趾各有跖趾关节：每个顶点给最近的那一趾。趾间关节没有对应，足趾皮肤只随跖趾关节。",
+            "en": "MHR has one \"ball\" joint for all toes, this rig a metatarsophalangeal joint per toe: every vertex goes to its nearest toe. The interphalangeal joints of the toes have no counterpart; toe skin follows the MTP joint only."
+          }
+        }
+      ],
+      "generic": "^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$",
+      "genericWhy": {
+        "zh": "手指：MHR 的指关节中心与本骨架按骨拟合的中心相差 5–17 mm（拇指腕掌关节最大），握拳时 MHR 权重的皮肤拉伸更大；手指之间有空隙，距离场在这里本来就分得开，所以手指仍用距离场的权重。",
+        "en": "Fingers: MHR's finger joint centres differ from this rig's bone-fitted centres by 5–17 mm (most at the thumb's carpometacarpal joint) and its weights stretch the skin more in a fist; the fingers are apart, where the distance field separates them well anyway, so the fingers keep the distance-field weights."
       }
     }
   ]
