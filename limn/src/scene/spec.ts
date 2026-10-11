@@ -140,6 +140,8 @@ export interface SceneSpec {
   overlay?: boolean
   /** 不逐个描边的实体名（正则）/ names of entities not outlined one by one (a regular expression) */
   merge?: string
+  /** 名字匹配的实体衬在切片后面（正则）/ entities whose name matches line the back of the slab (a regular expression) */
+  lining?: string
   /** 主题解析选中了目录里的一个现成模型 / the resolver chose a ready-made model from the catalogue */
   catalog?: string
   /** kind 为 'landscape' 时才有 / present when kind is 'landscape' */

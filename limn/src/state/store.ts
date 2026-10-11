@@ -165,6 +165,13 @@ export interface CatalogEntry {
   points?: { url: string; voxelSpacing: number; fit?: TemplateFit }
   merge?: string
   cut?: number
+  /** 衬在切片后面的实体（正则）/ entities that line the back of the slab (a regular expression) */
+  lining?: string
+  /**
+   * 膜上某种蛋白的数量按文献推断、位置重排成等间隔的环：pattern 是它的实体名，count 是推断的数量，source 是出处。
+   * A membrane protein whose number is inferred from the literature and whose copies are re-set in evenly spaced rings: `pattern` names its entity, `count` is the inferred number, `source` where it comes from.
+   */
+  respike?: { pattern: string; count: number; source: string }
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
   membrane?: [number, number, number]
   /** 按角色指定色族 {角色: [L, C, h]} / a family of hue per role, {role: [L, C, h]} */
@@ -228,6 +235,66 @@ const START_DRAWING: Drawing = typeof location !== 'undefined' && new URLSearchP
  * M1 blue, nucleoprotein orange, RNA yellow, polymerase red.
  */
 type V3 = [number, number, number]
+
+/**
+ * 实例化的模型里，把膜上某种蛋白的数量换成文献里的数，并排成等间隔的环（见 src/infer/idealise.ts）。
+ * 原模型里这种蛋白的拷贝去掉（它们各自带的那一小块膜留着），返回新的一个面板。
+ * In an instanced model, replace the number of one membrane protein by a number from the
+ * literature and set the copies in evenly spaced rings (see src/infer/idealise.ts). The model's own
+ * copies of that protein are removed (the patch of membrane each carries stays), and a new panel
+ * is returned.
+ */
+function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: Note[]): Panel | null {
+  const re = new RegExp(entry.respike!.pattern, 'i')
+  const asm = model.assemblies.find((a) => a.id === assembly)
+  if (!asm) return null
+  const is = (ci: number) => re.test(model.entities[model.chains[ci]!.entity]!.description) && model.entities[model.chains[ci]!.entity]!.kind !== 'lipid'
+  const group = asm.groups.find((g) => g.chains.some(is))
+  if (!group || group.operators.length === 0) return null
+  const chains = group.chains.filter(is)
+  const at = (m: Float32Array, p: V3): V3 => [m[0]! * p[0] + m[4]! * p[1] + m[8]! * p[2] + m[12]!, m[1]! * p[0] + m[5]! * p[1] + m[9]! * p[2] + m[13]!, m[2]! * p[0] + m[6]! * p[1] + m[10]! * p[2] + m[14]!]
+  // 膜的中心：所有膜块位置的平均 / the membrane's centre: the mean position of all its patches
+  const centre: V3 = [0, 0, 0]
+  let n = 0
+  for (const g of asm.groups) {
+    const c0 = chainCentre(model, g.chains[0]!)
+    for (const op of g.operators) {
+      const p = at(op, c0)
+      centre[0] += p[0]
+      centre[1] += p[1]
+      centre[2] += p[2]
+      n++
+    }
+  }
+  centre[0] /= n
+  centre[1] /= n
+  centre[2] /= n
+  // 样板：原模型里的第一份，搬到它在模型里的位置上 / the template: the model's first copy, carried to where it stands in the model
+  const sub = subMolecule(model, chains, `${model.id}:spike`, entry.titleEn)
+  const op = group.operators[0]!
+  for (let i = 0; i < sub.atomCount; i++) {
+    const p = at(op, [sub.pos[i * 3]!, sub.pos[i * 3 + 1]!, sub.pos[i * 3 + 2]!])
+    sub.pos.set(p, i * 3)
+  }
+  const template = templateOf(sub, sub.chains.map((_, i) => i), centre)
+  const had = group.operators.length
+  const count = entry.respike!.count
+  sub.assemblies.push({ id: 'inferred', groups: [{ chains: sub.chains.map((_, i) => i), operators: placeTemplate(template, centre, ringSites(count, [0, 0, 1])) }] })
+  group.chains = group.chains.filter((ci) => !is(ci))
+  if (group.chains.length === 0) asm.groups.splice(asm.groups.indexOf(group), 1)
+  const lch = (e: Molecule['entities'][number]): [number, number, number] | null => entry.colors?.find(([pattern]) => new RegExp(pattern, 'i').test(e.description))?.[1] ?? null
+  const roles: Role[] = sub.entities.map(() => 'focus')
+  const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: sub.entities.map((e) => lch(e)) }
+  notes.push({ key: 'note.respiked', params: { had, count, source: entry.respike!.source } })
+  const spec: PanelSpec = {
+    label: `${entry.title}：刺（推断的数量和排布）`, labelEn: `${entry.titleEn}: spikes (inferred number and arrangement)`,
+    source: { id: `${entry.id}:spike`, kind: 'model', title: entry.titleEn, method: tIn('zh', 'method.inferredCount'), methodEn: tIn('en', 'method.inferredCount'), resolution: null, year: null, tier: 'estimated', licence: entry.licence, attribution: entry.attribution, citation: entry.respike!.source, link: entry.link },
+    assembly: 'inferred',
+    entities: sub.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description, description: e.description, organism: '' })),
+    reason: '',
+  }
+  return { spec, mol: sub, coloring, align: null }
+}
 
 async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void, idealise: boolean, colors: NonNullable<CatalogEntry['colors']>): Promise<Panel[]> {
   const lipids = model.chains.filter((c) => model.entities[c.entity]!.kind === 'lipid')
@@ -626,8 +693,9 @@ export const useStore = create<State>((set, get) => ({
       if (mesoscale && !entry.points) notes.push({ key: 'note.publishedModel' })
       // 数据里没有的部分，按已知结构推断着补上，各自是一个面板，和模型在同一个坐标系里
       // what the data lacks is filled in by inference from known structures, each part a panel of its own in the model's coordinate frame
-      const inferred: Panel[] = entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
-      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
+      const respiked = entry.respike && get().drawing === 'painted' ? respike(entry, mol, assembly, notes) : null
+      const inferred: Panel[] = respiked ? [respiked] : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
+      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({
         spec: scene,
         panels: [{ spec, mol, coloring, align: null }, ...inferred],
@@ -996,7 +1064,7 @@ export const useStore = create<State>((set, get) => ({
     const sp = get().spec
     // 带“理想化排布”的模型两种画法用的排布不同，要重新载入 / a model with an idealised arrangement uses a different arrangement in each drawing and has to be reloaded
     const entry = sp?.catalog ? (catalog.models as CatalogEntry[]).find((m) => m.id === sp.catalog) : undefined
-    if (entry?.infer) {
+    if (entry?.infer || entry?.respike) {
       set({ drawing })
       void get().loadCatalog(entry.id)
       return
