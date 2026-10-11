@@ -103,6 +103,10 @@ limn 这一轮的数（参考图的数同上表）：
 - 试过更大的探针（9 像素）：形状更圆，但血凝素的刺连成了一整圈，退回 7。
 - 没改好的：相邻的同种分子在平滑后会连在一起，只剩编号不同处的一条线分开；膜的切口内缘还有一圈碎线；有的地方出现小白洞（真实的缝隙被描了边）；构图和环境没动。
 
+### 第三轮（g3）：很大的模型默认放大
+
+突触前、突触后两个整体模型打开时放大 3.2 倍到中间一块（目录条目里的 `zoom`）。整个画出来时每个分子只有几个像素，像一片碎纸屑；放大后小泡、细胞骨架和周围的蛋白才读得出来，画面也铺满了。突触这一对的细碎起伏从 2.83 降到 1.53（他的画 0.94），白纸占比从 0.37 降到 0。主色距离从 0.107 升到 0.144：我们一个区室里有橙、蓝、紫、褐好几族颜色，他的每个区室只有一族；这是下一步要改的（按区室配色）。并排图是 `out/g3-synapse.jpg`。
+
 ## English
 
 limn used to be matched against Illustrate, Goodsell's own program (see `../illustrate/`). This directory matches it against something else: his **hand-painted landscapes**. The method is to put "his painting" and "limn's picture" of the same subject side by side, list where they differ, and measure after every change.
@@ -156,3 +160,7 @@ The numbers are in the table above.
 - `out/g2-nucleosome-before-after.jpg` shows the nucleosome before and after.
 - A larger probe (9 pixels) was tried: rounder shapes, but the hemagglutinin spikes joined into one ring, so it went back to 7.
 - Not yet right: neighbouring copies of one molecule join once smoothed, with only the line where ids differ to part them; a ring of broken lines remains on the inner edge of a cut membrane; small white holes appear in places (real gaps that get outlined); composition and environment are untouched.
+
+### Round 3 (g3): very large models open zoomed in
+
+The two whole synapse models open at 3.2 times, on their middle (`zoom` in the catalogue entry). Drawn whole, each molecule is a few pixels and the picture is confetti; zoomed in, the vesicles, the cytoskeleton and the proteins around them can be read, and the frame is filled. For the synapse pair fine relief drops from 2.83 to 1.53 (0.94 in his painting) and the share of blank paper from 0.37 to 0. The colour distance rises from 0.107 to 0.144: one of our compartments holds several families of hue (orange, blue, violet, tan) where each of his has one; that is the next thing to change (colour by compartment). The side-by-side image is `out/g3-synapse.jpg`.

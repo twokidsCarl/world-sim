@@ -161,6 +161,8 @@ export interface CatalogEntry {
   points?: { url: string; voxelSpacing: number; fit?: TemplateFit }
   merge?: string
   cut?: number
+  /** 打开时的放大倍数，缺省 1 / the zoom it opens at, 1 by default */
+  zoom?: number
   roles?: string[][]
   caption: string
   tier: string
@@ -456,6 +458,9 @@ export const useStore = create<State>((set, get) => ({
         panels: [{ spec, mol, coloring, align: null }],
         colorings: [coloring],
         ...freshLook(),
+        // 很大的模型默认放大到中间一块：整个画出来时每个分子只有几个像素，什么也看不清
+        // a very large model opens zoomed in on its middle: drawn whole, each molecule is a few pixels and nothing can be made out
+        zoom: entry.zoom ?? 1,
         cut: entry.cut ?? 0,
         cutDefault: entry.cut ?? 0,
         style: styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing),
