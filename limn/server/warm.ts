@@ -18,11 +18,14 @@
  * download would start over each time. LIMN_WARM=1 or 0 says so explicitly.
  */
 import catalog from '../data/catalog.json'
+import cells from '../data/cells.json'
 import neurons from '../data/neurons.json'
 import { micronsUrl, neuromorphoUrl } from '../src/neuro/swc'
 import { emdb } from './sources/emdb'
 import { cached } from './structures'
+import type { CellSource } from '../src/volume/cell'
 import { bigPdbKey, makeBigPdb, type BigPdbSource } from './tools/bigpdb'
+import { cellKey, makeCell } from './tools/cell'
 import { groKey, makeGro } from './tools/gro'
 import { makePetworld, petworldKey } from './tools/petworld'
 import { preparedFile } from './tools/prepared'
@@ -71,6 +74,8 @@ export function warmList(cards: string[]): WarmItem[] {
       })
   }
   for (const m of models) if (m.source.kind === 'url' && m.source.url) out.push({ label: m.id, run: () => cached(m.source.url!) })
+  // 整个细胞：分割数据一百多块，取齐并算好表面 / whole cells: over a hundred blocks of segmentation, fetched and turned into surfaces
+  for (const c of cells.cells as (CellSource & { id: string })[]) out.push({ label: c.id, run: () => preparedFile(cellKey(c), () => makeCell(c)) })
   const big = models.filter((m) => m.source.kind === 'prepared').sort((a, b) => (a.source.head ?? 0) - (b.source.head ?? 0))
   for (const m of big) out.push({ label: m.id, run: () => prepare(m.source) })
   return out

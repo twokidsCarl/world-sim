@@ -138,3 +138,22 @@ describe('surface mesh', () => {
     expect(volume / (n * 2) ** 3).toBeLessThan(1.01)
   })
 })
+
+describe('a prepared cell', () => {
+  it('survives its file format', async () => {
+    const { encodeCell, decodeCell } = await import('../src/volume/cell')
+    const g = {
+      positions: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 5, 5]),
+      triangles: new Uint32Array([0, 1, 2]),
+      radius: 60.8,
+      voxel: [64, 64, 83.84] as [number, number, number],
+      parts: [{ label: 'nucleus_seg', start: 0, count: 3 }, { label: 'mito_seg', start: 3, count: 1 }],
+      missing: ['golgi_seg'],
+    }
+    const back = decodeCell(encodeCell(g))
+    expect(Array.from(back.positions)).toEqual(Array.from(g.positions))
+    expect(Array.from(back.triangles)).toEqual(Array.from(g.triangles))
+    expect({ radius: back.radius, voxel: back.voxel, parts: back.parts, missing: back.missing }).toEqual({ radius: g.radius, voxel: g.voxel, parts: g.parts, missing: g.missing })
+    expect(() => decodeCell(new Uint8Array(32))).toThrow()
+  })
+})

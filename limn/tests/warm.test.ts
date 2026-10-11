@@ -13,6 +13,8 @@ describe('warm-up', () => {
     expect(labels).toContain('PDB 1AOI')
     expect(labels).toContain('EMD-1080')
     expect(labels.filter((l) => l.startsWith('MICrONS ')).length).toBe(5)
+    // 整个细胞也在内：它的分割数据以前是页面每次逐块现取的 / whole cells too: their segmentation used to be fetched block by block by the page every time
+    expect(labels).toContain('hela-organelles')
   })
 
   it('leaves the very large models to the end, largest download last', () => {

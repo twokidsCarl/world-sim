@@ -12,6 +12,7 @@ import catalog from '../data/catalog.json'
 import sim from '../sim.json'
 import { shouldWarm, warm, warmList, warmState } from './warm'
 import { bigPdbKey, makeBigPdb, type BigPdbSource } from './tools/bigpdb'
+import { cellKey, cellSource, makeCell } from './tools/cell'
 import { groKey, makeGro } from './tools/gro'
 import { makePetworld, petworldKey } from './tools/petworld'
 import { poll } from './tools/prepared'
@@ -64,6 +65,16 @@ Bun.serve({
             : src.format === 'gro'
             ? await poll(groKey(src.url, src.member!, src.head!, src.budget ?? 4_000_000), () => makeGro(src.url!, src.member!, src.head!, src.budget ?? 4_000_000))
             : await poll(petworldKey(src.url), () => makePetworld(src.url!))
+        if ('preparing' in state) return json(state, 202)
+        const file = Bun.file(state.path)
+        return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })
+      }
+      // 一个细胞的细胞器表面：预先做好的那一个文件；还在做就说“还在准备”
+      // the organelle surfaces of a cell: the one file prepared ahead of time, or "still preparing" while it is being made
+      if (url.pathname === '/api/cell') {
+        const src = cellSource(url.searchParams.get('id') ?? '')
+        if (!src) return fail(new Error('没有这个细胞 / no such cell'), 404)
+        const state = await poll(cellKey(src), () => makeCell(src))
         if ('preparing' in state) return json(state, 202)
         const file = Bun.file(state.path)
         return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })
