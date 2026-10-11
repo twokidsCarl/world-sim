@@ -1,4 +1,6 @@
 {
+ "ignoredAnchorItems": 129,
+ "staleMaleIds": [],
  "pose": {
   "left": {
    "femurDeg": 5.7,
@@ -808,26 +810,26 @@
   ]
  },
  "jacobian": {
-  "samples": 40437,
+  "samples": 46015,
   "min": -8.198,
-  "p01": 0.171,
-  "median": 0.951,
-  "p99": 2.249,
+  "p01": 0.189,
+  "median": 0.948,
+  "p99": 2.194,
   "max": 6.699,
-  "folded": 250,
-  "below02": 447,
+  "folded": 260,
+  "below02": 485,
   "above4": 25,
   "extremeByNearestBone": {
-   "Left tenth rib": 39,
-   "Right first rib": 31,
-   "Left first rib": 28,
+   "Left tenth rib": 43,
+   "Right first rib": 33,
+   "Left first rib": 29,
    "Sacrum": 25,
+   "Right clavicle": 19,
+   "Left scapula": 17,
+   "Left patella": 17,
+   "Right eleventh rib": 16,
    "Left ninth rib": 16,
-   "Left scapula": 16,
-   "Right eleventh rib": 15,
-   "Right sixth rib": 14,
-   "Right scapula": 13,
-   "Right tenth rib": 13
+   "Right eighth rib": 15
   }
  },
  "realSoftPartOffsets": [
@@ -1013,7 +1015,7 @@
   "roomMade": {
    "uterus": 19,
    "left ovary": 4,
-   "right ovary": 3
+   "right ovary": 5
   },
   "pelvis": {
    "insideDescendingColon": {
@@ -1132,26 +1134,129 @@
    }
   }
  },
+ "fat": {
+  "options": {
+   "voxel": 0.003,
+   "closing": 0.012,
+   "maxDepth": 0.03,
+   "smooth": 2
+  },
+  "bodyVolumeL": 63.6,
+  "fatVolumeL": 13.3,
+  "regions": [
+   {
+    "id": "W_SOMA_fat_head",
+    "name": "Subcutaneous tissue of head",
+    "volumeMl": 231,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 3,
+     "p90": 9,
+     "max": 30
+    },
+    "skinCovered": 0.614
+   },
+   {
+    "id": "W_SOMA_fat_neck",
+    "name": "Subcutaneous tissue of neck",
+    "volumeMl": 154,
+    "thicknessMm": {
+     "p10": 6,
+     "median": 12,
+     "p90": 21,
+     "max": 30
+    },
+    "skinCovered": 0.772
+   },
+   {
+    "id": "W_SOMA_fat_trunk",
+    "name": "Subcutaneous tissue of trunk",
+    "volumeMl": 5880,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 24,
+     "max": 30
+    },
+    "skinCovered": 0.891
+   },
+   {
+    "id": "W_SOMA_fat_upper_limb_L",
+    "name": "Subcutaneous tissue of left upper limb",
+    "volumeMl": 989,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 18,
+     "max": 30
+    },
+    "skinCovered": 0.896
+   },
+   {
+    "id": "W_SOMA_fat_upper_limb_R",
+    "name": "Subcutaneous tissue of right upper limb",
+    "volumeMl": 1042,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 18,
+     "max": 30
+    },
+    "skinCovered": 0.895
+   },
+   {
+    "id": "W_SOMA_fat_lower_limb_L",
+    "name": "Subcutaneous tissue of left lower limb",
+    "volumeMl": 2474,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 21,
+     "max": 30
+    },
+    "skinCovered": 0.873
+   },
+   {
+    "id": "W_SOMA_fat_lower_limb_R",
+    "name": "Subcutaneous tissue of right lower limb",
+    "volumeMl": 2522,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 21,
+     "max": 30
+    },
+    "skinCovered": 0.868
+   }
+  ]
+ },
  "adjacency": {
-  "pairs": 27297,
+  "pairs": 30684,
   "degree": {
    "median": 13,
-   "p90": 33,
-   "p99": 79,
-   "max": 197
+   "p90": 35,
+   "p99": 87,
+   "max": 238
   },
   "envelopes": [
-   "Skin"
+   "Skin",
+   "Subcutaneous tissue of head",
+   "Subcutaneous tissue of neck",
+   "Subcutaneous tissue of trunk",
+   "Subcutaneous tissue of left upper limb",
+   "Subcutaneous tissue of right upper limb",
+   "Subcutaneous tissue of left lower limb",
+   "Subcutaneous tissue of right lower limb"
   ]
  },
  "trees": {
   "isa": {
-   "concepts": 4559,
-   "parts": 3213
+   "concepts": 4817,
+   "parts": 3366
   },
   "partOf": {
    "concepts": 1495,
-   "parts": 1384
+   "parts": 1385
   },
   "hraIsaPlacement": {
    "FMA is-a chain": 42,
@@ -1678,21 +1783,29 @@
   }
  },
  "interpenetration": {
-  "warpedSoftParts": 2438,
-  "touchingBoneBefore": 687,
-  "meanInsideBefore": 0.0397,
-  "meanInsideAfter": 0.0136,
-  "over10pctBefore": 293,
-  "over10pctAfter": 94,
-  "partsWithVerticesMoved": 680,
+  "warpedSoftParts": 2564,
+  "touchingBoneBefore": 751,
+  "meanInsideBefore": 0.0459,
+  "meanInsideAfter": 0.0154,
+  "over10pctBefore": 346,
+  "over10pctAfter": 110,
+  "partsWithVerticesMoved": 743,
   "worstAfter": [
    {
     "name": "Left costoclavicular ligament",
     "inside": 0.935
    },
    {
+    "name": "Right anterior meniscotibial ligament (Medial meniscus)",
+    "inside": 0.933
+   },
+   {
     "name": "Right costoclavicular ligament",
     "inside": 0.917
+   },
+   {
+    "name": "Left anterior meniscotibial ligament (Medial meniscus)",
+    "inside": 0.773
    },
    {
     "name": "Inferior pubic ligament",
@@ -1717,14 +1830,6 @@
    {
     "name": "Right meniscopatellar ligament",
     "inside": 0.423
-   },
-   {
-    "name": "Right sublingual gland",
-    "inside": 0.397
-   },
-   {
-    "name": "Thoracic rotator",
-    "inside": 0.377
    }
   ],
   "nerves": {
@@ -1771,8 +1876,8 @@
  },
  "cautions": [
   {
-   "en": "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the 86 parts marked \"scanned\" are her own anatomy; 3069 parts are warped male anatomy.",
-   "zh": "本模型是拼合构建的，并非某一位女性的完整扫描：骨骼来自女性真实 CT（Visible Human Female），其上的软组织则由男性模型形变贴合而成。只有标为“扫描”的 86 个部件是她本人的解剖结构，另有 3069 个部件是形变后的男性结构。"
+   "en": "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the 86 parts marked \"scanned\" are her own anatomy; 3215 parts are warped male anatomy.",
+   "zh": "本模型是拼合构建的，并非某一位女性的完整扫描：骨骼来自女性真实 CT（Visible Human Female），其上的软组织则由男性模型形变贴合而成。只有标为“扫描”的 86 个部件是她本人的解剖结构，另有 3215 个部件是形变后的男性结构。"
   },
   {
    "en": "Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.",
@@ -1785,6 +1890,10 @@
   {
    "en": "The body surface is synthetic: male skin deformed to her skeleton and raised into a smooth envelope over the breasts. It does not show female body shape or fat distribution. The breasts themselves are a standing-shape artist model.",
    "zh": "体表是合成的：男性皮肤按她的骨骼形变后，再在乳房处抬高成平滑包络，并不反映女性的体形和脂肪分布。乳房本身是站立位形态的美术模型。"
+  },
+  {
+   "zh": "皮下脂肪层是在上述合成体表与她的肌肉、骨骼、器官外包络之间按 3 mm 体素填充得到的（最深只算到皮下 3 cm），并非扫描所得；其厚度取决于合成的皮肤，不代表女性真实的脂肪分布。",
+   "en": "The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution."
   },
   {
    "en": "Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.",
@@ -1812,10 +1921,11 @@
   }
  ],
  "notes": [
-  "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the 86 parts marked \"scanned\" are her own anatomy; 3069 parts are warped male anatomy.",
+  "This body is a construction, not a scan of one person: her real skeleton (Visible Human Female CT) carries male soft tissue deformed to fit it. Only the 86 parts marked \"scanned\" are her own anatomy; 3215 parts are warped male anatomy.",
   "Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.",
   "Pelvic soft tissue is not female anatomy: the uterus, ovaries, tubes and vagina are artist-modelled (Human Reference Atlas), while the bowel, vessels, nerves and pelvic floor around them are male structures moved aside. The sigmoid colon was shifted up to 5 cm to clear the uterus and left ovary; still overlapping: Cervicovaginal junction 10% (Rectum), Vagina 15% (Right puborectalis).",
   "The body surface is synthetic: male skin deformed to her skeleton and raised into a smooth envelope over the breasts. It does not show female body shape or fat distribution. The breasts themselves are a standing-shape artist model.",
+  "The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution.",
   "Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.",
   "Pose is reconstructed: the donor was scanned lying down with bent elbows and pointed feet, and each bone was moved rigidly into a standing pose. Joint spaces at the elbow, knee, ankle and shoulder are approximate, and the scapulae and clavicles keep their lying-down position.",
   "Right radius, ulna and the bones of both hands and feet are not her scanned bones: the right forearm is a mirrored copy of the left (the scan cut it off), and hand and foot bones are warped male bones with extended fingers.",
@@ -1824,29 +1934,30 @@
   "Everything said about the male model also applies to the warped parts: nerves, ligaments and lymph nodes are artist-modelled with schematic nerve thickness; phrenic nerve, pleura, pericardium, spinal cord, menisci and cruciate ligaments are absent."
  ],
  "counts": {
-  "parts": 3213,
+  "parts": 3366,
   "byProvenance": {
    "scanned": 86,
-   "warped": 3069,
-   "curated": 58
+   "warped": 3215,
+   "curated": 65
   },
   "bySource": {
    "Visible Human Female CT": 96,
    "BodyParts3D 4.0": 2100,
    "BodyParts3D 3.0": 79,
-   "Z-Anatomy": 652,
-   "Open3DModel": 228,
+   "Z-Anatomy": 768,
+   "Open3DModel": 255,
+   "soma (derived)": 10,
    "Human Reference Atlas": 58
   },
   "bySystem": {
    "cardiovascular": {
     "scanned": 0,
-    "warped": 1041,
+    "warped": 1042,
     "curated": 4
    },
    "digestive": {
     "scanned": 2,
-    "warped": 135,
+    "warped": 143,
     "curated": 0
    },
    "endocrine": {
@@ -1856,12 +1967,12 @@
    },
    "integumentary": {
     "scanned": 0,
-    "warped": 9,
-    "curated": 16
+    "warped": 17,
+    "curated": 23
    },
    "lymphatic": {
     "scanned": 1,
-    "warped": 128,
+    "warped": 158,
     "curated": 0
    },
    "muscular": {
@@ -1871,7 +1982,7 @@
    },
    "nervous": {
     "scanned": 0,
-    "warped": 633,
+    "warped": 639,
     "curated": 0
    },
    "reproductive": {
@@ -1881,12 +1992,12 @@
    },
    "respiratory": {
     "scanned": 2,
-    "warped": 130,
+    "warped": 132,
     "curated": 0
    },
    "skeletal": {
     "scanned": 70,
-    "warped": 425,
+    "warped": 516,
     "curated": 0
    },
    "urinary": {
@@ -2122,22 +2233,22 @@
   }
  },
  "output": {
-  "parts": 3213,
-  "triangles": 2228038,
+  "parts": 3366,
+  "triangles": 2418838,
   "glbBytes": {
-   "integumentary.glb": 823824,
+   "integumentary.glb": 1157252,
    "muscular.glb": 5171044,
-   "skeletal.glb": 2032292,
-   "cardiovascular.glb": 4848460,
-   "nervous.glb": 3928348,
-   "respiratory.glb": 485036,
-   "digestive.glb": 710652,
+   "skeletal.glb": 2592184,
+   "cardiovascular.glb": 4855764,
+   "nervous.glb": 4142956,
+   "respiratory.glb": 514588,
+   "digestive.glb": 889128,
    "urinary.glb": 28720,
    "reproductive.glb": 193168,
    "endocrine.glb": 28112,
-   "lymphatic.glb": 570484
+   "lymphatic.glb": 712080
   },
-  "anatomyJsonBytes": 2341870,
+  "anatomyJsonBytes": 2522106,
   "nerves": 405,
   "bounds": [
    -0.3411,

@@ -181,6 +181,8 @@ export interface Dataset {
   partFmas: Map<string, Set<string>>
   /** child -> parent edges of trees.isa */
   isaEdges: [string, string][]
+  /** child -> parent edges of trees.partOf */
+  partOfEdges: [string, string][]
   /** Ids named for one side but used by parts of both sides; their side word was dropped. */
   sharedSidedIds: { id: string; name: string }[]
   /** Every left/right part with the concept id it uses. */
@@ -188,7 +190,7 @@ export interface Dataset {
 }
 
 export function loadDataset(): Dataset {
-  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [], sharedSidedIds: [], sidedParts: [] }
+  const out: Dataset = { bodies: [], names: new Map(), partFmas: new Map(), isaEdges: [], partOfEdges: [], sharedSidedIds: [], sidedParts: [] }
   const sides = new Map<string, Set<string>>()
   for (const body of BODIES) {
     const file = resolve(ANATOMY_DIR, body, 'anatomy.json')
@@ -203,6 +205,7 @@ export function loadDataset(): Dataset {
       if (c.id && c.name && !out.names.has(c.id)) out.names.set(c.id, c.name)
     }
     for (const c of data.trees.isa ?? []) if (c.parent && c.id) out.isaEdges.push([c.id, c.parent])
+    for (const c of data.trees.partOf ?? []) if (c.parent && c.id) out.partOfEdges.push([c.id, c.parent])
     for (const p of data.parts) {
       if (!p.fma) continue
       fmas.add(p.fma)

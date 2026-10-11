@@ -1,3 +1,6 @@
+// BodyParts3D -> 运行时解剖数据管线。
+//   bun tools/pipeline/run.ts [--out <dir>] [--classify-only]
+// 读取 data/raw/bodyparts3d，写出 public/anatomy/male/{anatomy.json,<system>.glb,pipeline-report.json}。
 // BodyParts3D -> runtime anatomy pipeline.
 //   bun tools/pipeline/run.ts [--out <dir>] [--classify-only]
 // Reads data/raw/bodyparts3d, writes public/anatomy/male/{anatomy.json,<system>.glb,pipeline-report.json}.
@@ -14,7 +17,10 @@ import { compareNormals, computeNormals, measure, rotateToRuntime, simplifyMesh,
 import { writeSystemGlb, type GlbPart } from './glb.ts'
 import { depthOf, EXPOSURE_MAX_DISTANCE, LAYERS, SUPERFICIAL_EXPOSURE, usesExposure } from './layers.ts'
 import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT3_DEFAULTS, overlapWith, pairStructures, placeConcept, pushOutOfSolids, register3to4, SOLID_TISSUES, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
-import { canalFor, isaPathFromFma, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type TreePath } from './importZa.ts'
+import { canalFor, isaPathFromFma, localJointWarp, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type JointCacheEntry, type TreePath } from './importZa.ts'
+import { capHoles, envelopeOf } from './derive.ts'
+import { deriveFat, FAT_DEEP_TISSUES, FAT_OPTIONS, FAT_REGIONS, fatRegionOfBone, isFatPart } from './fat.ts'
+import { PointIndex } from './register.ts'
 import { nerveAgreement, runLandmarkChecks, type LandmarkResult } from './landmarks.ts'
 import { InsideTester, surfacePoints, thinPoints } from './register.ts'
 import type { Polyline } from './tube.ts'
@@ -24,22 +30,40 @@ import { hasRelease3, loadRelease3, RAW3_DIR } from './release3.ts'
 import { listObjFiles, loadTables, RAW_DIR } from './source.ts'
 import { emitConcepts, type Ontology } from './tables.ts'
 
-// ── Parameters ────────────────────────────────────────────────────────────────────────────────
-/** Simplification error bound: this fraction of the part's thickness (3·V/A), clamped below. */
+// ── 参数 / Parameters ────────────────────────────────────────────────────────────────────────────────
+/**
+ * 简化误差上限：部件厚度（3·V/A）的这一比例，并按下面的范围钳制。
+ * Simplification error bound: this fraction of the part's thickness (3·V/A), clamped below.
+ */
 export const SIMPLIFY_ERROR_PER_THICKNESS = 0.08
-export const SIMPLIFY_ERROR_MIN = 0.08e-3 // m
-export const SIMPLIFY_ERROR_MAX = 0.8e-3 // m
-/** Parts at or below this many triangles are never simplified. */
+export const SIMPLIFY_ERROR_MIN = 0.08e-3 // 米 / m
+export const SIMPLIFY_ERROR_MAX = 0.8e-3 // 米 / m
+/**
+ * 三角形数不超过此值的部件一律不简化。
+ * Parts at or below this many triangles are never simplified.
+ */
 export const SIMPLIFY_MIN_TRIANGLES = 400
-/** Never coarser than one triangle per equilateral triangle of this edge length (m). */
+/**
+ * 简化后不得比“每个此边长（米）的等边三角形对应一个三角形”更粗。
+ * Never coarser than one triangle per equilateral triangle of this edge length (m).
+ */
 export const SIMPLIFY_MAX_EDGE = 0.012
-export const ADJACENCY_THRESHOLD = 0.002 // m
-export const ADJACENCY_SPACING = 0.002 // m
-/** Parts touching more parts than this are envelopes (the skin); they get no adjacency at all. */
-export const ADJACENCY_MAX_DEGREE = 200
-/** Same concept + bounds equal within this (m) = a re-tessellation of the same structure. */
+export const ADJACENCY_THRESHOLD = 0.002 // 米 / m
+export const ADJACENCY_SPACING = 0.002 // 米 / m
+/**
+ * 接触部件数超过此值的部件是包络（皮肤）；完全不给它们计邻接。
+ * Parts touching more parts than this are envelopes (the skin); they get no adjacency at all.
+ */
+export const ADJACENCY_MAX_DEGREE = 250
+/**
+ * 概念相同且包围盒相差在此值（米）以内 = 同一结构的重新三角化。
+ * Same concept + bounds equal within this (m) = a re-tessellation of the same structure.
+ */
 const NEAR_DUPLICATE_BBOX = 0.0005
-/** Release 3.0 candidates vetoed by hand: file id -> reason. */
+/** 人工否决的 3.0 版候选：文件 id -> 原因。 / Release 3.0 candidates vetoed by hand: file id -> reason. */
+// 这些结构与 4.0 中已有的部件是同一结构，但归在不同的概念 id 下（4.0 有各部分而这里是整体，
+// 4.0 有各成员而这里是集合，或概念被改名），并且由于 4.0 对它们重新建模，
+// 它们与 4.0 几何的重合程度不足以通过自动冗余检测。
 // These are the same structures as existing 4.0 parts but filed under a different concept id
 // (a whole where 4.0 has the pieces, a set where 4.0 has the members, or a renamed concept), and
 // they do not coincide with the 4.0 geometry closely enough for the automatic redundancy test
@@ -70,8 +94,13 @@ const IMPORT3_EXCLUDE: Record<string, string> = {
 }
 
 const ROOT = join(import.meta.dirname, '../..')
-/** Id prefix of parts imported from release 3.0 (whose files are named by concept, not FJ id). */
+/**
+ * 从 3.0 版导入的部件的 id 前缀（其文件按概念命名，而非按 FJ id）。
+ * Id prefix of parts imported from release 3.0 (whose files are named by concept, not FJ id).
+ */
 export const R3_PREFIX = 'R3_'
+// 3.0 版早于 4.0 归档在 2025 年发布的重新授权声明；它自带的 README 和每个 OBJ 文件头
+// 仍写明 CC BY-SA 2.1 JP，所以导入部件记录的就是这一许可。
 // Release 3.0 predates the 2025 relicensing notice of the 4.0 archive; its own README and every
 // OBJ header still state CC BY-SA 2.1 JP, so that is what is recorded for the imported parts.
 const SOURCE3: SourceInfo = {
@@ -93,13 +122,33 @@ const SOURCE_O3D: SourceInfo = {
   license: 'CC BY-SA 4.0',
   attribution: 'Open3DModel, Open 3D Model project (LUMC, UMC Utrecht, Maastricht UMC+, KU Leuven KULAK), anatomytool.org - CC BY-SA 4.0; based on Z-Anatomy and BodyParts3D.' + ZA_NOTE,
 }
-/** A nerve is not shipped when, after clean-up, more than this share of its length is in bone it has no business in … */
+const SOURCE_DERIVED: SourceInfo = {
+  name: 'soma (derived)',
+  url: 'https://github.com/',
+  license: 'CC BY-SA 4.0',
+  attribution: 'Computed by this project from neighbouring structures of the model (closed envelopes of organs); not taken from any atlas or scan.',
+}
+/**
+ * 清理之后，若神经长度中位于它不该进入的骨内的比例超过此值，则不发布该神经……
+ * A nerve is not shipped when, after clean-up, more than this share of its length is in bone it has no business in …
+ */
 const NERVE_MAX_IN_BONE = 0.15
-/** … or deep inside muscle bellies. */
+/** ……或深入肌腹内部的比例超过此值。 / … or deep inside muscle bellies. */
 const NERVE_MAX_DEEP_IN_MUSCLE = 0.4
-/** A Z-Anatomy mesh is not shipped with more than this share of its surface inside existing solids. */
+/**
+ * Z-Anatomy 网格的表面位于现有实体内的比例超过此值时不发布。
+ * A Z-Anatomy mesh is not shipped with more than this share of its surface inside existing solids.
+ */
 const ZA_MAX_INSIDE = 0.6
-/** IS-A concept (by name) for Z-Anatomy items whose FMA chain does not meet the 4.0 tree or that have no FMA id. */
+/**
+ * 按所连骨拟合的关节结构，其表面位于骨或软骨内的比例不超过此值时才发布。
+ * A joint structure fitted to its bones is shipped with at most this share of its surface inside bone or cartilage.
+ */
+const JOINT_MAX_IN_BONE = 0.25
+/**
+ * FMA 链未与 4.0 树相遇、或没有 FMA id 的 Z-Anatomy 条目所用的 IS-A 概念（按名称）。
+ * IS-A concept (by name) for Z-Anatomy items whose FMA chain does not meet the 4.0 tree or that have no FMA id.
+ */
 const ZA_FALLBACK_ISA: Record<string, string> = {
   nerve: 'segment of neural tree organ',
   ligament: 'ligament organ',
@@ -119,7 +168,7 @@ interface Element {
   name: string
   fma: string
   volume?: number
-  /** welded source mesh, runtime frame */
+  /** 焊接后的源网格，运行时坐标系 / welded source mesh, runtime frame */
   mesh: Mesh
   stats: MeshStats
   sourceTriangles: number
@@ -127,15 +176,18 @@ interface Element {
   isa: string[]
   partOf: string[]
   provenance: Provenance
-  /** set for parts imported from release 3.0 */
+  /** 从 3.0 版导入的部件才设置 / set for parts imported from release 3.0 */
   placement?: Placement
-  /** `SourceInfo.name` when the geometry is not from the first source */
+  /** 几何不是来自第一个数据源时的 `SourceInfo.name` / `SourceInfo.name` when the geometry is not from the first source */
   source?: string
-  /** tree positions of parts imported from the Z-Anatomy package */
+  /** 从 Z-Anatomy 包导入的部件在树中的位置 / tree positions of parts imported from the Z-Anatomy package */
   tree?: { isa: TreePath; partOf: TreePath | null }
-  /** final centrelines of nerve parts (written to nerves.json) */
+  /** 神经部件的最终中心线（写入 nerves.json） / final centrelines of nerve parts (written to nerves.json) */
   centrelines?: Polyline[]
-  /** geometry was built to measure (nerve tubes): do not run the simplifier over it */
+  /**
+   * 几何是按需定制生成的（神经管）：不要对它运行简化器
+   * geometry was built to measure (nerve tubes): do not run the simplifier over it
+   */
   keepGeometry?: boolean
 }
 
@@ -153,7 +205,7 @@ async function main() {
   const lap = (label: string) => console.log(`  [${((performance.now() - t0) / 1000).toFixed(1)}s] ${label}`)
   const report: Record<string, unknown> = {}
 
-  // ── 1. Tables and files ─────────────────────────────────────────────────────────────────────
+  // ── 1. 表与文件 / 1. Tables and files ─────────────────────────────────────────────────────────────────────
   const tables = loadTables()
   const files = listObjFiles()
   const tableElements = new Set<string>([...tables.isa.conceptsOf.keys(), ...tables.partOf.conceptsOf.keys()])
@@ -167,6 +219,7 @@ async function main() {
   report.missingObj = missingObj
   report.orphanObj = orphanObj
 
+  // 源标签修正：`tableId(el)` 是其表行/文件头描述 `el` 的那个元素。
   // Source label corrections: `tableId(el)` is the element whose table rows / header describe `el`.
   const swap = new Map<string, string>()
   for (const [a, b] of SWAPPED_LABELS) {
@@ -177,7 +230,7 @@ async function main() {
   }
   const headers = new Map<string, ReturnType<typeof parseObj>['header']>()
 
-  // ── 2. Load, weld, measure, classify ────────────────────────────────────────────────────────
+  // ── 2. 加载、焊接、测量、分类 / 2. Load, weld, measure, classify ────────────────────────────────────────────────────────
   const elements: Element[] = []
   const blankHeaders: string[] = []
   const notInIsa: string[] = []
@@ -211,6 +264,7 @@ async function main() {
     if (isaIds.length === 0) notInIsa.push(id)
     const isa = isaIds.map((c) => tables.isa.name.get(c) ?? c)
     const partOf = poIds.map((c) => tables.partOf.name.get(c) ?? c)
+    // 17 个文件的文件头为空（没有名称/概念）：退而采用最具体的概念。
     // 17 files have an empty header (no name / concept): fall back to the most specific concept.
     const ownConcept = isaIds[0] ?? poIds[0] ?? ''
     if (!obj.header.name || !obj.header.conceptId) blankHeaders.push(id)
@@ -225,6 +279,7 @@ async function main() {
     })
   }
   lap(`parsed ${elements.length} OBJ files: ${sourceTriangles} triangles, ${sourceVertices} vertices (${weldedVertices} after weld, ${weldDroppedTriangles} degenerate/duplicate triangles dropped)`)
+  // 互换的元素对交换名称和概念 id（两个文件头到这时才都已知）
   // swapped pairs exchange name and concept id (both headers are known only now)
   for (const e of elements) {
     const other = swap.get(e.id)
@@ -248,8 +303,8 @@ async function main() {
   console.log(`  source normals vs recomputed: mean dot min ${normalDots[0]?.toFixed(3)}, median ${quantile(normalDots, 0.5).toFixed(3)} (source normals are sound; normals are recomputed after simplification anyway)`)
   report.source = { triangles: sourceTriangles, vertices: sourceVertices, weldedVertices, weldDroppedTriangles, normalAgreementMin: normalDots[0], blankHeaders, notInIsa }
 
-  // ── 3. Duplicates ───────────────────────────────────────────────────────────────────────────
-  // alias: dropped element id -> kept element id
+  // ── 3. 重复件 / 3. Duplicates ───────────────────────────────────────────────────────────────────────────
+  // 别名：被丢弃的元素 id -> 保留的元素 id / alias: dropped element id -> kept element id
   const alias = new Map<string, string>()
   const merged: { kept: string; dropped: string; name: string; kind: 'exact' | 'near' }[] = []
   {
@@ -288,13 +343,14 @@ async function main() {
   }
   report.duplicatesMerged = merged
 
+  // 表中的元素 id -> 现在代表它的保留部件的 id（标签互换、合并的重复件）
   // table element id -> id of the kept part that now stands for it (label swaps, merged duplicates)
   const resolve = (el: string) => {
     const sw = swap.get(el) ?? el
     return alias.get(sw) ?? sw
   }
 
-  // ── 3b. Release 3.0 import ──────────────────────────────────────────────────────────────────
+  // ── 3b. 导入 3.0 版 / 3b. Release 3.0 import ──────────────────────────────────────────────────────────────────
   const imported: Element[] = []
   if (!hasRelease3()) {
     console.log(`\n  WARNING release 3.0 not found in ${RAW3_DIR}: lungs, liver, abdominal wall etc. will be missing`)
@@ -324,6 +380,7 @@ async function main() {
     }
     const candidates = evaluateCandidates(r3, pairs, reg, field, (p) => classOf.get(p.id)!.system, (p) => IMPORT3_EXCLUDE[p.id] ?? null, IMPORT3_DEFAULTS)
     lap(`evaluated ${candidates.length} release 3.0 candidates`)
+    // 左右孪生件共用同一判定：一个结构不会只发布一侧
     // left/right twins share a verdict: a structure is not shipped on one side only
     {
       const twinName = (n: string) => n.replace(/\b(left|right)\b/g, (m) => (m === 'left' ? 'right' : 'left'))
@@ -338,7 +395,7 @@ async function main() {
       }
     }
 
-    // frame difference, by region of the 3.0 body
+    // 坐标系差异，按 3.0 身体的区域 / frame difference, by region of the 3.0 body
     const region = (c: readonly number[]): string => {
       const [x, y] = c as [number, number]
       if (y > 1.42) return 'head'
@@ -387,6 +444,7 @@ async function main() {
         console.log(`    ${pad(c.part.id, 12)}${pad(c.part.name.slice(0, 46), 47)}${pad(`${cl.system}/${cl.tissue}`, 22)}moved ${pad(mm(c.report.displacement), 6)}same-system ${pct(c.report.onSameSystem)}inside ${pct(c.report.inside)}deep ${pct(c.report.deepInside)}pushed ${pct(c.report.pushedOut.moved)}${tail}`)
       }
     }
+    // 包含关系：归在候选自身概念下的 4.0 元素应位于候选内部
     // containment: 4.0 elements filed under the candidate's own concept should lie inside it
     const byIdExisting = new Map(existing.map((e) => [e.id, e]))
     const containment: Record<string, unknown>[] = []
@@ -399,6 +457,7 @@ async function main() {
       console.log(`  ${pad(c.part.name, 28)}${pad(c.report.decision, 11)}${pad(pair.elements.length + ' elements', 14)}inside ${pad((res.fraction * 100).toFixed(1) + '%', 8)}(unregistered: ${(raw.fraction * 100).toFixed(1)}%)  least inside: ${res.worst.slice(0, 3).map(([n, f]) => `${n} ${(f * 100).toFixed(0)}%`).join('; ')}`)
       containment.push({ id: c.part.id, name: c.part.name, decision: c.report.decision, elements: pair.elements.length, inside: round(res.fraction, 4), insideUnregistered: round(raw.fraction, 4), leastInside: res.worst })
     }
+    // 从整个肺来看：肺叶边界有移动，所以 4.0 的某个肺段可能落在相邻肺叶内
     // whole-lung view: lobe boundaries moved, so a 4.0 segment may sit in the neighbouring lobe
     const lungs: Record<string, unknown>[] = []
     for (const side of ['right', 'left']) {
@@ -444,7 +503,7 @@ async function main() {
     kept.push(...imported)
   }
 
-  // ── 3c. Z-Anatomy / Open3DModel import (nerves, lymph nodes, thyroid, ligaments, fasciae) ────
+  // ── 3c. 导入 Z-Anatomy / Open3DModel（神经、淋巴结、甲状腺、韧带、筋膜） / 3c. Z-Anatomy / Open3DModel import (nerves, lymph nodes, thyroid, ligaments, fasciae) ────
   const importedZa: Element[] = []
   let landmarks: LandmarkResult[] = []
   if (!hasZa()) {
@@ -482,7 +541,7 @@ async function main() {
     const isaIdByName = new Map<string, string>()
     for (const [id, n] of tables.isa.name) if (!isaIdByName.has(n)) isaIdByName.set(n, id)
     const dropped: { id: string; name: string; kind: string; reason: string }[] = []
-    // FMA ids used by imported items of both sides
+    // 两侧的导入条目都用到的 FMA id / FMA ids used by imported items of both sides
     const sharedAcrossSides = new Set<string>()
     {
       const sides = new Map<string, Set<string>>()
@@ -500,9 +559,13 @@ async function main() {
       const inIsa = (id: string) => tables.isa.name.has(id)
       let fma: string
       let isa: TreePath
-      if (it.fma) {
-        fma = it.fma
+      const itFma = it.proxyFor?.fma ?? it.fma
+      if (itFma) {
+        fma = itFma
         isa = isaPathFromFma(fma, fmaNames?.label.get(fma) ?? it.fmaLabel ?? displayName(it.name, it.side), (id) => fmaNames?.parents.get(id), (id) => fmaNames?.label.get(id), inIsa, fallback)
+        // 归在不分侧类下的分侧条目（FMA 没有它的左/右类，或两侧被映射到同一个 id）：
+        // 每一侧各得一个自己的概念 `<id>_L` / `<id>_R`，作为不分侧概念的子概念，
+        // 这样名称就可以按侧别索引。
         // A lateralised item filed under an unsided class (FMA has no left/right class for it,
         // or both sides were mapped to one id): each side gets its own concept, `<id>_L` /
         // `<id>_R`, as a child of the unsided one, so that names can be keyed per side.
@@ -514,6 +577,7 @@ async function main() {
           mintedSided++
         }
       } else {
+        // 没有 FMA 类：用合成概念，分侧概念挂在不分侧概念之下
         // no FMA class: a synthetic concept, sided under an unsided one
         fma = syntheticConceptId(it.name, it.side)
         const path: [string, string][] = [[fma, displayName(it.name, it.side).replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase())]]
@@ -525,20 +589,28 @@ async function main() {
     }
     const classOf = (it: ZaItem): { system: SystemId; tissue: TissueId } => {
       if (it.kind === 'nerve') return { system: 'nervous', tissue: 'nerve' }
+      // 该包把半月板胫骨韧带/半月板髌骨韧带归为软骨
       // the package files the meniscotibial / meniscopatellar ligaments as cartilage
       if (it.category === 'ligament-bursa-fascia' && it.tissue === 'cartilage') return { system: 'skeletal', tissue: 'ligament' }
-      return { system: it.system as SystemId, tissue: it.tissue as TissueId }
+      // 第 2 批没有确定膜和甲的组织类型
+      // batch 2 leaves the tissue of membranes and nails open
+      const g = it.batchGroup ?? ''
+      if (/nail/.test(g)) return { system: 'integumentary', tissue: 'skin' }
+      if (/meninges/.test(g)) return { system: 'nervous', tissue: 'fascia' }
+      if (/peritoneum/.test(g)) return { system: 'digestive', tissue: 'fascia' }
+      if (/spinal cord/.test(g)) return { system: 'nervous', tissue: 'brain' }
+      return { system: it.system as SystemId, tissue: (it.tissue === 'other' ? 'fascia' : it.tissue) as TissueId }
     }
     const makeElement = (it: ZaItem, mesh: Mesh, extra: Partial<Element> = {}): Element => {
       const cls = classOf(it)
       const { fma, tree } = treeOf(it, cls.tissue)
       return {
-        id: it.id, name: displayName(it.name, it.side), fma, mesh, stats: measure(mesh), sourceTriangles: it.triangles,
+        id: it.id, name: displayName(it.proxyFor?.name ?? it.name, it.side), fma, mesh, stats: measure(mesh), sourceTriangles: it.triangles,
         cls: { ...cls, rule: 'Z-Anatomy package', signal: 'isa' }, isa: [], partOf: [], provenance: 'curated', source: sourceName(it), tree, ...extra,
       }
     }
 
-    // nerves
+    // 神经 / nerves
     const nerveItems = pkg.items.filter((i) => i.kind === 'nerve' && !i.candidate && i.preferred)
     const nerveRows: Record<string, unknown>[] = []
     const agreement: Record<string, unknown>[] = []
@@ -557,6 +629,7 @@ async function main() {
       const def = reg.deformation(it.frame, it.side)
       const lines = pkg.centreline(it)
       const warpedLines = lines && lines.length ? warpNerve(lines, def, field, { ...NERVE_BUILD_DEFAULTS, canal: canalFor(it.name) }) : null
+      // BodyParts3D 已有这条神经：保留它的部件，丢弃导入件，但测量两者的吻合程度
       // BodyParts3D already has this nerve: keep its part, drop the import, but measure agreement
       const same = (it.fma ? fmaTaken.get(it.fma) : undefined) ?? (nameTaken.has(name.toLowerCase()) ? [nameTaken.get(name.toLowerCase())!] : undefined)
       if (same && same.length) {
@@ -593,6 +666,7 @@ async function main() {
         }
         importedZa.push(makeElement(it, w.mesh!, { centrelines: w.branches, keepGeometry: true }))
       } else {
+        // 神经节（没有中心线）以及中心线不完整的 8 条神经：直接对网格做形变
         // ganglia (no centreline) and the 8 nerves whose centrelines are incomplete: warp the mesh
         if (!it.files?.mesh) continue
         const src = pkg.mesh(it.files.mesh)
@@ -603,13 +677,19 @@ async function main() {
     }
     lap(`warped ${nerveItems.length} nerves`)
 
-    // meshes
+    // 网格 / meshes
     const isSolid = (i: number) => SOLID_TISSUES.includes(field.parts[i]!.tissue)
     const isHard = (i: number) => HARD_TISSUES.includes(field.parts[i]!.tissue)
     const warpMesh = (it: ZaItem) => {
       const src = pkg.mesh(it.files!.mesh!)
       const def = reg.deformation(it.frame, it.side)
-      const w = weld(def.apply(src.positions), src.indices)
+      return settle(weld(def.apply(src.positions), src.indices))
+    }
+    /**
+     * 针对硬组织做碰撞清理，然后评估部件在现有实体之间的位置
+     * collision clean-up against hard tissue, then how the part sits among the existing solids
+     */
+    const settle = (w: Mesh) => {
       const pre = measure({ positions: w.positions, indices: w.indices })
       const push = pushOutOfSolids(w.positions, pre.bbox, field, isHard)
       const mesh: Mesh = { positions: push.positions, indices: w.indices }
@@ -620,8 +700,71 @@ async function main() {
       const top = [...ov.inside].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([i, f]) => `${field.parts[i]!.name} ${(f * 100).toFixed(0)}%`)
       return { mesh, stats, inside: ov.insideAny, deep: ov.deepAny, byTissue, top, pushed: push.moved / Math.max(1, w.positions.length / 3), meanPush: push.meanPush }
     }
-    const meshItems = pkg.items.filter((i) => i.kind === 'mesh' && !i.candidate && i.files?.mesh && ['endocrine', 'lymph', 'ligament-bursa-fascia'].includes(i.category ?? ''))
+    // 第 2 批：只导入被要求的结构；下肢关节结构若两个图谱都有，采用 Open3DModel 的
+    // （封闭网格、带角的半月板），其他部位采用 Z-Anatomy 的
+    // batch 2: only the structures that were asked for; where both atlases have a lower-limb joint
+    // structure the Open3DModel one is used (closed meshes, menisci with horns), elsewhere Z-Anatomy
+    const LOWER_JOINT = /menisc|cruciate|Infrapatellar fat pad|capsule of (knee|hip|ankle) joint/i
+    const o3dNames = new Set(pkg.items.filter((i) => i.batch === 2 && i.source === 'open3dmodel' && /^requested/.test(i.batchGroup ?? '')).map((i) => `${i.name}|${i.side}`))
+    const batch2Skip = (i: ZaItem): string | null => {
+      if (/pleura/.test(i.batchGroup ?? '')) return 'both pleural layers are offsets of one lung-shaped atlas surface; the pleura is derived from our own lungs instead'
+      if (i.name === 'Mesocolon') return 'duplicates the transverse mesocolon of BodyParts3D'
+      if (i.name === 'Sigmoid colon') return 'duplicates the distal part of BodyParts3D "Descending colon"'
+      if (i.source === 'z-anatomy' && LOWER_JOINT.test(i.name) && o3dNames.has(`${i.name}|${i.side}`)) return 'the Open3DModel version is used'
+      if (i.source === 'open3dmodel' && i.alternateOf && !LOWER_JOINT.test(i.name)) return 'the Z-Anatomy version is used'
+      return null
+    }
+    const meshItems = pkg.items.filter((i) => i.kind === 'mesh' && !i.candidate && i.files?.mesh && (['endocrine', 'lymph', 'ligament-bursa-fascia'].includes(i.category ?? '') || (i.batch === 2 && /^requested/.test(i.batchGroup ?? ''))))
     const meshRows: Record<string, unknown>[] = []
+    const jointCache = new Map<string, JointCacheEntry>()
+    const jointRows: { id: string; name: string; source: string; before: Record<string, number> | null; after: Record<string, unknown>; ends: { bone: string; gapMm: number; atlasGapMm: number }[]; shipped: boolean }[] = []
+    const lymphRows: { id: string; name: string; insideBefore: number; in: string[]; movedMm: number | null; insideAfter: number | null }[] = []
+    const DIRS26: number[][] = []
+    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+      if (!x && !y && !z) continue
+      const l = Math.hypot(x, y, z)
+      DIRS26.push([x / l, y / l, z / l])
+    }
+    // 在体内 = 该点的前方和后方都能遇到皮肤
+    // inside the body = the skin is met both in front of and behind the point
+    const skinPart = existing.find((e) => e.name === 'Skin' && e.tissue === 'skin')
+    const insideBody = (pts: Float32Array): number => {
+      if (!skinPart) return 1
+      const p = skinPart.mesh.positions
+      const idx = skinPart.mesh.indices
+      let b = [Infinity, Infinity, -Infinity, -Infinity]
+      for (let i = 0; i < pts.length; i += 3) b = [Math.min(b[0]!, pts[i]!), Math.min(b[1]!, pts[i + 1]!), Math.max(b[2]!, pts[i]!), Math.max(b[3]!, pts[i + 1]!)]
+      const tris: number[] = []
+      for (let t = 0; t < idx.length; t += 3) {
+        const a = 3 * idx[t]!
+        const c = 3 * idx[t + 1]!
+        const d = 3 * idx[t + 2]!
+        if (Math.max(p[a]!, p[c]!, p[d]!) < b[0]! || Math.min(p[a]!, p[c]!, p[d]!) > b[2]! || Math.max(p[a + 1]!, p[c + 1]!, p[d + 1]!) < b[1]! || Math.min(p[a + 1]!, p[c + 1]!, p[d + 1]!) > b[3]!) continue
+        tris.push(a, c, d)
+      }
+      let ok = 0
+      for (let i = 0; i < pts.length; i += 3) {
+        const x = pts[i]! + 1.3e-7
+        const y = pts[i + 1]! + 0.7e-7
+        const z = pts[i + 2]!
+        let front = false
+        let back = false
+        for (let t = 0; t < tris.length && !(front && back); t += 3) {
+          const a = tris[t]!
+          const c = tris[t + 1]!
+          const d = tris[t + 2]!
+          const w0 = (p[c]! - x) * (p[d + 1]! - y) - (p[c + 1]! - y) * (p[d]! - x)
+          const w1 = (p[d]! - x) * (p[a + 1]! - y) - (p[d + 1]! - y) * (p[a]! - x)
+          const w2 = (p[a]! - x) * (p[c + 1]! - y) - (p[a + 1]! - y) * (p[c]! - x)
+          if (!((w0 > 0 && w1 > 0 && w2 > 0) || (w0 < 0 && w1 < 0 && w2 < 0))) continue
+          const hz = (w0 * p[a + 2]! + w1 * p[c + 2]! + w2 * p[d + 2]!) / (w0 + w1 + w2)
+          if (hz > z) front = true
+          else back = true
+        }
+        if (front && back) ok++
+      }
+      return pts.length ? ok / (pts.length / 3) : 1
+    }
     for (const it of meshItems) {
       const name = displayName(it.name, it.side)
       if (it.inBp3d40) {
@@ -633,15 +776,78 @@ async function main() {
         dropped.push({ id: it.id, name, kind: it.category!, reason: `the dataset already has this concept (${same.map((e) => `${e.id} ${e.name}`).join(', ')})` })
         continue
       }
+      const kind = it.category ?? it.batchGroup ?? 'mesh'
+      if (it.batch === 2) {
+        const skip = batch2Skip(it)
+        if (skip) {
+          dropped.push({ id: it.id, name, kind, reason: `not imported: ${skip}` })
+          continue
+        }
+      } else if (it.source === 'z-anatomy' && LOWER_JOINT.test(it.name) && o3dNames.has(`${it.name}|${it.side}`)) {
+        dropped.push({ id: it.id, name, kind, reason: 'not imported: the Open3DModel version is used' })
+        continue
+      }
+      const jointish = classOf(it).system === 'skeletal'
+      const tryJoint = (before: { inside: number; deep: number; byTissue: Record<string, number> } | null): boolean => {
+        const src = pkg.mesh(it.files!.mesh!)
+        const fit = localJointWarp(src, it.frame, it.side, pkg, field, jointCache)
+        if (!fit) return false
+        const j = settle(weld(fit.positions, src.indices))
+        const ends = fit.bones.map((bn) => {
+          const idx = bn.bp3dIds.map((id) => field.surfaceIndex(existing.findIndex((e) => e.id === id)))
+          let d = Infinity
+          for (let i = 0; i < j.mesh.positions.length; i += 3) for (const t of idx) d = Math.min(d, t.distance(j.mesh.positions[i]!, j.mesh.positions[i + 1]!, j.mesh.positions[i + 2]!, 0.03))
+          return { bone: `${bn.side === 'M' ? '' : bn.side === 'L' ? 'left ' : 'right '}${bn.name.toLowerCase()}`, gapMm: round(d * 1000, 2), atlasGapMm: round(bn.sourceGap * 1000, 2) }
+        })
+        const inBone = (j.byTissue.bone ?? 0) + (j.byTissue.cartilage ?? 0) + (j.byTissue.tooth ?? 0)
+        // 按它所属的骨来评判：大部分在骨外，两端各在图谱所示的位置
+        // judged by the bones it belongs to: mostly outside them, each end where the atlas has it
+        const ok = inBone <= JOINT_MAX_IN_BONE && ends.every((e) => e.gapMm <= e.atlasGapMm + 3)
+        jointRows.push({ id: it.id, name, source: sourceName(it), before: before ? { inside: round(before.inside, 3), deep: round(before.deep, 3), inBone: round((before.byTissue.bone ?? 0) + (before.byTissue.cartilage ?? 0), 3) } : null, after: { inside: round(j.inside, 3), deep: round(j.deep, 3), inBone: round(inBone, 3), in: j.top }, ends, shipped: ok })
+        if (ok) importedZa.push(makeElement(it, j.mesh))
+        return ok
+      }
+      // 第 2 批的关节结构直接采用关节局部拟合
+      // joint structures of batch 2 go straight to the joint-local fit
+      if (jointish && it.batch === 2 && tryJoint(null)) continue
       const w = warpMesh(it)
       meshRows.push({ id: it.id, name, category: it.category, inside: round(w.inside, 4), deep: round(w.deep, 4), byTissue: w.byTissue, pushed: round(w.pushed, 4), top: w.top })
       if (w.deep > IMPORT3_DEFAULTS.maxDeepInside || w.inside > ZA_MAX_INSIDE) {
-        dropped.push({ id: it.id, name, kind: it.category!, reason: `misplaced: ${(w.inside * 100).toFixed(0)}% of its surface inside existing solids, ${(w.deep * 100).toFixed(0)}% deeper than ${IMPORT3_DEFAULTS.deepDistance * 1000} mm (${w.top.join(', ')})` })
+        // 第二次机会 (a)：跨骨的部件只按这些骨来拟合
+        // second chance (a): a part that spans bones is fitted to those bones alone
+        if (jointish && it.batch !== 2 && tryJoint(w)) continue
+        // 第二次机会 (b)：淋巴结整体移到最近的空位
+        // second chance (b): a lymph node is moved, whole, to the nearest free spot
+        if (it.category === 'lymph') {
+          const pts0 = thinPoints(surfacePoints(w.mesh, 0.002), 0.0015)
+          const at = (t: number[]) => {
+            const pts = Float32Array.from(pts0, (v, i) => v + t[i % 3]!)
+            const bb = w.stats.bbox.map((v, i) => v + t[i % 3]!)
+            const ov = overlapWith(pts, bb, field, IMPORT3_DEFAULTS.nearDistance, IMPORT3_DEFAULTS.deepDistance, isSolid)
+            return { inside: ov.insideAny, deep: ov.deepAny, inBody: insideBody(pts) }
+          }
+          let best: { t: number[]; len: number; inside: number } | null = null
+          for (let step = 1; step <= 15 && !best; step++) {
+            const len = step * 0.002
+            for (const d of DIRS26) {
+              const t = d.map((v) => v * len)
+              const r = at(t)
+              if (r.inside <= 0.1 && r.deep <= 0.01 && r.inBody >= 0.99 && (!best || r.inside < best.inside)) best = { t, len, inside: r.inside }
+            }
+          }
+          lymphRows.push({ id: it.id, name, insideBefore: round(w.inside, 3), in: w.top, movedMm: best ? round(best.len * 1000, 0) : null, insideAfter: best ? round(best.inside, 3) : null })
+          if (best) {
+            const moved: Mesh = { positions: Float32Array.from(w.mesh.positions, (v, i) => v + best!.t[i % 3]!), indices: w.mesh.indices }
+            importedZa.push(makeElement(it, moved))
+            continue
+          }
+        }
+        dropped.push({ id: it.id, name, kind, reason: `misplaced: ${(w.inside * 100).toFixed(0)}% of its surface inside existing solids, ${(w.deep * 100).toFixed(0)}% deeper than ${IMPORT3_DEFAULTS.deepDistance * 1000} mm (${w.top.join(', ')})` })
         continue
       }
       importedZa.push(makeElement(it, w.mesh))
     }
-    // twins share a verdict
+    // 孪生件共用同一判定 / twins share a verdict
     {
       const twin = (n: string) => n.replace(/^(Left|Right) /, (m) => (m === 'Left ' ? 'Right ' : 'Left '))
       const gone = new Map(dropped.filter((d) => /misplaced/.test(d.reason)).map((d) => [d.name, d]))
@@ -655,7 +861,10 @@ async function main() {
     }
     lap(`warped ${meshItems.length} Z-Anatomy meshes`)
 
-    // report
+    console.log(`\nJoint-local registration (parts fitted to the bones they attach to; "in bone" before = with the body-wide field, where that was tried): ${jointRows.filter((r) => r.shipped).length} of ${jointRows.length} placed`)
+    for (const r of jointRows) console.log(`  ${r.shipped ? 'ok  ' : 'DROP'} ${pad(r.name.slice(0, 50), 51)}in bone ${r.before ? (r.before.inBone! * 100).toFixed(0) + '% → ' : ''}${((r.after.inBone as number) * 100).toFixed(0)}%, in any solid ${r.before ? (r.before.inside! * 100).toFixed(0) + '% → ' : ''}${((r.after.inside as number) * 100).toFixed(0)}%; ends: ${r.ends.map((e) => `${e.bone} ${e.gapMm} (atlas ${e.atlasGapMm})`).join(', ')}`)
+    console.log(`\nLymph nodes moved to free space: ${lymphRows.filter((r) => r.movedMm !== null).length} of ${lymphRows.length}: ${lymphRows.map((r) => `${r.name} ${r.movedMm === null ? 'NOT PLACED' : r.movedMm + ' mm'}`).join('; ')}`)
+    // 报告 / report
     const pct = (v: number) => (v * 100).toFixed(2) + '%'
     console.log(`\nNerves: ${nerveRows.length} tube nerves measured, ${(lenAll).toFixed(1)} m of centreline`)
     console.log(`  in bone (canals/foramina excluded): ${pct(boneBefore / lenAll)} of length after registration → ${pct(boneAfter / lenAll)} after clean-up; in expected canals/foramina: ${pct(canalAll / lenAll)}`)
@@ -670,11 +879,13 @@ async function main() {
       for (const a of agreement) console.log(`    ${pad(a.imported as string, 34)}vs ${pad(a.existing as string, 30)}median ${a.medianMm} mm, max ${a.maxMm} mm, ${((a.within5mm as number) * 100).toFixed(0)}% within 5 mm`)
     }
 
+    // 按要求做的备选比较：腹横肌（3.0 版对 Z-Anatomy）与胸膜
     // fallback comparisons asked for: transversus abdominis (3.0 vs Z-Anatomy) and the pleura
     const comparisons: Record<string, unknown>[] = []
     console.log('\nZ-Anatomy fallbacks compared (not imported unless stated)')
     for (const it of pkg.items.filter((i) => i.kind === 'mesh' && !i.candidate && i.files?.mesh && (/^Transversus abdominis/.test(i.name) || i.name === 'Pleura'))) {
       const name = displayName(it.name, it.side)
+      // 与除它将要替换的 3.0 部件之外的所有部件比较
       // compare against everything except the 3.0 part it would replace
       const w = warpMesh(it)
       const r3 = kept.find((e) => e.id.startsWith(R3_PREFIX) && e.fma === it.fma)
@@ -698,6 +909,37 @@ async function main() {
       comparisons.push(row)
     }
 
+    // 脊髓：应位于椎管内，且各神经根仍与其相接
+    // spinal cord: inside the vertebral canal, and the root units still meet it
+    {
+      let cordCaps = 0
+      const cord = importedZa.find((e) => e.name === 'Spinal cord')
+      if (cord) {
+        // 图谱中的脊髓是两端开口的管，这里封口 / the atlas cord is a tube open at both ends: cap it
+        const welded = weld(cord.mesh.positions, cord.mesh.indices)
+        const capped = capHoles({ positions: welded.positions, indices: welded.indices })
+        if (capped.holes) {
+          cord.mesh = capped.mesh
+          cord.stats = measure(capped.mesh)
+          cord.sourceTriangles = capped.mesh.indices.length / 3
+        }
+        cordCaps = capped.holes
+        const pts = thinPoints(surfacePoints(cord.mesh, 0.003), 0.002)
+        const ov = overlapWith(pts, cord.stats.bbox, field, 0.002, 0.004, (i) => HARD_TISSUES.includes(field.parts[i]!.tissue))
+        const idx = new PointIndex(thinPoints(surfacePoints(cord.mesh, 0.0015), 0.001), 0.004)
+        const gaps: { name: string; mm: number }[] = []
+        for (const e of importedZa) {
+          if (!e.centrelines || !/(anterior|posterior) root of [CTL]\d+ spinal nerve/i.test(e.name)) continue
+          let d = Infinity
+          for (const l of e.centrelines) for (let i = 0; i < l.points.length; i += 3) d = Math.min(d, idx.distance(l.points[i]!, l.points[i + 1]!, l.points[i + 2]!))
+          gaps.push({ name: e.name, mm: round(d * 1000, 2) })
+        }
+        const g = gaps.map((x) => x.mm).sort((a, b) => a - b)
+        const worst = [...gaps].sort((a, b) => b.mm - a.mm).slice(0, 5)
+        console.log(`\nSpinal cord (Z-Anatomy, procedural): ${(ov.insideAny * 100).toFixed(1)}% of its surface inside bone or cartilage (${[...ov.inside].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([i, f]) => `${field.parts[i]!.name} ${(f * 100).toFixed(1)}%`).join(', ') || '-'}); spans y ${cord.stats.bbox[1].toFixed(3)}…${cord.stats.bbox[4].toFixed(3)} m; ${gaps.length} spinal root units start ${g[Math.floor(g.length / 2)] ?? '-'} mm (median) from its surface, max ${g[g.length - 1] ?? '-'} mm (${worst.map((x) => `${x.name} ${x.mm}`).join(', ')})`)
+        report.spinalCord = { openEndsCapped: cordCaps, closedVolumeMl: round(Math.abs(cord.stats.signedVolume) * 1e6, 1), surfaceInBone: round(ov.insideAny, 4), yRange: [round(cord.stats.bbox[1], 3), round(cord.stats.bbox[4], 3)], roots: gaps.length, rootGapMedianMm: g[Math.floor(g.length / 2)] ?? null, rootGapMaxMm: g[g.length - 1] ?? null, rootGaps: gaps }
+      }
+    }
     kept.push(...importedZa)
     {
       const meshByName = new Map<string, Mesh>()
@@ -738,12 +980,99 @@ async function main() {
         deepInMuscleBefore: round(muscleBefore / lenAll, 5), deepInMuscleAfter: round(muscleAfter / lenAll, 5), pointsMoved: round(ptsMoved / ptsAll, 5), pointsMovedOutOfBone: round(ptsBone / ptsAll, 5), meanPushMm: round((pushSum / Math.max(1, ptsMoved)) * 1000, 2),
         perNerve: nerveRows, agreementWithBodyParts3D: agreement,
       },
-      meshes: meshRows, comparisons,
+      meshes: meshRows, comparisons, jointRefits: jointRows, lymphMoved: lymphRows,
       placement: importedZa.map((e) => ({ id: e.id, fma: e.fma, isaHow: e.tree!.isa.how, isaAnchor: e.tree!.isa.anchor ? tables.isa.name.get(e.tree!.isa.anchor) : null, isaPath: e.tree!.isa.path.map(([, n]) => n), partOf: !!e.tree!.partOf })),
     }
   }
 
-  // ── 4. Classification report ────────────────────────────────────────────────────────────────
+  // ── 3d. 由我们自身几何推导的结构 / 3d. Structures derived from our own geometry ────────────────────────────────────────────
+  // 没有哪个图谱能与本体吻合的薄壳：按它们所覆盖器官的封闭包络计算。
+  // 标记为 `curated`，数据源为 "soma (derived)"。
+  // Thin shells that no atlas fits to this body: computed as closed envelopes of the organs they
+  // cover. Labelled `curated`, source "soma (derived)".
+  const derived: Element[] = []
+  {
+    const fmaNames = loadFmaNames()
+    const isaIdByName = new Map<string, string>()
+    for (const [id, n] of tables.isa.name) if (!isaIdByName.has(n)) isaIdByName.set(n, id)
+    const make = (id: string, fma: string, name: string, system: SystemId, of: Element[], offset: number): Record<string, unknown> | null => {
+      if (!of.length) return null
+      const mesh = envelopeOf(of.map((e) => e.mesh), { voxel: 0.002, offset, smooth: 4 })
+      if (!mesh.indices.length) return null
+      const isa = isaPathFromFma(fma, fmaNames?.label.get(fma) ?? name, (c) => fmaNames?.parents.get(c), (c) => fmaNames?.label.get(c), (c) => tables.isa.name.has(c), isaIdByName.get('organ component') ?? null)
+      derived.push({ id, name, fma, mesh, stats: measure(mesh), sourceTriangles: mesh.indices.length / 3, cls: { system, tissue: 'fascia', rule: 'derived', signal: 'none' }, isa: [], partOf: [], provenance: 'curated', source: SOURCE_DERIVED.name, tree: { isa, partOf: null } })
+      // 检查：它所覆盖的结构在它内部；它不进入骨内
+      // checks: what it covers is inside it; it stays out of bone
+      const tester = new InsideTester(mesh, 96)
+      let inside = 0
+      let total = 0
+      for (const e of of) {
+        const pts = thinPoints(surfacePoints(e.mesh, 0.004), 0.003)
+        inside += tester.fractionInside(pts) * pts.length
+        total += pts.length
+      }
+      const sp = thinPoints(surfacePoints(mesh, 0.004), 0.003)
+      let inBone = 0
+      const b = measure(mesh).bbox
+      for (const e of kept) {
+        if (e.cls.tissue !== 'bone' && e.cls.tissue !== 'cartilage') continue
+        const eb = e.stats.bbox
+        if (eb[0] > b[3] || eb[3] < b[0] || eb[1] > b[4] || eb[4] < b[1] || eb[2] > b[5] || eb[5] < b[2]) continue
+        inBone += new InsideTester(e.mesh, 48).fractionInside(sp)
+      }
+      const st = measure(mesh)
+      return { id, name, from: of.map((e) => e.name), offsetMm: offset * 1000, triangles: mesh.indices.length / 3, areaCm2: round(st.area * 1e4, 0), volumeMl: round(Math.abs(st.signedVolume) * 1e6, 0), contentInside: round(total ? inside / total : 0, 4), surfaceInBone: round(inBone, 4) }
+    }
+    const rows = [
+      make('SOMA_visceral_pleura_L', 'FMA27311', 'Left visceral pleura', 'respiratory', kept.filter((e) => /lobe of left lung/i.test(e.name)), 0.002),
+      make('SOMA_visceral_pleura_R', 'FMA27310', 'Right visceral pleura', 'respiratory', kept.filter((e) => /lobe of right lung|^Middle lobe of lung$/i.test(e.name)), 0.002),
+      make('SOMA_pericardium', 'FMA9868', 'Pericardial sac', 'cardiovascular', kept.filter((e) => e.cls.system === 'cardiovascular' && (e.cls.tissue === 'heart' || e.cls.tissue === 'space') && !/cusp|leaflet|papillary/i.test(e.name)), 0.004),
+    ].filter((r): r is Record<string, unknown> => !!r)
+    kept.push(...derived)
+    if (rows.length) {
+      console.log('\nDerived shells (closed envelopes of our own organs, 2 mm voxels)')
+      for (const r of rows) console.log(`  ${pad(r.name as string, 24)}${r.offsetMm} mm outside ${(r.from as string[]).length} parts; ${r.triangles} triangles, ${r.areaCm2} cm², encloses ${r.volumeMl} ml; ${((r.contentInside as number) * 100).toFixed(1)}% of the covered organs' surface inside it; ${((r.surfaceInBone as number) * 100).toFixed(1)}% of its surface inside bone or cartilage`)
+    }
+    report.derived = rows
+
+    // 皮下脂肪：皮肤内壁与深部包络（肌、骨、软骨、器官）之间的空间，按区域切分。见 fat.ts。
+    // Subcutaneous fat: the space between the inner wall of the skin and the deep envelope
+    // (muscle, bone, cartilage, organs), cut by region. See fat.ts.
+    const skinEl = kept.find((e) => e.name === 'Skin' && e.cls.tissue === 'skin')
+    if (skinEl) {
+      const deep = kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary')
+      const byRegion = new Map<string, number[]>()
+      for (const e of kept) {
+        if (e.cls.tissue !== 'bone') continue
+        const r = fatRegionOfBone(e.name)
+        const a = byRegion.get(r) ?? []
+        for (const v of thinPoints(surfacePoints(e.mesh, 0.006), 0.006)) a.push(v)
+        byRegion.set(r, a)
+      }
+      const regionInputs = FAT_REGIONS.filter((r) => byRegion.has(r.key)).map((r) => ({ region: r.key, bonePoints: Float32Array.from(byRegion.get(r.key)!) }))
+      const fat = deriveFat(skinEl.mesh, deep.map((e) => e.mesh), regionInputs, FAT_OPTIONS)
+      const fatRows: Record<string, unknown>[] = []
+      for (const r of fat.regions) {
+        const def = FAT_REGIONS.find((x) => x.key === r.region)!
+        if (r.mesh.indices.length < 300) continue
+        const isa = isaPathFromFma(def.fma, fmaNames?.label.get(def.fma) ?? def.name, (c) => fmaNames?.parents.get(c), (c) => fmaNames?.label.get(c), (c) => tables.isa.name.has(c), isaIdByName.get('organ component') ?? null)
+        const st = measure(r.mesh)
+        const el: Element = { id: `SOMA_fat_${r.region}`, name: def.name, fma: def.fma, mesh: r.mesh, stats: st, sourceTriangles: r.mesh.indices.length / 3, cls: { system: 'integumentary', tissue: 'fat', rule: 'derived', signal: 'none' }, isa: [], partOf: [], provenance: 'curated', source: SOURCE_DERIVED.name, tree: { isa, partOf: null } }
+        derived.push(el)
+        kept.push(el)
+        fatRows.push({ id: el.id, name: el.name, fma: el.fma, sourceTriangles: el.sourceTriangles, areaCm2: round(st.area * 1e4, 0), volumeMl: round(r.volume * 1e6, 0), thicknessMm: { p10: round(r.thickness.p10 * 1000, 0), median: round(r.thickness.median * 1000, 0), p90: round(r.thickness.p90 * 1000, 0), max: round(r.thickness.max * 1000, 0) }, skinCovered: round(r.skinCovered, 3), verticesPulledIn: round(r.verticesPulledIn, 4) })
+      }
+      console.log(`\nSubcutaneous fat (derived; ${FAT_OPTIONS.voxel * 1000} mm voxels, deep envelope closed by ${FAT_OPTIONS.closing * 1000} mm, at most ${FAT_OPTIONS.maxDepth * 1000} mm below the skin); volume inside the skin ${(fat.bodyVolume * 1000).toFixed(1)} l, fat ${(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000).toFixed(1)} l`)
+      for (const r of fatRows) {
+        const t = r.thicknessMm as Record<string, number>
+        console.log(`  ${pad(r.name as string, 44)}${pad(`${r.volumeMl} ml`, 10)}${pad(`${r.areaCm2} cm²`, 11)}thickness p10 ${t.p10} / median ${t.median} / p90 ${t.p90} / max ${t.max} mm (steps of ${FAT_OPTIONS.voxel * 1000} mm); fat under ${((r.skinCovered as number) * 100).toFixed(0)}% of the region's skin`)
+      }
+      report.fat = { options: FAT_OPTIONS, bodyVolumeL: round(fat.bodyVolume * 1000, 1), fatVolumeL: round(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000, 1), deepParts: deep.length, regions: fatRows }
+    }
+    lap(`derived ${derived.length} parts`)
+  }
+
+  // ── 4. 分类报告 / 4. Classification report ────────────────────────────────────────────────────────────────
   {
     const table = new Map<string, number>()
     const bySignal = new Map<string, number>()
@@ -775,7 +1104,7 @@ async function main() {
   }
   if (classifyOnly) return
 
-  // ── 5. Side ─────────────────────────────────────────────────────────────────────────────────
+  // ── 5. 侧别 / 5. Side ─────────────────────────────────────────────────────────────────────────────────
   const sides = kept.map((e) => SIDE_OVERRIDES[e.id] ?? sideOf(e.name, e.stats.centroid, e.stats.bbox))
   {
     const conflicts = kept.filter((e, i) => {
@@ -795,12 +1124,12 @@ async function main() {
     report.side = { counts: c, fromName: named, nameVsCentroidConflicts: conflicts.map((e) => ({ id: e.id, name: e.name, x: round(e.stats.centroid[0]) })) }
   }
 
-  // ── 6. Exposure -> depth ────────────────────────────────────────────────────────────────────
+  // ── 6. 暴露度 -> 深度 / 6. Exposure -> depth ────────────────────────────────────────────────────────────────────
   const sourceMeshes = kept.map((e) => e.mesh)
   const roles: ExposureRole[] = kept.map((e) => {
     const { system, tissue } = e.cls
     if (system === 'integumentary') return e.isa.includes('skin') ? 'skin' : 'ignore'
-    // lymph nodes are too small to hide a muscle
+    // 淋巴结太小，遮不住肌 / lymph nodes are too small to hide a muscle
     if (system === 'lymphatic' && e.provenance === 'curated') return 'ignore'
     if (tissue === 'muscle' || tissue === 'bone' || tissue === 'cartilage' || tissue === 'organ' || tissue === 'brain' || tissue === 'heart' || tissue === 'gland' || tissue === 'tooth') return 'occluder'
     return 'ignore'
@@ -812,7 +1141,7 @@ async function main() {
     : targets.map(() => 0)
   const exposure = new Map<number, number>()
   {
-    // left/right twins share the mean
+    // 左右孪生件共用均值 / left/right twins share the mean
     const groups = new Map<string, number[]>()
     targets.forEach((ti, k) => {
       const key = kept[ti]!.name.replace(/\b(left|right)\b\s*/gi, '').toLowerCase()
@@ -836,9 +1165,10 @@ async function main() {
     report.exposure = Object.fromEntries(targets.map((ti) => [kept[ti]!.id, round(exposure.get(ti)!, 3)]))
   }
 
-  // ── 7. Adjacency (on the unsimplified surfaces) ─────────────────────────────────────────────
+  // ── 7. 邻接（在未简化的表面上计算） / 7. Adjacency (on the unsimplified surfaces) ─────────────────────────────────────────────
   const adj = computeAdjacency(sourceMeshes, { threshold: ADJACENCY_THRESHOLD, spacing: ADJACENCY_SPACING })
-  const envelopes = adj.neighbours.map((l, i) => (l.length > ADJACENCY_MAX_DEGREE ? i : -1)).filter((i) => i >= 0)
+  // 皮下脂肪与皮肤一样是包络，一律不计邻接 / the subcutaneous fat is an envelope like the skin: never in the adjacency
+  const envelopes = adj.neighbours.map((l, i) => (l.length > ADJACENCY_MAX_DEGREE || isFatPart(kept[i]!.id) ? i : -1)).filter((i) => i >= 0)
   const envelopeSet = new Set(envelopes)
   const neighbours = adj.neighbours.map((l, i) => (envelopeSet.has(i) ? [] : l.filter((j) => !envelopeSet.has(j))))
   lap(`adjacency from ${adj.samples} surface samples`)
@@ -867,7 +1197,7 @@ async function main() {
     }
   }
 
-  // ── 8. Simplify, normals, final measurements ────────────────────────────────────────────────
+  // ── 8. 简化、法线、最终测量 / 8. Simplify, normals, final measurements ────────────────────────────────────────────────
   const parts: Part[] = []
   const glbParts = new Map<SystemId, GlbPart[]>()
   let outTriangles = 0
@@ -929,12 +1259,14 @@ async function main() {
     maxErrorM: maxError, worstVolumeChange: worstVolume, byTissue: Object.fromEntries([...trisByTissue].map(([t, [a, b]]) => [t, { source: a, written: b }])),
   }
 
-  // ── 9. Trees ────────────────────────────────────────────────────────────────────────────────
+  // ── 9. 树 / 9. Trees ────────────────────────────────────────────────────────────────────────────────
+  // 合并的重复件仍然可达：保留的元素取代被丢弃元素的位置。
   // Merged duplicates stay reachable: the kept element takes the dropped one's place.
   const keepIds = new Set(kept.map((e) => e.id))
   const withAliases = (onto: Ontology, which: 'isa' | 'partOf'): Ontology => {
     const elementsMap = new Map<string, Set<string>>()
     for (const [c, set] of onto.elements) elementsMap.set(c, new Set([...set].map(resolve)))
+    // 重新标注的元素离开旧概念，移到正确的概念下（上方的祖先相同）
     // relabelled elements leave their old concept for the right one (same ancestors above)
     for (const [id, oldFma] of relabelledFrom) {
       const next = RELABELLED[id]!.fma
@@ -947,6 +1279,8 @@ async function main() {
     const name = new Map(onto.name)
     const parent = new Map(onto.parent)
     const children = new Map([...onto.children].map(([k, v]) => [k, [...v]]))
+    // 导入的部件：树中有其自身概念时挂在该概念下，否则作为新的叶概念挂在安置概念之下
+    // （没有安置概念时挂在树根，仅限 isa）
     // imported parts: under their own concept when the tree has it, otherwise as a new leaf
     // concept below the placement concept (the tree root when there is none, isa only)
     for (const e of imported) {
@@ -968,8 +1302,9 @@ async function main() {
         set.add(e.id)
       }
     }
+    // 来自 Z-Anatomy 包的部件：创建其路径上缺失的概念，子概念在前
     // parts from the Z-Anatomy package: create the missing concepts of their path, child first
-    for (const e of importedZa) {
+    for (const e of [...importedZa, ...derived]) {
       const t = which === 'isa' ? e.tree!.isa : e.tree!.partOf
       if (!t) continue
       const anchor = t.anchor ?? (which === 'isa' ? onto.root : null)
@@ -998,7 +1333,10 @@ async function main() {
   console.log(`\nTrees: isa ${isaTree.length} concepts covering ${isaReach.size}/${parts.length} parts (of ${tables.isa.name.size} source concepts); partOf ${partOfTree.length} concepts covering ${poReach.size}/${parts.length} parts (of ${tables.partOf.name.size})`)
   report.trees = { isa: { concepts: isaTree.length, parts: isaReach.size }, partOf: { concepts: partOfTree.length, parts: poReach.size } }
 
-  // ── 10. Write ───────────────────────────────────────────────────────────────────────────────
+  // ── 10. 写出 / 10. Write ───────────────────────────────────────────────────────────────────────────────
+  // 所有内容先写到目标旁边的临时目录，再逐个文件移入（rename 是原子操作），先 GLB、
+  // 最后 anatomy.json，这样读取方永远不会看到写了一半的文件。在第一次和最后一次 rename
+  // 之间，读取方仍可能把旧的 anatomy.json 与新的 GLB 配在一起；这个窗口只有几毫秒。
   // Everything is written to a scratch directory next to the target and then moved in file by
   // file (rename is atomic), GLBs first and anatomy.json last, so a reader never sees a
   // half-written file. Between the first and the last rename a reader can still pair the old
@@ -1020,6 +1358,7 @@ async function main() {
     systems.push({ id: def.id, name: def.name, color: def.color, glb, partCount: list.length })
   }
   for (const s of glbParts.keys()) if (!systemDefs.some((d) => d.id === s)) throw new Error(`system ${s} missing from data/curated/systems.json`)
+  // 概念审计：仅凭其概念无法单独描述的部件
   // concept audit: parts whose concept cannot describe them alone
   {
     const groups = new Map<string, Set<string>>()
@@ -1043,7 +1382,7 @@ async function main() {
     schema: 1,
     body: 'male',
     cautions,
-    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : [])],
+    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : []), ...(derived.length ? [SOURCE_DERIVED] : [])],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
     parts,
@@ -1051,6 +1390,7 @@ async function main() {
   }
   const json = JSON.stringify(data)
   writeFileSync(join(stage, 'anatomy.json'), json)
+  // nerves.json：生成神经管所依据的中心线
   // nerves.json: the centrelines the nerve tubes were built from
   const nervePaths: NervePath[] = kept
     .filter((e) => e.centrelines && e.centrelines.length)
@@ -1085,7 +1425,10 @@ async function main() {
   lap('done')
 }
 
-/** What a user should not trust in the male body, most important first. */
+/**
+ * 用户不应信任男性身体中的哪些内容，最重要的排在最前。
+ * What a user should not trust in the male body, most important first.
+ */
 function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts: number): { zh: string; en: string }[] {
   const out: { zh: string; en: string }[] = []
   out.push({
@@ -1115,8 +1458,20 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
     })
   }
   out.push({
-    en: 'Missing structures: phrenic nerve, cervical plexus branches, great auricular and occipital nerves, splanchnic nerves; the spinal cord itself (only its central canal); pleura, pericardium and most peritoneum; cruciate ligaments and menisci of the knee; parotid gland; inferior parathyroids; middle and inner ear; fat. The liver exists only as its eight segments, the heart only as chamber walls and valves.',
-    zh: '缺失的结构：膈神经、颈丛分支、耳大神经和枕神经、内脏神经；脊髓本体（仅有中央管）；胸膜、心包和大部分腹膜；膝关节交叉韧带和半月板；腮腺；下甲状旁腺；中耳和内耳；脂肪。肝脏只以肝段形式存在，心脏只有心腔壁和瓣膜。',
+    en: 'The pleura and the pericardium are not anatomical models: they are closed envelopes computed 2 mm (pleura) and 4 mm (pericardium) outside our own lungs and heart. Only the visceral pleura is shown; there is no parietal pleura, pleural recess or pericardial reflection.',
+    zh: '胸膜和心包不是解剖建模：它们是在本模型的肺和心脏外侧 2 mm（胸膜）和 4 mm（心包）处计算出的封闭包络面。目前只有脏胸膜，没有壁胸膜、胸膜隐窝和心包返折。',
+  })
+  out.push({
+    zh: '皮下脂肪层不是扫描或建模所得：它是把皮肤内壁与肌肉、骨骼、器官外包络之间的空隙按 3 mm 体素填充后得到的，按头、颈、躯干和四肢分区，最深只算到皮下 3 cm。其厚度反映的是本模型皮肤与肌肉之间的间距，不代表真实的脂肪分布；腋窝、腘窝等凹陷处的深部脂肪与皮下脂肪没有区分，浅筋膜的膜性层也未单独表示。',
+    en: 'The subcutaneous fat layer is neither scanned nor modelled: it is the gap between the inner wall of the skin and the outer envelope of muscles, bones and organs, filled at 3 mm voxels, cut into head, neck, trunk and limbs, and followed no deeper than 3 cm below the skin. Its thickness shows the spacing between skin and muscle in this model, not a real fat distribution; deep fat in hollows such as the axilla and the popliteal fossa is not separated from it, and the membranous layer of the superficial fascia is not shown.',
+  })
+  out.push({
+    en: 'The spinal cord is a schematic tube that ends at L2/L3 together with its dura (a real dural sac reaches S2); there are no cranial meninges except the falx and tentorium. The parotid gland is about a quarter of real size (5.6 cm³). Joint capsules, menisci and cruciate ligaments were fitted to our bones joint by joint and often overlap the muscles around them.',
+    zh: '脊髓是示意性的管状模型，与硬脊膜一同止于 L2/L3（真实硬膜囊可达 S2）；除大脑镰和小脑幕外没有颅内脑膜。腮腺体积约为真实大小的四分之一（5.6 cm³）。关节囊、半月板和交叉韧带是逐个关节贴合到本模型骨骼上的，常与周围肌肉重叠。',
+  })
+  out.push({
+    en: 'Missing structures: phrenic nerve, cervical plexus branches, great auricular and occipital nerves, splanchnic nerves; parietal pleura and parietal peritoneum; ligamenta flava; lymphatic vessels and thoracic duct; cecum, sigmoid colon and anal canal as separate parts; inferior parathyroids; middle and inner ear; subcutaneous fat. The liver exists only as its eight segments, the heart only as chamber walls and valves.',
+    zh: '缺失的结构：膈神经、颈丛分支、耳大神经和枕神经、内脏神经；壁胸膜和壁腹膜；黄韧带；淋巴管和胸导管；盲肠、乙状结肠和肛管未单独成件；下甲状旁腺；中耳和内耳；皮下脂肪。肝脏只以肝段形式存在，心脏只有心腔壁和瓣膜。',
   })
   out.push({
     en: 'Left/right labels of five structures were wrong in the source and corrected here from their position: flexor pollicis brevis, brachium of superior colliculus, middle pharyngeal constrictor, ascending lumbar vein (labels swapped) and one fibular vein. For heart, liver and coronary structures "left/right" in a name refers to the organ, not the side of the body.',
@@ -1127,8 +1482,8 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
     zh: '肌肉的“浅层/深层”是按几何关系自动计算的（肌肉表面有多少直接朝向皮肤而未被遮盖），并非取自教科书分层：例如腹直肌在本模型中被腹外斜肌腱膜覆盖，因而归入深层。',
   })
   out.push({
-    en: 'Meshes were simplified (largest deviation 0.8 mm) and the feet point downwards as in the scanner; lower-limb lymph nodes and several knee, shoulder and ankle ligaments were left out because they did not fit this body.',
-    zh: '网格经过简化（最大偏差 0.8 mm）；双足呈扫描时的跖屈姿势。下肢部分淋巴结以及膝、肩、踝的若干韧带因无法贴合本模型而未收录。',
+    en: 'Meshes were simplified (largest deviation 0.8 mm) and the feet point downwards as in the scanner. About 30 lymph node groups were shifted by up to 3 cm to the nearest free space, and a few nodes and ligaments were left out because they did not fit this body.',
+    zh: '网格经过简化（最大偏差 0.8 mm）；双足呈扫描时的跖屈姿势。约 30 组淋巴结被整体平移到最近的空隙处（最多约 3 cm），少数淋巴结和韧带因无法贴合本模型而未收录。',
   })
   return out
 }

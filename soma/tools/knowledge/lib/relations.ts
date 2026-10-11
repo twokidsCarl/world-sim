@@ -18,7 +18,7 @@ import { ancestors, compareIds, descendants } from './bp3d.ts'
 import { sideOf, sideOfConcept, sidedDerivative, stripSide, type Model } from './model.ts'
 import { P_INNERVATES, RELATION_PROPS } from './wikidata.ts'
 
-export type Via = 'direct' | 'is-a' | 'laterality' | 'whole' | 'wikipedia'
+export type Via = 'direct' | 'is-a' | 'laterality' | 'whole' | 'wikipedia' | 'zanatomy'
 
 export interface BuiltRelation extends Relation {
   /** Not serialised: how the statement reached the subject. */
@@ -32,7 +32,7 @@ export interface RelationsResult {
 }
 
 const MUSCLE_ONLY: RelationKind[] = ['origin', 'insertion', 'antagonist']
-const VIA_RANK: Record<Via, number> = { direct: 0, 'is-a': 1, laterality: 2, whole: 3, wikipedia: 4 }
+const VIA_RANK: Record<Via, number> = { direct: 0, 'is-a': 1, laterality: 2, whole: 3, wikipedia: 4, zanatomy: 5 }
 /** is-a ancestors with more BodyParts3D descendants than this do not propagate. */
 export const MAX_ISA_FANOUT = 100
 const ORGAN_PART = /^(?:.+ )?(?:body|fundus|wall|part|zone|segment|region|lobe) of (.+)$/

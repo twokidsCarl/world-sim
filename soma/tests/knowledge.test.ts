@@ -181,6 +181,22 @@ describe('names.json', () => {
     }
   })
 
+  // 第二批扩充：膝、浆膜、脊髓、腮腺、皮下脂肪 / second extension: knee, serous membranes, cord, parotid, fat
+  it('knee, serous membranes, spinal cord and subcutaneous fat use mainland terms', () => {
+    if (!names.FMA44616) return // 数据集未包含这些部件 / dataset without these parts
+    expect(names.FMA44616?.zh).toBe('左前交叉韧带')
+    expect(names.FMA44633?.zh).toBe('左外侧半月板')
+    expect(names.FMA7647?.zh).toBe('脊髓')
+    expect(names.FMA256541?.zh).toBe('脊髓前角')
+    expect(names.FMA59798?.zh).toBe('左腮腺')
+    expect(names.FMA27311?.zh).toBe('左脏胸膜')
+    expect(names.FMA9868?.zh).toBe('心包')
+    expect(names.FMA53659?.zh).toBe('头部皮下脂肪（浅筋膜）')
+    expect(names.FMA58392?.zh).toBe('左上肢皮下脂肪（浅筋膜）')
+    expect(names.ZAC_anterior_meniscotibial_ligament_lateral_meniscus_L?.zh).toBe('左半月板胫骨前韧带（外侧半月板）')
+    expect(names.FMA60870_L?.zh).toBe('左甲周皮')
+  })
+
   it('female reproductive system and breast use mainland terms', () => {
     if (!names.UBERON_0000002) return // female dataset not part of this build
     // UBERON:0000002 -> Q666412 "cervix" on Wikidata (P1554), which also carries FMA17740
@@ -234,6 +250,11 @@ describe('relations.json', () => {
       if (r.source.name.startsWith('Wikidata')) {
         expect(r.source.url, at).toMatch(/^https:\/\/www\.wikidata\.org\/wiki\/Q\d+#P\d+$/)
         expect(r.source.license, at).toBe('CC0 1.0')
+      } else if (r.source.name.startsWith('Z-Anatomy')) {
+        expect(r.source.name, at).toMatch(/^Z-Anatomy \(attachment patch on bone, by geometry\)/)
+        expect(r.source.url, at).toBe('https://github.com/Z-Anatomy')
+        expect(r.source.license, at).toBe('CC BY-SA 4.0')
+        expect(['origin', 'insertion'], at).toContain(r.kind)
       } else {
         expect(r.source.name, at).toMatch(/^Wikipedia "/)
         expect(r.source.url, at).toMatch(/^https:\/\/en\.wikipedia\.org\/w\/index\.php\?title=[^&]+&oldid=\d+$/)
@@ -400,6 +421,45 @@ describe('relations.json', () => {
     }
     const viaBase = relations.filter((r) => r.source.name.includes('from the unsided concept'))
     expect(viaBase.length).toBeGreaterThan(20)
+  })
+
+  describe('Z-Anatomy bone-level attachments', () => {
+    const za = relations.filter((r) => r.source.name.startsWith('Z-Anatomy'))
+    const objects = (subject: string, kind: RelationKind) => za.filter((r) => r.subject === subject && r.kind === kind).map((r) => r.object)
+
+    it('always point at a named concept and never repeat a bone the muscle already has', () => {
+      if (!za.length) return // attachments file not part of this build
+      for (const r of za) {
+        expect(r.object, `${r.subject} ${r.kind}`).toBeDefined()
+        expect(names[r.object!]?.zh, r.object).toBeTruthy()
+        const same = relations.filter((o) => o.subject === r.subject && o.kind === r.kind && o.object === r.object)
+        expect(same, `${r.subject} ${r.kind} ${r.object}`).toHaveLength(1)
+      }
+    })
+
+    // Checked against standard anatomy by hand.
+    it('spot checks: biceps -> radius, rectus femoris -> hip bone, gastrocnemius -> femur and calcaneus, deltoid', () => {
+      if (!za.length) return
+      // long head of left biceps brachii: origin scapula, insertion radius (whole-muscle patch)
+      expect(objects('FMA37687', 'origin')).toContain('FMA13396')
+      expect(objects('FMA37687', 'insertion')).toContain('FMA23465')
+      expect(za.find((r) => r.subject === 'FMA37687' && r.kind === 'insertion')!.source.name).toContain('patch of the whole muscle "biceps brachii", may not apply to this part')
+      // left rectus femoris: origin on the left hip bone
+      expect(objects('FMA38929', 'origin')).toContain('FMA16587')
+      // lateral head of left gastrocnemius: origin femur; insertion calcaneus, filed under triceps surae
+      expect(objects('FMA45961', 'origin')).toContain('FMA24475')
+      expect(objects('FMA45961', 'insertion')).toContain('FMA24498')
+      // deltoid parts: insertion on the humerus (whole muscle); clavicular origin on the clavicle is
+      // already stated by Wikidata, so it is not repeated
+      expect(objects('FMA34681', 'insertion')).toContain('FMA23131')
+      expect(objects('FMA34681', 'origin')).not.toContain('FMA13323')
+    })
+
+    it('does not emit patches rejected as reversed (pectoralis minor, serratus anterior)', () => {
+      if (!za.length) return
+      // left pectoralis minor FMA13376, left serratus anterior FMA13399
+      for (const id of ['FMA13376', 'FMA13399']) expect(za.filter((r) => r.subject === id)).toEqual([])
+    })
   })
 
   it('does not keep muscle-only statements on non-muscles', () => {

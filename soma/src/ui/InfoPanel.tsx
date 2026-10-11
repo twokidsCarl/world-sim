@@ -4,11 +4,30 @@ import { PROVENANCE_LABEL, RELATION_LABEL, SIDE_LABEL, TISSUE_LABEL, provenanceC
 import type { Concept, Part, Relation } from '../anatomy/types.ts'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
+import { ShowSkinTerritory, SkinRegionInfo } from './SkinRegionInfo.tsx'
 
 const TREE_LABEL: Record<TreeKind, string> = { isa: '分类路径 is-a', partOf: '组成路径 part-of' }
 const LIST_LIMIT = 30
 
 export function InfoPanel({ graph }: { graph: AnatomyGraph }) {
+  const hasRegion = useApp((s) => s.skinMapMode !== 'off' && s.skinRegions.length > 0)
+  const hasSelection = useApp((s) => s.selection.ids.length > 0 || !!s.selection.concept)
+  // 体表图区域卡片在上；其下是所选结构（如支配神经）的常规信息
+  // the skin map region card on top; the usual info for the selected structure (e.g. the nerve) below
+  if (hasRegion) {
+    return (
+      <div className="panel-body scroll info-stack">
+        <div className="info">
+          <SkinRegionInfo graph={graph} />
+        </div>
+        {hasSelection && <SelectionInfo graph={graph} />}
+      </div>
+    )
+  }
+  return <SelectionInfo graph={graph} />
+}
+
+function SelectionInfo({ graph }: { graph: AnatomyGraph }) {
   const selection = useApp((s) => s.selection)
   const dataset = useApp((s) => s.dataset)
 
@@ -204,6 +223,7 @@ function RelationGroup({ graph, kind, list }: { graph: AnatomyGraph; kind: Relat
   const [all, setAll] = useState(false)
   const app = useApp.getState()
   const label = (r: Relation) => r.objectLabel.zh ?? r.objectLabel.en
+  // 这一组所有目标能对应到的全部部件，供“全选”使用
   // every part any target of this group resolves to, for "select all"
   const union: string[] = []
   const seen = new Set<string>()
@@ -290,6 +310,7 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
   const source = graph.sourceOf(part)
   const adjacent = graph.adjacentParts(part.id)
   const wikidata = graph.names[part.fma]?.wikidata
+  // 路径以部件自身的概念结尾；这里只显示它的上级
   // the chain ends at the part's own concept; show only its ancestors there
   const chainOf = (tree: TreeKind) => {
     const chain = graph.partChain(tree, part.id)
@@ -299,6 +320,7 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
     <div className="panel-body scroll info">
       <Names name={name} />
       <Actions />
+      <ShowSkinTerritory graph={graph} partIds={[part.id]} isNerve={part.tissue === 'nerve'} />
       <dl className="props">
         <IdRows id={part.fma} />
         <dt>部件 ID</dt>
@@ -371,6 +393,7 @@ function ConceptInfo({ graph, tree, concept, partIds }: { graph: AnatomyGraph; t
     <div className="panel-body scroll info">
       <Names name={graph.conceptName(concept)} />
       <Actions />
+      <ShowSkinTerritory graph={graph} partIds={partIds} isNerve={partIds.some((id) => graph.part(id)?.tissue === 'nerve')} />
       <dl className="props">
         <IdRows id={concept.id} />
         <dt>类型</dt>

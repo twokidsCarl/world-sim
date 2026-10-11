@@ -9,7 +9,7 @@ import { buildOntology, directParts, emitConcepts, parseTsv } from '../tools/pip
 
 const enc = (s: string) => new TextEncoder().encode(s)
 
-/** Axis-aligned box with outward-facing triangles. */
+/** 三角形朝外的轴对齐长方体。 / Axis-aligned box with outward-facing triangles. */
 function box(min: [number, number, number], max: [number, number, number]): Mesh {
   const [x0, y0, z0] = min
   const [x1, y1, z1] = max
@@ -143,6 +143,7 @@ describe('parseObj', () => {
 
 describe('geometry', () => {
   it('converts source mm (Z up, anterior −Y) to runtime m (Y up, anterior +Z)', () => {
+    // 一个向左 10 mm、向前 20 mm、向上 1500 mm 的点
     // a point 10 mm to the left, 20 mm anterior, 1500 mm up
     const out = sourceToRuntime(new Float32Array([10, -20, 1500]))
     expect(out[0]).toBeCloseTo(0.01)
@@ -157,8 +158,8 @@ describe('geometry', () => {
     expect(s.bbox).toEqual([1, 2, 3, 2, 4, 6])
   })
   it('welds duplicate vertices and drops degenerate and duplicate triangles', () => {
-    const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0, /* dup of 0 */ 0, 0, 0, 1, 1, 0, /* unused */ 9, 9, 9])
-    const indices = new Uint32Array([0, 1, 2, /* same tri via dup */ 3, 1, 2, /* degenerate */ 0, 3, 1, 1, 4, 2])
+    const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0, /* 与 0 重复 / dup of 0 */ 0, 0, 0, 1, 1, 0, /* 未使用 / unused */ 9, 9, 9])
+    const indices = new Uint32Array([0, 1, 2, /* 经重复顶点得到的同一三角形 / same tri via dup */ 3, 1, 2, /* 退化 / degenerate */ 0, 3, 1, 1, 4, 2])
     const w = weld(positions, indices)
     expect(w.positions.length / 3).toBe(4)
     expect(w.indices.length / 3).toBe(2)
@@ -217,8 +218,10 @@ describe('classify', () => {
     expect(c('Right conus artery', ['right conus artery', 'coronary artery', 'artery', 'segment of arterial tree organ'], ['right coronary artery', 'heart'])).toBe('cardiovascular/artery/isa')
   })
   it('puts exceptions above the broad rule they carve out of', () => {
+    // FMA 把跟腱归在 skeletal ligament 之下
     // FMA files the Achilles tendon under skeletal ligament
     expect(c('Right calcaneal tendon', ['right calcaneal tendon', 'calcaneal tendon', 'skeletal ligament', 'ligament organ'])).toBe('muscular/tendon/isa')
+    // 眼外肌是肌，不是 "eye"
     // extra-ocular muscles are muscles, not "eye"
     expect(c('Left medial rectus', ['left medial rectus', 'extra-ocular muscle', 'muscle organ'], ['left eye'])).toBe('muscular/muscle/isa')
     expect(c('Optic chiasm', ['optic chiasm', 'nerve trunk', 'segment of neural tree organ'])).toBe('nervous/brain/isa')
@@ -242,6 +245,7 @@ describe('side', () => {
     expect(sideOf('Stomach', [0.04, 1, 0], [0.01, 0, 0, 0.09, 1, 1])).toBe('L')
     expect(sideOf('Gallbladder', [-0.05, 1, 0], [-0.07, 0, 0, -0.02, 1, 1])).toBe('R')
     expect(sideOf('Sternum', [0.001, 1, 0], [-0.03, 0, 0, 0.03, 1, 1])).toBe('M')
+    // 质心偏离中线，但部件跨越中线
     // off-centre centroid but the part spans the midline
     expect(sideOf('Liver', [-0.05, 1, 0], [-0.12, 0, 0, 0.06, 1, 1])).toBe('M')
     expect(sideOf('Left femur', [-0.2, 1, 0], [-0.3, 0, 0, -0.1, 1, 1])).toBe('L')
@@ -252,6 +256,10 @@ describe('layers', () => {
   const name = (d: number) => LAYERS[d]!.key
   it('orders layers superficial to deep', () => {
     expect(name(depthOf('integumentary', 'skin'))).toBe('skin')
+    // 皮下脂肪层位于皮肤与筋膜之间 / the subcutaneous fat layer lies between skin and fascia
+    expect(name(depthOf('integumentary', 'fat'))).toBe('fat')
+    expect(depthOf('integumentary', 'skin')).toBeLessThan(depthOf('integumentary', 'fat'))
+    expect(depthOf('integumentary', 'fat')).toBeLessThan(depthOf('muscular', 'fascia'))
     expect(name(depthOf('muscular', 'muscle', SUPERFICIAL_EXPOSURE + 0.01))).toBe('muscle-superficial')
     expect(name(depthOf('muscular', 'muscle', 0))).toBe('muscle-deep')
     expect(name(depthOf('cardiovascular', 'artery'))).toBe('neurovascular')
@@ -278,9 +286,9 @@ describe('adjacency', () => {
   it('links parts within the threshold, symmetrically, and nothing else', () => {
     const meshes = [
       box([0, 0, 0], [10, 10, 10]),
-      box([11, 0, 0], [21, 10, 10]), // 1 away from #0
-      box([26, 0, 0], [36, 10, 10]), // 5 away from #1
-      box([0, 11.5, 0], [10, 20, 10]), // 1.5 away from #0
+      box([11, 0, 0], [21, 10, 10]), // 距 #0 为 1 / 1 away from #0
+      box([26, 0, 0], [36, 10, 10]), // 距 #1 为 5 / 5 away from #1
+      box([0, 11.5, 0], [10, 20, 10]), // 距 #0 为 1.5 / 1.5 away from #0
     ]
     const r = computeAdjacency(meshes, { threshold: 2, spacing: 1 })
     expect(r.neighbours).toEqual([[1, 3], [0], [], [0]])
@@ -291,8 +299,8 @@ describe('adjacency', () => {
 describe('exposure', () => {
   it('scores an uncovered slab about one half and a covered one zero', () => {
     const skin = box([-50, 30, -50], [50, 31, 50])
-    const top = box([-20, 10, -20], [20, 14, 20]) // directly under the skin
-    const under = box([-20, 0, -20], [20, 4, 20]) // hidden beneath `top`
+    const top = box([-20, 10, -20], [20, 14, 20]) // 紧贴皮肤之下 / directly under the skin
+    const under = box([-20, 0, -20], [20, 4, 20]) // 被 `top` 遮住 / hidden beneath `top`
     const e = computeExposure([skin, top, under], ['skin', 'occluder', 'occluder'], [1, 2], { cell: 2, spacing: 1.5, maxDistance: 40 })
     expect(e[0]!).toBeGreaterThan(0.35)
     expect(e[0]!).toBeLessThan(0.6)

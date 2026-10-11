@@ -1,9 +1,12 @@
+// 神经、韧带、筋膜和淋巴结：英文术语 -> 简体中文（大陆《人体解剖学名词》用法）。
+// 手写词表：机器翻译，未经专业人员审核。由 terms.ts 并入 TERMS，此处词条优先于通用表。
+//
 // Nerves, ligaments, fasciae and lymph nodes: English term -> Simplified Chinese, mainland usage
 // (《人体解剖学名词》 style). Hand-written: MACHINE TRANSLATION, NOT REVIEWED by a professional.
 // Merged into TERMS by terms.ts; entries here win over the general table.
 
 export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
-  // ---- generic nervous system -----------------------------------------------------------
+  // ---- 神经系统通用词 / generic nervous system -----------------------------------------------------------
   'peripheral nerve': '周围神经', 'autonomic nerve': '自主神经', 'nerve root': '神经根',
   'nerve plexus': '神经丛', 'spinal nerve': '脊神经', 'lumbar spinal nerve': '腰神经',
   'cervical nerve': '颈神经', 'thoracic nerve': '胸神经', 'lumbar nerve': '腰神经',
@@ -18,7 +21,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'superior trunk': '上干', 'middle trunk': '中干', 'inferior trunk': '下干',
   'lateral cord': '外侧束', 'medial cord': '内侧束', 'posterior cord': '后束', 'anterior cord': '前束',
 
-  // ---- cranial nerves and branches -------------------------------------------------------
+  // ---- 脑神经及其分支 / cranial nerves and branches -------------------------------------------------------
   'facial nerve': '面神经', 'abducens nerve': '展神经', 'vestibulocochlear nerve': '前庭蜗神经',
   'spinal accessory nerve': '副神经', 'accessory nerve': '副神经', 'glossopharyngeal nerve': '舌咽神经',
   'vagus nerve': '迷走神经', 'hypoglossal nerve': '舌下神经', 'olfactory nerve': '嗅神经',
@@ -29,7 +32,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'supratrochlear nerve': '滑车上神经', 'infratrochlear nerve': '滑车下神经',
   'anterior ethmoidal nerve': '筛前神经', 'long ciliary nerve': '睫状长神经',
 
-  // ---- plexuses ---------------------------------------------------------------------------
+  // ---- 神经丛 / plexuses ---------------------------------------------------------------------------
   'brachial nerve plexus': '臂丛', 'brachial plexus': '臂丛', 'lumbar nerve plexus': '腰丛',
   'lumbar plexus': '腰丛', 'sacral nerve plexus': '骶丛', 'sacral plexus': '骶丛',
   'lumbosacral nerve plexus': '腰骶丛', 'lumbosacral plexus': '腰骶丛', 'limb nerve plexus': '肢体神经丛',
@@ -38,7 +41,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'c4 contribution to brachial plexus roots': '第4颈神经至臂丛根的分支',
   'roots of brachial plexus (unassigned branches)': '臂丛根（未归类分支）',
 
-  // ---- upper limb nerves ------------------------------------------------------------------
+  // ---- 上肢神经 / upper limb nerves ------------------------------------------------------------------
   'median nerve': '正中神经', 'ulnar nerve': '尺神经', 'radial nerve': '桡神经',
   'musculocutaneous nerve': '肌皮神经', 'axillary nerve': '腋神经', 'long thoracic nerve': '胸长神经',
   'suprascapular nerve': '肩胛上神经', 'dorsal scapular nerve': '肩胛背神经',
@@ -59,7 +62,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'communicating branch of ulnar nerve with median nerve (palm)': '尺神经与正中神经的交通支（手掌）',
   'ulnar nerve-median nerve communicating branch': '尺神经与正中神经的交通支',
 
-  // ---- lower limb and trunk nerves --------------------------------------------------------
+  // ---- 下肢和躯干神经 / lower limb and trunk nerves --------------------------------------------------------
   'sciatic nerve': '坐骨神经', 'tibial nerve': '胫神经', 'common fibular nerve': '腓总神经',
   'superficial fibular nerve': '腓浅神经', 'deep fibular nerve': '腓深神经', 'femoral nerve': '股神经',
   'obturator nerve': '闭孔神经', 'pudendal nerve': '阴部神经', 'saphenous nerve': '隐神经',
@@ -81,7 +84,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'hypogastric branch': '腹下支', 'iliac branch': '髂支', 'lateral calcaneal branches': '跟外侧支',
   'medial calcaneal branches': '跟内侧支',
 
-  // ---- joints (for "ligament of ... joint") ----------------------------------------------
+  // ---- 关节（用于 “ligament of ... joint”）/ joints (for "ligament of ... joint") ----------------------------------------------
   'ankle joint': '踝关节', 'elbow joint': '肘关节', 'glenohumeral joint': '盂肱关节',
   'hip joint': '髋关节', 'knee joint': '膝关节', 'sacrococcygeal joint': '骶尾关节',
   'sternoclavicular joint': '胸锁关节', 'talocalcaneal joint': '距跟关节', 'wrist joint': '腕关节',
@@ -91,7 +94,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'temporomandibular joint': '颞下颌关节', 'acromioclavicular joint': '肩锁关节',
   'articular capsule': '关节囊', 'head of femur': '股骨头', 'head of rib': '肋头',
 
-  // ---- ligaments: spine, thorax, shoulder, elbow -----------------------------------------
+  // ---- 韧带：脊柱、胸、肩、肘 / ligaments: spine, thorax, shoulder, elbow -----------------------------------------
   'anterior longitudinal ligament': '前纵韧带', 'posterior longitudinal ligament': '后纵韧带',
   'ligamenta flava': '黄韧带', 'ligamentum flavum': '黄韧带', 'ligamentum nuchae': '项韧带',
   'intertransverse ligaments': '横突间韧带', 'interspinous ligament': '棘间韧带',
@@ -114,7 +117,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'stylomandibular ligament': '茎突下颌韧带', 'sphenomandibular ligament': '蝶下颌韧带',
   'pterygospinous ligament': '翼棘韧带', 'cricopharyngeal ligament': '环咽韧带',
 
-  // ---- ligaments: wrist and hand ----------------------------------------------------------
+  // ---- 韧带：腕和手 / ligaments: wrist and hand ----------------------------------------------------------
   'dorsal radiocarpal ligament': '桡腕背侧韧带', 'palmar radiocarpal ligament': '桡腕掌侧韧带',
   'dorsal ulnocarpal ligament': '尺腕背侧韧带', 'palmar ulnocarpal ligament': '尺腕掌侧韧带',
   'dorsal radio-ulnar ligament': '桡尺背侧韧带', 'palmar radio-ulnar ligament': '桡尺掌侧韧带',
@@ -139,7 +142,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'collateral ligaments of metacarpophalangeal joints': '掌指关节侧副韧带',
   'palmar ligaments of interphalangeal joints of hand': '指骨间关节掌侧韧带',
 
-  // ---- ligaments: pelvis, hip, knee -------------------------------------------------------
+  // ---- 韧带：骨盆、髋、膝 / ligaments: pelvis, hip, knee -------------------------------------------------------
   'inguinal ligament': '腹股沟韧带', 'iliolumbar ligament': '髂腰韧带',
   'sacrotuberous ligament': '骶结节韧带', 'sacrospinous ligament': '骶棘韧带',
   'arcuate pubic ligament': '耻骨弓状韧带', 'superior pubic ligament': '耻骨上韧带',
@@ -155,7 +158,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'meniscopatellar ligament': '半月板髌韧带', 'transverse ligament of knee': '膝横韧带',
   'lateral patellar retinaculum': '髌外侧支持带', 'medial patellar retinaculum': '髌内侧支持带',
 
-  // ---- ligaments: ankle and foot ----------------------------------------------------------
+  // ---- 韧带：踝和足 / ligaments: ankle and foot ----------------------------------------------------------
   'talofibular ligament': '距腓韧带', 'anterior talofibular ligament': '距腓前韧带',
   'posterior talofibular ligament': '距腓后韧带', 'calcaneofibular ligament': '跟腓韧带',
   'anterior tibiofibular ligament': '胫腓前韧带', 'posterior tibiofibular ligament': '胫腓后韧带',
@@ -183,7 +186,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'collateral ligaments of interphalangeal joints of foot': '趾骨间关节侧副韧带',
   'dorsal tarsal ligament': '跗骨背侧韧带', 'tarsal interosseous ligament': '跗骨骨间韧带',
 
-  // ---- fasciae, aponeuroses, retinacula --------------------------------------------------
+  // ---- 筋膜、腱膜、支持带 / fasciae, aponeuroses, retinacula --------------------------------------------------
   fascia: '筋膜', aponeurosis: '腱膜', 'fascia of muscle': '肌筋膜', 'antebrachial fascia': '前臂筋膜',
   'brachial fascia': '臂筋膜', 'crural fascia': '小腿筋膜', 'diaphragmatic fascia': '膈筋膜',
   'iliopsoas fascia': '髂腰肌筋膜', 'investing abdominal fascia': '腹部封套筋膜',
@@ -201,7 +204,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'superior extensor retinaculum of ankle': '伸肌上支持带', 'superior fibular retinaculum': '腓骨肌上支持带',
   'inferior fibular retinaculum': '腓骨肌下支持带',
 
-  // ---- lymphoid ---------------------------------------------------------------------------
+  // ---- 淋巴 / lymphoid ---------------------------------------------------------------------------
   'lymph node': '淋巴结', 'lymph node group': '淋巴结群', 'lymphoid tissue': '淋巴组织',
   'lymphomyeloid tissue': '淋巴骨髓组织', 'mucosa-associated lymphoid tissue': '黏膜相关淋巴组织',
   'organized mucosa-associated lymphoid tissue': '有组织的黏膜相关淋巴组织',
@@ -210,14 +213,14 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'parietal lymph node': '壁淋巴结', 'visceral lymph node': '脏淋巴结',
   'lymph node of pelvis': '盆部淋巴结', 'lymph node of neck': '颈部淋巴结',
   'parietal lymph node of pelvis': '盆壁淋巴结',
-  // upper limb
+  // 上肢 / upper limb
   'axillary lymph node': '腋淋巴结', 'axillary lymph nodes': '腋淋巴结',
   'apical axillary lymph node': '腋尖淋巴结', 'apical axillary lymph nodes': '腋尖淋巴结',
   'central axillary lymph node': '腋中央淋巴结', 'lateral axillary lymph node': '腋外侧淋巴结',
   'superficial axillary lymph node': '腋浅淋巴结', 'subscapular lymph node': '肩胛下淋巴结',
   'pectoral lymph node': '胸肌淋巴结', 'brachial lymph node': '肱淋巴结', 'cubital lymph nodes': '肘淋巴结',
   'infraclavicular lymph nodes': '锁骨下淋巴结', 'supraclavicular lymph node': '锁骨上淋巴结',
-  // lower limb
+  // 下肢 / lower limb
   'inguinal lymph node': '腹股沟淋巴结', 'deep inguinal lymph node': '腹股沟深淋巴结',
   'superficial inguinal lymph node': '腹股沟浅淋巴结',
   'intermediate deep inguinal lymph node': '腹股沟深中间淋巴结',
@@ -228,7 +231,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'popliteal lymph node': '腘淋巴结', 'deep popliteal lymph node': '腘深淋巴结',
   'superficial popliteal lymph node': '腘浅淋巴结', 'tibial lymph node': '胫淋巴结',
   'anterior tibial lymph node': '胫前淋巴结', 'posterior tibial lymph node': '胫后淋巴结',
-  // head and neck
+  // 头颈 / head and neck
   'cervical lymph node': '颈淋巴结', 'lateral cervical lymph node': '颈外侧淋巴结',
   'deep lateral cervical lymph node': '颈外侧深淋巴结', 'deep cervical lymph node': '颈深淋巴结',
   'superficial lateral cervical lymph nodes': '颈外侧浅淋巴结',
@@ -242,7 +245,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'facial lymph node': '面淋巴结', 'buccinator lymph node': '颊肌淋巴结', 'nasolabial lymph node': '鼻唇淋巴结',
   'mandibular lymph node': '下颌淋巴结', 'pretracheal lymph nodes': '气管前淋巴结',
   'thyroid lymph nodes': '甲状腺淋巴结', 'paratracheal cervical nodes': '颈部气管旁淋巴结',
-  // thorax
+  // 胸部 / thorax
   'paratracheal thoracic nodes': '胸部气管旁淋巴结', 'tracheobronchial lymph node': '气管支气管淋巴结',
   'inferior tributary of tracheobronchial lymph node group': '气管支气管下淋巴结群',
   'superior lymph node group of tracheobronchial lymphatic chain': '气管支气管上淋巴结群',
@@ -252,7 +255,7 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'subdiaphragmatic lymph node': '膈下淋巴结', 'prevertebral lymph node': '椎前淋巴结',
   'juxta-oesophageal lymph node': '食管旁淋巴结', 'node of arch of azygos vein': '奇静脉弓淋巴结',
   'node of ligamentum arteriosum': '动脉韧带淋巴结', 'deep lymph node of thorax': '胸部深淋巴结',
-  // abdomen and pelvis
+  // 腹部和盆部 / abdomen and pelvis
   'subaortic lymph node': '主动脉下淋巴结', 'retro-aortic lymph node': '主动脉后淋巴结',
   'retrocaval nodes': '腔静脉后淋巴结', 'celiac lymph node': '腹腔淋巴结', 'gastric lymph node': '胃淋巴结',
   'pyloric lymph node': '幽门淋巴结', 'suprapyloric lymph node': '幽门上淋巴结',
@@ -274,14 +277,14 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'median sacral nodes': '骶正中淋巴结', 'lateral vesical lymph node': '膀胱外侧淋巴结',
   'prevesical lymph node': '膀胱前淋巴结', 'postvesical lymph node': '膀胱后淋巴结',
 
-  // ---- glands and upper-level classes introduced with these imports ----------------------
+  // ---- 随这些导入出现的腺体和上位类 / glands and upper-level classes introduced with these imports ----------------------
   'thyroid gland': '甲状腺', 'parathyroid gland': '甲状旁腺', 'superior parathyroid gland': '上甲状旁腺',
   'inferior parathyroid gland': '下甲状旁腺', 'homogeneous organ': '同质器官', 'tissue cluster': '组织簇',
   'organ region cluster': '器官区簇', 'portion of heterogeneous tissue': '异质组织',
   'skeletal membrane organ': '骨骼膜性器官', 'variant anatomical structure': '变异解剖结构',
   'organ components': '器官组成部分',
 
-  // ---- further exact terms (complete names) -----------------------------------------------
+  // ---- 其他完整名称词条 / further exact terms (complete names) -----------------------------------------------
   'mental nerve': '颏神经',
   'dorsal digital branches of superficial fibular nerve': '腓浅神经趾背神经',
   'lateral dorsal cutaneous nerve (sural part)': '足背外侧皮神经（腓肠神经部）',
@@ -293,6 +296,9 @@ export const NERVE_LIGAMENT_LYMPH_TERMS: Record<string, string> = {
   'autonomic ganglion': '自主神经节',
 }
 
+// 大陆用语：这些结构的 Wikidata 中文标签是地区性（台湾/香港）或口语化的说法。
+// 与本文件其他内容一样：机器翻译，未经审核。
+//
 // Mainland wording for structures whose Wikidata zh label is regional (Taiwan/HK) or colloquial.
 // Same status as everything else here: machine translation, unreviewed.
 export const MAINLAND_TERMS: Record<string, string> = {
@@ -331,6 +337,7 @@ export const MAINLAND_TERMS: Record<string, string> = {
   'lower second secondary premolar tooth': '下颌第二前磨牙',
 }
 
+// 女性生殖系统和乳房。大陆用语；机器翻译，未经审核。
 // Female reproductive system and breast. Mainland usage; machine translation, unreviewed.
 export const FEMALE_TERMS: Record<string, string> = {
   uterus: '子宫', 'body of uterus': '子宫体', 'fundus of uterus': '子宫底', 'uterine cervix': '子宫颈',
@@ -357,6 +364,79 @@ export const FEMALE_TERMS: Record<string, string> = {
   'interlobar adipose tissue of mammary gland': '乳腺叶间脂肪组织（乳房脂肪体）',
   'adipose tissue': '脂肪组织', 'serous sac': '浆膜囊', 'peritoneal cavity': '腹膜腔',
   'front of trunk': '躯干前面', 'anatomical orifice': '解剖学孔口',
-  // donor-specific finding in the Visible Human Female data
+  // Visible Human Female 数据中供体特有的变异 / donor-specific finding in the Visible Human Female data
   'supernumerary lumbar vertebra (first of six)': '额外腰椎（六节中的第一节，个体变异）',
+}
+
+// 数据集扩充（膝关节、浆膜、脑脊膜、唾液腺、皮肤附属物、关节囊）所需的词汇。机器翻译，未经审核。
+//
+// Vocabulary for structures announced for the next dataset extension (knee, serous membranes,
+// meninges, salivary glands, integument, joint capsules). Machine translation, unreviewed.
+export const EXTENSION_TERMS: Record<string, string> = {
+  meniscus: '半月板', 'lateral meniscus': '外侧半月板', 'medial meniscus': '内侧半月板',
+  'anterior horn': '前角', 'posterior horn': '后角', 'lateral horn': '侧角',
+  'posterior meniscofemoral ligament': '板股后韧带', 'anterior meniscofemoral ligament': '板股前韧带',
+  'infrapatellar fat pad': '髌下脂肪垫', 'fat pad': '脂肪垫', 'suprapatellar bursa': '髌上囊',
+  bursa: '滑膜囊', 'synovial membrane': '滑膜', 'joint capsule': '关节囊',
+  'shoulder joint': '肩关节', 'humeroulnar joint': '肱尺关节', 'humeroradial joint': '肱桡关节',
+  'radiocarpal joint': '桡腕关节', 'proximal radioulnar joint': '桡尺近侧关节',
+  'distal radioulnar joint': '桡尺远侧关节', 'carpometacarpal joint': '腕掌关节',
+  'metacarpophalangeal joint': '掌指关节', 'interphalangeal joint': '指骨间关节',
+  'interphalangeal joint of hand': '指骨间关节', 'interphalangeal joint of foot': '趾骨间关节',
+  'tibiofibular joint': '胫腓关节', 'talocrural joint': '距小腿关节', 'subtalar joint': '距下关节',
+  'tarsometatarsal joint': '跗跖关节', 'zygapophyseal joint': '关节突关节',
+  'atlanto-axial joint': '寰枢关节', 'costovertebral joint': '肋椎关节', 'sternocostal joint': '胸肋关节',
+  pleura: '胸膜', 'visceral pleura': '脏胸膜', 'parietal pleura': '壁胸膜', 'costal pleura': '肋胸膜',
+  'diaphragmatic pleura': '膈胸膜', 'mediastinal pleura': '纵隔胸膜', 'cervical pleura': '胸膜顶',
+  'pleural cavity': '胸膜腔', pericardium: '心包', 'fibrous pericardium': '纤维心包',
+  'serous pericardium': '浆膜心包', 'parietal layer of serous pericardium': '浆膜心包壁层',
+  'visceral layer of serous pericardium': '浆膜心包脏层', 'pericardial cavity': '心包腔',
+  'pericardial sac': '心包', 'spinal cord': '脊髓', 'anterior horn of spinal cord': '脊髓前角',
+  'posterior horn of spinal cord': '脊髓后角', 'lateral horn of spinal cord': '脊髓侧角',
+  'gray matter of spinal cord': '脊髓灰质', 'white matter of spinal cord': '脊髓白质',
+  'spinal dura mater': '硬脊膜', 'arachnoid mater': '蛛网膜', 'spinal arachnoid mater': '脊髓蛛网膜',
+  'cranial arachnoid mater': '脑蛛网膜', 'pia mater': '软膜', 'spinal pia mater': '软脊膜',
+  'cranial pia mater': '软脑膜', 'falx cerebri': '大脑镰', 'falx cerebelli': '小脑镰',
+  'parotid gland': '腮腺', 'accessory parotid gland': '副腮腺', 'parotid duct': '腮腺管',
+  'submandibular duct': '下颌下腺管', 'sublingual gland': '舌下腺', 'sublingual duct': '舌下腺管',
+  omentum: '网膜', 'greater omentum': '大网膜', 'lesser omentum': '小网膜',
+  nail: '甲', fingernail: '指甲', toenail: '趾甲', 'nail of finger': '指甲', 'nail of toe': '趾甲',
+  'nail plate': '甲板', 'nail bed': '甲床', eponychium: '甲上皮', perionychium: '甲周皮',
+  hyponychium: '甲下皮', 'subcutaneous fat': '皮下脂肪', 'subcutaneous adipose tissue': '皮下脂肪组织',
+  'subcutaneous tissue': '皮下组织', hypodermis: '皮下组织', 'superficial fascia': '浅筋膜',
+  'deep fascia': '深筋膜',
+  // ---- 第二批扩充 / second extension batch
+  'meniscotibial ligament': '半月板胫骨韧带', 'anterior meniscotibial ligament': '半月板胫骨前韧带',
+  'posterior meniscotibial ligament': '半月板胫骨后韧带', 'meniscofemoral ligament': '板股韧带',
+  horn: '角', 'popliteofibular ligament': '腘腓韧带', 'intersesamoid ligament': '籽骨间韧带',
+  'dorsal cuneocuboid ligament': '楔骰背侧韧带', 'tibiotalar part': '胫距部',
+  'intervertebral syndesmosis': '椎间韧带联合', 'fascia organ': '筋膜', 'tissue component': '组织成分',
+  'leptomeningeal sac': '软膜囊', 'nail fold': '甲襞', 'proximal nail fold': '近端甲襞', perionyx: '甲周皮',
+  'articular capsules of distal interphalangeal joints': '远侧指骨间关节囊',
+  'articular capsules of proximal interphalangeal joints': '近侧指骨间关节囊',
+  'articular capsules of distal interphalangeal joints of foot': '远侧趾骨间关节囊',
+  'articular capsules of proximal interphalangeal joints of foot': '近侧趾骨间关节囊',
+  'articular capsules of metacarpophalangeal joints': '掌指关节囊',
+  'articular capsules of metatarsophalangeal joints': '跖趾关节囊',
+  'fibular lymph node': '腓淋巴结', 'interpectoral lymph nodes': '胸肌间淋巴结',
+  'supratrochlear lymph nodes': '滑车上淋巴结', 'retropharyngeal lymph nodes': '咽后淋巴结',
+  'lateral aortic lymph node': '主动脉外侧淋巴结', 'lateral caval lymph node': '腔静脉外侧淋巴结',
+  'precaval lymph node': '腔静脉前淋巴结', 'pre-aortic lymph node': '主动脉前淋巴结',
+  'lateral pericardial lymph node': '心包外侧淋巴结', 'prepericardial lymph node': '心包前淋巴结',
+  'pararectal lymph node': '直肠旁淋巴结',
+  // 皮下脂肪部件挂在 FMA 的 “superficial fascia of X” 概念上
+  // the subcutaneous fat parts sit on FMA's "superficial fascia of X" concepts
+  'superficial fascia of head': '头部皮下脂肪（浅筋膜）', 'superficial fascia of neck': '颈部皮下脂肪（浅筋膜）',
+  'superficial fascia of trunk': '躯干皮下脂肪（浅筋膜）', 'superficial fascia of upper limb': '上肢皮下脂肪（浅筋膜）',
+  'superficial fascia of lower limb': '下肢皮下脂肪（浅筋膜）',
+  'ventral gray column of spinal cord': '脊髓前角', 'dorsal gray column of spinal cord': '脊髓后角',
+  'lateral gray column of spinal cord': '脊髓侧角',
+  'anterior axillary lymph nodes': '腋前淋巴结', 'anterior axillary lymph node': '腋前淋巴结',
+  'inferior deep lateral cervical lymph nodes': '颈外侧下深淋巴结',
+  'superior deep lateral cervical lymph nodes': '颈外侧上深淋巴结',
+  'inferior pancreatic lymph node': '胰下淋巴结', 'intermediate external iliac lymph node': '髂外中间淋巴结',
+  'medial external iliac lymph node': '髂外内侧淋巴结', 'lateral external iliac lymph node': '髂外外侧淋巴结',
+  'anterior ileocolic lymph node': '盲肠前淋巴结', 'posterior ileocolic lymph node': '盲肠后淋巴结',
+  'right gastric lymph node': '胃右淋巴结', 'left gastric lymph node': '胃左淋巴结',
+  'great toe': '踇趾', 'interphalangeal joint of great toe': '踇趾趾骨间关节',
 }

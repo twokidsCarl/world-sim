@@ -1,3 +1,25 @@
+// 女性身体：把男性模型配准到真实的女性锚点上。
+//   bun tools/pipeline/female.ts [--out <dir>]
+// 读取已构建的男性身体（public/anatomy/male —— 先运行男性管线）和女性锚点包
+// （data/raw/female/out/anchors），写出 public/anatomy/female。
+//
+// 哪些是真实的、哪些不是（同时写入 pipeline-report.json 的 `notes`）：
+//   scanned  她自己的骨（Visible Human Female CT），逐块骨做刚性移动，从仰卧扫描姿势变到
+//            男性的站立姿势；以及来自同一 CT 的少数质量好的器官和躯干肌
+//   curated  子宫、卵巢、输卵管、阴道、盆腔韧带、子宫血管、乳房（HRA）
+//   warped   其余一切：男性几何经过一个把男性骨骼映射到她的骨骼上的平滑形变场带过来
+//
+// 步骤
+//   1. pose      每块骨的刚性变换：扫描 → 站立（上肢：取自锚点包；下肢和足：每块骨绕其近端
+//                关节中心转到男性对应骨的朝向；右前臂和右手：用左侧镜像，因为右侧被 CT 视野
+//                截断）
+//   2. field P   把同样的运动表示为平滑场，用于她跨关节的软组织
+//   3. field D   男性 → 女性，来自每块男性骨到她摆好姿势的骨的相似变换拟合
+//   4. parts     有一一对应且质量好的真实部件时用她的真实部件，否则用形变后的男性部件；
+//                去掉男性特有的部件，加入 HRA 女性器官
+//   5. clean-up  处理与她的骨的碰撞，由形变后的中心线重建神经管
+//   6. 检查、邻接、树、输出
+//
 // Female body: the male model registered onto real female anchors.
 //   bun tools/pipeline/female.ts [--out <dir>]
 // Reads the built male body (public/anatomy/male — run the male pipeline first) and the female
@@ -33,6 +55,7 @@ import { computeNormals, measure, simplifyMesh, weld, type Mesh, type MeshStats 
 import { writeSystemGlb, type GlbPart } from './glb.ts'
 import { HARD_TISSUES, overlapWith, pushOutOfSolids, SOLID_TISSUES, SurfaceField, type ExistingPart } from './import3.ts'
 import { canalFor, isaPathFromFma, NERVE_BUILD_DEFAULTS, warpNerveLines } from './importZa.ts'
+import { deriveFat, FAT_DEEP_TISSUES, FAT_OPTIONS, FAT_REGIONS, fatRegionOfBone, isFatPart } from './fat.ts'
 import { runLandmarkChecks, slabCentroid } from './landmarks.ts'
 import { depthOf, LAYERS } from './layers.ts'
 import { applyRigid, buildDeformation, buildTwoLevelDeformation, fitRigid, icp, InsideTester, PointIndex, surfaceDistance, surfacePoints, thinPoints, type Deformation, type Rigid } from './register.ts'
@@ -42,28 +65,49 @@ import { loadFmaNames } from './zanatomy.ts'
 const ROOT = join(import.meta.dirname, '../..')
 const MALE_DIR = join(ROOT, 'public/anatomy/male')
 
-// ── Parameters ────────────────────────────────────────────────────────────────────────────────
+// ── 参数 / Parameters ────────────────────────────────────────────────────────────────────────────────
 const FIELD = { minSigma: Number(process.env.SOMA_SIGMA ?? 0.012), k: Number(process.env.SOMA_K ?? 32) }
 const TWO_LEVEL = { coarseSpacing: 0.025, coarseSigma: Number(process.env.SOMA_CS ?? 0.04), coarseK: 64, fineSigma: 0.012, fineK: 32, fadeDistance: Number(process.env.SOMA_FADE ?? 0.03) }
 const ANCHOR_SPACING = 0.006
-/** bone anchors: after the similarity fit, points are moved onto her bone surface within this distance */
+/**
+ * 骨锚点：相似变换拟合之后，距她的骨表面在此距离以内的点被移到骨表面上
+ * bone anchors: after the similarity fit, points are moved onto her bone surface within this distance
+ */
 const SNAP_DISTANCE = 0.012
-/** a male bone whose similarity fit onto her bone is worse than this (symmetric p95) is not used as an anchor */
+/**
+ * 男性骨到她的骨的相似变换拟合若差于此值（对称 p95），则不用作锚点
+ * a male bone whose similarity fit onto her bone is worse than this (symmetric p95) is not used as an anchor
+ */
 const MAX_FIT_P95 = 0.012
-/** soft-tissue anchors (centroid + scale only) get this confidence relative to a perfect bone fit */
+/**
+ * 软组织锚点（仅质心 + 尺度）相对于完美骨拟合的置信度
+ * soft-tissue anchors (centroid + scale only) get this confidence relative to a perfect bone fit
+ */
 const SOFT_ANCHOR_CONFIDENCE = 0.2
-/** her real soft parts count as rigidly moved (stay "scanned") when the posing field bends them less than this */
+/**
+ * 摆姿势场对她的真实软组织部件的弯曲小于此值时，视为刚性移动（保持 "scanned"）
+ * her real soft parts count as rigidly moved (stay "scanned") when the posing field bends them less than this
+ */
 const RIGID_TOLERANCE = 0.002
-/** her real soft part replaces the warped male one only when their centroids agree within this */
+/**
+ * 只有当两者质心相差在此值以内时，她的真实软组织部件才替换形变后的男性部件
+ * her real soft part replaces the warped male one only when their centroids agree within this
+ */
 const REAL_SOFT_MAX_OFFSET = 0.03
-const ADJACENCY = { threshold: 0.002, spacing: 0.002, maxDegree: 200 }
+const ADJACENCY = { threshold: 0.002, spacing: 0.002, maxDegree: 250 }
 const SIMPLIFY = { perThickness: 0.08, min: 0.08e-3, max: 0.8e-3, minTriangles: 400, maxEdge: 0.012 }
 
-/** Male parts that have no place in a female body: by system, then by name. */
+/**
+ * 女性身体中不应存在的男性部件：先按系统，再按名称。
+ * Male parts that have no place in a female body: by system, then by name.
+ */
 const MALE_ONLY_NAME = /\bpenis\b|\btest(is|es|icular)\b|prostat|seminal|deferent|epididym|scrot|spermat|cremaster|^urethra$/i
 const isMaleOnly = (p: Part) => p.system === 'reproductive' || MALE_ONLY_NAME.test(p.name)
 
-/** Her extra lumbar vertebra has no FMA class of its own: a synthetic concept under "lumbar vertebra". */
+/**
+ * 她多出的那块腰椎没有自己的 FMA 类：在 "lumbar vertebra" 之下用一个合成概念。
+ * Her extra lumbar vertebra has no FMA class of its own: a synthetic concept under "lumbar vertebra".
+ */
 const SUPERNUMERARY_CONCEPT = 'VFC_supernumerary_lumbar_vertebra'
 
 const SOURCE_VHF: SourceInfo = {
@@ -91,10 +135,16 @@ interface FPart {
   source: string
   mesh: Mesh
   volume?: number
-  /** id of the male part this one corresponds to (replaces or is warped from) */
+  /**
+   * 该部件所对应的男性部件的 id（替换它，或由它形变而来）
+   * id of the male part this one corresponds to (replaces or is warped from)
+   */
   male?: string
   centrelines?: Polyline[]
-  /** geometry is final (already simplified male mesh, rebuilt nerve tube) */
+  /**
+   * 几何已是最终形态（已简化的男性网格、重建的神经管）
+   * geometry is final (already simplified male mesh, rebuilt nerve tube)
+   */
   keepGeometry?: boolean
   note?: string
 }
@@ -122,7 +172,7 @@ const apply3 = (m: Rigid, p: readonly number[]): [number, number, number] => [
   m.r[3]! * p[0]! + m.r[4]! * p[1]! + m.r[5]! * p[2]! + m.t[1],
   m.r[6]! * p[0]! + m.r[7]! * p[1]! + m.r[8]! * p[2]! + m.t[2],
 ]
-/** x ↦ R(x − pivot) + target */
+/** 刚性变换 / x ↦ R(x − pivot) + target */
 const about = (r: number[], pivot: readonly number[], target: readonly number[]): Rigid => ({
   r,
   t: [
@@ -132,7 +182,7 @@ const about = (r: number[], pivot: readonly number[], target: readonly number[])
   ],
 })
 const compose = (a: Rigid, b: Rigid): Rigid => {
-  // a ∘ b
+  // 复合 / a ∘ b
   const r = [0, 0, 0, 0, 0, 0, 0, 0, 0]
   for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) r[3 * i + j] = a.r[3 * i]! * b.r[j]! + a.r[3 * i + 1]! * b.r[3 + j]! + a.r[3 * i + 2]! * b.r[6 + j]!
   return { r, t: apply3(a, b.t) }
@@ -146,7 +196,10 @@ const mirrorX = (m: Mesh): Mesh => {
 }
 const angleDeg = (r: number[]) => (Math.acos(Math.max(-1, Math.min(1, (r[0]! + r[4]! + r[8]! - 1) / 2))) * 180) / Math.PI
 
-/** Rotation that turns `source` (female bone) to the orientation of `target` (male bone), sizes aside. */
+/**
+ * 把 `source`（女性骨）转到 `target`（男性骨）朝向的旋转，不考虑大小。
+ * Rotation that turns `source` (female bone) to the orientation of `target` (male bone), sizes aside.
+ */
 function orientationTo(source: Mesh, target: Mesh): { r: number[]; rms: number } {
   const tgt = thinPoints(surfacePoints(target, 0.003), 0.003)
   const src = thinPoints(surfacePoints(source, 0.004), 0.006)
@@ -156,6 +209,10 @@ function orientationTo(source: Mesh, target: Mesh): { r: number[]; rms: number }
 }
 
 /**
+ * 肋骨的中心线，表示为从椎骨端到前端的折线：表面点按其绕一条竖直轴的角度分箱
+ * （该轴穿过胸廓中部；肋骨从后方绕过侧面到前方是单调扫过的），每个箱取一个质心。
+ * 返回中心线上的点及其归一化弧长。
+ *
  * Centreline of a rib as a polyline from its vertebral end to its anterior end: surface points
  * are binned by their angle round a vertical axis through the middle of the rib cage (a rib
  * sweeps monotonically from the back round the side to the front), one centroid per bin.
@@ -187,7 +244,7 @@ function ribCentreline(points: Float32Array, axisZ: number): { c: number[][]; s:
   return { c, s: s.map((v) => v / total), angleOf, a0, a1 }
 }
 
-/** Point of a centreline at normalised arc length t. */
+/** 中心线上归一化弧长为 t 处的点。 / Point of a centreline at normalised arc length t. */
 function alongLine(line: { c: number[][]; s: number[] }, t: number): number[] {
   const { c, s } = line
   if (t <= 0) return c[0]!
@@ -198,7 +255,7 @@ function alongLine(line: { c: number[][]; s: number[] }, t: number): number[] {
   return [0, 1, 2].map((k) => c[i - 1]![k]! + (c[i]![k]! - c[i - 1]![k]!) * u)
 }
 
-/** Nearest centreline position (normalised arc length) of a point. */
+/** 一个点在中心线上的最近位置（归一化弧长）。 / Nearest centreline position (normalised arc length) of a point. */
 function paramOf(line: { c: number[][]; s: number[] }, p: readonly number[]): number {
   let best = 0
   let bd = Infinity
@@ -244,15 +301,33 @@ async function main() {
 
   const male = await loadBuiltBody(MALE_DIR)
   const fa = loadFemaleAnchors()
+  // 只使用本流程为之设计的条目：CT 分割（VF_*）和 HRA 女性器官；包里后来加入的来源（Denver 的 VD_*、HRA 皮肤）暂不使用。
+  // Only the items this build was designed for: CT segmentations (VF_*) and the HRA female organs.
+  // Sources added to the package later (Denver VD_*, the HRA skin) are ignored until they are integrated.
+  {
+    const usable = (i: FemaleItem) => i.id.startsWith('VF_') || (i.id.startsWith('HRA_') && !/skin/i.test(i.name) && i.kind !== 'surface')
+    const ignored = fa.items.filter((i) => !usable(i))
+    if (ignored.length) console.log(`  anchor package: ${ignored.length} items from sources not integrated yet are ignored (${[...new Set(ignored.map((i) => i.id.split('_')[0]))].join(', ')})`)
+    report.ignoredAnchorItems = ignored.length
+    fa.items = fa.items.filter(usable)
+  }
   const fmaNames = loadFmaNames()
   const maleByName = new Map<string, Part>()
   for (const p of male.data.parts) if (!maleByName.has(p.name)) maleByName.set(p.name, p)
   const maleMesh = (id: string) => male.meshes.get(id)!
   lap(`male body: ${male.data.parts.length} parts; female anchors: ${fa.items.length} items`)
-  const unknown = fa.items.flatMap((i) => i.male_parts.filter((id) => !male.parts.has(id)))
-  if (unknown.length) throw new Error(`anchor package names male parts that no longer exist (${unknown.slice(0, 5).join(', ')}…): rerun tools/register/run_anchors.sh`)
+  // 锚点包是对照较早的一次男性构建来解析 `male_parts` 的：此后已被替换的 id
+  // 从对应关系中去掉（会写入报告），不算致命错误
+  // the anchor package resolved `male_parts` against an earlier male build: ids that have since
+  // been replaced are dropped from the correspondence (reported), not fatal
+  const unknown = [...new Set(fa.items.flatMap((i) => i.male_parts.filter((id) => !male.parts.has(id))))]
+  if (unknown.length) {
+    console.log(`  WARNING the anchor package names ${unknown.length} male parts that no longer exist (${unknown.join(', ')}); ignored — rerun tools/register/run_anchors.sh to refresh`)
+    for (const i of fa.items) i.male_parts = i.male_parts.filter((id) => male.parts.has(id))
+  }
+  report.staleMaleIds = unknown
 
-  // ── 1. Pose ─────────────────────────────────────────────────────────────────────────────────
+  // ── 1. 姿势 / 1. Pose ─────────────────────────────────────────────────────────────────────────────────
   const item = (id: string): FemaleItem => {
     const it = fa.byId.get(id)
     if (!it) throw new Error(`anchor item ${id} missing`)
@@ -260,7 +335,7 @@ async function main() {
   }
   const scanned = (id: string) => fa.scanned(item(id))
   const maleUnion = (it: FemaleItem) => unionMesh(it.male_parts.map(maleMesh))
-  /** scan → standing, before the final vertical shift */
+  /** 扫描 → 站立，尚未做最后的竖直平移 / scan → standing, before the final vertical shift */
   const pose = new Map<string, Rigid>()
   const poseNotes: Record<string, unknown> = {}
   for (const it of fa.items) if (it.repose) pose.set(it.id, fromMatrix(it.repose))
@@ -281,6 +356,7 @@ async function main() {
     for (const g of ['tarsal', 'metatarsal', 'toes']) pose.set(`VF_${g}_${side}`, tFoot)
     poseNotes[side] = { femurDeg: round(angleDeg(femur.r), 1), tibiaDeg: round(angleDeg(tibia.r), 1), footDeg: round(angleDeg(foot.r), 1), fitRmsMm: [femur.rms, tibia.rms, foot.rms].map((v) => round(v * 1000, 1)) }
   }
+  // 每个条目的目标网格，处于站立姿势
   // target meshes of every item, in the standing pose
   const target = new Map<string, Mesh>()
   for (const it of fa.items) {
@@ -288,6 +364,7 @@ async function main() {
     if (!(it.kind === 'bone' || it.kind === 'bone-group' || it.kind === 'cartilage' || it.kind === 'tooth')) continue
     target.set(it.id, transformMesh(fa.scanned(it), pose.get(it.id) ?? IDENT))
   }
+  // 右前臂和右手：被 CT 视野截断 → 用左侧镜像，挂在右肱骨上
   // right forearm and hand: clipped by the CT field of view → mirrored left ones, hung on the right humerus
   const MIRRORED = ['radius', 'ulna', 'carpal', 'metacarpal', 'fingers']
   {
@@ -298,6 +375,7 @@ async function main() {
     for (const b of MIRRORED) target.set(`VF_${b}_right`, transformMesh(mirrorX(target.get(`VF_${b}_left`)!), fit.transform))
     poseNotes.rightForearm = { method: 'left radius, ulna and hand mirrored and attached by fitting the mirrored left humerus to the right humerus', humerusFitRmsMm: round(fit.rms * 1000, 2), rotationDeg: round(angleDeg(fit.transform.r), 1) }
   }
+  // 站在男性的地面上：她双足的最低点与他的等高
   // stand on the male's floor: lowest point of her feet at the height of his
   const floorOf = (meshes: Mesh[]) => Math.min(...meshes.map((m) => measure(m).bbox[1]))
   const maleFloor = floorOf(male.data.parts.filter((p) => p.tissue === 'bone' && /toe|metatarsal|calcane|talus|cuboid|cuneiform|navicular/i.test(p.name)).map((p) => maleMesh(p.id)))
@@ -309,6 +387,7 @@ async function main() {
   console.log(`\nPose: leg bones turned about their proximal joint to the male bone's orientation — ${JSON.stringify(poseNotes)}; whole body shifted ${mm(dy)} mm in Y to stand on the male's floor`)
   report.pose = { ...poseNotes, verticalShiftM: round(dy) }
 
+  // 2. field P：把姿势表示为平滑场（用于她的软组织和 HRA 器官）
   // 2. field P: the pose as a smooth field (for her soft tissue and the HRA organs)
   let fieldP: Deformation
   {
@@ -326,7 +405,7 @@ async function main() {
   const posed = (it: FemaleItem): Mesh => ({ positions: fieldP.apply(fa.scanned(it).positions), indices: fa.scanned(it).indices })
   lap('pose and posing field')
 
-  // ── 3. Field D: male → female ───────────────────────────────────────────────────────────────
+  // ── 3. Field D：男性 → 女性 / 3. Field D: male → female ───────────────────────────────────────────────────────────────
   interface Fit { id: string; kind: string; region: string; from: Float32Array; to: Float32Array; conf: number; p95: number; scale: number }
   const fits: Fit[] = []
   const regionOf = (it: FemaleItem): string => {
@@ -342,6 +421,7 @@ async function main() {
     if (/tarsal|toes/.test(id)) return 'foot'
     return 'other'
   }
+  // 肋骨绕之扫过的竖直轴，每个身体各一条：位于中线，在脊柱与胸骨的正中间
   // vertical axis the ribs sweep round, per body: midline, half-way between spine and sternum
   const midZ = (meshes: Mesh[]) => {
     const b = meshes.map((m) => measure(m).bbox)
@@ -353,12 +433,14 @@ async function main() {
   const softTargets = new Map<string, Mesh>()
   const fitOf = new Map<string, Rigid>()
   const rejected: { id: string; p95: number }[] = []
+  // 先处理椎骨：每根肋骨的拟合以它所连椎骨的变换为初值
   // vertebrae first: each rib starts its fit from the transform of the vertebra it hangs on
   const ordered = [...fa.items].sort((a, b) => Number(/VF_rib_/.test(a.id)) - Number(/VF_rib_/.test(b.id)))
   for (const it of ordered) {
     if (!it.male_parts.length || it.pose === 'scanned-only') continue
     const hard = it.kind === 'bone' || it.kind === 'bone-group' || it.kind === 'cartilage'
     if (hard) {
+      // 蜷曲的手指以及那个零碎的单一肋软骨标签与男性的形状不对应
       // curled fingers and the single fragmented costal-cartilage label do not correspond to the male shapes
       if (/fingers|costal_cartilages/.test(it.id)) continue
       const tm = target.get(it.id)!
@@ -381,6 +463,7 @@ async function main() {
       const from = thinPoints(surfacePoints(m, ANCHOR_SPACING), ANCHOR_SPACING)
       const to = applyRigid(res.transform, from)
       if (rib) {
+        // 肋骨：按沿肋骨的位置建立对应（见 ribCentreline），并沿用男性横截面上的偏移
         // ribs: correspondence by position along the rib (see ribCentreline), the male
         // cross-section offset carried over
         const lm = ribCentreline(raw, RIB_AXIS_Z_MALE)
@@ -403,10 +486,13 @@ async function main() {
         to[i + 2] = fine.points[3 * I[0]! + 2]!
       }
       const scale = Math.cbrt(Math.abs(res.transform.r[0]! * (res.transform.r[4]! * res.transform.r[8]! - res.transform.r[5]! * res.transform.r[7]!) - res.transform.r[1]! * (res.transform.r[3]! * res.transform.r[8]! - res.transform.r[5]! * res.transform.r[6]!) + res.transform.r[2]! * (res.transform.r[3]! * res.transform.r[7]! - res.transform.r[4]! * res.transform.r[6]!)))
+      // 组标签（手、足、颅骨）作为目标比单块骨更粗
       // a group label (hand, foot, skull) is a coarser target than a single bone
       const conf = rib ? 0.6 : (it.correspondence === 'group' ? 0.6 : 1) / (1 + (p95 / 0.008) ** 2)
       fits.push({ id: it.id, kind: it.kind, region: regionOf(it), from, to, conf, p95, scale })
     } else if (!process.env.SOMA_NOSOFT && it.quality === 'good' && it.kind === (process.env.SOMA_SOFTALL ? it.kind : 'organ') && (it.kind === 'organ' || it.kind === 'muscle') && it.id !== 'VF_brain') {
+      // 软组织：个体形状差异太大，无法建立表面对应；只沿用“这个器官在这里、有这么大”
+      //  （质心和体积）
       // soft tissue: individual shapes differ too much for surface correspondences; only "this
       // organ sits here and is this big" is carried over (centroid and volume)
       const tm = posed(it)
@@ -422,6 +508,9 @@ async function main() {
       fits.push({ id: it.id, kind: it.kind, region: regionOf(it), from, to, conf: SOFT_ANCHOR_CONFIDENCE, p95: NaN, scale })
     }
   }
+  // CT 分割的肋骨标签并非都可靠（左侧第 5–9 肋与右侧的长度相差可达 17 %）：
+  // 若一根肋骨的平均位移与其邻居（上下相邻的肋骨、对侧的同序肋骨、它的椎骨）不一致，
+  // 就把它当作标错处理。
   // Rib labels of the CT segmentation are not all trustworthy (left ribs 5–9 differ from the right
   // ones by up to 17 % in length): a rib whose mean displacement disagrees with its neighbours
   // (the ribs above and below, its opposite number, its vertebra) is treated as mislabelled.
@@ -442,6 +531,7 @@ async function main() {
       if (refs.length < 2) continue
       const med = [0, 1, 2].map((k) => quantile(refs.map((d) => d[k]!), 0.5))
       const own = disp.get(f.id)!
+      // 对侧肋骨的 x 是镜像的，但这不影响 y 和 z 的中位数；比较这两个分量
       // mirrored x for the opposite rib does not matter for the median of y and z; compare those
       const off = Math.hypot(own[1]! - med[1]!, own[2]! - med[2]!)
       if (off > 0.02) suspectRibs.push({ id: f.id, offMm: round(off * 1000, 1) })
@@ -492,6 +582,7 @@ async function main() {
     report.registration = { anchors: fits.length, hard: hardFits.length, soft: fits.length - hardFits.length, byRegion: rows, suspectRibs, rejected: rejected.map((r) => ({ id: r.id, fitP95Mm: round(r.p95 * 1000, 1) })), perAnchor: hardFits.map((f) => ({ id: f.id, region: f.region, scale: round(f.scale, 3), fitP95Mm: round(f.p95 * 1000, 2), residualMm: round(residual.get(f.id)! * 1000, 2), leaveOutMm: round(leaveOut.get(f.id)! * 1000, 2) })), sizeOutliers: odd.map((f) => f.id) }
   }
 
+  // 在覆盖男性身体的网格上计算该场的雅可比
   // Jacobian of the field on a grid over the male body
   {
     const all = concat(male.data.parts.filter((p) => p.tissue !== 'skin').map((p) => thinPoints(surfacePoints(maleMesh(p.id), 0.01), 0.01)))
@@ -560,7 +651,7 @@ async function main() {
   }
   lap('field checks')
 
-  // ── 4. Parts ────────────────────────────────────────────────────────────────────────────────
+  // ── 4. 部件 / 4. Parts ────────────────────────────────────────────────────────────────────────────────
   const parts: FPart[] = []
   const replaced = new Set<string>()
   const realNotes: Record<string, string> = {}
@@ -572,6 +663,7 @@ async function main() {
     const isBone = it.kind === 'bone' || it.kind === 'cartilage'
     const mirrored = it.side === 'R' && MIRRORED.some((b) => it.id === `VF_${b}_right`)
     if (it.id === 'VF_vertebrae_L1') {
+      // 六块腰椎：她的第一块没有男性对应物
       // six lumbar vertebrae: her first one has no male counterpart
       parts.push({ id: it.id, fma: SUPERNUMERARY_CONCEPT, name: 'Supernumerary lumbar vertebra (first of six)', system: 'skeletal', tissue: 'bone', depth: depthOf('skeletal', 'bone'), side: 'M', provenance: 'scanned', source: SOURCE_VHF.name, mesh: target.get(it.id)!, volume: it.volume_ml })
       continue
@@ -587,6 +679,8 @@ async function main() {
       replaced.add(m.id)
     } else if (!isBone && it.quality === 'good' && (it.kind === 'organ' || it.kind === 'muscle')) {
       const mesh = softTargets.get(it.id) ?? posed(it)
+      // 只有当她的真实部件与形变场给出的男性部件位置一致时才使用它；一块分割出来的肌
+      // 若只是男性对应肌的一个碎片，或者离它很远，会破坏周围所有形变结构的连续性
       // her real part is used only where it agrees with where the field puts the male one;
       // a segmented muscle that is a fragment of, or far from, its male counterpart would break
       // the continuity of everything warped around it
@@ -601,6 +695,7 @@ async function main() {
           continue
         }
       }
+      // 摆姿势场对它的移动是刚性的吗？
       // did the posing field move it rigidly?
       const src = fa.scanned(it).positions
       const fit = fitRigid(src, mesh.positions)
@@ -610,6 +705,7 @@ async function main() {
       parts.push({ ...base, provenance: bend <= RIGID_TOLERANCE ? 'scanned' : 'warped', mesh, note: bend <= RIGID_TOLERANCE ? undefined : `re-posed non-rigidly with the bones it attaches to (bent by up to ${mm(bend)} mm)` })
       if (bend > RIGID_TOLERANCE) realNotes[it.id] = `bent ${mm(bend)} mm by re-posing`
       replaced.add(m.id)
+      // 她的真实部件距形变场本会放置男性部件的位置有多远？
       // how far is her real part from where the field would have put the male one?
       const wc = measure({ positions: fieldD.apply(maleMesh(m.id).positions), indices: maleMesh(m.id).indices }).centroid
       const rc = measure(mesh).centroid
@@ -625,6 +721,7 @@ async function main() {
   report.realSoftPartOffsets = softOffsets
   const dropped = male.data.parts.filter(isMaleOnly)
   const droppedIds = new Set(dropped.map((p) => p.id))
+  // 把她的真实部件作为实体，用于所有形变部件的碰撞处理
   // her real parts as solids for collision handling of everything warped
   const solids: ExistingPart[] = parts.map((p) => ({ id: p.id, fma: p.fma, name: p.name, mesh: p.mesh, stats: measure(p.mesh), system: p.system, tissue: p.tissue }))
   const field = new SurfaceField(solids)
@@ -635,6 +732,8 @@ async function main() {
   let nerveStats = { length: 0, boneBefore: 0, boneAfter: 0, canal: 0, muscleBefore: 0, muscleAfter: 0, points: 0, moved: 0 }
   for (const m of male.data.parts) {
     if (replaced.has(m.id) || droppedIds.has(m.id)) continue
+    // 皮下脂肪不做形变，稍后在她自己的皮肤和深部结构上重新推导 / the subcutaneous fat is not warped: it is derived again from her own skin and deep parts below
+    if (isFatPart(m.id)) continue
     const base = { id: `W_${m.id}`, fma: m.fma, name: m.name, system: m.system, tissue: m.tissue, depth: m.depth, side: m.side, provenance: 'warped' as Provenance, source: m.source ?? male.data.sources[0]!.name, male: m.id }
     const lines = male.nerves.get(m.id)
     if (lines && m.tissue === 'nerve') {
@@ -651,6 +750,7 @@ async function main() {
     }
     const src = maleMesh(m.id)
     let positions = fieldD.apply(src.positions)
+    // 形变后的软组织部件不得位于她的真实骨内；形变后的骨（颅骨、手、足、胸骨）本身就是骨
     // warped soft parts must not sit in her real bones; warped bones (skull, hands, feet, sternum) are bones themselves
     if (!HARD_TISSUES.includes(m.tissue) && m.tissue !== 'skin') {
       const st = measure({ positions, indices: src.indices })
@@ -668,7 +768,7 @@ async function main() {
   }
   lap(`${real} real female parts, ${parts.length - real} male parts warped, ${dropped.length} male-only parts dropped`)
 
-  // HRA female organs
+  // HRA 女性器官 / HRA female organs
   const hraClass = (it: FemaleItem): { system: SystemId; tissue: TissueId } => {
     const n = it.id
     if (/artery/.test(n)) return { system: 'cardiovascular', tissue: 'artery' }
@@ -686,6 +786,7 @@ async function main() {
     const sided = /\b(left|right)\b/i.test(n) || it.side === 'M' ? n : `${it.side === 'L' ? 'left' : 'right'} ${n}`
     return sided[0]!.toUpperCase() + sided.slice(1)
   }
+  // 两侧 HRA 条目都用到的概念 id，各得一个分侧的子概念（`<id>_L` / `<id>_R`）
   // concept ids used by HRA items of both sides get a sided child each (`<id>_L` / `<id>_R`)
   const hraConcept = (it: FemaleItem) => it.fma ?? (it.ontology_id ? it.ontology_id.replace(':', '_') : `HRAC_${it.id.replace(/^HRA_/, '').replace(/_[LR]$/, '').toLowerCase()}`)
   const hraSides = new Map<string, Set<string>>()
@@ -728,9 +829,10 @@ async function finish(input: FinishInput) {
   const byName = (name: string) => parts.find((p) => p.name === name)
   const samplesOf = (m: Mesh, spacing = 0.003) => thinPoints(surfacePoints(m, spacing), spacing * 0.8)
 
-  // ── 5. Sex-specific collisions ──────────────────────────────────────────────────────────────
+  // ── 5. 性别特有的碰撞 / 5. Sex-specific collisions ──────────────────────────────────────────────────────────────
   const collisions: Record<string, unknown> = {}
   {
+    // 右卵巢与髂血管：（刚性地）移动卵巢，直到两者不再相交
     // right ovary against the iliac vessels: move the ovary (rigidly) until it is clear
     for (const side of ['left', 'right']) {
       const ovary = parts.find((p) => p.id === `HRA_${side}_ovary`)
@@ -763,6 +865,7 @@ async function finish(input: FinishInput) {
         const I = new Int32Array(1)
         const D = new Float64Array(1)
         idx.nearest(oc[0], oc[1], oc[2], 1, I, D)
+        // 离开血管上的最近点，水平地朝向盆腔（向内侧）
         // away from the nearest point of the vessel, horizontally towards the pelvic cavity (medially)
         let dir = [oc[0] - idx.points[3 * I[0]!]!, oc[1] - idx.points[3 * I[0]! + 1]!, oc[2] - idx.points[3 * I[0]! + 2]!]
         const len = Math.hypot(dir[0]!, dir[1]!, dir[2]!)
@@ -802,6 +905,9 @@ async function finish(input: FinishInput) {
     const beforeColon = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, colon()), 3)]))
     const beforeBladder = Object.fromEntries(GROUPS.map(([n, re]) => [n, round(measureGroup(re, bladder), 3)]))
 
+    // (1) HRA 器官与她扫描得到的膀胱：膀胱是实测的，HRA 器官则是由骨驱动的拟合放置的
+    // 美术模型，所以由 HRA 这一组让位。整套内生殖器（子宫、阴道、输卵管、卵巢及其韧带和血管）
+    // 作为一个刚体整体向后移动，直到阴道和子宫颈离开膀胱。
     // (1) HRA organs against her scanned bladder: the bladder is measured, the HRA organs are an
     // artist's model placed by a bone-driven fit, so the HRA set gives way. The whole internal
     // genital set (uterus, vagina, tubes, ovaries, their ligaments and vessels) is moved back
@@ -820,6 +926,10 @@ async function finish(input: FinishInput) {
     }
     collisions.hraSetMovedPosteriorMm = round(nudge * 1000, 1)
 
+    // (2) 形变后的男性乙状结肠穿过她的左侧附件和子宫。一个包住了器官的封闭管，无法靠把
+    // 管壁向外推来解除相交，所以改为把肠管横向移开：一个以该器官为中心的平滑平移场，方向
+    // 从器官指向肠管的局部中心，逐步增大直到器官位于管外。所有形变后的消化系统部件都经过
+    // 同一个场，所以结肠、结肠带和结肠系膜保持在一起。
     // (2) The warped male sigmoid colon runs through her left adnexa and uterus. A closed tube
     // that contains an organ cannot be cleared by pushing its surface outward, so the bowel is
     // shifted sideways instead: a smooth translation field centred on the organ, pointing from
@@ -827,10 +937,14 @@ async function finish(input: FinishInput) {
     // digestive part goes through the same field, so the colon, its taeniae and the mesocolon
     // stay together.
     const shifts: Record<string, unknown>[] = []
+    // 肠管不得被推入的结构：她的盆骨、腰椎和膀胱
     // what the bowel must not be pushed into: her pelvic bones, lumbar spine and bladder
     const pelvicObstacles = parts.filter((p) => p.provenance === 'scanned' && (/hip bone|Sacrum|lumbar vertebra/i.test(p.name) || p.name === 'Urinary bladder')).map((p) => new InsideTester(p.mesh, 64))
     const colonVolumeBefore = colon() ? Math.abs(measure(colon()!.mesh).signedVolume) : 0
-    const bowel = () => parts.filter((p) => p.provenance === 'warped' && p.system === 'digestive' && p.tissue !== 'tooth')
+    // 容器只考虑实体肠管（organ）；网膜等薄膜不是封闭实体 / containers are solid bowel only; omenta are open sheets
+    const bowelAll = () => parts.filter((p) => p.provenance === 'warped' && p.system === 'digestive' && p.tissue !== 'tooth')
+    const bowel = () => bowelAll().filter((p) => p.tissue === 'organ')
+    // 把肠管从一个器官上移开，可能使它压到下一个器官上：重复直到不再有变化
     // moving the bowel off one organ can bring it onto the next: repeat until nothing changes
     for (let pass = 0; pass < 4; pass++) {
     const done = shifts.length
@@ -846,6 +960,8 @@ async function finish(input: FinishInput) {
         const tester = () => new InsideTester(container.mesh, 96)
         const before = tester().fractionInside(pts)
         if (before < 0.03) continue
+        // 往哪个方向？尝试各水平方向、向上以及它们之间的斜向；对每个方向，逐步增大位移直到
+        // 器官位于管外，并按肠管需要移动多远、最终有多少落入她的骨或膀胱来打分。代价最小者胜出。
         // Which way? Try the horizontal directions, upwards and the diagonals between; for each,
         // grow the shift until the organ is outside, and score it by how far the bowel had to
         // move and how much of it ends up in her bones or bladder. The cheapest wins.
@@ -886,9 +1002,10 @@ async function finish(input: FinishInput) {
         const shift = best!.shift
         const after = best!.after
         const moved = (arr: Float32Array, sft: number) => movedBy(arr, d, sft)
-        for (const p of bowel()) {
+        for (const p of bowelAll()) {
           p.mesh = { positions: moved(p.mesh.positions, shift), indices: p.mesh.indices }
         }
+        // 挂在肠管上的结构随它一起移动：结肠血管和直肠血管及其淋巴结
         // what hangs on the bowel moves with it: colic and rectal vessels, their nodes
         for (const p of parts) {
           if (p.provenance !== 'warped' || p.system === 'digestive') continue
@@ -905,6 +1022,9 @@ async function finish(input: FinishInput) {
     const solids: ExistingPart[] = female.map((p) => ({ id: p.id, fma: p.fma, name: p.name, mesh: p.mesh, stats: measure(p.mesh), system: p.system, tissue: 'bone' as TissueId }))
     const field = new SurfaceField(solids)
     const fb = solids.reduce((b, s) => [Math.min(b[0]!, s.stats.bbox[0]), Math.min(b[1]!, s.stats.bbox[1]), Math.min(b[2]!, s.stats.bbox[2]), Math.max(b[3]!, s.stats.bbox[3]), Math.max(b[4]!, s.stats.bbox[4]), Math.max(b[5]!, s.stats.bbox[5])], [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity])
+    // 先腾出空间：男性盆腔中，她的子宫和卵巢所在之处是肠管。每个器官附近的形变部件沿径向
+    // 移出包围该器官的椭球（半轴 = 包围盒的一半 + 3 mm）；位移在 1.7 倍半轴处衰减到零，
+    // 所以不会撕裂。
     // Make room first: the male pelvis has bowel where her uterus and ovaries are. Warped parts
     // near each organ are moved radially out of an ellipsoid around it (semi-axes = half its
     // bounds + 3 mm); the displacement fades to zero at 1.7 semi-axes, so nothing tears.
@@ -931,6 +1051,7 @@ async function finish(input: FinishInput) {
             const d = [(arr[i]! - c[0]!) / r[0]!, (arr[i + 1]! - c[1]!) / r[1]!, (arr[i + 2]! - c[2]!) / r[2]!]
             const rho = Math.hypot(d[0]!, d[1]!, d[2]!)
             if (rho >= OUTER || rho < 1e-6) continue
+            // 单调映射 [0, OUTER] → [1.05, OUTER]
             // monotone map [0, OUTER] → [1.05, OUTER]
             const k = (1.05 + (rho * (OUTER - 1.05)) / OUTER) / rho
             if (!res) res = Float32Array.from(arr)
@@ -950,6 +1071,7 @@ async function finish(input: FinishInput) {
       roomFor[g.name] = movedParts
     }
     collisions.roomMade = roomFor
+    // 结肠必须仍是一条位置合理、形状合理的管
     // the colon must still be a sensible tube somewhere sensible
     {
       const col = colon()
@@ -978,6 +1100,7 @@ async function finish(input: FinishInput) {
       const frac = (m: Mesh) => overlapWith(samplesOf(m, 0.003), measure(m).bbox, field, 0.002, 0.004, () => true).insideAny
       const before = frac(p.mesh)
       if (before < 0.005) continue
+      // 她自己扫描得到的器官（膀胱）不改变形状；形变后的男性部件则会
       // her own scanned organs (bladder) are not reshaped; warped male parts are
       const movable = p.provenance === 'warped'
       if (movable) p.mesh = { positions: pushOutOfSolids(p.mesh.positions, st.bbox, field, () => true, { clearance: 0.0005, maxPush: 0.03, radius: 0.012, step: 0.0005 }).positions, indices: p.mesh.indices }
@@ -988,6 +1111,7 @@ async function finish(input: FinishInput) {
     for (const r of rows.slice(0, 14)) console.log(`  ${pad(r.name, 44)}${(r.before * 100).toFixed(1)}% → ${(r.after * 100).toFixed(1)}%${r.movable ? '' : '  (her scanned part: not moved)'}`)
     for (const [k, v] of Object.entries(collisions)) console.log(`  ${k}: ${JSON.stringify(v)}`)
     collisions.pelvicViscera = rows.map((r) => ({ ...r, before: round(r.before, 4), after: round(r.after, 4) }))
+    // 反过来也要看：之后子宫有多少位于其他软组织器官内
     // and the other way round: how much of the uterus is inside other soft organs afterwards
     const others: ExistingPart[] = parts.filter((p) => p.provenance !== 'curated' && SOLID_TISSUES.includes(p.tissue)).map((p) => ({ id: p.id, fma: p.fma, name: p.name, mesh: p.mesh, stats: measure(p.mesh), system: p.system, tissue: p.tissue }))
     const near = others.filter((o) => !(o.stats.bbox[0] > fb[3]! || o.stats.bbox[3] < fb[0]! || o.stats.bbox[1] > fb[4]! || o.stats.bbox[4] < fb[1]! || o.stats.bbox[2] > fb[5]! || o.stats.bbox[5] < fb[2]!))
@@ -1003,7 +1127,9 @@ async function finish(input: FinishInput) {
   }
   lap('sex-specific collisions')
 
-  // ── 5b. Skin: the warped male surface, raised into a smooth envelope over the breasts ───────
+  // ── 5b. 皮肤：形变后的男性表面，在乳房处抬升为平滑包络 / 5b. Skin: the warped male surface, raised into a smooth envelope over the breasts ───────
+  // 皮肤是一层薄的双壁壳，所以“在体内”不能用射线奇偶性来判断。
+  // 从一个点正向前（+Z）发出的射线若完全碰不到皮肤三角形，就算该点在皮肤前方。
   // The skin is a thin double-walled shell, so "inside the body" cannot be tested by ray parity.
   // A point is counted as in front of the skin when a ray from it straight forwards (+Z) meets
   // no skin triangle at all.
@@ -1050,7 +1176,7 @@ async function finish(input: FinishInput) {
       const idx = skin.mesh.indices
       const nv = pos.length / 3
       const before = { L: inFrontOfSkin(skin.mesh, concat(breastParts('L').map((p) => samplesOf(p.mesh, 0.004)))), R: inFrontOfSkin(skin.mesh, concat(breastParts('R').map((p) => samplesOf(p.mesh, 0.004)))) }
-      // vertex neighbours
+      // 顶点的邻居 / vertex neighbours
       const nb: number[][] = Array.from({ length: nv }, () => [])
       for (let t = 0; t < idx.length; t += 3) for (let k = 0; k < 3; k++) {
         const a = idx[t + k]!
@@ -1070,6 +1196,7 @@ async function finish(input: FinishInput) {
           c[1] = c[1]! + bp[i + 1]! / (bp.length / 3)
           zMin = Math.min(zMin, bp[i + 2]!)
         }
+        // 乳房后方、胸壁上的极点：包络自此点沿径向展开
         // pole behind the breast, on the chest wall: the envelope is radial from here
         const base = [c[0]!, c[1]!, zMin - 0.02]
         const dirs: number[][] = []
@@ -1098,6 +1225,7 @@ async function finish(input: FinishInput) {
           }
           if (rb > 0 && rb + MARGIN > r) lift[v] = rb + MARGIN - r
         }
+        // 平滑的裙边：每个顶点的抬升量至少为其邻居平均抬升量的 0.8 倍
         // smooth skirt: every vertex is lifted at least 0.8 × the mean lift of its neighbours
         for (let it = 0; it < 30; it++) {
           for (let v = 0; v < nv; v++) {
@@ -1128,7 +1256,40 @@ async function finish(input: FinishInput) {
     report.skin = skinReport
   }
 
-  // ── 6. Final geometry ───────────────────────────────────────────────────────────────────────
+  // ── 5c. 皮下脂肪：在她的皮肤与深部结构之间重新推导 / subcutaneous fat, derived again between her skin and her deep parts
+  {
+    const skin = parts.find((p) => p.name === 'Skin' && p.tissue === 'skin')
+    const maleFat = male.data.parts.filter((m) => isFatPart(m.id))
+    if (skin && maleFat.length) {
+      // 乳腺各部（HRA）也算深部，脂肪包在其外 / the HRA breast parts count as deep too; the fat lies around them
+      const deep = parts.filter((p) => (FAT_DEEP_TISSUES.has(p.tissue) || p.tissue === 'fat') && p.tissue !== 'skin' && p !== skin)
+      const byRegion = new Map<string, number[]>()
+      for (const p of parts) {
+        if (p.tissue !== 'bone') continue
+        const r = fatRegionOfBone(p.name)
+        const a = byRegion.get(r) ?? []
+        for (const v of thinPoints(surfacePoints(p.mesh, 0.006), 0.006)) a.push(v)
+        byRegion.set(r, a)
+      }
+      const fat = deriveFat(skin.mesh, deep.map((p) => p.mesh), FAT_REGIONS.filter((r) => byRegion.has(r.key)).map((r) => ({ region: r.key, bonePoints: Float32Array.from(byRegion.get(r.key)!) })), FAT_OPTIONS)
+      const rows: Record<string, unknown>[] = []
+      for (const r of fat.regions) {
+        const m = maleFat.find((x) => x.id === `SOMA_fat_${r.region}`)
+        if (!m || r.mesh.indices.length < 300) continue
+        parts.push({ id: `W_${m.id}`, fma: m.fma, name: m.name, system: m.system, tissue: m.tissue, depth: m.depth, side: m.side, provenance: 'curated', source: m.source ?? 'soma (derived)', male: m.id, mesh: r.mesh, note: 'derived from her own skin and deep parts, not warped from the male' })
+        rows.push({ id: `W_${m.id}`, name: m.name, volumeMl: round(r.volume * 1e6, 0), thicknessMm: { p10: round(r.thickness.p10 * 1000, 0), median: round(r.thickness.median * 1000, 0), p90: round(r.thickness.p90 * 1000, 0), max: round(r.thickness.max * 1000, 0) }, skinCovered: round(r.skinCovered, 3) })
+      }
+      console.log(`\nSubcutaneous fat (derived on her body): volume inside the skin ${(fat.bodyVolume * 1000).toFixed(1)} l, fat ${(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000).toFixed(1)} l`)
+      for (const r of rows) {
+        const t = r.thicknessMm as Record<string, number>
+        console.log(`  ${pad(r.name as string, 44)}${pad(`${r.volumeMl} ml`, 10)}thickness p10 ${t.p10} / median ${t.median} / p90 ${t.p90} / max ${t.max} mm; fat under ${((r.skinCovered as number) * 100).toFixed(0)}% of the region's skin`)
+      }
+      report.fat = { options: FAT_OPTIONS, bodyVolumeL: round(fat.bodyVolume * 1000, 1), fatVolumeL: round(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000, 1), regions: rows }
+      lap('subcutaneous fat')
+    }
+  }
+
+  // ── 6. 最终几何 / 6. Final geometry ───────────────────────────────────────────────────────────────────────
   const final: { p: FPart; mesh: Mesh; stats: MeshStats }[] = []
   let trianglesIn = 0
   for (const p of parts) {
@@ -1148,9 +1309,9 @@ async function finish(input: FinishInput) {
   const trianglesOut = final.reduce((s, f) => s + f.mesh.indices.length / 3, 0)
   lap(`final geometry: ${trianglesIn} → ${trianglesOut} triangles`)
 
-  // adjacency
+  // 邻接 / adjacency
   const adj = computeAdjacency(final.map((f) => f.mesh), { threshold: ADJACENCY.threshold, spacing: ADJACENCY.spacing })
-  const envelopes = new Set(adj.neighbours.map((l, i) => (l.length > ADJACENCY.maxDegree ? i : -1)).filter((i) => i >= 0))
+  const envelopes = new Set(adj.neighbours.map((l, i) => (l.length > ADJACENCY.maxDegree || isFatPart(final[i]!.p.id) ? i : -1)).filter((i) => i >= 0))
   const neighbours = adj.neighbours.map((l, i) => (envelopes.has(i) ? [] : l.filter((j) => !envelopes.has(j))))
   {
     const deg = neighbours.map((l) => l.length).filter((_, i) => !envelopes.has(i))
@@ -1176,6 +1337,7 @@ async function finish(input: FinishInput) {
     adjacent: neighbours[i]!.map((j) => final[j]!.p.id),
   }))
 
+  // ── 7. 树：男性的树，部件 id 已转换，剪掉男性特有的概念，加入女性的概念 /
   // ── 7. Trees: the male trees with part ids translated, male-only concepts pruned, female ones added
   const toFemale = new Map<string, string>()
   for (const p of parts) if (p.male) toFemale.set(p.male, p.id)
@@ -1186,6 +1348,7 @@ async function finish(input: FinishInput) {
     for (const e of extras) {
       if (!e.anchor || !nodes.has(e.anchor)) continue
       const chain = [...e.path.map(([id]) => id), e.anchor]
+      // 先创建父节点再创建子节点，使列表保持父在前
       // create parents before children so the list stays parent-first
       for (let k = e.path.length - 1; k >= 0; k--) {
         const [id, label] = e.path[k]!
@@ -1195,6 +1358,7 @@ async function finish(input: FinishInput) {
       }
       nodes.get(chain[0]!)!.parts.push(e.part)
     }
+    // 剪掉其下没有任何内容的概念
     // prune concepts with nothing beneath them
     const children = new Map<string, string[]>()
     for (const id of order) {
@@ -1208,6 +1372,8 @@ async function finish(input: FinishInput) {
       alive.set(id, v)
       return v
     }
+    // 父在前的顺序：原有节点本来就是；新节点按每条链以父在前的方式追加，但某个新节点的
+    // 父节点可能是之后才追加的另一个新节点 → 做一遍稳定的拓扑排序
     // parent-first order: originals already are; new nodes were appended parent-first per chain,
     // but a new node's parent may be another new node appended later → stable topological pass
     const out: Concept[] = []
@@ -1235,7 +1401,7 @@ async function finish(input: FinishInput) {
       partOfExtras.push({ part: p.id, path: own, anchor: partOfByName('vertebral column') ?? partOfByName('skeletal system') })
       continue
     }
-    // HRA
+    // HRA 器官 / HRA
     const fallback = fallbackIsa(p.tissue === 'artery' ? 'artery' : p.tissue === 'vein' ? 'vein' : 'anatomical structure')
     let tp
     const lower = p.name[0]!.toLowerCase() + p.name.slice(1)
@@ -1246,10 +1412,12 @@ async function finish(input: FinishInput) {
     if (sidedOf) tp = { ...tp, path: [[p.fma, lower], ...tp.path] as [string, string][], anchor: tp.path.length ? tp.anchor : base }
     placement[tp.how] = (placement[tp.how] ?? 0) + 1
     isaExtras.push({ part: p.id, path: tp.path, anchor: tp.anchor })
+    // part-of：手工指定，挂在部件所属的系统之下
     // part-of: by hand, under the system the part belongs to
     const sys = p.system === 'reproductive' ? partOfByName('genital system') : p.system === 'integumentary' ? (partOfByName('integument') ?? partOfByName('integumentary system')) : partOfByName('cardiovascular system')
     partOfExtras.push({ part: p.id, path: [[p.fma, lower]], anchor: sys })
   }
+  // 男性特有的 "genital system" 分支会在女性部件挂上之前被剪掉：保留该节点
   // the male-only "genital system" branch would be pruned before the female parts are attached: keep the node
   const isaTree = rebuild(male.data.trees.isa, isaExtras)
   const partOfTree = rebuild(male.data.trees.partOf, partOfExtras)
@@ -1257,7 +1425,7 @@ async function finish(input: FinishInput) {
   console.log(`\nTrees: isa ${isaTree.length} concepts covering ${reach(isaTree).size}/${parts.length} parts; partOf ${partOfTree.length} concepts covering ${reach(partOfTree).size} parts; HRA isa placement: ${JSON.stringify(placement)} (partOf: by hand under genital system / integument / cardiovascular system)`)
   report.trees = { isa: { concepts: isaTree.length, parts: reach(isaTree).size }, partOf: { concepts: partOfTree.length, parts: reach(partOfTree).size }, hraIsaPlacement: placement }
 
-  // ── 8. Checks ───────────────────────────────────────────────────────────────────────────────
+  // ── 8. 检查 / 8. Checks ───────────────────────────────────────────────────────────────────────────────
   const meshByName = new Map<string, Mesh>()
   const nerveByName = new Map<string, Polyline[]>()
   for (const f of final) {
@@ -1270,6 +1438,7 @@ async function finish(input: FinishInput) {
   console.log(`  ${landmarks.filter((r) => r.pass).length} pass, ${landmarks.filter((r) => r.evaluated && !r.pass).length} fail, ${landmarks.filter((r) => !r.evaluated).length} not evaluated`)
   report.landmarks = landmarks
 
+  // 肌的附着：长肌的两端是否仍在正确的骨上？
   // muscle attachments: both ends of long muscles still on the right bones?
   const maleMeshByName = new Map<string, Mesh>()
   for (const p of male.data.parts) if (!maleMeshByName.has(p.name)) maleMeshByName.set(p.name, male.meshes.get(p.id)!)
@@ -1318,6 +1487,7 @@ async function finish(input: FinishInput) {
   for (const a of attachments) console.log(`  ${a.ok ? 'ok  ' : 'OFF '}${pad(a.muscle, 40)}${pad(a.end, 7)}${pad(a.bone, 20)}${pad(a.maleMm, 7)}→ ${a.femaleMm}`)
   report.attachments = attachments
 
+  // 性别特有结构的放置
   // sex-specific placement
   const cz = (n: string) => measure(byName(n)!.mesh).centroid
   const sexChecks: Record<string, unknown> = {}
@@ -1356,6 +1526,7 @@ async function finish(input: FinishInput) {
     report.sexChecks = sexChecks
   }
 
+  // 形变后的部件与她的骨的关系
   // warped parts against her bones
   {
     const before = insideBone.filter((x) => x.before > 0)
@@ -1367,6 +1538,7 @@ async function finish(input: FinishInput) {
     report.interpenetration = { ...st, worstAfter: worst.map((x) => ({ name: x.name, inside: round(x.after, 3) })), nerves: { lengthM: round(n.length, 2), inBoneBefore: round(n.boneBefore / n.length, 5), inBoneAfter: round(n.boneAfter / n.length, 5), inCanal: round(n.canal / n.length, 5), deepInRealMuscleBefore: round(n.muscleBefore / n.length, 5), deepInRealMuscleAfter: round(n.muscleAfter / n.length, 5), pointsMoved: round(n.moved / Math.max(1, n.points), 4) } }
   }
 
+  // 她的骨就是她的骨：只做刚性移动
   // her bones are her bones: rigidly moved
   {
     let worst = 0
@@ -1385,9 +1557,10 @@ async function finish(input: FinishInput) {
     report.scannedBones = { parts: count, maxNonRigidDeviationM: worst }
   }
 
-  // ── 9. Notes and output ─────────────────────────────────────────────────────────────────────
+  // ── 9. 说明与输出 / 9. Notes and output ─────────────────────────────────────────────────────────────────────
   const count = (f: (p: FPart) => boolean) => parts.filter(f).length
   const maleNamesDropped = dropped.map((p) => p.name)
+  // 盂肱关节的吻合度：肱骨已绕肱骨头中心重新摆位，肩胛骨则完全没有动
   // glenohumeral congruency: the humeri were re-posed about the head centre, the scapulae not at all
   const shoulder: Record<string, unknown> = {}
   for (const side of ['left', 'right'] as const) {
@@ -1425,6 +1598,10 @@ async function finish(input: FinishInput) {
       en: 'The body surface is synthetic: male skin deformed to her skeleton and raised into a smooth envelope over the breasts. It does not show female body shape or fat distribution. The breasts themselves are a standing-shape artist model.',
       zh: '体表是合成的：男性皮肤按她的骨骼形变后，再在乳房处抬高成平滑包络，并不反映女性的体形和脂肪分布。乳房本身是站立位形态的美术模型。',
     },
+    ...(parts.some((p) => isFatPart(p.id)) ? [{
+      zh: '皮下脂肪层是在上述合成体表与她的肌肉、骨骼、器官外包络之间按 3 mm 体素填充得到的（最深只算到皮下 3 cm），并非扫描所得；其厚度取决于合成的皮肤，不代表女性真实的脂肪分布。',
+      en: 'The subcutaneous fat layer fills the gap between that synthetic body surface and the outer envelope of her muscles, bones and organs at 3 mm voxels (no deeper than 3 cm below the skin); it is not scanned, and its thickness follows the synthetic skin rather than a real female fat distribution.',
+    }] : []),
     {
       en: 'Missing: external genitalia and perineum, female urethra, ovarian and vaginal vessels. Male-only parts (prostate, testes, penis, seminal vesicles, testicular vessels, male urethra) were removed, not replaced.',
       zh: '缺失：外生殖器和会阴、女性尿道、卵巢血管和阴道血管。男性特有结构（前列腺、睾丸、阴茎、精囊、睾丸血管、男性尿道）已删除，但未以对应的女性结构替代。',

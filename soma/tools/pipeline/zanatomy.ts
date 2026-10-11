@@ -1,3 +1,6 @@
+// 读取由 tools/zanatomy 构建的 Z-Anatomy / Open3DModel 导入包
+// （data/raw/z-anatomy/out/import，见其中的 README.md）。其中的几何处于源图谱坐标系
+// （"za"、"o3d"），已转换到我们的坐标轴和单位，但尚未配准到 BodyParts3D。
 // Reader for the Z-Anatomy / Open3DModel import package built by tools/zanatomy
 // (data/raw/z-anatomy/out/import, see its README.md). Geometry there is in the source atlas
 // frames ("za", "o3d") converted to our axes and units but NOT registered to BodyParts3D.
@@ -27,9 +30,13 @@ export interface ZaItem {
   fma: string | null
   fmaUnsided?: string | null
   fmaSided?: boolean
-  /** lateralised item whose `fma` is the unsided class */
+  /** 分侧条目，但其 `fma` 是不分侧的类 / lateralised item whose `fma` is the unsided class */
   fmaIsUnsided?: boolean
   fmaMatch?: string
+  batch?: number
+  batchGroup?: string
+  alternateOf?: string[]
+  proxyFor?: { name: string; fma: string }
   fmaUnsidedLabel?: string
   fmaLabel?: string
   system: string
@@ -89,6 +96,7 @@ export function loadZa(dir = ZA_DIR): ZaPackage {
     if (!/^[\w.-]+\.bin$/.test(ref.file)) throw new Error(`unexpected mesh file ${ref.file}`)
     let buf = bins.get(ref.file)
     if (!buf) bins.set(ref.file, (buf = readFileSync(join(dir, ref.file))))
+    // 复制出来：不保证这些偏移在 Buffer 池内按 4 字节对齐
     // copy out: the offsets are not guaranteed to be 4-byte aligned within the Buffer's pool
     const v = buf.subarray(ref.vOffset, ref.vOffset + ref.vCount * 12)
     const i = buf.subarray(ref.iOffset, ref.iOffset + ref.iCount * 4)
@@ -105,11 +113,14 @@ export function loadZa(dir = ZA_DIR): ZaPackage {
 
 export interface FmaNames {
   label: Map<string, string>
-  /** is-a parents (FMA 5.1.0) */
+  /** is-a 父类（FMA 5.1.0） / is-a parents (FMA 5.1.0) */
   parents: Map<string, string[]>
 }
 
-/** FMA labels and is-a parents extracted by tools/zanatomy/fma_extract.py; null when absent. */
+/**
+ * 由 tools/zanatomy/fma_extract.py 提取的 FMA 标签与 is-a 父类；文件不存在时为 null。
+ * FMA labels and is-a parents extracted by tools/zanatomy/fma_extract.py; null when absent.
+ */
 export function loadFmaNames(path = FMA_NAMES): FmaNames | null {
   if (!existsSync(path)) return null
   const label = new Map<string, string>()
@@ -122,8 +133,12 @@ export function loadFmaNames(path = FMA_NAMES): FmaNames | null {
   return { label, parents }
 }
 
-/** Display name in the BodyParts3D style: "Left median nerve", "Right C5 root of brachial plexus". */
+/**
+ * BodyParts3D 风格的显示名："Left median nerve"、"Right C5 root of brachial plexus"。
+ * Display name in the BodyParts3D style: "Left median nerve", "Right C5 root of brachial plexus".
+ */
 export function displayName(name: string, side: 'L' | 'R' | 'M'): string {
+  // TA2 把不恒定的结构放在括号里："(Anterior tibial node)"
   // TA2 puts inconstant structures in parentheses: "(Anterior tibial node)"
   let n = name.trim()
   const m = /^\((.*)\)$/.exec(n)

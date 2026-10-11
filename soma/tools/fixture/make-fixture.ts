@@ -1,3 +1,4 @@
+// 开发用示例数据生成器：用几何基本体生成一份符合数据约定的小数据集（用法与输出布局见下方英文说明；FMA 编号为虚构）。
 // Dev fixture generator: writes a small, contract-conformant dataset built from primitives.
 //
 //   bun tools/fixture/make-fixture.ts                 -> public/anatomy/fixture/
@@ -14,7 +15,7 @@ import { join, resolve } from 'node:path'
 import { Document, NodeIO } from '@gltf-transform/core'
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions'
 import { quantize, reorder } from '@gltf-transform/functions'
-import { MeshoptEncoder } from 'meshoptimizer'
+import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer'
 import * as THREE from 'three'
 import type {
   AnatomyData,
@@ -25,6 +26,7 @@ import type {
   Relation,
   RelationKind,
   Side,
+  SkinMaps,
   SystemDef,
   SystemId,
   TissueId,
@@ -48,12 +50,16 @@ interface Draft {
   depth: number
   side: Side
   geo: Geo
+  /** isa 分类路径，根在前（名称）。部件自身的概念会自动追加。 */
   /** isa class path, root first (names). The part's own concept is appended automatically. */
   isa: string[]
+  /** partOf 部位名；该部件不在 partOf 树中时为 null。 */
   /** partOf region name, or null when the part is not covered by the partOf tree. */
   region: string | null
+  /** 几何“来自”的数据集；缺省为第一个来源。 */
   /** Dataset the geometry "came from"; absent = the first source. */
   source?: string
+  /** 中心线，用于在 nerves.json 中有条目的部件。 */
   /** Centreline, for parts that get an entry in nerves.json. */
   path?: { points: Vec3[]; radius: number }
 }
@@ -61,7 +67,7 @@ interface Draft {
 const SRC_WARPED = 'soma fixture (warped set)'
 const SRC_DRAWN = 'soma fixture (drawn set)'
 
-// ---------------------------------------------------------------- geometry helpers
+// ---------------------------------------------------------------- 几何辅助 / geometry helpers
 
 function fromThree(g: THREE.BufferGeometry, m?: THREE.Matrix4): Geo {
   if (m) g.applyMatrix4(m)
@@ -89,6 +95,7 @@ function ellipsoid(c: Vec3, r: Vec3, seg = 20): Geo {
   return fromThree(new THREE.SphereGeometry(1, seg, Math.max(8, Math.round(seg * 0.7))), m)
 }
 
+/** 从 a 到 b 的带端盖圆柱（或圆台）。 */
 /** Capped cylinder (or cone frustum) from a to b. */
 function tube(a: Vec3, b: Vec3, r0: number, r1 = r0, seg = 14): Geo {
   const va = new THREE.Vector3(...a)
@@ -97,6 +104,7 @@ function tube(a: Vec3, b: Vec3, r0: number, r1 = r0, seg = 14): Geo {
   const len = dir.length()
   const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize())
   const m = new THREE.Matrix4().compose(va.clone().add(vb).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1))
+  // CylinderGeometry(radiusTop, radiusBottom)：顶端是 +Y，即朝向 b。
   // CylinderGeometry(radiusTop, radiusBottom): top is +Y, i.e. towards b.
   return fromThree(new THREE.CylinderGeometry(r1, r0, len, seg, 4), m)
 }
@@ -106,9 +114,11 @@ function box(c: Vec3, s: Vec3): Geo {
   return fromThree(new THREE.BoxGeometry(s[0], s[1], s[2], 2, 2, 2), m)
 }
 
+/** XZ 平面内的半环（一根肋骨），开口朝向脊柱。side：+1 为身体左侧。 */
 /** Half ring in the XZ plane (a rib), opening towards the spine. side: +1 = body's left. */
 function rib(y: number, rx: number, rz: number, side: number, t = 0.008): Geo {
   const r = Math.max(rx, rz)
+  // XY 平面的单位圆环弧 → 放平到 XZ，从脊柱处起始，再缩放成椭圆
   // unit torus arc in XY -> lay it in XZ, start it at the spine, then scale to an ellipse
   const m = new THREE.Matrix4()
     .makeTranslation(0, y, 0.02)
@@ -200,7 +210,7 @@ function measure(g: Geo): Pick<Part, 'bbox' | 'centroid' | 'triangles' | 'volume
   }
 }
 
-// ---------------------------------------------------------------- systems / layers
+// ---------------------------------------------------------------- 系统与图层 / systems / layers
 
 const SYSTEMS: Omit<SystemDef, 'glb' | 'partCount'>[] = [
   { id: 'integumentary', name: { en: 'Integumentary', zh: '皮肤系统' }, color: '#e0b79b' },
@@ -224,7 +234,7 @@ const LAYERS: AnatomyData['layers'] = [
   { name: { en: 'Viscera, vessels and nerves', zh: '内脏、血管与神经' } },
 ]
 
-// ---------------------------------------------------------------- the body
+// ---------------------------------------------------------------- 人体 / the body
 
 const drafts: Draft[] = []
 const zhOfClass = new Map<string, string>()
@@ -278,6 +288,7 @@ function single(spec: Spec, geo: Geo): Draft {
   return d
 }
 
+/** 共用一个 isa 概念的左右一对。geo(+1) 为身体左侧（+X）。 */
 /** Left/right pair under a shared isa concept. geo(+1) is the body's left (+X). */
 function pair(spec: Spec, regionLR: [string, string] | null, geo: (s: number) => Geo): void {
   zhOfClass.set(spec.name, spec.zh)
@@ -302,7 +313,7 @@ function pair(spec: Spec, regionLR: [string, string] | null, geo: (s: number) =>
 }
 
 function buildBody(): void {
-  // --- skin: one merged shell
+  // --- 皮肤：合并成一层外壳 / skin: one merged shell
   single(
     { name: 'Skin', zh: '皮肤', la: 'Cutis', system: 'integumentary', tissue: 'skin', depth: 0, isa: C.skin, region: null },
     merge(
@@ -319,7 +330,7 @@ function buildBody(): void {
     ),
   )
 
-  // --- muscles
+  // --- 肌肉 / muscles
   const mus = (name: string, zh: string, la: string): Spec => ({
     name, zh, la, system: 'muscular', tissue: 'muscle', depth: 1, isa: C.muscle, region: null,
   })
@@ -336,7 +347,7 @@ function buildBody(): void {
   pair(mus('Gastrocnemius', '腓肠肌', 'Musculus gastrocnemius'), ['Left lower limb', 'Right lower limb'], (s) =>
     ellipsoid([s * 0.1, 0.33, -0.03], [0.035, 0.11, 0.028]))
 
-  // --- skeleton
+  // --- 骨骼 / skeleton
   const bone = (name: string, zh: string, la: string, isa: string[], region: string | null): Spec => ({
     name, zh, la, system: 'skeletal', tissue: 'bone', depth: 2, isa, region,
   })
@@ -366,7 +377,7 @@ function buildBody(): void {
   pair(bone('Tibia', '胫骨', 'Tibia', C.longBone, null), ['Left lower limb', 'Right lower limb'], (s) =>
     tube([s * 0.1, 0.48, 0], [s * 0.1, 0.08, -0.005], 0.018, 0.013))
 
-  // --- cardiovascular
+  // --- 心血管 / cardiovascular
   const cv = (name: string, zh: string, la: string, tissue: TissueId, isa: string[], region: string | null): Spec => ({
     name, zh, la, system: 'cardiovascular', tissue, depth: 3, isa, region,
   })
@@ -380,7 +391,7 @@ function buildBody(): void {
   pair(cv('Femoral vein', '股静脉', 'Vena femoralis', 'vein', C.vein, null), null, (s) =>
     tube([s * 0.045, 0.985, -0.03], [s * 0.1, 0.52, 0.028], 0.007, 0.006, 10))
 
-  // --- nervous
+  // --- 神经 / nervous
   const nv = (name: string, zh: string, la: string, tissue: TissueId, isa: string[], region: string | null): Spec => ({
     name, zh, la, system: 'nervous', tissue, depth: 3, isa, region,
   })
@@ -429,7 +440,7 @@ function buildBody(): void {
     }
   }
 
-  // --- respiratory
+  // --- 呼吸 / respiratory
   const rs = (name: string, zh: string, la: string, region: string | null): Spec => ({
     name, zh, la, system: 'respiratory', tissue: 'organ', depth: 3, isa: C.viscus, region,
   })
@@ -437,7 +448,7 @@ function buildBody(): void {
     ellipsoid([s * 0.085, 1.3, 0.005], [0.055, 0.12, 0.07]))
   single(rs('Trachea', '气管', 'Trachea', 'Neck'), tube([0, 1.36, 0.02], [0, 1.5, 0.03], 0.01, 0.01, 12))
 
-  // --- digestive
+  // --- 消化 / digestive
   const dg = (name: string, zh: string, la: string): Spec => ({
     name, zh, la, system: 'digestive', tissue: 'organ', depth: 3, isa: C.viscus, region: 'Abdomen',
   })
@@ -447,18 +458,19 @@ function buildBody(): void {
     fromThree(new THREE.TorusKnotGeometry(0.045, 0.014, 96, 8, 3, 5),
       new THREE.Matrix4().makeTranslation(0, 1.0, 0.04).multiply(new THREE.Matrix4().makeScale(1.3, 0.9, 0.6))))
 
-  // --- urinary
+  // --- 泌尿 / urinary
   const ur = (name: string, zh: string, la: string): Spec => ({
     name, zh, la, system: 'urinary', tissue: 'organ', depth: 3, isa: C.viscus, region: 'Abdomen',
   })
   pair(ur('Kidney', '肾', 'Ren'), ['Abdomen', 'Abdomen'], (s) => ellipsoid([s * 0.065, 1.08, -0.045], [0.026, 0.05, 0.02]))
   single(ur('Urinary bladder', '膀胱', 'Vesica urinaria'), ellipsoid([0, 0.9, 0.04], [0.035, 0.03, 0.03]))
 
-  // --- endocrine
+  // --- 内分泌 / endocrine
   single({ name: 'Thyroid gland', zh: '甲状腺', la: 'Glandula thyroidea', system: 'endocrine', tissue: 'gland', depth: 3, isa: C.gland, region: 'Neck' },
     merge(ellipsoid([0.018, 1.47, 0.035], [0.012, 0.022, 0.01], 12), ellipsoid([-0.018, 1.47, 0.035], [0.012, 0.022, 0.01], 12)))
 }
 
+/** 压力测试数据集：N 个小团块散布在人体大小的空间内，覆盖所有系统。 */
 /** Stress dataset: N small blobs spread through a body-sized volume, all systems. */
 function buildStress(n: number): void {
   let seed = 12345
@@ -504,7 +516,7 @@ function buildStress(n: number): void {
   }
 }
 
-// ---------------------------------------------------------------- assemble
+// ---------------------------------------------------------------- 组装 / assemble
 
 function adjacency(parts: Part[], margin: number): void {
   const skip = new Set(parts.filter((p) => p.tissue === 'skin').map((p) => p.id))
@@ -540,6 +552,7 @@ function buildTrees(): AnatomyData['trees'] {
   for (const d of drafts) {
     let parent: string | null = null
     for (const name of d.isa) parent = ensure(isa, name, parent).id
+    // 共用不分侧概念 id 的左右部件挂在同一个概念下，概念名不带左右
     // twins sharing an unsided concept id hang off that one concept, named without the side
     const own = d.fma !== fmaByName.get(d.name) || !d.fma.startsWith('ZAC_') ? d.name : d.name.replace(/^(Left|Right) (.)/, (_m, _s, c: string) => c.toUpperCase())
     ensure(isa, own, parent).parts.push(d.id)
@@ -572,6 +585,7 @@ function buildKnowledge(): { names: Record<string, NameEntry>; relations: Relati
   const names: Record<string, NameEntry> = {}
   let i = 0
   for (const d of drafts) {
+    // 每三个名称标记一个为已审校，以便两种徽标状态都出现
     // every third name is marked reviewed so both badge states appear
     names[d.fma] = { zh: d.zh, la: d.la, zhSource: 'fixture', status: i++ % 3 === 0 ? 'reviewed' : 'unreviewed' }
   }
@@ -635,6 +649,76 @@ async function writeGlb(path: string, parts: Draft[]): Promise<void> {
     .registerExtensions([EXTMeshoptCompression, KHRMeshQuantization])
     .registerDependencies({ 'meshopt.encoder': MeshoptEncoder })
   await writeFile(path, await io.writeBinary(doc))
+}
+
+/**
+ * 示例体表图：读回刚写出的皮肤 GLB（体表图按解码后的顶点顺序索引，而写文件时顶点被重排过），
+ * 按位置给每个顶点分区。
+ * Fixture skin maps: read the skin GLB back (maps index vertices in decoded order, and writing
+ * reorders them) and assign each vertex a region from its position.
+ */
+async function buildSkinMaps(glbPath: string, skinId: string): Promise<{ json: SkinMaps; bin: Uint8Array }> {
+  await MeshoptDecoder.ready
+  const io = new NodeIO()
+    .registerExtensions([EXTMeshoptCompression, KHRMeshQuantization])
+    .registerDependencies({ 'meshopt.decoder': MeshoptDecoder })
+  const doc = await io.read(glbPath)
+  const node = doc.getRoot().listNodes().find((n) => n.getName() === skinId)
+  const pos = node?.getMesh()?.listPrimitives()[0]?.getAttribute('POSITION')
+  if (!node || !pos) throw new Error(`fixture: skin node ${skinId} not found in ${glbPath}`)
+  const m = new THREE.Matrix4().fromArray(node.getWorldMatrix())
+  const n = pos.getCount()
+  const v = new THREE.Vector3()
+  const el: number[] = []
+  const bin = new Uint8Array(n * 2)
+  for (let i = 0; i < n; i++) {
+    pos.getElement(i, el)
+    v.set(el[0]!, el[1]!, el[2]!).applyMatrix4(m)
+    // 图一（"皮节"）：按高度分四带 / map 1 ("dermatomes"): four bands by height
+    bin[i] = v.y > 1.5 ? 0 : v.y > 1.12 ? 1 : v.y > 0.86 ? 2 : 3
+    // 图二（"皮神经"）：左臂、右臂、其余；足部留作未分配
+    // map 2 ("nerve territories"): left arm, right arm, the rest; feet left unassigned
+    bin[n + i] = v.y < 0.12 ? 255 : v.x > 0.17 ? 0 : v.x < -0.17 ? 1 : 2
+  }
+  const source = { name: 'soma fixture (synthetic)', url: 'https://example.org/soma-fixture', license: 'CC0-1.0' }
+  const method = (zh: string, en: string) => ({
+    zh: `${zh}这是合成的示例数据，不是解剖学内容，未经临床审校，不能用于诊断。`,
+    en: `${en} Synthetic fixture data, not anatomy; not clinically reviewed and not for diagnosis.`,
+  })
+  const json: SkinMaps = {
+    part: skinId,
+    vertexCount: n,
+    maps: [
+      {
+        id: 'dermatome',
+        name: { zh: '皮节', en: 'Dermatomes' },
+        regions: [
+          { name: { zh: '头颈带', en: 'Head and neck band' }, concept: fmaFor('Brain'), color: '#e6194b' },
+          { name: { zh: '胸带', en: 'Thoracic band' }, concept: fmaFor('Spinal cord'), color: '#3cb44b' },
+          { name: { zh: '腹带', en: 'Abdominal band' }, concept: 'FMA999999', color: '#ffe119' },
+          { name: { zh: '下肢带', en: 'Lower limb band' }, concept: fmaFor('Sciatic nerve'), color: '#4363d8' },
+        ],
+        offset: 0,
+        method: method('按顶点高度分带。', 'Bands by vertex height.'),
+        sources: [source],
+        status: 'unreviewed',
+      },
+      {
+        id: 'cutaneousNerve',
+        name: { zh: '皮神经分布区', en: 'Cutaneous nerve territories' },
+        regions: [
+          { name: { zh: '左臂（尺神经）', en: 'Left arm (ulnar nerve)' }, concept: 'ZAC_ulnar_nerve', color: '#f58231' },
+          { name: { zh: '右臂（肌皮神经）', en: 'Right arm (musculocutaneous nerve)' }, concept: 'ZAC_musculocutaneous_nerve', color: '#911eb4' },
+          { name: { zh: '躯干与下肢', en: 'Trunk and lower limbs' }, color: '#46f0f0' },
+        ],
+        offset: n,
+        method: method('按顶点左右位置分区，足部未分配。', 'Split by side; the feet are unassigned.'),
+        sources: [source],
+        status: 'unreviewed',
+      },
+    ],
+  }
+  return { json, bin }
 }
 
 async function main(): Promise<void> {
@@ -710,6 +794,10 @@ async function main(): Promise<void> {
     .filter((d) => d.path)
     .map((d) => ({ part: d.id, branches: [{ points: d.path!.points.flat(), radius: d.path!.points.map(() => d.path!.radius) }] }))
   await writeFile(join(outDir, 'nerves.json'), JSON.stringify(nerves))
+  const skin = drafts.find((d) => d.tissue === 'skin')!
+  const skinMaps = await buildSkinMaps(join(outDir, 'integumentary.glb'), skin.id)
+  await writeFile(join(outDir, 'skinmaps.json'), JSON.stringify(skinMaps.json))
+  await writeFile(join(outDir, 'skinmaps.bin'), skinMaps.bin)
   await writeFile(join(outDir, 'knowledge/names.json'), JSON.stringify(k.names, null, 1))
   await writeFile(join(outDir, 'knowledge/relations.json'), JSON.stringify(k.relations, null, 1))
 

@@ -20,6 +20,7 @@ import { BRANCH_NOTE, buildRelations, INVERSE_NOTE, MAX_ISA_FANOUT, mirrorInnerv
 import { stats } from './lib/sparql.ts'
 import { fetchPropertyLabels, P_FMA, P_INNERVATES, P_TA98, P_TA98_LATIN, P_UBERON, RELATION_PROPS } from './lib/wikidata.ts'
 import { buildWikipediaFill } from './lib/wikipedia.ts'
+import { buildZanatomyAttachments } from './lib/zanatomy.ts'
 
 const opts = { refresh: process.argv.includes('--refresh'), offline: process.argv.includes('--offline') }
 
@@ -50,7 +51,8 @@ async function main() {
   const { names, disagreements, replaced } = buildNames(m)
   const wd = buildRelations(m, names)
   const wp = await buildWikipediaFill(m, names, wd.relations, opts)
-  const forward: BuiltRelation[] = [...wd.relations, ...wp.relations]
+  const za = buildZanatomyAttachments(m, names, [...wd.relations, ...wp.relations])
+  const forward: BuiltRelation[] = [...wd.relations, ...wp.relations, ...za.relations]
   const mirrored = mirrorInnervation(m, names, forward)
   const built: BuiltRelation[] = [...forward, ...mirrored]
   built.sort((a, b) => compareIds(a.subject, b.subject) || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind))
@@ -76,7 +78,7 @@ async function main() {
     const kinds: Record<string, Record<string, number>> = {}
     for (const k of KINDS) {
       const of = rel.filter((r) => r.kind === k)
-      const row: Record<string, number> = { total: of.length, direct: 0, 'is-a': 0, laterality: 0, whole: 0, wikipedia: 0 }
+      const row: Record<string, number> = { total: of.length, direct: 0, 'is-a': 0, laterality: 0, whole: 0, wikipedia: 0, zanatomy: 0 }
       for (const r of of) row[r.via]!++
       row.subjects = new Set(of.map((r) => r.subject)).size
       row.objectHasFma = of.filter((r) => r.object).length
@@ -127,7 +129,7 @@ async function main() {
   }
   const gapList = [...groups.values()].sort((a, b) => a.name.localeCompare(b.name))
   const gaps = {
-    note: 'Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. "wholeMuscleOnly" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray\'s Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0).',
+    note: 'Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. "wholeMuscleOnly" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray\'s Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0). Bone-level attachments from Z-Anatomy patches count as present.',
     muscleElementConcepts: muscles.length,
     complete,
     withGaps: muscles.length - complete,
@@ -192,6 +194,7 @@ async function main() {
       nerveSubjects: new Set(built.filter((r) => r.kind === 'innervates').map((r) => r.subject)).size,
     },
     wikipedia: wp.report,
+    zanatomyAttachments: za.report,
     muscleGaps: { muscleElementConcepts: gaps.muscleElementConcepts, complete: gaps.complete, withGaps: gaps.withGaps, unlateralisedGroups: gaps.unlateralisedGroups, missingCounts: gaps.missingCounts },
     zhRejectedWikidataLabels: { note: 'Wikidata zh labels discarded because their structure type contradicts the English label.', items: [...m.rejectedZh.values()].sort() },
     zhMainlandOverWikidata: {
