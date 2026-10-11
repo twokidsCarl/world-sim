@@ -6,7 +6,7 @@ import { buildItem } from '../scene/build'
 import { gridLayout, type Slot } from '../scene/layout'
 import { MEMBRANE_LCH, useStore, type Look } from '../state/store'
 import { atomColors, type Coloring } from '../style/assign'
-import { TONE_LANDSCAPE, TONE_MOLECULE } from '../style/palettes'
+import { TONE_LANDSCAPE, TONE_MOLECULE, TONE_PAINTED } from '../style/palettes'
 import { scaleBar, type ScaleBar } from '../render/scalebar'
 import { pick, t, shown } from '../i18n'
 
@@ -222,7 +222,7 @@ export function Stage() {
     } else if (st.spec?.mesoscale) {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: 0, perCopy: true, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
     } else {
-      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined, noCut: p.noCut }, p.annotation)))
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, st.drawing === 'painted' ? TONE_PAINTED : TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined, noCut: p.noCut }, p.annotation)))
     }
     draw(false)
   }, [sceneRev])
@@ -232,7 +232,7 @@ export function Stage() {
     const r = stage.renderer
     if (!r) return
     const sp = useStore.getState().spec
-    const tone = sp?.landscape || sp?.mesoscale ? TONE_LANDSCAPE : TONE_MOLECULE
+    const tone = sp?.landscape || sp?.mesoscale ? TONE_LANDSCAPE : useStore.getState().drawing === 'painted' ? TONE_PAINTED : TONE_MOLECULE
     panels.forEach((p, i) => colorings[i] && r.setColors(i, atomColors(p.mol, colorings[i]!, tone, p.annotation)))
     draw(false)
   }, [colorings])

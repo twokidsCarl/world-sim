@@ -31,6 +31,7 @@ uniform vec2 u_toClip;
 uniform float u_clipFront;
 uniform float u_radiusScale;
 uniform float u_minRadius; // Å
+uniform float u_inflate;   // 平滑用的探针半径（Å），加在每个球上；见 SMOOTH_FS / the probe radius for smoothing in Å, added to every sphere; see SMOOTH_FS
 uniform vec3 u_layer;   // 景深层数（0 = 不分层）、淡出开始和结束处的视图 z / depth layers (0 = none), view z where fading starts and ends
 uniform vec2 u_fogKeep; // 前端和后端各保留的本色比例 / share of true colour kept at the front and at the back
 out vec2 v_uv;
@@ -54,7 +55,7 @@ void main() {
   vec3 view = u_rot * ((u_place * vec4(local, 1.0)).xyz - u_center);
   // 纤维的各股至少取最小半径的两倍，这样缠成一团时仍看得出是一股一股的
   // strands of a fibre are held to twice the minimum, so a tangle still reads as strands
-  float r = posr.w <= 0.0 ? 0.0 : max(posr.w * u_radiusScale, u_minRadius * (mc.w > 1.5 && mc.w < 2.5 ? 2.0 : 1.0));
+  float r = posr.w <= 0.0 ? 0.0 : max(posr.w * u_radiusScale, u_minRadius * (mc.w > 1.5 && mc.w < 2.5 ? 2.0 : 1.0)) + u_inflate;
   v_uv = a_corner;
   v_color = texelFetch(u_color, at, 0).rgb;
   v_z = view.z;
@@ -157,6 +158,7 @@ uniform vec2 u_toClip;
 uniform float u_clipFront;
 uniform float u_radiusScale;
 uniform float u_minRadius;
+uniform float u_inflate;
 out vec2 v_xy;
 flat out vec4 v_a;
 flat out vec4 v_b;
@@ -173,7 +175,7 @@ void main() {
   uvec2 s = texelFetch(u_seg, ivec2(gl_InstanceID % u_w, gl_InstanceID / u_w), 0).rg;
   ivec2 ia = ivec2(int(s.x) % u_w, int(s.x) / u_w), ib = ivec2(int(s.y) % u_w, int(s.y) / u_w);
   vec4 A = texelFetch(u_posr, ia, 0), B = texelFetch(u_posr, ib, 0);
-  float ra = max(A.w * u_radiusScale, u_minRadius), rb = max(B.w * u_radiusScale, u_minRadius);
+  float ra = max(A.w * u_radiusScale, u_minRadius) + u_inflate, rb = max(B.w * u_radiusScale, u_minRadius) + u_inflate;
   vec3 pa = toView(A.xyz), pb = toView(B.xyz);
   // 和球一样：端点被截面丢掉的线段整段不画 / as with spheres: a segment with an end dropped by the cut is not drawn at all
   if (A.w <= 0.0 || B.w <= 0.0 || max(pa.z, pb.z) > u_clipFront) {
@@ -309,6 +311,77 @@ void main() {
   o_color = vec4(v_color, 1.0);
   uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
   o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, u_solid && !gl_FrontFacing && u_clipFront < 1.0e29 ? 3u : 1u);
+}`
+
+/**
+ * “滚球”平滑：把原子的疙瘩抹成光滑的轮廓，分子的外形和大小不变。
+ *
+ * 画球时每个球的半径已经加了探针半径 p，得到的深度图是“探针球心能到的最近处”。这里再对它做一次
+ * 以半径 p 的球为结构元的腐蚀：每个像素取周围 p 以内各点的 深度 − sqrt(p² − 距离²) 的最小值。
+ * 两步合起来是高度场上的闭运算，也就是从观察方向看到的、探针滚过之后的表面：原子之间的沟被填平，
+ * 凸出的地方回到原处。周围 p 以内只要有背景，这个像素就回到背景，所以轮廓不会变胖。
+ * 颜色和编号取自给出最小值的那个邻点：在近处分子的边缘，被露出来的是它后面的东西。
+ *
+ * "Rolling ball" smoothing: the lumps of atoms are wiped into smooth outlines, with the shape and
+ * size of each molecule unchanged.
+ *
+ * The spheres were drawn with the probe radius p added to each, so the depth map is "the nearest
+ * the centre of a probe can come". Here that map is eroded with a ball of radius p as structuring
+ * element: each pixel takes the minimum, over points within p, of depth − sqrt(p² − distance²).
+ * Together the two steps are a closing of the height field, the surface a probe leaves after
+ * rolling over it as seen from the viewer: grooves between atoms are filled and what stood out
+ * returns to where it was. If anything within p is background the pixel goes back to background,
+ * so outlines do not grow fatter. Colour and ids come from the neighbour that gave the minimum:
+ * at the rim of a nearer molecule, what is uncovered is whatever lies behind it.
+ */
+export const SMOOTH_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+precision highp usampler2D;
+uniform sampler2D u_depth;
+uniform sampler2D u_color;
+uniform usampler2D u_ids;
+uniform vec2 u_z;
+uniform float u_probe;   // Å
+uniform float u_pxPerA;
+uniform int u_rings;     // 采样的圈数；交互时少取几圈 / rings of samples; fewer while interacting
+layout(location = 0) out vec4 o_color;
+layout(location = 1) out uvec4 o_ids;
+void main() {
+  ivec2 size = textureSize(u_depth, 0);
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  float d0 = texelFetch(u_depth, p, 0).r;
+  if (d0 >= 1.0) discard;
+  float own = mix(u_z.x, u_z.y, d0) - u_probe;
+  float best = own;
+  ivec2 at = p;
+  float R = u_probe * u_pxPerA;
+  for (int k = 1; k <= u_rings; k++) {
+    float f = float(k) / float(u_rings);
+    int n = 6 + 4 * k;
+    float h = u_probe * sqrt(max(0.0, 1.0 - f * f));
+    for (int j = 0; j < n; j++) {
+      // 每一圈错开半步，免得采样排成放射状的线 / each ring is offset by half a step, so that samples do not line up along spokes
+      float a = (float(j) + 0.5 * float(k)) * 6.2831853 / float(n);
+      ivec2 q = p + ivec2(round(vec2(cos(a), sin(a)) * R * f));
+      if (q.x < 0 || q.y < 0 || q.x >= size.x || q.y >= size.y) continue;
+      float dq = texelFetch(u_depth, q, 0).r;
+      if (dq >= 1.0) discard;
+      float z = mix(u_z.x, u_z.y, dq) - h;
+      if (z < best) {
+        best = z;
+        at = q;
+      }
+    }
+  }
+  gl_FragDepth = clamp((u_z.x - best) / (u_z.x - u_z.y), 0.0, 0.999999);
+  // 只有当最小值比本像素自己的低出一截（真的露出了后面的东西）才换用那个邻点的颜色和编号；
+  // 否则在分子内部，最小值在几个采样之间来回跳，编号跟着跳，会描出碎线
+  // the neighbour's colour and ids are taken only when its minimum is well below this pixel's own (something behind really is uncovered);
+  // otherwise, inside a molecule, the minimum hops between samples, the ids hop with it, and broken lines get drawn
+  if (own - best < 0.6 * u_probe) at = p;
+  o_color = texelFetch(u_color, at, 0);
+  o_ids = texelFetch(u_ids, at, 0);
 }`
 
 export const QUAD_VS = /* glsl */ `#version 300 es

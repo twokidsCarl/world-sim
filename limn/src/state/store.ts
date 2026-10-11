@@ -9,7 +9,7 @@ import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
 import { loadLipids, type LipidSet } from '../landscape/lipid'
 import { fitFromPdbtm, fitToMembrane, type MembraneFit } from '../landscape/orient'
 import type { Annotation, ColorMode } from '../style/annotate'
-import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, STYLE_NEURON, type Style } from '../render/style'
+import { cloneStyle, STYLE_MOLECULE, styleFor, type Drawing, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
 import type { Note, PanelSpec, SceneSpec, Tier } from '../scene/spec'
@@ -121,6 +121,9 @@ interface State extends Look {
   /** 换上色方式；需要时先去取注释 / change the colour mode, fetching annotation first when it is needed */
   setColorMode(mode: ColorMode): Promise<void>
   setStyle(patch: (s: Style) => void): void
+  /** 画法：手绘或 Illustrate / the way of drawing: painted or Illustrate */
+  drawing: Drawing
+  setDrawing(d: Drawing): void
   setLook(patch: Partial<Look>): void
   applyEdits(edits: Edit[]): void
   getLook(): Look
@@ -200,6 +203,9 @@ async function fetchPrepared(path: string, waiting: () => void): Promise<Uint8Ar
   throw noteError('error.preparedTimeout')
 }
 
+/** 起始的画法：地址里带 ?style=illustrate 时用 Illustrate，否则手绘 / the drawing to start with: Illustrate when the address carries ?style=illustrate, painted otherwise */
+const START_DRAWING: Drawing = typeof location !== 'undefined' && new URLSearchParams(location.search).get('style') === 'illustrate' ? 'illustrate' : 'painted'
+
 const freshLook = (): Pick<Look, 'rot' | 'zoom' | 'shift'> => ({ rot: identity3(), zoom: 1, shift: [0, 0] })
 
 /** 下载进度写到状态栏，每秒最多几次 / download progress for the status line, a few times a second at most */
@@ -239,7 +245,8 @@ export const useStore = create<State>((set, get) => ({
   panels: [],
   ...freshLook(),
   cut: 0,
-  style: cloneStyle(STYLE_MOLECULE),
+  drawing: START_DRAWING,
+  style: styleFor('molecule', START_DRAWING),
   colorings: [],
   sceneRev: 0,
   drawRev: 0,
@@ -300,7 +307,7 @@ export const useStore = create<State>((set, get) => ({
             colorings[pi] = { ...colorings[pi]!, hueShift: colorings[pi]!.hueShift.map(() => 0), nudge: colorings[pi]!.nudge.map(() => shift) }
           })
         }
-        set((s) => ({ spec, panels, colorings, lipids, ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
+        set((s) => ({ spec, panels, colorings, lipids, ...freshLook(), cut: 0, cutDefault: 0, style: styleFor('landscape', s.drawing), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
         return
       }
       // 同一蛋白质的各个面板转到共同的朝向，
@@ -316,7 +323,7 @@ export const useStore = create<State>((set, get) => ({
         }
       }
       if (aligned.length) spec.notes = [...spec.notes, { key: 'note.aligned', params: { ...listParams('list', (lang) => aligned.map((a) => tIn(lang, 'note.aligned.item', a))), ref: panels[0]!.mol.id } }]
-      set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: styleFor('molecule', s.drawing), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
@@ -351,7 +358,7 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, ...(title && titleEn ? { titleEn } : {}), caption: '', panels: [spec], notes: !prediction ? [] : isComplex ? [{ key: 'note.complex', params: { iptm: iptm ?? '?' } }] : prediction.source === 'BFVD' ? [{ key: 'note.bfvd' }] : [{ key: 'note.alphafold', params: { percent: Math.round(prediction.confident * 100) } }] }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: styleFor('molecule', s.drawing), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
       fetchPapers()
       // 单个蛋白的预测模型：顺便查含有它的预测复合物 / for a single predicted protein, also look up the predicted complexes that contain it
       if (af && !isComplex) void api.complexes(af[1]!).then((list) => useStore.getState().spec?.topic === clean && useStore.setState({ complexes: list }))
@@ -451,7 +458,7 @@ export const useStore = create<State>((set, get) => ({
         ...freshLook(),
         cut: entry.cut ?? 0,
         cutDefault: entry.cut ?? 0,
-        style: cloneStyle(mesoscale ? STYLE_MESOSCALE : STYLE_MOLECULE),
+        style: styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing),
         rounds: [],
         busy: '',
         sceneRev: s.sceneRev + 1,
@@ -533,7 +540,7 @@ export const useStore = create<State>((set, get) => ({
       }
       const overlay = panels.length > 1
       const scene: SceneSpec = { topic: info.id, kind: 'molecule', title: info.title || info.id, caption: '', panels: panels.map((p) => p.spec), notes, overlay }
-      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: overlay ? 0.5 : 0, cutDefault: overlay ? 0.5 : 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: overlay ? 0.5 : 0, cutDefault: overlay ? 0.5 : 0, style: styleFor('molecule', s.drawing), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
@@ -650,7 +657,7 @@ export const useStore = create<State>((set, get) => ({
         { key: 'note.neuron.thin' },
       ]
       const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: '', panels: [spec], notes, unit: 'µm' }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: styleFor('neuron', s.drawing), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
     }
@@ -711,7 +718,7 @@ export const useStore = create<State>((set, get) => ({
         { key: 'note.neuron.thin' },
       ]
       const scene: SceneSpec = { topic: group.title, kind: 'neuron', title: group.title, titleEn: group.titleEn, caption: group.about, captionEn: group.aboutEn, panels: panels.map((p) => p.spec), notes, unit: 'µm', overlay: true }
-      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: styleFor('neuron', s.drawing), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
     }
@@ -758,7 +765,7 @@ export const useStore = create<State>((set, get) => ({
       ]
       const title = list.map((h) => h.name).join(' · ')
       const scene: SceneSpec = { topic: title, kind: 'neuron', title, caption: '', panels: panels.map((p) => p.spec), notes, unit: 'µm' }
-      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: styleFor('neuron', s.drawing), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
     }
@@ -792,6 +799,13 @@ export const useStore = create<State>((set, get) => ({
       set({ panels, busy: '' })
     }
     set((s) => ({ colorings: s.colorings.map((c) => ({ ...c, mode })) }))
+  },
+
+  setDrawing(drawing) {
+    const sp = get().spec
+    // 细胞和密度图这类网格场景有自己调过的画法，不跟着换 / mesh scenes such as cells and density maps keep their own tuned style
+    const kind = sp?.landscape ? 'landscape' : sp?.mesoscale ? 'mesoscale' : sp?.kind === 'neuron' ? 'neuron' : 'molecule'
+    set((s) => ({ drawing, style: sp && !get().panels.some((p) => p.mol.triangles) ? styleFor(kind, drawing) : s.style, colorings: s.colorings.slice() }))
   },
 
   setStyle(patch) {

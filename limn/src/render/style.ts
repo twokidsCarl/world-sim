@@ -51,6 +51,14 @@ export interface Style {
    * unchanged chroma.
    */
   fog: { color: RGB; front: number; back: number; layers: number; shade?: number }
+  /**
+   * “滚球”平滑的探针半径，以 1500 px 图像上的像素计；0 或缺省 = 不平滑。见 shaders.ts 的 SMOOTH_FS。
+   * 因为是按屏幕像素定的，整颗病毒时分子被抹成光滑的一团，放大到单个分子时原子又看得出来。
+   * The probe radius of the "rolling ball" smoothing, in pixels of a 1500 px image; 0 or absent
+   * = none. See SMOOTH_FS in shaders.ts. Being set in screen pixels, it wipes molecules into
+   * smooth blobs at the scale of a whole virion and lets atoms show again when zoomed in on one.
+   */
+  smooth?: number
   /** 纸纹，0 = 关闭 / paper grain, 0 = off */
   grain: number
   radiusScale: number
@@ -125,6 +133,9 @@ export const STYLE_MESOSCALE: Style = {
   shadow: { strength: 0, cone: 2, floor: 1, radius: 0 },
   fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0, layers: 3, shade: 0.5 },
   grain: 0.07,
+  // 形状靠平滑来变光滑，球就按真实大小画 / shapes are made smooth by the smoothing pass, so spheres are drawn at their true size
+  smooth: 7,
+  radiusScale: 1,
 }
 
 /**
@@ -138,4 +149,44 @@ export const STYLE_NEURON: Style = {
   // 小于这个宽度的分支会整条被描边盖住 / a branch narrower than this would be covered by its own outline from side to side
   minRadius: 2.8,
   lineWidth: 0.8,
+}
+
+/**
+ * 手绘画法下的单个结构：线是填色的深一号，阴影很轻，远处略深，形状做平滑（放大到看得见原子时平滑自然变弱）。
+ * A single structure in the painted drawing: lines are a deeper shade of the fill, shadows are
+ * faint, distance is a little deeper, and shapes are smoothed (the smoothing fades by itself once
+ * zoomed in far enough for atoms to show).
+ */
+export const STYLE_PAINTED: Style = {
+  ...structuredClone(STYLE_MOLECULE),
+  background: [0.992, 0.988, 0.976],
+  inkTint: 1,
+  inkShade: 0.26,
+  lineWidth: 1,
+  shadow: { strength: 0.0008, cone: 2, floor: 0.86, radius: 0 },
+  fog: { color: [1, 1, 1], front: 1, back: 0, layers: 0, shade: 0.72 },
+  grain: 0.07,
+  smooth: 7,
+}
+
+/** Illustrate 画法下的整体模型：四期及以前的样子 / whole models in the Illustrate drawing, as they were up to round 4 */
+export const STYLE_MESOSCALE_CLASSIC: Style = {
+  ...structuredClone(STYLE_LANDSCAPE),
+  background: [1, 1, 1],
+  fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0.5, layers: 3 },
+  grain: 0,
+}
+
+/**
+ * 两种画法：手绘（对齐 Goodsell 的水彩全景，见 research/goodsell/）和 Illustrate（对齐他的出图程序，见 research/illustrate/）。
+ * The two ways of drawing: painted (matched to Goodsell's watercolour landscapes, see
+ * research/goodsell/) and Illustrate (matched to his own program, see research/illustrate/).
+ */
+export type Drawing = 'painted' | 'illustrate'
+
+export function styleFor(kind: 'molecule' | 'mesoscale' | 'landscape' | 'neuron', drawing: Drawing): Style {
+  if (kind === 'neuron') return cloneStyle(STYLE_NEURON)
+  if (kind === 'landscape') return cloneStyle(STYLE_LANDSCAPE)
+  if (kind === 'mesoscale') return cloneStyle(drawing === 'painted' ? STYLE_MESOSCALE : STYLE_MESOSCALE_CLASSIC)
+  return cloneStyle(drawing === 'painted' ? STYLE_PAINTED : STYLE_MOLECULE)
 }
