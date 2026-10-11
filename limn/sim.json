@@ -115,12 +115,12 @@
     {
       "id": "ribosomes-in-situ",
       "title": {
-        "zh": "细胞里核糖体的真实分布（冷冻电镜断层扫描）",
-        "en": "Where the ribosomes really are in a cell (cryo-electron tomography)"
+        "zh": "细胞里核糖体的真实分布和朝向（冷冻电镜断层扫描）",
+        "en": "Where the ribosomes are in a cell, and which way they face (cryo-electron tomography)"
       },
       "hint": {
-        "zh": "331 个核糖体的位置是实测的，朝向是随机的。拖动旋转。结构是现取的，需要联网；取过一次后会缓存在本机",
-        "en": "The positions of 331 ribosomes are measured; their orientations are random. Drag to rotate. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+        "zh": "331 个核糖体的位置和朝向都是实测的。拖动旋转，滚轮放大。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "The positions and orientations of 331 ribosomes are both measured. Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
       },
       "idea": "2.1",
       "url": "/?model=mycoplasma-ribosomes-in-situ"

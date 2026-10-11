@@ -364,8 +364,8 @@
     },
     {
       "id": "mycoplasma-ribosomes-in-situ",
-      "title": "细胞里核糖体的真实分布（冷冻电镜断层扫描）",
-      "titleEn": "Where the ribosomes really are in a cell (cryo-electron tomography)",
+      "title": "细胞里核糖体的真实分布和朝向（冷冻电镜断层扫描）",
+      "titleEn": "Where the ribosomes are in a cell, and which way they face (cryo-electron tomography)",
       "keywords": [
         "断层扫描",
         "cryo-et",
@@ -380,7 +380,31 @@
       },
       "points": {
         "url": "https://files.cryoetdataportal.cziscience.com/10003/TS_04/Reconstructions/VoxelSpacing6.802/Annotations/100/chloramphenicol_bound_70s_ribosome-1.0_orientedpoint.ndjson",
-        "voxelSpacing": 6.802
+        "voxelSpacing": 6.802,
+        "fit": {
+          "rotation": [
+            0.53777,
+            -0.45202,
+            0.71168,
+            -0.05529,
+            0.8234,
+            0.56476,
+            -0.84127,
+            -0.34306,
+            0.41781
+          ],
+          "centre": [
+            276.23,
+            287.47,
+            287.96
+          ],
+          "shift": [
+            13.6,
+            0,
+            -13.6
+          ],
+          "mirrored": true
+        }
       },
       "perCopy": true,
       "cut": 0,
@@ -388,8 +412,8 @@
         ["RNA", "nucleic"],
         [".", "nucleic-binding"]
       ],
-      "caption": "一只肺炎支原体细胞的一片冷冻电镜断层扫描里，331 个核糖体各自所在的位置。位置是实测的；每个位置上放的是同一种细胞里解出的 70S 核糖体原子模型。朝向没有采用数据集里的值，是随机的。细胞膜和其他分子没有画。",
-      "captionEn": "Where each of 331 ribosomes sits in one cryo-electron tomogram of a Mycoplasma pneumoniae cell. The positions are measured; at each one stands the same atomic model of the 70S ribosome, solved in cells of this species. Orientations are random, not the dataset's own values. The cell membrane and other molecules are not drawn.",
+      "caption": "一只肺炎支原体细胞的一片冷冻电镜断层扫描里，331 个核糖体各自的位置和朝向。每个位置上放的是同一种细胞里解出的 70S 核糖体原子模型。细胞膜和其他分子没有画。",
+      "captionEn": "The positions and orientations of 331 ribosomes in one cryo-electron tomogram of Mycoplasma pneumoniae cells. At each stands the atomic model of the 70S ribosome solved in the same kind of cell. The cell membrane and all other molecules are not drawn.",
       "tier": "measured",
       "licence": "CC0 1.0（粒子位置，CZ CryoET Data Portal；原子模型，wwPDB）",
       "licenceEn": "CC0 1.0 (particle positions, CZ CryoET Data Portal; atomic model, wwPDB)",

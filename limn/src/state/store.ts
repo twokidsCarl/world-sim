@@ -20,7 +20,7 @@ import cellTable from '../../data/cells.json'
 import { readN5Mask } from '../volume/n5'
 import { neuromorphoUrl, neuronMolecule, parseSwc } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
-import { assemblyAtPoints, parsePicks } from '../mol/points'
+import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
 import { defaultColoring, spreadHues, type Coloring } from '../style/assign'
@@ -152,7 +152,7 @@ export interface CatalogEntry {
   source: { kind: string; url?: string; id?: string }
   perCopy?: boolean
   /** 粒子的实测位置：文件地址和体素大小（Å）/ measured particle positions: the file's address and the voxel size in Å */
-  points?: { url: string; voxelSpacing: number }
+  points?: { url: string; voxelSpacing: number; fit?: TemplateFit }
   merge?: string
   cut?: number
   roles?: string[][]
@@ -346,11 +346,15 @@ export const useStore = create<State>((set, get) => ({
         set({ busy: say('busy.picks', { name: pick(entry.title, entry.titleEn) }) })
         const res = await fetch(entry.points.url)
         if (!res.ok) throw noteError('error.picksFetch', { status: res.status, host: new URL(entry.points.url).hostname })
-        const pts = parsePicks(await res.text(), entry.points.voxelSpacing)
+        const picks = readPicks(await res.text(), entry.points.voxelSpacing)
+        const pts = picks.points
         if (pts.length === 0) throw noteError('error.picksEmpty')
-        mol.assemblies.push(assemblyAtPoints(mol, assembly, pts, rng(1)))
+        // 有朝向矩阵、也有模型在模板坐标系里的拟合时，朝向用实测的；否则随机
+        // with orientation matrices and a fit of the model into the template's frame, orientations are the measured ones; otherwise random
+        const oriented = !!picks.rotations && !!entry.points.fit
+        mol.assemblies.push(oriented ? assemblyAtPicks(mol, assembly, pts, picks.rotations!, entry.points.fit!) : assemblyAtPoints(mol, assembly, pts, rng(1)))
         assembly = 'picks'
-        notes.push({ key: 'note.picks', params: { count: pts.length / 3 } })
+        notes.push(oriented ? { key: 'note.picksOriented', params: { count: pts.length / 3 } } : { key: 'note.picks', params: { count: pts.length / 3 } })
       }
       // 原子太多就改画每个残基一个球 / with too many atoms, draw one sphere per residue instead
       const full = placedAtomCount(mol, assembly)
