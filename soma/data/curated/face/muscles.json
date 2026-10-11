@@ -1,0 +1,752 @@
+{
+ "_doc": {
+  "zh": "面部表情肌的参数化定义。几何（作用线两端、宽度）在构建时从肌肉部件的网格量出；这里给的是量不出来的东西：哪一端是固定端（hint：从活动端指向固定端的大致方向，按身体左侧书写，x 为外侧、y 为上、z 为前，右侧取镜像）、作用区域的限制（mask）、以及全激活时皮肤的最大位移（excursionMm）。attachments 的文字依据 soma 知识层里各肌的起止点条目（出处见 sources.json 的 soma-knowledge）。excursionMm、spreadMm、reachMm、sectors 都是本项目的假设，没有出处。模型里没有的肌肉列在 missing。",
+  "en": "Parametric definitions of the muscles of facial expression. Geometry (both ends of the line of action, width) is measured from the muscle part meshes at build time; this file supplies what cannot be measured: which end is the fixed one (`hint`: the rough direction from the mobile end to the fixed end, written for the body's left side with x lateral, y up, z anterior; mirrored for the right), limits of the zone of influence (`mask`), and the largest skin displacement at full activation (`excursionMm`). The `attachments` text follows the origin and insertion entries of each muscle in the soma knowledge layer (see soma-knowledge in sources.json). `excursionMm`, `spreadMm`, `reachMm` and `sectors` are assumptions of this project and have no source. Muscles the model lacks are listed under `missing`."
+ },
+ "attachmentsSource": "soma-knowledge",
+ "parametersSource": null,
+ "fields": {
+  "model": {
+   "zh": "linear：把活动端附近的皮肤拉向固定端；sphincter：把环周围的皮肤拉向环心；lid：眼睑沿眼球表面开合。",
+   "en": "linear: pulls the skin round the mobile end towards the fixed end; sphincter: draws the skin round the ring towards its centre; lid: an eyelid sliding over the globe."
+  },
+  "spreadMm": {
+   "zh": "作用区在肌肉半宽之外向两侧延伸的距离",
+   "en": "how far the zone of influence extends sideways beyond the muscle's half-width"
+  },
+  "reachMm": {
+   "zh": "作用区越过活动端继续延伸的距离",
+   "en": "how far the zone of influence extends beyond the mobile end"
+  },
+  "mask": {
+   "zh": "aboveStomion / belowStomion：只作用于口裂以上 / 以下（上唇肌不动下唇）；aboveEye / belowEye：只作用于睑裂以上 / 以下。",
+   "en": "aboveStomion / belowStomion: acts only above / below the oral fissure (upper-lip muscles leave the lower lip alone); aboveEye / belowEye: acts only above / below the palpebral fissure."
+  },
+  "carryMm": {
+   "zh": "越过活动端后权重保持为 1 的距离（肌肉止于其中的组织被整体带动），之后才在 reachMm 内衰减",
+   "en": "distance beyond the mobile end over which the weight stays 1 (the tissue the muscle inserts into is carried as a whole), before it decays over reachMm"
+  },
+  "insertAt": {
+   "zh": "modiolus：皮肤上的活动端不取肌肉网格末端在皮肤上的最近点，而取皮肤上的口角轴（口角外侧 3 mm，从正前方投影到皮肤）。原因：皮肤比这些肌肉浅 12–18 mm，最近点会落到口角外侧 15–20 mm 的颊部。",
+   "en": "modiolus: the mobile end on the skin is not the skin point nearest to the end of the muscle mesh but the modiolus on the skin (3 mm lateral to the corner of the mouth, projected onto the skin from straight ahead). Reason: the skin lies 12–18 mm superficial to these muscles, and the nearest point would fall on the cheek 15–20 mm lateral to the corner of the mouth."
+  }
+ },
+ "lid": {
+  "closureFraction": 0.2,
+  "upperLidHeightMm": 14,
+  "lowerLidHeightMm": 9,
+  "note": {
+   "zh": "闭合线取在下睑缘之上、睑裂高度的 closureFraction 处：闭眼主要靠上睑下落，下睑只上抬一点。两睑各越过闭合线 overlapMm，使网格的睑缘确实合拢。四个数都是假设。",
+   "en": "The lids meet at `closureFraction` of the aperture above the lower lid margin: closing is mostly the upper lid coming down, the lower lid rising a little. Each lid travels `overlapMm` past the closure line so that the lid margins of the meshes really meet. All four numbers are assumptions."
+  },
+  "overlapMm": 0.7,
+  "followers": "orbicularis oculi|tarsal plate|levator palpebrae|eyelid|eyelash|conjunctiva|subcutaneous",
+  "followersNote": {
+   "zh": "皮肤之外，只有名字匹配 followers 的部件随眼睑通道移动；否则贴在眼球上的眼外肌止点也会被带着走。",
+   "en": "Apart from the skin, only parts whose name matches `followers` move with the lid channels; otherwise the insertions of the extraocular muscles on the globe would be dragged along."
+  }
+ },
+ "jaw": {
+  "joint": "tmj",
+  "dof": 0,
+  "closers": [
+   "masseter",
+   "temporalis",
+   "medial pterygoid"
+  ],
+  "openers": [
+   "lateral pterygoid"
+  ],
+  "note": {
+   "zh": "咀嚼肌不产生皮肤位移场：它们通过骨架绑定里的颞下颌关节（tmj）起作用。张口还靠二腹肌等舌骨上肌，这里没有列为通道。",
+   "en": "The masticatory muscles produce no skin displacement field: they act through the temporomandibular joint (tmj) of the rig. Opening also uses the digastric and other suprahyoid muscles, which are not channels here."
+  }
+ },
+ "missing": [
+  {
+   "name": "depressor supercilii",
+   "note": {
+    "zh": "两个体型的数据里都没有这块肌肉（AU4 的肌肉基础之一）；AU4 只由皱眉肌和降眉间肌驱动。",
+    "en": "Neither body has this muscle (part of the muscular basis of AU4); AU4 is driven by corrugator supercilii and procerus only."
+   }
+  },
+  {
+   "name": "depressor septi nasi",
+   "note": {
+    "zh": "数据里没有。",
+    "en": "Not in the data."
+   }
+  },
+  {
+   "name": "superior tarsal muscle",
+   "note": {
+    "zh": "数据里没有；上睑的开合只用一个眼睑通道表示。",
+    "en": "Not in the data; the upper lid is represented by one lid channel."
+   }
+  }
+ ],
+ "muscles": [
+  {
+   "id": "frontalis",
+   "match": "^(left|right) frontalis$",
+   "name": {
+    "zh": "额肌",
+    "en": "frontalis"
+   },
+   "model": "linear",
+   "hint": [
+    0,
+    1,
+    -0.4
+   ],
+   "excursionMm": 8,
+   "spreadMm": 10,
+   "reachMm": 14,
+   "mask": [
+    "aboveEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "帽状腱膜",
+     "en": "galea aponeurotica"
+    },
+    "insertion": {
+     "zh": "眉部和额部皮肤，与眼轮匝肌交织",
+     "en": "skin of the eyebrow and forehead, blending with orbicularis oculi"
+    }
+   },
+   "action": {
+    "zh": "上提眉毛，额部出现横纹",
+    "en": "raises the eyebrow; horizontal forehead furrows"
+   }
+  },
+  {
+   "id": "corrugator",
+   "match": "corrugator supercilii",
+   "name": {
+    "zh": "皱眉肌",
+    "en": "corrugator supercilii"
+   },
+   "model": "linear",
+   "hint": [
+    -1,
+    -0.35,
+    0
+   ],
+   "excursionMm": 5,
+   "spreadMm": 9,
+   "reachMm": 16,
+   "mask": [
+    "aboveEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "眉弓内侧端",
+     "en": "medial end of the superciliary arch"
+    },
+    "insertion": {
+     "zh": "眉中部上方的额部皮肤",
+     "en": "skin of the forehead above the middle of the eyebrow"
+    }
+   },
+   "action": {
+    "zh": "把眉毛拉向内下方，眉间出现纵纹",
+    "en": "draws the eyebrow medially and down; vertical glabellar furrows"
+   }
+  },
+  {
+   "id": "procerus",
+   "match": "procerus",
+   "name": {
+    "zh": "降眉间肌",
+    "en": "procerus"
+   },
+   "model": "linear",
+   "hint": [
+    0,
+    -1,
+    0
+   ],
+   "excursionMm": 4,
+   "spreadMm": 8,
+   "reachMm": 12,
+   "mask": [
+    "aboveEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "鼻骨和鼻外侧软骨上部的筋膜",
+     "en": "fascia over the nasal bone and the upper lateral nasal cartilage"
+    },
+    "insertion": {
+     "zh": "眉间皮肤",
+     "en": "skin between the eyebrows (glabella)"
+    }
+   },
+   "action": {
+    "zh": "把眉内侧端的皮肤向下拉，鼻根出现横纹",
+    "en": "pulls the skin between the brows down; transverse furrow at the root of the nose"
+   }
+  },
+  {
+   "id": "llsan",
+   "match": "levator labii superioris alaeque nasi",
+   "name": {
+    "zh": "提上唇鼻翼肌",
+    "en": "levator labii superioris alaeque nasi"
+   },
+   "model": "linear",
+   "hint": [
+    0,
+    1,
+    0
+   ],
+   "excursionMm": 3.5,
+   "spreadMm": 10,
+   "reachMm": 12,
+   "mask": [
+    "aboveStomion",
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "上颌骨额突",
+     "en": "frontal process of the maxilla"
+    },
+    "insertion": {
+     "zh": "鼻翼软骨和皮肤、上唇",
+     "en": "alar cartilage and skin of the nose, upper lip"
+    }
+   },
+   "action": {
+    "zh": "上提鼻翼和上唇，鼻背两侧起皱",
+    "en": "lifts the ala of the nose and the upper lip; wrinkles along the sides of the nose"
+   },
+   "carryMm": 18,
+   "carryNote": {
+    "zh": "肌肉网格的下端止于鼻唇沟一带，没有伸进上唇；真实的肌纤维止于上唇（和鼻翼）的皮肤。carryMm 让权重在越过网格末端后先保持为 1，直到被口裂的 mask 截断，这样被上提的是上唇本身。数值是假设。",
+    "en": "The muscle mesh ends near the nasolabial furrow and does not reach into the upper lip, whereas the real fibres insert into the skin of the upper lip (and ala). carryMm keeps the weight at 1 beyond the end of the mesh until the oral-fissure mask cuts it off, so that it is the upper lip itself that is raised. The value is an assumption."
+   }
+  },
+  {
+   "id": "lls",
+   "match": "levator labii superioris$",
+   "name": {
+    "zh": "提上唇肌",
+    "en": "levator labii superioris"
+   },
+   "model": "linear",
+   "hint": [
+    0.2,
+    1,
+    0
+   ],
+   "excursionMm": 5,
+   "spreadMm": 12,
+   "reachMm": 10,
+   "mask": [
+    "aboveStomion",
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "眶下缘内侧（上颌骨）",
+     "en": "medial infra-orbital margin (maxilla)"
+    },
+    "insertion": {
+     "zh": "上唇的皮肤和肌肉",
+     "en": "skin and muscle of the upper lip"
+    }
+   },
+   "action": {
+    "zh": "上提上唇，加深鼻唇沟",
+    "en": "raises the upper lip; deepens the nasolabial furrow"
+   },
+   "carryMm": 20,
+   "carryNote": {
+    "zh": "肌肉网格的下端止于鼻唇沟一带，没有伸进上唇；真实的肌纤维止于上唇（和鼻翼）的皮肤。carryMm 让权重在越过网格末端后先保持为 1，直到被口裂的 mask 截断，这样被上提的是上唇本身。数值是假设。",
+    "en": "The muscle mesh ends near the nasolabial furrow and does not reach into the upper lip, whereas the real fibres insert into the skin of the upper lip (and ala). carryMm keeps the weight at 1 beyond the end of the mesh until the oral-fissure mask cuts it off, so that it is the upper lip itself that is raised. The value is an assumption."
+   }
+  },
+  {
+   "id": "zygomaticus_minor",
+   "match": "zygomaticus minor",
+   "name": {
+    "zh": "颧小肌",
+    "en": "zygomaticus minor"
+   },
+   "model": "linear",
+   "hint": [
+    1,
+    1,
+    -0.3
+   ],
+   "excursionMm": 5,
+   "spreadMm": 8,
+   "reachMm": 10,
+   "mask": [
+    "aboveStomion",
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "颧骨",
+     "en": "zygomatic bone"
+    },
+    "insertion": {
+     "zh": "上唇皮肤",
+     "en": "skin of the upper lip"
+    }
+   },
+   "action": {
+    "zh": "把上唇向外上方拉",
+    "en": "draws the upper lip up and laterally"
+   },
+   "carryMm": 12,
+   "carryNote": {
+    "zh": "肌肉网格的下端止于鼻唇沟一带，没有伸进上唇；真实的肌纤维止于上唇（和鼻翼）的皮肤。carryMm 让权重在越过网格末端后先保持为 1，直到被口裂的 mask 截断，这样被上提的是上唇本身。数值是假设。",
+    "en": "The muscle mesh ends near the nasolabial furrow and does not reach into the upper lip, whereas the real fibres insert into the skin of the upper lip (and ala). carryMm keeps the weight at 1 beyond the end of the mesh until the oral-fissure mask cuts it off, so that it is the upper lip itself that is raised. The value is an assumption."
+   }
+  },
+  {
+   "id": "zygomaticus_major",
+   "match": "zygomaticus major",
+   "name": {
+    "zh": "颧大肌",
+    "en": "zygomaticus major"
+   },
+   "model": "linear",
+   "hint": [
+    1,
+    1,
+    -0.5
+   ],
+   "excursionMm": 9,
+   "spreadMm": 10,
+   "reachMm": 14,
+   "mask": [
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "颧骨前面",
+     "en": "anterior surface of the zygomatic bone"
+    },
+    "insertion": {
+     "zh": "口角轴（modiolus）",
+     "en": "modiolus at the angle of the mouth"
+    }
+   },
+   "action": {
+    "zh": "把口角向外上方拉",
+    "en": "pulls the angle of the mouth up and laterally"
+   },
+   "insertAt": "modiolus"
+  },
+  {
+   "id": "levator_anguli_oris",
+   "match": "levator anguli oris",
+   "name": {
+    "zh": "提口角肌",
+    "en": "levator anguli oris"
+   },
+   "model": "linear",
+   "hint": [
+    0,
+    1,
+    0
+   ],
+   "excursionMm": 5,
+   "spreadMm": 8,
+   "reachMm": 10,
+   "mask": [
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "上颌骨尖牙窝",
+     "en": "canine fossa of the maxilla"
+    },
+    "insertion": {
+     "zh": "口角轴",
+     "en": "modiolus"
+    }
+   },
+   "action": {
+    "zh": "上提口角",
+    "en": "raises the angle of the mouth"
+   },
+   "insertAt": "modiolus"
+  },
+  {
+   "id": "risorius",
+   "match": "risorius",
+   "name": {
+    "zh": "笑肌",
+    "en": "risorius"
+   },
+   "model": "linear",
+   "hint": [
+    1,
+    0,
+    -1
+   ],
+   "excursionMm": 8,
+   "spreadMm": 10,
+   "reachMm": 14,
+   "mask": [
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "腮腺咬肌筋膜",
+     "en": "parotid and masseteric fascia"
+    },
+    "insertion": {
+     "zh": "口角轴",
+     "en": "modiolus"
+    }
+   },
+   "action": {
+    "zh": "把口角向外侧水平拉开",
+    "en": "stretches the angle of the mouth straight to the side"
+   },
+   "insertAt": "modiolus"
+  },
+  {
+   "id": "buccinator",
+   "match": "buccinator",
+   "name": {
+    "zh": "颊肌",
+    "en": "buccinator"
+   },
+   "model": "linear",
+   "hint": [
+    0.3,
+    0,
+    -1
+   ],
+   "excursionMm": 4,
+   "spreadMm": 10,
+   "reachMm": 10,
+   "mask": [
+    "belowEye"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "上下颌骨牙槽突、翼突下颌缝",
+     "en": "alveolar processes of maxilla and mandible, pterygomandibular raphe"
+    },
+    "insertion": {
+     "zh": "口角轴，与口轮匝肌交织",
+     "en": "modiolus, blending with orbicularis oris"
+    }
+   },
+   "action": {
+    "zh": "把颊压向牙列，口角向后收紧",
+    "en": "presses the cheek against the teeth; tightens the angle of the mouth backwards"
+   },
+   "insertAt": "modiolus"
+  },
+  {
+   "id": "depressor_anguli_oris",
+   "match": "depressor anguli oris",
+   "name": {
+    "zh": "降口角肌",
+    "en": "depressor anguli oris"
+   },
+   "model": "linear",
+   "hint": [
+    0,
+    -1,
+    0
+   ],
+   "excursionMm": 6,
+   "spreadMm": 9,
+   "reachMm": 12,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "下颌骨斜线",
+     "en": "oblique line of the mandible"
+    },
+    "insertion": {
+     "zh": "口角轴",
+     "en": "modiolus of the mouth"
+    }
+   },
+   "action": {
+    "zh": "把口角向下拉",
+    "en": "pulls the angle of the mouth down"
+   },
+   "insertAt": "modiolus"
+  },
+  {
+   "id": "depressor_labii_inferioris",
+   "match": "depressor labii inferioris",
+   "name": {
+    "zh": "降下唇肌",
+    "en": "depressor labii inferioris"
+   },
+   "model": "linear",
+   "hint": [
+    0.4,
+    -1,
+    0
+   ],
+   "excursionMm": 5,
+   "spreadMm": 9,
+   "reachMm": 10,
+   "mask": [
+    "belowStomion"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "下颌骨斜线（颏联合与颏孔之间）",
+     "en": "oblique line of the mandible, between the symphysis and the mental foramen"
+    },
+    "insertion": {
+     "zh": "下唇皮肤、口轮匝肌",
+     "en": "skin of the lower lip, orbicularis oris fibres"
+    }
+   },
+   "action": {
+    "zh": "把下唇向下、略向外拉",
+    "en": "draws the lower lip down and a little laterally"
+   }
+  },
+  {
+   "id": "mentalis",
+   "match": "mentalis",
+   "name": {
+    "zh": "颏肌",
+    "en": "mentalis"
+   },
+   "model": "linear",
+   "hint": [
+    0,
+    1,
+    -0.6
+   ],
+   "excursionMm": 4,
+   "spreadMm": 9,
+   "reachMm": 10,
+   "mask": [
+    "belowStomion"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "下颌骨切牙窝",
+     "en": "incisive fossa of the mandible"
+    },
+    "insertion": {
+     "zh": "颏部皮肤",
+     "en": "skin of the chin"
+    }
+   },
+   "action": {
+    "zh": "上提颏部皮肤，使下唇前突",
+    "en": "raises the skin of the chin and pushes the lower lip up and forward"
+   }
+  },
+  {
+   "id": "nasalis",
+   "match": "nasalis",
+   "name": {
+    "zh": "鼻肌",
+    "en": "nasalis"
+   },
+   "model": "linear",
+   "hint": [
+    1,
+    -0.6,
+    -0.8
+   ],
+   "excursionMm": 2,
+   "spreadMm": 6,
+   "reachMm": 8,
+   "mask": [
+    "belowEye",
+    "aboveStomion"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "上颌骨（切牙和尖牙上方）",
+     "en": "maxilla, above the incisor and canine teeth"
+    },
+    "insertion": {
+     "zh": "鼻背腱膜、鼻翼",
+     "en": "aponeurosis over the bridge of the nose, alar cartilage"
+    }
+   },
+   "action": {
+    "zh": "压窄或开大鼻孔",
+    "en": "compresses or flares the nostril"
+   }
+  },
+  {
+   "id": "platysma",
+   "match": "platysma",
+   "name": {
+    "zh": "颈阔肌",
+    "en": "platysma"
+   },
+   "model": "linear",
+   "hint": [
+    0.25,
+    -1,
+    -0.3
+   ],
+   "excursionMm": 6,
+   "spreadMm": 14,
+   "reachMm": 14,
+   "mask": [
+    "belowStomion"
+   ],
+   "attachments": {
+    "origin": {
+     "zh": "锁骨上下区的皮下组织",
+     "en": "subcutaneous tissue of the infraclavicular and supraclavicular regions"
+    },
+    "insertion": {
+     "zh": "下颌底、颊部和下唇的皮肤、口角、口轮匝肌",
+     "en": "base of the mandible, skin of cheek and lower lip, angle of the mouth, orbicularis oris"
+    }
+   },
+   "action": {
+    "zh": "把下唇和口角向下外方拉，绷紧颈部皮肤",
+    "en": "draws the lower lip and the angle of the mouth down and laterally; tenses the skin of the neck"
+   }
+  },
+  {
+   "id": "orbicularis_oculi_orbital",
+   "match": "orbicularis oculi",
+   "name": {
+    "zh": "眼轮匝肌眶部",
+    "en": "orbicularis oculi, orbital part"
+   },
+   "model": "sphincter",
+   "excursionMm": 4,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "睑内侧韧带、上颌骨额突、额骨鼻部",
+     "en": "medial palpebral ligament, frontal process of the maxilla, nasal part of the frontal bone"
+    },
+    "insertion": {
+     "zh": "环绕眶缘回到起点；纤维附着于眉和颊部皮肤",
+     "en": "sweeps round the orbital margin back to its origin; fibres attach to the skin of the brow and cheek"
+    }
+   },
+   "action": {
+    "zh": "环形收缩：上提颊部、压低眉外侧、挤窄睑裂，眼外侧出现鱼尾纹",
+    "en": "contracts as a ring: raises the cheek, lowers the lateral brow, narrows the eye opening; crow's feet at the outer corner"
+   },
+   "ring": "outer",
+   "sectors": {
+    "inferior": 1.0,
+    "lateral": 0.8,
+    "superior": 0.4,
+    "medial": 0.3
+   },
+   "ringNote": {
+    "zh": "按几何选环：两个眼轮匝肌部件里平均半径较大的那个是眶部。发布的数据里这两个部件的名字与几何相反（名为“Palpebral part”的是外环），所以这里不按名字取。",
+    "en": "The ring is chosen by geometry: of the two orbicularis oculi parts the one with the larger mean radius is the orbital part. In the shipped data the names of the two parts are the opposite of their geometry (the part named \"Palpebral part\" is the outer ring), so the name is not used."
+   }
+  },
+  {
+   "id": "orbicularis_oculi_palpebral_upper",
+   "match": "orbicularis oculi",
+   "name": {
+    "zh": "眼轮匝肌睑部（上睑）",
+    "en": "orbicularis oculi, palpebral part (upper lid)"
+   },
+   "model": "lid",
+   "excursionMm": 0,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "睑内侧韧带",
+     "en": "medial palpebral ligament"
+    },
+    "insertion": {
+     "zh": "睑外侧缝",
+     "en": "lateral palpebral raphe"
+    }
+   },
+   "action": {
+    "zh": "上睑下落闭眼（同时上睑提肌放松）",
+    "en": "lowers the upper lid to close the eye (levator palpebrae superioris relaxes at the same time)"
+   },
+   "ring": "inner",
+   "lid": "upper"
+  },
+  {
+   "id": "orbicularis_oculi_palpebral_lower",
+   "match": "orbicularis oculi",
+   "name": {
+    "zh": "眼轮匝肌睑部（下睑）",
+    "en": "orbicularis oculi, palpebral part (lower lid)"
+   },
+   "model": "lid",
+   "excursionMm": 0,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "睑内侧韧带",
+     "en": "medial palpebral ligament"
+    },
+    "insertion": {
+     "zh": "睑外侧缝",
+     "en": "lateral palpebral raphe"
+    }
+   },
+   "action": {
+    "zh": "下睑上抬并绷紧",
+    "en": "raises and tightens the lower lid"
+   },
+   "ring": "inner",
+   "lid": "lower"
+  },
+  {
+   "id": "orbicularis_oris",
+   "match": "^orbicularis oris$",
+   "name": {
+    "zh": "口轮匝肌",
+    "en": "orbicularis oris"
+   },
+   "model": "sphincter",
+   "excursionMm": 4,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "上颌骨和下颌骨",
+     "en": "maxilla and mandible"
+    },
+    "insertion": {
+     "zh": "唇周皮肤",
+     "en": "skin around the lips"
+    }
+   },
+   "action": {
+    "zh": "闭唇、缩唇",
+    "en": "closes and purses the lips"
+   },
+   "ring": "single",
+   "sectors": {
+    "inferior": 0.5,
+    "lateral": 1.0,
+    "superior": 0.5,
+    "medial": 1.0
+   }
+  }
+ ]
+}

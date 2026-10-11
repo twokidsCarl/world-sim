@@ -1,0 +1,98 @@
+{
+ "_doc": {
+  "zh": "面部疼痛表情模型用到的出处。opened 一栏写明本项目实际打开并读到了什么；只取事实和已发表的统计数字，没有再分发任何数据集内容，也没有用真人面部训练任何模型。这是疼痛行为的计算模型，用于教学；模拟人并没有主观感受。",
+  "en": "Sources used by the facial pain expression model. `opened` states what was actually opened and read for this project; only facts and published statistics are taken, nothing from any dataset is redistributed and no model was trained on faces of real people. This is a computational model of pain behaviour for teaching; the simulated body has no subjective experience."
+ },
+ "sources": [
+  {
+   "id": "chen2018",
+   "citation": "Chen Z, Ansari R, Wilkie DJ. Automated Pain Detection from Facial Expressions using FACS: A Review. arXiv:1811.07988 (2018).",
+   "url": "https://arxiv.org/abs/1811.07988",
+   "license": "arXiv preprint; licence not shown on the page read. Facts only.",
+   "opened": {
+    "zh": "读了 HTML 全文（ar5iv）。给出：Pain = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43；与疼痛相关的 AU 为 AU4、AU6/7、AU9、AU10、AU43，另列 AU12、AU20、AU25、AU26、AU27；PSPI 为 16 级量表；UNBC-McMaster 库有 48,398 帧、200 段视频。",
+    "en": "Full text read as HTML (ar5iv). States: Pain = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43; pain-related AUs are AU4, AU6/7, AU9, AU10, AU43, with AU12, AU20, AU25, AU26, AU27 listed in addition; the PSPI is a 16-level scale; the UNBC-McMaster archive holds 48,398 FACS-coded frames in 200 sequences."
+   }
+  },
+  {
+   "id": "egede2017",
+   "citation": "Egede J, Valstar M, Martinez B. Fusing Deep Learned and Hand-Crafted Features of Appearance, Shape, and Dynamics for Automatic Pain Estimation. arXiv:1701.04540 (2017).",
+   "url": "https://arxiv.org/abs/1701.04540",
+   "license": "arXiv preprint; licence not shown on the page read. Facts only.",
+   "opened": {
+    "zh": "读了 HTML 全文（ar5iv）。给出：UNBC-McMaster 库 25 人、200 段、每段约 60–700 帧、共 48,398 帧；编码的 AU 为 AU4、6、7、9、10、12、20、25、26、27、43；强度为 A–E（0–5），AU43 只有有/无两种状态；PSPI = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43；82.71% 的帧疼痛得分为 0。",
+    "en": "Full text read as HTML (ar5iv). States: UNBC-McMaster has 25 subjects, 200 sequences of about 60–700 frames, 48,398 frames in total; the coded AUs are AU4, 6, 7, 9, 10, 12, 20, 25, 26, 27 and 43; intensity is A–E (0–5) and AU43 has only two states, present or absent; PSPI = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43; 82.71% of all frames have a pain score of zero."
+   }
+  },
+  {
+   "id": "prkachin2021",
+   "citation": "Prkachin KM, Hammal Z. Computer Mediated Automatic Detection of Pain-Related Behavior: Prospect, Progress, Perils. Front Pain Res 2021;2:788606.",
+   "url": "https://doi.org/10.3389/fpain.2021.788606",
+   "license": "CC BY 4.0",
+   "opened": {
+    "zh": "读了出版社网页上的全文（前约 12 万字符）。给出：核心的疼痛动作是降眉（AU4）、眼眶收紧（AU6 或 7）、提肌收缩（AU9 或 10）和张口（AU25、26 或 27）；闭眼（AU43）在临床疼痛研究中也稳定地区分有痛与无痛；PSPI 是这些 AU 得分之和；UNBC-McMaster 库有 25 名参与者的 200 段视频。文中没有给出表情起始、峰值、消退的时间数值。",
+    "en": "Full text read on the publisher's page (about the first 120,000 characters). States: the core pain actions are brow lowering (AU4), orbit tightening (AU6 or 7), levator tightening (AU9 or 10) and mouth opening (AU25, 26 or 27); eyelid closing (AU43) also consistently discriminates pain from no pain in studies of clinical pain; the PSPI is the sum of the scores of these AUs; the UNBC-McMaster archive holds 200 sequences from 25 participants. It gives no numbers for onset, apex or offset times."
+   }
+  },
+  {
+   "id": "kunz2019",
+   "citation": "Kunz M, Meixner D, Lautenbacher S. Facial muscle movements encoding pain—a systematic review. Pain 2019;160(3):535–549.",
+   "url": "https://doi.org/10.1097/j.pain.0000000000001424",
+   "license": "Not open access. Abstract only.",
+   "opened": {
+    "zh": "只读了摘要（经 Europe PMC）。给出：27 项实验性疼痛研究和 10 项临床疼痛研究中，稳定出现的疼痛相关 AU 是 AU4、AU6_7、AU9_10、AU25_26_27，临床疼痛中 AU43 更常见；这些 AU 多数时候并不同时出现，而是以不同方式组合，不存在一张统一的“疼痛脸”。",
+    "en": "Abstract only (via Europe PMC). States: across 27 experimental and 10 clinical pain studies the consistent pain-related AUs are AU4, AUs6_7, AUs9_10 and AUs25_26_27, with AU43 more frequent in clinical pain; these AUs are most often not displayed all at once but combined differently, so there is no uniform expression of pain."
+   }
+  },
+  {
+   "id": "ashraf2009",
+   "citation": "Ashraf AB, Lucey S, Cohn JF, Chen T, Ambadar Z, Prkachin KM, Solomon PE. The Painful Face – Pain Expression Recognition Using Active Appearance Models. Image Vis Comput 2009;27(12):1788–1796.",
+   "url": "https://doi.org/10.1016/j.imavis.2009.05.007",
+   "license": "© Elsevier; author manuscript free to read at PMC3402903. Facts only.",
+   "opened": {
+    "zh": "读了 PMC 上的作者稿。给出：逐帧的疼痛综合分是降眉、眼眶收紧、提肌收缩、闭眼四个动作的强度之和；各动作按 6 级强度编码（0 = 无，1 = 微量……5 = 最大）。",
+    "en": "Author manuscript read at PMC. States: the per-frame composite pain score is the summed intensity of four actions — brow lowering, orbit tightening, levator contraction and eye closing — each coded on a 6-level intensity scale (0 = absent, 1 = trace … 5 = maximum)."
+   }
+  },
+  {
+   "id": "prkachin2008",
+   "citation": "Prkachin KM, Solomon PE. The structure, reliability and validity of pain expression: Evidence from patients with shoulder pain. Pain 2008;139(2):267–274.",
+   "url": "https://doi.org/10.1016/j.pain.2008.04.010",
+   "license": "Not open access. Not opened.",
+   "opened": {
+    "zh": "没有打开正文（付费）。PSPI 的原始出处；公式是从 chen2018、egede2017 转引的。题录和 DOI 已对照 Crossref 记录核对。",
+    "en": "Full text not opened (paywalled). The original source of the PSPI; the formula is taken second-hand from chen2018 and egede2017. The bibliographic record and DOI were checked against Crossref."
+   }
+  },
+  {
+   "id": "wikipedia-facs",
+   "citation": "Wikipedia contributors. Facial Action Coding System (table of main action units; intensity scoring).",
+   "url": "https://en.wikipedia.org/wiki/Facial_Action_Coding_System",
+   "license": "CC BY-SA 4.0",
+   "opened": {
+    "zh": "读了页面（2026-10-11）。AU 的名称和肌肉基础取自“主要动作单元”表；强度 A 微量、B 轻度、C 明显、D 严重、E 最大。FACS 手册本身（Ekman、Friesen、Hager 2002）不是开放资料，没有打开。",
+    "en": "Page read on 2026-10-11. AU names and muscular basis are taken from its table of main action units; intensities are A trace, B slight, C marked or pronounced, D severe or extreme, E maximum. The FACS manual itself (Ekman, Friesen, Hager 2002) is not open and was not opened."
+   }
+  },
+  {
+   "id": "soma-knowledge",
+   "citation": "soma knowledge layer (public/anatomy/knowledge/relations.json): origins and insertions of the facial muscles, each from a Wikipedia muscle infobox revision, Wikidata, or a Z-Anatomy attachment patch.",
+   "url": "https://en.wikipedia.org/wiki/Facial_muscles",
+   "license": "CC BY-SA 4.0 (Wikipedia, Z-Anatomy); CC0 (Wikidata)",
+   "opened": {
+    "zh": "读了本仓库已有的 relations.json 里面部肌肉的起止点条目（每条自带修订版链接）。muscles.json 里的 attachments 文字据此写成；“哪一端是起点”的几何方向是本项目据这些文字定的。",
+    "en": "The origin and insertion entries of the facial muscles in this repository's existing relations.json were read (each carries its own revision link). The `attachments` text in muscles.json follows them; the geometric direction that says which end is the origin is this project's reading of that text."
+   }
+  },
+  {
+   "id": "waters1987",
+   "citation": "Waters K. A muscle model for animating three-dimensional facial expression. Computer Graphics (Proc. SIGGRAPH '87) 1987;21(4):17–24.",
+   "url": "https://history.siggraph.org/?p=116055",
+   "license": "Not open access. Paper not opened.",
+   "opened": {
+    "zh": "没有打开论文本身，只核对了题录。线状肌（影响区内把皮肤拉向固定端，随距离衰减）和环状肌这两类参数化肌肉的想法出自这里；本项目的衰减函数和所有参数是自己定的，不是照搬。",
+    "en": "The paper itself was not opened; only the bibliographic record was checked. The idea of two kinds of parametric muscle — a linear muscle that pulls the skin in a zone of influence towards its fixed end with a falloff, and a sphincter — comes from here; the falloff functions and every parameter are this project's own, not copied."
+   }
+  }
+ ]
+}

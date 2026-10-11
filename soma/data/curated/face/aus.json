@@ -1,0 +1,221 @@
+{
+ "_doc": {
+  "zh": "FACS 动作单元（AU）到肌肉通道的对应。只收 UNBC-McMaster 库为疼痛编码的 11 个 AU（见 sources.json 的 egede2017）。channels 的键是 muscles.json 里的肌肉 id（两侧同时激活），值是 AU 强度为 5（E 级，最大）时该肌肉的激活。AU 的名称和肌肉基础取自 wikipedia-facs；权重的具体数值、以及“强度 0–5 与位移成正比”都是本项目的假设（FACS 的强度是序数等级，不是位移量）。jawFraction 是强度为 5 时下颌张开角占颞下颌关节活动范围的比例，也是假设。",
+  "en": "FACS action units (AUs) as combinations of muscle channels. Only the 11 AUs that the UNBC-McMaster archive codes for pain are included (see egede2017 in sources.json). Keys of `channels` are muscle ids from muscles.json (both sides activate together); values are the muscle's activation at AU intensity 5 (level E, maximum). AU names and muscular basis come from wikipedia-facs; the weight values, and the proportionality of displacement to intensity 0–5, are assumptions of this project (FACS intensities are ordinal grades, not displacements). `jawFraction` is the jaw opening at intensity 5 as a fraction of the temporomandibular range of motion, also an assumption."
+ },
+ "intensity": {
+  "min": 0,
+  "max": 5,
+  "labels": [
+   "0",
+   "A",
+   "B",
+   "C",
+   "D",
+   "E"
+  ],
+  "source": "wikipedia-facs"
+ },
+ "aus": [
+  {
+   "id": "AU4",
+   "name": {
+    "zh": "降眉",
+    "en": "Brow lowerer"
+   },
+   "channels": {
+    "corrugator": 1,
+    "procerus": 1
+   },
+   "missing": [
+    "depressor supercilii"
+   ],
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：降眉间肌（depressor glabellae，即 procerus）、降眉肌、皱眉肌。模型里没有降眉肌。",
+     "en": "Muscular basis: depressor glabellae (procerus), depressor supercilii, corrugator supercilii. The model has no depressor supercilii."
+    }
+   }
+  },
+  {
+   "id": "AU6",
+   "name": {
+    "zh": "提颊",
+    "en": "Cheek raiser"
+   },
+   "channels": {
+    "orbicularis_oculi_orbital": 1,
+    "orbicularis_oculi_palpebral_lower": 0.4
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：眼轮匝肌眶部。下睑随颊部被推高的 0.4 是假设。",
+     "en": "Muscular basis: orbicularis oculi, pars orbitalis. The 0.4 for the lower lid being pushed up with the cheek is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU7",
+   "name": {
+    "zh": "睑收紧",
+    "en": "Lid tightener"
+   },
+   "channels": {
+    "orbicularis_oculi_palpebral_lower": 1,
+    "orbicularis_oculi_palpebral_upper": 0.35
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：眼轮匝肌睑部。上睑下落 0.35（睑裂变窄而不闭合）是假设。",
+     "en": "Muscular basis: orbicularis oculi, pars palpebralis. The 0.35 of upper-lid lowering (a narrowed, not closed, eye) is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU9",
+   "name": {
+    "zh": "皱鼻",
+    "en": "Nose wrinkler"
+   },
+   "channels": {
+    "llsan": 1
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：提上唇鼻翼肌。",
+     "en": "Muscular basis: levator labii superioris alaeque nasi."
+    }
+   }
+  },
+  {
+   "id": "AU10",
+   "name": {
+    "zh": "提上唇",
+    "en": "Upper lip raiser"
+   },
+   "channels": {
+    "lls": 1
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：提上唇肌（眶下头）。",
+     "en": "Muscular basis: levator labii superioris, caput infraorbitalis."
+    }
+   }
+  },
+  {
+   "id": "AU12",
+   "name": {
+    "zh": "拉口角",
+    "en": "Lip corner puller"
+   },
+   "channels": {
+    "zygomaticus_major": 1
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：颧大肌。",
+     "en": "Muscular basis: zygomaticus major."
+    }
+   }
+  },
+  {
+   "id": "AU20",
+   "name": {
+    "zh": "唇横拉",
+    "en": "Lip stretcher"
+   },
+   "channels": {
+    "risorius": 1,
+    "platysma": 0.5
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：笑肌，颈阔肌协同。颈阔肌的 0.5 是假设。",
+     "en": "Muscular basis: risorius with platysma. The 0.5 for platysma is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU25",
+   "name": {
+    "zh": "分唇",
+    "en": "Lips part"
+   },
+   "channels": {
+    "depressor_labii_inferioris": 0.6
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：降下唇肌，或颏肌、口轮匝肌放松。这里只用降下唇肌，0.6 是假设。",
+     "en": "Muscular basis: depressor labii inferioris, or relaxation of mentalis or orbicularis oris. Only the depressor is used here; 0.6 is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU26",
+   "name": {
+    "zh": "下颌下落",
+    "en": "Jaw drop"
+   },
+   "channels": {
+    "depressor_labii_inferioris": 0.3
+   },
+   "jawFraction": 0.35,
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：咬肌；颞肌和翼内肌放松。表现为颞下颌关节张开；jawFraction 0.35 和降下唇肌 0.3 是假设。",
+     "en": "Muscular basis: masseter; relaxed temporalis and internal pterygoid. Realised as opening of the temporomandibular joint; jawFraction 0.35 and the 0.3 of the lip depressor are assumptions."
+    }
+   }
+  },
+  {
+   "id": "AU27",
+   "name": {
+    "zh": "张大口",
+    "en": "Mouth stretch"
+   },
+   "channels": {
+    "depressor_labii_inferioris": 0.5
+   },
+   "jawFraction": 1.0,
+   "missing": [
+    "digastric (not a channel)"
+   ],
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：翼肌、二腹肌。表现为颞下颌关节张到活动范围的上限；降下唇肌 0.5 是假设。",
+     "en": "Muscular basis: pterygoids, digastric. Realised as the temporomandibular joint opened to the end of its range; the 0.5 of the lip depressor is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU43",
+   "name": {
+    "zh": "闭眼",
+    "en": "Eyes closed"
+   },
+   "channels": {
+    "orbicularis_oculi_palpebral_upper": 1,
+    "orbicularis_oculi_palpebral_lower": 1
+   },
+   "basis": {
+    "source": "wikipedia-facs",
+    "note": {
+     "zh": "肌肉基础：上睑提肌放松（眨眼 AU45 另有眼轮匝肌睑部收缩）。这里用上下睑两个通道到闭合线表示；强度按 0–5 连续取值，5 = 完全闭合，而 FACS 和 PSPI 里 AU43 只有有 / 无。",
+     "en": "Muscular basis: relaxation of levator palpebrae superioris (the blink, AU45, adds contraction of the palpebral orbicularis). Realised as both lid channels travelling to the closure line; the intensity is continuous 0–5 here with 5 = fully closed, whereas in FACS and in the PSPI AU43 is only present or absent."
+    }
+   }
+  }
+ ]
+}
