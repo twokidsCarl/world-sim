@@ -41,23 +41,31 @@ const KINDS: { type: number; name: string; nameEn: string }[] = [
 const MIN_RADIUS = 0.08
 
 /**
- * 把重建变成一串串紧挨着的球：每一段（节点到它的父节点）按半径线性过渡，球心间距是半径的三分之一，
- * 所以轮廓上的起伏不到半径的 2%。每种类型（胞体、轴突、树突…）是一条“链”。坐标单位仍是微米。
+ * 把重建变成可以画的东西。每个节点一个球；每一段（节点到它的父节点）是连着两个球的一段圆台，
+ * 半径按两端线性过渡。每种类型（胞体、轴突、树突…）是一条“链”。坐标单位仍是微米。
  * 三点式胞体（一个中心点加两个偏开一个半径的点，是 SWC 里表示球形胞体的约定）只画中心那一个球。
+ * 从胞体伸出的第一段，起点的粗细取子节点的，不取胞体的，否则会画成一个大圆锥。
  *
- * Turn a reconstruction into runs of closely spaced spheres: each segment (a node to its parent)
- * tapers linearly, with centres a third of a radius apart, so the outline ripples by less than 2%
- * of the radius. Each type (soma, axon, dendrite...) is one "chain". Coordinates stay in microns.
- * A three-point soma (a centre plus two points one radius away, the SWC convention for a round
- * soma) is drawn as the centre sphere alone.
+ * `dense` 为真时不用圆台，改用一串紧挨着的球来填每一段（球心间距是半径的三分之一，轮廓上的起伏
+ * 不到半径的 2%）。这是加入圆台之前的画法，留着做对照。
+ *
+ * Turn a reconstruction into something drawable. Each node is a sphere, and each segment (a node
+ * to its parent) is a round cone joining the two, tapering linearly. Each type (soma, axon,
+ * dendrite...) is one "chain". Coordinates stay in microns. A three-point soma (a centre plus two
+ * points one radius away, the SWC convention for a round soma) is drawn as the centre sphere
+ * alone. The first segment out of the soma starts at its child's thickness, not the soma's, or it
+ * would be drawn as one large cone.
+ *
+ * With `dense` the cones are replaced by runs of closely spaced spheres filling each segment
+ * (centres a third of a radius apart, so the outline ripples by less than 2% of the radius). That
+ * is how it was drawn before there were cones, and it is kept for comparison.
  */
-export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxSpheres = 2_000_000): Molecule {
+export function neuronMolecule(nodes: SwcNode[], id: string, title: string, dense = false, maxSpheres = 2_000_000): Molecule {
   const byId = new Map(nodes.map((n) => [n.id, n]))
   const soma = nodes.filter((n) => n.type === 1)
   const threePoint = soma.length === 3 && soma[1]!.parent === soma[0]!.id && soma[2]!.parent === soma[0]!.id
   const kindOf = (t: number) => (KINDS.some((k) => k.type === t) ? t : 0)
 
-  // 先数一遍要多少个球，太多就把间距放大 / count the spheres first, and widen the spacing if there are too many
   const segments: { a: SwcNode; b: SwcNode; len: number }[] = []
   let wanted = 0
   for (const n of nodes) {
@@ -67,21 +75,35 @@ export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxS
     segments.push({ a: p, b: n, len })
     wanted += len / (Math.max(MIN_RADIUS, Math.min(n.r, p.r)) / 3)
   }
+  // 密排时先数一遍要多少个球，太多就把间距放大 / when dense, count the spheres first and widen the spacing if there are too many
   const stretch = Math.max(1, wanted / maxSpheres)
 
   const per = new Map<number, number[]>() // type -> x, y, z, r ...
-  const push = (t: number, x: number, y: number, z: number, r: number) => {
+  /** 加一个球，返回它在哪种类型里排第几 / add a sphere and return which type it went to and its place there */
+  const push = (t: number, x: number, y: number, z: number, r: number): [number, number] => {
     const k = kindOf(t)
     if (!per.has(k)) per.set(k, [])
-    per.get(k)!.push(x, y, z, Math.max(MIN_RADIUS, r))
+    const d = per.get(k)!
+    d.push(x, y, z, Math.max(MIN_RADIUS, r))
+    return [k, d.length / 4 - 1]
   }
+  const where = new Map<number, [number, number]>() // 节点编号 -> 球 / node id -> sphere
   for (const n of nodes) {
     if (threePoint && n.type === 1 && n !== soma[0]) continue
-    push(n.type, n.x, n.y, n.z, n.r)
+    where.set(n.id, push(n.type, n.x, n.y, n.z, n.r))
   }
+  const joins: [[number, number], [number, number]][] = []
   for (const { a, b, len } of segments) {
     // 一段的类型取子节点的；从胞体伸出的第一段因此算作树突或轴突 / a segment takes its child's type, so the first stretch out of the soma counts as dendrite or axon
-    const ra = Math.max(MIN_RADIUS, a.type === 1 && b.type !== 1 ? b.r : a.r), rb = Math.max(MIN_RADIUS, b.r)
+    const fromSoma = a.type === 1 && b.type !== 1
+    const ra = Math.max(MIN_RADIUS, fromSoma ? b.r : a.r), rb = Math.max(MIN_RADIUS, b.r)
+    if (!dense) {
+      const end = where.get(b.id)
+      // 起点在胞体上时另放一个细的球，圆台从它开始 / when the start is on the soma, a thin sphere of its own is put there for the cone to start from
+      const start = fromSoma || !where.has(a.id) ? push(b.type, a.x, a.y, a.z, ra) : where.get(a.id)!
+      if (end) joins.push([start, end])
+      continue
+    }
     const step = (Math.min(ra, rb) / 3) * stretch
     const steps = Math.floor(len / step)
     for (let k = 1; k < steps; k++) {
@@ -92,10 +114,12 @@ export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxS
 
   const pos: number[] = [], radius: number[] = []
   const chains: Chain[] = [], entities: Entity[] = []
+  const startOf = new Map<number, number>()
   for (const k of KINDS) {
     const d = per.get(k.type)
     if (!d || d.length === 0) continue
     const start = pos.length / 3
+    startOf.set(k.type, start)
     for (let i = 0; i < d.length; i += 4) {
       pos.push(d[i]!, d[i + 1]!, d[i + 2]!)
       radius.push(d[i + 3]!)
@@ -107,6 +131,11 @@ export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxS
   if (n === 0) throw noteError('error.swc.empty', { id })
   const chainOf = new Uint32Array(n)
   chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
+  const pairs = new Uint32Array(joins.length * 2)
+  joins.forEach(([s, e], i) => {
+    pairs[i * 2] = startOf.get(s[0])! + s[1]
+    pairs[i * 2 + 1] = startOf.get(e[0])! + e[1]
+  })
   return {
     id,
     title,
@@ -116,6 +145,7 @@ export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxS
     element: new Uint8Array(n).fill(El.N),
     radius: new Float32Array(radius),
     chainOf,
+    ...(dense ? {} : { segments: pairs }),
     isTrace: new Uint8Array(n),
     residue: new Int32Array(n).fill(1),
     chains,

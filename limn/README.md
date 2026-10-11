@@ -15,6 +15,7 @@
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
 | 三期 | 界面实测与版面修正；比例尺；界面中英双语（`?lang=en`）；AlphaFold 预测复合物；BFVD 病毒蛋白预测；Complex Portal 复合物配比；NeuroMorpho 检索与多神经元并排；自备拷贝数表的导入口 | 完成。MICrONS 在四期接入 |
+| 四期 | 三处小修；看图精修改成成对比较并能撤销；脂质构象的几何松弛；核糖体的实测朝向；MICrONS 连接组里相邻的神经元；两种新图元（圆台胶囊、三角网格） | 这几项完成；超大模型（突触、流感整病毒、syn3A）还没做 |
 | 二期·7 | 整个细胞的细胞器：OpenOrganelle 的电镜分割（HeLa 细胞的细胞核、内质网、线粒体、高尔基体、内体） | 第一版完成，见 `src/volume/n5.ts`、`data/cells.json` |
 | 二期·8 | 电镜密度图：按 `EMD-编号` 载入 EMDB 的图，画作者建议阈值处的等值面，拟合的原子模型叠在里面 | 第一版完成，见 `src/volume/mrc.ts`、`server/sources/emdb.ts` |
 | 二期·6 | 神经元形态：NeuroMorpho.Org 的显微重建（锥体细胞、浦肯野细胞等），按胞体、树突、轴突分色 | 第一版完成，见 `src/neuro/swc.ts`、`data/neurons.json` |
@@ -92,7 +93,9 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 
 ## 密度图和细胞器：表面是怎么画的
 
-电镜密度图（[EMDB](https://www.ebi.ac.uk/emdb/)，CC0）和整个细胞的细胞器分割（[OpenOrganelle](https://openorganelle.janelia.org/)，CC BY 4.0）都不是原子，而是三维的体数据。limn 仍然只用小球来画：先找出表面穿过的每个小格，在每格里放一个点（“表面网”法），再在每个点上放一个略小于一个体素的球，球连成面。这样描边、阴影、剖开都照旧可用，不需要另写一套网格画法。
+电镜密度图（[EMDB](https://www.ebi.ac.uk/emdb/)，CC0）和整个细胞的细胞器分割（[OpenOrganelle](https://openorganelle.janelia.org/)，CC BY 4.0）都不是原子，而是三维的体数据。limn 把它们的表面画成三角网格：先找出表面穿过的每个小格，在每格里放一个顶点（“表面网”法），再把相邻小格的顶点连成面（`src/volume/mrc.ts` 的 `surfaceMesh`）。网格平涂，不用法线，描边和阴影照旧只从深度和编号算。细胞器是实心的，剖开时切口画成平的断面；密度图的等值面剖开时看到的是壳的里面，叠在里面的原子模型因此露出来。
+
+四期之前没有三角网格，表面是在每个顶点上放一个略小于一个体素的球拼出来的。那种画法留着做对照：地址里加 `?prim=spheres` 就用它。同一视角下两种画法的差别（1400 像素的图）：GroEL 的密度图（EMD-1080）有 19% 的主体像素不同，网格画出的面积是小球的 0.91 倍，因为小球把表面往外撑了将近一个体素，孔被填小了；HeLa 细胞有 57% 的主体像素不同，其中 99% 在轮廓线 3 像素以内，主要来自两处：细胞核等被切开的地方现在是平的断面，薄的内质网不再被小球撑胖，线因此更密。我的判断是网格更接近数据，但 HeLa 细胞里内质网那一片的线比以前更碎，不一定更好看。
 
 - **密度图**画的是作者建议的阈值处的等值面；阈值高一点或低一点，表面会瘦一点或胖一点。大的图会先把体素合并到最长边 200 以内。条目里有拟合的原子模型时，模型叠在里面：密度图从正中剖开，模型不切。
 - **细胞器**用的是原数据缩小 16 倍的版本（每个体素约 64×64×84 nm），比这更细的结构看不出来或者断开；边界是机器学习模型逐个体素判断的，不是人工描的。默认从上往下看、在半高处剖开，细胞膜没有画。核膜算在内质网的分割里，紧贴着细胞核表面；贴着细胞核两个体素以内的其他细胞器没有画，免得两层表面叠在一起。
@@ -100,7 +103,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 
 ## 神经元形态图
 
-“现成模型”页里的“神经元的形态”画的不是原子，而是从显微图像描出来的整个神经元（[NeuroMorpho.Org](https://neuromorpho.org/)，CC BY 4.0），单位是微米。画法和分子图是同一套：每一段分支用一串紧挨着的球表示（球心间距是半径的三分之一，轮廓起伏不到半径的 2%），所以不需要新的图元。
+“现成模型”页里的“神经元的形态”画的不是原子，而是从显微图像描出来的整个神经元（[NeuroMorpho.Org](https://neuromorpho.org/)，CC BY 4.0），单位是微米。每个节点画一个球，每一段分支画成连着两端的一段圆台（“胶囊”），粗细按两端的半径线性过渡；片元里直接求视线和圆台的交点（`src/render/capsule.ts` 里有这段算式的可测版本）。四期之前每一段是用一串紧挨着的球填出来的（球心间距是半径的三分之一），`?prim=spheres` 仍可切回那种画法：浦肯野细胞现在是 4,153 段，五个 MICrONS 细胞从 68 万个球变成约 3 万段，画出来的面积相差不到 1%。
 
 - 分支的走向是重建数据；粗细也来自重建，但重建里的粗细常常不如走向可靠。
 - 比线还细的分支画粗了一点，否则会整条被描边盖住。
@@ -182,6 +185,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
 | Round 3 | The interface checked by hand, with layout fixes; scale bars; a bilingual interface (`?lang=en`); AlphaFold predicted complexes; BFVD predictions of viral proteins; Complex Portal stoichiometry; NeuroMorpho search and several neurons side by side; an import path for a copy-number table of your own | Done. Connectome datasets such as MICrONS are not connected (no licence statement was found) |
+| Round 4 | Three small fixes; the review loop compares pairs and can undo; geometric relaxation of lipid conformers; measured orientations for ribosomes; neighbouring neurons from the MICrONS connectome; two new primitives (round cones and triangle meshes) | These are done; the very large models (synapse, whole influenza virion, syn3A) are not done yet |
 | Round 2, phase 7 | Whole-cell organelles: electron-microscopy segmentations from OpenOrganelle (the nucleus, endoplasmic reticulum, mitochondria, Golgi and endosomes of a HeLa cell) | First version done, see `src/volume/n5.ts`, `data/cells.json` |
 | Round 2, phase 8 | Electron-microscopy density maps: an EMDB map loads as `EMD-<number>`, drawn as the isosurface at its authors' recommended level, with the fitted atomic model inside | First version done, see `src/volume/mrc.ts`, `server/sources/emdb.ts` |
 | Round 2, phase 6 | Neuron morphologies: microscopy reconstructions from NeuroMorpho.Org (pyramidal cells, a Purkinje cell and others), coloured by soma, dendrite and axon | First version done, see `src/neuro/swc.ts`, `data/neurons.json` |
@@ -258,7 +262,9 @@ The catalogue stores pointers, provenance and licences only; models are download
 
 ## Density maps and organelles: how surfaces are drawn
 
-Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and whole-cell organelle segmentations ([OpenOrganelle](https://openorganelle.janelia.org/), CC BY 4.0) are not atoms but three-dimensional volumes. limn still draws them with small spheres: every cell of the grid that the surface passes through gets one point (the "surface nets" method), and a sphere a little smaller than a voxel goes on every point, so that the spheres join into a surface. Outlines, shadows and cut-aways all keep working, and no separate mesh drawing is needed.
+Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and whole-cell organelle segmentations ([OpenOrganelle](https://openorganelle.janelia.org/), CC BY 4.0) are not atoms but three-dimensional volumes. limn draws their surfaces as triangle meshes: every cell of the grid that the surface passes through gets one vertex (the "surface nets" method), and the vertices of neighbouring cells are joined into faces (`surfaceMesh` in `src/volume/mrc.ts`). A mesh is filled flat and uses no normals; outlines and shadows come from depth and ids as everywhere else. Organelles are solid, so a cut through one is drawn as a flat section; the isosurface of a density map shows the inside of its shell when cut, which is what lets the atomic model inside it be seen.
+
+Before round 4 there were no triangle meshes, and a surface was built by putting a sphere a little smaller than a voxel on every vertex. That way of drawing is kept for comparison: add `?prim=spheres` to the address to use it. How the two differ at the same view (pictures 1400 pixels across): for the GroEL density map (EMD-1080) 19% of the subject's pixels differ and the mesh covers 0.91 times the area of the spheres, because the spheres push the surface out by nearly a voxel and close up the holes; for the HeLa cell 57% of the subject's pixels differ, 99% of them within 3 pixels of an outline, mostly from two things: the nucleus and whatever else is cut open is now a flat section, and thin endoplasmic reticulum is no longer fattened by spheres, so its lines are denser. My judgement is that the mesh is closer to the data, but the lines over the endoplasmic reticulum in the HeLa cell are more broken up than before and not necessarily better looking.
 
 - A **density map** is drawn as the isosurface at the level its authors recommend; a slightly higher or lower level gives a slightly thinner or fatter surface. A large map is first binned to at most 200 voxels a side. When the entry has a fitted atomic model, the model goes inside: the map is cut through the middle and the model is left whole.
 - **Organelles** use the data reduced sixteen-fold (voxels of about 64 × 64 × 84 nm), so anything finer is lost or broken up; the boundaries were decided voxel by voxel by a machine-learning model, not traced by hand. By default the cell is seen from above and cut at mid-height, and the plasma membrane is not drawn. The nuclear envelope belongs to the ER segmentation and lies right on the surface of the nucleus; whatever of another organelle is within two voxels of the nucleus is not drawn, so that two coincident surfaces do not fight.
@@ -266,7 +272,7 @@ Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and 
 
 ## Neuron morphology pictures
 
-"Shapes of neurons", on the ready-made models tab, draws not atoms but whole neurons traced from microscope images ([NeuroMorpho.Org](https://neuromorpho.org/), CC BY 4.0), in microns. The drawing method is the one used for molecules: each stretch of a branch is a run of closely spaced spheres (centres a third of a radius apart, so the outline ripples by less than 2% of the radius), and no new primitive is needed.
+"Shapes of neurons", on the ready-made models tab, draws not atoms but whole neurons traced from microscope images ([NeuroMorpho.Org](https://neuromorpho.org/), CC BY 4.0), in microns. The drawing method is the one used for molecules: each node is a sphere and each stretch of a branch is a round cone (a "capsule") joining its two ends, tapering linearly between their radii; the fragment shader finds where the line of sight meets the cone directly (`src/render/capsule.ts` holds a testable copy of the algebra). Before round 4 each stretch was filled with a run of closely spaced spheres (centres a third of a radius apart), and `?prim=spheres` still switches back to that: the Purkinje cell is now 4,153 segments, and the five MICrONS cells go from 680 thousand spheres to about 30 thousand segments, with the drawn area differing by under 1%.
 
 - Where a branch runs is the reconstruction's data; so is its thickness, though thickness in reconstructions is often less reliable than course.
 - A branch thinner than the line is drawn a little fatter, or its outline would cover it from side to side.

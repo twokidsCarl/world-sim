@@ -156,7 +156,11 @@ export function Stage() {
         // 读一个像素是等待 GPU 的唯一可靠办法
         // reading a pixel is the only reliable way to wait for the GPU
         r.gl.readPixels(0, 0, 1, 1, r.gl.RGBA, r.gl.UNSIGNED_BYTE, new Uint8Array(4))
-        setInfo(t(s.spec?.kind === 'neuron' ? 'stage.spheres' : 'stage.atoms', { ids: s.panels.map((p) => p.mol.id).join(' · '), n: r.lastAtoms.toLocaleString(), ms: Math.round(performance.now() - t0) }))
+        const ids = s.panels.map((p) => p.mol.id).join(' · '), ms = Math.round(performance.now() - t0)
+        // 有网格或圆台时报它们的数目 / with a mesh or cones, report how many of those there are
+        if (r.lastTriangles > 0) setInfo(t(r.lastAtoms > 0 ? 'stage.trianglesAtoms' : 'stage.triangles', { ids, n: r.lastTriangles.toLocaleString(), atoms: r.lastAtoms.toLocaleString(), ms }))
+        else if (r.lastSegments > 0) setInfo(t('stage.segments', { ids, n: r.lastSegments.toLocaleString(), ms }))
+        else setInfo(t(s.spec?.kind === 'neuron' ? 'stage.spheres' : 'stage.atoms', { ids, n: r.lastAtoms.toLocaleString(), ms }))
       }
     })
     clearTimeout(settle.current)

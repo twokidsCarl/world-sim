@@ -129,6 +129,82 @@ export function surfacePoints(vol: Volume, level: number): Float32Array {
 }
 
 /**
+ * 等值面的三角网格（“表面网”法）：顶点就是 surfacePoints 给出的那些点，顺序也相同；每条被等值面穿过的
+ * 格点连线，把围着它的四个小格的顶点连成一个四边形（两个三角形）。三角形的绕向使法线从高值指向低值，
+ * 也就是从物体里面指向外面。返回顶点坐标和三角形的顶点下标。
+ *
+ * A triangle mesh of an isosurface (the "surface nets" method). The vertices are exactly the
+ * points surfacePoints gives, in the same order; every grid edge the surface crosses joins the
+ * vertices of the four cells around it into a quad (two triangles). Triangles are wound so that
+ * normals point from high values to low, that is from inside the object outwards. Returns the
+ * vertex coordinates and the triangles as vertex indices.
+ */
+export function surfaceMesh(vol: Volume, level: number): { positions: Float32Array; triangles: Uint32Array } {
+  const { nx, ny, nz, data } = vol
+  const positions = surfacePoints(vol, level)
+  const cx = nx - 1, cy = ny - 1, cz = nz - 1
+  // 每个小格的顶点下标，没有顶点的是 -1；按 surfacePoints 的遍历顺序重数一遍 / the vertex of every cell, -1 for none; recounted in the order surfacePoints visits them
+  const vertexOf = new Int32Array(Math.max(0, cx * cy * cz)).fill(-1)
+  const inside = (x: number, y: number, z: number) => data[x + nx * (y + ny * z)]! >= level
+  let n = 0
+  for (let z = 0; z < cz; z++)
+    for (let y = 0; y < cy; y++)
+      for (let x = 0; x < cx; x++) {
+        const a = inside(x, y, z)
+        if (inside(x + 1, y, z) !== a || inside(x, y + 1, z) !== a || inside(x + 1, y + 1, z) !== a || inside(x, y, z + 1) !== a || inside(x + 1, y, z + 1) !== a || inside(x, y + 1, z + 1) !== a || inside(x + 1, y + 1, z + 1) !== a) vertexOf[x + cx * (y + cy * z)] = n++
+      }
+  const tri: number[] = []
+  const cell = (x: number, y: number, z: number) => vertexOf[x + cx * (y + cy * z)]!
+  const quad = (a: number, b: number, c: number, d: number, flip: boolean) => {
+    if (a < 0 || b < 0 || c < 0 || d < 0) return
+    if (flip) tri.push(a, c, b, a, d, c)
+    else tri.push(a, b, c, a, c, d)
+  }
+  // 贴着数据边界的连线没有四个小格围着，跳过（表面在那里开口）/ an edge on the border of the data has no four cells around it and is skipped (the surface is open there)
+  for (let z = 0; z < nz; z++)
+    for (let y = 0; y < ny; y++)
+      for (let x = 0; x < nx; x++) {
+        const a = inside(x, y, z)
+        if (x < nx - 1 && y > 0 && z > 0 && y < ny - 1 && z < nz - 1 && inside(x + 1, y, z) !== a) quad(cell(x, y - 1, z - 1), cell(x, y, z - 1), cell(x, y, z), cell(x, y - 1, z), !a)
+        if (y < ny - 1 && x > 0 && z > 0 && x < nx - 1 && z < nz - 1 && inside(x, y + 1, z) !== a) quad(cell(x - 1, y, z - 1), cell(x - 1, y, z), cell(x, y, z), cell(x, y, z - 1), !a)
+        if (z < nz - 1 && x > 0 && y > 0 && x < nx - 1 && y < ny - 1 && inside(x, y, z + 1) !== a) quad(cell(x - 1, y - 1, z), cell(x, y - 1, z), cell(x, y, z), cell(x - 1, y, z), !a)
+      }
+  return { positions, triangles: new Uint32Array(tri) }
+}
+
+/**
+ * 在体数据四周各加一层值为 `value` 的体素。这样贴着数据边界的物体在边界上也有表面，网格是封闭的。
+ * Add one layer of voxels of `value` all round a volume, so that an object touching the border of
+ * the data gets a surface there too and its mesh is closed.
+ */
+export function pad(vol: Volume, value = 0): Volume {
+  const nx = vol.nx + 2, ny = vol.ny + 2, nz = vol.nz + 2
+  const data = new (vol.data.constructor as new (n: number) => Float32Array | Uint8Array)(nx * ny * nz)
+  if (value !== 0) data.fill(value)
+  for (let z = 0; z < vol.nz; z++)
+    for (let y = 0; y < vol.ny; y++) {
+      const from = vol.nx * (y + vol.ny * z)
+      data.set(vol.data.subarray(from, from + vol.nx), 1 + nx * (y + 1 + ny * (z + 1)))
+    }
+  return { nx, ny, nz, data, voxel: vol.voxel, origin: [vol.origin[0] - vol.voxel[0], vol.origin[1] - vol.voxel[1], vol.origin[2] - vol.voxel[2]] }
+}
+
+/** 一张封闭网格的面积和它围住的体积（体积按绕向带符号）/ the area of a closed mesh and the volume it encloses (signed by winding) */
+export function meshMeasure(positions: Float32Array, triangles: Uint32Array): { area: number; volume: number } {
+  let area = 0, volume = 0
+  for (let t = 0; t < triangles.length; t += 3) {
+    const a = triangles[t]! * 3, b = triangles[t + 1]! * 3, c = triangles[t + 2]! * 3
+    const ax = positions[a]!, ay = positions[a + 1]!, az = positions[a + 2]!
+    const ux = positions[b]! - ax, uy = positions[b + 1]! - ay, uz = positions[b + 2]! - az
+    const vx = positions[c]! - ax, vy = positions[c + 1]! - ay, vz = positions[c + 2]! - az
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx
+    area += Math.hypot(nx, ny, nz) / 2
+    volume += (ax * nx + ay * ny + az * nz) / 6
+  }
+  return { area, volume }
+}
+
+/**
  * 把掩码向外扩 `r` 个体素（方形邻域），返回新的掩码。
  * Grow a mask outward by `r` voxels (a box neighbourhood), returning a new mask.
  */

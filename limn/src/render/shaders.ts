@@ -117,6 +117,190 @@ void main() {
   o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, v_fine > 0.5 ? 2u : 1u);
 }`
 
+/**
+ * 胶囊：把两个原子（位置和半径取自同一张原子纹理）连成一段圆台。每段画一个贴着它投影的长方形，
+ * 片元里求视线与圆台侧面的交点。两端的球冠不在这里画：两个端点本身各有一个球。
+ * 求交的算式见 src/render/capsule.ts，那里有同一段算式的可测版本。
+ *
+ * Capsules: two atoms (positions and radii from the same atom texture) joined into a round cone.
+ * Each segment draws a rectangle hugging its projection, and the fragment finds where the line
+ * of sight meets the side of the cone. The end caps are not drawn here: each end is an atom with
+ * a sphere of its own. The algebra is in src/render/capsule.ts, in a form that can be tested.
+ */
+export const CAPSULE_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+precision highp usampler2D;
+layout(location = 0) in vec2 a_corner;
+uniform sampler2D u_posr;
+uniform sampler2D u_color;
+uniform usampler2D u_ids;
+uniform sampler2D u_inst;
+uniform usampler2D u_instIds;
+uniform usampler2D u_seg;
+uniform int u_w;
+uniform mat4 u_place;
+uniform mat3 u_rot;
+uniform vec3 u_center;
+uniform vec2 u_toClip;
+uniform float u_clipFront;
+uniform float u_radiusScale;
+uniform float u_minRadius;
+out vec2 v_xy;
+flat out vec4 v_a;
+flat out vec4 v_b;
+flat out vec3 v_color;
+flat out uvec2 v_ids;
+flat out uvec2 v_inst;
+vec3 toView(vec3 q) {
+  vec4 p = vec4(q, 1.0);
+  // 线段只按第一个实例画 / segments are drawn for the first instance only
+  vec3 local = vec3(dot(texelFetch(u_inst, ivec2(0, 0), 0), p), dot(texelFetch(u_inst, ivec2(1, 0), 0), p), dot(texelFetch(u_inst, ivec2(2, 0), 0), p));
+  return u_rot * ((u_place * vec4(local, 1.0)).xyz - u_center);
+}
+void main() {
+  uvec2 s = texelFetch(u_seg, ivec2(gl_InstanceID % u_w, gl_InstanceID / u_w), 0).rg;
+  ivec2 ia = ivec2(int(s.x) % u_w, int(s.x) / u_w), ib = ivec2(int(s.y) % u_w, int(s.y) / u_w);
+  vec4 A = texelFetch(u_posr, ia, 0), B = texelFetch(u_posr, ib, 0);
+  float ra = max(A.w * u_radiusScale, u_minRadius), rb = max(B.w * u_radiusScale, u_minRadius);
+  vec3 pa = toView(A.xyz), pb = toView(B.xyz);
+  // 和球一样：端点被截面丢掉的线段整段不画 / as with spheres: a segment with an end dropped by the cut is not drawn at all
+  if (A.w <= 0.0 || B.w <= 0.0 || max(pa.z, pb.z) > u_clipFront) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
+  vec2 d = pb.xy - pa.xy;
+  float len = length(d);
+  vec2 u = len > 1.0e-6 ? d / len : vec2(1.0, 0.0);
+  float rm = max(ra, rb);
+  vec2 xy = (pa.xy + pb.xy) * 0.5 + u * a_corner.x * (len * 0.5 + rm) + vec2(-u.y, u.x) * a_corner.y * rm;
+  v_xy = xy;
+  v_a = vec4(pa, ra);
+  v_b = vec4(pb, rb);
+  // 颜色和编号取第二个端点的 / colour and ids are those of the second end
+  v_color = texelFetch(u_color, ib, 0).rgb;
+  v_ids = texelFetch(u_ids, ib, 0).rg;
+  v_inst = texelFetch(u_instIds, ivec2(0, 0), 0).rg;
+  gl_Position = vec4(xy * u_toClip, 0.0, 1.0);
+}`
+
+export const CAPSULE_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 v_xy;
+flat in vec4 v_a;
+flat in vec4 v_b;
+flat in vec3 v_color;
+flat in uvec2 v_ids;
+flat in uvec2 v_inst;
+uniform vec2 u_z;
+uniform bool u_outlineByMolecule;
+layout(location = 0) out vec4 o_color;
+layout(location = 1) out uvec4 o_ids;
+void main() {
+  vec3 pa = v_a.xyz, pb = v_b.xyz;
+  float ra = v_a.w, rb = v_b.w;
+  float top = max(pa.z + ra, pb.z + rb);
+  vec3 ba = pb - pa;
+  vec3 oa = vec3(v_xy, top) - pa;
+  float rr = ra - rb;
+  float m0 = dot(ba, ba);
+  float d2 = m0 - rr * rr;
+  if (d2 <= 0.0) discard;
+  float m1 = dot(ba, oa), m2 = -ba.z, m3 = -oa.z, m5 = dot(oa, oa);
+  float k2 = d2 - m2 * m2;
+  float k1 = d2 * m3 - m1 * m2 + m2 * rr * ra;
+  float k0 = d2 * m5 - m1 * m1 + m1 * rr * ra * 2.0 - m0 * ra * ra;
+  float h = k1 * k1 - k0 * k2;
+  if (h < 0.0 || abs(k2) < 1.0e-7 * m0) discard;
+  float sq = sqrt(h);
+  float t1 = (-k1 - sq) / k2, t2 = (-k1 + sq) / k2;
+  float y1 = m1 - ra * rr + t1 * m2, y2 = m1 - ra * rr + t2 * m2;
+  float t = 1.0e30;
+  if (y1 > 0.0 && y1 < d2) t = t1;
+  if (y2 > 0.0 && y2 < d2) t = min(t, t2);
+  if (t > 1.0e29) discard;
+  float z = top - t;
+  gl_FragDepth = clamp((u_z.x - z) / (u_z.x - u_z.y), 0.0, 0.999999);
+  o_color = vec4(v_color, 1.0);
+  uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
+  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, 1u);
+}`
+
+/**
+ * 三角网格：顶点就是原子纹理里的点（顶点下标 = 原子下标），所以只需要一张下标表。平色，不用法线，
+ * 描边和阴影同样只从深度和编号算。截面处按片元丢弃，实心的东西（细胞器）露出来的背面画在截面上，剖开看到的是实心的断面；不标成实心的（密度图的等值面）剖开看到的是壳的里面。
+ *
+ * Triangle meshes: the vertices are the points in the atom texture (vertex index = atom index),
+ * so an index list is all that is needed. Flat colour and no normals; outlines and shadows come
+ * from depth and ids as everywhere else. At a cut, fragments are discarded one by one and the
+ * back faces this exposes are drawn on the cut plane when the mesh is marked solid (organelles),
+ * so a cut-away shows solid sections; one not so marked (the isosurface of a density map) shows
+ * the inside of its shell.
+ */
+export const MESH_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+precision highp usampler2D;
+uniform sampler2D u_posr;
+uniform sampler2D u_color;
+uniform usampler2D u_ids;
+uniform sampler2D u_inst;
+uniform usampler2D u_instIds;
+uniform int u_w;
+uniform mat4 u_place;
+uniform mat3 u_rot;
+uniform vec3 u_center;
+uniform vec2 u_toClip;
+out float v_z;
+flat out vec3 v_color;
+flat out uvec2 v_ids;
+flat out uvec2 v_inst;
+void main() {
+  ivec2 at = ivec2(gl_VertexID % u_w, gl_VertexID / u_w);
+  vec4 p = vec4(texelFetch(u_posr, at, 0).xyz, 1.0);
+  vec3 local = vec3(dot(texelFetch(u_inst, ivec2(0, 0), 0), p), dot(texelFetch(u_inst, ivec2(1, 0), 0), p), dot(texelFetch(u_inst, ivec2(2, 0), 0), p));
+  vec3 view = u_rot * ((u_place * vec4(local, 1.0)).xyz - u_center);
+  v_z = view.z;
+  v_color = texelFetch(u_color, at, 0).rgb;
+  v_ids = texelFetch(u_ids, at, 0).rg;
+  v_inst = texelFetch(u_instIds, ivec2(0, 0), 0).rg;
+  gl_Position = vec4(view.xy * u_toClip, 0.0, 1.0);
+}`
+
+export const MESH_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in float v_z;
+flat in vec3 v_color;
+flat in uvec2 v_ids;
+flat in uvec2 v_inst;
+uniform vec2 u_z;
+uniform float u_clipFront;
+uniform bool u_outlineByMolecule;
+uniform bool u_solid; // 这张网格围着的是实心的东西 / this mesh encloses something solid
+layout(location = 0) out vec4 o_color;
+layout(location = 1) out uvec4 o_ids;
+void main() {
+  if (v_z > u_clipFront) discard;
+  // 剖开时，看得见背面就说明视线是在截面上进到物体里面的：把这个像素画在截面上，切口于是是一个平的实心断面，
+  // 而不是一个空壳。网格要封闭、法线朝外才成立。
+  // With a cut, a visible back face means the line of sight entered the solid at the cut plane:
+  // the pixel is drawn on that plane, so a cut shows a flat solid section instead of a hollow
+  // shell. This holds for closed meshes with outward normals.
+  // 深度照实写，这样深度测试挑出的确实是视线碰到的第一个面；它若是背面，就在编号的第四个分量里记 3，
+  // 后面的描边和合成通道把这样的像素当作位于截面上。
+  // The true depth is written, so that the depth test really picks the first face along the line
+  // of sight; if that face is a back face, 3 goes into the fourth id channel, and the edge and
+  // composite passes treat such a pixel as lying on the cut plane.
+  gl_FragDepth = clamp((u_z.x - v_z) / (u_z.x - u_z.y), 0.0, 0.999999);
+  o_color = vec4(v_color, 1.0);
+  uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
+  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, u_solid && !gl_FrontFacing && u_clipFront < 1.0e29 ? 3u : 1u);
+}`
+
 export const QUAD_VS = /* glsl */ `#version 300 es
 layout(location = 0) in vec2 a_corner;
 void main() { gl_Position = vec4(a_corner, 0.0, 1.0); }`
@@ -136,12 +320,15 @@ uniform vec3 u_subunit;    // 低阈值、高阈值、强度 0..1 / low, high, s
 uniform vec3 u_residue;    // 低阈值、高阈值、残基编号差 / low, high, residue-number difference
 uniform vec4 u_shadow;     // 每个采样的强度、锥角、下限、半径 Å / strength per sample, cone angle, floor, radius Å
 uniform int u_shadowN;     // 中心每侧的采样数（10 = Illustrate 的 21x21） / samples per side of centre (10 = Illustrate's 21x21)
+uniform vec2 u_cap;        // x > 0：场景里有网格被剖开；y：截面的视图 z / x > 0: a mesh in the scene is cut; y: view z of the cut plane
 out vec4 o;
 
 ivec2 size;
 ivec2 clampP(ivec2 p) { return clamp(p, ivec2(0), size - 1); }
 float zAt(ivec2 p) {
   float d = texelFetch(u_depth, clampP(p), 0).r;
+  // 网格被剖开后露出的背面：算作在截面上 / the back of a mesh exposed by the cut counts as lying on the cut plane
+  if (u_cap.x > 0.0 && d < 1.0 && texelFetch(u_ids, clampP(p), 0).a == 3u) return u_cap.y;
   return d >= 1.0 ? -1.0e4 : mix(u_z.x, u_z.y, d);
 }
 
@@ -216,6 +403,8 @@ uniform vec2 u_fogAmt;  // 前端和后端各保留的本色比例 / share of tr
 uniform vec3 u_ink;
 uniform float u_grain;
 uniform bool u_layered; // 景深淡出已按分子决定，存在颜色的 alpha 里 / depth fading was decided per molecule, in the colour's alpha
+uniform highp usampler2D u_ids;
+uniform vec2 u_cap;     // 同描边通道 / as in the edge pass
 out vec4 o;
 
 float hash(vec2 p) {
@@ -245,6 +434,7 @@ void main() {
   vec3 rgb = u_bg;
   if (d < 1.0) {
     float z = mix(u_z.x, u_z.y, d);
+    if (u_cap.x > 0.0 && texelFetch(u_ids, p, 0).a == 3u) z = u_cap.y;
     float t = clamp((u_zSpan.x - z) / max(u_zSpan.x - u_zSpan.y, 1.0e-3), 0.0, 1.0);
     float keep = mix(u_fogAmt.x, u_fogAmt.y, t);
     vec4 c = texelFetch(u_color, p, 0);
