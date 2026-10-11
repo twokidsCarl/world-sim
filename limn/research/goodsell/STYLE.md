@@ -6,7 +6,7 @@
 
 | 他的做法 | 在哪些画里看得最清楚 | limn |
 |---|---|---|
-| **画的是一片薄切片**：切面这一层用亮色，后面一两层用同色的深一号，再往后不画。从不画整个物体的后半个内壁。 | influenza-virus、zika-virus、ebola-virus、coronavirus、escherichia-coli | 已做（`Style.slab`，剖开时只画厚度为画幅高度 24% 的一片；16% 时后面的层不够，空隙里露白） |
+| **画的是一片薄切片**：切面这一层用亮色，后面一两层用同色的深一号，再往后不画。从不画整个物体的后半个内壁。 | influenza-virus、zika-virus、ebola-virus、coronavirus、escherichia-coli | 已做（`Style.slab`，剖开时只画厚度为画幅高度 42% 的一片；更薄时后面的层不够，空隙里露白） |
 | **里面总是填满的**。没有坐标的东西，按文献和已知结构画上去。 | influenza-virus（M1、RNP、聚合酶）、coronavirus（核蛋白和 RNA）、sars-cov-2-mrna-vaccine | 流感已做（`src/infer/influenza.ts`），标为推断；别的还没做 |
 | **一个区室一族颜色**，相邻的区室用对比色：病毒里面紫或蓝，包膜粉或紫，血浆黄绿，细胞质蓝，细胞核紫。 | excitatory-and-inhibitory-synapses、hiv-vaccine、autophagy | 流感按他那幅量出的颜色做了（目录条目的 `colors`）；别的模型一个区室里仍有好几族颜色 |
 | **远近只靠同色的三档深浅**，没有渐变的阴影。 | influenza-virus（血凝素三层：明度 0.76、0.60、0.45） | 已做 |
@@ -76,13 +76,23 @@ limn 这一轮的数：
 
 并排图：`out/g8-influenza.jpg`。还差：八条杆成一束在中间，束的两侧到内壁之间仍有空（他画的是填满整个圆）；刺的头部没有他那样的分瓣。
 
+### 第九轮（g9）：白的地方填上，勾黑线
+
+用户看了 `g8-influenza.jpg` 提了两条：白色的地方要有结构填上；要勾黑线。
+
+- **勾黑线**：墨色改成接近黑、只带一点旁边填色的色相，线宽从 1.05 加到 1.6。
+- **每个刺单独描边**。查出一个错：刺和它身上的糖链放在同一组里，而“糖链不单独描边”的规则是按组判断的，结果整个刺都被当成不描边的东西，相邻的刺之间一条线也没有。现在糖链单独成组。
+- **填白**：切片从画幅高度的 24% 加厚到 42%，刺之间的空隙里露出后面几圈刺；里面的七条核糖核蛋白从紧挨着中间那条改成摊开到贴着内壁，从侧面看铺满了整个圆。
+- 并排图：`out/g9-influenza.jpg`。
+- 还差：左上和左下还有几处白缝（那里前后两圈刺正好对齐）；刺的头部没有他那样的分瓣；神经氨酸酶只有少数几个在切片里。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and the description he gives each (`gallery/index.json`). The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
 
 In order, the rows of the table are:
 
-1. **He paints a thin slab**: the cut layer in bright colour, a layer or two behind it in deeper shades of the same hue, and nothing beyond; never the far inner wall of the whole object. Done (`Style.slab`: when cut, only a slab 24% of the frame height thick is drawn; at 16% there were too few layers behind and paper showed through the gaps).
+1. **He paints a thin slab**: the cut layer in bright colour, a layer or two behind it in deeper shades of the same hue, and nothing beyond; never the far inner wall of the whole object. Done (`Style.slab`: when cut, only a slab 42% of the frame height thick is drawn; thinner, there were too few layers behind and paper showed through the gaps).
 2. **The inside is always full.** What has no coordinates is painted in from the literature and from known structures. Done for influenza (`src/infer/influenza.ts`), marked as inferred; not yet for anything else.
 3. **One family of hue per compartment**, with contrast between neighbouring compartments: violet or blue inside a virus, pink or violet for the envelope, yellow-green for plasma, blue for cytoplasm, violet for the nucleus. Done for influenza with colours measured on his painting (`colors` in the catalogue entry); other models still mix several families in one compartment.
 4. **Distance is three steps of one hue**, with no graded shadows. Done.
@@ -142,3 +152,13 @@ Following him:
 - In the Illustrate drawing each rod still gets whole helical stretches only.
 
 Side by side: `out/g8-influenza.jpg`. Still short: the eight rods form a bundle in the middle, with space left between its flanks and the wall (he fills the whole circle); the heads of the spikes lack the lobes his have.
+
+### Round 9 (g9): white filled in, outlines in black
+
+Looking at `g8-influenza.jpg` the user asked for two things: structure where it is white, and black outlines.
+
+- **Black outlines**: the ink is now nearly black with only a trace of the neighbouring fill's hue, and the line width goes from 1.05 to 1.6.
+- **Every spike outlined on its own.** A fault was found: a spike and the glycans on it were in one group, and the rule "glycans are not outlined one by one" is decided per group, so whole spikes counted as not outlined and no line at all was drawn between neighbours. Glycans now form a group of their own.
+- **Filling the white**: the slab goes from 24% of the frame height to 42%, so the gaps between spikes show the rings of spikes behind; inside, the seven outer ribonucleoproteins are spread out to the wall instead of hugging the middle one, and seen from the side they cover the whole circle.
+- Side by side: `out/g9-influenza.jpg`.
+- Still short: a few white slits remain at upper and lower left (where two rings of spikes happen to line up); the heads of the spikes lack the lobes his have; only a few neuraminidases fall in the slab.

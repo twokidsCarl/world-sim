@@ -223,7 +223,10 @@ export function rnpBundle(rnp: Molecule, polymerase: Molecule, centre: V3, cavit
   const spots: { nt: number; x: number; y: number }[] = [{ nt: order[0]!.nt, x: 0, y: 0 }]
   around.forEach((s, k) => {
     const a = (k / around.length) * 2 * Math.PI
-    spots.push({ nt: s.nt, x: Math.cos(a) * rodR * 2.05, y: Math.sin(a) * rodR * 2.05 })
+    // 填满时把周围七条摊开到贴着内壁，从侧面看它们铺满整个圆；否则紧挨着中间那条
+    // when filling, the seven around are spread out to the wall, so that seen from the side they cover the whole circle; otherwise they hug the middle one
+    const ringR = fill ? Math.max(rodR * 2.05, cavity - rodR * 1.05) : rodR * 2.05
+    spots.push({ nt: s.nt, x: Math.cos(a + 0.22) * ringR, y: Math.sin(a + 0.22) * ringR })
   })
   for (const s of spots) {
     const off = Math.hypot(s.x, s.y)

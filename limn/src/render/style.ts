@@ -134,9 +134,12 @@ export const STYLE_MESOSCALE: Style = {
   // 略暖的纸白 / a slightly warm paper white
   background: [0.992, 0.988, 0.976],
   // 线是旁边填色的深一号，细一些 / lines are a deeper shade of the fill beside them, and thinner
-  inkTint: 1,
-  inkShade: 0.24,
-  lineWidth: 1.05,
+  // 勾黑线：墨色接近黑，只带一点旁边填色的色相；线比以前粗
+  // outlined in black: the ink is nearly black with only a trace of the neighbouring fill's hue, and lines are heavier than before
+  ink: [0.07, 0.06, 0.09],
+  inkTint: 0.3,
+  inkShade: 0.18,
+  lineWidth: 1.6,
   // 平涂：不要原子之间的阴影，明暗只来自景深的三档 / flat washes: no shadows between atoms, tone comes from the three depth steps alone
   shadow: { strength: 0, cone: 2, floor: 1, radius: 0 },
   fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0, layers: 3, shade: 0.5 },
@@ -144,7 +147,7 @@ export const STYLE_MESOSCALE: Style = {
   // 形状靠平滑来变光滑，球就按真实大小画 / shapes are made smooth by the smoothing pass, so spheres are drawn at their true size
   smooth: 7,
   radiusScale: 1,
-  slab: 0.24,
+  slab: 0.42,
 }
 
 /**
