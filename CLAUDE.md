@@ -15,6 +15,20 @@ tools/pr.sh "<项目>: <做了什么>" <项目目录>
 - 提交信息的正文用环境变量 `COMMIT_BODY` 传入，PR 描述用 `PR_BODY`。
 - 脚本报"还没有合并"时，用 `gh pr checks <url>` 看原因。通常是和刚合并的改动冲突，重新运行脚本即可（它每次都基于最新的 `origin/main`）。
 
+### 提交前跑测试 / Run the tests before submitting
+
+```sh
+tools/ci.sh <项目目录>...
+```
+
+它跑这个子项目的全部测试：有 `pyproject.toml` 就跑 `pytest`，`<目录>` 或 `<目录>/web` 有 `package.json` 就 `bun install` 后跑它有的 `typecheck` 和 `test`。合并进 `main` 之后，`.github/workflows/ci.yml` 会对改到的子项目再跑一遍同一个脚本。它现在只报告、不拦合并；所以**请在提交前自己跑**，别让 `main` 红着。
+
+It runs the subproject's whole test set: `pytest` where there is a `pyproject.toml`, and for
+a `package.json` in `<dir>` or `<dir>/web`, `bun install` followed by whichever of `typecheck`
+and `test` it defines. After a merge into `main`, `.github/workflows/ci.yml` runs the same
+script again for the subprojects that merge touched. For now it only reports and does not
+gate merges, so **run it yourself before submitting** and do not leave `main` red.
+
 ## 中英双语
 
 进 git 的内容都要有中文和英文两个版本：

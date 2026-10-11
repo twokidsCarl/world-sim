@@ -1,0 +1,71 @@
+name: ci
+
+# 每次合并进 main 之后，跑这次改到的子项目的测试。也可以手动指定项目来跑。
+# 现在它只报告，不拦合并：自动合并（automerge.yml）不等它。等各项目在这里都稳定通过之后，
+# 再把它设成合并的必要条件。
+#
+# After every merge into main, run the tests of the subprojects that merge touched. It can
+# also be run by hand for chosen projects. For now it only reports and does not gate merges:
+# automerge.yml does not wait for it. Once every project passes here reliably it can be made
+# a required check.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      projects:
+        description: "要跑的子项目，空格分隔 / subprojects to run, space-separated"
+        required: true
+        default: "idea-loom limn mindloop polis soma strata"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  changed:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.list.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: list
+        env:
+          GIVEN: ${{ inputs.projects }}
+        run: |
+          if [ -n "$GIVEN" ]; then
+            names="$GIVEN"
+          else
+            # 这次合并改到的顶层目录里，是子项目的那些（有 pyproject.toml 或 package.json）。
+            # The top-level directories this merge touched that are subprojects (they have a pyproject.toml or a package.json).
+            names=""
+            for dir in $(git diff --name-only HEAD~1 HEAD | cut -d/ -f1 | sort -u); do
+              if [ -f "$dir/pyproject.toml" ] || [ -f "$dir/package.json" ] || [ -f "$dir/web/package.json" ]; then names="$names $dir"; fi
+            done
+          fi
+          json=$(printf '%s\n' $names | grep -E '^[A-Za-z0-9._-]+$' | jq -R . | jq -cs .)
+          echo "projects=$json" >> "$GITHUB_OUTPUT"
+          echo "projects: $json"
+
+  test:
+    needs: changed
+    if: needs.changed.outputs.projects != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.changed.outputs.projects) }}
+    name: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: oven-sh/setup-bun@v2
+      - env:
+          PROJECT: ${{ matrix.project }}
+        run: tools/ci.sh "$PROJECT"
