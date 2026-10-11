@@ -695,8 +695,27 @@
           "default": 0.35,
           "type": "number"
         },
+        "spread": {
+          "default": 2.0,
+          "description": "各人门槛的离散程度：0 表示人人一样 / how far individual thresholds differ; 0 means everyone is alike",
+          "minimum": 0,
+          "type": "number"
+        },
+        "attach": {
+          "default": 2.0,
+          "description": "与银行的往来把门槛抬高多少 / how much ties to the bank raise the threshold",
+          "minimum": 0,
+          "type": "number"
+        },
         "reserve_ratio": {
           "default": 0.3,
+          "type": "number"
+        },
+        "institutional": {
+          "default": 0,
+          "description": "存款总额中属于企业和机构的比例；它们不在传话网里，也不来排队 / share of all deposits held by firms and institutions, which are outside the rumour network and do not queue",
+          "exclusiveMaximum": 1,
+          "minimum": 0,
           "type": "number"
         },
         "tellers": {
@@ -790,6 +809,29 @@
           "description": "这笔存款对他有多要紧 / how much this deposit matters to them",
           "maximum": 1,
           "minimum": 0,
+          "type": "number"
+        },
+        "tenure": {
+          "default": 0,
+          "description": "与这家银行往来的年数 / years this person has banked here",
+          "minimum": 0,
+          "type": "number"
+        },
+        "borrower": {
+          "default": false,
+          "description": "是否在这家银行有贷款 / whether they also borrow from this bank",
+          "type": "boolean"
+        },
+        "insured": {
+          "default": 0,
+          "description": "存款中受存款保险保障的比例 / share of the deposit covered by deposit insurance",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "resolve": {
+          "default": 0,
+          "description": "沉得住气的程度，标准正态的一次抽样；越大越不容易去取 / steadiness, one standard-normal draw; the larger, the less readily they withdraw",
           "type": "number"
         },
         "household": {

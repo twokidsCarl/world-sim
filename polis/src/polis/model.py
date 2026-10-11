@@ -46,6 +46,10 @@ class Person(BaseModel):
     # 场景状态 / scenario state
     deposit: float = Field(description="存款，单位：元 / deposit, in yuan")
     stake: float = Field(ge=0, le=1, description="这笔存款对他有多要紧 / how much this deposit matters to them")
+    tenure: float = Field(0, ge=0, description="与这家银行往来的年数 / years this person has banked here")
+    borrower: bool = Field(False, description="是否在这家银行有贷款 / whether they also borrow from this bank")
+    insured: float = Field(0, ge=0, le=1, description="存款中受存款保险保障的比例 / share of the deposit covered by deposit insurance")
+    resolve: float = Field(0, description="沉得住气的程度，标准正态的一次抽样；越大越不容易去取 / steadiness, one standard-normal draw; the larger, the less readily they withdraw")
     # 社会位置 / social position
     household: int
     district: int
@@ -155,8 +159,11 @@ class Params(BaseModel):
     bias: float = -5.0
     hazard: float = 0.30
     perceived_reserve: float = 0.35
+    spread: float = Field(2.0, ge=0, description="各人门槛的离散程度：0 表示人人一样 / how far individual thresholds differ; 0 means everyone is alike")
+    attach: float = Field(2.0, ge=0, description="与银行的往来把门槛抬高多少 / how much ties to the bank raise the threshold")
     # 钱庄 / the bank
     reserve_ratio: float = 0.30
+    institutional: float = Field(0, ge=0, lt=1, description="存款总额中属于企业和机构的比例；它们不在传话网里，也不来排队 / share of all deposits held by firms and institutions, which are outside the rumour network and do not queue")
     tellers: float = 0.02
     interventions: list[Intervention] = []
     llm: bool = Field(False, description="主角是否交给大模型扮演 / whether the model plays the protagonists")

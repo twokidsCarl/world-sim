@@ -17,7 +17,7 @@
         "zh": "更夫夜里看见钱庄往外抬箱子。看这句话怎么传开、走样，队伍怎么排起来。钱庄其实并不亏空。点任何一个人看他怎么想。",
         "en": "A night watchman sees boxes carried out of the bank. Watch the remark spread and distort and the queue form. The bank is in fact sound. Click anyone to see what they think."
       },
-      "url": "/?run=rumor_run-s1-cal-none"
+      "url": "/?run=rumor_run-s7-cal-none"
     },
     {
       "id": "guarantee",
@@ -26,34 +26,34 @@
         "zh": "和上一张是同一座城、同一句话，只多了第三天早上官银号的担保。对比两条世界线差在哪里。",
         "en": "Same town and same remark as the previous card, plus a guarantee from the official bank on the third morning. Compare where the two worlds part."
       },
-      "url": "/?run=rumor_run-s1-cal-guarantee"
+      "url": "/?run=rumor_run-s7-cal-guarantee"
     },
     {
       "id": "llm",
       "title": { "zh": "主角由大模型扮演", "en": "Protagonists played by a language model" },
       "hint": {
-        "zh": "十一个有名有姓的人物由模型决定怎么想、怎么办、对人说什么。这里跟着何寡妇：她的棺材本全在这家钱庄。",
-        "en": "Eleven named characters have a model decide what they think, do and say. This one follows the widow He, whose life savings are all in this bank."
+        "zh": "十一个有名有姓的人物由模型决定怎么想、怎么办、对人说什么。这里跟着更夫老周：箱子是他亲眼看见的，四十块钱是他的老本。在这个世界里钱庄撑住了。",
+        "en": "Eleven named characters have a model decide what they think, do and say. This one follows Old Zhou the night watchman, who saw the boxes himself and has forty yuan of savings at stake. In this world the bank holds."
       },
-      "url": "/?run=rumor_run-s1-cal-none-llm&person=widow&t=24"
+      "url": "/?run=rumor_run-s7-cal-none-llm&person=witness&t=38"
     },
     {
       "id": "toyokawa",
       "title": { "zh": "丰川信用金库，1973：一句玩笑", "en": "Toyokawa Shinkin Bank, 1973: a joke" },
       "hint": {
-        "zh": "按史料的时间线重演：通勤列车上的一句玩笑，一周后成了挤兑。这是金库撑住的一个世界；换种子，约三分之一的世界里它会倒，而史料里没有倒。",
-        "en": "A replay on the recorded timeline: a joke on a commuter train becomes a bank run a week later. This is a world where the bank holds; across seeds it fails in about a third of worlds, which did not happen in the record."
+        "zh": "按史料的时间线重演：通勤列车上的一句玩笑，一周后成了挤兑。这是发生了挤兑、金库撑住的一个世界；换种子，多数世界里玩笑不了了之。",
+        "en": "A replay on the recorded timeline: a joke on a commuter train becomes a bank run a week later. This is a world where a run happens and the bank holds; across seeds the joke goes nowhere in most worlds."
       },
       "url": "/?run=toyokawa-s7-cal&t=100"
     },
     {
       "id": "bea",
-      "title": { "zh": "东亚银行，2008：模型对不上的一次", "en": "Bank of East Asia, 2008: where the model gets it wrong" },
+      "title": { "zh": "东亚银行，2008：一条群发短信", "en": "Bank of East Asia, 2008: a mass text message" },
       "hint": {
-        "zh": "样本外检验。时间对得上，规模完全对不上：史料里只提走了 0.67% 的存款、银行没倒，模拟里人人都去取、银行倒了。留着它，是为了看清模型错在哪里。",
-        "en": "The out-of-sample test. The timing matches and the scale does not: in the record 0.67% of deposits left and the bank held, while in the simulation everyone withdraws and it fails. Kept here to show where the model is wrong."
+        "zh": "史料里只提走了 0.67% 的存款，银行没倒。模型最初在这里错得离谱（人人都去取），据此重新设计过「谁会去取」；现在规模对上了，但它已经是拟合过的案例，不算检验。",
+        "en": "In the record 0.67% of deposits left and the bank held. The model first got this badly wrong (everyone withdrew), and who withdraws was redesigned because of it; the scale now matches, but this is a fitted case and no longer a test."
       },
-      "url": "/?run=bea-s1-cal&t=30"
+      "url": "/?run=bea-s7-cal&t=40"
     },
     {
       "id": "lab",
@@ -62,14 +62,14 @@
         "zh": "停在第三天上午，钱庄还没倒。在右侧选一种干预加入，点「分叉重跑」，时间轴上虚线是原来那条世界线。",
         "en": "Paused on the third morning, before the bank fails. Pick an intervention on the right, add it and press the fork button; the dashed lines on the timeline are the original world."
       },
-      "url": "/?run=rumor_run-s1-cal-none&t=37&tab=lab"
+      "url": "/?run=rumor_run-s7-cal-none&t=37&tab=lab"
     },
     {
       "id": "evidence",
       "title": { "zh": "依据：理论、案例、事实与校准", "en": "Evidence: theories, cases, facts and calibration" },
       "hint": {
-        "zh": "模拟依据的 12 张理论卡、7 个案例、10 条典型事实，逐条标明出处是否核实；以及校准对上了什么、没对上什么。",
-        "en": "The 12 theory cards, 7 cases and 10 stylised facts behind the simulation, each marked with whether its sources were checked, and what calibration did and did not match."
+        "zh": "模拟依据的 12 张理论卡、10 个案例、10 条典型事实，逐条标明出处是否核实；以及校准对上了什么、没对上什么。",
+        "en": "The 12 theory cards, 10 cases and 10 stylised facts behind the simulation, each marked with whether its sources were checked, and what calibration did and did not match."
       },
       "url": "/?view=library"
     }

@@ -73,19 +73,57 @@ def fail_probability(belief, expect, p: Params):
     return 1.0 - (1.0 - belief) * (1.0 - run)
 
 
-def withdraw_hazard(belief, urgent, expect, fear, stake, risk_aversion, conformity, p: Params):
+def attachment(tenure, borrower):
+    """与银行的往来有多深，0 到 1：往来二十年算满，有贷款再加一半。
+    How deep the relationship with the bank runs, from 0 to 1: twenty years counts as full, and a loan adds half.
+
+    依据是 Iyer 与 Puri：往来久、有贷款的储户明显更不容易跑。两项各占一半是这里定的。
+    The evidence is Iyer and Puri: depositors with long relationships and loans are markedly less likely to run.
+    The equal weighting of the two is set here.
+    """
+    return 0.5 * np.minimum(np.asarray(tenure) / 20.0, 1.0) + 0.5 * np.asarray(borrower, dtype=float)
+
+
+def threshold(resolve, attach, p: Params):
+    """这个人的门槛：动机要高过它才会去取。每人一个，整场不变（Granovetter 的门槛模型）。
+    A person's threshold: the motive must exceed it before they withdraw. One per person, fixed for the whole run
+    (Granovetter's threshold model).
+    """
+    return p.spread * np.asarray(resolve) + p.attach * np.asarray(attach)
+
+
+def cover(insured, trust_institution):
+    """心里觉得有多少存款是保得住的：保险覆盖的比例 × 对官面的信任。
+    How much of the deposit feels safe: the insured share × trust in institutions.
+    """
+    return np.asarray(insured) * np.asarray(trust_institution)
+
+
+def withdraw_fraction(covered, fear):
+    """去了取多少：没保障的部分全取；有保障的部分，越怕取得越多。
+    How much is taken out once at the counter: all of the uncovered part, and more of the covered part the greater the fear.
+    """
+    return 1.0 - np.asarray(covered) * (1.0 - np.clip(fear, 0.0, 1.0))
+
+
+def withdraw_hazard(belief, urgent, expect, fear, stake, risk_aversion, conformity, p: Params, thresh=0.0, covered=0.0):
     """这一小时决定去取钱的概率。/ The probability of deciding to withdraw during this hour.
 
     信了还不够，还得觉得事情迫在眉睫（urgent）：信一个含糊的说法，人只会多打听，不会去排队。
     Believing is not enough; it has to feel imminent. Someone who believes a vague version asks around rather than queues.
+
+    动机没过自己的门槛（thresh）的人，等多久也不会去：没有这一条，每小时掷一次骰子，日子一长人人都会被掷中。
+    有保障的那部分存款（covered）不算在可能的损失里。
+    Someone whose motive stays below their own threshold never goes, however long they wait. Without this, a die
+    rolled every hour catches everybody in the end. The covered part of a deposit is left out of what can be lost.
     """
-    gain = fail_probability(belief * urgent, expect, p) * stake * (1.0 + risk_aversion) - p.cost
+    gain = fail_probability(belief * urgent, expect, p) * stake * (1.0 + risk_aversion) * (1.0 - covered) - p.cost
     u = p.lam * gain + 2.0 * conformity * (expect - 0.2) + 1.5 * (fear - 0.5) + p.bias
     # 估下来不值得跑一趟的人不会去：没有这一条，全城知情之后总有人"无缘无故"去取，再把别人带动起来
     # Nobody goes when the trip is not worth it by their own estimate. Without this, once the whole town has heard,
     # a trickle of people withdraw for no reason and set others off
     worth = np.clip(gain / 0.05, 0.0, 1.0)
-    return p.hazard * sigmoid(u) * worth
+    return p.hazard * sigmoid(u) * worth * (u > thresh)
 
 
 def fear_target(belief, urgent, expect, stake, risk_aversion):

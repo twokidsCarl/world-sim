@@ -28,6 +28,7 @@ SPACE: dict[str, tuple[float, float]] = {
     "lam": (4.0, 16.0),
     "bias": (-8.0, -3.0),
     "hazard": (0.05, 0.5),
+    "spread": (0.5, 5.0),
 }
 
 
@@ -144,6 +145,9 @@ def targets() -> list[Target]:
     if "toyokawa_shinkin_1973" in cases:
         out.append(Target("toyokawa_like", "cases/toyokawa_shinkin_1973", 0.3, 1.0,
                           "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）"))  # fmt: skip
+    if "bea_bank_run_2008" in cases:
+        out.append(Target("bea_amount", "cases/bea_bank_run_2008", 0.0, 0.02,
+                          "东亚银行：被提走的存款不到总额的 2%（主席事后的说法；银行公布的是 0.67%）。这个案例的结果已经看过，所以拿来校准、不再算检验"))  # fmt: skip
     if "sanren_chenghu" in cases:
         out.append(Target("sanren_steps", "cases/sanren_chenghu", 3.0, 3.0, "一人说不信，两人说起疑，三人说就信了"))
     return out
@@ -211,12 +215,25 @@ def toyokawa_like(over: dict[str, float], seeds: list[int], n: int) -> float:
     return float(np.mean([all(record_like(over, s, n).values()) for s in seeds]))
 
 
+def bea_amount(over: dict[str, float], seed: int, n: int) -> float:
+    """东亚银行场景里被提走的存款占总额的比例；银行倒了算全部。
+    Share of all deposits withdrawn in the Bank of East Asia scenario; a failed bank counts as everything.
+    """
+    sc = trace.scenario_module("bea")
+    params = Params(scenario="bea", seed=seed, n=n, **(sc.DEFAULTS | over))
+    params.interventions = sc.interventions(params.start_hour)
+    pop, r = trace.run_only(params)
+    if r.failed_at is not None:
+        return 1.0
+    return float(sum(e["x"] for e in r.events if e["k"] == "withdraw") / sum(p.deposit for p in pop.persons))
+
+
 def measure(over: dict[str, float], seed: int, n: int) -> dict[str, float]:
     """一组参数、一个种子下的全部校准指标，都在通和场景加可信担保的情形下量。
     All calibration metrics for one parameter set and one seed, measured on the fictional scenario with a credible guarantee.
 
-    丰川场景不参与校准：它留作校准之外的检验，见 canon.py。
-    The Toyokawa replay is deliberately left out: it is the out-of-sample test, see canon.py.
+    丰川和东亚银行两个场景另外各跑一遍，见 evaluate 和 bea_amount。
+    The Toyokawa and Bank of East Asia scenarios are each run separately; see evaluate and bea_amount.
     """
     base = Params(seed=seed, n=n)
     params = base.model_copy(update=over | {"interventions": guarantee(base.start_hour)})
@@ -227,6 +244,7 @@ def measure(over: dict[str, float], seed: int, n: int) -> dict[str, float]:
         "correction_residual": correction_residual(pop, result, params),
         "survived": survived(pop, result),
         "sanren_steps": sanren_steps(params),
+        "bea_amount": bea_amount(over, seed, n),
     }
 
 

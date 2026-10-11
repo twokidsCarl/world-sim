@@ -46,6 +46,9 @@ class Context:
     persona: str
     deposit: float
     stake: float
+    tenure: float
+    borrower: bool
+    covered: float
     risk_aversion: float
     conformity: float
     trust_institution: float
@@ -83,6 +86,10 @@ def prompt(c: Context) -> str:
         if c.can_withdraw
         else f"你在{c.bank}没有存款。"
     )
+    if c.can_withdraw:
+        money += f"你和这家银行往来了 {c.tenure:.0f} 年" + ("，在这里还有贷款。" if c.borrower else "。")
+        if c.covered > 0:
+            money += f"你听说存款有保险，自己估计大约 {c.covered:.0%} 的钱保得住。"
     temper = "、".join(
         [
             _level(c.risk_aversion, ("不大怕吃亏", "怕吃亏", "最怕吃亏")),
