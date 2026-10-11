@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { fitCanvas, theme } from '../plot/plot'
 import { LatticeRenderer, type LatticeView } from '../render/lattice'
+import { STATE_COLOURS } from '../render/palette'
 import { parseHex } from '../render/points'
 import type { IsingBackend, IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
 import type { Ising3dCpuBackend, Ising3dGpuBackend } from '../substrates/ising/backend3d'
+import type { PottsBackend, PottsCpuBackend, PottsGpuBackend } from '../substrates/potts/backend'
 import { engine } from './engine'
 import { useUi } from './store'
 
@@ -29,14 +31,14 @@ function rects(w: number, h: number): [number, number, number, number][] {
   return [tile(0, 0, h), tile(w - small, 0, small), tile(w - small, small, small), tile(w - small, 2 * small, small)]
 }
 
-function CpuCanvas() {
+function CpuCanvas({ palette = false }: { palette?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const scratch = document.createElement('canvas')
     return engine.onFrame(() => {
       const canvas = ref.current
       if (!canvas || engine.backend.kind !== 'cpu') return
-      const b = engine.backend as IsingCpuBackend | Ising3dCpuBackend
+      const b = engine.backend as IsingCpuBackend | Ising3dCpuBackend | PottsCpuBackend
       const { ctx, w, h } = fitCanvas(canvas)
       ctx.clearRect(0, 0, w, h)
       ctx.imageSmoothingEnabled = false
@@ -49,20 +51,21 @@ function CpuCanvas() {
           const sctx = scratch.getContext('2d')!
           const image = sctx.createImageData(size, size)
           for (let i = 0; i < size * size; i++) {
-            image.data[4 * i] = r
-            image.data[4 * i + 1] = g
-            image.data[4 * i + 2] = bl
-            image.data[4 * i + 3] = spins[i]! * 255
+            const c = palette ? STATE_COLOURS[spins[i]! & 7]! : [r, g, bl]
+            image.data[4 * i] = c[0]!
+            image.data[4 * i + 1] = c[1]!
+            image.data[4 * i + 2] = c[2]!
+            image.data[4 * i + 3] = palette ? 255 : spins[i]! * 255
           }
           sctx.putImageData(image, 0, 0)
           ctx.drawImage(scratch, ...layout[k]!)
         })
     })
-  }, [])
+  }, [palette])
   return <canvas ref={ref} className="stage wide" />
 }
 
-function GpuCanvas() {
+function GpuCanvas({ palette = false }: { palette?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     const canvas = ref.current
@@ -73,7 +76,7 @@ function GpuCanvas() {
     const renderer = new LatticeRenderer(gpu.device, gpu.format)
     return engine.onFrame(() => {
       if (engine.backend.kind !== 'gpu') return
-      const b = engine.backend as IsingGpuBackend | Ising3dGpuBackend
+      const b = engine.backend as IsingGpuBackend | Ising3dGpuBackend | PottsGpuBackend
       const dpr = window.devicePixelRatio || 1
       const w = Math.max(4, Math.round(canvas.clientWidth * dpr))
       const h = Math.max(3, Math.round(canvas.clientHeight * dpr))
@@ -88,10 +91,10 @@ function GpuCanvas() {
         .map((v, k) => ({ ...v, rect: layout[k]!.map(Math.floor) as LatticeView['rect'] }))
       const encoder = gpu.device.createCommandEncoder()
       b.encodePyramid(encoder)
-      renderer.draw(encoder, context.getCurrentTexture().createView(), views, parseHex(theme().ink))
+      renderer.draw(encoder, context.getCurrentTexture().createView(), views, parseHex(theme().ink), palette)
       gpu.device.queue.submit([encoder.finish()])
     })
-  }, [])
+  }, [palette])
   return <canvas ref={ref} className="stage wide" />
 }
 
@@ -113,6 +116,27 @@ export function IsingStage() {
   return (
     <section className="stage-wrap">
       {kind === 'gpu' ? <GpuCanvas /> : <CpuCanvas />}
+      <span ref={infoRef} className="caption" />
+    </section>
+  )
+}
+
+export function PottsStage() {
+  const kind = useUi((s) => s.backendKind)
+  const infoRef = useRef<HTMLSpanElement>(null)
+  useEffect(
+    () =>
+      engine.onFrame(() => {
+        const b = engine.backend as PottsBackend
+        if (infoRef.current) {
+          infoRef.current.textContent = `${b.L} × ${b.L} 个格点，${b.q} 种状态各一种颜色 · 第 ${b.stepCount} 次扫描 · 左：原始晶格；右：块边长 2、4、8 的相对多数粗粒化`
+        }
+      }),
+    [],
+  )
+  return (
+    <section className="stage-wrap">
+      {kind === 'gpu' ? <GpuCanvas palette /> : <CpuCanvas palette />}
       <span ref={infoRef} className="caption" />
     </section>
   )
