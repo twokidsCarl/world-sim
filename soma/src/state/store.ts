@@ -4,6 +4,7 @@
 
 import { create } from 'zustand'
 import { mapPartsBetween, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
+import { devShapeScales, loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
 import type { SectionState, SystemState } from './display.ts'
@@ -20,7 +21,7 @@ export interface Selection {
 
 export const EMPTY_SELECTION: Selection = { ids: [], set: new Set(), concept: null }
 
-export type LeftTab = 'display' | 'tree'
+export type LeftTab = 'display' | 'tree' | 'pose'
 
 /** 'tissue'：按组织着色；'source'：按几何来源着色。 */
 /** 'tissue': anatomical colours; 'source': colour by where the geometry came from. */
@@ -98,6 +99,21 @@ export interface AppState {
   skinHover: number | null
   /** 皮肤半透明以露出其下的支配神经 / Skin drawn see-through to reveal the supplying nerve. */
   skinSeeThrough: boolean
+  /** 当前人体的骨架绑定；首次打开"姿势"面板时才加载 / This body's rig, loaded when the Pose panel is first used. */
+  rig: LoadedRig | null
+  rigStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'stale' | 'error'
+  rigMessage: string
+  rigProgress: number
+  /** 目标姿势：关节 id → 各自由度的角度（弧度，相对静止姿势）/ Target pose: joint id → angle per dof (radians from rest). */
+  pose: Pose
+  /** 递增表示"过渡到当前姿势"（约 0.6 秒），否则立即应用 / Bumped to ask for a ~0.6 s transition to `pose`; otherwise it applies at once. */
+  poseAnimate: number
+  poseMirror: boolean
+  breathing: boolean
+  /** 正在操作的关节（显示操纵环和关节信息）/ The joint being manipulated (gizmo and joint info). */
+  poseJoint: string | null
+  jointScales: Scales | null
+  shapeDev: { stature: number; legRatio: number }
   selection: Selection
   hover: string | null
   explode: number
@@ -152,6 +168,18 @@ export interface AppState {
   setColorMode(mode: ColorMode): void
   setProvenanceVisible(p: Provenance, visible: boolean): void
   setNerveBoost(on: boolean): void
+  /** 加载当前人体的绑定（已加载则直接返回）/ Load this body's rig (no-op when loaded). */
+  ensureRig(): Promise<LoadedRig | null>
+  /** 查看器发现绑定与网格不符时调用 / Called by the viewer when the rig does not match the meshes. */
+  rejectRig(message: string): void
+  setPose(pose: Pose, opts?: { animate?: boolean }): void
+  setDof(joint: string, dof: number, angle: number): void
+  applyPosePreset(id: string): void
+  resetPose(): void
+  setPoseMirror(on: boolean): void
+  setBreathing(on: boolean): void
+  selectJoint(id: string | null): void
+  setShapeDev(stature: number, legRatio: number): void
   /** 打开 / 关闭体表图；首次打开时加载数据 / Turn a skin map on or off; loads the data on first use. */
   setSkinMapMode(mode: 'off' | SkinMapId): void
   /** 加载当前人体的体表图（已加载则直接返回）/ Load this body's skin maps (no-op when loaded). */
@@ -193,6 +221,15 @@ export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: Syst
   return n === 1 && !!systems[id]?.visible
 }
 
+let pendingRig: { graph: AnatomyGraph; promise: Promise<LoadedRig | null> } | null = null
+let rigLoader = (dataset: string, onProgress: (f: number) => void) => loadRig(`${import.meta.env.BASE_URL}anatomy/${dataset}/`, onProgress)
+
+/** 测试用：替换绑定的加载方式 / For tests: replace how the rig is fetched. */
+export function setRigLoader(loader: typeof rigLoader): void {
+  rigLoader = loader
+  pendingRig = null
+}
+
 let pendingSkinMaps: { graph: AnatomyGraph; promise: Promise<LoadedSkinMaps | null> } | null = null
 let skinMapLoader: (dataset: string) => Promise<LoadedSkinMaps | null> = (dataset) =>
   loadSkinMaps(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
@@ -221,6 +258,17 @@ export const useApp = create<AppState>()((set, get) => ({
   colorMode: 'tissue',
   provenanceHidden: new Set(),
   nerveBoost: true,
+  rig: null,
+  rigStatus: 'idle',
+  rigMessage: '',
+  rigProgress: 0,
+  pose: {},
+  poseAnimate: 0,
+  poseMirror: true,
+  breathing: false,
+  poseJoint: null,
+  jointScales: null,
+  shapeDev: { stature: 1, legRatio: 1 },
   skinMapMode: 'off',
   skinMaps: null,
   skinMapsStatus: 'idle',
@@ -304,8 +352,18 @@ export const useApp = create<AppState>()((set, get) => ({
       skinRegions: [],
       skinHover: null,
       skinSeeThrough: false,
+      // 绑定属于具体人体；姿势按关节 id 记录，换人体后沿用（新绑定里没有的关节被忽略）
+      // the rig belongs to one body; the pose is kept by joint id across a switch (joints the new rig lacks are ignored)
+      rig: null,
+      rigStatus: 'idle',
+      rigMessage: '',
+      rigProgress: 0,
+      poseJoint: null,
+      jointScales: null,
+      shapeDev: { stature: 1, legRatio: 1 },
     })
     if (get().skinMapMode !== 'off') void get().ensureSkinMaps()
+    if (get().leftTab === 'pose' || !poseIsRest(get().pose) || get().breathing) void get().ensureRig()
   },
 
   switchBody: (body) => {
@@ -433,6 +491,69 @@ export const useApp = create<AppState>()((set, get) => ({
     }),
   setNerveBoost: (nerveBoost) => set({ nerveBoost }),
 
+  ensureRig: async () => {
+    const { rig, rigStatus, graph, dataset } = get()
+    if (rig || !graph) return rig
+    if (rigStatus === 'missing' || rigStatus === 'stale' || rigStatus === 'error') return null
+    if (pendingRig && pendingRig.graph === graph) return pendingRig.promise
+    set({ rigStatus: 'loading', rigProgress: 0, rigMessage: '' })
+    const promise = rigLoader(dataset, (f) => {
+      if (get().graph === graph) set({ rigProgress: f })
+    })
+      .then((res) => {
+        if (get().graph !== graph) return null // 已换人体 / the body changed meanwhile
+        if (!res.ok) {
+          set({ rigStatus: res.reason, rigMessage: res.message })
+          return null
+        }
+        set({ rig: res.rig, rigStatus: 'ready', rigProgress: 1 })
+        return res.rig
+      })
+      .catch((err: unknown) => {
+        console.warn('[soma] rig failed to load', err)
+        if (get().graph === graph) set({ rigStatus: 'error', rigMessage: err instanceof Error ? err.message : String(err) })
+        return null
+      })
+      .finally(() => {
+        if (pendingRig?.graph === graph) pendingRig = null
+      })
+    pendingRig = { graph, promise }
+    return promise
+  },
+  rejectRig: (message) => set({ rig: null, rigStatus: 'stale', rigMessage: message, poseJoint: null, breathing: false }),
+
+  setPose: (pose, opts) => set((s) => ({ pose, poseAnimate: opts?.animate ? s.poseAnimate + 1 : s.poseAnimate })),
+  setDof: (joint, dof, angle) => {
+    const { rig, pose, poseMirror } = get()
+    if (rig) set({ pose: withDof(rig.rig.joints, pose, joint, dof, angle, poseMirror) })
+  },
+  applyPosePreset: (id) => {
+    const { rig } = get()
+    const preset = rig ? posePresets(rig.rig.joints).find((p) => p.id === id) : undefined
+    if (preset) get().setPose(preset.pose, { animate: true })
+  },
+  resetPose: () => set((s) => ({ pose: {}, poseAnimate: s.poseAnimate + 1, breathing: false })),
+  setPoseMirror: (poseMirror) => set({ poseMirror }),
+  setBreathing: (breathing) => {
+    set({ breathing })
+    if (breathing) void get().ensureRig()
+  },
+  selectJoint: (id) => {
+    const { rig, graph } = get()
+    if (!id || !rig || !graph) {
+      set({ poseJoint: null })
+      return
+    }
+    // 高亮这个关节直接带动的骨（刚性绑定在它上面的部件）
+    // highlight the bones this joint moves directly (parts rigidly bound to it)
+    const ids = rig.rig.bindings.filter((b) => b.joint === id && graph.part(b.part)).map((b) => b.part)
+    set({ poseJoint: id, selection: makeSelection(ids) })
+  },
+  setShapeDev: (stature, legRatio) => {
+    const { rig } = get()
+    set({ shapeDev: { stature, legRatio }, jointScales: rig ? devShapeScales(rig.rig.joints, stature, legRatio) : null })
+  },
+
   setSkinMapMode: (mode) => {
     if (get().skinMapMode === mode) return
     set({ skinMapMode: mode, skinRegions: [], skinHover: null, skinSeeThrough: false })
@@ -519,7 +640,10 @@ export const useApp = create<AppState>()((set, get) => ({
   requestFocus: (ids = null) => set((s) => ({ focusRequest: { nonce: s.focusRequest.nonce + 1, ids } })),
   requestHome: () => set((s) => ({ homeRequest: s.homeRequest + 1 })),
 
-  setLeftTab: (leftTab) => set({ leftTab }),
+  setLeftTab: (leftTab) => {
+    set({ leftTab })
+    if (leftTab === 'pose') void get().ensureRig()
+  },
   setTreeTab: (treeTab) => set({ treeTab }),
   toggleExpanded: (tree, id) =>
     set((s) => {

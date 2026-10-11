@@ -1,3 +1,4 @@
+// 回退的场景表示：每个部件一个网格，用于 WebGL2 后端。合批路径从一个大索引缓冲里发出几千次子绘制，Chrome 的 WebGL2（ANGLE on Metal）会随“子绘制数 × 索引缓冲大小”变慢（2000 个部件时 385 毫秒一帧），所以 WebGL2 下每个部件单独绘制、各有自己的小索引缓冲；顶点缓冲仍然共享，颜色来自逐对象 uniform，材质与合批路径相同。
 // Fallback scene representation: one Mesh per part, used on the WebGL2 backend.
 //
 // The batched path (batches.ts) issues thousands of sub-draws out of ONE large index buffer.
@@ -20,9 +21,9 @@ import {
 } from 'three/webgpu'
 import { userData } from 'three/tsl'
 import { DoubleSide, FrontSide } from 'three/webgpu'
-import { MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, makePartMaterials, type BakedPart, type PartMaterialSet, type PartRenderer } from './batches.ts'
+import { MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, makePartMaterials, type BakedPart, type PartBuffers, type PartMaterialSet, type PartRenderer } from './batches.ts'
+import { NOT_BOOSTED, type SkinningData, type SkinningMode } from './skinning.ts'
 
-const NOT_BOOSTED = 1000
 
 interface Entry {
   baked: BakedPart
@@ -44,8 +45,12 @@ export class PartMeshes implements PartRenderer {
   private readonly fwd = new Vector3()
   private readonly cam = new Vector3()
 
-  constructor() {
-    this.materials = makePartMaterials(userData('rgba', 'vec4'))
+  readonly skinning: SkinningData
+  private readonly ranges: { vertexStart: number; vertexCount: number }[] = []
+
+  constructor(skinning: SkinningData) {
+    this.skinning = skinning
+    this.materials = makePartMaterials(skinning, userData('rgba', 'vec4'))
   }
 
   get size(): number {
@@ -62,6 +67,7 @@ export class PartMeshes implements PartRenderer {
   }
 
   /**
+   * 把上次调用之后加入的部件的顶点拼进共享缓冲（每个系统一套），并创建它们的网格。
    * Concatenate the vertices of the parts added since the last call into shared buffers
    * (one set per loaded system) and create their meshes.
    */
@@ -72,6 +78,9 @@ export class PartMeshes implements PartRenderer {
     const position = new BufferAttribute(new Float32Array(vertices * 3), 3)
     const normal = new BufferAttribute(new Float32Array(vertices * 3), 3)
     const thin = new BufferAttribute(new Float32Array(vertices), 1)
+    // 蒙皮属性先占位，绑定数据加载后再填 / skin attributes are reserved now and filled in when the rig loads
+    const skinIndex = new BufferAttribute(new Uint16Array(vertices * 4), 4, true)
+    const skinWeight = new BufferAttribute(new Uint8Array(vertices * 4), 4, true)
     let vo = 0
     for (const e of this.pending) {
       const g = e.baked.geometry
@@ -82,13 +91,17 @@ export class PartMeshes implements PartRenderer {
       const src = g.index!.array
       const index = new Uint32Array(src.length)
       for (let i = 0; i < src.length; i++) index[i] = src[i]! + vo
+      this.ranges.push({ vertexStart: vo, vertexCount: count })
       vo += count
 
       const geometry = new BufferGeometry()
       geometry.setAttribute('position', position)
       geometry.setAttribute('normal', normal)
       geometry.setAttribute('aThin', thin)
+      geometry.setAttribute('skinIndex', skinIndex)
+      geometry.setAttribute('skinWeight', skinWeight)
       geometry.setIndex(new BufferAttribute(index, 1))
+      // 包围盒取自数据文件：自己算的话每个部件都要扫一遍整个共享缓冲
       // bounds from the data file: computing them would scan the whole shared buffer per part
       const b = e.bbox
       geometry.boundingBox = new Box3(new Vector3(b[0], b[1], b[2]), new Vector3(b[3], b[4], b[5]))
@@ -153,9 +166,45 @@ export class PartMeshes implements PartRenderer {
   }
 
   setBoost(radiusPerMetre: number): void {
-    this.materials.boost.value = radiusPerMetre
+    this.materials.data.boost.value = radiusPerMetre
   }
 
+  partBuffers(id: number): PartBuffers {
+    const g = this.meshes[id]!.geometry
+    const r = this.ranges[id]!
+    const v0 = r.vertexStart
+    const v1 = v0 + r.vertexCount
+    return {
+      position: (g.getAttribute('position').array as Float32Array).subarray(v0 * 3, v1 * 3),
+      skinIndex: (g.getAttribute('skinIndex').array as Uint16Array).subarray(v0 * 4, v1 * 4),
+      skinWeight: (g.getAttribute('skinWeight').array as Uint8Array).subarray(v0 * 4, v1 * 4),
+      aux: (g.getAttribute('aThin').array as Float32Array).subarray(v0, v1),
+      index: g.index!.array as Uint32Array,
+      indexBase: v0,
+    }
+  }
+
+  flushSkinAttributes(): void {
+    const seen = new Set<unknown>()
+    for (const m of this.meshes) {
+      for (const name of ['skinIndex', 'skinWeight', 'aThin']) {
+        const a = m.geometry.getAttribute(name) as BufferAttribute
+        if (!seen.has(a)) {
+          seen.add(a)
+          a.needsUpdate = true
+        }
+      }
+    }
+  }
+
+  setSkinning(mode: SkinningMode): void {
+    this.materials.setSkinning(mode)
+    // 摆姿势后数据文件里的包围盒不再可信：不做视锥裁剪
+    // the data file's bounds are wrong once posed: no frustum culling
+    for (const m of this.meshes) m.frustumCulled = mode === 'off'
+  }
+
+  /** 每个混合部件质心的观察深度，供渲染器的透明排序读取。 */
   /** View depth of each blended part's centroid, read by the renderer's transparent sort. */
   beforeRender(camera: Camera): void {
     this.cam.setFromMatrixPosition(camera.matrixWorld)
@@ -169,6 +218,7 @@ export class PartMeshes implements PartRenderer {
   }
 
   dispose(): void {
+    // 顶点属性按系统共享；逐个释放几何，最后一个使用者释放后才真正释放
     // vertex attributes are shared per system; disposing each geometry releases them once all users are gone
     for (const m of this.meshes) m.geometry.dispose()
     this.materials.solid.dispose()
@@ -177,6 +227,7 @@ export class PartMeshes implements PartRenderer {
   }
 }
 
+/** 逐网格路径的透明排序：按部件质心深度从后往前。 */
 /** Transparent sort for the per-mesh path: back to front by part centroid depth. */
 export function centroidTransparentSort(
   a: { renderOrder: number; object: Object3D; id: number },

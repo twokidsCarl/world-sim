@@ -80,6 +80,14 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             skinRegions: [],
             skinHover: null,
             skinSeeThrough: false,
+            // 对照窗格暂不摆姿势（见报告）/ the compare pane is not posed yet (see report)
+            rig: null,
+            pose: {},
+            poseAnimate: 0,
+            breathing: false,
+            poseJoint: null,
+            jointScales: null,
+            leftTab: 'display',
           }
         }
         viewer = new Viewer(host, g, `${import.meta.env.BASE_URL}anatomy/${other}/`, {

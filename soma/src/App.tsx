@@ -8,6 +8,7 @@ import { CautionsDialog } from './ui/CautionsDialog.tsx'
 import { DisplayPanel } from './ui/DisplayPanel.tsx'
 import { Icon } from './ui/Icon.tsx'
 import { InfoPanel } from './ui/InfoPanel.tsx'
+import { PosePanel } from './ui/PosePanel.tsx'
 import { TopBar } from './ui/TopBar.tsx'
 import { TreePanel } from './ui/TreePanel.tsx'
 import { ViewerPane } from './ui/ViewerPane.tsx'
@@ -25,6 +26,7 @@ export function App() {
 
   const requestedBody = useApp((s) => s.requestedBody)
 
+  // 第一个人体由 URL 指定；之后由顶栏的切换控件驱动 `requestedBody`
   // the URL names the first body; after that the top-bar switch drives `requestedBody`
   useEffect(() => {
     useApp.setState({ requestedBody: requestedDataset(location.search) })
@@ -43,9 +45,11 @@ export function App() {
         debug.graph = g
         for (const n of ds.notices) app.addNotice(n)
         app.init(g, ds.dataset)
+        // 缺少的人体会回退到示例数据；切换控件随之显示实际加载的那个
         // a missing body falls back to the fixture; the switch then shows what is really loaded
         useApp.setState({ requestedBody: ds.dataset })
         app.setLoad({ progress: 0.1, message: '加载模型…' })
+        // 不刷新页面也让地址保持可分享
         // keep the address shareable without reloading the page
         const url = new URL(location.href)
         if (ds.dataset === 'male') url.searchParams.delete('body')
@@ -89,11 +93,14 @@ export function App() {
             <button role="tab" aria-selected={leftTab === 'tree'} className={leftTab === 'tree' ? 'active' : ''} onClick={() => setLeftTab('tree')}>
               结构树 <span className="en">Tree</span>
             </button>
+            <button role="tab" aria-selected={leftTab === 'pose'} className={leftTab === 'pose' ? 'active' : ''} onClick={() => setLeftTab('pose')}>
+              姿势 <span className="en">Pose</span>
+            </button>
             <button className="drawer-close" onClick={() => setLeftOpen(false)} aria-label="关闭">
               <Icon name="close" />
             </button>
           </div>
-          {graph && (leftTab === 'display' ? <DisplayPanel graph={graph} /> : <TreePanel graph={graph} />)}
+          {graph && (leftTab === 'display' ? <DisplayPanel graph={graph} /> : leftTab === 'pose' ? <PosePanel graph={graph} /> : <TreePanel graph={graph} />)}
         </aside>
 
         <main className="stage">
