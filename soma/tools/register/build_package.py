@@ -23,6 +23,7 @@ from scipy.spatial import cKDTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import anchor_spec  # noqa: E402
+import denver_import  # noqa: E402
 import hra_place  # noqa: E402
 from anchorlib import (BinWriter, apply, end_slab, frame, kabsch, load_bp3d_obj, pca_axis, ransac_sphere,  # noqa: E402
                        render, rigid_about, rot_angle_deg, sample_surface, unit)
@@ -429,11 +430,44 @@ def main():
     hra_recs, hra_report, hra_bones = hra_place.place(hra_dir, items, work, V2A)
     recs += hra_recs
 
+    # ── Denver lower-extremity set (same donor, cryosections) ────────────────────────────────
+    den_report = {"present": False}
+    if denver_import.available(DENVER_DIR):
+        den_recs, den_report = denver_import.place(DENVER_DIR, items, work, V2A, male, raw_seg_dir=sys.argv[6] if len(sys.argv) > 6 else None)
+        den_report["present"] = True
+        recs += den_recs
+        for r in den_recs:
+            for i in r["male_parts"]:
+                claimed[i].append(r["id"])
+    # which of two sources to use when both cover a structure
+    ids = {r["id"] for r in recs}
+    alt = defaultdict(list)
+    for r in recs:
+        r.setdefault("follows", None)
+        r.setdefault("duplicates", None)
+    for r in recs:
+        if r["source"] != "denver":
+            continue
+        cands = [x for x in (r["duplicates"] or "").split(" + ") if x in ids] if r["kind"] in ("bone", "bone-group") else \
+                [r["id"].replace("VD_", "VF_")] if r["id"].replace("VD_", "VF_") in ids else []
+        for x in cands:
+            alt[x].append(r["id"])
+            alt[r["id"]].append(x)
+    for r in recs:
+        r["alternatives"] = sorted(set(alt.get(r["id"], [])))
+    rec_by = {r["id"]: r for r in recs}
+    for r in recs:
+        if "preferred" not in r:
+            # a CT item stays preferred unless every part of it is covered by a preferred Denver item
+            r["preferred"] = not any(rec_by[o].get("preferred") for o in r["alternatives"])
+
     # ── binaries ──────────────────────────────────────────────────────────────────────────────
     wS, wR = BinWriter(os.path.join(out, "scanned.bin")), BinWriter(os.path.join(out, "reposed.bin"))
     for r in recs:
         v, f, T = r.pop("_v"), r.pop("_f"), r.pop("_T")
         r["mesh"] = {"scanned": wS.add(v, f)}
+        if r.get("_w") is not None:
+            r["mesh"]["scanned"]["vertex_weight"] = wS.add_array(r.pop("_w"))
         r["mesh"]["reposed"] = wR.add(v if T is None else apply(T, v), f) if r["pose"] == "both" else None
         if T is not None:
             vr = apply(T, v)
@@ -498,6 +532,35 @@ def main():
                             "volume_ratio_L_over_R": round(a["volume_ml"] / b["volume_ml"], 3),
                             "length_ratio_L_over_R": round(ext(S(a["id"])) / ext(S(b["id"])), 3) if isbone else None})
 
+    # Denver muscles: left/right symmetry and female/male volume
+    def male_volume(parts):
+        tot = 0.0
+        for p in parts:
+            mm_ = male.mesh(p["id"])
+            if mm_ is not None and len(mm_[1]):
+                tot += abs(float(np.einsum("ij,ij->i", mm_[0][mm_[1][:, 0]], np.cross(mm_[0][mm_[1][:, 1]], mm_[0][mm_[1][:, 2]])).sum() / 6.0)) * 1e6
+            elif p.get("volume"):
+                tot += float(p["volume"])
+            else:
+                return None
+        return tot or None
+
+    muscles = []
+    for r in recs:
+        if r["source"] == "denver" and r["kind"] == "muscle" and r["side"] == "L":
+            o = by_id[r["id"].replace("_left", "_right")]
+            mvL = male_volume([p for p in male.parts if p["id"] in r["male_parts"]]) if r["male_parts"] else None
+            mvR = male_volume([p for p in male.parts if p["id"] in o["male_parts"]]) if o["male_parts"] else None
+            fm = (r["volume_ml"] + o["volume_ml"]) / (mvL + mvR) if mvL and mvR else None
+            muscles.append({"muscle": r["id"].replace("VD_", "").replace("_left", ""), "left_ml": r["volume_ml"], "right_ml": o["volume_ml"],
+                            "L_over_R": round(r["volume_ml"] / o["volume_ml"], 3), "male_left_ml": round(mvL, 1) if mvL else None,
+                            "male_right_ml": round(mvR, 1) if mvR else None, "female_over_male": round(fm, 3) if fm else None,
+                            "male_parts": len(r["male_parts"])})
+    fmr = [m_["female_over_male"] for m_ in muscles if m_["female_over_male"]]
+    fm_med = float(np.median(fmr)) if fmr else None
+    for m_ in muscles:
+        m_["outlier"] = bool(m_["female_over_male"] and fm_med and not (0.5 < m_["female_over_male"] / fm_med < 2.0)) or abs(m_["L_over_R"] - 1) > 0.25
+
     # coverage: male parts with a female anchor, by system and by body region
     reg_rx = [("head", anchor_spec.CRANIAL[:-2] + r"|mandible|hyoid bone)$"), ("neck", r"cervical vertebra$|^atlas$|^axis$"),
               ("thorax", r"thoracic vertebra$| rib$|sternum|manubrium|xiphoid|costal cartilage$|^clavicle$|^scapula$"),
@@ -524,7 +587,6 @@ def main():
     counts = Counter((r["source"], r["kind"], r["quality"]) for r in recs)
 
     # ── manifest ─────────────────────────────────────────────────────────────────────────────
-    denver_present = os.path.isdir(DENVER_DIR) and any(f.lower().endswith(".stl") for _, _, fs in os.walk(DENVER_DIR) for f in fs)
     manifest = {
         "schema": 1, "name": "soma female anchor set (Visible Human Female)", "license": "CC BY-SA 4.0",
         "frame": {"units": "metre", "axes": "+X patient left, +Y up (superior), +Z anterior",
@@ -542,7 +604,11 @@ def main():
             {"id": "hra", "name": "Human Reference Atlas 3D Reference Object Library, united female v1.10", "provider": "HuBMAP / HRA",
              "url": "https://cdn.humanatlas.io/digital-objects/ref-organ/united-female/latest/assets/3d-vh-f-united.glb",
              "license": "CC BY 4.0", "license_url": "https://creativecommons.org/licenses/by/4.0/",
-             "attribution": hra_place.HRA_ATTR, "provenance": "curated"}],
+             "attribution": hra_place.HRA_ATTR, "provenance": "curated"},
+            {"id": "denver", "name": "Three-dimensional lower extremity musculoskeletal geometry of the Visible Human Female (Final 3D STL Models)",
+             "provider": "University of Denver, Center for Orthopaedic Biomechanics", "url": "https://digitalcommons.du.edu/visiblehuman/1",
+             "doi": "10.56902/COB.vh.2022.1", "license": "CC BY 4.0", "license_url": "https://creativecommons.org/licenses/by/4.0/",
+             "attribution": denver_import.ATTR, "provenance": "scanned (manual segmentation of the donor's cryosections)"}],
         "tools": [
             {"name": "TotalSegmentator 2.18.0", "license": "Apache-2.0 (open tasks only were used)",
              "cite": "Wasserthal J. et al. TotalSegmentator: Robust Segmentation of 104 Anatomic Structures in CT Images. Radiology: Artificial Intelligence 2023;5(5):e230024."},
@@ -562,21 +628,18 @@ def main():
                    "reposed_doc": "same items as scanned minus pose == 'scanned-only'; upper-limb bones have their `repose` transform applied"},
         "pose": pose,
         "hra_placement": hra_report,
-        "hooks": {"denver": {
-            "present": bool(denver_present), "expected_directory": DENVER_DIR,
-            "expected_content": "extracted 'Final 3D STL Models' of the University of Denver Visible Human Female lower-extremity set "
-                                "(https://digitalcommons.du.edu/visiblehuman/1, CC BY 4.0, Andreassen et al., Sci Data 10, 34 (2023))",
-            "would_add": ["hip bones with separate pubis / ischium detail", "individual tarsal bones (talus, calcaneus, navicular, cuboid, cuneiforms)",
-                          "76 individually segmented pelvis / thigh / leg muscles", "hip, knee and ankle cartilage, 8 knee ligaments"],
-            "import_status": "not implemented: the STLs are in the aligned cryosection frame; they need a rigid fit to this package's "
-                             "pelvis / femur / tibia anchors (same donor, so per-bone ICP should be near-exact) before being added with ids DU_*"}},
+        "denver_import": den_report,
+        "fat": json.load(open(os.path.join(work, "fat_report.json"))) if os.path.exists(os.path.join(work, "fat_report.json")) else None,
+        "hooks": {"denver": {"present": bool(den_report["present"]), "expected_directory": DENVER_DIR + "/" + denver_import.SUBDIR,
+                             "import_status": "implemented (denver_import.py); items VD_*" if den_report["present"] else
+                             "directory not found at build time; package built without VD_* items"}},
         "counts": {f"{a}/{b}/{c}": n for (a, b, c), n in sorted(counts.items())},
         "items": [{k: v for k, v in r.items() if not k.startswith("_")} for r in recs],
     }
     json.dump(manifest, open(os.path.join(out, "manifest.json"), "w"), indent=1)
 
     sanity = {"bone_size_ratio_female_over_male": {"median": round(med, 3), "items": sizes}, "skeleton_measures": pelvis,
-              "left_right_symmetry": sym,
+              "left_right_symmetry": sym, "denver_muscles": {"median_female_over_male": round(fm_med, 3) if fm_med else None, "items": muscles},
               "coverage_by_system": {k: dict(v) for k, v in cov_sys.items()},
               "coverage_by_region": {k: dict(v) for k, v in cov_reg.items()},
               "male_parts_total": len(male.parts), "male_parts_with_anchor": len(claimed)}
@@ -600,6 +663,16 @@ def main():
             G(lambda r: r["id"] in ("VF_urinary_bladder",), (240, 220, 80)), G(lambda r: r["id"] == "VF_colon", (150, 110, 70)),
             G(lambda r: r["source"] == "hra" and "mammary" not in r.get("hra_path", ""), (255, 80, 120))],
            os.path.join(out, "preview", "pelvis_hra_organs.png"), height=900, crop=([-0.2, 0.80, -0.14], [0.2, 1.08, 0.16]))
+    if den_report["present"]:
+        den = lambda kind: (lambda r: r["source"] == "denver" and r["kind"] == kind)
+        render([G(lambda r: bone(r) and re.match(r"VF_(hip|sacrum|femur|tibia|fibula|patella|tarsal|metatarsal|toes|vertebrae_L)", r["id"]) is not None, (120, 120, 100)),
+                G(den("muscle"), (220, 90, 80)), G(den("ligament"), (90, 220, 255)), G(den("cartilage"), (120, 255, 160))],
+               os.path.join(out, "preview", "denver_legs.png"), crop=([-0.3, 0.0, -0.2], [0.3, 1.2, 0.25]))
+        render([G(lambda r: r["id"].startswith("VF_tarsal") or r["id"].startswith("VF_metatarsal") or r["id"].startswith("VF_toes"), (255, 120, 60)),
+                G(lambda r: r["source"] == "denver" and r["kind"] in ("bone", "bone-group") and re.search(r"talus|calcaneus|navicular|cuboid|cuneiform", r["id"]) is not None, (120, 220, 255))],
+               os.path.join(out, "preview", "denver_tarsals_vs_ct.png"), height=700, crop=([-0.2, 0.0, -0.12], [0.2, 0.2, 0.2]))
+    render([G(skin, (150, 150, 150), True), G(lambda r: r["id"] == "HRA_skin", (255, 120, 170))],
+           os.path.join(out, "preview", "skin_ct_vs_hra.png"))
     # re-posed arms against the male (male drawn after rigid trunk alignment + translation to the female shoulders' midpoint)
     arm_rx = r"VF_(humerus|radius|ulna|carpal|metacarpal|fingers|scapula|clavicula)_"
     armF = lambda r: re.match(arm_rx, r["id"]) is not None
@@ -616,7 +689,7 @@ def main():
            os.path.join(out, "preview", "arms_scanned_vs_reposed.png"), crop=box)
     print(json.dumps({"counts": manifest["counts"], "pose": pose["sides"], "trunk_deg": pose["trunk_alignment_female_to_male_deg"],
                       "pelvis": pelvis, "median_ratio": med, "outliers": [s for s in sizes if s["outlier"]],
-                      "coverage_by_system": sanity["coverage_by_system"], "hra": hra_report.get("summary")}, indent=1))
+                      "coverage_by_system": sanity["coverage_by_system"], "hra": hra_report.get("summary"), "denver": den_report.get("summary")}, indent=1))
 
 
 if __name__ == "__main__":
