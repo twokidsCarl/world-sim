@@ -75,6 +75,8 @@ export class MdGpuBackend implements MdBackend {
   spec: PotentialSpec
   /** 粒子位置，供渲染器使用。 / Particle positions, for the renderer. */
   readonly pos: GPUBuffer
+  /** 第 0 号粒子最近一次回读到的位置 / Position of particle 0 as of the last readback */
+  tracked: ArrayLike<number> | null = null
   /** 每粒子：位力份额、Re ψ6、Im ψ6、近邻数。 / Per particle: virial share, Re ψ6, Im ψ6, neighbour count. */
   readonly aux: GPUBuffer
 
@@ -421,7 +423,8 @@ export class MdGpuBackend implements MdBackend {
     const fieldBytes = wantField ? fieldWords * 4 : 0
     const modeBytes = wantModes ? MODE_SLOTS * 4 : 0
     const staging = this.device.createBuffer({
-      size: partialBytes + histBytes + heatBytes + fieldBytes + modeBytes,
+      // 末尾 16 字节：第 0 号粒子的位置。 / The last 16 bytes: the position of particle 0.
+      size: partialBytes + histBytes + heatBytes + fieldBytes + modeBytes + 16,
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
     })
     this.writeParams(vmax)
@@ -448,6 +451,7 @@ export class MdGpuBackend implements MdBackend {
     if (wantModes) {
       encoder.copyBufferToBuffer(this.buffers[13]!, 0, staging, partialBytes + histBytes + heatBytes + fieldBytes, modeBytes)
     }
+    encoder.copyBufferToBuffer(this.buffers[1]!, 0, staging, partialBytes + histBytes + heatBytes + fieldBytes + modeBytes, 16)
     pass = encoder.beginComputePass()
     this.dispatch(pass, 'clearHist', HIST_WORDS)
     this.dispatch(pass, 'clearHeat', this.chunks, 64)
@@ -466,6 +470,7 @@ export class MdGpuBackend implements MdBackend {
     const partial = new Float32Array(raw, 0, this.chunks * PARTIAL_FLOATS)
     const hist = new Uint32Array(raw, partialBytes, HIST_WORDS)
     const heatPartial = new Float32Array(raw, partialBytes + histBytes, this.chunks)
+    this.tracked = Array.from(new Float32Array(raw, partialBytes + histBytes + heatBytes + fieldBytes + modeBytes, 3))
 
     // 各块的和是 f32；总和用 f64 累加。 / Chunk sums are f32; the totals are accumulated in f64.
     let ke = 0
@@ -498,7 +503,9 @@ export class MdGpuBackend implements MdBackend {
     }
     const n = this.n
     const volume = this.box[0] * this.box[1] * this.box[2]
-    const temperature = (2 * ke) / (this.dim * (n - 1))
+    // 整体流动的动能不计入温度，与 ref/step.ts 的 temperature 一致。
+    // The kinetic energy of bulk flow is left out of the temperature, as in temperature() in ref/step.ts.
+    const temperature = (2 * (ke - (px * px + py * py + pz * pz) / (2 * n))) / (this.dim * (n - 1))
     if (epoch > this.rebasedAt) {
       this.rebasedAt = epoch
       this.heat = 0

@@ -142,6 +142,36 @@ const COLOURS = ['单色', '局域六角序 |ψ₆|', '粒子种类']
 const SLAB_HALF = 1.5
 
 /**
+ * 鼠标停在 g(r) 图上时，以第 0 号粒子为圆心画出对应半径的圆：图上的峰就是圆上挤着的邻居。
+ * While the pointer is over the g(r) plot, draw a circle of that radius around particle 0:
+ * a peak in the plot is the neighbours crowding on the circle.
+ */
+function ShellRing() {
+  const ref = useRef<HTMLElement>(null)
+  useEffect(
+    () =>
+      engine.onFrame(() => {
+        const el = ref.current
+        if (!el) return
+        const b = engine.backend as MdBackend
+        const r = engine.view.shell ?? 0
+        const at = b.tracked
+        if (!(r > 0) || !at || b.dim !== 2) {
+          el.hidden = true
+          return
+        }
+        el.hidden = false
+        el.style.left = `${((at[0]! - r) / b.box[0]!) * 100}%`
+        el.style.top = `${((at[1]! - r) / b.box[1]!) * 100}%`
+        el.style.width = `${((2 * r) / b.box[0]!) * 100}%`
+        el.style.height = `${((2 * r) / b.box[1]!) * 100}%`
+      }),
+    [],
+  )
+  return <i ref={ref} className="shell" hidden />
+}
+
+/**
  * 在舞台上拖出一个矩形选区；右侧各层会同时画出选区内的取值。仅二维。
  * Drag a rectangle on the stage; the level cards then also draw the values inside it. 2D only.
  */
@@ -237,6 +267,7 @@ export function MdStage() {
       <div className="stage-frame">
         {kind === 'gpu' ? <GpuCanvas /> : <CpuCanvas />}
         {!three && <RegionBrush />}
+        {!three && <ShellRing />}
       </div>
       <span ref={infoRef} className="caption" />
       {!three && (

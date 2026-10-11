@@ -268,11 +268,15 @@ export function kineticEnergy(s: MdState): number {
 }
 
 /**
- * 动理学温度，已扣除质心的 dim 个自由度。
- * Kinetic temperature, with the dim centre-of-mass degrees of freedom removed.
+ * 动理学温度：只算相对于质心的运动，并扣除质心的 dim 个自由度。整体流动的动能不是热。
+ * Kinetic temperature: of the motion relative to the centre of mass only, with the dim
+ * centre-of-mass degrees of freedom removed. The kinetic energy of bulk flow is not heat.
  */
 export function temperature(s: MdState): number {
-  return (2 * kineticEnergy(s)) / (s.dim * (s.n - 1))
+  const p = momentum(s)
+  let bulk = 0
+  for (const c of p) bulk += (c * c) / (2 * s.n)
+  return (2 * (kineticEnergy(s) - bulk)) / (s.dim * (s.n - 1))
 }
 
 export function momentum(s: MdState): number[] {
