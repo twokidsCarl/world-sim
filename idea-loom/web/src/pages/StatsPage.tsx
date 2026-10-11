@@ -95,17 +95,21 @@ export function StatsPage({ state }: { state: State }) {
         <Tile label={t('读缓存', 'Cache reads')} value={compact(stats.totals.cache_read, lang)} note={t('token，重复读上文的量', 'tokens, the context read again')} />
       </div>
 
-      <Tabs
-        label={t('统计分段', 'Statistics sections')}
-        value={tab}
-        onChange={setTab}
-        items={[
-          { id: 'projects', label: t('项目', 'Projects') },
-          { id: 'runs', label: t('运行', 'Runs') },
-          { id: 'attention', label: t('注意力', 'Attention') },
-          { id: 'calls', label: t('模型调用', 'Model calls') },
-        ]}
-      />
+      {/* 包一层，让标签和上面的数字卡片、下面的内容各有间距。 */}
+      {/* A wrapper so the tabs get spacing from the tiles above and the content below. */}
+      <div className="stats-tabs">
+        <Tabs
+          label={t('统计分段', 'Statistics sections')}
+          value={tab}
+          onChange={setTab}
+          items={[
+            { id: 'projects', label: t('项目', 'Projects') },
+            { id: 'runs', label: t('运行', 'Runs') },
+            { id: 'attention', label: t('注意力', 'Attention') },
+            { id: 'calls', label: t('模型调用', 'Model calls') },
+          ]}
+        />
+      </div>
 
       {tab === 'projects' && (
         <>
