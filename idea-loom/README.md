@@ -98,10 +98,9 @@ generated from it.
     After approval a second run starts: it may only edit the job's directory
     (`idea-loom/` for a wish, the subproject's directory for a task) and run that
     directory's test commands, never git or gh. Anything not explicitly allowed is denied.
-  - 它结束后由程序自己：检查有没有改到目录外面的文件（有就判失败，不开 PR）→ 把测试重跑一遍（不过就停）→ 调用 `tools/pr.sh` → 合并后把愿望标为已做完、任务标为已合并。
-    When it finishes the runner itself checks that nothing outside the directory changed
-    (if anything did, the job fails with no PR), re-runs the tests (stopping on a
-    failure), calls `tools/pr.sh`, and after the merge marks the wish done or the task merged.
+  - 它结束后由程序自己：把测试重跑一遍 → 调用 `tools/pr.sh`（只提交这个目录）→ 合并后把愿望标为已做完、任务标为已合并。
+    When it finishes the runner itself re-runs the tests, calls `tools/pr.sh` (which
+    submits this directory only), and after the merge marks the wish done or the task merged.
   - 以程序重跑的测试为准，不以 Claude 自己说"做完了"为准。测试没过会把输出交回给它修，最多两轮。它被拒绝的操作会记下来显示在作业的"经过"里。
     The tests re-run by the runner decide the outcome, not the agent's own "done". Failing
     output is handed back to it for repair, twice at most. Operations it was denied are
@@ -116,13 +115,14 @@ generated from it.
     Each phase runs in its own process with its state under `runs/jobs/`, unaffected by a
     backend restart.
 
-  已知的边界：目录限制管的是 Claude 的写文件工具。测试命令会执行这个目录里的代码，那些代码在技术上能写到别处；所以另有"改到目录外就判失败"的检查，而且 PR 只包含这个目录。PR 合并前没有人工审查——你审的是方案。
+  已知的边界：目录限制管的是 Claude 的写文件工具（用真实 CLI 验证过），而且 PR 只包含这个目录。但测试命令会执行这个目录里的代码，那些代码在技术上能写到本机的别处；工作目录是多个会话共用的，别的目录随时有人在改，所以程序没法靠比较文件变化来发现这种情况。PR 合并前没有人工审查——你审的是方案。
 
-  A known limit: the directory restriction applies to Claude's file-writing tools. The
-  test commands execute code from that directory, which could technically write
-  elsewhere; hence the separate check that fails a job on any change outside the
-  directory, and the PR only ever contains that directory. No human reviews the PR before
-  it merges — what you review is the plan.
+  A known limit: the directory restriction applies to Claude's file-writing tools (checked
+  against the real CLI), and the PR only ever contains that directory. But the test
+  commands execute code from that directory, which could technically write elsewhere on
+  this machine; the working tree is shared and other directories change all the time, so
+  the runner cannot detect that by comparing files. No human reviews the PR before it
+  merges — what you review is the plan.
 - **推进 / Advance**：在开发页对一个子项目点"推进"，模型读它的 README 和最近的 PR，提议下一个里程碑，建成一个待开工的任务。
   Press "advance" on a subproject and the model reads its README and recent PRs, proposes
   the next milestone and files it as a todo task.

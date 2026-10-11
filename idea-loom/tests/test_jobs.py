@@ -120,14 +120,12 @@ def test_cannot_approve_twice_or_with_uncommitted_changes(repo, wish):
         jobs.approve(job.job_id)
 
 
-def test_changes_outside_the_directory_fail_the_job_without_a_pr(repo, wish, monkeypatch):
-    monkeypatch.setenv("FAKE_WRITES", json.dumps({"idea-loom/src/a.py": "x = 2\n", "other.txt": "被改了\n"}))
+def test_other_sessions_changing_other_directories_do_not_fail_the_job(repo, wish):
     job = jobs.start("wish", wish)
+    (repo / "other.txt").write_text("别的会话同时改了别的目录\n")
     jobs.approve(job.job_id)
-    job = jobs.get(job.job_id)
-    assert job.phase == "failed" and "other.txt" in job.error and "外面" in job.error
-    assert not (repo / "tools" / "args.txt").exists()
-    assert wishes.get(wish).status == "accepted" and "作业失败" in wishes.get(wish).notes[0].text
+    assert jobs.get(job.job_id).phase == "merged"
+    assert (repo / "tools" / "args.txt").read_text().splitlines()[1:] == ["idea-loom"]  # PR 只含这个目录 / the PR holds this directory only
 
 
 def test_failed_tests_block_the_pr_and_revert_restores_the_files(repo, wish, monkeypatch):
