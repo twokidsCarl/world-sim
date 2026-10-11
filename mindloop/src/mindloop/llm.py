@@ -9,7 +9,9 @@
 
 环境变量：
     MINDLOOP_CLAUDE_BIN  claude 可执行文件（缺省在 PATH 里找 `claude`）
-    MINDLOOP_CACHE       磁盘缓存目录（缺省 <项目根>/.cache/llm）
+    MINDLOOP_CACHE       磁盘缓存目录 / disk cache directory
+                         （缺省 $WORLD_SIM_STATE/llm；再没有就是 <项目根>/.cache/llm）
+                         (default $WORLD_SIM_STATE/llm, else <project root>/.cache/llm)
     MINDLOOP_MODEL       缺省模型（缺省 sonnet）
     MINDLOOP_TIMEOUT     单次调用超时秒数（缺省 90）
 """
@@ -63,8 +65,18 @@ def default_model() -> str:
 
 
 def cache_dir() -> Path:
+    """缓存写到哪里：MINDLOOP_CACHE > $WORLD_SIM_STATE/llm > <项目根>/.cache/llm。
+
+    Where the cache goes. Under the shared host (idea-loom) the project directory is a
+    snapshot that is replaced on every release, so run-time data belongs in WORLD_SIM_STATE.
+    """
     env = os.environ.get("MINDLOOP_CACHE")
-    return Path(env) if env else Path(__file__).resolve().parents[2] / ".cache" / "llm"
+    if env:
+        return Path(env)
+    state = os.environ.get("WORLD_SIM_STATE")
+    if state:
+        return Path(state) / "llm"
+    return Path(__file__).resolve().parents[2] / ".cache" / "llm"
 
 
 def _timeout() -> float:
