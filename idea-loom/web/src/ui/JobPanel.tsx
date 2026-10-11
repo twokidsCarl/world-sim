@@ -80,7 +80,7 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
     <div className="job">
       <div className="job-head">
         <span className={`badge ${TONE[job.phase] ?? ''}`}>
-          {active && <span className="spin" aria-hidden="true">◌</span>} {label(lang, 'phase', job.phase, job.phase_label)}
+          {active && <span className="spin" aria-hidden="true">◌</span>} {job.queued ? t('排队中', 'Queued') : label(lang, 'phase', job.phase, job.phase_label)}
         </span>
         <span className="muted small">
           {t('在', 'In')} <code>{job.directory}/</code> · {t('开始于', 'started')} {formatTime(job.created_at)}
@@ -104,6 +104,7 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
       )}
 
       {job.error && <div className="notice bad pre" role="alert">{job.error}</div>}
+      {job.queued && job.waiting && <div className="notice warn" role="status">{t(`还没轮到：${job.waiting}`, `Not started yet: ${job.waiting}`)}</div>}
       {job.phase === 'merged' && (
         <div className="notice good" role="status">
           {t('已合并', 'Merged')}{job.pr_url && <>{t('：', ': ')}<a href={job.pr_url} target="_blank" rel="noreferrer">{t(`合并请求 #${job.pr}`, `pull request #${job.pr}`)}</a></>}{t('。', '.')}

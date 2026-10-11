@@ -77,7 +77,8 @@ STREAM_SCRIPT = r'''#!{python}
 import json, os, sys, time
 stdin = sys.stdin.read()
 with open(os.environ["FAKE_LOG"], "a") as f:
-    f.write(json.dumps({{"argv": sys.argv[1:], "stdin": stdin, "cwd": os.getcwd()}}) + "\n")
+    f.write(json.dumps({{"argv": sys.argv[1:], "stdin": stdin, "cwd": os.getcwd(), "has_push_token": "GH_TOKEN" in os.environ,
+                        "scrub": os.environ.get("CLAUDE_CODE_SUBPROCESS_ENV_SCRUB", "")}}) + "\n")
 executing = "--tools" in sys.argv and "Edit" in sys.argv[sys.argv.index("--tools") + 1]
 if executing:
     for rel, content in json.loads(os.environ.get("FAKE_WRITES", "{{}}")).items():

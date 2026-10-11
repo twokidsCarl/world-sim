@@ -507,6 +507,14 @@ def list_jobs() -> list[jobs.Job]:
     return jobs.listing()
 
 
+@app.get("/api/worker")
+def worker_status() -> dict[str, object]:
+    """队列、在跑的作业、今天开工了几个、额度有没有到暂停线。 / The queue, running jobs, how many started today, and whether the allowance pause is on."""
+    from . import worker
+
+    return worker.status()
+
+
 @app.post("/api/jobs", response_model=jobs.Job)
 def start_job(body: JobStartBody) -> jobs.Job:
     return _do(jobs.start, body.kind, body.ref)
