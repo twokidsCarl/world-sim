@@ -119,22 +119,24 @@ button.chip.thread.on { color: var(--ink); border-color: var(--tc); background: 
 
 /* 地图 / map */
 .grid-wrap { overflow-x: auto; }
-.grid { width: 100%; min-width: 860px; border-collapse: collapse; table-layout: fixed; }
+/* 每列至少 150px，窄了就横向滚动 / each column is at least 150px; scroll sideways when narrower */
+.grid { width: 100%; min-width: 1010px; border-collapse: collapse; table-layout: fixed; }
 .grid th, .grid td { border: 1px solid var(--line); vertical-align: top; text-align: left; }
 .grid thead th { padding: 8px 10px; font-weight: 600; font-size: 13px; background: var(--panel); }
-.grid thead th a, .grid .lv a { text-decoration: none; }
+.grid thead th a, .grid .lv a { text-decoration: none; overflow-wrap: anywhere; }
 .grid th.lv { width: 190px; padding: 8px 10px; font-weight: 400; background: var(--panel); }
 .grid th.lv a { font: 600 15px var(--serif); }
 .grid .lv-id { color: var(--accent); font-family: var(--sans); font-size: 12.5px; margin-right: 2px; }
 .grid th.lv .chip { margin-top: 4px; }
 .grid .total { width: 70px; text-align: center; vertical-align: middle; font-size: 16px; background: var(--panel); }
 .grid .total a { text-decoration: none; }
-.cell { height: 84px; padding: 0; }
+/* 格子随内容长高，标题最多两行 / cells grow with content; titles clamp to two lines */
+.cell { min-height: 84px; padding: 0; }
 .cell a { display: block; height: 100%; padding: 7px 9px; text-decoration: none; }
 .cell a:hover { box-shadow: inset 0 0 0 2px var(--accent); }
 .cell .n { font: 600 18px var(--serif); display: block; line-height: 1.1; }
 .cell .titles { display: grid; margin-top: 3px; font-size: 11.5px; line-height: 1.45; color: var(--ink-2); }
-.cell .titles span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell .titles span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .cell .titles .more { color: var(--ink-3); }
 .cell .none { display: grid; place-items: center; height: 100%; color: var(--ink-3); }
 .cell.s0 { background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--line) 45%, transparent) 6px 7px); }

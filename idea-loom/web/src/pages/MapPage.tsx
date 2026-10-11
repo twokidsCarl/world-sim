@@ -76,7 +76,7 @@ export function MapPage({ state }: { state: State }) {
                                   <span className="n num">{ids.length}</span>
                                   <span className="titles">
                                     {ids.slice(0, 3).map((id) => (
-                                      <span key={id}>{title.get(id)}</span>
+                                      <span key={id} title={title.get(id)}>{title.get(id)}</span>
                                     ))}
                                     {ids.length > 3 && <span className="more">还有 {ids.length - 3} 条</span>}
                                   </span>
