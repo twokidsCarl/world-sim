@@ -1,0 +1,1016 @@
+{
+  "title": "Contract",
+  "type": "object",
+  "properties": {
+    "state": {
+      "$ref": "#/$defs/State"
+    },
+    "idea": {
+      "$ref": "#/$defs/IdeaDetail"
+    }
+  },
+  "required": [
+    "state",
+    "idea"
+  ],
+  "$defs": {
+    "Counts": {
+      "properties": {
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "by_status": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "By Status",
+          "type": "object"
+        },
+        "live": {
+          "title": "Live",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "total",
+        "by_status",
+        "live"
+      ],
+      "title": "Counts",
+      "type": "object"
+    },
+    "Coverage": {
+      "description": "层 × 横线每格有几条（只算在池、开发中、已做出的）。\n\nIdeas per level × thread cell, counting only live ones (pool, building, built).",
+      "properties": {
+        "cells": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "title": "Cells",
+          "type": "object"
+        },
+        "by_level": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "By Level",
+          "type": "object"
+        },
+        "untagged": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Untagged",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cells",
+        "by_level",
+        "untagged"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "Edge": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "refined_from",
+            "fused_from",
+            "split_from",
+            "merged_into"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "target"
+      ],
+      "title": "Edge",
+      "type": "object"
+    },
+    "Frame": {
+      "description": "想法池的骨架：层、横线、内核。 / The skeleton of the pool: levels, threads, kernels.",
+      "properties": {
+        "levels": {
+          "items": {
+            "$ref": "#/$defs/LevelInfo"
+          },
+          "title": "Levels",
+          "type": "array"
+        },
+        "threads": {
+          "items": {
+            "$ref": "#/$defs/ThreadInfo"
+          },
+          "title": "Threads",
+          "type": "array"
+        },
+        "kernels": {
+          "items": {
+            "$ref": "#/$defs/KernelInfo"
+          },
+          "title": "Kernels",
+          "type": "array"
+        }
+      },
+      "required": [
+        "levels",
+        "threads",
+        "kernels"
+      ],
+      "title": "Frame",
+      "type": "object"
+    },
+    "HistoryItem": {
+      "properties": {
+        "at": {
+          "title": "At",
+          "type": "string"
+        },
+        "by": {
+          "title": "By",
+          "type": "string"
+        },
+        "by_label": {
+          "title": "By Label",
+          "type": "string"
+        },
+        "event": {
+          "enum": [
+            "created",
+            "edited",
+            "moved",
+            "status",
+            "merged_into",
+            "discarded",
+            "restored",
+            "noted"
+          ],
+          "title": "Event",
+          "type": "string"
+        },
+        "event_label": {
+          "title": "Event Label",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "pr": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pr"
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "at",
+        "by",
+        "by_label",
+        "event",
+        "event_label",
+        "text",
+        "pr",
+        "before",
+        "after"
+      ],
+      "title": "HistoryItem",
+      "type": "object"
+    },
+    "Idea": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "L1",
+            "L2",
+            "L3",
+            "L4",
+            "L5",
+            "L6",
+            "L7",
+            "L8",
+            "L9",
+            "L10",
+            "纵",
+            "造",
+            "规"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "threads": {
+          "items": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E"
+            ],
+            "type": "string"
+          },
+          "title": "Threads",
+          "type": "array"
+        },
+        "kernel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kernel"
+        },
+        "status": {
+          "default": "pool",
+          "enum": [
+            "draft",
+            "pool",
+            "building",
+            "built",
+            "merged",
+            "discarded"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "status_label": {
+          "default": "在池",
+          "title": "Status Label",
+          "type": "string"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/Edge"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "merged_into": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Merged Into"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "origin": {
+          "$ref": "#/$defs/Origin"
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "title": "Updated At",
+          "type": "string"
+        },
+        "versions": {
+          "default": 1,
+          "title": "Versions",
+          "type": "integer"
+        },
+        "mentions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Mentions",
+          "type": "array"
+        },
+        "projects": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Projects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "body",
+        "level",
+        "threads",
+        "kernel",
+        "status",
+        "status_label",
+        "edges",
+        "merged_into",
+        "reason",
+        "origin",
+        "created_at",
+        "updated_at",
+        "versions",
+        "mentions",
+        "projects"
+      ],
+      "title": "Idea",
+      "type": "object"
+    },
+    "IdeaDetail": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "L1",
+            "L2",
+            "L3",
+            "L4",
+            "L5",
+            "L6",
+            "L7",
+            "L8",
+            "L9",
+            "L10",
+            "纵",
+            "造",
+            "规"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "threads": {
+          "items": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E"
+            ],
+            "type": "string"
+          },
+          "title": "Threads",
+          "type": "array"
+        },
+        "kernel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kernel"
+        },
+        "status": {
+          "default": "pool",
+          "enum": [
+            "draft",
+            "pool",
+            "building",
+            "built",
+            "merged",
+            "discarded"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "status_label": {
+          "default": "在池",
+          "title": "Status Label",
+          "type": "string"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/Edge"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "merged_into": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Merged Into"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "origin": {
+          "$ref": "#/$defs/Origin"
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "title": "Updated At",
+          "type": "string"
+        },
+        "versions": {
+          "default": 1,
+          "title": "Versions",
+          "type": "integer"
+        },
+        "mentions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Mentions",
+          "type": "array"
+        },
+        "projects": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Projects",
+          "type": "array"
+        },
+        "prompt_text": {
+          "title": "Prompt Text",
+          "type": "string"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/HistoryItem"
+          },
+          "title": "History",
+          "type": "array"
+        },
+        "links_out": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "title": "Links Out",
+          "type": "array"
+        },
+        "links_in": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "title": "Links In",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "body",
+        "level",
+        "threads",
+        "kernel",
+        "status",
+        "status_label",
+        "edges",
+        "merged_into",
+        "reason",
+        "origin",
+        "created_at",
+        "updated_at",
+        "versions",
+        "mentions",
+        "projects",
+        "prompt_text",
+        "history",
+        "links_out",
+        "links_in"
+      ],
+      "title": "IdeaDetail",
+      "type": "object"
+    },
+    "KernelCount": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "desc": {
+          "title": "Desc",
+          "type": "string"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Project"
+        },
+        "ideas": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ideas",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "desc",
+        "project",
+        "ideas"
+      ],
+      "title": "KernelCount",
+      "type": "object"
+    },
+    "KernelInfo": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "desc": {
+          "default": "",
+          "title": "Desc",
+          "type": "string"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project"
+        }
+      },
+      "required": [
+        "name",
+        "desc",
+        "project"
+      ],
+      "title": "KernelInfo",
+      "type": "object"
+    },
+    "LevelInfo": {
+      "properties": {
+        "id": {
+          "enum": [
+            "L1",
+            "L2",
+            "L3",
+            "L4",
+            "L5",
+            "L6",
+            "L7",
+            "L8",
+            "L9",
+            "L10",
+            "纵",
+            "造",
+            "规"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "unit": {
+          "default": "",
+          "title": "Unit",
+          "type": "string"
+        },
+        "emerges": {
+          "default": "",
+          "title": "Emerges",
+          "type": "string"
+        },
+        "intro": {
+          "default": "",
+          "title": "Intro",
+          "type": "string"
+        },
+        "kind": {
+          "default": "ladder",
+          "enum": [
+            "ladder",
+            "vertical",
+            "branch"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "unit",
+        "emerges",
+        "intro",
+        "kind"
+      ],
+      "title": "LevelInfo",
+      "type": "object"
+    },
+    "Link": {
+      "description": "血缘图里的一条边，方向是 source → target。 / One lineage edge, source → target.",
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "kind",
+        "label"
+      ],
+      "title": "Link",
+      "type": "object"
+    },
+    "Origin": {
+      "description": "一条 idea 是怎么来的。 / Where an idea came from.",
+      "properties": {
+        "how": {
+          "default": "human",
+          "title": "How",
+          "type": "string"
+        },
+        "commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commit"
+        },
+        "pr": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pr"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt"
+        }
+      },
+      "title": "Origin",
+      "type": "object",
+      "required": [
+        "how",
+        "commit",
+        "pr",
+        "subject",
+        "prompt"
+      ]
+    },
+    "Project": {
+      "properties": {
+        "dir": {
+          "title": "Dir",
+          "type": "string"
+        },
+        "tagline": {
+          "default": "",
+          "title": "Tagline",
+          "type": "string"
+        },
+        "level": {
+          "anyOf": [
+            {
+              "enum": [
+                "L1",
+                "L2",
+                "L3",
+                "L4",
+                "L5",
+                "L6",
+                "L7",
+                "L8",
+                "L9",
+                "L10",
+                "纵",
+                "造",
+                "规"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Level"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Keywords",
+          "type": "array"
+        },
+        "ideas": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ideas",
+          "type": "array"
+        },
+        "ui_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ui Url"
+        }
+      },
+      "required": [
+        "dir",
+        "tagline",
+        "level",
+        "keywords",
+        "ideas",
+        "ui_url"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "State": {
+      "properties": {
+        "frame": {
+          "$ref": "#/$defs/Frame"
+        },
+        "projects": {
+          "items": {
+            "$ref": "#/$defs/Project"
+          },
+          "title": "Projects",
+          "type": "array"
+        },
+        "ideas": {
+          "items": {
+            "$ref": "#/$defs/Idea"
+          },
+          "title": "Ideas",
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "title": "Links",
+          "type": "array"
+        },
+        "coverage": {
+          "$ref": "#/$defs/Coverage"
+        },
+        "kernels": {
+          "items": {
+            "$ref": "#/$defs/KernelCount"
+          },
+          "title": "Kernels",
+          "type": "array"
+        },
+        "counts": {
+          "$ref": "#/$defs/Counts"
+        },
+        "unreadable": {
+          "default": 0,
+          "title": "Unreadable",
+          "type": "integer"
+        },
+        "labels": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Labels",
+          "type": "object"
+        }
+      },
+      "required": [
+        "frame",
+        "projects",
+        "ideas",
+        "links",
+        "coverage",
+        "kernels",
+        "counts",
+        "unreadable",
+        "labels"
+      ],
+      "title": "State",
+      "type": "object"
+    },
+    "ThreadInfo": {
+      "properties": {
+        "id": {
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "short": {
+          "title": "Short",
+          "type": "string"
+        },
+        "desc": {
+          "default": "",
+          "title": "Desc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "short",
+        "desc"
+      ],
+      "title": "ThreadInfo",
+      "type": "object"
+    },
+    "Version": {
+      "properties": {
+        "at": {
+          "title": "At",
+          "type": "string"
+        },
+        "by": {
+          "title": "By",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        }
+      },
+      "required": [
+        "at",
+        "by",
+        "title",
+        "body"
+      ],
+      "title": "Version",
+      "type": "object"
+    }
+  }
+}
