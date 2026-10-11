@@ -102,6 +102,7 @@ export function compressibilityLimit(p: Record<string, number>, T: number): numb
     spec.m === 6 &&
     spec.rc >= 4 &&
     !p.fractionB &&
+    !p.chain &&
     !p.walls &&
     ljFluid2dApplies(p.density!, T)
   if (!applies) return null

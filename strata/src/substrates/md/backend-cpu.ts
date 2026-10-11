@@ -2,8 +2,10 @@ import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
 import { Correlator } from '../../analysis/autocorrelation'
 import { speciesField, speciesTables, type PairField, type PotentialSpec } from './potential'
-import { initFcc, initTriangular } from './ref/init'
+import { initChains, initFcc, initTriangular } from './ref/init'
 import {
+  aggregates,
+  type Aggregates,
   densityModes,
   q6Summary,
   type Q6Summary,
@@ -28,7 +30,7 @@ import {
   volume,
   type MdState,
 } from './ref/step'
-import { boxAspect, fccCells, fieldKey, obstacleOf, potentialSpec, strengthMatrix } from './schema'
+import { BOND_K, BOND_R0, boxAspect, chainOf, fccCells, fieldKey, obstacleOf, potentialSpec, repulsiveMatrix, strengthMatrix } from './schema'
 
 export interface MdFrame extends Frame {
   time: number
@@ -53,6 +55,8 @@ export interface MdFrame extends Frame {
   modes?: DensityModes
   /** Steinhardt q₆ 的汇总，仅三维 / Summary of Steinhardt q₆, 3D only */
   q6?: Q6Summary
+  /** 两亲分子的聚集体统计；只在成键时给出。 / Aggregate statistics of the amphiphiles; present only with bonds. */
+  aggregates?: Aggregates
   /**
    * 输运系数用的记录，只有 CPU 后端提供：切应力的自相关、均方位移及其起算以来的时间。
    * Records for transport coefficients, from the CPU backend only: the shear-stress
@@ -152,9 +156,13 @@ export class MdCpuBackend implements MdBackend {
     this.p = { ...p }
     this.spec = potentialSpec(p)
     this.key = fieldKey(p)
-    this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p)))
-    this.state =
-      p.dim === 3
+    this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p), undefined, repulsiveMatrix(p)))
+    this.state = chainOf(p)
+      ? initChains(
+          { nx: Math.min(p.nx, CPU_MAX_NX), density: p.density, temperature: p.temperature, seed, chain: chainOf(p), bondK: BOND_K, bondR0: BOND_R0 },
+          this.pair,
+        )
+      : p.dim === 3
         ? initFcc(
             {
               cells: Math.min(fccCells(p.nx), CPU_MAX_CELLS),
@@ -183,7 +191,7 @@ export class MdCpuBackend implements MdBackend {
     this.applyDrive()
     // 这些力是在开启壁面之前算出的。 / Forces were computed before the walls were switched on.
     if (this.state.walls) computeForces(this.state, this.pair)
-    if (p.integrator === 1 && !this.state.walls) this.reversible = toReversible(this.state, this.pair, p.dt)
+    if (p.integrator === 1 && !this.state.walls && !this.state.chain) this.reversible = toReversible(this.state, this.pair, p.dt)
     this.start = this.state.pos.slice()
     this.rebase()
   }
@@ -239,7 +247,7 @@ export class MdCpuBackend implements MdBackend {
     if (fieldKey(p) !== this.key) {
       this.key = fieldKey(p)
       this.spec = potentialSpec(p)
-      this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p)))
+      this.pair = speciesField(speciesTables(this.spec, strengthMatrix(p), undefined, repulsiveMatrix(p)))
       computeForces(this.state, this.pair)
       this.rebase()
     }
@@ -361,6 +369,7 @@ export class MdCpuBackend implements MdBackend {
       }
     }
     if (ids.includes('q6') && s.dim === 3) frame.q6 = q6Summary(s)
+    if (ids.includes('aggregates') && s.chain > 1) frame.aggregates = aggregates(s.pos, 2, s.n, s.chain, s.box)
     if (region) frame.region = regionFrame(s, region, ids, 4 * Math.sqrt(sc.temperature))
     return frame
   }

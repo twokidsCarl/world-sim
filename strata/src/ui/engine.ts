@@ -239,6 +239,16 @@ export class Engine {
     this.rebuild()
   }
 
+  /**
+   * 把所有旋钮恢复成默认值（计算后端除外）并重建。引导实验开始前调用，免得上一个实验留下的设置混进来。
+   * Put every knob back to its default (except the compute backend) and rebuild. Called before a
+   * guided experiment starts, so that settings left by the previous one do not leak in.
+   */
+  resetParams(): void {
+    this.params = { ...defaults(this.substrate.knobs), backend: this.params.backend ?? 0 }
+    this.rebuild()
+  }
+
   private rebuild(): void {
     this.backend.dispose()
     this.backend = this.substrate.create(this.params, this.seed, this.gpu)

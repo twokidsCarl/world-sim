@@ -4,8 +4,10 @@ import { PassTimer } from '../../gpu/timing'
 import type { MdBackend, MdFrame, Region, RegionFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
 import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
-import { initFcc, initTriangular } from './ref/init'
+import { initChains, initFcc, initTriangular } from './ref/init'
 import {
+  aggregates,
+  type Aggregates,
   FIELD_G,
   fieldGrid,
   MODE_COUNT,
@@ -16,7 +18,7 @@ import {
   type FieldSums,
   type Hist,
 } from './ref/reducers'
-import { boxAspect, fccCells, fieldKey, obstacleOf, potentialSpec, strengthMatrix } from './schema'
+import { BOND_K, BOND_R0, boxAspect, chainOf, fccCells, fieldKey, obstacleOf, potentialSpec, repulsiveMatrix, strengthMatrix } from './schema'
 
 const CHUNK = 256
 const TABLE_K = 2048
@@ -92,6 +94,8 @@ export class MdGpuBackend implements MdBackend {
   private table!: PairTable
   private key: string
   private fractionB = 0
+  /** 每个分子的珠子数；不成键时为 0。 / Beads per molecule; 0 without bonds. */
+  private chain = 0
   private cells = 0
   private nc: [number, number, number] = [1, 1, 1]
   private cap = 0
@@ -126,10 +130,15 @@ export class MdGpuBackend implements MdBackend {
     this.lastT = p.temperature
     this.spec = potentialSpec(p)
     this.key = fieldKey(p)
-    const field = speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K))
+    const field = speciesField(speciesTables(this.spec, strengthMatrix(p), TABLE_K, repulsiveMatrix(p)))
     this.dim = p.dim === 3 ? 3 : 2
-    const init =
-      this.dim === 3
+    this.chain = chainOf(p)
+    const init = this.chain
+      ? initChains(
+          { nx: p.nx!, density: p.density!, temperature: p.temperature!, seed, chain: this.chain, bondK: BOND_K, bondR0: BOND_R0 },
+          field,
+        )
+      : this.dim === 3
         ? initFcc(
             { cells: fccCells(p.nx!), density: p.density!, temperature: p.temperature!, seed, fractionB: p.fractionB },
             field,
@@ -204,7 +213,7 @@ export class MdGpuBackend implements MdBackend {
    */
   private uploadTable(): void {
     const strength = strengthMatrix(this.p)
-    const tables = speciesTables(this.spec, strength, TABLE_K)
+    const tables = speciesTables(this.spec, strength, TABLE_K, repulsiveMatrix(this.p))
     this.table = tables[0]![0]!
     const stride = (TABLE_K + 1) * 2
     const data = new Float32Array(4 * stride)
@@ -274,12 +283,12 @@ export class MdGpuBackend implements MdBackend {
     u.set([this.n, this.dim, TABLE_K, CHUNK], 8)
     f.set([this.p.dt, t.rc2, t.r2min, t.k / (t.rc2 - t.r2min)], 12)
     f.set([vmax, this.rdfMax, this.lambda, this.rdfReach], 16)
-    u.set([modeStride(this.box[0]!), modeStride(this.box[1]!), region ? 1 : 0, 0], 24)
+    u.set([modeStride(this.box[0]!), modeStride(this.box[1]!), region ? 1 : 0, this.chain], 24)
     f.set(region ?? [0, 0, 0, 0], 28)
     u.set([...fieldGrid(this.box), 0, 0], 32)
     const o = this.obstacle
     f.set(o ? [o.x, o.y, o.r, 1] : [0, 0, 0, 0], 36)
-    f.set([this.p.walls === 1 && this.dim === 2 ? (this.p.gravity ?? 0) : 0, this.p.temperature! + (this.p.deltaT ?? 0), 0, 0], 40)
+    f.set([this.p.walls === 1 && this.dim === 2 ? (this.p.gravity ?? 0) : 0, this.p.temperature! + (this.p.deltaT ?? 0), BOND_K, BOND_R0], 40)
     const walls = this.p.walls === 1
     f.set([walls ? this.p.drive! : 0, this.p.temperature!], 20)
     u.set([walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
@@ -478,6 +487,7 @@ export class MdGpuBackend implements MdBackend {
     this.submit(encoder)
     // 选区的统计紧跟着提交，读到的是同一时刻的状态。
     // The region's statistics are submitted right behind, so they see the same state.
+    const grouped = ids.includes('aggregates') && this.chain > 1 ? this.readAggregates() : null
     const regional = region ? this.reduceRegion(region, wantSpeed, wantRdf, vmax, rdfMax) : null
 
     try {
@@ -585,7 +595,26 @@ export class MdGpuBackend implements MdBackend {
     staging.unmap()
     staging.destroy()
     if (regional) frame.region = await regional
+    if (grouped) frame.aggregates = await grouped
     return frame
+  }
+
+  /**
+   * 聚集体统计需要所有粒子的位置：回读位置缓冲，在 CPU 上做并查集。只在成键时用，粒子数不多。
+   * Aggregate statistics need every position: read the position buffer back and run the union–find
+   * on the CPU. Used only with bonds, where the particle count is modest.
+   */
+  private async readAggregates(): Promise<Aggregates> {
+    const bytes = this.n * 16
+    const staging = this.device.createBuffer({ size: bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })
+    const encoder = this.device.createCommandEncoder()
+    encoder.copyBufferToBuffer(this.buffers[1]!, 0, staging, 0, bytes)
+    this.submit(encoder)
+    await staging.mapAsync(GPUMapMode.READ)
+    const out = aggregates(new Float32Array(staging.getMappedRange()), 4, this.n, this.chain, this.box)
+    staging.unmap()
+    staging.destroy()
+    return out
   }
 
   /**

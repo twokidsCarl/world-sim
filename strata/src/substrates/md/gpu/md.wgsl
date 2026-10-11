@@ -36,7 +36,8 @@ struct Params {
   strideY: u32,
   // 1：只统计选区内的粒子 / 1: reductions count only particles inside the region
   regionOn: u32,
-  pad1: u32,
+  // 每个分子的珠子数，0 表示不成键 / beads per molecule, 0 for no bonds
+  chain: u32,
   // 选区矩形 (x0, y0, x1, y1) / region rectangle (x0, y0, x1, y1)
   region: vec4f,
   // 粗粒化网格沿 x、y 的格数 / cells of the coarse-graining grid along x and y
@@ -249,6 +250,26 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
       let i6 = pow(t, -6.0);
       f += vec3f(24.0 * (2.0 * i6 * i6 - i6) / t * od / dist, 0.0);
       pe += 4.0 * (i6 * i6 - i6) + 1.0;
+    }
+  }
+  if (P.chain > 1u) {
+    // 分子内相邻珠子之间的弹簧，与 ref/step.ts 的 bondForces 相同；每根键的势能和位力两端各记一半。
+    // Springs between consecutive beads of a molecule, as bondForces in ref/step.ts; each
+    // bond's potential energy and virial are split between its two ends.
+    for (var side = 0u; side < 2u; side++) {
+      var j = i + 1u;
+      if (side == 0u) {
+        if (i % P.chain == 0u) { continue; }
+        j = i - 1u;
+      } else if (j % P.chain == 0u || j >= P.n) {
+        continue;
+      }
+      let d = minImage(xi - pos[j].xyz);
+      let r = length(d);
+      let g = -P.extra.z * (r - P.extra.w) / r;
+      f += g * d;
+      pe += 0.25 * P.extra.z * (r - P.extra.w) * (r - P.extra.w);
+      vir += 0.5 * g * r * r;
     }
   }
   force[i] = vec4f(f, pe);

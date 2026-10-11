@@ -689,3 +689,105 @@ export function q6Summary(s: MdState): Q6Summary {
   }
   return { local: a / s.n, averaged: b / s.n, crystalFraction: c / s.n }
 }
+
+/** 两个分子的尾珠相距不到这个距离，就算在同一个聚集体里。 / Two molecules belong to one aggregate when tail beads of theirs are closer than this. */
+export const AGGREGATE_RADIUS = 1.5
+/** 聚集数分布画到这个大小为止，更大的并入最后一格。 / The aggregation-number distribution is drawn up to this size; larger ones go in the last bin. */
+export const AGGREGATE_BINS = 60
+
+export interface Aggregates {
+  /** 分子总数。 / Number of molecules. */
+  molecules: number
+  /** 独自一个、没有和别的分子聚在一起的分子所占的比例。 / Fraction of molecules on their own, aggregated with no other. */
+  free: number
+  /** 按分子加权的平均聚集数：随机挑一个分子，它所在聚集体的平均大小。 / Weight-average aggregation number: the mean size of the aggregate a randomly chosen molecule is in. */
+  mean: number
+  largest: number
+  /** sizes[k] 是处在大小为 k + 1 的聚集体里的分子所占的比例。 / sizes[k] is the fraction of molecules in aggregates of size k + 1. */
+  sizes: Float64Array
+}
+
+/**
+ * 两亲分子的聚集体统计（二维）。位置数组每个粒子占 `stride` 个数，前两个是 x、y；
+ * 分子 m 的珠子是下标 m·chain 起的 chain 个，第一个是头，其余是尾。用并查集把尾珠靠近的分子并到一起。
+ * Aggregate statistics for amphiphiles (2D). The position array holds `stride` numbers per
+ * particle, x and y first; molecule m owns the chain beads from index m·chain, the first a
+ * head and the rest tails. A union–find merges molecules whose tail beads are close.
+ */
+export function aggregates(
+  pos: ArrayLike<number>,
+  stride: number,
+  n: number,
+  chain: number,
+  box: ArrayLike<number>,
+  radius = AGGREGATE_RADIUS,
+): Aggregates {
+  const molecules = Math.floor(n / chain)
+  const parent = Int32Array.from({ length: molecules }, (_, m) => m)
+  const find = (m: number): number => {
+    while (parent[m] !== m) {
+      parent[m] = parent[parent[m]!]!
+      m = parent[m]!
+    }
+    return m
+  }
+  const [lx, ly] = [box[0]!, box[1]!]
+  const nx = Math.max(1, Math.floor(lx / radius))
+  const ny = Math.max(1, Math.floor(ly / radius))
+  // 尾珠按元胞排成链表。 / Tail beads threaded into per-cell linked lists.
+  const head = new Int32Array(nx * ny).fill(-1)
+  const next = new Int32Array(n).fill(-1)
+  const cellOf = (i: number) => {
+    const cx = Math.min(nx - 1, Math.floor((pos[stride * i]! / lx) * nx))
+    const cy = Math.min(ny - 1, Math.floor((pos[stride * i + 1]! / ly) * ny))
+    return [cx, cy] as const
+  }
+  for (let i = 0; i < molecules * chain; i++) {
+    if (i % chain === 0) continue
+    const [cx, cy] = cellOf(i)
+    next[i] = head[cy * nx + cx]!
+    head[cy * nx + cx] = i
+  }
+  const r2max = radius * radius
+  for (let i = 0; i < molecules * chain; i++) {
+    if (i % chain === 0) continue
+    const mi = Math.floor(i / chain)
+    const [cx, cy] = cellOf(i)
+    for (let oy = -1; oy <= 1; oy++) {
+      for (let ox = -1; ox <= 1; ox++) {
+        // 盒子不足三个元胞宽时，同一个元胞会被访问多次，无妨。
+        // With fewer than three cells across, a cell is visited more than once, which is harmless.
+        const c = ((cy + oy + ny) % ny) * nx + ((cx + ox + nx) % nx)
+        for (let j = head[c]!; j >= 0; j = next[j]!) {
+          const mj = Math.floor(j / chain)
+          if (mj <= mi) continue
+          let dx = pos[stride * i]! - pos[stride * j]!
+          let dy = pos[stride * i + 1]! - pos[stride * j + 1]!
+          dx -= lx * Math.round(dx / lx)
+          dy -= ly * Math.round(dy / ly)
+          if (dx * dx + dy * dy < r2max) {
+            const a = find(mi)
+            const b = find(mj)
+            if (a !== b) parent[a] = b
+          }
+        }
+      }
+    }
+  }
+  const count = new Int32Array(molecules)
+  for (let m = 0; m < molecules; m++) count[find(m)]!++
+  const sizes = new Float64Array(AGGREGATE_BINS)
+  let free = 0
+  let mean = 0
+  let largest = 0
+  for (let m = 0; m < molecules; m++) {
+    const size = count[m]!
+    if (size === 0) continue
+    if (size === 1) free += 1
+    mean += size * size
+    largest = Math.max(largest, size)
+    sizes[Math.min(size, AGGREGATE_BINS) - 1]! += size
+  }
+  for (let k = 0; k < AGGREGATE_BINS; k++) sizes[k] = sizes[k]! / Math.max(molecules, 1)
+  return { molecules, free: free / Math.max(molecules, 1), mean: mean / Math.max(molecules, 1), largest, sizes }
+}

@@ -204,6 +204,19 @@
       "url": "/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1"
     },
     {
+      "id": "micelles",
+      "title": {
+        "zh": "一头亲水一头疏水的分子自己聚成小团",
+        "en": "Molecules with a water-loving head and water-hating tails gather into small clusters"
+      },
+      "hint": {
+        "zh": "高温时各走各的；降温后尾朝里、头朝外聚成十来个分子的小团",
+        "en": "Hot, they wander alone; cooled, they gather into clusters of about ten with tails inside and heads outside"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=micelles"
+    },
+    {
       "id": "isingDimension",
       "title": {
         "zh": "同一个模型，同一个温度，换一个维度",

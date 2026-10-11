@@ -69,6 +69,51 @@ export function shiftedPotential(spec: PotentialSpec, r: number): { u: number; f
   return { u: a.u - c.u - (r - spec.rc) * c.du, f: -(a.du - c.du) }
 }
 
+/**
+ * 势阱最低点的位置：在 [0.5, rc] 上先扫描再用黄金分割细化。没有势阱（纯排斥）时返回 rc。
+ * Where the well is deepest: a scan over [0.5, rc] refined by golden-section search.
+ * Returns rc when there is no well (a purely repulsive potential).
+ */
+export function wellPosition(spec: PotentialSpec): number {
+  const steps = 400
+  let best = spec.rc
+  let bestU = rawPotential(spec, spec.rc).u
+  for (let i = 0; i < steps; i++) {
+    const r = 0.5 + ((spec.rc - 0.5) * i) / steps
+    const u = rawPotential(spec, r).u
+    if (u < bestU) {
+      bestU = u
+      best = r
+    }
+  }
+  if (best === spec.rc) return best
+  const h = (spec.rc - 0.5) / steps
+  let a = Math.max(0.5, best - h)
+  let b = Math.min(spec.rc, best + h)
+  const ratio = (Math.sqrt(5) - 1) / 2
+  for (let i = 0; i < 60; i++) {
+    const c = b - ratio * (b - a)
+    const d = a + ratio * (b - a)
+    if (rawPotential(spec, c).u < rawPotential(spec, d).u) b = d
+    else a = c
+  }
+  return (a + b) / 2
+}
+
+/**
+ * 只留排斥的那一半（Weeks–Chandler–Andersen 的做法）：在势阱最低点截断并上移阱深，
+ * 势和力在截断处都连续地到零。
+ * The repulsive half only (as Weeks, Chandler and Andersen do): cut at the bottom of the
+ * well and shifted up by its depth, so both potential and force reach zero continuously
+ * at the cut.
+ */
+export function repulsivePotential(spec: PotentialSpec, r: number): { u: number; f: number } {
+  const rm = wellPosition(spec)
+  if (r >= rm) return { u: 0, f: 0 }
+  const a = rawPotential(spec, r)
+  return { u: a.u - rawPotential(spec, rm).u, f: -a.du }
+}
+
 /** 精确的 f64 求值。供参考测试使用。 / Exact f64 evaluation. Used by the reference tests. */
 export function analyticPair(spec: PotentialSpec): PairEval {
   const c = rawPotential(spec, spec.rc)
@@ -99,14 +144,14 @@ export interface PairTable {
  * Tabulate g and u on a uniform grid in r² over [rMin², rc²]. Below rMin the values are
  * clamped to the innermost sample, which caps the force in the steep core.
  */
-export function buildTable(spec: PotentialSpec, k = 2048, rMin = 0.5): PairTable {
+export function buildTable(spec: PotentialSpec, k = 2048, rMin = 0.5, repulsive = false): PairTable {
   const r2min = rMin * rMin
   const rc2 = spec.rc * spec.rc
   const g = new Float64Array(k + 1)
   const u = new Float64Array(k + 1)
   for (let i = 0; i <= k; i++) {
     const r = Math.sqrt(r2min + ((rc2 - r2min) * i) / k)
-    const s = shiftedPotential(spec, r)
+    const s = repulsive ? repulsivePotential(spec, r) : shiftedPotential(spec, r)
     g[i] = s.f / r
     u[i] = s.u
   }
@@ -151,9 +196,13 @@ export interface PairField {
  * Per-species-pair tables: strength[si][sj] scales epsilon for the force on si from sj.
  * A symmetric matrix gives reciprocal forces (Newton's third law); an asymmetric one
  * does not, and then momentum and energy are no longer conserved.
+ * repulsive[si][sj] 为真的那一对只留排斥的一半。
+ * A pair with repulsive[si][sj] set keeps only its repulsive half.
  */
-export function speciesTables(spec: PotentialSpec, strength: number[][], k = 2048): PairTable[][] {
-  return strength.map((row) => row.map((e) => buildTable({ ...spec, epsilon: spec.epsilon * e }, k)))
+export function speciesTables(spec: PotentialSpec, strength: number[][], k = 2048, repulsive?: boolean[][]): PairTable[][] {
+  return strength.map((row, si) =>
+    row.map((e, sj) => buildTable({ ...spec, epsilon: spec.epsilon * e }, k, 0.5, repulsive?.[si]?.[sj] === true)),
+  )
 }
 
 export function speciesField(tables: PairTable[][]): PairField {

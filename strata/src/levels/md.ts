@@ -6,7 +6,8 @@ import type { QuantityDef } from '../core/quantity'
 import type { MdFrame } from '../substrates/md/backend-cpu'
 import { shiftedPotential } from '../substrates/md/potential'
 import { runningIntegral } from '../analysis/autocorrelation'
-import { profiles, structureFactor } from '../substrates/md/ref/reducers'
+import { AGGREGATE_BINS, profiles, structureFactor } from '../substrates/md/ref/reducers'
+import { chainOf } from '../substrates/md/schema'
 import { speedPdf } from '../theory/maxwell'
 import { cutoffPressureCorrection2d, ljFluid2d, ljFluid2dApplies } from '../theory/ljEos'
 import { virialPressure } from '../theory/virial'
@@ -18,7 +19,7 @@ import { virialPressure } from '../theory/virial'
 const nonreciprocal = (p: Record<string, number>) =>
   p.walls
     ? '有壁面换热和外力做功：系统是开放的，这条守恒律不适用'
-    : p.fractionB! > 0 && p.nonreciprocal! > 0
+    : !chainOf(p) && p.fractionB! > 0 && p.nonreciprocal! > 0
       ? '作用力不再等于反作用力：这条守恒律已失效'
       : null
 
@@ -242,6 +243,8 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     reducers: ['scalars'],
     compute: (f) => f.scalars!.pressure,
     theory: (f, p) => {
+      // 成键的分子不是简单流体，下面两种状态方程都不适用。 / Bonded molecules are not a simple fluid; neither equation of state below applies.
+      if (chainOf(p)) return null
       const { density, temperature, dim } = f.scalars!
       // 已发表的状态方程只针对二维、单组分、完整的 12-6 势；截断半径够大时加上截断修正即可对照。
       // The published equation of state is for the 2D, one-component, full 12-6 potential;
@@ -558,9 +561,42 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     label: '分相程度',
     kind: 'scalar',
     reducers: ['scalars'],
-    when: (p) => p.fractionB! > 0,
+    when: (p) => p.fractionB! > 0 && !chainOf(p),
     compute: (f) => f.scalars!.demix,
     theory: () => 0,
     theoryLabel: '随机混合：0（参照）；两种粒子完全分开时趋于 1',
+  },
+  {
+    id: 'freeFraction',
+    level: 'structure',
+    label: '落单的分子所占的比例',
+    kind: 'scalar',
+    reducers: ['aggregates'],
+    when: (p) => chainOf(p) > 0,
+    compute: (f) => f.aggregates!.free,
+    theoryLabel: '两个分子的尾珠相距不到 1.5σ 就算聚在一起。高温下大多数分子落单；温度低到尾–尾吸引胜过热运动时，几乎没有落单的。没有理论线。',
+  },
+  {
+    id: 'aggregation',
+    level: 'structure',
+    label: '平均聚集数（按分子加权）',
+    kind: 'scalar',
+    reducers: ['aggregates'],
+    when: (p) => chainOf(p) > 0,
+    compute: (f) => f.aggregates!.mean,
+    theoryLabel: '随机挑一个分子，它所在的聚集体里平均有几个分子。没有理论线。',
+  },
+  {
+    id: 'aggregateSizes',
+    level: 'structure',
+    label: '聚集数的分布',
+    kind: 'curve',
+    mark: 'bars',
+    smooth: 0.2,
+    xLabel: '聚集体里的分子数',
+    reducers: ['aggregates'],
+    when: (p) => chainOf(p) > 0,
+    compute: (f) => ({ x: Float64Array.from({ length: AGGREGATE_BINS }, (_, k) => k + 1), y: f.aggregates!.sizes }),
+    theoryLabel: `纵轴：处在这个大小的聚集体里的分子所占的比例；${AGGREGATE_BINS} 个以上的并入最后一格。头朝外挡住了别的分子，聚集体停在有限大小，而不是长成一整块。`,
   },
 ]

@@ -18,10 +18,10 @@ import { MESH_KNOBS } from '../substrates/mesh/schema'
 import { PottsCpuBackend, PottsGpuBackend } from '../substrates/potts/backend'
 import { POTTS_KNOBS } from '../substrates/potts/schema'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
-import { initFcc, initTriangular } from '../substrates/md/ref/init'
-import { densityModes, q6Summary, rdf, regionFrame, scalars, speedHistogram } from '../substrates/md/ref/reducers'
+import { initChains, initFcc, initTriangular } from '../substrates/md/ref/init'
+import { aggregates, densityModes, q6Summary, rdf, regionFrame, scalars, speedHistogram } from '../substrates/md/ref/reducers'
 import { computeForces, step } from '../substrates/md/ref/step'
-import { MD_KNOBS, fccCells, potentialSpec, strengthMatrix } from '../substrates/md/schema'
+import { BOND_K, BOND_R0, MD_KNOBS, fccCells, potentialSpec, repulsiveMatrix, strengthMatrix } from '../substrates/md/schema'
 
 export interface HarnessRow {
   name: string
@@ -294,6 +294,39 @@ export async function runHarness(): Promise<HarnessResult> {
   check('圆盘：势能相对误差', Math.abs(frameO.scalars!.pe - scalars(refO).pe) / Math.abs(scalars(refO).pe), 1e-4)
   check('矩形场网格：粒子总数差', Math.abs(frameO.field!.count.reduce((a, c) => a + c, 0) - refO.n), 0)
   gpuO.dispose()
+
+  // 两亲分子：只留排斥的势表，加上分子内的弹簧。
+  // Amphiphiles: repulsive-only tables plus the springs inside each molecule.
+  const cp: Params = { ...p, chain: 3, nx: 60, density: 0.2, temperature: 1, epsBB: 3 }
+  const chainField = speciesField(speciesTables(potentialSpec(cp), strengthMatrix(cp), undefined, repulsiveMatrix(cp)))
+  const chainRef = initChains({ nx: 60, density: 0.2, temperature: 1, seed: 6, chain: 3, bondK: BOND_K, bondR0: BOND_R0 }, chainField)
+  step(chainRef, chainField, cp.dt!, 300)
+  for (let k = 0; k < chainRef.pos.length; k++) {
+    chainRef.pos[k] = Math.fround(chainRef.pos[k]!)
+    chainRef.vel[k] = Math.fround(chainRef.vel[k]!)
+  }
+  computeForces(chainRef, chainField)
+  const chainGpu = new MdGpuBackend(gpu, cp, 6)
+  check('两亲分子：粒子数差', Math.abs(chainGpu.n - chainRef.n), 0)
+  chainGpu.writeState(chainRef.pos, chainRef.vel, chainRef.species)
+  const chainState = await chainGpu.readState()
+  let chainMax = 0
+  let chainErr = 0
+  for (let i = 0; i < chainRef.n; i++) {
+    for (let d = 0; d < 2; d++) {
+      chainMax = Math.max(chainMax, Math.abs(chainRef.force[2 * i + d]!))
+      chainErr = Math.max(chainErr, Math.abs(chainRef.force[2 * i + d]! - chainState.force[4 * i + d]!))
+    }
+  }
+  check('两亲分子：受力最大误差 / 最大受力', chainErr / chainMax, 1e-4)
+  const chainFrame = await chainGpu.reduce(['scalars', 'aggregates'])
+  const chainSc = scalars(chainRef)
+  check('两亲分子：势能相对误差', Math.abs(chainFrame.scalars!.pe - chainSc.pe) / Math.abs(chainSc.pe), 1e-4)
+  check('两亲分子：压强相对误差', Math.abs(chainFrame.scalars!.pressure - chainSc.pressure) / Math.abs(chainSc.pressure), 1e-3)
+  const chainAgg = aggregates(chainRef.pos, 2, chainRef.n, 3, chainRef.box)
+  check('两亲分子：落单比例差', Math.abs(chainFrame.aggregates!.free - chainAgg.free), 0)
+  check('两亲分子：平均聚集数差', Math.abs(chainFrame.aggregates!.mean - chainAgg.mean), 1e-9)
+  chainGpu.dispose()
 
   // 带非互易矩阵的双组分混合物会用到每一张粒子对参数表。
   // A two-species mixture with a non-reciprocal matrix exercises every per-pair table.
