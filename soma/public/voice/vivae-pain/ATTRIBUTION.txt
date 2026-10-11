@@ -1,0 +1,65 @@
+VIVAE 疼痛发声录音包
+
+仅限非商业使用（CC BY-NC 4.0）。本目录是独立的集合：不属于本仓库的 CC BY-SA 4.0 解剖数据集，
+也不属于 MIT 代码。用于商业用途的构建或部署必须删除本目录，应用会自动改用参数合成器。
+
+来源
+  标题：The Variably Intense Vocalizations of Affect and Emotion Corpus (VIVAE)
+  作者：Natalie Holz、Pauline Larrouy-Maestri、David Poeppel
+  发布：Zenodo，2020，DOI 10.5281/zenodo.4066235，https://zenodo.org/records/4066235
+  许可：Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+        https://creativecommons.org/licenses/by-nc/4.0/
+  语料页面要求的引用：
+    Holz, N., Larrouy-Maestri, P., & Poeppel, D. (2022). The Variably Intense Vocalizations of
+    Affect and Emotion (VIVAE) corpus prompts new perspective on nonspeech perception.
+    Emotion, 22(1), 213–225. http://dx.doi.org/10.1037/emo0001048
+
+改动说明（本目录的内容是经过修改的）
+  1. 只选取了 full set 里文件名中情绪为 pain（身体疼痛）的 185 个文件，其余 900 个没有收入。
+  2. 从 44.1 kHz 重采样到 24 kHz，仍是 16 位单声道 WAV；文件名保持语料原样
+     （说话人_情绪_强度_编号）。没有裁剪、没有调整响度。
+  3. 新增 manifest.json：逐条的时长、平均基频、电平、谐噪比、按规则判定的发声类型，
+     以及每秒 100 帧的电平、基频、有声标志和张口度估计。这些分析不是原语料的一部分，
+     出自本项目，未经专业人员审校。
+  重新生成：bun tools/voice/pack.ts（需要先把语料下载到 data/raw/voice/）。
+
+说明
+  这些是按指令表演出来的发声，不是真实疼痛时的录音。本项目是用于教学的疼痛行为计算模型，
+  被模拟的身体没有主观体验。原作者没有为本项目背书。材料按原样提供，不附带任何担保。
+
+--------------------------------------------------------------------------------
+
+VIVAE pain vocalisation sound pack
+
+NON-COMMERCIAL USE ONLY (CC BY-NC 4.0). This directory is a separate collection: it is not
+part of this repository's CC BY-SA 4.0 anatomy dataset and not part of its MIT-licensed code.
+A build or deployment for commercial use must delete this directory; the application then
+falls back to its parametric synthesizer.
+
+Source
+  Title:    The Variably Intense Vocalizations of Affect and Emotion Corpus (VIVAE)
+  Creators: Natalie Holz, Pauline Larrouy-Maestri, David Poeppel
+  Published: Zenodo, 2020, DOI 10.5281/zenodo.4066235, https://zenodo.org/records/4066235
+  Licence:  Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+            https://creativecommons.org/licenses/by-nc/4.0/
+  Citation requested by the corpus record:
+    Holz, N., Larrouy-Maestri, P., & Poeppel, D. (2022). The Variably Intense Vocalizations of
+    Affect and Emotion (VIVAE) corpus prompts new perspective on nonspeech perception.
+    Emotion, 22(1), 213–225. http://dx.doi.org/10.1037/emo0001048
+
+Changes made (the contents of this directory are modified from the original)
+  1. Selection: only the 185 files of the full set whose file name gives the emotion as pain
+     (physical pain); the other 900 files are not included.
+  2. Re-encoding: resampled from 44.1 kHz to 24 kHz, still 16-bit mono WAV; file names are
+     kept as in the corpus (speaker_emotion_intensity_item). No trimming, no loudness change.
+  3. Added manifest.json: per clip the duration, mean F0, level, harmonics-to-noise ratio, a
+     rule-based vocalisation type, and tracks at 100 frames per second (level, F0, voiced flag,
+     a mouth-opening estimate). This analysis is not part of the original corpus; it was made
+     by this project and has not been reviewed by a specialist.
+  To regenerate: bun tools/voice/pack.ts (after downloading the corpus into data/raw/voice/).
+
+Notes
+  These are vocalisations acted on instruction, not recordings made during real pain. This
+  project is a computational model of pain behaviour for teaching; the simulated body has no
+  subjective experience. The original authors do not endorse this project. The material is
+  provided as-is, without warranties of any kind.

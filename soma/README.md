@@ -127,6 +127,15 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 
 名称数据里约三分之二的中文名是按术语表机器生成的，没有出处；`names.json` 的 `zhSource` 字段逐条标明了来源，全部条目的状态都是 `unreviewed`。
 
+### 疼痛声音包（禁止商用，与解剖数据分开）
+
+`public/voice/vivae-pain/` 是一个**独立的集合**，许可是 **CC BY-NC 4.0（仅限非商业使用）**，不属于上面 CC BY-SA 4.0 的解剖数据集，也不属于 MIT 许可的代码。
+
+- 内容：VIVAE 语料库（Holz、Larrouy-Maestri、Poeppel，[doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)）里"身体疼痛"类的 185 条录音，重采样到 24 kHz，另加本项目做的逐条分析。这些是按指令表演出来的发声，不是真实疼痛时的录音。署名、许可和改动清单在该目录的 `ATTRIBUTION.txt` 和 `LICENSE.txt` 里。
+- 用法：`src/voice/` 在运行时加载它，在录音基础上做变化（换录音、小幅变调变速、连成持续性发声、由女声推出男声）。目录不存在时自动改用参数化合成器。
+- **商业用途的构建或部署必须删除这个目录**（构建产物里是 `dist/voice/`）。没有任何机制强制这一点。
+- `data/curated/voice/calibration.json` 只含由该语料统计出的汇总量，不含音频。
+
 ## 已知的缺口
 
 完整的清单在每个体型数据的 `cautions` 字段里。主要的几条：
@@ -286,6 +295,15 @@ Apart from the code, the anatomy data in this directory (`public/anatomy/`, `dat
 | ISNCSCI key sensory points, Lee et al. 2008, Gray 1918 | Basis of the skin map definitions (facts only, cited per entry) | see `data/curated/skinmaps/` |
 
 About two thirds of the Chinese names are machine-generated from a term lexicon and have no source; `zhSource` in `names.json` says where each came from, and every entry is `unreviewed`.
+
+### Pain sound pack (non-commercial, separate from the anatomy data)
+
+`public/voice/vivae-pain/` is a **separate collection** under **CC BY-NC 4.0 (non-commercial use only)**. It is not part of the CC BY-SA 4.0 anatomy dataset above and not part of the MIT-licensed code.
+
+- Contents: the 185 physical-pain recordings of the VIVAE corpus (Holz, Larrouy-Maestri, Poeppel, [doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)), resampled to 24 kHz, plus a per-clip analysis made by this project. They are vocalisations performed on instruction, not recordings of real pain. Attribution, licence and the list of changes are in `ATTRIBUTION.txt` and `LICENSE.txt` in that directory.
+- Use: `src/voice/` loads it at run time and varies the recordings (clip choice, small pitch and time changes, sequences for sustained pain, a male voice derived from the female recordings). Without the directory it falls back to the parametric synthesizer.
+- **A build or deployment for commercial use must delete this directory** (`dist/voice/` in the build output). Nothing enforces this.
+- `data/curated/voice/calibration.json` holds only aggregates computed from the corpus, no audio.
 
 ## Known gaps
 

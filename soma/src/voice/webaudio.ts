@@ -2,8 +2,8 @@
 // A thin Web Audio wrapper: put a rendering into an AudioBuffer and play it at a given time on the
 // shared clock. All signal processing lives in synth.ts.
 
-import { painVocalisation, type PainVocalisation, type PainVocalisationInput } from './control.ts'
-import { renderVocalisation } from './synth.ts'
+import { painVocalisation, type PainVocalisation } from './control.ts'
+import { renderPainVocalisation, type PainVoice, type PainVoiceInput } from './recorded.ts'
 import type { RenderResult } from './types.ts'
 
 export function toAudioBuffer(ctx: BaseAudioContext, result: RenderResult): AudioBuffer {
@@ -23,14 +23,16 @@ export interface ScheduledVocalisation {
 }
 
 // 生成并安排一次发声。when 是 AudioContext.currentTime 刻度上的时刻；面部表情用返回的
-// startTime 加上 vocalisation.timeline 里的时刻来对齐。
+// startTime 加上 vocalisation.timeline 里的时刻来对齐。给了 voice 且它带着录音包时用录音，否则用参数合成器。
 // Generate and schedule one vocalisation. `when` is on the AudioContext.currentTime scale; facial
-// animation aligns itself with the returned startTime plus the times in vocalisation.timeline.
-export function schedulePainVocalisation(ctx: AudioContext, input: PainVocalisationInput, when = ctx.currentTime, destination: AudioNode = ctx.destination): ScheduledVocalisation {
-  const vocalisation = painVocalisation(input)
-  if (!vocalisation.params) return { vocalisation, source: null, startTime: when, endTime: when }
-  // 按上下文的采样率直接渲染，不用重采样 / render at the context's own sample rate, so nothing is resampled
-  const result = renderVocalisation(vocalisation.params, ctx.sampleRate)
+// animation aligns itself with the returned startTime plus the times in vocalisation.timeline. With a
+// `voice` that holds the sound pack the recordings are used; otherwise the parametric synthesizer.
+export function schedulePainVocalisation(ctx: AudioContext, input: PainVoiceInput, when = ctx.currentTime, destination: AudioNode = ctx.destination, voice?: PainVoice): ScheduledVocalisation {
+  const vocalisation = voice ? voice.vocalise(input) : painVocalisation(input)
+  // 合成来源按上下文的采样率直接渲染；录音来源保持录音包的采样率，由浏览器重采样。
+  // Synthetic sound is rendered at the context's own rate; recorded sound keeps the pack's rate and the browser resamples it.
+  const result = renderPainVocalisation(vocalisation, vocalisation.recorded ? undefined : ctx.sampleRate)
+  if (!result) return { vocalisation, source: null, startTime: when, endTime: when }
   const source = ctx.createBufferSource()
   source.buffer = toAudioBuffer(ctx, result)
   source.connect(destination)

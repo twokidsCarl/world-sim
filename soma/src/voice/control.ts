@@ -63,7 +63,7 @@ export interface Knots {
 // pain you can think of").
 export const VIVAE_LEVELS = { low: 2.5, moderate: 5, strong: 7.5, peak: 10 } as const
 export const RAINE_LEVELS = { mild: 3, moderate: 6.5, severe: 10 } as const
-const RAINE_X = [RAINE_LEVELS.mild, RAINE_LEVELS.moderate, RAINE_LEVELS.severe]
+export const RAINE_X = [RAINE_LEVELS.mild, RAINE_LEVELS.moderate, RAINE_LEVELS.severe]
 
 // Raine 等 (2019) 表 3（女）与表 4（男）的各级均值；这里只用男女之间的比值和差值。
 // Per-level means from Raine et al. (2019), Table 3 (female) and Table 4 (male); only the ratios and
@@ -154,6 +154,12 @@ export interface PainVocalisation {
   // 按规则这一次本来不出声（只有 vocalise: 'always' 时才可能为真而仍有参数）
   // by the rule this repetition would have been silent (only with vocalise: 'always' can this be true while params exist)
   silentByRule: boolean
+  // 声音的来源：'recorded' = 取自录音包并做了变化；'synthetic' = 参数合成
+  // where the sound comes from: 'recorded' = taken from the sound pack and varied; 'synthetic' = parametric synthesis
+  source: 'recorded' | 'synthetic'
+  // 仅当 source 为 'recorded'：已经做好变化的波形，以及用到的录音文件名
+  // only when source is 'recorded': the varied waveform and the names of the recordings used
+  recorded?: { pcm: Float32Array; sampleRate: number; clips: string[] }
 }
 
 const st = (semitones: number) => 2 ** (semitones / 12)
@@ -272,7 +278,7 @@ function exhaleSegment(durationS: number, relDb: number, mouthStart: number, rng
   }
 }
 
-const EMPTY_TIMELINE = (): Timeline => ({ durationS: 0, frameRate: 100, events: [], mouth: new Float32Array(0), level: new Float32Array(0), airflow: new Float32Array(0), f0: new Float32Array(0) })
+export const EMPTY_TIMELINE = (): Timeline => ({ durationS: 0, frameRate: 100, events: [], mouth: new Float32Array(0), level: new Float32Array(0), airflow: new Float32Array(0), f0: new Float32Array(0) })
 
 // 主入口。同样的输入（含种子）总是得到同样的结果；换种子得到同一强度下的另一次发声。
 // The main entry point. The same input (seed included) always gives the same result; another seed
@@ -287,7 +293,7 @@ export function painVocalisation(input: PainVocalisationInput): PainVocalisation
   // The order of the draws is fixed, so 'always' and 'auto' give the same vocalisation for seeds that sound.
   const silentByRule = rng.next() >= pSound
   const uType = rng.next()
-  if (silentByRule && input.vocalise !== 'always') return { type: 'none', params: null, timeline: EMPTY_TIMELINE(), soundProbability: pSound, silentByRule }
+  if (silentByRule && input.vocalise !== 'always') return { type: 'none', params: null, timeline: EMPTY_TIMELINE(), soundProbability: pSound, silentByRule, source: 'synthetic' }
 
   const probs = typeProbabilities(intensity, onset)
   let type: Exclude<VocalisationType, 'none'> = 'scream'
@@ -364,5 +370,5 @@ export function painVocalisation(input: PainVocalisationInput): PainVocalisation
     seed: Math.floor(rng.next() * 2 ** 31),
     segments,
   }
-  return { type, params, timeline: computeTimeline(params), soundProbability: pSound, silentByRule }
+  return { type, params, timeline: computeTimeline(params), soundProbability: pSound, silentByRule, source: 'synthetic' }
 }
