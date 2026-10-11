@@ -191,6 +191,7 @@ export function App() {
                   <button disabled={working} onClick={() => s.repack()}>重新随机排布</button>
                   <span className="muted">
                     {s.spec.landscape.width / 10}×{s.spec.landscape.height / 10} nm，厚 {s.spec.landscape.depth / 10} nm
+                    {s.dnaPairs > 0 && `；DNA ${s.dnaPairs.toLocaleString()} 个碱基对（程序生成）`}
                   </span>
                 </div>
               )}

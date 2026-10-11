@@ -30,6 +30,7 @@ interface Recipe {
   density_below_g_per_L: number
   organism_taxid: number
   tissue: string
+  dna_megabases_per_cubic_micron: number
   notes: string[]
   ingredients: {
     name: string
@@ -51,7 +52,7 @@ const TISSUES = ['WHOLE_ORGANISM', 'BRAIN', 'CEREBRAL_CORTEX', 'PLASMA', 'SERUM'
 
 const RECIPE_SCHEMA = {
   type: 'object',
-  required: ['title', 'caption', 'membrane', 'membrane_outer_side', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'notes', 'ingredients'],
+  required: ['title', 'caption', 'membrane', 'membrane_outer_side', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'dna_megabases_per_cubic_micron', 'notes', 'ingredients'],
   properties: {
     title: { type: 'string', description: 'language of the topic' },
     caption: { type: 'string', description: '2-4 sentences, language of the topic: where in the cell this is and what is going on. Name parts by what they are.' },
@@ -63,6 +64,7 @@ const RECIPE_SCHEMA = {
     density_below_g_per_L: { type: 'number', description: 'total macromolecule concentration below the membrane, or of the whole scene (bacterial cytoplasm is about 300, eukaryotic cytosol about 100-200)' },
     organism_taxid: { type: 'integer', description: 'NCBI taxonomy id of the organism whose cell this is, used to look up measured protein abundances: Escherichia coli K-12 = 511145, human = 9606, mouse = 10090, baker\'s yeast = 4932, Bacillus subtilis = 224308, Mycobacterium tuberculosis = 83332. 0 if unsure or if the scene is not one organism\'s cell.' },
     tissue: { type: 'string', enum: TISSUES, description: 'for human or mouse: the tissue or fluid the scene is in, if it is one of these; otherwise WHOLE_ORGANISM' },
+    dna_megabases_per_cubic_micron: { type: 'number', description: 'how much double-stranded DNA the compartment below the membrane (or the whole scene) holds, in million base pairs per cubic micron: genome size times copies, divided by the volume it occupies. A bacterial nucleoid region is very roughly 5-15; a eukaryotic nucleus roughly 10-30; 0 where there is no DNA (cytosol of a eukaryote, blood plasma, outside a cell). Long DNA is then drawn as a generated double helix at that density.' },
     notes: { type: 'array', items: { type: 'string' }, description: 'what is simplified or left out, language of the topic' },
     ingredients: {
       type: 'array', minItems: 4, maxItems: 12,
@@ -100,7 +102,7 @@ Write the recipe:
 - List the 6 to 12 macromolecules that make up most of the mass in this place, plus the few the topic is about. Abundant, well-known molecules matter more than rare ones: a cytoplasm is mostly ribosomes, translation factors, glycolytic enzymes and chaperones; blood plasma is mostly albumin, immunoglobulins, fibrinogen and lipoproteins.
 - Give each a realistic abundance from the literature for this organism and compartment. Where the molecule is a protein of the scene's organism, also give its gene symbols: measured abundances from the PaxDb database will then replace your estimate. These numbers decide how many copies are drawn, so be honest: if a molecule is rare, give its real, low value and mark it as a feature so it still appears once.
 - A real compartment holds thousands of kinds of molecule and you can list only a dozen. The listed ones stand in for the rest: their relative proportions come from your abundances, and the number of copies is then scaled so that the total mass drawn matches the compartment's overall macromolecule density, which you also give. Molecules marked as a feature are not scaled.
-- Only include molecules for which an experimental structure of the whole molecule or assembly plausibly exists in the PDB. Nucleic acid strands and long fibres cannot be drawn yet; leave them out and say so in the notes.
+- Only include molecules for which an experimental structure of the whole molecule or assembly plausibly exists in the PDB. Long DNA is drawn separately as a generated double helix from the density you give; do not list it as an ingredient. Messenger RNA and cytoskeletal filaments cannot be drawn yet; leave them out and say so in the notes.
 - Colour roles: focus (pink-magenta) for the subject; soluble (blue) for ordinary soluble proteins; membrane (green) for membrane proteins; nucleic-binding (orange) for ribosomes, polymerases and other nucleic-acid machines; extracellular (tan) for molecules outside the cell. Use the roles to separate inside from outside and the subject from its surroundings.
 - In the notes, say what a reader should not over-interpret: positions and orientations are random, abundances are estimates.`
 
@@ -267,7 +269,12 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   if (panels.length === 0) throw new Error('配方里的成分都没有找到可用的结构')
 
   const outer = recipe.membrane_outer_side === 'below' ? ('below' as const) : ('above' as const)
-  const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, ...(recipe.membrane ? { outer } : {}), above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
+  // DNA 的总长度：密度（百万碱基对/立方微米）x 体积 x 每对 3.4 Å，封顶在十倍画面宽度
+  // total DNA length: density (million base pairs per cubic micron) x volume x 3.4 Å per pair, capped at ten frame widths
+  const mbp = Math.max(0, Math.min(60, Number(recipe.dna_megabases_per_cubic_micron) || 0))
+  const dnaLength = Math.min(BOX.width * 10, mbp * 1e6 * 3.4 * volume * 1e-12)
+  const dna = dnaLength >= 300 ? { length: Math.round(dnaLength), basis: `约 ${mbp} 百万碱基对/μm³（估计）` } : undefined
+  const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, ...(recipe.membrane ? { outer } : {}), ...(dna ? { dna } : {}), above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
   const notes = [
     '分子是真实结构，按比例绘制；它们的位置和朝向是程序随机排布的，不是观测结果。',
     pax && measured.size
@@ -275,9 +282,12 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
       : '各成分之间的比例来自模型给出的丰度估计值，不是测量值。',
     `真实的细胞里有上千种分子，这里只列出十来种作为代表：除标为主角的成分外，数量已按比例放大，使画出的总质量与该区室的大分子总浓度（${[recipe.membrane && recipe.density_above_g_per_L > 0 ? `膜上方约 ${recipe.density_above_g_per_L} g/L` : '', recipe.density_below_g_per_L > 0 ? `${recipe.membrane ? '膜下方' : ''}约 ${recipe.density_below_g_per_L} g/L` : ''].filter(Boolean).join('，')}）相符。`,
     ...(recipe.membrane ? ['膜蛋白按分子长轴竖立在膜上或膜中；只解析了膜外段的结构立在膜面上，连膜的一端由链的末端位置判断。这是近似摆放，未使用实验确定的取向和插入深度，膜外段与膜之间缺失的柄部和跨膜段没有画。脂质用同一种磷脂（POPC）的理想构象铺成。'] : []),
-    '未画出水、离子、小分子，以及核酸长链和纤维。',
+    dna
+      ? `DNA 是程序生成的双螺旋：碱基对的形状量自晶体结构 1BNA，走向是随机弯曲的曲线，序列随机，总长度按 ${dna.basis} 换算（这一片里约 ${Math.round(dna.length / 3.4)} 个碱基对）。真实细胞里 DNA 上结合的蛋白和它的超螺旋没有画。`
+      : '',
+    dna ? '未画出水、离子、小分子，以及 RNA 长链和细胞骨架纤维。' : '未画出水、离子、小分子，以及核酸长链和纤维。',
     ...(skipped.length ? [`未能画出：${skipped.join('、')}。`] : []),
     ...(recipe.notes ?? []).filter((n) => typeof n === 'string' && n.trim()),
-  ]
+  ].filter(Boolean)
   return { topic, kind: 'landscape', title: recipe.title?.trim() || topic, caption: recipe.caption?.trim() ?? '', panels, notes, landscape }
 }

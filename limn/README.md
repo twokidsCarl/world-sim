@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·2c | 全景图里的 DNA 长链（程序生成的双螺旋） | 完成，见 `src/landscape/fiber.ts`、`data/bdna.json` |
 | 二期·2b | 膜蛋白按 OPM 的取向嵌进膜里 | 完成，见 `server/sources/opm.ts`、`src/landscape/orient.ts` |
 | 二期·2a | 全景图的蛋白丰度改用 PaxDb 实测数据 | 完成，见 `server/sources/paxdb.ts` |
 | 二期·1 | 现成的整病毒、整细胞模型：新冠病毒颗粒、HIV、突触小泡、外泌体、整只支原体、核孔等 14 个 | 完成，见 `data/catalog.json`、`src/mol/load.ts`、`src/mol/coarse.ts` |
@@ -82,7 +83,8 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 - **丰度优先用实测数据，查不到才是估计值。** 配方由模型拟定：列出十来种有代表性的分子。场景属于某个物种的细胞时，蛋白的丰度取自 [PaxDb](https://pax-db.org/)（整合了多项质谱研究的丰度数据库，覆盖大肠杆菌、酵母、人和小鼠的各种组织等四百多个物种）；复合物取各亚基的中位数，再除以每种亚基的份数。PaxDb 里查不到的成分和膜蛋白的面密度仍是模型的估计。界面上每种成分都标明是“实测数据”还是“估计”。除标为主角的成分外，数量按比例放大到区室总浓度，用这十来种代表其余上千种。
 - **膜蛋白的取向优先用 OPM。** [OPM](https://opm.phar.umich.edu/) 数据库收录的结构，按它给出的位置、倾角和内外朝向嵌进膜里（这是由实验结构计算出来的取向，不是直接测量）；界面上会标出。OPM 没有收录的（多数只解析了膜外段的结构）仍是近似摆放：沿分子长轴竖立，立在膜面上，连膜的一端由链末端的位置判断，缺失的柄部和跨膜段不画。膜蛋白正前方的脂质不画，好让跨膜的部分露出来。
 - **膜是同一种磷脂（POPC）的理想构象铺成的**，不是真实的脂质组成和构象。
-- **没有画**：水、离子、小分子，以及核酸长链和纤维（DNA、mRNA、细胞骨架）。
+- **DNA 是程序生成的。** 场景里有 DNA 时（细菌拟核、细胞核），画成双螺旋长链：每个碱基对的原子位置量自晶体结构 1BNA，螺旋参数用溶液中 B 型 DNA 的通用值（每对升 3.4 Å、每圈 10.5 对），走向是按 DNA 的刚度（持久长度约 50 nm）随机弯曲的曲线，序列随机，总长度按模型估计的 DNA 密度换算。DNA 上结合的蛋白、超螺旋和核小体没有画。
+- **没有画**：水、离子、小分子，以及 RNA 长链和细胞骨架纤维。
 
 所以它适合用来感受“细胞里有多挤、各种分子相对多大”，不适合用来读具体的相互作用。
 
@@ -112,6 +114,7 @@ bun run dev                    # 然后打开 http://127.0.0.1:5184/research/ill
 - **膜蛋白取向**：运行时从 [OPM](https://opm.phar.umich.edu/) 下载预先定向的坐标，只取 Cα 位置和膜的半厚度，缓存在本机，不入库。OPM 的许可条款我没有查到原文，所以只在运行时取用、标明来源。
 - **蛋白丰度**：运行时从 [PaxDb](https://pax-db.org/) 下载对应物种和组织的整合数据集，缓存在本机，不入库。
 - **现成模型**（`data/catalog.json`，只存指针）：[Mesoscale Explorer](https://mesoscope.scripps.edu/explorer/) 的示例文件，包括 YASARA [PetWorld](http://download.yasara.org/petworld/)（CC BY-SA 4.0；Ozvoldik 等，*J. Chem. Inf. Model.* 2021）和 [cellPACK](https://github.com/mesoscope/cellPACK_data)（数据仓库为 MIT）的模型、生殖支原体整细胞模型（MIT；Maritan 等，*J. Mol. Biol.* 2022），以及 RCSB 里的整合结构（PDB-IHM，CC0）。
+- **`data/bdna.json`**：四种碱基对在螺旋坐标系里的原子位置，由 `bun server/tools/build_bdna.ts` 从 PDB 1BNA（CC0；Drew 等，*PNAS* 1981）量出。
 - **`data/motm.json`**：PDB-101 “Molecule of the Month” 各篇文章的标题和文中提到的 PDB 编号，用来优先选经过人工挑选的代表性结构。不含文章正文和图片。
 - **参考图**：Goodsell 的原图来自 RCSB PDB-101 的 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery) 和 [Molecule of the Month](https://pdb101.rcsb.org/motm)，许可为 CC-BY-4.0。本仓库**不包含这些图片**，只包含从中测得的统计数字（写在风格准则里）；`research/gallery/` 和 `research/out/` 已被忽略，用上面的脚本重新获取。
 - **算法来源**：描边与阴影的做法出自 Goodsell 的 [Illustrate](https://github.com/ccsb-scripps/Illustrate)（Apache-2.0；Goodsell, Autin & Olson, *Structure* 2019）。limn 是重新实现，不包含其源码。
@@ -135,6 +138,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 2c | Long DNA in landscapes, as a generated double helix | Done, see `src/landscape/fiber.ts`, `data/bdna.json` |
 | Round 2, phase 2b | Membrane proteins sit in the membrane as OPM orients them | Done, see `server/sources/opm.ts`, `src/landscape/orient.ts` |
 | Round 2, phase 2a | Protein abundances in landscapes come from PaxDb measurements | Done, see `server/sources/paxdb.ts` |
 | Round 2, phase 1 | Ready-made whole virions and cells: a SARS-CoV-2 virion, HIV, a synaptic vesicle, an exosome, a whole mycoplasma cell, nuclear pores; 14 models | Done, see `data/catalog.json`, `src/mol/load.ts`, `src/mol/coarse.ts` |
@@ -202,7 +206,8 @@ Not observed, and said so in the interface:
 - **Abundances are measured where possible and estimated otherwise.** The recipe is proposed by the model: a dozen representative molecules. When the scene is one organism's cell, protein abundances come from [PaxDb](https://pax-db.org/), a database that integrates many mass-spectrometry studies and covers over four hundred organisms, including E. coli, yeast, and many human and mouse tissues; a complex takes the median over its subunits, divided by the number of copies of each. Ingredients PaxDb does not have, and the surface density of membrane proteins, are still the model's estimates. The interface marks every ingredient as measured data or an estimate. Apart from the featured ones, counts are scaled up to the compartment's total concentration, so that a dozen kinds stand in for the thousand others.
 - **Membrane proteins follow OPM where it has them.** A structure listed in the [OPM](https://opm.phar.umich.edu/) database is set into the membrane at the position, tilt and inside-outside sense OPM gives (an orientation computed from the experimental structure, not measured directly), and the interface says so. Structures OPM does not list (mostly those that cover only the part outside the membrane) are still placed approximately: standing along their long axis on the membrane face, with the membrane end judged from where the chain terminus is, and with missing stalks and transmembrane segments not drawn. Lipids straight in front of a membrane protein are left out so that the part spanning the membrane can be seen.
 - **The membrane is one phospholipid (POPC) in its ideal conformation**, not a real lipid composition or real conformations.
-- **Not drawn**: water, ions, small molecules, and long nucleic acids and filaments (DNA, mRNA, the cytoskeleton).
+- **DNA is generated.** Where a scene holds DNA (a bacterial nucleoid, a nucleus) it is drawn as long double helix: the atoms of each base pair were measured from the crystal structure 1BNA, the helix uses the usual figures for B-DNA in solution (a rise of 3.4 Å per pair, 10.5 pairs per turn), its course is a curve that bends at random with DNA's own stiffness (a persistence length of about 50 nm), the sequence is random, and the total length follows the DNA density the model estimates. Proteins bound to the DNA, supercoiling and nucleosomes are not drawn.
+- **Not drawn**: water, ions, small molecules, and long RNA and cytoskeletal filaments.
 
 So a landscape is good for a sense of how crowded a cell is and how large its molecules are relative to each other, and not for reading off particular interactions.
 
@@ -232,6 +237,7 @@ Rebuilding the Molecule of the Month table (`data/motm.json`, article titles and
 - **Membrane protein orientation**: pre-oriented coordinates are downloaded from [OPM](https://opm.phar.umich.edu/) at run time; only Cα positions and the membrane half-thickness are used, cached locally, and none of it is in this repository. I could not find the text of OPM's licence, so the data is only fetched at run time and credited.
 - **Protein abundance**: the integrated dataset for the organism and tissue is downloaded from [PaxDb](https://pax-db.org/) at run time and cached locally; none of it is in this repository.
 - **Ready-made models** (`data/catalog.json`, pointers only): the example files of the [Mesoscale Explorer](https://mesoscope.scripps.edu/explorer/), which include models from YASARA [PetWorld](http://download.yasara.org/petworld/) (CC BY-SA 4.0; Ozvoldik et al., *J. Chem. Inf. Model.* 2021) and [cellPACK](https://github.com/mesoscope/cellPACK_data) (the data repository is MIT), the whole-cell model of Mycoplasma genitalium (MIT; Maritan et al., *J. Mol. Biol.* 2022), and integrative structures in the RCSB (PDB-IHM, CC0).
+- **`data/bdna.json`**: the atoms of the four kinds of base pair in the frame of the helix, measured from PDB 1BNA (CC0; Drew et al., *PNAS* 1981) by `bun server/tools/build_bdna.ts`.
 - **`data/motm.json`**: the title of each PDB-101 "Molecule of the Month" article and the PDB ids it mentions, used to prefer hand-picked representative structures. It contains no article text and no images.
 - **Reference pictures**: Goodsell's originals come from the RCSB PDB-101 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery) and [Molecule of the Month](https://pdb101.rcsb.org/motm), licensed CC-BY-4.0. This repository **does not contain those images**, only statistics measured from them (in the style guide); `research/gallery/` and `research/out/` are ignored and can be fetched again with the scripts above.
 - **Algorithms**: the outlines and shadows follow Goodsell's [Illustrate](https://github.com/ccsb-scripps/Illustrate) (Apache-2.0; Goodsell, Autin & Olson, *Structure* 2019). limn is a reimplementation and contains none of its source.

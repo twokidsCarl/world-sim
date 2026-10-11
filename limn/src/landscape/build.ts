@@ -4,6 +4,7 @@ import { axisAngle, mul3 } from '../render/camera'
 import { principalFrame } from '../refine/views'
 import { assemblyCopies } from '../scene/build'
 import type { LandscapeSpec } from '../scene/spec'
+import { DNA_RADIUS, dnaAlong, occupyStrand, RISE, wander, type Strand } from './fiber'
 import { membraneToScene, type MembraneFit } from './orient'
 import { coarsen, collides, Occupied, placement, randomRotation, rng, scatter, type Coarse, type Region } from './pack'
 
@@ -41,6 +42,8 @@ export interface Packed {
   wanted: number[]
   /** 每个面板：分子自身的中心，每次放置把它移进场景 / per panel: the molecule's own centre, which each placement moves into the scene */
   centers: [number, number, number][]
+  /** 生成的 DNA（每条是一个组装体），没有则为 null / generated DNA, one assembly per strand, or null */
+  dna: Molecule | null
 }
 
 /** 一次放置把分子的中心放到哪里 / Where a placement puts a molecule's centre. */
@@ -210,6 +213,27 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
     }
   }
 
+  // 2.5 DNA：在放可溶分子之前铺好，让蛋白去填它周围的空隙。每条从画面一侧进来，大致横穿画面。
+  // 2.5 DNA: laid before the soluble molecules, so that proteins fill in around it. Each strand
+  // enters from one side of the frame and runs roughly across it.
+  const strands: Strand[] = []
+  if (spec.dna && spec.dna.length > 0) {
+    const yLo = -H, yHi = spec.membrane ? -MEMBRANE_HALF - DNA_RADIUS - 6 : H
+    const inside = (p: [number, number, number]) => Math.abs(p[0]) <= W + 20 && p[1] >= yLo - 20 && p[1] <= yHi && p[2] <= -DNA_RADIUS && p[2] >= -spec.depth
+    let left = spec.dna.length
+    for (let tries = 0; left > 200 && tries < 60; tries++) {
+      const fromLeft = rand() < 0.5
+      const start: [number, number, number] = [fromLeft ? -W - 10 : W + 10, yLo + rand() * (yHi - yLo), -DNA_RADIUS - 8 - rand() * Math.max(0, spec.depth - 2 * DNA_RADIUS - 16)]
+      const dir: [number, number, number] = [fromLeft ? 1 : -1, (rand() - 0.5) * 0.9, (rand() - 0.5) * 0.25]
+      const s = wander(start, dir, Math.ceil(left / RISE), rand, inside, occ)
+      // 太短的（刚进来就撞上东西）不要 / drop one that is too short (it ran into something at once)
+      if (s.points.length * RISE < 150) continue
+      occupyStrand(occ, s)
+      strands.push(s)
+      left -= s.points.length * RISE
+    }
+  }
+
   // 3. 可溶性分子。主角先放，放在前景且远离边缘，让画面的主体完整可见；
   // 然后是其余的，从大到小，让小的去填空隙。
   // 3. soluble molecules. The featured ones go first, in the foreground and
@@ -236,5 +260,5 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
     wanted[ing.panel] = ing.copies
     places[ing.panel] = scatter(occ, c, ing.copies, sideOf(ing, c, W, H, z0, z1), rand, randomRotation, 80)
   }
-  return { places, lipids, wanted, centers: coarse.map((c) => c.center) }
+  return { places, lipids, wanted, centers: coarse.map((c) => c.center), dna: strands.length ? dnaAlong(strands, rand) : null }
 }
