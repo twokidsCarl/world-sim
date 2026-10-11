@@ -98,7 +98,7 @@ export type Suggestion = { title: string; kind: string; stuck: string; suggestio
 export type Text2 = { zh: string; en: string }
 export type SimView = {
   name: string; title: Text2; level: string | null; ready: boolean; source: string; origin: string; status: string; playable: boolean
-  stale: boolean; version: string; log: string; built_at: string | null; has_api: boolean; api_running: boolean; cards: number
+  stale: boolean; version: string; log: string; built_at: string | null; attempts: number; next_retry: string | null; has_api: boolean; api_running: boolean; cards: number
 }
 export type CardView = { key: string; sim: string; sim_title: Text2; level: string | null; id: string; title: Text2; hint: Text2; idea: string | null; url: string; status: string }
 export type CardHistory = { views: number; seconds: number; quick_skips: number; liked: boolean; last_at: string }
@@ -150,13 +150,12 @@ export const api = {
   reviewStatus: () => call<{ actions_since: number; due: boolean; last_at: string | null }>('/api/review'),
   review: () => call<Suggestion[]>('/api/review', {}),
   recordWish: (body: { title: string; kind: string; stuck: string; suggestion: string }) => call<WishDetail>('/api/wishes', body),
-  play: () => call<PlayView>('/api/play'),
+  play: (fresh = false) => call<PlayView>(`/api/play${fresh ? '?fresh=true' : ''}`),
   sendSuggestion: (body: { title: string; stuck: string; where_url: string; where_title: string }) => call<VisitorWish>('/api/suggestions', body),
   mySuggestions: () => call<VisitorWish[]>('/api/suggestions/mine'),
   suggestions: () => call<VisitorWish[]>('/api/suggestions'),
   acceptSuggestion: (id: string) => call<VisitorWish>(`/api/suggestions/${id}/accept`, {}),
   dismissSuggestion: (id: string) => call<VisitorWish>(`/api/suggestions/${id}/dismiss`, { note: '' }),
-  rebuildSim: (name: string) => call<{ status: string }>(`/api/play/${name}/build`, {}),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),
 }

@@ -21,6 +21,8 @@ const WHY: Record<Reason, [string, string]> = {
   'not-ready': ['还没准备好', 'Not ready yet'],
 }
 
+const clock = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
 // 单列的卡片流：一屏一张，一次只运行当前这一张。
 // A single-column feed: one card per screen, and only the current one runs.
 export function PlayPage({ state }: { state: State }) {
@@ -71,6 +73,15 @@ export function PlayPage({ state }: { state: State }) {
     const timer = setInterval(() => void load(), 4000)
     return () => clearInterval(timer)
   }, [building, load])
+
+  // 有项目构建失败在等重试时，隔半分钟看一眼：读这个接口本身就会在到点后重试。
+  // While a failed build waits for its retry, look every half minute: reading the view is what triggers the retry.
+  const waiting = view?.sims.some((s) => s.ready && s.status === 'failed' && !!s.next_retry) ?? false
+  useEffect(() => {
+    if (!waiting) return
+    const timer = setInterval(() => void load(), 30000)
+    return () => clearInterval(timer)
+  }, [waiting, load])
 
   const current = order[index]
   const card = current?.card
@@ -173,8 +184,8 @@ export function PlayPage({ state }: { state: State }) {
               <div className="play-wait">
                 <h3>{sim.status === 'failed' ? t(`${sim.name} 构建失败`, `${sim.name} failed to build`) : t(`${sim.name} 正在构建…`, `${sim.name} is building…`)}</h3>
                 <pre className="job-pre">{sim.log}</pre>
-                {owner && sim.status === 'failed' && (
-                  <button onClick={() => void api.rebuildSim(sim.name).then(() => load())}>{t('重新构建', 'Rebuild')}</button>
+                {sim.status === 'failed' && sim.next_retry && (
+                  <p className="muted small">{t(`将在 ${clock(sim.next_retry)} 自动重试（第 ${sim.attempts} 次失败）`, `Retrying automatically at ${clock(sim.next_retry)} (failure ${sim.attempts})`)}</p>
                 )}
               </div>
             )}
@@ -195,7 +206,7 @@ export function PlayPage({ state }: { state: State }) {
             {owner && <button onClick={() => openAssistant(true)} title={t('问小助手：它会带上这张卡和它的 idea', 'Ask the assistant: it gets this card and its idea')}>
               ✦<span className="small">{t('问', 'Ask')}</span>
             </button>}
-            <button onClick={() => setReload(reload + 1)} title={t('重来：把这个模拟重新加载一遍', 'Restart: reload this simulation')}>
+            <button onClick={() => void api.play(true).then((v) => (setView(v), setReload(reload + 1)), () => setReload(reload + 1))} title={t('重来：把这个模拟重新加载一遍', 'Restart: reload this simulation')}>
               ↻<span className="small">{t('重来', 'Restart')}</span>
             </button>
             <a href={embedUrl(card.url).replace(/[?&]embed=1/, '')} target="_blank" rel="noreferrer" title={t('在新窗口打开完整的界面', 'Open the full UI in a new window')}>
@@ -243,7 +254,6 @@ export function PlayPage({ state }: { state: State }) {
                 <th scope="col">{t('版本', 'Version')}</th>
                 <th scope="col" className="r">{t('卡片', 'Cards')}</th>
                 <th scope="col">{t('后端', 'Backend')}</th>
-                <th scope="col" />
               </tr>
             </thead>
             <tbody>
@@ -255,13 +265,11 @@ export function PlayPage({ state }: { state: State }) {
                   <td>
                     {{ ready: t('● 就绪', '● Ready'), building: t('◌ 构建中', '◌ Building'), failed: t('× 失败', '× Failed'), missing: t('○ 还没构建', '○ Not built') }[s.status] ?? s.status}
                     {s.status !== 'ready' && s.playable && <span className="muted small"> {t('（在用上一个版本）', '(serving the previous build)')}</span>}
+                    {s.status === 'failed' && s.next_retry && <span className="muted small"> {t(`${clock(s.next_retry)} 自动重试`, `retry at ${clock(s.next_retry)}`)}</span>}
                   </td>
                   <td className="num small">{s.version || '—'}</td>
                   <td className="r num">{s.cards}</td>
                   <td className="small">{s.has_api ? (s.api_running ? t('在跑', 'running') : t('用到时启动', 'starts on demand')) : t('不需要', 'none')}</td>
-                  <td>
-                    {owner && <button onClick={() => void api.rebuildSim(s.name).then(() => load())}>{t('重新构建', 'Rebuild')}</button>}
-                  </td>
                 </tr>
               ))}
             </tbody>

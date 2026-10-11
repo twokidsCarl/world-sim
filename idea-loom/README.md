@@ -187,6 +187,9 @@ needs starting, because idea-loom hosts them all.
   touched) and built under `runs/play/<project>/`. The version is that directory's tree
   hash on main; a merged PR triggers a rebuild, and the last good build stays in use
   while a new one builds or if it fails.
+  构建失败后会自己按 5 分钟、15 分钟、1 小时（封顶）的间隔重试，版本再变就马上重来；界面上没有“重新构建”按钮。
+  A failed build retries by itself after 5 minutes, 15 minutes, then every hour, and
+  at once when the version changes again; the UI has no rebuild button.
 - **后端按需启动 / Backends start on demand**：需要后端的项目，第一次访问它的 `/api/*` 时在一个空闲端口上启动（用那个项目自己的环境），请求转发过去，十分钟没人用就停掉。
   A project's backend is started on a free port (in that project's own environment) the
   first time its `/api/*` is requested, proxied to, and stopped after ten idle minutes.
