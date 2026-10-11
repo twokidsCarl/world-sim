@@ -13,7 +13,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import auth, config, edits, github, suggestions, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
+from . import auth, config, edits, github, notify, suggestions, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .play import host as play_host
 from .play import manifest as play_manifest
@@ -843,3 +843,39 @@ def accept_suggestion(suggestion_id: str) -> suggestions.Suggestion:
 @app.post("/api/suggestions/{suggestion_id}/dismiss", response_model=suggestions.Suggestion)
 def dismiss_suggestion(suggestion_id: str, body: DismissBody) -> suggestions.Suggestion:
     return _suggest(suggestions.dismiss, suggestion_id, body.note)
+
+
+# ---------- 推送通知 / push notifications ----------
+
+
+class PushBody(BaseModel):
+    subscription: dict
+
+
+class PushOffBody(BaseModel):
+    endpoint: str
+
+
+@app.get("/api/push")
+def push_state() -> dict[str, object]:
+    return {"configured": notify.configured(), "public_key": notify.public_key(), "devices": len(notify.subscriptions())}
+
+
+@app.post("/api/push/subscribe")
+def push_subscribe(body: PushBody) -> dict[str, int]:
+    if not notify.configured():
+        raise HTTPException(422, "这里还没有配置推送的密钥")
+    try:
+        return {"devices": notify.subscribe(body.subscription)}
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.post("/api/push/unsubscribe")
+def push_unsubscribe(body: PushOffBody) -> dict[str, int]:
+    return {"devices": notify.unsubscribe(body.endpoint)}
+
+
+@app.post("/api/push/test")
+def push_test() -> dict[str, int]:
+    return {"sent": notify.send("idea-loom", "通知是通的。 / Notifications work.", url="/work", tag="test")}

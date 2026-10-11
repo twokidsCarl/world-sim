@@ -202,15 +202,6 @@ button.chip.thread.on { color: var(--ink); border-color: var(--tc); background: 
   .idea-row { grid-template-columns: 48px minmax(0, 1fr) 84px; }
   .idea-row .where { display: none; }
 }
-@media (max-width: 720px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
-  .nav { position: static; height: auto; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 16px; }
-  .mark { padding: 0 12px 0 0; }
-  .mark small { display: none; }
-  .nav-foot { margin: 0 0 0 auto; padding: 0; }
-  .page { padding: 20px 16px 48px; }
-  .page-head { flex-direction: column; align-items: flex-start; }
-}
 
 /* 表单和操作 / forms and actions */
 .form { display: grid; gap: 12px; max-width: 760px; }
@@ -462,3 +453,43 @@ button.link { border: 0; padding: 0; color: var(--ink-2); text-decoration: under
 .play-sims { margin-top: 16px; }
 .card-picks button { text-align: left; }
 .card-picks button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
+
+/* 手机：导航变成底部的一条标签栏（可以左右滑），内容占满宽度。
+   Phone: the navigation becomes a tab bar along the bottom (it scrolls sideways) and the content takes the full width. */
+@media (max-width: 720px) {
+  :root { --tabbar-h: calc(52px + env(safe-area-inset-bottom, 0px)); }
+  .shell { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--tabbar-h); }
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 20; height: var(--tabbar-h); flex-direction: row; align-items: center; gap: 4px;
+         padding: 6px max(10px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
+         border-right: 0; border-top: 1px solid var(--line); background: var(--paper); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .mark { display: none; }
+  .nav-item { flex: none; gap: 6px; padding: 9px 12px; min-height: 40px; white-space: nowrap; }
+  .nav-foot { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 0 0 8px; padding: 0; }
+  .nav-foot .sync { display: flex; align-items: center; gap: 8px; margin: 0; white-space: nowrap; }
+  .nav-foot .sync button { width: auto; }
+  .nav-foot .who { margin: 0; }
+  .nav-foot .who .row, .nav-foot .row { flex-wrap: nowrap; }
+  .page { padding: 16px 14px 32px; }
+  .pad { padding: 16px 14px; }
+  .page-head { flex-direction: column; align-items: flex-start; }
+  button, select, input, textarea, a.button { min-height: 40px; font-size: 16px; }  /* 16px：iOS 不会因为聚焦输入框而放大页面 / 16px keeps iOS from zooming when an input is focused */
+  .chip, button.link, .thread-toggles button { min-height: 0; font-size: inherit; }
+  table { display: block; overflow-x: auto; }
+  /* 小助手：占满整屏的面板。 / The assistant: a full-screen sheet. */
+  .a-dock.floating { top: 0; right: 0; bottom: 0; left: 0; width: auto; height: auto; border: 0; border-radius: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .a-launch { right: 12px; bottom: calc(var(--tabbar-h) + 12px); }
+  /* 玩：模拟占满屏幕，操作栏固定在它下面一排（上下滑动的手势留给模拟自己）。
+     Play: the simulation fills the screen and the actions sit in a fixed row beneath it (vertical swipes are left to the simulation). */
+  .play { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; gap: 8px; height: calc(100dvh - var(--tabbar-h) - 150px); min-height: 360px; }
+  .play-stage { grid-column: 1; grid-row: 1; border-radius: 10px; }
+  .play-rail { grid-column: 1; grid-row: 2; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .play-rail::-webkit-scrollbar { display: none; }
+  .play-rail button, .play-rail a { flex: 1 0 56px; min-height: 48px; padding: 4px; }
+  .play-caption { grid-row: 3; }
+  /* 玩的页面上操作栏里已经有「问」，浮着的按钮会挡住它。 / The play page already has Ask in its action row; the floating button would cover it. */
+  body:has(.play) .a-launch { display: none; }
+  .thread-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filters { max-width: 100%; }
+  .filters select, .filters input { max-width: 100%; }
+}

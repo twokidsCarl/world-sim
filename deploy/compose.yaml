@@ -12,6 +12,7 @@ x-loom: &loom
     dockerfile: deploy/Dockerfile
   restart: unless-stopped
   environment: &loom-env
+    IDEA_LOOM_VAPID_PUBLIC: ${VAPID_PUBLIC:-}
     IDEA_LOOM_SIM_DOMAIN: ${SIM_DOMAIN}
     IDEA_LOOM_PUBLIC_URL: https://${HUB_DOMAIN}
     IDEA_LOOM_PLAY_URL: http://play:8768
@@ -41,6 +42,7 @@ services:
       IDEA_LOOM_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       IDEA_LOOM_GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       IDEA_LOOM_SESSION_SECRET: ${SESSION_SECRET}
+      IDEA_LOOM_VAPID_PRIVATE: ${VAPID_PRIVATE:-}   # 访客提愿望时由 hub 推送 / the hub pushes when a visitor sends a wish
       IDEA_LOOM_DB: /srv/state/db/loom.sqlite
     volumes:
       - repo:/srv/repo:ro          # 只读：读名片和版本号 / read-only: card files and versions
@@ -85,6 +87,7 @@ services:
       IDEA_LOOM_REPO_URL: ${REPO_URL}
       IDEA_LOOM_WORK: /srv/work
       IDEA_LOOM_DB: /srv/state/db/loom.sqlite
+      IDEA_LOOM_VAPID_PRIVATE: ${VAPID_PRIVATE:-}   # 作业的结果由 worker 推送 / job results are pushed by the worker
       IDEA_LOOM_API: http://hub:8767     # 小助手的工具回调打到 hub / the assistant's tool callbacks go to the hub
       IDEA_LOOM_JOBS_PER_DAY: ${JOBS_PER_DAY:-6}
       IDEA_LOOM_USAGE_PAUSE: ${USAGE_PAUSE:-0.8}

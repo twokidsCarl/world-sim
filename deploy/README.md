@@ -149,6 +149,15 @@ visitor writes is untrusted text: in the planning prompt it is fenced between se
 and the model is told it is material, not instructions; the job page lets you expand the
 exact brief handed to Claude.
 
+## 手机 / On a phone
+
+- 窄屏时导航变成底部的一条标签栏（可以左右滑），小助手变成整屏的面板，玩的页面上模拟占满屏幕、操作排成它下面的一行。
+  On a narrow screen the navigation becomes a tab bar along the bottom (it scrolls sideways), the assistant becomes a full-screen sheet, and on the play page the simulation fills the screen with the actions in a row beneath it.
+- 可以装到主屏幕：iPhone 上用 Safari 的"添加到主屏幕"，Android 上 Chrome 会提示安装。
+  It can be installed to the home screen: "Add to Home Screen" in Safari on an iPhone; Chrome on Android offers to install it.
+- 推送通知：填好 `VAPID_PUBLIC` / `VAPID_PRIVATE`，主人在界面上点一次"通知"。之后方案出来等批准、作业完成或失败、有访客提了愿望、队列被闸门拦下，都会推到那台设备，点开就是对应的那一页。iPhone 上要先装到主屏幕才收得到推送。
+  Push notifications: fill in `VAPID_PUBLIC` / `VAPID_PRIVATE` and tap "Alerts" once in the UI as the owner. After that a plan waiting for approval, a job finishing or failing, a visitor sending a wish and the queue being held by a gate are all pushed to that device, and tapping one opens the page concerned. On an iPhone the app must be installed to the home screen before it can receive push.
+
 ## 作业 / Jobs
 
 ```sh
@@ -195,8 +204,8 @@ database, then exports the ideas, wishes and tasks; if they differ from `main` i
    The repository's auto-merge does not look at tests yet. The worker re-runs the tests before opening its PR, but PRs from other sources have no such gate.
 2. **作业的出站网络 / Outbound network for jobs**。作业的进程能访问任何地址，还没有只放行模型接口、GitHub 和包管理源的名单。
    A job's processes can reach any address; there is no allow-list yet limiting them to the model API, GitHub and the package registries.
-3. 手机布局与推送、持续运行与自动维护。
-   Visitor wishes, the phone layout and push notifications, unattended running and automatic maintenance.
+3. 持续运行与自动维护。
+   Unattended running and automatic maintenance.
 
 ## 已知的风险 / Known risks
 
@@ -204,6 +213,8 @@ database, then exports the ideas, wishes and tasks; if they differ from `main` i
   The database was tested locally (the existing 350 idea events imported, with the folded state and the exported files byte-identical to the originals; concurrent creation never collides), but **the Litestream backup and restore have not been run**; the configuration follows its documentation.
 - 作业这一段在本机用假的 `claude` 和假的 `gh`、一个本地的远端仓库测过（排队、工作区、提交只含这个目录、推分支、开 PR、等合并、闸门、取消、接着做），但**没有在容器里对着真的 GitHub 跑过**。`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` 的效果没有单独验证过。
   Jobs were tested locally with a fake `claude`, a fake `gh` and a local remote (queueing, the workspace, a commit holding only that directory, pushing, opening the PR, waiting for the merge, the gates, cancelling, resuming), but **have not been run in the container against the real GitHub**. The effect of `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` has not been verified separately.
+- 手机布局只在电脑上用 390 像素宽的窗口看过（玩、想法池、许愿池三页），**没有在真机上试过**；装到主屏幕和推送通知没有端到端试过（推送的服务器端用假的发送函数测过）。
+  The phone layout was only looked at in a 390-pixel-wide frame on a computer (the play, idea pool and wish pool pages) and **not on a real phone**; installing to the home screen and push notifications were not tried end to end (the server side of push is tested with a fake delivery function).
 - 登录这一段在本机测过（三种身份逐个调接口、伪造和过期的 cookie、回调的 state 校验），但**没有对着真的 GitHub 走过一遍**，因为还没有域名和 OAuth 应用。
   Sign-in was tested locally (every route as each of the three roles, forged and expired cookies, the callback's state check) but **has not been run against the real GitHub**, since there is no domain or OAuth app yet.
 - 模拟的子域名不需要登录，任何人都能玩；它们的后端只有限流这一道。

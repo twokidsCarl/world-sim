@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router'
 import { IdeaPage } from '../pages/IdeaPage'
 import { InboxPage } from '../pages/InboxPage'
@@ -15,6 +15,7 @@ import { AssistantDock } from '../assistant/AssistantDock'
 import { useAssistant } from '../assistant/store'
 import { install as installTrail } from '../assistant/trail'
 import { applyLang, plural } from '../i18n'
+import { type PushState, pushState, turnOff, turnOn } from '../push'
 import { useStore, useT } from '../state/store'
 
 const NAV = [
@@ -38,6 +39,12 @@ export function App() {
   useEffect(() => {
     if (me?.role === 'member') installTrail()
   }, [me?.role])
+  // 通知的开关只给主人；浏览器不支持或者服务器没配密钥时不显示。
+  // The notification switch is for the owner only and is hidden when the browser lacks support or the server has no keys.
+  const [push, setPush] = useState<PushState>('unsupported')
+  useEffect(() => {
+    if (owner) void pushState().then(setPush)
+  }, [owner])
   // 只有主人能用的页面，别人看到的是一句说明。 / Pages only the owner can use show everyone else one line of explanation.
   const gate = (page: ReactNode) => (owner ? page : <p className="pad">{t('这一页只有主人能用。', 'Only the owner can use this page.')}</p>)
   useEffect(() => {
@@ -113,6 +120,16 @@ export function App() {
             </div>
           )}
           <div className="row">
+            {owner && (push === 'on' || push === 'off') && (
+              <button
+                aria-pressed={push === 'on'}
+                title={push === 'on' ? t('通知开着：方案待批、作业结果、访客的愿望会推到这台设备', 'Notifications are on: plans to approve, job results and visitors’ wishes are pushed to this device') : t('打开通知', 'Turn notifications on')}
+                onClick={() => void (push === 'on' ? turnOff() : turnOn()).then(setPush)}
+              >
+                {push === 'on' ? t('通知 ✓', 'Alerts ✓') : t('通知', 'Alerts')}
+              </button>
+            )}
+            {owner && push === 'blocked' && <span className="muted small" title={t('浏览器里把这个站点的通知禁掉了，要到浏览器的设置里放开', 'Notifications for this site are blocked in the browser; allow them in its settings')}>{t('通知被禁', 'Alerts blocked')}</span>}
             <button onClick={toggleTheme} aria-label={t('切换昼夜配色', 'Switch between light and dark')}>
               {theme === 'dark' ? t('昼', 'Light') : t('夜', 'Dark')}
             </button>

@@ -254,6 +254,20 @@ def db_export(out: str = typer.Argument(..., help="导出到哪个目录 / the d
         typer.echo(f"{stream:<10} {text.count(chr(10))}")
 
 
+push_app = typer.Typer(help="推送通知 / push notifications", no_args_is_help=True)
+app.add_typer(push_app, name="push")
+
+
+@push_app.command("keys")
+def push_keys() -> None:
+    """生成一对推送用的密钥，照着打印的两行设环境变量。 / Generate a key pair for push; set the two environment variables as printed."""
+    from . import notify
+
+    pair = notify.generate_keys()
+    typer.echo(f"IDEA_LOOM_VAPID_PUBLIC={pair['public']}")
+    typer.echo(f"IDEA_LOOM_VAPID_PRIVATE={pair['private']}")
+
+
 @app.command("worker")
 def worker_(once: bool = typer.Option(False, help="只看一遍队列就退出 / look over the queue once and exit")) -> None:
     """云端跑作业的进程：从队列里取主人批准过的事来做。 / The process that runs jobs in the cloud, taking what the owner approved from the queue."""

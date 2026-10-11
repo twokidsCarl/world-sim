@@ -313,6 +313,7 @@ src/idea_loom/
   calls.py      云端：hub 把模型调用交给 worker（只给数据，不给命令）/ in the cloud: the hub hands model calls to the worker (data only, never a command)
   review.py     回看操作轨迹 / review of the action trail
   wishes.py     许愿池 / the wish pool
+  notify.py     推送通知：方案待批、作业结果、访客的愿望、队列暂停 / push notifications: plans to approve, job results, visitors' wishes, queue pauses
   suggestions.py 访客提的愿望：待主人过目的队列 / wishes from visitors: the queue the owner looks over
   trail.py      操作轨迹 / the action trail
   assistant/    小助手：提示词、回合、事件流、工具服务 / the assistant: prompt, turns, event stream, tool server

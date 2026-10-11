@@ -21,7 +21,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel
 
-from . import store, wishes
+from . import notify, store, wishes
 
 PER_DAY = 5
 MAX_TITLE, MAX_TEXT = 120, 1000
@@ -93,6 +93,7 @@ def send(by: str, title: str, stuck: str = "", where_url: str = "", where_title:
     row: dict[str, Any] = {"at": now(), "id": sid, "event": "sent", "by": by, "title": title, "stuck": _clip(stuck, MAX_TEXT),
                            "where_url": _clip(where_url, 300) if where_url.startswith("/") else "", "where_title": _clip(where_title, MAX_TITLE)}
     store.append(path(), [row])
+    notify.send("有访客提了愿望，等你过目", f"{by}：{title}", url="/wishes", tag="suggestions")
     return load()[sid]
 
 
