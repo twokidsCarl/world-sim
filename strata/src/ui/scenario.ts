@@ -96,6 +96,7 @@ class ScenarioPlayer {
     )
     for (const [id, value] of entries) if (engine.params[id] !== value) engine.setParam(id, value)
     if (step.action === 'reverse') engine.reverse()
+    if (step.action === 'push') engine.push(step.velocity ?? 0)
     if (step.action === 'perturb') engine.perturb(SOUND_KICK * Math.sqrt(engine.params.temperature ?? 1))
     this.startedAt = engine.backend.stepCount
     // 恰好运行这么多步：反转必须发生在已知的步数上。

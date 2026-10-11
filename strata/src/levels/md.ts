@@ -23,6 +23,66 @@ const nonreciprocal = (p: Record<string, number>) =>
 
 const BINS = 24
 
+/**
+ * 紧贴圆盘背风面的一小块区域里的平均 uₓ：沿流向从圆心后 1.15 到 1.9 个半径，横向 ±0.35 个半径。
+ * 回流涡就在这里；再往下游或再宽一些，平均值就被尾迹外的正向流动盖过了。
+ * 障碍物在上游四分之一处的正中。
+ *
+ * Mean uₓ in a small box hugging the lee side of the disc: from 1.15 to 1.9 radii behind
+ * its centre along the flow, and ±0.35 radii across. The recirculating eddies sit here;
+ * further downstream or wider, the average is swamped by the forward flow outside the wake.
+ * The obstacle sits mid-height, a quarter of the way along the channel.
+ */
+function wakeVelocity(f: MdFrame, radius: number): number {
+  const { gx, gy, count, vx } = f.field!
+  const [lx, ly] = [f.box[0]!, f.box[1]!]
+  let n = 0
+  let sum = 0
+  for (let cy = 0; cy < gy; cy++) {
+    const y = ((cy + 0.5) / gy) * ly - 0.5 * ly
+    if (Math.abs(y) > 0.35 * radius) continue
+    for (let cx = 0; cx < gx; cx++) {
+      const x = ((cx + 0.5) / gx) * lx - 0.25 * lx
+      if (x < 1.15 * radius || x > 1.9 * radius) continue
+      n += count[cy * gx + cx]!
+      sum += vx[cy * gx + cx]!
+    }
+  }
+  return n > 0 ? sum / n : NaN
+}
+
+/**
+ * 对流的度量：取高度居中的三分之一，把 x 方向分成 16 段，各段的平均竖直流速的均方根。
+ * 同时给出没有对流时仅由热运动造成的期望值 √(T / 每段粒子数)。
+ * A measure of convection: in the middle third of the height, split x into 16 segments
+ * and take the root mean square of each segment's mean vertical velocity. Also returns
+ * what thermal motion alone would give without convection, √(T / particles per segment).
+ */
+function convection(f: MdFrame): { rms: number; noise: number } {
+  const { gx, gy, count, vy, v2 } = f.field!
+  const segments = 16
+  const per = gx / segments
+  let rms = 0
+  let n = 0
+  let energy = 0
+  for (let seg = 0; seg < segments; seg++) {
+    let m = 0
+    let py = 0
+    for (let cy = Math.floor(gy / 3); cy < Math.ceil((2 * gy) / 3); cy++) {
+      for (let cx = seg * per; cx < (seg + 1) * per; cx++) {
+        m += count[cy * gx + cx]!
+        py += vy[cy * gx + cx]!
+        energy += v2[cy * gx + cx]!
+      }
+    }
+    n += m
+    rms += m > 0 ? (py / m) ** 2 / segments : 0
+  }
+  // 二维下每个速度分量的方差是 T ≈ ⟨v²⟩ / 2。 / In 2D each velocity component has variance T ≈ ⟨v²⟩ / 2.
+  const T = n > 0 ? energy / (2 * n) : 0
+  return { rms: Math.sqrt(rms), noise: n > 0 ? Math.sqrt(T / (n / segments)) : 0 }
+}
+
 export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
   {
     id: 'drift',
@@ -142,10 +202,59 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'field',
     reducers: ['field'],
     compute: (f) => {
-      const { g, count } = f.field!
-      const cell = (f.box[0]! * f.box[1]!) / (g * g)
-      return { nx: g, ny: g, data: Float64Array.from(count, (c) => c / cell), aspect: f.box[0]! / f.box[1]! }
+      const { gx, gy, count } = f.field!
+      const cell = (f.box[0]! * f.box[1]!) / (gx * gy)
+      return { nx: gx, ny: gy, data: Float64Array.from(count, (c) => c / cell), aspect: f.box[0]! / f.box[1]! }
     },
+  },
+  {
+    id: 'flowField',
+    level: 'hydro',
+    label: '沿管道的流速场 uₓ(x, y)',
+    kind: 'field',
+    smooth: 0.02,
+    reducers: ['field'],
+    when: (p) => p.walls === 1 && p.dim !== 3,
+    compute: (f) => {
+      const { gx, gy, count, vx } = f.field!
+      return { nx: gx, ny: gy, data: Float64Array.from(vx, (v, c) => (count[c]! > 0 ? v / count[c]! : 0)), aspect: f.box[0]! / f.box[1]!, signed: true }
+    },
+  },
+  {
+    id: 'crossField',
+    level: 'hydro',
+    label: '横向流速场 u_y(x, y)',
+    kind: 'field',
+    smooth: 0.02,
+    reducers: ['field'],
+    when: (p) => p.walls === 1 && p.dim !== 3,
+    compute: (f) => {
+      const { gx, gy, count, vy } = f.field!
+      return { nx: gx, ny: gy, data: Float64Array.from(vy, (v, c) => (count[c]! > 0 ? v / count[c]! : 0)), aspect: f.box[0]! / f.box[1]!, signed: true }
+    },
+  },
+  {
+    id: 'wakeVelocity',
+    level: 'hydro',
+    label: '圆盘背风面的流速（瞬时值，噪声大）',
+    kind: 'scalar',
+    record: true,
+    reducers: ['field'],
+    when: (p) => p.walls === 1 && p.obstacle! > 0 && p.dim !== 3,
+    compute: (f, p) => wakeVelocity(f, p.obstacle!),
+    theory: () => 0,
+    theoryLabel: '0：时间平均后低于它，说明圆盘后面有回流；见下面的分析卡片',
+  },
+  {
+    id: 'convection',
+    level: 'hydro',
+    label: '对流强度：中间一层竖直流速沿 x 的起伏',
+    kind: 'scalar',
+    reducers: ['field', 'scalars'],
+    when: (p) => p.walls === 1 && p.gravity! > 0 && p.dim !== 3,
+    compute: (f) => convection(f).rms,
+    theory: (f) => convection(f).noise,
+    theoryLabel: '没有对流时的热噪声水平（由粒子数与温度估计）；明显高出它才是对流',
   },
   {
     id: 'concentration',
@@ -172,7 +281,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     smooth: 0.03,
     xLabel: '横向位置 y / 管宽',
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    when: (p) => p.walls === 1 && p.drive! > 0 && p.dim !== 3,
     compute: (f) => {
       const pr = profiles(f.field!, f.box, BINS)
       return { x: pr.y, y: pr.ux }
@@ -194,7 +303,8 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     label: '粘度 η（由流量反推）',
     kind: 'scalar',
     reducers: ['field', 'scalars'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    // 反推公式只对没有障碍物的管道流成立。 / The formula holds only for channel flow without an obstacle.
+    when: (p) => p.walls === 1 && p.drive! > 0 && !p.obstacle && p.dim !== 3,
     compute: (f, p) => {
       const pr = profiles(f.field!, f.box, BINS)
       let mean = 0
@@ -219,6 +329,8 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       return { x: pr.y, y: pr.temperature }
     },
     theory: (f, p) => {
+      // 两壁温度不同时没有一条简单的参照线。 / With walls at different temperatures there is no simple reference line.
+      if (p.deltaT) return null
       const pr = profiles(f.field!, f.box, BINS)
       return { x: pr.y, y: Float64Array.from(pr.y, () => p.temperature!) }
     },

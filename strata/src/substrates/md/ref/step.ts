@@ -34,7 +34,17 @@ export interface MdState {
    * crosses is put back and re-emitted with a velocity drawn from the wall temperature.
    */
   walls: boolean
+  /** y = 0 处壁面的温度 / Temperature of the wall at y = 0 */
   wallTemperature: number
+  /** y = box[1] 处壁面的温度 / Temperature of the wall at y = box[1] */
+  wallTemperatureFar: number
+  /** 每个粒子沿 +y 方向受到的均匀体力（重力）。 / Uniform body force per particle along +y (gravity). */
+  gravity: number
+  /**
+   * 固定的圆盘障碍物：圆心与半径。粒子受到来自圆盘表面的短程排斥。
+   * A fixed disc obstacle: centre and radius. Particles feel a short-range repulsion from its surface.
+   */
+  obstacle: { x: number; y: number; r: number } | null
   /** 每个粒子沿 x 方向受到的均匀体力。 / Uniform body force per particle along x. */
   drive: number
   seed: number
@@ -57,6 +67,9 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
     grid: null,
     walls: false,
     wallTemperature: 1,
+    wallTemperatureFar: 1,
+    gravity: 0,
+    obstacle: null,
     drive: 0,
     seed: 0,
   }
@@ -160,8 +173,44 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
       if (dim === 3) force[i * dim + 2] = fz
     }
   }
+  if (s.obstacle) pe += obstacleForces(s)
   s.pe = pe
   s.virial = virial
+}
+
+/** 圆盘表面排斥势的作用范围：Lennard-Jones 势阱的位置。 / Range of the disc's surface repulsion: the Lennard-Jones minimum. */
+const OBSTACLE_RANGE = Math.pow(2, 1 / 6)
+
+/**
+ * 把固定圆盘的排斥力加到各粒子上，返回它贡献的势能。以到圆盘表面的距离加 1 为自变量 s，
+ * 用截断在势阱处并上移的 Lennard-Jones 排斥 u = 4 (s⁻¹² − s⁻⁶) + 1：表面正好在 s = 1。
+ *
+ * Add the repulsion of the fixed disc to the particles and return the potential energy it
+ * contributes. With s the distance to the disc's surface plus 1, the force is the
+ * Lennard-Jones repulsion cut at its minimum and shifted up, u = 4 (s⁻¹² − s⁻⁶) + 1, so
+ * that the surface sits at s = 1.
+ */
+function obstacleForces(s: MdState): number {
+  const { dim, n, pos, force, box } = s
+  const o = s.obstacle!
+  let pe = 0
+  for (let i = 0; i < n; i++) {
+    let dx = pos[i * dim] - o.x
+    let dy = pos[i * dim + 1] - o.y
+    dx -= box[0] * Math.round(dx / box[0])
+    if (!s.walls) dy -= box[1] * Math.round(dy / box[1])
+    const d = Math.hypot(dx, dy)
+    // 钳在 0.5 以上，深入圆盘内部的粒子受到的力很大但有限。
+    // Clamped at 0.5, so a particle deep inside the disc feels a large but finite force.
+    const t = Math.max(d - o.r + 1, 0.5)
+    if (t >= OBSTACLE_RANGE || d === 0) continue
+    const i6 = Math.pow(t, -6)
+    const f = (24 * (2 * i6 * i6 - i6)) / t
+    force[i * dim] += (f * dx) / d
+    force[i * dim + 1] += (f * dy) / d
+    pe += 4 * (i6 * i6 - i6) + 1
+  }
+  return pe
 }
 
 /**
@@ -175,7 +224,7 @@ export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void 
   for (let it = 0; it < nSteps; it++) {
     for (let k = 0; k < len; k++) {
       const d = k % dim
-      vel[k] += half * (force[k] + (d === 0 ? s.drive : 0))
+      vel[k] += half * (force[k] + (d === 0 ? s.drive : d === 1 ? s.gravity : 0))
       const L = box[d]
       const x = pos[k] + dt * vel[k]
       if (s.walls && d === 1) {
@@ -184,7 +233,10 @@ export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void 
       } else pos[k] = x - L * Math.floor(x / L)
     }
     computeForces(s, pair)
-    for (let k = 0; k < len; k++) vel[k] += half * (force[k] + (k % dim === 0 ? s.drive : 0))
+    for (let k = 0; k < len; k++) {
+      const d = k % dim
+      vel[k] += half * (force[k] + (d === 0 ? s.drive : d === 1 ? s.gravity : 0))
+    }
     s.step++
   }
 }
@@ -202,7 +254,7 @@ function hitWall(s: MdState, i: number, lower: boolean): void {
   // 加以钳制，使极端的越界也仍落在盒内。 / Clamped so that an extreme overshoot still lands inside the box.
   pos[i * dim + 1] = Math.min(Math.max(lower ? -y : 2 * L - y, 0), L * (1 - 1e-12))
   const key = s.seed ^ Math.imul(s.step + 1, 0x632be5ab)
-  const sd = Math.sqrt(s.wallTemperature)
+  const sd = Math.sqrt(lower ? s.wallTemperature : s.wallTemperatureFar)
   const normal = sd * Math.sqrt(-2 * Math.log(uniform(key, 4 * i)))
   vel[i * dim] = sd * gaussian(key, 4 * i + 1)
   vel[i * dim + 1] = lower ? normal : -normal

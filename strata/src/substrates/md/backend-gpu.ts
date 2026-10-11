@@ -7,6 +7,7 @@ import { speciesField, speciesTables, type PairTable, type PotentialSpec } from 
 import { initFcc, initTriangular } from './ref/init'
 import {
   FIELD_G,
+  fieldGrid,
   MODE_COUNT,
   demixing,
   modeStride,
@@ -15,7 +16,7 @@ import {
   type FieldSums,
   type Hist,
 } from './ref/reducers'
-import { boxAspect, fccCells, fieldKey, potentialSpec, strengthMatrix } from './schema'
+import { boxAspect, fccCells, fieldKey, obstacleOf, potentialSpec, strengthMatrix } from './schema'
 
 const CHUNK = 256
 const TABLE_K = 2048
@@ -25,11 +26,12 @@ const RDF_OFFSET = 64
 const MAX_CELL_SLOT = 192
 const HIST_WORDS = 196
 const THERMOSTAT_TAU = 0.5
-const PARAM_BYTES = 128
+const PARAM_BYTES = 176
 /** 每块的归约输出：4 个 vec4。 / Reduction output per chunk: 4 vec4. */
 const PARTIAL_FLOATS = 16
 const MODE_SLOTS = 2 + 4 * MODE_COUNT
-const FIELD_WORDS = FIELD_G * FIELD_G * 5
+/** 场缓冲按最大的网格（4 FIELD_G × FIELD_G）分配。 / The field buffer is sized for the largest grid (4 FIELD_G × FIELD_G). */
+const FIELD_WORDS = 4 * FIELD_G * FIELD_G * 5
 const FIELD_V = 1024
 const FIELD_V2 = 256
 /**
@@ -54,11 +56,12 @@ const ENTRY_BINDINGS = {
   clearHist: [9],
   speedHist: [0, 1, 2, 9],
   rdfHist: [0, 1, 5, 6, 9],
-  clearField: [11],
+  clearField: [0, 11],
   fieldBin: [0, 1, 2, 11],
   densityModes: [0, 1, 12],
   mergeModes: [0, 12, 13],
   soundKick: [0, 1, 2],
+  addVelocity: [0, 2],
 } as const
 
 type Entry = keyof typeof ENTRY_BINDINGS
@@ -98,6 +101,8 @@ export class MdGpuBackend implements MdBackend {
   private pendingKick: number | null = null
   private pendingReverse = false
   private pendingPerturb: number | null = null
+  private pendingPush: number | null = null
+  private obstacle: { x: number; y: number; r: number } | null = null
   private heat = 0
   private e0 = 0
   private rebaseEpoch = 1
@@ -131,10 +136,12 @@ export class MdGpuBackend implements MdBackend {
               fractionB: p.fractionB,
               aspect: boxAspect(p),
               stripe: p.layoutB === 1,
+              obstacle: obstacleOf(p),
             },
             field,
           )
     this.n = init.n
+    this.obstacle = init.obstacle
     this.box = init.box
     this.chunks = Math.ceil(this.n / CHUNK)
 
@@ -258,6 +265,10 @@ export class MdGpuBackend implements MdBackend {
     f.set([vmax, this.rdfMax, this.lambda, this.rdfReach], 16)
     u.set([modeStride(this.box[0]!), modeStride(this.box[1]!), region ? 1 : 0, 0], 24)
     f.set(region ?? [0, 0, 0, 0], 28)
+    u.set([...fieldGrid(this.box), 0, 0], 32)
+    const o = this.obstacle
+    f.set(o ? [o.x, o.y, o.r, 1] : [0, 0, 0, 0], 36)
+    f.set([this.p.walls === 1 && this.dim === 2 ? (this.p.gravity ?? 0) : 0, this.p.temperature! + (this.p.deltaT ?? 0), 0, 0], 40)
     const walls = this.p.walls === 1 && this.dim === 2
     f.set([walls ? this.p.drive! : 0, this.p.temperature!], 20)
     u.set([walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
@@ -314,7 +325,13 @@ export class MdGpuBackend implements MdBackend {
     const { dt, thermostat, temperature: target } = this.p
     let rescale = false
     let soundKick = false
-    if (this.pendingPerturb !== null) {
+    let push = false
+    if (this.pendingPush !== null) {
+      this.lambda = this.pendingPush
+      this.pendingPush = null
+      this.rebaseEpoch++
+      push = true
+    } else if (this.pendingPerturb !== null) {
       // 内核从重标因子所用的同一个 uniform 槽位读取振幅。
       // The kernel reads its amplitude from the same uniform slot as the rescale factor.
       this.lambda = this.pendingPerturb
@@ -345,6 +362,7 @@ export class MdGpuBackend implements MdBackend {
     const pass = encoder.beginComputePass(this.timer.descriptor())
     if (rescale) this.dispatch(pass, 'rescale', this.chunks, 64)
     if (soundKick) this.dispatch(pass, 'soundKick', this.n)
+    if (push) this.dispatch(pass, 'addVelocity', this.n)
     for (let i = 0; i < n; i++) {
       this.dispatch(pass, 'kickDrift', this.n)
       this.encodeForces(pass)
@@ -365,6 +383,10 @@ export class MdGpuBackend implements MdBackend {
    * 沿 x 方向激发一个驻声波，速度振幅为给定值。
    * Launch a standing sound wave along x with the given velocity amplitude.
    */
+  push(velocity: number): void {
+    this.pendingPush = velocity
+  }
+
   perturb(amplitude: number): void {
     this.pendingPerturb = amplitude
   }
@@ -394,7 +416,9 @@ export class MdGpuBackend implements MdBackend {
     const partialBytes = this.chunks * PARTIAL_FLOATS * 4
     const histBytes = HIST_WORDS * 4
     const heatBytes = this.chunks * 4
-    const fieldBytes = wantField ? FIELD_WORDS * 4 : 0
+    const [gx, gy] = fieldGrid(this.box)
+    const fieldWords = gx * gy * 5
+    const fieldBytes = wantField ? fieldWords * 4 : 0
     const modeBytes = wantModes ? MODE_SLOTS * 4 : 0
     const staging = this.device.createBuffer({
       size: partialBytes + histBytes + heatBytes + fieldBytes + modeBytes,
@@ -406,7 +430,7 @@ export class MdGpuBackend implements MdBackend {
     if (wantSpeed) this.dispatch(pass, 'speedHist', this.n)
     if (wantRdf) this.dispatch(pass, 'rdfHist', this.n)
     if (wantField) {
-      this.dispatch(pass, 'clearField', FIELD_WORDS)
+      this.dispatch(pass, 'clearField', fieldWords)
       this.dispatch(pass, 'fieldBin', this.n)
     }
     if (wantModes) {
@@ -508,7 +532,7 @@ export class MdGpuBackend implements MdBackend {
       },
     }
     if (wantSpeed) frame.speedHist = speedDensity(hist, n, vmax)
-    if (wantField) frame.field = fieldFromFixed(new Int32Array(raw, partialBytes + histBytes + heatBytes, FIELD_WORDS))
+    if (wantField) frame.field = fieldFromFixed(new Int32Array(raw, partialBytes + histBytes + heatBytes, fieldWords), gx, gy)
     if (wantModes) {
       frame.modes = {
         data: Float64Array.from(new Float32Array(raw, partialBytes + histBytes + heatBytes + fieldBytes, MODE_SLOTS)),
@@ -658,10 +682,11 @@ function speedDensity(hist: Uint32Array, n: number, vmax: number): Hist {
  * 解码 fieldBin 内核写入的定点 i32 单元求和。
  * Decode the fixed-point i32 cell sums written by the fieldBin kernel.
  */
-function fieldFromFixed(words: Int32Array): FieldSums {
-  const cells = FIELD_G * FIELD_G
+function fieldFromFixed(words: Int32Array, gx: number, gy: number): FieldSums {
+  const cells = gx * gy
   const out: FieldSums = {
-    g: FIELD_G,
+    gx,
+    gy,
     count: new Float64Array(cells),
     vx: new Float64Array(cells),
     vy: new Float64Array(cells),

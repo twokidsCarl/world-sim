@@ -63,7 +63,48 @@ export function diffuse(c0: ArrayLike<number>, D: number, time: number, dy: numb
 
 const mixture = (p: Record<string, number>) => p.fractionB! > 0 && p.layoutB === 1 && !p.walls && p.dim !== 3
 
+/**
+ * 序列后半段的平均值与标准误。把后半段切成 10 块、用块平均的离散程度估计误差，
+ * 这样相邻样本之间的相关不会让误差被低估。
+ * Mean and standard error of the second half of a series. The half is cut into 10 blocks
+ * and the error estimated from the scatter of the block means, so that correlation
+ * between neighbouring samples does not make it look smaller than it is.
+ */
+export function blockAverage(values: number[]): { mean: number; error: number } {
+  const half = values.slice(Math.floor(values.length / 2))
+  const blocks = 10
+  const size = Math.floor(half.length / blocks)
+  const means: number[] = []
+  for (let b = 0; b < blocks; b++) {
+    let sum = 0
+    for (let i = b * size; i < (b + 1) * size; i++) sum += half[i]!
+    means.push(sum / size)
+  }
+  const mean = means.reduce((a, c) => a + c, 0) / blocks
+  const variance = means.reduce((a, c) => a + (c - mean) ** 2, 0) / (blocks - 1)
+  return { mean, error: Math.sqrt(variance / blocks) }
+}
+
 export const MD_ANALYSES: AnalysisDef[] = [
+  {
+    id: 'wake',
+    level: 'hydro',
+    label: '圆盘后面有没有回流',
+    source: 'wakeVelocity',
+    minSamples: 60,
+    when: (p) => p.walls === 1 && p.obstacle! > 0 && p.dim !== 3,
+    compute(h) {
+      const { mean, error } = blockAverage(h.y.map((y) => y[0]!))
+      const backflow = mean + 2 * error < 0
+      return {
+        headline: `背风面的平均流速 ${mean.toFixed(3)} ± ${error.toFixed(3)}`,
+        detail: backflow
+          ? '明显为负：紧贴圆盘背后的流体在逆着来流方向走，那里有一对回流涡。没有任何一个粒子被规定要这样运动。'
+          : '还不能说是负的。回流只在雷诺数够大时出现；流动建立起来也需要时间（取记录的后一半做平均）。',
+        agree: backflow,
+      }
+    },
+  },
   {
     id: 'sound',
     level: 'hydro',

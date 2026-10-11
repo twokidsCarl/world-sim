@@ -16,7 +16,7 @@ import {
 } from './ref/reducers'
 import { reverseTime, stepReversible, toReversible, type ReversibleState } from './ref/reversible'
 import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
-import { boxAspect, fccCells, fieldKey, potentialSpec, strengthMatrix } from './schema'
+import { boxAspect, fccCells, fieldKey, obstacleOf, potentialSpec, strengthMatrix } from './schema'
 
 export interface MdFrame extends Frame {
   time: number
@@ -132,6 +132,7 @@ export class MdCpuBackend implements MdBackend {
               fractionB: p.fractionB,
               aspect: boxAspect(p),
               stripe: p.layoutB === 1,
+              obstacle: obstacleOf(p),
             },
             this.pair,
           )
@@ -163,7 +164,11 @@ export class MdCpuBackend implements MdBackend {
 
   private applyDrive(): void {
     this.state.drive = this.state.walls ? this.p.drive : 0
+    this.state.gravity = this.state.walls ? (this.p.gravity ?? 0) : 0
+    // y = 0 是画面上方的壁；下壁（y = box[1]）可以更热。
+    // y = 0 is the wall at the top of the picture; the lower wall (y = box[1]) may be hotter.
     this.state.wallTemperature = this.p.temperature
+    this.state.wallTemperatureFar = this.p.temperature + (this.p.deltaT ?? 0)
   }
 
   private energy(): number {
@@ -194,6 +199,13 @@ export class MdCpuBackend implements MdBackend {
     }
     this.p = { ...p }
     this.applyDrive()
+  }
+
+  /** 给所有粒子加上沿 x 的同一个速度。 / Add the same velocity along x to every particle. */
+  push(velocity: number): void {
+    if (this.reversible) return
+    for (let i = 0; i < this.state.n; i++) this.state.vel[i * this.state.dim] += velocity
+    this.rebase()
   }
 
   /**

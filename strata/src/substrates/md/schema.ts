@@ -171,10 +171,45 @@ export const MD_KNOBS: Knob[] = [
     tag: 'state',
     min: 0,
     max: 0.02,
-    step: 0.001,
+    step: 0.0002,
     default: 0.006,
     rebuild: 'none',
     when: (p) => p.walls === 1,
+  },
+  {
+    id: 'obstacle',
+    label: '圆盘障碍物的半径',
+    tag: 'state',
+    min: 0,
+    max: 40,
+    step: 1,
+    default: 0,
+    rebuild: 'state',
+    note: '0 表示没有。圆盘固定在管道上游四分之一处的正中，粒子受它表面的短程排斥。',
+    when: (p) => p.walls === 1 && p.dim === 2,
+  },
+  {
+    id: 'gravity',
+    label: '重力（指向下壁）',
+    tag: 'state',
+    min: 0,
+    max: 0.1,
+    step: 0.002,
+    default: 0,
+    rebuild: 'none',
+    when: (p) => p.walls === 1 && p.dim === 2,
+  },
+  {
+    id: 'deltaT',
+    label: '下壁比上壁热多少 ΔT',
+    tag: 'state',
+    min: 0,
+    max: 10,
+    step: 0.1,
+    default: 0,
+    rebuild: 'none',
+    note: '上壁温度是上面的温度 T，下壁是 T + ΔT。从下面加热、重力向下时，温差够大就会出现对流。',
+    when: (p) => p.walls === 1 && p.dim === 2,
   },
   { id: 'density', label: '数密度 ρ', tag: 'state', min: 0.02, max: 1.0, step: 0.01, default: 0.6, rebuild: 'state' },
   {
@@ -299,4 +334,12 @@ export function boxOf(p: Params, cpu = false): number[] {
   const ny = Math.max(2, 2 * Math.round(nx / Math.sqrt(3) / boxAspect(p)))
   const a = Math.sqrt(2 / (Math.sqrt(3) * p.density))
   return [nx * a, (ny * a * Math.sqrt(3)) / 2]
+}
+
+/**
+ * 障碍物在盒子里的位置（宽、高的分数）与半径；没有时为 undefined。
+ * The obstacle's position (as fractions of width and height) and radius; undefined when there is none.
+ */
+export function obstacleOf(p: Params): { fx: number; fy: number; r: number } | undefined {
+  return p.walls === 1 && p.dim !== 3 && p.obstacle > 0 ? { fx: 0.25, fy: 0.5, r: p.obstacle } : undefined
 }

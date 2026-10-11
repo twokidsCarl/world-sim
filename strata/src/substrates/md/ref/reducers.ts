@@ -9,11 +9,22 @@ import { kineticEnergy, momentum, pressure, temperature, volume, type MdState } 
 export const FIELD_G = 48
 
 /**
+ * 粗粒化网格的格数：y 方向固定 FIELD_G 格，x 方向按盒子的宽高比取 1 到 4 倍，使格子大致为正方。
+ * Cells of the coarse-graining grid: FIELD_G along y, and 1 to 4 times that along x
+ * following the box's aspect ratio, so that cells are roughly square.
+ */
+export function fieldGrid(box: ArrayLike<number>): [number, number] {
+  return [FIELD_G * Math.max(1, Math.min(4, Math.round(box[0]! / box[1]!))), FIELD_G]
+}
+
+/**
  * g × g 网格中各单元内粒子的逐单元求和，按行主序存储，y 为行。
  * Per-cell sums over the particles in each cell of a g × g grid, row-major with y as the row.
  */
 export interface FieldSums {
-  g: number
+  /** 沿 x 与沿 y 的格数 / Cells along x and along y */
+  gx: number
+  gy: number
   count: Float64Array
   vx: Float64Array
   vy: Float64Array
@@ -309,20 +320,22 @@ export function rdf(s: MdState, bins: number, rmax: number): Hist {
  * Irving–Kirkwood/Hardy construction, in which mass and momentum of the fields equal
  * those of the particles exactly.
  */
-export function fieldSums(s: MdState, g = FIELD_G): FieldSums {
+export function fieldSums(s: MdState): FieldSums {
+  const [gx, gy] = fieldGrid(s.box)
   const out: FieldSums = {
-    g,
-    count: new Float64Array(g * g),
-    vx: new Float64Array(g * g),
-    vy: new Float64Array(g * g),
-    v2: new Float64Array(g * g),
-    countB: new Float64Array(g * g),
+    gx,
+    gy,
+    count: new Float64Array(gx * gy),
+    vx: new Float64Array(gx * gy),
+    vy: new Float64Array(gx * gy),
+    v2: new Float64Array(gx * gy),
+    countB: new Float64Array(gx * gy),
   }
   const { dim, pos, vel, box } = s
   for (let i = 0; i < s.n; i++) {
-    const cx = Math.min(g - 1, Math.floor((pos[i * dim] / box[0]) * g))
-    const cy = Math.min(g - 1, Math.floor((pos[i * dim + 1] / box[1]) * g))
-    const c = cy * g + cx
+    const cx = Math.min(gx - 1, Math.floor((pos[i * dim] / box[0]) * gx))
+    const cy = Math.min(gy - 1, Math.floor((pos[i * dim + 1] / box[1]) * gy))
+    const c = cy * gx + cx
     const vx = vel[i * dim]
     const vy = vel[i * dim + 1]
     out.count[c]++
@@ -343,7 +356,7 @@ export function profiles(
   box: ArrayLike<number>,
   bins = 24,
 ): { y: Float64Array; density: Float64Array; ux: Float64Array; temperature: Float64Array; fractionB: Float64Array } {
-  const per = f.g / bins
+  const per = f.gy / bins
   const y = new Float64Array(bins)
   const density = new Float64Array(bins)
   const ux = new Float64Array(bins)
@@ -356,8 +369,8 @@ export function profiles(
     let py = 0
     let v2 = 0
     for (let row = b * per; row < (b + 1) * per; row++) {
-      for (let cx = 0; cx < f.g; cx++) {
-        const c = row * f.g + cx
+      for (let cx = 0; cx < f.gx; cx++) {
+        const c = row * f.gx + cx
         n += f.count[c]
         px += f.vx[c]
         py += f.vy[c]

@@ -18,7 +18,22 @@ function format(v: number): string {
  * 场的热图，在其自身的最小值与最大值之间缩放。返回该范围。
  * Heat map of a field, scaled between its own minimum and maximum. Returns that range.
  */
-function drawField(canvas: HTMLCanvasElement, f: { nx: number; ny: number; data: ArrayLike<number>; aspect: number }): [number, number] {
+/**
+ * 蓝–白–红的发散色图（ColorBrewer RdBu 的两端），t 在 0..1，0.5 为白。
+ * A blue–white–red diverging map (the ends of ColorBrewer RdBu); t in 0..1, white at 0.5.
+ */
+function diverging(t: number): [number, number, number] {
+  const lo = [0.13, 0.4, 0.67]
+  const hi = [0.7, 0.09, 0.17]
+  const end = t < 0.5 ? lo : hi
+  const w = Math.abs(t - 0.5) * 2
+  return [0.97 + (end[0]! - 0.97) * w, 0.97 + (end[1]! - 0.97) * w, 0.97 + (end[2]! - 0.97) * w]
+}
+
+function drawField(
+  canvas: HTMLCanvasElement,
+  f: { nx: number; ny: number; data: ArrayLike<number>; aspect: number; signed?: boolean },
+): [number, number] {
   canvas.style.height = `${Math.min(220, canvas.clientWidth / f.aspect)}px`
   const { ctx, w, h } = fitCanvas(canvas)
   let lo = Infinity
@@ -29,7 +44,10 @@ function drawField(canvas: HTMLCanvasElement, f: { nx: number; ny: number; data:
   }
   const image = new ImageData(f.nx, f.ny)
   for (let i = 0; i < f.data.length; i++) {
-    const [r, g, b] = viridis(hi > lo ? (f.data[i]! - lo) / (hi - lo) : 0.5)
+    // 有符号的场以 0 为中心、两侧等幅。 / Signed fields are centred on 0 with equal range on both sides.
+    const [r, g, b] = f.signed
+      ? diverging(0.5 + (0.5 * f.data[i]!) / (Math.max(Math.abs(lo), Math.abs(hi)) || 1))
+      : viridis(hi > lo ? (f.data[i]! - lo) / (hi - lo) : 0.5)
     image.data.set([r * 255, g * 255, b * 255, 255], 4 * i)
   }
   const scratch = (drawField.scratch ??= document.createElement('canvas'))

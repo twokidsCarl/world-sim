@@ -13,6 +13,7 @@ English version below / 英文版见下文。
   - 动理：速率分布对麦克斯韦–玻尔兹曼分布，径向分布函数 g(r) 对低密度极限。
   - 热力学：温度、压强对理论：低密度下是第二维里系数；二维 12-6 势、截断半径不小于 4σ 时，是 Homes 等 (2025) 发表的状态方程加截断修正。
   - 流体：把粒子按网格分箱成密度、流速、温度场（Irving–Kirkwood 构造的最简情形，场的质量和动量与粒子严格相等）。上下热壁加驱动力时，流速剖面对照 Navier–Stokes 的抛物线，并由流量反推粘度。页头的“敲一下”激发盒子里最长的一列驻波，由这个密度模的振荡频率得到声速，对照维里展开到 B₂ 的绝热声速。
+  - 管道里可以放一个固定的圆盘障碍物，也可以加重力并让下壁比上壁热：前者在流速够大时圆盘背后出现回流和摆动的尾迹，后者在浮力够强时出现 Rayleigh–Bénard 对流卷。流速场和横向流速场用以 0 为中心的蓝–白–红色图画出。
   - 结构因子 S(k) = |ρ_k|² / N，由密度沿 x 和 y 的傅里叶模得到：理想气体为 1，液体有一个宽峰，晶体在倒格矢处有尖锐的 Bragg 峰。
   - 元：B 粒子从一条带开始扩散时，记录浓度剖面的时间序列，用弱形式稀疏回归（SINDy）在 5 个候选项里拟合它服从的方程，并用发现的方程把最早的剖面推演到现在与实测对照；再用动态模态分解（DMD）独立估计各模态的衰减率。
   - 结构：局域与全局六角序参量 ψ₆，可按它给粒子着色，看到晶粒、晶界和缺陷。
@@ -32,7 +33,7 @@ English version below / 英文版见下文。
 
 每个可调参数都带标签，说明它是改变普适类、仅改变数值、状态变量还是数值方法。每个带理论的量旁边实时标出“吻合”或“偏离”。
 
-页面底部有引导实验（敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
+页面底部有引导实验（流过圆盘、从下面加热出现对流卷、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=wake`、`/?scenario=convection`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
 
 ## 运行
 
@@ -75,7 +76,8 @@ CPU 参考实现先写，是规范；WGSL 内核是它的优化，并用同一�
 
 - 分子动力学最多两种粒子，粒子之间没有化学键（所以只有分相，没有胶束和膜）。
 - 三维下没有壁面、条带初始分布和六角序参量；结构量只有配位数，它分不清稠密液体和晶体（液体约 10 到 11.5，晶体 12），还没有 Steinhardt q₆。三维的 g(r) 只算到一个元胞宽（约 2.5 到 3σ）。
-- 流体层只验证了管道流的剖面形状；绕流尾迹和对流还没有做。管道流的抛物线幅度取自实测平均流速，粘度是反推值，没有独立的理论对照。
+- 绕流和对流都是定性验收，没有逐点的理论线。绕流：十一万多个粒子、圆盘直径 60σ、流速约为声速的一半（可压缩），圆盘背风面的时间平均流速为 −0.17 ± 0.03（来流 1.23），下游尾迹左右摆动，但没有测量脱落频率；流速减半时（雷诺数约二十）没有显著回流。对流：下壁温度是上壁的十倍，重力 0.06 时竖直流速的起伏是热噪声的五倍，出现约四对对流卷；重力 0.02 时约为 1.5 倍，没有清晰的卷。临界瑞利数没有测。
+- 有整体流动时，“温度 T”这张卡片把流动的动能也算了进去，读数偏高；局域的温度看流体层的温度剖面。
 - 压强与已发表状态方程的对照只适用于二维、单组分的 12-6 势，且截断半径不小于 4σ（默认是 2.5σ，此时只画低密度的维里线）。截断修正是平均场估计。
 - 声速只在稀薄气体里做了对照（维里展开到 B₂ 的绝热声速）；稠密流体没有独立的理论值可比。波长必须远大于平均自由程才算声波，这需要足够大的盒子（密度 0.15、1840 个粒子的方盒子就不够）。结构因子只沿 x 和 y 取样，大盒子里每隔几个波矢取一个，尖锐的 Bragg 峰可能落在取样点之间。
 - 基本常量面板只做标度换算，以氩为基准；它不改变约化单位下的动力学。
@@ -108,6 +110,7 @@ Three substrates, switched at the top right of the interface:
   - Kinetic: the speed distribution against the Maxwell–Boltzmann distribution, and the radial distribution function g(r) against its low-density limit.
   - Thermodynamic: temperature, and pressure against theory: the second virial coefficient at low density, and, for the 2D 12-6 potential with a cutoff of at least 4 σ, the published equation of state of Homes et al. (2025) plus a cutoff correction.
   - Hydrodynamic: the particles are binned on a grid into density, flow-velocity and temperature fields (the simplest case of the Irving–Kirkwood construction; the mass and momentum of the fields are exactly equal to those of the particles). With hot walls at top and bottom and a driving force, the flow-velocity profile is compared with the Navier–Stokes parabola, and the viscosity is inferred from the flow rate. A "knock" button launches the longest standing wave in the box; the oscillation frequency of that density mode gives the speed of sound, compared with the adiabatic sound speed of the virial expansion to B₂.
+  - A fixed disc obstacle can be placed in the channel, and gravity can be added with the lower wall hotter than the upper one: with the former, at high enough flow speed, backflow and a swaying wake appear behind the disc; with the latter, when buoyancy is strong enough, Rayleigh–Bénard convection rolls appear. The flow-velocity and cross-flow fields are drawn with a blue–white–red map centred on 0.
   - Structure factor S(k) = |ρ_k|² / N from the Fourier modes of the density along x and y: 1 for an ideal gas, a broad peak for a liquid, sharp Bragg peaks for a crystal.
   - Meta: when the B particles start diffusing from a stripe, the time series of the concentration profile is recorded, and weak-form sparse regression (SINDy) fits the equation it obeys among 5 candidate terms; the discovered equation is then used to evolve the earliest profile to the present for comparison with the measurement. Dynamic mode decomposition (DMD) is then used to estimate the decay rate of each mode independently.
   - Structure: the local and global hexatic order parameter ψ₆; particles can be coloured by it, showing grains, grain boundaries and defects.
@@ -127,7 +130,7 @@ On the molecular dynamics stage (2D) you can drag a rectangle to select a region
 
 Every adjustable parameter carries a label saying whether it changes the universality class, only changes numerical values, is a state variable, or is a numerical method. Next to every quantity that has a theory, "agrees" or "deviates" is shown in real time.
 
-At the bottom of the page there are guided experiments (knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
+At the bottom of the page there are guided experiments (flow past a disc, heating from below until convection rolls appear, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=wake`, `/?scenario=convection`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
 
 ## Running
 
@@ -170,7 +173,8 @@ The CPU reference implementation is written first and is the specification; the 
 
 - Molecular dynamics has at most two species, and there are no chemical bonds between particles (so there is only phase separation, no micelles or membranes).
 - In 3D there are no walls, no stripe initial distribution and no hexatic order parameter; the only structural quantity is the coordination number, which cannot tell a dense liquid from a crystal (about 10 to 11.5 for the liquid, 12 for the crystal), and there is no Steinhardt q₆ yet. In 3D, g(r) is computed only out to one cell width (about 2.5 to 3σ).
-- The hydrodynamic level has only verified the shape of the channel-flow profile; wakes behind obstacles and convection have not been done yet. The amplitude of the channel-flow parabola is taken from the measured mean flow velocity, and the viscosity is an inferred value with no independent theoretical comparison.
+- Flow past the disc and convection are accepted qualitatively; there is no point-by-point theory line. Flow past the disc: over 110,000 particles, disc diameter 60 σ, flow at about half the speed of sound (so compressible); the time-averaged velocity on the lee side of the disc is −0.17 ± 0.03 (incoming flow 1.23), and the wake downstream sways from side to side, but no shedding frequency was measured; at half that speed (Reynolds number about twenty) there is no significant backflow. Convection: with the lower wall ten times hotter than the upper one, at gravity 0.06 the vertical-velocity variation is five times the thermal noise and about four pairs of rolls appear; at gravity 0.02 it is about 1.5 times, with no clear rolls. The critical Rayleigh number was not measured.
+- When there is bulk flow, the "temperature T" card includes the kinetic energy of the flow and reads high; for the local temperature see the temperature profile on the hydrodynamic level.
 - The pressure is compared with the published equation of state only for the 2D one-component 12-6 potential with a cutoff of at least 4 σ (the default is 2.5 σ, where only the low-density virial line is drawn). The cutoff correction is a mean-field estimate.
 - The speed of sound is checked in a dilute gas only, against the adiabatic sound speed of the virial expansion to B₂; in a dense fluid there is no independent theoretical value to compare with. The wave must be many mean free paths long to be sound at all, which needs a large box (a square box of 1840 particles at density 0.15 is too small). The structure factor is sampled along x and y only, and in large boxes at every few wave vectors, so a sharp Bragg peak can fall between samples.
 - The fundamental constants panel only does scaling conversions, with argon as the reference; it does not change the dynamics in reduced units.
