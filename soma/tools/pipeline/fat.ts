@@ -75,6 +75,8 @@ export interface FatResult {
   bodyVolume: number
   /** 体素网格尺寸 / voxel grid dimensions */
   grid: [number, number, number]
+  /** 皮肤是否为单层壁（由深部体素判别） / whether the skin is single-walled (told from the deep voxels) */
+  skinSingleWalled: boolean
 }
 
 /**
@@ -222,6 +224,22 @@ export function deriveFat(skin: Mesh, deep: Mesh[], regions: FatRegionInput[], o
   const skinIndex = new PointIndex(surfacePoints(skin, 0.0015), 0.004)
   const skinTester = new InsideTester(skin, 256)
   const CLEAR = 0.0008
+  // 皮肤是双层壁（有厚度的壳）还是单层壁？双层壁时 skinTester.contains 表示“在皮肤壁的实质内”，
+  // 单层壁时它表示“在体内”。用深部体素来判别：深部体素多数被“包含”的就是单层壁。
+  // 单层壁时，脂肪顶点只在贴着皮肤或落到体外时才向内收（否则每个顶点都会被当成“在皮肤内”而内收 6 mm）。
+  // Is the skin double-walled (a shell with thickness) or single-walled? For a double wall
+  // skinTester.contains means "inside the wall material", for a single wall "inside the body". Deep
+  // voxels tell them apart: when most of them are "contained" the skin is single-walled. Fat vertices
+  // under a single-walled skin are pulled in only when they touch the skin or lie outside the body
+  // (otherwise every vertex would count as "inside the skin" and be pulled in by 6 mm).
+  let deepSeen = 0
+  let deepContained = 0
+  for (let c = 0; c < N && deepSeen < 4000; c += 97) {
+    if (cls[c] !== DEEP) continue
+    deepSeen++
+    if (skinTester.contains(o[0]! + (c % nx) * h, o[1]! + (Math.floor(c / nx) % ny) * h, o[2]! + Math.floor(c / (nx * ny)) * h)) deepContained++
+  }
+  const singleWall = deepSeen > 0 && deepContained > deepSeen / 2
   const out: FatRegion[] = []
   regions.forEach((r, ri) => {
     let count = 0
@@ -273,7 +291,7 @@ export function deriveFat(skin: Mesh, deep: Mesh[], regions: FatRegionInput[], o
         const y = mesh.positions[3 * v + 1]!
         const z = mesh.positions[3 * v + 2]!
         const near = skinIndex.distance(x, y, z, CLEAR * 2) < CLEAR
-        if (!near && !skinTester.contains(x, y, z)) break
+        if (!near && skinTester.contains(x, y, z) === singleWall) break
         mesh.positions[3 * v] = x - normals[3 * v]! * 0.0005
         mesh.positions[3 * v + 1] = y - normals[3 * v + 1]! * 0.0005
         mesh.positions[3 * v + 2] = z - normals[3 * v + 2]! * 0.0005
@@ -290,5 +308,5 @@ export function deriveFat(skin: Mesh, deep: Mesh[], regions: FatRegionInput[], o
       verticesPulledIn: nv ? pulled / nv : 0,
     })
   })
-  return { regions: out, bodyVolume: inside * h ** 3, grid: dims }
+  return { regions: out, bodyVolume: inside * h ** 3, grid: dims, skinSingleWalled: singleWall }
 }

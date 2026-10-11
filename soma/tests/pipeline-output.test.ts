@@ -29,6 +29,8 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     return hits[0]!
   }
   const layerOf = (p: Part) => LAYERS[p.depth]!.key
+  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { skinPackage?: { installed?: boolean }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] } }
+  const skinInstalled = !!pipelineReport.skinPackage?.installed
   const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? ((JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as { shoulderGirdle?: { provenance?: { relabelledIds?: string[] } } }).shoulderGirdle?.provenance?.relabelledIds ?? []) : [])
 
   it('has the contract header', () => {
@@ -54,11 +56,22 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       expect(['L', 'R', 'M'], p.id).toContain(p.side)
       // BodyParts3D 4.0 的部件是 scanned；肩带姿势校正中被非刚性形变的那些改标为 warped（见 pipeline-shoulder.test.ts）
       // BodyParts3D 4.0 parts are scanned; those deformed non-rigidly by the shoulder posture correction are relabelled warped (see pipeline-shoulder.test.ts)
-      if (p.id.startsWith('FJ')) expect(p.provenance, p.id).toBe(shoulderWarped.has(p.id) ? 'warped' : 'scanned')
+      // 皮肤例外：装入了外部皮肤包时，它是按内部结构拟合的参数化体表（curated，来源为皮肤包），不是扫描皮肤
+      // the skin is the exception: with an external skin package installed it is a parametric surface fitted to the internals (curated, sourced from the package), not the scanned skin
+      if (p.id === 'FJ2810' && skinInstalled) expect(p.provenance, p.id).toBe('curated')
+      else if (p.id.startsWith('FJ')) expect(p.provenance, p.id).toBe(shoulderWarped.has(p.id) ? 'warped' : 'scanned')
       else expect(p.provenance, p.id).toBe(p.id.startsWith('R3_') ? 'warped' : 'curated')
       // 每个部件所指的数据源都存在；只有来自第一个数据源的部件可以省略它
       // every part names a source that exists; only first-source parts may leave it out
-      if (p.id.startsWith('FJ')) expect(p.source, p.id).toBeUndefined()
+      if (p.id === 'FJ2810' && skinInstalled) {
+        const src = data.sources.find((x) => x.name === p.source)!
+        expect(src, p.id).toBeDefined()
+        expect(src.name).not.toMatch(/BodyParts3D/)
+        expect(src.license.length).toBeGreaterThan(3)
+        expect(src.attribution.length).toBeGreaterThan(20)
+        // 旧皮肤的体积不再适用 / the old skin's volume no longer applies
+        expect(p.volume).toBeUndefined()
+      } else if (p.id.startsWith('FJ')) expect(p.source, p.id).toBeUndefined()
       else expect(data.sources.slice(1).map((x) => x.name), p.id).toContain(p.source)
       expect(Number.isInteger(p.depth) && p.depth >= 0 && p.depth < data.layers.length, p.id).toBe(true)
       expect(p.triangles, p.id).toBeGreaterThan(3)
@@ -329,6 +342,12 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       expect(c.zh.length).toBeLessThan(260)
     }
     const all = data.cautions!.map((c) => c.en).join(' ')
+    if (skinInstalled) {
+      // 换上的皮肤要如实说明，其来源带许可证 / the installed skin is described for what it is, and its source carries a licence
+      expect(all).toContain('parametric body surface')
+      expect(data.cautions!.map((c) => c.zh).join(' ')).toContain('参数化人体表面')
+      expect(data.sources.find((x) => x.name === byName('Skin').source)!.license).toMatch(/\S/)
+    }
     for (const w of ['not a scan of one person', 'supine', 'marked as warped', 'Z-Anatomy', 'BodyParts3D 3.0', 'Transversus abdominis', 'phrenic nerve', 'Left/right labels']) expect(all).toContain(w)
   })
 
@@ -881,6 +900,13 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       // 总量在合理范围：体内体积的 10%–30% / total within a plausible range: 10–30% of the volume inside the skin
       expect(report.fat.fatVolumeL / report.fat.bodyVolumeL).toBeGreaterThan(0.1)
       expect(report.fat.fatVolumeL / report.fat.bodyVolumeL).toBeLessThan(0.3)
+      // 脂肪面只在贴着皮肤的地方才向内收：若几乎每个顶点都被内收，说明把单层壁皮肤的“体内”当成了“皮肤壁内”
+      // （那样脂肪会整体缩进 6 mm，表面起皱，简化不动，三角形数翻几倍）
+      // the fat surface is pulled in only where it touches the skin: nearly every vertex pulled in would mean that
+      // "inside the body" of a single-walled skin was taken for "inside the skin wall" (the fat then shrinks by 6 mm
+      // everywhere, wrinkles, resists simplification and multiplies its triangles)
+      for (const r of report.fat.regions as { id: string; verticesPulledIn: number }[]) expect(r.verticesPulledIn, r.id).toBeLessThan(0.5)
+      expect(fat.reduce((n, p) => n + p.triangles, 0)).toBeLessThan(90_000)
       expect(skin.depth).toBeLessThan(fat[0]!.depth)
       expect(fat[0]!.depth).toBeLessThan(byName('Left fascia lata').depth)
       expect(data.cautions!.some((c) => /subcutaneous fat/i.test(c.en) && /皮下脂肪/.test(c.zh))).toBe(true)

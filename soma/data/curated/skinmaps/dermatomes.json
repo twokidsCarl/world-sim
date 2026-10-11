@@ -1435,10 +1435,11 @@
     "en": "Dorsal surface of the proximal phalanx of the middle finger."
    },
    "rule": {
-    "zh": "中指、手中部、前臂后面的条带；示指和环指归于 C6/C7/C8 中距离最近者。",
-    "en": "Middle finger, centre of hand, strip on the back of the forearm; index and ring fingers are left to the nearest of C6/C7/C8."
+    "zh": "示指、中指、手中部、前臂后面的条带（示指、环指的归属依 Cambridge 教学图：示指、中指 C7，环指、小指 C8；ISNCSCI 图示把这两指画在分界线上）。",
+    "en": "Index and middle fingers, centre of hand, strip on the back of the forearm (index and ring fingers after the Cambridge teaching map: index and middle C7, ring and little C8; the ISNCSCI figure draws both on the boundaries)."
    },
    "cite": [
+    "challoumas",
     "isncsci2011",
     "lee2008"
    ],
@@ -1535,6 +1536,64 @@
       "zh": "前臂后面向上的条带（推定；评定表图示未画上肢后面）",
       "en": "strip up the back of the forearm (interpolated; the worksheet figure does not show the back of the arm)"
      }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "示指背面",
+      "en": "index finger, dorsal"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ],
+     "note": {
+      "zh": "示指掌面",
+      "en": "index finger, palmar"
+     }
     }
    ],
    "basis": "landmark-rule"
@@ -1551,10 +1610,11 @@
     "en": "Dorsal surface of the proximal phalanx of the little finger."
    },
    "rule": {
-    "zh": "小指、手尺侧缘和前臂远端尺侧。",
-    "en": "Little finger, ulnar border of hand and distal forearm."
+    "zh": "环指、小指、手尺侧缘和前臂远端尺侧。",
+    "en": "Ring and little fingers, ulnar border of hand and distal forearm."
    },
    "cite": [
+    "challoumas",
     "isncsci2011",
     "lee2008"
    ],
@@ -1622,6 +1682,64 @@
        "deg": 0
       }
      ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "环指背面",
+      "en": "ring finger, dorsal"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ],
+     "note": {
+      "zh": "环指掌面",
+      "en": "ring finger, palmar"
+     }
     }
    ],
    "basis": "landmark-rule"
@@ -1678,6 +1796,24 @@
      "note": {
       "zh": "肘内侧和前臂内侧",
       "en": "medial elbow and forearm"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": 0.78,
+       "deg": 270
+      },
+      {
+       "frame": "arm",
+       "t": 0.9,
+       "deg": 270
+      }
+     ],
+     "note": {
+      "zh": "臂内侧远段",
+      "en": "distal medial arm"
      }
     }
    ],
@@ -1737,36 +1873,67 @@
       "K_T2",
       {
        "frame": "arm",
-       "t": 0.25,
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.06
+       },
        "deg": 270
       },
       {
        "frame": "arm",
-       "t": 0.5,
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.16
+       },
        "deg": 270
       }
      ],
      "note": {
-      "zh": "腋窝和臂内侧上部（肋间臂神经）",
-      "en": "axilla and upper medial arm (intercostobrachial)"
+      "zh": "腋窝和臂内侧上部（肋间臂神经）；上臂与胸壁粘连的皮肤上取最近的皮肤",
+      "en": "axilla and upper medial arm (intercostobrachial); on a skin whose arm is fused to the chest the nearest skin is taken"
      }
     },
     {
      "curve": [
       {
        "frame": "arm",
-       "t": 0.3,
+       "t": 0.42,
        "deg": 335
       },
       {
        "frame": "arm",
-       "t": 0.55,
+       "t": 0.58,
        "deg": 335
       }
      ],
      "note": {
       "zh": "臂前内侧",
       "en": "anteromedial arm"
+     }
+    },
+    {
+     "curve": [
+      "K_T2",
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.06
+       },
+       "deg": 240
+      },
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.16
+       },
+       "deg": 240
+      }
+     ],
+     "note": {
+      "zh": "臂后内侧上部",
+      "en": "upper posteromedial arm"
      }
     }
    ],
@@ -3070,40 +3237,7 @@
        },
        "to": "inf+0.2*ant"
       },
-      {
-       "at": {
-        "xyz": [
-         {
-          "offset": [
-           "coccyxTip",
-           [
-            0.012,
-            0,
-            0
-           ]
-          ]
-         },
-         {
-          "offset": [
-           "ischialTuberosity",
-           [
-            0,
-            0.03,
-            0
-           ]
-          ]
-         },
-         {
-          "lerp": [
-           "coccyxTip",
-           "pubicSymphysis",
-           0.55
-          ]
-         }
-        ]
-       },
-       "to": "inf"
-      }
+      "perineum"
      ],
      "note": {
       "zh": "阴茎、阴囊和会阴",

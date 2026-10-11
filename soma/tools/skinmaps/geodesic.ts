@@ -89,8 +89,9 @@ export function grow(skin: Skin, seeds: Seed[], blocked?: Uint8Array, edgeOk?: (
  * Path along mesh edges between two outer-wall vertices (inclusive). With `guide` (the straight
  * 3D segment the path should follow) every step is penalised by its distance from that segment,
  * so the chain hugs the intended line instead of zig-zagging through the triangulation.
+ * 进入 avoid 标记的顶点要加 3 cm 的代价。 / Entering a vertex marked in `avoid` costs an extra 3 cm.
  */
-export function path(skin: Skin, from: number, to: number, edgeOk?: (a: number, b: number) => boolean, guide?: [number[], number[]]): number[] {
+export function path(skin: Skin, from: number, to: number, edgeOk?: (a: number, b: number) => boolean, guide?: [number[], number[]], avoid?: Uint8Array): number[] {
   if (from === to) return [from]
   const dist = new Float32Array(skin.n).fill(Infinity)
   const prev = new Int32Array(skin.n).fill(-1)
@@ -114,7 +115,7 @@ export function path(skin: Skin, from: number, to: number, edgeOk?: (a: number, 
       const u = skin.adj[k]!
       if (!skin.outer[u]) continue
       if (edgeOk && !edgeOk(v, u)) continue
-      const nd = Math.fround(d + skin.adjLen[k]! + 3 * dev(u))
+      const nd = Math.fround(d + skin.adjLen[k]! + 3 * dev(u) + (avoid && avoid[u] && u !== to ? 0.03 : 0))
       if (nd < dist[u]!) { dist[u] = nd; prev[u] = v; heap.push(nd, u) }
     }
   }

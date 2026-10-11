@@ -6,7 +6,7 @@ refits MHR and regenerates the shape fields.
     -> data/raw/bodyshape/out/female-skin/   skin.obj, weights.bin, joints.json, fit.json/.txt,
        shape-*.f32, shape-fields.json, previews, LICENSE-MHR.txt, NOTICE-MHR.txt, manifest.json
 
-步骤 / steps: export-parts.ts female -> measure.py female（骨性标志）-> fit_skin.py female --mode targets（有 rig.json 时用其关节中心）
+步骤 / steps: export-parts.ts female -> measure.py female（骨性标志）-> fit_skin.py female --mode envelope -> compose_female.py -> enclose_skin.py female -> breast_placement.py（有 rig.json 时用其关节中心）
 -> shape_fields.py female。男性同理：fit_skin.py male; shape_fields.py male。
 The same for the male: fit_skin.py male; shape_fields.py male.
 """
@@ -23,7 +23,10 @@ def main():
     # 先重新导出，免得用到旧的网格 / re-export first so that no stale meshes are used
     for cmd in (['bun', os.path.join(HERE, 'export-parts.ts'), 'female'],
                 [py, '-I', os.path.join(HERE, 'measure.py'), 'female'],
-                [py, os.path.join(HERE, 'fit_skin.py'), 'female', '--mode', 'targets', '--bmi', bmi],
+                [py, os.path.join(HERE, 'fit_skin.py'), 'female', '--mode', 'envelope', '--bmi', bmi],
+                [py, os.path.join(HERE, 'compose_female.py'), '--bmi', bmi],
+                [py, os.path.join(HERE, 'enclose_skin.py'), 'female', '--bmi', bmi],
+                [py, os.path.join(HERE, 'breast_placement.py')],
                 [py, os.path.join(HERE, 'shape_fields.py'), 'female']):
         print('>>', ' '.join(os.path.basename(c) if os.path.exists(c) else c for c in cmd), flush=True)
         subprocess.run(cmd, check=True)

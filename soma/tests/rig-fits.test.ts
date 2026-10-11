@@ -238,21 +238,26 @@ describe('OpenSim reader', () => {
 })
 
 describe('external skin weights', () => {
-  it('maps another skeleton onto this rig, sending helper joints to their parent', async () => {
+  it('maps another skeleton onto this rig and transfers the weights by closest point', async () => {
     const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs')
     const { tmpdir } = await import('node:os')
     const { join } = await import('node:path')
     const { loadExternalWeights } = await import('../tools/rig/external.ts')
     const dir = mkdtempSync(join(tmpdir(), 'rig-ext-'))
     try {
-      // 外部骨架：root → upleg → (twist 辅助骨, lowleg)；ball 映射到本骨架没有的 id
-      // the other skeleton: root → upleg → (a twist helper, lowleg); "ball" maps to an id this rig does not have
+      // 原始表面：xy 平面上的一个正方形（两个三角形），4 个顶点
+      // the original surface: a square in the xy plane (two triangles), 4 vertices
+      writeFileSync(join(dir, 'skin.obj'), '# test\nv 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nf 1 2 3\nf 1 3 4\n')
+      writeFileSync(join(dir, 'manifest.json'), JSON.stringify({ source: { name: 'TestSkin' }, fittedTo: { body: 'male' } }))
+      // 外部骨架：root → upleg → (扭转辅助骨, lowleg → ball)；l_twist2 按规则在髋、膝之间分；ball 映射到本骨架没有的 id
+      // the other skeleton: root → upleg → (a twist helper, lowleg → ball); l_twist2 is shared between hip and knee by a rule; "ball" maps to an id this rig lacks
       writeFileSync(join(dir, 'joints.json'), JSON.stringify({
-        names: ['root', 'upleg', 'upleg_twist', 'lowleg', 'ball'],
+        names: ['root', 'l_upleg', 'l_twist2', 'l_lowleg', 'l_ball'],
         parents: [-1, 0, 1, 1, 3],
+        positions: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         mapping: [{ anatomical: 'pelvis' }, { anatomical: 'hip_L' }, { anatomical: null }, { anatomical: 'knee_L' }, { anatomical: 'mtp_L' }],
       }))
-      const rec: [number, number, number][] = [[0, 1, 0.5], [0, 2, 0.5], [1, 3, 0.25], [1, 4, 0.75], [2, 0, 2]]
+      const rec: [number, number, number][] = [[0, 1, 1], [1, 2, 1], [2, 3, 0.25], [2, 4, 0.75], [3, 0, 2]]
       const buf = new Uint8Array(rec.length * 12)
       const dv = new DataView(buf.buffer)
       rec.forEach(([v, j, w], i) => {
@@ -261,17 +266,28 @@ describe('external skin weights', () => {
         dv.setFloat32(i * 12 + 8, w, true)
       })
       writeFileSync(join(dir, 'weights.bin'), buf)
-      const w = loadExternalWeights(dir, ['pelvis', 'hip_L', 'knee_L'])!
-      expect(w.vertexCount).toBe(3)
-      // 顶点 0：髋 0.5 + 扭转骨 0.5 → 全部归髋 / vertex 0: hip 0.5 + twist helper 0.5 → all on the hip
+      const J = ['pelvis', 'hip_L', 'knee_L'].map((id) => ({ id, center: [0, 0, 0] as V3, tail: [0, -1, 0] as V3 }))
+      const w = loadExternalWeights(dir, J, [{ match: '^([lr])_twist([1-4])$', to: [{ joint: 'hip_{S}', share: '1-n/4' }, { joint: 'knee_{S}', share: 'n/4' }] }])!
+      expect(w.vertexCount).toBe(4)
+      expect(w.sourceName).toBe('TestSkin')
       expect([...w.rows[0]!]).toEqual([[1, 1]])
-      // 顶点 1：膝 0.25 + ball 0.75（id 不认识，归父关节即膝）/ vertex 1: knee 0.25 + ball 0.75 (unknown id → its parent, the knee)
-      expect([...w.rows[1]!]).toEqual([[2, 1]])
-      // 顶点 2：权重归一化 / vertex 2: weights are normalised
-      expect([...w.rows[2]!]).toEqual([[0, 1]])
+      // 顶点 1：扭转骨 2 → 髋、膝各半 / vertex 1: twist helper 2 → half hip, half knee
+      expect(w.rows[1]!.get(1)).toBeCloseTo(0.5, 9)
+      expect(w.rows[1]!.get(2)).toBeCloseTo(0.5, 9)
+      // 顶点 2：膝 0.25 + ball 0.75（id 不认识，归父关节即膝）/ vertex 2: knee 0.25 + ball 0.75 (unknown id → its parent, the knee)
+      expect([...w.rows[2]!]).toEqual([[2, 1]])
+      // 顶点 3：权重归一化 / vertex 3: weights are normalised
+      expect([...w.rows[3]!]).toEqual([[0, 1]])
       expect(w.notes.some((n) => n.includes('mtp_L'))).toBe(true)
-      expect(w.mapped.find((m) => m.external === 'upleg_twist')).toEqual({ external: 'upleg_twist', joint: 'hip_L', how: 'parent' })
-      expect(loadExternalWeights(join(dir, 'absent'), ['pelvis'])).toBeNull()
+      expect(w.mapped.find((m) => m.external === 'l_ball')!.rule).toContain('parent')
+      // 按最近点传递：边 0–1 中点上方 1 mm 处的点得到两端顶点权重的平均
+      // transfer by closest point: a point 1 mm above the middle of edge 0–1 gets the mean of its two vertices
+      const t = w.transfer(Float32Array.from([0.5, 0, 0.001, 0, 1, 0]))
+      expect(t.rows[0]!.get(1)).toBeCloseTo(0.75, 6)
+      expect(t.rows[0]!.get(2)).toBeCloseTo(0.25, 6)
+      expect([...t.rows[1]!].map(([j, x]) => [j, Math.round(x * 1e6) / 1e6])).toEqual([[0, 1]])
+      expect(t.maxMm).toBeCloseTo(1, 3)
+      expect(loadExternalWeights(join(dir, 'absent'), J)).toBeNull()
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

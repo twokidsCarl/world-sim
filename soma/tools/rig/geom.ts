@@ -65,6 +65,27 @@ export class Surface {
     return r ? { point: [r.point.x, r.point.y, r.point.z], distance: r.distance } : null
   }
 
+  /**
+   * 表面上离 p 最近的点，以及它所在三角形的三个顶点下标和重心坐标。
+   * The point of the surface closest to p, with the three vertex indices of its triangle and the barycentric coordinates.
+   */
+  closestFace(p: V3): { point: V3; distance: number; verts: [number, number, number]; bary: [number, number, number] } | null {
+    const r = this.bvh.closestPointToPoint(this.v.set(p[0], p[1], p[2]), this.target)
+    if (!r) return null
+    const idx = this.bvh.geometry.index!.array, P = this.positions
+    const a = idx[r.faceIndex * 3]!, b = idx[r.faceIndex * 3 + 1]!, c = idx[r.faceIndex * 3 + 2]!
+    const q: V3 = [r.point.x, r.point.y, r.point.z]
+    const A: V3 = [P[a * 3]!, P[a * 3 + 1]!, P[a * 3 + 2]!], B: V3 = [P[b * 3]!, P[b * 3 + 1]!, P[b * 3 + 2]!], C: V3 = [P[c * 3]!, P[c * 3 + 1]!, P[c * 3 + 2]!]
+    const v0 = sub(B, A), v1 = sub(C, A), v2 = sub(q, A)
+    const d00 = v0[0] * v0[0] + v0[1] * v0[1] + v0[2] * v0[2], d01 = v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2], d11 = v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]
+    const d20 = v2[0] * v0[0] + v2[1] * v0[1] + v2[2] * v0[2], d21 = v2[0] * v1[0] + v2[1] * v1[1] + v2[2] * v1[2]
+    const den = d00 * d11 - d01 * d01
+    let v = den > 1e-20 ? (d11 * d20 - d01 * d21) / den : 0, w = den > 1e-20 ? (d00 * d21 - d01 * d20) / den : 0
+    v = Math.min(1, Math.max(0, v))
+    w = Math.min(1 - v, Math.max(0, w))
+    return { point: q, distance: r.distance, verts: [a, b, c], bary: [1 - v - w, v, w] }
+  }
+
   /** 射线奇偶性包含判断（对闭合曲面才有意义）。两条射线结果必须一致，否则由第三条裁决。 Ray-parity containment (meaningful for closed surfaces). Two rays must agree, else a third decides. */
   contains(x: number, y: number, z: number): boolean {
     const b = this.bbox

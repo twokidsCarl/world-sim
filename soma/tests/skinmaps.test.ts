@@ -17,12 +17,26 @@ const KNOWN = {
   // 模型上 ISNCSCI 的 T12 点（腹股沟韧带中点）与“腹股沟属 L1”的教学说法相差约 2.5 cm。
   // ISNCSCI puts T12 on the mid-inguinal point; the "inguinal = L1" teaching point lies 2.5 cm lower here.
   failedChecks: ['2.5 cm below the midpoint of the inguinal ligament'],
-  // 躯干带在上臂与胸壁皮肤粘连处被隔开，上背部各带窄于网格分辨率。
-  // Trunk bands are interrupted where the arm is fused to the chest wall, and the upper-back bands are narrower than the mesh resolves.
-  splitDermatomes: /^(T([2-9]|10|11)|S3|V3)$/,
-  asymmetricDermatomes: /^(V3|T[3-6]|T10)$/,
-  splitTerritories: /^(obturator|pudendal|sural|superficialFibular|intercostobrachial|ilioinguinal)$/,
-  disagreeingTerritories: ['iliohypogastricLateral', 'iliohypogastricAnterior', 'ilioinguinal', 'genitofemoralGenital', 'medialBrachial', 'intercostobrachial', 'obturator'],
+  // 躯干带在腋窝以上（躯干与上臂连成一体处）前后分开；背部近中线处各带窄于网格分辨率。V3 的颏部与耳前两段各有种子。
+  // Trunk bands are in a front and a back piece above the axilla, where trunk and arm are one mass;
+  // beside the spine the bands are narrower than the mesh resolves. V3 has separate seeds for the chin and in front of the ear.
+  splitDermatomes: /^(T([2-9]|10|11)|V3)$/,
+  // 上背部和胸部的窄带在网格分辨率下左右互有出入。
+  // The narrow upper-back and chest bands trade area between the sides at mesh resolution.
+  asymmetricDermatomes: /^(T[3-6])$/,
+  splitTerritories: /^(obturator|pudendal)$/,
+  // 与教科书节段不符（低于一半面积）的分布区，各有原因：
+  //  - 髂腹下神经两支：ISNCSCI 把 T12 放在腹股沟韧带上，下腹部在皮节图上属 T12 而非 L1；外侧皮支分布区跨 L1/L2。
+  //  - 臂内侧皮神经：Gray 正文为 C8、T1，但臂内侧上部在各家皮节图上属 T2（Gray 自己的节段图也标 T1–T2）。
+  //  - 臂后皮神经：臂后面正中即上肢背侧轴线，C5 与 T1/T2 在此相接，皮节图上臂后没有 C6–C8。
+  // Territories with less than half their area in the dermatomes of their textbook segments, and why:
+  //  - both iliohypogastric branches: ISNCSCI puts T12 on the inguinal ligament, so the lower abdomen
+  //    is T12, not L1, in the dermatome map; the lateral branch's territory straddles L1/L2.
+  //  - medial brachial cutaneous: Gray's text gives C8, T1, but the upper medial arm is T2 in the
+  //    dermatome maps (Gray's own segmental figure labels it T1-2).
+  //  - posterior brachial cutaneous: the back of the arm is the dorsal axial line, where C5 meets
+  //    T1/T2; the dermatome maps have no C6-C8 on the back of the arm.
+  disagreeingTerritories: ['iliohypogastricLateral', 'iliohypogastricAnterior', 'medialBrachial', 'posteriorBrachial'],
 }
 
 describe.skipIf(!has('male'))('skin maps (public/anatomy/male)', () => {
@@ -122,6 +136,10 @@ describe.skipIf(!has('male'))('skin maps (public/anatomy/male)', () => {
     for (const p of report.dermatome.pieces) expect(p.region).toMatch(KNOWN.splitDermatomes)
     for (const p of report.cutaneous.pieces) expect(p.region).toMatch(KNOWN.splitTerritories)
     for (const a of report.cutaneous.areas) expect(a.L + a.R, a.key).toBeGreaterThan(20)
+    // 没有腋窝、上臂与胸壁粘连的皮肤上做不到的两项，在有腋窝的皮肤上必须成立 / Two things impossible on a skin whose arm is fused to the chest must hold on one with an axilla.
+    const icb = report.cutaneous.composition.find((c) => c.key === 'intercostobrachial')!
+    expect(icb.inExpected).toBeGreaterThan(0.8)
+    expect(report.cutaneous.areas.find((a) => a.key === 'intercostobrachial')!.mirror).toBeGreaterThan(0.5)
     expect(report.dermatome.speckle.isolated).toBeLessThanOrEqual(2)
     expect(report.cutaneous.speckle.isolated).toBeLessThanOrEqual(2)
     expect(report.dermatome.speckle.outvotedFraction).toBeLessThan(0.03)

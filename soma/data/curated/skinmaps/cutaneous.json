@@ -1493,7 +1493,7 @@
          "iliacCrestTop",
          [
           0,
-          0.035,
+          0.02,
           0.01
          ]
         ]
@@ -1506,7 +1506,7 @@
          "asis",
          [
           -0.005,
-          0.035,
+          0.005,
           -0.04
          ]
         ]
@@ -1519,7 +1519,7 @@
          "pubicSymphysis",
          [
           0.015,
-          0.06,
+          0.045,
           -0.04
          ]
         ]
@@ -1624,7 +1624,24 @@
      "nerve": [
       "{side} anterior cutaneous branch of iliohypogastric nerve"
      ],
-     "maxDepthMm": 40
+     "maxDepthMm": 40,
+     "clip": {
+      "dir": "med",
+      "beyond": {
+       "offset": [
+        "asis",
+        [
+         -0.03,
+         0,
+         0
+        ]
+       ]
+      }
+     },
+     "note": {
+      "zh": "只取髂前上棘内侧 3 cm 以内侧的终末段：神经途经髂前上棘处也贴近皮肤，但那里不是它的分布区。",
+      "en": "Only the terminal stretch medial to a point 3 cm medial of the anterior superior iliac spine: the nerve also runs close under the skin at the spine, which is not its territory."
+     }
     }
    ]
   },
@@ -1656,7 +1673,24 @@
      "nerve": [
       "{side} ilio-inguinal nerve"
      ],
-     "maxDepthMm": 25
+     "maxDepthMm": 25,
+     "clip": {
+      "dir": "med",
+      "beyond": {
+       "offset": [
+        "asis",
+        [
+         -0.03,
+         0,
+         0
+        ]
+       ]
+      }
+     },
+     "note": {
+      "zh": "只取髂前上棘内侧 3 cm 以内侧的终末段：神经途经髂前上棘处也贴近皮肤，但那里不是它的分布区。",
+      "en": "Only the terminal stretch medial to a point 3 cm medial of the anterior superior iliac spine: the nerve also runs close under the skin at the spine, which is not its territory."
+     }
     }
    ]
   },
@@ -1722,7 +1756,15 @@
      "nerve": [
       "{side} genital branch of genitofemoral nerve"
      ],
-     "maxDepthMm": 12
+     "maxDepthMm": 12,
+     "clip": {
+      "dir": "inf",
+      "beyond": "pubicTubercle"
+     },
+     "note": {
+      "zh": "只取耻骨结节以下的终末段（至阴囊/大阴唇）。",
+      "en": "Only the terminal stretch below the pubic tubercle (to the scrotum / labium majus)."
+     }
     }
    ]
   },
@@ -1917,40 +1959,7 @@
        },
        "to": "inf+0.2*ant"
       },
-      {
-       "at": {
-        "xyz": [
-         {
-          "offset": [
-           "coccyxTip",
-           [
-            0.012,
-            0,
-            0
-           ]
-          ]
-         },
-         {
-          "offset": [
-           "ischialTuberosity",
-           [
-            0,
-            0.03,
-            0
-           ]
-          ]
-         },
-         {
-          "lerp": [
-           "coccyxTip",
-           "pubicSymphysis",
-           0.55
-          ]
-         }
-        ]
-       },
-       "to": "inf"
-      }
+      "perineum"
      ]
     },
     {
@@ -2190,7 +2199,18 @@
      "nerve": [
       "{side} medial brachial cutaneous nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "where": {
+      "frame": "arm",
+      "t": [
+       0.6,
+       1.1
+      ]
+     },
+     "note": {
+      "zh": "只取上臂远侧四成的一段：其上方的臂内侧、后内侧上半属肋间臂神经（Gray），本神经只是途经该处皮下。",
+      "en": "Only the stretch in the distal four tenths of the arm: the upper half of the medial and posteromedial arm above it belongs to the intercostobrachial nerve (Gray); this nerve merely runs under the skin there."
+     }
     }
    ]
   },
@@ -2220,15 +2240,57 @@
       "K_T2",
       {
        "frame": "arm",
-       "t": 0.2,
-       "deg": 255
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.05
+       },
+       "deg": 270
       },
       {
        "frame": "arm",
-       "t": 0.38,
-       "deg": 240
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.14
+       },
+       "deg": 265
       }
-     ]
+     ],
+     "note": {
+      "zh": "腋窝至臂内侧上部（位置相对上臂内侧皮肤最上端而定，两种皮肤通用）",
+      "en": "axilla to the upper medial arm (placed relative to the top of the medial arm skin, so it works on both kinds of skin)"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.06
+       },
+       "deg": 315
+      },
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.06
+       },
+       "deg": 270
+      },
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.06
+       },
+       "deg": 215
+      }
+     ],
+     "note": {
+      "zh": "绕臂内侧上部一周：前内侧、内侧、后内侧",
+      "en": "round the upper medial arm: anteromedial, medial, posteromedial"
+     }
     }
    ]
   },
@@ -2398,6 +2460,64 @@
       "zh": "自手背经第 3、4 掌骨头之间至环指近节背面桡侧：模型中指背神经到达环指，但其分布区在指根处被隔断，按 Gray 所述（中指与环指相邻缘）以标志曲线连通。",
       "en": "From the back of the hand between the heads of the third and fourth metacarpals to the radial side of the back of the ring finger's proximal phalanx: the modelled dorsal digital nerve reaches the ring finger but its territory was cut off at the root of the finger; joined by a landmark curve as Gray describes (adjacent sides of middle and ring fingers)."
      }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} second metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "自手背至示指近节背面，使指背的分布区与手背相连（Gray：示指、中指背面至中节）。",
+      "en": "From the back of the hand to the back of the proximal phalanx of the index finger, so that the territory on the back of the finger stays joined to the back of the hand (Gray: back of index and middle fingers as far as the middle phalanges)."
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} third metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "自手背至中指近节背面，使指背的分布区与手背相连（Gray：示指、中指背面至中节）。",
+      "en": "From the back of the hand to the back of the proximal phalanx of the middle finger, so that the territory on the back of the finger stays joined to the back of the hand (Gray: back of index and middle fingers as far as the middle phalanges)."
+     }
     }
    ]
   },
@@ -2442,7 +2562,15 @@
       "{side} proper palmar digital branches of median nerve to thumb",
       "{side} common palmar digital branches of median nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "facing": {
+      "frame": "hand",
+      "deg": 0
+     },
+     "note": {
+      "zh": "只取投影到掌侧皮肤的点：手指很细，指掌侧神经的中心线也会落到指背皮肤上。指背远节另有标志曲线种子。",
+      "en": "Only points that project onto palmar skin: the fingers are thin and the palmar digital nerves' centrelines also land on dorsal skin. The dorsum of the distal phalanges has its own landmark seeds."
+     }
     },
     {
      "curve": [
@@ -2527,6 +2655,35 @@
        "deg": 330
       }
      ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 45
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 45
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 45
+      }
+     ],
+     "note": {
+      "zh": "环指掌面桡侧半",
+      "en": "radial half of the palmar ring finger"
+     }
     }
    ]
   },
@@ -2569,7 +2726,15 @@
       "{side} proper palmar digital branches of ulnar nerve",
       "{side} common palmar digital branch of ulnar nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "facing": {
+      "frame": "hand",
+      "deg": 0
+     },
+     "note": {
+      "zh": "只取投影到掌侧皮肤的点：手指很细，指掌侧神经的中心线也会落到指背皮肤上。指背远节另有标志曲线种子。",
+      "en": "Only points that project onto palmar skin: the fingers are thin and the palmar digital nerves' centrelines also land on dorsal skin. The dorsum of the distal phalanges has its own landmark seeds."
+     }
     },
     {
      "curve": [
@@ -2633,6 +2798,64 @@
        "deg": 270
       }
      ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 315
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 315
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 315
+      }
+     ],
+     "note": {
+      "zh": "环指掌面尺侧半",
+      "en": "ulnar half of the palmar ring finger"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 225
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 225
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} ring finger"
+       },
+       "frame": "hand",
+       "deg": 225
+      }
+     ],
+     "note": {
+      "zh": "环指背面尺侧半（手背支，未建模）",
+      "en": "ulnar half of the back of the ring finger (dorsal branch, not modelled)"
+     }
     }
    ]
   },

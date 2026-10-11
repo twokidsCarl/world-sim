@@ -44,7 +44,9 @@ export interface PostureReport {
   /** 各组织：全部边的拉伸比（当前长度 / 静止长度）的第 99、99.9 百分位，超过 2 倍的边所占比例（%），最大值及其所在部件。 Per tissue, over all edges: 99th and 99.9th percentile of the stretch ratio (posed / rest length), share of edges stretched more than 2× (%), the maximum and the part it occurs in. */
   stretch: Record<string, { p99: number; p999: number; over2Pct: number; max: number; worst: string }>
   volume: { muscles: number; lengthChanged: number; medianAbsErrSkinnedPct: number; medianAbsErrUniformPct: number; medianAbsErrTaperedPct: number; p90AbsErrSkinnedPct: number; p90AbsErrUniformPct: number; p90AbsErrTaperedPct: number }
-  skin: { flippedPct: number; collapsedPct: number; selfInsidePct: number; minAreaRatio: number; maxEdgeStretch: number }
+  skin: { flippedPct: number; collapsedPct: number; selfInsidePct: number; minAreaRatio: number; maxEdgeStretch: number; stretchedAreaCm2: number }
+  /** 深部结构（骨、肌、腱、韧带、软骨、血管、神经）穿出当前皮肤的顶点比例（%）与最深穿出量（mm）；皮肤不是单层闭合曲面时为 null。 Share of deep-part vertices (bone, muscle, tendon, ligament, cartilage, vessels, nerves) outside the posed skin (%) and the farthest one (mm); null when the skin is not a closed single wall. */
+  poke: { sampled: number; outsidePct: number; over2mmPct: number; worstMm: number; worstPart: string } | null
   corridors: { what: string; ok: boolean; behindMm: number; axisDistanceMm: number; axisDistanceRestMm: number; insideBonePct: number; detail: string }[]
 }
 
@@ -367,7 +369,7 @@ export function validate(body: Body, build: BuildResult, outDir: string | null, 
     skinSample = all.filter((_, k) => !base[k])
   }
   const skinOf = (posed: Float32Array): PostureReport['skin'] => {
-    if (!skinPart) return { flippedPct: 0, collapsedPct: 0, selfInsidePct: 0, minAreaRatio: 1, maxEdgeStretch: 1 }
+    if (!skinPart) return { flippedPct: 0, collapsedPct: 0, selfInsidePct: 0, minAreaRatio: 1, maxEdgeStretch: 1, stretchedAreaCm2: 0 }
     const m = body.meshes.get(skinPart.id)!
     const a = m.positions, idx = m.indices
     let flipped = 0, collapsed = 0, minRatio = Infinity, total = 0
@@ -393,16 +395,47 @@ export function validate(body: Body, build: BuildResult, outDir: string | null, 
       if (nx * mx + ny * my + nz * mz < 0) flipped++
     }
     const ins = insideSkin(posed, idx, skinSample)
-    let mxStretch = 1
+    // “蹼”的量度：有任一条边被拉长到 2 倍以上的三角形，在当前姿势下的总面积
+    // measure of webbing: total posed area of the triangles with any edge stretched beyond 2×
+    let mxStretch = 1, webArea = 0
     for (let t = 0; t < idx.length; t += 3) {
+      let worst = 1
       for (let e = 0; e < 3; e++) {
         const i = idx[t + e]! * 3, j = idx[t + ((e + 1) % 3)]! * 3
         const l0 = Math.hypot(a[i]! - a[j]!, a[i + 1]! - a[j + 1]!, a[i + 2]! - a[j + 2]!)
         if (l0 < 0.001) continue
-        mxStretch = Math.max(mxStretch, Math.hypot(posed[i]! - posed[j]!, posed[i + 1]! - posed[j + 1]!, posed[i + 2]! - posed[j + 2]!) / l0)
+        worst = Math.max(worst, Math.hypot(posed[i]! - posed[j]!, posed[i + 1]! - posed[j + 1]!, posed[i + 2]! - posed[j + 2]!) / l0)
+      }
+      mxStretch = Math.max(mxStretch, worst)
+      if (worst > 2) {
+        const i = idx[t]! * 3, j = idx[t + 1]! * 3, k = idx[t + 2]! * 3
+        const ux = posed[j]! - posed[i]!, uy = posed[j + 1]! - posed[i + 1]!, uz = posed[j + 2]! - posed[i + 2]!
+        const vx = posed[k]! - posed[i]!, vy = posed[k + 1]! - posed[i + 1]!, vz = posed[k + 2]! - posed[i + 2]!
+        webArea += Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) / 2
       }
     }
-    return { flippedPct: pct(flipped, total), collapsedPct: pct(collapsed, total), selfInsidePct: pct(ins.filter(Boolean).length, skinSample.length), minAreaRatio: r2(minRatio), maxEdgeStretch: r2(mxStretch) }
+    return { flippedPct: pct(flipped, total), collapsedPct: pct(collapsed, total), selfInsidePct: pct(ins.filter(Boolean).length, skinSample.length), minAreaRatio: r2(minRatio), maxEdgeStretch: r2(mxStretch), stretchedAreaCm2: Math.round(webArea * 1e5) / 10 }
+  }
+
+  // 深部结构穿出皮肤：皮肤是单层闭合曲面时，用射线奇偶性判断顶点在皮肤内外
+  // deep parts through the skin: with a closed single-walled skin, ray parity tells inside from outside
+  const DEEP: TissueId[] = ['bone', 'muscle', 'tendon', 'ligament', 'cartilage', 'artery', 'vein', 'nerve']
+  const pokeOf = (posedSkin: Float32Array, posedOf: (p: Part) => Float32Array): NonNullable<PostureReport['poke']> => {
+    const s = new Surface({ positions: posedSkin, indices: body.meshes.get(skinPart!.id)!.indices })
+    let n = 0, out = 0, over = 0, worst = 0, worstPart = ''
+    for (const p of parts) {
+      if (!DEEP.includes(p.tissue)) continue
+      const pos = posedOf(p)
+      for (let i = (p.id.charCodeAt(p.id.length - 1) & 7) * 3; i < pos.length; i += 24) {
+        n++
+        if (s.contains(pos[i]!, pos[i + 1]!, pos[i + 2]!)) continue
+        out++
+        const d = s.distance(pos[i]!, pos[i + 1]!, pos[i + 2]!, 0.2)
+        if (d > 0.002) over++
+        if (Number.isFinite(d) && d > worst) (worst = d), (worstPart = p.name)
+      }
+    }
+    return { sampled: n, outsidePct: pct(out, n), over2mmPct: pct(over, n), worstMm: r2(worst * 1000), worstPart }
   }
 
   // 走行通道：静止时位于关节中心某半径内的那一段，摆姿势后应仍在关节的屈侧（后方）。屈侧方向取
@@ -491,7 +524,8 @@ export function validate(body: Body, build: BuildResult, outDir: string | null, 
       softInBone: softInBone(poser, posedOf),
       stretch: stretchOf(posedOf),
       volume: volumeOf(poser),
-      skin: skinPart ? skinOf(posedOf(skinPart)) : { flippedPct: 0, collapsedPct: 0, selfInsidePct: 0, minAreaRatio: 1, maxEdgeStretch: 1 },
+      skin: skinPart ? skinOf(posedOf(skinPart)) : { flippedPct: 0, collapsedPct: 0, selfInsidePct: 0, minAreaRatio: 1, maxEdgeStretch: 1, stretchedAreaCm2: 0 },
+      poke: skinPart && build.fieldStats.skinWalls === 1 ? pokeOf(posedOf(skinPart), posedOf) : null,
       corridors,
     }
     reports.push(rep)

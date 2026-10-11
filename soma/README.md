@@ -135,7 +135,8 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 - 没有的神经：膈神经、颈丛、肋下神经、内脏神经、自主神经丛、喉神经。
 - 没有壁胸膜、淋巴管、黄韧带、颅内脑膜；心包只是心脏的外包络；降结肠包含乙状结肠；脊髓是程序化生成的表面，止于 L2/L3。
 - 皮下脂肪是从皮肤内壁和深层结构之间推导出来的，厚度按 3 mm 量化。
-- 男性皮肤网格的上臂与胸壁粘连，腋部和臂内侧几乎没有皮肤；体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
+- 男性皮肤是按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤：生殖器处只是一块隆起，脚趾连成一块，没有乳头和脐，指尖和眼周有突起；腋窝内侧的皮肤贴着胸壁。大幅度姿势下（肩前屈 160°、深蹲）皮肤仍有明显拉伸，深部结构会穿出皮肤最多约 4 cm；呼吸演示时胸部皮肤不随肋骨动。皮肤包不在仓库里，由 `tools/bodyshape/` 的脚本生成到 `data/raw/bodyshape/out/`。
+- 体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
 - 男性的肩带姿势被校正过：原始扫描是仰卧耸肩的姿势，锁骨下降约 10°、肩胛骨沿胸廓转动，上肢整体平移。148 个跨越肩部的肌肉、血管和皮肤因此由 `scanned` 改标为 `warped`。两肩关节中心间距 338 mm，没有达到 350 mm 的目标；肩胛骨内旋仍比文献均值小约 2 个标准差。
 - 女性体型是第二版，仍比男性粗糙得多：
   - 骨架来自 Visible Human 女性供体（59 岁、肥胖、六节腰椎），已按标准比例缩放到身高 1.606 m、五节腰椎，所以她的部件都不再标为 `scanned`。缩放系数记在 `pipeline-report.json` 里。踝仍偏高约 17 mm。
@@ -294,7 +295,8 @@ The full list is in each body's `cautions`. The main ones:
 - Missing nerves: phrenic, cervical plexus, subcostal, splanchnic, autonomic plexuses, laryngeal.
 - No parietal pleura, lymphatic vessels, ligamenta flava or cranial meninges; the pericardium is only an envelope of the heart; the descending colon includes the sigmoid; the spinal cord is a procedurally generated surface ending at L2/L3.
 - Subcutaneous fat is derived from the space between the skin's inner wall and the deep structures; thickness is quantised to 3 mm.
-- The male skin mesh fuses the upper arm to the chest wall, leaving almost no axillary or medial-arm skin; skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
+- The male skin is a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin: the genital region is only a mound, the toes are one block, there are no nipples or navel, and there are bumps at the fingertips and round the eyes; medial axillary skin lies against the chest wall. In large poses (shoulder flexion 160°, deep squat) the skin still stretches visibly and deep parts come through it by up to about 4 cm; in the breathing demonstration the chest skin does not follow the ribs. The skin package is not in the repository; the scripts in `tools/bodyshape/` write it to `data/raw/bodyshape/out/`.
+- Skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
 - The male shoulder girdle was re-posed: the scan is supine with shrugged shoulders, so the clavicles were lowered by about 10°, the scapulae turned round the rib cage and each upper limb translated. 148 muscles, vessels and the skin that span the shoulder changed from `scanned` to `warped`. The glenohumeral centres are 338 mm apart, short of the 350 mm target, and scapular internal rotation is still about 2 SD below the literature mean.
 - The female body is a second version and still far coarser than the male:
   - The skeleton is from the Visible Human Female donor (59 years old, obese, six lumbar vertebrae), rescaled to standard proportions at 1.606 m with five lumbar vertebrae, so none of her parts is marked `scanned` any more. The scale factors are in `pipeline-report.json`. The ankle is still about 17 mm too high.

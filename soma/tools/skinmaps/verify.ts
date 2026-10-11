@@ -23,9 +23,24 @@ export interface CheckDef {
   source: string
 }
 
-export interface AreaRow { key: string; L: number; R: number; ratio: number | null; flagged: boolean }
+export interface AreaRow {
+  key: string
+  L: number
+  R: number
+  ratio: number | null
+  /**
+   * 镜像一致率：把该区每个顶点按正中面镜像到对侧，对侧最近的皮肤（15 mm 以内）标签相同的面积占比。
+   * 衡量的是“图”是否左右对称，不受两侧皮肤网格面积本身不等的影响。
+   * Mirror agreement: share of the region's area whose mirror image across the median plane lands
+   * (within 15 mm) on skin with the same label. It measures the symmetry of the map itself and is
+   * not affected by the two sides of the skin mesh having unequal area.
+   */
+  mirror: number | null
+  /** 左右面积比超出 0.8–1.25，且镜像一致率低于 0.8 / L/R area ratio outside 0.8–1.25 and mirror agreement below 0.8. */
+  flagged: boolean
+}
 
-const isLeft = (skin: Skin, v: number) => skin.positions[v * 3]! >= skin.midX
+const isLeft = (skin: Skin, v: number) => skin.left[v] === 1
 
 /** 外壁顶点中未分配的比例 / Fraction of outer-wall vertices left unassigned (255). */
 export function unassigned(skin: Skin, labels: Uint8Array): { count: number; fraction: number; innerCount: number } {
@@ -36,16 +51,46 @@ export function unassigned(skin: Skin, labels: Uint8Array): { count: number; fra
   return { count: c, fraction: c / n, innerCount: inner }
 }
 
-/** 各区每侧面积（cm²，仅外壁）及左右比 / Area per region and side (cm², outer wall only) with the L/R ratio. */
+/**
+ * 各区每侧面积（cm²，仅外壁、不含被盖住的皮肤）、左右比和镜像一致率。
+ * Area per region and side (cm², outer wall only, covered skin excluded), the L/R ratio and the mirror agreement.
+ */
 export function areas(skin: Skin, labels: Uint8Array, regions: RegionDef[]): AreaRow[] {
   const L = new Float64Array(regions.length), R = new Float64Array(regions.length)
+  const same = new Float64Array(regions.length), seen = new Float64Array(regions.length)
+  const cell = 0.015
+  const grid = new Map<string, number[]>()
+  const keyOf = (x: number, y: number, z: number) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`
+  const use = (i: number) => skin.outer[i] === 1 && labels[i] !== 255 && !skin.covered[i]
   for (let i = 0; i < skin.n; i++) {
-    if (!skin.outer[i] || labels[i] === 255) continue
-    ;(isLeft(skin, i) ? L : R)[labels[i]!]! += skin.area[i]! * 1e4
+    if (!use(i)) continue
+    const k = keyOf(skin.positions[i * 3]!, skin.positions[i * 3 + 1]!, skin.positions[i * 3 + 2]!)
+    const l = grid.get(k)
+    if (l) l.push(i)
+    else grid.set(k, [i])
+  }
+  for (let i = 0; i < skin.n; i++) {
+    if (!use(i)) continue
+    const a = skin.area[i]! * 1e4
+    ;(isLeft(skin, i) ? L : R)[labels[i]!]! += a
+    const x = 2 * skin.midX - skin.positions[i * 3]!, y = skin.positions[i * 3 + 1]!, z = skin.positions[i * 3 + 2]!
+    let best = -1, bd = cell
+    for (let dx = -1; dx <= 1; dx++)
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dz = -1; dz <= 1; dz++)
+          for (const u of grid.get(keyOf(x + dx * cell, y + dy * cell, z + dz * cell)) ?? []) {
+            const d = Math.hypot(skin.positions[u * 3]! - x, skin.positions[u * 3 + 1]! - y, skin.positions[u * 3 + 2]! - z)
+            if (d < bd) { bd = d; best = u }
+          }
+    if (best < 0) continue
+    seen[labels[i]!]! += a
+    if (labels[best] === labels[i]) same[labels[i]!]! += a
   }
   return regions.map((r, k) => {
     const ratio = R[k]! > 0 ? L[k]! / R[k]! : null
-    return { key: r.key, L: +L[k]!.toFixed(1), R: +R[k]!.toFixed(1), ratio: ratio === null ? null : +ratio.toFixed(3), flagged: ratio === null || ratio < 0.8 || ratio > 1.25 }
+    const mirror = seen[k]! > 0 ? +(same[k]! / seen[k]!).toFixed(3) : null
+    const off = ratio === null || ratio < 0.8 || ratio > 1.25
+    return { key: r.key, L: +L[k]!.toFixed(1), R: +R[k]!.toFixed(1), ratio: ratio === null ? null : +ratio.toFixed(3), mirror, flagged: off && (mirror === null || mirror < 0.8) }
   })
 }
 
@@ -165,27 +210,62 @@ export function composition(skin: Skin, derm: { def: MapDef; labels: Uint8Array 
 
 export interface Piece { region: string; side: SideLR; pieces: number; smallerCm2: number[] }
 
-/** 每区每侧的连通块数；只列出多于一块者 / Connected pieces per region and side; only regions in more than one piece are listed. */
+/**
+ * 每区每侧的块数；只列出多于一块者。两块之间只要有顶点相距不到 2.5 mm 就算相连：有的皮肤网格在手指等处
+ * 叠着两层几乎重合、只在别处相连的皮肤，看上去是一片，按网格连通却是两块。
+ * Pieces per region and side; only regions in more than one piece are listed. Two pieces count as
+ * joined when any of their vertices lie within 2.5 mm of each other: some skin meshes carry two
+ * nearly coincident sheets (on the fingers, for instance) joined only elsewhere, which look like one
+ * patch but are two by mesh connectivity.
+ */
 export function pieces(skin: Skin, labels: Uint8Array, regions: RegionDef[]): Piece[] {
-  const seen = new Uint8Array(skin.n)
-  const by = new Map<string, number[]>()
+  const comp = new Int32Array(skin.n).fill(-1)
+  const areaOf: number[] = [], keyOfComp: string[] = []
   for (let i = 0; i < skin.n; i++) {
-    if (!skin.outer[i] || seen[i] || labels[i] === 255) continue
+    if (!skin.outer[i] || comp[i]! >= 0 || labels[i] === 255) continue
     const left = isLeft(skin, i)
+    const id = areaOf.length
     const stack = [i]
-    seen[i] = 1
+    comp[i] = id
     let area = 0
     while (stack.length) {
       const v = stack.pop()!
       area += skin.area[v]!
       for (let k = skin.adjStart[v]!; k < skin.adjStart[v + 1]!; k++) {
         const u = skin.adj[k]!
-        if (skin.outer[u] && !seen[u] && labels[u] === labels[i] && isLeft(skin, u) === left) { seen[u] = 1; stack.push(u) }
+        if (skin.outer[u] && comp[u]! < 0 && labels[u] === labels[i] && isLeft(skin, u) === left) { comp[u] = id; stack.push(u) }
       }
     }
-    const key = `${labels[i]}|${left ? 'L' : 'R'}`
-    by.set(key, [...(by.get(key) ?? []), area * 1e4])
+    areaOf.push(area * 1e4)
+    keyOfComp.push(`${labels[i]}|${left ? 'L' : 'R'}`)
   }
+  const parent = areaOf.map((_, k) => k)
+  const find = (x: number): number => { while (parent[x] !== x) { parent[x] = parent[parent[x]!]!; x = parent[x]! } return x }
+  const cell = 0.0025
+  const grid = new Map<string, number[]>()
+  const cellKey = (x: number, y: number, z: number) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`
+  for (let i = 0; i < skin.n; i++) {
+    if (comp[i]! < 0) continue
+    const k = cellKey(skin.positions[i * 3]!, skin.positions[i * 3 + 1]!, skin.positions[i * 3 + 2]!)
+    const l = grid.get(k)
+    if (l) l.push(i)
+    else grid.set(k, [i])
+  }
+  for (let i = 0; i < skin.n; i++) {
+    if (comp[i]! < 0) continue
+    const x = skin.positions[i * 3]!, y = skin.positions[i * 3 + 1]!, z = skin.positions[i * 3 + 2]!
+    for (let dx = -1; dx <= 1; dx++)
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dz = -1; dz <= 1; dz++)
+          for (const u of grid.get(cellKey(x + dx * cell, y + dy * cell, z + dz * cell)) ?? []) {
+            if (comp[u] === comp[i] || keyOfComp[comp[u]!] !== keyOfComp[comp[i]!]) continue
+            if (Math.hypot(skin.positions[u * 3]! - x, skin.positions[u * 3 + 1]! - y, skin.positions[u * 3 + 2]! - z) < cell) parent[find(comp[u]!)] = find(comp[i]!)
+          }
+  }
+  const merged = new Map<number, number>()
+  areaOf.forEach((a, k) => merged.set(find(k), (merged.get(find(k)) ?? 0) + a))
+  const by = new Map<string, number[]>()
+  for (const [root, a] of merged) by.set(keyOfComp[root]!, [...(by.get(keyOfComp[root]!) ?? []), a])
   const out: Piece[] = []
   for (const [key, list] of by) {
     if (list.length < 2) continue

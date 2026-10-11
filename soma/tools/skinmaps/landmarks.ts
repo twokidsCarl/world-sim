@@ -11,6 +11,13 @@ import { add, cross, dist, dot, lerp, mul, norm, nrm, pos, sub, type Skin, type 
 export type SideLR = 'L' | 'R'
 export type Dir = string | [number, number, number]
 
+/**
+ * 坐标架轴线上的位置：0 = 起点，1 = 终点；或相对某个标志点沿轴的位置再加 plus（如“上臂内侧皮肤最上端以下 0.06”）。
+ * Position along a frame's axis: 0 = origin, 1 = end; or the position of a landmark along the axis
+ * plus an amount (e.g. "0.06 below the top of the medial arm skin").
+ */
+export type FrameT = number | { from: PointExpr; plus: number }
+
 export type PointExpr =
   | string
   | { part: string; pick?: 'centroid' | { extreme: Dir; within?: { axis: Dir; frac: [number, number] }; half?: boolean } | { slice: { axis: Dir; frac: [number, number] }; half?: boolean } }
@@ -22,7 +29,7 @@ export type PointExpr =
    * Point A moved by (to − from): carries a displacement measured in one place over to another.
    */
   | { shift: [PointExpr, PointExpr, PointExpr] }
-  | { frame: string; t: number }
+  | { frame: string; t: FrameT }
   /**
    * 神经中心线与过 x 的矢状面相交处的点（躯干前面或后面）。
    * The point of a nerve's centreline where it crosses the sagittal plane through `x` (front or back of the trunk).
@@ -33,8 +40,22 @@ export type SkinExpr =
   | string
   | { at: PointExpr; to?: 'nearest' | 'nearestAny' | 'trunkRadial' | Dir | { awayFrom: PointExpr } }
   | { at: PointExpr; frame: string; deg: number }
-  | { frame: string; t: number; deg: number }
-  | { dimple: { between: [PointExpr, PointExpr] } }
+  | { frame: string; t: FrameT; deg: number }
+  /**
+   * 前正中线上 A、B 之间最深的凹点（脐）。凹陷不足 minDepthMm（皮肤上没有做出脐）时改用 fallback。
+   * Deepest dimple of the anterior midline between A and B (the umbilicus). When it is shallower
+   * than minDepthMm (a skin without a modelled umbilicus) the fallback is used instead.
+   */
+  | { dimple: { between: [PointExpr, PointExpr]; minDepthMm?: number; fallback?: SkinExpr } }
+  /**
+   * 沿坐标架轴线自 t[0] 向 t[1] 逐步前进，在第一个沿 deg 方向 maxMm 以内有皮肤的位置取该皮肤点
+   * （如上臂内侧皮肤的最上端，即腋窝顶）。
+   * Steps along a frame's axis from t[0] towards t[1] and takes the skin hit at the first position
+   * that has skin within maxMm in direction deg (e.g. the top of the medial arm skin: the apex of the axilla).
+   */
+  | { frameScan: { frame: string; deg: number; t: [number, number]; maxMm: number } }
+  /** 依次尝试，取第一个能求出的 / Tried in order; the first that can be evaluated is taken. */
+  | { first: SkinExpr[] }
   /**
    * 神经的体表投影（自躯干轴线向外的径向投影）与过某点的矢状面在躯干前面相交处。
    * Where a nerve's skin projection (radially out of the trunk) crosses the sagittal plane through a point, on the front of the trunk.
@@ -56,6 +77,8 @@ export interface FrameDef {
    * Trunk frame only: skin lateral to this point belongs to the arm, not the trunk.
    */
   armLimit?: PointExpr
+  /** 仅用于躯干坐标架：armLimit 只在此点的高度以上生效 / Trunk frame only: armLimit applies only above the height of this point. */
+  armLimitAbove?: PointExpr
 }
 
 export interface LandmarkFile {
@@ -70,6 +93,7 @@ export interface Frame {
   lat0: V3
   lat1: V3
   armLimit?: PointExpr
+  armLimitAbove?: PointExpr
 }
 
 const TOKENS: Record<string, [number, number, number]> = {
@@ -221,7 +245,7 @@ export class Landmarks {
       return [p[0] + (side === 'L' ? o[0] : -o[0]), p[1] + o[1], p[2] + o[2]]
     }
     const f = this.frame(e.frame, side)
-    return lerp(f.origin, f.end, e.t)
+    return lerp(f.origin, f.end, this.tOf(e.frame, e.t, side))
   }
 
   frame(name: string, side: SideLR): Frame {
@@ -237,9 +261,13 @@ export class Landmarks {
       return norm(sub(v, mul(axis, dot(v, axis))))
     }
     const lat0 = orth(def.lat0)
-    const f: Frame = { origin, end, axis, lat0, lat1: def.lat1 ? orth(def.lat1) : lat0, armLimit: def.armLimit }
+    const f: Frame = { origin, end, axis, lat0, lat1: def.lat1 ? orth(def.lat1) : lat0, armLimit: def.armLimit, armLimitAbove: def.armLimitAbove }
     this.frameCache.set(key, f)
     return f
+  }
+
+  tOf(frame: string, t: FrameT, side: SideLR): number {
+    return typeof t === 'number' ? t : this.frameT(frame, this.point(t.from, side), side) + t.plus
   }
 
   /**
@@ -275,17 +303,22 @@ export class Landmarks {
     const f = this.frame('trunk', side)
     const t = (p[1] - f.origin[1]) / (f.end[1] - f.origin[1])
     const c: V3 = [f.origin[0] + (f.end[0] - f.origin[0]) * t, p[1], f.origin[2] + (f.end[2] - f.origin[2]) * t]
-    // 上臂与胸壁在皮肤网格中粘连之处，射线会从上臂穿出：击中点在肩关节外侧（留 12 mm 余量）或距离超过 12 cm 时，不算躯干皮肤（返回 -1）。
-    // Where the upper arm is fused to the chest wall in the skin mesh the ray comes out on the
-    // arm instead: a hit lateral to the shoulder joint (less a 12 mm margin) or more than 12 cm
-    // away is not trunk skin (-1).
+    // 上臂内侧皮肤最上端（armLimitAbove）以上，躯干与上臂连成一体，射线会从肩或上臂穿出：
+    // 在这一高度以上，击中点在肩关节外侧（留 12 mm 余量）的不算躯干皮肤；任何高度上距离超过 12 cm 的也不算（返回 -1）。
+    // 该高度以下上臂与躯干是分开的，射线先穿出的就是胸壁皮肤。
+    // Above the top of the medial arm skin (armLimitAbove) the trunk is one mass with the arm and
+    // the ray comes out on the shoulder or arm: above that height a hit lateral to the shoulder
+    // joint (less a 12 mm margin) is not trunk skin, and at any height a hit more than 12 cm away
+    // is not (-1). Below it the arm is separate and the ray leaves through the chest wall first.
     const d = norm([p[0] - c[0], 0, p[2] - c[2]])
     const v = this.rayVertex(p, d, 0.12)
     if (v < 0 || !this.lastHit) return -1
-    if (f.armLimit) {
+    const hit = this.lastHit
+    if (f.armLimit && (!f.armLimitAbove || p[1] > this.point(f.armLimitAbove, side)[1])) {
       const limit = Math.abs(this.point(f.armLimit, side)[0] - this.skin.midX) - 0.012
-      if (Math.abs(this.lastHit[0] - this.skin.midX) > limit) return -1
+      if (Math.abs(hit[0] - this.skin.midX) > limit) return -1
     }
+    this.lastHit = hit
     return v
   }
 
@@ -300,8 +333,19 @@ export class Landmarks {
    * First outer-wall hit of a ray; falls back to the nearest outer vertex when it misses.
    */
   rayVertex(origin: V3, d: V3, maxDist = Infinity): number {
-    const hits = this.skin.outerBvh.hits(origin, d)
-    const h = hits.find((x) => x.t > 1e-5)
+    const hits = this.skin.outerBvh.hits(origin, d).filter((x) => x.t > 1e-5)
+    // 射线自体内发出，要的是它“穿出”皮肤的那一点（该处皮肤法线与射线同向）。两处皮肤互相贴合或穿插时
+    //（如上臂内侧与胸壁），先碰到的可能是另一处皮肤的背面，须跳过。没有穿出点时退回到第一个交点。
+    // The ray starts inside the body and what is wanted is where it leaves the skin (skin normal
+    // along the ray). Where two stretches of skin touch or interpenetrate (medial arm against the
+    // chest wall) the first wall met may be the back of the other one and must be skipped. With
+    // no exit hit at all the first intersection is taken.
+    const exits = (x: { face: number }) => {
+      const [a, b, c] = this.skin.outerBvh.faceVerts(x.face)
+      const pa = pos(this.skin, a)
+      return dot(cross(sub(pos(this.skin, b), pa), sub(pos(this.skin, c), pa)), d) > 0
+    }
+    const h = hits.find(exits) ?? hits[0]
     this.lastHit = null
     if (h && h.t > maxDist) return -1
     if (!h) return maxDist < Infinity ? -1 : this.nearestVertex(origin, false)
@@ -364,6 +408,23 @@ export class Landmarks {
       return this.vertex(def, side)
     }
     if (!isSkinExpr(e)) return this.nearestVertex(this.point(e, side))
+    if ('first' in e) {
+      let err: unknown
+      for (const x of e.first) {
+        try { return this.vertex(x, side) } catch (ex) { err = ex }
+      }
+      throw err
+    }
+    if ('frameScan' in e) {
+      const { frame, deg, t, maxMm } = e.frameScan
+      const step = (t[1] - t[0]) / 40
+      for (let k = 0; k <= 40; k++) {
+        const tt = t[0] + step * k
+        const v = this.rayVertex(this.point({ frame, t: tt }, side), this.frameDir(frame, tt, deg, side), maxMm / 1000)
+        if (v >= 0 && (side === 'L') === this.skin.positions[v * 3]! >= this.skin.midX) return v
+      }
+      throw new Error(`frameScan found no skin: ${JSON.stringify(e)}`)
+    }
     if ('dimple' in e) {
       const a = this.point(e.dimple.between[0], side), b = this.point(e.dimple.between[1], side)
       const y0 = Math.min(a[1], b[1]), y1 = Math.max(a[1], b[1])
@@ -382,7 +443,10 @@ export class Landmarks {
         const s = p[2] - zs.reduce((x, y) => x + y, 0) / zs.length
         if (s < bs) { bs = s; best = v }
       }
-      if (best < 0) throw new Error('no dimple found')
+      if (best < 0 || bs > -(e.dimple.minDepthMm ?? 0) / 1000) {
+        if (e.dimple.fallback) return this.vertex(e.dimple.fallback, side)
+        throw new Error('no dimple found')
+      }
       return best
     }
     if ('nerveCross' in e) {
@@ -418,12 +482,12 @@ export class Landmarks {
     }
     if ('frame' in e && 'deg' in e) {
       const origin = 'at' in e ? this.point(e.at, side) : this.point({ frame: e.frame, t: e.t }, side)
-      const t = 'at' in e ? this.frameT(e.frame, origin, side) : e.t
-      // 肢体内发出的射线若 15 cm 内未穿出皮肤（如上臂内侧与胸壁的皮肤网格粘连处），
+      const t = 'at' in e ? this.frameT(e.frame, origin, side) : this.tOf(e.frame, e.t, side)
+      // 肢体内发出的射线若 15 cm 内未穿出皮肤（该方向上肢体与躯干相连，如腋窝以上的上臂内侧），
       // 则取沿该方向 5 cm 处最近的皮肤顶点。
-      // A ray from inside a limb that does not leave the skin within 15 cm (e.g. where the
-      // medial arm is fused to the chest wall in the skin mesh) falls back to the skin vertex
-      // nearest to the point 5 cm out along it.
+      // A ray from inside a limb that does not leave the skin within 15 cm (the limb is joined to
+      // the trunk in that direction, e.g. the medial side of the arm above the axilla) falls back
+      // to the skin vertex nearest to the point 5 cm out along it.
       const d = this.frameDir(e.frame, t, e.deg, side)
       const v = this.rayVertex(origin, d, 0.15)
       return v >= 0 ? v : this.nearestVertex(add(origin, mul(d, 0.05)), false)
@@ -443,5 +507,5 @@ export class Landmarks {
 }
 
 export function isSkinExpr(e: unknown): e is Exclude<SkinExpr, string> {
-  return typeof e === 'object' && e !== null && ('at' in e || 'deg' in e || 'dimple' in e || 'skinExtreme' in e || 'nerveCross' in e)
+  return typeof e === 'object' && e !== null && ('at' in e || 'deg' in e || 'dimple' in e || 'skinExtreme' in e || 'nerveCross' in e || 'frameScan' in e || 'first' in e)
 }

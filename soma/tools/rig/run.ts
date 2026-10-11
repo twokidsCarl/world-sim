@@ -44,12 +44,16 @@ if (import.meta.main) {
   const log = (m: string): void => console.log(`[rig ${bodyId} ${((performance.now() - t0) / 1000).toFixed(1)}s] ${m}`)
   const body = await readBody(dir)
   log(`read ${body.data.parts.length} parts`)
-  const build = buildRig(body, log)
-  writeFileSync(join(dir, 'rig.json'), JSON.stringify(build.rig))
-  writeFileSync(join(dir, 'rig.bin'), build.bin)
+  // --skin=field：皮肤也按距离场绑定，不用外部权重；结果只写到 tools/rig/out/<body>-field/，不覆盖发布的文件（用于对比）
+  // --skin=field: bind the skin by the distance field too, without external weights; results go to tools/rig/out/<body>-field/ only and the published files are left alone (for comparison)
+  const generic = args.includes('--skin=field')
+  const build = buildRig(body, log, { genericSkin: generic })
+  const outDir = join(import.meta.dirname, 'out', generic ? `${bodyId}-field` : bodyId)
+  mkdirSync(outDir, { recursive: true })
+  const target = generic ? outDir : dir
+  writeFileSync(join(target, 'rig.json'), JSON.stringify(build.rig))
+  writeFileSync(join(target, 'rig.bin'), build.bin)
   log(`rig.json: ${build.rig.joints.length} joints, ${build.rig.bindings.length} bindings, ${build.rig.muscles.length} muscle lines; rig.bin ${(build.bin.length / 1e6).toFixed(2)} MB`)
-  const outDir = join(import.meta.dirname, 'out', bodyId)
-  if (!args.includes('--no-renders')) mkdirSync(outDir, { recursive: true })
   const validation = args.includes('--no-validate') ? null : validate(body, build, args.includes('--no-renders') ? null : outDir, log)
   if (validation) validation.renders = validation.renders.map((f) => f.slice(ROOT.length + 1))
   const report = {
@@ -69,11 +73,12 @@ if (import.meta.main) {
       withoutLine: build.attach.filter((a) => a.tissue === 'muscle' && !a.line).map((a) => ({ part: a.part, name: a.name, why: a.why ?? '' })),
     },
     calibration: build.calibration,
+    externalSkin: build.external,
     fieldQueries: build.field.queryStats,
     attach: build.attach,
     notes: build.notes,
     validation,
   }
-  writeFileSync(join(dir, 'rig-report.json'), JSON.stringify(report, null, 1))
+  writeFileSync(join(target, 'rig-report.json'), JSON.stringify(report, null, 1))
   log('done')
 }

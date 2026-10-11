@@ -10,7 +10,7 @@
 //               nerves: weights on the centreline, smoothed along it, then handed to tube vertices by their nearest centreline segment
 
 import type { MuscleLine, NervePath, Part, Vec3 } from '../../src/anatomy/types.ts'
-import type { ExternalWeights } from './external.ts'
+import type { ExternalRule, ExternalWeights } from './external.ts'
 import { type BodyField, weightsFromDistances } from './field.ts'
 import { pca } from './fits.ts'
 import { Surface } from './geom.ts'
@@ -52,8 +52,8 @@ export interface BindRules {
   rules: (Policy & { match: string })[]
   attachmentExcludes?: AttachmentExclude[]
   hingeBlend?: HingeBlend[]
-  /** 自带外部蒙皮权重的部件（见 external.ts）：按组织类型匹配，且顶点数必须与外部权重一致。 Parts that come with external skin weights (see external.ts): matched by tissue, and the vertex count must equal that of the external weights. */
-  externalWeights?: { tissue: string; body: string; dir: string; why?: { zh: string; en: string } }[]
+  /** 自带外部蒙皮权重的皮肤（见 external.ts）：部件的 Part.source 与权重包 manifest 的 source.name 一致时采用。 Skins that come with external weights (see external.ts): used when the part's Part.source equals source.name of the package manifest. */
+  externalWeights?: { body: string; dir: string; map?: ExternalRule[]; generic?: string; genericWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
 }
 
 export interface BoundPart {
@@ -368,8 +368,8 @@ export interface BindContext {
   /** 每个关节的混合半径（米）。 Blend radius per joint, metres. */
   radius: number[]
   rules: BindRules
-  /** 已读入的外部蒙皮权重（按组织类型）。 External skin weights already loaded, by tissue. */
-  external?: Map<string, ExternalWeights>
+  /** 已读入的外部蒙皮权重包。 External skin-weight packages already loaded. */
+  external?: ExternalWeights[]
   /** Z-Anatomy 附着斑块（没有该文件时为空）。 Z-Anatomy attachment patches (empty when the file is absent). */
   patches?: AttachmentPatch[]
   log?: (msg: string) => void
@@ -880,33 +880,43 @@ export function bindAll(ctx: BindContext): BindResult {
       mainJoints.set(p.id, [bj])
       continue
     }
-    // 外部权重：顶点数一致才用（顶点顺序须与外部文件相同），否则退回本部件组织类型的默认方法
-    // external weights: used only when the vertex count agrees (the vertex order must be that of the external file); otherwise the tissue's default method
-    const ext = ctx.external?.get(p.tissue)
+    // 外部权重：部件的 source 与权重包的来源一致时，按最近点从原始表面传入
+    // external weights: when the part's source is that of a weight package, transferred from the original surface by closest point
+    const ext = (ctx.external ?? []).find((e) => e.sourceName !== '' && p.source === e.sourceName && p.tissue === 'skin')
     if (ext) {
       const raw = body.meshes.get(p.id)!
       const nv = raw.positions.length / 3
-      if (nv === ext.vertexCount) {
-        const mesh = weld(raw.positions, raw.indices)
-        // 位置相同的顶点取平均，保证接缝两侧一致 / vertices at the same position are averaged so that seams stay closed
-        const rows: Map<number, number>[] = Array.from({ length: mesh.n }, () => new Map<number, number>())
-        const cnt = new Uint32Array(mesh.n)
-        for (let i = 0; i < nv; i++) {
-          const u = mesh.map[i]!
-          cnt[u] = cnt[u]! + 1
-          for (const [j, w] of ext.rows[i]!) rows[u]!.set(j, (rows[u]!.get(j) ?? 0) + w)
-        }
-        rows.forEach((r, u) => {
-          for (const [j, w] of r) r.set(j, w / Math.max(1, cnt[u]!))
+      const mesh = weld(raw.positions, raw.indices)
+      const t = ext.transfer(mesh.pos)
+      // 按区域选择：外部权重落在 generic 所列关节上的那部分份额 m，改用距离场的权重（两者按 m 混合，过渡连续）
+      // choice by region: for the share m of the external weight that sits on the joints named by `generic`, the distance-field weights are used instead (blended by m, so the transition is continuous)
+      const cfg = (ctx.rules.externalWeights ?? []).find((e) => e.dir === ext.dir)
+      let blended = 0
+      if (cfg?.generic) {
+        const re = new RegExp(cfg.generic)
+        const isGen = joints.map((j) => re.test(j.def.id))
+        const pol0 = ctx.rules.defaults[p.tissue] ?? { method: 'field', beta: 0.4 }
+        t.rows.forEach((row, i) => {
+          let m = 0
+          for (const [j, w] of row) if (isGen[j]) m += w
+          if (m < 0.02) return
+          const q: V3 = [mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!]
+          weightsFromDistances(field.query(q), pol0.beta ?? 0.4, radius, tmp)
+          if (!tmp.size) return
+          hingeResplit(tmp, q[0], q[1], q[2])
+          for (const [j, w] of row) row.set(j, w * (1 - m))
+          for (const [j, w] of tmp) row.set(j, (row.get(j) ?? 0) + m * w)
+          blended++
         })
-        const d = densify(rows)
-        smooth(d, mesh, rows.some((r) => r.size === 0) ? 2 : 0)
-        finish(p, 'external', mesh, d, nv)
-        notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir} (${ext.mapped.length} external joints mapped)`)
-        if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
-        continue
       }
-      if (p.triangles > 20000) notes.push(`${p.id} "${p.name}": external weights are for ${ext.vertexCount} vertices but the part has ${nv}; bound by the distance field instead`)
+      const d = densify(t.rows)
+      // 不做整体平滑：外部权重本身是连续的，按 m 的混合也连续；只有个别顶点没取到权重时才由邻居填充
+      // no overall smoothing: the external weights are continuous as they are and so is the blend by m; neighbours only fill vertices that got no weight
+      smooth(d, mesh, t.rows.some((r) => r.size === 0) ? 2 : 0)
+      finish(p, 'external', mesh, d, nv)
+      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}`)
+      if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
+      continue
     }
     const pol = policyOf(p)
     if (pol.method === 'attach') {

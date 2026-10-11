@@ -67,12 +67,24 @@ def adjacency(n, F):
     return sparse.diags(1.0 / np.maximum(np.asarray(A.sum(1)).ravel(), 1)) @ A
 
 
-def enclose(V0, F, P, log, cap, iters=30, step_cap=0.006):
+def exposed(V, F):
+    """露在外面的顶点：沿法线外移 1.5 mm 后在网格之外。腋窝、指缝、两腿之间，皮肤会自相重叠，
+    埋在里面的那部分不算体表。
+    Exposed vertices: those that are outside the mesh after moving 1.5 mm along the normal. At the
+    axilla, between fingers and between the thighs the skin overlaps itself; the buried part is not body surface."""
+    import igl
+    w = igl.fast_winding_number(np.ascontiguousarray(V), np.ascontiguousarray(F), np.ascontiguousarray(V + 0.0015 * vertex_normals(V, F)))
+    return w < 0.5
+
+
+def enclose(V0, F, P, log, cap, passes=10, step_cap=0.012):
     """把皮肤沿“初始的、平滑过的法线”外推，直到采样点 P 都在皮肤下 MARGIN 以内。
-    方向固定不变（每轮重算法线会在手指、鼻、腋窝等处失稳）；每个顶点的总位移不超过 cap[i]。
+    方向固定不变；每个顶点的总位移不超过 cap[i]；距离只对露在外面的皮肤量、位移也只加在它上面
+    （否则在皮肤自相重叠处，埋在里面的那层会被越推越深，永不收敛）。
     Push the skin out along its initial, smoothed normals until every sample in P lies at least MARGIN
-    under it. The direction is fixed (recomputing normals each round is unstable at fingers, nose and
-    axilla); the total displacement of vertex i never exceeds cap[i]."""
+    under it. The direction is fixed; the total displacement of vertex i never exceeds cap[i];
+    distances are measured to, and displacement applied on, the exposed skin only (where the skin
+    overlaps itself the buried sheet would otherwise be pushed ever deeper and never converge)."""
     import igl
     A = adjacency(len(V0), F)
     n0 = vertex_normals(V0, F)
@@ -80,28 +92,49 @@ def enclose(V0, F, P, log, cap, iters=30, step_cap=0.006):
         n0 = 0.5 * n0 + 0.5 * (A @ n0)
         n0 /= np.maximum(np.linalg.norm(n0, axis=1), 1e-12)[:, None]
     D = np.zeros(len(V0))
-    s = signed_distance(P, V0, F)
-    cand = np.where(s > -0.03)[0]   # 更深的点不会因皮肤外移而露出 / deeper points cannot surface when the skin only moves out
-    Pc = P[cand]
-    for it in range(iters):
-        V = V0 + D[:, None] * n0
-        s = signed_distance(Pc, V, F)
+    best = None
+    ex = exposed(V0, F)
+    Fe = F[ex[F].all(1)]
+    log.append(f'  exposed skin: {ex.mean() * 100:.1f} % of vertices ({(~ex).sum()} buried where the skin overlaps itself)')
+    w = igl.fast_winding_number(np.ascontiguousarray(V0), np.ascontiguousarray(F), np.ascontiguousarray(P))
+    d = np.sqrt(igl.point_mesh_squared_distance(np.ascontiguousarray(P), np.ascontiguousarray(V0), np.ascontiguousarray(Fe))[0])
+    cand = np.where((w < 0.5) | (d < 0.03))[0]   # 更深的点不会因皮肤外移而露出 / deeper points cannot surface when the skin only moves out
+    Pc = np.ascontiguousarray(P[cand])
+    for it in range(passes):
+        V = np.ascontiguousarray(V0 + D[:, None] * n0)
+        w = igl.fast_winding_number(V, np.ascontiguousarray(F), Pc)
+        d2, fi, _ = igl.point_mesh_squared_distance(Pc, V, np.ascontiguousarray(Fe))[:3]
+        s = np.where(w > 0.5, -1.0, 1.0) * np.sqrt(d2)
         off = s > -MARGIN
-        if it % 5 == 0 or off.sum() == 0:
-            log.append(f'  enclose iteration {it}: {off.sum()} samples within {MARGIN * 1000:.1f} mm of or outside the skin; furthest {max(s.max(), 0) * 1000:.1f} mm outside')
+        log.append(f'  enclose pass {it}: {off.sum()} samples within {MARGIN * 1000:.1f} mm of or outside the skin; {(s > 0).sum()} outside, furthest {max(s.max(), 0) * 1000:.1f} mm')
+        # 记住“在外采样点最少”的那一轮：个别自相重叠处会越推越远，出现这种情况就退回并停止
+        # remember the pass with the fewest samples outside: at a few self-overlapping spots the push can run away; when it does, fall back and stop
+        score = (int((s > 0).sum()), float(max(s.max(), 0)))
+        if best is None or score < best[0]:
+            best = (score, D.copy())
+        elif it >= 3 and score[1] > best[0][1] + 0.002:
+            log.append(f'  enclose: pass {it} is worse than the best pass; falling back to it')
+            D = best[1]
+            break
         if off.sum() == 0:
             break
         need = np.minimum(s[off] + MARGIN + 0.0005, step_cap)
-        fi = igl.point_mesh_squared_distance(np.ascontiguousarray(Pc[off]), np.ascontiguousarray(V), np.ascontiguousarray(F))[1]
         req = np.zeros(len(V))
         for k in range(3):
-            np.maximum.at(req, F[fi, k], need)
+            np.maximum.at(req, Fe[fi[off], k], need)
         for _ in range(4):
             req = np.maximum(req, 0.75 * (A @ req))
+        req[~ex] = 0
         D = np.minimum(D + req, cap)
     # 位移场的轻度平滑：只增不减，保持包裹 / light smoothing of the displacement that never decreases it, so enclosure is kept
-    for _ in range(3):
-        D = np.minimum(np.maximum(D, A @ D), cap)
+    for _ in range(6):
+        Dn = np.minimum(np.maximum(D, A @ D), cap)
+        D = np.where(ex, Dn, D)
+    # 再把位移场本身磨平一些（取平滑值与原值的较大者之上的平均），减轻肌肉轮廓印在皮肤上的凹凸
+    # then soften the field itself (average of the field and its smoothed version, never below the field), so muscle outlines print through less
+    for _ in range(4):
+        Dn = np.minimum(np.maximum(D, 0.5 * D + 0.5 * (A @ (A @ D))), cap)
+        D = np.where(ex, Dn, D)
     return V0 + D[:, None] * n0
 
 
@@ -227,7 +260,7 @@ def main():
     log.append(f'\n== BEFORE local correction: deep-part surface samples outside the skin ({len(Pd)} samples of {len(parts)} parts)\n{fmt_cont(c0)}')
     # 位移上限：一般 45 mm；男性外生殖器所在的腹股沟区 80 mm（见报告：那里是把光滑的皮肤整体外推成一个隆起）
     # displacement cap: 45 mm in general; 80 mm in the male groin, where the smooth skin is pushed out into a mound over the external genitalia
-    cap = np.full(len(V0), 0.045)
+    cap = np.full(len(V0), 0.045 if sex == 'M' else 0.02)   # 女性：按包络拟合后需要的外推不超过 17 mm / female: after the envelope fit no push above 17 mm is needed
     if sex == 'M':
         gen = [p for p in parts if any(t in p['name'].lower() for t in ('penis', 'scrotum', 'testis', 'epididymis'))]
         if gen:

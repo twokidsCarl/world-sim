@@ -44,7 +44,8 @@
      ]
     }
    ],
-   "armLimit": "shoulder"
+   "armLimit": "shoulder",
+   "armLimitAbove": "armSkinTop"
   },
   "arm": {
    "origin": "shoulder",
@@ -511,7 +512,27 @@
        ]
       ]
      }
-    ]
+    ],
+    "minDepthMm": 5,
+    "fallback": {
+     "at": {
+      "xyz": [
+       {
+        "offset": [
+         "core",
+         [
+          0.004,
+          0,
+          0
+         ]
+        ]
+       },
+       "umbilicusLevel",
+       "core"
+      ]
+     },
+     "to": "ant"
+    }
    }
   },
   "eop": {
@@ -623,17 +644,32 @@
    "deg": 320
   },
   "K_T2": {
-   "at": {
-    "offset": [
-     "shoulder",
-     [
-      -0.035,
-      -0.06,
-      0
-     ]
-    ]
-   },
-   "to": "nearestAny"
+   "first": [
+    {
+     "frameScan": {
+      "frame": "arm",
+      "deg": 270,
+      "t": [
+       0.1,
+       0.5
+      ],
+      "maxMm": 80
+     }
+    },
+    {
+     "at": {
+      "offset": [
+       "shoulder",
+       [
+        -0.035,
+        -0.06,
+        0
+       ]
+      ]
+     },
+     "to": "nearestAny"
+    }
+   ]
   },
   "mcl": "clavicleMid",
   "ics3": {
@@ -1965,6 +2001,39 @@
     ]
    },
    "to": "ant"
+  },
+  "umbilicusLevel": {
+   "part": "Intervertebral disk of third lumbar vertebra"
+  },
+  "perineum": {
+   "at": {
+    "offset": [
+     {
+      "lerp": [
+       "coccyxTip",
+       "pubicSymphysis",
+       0.55
+      ]
+     },
+     [
+      0.008,
+      -0.085,
+      0
+     ]
+    ]
+   },
+   "to": "nearestAny"
+  },
+  "armSkinTop": {
+   "frameScan": {
+    "frame": "arm",
+    "deg": 270,
+    "t": [
+     0.1,
+     0.95
+    ],
+    "maxMm": 80
+   }
   }
  },
  "notes": {
@@ -1975,6 +2044,22 @@
   "T2FrontMid … T11FrontMid": {
    "zh": "T2–T11 皮节带在前正中线旁的终点：取肋间神经最靠近正中线的前端的高度，水平延至正中线旁。这样胸骨前和两乳之间的皮肤按神经前端的高度归属，而不是按沿皮肤表面绕行的距离归属。",
    "en": "Where the T2–T11 bands end beside the anterior midline: the height of the intercostal nerve's anterior end (its point nearest the midline), carried horizontally to the midline. Skin over the sternum and between the breasts then follows the level of the nerve ends instead of the distance round the surface."
+  },
+  "umbilicus": {
+   "zh": "皮肤上有脐凹（深度 ≥ 5 mm）时取脐凹；没有做出脐的皮肤，按常用的体表投影取 L3–L4 椎间盘平面的前正中线旁。",
+   "en": "The umbilical dimple when the skin has one (at least 5 mm deep); on a skin without a modelled umbilicus, the point beside the anterior midline at the level of the L3–L4 disc, its usual surface projection."
+  },
+  "K_T2": {
+   "zh": "腋窝顶：沿肱骨轴线自近端向远端（至中点为止），第一个向内侧 8 cm 内有皮肤的位置，即上臂内侧皮肤的最上端。上臂与胸壁粘连到肱骨中点以下、没有腋窝的皮肤上，退回到按肩关节偏移取最近皮肤点的旧规则。",
+   "en": "Apex of the axilla: going distally along the humeral axis (as far as its middle), the first position with skin within 8 cm medially, i.e. the top of the medial arm skin. On a skin whose arm is fused to the chest to below the middle of the humerus (no axilla) the old rule is used: the skin nearest to a point offset from the shoulder joint."
+  },
+  "perineum": {
+   "zh": "会阴：尾骨尖与耻骨联合连线上 55% 处下方 8.5 cm 的点所对应的最近皮肤。不用向下的射线：两股内侧皮肤在中线贴合或穿插时，射线会从股内侧远处穿出。",
+   "en": "Perineum: the skin nearest to the point 8.5 cm below the 55% point of the line from the tip of the coccyx to the pubic symphysis. Not a downward ray: where the medial skin of the two thighs meets or interpenetrates at the midline, a ray comes out far down the medial thigh."
+  },
+  "armSkinTop": {
+   "zh": "上臂内侧皮肤的最上端：其上方躯干与上臂连成一体。有腋窝的皮肤上即腋窝顶；上臂与胸壁粘连的皮肤上位置更低。臂内侧的种子（T2、肋间臂神经）相对此点定位。",
+   "en": "Top of the medial arm skin: above it the trunk and the arm are one mass. The apex of the axilla on a skin that has one; lower on a skin whose arm is fused to the chest. The seeds of the medial arm (T2, intercostobrachial) are placed relative to it."
   }
  }
 }

@@ -1117,8 +1117,27 @@ async function main() {
         skinEl.mesh = pkg.mesh
         skinEl.stats = measure(pkg.mesh)
         skinEl.sourceTriangles = pkg.mesh.indices.length / 3
+        // 换上的皮肤不是这个人的扫描皮肤，而是按他的内部结构拟合的参数化体表：标为 curated，来源记皮肤包的来源；
+        // BodyParts3D 文件头里的体积属于旧皮肤，不再适用。
+        // The installed skin is not this man's scanned skin but a parametric surface fitted to his
+        // internals: labelled curated, with the package's source; the volume in the BodyParts3D
+        // header belonged to the old skin and no longer applies.
         skinEl.provenance = 'curated'
         skinEl.source = pkg.source.name
+        skinEl.volume = undefined
+        // 肩带校正中被形变的旧皮肤已被换掉，不再计入“由 scanned 改标为 warped”的部件
+        // the old skin, deformed by the shoulder correction, is gone: it no longer counts among the parts relabelled from scanned to warped
+        const pv = (report.shoulderGirdle as { provenance?: { scannedAfter: number; relabelledToWarped: number; relabelledByTissue: Record<string, number>; relabelledIds: string[]; replacedBySkinPackage?: string[] } } | undefined)?.provenance
+        if (pv && pv.relabelledIds.includes(skinEl.id)) {
+          pv.relabelledIds = pv.relabelledIds.filter((id) => id !== skinEl.id)
+          pv.relabelledToWarped--
+          if (pv.relabelledByTissue.skin) {
+            pv.relabelledByTissue.skin--
+            if (!pv.relabelledByTissue.skin) delete pv.relabelledByTissue.skin
+          }
+          pv.replacedBySkinPackage = [skinEl.id]
+        }
+        if (pv) pv.scannedAfter = kept.filter((e) => e.provenance === 'scanned').length
         externalSkinSource = pkg.source
         const fit = checkSkinFit(pkg.mesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ name: e.name, mesh: e.mesh })))
         Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit })
@@ -1169,7 +1188,7 @@ async function main() {
         const t = r.thicknessMm as Record<string, number>
         console.log(`  ${pad(r.name as string, 44)}${pad(`${r.volumeMl} ml`, 10)}${pad(`${r.areaCm2} cm²`, 11)}thickness p10 ${t.p10} / median ${t.median} / p90 ${t.p90} / max ${t.max} mm (steps of ${FAT_OPTIONS.voxel * 1000} mm); fat under ${((r.skinCovered as number) * 100).toFixed(0)}% of the region's skin`)
       }
-      report.fat = { options: FAT_OPTIONS, bodyVolumeL: round(fat.bodyVolume * 1000, 1), fatVolumeL: round(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000, 1), deepParts: deep.length, regions: fatRows }
+      report.fat = { options: FAT_OPTIONS, skinSingleWalled: fat.skinSingleWalled, bodyVolumeL: round(fat.bodyVolume * 1000, 1), fatVolumeL: round(fat.regions.reduce((a, r) => a + r.volume, 0) * 1000, 1), deepParts: deep.length, regions: fatRows }
     }
     lap(`derived ${derived.length} parts`)
   }
@@ -1270,7 +1289,12 @@ async function main() {
   // ── 7. 邻接（在未简化的表面上计算） / 7. Adjacency (on the unsimplified surfaces) ─────────────────────────────────────────────
   const adj = computeAdjacency(sourceMeshes, { threshold: ADJACENCY_THRESHOLD, spacing: ADJACENCY_SPACING })
   // 皮下脂肪与皮肤一样是包络，一律不计邻接 / the subcutaneous fat is an envelope like the skin: never in the adjacency
-  const envelopes = adj.neighbours.map((l, i) => (l.length > ADJACENCY_MAX_DEGREE || isFatPart(kept[i]!.id) ? i : -1)).filter((i) => i >= 0)
+  // 皮肤按它的身份算包络，不按邻接数：单层壁的拟合皮肤只碰到 241 个部件，低于阈值，
+  // 若只看邻接数它就会被当成普通部件，而其余部件的邻接表里并不列它（邻接不再对称）。
+  // The skin is an envelope by what it is, not by its degree: the fitted single-walled skin touches
+  // only 241 parts, under the threshold; judged by degree alone it would count as an ordinary part
+  // while no other part lists it (and the adjacency would stop being symmetric).
+  const envelopes = adj.neighbours.map((l, i) => (l.length > ADJACENCY_MAX_DEGREE || isFatPart(kept[i]!.id) || roles[i] === 'skin' ? i : -1)).filter((i) => i >= 0)
   const envelopeSet = new Set(envelopes)
   const neighbours = adj.neighbours.map((l, i) => (envelopeSet.has(i) ? [] : l.filter((j) => !envelopeSet.has(j))))
   lap(`adjacency from ${adj.samples} surface samples`)
@@ -1279,7 +1303,7 @@ async function main() {
     const pairs = neighbours.reduce((s, l) => s + l.length, 0) / 2
     const names = (i: number) => neighbours[i]!.map((j) => kept[j]!.name)
     console.log(`\nAdjacency (≤ ${ADJACENCY_THRESHOLD * 1000} mm between surface samples ≤ ${ADJACENCY_SPACING * 1000} mm apart): ${pairs} pairs`)
-    console.log(`  envelopes excluded (degree > ${ADJACENCY_MAX_DEGREE}): ${envelopes.map((i) => `${kept[i]!.name} (${adj.neighbours[i]!.length})`).join(', ') || 'none'}`)
+    console.log(`  envelopes excluded (skin, subcutaneous fat, degree > ${ADJACENCY_MAX_DEGREE}): ${envelopes.map((i) => `${kept[i]!.name} (${adj.neighbours[i]!.length})`).join(', ') || 'none'}`)
     console.log(`  degree min ${deg[0]}, p10 ${quantile(deg, 0.1)}, median ${quantile(deg, 0.5)}, p90 ${quantile(deg, 0.9)}, p99 ${quantile(deg, 0.99)}, max ${deg[deg.length - 1]}; isolated parts: ${deg.filter((d) => d === 0).length}`)
     const top = neighbours.map((l, i) => [l.length, kept[i]!.name] as const).sort((a, b) => b[0] - a[0]).slice(0, 8)
     console.log(`  highest: ${top.map(([d, n]) => `${n} ${d}`).join(', ')}`)
@@ -1548,8 +1572,16 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
       zh: `肩部不是扫描时的姿势。BodyParts3D 为仰卧位成像，双肩耸起并后缩；本模型已把锁骨和肩胛骨摆回站立静息位（锁骨上提 ${mean('clavicleElevation', 'before')}° → ${mean('clavicleElevation', 'after')}°、后缩 ${mean('clavicleRetraction', 'before')}° → ${mean('clavicleRetraction', 'after')}°；肩胛骨内旋 ${mean('scapulaInternalRotation', 'before')}° → ${mean('scapulaInternalRotation', 'after')}°、上回旋 ${mean('scapulaUpwardRotation', 'before')}° → ${mean('scapulaUpwardRotation', 'after')}°）。肩关节因此下降约 ${down} mm、前移约 ${fwd} mm，两侧肱骨头中心的间距由 ${Math.round(sg.glenohumeralSeparationMm.before)} mm 增至 ${Math.round(sg.glenohumeralSeparationMm.after)} mm。没有缩放任何骨，每侧上肢作为一个整体平移。`,
     })
     out.push({
-      en: `To follow the new shoulder posture, ${sg.provenance.relabelledToWarped} scanned parts that cross the region were deformed and are marked as warped: ${t.muscle ?? 0} muscles (deltoid, pectoralis major and minor, trapezius, serratus anterior, rhomboids, levator scapulae, latissimus dorsi, the rotator cuff, the origins of biceps and triceps), ${(t.artery ?? 0) + (t.vein ?? 0)} arteries and veins of the root of the neck, the axilla and the shoulder, and the skin. Nerves, ligaments, fasciae and lymph nodes of the region were carried along with the tissue around them. The scapula is still less internally rotated than average (about ${mean('scapulaInternalRotation', 'after')}° against 41°): that is as far as it turns while staying on this rib cage.`,
-      zh: `为跟随肩带的新姿势，跨越该区域的 ${sg.provenance.relabelledToWarped} 个扫描部件发生了形变，并标为“形变”：${t.muscle ?? 0} 块肌（三角肌、胸大肌和胸小肌、斜方肌、前锯肌、菱形肌、肩胛提肌、背阔肌、肩袖各肌、肱二头肌和肱三头肌的起始部）、${(t.artery ?? 0) + (t.vein ?? 0)} 条颈根部、腋窝和肩部的动脉和静脉，以及皮肤。该区域的神经、韧带、筋膜和淋巴结随周围组织一同移动。肩胛骨的内旋仍小于平均值（约 ${mean('scapulaInternalRotation', 'after')}° 对 41°）：在不离开本模型胸廓的前提下只能转到这里。`,
+      en: `To follow the new shoulder posture, ${sg.provenance.relabelledToWarped} scanned parts that cross the region were deformed and are marked as warped: ${t.muscle ?? 0} muscles (deltoid, pectoralis major and minor, trapezius, serratus anterior, rhomboids, levator scapulae, latissimus dorsi, the rotator cuff, the origins of biceps and triceps), ${(t.artery ?? 0) + (t.vein ?? 0)} arteries and veins of the root of the neck, the axilla and the shoulder${t.skin ? ', and the skin' : ''}. Nerves, ligaments, fasciae and lymph nodes of the region were carried along with the tissue around them. The scapula is still less internally rotated than average (about ${mean('scapulaInternalRotation', 'after')}° against 41°): that is as far as it turns while staying on this rib cage.`,
+      zh: `为跟随肩带的新姿势，跨越该区域的 ${sg.provenance.relabelledToWarped} 个扫描部件发生了形变，并标为“形变”：${t.muscle ?? 0} 块肌（三角肌、胸大肌和胸小肌、斜方肌、前锯肌、菱形肌、肩胛提肌、背阔肌、肩袖各肌、肱二头肌和肱三头肌的起始部）、${(t.artery ?? 0) + (t.vein ?? 0)} 条颈根部、腋窝和肩部的动脉和静脉${t.skin ? '，以及皮肤' : ''}。该区域的神经、韧带、筋膜和淋巴结随周围组织一同移动。肩胛骨的内旋仍小于平均值（约 ${mean('scapulaInternalRotation', 'after')}° 对 41°）：在不离开本模型胸廓的前提下只能转到这里。`,
+    })
+  }
+  const sk = report.skinPackage as { installed?: boolean; fit?: { outside: number } } | undefined
+  if (sk?.installed) {
+    const pct = ((sk.fit?.outside ?? 0) * 100).toFixed(1)
+    out.push({
+      en: `The skin is not this man's skin. The skin that came with BodyParts3D (a thick shell that joined the upper arms to the chest) was replaced by a parametric body surface (Momentum Human Rig, MHR) fitted to the bones and muscles of this model and then pushed outwards locally until it encloses them (${pct}% of the deep parts' surface still lies outside it, at the fingers). It is a smooth generic surface: the external genital region is a faceted mound, not penile and scrotal skin; the toes are one block; the skin round the fingertips is pushed out; the eye region has artefacts; there are no nipples, navel or skin creases.`,
+      zh: `皮肤不是此人的皮肤。BodyParts3D 自带的皮肤（一层厚壳，上臂与胸壁连在一起）已换成参数化人体表面（Momentum Human Rig，MHR）：先按本模型的骨骼和肌肉拟合，再局部外推到把它们包住（深部结构的表面仍有 ${pct}% 露在皮肤外，位于手指）。它是光滑的通用体表：外生殖器区只是一个带棱面的隆起，没有阴茎和阴囊的皮肤；足趾连成一块；指尖周围的皮肤被向外推出；眼部有瑕疵；没有乳头、脐和皮纹。`,
     })
   }
   const z = report.zAnatomy as { available: boolean; nerves?: { pointsMoved: number; inBoneAfter: number; deepInMuscleAfter: number } } | undefined
@@ -1587,8 +1619,8 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
     zh: '脊髓是示意性的管状模型，与硬脊膜一同止于 L2/L3（真实硬膜囊可达 S2）；除大脑镰和小脑幕外没有颅内脑膜。腮腺体积约为真实大小的四分之一（5.6 cm³）。关节囊、半月板和交叉韧带是逐个关节贴合到本模型骨骼上的，常与周围肌肉重叠。',
   })
   out.push({
-    en: 'Missing structures: phrenic nerve, cervical plexus branches, great auricular and occipital nerves, splanchnic nerves; parietal pleura and parietal peritoneum; ligamenta flava; lymphatic vessels and thoracic duct; cecum, sigmoid colon and anal canal as separate parts; inferior parathyroids; middle and inner ear; subcutaneous fat. The liver exists only as its eight segments, the heart only as chamber walls and valves.',
-    zh: '缺失的结构：膈神经、颈丛分支、耳大神经和枕神经、内脏神经；壁胸膜和壁腹膜；黄韧带；淋巴管和胸导管；盲肠、乙状结肠和肛管未单独成件；下甲状旁腺；中耳和内耳；皮下脂肪。肝脏只以肝段形式存在，心脏只有心腔壁和瓣膜。',
+    en: 'Missing structures: phrenic nerve, cervical plexus branches, great auricular and occipital nerves, splanchnic nerves; parietal pleura and parietal peritoneum; ligamenta flava; lymphatic vessels and thoracic duct; cecum, sigmoid colon and anal canal as separate parts; inferior parathyroids; middle and inner ear. The liver exists only as its eight segments, the heart only as chamber walls and valves.',
+    zh: '缺失的结构：膈神经、颈丛分支、耳大神经和枕神经、内脏神经；壁胸膜和壁腹膜；黄韧带；淋巴管和胸导管；盲肠、乙状结肠和肛管未单独成件；下甲状旁腺；中耳和内耳。肝脏只以肝段形式存在，心脏只有心腔壁和瓣膜。',
   })
   out.push({
     en: 'Left/right labels of five structures were wrong in the source and corrected here from their position: flexor pollicis brevis, brachium of superior colliculus, middle pharyngeal constrictor, ascending lumbar vein (labels swapped) and one fibular vein. For heart, liver and coronary structures "left/right" in a name refers to the organ, not the side of the body.',
