@@ -703,11 +703,41 @@
      "curve": [
       {
        "at": {
+        "offset": [
+         "frontal",
+         [
+          0.03,
+          0,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.03,
+          -0.03,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
         "part": "Tarsal plate of {side} upper eyelid"
        },
        "to": "nearestAny"
       }
-     ]
+     ],
+     "note": {
+      "zh": "自额部经眉弓至上睑，连成一线：上睑的种子点在眼裂粗糙的皮肤上可能被 V2 围住而与额部断开。",
+      "en": "From the forehead over the brow to the upper eyelid, as one line: on a skin with rough eyelids the eyelid seed alone can be surrounded by V2 and cut off from the forehead."
+     }
     },
     {
      "curve": [

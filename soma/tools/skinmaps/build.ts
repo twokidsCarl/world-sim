@@ -64,6 +64,14 @@ export interface SeedDef {
    */
   clip?: { dir: Dir; beyond?: PointExpr; before?: PointExpr }
   /**
+   * 神经在两段够浅的走行之间一度变深（建模、配准的深度误差）时，仍沿其走行连成一条种子线，
+   * 免得分布区断成两块。只用于穿出深筋膜后一直走在皮下的皮神经（如腓肠神经）。
+   * Where the nerve dips deeper between two shallow enough stretches (depth error of modelling and
+   * registration), seed along its course all the same, so that the territory is not cut in two.
+   * Only for cutaneous nerves that stay subcutaneous once through the deep fascia (e.g. the sural nerve).
+   */
+  bridge?: boolean
+  /**
    * 距种子测地距离在此值以内的皮肤，起始距离均为 0（有宽度的种子）。
    * All skin within this geodesic distance of the seed starts at distance 0 (a seed with width).
    */
@@ -351,7 +359,13 @@ export class Builder {
         }
         let used = 0
         for (const b of br) {
-          const raw = this.projectNerve(b, 'beneath', side, depth, def.where, def.facing)
+          let raw = this.projectNerve(b, 'beneath', side, depth, def.where, def.facing)
+          if (def.bridge && raw.verts.length) {
+            // 取这条分支上第一个到最后一个够浅的点之间的整段（深度放宽到 6 cm）。
+            // The whole stretch of this branch from its first to its last shallow enough point (depth relaxed to 6 cm).
+            const shallow = b.map((q) => { const v = this.lm.nearestVertex(q, true, depth); return v >= 0 })
+            raw = this.projectNerve(b.slice(shallow.indexOf(true), shallow.lastIndexOf(true) + 1), 'beneath', side, 0.06, def.where, def.facing)
+          }
           used += raw.verts.length
           const line: Line = { verts: [], pts: [], gap: [] }
           for (let i = 0; i < raw.verts.length; i++) {
