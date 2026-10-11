@@ -25,6 +25,10 @@ def _head_text() -> str:
 @pytest.fixture(scope="module")
 def imported() -> tuple[State, str]:
     text = _head_text()
+    # 这些测试顺着 IDEAS.md 的提交历史还原每条 idea 的来历；浅克隆里没有历史，测不了。
+    # These tests rebuild each idea's history from the commits of IDEAS.md; a shallow clone has no history to rebuild from.
+    if subprocess.run(["git", "-C", str(REPO), "rev-parse", "--is-shallow-repository"], capture_output=True, text=True).stdout.strip() == "true":
+        pytest.skip("这是一个浅克隆，没有完整的 git 历史")
     snapshots = importer.history(REPO)
     events = importer.events_from(snapshots)
     folded, _ = ideas.fold(events)
