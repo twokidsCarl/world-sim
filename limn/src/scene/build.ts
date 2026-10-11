@@ -13,6 +13,13 @@ const RESIDUE_OFFSET = 100_000
  * no step in depth between them, and this line is all that separates them.
  */
 const MESH_PART_SIZE = 1e9
+/**
+ * 拷贝总数不超过这个数的模型（一个病毒颗粒），膜才衬在后面；整个突触、整个细胞里有几百个小泡，
+ * 都留在后面的话画面上到处是碎片。
+ * Only in a model with no more copies than this (a single virion) does the membrane line the back;
+ * a whole synapse or cell has hundreds of vesicles, and keeping them all behind litters the picture.
+ */
+const LINING_MAX = 20_000
 /** 球数超过这个数的单份脂质当作一整张膜 / lipids in a single copy with more spheres than this count as a membrane in one piece */
 const SHEET_MIN = 20_000
 
@@ -177,7 +184,9 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           data[k + 13] = centre[1]
           data[k + 14] = centre[2]
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
-          data[k + 15] = p.keepBack ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
+          // 膜总是衬在后面：切片的背面不切它，里面的空处露出的是膜的内壁（按深度取深一号的色调），不是白纸
+          // a membrane always lines the back: it is not cut at the back of a slab, so empty space inside shows its inner wall (in the deeper tone of its depth) and not paper
+          data[k + 15] = p.keepBack || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : p.molecule + 1 + (g.merged ? groupCopy : copy)

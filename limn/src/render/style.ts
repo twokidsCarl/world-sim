@@ -142,7 +142,9 @@ export const STYLE_MESOSCALE: Style = {
   lineWidth: 1.35,
   // 平涂：不要原子之间的阴影，明暗只来自景深的三档 / flat washes: no shadows between atoms, tone comes from the three depth steps alone
   shadow: { strength: 0, cone: 2, floor: 1, radius: 0 },
-  fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0, layers: 3, shade: 0.5 },
+  // 最远一层压到本色的 0.64：量他的流感病毒，血凝素前后三层的明度是 0.76、0.60、0.45，也就是后层约为前层的 0.6–0.8
+  // the farthest layer is taken down to 0.64 of the fill: on his influenza virion three layers of hemagglutinin measure 0.76, 0.60, 0.45 in lightness, the back ones 0.6–0.8 of the front
+  fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0, layers: 3, shade: 0.64 },
   grain: 0.07,
   // 形状靠平滑来变光滑，球就按真实大小画 / shapes are made smooth by the smoothing pass, so spheres are drawn at their true size
   smooth: 5,

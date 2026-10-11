@@ -99,7 +99,7 @@ void main() {
   }
   // 切片：整个分子按它的中心留或丢，所以切片里的分子都是完整的；永不切的东西（标志 3）除外
   // a slab: a molecule is kept or dropped whole by its centre, so every molecule in the slab is complete; except what is never cut (flag 3)
-  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5) && mc.w < 5.5)) {
+  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5) && mc.w < 4.5)) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
