@@ -91,7 +91,7 @@ describe('resolveTopic', () => {
   it('offers an AlphaFold model only when experiments cover the protein poorly, and labels it', async () => {
     const af = {
       findProtein: async () => [{ accession: 'P12345', name: 'Mystery protein', gene: 'MYST', organism: 'Homo sapiens', length: 400 }],
-      alphafold: async () => ({ accession: 'P12345', url: 'https://example.org/AF-P12345.bcif', confident: 0.8 }),
+      alphafold: async () => ({ accession: 'P12345', url: 'https://example.org/AF-P12345.bcif', confident: 0.8, source: 'AlphaFold DB' as const }),
     }
     const withGene = (deps: Deps): Deps => ({
       ...deps,
@@ -105,7 +105,7 @@ describe('resolveTopic', () => {
     const poor = fakeDeps(predicted, { ...af, bestStructures: async () => [{ pdbId: '1AAA', chain: 'A', coverage: 0.2, resolution: 2, method: 'X-ray' }] })
     const spec = await resolveTopic('test', withGene(poor.deps))
     expect(spec.panels[0]!.source.kind).toBe('alphafold')
-    expect(spec.notes.join(' ')).toContain('预测')
+    expect(spec.notes).toContainEqual({ key: 'note.alphafoldPanel', params: { id: 'AF-P12345' } })
 
     const good = fakeDeps(goodChoice, { ...af, bestStructures: async () => [{ pdbId: '1AAA', chain: 'A', coverage: 0.95, resolution: 2, method: 'X-ray' }] })
     await resolveTopic('test', withGene(good.deps))

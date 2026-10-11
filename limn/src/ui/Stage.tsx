@@ -8,6 +8,7 @@ import { MEMBRANE_LCH, useStore, type Look } from '../state/store'
 import { atomColors, type Coloring } from '../style/assign'
 import { TONE_LANDSCAPE, TONE_MOLECULE } from '../style/palettes'
 import { scaleBar, type ScaleBar } from '../render/scalebar'
+import { pick, t } from '../i18n'
 
 /** 双层膜是一片淡黄绿色，如同 Goodsell 画的膜 / The bilayer is one pale yellow-green wash, as in Goodsell's membranes. */
 const LIPID_COLORING: Coloring = { roles: ['membrane'], hueShift: [0], nudge: [0], override: [MEMBRANE_LCH] }
@@ -102,7 +103,7 @@ export function panelLabels(view: View, w: number, h: number): { x: number; y: n
   return stage.slots.map((sl, i) => ({
     x: w / 2 + (sl.x - vcx) * pxPerA,
     y: h / 2 - (sl.y - sl.halfH - vcy) * pxPerA,
-    text: s.panels[i]?.spec.label ?? '',
+    text: pick(s.panels[i]?.spec.label, s.panels[i]?.spec.labelEn),
   }))
 }
 
@@ -123,6 +124,8 @@ export function Stage() {
   const busy = useStore((s) => s.busy)
   const error = useStore((s) => s.error)
   const drawRev = useStore((s) => s.drawRev)
+  // 订阅语言，换语言时重新渲染（下面的提示语）/ subscribe to the language so that a change re-renders (the prompt below)
+  useStore((s) => s.lang)
   const pending = useRef(0)
   const settle = useRef(0)
 
@@ -153,7 +156,7 @@ export function Stage() {
         // 读一个像素是等待 GPU 的唯一可靠办法
         // reading a pixel is the only reliable way to wait for the GPU
         r.gl.readPixels(0, 0, 1, 1, r.gl.RGBA, r.gl.UNSIGNED_BYTE, new Uint8Array(4))
-        setInfo(`${s.panels.map((p) => p.mol.id).join(' · ')} · ${r.lastAtoms.toLocaleString()} 个${s.spec?.kind === 'neuron' ? '球' : '原子'} · ${Math.round(performance.now() - t0)} ms`)
+        setInfo(t(s.spec?.kind === 'neuron' ? 'stage.spheres' : 'stage.atoms', { ids: s.panels.map((p) => p.mol.id).join(' · '), n: r.lastAtoms.toLocaleString(), ms: Math.round(performance.now() - t0) }))
       }
     })
     clearTimeout(settle.current)
@@ -269,7 +272,7 @@ export function Stage() {
   }, [])
 
   // 嵌入模式没有输入框，所以不显示“输入…开始”的提示 / embed mode has no input box, so the prompt to type something is not shown
-  const status = fatal || busy || error || info || (new URLSearchParams(location.search).get('embed') === '1' ? '' : '输入一个主题或 PDB 编号开始')
+  const status = fatal || busy || error || info || (new URLSearchParams(location.search).get('embed') === '1' ? '' : t('stage.empty'))
   return (
     <div className="stage">
       <canvas ref={canvasRef} />

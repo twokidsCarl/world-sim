@@ -52,17 +52,17 @@ export function parseOutput(stdout: string, schema: Record<string, unknown>): Re
   try {
     data = JSON.parse(stdout)
   } catch {
-    throw new LLMError(`claude 的输出不是 JSON: ${stdout.slice(0, 200)}`)
+    throw new LLMError(`claude 的输出不是 JSON / claude did not return JSON: ${stdout.slice(0, 200)}`)
   }
   // Some versions print the event list; the answer is the last "result" event.
   if (Array.isArray(data)) data = data.filter((x: any) => x && x.type === 'result').pop()
-  if (!data || typeof data !== 'object') throw new LLMError('claude 的输出里没有结果')
-  if (data.is_error) throw new LLMError(`claude 报错: ${String(data.result ?? data.subtype).slice(0, 300)}`)
+  if (!data || typeof data !== 'object') throw new LLMError('claude 的输出里没有结果 / claude returned no result')
+  if (data.is_error) throw new LLMError(`claude 报错 / claude reported an error: ${String(data.result ?? data.subtype).slice(0, 300)}`)
   let out = data.structured_output
   if (!out || typeof out !== 'object') out = extractJson(typeof data.result === 'string' ? data.result : '')
-  if (!out || typeof out !== 'object' || Array.isArray(out)) throw new LLMError('claude 没有按要求的结构回答')
+  if (!out || typeof out !== 'object' || Array.isArray(out)) throw new LLMError('claude 没有按要求的结构回答 / claude did not answer in the required structure')
   const missing = ((schema.required as string[] | undefined) ?? []).filter((k) => !(k in out))
-  if (missing.length) throw new LLMError(`回答缺少字段: ${missing.join(', ')}`)
+  if (missing.length) throw new LLMError(`回答缺少字段 / the answer lacks fields: ${missing.join(', ')}`)
   return out
 }
 
@@ -131,7 +131,7 @@ async function run(argv: string[], prompt: string, cwd: string, timeoutMs: numbe
   try {
     proc = Bun.spawn(argv, { cwd, stdin: 'pipe', stdout: 'pipe', stderr: 'pipe' })
   } catch (e) {
-    throw new LLMError(`无法启动 claude: ${e instanceof Error ? e.message : e}`)
+    throw new LLMError(`无法启动 claude / could not start claude: ${e instanceof Error ? e.message : e}`)
   }
   proc.stdin.write(prompt)
   proc.stdin.end()
@@ -142,7 +142,7 @@ async function run(argv: string[], prompt: string, cwd: string, timeoutMs: numbe
   }, timeoutMs)
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited])
   clearTimeout(timer)
-  if (timedOut) throw new LLMError(`claude 超过 ${Math.round(timeoutMs / 1000)} 秒没有回答`)
-  if (code !== 0 && !stdout.trim()) throw new LLMError(`claude 退出码 ${code}: ${stderr.slice(0, 300)}`)
+  if (timedOut) throw new LLMError(`claude 超过 ${Math.round(timeoutMs / 1000)} 秒没有回答 / claude did not answer within ${Math.round(timeoutMs / 1000)} seconds`)
+  if (code !== 0 && !stdout.trim()) throw new LLMError(`claude 退出码 ${code} / claude exited with code ${code}: ${stderr.slice(0, 300)}`)
   return stdout
 }

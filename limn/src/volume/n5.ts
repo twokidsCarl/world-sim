@@ -1,4 +1,6 @@
 import type { Volume } from './mrc'
+// 这个文件里 `t` 另有所指，所以换个名字 / `t` means something else in this file, hence the other name
+import { t as tr } from '../i18n'
 
 /**
  * N5：分块存放的大体数据（OpenOrganelle 用它放整个细胞的电镜数据和细胞器的分割结果）。
@@ -32,16 +34,16 @@ const BYTES: Record<string, number> = { uint8: 1, int8: 1, uint16: 2, int16: 2, 
 export async function readBlock(file: ArrayBuffer, attrs: N5Attributes): Promise<{ size: number[]; nonzero: Uint8Array }> {
   const v = new DataView(file)
   const mode = v.getUint16(0, false), ndim = v.getUint16(2, false)
-  if (mode > 1 || ndim !== attrs.dimensions.length) throw new Error('N5 分块的文件头无法识别')
+  if (mode > 1 || ndim !== attrs.dimensions.length) throw new Error(tr('error.n5.header'))
   const size = Array.from({ length: ndim }, (_, i) => v.getUint32(4 + i * 4, false))
   const start = 4 + ndim * 4 + (mode === 1 ? 4 : 0)
   let payload = new Uint8Array(file, start)
   if (attrs.compression.type === 'gzip') payload = new Uint8Array(await new Response(new Blob([payload]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer())
-  else if (attrs.compression.type !== 'raw') throw new Error(`不支持的 N5 压缩方式：${attrs.compression.type}`)
+  else if (attrs.compression.type !== 'raw') throw new Error(tr('error.n5.compression', { type: attrs.compression.type }))
   const w = BYTES[attrs.dataType]
-  if (!w) throw new Error(`不支持的 N5 数据类型：${attrs.dataType}`)
+  if (!w) throw new Error(tr('error.n5.dataType', { type: attrs.dataType }))
   const count = size.reduce((a, b) => a * b, 1)
-  if (payload.length < count * w) throw new Error('N5 分块的数据不完整')
+  if (payload.length < count * w) throw new Error(tr('error.n5.truncated'))
   const nonzero = new Uint8Array(count)
   // 只关心是不是 0，所以字节序无所谓：任一字节非 0 即可 / only zero or not matters, so byte order does not: any non-zero byte will do
   for (let i = 0; i < count; i++) {
@@ -60,12 +62,12 @@ export async function readBlock(file: ArrayBuffer, attrs: N5Attributes): Promise
  */
 export async function readN5Mask(base: string, onProgress?: (done: number, total: number) => void, fetcher: typeof fetch = fetch): Promise<Volume & { attributes: N5Attributes }> {
   const res = await fetcher(`${base}/attributes.json`)
-  if (!res.ok) throw new Error(`没有找到数据集 ${base}（HTTP ${res.status}）`)
+  if (!res.ok) throw new Error(tr('error.n5.missing', { base, status: res.status }))
   const attrs = (await res.json()) as N5Attributes
-  if (attrs.dimensions.length !== 3) throw new Error('只支持三维的 N5 数据集')
+  if (attrs.dimensions.length !== 3) throw new Error(tr('error.n5.dims'))
   const [nx, ny, nz] = attrs.dimensions as [number, number, number]
   const [bx, by, bz] = attrs.blockSize as [number, number, number]
-  if (nx * ny * nz > 400_000_000) throw new Error('这个尺度的数据太大，换一个更粗的尺度')
+  if (nx * ny * nz > 400_000_000) throw new Error(tr('error.n5.tooBig'))
   const data = new Uint8Array(nx * ny * nz)
   const blocks: [number, number, number][] = []
   for (let iz = 0; iz * bz < nz; iz++) for (let iy = 0; iy * by < ny; iy++) for (let ix = 0; ix * bx < nx; ix++) blocks.push([ix, iy, iz])

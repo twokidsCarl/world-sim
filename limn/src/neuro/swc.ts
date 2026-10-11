@@ -1,4 +1,5 @@
 import { El, IDENTITY, type Chain, type Entity, type Molecule } from '../mol/types'
+import { t } from '../i18n'
 
 /**
  * SWC：神经元形态重建的通用格式。每行一个节点：编号、类型、x、y、z、半径、父节点编号；坐标单位是微米。
@@ -103,7 +104,7 @@ export function neuronMolecule(nodes: SwcNode[], id: string, title: string, maxS
     chains.push({ asymId: k.nameEn, authAsymId: k.nameEn, entity: entities.length - 1, start, count: pos.length / 3 - start, model: 1 })
   }
   const n = pos.length / 3
-  if (n === 0) throw new Error(`${id} 里没有读到节点`)
+  if (n === 0) throw new Error(t('error.swc.empty', { id }))
   const chainOf = new Uint32Array(n)
   chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
   return {

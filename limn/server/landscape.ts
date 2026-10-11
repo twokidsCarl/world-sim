@@ -9,7 +9,7 @@
  * Abundances come from PaxDb's measurements where it has them and from the
  * model's estimate otherwise, and each is reported as what it is.
  */
-import type { Ingredient, LandscapeSpec, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
+import type { Ingredient, LandscapeSpec, Note, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
 import { ROLES, type Role } from '../src/style/palettes'
 import type { Deps } from './resolve'
 import membraneData from '../data/membranes.json'
@@ -110,6 +110,9 @@ Write the recipe:
 - Colour roles: focus (pink-magenta) for the subject; soluble (blue) for ordinary soluble proteins; membrane (green) for membrane proteins; nucleic-binding (orange) for ribosomes, polymerases and other nucleic-acid machines; extracellular (tan) for molecules outside the cell. Use the roles to separate inside from outside and the subject from its surroundings.
 - In the notes, say what a reader should not over-interpret: positions and orientations are random, abundances are estimates.`
 
+/** 一串名字作为说明的参数：中文用顿号连，英文（`<name>En`）用逗号连 / a run of names as a note's parameters: joined the Chinese way, and the English way under `<name>En` */
+const names = (name: string, list: string[]): Record<string, string> => ({ [name]: list.join('、'), [name + 'En']: list.join(', ') })
+
 const fmt = (v: number) => (v >= 10 ? Math.round(v).toString() : v >= 1 ? v.toFixed(1) : v.toPrecision(2))
 
 interface Pick {
@@ -120,7 +123,7 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   log('拟定场景配方')
   const recipe = await deps.ask<Recipe>({ system: RECIPE_SYSTEM, prompt: `Topic: ${topic}`, schema: RECIPE_SCHEMA })
   const ingredients = (recipe.ingredients ?? []).slice(0, 12)
-  if (ingredients.length === 0) throw new Error('没能为这个主题拟出场景配方')
+  if (ingredients.length === 0) throw new Error('没能为这个主题拟出场景配方 / Could not draw up a recipe for this topic')
 
   log(`为 ${ingredients.length} 种成分检索结构`)
   const perIngredient: Set<string>[] = ingredients.map(() => new Set())
@@ -143,7 +146,7 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
 
   log('为每种成分选定结构')
   const usable = ingredients.map((_, k) => k).filter((k) => candidates[k]!.length > 0)
-  if (usable.length === 0) throw new Error('没有为任何成分找到结构')
+  if (usable.length === 0) throw new Error('没有为任何成分找到结构 / No structure was found for any ingredient')
   const brief = (e: EntryInfo) =>
     `  ${e.id}: ${e.title.slice(0, 110)} | ${e.method}${e.resolution ? `, ${e.resolution.toFixed(1)} Å` : ''} | assemblies ${e.assemblies.map((a) => `${a.id}[${a.chains} chains, ${a.atoms} atoms]`).join(' ')} | ${e.entities.filter((x) => x.kind !== 'ligand').map((x) => `${x.description.slice(0, 40)}${x.organism ? ` (${x.organism})` : ''}`).join('; ')}`
   const prompt = [
@@ -182,6 +185,8 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   interface Chosen { k: number; id: string; assembly: string; mass: number; expected: number; inMembrane: boolean; compartment: Ingredient['compartment'] }
   const chosen: Chosen[] = []
   const skipped: string[] = []
+  /** 按所给丰度不到一个拷贝的成分 / ingredients whose stated abundance gives less than one copy */
+  const tooFew: string[] = []
   ingredients.forEach((ing, k) => {
     const p = (pick.picks ?? []).find((x) => x.ingredient === k)
     const id = p ? String(p.source_id).toUpperCase() : ''
@@ -237,7 +242,7 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
     const f = c.inMembrane || ing.feature ? 1 : (scale.get(c.compartment) ?? 1)
     const copies = Math.min(600, Math.max(ing.feature ? 1 : 0, Math.round(c.expected * f)))
     if (copies === 0) {
-      skipped.push(`${ing.name}（按所给丰度，这么小的体积里不到一个）`)
+      tooFew.push(ing.name)
       continue
     }
     const role: Role = (ROLES as string[]).includes(ing.role) ? (ing.role as Role) : 'soluble'
@@ -257,11 +262,13 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
       panel: panels.length - 1,
       compartment: c.compartment,
       copies,
+      // 只给数值，文字由网页端按界面语言写（src/i18n.ts 的 abundance.*）
+      // figures only; the web app words them in the interface language (abundance.* in src/i18n.ts)
       abundance: c.inMembrane
-        ? `约 ${ing.per_square_micron} 个/μm²`
+        ? { key: 'abundance.perArea', params: { n: ing.per_square_micron } }
         : measured.has(c.k)
-          ? `PaxDb：${measured.get(c.k)!.genes.join('、')} ${Math.round(measured.get(c.k)!.ppm).toLocaleString('en')} ppm，约 ${fmt(measured.get(c.k)!.uM)} μM`
-          : `约 ${ing.concentration_uM} μM`,
+          ? { key: 'abundance.paxdb', params: { ...names('genes', measured.get(c.k)!.genes), ppm: Math.round(measured.get(c.k)!.ppm).toLocaleString('en'), uM: fmt(measured.get(c.k)!.uM) } }
+          : { key: 'abundance.concentration', params: { uM: ing.concentration_uM } },
       tier: !c.inMembrane && measured.has(c.k) ? 'curated' : 'estimated',
       feature: !!ing.feature,
       ...(c.inMembrane
@@ -272,28 +279,44 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
         : {}),
     })
   }
-  if (panels.length === 0) throw new Error('配方里的成分都没有找到可用的结构')
+  if (panels.length === 0) throw new Error('配方里的成分都没有找到可用的结构 / None of the ingredients in the recipe has a usable structure')
 
   const outer = recipe.membrane_outer_side === 'below' ? ('below' as const) : ('above' as const)
   // DNA 的总长度：密度（百万碱基对/立方微米）x 体积 x 每对 3.4 Å，封顶在十倍画面宽度
   // total DNA length: density (million base pairs per cubic micron) x volume x 3.4 Å per pair, capped at ten frame widths
   const mbp = Math.max(0, Math.min(60, Number(recipe.dna_megabases_per_cubic_micron) || 0))
   const dnaLength = Math.min(BOX.width * 10, mbp * 1e6 * 3.4 * volume * 1e-12)
-  const dna = dnaLength >= 300 ? { length: Math.round(dnaLength), basis: `约 ${mbp} 百万碱基对/μm³（估计）` } : undefined
+  const dna = dnaLength >= 300 ? { length: Math.round(dnaLength), basis: `${mbp} Mbp/μm³` } : undefined
   const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, ...(recipe.membrane ? { outer, ...(membraneData.membranes.some((m) => m.id === recipe.membrane_type) ? { membraneType: recipe.membrane_type } : {}) } : {}), ...(dna ? { dna } : {}), above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
-  const notes = [
-    '分子是真实结构，按比例绘制；它们的位置和朝向是程序随机排布的，不是观测结果。',
+  // 代码写的说明只给字典键和参数，文字在 src/i18n.ts，由网页端按界面语言写出；模型写的说明是原样的字符串
+  // code-written notes carry a dictionary key and parameters only; the text is in src/i18n.ts and the web app words it in the interface language. Model-written notes stay plain strings
+  const rest = chosen.length - measured.size
+  const densityAbove = recipe.membrane && recipe.density_above_g_per_L > 0 ? recipe.density_above_g_per_L : 0
+  const densityBelow = recipe.density_below_g_per_L > 0 ? recipe.density_below_g_per_L : 0
+  const scaled: Note =
+    densityAbove && densityBelow
+      ? { key: 'note.land.scaled.both', params: { above: densityAbove, below: densityBelow } }
+      : densityAbove
+        ? { key: 'note.land.scaled.above', params: { above: densityAbove } }
+        : densityBelow
+          ? recipe.membrane
+            ? { key: 'note.land.scaled.below', params: { below: densityBelow } }
+            : { key: 'note.land.scaled.whole', params: { below: densityBelow } }
+          : { key: 'note.land.scaled.none' }
+  const notes: Note[] = [
+    { key: 'note.land.random' },
     pax && measured.size
-      ? `${measured.size} 种成分的丰度取自 PaxDb 的整合质谱数据（${pax.name}），其余${chosen.length - measured.size > 0 ? ` ${chosen.length - measured.size} 种` : ''}是模型的估计值；每种成分各自标明。`
-      : '各成分之间的比例来自模型给出的丰度估计值，不是测量值。',
-    `真实的细胞里有上千种分子，这里只列出十来种作为代表：除标为主角的成分外，数量已按比例放大，使画出的总质量与该区室的大分子总浓度（${[recipe.membrane && recipe.density_above_g_per_L > 0 ? `膜上方约 ${recipe.density_above_g_per_L} g/L` : '', recipe.density_below_g_per_L > 0 ? `${recipe.membrane ? '膜下方' : ''}约 ${recipe.density_below_g_per_L} g/L` : ''].filter(Boolean).join('，')}）相符。`,
-    ...(recipe.membrane ? ['膜蛋白按分子长轴竖立在膜上或膜中；只解析了膜外段的结构立在膜面上，连膜的一端由链的末端位置判断。这是近似摆放，未使用实验确定的取向和插入深度，膜外段与膜之间缺失的柄部和跨膜段没有画。脂质用同一种磷脂（POPC）的理想构象铺成。'] : []),
-    dna
-      ? `DNA 是程序生成的双螺旋：碱基对的形状量自晶体结构 1BNA，走向是随机弯曲的曲线，序列随机，总长度按 ${dna.basis} 换算（这一片里约 ${Math.round(dna.length / 3.4)} 个碱基对）。真实细胞里 DNA 上结合的蛋白和它的超螺旋没有画。`
-      : '',
-    dna ? '未画出水、离子、小分子，以及 RNA 长链和细胞骨架纤维。' : '未画出水、离子、小分子，以及核酸长链和纤维。',
-    ...(skipped.length ? [`未能画出：${skipped.join('、')}。`] : []),
+      ? rest > 0
+        ? { key: 'note.land.paxdb', params: { measured: measured.size, dataset: pax.name, rest } }
+        : { key: 'note.land.paxdbAll', params: { measured: measured.size, dataset: pax.name } }
+      : { key: 'note.land.estimated' },
+    scaled,
+    ...(recipe.membrane ? [{ key: 'note.land.membranePlacement' }] : []),
+    ...(dna ? [{ key: 'note.land.dna', params: { mbp, pairs: Math.round(dna.length / 3.4) } }] : []),
+    { key: dna ? 'note.land.omittedWithDna' : 'note.land.omitted' },
+    ...(skipped.length ? [{ key: 'note.land.notDrawn', params: names('names', skipped) }] : []),
+    ...(tooFew.length ? [{ key: 'note.land.tooFew', params: names('names', tooFew) }] : []),
     ...(recipe.notes ?? []).filter((n) => typeof n === 'string' && n.trim()),
-  ].filter(Boolean)
+  ]
   return { topic, kind: 'landscape', title: recipe.title?.trim() || topic, caption: recipe.caption?.trim() ?? '', panels, notes, landscape }
 }

@@ -4,7 +4,8 @@ import membraneTable from '../data/membranes.json'
 import { parseLipid, parseSdf } from '../src/landscape/lipid'
 import { rng } from '../src/landscape/pack'
 import { IDENTITY, type Molecule } from '../src/mol/types'
-import type { LandscapeSpec } from '../src/scene/spec'
+import type { LandscapeSpec, Note } from '../src/scene/spec'
+import { noteKey } from '../src/i18n'
 import { BOX, resolveLandscape } from '../server/landscape'
 import type { Deps } from '../server/resolve'
 import { parseOpm } from '../server/sources/opm'
@@ -36,6 +37,8 @@ const ing = (name: string, query: string, uM: number, over: any = {}) => ({
 const recipe = (ingredients: any[], over: any = {}) => ({
   title: 't', caption: 'c', membrane: false, above: '', below: 'cytoplasm', density_above_g_per_L: 0, density_below_g_per_L: 300, notes: [], ingredients, ...over,
 })
+/** 代码写的说明的键；模型写的是空串 / the keys of code-written notes; a model-written note gives an empty string */
+const keys = (notes: Note[]) => notes.map(noteKey)
 const pick = (...ids: string[]) => ({ picks: ids.map((id, i) => ({ ingredient: i, source_id: id, assembly_id: '1' })) })
 
 describe('resolveLandscape', () => {
@@ -54,8 +57,8 @@ describe('resolveLandscape', () => {
   it('shows a featured molecule once without scaling it, and says the numbers are estimates', async () => {
     const spec = await resolveLandscape('x', deps(recipe([ing('rare', 'big', 0.01, { feature: true, role: 'focus' }), ing('a', 'small', 100)]), pick('3CCC', '1AAA')))
     expect(spec.landscape!.ingredients[0]).toMatchObject({ copies: 1, feature: true })
-    expect(spec.notes.join(' ')).toMatch(/估计/)
-    expect(spec.notes.join(' ')).toMatch(/随机排布/)
+    expect(keys(spec.notes)).toContain('note.land.estimated')
+    expect(keys(spec.notes)).toContain('note.land.random')
   })
 
   it('only accepts a structure found for that very ingredient', async () => {
@@ -63,7 +66,7 @@ describe('resolveLandscape', () => {
     // the model assigns ingredient 0 a structure that was found for ingredient 1
     const spec = await resolveLandscape('x', deps(recipe([ing('a', 'small', 100), ing('b', 'medium', 50)]), pick('2BBB', '2BBB')))
     expect(spec.panels.map((p) => p.source.id)).toEqual(['2BBB'])
-    expect(spec.notes.join(' ')).toContain('未能画出：a')
+    expect(spec.notes).toContainEqual({ key: 'note.land.notDrawn', params: { names: 'a', namesEn: 'a' } })
   })
 
   it('uses area, not volume, for membrane proteins', async () => {
@@ -97,11 +100,11 @@ describe('PaxDb abundances', () => {
     expect(asked).toEqual([[1, 'WHOLE_ORGANISM']])
     const [a, b] = spec.landscape!.ingredients
     expect(a!.tier).toBe('curated')
-    expect(a!.abundance).toMatch(/PaxDb.*tufA.*10,000 ppm/)
+    expect(a!.abundance).toMatchObject({ key: 'abundance.paxdb', params: { genes: 'tufA', ppm: '10,000' } })
     expect(b!.tier).toBe('estimated')
     // 75 µM 对 1 µM：实测值把比例从 1:1 改成了 75:1 / 75 µM against 1 µM: the measured value turns a 1:1 ratio into 75:1
     expect(a!.copies / b!.copies).toBeGreaterThan(40)
-    expect(spec.notes.join(' ')).toMatch(/1 种成分的丰度取自 PaxDb/)
+    expect(spec.notes).toContainEqual({ key: 'note.land.paxdb', params: { measured: 1, dataset: expect.any(String), rest: 1 } })
   })
 
   it('divides a homo-oligomer\'s abundance by its number of chains', async () => {
@@ -110,7 +113,7 @@ describe('PaxDb abundances', () => {
     const d = deps(recipe([ing('GAPDH', 'small', 1, { genes: ['gapA'] })], { organism_taxid: 1, tissue: 'WHOLE_ORGANISM' }), pick('1AAA'))
     const spec = await resolveLandscape('x', { ...d, entryInfo: async () => [known], abundances: async (t) => parsePaxdb(file, t, 'WHOLE_ORGANISM') })
     // 2000 ppm 的单体，四聚体是 500 ppm，即 3.75 µM / 2,000 ppm of monomer is 500 ppm of tetramer, 3.75 µM
-    expect(spec.landscape!.ingredients[0]!.abundance).toMatch(/约 3\.8 μM/)
+    expect(spec.landscape!.ingredients[0]!.abundance).toMatchObject({ key: 'abundance.paxdb', params: { uM: '3.8' } })
   })
 })
 

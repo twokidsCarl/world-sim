@@ -82,3 +82,7 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .status.error { white-space: normal; }
 /* 全景图画面很花，比例尺垫一块底色才读得清 / a landscape is busy, so the scale bar gets a backing to stay legible */
 .scalebar.dark { background: #1a1816cc; padding: 2px 6px 4px; border-radius: 4px; }
+
+/* 侧栏顶上：名字在左，语言切换在右 / the top of the sidebar: the name on the left, the language switch on the right */
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.side-head .lang { padding: 2px 8px; font-size: 12px; color: #55524b; }

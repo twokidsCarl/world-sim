@@ -15,7 +15,7 @@ const PORT = Number(process.env.LIMN_PORT || 5185)
 const json = (body: unknown, status = 200) => Response.json(body, { status })
 const fail = (e: unknown, status = 500) => json({ error: e instanceof Error ? e.message : String(e) }, status)
 const png = (b64: unknown): Uint8Array => {
-  if (typeof b64 !== 'string' || b64.length < 100) throw new Error('缺少图片')
+  if (typeof b64 !== 'string' || b64.length < 100) throw new Error('缺少图片 / The image is missing')
   return Uint8Array.from(Buffer.from(b64.replace(/^data:image\/png;base64,/, ''), 'base64'))
 }
 
@@ -32,7 +32,7 @@ Bun.serve({
       const lig = /^\/api\/ligand\/([A-Za-z0-9]{1,5})$/.exec(url.pathname)
       if (lig) {
         const res = await fetch(`https://files.rcsb.org/ligands/download/${lig[1]!.toUpperCase()}_ideal.sdf`)
-        return res.ok ? new Response(await res.text(), { headers: { 'Content-Type': 'text/plain' } }) : json({ error: `没有找到配体 ${lig[1]}` }, 404)
+        return res.ok ? new Response(await res.text(), { headers: { 'Content-Type': 'text/plain' } }) : json({ error: `没有找到配体 ${lig[1]} / Ligand ${lig[1]} was not found` }, 404)
       }
       // 结构文件：从白名单主机取一次，之后读本机缓存
       // structure files: fetched once from an allowlisted host, then served from the local cache

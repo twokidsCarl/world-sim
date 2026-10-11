@@ -23,6 +23,7 @@
         ["Nest|Pyramid", "nucleic-binding"]
       ],
       "caption": "整颗病毒的原子模型，从中间剖开：包膜上的刺突蛋白（S）、膜蛋白（M）和包膜蛋白（E），内部是核衣壳蛋白与 RNA 组成的核糖核蛋白。",
+      "captionEn": "An atomic model of the whole virus, cut through the middle: the spike (S), membrane (M) and envelope (E) proteins in the envelope, and inside it the ribonucleoprotein of nucleocapsid protein and RNA.",
       "tier": "curated",
       "licence": "CC BY-SA 4.0",
       "attribution": "Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
@@ -51,6 +52,7 @@
         ["^(RT|IN|NC|PR)$", "nucleic-binding"]
       ],
       "caption": "成熟 HIV-1 病毒颗粒的原子模型，从中间剖开：包膜上的 gp160 刺突，膜下的基质蛋白，锥形衣壳里是两条基因组 RNA 和逆转录酶、整合酶。",
+      "captionEn": "An atomic model of the mature HIV-1 virion, cut through the middle: gp160 spikes in the envelope, matrix protein beneath the membrane, and a conical capsid holding the two genomic RNAs with reverse transcriptase and integrase.",
       "tier": "curated",
       "licence": "CC BY-SA 4.0",
       "attribution": "Kornel Ozvoldik, Elmar Krieger and the cellPACK team (YASARA PetWorld)",
@@ -80,6 +82,7 @@
         [".", "membrane"]
       ],
       "caption": "一个突触小泡的原子模型，从中间剖开：膜上有质子泵 V-ATPase、谷氨酸转运体 VGLUT、SNARE 蛋白和突触结合蛋白，里面装着谷氨酸。",
+      "captionEn": "An atomic model of a synaptic vesicle, cut through the middle: its membrane carries the proton pump V-ATPase, the glutamate transporter VGLUT, SNARE proteins and synaptotagmin, and it is filled with glutamate.",
       "tier": "curated",
       "licence": "CC BY-SA 4.0",
       "attribution": "Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
@@ -107,8 +110,10 @@
         [".", "focus"]
       ],
       "caption": "cellPACK 组装的成熟 HIV-1 病毒颗粒，从中间剖开。",
+      "captionEn": "A mature HIV-1 virion assembled with cellPACK, cut through the middle.",
       "tier": "curated",
-      "licence": "文件未附许可声明；cellPACK 的数据仓库为 MIT / no licence stated with the file; the cellPACK data repository is MIT",
+      "licence": "文件未附许可声明；cellPACK 的数据仓库为 MIT",
+      "licenceEn": "No licence stated with the file; the cellPACK data repository is MIT",
       "attribution": "Ludovic Autin et al. (cellPACK)",
       "citation": "Johnson et al., Nature Methods 2015, doi:10.1038/nmeth.3204",
       "link": "https://mesoscope.scripps.edu/explorer/"
@@ -135,8 +140,10 @@
         [".", "soluble"]
       ],
       "caption": "cellPACK 组装的外泌体，从中间剖开：膜上有四跨膜蛋白 CD9、CD63、CD81 和整合素，里面是细胞质蛋白和 RNA。",
+      "captionEn": "An exosome assembled with cellPACK, cut through the middle: the membrane carries the tetraspanins CD9, CD63 and CD81 and integrins, and inside are cytoplasmic proteins and RNA.",
       "tier": "curated",
-      "licence": "文件未附许可声明；cellPACK 的数据仓库为 MIT / no licence stated with the file; the cellPACK data repository is MIT",
+      "licence": "文件未附许可声明；cellPACK 的数据仓库为 MIT",
+      "licenceEn": "No licence stated with the file; the cellPACK data repository is MIT",
       "attribution": "Julia Jimenez, Ludovic Autin et al. (cellPACK)",
       "citation": "Jimenez et al., J. Biocommunication 2019, doi:10.5210/jbc.v43i2.10331",
       "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9139774/"
@@ -164,8 +171,10 @@
         [".", "soluble"]
       ],
       "caption": "David Goodsell 与 Ludovic Autin 把《生命的机器》里的分子放进同一个三维场景：按比例排在一起的上百种蛋白、核酸和膜。",
+      "captionEn": "David Goodsell and Ludovic Autin put the molecules of The Machinery of Life into a single three-dimensional scene: more than a hundred kinds of protein, nucleic acid and membrane arranged together to scale.",
       "tier": "curated",
-      "licence": "文件未附许可声明 / no licence stated with the file",
+      "licence": "文件未附许可声明",
+      "licenceEn": "No licence stated with the file",
       "attribution": "David S. Goodsell, Ludovic Autin",
       "citation": "Mesoscale Explorer, Protein Science 2024, doi:10.1002/pro.5177",
       "link": "https://cdn.rcsb.org/pdb101/molecular-machinery/"
@@ -194,6 +203,7 @@
         [".", "soluble"]
       ],
       "caption": "一整只生殖支原体细胞的模型，从中间剖开：膜、核糖体、基因组 DNA 和几百种蛋白，数量来自全细胞模拟的一个时刻。",
+      "captionEn": "A model of an entire Mycoplasma genitalium cell, cut through the middle: membrane, ribosomes, genomic DNA and several hundred kinds of protein, in numbers taken from one moment of a whole-cell simulation.",
       "tier": "curated",
       "licence": "MIT",
       "attribution": "Martina Maritan, Ludovic Autin, Jonathan Karr, Markus Covert, Arthur Olson, David Goodsell",
@@ -214,6 +224,7 @@
         "id": "3J3Q"
       },
       "caption": "由 1356 条衣壳蛋白链围成的锥形衣壳（186 个六聚体、12 个五聚体），冷冻电镜与全原子模拟得到的模型。",
+      "captionEn": "The conical capsid enclosed by 1356 capsid protein chains (186 hexamers and 12 pentamers), a model from cryo-electron microscopy and all-atom simulation.",
       "tier": "measured",
       "licence": "CC0 1.0",
       "attribution": "wwPDB",
@@ -233,6 +244,7 @@
         "id": "5IRE"
       },
       "caption": "成熟寨卡病毒颗粒的外壳：180 份包膜蛋白 E 和膜蛋白 M 按二十面体对称铺满表面。",
+      "captionEn": "The shell of the mature Zika virion: 180 copies each of the envelope protein E and the membrane protein M cover the surface with icosahedral symmetry.",
       "tier": "measured",
       "licence": "CC0 1.0",
       "attribution": "wwPDB",
@@ -252,6 +264,7 @@
         "id": "3J27"
       },
       "caption": "成熟登革病毒颗粒的外壳，冷冻电镜结构。",
+      "captionEn": "The shell of the mature dengue virion, a cryo-electron microscopy structure.",
       "tier": "measured",
       "licence": "CC0 1.0",
       "attribution": "wwPDB",
@@ -276,6 +289,7 @@
         "id": "1M4X"
       },
       "caption": "由 5040 份主要衣壳蛋白组成的二十面体外壳，直径约 190 nm，1600 万个原子。",
+      "captionEn": "An icosahedral shell of 5040 copies of the major capsid protein, about 190 nm across, 16 million atoms.",
       "tier": "measured",
       "licence": "CC0 1.0",
       "attribution": "wwPDB",
@@ -299,6 +313,7 @@
         "id": "7R5K"
       },
       "caption": "人核孔复合体的骨架（收缩态），由冷冻电镜断层扫描和结构预测整合得到。",
+      "captionEn": "The scaffold of the human nuclear pore complex (constricted state), from cryo-electron tomography integrated with structure prediction.",
       "tier": "curated",
       "licence": "CC0 1.0",
       "attribution": "wwPDB",
@@ -319,6 +334,7 @@
         "id": "9A1M"
       },
       "caption": "裂殖酵母核孔复合体的整合结构模型，189 万个原子。",
+      "captionEn": "An integrative structural model of the fission yeast nuclear pore complex, 1.89 million atoms.",
       "tier": "curated",
       "licence": "CC0 1.0",
       "attribution": "wwPDB / PDB-IHM",
@@ -339,6 +355,7 @@
         "id": "8ZZ1"
       },
       "caption": "七种蛋白组成的 Y 形复合体。每个小球代表一段残基，位置由交联质谱和电镜数据整合确定，不是原子坐标。",
+      "captionEn": "A Y-shaped complex of seven proteins. Each bead stands for a stretch of residues, placed by integrating cross-linking mass spectrometry and electron microscopy data; these are not atomic coordinates.",
       "tier": "curated",
       "licence": "CC0 1.0",
       "attribution": "wwPDB / PDB-IHM",
@@ -372,9 +389,12 @@
         [".", "nucleic-binding"]
       ],
       "caption": "一只肺炎支原体细胞的一片冷冻电镜断层扫描里，331 个核糖体各自所在的位置。位置是实测的；每个位置上放的是同一种细胞里解出的 70S 核糖体原子模型。朝向没有采用数据集里的值，是随机的。细胞膜和其他分子没有画。",
+      "captionEn": "Where each of 331 ribosomes sits in one cryo-electron tomogram of a Mycoplasma pneumoniae cell. The positions are measured; at each one stands the same atomic model of the 70S ribosome, solved in cells of this species. Orientations are random, not the dataset's own values. The cell membrane and other molecules are not drawn.",
       "tier": "measured",
       "licence": "CC0 1.0（粒子位置，CZ CryoET Data Portal；原子模型，wwPDB）",
+      "licenceEn": "CC0 1.0 (particle positions, CZ CryoET Data Portal; atomic model, wwPDB)",
       "attribution": "CZ CryoET Data Portal 数据集 10003，TS_04；PDB 7P6Z",
+      "attributionEn": "CZ CryoET Data Portal dataset 10003, TS_04; PDB 7P6Z",
       "citation": "Xue et al., Nature 2022, doi:10.1038/s41586-022-05255-2",
       "link": "https://cryoetdataportal.czscience.com/datasets/10003"
     }

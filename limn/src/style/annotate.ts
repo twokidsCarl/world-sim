@@ -26,8 +26,8 @@ export interface Annotation {
  * AlphaMissense's predicted pathogenicity of substitutions.
  */
 export type ColorMode = 'role' | 'confidence' | 'domains' | 'sites' | 'pathogenicity'
+/** 上色方式的显示名在 src/i18n.ts（`colorModeLabel`），跟随界面语言 / the display names of the colour modes are in src/i18n.ts (`colorModeLabel`) and follow the interface language */
 export const COLOR_MODES: ColorMode[] = ['role', 'confidence', 'domains', 'sites', 'pathogenicity']
-export const COLOR_MODE_LABEL: Record<ColorMode, string> = { role: '按功能角色', confidence: '按预测置信度（pLDDT）', domains: '按结构域', sites: '标出活性与结合位点', pathogenicity: '按突变致病性预测（AlphaMissense）' }
 
 type LCH = [number, number, number]
 

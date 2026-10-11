@@ -40,8 +40,10 @@
         }
       ],
       "caption": "聚焦离子束扫描电镜拍下的一整个 HeLa 细胞，各种细胞器由机器学习逐个体素分割出来。从上往下看，在半高处剖开；细胞膜没有画（它的褶皱会盖住里面的细胞器）。",
+      "captionEn": "An entire HeLa cell imaged by focused ion beam scanning electron microscopy, with each kind of organelle segmented voxel by voxel by machine learning. Seen from above and cut at mid-height; the cell membrane is not drawn (its folds would hide the organelles inside).",
       "licence": "CC BY 4.0",
       "attribution": "Janelia COSEM / OpenOrganelle，数据集 jrc_hela-2",
+      "attributionEn": "Janelia COSEM / OpenOrganelle, dataset jrc_hela-2",
       "citation": "Heinrich et al., Nature 2021, doi:10.1038/s41586-021-03977-3; Xu et al., Nature 2021, doi:10.1038/s41586-021-03992-4",
       "link": "https://openorganelle.janelia.org/datasets/jrc_hela-2"
     }

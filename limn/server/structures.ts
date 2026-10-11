@@ -40,7 +40,7 @@ export function allowed(url: string): boolean {
  * Path of the cached file, downloading it first if needed. One URL is downloaded only once at a time.
  */
 export function cached(url: string, fetcher: typeof fetch = fetch): Promise<string> {
-  if (!allowed(url)) return Promise.reject(new Error(`不允许从这个地址下载: ${url}`))
+  if (!allowed(url)) return Promise.reject(new Error(`不允许从这个地址下载 / downloading from this address is not allowed: ${url}`))
   const dir = join(stateDir(), 'structures')
   const path = join(dir, createHash('sha256').update(url).digest('hex').slice(0, 32))
   const running = pending.get(path)
@@ -49,9 +49,9 @@ export function cached(url: string, fetcher: typeof fetch = fetch): Promise<stri
     if (await stat(path).then((s) => s.size > 0, () => false)) return path
     await mkdir(dir, { recursive: true })
     const res = await fetcher(url, { headers: { 'User-Agent': 'limn (local illustration tool)' } })
-    if (!res.ok) throw new Error(`下载失败（HTTP ${res.status}）: ${url}`)
+    if (!res.ok) throw new Error(`下载失败 / download failed (HTTP ${res.status}): ${url}`)
     const buf = new Uint8Array(await res.arrayBuffer())
-    if (buf.length === 0 || buf.length > MAX_BYTES) throw new Error(`文件大小不合理（${buf.length} 字节）: ${url}`)
+    if (buf.length === 0 || buf.length > MAX_BYTES) throw new Error(`文件大小不合理 / implausible file size (${buf.length} bytes): ${url}`)
     // 先写临时文件再改名，中途断掉不会留下半个文件 / write to a temporary file and rename, so an interrupted download leaves no partial file
     const tmp = `${path}.${process.pid}.tmp`
     await writeFile(tmp, buf)

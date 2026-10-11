@@ -6,7 +6,7 @@
  * choice is constrained to the ids that came back from the databases, so a
  * structure id can never be made up.
  */
-import type { EntitySpec, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
+import type { EntitySpec, Note, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
 import { ROLES, type Role } from '../src/style/palettes'
 import { resolveLandscape } from './landscape'
 import { ask as realAsk, type AskOptions } from './llm'
@@ -163,7 +163,7 @@ const PDB_ID = /^[0-9][A-Za-z0-9]{3}$/
 
 export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s: string) => void = () => {}): Promise<SceneSpec> {
   topic = topic.trim()
-  if (!topic) throw new Error('请输入一个主题')
+  if (!topic) throw new Error('请输入一个主题 / Please enter a topic')
 
   log('理解主题')
   const intent = await deps.ask<Intent>({ system: INTENT_SYSTEM, prompt: `Topic: ${topic}`, schema: INTENT_SCHEMA })
@@ -173,7 +173,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
   const whole = catalog.models.find((m) => m.id === intent.whole_model)
   if (whole) {
     log(`使用现成模型：${whole.title}`)
-    return { topic, kind: 'model', title: whole.title, caption: whole.caption, panels: [], notes: [], catalog: whole.id }
+    return { topic, kind: 'model', title: whole.title, titleEn: whole.titleEn, caption: whole.caption, captionEn: whole.captionEn, panels: [], notes: [], catalog: whole.id }
   }
 
   if (intent.kind === 'landscape') return resolveLandscape(topic, deps, log)
@@ -240,7 +240,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
     if (!info) continue // 回忆出的 id 并不存在 / a recalled id that does not exist
     candidates.push({ via, info, ref: { id, kind: 'pdb', title: info.title, method: info.method, resolution: info.resolution, year: info.year } })
   }
-  if (candidates.length === 0) throw new Error(`没有找到和“${topic}”对应的结构。换个更具体的说法试试，例如蛋白名加物种。`)
+  if (candidates.length === 0) throw new Error(`没有找到和“${topic}”对应的结构。换个更具体的说法试试，例如蛋白名加物种。 / No structure was found for “${topic}”. Try something more specific, such as a protein name with its species.`)
 
   log(`在 ${candidates.length} 个候选结构中选择`)
   const prompt = [
@@ -254,7 +254,9 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
   const choice = await deps.ask<Choice>({ system: CHOICE_SYSTEM, prompt, schema: choiceSchema(candidates.map((c) => c.ref.id), Math.max(1, intent.steps.length)) })
 
   const panels: PanelSpec[] = []
-  const notes = (choice.notes ?? []).filter((n) => typeof n === 'string' && n.trim())
+  // 模型写的说明是字符串；代码加的是字典键和参数（文字在 src/i18n.ts）
+  // the model's notes are strings; the ones code adds are a dictionary key with parameters (the text is in src/i18n.ts)
+  const notes: Note[] = (choice.notes ?? []).filter((n) => typeof n === 'string' && n.trim())
   for (const p of choice.panels ?? []) {
     const c = candidates.find((x) => x.ref.id === String(p.source_id).toUpperCase())
     if (!c) continue // 不在候选之列：丢弃，绝不信任 / not one of the candidates: dropped, never trusted
@@ -266,11 +268,20 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
       return { entityId: e.entityId, role, name: m?.name?.trim() || e.description, description: e.description, organism: e.organism }
     })
     panels.push({ label: p.label?.trim() || c.info.title, source: c.ref, assembly, entities, reason: p.reason ?? '' })
-    if (c.ref.kind === 'alphafold') notes.push(`${c.ref.id} 是 AlphaFold 预测模型，不是实验结构；低置信度的区域已省略。`)
+    if (c.ref.kind === 'alphafold') notes.push({ key: 'note.alphafoldPanel', params: { id: c.ref.id } })
   }
-  if (panels.length === 0) throw new Error('没能从候选结构中选出可用的一个，请换个说法再试。')
+  if (panels.length === 0) throw new Error('没能从候选结构中选出可用的一个，请换个说法再试。 / None of the candidate structures could be used. Please rephrase the topic and try again.')
 
-  return { topic, kind: intent.kind, title: choice.title?.trim() || topic, caption: choice.caption?.trim() ?? '', panels, notes: [...new Set(notes)] }
+  return { topic, kind: intent.kind, title: choice.title?.trim() || topic, caption: choice.caption?.trim() ?? '', panels, notes: unique(notes) }
+}
+
+/** 去掉重复的说明；带参数的按内容比 / drop repeated notes; those with parameters are compared by content */
+function unique(notes: Note[]): Note[] {
+  const seen = new Set<string>()
+  return notes.filter((n) => {
+    const k = JSON.stringify(n)
+    return !seen.has(k) && !!seen.add(k)
+  })
 }
 
 function fallbackRole(kind: EntryInfo['entities'][number]['kind']): Role {
