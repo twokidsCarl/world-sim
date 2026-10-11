@@ -167,3 +167,37 @@ def test_the_allowance_reported_by_the_cli_is_recorded(cloud, wish, monkeypatch,
     cloud("worker")
     worker.Worker().tick()
     assert gates.usage()["windows"]["five_hour"]["utilization"] == 0.34 and gates.paused() is None
+
+
+def test_the_worker_exports_the_database_to_the_repository_and_keeps_what_others_committed(cloud, repo, tmp_path, monkeypatch):  # noqa: F811
+    from idea_loom import cloud as bootstrap
+    from idea_loom import edits, ideas, store
+
+    (repo / "IDEAS.md").write_text("# IDEAS\n")           # 没有标记的文件不会被改写 / a file without the markers is left alone
+    extra = '{"at": "2026-01-02T00:00:00+00:00", "body": "别的会话提交的。", "by": "human", "event": "created", "id": "2.1", "level": "L2", "title": "别处来的"}\n'
+    with (repo / "idea-loom" / "data" / "ideas.jsonl").open("a", encoding="utf-8") as f:
+        f.write(extra)
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "another session")
+    monkeypatch.setenv("IDEA_LOOM_DB", str(tmp_path / "db" / "loom.sqlite"))
+    cloud("worker")
+    assert worker.export_pool() is None                    # 库是空的时候先并进 main 上的，没有可导出的 / an empty database first takes in main; nothing to export
+    assert "2.1" in ideas.current()[0]
+    new_id = edits.create(title="云端写的", body="在手机上想到的。", level="L2")
+    assert new_id == "2.2"
+    assert worker.export_pool() == "https://example.test/pull/34"
+    create = [c for c in gh_calls(tmp_path) if c["argv"][:2] == ["pr", "create"]][-1]
+    title = create["argv"][create["argv"].index("--title") + 1]
+    assert title == "ideas: 同步想法池（1 处改动）/ sync the idea pool (1 change)" and create["has_token"]
+    branch = create["argv"][create["argv"].index("--head") + 1]
+    pushed = subprocess.run(["git", "-C", str(repo), "show", f"{branch}:idea-loom/data/ideas.jsonl"], capture_output=True, text=True).stdout
+    assert pushed == store.export_text("ideas") and pushed.count("\n") == 6 and "别处来的" in pushed and "云端写的" in pushed
+    stat = subprocess.run(["git", "-C", str(repo), "show", "--stat", "--format=", branch], capture_output=True, text=True).stdout
+    assert "idea-loom/data/ideas.jsonl" in stat and "other.txt" not in stat and "IDEAS.md" not in stat
+    assert not (tmp_path / "work" / "sync").exists()
+    w = worker.Worker()
+    assert w.maybe_export() is False                       # 还没到时间 / not due yet
+    w.exported_at -= worker.EXPORT_EVERY
+    assert w.maybe_export() is True
+    w.exporting.join(timeout=20)
+    assert bootstrap.import_from_main(repo=worker.clone()) == {"ideas": 0}

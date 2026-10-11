@@ -5,9 +5,9 @@
 Put world-sim on one cloud host: idea-loom is the single entry point and every simulation
 lives on its own subdomain.
 
-> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"、"登录与权限"、"数据库"三期和"云端作业"的主体，下面"还没有的"一节列了没做的部分。
+> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"、"登录与权限"、"数据库"、"云端作业"四期（合并前的自动测试除外），下面"还没有的"一节列了没做的部分。
 >
-> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed", "sign-in and roles" and "database" stages and the core of "jobs in the cloud" are done so far; see "not there yet" below.
+> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed", "sign-in and roles", "database" and "jobs in the cloud" stages are done so far (except tests before merging); see "not there yet" below.
 
 ## 结构 / Layout
 
@@ -160,19 +160,31 @@ for seven days so they can be resumed.
 - **并行 / Parallelism**：同时最多两个作业，同一个目录同时只有一个。
   At most two jobs at once, and only one per directory.
 
+**其余的模型调用也经过 worker。** hub 里没有 `claude`，也没有订阅令牌。生成、细化、翻译、小助手要调用模型时，hub 在共享卷里放一张单子，`worker` 取走、**自己拼好命令**去跑、把输出一行行写回来。单子里只有数据（提示词、模型名、哪一轮对话），没有命令行，所以 hub 即使出了问题也不能让 `worker` 执行任意命令。`worker` 没启动时，界面上这些功能会直接说"worker 没有在运行"。
+
+**The other model calls go through the worker too.** The hub has neither `claude` nor the
+subscription token. When generating, refining, translating or the assistant needs the model,
+the hub leaves a request slip on the shared volume; the worker takes it, **builds the command
+itself**, runs it and writes the output back line by line. A slip holds data only (the prompt,
+the model name, which conversation turn) and never a command line, so even a compromised hub
+cannot make the worker run an arbitrary command. When the worker is not running, those
+features say so in the UI.
+
+**导出到仓库 / Export to the repository.** `worker` 每 15 分钟看一次：先把 `main` 上别的会话提交的事件并进数据库，再把数据库里的 idea、愿望、任务导出；和 `main` 上的不一样，就重新生成 `IDEAS.md` / `IDEAS.en.md` 并开一个 PR。
+
+Every 15 minutes the worker first merges events other sessions committed to `main` into the
+database, then exports the ideas, wishes and tasks; if they differ from `main` it regenerates
+`IDEAS.md` / `IDEAS.en.md` and opens a PR.
+
 ## 还没有的 / Not there yet
 
 按顺序做 / In this order:
 
-1. **导出到仓库 / Export to the repository**。数据库里新的 idea 事件还不会自动变成 PR：导出并推送需要仓库的凭证，那在 `worker` 里，和下一条一起做。在那之前，云端写的 idea 只在数据库里。
-   New idea events in the database do not become a pull request by themselves yet: exporting and pushing needs the repository credential, which lives in the `worker` and comes with the next item. Until then ideas written in the cloud exist only in the database.
-2. **其余的模型调用 / The other model calls**。作业已经由 `worker` 来跑（见下面"作业"一节）；但生成、细化、翻译、小助手仍然是 hub 直接调 `claude`，而 hub 里没有它，所以这几样在云端暂时用不了。
-   Jobs now run in the `worker` (see "Jobs" below), but generating, refining, translating and the assistant still call `claude` from the hub, which does not have it, so those do not work in the cloud yet.
-3. **合并前的自动测试 / Tests before merging**。仓库的自动合并现在不看测试。worker 在开 PR 之前自己重跑过测试，但别的来源的 PR 没有这一关。
+1. **合并前的自动测试 / Tests before merging**。仓库的自动合并现在不看测试。worker 在开 PR 之前自己重跑过测试，但别的来源的 PR 没有这一关。
    The repository's auto-merge does not look at tests yet. The worker re-runs the tests before opening its PR, but PRs from other sources have no such gate.
-4. **作业的出站网络 / Outbound network for jobs**。作业的进程能访问任何地址，还没有只放行模型接口、GitHub 和包管理源的名单。
+2. **作业的出站网络 / Outbound network for jobs**。作业的进程能访问任何地址，还没有只放行模型接口、GitHub 和包管理源的名单。
    A job's processes can reach any address; there is no allow-list yet limiting them to the model API, GitHub and the package registries.
-5. 访客提愿望、手机布局与推送、持续运行与自动维护。
+3. 访客提愿望、手机布局与推送、持续运行与自动维护。
    Visitor wishes, the phone layout and push notifications, unattended running and automatic maintenance.
 
 ## 已知的风险 / Known risks

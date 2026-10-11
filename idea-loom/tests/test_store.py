@@ -114,4 +114,4 @@ def test_sync_from_the_hub_is_refused_in_database_mode(db):
     from idea_loom import sync
 
     st = sync.status()
-    assert st.can_sync is False and "worker" in (st.reason or "")
+    assert st.can_sync is False and "worker 每 15 分钟自动导出" in (st.reason or "")

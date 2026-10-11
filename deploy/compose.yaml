@@ -85,6 +85,7 @@ services:
       IDEA_LOOM_REPO_URL: ${REPO_URL}
       IDEA_LOOM_WORK: /srv/work
       IDEA_LOOM_DB: /srv/state/db/loom.sqlite
+      IDEA_LOOM_API: http://hub:8767     # 小助手的工具回调打到 hub / the assistant's tool callbacks go to the hub
       IDEA_LOOM_JOBS_PER_DAY: ${JOBS_PER_DAY:-6}
       IDEA_LOOM_USAGE_PAUSE: ${USAGE_PAUSE:-0.8}
       GIT_AUTHOR_NAME: ${GIT_NAME}

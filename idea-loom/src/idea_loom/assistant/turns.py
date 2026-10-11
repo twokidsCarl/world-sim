@@ -26,7 +26,7 @@ from typing import Any, Iterator, Optional
 
 from pydantic import BaseModel, Field
 
-from .. import edits, ideas, llm, ops, store, wishes
+from .. import calls, edits, ideas, llm, ops, store, wishes
 from ..trail import Action
 from .stream import StreamParser
 
@@ -217,7 +217,11 @@ def start(conversation_id: str, request: TurnRequest) -> int:
     if conversation_id in _by_conversation:
         raise TurnError("上一个问题还在回答")
     binary = llm.claude_bin()
-    if binary is None:
+    if calls.remote():
+        if not calls.worker_alive():
+            raise TurnError("worker 没有在运行，小助手现在用不了")
+        binary = ""
+    elif binary is None:
         raise TurnError("这台机器上找不到 claude 命令，小助手现在用不了")
     turn = len(_turn_dirs(conversation_id)) + 1
     directory = root() / conversation_id / "turns" / str(turn)
@@ -235,19 +239,27 @@ def _run(ctx: _Running, binary: str) -> None:
     parser = StreamParser(repo=str(store.repo_root()))
     try:
         prompt = question_text(ctx.conversation_id, ctx.turn, ctx.request)
-        ctx.process = subprocess.Popen(build_argv(binary, ctx.token), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                       stderr=subprocess.DEVNULL, cwd=store.repo_root())
-        timer = threading.Timer(TURN_LIMIT_SECONDS, ctx.process.kill)
-        timer.start()
-        if ctx.stopped:
-            ctx.process.kill()
-        assert ctx.process.stdin and ctx.process.stdout
-        try:
-            ctx.process.stdin.write(prompt.encode("utf-8"))
-            ctx.process.stdin.close()
-        except BrokenPipeError:
-            pass  # 已经被停掉了 / already stopped
-        for raw in ctx.process.stdout:
+        if calls.remote():
+            # hub 上：交给 worker 去跑，这里跟着读它写回来的事件。工具的回调仍然打到 hub，用这一轮的令牌。
+            # On the hub: the worker runs it and the events it writes back are read here. Tool callbacks still come to the hub, with this turn's token.
+            slip = calls.submit("assistant", {"token": ctx.token, "prompt": prompt})
+            source: Iterator[bytes] = calls.lines(slip, TURN_LIMIT_SECONDS, stopped=lambda: ctx.stopped)
+            timer = None
+        else:
+            ctx.process = subprocess.Popen(build_argv(binary, ctx.token), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                           stderr=subprocess.DEVNULL, cwd=store.repo_root())
+            timer = threading.Timer(TURN_LIMIT_SECONDS, ctx.process.kill)
+            timer.start()
+            if ctx.stopped:
+                ctx.process.kill()
+            assert ctx.process.stdin and ctx.process.stdout
+            try:
+                ctx.process.stdin.write(prompt.encode("utf-8"))
+                ctx.process.stdin.close()
+            except BrokenPipeError:
+                pass  # 已经被停掉了 / already stopped
+            source = ctx.process.stdout
+        for raw in source:
             try:
                 obj = json.loads(raw)
             except ValueError:
@@ -255,8 +267,14 @@ def _run(ctx: _Running, binary: str) -> None:
             if isinstance(obj, dict):
                 for event in parser.feed(obj):
                     ctx.emit(event)
-        ctx.process.wait()
-        timer.cancel()
+        if calls.remote():
+            problem = calls.outcome(slip).get("error")
+            if problem and parser.result is None and not ctx.stopped:
+                raise RuntimeError(str(problem))
+        if ctx.process is not None:
+            ctx.process.wait()
+        if timer is not None:
+            timer.cancel()
         final = {"type": "stopped"} if ctx.stopped else parser.final()
     except Exception as e:  # noqa: BLE001 — 回合失败要告诉界面，不能悄悄没了 / a failed turn must reach the UI
         final = {"type": "failed", "message": f"小助手出错了：{e}"[:300]}

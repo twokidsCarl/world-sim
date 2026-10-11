@@ -77,7 +77,7 @@ def status(repo: Optional[Path] = None) -> SyncStatus:
     if store.db_path() is not None:
         # 数据在数据库里时，仓库里的文件是导出的记录；导出并开 PR 要推送凭证，那是 worker 的事。
         # With the data in the database the files in the repository are an exported record; exporting and opening the PR needs the push credential, which is the worker's.
-        return SyncStatus(pending=0, ideas_md_stale=False, can_sync=False, reason="云端的数据在数据库里，导出到仓库由 worker 来做，这一步还没有接上。")
+        return SyncStatus(pending=0, ideas_md_stale=False, can_sync=False, reason="云端的数据在数据库里，worker 每 15 分钟自动导出到仓库一次。")
     try:
         rel = _rel(repo, data / "ideas.jsonl")
     except ValueError:
