@@ -162,6 +162,7 @@ export function App() {
                         </div>
                       )
                     })()}
+                  {p.membrane && <div className="muted">膜内取向：OPM（{p.membrane.matched} 个残基叠合，偏差 {p.membrane.rmsd.toFixed(2)} Å）</div>}
                   <div className="row" style={{ margin: '4px 0' }}>
                     <select value={p.spec.assembly} onChange={(e) => s.setAssembly(pi, e.target.value)} style={{ flex: 1 }}>
                       {p.mol.assemblies.map((a) => (

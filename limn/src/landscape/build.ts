@@ -4,6 +4,7 @@ import { axisAngle, mul3 } from '../render/camera'
 import { principalFrame } from '../refine/views'
 import { assemblyCopies } from '../scene/build'
 import type { LandscapeSpec } from '../scene/spec'
+import { membraneToScene, type MembraneFit } from './orient'
 import { coarsen, collides, Occupied, placement, randomRotation, rng, scatter, type Coarse, type Region } from './pack'
 
 /** 双层膜两个头基平面之间厚度的一半，Å / Half the thickness of the bilayer between its head-group planes, Å. */
@@ -50,6 +51,8 @@ export function placedCenter(m: Float32Array, c: [number, number, number]): [num
 export interface PackInput {
   mol: Molecule
   assembly: string
+  /** 实验确定的膜内取向（OPM），有的话 / the experimentally derived orientation in the membrane (OPM), when there is one */
+  membrane?: MembraneFit | null
 }
 
 /**
@@ -107,12 +110,25 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
 
   // 1. 膜蛋白，立在膜平面上 / 1. membrane proteins, standing in the membrane plane
   const lipids: Float32Array[] = []
+  // 每个膜蛋白拷贝在膜平面里的位置和大致半径：它正前方的脂质不画，让跨膜的部分露出来
+  // where each membrane-protein copy sits in the membrane plane, and roughly how wide it is: lipids
+  // straight in front of it are left out, so that the part spanning the membrane shows
+  const windows: [number, number, number][] = []
   if (spec.membrane) {
     for (const i of order.filter((i) => spec.ingredients[i]!.compartment === 'membrane').sort(bySize)) {
       const ing = spec.ingredients[i]!, c = coarse[ing.panel]!
       let base = upright(c)
       let y = 0
-      if (ing.anchor === 'above' || ing.anchor === 'below') {
+      const fit = inputs[ing.panel]!.membrane
+      if (fit) {
+        // 有 OPM 的取向：照它摆。先到膜坐标系，再转到场景里（膜法线沿 y），高度由分子中心在膜坐标系里的 z 决定
+        // an OPM orientation exists: follow it. Into the membrane frame, then into the scene (normal
+        // along y); the height is where the molecule's centre lies along z in the membrane frame
+        const m = fit.matrix, s = membraneToScene(spec.outer ?? 'above')
+        base = mul3(s, new Float32Array([m[0]!, m[1]!, m[2]!, m[4]!, m[5]!, m[6]!, m[8]!, m[9]!, m[10]!]))
+        const cz = m[2]! * c.center[0] + m[6]! * c.center[1] + m[10]! * c.center[2] + m[14]!
+        y = (spec.outer ?? 'above') === 'above' ? cz : -cz
+      } else if (ing.anchor === 'above' || ing.anchor === 'below') {
         const side = ing.anchor === 'above' ? 1 : -1
         // 把链上与膜相接的那一端转向膜
         // turn the end of the chain that joins the membrane towards it
@@ -132,9 +148,26 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
         y = side * (MEMBRANE_HALF + reach)
       }
       const stand = base
-      const [z0, z1] = zRange(c)
+      const [zBack, z1] = zRange(c)
+      // 膜蛋白尽量放在靠近切面的地方，这样跨膜的部分露在前排脂质之外；前排放不下再往后放
+      // membrane proteins go near the cut face where they can, so the part that spans the membrane
+      // is not hidden behind the front lipids; what does not fit there goes further back
+      const z0 = Math.max(zBack, z1 - 50)
       wanted[ing.panel] = ing.copies
-      places[ing.panel] = scatter(occ, c, ing.copies, { min: [-W, y, z0], max: [W, y, z1] }, rand, (r) => mul3(axisAngle(0, 1, 0, r() * 2 * Math.PI), stand), 200)
+      const frontRow = scatter(occ, c, ing.copies, { min: [-W, y, z0], max: [W, y, z1] }, rand, (r) => mul3(axisAngle(0, 1, 0, r() * 2 * Math.PI), base), 120)
+      places[ing.panel] = frontRow.length >= ing.copies ? frontRow : [...frontRow, ...scatter(occ, c, ing.copies - frontRow.length, { min: [-W, y, zBack], max: [W, y, z1] }, rand, (r) => mul3(axisAngle(0, 1, 0, r() * 2 * Math.PI), stand), 200)]
+      for (const m of places[ing.panel]!) {
+        const pc = placedCenter(m, c.center)
+        // 只统计靠近膜平面的那部分小球，得到跨膜段的半径 / only the spheres near the membrane plane count, giving the radius of the spanning part
+        let r = 0
+        for (let k = 0; k < c.spheres.length; k += 4) {
+          // 小球的坐标是相对分子中心的 / sphere coordinates are relative to the molecule's centre
+          const dx = m[0]! * c.spheres[k]! + m[4]! * c.spheres[k + 1]! + m[8]! * c.spheres[k + 2]!
+          const sy = m[1]! * c.spheres[k]! + m[5]! * c.spheres[k + 1]! + m[9]! * c.spheres[k + 2]! + pc[1]
+          if (Math.abs(sy) < MEMBRANE_HALF) r = Math.max(r, Math.abs(dx) + c.spheres[k + 3]! * 0.5)
+        }
+        if (r > 0) windows.push([pc[0], pc[2], r])
+      }
     }
 
     // 2. 双层膜：脂质放在带抖动的网格上，分两个小叶，跳过蛋白质
@@ -164,6 +197,7 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
             const pos: [number, number, number] = [x + (rand() - 0.5) * 3, y + (rand() - 0.5) * 2.5, z + (rand() - 0.5) * 3]
             const rot = mul3(axisAngle(0, 1, 0, rand() * 2 * Math.PI), dir)
             if (collides(occ, lc, rot, pos, 2.5)) continue
+            if (windows.some(([wx, wz, wr]) => pos[2] > wz && Math.abs(pos[0] - wx) < wr)) continue
             lipids.push(placement(rot, pos, lc.center))
           }
         }

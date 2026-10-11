@@ -184,7 +184,7 @@ export function Stage() {
     const cs = st.colorings
     const land = st.spec?.landscape
     if (land) {
-      const packed = packScene(panels.map((p) => ({ mol: p.mol, assembly: p.spec.assembly })), land, st.lipid, st.seed)
+      const packed = packScene(panels.map((p) => ({ mol: p.mol, assembly: p.spec.assembly, membrane: p.membrane })), land, st.lipid, st.seed)
       let molecule = 0
       const items = panels.map((p, i) =>
         buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, packed.places[i]!.map((matrix) => ({ assembly: p.spec.assembly, matrix, molecule: molecule++, center: placedCenter(matrix, packed.centers[i]!) }))),

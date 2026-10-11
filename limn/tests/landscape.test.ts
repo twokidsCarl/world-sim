@@ -6,7 +6,9 @@ import { IDENTITY, type Molecule } from '../src/mol/types'
 import type { LandscapeSpec } from '../src/scene/spec'
 import { BOX, resolveLandscape } from '../server/landscape'
 import type { Deps } from '../server/resolve'
+import { parseOpm } from '../server/sources/opm'
 import { parsePaxdb, ppmToMicromolar } from '../server/sources/paxdb'
+import { fitToMembrane } from '../src/landscape/orient'
 import type { EntryInfo } from '../server/sources/rcsb'
 
 const entry = (id: string, atoms: number): EntryInfo => ({
@@ -202,6 +204,74 @@ describe('membrane proteins that are only an ectodomain', () => {
         // ...and the anchored end is the one nearer the membrane
         expect(Math.abs(near)).toBeLessThan(Math.abs(far))
         expect(Math.abs(near)).toBeLessThan(40)
+      }
+    }
+  })
+})
+
+// 膜内取向 / orientation in the membrane
+describe('OPM orientation', () => {
+  /** 沿 z 的一根“螺旋”，n 个残基 / a "helix" along z with n residues */
+  const helix = (n: number): Molecule => {
+    const pos = new Float32Array(n * 3)
+    const authResidue = new Int32Array(n)
+    for (let i = 0; i < n; i++) {
+      pos.set([Math.cos(i * 1.7) * 2.3 + i * 0.05, Math.sin(i * 1.7) * 2.3, i * 1.5 - (n * 1.5) / 2], i * 3)
+      authResidue[i] = 101 + i
+    }
+    return {
+      id: 'TM', title: 'TM', atomCount: n, pos, element: new Uint8Array(n), chainOf: new Uint32Array(n), isTrace: new Uint8Array(n).fill(1), residue: Int32Array.from({ length: n }, (_, i) => i + 1), authResidue,
+      chains: [{ asymId: 'A', authAsymId: 'X', entity: 0, start: 0, count: n, model: 1 }],
+      entities: [{ id: '1', description: 'TM', kind: 'protein' }],
+      assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
+    }
+  }
+  /** 把分子转一下、挪一下，写成 OPM 那样的 PDB 文件 / turn and move the molecule and write it out as an OPM-style PDB file */
+  const opmFile = (mol: Molecule, half: number, chain = 'X') => {
+    const lines = [`REMARK      1/2 of bilayer thickness:   ${half.toFixed(1)}`]
+    for (let i = 0; i < mol.atomCount; i++) {
+      // 绕 x 轴转 90 度（z -> y），再平移 / rotate 90 degrees about x (z -> y), then translate
+      const x = mol.pos[i * 3]! + 7, y = -mol.pos[i * 3 + 2]! + 3, z = mol.pos[i * 3 + 1]! - 4
+      const f = (v: number) => v.toFixed(3).padStart(8)
+      lines.push(`ATOM  ${String(i + 1).padStart(5)}  CA  ALA ${chain}${String(mol.authResidue![i]).padStart(4)}    ${f(x)}${f(y)}${f(z)}  1.00  0.00           C`)
+    }
+    return lines.join('\n')
+  }
+
+  it('reads the half-thickness and the Cα positions, keyed by author chain and residue number', () => {
+    const o = parseOpm(opmFile(helix(30), 15.4), '1abc')!
+    expect(o.half).toBe(15.4)
+    expect(o.keys[0]).toBe('X:101')
+    expect(o.keys.length).toBe(30)
+    expect(parseOpm('HEADER nothing here', '1abc')).toBeNull()
+  })
+
+  it('recovers the rigid motion exactly, using author numbering', () => {
+    const mol = helix(30)
+    const fit = fitToMembrane(mol, parseOpm(opmFile(mol, 15.4), '1abc')!)!
+    expect(fit.matched).toBe(30)
+    expect(fit.rmsd).toBeLessThan(0.01)
+    // 原来沿 z 的轴，在膜坐标系里沿 -y / the axis that ran along z runs along -y in the membrane frame
+    const m = fit.matrix
+    expect([m[8]!, m[9]!, m[10]!].map((v) => Math.round(v))).toEqual([0, -1, 0])
+  })
+
+  it('refuses when chain names do not correspond', () => {
+    const mol = helix(30)
+    expect(fitToMembrane(mol, parseOpm(opmFile(mol, 15.4, 'Q'), '1abc')!)).toBeNull()
+  })
+
+  it('stands an oriented protein with its outer end on the outer side', () => {
+    // 分子的 +z 端在膜坐标系里也是 +z（外侧）/ the molecule's +z end is +z (outside) in the membrane frame too
+    const mol = helix(40)
+    const fit = { matrix: IDENTITY, half: 15, matched: 40, rmsd: 0 }
+    const scene = (outer: 'above' | 'below'): LandscapeSpec => ({ width: 300, height: 300, depth: 100, membrane: true, outer, above: '', below: '', ingredients: [{ panel: 0, compartment: 'membrane', copies: 3, abundance: '', feature: false }] })
+    for (const outer of ['above', 'below'] as const) {
+      const packed = packScene([{ mol, assembly: 'asym', membrane: fit }], scene(outer), null, 1)
+      expect(packed.places[0]!.length).toBe(3)
+      for (const m of packed.places[0]!) {
+        const top = [0, 0, 30], y = m[1]! * top[0]! + m[5]! * top[1]! + m[9]! * top[2]! + m[13]!
+        expect(outer === 'above' ? y : -y).toBeCloseTo(30, 3)
       }
     }
   })
