@@ -163,7 +163,11 @@ uniform float u_clipFront;
 uniform float u_radiusScale;
 uniform float u_minRadius;
 uniform float u_inflate;
+uniform float u_clipBack;
+uniform vec3 u_layer;
+uniform vec2 u_fogKeep;
 out vec2 v_xy;
+flat out float v_keep;
 flat out vec4 v_a;
 flat out vec4 v_b;
 flat out vec3 v_color;
@@ -182,7 +186,9 @@ void main() {
   float ra = max(A.w * u_radiusScale, u_minRadius) + u_inflate, rb = max(B.w * u_radiusScale, u_minRadius) + u_inflate;
   vec3 pa = toView(A.xyz), pb = toView(B.xyz);
   // 和球一样：端点被截面丢掉的线段整段不画 / as with spheres: a segment with an end dropped by the cut is not drawn at all
-  if (A.w <= 0.0 || B.w <= 0.0 || max(pa.z, pb.z) > u_clipFront) {
+  // 切片的背面同理；色调和两端的球一致，取最前一层的 / likewise at the back of a slab; the tone matches the spheres at its ends, that of the front layer
+  v_keep = u_layer.x > 0.0 ? u_fogKeep.x : 1.0;
+  if (A.w <= 0.0 || B.w <= 0.0 || max(pa.z, pb.z) > u_clipFront || min(pa.z, pb.z) < u_clipBack) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
@@ -210,6 +216,7 @@ flat in vec4 v_b;
 flat in vec3 v_color;
 flat in uvec2 v_ids;
 flat in uvec2 v_inst;
+flat in float v_keep;
 uniform vec2 u_z;
 uniform bool u_outlineByMolecule;
 layout(location = 0) out vec4 o_color;
@@ -239,7 +246,7 @@ void main() {
   if (t > 1.0e29) discard;
   float z = top - t;
   gl_FragDepth = clamp((u_z.x - z) / (u_z.x - u_z.y), 0.0, 0.999999);
-  o_color = vec4(v_color, 1.0);
+  o_color = vec4(v_color, v_keep);
   uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
   o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, 1u);
 }`

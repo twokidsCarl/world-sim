@@ -469,6 +469,8 @@ export class Renderer {
       const c = this.capsule
       common(c)
       gl.uniform1i(this.u(c, 'u_seg'), 5)
+      gl.uniform3f(this.u(c, 'u_layer'), layers, span[0], span[1])
+      gl.uniform2f(this.u(c, 'u_fogKeep'), style.fog.front, style.fog.back)
       for (const it of this.items) {
         if (!it.seg) continue
         bindItem(c, it)

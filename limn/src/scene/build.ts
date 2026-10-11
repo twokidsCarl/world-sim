@@ -166,6 +166,8 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         for (let r = 0; r < 3; r++) for (let col = 0; col < 4; col++) data[k + r * 4 + col] = m[col * 4 + r]!
         const centre = p.center ?? (p.perCopy || p.strand ? ([m[0]! * c[0]! + m[4]! * c[1]! + m[8]! * c[2]! + m[12]!, m[1]! * c[0]! + m[5]! * c[1]! + m[9]! * c[2]! + m[13]!, m[2]! * c[0]! + m[6]! * c[1]! + m[10]! * c[2]! + m[14]!] as const) : null)
         if (p.noCut) data[k + 15] = 3
+        // 用线段连起来的东西（核酸的走向）：按每个球、每段线自己的深度来切，不按整体的中心 / things joined by segments (the course of a nucleic acid) are cut sphere by sphere and segment by segment at their own depth, not by a centre of the whole
+        else if (p.perCopy && mol.segments?.length) data[k + 15] = 5
         // 一整张不分块的膜（只有一份、球很多的脂质）：没有“整体的中心”可言，按球来切 / a membrane in one piece (lipids in a single copy with very many spheres) has no meaningful centre and is cut sphere by sphere
         else if (p.perCopy && g.lipid && g.operators.length === 1 && ps.length === 1 && g.runs.reduce((s, r) => s + r.count, 0) > SHEET_MIN) data[k + 15] = 5
         else if (centre) {

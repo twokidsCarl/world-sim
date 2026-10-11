@@ -266,3 +266,62 @@ export function shell(pos: Float32Array, start: number, count: number): { centre
   r.sort((a, b) => a - b)
   return { centre: c, inner: r[Math.floor(r.length * 0.02)]!, outer: r[Math.floor(r.length * 0.98)]! }
 }
+
+/**
+ * 把一段 RNP 结构里 RNA 的走向画成一条线：取 RNA 链上的磷原子，每 `every` 个取一个、做一点平滑，
+ * 再从杆的轴线往外推 `lift` Å（否则它埋在核蛋白的沟里看不见），然后按每一段的变换搬到位。
+ * 返回球（x, y, z）和把相邻的球连起来的线段。Goodsell 把基因组 RNA 画成核蛋白上一条明显的黄色波浪线。
+ *
+ * Draw the course of the RNA in a stretch of RNP as a line: the phosphorus atoms of the RNA
+ * chains, one in every `every` and lightly smoothed, pushed `lift` Å out from the rod's axis (or
+ * it lies hidden in the nucleoprotein's groove), then carried into place by each stretch's
+ * transform. Returns spheres (x, y, z) and the segments joining neighbours. Goodsell paints the
+ * genomic RNA as a clear yellow wavy line on the nucleoprotein.
+ */
+export function rnaPath(rnp: Molecule, stretches: Float32Array[], lift: number, every = 3): { pos: Float32Array; segments: Uint32Array } {
+  const ax = principalAxis(rnp.pos)
+  // 杆的表面：各球到轴的距离的第 95 百分位 / the rod's surface: the 95th percentile of sphere distances from the axis
+  const ds: number[] = []
+  for (let i = 0; i < rnp.atomCount; i += 7) {
+    const d = sub([rnp.pos[i * 3]!, rnp.pos[i * 3 + 1]!, rnp.pos[i * 3 + 2]!], ax.centre)
+    ds.push(Math.hypot(...sub(d, mulS(ax.axis, dot(d, ax.axis)))))
+  }
+  ds.sort((x, y) => x - y)
+  const surface = ds[Math.floor(ds.length * 0.95)] ?? 0
+  const strands: V3[][] = []
+  for (const c of rnp.chains) {
+    if (rnp.entities[c.entity]!.kind !== 'rna') continue
+    const p: V3[] = []
+    for (let i = c.start; i < c.start + c.count; i++) if (rnp.isTrace[i]) p.push([rnp.pos[i * 3]!, rnp.pos[i * 3 + 1]!, rnp.pos[i * 3 + 2]!])
+    if (p.length < 4) continue
+    const line: V3[] = []
+    for (let i = 0; i < p.length; i += every) {
+      // 前后各两个点的平均 / the mean of two points either side
+      const q: V3 = [0, 0, 0]
+      let n = 0
+      for (let k = Math.max(0, i - 2); k <= Math.min(p.length - 1, i + 2); k++) {
+        q[0] += p[k]![0]
+        q[1] += p[k]![1]
+        q[2] += p[k]![2]
+        n++
+      }
+      const m: V3 = [q[0] / n, q[1] / n, q[2] / n]
+      const d = sub(m, ax.centre)
+      const radial = sub(d, mulS(ax.axis, dot(d, ax.axis)))
+      // 至少推到杆的表面上，线才整条露在外面 / pushed at least onto the rod's surface, so that the whole line shows
+      const r = Math.hypot(...radial)
+      line.push(add(m, mulS(norm(radial), Math.max(lift, surface - r))))
+    }
+    strands.push(line)
+  }
+  const pos: number[] = [], seg: number[] = []
+  for (const m of stretches)
+    for (const line of strands) {
+      line.forEach((p, i) => {
+        const q = apply(m, p)
+        if (i > 0) seg.push(pos.length / 3 - 1, pos.length / 3)
+        pos.push(q[0], q[1], q[2])
+      })
+    }
+  return { pos: new Float32Array(pos), segments: new Uint32Array(seg) }
+}
