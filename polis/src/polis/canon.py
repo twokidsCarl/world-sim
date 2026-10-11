@@ -2,8 +2,9 @@
 
 Canonical checks: does the simulation reproduce what the source texts and records say happened.
 
-校准用过的目标在这里标为 fitted；没用过的是 held-out，只有后者算得上检验。
-Targets used in calibration are marked fitted; the rest are held out, and only those count as tests.
+校准用过的目标、以及结果已经看过并据此改过模型的案例，在这里标为 fitted；其余是 held-out，只有后者算得上检验。
+Targets used in calibration, and cases whose results were seen and acted on, are marked fitted; the rest are held out,
+and only those count as tests.
 """
 
 from __future__ import annotations
@@ -60,9 +61,14 @@ def toyokawa(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Ch
 
 
 def bea(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
-    """东亚银行 2008：样本外检验。场景设定在第一次运行前定下，没有参与校准，也没有据此改过模型。
-    Bank of East Asia 2008: the out-of-sample test. Its settings were fixed before the first run; it took no part in
-    calibration and no model change was made in response to it.
+    """东亚银行 2008：曾经是样本外检验，现在不是了。
+    Bank of East Asia 2008: once the out-of-sample test, no longer.
+
+    它的设定在第一次运行前定下、没有参与校准；但结果（规模差了两个数量级）已经看过，并且正是这个结果引出了
+    对"谁会去取"的重新设计。所以从那以后它标为 fitted，真正的检验见 held_out。
+    Its settings were fixed before the first run and it took no part in calibration. But its result (the scale was
+    off by two orders of magnitude) has been seen, and that result is what prompted the redesign of who withdraws.
+    From then on it is marked fitted; the real tests are in held_out.
     """
     from .scenarios import bea as sc
 
@@ -80,9 +86,70 @@ def bea(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
     days = [d for d in day if not np.isnan(d)]
     case = "bea_bank_run_2008"
     return [
-        Check(case, "银行没有倒闭", f"{sum(survived)}/{k} 个世界撑住", sum(survived), k, False),
+        Check(case, "银行没有倒闭", f"{sum(survived)}/{k} 个世界撑住", sum(survived), k, True),
         Check(case, "周三（第 3 天）出现挤兑；有来源说周二下午已有人去", f"{len(days)}/{k} 个世界发生挤兑" + (f"，平均第 {np.mean(days):.1f} 天" if days else ""),
-              sum(2 <= d <= 3 for d in days), k, False),  # fmt: skip
-        Check(case, "被提走的存款不到总额的 2%（银行公布 0.67%）", f"平均 {np.mean(amount):.1%}，最多 {max(amount):.1%}", sum(x < 0.02 for x in amount), k, False),
-        Check(case, "不到两天平息", f"{sum(calm)}/{k} 个世界", sum(calm), k, False),
+              sum(2 <= d <= 3 for d in days), k, True),  # fmt: skip
+        Check(case, "被提走的存款不到总额的 2%（银行公布 0.67%）", f"平均 {np.mean(amount):.1%}，最多 {max(amount):.1%}", sum(x < 0.02 for x in amount), k, True),
+        Check(case, "不到两天平息", f"{sum(calm)}/{k} 个世界", sum(calm), k, True),
     ]
+
+
+HELD_OUT = ("bac", "swedbank", "kaspi")
+
+
+def judge(record: dict, survived: bool, day: float, amount: float, runners: float, calm: bool) -> dict[str, bool]:
+    """一个世界对不对得上史料。标准在模型改动之前写定：比例要落在史料数字的二分之一到两倍之间。
+    Whether one world matches the record. The criteria were fixed before the model was changed: a share must fall
+    between half and twice the recorded figure.
+    """
+    lo, hi = record["run_days"]
+    out = {
+        "survived": bool(survived),
+        "on_day": bool(lo <= day <= hi),  # 没发生挤兑时 day 是 nan，算没对上 / day is nan when no run happened, which counts as a miss
+        "amount": bool(record["amount"] / 2 <= amount <= record["amount"] * 2),
+        "calm": bool(calm),
+    }
+    if record["runners"] is not None:
+        out["runners"] = bool(record["runners"] / 2 <= runners <= record["runners"] * 2)
+    return out
+
+
+def held_out(scenario: str, over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
+    """样本外检验：场景设定和通过标准（场景模块里的 RECORD）都在模型改动之前合并，之后不改。
+    The out-of-sample test: the scenario's settings and its pass criteria (RECORD in the scenario module) were merged
+    before the model was changed and are not edited afterwards.
+
+    "平息"指当局表态两天之后才去排队的人不超过全部挤兑者的一成，与东亚银行的检验同一口径。
+    "Calm" means that no more than a tenth of all runners joined the queue later than two days after the
+    authorities' statement, the same definition as in the Bank of East Asia check.
+    """
+    sc = cal.trace.scenario_module(scenario)
+    rec = sc.RECORD
+    worlds, amounts, shares, days = [], [], [], []
+    for seed in seeds:
+        params = Params(scenario=scenario, seed=seed, n=n, **(sc.DEFAULTS | over))
+        params.interventions = sc.interventions(params.start_hour)
+        pop, r = cal.trace.run_only(params)
+        total = sum(p.deposit for p in pop.persons)
+        amount = sum(e["x"] for e in r.events if e["k"] == "withdraw") / total
+        share = cal.runner_share(pop, r)
+        day = cal.run_day(pop, r, params)
+        calm = cal.late_share(r, n, sc.GUARANTEE_T + 48) <= 0.1
+        worlds.append(judge(rec, r.failed_at is None, day, amount, share, calm))
+        amounts.append(amount), shares.append(share), days.append(day)
+    k = len(seeds)
+    count = lambda key: sum(w[key] for w in worlds)  # noqa: E731
+    ran = [d for d in days if not np.isnan(d)]
+    lo, hi = rec["run_days"]
+    when = f"第 {lo} 天" if lo == hi else f"第 {lo}–{hi} 天"
+    case = rec["case"]
+    out = [
+        Check(case, "全部相符", f"{sum(all(w.values()) for w in worlds)}/{k} 个世界", sum(all(w.values()) for w in worlds), k, False),
+        Check(case, "银行没有倒闭", f"{count('survived')}/{k} 个世界撑住", count("survived"), k, False),
+        Check(case, f"{when}出现挤兑", f"{len(ran)}/{k} 个世界发生挤兑" + (f"，平均第 {np.mean(ran):.1f} 天" if ran else ""), count("on_day"), k, False),
+        Check(case, f"被提走的存款约为总额的 {rec['amount']:.1%}（要求在一半到两倍之间）", f"平均 {np.mean(amounts):.1%}，最少 {min(amounts):.1%}，最多 {max(amounts):.1%}", count("amount"), k, False),
+    ]  # fmt: skip
+    if rec["runners"] is not None:
+        out.append(Check(case, f"去取款的储户约占 {rec['runners']:.0%}（要求在一半到两倍之间）", f"平均 {np.mean(shares):.1%}", count("runners"), k, False))
+    out.append(Check(case, "当局表态两天后基本没人再去取", f"{count('calm')}/{k} 个世界", count("calm"), k, False))
+    return out

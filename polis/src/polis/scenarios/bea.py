@@ -1,9 +1,10 @@
 """第三个场景：2008 年 9 月香港东亚银行挤兑。事件顺序取自 corpus/cases/bea_bank_run_2008.yaml。
 Third scenario: the September 2008 run on the Bank of East Asia in Hong Kong. Event order from the corpus case file.
 
-这个场景只用来做样本外检验：它的设定在第一次运行之前就定下，之后不再调。
+这个场景原本只用来做样本外检验：它的设定在第一次运行之前就定下，之后不再调。结果看过之后它不再算检验（见 canon.bea）。
 街区、人物和人口都是合成的；人物是虚构的普通储户，不对应任何真实的人。
-This scenario exists only as an out-of-sample test: its settings were fixed before the first run and are not tuned.
+This scenario was built as an out-of-sample test: its settings were fixed before the first run and are not tuned.
+Once its result had been seen it stopped counting as a test (see canon.bea).
 Districts, cast and population are synthetic; the characters are invented ordinary depositors, not real people.
 
 凡是史料里没有数字的地方（群发短信触及多少人、有多可信），用的是实验台里早已存在的预设值，没有为这个场景另设。

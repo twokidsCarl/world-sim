@@ -45,12 +45,42 @@ def test_toyokawa_checks_count_worlds_and_are_marked_fitted():
     assert all(0 <= c.passed <= c.runs == 2 for c in checks)
 
 
-def test_bea_is_the_out_of_sample_case():
+def test_bea_is_no_longer_counted_as_a_test():
     checks = canon.bea(SAVED, [1, 2], n=300)
-    assert len(checks) == 4 and not any(c.fitted for c in checks)
+    assert len(checks) == 4 and all(c.fitted for c in checks)
     assert all(0 <= c.passed <= c.runs == 2 for c in checks)
-    # 校准的目标里没有它 / it is not among the calibration targets
-    assert not any("bea" in t.metric for t in cal.targets())
+
+
+def test_held_out_scenarios_are_frozen_from_verified_cases():
+    """只检查设定和标准本身，不运行这三个场景。/ Checks the settings and criteria only; the scenarios are not run."""
+    from polis import corpus, population
+
+    cases = {c.id: c for c in corpus.load("cases")}
+    for name in canon.HELD_OUT:
+        sc = trace.scenario_module(name)
+        rec = sc.RECORD
+        assert cases[rec["case"]].verified
+        assert set(rec) == {"case", "run_days", "amount", "runners"}
+        assert 0 < rec["amount"] < 1 and rec["run_days"][0] <= rec["run_days"][1]
+        assert isinstance(sc.DEPOSIT_INSURANCE, bool)
+        ivs = sc.interventions(sc.DEFAULTS["start_hour"])
+        assert any(iv.t == sc.GUARANTEE_T and iv.valence == -1 for iv in ivs)
+        assert all(0 <= iv.t < sc.DEFAULTS["ticks"] for iv in ivs)
+        pop = population.build(Params(scenario=name, n=300, **sc.DEFAULTS), sc)
+        assert {"banker", "witness"} <= pop.cast.keys()
+        # 校准的目标里没有它们 / none of them is among the calibration targets
+        assert not any(rec["case"] in t.source for t in cal.targets())
+
+
+def test_judge_applies_the_factor_of_two_band():
+    rec = dict(case="x", run_days=(1, 2), amount=0.02, runners=0.10)
+    good = canon.judge(rec, True, 2.0, 0.03, 0.06, True)
+    assert all(good.values()) and set(good) == {"survived", "on_day", "amount", "calm", "runners"}
+    assert not canon.judge(rec, True, 2.0, 0.041, 0.06, True)["amount"]
+    assert not canon.judge(rec, True, 2.0, 0.009, 0.06, True)["amount"]
+    assert not canon.judge(rec, True, float("nan"), 0.0, 0.0, True)["on_day"]
+    assert not canon.judge(rec, True, 3.0, 0.02, 0.21, True)["runners"]
+    assert "runners" not in canon.judge(rec | {"runners": None}, True, 1.0, 0.02, 0.5, True)
 
 
 def test_record_like_reports_each_feature():

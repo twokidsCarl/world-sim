@@ -100,7 +100,6 @@ NOTICE = "丰川信用金库声明：本库经营正常，请勿听信流言。"
 GUARANTEE = "日本银行表示：丰川信用金库经营健全。各报同日报道此事系谣言，成堆的现金已摆在柜台前。"
 FAILED = "丰川信用金库付不出钱，关门了。"
 
-ERRAND_T = 5 * 24 + 3  # 12 月 13 日 11:00，J 为付货款吩咐取钱 / 13 Dec 11:00, J has money withdrawn to pay a supplier
 ERRAND_T = 5 * 24 + 3  # 12 月 13 日 11:00，J 为付货款吩咐取钱 / 11:00 on 13 December, J has money withdrawn to pay a supplier
 NOTICE_T = 6 * 24 + 1  # 12 月 14 日 09:00，金库自己的声明 / 09:00 on 14 December, the bank's own statement
 GUARANTEE_T = 6 * 24 + 10  # 12 月 14 日 18:00，媒体集中报道、日本银行表态 / 18:00 on 14 December, concerted press coverage and the Bank of Japan's statement
