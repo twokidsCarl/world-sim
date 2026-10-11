@@ -60,6 +60,47 @@
       "link": "http://download.yasara.org/petworld/hiv/index.html"
     },
     {
+      "id": "influenza-virion",
+      "title": "流感病毒颗粒（H1N1，整个包膜）",
+      "titleEn": "An influenza virion (H1N1, the whole envelope)",
+      "keywords": [
+        "流感",
+        "流感病毒",
+        "influenza",
+        "H1N1",
+        "血凝素",
+        "hemagglutinin"
+      ],
+      "source": {
+        "kind": "prepared",
+        "format": "pdb",
+        "url": "https://g-7e3643.2af3b.36fe.data.globus.org/H1N1-Mich2015-PSF-PDB-JS_lastframe_not_water_not_ions.tar.gz",
+        "member": "H1N1-Mich2015_pr_gl_lip_LAST.pdb",
+        "head": 640000000,
+        "budget": 8000000,
+        "chains": {"H": "hemagglutinin", "N": "neuraminidase", "M": "M2 proton channel"},
+        "lipids": ["POPC"]
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "roles": [
+        ["hemagglutinin", "focus"],
+        ["neuraminidase", "nucleic-binding"],
+        ["M2", "extracellular"],
+        ["glycan", "glycan"]
+      ],
+      "caption": "一整个甲型流感病毒颗粒的包膜，从中间剖开：膜上插着 236 个血凝素三聚体和 30 个神经氨酸酶四聚体，带着它们的糖链，还有 11 个 M2 质子通道（只有跨膜的那一段）。这是一次全原子分子动力学模拟的最后一帧；模型里只有包膜和膜上的蛋白，病毒内部的基质蛋白和基因组不在其中。",
+      "captionEn": "The envelope of an entire influenza A virion, cut through the middle: 236 hemagglutinin trimers and 30 neuraminidase tetramers stand in the membrane with their glycans, along with 11 M2 proton channels (their membrane-spanning part only). This is the last frame of an all-atom molecular dynamics simulation; the model holds the envelope and its proteins only, without the matrix protein and genome inside the virus.",
+      "tier": "curated",
+      "licence": "没有找到许可声明",
+      "licenceEn": "no licence statement found",
+      "attribution": "Lorenzo Casalino, Christian Seitz, Rommie Amaro 等（加州大学圣迭戈分校 Amaro 实验室）",
+      "attributionEn": "Lorenzo Casalino, Christian Seitz, Rommie Amaro and colleagues (Amaro Lab, UC San Diego)",
+      "citation": "Casalino et al., ACS Cent. Sci. 2022, doi:10.1021/acscentsci.2c00981",
+      "link": "https://amarolab.ucsd.edu/influenza.php",
+      "merge": "glycan"
+    },
+    {
       "id": "synaptic-vesicle",
       "title": "突触小泡",
       "titleEn": "Synaptic vesicle",

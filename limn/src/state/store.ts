@@ -183,7 +183,8 @@ const DENSE = typeof location !== 'undefined' && new URLSearchParams(location.se
 
 /** 向本地服务要一个预处理过的模型；还在准备就隔几秒再问 / ask the local service for a prepared model, asking again every few seconds while it is being prepared */
 async function fetchPrepared(id: string, waiting: () => void): Promise<Uint8Array> {
-  for (let tries = 0; tries < 400; tries++) {
+  // 每 3 秒问一次，最多等一小时（最大的一个要下载 640 MB）/ asking every 3 seconds for up to an hour (the largest needs a 640 MB download)
+  for (let tries = 0; tries < 1200; tries++) {
     const res = await fetch(`/api/prepared?id=${encodeURIComponent(id)}`).catch(() => null)
     if (!res) throw noteError('error.preparedNoServer')
     if (res.status === 202) {
@@ -377,6 +378,8 @@ export const useStore = create<State>((set, get) => ({
         const h = made.header
         const n = (v: number) => v.toLocaleString('en-US')
         if (h.unit === 'beads') notes.push({ key: 'note.preparedBeads', params: { atoms: n(h.atomsPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced) } })
+        // 只有一份的显式模型（不是实例化的）/ an explicit model in a single copy (not instanced)
+        else if (h.ops === 1) notes.push({ key: 'note.preparedAtoms', params: { atoms: n(h.atomsPlaced), heavy: n(h.heavyPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced) } })
         else notes.push({ key: 'note.prepared', params: { atoms: n(h.atomsPlaced), heavy: n(h.heavyPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced), kinds: h.objects.length, copies: n(h.ops) } })
       } else mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(pick(entry.title, entry.titleEn)))
       let assembly = defaultAssembly(mol)
@@ -435,6 +438,8 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const mesoscale = !!entry.perCopy
+      // 没有找到许可声明的数据，在说明里写明 / data for which no licence statement was found says so in its notes
+      if (entry.licenceEn === 'no licence statement found') notes.push({ key: 'note.noLicence' })
       if (mesoscale && !entry.points) notes.push({ key: 'note.publishedModel' })
       const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({

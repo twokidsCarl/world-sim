@@ -61,6 +61,19 @@
       "url": "/?model=hiv-virion-petworld"
     },
     {
+      "id": "influenza-virion",
+      "title": {
+        "zh": "一整个流感病毒颗粒：膜和上面的几百根“刺”",
+        "en": "A whole influenza virion: the membrane and its hundreds of spikes"
+      },
+      "hint": {
+        "zh": "拖动旋转，用“剖开”滑杆看里面；粉紫色是血凝素，橙色是神经氨酸酶。一次全原子模拟的最后一帧，633 万个原子。没有找到这份数据的许可声明，使用时现取。第一次打开时本机要下载 640 MB 并处理，需要联网，可能要半小时；之后直接用存下来的结果",
+        "en": "Drag to rotate; use the cut slider to look inside. Pink and purple are hemagglutinin, orange is neuraminidase. The last frame of an all-atom simulation, 6.33 million atoms. No licence statement was found for this data, which is fetched when used. The first time, 640 MB is downloaded and processed on this machine, which needs a network connection and may take half an hour; afterwards the stored result is used"
+      },
+      "idea": "2.1",
+      "url": "/?model=influenza-virion"
+    },
+    {
       "id": "synaptic-vesicle",
       "title": {
         "zh": "突触小泡：装满谷氨酸的一个小囊",
