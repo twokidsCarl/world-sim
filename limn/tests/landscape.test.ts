@@ -6,6 +6,7 @@ import { IDENTITY, type Molecule } from '../src/mol/types'
 import type { LandscapeSpec } from '../src/scene/spec'
 import { BOX, resolveLandscape } from '../server/landscape'
 import type { Deps } from '../server/resolve'
+import { parsePaxdb, ppmToMicromolar } from '../server/sources/paxdb'
 import type { EntryInfo } from '../server/sources/rcsb'
 
 const entry = (id: string, atoms: number): EntryInfo => ({
@@ -21,7 +22,7 @@ function deps(recipe: any, picks: any): Deps {
     ask: (async () => (call++ === 0 ? recipe : picks)) as Deps['ask'],
     searchText: async (q) => (q === 'small' ? ['1AAA'] : q === 'medium' ? ['2BBB'] : q === 'big' ? ['3CCC'] : []),
     entryInfo: async (ids) => ids.map((i) => known.get(i)).filter((x): x is EntryInfo => !!x),
-    findProtein: async () => [], bestStructures: async () => [], alphafold: async () => null,
+    findProtein: async () => [], bestStructures: async () => [], alphafold: async () => null, abundances: async () => null,
   }
 }
 
@@ -66,6 +67,46 @@ describe('resolveLandscape', () => {
     const spec = await resolveLandscape('x', deps(r, pick('2BBB', '1AAA')))
     const m = spec.landscape!.ingredients.find((x) => x.compartment === 'membrane')!
     expect(m.copies).toBe(Math.round(5000 * BOX.width * BOX.depth * 1e-8))
+  })
+})
+
+// 实测丰度 / measured abundances
+describe('PaxDb abundances', () => {
+  const file = ['#name: Test organism - Whole organism (Integrated)', '#score: 20', '#gene_name\tstring_external_id\tabundance', 'tufA\t1.b1\t10000', 'gapA\t1.b2\t2000', 'gapA\t1.b2x\t500', 'bad\t1.b3\tNA', ''].join('\n')
+
+  it('reads a dataset file', () => {
+    const a = parsePaxdb(file, 1, 'WHOLE_ORGANISM')
+    expect(a.name).toBe('Test organism - Whole organism (Integrated)')
+    expect([...a.ppm]).toEqual([['tufa', 10000], ['gapa', 2000]])
+  })
+
+  it('turns ppm into a concentration', () => {
+    // 300 g/L、平均 40 kDa：蛋白总浓度 7.5 mM，1 ppm 是 7.5 nM / at 300 g/L and 40 kDa mean: 7.5 mM of protein in all, so 1 ppm is 7.5 nM
+    expect(ppmToMicromolar(1, 300)).toBeCloseTo(0.0075, 6)
+    expect(ppmToMicromolar(10000, 300)).toBeCloseTo(75, 3)
+  })
+
+  it('replaces the estimate where a gene is found, and says which numbers are which', async () => {
+    const d = deps(recipe([ing('EF-Tu', 'small', 1, { genes: ['tufA'] }), ing('other', 'medium', 1, { genes: ['notInPaxdb'] })], { organism_taxid: 1, tissue: 'WHOLE_ORGANISM' }), pick('1AAA', '2BBB'))
+    const asked: [number, string][] = []
+    const spec = await resolveLandscape('x', { ...d, abundances: async (taxid, tissue) => (asked.push([taxid, tissue ?? '']), parsePaxdb(file, taxid, 'WHOLE_ORGANISM')) })
+    expect(asked).toEqual([[1, 'WHOLE_ORGANISM']])
+    const [a, b] = spec.landscape!.ingredients
+    expect(a!.tier).toBe('curated')
+    expect(a!.abundance).toMatch(/PaxDb.*tufA.*10,000 ppm/)
+    expect(b!.tier).toBe('estimated')
+    // 75 µM 对 1 µM：实测值把比例从 1:1 改成了 75:1 / 75 µM against 1 µM: the measured value turns a 1:1 ratio into 75:1
+    expect(a!.copies / b!.copies).toBeGreaterThan(40)
+    expect(spec.notes.join(' ')).toMatch(/1 种成分的丰度取自 PaxDb/)
+  })
+
+  it('divides a homo-oligomer\'s abundance by its number of chains', async () => {
+    const known = entry('1AAA', 3000)
+    known.assemblies = [{ id: '1', atoms: 12000, chains: 4, symmetry: 'D2' }]
+    const d = deps(recipe([ing('GAPDH', 'small', 1, { genes: ['gapA'] })], { organism_taxid: 1, tissue: 'WHOLE_ORGANISM' }), pick('1AAA'))
+    const spec = await resolveLandscape('x', { ...d, entryInfo: async () => [known], abundances: async (t) => parsePaxdb(file, t, 'WHOLE_ORGANISM') })
+    // 2000 ppm 的单体，四聚体是 500 ppm，即 3.75 µM / 2,000 ppm of monomer is 500 ppm of tetramer, 3.75 µM
+    expect(spec.landscape!.ingredients[0]!.abundance).toMatch(/约 3\.8 μM/)
   })
 })
 

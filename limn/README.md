@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·2a | 全景图的蛋白丰度改用 PaxDb 实测数据 | 完成，见 `server/sources/paxdb.ts` |
 | 二期·1 | 现成的整病毒、整细胞模型：新冠病毒颗粒、HIV、突触小泡、外泌体、整只支原体、核孔等 14 个 | 完成，见 `data/catalog.json`、`src/mol/load.ts`、`src/mol/coarse.ts` |
 
 二期的目标是用更多真实数据扩大可画的范围，共八个阶段：现成模型（已完成）、用实测数据替换估计值（丰度、膜取向、脂质组成）、AlphaFold 扩展与逐残基标注、Nature/Science 最新结构、分子尺度的突触、神经元形态、细胞器网格、电镜密度图。
@@ -77,7 +78,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 不是观测结果，界面上也都写明了：
 
 - **位置和朝向是随机排布的。** 可溶分子在各自区室里随机放置；真实细胞里的结合关系、排列（例如贴在膜内侧的基质蛋白层）没有体现。
-- **丰度是模型给的估计值。** 配方由模型拟定：列出十来种有代表性的分子和它们的大致浓度。除标为主角的成分外，数量按比例放大到区室总浓度，用这十来种代表其余上千种。
+- **丰度优先用实测数据，查不到才是估计值。** 配方由模型拟定：列出十来种有代表性的分子。场景属于某个物种的细胞时，蛋白的丰度取自 [PaxDb](https://pax-db.org/)（整合了多项质谱研究的丰度数据库，覆盖大肠杆菌、酵母、人和小鼠的各种组织等四百多个物种）；复合物取各亚基的中位数，再除以每种亚基的份数。PaxDb 里查不到的成分和膜蛋白的面密度仍是模型的估计。界面上每种成分都标明是“实测数据”还是“估计”。除标为主角的成分外，数量按比例放大到区室总浓度，用这十来种代表其余上千种。
 - **膜蛋白是近似摆放的。** 沿分子长轴竖立；只解析了膜外段的结构立在膜面上，连膜的一端由链末端的位置判断。没有使用实验确定的取向和插入深度，缺失的柄部和跨膜段不画。
 - **膜是同一种磷脂（POPC）的理想构象铺成的**，不是真实的脂质组成和构象。
 - **没有画**：水、离子、小分子，以及核酸长链和纤维（DNA、mRNA、细胞骨架）。
@@ -107,6 +108,7 @@ bun run dev                    # 然后打开 http://127.0.0.1:5184/research/ill
 ## 数据与参考图
 
 - **结构数据**：运行时从 RCSB PDB（`models.rcsb.org`，CC0）按编号下载，不入库。检索还用到 UniProt、PDBe SIFTS 和 AlphaFold DB 的公开接口。
+- **蛋白丰度**：运行时从 [PaxDb](https://pax-db.org/) 下载对应物种和组织的整合数据集，缓存在本机，不入库。
 - **现成模型**（`data/catalog.json`，只存指针）：[Mesoscale Explorer](https://mesoscope.scripps.edu/explorer/) 的示例文件，包括 YASARA [PetWorld](http://download.yasara.org/petworld/)（CC BY-SA 4.0；Ozvoldik 等，*J. Chem. Inf. Model.* 2021）和 [cellPACK](https://github.com/mesoscope/cellPACK_data)（数据仓库为 MIT）的模型、生殖支原体整细胞模型（MIT；Maritan 等，*J. Mol. Biol.* 2022），以及 RCSB 里的整合结构（PDB-IHM，CC0）。
 - **`data/motm.json`**：PDB-101 “Molecule of the Month” 各篇文章的标题和文中提到的 PDB 编号，用来优先选经过人工挑选的代表性结构。不含文章正文和图片。
 - **参考图**：Goodsell 的原图来自 RCSB PDB-101 的 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery) 和 [Molecule of the Month](https://pdb101.rcsb.org/motm)，许可为 CC-BY-4.0。本仓库**不包含这些图片**，只包含从中测得的统计数字（写在风格准则里）；`research/gallery/` 和 `research/out/` 已被忽略，用上面的脚本重新获取。
@@ -131,6 +133,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 2a | Protein abundances in landscapes come from PaxDb measurements | Done, see `server/sources/paxdb.ts` |
 | Round 2, phase 1 | Ready-made whole virions and cells: a SARS-CoV-2 virion, HIV, a synaptic vesicle, an exosome, a whole mycoplasma cell, nuclear pores; 14 models | Done, see `data/catalog.json`, `src/mol/load.ts`, `src/mol/coarse.ts` |
 
 Round 2 widens what can be drawn by bringing in more real data, in eight phases: ready-made models (done), measured data in place of estimates (abundance, membrane orientation, lipid composition), AlphaFold extensions and per-residue annotation, recent structures from Nature and Science, the synapse at molecular scale, neuron morphologies, organelle meshes, and electron-microscopy density maps.
@@ -193,7 +196,7 @@ Real: every molecule is an experimental structure from the PDB, drawn at one sca
 Not observed, and said so in the interface:
 
 - **Positions and orientations are random.** Soluble molecules are scattered within their compartment; real binding partners and arrangements (a matrix layer under a membrane, say) are not represented.
-- **Abundances are the model's estimates.** The recipe is proposed by the model: a dozen representative molecules and their rough concentrations. Apart from the featured ones, counts are scaled up to the compartment's total concentration, so that a dozen kinds stand in for the thousand others.
+- **Abundances are measured where possible and estimated otherwise.** The recipe is proposed by the model: a dozen representative molecules. When the scene is one organism's cell, protein abundances come from [PaxDb](https://pax-db.org/), a database that integrates many mass-spectrometry studies and covers over four hundred organisms, including E. coli, yeast, and many human and mouse tissues; a complex takes the median over its subunits, divided by the number of copies of each. Ingredients PaxDb does not have, and the surface density of membrane proteins, are still the model's estimates. The interface marks every ingredient as measured data or an estimate. Apart from the featured ones, counts are scaled up to the compartment's total concentration, so that a dozen kinds stand in for the thousand others.
 - **Membrane proteins are placed approximately.** They stand along their long axis; a structure that covers only the part outside the membrane stands on the membrane face, with the membrane end judged from where the chain terminus is. Experimentally determined orientations and insertion depths are not used, and missing stalks and transmembrane segments are not drawn.
 - **The membrane is one phospholipid (POPC) in its ideal conformation**, not a real lipid composition or real conformations.
 - **Not drawn**: water, ions, small molecules, and long nucleic acids and filaments (DNA, mRNA, the cytoskeleton).
@@ -223,6 +226,7 @@ Rebuilding the Molecule of the Month table (`data/motm.json`, article titles and
 ## Data and reference pictures
 
 - **Structures**: downloaded by id at run time from the RCSB PDB (`models.rcsb.org`, CC0); none are in this repository. Lookups also use the public interfaces of UniProt, PDBe SIFTS and the AlphaFold DB.
+- **Protein abundance**: the integrated dataset for the organism and tissue is downloaded from [PaxDb](https://pax-db.org/) at run time and cached locally; none of it is in this repository.
 - **Ready-made models** (`data/catalog.json`, pointers only): the example files of the [Mesoscale Explorer](https://mesoscope.scripps.edu/explorer/), which include models from YASARA [PetWorld](http://download.yasara.org/petworld/) (CC BY-SA 4.0; Ozvoldik et al., *J. Chem. Inf. Model.* 2021) and [cellPACK](https://github.com/mesoscope/cellPACK_data) (the data repository is MIT), the whole-cell model of Mycoplasma genitalium (MIT; Maritan et al., *J. Mol. Biol.* 2022), and integrative structures in the RCSB (PDB-IHM, CC0).
 - **`data/motm.json`**: the title of each PDB-101 "Molecule of the Month" article and the PDB ids it mentions, used to prefer hand-picked representative structures. It contains no article text and no images.
 - **Reference pictures**: Goodsell's originals come from the RCSB PDB-101 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery) and [Molecule of the Month](https://pdb101.rcsb.org/motm), licensed CC-BY-4.0. This repository **does not contain those images**, only statistics measured from them (in the style guide); `research/gallery/` and `research/out/` are ignored and can be fetched again with the scripts above.

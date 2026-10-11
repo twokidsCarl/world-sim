@@ -158,7 +158,7 @@ export function App() {
                       if (!ing) return null
                       return (
                         <div className="muted">
-                          {ing.abundance}（估计） → {ing.copies} 个{placed !== undefined && placed < ing.copies ? `，放下了 ${placed} 个` : ''}
+                          {ing.abundance}（{ing.tier === 'curated' ? '实测数据' : '估计'}） → {ing.copies} 个{placed !== undefined && placed < ing.copies ? `，放下了 ${placed} 个` : ''}
                         </div>
                       )
                     })()}
