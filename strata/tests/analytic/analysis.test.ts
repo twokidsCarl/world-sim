@@ -77,6 +77,56 @@ describe('dynamic mode decomposition', () => {
   })
 })
 
+describe('forward–backward DMD', () => {
+  // 两个衰减模加上测量噪声。标准 DMD 高估衰减率，前向–后向 DMD 应明显更准。
+  // Two decaying modes plus measurement noise. Standard DMD overestimates the decay
+  // rates; forward–backward DMD should be clearly more accurate.
+  const m = 24
+  const dt = 0.5
+  const rates = [0.02, 0.08]
+  const noisy = (seed: number, sigma: number) =>
+    Array.from({ length: 80 }, (_, t) =>
+      Float64Array.from({ length: m }, (_, j) => {
+        const y = (2 * Math.PI * j) / m
+        const time = t * dt
+        return (
+          0.3 +
+          0.25 * Math.exp(-rates[0]! * time) * Math.cos(y) +
+          0.15 * Math.exp(-rates[1]! * time) * Math.cos(2 * y) +
+          sigma * gaussian(seed, t * m + j)
+        )
+      }),
+    )
+
+  it('agrees with standard DMD on noiseless data', () => {
+    const data = noisy(1, 0)
+    const plain = dmd(data, dt, 3).rates
+    const fb = dmd(data, dt, 3, { forwardBackward: true }).rates
+    for (let i = 0; i < 3; i++) expect(fb[i]!.re).toBeCloseTo(plain[i]!.re, 6)
+    expect(-fb[1]!.re).toBeCloseTo(rates[0]!, 6)
+    expect(-fb[2]!.re).toBeCloseTo(rates[1]!, 6)
+  })
+
+  it('removes most of the noise bias in the decay rates', () => {
+    let plainError = 0
+    let fbError = 0
+    let plainBias = 0
+    const seeds = [11, 12, 13, 14, 15, 16]
+    for (const seed of seeds) {
+      const data = noisy(seed, 0.02)
+      const plain = -dmd(data, dt, 3).rates[1]!.re
+      const fb = -dmd(data, dt, 3, { forwardBackward: true }).rates[1]!.re
+      plainError += Math.abs(plain / rates[0]! - 1) / seeds.length
+      fbError += Math.abs(fb / rates[0]! - 1) / seeds.length
+      plainBias += (plain / rates[0]! - 1) / seeds.length
+    }
+    console.log(`slowest decay rate, mean relative error: standard ${plainError.toFixed(3)} (bias ${plainBias.toFixed(3)}), forward-backward ${fbError.toFixed(3)}`)
+    // 标准 DMD 的偏差是正的（衰减偏快）。 / The bias of standard DMD is positive (decay too fast).
+    expect(plainBias).toBeGreaterThan(0.05)
+    expect(fbError).toBeLessThan(plainError / 2)
+  })
+})
+
 describe('weak-form SINDy', () => {
   it('recovers the heat equation from noiseless data', () => {
     const D = 0.02

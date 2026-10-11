@@ -4,7 +4,7 @@
 // to the next, restricted to the leading singular directions, and read its eigenvalues
 // as growth or decay rates.
 
-import { eigenvalues, multiply, symmetricEigen, transpose, type Complex, type Matrix } from './linalg'
+import { eigenvalues, inverse, multiply, symmetricEigen, transpose, type Complex, type Matrix } from './linalg'
 
 export interface DmdResult {
   /**
@@ -22,7 +22,12 @@ export interface DmdResult {
  * `snapshots[t]` is the state at time t * dt. `rank` is the number of singular directions
  * kept. Rates are returned sorted from slowest decay to fastest.
  */
-export function dmd(snapshots: ArrayLike<number>[], dt: number, rank: number): DmdResult {
+export function dmd(
+  snapshots: ArrayLike<number>[],
+  dt: number,
+  rank: number,
+  options: { forwardBackward?: boolean } = {},
+): DmdResult {
   const steps = snapshots.length - 1
   const m = snapshots[0]!.length
   // 每一列是一个快照：X 取 0..T-1，Y 取 1..T。
@@ -41,7 +46,26 @@ export function dmd(snapshots: ArrayLike<number>[], dt: number, rank: number): D
   const reduced = multiply(multiply(ut, multiply(y, transpose(x))), u).map((row) =>
     row.map((v, j) => v / (singular[j]! * singular[j]!)),
   )
-  const rates = eigenvalues(reduced)
+  let multipliers = eigenvalues(reduced)
+  if (options.forwardBackward) {
+    // 前向–后向 DMD（Dawson 等 2016）。数据里的噪声使正向拟合的算子系统性地偏小（衰减偏快），
+    // 而把时间倒过来拟合的算子偏差方向相反；两者合成 (A_f A_b⁻¹)^(1/2) 可消去一阶偏差。
+    // Forward–backward DMD (Dawson et al. 2016). Noise in the data makes the operator
+    // fitted forwards systematically too small (decay too fast), and the one fitted with
+    // time reversed is biased the other way; combining them as (A_f A_b⁻¹)^(1/2) cancels
+    // the bias to first order.
+    const a = multiply(ut, x)
+    const b = multiply(ut, y)
+    const backward = multiply(multiply(a, transpose(b)), inverse(multiply(b, transpose(b))))
+    multipliers = eigenvalues(multiply(reduced, inverse(backward))).map((sq) => {
+      // 主平方根：采样足够密时乘子接近 1，实部为正。
+      // Principal square root: with fine enough sampling the multipliers are near 1, with positive real part.
+      const modulus = Math.sqrt(Math.hypot(sq.re, sq.im))
+      const angle = Math.atan2(sq.im, sq.re) / 2
+      return { re: modulus * Math.cos(angle), im: modulus * Math.sin(angle) }
+    })
+  }
+  const rates = multipliers
     .map((mu) => ({ re: Math.log(Math.hypot(mu.re, mu.im)) / dt, im: Math.atan2(mu.im, mu.re) / dt }))
     .sort((a, b) => b.re - a.re)
   return { rates, singular }

@@ -221,6 +221,8 @@ export const MD_ANALYSES: AnalysisDef[] = [
       const dy = h.x[1]! - h.x[0]!
       // 秩取 4：守恒的平均值加上衰减最慢的几个形状。
       // Rank 4: the conserved mean and the slowest decaying shapes.
+      // 用标准 DMD。前向–后向的变体在这份真实数据上没有更准（见 README）。
+      // Standard DMD. The forward–backward variant was no more accurate on these real data (see the README).
       const { rates } = dmd(data, dt, 4)
       const measured = [-rates[1]!.re, -rates[2]!.re]
       const D = weakSindy(data, dt, dy, undefined, SPARSITY).coefficients[0]!
@@ -230,7 +232,7 @@ export const MD_ANALYSES: AnalysisDef[] = [
         headline: `两个最慢模态的衰减率：${measured[0]!.toPrecision(3)} 和 ${measured[1]!.toPrecision(3)}`,
         detail:
           D > 0
-            ? `扩散方程预言 D·(2πn/L)² = ${predicted[0]!.toPrecision(3)} 和 ${predicted[1]!.toPrecision(3)}（D 取自上面的拟合），比值 ${(measured[0]! / predicted[0]!).toFixed(2)} 和 ${(measured[1]! / predicted[1]!).toFixed(2)}。两种方法互不相干：一个拟合方程，一个只找线性模态。DMD 对噪声和所取的时间窗敏感，这里的偏差可达三四成，只能算量级上的印证。`
+            ? `扩散方程预言 D·(2πn/L)² = ${predicted[0]!.toPrecision(3)} 和 ${predicted[1]!.toPrecision(3)}（D 取自上面的拟合），比值 ${(measured[0]! / predicted[0]!).toFixed(2)} 和 ${(measured[1]! / predicted[1]!).toFixed(2)}。两种方法互不相干：一个拟合方程，一个只找线性模态。DMD 的读数随记录长度变化很大：初始的台阶含有许多高阶模，记录短时它们混进前几个模态，比值可以偏离数倍；高阶模衰减掉之后才接近 1。只能算量级上的印证。`
             : '上面的拟合没有给出正的扩散系数，无法比较。',
         curve: { x: [1, 2], y: measured },
         theory: D > 0 ? { x: [1, 2], y: predicted } : undefined,
