@@ -5,6 +5,16 @@ export interface Style {
   background: RGB
   ink: RGB
   /**
+   * 线取“旁边的填色压暗”的比例：0（缺省）用固定的墨色 `ink`，1 完全用填色的深一号。
+   * Goodsell 手绘的线是深紫、深绿这样的同色深线，不是黑线；量他的画，线的彩度在 0.06–0.09。
+   * How far a line takes "the fill beside it, darkened": 0 (the default) uses the fixed `ink`,
+   * 1 uses a deeper shade of the fill entirely. The lines in Goodsell's paintings are dark violet
+   * or dark green, of the fill's own hue, not black; measured, their chroma is 0.06–0.09.
+   */
+  inkTint?: number
+  /** 线压暗到填色的几成（缺省 0.35）/ how dark the line is, as a share of the fill (default 0.35) */
+  inkShade?: number
+  /**
    * 1 = Illustrate 在 1500 px 图像上的线宽；随输出尺寸缩放
    * 1 = Illustrate's line weight on a 1500 px image; scales with output size
    */
@@ -32,8 +42,15 @@ export interface Style {
    * Depth fading towards `color`: the share of true colour kept at the front
    * and at the back. With `layers` > 0 each molecule is assigned whole to one
    * of that many flat steps, as in Goodsell's paintings; 0 fades smoothly.
+   *
+   * `shade` > 0 时景深不褪向 `color`，而是把本色压暗、加浓，`shade` 是最远处的明暗系数。
+   * 量他的流感病毒：前后三层血凝素的明度是 0.76、0.60、0.45，彩度几乎不变。
+   * With `shade` > 0 depth does not fade towards `color`: the fill itself is darkened and
+   * enriched, `shade` being the factor at the far end. Measured on his influenza virion, three
+   * layers of hemagglutinin from front to back have lightness 0.76, 0.60, 0.45 at almost
+   * unchanged chroma.
    */
-  fog: { color: RGB; front: number; back: number; layers: number }
+  fog: { color: RGB; front: number; back: number; layers: number; shade?: number }
   /** 纸纹，0 = 关闭 / paper grain, 0 = off */
   grain: number
   radiusScale: number
@@ -98,9 +115,16 @@ export const STYLE_LANDSCAPE: Style = {
  */
 export const STYLE_MESOSCALE: Style = {
   ...structuredClone(STYLE_LANDSCAPE),
-  background: [1, 1, 1],
-  fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0.5, layers: 3 },
-  grain: 0,
+  // 略暖的纸白 / a slightly warm paper white
+  background: [0.992, 0.988, 0.976],
+  // 线是旁边填色的深一号，细一些 / lines are a deeper shade of the fill beside them, and thinner
+  inkTint: 1,
+  inkShade: 0.3,
+  lineWidth: 0.85,
+  // 平涂：不要原子之间的阴影，明暗只来自景深的三档 / flat washes: no shadows between atoms, tone comes from the three depth steps alone
+  shadow: { strength: 0, cone: 2, floor: 1, radius: 0 },
+  fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0, layers: 3, shade: 0.5 },
+  grain: 0.07,
 }
 
 /**

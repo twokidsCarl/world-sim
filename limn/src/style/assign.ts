@@ -78,10 +78,10 @@ export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECUL
     const [L, C, h] = entityLch(c, ch.entity, tone)
     // 膜是一片均匀的颜色，不按链变化 / a membrane is one even wash, with no variation from chain to chain
     const flat = mol.entities[ch.entity]!.kind === 'lipid'
-    // 0、+1、-1、+2、-2 …… 每步 9 度，五条链后循环
-    // 0, +1, -1, +2, -2 ... steps of 9 degrees, wrapping after five chains
+    // 0、+1、-1、+2、-2 …… 每步 9 度（或色调自己定的步长），五条链后循环
+    // 0, +1, -1, +2, -2 ... steps of 9 degrees (or the tone's own step), wrapping after five chains
     const step = flat ? 0 : ((k % 5) + 1) >> 1
-    const dh = (k % 5) % 2 === 1 ? step * 9 : -step * 9
+    const dh = (k % 5) % 2 === 1 ? step * (tone.hueStep ?? 9) : -step * (tone.hueStep ?? 9)
     const dL = flat ? 0 : (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
     const other = to8(oklch(L + dL, C, h + dh))
     const carbon = to8(oklch(L + dL + tone.carbonLift, Math.max(0, C - tone.carbonDrop), h + dh))

@@ -77,9 +77,10 @@ void main() {
     zcut = -1.0e30;
   } else if (mc.w > 4.5) {
     if (u_layer.x > 0.0) {
-      float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 0.999);
-      float s = u_layer.x <= 1.0 ? 0.0 : floor(t * u_layer.x) / (u_layer.x - 1.0);
-      v_keep = mix(u_fogKeep.x, u_fogKeep.y, s);
+      // 整张膜的色调随深度连续变化，不分档：按球分档会在档与档交界处出一圈杂点
+      // a membrane in one piece is toned continuously with depth, not in steps: stepping sphere by sphere leaves a ring of speckle where steps meet
+      float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 1.0);
+      v_keep = mix(u_fogKeep.x, u_fogKeep.y, t);
     }
   } else if (mc.w > 0.5) {
     float zc = (u_rot * ((u_place * vec4(mc.xyz, 1.0)).xyz - u_center)).z;
@@ -417,7 +418,18 @@ uniform float u_grain;
 uniform bool u_layered; // 景深淡出已按分子决定，存在颜色的 alpha 里 / depth fading was decided per molecule, in the colour's alpha
 uniform highp usampler2D u_ids;
 uniform vec2 u_cap;     // 同描边通道 / as in the edge pass
+uniform vec3 u_inkTint; // x：线取“该处填色压暗”的比例（0 = 用固定的墨色）；y：压暗到本色的几成；z：笔宽（像素）
+                        // x: how far a line takes "the fill here, darkened" (0 = the fixed ink); y: how dark, as a share of the fill; z: pen width in pixels
+uniform float u_fogShade; // > 0：景深不是褪向雾色，而是把本色压暗、加浓；值是最远处的明暗系数 / > 0: depth does not fade to the fog colour but darkens and enriches the fill itself; the value is the factor at the far end
 out vec4 o;
+
+// 压暗并略微加浓：Goodsell 画里远处的层和线都是“同一个颜色的深一号”，彩度不跟着掉
+// darken and enrich a little: in Goodsell's paintings both the far layers and the lines are "the same colour, a shade deeper", and chroma does not drop with it
+vec3 deepen(vec3 c, float k) {
+  vec3 d = c * k;
+  float g = dot(d, vec3(0.299, 0.587, 0.114));
+  return clamp(mix(vec3(g), d, 1.0 + 0.9 * (1.0 - k)), 0.0, 1.0);
+}
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -451,9 +463,31 @@ void main() {
     float keep = mix(u_fogAmt.x, u_fogAmt.y, t);
     vec4 c = texelFetch(u_color, p, 0);
     if (u_layered) keep = c.a;
-    rgb = mix(u_fog, c.rgb * e.b, keep);
+    if (u_fogShade > 0.0) rgb = deepen(c.rgb, mix(u_fogShade, 1.0, keep)) * e.b;
+    else rgb = mix(u_fog, c.rgb * e.b, keep);
   }
-  rgb = mix(rgb, u_ink, line);
+  vec3 ink = u_ink;
+  if (u_inkTint.x > 0.0 && line > 0.0) {
+    // 线的颜色取自它旁边的填色；线落在物体外面时，在一两个笔宽内找最近的有填色的像素
+    // a line takes its colour from the fill beside it; where the line falls outside the object, the nearest filled pixel within a pen width or two is used
+    vec3 fill = vec3(-1.0);
+    if (d < 1.0) fill = texelFetch(u_color, p, 0).rgb;
+    else {
+      ivec2 size = textureSize(u_color, 0);
+      for (int ring = 1; ring <= 3 && fill.r < 0.0; ring++) {
+        for (int k = 0; k < 8; k++) {
+          float a = float(k) * 0.7853982;
+          ivec2 q = clamp(p + ivec2(round(vec2(cos(a), sin(a)) * float(ring) * u_inkTint.z)), ivec2(0), size - 1);
+          if (texelFetch(u_depth, q, 0).r < 1.0) {
+            fill = texelFetch(u_color, q, 0).rgb;
+            break;
+          }
+        }
+      }
+    }
+    if (fill.r >= 0.0) ink = mix(u_ink, deepen(fill, u_inkTint.y), u_inkTint.x);
+  }
+  rgb = mix(rgb, ink, line);
   if (u_grain > 0.0) {
     // 纸纹：两个倍频的值噪声，只压暗。
     // Paper tooth: two octaves of value noise, darkening only.

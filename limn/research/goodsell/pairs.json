@@ -1,0 +1,11 @@
+{
+  "about": "每一对：Goodsell 的一幅画，和 limn 里同一个对象的场景。 / Each pair: one of Goodsell's paintings, and the scene of the same subject in limn.",
+  "pairs": [
+    { "name": "influenza", "ref": "influenza-virus.jpg", "scene": "/?model=influenza-virion" },
+    { "name": "zika", "ref": "zika-virus.jpg", "scene": "/?model=zika-virus" },
+    { "name": "coronavirus", "ref": "coronavirus.jpg", "scene": "/?model=sars-cov-2-virion" },
+    { "name": "hiv", "ref": "hiv-in-blood-plasma.jpg", "scene": "/?model=hiv-virion-petworld" },
+    { "name": "synapse", "ref": "excitatory-and-inhibitory-synapses.jpg", "scene": "/?model=presynaptic-bouton" },
+    { "name": "mycoplasma", "ref": "mycoplasma-mycoides.jpg", "scene": "/?model=mycoplasma-genitalium" }
+  ]
+}

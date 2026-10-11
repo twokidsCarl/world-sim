@@ -168,7 +168,9 @@ export interface CatalogEntry {
 }
 
 /** 膜的颜色：淡黄绿，取自 Goodsell 的膜 / the membrane wash: pale yellow-green, as in Goodsell's membranes */
-export const MEMBRANE_LCH: [number, number, number] = [0.8, 0.085, 112]
+// 膜是很浅的一层淡色。量 Goodsell 的流感病毒，包膜是 L 0.89、C 0.035、h 290
+// a membrane is a very pale wash. Measured on Goodsell's influenza virion, the envelope is L 0.89, C 0.035, h 290
+export const MEMBRANE_LCH: [number, number, number] = [0.9, 0.035, 290]
 
 export const CATALOG = catalog.models as CatalogEntry[]
 
