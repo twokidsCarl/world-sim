@@ -100,7 +100,7 @@ def test_errand_is_an_unrelated_withdrawal_and_documented_ties_exist():
 
 
 def test_run_day_and_late_share():
-    _, pop, r = cal.toyokawa({}, 1, 300)
+    _, pop, r = cal.toyokawa({"bias": 3.0, "w_tell": 6.0, "share": 0.5}, 1, 300)  # 话传得快、门槛压低，保证有人去排队 / fast talk and low thresholds, so that people do queue
     p = Params(scenario="toyokawa", start_hour=8)
     queued = cal._queued_at(r, len(pop.persons))
     assert (queued >= 0).any()

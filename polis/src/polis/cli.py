@@ -21,7 +21,7 @@ runs_dir = trace.runs_dir
 # 统一入口的卡片要用的几次运行：(场景, 种子, 回应)。都用校准后的参数，引擎按种子确定，所以不必进 git。
 # The runs the shared host's cards point at: (scenario, seed, response). All use the calibrated parameters and the
 # engine is deterministic per seed, so they need not be in git.
-SHOWCASE = [("rumor_run", 7, "guarantee"), ("rumor_run", 7, "none"), ("toyokawa", 1, "notice"), ("bea", 12, "notice")]
+SHOWCASE = [("rumor_run", 7, "guarantee"), ("rumor_run", 7, "none"), ("toyokawa", 53, "notice"), ("bea", 10, "notice")]
 
 
 def _line(m: model.Manifest) -> str:
@@ -186,6 +186,15 @@ def canon(
         typer.echo(f"样本外检验：{sum(c.passed for c in held)}/{sum(c.runs for c in held)} 次对上")
     else:
         typer.echo("样本外的三个案例没有跑（加 --held-out）/ the three held-out cases were not run (add --held-out)")
+
+
+@app.command()
+def curate():
+    """从 data/raw/ 的原始下载重新算出 data/curated/ 里的汇总数。/ Recompute the aggregates in data/curated/ from the raw downloads in data/raw/."""
+    from . import curate as cu
+
+    for path in cu.write():
+        typer.echo(f"已写入 {path.relative_to(cu.PROJECT)}")
 
 
 @app.command()

@@ -39,7 +39,7 @@ def test_witness_is_asked_and_its_words_enter_the_world():
     said = [m for m in r.messages if m.author == pop.cast["witness"] and m.text == "通和连夜把银子运走了！"]
     assert said and said[0].severity == 1.5 and said[0].parent == 0
     assert any(e["k"] == "tell" and e["m"] == said[0].id for e in r.events)
-    assert {"k": "thought", "a": pop.cast["witness"], "x": "这事得说出去。", "via": "llm"}.items() <= next(e for e in r.events if e.get("via") == "llm").items()
+    assert {"k": "thought", "a": pop.cast["witness"], "x": "这事得说出去。", "via": "llm"}.items() <= next(e for e in r.events if e.get("via") == "llm" and e["a"] == pop.cast["witness"]).items()
 
 
 def test_withdraw_decision_puts_them_in_the_queue_and_only_models_decide_for_them():
