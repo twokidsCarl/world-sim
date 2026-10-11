@@ -111,6 +111,45 @@ export function initTriangular(
 }
 
 /**
+ * 两亲分子：每个分子是一条 `chain` 个珠子的短链，第一个珠子是头（组分 0），其余是尾（组分 1）。
+ * 分子排在矩形格子上，分子内的珠子沿 x 相距键长 r₀，头朝左还是朝右随机。
+ * 每行约放 nx / chain 个分子，行数取得使盒子接近正方。
+ * Amphiphiles: each molecule is a short chain of `chain` beads, the first a head (species 0)
+ * and the rest tails (species 1). Molecules sit on a rectangular grid, their beads a bond
+ * length r₀ apart along x, with the head on the left or the right at random. About
+ * nx / chain molecules go in a row, and the number of rows makes the box nearly square.
+ */
+export function initChains(
+  o: { nx: number; density: number; temperature: number; seed: number; chain: number; bondK: number; bondR0: number },
+  pair: PairField,
+): MdState {
+  const { chain } = o
+  const perRow = Math.max(2, Math.round(o.nx / chain))
+  // 每个分子占的面积是 chain / ρ；格子沿 x 的边长是沿 y 的 chain 倍。
+  // Each molecule takes an area chain / ρ; a grid cell is chain times longer along x than along y.
+  const area = chain / o.density
+  const w = Math.sqrt(area * chain)
+  const h = area / w
+  const rows = Math.max(2, Math.round((perRow * w) / h))
+  const s = createState(2, perRow * rows * chain, [perRow * w, rows * h])
+  s.chain = chain
+  s.bondK = o.bondK
+  s.bondR0 = o.bondR0
+  for (let m = 0; m < perRow * rows; m++) {
+    const cx = ((m % perRow) + 0.5) * w
+    const cy = (Math.floor(m / perRow) + 0.5) * h
+    const flip = uniform(o.seed ^ 0x2545f491, m) < 0.5 ? -1 : 1
+    for (let b = 0; b < chain; b++) {
+      const i = m * chain + b
+      s.pos[2 * i] = cx + flip * (b - (chain - 1) / 2) * o.bondR0
+      s.pos[2 * i + 1] = cy
+      s.species[i] = b === 0 ? 0 : 1
+    }
+  }
+  return thermalise(s, o.temperature, o.seed, pair)
+}
+
+/**
  * 三维面心立方晶格，每边 `cells` 个惯用晶胞（每个晶胞 4 个粒子），置于立方周期性盒子中。
  * 3D face-centred cubic lattice of `cells` conventional cells per side (4 particles each)
  * in a cubic periodic box.

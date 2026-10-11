@@ -284,7 +284,7 @@ function RegionBrush({ three = false }: { three?: boolean }) {
 export function MdStage() {
   const kind = useUi((s) => s.backendKind)
   const [colour, setColour] = useState(engine.view.colour ?? 0)
-  const mixture = useUi((s) => s.params.fractionB! > 0)
+  const mixture = useUi((s) => s.params.fractionB! > 0 || s.params.chain! > 1)
   const three = useUi((s) => s.params.dim === 3)
   const hasRegion = useUi((s) => s.hasRegion)
   const [slab, setSlab] = useState(engine.view.slab ?? 0)

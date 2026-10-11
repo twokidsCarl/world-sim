@@ -61,7 +61,10 @@ class ScenarioPlayer {
     if (!scenario) return
     this.stop()
     this.scenario = scenario
-    engine.setSubstrate(scenario.substrate)
+    // 同一个底座上接着做另一个实验时，先把旋钮恢复成默认值。
+    // When another experiment follows on the same substrate, put the knobs back to their defaults first.
+    if (engine.substrate.id === scenario.substrate) engine.resetParams()
+    else engine.setSubstrate(scenario.substrate)
     // 即使对应的卡片没有挂载，也保持对预期量的计算。
     // Keep the expected quantities computed even if their cards are not mounted.
     const ids = new Set(scenario.steps.flatMap((s) => (s.expect ? [s.expect.quantity] : [])))

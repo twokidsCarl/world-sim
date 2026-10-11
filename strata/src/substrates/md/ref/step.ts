@@ -58,6 +58,16 @@ export interface MdState {
   obstacle: { x: number; y: number; r: number } | null
   /** 每个粒子沿 x 方向受到的均匀体力。 / Uniform body force per particle along x. */
   drive: number
+  /**
+   * 每个分子的珠子数；0 或 1 表示不成键。分子 m 的珠子是下标 m·chain 到 (m+1)·chain − 1，
+   * 相邻下标的两个珠子之间有一根弹簧。
+   * Beads per molecule; 0 or 1 means no bonds. Molecule m owns indices m·chain to
+   * (m+1)·chain − 1, and beads with consecutive indices are joined by a spring.
+   */
+  chain: number
+  /** 键的劲度系数与平衡长度：U = ½ k (r − r₀)²。 / Stiffness and rest length of a bond: U = ½ k (r − r₀)². */
+  bondK: number
+  bondR0: number
   seed: number
 }
 
@@ -84,6 +94,9 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
     gravity: 0,
     obstacle: null,
     drive: 0,
+    chain: 0,
+    bondK: 0,
+    bondR0: 1,
     seed: 0,
   }
 }
@@ -193,6 +206,37 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
   s.pe = pe
   s.virial = virial
   s.virialXY = virialXY
+  if (s.chain > 1) bondForces(s)
+}
+
+/**
+ * 分子内相邻珠子之间的弹簧力，加到受力、势能和位力上。
+ * Spring forces between consecutive beads of a molecule, added to the forces, the potential energy and the virial.
+ */
+function bondForces(s: MdState): void {
+  const { dim, n, pos, force, box, chain } = s
+  for (let i = 0; i + 1 < n; i++) {
+    if ((i + 1) % chain === 0) continue
+    const j = i + 1
+    let r2 = 0
+    const d = [0, 0, 0]
+    for (let k = 0; k < dim; k++) {
+      let x = pos[i * dim + k] - pos[j * dim + k]
+      if (!(s.walls && k === 1)) x -= box[k] * Math.round(x / box[k])
+      d[k] = x
+      r2 += x * x
+    }
+    const r = Math.sqrt(r2)
+    // g = f / r，与对相互作用的约定相同。 / g = f / r, the same convention as for the pair interaction.
+    const g = (-s.bondK * (r - s.bondR0)) / r
+    for (let k = 0; k < dim; k++) {
+      force[i * dim + k] += g * d[k]!
+      force[j * dim + k] -= g * d[k]!
+    }
+    s.pe += 0.5 * s.bondK * (r - s.bondR0) ** 2
+    s.virial += g * r2
+    s.virialXY += g * d[0]! * d[1]!
+  }
 }
 
 /** 圆盘表面排斥势的作用范围：Lennard-Jones 势阱的位置。 / Range of the disc's surface repulsion: the Lennard-Jones minimum. */

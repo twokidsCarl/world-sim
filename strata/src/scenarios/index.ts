@@ -545,4 +545,42 @@ export const SCENARIOS: Scenario[] = [
       },
     ],
   },
+  {
+    id: 'micelles',
+    title: '一头亲水一头疏水的分子自己聚成小团',
+    substrate: 'md',
+    steps: [
+      {
+        text: '四千八百个三珠分子：一个头（深色）拖着两个尾（橙色）。尾与尾相吸，头只会把别的珠子推开。温度很高时热运动占上风，大多数分子各走各的。',
+        set: {
+          dim: 2,
+          walls: 0,
+          chain: 3,
+          nx: 120,
+          density: 0.15,
+          temperature: 3,
+          epsBB: 3,
+          thermostat: 1,
+          integrator: 0,
+          obstacle: 0,
+          drive: 0,
+          gravity: 0,
+          deltaT: 0,
+        },
+        run: 8000,
+        expect: { quantity: 'freeFraction', min: 0.5, text: '高温：一半以上的分子落单' },
+      },
+      {
+        text: '把温度降到 0.7。尾巴一旦碰到一起就不容易分开，分子聚成一个个小团：尾朝里，头朝外。头挡在外面，所以小团长到十来个分子就停下，而不是并成一整块。',
+        set: { temperature: 0.7 },
+        run: 40000,
+        expect: { quantity: 'freeFraction', max: 0.1, text: '低温：几乎没有落单的分子' },
+      },
+      {
+        text: '看右侧“聚集数的分布”：它在几个到十几个分子处有一个峰。',
+        run: 4000,
+        expect: { quantity: 'aggregation', min: 5, text: '平均聚集数在 5 以上' },
+      },
+    ],
+  },
 ]

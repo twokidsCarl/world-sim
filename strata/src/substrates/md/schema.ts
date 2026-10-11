@@ -90,11 +90,11 @@ export const MD_KNOBS: Knob[] = [
     label: 'B–B 吸引强度 ε_BB',
     tag: 'value',
     min: 0.2,
-    max: 2,
+    max: 4,
     step: 0.05,
     default: 1,
     rebuild: 'table',
-    when: (p) => p.fractionB > 0,
+    when: (p) => p.fractionB > 0 || p.chain > 0,
   },
   {
     id: 'epsAB',
@@ -106,7 +106,7 @@ export const MD_KNOBS: Knob[] = [
     default: 0.3,
     rebuild: 'table',
     note: '低于同种吸引时，两种粒子在低温下分相。A–A 强度固定为 1。',
-    when: (p) => p.fractionB > 0,
+    when: (p) => !chainOf(p) && p.fractionB > 0,
   },
   {
     id: 'nonreciprocal',
@@ -119,7 +119,25 @@ export const MD_KNOBS: Knob[] = [
     rebuild: 'table',
     breaks: '动量和能量不再守恒',
     note: 'A 受 B 的力乘 (1+δ)，B 受 A 的力乘 (1−δ)。δ>0 时不存在势能函数：这是“粒子生命”一类玩具规则的做法，不是封闭系统的物理。',
-    when: (p) => p.fractionB > 0,
+    when: (p) => !chainOf(p) && p.fractionB > 0,
+  },
+  {
+    id: 'chain',
+    label: '两亲分子：每个分子的珠子数',
+    tag: 'class',
+    min: 0,
+    max: 4,
+    step: 1,
+    default: 0,
+    rebuild: 'state',
+    options: [
+      { value: 0, label: '不成键' },
+      { value: 2, label: '2（头–尾）' },
+      { value: 3, label: '3（头–尾–尾）' },
+      { value: 4, label: '4' },
+    ],
+    note: '把粒子用弹簧串成短链：第一个珠子是头（A），其余是尾（B）。尾与尾相吸（强度 ε_BB），头与任何珠子之间只有排斥。没有溶剂粒子：溶剂的作用折算进了这两条规则里。温度够低时分子自己聚成尾朝里、头朝外的小团。需要打开恒温器。',
+    when: (p) => p.dim !== 3 && !p.walls,
   },
   {
     id: 'fractionB',
@@ -131,6 +149,7 @@ export const MD_KNOBS: Knob[] = [
     default: 0,
     rebuild: 'state',
     note: '大于 0 时出现第二种粒子，以及它与 A 的相互作用矩阵。',
+    when: (p) => !chainOf(p),
   },
   {
     id: 'layoutB',
@@ -146,7 +165,7 @@ export const MD_KNOBS: Knob[] = [
       { value: 1, label: '中间一条带' },
     ],
     note: '条带：盒子变成扁长形，B 从中间向两侧扩散，可以从浓度剖面里发现扩散方程。',
-    when: (p) => p.fractionB > 0 && p.dim === 2,
+    when: (p) => !chainOf(p) && p.fractionB > 0 && p.dim === 2,
   },
   {
     id: 'walls',
@@ -251,7 +270,7 @@ export const MD_KNOBS: Knob[] = [
       { value: 1, label: '整数坐标（逐位可逆）' },
     ],
     note: '牛顿力学在微观上是时间可逆的。浮点运算的舍入会破坏这一点；把坐标取成整数后，倒放能一位不差地回到起点。整数积分器不支持恒温器、壁面和驱动力。',
-    when: (p) => p.backend === 0,
+    when: (p) => p.backend === 0 && !chainOf(p),
   },
   {
     id: 'backend',
@@ -297,6 +316,12 @@ export function potentialSpec(p: Params): PotentialSpec {
  * strength[si][sj] scales epsilon for the force on species si from species sj.
  */
 export function strengthMatrix(p: Params): number[][] {
+  if (chainOf(p)) {
+    return [
+      [1, 1],
+      [1, p.epsBB],
+    ]
+  }
   if (!p.fractionB) return [[1]]
   return [
     [1, p.epsAB * (1 + p.nonreciprocal)],
@@ -304,9 +329,31 @@ export function strengthMatrix(p: Params): number[][] {
   ]
 }
 
+/** 两亲分子的键：劲度系数与平衡长度。 / The bond of an amphiphile: stiffness and rest length. */
+export const BOND_K = 100
+export const BOND_R0 = 1
+
+/** 每个分子的珠子数；不成键（或三维、有壁面）时为 0。 / Beads per molecule; 0 without bonds (or in 3D, or with walls). */
+export function chainOf(p: Params): number {
+  return p.chain > 1 && p.dim !== 3 && !p.walls ? p.chain : 0
+}
+
+/**
+ * 哪些组分对只留排斥：两亲分子里除尾–尾之外的所有组分对。
+ * Which species pairs keep only their repulsion: for amphiphiles, every pair but tail–tail.
+ */
+export function repulsiveMatrix(p: Params): boolean[][] | undefined {
+  return chainOf(p)
+    ? [
+        [true, true],
+        [true, false],
+      ]
+    : undefined
+}
+
 /** 只要对相互作用改变，它就跟着改变。 / Changes whenever the pair interaction does. */
 export function fieldKey(p: Params): string {
-  return JSON.stringify([potentialSpec(p), strengthMatrix(p)])
+  return JSON.stringify([potentialSpec(p), strengthMatrix(p), repulsiveMatrix(p)])
 }
 
 /**
