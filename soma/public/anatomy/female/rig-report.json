@@ -2,8 +2,8 @@
  "schema": 1,
  "body": "female",
  "inputs": {
-  "anatomy.json": "3db510446e40e750",
-  "integumentary.glb": "59ac1c29c5b27887",
+  "anatomy.json": "02fb19a22b4ef032",
+  "integumentary.glb": "41a83d28247eb235",
   "muscular.glb": "3a88e02ec3efb08e",
   "skeletal.glb": "44a5be990f2f2414",
   "cardiovascular.glb": "f4625c8225ffc59c",
@@ -22,7 +22,7 @@
   "data/curated/rig/bindings.json": "0e9bdd402426e032",
   "data/curated/rig/overrides.json": "7eaa2f8ae3b733ad"
  },
- "binBytes": 19863864,
+ "binBytes": 19558668,
  "joints": [
   {
    "id": "pelvis",
@@ -3423,21 +3423,21 @@
   }
  ],
  "field": {
-  "skinWalls": 2,
-  "airVoxelsRemoved": 44961,
-  "stepsClosed": 6614,
-  "plug": 1,
+  "skinWalls": 1,
+  "airVoxelsRemoved": 45260,
+  "stepsClosed": 3478,
+  "plug": 0,
   "voxel": 0.005,
   "dims": [
-   145,
+   144,
    329,
    67
   ],
-  "insideVoxels": 479861,
-  "labelledVoxels": 479939,
+  "insideVoxels": 481530,
+  "labelledVoxels": 481562,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 9098
+  "buildMs": 5872
  },
  "bindings": {
   "bone": {
@@ -3452,8 +3452,8 @@
   },
   "field": {
    "parts": 1860,
-   "vertices": 843547,
-   "rigid": 307
+   "vertices": 818114,
+   "rigid": 308
   },
   "attach": {
    "parts": 609,
@@ -8902,9 +8902,9 @@
  ],
  "externalSkin": [],
  "fieldQueries": {
-  "direct": 10138812,
-  "tested": 368185,
-  "obstructed": 213719
+  "direct": 9999671,
+  "tested": 303077,
+  "obstructed": 161396
  },
  "attach": [
   {
@@ -27319,12 +27319,12 @@
    "badJointIndices": 0
   },
   "armSkin": {
-   "forearmVerts": 9073,
+   "forearmVerts": 3723,
    "maxTrunkWeightForearm": 0,
-   "upperArmVerts": 766,
-   "maxTrunkWeightDistalUpperArm": 0.36,
-   "trunkVerts": 6524,
-   "maxArmWeightTrunkBelowAxilla": 0
+   "upperArmVerts": 351,
+   "maxTrunkWeightDistalUpperArm": 0.2,
+   "trunkVerts": 1617,
+   "maxArmWeightTrunkBelowAxilla": 0.04
   },
   "postures": [
    {
@@ -27486,14 +27486,20 @@
      "p90AbsErrTaperedPct": 0
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.6,
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 1,
      "maxEdgeStretch": 1,
      "stretchedAreaCm2": 0
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.4,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -27681,10 +27687,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.17,
-      "p999": 1.91,
-      "over2Pct": 0.08,
-      "max": 3.78,
+      "p99": 1.15,
+      "p999": 1.75,
+      "over2Pct": 0.04,
+      "max": 3.28,
       "worst": "Skin"
      },
      "bone": {
@@ -27704,8 +27710,8 @@
      "fat": {
       "p99": 1.09,
       "p999": 1.55,
-      "over2Pct": 0.03,
-      "max": 2.89,
+      "over2Pct": 0.02,
+      "max": 2.99,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
@@ -27720,14 +27726,20 @@
      "p90AbsErrTaperedPct": 23.76
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.7,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.01,
-     "maxEdgeStretch": 3.78,
-     "stretchedAreaCm2": 83.9
+     "minAreaRatio": 0.03,
+     "maxEdgeStretch": 3.28,
+     "stretchedAreaCm2": 24.1
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.5,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -27915,10 +27927,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.29,
-      "p999": 2.57,
-      "over2Pct": 0.27,
-      "max": 6.52,
+      "p99": 1.25,
+      "p999": 2.29,
+      "over2Pct": 0.2,
+      "max": 5.02,
       "worst": "Skin"
      },
      "bone": {
@@ -27936,10 +27948,10 @@
       "worst": "Right posterior antebrachial cutaneous nerve"
      },
      "fat": {
-      "p99": 1.15,
+      "p99": 1.13,
       "p999": 1.95,
       "over2Pct": 0.09,
-      "max": 4.18,
+      "max": 4.52,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
@@ -27954,14 +27966,20 @@
      "p90AbsErrTaperedPct": 63.75
     },
     "skin": {
-     "flippedPct": 0.3,
-     "collapsedPct": 0.1,
-     "selfInsidePct": 0.3,
-     "minAreaRatio": 0.01,
-     "maxEdgeStretch": 6.52,
-     "stretchedAreaCm2": 358
+     "flippedPct": 0.7,
+     "collapsedPct": 0,
+     "selfInsidePct": 0.2,
+     "minAreaRatio": 0.05,
+     "maxEdgeStretch": 5.02,
+     "stretchedAreaCm2": 154
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.1,
+     "over2mmPct": 0.5,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28185,10 +28203,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.53,
-      "p999": 3.21,
-      "over2Pct": 0.44,
-      "max": 10.29,
+      "p99": 1.45,
+      "p999": 2.77,
+      "over2Pct": 0.32,
+      "max": 5.91,
       "worst": "Skin"
      },
      "bone": {
@@ -28200,17 +28218,17 @@
      },
      "nerve": {
       "p99": 1.31,
-      "p999": 3.03,
-      "over2Pct": 0.3,
+      "p999": 3.05,
+      "over2Pct": 0.31,
       "max": 9.5,
       "worst": "Left median nerve"
      },
      "fat": {
-      "p99": 1.39,
-      "p999": 3.19,
-      "over2Pct": 0.35,
-      "max": 6.63,
-      "worst": "Subcutaneous tissue of right upper limb"
+      "p99": 1.45,
+      "p999": 3.21,
+      "over2Pct": 0.4,
+      "max": 8.76,
+      "worst": "Subcutaneous tissue of left upper limb"
      }
     },
     "volume": {
@@ -28224,14 +28242,20 @@
      "p90AbsErrTaperedPct": 77.86
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.8,
      "collapsedPct": 0.1,
      "selfInsidePct": 0.6,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 10.29,
-     "stretchedAreaCm2": 1075.2
+     "minAreaRatio": 0.03,
+     "maxEdgeStretch": 5.91,
+     "stretchedAreaCm2": 471.5
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.2,
+     "over2mmPct": 0.6,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28442,7 +28466,7 @@
      },
      "vein": {
       "p99": 1.01,
-      "p999": 1.25,
+      "p999": 1.27,
       "over2Pct": 0.02,
       "max": 6.37,
       "worst": "Right cephalic vein"
@@ -28455,10 +28479,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.17,
-      "p999": 1.93,
-      "over2Pct": 0.08,
-      "max": 3.78,
+      "p99": 1.15,
+      "p999": 1.75,
+      "over2Pct": 0.04,
+      "max": 3.28,
       "worst": "Skin"
      },
      "bone": {
@@ -28477,9 +28501,9 @@
      },
      "fat": {
       "p99": 1.09,
-      "p999": 1.55,
-      "over2Pct": 0.03,
-      "max": 2.88,
+      "p999": 1.53,
+      "over2Pct": 0.02,
+      "max": 2.99,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
@@ -28494,14 +28518,20 @@
      "p90AbsErrTaperedPct": 23.76
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.7,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.01,
-     "maxEdgeStretch": 3.78,
-     "stretchedAreaCm2": 83.5
+     "minAreaRatio": 0.04,
+     "maxEdgeStretch": 3.28,
+     "stretchedAreaCm2": 24.1
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.5,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28640,7 +28670,7 @@
      },
      "organ": {
       "p99": 1.13,
-      "p999": 1.95,
+      "p999": 1.93,
       "over2Pct": 0.09,
       "max": 12.05,
       "worst": "Right interpectoral nodes"
@@ -28668,10 +28698,10 @@
      },
      "fascia": {
       "p99": 1.01,
-      "p999": 1.83,
-      "over2Pct": 0.08,
-      "max": 8.27,
-      "worst": "Right clavipectoral fascia"
+      "p999": 1.75,
+      "over2Pct": 0.07,
+      "max": 8.08,
+      "worst": "Right investing abdominal fascia"
      },
      "space": {
       "p99": 1.01,
@@ -28710,16 +28740,16 @@
      },
      "heart": {
       "p99": 1.03,
-      "p999": 1.37,
+      "p999": 1.35,
       "over2Pct": 0,
       "max": 2.4,
       "worst": "Wall of right atrium"
      },
      "skin": {
-      "p99": 2.19,
-      "p999": 7.93,
-      "over2Pct": 1.13,
-      "max": 27.44,
+      "p99": 1.89,
+      "p999": 3.97,
+      "over2Pct": 0.88,
+      "max": 21.13,
       "worst": "Skin"
      },
      "bone": {
@@ -28730,18 +28760,18 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 1.45,
-      "p999": 3.43,
-      "over2Pct": 0.4,
-      "max": 21.33,
+      "p99": 1.39,
+      "p999": 2.93,
+      "over2Pct": 0.31,
+      "max": 10.33,
       "worst": "Right medial brachial cutaneous nerve"
      },
      "fat": {
-      "p99": 1.65,
-      "p999": 3.65,
-      "over2Pct": 0.57,
-      "max": 10.3,
-      "worst": "Subcutaneous tissue of right upper limb"
+      "p99": 1.49,
+      "p999": 3.27,
+      "over2Pct": 0.45,
+      "max": 9.96,
+      "worst": "Subcutaneous tissue of trunk"
      }
     },
     "volume": {
@@ -28755,14 +28785,20 @@
      "p90AbsErrTaperedPct": 19.66
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.7,
      "collapsedPct": 0,
-     "selfInsidePct": 0.1,
-     "minAreaRatio": 0.02,
-     "maxEdgeStretch": 25.25,
-     "stretchedAreaCm2": 1848.9
+     "selfInsidePct": 0.5,
+     "minAreaRatio": 0.01,
+     "maxEdgeStretch": 21.13,
+     "stretchedAreaCm2": 903.4
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.1,
+     "over2mmPct": 0.5,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28901,8 +28937,8 @@
      },
      "organ": {
       "p99": 1.25,
-      "p999": 3.15,
-      "over2Pct": 0.28,
+      "p999": 3.13,
+      "over2Pct": 0.27,
       "max": 51.11,
       "worst": "Right interpectoral nodes"
      },
@@ -28929,8 +28965,8 @@
      },
      "fascia": {
       "p99": 1.01,
-      "p999": 3.11,
-      "over2Pct": 0.21,
+      "p999": 2.83,
+      "over2Pct": 0.19,
       "max": 19.1,
       "worst": "Right investing abdominal fascia"
      },
@@ -28964,23 +29000,23 @@
      },
      "vein": {
       "p99": 1.75,
-      "p999": 5.61,
+      "p999": 5.67,
       "over2Pct": 0.83,
       "max": 24.11,
       "worst": "Left medial brachial vein"
      },
      "heart": {
       "p99": 1.05,
-      "p999": 1.65,
+      "p999": 1.67,
       "over2Pct": 0.03,
       "max": 3.43,
       "worst": "Wall of right atrium"
      },
      "skin": {
-      "p99": 4.09,
-      "p999": 16.97,
-      "over2Pct": 2.32,
-      "max": 57.96,
+      "p99": 3.23,
+      "p999": 7.99,
+      "over2Pct": 2.09,
+      "max": 50.91,
       "worst": "Skin"
      },
      "bone": {
@@ -28991,18 +29027,18 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 1.97,
-      "p999": 7.35,
-      "over2Pct": 0.97,
-      "max": 45.37,
-      "worst": "Right medial brachial cutaneous nerve"
+      "p99": 1.81,
+      "p999": 6.03,
+      "over2Pct": 0.84,
+      "max": 21.63,
+      "worst": "Right posterior brachial cutaneous nerve"
      },
      "fat": {
-      "p99": 2.61,
-      "p999": 6.79,
-      "over2Pct": 1.65,
-      "max": 22.31,
-      "worst": "Subcutaneous tissue of right upper limb"
+      "p99": 2.33,
+      "p999": 6.37,
+      "over2Pct": 1.34,
+      "max": 20.54,
+      "worst": "Subcutaneous tissue of trunk"
      }
     },
     "volume": {
@@ -29016,14 +29052,20 @@
      "p90AbsErrTaperedPct": 40.44
     },
     "skin": {
-     "flippedPct": 0.7,
-     "collapsedPct": 0,
-     "selfInsidePct": 1.9,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 48.69,
-     "stretchedAreaCm2": 5608.7
+     "flippedPct": 1.2,
+     "collapsedPct": 0.1,
+     "selfInsidePct": 3.5,
+     "minAreaRatio": 0.05,
+     "maxEdgeStretch": 50.91,
+     "stretchedAreaCm2": 2473.1
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 2.5,
+     "over2mmPct": 1.8,
+     "worstMm": 32.3,
+     "worstPart": "Left anterior interosseous nerve of forearm"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29125,8 +29167,8 @@
       "worst": "Left articular cartilage of head of femur"
      },
      "organ": {
-      "p99": 1.97,
-      "p999": 5.23,
+      "p99": 1.99,
+      "p999": 5.25,
       "over2Pct": 0.96,
       "max": 27.46,
       "worst": "Middle part of ileum"
@@ -29139,9 +29181,9 @@
       "worst": "Left greater vestibular gland"
      },
      "muscle": {
-      "p99": 2.67,
-      "p999": 4.99,
-      "over2Pct": 2.62,
+      "p99": 2.65,
+      "p999": 4.81,
+      "over2Pct": 2.57,
       "max": 72.82,
       "worst": "External layer of left pubovisceral muscle"
      },
@@ -29154,7 +29196,7 @@
      },
      "fascia": {
       "p99": 2.63,
-      "p999": 4.79,
+      "p999": 4.77,
       "over2Pct": 2.87,
       "max": 30.93,
       "worst": "Mesentery of small intestine"
@@ -29189,8 +29231,8 @@
      },
      "vein": {
       "p99": 1.13,
-      "p999": 2.33,
-      "over2Pct": 0.18,
+      "p999": 2.35,
+      "over2Pct": 0.19,
       "max": 31.2,
       "worst": "Left superficial epigastric vein"
      },
@@ -29202,11 +29244,11 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.77,
-      "p999": 3.99,
-      "over2Pct": 0.75,
-      "max": 14.26,
-      "worst": "Skin"
+      "p99": 1.53,
+      "p999": 3.39,
+      "over2Pct": 0.52,
+      "max": 7.35,
+      "worst": "Pubic hair"
      },
      "bone": {
       "p99": 1.01,
@@ -29217,16 +29259,16 @@
      },
      "nerve": {
       "p99": 1.85,
-      "p999": 4.53,
+      "p999": 4.47,
       "over2Pct": 0.81,
       "max": 15.38,
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 1.57,
-      "p999": 3.65,
-      "over2Pct": 0.55,
-      "max": 9.91,
+      "p99": 1.55,
+      "p999": 3.71,
+      "over2Pct": 0.56,
+      "max": 9.31,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -29241,14 +29283,20 @@
      "p90AbsErrTaperedPct": 128.8
     },
     "skin": {
-     "flippedPct": 0.3,
-     "collapsedPct": 0.1,
-     "selfInsidePct": 0.6,
-     "minAreaRatio": 0.01,
-     "maxEdgeStretch": 14.26,
-     "stretchedAreaCm2": 1253.1
+     "flippedPct": 0.7,
+     "collapsedPct": 0,
+     "selfInsidePct": 0.2,
+     "minAreaRatio": 0.13,
+     "maxEdgeStretch": 6.73,
+     "stretchedAreaCm2": 571
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.1,
+     "over2mmPct": 0.5,
+     "worstMm": 25.64,
+     "worstPart": "Right cutaneous branch of anterior branch of obturator nerve"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29445,10 +29493,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.09,
-      "p999": 2.59,
-      "over2Pct": 0.2,
-      "max": 8.27,
+      "p99": 1.03,
+      "p999": 2.11,
+      "over2Pct": 0.12,
+      "max": 5.08,
       "worst": "Skin"
      },
      "bone": {
@@ -29466,10 +29514,10 @@
       "worst": "Left anterior cutaneous branches of femoral nerve"
      },
      "fat": {
-      "p99": 1.15,
-      "p999": 1.97,
+      "p99": 1.13,
+      "p999": 1.95,
       "over2Pct": 0.09,
-      "max": 6.73,
+      "max": 7.09,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -29484,14 +29532,20 @@
      "p90AbsErrTaperedPct": 66.37
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.7,
      "collapsedPct": 0,
-     "selfInsidePct": 0.2,
-     "minAreaRatio": 0.01,
-     "maxEdgeStretch": 8.27,
-     "stretchedAreaCm2": 402
+     "selfInsidePct": 0.1,
+     "minAreaRatio": 0.04,
+     "maxEdgeStretch": 5.08,
+     "stretchedAreaCm2": 175
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.5,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29688,10 +29742,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.15,
-      "p999": 3.53,
-      "over2Pct": 0.33,
-      "max": 12.29,
+      "p99": 1.07,
+      "p999": 2.77,
+      "over2Pct": 0.22,
+      "max": 7.44,
       "worst": "Skin"
      },
      "bone": {
@@ -29709,10 +29763,10 @@
       "worst": "Left lateral sural cutaneous nerve"
      },
      "fat": {
-      "p99": 1.21,
+      "p99": 1.19,
       "p999": 2.57,
-      "over2Pct": 0.2,
-      "max": 10.53,
+      "over2Pct": 0.23,
+      "max": 10.07,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -29727,14 +29781,20 @@
      "p90AbsErrTaperedPct": 100.33
     },
     "skin": {
-     "flippedPct": 0.2,
-     "collapsedPct": 0,
-     "selfInsidePct": 0.3,
-     "minAreaRatio": 0.07,
-     "maxEdgeStretch": 12.29,
-     "stretchedAreaCm2": 826.4
+     "flippedPct": 0.7,
+     "collapsedPct": 0.1,
+     "selfInsidePct": 0.4,
+     "minAreaRatio": 0.01,
+     "maxEdgeStretch": 7.44,
+     "stretchedAreaCm2": 344.2
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.3,
+     "over2mmPct": 0.7,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29976,10 +30036,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.03,
-      "p999": 1.17,
+      "p99": 1.01,
+      "p999": 1.15,
       "over2Pct": 0,
-      "max": 1.99,
+      "max": 1.42,
       "worst": "Skin"
      },
      "bone": {
@@ -29997,10 +30057,10 @@
       "worst": "Left lateral calcaneal branches of sural nerve"
      },
      "fat": {
-      "p99": 1.03,
-      "p999": 1.13,
+      "p99": 1.01,
+      "p999": 1.11,
       "over2Pct": 0,
-      "max": 1.47,
+      "max": 1.33,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -30015,14 +30075,20 @@
      "p90AbsErrTaperedPct": 1.06
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.6,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.58,
-     "maxEdgeStretch": 1.99,
+     "minAreaRatio": 0.59,
+     "maxEdgeStretch": 1.42,
      "stretchedAreaCm2": 0
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.4,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30264,10 +30330,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.09,
-      "p999": 1.69,
-      "over2Pct": 0.03,
-      "max": 5.31,
+      "p99": 1.05,
+      "p999": 1.51,
+      "over2Pct": 0.01,
+      "max": 2.56,
       "worst": "Skin"
      },
      "bone": {
@@ -30285,10 +30351,10 @@
       "worst": "Left lateral calcaneal branches of sural nerve"
      },
      "fat": {
-      "p99": 1.07,
-      "p999": 1.57,
-      "over2Pct": 0.03,
-      "max": 3.52,
+      "p99": 1.05,
+      "p999": 1.53,
+      "over2Pct": 0.01,
+      "max": 3.78,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -30303,14 +30369,20 @@
      "p90AbsErrTaperedPct": 13.72
     },
     "skin": {
-     "flippedPct": 0.2,
-     "collapsedPct": 0,
+     "flippedPct": 0.7,
+     "collapsedPct": 0.1,
      "selfInsidePct": 0.1,
-     "minAreaRatio": 0,
-     "maxEdgeStretch": 5.31,
-     "stretchedAreaCm2": 22.4
+     "minAreaRatio": 0.04,
+     "maxEdgeStretch": 2.56,
+     "stretchedAreaCm2": 4.1
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.4,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30552,10 +30624,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.47,
-      "p999": 2.35,
-      "over2Pct": 0.24,
-      "max": 4.88,
+      "p99": 1.41,
+      "p999": 2.27,
+      "over2Pct": 0.17,
+      "max": 4.98,
       "worst": "Skin"
      },
      "bone": {
@@ -30573,11 +30645,11 @@
       "worst": "Left dorsal branch of ulnar nerve"
      },
      "fat": {
-      "p99": 1.05,
-      "p999": 1.51,
-      "over2Pct": 0.03,
-      "max": 3.52,
-      "worst": "Subcutaneous tissue of right upper limb"
+      "p99": 1.07,
+      "p999": 1.49,
+      "over2Pct": 0.01,
+      "max": 3.27,
+      "worst": "Subcutaneous tissue of left upper limb"
      }
     },
     "volume": {
@@ -30591,14 +30663,20 @@
      "p90AbsErrTaperedPct": 30.81
     },
     "skin": {
-     "flippedPct": 0.4,
+     "flippedPct": 1,
      "collapsedPct": 0.1,
-     "selfInsidePct": 1.4,
-     "minAreaRatio": 0.03,
-     "maxEdgeStretch": 4.88,
-     "stretchedAreaCm2": 73.8
+     "selfInsidePct": 3.8,
+     "minAreaRatio": 0.04,
+     "maxEdgeStretch": 4.98,
+     "stretchedAreaCm2": 29.6
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.3,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30737,7 +30815,7 @@
       "p99": 1.01,
       "p999": 1.23,
       "over2Pct": 0.03,
-      "max": 4.87,
+      "max": 4.76,
       "worst": "Thyroid gland"
      },
      "muscle": {
@@ -30804,10 +30882,10 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 1.07,
-      "p999": 1.95,
-      "over2Pct": 0.08,
-      "max": 4.3,
+      "p99": 1.05,
+      "p999": 1.77,
+      "over2Pct": 0.07,
+      "max": 4.84,
       "worst": "Skin"
      },
      "bone": {
@@ -30826,9 +30904,9 @@
      },
      "fat": {
       "p99": 1.03,
-      "p999": 1.53,
+      "p999": 1.47,
       "over2Pct": 0.02,
-      "max": 3.47,
+      "max": 2.75,
       "worst": "Subcutaneous tissue of neck"
      }
     },
@@ -30843,14 +30921,20 @@
      "p90AbsErrTaperedPct": 18.66
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.7,
      "collapsedPct": 0,
-     "selfInsidePct": 0.1,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 4.3,
-     "stretchedAreaCm2": 76
+     "selfInsidePct": 0,
+     "minAreaRatio": 0.07,
+     "maxEdgeStretch": 4.84,
+     "stretchedAreaCm2": 36.9
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1,
+     "over2mmPct": 0.4,
+     "worstMm": 22.36,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30993,14 +31077,14 @@
       "p99": 1.07,
       "p999": 1.27,
       "over2Pct": 0.01,
-      "max": 2.09,
+      "max": 2.13,
       "worst": "Right sixth costal cartilage"
      },
      "organ": {
       "p99": 1.15,
-      "p999": 3.59,
+      "p999": 3.63,
       "over2Pct": 0.29,
-      "max": 19.47,
+      "max": 19.65,
       "worst": "Distal part of jejunum"
      },
      "gland": {
@@ -31033,9 +31117,9 @@
      },
      "space": {
       "p99": 1.01,
-      "p999": 1.17,
+      "p999": 1.15,
       "over2Pct": 0,
-      "max": 1.74,
+      "max": 1.72,
       "worst": "Cavity of right atrium"
      },
      "tendon": {
@@ -31047,9 +31131,9 @@
      },
      "artery": {
       "p99": 1.19,
-      "p999": 2.81,
+      "p999": 2.75,
       "over2Pct": 0.2,
-      "max": 25.57,
+      "max": 25.23,
       "worst": "Left superior epigastric artery"
      },
      "brain": {
@@ -31061,44 +31145,44 @@
      },
      "vein": {
       "p99": 1.23,
-      "p999": 3.25,
-      "over2Pct": 0.27,
+      "p999": 3.19,
+      "over2Pct": 0.26,
       "max": 15.29,
       "worst": "Anterior superior segmental branch of right portal vein"
      },
      "heart": {
-      "p99": 1.55,
-      "p999": 3.27,
-      "over2Pct": 0.41,
-      "max": 5.92,
+      "p99": 1.53,
+      "p999": 3.29,
+      "over2Pct": 0.42,
+      "max": 5.91,
       "worst": "Anterior leaflet of tricuspid valve"
      },
      "skin": {
-      "p99": 1.21,
-      "p999": 2.05,
-      "over2Pct": 0.11,
-      "max": 6.93,
+      "p99": 1.15,
+      "p999": 1.59,
+      "over2Pct": 0.03,
+      "max": 6.66,
       "worst": "Skin"
      },
      "bone": {
       "p99": 1.27,
-      "p999": 2.01,
+      "p999": 2.03,
       "over2Pct": 0.15,
-      "max": 2.89,
+      "max": 2.86,
       "worst": "Xiphoid process"
      },
      "nerve": {
       "p99": 1.17,
-      "p999": 1.67,
+      "p999": 1.63,
       "over2Pct": 0.06,
       "max": 23.28,
       "worst": "Left ninth intercostal nerve"
      },
      "fat": {
-      "p99": 1.23,
-      "p999": 1.81,
-      "over2Pct": 0.06,
-      "max": 3.98,
+      "p99": 1.25,
+      "p999": 2.81,
+      "over2Pct": 0.2,
+      "max": 12.77,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
@@ -31113,14 +31197,20 @@
      "p90AbsErrTaperedPct": 15.06
     },
     "skin": {
-     "flippedPct": 0.3,
-     "collapsedPct": 0,
-     "selfInsidePct": 0.4,
-     "minAreaRatio": 0.03,
-     "maxEdgeStretch": 6.93,
-     "stretchedAreaCm2": 96.6
+     "flippedPct": 0.7,
+     "collapsedPct": 0.1,
+     "selfInsidePct": 0.3,
+     "minAreaRatio": 0.05,
+     "maxEdgeStretch": 6.66,
+     "stretchedAreaCm2": 36.1
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.2,
+     "over2mmPct": 0.6,
+     "worstMm": 36.51,
+     "worstPart": "Right rectus abdominis"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31281,9 +31371,9 @@
       "worst": "Left greater vestibular gland"
      },
      "muscle": {
-      "p99": 3.67,
-      "p999": 7.79,
-      "over2Pct": 6.31,
+      "p99": 3.65,
+      "p999": 7.53,
+      "over2Pct": 6.24,
       "max": 90.53,
       "worst": "External layer of left pubovisceral muscle"
      },
@@ -31333,7 +31423,7 @@
       "p99": 1.89,
       "p999": 3.97,
       "over2Pct": 0.87,
-      "max": 40.15,
+      "max": 40.16,
       "worst": "Left superficial epigastric vein"
      },
      "heart": {
@@ -31344,11 +31434,11 @@
       "worst": "Anterior leaflet of mitral valve"
      },
      "skin": {
-      "p99": 3.13,
-      "p999": 6.63,
-      "over2Pct": 2.73,
-      "max": 28.68,
-      "worst": "Skin"
+      "p99": 2.57,
+      "p999": 5.33,
+      "over2Pct": 1.84,
+      "max": 17.48,
+      "worst": "Pubic hair"
      },
      "bone": {
       "p99": 1.01,
@@ -31365,10 +31455,10 @@
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 2.69,
-      "p999": 5.69,
-      "over2Pct": 2.01,
-      "max": 12.77,
+      "p99": 2.71,
+      "p999": 5.93,
+      "over2Pct": 2.02,
+      "max": 12.25,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -31383,14 +31473,20 @@
      "p90AbsErrTaperedPct": 95.46
     },
     "skin": {
-     "flippedPct": 0.7,
+     "flippedPct": 1,
      "collapsedPct": 0.2,
-     "selfInsidePct": 2.3,
-     "minAreaRatio": 0,
-     "maxEdgeStretch": 22.95,
-     "stretchedAreaCm2": 5245.4
+     "selfInsidePct": 1.6,
+     "minAreaRatio": 0.01,
+     "maxEdgeStretch": 8.62,
+     "stretchedAreaCm2": 2307.2
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 2.1,
+     "over2mmPct": 1.3,
+     "worstMm": 24.02,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31520,8 +31616,8 @@
      },
      "organ": {
       "p99": 2.07,
-      "p999": 7.45,
-      "over2Pct": 1.17,
+      "p999": 7.47,
+      "over2Pct": 1.18,
       "max": 40.23,
       "worst": "Juxta-intestinal mesenteric nodes"
      },
@@ -31533,9 +31629,9 @@
       "worst": "Left greater vestibular gland"
      },
      "muscle": {
-      "p99": 2.99,
-      "p999": 6.13,
-      "over2Pct": 4.39,
+      "p99": 2.95,
+      "p999": 5.93,
+      "over2Pct": 4.32,
       "max": 72.82,
       "worst": "External layer of left pubovisceral muscle"
      },
@@ -31596,11 +31692,11 @@
       "worst": "Left anterior cusp of pulmonary valve"
      },
      "skin": {
-      "p99": 2.53,
-      "p999": 5.09,
-      "over2Pct": 1.83,
-      "max": 22.06,
-      "worst": "Skin"
+      "p99": 2.11,
+      "p999": 4.09,
+      "over2Pct": 1.18,
+      "max": 13.6,
+      "worst": "Pubic hair"
      },
      "bone": {
       "p99": 1.01,
@@ -31611,17 +31707,17 @@
      },
      "nerve": {
       "p99": 2.61,
-      "p999": 6.03,
-      "over2Pct": 1.9,
+      "p999": 6.01,
+      "over2Pct": 1.89,
       "max": 15.38,
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 2.19,
-      "p999": 4.49,
-      "over2Pct": 1.29,
-      "max": 9.91,
-      "worst": "Subcutaneous tissue of left lower limb"
+      "p99": 2.17,
+      "p999": 4.63,
+      "over2Pct": 1.26,
+      "max": 9.32,
+      "worst": "Subcutaneous tissue of right lower limb"
      }
     },
     "volume": {
@@ -31635,14 +31731,20 @@
      "p90AbsErrTaperedPct": 96.12
     },
     "skin": {
-     "flippedPct": 0.6,
-     "collapsedPct": 0.3,
-     "selfInsidePct": 1.5,
-     "minAreaRatio": 0.01,
-     "maxEdgeStretch": 17.72,
-     "stretchedAreaCm2": 3193.5
+     "flippedPct": 0.9,
+     "collapsedPct": 0.1,
+     "selfInsidePct": 0.4,
+     "minAreaRatio": 0.04,
+     "maxEdgeStretch": 6.53,
+     "stretchedAreaCm2": 1406.2
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.4,
+     "over2mmPct": 0.7,
+     "worstMm": 24.23,
+     "worstPart": "Right superior clunial nerves"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31737,8 +31839,8 @@
      "organ": {
       "p99": 1.41,
       "p999": 4.45,
-      "over2Pct": 0.39,
-      "max": 17.38,
+      "over2Pct": 0.4,
+      "max": 17.43,
       "worst": "Left hepatic duct"
      },
      "gland": {
@@ -31771,9 +31873,9 @@
      },
      "space": {
       "p99": 1.43,
-      "p999": 3.21,
-      "over2Pct": 0.42,
-      "max": 9.08,
+      "p999": 3.11,
+      "over2Pct": 0.41,
+      "max": 5.36,
       "worst": "Cavity of left atrium"
      },
      "tendon": {
@@ -31785,9 +31887,9 @@
      },
      "artery": {
       "p99": 1.75,
-      "p999": 5.75,
+      "p999": 5.69,
       "over2Pct": 0.72,
-      "max": 19.59,
+      "max": 19.36,
       "worst": "Left superior epigastric artery"
      },
      "brain": {
@@ -31798,45 +31900,45 @@
       "worst": "Third ventricle"
      },
      "vein": {
-      "p99": 2.13,
+      "p99": 2.11,
       "p999": 6.77,
-      "over2Pct": 1.12,
+      "over2Pct": 1.11,
       "max": 21.08,
       "worst": "Anterior superior segmental branch of right portal vein"
      },
      "heart": {
-      "p99": 6.43,
-      "p999": 14.65,
-      "over2Pct": 7.11,
-      "max": 30.79,
+      "p99": 6.31,
+      "p999": 14.71,
+      "over2Pct": 6.99,
+      "max": 30.58,
       "worst": "Septal leaflet of tricuspid valve"
      },
      "skin": {
-      "p99": 1.31,
-      "p999": 2.33,
-      "over2Pct": 0.18,
-      "max": 6.71,
+      "p99": 1.27,
+      "p999": 2.25,
+      "over2Pct": 0.14,
+      "max": 10.7,
       "worst": "Skin"
      },
      "bone": {
       "p99": 4.65,
-      "p999": 8.05,
-      "over2Pct": 6.14,
+      "p999": 8.01,
+      "over2Pct": 6.09,
       "max": 11.23,
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 1.29,
-      "p999": 2.09,
+      "p99": 1.27,
+      "p999": 2.07,
       "over2Pct": 0.12,
       "max": 18.51,
       "worst": "Left ninth intercostal nerve"
      },
      "fat": {
-      "p99": 1.23,
-      "p999": 1.61,
-      "over2Pct": 0.02,
-      "max": 4.63,
+      "p99": 1.29,
+      "p999": 2.35,
+      "over2Pct": 0.16,
+      "max": 8.11,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
@@ -31851,14 +31953,20 @@
      "p90AbsErrTaperedPct": 66.91
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.7,
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 6.71,
-     "stretchedAreaCm2": 204.5
+     "minAreaRatio": 0.06,
+     "maxEdgeStretch": 10.7,
+     "stretchedAreaCm2": 60.7
     },
-    "poke": null,
+    "poke": {
+     "sampled": 151991,
+     "outsidePct": 1.1,
+     "over2mmPct": 0.6,
+     "worstMm": 50.55,
+     "worstPart": "Right rectus abdominis"
+    },
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",

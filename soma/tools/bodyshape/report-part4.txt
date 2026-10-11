@@ -1,0 +1,193 @@
+# 第四部分（中文）
+
+## 17. 女性皮肤：先量偏移，再重做（内部结构 031ce88117d19693）
+
+### 仍然不对的地方
+
+- 体表是“她的深部结构 + 各部位标准厚度的一层”，所以体型随她的肌肉走：肩宽腰直、胸肌和膝周围的轮廓还看得出来，是偏男性的瘦削体型，不是女性的脂肪分布。乳房是从女性体型的 MHR 加上去的，只从胸壁突出 28–32 mm。
+- 头是 MHR 的平均头（没有逐顶点修正），不像她也不明显是女性；身高因此是 1.619 m（骨架按我的量法 1.611 m）。
+- 修正后仍有 1 个部件在皮肤外：左拇指末节指骨，最多 1.8 mm（15 % 的采样点）。
+- 足趾末节在局部外推前伸出 8–15 mm（MHR 的足趾是一整块、偏短），靠外推包住，足尖皮肤被推了最多 19 mm。
+- 腹部前方有一个由脏器包络加 16 mm 脂肪形成的隆起。
+- 我的颈围、大腿根围量法在这张网格上不可信（393 对标准 312；464 对 555），不要用。
+- 男性皮肤没有动。他没有这个偏移问题（见下），但手指末节同样是靠外推包住的（最多 39 mm）；要修需要重跑他的拟合，等你发话。
+
+### 你要的测量
+
+1. 关节：皮肤骨架与 rig.json 的关节中心，在三次拟合里都对得上——肩 1.2 / 1.8 mm，肘 2.8 / 3.9，腕 2.0 / 2.5，髋 2.5 / 2.4，踝 3.0 / 2.8；膝 8.7 / 10.4（MHR 的膝关节点定义不同，故意给了小权重）；手指 30 个关节中位 1.6 mm、最大 10 mm。所以不是关节位置或姿势错了。
+2. 截面偏移（上一版，按围度目标拟合的女性体型 MHR，外推之前）：
+   - 前臂：皮肤形心相对深部结构形心偏 [内 10–19，前 7–15] mm；外侧余量 −11 至 −20 mm、后侧 −9 至 −16 mm，内侧和前侧 +6 至 +18 mm；围度皮肤 180–205 对深部 186–217。
+   - 躯干（髋到肩的 40 %、55 %、70 % 高度）：皮肤偏前 14 / 12 / 22 mm；后侧余量 −27 / −29 / −5 mm，前侧 +20 / −1 / +37 mm；55 % 处皮肤围度 691 对深部 793。
+   - 小腿：偏外 7–18 mm，内侧余量 −4 至 −19 mm。
+   - 你的判读是对的：是位置不对，不是整圈都细。
+3. 原因不是姿势，而是形状：把同一套姿势换上女性体型的身份系数，偏移原样回来（前臂 [−16, +11] mm，躯干后侧 −26 / −28 mm）。女性体型的 MHR 在关节轴周围的软组织分布，与她那套形变来的男性肌肉不一致。男性没有这个问题：他的皮肤是贴着自己的皮肤拟合的，躯干偏移 ≤ 9 mm、前臂 ≤ 6 mm，各方向余量为正。
+4. 上臂和大腿的切片会切到相邻的躯干或对侧，那两段的偏移数字不可靠，没有引用。
+
+### 重做的办法
+
+- `fit_skin.py female --mode envelope`：目标面 = 她的深部结构包络 + 各部位应有的皮下脂肪和 2 mm 皮肤；关节对 rig.json；45 个身份系数、骨架缩放、姿势和手指各节长度一起解，再做逐顶点修正（上限 20 mm）。一个统一的脂肪系数调到体积 BMI = 21.6（标准厚度时是 22.05，系数 0.89）。
+- `compose_female.py`：逐顶点修正先低通（否则每条肌束都印在皮肤上，脸上印出表情肌）；乳房区加上“女性体型 MHR 减去基准”的差；头部不用修正、头的身份系数取 0。
+- `enclose_skin.py female`：局部外推到全部深部结构在皮肤下 2.5 mm，位移上限 20 mm。
+
+### 结果（外推前，体积 BMI 21.45，身高 1.619 m）
+
+| 区域 | 肌肉在外 | 骨在外 | 器官在外 |
+|---|---|---|---|
+| 头 | 9.2 %（> 5 mm 的 2.7 %） | 3.2 % | 0.4 % |
+| 膝 | 9.7 %（> 5 mm 的 3.7 %） | 3.5 % | 0 |
+| 足 | 1.6 % | 10.3 %（趾骨末节） | — |
+| 小腿 | 3.4 % | 2.0 % | 0 |
+| 前臂 | 3.0 % | 0.1 % | 0 |
+| 大腿 | 2.9 % | 0 | — |
+| 腹 | 0.8 % | 0.1 % | 0 |
+| 肩 | 0.5 % | 0 | 8.9 %（腋窝和胸肌间淋巴结） |
+| 胸 | 0.2 % | 0.3 % | 1.2 % |
+| 颈、上臂、手、骨盆 | ≤ 0.2 % | ≤ 0.9 % | 0 |
+| 全身 | 1.5 %（> 5 mm 的 0.4 %） | 2.4 % | 0.3 % |
+
+上一版同一张表是肌肉 10.4 %、骨 8.5 %。
+
+外推前最靠外的部件（第 95 百分位）：第 2–4 趾末节趾骨 8–14 mm，𧿹趾末节 8 mm，缝匠肌 7–9 mm，右胸肌间淋巴结 8 mm，胸锁乳突肌 7.5 mm，枕肌 7 mm。前臂伸肌群、下后锯肌、背阔肌已不在榜上：上一版它们的 25–33 mm 是皮肤位置造成的，不是肌肉过量。所以目前没有需要管线缩小的肌肉；剩下的是头部（平均头对她的颅面）、膝和足趾，都是皮肤一侧的问题。
+
+外推后：在外 0.0 %（只剩左拇指末节 1.8 mm）；体积 BMI 22.2（+1.9 L）。皮肤位移：膝 75 % 的顶点、中位 3.6 mm、最大 19 mm；前臂 43 % / 2.1 / 11；小腿 39 % / 3.1 / 13；腹 23 % / 2.5 / 16；骨盆 0.6 %。
+
+| 围度 mm | 外推前 | 外推后 | 标准皮肤 |
+|---|---|---|---|
+| 前臂 | 235 | 250 | 245 |
+| 上臂 | 263 | 271 | 267 |
+| 小腿 | 336 | 344 | 338 |
+| 大腿中部 | 443 | 452 | 456 |
+| 大腿下部 | 353 | 377 | 367 |
+| 踝 | 198 | 207 | 208 |
+| 腕 | 151 | 158 | 149 |
+| 腰（髂嵴） | 773 | 776 | 799 |
+| 腰（脐） | 766 | 770 | 761 |
+| 臀 | 913 | 913 | 928 |
+| 胸（含乳房） | 907 | 910 | 868 |
+
+最终皮肤的截面偏移：前臂 ≤ 0.6 mm、小腿 ≤ 0.4 mm，四个方向余量都是 +3 至 +6 mm；躯干各高度余量为正（后侧 +7 至 +17 mm），只有 85 % 高度两侧为 −1.6 / −1.8 mm（切到腋部）。
+
+脂肪空间（皮肤到最近深部结构，中位，外推后）：腹 14.0 mm，骨盆 17.0，大腿 11.0，上臂 9.8，肩 8.4，膝 7.4，胸 6.8，颈 5.6，小腿 5.3，前臂 4.6，手 4.2；不足 2 mm 的皮肤比例各区 ≤ 2.3 %。
+
+间隙：上臂到躯干 9.9 / 9.5 mm，前臂到躯干 48 / 60 mm，两大腿之间 0.1 mm。皮肤封闭。会阴：肛门外括约肌覆盖 5.8 mm，直肠联合纵肌 10.9，肛门内括约肌 11.7，会阴深横肌 15.0；皮肤在会阴下是闭合的光滑面，没有阴唇等几何。
+
+### 手指（两具都有的问题）
+
+MHR 有每节指骨的长度缩放和指尖节点。女性这次加了这些参数和指尖对应点（末节指骨远端外 3 mm）：手指关节残差中位 1.6 mm，指尖 0.4–2.8 mm（左拇指 5.9），手部骨在外从 12 % 降到 0.9 %，不再有 39–44 mm 的外推（手部最大 20 mm，只在左拇指处）。足趾 MHR 不能摆：没有分开的足趾。男性要同样修需重跑他的拟合。
+
+### 乳房的摆放（管线可直接用的数字）
+
+变换：p' = A + T + s·(p − A)，对该侧全部 HRA 部件。
+
+| 侧 | 绕点 A（米） | 平移 T（米） | 缩放 s（腺体 99 % 在皮下 ≥ 3 mm） | 乳头尖 | 乳头尖正好在皮肤上的缩放 |
+|---|---|---|---|---|---|
+| 左 | (0.0996, 1.1143, 0.1391) | (−0.0380, −0.0691, +0.0307) | 0.333 | 皮下 2.7 mm | 0.403（腺体 p99 +2.6 mm，不够覆盖） |
+| 右 | (−0.0896, 1.1164, 0.1362) | (+0.0488, −0.0656, +0.0324) | 0.293 | 皮下 2.6 mm | 0.343（腺体 p99 +0.9 mm） |
+
+“≥ 3 mm 覆盖”和“乳头在皮肤上”不能同时满足：HRA 的腺体紧贴在乳头后面。取 3 mm 覆盖的缩放时乳头尖在皮下约 2.7 mm，乳头、乳晕这三个皮肤部件需要沿前方再移出约 3 mm。皮肤乳房从胸壁突出 32 / 28 mm，HRA 乳房 80 / 82 mm，所以缩放约 1/3；现在的 HRA 部件比皮肤乳房的最前点高 66–69 mm、偏外 38–49 mm。
+
+### 文件
+
+- 包：`data/raw/bodyshape/out/female-skin/`（`manifest.json` 的 `fittedTo.key` = 031ce88117d19693；`skin.obj` 73639 顶点、封闭）。
+- 测量：`diag-offsets.txt`（上一版）、`diag-offsets-final.txt`、`enclosure.txt`、`breast-placement.json`、`compose.txt`。
+- 仅按包络拟合的那一版（无乳房、脸上有表情肌轮廓）留在 `data/raw/bodyshape/out/female-skin-envelope/` 供对照。
+- 渲染：包目录内 `preview-skin.png`、`preview-overlay.png`、`preview-pokes.png`、`preview-pokes-before.png`、`closeup-axilla/chest/groin-skin|overlay.png`、`closeup-perineum-below-*.png`。我只看了 `preview-skin.png`。
+- 新脚本：`diag_offsets.py`、`compose_female.py`、`breast_placement.py`；`reference_female.py` 现在依次跑导出、测量、包络拟合、合成、外推、乳房摆放、体型场。
+
+---
+
+# Part 4 (English)
+
+## 17. The female skin: offsets measured, then redone (internals 031ce88117d19693)
+
+### What is still wrong
+
+- The surface is "her deep parts plus a layer of the standard thickness for each region", so the build follows her muscles: broad shoulders, straight waist, with pectoral and knee relief still visible — a lean, male-patterned body, not a female fat distribution. The breasts are added from the female-shaped MHR and project only 28–32 mm from the chest wall.
+- The head is MHR's mean head (no per-vertex correction); it does not look like her nor clearly female. Stature is therefore 1.619 m (the skeleton measures 1.611 m by my method).
+- One part is still outside after the correction: the distal phalanx of the left thumb, at most 1.8 mm (15 % of its samples).
+- The distal phalanges of the toes stick out 8–15 mm before the local push (MHR's toes are one short block) and are enclosed by pushing the toe-tip skin by up to 19 mm.
+- There is a bulge at the front of the abdomen, made by the organ envelope plus 16 mm of fat.
+- My neck and proximal-thigh girth measures are not trustworthy on this mesh (393 against a standard of 312; 464 against 555); do not use them.
+- The male skin was not touched. He does not have the offset problem (below), but his fingertips are likewise enclosed by pushing (up to 39 mm); fixing that needs a rerun of his fit, which waits for your word.
+
+### The measurements you asked for
+
+1. Joints: the skin skeleton matches the rig.json centres in all three fits — shoulder 1.2 / 1.8 mm, elbow 2.8 / 3.9, wrist 2.0 / 2.5, hip 2.5 / 2.4, ankle 3.0 / 2.8; knee 8.7 / 10.4 (MHR defines its knee joint differently, so it has a small weight on purpose); the 30 finger joints have a median of 1.6 mm and a maximum of 10 mm. So joint positions and pose were not the fault.
+2. Cross-section offsets (previous version: female-shaped MHR fitted to girth targets, before the push):
+   - Forearm: skin centroid off the deep centroid by [10–19 medial, 7–15 anterior] mm; margin −11 to −20 mm laterally and −9 to −16 mm posteriorly, +6 to +18 mm medially and anteriorly; girth skin 180–205 against deep 186–217.
+   - Trunk (40 %, 55 %, 70 % of the way from hip to shoulder): skin forward by 14 / 12 / 22 mm; posterior margin −27 / −29 / −5 mm, anterior +20 / −1 / +37 mm; at 55 % the skin girth is 691 against 793 for the deep parts.
+   - Lower leg: 7–18 mm lateral, medial margin −4 to −19 mm.
+   - Your reading was right: it is placement, not a skin too thin all round.
+3. The cause is shape, not pose: putting female-shaped identity coefficients on that same pose brings the offsets straight back (forearm [−16, +11] mm, trunk posterior −26 / −28 mm). The female-shaped MHR distributes soft tissue around the joint axes differently from her warped male musculature. The male does not have this: his skin was fitted to his own skin, with trunk offsets ≤ 9 mm, forearm ≤ 6 mm and positive margins all round.
+4. Upper-arm and thigh slices cut into the neighbouring trunk or the other limb; their offset figures are unreliable and are not quoted.
+
+### How it was redone
+
+- `fit_skin.py female --mode envelope`: target surface = her deep envelope + the intended subcutaneous fat and 2 mm of skin for each region; joints to rig.json; 45 identity coefficients, skeleton scales, pose and finger-segment lengths solved together, then a per-vertex correction (capped at 20 mm). One overall fat factor is tuned to volume BMI 21.6 (22.05 at standard thickness; factor 0.89).
+- `compose_female.py`: the per-vertex correction is low-passed (otherwise every muscle bundle, and the facial muscles, print through); over the breasts the difference "female-shaped MHR minus base" is added; the head gets no correction and zero head identity.
+- `enclose_skin.py female`: local push until every deep part is 2.5 mm under the skin, displacement capped at 20 mm.
+
+### Result (before the push: volume BMI 21.45, stature 1.619 m)
+
+| Region | Muscle outside | Bone outside | Organ outside |
+|---|---|---|---|
+| Head | 9.2 % (2.7 % by > 5 mm) | 3.2 % | 0.4 % |
+| Knee | 9.7 % (3.7 % by > 5 mm) | 3.5 % | 0 |
+| Foot | 1.6 % | 10.3 % (distal toe phalanges) | — |
+| Lower leg | 3.4 % | 2.0 % | 0 |
+| Forearm | 3.0 % | 0.1 % | 0 |
+| Thigh | 2.9 % | 0 | — |
+| Abdomen | 0.8 % | 0.1 % | 0 |
+| Shoulder | 0.5 % | 0 | 8.9 % (axillary and interpectoral nodes) |
+| Chest | 0.2 % | 0.3 % | 1.2 % |
+| Neck, upper arm, hand, pelvis | ≤ 0.2 % | ≤ 0.9 % | 0 |
+| Whole body | 1.5 % (0.4 % by > 5 mm) | 2.4 % | 0.3 % |
+
+The same table for the previous version read 10.4 % muscle and 8.5 % bone.
+
+Parts furthest outside before the push (95th percentile): distal phalanges of toes 2–4 at 8–14 mm, of the big toes 8 mm, sartorius 7–9 mm, right interpectoral nodes 8 mm, sternocleidomastoid 7.5 mm, occipitalis 7 mm. The forearm extensors, serratus posterior inferior and latissimus dorsi are no longer on the list: their 25–33 mm in the previous version came from where the skin sat, not from excess muscle. So no muscle currently needs slimming by the pipeline; what remains is the head (mean head against her skull and face), the knees and the toes, all on the skin side.
+
+After the push: 0.0 % outside (only the left thumb phalanx, 1.8 mm); volume BMI 22.2 (+1.9 L). Skin displacement: knee 75 % of vertices, median 3.6 mm, maximum 19 mm; forearm 43 % / 2.1 / 11; lower leg 39 % / 3.1 / 13; abdomen 23 % / 2.5 / 16; pelvis 0.6 %.
+
+| Girth mm | Before push | After push | Standard skin |
+|---|---|---|---|
+| Forearm | 235 | 250 | 245 |
+| Upper arm | 263 | 271 | 267 |
+| Calf | 336 | 344 | 338 |
+| Mid-thigh | 443 | 452 | 456 |
+| Lower thigh | 353 | 377 | 367 |
+| Ankle | 198 | 207 | 208 |
+| Wrist | 151 | 158 | 149 |
+| Waist (iliac) | 773 | 776 | 799 |
+| Waist (navel) | 766 | 770 | 761 |
+| Hip | 913 | 913 | 928 |
+| Chest (with breasts) | 907 | 910 | 868 |
+
+Cross-section offsets of the final skin: forearm ≤ 0.6 mm, lower leg ≤ 0.4 mm, margins +3 to +6 mm in all four directions; trunk margins positive at every level (posterior +7 to +17 mm), except −1.6 / −1.8 mm at the sides at 85 % height (the slice reaches the axilla).
+
+Fat room (skin to nearest deep surface, median, after the push): abdomen 14.0 mm, pelvis 17.0, thigh 11.0, upper arm 9.8, shoulder 8.4, knee 7.4, chest 6.8, neck 5.6, lower leg 5.3, forearm 4.6, hand 4.2; skin closer than 2 mm to a deep part ≤ 2.3 % in every region.
+
+Gaps: upper arm to trunk 9.9 / 9.5 mm, forearm to trunk 48 / 60 mm, between the thighs 0.1 mm. The skin is closed. Perineum: external anal sphincter 5.8 mm of cover, conjoint longitudinal muscle 10.9, internal anal sphincter 11.7, deep transverse perineal muscle 15.0; the skin is a closed smooth surface there, with no labial or other geometry.
+
+### Fingers (an issue on both bodies)
+
+MHR has a length scale for every finger segment and a fingertip node. For the female these parameters and fingertip correspondences (3 mm beyond the far end of the distal phalanx) were added: finger-joint residual median 1.6 mm, fingertips 0.4–2.8 mm (left thumb 5.9); hand bone outside went from 12 % to 0.9 %, and the 39–44 mm pushes are gone (hand maximum 20 mm, at the left thumb only). Toes cannot be posed: MHR has no separate toes. The same fix for the male needs a rerun of his fit.
+
+### Breast placement (numbers the pipeline can apply)
+
+Transform: p' = A + T + s·(p − A), for every HRA part of that side.
+
+| Side | About point A (m) | Translation T (m) | Scale s (99 % of gland ≥ 3 mm under the skin) | Nipple tip | Scale that puts the nipple tip exactly on the skin |
+|---|---|---|---|---|---|
+| Left | (0.0996, 1.1143, 0.1391) | (−0.0380, −0.0691, +0.0307) | 0.333 | 2.7 mm under | 0.403 (gland p99 +2.6 mm: not covered) |
+| Right | (−0.0896, 1.1164, 0.1362) | (+0.0488, −0.0656, +0.0324) | 0.293 | 2.6 mm under | 0.343 (gland p99 +0.9 mm) |
+
+"At least 3 mm of cover" and "nipple on the skin" cannot both hold: in the HRA parts the gland sits right behind the nipple. With the 3 mm-cover scale the nipple tip is about 2.7 mm under the skin, so the nipple and areola skin parts need a further shift of about 3 mm forwards. The skin breast projects 32 / 28 mm from the chest wall, the HRA breast 80 / 82 mm, hence a scale near one third; the HRA parts now sit 66–69 mm above and 38–49 mm lateral of the skin breast's apex.
+
+### Files
+
+- Package: `data/raw/bodyshape/out/female-skin/` (`fittedTo.key` in `manifest.json` = 031ce88117d19693; `skin.obj` 73,639 vertices, closed).
+- Measurements: `diag-offsets.txt` (previous version), `diag-offsets-final.txt`, `enclosure.txt`, `breast-placement.json`, `compose.txt`.
+- The envelope-only version (no breasts, facial muscles printing through) is kept in `data/raw/bodyshape/out/female-skin-envelope/` for comparison.
+- Renders, in the package directory: `preview-skin.png`, `preview-overlay.png`, `preview-pokes.png`, `preview-pokes-before.png`, `closeup-axilla/chest/groin-skin|overlay.png`, `closeup-perineum-below-*.png`. I looked only at `preview-skin.png`.
+- New scripts: `diag_offsets.py`, `compose_female.py`, `breast_placement.py`; `reference_female.py` now runs export, measurement, envelope fit, composition, push, breast placement and shape fields in turn.

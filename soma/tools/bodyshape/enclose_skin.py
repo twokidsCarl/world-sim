@@ -138,6 +138,112 @@ def enclose(V0, F, P, log, cap, passes=10, step_cap=0.012):
     return V0 + D[:, None] * n0
 
 
+def vertex_area(V, F):
+    a = np.linalg.norm(np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]]), axis=1) / 6.0
+    out = np.zeros(len(V))
+    for k in range(3):
+        np.add.at(out, F[:, k], a)
+    return out
+
+
+def facing_area(V, F, reg, radius=0.0015):
+    """皮肤自相贴近的面积（cm2），按区域和左右：某顶点 1.5 mm 内有法线相对的另一层皮肤，或它本身被埋在另一层之内。
+    Area (cm2) of skin lying against another sheet of skin, by region and side: a vertex counts when another sheet
+    with an opposing normal lies within 1.5 mm, or when the vertex is buried inside another sheet."""
+    from scipy.spatial import cKDTree
+    n = vertex_normals(V, F)
+    tree = cKDTree(V)
+    flag = ~exposed(V, F)
+    pairs = tree.query_pairs(radius, output_type='ndarray')
+    if len(pairs):
+        opp = np.einsum('ij,ij->i', n[pairs[:, 0]], n[pairs[:, 1]]) < -0.3
+        flag[pairs[opp, 0]] = True
+        flag[pairs[opp, 1]] = True
+    A = vertex_area(V, F) * 1e4
+    out = {}
+    for r in np.unique(reg):
+        for S, m in (('L', V[:, 0] > 0), ('R', V[:, 0] <= 0)):
+            a = float(A[flag & (reg == r) & m].sum())
+            if a > 0.05:
+                out[f'{r}_{S}'] = round(a, 1)
+    return out
+
+
+def mhr_groups(lod):
+    """按蒙皮权重把皮肤顶点分到左臂、右臂、左腿、右腿、躯干（比按到肢段轴线的距离分可靠：腋下的胸壁皮肤离上臂轴线也很近）。
+    Skin vertices grouped by skin weights into left arm, right arm, left leg, right leg and trunk (more reliable than
+    distance to a limb axis: the chest-wall skin under the axilla is also close to the upper-arm axis)."""
+    vi, ji, w, _ = mhrlib.skin_weights(lod)
+    jn = mhrlib.joint_names(lod)
+    gid = np.zeros(len(jn), int)   # 0 躯干 / trunk
+    for i, name in enumerate(jn):
+        side = name[0] if name[1] == '_' else None
+        base = name[2:] if side else name
+        if side and any(base.startswith(t) for t in ('uparm', 'lowarm', 'wrist', 'thumb', 'index', 'middle', 'ring', 'pinky')):
+            gid[i] = 1 if side == 'l' else 2
+        elif side and any(base.startswith(t) for t in ('upleg', 'lowleg', 'foot', 'talocrural', 'subtalar', 'transversetarsal', 'ball')):
+            gid[i] = 3 if side == 'l' else 4
+    acc = np.zeros((int(vi.max()) + 1, 5))
+    np.add.at(acc, (vi, gid[ji]), w)
+    return acc.argmax(1)
+
+
+def sheet_gaps(V, F, grp, pairs=((1, 0), (2, 0), (3, 4))):
+    """成对的两片皮肤（左臂–躯干、右臂–躯干、左腿–右腿）之间的有符号间隙：正 = 分开的距离，负 = 一片在另一片之内。
+    Signed gap between paired sheets of skin (left arm-trunk, right arm-trunk, left leg-right leg): positive = distance apart, negative = one inside the other."""
+    from scipy.spatial import cKDTree
+    n = vertex_normals(V, F)
+    g = np.full(len(V), np.inf)
+    for a, b in list(pairs) + [(q, p_) for p_, q in pairs]:
+        ia, ib = np.where(grp == a)[0], np.where(grp == b)[0]
+        d, j = cKDTree(V[ib]).query(V[ia])
+        vb, nb = V[ib][j], n[ib][j]
+        behind = np.einsum('ij,ij->i', V[ia] - vb, nb) < 0
+        facing = np.einsum('ij,ij->i', n[ia], nb) < -0.2
+        gg = np.where(behind, -d, d)
+        use = (facing | behind) & (d < 0.03)
+        g[ia] = np.where(use, np.minimum(g[ia], gg), g[ia])
+    return g
+
+
+def contact_area(V, F, grp, limit=0.006):
+    """与配对皮肤相距不足 6 mm（或在其内）的皮肤面积（cm2）：左臂、右臂（对躯干），以及两腿之间。
+    Area (cm2) of skin within 6 mm of its paired sheet (or inside it): left arm, right arm (against the trunk) and between the legs."""
+    g = sheet_gaps(V, F, grp)
+    A = vertex_area(V, F) * 1e4
+    return {'armL': round(float(A[(grp == 1) & (g < limit)].sum()), 1), 'armR': round(float(A[(grp == 2) & (g < limit)].sum()), 1),
+            'legs': round(float(A[np.isin(grp, [3, 4]) & (g < limit)].sum()), 1),
+            'insideArmL': round(float(A[(grp == 1) & (g < 0)].sum()), 1), 'insideArmR': round(float(A[(grp == 2) & (g < 0)].sum()), 1)}
+
+
+def separate_sheets(V, F, grp, DV, DF, log, gap=0.008, rounds=3):
+    """把相对的两片皮肤（上臂内侧与胸壁、两大腿内侧）各自向内收，使其间至少留 gap；每个顶点内收不超过“它下面的软组织厚度 - 3 mm”。
+    骨骼决定姿势，所以不是靠外展手臂，而是靠局部改皮肤形状来打开腋下。
+    Draw facing sheets of skin (medial upper arm and chest wall; the medial thighs) inwards, each on its own side, until at
+    least `gap` is left between them; no vertex moves in by more than the soft tissue under it minus 3 mm. Bones define the
+    pose, so the axilla is opened by reshaping the skin locally, not by abducting the arm."""
+    import igl
+    A = adjacency(len(V), F)
+    V = V.copy()
+    total = np.zeros(len(V))
+    for it in range(rounds):
+        n = vertex_normals(V, F)
+        for _ in range(2):
+            n = 0.5 * n + 0.5 * (A @ n)
+            n /= np.maximum(np.linalg.norm(n, axis=1), 1e-12)[:, None]
+        g = sheet_gaps(V, F, grp)
+        need = np.where(g < gap, (gap - g) / 2.0, 0.0)
+        for _ in range(3):
+            need = np.maximum(need, 0.7 * (A @ need))
+        room = np.sqrt(igl.point_mesh_squared_distance(np.ascontiguousarray(V), DV, DF)[0]) - 0.003
+        need = np.clip(np.minimum(need, room), 0, 0.008)
+        V = V - need[:, None] * n
+        total += need
+    mv = total > 0.0005
+    log.append(f'  separation: {int(mv.sum())} vertices drawn inwards, median {np.median(total[mv]) * 1000 if mv.any() else 0:.1f} mm, max {total.max() * 1000:.1f} mm')
+    return V
+
+
 def containment(P, grp, reg, V, F):
     s = signed_distance(P, V, F) * 1000
     out = {}
@@ -267,7 +373,17 @@ def main():
             gv = np.vstack([fb.mesh(p)[0] for p in gen])
             lo_, hi_ = gv.min(0) - 0.05, gv.max(0) + 0.05
             cap[((V0 >= lo_) & (V0 <= hi_)).all(1)] = 0.08
+    # 手：有了指节长度缩放后不该再需要大的外推；限制在 10 mm，免得相邻手指的皮肤被推到一起
+    # hands: with the finger length scales no large push should be needed; capped at 10 mm so adjacent fingers are not pushed together
+    cap[classify(V0, L) == 'hand'] = np.minimum(cap[classify(V0, L) == 'hand'], 0.010)
     V1 = enclose(V0, F, Pd, log, cap)
+    regV0 = classify(V0, L)
+    grpV = mhr_groups(lod)
+    before_contact = contact_area(V1, F, grpV)
+    DVc, DFc = np.ascontiguousarray(DV), np.ascontiguousarray(DF)
+    V1 = separate_sheets(V1, F, grpV, DVc, DFc, log)
+    log.append(f'  skin within 6 mm of the facing sheet, cm2 (arm against trunk, between the legs; "inside" = one sheet inside the other): before {before_contact} -> after {contact_area(V1, F, grpV)}')
+    log.append(f'  skin lying against skin (cm2 by region and side): {facing_area(V1, F, regV0)}')
     c1, s1 = containment(Pd, grp, reg, V1, F)
     log.append(f'\n== AFTER local correction\n{fmt_cont(c1)}')
     disp = np.linalg.norm(V1 - V0, axis=1) * 1000

@@ -1828,6 +1828,25 @@ async function finish(input: FinishInput) {
       skin.keepGeometry = true
       skin.note = 'external skin package fitted to these internals'
       installedSkin = pkg
+      // 乳房的摆放（可选）：皮肤包里的 breast-placement.json 给出每侧 HRA 乳房部件的变换 p' = A + T + s·(p − A)
+      // breast placement (optional): breast-placement.json in the skin package gives, per side, the transform p' = A + T + s·(p − A) of the HRA breast parts
+      const bpFile = join(ROOT, SKIN_PACKAGE_DIR, 'breast-placement.json')
+      if (existsSync(bpFile)) {
+        const bp = JSON.parse(readFileSync(bpFile, 'utf8')) as { sides?: Record<string, { aboutPoint?: number[]; translationM?: number[]; scale?: number }> }
+        const placed: Record<string, unknown> = {}
+        for (const side of ['L', 'R'] as const) {
+          const t = bp.sides?.[side]
+          const A = t?.aboutPoint
+          const T = t?.translationM
+          const sc = t?.scale
+          if (!A || !T || A.length !== 3 || T.length !== 3 || typeof sc !== 'number' || !(sc > 0) || ![...A, ...T, sc].every(Number.isFinite)) continue
+          const list = parts.filter((p) => p.source === SOURCE_HRA.name && p.system === 'integumentary' && p.side === side)
+          for (const p of list) p.mesh = { positions: Float32Array.from(p.mesh.positions, (v, i) => A[i % 3]! + T[i % 3]! + sc * (v - A[i % 3]!)), indices: p.mesh.indices }
+          placed[side] = { parts: list.length, aboutPoint: A, translationM: T, scale: sc }
+        }
+        row.breastPlacement = { file: `${SKIN_PACKAGE_DIR}/breast-placement.json`, sides: placed }
+        console.log(`  breast placement from the skin package: ${JSON.stringify(placed)}`)
+      }
       const fit = checkSkinFit(pkg.mesh, deepOf())
       Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit })
       console.log(`\nSkin package ${SKIN_PACKAGE_DIR} installed (${pkg.source.name}, ${pkg.mesh.indices.length / 3} triangles, ${fit.closed ? 'closed' : 'NOT closed'}); deep-part surface outside the skin ${(fit.outside * 100).toFixed(1)}% (${(fit.outside5mm * 100).toFixed(1)}% by more than 5 mm); worst: ${fit.worst.slice(0, 5).map((w) => `${w.name} ${(w.outside * 100).toFixed(0)}%`).join(', ') || '-'}`)
@@ -1893,7 +1912,9 @@ async function finish(input: FinishInput) {
 
   // 邻接 / adjacency
   const adj = computeAdjacency(final.map((f) => f.mesh), { threshold: ADJACENCY.threshold, spacing: ADJACENCY.spacing })
-  const envelopes = new Set(adj.neighbours.map((l, i) => (l.length > ADJACENCY.maxDegree || isFatPart(final[i]!.p.id) ? i : -1)).filter((i) => i >= 0))
+  // 皮肤按角色算作包络，不按邻居数：贴合得好的单层皮肤邻居数可能低于阈值，那样会留下左右不对称的邻接
+  // the skin is an envelope by role, not by neighbour count: a well-fitted single-walled skin can fall under the threshold and would leave asymmetric adjacency
+  const envelopes = new Set(adj.neighbours.map((l, i) => (l.length > ADJACENCY.maxDegree || isFatPart(final[i]!.p.id) || (final[i]!.p.tissue === 'skin' && final[i]!.p.name === 'Skin') ? i : -1)).filter((i) => i >= 0))
   const neighbours = adj.neighbours.map((l, i) => (envelopes.has(i) ? [] : l.filter((j) => !envelopes.has(j))))
   {
     const deg = neighbours.map((l) => l.length).filter((_, i) => !envelopes.has(i))

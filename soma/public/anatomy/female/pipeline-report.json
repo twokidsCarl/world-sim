@@ -901,22 +901,22 @@
   ]
  },
  "jacobian": {
-  "samples": 46141,
+  "samples": 47561,
   "min": -7.518,
-  "p01": 0.117,
-  "median": 0.901,
-  "p99": 1.833,
+  "p01": 0.123,
+  "median": 0.902,
+  "p99": 1.826,
   "max": 5.067,
-  "folded": 310,
-  "below02": 633,
+  "folded": 312,
+  "below02": 632,
   "above4": 5,
   "extremeByNearestBone": {
    "Left scapula": 68,
    "Left eighth rib": 34,
    "Left clavicle": 25,
    "Left first rib": 24,
-   "Right twelfth rib": 22,
    "Right scapula": 21,
+   "Right twelfth rib": 21,
    "Xiphoid process": 21,
    "Twelfth thoracic vertebra": 20,
    "Left tenth rib": 19,
@@ -10351,13 +10351,13 @@
  },
  "skin": {
   "method": "radial envelope over the HRA breasts with a smooth skirt",
-  "verticesRaised": 2341,
-  "ofVertices": 42535,
-  "maxLiftMm": 82,
+  "verticesRaised": 809,
+  "ofVertices": 14612,
+  "maxLiftMm": 80.1,
   "breastSurfaceInFrontOfSkin": {
    "before": {
-    "left": 0.747,
-    "right": 0.747
+    "left": 0.748,
+    "right": 0.749
    },
    "after": {
     "left": 0,
@@ -10677,15 +10677,15 @@
    }
   ],
   "partsMoved": 1860,
-  "maxDisplacementMm": 11.3
+  "maxDisplacementMm": 11.2
  },
  "skinPackage": {
   "dir": "data/raw/bodyshape/out/female-skin",
   "internalsKey": "031ce88117d19693",
-  "present": true,
+  "present": false,
   "fittedTo": null,
   "installed": false,
-  "reason": "the package does not say which internals it was fitted to (manifest.fittedTo missing)"
+  "reason": "no package"
  },
  "fat": {
   "options": {
@@ -10694,92 +10694,92 @@
    "maxDepth": 0.03,
    "smooth": 2
   },
-  "bodyVolumeL": 53.9,
-  "fatVolumeL": 11.4,
+  "bodyVolumeL": 56.9,
+  "fatVolumeL": 13.6,
   "regions": [
    {
     "id": "W_SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "volumeMl": 214,
+    "volumeMl": 400,
     "thicknessMm": {
      "p10": 3,
      "median": 3,
      "p90": 9,
      "max": 30
     },
-    "skinCovered": 0.602
+    "skinCovered": 0.956
    },
    {
     "id": "W_SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
-    "volumeMl": 132,
+    "volumeMl": 150,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
-     "p90": 21,
+     "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.772
+    "skinCovered": 0.895
    },
    {
     "id": "W_SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
-    "volumeMl": 4746,
+    "volumeMl": 5304,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
-     "p90": 24,
+     "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.887
+    "skinCovered": 0.941
    },
    {
     "id": "W_SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
-    "volumeMl": 752,
+    "volumeMl": 944,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 15,
      "max": 30
     },
-    "skinCovered": 0.9
+    "skinCovered": 0.958
    },
    {
     "id": "W_SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
-    "volumeMl": 789,
+    "volumeMl": 1000,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 15,
      "max": 30
     },
-    "skinCovered": 0.887
+    "skinCovered": 0.967
    },
    {
     "id": "W_SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
-    "volumeMl": 2385,
+    "volumeMl": 2902,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.862
+    "skinCovered": 0.95
    },
    {
     "id": "W_SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
-    "volumeMl": 2379,
+    "volumeMl": 2866,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.843
+    "skinCovered": 0.933
    }
   ]
  },
@@ -12699,7 +12699,7 @@
      61
     ],
     "lowestPointBelowOutletPlaneMm": 2.8,
-    "closestToPresentSkinMm": 12.9,
+    "closestToPresentSkinMm": 23.3,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 11.7
    },
@@ -12710,7 +12710,7 @@
      50
     ],
     "lowestPointBelowOutletPlaneMm": 8.2,
-    "closestToPresentSkinMm": 0.4,
+    "closestToPresentSkinMm": 9.1,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 3.4
    },
@@ -12721,8 +12721,8 @@
      39
     ],
     "lowestPointBelowOutletPlaneMm": 0.2,
-    "closestToPresentSkinMm": 0.4,
-    "presentSkinBelowLowestPoint": false,
+    "closestToPresentSkinMm": 3,
+    "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 7.3
    },
    "WU_deep_perineal_muscle_R": {
@@ -12732,7 +12732,7 @@
      40
     ],
     "lowestPointBelowOutletPlaneMm": 0.9,
-    "closestToPresentSkinMm": 0.2,
+    "closestToPresentSkinMm": 5.5,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 7.3
    },
@@ -12743,7 +12743,7 @@
      39
     ],
     "lowestPointBelowOutletPlaneMm": -1,
-    "closestToPresentSkinMm": 0.2,
+    "closestToPresentSkinMm": 2.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 6.5
    },
@@ -12754,7 +12754,7 @@
      39
     ],
     "lowestPointBelowOutletPlaneMm": -1.1,
-    "closestToPresentSkinMm": 0.3,
+    "closestToPresentSkinMm": 4.6,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 6.9
    },
@@ -12765,7 +12765,7 @@
      40
     ],
     "lowestPointBelowOutletPlaneMm": -3.4,
-    "closestToPresentSkinMm": 1,
+    "closestToPresentSkinMm": 8.6,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 10.1
    },
@@ -12776,7 +12776,7 @@
      41
     ],
     "lowestPointBelowOutletPlaneMm": -1.1,
-    "closestToPresentSkinMm": 0.2,
+    "closestToPresentSkinMm": 7.7,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 9.5
    },
@@ -12787,7 +12787,7 @@
      57
     ],
     "lowestPointBelowOutletPlaneMm": -2.9,
-    "closestToPresentSkinMm": 27.1,
+    "closestToPresentSkinMm": 32.2,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 20
    },
@@ -12798,7 +12798,7 @@
      59
     ],
     "lowestPointBelowOutletPlaneMm": -2,
-    "closestToPresentSkinMm": 27,
+    "closestToPresentSkinMm": 31.1,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 24.7
    },
@@ -12809,7 +12809,7 @@
      72
     ],
     "lowestPointBelowOutletPlaneMm": 8.1,
-    "closestToPresentSkinMm": 15.5,
+    "closestToPresentSkinMm": 36.4,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 14.1
    },
@@ -12820,7 +12820,7 @@
      73
     ],
     "lowestPointBelowOutletPlaneMm": 9.9,
-    "closestToPresentSkinMm": 16.3,
+    "closestToPresentSkinMm": 37.1,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 15.9
    },
@@ -12831,7 +12831,7 @@
      63
     ],
     "lowestPointBelowOutletPlaneMm": 6.3,
-    "closestToPresentSkinMm": 16.4,
+    "closestToPresentSkinMm": 26,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 12.5
    },
@@ -12842,7 +12842,7 @@
      66
     ],
     "lowestPointBelowOutletPlaneMm": 7.4,
-    "closestToPresentSkinMm": 19.6,
+    "closestToPresentSkinMm": 29.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 16
    },
@@ -12853,7 +12853,7 @@
      103
     ],
     "lowestPointBelowOutletPlaneMm": 29.8,
-    "closestToPresentSkinMm": 0.3,
+    "closestToPresentSkinMm": 43,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 8.4
    },
@@ -12864,7 +12864,7 @@
      80
     ],
     "lowestPointBelowOutletPlaneMm": 12.8,
-    "closestToPresentSkinMm": 18.5,
+    "closestToPresentSkinMm": 39.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 10.7
    },
@@ -12875,18 +12875,18 @@
      56
     ],
     "lowestPointBelowOutletPlaneMm": 1.8,
-    "closestToPresentSkinMm": 11.1,
+    "closestToPresentSkinMm": 21.9,
     "presentSkinBelowLowestPoint": true,
     "closestToSpecimenOutlineMm": 10.8
    }
   },
-  "structuresWithNoSkinBelow": 2,
+  "structuresWithNoSkinBelow": 1,
   "specimenPerinealOutline": {
    "samples": 3600,
    "toPresentSkinMm": {
-    "median": 12.1,
-    "p90": 28.3,
-    "max": 46.8
+    "median": 29.9,
+    "p90": 43.2,
+    "max": 54.3
    },
    "belowOutletPlaneMm": {
     "median": 35.7,
@@ -13068,7 +13068,8 @@
    "Visible Human Female CT": 84,
    "University of Denver Visible Human lower extremity": 100,
    "Wu et al. 2015 pelvic floor": 51,
-   "BodyParts3D 4.0": 2022,
+   "BodyParts3D 4.0": 2021,
+   "Momentum Human Rig (MHR) v1.0.1": 1,
    "BodyParts3D 3.0": 79,
    "Z-Anatomy": 747,
    "Open3DModel": 251,
@@ -13409,9 +13410,9 @@
  },
  "output": {
   "parts": 3369,
-  "triangles": 3657967,
+  "triangles": 3608323,
   "glbBytes": {
-   "integumentary.glb": 1158080,
+   "integumentary.glb": 853696,
    "muscular.glb": 7956292,
    "skeletal.glb": 2760308,
    "cardiovascular.glb": 5045424,
@@ -13423,15 +13424,15 @@
    "endocrine.glb": 28244,
    "lymphatic.glb": 703076
   },
-  "anatomyJsonBytes": 2618281,
+  "anatomyJsonBytes": 2618567,
   "nerves": 405,
   "bounds": [
-   -0.3545,
-   -0.0789,
-   -0.0557,
-   0.3392,
+   -0.3518,
+   -0.0788,
+   -0.0541,
+   0.3367,
    1.5417,
-   0.2479
+   0.2474
   ]
  }
 }
