@@ -145,3 +145,14 @@ def test_extract_json():
     assert llm.extract_json('```json\n{"a": 1}\n```') == {"a": 1}
     with pytest.raises(ValueError):
         llm.extract_json("没有")
+
+
+def test_cache_dir_precedence(monkeypatch, tmp_path):
+    # MINDLOOP_CACHE > WORLD_SIM_STATE/llm > 项目根 / project root
+    monkeypatch.delenv("MINDLOOP_CACHE", raising=False)
+    monkeypatch.delenv("WORLD_SIM_STATE", raising=False)
+    assert llm.cache_dir().parts[-2:] == (".cache", "llm")
+    monkeypatch.setenv("WORLD_SIM_STATE", str(tmp_path / "state"))
+    assert llm.cache_dir() == tmp_path / "state" / "llm"
+    monkeypatch.setenv("MINDLOOP_CACHE", str(tmp_path / "mine"))
+    assert llm.cache_dir() == tmp_path / "mine"
