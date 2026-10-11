@@ -29,6 +29,8 @@ export interface IsingLevel {
 
 export interface IsingFrame extends Frame {
   T: number
+  /** 空间维度 / Space dimension */
+  dim: 2 | 3
   /**
    * levels[0] 是被模拟的晶格；其后每一级都是前一级按 2×2 多数规则粗粒化的结果。
    * levels[0] is the simulated lattice; each next one is a 2×2 majority-rule coarsening.
@@ -49,8 +51,15 @@ export interface IsingFrame extends Frame {
   transitions?: Float64Array[]
 }
 
+/** 一张要画出来的方格：边长与各格点的 0/1。 / A square lattice to draw: its side and the 0/1 of each cell. */
+export interface LatticeSlice {
+  size: number
+  cells: Uint8Array
+}
+
 export interface IsingBackend extends RunBackend<IsingFrame> {
   readonly L: number
+  readonly dim: 2 | 3
 }
 
 /**
@@ -98,6 +107,7 @@ function toLevel(size: number, sums: LatticeSums): IsingLevel {
 
 export class IsingCpuBackend implements IsingBackend {
   readonly kind = 'cpu'
+  readonly dim = 2
   state: IsingState
   private thr: Uint32Array
   private p: Params
@@ -140,6 +150,11 @@ export class IsingCpuBackend implements IsingBackend {
     return out
   }
 
+  /** 各层要画的方格（二维就是整个晶格）。 / The lattices to draw, one per level (in 2D the whole lattice). */
+  slices(): LatticeSlice[] {
+    return this.pyramid().map((cells, k) => ({ size: this.L >> k, cells }))
+  }
+
   reduce(ids: readonly string[] = []): IsingFrame {
     // 有效信息需要一次扫描前后的两个状态，所以这里会让模拟前进一次扫描。
     // Effective information needs the state before and after one sweep, so this advances
@@ -151,7 +166,7 @@ export class IsingCpuBackend implements IsingBackend {
       transitions = this.tally.add(this.pyramid().map((spins, k) => transitionCounts(before[k]!, spins, this.L >> k)))
     }
     const levels = this.pyramid().map((spins, k) => toLevel(this.L >> k, latticeSums(spins, this.L >> k)))
-    return { step: this.stepCount, T: this.p.T, levels, binder: this.moments.add(levels[0]!.m), transitions }
+    return { step: this.stepCount, T: this.p.T, dim: 2, levels, binder: this.moments.add(levels[0]!.m), transitions }
   }
 
   dispose(): void {}
@@ -161,6 +176,7 @@ type Entry = 'metropolis' | 'bump' | 'block' | 'reduceRows' | 'clearTpm' | 'tran
 
 export class IsingGpuBackend implements IsingBackend {
   readonly kind = 'gpu'
+  readonly dim = 2
   readonly L: number
   readonly levels: number
   stepCount = 0
@@ -314,6 +330,11 @@ export class IsingGpuBackend implements IsingBackend {
     pass.end()
   }
 
+  /** 各层在缓冲里的位置（二维从头开始）。 / Where each level sits in its buffer (from the start in 2D). */
+  latticeViews(): { buffer: GPUBuffer; size: number; offset: number }[] {
+    return this.spins.map((buffer, k) => ({ buffer, size: this.L >> k, offset: 0 }))
+  }
+
   async reduce(ids: readonly string[] = []): Promise<IsingFrame> {
     const wantTransitions = ids.includes('transitions')
     const T = this.p.T
@@ -393,7 +414,7 @@ export class IsingGpuBackend implements IsingBackend {
     // 参数改变之前提交的帧不得计入新的平均。
     // A frame submitted before the parameters changed must not enter the new average.
     const binder = epoch === this.epoch ? this.moments.add(levels[0]!.m) : NaN
-    return { step, T, levels, binder, transitions }
+    return { step, T, dim: 2, levels, binder, transitions }
   }
 
   /**

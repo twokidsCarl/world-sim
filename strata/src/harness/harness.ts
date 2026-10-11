@@ -9,6 +9,7 @@ import { GravityGpuBackend } from '../substrates/gravity/backend'
 import { gravityScalars, leapfrog, uniformSphere } from '../substrates/gravity/ref'
 import { GRAVITY_KNOBS } from '../substrates/gravity/schema'
 import { IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
+import { Ising3dCpuBackend, Ising3dGpuBackend } from '../substrates/ising/backend3d'
 import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
@@ -292,6 +293,27 @@ export async function runHarness(): Promise<HarnessResult> {
   cpuCounts.forEach((counts, k) => counts.forEach((c, i) => (countDiff += Math.abs(c - gpuCounts[k]![i]!))))
   check(`Ising ${cpuCounts.length} 层转移计数差`, countDiff, 0)
   isingGpu.dispose()
+
+  // 三维 Ising：同样要求逐位一致。
+  // 3D Ising: bit-for-bit agreement is required here too.
+  const ip3: Params = { ...defaults(ISING_KNOBS), dim: 3, L3: 5, T: 4.4, h: 0.03 }
+  const ising3Cpu = new Ising3dCpuBackend(ip3, 7)
+  const ising3Gpu = new Ising3dGpuBackend(gpu, ip3, 7)
+  for (let i = 0; i < 4; i++) {
+    ising3Cpu.step(5)
+    ising3Gpu.step(5)
+    await ising3Gpu.idle()
+  }
+  const gpuSpins3 = await ising3Gpu.readSpins()
+  let mismatched3 = 0
+  for (let i = 0; i < gpuSpins3.length; i++) mismatched3 += gpuSpins3[i] === ising3Cpu.state.spins[i] ? 0 : 1
+  check('三维 Ising 20 次扫描后不一致的自旋数', mismatched3, 0)
+  const cpuLevels3 = ising3Cpu.reduce().levels
+  const gpuLevels3 = (await ising3Gpu.reduce()).levels
+  let levelDiff3 = 0
+  cpuLevels3.forEach((l, k) => (levelDiff3 += Math.abs(l.m - gpuLevels3[k]!.m) + Math.abs(l.nn - gpuLevels3[k]!.nn)))
+  check(`三维 Ising ${cpuLevels3.length} 层金字塔统计量差`, levelDiff3, 0)
+  ising3Gpu.dispose()
 
   // 引力：先用直接求和计算加速度和势，再跑一段短轨迹。
   // Gravity: accelerations and potentials by direct summation, then a short trajectory.

@@ -1,6 +1,7 @@
 import type { Substrate } from '../../core/substrate'
 import { ISING_QUANTITIES } from '../../levels/ising'
 import { IsingCpuBackend, IsingGpuBackend, type IsingFrame } from './backend'
+import { Ising3dCpuBackend, Ising3dGpuBackend } from './backend3d'
 import { ISING_KNOBS } from './schema'
 
 export const isingSubstrate: Substrate<IsingFrame> = {
@@ -10,5 +11,12 @@ export const isingSubstrate: Substrate<IsingFrame> = {
   stepLabel: '扫描数',
   knobs: ISING_KNOBS,
   quantities: ISING_QUANTITIES,
-  create: (p, seed, gpu) => (p.backend && gpu ? new IsingGpuBackend(gpu, p, seed) : new IsingCpuBackend(p, seed)),
+  create: (p, seed, gpu) =>
+    p.dim === 3
+      ? p.backend && gpu
+        ? new Ising3dGpuBackend(gpu, p, seed)
+        : new Ising3dCpuBackend(p, seed)
+      : p.backend && gpu
+        ? new IsingGpuBackend(gpu, p, seed)
+        : new IsingCpuBackend(p, seed),
 }

@@ -3,6 +3,7 @@ import { fitCanvas, theme } from '../plot/plot'
 import { LatticeRenderer, type LatticeView } from '../render/lattice'
 import { parseHex } from '../render/points'
 import type { IsingBackend, IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
+import type { Ising3dCpuBackend, Ising3dGpuBackend } from '../substrates/ising/backend3d'
 import { engine } from './engine'
 import { useUi } from './store'
 
@@ -35,16 +36,15 @@ function CpuCanvas() {
     return engine.onFrame(() => {
       const canvas = ref.current
       if (!canvas || engine.backend.kind !== 'cpu') return
-      const b = engine.backend as IsingCpuBackend
+      const b = engine.backend as IsingCpuBackend | Ising3dCpuBackend
       const { ctx, w, h } = fitCanvas(canvas)
       ctx.clearRect(0, 0, w, h)
       ctx.imageSmoothingEnabled = false
       const [r, g, bl] = parseHex(theme().ink).map((c) => Math.round(c * 255)) as [number, number, number]
       const layout = rects(w, h)
-      b.pyramid()
+      b.slices()
         .slice(0, SHOWN)
-        .forEach((spins, k) => {
-          const size = b.L >> k
+        .forEach(({ size, cells: spins }, k) => {
           scratch.width = scratch.height = size
           const sctx = scratch.getContext('2d')!
           const image = sctx.createImageData(size, size)
@@ -73,7 +73,7 @@ function GpuCanvas() {
     const renderer = new LatticeRenderer(gpu.device, gpu.format)
     return engine.onFrame(() => {
       if (engine.backend.kind !== 'gpu') return
-      const b = engine.backend as IsingGpuBackend
+      const b = engine.backend as IsingGpuBackend | Ising3dGpuBackend
       const dpr = window.devicePixelRatio || 1
       const w = Math.max(4, Math.round(canvas.clientWidth * dpr))
       const h = Math.max(3, Math.round(canvas.clientHeight * dpr))
@@ -82,9 +82,10 @@ function GpuCanvas() {
         canvas.height = h
       }
       const layout = rects(w, h)
-      const views: LatticeView[] = b.spins
+      const views: LatticeView[] = b
+        .latticeViews()
         .slice(0, SHOWN)
-        .map((buffer, k) => ({ buffer, size: b.L >> k, rect: layout[k]!.map(Math.floor) as LatticeView['rect'] }))
+        .map((v, k) => ({ ...v, rect: layout[k]!.map(Math.floor) as LatticeView['rect'] }))
       const encoder = gpu.device.createCommandEncoder()
       b.encodePyramid(encoder)
       renderer.draw(encoder, context.getCurrentTexture().createView(), views, parseHex(theme().ink))
@@ -102,7 +103,9 @@ export function IsingStage() {
       engine.onFrame(() => {
         const b = engine.backend as IsingBackend
         if (infoRef.current) {
-          infoRef.current.textContent = `${b.L} × ${b.L} 个自旋 · 第 ${b.stepCount} 次扫描 · 左：原始晶格；右：块边长 2、4、8 的多数表决粗粒化`
+          infoRef.current.textContent =
+            (b.dim === 3 ? `${b.L}³ 个自旋（画的是正中间的截面）` : `${b.L} × ${b.L} 个自旋`) +
+            ` · 第 ${b.stepCount} 次扫描 · 左：原始晶格；右：块边长 2、4、8 的多数表决粗粒化`
         }
       }),
     [],

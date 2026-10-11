@@ -23,10 +23,10 @@ English version below / 英文版见下文。
   - 结构：局域与全局六角序参量 ψ₆，可按它给粒子着色，看到晶粒、晶界和缺陷。
   - 两种粒子：对称的相互作用强度矩阵，异种吸引弱时低温分相。另有“打破作用力与反作用力”旋钮：一旦打开，能量和动量守恒仪表被划掉，速率分布也偏离麦克斯韦分布。
   - 基本常量面板：改精细结构常数和电子/质子质量比，按标度关系换算这盒粒子的真实尺寸、温度、时间，并给出 de Boer 参数作为经典近似是否可信的仪表。
-- **Ising 自旋**：近邻与次近邻耦合加外场，四子格 Metropolis 更新。由自旋数据算出：
+- **Ising 自旋**：近邻与次近邻耦合加外场，四子格 Metropolis 更新。由自旋数据算出：维度是一个旋钮，标为“改变普适类”：三维用奇偶两个子格更新、2×2×2 的块自旋，画正中间的一个截面。
   - 热力学：磁化强度与能量对 Onsager–Yang 精确解。
   - 元：块自旋多数表决的重整化金字塔，以及磁化强度和近邻关联随尺度的流向；Binder 累积量（临界点上与晶格大小无关）。另有实验性的“有效信息随尺度的变化”：每一层把格点的局部状态取为（自旋，四邻之和），统计一次扫描前后的转移，算出有效信息。
-  - 测试里用 Wolff 团簇更新定量检验临界行为：不同大小晶格的 Binder 曲线在精确的 Tc 相交，Tc 处磁化强度按 L^(−1/8) 衰减；加上次近邻耦合后 Tc 移动四成，交点处的累积量不变。
+  - 测试里用 Wolff 团簇更新定量检验临界行为：不同大小晶格的 Binder 曲线在精确的 Tc 相交，Tc 处磁化强度按 L^(−1/8) 衰减；加上次近邻耦合后 Tc 移动四成，交点处的累积量不变。三维同样检验：Binder 曲线交于 4.504（文献 4.5115），临界点磁化强度的指数 −0.510（文献约 −0.518，二维是 −0.125）。
 
 - **引力 N 体**：三维软化牛顿引力，直接对所有天体对求和，蛙跳积分。这是独立场景，不与分子动力学共用一个盒子。由天体数据算出：
   - 微观：能量与动量守恒。
@@ -37,7 +37,7 @@ English version below / 英文版见下文。
 
 每个可调参数都带标签，说明它是改变普适类、仅改变数值、状态变量还是数值方法。每个带理论的量旁边实时标出“吻合”或“偏离”。
 
-页面底部有引导实验（三维过冷液体里等一个晶核、流过圆盘、从下面加热出现对流卷、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=nucleation`、`/?scenario=wake`、`/?scenario=convection`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
+页面底部有引导实验（同一个 Ising 模型换一个维度、三维过冷液体里等一个晶核、流过圆盘、从下面加热出现对流卷、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=isingDimension`、`/?scenario=nucleation`、`/?scenario=wake`、`/?scenario=convection`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
 
 ## 运行
 
@@ -90,7 +90,7 @@ CPU 参考实现先写，是规范；WGSL 内核是它的优化，并用同一�
 - 压强的理论线只展开到第二维里系数，仅在低密度有效；稠密时与实测不符是预期的。
 - 临界点附近 Metropolis 更新平衡极慢，大晶格可能长时间达不到平衡；界面上实时的 Binder 累积量因此只在小晶格上可信。Wolff 更新只用于测试，不是被模拟的动力学。
 - 有效信息是实验性的：数值依赖局部状态的取法，而且各层用的是同一个时间步（一次扫描），粗的层本来就变得慢，这本身会抬高它的读数。它没有理论值可对照。实测（512²）：临界温度下从 0.60 升到 2.08 比特，T = 3.5 时在 0.1 到 0.4 之间，T = 1.5 时趋于 0。
-- Ising 只有二维。三维 Ising（临界指数不同，是“改变普适类”最干净的例子）还没有做。
+- 三维 Ising 只有最近邻耦合，没有次近邻耦合，也没有“有效信息”那张卡片；它没有精确解，磁化强度和能量不画理论线，临界温度与指数取文献里的数值结果。测试用的晶格很小（8 到 32），Binder 交点处的累积量是 0.490，比文献的大晶格值 0.465 高，这是小晶格的修正。
 - 方程发现只做了扩散这一种情形。SINDy 的稀疏阈值取 0.2（分箱的粒子数据每箱有百分之几的噪声，取 0.1 会留下拟合噪声的小项）；浓度趋于均匀后信号被噪声淹没，拟合会失效。DMD 的衰减率与扩散方程的预言只在量级上吻合，而且随记录长度变化很大：一次运行里，两个最慢模态与预言之比在 1.2 万步时是 3.5 和 1.4，到 4 万步时是 0.99 和 1.42。试过前向–后向 DMD：在加了噪声的合成数据上它把最慢衰减率的平均误差从 264% 降到 81%，但在真实粒子数据上并不更准（4 万步时 0.86 和 1.62）。可见主要误差不是噪声带来的偏差，而是初始台阶里高阶模混进了前几个模态。界面仍用标准 DMD。
 - 引力是 O(N²) 直接求和，最多 16384 个天体；没有气体、辐射和核反应，所以只有无碰撞的坍缩与弛豫，没有恒星。
 - 冷坍缩后“全体的 2K/|U|”不会回到 1：约两成天体被抛出带走动能，而且软化势下 |U| 不等于力的位力。位力定理的检验只对束缚部分、用力的位力来做。
@@ -126,10 +126,10 @@ Three substrates, switched at the top right of the interface:
   - Structure: the local and global hexatic order parameter ψ₆; particles can be coloured by it, showing grains, grain boundaries and defects.
   - Two species: a symmetric matrix of interaction strengths; when the unlike-species attraction is weak, the system phase-separates at low temperature. There is also a "break action and reaction" knob: once it is turned on, the energy and momentum conservation gauges are struck out, and the speed distribution also deviates from the Maxwell distribution.
   - Fundamental constants panel: change the fine-structure constant and the electron/proton mass ratio, convert the real size, temperature and time of this box of particles by scaling relations, and get the de Boer parameter as a gauge of whether the classical approximation can be trusted.
-- **Ising spins**: nearest-neighbour and next-nearest-neighbour couplings plus an external field, with four-sublattice Metropolis updates. Computed from the spin data:
+- **Ising spins**: nearest-neighbour and next-nearest-neighbour couplings plus an external field, with four-sublattice Metropolis updates. Computed from the spin data: The dimension is a knob, tagged "changes the universality class": in 3D the update runs on the two parity sublattices, block spins are 2×2×2, and the middle slice is drawn.
   - Thermodynamic: magnetization and energy against the exact Onsager–Yang solution.
   - Meta: the renormalization pyramid of block spins by majority vote, and the flow of the magnetization and the nearest-neighbour correlation with scale; the Binder cumulant (independent of lattice size at the critical point). There is also an experimental "effective information against scale": at each level the local state of a site is taken to be (spin, sum of its four neighbours), transitions across one sweep are counted, and the effective information is computed from them.
-  - In the tests, Wolff cluster updates are used to check the critical behaviour quantitatively: the Binder curves of lattices of different sizes cross at the exact Tc, and at Tc the magnetization decays as L^(−1/8); with a next-nearest-neighbour coupling added, Tc shifts by forty percent while the cumulant at the crossing is unchanged.
+  - In the tests, Wolff cluster updates are used to check the critical behaviour quantitatively: the Binder curves of lattices of different sizes cross at the exact Tc, and at Tc the magnetization decays as L^(−1/8); with a next-nearest-neighbour coupling added, Tc shifts by forty percent while the cumulant at the crossing is unchanged. The same is checked in 3D: the Binder curves cross at 4.504 (literature 4.5115), and the magnetisation exponent at the critical point is −0.510 (literature about −0.518; in 2D it is −0.125).
 
 - **Gravitational N-body**: 3D softened Newtonian gravity, direct summation over all pairs of bodies, leapfrog integration. This is a separate scene; it does not share a box with the molecular dynamics. Computed from the body data:
   - Microscopic: energy and momentum conservation.
@@ -140,7 +140,7 @@ On the molecular dynamics stage (2D) you can drag a rectangle to select a region
 
 Every adjustable parameter carries a label saying whether it changes the universality class, only changes numerical values, is a state variable, or is a numerical method. Next to every quantity that has a theory, "agrees" or "deviates" is shown in real time.
 
-At the bottom of the page there are guided experiments (waiting for a nucleus in a supercooled 3D liquid, flow past a disc, heating from below until convection rolls appear, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=nucleation`, `/?scenario=wake`, `/?scenario=convection`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
+At the bottom of the page there are guided experiments (the same Ising model in a different dimension, waiting for a nucleus in a supercooled 3D liquid, flow past a disc, heating from below until convection rolls appear, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=isingDimension`, `/?scenario=nucleation`, `/?scenario=wake`, `/?scenario=convection`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
 
 ## Running
 
@@ -193,7 +193,7 @@ The CPU reference implementation is written first and is the specification; the 
 - The theory line for the pressure is expanded only to the second virial coefficient and is valid only at low density; disagreement with the measurement at high density is expected.
 - Near the critical point Metropolis updates equilibrate extremely slowly, and large lattices may fail to reach equilibrium for a long time; the real-time Binder cumulant in the interface is therefore trustworthy only on small lattices. Wolff updates are used only in the tests and are not the dynamics being simulated.
 - Effective information is experimental: its value depends on the choice of local state, and every level uses the same time step (one sweep) although coarse levels change more slowly anyway, which by itself raises their reading. There is no theoretical value to compare with. Measured (512²): from 0.60 to 2.08 bits with coarse-graining at the critical temperature, between 0.1 and 0.4 at T = 3.5, tending to 0 at T = 1.5.
-- Ising is 2D only. The 3D Ising model (different critical exponents, the cleanest example of "changing the universality class") has not been done yet.
+- The 3D Ising model has nearest-neighbour coupling only: no next-nearest-neighbour coupling and no "effective information" card. It has no exact solution, so magnetisation and energy have no theory line, and the critical temperature and exponents are numerical results from the literature. The lattices used in the tests are small (8 to 32); the cumulant at the Binder crossing is 0.490, above the literature's large-lattice value of 0.465, which is a small-lattice correction.
 - Equation discovery has been done only for the single case of diffusion. The SINDy sparsity threshold is set to 0.2 (the binned particle data have a few percent of noise per bin, and 0.1 would leave small terms that fit the noise); once the concentration approaches uniformity the signal is drowned in noise and the fit fails. The DMD decay rates agree with the prediction of the diffusion equation only in order of magnitude, and vary strongly with the length of the record: in one run the ratios of the two slowest modes to the prediction were 3.5 and 1.4 at 12,000 steps and 0.99 and 1.42 at 40,000 steps. Forward–backward DMD was tried: on synthetic data with added noise it lowers the mean error of the slowest decay rate from 264% to 81%, but on the real particle data it is no more accurate (0.86 and 1.62 at 40,000 steps). So the main error is not noise bias but higher modes of the initial step leaking into the first few. The interface still uses standard DMD.
 - Gravity is O(N²) direct summation, with at most 16384 bodies; there is no gas, radiation or nuclear reactions, so there is only collisionless collapse and relaxation, and no stars.
 - After a cold collapse the "2K/|U| of the whole system" does not return to 1: about twenty percent of the bodies are ejected and carry away kinetic energy, and with a softened potential |U| is not equal to the virial of the forces. The virial theorem is tested only on the bound part, using the virial of the forces.

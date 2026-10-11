@@ -5,6 +5,7 @@ const SHADER = /* wgsl */ `
 struct View {
   up: vec4f,
   size: u32,
+  offset: u32,   // 这张方格在缓冲里的起始下标 / index in the buffer where this lattice starts
 }
 
 @group(0) @binding(0) var<uniform> V: View;
@@ -27,13 +28,15 @@ fn vs(@builtin(vertex_index) vi: u32) -> Out {
 @fragment
 fn fs(in: Out) -> @location(0) vec4f {
   let c = min(vec2u(in.uv * f32(V.size)), vec2u(V.size - 1));
-  return V.up * f32(cells[c.y * V.size + c.x]);
+  return V.up * f32(cells[V.offset + c.y * V.size + c.x]);
 }
 `
 
 export interface LatticeView {
   buffer: GPUBuffer
   size: number
+  /** 方格在缓冲里的起始下标（三维晶格的一个截面）；默认 0。 / Index where the lattice starts in the buffer (a slice of a 3D lattice); 0 by default. */
+  offset?: number
   /** 以设备像素计的视口：x、y、宽、高。 / Viewport in device pixels: x, y, width, height. */
   rect: [number, number, number, number]
 }
@@ -78,7 +81,7 @@ export class LatticeRenderer {
       }
       const data = new ArrayBuffer(32)
       new Float32Array(data, 0, 4).set([...color, 1])
-      new Uint32Array(data, 16, 1)[0] = l.size
+      new Uint32Array(data, 16, 2).set([l.size, l.offset ?? 0])
       this.device.queue.writeBuffer(entry.uniform, 0, data)
       pass.setViewport(...l.rect, 0, 1)
       pass.setBindGroup(0, entry.group)

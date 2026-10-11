@@ -2,15 +2,30 @@ import type { Knob } from '../../core/params'
 
 export const ISING_KNOBS: Knob[] = [
   {
+    id: 'dim',
+    label: '空间维度',
+    tag: 'class',
+    min: 2,
+    max: 3,
+    step: 1,
+    default: 2,
+    rebuild: 'state',
+    options: [
+      { value: 2, label: '二维' },
+      { value: 3, label: '三维' },
+    ],
+    note: '同一条规则，换一个维度就换了普适类：临界温度从 2.269 变成 4.512，临界点磁化强度随晶格大小的衰减指数从 1/8 变成约 0.52。三维画的是正中间的一个截面。',
+  },
+  {
     id: 'T',
     label: '温度 T',
     tag: 'state',
     min: 0.5,
-    max: 5,
+    max: 6.5,
     step: 0.01,
     default: 2.6,
     rebuild: 'none',
-    note: 'J₂=0、h=0 时临界温度 Tc ≈ 2.269。临界点附近 Metropolis 更新平衡极慢，大晶格可能长时间达不到平衡。',
+    note: '二维 J₂=0、h=0 时临界温度 Tc ≈ 2.269；三维 Tc ≈ 4.512。临界点附近 Metropolis 更新平衡极慢，大晶格可能长时间达不到平衡。',
   },
   {
     id: 'h',
@@ -33,6 +48,24 @@ export const ISING_KNOBS: Knob[] = [
     default: 0,
     rebuild: 'none',
     note: '改变微观相互作用的细节：Tc 会移动，但临界指数不变（仍是二维 Ising 普适类）。',
+    when: (p) => p.dim !== 3,
+  },
+  {
+    id: 'L3',
+    label: '晶格边长 L（三维）',
+    tag: 'numerical',
+    min: 5,
+    max: 7,
+    step: 1,
+    default: 6,
+    rebuild: 'state',
+    options: [
+      { value: 5, label: '32' },
+      { value: 6, label: '64' },
+      { value: 7, label: '128' },
+    ],
+    note: 'CPU 参考实现最多取 32。',
+    when: (p) => p.dim === 3,
   },
   {
     id: 'L',
@@ -43,6 +76,7 @@ export const ISING_KNOBS: Knob[] = [
     step: 1,
     default: 9,
     rebuild: 'state',
+    when: (p) => p.dim !== 3,
     options: [
       { value: 6, label: '64' },
       { value: 7, label: '128' },
