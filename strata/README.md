@@ -142,7 +142,7 @@ curl -X POST localhost:8790/api/run/ising -H 'content-type: application/json' \
 - “是否相符”用的是界面里那套容差和理论线，理论超出适用范围时照样会给出一个数（例如稠密流体对低密度的维里展开），适用条件见 `quantities` 数据集的 `theory_note`。
 - Ising 的“有效信息”每采样一次会让模拟多推进一次扫描，返回的 `steps` 是实际步数。
 - 一次只算一个请求，其余的排队。
-- 只在本机经 idea-loom 的校验和转发代码试过；合并后由 idea-loom 托管的那一份还没有实测。
+- 合并后由 idea-loom 托管的那一份试过三样：一次 Ising 计算（结果与本机逐位相同）、一次数据集查询、一次出错提示。其余四个计算只在本机经它的校验和转发代码试过。
 
 ## 已知边界
 
@@ -318,7 +318,7 @@ Limits, and what is not done:
 - Agreement uses the UI's own tolerances and theory lines; where a theory is outside its range a number is still given (a dense fluid against the low-density virial expansion, for example). The conditions are in `theory_note` of the `quantities` dataset.
 - Ising's effective information advances the simulation by one extra sweep per sample; the `steps` returned is the actual count.
 - One request is computed at a time; the others queue.
-- Tried only on this machine through idea-loom's validation and forwarding code; the copy hosted by idea-loom after the merge has not been exercised yet.
+- Three things were tried on the copy idea-loom hosts after the merge: one Ising computation (bit-identical to the local result), one dataset query and one error reply. The other four computations were only tried locally through its validation and forwarding code.
 
 ## Known limits
 

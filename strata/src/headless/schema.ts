@@ -81,10 +81,10 @@ export function capability(s: Substrate<Frame>): Json {
     .join(', ')
   return {
     id: `run_${s.id}`,
-    title: { zh: `跑一次${s.label}`, en: `Run ${e.label.toLowerCase()} once` },
+    title: { zh: `跑一次：${s.label}`, en: `Run once: ${e.label}` },
     description: {
-      zh: `不用浏览器，用 CPU 参考实现（双精度）跑一次${s.label}：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（${sizes}），最多 ${limits.steps} ${s.stepLabel}；超过约 ${RUN_SECONDS} 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。`,
-      en: `Runs ${e.label.toLowerCase()} once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (${sizes}) and at most ${limits.steps} ${e.step}; past about ${RUN_SECONDS} seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written.`,
+      zh: `不用浏览器，用 CPU 参考实现（双精度）跑一次“${s.label}”：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（${sizes}），最多 ${limits.steps} ${s.stepLabel}；超过约 ${RUN_SECONDS} 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。`,
+      en: `Runs the substrate "${e.label}" once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (${sizes}) and at most ${limits.steps} ${e.step}; past about ${RUN_SECONDS} seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written.`,
     },
     http: { method: 'POST', path: `/api/run/${s.id}` },
     input: inputSchema(s),
