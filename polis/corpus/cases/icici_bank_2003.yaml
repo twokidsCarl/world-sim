@@ -1,0 +1,108 @@
+title: ICICI 银行挤兑（2003年4月，印度）
+kind: history
+setting: 2003年4月11日至14日的印度，从古吉拉特邦开始。此前两年邦里有二十多家合作银行倒闭；4月10日股市大跌。
+summary: >-
+  一家经营正常的大型私营银行，因为“现金周转不灵”的传闻被储户挤兑。传闻从古吉拉特邦南部的瓦尔萨德传出；4月11日，一份地方报纸刊出了关于银行财务问题的说法，
+  艾哈迈达巴德、拉杰果德、苏拉特、阿嫩德等地的取款机前挤满了人，随后蔓延到孟买、浦那等城市。银行当天发表声明否认，加派运钞车保证取款机不空。
+  4月12日，印度储备银行声明该行流动性充足、财务稳健，并安排向它供应现金；当天全国1680台取款机被取走136 crore 卢比以上，平日是55到60 crore。
+  4月11日至13日共被取走550 crore 卢比，而银行2002年底的存款总额是41,316 crore。4月13日起储户陆续把钱存回，银行周日周一照常营业。
+people:
+  - {name: 储户们, role: ICICI 银行的存款人, traits: 两年里见过二十多家合作银行倒闭，看到报上的说法就去取款机取钱}
+  - {name: Kalpana Morparia, role: ICICI 银行执行董事, traits: 4月11日发表声明，说传闻是恶意的、毫无根据，银行财务状况没有不利变化}
+  - {name: Chanda Kochhar, role: ICICI 银行执行董事, traits: 说取款机和分行现金充足，银行周日周一照常开门}
+  - {name: 印度储备银行, role: 中央银行, traits: 4月12日声明该行流动性充足、财务稳健，并安排供应现金}
+events:
+  - {what: 4月10日，股市大跌；有关 ICICI 银行流动性受损的传闻在古吉拉特邦南部的瓦尔萨德出现。, who: [储户们]}
+  - {what: 4月11日（周五），一份地方报纸刊出关于银行财务问题的说法；艾哈迈达巴德、拉杰果德、苏拉特、阿嫩德的取款机被挤兑，古吉拉特邦当天被取走约23 crore 卢比。银行发表声明否认。, who: [储户们, Kalpana Morparia]}
+  - {what: 4月12日（周六），挤兑蔓延到孟买等地；古吉拉特邦再被取走约65 crore，全国取款机被取走136 crore 以上（平日55到60 crore）。印度储备银行声明该行流动性充足、财务稳健，并安排供应现金。, who: [储户们, 印度储备银行, Chanda Kochhar]}
+  - {what: 4月13日（周日），储户开始把钱存回；银行周日和周一照常营业。4月11日至13日累计被取走550 crore 卢比。, who: [储户们]}
+outcome: 银行没有倒闭：三天里被取走的约为存款总额的1.3%，储备银行表态并供应现金之后平息，周日起有人把钱存回。
+theories: [informational_cascade, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: The run on ICICI Bank (India, April 2003)
+  setting: India, 11–14 April 2003, starting in Gujarat. More than twenty co-operative banks in the state had failed in the previous two years; the stock market fell sharply on 10 April.
+  summary: >-
+    A sound large private bank was run on over a rumour that it was short of cash. The rumour started in Valsad in south Gujarat; on 11 April a local newspaper
+    printed the claim about the bank's finances, and ATMs in Ahmedabad, Rajkot, Surat and Anand were besieged, the rush then spreading to Mumbai, Pune and
+    other cities. The bank denied the rumour the same day and doubled its armoured vans. On 12 April the Reserve Bank of India said the bank had sufficient
+    liquidity and was sound, and arranged cash for it; that day more than Rs 136 crore left its 1,680 ATMs against Rs 55–60 crore on a normal day. Rs 550
+    crore was withdrawn over 11–13 April, against deposits of Rs 41,316 crore at the end of 2002. From 13 April customers began to redeposit.
+  people:
+    - name: "Depositors"
+      role: "Depositors of ICICI Bank"
+      traits: >-
+        Had seen more than twenty co-operative banks fail in two years; went to the cash machines on seeing the newspaper's claim.
+    - name: "Kalpana Morparia"
+      role: "Executive director of ICICI Bank"
+      traits: >-
+        Issued a statement on 11 April calling the rumours mischievous and baseless and saying there had been no adverse change in the bank's finances.
+    - name: "Chanda Kochhar"
+      role: "Executive director of ICICI Bank"
+      traits: >-
+        Said the ATMs and branches had enough cash and that the bank would stay open on Sunday and Monday.
+    - name: "Reserve Bank of India"
+      role: "Central bank"
+      traits: >-
+        Stated on 12 April that the bank had sufficient liquidity and was sound, and arranged a supply of cash.
+  events:
+    - >-
+      On 10 April the stock market fell sharply; rumours that ICICI Bank's liquidity had been hurt appeared in Valsad in south Gujarat.
+    - >-
+      On 11 April (Friday), a local newspaper printed the claim about the bank's finances; ATMs in Ahmedabad, Rajkot, Surat and Anand were besieged and
+      about Rs 23 crore was withdrawn in Gujarat that day. The bank issued a denial.
+    - >-
+      On 12 April (Saturday), the rush spread to Mumbai and elsewhere; another Rs 65 crore or so was withdrawn in Gujarat, and more than Rs 136 crore left
+      the bank's ATMs nationwide (Rs 55–60 crore on a normal day). The Reserve Bank of India stated that the bank had sufficient liquidity and was sound,
+      and arranged a supply of cash.
+    - >-
+      On 13 April (Sunday), customers began to redeposit; the bank stayed open on Sunday and Monday. Rs 550 crore had been withdrawn over 11–13 April.
+  outcome: The bank did not fail. About 1.3% of deposits was withdrawn over three days; the run subsided after the Reserve Bank's statement and supply of cash, and redeposits began on Sunday.
+  checked:
+    - >-
+      Fetched the article. Checked: Rs 550 crore withdrawn between 11 and 13 April; the rumour starting in Valsad and spreading to Surat, Ahmedabad, Pune,
+      Delhi, Kolkata and parts of Mumbai; a local newspaper's report; more than Rs 136 crore withdrawn from 1,680 ATMs on 12 April against Rs 55–60 crore
+      normally; the inquiry under P. N. Bhagwati. The article cites Business Standard, which I did not open. The 550 figure is a gross amount and so
+      includes ordinary withdrawals; the article does not separate them.
+    - >-
+      Fetched the article. Checked: the rush beginning on 11 April after a local newspaper published the rumours; about Rs 23 crore withdrawn in Gujarat on
+      11 April and Rs 65 crore on 12 April (the bank's Gujarat retail head); withdrawals ending on 12 April after the Reserve Bank's assurances; customers
+      returning to deposit from 13 April; the bank open on 13 and 14 April; 22 co-operative banks failed in Gujarat in the previous two years.
+    - >-
+      Fetched the page. Checked: the Reserve Bank's statement of 12 April ("sufficient liquidity, including in its current account with the RBI"; "financial
+      position is also sound"; cash arranged); ATMs besieged in Ahmedabad, Rajkot, Surat and Anand the day before; the bank open on Sunday and Monday;
+      total deposits of Rs 41,316 crore at 31 December 2002. The "about 1.3%" is my own division, 550 ÷ 41,316; no source prints this ratio, and the two
+      numbers are three months apart.
+sources:
+  - work: India's ICICI Bank investigating rumor that triggered ATM rush
+    author: ATM Marketplace（引 Business Standard / citing Business Standard）
+    year: 2003
+    locator: 2003年4月17日
+    url: https://www.atmmarketplace.com/news/indias-icici-bank-investigating-rumor-that-triggered-atm-rush
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：4月11日至13日被取走550 crore 卢比；传闻从瓦尔萨德传出，蔓延到苏拉特、艾哈迈达巴德、浦那、德里、加尔各答和孟买部分地区；
+      一份地方报纸的报道；4月12日全国1680台取款机被取走136 crore 以上，平日55到60 crore；由 P. N. Bhagwati 主持调查。
+      报道转引 Business Standard，我没有打开原文。550 是总取款额，包含平日本来就有的取款，报道没有分开。
+      Confirmed: Rs 550 crore over 11–13 April, the origin in Valsad, the ATM figures for 12 April. It cites Business Standard, which I did not open.
+      The 550 figure is gross and includes ordinary withdrawals.
+  - work: In India, rumor causes rush on ICICI Bank's ATMs
+    author: ATM Marketplace
+    year: 2003
+    locator: 2003年4月13日，艾哈迈达巴德
+    url: https://www.atmmarketplace.com/news/in-india-rumor-causes-rush-on-icici-banks-atms/
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：4月11日地方报纸刊出传闻后开始挤兑；古吉拉特邦4月11日约23 crore、4月12日约65 crore（银行古吉拉特零售负责人的说法）；
+      储备银行保证之后取款于4月12日停止；4月13日起储户回来存钱；银行4月13、14日营业；此前两年古吉拉特有22家合作银行倒闭。
+      Confirmed: the Gujarat figures for 11 and 12 April, withdrawals ending on 12 April after the Reserve Bank's assurances, and redeposits from 13 April.
+  - work: Business page, The Tribune (Chandigarh)
+    author: The Tribune
+    year: 2003
+    locator: 2003年4月13日
+    url: https://www.tribuneindia.com/2003/20030413/biz.htm
+    verified: true
+    checked: >-
+      取回该页 / fetched the page. 核对了：储备银行4月12日的声明（流动性充足，包括在储备银行的往来账户；财务状况稳健；已安排供应现金）；
+      前一天艾哈迈达巴德、拉杰果德、苏拉特、阿嫩德的取款机被挤兑；银行周日周一营业；2002年12月31日存款总额41,316 crore 卢比。
+      “约1.3%”是我用 550 ÷ 41,316 算的，没有来源印这个比例，两个数相隔三个月。
+      Confirmed the Reserve Bank's statement of 12 April and total deposits of Rs 41,316 crore at 31 December 2002. The 1.3% share is my own division.

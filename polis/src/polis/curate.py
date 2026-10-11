@@ -36,6 +36,8 @@ PLACES: dict[str, tuple[str | None, str, int]] = {
     "bac": ("Costa Rica", "Costa Rica", 2005),
     "swedbank": ("Latvia", "Latvia", 2010),
     "kaspi": ("Kazakhstan", "Kazakhstan", 2015),
+    "icici": ("India", "India", 2005),
+    "fib": ("Bulgaria", "Bulgaria", 2015),
 }
 
 # 「非常信任 / 有些信任 / 不太信任 / 完全不信任」换成 1、2/3、1/3、0；「不知道 / 拒答」不计

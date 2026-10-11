@@ -94,7 +94,13 @@ def bea(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
     ]
 
 
-HELD_OUT = ("bac", "swedbank", "kaspi")
+# 第一轮的三起：结果已经看过（挤兑要么不发生、要么太大），并据此决定再改一轮模型，所以不再算检验。
+# The first round's three: their results have been seen (a run either did not happen or was far too large) and prompted
+# another round of model changes, so they no longer count as tests.
+SEEN = ("bac", "swedbank", "kaspi")
+# 第二轮的两起：设定和标准在第二轮模型改动之前合并。
+# The second round's two: their settings and criteria were merged before the second round of model changes.
+HELD_OUT = ("icici", "fib")
 
 
 def judge(record: dict, survived: bool, day: float, amount: float, runners: float, calm: bool) -> dict[str, bool]:
@@ -118,6 +124,9 @@ def held_out(scenario: str, over: dict[str, float], seeds: list[int], n: int = 1
     """样本外检验：场景设定和通过标准（场景模块里的 RECORD）都在模型改动之前合并，之后不改。
     The out-of-sample test: the scenario's settings and its pass criteria (RECORD in the scenario module) were merged
     before the model was changed and are not edited afterwards.
+
+    SEEN 里的案例用同一套标准重跑，但标为 fitted：它们的结果已经影响过模型。
+    Cases in SEEN are rerun against the same criteria but marked fitted: their results have already shaped the model.
 
     "平息"指当局表态两天之后才去排队的人不超过全部挤兑者的一成，与东亚银行的检验同一口径。
     "Calm" means that no more than a tenth of all runners joined the queue later than two days after the
@@ -143,13 +152,14 @@ def held_out(scenario: str, over: dict[str, float], seeds: list[int], n: int = 1
     lo, hi = rec["run_days"]
     when = f"第 {lo} 天" if lo == hi else f"第 {lo}–{hi} 天"
     case = rec["case"]
+    fitted = scenario in SEEN
     out = [
-        Check(case, "全部相符", f"{sum(all(w.values()) for w in worlds)}/{k} 个世界", sum(all(w.values()) for w in worlds), k, False),
-        Check(case, "银行没有倒闭", f"{count('survived')}/{k} 个世界撑住", count("survived"), k, False),
-        Check(case, f"{when}出现挤兑", f"{len(ran)}/{k} 个世界发生挤兑" + (f"，平均第 {np.mean(ran):.1f} 天" if ran else ""), count("on_day"), k, False),
-        Check(case, f"被提走的存款约为总额的 {rec['amount']:.1%}（要求在一半到两倍之间）", f"平均 {np.mean(amounts):.1%}，最少 {min(amounts):.1%}，最多 {max(amounts):.1%}", count("amount"), k, False),
+        Check(case, "全部相符", f"{sum(all(w.values()) for w in worlds)}/{k} 个世界", sum(all(w.values()) for w in worlds), k, fitted),
+        Check(case, "银行没有倒闭", f"{count('survived')}/{k} 个世界撑住", count("survived"), k, fitted),
+        Check(case, f"{when}出现挤兑", f"{len(ran)}/{k} 个世界发生挤兑" + (f"，平均第 {np.mean(ran):.1f} 天" if ran else ""), count("on_day"), k, fitted),
+        Check(case, f"被提走的存款约为总额的 {rec['amount']:.1%}（要求在一半到两倍之间）", f"平均 {np.mean(amounts):.1%}，最少 {min(amounts):.1%}，最多 {max(amounts):.1%}", count("amount"), k, fitted),
     ]  # fmt: skip
     if rec["runners"] is not None:
-        out.append(Check(case, f"去取款的储户约占 {rec['runners']:.0%}（要求在一半到两倍之间）", f"平均 {np.mean(shares):.1%}", count("runners"), k, False))
-    out.append(Check(case, "当局表态两天后基本没人再去取", f"{count('calm')}/{k} 个世界", count("calm"), k, False))
+        out.append(Check(case, f"去取款的储户约占 {rec['runners']:.0%}（要求在一半到两倍之间）", f"平均 {np.mean(shares):.1%}", count("runners"), k, fitted))
+    out.append(Check(case, "当局表态两天后基本没人再去取", f"{count('calm')}/{k} 个世界", count("calm"), k, fitted))
     return out

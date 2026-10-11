@@ -52,11 +52,12 @@ def test_bea_is_no_longer_counted_as_a_test():
 
 
 def test_held_out_scenarios_are_frozen_from_verified_cases():
-    """只检查设定和标准本身，不运行这三个场景。/ Checks the settings and criteria only; the scenarios are not run."""
+    """只检查设定和标准本身，不运行这些场景。/ Checks the settings and criteria only; the scenarios are not run."""
     from polis import corpus, population
 
     cases = {c.id: c for c in corpus.load("cases")}
-    for name in canon.HELD_OUT:
+    assert not set(canon.HELD_OUT) & set(canon.SEEN)
+    for name in canon.HELD_OUT + canon.SEEN:
         sc = trace.scenario_module(name)
         rec = sc.RECORD
         assert cases[rec["case"]].verified

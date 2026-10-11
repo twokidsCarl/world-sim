@@ -19,3 +19,5 @@ profiles:
   bac: {place: Costa Rica, year: 2004, counts: [377711, 813848, 797183, 1951454, 259792]}
   swedbank: {place: Latvia, year: 2011, counts: [106096, 187256, 269007, 1117000, 380424]}
   kaspi: {place: Kazakhstan, year: 2014, counts: [1914224, 2926275, 2731937, 9068509, 1175080]}
+  icici: {place: India, year: 2003, counts: [134313675, 249754954, 218474596, 463184280, 51065148]}
+  fib: {place: Bulgaria, year: 2014, counts: [340069, 657103, 735093, 4062696, 1428217]}

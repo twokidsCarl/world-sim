@@ -2,8 +2,8 @@
 English for each scenario's title, setting and place names. People's names, the wordings of the rumour and
 characters' thoughts stay in the original Chinese and are not here.
 
-单独放一个文件，是因为三个样本外场景的模块在写定之后不再改动。
-This lives in a file of its own because the three held-out scenario modules are not edited once fixed.
+单独放一个文件，是因为样本外场景的模块在写定之后不再改动。
+This lives in a file of its own because the held-out scenario modules are not edited once fixed.
 """
 
 from __future__ import annotations
@@ -15,6 +15,8 @@ TITLE = {
     "bac": "The run on BAC San José (2004)",
     "swedbank": "The run on Swedbank in Latvia (2011)",
     "kaspi": "The run on Kaspi Bank (2014)",
+    "icici": "The run on ICICI Bank (2003)",
+    "fib": "The run on First Investment Bank (2014)",
 }
 
 SETTING = {
@@ -43,6 +45,15 @@ SETTING = {
     "kaspi": (
         "Kazakhstan, February 2014, a week after the tenge lost nearly a fifth of its value. On Tuesday an anonymous "
         "mass message says Kaspi and two other banks are about to go bankrupt. The bank is sound."
+    ),
+    "icici": (
+        "Gujarat, India, April 2003, where more than twenty co-operative banks have failed in two years. On Friday a "
+        "local newspaper says ICICI Bank is in trouble and people rush to its cash machines. The bank is sound."
+    ),
+    "fib": (
+        "Bulgaria, June 2014, a week after the fourth-largest bank was taken over by the central bank. On Friday text "
+        "messages, e-mails and phone calls say First Investment Bank is out of cash too, and people rush to its "
+        "branches. The bank is sound."
     ),
 }
 
@@ -79,6 +90,16 @@ NAMES = {
         "阿拉木图中心": "Central Almaty", "阿斯塔纳": "Astana", "奇姆肯特": "Shymkent", "卡拉干达": "Karaganda", "阿克托别": "Aktobe",
         "阿特劳": "Atyrau", "巴甫洛达尔": "Pavlodar", "塔拉兹": "Taraz",
         "Kaspi 银行": "Kaspi Bank", "茶馆": "Teahouse", "食堂": "Canteen", "绿色巴扎": "Green Bazaar", "地铁站": "Metro station",
+    },
+    "icici": {
+        "艾哈迈达巴德": "Ahmedabad", "瓦尔萨德": "Valsad", "苏拉特": "Surat", "拉杰果德": "Rajkot", "阿嫩德": "Anand",
+        "巴罗达": "Vadodara", "甘地讷格尔": "Gandhinagar", "包纳加尔": "Bhavnagar",
+        "ICICI 银行": "ICICI Bank", "茶摊": "Tea stall", "小吃店": "Snack shop", "布料市场": "Cloth market", "火车站": "Railway station",
+    },
+    "fib": {
+        "索非亚中心": "Central Sofia", "普罗夫迪夫": "Plovdiv", "瓦尔纳": "Varna", "布尔加斯": "Burgas", "鲁塞": "Ruse",
+        "旧扎戈拉": "Stara Zagora", "普列文": "Pleven", "柳林区": "Lyulin",
+        "第一投资银行": "First Investment Bank", "咖啡馆": "Café", "小酒馆": "Tavern", "妇女市场": "Women's Market", "地铁站": "Metro station",
     },
 }  # fmt: skip
 

@@ -1,0 +1,125 @@
+title: 第一投资银行挤兑（2014年6月，保加利亚）
+kind: history
+setting: 2014年6月27日至7月3日的保加利亚。一周前，第四大银行 Corpbank（KTB）遭挤兑后被中央银行接管。第一投资银行（FIB）是第三大银行。
+summary: >-
+  一家资本充足的大银行，在另一家银行刚被接管一周之后，被一阵针对它的不实消息挤兑。6月27日周五，说它缺现金的消息经短信、电子邮件和电话传开，
+  储户涌到分行；仅这一天就流出7.88亿列弗，超过其存款的一成。银行午后不久暂时关门，给分行和取款机补充现金。中央银行说这是无端的、有组织的攻击。
+  6月29日周日，警方逮捕了散布消息的嫌疑人，总统召集各党领袖后说“没有银行危机，只有信任危机和犯罪攻击”；同日欧盟委员会批准流动性支持方案，
+  国家向该行存入12亿列弗。6月30日周一仍有人取款，但队伍明显比周五短。6月20日到7月3日，该行共付出14.24亿列弗，而2013年底的存款是75.35亿。
+people:
+  - {name: 散布消息的人, role: 用短信、电子邮件和电话散布不实消息的人, traits: 在另一家银行刚被接管、人心不定的时候点名第一投资银行；警方6月29日逮捕了五人}
+  - {name: 储户们, role: 第一投资银行的存款人, traits: 一周前刚看到 Corpbank 的储户取不出钱，收到消息就去分行}
+  - {name: 保加利亚国家银行, role: 中央银行, traits: 称这是无端的、有组织的攻击，提议把蓄意散布银行不实消息的处罚从罚款提高到五至十年监禁}
+  - {name: Rosen Plevneliev, role: 保加利亚总统, traits: 周日召集各党领袖紧急会商，说没有银行危机，只有信任危机和犯罪攻击}
+events:
+  - {what: 6月20日前后，第四大银行 Corpbank 遭挤兑，被中央银行接管。, who: [保加利亚国家银行]}
+  - {what: 6月27日（周五），说第一投资银行缺现金的消息经短信、电子邮件和电话传开，储户涌到分行；当天流出7.88亿列弗，超过存款的10%。银行午后不久暂时关门补充现金。中央银行称这是无端的有组织攻击。, who: [散布消息的人, 储户们, 保加利亚国家银行]}
+  - {what: 6月29日（周日），警方逮捕五名嫌疑人；总统召集各党领袖后表态；欧盟委员会批准流动性支持方案，国家向该行存入12亿列弗。, who: [Rosen Plevneliev]}
+  - {what: 6月30日（周一），政府宣布33亿列弗的紧急信贷额度；仍有人到第一投资银行取款，但队伍明显比周五短。, who: [储户们]}
+  - {what: 6月20日到7月3日，该行共付出14.24亿列弗（2013年底存款为75.35亿列弗）。, who: [储户们]}
+outcome: 银行没有倒闭，资本也没有缺口：一天之内流出一成多的存款，两周内共付出将近两成；国家存款和总统表态之后队伍变短。这笔国家存款后来延期，到2016年还清。
+theories: [informational_cascade, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: The run on First Investment Bank (Bulgaria, June 2014)
+  setting: Bulgaria, 27 June to 3 July 2014. A week earlier the fourth-largest bank, Corpbank (KTB), had been taken over by the central bank after a run. First Investment Bank (FIB) was the third-largest.
+  summary: >-
+    A well-capitalised large bank was run on by a burst of false messages aimed at it, a week after another bank had been taken over. On Friday 27 June
+    the claim that it was short of cash spread by text message, e-mail and phone, and depositors rushed to branches; BGN 788 million, over a tenth of its
+    deposits, left that day alone. The bank closed temporarily in the early afternoon to replenish cash. The central bank called it an organised attack
+    without any reason. On Sunday 29 June police arrested suspects, the president said there was "no banking crisis but a crisis in confidence and
+    criminal attacks", the European Commission approved a liquidity scheme and the state placed BGN 1.2 billion with the bank. On Monday some people still
+    withdrew but queues were visibly smaller. From 20 June to 3 July the bank paid out BGN 1,424 million, against deposits of BGN 7,535 million.
+  people:
+    - name: "Message senders"
+      role: "Those who spread the false claim by text message, e-mail and phone"
+      traits: >-
+        Named First Investment Bank just after another bank had been taken over and nerves were raw; police arrested five people on 29 June.
+    - name: "Depositors"
+      role: "Depositors of First Investment Bank"
+      traits: >-
+        Had watched Corpbank's depositors locked out of their money a week earlier; went to the branches on receiving the messages.
+    - name: "Bulgarian National Bank"
+      role: "Central bank"
+      traits: >-
+        Called it an organised attack without any reason, and proposed raising the penalty for wilfully spreading false information about banks from
+        fines to five to ten years in prison.
+    - name: "Rosen Plevneliev"
+      role: "President of Bulgaria"
+      traits: >-
+        Convened party leaders for an emergency meeting on Sunday and said there was no banking crisis, only a crisis in confidence and criminal attacks.
+  events:
+    - >-
+      Around 20 June the fourth-largest bank, Corpbank, suffered a run and was taken over by the central bank.
+    - >-
+      On 27 June (Friday), the claim that First Investment Bank was short of cash spread by text message, e-mail and phone and depositors rushed to
+      branches; BGN 788 million, over 10% of deposits, left that day. The bank closed temporarily in the early afternoon to replenish cash. The central
+      bank called it an organised attack without any reason.
+    - >-
+      On 29 June (Sunday), police arrested five suspects; the president made his statement after convening party leaders; the European Commission approved
+      the liquidity scheme and the state placed BGN 1.2 billion with the bank.
+    - >-
+      On 30 June (Monday), the government announced an emergency credit line of BGN 3.3 billion; some people still withdrew from First Investment Bank,
+      but queues were visibly smaller than on Friday.
+    - >-
+      From 20 June to 3 July the bank paid out BGN 1,424 million in all (deposits were BGN 7,535 million at the end of 2013).
+  outcome: The bank did not fail and had no capital shortfall. Over a tenth of deposits left in one day and nearly a fifth was paid out within two weeks; queues shortened after the state deposit and the president's statement. The state deposit was later extended and repaid by 2016.
+  checked:
+    - >-
+      Downloaded the decision and read recitals 22, 25 and 81 and 107. Checked: the outflow "prompted mainly by a surge of speculative information about
+      the Bank"; BGN 788 million on 27 June alone, "over 10% of its deposits"; BGN 1,424 million paid out between 20 June and 3 July 2014 against BGN 7,535
+      million of deposits at 31 December 2013; the liquidity scheme notified and approved on 29 June; no capital shortfall. The decision does not give the
+      outflow for 27 June to 3 July on its own, nor the number of depositors who withdrew.
+    - >-
+      Read the letter. Checked: "panic withdrawal of deposits in June 2014"; liquidity support of BGN 1.2 billion granted on 29 June 2014 under scheme
+      SA.38994.
+    - >-
+      Fetched the article. Checked: rumours on Friday that the bank was short of liquidity; the bank closing early; five people arrested on Sunday for
+      using text messages, e-mails and phone calls to spread false information; the president's words after the emergency meeting; the BGN 3.3 billion
+      credit line on Monday; smaller queues on Monday than on Friday; the central bank's proposal on penalties.
+    - >-
+      Fetched the article. Checked: the central bank's words about "an organised attack against Bulgarian banks without any reason" and "untrue and
+      ill-intentioned rumours"; queues at branches in Sofia; the bank saying it had imposed no restrictions. The article says "yesterday" and is dated 27
+      June, so whether the statement came on the 26th or the 27th is not settled by it; I have taken the day of the run.
+sources:
+  - work: State aid SA.39854 (2014/N), Bulgaria, Restructuring plan of First Investment Bank (FIB)（欧盟委员会决定 / Commission decision）
+    author: European Commission
+    year: 2014
+    locator: 2014年11月25日；第22、25、81、107段
+    url: https://ec.europa.eu/competition/state_aid/cases/255309/255309_1629861_152_4.pdf
+    verified: true
+    checked: >-
+      下载了决定全文，读了第22、25、81、107段 / downloaded the decision and read recitals 22, 25, 81 and 107. 核对了：流出“主要由一阵针对该行的投机性消息引起”；
+      仅6月27日一天流出7.88亿列弗，“超过其存款的10%”；2014年6月20日到7月3日共付出14.24亿列弗，2013年12月31日存款为75.35亿列弗；
+      流动性方案6月29日通报并于同日批准；没有资本缺口。决定没有单列6月27日到7月3日的流出，也没有取款的储户人数。
+      Confirmed: BGN 788 million on 27 June alone (over 10% of deposits); BGN 1,424 million from 20 June to 3 July against deposits of BGN 7,535 million.
+      The decision gives neither the outflow for 27 June to 3 July on its own nor a count of depositors.
+  - work: Disclosure of information（致金融监督委员会的信 / letter to the Financial Supervision Commission）
+    author: First Investment Bank AD
+    year: 2014
+    locator: 2014年11月26日
+    url: https://www.fibank.bg/uploads/_Investors/ShareholderInfo/docs/Fibank20141126EN.pdf
+    verified: true
+    checked: >-
+      读了这封信 / read the letter. 核对了：“2014年6月恐慌性提取存款之后”，2014年6月29日按 SA.38994 方案获得12亿列弗的流动性支持。
+      Confirmed: liquidity support of BGN 1.2 billion granted on 29 June 2014 after the panic withdrawals.
+  - work: Bulgarian banks stabilized with aid; 5 arrested over plot to bring them down with rumors
+    author: Associated Press（刊于 Fox News / carried by Fox News）
+    year: 2014
+    locator: 2014年6月30日
+    url: https://www.foxnews.com/world/bulgarian-banks-stabilized-with-aid-5-arrested-over-plot-to-bring-them-down-with-rumors
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：周五传出该行缺流动性的传闻；银行提前关门；周日五人因用短信、电子邮件和电话散布不实消息被捕；
+      总统紧急会商后的原话；周一33亿列弗的信贷额度；周一队伍明显比周五短；中央银行提议加重处罚。
+      Confirmed: the rumours on Friday, the early closure, the arrests and the president's statement on Sunday, and smaller queues on Monday.
+  - work: Bulgaria central bank warns against attacks on banking system
+    author: Gulf Times（路透社稿 / Reuters copy）
+    year: 2014
+    locator: 2014年6月27日
+    url: https://www.gulf-times.com/story/398112/bulgaria-central-bank-warns-against-attacks-on-banking-system/amp
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：中央银行“无端地有组织攻击保加利亚的银行”“不实的恶意传言”的说法；索非亚分行门前排队；银行称没有对业务设限。
+      报道写的是“昨天”、日期是6月27日，所以声明是26日还是27日它定不了；我取的是挤兑当日。
+      Confirmed the central bank's wording and the queues in Sofia. The article says "yesterday" and is dated 27 June, so the day of the statement is
+      not settled by it; I have taken the day of the run.
