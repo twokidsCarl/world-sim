@@ -230,20 +230,6 @@ export function posePresets(joints: Joint[]): PosePreset[] {
   return out
 }
 
-/**
- * 开发用的体型挂钩：整体身高缩放和腿长比例 → 逐关节的节段缩放。
- * Dev-only body-shape hook: an overall stature scale and a leg-length ratio → per-joint segment scales.
- */
-export function devShapeScales(joints: readonly Joint[], stature: number, legRatio: number): Scales | null {
-  if (Math.abs(stature - 1) < 1e-6 && Math.abs(legRatio - 1) < 1e-6) return null
-  const out: Scales = {}
-  for (const j of joints) {
-    const leg = /^(hip|knee)_[LR]$/.test(j.id)
-    out[j.id] = { along: stature * (leg ? legRatio : 1), across: stature }
-  }
-  return out
-}
-
 export type JointGroupId = 'spine' | 'ribs' | 'jaw' | 'shoulder' | 'arm' | 'hand' | 'leg' | 'foot'
 
 export const JOINT_GROUPS: { id: JointGroupId; zh: string; en: string }[] = [

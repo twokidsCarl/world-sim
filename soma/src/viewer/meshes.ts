@@ -176,6 +176,7 @@ export class PartMeshes implements PartRenderer {
     const v1 = v0 + r.vertexCount
     return {
       position: (g.getAttribute('position').array as Float32Array).subarray(v0 * 3, v1 * 3),
+      normal: (g.getAttribute('normal').array as Float32Array).subarray(v0 * 3, v1 * 3),
       skinIndex: (g.getAttribute('skinIndex').array as Uint16Array).subarray(v0 * 4, v1 * 4),
       skinWeight: (g.getAttribute('skinWeight').array as Uint8Array).subarray(v0 * 4, v1 * 4),
       aux: (g.getAttribute('aThin').array as Float32Array).subarray(v0, v1),
@@ -186,9 +187,11 @@ export class PartMeshes implements PartRenderer {
 
   markPositions(id: number): void {
     const r = this.ranges[id]!
-    const a = this.meshes[id]!.geometry.getAttribute('position') as BufferAttribute
-    a.addUpdateRange(r.vertexStart * 3, r.vertexCount * 3)
-    a.needsUpdate = true
+    for (const name of ['position', 'normal']) {
+      const a = this.meshes[id]!.geometry.getAttribute(name) as BufferAttribute
+      a.addUpdateRange(r.vertexStart * 3, r.vertexCount * 3)
+      a.needsUpdate = true
+    }
   }
 
   flushSkinAttributes(): void {

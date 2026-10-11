@@ -139,7 +139,7 @@ async function ensureVoice(): Promise<PainVoice> {
  */
 export async function triggerPain(): Promise<void> {
   const s = useApp.getState()
-  const { level, onset, muted } = s.pain
+  const { level, onset, muted, always } = s.pain
   if (level <= 0) return
   void s.ensureFace()
   void s.ensureRig() // 张口要靠下颌关节 / the jaw joint is what opens the mouth
@@ -152,11 +152,18 @@ export async function triggerPain(): Promise<void> {
   // 在手势里创建 / 恢复音频上下文，之后才能在加载完成时出声
   // create / resume the audio context inside the gesture so sound can start once loading is done
   context ??= new AudioContext()
-  if (context.state === 'suspended') await context.resume()
+  // 没有用户手势时 resume() 可能一直不返回：等一小会儿，还不行就只做表情
+  // without a user gesture resume() may never settle: wait briefly, and if still silent let the face respond alone
+  if (context.state === 'suspended') await Promise.race([context.resume().catch(() => undefined), new Promise((r) => setTimeout(r, 400))])
+  if (context.state !== 'running') {
+    episode = { t0: performance.now(), duration, level }
+    useApp.setState((x) => ({ painNonce: x.painNonce + 1 }))
+    return
+  }
   const v = await ensureVoice()
   const body = useApp.getState().graph?.data.body ?? 'male'
   scheduled?.source?.stop()
-  scheduled = schedulePainVocalisation(context, { intensity: level, onset, sex: body, seed: seed++ }, context.currentTime + 0.05, context.destination, v)
+  scheduled = schedulePainVocalisation(context, { intensity: level, onset, sex: body, seed: seed++, vocalise: always ? 'always' : 'auto' }, context.currentTime + 0.05, context.destination, v)
   // 表情与声音对齐：刺激开始 = 声音开始 / face and sound aligned: stimulus onset = start of the sound
   episode = { t0: performance.now() + (scheduled.startTime - context.currentTime) * 1000, duration, level }
   useApp.setState((x) => ({

@@ -174,6 +174,7 @@ export interface PartRenderer {
 
 export interface PartBuffers {
   position: Float32Array
+  normal: Float32Array
   skinIndex: Uint16Array
   skinWeight: Uint8Array
   aux: Float32Array
@@ -389,6 +390,7 @@ export class PartBatches implements PartRenderer {
     const index = g.index!.array as Uint32Array | Uint16Array
     return {
       position: (g.getAttribute('position').array as Float32Array).subarray(v0 * 3, v1 * 3),
+      normal: (g.getAttribute('normal').array as Float32Array).subarray(v0 * 3, v1 * 3),
       skinIndex: (g.getAttribute('skinIndex').array as Uint16Array).subarray(v0 * 4, v1 * 4),
       skinWeight: (g.getAttribute('skinWeight').array as Uint8Array).subarray(v0 * 4, v1 * 4),
       aux: (g.getAttribute('aThin').array as Float32Array).subarray(v0, v1),
@@ -399,9 +401,12 @@ export class PartBatches implements PartRenderer {
 
   markPositions(id: number): void {
     const r = this.ranges[id]!
-    const a = this.opaque.geometry.getAttribute('position') as BufferAttribute
-    a.addUpdateRange(r.vertexStart * 3, r.vertexCount * 3)
-    a.needsUpdate = true
+    // 位置和法线一起上传（改了位置的部件法线也会重算）/ positions and normals go up together (a rewritten part has its normals recomputed too)
+    for (const name of ['position', 'normal']) {
+      const a = this.opaque.geometry.getAttribute(name) as BufferAttribute
+      a.addUpdateRange(r.vertexStart * 3, r.vertexCount * 3)
+      a.needsUpdate = true
+    }
   }
 
   flushSkinAttributes(): void {

@@ -189,6 +189,10 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
             {pain.muted ? '已静音' : '静音'}
           </button>
         </div>
+        <label className="check" title="模型里疼痛较轻时常常不出声；勾选后每次触发都给出一次发声 / the model often stays silent at low pain; with this on every trigger vocalises">
+          <input type="checkbox" checked={pain.always} onChange={(e) => app.setPain({ always: e.target.checked })} />
+          每次触发都出声 <span className="en">Always vocalise</span>
+        </label>
         {voiceStatus === 'loading' && (
           <>
             <p className="hint">正在下载声音素材（约 8.6 MB）… {Math.round(voiceProgress * 100)}%</p>

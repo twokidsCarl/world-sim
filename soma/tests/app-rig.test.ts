@@ -11,7 +11,6 @@ import {
   JOINT_TEXELS,
   anatomicalPose,
   breathingPose,
-  devShapeScales,
   dofAxisWorld,
   indexRig,
   jointGroup,
@@ -269,8 +268,6 @@ describe('pose utilities', () => {
     expect(p.slice(0, 2).map((x) => x.id)).toEqual(['rest', 'anatomical'])
     expect(p.map((x) => x.id)).toEqual(expect.arrayContaining(standardPostures(joints).filter((x) => x.id !== 'rest').map((x) => x.id)))
     expect(p.find((x) => x.id === 'elbow140')!.pose.elbow_L![0]).toBeLessThanOrEqual(2.4)
-    expect(devShapeScales(joints, 1, 1)).toBeNull()
-    expect(devShapeScales(joints, 1.1, 1)!.root).toEqual({ along: 1.1, across: 1.1 })
   })
 })
 
@@ -354,14 +351,6 @@ describe('store: rig and pose flows', () => {
     await S().ensureRig() // init 已因姿势非静止而开始加载 / init already started loading because the pose is not rest
     expect(S().rigStatus).toBe('ready')
     expect(loads).toBe(2)
-  })
-
-  it('dev shape sliders produce joint scales; identity clears them', async () => {
-    await S().ensureRig()
-    S().setShapeDev(1.05, 1.1)
-    expect(S().jointScales!.root).toEqual({ along: 1.05, across: 1.05 })
-    S().setShapeDev(1, 1)
-    expect(S().jointScales).toBeNull()
   })
 })
 

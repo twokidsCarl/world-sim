@@ -91,6 +91,8 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             cameraRequest: null,
             face: null,
             skinOpaque: false,
+            shape: null,
+            shapeControls: {},
           }
         }
         viewer = new Viewer(host, g, `${import.meta.env.BASE_URL}anatomy/${other}/`, {

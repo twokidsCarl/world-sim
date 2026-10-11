@@ -4,6 +4,7 @@
 
 import { TREE_KINDS, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
+import { nonDefaultControls } from '../anatomy/shape.ts'
 import type { SystemId } from '../anatomy/types.ts'
 import type { SystemState } from './display.ts'
 import { useApp, type AppState } from './store.ts'
@@ -93,6 +94,7 @@ export function snapshot(s: AppState): UrlState {
   if (s.pain.hold && s.pain.level > 0) out.pain = s.pain.level
   if (Object.keys(s.aus).length) out.au = { ...s.aus }
   if (s.skinOpaque) out.skin = true
+  if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
   if (s.colorMode === 'source') out.src = true
   return out
 }
@@ -180,6 +182,19 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
   if (state.cmp) {
     if (graph.data.systems.some((x) => x.id === state.cmp && x.partCount > 0)) app.setCompare(state.cmp)
     else warnings.push('cmp: 此人体没有这个系统 / this body lacks that system')
+  }
+  if (state.shape) {
+    const shape = await useApp.getState().ensureShape()
+    if (!shape) warnings.push('shape: 此人体没有体型数据 / this body has no shape data')
+    else {
+      for (const [id, v] of Object.entries(state.shape)) {
+        const c = shape.data.controls.find((x) => x.id === id)
+        if (!c) continue
+        if (v < c.valid.min - 1e-9 || v > c.valid.max + 1e-9) warnings.push(`shape: ${id}=${v} 超出此人体的可用范围 ${c.valid.min}…${c.valid.max}，已截断 / outside this body's valid range, clamped`)
+        useApp.getState().setShapeControl(c.id, v)
+      }
+      useApp.setState({ shapeLimit: null })
+    }
   }
   if (state.pose || state.breath) {
     const rig = await useApp.getState().ensureRig()

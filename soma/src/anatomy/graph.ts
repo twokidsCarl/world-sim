@@ -375,6 +375,17 @@ export class AnatomyGraph {
     return true
   }
 
+  /**
+   * 皮肤本身的部件 id：皮肤类部件中三角形最多的那个（毛发、眉毛、指甲等附属部件也是"皮肤"组织）。
+   * The part id of the skin proper: the skin-tissue part with the most triangles (hair, eyebrows,
+   * nails and other appendages are skin tissue too).
+   */
+  mainSkinId(): string | null {
+    let best: Part | null = null
+    for (const p of this.parts) if (p.tissue === 'skin' && (!best || p.triangles > best.triangles)) best = p
+    return best?.id ?? null
+  }
+
   /** What a user should not trust in this body, most important first. */
   get cautions(): readonly { zh: string; en: string }[] {
     return Array.isArray(this.data.cautions) ? this.data.cautions : []

@@ -1080,6 +1080,10 @@ input[type='checkbox'] {
   bottom: 52px;
 }
 
+.shape-limit {
+  color: var(--warn);
+}
+
 /* 疼痛反应面板 / pain response panel */
 .pain-statement {
   margin-bottom: 10px;
