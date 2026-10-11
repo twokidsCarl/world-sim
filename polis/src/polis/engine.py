@@ -85,6 +85,8 @@ class Sim:
         self.src, self.dst = a[order], b[order]
         self.kind = np.array([KINDS.index(t.kind) for t in pop.ties] * 2)[order]
         self.strength = np.array([t.strength for t in pop.ties] * 2)[order]
+        self.intimate = self.kind != KINDS.index("neighbor")  # 家人、同事、朋友算亲近；邻居只是点头之交
+        self.intimate &= self.kind != KINDS.index("colleague")  # kin and friends are close; neighbours and colleagues are not
         self.wsum = np.maximum(np.bincount(self.dst, weights=self.strength, minlength=n), 1e-9)
         self.degree = np.maximum(np.bincount(self.dst, minlength=n), 1)
         self.members = [np.array([x.idx for x in ps if v.idx in x.venues], dtype=int) for v in pop.venues]
@@ -114,6 +116,7 @@ class Sim:
         self.failed_at: int | None = None
 
         self.messages: list[Message] = []
+        self._severity = np.zeros(0)
         self.events: list[dict] = []
         self.queue_msg = -1
         self.t = 0
@@ -128,6 +131,15 @@ class Sim:
                     severity=round(severity, 3), text=text)  # fmt: skip
         self.messages.append(m)
         return m.id
+
+    def _urgent(self) -> np.ndarray:
+        """每个人手里那个说法有多催人；没有说法或手里是辟谣的，按中等算。
+        How pressing each person's version is; those holding none, or a rebuttal, count as middling.
+        """
+        if len(self._severity) != len(self.messages):  # 只在有新说法时重建 / rebuilt only when a new version appears
+            self._severity = np.array([m.severity if m.valence == 1 else 1.0 for m in self.messages])
+        severity = self._severity
+        return mind.urgency(np.where(self.held >= 0, severity[np.maximum(self.held, 0)], 1.0))
 
     def _think(self, i: int, kind: str, **kw) -> None:
         # 模型扮演的人，听到消息和去排队时的心里话由模型来写
@@ -192,6 +204,7 @@ class Sim:
 
     def _broadcast(self, iv: Intervention) -> None:
         m = self._message(None, iv.actor, iv.valence, iv.strength, iv.text)
+        self.reserve += iv.cash * self.total  # 最后贷款人运来的现银 / cash shipped in by the lender of last resort
         reached = np.flatnonzero(self.rng.random(self.n) < iv.reach)
         confirm = 1.0 + self.p.confirm * iv.valence * np.tanh(self.L[reached] / 2.0)
         self.L[reached] += iv.valence * iv.strength * (0.3 + self.trust_institution[reached]) * confirm
@@ -212,6 +225,8 @@ class Sim:
             self._think(iv.actor, "notice")
 
     def _intervene(self, iv: Intervention) -> None:
+        if iv.target is None and iv.role is not None:
+            iv = iv.model_copy(update={"target": self.pop.cast[iv.role]})
         if iv.kind == "broadcast":
             self._broadcast(iv)
         elif iv.kind == "close_venue":
@@ -230,6 +245,13 @@ class Sim:
             parent = int(self.held[i]) if self.held[i] >= 0 else None
             self.held[i] = self._message(parent, i, -1, 1.0, self.sc.REBUTTAL[0])
             self._emit("intervene", a=i, m=int(self.held[i]), x="被请到柜上看了库银，回去替钱庄说话")
+        elif iv.kind == "errand":
+            # 与传闻无关的一次取款：旁人看不出区别 / a withdrawal that has nothing to do with the rumour; onlookers cannot tell
+            i = iv.target
+            if self.status[i] <= AWARE and self.deposit[i] > 0:
+                self.status[i] = max(self.status[i], AWARE)
+                self._emit("intervene", a=i, x="为了付一笔货款去取钱，与传闻无关")
+                self._join_queue(i)
         elif iv.kind == "insurance":
             self.stake *= 1 - iv.value
             self._emit("intervene", x=f"官府宣布：存款若有损失，赔付 {round(iv.value * 100)}%")
@@ -239,10 +261,11 @@ class Sim:
     def _spread(self, hour: int) -> None:
         p = self.p
         belief = mind.sigmoid(self.L)
-        drive = np.where(self.verified, 0.5, mind.share_drive(belief, self.fear, self.stake)) * self.zeal
+        drive = np.where(self.verified, 0.5, mind.share_drive(belief, self._urgent(), self.fear, self.stake)) * self.zeal
         drive = np.where((self.held >= 0) & ~self.silenced, drive, 0.0)
 
         prob = p.share * _activity(hour)[self.kind] * self.strength * drive[self.src]
+        prob *= mind.reach(np.where(self.verified, 1.0, belief)[self.src], self.intimate)
         for e in np.flatnonzero(self.rng.random(len(prob)) < prob):
             s, d = int(self.src[e]), int(self.dst[e])
             self._tell(s, d, KINDS[self.kind[e]], float(self.strength[e] * (0.4 + 0.6 * self.trust_general[d])))
@@ -252,7 +275,9 @@ class Sim:
             if not (v.hours[0] <= hour < v.hours[1]) or len(who) < 2 or self.t < self.closed_until[v.idx]:
                 continue
             present = who[self.rng.random(len(who)) < VENUE_ATTEND]
-            speaking = present[self.rng.random(len(present)) < p.venue_share * drive[present]]
+            # 在人来人往的地方开口，得自己先信了 / speaking up in a public place takes conviction
+            sure = np.where(self.verified, 1.0, belief)[present]
+            speaking = present[self.rng.random(len(present)) < p.venue_share * drive[present] * sure]
             for s in speaking:
                 others = present[present != s]
                 for d in self.rng.choice(others, min(p.venue_audience, len(others)), replace=False):
@@ -304,14 +329,14 @@ class Sim:
         self.talk = np.clip(0.85 * self.talk + self._talk_new / self.degree, 0, 1)
         self.expect = mind.expectation(seen, self.talk, self.depth)
         belief = mind.sigmoid(self.L)
-        self.fear += 0.3 * (mind.fear_target(belief, self.expect, self.stake, self.risk_aversion) - self.fear)
+        self.fear += 0.3 * (mind.fear_target(belief, self._urgent(), self.expect, self.stake, self.risk_aversion) - self.fear)
         self.L += p.forget * (self.L0 - self.L)
         self.L[self.banker] = self.L0[self.banker]
 
     def _decide(self) -> None:
         belief = mind.sigmoid(self.L)
         ok = (self.status == AWARE) & (self.deposit > 0) & ~self.directed
-        hazard = mind.withdraw_hazard(belief, self.expect, self.fear, self.stake, self.risk_aversion, self.conformity, self.p)
+        hazard = mind.withdraw_hazard(belief, self._urgent(), self.expect, self.fear, self.stake, self.risk_aversion, self.conformity, self.p)
         for i in np.flatnonzero(ok & (self.rng.random(self.n) < hazard)):
             self._join_queue(int(i))
 
@@ -340,7 +365,7 @@ class Sim:
             if d is None:
                 # 模型没答上来：这一次按数值规则办 / no answer from the model: fall back to the numeric rule this once
                 b = float(mind.sigmoid(self.L[i]))
-                h = mind.withdraw_hazard(b, self.expect[i], self.fear[i], self.stake[i], self.risk_aversion[i], self.conformity[i], self.p)
+                h = mind.withdraw_hazard(b, self._urgent()[i], self.expect[i], self.fear[i], self.stake[i], self.risk_aversion[i], self.conformity[i], self.p)
                 if self.deposit[i] > 0 and self.rng.random() < h * 8:  # 一天只问一次，所以把一天的机会并在一起 / asked only once a day, so the whole day's chances are pooled into this one draw
                     self._join_queue(i)
                 continue

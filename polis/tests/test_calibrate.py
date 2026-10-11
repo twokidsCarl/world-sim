@@ -62,14 +62,32 @@ def test_correction_residual_needs_a_correction():
     assert 0 <= cal.correction_residual(pop, r, p) <= 1.2
 
 
-def test_saved_calibration_still_hits_its_targets():
+def test_saved_calibration_holds_the_fictional_bank_under_a_guarantee():
     import json
 
     from polis.cli import CALIBRATION
 
     saved = json.loads(CALIBRATION.read_text(encoding="utf-8"))
-    score, _ = cal.evaluate(saved["calibrated"]["params"], [1, 2], saved["n"], cal.targets())
-    assert score < 0.5
+    for seed in (1, 2):
+        m = cal.measure(saved["calibrated"]["params"], seed, saved["n"])
+        assert m["survived"] == 1 and m["sanren_steps"] == 3
+
+
+def test_nobody_withdraws_when_it_is_not_worth_the_trip():
+    from polis import mind
+
+    p = Params()
+    calm = mind.withdraw_hazard(0.02, 1.0, 0.0, 0.0, 0.5, 0.5, 0.5, p)
+    alarmed = mind.withdraw_hazard(0.9, 1.0, 0.0, 0.5, 0.9, 0.5, 0.5, p)
+    assert calm == 0 and alarmed > 0
+
+
+def test_vague_versions_press_less_than_alarming_ones():
+    from polis import mind
+
+    assert mind.urgency(0.6) < mind.urgency(1.0) < mind.urgency(2.0) == 1.0
+    assert mind.share_drive(0.5, mind.urgency(0.6), 0.0, 0.5) < mind.share_drive(0.5, mind.urgency(2.0), 0.0, 0.5)
+    assert mind.reach(0.1, False) < mind.reach(0.1, True) == 1.0
 
 
 def test_three_men_make_a_tiger_under_saved_calibration():

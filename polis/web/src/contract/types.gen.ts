@@ -170,15 +170,19 @@ export interface Fact {
  */
 export interface Intervention {
   t: number;
-  kind?: "broadcast" | "close_venue" | "silence" | "convince" | "insurance";
+  kind?: "broadcast" | "close_venue" | "silence" | "convince" | "insurance" | "errand";
   /**
    * broadcast：出面的人 / broadcast: the person who makes the announcement
    */
   actor?: number | null;
   /**
-   * close_venue：场所下标；silence / convince：人的下标 / close_venue: venue index; silence and convince: person index
+   * close_venue：场所下标；silence / convince / errand：人的下标 / close_venue: venue index; silence and convince: person index
    */
   target?: number | null;
+  /**
+   * 用主角的角色键指定对象，代替 target / name the target by cast key instead of index
+   */
+  role?: string | null;
   text?: string;
   valence?: 1 | -1;
   strength?: number;
@@ -190,6 +194,10 @@ export interface Intervention {
    * close_venue：关几个小时，0 为一直关 / close_venue: hours closed; 0 means closed for good
    */
   duration?: number;
+  /**
+   * broadcast：随告示运到柜上的现银，按存款总额的比例 / cash delivered with the notice, as a share of total deposits
+   */
+  cash?: number;
   /**
    * insurance：存款保险赔付比例 / insurance: share of a lost deposit that is paid back
    */

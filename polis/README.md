@@ -4,9 +4,9 @@
 
 ## 模拟什么
 
-有两个场景。虚构的「通和钱庄挤兑」（`rumor_run`）：一座千余口人的县城，更夫夜里看见钱庄后门往外抬箱子，这句话传开、走样，最后挤垮了一家并不亏空的钱庄。
+有三个场景。虚构的「通和钱庄挤兑」（`rumor_run`）：一座千余口人的县城，更夫夜里看见钱庄后门往外抬箱子，这句话传开、走样，最后挤垮了一家并不亏空的钱庄。
 
-另一个是按史料搭的「丰川信用金库挤兑（1973）」（`toyokawa`），人物和事件顺序取自 `corpus/cases/`，用来检验模型。
+另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，只作样本外检验。
 
 - **人**：人口属性、五项稳定特质（信人、信官面文章、怕吃亏、随大流、读报听讯）、随时间变化的心智状态（信念、恐惧、估计多少人会去取钱），以及揣度他人的层数（0–2 层）。
 - **社会**：家人、邻居、同事、朋友四种关系，加上茶馆、菜场、庙、学堂这些会碰面的场所。
@@ -28,7 +28,7 @@ uv run polis run --seed 1               # 跑一次，记录写入 runs/
 uv run polis run -s 1 -r none           # 同一座城，无人回应；-r guarantee 是官银号出面担保
 uv run polis run -s 1 -c -r guarantee   # -c 用校准过的参数
 uv run polis calibrate                  # 对照语料里的事实，报告偏差并搜索参数
-uv run polis run toyokawa -c            # 丰川场景，按史料的回应时间
+uv run polis run toyokawa -c            # 丰川场景，按史料的回应时间；bea 是东亚银行场景
 uv run polis canon                      # 对照原作与史料，逐条看模拟对上了没有
 uv run polis run -s 1 -c -r none --llm  # 主角交给大模型扮演（约 30 次调用，一分钟左右）
 uv run polis list                       # 已有的记录
@@ -64,9 +64,13 @@ cd web && bun run test && bun run typecheck
 
 - **人口是合成的**：属性与特质的分布是占位假设，由种子生成，没有对齐任何调查。
 - **默认的行为参数是手调的**，调到曲线看起来合理为止。
-- **校准只是起步**：`polis calibrate` 用语料里五个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎）随机搜索七个参数，结果存在 `calibration.json`。目标少、参数多，得到的是"与这几条事实不矛盾"的一组参数；"可信担保"的力度本身也是手设的。
-- **校准之外的检验目前没通过**：`polis canon` 用校准后的参数重演丰川事件，六项检验 8 个种子共 48 次只对上 1 次。模拟里谣言走得太快：第 3 天就开始挤兑，金库撑不到当局出面；史料里是第 6 天才开始，金库没倒。把丰川的时间线也放进校准试过，结果是要么几乎什么都不发生、要么失控，找不到稳定落在中间的参数。也就是说，这个模型还不能可信地复现一次真实的多日挤兑。
-- 通和场景的**人物、地名、说法都是本项目原创**；丰川场景的人物代号和事件顺序取自语料里的史料转述，街区、人口、存款和关系网是合成的。
+- **校准只是起步**：`polis calibrate` 用语料里六个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎、丰川的平行世界里至少三成像史料）随机搜索七个参数，结果存在 `calibration.json`。前五个命中；丰川那一条在校准用的 8 个种子上是 25%，没到三成。目标少、参数多，得到的是"与这几条事实大体不矛盾"的一组参数；"可信担保"的力度本身也是手设的。
+- **模型还不能复现真实的挤兑**。`polis canon` 换一批种子各跑 30 个平行世界：
+  - 丰川（参与过校准）：19 个世界金库撑住、11 个倒闭；五件事全部像史料的只有 1 个。一半的世界里玩笑不了了之，这本身说得通，但不该有三分之一的世界以倒闭收场。
+  - 东亚银行（样本外）：时间对得上（平均第 2.2 天起挤兑，担保后两天内平息），规模完全对不上——模拟里平均提走存款的 50%，20 个世界银行倒闭；史料里银行公布的是 0.67%，银行没倒。
+  - 两个案例指向同一个毛病：挤兑一旦开始，模型里几乎人人都去取；现实里即使在高峰也只是少数人。
+  - 这一轮为此改过的规则：说法含糊时不催人行动也不值得逢人便讲、拿不准时只问亲近的人、估下来不值得跑一趟的人不去、担保可以带来现银。它们让丰川从"第 3 天必倒"变成"多数世界不倒"，但没有解决规模问题。
+- 通和场景的**人物、地名、说法都是本项目原创**；丰川和东亚银行场景的事件顺序取自语料里的史料转述，人物是匿名代号或虚构的普通储户，街区、人口、存款和关系网是合成的。
 
 ---
 
@@ -76,9 +80,9 @@ A parallel-society simulator: how a crowd of people decide, how they pass words 
 
 ## What it simulates
 
-There are two scenarios. The first is the fictional "run on Tonghe Bank (通和钱庄)" (`rumor_run`): a county town of a little over a thousand people, where the night watchman sees chests being carried out of the bank's back door; that one sentence spreads, gets distorted, and in the end brings down a bank that was never insolvent.
+There are three scenarios. The first is the fictional "run on Tonghe Bank (通和钱庄)" (`rumor_run`): a county town of a little over a thousand people, where the night watchman sees chests being carried out of the bank's back door; that one sentence spreads, gets distorted, and in the end brings down a bank that was never insolvent.
 
-The other is the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`), built from the historical record; its characters and order of events are taken from `corpus/cases/`, and it is used to test the model.
+The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and serve only as the out-of-sample test.
 
 - **People**: demographic attributes, five stable traits (trust in other people, trust in official statements, loss aversion, conformity, attention to newspapers and news), a mental state that changes over time (belief, fear, an estimate of how many others will go to withdraw), and a depth of reasoning about others (0–2 levels).
 - **Society**: four kinds of ties — family, neighbours, colleagues, friends — plus the venues where people run into each other: the teahouse, the market, the temple, the school.
@@ -100,7 +104,7 @@ uv run polis run --seed 1               # one run; the record is written to runs
 uv run polis run -s 1 -r none           # same town, nobody responds; -r guarantee has the official bank step in with a guarantee
 uv run polis run -s 1 -c -r guarantee   # -c uses the calibrated parameters
 uv run polis calibrate                  # compare against the facts in the corpus, report deviations and search parameters
-uv run polis run toyokawa -c            # Toyokawa scenario, with the response timing from the historical record
+uv run polis run toyokawa -c            # Toyokawa scenario, with the response timing from the historical record; bea is the Bank of East Asia scenario
 uv run polis canon                      # check the simulation item by item against the original story and the historical record
 uv run polis run -s 1 -c -r none --llm  # hand the cast to an LLM (about 30 calls, roughly one minute)
 uv run polis list                       # existing records
@@ -136,6 +140,10 @@ The engine currently uses no external data at all; the corpus is only paraphrase
 
 - **The population is synthetic**: the distributions of attributes and traits are placeholder assumptions, generated from the seed and not aligned with any survey.
 - **The default behavioural parameters are hand-tuned**, adjusted until the curves looked reasonable.
-- **Calibration is only a beginning**: `polis calibrate` runs a random search over seven parameters against five targets from the corpus (3%–9% of depositors withdraw; a person is more likely to run if an acquaintance has; a denial works but does not fully clear the rumour; the bank holds when there is a credible guarantee; three men make a tiger (三人成虎)), and stores the result in `calibration.json`. With few targets and many parameters, what comes out is a parameter set that is "not contradicted by these few facts"; the strength of the "credible guarantee" is itself set by hand.
-- **The test outside calibration currently fails**: `polis canon` replays the Toyokawa event with the calibrated parameters, and across six checks and 8 seeds — 48 in total — only 1 matches. In the simulation the rumour travels too fast: the run starts on day 3 and the bank does not last until the authorities step in; in the historical record it started only on day 6 and the bank did not fail. Adding the Toyokawa timeline to the calibration was tried; the result was either that almost nothing happens or that things spiral out of control, and no parameters were found that settle stably in between. In other words, this model cannot yet credibly reproduce a real multi-day bank run.
-- In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa scenario, the character codes and order of events are taken from the corpus's paraphrase of the historical record, while the districts, population, deposits and tie network are synthetic.
+- **Calibration is only a beginning**: `polis calibrate` runs a random search over seven parameters against six targets from the corpus (3%–9% of depositors withdraw, a person is more likely to run when acquaintances have, corrections work but leave a residue, the bank holds under a credible guarantee, three men make a tiger, and at least three in ten parallel Toyokawa worlds resemble the record); the result is stored in `calibration.json`. The first five are hit; the Toyokawa one reaches 25% on the 8 calibration seeds, short of three in ten. With few targets and many parameters this is a parameter set that is "broadly not contradicted by these few facts"; the strength of the "credible guarantee" is itself set by hand.
+- **The model cannot yet reproduce a real bank run.** `polis canon` runs 30 parallel worlds per case on a fresh set of seeds:
+  - Toyokawa (used in calibration): the bank holds in 19 worlds and fails in 11; only 1 world matches the record on all five points. The joke going nowhere in half the worlds is plausible in itself, but a third of worlds should not end in failure.
+  - Bank of East Asia (out of sample): the timing matches (the run starts on day 2.2 on average and subsides within two days of the guarantee) and the scale does not match at all — the simulation withdraws 50% of deposits on average and the bank fails in 20 worlds; in the record the bank reported 0.67% and did not fail.
+  - Both cases point to the same defect: once a run starts, nearly everyone in the model goes to withdraw; in reality only a minority does, even at the peak.
+  - Rules changed in this round because of it: a vague version neither presses people to act nor is worth telling everyone, people who are unsure ask only those close to them, nobody goes when the trip is not worth it by their own estimate, and a guarantee can bring cash. These took Toyokawa from "always fails on day 3" to "holds in most worlds" but did not fix the scale.
+- In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa and Bank of East Asia scenarios the order of events comes from the corpus's paraphrase of the records, the characters are anonymous labels or invented ordinary depositors, and the districts, population, deposits and network of ties are synthetic.
