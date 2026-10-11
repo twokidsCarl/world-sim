@@ -7,7 +7,7 @@
       "strata"
     ],
     "ideas": [],
-    "ui_url": "http://localhost:5188",
+    "ui_url": null,
     "tagline_en": "From microscopic rules to emergence"
   },
   {
@@ -19,7 +19,7 @@
       "limn"
     ],
     "ideas": [],
-    "ui_url": "http://localhost:5184",
+    "ui_url": null,
     "tagline_en": "Goodsell-style scientific illustration"
   },
   {
@@ -30,7 +30,7 @@
       "soma"
     ],
     "ideas": [],
-    "ui_url": "http://localhost:5183",
+    "ui_url": null,
     "tagline_en": "3D human anatomy"
   },
   {
@@ -41,7 +41,7 @@
       "mindloop"
     ],
     "ideas": [],
-    "ui_url": "http://localhost:8765",
+    "ui_url": null,
     "tagline_en": "I know that you know that I know"
   },
   {
@@ -52,7 +52,7 @@
       "polis"
     ],
     "ideas": [],
-    "ui_url": "http://localhost:5186",
+    "ui_url": null,
     "tagline_en": "A parallel society"
   }
 ]

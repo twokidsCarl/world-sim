@@ -132,20 +132,57 @@ generated from it.
 
 ## 运行 / Run
 
-需要 [uv](https://docs.astral.sh/uv/) 和 [bun](https://bun.sh)；用模型的功能还需要本机装有并登录了
-`claude` 命令行（不需要 API key）。两个进程：
+需要 [uv](https://docs.astral.sh/uv/) 和 [bun](https://bun.sh)；用模型的功能还需要本机装有并登录了 `claude` 命令行（不需要 API key）。
 
 Needs [uv](https://docs.astral.sh/uv/) and [bun](https://bun.sh); the model-backed
-features also need the `claude` CLI installed and logged in on this machine (no API
-key). Two processes:
+features also need the `claude` CLI installed and logged in on this machine (no API key).
+
+日常使用只要一个进程 / For everyday use, one process:
 
 ```sh
-# 后端 / backend — http://127.0.0.1:8767
-uv run idea-loom serve
-
-# 界面 / UI — http://localhost:5187
-cd web && bun install && bun run dev
+uv run idea-loom build-ui     # 第一次，或者界面的代码变了之后 / the first time, or after the UI code changes
+uv run idea-loom serve        # 然后打开 / then open  http://localhost:8767
 ```
+
+这一个进程同时托管所有模拟，见下面"统一入口"。开发 idea-loom 自己时，另开一个终端跑 `cd web && bun install && bun run dev`（http://localhost:5187，带热更新，接口转给 8767）。
+
+That one process also hosts every simulation; see "the single entry point" below. When
+developing idea-loom itself, run `cd web && bun install && bun run dev` in a second
+terminal (http://localhost:5187, with hot reload, proxying the API to 8767).
+
+## 统一入口 / The single entry point
+
+各子项目开发时用自己的服务器和端口；使用时不用启动它们，idea-loom 托管全部。
+
+Subprojects use their own servers and ports while being developed; for use none of them
+needs starting, because idea-loom hosts them all.
+
+- **每个模拟一个子域名 / One subdomain per simulation**：`http://<项目>.localhost:8767/`。它是独立的源：有自己的本地存储，脚本碰不到 idea-loom 的页面；项目里从根开始的路径（`/api/…`、`/assets/…`）不用改。
+  A separate origin: its own local storage, no script access to idea-loom's pages, and
+  the project's root-relative paths work unchanged.
+- **跑的是 main 上的版本 / It runs what is on main**：对每个项目，从 `origin/main` 取出它的目录（不碰工作目录），在 `runs/play/<项目>/` 下构建。版本号是那个目录在 main 上的 tree 哈希；合并了新 PR 就重新构建，构建期间和构建失败时继续用上一个成功的版本。
+  Each project's directory is extracted from `origin/main` (the working tree is never
+  touched) and built under `runs/play/<project>/`. The version is that directory's tree
+  hash on main; a merged PR triggers a rebuild, and the last good build stays in use
+  while a new one builds or if it fails.
+- **后端按需启动 / Backends start on demand**：需要后端的项目，第一次访问它的 `/api/*` 时在一个空闲端口上启动（用那个项目自己的环境），请求转发过去，十分钟没人用就停掉。
+  A project's backend is started on a free port (in that project's own environment) the
+  first time its `/api/*` is requested, proxied to, and stopped after ten idle minutes.
+- **来源检查 / Origin check**：idea-loom 自己的接口拒绝来自模拟源的请求，模拟页面里的脚本调不了它。
+  idea-loom's own API refuses requests from a simulation's origin.
+- **名片 / Card files**：每个项目怎么托管、有哪些卡片，写在它根目录的 `sim.json`（格式和各项目要遵守的嵌入约定见根目录 `CLAUDE.md`）。项目还没提交 `sim.json` 时，用 `data/play/<项目>.json` 里的临时名片。
+  How a project is hosted and which cards it offers is declared in the `sim.json` at its
+  root (the format and the embed contract are in the root `CLAUDE.md`). Until a project
+  commits one, the interim file `data/play/<project>.json` is used.
+
+```sh
+uv run idea-loom play status          # 每个模拟的构建状态 / build state of every simulation
+uv run idea-loom play build [项目]     # 取 main 的快照并构建 / snapshot main and build
+```
+
+子域名只在本机有效。要给别的机器看，需要换成真正的域名。
+
+The subdomains only work on this machine; serving other machines needs real host names.
 
 环境变量（都可以不设）/ Environment (all optional)：`IDEA_LOOM_MODEL`（缺省 `sonnet`，生成、细化、翻译用 / default `sonnet`, for generate, refine, translate）、`IDEA_LOOM_ASSISTANT_MODEL`（小助手 / the assistant）、`IDEA_LOOM_JOB_MODEL`（作业 / jobs）。
 
@@ -172,6 +209,7 @@ the world-sim git history and skips itself without it.
 | `data/projects.json` | 子项目和它们对应的层 / subprojects and their levels |
 | `data/wishes.jsonl` | 愿望的事件 / wish events |
 | `data/tasks.jsonl` | 开发任务的事件 / development task events |
+| `data/play/*.json` | 各项目的临时名片 / interim card files for the projects |
 
 `runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl`、小助手的对话 `assistant/` 和作业 `jobs/`。
 
@@ -227,6 +265,7 @@ src/idea_loom/
   tasks.py      开发任务 / development tasks
   github.py     读合并请求 / read pull requests
   stats.py      统计 / statistics
+  play/         统一入口：名片、快照与构建、后端进程、按主机名分发 / the single entry point: card files, snapshots and builds, backend processes, routing by host
   jobs.py       作业：出方案、批准、执行、测试、PR / jobs: plan, approve, execute, test, PR
   review.py     回看操作轨迹 / review of the action trail
   wishes.py     许愿池 / the wish pool

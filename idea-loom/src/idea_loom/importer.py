@@ -33,11 +33,11 @@ MERGES = {
 THREAD_SHORT = {"A": "传播", "B": "崩溃", "C": "互猜", "D": "记忆", "E": "接口"}
 BRANCH_NAMES = {"纵": "纵线：同一件事穿过所有层", "造": "支线 造：人造的东西", "规": "支线 规：纯粹的规则世界"}
 PROJECTS = [
-    Project(dir="strata", tagline="从微观规则到涌现", level="L1", keywords=["strata"], ui_url="http://localhost:5188"),
-    Project(dir="limn", tagline="Goodsell 风格的科学插图", level="L2", keywords=["Goodsell", "limn"], ui_url="http://localhost:5184"),
-    Project(dir="soma", tagline="三维人体解剖", level="L4", keywords=["soma"], ui_url="http://localhost:5183"),
-    Project(dir="mindloop", tagline="我知道你知道我知道", level="L6", keywords=["mindloop"], ui_url="http://localhost:8765"),
-    Project(dir="polis", tagline="平行社会", level="L8", keywords=["polis"], ui_url="http://localhost:5186"),
+    Project(dir="strata", tagline="从微观规则到涌现", level="L1", keywords=["strata"]),
+    Project(dir="limn", tagline="Goodsell 风格的科学插图", level="L2", keywords=["Goodsell", "limn"]),
+    Project(dir="soma", tagline="三维人体解剖", level="L4", keywords=["soma"]),
+    Project(dir="mindloop", tagline="我知道你知道我知道", level="L6", keywords=["mindloop"]),
+    Project(dir="polis", tagline="平行社会", level="L8", keywords=["polis"]),
 ]
 
 
