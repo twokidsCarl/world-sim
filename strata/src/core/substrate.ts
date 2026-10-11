@@ -25,7 +25,7 @@ export interface Backend<F> {
    */
   setParams(p: Params): void
   /** 对当前状态计算所请求的约化器。 / Compute the requested reducers for the current state. */
-  reduce(ids: readonly string[]): F | Promise<F>
+  reduce(ids: readonly string[], region?: [number, number, number, number] | null): F | Promise<F>
   dispose(): void
 }
 

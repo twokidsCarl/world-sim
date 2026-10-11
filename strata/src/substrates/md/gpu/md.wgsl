@@ -34,8 +34,11 @@ struct Params {
   seed: u32,            // 每提交一批就改变一次 / changes every submitted batch
   strideX: u32,         // 密度模沿 x 每隔 strideX 个波矢采样一个 / density modes sample every strideX-th wave vector along x
   strideY: u32,
-  pad0: u32,
+  // 1：只统计选区内的粒子 / 1: reductions count only particles inside the region
+  regionOn: u32,
   pad1: u32,
+  // 选区矩形 (x0, y0, x1, y1) / region rectangle (x0, y0, x1, y1)
+  region: vec4f,
 }
 
 const SPEED_BINS = 64u;
@@ -72,13 +75,19 @@ const MODE_SLOTS = 194u;
 @group(0) @binding(6) var<storage, read_write> cellTable: array<u32>;
 // 均匀 r² 网格上的 (f/r, u)；每个组分对一张表 / (f/r, u) on a uniform r² grid; one table per species pair
 @group(0) @binding(7) var<storage, read> potTable: array<vec2f>;
-@group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // 每块三个 / three per chunk
+@group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // 每块四个 / four per chunk
 @group(0) @binding(9) var<storage, read_write> hist: array<atomic<u32>>;
 @group(0) @binding(10) var<storage, read_write> heat: array<f32>;        // 每块一个 / one per chunk
 @group(0) @binding(12) var<storage, read_write> modeChunks: array<f32>;   // 每块 MODE_SLOTS 个 / MODE_SLOTS per chunk
 @group(0) @binding(13) var<storage, read_write> modes: array<f32>;        // MODE_SLOTS
 // 每个单元：计数、Σvx、Σvy、Σv²、组分 B 的计数 / per cell: count, Σvx, Σvy, Σv², count of species B
 @group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>;
+
+// 粒子是否计入当前的统计：没有选区时全部计入。
+// Whether a particle counts towards the current reduction: all of them when no region is set.
+fn counted(p: vec3f) -> bool {
+  return P.regionOn == 0u || (all(p.xy >= P.region.xy) && all(p.xy < P.region.zw));
+}
 
 fn cellCoord(p: vec3f) -> vec3u {
   return min(vec3u(p / P.box.xyz * vec3f(P.nc.xyz)), P.nc.xyz - vec3u(1u));
@@ -240,7 +249,10 @@ fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
   var bonds = 0.0;
   var unlike = 0.0;
   var coord = 0.0;
+  var count = 0.0;
   for (var i = start; i < end; i++) {
+    if (!counted(pos[i].xyz)) { continue; }
+    count += 1.0;
     let v = vel[i].xyz;
     ke += 0.5 * dot(v, v);
     pe += force[i].w;
@@ -254,9 +266,10 @@ fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
     unlike += u;
     bonds += rest - 64.0 * u;
   }
-  partial[3u * id.x] = vec4f(ke, pe, vir, bonds);
-  partial[3u * id.x + 1u] = vec4f(p, coord);
-  partial[3u * id.x + 2u] = vec4f(psi, unlike);
+  partial[4u * id.x] = vec4f(ke, pe, vir, bonds);
+  partial[4u * id.x + 1u] = vec4f(p, coord);
+  partial[4u * id.x + 2u] = vec4f(psi, unlike);
+  partial[4u * id.x + 3u] = vec4f(count, 0.0, 0.0, 0.0);
 }
 
 // 把速度乘以 lambda，并按块记录由此增加的动能。
@@ -288,7 +301,7 @@ fn clearHist(@builtin(global_invocation_id) id: vec3u) {
 @compute @workgroup_size(256)
 fn speedHist(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
-  if (i >= P.n) { return; }
+  if (i >= P.n || !counted(pos[i].xyz)) { return; }
   let b = u32(length(vel[i].xyz) / P.vmax * f32(SPEED_BINS));
   if (b < SPEED_BINS) { atomicAdd(&hist[b], 1u); }
 }
@@ -300,6 +313,7 @@ fn rdfHist(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
   let xi = pos[i].xyz;
+  if (!counted(xi)) { return; }
   let ci = vec3i(cellCoord(xi));
   let reach = i32(P.rdfReach);
   let zr = reach * i32(P.dim == 3u);
@@ -311,7 +325,10 @@ fn rdfHist(@builtin(global_invocation_id) id: vec3u) {
         let count = min(atomicLoad(&cellCount[c]), P.nc.w);
         for (var k = 0u; k < count; k++) {
           let j = cellTable[c * P.nc.w + k];
-          if (j <= i) { continue; }
+          // 有选区时以区内粒子为中心统计所有邻居（有序对）；否则每个无序对只计一次。
+          // With a region, count every neighbour of each particle inside it (ordered pairs);
+          // otherwise count each unordered pair once.
+          if (j == i || (P.regionOn == 0u && j < i)) { continue; }
           let d = minImage(xi - pos[j].xyz);
           let r2 = dot(d, d);
           if (r2 >= r2max) { continue; }

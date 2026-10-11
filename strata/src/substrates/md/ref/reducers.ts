@@ -442,3 +442,101 @@ export function structureFactor(m: DensityModes, n: number, box: ArrayLike<numbe
   points.sort((a, b) => a[0] - b[0])
   return { x: Float64Array.from(points, (p) => p[0]), y: Float64Array.from(points, (p) => p[1]) }
 }
+
+/**
+ * 选区内粒子的统计（仅二维）。g(r) 以区内每个粒子为中心统计它的所有邻居，
+ * 并用选区自己的密度归一化。
+ * Statistics over the particles inside a rectangle (2D only). g(r) is centred on each
+ * particle inside and counts all of its neighbours, normalised by the region's own density.
+ */
+export function regionFrame(
+  s: MdState,
+  region: readonly [number, number, number, number],
+  ids: readonly string[],
+  vmax: number,
+): {
+  n: number
+  density: number
+  temperature: number
+  psi6Local: number
+  coordination: number
+  speedHist?: Hist
+  rdf?: Hist
+} {
+  const [x0, y0, x1, y1] = region
+  const inside = (i: number) => {
+    const x = s.pos[2 * i]
+    const y = s.pos[2 * i + 1]
+    return x >= x0 && x < x1 && y >= y0 && y < y1
+  }
+  const psi = psi6(s)
+  let n = 0
+  let ke = 0
+  let psiAbs = 0
+  for (let i = 0; i < s.n; i++) {
+    if (!inside(i)) continue
+    n++
+    ke += 0.5 * (s.vel[2 * i] ** 2 + s.vel[2 * i + 1] ** 2)
+    psiAbs += Math.hypot(psi[2 * i], psi[2 * i + 1])
+  }
+  let neighbours = 0
+  forEachPair(s, COORDINATION_RADIUS, (i, j) => {
+    neighbours += (inside(i) ? 1 : 0) + (inside(j) ? 1 : 0)
+  })
+  const area = (x1 - x0) * (y1 - y0)
+  const out: ReturnType<typeof regionFrame> = {
+    n,
+    density: n / area,
+    // 选区不是孤立系统，不扣除质心自由度。 / The region is not isolated, so no centre-of-mass degrees of freedom are removed.
+    temperature: n > 0 ? ke / n : 0,
+    psi6Local: n > 0 ? psiAbs / n : 0,
+    coordination: n > 0 ? neighbours / n : 0,
+  }
+  if (ids.includes('speedHist')) {
+    const bins = 40
+    const w = vmax / bins
+    const x = new Float64Array(bins)
+    const y = new Float64Array(bins)
+    for (let i = 0; i < s.n; i++) {
+      if (!inside(i)) continue
+      const b = Math.floor(Math.hypot(s.vel[2 * i], s.vel[2 * i + 1]) / w)
+      if (b < bins) y[b]++
+    }
+    for (let b = 0; b < bins; b++) {
+      x[b] = (b + 0.5) * w
+      y[b] /= Math.max(n, 1) * w
+    }
+    out.speedHist = { x, y }
+  }
+  if (ids.includes('rdf')) {
+    const bins = 120
+    let half = Infinity
+    for (let d = 0; d < 2; d++) half = Math.min(half, s.box[d] / 2)
+    const rmax = Math.min(4, half)
+    const counts = new Float64Array(bins)
+    forEachPair(s, rmax, (i, j, r2) => {
+      const b = Math.floor((Math.sqrt(r2) / rmax) * bins)
+      if (b < bins) counts[b] += (inside(i) ? 1 : 0) + (inside(j) ? 1 : 0)
+    })
+    out.rdf = regionRdf(counts, rmax, n, area)
+  }
+  return out
+}
+
+/**
+ * 把以区内粒子为中心的有序对计数化为 g(r)：除以 n · ρ_区 · 环面积。
+ * Turn ordered pair counts centred on the region's particles into g(r): divide by
+ * n · ρ_region · ring area.
+ */
+export function regionRdf(counts: ArrayLike<number>, rmax: number, n: number, area: number): Hist {
+  const bins = counts.length
+  const w = rmax / bins
+  const x = new Float64Array(bins)
+  const y = new Float64Array(bins)
+  for (let b = 0; b < bins; b++) {
+    const ring = Math.PI * (((b + 1) * w) ** 2 - (b * w) ** 2)
+    x[b] = (b + 0.5) * w
+    y[b] = n > 0 ? counts[b]! / (n * (n / area) * ring) : 0
+  }
+  return { x, y }
+}

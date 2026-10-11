@@ -1,7 +1,7 @@
 import type { Params } from '../../core/params'
 import type { GpuContext } from '../../gpu/device'
 import { PassTimer } from '../../gpu/timing'
-import type { MdBackend, MdFrame } from './backend-cpu'
+import type { MdBackend, MdFrame, Region, RegionFrame } from './backend-cpu'
 import code from './gpu/md.wgsl?raw'
 import { speciesField, speciesTables, type PairTable, type PotentialSpec } from './potential'
 import { initFcc, initTriangular } from './ref/init'
@@ -11,6 +11,7 @@ import {
   demixing,
   modeStride,
   rdfNormalise,
+  regionRdf,
   type FieldSums,
   type Hist,
 } from './ref/reducers'
@@ -24,7 +25,9 @@ const RDF_OFFSET = 64
 const MAX_CELL_SLOT = 192
 const HIST_WORDS = 196
 const THERMOSTAT_TAU = 0.5
-const PARAM_BYTES = 112
+const PARAM_BYTES = 128
+/** 每块的归约输出：4 个 vec4。 / Reduction output per chunk: 4 vec4. */
+const PARTIAL_FLOATS = 16
 const MODE_SLOTS = 2 + 4 * MODE_COUNT
 const FIELD_WORDS = FIELD_G * FIELD_G * 5
 const FIELD_V = 1024
@@ -45,11 +48,11 @@ const ENTRY_BINDINGS = {
   clearCells: [0, 5],
   fillCells: [0, 1, 5, 6, 9],
   forces: [0, 1, 3, 4, 5, 6, 7],
-  reduceChunks: [0, 2, 3, 4, 8],
+  reduceChunks: [0, 1, 2, 3, 4, 8],
   rescale: [0, 2, 10],
   clearHeat: [0, 10],
   clearHist: [9],
-  speedHist: [0, 2, 9],
+  speedHist: [0, 1, 2, 9],
   rdfHist: [0, 1, 5, 6, 9],
   clearField: [11],
   fieldBin: [0, 1, 2, 11],
@@ -144,7 +147,7 @@ export class MdGpuBackend implements MdBackend {
     make(3, this.n * 16)
     this.aux = make(4, this.n * 16)
     make(7, 4 * (TABLE_K + 1) * 8)
-    make(8, this.chunks * 48)
+    make(8, this.chunks * PARTIAL_FLOATS * 4)
     make(9, HIST_WORDS * 4)
     make(10, this.chunks * 4)
     make(11, FIELD_WORDS * 4)
@@ -243,7 +246,7 @@ export class MdGpuBackend implements MdBackend {
     }
   }
 
-  private writeParams(vmax: number): void {
+  private writeParams(vmax: number, region: Region | null = null): void {
     const data = new ArrayBuffer(PARAM_BYTES)
     const f = new Float32Array(data)
     const u = new Uint32Array(data)
@@ -253,7 +256,8 @@ export class MdGpuBackend implements MdBackend {
     u.set([this.n, this.dim, TABLE_K, CHUNK], 8)
     f.set([this.p.dt, t.rc2, t.r2min, t.k / (t.rc2 - t.r2min)], 12)
     f.set([vmax, this.rdfMax, this.lambda, this.rdfReach], 16)
-    u.set([modeStride(this.box[0]!), modeStride(this.box[1]!), 0, 0], 24)
+    u.set([modeStride(this.box[0]!), modeStride(this.box[1]!), region ? 1 : 0, 0], 24)
+    f.set(region ?? [0, 0, 0, 0], 28)
     const walls = this.p.walls === 1 && this.dim === 2
     f.set([walls ? this.p.drive! : 0, this.p.temperature!], 20)
     u.set([walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
@@ -373,7 +377,7 @@ export class MdGpuBackend implements MdBackend {
     this.pendingReverse = true
   }
 
-  async reduce(ids: readonly string[]): Promise<MdFrame> {
+  async reduce(ids: readonly string[], region?: Region | null): Promise<MdFrame> {
     const step = this.stepCount
     const time = this.time
     const spec = this.spec
@@ -387,7 +391,7 @@ export class MdGpuBackend implements MdBackend {
     this.lastReduceStep = step
     this.reducing++
 
-    const partialBytes = this.chunks * 48
+    const partialBytes = this.chunks * PARTIAL_FLOATS * 4
     const histBytes = HIST_WORDS * 4
     const heatBytes = this.chunks * 4
     const fieldBytes = wantField ? FIELD_WORDS * 4 : 0
@@ -425,6 +429,9 @@ export class MdGpuBackend implements MdBackend {
     this.dispatch(pass, 'clearHeat', this.chunks, 64)
     pass.end()
     this.submit(encoder)
+    // 选区的统计紧跟着提交，读到的是同一时刻的状态。
+    // The region's statistics are submitted right behind, so they see the same state.
+    const regional = region && this.dim === 2 ? this.reduceRegion(region, wantSpeed, wantRdf, vmax, rdfMax) : null
 
     try {
       await staging.mapAsync(GPUMapMode.READ)
@@ -432,7 +439,7 @@ export class MdGpuBackend implements MdBackend {
       this.reducing--
     }
     const raw = staging.getMappedRange()
-    const partial = new Float32Array(raw, 0, this.chunks * 12)
+    const partial = new Float32Array(raw, 0, this.chunks * PARTIAL_FLOATS)
     const hist = new Uint32Array(raw, partialBytes, HIST_WORDS)
     const heatPartial = new Float32Array(raw, partialBytes + histBytes, this.chunks)
 
@@ -451,18 +458,18 @@ export class MdGpuBackend implements MdBackend {
     let unlike = 0
     let neighbours = 0
     for (let c = 0; c < this.chunks; c++) {
-      bonds += partial[12 * c + 3]!
-      unlike += partial[12 * c + 11]!
-      neighbours += partial[12 * c + 7]!
-      ke += partial[12 * c]!
-      pe += partial[12 * c + 1]!
-      virial += partial[12 * c + 2]!
-      px += partial[12 * c + 4]!
-      py += partial[12 * c + 5]!
-      pz += partial[12 * c + 6]!
-      psiRe += partial[12 * c + 8]!
-      psiIm += partial[12 * c + 9]!
-      psiAbs += partial[12 * c + 10]!
+      bonds += partial[PARTIAL_FLOATS * c + 3]!
+      unlike += partial[PARTIAL_FLOATS * c + 11]!
+      neighbours += partial[PARTIAL_FLOATS * c + 7]!
+      ke += partial[PARTIAL_FLOATS * c]!
+      pe += partial[PARTIAL_FLOATS * c + 1]!
+      virial += partial[PARTIAL_FLOATS * c + 2]!
+      px += partial[PARTIAL_FLOATS * c + 4]!
+      py += partial[PARTIAL_FLOATS * c + 5]!
+      pz += partial[PARTIAL_FLOATS * c + 6]!
+      psiRe += partial[PARTIAL_FLOATS * c + 8]!
+      psiIm += partial[PARTIAL_FLOATS * c + 9]!
+      psiAbs += partial[PARTIAL_FLOATS * c + 10]!
       heat += heatPartial[c]!
     }
     const n = this.n
@@ -515,7 +522,72 @@ export class MdGpuBackend implements MdBackend {
     }
     staging.unmap()
     staging.destroy()
+    if (regional) frame.region = await regional
     return frame
+  }
+
+  /**
+   * 只统计选区内粒子的一轮归约。uniform 的写入与提交在队列里按先后顺序执行，所以先写入
+   * 带选区的参数、提交，再把参数写回即可，不需要第二套绑定组。
+   * One round of reductions over the particles inside the region. Uniform writes and
+   * submits execute in queue order, so it is enough to write the parameters with the
+   * region, submit, and write them back; no second set of bind groups is needed.
+   */
+  private async reduceRegion(
+    region: Region,
+    wantSpeed: boolean,
+    wantRdf: boolean,
+    vmax: number,
+    rdfMax: number,
+  ): Promise<RegionFrame> {
+    const partialBytes = this.chunks * PARTIAL_FLOATS * 4
+    const histBytes = HIST_WORDS * 4
+    const staging = this.device.createBuffer({
+      size: partialBytes + histBytes,
+      usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+    })
+    this.writeParams(vmax, region)
+    const encoder = this.device.createCommandEncoder()
+    let pass = encoder.beginComputePass()
+    if (wantSpeed) this.dispatch(pass, 'speedHist', this.n)
+    if (wantRdf) this.dispatch(pass, 'rdfHist', this.n)
+    this.dispatch(pass, 'reduceChunks', this.chunks, 64)
+    pass.end()
+    encoder.copyBufferToBuffer(this.buffers[8]!, 0, staging, 0, partialBytes)
+    encoder.copyBufferToBuffer(this.buffers[9]!, 0, staging, partialBytes, histBytes)
+    pass = encoder.beginComputePass()
+    this.dispatch(pass, 'clearHist', HIST_WORDS)
+    pass.end()
+    this.submit(encoder)
+    this.writeParams(vmax)
+
+    await staging.mapAsync(GPUMapMode.READ)
+    const raw = staging.getMappedRange()
+    const partial = new Float32Array(raw, 0, this.chunks * PARTIAL_FLOATS)
+    const hist = new Uint32Array(raw, partialBytes, HIST_WORDS)
+    let n = 0
+    let ke = 0
+    let psiAbs = 0
+    let neighbours = 0
+    for (let c = 0; c < this.chunks; c++) {
+      ke += partial[PARTIAL_FLOATS * c]!
+      neighbours += partial[PARTIAL_FLOATS * c + 7]!
+      psiAbs += partial[PARTIAL_FLOATS * c + 10]!
+      n += partial[PARTIAL_FLOATS * c + 12]!
+    }
+    const area = (region[2] - region[0]) * (region[3] - region[1])
+    const out: RegionFrame = {
+      n,
+      density: n / area,
+      temperature: n > 0 ? ke / n : 0,
+      psi6Local: n > 0 ? psiAbs / n : 0,
+      coordination: n > 0 ? neighbours / n : 0,
+    }
+    if (wantSpeed) out.speedHist = speedDensity(hist, Math.max(n, 1), vmax)
+    if (wantRdf) out.rdf = regionRdf(Float64Array.from(hist.subarray(RDF_OFFSET, RDF_OFFSET + RDF_BINS)), rdfMax, n, area)
+    staging.unmap()
+    staging.destroy()
+    return out
   }
 
   /** 完整回读状态，仅供交叉校验工具使用。 / Full state readback, for the cross-check harness only. */

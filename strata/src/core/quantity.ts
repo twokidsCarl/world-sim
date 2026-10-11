@@ -62,6 +62,11 @@ export interface QuantityDef<F> {
   theory?(frame: F, p: Params): Value | null
   theoryLabel?: string
   /**
+   * 同一个量在选区内的取值；没有选区时返回 null。
+   * The same quantity restricted to the selected region; null when no region is set.
+   */
+  regional?(frame: F, p: Params): Value | null
+  /**
    * 测量与理论何时算作相符：对标量，|value - theory| <= abs + rel * |theory|；
    * 对曲线，绝对差之和相对于理论值之和须不超过 rel。
    * When measurement and theory count as agreeing: |value - theory| <= abs + rel * |theory|
@@ -113,6 +118,8 @@ export interface Sample {
   epoch: number
   value: Value
   theory: Value | null
+  /** 选区内的取值 / The value inside the selected region */
+  regional: Value | null
 }
 
 /**
