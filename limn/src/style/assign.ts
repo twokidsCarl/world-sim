@@ -2,18 +2,21 @@ import { El, type Molecule } from '../mol/types'
 import { oklch, type RGB } from './oklab'
 import { ROLE_HUE, TONE_MOLECULE, type Role, type Tone } from './palettes'
 
-/** How one structure is coloured: a role per entity, optional exact colours. */
+/** 一个结构怎么上色：每个实体一个角色，可选的精确颜色 / How one structure is coloured: a role per entity, optional exact colours. */
 export interface Coloring {
   roles: Role[]
-  /** per-entity hue shift in degrees, added to the role's hue; set by spreadHues */
+  /**
+   * 每个实体的色相偏移（度），加到角色的色相上；由 spreadHues 设置
+   * per-entity hue shift in degrees, added to the role's hue; set by spreadHues
+   */
   hueShift: number[]
-  /** per-entity manual hue adjustment in degrees, kept when roles change */
+  /** 每个实体的手动色相调整（度），角色变化时保留 / per-entity manual hue adjustment in degrees, kept when roles change */
   nudge: number[]
-  /** per-entity override as [L, C, h]; wins over role and shift */
+  /** 每个实体的覆盖值 [L, C, h]；优先于角色和偏移 / per-entity override as [L, C, h]; wins over role and shift */
   override: (null | [number, number, number])[]
 }
 
-/** A reasonable colouring with no outside knowledge of what the structure is. */
+/** 在不了解结构是什么的情况下，给出一套合理的配色 / A reasonable colouring with no outside knowledge of what the structure is. */
 export function defaultColoring(mol: Molecule): Coloring {
   const proteinRoles: Role[] = ['soluble', 'membrane', 'focus', 'extracellular']
   let p = 0
@@ -33,7 +36,7 @@ export function defaultColoring(mol: Molecule): Coloring {
   return spreadHues({ roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) })
 }
 
-/** Entities sharing a role are fanned out across that role's hue range. */
+/** 同一角色的实体在该角色的色相范围内展开 / Entities sharing a role are fanned out across that role's hue range. */
 export function spreadHues(c: Coloring): Coloring {
   const byRole = new Map<Role, number[]>()
   c.roles.forEach((r, i) => byRole.set(r, [...(byRole.get(r) ?? []), i]))
@@ -55,6 +58,8 @@ export function entityLch(c: Coloring, entity: number, tone: Tone): [number, num
 }
 
 /**
+ * 每个原子一个 RGBA8。同一实体的各条链在色相和明度上略有交替，以便分清相邻的拷贝；
+ * 碳原子比同链的其他原子略灰。
  * Per-atom RGBA8. Chains of one entity alternate slightly in hue and
  * lightness so that neighbouring copies can be told apart; carbons are a
  * little greyer than the other atoms of their chain.
@@ -66,10 +71,13 @@ export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECUL
     const k = seen.get(ch.entity) ?? 0
     seen.set(ch.entity, k + 1)
     const [L, C, h] = entityLch(c, ch.entity, tone)
+    // 膜是一片均匀的颜色，不按链变化 / a membrane is one even wash, with no variation from chain to chain
+    const flat = mol.entities[ch.entity]!.kind === 'lipid'
+    // 0、+1、-1、+2、-2 …… 每步 9 度，五条链后循环
     // 0, +1, -1, +2, -2 ... steps of 9 degrees, wrapping after five chains
-    const step = ((k % 5) + 1) >> 1
+    const step = flat ? 0 : ((k % 5) + 1) >> 1
     const dh = (k % 5) % 2 === 1 ? step * 9 : -step * 9
-    const dL = (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
+    const dL = flat ? 0 : (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
     const other = to8(oklch(L + dL, C, h + dh))
     const carbon = to8(oklch(L + dL + tone.carbonLift, Math.max(0, C - tone.carbonDrop), h + dh))
     for (let i = ch.start; i < ch.start + ch.count; i++) {
@@ -85,10 +93,18 @@ export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECUL
 
 const to8 = (c: RGB): RGB => [Math.round(c[0] * 255), Math.round(c[1] * 255), Math.round(c[2] * 255)]
 
-/** Illustrate's radii: carbon 1.6, sulfur and phosphorus 1.8, others 1.5 Å. */
+/**
+ * Illustrate 的半径：碳 1.6，硫和磷 1.8，其余 1.5 Å。
+ * Illustrate's radii: carbon 1.6, sulfur and phosphorus 1.8, others 1.5 Å.
+ */
 export function atomRadii(mol: Molecule): Float32Array {
   const r = new Float32Array(mol.atomCount)
   for (let i = 0; i < mol.atomCount; i++) {
+    const given = mol.radius?.[i]
+    if (given) {
+      r[i] = given
+      continue
+    }
     const e = mol.element[i]
     r[i] = e === El.C ? 1.6 : e === El.S || e === El.P ? 1.8 : e === El.Other ? 1.8 : 1.5
   }

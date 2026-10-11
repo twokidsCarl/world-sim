@@ -1,48 +1,85 @@
 import { COMPOSITE_FS, EDGE_FS, QUAD_VS, SPHERE_FS, SPHERE_VS } from './shaders'
 import type { Style } from './style'
 
-/** One contiguous run of atoms, placed by one matrix. */
+/**
+ * 一段连续的原子，由实例表里连续的若干个实例各画一次。
+ * One contiguous run of atoms, drawn once by each of a contiguous range of instances.
+ */
 export interface Draw {
   start: number
   count: number
-  /** column-major 4x4 */
-  matrix: Float32Array
-  /** added to each atom's chain index so every placed copy outlines separately */
-  subunitBase: number
-  molecule: number
-  /** world position of the whole molecule's centre, for depth layers */
-  center?: [number, number, number]
+  /** 实例表中的起始下标和个数 / first instance and how many */
+  opStart: number
+  opCount: number
 }
 
-/** Atoms sharing one set of GPU buffers, drawn one or more times. */
+/**
+ * 实例表：每个实例是一个刚体变换，外加它所属分子的信息。
+ * The instance table: one rigid transform per instance, plus what molecule it belongs to.
+ */
+export interface Instances {
+  count: number
+  /**
+   * 每个实例 16 个数：3×4 矩阵的三行，然后是分子中心的世界坐标 xyz 和一个标志（1 = 有中心）。
+   * 有中心的实例整体归入一个景深层，并在截面处整体保留或丢弃。
+   * 16 floats each: the three rows of a 3x4 matrix, then the molecule's centre (xyz) and a
+   * flag (1 = centre known). An instance with a centre takes one depth layer as a whole and
+   * is kept or dropped whole at a cut.
+   */
+  data: Float32Array
+  /**
+   * 每个实例 2 个整数：加到链编号上的偏移（让每个拷贝单独描边）、分子编号。
+   * 2 ints each: the offset added to chain indices (so every copy outlines separately), molecule id.
+   */
+  ids: Uint32Array
+}
+
+/** 单位变换的单个实例 / A single identity instance. */
+export function identityInstances(molecule = 0): Instances {
+  return { count: 1, data: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]), ids: new Uint32Array([0, molecule]) }
+}
+
+/**
+ * 共用一组 GPU 数据的原子，被画一次或多次。
+ * Atoms sharing one set of GPU data, drawn one or more times.
+ */
 export interface RenderItem {
-  /** x, y, z, radius per atom */
+  /** 每个原子的 x、y、z、半径 / x, y, z, radius per atom */
   posr: Float32Array
-  /** RGBA8 per atom */
+  /** 每个原子一个 RGBA8 / RGBA8 per atom */
   color: Uint8Array
-  /** chain index, residue number (offset to be non-negative) per atom */
+  /** 每个原子的链编号、残基编号（加了偏移以保证非负） / chain index, residue number (offset to be non-negative) per atom */
   ids: Uint32Array
   draws: Draw[]
-  /** typical diameter of one chain in Å; lines between chains fade when this gets small on screen */
+  instances: Instances
+  /**
+   * 一条链的典型直径（Å）；它在屏幕上变小时，链间的线会淡出
+   * typical diameter of one chain in Å; lines between chains fade when this gets small on screen
+   */
   subunitSize: number
 }
 
 export interface View {
-  /** column-major 3x3, world to view; +z points at the viewer */
+  /** 列主序 3x3，世界到视图；+z 指向观察者 / column-major 3x3, world to view; +z points at the viewer */
   rot: Float32Array
   center: [number, number, number]
-  /** Å spanned by the image height */
+  /** 图像高度所跨的 Å 数 / Å spanned by the image height */
   height: number
-  /** atoms nearer than this view-space z are dropped; Infinity = no cut */
+  /** 视图空间 z 比这更靠前的原子被丢弃；Infinity = 不截 / atoms nearer than this view-space z are dropped; Infinity = no cut */
   clipFront: number
-  /** view-space z where depth fading starts and ends; default: the scene's bounding sphere */
+  /**
+   * 景深淡出开始和结束处的视图空间 z；默认取场景的包围球
+   * view-space z where depth fading starts and ends; default: the scene's bounding sphere
+   */
   fogSpan?: [number, number]
+  /** 画面内容在视线方向上的半厚度（Å），由取景算出 / half the subject's extent along the view direction in Å, set by framing */
+  halfDepth?: number
 }
 
 export interface Bounds {
   center: [number, number, number]
   radius: number
-  /** x, y, z, r of every placed run, for framing a particular view */
+  /** 每段已放置原子的 x、y、z、r，用于给特定视角取景 / x, y, z, r of every placed run, for framing a particular view */
   spheres: Float32Array
   subunitSize: number
 }
@@ -61,14 +98,16 @@ interface Target {
 }
 
 interface GpuItem {
-  posr: WebGLBuffer
-  color: WebGLBuffer
-  ids: WebGLBuffer
+  posr: WebGLTexture
+  color: WebGLTexture
+  ids: WebGLTexture
+  inst: WebGLTexture
+  instIds: WebGLTexture
   draws: Draw[]
   atoms: number
-  /** this item's own bounds, before its placement */
+  /** 该项自身的包围范围，未经摆放 / this item's own bounds, before its placement */
   local: Bounds
-  /** column-major 4x4 applied after the draw matrices */
+  /** 列主序 4x4，在绘制矩阵之后施加 / column-major 4x4 applied after the draw matrices */
   place: Float32Array
 }
 
@@ -86,8 +125,10 @@ export class Renderer {
   private target: Target | null = null
   private uniforms = new Map<WebGLProgram, Map<string, WebGLUniformLocation | null>>()
   bounds: Bounds = { center: [0, 0, 0], radius: 1, spheres: new Float32Array(0), subunitSize: 30 }
-  /** instanced spheres drawn in the last frame */
+  /** 上一帧画出的实例化球数 / instanced spheres drawn in the last frame */
   lastAtoms = 0
+  /** 数据纹理的宽度 / width of the data textures */
+  private texW = 4096
 
   constructor(readonly canvas: HTMLCanvasElement | OffscreenCanvas) {
     const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: true }) as WebGL2RenderingContext | null
@@ -110,12 +151,9 @@ export class Renderer {
     gl.bindVertexArray(this.vao)
     gl.enableVertexAttribArray(0)
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
-    for (const loc of [1, 2, 3]) {
-      gl.enableVertexAttribArray(loc)
-      gl.vertexAttribDivisor(loc, 1)
-    }
     gl.bindVertexArray(null)
-    // an empty stage is paper, not a black hole
+    this.texW = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number)
+    // 空舞台是白纸，不是黑洞 / an empty stage is paper, not a black hole
     gl.clearColor(1, 1, 1, 1)
     gl.clear(gl.COLOR_BUFFER_BIT)
   }
@@ -142,31 +180,57 @@ export class Renderer {
     return m.get(name)!
   }
 
+  /**
+   * 把一维数组放进宽度固定的二维纹理（不足一行的补零）。
+   * Store a flat array in a fixed-width 2D texture, padding the last row.
+   */
+  private dataTexture(internal: number, format: number, type: number, data: Float32Array | Uint8Array | Uint32Array, perTexel: number): WebGLTexture {
+    const gl = this.gl
+    const w = this.texW
+    const h = Math.max(1, Math.ceil(data.length / perTexel / w))
+    let full = data
+    if (data.length !== w * h * perTexel) {
+      full = new (data.constructor as new (n: number) => Float32Array | Uint8Array | Uint32Array)(w * h * perTexel)
+      full.set(data)
+    }
+    const t = gl.createTexture()!
+    gl.bindTexture(gl.TEXTURE_2D, t)
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
+    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, full)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    return t
+  }
+
   setScene(items: RenderItem[]): void {
     const gl = this.gl
-    for (const it of this.items) {
-      gl.deleteBuffer(it.posr)
-      gl.deleteBuffer(it.color)
-      gl.deleteBuffer(it.ids)
-    }
+    for (const it of this.items) for (const t of [it.posr, it.color, it.ids, it.inst, it.instIds]) gl.deleteTexture(t)
     this.items = items.map((it) => {
-      const mk = (data: ArrayBufferView) => {
-        const b = gl.createBuffer()!
-        gl.bindBuffer(gl.ARRAY_BUFFER, b)
-        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
-        return b
+      // 原子和实例各有两张纹理：浮点数据一张，整数编号一张（RG 两个分量）
+      // atoms and instances each get two textures: one of floats, one of integer ids (two channels, RG)
+      return {
+        posr: this.dataTexture(gl.RGBA32F, gl.RGBA, gl.FLOAT, it.posr, 4),
+        color: this.dataTexture(gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, it.color, 4),
+        ids: this.dataTexture(gl.RG32UI, gl.RG_INTEGER, gl.UNSIGNED_INT, it.ids, 2),
+        inst: this.dataTexture(gl.RGBA32F, gl.RGBA, gl.FLOAT, it.instances.data, 4),
+        instIds: this.dataTexture(gl.RG32UI, gl.RG_INTEGER, gl.UNSIGNED_INT, it.instances.ids, 2),
+        draws: it.draws,
+        atoms: it.posr.length / 4,
+        local: sceneBounds([it]),
+        place: IDENTITY4,
       }
-      return { posr: mk(it.posr), color: mk(it.color), ids: mk(it.ids), draws: it.draws, atoms: it.posr.length / 4, local: sceneBounds([it]), place: IDENTITY4 }
     })
     this.bounds = this.placedBounds()
   }
 
-  /** Bounds of item `i` on its own, ignoring where it is placed. */
+  /** 第 `i` 项自身的包围范围，不考虑它被放在哪里 / Bounds of item `i` on its own, ignoring where it is placed. */
   localBounds(i: number): Bounds | undefined {
     return this.items[i]?.local
   }
 
-  /** Move whole items rigidly (one matrix per item) without re-uploading atoms. */
+  /** 整体刚性移动各项（每项一个矩阵），不重新上传原子 / Move whole items rigidly (one matrix per item) without re-uploading atoms. */
   setPlacements(mats: Float32Array[]): void {
     this.items.forEach((it, i) => (it.place = mats[i] ?? IDENTITY4))
     this.bounds = this.placedBounds()
@@ -202,9 +266,15 @@ export class Renderer {
 
   setColors(item: number, color: Uint8Array): void {
     const it = this.items[item]
-    if (!it) return
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, it.color)
-    this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, color)
+    if (!it || color.length !== it.atoms * 4) return
+    const gl = this.gl
+    const w = this.texW
+    const rows = Math.floor(it.atoms / w)
+    gl.bindTexture(gl.TEXTURE_2D, it.color)
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
+    if (rows > 0) gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, w, rows, gl.RGBA, gl.UNSIGNED_BYTE, color.subarray(0, rows * w * 4))
+    const rest = it.atoms - rows * w
+    if (rest > 0) gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, rows, rest, 1, gl.RGBA, gl.UNSIGNED_BYTE, color.subarray(rows * w * 4))
   }
 
   private ensureTarget(w: number, h: number): Target {
@@ -240,19 +310,20 @@ export class Renderer {
     return this.target
   }
 
-  /** Largest supersampling factor (2 or 1) whose buffers fit this output size. */
+  /** 缓冲区能容纳该输出尺寸的最大超采样倍数（2 或 1） / Largest supersampling factor (2 or 1) whose buffers fit this output size. */
   supersample(w: number, h: number): number {
     const max = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE) as number
     return w * 2 <= Math.min(max, 8192) && h * 2 <= Math.min(max, 8192) && w * h * 4 <= 40_000_000 ? 2 : 1
   }
 
-  /** Render at w×h internal pixels into the composite buffer. */
+  /** 以 w×h 的内部像素渲染到合成缓冲 / Render at w×h internal pixels into the composite buffer. */
   private renderInternal(view: View, style: Style, w: number, h: number, fast: boolean): Target {
     const gl = this.gl
     const t = this.ensureTarget(w, h)
     const b = this.bounds
     const pxPerA = h / view.height
 
+    // 场景包围球在视图空间的 z 给出深度范围。
     // View-space z of the scene's bounding sphere gives the depth range.
     const dx = b.center[0] - view.center[0], dy = b.center[1] - view.center[1], dz = b.center[2] - view.center[2]
     const zc = view.rot[2]! * dx + view.rot[5]! * dy + view.rot[8]! * dz
@@ -278,6 +349,7 @@ export class Renderer {
     gl.uniform2f(this.u(p, 'u_z'), zFront, zBack)
     gl.uniform1f(this.u(p, 'u_clipFront'), Number.isFinite(view.clipFront) ? view.clipFront : 1e30)
     gl.uniform1f(this.u(p, 'u_radiusScale'), style.radiusScale)
+    gl.uniform1f(this.u(p, 'u_minRadius'), (style.minRadius * Math.max(1, (Math.max(w, h) / 1500) * style.lineWidth)) / pxPerA)
     gl.uniform1i(this.u(p, 'u_outlineByMolecule'), style.outlineBy === 'molecule' ? 1 : 0)
     gl.bindVertexArray(this.vao)
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad)
@@ -285,30 +357,28 @@ export class Renderer {
     let atoms = 0
     const layers = style.fog.layers
     const span = view.fogSpan ?? [Math.min(zc + b.radius, zFront), zc - b.radius]
-    const r = view.rot, vc = view.center
-    gl.uniform1f(this.u(p, 'u_keep'), 1)
+    gl.uniform1i(this.u(p, 'u_w'), this.texW)
+    gl.uniform3f(this.u(p, 'u_layer'), layers, span[0], span[1])
+    gl.uniform2f(this.u(p, 'u_fogKeep'), style.fog.front, style.fog.back)
+    const names = ['u_posr', 'u_color', 'u_ids', 'u_inst', 'u_instIds']
+    names.forEach((n, i) => gl.uniform1i(this.u(p, n), i))
     for (const it of this.items) {
+      ;[it.posr, it.color, it.ids, it.inst, it.instIds].forEach((t, i) => {
+        gl.activeTexture(gl.TEXTURE0 + i)
+        gl.bindTexture(gl.TEXTURE_2D, t)
+      })
       gl.uniformMatrix4fv(this.u(p, 'u_place'), false, it.place)
       for (const d of it.draws) {
-        if (d.count <= 0) continue
-        gl.bindBuffer(gl.ARRAY_BUFFER, it.posr)
-        gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, d.start * 16)
-        gl.bindBuffer(gl.ARRAY_BUFFER, it.color)
-        gl.vertexAttribPointer(2, 4, gl.UNSIGNED_BYTE, true, 4, d.start * 4)
-        gl.bindBuffer(gl.ARRAY_BUFFER, it.ids)
-        gl.vertexAttribIPointer(3, 2, gl.UNSIGNED_INT, 8, d.start * 8)
-        gl.uniformMatrix4fv(this.u(p, 'u_model'), false, d.matrix)
-        gl.uniform1ui(this.u(p, 'u_subunitBase'), d.subunitBase)
-        gl.uniform1ui(this.u(p, 'u_molecule'), d.molecule)
-        if (layers > 0 && d.center) {
-          // the whole molecule takes the tone of the layer its centre is in
-          const z = r[2]! * (d.center[0] - vc[0]) + r[5]! * (d.center[1] - vc[1]) + r[8]! * (d.center[2] - vc[2])
-          const t = Math.min(0.999, Math.max(0, (span[0] - z) / Math.max(span[0] - span[1], 1e-3)))
-          const step = layers === 1 ? 0 : Math.floor(t * layers) / (layers - 1)
-          gl.uniform1f(this.u(p, 'u_keep'), style.fog.front + (style.fog.back - style.fog.front) * step)
+        if (d.count <= 0 || d.opCount <= 0) continue
+        // 一次绘制的实例数上限是 2^31；超过就按实例分批
+        // one call can draw at most 2^31 instances; split by instance beyond that
+        const per = Math.max(1, Math.floor(2_000_000_000 / d.count))
+        for (let o = 0; o < d.opCount; o += per) {
+          const n = Math.min(per, d.opCount - o)
+          gl.uniform3i(this.u(p, 'u_run'), d.start, d.count, d.opStart + o)
+          gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, d.count * n)
+          atoms += d.count * n
         }
-        gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, d.count)
-        atoms += d.count
       }
     }
     this.lastAtoms = atoms
@@ -322,17 +392,25 @@ export class Renderer {
       gl.uniform1i(this.u(prog, name), unit)
     }
 
+    // 笔宽取 Illustrate 在 1500 px 图像上一个像素的卷积核步长。
     // The pen is Illustrate's one-pixel kernel step on a 1500 px image.
     const pen = Math.max(1, (Math.max(w, h) / 1500) * style.lineWidth)
+    // Illustrate 的阴影在 12 px/Å 时延伸 50 px。更大的对象以更小的比例绘制，
+    // 所以默认让延伸范围跟随视图。
     // Illustrate's shadow reaches 50 px at 12 px/Å. Larger subjects are drawn
     // at smaller scales, so by default the reach follows the view instead.
     const reach = style.shadow.radius > 0 ? style.shadow.radius : Math.max(50 / 12, view.height * 0.045)
+    // 深度台阶要比一个笔宽大得多才读得出是一条边；
+    // 在病毒尺度下，这样只留下外轮廓和大的起伏。
     // A depth step only reads as an edge if it is large next to one pen width;
     // at virus scale this leaves the silhouette and the big relief.
     const diffMax = Math.max(style.contour.diffMax, (24 * pen) / pxPerA)
+    // 链间的线需要空间：链的宽度从 40 个笔宽缩到 12 个笔宽时线逐渐淡出，
+    // Goodsell 手绘时就是这么做的。
     // Lines between chains need room: they fade out as a chain shrinks from
     // 40 to 12 pen widths across, which is what Goodsell does by hand.
     const subunitPens = (b.subunitSize * pxPerA) / pen
+    // （全景里整个分子之间的线从不淡出）
     // (lines between whole molecules, in a landscape, never fade)
     const subunitFade = style.outlineBy === 'molecule' ? 1 : Math.min(1, Math.max(0, (subunitPens - 12) / 28))
 
@@ -372,7 +450,7 @@ export class Renderer {
     return t
   }
 
-  /** Draw to the canvas at its current pixel size. */
+  /** 按画布当前的像素尺寸画到画布上 / Draw to the canvas at its current pixel size. */
   render(view: View, style: Style, fast = false): void {
     const gl = this.gl
     const cw = this.canvas.width, ch = this.canvas.height
@@ -385,7 +463,7 @@ export class Renderer {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   }
 
-  /** Render off-screen at w×h and return top-down RGBA pixels. */
+  /** 离屏渲染 w×h，返回自上而下的 RGBA 像素 / Render off-screen at w×h and return top-down RGBA pixels. */
   renderPixels(view: View, style: Style, w: number, h: number): Uint8ClampedArray {
     const gl = this.gl
     const ss = this.supersample(w, h)
@@ -410,88 +488,73 @@ export class Renderer {
   }
 }
 
-/** Bounding sphere of everything drawn, from each run's box under its matrix. */
-export function sceneBounds(items: RenderItem[]): Bounds {
-  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity]
-  for (const it of items) {
-    const boxes = new Map<string, number[]>()
-    for (const d of it.draws) {
-      const key = d.start + ':' + d.count
-      let box = boxes.get(key)
-      if (!box) {
-        box = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity]
-        for (let i = d.start; i < d.start + d.count; i++) {
-          const r = it.posr[i * 4 + 3]!
-          for (let k = 0; k < 3; k++) {
-            const v = it.posr[i * 4 + k]!
-            if (v - r < box[k]!) box[k] = v - r
-            if (v + r > box[k + 3]!) box[k + 3] = v + r
-          }
-        }
-        boxes.set(key, box)
-      }
-      const m = d.matrix
-      for (let c = 0; c < 8; c++) {
-        const x = box[c & 1 ? 3 : 0]!, y = box[c & 2 ? 4 : 1]!, z = box[c & 4 ? 5 : 2]!
-        for (let k = 0; k < 3; k++) {
-          const v = m[k]! * x + m[4 + k]! * y + m[8 + k]! * z + m[12 + k]!
-          if (v < lo[k]!) lo[k] = v
-          if (v > hi[k]!) hi[k] = v
-        }
-      }
-    }
-  }
-  if (!Number.isFinite(lo[0]!)) return { center: [0, 0, 0], radius: 1, spheres: new Float32Array(0), subunitSize: 30 }
-  const center: [number, number, number] = [(lo[0]! + hi[0]!) / 2, (lo[1]! + hi[1]!) / 2, (lo[2]! + hi[2]!) / 2]
+/** 实例 o 的列主序 4x4 / instance o as a column-major 4x4 */
+export function instanceMatrix(inst: Instances, o: number): Float32Array {
+  const d = inst.data, k = o * 16
+  return new Float32Array([d[k]!, d[k + 4]!, d[k + 8]!, 0, d[k + 1]!, d[k + 5]!, d[k + 9]!, 0, d[k + 2]!, d[k + 6]!, d[k + 10]!, 0, d[k + 3]!, d[k + 7]!, d[k + 11]!, 1])
+}
 
+/**
+ * 画出来的全部内容的包围球，以及贴合形状的一组小球（用于取景）。
+ * Bounding sphere of everything drawn, plus a set of small spheres that hug the shape (for framing).
+ */
+export function sceneBounds(items: RenderItem[]): Bounds {
   let radius = 0
   const placed: number[] = []
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity]
   for (const it of items) {
-    // Atoms that follow each other in a chain are near each other, so
-    // spheres around short stretches hug the shape closely.
-    const CHUNK = 64
-    const chunks = new Map<string, number[]>()
+    // 实例很多时，每个实例只用一个球，否则小球数量会爆炸
+    // with very many instances, one sphere per instance keeps the list small
+    const instanced = it.draws.reduce((s, d) => s + d.count * d.opCount, 0)
+    const CHUNK = instanced > 20_000_000 ? Infinity : 64
+    const data = it.instances.data
     for (const d of it.draws) {
-      const key = d.start + ':' + d.count
-      let s = chunks.get(key)
-      if (!s) {
-        s = []
-        // Split any stretch whose sphere is loose: small molecules listed one
-        // after another in the file can be far apart.
-        const stack: [number, number][] = []
-        for (let a = d.start; a < d.start + d.count; a += CHUNK) stack.push([a, Math.min(a + CHUNK, d.start + d.count)])
-        while (stack.length) {
-          const [a, end] = stack.pop()!
-          let cx = 0, cy = 0, cz = 0
-          for (let i = a; i < end; i++) {
-            cx += it.posr[i * 4]!
-            cy += it.posr[i * 4 + 1]!
-            cz += it.posr[i * 4 + 2]!
-          }
-          cx /= end - a
-          cy /= end - a
-          cz /= end - a
-          let r = 0
-          for (let i = a; i < end; i++) {
-            r = Math.max(r, Math.hypot(it.posr[i * 4]! - cx, it.posr[i * 4 + 1]! - cy, it.posr[i * 4 + 2]! - cz) + it.posr[i * 4 + 3]!)
-          }
-          if (r > 8 && end - a > 4) {
-            const mid = (a + end) >> 1
-            stack.push([a, mid], [mid, end])
-          } else s.push(cx, cy, cz, r)
+      const s: number[] = []
+      // 链上相邻的原子在空间上也相邻，所以短片段的包围球贴得很紧；松的片段再对半分
+      // atoms that follow each other in a chain are near each other, so spheres around
+      // short stretches hug the shape; a loose stretch is split in half again
+      const stack: [number, number][] = []
+      if (CHUNK === Infinity) stack.push([d.start, d.start + d.count])
+      else for (let a = d.start; a < d.start + d.count; a += CHUNK) stack.push([a, Math.min(a + CHUNK, d.start + d.count)])
+      while (stack.length) {
+        const [a, end] = stack.pop()!
+        let cx = 0, cy = 0, cz = 0
+        for (let i = a; i < end; i++) {
+          cx += it.posr[i * 4]!
+          cy += it.posr[i * 4 + 1]!
+          cz += it.posr[i * 4 + 2]!
         }
-        chunks.set(key, s)
+        cx /= end - a
+        cy /= end - a
+        cz /= end - a
+        let r = 0
+        for (let i = a; i < end; i++) r = Math.max(r, Math.hypot(it.posr[i * 4]! - cx, it.posr[i * 4 + 1]! - cy, it.posr[i * 4 + 2]! - cz) + it.posr[i * 4 + 3]!)
+        if (CHUNK !== Infinity && r > 8 && end - a > 1) {
+          const mid = (a + end) >> 1
+          stack.push([a, mid], [mid, end])
+        } else s.push(cx, cy, cz, r)
       }
-      const m = d.matrix
-      for (let k = 0; k < s.length; k += 4) {
-        const x = m[0]! * s[k]! + m[4]! * s[k + 1]! + m[8]! * s[k + 2]! + m[12]!
-        const y = m[1]! * s[k]! + m[5]! * s[k + 1]! + m[9]! * s[k + 2]! + m[13]!
-        const z = m[2]! * s[k]! + m[6]! * s[k + 1]! + m[10]! * s[k + 2]! + m[14]!
-        radius = Math.max(radius, Math.hypot(x - center[0], y - center[1], z - center[2]) + s[k + 3]!)
-        placed.push(x, y, z, s[k + 3]!)
+      for (let o = d.opStart; o < d.opStart + d.opCount; o++) {
+        const m = o * 16
+        for (let k = 0; k < s.length; k += 4) {
+          const x = data[m]! * s[k]! + data[m + 1]! * s[k + 1]! + data[m + 2]! * s[k + 2]! + data[m + 3]!
+          const y = data[m + 4]! * s[k]! + data[m + 5]! * s[k + 1]! + data[m + 6]! * s[k + 2]! + data[m + 7]!
+          const z = data[m + 8]! * s[k]! + data[m + 9]! * s[k + 1]! + data[m + 10]! * s[k + 2]! + data[m + 11]!
+          const r = s[k + 3]!
+          placed.push(x, y, z, r)
+          if (x - r < lo[0]!) lo[0] = x - r
+          if (y - r < lo[1]!) lo[1] = y - r
+          if (z - r < lo[2]!) lo[2] = z - r
+          if (x + r > hi[0]!) hi[0] = x + r
+          if (y + r > hi[1]!) hi[1] = y + r
+          if (z + r > hi[2]!) hi[2] = z + r
+        }
       }
     }
   }
+  if (placed.length === 0) return { center: [0, 0, 0], radius: 1, spheres: new Float32Array(0), subunitSize: 30 }
+  const center: [number, number, number] = [(lo[0]! + hi[0]!) / 2, (lo[1]! + hi[1]!) / 2, (lo[2]! + hi[2]!) / 2]
+  for (let k = 0; k < placed.length; k += 4) radius = Math.max(radius, Math.hypot(placed[k]! - center[0], placed[k + 1]! - center[1], placed[k + 2]! - center[2]) + placed[k + 3]!)
   const subunitSize = Math.min(...items.map((it) => it.subunitSize))
   return { center, radius, spheres: new Float32Array(placed), subunitSize }
 }

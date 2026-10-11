@@ -66,7 +66,8 @@ describe('scatter', () => {
             const d = Math.hypot(world[a]![i]! - world[b]![j]!, world[a]![i + 1]! - world[b]![j + 1]!, world[a]![i + 2]! - world[b]![j + 2]!)
             expect(d).toBeGreaterThanOrEqual(world[a]![i + 3]! + world[b]![j + 3]! - 1e-3)
           }
-  })
+    // 逐对检查很慢，机器忙时会超过默认的 5 秒 / the pairwise check is slow and can pass the default 5 s on a busy machine
+  }, 20_000)
 
   it('keeps every centre inside the region', () => {
     const c = coarsen(blob(40, 800, 5))

@@ -1,4 +1,4 @@
-/** Local service for the limn web app: topic resolution and image review. */
+/** limn 网页应用的本地服务：主题解析和图像评审 / Local service for the limn web app: topic resolution and image review. */
 import { critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
@@ -20,6 +20,7 @@ Bun.serve({
     const url = new URL(req.url)
     try {
       if (url.pathname === '/api/health') return json({ ok: true, claude: await available() })
+      // 化学组分的理想坐标（用于膜脂质）。
       // Ideal coordinates of a chemical component (used for the membrane lipid).
       const lig = /^\/api\/ligand\/([A-Za-z0-9]{1,5})$/.exec(url.pathname)
       if (lig) {
@@ -36,6 +37,14 @@ Bun.serve({
       if (url.pathname === '/api/critique') {
         const r = body as unknown as Omit<CritiqueRequest, 'image'> & { image: string }
         return json(await critique({ ...r, image: png(r.image) }))
+      }
+      // 把一张渲染结果存到缓存目录，便于在浏览器之外检查（仅本机）
+      // Save a rendered picture under the cache directory so it can be inspected outside the browser (local only).
+      if (url.pathname === '/api/snapshot') {
+        const name = String(body.name ?? 'snapshot').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 60) || 'snapshot'
+        const path = `${process.env.LIMN_CACHE || '.cache'}/snapshots/${name}.png`
+        await Bun.write(path, png(body.image))
+        return json({ path })
       }
       if (url.pathname === '/api/pick-view') {
         return json(await pickView(png(body.image), Number(body.count), String(body.title ?? ''), String(body.contents ?? '')))
