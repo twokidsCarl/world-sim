@@ -132,6 +132,40 @@ def test_a_pr_that_does_not_merge_fails_the_job_and_keeps_the_workspace_for_resu
     assert len(fc.calls(tmp_path / "calls.jsonl")) == 2      # 接着做不再调用模型 / resuming does not call the model again
 
 
+def test_plans_run_in_parallel_but_execution_queues_behind_the_previous_job(cloud, wish, tmp_path):  # noqa: F811
+    other_wish = wishes.record(title="另一条", kind="other", stuck="", suggestion="")
+    first, second = jobs.start("wish", wish), jobs.start("wish", other_wish)
+    with pytest.raises(jobs.JobError, match=first.job_id):
+        jobs.start("wish", wish)                       # 同一条愿望不重复开 / the same wish is not started twice
+    cloud("worker")
+    w = worker.Worker()
+    assert sorted(w.tick()) == sorted([first.job_id, second.job_id])   # 两个方案都出得来 / both plans get written
+    w.running.clear()
+    cloud("hub")
+    assert jobs.approve(first.job_id).queued == "execute"
+    queued = jobs.approve(second.job_id)
+    assert queued.queued == "execute" and queued.waiting is None       # 第一个还只是排着，没在动手 / the first is only queued, not working yet
+    cloud("worker")
+    assert w.tick() == [first.job_id] and jobs.get(first.job_id).phase == "merged"
+    held = jobs.get(second.job_id)                                     # 第二个等第一个，原因写出来 / the second waits for the first, with the reason
+    assert held.queued == "execute" and "等《" in (held.waiting or "")
+    w.running.clear()
+    assert w.tick() == [second.job_id] and jobs.get(second.job_id).phase == "merged"
+
+
+def test_hold_names_the_job_in_the_same_directory_that_is_waiting_for_its_merge(cloud, wish):  # noqa: F811
+    first = jobs.start("wish", wish)
+    second = jobs.start("wish", wishes.record(title="另一条", kind="other", stuck="", suggestion=""))
+    jobs.save(jobs.get(first.job_id).model_copy(update={"phase": "pr", "queued": None}))
+    queued = jobs.get(second.job_id).model_copy(update={"phase": "running", "queued": "execute"})
+    jobs.save(queued)
+    w = worker.Worker()
+    reason = w._hold(queued, jobs.listing())
+    assert reason and "等《" in reason
+    plan = jobs.get(second.job_id).model_copy(update={"phase": "planning", "queued": "plan"})
+    assert w._hold(plan, jobs.listing()) is None       # 出方案不受影响 / planning is not held
+
+
 def test_cancelling_a_queued_job_means_it_never_starts(cloud, wish, tmp_path):  # noqa: F811
     job = jobs.start("wish", wish)
     assert jobs.cancel(job.job_id).queued is None

@@ -127,9 +127,14 @@ generated from it.
   - 失败的作业如果已经改了文件，可以点"接着做"直接从跑测试走到开 PR，不用重来；也可以一键还原。
     A failed job that already changed files can be continued from the tests to the PR
     without starting over, or reverted in one click.
-  - 同一个目录同时只跑一个作业。开工前该目录的代码必须没有未提交的改动，这样失败或取消后可以一键还原。
-    One job per directory at a time. The directory's code must have no uncommitted changes
-    before a job starts, so a failed or cancelled job can be reverted with one click.
+  - 云端：出方案只读，同一个目录可以并行；动手阶段同目录排队，前一个合并后后一个才开工（从最新的 main 切分支，带着前一个的改动），页面显示"排队中：等《…》做完"。同一项已有未结束的作业时不能再开。本地（就地改，或没有 worker）同一个目录仍然同时只跑一个作业；开工前该目录的代码必须没有未提交的改动，这样失败或取消后可以一键还原。
+    Cloud: planning is read-only, so one directory can plan in parallel; execution queues per
+    directory and the next job starts only after the previous one has merged (branching from
+    the latest main, so it carries the earlier changes), shown as "queued: waiting for …". An
+    item that already has an unfinished job cannot be started again. Locally (in place, or
+    without a worker) a directory still runs one job at a time, and its code must have no
+    uncommitted changes before a job starts, so a failed or cancelled job can be reverted with
+    one click.
   - 每个阶段在独立的进程里跑，状态写在 `runs/jobs/` 下，后端重启不影响它。
     Each phase runs in its own process with its state under `runs/jobs/`, unaffected by a
     backend restart.

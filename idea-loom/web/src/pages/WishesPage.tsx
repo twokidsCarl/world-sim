@@ -135,6 +135,7 @@ export function WishPage() {
   const [copied, setCopied] = useState(false)
   const [job, setJob] = useState<Job | null>(null)
   const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
   const lang = useLang()
   const t = useT()
   const loadJob = () => api.jobs().then((all) => setJob(all.find((j) => j.kind === 'wish' && j.ref === id) ?? null), () => undefined)
@@ -284,6 +285,19 @@ export function WishPage() {
         {job ? (
           <JobPanel jobId={job.job_id} onChange={() => (void reload(), void refresh(), void loadJob())} />
         ) : null}
+        {job && !['failed', 'cancelled', 'declined'].includes(job.phase) && ['open', 'accepted'].includes(wish.status) && (
+          <div className="row">
+            <button className="primary" disabled>
+              {t('开工：让 Claude 先出方案', 'Start: have Claude write a plan first')}
+            </button>
+            <span className="muted small">
+              {t('这条愿望已经有一个作业在进行，见上面的作业。', 'This wish already has a job under way; see the job above.')}{' '}
+              <Link to={`/work/jobs/${job.job_id}`}>{t('打开作业', 'Open the job')}</Link>
+              {job.queued && job.waiting ? ` · ${t(`排队中：${job.waiting}`, `Queued: ${job.waiting}`)}` : ''}
+            </span>
+          </div>
+        )}
+        {startError && <div className="notice bad" role="alert">{startError}</div>}
         {canStart && (
           <div className="row">
             <button
@@ -291,9 +305,10 @@ export function WishPage() {
               disabled={starting}
               onClick={() => {
                 setStarting(true)
+                setStartError(null)
                 void api.startJob('wish', wish.wish_id).then(
                   () => (setStarting(false), void loadJob(), void reload()),
-                  (e: Error) => (setStarting(false), setError(e.message)),
+                  (e: Error) => (setStarting(false), setStartError(e.message), void loadJob()),
                 )
               }}
             >

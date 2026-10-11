@@ -70,11 +70,17 @@ def test_plan_first_and_nothing_is_written_before_approval(repo, wish):
     assert [e["type"] for e in jobs.events(job.job_id)] == ["note", "step", "step", "plan"]
 
 
-def test_only_one_job_per_directory(repo, wish):
+def test_in_place_mode_still_runs_one_job_per_directory(repo, wish):
     jobs.start("wish", wish)
     other = wishes.record(title="另一条", kind="other", stuck="", suggestion="")
     with pytest.raises(jobs.JobError, match="同时只跑一个"):
         jobs.start("wish", other)
+
+
+def test_the_same_wish_cannot_be_started_twice(repo, wish):
+    first = jobs.start("wish", wish)
+    with pytest.raises(jobs.JobError, match=first.job_id):
+        jobs.start("wish", wish)
 
 
 def test_revise_carries_the_feedback(repo, wish):
