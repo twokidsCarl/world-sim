@@ -69,7 +69,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 
 1. **模型不出像素，也不出坐标。** 画面完全由 PDB 的原子坐标确定性渲染。
 2. **模型不能编造结构编号。** 解析分三步：模型说要找什么 → 代码去 RCSB、UniProt、PDBe 查 → 模型只能在查回来的候选里选（选项是候选编号的枚举，不在其中的一律丢弃）。模型凭记忆提到的编号只当作检索线索，要经 RCSB 确认存在并取回真实的描述后才会成为候选。
-3. **看图精修只能改呈现。** 评审能做的操作是一份白名单：转视角、缩放、改颜色角色、调线条和阴影。换结构、动坐标不在其中，见 `src/refine/edits.ts`。
+3. **看图精修只能改呈现，而且改了要比出来确实更好才留下。** 评审给同一张图打的分自己就会跳半分到一分（同一张血红蛋白图评四次：6.5、7、7、7），所以不靠分数判断。每轮最多改三项，改完把改之前和改之后的两张图交给评审直接比较（哪张叫 A 是随机的），更好才保留，否则立刻退回并记下“这个改法没用”；连续两轮没有改进就停。 评审能做的操作是一份白名单：转视角、缩放、改颜色角色、调线条和阴影。换结构、动坐标不在其中，见 `src/refine/edits.ts`。
 4. **说明出处和局限。** 界面列出每个面板的 PDB 编号、实验方法、分辨率、年份和选它的理由，以及这个结构的论文（标题、作者、期刊、年份、DOI 链接）；AlphaFold 预测模型会明确标注，低置信度区域不画。论文大多不是开放获取的，所以只显示书目信息并链接到原文；只有 Europe PMC 标明开放获取并带知识共享许可的论文才显示摘要。不转载论文的图和正文。
 
 多个面板的机理图里，各面板比例相同，并按共同的蛋白链叠合到同一朝向。
@@ -235,7 +235,7 @@ The interface comes in Chinese and English: the button at the top of the sidebar
 
 1. **The model produces neither pixels nor coordinates.** The picture is rendered deterministically from atomic coordinates.
 2. **The model cannot invent a structure id.** Resolution has three steps: the model says what to look for; code looks it up in RCSB, UniProt and PDBe; the model may then choose only among what came back (the choice is an enumeration of the candidate ids, and anything else is discarded). Ids the model recalls from memory are search hints only; each must be confirmed by RCSB, and its real description fetched, before it becomes a candidate.
-3. **The review loop can change presentation only.** What a reviewer may do is a whitelist: turn the view, zoom, cut, change colour roles, adjust lines and shadows. Swapping structures or moving atoms is not on it; see `src/refine/edits.ts`.
+3. **The review loop can change presentation only, and a change stays only if a direct comparison shows it is better.** The score a reviewer gives one picture wanders by half a point to a point by itself (one haemoglobin picture scored four times: 6.5, 7, 7, 7), so scores are not what decides. Each round makes at most three changes, then the pictures before and after are given to the reviewer to compare directly (which is called A is random); the change is kept only if it is better and is otherwise undone at once, with a note that it did not help, and two rounds in a row without improvement end the loop. What a reviewer may do is a whitelist: turn the view, zoom, cut, change colour roles, adjust lines and shadows. Swapping structures or moving atoms is not on it; see `src/refine/edits.ts`.
 4. **Provenance and limits are stated.** The interface lists each panel's PDB id, method, resolution, year and the reason it was chosen, and the structure's paper (title, authors, journal, year, a DOI link). AlphaFold predictions are labelled as such, and their low-confidence regions are not drawn. Most papers are not open access, so only bibliographic facts are shown, with a link to the original; an abstract appears only when Europe PMC marks the paper open access under a Creative Commons licence. No figure or body text of a paper is reproduced.
 
 In a multi-panel mechanism figure every panel is at the same scale, and panels are superposed on their shared protein chain so that they face the same way.

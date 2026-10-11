@@ -481,6 +481,7 @@ export function App() {
                       <img src={r.image} alt="" />
                       <div>
                         <span className="score">{r.overall === null ? t('refine.viewRound') : t('refine.score', { score: r.overall.toFixed(1) })}</span>
+                        {r.verdict && <span className={'verdict' + (r.kept ? ' kept' : '')} title={r.reason}> · {t(r.kept ? 'refine.kept' : r.verdict === 'worse' ? 'refine.undoneWorse' : 'refine.undoneSame')}</span>}
                         <p>{r.comment}</p>
                       </div>
                     </button>

@@ -1,5 +1,5 @@
 /** limn 网页应用的本地服务：主题解析和图像评审 / Local service for the limn web app: topic resolution and image review. */
-import { critique, pickView, type CritiqueRequest } from './critique'
+import { compare, critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
 import { annotate } from './sources/annotations'
@@ -99,6 +99,10 @@ Bun.serve({
         const path = `${stateDir()}/snapshots/${name}.png`
         await Bun.write(path, png(body.image))
         return json({ path })
+      }
+      // 两张图哪张更好 / which of two pictures is better
+      if (url.pathname === '/api/compare') {
+        return json(await compare(png(body.a), png(body.b), String(body.title ?? ''), String(body.contents ?? ''), body.mode === 'landscape' ? 'landscape' : 'molecule', String(body.request ?? '')))
       }
       if (url.pathname === '/api/pick-view') {
         return json(await pickView(png(body.image), Number(body.count), String(body.title ?? ''), String(body.contents ?? '')))

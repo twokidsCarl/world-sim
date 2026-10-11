@@ -124,3 +124,6 @@ export async function neurons(q: { species: string; region: string; cellType: st
     return { total: 0, hits: [] }
   }
 }
+
+/** 两张图哪张更好 / which of two pictures is better */
+export const compare = (body: { a: string; b: string; title: string; contents: string; mode: 'molecule' | 'landscape'; request?: string }) => post<{ better: 'A' | 'B' | 'same'; reason: string }>('/api/compare', body)

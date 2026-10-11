@@ -96,3 +96,6 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .catalog .neuron-search form button { width: 100%; }
 /* 侧栏是弹性列：可滚动的列表不许被压扁到看不见 / the sidebar is a flex column: a scrolling list must not be squeezed out of sight */
 .side > * { flex-shrink: 0; }
+
+.verdict { color: #a3261c; }
+.verdict.kept { color: #2f6b3a; }

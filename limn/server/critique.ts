@@ -44,7 +44,7 @@ const SCHEMA = {
     },
     overall: { ...SCORE, description: 'how close this is to a picture Goodsell would publish; 8 or more means ready' },
     comment: { type: 'string', description: '2-4 sentences, in Chinese: what works, what is the main problem, what you are changing and why' },
-    edits: { type: 'array', maxItems: 6, items: EDIT_SCHEMA, description: 'the changes to make now; empty if the picture is ready' },
+    edits: { type: 'array', maxItems: 3, items: EDIT_SCHEMA, description: 'the one to three changes to make now; empty if you see no clear problem worth a change' },
     done: { type: 'boolean', description: 'true when further edits would not improve it' },
   },
 }
@@ -71,11 +71,11 @@ Scoring, 1-10 each: composition, color, line, depth, readability; and overall.
 Be a demanding but practical reviewer. Do not hand out 9s on the first look, and do not keep changing a picture that is already good.
 
 Edits: you may only change presentation, using the listed operations. You cannot change which structures are shown.
-- Make few, purposeful edits per round (at most 6). Prefer the one change that fixes the biggest problem.
+- Make at most three edits per round, and prefer the single change that fixes the biggest problem. After your edits are applied, the picture before and the picture after will be compared side by side; a change that is not a visible improvement is undone. So do not change things for the sake of changing them: if you see no clear problem, return no edits and set done to true. Small nudges to settings that already look right are almost always undone.
 - Rotation is relative to the current view. Use it deliberately: say in the comment what you expect to come into view.
 - Use the measured numbers as evidence: "fill" is the share of the frame's height and width the subject spans (aim for 0.80-0.92 on the tighter axis), "ink" is the share of pixels that are outline (molecule pictures by Goodsell are about 0.03; above 0.08 is too heavy).
 - If the user gave a request, carry it out first; it outranks your own preferences.
-- If earlier rounds are listed, do not repeat a change that lowered the score, and do not undo one that raised it.`
+- If earlier rounds are listed, do not propose again a change that was tried and undone, and do not reverse one that was kept.`
 
 export function critique(req: CritiqueRequest, ask: Ask = realAsk): Promise<Critique> {
   const prompt = [
@@ -115,4 +115,33 @@ Prefer views where differently coloured parts are all visible and overlap little
 export function pickView(image: Uint8Array, count: number, title: string, contents: string, ask: Ask = realAsk): Promise<{ index: number; reason: string }> {
   const prompt = `Subject: ${title}\n\n# What is shown\n${contents}\n\nThe sheet has views numbered 1 to ${count}. Read views.png and choose one.`
   return ask({ system: PICK_SYSTEM, prompt, schema: PICK_SCHEMA, images: [{ name: 'views.png', data: image }], cache: false })
+}
+
+export interface Comparison {
+  /** A 或 B 哪张更好；差不多时为 same / which of A and B is better; "same" when there is little to choose */
+  better: 'A' | 'B' | 'same'
+  reason: string
+}
+
+const COMPARE_SCHEMA = {
+  type: 'object',
+  required: ['better', 'reason'],
+  properties: {
+    better: { type: 'string', enum: ['A', 'B', 'same'], description: 'which picture is the better illustration; "same" if you cannot name a clear, visible advantage' },
+    reason: { type: 'string', description: 'one sentence, in Chinese: the visible difference that decided it' },
+  },
+}
+
+const COMPARE_SYSTEM = `You are the art director for scientific illustrations in the style of David S. Goodsell (flat colour, black outlines, colour by function, soft crevice shadow, the subject filling the frame and turned to show what matters).
+Read the two image files a.png and b.png with the Read tool. They are two renderings of the same subject that differ in presentation only.
+Say which one is the better illustration. Judge only what you can see: clearer separation of the functional parts, cleaner and more even line work, better depth, better framing, the important part more visible.
+If you cannot point to a clear, visible advantage of one over the other, answer "same". Do not prefer a picture merely for being different.`
+
+/**
+ * 两张图直接比较。调用方随机决定哪张叫 A，避免评审偏向固定的位置。
+ * Compare two pictures directly. The caller decides at random which is called A, so that the reviewer's preference for a position cannot bias the result.
+ */
+export function compare(a: Uint8Array, b: Uint8Array, title: string, contents: string, mode: 'molecule' | 'landscape', request = '', ask: Ask = realAsk): Promise<Comparison> {
+  const prompt = `Subject: ${title}\nMode: ${mode}\n\n# What is shown\n${contents}\n\n${request ? `# Request from the user\nThe user asked for this: ${request}\nThe picture that carries out the request better is the better one, provided it is not clearly worse as an illustration.\n\n` : ''}Read a.png and b.png, then say which is better.`
+  return ask<Comparison>({ system: COMPARE_SYSTEM, prompt, schema: COMPARE_SCHEMA, images: [{ name: 'a.png', data: a }, { name: 'b.png', data: b }], cache: false })
 }

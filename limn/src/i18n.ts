@@ -135,6 +135,10 @@ export const zh = {
   'refine.viewChosen': '选定观察方向：{reason}',
   'refine.finalScore': '正在给最后一版打分…',
   'refine.round': '第 {n} 轮：正在看图评审…',
+  'refine.judging': '正在比较改之前和改之后…',
+  'refine.kept': '比改之前好，保留',
+  'refine.undoneWorse': '不如改之前，已退回',
+  'refine.undoneSame': '看不出更好，已退回',
 
   // 线条、导出、提示 / lines, export, hints
   'look.cut': '剖开',
@@ -387,6 +391,10 @@ export const en: Record<Key, string> = {
   'refine.viewChosen': 'View chosen: {reason}',
   'refine.finalScore': 'Scoring the final version…',
   'refine.round': 'Round {n}: reviewing the picture…',
+  'refine.judging': 'Comparing before and after…',
+  'refine.kept': 'Better than before: kept',
+  'refine.undoneWorse': 'Worse than before: undone',
+  'refine.undoneSame': 'No visible gain: undone',
 
   // 线条、导出、提示 / lines, export, hints
   'look.cut': 'Cut',

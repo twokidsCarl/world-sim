@@ -5,6 +5,7 @@
  * server) is shown the actual render and answers with presentation edits.
  * The scene's structures are never touched here.
  */
+import { runRounds } from './rounds'
 import * as api from '../api'
 import type { Mat3 } from '../render/camera'
 import type { Renderer } from '../render/Renderer'
@@ -150,39 +151,41 @@ export async function refine(opts: RefineOptions): Promise<void> {
     }
 
     const entityIds = () => store.getState().panels.map((p) => p.mol.entities.map((e) => e.id))
-    const history: string[] = []
-    let drops = 0
-    let prev = -Infinity
-    for (let k = 0; k <= opts.maxRounds; k++) {
-      const scoringOnly = k === opts.maxRounds
-      say(scoringOnly ? t('refine.finalScore') : t('refine.round', { n: k + 1 }))
-      const look = store.getState().getLook()
-      const shot = await capture(r, look)
-      const image = shot.image
-      const reply = await api.critique({
-        image,
-        title,
-        contents: describeContents(),
-        settings: describeSettings(look),
-        metrics: describeMetrics(measure(shot.px, shot.w, shot.h, look.style.background)),
-        history: history.join('\n'),
-        feedback: k === 0 ? opts.feedback : '',
-        mode: store.getState().spec?.landscape ? 'landscape' : 'molecule',
-      })
-      const edits: Edit[] = scoringOnly ? [] : sanitizeEdits(reply.edits, entityIds())
-      push({ image, overall: reply.overall, scores: reply.scores, comment: reply.comment, edits, look })
-      history.push(`round ${k + 1}: overall ${reply.overall}. ${edits.length ? 'then changed: ' + JSON.stringify(edits) : 'no changes made'}`)
-      drops = reply.overall < prev ? drops + 1 : 0
-      prev = reply.overall
-      if (scoringOnly || reply.done || edits.length === 0 || drops >= 2) break
-      store.getState().applyEdits(edits)
-    }
-
-    // 让画面停在见过的最好版本上，不一定是最后一个。
-    // Leave the picture on the best version seen, not necessarily the last.
-    const scored = rounds.filter((x) => x.overall !== null)
-    const best = scored.reduce<Round | null>((a, b) => (!a || b.overall! > a.overall! ? b : a), null)
-    if (best) store.getState().setLook(structuredClone(best.look))
+    const mode = store.getState().spec?.landscape ? ('landscape' as const) : ('molecule' as const)
+    type Shot = Awaited<ReturnType<typeof capture>>
+    await runRounds<Edit, Look, Shot>({
+      maxRounds: opts.maxRounds,
+      maxEdits: 3,
+      getLook: () => store.getState().getLook(),
+      setLook: (look) => store.getState().setLook(structuredClone(look)),
+      capture: () => capture(r, store.getState().getLook()),
+      async propose(shot, history, k) {
+        say(t('refine.round', { n: k + 1 }))
+        const look = store.getState().getLook()
+        const reply = await api.critique({
+          image: shot.image,
+          title,
+          contents: describeContents(),
+          settings: describeSettings(look),
+          metrics: describeMetrics(measure(shot.px, shot.w, shot.h, look.style.background)),
+          history: history.join('\n'),
+          feedback: k === 0 ? opts.feedback : '',
+          mode,
+        })
+        return { comment: reply.comment, overall: reply.overall, edits: sanitizeEdits(reply.edits, entityIds()), done: reply.done }
+      },
+      apply: (edits) => store.getState().applyEdits(edits),
+      async compare(before, after) {
+        say(t('refine.judging'))
+        // 随机决定哪张叫 A / which one is called A is decided at random
+        const swap = Math.random() < 0.5
+        const reply = await api.compare({ a: swap ? after.image : before.image, b: swap ? before.image : after.image, title, contents: describeContents(), mode, request: opts.feedback })
+        const afterIs = swap ? 'A' : 'B'
+        return { verdict: reply.better === 'same' ? 'same' : reply.better === afterIs ? 'better' : 'worse', reason: reply.reason }
+      },
+      describe: (edits) => JSON.stringify(edits),
+      onRound: (log) => push({ image: log.shot.image, overall: log.proposal.overall, scores: null, comment: log.proposal.comment, edits: log.proposal.edits, look: log.look, ...(log.verdict ? { verdict: log.verdict, kept: log.kept, reason: log.reason } : {}) }),
+    })
   } catch (e) {
     store.setState({ error: errorNote(e) })
   } finally {
