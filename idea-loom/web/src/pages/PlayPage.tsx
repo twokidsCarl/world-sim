@@ -19,6 +19,7 @@ const WHY: Record<Reason, [string, string]> = {
   skipped: ['上次很快就划走了', 'Left quickly last time'],
   seen: ['看过了', 'Seen before'],
   'not-ready': ['还没准备好', 'Not ready yet'],
+  explore: ['随机挑的，换换口味', 'Picked at random, for variety'],
 }
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -39,6 +40,9 @@ export function PlayPage({ state }: { state: State }) {
   const [liked, setLiked] = useState<Record<string, boolean>>({})
   const [reload, setReload] = useState(0)
   const [showWhy, setShowWhy] = useState(false)
+  // 每次进这一页用一个新的种子：探索位每次不同，但在这一页里顺序不变。
+  // A new seed for each visit to the page: exploration slots differ between visits, and the order stays put during one.
+  const [seed] = useState(() => Math.floor(Math.random() * 0x100000000))
   const shown = useRef<{ key: string; idea: string; since: number; hidden: number; hiddenAt: number | null } | null>(null)
 
   const load = useCallback(
@@ -55,7 +59,7 @@ export function PlayPage({ state }: { state: State }) {
   useEffect(() => {
     void load().then((v) => {
       if (!v) return
-      const ranked = rank(v.cards, v.history)
+      const ranked = rank(v.cards, v.history, seed)
       const wanted = params.get('card')
       const at = wanted ? ranked.findIndex((r) => r.card.key === wanted) : -1
       if (at > 0) ranked.unshift(...ranked.splice(at, 1))
