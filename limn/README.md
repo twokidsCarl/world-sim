@@ -64,6 +64,8 @@ bun run typecheck
 
 world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767/`），卡片列表在 `sim.json`。每张卡是一个直达链接：`/?model=<目录 id>` 或 `/?id=<PDB 编号>`。加上 `?embed=1` 时只留画面，上面一条标题栏（标题、出处、“剖开”滑杆），在 320–400 px 宽的卡片里实测过不压画面；不带其他参数时画新冠病毒颗粒。
 
+**预热**：结构文件不在仓库里（第三方数据，有的几百 MB），只能在用的机器上取。托管时后端一启动，就在后台把所有卡片要用的文件依次取好，并把几个超大模型转换好（`server/warm.ts`，从小的做起，流感那 640 MB 排在最后），所以卡片打开时一般不用再等下载；`/api/warm` 能看到做到第几项。全部做完之前打开某张还没轮到的卡，仍然要现等。开发时默认不预热（后端会随改动重启，大文件下到一半要重来），用 `LIMN_WARM=1` 打开、`LIMN_WARM=0` 关闭。HeLa 细胞的分割数据是浏览器直接取的，不在预热之内。
+
 界面有中文和英文两种语言：侧栏顶上的按钮切换，选择记在浏览器里；网址里加 `?lang=zh` 或 `?lang=en` 可以指定（嵌入模式也认）。界面文字都在 `src/i18n.ts` 的两张表里；模型写的标题、说明和注释保持主题所用的语言。
 
 ## 它怎么保证画的是真的
@@ -235,6 +237,8 @@ The local service caches every structure file it has fetched under `structures/`
 ### Inside idea-loom
 
 idea-loom, the single entry point of world-sim, hosts limn at `http://limn.localhost:8767/`; the cards are listed in `sim.json`. Each card is a deep link: `/?model=<catalogue id>` or `/?id=<PDB id>`. With `?embed=1` only the stage remains under a title strip (title, provenance, cut slider), checked in cards 320-400 px wide so that nothing sits on the picture; with no other parameter it draws the SARS-CoV-2 virion.
+
+**Warm-up**: structure files are not in the repository (third-party data, some of it hundreds of MB) and can only be fetched on the machine that uses them. When hosted, the backend starts fetching everything the cards need as soon as it comes up, one file after another in the background, and converts the few very large models (`server/warm.ts`, smallest first, with the 640 MB of the influenza virion last), so a card generally opens without waiting for a download; `/api/warm` shows how far it has got. A card whose turn has not yet come still has to wait if opened before the warm-up is through. While developing there is no warm-up by default (the backend restarts with every change, and a large download would start over); `LIMN_WARM=1` turns it on and `LIMN_WARM=0` off. The HeLa cell's segmentation is fetched directly by the browser and is not part of the warm-up.
 
 The interface comes in Chinese and English: the button at the top of the sidebar switches, and the choice is remembered in the browser; `?lang=zh` or `?lang=en` in the address sets it (embed mode follows it too). All interface text is in the two tables of `src/i18n.ts`; titles, captions and notes written by the model stay in the language of the topic.
 
