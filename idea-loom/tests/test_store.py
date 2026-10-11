@@ -115,3 +115,14 @@ def test_sync_from_the_hub_is_refused_in_database_mode(db):
 
     st = sync.status()
     assert st.can_sync is False and "worker 每 15 分钟自动导出" in (st.reason or "")
+
+
+def test_many_writers_of_one_json_file_do_not_trip_over_each_other(tmp_path):
+    """两个请求同时写同一个状态文件，曾经会报"临时文件不见了"。 / Two requests writing one state file at once used to fail with "temporary file is gone"."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    target = tmp_path / "play" / "soma" / "state.json"
+    with ThreadPoolExecutor(16) as pool:
+        list(pool.map(lambda n: store.write_json(target, {"n": n, "pad": "x" * 2000}), range(300)))
+    assert store.read_json(target, None)["n"] in range(300)          # 是完整的一份 / one complete copy
+    assert [p.name for p in target.parent.iterdir()] == ["state.json"]  # 没有留下临时文件 / no temporary file left behind
