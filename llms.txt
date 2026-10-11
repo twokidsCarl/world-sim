@@ -23,25 +23,29 @@ Everything below is read-only or a bounded, deterministic computation. No key is
   - run [citation](/api/v1/capabilities/limn/citation): Summary and citation of a structure / 结构的概要和出处
   - run [alphafold](/api/v1/capabilities/limn/alphafold): Predicted structure / 预测结构
   - run [complexes](/api/v1/capabilities/limn/complexes): Predicted complexes / 预测的复合物
-- **mindloop** — I know that you know that I know / 我知道你知道我知道: Two people guessing each other: I know that you know that I know. 25 sourced cases (the Empty Fort, Holmes and Moriarty, Poe's odd-or-even…), each of which can be computed for "how many levels each side reasons". Find a case id in `cases`, then run `compute`.
+- **mindloop** — I know that you know that I know / 我知道你知道我知道: Two people guessing each other: I know that you know that I know. 25 sourced cases (the Empty Fort, Holmes and Moriarty, Poe's odd-or-even…). 16 of them carry a game (the record has a `game` field) and can be computed for "how many levels each side reasons"; the other 9 are readers with a level-by-level prose account only. Find a case id in `cases`, then run `compute`.
   - data [cases](/api/v1/datasets/mindloop/cases/schema): Cases / 案例 (MIT (summaries written for this repository; quoted works keep their own copyright))
   - run [compute](/api/v1/capabilities/mindloop/compute): Compute a case / 算一个案例
-- **polis** — A parallel society: how one remark brings down a bank / 平行社会：一句闲话怎么挤垮一家钱庄: A parallel society: how rumours, bank runs and conformity spread through a small town. Offered here is the corpus it rests on — theories, historical cases and quantitative facts, each with sources and verification flags — plus the model's calibration targets and results. Starting a new simulation is command-line only for now.
+- **polis** — A parallel society: how one remark brings down a bank / 平行社会：一句闲话怎么挤垮一家钱庄: A parallel society: how a rumour spreads through a small town and turns into a bank run. Offered here are the corpus it rests on (theories, cases and stylised facts, each with sources and verification flags), the calibration targets, the age structures used for its populations, and one computation: run a simulation for a scenario and seed and get a summary. Start with facts and cases; call simulate to run one. Note that the model has not passed its out-of-sample tests, so a result is not a forecast for any real bank.
   - data [theory](/api/v1/datasets/polis/theory/schema): Theories / 理论 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
-  - data [cases](/api/v1/datasets/polis/cases/schema): Historical cases / 历史案例 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
-  - data [facts](/api/v1/datasets/polis/facts/schema): Quantitative facts / 量化的事实 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
+  - data [cases](/api/v1/datasets/polis/cases/schema): Cases / 案例 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
+  - data [facts](/api/v1/datasets/polis/facts/schema): Stylised facts / 典型事实 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
   - data [calibration-targets](/api/v1/datasets/polis/calibration-targets/schema): Calibration targets / 校准目标 (MIT)
-- **soma** — 3D human anatomy / 三维人体解剖: 3D human anatomy: 3,332 anatomical parts (with FMA ids), 8,760 relations between them (origins, insertions, innervation, blood supply and more), Chinese names, joint ranges of motion and dermatome maps. Nothing to simulate; this is data. To answer "which nerve innervates this muscle": find its fma id in `parts` by English name, then query `relations` with key=<fma>&where=kind=innervatedBy.
-  - data [parts](/api/v1/datasets/soma/parts/schema): Anatomical parts / 解剖部件 (CC BY-SA 4.0)
-  - data [relations](/api/v1/datasets/soma/relations/schema): Anatomical relations / 解剖关系 (CC BY-SA 4.0 (each record carries its own source licence, mostly CC0 1.0 from Wikidata))
+  - data [age-structure](/api/v1/datasets/polis/age-structure/schema): Age structure / 年龄结构 (CC BY 3.0 IGO)
+  - run [simulate](/api/v1/capabilities/polis/simulate): Run one simulation / 跑一次模拟
+- **soma** — 3D human anatomy / 三维人体解剖: 3D human anatomy (a teaching model, not a clinical reference): 3,332 male and 3,369 female anatomical parts (each with a concept id, mostly an FMA id), 8,760 relations (origins, insertions, innervation, blood supply and more), Chinese names, joint ranges of motion, dermatomes and cutaneous nerve territories. Nothing to simulate; this is data. No name or relation has been reviewed by a person. To answer "which nerve innervates this muscle": find the `fma` field of the part in `parts` by English name, then query `relations` with key=<fma>&where=kind=innervatedBy.
+  - data [parts](/api/v1/datasets/soma/parts/schema): Anatomical parts / 解剖部件 (CC BY-SA 4.0 for the dataset as a whole; upstream sources are CC BY 4.0, CC BY-SA 2.1 JP, CC BY-SA 4.0 and Apache-2.0, listed under `sources` in the file)
+  - data [parts-female](/api/v1/datasets/soma/parts-female/schema): Anatomical parts (female) / 解剖部件（女性） (CC BY-SA 4.0 for the dataset as a whole; upstream sources (CC BY 4.0, CC BY-SA, Apache-2.0, NLM terms with attribution) are listed under `sources` in the file)
+  - data [relations](/api/v1/datasets/soma/relations/schema): Anatomical relations / 解剖关系 (CC BY-SA 4.0 (each record carries its own source licence: 8,151 are CC0 1.0 from Wikidata, 609 are CC BY-SA 4.0 from Wikipedia and Z-Anatomy))
   - data [names](/api/v1/datasets/soma/names/schema): Chinese names / 中文名称 (CC BY-SA 4.0)
   - data [range-of-motion](/api/v1/datasets/soma/range-of-motion/schema): Joint ranges of motion / 关节活动度 (CC BY-SA 4.0)
   - data [dermatomes](/api/v1/datasets/soma/dermatomes/schema): Dermatomes / 皮节 (CC BY-SA 4.0)
+  - data [cutaneous-nerves](/api/v1/datasets/soma/cutaneous-nerves/schema): Cutaneous nerve territories / 皮神经分布区 (CC BY-SA 4.0)
 - **strata** — From microscopic rules to emergence / 从微观规则到涌现: From microscopic rules to emergence: molecular dynamics, Ising, Potts, gravity, meshes and more, run on the GPU in a browser. It has no headless entry point yet, so there is no callable computation or dataset here for now; its card URLs in the catalogue can be given to a person to open.
 
 ## Idea pool / 想法池
 
-- [Search](/api/v1/ideas?q=rumour): `/api/v1/ideas?q=&level=&thread=&kernel=&project=&full=` — titles by default, bodies with `full=true`; 105 live ideas, each a short prompt that can be handed to an agent to build a simulation. / 搜索想法池。
+- [Search](/api/v1/ideas?q=rumour): `/api/v1/ideas?q=&level=&thread=&kernel=&project=&full=` — titles by default, bodies with `full=true`; 107 live ideas, each a short prompt that can be handed to an agent to build a simulation. / 搜索想法池。
 - One idea with history and lineage: `/api/v1/ideas/{id}` / 一条 idea 的全文、历史和血缘。
 
 ## Conventions / 约定
