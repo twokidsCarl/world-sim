@@ -4,14 +4,18 @@
                         ↘ 提意见重写 / 不做          ↘ 失败（可以还原）
 
 出方案时 Claude 只有读文件的工具。批准之后才另起一次，给它写 `<目录>/` 的权限和跑测试的
-命令，不给 git 和 gh。它结束后由这里自己跑测试、检查有没有改到目录外面、调用 tools/pr.sh。
+命令，不给 git 和 gh。它结束后由这里自己跑测试、调用 tools/pr.sh（只提交这个目录）。
+工作目录是多个会话共用的，别的会话随时在改别的目录，所以这里不去比较"目录外有没有变化"：
+范围靠写文件的权限规则和"PR 只含这个目录"来保证。
 每个阶段在一个独立的进程里跑，状态都写在 runs/jobs/<编号>/ 下，所以后端重启不影响它。
 
 Jobs: trigger Claude Code from the UI to do a wish or a development task. While
 planning, Claude only has read tools. Only after approval does a second run get write
 access to `<directory>/` and the test commands, and never git or gh. When it finishes,
-this module runs the tests itself, checks that nothing outside the directory changed,
-and calls tools/pr.sh. Each phase runs in its own process with all state on disk under
+this module runs the tests itself and calls tools/pr.sh, which submits that directory only.
+The working tree is shared by several sessions that change other directories at any time,
+so this module does not compare "did anything outside change": the scope is enforced by the
+file-write permission rule and by the PR containing only this directory. Each phase runs in its own process with all state on disk under
 runs/jobs/<id>/, so a backend restart does not affect it.
 """
 
@@ -240,13 +244,6 @@ def dirty(directory: str) -> list[str]:
     return [f for f in files if not f.startswith(f"{directory}/data/")]
 
 
-def _outside(directory: str) -> set[str]:
-    repo = store.repo_root()
-    out = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=all"], capture_output=True, text=True).stdout
-    files = {line[3:].split(" -> ")[-1].strip('"') for line in out.splitlines() if line.strip()}
-    return {f for f in files if not f.startswith(directory + "/")}
-
-
 def approve(job_id: str) -> Job:
     job = get(job_id)
     if job.phase != "plan_ready":
@@ -256,7 +253,6 @@ def approve(job_id: str) -> Job:
         raise JobError(f"`{job.directory}/` 里有还没提交的改动（{'、'.join(changed[:4])}{' 等' if len(changed) > 4 else ''}）。先把它们提交或还原，这样作业失败时才能干净地还原。")
     job.phase = "running"
     save(job)
-    store.write_json(_dir(job_id) / "outside.json", sorted(_outside(job.directory)))
     if job.kind == "wish":
         if wishes.get(job.ref).status == "open":
             wishes.set_status(job.ref, "accepted", note="方案已批准，开始动手")
@@ -476,12 +472,6 @@ def _commands_text(directory: str) -> str:
     )
 
 
-def _check_scope(job: Job) -> Optional[str]:
-    before = set(store.read_json(_dir(job.job_id) / "outside.json", []))
-    strayed = sorted(_outside(job.directory) - before)
-    return f"它改到了 `{job.directory}/` 外面的文件：{'、'.join(strayed[:6])}。没有开 PR。这些文件需要你自己看一下。" if strayed else None
-
-
 def _run_tests(job: Job) -> Optional[str]:
     """由程序自己跑测试。返回失败的那一段输出，全过返回 None。 / Run the tests; return the failing output, or None."""
     repo = store.repo_root()
@@ -499,20 +489,17 @@ def _run_tests(job: Job) -> Optional[str]:
 
 
 def _finish(job_id: str) -> None:
-    """Claude 结束之后的事：查范围 → 跑测试 →（没过就让它修，最多两轮）→ 开 PR → 标回。
+    """Claude 结束之后的事：跑测试 →（没过就让它修，最多两轮）→ 开 PR → 标回。
 
     它自己有没有跑测试、说没说"做完了"，都不决定成败：以程序重跑的测试为准。
 
-    What happens after Claude ends: check the scope, run the tests (letting it repair up to
+    What happens after Claude ends: run the tests (letting it repair up to
     twice on failure), open the PR and report back. Whether the agent ran the tests or said
     "done" does not decide the outcome; the tests re-run here do.
     """
     job = get(job_id)
     repo = store.repo_root()
     job.changed = dirty(job.directory)
-    stray = _check_scope(job)
-    if stray:
-        return _fail(job, stray)
     if not job.changed:
         return _fail(job, "Claude 结束了，但没有改任何文件。" + str(job.summary.get("not_done") or ""))
 
@@ -538,9 +525,6 @@ def _finish(job_id: str) -> None:
         if job.phase == "cancelled":
             return
         job.changed = dirty(job.directory)
-        stray = _check_scope(job)
-        if stray:
-            return _fail(job, stray)
 
     job.phase = "pr"
     save(job)
