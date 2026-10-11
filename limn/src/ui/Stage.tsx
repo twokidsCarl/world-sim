@@ -10,6 +10,8 @@ import { TONE_LANDSCAPE, TONE_MOLECULE } from '../style/palettes'
 
 /** 双层膜是一片淡黄绿色，如同 Goodsell 画的膜 / The bilayer is one pale yellow-green wash, as in Goodsell's membranes. */
 const LIPID_COLORING: Coloring = { roles: ['membrane'], hueShift: [0], nudge: [0], override: [MEMBRANE_LCH] }
+/** 生成的 DNA 用核酸的颜色 / generated DNA takes the nucleic-acid colour */
+const DNA_COLORING: Coloring = { roles: ['nucleic'], hueShift: [0], nudge: [0], override: [null] }
 
 /** 可见画布的渲染器，与导出和评审循环共用 / The renderer of the visible canvas, shared with export and the review loop. */
 export const stage: { renderer: Renderer | null; slots: Slot[] } = { renderer: null, slots: [] }
@@ -197,8 +199,13 @@ export function Stage() {
         for (let a = 0; a < st.lipid.atomCount; a++) for (let k = 0; k < 3; k++) lc[k]! += st.lipid.pos[a * 3 + k]! / st.lipid.atomCount
         items.push(buildItem(st.lipid, LIPID_COLORING, TONE_LANDSCAPE, packed.lipids.map((matrix) => ({ assembly: 'asym', matrix, molecule, center: placedCenter(matrix, lc) }))))
       }
+      if (packed.dna) {
+        // 生成的 DNA：每条一个编号，画成连续的一条 / generated DNA: one id per strand, each drawn as one continuous strand
+        const dna = packed.dna
+        items.push(buildItem(dna, DNA_COLORING, TONE_LANDSCAPE, dna.assemblies.slice(1).map((a) => ({ assembly: a.id, molecule: ++molecule, strand: true }))))
+      }
       r.setScene(items)
-      useStore.setState({ placed: packed.places.map((p) => p.length) })
+      useStore.setState({ placed: packed.places.map((p) => p.length), dnaPairs: packed.dna ? packed.dna.assemblies.slice(1).reduce((s, a) => s + a.groups.reduce((t, g) => t + g.operators.length, 0), 0) : 0 })
     } else if (st.spec?.mesoscale) {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: 0, perCopy: true, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
     } else {

@@ -94,6 +94,11 @@ export interface LandscapeSpec {
   above: string
   below: string
   ingredients: Ingredient[]
+  /**
+   * 要画的 DNA：这一片里双螺旋的总长度（Å），以及这个数的来历。
+   * DNA to draw: the total length of double helix in the slab, in Å, and where that figure comes from.
+   */
+  dna?: { length: number; basis: string }
 }
 
 export interface SceneSpec {

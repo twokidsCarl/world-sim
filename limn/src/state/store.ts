@@ -69,6 +69,8 @@ interface State extends Look {
   seed: number
   /** 每个面板在全景里放了多少拷贝；由舞台在排布完成后设置 / per panel, copies placed in the landscape; set by the stage after packing */
   placed: number[]
+  /** 全景里画出的 DNA 碱基对数 / base pairs of DNA drawn in the landscape */
+  dnaPairs: number
   repack(): void
   resolveTopic(topic: string): Promise<void>
   loadId(id: string): Promise<void>
@@ -152,6 +154,7 @@ export const useStore = create<State>((set, get) => ({
   lipid: null,
   seed: 1,
   placed: [],
+  dnaPairs: 0,
 
   repack() {
     set((s) => ({ seed: s.seed + 1, sceneRev: s.sceneRev + 1 }))

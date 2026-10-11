@@ -27,6 +27,12 @@ export interface Placement {
    * Entities whose name matches are not outlined one by one (the thousands of glutamates in a vesicle, say).
    */
   merge?: RegExp
+  /**
+   * 一条纤维（如生成的 DNA）：所有拷贝共用分子编号、连成一条，但各自归入自己位置的景深层。
+   * One fibre (generated DNA, say): every copy shares the molecule id and joins into one strand,
+   * but each takes the depth layer of its own position.
+   */
+  strand?: boolean
 }
 
 /** 一段原子在一个算符下的一份拷贝 / one run of atoms under one operator */
@@ -122,7 +128,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
     const groupCopy = copy
     // 这一组原子的质心，用来给每个拷贝一个中心 / centroid of the group's atoms, giving each copy a centre
     const c = [0, 0, 0]
-    if (ps.some((p) => p.perCopy)) {
+    if (ps.some((p) => p.perCopy || p.strand)) {
       let n = 0
       for (const r of g.runs) {
         const step = Math.max(1, Math.floor(r.count / 200))
@@ -140,13 +146,13 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         const m = p.matrix ? mul(p.matrix, op) : op
         const k = o * 16
         for (let r = 0; r < 3; r++) for (let col = 0; col < 4; col++) data[k + r * 4 + col] = m[col * 4 + r]!
-        const centre = p.center ?? (p.perCopy ? ([m[0]! * c[0]! + m[4]! * c[1]! + m[8]! * c[2]! + m[12]!, m[1]! * c[0]! + m[5]! * c[1]! + m[9]! * c[2]! + m[13]!, m[2]! * c[0]! + m[6]! * c[1]! + m[10]! * c[2]! + m[14]!] as const) : null)
+        const centre = p.center ?? (p.perCopy || p.strand ? ([m[0]! * c[0]! + m[4]! * c[1]! + m[8]! * c[2]! + m[12]!, m[1]! * c[0]! + m[5]! * c[1]! + m[9]! * c[2]! + m[13]!, m[2]! * c[0]! + m[6]! * c[1]! + m[10]! * c[2]! + m[14]!] as const) : null)
         if (centre) {
           data[k + 12] = centre[0]
           data[k + 13] = centre[1]
           data[k + 14] = centre[2]
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
-          data[k + 15] = p.perCopy && g.merged && !g.lipid ? 2 : 1
+          data[k + 15] = p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : p.molecule + 1 + (g.merged ? groupCopy : copy)
