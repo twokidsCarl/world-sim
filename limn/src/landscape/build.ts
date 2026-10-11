@@ -5,6 +5,7 @@ import { principalFrame } from '../refine/views'
 import { assemblyCopies } from '../scene/build'
 import type { LandscapeSpec } from '../scene/spec'
 import { DNA_RADIUS, dnaAlong, occupyStrand, RISE, wander, type Strand } from './fiber'
+import type { LipidShare } from './lipid'
 import { membraneToScene, type MembraneFit } from './orient'
 import { coarsen, collides, Occupied, placement, randomRotation, rng, scatter, type Coarse, type Region } from './pack'
 
@@ -37,7 +38,8 @@ function upright(c: Coarse): Float32Array {
 export interface Packed {
   /** 每个面板：每个放置的拷贝一个列主序 4x4 / per panel: one column-major 4x4 per placed copy */
   places: Float32Array[][]
-  lipids: Float32Array[]
+  /** 每种脂质和它的各个拷贝的位置 / each kind of lipid and where its copies go */
+  lipids: { mol: Molecule; places: Float32Array[] }[]
   /** 每个面板：要求的拷贝数和放得下的拷贝数 / per panel: copies asked for and copies that fitted */
   wanted: number[]
   /** 每个面板：分子自身的中心，每次放置把它移进场景 / per panel: the molecule's own centre, which each placement moves into the scene */
@@ -95,7 +97,7 @@ export function terminusPoint(mol: Molecule, assembly: string, which: 'N' | 'C')
  * -depth (far) to 0 (the cut face nearest the viewer). A membrane, if any,
  * lies in the y = 0 plane.
  */
-export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molecule | null, seed: number): Packed {
+export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molecule | { outer: LipidShare[]; inner: LipidShare[] } | null, seed: number): Packed {
   const rand = rng(seed)
   const occ = new Occupied()
   const coarse = inputs.map((p) => coarsen(assemblyPoints(p.mol, p.assembly)))
@@ -112,7 +114,7 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
   const order = spec.ingredients.map((_, i) => i)
 
   // 1. 膜蛋白，立在膜平面上 / 1. membrane proteins, standing in the membrane plane
-  const lipids: Float32Array[] = []
+  const lipids: Packed['lipids'] = []
   // 每个膜蛋白拷贝在膜平面里的位置和大致半径：它正前方的脂质不画，让跨膜的部分露出来
   // where each membrane-protein copy sits in the membrane plane, and roughly how wide it is: lipids
   // straight in front of it are left out, so that the part spanning the membrane shows
@@ -173,38 +175,70 @@ export function packScene(inputs: PackInput[], spec: LandscapeSpec, lipid: Molec
       }
     }
 
-    // 2. 双层膜：脂质放在带抖动的网格上，分两个小叶，跳过蛋白质
-    // 2. the bilayer: lipids on a jittered grid in two leaflets, skipping protein
+    // 2. 双层膜：脂质放在带抖动的网格上，两个小叶各按自己的组成混排，跳过蛋白质
+    // 2. the bilayer: lipids on a jittered grid, each leaflet mixed to its own composition, skipping protein
     if (lipid) {
-      const lc = coarsen(lipid.pos, 7)
-      const stand = upright(lc)
-      // 头基朝哪边？磷原子标出它
-      // which way is the head group? the phosphorus atom marks it
-      let headY = 0, lo = Infinity, hi = -Infinity
-      for (let a = 0; a < lipid.atomCount; a++) {
-        const dx = lipid.pos[a * 3]! - lc.center[0], dy = lipid.pos[a * 3 + 1]! - lc.center[1], dz = lipid.pos[a * 3 + 2]! - lc.center[2]
-        const y = stand[1]! * dx + stand[4]! * dy + stand[7]! * dz
-        lo = Math.min(lo, y)
-        hi = Math.max(hi, y)
-        if (lipid.element[a] === El.P) headY = y
+      const set: { outer: LipidShare[]; inner: LipidShare[] } = 'outer' in lipid ? lipid : { outer: [{ cls: 'PC', mol: lipid, fraction: 1, tails: 2 }], inner: [{ cls: 'PC', mol: lipid, fraction: 1, tails: 2 }] }
+      // 每种脂质：立起来、头朝上时的朝向，以及头顶和尾端离中心多远
+      // per lipid: the orientation that stands it head up, and how far its head and its tail tip are from its centre
+      const shapes = new Map<Molecule, { c: Coarse; headUp: Float32Array; headDown: Float32Array; top: number; bottom: number }>()
+      for (const sh of [...set.outer, ...set.inner]) {
+        const m = sh.mol
+        if (shapes.has(m)) continue
+        const c = coarsen(m.pos, 7)
+        const stand = upright(c)
+        // 头基朝哪边？非碳原子（磷、氧、氮）聚在那一端 / which end is the head group? the atoms that are not carbon (P, O, N) gather there
+        let polar = 0, np = 0, lo = Infinity, hi = -Infinity
+        for (let a = 0; a < m.atomCount; a++) {
+          const dx = m.pos[a * 3]! - c.center[0], dy = m.pos[a * 3 + 1]! - c.center[1], dz = m.pos[a * 3 + 2]! - c.center[2]
+          const y = stand[1]! * dx + stand[4]! * dy + stand[7]! * dz
+          lo = Math.min(lo, y)
+          hi = Math.max(hi, y)
+          if (m.element[a] !== El.C) {
+            polar += y
+            np++
+          }
+        }
+        const flip = np > 0 && polar / np < 0
+        const headUp = flip ? mul3(axisAngle(1, 0, 0, Math.PI), stand) : stand
+        shapes.set(m, { c, headUp, headDown: mul3(axisAngle(1, 0, 0, Math.PI), headUp), top: flip ? -lo : hi, bottom: flip ? -hi : lo })
       }
-      const headUp = headY >= 0 ? stand : mul3(axisAngle(1, 0, 0, Math.PI), stand)
-      const headDown = mul3(axisAngle(1, 0, 0, Math.PI), headUp)
-      const half = (hi - lo) / 2
-      // 尾部在膜的正中相接 / tails meet at the middle of the membrane
-      const offset = Math.min(half, MEMBRANE_HALF) * 0.92
-      const pitch = 8.4 // 每个脂质约 70 Å² / about 70 Å² per lipid
-      for (const [dir, y] of [[headUp, offset], [headDown, -offset]] as const) {
-        for (let x = -W; x <= W; x += pitch) {
-          for (let z = -spec.depth - 10; z <= -4; z += pitch) {
-            const pos: [number, number, number] = [x + (rand() - 0.5) * 3, y + (rand() - 0.5) * 2.5, z + (rand() - 0.5) * 3]
-            const rot = mul3(axisAngle(0, 1, 0, rand() * 2 * Math.PI), dir)
-            if (collides(occ, lc, rot, pos, 2.5)) continue
+      const byMol = new Map<Molecule, Float32Array[]>()
+      const pitch = 8.4 // 每个双链脂质约 70 Å² / about 70 Å² per two-chained lipid
+      const outerUp = (spec.outer ?? 'above') === 'above'
+      for (const up of [true, false]) {
+        const leaflet = up === outerUp ? set.outer : set.inner
+        if (leaflet.length === 0) continue
+        const total = leaflet.reduce((s, x) => s + x.fraction, 0) || 1
+        // 尾端在膜正中相接；胆固醇这样的短分子把头对齐到比磷脂头基低 6 Å 的地方
+        // tail tips meet at mid-membrane; a short molecule such as cholesterol has its head lined up 6 Å below the phospholipid head groups
+        const reach = Math.max(...leaflet.filter((x) => x.tails > 0).map((x) => 1 - shapes.get(x.mol)!.bottom + shapes.get(x.mol)!.top), 0) || 24
+        for (let z = -spec.depth - 10; z <= -4; z += pitch) {
+          for (let x = -W; x <= W; ) {
+            let pick = rand() * total, sh = leaflet[0]!
+            for (const cand of leaflet) {
+              pick -= cand.fraction
+              if (pick <= 0) {
+                sh = cand
+                break
+              }
+            }
+            const g = shapes.get(sh.mol)!
+            // 四条、六条尾链的脂质占两格、三格 / a lipid with four or six tails takes two or three sites
+            const sites = Math.max(1, Math.round(sh.tails / 2))
+            const cx = x + ((sites - 1) * pitch) / 2
+            x += sites * pitch
+            const centreY = sh.tails > 0 ? 1 - g.bottom : Math.max(1 - g.bottom, reach - 6 - g.top)
+            const pos: [number, number, number] = [cx + (rand() - 0.5) * 3, (up ? 1 : -1) * (centreY + (rand() - 0.5) * 2.5), z + (rand() - 0.5) * 3]
+            const rot = mul3(axisAngle(0, 1, 0, rand() * 2 * Math.PI), up ? g.headUp : g.headDown)
+            if (collides(occ, g.c, rot, pos, 2.5)) continue
             if (windows.some(([wx, wz, wr]) => pos[2] > wz && Math.abs(pos[0] - wx) < wr)) continue
-            lipids.push(placement(rot, pos, lc.center))
+            if (!byMol.has(sh.mol)) byMol.set(sh.mol, [])
+            byMol.get(sh.mol)!.push(placement(rot, pos, g.c.center))
           }
         }
       }
+      for (const [mol, places] of byMol) lipids.push({ mol, places })
       // 脂质之间互不排斥（网格已经把它们隔开），
       // 但之后放置的一切都必须避开双层膜
       // lipids do not exclude one another (the grid already spaces them),

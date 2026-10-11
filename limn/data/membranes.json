@@ -1,0 +1,112 @@
+{
+  "about": "各类膜的脂质组成（按脂质类别的摩尔百分比），每条都有出处。数字是文献里的事实，这里只为画图做了两处简化：缩醛磷脂并入 PE，没有对应坐标的少量类别略去后归一。 / Lipid composition of several membranes (mol % by lipid class), each with its source. The numbers are facts from the literature; two simplifications are made for drawing: plasmalogens are counted with PE, and minor classes with no coordinates to draw are dropped and the rest renormalised.",
+  "lipids": {
+    "PC": { "ccd": "POV", "name": "POPC（磷脂酰胆碱）", "nameEn": "POPC (phosphatidylcholine)" },
+    "PE": { "ccd": "6OU", "name": "POPE（磷脂酰乙醇胺）", "nameEn": "POPE (phosphatidylethanolamine)" },
+    "PS": { "ccd": "D39", "name": "POPS（磷脂酰丝氨酸）", "nameEn": "POPS (phosphatidylserine)" },
+    "PG": { "ccd": "PGW", "name": "POPG（磷脂酰甘油）", "nameEn": "POPG (phosphatidylglycerol)" },
+    "PI": { "ccd": "PIE", "name": "POPI（磷脂酰肌醇）", "nameEn": "POPI (phosphatidylinositol)" },
+    "SM": { "ccd": "HWP", "name": "鞘磷脂", "nameEn": "sphingomyelin" },
+    "CHOL": { "ccd": "CLR", "name": "胆固醇", "nameEn": "cholesterol" },
+    "CL": { "ccd": "CDL", "name": "心磷脂", "nameEn": "cardiolipin" },
+    "LPS": { "ccd": "KDL", "name": "脂多糖的内核（Kdo2-脂质 A）", "nameEn": "the inner core of lipopolysaccharide (Kdo2-lipid A)" }
+  },
+  "membranes": [
+    {
+      "id": "plasma-mammalian",
+      "name": "哺乳动物细胞的质膜",
+      "nameEn": "Mammalian plasma membrane",
+      "outer": { "SM": 55.3, "PC": 42.3, "PS": 1.5, "PI": 0.9 },
+      "inner": { "PE": 41.0, "PS": 33.1, "PC": 22.9, "SM": 2.0, "PI": 1.0 },
+      "cholesterol": 40,
+      "basis": "人红细胞两个小叶的磷脂组成是实测的（酶切加质谱）。胆固醇约占全部脂质的 40%，但它在两个小叶之间怎么分没有测到，这里两边各放 40%，是原作者做模拟时的假设。内叶的 PE 里有 17.4 是缩醛磷脂。糖脂没有测到，没有画。",
+      "basisEn": "The phospholipids of each leaflet of human red blood cells were measured (enzymatic digestion and mass spectrometry). Cholesterol is about 40% of all lipid, but its split between the leaflets was not measurable; 40% is put in each, which is the authors' own assumption for their simulations. Of the inner leaflet's PE, 17.4 is plasmalogen. Glycolipids were not detected and are not drawn.",
+      "kind": "measured",
+      "citation": "Lorent et al., Nat. Chem. Biol. 2020, doi:10.1038/s41589-020-0529-6 (Table I)"
+    },
+    {
+      "id": "endoplasmic-reticulum",
+      "name": "内质网膜",
+      "nameEn": "Endoplasmic reticulum membrane",
+      "outer": { "PC": 57, "PE": 21, "PI": 9, "SM": 4, "PS": 4 },
+      "inner": { "PC": 57, "PE": 21, "PI": 9, "SM": 4, "PS": 4 },
+      "cholesterol": 6.5,
+      "basis": "大鼠肝脏内质网的整膜组成（占脂质磷的百分比，多项较早研究的平均）；两个小叶没有分别测量，这里两边相同。胆固醇与磷脂的摩尔比是 0.07。",
+      "basisEn": "Whole-membrane composition of rat liver endoplasmic reticulum (percent of lipid phosphorus, averaged over several older studies); the leaflets were not measured separately and are drawn alike. The molar ratio of cholesterol to phospholipid is 0.07.",
+      "kind": "measured",
+      "citation": "Vance, Traffic 2015, doi:10.1111/tra.12230, as tabulated in Saud et al., J. Lipid Res. 2022, doi:10.1016/j.jlr.2022.100208 (Table 3)"
+    },
+    {
+      "id": "mitochondrial-inner",
+      "name": "线粒体内膜",
+      "nameEn": "Inner mitochondrial membrane",
+      "outer": { "PC": 41, "PE": 38, "CL": 16, "SM": 2, "PI": 2, "PS": 1 },
+      "inner": { "PC": 41, "PE": 38, "CL": 16, "SM": 2, "PI": 2, "PS": 1 },
+      "cholesterol": 5.7,
+      "basis": "大鼠肝脏线粒体内膜的整膜组成（占脂质磷的百分比）；两个小叶没有分别测量，这里两边相同。胆固醇与磷脂的摩尔比是 0.06。",
+      "basisEn": "Whole-membrane composition of the inner membrane of rat liver mitochondria (percent of lipid phosphorus); the leaflets were not measured separately and are drawn alike. The molar ratio of cholesterol to phospholipid is 0.06.",
+      "kind": "measured",
+      "citation": "Vance, Traffic 2015, doi:10.1111/tra.12230, as tabulated in Saud et al., J. Lipid Res. 2022, doi:10.1016/j.jlr.2022.100208 (Table 3)"
+    },
+    {
+      "id": "ecoli-inner",
+      "name": "大肠杆菌内膜",
+      "nameEn": "Escherichia coli inner membrane",
+      "outer": { "PE": 78, "PG": 12, "CL": 6 },
+      "inner": { "PE": 78, "PG": 12, "CL": 6 },
+      "cholesterol": 0,
+      "basis": "这是整个细胞（内膜加外膜）的磷脂组成，对数期，不是单独分离的内膜；单说内膜的文献数字彼此不一致（PE 约 50% 到 60–65%）。两个小叶这里画成相同，实际上 PE 约 75% 在胞质一侧。",
+      "basisEn": "This is the phospholipid composition of whole cells (inner plus outer membrane) in exponential growth, not of the isolated inner membrane; figures given for the inner membrane alone disagree with one another (PE from about 50% to 60-65%). The leaflets are drawn alike, although about 75% of PE is on the cytoplasmic side.",
+      "kind": "measured",
+      "citation": "Rowlett et al., J. Bacteriol. 2017, doi:10.1128/JB.00849-16 (Table 1); leaflet split: Bogdanov et al., Sci. Adv. 2020, doi:10.1126/sciadv.aaz6333"
+    },
+    {
+      "id": "ecoli-outer",
+      "name": "大肠杆菌外膜",
+      "nameEn": "Escherichia coli outer membrane",
+      "outer": { "LPS": 100 },
+      "inner": { "PE": 75, "PG": 22.5, "CL": 5 },
+      "cholesterol": 0,
+      "basis": "外叶是脂多糖、内叶是磷脂，这一点是定性的结论；内叶的比例取自一篇综述给出的范围（PE 70–80%、PG 20–25%、心磷脂约 5%）的中间值，原文没有说明是摩尔比还是重量比。脂多糖只画到内核（Kdo2-脂质 A），外面的长糖链没有画。",
+      "basisEn": "That the outer leaflet is lipopolysaccharide and the inner leaflet phospholipid is a qualitative finding; the inner leaflet's proportions are the midpoints of ranges given in a review (PE 70-80%, PG 20-25%, cardiolipin about 5%), which does not say whether they are by mole or by weight. Lipopolysaccharide is drawn only as far as its inner core (Kdo2-lipid A); the long sugar chains beyond are not drawn.",
+      "kind": "review",
+      "citation": "Wang, Ma & Wang, Microb. Cell Fact. 2021, doi:10.1186/s12934-021-01565-8; asymmetry: Benn et al., PNAS 2021, doi:10.1073/pnas.2112237118"
+    },
+    {
+      "id": "hiv-envelope",
+      "name": "HIV-1 的包膜",
+      "nameEn": "HIV-1 envelope",
+      "outer": { "PE": 35.2, "SM": 33.1, "PC": 16.0, "PS": 15.5 },
+      "inner": { "PE": 35.2, "SM": 33.1, "PC": 16.0, "PS": 15.5 },
+      "cholesterol": 45.2,
+      "basis": "纯化的 HIV-1 病毒颗粒的整膜组成：磷脂的比例取自原文表 1（占所测磷脂的摩尔百分比），胆固醇的比例由表 2 每个病毒颗粒的分子数换算（胆固醇 134,000，磷脂合计约 162,000）。PE 里大部分是缩醛磷脂；鞘磷脂含二氢鞘磷脂。两个小叶没有分别测量，这里两边相同。",
+      "basisEn": "Whole-envelope composition of purified HIV-1 virions: phospholipid proportions are from Table 1 of the paper (mol % of the phospholipids quantified), and the share of cholesterol is worked out from the molecules per virion in Table 2 (cholesterol 134,000; phospholipids about 162,000 in all). Most of the PE is plasmalogen; sphingomyelin includes dihydrosphingomyelin. The leaflets were not measured separately and are drawn alike.",
+      "kind": "measured",
+      "citation": "Brügger et al., PNAS 2006, doi:10.1073/pnas.0511136103 (Tables 1 and 2)"
+    },
+    {
+      "id": "sars-cov-2-envelope",
+      "name": "新冠病毒的包膜",
+      "nameEn": "SARS-CoV-2 envelope",
+      "outer": { "PC": 61, "PE": 19, "PI": 18 },
+      "inner": { "PC": 61, "PE": 19, "PI": 18 },
+      "cholesterol": 0,
+      "basis": "在 Vero 细胞里培养、梯度纯化的病毒颗粒的组成（占磷脂加鞘脂的摩尔百分比）；几乎不含胆固醇（与磷脂的摩尔比约 0.0006）、鞘磷脂和 PS。换用 A549 细胞培养时比例不同（PC 40、PI 37、PE 23）。脂质的不对称性基本消失，所以两边相同。",
+      "basisEn": "Composition of gradient-purified virions grown in Vero cells (mol % of phospholipids plus sphingolipids); nearly free of cholesterol (molar ratio to phospholipid about 0.0006), sphingomyelin and PS. Virus grown in A549 cells differs (PC 40, PI 37, PE 23). Lipid asymmetry is largely lost, so the leaflets are drawn alike.",
+      "kind": "measured",
+      "citation": "Saud et al., J. Lipid Res. 2022, doi:10.1016/j.jlr.2022.100208 (Table 3)"
+    },
+    {
+      "id": "synaptic-vesicle",
+      "name": "突触小泡的膜",
+      "nameEn": "Synaptic vesicle membrane",
+      "outer": { "PE": 42.1, "PC": 36.3, "PS": 12.3, "SM": 7.4, "PI": 1.9 },
+      "inner": { "PE": 42.1, "PC": 36.3, "PS": 12.3, "SM": 7.4, "PI": 1.9 },
+      "cholesterol": 44.5,
+      "basis": "大鼠脑突触小泡的整膜组成，由每个小泡的分子数换算（胆固醇 5663，磷脂合计约 7000）；原文正文里写的胆固醇是 40%。PE 里约 45% 是缩醛磷脂。两个小叶没有分别测量，这里两边相同。",
+      "basisEn": "Whole-membrane composition of rat brain synaptic vesicles, worked out from molecules per vesicle (cholesterol 5,663; phospholipids about 7,000 in all); the paper's own text gives cholesterol as 40%. About 45% of the PE is plasmalogen. The leaflets were not measured separately and are drawn alike.",
+      "kind": "measured",
+      "citation": "Takamori et al., Cell 2006, doi:10.1016/j.cell.2006.10.030 (Table 2)"
+    }
+  ]
+}

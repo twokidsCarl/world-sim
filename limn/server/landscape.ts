@@ -12,6 +12,7 @@
 import type { Ingredient, LandscapeSpec, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
 import { ROLES, type Role } from '../src/style/palettes'
 import type { Deps } from './resolve'
+import membraneData from '../data/membranes.json'
 import { ppmToMicromolar } from './sources/paxdb'
 import type { EntryInfo } from './sources/rcsb'
 
@@ -24,6 +25,7 @@ interface Recipe {
   caption: string
   membrane: boolean
   membrane_outer_side: string
+  membrane_type: string
   above: string
   below: string
   density_above_g_per_L: number
@@ -52,12 +54,13 @@ const TISSUES = ['WHOLE_ORGANISM', 'BRAIN', 'CEREBRAL_CORTEX', 'PLASMA', 'SERUM'
 
 const RECIPE_SCHEMA = {
   type: 'object',
-  required: ['title', 'caption', 'membrane', 'membrane_outer_side', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'dna_megabases_per_cubic_micron', 'notes', 'ingredients'],
+  required: ['title', 'caption', 'membrane', 'membrane_outer_side', 'membrane_type', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'dna_megabases_per_cubic_micron', 'notes', 'ingredients'],
   properties: {
     title: { type: 'string', description: 'language of the topic' },
     caption: { type: 'string', description: '2-4 sentences, language of the topic: where in the cell this is and what is going on. Name parts by what they are.' },
     membrane: { type: 'boolean', description: 'true if a lipid bilayer crosses the scene horizontally' },
     membrane_outer_side: { type: 'string', enum: ['above', 'below', 'none'], description: 'which side of the membrane, as drawn, is its outer face: the extracellular side of a plasma membrane or viral envelope, the periplasmic side of a bacterial inner membrane, the lumen of an organelle or vesicle. "none" if there is no membrane.' },
+    membrane_type: { type: 'string', enum: ['none', 'other', ...membraneData.membranes.map((m) => m.id)], description: `which membrane this is, used to draw its real lipid composition: ${membraneData.membranes.map((m) => `${m.id} = ${m.nameEn}`).join('; ')}. "other" for a membrane not in the list (it is then drawn with one phospholipid); "none" if there is no membrane.` },
     above: { type: 'string', description: 'what is above the membrane (e.g. extracellular space, blood plasma); empty if no membrane' },
     below: { type: 'string', description: 'what is below the membrane, or the whole scene if there is no membrane (e.g. cytoplasm)' },
     density_above_g_per_L: { type: 'number', description: 'total macromolecule concentration above the membrane, grams per litre (blood plasma is about 70-80); 0 if no membrane' },
@@ -274,7 +277,7 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   const mbp = Math.max(0, Math.min(60, Number(recipe.dna_megabases_per_cubic_micron) || 0))
   const dnaLength = Math.min(BOX.width * 10, mbp * 1e6 * 3.4 * volume * 1e-12)
   const dna = dnaLength >= 300 ? { length: Math.round(dnaLength), basis: `约 ${mbp} 百万碱基对/μm³（估计）` } : undefined
-  const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, ...(recipe.membrane ? { outer } : {}), ...(dna ? { dna } : {}), above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
+  const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, ...(recipe.membrane ? { outer, ...(membraneData.membranes.some((m) => m.id === recipe.membrane_type) ? { membraneType: recipe.membrane_type } : {}) } : {}), ...(dna ? { dna } : {}), above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
   const notes = [
     '分子是真实结构，按比例绘制；它们的位置和朝向是程序随机排布的，不是观测结果。',
     pax && measured.size

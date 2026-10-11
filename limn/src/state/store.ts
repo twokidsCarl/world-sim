@@ -4,7 +4,7 @@ import { loadMolecule } from '../mol/load'
 import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
-import { loadLipid } from '../landscape/lipid'
+import { loadLipids, type LipidSet } from '../landscape/lipid'
 import { fitToMembrane, type MembraneFit } from '../landscape/orient'
 import type { Annotation, ColorMode } from '../style/annotate'
 import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, type Style } from '../render/style'
@@ -69,7 +69,7 @@ interface State extends Look {
   rounds: Round[]
   refining: string
   /** 膜脂质，全景有膜时加载 / the membrane lipid, loaded when a landscape has a membrane */
-  lipid: Molecule | null
+  lipids: LipidSet | null
   /** 全景随机排布的种子 / seed of the random arrangement of a landscape */
   seed: number
   /** 每个面板在全景里放了多少拷贝；由舞台在排布完成后设置 / per panel, copies placed in the landscape; set by the stage after packing */
@@ -160,7 +160,7 @@ export const useStore = create<State>((set, get) => ({
   error: '',
   rounds: [],
   refining: '',
-  lipid: null,
+  lipids: null,
   seed: 1,
   placed: [],
   dnaPairs: 0,
@@ -177,7 +177,8 @@ export const useStore = create<State>((set, get) => ({
       set({ busy: `正在下载 ${spec.panels.map((p) => p.source.id).join('、')}…` })
       const panels = await Promise.all(spec.panels.map(loadPanel))
       if (spec.landscape) {
-        const lipid = spec.landscape.membrane ? await loadLipid() : null
+        const lipids = spec.landscape.membrane ? await loadLipids(spec.landscape.membraneType) : null
+        if (lipids) spec.notes = [...spec.notes.filter((n) => !/脂质用同一种磷脂/.test(n)), `膜的脂质组成：${lipids.name}。${lipids.basis}${lipids.citation ? `出处：${lipids.citation}。` : ''}每种脂质用数据库里的理想坐标，尾链已转到同一侧；位置随机，构象都相同。`]
         // 膜蛋白：向 OPM 要它在膜里的取向，叠合到我们手上的坐标
         // membrane proteins: ask OPM how each sits in the membrane and fit that to the coordinates in hand
         const oriented: string[] = []
@@ -208,7 +209,7 @@ export const useStore = create<State>((set, get) => ({
             colorings[pi] = { ...colorings[pi]!, hueShift: colorings[pi]!.hueShift.map(() => 0), nudge: colorings[pi]!.nudge.map(() => shift) }
           })
         }
-        set((s) => ({ spec, panels, colorings, lipid, ...freshLook(), cut: 0, style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
+        set((s) => ({ spec, panels, colorings, lipids, ...freshLook(), cut: 0, style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
         return
       }
       // 同一蛋白质的各个面板转到共同的朝向，
