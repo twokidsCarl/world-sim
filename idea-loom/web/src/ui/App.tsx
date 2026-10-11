@@ -18,6 +18,7 @@ import { install as installTrail } from '../assistant/trail'
 import { applyLang, plural } from '../i18n'
 import { type PushState, pushState, turnOff, turnOn } from '../push'
 import { useStore, useT } from '../state/store'
+import { useStale } from '../version'
 
 const NAV = [
   { to: '/play', zh: '玩', en: 'Play', end: false, owner: false },
@@ -36,6 +37,9 @@ export function App() {
   const t = useT()
   const openWishes = useAssistant((a) => a.openWishes)
   const owner = me?.role === 'owner'
+  // 后端重启过或界面重新构建过，这一页就过时了；只提示，不自己刷新，免得打断正在写的东西。
+  // After a backend restart or a UI rebuild this page is out of date; it only says so and never reloads by itself, so nothing being typed is lost.
+  const stale = useStale()
   // 主人的操作轨迹由小助手装上；登录的访客没有小助手，在这里装，记的是他自己的观看和收藏。
   // The assistant installs the owner's action trail; a signed-in member has no assistant, so it is installed here and records their own watching and likes.
   useEffect(() => {
@@ -143,6 +147,12 @@ export function App() {
         </div>
       </nav>
       <main className="main">
+        {stale && (
+          <div className="notice warn" role="status">
+            {t('工具已经更新，这一页还是旧的。', 'The tool has been updated and this page is still the old one.')}{' '}
+            <button onClick={() => location.reload()}>{t('刷新', 'Refresh')}</button>
+          </div>
+        )}
         {error && (
           <div className="notice bad" role="alert">
             {error} <button onClick={() => void load()}>{t('重试', 'Retry')}</button>
