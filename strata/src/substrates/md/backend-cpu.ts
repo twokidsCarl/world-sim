@@ -4,6 +4,8 @@ import { speciesField, speciesTables, type PairField, type PotentialSpec } from 
 import { initFcc, initTriangular } from './ref/init'
 import {
   densityModes,
+  q6Summary,
+  type Q6Summary,
   regionFrame,
   fieldSums,
   rdf,
@@ -39,6 +41,8 @@ export interface MdFrame extends Frame {
   rdf?: Hist
   field?: FieldSums
   modes?: DensityModes
+  /** Steinhardt q₆ 的汇总，仅三维 / Summary of Steinhardt q₆, 3D only */
+  q6?: Q6Summary
   /** 设了选区时才有 / Present only while a region is set */
   region?: RegionFrame
   /**
@@ -294,6 +298,7 @@ export class MdCpuBackend implements MdBackend {
     if (ids.includes('field')) frame.field = fieldSums(s)
     if (ids.includes('distance')) frame.distance = this.distance()
     if (ids.includes('modes')) frame.modes = densityModes(s)
+    if (ids.includes('q6') && s.dim === 3) frame.q6 = q6Summary(s)
     if (region && s.dim === 2) frame.region = regionFrame(s, region, ids, 4 * Math.sqrt(sc.temperature))
     return frame
   }

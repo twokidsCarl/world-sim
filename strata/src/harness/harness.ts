@@ -13,7 +13,7 @@ import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
 import { initFcc, initTriangular } from '../substrates/md/ref/init'
-import { densityModes, rdf, regionFrame, scalars, speedHistogram } from '../substrates/md/ref/reducers'
+import { densityModes, q6Summary, rdf, regionFrame, scalars, speedHistogram } from '../substrates/md/ref/reducers'
 import { computeForces, step } from '../substrates/md/ref/step'
 import { MD_KNOBS, fccCells, potentialSpec, strengthMatrix } from '../substrates/md/schema'
 
@@ -171,12 +171,16 @@ export async function runHarness(): Promise<HarnessResult> {
     }
   }
   check('三维：受力最大误差 / 最大受力', ferr3 / fmax3, 1e-4)
-  const frame3 = await gpu3.reduce(['scalars', 'rdf', 'speedHist'])
+  const frame3 = await gpu3.reduce(['scalars', 'rdf', 'speedHist', 'q6'])
   const sc3 = scalars(ref3)
   check('三维：动能相对误差', Math.abs(frame3.scalars!.ke - sc3.ke) / sc3.ke, 1e-5)
   check('三维：势能相对误差', Math.abs(frame3.scalars!.pe - sc3.pe) / Math.abs(sc3.pe), 1e-4)
   check('三维：压强相对误差', Math.abs(frame3.scalars!.pressure - sc3.pressure) / Math.abs(sc3.pressure), 1e-3)
   check('三维：配位数差', Math.abs(frame3.scalars!.coordination - sc3.coordination), 1e-6)
+  const q3 = q6Summary(ref3)
+  check('三维：平均 q₆ 差', Math.abs(frame3.q6!.local - q3.local), 1e-5)
+  check('三维：平均 q̄₆ 差', Math.abs(frame3.q6!.averaged - q3.averaged), 1e-5)
+  check('三维：晶体比例差', Math.abs(frame3.q6!.crystalFraction - q3.crystalFraction), 1e-3)
   const rdfMax3 = frame3.rdf!.x[119]! + frame3.rdf!.x[0]!
   check('三维：g(r) 直方图 L1 差', l1(frame3.rdf!.y, rdf(ref3, 120, rdfMax3).y), 1e-3)
   check('三维：速率直方图 L1 差', l1(frame3.speedHist!.y, speedHistogram(ref3, 64, 4 * Math.sqrt(1.5)).y), 1e-3)

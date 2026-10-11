@@ -99,6 +99,38 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'nucleation',
+    title: '三维过冷液体：等一个晶核',
+    substrate: 'md',
+    steps: [
+      {
+        text: '一万六千多个粒子的三维稠密流体，温度 2.5，远在熔点之上。“处在晶体环境里的粒子比例”几乎是零。',
+        set: {
+          dim: 3,
+          nx: 64,
+          density: 0.95,
+          temperature: 2.5,
+          thermostat: 1,
+          walls: 0,
+          fractionB: 0,
+          integrator: 0,
+        },
+        run: 4000,
+        expect: { quantity: 'crystalFraction', max: 0.05, text: '熔体：晶体比例低于 0.05' },
+      },
+      {
+        text: '把热浴骤降到 0.5，远低于熔点。配位数立刻就和晶体差不多了（约 11.3），但粒子还是乱的：液体被过冷，在等一个足够大的晶核偶然出现。把着色切到“键取向序 q̄₆”、显示切到“切片”来看。',
+        set: { temperature: 0.5 },
+        run: 12000,
+      },
+      {
+        text: '晶核一旦出现就长得很快，几万步之内吞掉整个盒子，留下几块取向不同的晶粒和它们之间的晶界。何时成核是随机的，每次重置都不一样。',
+        run: 70000,
+        expect: { quantity: 'crystalFraction', min: 0.6, text: '结晶：晶体比例超过 0.6' },
+      },
+    ],
+  },
+  {
     id: 'dimension',
     title: '同一条势，换一个维度',
     substrate: 'md',

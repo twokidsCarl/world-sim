@@ -553,3 +553,127 @@ export function regionRdf(counts: ArrayLike<number>, rmax: number, n: number, ar
   }
   return { x, y }
 }
+
+/** 每个粒子的 q₆ 向量的实分量个数：m = 0 一个，m = 1..6 各两个。 / Real components of a particle's q₆ vector: one for m = 0, two each for m = 1..6. */
+export const Q6_COMPONENTS = 13
+
+/** q̄₆ 高于此值的粒子算作处在晶体环境里；液体约 0.15–0.2，面心立方约 0.57。 / A particle with q̄₆ above this counts as crystalline; a liquid has about 0.15–0.2, fcc about 0.57. */
+export const Q6_CRYSTAL = 0.3
+
+// g_m = 2 (6 − m)! / (6 + m)!（m = 0 时为 1）的平方根：乘上它之后，q₆² 就是各分量的平方和。
+// Square roots of g_m = 2 (6 − m)! / (6 + m)! (1 for m = 0): scaled by these, q₆² is the plain sum of squares of the components.
+const Q6_WEIGHT = (() => {
+  const factorial = (n: number): number => (n <= 1 ? 1 : n * factorial(n - 1))
+  return Array.from({ length: 7 }, (_, m) => Math.sqrt(m === 0 ? 1 : (2 * factorial(6 - m)) / factorial(6 + m)))
+})()
+
+/**
+ * 把单位键矢量 (x, y, z) 的 l = 6 球谐分量累加到 out[offset..offset+13)。
+ * 用 Y₆ₘ ∝ (dᵐP₆/dzᵐ)(z) · (x + iy)ᵐ，其中 P₆(z) = (231 z⁶ − 315 z⁴ + 105 z² − 5) / 16。
+ *
+ * Add the l = 6 spherical-harmonic components of a unit bond vector (x, y, z) to
+ * out[offset..offset+13), using Y₆ₘ ∝ (dᵐP₆/dzᵐ)(z) · (x + iy)ᵐ with
+ * P₆(z) = (231 z⁶ − 315 z⁴ + 105 z² − 5) / 16.
+ */
+export function addQ6(out: Float64Array, offset: number, x: number, y: number, z: number): void {
+  const z2 = z * z
+  const d = [
+    (231 * z2 * z2 * z2 - 315 * z2 * z2 + 105 * z2 - 5) / 16,
+    (1386 * z2 * z2 * z - 1260 * z2 * z + 210 * z) / 16,
+    (6930 * z2 * z2 - 3780 * z2 + 210) / 16,
+    (27720 * z2 * z - 7560 * z) / 16,
+    (83160 * z2 - 7560) / 16,
+    (166320 * z) / 16,
+    166320 / 16,
+  ]
+  out[offset] += Q6_WEIGHT[0]! * d[0]!
+  // (x + iy)ᵐ 逐次相乘得到。 / (x + iy)ᵐ by repeated multiplication.
+  let re = 1
+  let im = 0
+  for (let m = 1; m <= 6; m++) {
+    const r = re * x - im * y
+    im = re * y + im * x
+    re = r
+    out[offset + 2 * m - 1] += Q6_WEIGHT[m]! * d[m]! * re
+    out[offset + 2 * m] += Q6_WEIGHT[m]! * d[m]! * im
+  }
+}
+
+/**
+ * Steinhardt 键取向序参量（Steinhardt, Nelson & Ronchetti 1983），三维。对每个粒子，把它到
+ * `radius` 内各近邻的键方向的 l = 6 球谐分量取平均，得到 13 维向量 q₆ₘ；其模长就是局域的 q₆。
+ * 再把自己和各近邻的向量取平均、取模，得到 q̄₆（Lechner & Dellago 2008）：它把液体和晶体分得开得多。
+ *
+ * Steinhardt bond-orientational order (Steinhardt, Nelson & Ronchetti 1983), in 3D. For
+ * each particle the l = 6 spherical-harmonic components of the bond directions to its
+ * neighbours within `radius` are averaged into a 13-component vector q₆ₘ, whose length is
+ * the local q₆. Averaging that vector over the particle and its neighbours and taking the
+ * length gives q̄₆ (Lechner & Dellago 2008), which separates liquid from crystal far better.
+ */
+export function steinhardt(s: MdState, radius = COORDINATION_RADIUS): { local: Float64Array; averaged: Float64Array } {
+  const n = s.n
+  const vectors = new Float64Array(n * Q6_COMPONENTS)
+  const count = new Float64Array(n)
+  const pairs: number[] = []
+  const { pos, box } = s
+  forEachPair(s, radius, (i, j, r2) => {
+    const r = Math.sqrt(r2)
+    let dx = pos[3 * j] - pos[3 * i]
+    let dy = pos[3 * j + 1] - pos[3 * i + 1]
+    let dz = pos[3 * j + 2] - pos[3 * i + 2]
+    dx -= box[0] * Math.round(dx / box[0])
+    dy -= box[1] * Math.round(dy / box[1])
+    dz -= box[2] * Math.round(dz / box[2])
+    // l 为偶数，键从哪一端看都一样。 / l is even, so the bond looks the same from either end.
+    addQ6(vectors, i * Q6_COMPONENTS, dx / r, dy / r, dz / r)
+    addQ6(vectors, j * Q6_COMPONENTS, dx / r, dy / r, dz / r)
+    count[i]++
+    count[j]++
+    pairs.push(i, j)
+  })
+  const local = new Float64Array(n)
+  for (let i = 0; i < n; i++) {
+    let sum = 0
+    for (let c = 0; c < Q6_COMPONENTS; c++) {
+      if (count[i] > 0) vectors[i * Q6_COMPONENTS + c] /= count[i]
+      sum += vectors[i * Q6_COMPONENTS + c] ** 2
+    }
+    local[i] = Math.sqrt(sum)
+  }
+  const mean = Float64Array.from(vectors)
+  for (let k = 0; k < pairs.length; k += 2) {
+    const i = pairs[k]!
+    const j = pairs[k + 1]!
+    for (let c = 0; c < Q6_COMPONENTS; c++) {
+      mean[i * Q6_COMPONENTS + c] += vectors[j * Q6_COMPONENTS + c]
+      mean[j * Q6_COMPONENTS + c] += vectors[i * Q6_COMPONENTS + c]
+    }
+  }
+  const averaged = new Float64Array(n)
+  for (let i = 0; i < n; i++) {
+    let sum = 0
+    for (let c = 0; c < Q6_COMPONENTS; c++) sum += (mean[i * Q6_COMPONENTS + c] / (count[i] + 1)) ** 2
+    averaged[i] = Math.sqrt(sum)
+  }
+  return { local, averaged }
+}
+
+/** 全体的平均 q₆、平均 q̄₆，以及 q̄₆ 超过 Q6_CRYSTAL 的粒子比例。 / Mean q₆, mean q̄₆ and the fraction of particles with q̄₆ above Q6_CRYSTAL. */
+export interface Q6Summary {
+  local: number
+  averaged: number
+  crystalFraction: number
+}
+
+export function q6Summary(s: MdState): Q6Summary {
+  const { local, averaged } = steinhardt(s)
+  let a = 0
+  let b = 0
+  let c = 0
+  for (let i = 0; i < s.n; i++) {
+    a += local[i]
+    b += averaged[i]
+    if (averaged[i] > Q6_CRYSTAL) c++
+  }
+  return { local: a / s.n, averaged: b / s.n, crystalFraction: c / s.n }
+}

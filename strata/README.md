@@ -17,6 +17,7 @@ English version below / 英文版见下文。
   - 涡量场（由分箱的平均流速差分得到）。
   - 鼠标停在 g(r) 图上时，舞台上以一个粒子为圆心画出对应半径的圆：图上的峰就是圆上挤着的邻居。
   - 长波极限：最长波处的 S(k) 的时间平均，对照涨落–压缩率关系 T/(∂P/∂ρ)（只在已发表状态方程适用时有理论值）。
+  - 三维下的 Steinhardt 键取向序 q₆ 及其近邻平均 q̄₆（理想面心立方、六方密堆、体心立方、简单立方、二十面体的值都对上了文献），可按 q̄₆ 给粒子着色，看到晶粒和晶界。
   - 结构因子 S(k) = |ρ_k|² / N，由密度沿 x 和 y 的傅里叶模得到：理想气体为 1，液体有一个宽峰，晶体在倒格矢处有尖锐的 Bragg 峰。
   - 元：B 粒子从一条带开始扩散时，记录浓度剖面的时间序列，用弱形式稀疏回归（SINDy）在 5 个候选项里拟合它服从的方程，并用发现的方程把最早的剖面推演到现在与实测对照；再用动态模态分解（DMD）独立估计各模态的衰减率。
   - 结构：局域与全局六角序参量 ψ₆，可按它给粒子着色，看到晶粒、晶界和缺陷。
@@ -36,7 +37,7 @@ English version below / 英文版见下文。
 
 每个可调参数都带标签，说明它是改变普适类、仅改变数值、状态变量还是数值方法。每个带理论的量旁边实时标出“吻合”或“偏离”。
 
-页面底部有引导实验（流过圆盘、从下面加热出现对流卷、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=wake`、`/?scenario=convection`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
+页面底部有引导实验（三维过冷液体里等一个晶核、流过圆盘、从下面加热出现对流卷、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=nucleation`、`/?scenario=wake`、`/?scenario=convection`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
 
 ## 运行
 
@@ -78,7 +79,8 @@ CPU 参考实现先写，是规范；WGSL 内核是它的优化，并用同一�
 ## 已知边界
 
 - 分子动力学最多两种粒子，粒子之间没有化学键（所以只有分相，没有胶束和膜）。
-- 三维下没有壁面、条带初始分布和六角序参量；结构量只有配位数，它分不清稠密液体和晶体（液体约 10 到 11.5，晶体 12），还没有 Steinhardt q₆。三维的 g(r) 只算到一个元胞宽（约 2.5 到 3σ）。
+- 三维下没有壁面、条带初始分布和六角序参量。配位数分不清稠密液体和晶体（过冷液体约 11.3，结晶后 11.6），判别晶体用近邻平均的 Steinhardt q̄₆，阈值取 0.3（液体约 0.18，完美面心立方 0.575）；它不区分面心立方、六方密堆和体心立方。三维的 g(r) 只算到一个元胞宽（约 2.5 到 3σ）。
+- 三维结晶是均匀成核，何时出现晶核是随机的。一次实测（16384 个粒子，ρ = 0.95，从 2.5 淬火到 0.5）：晶体比例在约 1.5 万步内停在 0.03 到 0.06，之后上升，8 万步时到 0.92。别的随机种子下潜伏期可能长得多，引导实验的最后一步因此可能不通过。
 - 绕流和对流都是定性验收，没有逐点的理论线。绕流：十一万多个粒子、圆盘直径 60σ、流速约为声速的一半（可压缩），圆盘背风面的时间平均流速为 −0.17 ± 0.03（来流 1.23），下游尾迹左右摆动，但没有测量脱落频率；流速减半时（雷诺数约二十）没有显著回流。对流：下壁温度是上壁的十倍，重力 0.06 时竖直流速的起伏是热噪声的五倍，出现约四对对流卷；重力 0.02 时约为 1.5 倍，没有清晰的卷。临界瑞利数没有测。
 - “温度 T”只算相对于质心的运动，整体平移的动能不计入；但有剪切的流动（管道流）里，各层流速不同，这部分仍算在内，读数略偏高，局域的温度看流体层的温度剖面。
 - 场的回读在管道几何下约 180KB（192×48 格），超过了最初自定的 64KB。实测每次归约因此多花约 0.2 毫秒（11.6 万粒子，每秒归约约十次），所以保留了这个分辨率。
@@ -118,6 +120,7 @@ Three substrates, switched at the top right of the interface:
   - The vorticity field (by differencing the binned mean velocity).
   - While the pointer is over the g(r) plot, a circle of that radius is drawn on the stage around one particle: a peak in the plot is the neighbours crowding on the circle.
   - Long-wavelength limit: the time average of S(k) at the longest wave, against the fluctuation–compressibility relation T/(∂P/∂ρ) (a theoretical value exists only where the published equation of state applies).
+  - In 3D, the Steinhardt bond-orientational order q₆ and its neighbour average q̄₆ (the values for ideal fcc, hcp, bcc, simple cubic and the icosahedron all match the literature); particles can be coloured by q̄₆ to show grains and grain boundaries.
   - Structure factor S(k) = |ρ_k|² / N from the Fourier modes of the density along x and y: 1 for an ideal gas, a broad peak for a liquid, sharp Bragg peaks for a crystal.
   - Meta: when the B particles start diffusing from a stripe, the time series of the concentration profile is recorded, and weak-form sparse regression (SINDy) fits the equation it obeys among 5 candidate terms; the discovered equation is then used to evolve the earliest profile to the present for comparison with the measurement. Dynamic mode decomposition (DMD) is then used to estimate the decay rate of each mode independently.
   - Structure: the local and global hexatic order parameter ψ₆; particles can be coloured by it, showing grains, grain boundaries and defects.
@@ -137,7 +140,7 @@ On the molecular dynamics stage (2D) you can drag a rectangle to select a region
 
 Every adjustable parameter carries a label saying whether it changes the universality class, only changes numerical values, is a state variable, or is a numerical method. Next to every quantity that has a theory, "agrees" or "deviates" is shown in real time.
 
-At the bottom of the page there are guided experiments (flow past a disc, heating from below until convection rolls appear, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=wake`, `/?scenario=convection`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
+At the bottom of the page there are guided experiments (waiting for a nucleus in a supercooled 3D liquid, flow past a disc, heating from below until convection rolls appear, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=nucleation`, `/?scenario=wake`, `/?scenario=convection`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
 
 ## Running
 
@@ -179,7 +182,8 @@ The CPU reference implementation is written first and is the specification; the 
 ## Known limits
 
 - Molecular dynamics has at most two species, and there are no chemical bonds between particles (so there is only phase separation, no micelles or membranes).
-- In 3D there are no walls, no stripe initial distribution and no hexatic order parameter; the only structural quantity is the coordination number, which cannot tell a dense liquid from a crystal (about 10 to 11.5 for the liquid, 12 for the crystal), and there is no Steinhardt q₆ yet. In 3D, g(r) is computed only out to one cell width (about 2.5 to 3σ).
+- In 3D there are no walls, no stripe initial distribution and no hexatic order parameter. The coordination number cannot tell a dense liquid from a crystal (about 11.3 in the supercooled liquid, 11.6 after crystallising); crystals are identified by the neighbour-averaged Steinhardt q̄₆ with a threshold of 0.3 (about 0.18 in the liquid, 0.575 for perfect fcc). It does not distinguish fcc, hcp and bcc. In 3D g(r) is computed out to one cell width only (about 2.5 to 3 σ).
+- Crystallisation in 3D is by homogeneous nucleation, and when a nucleus appears is random. One measured run (16,384 particles, ρ = 0.95, quenched from 2.5 to 0.5): the crystalline fraction stayed between 0.03 and 0.06 for about 15,000 steps, then rose, reaching 0.92 at 80,000 steps. With other random seeds the incubation may be much longer, so the last step of the guided experiment may then fail.
 - Flow past the disc and convection are accepted qualitatively; there is no point-by-point theory line. Flow past the disc: over 110,000 particles, disc diameter 60 σ, flow at about half the speed of sound (so compressible); the time-averaged velocity on the lee side of the disc is −0.17 ± 0.03 (incoming flow 1.23), and the wake downstream sways from side to side, but no shedding frequency was measured; at half that speed (Reynolds number about twenty) there is no significant backflow. Convection: with the lower wall ten times hotter than the upper one, at gravity 0.06 the vertical-velocity variation is five times the thermal noise and about four pairs of rolls appear; at gravity 0.02 it is about 1.5 times, with no clear rolls. The critical Rayleigh number was not measured.
 - The "temperature T" counts only motion relative to the centre of mass, so the kinetic energy of a uniform drift is left out; in a sheared flow (channel flow) the layers move at different speeds and that part is still included, so it reads slightly high. For the local temperature see the temperature profile on the hydrodynamic level.
 - The field readback is about 180 KB in the channel geometry (192 × 48 cells), above the 64 KB limit set at the start. Measured, it adds about 0.2 ms to each reduction (116,000 particles, about ten reductions per second), so the resolution was kept.

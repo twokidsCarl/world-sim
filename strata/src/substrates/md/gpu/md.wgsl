@@ -86,6 +86,11 @@ const MODE_SLOTS = 194u;
 @group(0) @binding(12) var<storage, read_write> modeChunks: array<f32>;   // 每块 MODE_SLOTS 个 / MODE_SLOTS per chunk
 @group(0) @binding(13) var<storage, read_write> modes: array<f32>;        // MODE_SLOTS
 // 每个单元：计数、Σvx、Σvy、Σv²、组分 B 的计数 / per cell: count, Σvx, Σvy, Σv², count of species B
+// 每粒子 16 个：q₆ 向量的 13 个分量，局域 q₆，近邻平均的 q̄₆，近邻数。
+// 16 per particle: the 13 components of the q₆ vector, the local q₆, the neighbour-averaged q̄₆, the neighbour count.
+@group(0) @binding(14) var<storage, read_write> q6: array<f32>;
+// 每块一个：Σ q₆，Σ q̄₆，q̄₆ 超过阈值的粒子数 / one per chunk: Σ q₆, Σ q̄₆, number of particles with q̄₆ above the threshold
+@group(0) @binding(15) var<storage, read_write> q6Chunks: array<vec4f>;
 @group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>;
 
 // 粒子是否计入当前的统计：没有选区时全部计入。
@@ -439,4 +444,111 @@ fn addVelocity(@builtin(global_invocation_id) id: vec3u) {
   if (i >= P.n) { return; }
   let v = vel[i];
   vel[i] = vec4f(v.x + P.lambda, v.yzw);
+}
+
+// ---- Steinhardt q₆（三维）。与 ref/reducers.ts 的 addQ6 / steinhardt 相同。
+// ---- Steinhardt q₆ (3D). Same as addQ6 / steinhardt in ref/reducers.ts.
+
+// √g_m，g_m = 2 (6 − m)! / (6 + m)!（m = 0 时为 1）。 / √g_m with g_m = 2 (6 − m)! / (6 + m)! (1 for m = 0).
+const Q6_WEIGHT = array<f32, 7>(1, 0.21821789, 0.034503278, 0.00575054633, 0.00104990131, 0.000223839712, 6.46169591e-05);
+const Q6_CRYSTAL = 0.3;
+
+// 第一步：每个粒子对近邻键方向的 l = 6 球谐分量取平均。
+// First pass: each particle averages the l = 6 spherical-harmonic components of its bond directions.
+@compute @workgroup_size(256)
+fn q6Local(@builtin(global_invocation_id) id: vec3u) {
+  let i = id.x;
+  if (i >= P.n) { return; }
+  let xi = pos[i].xyz;
+  let ci = vec3i(cellCoord(xi));
+  var acc: array<f32, 13>;
+  var nb = 0.0;
+  for (var oz = -1; oz <= 1; oz++) {
+    for (var oy = -1; oy <= 1; oy++) {
+      for (var ox = -1; ox <= 1; ox++) {
+        let c = cellIndex(wrapCell(ci + vec3i(ox, oy, oz)));
+        let count = min(atomicLoad(&cellCount[c]), P.nc.w);
+        for (var k = 0u; k < count; k++) {
+          let j = cellTable[c * P.nc.w + k];
+          if (j == i) { continue; }
+          let d = minImage(pos[j].xyz - xi);
+          let r2 = dot(d, d);
+          if (r2 >= COORD_R2) { continue; }
+          let u = d * inverseSqrt(r2);
+          let z2 = u.z * u.z;
+          // dᵐP₆/dzᵐ，m = 0..6 / dᵐP₆/dzᵐ for m = 0..6
+          let dm = array<f32, 7>(
+            (231.0 * z2 * z2 * z2 - 315.0 * z2 * z2 + 105.0 * z2 - 5.0) / 16.0,
+            (1386.0 * z2 * z2 * u.z - 1260.0 * z2 * u.z + 210.0 * u.z) / 16.0,
+            (6930.0 * z2 * z2 - 3780.0 * z2 + 210.0) / 16.0,
+            (27720.0 * z2 * u.z - 7560.0 * u.z) / 16.0,
+            (83160.0 * z2 - 7560.0) / 16.0,
+            166320.0 * u.z / 16.0,
+            166320.0 / 16.0);
+          acc[0] += Q6_WEIGHT[0] * dm[0];
+          var e = vec2f(1.0, 0.0);
+          for (var m = 1u; m <= 6u; m++) {
+            e = vec2f(e.x * u.x - e.y * u.y, e.x * u.y + e.y * u.x);
+            acc[2u * m - 1u] += Q6_WEIGHT[m] * dm[m] * e.x;
+            acc[2u * m] += Q6_WEIGHT[m] * dm[m] * e.y;
+          }
+          nb += 1.0;
+        }
+      }
+    }
+  }
+  var sum = 0.0;
+  for (var c = 0u; c < 13u; c++) {
+    let v = acc[c] / max(nb, 1.0);
+    q6[i * 16u + c] = v;
+    sum += v * v;
+  }
+  q6[i * 16u + 13u] = sqrt(sum);
+  q6[i * 16u + 15u] = nb;
+}
+
+// 第二步：把自己和各近邻的 q₆ 向量取平均，取模得 q̄₆。只写第 14 个分量，读的是别的分量。
+// Second pass: average the q₆ vectors of the particle and its neighbours; the length is q̄₆.
+// Only component 14 is written; the others are the ones read.
+@compute @workgroup_size(256)
+fn q6Average(@builtin(global_invocation_id) id: vec3u) {
+  let i = id.x;
+  if (i >= P.n) { return; }
+  let xi = pos[i].xyz;
+  let ci = vec3i(cellCoord(xi));
+  var acc: array<f32, 13>;
+  for (var c = 0u; c < 13u; c++) { acc[c] = q6[i * 16u + c]; }
+  var nb = 1.0;
+  for (var oz = -1; oz <= 1; oz++) {
+    for (var oy = -1; oy <= 1; oy++) {
+      for (var ox = -1; ox <= 1; ox++) {
+        let cell = cellIndex(wrapCell(ci + vec3i(ox, oy, oz)));
+        let count = min(atomicLoad(&cellCount[cell]), P.nc.w);
+        for (var k = 0u; k < count; k++) {
+          let j = cellTable[cell * P.nc.w + k];
+          if (j == i) { continue; }
+          let d = minImage(pos[j].xyz - xi);
+          if (dot(d, d) >= COORD_R2) { continue; }
+          for (var c = 0u; c < 13u; c++) { acc[c] += q6[j * 16u + c]; }
+          nb += 1.0;
+        }
+      }
+    }
+  }
+  var sum = 0.0;
+  for (var c = 0u; c < 13u; c++) { sum += (acc[c] / nb) * (acc[c] / nb); }
+  q6[i * 16u + 14u] = sqrt(sum);
+}
+
+@compute @workgroup_size(64)
+fn q6Reduce(@builtin(global_invocation_id) id: vec3u) {
+  let start = id.x * P.chunk;
+  if (start >= P.n) { return; }
+  let end = min(start + P.chunk, P.n);
+  var s = vec4f(0.0);
+  for (var i = start; i < end; i++) {
+    let avg = q6[i * 16u + 14u];
+    s += vec4f(q6[i * 16u + 13u], avg, f32(avg > Q6_CRYSTAL), 0.0);
+  }
+  q6Chunks[id.x] = s;
 }

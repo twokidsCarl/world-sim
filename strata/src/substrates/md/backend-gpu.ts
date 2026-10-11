@@ -62,6 +62,9 @@ const ENTRY_BINDINGS = {
   mergeModes: [0, 12, 13],
   soundKick: [0, 1, 2],
   addVelocity: [0, 2],
+  q6Local: [0, 1, 5, 6, 14],
+  q6Average: [0, 1, 5, 6, 14],
+  q6Reduce: [0, 14, 15],
 } as const
 
 type Entry = keyof typeof ENTRY_BINDINGS
@@ -79,6 +82,8 @@ export class MdGpuBackend implements MdBackend {
   tracked: ArrayLike<number> | null = null
   /** 每粒子：位力份额、Re ψ6、Im ψ6、近邻数。 / Per particle: virial share, Re ψ6, Im ψ6, neighbour count. */
   readonly aux: GPUBuffer
+  /** 每粒子 16 个浮点；第 14 个是 q̄₆（仅三维）。 / 16 floats per particle; number 14 is q̄₆ (3D only). */
+  readonly q6!: GPUBuffer
 
   private device: GPUDevice
   private p: Params
@@ -162,6 +167,10 @@ export class MdGpuBackend implements MdBackend {
     make(11, FIELD_WORDS * 4)
     make(12, this.chunks * MODE_SLOTS * 4)
     make(13, MODE_SLOTS * 4)
+    // q₆ 只在三维下用到；二维时留一个占位的小缓冲。
+    // q₆ is used in 3D only; in 2D a small placeholder buffer stands in.
+    this.q6 = make(14, this.dim === 3 ? this.n * 64 : 64)
+    make(15, this.chunks * 16)
     this.seed = seed
 
     const pos = new Float32Array(this.n * 4)
@@ -412,6 +421,7 @@ export class MdGpuBackend implements MdBackend {
     const wantRdf = ids.includes('rdf')
     const wantField = ids.includes('field')
     const wantModes = ids.includes('modes')
+    const wantQ6 = ids.includes('q6') && this.dim === 3
     this.lastReduceStep = step
     this.reducing++
 
@@ -422,9 +432,10 @@ export class MdGpuBackend implements MdBackend {
     const fieldWords = gx * gy * 5
     const fieldBytes = wantField ? fieldWords * 4 : 0
     const modeBytes = wantModes ? MODE_SLOTS * 4 : 0
+    const q6Bytes = wantQ6 ? this.chunks * 16 : 0
     const staging = this.device.createBuffer({
       // 末尾 16 字节：第 0 号粒子的位置。 / The last 16 bytes: the position of particle 0.
-      size: partialBytes + histBytes + heatBytes + fieldBytes + modeBytes + 16,
+      size: partialBytes + histBytes + heatBytes + fieldBytes + modeBytes + 16 + q6Bytes,
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
     })
     this.writeParams(vmax)
@@ -440,11 +451,19 @@ export class MdGpuBackend implements MdBackend {
       this.dispatch(pass, 'densityModes', this.chunks, 64)
       this.dispatch(pass, 'mergeModes', MODE_SLOTS, 64)
     }
+    if (wantQ6) {
+      this.dispatch(pass, 'q6Local', this.n)
+      this.dispatch(pass, 'q6Average', this.n)
+      this.dispatch(pass, 'q6Reduce', this.chunks, 64)
+    }
     this.dispatch(pass, 'reduceChunks', this.chunks, 64)
     pass.end()
     encoder.copyBufferToBuffer(this.buffers[8]!, 0, staging, 0, partialBytes)
     encoder.copyBufferToBuffer(this.buffers[9]!, 0, staging, partialBytes, histBytes)
     encoder.copyBufferToBuffer(this.buffers[10]!, 0, staging, partialBytes + histBytes, heatBytes)
+    if (wantQ6) {
+      encoder.copyBufferToBuffer(this.buffers[15]!, 0, staging, partialBytes + histBytes + heatBytes + fieldBytes + modeBytes + 16, q6Bytes)
+    }
     if (wantField) {
       encoder.copyBufferToBuffer(this.buffers[11]!, 0, staging, partialBytes + histBytes + heatBytes, fieldBytes)
     }
@@ -546,6 +565,18 @@ export class MdGpuBackend implements MdBackend {
         strideX: modeStride(this.box[0]!),
         strideY: modeStride(this.box[1]!),
       }
+    }
+    if (wantQ6) {
+      const part = new Float32Array(raw, partialBytes + histBytes + heatBytes + fieldBytes + modeBytes + 16, this.chunks * 4)
+      let local = 0
+      let averaged = 0
+      let crystalline = 0
+      for (let c = 0; c < this.chunks; c++) {
+        local += part[4 * c]!
+        averaged += part[4 * c + 1]!
+        crystalline += part[4 * c + 2]!
+      }
+      frame.q6 = { local: local / n, averaged: averaged / n, crystalFraction: crystalline / n }
     }
     if (wantRdf) {
       const counts = Float64Array.from(hist.subarray(RDF_OFFSET, RDF_OFFSET + RDF_BINS))
