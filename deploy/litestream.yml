@@ -1,0 +1,13 @@
+# 把数据库连续复制到对象存储（任何兼容 S3 的都行）。机器坏了，在新机器上能恢复到几秒前。
+# 访问密钥从环境变量 LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY 读。
+# Continuously replicate the database to object storage (anything S3-compatible). If the
+# host is lost, a new one can be restored to within seconds. The access keys are read from
+# LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY.
+dbs:
+  - path: /srv/state/db/loom.sqlite
+    replicas:
+      - type: s3
+        bucket: ${BACKUP_BUCKET}
+        path: loom
+        endpoint: ${BACKUP_ENDPOINT}
+        region: ${BACKUP_REGION}

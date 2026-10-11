@@ -28,13 +28,14 @@ async def _lifespan(_app: FastAPI):
         from .play import keeper
 
         cloud.ensure_clone()
+        cloud.seed_data()  # play 有自己的数据目录，过渡期的名片从这里读 / play has its own data directory and reads the interim card files from it
         keeper.start()
     elif config.role() == "hub":
         import threading
 
         from . import cloud
 
-        threading.Thread(target=cloud.wait_and_seed, daemon=True, name="seed-data").start()
+        threading.Thread(target=cloud.keep_importing, daemon=True, name="seed-data").start()
     yield
 
 

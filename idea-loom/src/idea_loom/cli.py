@@ -210,6 +210,50 @@ def play_build(name: Optional[str] = typer.Argument(None, help="不给就全部�
             typer.echo(state.log[-1200:], err=True)
 
 
+db_app = typer.Typer(help="数据库：设了 IDEA_LOOM_DB 时事件日志存在这里 / the database that holds the event logs when IDEA_LOOM_DB is set", no_args_is_help=True)
+app.add_typer(db_app, name="db")
+
+
+def _need_db() -> None:
+    if store.db_path() is None:
+        typer.echo("没有设置 IDEA_LOOM_DB：现在用的是文件。 / IDEA_LOOM_DB is not set: files are in use.")
+        raise typer.Exit(1)
+
+
+@db_app.command("status")
+def db_status() -> None:
+    """每条日志有多少事件。 / How many events each log holds."""
+    _need_db()
+    typer.echo(str(store.db_path()))
+    for stream, n in store.counts().items():
+        typer.echo(f"  {stream:<10} {n}")
+
+
+@db_app.command("import")
+def db_import(main: bool = typer.Option(True, help="也把 origin/main 上的事件文件并进来 / also merge the event files on origin/main")) -> None:
+    """把现有的事件文件并进数据库。可以反复做，不会重复。 / Merge the existing event files into the database. Repeatable without duplicates."""
+    from . import cloud
+
+    _need_db()
+    for label, added in (("文件 / files", cloud.migrate_files()), ("main", cloud.import_from_main() if main else {})):
+        for stream, n in added.items():
+            typer.echo(f"{label}  {stream:<10} +{n}")
+
+
+@db_app.command("export")
+def db_export(out: str = typer.Argument(..., help="导出到哪个目录 / the directory to export into")) -> None:
+    """把 idea、愿望、任务导出成仓库里那种事件文件。 / Export ideas, wishes and tasks as the event files the repository holds."""
+    from pathlib import Path
+
+    _need_db()
+    target = Path(out)
+    target.mkdir(parents=True, exist_ok=True)
+    for stream in store.DATA_STREAMS:
+        text = store.export_text(stream)
+        (target / f"{stream}.jsonl").write_text(text, encoding="utf-8")
+        typer.echo(f"{stream:<10} {text.count(chr(10))}")
+
+
 @app.command("build-ui")
 def build_ui() -> None:
     """把 idea-loom 自己的界面构建成静态文件，由后端直接提供。 / Build idea-loom's own UI into static files served by the backend."""

@@ -78,8 +78,7 @@ def cache_dir() -> Path:
 
 
 def runs_dir() -> Path:
-    override = os.environ.get("IDEA_LOOM_RUNS")
-    return Path(override) if override else Path(__file__).resolve().parents[2] / "runs"
+    return store.runs_dir()
 
 
 def _neutral_cwd() -> str:

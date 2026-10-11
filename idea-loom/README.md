@@ -245,6 +245,15 @@ the world-sim git history and skips itself without it.
 every call in `llm.jsonl`, the action trail in `trail.jsonl`, the assistant's
 conversations under `assistant/` and the jobs under `jobs/`.
 
+以上是本地的存法。设了 `IDEA_LOOM_DB`（云端）之后，`ideas`、`wishes`、`tasks`、`trail`、`proposals`、`llm` 这六条日志改存进一个 SQLite 文件的事件表，读写的接口不变（`store.py`）；仓库里的文件变成导出的记录。`uv run idea-loom db import` 把现有的文件并进数据库（可以反复做，不会重复），`db export <目录>` 导出成和原来逐字节相同的文件，`db status` 看每条日志有多少事件。
+
+That is how things are stored locally. With `IDEA_LOOM_DB` set (the cloud), the six logs
+`ideas`, `wishes`, `tasks`, `trail`, `proposals` and `llm` go into an event table in one
+SQLite file instead, behind the same read and write interface (`store.py`), and the files
+in the repository become an exported record. `uv run idea-loom db import` merges the
+existing files into the database (repeatable, never duplicating), `db export <dir>` writes
+files byte-identical to the originals, and `db status` shows how many events each log has.
+
 愿望进 git，也就是公开的。如果不想公开，把 `data/wishes.jsonl` 移到 `runs/` 下并改 `wishes.py` 里的路径。
 
 Wishes are in git and therefore public. To keep them private, move `data/wishes.jsonl`
@@ -272,6 +281,7 @@ uv run idea-loom translate          # 把还没有英文的译成英文 / transl
 uv run idea-loom sync               # 生成并开 PR / regenerate and open a PR
 uv run idea-loom import --force     # 重新导入 / re-import from git history
 uv run idea-loom schema             # 数据契约的 JSON Schema / JSON Schema of the contract
+uv run idea-loom db status          # 数据库存法时：每条日志有多少事件（另有 import、export）/ with the database: events per log (also import, export)
 uv run idea-loom wishes list        # 许愿池（给处理愿望的 Claude Code 用）/ the wish pool, for a Claude Code session
 uv run idea-loom wishes accept <id> # 另有 show、note、link、done、decline / also show, note, link, done, decline
 cd web && bun run gen:types         # 重新生成前端类型 / regenerate the TS types
@@ -282,7 +292,7 @@ cd web && bun run gen:types         # 重新生成前端类型 / regenerate the 
 ```
 src/idea_loom/
   model.py      数据契约 / data contract
-  store.py      只追加的 JSONL / append-only JSONL
+  store.py      只追加的事件日志：文件或数据库 / append-only event logs: files or the database
   ideas.py      折叠、血缘、覆盖表、内核计数 / fold, lineage, coverage, kernel counts
   markdown.py   读 IDEAS.md / parse IDEAS.md
   importer.py   从 git 历史导入 / import from git history
