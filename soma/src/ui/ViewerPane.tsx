@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { debug } from '../debug.ts'
 import { useApp } from '../state/store.ts'
+import { setUrlCamera } from '../state/urlSync.ts'
 import type { Viewer } from '../viewer/Viewer.ts'
 import { ComparePane } from './ComparePane.tsx'
+import { EmbedControls } from './EmbedControls.tsx'
 import { Icon } from './Icon.tsx'
 
 function bodyUrl(dataset: string): string {
@@ -31,6 +33,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   const skinSeeThrough = useApp((s) => s.skinSeeThrough)
   const skinMap = useApp((s) => (s.skinMapMode === 'off' ? undefined : s.skinMaps?.maps.find((m) => m.id === s.skinMapMode)))
   const hasSelection = selection.ids.length > 0
+  const embed = useApp((s) => s.embed)
 
   const viewerRef = useRef<Viewer | null>(null)
   const [ready, setReady] = useState(false)
@@ -53,7 +56,10 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
         if (cancelled) return
         viewer = new Viewer(host, firstGraph.current, bodyUrl(app.dataset), {
           forceWebGL: params.get('renderer') === 'webgl',
+          embed: app.embed,
         })
+        viewer.autoLoad = true
+        viewer.onCameraSettled = (cam) => setUrlCamera(cam)
         await viewer.init()
         if (cancelled) return viewer.dispose()
         viewerRef.current = viewer
@@ -83,29 +89,36 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
     }
   }, [])
 
-  // 加载当前人体的几何；切换人体时释放旧的并保留视角
-  // load the current body's geometry; a body switch frees the old one and keeps the camera
+  // 加载当前人体的几何：只取显示状态需要的系统，隐藏的系统等到显示时再取；切换人体时释放旧的并保留视角
+  // load the current body's geometry: only the systems the display state needs, hidden ones when
+  // they are shown; a body switch frees the old one and keeps the camera
   useEffect(() => {
     const viewer = viewerRef.current
     if (!ready || !viewer) return
     const app = useApp.getState()
-    let cancelled = false
     if (viewer.isStale(graph)) viewer.setBody(graph, bodyUrl(app.dataset), { keepCamera: true })
-    viewer
-      .loadSystems((p) =>
-        app.setLoad({ phase: 'loading', progress: 0.1 + 0.9 * (p.total ? p.done / p.total : 1), message: `加载模型… ${p.done}/${p.total}`, loaded: [...p.loaded] }),
-      )
-      .then((problems) => {
-        if (cancelled || viewer.isStale(graph)) return
-        for (const p of problems) app.addNotice(p)
-        app.setLoad({ phase: 'ready', progress: 1, message: '' })
+    const reported = new Set<string>()
+    viewer.onLoad = (p) => {
+      if (viewer.isStale(graph)) return
+      for (const problem of p.problems) {
+        if (!reported.has(problem)) {
+          reported.add(problem)
+          app.addNotice(problem)
+        }
+      }
+      const pending = p.done < p.total
+      app.setLoad({
+        phase: pending ? 'loading' : 'ready',
+        progress: pending ? 0.1 + 0.9 * (p.total ? p.done / p.total : 1) : 1,
+        message: pending ? `加载模型… ${p.done}/${p.total}` : '',
+        loaded: p.loaded,
+        bytes: p.bytes,
+        bytesTotal: p.bytesTotal,
       })
-      .catch((err: unknown) => {
-        console.error('[soma] geometry load failed', err)
-        if (!cancelled) app.setLoad({ phase: 'error', message: `模型加载失败：${err instanceof Error ? err.message : String(err)}` })
-      })
+    }
+    viewer.invalidateState()
     return () => {
-      cancelled = true
+      viewer.onLoad = null
     }
   }, [ready, graph])
 
@@ -129,10 +142,11 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   } else if (selection.ids.length > 1) selectionLabel = `已选择 ${selection.ids.length} 个结构`
 
   return (
-    <div className={`viewer${compare ? ' comparing' : ''}`}>
+    <div className={`viewer${compare ? ' comparing' : ''}${embed ? ' embedded' : ''}`}>
       <div className="viewer-host" ref={hostRef} />
       {compare && ready && <ComparePane graph={graph} dataset={dataset} system={compare.system} />}
 
+      {embed && <EmbedControls graph={graph} />}
       <div className="viewer-tools">
         <button className="tool-btn" onClick={() => app.requestHome()} title="复位视角 Reset view">
           <Icon name="home" /> <span>复位</span>
@@ -221,7 +235,10 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
           <div className="loading-bar">
             <div style={{ width: `${Math.round(load.progress * 100)}%` }} />
           </div>
-          <span>{load.message}</span>
+          <span>
+            {load.message}
+            {load.bytesTotal ? ` · ${(Math.min(load.bytes ?? 0, load.bytesTotal) / 1048576).toFixed(1)} / ${(load.bytesTotal / 1048576).toFixed(1)} MB` : ''}
+          </span>
           <ul className="loading-systems">
             {graph.data.systems
               .filter((sys) => sys.glb)

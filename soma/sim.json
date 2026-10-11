@@ -1,0 +1,169 @@
+{
+  "title": {
+    "zh": "三维人体解剖",
+    "en": "3D human anatomy"
+  },
+  "level": "L4",
+  "ready": true,
+  "web": {
+    "dir": ".",
+    "build": [
+      [
+        "bun",
+        "install"
+      ],
+      [
+        "bunx",
+        "vite",
+        "build"
+      ]
+    ],
+    "dist": "dist"
+  },
+  "cards": [
+    {
+      "id": "peel",
+      "title": {
+        "zh": "一具可以一层层剥开的身体",
+        "en": "A body you can peel layer by layer"
+      },
+      "hint": {
+        "zh": "拖动下方滑块，从皮肤一层层剥到骨骼；拖动旋转，点一下之后可用滚轮缩放。首次加载约 20 MB",
+        "en": "Drag the slider to peel from skin down to bone; drag to rotate, click once to enable wheel zoom. The first load is about 20 MB"
+      },
+      "url": "/?peel=0"
+    },
+    {
+      "id": "skeleton",
+      "title": {
+        "zh": "只看骨骼",
+        "en": "The skeleton alone"
+      },
+      "hint": {
+        "zh": "点任意一块骨看名称；双击聚焦。只下载骨骼（约 2.5 MB），加载很快",
+        "en": "Click any bone for its name; double-click to focus. Only the skeleton is fetched (about 2.5 MB), so it loads fast"
+      },
+      "url": "/?sys=ske"
+    },
+    {
+      "id": "nerves",
+      "title": {
+        "zh": "骨架上的神经",
+        "en": "Nerves on the skeleton"
+      },
+      "hint": {
+        "zh": "神经只有零点几毫米粗：指针靠近就能选中，不必正好点在线上。试着沿坐骨神经一路点下去",
+        "en": "Nerves are a fraction of a millimetre thick: the pointer only has to come near one to pick it. Try following the sciatic nerve down the leg"
+      },
+      "url": "/?sys=ske,ner"
+    },
+    {
+      "id": "biceps",
+      "title": {
+        "zh": "一块肌肉的起止点和神经支配",
+        "en": "One muscle: origin, insertion, innervation"
+      },
+      "hint": {
+        "zh": "已选中左肱二头肌长头。在完整界面里可以看到它的起点、止点、支配神经和血供，逐个点开",
+        "en": "The long head of the left biceps is selected. Open the full UI to see its origin, insertion, nerve and blood supply, each one clickable"
+      },
+      "url": "/?sys=ske,mus&sel=FJ1478M&focus=1"
+    },
+    {
+      "id": "thorax-section",
+      "title": {
+        "zh": "横断胸部",
+        "en": "A cut through the thorax"
+      },
+      "hint": {
+        "zh": "拖动“剖切”滑块上下移动切面，切口按组织填色：看心、肺、大血管在胸腔里的位置关系",
+        "en": "Drag the section slider to move the cut; the cut faces are filled by tissue. See how heart, lungs and great vessels sit in the chest"
+      },
+      "url": "/?sys=mus,ske,cv,res,dig,ner&cut=a770"
+    },
+    {
+      "id": "dermatomes",
+      "title": {
+        "zh": "皮节图",
+        "en": "Dermatome map"
+      },
+      "hint": {
+        "zh": "鼠标移到皮肤上看是哪一节脊神经的皮节，点一下高亮。这是教学示意图，边界因人而异",
+        "en": "Hover the skin to see which spinal segment supplies it, click to highlight. A teaching diagram: real boundaries vary between people"
+      },
+      "url": "/?sys=int&map=d"
+    },
+    {
+      "id": "median-nerve",
+      "title": {
+        "zh": "正中神经和它管的皮肤",
+        "en": "The median nerve and the skin it supplies"
+      },
+      "hint": {
+        "zh": "皮肤半透明，能看到正中神经一路走到手掌，以及它支配的那片皮肤。切换到“皮节”对比两种分区",
+        "en": "The skin is see-through: follow the median nerve to the palm and the patch of skin it supplies. Switch to dermatomes to compare the two maps"
+      },
+      "url": "/?sys=int,ske,ner&map=n&reg=35&see=1&sel=FMA14385&focus=1"
+    },
+    {
+      "id": "squat",
+      "title": {
+        "zh": "摆姿势：深蹲",
+        "en": "Posed: deep squat"
+      },
+      "hint": {
+        "zh": "进来会自己蹲下。点下方按钮换别的姿势；这是纯运动学演示，深屈时软组织会互相穿插",
+        "en": "It squats by itself. Use the buttons for other poses; this is kinematics only, so soft tissue interpenetrates in deep flexion"
+      },
+      "url": "/?sys=ske,mus&pose=squat"
+    },
+    {
+      "id": "elbow",
+      "title": {
+        "zh": "屈肘时的上臂肌肉",
+        "en": "Arm muscles as the elbow bends"
+      },
+      "hint": {
+        "zh": "屈肘 90°，已选中肱二头肌：看它随关节变短变粗。点“静止”再点“屈肘”反复对比",
+        "en": "Elbow at 90° with the biceps selected: watch it shorten and thicken. Toggle between rest and the flexed pose to compare"
+      },
+      "url": "/?sys=ske,mus&pose=elbow90&sel=FJ1478M&focus=1"
+    },
+    {
+      "id": "breathing",
+      "title": {
+        "zh": "呼吸时的胸廓",
+        "en": "The rib cage breathing"
+      },
+      "hint": {
+        "zh": "各肋循环上提和下降。从侧面和上方看，下位肋像桶柄一样向外张开",
+        "en": "The ribs rise and fall in a cycle. From the side and from above, the lower ribs swing out like bucket handles"
+      },
+      "url": "/?sys=ske,res&breath=1"
+    },
+    {
+      "id": "heart",
+      "title": {
+        "zh": "心脏和大血管",
+        "en": "The heart and great vessels"
+      },
+      "hint": {
+        "zh": "只显示心脏、主动脉、肺动脉干和腔静脉。点任意一部分看名称，拖动转到背面看肺静脉入口",
+        "en": "Only the heart, aorta, pulmonary trunk and venae cavae are shown. Click any part for its name; turn it round to see where the veins enter"
+      },
+      "url": "/?iso=FMA7088,FMA3734,FMA8615,FMA10951,FJ3645&focus=1"
+    },
+    {
+      "id": "knee",
+      "title": {
+        "zh": "膝关节：从上方看半月板和韧带",
+        "en": "The knee from above: menisci and ligaments"
+      },
+      "hint": {
+        "zh": "已隐去股骨和髌骨，只留胫骨、腓骨、膝关节的韧带和半月板。从上往下看胫骨平台：两块半月板、前后交叉韧带，逐个点一点",
+        "en": "Femur and patella are hidden; tibia, fibula and the knee ligaments and menisci remain. Look down on the tibial plateau: two menisci and the two cruciate ligaments — click each"
+      },
+      "url": "/?iso=FMA44580,FMA64019,FMA24476,FMA24479&cam=0.101,0.567,0.250,0.071,0.367,0.08"
+    }
+  ]
+}

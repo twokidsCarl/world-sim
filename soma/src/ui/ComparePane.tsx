@@ -88,6 +88,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             poseJoint: null,
             jointScales: null,
             leftTab: 'display',
+            cameraRequest: null,
           }
         }
         viewer = new Viewer(host, g, `${import.meta.env.BASE_URL}anatomy/${other}/`, {

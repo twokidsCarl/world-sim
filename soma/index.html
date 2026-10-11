@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>soma — 3D 人体解剖</title>
+    <!-- 脚本加载前就用舞台的底色，嵌在 iframe 里时不闪白 / the stage colour before any script runs, so an iframe does not flash white -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #15181d;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

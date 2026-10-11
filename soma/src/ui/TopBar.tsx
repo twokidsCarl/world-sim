@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useApp } from '../state/store.ts'
+import { currentLink } from '../state/urlSync.ts'
 import { Icon } from './Icon.tsx'
 import { SearchBox } from './SearchBox.tsx'
 
@@ -23,6 +25,18 @@ export function TopBar() {
   const app = useApp.getState()
   const cautions = graph?.cautions.length ?? 0
   const isBody = dataset === 'male' || dataset === 'female'
+  const [copied, setCopied] = useState(false)
+  // 复制当前视图的链接（状态都编码在查询参数里）/ copy a link to the current view (all state is in the query)
+  const copyLink = async (): Promise<void> => {
+    const link = currentLink()
+    try {
+      await navigator.clipboard.writeText(link)
+    } catch {
+      window.prompt('复制此链接 / Copy this link', link)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1600)
+  }
   const hasSkeleton = !!graph?.data.systems.some((s) => s.id === 'skeletal' && s.partCount > 0)
   return (
     <header className="topbar">
@@ -66,6 +80,9 @@ export function TopBar() {
             初版 · {cautions} 条注意事项
           </button>
         )}
+        <button className="text-btn" onClick={() => void copyLink()} title="复制能直接打开当前视图的链接 / Copy a link that opens this view">
+          {copied ? '已复制 Copied' : '复制链接'}
+        </button>
         <button className="text-btn" onClick={() => app.setAboutOpen(true)}>
           数据来源与声明
         </button>

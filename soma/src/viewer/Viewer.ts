@@ -102,6 +102,11 @@ export interface ViewerStats {
   meshes: number
   bvhBuilt: number
   bvhTotal: number
+  /** 渲染循环是否暂停（页面隐藏或滚出视口）及累计 tick 数 / Whether the loop is paused (page hidden or scrolled out of view) and ticks so far. */
+  paused: boolean
+  ticks: number
+  /** 已加载几何的系统 / Systems whose geometry is loaded. */
+  systems: SystemId[]
 }
 
 export interface BenchResult {
@@ -154,6 +159,7 @@ export type ViewState = Pick<
   | 'poseJoint'
   | 'jointScales'
   | 'leftTab'
+  | 'cameraRequest'
 >
 
 export interface ViewerOptions {
@@ -161,6 +167,14 @@ export interface ViewerOptions {
   /** 显示状态的来源；默认是应用 store。 */
   /** Where display state comes from; defaults to the app store. */
   state?: () => ViewState
+  /**
+   * 嵌入在别的页面里：滚轮只在画布获得焦点（点过一下）或按住 Ctrl / ⌘ 时缩放，否则让页面照常滚动；
+   * 触摸时未激活前竖向滑动留给页面。
+   * Embedded in another page: the wheel zooms only once the canvas has focus (after a click) or
+   * with Ctrl / ⌘ held, otherwise the page scrolls as usual; before activation a vertical touch
+   * swipe is left to the page.
+   */
+  embed?: boolean
   /** false：只能环绕，不悬停、不选择（对照窗格）。 */
   /** false: orbit only — no hover, no selection (compare pane). */
   interactive?: boolean
@@ -176,8 +190,14 @@ export interface CameraPose {
 }
 
 export interface LoadProgress {
+  /** 已请求的系统中已结束（成功或失败）的个数与总数 / Finished (loaded or failed) and total among the requested systems. */
   done: number
   total: number
+  /** 已下载 / 预计的字节数 / Bytes received / expected. */
+  bytes: number
+  bytesTotal: number
+  /** 这一批请求中遇到的问题 / Problems met so far. */
+  problems: string[]
   /** 几何已到达的系统，按到达顺序。 */
   /** Systems whose geometry has arrived, in arrival order. */
   loaded: SystemId[]
@@ -242,6 +262,26 @@ export class Viewer {
   /** 已写入顶点属性的绑定（与 store 中的不同则需重新写入）/ The rig whose influences are in the vertex attributes. */
   private appliedRig: LoadedRig | null = null
   private loadComplete = false
+  /** 各系统几何的加载状态；没有条目表示还没请求 / Load state of each system's geometry; no entry = not requested yet. */
+  private systemLoad = new Map<SystemId, 'pending' | 'loaded' | 'failed'>()
+  private systemBytes = new Map<SystemId, { loaded: number; total: number }>()
+  private loadedOrder: SystemId[] = []
+  private loadProblems: string[] = []
+  private attachedObjects = 0
+  /** 为真时按显示状态自动加载需要的系统（主视图）；对照窗格自己指定 / When true, systems are fetched as the display state needs them (main view); the compare pane names its own. */
+  autoLoad = false
+  /** 加载进度回调 / Load progress callback. */
+  onLoad: ((p: LoadProgress) => void) | null = null
+  /** 用户动过相机之后（或 URL 设过相机）报告位置与目标；复位时报告 undefined。 */
+  /** Reports position and target once the user has moved the camera (or a URL set it); undefined after a reset. */
+  onCameraSettled: ((cam: { p: [number, number, number]; t: [number, number, number] } | undefined) => void) | null = null
+  private cameraNonce = 0
+  private readonly embed: boolean
+  /** 暂停的原因（页面隐藏、滚出视口）；非空时渲染循环停止 / Why the loop is paused (page hidden, scrolled out of view); non-empty = stopped. */
+  private readonly pauseReasons = new Set<string>()
+  private pausedAt = 0
+  private tickCount = 0
+  private intersection: IntersectionObserver | null = null
   /** 屏幕上实际显示的姿势（过渡动画中的中间值）/ The pose actually on screen (mid-transition values included). */
   private displayPose: Pose = {}
   private poseTween: { from: Pose; to: Pose; t0: number; ms: number } | null = null
@@ -325,6 +365,7 @@ export class Viewer {
     this.baseUrl = baseUrl
     this.source = opts.state ?? useApp.getState
     this.interactive = opts.interactive ?? true
+    this.embed = opts.embed ?? false
     this.renderer = new WebGPURenderer({ antialias: true, forceWebGL: opts.forceWebGL ?? false })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     this.renderer.setClearColor(new Color('#15181d'), 1)
@@ -372,6 +413,11 @@ export class Viewer {
     this.controls.addEventListener('start', () => {
       this.tween = null
     })
+    this.controls.addEventListener('end', () => this.reportCamera())
+    if (this.embed) {
+      canvas.tabIndex = 0
+      canvas.style.touchAction = 'pan-y'
+    }
     this.home(false)
   }
 
@@ -392,18 +438,81 @@ export class Viewer {
     el.addEventListener('pointermove', this.onPointerMove)
     el.addEventListener('pointerleave', this.onPointerLeave)
     el.addEventListener('contextmenu', this.onContextMenu)
+    if (this.embed) {
+      el.addEventListener('wheel', this.onEmbedWheel, { capture: true })
+      el.addEventListener('focus', this.onEmbedFocus)
+      el.addEventListener('blur', this.onEmbedBlur)
+    }
+    document.addEventListener('visibilitychange', this.onVisibility)
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.intersection = new IntersectionObserver((entries) => {
+        for (const e of entries) this.setPaused('offscreen', !e.isIntersecting)
+      })
+      this.intersection.observe(el)
+    }
+    if (document.visibilityState === 'hidden') this.pauseReasons.add('hidden')
 
     if (this.source === useApp.getState) {
       this.unsubscribe = useApp.subscribe(() => {
         this.syncNeeded = true
       })
     }
+    if (this.pauseReasons.size === 0) this.raf = requestAnimationFrame(this.tick)
+    else this.pausedAt = performance.now()
+  }
+
+  private onVisibility = (): void => this.setPaused('hidden', document.visibilityState === 'hidden')
+
+  /**
+   * 暂停 / 恢复渲染循环（连同姿势与呼吸动画、空闲时的 BVH 预构建）。恢复时把各动画的起始时刻
+   * 顺延暂停的时长，所以动画不会跳。
+   * Pause / resume the render loop (with pose and breathing animation and the idle BVH
+   * pre-builds). On resume every animation's start time is shifted by the paused duration, so
+   * nothing jumps.
+   */
+  setPaused(reason: string, on: boolean): void {
+    const was = this.pauseReasons.size > 0
+    if (on) this.pauseReasons.add(reason)
+    else this.pauseReasons.delete(reason)
+    const now = this.pauseReasons.size > 0
+    if (was === now || this.disposed) return
+    if (now) {
+      cancelAnimationFrame(this.raf)
+      this.pausedAt = performance.now()
+      return
+    }
+    const dt = performance.now() - this.pausedAt
+    if (this.tween) this.tween.t0 += dt
+    if (this.poseTween) this.poseTween.t0 += dt
+    this.breathT0 += dt
+    this.lastFrameT = 0
+    this.dirty = true
     this.raf = requestAnimationFrame(this.tick)
+  }
+
+  private onEmbedWheel = (e: WheelEvent): void => {
+    // 未激活且没按修饰键：不交给相机控制器，也不阻止默认行为，页面照常滚动
+    // not activated and no modifier: keep it from the camera controls and let the page scroll
+    if (document.activeElement !== this.renderer.domElement && !e.ctrlKey && !e.metaKey) e.stopImmediatePropagation()
+  }
+  private onEmbedFocus = (): void => {
+    this.renderer.domElement.style.touchAction = 'none'
+  }
+  private onEmbedBlur = (): void => {
+    this.renderer.domElement.style.touchAction = 'pan-y'
+  }
+
+  private reportCamera(): void {
+    const p = this.camera.position
+    const t = this.controls.target
+    this.onCameraSettled?.({ p: [p.x, p.y, p.z], t: [t.x, t.y, t.z] })
   }
 
   dispose(): void {
     this.disposed = true
     cancelAnimationFrame(this.raf)
+    document.removeEventListener('visibilitychange', this.onVisibility)
+    this.intersection?.disconnect()
     this.unsubscribe?.()
     this.resizeObserver?.disconnect()
     const el = this.renderer.domElement
@@ -415,6 +524,9 @@ export class Viewer {
     el.removeEventListener('pointermove', this.onPointerMove)
     el.removeEventListener('pointerleave', this.onPointerLeave)
     el.removeEventListener('contextmenu', this.onContextMenu)
+    el.removeEventListener('wheel', this.onEmbedWheel, { capture: true })
+    el.removeEventListener('focus', this.onEmbedFocus)
+    el.removeEventListener('blur', this.onEmbedBlur)
     this.controls.dispose()
     this.batches?.dispose()
     this.skinLayer?.dispose()
@@ -451,6 +563,11 @@ export class Viewer {
     this.poseRt = null
     this.appliedRig = null
     this.loadComplete = false
+    this.systemLoad = new Map()
+    this.systemBytes = new Map()
+    this.loadedOrder = []
+    this.loadProblems = []
+    this.attachedObjects = 0
     this.poseTween = null
     this.displayPose = {}
     this.posed = false
@@ -481,49 +598,72 @@ export class Viewer {
     if (!opts.keepCamera) this.home(false)
   }
 
-  /**
-   * 加载各系统的 GLB（全部，或仅 `only`），把每个部件烘焙到世界坐标。每个系统的文件一到就显示；缺失或损坏的文件会被报告并跳过。返回可读的问题列表。
-   * Load the systems' GLBs (all, or just `only`), baking each part to world space. Each
-   * system appears as soon as its file has arrived; a missing or broken file is reported
-   * and skipped. Returns human-readable problems.
-   */
-  async loadSystems(onProgress: (p: LoadProgress) => void, only?: readonly SystemId[]): Promise<string[]> {
-    const token = this.bodyToken
-    const graph = this.graph
-    const loader = new GLTFLoader()
-    loader.setMeshoptDecoder(MeshoptDecoder)
-    const systems = graph.data.systems.filter((s) => s.glb && (!only || only.includes(s.id)))
-    const problems: string[] = []
-    const loaded: SystemId[] = []
-    let done = 0
-
+  /** 场景表示（合批或逐网格），按整个人体的规模一次建好；各系统的几何之后陆续填入。 */
+  /** The scene representation (batched or per-mesh), sized once for the whole body; systems are filled in as they arrive. */
+  private ensureRenderer(): PartRenderer {
+    if (this.batches) return this.batches
     // 索引数可由数据文件得知；顶点数未知，所以先用估计值，某个人体需要更多时批次会扩容。
     // The index count is known from the data file; the vertex count is not, so it starts
     // from an estimate and the batch grows if a body needs more.
     let triangles = 0
-    let partCount = 0
-    for (const sys of systems) {
-      for (const p of graph.partsBySystem(sys.id)) {
-        triangles += p.triangles
-        partCount++
-      }
-    }
+    for (const p of this.graph.parts) triangles += p.triangles
     const forced = new URLSearchParams(location.search).get('scene')
     this.scenePath = forced === 'batched' || forced === 'meshes' ? forced : this.backend === 'webgpu' ? 'batched' : 'meshes'
     const batches: PartRenderer =
-      this.scenePath === 'batched' ? new PartBatches(partCount, Math.ceil(triangles * 0.62) + 2000, triangles * 3 + 3000, this.skinning) : new PartMeshes(this.skinning)
+      this.scenePath === 'batched'
+        ? new PartBatches(this.graph.parts.length, Math.ceil(triangles * 0.62) + 2000, triangles * 3 + 3000, this.skinning)
+        : new PartMeshes(this.skinning)
     if (this.scenePath === 'meshes') this.renderer.setTransparentSort(centroidTransparentSort as never)
     this.batches = batches
     this.updateBoost()
-    let attached = 0
+    return batches
+  }
 
-    onProgress({ done, total: systems.length, loaded })
-    await Promise.all(
-      systems.map(async (sys) => {
+  private emitLoad(): void {
+    let done = 0
+    let bytes = 0
+    let bytesTotal = 0
+    for (const st of this.systemLoad.values()) if (st !== 'pending') done++
+    for (const b of this.systemBytes.values()) {
+      bytes += b.loaded
+      bytesTotal += b.total
+    }
+    this.onLoad?.({ done, total: this.systemLoad.size, loaded: [...this.loadedOrder], bytes, bytesTotal, problems: [...this.loadProblems] })
+  }
+
+  /** 是否有系统正在加载 / Whether any system is still loading. */
+  get loading(): boolean {
+    for (const st of this.systemLoad.values()) if (st === 'pending') return true
+    return false
+  }
+
+  /**
+   * 加载给定系统中尚未请求过的那些。每个系统的文件一到就显示；缺失或损坏的文件会被记录并跳过。
+   * Fetch those of the given systems that were not requested yet. Each appears as soon as its
+   * file has arrived; a missing or broken file is recorded and skipped.
+   */
+  requestSystems(ids: Iterable<SystemId>): Promise<void> {
+    const token = this.bodyToken
+    const graph = this.graph
+    const wanted = [...ids].map((id) => graph.data.systems.find((s) => s.id === id)).filter((s): s is NonNullable<typeof s> => !!s && !!s.glb && !this.systemLoad.has(s.id))
+    if (wanted.length === 0) return Promise.resolve()
+    const batches = this.ensureRenderer()
+    const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
+    for (const sys of wanted) this.systemLoad.set(sys.id, 'pending')
+    this.loadComplete = false
+    this.emitLoad()
+    return Promise.all(
+      wanted.map(async (sys) => {
         try {
-          const gltf = await loader.loadAsync(new URL(sys.glb!, new URL(this.baseUrl, location.href)).href)
+          const gltf = await loader.loadAsync(new URL(sys.glb!, new URL(this.baseUrl, location.href)).href, (ev) => {
+            if (token !== this.bodyToken) return
+            this.systemBytes.set(sys.id, { loaded: ev.loaded, total: ev.total || ev.loaded })
+            this.emitLoad()
+          })
           if (this.disposed || token !== this.bodyToken) return
           const baked = this.bake(gltf.scene)
+          const fresh: number[] = []
           for (const [i, b] of baked) {
             if (this.inst[i]! >= 0) continue
             const part = graph.parts[i]!
@@ -541,30 +681,71 @@ export class Viewer {
             this.inst[i] = batches.add(b, part.tissue === 'nerve' ? b.radius : null, part.bbox, part.centroid)
             this.bvhQueue.push(i)
             this.bvhTotal++
+            fresh.push(i)
           }
           batches.finish()
           for (const b of baked.values()) b.geometry.dispose()
           const objects = batches.objects
-          if (objects.length > attached) this.root.add(...objects.slice(attached))
-          attached = objects.length
-          loaded.push(sys.id)
+          if (objects.length > this.attachedObjects) this.root.add(...objects.slice(this.attachedObjects))
+          this.attachedObjects = objects.length
+          this.systemLoad.set(sys.id, 'loaded')
+          this.loadedOrder.push(sys.id)
+          // 绑定已经写入时，后到的部件补写它们的影响 / with a rig already applied, late parts get their influences now
+          if (this.appliedRig && this.poseRt) this.writeRigParts(this.appliedRig, fresh)
           this.forceFull = true
           this.syncNeeded = true
           const expected = graph.partsBySystem(sys.id).length
-          if (baked.size < expected) problems.push(`${sys.name.zh}：${expected - baked.size}/${expected} 个结构在 ${sys.glb} 中没有几何`)
+          if (baked.size < expected) this.loadProblems.push(`${sys.name.zh}：${expected - baked.size}/${expected} 个结构在 ${sys.glb} 中没有几何`)
         } catch (err) {
           if (this.disposed || token !== this.bodyToken) return
           console.warn(`[soma] failed to load ${sys.glb}`, err)
-          problems.push(`${sys.name.zh}：无法加载 ${sys.glb}`)
+          this.systemLoad.set(sys.id, 'failed')
+          this.loadProblems.push(`${sys.name.zh}：无法加载 ${sys.glb}`)
         }
-        if (token === this.bodyToken) onProgress({ done: ++done, total: systems.length, loaded })
+        if (token !== this.bodyToken) return
+        if (!this.loading) {
+          this.loadComplete = true
+          this.syncNeeded = true
+        }
+        this.emitLoad()
       }),
-    )
-    if (token === this.bodyToken) {
+    ).then(() => undefined)
+  }
+
+  /**
+   * 加载各系统的 GLB（全部，或仅 `only`），返回遇到的问题。对照窗格和测试用；主视图由显示状态驱动加载。
+   * Load the systems' GLBs (all, or just `only`) and return the problems met. Used by the
+   * compare pane and tests; the main view loads as its display state requires.
+   */
+  async loadSystems(onProgress: (p: LoadProgress) => void, only?: readonly SystemId[]): Promise<string[]> {
+    this.onLoad = onProgress
+    await this.requestSystems(only ?? this.graph.data.systems.map((s) => s.id))
+    if (!this.loading) {
       this.loadComplete = true
       this.syncNeeded = true
     }
-    return problems
+    return [...this.loadProblems]
+  }
+
+  /**
+   * 当前显示状态需要哪些系统的几何：隔离时只要被隔离部件所在的系统，否则是可见的系统；
+   * 再加上被选中、相邻模式涉及的部件以及体表图所在皮肤的系统。
+   * Which systems' geometry the display state needs: under isolation only the systems of the
+   * isolated parts, otherwise the visible systems; plus those of selected parts, of the adjacent
+   * focus, and of the skin a skin map is painted on.
+   */
+  private neededSystems(s: ViewState): Set<SystemId> {
+    const need = new Set<SystemId>()
+    const add = (id: string): void => {
+      const p = this.graph.part(id)
+      if (p) need.add(p.system)
+    }
+    if (s.isolated) for (const id of s.isolated) add(id)
+    else for (const sys of this.graph.data.systems) if (s.systems[sys.id]?.visible ?? true) need.add(sys.id)
+    for (const id of s.selection.ids) add(id)
+    if (s.adjacentMode) for (const id of s.selection.ids) for (const a of this.graph.part(id)?.adjacent ?? []) add(a)
+    if (s.skinMapMode !== 'off' && s.skinMaps) add(s.skinMaps.part)
+    return need
   }
 
   /** 烘焙一个已加载 GLB 中的部件，按部件索引存放。 */
@@ -642,6 +823,15 @@ export class Viewer {
     this.prev = s
     this.forceFull = false
     this.syncNeeded = false
+    if (this.autoLoad) void this.requestSystems(this.neededSystems(s))
+    if (s.cameraRequest && s.cameraRequest.nonce !== this.cameraNonce) {
+      this.cameraNonce = s.cameraRequest.nonce
+      this.tween = null
+      this.camera.position.set(...s.cameraRequest.p)
+      this.controls.target.set(...s.cameraRequest.t)
+      this.controls.update()
+      this.dirty = true
+    }
     const wantFocus = s.focusRequest.nonce !== this.focusNonce
     const wantHome = s.homeRequest !== this.homeNonce
     this.focusNonce = s.focusRequest.nonce
@@ -814,20 +1004,38 @@ export class Viewer {
       useApp.getState().rejectRig(problems.slice(0, 3).join('；'))
       return
     }
-    for (let i = 0; i < parts.length; i++) {
+    this.writeRigParts(rig, parts.map((_, i) => i))
+    this.poseRt = new PoseRuntime(rig, (i) => (this.inst[i]! >= 0 ? { id: parts[i]!.id, buffers: batches.partBuffers(this.inst[i]!) } : null))
+    this.applyRigToSkinLayer()
+    this.poseDirty = true
+  }
+
+  /** 把绑定写进给定部件的顶点属性 / Write the rig into the vertex attributes of the given parts. */
+  private writeRigParts(rig: LoadedRig, indices: readonly number[]): void {
+    const batches = this.batches
+    if (!batches) return
+    const parts = this.graph.parts
+    for (const i of indices) {
       const id = this.inst[i]!
       if (id < 0) continue
       const b = batches.partBuffers(id)
-      writeInfluences(rig, parts[i]!.id, b.position.length / 3, b.skinIndex, b.skinWeight, 0)
+      const n = b.position.length / 3
+      const binding = rig.bindingOf.get(parts[i]!.id)
+      if (binding && binding.joint === undefined && binding.vertexCount !== n) {
+        // 后到的系统与绑定不符：整套绑定作废 / a late system does not match the rig: the whole rig is refused
+        console.warn(`[soma] rig rejected: ${parts[i]!.id} has ${n} vertices, the binding ${binding.vertexCount}`)
+        this.appliedRig = null
+        this.poseRt = null
+        useApp.getState().rejectRig(`部件 ${parts[i]!.id} 的绑定与网格不符 / the binding of ${parts[i]!.id} does not match its mesh`)
+        return
+      }
+      writeInfluences(rig, parts[i]!.id, n, b.skinIndex, b.skinWeight, 0)
       const line = rig.muscleOf.get(parts[i]!.id)
       // 肌肉部件：aThin 记作 −(作用线下标 + 1)，着色器据此做体积修正
       // muscle parts: aThin holds −(line index + 1), which the shader uses for the volume correction
       if (line !== undefined) b.aux.fill(-(line + 1))
     }
     batches.flushSkinAttributes()
-    this.poseRt = new PoseRuntime(rig, (i) => (this.inst[i]! >= 0 ? { id: parts[i]!.id, buffers: batches.partBuffers(this.inst[i]!) } : null))
-    this.applyRigToSkinLayer()
-    this.poseDirty = true
   }
 
   private applyRigToSkinLayer(): void {
@@ -1399,6 +1607,7 @@ export class Viewer {
   /** 正面全身视角。 */
   /** Whole body from the front. */
   home(animate: boolean): void {
+    this.onCameraSettled?.(undefined)
     const b = this.graph.bodyBounds
     const box = new Box3(new Vector3(b[0], b[1], b[2]), new Vector3(b[3], b[4], b[5]))
     this.frame(box, new Vector3(0, 0.08, 1).normalize(), animate)
@@ -1451,6 +1660,9 @@ export class Viewer {
   private onContextMenu = (e: Event): void => e.preventDefault()
 
   private onPointerDown = (e: PointerEvent): void => {
+    // 嵌入模式：点一下画布即激活（之后滚轮缩放、触摸完全交给模型）
+    // embed mode: a press on the canvas activates it (wheel zoom and full touch control from then on)
+    if (this.embed) this.renderer.domElement.focus({ preventScroll: true })
     this.lastPointerType = e.pointerType === 'mouse' ? 'mouse' : 'touch'
     this.pointers.add(e.pointerId)
     this.onPointer?.(null)
@@ -1554,13 +1766,17 @@ export class Viewer {
   private tick = (t: number): void => {
     if (this.disposed) return
     this.raf = requestAnimationFrame(this.tick)
+    this.tickCount++
 
     if (this.tween) {
       const k = Math.min(1, (t - this.tween.t0) / this.tween.ms)
       const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2
       this.camera.position.lerpVectors(this.tween.fromPos, this.tween.toPos, e)
       this.controls.target.lerpVectors(this.tween.fromTarget, this.tween.toTarget, e)
-      if (k >= 1) this.tween = null
+      if (k >= 1) {
+        this.tween = null
+        this.reportCamera()
+      }
       this.dirty = true
     }
     this.controls.update()
@@ -1634,6 +1850,9 @@ export class Viewer {
       meshes: this.batches?.size ?? 0,
       bvhBuilt: this.bvhBuilt,
       bvhTotal: this.bvhTotal,
+      paused: this.pauseReasons.size > 0,
+      ticks: this.tickCount,
+      systems: [...this.loadedOrder],
     }
   }
 

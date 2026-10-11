@@ -36,6 +36,9 @@ export interface LoadState {
   /** 几何已到达的系统（用于逐系统的加载状态）。 */
   /** Systems whose geometry has arrived (for the per-system loading status). */
   loaded: readonly SystemId[]
+  /** 已下载 / 预计的几何字节数（预计值未知时为 0）/ Geometry bytes received / expected (0 when the total is unknown). */
+  bytes?: number
+  bytesTotal?: number
 }
 
 /** 按人体记录其注意事项已读。存储可能不可用。 */
@@ -70,6 +73,12 @@ export interface AppState {
   /** Dataset the user asked for; the app loads it and then `dataset` follows. */
   requestedBody: string
   cautionsOpen: boolean
+  /** 嵌入模式（?embed=1）：只有舞台和必要控件，不弹对话框 / Embed mode (?embed=1): stage and essential controls only, no dialogs. */
+  embed: boolean
+  /** 当前姿势来自哪个预设（之后改过任何角度则为 null）/ The preset the pose came from (null once any angle was changed). */
+  posePreset: string | null
+  /** 递增以请求查看器把相机放到给定的位置和目标 / Bumped to ask the viewer to put the camera at a position and target. */
+  cameraRequest: { nonce: number; p: [number, number, number]; t: [number, number, number] } | null
   /** 与另一人体并排对照，限定一个系统。 */
   /** Side-by-side comparison with the other body, restricted to one system. */
   compare: { system: SystemId } | null
@@ -245,6 +254,9 @@ export const useApp = create<AppState>()((set, get) => ({
   dataset: '',
   requestedBody: '',
   cautionsOpen: false,
+  embed: false,
+  posePreset: null,
+  cameraRequest: null,
   compare: null,
   systemsBeforeCompare: null,
   notices: [],
@@ -344,7 +356,8 @@ export const useApp = create<AppState>()((set, get) => ({
       hover: null,
       compare: null,
       systemsBeforeCompare: null,
-      cautionsOpen: cautions > 0 && storageGet(cautionsSeenKey(dataset, cautions)) === null,
+      // 嵌入模式下不弹对话框（改为舞台角落的一行提示）/ no dialog in embed mode (a one-line notice on the stage instead)
+      cautionsOpen: !prev.embed && cautions > 0 && storageGet(cautionsSeenKey(dataset, cautions)) === null,
       // 体表图属于具体人体：换人体后重新加载，区域索引不沿用
       // skin maps belong to one body: reload after a switch, region indices do not carry over
       skinMaps: null,
@@ -522,17 +535,20 @@ export const useApp = create<AppState>()((set, get) => ({
   },
   rejectRig: (message) => set({ rig: null, rigStatus: 'stale', rigMessage: message, poseJoint: null, breathing: false }),
 
-  setPose: (pose, opts) => set((s) => ({ pose, poseAnimate: opts?.animate ? s.poseAnimate + 1 : s.poseAnimate })),
+  setPose: (pose, opts) => set((s) => ({ pose, posePreset: null, poseAnimate: opts?.animate ? s.poseAnimate + 1 : s.poseAnimate })),
   setDof: (joint, dof, angle) => {
     const { rig, pose, poseMirror } = get()
-    if (rig) set({ pose: withDof(rig.rig.joints, pose, joint, dof, angle, poseMirror) })
+    if (rig) set({ pose: withDof(rig.rig.joints, pose, joint, dof, angle, poseMirror), posePreset: null })
   },
   applyPosePreset: (id) => {
     const { rig } = get()
     const preset = rig ? posePresets(rig.rig.joints).find((p) => p.id === id) : undefined
-    if (preset) get().setPose(preset.pose, { animate: true })
+    if (preset) {
+      get().setPose(preset.pose, { animate: true })
+      set({ posePreset: id === 'rest' ? null : id })
+    }
   },
-  resetPose: () => set((s) => ({ pose: {}, poseAnimate: s.poseAnimate + 1, breathing: false })),
+  resetPose: () => set((s) => ({ pose: {}, posePreset: null, poseAnimate: s.poseAnimate + 1, breathing: false })),
   setPoseMirror: (poseMirror) => set({ poseMirror }),
   setBreathing: (breathing) => {
     set({ breathing })
