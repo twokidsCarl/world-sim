@@ -21,6 +21,63 @@ events:
   - {what: 后来太子结束人质身份回国，庞葱果然再也没能见到魏王。, who: [魏太子, 庞葱, 魏王]}
 outcome: 尽管事先被明确警告过，魏王仍在多人重复的谗言下改变了对庞葱的看法，庞葱归国后不得再见。
 theories: [complex_contagion]
+en:
+  title: "Three men make a tiger"
+  setting: >-
+    The Warring States period, between Daliang, the capital of the state of Wei, and Handan in the state of Zhao; Pang Cong is about to accompany the
+    crown prince of Wei to Handan as a hostage, and speaks with the King of Wei before setting out.
+  summary: >-
+    Pang Cong uses a hypothetical to show the King of Wei that the same untrue statement is believed by no one when one man says it, raises doubt when two
+    men say it, and is taken for true when three men say it: whether it is believed depends on the number of people saying it, not on the fact itself. He
+    goes on to point out that after he leaves, those who speak against him will be far more than three, and that the king will have no means of checking
+    close at hand. The king says in words that he will judge for himself; in the event the slander arrives first after Pang Cong has left, and the king
+    believes it all the same. What the story gives is a very clean rule: the number of sources repeating a thing can stand in for evidence, and being
+    warned beforehand is not enough to make one immune.
+  people:
+    - name: "Pang Cong"
+      role: "Minister of Wei, about to accompany the crown prince to Handan as a hostage"
+      traits: >-
+        Knows clearly how rumour does its work, and tries to "inoculate" his ruler before leaving.
+    - name: "The King of Wei"
+      role: "Ruler of the state of Wei, who hears and decides on talk about his ministers"
+      traits: >-
+        Considers himself able to judge independently; in fact his belief changes step by step as the number of speakers increases.
+    - name: "The Crown Prince of Wei"
+      role: "The hostage sent to Handan"
+      traits: >-
+        Only the background to the events; takes no part in the spreading.
+    - name: "Those who talk about the minister"
+      role: "People at court who speak against Pang Cong after he leaves (unnamed in the original text)"
+      traits: >-
+        Number "more than three", each repeating the same story.
+  events:
+    - >-
+      Pang Cong, about to go with the crown prince to Handan as a hostage, asks the King of Wei before setting out: if one man said there was a tiger in the
+      marketplace, would you believe it? The king answers that he would not.
+    - >-
+      Pang Cong asks again: and if two men both said so? The king answers that he would begin to doubt.
+    - >-
+      Pang Cong asks a third time: and if three men all said so? The king answers that he would then believe it.
+    - >-
+      Pang Cong points out that there is plainly no tiger in the marketplace, and that it "becomes a tiger" only because three men all say so; Handan is
+      much farther away than the marketplace, and those who talk about him are more than three; he asks the king to look into it clearly.
+    - >-
+      The king indicates that he knows his own mind. Pang Cong takes his leave.
+    - >-
+      After Pang Cong has gone, the slander reaches the king a step ahead.
+    - >-
+      Later the crown prince's time as a hostage ends and he returns home, and Pang Cong, just as foreseen, is never again able to see the king.
+  outcome: >-
+    Although explicitly warned beforehand, the King of Wei still changed his view of Pang Cong under slander repeated by many people, and after returning
+    home Pang Cong was not received again.
+  checked:
+    - >-
+      Fetched the raw text of the page (the header gives title=戰國策卷二十三, section=魏二, author=劉向), found the chapter 「龐蔥與太子質於邯鄲」, and checked sentence by
+      sentence the three questions and three answers for one man / two men / three men, “三人言而成虎”, “寡人自為知”, “讒言先至”, and “後太子罷質，果不得見”. The annotation mentions
+      that another edition has “龐恭” for “龐蔥”. The work was compiled in the Western Han and has no exact year, so year is left empty.
+    - >-
+      The article states “三人成虎典出《戰國策·魏策二》” (that "three men make a tiger" comes from the Zhanguo ce, Strategies of Wei II) and quotes the same passage,
+      which agrees with what was seen on Wikisource; used only as corroboration of the attribution.
 sources:
   - work: 《战国策》卷二十三·魏策二「庞葱与太子质于邯郸」
     author: 刘向（编订）

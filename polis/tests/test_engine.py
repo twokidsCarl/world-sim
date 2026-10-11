@@ -134,7 +134,7 @@ def test_insurance_shrinks_what_is_withdrawn_and_money_still_adds_up():
     assert mind.withdraw_fraction(0.8, 1.0) == 1.0
     sc = trace.scenario_module("bea")
     # 压低门槛，保证有人去取 / thresholds lowered so that somebody does withdraw
-    p = Params(scenario="bea", n=300, bias=-2.0, **sc.DEFAULTS)
+    p = Params(scenario="bea", n=300, bias=3.0, **sc.DEFAULTS)
     p.interventions = sc.interventions(p.start_hour)
     pop = population.build(p, sc)
     deposit = np.array([x.deposit for x in pop.persons])
@@ -162,3 +162,21 @@ def test_new_person_fields_do_not_disturb_the_old_ones():
     x = pop.persons[pop.cast["widow"]]
     assert (x.name, x.deposit, x.stake) == ("何寡妇", 260.0, 1.0)
     assert all(p.tenure == 0 and not p.borrower for p in pop.persons if p.deposit == 0 and not p.protagonist)
+
+
+def test_age_structure_follows_the_un_figures_where_a_scenario_has_them():
+    assert population.age_profile("rumor_run") is None
+    raw = np.arange(population.AGE_LO, population.AGE_HI)
+    assert np.array_equal(population.ages(raw, None), raw)
+    profile = population.age_profile("swedbank")
+    assert (profile["place"], profile["year"]) == ("Latvia", 2011)
+    w = population.age_weights(profile["counts"])
+    assert len(w) == 66 and w.sum() == pytest.approx(1)
+    _, child, youth, adult, old = profile["counts"]
+    assert w[51:].sum() == pytest.approx(old / (child / 10 + youth + adult + old))  # 65 岁以上 / aged 65 and over
+    sc = trace.scenario_module("swedbank")
+    pop = population.build(Params(scenario="swedbank", n=3000, **sc.DEFAULTS), sc)
+    age = np.array([x.age for x in pop.persons if not x.protagonist])
+    assert age.min() >= 14 and age.max() <= 79
+    assert (age >= 65).mean() == pytest.approx(w[51:].sum(), abs=0.03)
+    assert "Latvia 2011" in pop.note and pop.synthetic

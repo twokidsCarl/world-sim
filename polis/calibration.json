@@ -1,5 +1,6 @@
 {
   "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
+  "note_en": "A parameter set found by random search that does not contradict the targets; with few targets and many parameters it is not unique.",
   "samples": 500,
   "seeds": 8,
   "n": 600,
@@ -9,83 +10,90 @@
       "source": "facts/bank_run_depositor_share",
       "lo": 0.029,
       "hi": 0.087,
-      "why": "有储户级数据的挤兑里，去取款的储户所占比例"
+      "why": "有储户级数据的挤兑里，去取款的储户所占比例",
+      "why_en": "In runs with depositor-level data, the share of depositors who withdrew"
     },
     {
       "metric": "neighbor_lift",
       "source": "facts/bank_run_network_contagion",
       "lo": 1.0,
       "hi": 99.0,
-      "why": "熟人跑了，自己更可能跑"
+      "why": "熟人跑了，自己更可能跑",
+      "why_en": "A depositor is more likely to run once an acquaintance has"
     },
     {
       "metric": "correction_residual",
       "source": "facts/correction_continued_influence",
       "lo": 0.0,
       "hi": 1.0,
-      "why": "辟谣有效，但消不干净"
+      "why": "辟谣有效，但消不干净",
+      "why_en": "A correction works but leaves a residue"
     },
     {
       "metric": "survived",
       "source": "cases/toyokawa_shinkin_1973, cases/bea_bank_run_2008",
       "lo": 1.0,
       "hi": 1.0,
-      "why": "两家银行都在当局公开担保之后撑住了"
+      "why": "两家银行都在当局公开担保之后撑住了",
+      "why_en": "Both banks held once the authorities publicly vouched for them"
     },
     {
       "metric": "toyokawa_like",
       "source": "cases/toyokawa_shinkin_1973",
       "lo": 0.3,
       "hi": 1.0,
-      "why": "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）"
+      "why": "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）",
+      "why_en": "Toyokawa: at least three in ten parallel worlds resemble the record, with a run starting around day 6, a minority withdrawing, calm after the guarantee and the bank surviving (the three-in-ten floor is set here)"
     },
     {
       "metric": "bea_amount",
       "source": "cases/bea_bank_run_2008",
       "lo": 0.0,
       "hi": 0.02,
-      "why": "东亚银行：被提走的存款不到总额的 2%（主席事后的说法；银行公布的是 0.67%）。这个案例的结果已经看过，所以拿来校准、不再算检验"
+      "why": "东亚银行：被提走的存款不到总额的 2%（主席事后的说法；银行公布的是 0.67%）。这个案例的结果已经看过，所以拿来校准、不再算检验",
+      "why_en": "Bank of East Asia: under 2% of deposits withdrawn (the chairman's later account; the bank reported 0.67%). The result of this case has been seen, so it is used for calibration and no longer counts as a test"
     },
     {
       "metric": "sanren_steps",
       "source": "cases/sanren_chenghu",
       "lo": 3.0,
       "hi": 3.0,
-      "why": "一人说不信，两人说起疑，三人说就信了"
+      "why": "一人说不信，两人说起疑，三人说就信了",
+      "why_en": "One man says it and is not believed, two and doubt sets in, three and it is believed"
     }
   ],
   "default": {
-    "miss": 15.013572826583106,
+    "miss": 15.587108343012499,
     "metrics": {
       "runner_share": 0.0012483600253347812,
       "neighbor_lift": 0.0,
       "correction_residual": 0.6772670682091293,
       "survived": 1.0,
       "sanren_steps": 1.0,
-      "bea_amount": 0.013570777515175892,
+      "bea_amount": 0.04830662403074582,
       "toyokawa_like": 0.0
     }
   },
   "calibrated": {
-    "miss": 0.3051574990096086,
+    "miss": 1.0965479889286844,
     "metrics": {
-      "runner_share": 0.016144331610730686,
-      "neighbor_lift": 14.189647435897434,
-      "correction_residual": 0.743149742508167,
+      "runner_share": 0.0062505885214803325,
+      "neighbor_lift": 6.998730158730159,
+      "correction_residual": 0.5900182732500815,
       "survived": 1.0,
       "sanren_steps": 3.0,
-      "bea_amount": 0.004605454047777023,
-      "toyokawa_like": 0.375
+      "bea_amount": 0.0038371285577841,
+      "toyokawa_like": 0.0
     },
     "params": {
-      "w_tell": 3.5,
-      "corroborate": 1.388,
-      "w_seen": 2.04,
-      "share": 0.133,
-      "lam": 15.749,
-      "bias": -3.439,
-      "hazard": 0.5,
-      "spread": 2.278
+      "w_tell": 3.245,
+      "corroborate": 1.5,
+      "w_seen": 2.675,
+      "share": 0.092,
+      "lam": 16.0,
+      "bias": -4.267,
+      "hazard": 0.31,
+      "spread": 0.685
     }
   }
 }

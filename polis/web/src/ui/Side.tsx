@@ -3,20 +3,22 @@
 import { useMemo } from 'react'
 import type { Person } from '../contract/types.gen.ts'
 import {
-  AWARE, BELIEF, EXPECT, FEAR, STATUS, STATUS_NAMES, clockText, personLog, value, type RunData, type SimEvent,
+  AWARE, BELIEF, EXPECT, FEAR, STATUS, clockText, personLog, statusName, value, type RunData, type SimEvent,
 } from '../state/derive.ts' // prettier-ignore
+import { loc, tr } from '../state/lang.ts'
 import { useApp } from '../state/store.ts'
 import { Lab } from './Lab.tsx'
 
-const EDUCATION = ['不识字', '读过蒙学', '中学', '读过大学']
-const TIE: Record<string, string> = { kin: '家人', neighbor: '邻居', colleague: '同事', friend: '朋友' }
-const DEPTH = [
-  'TA只看眼前：亲眼见到几个人去取钱，就当有几个人会取。',
-  'TA会多想一步：跟TA说这事的人多半是信的，信的人迟早会去取。',
-  'TA想的是别人怎么想：人人都在猜别人会不会取，猜的人多了，钱庄没事也会被取空。',
+const EDUCATION: [string, string][] = [['不识字', 'No schooling'], ['读过蒙学', 'Elementary'], ['中学', 'Secondary'], ['读过大学', 'Higher']] // prettier-ignore
+const TIE: Record<string, [string, string]> = { kin: ['家人', 'family'], neighbor: ['邻居', 'neighbour'], colleague: ['同事', 'colleague'], friend: ['朋友', 'friend'] } // prettier-ignore
+const DEPTH: [string, string][] = [
+  ['TA只看眼前：亲眼见到几个人去取钱，就当有几个人会取。', 'Looks only at what is in front of them: however many people they have seen withdraw is how many they expect to.'],
+  ['TA会多想一步：跟TA说这事的人多半是信的，信的人迟早会去取。', 'Thinks one step further: whoever told them probably believes it, and believers will withdraw sooner or later.'],
+  ['TA想的是别人怎么想：人人都在猜别人会不会取，猜的人多了，钱庄没事也会被取空。', 'Thinks about what others think: everyone is guessing whether everyone else will withdraw, and enough guessing empties even a sound bank.'],
 ]
 
-const ta = (p: Person) => (p.sex === 'f' ? '她' : '他')
+const ta = (p: Person) => (p.sex === 'f' ? tr('她', 'she') : tr('他', 'he'))
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function Side() {
   const run = useApp((s) => s.run)
@@ -29,7 +31,7 @@ export function Side() {
       <nav className="tabs" role="tablist">
         {(['city', 'lab'] as const).map((key) => (
           <button key={key} role="tab" aria-selected={tab === key} onClick={() => useApp.getState().setTab(key)}>
-            {key === 'city' ? '观察' : '实验台'}
+            {key === 'city' ? tr('观察', 'Observe') : tr('实验台', 'Lab')}
           </button>
         ))}
       </nav>
@@ -62,19 +64,19 @@ function Overview({ run, k }: { run: RunData; k: number }) {
   return (
     <>
       <section>
-        <h2>{m.title}</h2>
+        <h2>{loc(m.title, m.title_en)}</h2>
         <p className="persona" style={{ marginTop: 8 }}>
-          {m.setting}
+          {loc(m.setting, m.setting_en)}
         </p>
         {run.population.synthetic && (
           <p className="small muted" style={{ marginTop: 8 }}>
-            {run.population.note}
+            {loc(run.population.note, run.population.note_en)}
           </p>
         )}
       </section>
 
       <section>
-        <h3>主角</h3>
+        <h3>{tr('主角', 'Cast')}</h3>
         {run.cast.map((p) => {
           const st = value(run, k, STATUS, p.idx)
           const pct = Math.round((value(run, k, BELIEF, p.idx) / 255) * 100)
@@ -85,16 +87,16 @@ function Overview({ run, k }: { run: RunData; k: number }) {
                 <span className="who">{p.name}</span>
                 <span className="role">{p.role}</span>
               </span>
-              <span className="small muted num">{st === AWARE ? `信 ${pct}%` : STATUS_NAMES[st]}</span>
+              <span className="small muted num">{st === AWARE ? tr(`信 ${pct}%`, `believes ${pct}%`) : statusName(st)}</span>
             </button>
           )
         })}
       </section>
 
       <section>
-        <h3>城里的动静</h3>
+        <h3>{tr('城里的动静', 'What is stirring')}</h3>
         <div className="log">
-          {recent.length === 0 && <p className="muted small">夜还静着。按「播放」，看一句话怎么走遍全城。</p>}
+          {recent.length === 0 && <p className="muted small">{tr('夜还静着。按「播放」，看一句话怎么走遍全城。', 'All quiet so far. Press Play and watch one remark cross the town.')}</p>}
           {recent.map((e, i) => (
             <Entry key={i} run={run} e={e} self={null} />
           ))}
@@ -111,13 +113,15 @@ function PersonView({ run, k, person: p }: { run: RunData; k: number; person: Pe
   const belief = value(run, k, BELIEF, p.idx) / 255
   const fear = value(run, k, FEAR, p.idx) / 255
   const expect = value(run, k, EXPECT, p.idx) / 255
-  const district = run.population.districts[p.district]!.name
-  const bank = run.population.venues[run.population.bank]!.name
+  const d = run.population.districts[p.district]!
+  const district = loc(d.name, d.name_en)
+  const b = run.population.venues[run.population.bank]!
+  const bank = loc(b.name, b.name_en)
 
   return (
     <>
       <button className="back" onClick={() => useApp.getState().select(null)}>
-        ← 全城
+        {tr('← 全城', '← The town')}
       </button>
       <section className="stack">
         <h2>
@@ -127,41 +131,41 @@ function PersonView({ run, k, person: p }: { run: RunData; k: number; person: Pe
         {p.persona && <p className="persona">{p.persona}</p>}
         <div className="chips">
           <span className="chip">
-            {p.age} 岁 · {p.sex === 'f' ? '女' : '男'}
+            {tr(`${p.age} 岁 · ${p.sex === 'f' ? '女' : '男'}`, `${p.age} · ${p.sex === 'f' ? 'woman' : 'man'}`)}
           </span>
-          <span className="chip">{EDUCATION[p.education]}</span>
-          <span className="chip">住{district}</span>
-          <span className="chip">{p.deposit > 0 ? `在${bank}存了 ${p.deposit} 元` : `在${bank}没有存款`}</span>
+          <span className="chip">{tr(...EDUCATION[p.education]!)}</span>
+          <span className="chip">{tr(`住${district}`, `Lives in ${district}`)}</span>
+          <span className="chip">{p.deposit > 0 ? tr(`在${bank}存了 ${p.deposit} 元`, `${p.deposit} on deposit at ${bank}`) : tr(`在${bank}没有存款`, `No deposit at ${bank}`)}</span>
           {/* 旧记录里没有这三项 / records made before these fields existed lack them */}
-          {p.deposit > 0 && p.tenure != null && <span className="chip">往来 {Math.round(p.tenure)} 年</span>}
-          {p.borrower && <span className="chip">有贷款</span>}
-          {p.deposit > 0 && (p.insured ?? 0) > 0 && <span className="chip">{(p.insured ?? 0) >= 1 ? '存款全额受保' : `存款 ${Math.round((p.insured ?? 0) * 100)}% 受保`}</span>}
+          {p.deposit > 0 && p.tenure != null && <span className="chip">{tr(`往来 ${Math.round(p.tenure)} 年`, `${Math.round(p.tenure)} years with the bank`)}</span>}
+          {p.borrower && <span className="chip">{tr('有贷款', 'Has a loan')}</span>}
+          {p.deposit > 0 && (p.insured ?? 0) > 0 && <span className="chip">{(p.insured ?? 0) >= 1 ? tr('存款全额受保', 'Fully insured') : tr(`存款 ${Math.round((p.insured ?? 0) * 100)}% 受保`, `${Math.round((p.insured ?? 0) * 100)}% insured`)}</span>}
         </div>
       </section>
 
       <section className="stack">
-        <h3>此刻 · {STATUS_NAMES[st]}</h3>
-        <Meter label="信钱庄要倒" v={belief} belief />
-        <Meter label="心里的怕" v={fear} />
-        <Meter label="估计会去取的人" v={expect} />
+        <h3>{tr('此刻', 'Now')} · {statusName(st)}</h3>
+        <Meter label={tr('信钱庄要倒', 'Believes the bank will fail')} v={belief} belief />
+        <Meter label={tr('心里的怕', 'Fear')} v={fear} />
+        <Meter label={tr('估计会去取的人', 'Expects others to withdraw')} v={expect} />
         <BeliefSpark run={run} i={p.idx} k={k} />
-        <p className="depth">{DEPTH[p.depth]!.replaceAll('TA', ta(p))}</p>
+        <p className="depth">{tr(DEPTH[p.depth]![0].replaceAll('TA', ta(p)), DEPTH[p.depth]![1])}</p>
       </section>
 
       <section className="stack">
-        <h3>这个人</h3>
-        <Meter label="信人" v={p.trust_general} />
-        <Meter label="信官面文章" v={p.trust_institution} />
-        <Meter label="怕吃亏" v={p.risk_aversion} />
-        <Meter label="随大流" v={p.conformity} />
-        <Meter label="读报听讯" v={p.media_use} />
-        {p.deposit > 0 && <Meter label="这笔钱多要紧" v={p.stake} />}
+        <h3>{tr('这个人', 'This person')}</h3>
+        <Meter label={tr('信人', 'Trusts people')} v={p.trust_general} />
+        <Meter label={tr('信官面文章', 'Trusts officialdom')} v={p.trust_institution} />
+        <Meter label={tr('怕吃亏', 'Fears loss')} v={p.risk_aversion} />
+        <Meter label={tr('随大流', 'Follows the crowd')} v={p.conformity} />
+        <Meter label={tr('读报听讯', 'Follows the news')} v={p.media_use} />
+        {p.deposit > 0 && <Meter label={tr('这笔钱多要紧', 'How much the money matters')} v={p.stake} />}
       </section>
 
       <section>
-        <h3>经历</h3>
+        <h3>{tr('经历', 'History')}</h3>
         <div className="log">
-          {shown.length === 0 && <p className="muted small">到这一刻为止，这件事还没找上{ta(p)}。</p>}
+          {shown.length === 0 && <p className="muted small">{tr(`到这一刻为止，这件事还没找上${ta(p)}。`, 'So far none of this has reached them.')}</p>}
           {shown.map((e, i) => (
             <Entry key={i} run={run} e={e} self={p.idx} />
           ))}
@@ -199,7 +203,7 @@ function BeliefSpark({ run, i, k }: { run: RunData; i: number; k: number }) {
     return out
   }, [run, i, ticks])
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label="对谣言的相信程度随时间的变化">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label={tr('对谣言的相信程度随时间的变化', 'Belief in the rumour over time')}>
       <line x1={0} x2={W} y1={H / 2} y2={H / 2} stroke="var(--line)" strokeDasharray="2 3" />
       <path d={d} fill="none" stroke="var(--rumor)" strokeWidth={2} strokeLinejoin="round" />
       <line x1={(k / ticks) * W} x2={(k / ticks) * W} y1={0} y2={H} stroke="var(--ink)" strokeWidth={1.2} />
@@ -208,10 +212,12 @@ function BeliefSpark({ run, i, k }: { run: RunData; i: number; k: number }) {
 }
 
 function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | null }) {
-  const me = self == null ? '他' : ta(run.population.persons[self]!)
-  const name = (i: number | null | undefined) => (i == null ? '有人' : i === self ? me : run.population.persons[i]!.name)
+  const me = self == null ? tr('他', 'he') : ta(run.population.persons[self]!)
+  const Me = cap(me)
+  const name = (i: number | null | undefined) => (i == null ? tr('有人', 'someone') : i === self ? me : run.population.persons[i]!.name)
   const msg = e.m != null ? run.messages[e.m] : undefined
-  const via = e.via?.startsWith('venue:') ? `在${run.population.venues[Number(e.via.slice(6))]!.name}` : e.via ? `${TIE[e.via]}` : ''
+  const place = e.via?.startsWith('venue:') ? run.population.venues[Number(e.via.slice(6))]! : null
+  const via = place ? tr(`在${place.name}`, `at ${loc(place.name, place.name_en)}`) : e.via && TIE[e.via] ? tr(...TIE[e.via]!) : ''
   const pick = (i: number | null | undefined) => (i != null && i !== self ? () => useApp.getState().select(i) : undefined)
   const who = (i: number | null | undefined) =>
     pick(i) ? (
@@ -221,16 +227,16 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
     ) : (
       name(i)
     )
-  const tag = msg && <span className={`tag ${msg.valence === 1 ? 'rumor' : 'rebut'}`}>{msg.valence === 1 ? '谣言' : '辟谣'}</span>
+  const tag = msg && <span className={`tag ${msg.valence === 1 ? 'rumor' : 'rebut'}`}>{msg.valence === 1 ? tr('谣言', 'Rumour') : tr('辟谣', 'Rebuttal')}</span>
 
   let body: React.ReactNode
   switch (e.k) {
     case 'thought':
       body = (
         <span className="thought">
-          {self == null && <b>{name(e.a)}：</b>}
+          {self == null && <b>{name(e.a)}{tr('：', ': ')}</b>}
           {String(e.x)}
-          {e.via === 'llm' && <span className="tag llm">模型所写</span>}
+          {e.via === 'llm' && <span className="tag llm">{tr('模型所写', 'Written by the model')}</span>}
         </span>
       )
       break
@@ -240,16 +246,16 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
           <span>
             {tag}
             {who(e.a)}
-            {via && <span className="muted">（{via}）</span>}说：<q>{msg?.text}</q>
+            {via && <span className="muted">{tr(`（${via}）`, ` (${via})`)}</span>}{tr('说：', ' said: ')}<q>{msg?.text}</q>
             <span className="muted num">
               {' '}
-              信 {e.p0}% → {e.p1}%
+              {tr('信', 'belief')} {e.p0}% → {e.p1}%
             </span>
           </span>
         ) : (
           <span className="muted">
-            {me}把话传给了{who(e.b)}
-            {via && `（${via}）`}
+            {tr(`${me}把话传给了`, `${Me} passed it on to `)}{who(e.b)}
+            {via && tr(`（${via}）`, ` (${via})`)}
           </span>
         )
       break
@@ -257,26 +263,26 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
       body = (
         <span>
           {tag}
-          {who(e.a)}把话说成了：<q>{msg?.text}</q>
+          {who(e.a)}{tr('把话说成了：', ' turned it into: ')}<q>{msg?.text}</q>
         </span>
       )
       break
     case 'seed':
-      body = <span>{tag}{me}亲眼看见了。</span>
+      body = <span>{tag}{tr(`${me}亲眼看见了。`, `${Me} saw it with their own eyes.`)}</span>
       break
     case 'queue':
-      body = <span>{me}去钱庄门口排队了。</span>
+      body = <span>{tr(`${me}去钱庄门口排队了。`, `${Me} joined the queue at the bank.`)}</span>
       break
     case 'withdraw':
-      body = <span>{me}取出了 {String(e.x)} 元。</span>
+      body = <span>{tr(`${me}取出了 ${String(e.x)} 元。`, `${Me} withdrew ${String(e.x)}.`)}</span>
       break
     case 'verify':
       body = (
         <span>
-          {me}自己去柜上看了。
+          {tr(`${me}自己去柜上看了。`, `${Me} went to the counter to see.`)}
           <span className="muted num">
             {' '}
-            信 {e.p0}% → {e.p1}%
+            {tr('信', 'belief')} {e.p0}% → {e.p1}%
           </span>
         </span>
       )
@@ -286,7 +292,7 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
         <span>
           {tag}
           <q>{msg?.text}</q>
-          <span className="muted">（{Math.round(Number(e.x) * 100)}% 的人看到了）</span>
+          <span className="muted">{tr(`（${Math.round(Number(e.x) * 100)}% 的人看到了）`, ` (seen by ${Math.round(Number(e.x) * 100)}%)`)}</span>
         </span>
       )
       break
@@ -299,7 +305,7 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
       )
       break
     case 'fail':
-      body = <b>通和钱庄兑不出银子，关门了。还有 {String(e.x)} 元存款没取出来。</b>
+      body = <b>{tr(`${run.population.venues[run.population.bank]!.name}付不出钱，关门了。还有 ${String(e.x)} 元存款没取出来。`, `The bank cannot pay and has shut. ${String(e.x)} in deposits was never withdrawn.`)}</b>
       break
   }
   return (

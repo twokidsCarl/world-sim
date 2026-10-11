@@ -28,6 +28,12 @@ export interface Case {
    * @minItems 1
    */
   sources: [Source, ...Source[]];
+  /**
+   * 正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts
+   */
+  en?: {
+    [k: string]: unknown;
+  };
   kind: "drama" | "novel" | "idiom" | "history";
   setting: string;
   summary: string;
@@ -83,6 +89,7 @@ export interface Character {
 export interface District {
   idx: number;
   name: string;
+  name_en?: string;
   /**
    * @minItems 2
    * @maxItems 2
@@ -143,6 +150,12 @@ export interface Fact {
    * @minItems 1
    */
   sources: [Source, ...Source[]];
+  /**
+   * 正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts
+   */
+  en?: {
+    [k: string]: unknown;
+  };
   statement: string;
   kind: "quantitative" | "qualitative";
   value?: number | null;
@@ -212,6 +225,8 @@ export interface Manifest {
   run_id: string;
   title: string;
   setting: string;
+  title_en?: string;
+  setting_en?: string;
   params: Params;
   n: number;
   ticks: number;
@@ -387,6 +402,7 @@ export interface Population {
   schema?: number;
   synthetic: boolean;
   note: string;
+  note_en?: string;
   /**
    * 坐标范围 [0, extent] / coordinates run over [0, extent]
    */
@@ -423,6 +439,7 @@ export interface Tie {
 export interface Venue {
   idx: number;
   name: string;
+  name_en?: string;
   kind: "bank" | "teahouse" | "market" | "temple" | "school" | "salon" | "shop" | "station";
   /**
    * @minItems 2
@@ -468,6 +485,12 @@ export interface Theory {
    * @minItems 1
    */
   sources: [Source, ...Source[]];
+  /**
+   * 正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts
+   */
+  en?: {
+    [k: string]: unknown;
+  };
   title_en: string;
   field: string;
   /**

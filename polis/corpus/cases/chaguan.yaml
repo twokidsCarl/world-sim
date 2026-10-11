@@ -26,6 +26,107 @@ events:
   - {what: 王利发、常四爷、秦仲义三个老人在将被夺走的茶馆里回顾各自一生，给自己撒纸钱祭奠。, who: [王利发, 常四爷, 秦仲义]}
 outcome: 靠“谁也不得罪、莫谈国事”经营了一辈子的王利发保不住茶馆，上吊自尽；茶馆落入他人之手。
 theories: [preference_falsification]
+en:
+  title: "Teahouse"
+  setting: >-
+    The Yutai Teahouse in Beijing; the three acts are set after the failure of the Hundred Days' Reform in 1898, in the period of warlord fighting in the
+    early Republic, and under Kuomintang rule after victory in the War of Resistance against Japan, about fifty years from first to last.
+  summary: >-
+    The teahouse is where people of every sort meet and exchange news: in Act One the customers discuss, on hearsay, who Tan Sitong is and what has
+    happened at court, while the proprietor keeps reminding them "Do not discuss affairs of state" and the detectives sit listening at the next table. A
+    casual remark by Chang Siye lamenting the fate of the country is overheard by a detective, and he is taken away on the spot as "one of Tan Sitong's
+    party"; the companion who speaks up for him is taken away with him. What is said, and who is listening nearby, directly decides what becomes of a
+    person. In the two later acts the "Do not discuss affairs of state" notices grow ever larger, the proprietor has to keep reminding customers to watch
+    what they say, secret agents extort money every month, and the teahouse's sense of safety, that "everyone here knows everyone", disappears. The play's
+    focus is how a public place gradually falls silent and falls apart when speech is under surveillance, not the spread of any one rumour; as a case,
+    what it offers is the set of relations "information hub + eavesdropper + self-censorship", with no collective action of the bank-run kind.
+  people:
+    - name: "Wang Lifa"
+      role: "Proprietor of the Yutai Teahouse"
+      traits: >-
+        Smooth with everyone, believing in saying pleasant things and offending no one; puts up "Do not discuss affairs of state" of his own accord and
+        repeats it aloud, and is the one who enforces self-censorship in the teahouse.
+    - name: "Chang Siye (Fourth Master Chang)"
+      role: "Bannerman, an old regular"
+      traits: >-
+        Upright and quick-tongued, says so when he cannot stand something; arrested over a single sentence.
+    - name: "Song Erye (Second Master Song)"
+      role: "Bannerman, an old regular, Chang Siye's friend"
+      traits: >-
+        Timid and afraid of trouble, particular about etiquette; tries to smooth things over for his friend and ends up taken away with him.
+    - name: "Song Enzi"
+      role: "Yamen detective, later a secret agent"
+      traits: >-
+        Listens in on the customers' talk in the teahouse and arrests people on scraps of speech; under the Republic lives on rewards for arrests and demands
+        money from the proprietor every month.
+    - name: "Qin Zhongyi"
+      role: "The teahouse's landlord, a capitalist who advocates saving the nation through industry"
+      traits: >-
+        Self-assured, scornful of petty charity; has his own views on affairs of state and dares to state them in public.
+    - name: "Eunuch Pang"
+      role: "A eunuch in power"
+      traits: >-
+        Conveys which way the court is leaning in the tone of "whoever dares change the ancestors' rules loses his head"; a source of signals of fear.
+    - name: "Liu Mazi (Pockmark Liu)"
+      role: "Matchmaker, go-between and trafficker in people"
+      traits: >-
+        Exploits unequal information to profit from both sides, and describes a sale as a favour.
+    - name: "Teahouse customers"
+      role: "Customers at the open tables in the teahouse"
+      traits: >-
+        Pass on to one another the news they have heard; keep silent about miseries that do not concern them.
+  events:
+    - >-
+      After the failure of the Hundred Days' Reform in 1898, the teahouse is full. The customers ask one another who Tan Sitong is and what crime he
+      committed, each with his own hearsay; Wang Lifa reminds everyone "Do not discuss affairs of state", and the same notice is pasted on the wall.
+    - >-
+      Eunuch Pang comes in and says before everyone that Tan Sitong has been sentenced to death and that whoever touches the ancestral laws loses his head,
+      and he crosses words with Qin Zhongyi.
+    - >-
+      A country woman wants to sell her daughter, and Qin Zhongyi has them driven out; Chang Siye orders two bowls of noodles for them and sighs that the
+      Great Qing is finished.
+    - >-
+      The detective Song Enzi, who has been sitting nearby all along, comes over and challenges this remark, decides that Chang Siye is of Tan Sitong's
+      party and arrests him on the spot; Song Erye steps in to explain and is told to come along too. None of the other customers says a word.
+    - >-
+      In the same act, Liu Mazi brokers the sale of the poor man Kang Liu's daughter to Eunuch Pang; those present only look on.
+    - >-
+      Act Two (the Republic, warlord fighting): people are being arrested in the streets, and the teahouse barely keeps going by constant "reform"; Song
+      Enzi and his like live on rewards for arrests, and require Wang Lifa to hand over a sum on the first of every month to settle the matter.
+    - >-
+      Act Three (after victory in the War of Resistance): the "Do not discuss affairs of state" notices are pasted up larger still, and Wang Lifa also has
+      to remind customers at every turn to watch what they say; people with official backing mean to take the teahouse over by force.
+    - >-
+      The three old men, Wang Lifa, Chang Siye and Qin Zhongyi, look back on their lives in the teahouse that is about to be taken from them, and scatter
+      paper money in mourning for themselves.
+  outcome: >-
+    Wang Lifa, who ran the teahouse all his life on "offend no one, do not discuss affairs of state", cannot keep it and hangs himself; the teahouse falls
+    into other hands.
+  checked:
+    - >-
+      The article confirms: the author is Lao She; a three-act play, written between 1956 and 1957 and published in July 1957 in the inaugural issue of
+      Harvest (《收获》); premiered on 29 March 1958 by the Beijing People's Art Theatre at the Capital Theatre, directed by Jiao Juyin and Xia Chun; the story
+      is set in the Yutai Teahouse in Beijing and spans about fifty years over three periods, the late Qing, the warlord era, and after victory in the War
+      of Resistance. The article has no act-by-act plot.
+    - >-
+      This is an English translation of Meng Jinghui's 2018/2019 adaptation, not Lao She's original script; note [1] on the page explains that the scenes in
+      it from Lao She's Teahouse (1957) are adapted from Ying Ruocheng's English translation. Checked on that page: the customers discussing "Who is this
+      Tan Sitong?"; Wang Lifa saying "Do Not Discuss Affairs of State"; Eunuch Pang saying that Tan Sitong has been sentenced to death and that those who
+      touch the ancestral laws are beheaded; the country woman asking two taels of silver for her daughter, Chang Siye ordering noodles and saying "the
+      Great Qing Empire is done for"; Song Enzi arresting him on that basis ("He must be a follower of Tan Sitong", "Restrain him") and telling Song Erye to
+      come too; later on, Song Enzi saying he gets bonuses for arrests and requiring Wang Lifa to pay on the first of every month; the three old men
+      scattering paper money at the end. Wu Xiangzi, Song Enzi's partner in the original, is not in this adaptation's list of characters and could not be
+      confirmed separately this time, so he is not listed among the people. No publicly checkable page with the full Chinese text of Lao She's original
+      script was found this time.
+    - >-
+      The article confirms: Act One is set after the failure of the Hundred Days' Reform; yamen detectives watch the customers, and the teahouse posts "Do
+      not discuss affairs of state"; Kang Liu sells his daughter, Liu Mazi profits from both sides, and those present look on in silence; in the two later
+      acts the "Do not discuss affairs of state" notices grow ever larger and Proprietor Wang has to remind people to watch what they say; policemen,
+      soldier-ruffians and secret agents take turns at extortion; Little Liu Mazi uses the power of Section Chief Shen to seize the teahouse; at the end
+      Proprietor Wang, Chang Siye and Qin Erye (Second Master Qin) scatter paper money in mourning for themselves.
+    - >-
+      The introduction confirms the periods of the three acts; that in Act One secret agents run rampant and ordinary people give offence at every turn,
+      which is why Wang Lifa posts "Do not discuss affairs of state"; and that in Act Three Wang Lifa is driven to hang himself.
 sources:
   - work: 茶馆（维基百科条目）
     author: 中文维基百科

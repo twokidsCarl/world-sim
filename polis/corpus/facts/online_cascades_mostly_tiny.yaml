@@ -20,6 +20,55 @@ caveats: >-
   这条事实更适合用来检验“大多数传言起不来、少数才爆发”的定性形状，而不是直接比对 99% 这个数。
 theories: [granovetter_threshold, watts_global_cascades]
 metric: ""
+en:
+  title: The vast majority of online diffusion cascades are tiny
+  statement: >-
+    The sizes of diffusion cascades of online content are extremely skewed: more than 99% of cascades are small and
+    terminate within the first generation; across seven different online platforms, 73%–96% of cascades did not
+    spread at all (only the initiator alone), and fewer than 1% of cascades exceeded 7 nodes.
+    Cascades reaching 100 people or more occur roughly once in every four thousand (0.025%), and truly "viral"
+    outbreaks are about one in a million.
+  unit: >-
+    proportion (share of all cascades that are small cascades terminating within one generation; the source says
+    "more than 99%")
+  conditions: >-
+    Goel et al. 2016: about 1 billion diffusion events on Twitter from July 2011 to July 2012 (news, videos,
+    images, petitions), with a mean cascade size of 1.3 and about 99% of adoptions coming from the initiator
+    himself or his direct followers; the in-depth analysis is of the 219,855 cascades among them with at least 100
+    nodes.
+    Goel, Watts and Goldstein 2012: seven online settings (Yahoo! Kindness, Yahoo! Zync, The Secretary Game,
+    Twitter News Stories, Twitter Videos, Friend Sense, Yahoo! Voice), with the share of single-node cascades in
+    each setting 73%–96%, mean cascade size 1.1–1.4, and 94%–99% of adoptions occurring within one step of the
+    initiator.
+  caveats: >-
+    The body text of the 2012 paper says that "73% to 95%" of cascades did not diffuse at all, but in Table I of
+    the same paper the Twitter Videos item is 96%; the interval in this entry follows the table and is taken as
+    73%–96%.
+    "More than 99%" in the 2016 paper is a summary statement citing the 2012 paper; "one in a thousand", "one in
+    four thousand" and "one in a million" correspond respectively to three different thresholds, "moderately
+    popular", "at least 100 nodes" and "viral hit", and should not be mixed. The distribution of cascade sizes is
+    heavy-tailed, but neither paper tests it as a strict power law.
+    Gap from the small-town setting: the threshold for "initiating" on an online platform is extremely low, and
+    the vast majority of posts are simply ignored anyway, so the share of small cascades is extremely high; with a
+    rumour about a bank in a small town, those who hear it have a personal stake, the probability of passing it on
+    once more is far higher than the online retweet rate, and the cascade-size distribution is not necessarily
+    equally skewed.
+    This fact is better suited to testing the qualitative shape that "most rumours never take off and only a few
+    break out" than to comparing directly against the figure of 99%.
+  checked:
+    - >-
+      Opened the full-text PDF of the journal version on the first author's personal website (the first page
+      prints Management Science 62(1), 2016, pp. 180–196): the introduction states that more than 99% of cascades
+      are small and terminate within one generation, that moderately popular events are about one in a thousand
+      and that viral hits are about one in a million; the data section states a mean cascade size of 1.3, that
+      about 99% of adoptions come from the root node or its direct followers, and that those with at least 100
+      nodes make up 0.025% (about one in four thousand, 219,855 in total).
+    - >-
+      Opened the full-text PDF of the paper on the first author's personal website: the body text states that
+      73%–95% of cascades in each setting had no diffusion whatsoever, that fewer than 1% of cascades exceeded 7
+      nodes and that fewer than 4% extended beyond one step; Table I lists for the seven settings the share of
+      single-node cascades (73%–96%), the mean size (1.1–1.4) and the share of adoptions within one step
+      (94%–99%). Conference name and page numbers confirmed via Crossref (DOI 10.1145/2229012.2229058).
 sources:
   - work: The Structural Virality of Online Diffusion
     author: Sharad Goel, Ashton Anderson, Jake Hofman, Duncan J. Watts

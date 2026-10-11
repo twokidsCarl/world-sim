@@ -13,6 +13,30 @@ predicts:
 - 挤兑一旦开始会自我加强：别人取得越多，自己留下的理由越少。
 - 可信的存款保险或暂停兑付承诺能让挤兑均衡消失，而且实际上不必动用。
 in_engine: mind.fail_probability：钱庄会倒，或者因为它本来亏空，或者因为大家都去取；engine.Sim._serve：先到先兑，现银按 reserve_ratio 计，兑不出即倒闭。
+en:
+  field: >-
+    Economics (banking theory)
+  claim: >-
+    Depositors each face a liquidity risk known only to themselves, and therefore need assets that can be withdrawn at any time; a bank's demand deposit contract can provide better risk sharing than direct market trading, which explains why banks that are subject to runs can still attract deposits. But the same contract has multiple equilibria: if everyone believes that others will not withdraw early, nobody runs; if everyone believes that others will withdraw, then withdrawing first becomes each person's best response, and the run is self-fulfilling. In the model the run itself causes real economic losses, and is not merely a symptom of other problems; arrangements such as deposit insurance can eliminate the bad equilibrium.
+  formal: >-
+    A coordination game under the demand deposit contract, with two pure-strategy equilibria: (1) only those who truly need liquidity withdraw early; (2) everyone withdraws early (a run). Which equilibrium occurs is not determined by the model itself. (This card was written from the abstract only and does not set out the three-period setting and payoff parameters of the original.)
+  parameters:
+  - >-
+    Whether the depositor needs to consume early, which is private information
+  - >-
+    Whether the depositor thinks other people will withdraw early; it determines which equilibrium is reached
+  predicts:
+  - >-
+    A bank whose fundamentals are perfectly sound may also be brought down by a run merely because expectations change.
+  - >-
+    Once a run starts it reinforces itself: the more others withdraw, the less reason one has to stay.
+  - >-
+    Credible deposit insurance or a commitment to suspend convertibility can make the run equilibrium disappear, and in practice need not be used.
+  in_engine: >-
+    mind.fail_probability: the money house will fail either because it was in deficit to begin with, or because everyone goes to withdraw; engine.Sim._serve: first come, first paid, with the silver on hand reckoned by reserve_ratio, and failure as soon as it cannot pay out.
+  checked:
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, authors, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract. The University of Chicago Press publisher landing page returned a 403/verification page to scraping and could not be opened directly.
 sources:
 - work: Bank Runs, Deposit Insurance, and Liquidity
   author: Douglas W. Diamond; Philip H. Dybvig

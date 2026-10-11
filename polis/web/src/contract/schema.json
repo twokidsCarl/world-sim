@@ -36,6 +36,12 @@
           "minItems": 1,
           "type": "array"
         },
+        "en": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts",
+          "type": "object"
+        },
         "kind": {
           "enum": [
             "drama",
@@ -115,6 +121,10 @@
           "type": "integer"
         },
         "name": {
+          "type": "string"
+        },
+        "name_en": {
+          "default": "",
           "type": "string"
         },
         "pos": {
@@ -272,6 +282,12 @@
           },
           "minItems": 1,
           "type": "array"
+        },
+        "en": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts",
+          "type": "object"
         },
         "statement": {
           "type": "string"
@@ -466,6 +482,14 @@
           "type": "string"
         },
         "setting": {
+          "type": "string"
+        },
+        "title_en": {
+          "default": "",
+          "type": "string"
+        },
+        "setting_en": {
+          "default": "",
           "type": "string"
         },
         "params": {
@@ -905,6 +929,10 @@
         "note": {
           "type": "string"
         },
+        "note_en": {
+          "default": "",
+          "type": "string"
+        },
         "extent": {
           "description": "坐标范围 [0, extent] / coordinates run over [0, extent]",
           "type": "number"
@@ -1116,6 +1144,12 @@
           "minItems": 1,
           "type": "array"
         },
+        "en": {
+          "additionalProperties": true,
+          "default": {},
+          "description": "正文各字段的英文，键见 EN_KEYS；列表与中文的列表等长 / English for the text fields, keys as in EN_KEYS; lists are as long as their Chinese counterparts",
+          "type": "object"
+        },
         "title_en": {
           "type": "string"
         },
@@ -1197,6 +1231,10 @@
           "type": "integer"
         },
         "name": {
+          "type": "string"
+        },
+        "name_en": {
+          "default": "",
           "type": "string"
         },
         "kind": {

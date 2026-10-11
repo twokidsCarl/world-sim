@@ -18,6 +18,43 @@ caveats: >-
   （Bond & Smith 1996 的元分析专门讨论这一点，本次只确认了书目，未读内容）。
 theories: [asch_conformity]
 metric: ""
+en:
+  title: Yielding rate in the Asch conformity experiments
+  statement: >-
+    Faced with a majority unanimously giving the wrong answer, participants followed the wrong answer in about 36.8%
+    of their judgements on the critical trials, whereas when judging alone they erred less than 1% of the time.
+    Individual differences were large: about a quarter of participants never followed the majority from start to
+    finish, and about 75% of participants followed it at least once.
+  unit: >-
+    proportion (share of judgements on critical trials that followed the erroneous majority)
+  conditions: >-
+    123 male undergraduates in total from three US colleges (published 1955); groups of 7–9 with only one real
+    participant, the rest being confederates arranged in advance; the task was to judge the lengths of lines aloud
+    in public, with the answer obvious at a glance; 18 judgements per session, on 12 of which the majority
+    deliberately answered wrongly.
+  caveats: >-
+    36.8% is a share of "judgements", not a share of "people", and is often miswritten as "a third of people
+    conformed"; counted by person, about 25% never yielded and about 75% yielded at least once, and the two measures
+    should not be mixed. All figures in this entry are taken from Asch's 1955 Scientific American article (in which
+    "a quarter" and "75%" are both approximate); the 1956 monograph (Psychological Monographs 70(9): 1–70,
+    bibliographic details confirmed via Crossref) gives a finer distribution, but the original was not opened this
+    time, and the discrepancies among the figures common in secondary sources (32%, 33%, 37%, "24% or 25% never
+    yielded" and so on) could not be checked one by one.
+    Gap from the small-town setting: in the experiment the others are strangers, the task is a perceptual judgement
+    with nothing at stake, and answers are given publicly face to face; in a bank run they are acquaintances, the
+    safety of deposits is involved, and the facts themselves are unclear, so the motive to conform includes both
+    normative pressure and informational inference, and the yielding rate cannot be carried over directly. The
+    sample consists only of US male undergraduates of the 1950s; cross-cultural and cross-period differences are
+    not covered by this entry (the meta-analysis by Bond & Smith 1996 discusses precisely this point; this time
+    only the bibliographic details were confirmed and the content was not read).
+  checked:
+    - >-
+      Opened the OCR full text of the scan of this article on the Internet Archive (solomon_original_djvu.txt, a
+      reprint included in an anthology): the body text states 123 participants, errors of less than 1% under
+      ordinary conditions, 36.8% of choices following the erroneous majority under group pressure, and about a
+      quarter of participants completely independent; the figure caption states that 75% of participants went
+      along with the majority to varying degrees. Volume, issue and page numbers confirmed via Crossref
+      (DOI 10.1038/scientificamerican1155-31).
 sources:
   - work: Opinions and Social Pressure
     author: Solomon E. Asch

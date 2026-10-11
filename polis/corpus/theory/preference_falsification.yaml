@@ -15,6 +15,35 @@ predicts:
 - 看似稳固的政权或规范可以在很短时间内崩塌，且事前连参与者自己也料不到。
 - 事后回看，剧变显得容易解释甚至必然，但同一理论预言下一次仍会出人意料。
 in_engine: ''
+en:
+  field: >-
+    Economics / political science
+  claim: >-
+    When people feel social pressure they publicly express preferences different from those they hold inwardly. When many people do this, public opinion deviates systematically from what is really thought in private: widely disliked institutions are sustained and appear solid, and even the people living within them are misled and cannot see the possibility of change. Yet this support is feigned, and once enough people are no longer afraid to reveal what they really think, public opposition erupts like a snowball, and a minor event can then trigger an upheaval that nobody anticipated beforehand. Over time, falsification also distorts public discussion and what people actually know, so that what was originally sustained by falsification gradually gains sincere acceptance.
+  formal: >-
+    Each person has a private preference and a public preference; whether they oppose publicly depends on whether the number of people who have already opposed publicly reaches their personal "revolutionary threshold" (the threshold-style formulation of Kuran 1989 and 1991; this card has seen only the abstract of the 1991 article and has not read the formulas in the body). A small rise in the number publicly opposing can cross the thresholds of the next batch of people, forming a chain reaction.
+  parameters:
+  - >-
+    What the individual truly wants inwardly
+  - >-
+    The position the individual expresses in front of others
+  - >-
+    The size of the already publicly opposing group needed for the individual to be willing to reveal their true preference publicly
+  predicts:
+  - >-
+    There is a systematic gap between anonymous surveys and public statements of position, and the greater the pressure the larger the gap.
+  - >-
+    A regime or norm that seems solid can collapse in a very short time, and beforehand not even the participants themselves can foresee it.
+  - >-
+    Looking back afterwards, the upheaval seems easy to explain or even inevitable, but the same theory predicts that the next one will still come as a surprise.
+  in_engine: ''
+  checked:
+  - >-
+    The Harvard University Press book page confirms the title, the author and the publisher, and gives a summary of the contents (the definition of preference falsification, the sustaining of unpopular structures, sudden collapse, the distortion of knowledge); the year 1995 relies on an Open Library search record (openlibrary.org/works/OL3527602W). The subtitle and the place of publication did not appear in the page metadata that was fetched and were filled in following the standard bibliographic description.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages. The Springer landing page requires cookies and the abstract was not read.
+  - >-
+    The Crossref DOI metadata record (deposited by the publisher) confirms the title, author, journal, year, volume and issue, and pages; the OpenAlex record for the same DOI gives the abstract, and the statement of the mechanism was written from that abstract.
 sources:
 - work: 'Private Truths, Public Lies: The Social Consequences of Preference Falsification'
   author: Timur Kuran

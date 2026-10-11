@@ -18,6 +18,44 @@ caveats: >-
   真假消息的传播差距是否同样大，没有这篇研究可以支持。数据是 2006–2017 年推特上由六家英文事实核查网站核查过的传言，不代表其他语言、其他平台。
 theories: [allport_postman_rumor_law]
 metric: ""
+en:
+  title: False news spreads farther and faster than true news
+  statement: >-
+    On Twitter, news judged false by fact-checking organisations spread farther, faster, deeper and more broadly
+    than true news: after controlling for characteristics of the poster, false news was about 70% more likely to
+    be retweeted than true news; true news took about 6 times as long as false news to reach 1,500 people, and
+    about 20 times as long to reach a retweet depth of 10. True news rarely reached more than 1,000 people,
+    whereas the top 1% of false-news cascades routinely reached between 1,000 and 100,000 people.
+  unit: >-
+    multiple (likelihood of false news being retweeted relative to true news; "70% higher")
+  conditions: >-
+    All rumours on Twitter in 2006–2017 that had been checked by six fact-checking organisations, about 126,000
+    retweet cascades, about 3 million people and more than 4.5 million retweets; truth or falsity was determined by
+    the fact-checking organisations (agreement between organisations 95%–98%); the "70%" comes from a regression
+    with retweeting as the dependent variable, controlling for the original poster's account age, activity level,
+    number of followers, number of followees and whether the account was verified.
+  caveats: >-
+    The sample contains only rumours that fact-checking organisations selected for checking, not all news, so
+    there is selection bias (false news worth checking is itself often news that has spread).
+    The paper's abstract says "about 126,000 stories" while the body text says "about 126,000 rumor cascades"; the
+    unit is cascades, not independent stories, which should be borne in mind when citing.
+    "6 times" and "20 times" are ratios of the time taken to reach a particular size or depth, not ratios of
+    spreading rates. The authors attribute the difference to false news being more novel, which is an
+    interpretation rather than direct evidence.
+    Gap from the small-town setting: this is an online platform with one-click retweeting, public broadcasting and
+    mainly strangers, where the cost of spreading is almost zero; face-to-face word of mouth has a cost and is
+    constrained by reputation among acquaintances, and this study provides no support on whether the gap in spread
+    between true and false news would be equally large there. The data are rumours on Twitter in 2006–2017 checked
+    by six English-language fact-checking websites, and do not represent other languages or other platforms.
+  checked:
+    - >-
+      Opened the full-text PDF of the paper on the MIT Media Lab website: the body text states about 126,000
+      rumour cascades, about 3 million people and more than 4.5 million times; "true news takes about 6 times as
+      long to reach 1,500 people", "about 20 times as long to reach depth 10", "the top 1% of false-news cascades
+      reach 1,000–100,000 people" and "false news is 70% more likely to be retweeted" are all in the body text
+      (corresponding to Figure 2 and Figure 4B). Journal volume, issue and page numbers confirmed via the Europe
+      PMC record (PMID 29590045) and the PDF footer; the authors' own MIT IDE research brief repeats the three
+      figures 6 times, 20 times and 70%.
 sources:
   - work: The spread of true and false news online
     author: Soroush Vosoughi, Deb Roy, Sinan Aral

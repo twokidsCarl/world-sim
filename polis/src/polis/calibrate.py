@@ -126,6 +126,7 @@ class Target:
     lo: float
     hi: float
     why: str
+    why_en: str = ""
 
 
 def targets() -> list[Target]:
@@ -134,22 +135,28 @@ def targets() -> list[Target]:
     out = []
     f = facts.get("bank_run_depositor_share")
     if f and f.range:  # type: ignore[attr-defined]
-        out.append(Target("runner_share", f"facts/{f.id}", *f.range, "有储户级数据的挤兑里，去取款的储户所占比例"))  # type: ignore[attr-defined]
+        out.append(Target("runner_share", f"facts/{f.id}", *f.range, "有储户级数据的挤兑里，去取款的储户所占比例",
+                          "In runs with depositor-level data, the share of depositors who withdrew"))  # type: ignore[attr-defined]
     if "bank_run_network_contagion" in facts:
-        out.append(Target("neighbor_lift", "facts/bank_run_network_contagion", 1.0, 99.0, "熟人跑了，自己更可能跑"))
+        out.append(Target("neighbor_lift", "facts/bank_run_network_contagion", 1.0, 99.0, "熟人跑了，自己更可能跑",
+                          "A depositor is more likely to run once an acquaintance has"))
     if "correction_continued_influence" in facts:
-        out.append(Target("correction_residual", "facts/correction_continued_influence", 0.0, 1.0, "辟谣有效，但消不干净"))
+        out.append(Target("correction_residual", "facts/correction_continued_influence", 0.0, 1.0, "辟谣有效，但消不干净",
+                          "A correction works but leaves a residue"))
     if {"toyokawa_shinkin_1973", "bea_bank_run_2008"} <= cases.keys():
         out.append(Target("survived", "cases/toyokawa_shinkin_1973, cases/bea_bank_run_2008", 1.0, 1.0,
-                          "两家银行都在当局公开担保之后撑住了"))  # fmt: skip
+                          "两家银行都在当局公开担保之后撑住了", "Both banks held once the authorities publicly vouched for them"))  # fmt: skip
     if "toyokawa_shinkin_1973" in cases:
         out.append(Target("toyokawa_like", "cases/toyokawa_shinkin_1973", 0.3, 1.0,
-                          "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）"))  # fmt: skip
+                          "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）",
+                          "Toyokawa: at least three in ten parallel worlds resemble the record, with a run starting around day 6, a minority withdrawing, calm after the guarantee and the bank surviving (the three-in-ten floor is set here)"))  # fmt: skip
     if "bea_bank_run_2008" in cases:
         out.append(Target("bea_amount", "cases/bea_bank_run_2008", 0.0, 0.02,
-                          "东亚银行：被提走的存款不到总额的 2%（主席事后的说法；银行公布的是 0.67%）。这个案例的结果已经看过，所以拿来校准、不再算检验"))  # fmt: skip
+                          "东亚银行：被提走的存款不到总额的 2%（主席事后的说法；银行公布的是 0.67%）。这个案例的结果已经看过，所以拿来校准、不再算检验",
+                          "Bank of East Asia: under 2% of deposits withdrawn (the chairman's later account; the bank reported 0.67%). The result of this case has been seen, so it is used for calibration and no longer counts as a test"))  # fmt: skip
     if "sanren_chenghu" in cases:
-        out.append(Target("sanren_steps", "cases/sanren_chenghu", 3.0, 3.0, "一人说不信，两人说起疑，三人说就信了"))
+        out.append(Target("sanren_steps", "cases/sanren_chenghu", 3.0, 3.0, "一人说不信，两人说起疑，三人说就信了",
+                          "One man says it and is not believed, two and doubt sets in, three and it is believed"))
     return out
 
 

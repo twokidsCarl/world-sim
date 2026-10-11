@@ -28,7 +28,68 @@ en:
     to withdraw. On 18 February hundreds of depositors rushed to branches; queues were still there on the 19th. The National Bank called the messages false the same
     day. At a press conference on the 20th Kaspi said about a tenth of its depositors had withdrawn 40 billion tenge over three days, out of a deposit base of
     442 billion. On the 21st the president said no bank would be allowed to fail.
+  people:
+    - name: "Anonymous message senders"
+      role: "Those who mass-sent the text and WhatsApp messages"
+      traits: >-
+        Exploited the unease after the fresh devaluation to name three banks as "about to go bankrupt"; prosecutors later said the suspects included staff of
+        one of the banks.
+    - name: "Depositors"
+      role: "Depositors of Kaspi and the other two banks"
+      traits: >-
+        Had watched their deposits shrink by nearly a fifth a week earlier; on receiving the messages went to branches and cash machines to withdraw.
+    - name: "Kaspi management"
+      role: "Chairman Vyacheslav Kim, chief executive Mikhail Lomtadze, and Michael Calvi of the shareholder Baring Vostok"
+      traits: >-
+        Shipped five times the usual cash to branches, made the figures public, and offered a reward to trace the source; said that by industry experience 10
+        to 15 percent of customers withdraw in the short term in a panic of this kind and most come back within a few months.
+    - name: "Kairat Kelimbetov"
+      role: "Governor of the National Bank of Kazakhstan"
+      traits: >-
+        Said the same day that the messages were false and a provocation; after meeting the heads of the ten largest banks said the banks were stable.
+    - name: "Nursultan Nazarbayev"
+      role: "President of Kazakhstan"
+      traits: >-
+        Stated on Friday that no bank would be allowed to fail.
+  events:
+    - >-
+      On 11 February the National Bank devalued the tenge by about 19% (from 155 tenge to 185 tenge to the US dollar).
+    - >-
+      On 18 February (Tuesday), anonymous text and WhatsApp messages said that three banks, Kaspi, Alliance and CenterCredit, were about to go bankrupt;
+      hundreds of depositors rushed to the three banks' branches. The National Bank said the same day that the messages were "false, speculative and
+      misleading" and meant to shake the banking system.
+    - >-
+      On 19 February (Wednesday), long queues formed for a second day outside some branches in Almaty. The prosecuting authorities said they were
+      investigating and had identified some of the suspects.
+    - >-
+      On 20 February (Thursday), Kaspi's management held a press conference: about a tenth of depositors had withdrawn 40 billion tenge over the past three
+      days, against total deposits of 442 billion tenge; the bank was shipping five times the usual cash to branches; it had offered a reward of 100 million
+      tenge and had received more than a thousand letters.
+    - >-
+      On 21 February (Friday), the president said that banks had not been allowed to fail in 2009 and would not be now either.
   outcome: The bank did not fail. Over three days about a tenth of depositors withdrew roughly 9% of deposits; the run subsided after the official statements, with cash paid on demand. The bank expected the money back within months; no follow-up confirming this was found.
+  checked:
+    - >-
+      Fetched the article. Checked: the statements of Lomtadze, Kim and Calvi at the press conference of 20 February; about 10% of depositors withdrawing 40
+      billion tenge over the past three days; a deposit base of 442 billion tenge; five times the usual cash shipped to branches; the reward of 100 million
+      tenge and more than a thousand letters received; Calvi saying that in the short term 10–15% of customers usually withdraw. The "about 9%" is my own
+      calculation, 40 billion ÷ 442 billion; the article does not print this ratio. The article does not say when the outflow stopped.
+    - >-
+      Fetched the article. Checked: the rumours spread by mobile text message earlier in the week naming Kaspi, Alliance and Center Credit; Kaspi saying on
+      Thursday that 10% of deposits had been withdrawn and that it expected customers to redeposit within a few months; the central bank calling the rumours
+      "false, speculative and misleading" on Tuesday; the three banks' joint statement; the president's statement on Friday; the 18.9% devaluation of 11
+      February.
+    - >-
+      Fetched the article. Checked: the messages spreading via "text messages and WhatsApp Messenger"; the three banks named; a spokesperson for the
+      Prosecutor General's Office saying that some of the suspects had been identified and a case opened, and that the messages were "deliberately false and
+      aimed at destabilization". No amounts.
+    - >-
+      Fetched the article. Checked: hundreds of depositors rushing to branches of the three banks on 18 February; warnings received beforehand by text
+      message and online; the 19% devaluation the previous week; the prosecutors' statements of 19 February.
+    - >-
+      Fetched the article. Checked: the exchange rate going from 155 to 185 tenge to the US dollar on 11 February; National Bank governor Kelimbetov saying
+      he had seen people queuing in long lines to withdraw money, and, after meeting the heads of the ten largest banks, confirming that the banks were
+      stable and that each bank was calculating its outflow; Kaspi offering a reward of $500,000.
 sources:
   - work: Kaspi bank погасил панику 4 тоннами долларов
     author: Forbes Kazakhstan

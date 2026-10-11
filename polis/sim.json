@@ -44,7 +44,7 @@
         "zh": "按史料的时间线重演：通勤列车上的一句玩笑，一周后成了挤兑。这是发生了挤兑、金库撑住的一个世界；换种子，多数世界里玩笑不了了之。",
         "en": "A replay on the recorded timeline: a joke on a commuter train becomes a bank run a week later. This is a world where a run happens and the bank holds; across seeds the joke goes nowhere in most worlds."
       },
-      "url": "/?run=toyokawa-s7-cal&t=100"
+      "url": "/?run=toyokawa-s1-cal&t=100"
     },
     {
       "id": "bea",
@@ -53,7 +53,7 @@
         "zh": "史料里只提走了 0.67% 的存款，银行没倒。模型最初在这里错得离谱（人人都去取），据此重新设计过「谁会去取」；现在规模对上了，但它已经是拟合过的案例，不算检验。",
         "en": "In the record 0.67% of deposits left and the bank held. The model first got this badly wrong (everyone withdrew), and who withdraws was redesigned because of it; the scale now matches, but this is a fitted case and no longer a test."
       },
-      "url": "/?run=bea-s7-cal&t=40"
+      "url": "/?run=bea-s12-cal&t=40"
     },
     {
       "id": "lab",

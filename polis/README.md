@@ -52,6 +52,7 @@ cd web && bun install && bun run dev    # 回放界面，http://localhost:5186
 | `tab=lab` | 直接进实验台 |
 | `view=library` | 直接打开依据页 |
 | `embed=1` | 嵌入模式：只留城和时间轴，进来就播放；点了人或进了实验台才出现右侧面板 |
+| `lang=en` / `lang=zh` | 界面语言。不写时用上次选的，再不然看浏览器语言。场景里的人名、谣言的说法和心里话始终是中文原文 |
 | `play=1` / `play=0` | 强制播放或不播放 |
 
 页面隐藏时播放和渲染循环会停下，回来再继续。
@@ -71,7 +72,7 @@ cd web && bun run test && bun run typecheck
 
 ## 语料
 
-`corpus/` 是模拟的理论依据和将来的校准目标，每条都带出处：
+`corpus/` 是模拟的理论依据和将来的校准目标，每条都带出处。正文是中文，每个文件的 `en:` 块里是英文；`uv run polis corpus` 会报出缺英文的条目。出处的卷期页码（`locator`）没有另译。
 
 - `theory/`：12 张理论卡（谣言、阈值、级联、挤兑、从众……），每张写明机制、可观察的推论，以及引擎里哪一处实现了它——留空的就是还没实现。
 - `cases/`：10 个案例，五个出自文学与典故，五个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行，以及留作样本外检验的 2004 年 BAC 圣何塞、2011 年 Swedbank 拉脱维亚、2014 年 Kaspi）。
@@ -81,27 +82,29 @@ cd web && bun run test && bun run typecheck
 
 ## 数据从哪来
 
-引擎目前没有使用任何外部数据；语料只是文献与史料的转述和书目信息。
+引擎用到的外部数据只有一项：联合国的年龄结构（见下）。语料只是文献与史料的转述和书目信息。
 
-- **人口是合成的**：属性与特质的分布是占位假设，由种子生成，没有对齐任何调查。
+- **人口是合成的，只有年龄结构对齐了公开数据**。五个史料场景的年龄结构取自联合国《世界人口展望 2024》里对应地方和年份的数字（日本 1973、香港 2008、哥斯达黎加 2004、拉脱维亚 2011、哈萨克斯坦 2014），许可是 CC BY 3.0 IGO，汇总数和出处在 `data/curated/age_structure.yaml`。其余属性与特质（教育、收入、信任、风险厌恶、从众、与银行的往来）的分布都是占位假设，由种子生成。虚构的通和场景没有对应的地方和年份，全部是假设。
+  - 查过但没有用的数据：世界价值观调查和中国综合社会调查不允许再分发；Our World in Data 上的人际信任数字出自同一批调查，受同样的使用条件约束；Wellcome Global Monitor 的页面没有写明数据的许可；Barro–Lee 的受教育年限数据保留版权。许可不清的一律没有放进仓库。
 - **默认的行为参数是手调的**，调到曲线看起来合理为止。
-- **校准只是起步**：`polis calibrate` 用语料里七个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎、丰川的平行世界里至少三成像史料、东亚银行被提走的存款不到 2%）随机搜索八个参数，结果存在 `calibration.json`。六个命中；取款储户的比例在校准用的 8 个种子上平均 1.6%，没到 3%。目标少、参数多，得到的是"与这几条事实大体不矛盾"的一组参数；"可信担保"的力度本身也是手设的。
+- **校准只是起步，而且很脆**：`polis calibrate` 用语料里七个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎、丰川的平行世界里至少三成像史料、东亚银行被提走的存款不到 2%）随机搜索八个参数，结果存在 `calibration.json`。五个命中；取款储户的比例在校准用的 8 个种子上平均 0.6%，没到 3%；丰川那一条是 0。"可信担保"的力度本身也是手设的。
+  - 脆在哪里：把年龄结构换成联合国的数字之前，同一个搜索找到过一组丰川命中 37.5% 的参数；人口只是年龄分布变了一点，那组参数就掉到 12.5%，重新搜索也没再找到更好的。那个 37.5% 是对种子和人口的过拟合，不是模型学到了什么。
 - **"谁会去取"重新设计过一次**（`mind.py`）。原来的规则是每个知情储户每小时掷一次骰子，日子一长人人都会被掷中，所以挤兑一旦开始几乎人人都去取。现在：
   - 每人有一个整场不变的门槛，动机没过门槛的人等多久也不去（Granovetter 的门槛模型）；与银行往来久、有贷款的人门槛更高（依据是 Iyer 与 Puri）。
   - 有存款保险的场景里，保得住的那部分不算在可能的损失里，去了也不一定取光。上限定在储户存款的 95 分位，这个比例是照 Iyer 与 Puri 的量级手设的。
   - 往来年数、有没有贷款、各人门槛的分布都是占位假设。
-- **重新设计之后，拟合过的案例规模对上了，没见过的案例仍然对不上。** `polis canon --held-out` 换一批种子各跑 30 个平行世界，只跑了这一次：
-  - 丰川（参与过校准）：29 个世界金库撑住（改之前 19 个）。但担保之前真发生挤兑的只有 3 个世界，27 个世界里玩笑不了了之；五件事全部像史料的仍然只有 1 个。校准用的种子上这个比例是 37.5%，换了种子就掉回去，说明那是对种子的过拟合。
-  - 东亚银行（结果看过，已拿来校准）：30 个世界银行都撑住（改之前 10 个），被提走的存款平均 2.7%、最多 8.8%（改之前平均 50%）；史料是 0.67%。但只有 10 个世界发生了挤兑。
+- **重新设计之后，拟合过的案例规模对上了，没见过的案例仍然对不上。** `polis canon --held-out` 换一批种子各跑 30 个平行世界。它跑过两次：第一次是重新设计刚完成时（PR #110），第二次是年龄结构换成联合国数字并重新校准之后；两次之间没有照着结果调过任何东西。下面是第二次、也就是现在的代码的结果，第一次的数字附在括号里：
+  - 丰川（参与过校准）：30 个世界金库都撑住（重新设计之前 19 个），但没有一个世界在担保之前发生挤兑，玩笑全都不了了之；五件事全部像史料的是 0 个（第一次 1 个）。
+  - 东亚银行（结果看过，已拿来校准）：30 个世界银行都撑住（重新设计之前 10 个），被提走的存款平均 1.5%、最多 6.6%（重新设计之前平均 50%，第一次 2.7%）；史料是 0.67%。但只有 5 个世界发生了挤兑。
   - 三起样本外案例，设定和通过标准在改模型之前就合并了（PR #104）。标准对三者相同：银行不倒、挤兑在史料所记的那一天开始、取走的比例在史料数字的一半到两倍之间、当局表态两天后基本没人再去。
 
     | 案例 | 史料 | 模拟（30 个世界） | 全部相符 |
     |---|---|---|---|
-    | BAC 圣何塞 2004 | 两天取走约 1.8% | 11 个世界发生挤兑；取走平均 15.1%（0%–80%）；4 个世界银行倒闭 | 0 / 30 |
-    | Swedbank 拉脱维亚 2011 | 一个周日取走约 1.5% | 12 个世界发生挤兑；取走平均 4.6%（0%–25.1%）；银行都撑住 | 1 / 30 |
-    | Kaspi 2014 | 三天里约一成储户取走约 9% | 没有一个世界发生挤兑；取走最多 1.1% | 0 / 30 |
+    | BAC 圣何塞 2004 | 两天取走约 1.8% | 6 个世界发生挤兑；取走平均 1.4%（0%–10.1%）；银行都撑住 | 0 / 30（第一次 0） |
+    | Swedbank 拉脱维亚 2011 | 一个周日取走约 1.5% | 3 个世界发生挤兑；取走平均 1.0%（0%–7.1%）；银行都撑住 | 1 / 30（第一次 1） |
+    | Kaspi 2014 | 三天里约一成储户取走约 9% | 没有一个世界发生挤兑 | 0 / 30（第一次 0） |
 
-  - 逐条检查共 480 次，对上 197 次，其中多数是"银行没倒""事后平息"这类什么都不发生也能对上的项。
+  - 逐条检查共 480 次，对上 197 次（两次恰好相同），平均数看上去接近史料，是因为多数世界什么都没发生、少数世界闹得很大，平均下来碰巧落在那里；对上的多数是"银行没倒""事后平息"这类什么都不发生也能对上的项。
   - **被否定的假设**：模型里，人要等熟人印证、看见别人去取，才会行动，所以结果非此即彼——要么不了了之，要么滚成雪崩。真实的三起挤兑都不是这样：一条群发消息在几小时内就让一小部分人各自去取了钱，规模有限而且各不相同。Kaspi 最清楚：国家银行当天就否认了，三天里仍有一成储户去取；模型里同样的否认在六小时后就把事情压没了。也就是说，"当局表态"的预设力度远大于实际，而"消息直接让一部分人行动"这条路模型里几乎没有。
   - 这三起案例的结果既然看过，下次再改模型，它们也不能再算检验，得另找新的。
 - 通和场景的**人物、地名、说法都是本项目原创**；丰川、东亚银行和三个样本外场景的事件顺序取自语料里的史料转述，人物是匿名代号或虚构的普通储户，街区、人口、存款和关系网是合成的。
@@ -162,6 +165,7 @@ The UI's state can be written into the address, so every scene has a link that o
 | `tab=lab` | Go straight to the lab |
 | `view=library` | Open the evidence page |
 | `embed=1` | Embed mode: stage and timeline only, playing on arrival; the side panel appears once a person is picked or the lab is opened |
+| `lang=en` / `lang=zh` | Interface language. Without it the last choice is used, and failing that the browser's language. People's names, the wordings of the rumour and characters' thoughts always stay in the original Chinese |
 | `play=1` / `play=0` | Force playing or not playing |
 
 Playback and the render loop stop while the page is hidden and resume on return.
@@ -181,7 +185,7 @@ cd web && bun run test && bun run typecheck
 
 ## Corpus
 
-`corpus/` holds the theoretical basis of the simulation and its future calibration targets; every entry carries its sources:
+`corpus/` holds the theoretical basis of the simulation and its future calibration targets; every entry carries its sources. The text is in Chinese, with the English in each file's `en:` block; `uv run polis corpus` reports entries that lack English. Source locators (volume, issue, pages) are not translated separately.
 
 - `theory/`: 12 theory cards (rumour, thresholds, cascades, bank runs, conformity, …), each stating the mechanism, its observable implications, and where in the engine it is implemented — a blank there means it is not implemented yet.
 - `cases/`: 10 cases — five from literature and classical allusion, five documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008, and three held out as tests: BAC San José in 2004, Swedbank in Latvia in 2011, Kaspi Bank in 2014).
@@ -191,27 +195,29 @@ A source's `verified` is true only after a page that actually confirms it has be
 
 ## Where the data comes from
 
-The engine currently uses no external data at all; the corpus is only paraphrase of literature and historical sources plus bibliographic information.
+The engine uses one piece of external data: the UN age structure (see below). The corpus is only paraphrase of literature and historical sources plus bibliographic information.
 
-- **The population is synthetic**: the distributions of attributes and traits are placeholder assumptions, generated from the seed and not aligned with any survey.
+- **The population is synthetic; only its age structure is aligned with public data.** For the five historical scenarios the age structure follows the UN World Population Prospects 2024 figures for the place and year (Japan 1973, Hong Kong 2008, Costa Rica 2004, Latvia 2011, Kazakhstan 2014), licensed CC BY 3.0 IGO; the aggregates and their attribution are in `data/curated/age_structure.yaml`. The distributions of every other attribute and trait (education, income, trust, risk aversion, conformity, ties to the bank) are placeholder assumptions generated from the seed. The fictional Tonghe scenario has no place or year and is assumption throughout.
+  - Data that was examined and not used: the World Values Survey and the Chinese General Social Survey do not allow redistribution; the interpersonal-trust figures on Our World in Data come from the same surveys and carry the same conditions; the Wellcome Global Monitor page states no licence for its data; the Barro–Lee schooling data is under copyright. Nothing whose licence was unclear went into the repository.
 - **The default behavioural parameters are hand-tuned**, adjusted until the curves looked reasonable.
-- **Calibration is only a beginning**: `polis calibrate` runs a random search over eight parameters against seven targets from the corpus (3%–9% of depositors withdraw, a person is more likely to run when acquaintances have, corrections work but leave a residue, the bank holds under a credible guarantee, three men make a tiger, at least three in ten parallel Toyokawa worlds resemble the record, and under 2% of deposits leave the Bank of East Asia); the result is stored in `calibration.json`. Six are hit; the share of depositors who withdraw averages 1.6% on the 8 calibration seeds, short of 3%. With few targets and many parameters this is a parameter set that is "broadly not contradicted by these few facts"; the strength of the "credible guarantee" is itself set by hand.
+- **Calibration is only a beginning, and it is fragile**: `polis calibrate` runs a random search over eight parameters against seven targets from the corpus (3%–9% of depositors withdraw, a person is more likely to run when acquaintances have, corrections work but leave a residue, the bank holds under a credible guarantee, three men make a tiger, at least three in ten parallel Toyokawa worlds resemble the record, and under 2% of deposits leave the Bank of East Asia); the result is stored in `calibration.json`. Five are hit; the share of depositors who withdraw averages 0.6% on the 8 calibration seeds, short of 3%, and the Toyokawa target scores 0. The strength of the "credible guarantee" is itself set by hand.
+  - How it is fragile: before the age structure was replaced with the UN figures, the same search found a parameter set that hit the Toyokawa target at 37.5%. With nothing changed but a slightly different age distribution, that set fell to 12.5%, and a fresh search found nothing better. The 37.5% was a fit to the seeds and the population, not something the model had learned.
 - **"Who withdraws" has been redesigned once** (`mind.py`). The old rule rolled a die every hour for every depositor who had heard, which catches everybody in the end, so once a run started nearly everyone withdrew. Now:
   - Each person has a threshold that is fixed for the whole run, and someone whose motive stays below it never goes however long they wait (Granovetter's threshold model); long relationships with the bank and loans raise it (the evidence is Iyer and Puri).
   - Where a scenario has deposit insurance, the covered part of a deposit is left out of what can be lost, and those who do go may not take everything. The cap sits at the 95th percentile of deposits, a share set by hand to Iyer and Puri's order of magnitude.
   - The distributions of tenure, of who has a loan, and of individual thresholds are placeholder assumptions.
-- **After the redesign the fitted cases match in scale; the unseen ones still do not.** `polis canon --held-out` ran 30 parallel worlds per case on a fresh set of seeds, once:
-  - Toyokawa (used in calibration): the bank holds in 29 worlds (19 before). But a run actually starts before the guarantee in only 3 worlds and the joke goes nowhere in 27; still only 1 world matches the record on all five points. On the calibration seeds that share was 37.5%; it falls back on fresh seeds, which means it was fitted to the seeds.
-  - Bank of East Asia (result seen, now used in calibration): the bank holds in all 30 worlds (10 before) and 2.7% of deposits leave on average, 8.8% at most (50% on average before); the record says 0.67%. But a run happens in only 10 worlds.
+- **After the redesign the fitted cases match in scale; the unseen ones still do not.** `polis canon --held-out` runs 30 parallel worlds per case on a fresh set of seeds. It has been run twice: once when the redesign was finished (PR #110), and once after the age structure was replaced with the UN figures and the model recalibrated; nothing was tuned to the results in between. Below is the second run, that of the current code, with the first run's figures in brackets:
+  - Toyokawa (used in calibration): the bank holds in all 30 worlds (19 before the redesign), but in none does a run start before the guarantee; the joke goes nowhere every time, and no world matches the record on all five points (1 in the first run).
+  - Bank of East Asia (result seen, now used in calibration): the bank holds in all 30 worlds (10 before the redesign) and 1.5% of deposits leave on average, 6.6% at most (50% on average before the redesign, 2.7% in the first run); the record says 0.67%. But a run happens in only 5 worlds.
   - Three held-out cases, whose settings and pass criteria were merged before the model was changed (PR #104). The criteria are the same for all three: the bank survives, the run starts on the recorded day, the share withdrawn is between half and twice the recorded figure, and almost nobody still goes two days after the authorities speak.
 
     | Case | Record | Simulation (30 worlds) | All criteria met |
     |---|---|---|---|
-    | BAC San José 2004 | about 1.8% withdrawn over two days | a run in 11 worlds; 15.1% withdrawn on average (0%–80%); the bank fails in 4 | 0 / 30 |
-    | Swedbank Latvia 2011 | about 1.5% withdrawn on one Sunday | a run in 12 worlds; 4.6% withdrawn on average (0%–25.1%); the bank always holds | 1 / 30 |
-    | Kaspi 2014 | about a tenth of depositors withdrew roughly 9% in three days | no run in any world; at most 1.1% withdrawn | 0 / 30 |
+    | BAC San José 2004 | about 1.8% withdrawn over two days | a run in 6 worlds; 1.4% withdrawn on average (0%–10.1%); the bank always holds | 0 / 30 (first run 0) |
+    | Swedbank Latvia 2011 | about 1.5% withdrawn on one Sunday | a run in 3 worlds; 1.0% withdrawn on average (0%–7.1%); the bank always holds | 1 / 30 (first run 1) |
+    | Kaspi 2014 | about a tenth of depositors withdrew roughly 9% in three days | no run in any world | 0 / 30 (first run 0) |
 
-  - Of 480 individual checks 197 pass, most of them items such as "the bank survives" and "calm afterwards" that also pass when nothing happens at all.
+  - Of 480 individual checks 197 pass (the same count in both runs, by coincidence). The averages look close to the record only because most worlds see nothing happen and a few see a great deal, which happens to average out there; most of the passes are items such as "the bank survives" and "calm afterwards" that also pass when nothing happens at all.
   - **The assumption this refutes**: in the model a person acts only after acquaintances corroborate the story and others are seen withdrawing, so outcomes are all or nothing: the rumour fizzles or it avalanches. None of the three real runs looked like that. A mass message made a small share of people go and withdraw, each on their own, within hours; the scale was limited and differed from case to case. Kaspi is the clearest: the National Bank denied the story the same day and a tenth of depositors still withdrew over three days, whereas in the model the same denial ends everything six hours in. So the preset strength of "the authorities speak" is far greater than the real thing, and the path by which a message moves some people directly hardly exists in the model.
   - Now that these three results have been seen, they cannot count as tests the next time the model changes either; new ones will be needed.
 - In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa, Bank of East Asia and three held-out scenarios the order of events comes from the corpus's paraphrase of the records, the characters are anonymous labels or invented ordinary depositors, and the districts, population, deposits and network of ties are synthetic.

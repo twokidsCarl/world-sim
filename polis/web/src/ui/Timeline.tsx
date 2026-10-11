@@ -2,14 +2,15 @@
 // Timeline: playback controls plus the aggregate curves. The four head-count lines share one y-axis; the bank's cash is a ratio and gets its own narrow strip.
 import { useEffect, useRef, useState } from 'react'
 import { clock, clockText, dayName, type RunData } from '../state/derive.ts'
+import { tr } from '../state/lang.ts'
 import { useApp } from '../state/store.ts'
-import { describe } from './Lab.tsx'
+import { describe, short } from './Lab.tsx'
 
 const SERIES = [
-  { key: 'aware', name: '听说了', color: 'var(--s-aware)' },
-  { key: 'believers', name: '相信', color: 'var(--s-believe)' },
-  { key: 'queue', name: '在排队', color: 'var(--s-queue)' },
-  { key: 'withdrew', name: '已取款', color: 'var(--s-withdrew)' },
+  { key: 'aware', name: ['听说了', 'Heard'], color: 'var(--s-aware)' },
+  { key: 'believers', name: ['相信', 'Believe'], color: 'var(--s-believe)' },
+  { key: 'queue', name: ['在排队', 'Queuing'], color: 'var(--s-queue)' },
+  { key: 'withdrew', name: ['已取款', 'Withdrew'], color: 'var(--s-withdrew)' },
 ] as const
 
 const SPEEDS = [1, 2, 4, 8, 16]
@@ -49,28 +50,28 @@ function Controls(props: { run: RunData; t: number; at: number; hovering: boolea
   return (
       <div className="controls">
         <button className="play" onClick={() => useApp.getState().toggle()}>
-          {playing ? '暂停' : '播放'}
+          {playing ? tr('暂停', 'Pause') : tr('播放', 'Play')}
         </button>
         <span className="clock num">{clockText(run, t)}</span>
-        <select aria-label="速度" value={speed} onChange={(e) => useApp.getState().setSpeed(Number(e.target.value))}>
+        <select aria-label={tr('速度', 'Speed')} value={speed} onChange={(e) => useApp.getState().setSpeed(Number(e.target.value))}>
           {SPEEDS.map((v) => (
             <option key={v} value={v}>
-              每秒 {v} 小时
+              {tr(`每秒 ${v} 小时`, `${v} h per second`)}
             </option>
           ))}
         </select>
         <div className="series">
-          <span className="muted">{hovering ? clockText(run, at) : '此刻'}</span>
+          <span className="muted">{hovering ? clockText(run, at) : tr('此刻', 'Now')}</span>
           {SERIES.map((d) => (
             <span key={d.key}>
               <i className="key" style={{ borderColor: d.color }} />
-              {d.name}
+              {tr(d.name[0], d.name[1])}
               <b className="num">{s[d.key][at]}</b>
             </span>
           ))}
           <span>
             <i className="key" style={{ borderColor: 'var(--ink)' }} />
-            钱庄现银
+            {tr('钱庄现银', 'Bank cash')}
             <b className="num">{Math.round((s.reserve[at]! / reserveFull) * 100)}%</b>
           </span>
         </div>
@@ -115,9 +116,9 @@ function Chart(props: {
   const ensemble = useApp((st) => st.ensemble)
   const marks: { k: number; text: string }[] = (run.manifest.params.interventions ?? []).map((iv) => ({
     k: iv.t,
-    text: iv.kind === 'broadcast' ? (iv.valence === 1 ? '新谣言' : (iv.strength ?? 0) >= 2.5 ? '担保' : '告示') : describe(run, iv).split('，')[0]!.slice(0, 5),
+    text: iv.kind === 'broadcast' ? (iv.valence === 1 ? tr('新谣言', 'Rumour') : (iv.strength ?? 0) >= 2.5 ? tr('担保', 'Guarantee') : tr('告示', 'Notice')) : short(run, iv),
   })) // prettier-ignore
-  if (run.manifest.summary.failed_at != null) marks.push({ k: run.manifest.summary.failed_at, text: '倒闭' })
+  if (run.manifest.summary.failed_at != null) marks.push({ k: run.manifest.summary.failed_at, text: tr('倒闭', 'Fails') })
 
   // 集成的中间八成：上沿从左到右，下沿从右到左，围成一条带；倒闭后没有值的时刻断开
   // Middle 80% of the ensemble: upper edge left to right, lower edge right to left, closing into a band; it breaks wherever there is no value after the bank has failed
@@ -150,7 +151,7 @@ function Chart(props: {
       width={width}
       height={height}
       role="img"
-      aria-label="各时刻听说、相信、排队、取款的人数，以及钱庄现银"
+      aria-label={tr('各时刻听说、相信、排队、取款的人数，以及钱庄现银', 'Numbers who have heard, believe, are queuing and have withdrawn at each moment, and the bank’s cash')}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId)
         useApp.setState({ playing: false })
@@ -175,7 +176,7 @@ function Chart(props: {
       ))}
       <line x1={M.l} x2={M.l + iw} y1={y2(0)} y2={y2(0)} stroke="var(--line)" />
       <text x={M.l - 6} y={y2(full) + 9} textAnchor="end">
-        现银
+        {tr('现银', 'Cash')}
       </text>
       {days.map((d) => (
         <text key={d.k} x={x(d.k) + 4} y={height - 3}>

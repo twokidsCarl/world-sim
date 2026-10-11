@@ -20,6 +20,46 @@ caveats: >-
   “第二个信号的边际作用大”这一形状。
 theories: [complex_contagion]
 metric: ""
+en:
+  title: Behaviours that need confirmation from several people spread farther and faster in clustered networks
+  statement: >-
+    When a behaviour is adopted only after repeated signals from several acquaintances, a highly clustered network
+    spreads it farther and faster than a network with random ties: in the experiment the behaviour spread on
+    average to 53.77% of the members of the clustered networks but to only 38.26% in the random networks, and the
+    speed of diffusion in the clustered networks was more than four times that in the random networks.
+    Adoption was markedly more likely on receiving signals from two neighbours than on receiving only one.
+  unit: >-
+    proportion (mean final adoption rate in the clustered networks; 0.3826 in the random networks used as the
+    comparison)
+  conditions: >-
+    Centola's 2010 online experiment: 1,528 participants were anonymously assigned to artificially constructed
+    health-community networks, each with a fixed number of "health buddies"; clustered lattice networks and random
+    networks of the same size and degree were compared in pairs, in 6 independent trials in total (N=98/128/144,
+    with 6 or 8 neighbours each); the behaviour being spread was registering for a health forum, and each time a
+    neighbour registered the system sent you a notification email; each trial lasted 3 weeks.
+  caveats: >-
+    There are only 6 pairs of networks; the difference is significant by a rank-sum test (P<0.01), but the
+    uncertainty about the effect size is large; the neighbours were anonymous strangers assigned by the system, the
+    signals were system emails rather than something a person said, and participants could not contact their
+    neighbours directly and did not know who they were. The paper's abstract itself makes the premise explicit:
+    clustering has the advantage only when the behaviour requires social reinforcement, and for things that can
+    spread on a single contact the prevailing hypothesis is that long-range shortcuts spread them faster.
+    Only the original 2010 paper was read this time; later replications and counter-examples were not checked.
+    Gap from the small-town setting: a small town's network of acquaintances is highly clustered to begin with, and
+    this fact supports a threshold-type specification in which "one goes to withdraw only after hearing the same
+    thing repeatedly from several acquaintances", but 53.77% and 38.26% are the numbers of this particular online
+    experiment, not transferable parameters; what a simulation should reproduce is the direction (clustered
+    networks higher than random networks) and the shape that "the marginal effect of the second signal is large".
+  checked:
+    - >-
+      Opened a PDF, kept on the web page of a faculty member at Brigham Young University, of a printout of the
+      full-text page on the Science website (the page header prints Science 329 (5996): 1194 and DOI
+      10.1126/science.1185231): the body text states 1,528 participants, three network sizes, 6 independent trials
+      of 3 weeks each, that the behaviour reached on average 53.77% of the clustered networks against 38.26% of
+      the random networks, and that the rate of diffusion in the clustered networks was more than four times that
+      in the random networks (P<0.01). Volume, issue and page numbers separately confirmed via the Europe PMC
+      record (PMID 20813952); the MIT News Office report of 3 September 2010 gives the rounded figures 54% and
+      38%.
 sources:
   - work: The Spread of Behavior in an Online Social Network Experiment
     author: Damon Centola

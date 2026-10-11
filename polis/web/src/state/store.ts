@@ -3,11 +3,12 @@
 import { create } from 'zustand'
 import type { Intervention, Manifest, Message, Population, Series } from '../contract/types.gen.ts'
 import { assemble, parseEvents, type RunData } from './derive.ts'
+import { setLang as applyLang, tr, type Lang } from './lang.ts'
 
 export type Theme = 'light' | 'dark'
 
-// 直达链接：?run=<记录>&t=<小时>&person=<主角的角色键或下标>&tab=lab&view=library&embed=1&play=1
-// Deep links: ?run=<run id>&t=<hour>&person=<cast key or index>&tab=lab&view=library&embed=1&play=1
+// 直达链接：?run=<记录>&t=<小时>&person=<主角的角色键或下标>&tab=lab&view=library&embed=1&play=1&lang=en
+// Deep links: ?run=<run id>&t=<hour>&person=<cast key or index>&tab=lab&view=library&embed=1&play=1&lang=en
 const query = new URLSearchParams(window.location.search)
 /** 嵌在别的页面里：只留城和时间轴，进来就播 / Embedded in another page: stage and timeline only, and it starts by itself */
 export const EMBED = query.get('embed') === '1'
@@ -34,6 +35,7 @@ export interface AppState {
   selected: number | null
   hovered: number | null
   theme: Theme
+  lang: Lang
   tab: Tab
   /**
    * 分叉记录的父记录，画成虚线作对比
@@ -62,6 +64,7 @@ export interface AppState {
   select: (i: number | null) => void
   hover: (i: number | null) => void
   setTheme: (theme: Theme) => void
+  setLang: (lang: Lang) => void
 }
 
 async function get(path: string): Promise<Response> {
@@ -75,6 +78,20 @@ async function get(path: string): Promise<Response> {
 const initialTheme: Theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 document.documentElement.dataset.theme = initialTheme
 
+// 语言：链接里写了就用链接的，其次是上次选的，再次看浏览器
+// Language: the link wins, then the last choice, then the browser's
+function storedLang(): string | null {
+  try {
+    return window.localStorage.getItem('polis-lang')
+  } catch {
+    return null
+  }
+}
+const asked = query.get('lang') ?? storedLang()
+const initialLang: Lang = asked === 'en' || asked === 'zh' ? asked : (navigator.language ?? 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en'
+applyLang(initialLang)
+document.documentElement.lang = initialLang === 'en' ? 'en' : 'zh-CN'
+
 export const useApp = create<AppState>((set, getState) => ({
   runs: [],
   run: null,
@@ -86,6 +103,7 @@ export const useApp = create<AppState>((set, getState) => ({
   selected: null,
   hovered: null,
   theme: initialTheme,
+  lang: initialLang,
   tab: 'city',
   compare: null,
   ensemble: null,
@@ -98,7 +116,7 @@ export const useApp = create<AppState>((set, getState) => ({
       const runs = (await (await get('/api/runs')).json()) as Manifest[]
       set({ runs })
       if (!runs[0]) {
-        set({ phase: 'error', error: '还没有运行记录。先在 polis/ 下执行 uv run polis run' })
+        set({ phase: 'error', error: tr('还没有运行记录。先在 polis/ 下执行 uv run polis run', 'No runs yet. Run `uv run polis run` in polis/ first.') })
         return
       }
       const wanted = query.get('run')
@@ -116,7 +134,7 @@ export const useApp = create<AppState>((set, getState) => ({
       // When embedded do not wait for a key press; the lab and the evidence page are for interacting, so they do not auto-play
       if (query.get('play') === '1' || (EMBED && !lab && !OPEN_LIBRARY && query.get('play') !== '0')) set({ playing: true })
     } catch (e) {
-      set({ phase: 'error', error: `连不上 API（${String(e)}）。先在 polis/ 下执行 uv run polis serve` })
+      set({ phase: 'error', error: tr(`连不上 API（${String(e)}）。先在 polis/ 下执行 uv run polis serve`, `Cannot reach the API (${String(e)}). Run \`uv run polis serve\` in polis/ first.`) })
     }
   },
 
@@ -158,7 +176,7 @@ export const useApp = create<AppState>((set, getState) => ({
         hovered: null,
       }) // prettier-ignore
     } catch (e) {
-      set({ phase: 'error', error: `读取记录失败：${String(e)}` })
+      set({ phase: 'error', error: tr(`读取记录失败：${String(e)}`, `Could not load the run: ${String(e)}`) })
     }
   },
 
@@ -181,7 +199,7 @@ export const useApp = create<AppState>((set, getState) => ({
       set({ runs: (await (await get('/api/runs')).json()) as Manifest[] })
       await getState().open(made.run_id, true)
     } catch (e) {
-      set({ labError: `分叉失败：${e instanceof Error ? e.message : String(e)}` })
+      set({ labError: tr('分叉失败：', 'Fork failed: ') + (e instanceof Error ? e.message : String(e)) })
     } finally {
       set({ busy: '' })
     }
@@ -198,7 +216,7 @@ export const useApp = create<AppState>((set, getState) => ({
       const ensemble = (await res.json()) as Ensemble
       if (getState().run?.manifest.run_id === id) set({ ensemble })
     } catch (e) {
-      set({ labError: `集成失败：${e instanceof Error ? e.message : String(e)}` })
+      set({ labError: tr('集成失败：', 'Ensemble failed: ') + (e instanceof Error ? e.message : String(e)) })
     } finally {
       set({ busy: '' })
     }
@@ -221,5 +239,15 @@ export const useApp = create<AppState>((set, getState) => ({
   setTheme: (theme) => {
     document.documentElement.dataset.theme = theme
     set({ theme })
+  },
+  setLang: (lang) => {
+    applyLang(lang)
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN'
+    try {
+      window.localStorage.setItem('polis-lang', lang)
+    } catch {
+      // 存不了就只在这一次有效 / if it cannot be stored the choice lasts for this visit only
+    }
+    set({ lang })
   },
 }))

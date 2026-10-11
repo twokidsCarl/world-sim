@@ -15,6 +15,34 @@ predicts:
 - 对当事人无关紧要的话题，即使信息含糊也传不开。
 - 同一条消息经多人接力转述后变短，保留下来的少数细节被放大，并朝转述者既有的成见方向偏移。
 in_engine: mind.share_drive：想讲的冲动 = 事情要紧 × 真假难辨，再加上怕。engine.Sim._tell 里转述会走样，但只做了越传越重（锐化），磨平与同化尚未实现。
+en:
+  field: >-
+    Social psychology
+  claim: >-
+    How much a rumour circulates depends on how important the topic is to the people concerned and on how ambiguous the relevant evidence is, and the two multiply: if either is zero, the rumour does not get going. A rumour is also systematically distorted as it is retold from person to person: details drop out and it grows shorter with each telling (levelling), a few details are picked out and emphasised (sharpening), and the content is altered to fit the reteller's presuppositions and interests better (assimilation). Note: the formula is a generalisation proposed by the authors, and secondary reviews point out that this exact multiplicative relationship has never been established empirically; this card has only verified that the formula appears on pp. 33–34 of the 1947 monograph, and was unable to open the full text of the 1946 journal article to confirm whether the formula is there as well.
+  formal: >-
+    R ~ i × a (R the amount of rumour in circulation, i importance, a ambiguity; a multiplicative relationship, R=0 when i=0 or a=0)
+  parameters:
+  - >-
+    The amount or intensity of rumour in circulation
+  - >-
+    The importance of the topic to the individuals concerned
+  - >-
+    The degree of ambiguity of the evidence bearing on the topic
+  predicts:
+  - >-
+    The volume of rumour is greatest when people's own vital interests are at stake and official information is missing or contradictory; once clarifying information lowers the ambiguity, the volume of rumour falls accordingly.
+  - >-
+    A topic that does not matter to the people concerned does not spread, even if the information is ambiguous.
+  - >-
+    The same message becomes shorter after being relayed through many people, the few details that survive are magnified, and it drifts in the direction of the retellers' existing prejudices.
+  in_engine: >-
+    mind.share_drive: the urge to tell = how much the matter matters × how hard it is to tell true from false, plus fear. In engine.Sim._tell a retelling gets distorted, but only growing graver with each telling (sharpening) is done; levelling and assimilation are not yet implemented.
+  checked:
+  - >-
+    The "Rumor" entry of the International Encyclopedia of the Social Sciences, as reproduced on encyclopedia.com, confirms the authors, the title, the year 1947 and New York: Holt, and places the formula R ~ i × a at pp. 33–34 of that book, while also describing levelling/sharpening/assimilation and later criticism; an Open Library search record (openlibrary.org/works/OL3420402W) additionally lists a 1947 Henry Holt edition. The publisher's original page was not seen.
+  - >-
+    The Crossref record confirms the title, the two authors, the journal, volume 10 issue 4, first page 501 and the year 1946; the OpenAlex record for the same article gives the pages 501–517. The Oxford Academic landing page returned a verification page and the full text was not read, so it cannot be confirmed whether the formula also appears in this article.
 sources:
 - work: The Psychology of Rumor
   author: Gordon W. Allport; Leo Postman

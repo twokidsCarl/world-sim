@@ -1,6 +1,7 @@
 // 从运行记录到画面所需量的纯函数推导。不碰 DOM，可单测（tests/derive.test.ts）。
 // Pure functions deriving what the screen needs from a run record. No DOM access; unit-testable (tests/derive.test.ts).
 import type { Event as SimEvent, Manifest, Message, Person, Population, Series } from '../contract/types.gen.ts'
+import { tr } from './lang.ts'
 
 export type { SimEvent }
 
@@ -13,7 +14,8 @@ export const AWARE = 1
 export const QUEUEING = 2
 export const WITHDREW = 3
 export const LOST = 4
-export const STATUS_NAMES = ['未闻', '知情', '排队', '已取', '受损']
+const STATUS_NAMES: [string, string][] = [['未闻', 'Unaware'], ['知情', 'Aware'], ['排队', 'Queuing'], ['已取', 'Withdrew'], ['受损', 'Lost']] // prettier-ignore
+export const statusName = (status: number): string => tr(...STATUS_NAMES[status]!)
 
 export interface RunData {
   manifest: Manifest
@@ -139,7 +141,7 @@ export function clock(run: RunData, t: number): { day: number; hour: number; nig
 }
 
 export function dayName(day: number): string {
-  return day <= 10 ? `第${'一二三四五六七八九十'[day - 1]}天` : `第 ${day} 天`
+  return tr(day <= 10 ? `第${'一二三四五六七八九十'[day - 1]}天` : `第 ${day} 天`, `Day ${day}`)
 }
 
 export function clockText(run: RunData, t: number): string {

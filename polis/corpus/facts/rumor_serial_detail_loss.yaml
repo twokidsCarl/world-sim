@@ -18,6 +18,54 @@ caveats: >-
   模拟若复现出“细节单调丢失 70%”反而可能说明缺少了相互核对的机制。
 theories: [allport_postman_rumor_law]
 metric: ""
+en:
+  title: Rumours rapidly lose detail in serial retelling
+  statement: >-
+    A description passed on orally from person to person in turn quickly becomes shorter: as reported at second
+    hand, about 70% of the details are lost in the first five or six retellings, after which it tends to
+    stabilise.
+    At the same time the few remaining details are accentuated (sharpening), and the content is altered to fit the
+    retellers' expectations and prejudices better (assimilation).
+  unit: >-
+    proportion (share of details lost in the first 5–6 retellings)
+  conditions: >-
+    The laboratory serial-retelling experiments carried out by Allport and Postman in the United States in the
+    1940s: the first participant looks at a picture and describes it from memory to a second person who has not
+    seen the picture, the second person then describes it to a third, and so on in relay; the retellers cannot ask
+    questions and have nothing at stake.
+  caveats: >-
+    The figure of 70% was seen this time only in the Wikipedia entry "Rumor" (which notes it as coming from page 75
+    of the 1951 reprint of "The Psychology of Rumor"); neither the original book nor the 1946 journal article was
+    opened to check it, so this entry is treated as "unverified" and the value can serve only as a reference for
+    the order of magnitude.
+    More important is the scope of applicability: Shibutani, in the "Rumor" entry of the International
+    Encyclopedia of the Social Sciences, points out that the laboratory relay differs greatly from real rumours.
+    Caplow 1947 found that rumours among US troops in the Pacific theatre in the Second World War actually became
+    more accurate as they spread (people checked with one another), the rumour planted in a girls' school by
+    Schachter and Burdick 1955 showed no distortion, and Peterson and Gist 1951 found that details kept being
+    added around the theme rather than reduced.
+    People in a small town can ask back, can hear the same thing repeatedly from several acquaintances, and their
+    own deposits are at stake, which is closer to these field studies than to a one-way relay experiment; if a
+    simulation reproduces "a monotonic loss of 70% of the details", that may on the contrary indicate that a
+    mechanism of mutual checking is missing.
+  checked:
+    - >-
+      The original book was not opened. 70% and "the first 5–6 retellings" were seen only in the Wikipedia entry
+      Rumor (a third-hand source, noting them as coming from page 75 of the 1951 reprint); the year 1947 is taken
+      from the wording of the Wikipedia entry, and the publisher of the first edition was not checked. The page on
+      the Oxford Academic website for the two authors' 1946 article says only that the article draws in part on
+      the forthcoming book of the same title.
+    - >-
+      Only the bibliographic details were confirmed: the article page on the Oxford Academic website gives the
+      authors, the journal, volume 10 issue 4 (Winter 1946), pages 501–517 and DOI 10.1093/poq/10.4.501. The
+      abstract on the page contains no figures at all and the full text is behind a paywall, so it could not be
+      confirmed whether 70% appears in this article.
+    - >-
+      Secondary source, corroborating only the qualitative conclusions and not containing the figure of 70%:
+      opened the page of this entry, which explains that in serial retelling reports become shorter and less
+      accurate, defines levelling, sharpening and assimilation, and lists three field studies that run counter to
+      the laboratory conclusions, Caplow 1947, Schachter and Burdick 1955 and Peterson and Gist 1951. The
+      publication year of the encyclopedia was not checked on the page.
 sources:
   - work: The Psychology of Rumor
     author: Gordon W. Allport, Leo Postman

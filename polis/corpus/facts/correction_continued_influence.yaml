@@ -21,6 +21,54 @@ caveats: >-
   Chan 等的摘要还指出，受众自己为错误信息想过理由时，残留更强、辟谣更弱——这与熟人之间反复议论传言的情形相近。
 theories: []
 metric: correction_residual
+en:
+  title: Debunking works but does not wipe the slate clean
+  statement: >-
+    Correcting misinformation significantly reduces how much people believe it, but cannot eliminate its influence
+    completely: a meta-analysis pooling 32 studies (N=6,527) found that after correction the misinformation still
+    left a small but significant residual influence (r=−0.05, p=0.045). Corrections work better when they come
+    from the original source, are coherent in content and are compatible with the audience's worldview; they work
+    worse when the misinformation comes from a credible source, has been repeated many times before the
+    correction, or when the correction comes late.
+  unit: >-
+    correlation coefficient r (residual influence of the misinformation after correction; the abstract gives only
+    r=−.05, and the coding direction of the minus sign needs to be confirmed by reading the body text)
+  conditions: >-
+    The meta-analysis of Walter and Tukachinsky: 32 studies on "whether misinformation still has an influence
+    after being corrected", with 6,527 participants in total (the abstract does not state the specific
+    experimental paradigms or countries of the individual studies).
+    Another meta-analysis (Chan et al. 2017, k=52, N=6,878) reports on a different basis: the effect of the
+    misinformation itself d=2.41–3.08, the debunking effect d=1.14–1.33, and the persistence of the misinformation
+    after debunking d=0.75–1.06.
+  caveats: >-
+    The figures of the two meta-analyses look very different (r=−0.05 versus d=0.75–1.06) because the baselines of
+    comparison differ, and they cannot be converted into one another and treated as the same quantity: only the
+    abstracts of the two papers were read this time, not the specific definitions of each effect size in the body
+    text, so before use one should go back to the originals to confirm which two groups are being compared.
+    The p-value of r=−0.05 is 0.045, only just past the significance threshold, so the conclusion that the residual
+    influence "exists but is very small" is not robust.
+    "Debunking backfires (the backfire effect)" is not among the conclusions of these two abstracts, and this entry
+    does not support that claim.
+    Gap from the small-town setting: these are measurements of belief in controlled experiments, not real
+    behaviour; a rumour of a bank run concerns one's own deposits, the costs of "better to believe it just in
+    case" are asymmetric, and the debunkers (the bank, the authorities) are precisely the interested parties, so
+    the actual residue may be larger than the experimental values (this is an inference, not a conclusion of the
+    sources).
+    The abstract of Chan et al. also points out that when the audience have themselves thought of reasons for the
+    misinformation, the persistence is stronger and the debunking weaker, which is close to the situation of
+    acquaintances repeatedly discussing a rumour among themselves.
+  checked:
+    - >-
+      Opened the record page for this article in the Chapman University institutional repository; the paper's
+      abstract on that page states k=32, N=6,527, that correction cannot completely eliminate the influence of
+      misinformation (r=−.05, p=.045), and the direction of each moderator. Volume, issue and page numbers
+      confirmed via Crossref (DOI 10.1177/0093650219854600); the publisher's page returned 403 and the body text
+      was not read.
+    - >-
+      Read the record and abstract of this article through the Europe PMC API (PMCID PMC5673564): the abstract
+      states k=52, N=6,878, misinformation effect d=2.41–3.08, debunking effect d=1.14–1.33, persistence after
+      debunking d=0.75–1.06, and that "the persistence is stronger when the audience themselves generate
+      supporting reasons". Volume, issue and page numbers confirmed via Crossref (DOI 10.1177/0956797617714579).
 sources:
   - work: "A Meta-Analytic Examination of the Continued Influence of Misinformation in the Face of Correction: How Powerful Is It, Why Does It Happen, and How to Stop It?"
     author: N. Walter, R. Tukachinsky

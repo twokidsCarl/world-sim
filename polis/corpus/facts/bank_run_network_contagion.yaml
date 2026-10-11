@@ -24,6 +24,62 @@ caveats: >-
   与小镇情境的差距较小（同城、熟人、邻里口耳相传），但一个是 2001 年有存款保险的印度城市，一个是 1850 年代纽约的移民社区。
 theories: [informational_cascade, diamond_dybvig_bank_run]
 metric: neighbor_lift
+en:
+  title: Bank runs spread through networks of acquaintances and neighbours
+  statement: >-
+    Whether a depositor runs depends to a large extent on whether his acquaintances and neighbours have run.
+    Minute-by-minute withdrawal data from a run in India show that the average probability of following suit after
+    contact with a person who has already run is about 3% via the network of account-opening introducers and about
+    5% via the neighbourhood, with contagion through the social network peaking on the second day of the crisis;
+    depositors with a long relationship with the bank and with loan dealings were markedly less likely to run. In
+    the two New York panics of the 1850s, whether Irish immigrant depositors ran was determined mainly by their
+    county of origin (that is, their social circle).
+  unit: >-
+    transmission probability per contact (value is the mean via the introducer network, 0.030; the upper end of
+    range is the mean via the neighbourhood, 0.052; estimated with one minute as one time interval)
+  conditions: >-
+    Iyer and Puri: the run of 13–15 March 2001 on a sound cooperative bank in the Indian state of Gujarat, with
+    minute-by-minute withdrawal records; the social network is characterised in two ways, by the introducer at the
+    time the account was opened (a real acquaintance relationship) and by the neighbourhood of residence (71
+    neighbourhoods in the sample in total); a transmission probability model is borrowed from epidemiology,
+    assuming contact with one person per time interval (one minute), and is estimated only for depositors in whose
+    network someone had already run.
+    Kelly and Ó Gráda: Irish immigrant depositors of the Emigrant Industrial Savings Bank in New York, in the two
+    panics of 1854 and 1857, with county of origin and address in New York standing for the social network.
+  caveats: >-
+    3% and 5% are model parameters obtained under the artificial assumption of "contact with one person per
+    minute", and they vary greatly over time (standard deviations 0.040 and 0.076, with maxima reaching 0.213 and
+    0.520 respectively); they cannot be written directly into a simulation as "each time one hears it from an
+    acquaintance there is a 3% probability of going to withdraw", and are suitable only as a reference for the
+    order of magnitude and the relative sizes.
+    These two figures are taken from the 2008 FDIC working paper version; the body text of the version formally
+    published in the American Economic Review in 2012 could not be opened this time, and it is not certain whether
+    the published version retains the same estimates.
+    The neighbourhood effect cannot be fully separated from shared local sources of news (the paper itself
+    mentions the reflection problem and uses the introducer network to mitigate it).
+    The county-level run proportions given by Kelly and Ó Gráda (in the 1857 sample, Donegal 17%, Cavan 26%, Meath
+    67%, Kerry 74%, and 52% for the sample as a whole) were computed in a sample of "all those who ran plus one
+    tenth of those who did not", which overstates the population proportion and can be used only to compare
+    differences between counties; the rank correlation of the county run proportions between the two years is
+    0.55.
+    The gap from the small-town setting is small (same city, acquaintances, word of mouth among neighbours), but
+    one is an Indian city in 2001 with deposit insurance and the other an immigrant community in 1850s New York.
+  checked:
+    - >-
+      Opened the full-text PDF of the working paper on the FDIC website: the introduction states that the average
+      transmission probability is 3% via the social group (introducer network) and 5% via the neighbourhood, and
+      that social-network contagion peaks on the second day of the crisis; the table of "transmission probability
+      estimates" gives the means 0.030 and 0.052 together with their standard deviations, minima and maxima; the
+      body text explains how the introducer network and the 71 neighbourhoods were constructed, and that account
+      age and loan dealings reduce the risk of running.
+    - >-
+      Opened the JSTOR scan PDF of the full paper: the abstract states that in the two panics the social network
+      (place of origin and place of residence in New York) was the prime determinant of behaviour; the body text
+      around Table 5 states that 52% of the 1857 sample closed their accounts, with Donegal 17%, Cavan 26%, Meath
+      67% and Kerry 74%, that the hypothesis of equal proportions across counties is rejected, and that the rank
+      correlation between the two years is 0.55; that the sample consists of all those who ran plus one tenth of
+      the other depositors is also in the body text. The value and range of this entry do not come from this
+      paper.
 sources:
   - work: "Understanding Bank Runs: The Importance of Depositor-Bank Relationships and Networks"
     author: Rajkamal Iyer, Manju Puri
