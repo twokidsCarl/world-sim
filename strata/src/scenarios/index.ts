@@ -99,6 +99,24 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'poiseuille3d',
+    title: '三维里的管道流：同一条抛物线',
+    substrate: 'md',
+    steps: [
+      {
+        text: '五万多个粒子的三维流体，夹在垂直于 y 的两面热壁之间，x 和 z 方向是周期的。先不加驱动力。',
+        set: { dim: 3, walls: 1, nx: 96, density: 0.7, temperature: 1.3, thermostat: 0, drive: 0, deltaT: 0, fractionB: 0 },
+        run: 4000,
+      },
+      {
+        text: '给每个粒子加一个沿 x 的小力。和二维一样，流速剖面自己长成抛物线；右侧的粘度由流量反推。',
+        set: { drive: 0.004 },
+        run: 60000,
+        expect: { quantity: 'flowProfile', agree: true, text: '三维的流速剖面与抛物线吻合' },
+      },
+    ],
+  },
+  {
     id: 'nucleation',
     title: '三维过冷液体：等一个晶核',
     substrate: 'md',

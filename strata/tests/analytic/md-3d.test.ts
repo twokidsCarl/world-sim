@@ -54,7 +54,7 @@ describe('3D molecular dynamics', () => {
   })
 
   it('the backend builds a 3D system from the dimension knob', () => {
-    const b = new MdCpuBackend({ ...defaults(MD_KNOBS), dim: 3, nx: 16, density: 0.9, temperature: 0.2, walls: 1 }, 1)
+    const b = new MdCpuBackend({ ...defaults(MD_KNOBS), dim: 3, nx: 16, density: 0.9, temperature: 0.2 }, 1)
     expect(b.dim).toBe(3)
     expect(b.n).toBe(4 * fccCells(16) ** 3)
     expect(b.state.walls).toBe(false)

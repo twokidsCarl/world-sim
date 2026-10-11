@@ -16,7 +16,7 @@ import { virialPressure } from '../theory/virial'
  * Why a conservation law of the isolated, reciprocal system does not apply, or null if it does.
  */
 const nonreciprocal = (p: Record<string, number>) =>
-  p.walls && p.dim !== 3
+  p.walls
     ? '有壁面换热和外力做功：系统是开放的，这条守恒律不适用'
     : p.fractionB! > 0 && p.nonreciprocal! > 0
       ? '作用力不再等于反作用力：这条守恒律已失效'
@@ -282,7 +282,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'field',
     smooth: 0.02,
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    when: (p) => p.walls === 1,
     compute: (f) => {
       const { gx, gy, count, vx } = f.field!
       return { nx: gx, ny: gy, data: Float64Array.from(vx, (v, c) => (count[c]! > 0 ? v / count[c]! : 0)), aspect: f.box[0]! / f.box[1]!, signed: true }
@@ -295,7 +295,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'field',
     smooth: 0.02,
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    when: (p) => p.walls === 1,
     compute: (f) => {
       const { gx, gy, count, vy } = f.field!
       return { nx: gx, ny: gy, data: Float64Array.from(vy, (v, c) => (count[c]! > 0 ? v / count[c]! : 0)), aspect: f.box[0]! / f.box[1]!, signed: true }
@@ -322,7 +322,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'field',
     smooth: 0.02,
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    when: (p) => p.walls === 1,
     compute: (f) => vorticity(f),
   },
   {
@@ -355,7 +355,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     label: '管道里的平均流速',
     kind: 'scalar',
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    when: (p) => p.walls === 1,
     compute: (f) => {
       const { count, vx } = f.field!
       let n = 0
@@ -403,7 +403,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     smooth: 0.03,
     xLabel: '横向位置 y / 管宽',
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.drive! > 0 && p.dim !== 3,
+    when: (p) => p.walls === 1 && p.drive! > 0,
     compute: (f) => {
       const pr = profiles(f.field!, f.box, BINS)
       return { x: pr.y, y: pr.ux }
@@ -426,7 +426,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'scalar',
     reducers: ['field', 'scalars'],
     // 反推公式只对没有障碍物的管道流成立。 / The formula holds only for channel flow without an obstacle.
-    when: (p) => p.walls === 1 && p.drive! > 0 && !p.obstacle && p.dim !== 3,
+    when: (p) => p.walls === 1 && p.drive! > 0 && !(p.obstacle && p.dim !== 3),
     compute: (f, p) => {
       const pr = profiles(f.field!, f.box, BINS)
       let mean = 0
@@ -445,7 +445,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     smooth: 0.03,
     xLabel: '横向位置 y / 管宽',
     reducers: ['field'],
-    when: (p) => p.walls === 1 && p.dim !== 3,
+    when: (p) => p.walls === 1,
     compute: (f) => {
       const pr = profiles(f.field!, f.box, BINS)
       return { x: pr.y, y: pr.temperature }

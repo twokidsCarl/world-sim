@@ -280,7 +280,7 @@ export class MdGpuBackend implements MdBackend {
     const o = this.obstacle
     f.set(o ? [o.x, o.y, o.r, 1] : [0, 0, 0, 0], 36)
     f.set([this.p.walls === 1 && this.dim === 2 ? (this.p.gravity ?? 0) : 0, this.p.temperature! + (this.p.deltaT ?? 0), 0, 0], 40)
-    const walls = this.p.walls === 1 && this.dim === 2
+    const walls = this.p.walls === 1
     f.set([walls ? this.p.drive! : 0, this.p.temperature!], 20)
     u.set([walls ? 1 : 0, (this.seed ^ Math.imul(++this.batch, 0x632be5ab)) >>> 0], 22)
     this.device.queue.writeBuffer(this.buffers[0]!, 0, data)
@@ -478,7 +478,7 @@ export class MdGpuBackend implements MdBackend {
     this.submit(encoder)
     // 选区的统计紧跟着提交，读到的是同一时刻的状态。
     // The region's statistics are submitted right behind, so they see the same state.
-    const regional = region && this.dim === 2 ? this.reduceRegion(region, wantSpeed, wantRdf, vmax, rdfMax) : null
+    const regional = region ? this.reduceRegion(region, wantSpeed, wantRdf, vmax, rdfMax) : null
 
     try {
       await staging.mapAsync(GPUMapMode.READ)
@@ -637,16 +637,17 @@ export class MdGpuBackend implements MdBackend {
       psiAbs += partial[PARTIAL_FLOATS * c + 10]!
       n += partial[PARTIAL_FLOATS * c + 12]!
     }
-    const area = (region[2] - region[0]) * (region[3] - region[1])
+    // 三维里选区是这个矩形沿 z 贯穿整个盒子的柱体。 / In 3D the region is this rectangle extruded through the whole box along z.
+    const measure = (region[2] - region[0]) * (region[3] - region[1]) * this.box[2]!
     const out: RegionFrame = {
       n,
-      density: n / area,
-      temperature: n > 0 ? ke / n : 0,
+      density: n / measure,
+      temperature: n > 0 ? (2 * ke) / (this.dim * n) : 0,
       psi6Local: n > 0 ? psiAbs / n : 0,
       coordination: n > 0 ? neighbours / n : 0,
     }
     if (wantSpeed) out.speedHist = speedDensity(hist, Math.max(n, 1), vmax)
-    if (wantRdf) out.rdf = regionRdf(Float64Array.from(hist.subarray(RDF_OFFSET, RDF_OFFSET + RDF_BINS)), rdfMax, n, area)
+    if (wantRdf) out.rdf = regionRdf(Float64Array.from(hist.subarray(RDF_OFFSET, RDF_OFFSET + RDF_BINS)), rdfMax, n, measure, this.dim)
     staging.unmap()
     staging.destroy()
     return out

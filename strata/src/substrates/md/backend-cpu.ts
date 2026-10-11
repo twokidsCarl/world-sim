@@ -178,7 +178,7 @@ export class MdCpuBackend implements MdBackend {
             },
             this.pair,
           )
-    this.state.walls = p.walls === 1 && p.dim !== 3
+    this.state.walls = p.walls === 1
     this.state.seed = seed
     this.applyDrive()
     // 这些力是在开启壁面之前算出的。 / Forces were computed before the walls were switched on.
@@ -210,7 +210,7 @@ export class MdCpuBackend implements MdBackend {
 
   private applyDrive(): void {
     this.state.drive = this.state.walls ? this.p.drive : 0
-    this.state.gravity = this.state.walls ? (this.p.gravity ?? 0) : 0
+    this.state.gravity = this.state.walls && this.state.dim === 2 ? (this.p.gravity ?? 0) : 0
     // y = 0 是画面上方的壁；下壁（y = box[1]）可以更热。
     // y = 0 is the wall at the top of the picture; the lower wall (y = box[1]) may be hotter.
     this.state.wallTemperature = this.p.temperature
@@ -361,7 +361,7 @@ export class MdCpuBackend implements MdBackend {
       }
     }
     if (ids.includes('q6') && s.dim === 3) frame.q6 = q6Summary(s)
-    if (region && s.dim === 2) frame.region = regionFrame(s, region, ids, 4 * Math.sqrt(sc.temperature))
+    if (region) frame.region = regionFrame(s, region, ids, 4 * Math.sqrt(sc.temperature))
     return frame
   }
 

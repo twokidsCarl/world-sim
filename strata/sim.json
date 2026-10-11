@@ -61,6 +61,19 @@
       "url": "/?scenario=poiseuille"
     },
     {
+      "id": "poiseuille3d",
+      "title": {
+        "zh": "三维里的管道流：同一条抛物线",
+        "en": "Channel flow in 3D: the same parabola"
+      },
+      "hint": {
+        "zh": "五万多个粒子夹在两面热壁之间，加一个小力，流速剖面自己长成抛物线",
+        "en": "55,000 particles between two thermal walls; add a small force and the velocity profile grows into a parabola"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=poiseuille3d"
+    },
+    {
       "id": "wake",
       "title": {
         "zh": "流过一个圆盘：背后出现回流",

@@ -150,7 +150,9 @@ fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
     let sd = sqrt(select(P.extra.y, P.wallT, lower));
     let normal = sd * sqrt(-2.0 * log(rand(key, 0u)));
     let tangent = sd * sqrt(-2.0 * log(rand(key, 1u))) * cos(6.2831853 * rand(key, 2u));
-    v = vec3f(tangent, select(-normal, normal, lower), 0.0);
+    // 三维里还有第二个切向分量。 / In 3D there is a second tangential component.
+    let tangentZ = sd * sqrt(-2.0 * log(rand(key, 3u))) * cos(6.2831853 * rand(key, 4u)) * f32(P.dim == 3u);
+    v = vec3f(tangent, select(-normal, normal, lower), tangentZ);
     x.y = clamp(select(2.0 * P.box.y - x.y, -x.y, lower), 0.0, P.box.y * 0.999999);
   } else {
     x.y = wrapped.y;
