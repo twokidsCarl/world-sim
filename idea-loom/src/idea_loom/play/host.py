@@ -33,6 +33,12 @@ from . import manifest, snapshot, supervisor
 # idea-loom's API. Nothing is limited locally.
 SIM_API_LIMIT = auth.Limiter(120, 60)
 HUB_API_LIMIT = auth.Limiter(600, 60)
+RUN_LIMIT = auth.Limiter(10, 60)  # 没有令牌时，每个地址每分钟能跑几次计算 / computations per address per minute without a token
+
+
+# 给 Agent 的几个不在 /api 下的地址，交给后端而不是当成界面的静态文件。
+# The few agent-facing paths outside /api, handed to the backend instead of being treated as UI static files.
+AGENT_PATHS = {"/llms.txt", "/llms-full.txt", "/openapi.json", "/mcp"}
 
 
 def client_ip(request: Request) -> str:
@@ -87,8 +93,12 @@ def _static(root: Path, path: str) -> Response:
     if target.is_dir():
         target = target / "index.html"
     if not target.is_file():
-        # 没有扩展名的路径当作前端自己的路由，回到 index.html。 / A path without an extension is a client route: fall back to index.html.
-        if "." not in path.rsplit("/", 1)[-1] and (root / "index.html").is_file():
+        # 不像一个文件的路径当作前端自己的路由，回到 index.html。"像文件"是指结尾是认得的扩展名（.js、.png…）；
+        # 只看有没有点是不够的：idea 的编号里就有点，/ideas/2.1 是一个页面，不是文件。
+        # A path that does not look like a file is a client route: fall back to index.html. "Looks like a
+        # file" means it ends in a known extension (.js, .png…); a dot alone is not enough, since idea ids
+        # contain one and /ideas/2.1 is a page, not a file.
+        if mimetypes.guess_type(path.rsplit("/", 1)[-1])[0] is None and (root / "index.html").is_file():
             target = root / "index.html"
         else:
             return Response("not found", status_code=404)
@@ -178,13 +188,16 @@ class HostRouter:
                     return await JSONResponse({"detail": "请求太频繁，过一会儿再试"}, status_code=429)(scope, receive, send)
                 # 每个接口要什么身份，集中在 auth.required_role 里；没列出的默认只有主人能用。
                 # Which role each route needs is decided in auth.required_role; anything unlisted is owner-only.
-                user = auth.user_from_cookie(request.cookies.get(auth.COOKIE))
+                user = auth.user_from_request(request.cookies.get(auth.COOKIE), request.headers.get("authorization"))
+                if not config.is_local() and path.startswith("/api/v1/run/") and not RUN_LIMIT.allow(user.agent or client_ip(request)) and not user.agent:
+                    return await JSONResponse({"error": "计算跑得太频繁了", "hint": "Without a token: 10 runs a minute per address. Wait, or ask the owner for a token."}, status_code=429)(scope, receive, send)
                 scope.setdefault("state", {})["user"] = user
                 if not auth.allowed(user, request.method, path):
                     code, detail = (401, "请先登录") if user.role == "guest" else (403, "这一步只有主人能做")
-                    return await JSONResponse({"detail": detail}, status_code=code)(scope, receive, send)
+                    hint = "Proposing needs a token with the propose scope: send it as 'Authorization: Bearer wsk_…'. Reading and running need none." if path.startswith("/api/v1/") else ""
+                    return await JSONResponse({"detail": detail, **({"error": detail, "hint": hint} if hint else {})}, status_code=code)(scope, receive, send)
             return await self.app(scope, receive, send)
-        if path.startswith("/auth/"):
+        if path.startswith("/auth/") or path in AGENT_PATHS:
             return await self.app(scope, receive, send)
         dist = ui_dist()
         if request.method in ("GET", "HEAD") and (dist / "index.html").is_file():
