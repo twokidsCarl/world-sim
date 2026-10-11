@@ -1,4 +1,4 @@
-import { t } from '../i18n'
+import { t, noteError } from '../i18n'
 
 /** OKLCh <-> sRGB. L 0..1, C about 0..0.3, h in degrees. */
 export type RGB = [number, number, number]
@@ -50,7 +50,7 @@ export function hex(rgb: RGB): string {
 
 export function parseHex(s: string): RGB {
   const m = /^#?([0-9a-f]{6})$/i.exec(s.trim())
-  if (!m) throw new Error(t('error.notColor', { value: s }))
+  if (!m) throw noteError('error.notColor', { value: s })
   const n = parseInt(m[1]!, 16)
   return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
 }

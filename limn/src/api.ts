@@ -1,12 +1,12 @@
 import type { SceneSpec } from './scene/spec'
-import { t } from './i18n'
+import { t, noteError } from './i18n'
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   let res: Response
   try {
     res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   } catch {
-    throw new Error(t('error.noServer'))
+    throw noteError('error.noServer')
   }
   const json = (await res.json().catch(() => null)) as (T & { error?: string }) | null
   if (!res.ok || !json) throw new Error(json?.error ?? t('error.serverHttp', { status: res.status }))

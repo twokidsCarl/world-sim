@@ -620,3 +620,34 @@ export function listParams(name: string, item: (lang: Lang) => string[]): Params
 export const roleLabel = (role: Role): string => t(`role.${role}`)
 export const colorModeLabel = (mode: ColorMode): string => t(`colorMode.${mode}`)
 export const tierLabel = (tier: Tier): string => t(`tier.${tier}`)
+
+/**
+ * 一条“键加参数”的消息，留到显示时才按当时的语言写出，所以切换语言后会跟着变。
+ * A message as a key with parameters, worded only when shown, in the language of that moment, so it follows a switch of language.
+ */
+export const say = (key: string, params?: Params): Note => ({ key, ...(params ? { params } : {}) })
+
+/** 带着消息键的错误：既有当时语言的文字，也能之后重译 / an error that carries its message key: worded in the language of the moment, and re-wordable later */
+export function noteError(key: keyof typeof zh, params?: Params): Error & { note: Note } {
+  return Object.assign(new Error(t(key, params)), { note: say(key, params) })
+}
+
+/** 从捕获到的异常里取出可以显示的消息 / the displayable message of a caught exception */
+export function errorNote(e: unknown): Note {
+  const note = (e as { note?: Note } | null)?.note
+  return note ?? (e instanceof Error ? e.message : String(e))
+}
+
+/**
+ * 显示一条消息。服务端的报错是“中文 / English”合在一行的，这里只留当前语言的那一半。
+ * Show a message. Errors from the server come as "Chinese / English" on one line; only the half in the current language is kept.
+ */
+export function shown(n: Note | ''): string {
+  if (n === '') return ''
+  if (typeof n !== 'string') return noteText(n)
+  const i = n.indexOf(' / ')
+  if (i < 0) return n
+  const a = n.slice(0, i), b = n.slice(i + 3)
+  const cjk = (x: string) => /[\u4e00-\u9fff]/.test(x)
+  return cjk(a) && !cjk(b) ? (current === 'zh' ? a : b) : n
+}

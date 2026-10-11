@@ -11,7 +11,7 @@ import type { Renderer } from '../render/Renderer'
 import { useStore, type Look, type Round } from '../state/store'
 import { hex } from '../style/oklab'
 import { ROLES } from '../style/palettes'
-import { t } from '../i18n'
+import { t, errorNote } from '../i18n'
 import { renderFigure } from '../render/export'
 import { stage, viewFor } from '../ui/Stage'
 import { sanitizeEdits, type Edit } from './edits'
@@ -184,7 +184,7 @@ export async function refine(opts: RefineOptions): Promise<void> {
     const best = scored.reduce<Round | null>((a, b) => (!a || b.overall! > a.overall! ? b : a), null)
     if (best) store.getState().setLook(structuredClone(best.look))
   } catch (e) {
-    store.setState({ error: e instanceof Error ? e.message : String(e) })
+    store.setState({ error: errorNote(e) })
   } finally {
     say('')
     // 离屏渲染按它们自己的画幅排布了面板；重画舞台
