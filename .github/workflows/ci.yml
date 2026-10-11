@@ -71,6 +71,8 @@ jobs:
     name: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # idea-loom 的导入测试要完整的提交历史 / idea-loom's import tests need the full commit history
       - uses: astral-sh/setup-uv@v6
       - uses: oven-sh/setup-bun@v2
       - env:
