@@ -1,3 +1,4 @@
+import { allowed } from '../server/structures'
 // 介观模型：两种文件方言、粗粒度小球、实例表和模型目录
 // Mesoscale models: the two file dialects, coarse spheres, the instance table and the catalogue
 import { describe, expect, it } from 'vitest'
@@ -134,7 +135,7 @@ describe('模型目录 / the catalogue', () => {
       expect(['measured', 'curated', 'predicted', 'estimated']).toContain(m.tier)
       if (m.source.kind === 'pdb') expect(m.source.id).toMatch(/^[0-9][A-Z0-9]{3}$/)
       // 预处理的模型由本地服务代取；YASARA 的下载站只有 http / prepared models are fetched by the local service, and YASARA's download site has http only
-      else if (m.source.kind === 'prepared') expect(m.source.url).toMatch(/^http:\/\/download\.yasara\.org\/petworld\/[a-z0-9_/]+\.cif\.gz$/)
+      else if (m.source.kind === 'prepared') expect(allowed(m.source.url!), m.id).toBe(true)
       else expect(m.source.url).toMatch(/^https:\/\//)
       for (const [pattern, role] of (m as { roles?: string[][] }).roles ?? []) {
         expect(() => new RegExp(pattern!)).not.toThrow()

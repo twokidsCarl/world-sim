@@ -8,7 +8,10 @@ import { JOURNALS, openAccess, recent, released } from './sources/literature'
 import { orientation } from './sources/opm'
 import { pdbtm, topology } from './sources/pdbtm'
 import { cached, stateDir } from './structures'
-import { poll } from './tools/petworld'
+import catalog from '../data/catalog.json'
+import { groKey, makeGro } from './tools/gro'
+import { makePetworld, petworldKey } from './tools/petworld'
+import { poll } from './tools/prepared'
 import { alphafold, complexes } from './sources/uniprot'
 import { searchNeurons } from './sources/neuromorpho'
 
@@ -46,7 +49,14 @@ Bun.serve({
       // 预处理过的超大模型：第一次请求时下载原文件并粗化（要一两分钟），之后直接给
       // a prepared very large model: the first request downloads and coarsens the original (a minute or two), later ones are served straight away
       if (url.pathname === '/api/prepared') {
-        const state = await poll(url.searchParams.get('url') ?? '')
+        // 只认目录里的条目：要下载什么、怎么转换，都由仓库里的目录决定，不由请求决定
+        // only catalogue entries are accepted: what is downloaded and how it is converted is decided by the catalogue in the repository, not by the request
+        const src = (catalog.models as { id: string; source: { kind: string; url?: string; format?: string; member?: string; head?: number; budget?: number } }[]).find((m) => m.id === url.searchParams.get('id') && m.source.kind === 'prepared')?.source
+        if (!src?.url) return fail(new Error('目录里没有这个预处理模型 / no such prepared model in the catalogue'), 404)
+        const state =
+          src.format === 'gro'
+            ? await poll(groKey(src.url, src.member!, src.head!, src.budget ?? 4_000_000), () => makeGro(src.url!, src.member!, src.head!, src.budget ?? 4_000_000))
+            : await poll(petworldKey(src.url), () => makePetworld(src.url!))
         if ('preparing' in state) return json(state, 202)
         const file = Bun.file(state.path)
         return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })

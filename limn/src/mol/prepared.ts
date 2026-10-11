@@ -20,6 +20,8 @@ export interface PreparedChain {
 
 export interface PreparedObject {
   name: string
+  /** 种类；同一种的对象在图例里是一项。没有时用名字 / the kind; objects of one kind are one item in the legend. The name stands in when absent */
+  kind?: string
   instances: number
   /** 在变换表里的起点 / first transform */
   opStart: number
@@ -31,6 +33,8 @@ export interface PreparedObject {
 
 export interface PreparedHeader {
   source: string
+  /** 原文件里一个粒子是什么：原子，或粗粒度模拟的珠子。没有时是原子 / what a particle of the original is: an atom, or a bead of a coarse-grained simulation. Atoms when absent */
+  unit?: 'atoms' | 'beads'
   /** 放置后的原子总数（含氢）、重原子总数 / atoms placed in all (with hydrogens), and heavy atoms */
   atomsPlaced: number
   heavyPlaced: number
@@ -78,7 +82,9 @@ export function decode(buf: Uint8Array): { header: PreparedHeader; spheres: Floa
 export function preparedMolecule(buf: Uint8Array, id: string, title: string): { mol: Molecule; header: PreparedHeader } {
   const { header, spheres, ops } = decode(buf)
   const n = header.spheres
-  const pos = new Float32Array(n * 3), radius = new Float32Array(n), chainOf = new Uint32Array(n), residue = new Int32Array(n)
+  // 残基编号全部取 1：球是并出来的，相邻两个球之间没有“残基的分界”可画
+  // every residue number is 1: the spheres are merged ones, and there is no residue boundary to draw between two neighbours
+  const pos = new Float32Array(n * 3), radius = new Float32Array(n), chainOf = new Uint32Array(n), residue = new Int32Array(n).fill(1)
   for (let i = 0; i < n; i++) {
     pos[i * 3] = spheres[i * 4]!
     pos[i * 3 + 1] = spheres[i * 4 + 1]!
@@ -86,6 +92,7 @@ export function preparedMolecule(buf: Uint8Array, id: string, title: string): { 
     radius[i] = spheres[i * 4 + 3]!
   }
   const entities: Entity[] = [{ id: 'membrane', description: 'membrane', kind: 'lipid' }]
+  const entityOf = new Map<string, number>()
   const chains: Chain[] = []
   const groups: Molecule['assemblies'][number]['groups'] = []
   header.objects.forEach((o, oi) => {
@@ -94,11 +101,14 @@ export function preparedMolecule(buf: Uint8Array, id: string, title: string): { 
     for (const c of o.chains) {
       if (c.count === 0) continue
       if (!c.lipid && entity < 0) {
-        entities.push({ id: o.name, description: o.name, kind: 'protein' })
-        entity = entities.length - 1
+        const kind = o.kind ?? o.name
+        if (!entityOf.has(kind)) {
+          entities.push({ id: kind, description: kind, kind: 'protein' })
+          entityOf.set(kind, entities.length - 1)
+        }
+        entity = entityOf.get(kind)!
       }
       chainOf.fill(chains.length, c.start, c.start + c.count)
-      for (let k = 0; k < c.count; k++) residue[c.start + k] = k + 1
       mine.push(chains.length)
       chains.push({ asymId: `${o.name}.${c.id}`, authAsymId: c.id, entity: c.lipid ? 0 : entity, start: c.start, count: c.count, model: oi + 1 })
     }

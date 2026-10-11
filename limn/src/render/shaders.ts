@@ -63,7 +63,9 @@ void main() {
   v_inst = texelFetch(u_instIds, ivec2(o % u_w, o / u_w), 0).rg;
   v_keep = 1.0;
   // 4 = 一大群小分子里的一个：彼此之间不画轮廓线 / 4 = one of a crowd of small molecules, with no contours drawn among them
-  v_fine = mc.w > 3.5 ? 1.0 : 0.0;
+  // 5 = 一整张不分块的膜：表面的小起伏不画线，按每个球自己的深度来切和上色调
+  // 5 = a membrane in one piece: its small relief draws no lines, and it is cut and toned sphere by sphere at each sphere's own depth
+  v_fine = mc.w > 4.5 ? 2.0 : mc.w > 3.5 ? 1.0 : 0.0;
   // 截面之前的原子整个丢弃，和 Illustrate 一样，所以剖面上不会出现被切开的球。
   // 已知中心的分子整体保留或丢弃，所以也不会被切开。
   // Atoms in front of the cut are dropped whole, as Illustrate does, so a
@@ -73,6 +75,12 @@ void main() {
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
   if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
+  } else if (mc.w > 4.5) {
+    if (u_layer.x > 0.0) {
+      float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 0.999);
+      float s = u_layer.x <= 1.0 ? 0.0 : floor(t * u_layer.x) / (u_layer.x - 1.0);
+      v_keep = mix(u_fogKeep.x, u_fogKeep.y, s);
+    }
   } else if (mc.w > 0.5) {
     float zc = (u_rot * ((u_place * vec4(mc.xyz, 1.0)).xyz - u_center)).z;
     zcut = zc;
@@ -113,8 +121,9 @@ void main() {
   gl_FragDepth = clamp((u_z.x - z) / (u_z.x - u_z.y), 0.0, 0.999999);
   o_color = vec4(v_color, v_keep);
   uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
-  // 第四个分量：0 = 没有东西，1 = 普通原子，2 = 小分子群里的原子 / fourth channel: 0 = nothing, 1 = an ordinary atom, 2 = an atom of a crowd of small molecules
-  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, v_fine > 0.5 ? 2u : 1u);
+  // 第四个分量：0 = 没有东西，1 = 普通原子，2 = 小分子群里的原子，3 = 网格被剖开露出的背面，4 = 整张膜上的球
+  // fourth channel: 0 = nothing, 1 = an ordinary atom, 2 = an atom of a crowd of small molecules, 3 = the back of a mesh exposed by a cut, 4 = a sphere of a membrane in one piece
+  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, v_fine > 1.5 ? 4u : v_fine > 0.5 ? 2u : 1u);
 }`
 
 /**
@@ -348,6 +357,9 @@ void main() {
       uvec4 id = texelFetch(u_ids, clampP(q), 0);
       // 同一群小分子内部的深度台阶不算轮廓 / a depth step inside one crowd of small molecules is not a contour
       bool within = id0.a == 2u && id.a == 2u && id.b == id0.b;
+      // 同一张膜上不到半层膜厚的起伏也不算；更大的台阶（膜的切口对着远处的膜）照常画线
+      // nor is relief of under half a bilayer on one membrane; a larger step (the cut edge of the membrane against membrane far behind) draws its line as usual
+      if (id0.a == 4u && id.a == 4u && id.b == id0.b && rd < 20.0) within = true;
       if (rd > u_contour.z && !within) l += min((rd - u_contour.z) / (u_contour.w - u_contour.z), 1.0);
       if (id.r != id0.r) r += 1.0;
       if (atom0 && id.a != 0u && abs(float(int(id.g) - int(id0.g))) > u_residue.z) g += 1.0;

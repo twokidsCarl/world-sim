@@ -182,9 +182,9 @@ export const CATALOG = catalog.models as CatalogEntry[]
 const DENSE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('prim') === 'spheres'
 
 /** 向本地服务要一个预处理过的模型；还在准备就隔几秒再问 / ask the local service for a prepared model, asking again every few seconds while it is being prepared */
-async function fetchPrepared(url: string, waiting: () => void): Promise<Uint8Array> {
+async function fetchPrepared(id: string, waiting: () => void): Promise<Uint8Array> {
   for (let tries = 0; tries < 400; tries++) {
-    const res = await fetch(`/api/prepared?url=${encodeURIComponent(url)}`).catch(() => null)
+    const res = await fetch(`/api/prepared?id=${encodeURIComponent(id)}`).catch(() => null)
     if (!res) throw noteError('error.preparedNoServer')
     if (res.status === 202) {
       waiting()
@@ -371,12 +371,13 @@ export const useStore = create<State>((set, get) => ({
       if (src.kind === 'prepared') {
         // 几十亿个原子的模型：本地服务先把它粗化成球（第一次要一两分钟），这里取粗化后的小文件
         // a model of billions of atoms: the local service coarsens it into spheres first (a minute or two the first time), and the small result is fetched here
-        const buf = await fetchPrepared(src.url!, () => set({ busy: say('busy.preparing', { name: pick(entry.title, entry.titleEn) }) }))
+        const buf = await fetchPrepared(entry.id, () => set({ busy: say('busy.preparing', { name: pick(entry.title, entry.titleEn) }) }))
         const made = preparedMolecule(buf, entry.id, entry.titleEn)
         mol = made.mol
         const h = made.header
         const n = (v: number) => v.toLocaleString('en-US')
-        notes.push({ key: 'note.prepared', params: { atoms: n(h.atomsPlaced), heavy: n(h.heavyPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced), kinds: h.objects.length, copies: n(h.ops) } })
+        if (h.unit === 'beads') notes.push({ key: 'note.preparedBeads', params: { atoms: n(h.atomsPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced) } })
+        else notes.push({ key: 'note.prepared', params: { atoms: n(h.atomsPlaced), heavy: n(h.heavyPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced), kinds: h.objects.length, copies: n(h.ops) } })
       } else mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(pick(entry.title, entry.titleEn)))
       let assembly = defaultAssembly(mol)
       if (entry.points) {
