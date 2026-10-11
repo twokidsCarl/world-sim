@@ -198,3 +198,33 @@ describe('the course of an RNA strand', () => {
     }
   })
 })
+
+describe('rods run up to the wall and are cut there', () => {
+  it('stacks stretches along the whole chord, leaves room for the polymerase, and keeps only what is inside', async () => {
+    const { rnpBundle, clipToCavity } = await import('../src/infer/influenza')
+    const rod: number[] = []
+    for (let i = 0; i <= 40; i++) for (let k = 0; k < 6; k++) rod.push(Math.cos(k) * 70, Math.sin(k) * 70, i * 10)
+    const blob: number[] = []
+    for (let i = 0; i < 30; i++) blob.push(Math.cos(i) * 40, Math.sin(i * 1.7) * 40, Math.sin(i) * 60)
+    const cavity = 420
+    const b = rnpBundle(mol(rod), mol(blob), [0, 0, 0], cavity, [0, 1, 0], 616, undefined, true)
+    expect(b.tops!.length).toBe(b.stretches.length)
+    // 填满时比只放完整的段要多 / more stretches than when only whole ones are placed
+    expect(b.stretches.length).toBeGreaterThan(rnpBundle(mol(rod), mol(blob), [0, 0, 0], cavity, [0, 1, 0], 616).stretches.length)
+    const { mol: clipped, kept } = clipToCavity(mol(rod), b.stretches, [0, 0, 0], cavity, [0, 1, 0], b.tops, 'r')
+    expect(kept).toBeGreaterThan(0.3)
+    expect(kept).toBeLessThan(1)
+    let lowest = Infinity
+    for (let i = 0; i < clipped.atomCount; i++) {
+      const p = [clipped.pos[i * 3]!, clipped.pos[i * 3 + 1]!, clipped.pos[i * 3 + 2]!]
+      expect(Math.hypot(...p)).toBeLessThanOrEqual(cavity + 1e-3)
+      expect(p[1]!).toBeLessThanOrEqual(Math.max(...b.tops!) + 1e-3)
+      lowest = Math.min(lowest, p[1]!)
+    }
+    // 中间那条杆一直伸到下面的内壁附近 / the middle rod reaches down to near the wall below
+    expect(lowest).toBeLessThan(-cavity + 80)
+    // 每一段下的每条链各成一条链 / every chain under every stretch is a chain of its own
+    expect(new Set(clipped.chains.map((c) => c.asymId)).size).toBe(clipped.chains.length)
+    expect(clipped.chains.reduce((s, c) => s + c.count, 0)).toBe(clipped.atomCount)
+  })
+})

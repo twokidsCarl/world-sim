@@ -64,6 +64,18 @@ limn 这一轮的数：
 - 并排图：`out/g7-influenza.jpg`、`out/g7-coronavirus.jpg`。
 - 还差：流感的 RNA 线在中间缠成一团，不像他那样一条条清楚的波浪；新冠里面仍然偏空，刺只有 30 个（数据如此）；刺的颜色在后面几层偏暗。
 
+### 第八轮（g8）：里面画满
+
+**先更正第七轮里的一句话。** 我写“他画得那么满是因为他画的颗粒更大”，量了之后发现不对：模拟里这个病毒颗粒连刺直径约 108 nm，已经是典型大小；按刺的长度（13.5 nm）去量他那幅画，他画的颗粒反而更小（约 75 nm）。他里面满，是因为他把核糖核蛋白一直画到贴着内壁，画的是每条的一部分。真实的核糖核蛋白最长的一条有一百多纳米，球形的病毒颗粒里本来就得折叠着才放得下。
+
+照他的做法：
+- 病毒颗粒的大小不动。每条核糖核蛋白沿杆的方向一段接一段摆满整条弦，在内壁处截断，顶上留出聚合酶的位置（`rnpBundle` 的 `fill`、`clipToCavity`）。
+- 每个核蛋白单独描边，所以读出来是一串珠子，和他画的一样；RNA 的黄线在珠子之间露出来。
+- 说明里写明：按基因组长度八条一共该有 23 段螺旋，画出来的相当于 8.3 段，每条只画了一部分；它们实际怎样折叠没有画。
+- Illustrate 画法下仍是每条只放完整的螺旋段。
+
+并排图：`out/g8-influenza.jpg`。还差：八条杆成一束在中间，束的两侧到内壁之间仍有空（他画的是填满整个圆）；刺的头部没有他那样的分瓣。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and the description he gives each (`gallery/index.json`). The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -118,3 +130,15 @@ The coronavirus was not treated this way: the PetWorld model has only 30 spikes 
 - **"Bending the rods to fill the space" was not done**, having been worked out and dropped: the cavity of the virion in this simulation is about 31 nm in radius, and at the true thickness of an RNP no amount of bending fits more than nine or ten helical stretches (eight stand straight now), where the genome's length calls for twenty-three. His is so full because the virion he paints is larger. Filling ours would mean drawing RNPs thinner or fewer than they are, which would be invention rather than inference, so it was left.
 - Side by side: `out/g7-influenza.jpg`, `out/g7-coronavirus.jpg`.
 - Still short: the influenza RNA line tangles in the middle instead of running in clear separate waves like his; the coronavirus is still rather empty inside, with only 30 spikes (as the data has it); spike colour is dark in the layers behind.
+
+### Round 8 (g8): the inside drawn full
+
+**First a correction to round 7.** I wrote that "his is so full because the virion he paints is larger"; measured, that is wrong. The virion of the simulation is about 108 nm across with its spikes, already a typical size, and going by the length of a spike (13.5 nm) the one in his painting is if anything smaller (about 75 nm). His is full because he runs every ribonucleoprotein right up to the inner wall and shows part of each. The longest real ribonucleoprotein is over a hundred nanometres and has to fold to fit inside a spherical virion at all.
+
+Following him:
+- The size of the virion is left alone. Each ribonucleoprotein is laid stretch after stretch along its whole chord and cut off at the inner wall, with room left on top for the polymerase (`fill` in `rnpBundle`, and `clipToCavity`).
+- Every nucleoprotein is outlined on its own, so the rods read as strings of beads, as in his painting, with the yellow line of the RNA showing between them.
+- The notes say so: the genome's length calls for 23 helical stretches across the eight, what is drawn amounts to 8.3, only part of each is shown, and how they really fold is not drawn.
+- In the Illustrate drawing each rod still gets whole helical stretches only.
+
+Side by side: `out/g8-influenza.jpg`. Still short: the eight rods form a bundle in the middle, with space left between its flanks and the wall (he fills the whole circle); the heads of the spikes lack the lobes his have.
