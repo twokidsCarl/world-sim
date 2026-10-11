@@ -20,7 +20,7 @@ English version below / 英文版见下文。
   - 基本常量面板：改精细结构常数和电子/质子质量比，按标度关系换算这盒粒子的真实尺寸、温度、时间，并给出 de Boer 参数作为经典近似是否可信的仪表。
 - **Ising 自旋**：近邻与次近邻耦合加外场，四子格 Metropolis 更新。由自旋数据算出：
   - 热力学：磁化强度与能量对 Onsager–Yang 精确解。
-  - 元：块自旋多数表决的重整化金字塔，以及磁化强度和近邻关联随尺度的流向；Binder 累积量（临界点上与晶格大小无关）。
+  - 元：块自旋多数表决的重整化金字塔，以及磁化强度和近邻关联随尺度的流向；Binder 累积量（临界点上与晶格大小无关）。另有实验性的“有效信息随尺度的变化”：每一层把格点的局部状态取为（自旋，四邻之和），统计一次扫描前后的转移，算出有效信息。
   - 测试里用 Wolff 团簇更新定量检验临界行为：不同大小晶格的 Binder 曲线在精确的 Tc 相交，Tc 处磁化强度按 L^(−1/8) 衰减；加上次近邻耦合后 Tc 移动四成，交点处的累积量不变。
 
 - **引力 N 体**：三维软化牛顿引力，直接对所有天体对求和，蛙跳积分。这是独立场景，不与分子动力学共用一个盒子。由天体数据算出：
@@ -81,6 +81,7 @@ CPU 参考实现先写，是规范；WGSL 内核是它的优化，并用同一�
 - 基本常量面板只做标度换算，以氩为基准；它不改变约化单位下的动力学。
 - 压强的理论线只展开到第二维里系数，仅在低密度有效；稠密时与实测不符是预期的。
 - 临界点附近 Metropolis 更新平衡极慢，大晶格可能长时间达不到平衡；界面上实时的 Binder 累积量因此只在小晶格上可信。Wolff 更新只用于测试，不是被模拟的动力学。
+- 有效信息是实验性的：数值依赖局部状态的取法，而且各层用的是同一个时间步（一次扫描），粗的层本来就变得慢，这本身会抬高它的读数。它没有理论值可对照。实测（512²）：临界温度下从 0.60 升到 2.08 比特，T = 3.5 时在 0.1 到 0.4 之间，T = 1.5 时趋于 0。
 - Ising 只有二维。三维 Ising（临界指数不同，是“改变普适类”最干净的例子）还没有做。
 - 方程发现只做了扩散这一种情形。SINDy 的稀疏阈值取 0.2（分箱的粒子数据每箱有百分之几的噪声，取 0.1 会留下拟合噪声的小项）；浓度趋于均匀后信号被噪声淹没，拟合会失效。DMD 的衰减率与扩散方程的预言只在量级上吻合，实测偏差可达三四成。
 - 引力是 O(N²) 直接求和，最多 16384 个天体；没有气体、辐射和核反应，所以只有无碰撞的坍缩与弛豫，没有恒星。
@@ -114,7 +115,7 @@ Three substrates, switched at the top right of the interface:
   - Fundamental constants panel: change the fine-structure constant and the electron/proton mass ratio, convert the real size, temperature and time of this box of particles by scaling relations, and get the de Boer parameter as a gauge of whether the classical approximation can be trusted.
 - **Ising spins**: nearest-neighbour and next-nearest-neighbour couplings plus an external field, with four-sublattice Metropolis updates. Computed from the spin data:
   - Thermodynamic: magnetization and energy against the exact Onsager–Yang solution.
-  - Meta: the renormalization pyramid of block spins by majority vote, and the flow of the magnetization and the nearest-neighbour correlation with scale; the Binder cumulant (independent of lattice size at the critical point).
+  - Meta: the renormalization pyramid of block spins by majority vote, and the flow of the magnetization and the nearest-neighbour correlation with scale; the Binder cumulant (independent of lattice size at the critical point). There is also an experimental "effective information against scale": at each level the local state of a site is taken to be (spin, sum of its four neighbours), transitions across one sweep are counted, and the effective information is computed from them.
   - In the tests, Wolff cluster updates are used to check the critical behaviour quantitatively: the Binder curves of lattices of different sizes cross at the exact Tc, and at Tc the magnetization decays as L^(−1/8); with a next-nearest-neighbour coupling added, Tc shifts by forty percent while the cumulant at the crossing is unchanged.
 
 - **Gravitational N-body**: 3D softened Newtonian gravity, direct summation over all pairs of bodies, leapfrog integration. This is a separate scene; it does not share a box with the molecular dynamics. Computed from the body data:
@@ -175,6 +176,7 @@ The CPU reference implementation is written first and is the specification; the 
 - The fundamental constants panel only does scaling conversions, with argon as the reference; it does not change the dynamics in reduced units.
 - The theory line for the pressure is expanded only to the second virial coefficient and is valid only at low density; disagreement with the measurement at high density is expected.
 - Near the critical point Metropolis updates equilibrate extremely slowly, and large lattices may fail to reach equilibrium for a long time; the real-time Binder cumulant in the interface is therefore trustworthy only on small lattices. Wolff updates are used only in the tests and are not the dynamics being simulated.
+- Effective information is experimental: its value depends on the choice of local state, and every level uses the same time step (one sweep) although coarse levels change more slowly anyway, which by itself raises their reading. There is no theoretical value to compare with. Measured (512²): from 0.60 to 2.08 bits with coarse-graining at the critical temperature, between 0.1 and 0.4 at T = 3.5, tending to 0 at T = 1.5.
 - Ising is 2D only. The 3D Ising model (different critical exponents, the cleanest example of "changing the universality class") has not been done yet.
 - Equation discovery has been done only for the single case of diffusion. The SINDy sparsity threshold is set to 0.2 (the binned particle data have a few percent of noise per bin, and 0.1 would leave small terms that fit the noise); once the concentration approaches uniformity the signal is drowned in noise and the fit fails. The DMD decay rates agree with the prediction of the diffusion equation only in order of magnitude; the measured deviation can reach thirty to forty percent.
 - Gravity is O(N²) direct summation, with at most 16384 bodies; there is no gas, radiation or nuclear reactions, so there is only collisionless collapse and relaxation, and no stars.

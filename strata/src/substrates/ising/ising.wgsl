@@ -96,3 +96,40 @@ fn reduceRows(@builtin(global_invocation_id) id: vec3u) {
   }
   partial[y] = vec4i(s, nn, nnn, 0);
 }
+
+// 以下用于有效信息：每一层上，一次扫描前后局部状态的转移计数。
+// For effective information: at each level, counts of local-state transitions across one sweep.
+@group(0) @binding(6) var<storage, read_write> prev: array<u32>;          // 扫描之前的同一层 / the same level before the sweep
+@group(0) @binding(7) var<storage, read_write> tpm: array<atomic<u32>>;   // 10 × 10
+
+// 局部状态编号 spin * 5 + (近邻和 + 4) / 2，须与 ref.ts 的 localState 一致。
+// Local state index spin * 5 + (neighbour sum + 4) / 2; must match localState in ref.ts.
+fn stateNow(x: u32, y: u32, L: u32) -> u32 {
+  let l = (x + L - 1u) % L;
+  let r = (x + 1u) % L;
+  let up = ((y + L - 1u) % L) * L;
+  let down = ((y + 1u) % L) * L;
+  let nn = pm(spins[y * L + l]) + pm(spins[y * L + r]) + pm(spins[up + x]) + pm(spins[down + x]);
+  return spins[y * L + x] * 5u + u32((nn + 4) / 2);
+}
+
+fn stateBefore(x: u32, y: u32, L: u32) -> u32 {
+  let l = (x + L - 1u) % L;
+  let r = (x + 1u) % L;
+  let up = ((y + L - 1u) % L) * L;
+  let down = ((y + 1u) % L) * L;
+  let nn = pm(prev[y * L + l]) + pm(prev[y * L + r]) + pm(prev[up + x]) + pm(prev[down + x]);
+  return prev[y * L + x] * 5u + u32((nn + 4) / 2);
+}
+
+@compute @workgroup_size(64)
+fn clearTpm(@builtin(global_invocation_id) id: vec3u) {
+  if (id.x < 100u) { atomicStore(&tpm[id.x], 0u); }
+}
+
+@compute @workgroup_size(16, 16)
+fn transitions(@builtin(global_invocation_id) id: vec3u) {
+  let L = U.L;
+  if (id.x >= L || id.y >= L) { return; }
+  atomicAdd(&tpm[stateBefore(id.x, id.y, L) * 10u + stateNow(id.x, id.y, L)], 1u);
+}

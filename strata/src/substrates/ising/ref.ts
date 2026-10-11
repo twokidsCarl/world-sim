@@ -192,3 +192,34 @@ export function binderCumulant(m2: number, m4: number, samples: number): number 
   if (samples === 0 || m2 === 0) return NaN
   return 1 - m4 / samples / (3 * (m2 / samples) ** 2)
 }
+
+/**
+ * 局部状态的个数：自旋（2 种）× 四个最近邻之和（5 种）。
+ * Number of local states: the spin (2 values) times the sum of its four nearest neighbours (5 values).
+ */
+export const LOCAL_STATES = 10
+
+/**
+ * 格点的局部状态编号：spin * 5 + (近邻和 + 4) / 2。
+ * Index of a site's local state: spin * 5 + (neighbour sum + 4) / 2.
+ */
+function localState(spins: Uint8Array, L: number, x: number, y: number): number {
+  const l = (x + L - 1) % L
+  const r = (x + 1) % L
+  const up = ((y + L - 1) % L) * L
+  const down = ((y + 1) % L) * L
+  const nn = pm(spins[y * L + l]) + pm(spins[y * L + r]) + pm(spins[up + x]) + pm(spins[down + x])
+  return spins[y * L + x] * 5 + ((nn + 4) >> 1)
+}
+
+/**
+ * 两个时刻之间局部状态的转移计数，按行优先排成 LOCAL_STATES × LOCAL_STATES。
+ * Counts of local-state transitions between two times, row-major LOCAL_STATES × LOCAL_STATES.
+ */
+export function transitionCounts(before: Uint8Array, after: Uint8Array, L: number): Float64Array {
+  const counts = new Float64Array(LOCAL_STATES * LOCAL_STATES)
+  for (let y = 0; y < L; y++) {
+    for (let x = 0; x < L; x++) counts[localState(before, L, x, y) * LOCAL_STATES + localState(after, L, x, y)]++
+  }
+  return counts
+}

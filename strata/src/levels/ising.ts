@@ -1,3 +1,4 @@
+import { effectiveInformation } from '../analysis/ei'
 import type { QuantityDef } from '../core/quantity'
 import type { IsingFrame } from '../substrates/ising/backend'
 import { BINDER_CRITICAL, onsagerEnergy, onsagerMagnetisation } from '../theory/onsager'
@@ -41,6 +42,23 @@ export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [
     theory: (_f, p) => (exact(p) ? BINDER_CRITICAL : null),
     theoryLabel:
       '临界点上的值 0.6107（各向同性方格、周期边界）。有序相趋于 2/3，无序相趋于 0；只有在 Tc，它才与晶格大小无关。自参数上次改动起累计。',
+  },
+  {
+    id: 'effectiveInformation',
+    level: 'meta',
+    label: '有效信息随尺度的变化（实验性）',
+    kind: 'curve',
+    mark: 'line',
+    // 后端已对计数做了累计，这里不再做滑动平均。 / The backend accumulates the counts, so no running average here.
+    smooth: 1,
+    xLabel: '粗粒化次数 k（块边长 2ᵏ）',
+    reducers: ['pyramid', 'transitions'],
+    compute: (f) => ({
+      x: f.transitions!.map((_, k) => k),
+      y: f.transitions!.map((counts) => effectiveInformation(counts, 10)),
+    }),
+    theoryLabel:
+      '单位：比特，上限 log₂10 ≈ 3.32。每一层把格点的局部状态取为（自旋，四邻之和）共 10 种，统计一次扫描前后的转移。计数自参数上次改动起累计；刚改完参数时最粗的几层样本太少，估计偏高，要等它收敛。结果依赖状态的这种取法，没有理论值可对照。',
   },
   {
     id: 'rgMagnetisation',

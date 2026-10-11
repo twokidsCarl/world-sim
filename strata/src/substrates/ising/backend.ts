@@ -11,6 +11,8 @@ import {
   pyramidLevels,
   sweep,
   thresholds,
+  transitionCounts,
+  LOCAL_STATES,
   type IsingState,
   type LatticeSums,
 } from './ref'
@@ -37,6 +39,14 @@ export interface IsingFrame extends Frame {
    * Binder cumulant of the magnetisation, from every frame since the parameters last changed.
    */
   binder: number
+  /**
+   * 各层局部状态在一次扫描前后的转移计数（每层 10 × 10），自参数上次改动起累计；只在被请求时给出。
+   * 粗的层格点很少，单次扫描的计数不足以估计转移概率，所以必须累计。
+   * Per-level counts of local-state transitions across one sweep (10 × 10 each), accumulated since
+   * the parameters last changed; present only when requested. Coarse levels have few sites, and one
+   * sweep's counts are too few to estimate transition probabilities, hence the accumulation.
+   */
+  transitions?: Float64Array[]
 }
 
 export interface IsingBackend extends RunBackend<IsingFrame> {
@@ -64,6 +74,23 @@ class Moments {
   }
 }
 
+/** 各层转移计数的累计 / Running totals of the per-level transition counts */
+class Tally {
+  private totals: Float64Array[] = []
+
+  reset(): void {
+    this.totals = []
+  }
+
+  add(counts: Float64Array[]): Float64Array[] {
+    counts.forEach((c, k) => {
+      const t = (this.totals[k] ??= new Float64Array(c.length))
+      for (let i = 0; i < c.length; i++) t[i]! += c[i]!
+    })
+    return this.totals.map((t) => t.slice())
+  }
+}
+
 function toLevel(size: number, sums: LatticeSums): IsingLevel {
   const n = size * size
   return { size, m: sums.s / n, nn: sums.nn / (2 * n), nnn: sums.nnn / (2 * n) }
@@ -75,6 +102,7 @@ export class IsingCpuBackend implements IsingBackend {
   private thr: Uint32Array
   private p: Params
   private moments = new Moments()
+  private tally = new Tally()
 
   constructor(p: Params, seed: number) {
     this.p = { ...p }
@@ -94,6 +122,7 @@ export class IsingCpuBackend implements IsingBackend {
     this.p = { ...p }
     this.thr = thresholds(p.T, p.j2, p.h)
     this.moments.reset()
+    this.tally.reset()
   }
 
   step(n: number): void {
@@ -111,15 +140,24 @@ export class IsingCpuBackend implements IsingBackend {
     return out
   }
 
-  reduce(): IsingFrame {
+  reduce(ids: readonly string[] = []): IsingFrame {
+    // 有效信息需要一次扫描前后的两个状态，所以这里会让模拟前进一次扫描。
+    // Effective information needs the state before and after one sweep, so this advances
+    // the simulation by one sweep.
+    let transitions: Float64Array[] | undefined
+    if (ids.includes('transitions')) {
+      const before = this.pyramid().map((spins) => spins.slice())
+      sweep(this.state, this.thr, 1)
+      transitions = this.tally.add(this.pyramid().map((spins, k) => transitionCounts(before[k]!, spins, this.L >> k)))
+    }
     const levels = this.pyramid().map((spins, k) => toLevel(this.L >> k, latticeSums(spins, this.L >> k)))
-    return { step: this.stepCount, T: this.p.T, levels, binder: this.moments.add(levels[0]!.m) }
+    return { step: this.stepCount, T: this.p.T, levels, binder: this.moments.add(levels[0]!.m), transitions }
   }
 
   dispose(): void {}
 }
 
-type Entry = 'metropolis' | 'bump' | 'block' | 'reduceRows'
+type Entry = 'metropolis' | 'bump' | 'block' | 'reduceRows' | 'clearTpm' | 'transitions'
 
 export class IsingGpuBackend implements IsingBackend {
   readonly kind = 'gpu'
@@ -138,10 +176,15 @@ export class IsingGpuBackend implements IsingBackend {
   private bumpGroup: GPUBindGroup
   private blockGroups: GPUBindGroup[] = []
   private reduceGroups: GPUBindGroup[] = []
+  private prev: GPUBuffer[] = []
+  private tpm: GPUBuffer[] = []
+  private clearTpmGroups: GPUBindGroup[] = []
+  private transitionGroups: GPUBindGroup[] = []
   private inFlight = 0
   private disposed = false
   private timer: PassTimer
   private moments = new Moments()
+  private tally = new Tally()
   private epoch = 0
 
   constructor(gpu: GpuContext, p: Params, seed: number) {
@@ -152,7 +195,7 @@ export class IsingGpuBackend implements IsingBackend {
     this.levels = pyramidLevels(this.L)
     const device = this.device
     const module = device.createShaderModule({ code })
-    for (const entry of ['metropolis', 'bump', 'block', 'reduceRows'] as Entry[]) {
+    for (const entry of ['metropolis', 'bump', 'block', 'reduceRows', 'clearTpm', 'transitions'] as Entry[]) {
       this.pipelines[entry] = device.createComputePipeline({ layout: 'auto', compute: { module, entryPoint: entry } })
     }
     const storage = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
@@ -161,6 +204,8 @@ export class IsingGpuBackend implements IsingBackend {
       const size = this.L >> k
       this.spins.push(device.createBuffer({ size: size * size * 4, usage: storage }))
       this.partial.push(device.createBuffer({ size: size * 16, usage: storage }))
+      this.prev.push(device.createBuffer({ size: size * size * 4, usage: storage }))
+      this.tpm.push(device.createBuffer({ size: LOCAL_STATES * LOCAL_STATES * 4, usage: storage }))
       const u = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST })
       device.queue.writeBuffer(u, 0, new Uint32Array([size, seed >>> 0, k, 0]))
       uniforms.push(u)
@@ -198,6 +243,15 @@ export class IsingGpuBackend implements IsingBackend {
           [5, this.partial[k]!],
         ]),
       )
+      this.clearTpmGroups.push(group('clearTpm', [[7, this.tpm[k]!]]))
+      this.transitionGroups.push(
+        group('transitions', [
+          [0, uniforms[k]!],
+          [1, this.spins[k]!],
+          [6, this.prev[k]!],
+          [7, this.tpm[k]!],
+        ]),
+      )
     }
     this.setParams(p)
   }
@@ -206,6 +260,7 @@ export class IsingGpuBackend implements IsingBackend {
     this.p = { ...p }
     this.device.queue.writeBuffer(this.thr, 0, thresholds(p.T, p.j2, p.h))
     this.moments.reset()
+    this.tally.reset()
     this.epoch++
   }
 
@@ -219,6 +274,16 @@ export class IsingGpuBackend implements IsingBackend {
     if (this.inFlight >= 2 || this.disposed) return
     const encoder = this.device.createCommandEncoder()
     const pass = encoder.beginComputePass(this.timer.descriptor())
+    this.encodeSweeps(pass, n)
+    pass.end()
+    this.timer.resolve(encoder)
+    this.submit(encoder)
+    this.timer.collect()
+    this.stepCount += n
+  }
+
+  /** n 次扫描：每次四个子格 / n sweeps of four sublattice passes each */
+  private encodeSweeps(pass: GPUComputePassEncoder, n: number): void {
     const groups = Math.ceil(this.L / 16)
     for (let i = 0; i < 4 * n; i++) {
       pass.setPipeline(this.pipelines.metropolis)
@@ -228,11 +293,6 @@ export class IsingGpuBackend implements IsingBackend {
       pass.setBindGroup(0, this.bumpGroup)
       pass.dispatchWorkgroups(1)
     }
-    pass.end()
-    this.timer.resolve(encoder)
-    this.submit(encoder)
-    this.timer.collect()
-    this.stepCount += n
   }
 
   get gpuStepMs(): number | null {
@@ -254,12 +314,36 @@ export class IsingGpuBackend implements IsingBackend {
     pass.end()
   }
 
-  async reduce(): Promise<IsingFrame> {
-    const step = this.stepCount
+  async reduce(ids: readonly string[] = []): Promise<IsingFrame> {
+    const wantTransitions = ids.includes('transitions')
     const T = this.p.T
     const epoch = this.epoch
     const encoder = this.device.createCommandEncoder()
     this.encodePyramid(encoder)
+    if (wantTransitions) {
+      // 留下各层扫描之前的样子，前进一次扫描，再把金字塔更新到新状态。
+      // Keep every level as it was, advance one sweep, and bring the pyramid up to date again.
+      for (let k = 0; k < this.levels; k++) {
+        encoder.copyBufferToBuffer(this.spins[k]!, 0, this.prev[k]!, 0, (this.L >> k) ** 2 * 4)
+      }
+      const sweep = encoder.beginComputePass()
+      this.encodeSweeps(sweep, 1)
+      sweep.end()
+      this.stepCount += 1
+      this.encodePyramid(encoder)
+      const count = encoder.beginComputePass()
+      for (let k = 0; k < this.levels; k++) {
+        count.setPipeline(this.pipelines.clearTpm)
+        count.setBindGroup(0, this.clearTpmGroups[k]!)
+        count.dispatchWorkgroups(2)
+        count.setPipeline(this.pipelines.transitions)
+        count.setBindGroup(0, this.transitionGroups[k]!)
+        const groups = Math.ceil((this.L >> k) / 16)
+        count.dispatchWorkgroups(groups, groups)
+      }
+      count.end()
+    }
+    const step = this.stepCount
     const pass = encoder.beginComputePass()
     pass.setPipeline(this.pipelines.reduceRows)
     for (let k = 0; k < this.levels; k++) {
@@ -269,15 +353,29 @@ export class IsingGpuBackend implements IsingBackend {
     pass.end()
     let bytes = 0
     for (let k = 0; k < this.levels; k++) bytes += (this.L >> k) * 16
-    const staging = this.device.createBuffer({ size: bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })
+    const tpmBytes = LOCAL_STATES * LOCAL_STATES * 4
+    const staging = this.device.createBuffer({
+      size: bytes + (wantTransitions ? this.levels * tpmBytes : 0),
+      usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+    })
     let offset = 0
     for (let k = 0; k < this.levels; k++) {
       encoder.copyBufferToBuffer(this.partial[k]!, 0, staging, offset, (this.L >> k) * 16)
       offset += (this.L >> k) * 16
     }
+    if (wantTransitions) {
+      for (let k = 0; k < this.levels; k++) encoder.copyBufferToBuffer(this.tpm[k]!, 0, staging, bytes + k * tpmBytes, tpmBytes)
+    }
     this.submit(encoder)
     await staging.mapAsync(GPUMapMode.READ)
-    const rows = new Int32Array(staging.getMappedRange())
+    const mapped = staging.getMappedRange()
+    const rows = new Int32Array(mapped, 0, bytes / 4)
+    const fresh = wantTransitions
+      ? Array.from({ length: this.levels }, (_, k) =>
+          Float64Array.from(new Uint32Array(mapped, bytes + k * tpmBytes, LOCAL_STATES * LOCAL_STATES)),
+        )
+      : undefined
+    const transitions = fresh && epoch === this.epoch ? this.tally.add(fresh) : fresh
     const levels: IsingLevel[] = []
     let row = 0
     for (let k = 0; k < this.levels; k++) {
@@ -295,7 +393,7 @@ export class IsingGpuBackend implements IsingBackend {
     // 参数改变之前提交的帧不得计入新的平均。
     // A frame submitted before the parameters changed must not enter the new average.
     const binder = epoch === this.epoch ? this.moments.add(levels[0]!.m) : NaN
-    return { step, T, levels, binder }
+    return { step, T, levels, binder, transitions }
   }
 
   /**
@@ -321,6 +419,6 @@ export class IsingGpuBackend implements IsingBackend {
   dispose(): void {
     this.disposed = true
     this.timer.destroy()
-    for (const b of [...this.spins, ...this.partial, this.thr]) b.destroy()
+    for (const b of [...this.spins, ...this.partial, ...this.prev, ...this.tpm, this.thr]) b.destroy()
   }
 }
