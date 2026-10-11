@@ -21,7 +21,9 @@ export const ROLES: Role[] = ['soluble', 'membrane', 'nucleic', 'nucleic-binding
 export const ROLE_HUE: Record<Role, { h: number; spread: number; C: number; L: number }> = {
   soluble: { h: 258, spread: 34, C: 1.0, L: 0 },
   membrane: { h: 142, spread: 22, C: 1.0, L: 0 },
-  nucleic: { h: 88, spread: 14, C: 1.0, L: 0.04 },
+  // 核酸：黄到橙。量他的流感病毒里的核糖核蛋白：h 59–81，C 0.13–0.16，L 0.67–0.82
+  // nucleic acids: yellow to orange. Measured on the ribonucleoprotein in his influenza virion: h 59–81, C 0.13–0.16, L 0.67–0.82
+  nucleic: { h: 80, spread: 12, C: 1.25, L: 0.04 },
   'nucleic-binding': { h: 58, spread: 16, C: 1.0, L: 0 },
   // 主角：紫到品红。量他的流感、新冠、寨卡：h 290–336，彩度 0.09–0.16
   // the subject: violet to magenta. Measured on his influenza, coronavirus and Zika paintings: h 290–336, chroma 0.09–0.16
@@ -53,5 +55,13 @@ export interface Tone {
 
 /** Molecule pictures: bright on white. Sampled: L 0.75-0.84, C up to 0.20. */
 export const TONE_MOLECULE: Tone = { L: 0.8, C: 0.165, carbonDrop: 0.036, carbonLift: 0.012 }
+/**
+ * 手绘画法下的单个结构：比 Illustrate 的柔和，碳和别的原子同色（一条链一个平涂的颜色）。
+ * 量 Goodsell 的画：前景填色 L 0.72–0.82，C 0.08–0.16。
+ * A single structure in the painted drawing: softer than Illustrate's, with carbons the colour of
+ * the other atoms (one flat colour per chain). Measured on Goodsell's paintings: foreground fills
+ * at L 0.72–0.82 and C 0.08–0.16.
+ */
+export const TONE_PAINTED: Tone = { L: 0.81, C: 0.125, carbonDrop: 0.0, carbonLift: 0.0, hueStep: 4 }
 /** Landscapes: greyer and a little darker. Sampled: L about 0.72, C about 0.11. */
 export const TONE_LANDSCAPE: Tone = { L: 0.76, C: 0.125, carbonDrop: 0.0, carbonLift: 0.0, hueStep: 3 }

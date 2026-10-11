@@ -82,6 +82,27 @@ limn 这一轮的数（参考图的数同上表）：
 - 寨卡没变：它是按 PDB 编号载入的，走的还是 Illustrate 画法。
 - 还差：形状仍是疙瘩（第二轮做平滑）；膜的内缘有一圈碎线；构图和环境没动。
 
+### 第二轮（g2）：光滑的形状，单个结构也用手绘画法
+
+- **“滚球”平滑**（`src/render/shaders.ts` 的 `SMOOTH_FS`）：画球时每个球的半径加一个探针半径，再对深度做一次以同样半径的球为结构元的腐蚀。合起来是高度场上的闭运算：原子之间的沟被填平，轮廓光滑，分子的外形和大小不变。探针半径按屏幕像素定（1500 像素宽的图上 7 像素），所以整颗病毒时分子成为光滑的一团，放大到看得见原子时自然变弱。
+- **单个结构**（按 PDB 编号载入的）也改用手绘画法：一条链一个平涂的颜色（碳不再另取灰一号的颜色），线是填色的深一号，阴影很轻。核酸的颜色按他画里核糖核蛋白量出的黄–橙（h 59–81）调亮。
+- **切换**：界面“线条与阴影”里多了“画法”一项，可以切回 Illustrate；地址里加 `?style=illustrate` 效果相同。Illustrate 画法本身没动，对照仍是 2.80。
+
+| pair | which | paper | ink | ink_L | ink_C | bumps | flat | L | C | palette |
+|---|---|---|---|---|---|---|---|---|---|---|
+| influenza | limn | 0.419 | 0.105 | 0.479 | 0.067 | 0.795 | 0.889 | 0.706 | 0.068 | 0.103 |
+| zika | limn | 0.388 | 0.154 | 0.427 | 0.068 | 0.982 | 0.861 | 0.690 | 0.097 | 0.178 |
+| coronavirus | limn | 0.611 | 0.120 | 0.454 | 0.067 | 0.786 | 0.859 | 0.685 | 0.089 | 0.125 |
+| hiv | limn | 0.467 | 0.177 | 0.470 | 0.078 | 1.008 | 0.823 | 0.699 | 0.102 | 0.189 |
+| synapse | limn | 0.365 | 0.260 | 0.433 | 0.052 | 2.830 | 0.270 | 0.625 | 0.068 | 0.107 |
+| mycoplasma | limn | 0.376 | 0.209 | 0.444 | 0.067 | 1.441 | 0.598 | 0.649 | 0.098 | 0.097 |
+
+- 细碎起伏（`bumps`，他的画是 0.70–0.94，支原体那幅 1.58）：流感 0.87→0.80，新冠 1.03→0.79，HIV 1.40→1.01，寨卡 1.69→0.98，进了他的范围；突触仍是 2.8，那张图在这个比例下每个分子只有几个像素，平滑帮不上，要靠构图（放大）来解决。
+- 寨卡这一对现在变了：淡紫的衣壳、粉色的糖链。
+- `out/g2-nucleosome-before-after.jpg` 是核小体改前改后的并排图。
+- 试过更大的探针（9 像素）：形状更圆，但血凝素的刺连成了一整圈，退回 7。
+- 没改好的：相邻的同种分子在平滑后会连在一起，只剩编号不同处的一条线分开；膜的切口内缘还有一圈碎线；有的地方出现小白洞（真实的缝隙被描了边）；构图和环境没动。
+
 ## English
 
 limn used to be matched against Illustrate, Goodsell's own program (see `../illustrate/`). This directory matches it against something else: his **hand-painted landscapes**. The method is to put "his painting" and "limn's picture" of the same subject side by side, list where they differ, and measure after every change.
@@ -121,3 +142,17 @@ limn's numbers for this round are in the table above (the references' are in the
 - Dominant-colour distance: influenza 0.119→0.108, synapse 0.142→0.105, mycoplasma 0.226→0.128, closer; coronavirus 0.110→0.121, HIV 0.104→0.157, farther. Most of the area of those last two paintings is the surrounding plasma and mucus (yellows and greens); we draw no environment, so turning the subject violet moves it away from "the dominant colours of the whole painting", although the picture itself looks more like his. The colour distance is therefore unreliable for scenes without an environment.
 - Zika is unchanged: it is loaded by PDB id and still drawn the Illustrate way.
 - Still missing: shapes are still lumps (smoothing is round 2); a ring of broken lines on the inner edge of the membrane; composition and environment are untouched.
+
+### Round 2 (g2): smooth shapes, and the painted drawing for single structures
+
+- **"Rolling ball" smoothing** (`SMOOTH_FS` in `src/render/shaders.ts`): each sphere is drawn with a probe radius added, and the depth is then eroded with a ball of the same radius as structuring element. Together that is a closing of the height field: grooves between atoms are filled and outlines become smooth, while the shape and size of each molecule stay as they are. The probe radius is set in screen pixels (7 on a picture 1500 pixels wide), so a molecule becomes a smooth blob at the scale of a whole virion, and the effect fades by itself once zoomed in far enough for atoms to show.
+- **Single structures** (those loaded by PDB id) take the painted drawing too: one flat colour per chain (carbons no longer a greyer shade), lines a deeper shade of the fill, and faint shadows. Nucleic acids are brightened to the yellow–orange measured on the ribonucleoprotein in his painting (h 59–81).
+- **Switching**: the "Lines and shadows" panel has a new "Drawing" choice that goes back to Illustrate; `?style=illustrate` in the address does the same. The Illustrate drawing itself is untouched, and its comparison still stands at 2.80.
+
+The numbers are in the table above.
+
+- Fine relief (`bumps`; 0.70–0.94 in his paintings, 1.58 in the mycoplasma one): influenza 0.87→0.80, coronavirus 1.03→0.79, HIV 1.40→1.01, Zika 1.69→0.98, all into his range; the synapse is still at 2.8, since at that scale each molecule is only a few pixels and smoothing cannot help, which is for composition (zooming in) to solve.
+- The Zika pair has changed now: a lavender capsid with pink glycans.
+- `out/g2-nucleosome-before-after.jpg` shows the nucleosome before and after.
+- A larger probe (9 pixels) was tried: rounder shapes, but the hemagglutinin spikes joined into one ring, so it went back to 7.
+- Not yet right: neighbouring copies of one molecule join once smoothed, with only the line where ids differ to part them; a ring of broken lines remains on the inner edge of a cut membrane; small white holes appear in places (real gaps that get outlined); composition and environment are untouched.

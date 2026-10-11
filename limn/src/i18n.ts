@@ -142,6 +142,9 @@ export const zh = {
   // 线条、导出、提示 / lines, export, hints
   'look.cut': '剖开',
   'style.title': '线条与阴影',
+  'style.drawing': '画法',
+  'style.painted': '手绘（Goodsell 的水彩全景）',
+  'style.illustrate': 'Illustrate（他的出图程序）',
   'style.lineWidth': '线宽',
   'style.innerLines': '内部轮廓',
   'style.shadow': '阴影强度',
@@ -418,6 +421,9 @@ export const en: Record<Key, string> = {
   // 线条、导出、提示 / lines, export, hints
   'look.cut': 'Cut',
   'style.title': 'Lines and shadows',
+  'style.drawing': 'Drawing',
+  'style.painted': 'Painted (Goodsell\'s watercolours)',
+  'style.illustrate': 'Illustrate (his own program)',
   'style.lineWidth': 'Line width',
   'style.innerLines': 'Inner lines',
   'style.shadow': 'Shadow strength',

@@ -1,4 +1,4 @@
-import { CAPSULE_FS, CAPSULE_VS, COMPOSITE_FS, EDGE_FS, MESH_FS, MESH_VS, QUAD_VS, SPHERE_FS, SPHERE_VS } from './shaders'
+import { CAPSULE_FS, CAPSULE_VS, COMPOSITE_FS, EDGE_FS, MESH_FS, MESH_VS, QUAD_VS, SMOOTH_FS, SPHERE_FS, SPHERE_VS } from './shaders'
 import type { Style } from './style'
 // 这个文件里 `t` 另有所指，所以换个名字 / `t` means something else in this file, hence the other name
 import { t as tr } from '../i18n'
@@ -109,6 +109,11 @@ interface Target {
   color: WebGLTexture
   ids: WebGLTexture
   depth: WebGLTexture
+  /** 平滑之后的一套缓冲；不平滑时不用 / the buffers after smoothing; unused without it */
+  gbuf2: WebGLFramebuffer
+  color2: WebGLTexture
+  ids2: WebGLTexture
+  depth2: WebGLTexture
   edgeFbo: WebGLFramebuffer
   edge: WebGLTexture
   outFbo: WebGLFramebuffer
@@ -141,6 +146,7 @@ export class Renderer {
   private sphere: WebGLProgram
   private capsule: WebGLProgram
   private mesh: WebGLProgram
+  private smoothProg: WebGLProgram
   private meshVao: WebGLVertexArrayObject
   /** 上一帧画出的线段数和三角形数 / segments and triangles drawn in the last frame */
   lastSegments = 0
@@ -166,6 +172,7 @@ export class Renderer {
     this.sphere = this.program(SPHERE_VS, SPHERE_FS)
     this.capsule = this.program(CAPSULE_VS, CAPSULE_FS)
     this.mesh = this.program(MESH_VS, MESH_FS)
+    this.smoothProg = this.program(QUAD_VS, SMOOTH_FS)
     this.meshVao = gl.createVertexArray()!
     this.edgeProg = this.program(QUAD_VS, EDGE_FS)
     this.compProg = this.program(QUAD_VS, COMPOSITE_FS)
@@ -332,8 +339,8 @@ export class Renderer {
     const t = this.target
     if (t && t.w === w && t.h === h) return t
     if (t) {
-      for (const tex of [t.color, t.ids, t.depth, t.edge, t.out]) gl.deleteTexture(tex)
-      for (const f of [t.gbuf, t.edgeFbo, t.outFbo]) gl.deleteFramebuffer(f)
+      for (const tex of [t.color, t.ids, t.depth, t.color2, t.ids2, t.depth2, t.edge, t.out]) gl.deleteTexture(tex)
+      for (const f of [t.gbuf, t.gbuf2, t.edgeFbo, t.outFbo]) gl.deleteFramebuffer(f)
     }
     const tex = (internal: number) => {
       const x = gl.createTexture()!
@@ -354,9 +361,11 @@ export class Renderer {
     }
     const color = tex(gl.RGBA8), ids = tex(gl.RGBA32UI), depth = tex(gl.DEPTH_COMPONENT32F), edge = tex(gl.RGBA8), out = tex(gl.RGBA8)
     const gbuf = fbo([[gl.COLOR_ATTACHMENT0, color], [gl.COLOR_ATTACHMENT1, ids], [gl.DEPTH_ATTACHMENT, depth]])
+    const color2 = tex(gl.RGBA8), ids2 = tex(gl.RGBA32UI), depth2 = tex(gl.DEPTH_COMPONENT32F)
+    const gbuf2 = fbo([[gl.COLOR_ATTACHMENT0, color2], [gl.COLOR_ATTACHMENT1, ids2], [gl.DEPTH_ATTACHMENT, depth2]])
     const edgeFbo = fbo([[gl.COLOR_ATTACHMENT0, edge]])
     const outFbo = fbo([[gl.COLOR_ATTACHMENT0, out]])
-    this.target = { w, h, gbuf, color, ids, depth, edgeFbo, edge, outFbo, out }
+    this.target = { w, h, gbuf, color, ids, depth, gbuf2, color2, ids2, depth2, edgeFbo, edge, outFbo, out }
     return this.target
   }
 
@@ -377,8 +386,11 @@ export class Renderer {
     // View-space z of the scene's bounding sphere gives the depth range.
     const dx = b.center[0] - view.center[0], dy = b.center[1] - view.center[1], dz = b.center[2] - view.center[2]
     const zc = view.rot[2]! * dx + view.rot[5]! * dy + view.rot[8]! * dz
-    const zFront = Math.min(zc + b.radius + 3, Number.isFinite(view.clipFront) ? view.clipFront + 3 : Infinity)
-    const zBack = zc - b.radius - 3
+    // 平滑的探针半径：在画面上是固定的几个像素，所以离得越远抹得越多；换成 Å 后设个上限
+    // the probe radius for smoothing: a fixed few pixels on screen, so the farther away the more is wiped; capped once converted to Å
+    const probe = (style.smooth ?? 0) > 0 ? Math.min(14, ((style.smooth ?? 0) * Math.max(1, Math.max(w, h) / 1500)) / pxPerA) : 0
+    const zFront = Math.min(zc + b.radius + 3 + probe, Number.isFinite(view.clipFront) ? view.clipFront + 3 + probe : Infinity)
+    const zBack = zc - b.radius - 3 - probe
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, t.gbuf)
     gl.viewport(0, 0, w, h)
@@ -404,6 +416,7 @@ export class Renderer {
       gl.uniform1f(this.u(p, 'u_clipFront'), Number.isFinite(view.clipFront) ? view.clipFront : 1e30)
       gl.uniform1f(this.u(p, 'u_radiusScale'), style.radiusScale)
       gl.uniform1f(this.u(p, 'u_minRadius'), (style.minRadius * Math.max(1, (Math.max(w, h) / 1500) * style.lineWidth)) / pxPerA)
+      gl.uniform1f(this.u(p, 'u_inflate'), probe)
       gl.uniform1i(this.u(p, 'u_outlineByMolecule'), style.outlineBy === 'molecule' ? 1 : 0)
       gl.uniform1i(this.u(p, 'u_w'), this.texW)
       names.forEach((n, i) => gl.uniform1i(this.u(p, n), i))
@@ -506,12 +519,38 @@ export class Renderer {
     // (lines between whole molecules, in a landscape, never fade)
     const subunitFade = style.outlineBy === 'molecule' ? 1 : Math.min(1, Math.max(0, (subunitPens - 12) / 28))
 
+    // 平滑：把第一套缓冲腐蚀进第二套，后面的描边和合成读第二套
+    // smoothing: the first set of buffers is eroded into the second, which the edge and composite passes then read
+    let G = { color: t.color, ids: t.ids, depth: t.depth }
+    if (probe > 0) {
+      const sm = this.smoothProg
+      gl.bindFramebuffer(gl.FRAMEBUFFER, t.gbuf2)
+      gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1])
+      gl.enable(gl.DEPTH_TEST)
+      gl.depthFunc(gl.ALWAYS)
+      gl.clearBufferfv(gl.COLOR, 0, [0, 0, 0, 0])
+      gl.clearBufferuiv(gl.COLOR, 1, new Uint32Array(4))
+      gl.clearBufferfi(gl.DEPTH_STENCIL, 0, 1, 0)
+      gl.useProgram(sm)
+      bind(sm, 0, 'u_depth', t.depth)
+      bind(sm, 1, 'u_color', t.color)
+      bind(sm, 2, 'u_ids', t.ids)
+      gl.uniform2f(this.u(sm, 'u_z'), zFront, zBack)
+      gl.uniform1f(this.u(sm, 'u_probe'), probe)
+      gl.uniform1f(this.u(sm, 'u_pxPerA'), pxPerA)
+      gl.uniform1i(this.u(sm, 'u_rings'), fast ? 2 : 6)
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+      gl.depthFunc(gl.LESS)
+      gl.disable(gl.DEPTH_TEST)
+      G = { color: t.color2, ids: t.ids2, depth: t.depth2 }
+    }
+
     const e = this.edgeProg
     gl.bindFramebuffer(gl.FRAMEBUFFER, t.edgeFbo)
     gl.drawBuffers([gl.COLOR_ATTACHMENT0])
     gl.useProgram(e)
-    bind(e, 0, 'u_depth', t.depth)
-    bind(e, 1, 'u_ids', t.ids)
+    bind(e, 0, 'u_depth', G.depth)
+    bind(e, 1, 'u_ids', G.ids)
     gl.uniform2f(this.u(e, 'u_z'), zFront, zBack)
     gl.uniform1f(this.u(e, 'u_pen'), pen)
     gl.uniform1f(this.u(e, 'u_pxPerA'), pxPerA)
@@ -527,10 +566,10 @@ export class Renderer {
     const c = this.compProg
     gl.bindFramebuffer(gl.FRAMEBUFFER, t.outFbo)
     gl.useProgram(c)
-    bind(c, 0, 'u_color', t.color)
+    bind(c, 0, 'u_color', G.color)
     bind(c, 1, 'u_edge', t.edge)
-    bind(c, 2, 'u_depth', t.depth)
-    bind(c, 3, 'u_ids', t.ids)
+    bind(c, 2, 'u_depth', G.depth)
+    bind(c, 3, 'u_ids', G.ids)
     gl.uniform2f(this.u(c, 'u_cap'), capped ? 1 : 0, capped ? view.clipFront : 0)
     gl.uniform2f(this.u(c, 'u_z'), zFront, zBack)
     if (view.fogSpan) gl.uniform2f(this.u(c, 'u_zSpan'), view.fogSpan[0], view.fogSpan[1])

@@ -497,6 +497,13 @@ export function App() {
 
             <div>
               <h2>{t('style.title')}</h2>
+              <label className="row">
+                {t('style.drawing')}
+                <select value={s.drawing} onChange={(e) => s.setDrawing(e.target.value as 'painted' | 'illustrate')}>
+                  <option value="painted">{t('style.painted')}</option>
+                  <option value="illustrate">{t('style.illustrate')}</option>
+                </select>
+              </label>
               {!s.spec.landscape && <Slider label={t('look.cut')} value={s.cut} min={0} max={0.9} step={0.01} onChange={(v) => s.setLook({ cut: v })} />}
               <Slider label={t('style.lineWidth')} value={s.style.lineWidth} min={0.5} max={3} step={0.1} onChange={(v) => s.setStyle((x) => (x.lineWidth = v))} />
               <Slider label={t('style.innerLines')} value={s.style.contour.diffMax} min={1} max={60} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />
