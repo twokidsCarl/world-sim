@@ -20,10 +20,11 @@ class Body:
     def __init__(self, name, root=None):
         d = os.path.join(root or os.path.join(RAW, 'bodies'), name)
         self.name = name
-        self.parts = json.load(open(os.path.join(d, 'index.json')))['parts']
+        idx = json.load(open(os.path.join(d, 'index.json')))
+        self.parts = idx['parts']
         self._v = {}
         self._i = {}
-        for s in ('integumentary', 'skeletal', 'muscular'):
+        for s in idx.get('systems', ('integumentary', 'skeletal', 'muscular')):
             self._v[s] = np.fromfile(os.path.join(d, s + '.f32'), dtype=np.float32).reshape(-1, 3).astype(np.float64)
             self._i[s] = np.fromfile(os.path.join(d, s + '.u32'), dtype=np.uint32).reshape(-1, 3).astype(np.int64)
         self.by_name = {}
@@ -60,6 +61,13 @@ class Body:
 
     def skin(self):
         return self.merged(lambda p: p['name'] == 'Skin')
+
+    # 管线判定“深部结构”的组织类型（tools/pipeline/fat.ts 的 FAT_DEEP_TISSUES），不含皮肤系统
+    # tissues the pipeline counts as deep parts (FAT_DEEP_TISSUES in tools/pipeline/fat.ts), integumentary system excluded
+    DEEP = ('muscle', 'bone', 'cartilage', 'organ', 'brain', 'heart', 'gland', 'tendon', 'tooth')
+
+    def deep_parts(self):
+        return [p for p in self.parts if p['tissue'] in self.DEEP and p['system'] != 'integumentary']
 
 
 # ---------------------------------------------------------------- 切片
@@ -229,4 +237,63 @@ def render_overlay(skin, inner, path, alpha=0.45, **kw):
     Image.blend(a, c, alpha).save(path)
     os.remove(path + '.inner.png')
     os.remove(path + '.skin.png')
+    return path
+
+
+def crop(V, F, lo, hi):
+    """只留重心落在盒子 [lo, hi] 内的三角形。Keep the triangles whose centroid lies in the box [lo, hi]."""
+    c = V[F].mean(1)
+    return V, F[((c >= np.asarray(lo)) & (c <= np.asarray(hi))).all(1)]
+
+
+def render_closeup(layers, path, lo, hi, views=('front', 'side'), height=800, alpha=None, title=None):
+    """局部特写：把各图层裁到盒子内再渲染。alpha 给定时，第一个图层（皮肤）半透明叠在其余图层上。
+    Close-up: every layer is cropped to the box, then rendered. With alpha, the first layer (the skin)
+    is blended over the others."""
+    cl = [(*crop(l[0], l[1], lo, hi), l[2]) for l in layers]
+    cl = [l for l in cl if len(l[1])]
+    kw = dict(views=views, height=height, bounds=(lo, hi), n_per_m2=4e7, title=title)
+    if alpha is None or len(cl) < 2:
+        return render_views(cl, path, **kw)
+    from PIL import Image
+    a = Image.open(render_views(cl[1:], path + '.inner.png', **kw)).convert('RGB')
+    c = Image.open(render_views(cl[:1], path + '.skin.png', **kw)).convert('RGB')
+    Image.blend(a, c, alpha).save(path)
+    os.remove(path + '.inner.png')
+    os.remove(path + '.skin.png')
+    return path
+
+
+def render_bottom(layers, path, lo, hi, width=900, n=3000000):
+    """自下向上看（会阴）：横轴为 x（受试者左侧在图右），纵轴为 z（前方在上）。
+    View from below (perineum): x across (subject's left on the right of the picture), z up the picture (anterior at the top)."""
+    from PIL import Image
+    rng = np.random.default_rng(2)
+    lo, hi = np.asarray(lo, float), np.asarray(hi, float)
+    sc = width / (hi[0] - lo[0])
+    H = int((hi[2] - lo[2]) * sc)
+    img = np.ones((H, width, 3))
+    zb = np.full(H * width, 1e9)
+    for l in layers:
+        V, F = crop(l[0], l[1], lo, hi)
+        if not len(F):
+            continue
+        p, nr = sample_surface(V, F, n, rng)
+        xi = ((p[:, 0] - lo[0]) * sc).astype(int)
+        yi = ((hi[2] - p[:, 2]) * sc).astype(int)
+        ok = (xi >= 0) & (xi < width) & (yi >= 0) & (yi < H)
+        xi, yi, y, nr = xi[ok], yi[ok], p[ok, 1], nr[ok]
+        light = np.array([0.2, -1.0, 0.3])
+        light /= np.linalg.norm(light)
+        sh = 0.35 + 0.65 * np.abs(nr @ light)
+        flat = yi * width + xi
+        o = np.argsort(-y)  # 最低的最后写入 / the lowest sample is written last
+        flat, y, sh = flat[o], y[o], sh[o]
+        u, last = np.unique(flat[::-1], return_index=True)
+        last = len(flat) - 1 - last
+        win = y[last] < zb[u]
+        zb[u[win]] = y[last][win]
+        img.reshape(-1, 3)[u[win]] = sh[last][win][:, None] * np.asarray(l[2], float)[None, :]
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8)).save(path)
     return path

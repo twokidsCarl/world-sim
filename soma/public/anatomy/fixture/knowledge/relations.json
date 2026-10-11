@@ -1,0 +1,268 @@
+[
+ {
+  "subject": "FMA900007",
+  "kind": "origin",
+  "objectLabel": {
+   "en": "Scapula (coracoid process, supraglenoid tubercle)",
+   "zh": "肩胛骨（喙突、盂上结节）"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900007",
+  "kind": "insertion",
+  "object": "FMA900027",
+  "objectLabel": {
+   "en": "Radial tuberosity",
+   "zh": "桡骨粗隆"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900007",
+  "kind": "innervatedBy",
+  "object": "ZAC_musculocutaneous_nerve",
+  "objectLabel": {
+   "en": "Musculocutaneous nerve",
+   "zh": "肌皮神经"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900008",
+  "kind": "innervatedBy",
+  "object": "ZAC_musculocutaneous_nerve",
+  "objectLabel": {
+   "en": "Musculocutaneous nerve",
+   "zh": "肌皮神经"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "ZAC_musculocutaneous_nerve",
+  "kind": "innervates",
+  "object": "FMA900007",
+  "objectLabel": {
+   "en": "Biceps brachii (left)",
+   "zh": "左肱二头肌"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "ZAC_musculocutaneous_nerve",
+  "kind": "innervates",
+  "object": "FMA900008",
+  "objectLabel": {
+   "en": "Biceps brachii (right)",
+   "zh": "右肱二头肌"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "ZAC_musculocutaneous_nerve",
+  "kind": "innervates",
+  "objectLabel": {
+   "en": "Coracobrachialis",
+   "zh": "喙肱肌"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900008",
+  "kind": "insertion",
+  "object": "FMA900028",
+  "objectLabel": {
+   "en": "Radial tuberosity",
+   "zh": "桡骨粗隆"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900009",
+  "kind": "origin",
+  "object": "FMA900029",
+  "objectLabel": {
+   "en": "Femur (shaft)",
+   "zh": "股骨体"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900009",
+  "kind": "insertion",
+  "object": "FMA900031",
+  "objectLabel": {
+   "en": "Tibial tuberosity",
+   "zh": "胫骨粗隆"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900009",
+  "kind": "arterialSupply",
+  "object": "FMA900036",
+  "objectLabel": {
+   "en": "Femoral artery",
+   "zh": "股动脉"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900009",
+  "kind": "antagonist",
+  "objectLabel": {
+   "en": "Hamstrings",
+   "zh": "腘绳肌"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900011",
+  "kind": "innervatedBy",
+  "object": "FMA900042",
+  "objectLabel": {
+   "en": "Tibial nerve (from sciatic nerve)",
+   "zh": "胫神经（坐骨神经分支）"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900033",
+  "kind": "arterialSupply",
+  "object": "FMA900034",
+  "objectLabel": {
+   "en": "Coronary arteries (from aorta)",
+   "zh": "冠状动脉（起自主动脉）"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900033",
+  "kind": "venousDrainage",
+  "object": "FMA900035",
+  "objectLabel": {
+   "en": "Inferior vena cava"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900047",
+  "kind": "venousDrainage",
+  "object": "FMA900035",
+  "objectLabel": {
+   "en": "Hepatic veins to inferior vena cava",
+   "zh": "肝静脉汇入下腔静脉"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900072",
+  "kind": "connectsWith",
+  "object": "FMA900073",
+  "objectLabel": {
+   "en": "Tibia (knee joint)",
+   "zh": "胫骨（膝关节）"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ },
+ {
+  "subject": "FMA900050",
+  "kind": "arterialSupply",
+  "object": "FMA900034",
+  "objectLabel": {
+   "en": "Renal artery (from aorta)",
+   "zh": "肾动脉"
+  },
+  "source": {
+   "name": "soma fixture (synthetic)",
+   "url": "https://example.org/soma-fixture",
+   "license": "CC0-1.0"
+  },
+  "status": "unreviewed"
+ }
+]

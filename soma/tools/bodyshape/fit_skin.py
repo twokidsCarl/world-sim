@@ -42,7 +42,7 @@ FINGERS = (('index', 2), ('middle', 3), ('ring', 4), ('pinky', 5))
 JOINT_MAP = {
     'uparm': ('gh', '盂肱关节（肩）', 'glenohumeral (shoulder)'), 'lowarm': ('elbow', '肘关节', 'elbow'), 'wrist': ('wrist', '腕关节', 'wrist'),
     'upleg': ('hip', '髋关节', 'hip'), 'lowleg': ('knee', '膝关节', 'knee'), 'foot': ('ankle', '踝关节（距小腿）', 'ankle (talocrural)'),
-    'subtalar': ('subtalar', '距下关节', 'subtalar'), 'ball': ('mtp', '跖趾关节（第 2、3 趾的平均）', 'metatarsophalangeal (mean of toes 2 and 3)'),
+    'subtalar': ('subtalar', '距下关节', 'subtalar'), 'ball': ('mtp2', '跖趾关节：MHR 只有一个，位于第 2、3 跖趾关节（mtp2、mtp3）之间', 'metatarsophalangeal: MHR has a single one, lying between mtp2 and mtp3'),
     'clavicle': ('sc', '胸锁关节', 'sternoclavicular'),
     'thumb1': ('cmc1', '拇指腕掌关节', 'thumb carpometacarpal'), 'thumb2': ('mcp1', '拇指掌指关节', 'thumb metacarpophalangeal'),
     'thumb3': ('ip1', '拇指指间关节', 'thumb interphalangeal'),
@@ -442,6 +442,15 @@ def joint_mapping(jn):
     return rows
 
 
+def stale_guard(name):
+    """导出的网格必须比 public/anatomy/<body>/anatomy.json 新，否则拒绝运行（曾因用旧网格拟合而出错）。
+    The exported meshes must be newer than public/anatomy/<body>/anatomy.json; refuse to run otherwise."""
+    exp = os.path.join(RAW, 'bodies', name, 'index.json')
+    src = os.path.join('public/anatomy', name, 'anatomy.json')
+    if os.path.getmtime(exp) < os.path.getmtime(src):
+        raise SystemExit(f'stale export for {name}: run  bun tools/bodyshape/export-parts.ts {name}  first')
+
+
 def main():
     name = sys.argv[1]
     arg = lambda k, d: (sys.argv[sys.argv.index(k) + 1] if k in sys.argv else d)
@@ -451,6 +460,7 @@ def main():
     out = os.path.join(RAW, 'out', arg('--out', f'{name}-skin'))
     os.makedirs(out, exist_ok=True)
     model = json.load(open(os.path.join(CUR, 'anthro-model.json')))
+    stale_guard(name)
     fb = Body(name)
     L = bone_landmarks(fb)
     jt, jsrc = joint_targets(name, fb, L)
@@ -559,6 +569,8 @@ def main():
         res['breastPartsVsSkin'] = br
         log.append('\nHRA breast parts vs the new skin (signed mm, + outside): ' + json.dumps({k: (v['outsideFraction'], v['p50Mm'], v['maxMm']) for k, v in br.items()}))
 
+    # 参数拟合的结果存盘，供 enclose_skin.py 做包裹修正和打包 / state of the parametric fit, for enclose_skin.py
+    np.savez(os.path.join(out, 'fit-state.npz'), identity=ident, mp=mp, offsets=off, lod=lod)
     write_obj(os.path.join(out, 'skin.obj'), V, F, f'{name} skin, MHR LOD{lod} topology (Apache-2.0); metres, Y up, +Z anterior, +X left')
     Vr, Pr, _ = mhrlib.run(ident, mp, lod, False)
     np.asarray(Vr + off, np.float32).tofile(os.path.join(out, 'skin-no-pose-correctives.f32'))

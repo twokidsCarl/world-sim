@@ -707,54 +707,54 @@
    },
    "ourSkeletonVsStandard": {
     "headNeck": {
-     "measuredMm": 252.0,
-     "expectedMm": 237.4,
-     "ratio": 1.062
+     "measuredMm": 241.0,
+     "expectedMm": 232.1,
+     "ratio": 1.038
     },
     "trunk": {
-     "measuredMm": 595.9,
-     "expectedMm": 564.2,
-     "ratio": 1.056
+     "measuredMm": 558.3,
+     "expectedMm": 545.3,
+     "ratio": 1.024
     },
     "thigh": {
-     "measuredMm": 375.5,
-     "expectedMm": 390.8,
-     "ratio": 0.961
+     "measuredMm": 365.4,
+     "expectedMm": 375.5,
+     "ratio": 0.973
     },
     "shank": {
-     "measuredMm": 360.3,
-     "expectedMm": 414.2,
-     "ratio": 0.87
+     "measuredMm": 367.7,
+     "expectedMm": 396.5,
+     "ratio": 0.927
     },
     "ankleHeight": {
-     "measuredMm": 86.7,
-     "expectedMm": 63.8,
-     "ratio": 1.358
+     "measuredMm": 78.8,
+     "expectedMm": 61.8,
+     "ratio": 1.275
     },
     "upperArm": {
-     "measuredMm": 297.1,
-     "expectedMm": 318.0,
-     "ratio": 0.934
+     "measuredMm": 300.1,
+     "expectedMm": 305.6,
+     "ratio": 0.982
     },
     "forearm": {
-     "measuredMm": 217.6,
-     "expectedMm": 246.6,
-     "ratio": 0.883
+     "measuredMm": 213.4,
+     "expectedMm": 237.2,
+     "ratio": 0.899
     },
     "hand": {
-     "measuredMm": 210.0,
-     "expectedMm": 183.2,
-     "ratio": 1.146
+     "measuredMm": 180.8,
+     "expectedMm": 177.5,
+     "ratio": 1.019
     },
     "shoulderWidth": {
-     "measuredMm": 326.3,
-     "expectedMm": 368.1,
-     "ratio": 0.887
+     "measuredMm": 357.2,
+     "expectedMm": 359.0,
+     "ratio": 0.995
     },
     "pelvisWidth": {
-     "measuredMm": 295.6,
-     "expectedMm": 265.3,
-     "ratio": 1.114
+     "measuredMm": 261.8,
+     "expectedMm": 258.3,
+     "ratio": 1.014
     }
    }
   },
@@ -998,9 +998,9 @@
      "ratio": 1.012
     },
     "upperArm": {
-     "measuredMm": 316.8,
+     "measuredMm": 313.4,
      "expectedMm": 326.4,
-     "ratio": 0.97
+     "ratio": 0.96
     },
     "forearm": {
      "measuredMm": 237.1,
@@ -1010,12 +1010,12 @@
     "hand": {
      "measuredMm": 182.3,
      "expectedMm": 187.9,
-     "ratio": 0.97
+     "ratio": 0.971
     },
     "shoulderWidth": {
-     "measuredMm": 332.7,
+     "measuredMm": 364.8,
      "expectedMm": 399.3,
-     "ratio": 0.833
+     "ratio": 0.913
     },
     "pelvisWidth": {
      "measuredMm": 289.4,
