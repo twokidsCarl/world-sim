@@ -1,6 +1,7 @@
 """统一入口：在临时仓库里用一个极小的假项目测。 / The single entry point, tested with a tiny fake project in a throwaway repository."""
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -81,6 +82,7 @@ def repo(tmp_path, monkeypatch, seeded):
             return snapshot.build(name)
         return state
 
+    ensure.real = real_ensure  # 要测真正的 ensure 的测试用它 / for tests of the real ensure
     monkeypatch.setattr(snapshot, "ensure", ensure)
     yield root
     for name in ("demo", "flat"):
@@ -135,6 +137,58 @@ def test_rebuild_only_when_the_version_on_main_changes(repo):
     second = snapshot.ensure("demo")
     assert second.version != first.version and "版本二" in get("/", sim="demo").text
     assert len(list(snapshot.base("demo").glob("src-*"))) == 1  # 旧的快照清掉了 / the old snapshot is gone
+
+
+GOOD_BUILD = ["sh", "-c", "mkdir -p out/assets && cp template.html out/index.html && cp assets/app.js out/assets/app.js"]
+
+
+def _set_build(repo, command, message):
+    raw = json.loads((repo / "demo" / "sim.json").read_text())
+    raw["web"]["build"] = [command]
+    (repo / "demo" / "sim.json").write_text(json.dumps(raw, ensure_ascii=False))
+    commit(repo, message)
+
+
+def _real_ensure(monkeypatch, now=None):
+    """用真正的 ensure，但不真的启动构建进程；返回 (状态, 有没有启动)。 / The real ensure without spawning a build process; returns (state, whether one was started)."""
+    started = []
+
+    class Fake:
+        pid = os.getpid()
+
+    real_popen = subprocess.Popen
+    monkeypatch.setattr(snapshot.subprocess, "Popen", lambda *a, **k: (started.append(a), Fake())[1] if "idea_loom.play.snapshot" in a[0] else real_popen(*a, **k))
+    state = snapshot.ensure.real("demo", now=now)
+    return state, bool(started)
+
+
+def test_failed_build_retries_with_backoff(repo, monkeypatch):
+    snapshot.ensure("demo")
+    _set_build(repo, ["sh", "-c", "exit 1"], "break")
+    snapshot.ensure("demo")  # 构建失败 / the build fails
+    failed = snapshot.status("demo")
+    assert (failed.status, failed.attempts) == ("failed", 1) and failed.next_retry and failed.failed_at
+    state, spawned = _real_ensure(monkeypatch, failed.failed_at + 60)
+    assert not spawned and (state.status, state.attempts) == ("failed", 1)  # 还没到时间 / not due yet
+    state, spawned = _real_ensure(monkeypatch, failed.failed_at + 301)
+    assert spawned and (state.status, state.attempts) == ("building", 1)  # 到点重试 / due: retried
+    again = snapshot.build("demo")
+    assert (again.status, again.attempts) == ("failed", 2)
+    assert not _real_ensure(monkeypatch, again.failed_at + 301)[1]  # 第二次要等更久 / the second wait is longer
+    assert _real_ensure(monkeypatch, again.failed_at + 901)[1]
+
+
+def test_new_version_resets_attempts_and_success_clears_them(repo, monkeypatch):
+    snapshot.ensure("demo")
+    _set_build(repo, ["sh", "-c", "exit 1"], "break")
+    snapshot.ensure("demo")
+    assert snapshot.status("demo").attempts == 1
+    _set_build(repo, ["sh", "-c", "exit 2"], "still broken")
+    state, spawned = _real_ensure(monkeypatch, snapshot.status("demo").failed_at + 1)
+    assert spawned and (state.status, state.attempts) == ("building", 0)  # 版本变了，马上构建并清零 / new version: built at once, count reset
+    _set_build(repo, GOOD_BUILD, "fix")
+    fixed = snapshot.ensure("demo")
+    assert fixed.status == "ready" and (fixed.attempts, fixed.failed_at, fixed.next_retry) == (0, None, None)
 
 
 def test_failed_build_shows_its_log_in_place_of_the_simulation(repo):

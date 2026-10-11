@@ -20,8 +20,12 @@ const SORTS: Record<SortKey, (p: ProjectStats) => number> = {
   per_pr: (p) => p.tokens_per_pr ?? -1,
 }
 
+// 上一次拿到的统计留在内存里：再点进来立刻就有，新的在后台换上。
+// The last statistics are kept in memory: coming back shows them at once while fresh ones replace them in the background.
+let lastStats: Stats | null = null
+
 export function StatsPage({ state }: { state: State }) {
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [stats, setStats] = useState<Stats | null>(lastStats)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sort, setSort] = useState<SortKey>('output')
@@ -31,11 +35,17 @@ export function StatsPage({ state }: { state: State }) {
   const load = (refresh = false) => {
     setBusy(true)
     api.stats(refresh).then(
-      (s) => (setStats(s), setError(null), setBusy(false)),
+      (s) => ((lastStats = s), setStats(s), setError(null), setBusy(false)),
       (e: Error) => (setError(e.message), setBusy(false)),
     )
   }
-  useEffect(() => load(), [])
+  useEffect(() => {
+    load()
+    // 服务器先给的是上一次的结果，同时在后台重算；过几秒再取一次，换上新的。
+    // The server answers with the last result while recomputing in the background; fetch again a few seconds later to pick up the fresh one.
+    const again = setTimeout(() => load(), 8000)
+    return () => clearTimeout(again)
+  }, [])
 
   const names = useMemo(() => stats?.projects.map((p) => p.dir) ?? [], [stats])
   if (error && !stats) return <Page title={t('统计', 'Statistics')}><div className="notice bad" role="alert">{error}</div></Page>
