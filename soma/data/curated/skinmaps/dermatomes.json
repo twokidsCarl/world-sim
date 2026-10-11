@@ -1138,6 +1138,31 @@
       "zh": "颏下",
       "en": "under the chin"
      }
+    },
+    {
+     "tag": "fossa",
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Fourth cervical vertebra"
+         },
+         [
+          0.03,
+          0,
+          0.02
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      "K_C3"
+     ],
+     "note": {
+      "zh": "自颈侧至锁骨上窝的关键点，连成一线：否则该关键点可能被 C4 的肩顶种子线隔开，只剩一个孤立顶点。",
+      "en": "From the side of the neck to the key point in the supraclavicular fossa, as one line: otherwise the key point can be cut off by the C4 seed line over the top of the shoulder and survive as a single isolated vertex."
+     }
     }
    ],
    "basis": "landmark-rule"
@@ -1965,6 +1990,40 @@
       "zh": "臂后内侧上部",
       "en": "upper posteromedial arm"
      }
+    },
+    {
+     "tag": "fold",
+     "curve": [
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": -0.16
+       },
+       "deg": 215
+      },
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": -0.06
+       },
+       "deg": 215
+      },
+      {
+       "frame": "arm",
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.06
+       },
+       "deg": 240
+      }
+     ],
+     "note": {
+      "zh": "腋后襞：腋窝以上、上肢背侧轴线内侧的肩后部皮肤。胸神经带的神经投影到腋后襞为止（再往外是与上臂连成一体的部分），这一小片若不设种子，会被恰好最近的某一条胸神经带占去，左右不一。",
+      "en": "Posterior axillary fold: the skin of the back of the shoulder above the axilla, medial to the dorsal axial line of the limb. The nerve projections of the thoracic bands stop at the fold (further out the trunk is one mass with the arm); without a seed this patch goes to whichever thoracic band happens to end nearest, differently on the two sides."
+     },
+     "offsetMm": -20
     }
    ],
    "basis": "nerve-geometry"
@@ -3203,6 +3262,24 @@
        "at": {
         "offset": [
          {
+          "part": "Sacrum",
+          "pick": {
+           "extreme": "sup"
+          }
+         },
+         [
+          0.02,
+          -0.015,
+          -0.02
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         {
           "part": "Sacrum"
          },
          [
@@ -3235,8 +3312,8 @@
       }
      ],
      "note": {
-      "zh": "骶骨表面、臀内侧、臀沟",
-      "en": "over the sacrum, medial buttock, infragluteal fold"
+      "zh": "骶骨表面（自骶骨上缘起）、臀内侧、臀沟",
+      "en": "over the sacrum (from its upper border), medial buttock, infragluteal fold"
      }
     },
     {

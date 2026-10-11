@@ -13,14 +13,24 @@
 //     weight rising from 0 at the fixed end to 1 at the mobile end, decaying beyond it and sideways.
 //   · 环状肌：环周围的皮肤沿切面被拉向环心，按方位（上、下、内、外）加权。
 //     Sphincter: skin round the ring is drawn towards the centre in the tangent plane, weighted by sector.
-//   · 眼睑：睑裂的上下缘用射线在睑部肌肉网格上量出；上睑下落、下睑上抬到闭合线，保持到眼球中心的距离。
-//     Eyelids: the margins of the palpebral fissure are measured by ray casting on the lid meshes; the
-//     upper lid comes down and the lower lid up to the closure line, keeping its distance from the globe centre.
-//   · 深层部件（肌肉、眉、唇、睑板、皮下脂肪、软骨、血管、神经……）跟随其上方皮肤的位移场，
+//   · 眼睑：深层的睑裂上下缘用射线在睑部肌肉网格上量出；上睑下落、下睑上抬到闭合线，保持到眼球中心的距离。
+//     皮肤是一张闭合的面，没有睑裂：皮肤上另量一套睑缘（两睑之间那片凹进去的皮肤的上下边），上睑的皮肤滑下来盖住
+//     那片皮肤，睑裂只是“形状”合上了。
+//     Eyelids: the margins of the deep palpebral fissure are measured by ray casting on the lid muscle meshes; the upper lid
+//     comes down and the lower lid up to the closure line, keeping its distance from the globe centre. The skin is one closed
+//     surface with no fissure: a second pair of margins is measured on the skin (the upper and lower edge of the recessed patch
+//     between the lids), and upper-lid skin slides down over that patch, so that only the SHAPE of the fissure closes.
+//   · 厚度变化：皮肤沿切面滑动时，被挤压处增厚、被拉开处变薄，w = −(H / 2)·div_s(u)，沿法线（见“在皮肤上求值”一节）。
+//     Thickness change: as the skin slides, it thickens where squeezed and thins where stretched, w = −(H / 2)·div_s(u) along the
+//     normal (see the section that evaluates the fields on the skin).
+//   · 口裂内陷：皮肤的唇不能分开；张口时把两唇相贴的那道褶向口内推，是几何上的替代，不是肌肉。
+//     Oral recess: the lips of the skin cannot part; on mouth opening the crease where they meet is pushed into the mouth. A
+//     geometric stand-in, not a muscle.
+//   · 深层部件（肌肉、眉、唇、睑板、皮下脂肪、软骨、血管、神经……）跟随其上方皮肤的切向位移场（不含厚度变化），
 //     离皮肤越深、离骨越近，跟随得越少。肌肉因此沿作用线缩短；不做隆起（体积不守恒）。
-//     Deep parts (muscles, eyebrow, lips, tarsal plates, subcutaneous fat, cartilages, vessels, nerves …)
-//     follow the field of the skin above them, less so the deeper below the skin and the closer to bone.
-//     Muscles thereby shorten along their line; no bulge is modelled (volume is not preserved).
+//     Deep parts (muscles, eyebrow, lips, tarsal plates, subcutaneous fat, cartilages, vessels, nerves …) follow the tangential
+//     field of the skin above them (without the thickness change), less so the deeper below the skin and the closer to bone.
+//     Muscles thereby shorten along their line; no bulge is modelled for them (their volume is not preserved).
 
 import type { Part, Rig, Side, Vec3 } from '../../src/anatomy/types.ts'
 import type { Bilingual, FaceAU, FaceChannel, FaceChannelKind, FaceData, FaceField, FaceSource, PainModel, Sourced } from '../../src/face/types.ts'
@@ -39,6 +49,7 @@ export interface MuscleDef {
   spreadMm: number
   reachMm: number
   carryMm?: number
+  hangMm?: number
   insertAt?: 'modiolus'
   mask: ('aboveStomion' | 'belowStomion' | 'aboveEye' | 'belowEye')[]
   attachments: { origin: Bilingual; insertion: Bilingual }
@@ -51,6 +62,7 @@ export interface MuscleDef {
 export interface Curated {
   muscles: {
     muscles: MuscleDef[]
+    bulge?: { gain: number; minMm: number; maxMm: number; limitMm: number; smoothing: number }
     lid: { closureFraction: number; upperLidHeightMm: number; lowerLidHeightMm: number; overlapMm?: number; followers?: string }
     jaw: { joint: string; dof: number; closers: string[]; openers: string[] }
     missing: { name: string; note: Bilingual }[]
@@ -65,7 +77,7 @@ export interface FaceReport {
   skin: { part: string; vertices: number; headVertices: number; faceVertices: number; faceMeanEdgeMm: number; perRegion: Record<string, { vertices: number; meanEdgeMm: number }> }
   muscles: { id: string; parts: string[]; basis: string; lengthMm: Record<string, number>; pcaVsHintCos: Record<string, number>; asymmetryMm: number | null; skinVertices: Record<string, number> }[]
   unmatched: { id: string; why: string }[]
-  eyes: { side: Side; ringsByGeometry: { inner: string; outer: string; innerName: string; outerName: string; namesSwapped: boolean } | null; fissureMm: { width: number; aperture: number } | null }[]
+  eyes: { side: Side; rings: { inner: string; outer: string; innerName: string; outerName: string; namesAgreeWithSize: boolean } | null; fissureMm: { width: number; aperture: number } | null; skinFissureMm: { width: number; aperture: number; centreVsGlobeX: number; upperVsDeep: number | null; lowerVsDeep: number | null; stepUpper: number; stepLower: number } | null }[]
   stomion: { skinY: number; deepY: number | null; differenceMm: number | null }
   deepParts: { considered: number; displaced: number; byTissue: Record<string, number> }
   entries: number
@@ -120,8 +132,8 @@ function meshPoints(m: RawMesh): V3[] {
   return out
 }
 
-/** 面积加权、再平滑两次的顶点法线。 Area-weighted vertex normals, smoothed twice. */
-function vertexNormals(m: RawMesh): Float32Array {
+/** 面积加权、再平滑 `passes` 遍的顶点法线。 Area-weighted vertex normals, smoothed `passes` times. */
+function vertexNormals(m: RawMesh, passes = 2): Float32Array {
   const n = new Float32Array(m.positions.length)
   const p = m.positions, idx = m.indices
   for (let t = 0; t < idx.length; t += 3) {
@@ -138,7 +150,7 @@ function vertexNormals(m: RawMesh): Float32Array {
   }
   normalise(n)
   let cur = n
-  for (let pass = 0; pass < 2; pass++) {
+  for (let pass = 0; pass < passes; pass++) {
     const next = Float32Array.from(cur)
     for (let t = 0; t < idx.length; t += 3) {
       for (let k = 0; k < 3; k++) {
@@ -163,6 +175,10 @@ interface Eye {
   outer: Part | null
   /** 睑裂上下缘的采样表（按 x）。 Sampled margins of the fissure (by x). */
   margins: { x0: number; step: number; lower: number[]; upper: number[] } | null
+  /** 皮肤上的睑裂（皮肤是一张闭合的面，睑裂只是形状）：上下缘，以及缘上台阶的高度。 The fissure on the skin (a closed surface, so the fissure is only a shape): both margins and the height of the step at each. */
+  skinMargins: { x0: number; step: number; lower: number[]; upper: number[]; tUp: number[]; tLow: number[]; /** 两睑之间皮肤的二次曲面系数 / coefficients of the quadric through the skin between the lids */ patch: number[] } | null
+  /** 名字与环的大小是否一致 / whether the names agree with the ring sizes. */
+  sizeAgrees: boolean
 }
 
 const tangent = (v: V3, n: V3): V3 => sub(v, mul(n, dot(v, n)))
@@ -183,9 +199,9 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   const unmatched: FaceReport['unmatched'] = []
   for (const d of defs) {
     const re = new RegExp(d.match, 'i')
-    const ps = parts.filter((p) => isMuscle(p) && re.test(p.name)).sort((a, b) => (a.id < b.id ? -1 : 1))
+    const ps = d.model === 'recess' ? [] : parts.filter((p) => isMuscle(p) && re.test(p.name)).sort((a, b) => (a.id < b.id ? -1 : 1))
     matched.set(d.id, ps)
-    if (ps.length === 0) unmatched.push({ id: d.id, why: `no muscle part matches /${d.match}/i` })
+    if (ps.length === 0 && d.model !== 'recess') unmatched.push({ id: d.id, why: `no muscle part matches /${d.match}/i` })
   }
   const facial = [...new Set([...matched.values()].flat())]
   if (facial.length === 0) throw new Error('face: no facial muscles found')
@@ -212,7 +228,9 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     if (skin.positions[a * 3 + 1]! > regionMinY - 0.03 || skin.positions[b * 3 + 1]! > regionMinY - 0.03 || skin.positions[c * 3 + 1]! > regionMinY - 0.03) subIdx.push(a, b, c)
   }
   const skinSurf = new Surface({ positions: skin.positions, indices: Uint32Array.from(subIdx) })
-  const normals = vertexNormals(skin)
+  // 平滑 6 遍：口裂、睑缘的褶皱里法线很乱，不平滑的话相邻顶点的滑动方向会互相打架，拉出尖刺
+  // six smoothing passes: inside the creases at the mouth and the lid margins the normals are erratic, and unsmoothed they make neighbouring vertices slide in conflicting directions and pull out spikes
+  const normals = vertexNormals(skin, 6)
   const onSkin = (p: V3): { point: V3; normal: V3; distance: number } => {
     const r = skinSurf.closestFace(p)
     if (!r) return { point: p, normal: [0, 0, 1], distance: Infinity }
@@ -255,18 +273,31 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       for (let i = 0; i < m.positions.length; i += 3) s += Math.hypot(m.positions[i]! - globe[0], m.positions[i + 1]! - globe[1])
       return { p, r: s / (m.positions.length / 3) }
     }).sort((a, b2) => a.r - b2.r)
-    eyes.push({ side, globe, radius, inner: rings.length >= 2 ? rings[0]!.p : null, outer: rings.length >= 1 ? rings[rings.length - 1]!.p : null, margins: null })
+    // 按名字取：睑部是贴着睑缘的内环，眶部是外环；名字不全时才退回到按环的大小取
+    // chosen by name: the palpebral part is the inner ring at the lid margins, the orbital part the outer ring; ring size is only the fallback when a name is missing
+    const named = { inner: rings.find((x) => /palpebral part/i.test(x.p.name))?.p ?? null, outer: rings.find((x) => /orbital part/i.test(x.p.name))?.p ?? null }
+    const bySize = { inner: rings.length >= 2 ? rings[0]!.p : null, outer: rings.length >= 1 ? rings[rings.length - 1]!.p : null }
+    const use = named.inner && named.outer ? named : bySize
+    eyes.push({ side, globe, radius, inner: use.inner, outer: use.outer, sizeAgrees: use.inner === bySize.inner && use.outer === bySize.outer, margins: null, skinMargins: null })
   }
+  /** 某 x 处睑裂的下缘和上缘；睑裂之外返回 null。 Lower and upper margin of the fissure at x; null outside it. */
+  const marginsAt = (e: Eye, x: number): [number, number] | null => {
+    const m = e.margins
+    if (!m) return null
+    const f = (x - m.x0) / m.step
+    if (f < 0 || f > m.lower.length - 1) return null
+    const i = Math.min(m.lower.length - 2, Math.floor(f)), t = f - i
+    return [m.lower[i]! * (1 - t) + m.lower[i + 1]! * t, m.upper[i]! * (1 - t) + m.upper[i + 1]! * t]
+  }
+
   const eyeReport: FaceReport['eyes'] = []
   for (const e of eyes) {
     // 睑裂：从前方向眼球投射线，没有先碰到眼睑（眼轮匝肌、睑板）的地方就是开着的
     // the fissure: rays cast at the globe from the front; where no lid (orbicularis oculi, tarsal plate) is hit first, the eye is open
     const sgn = e.side === 'L' ? 1 : -1
     const lidParts = parts.filter((p) => body.meshes.has(p.id) && (/orbicularis oculi/i.test(p.name) || /tarsal plate/i.test(p.name)) && (p.centroid[0] - midX) * sgn > 0)
-    let rep: FaceReport['eyes'][number] = { side: e.side, ringsByGeometry: null, fissureMm: null }
-    if (e.inner && e.outer && e.inner !== e.outer) {
-      rep.ringsByGeometry = { inner: e.inner.id, outer: e.outer.id, innerName: e.inner.name, outerName: e.outer.name, namesSwapped: /orbital/i.test(e.inner.name) && /palpebral/i.test(e.outer.name) }
-    }
+    let rep: FaceReport['eyes'][number] = { side: e.side, rings: null, fissureMm: null, skinFissureMm: null }
+    if (e.inner && e.outer && e.inner !== e.outer) rep.rings = { inner: e.inner.id, outer: e.outer.id, innerName: e.inner.name, outerName: e.outer.name, namesAgreeWithSize: e.sizeAgrees }
     if (lidParts.length) {
       const lids = new Surface(mergeMeshes(lidParts.map((p) => body.meshes.get(p.id)!)))
       const step = 0.5 * MM, ystep = 0.2 * MM, half = e.radius
@@ -306,19 +337,170 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         rep.fissureMm = { width: ((best[1]! - best[0]!) * step) / MM, aperture: Math.max(...lo2.map((l, i) => up2[i]! - l)) / MM }
       }
     }
+    {
+      // 皮肤上的睑裂：皮肤是闭合的，上下睑之间是一片“眼球形”的皮肤，睑缘处有一道台阶。
+      // 每一列（x）沿 y 看前表面的深度：自下而上，前跳最陡处是上睑缘，后跳最陡处是下睑缘。
+      // The fissure on the skin: the skin is closed, with a globe-shaped patch between the lids and a step at each margin.
+      // In every column (x) the depth of the front surface is followed along y: going up, the steepest forward jump is the upper
+      // margin and the steepest backward jump the lower margin.
+      const z = (x: number, y: number): number | null => {
+        const h = skinSurf.firstHit([x, y, e.globe[2] + 0.08], [x, y, e.globe[2] - 0.02])
+        return h ? e.globe[2] + 0.08 - h.distance : null
+      }
+      // 两睑之间那片皮肤比上下睑都凹进去。每一列从睑裂中部出发，沿前表面向上、向下走，
+      // 前表面在 0.8 mm 内抬高超过 RISE_UP / RISE_LOW 的地方就是上 / 下睑缘。从正对眼球中心的一列向两侧逐列走，
+      // 每列的出发点取上一列睑裂的中点；睑裂窄到 1.2 mm 以下、或出发点一下子浅了 1.5 mm（走出了眦部）就停。
+      // 深层睑裂只提供出发的高度，不用它的左右位置：皮肤上的眼和深层的眼球左右可以差好几毫米。
+      // The skin between the lids is recessed behind both lids. In each column the front surface is followed up and down from the
+      // middle of the fissure; where the surface rises by more than RISE_UP / RISE_LOW within 0.8 mm, that is the upper / lower
+      // margin. Columns are walked outwards from the one in front of the globe centre, each starting at the middle of the previous
+      // column's fissure, and the walk stops where the fissure is under 1.2 mm tall or the start point is suddenly 1.5 mm shallower
+      // (past the canthus). The deep fissure only supplies the starting height, not its left–right position: the eye on the skin and
+      // the deep globe can be several millimetres apart sideways.
+      const RISE_UP = 0.5 * MM, RISE_LOW = 0.3 * MM
+      const dm = e.margins
+      const step = 0.5 * MM, half = 26 * MM, cols = Math.round((2 * half) / step) + 1
+      const lower: number[] = new Array<number>(cols).fill(NaN), upper: number[] = new Array<number>(cols).fill(NaN), tUp: number[] = new Array<number>(cols).fill(NaN), tLow: number[] = new Array<number>(cols).fill(NaN)
+      const column = (x: number, y0: number): { lo: number; up: number; z0: number } | null => {
+        const z0 = z(x, y0)
+        if (z0 === null) return null
+        const walk = (dir: number, rise: number): number | null => {
+          // 台阶：0.8 mm 的行程内前表面抬高超过 rise / a step: the front surface rising by more than `rise` within 0.8 mm of travel
+          const hist = [z0]
+          for (let k = 1; k <= 60; k++) {
+            const zz = z(x, y0 + dir * k * 0.2 * MM)
+            if (zz === null) return null
+            if (zz - hist[Math.max(0, hist.length - 4)]! > rise) return y0 + dir * (k - 2) * 0.2 * MM
+            hist.push(zz)
+          }
+          return null
+        }
+        const up = walk(1, RISE_UP), lo = walk(-1, RISE_LOW)
+        return up === null ? null : { lo: lo ?? NaN, up, z0 }
+      }
+      if (dm) {
+        const mid = dm.lower.length >> 1
+        const xAt = (i: number): number => e.globe[0] - half + i * step
+        const start = Math.round(half / step)
+        const c0 = column(xAt(start), (dm.lower[mid]! + dm.upper[mid]!) / 2)
+        if (c0 && !Number.isNaN(c0.lo)) {
+          // 走两遍：第一遍不加“向两眦收拢”的限制，只为找到睑裂最高的一列；第二遍从那一列出发，加上限制。
+          // Two passes: the first, without the tapering rule, only finds the tallest column; the second starts from that column with the rule.
+          const walkOut = (i0: number, first: { lo: number; up: number; z0: number }, taper: boolean, visit: (i: number, c: { lo: number; up: number; z0: number }) => void): void => {
+            visit(i0, first)
+            const ap0 = first.up - first.lo
+            for (const dir of [1, -1]) {
+              let prev = first, least = ap0
+              for (let i = i0 + dir; i >= 0 && i < cols && Math.abs(i - start) * step <= 24 * MM; i += dir) {
+                const c = column(xAt(i), (prev.lo + prev.up) / 2)
+                // 出发点比正中一列浅 3 mm 以上（上了鼻梁）或深 12 mm 以上（绕到了面侧）也停 / also stop where the start point is over 3 mm shallower than in the first column (up the nose) or over 12 mm deeper (round the side of the face)
+                if (!c || c.z0 - prev.z0 > 1.5 * MM || c.z0 - c0.z0 > 3 * MM || c.z0 - c0.z0 < -12 * MM) break
+                // 下睑缘在外侧常常平得没有台阶：沿用上一列的 / laterally the lower margin often flattens out with no step: the previous column's is kept
+                if (Number.isNaN(c.lo) || c.lo < prev.lo - 0.6 * MM) c.lo = prev.lo
+                const ap = c.up - c.lo
+                if (ap < 1.2 * MM || ap > 15 * MM) break
+                // 睑裂向两眦收拢：收窄之后不得再变宽 / the fissure tapers towards the canthi: it may not widen again once it has narrowed
+                if (taper && ap > least + 0.8 * MM) break
+                least = Math.min(least, ap)
+                visit(i, c)
+                prev = c
+              }
+            }
+          }
+          let iMax = start, cMax = c0
+          walkOut(start, c0, false, (i, c) => {
+            if (c.up - c.lo > cMax.up - cMax.lo) (iMax = i), (cMax = c)
+          })
+          walkOut(iMax, cMax, true, (i, c) => {
+            ;(lower[i] = c.lo), (upper[i] = c.up)
+          })
+          for (let i = 0; i < cols; i++) if (!Number.isNaN(upper[i]!)) (tUp[i] = 0), (tLow[i] = 0)
+        }
+      }
+      let best = [0, -1], run = -1
+      for (let i = 0; i <= cols; i++) {
+        const open = i < cols && !Number.isNaN(upper[i]!)
+        if (open && run < 0) run = i
+        if (!open && run >= 0) {
+          if (i - 1 - run > best[1]! - best[0]!) best = [run, i - 1]
+          run = -1
+        }
+      }
+      if (best[1]! - best[0]! >= 8) {
+        // 5 列滑动中位数去掉离群的列，再做 5 列平均 / a 5-column running median removes outlier columns, then a 5-column mean
+        const cut = (a: number[]): number[] => a.slice(best[0]!, best[1]! + 1)
+        const med = (a: number[]): number[] => a.map((_, i) => {
+          const w = a.slice(Math.max(0, i - 2), Math.min(a.length, i + 3)).sort((p, q) => p - q)
+          return w[w.length >> 1]!
+        })
+        const avg = (a: number[]): number[] => a.map((_, i) => {
+          let sum = 0, k = 0
+          for (let j = Math.max(0, i - 2); j <= Math.min(a.length - 1, i + 2); j++) (sum += a[j]!), k++
+          return sum / k
+        })
+        const lo = avg(med(cut(lower))), up = avg(med(cut(upper)))
+        const x0 = e.globe[0] - half + best[0]! * step
+        // 两睑之间那片皮肤的二次曲面拟合：z = c0 + c1·u + c2·v + c3·u² + c4·u·v + c5·v²（u、v 为相对眼球中心的 x、y）
+        // a quadric fitted to the skin patch between the lids: z = c0 + c1·u + c2·v + c3·u² + c4·u·v + c5·v² (u, v are x, y relative to the globe centre)
+        const A: number[][] = Array.from({ length: 6 }, () => new Array<number>(7).fill(0))
+        let n = 0
+        for (let i = 0; i < lo.length; i++) {
+          const x = x0 + i * step
+          for (let y = lo[i]! + 0.8 * MM; y <= up[i]! - 0.8 * MM; y += 0.5 * MM) {
+            const zz = z(x, y)
+            if (zz === null) continue
+            const u = x - e.globe[0], v = y - e.globe[1]
+            const row = [1, u, v, u * u, u * v, v * v, zz - e.globe[2]]
+            for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) A[r]![c] = A[r]![c]! + row[r]! * row[c]!
+            n++
+          }
+        }
+        let patch: number[] | null = null
+        if (n >= 30) {
+          // 高斯消元（列主元）/ Gaussian elimination with partial pivoting
+          const scale = [1, 1e2, 1e2, 1e4, 1e4, 1e4]
+          for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) A[r]![c] = A[r]![c]! * scale[r]! * (c < 6 ? scale[c]! : 1)
+          let ok = true
+          for (let c = 0; c < 6 && ok; c++) {
+            let piv = c
+            for (let r = c + 1; r < 6; r++) if (Math.abs(A[r]![c]!) > Math.abs(A[piv]![c]!)) piv = r
+            if (Math.abs(A[piv]![c]!) < 1e-12) ok = false
+            ;[A[c], A[piv]] = [A[piv]!, A[c]!]
+            for (let r = 0; r < 6; r++) {
+              if (r === c) continue
+              const f = A[r]![c]! / A[c]![c]!
+              for (let k = c; k < 7; k++) A[r]![k] = A[r]![k]! - f * A[c]![k]!
+            }
+          }
+          if (ok) patch = A.map((row, r) => (row[6]! / row[r]!) * scale[r]!)
+        }
+        if (patch) {
+          e.skinMargins = { x0, step, lower: lo, upper: up, tUp: avg(med(cut(tUp))), tLow: avg(med(cut(tLow))), patch }
+          const sm = e.skinMargins
+          const mean = (a: number[]): number => a.reduce((x, y) => x + y, 0) / a.length
+          const k = sm.lower.reduce((bi, l, i) => (sm.upper[i]! - l > sm.upper[bi]! - sm.lower[bi]! ? i : bi), 0)
+          const xk = x0 + k * step
+          const dmk = marginsAt(e, xk)
+          rep.skinFissureMm = { width: +(((lo.length - 1) * step) / MM).toFixed(1), aperture: +((sm.upper[k]! - sm.lower[k]!) / MM).toFixed(2), centreVsGlobeX: +((x0 + ((lo.length - 1) * step) / 2 - e.globe[0]) / MM).toFixed(2), upperVsDeep: dmk ? +((sm.upper[k]! - dmk[1]) / MM).toFixed(2) : null, lowerVsDeep: dmk ? +((sm.lower[k]! - dmk[0]) / MM).toFixed(2) : null, stepUpper: +(mean(sm.tUp) / MM).toFixed(2), stepLower: +(mean(sm.tLow) / MM).toFixed(2) }
+        }
+      }
+    }
     eyeReport.push(rep)
   }
   const eyeY = eyes.length ? eyes.reduce((s, e) => s + e.globe[1], 0) / eyes.length : faceMaxY
-  /** 某 x 处睑裂的下缘和上缘；睑裂之外返回 null。 Lower and upper margin of the fissure at x; null outside it. */
-  const marginsAt = (e: Eye, x: number): [number, number] | null => {
-    const m = e.margins
-    if (!m) return null
-    const f = (x - m.x0) / m.step
-    if (f < 0 || f > m.lower.length - 1) return null
-    const i = Math.min(m.lower.length - 2, Math.floor(f)), t = f - i
-    return [m.lower[i]! * (1 - t) + m.lower[i + 1]! * t, m.upper[i]! * (1 - t) + m.upper[i + 1]! * t]
+  // 上、下睑缘的高度：深层的（睑部肌肉网格）和皮肤上的各一套；皮肤上的眼和深层的眼可以差几毫米
+  // heights of the upper and lower lid margins, one pair for the deep layer (lid muscle meshes) and one for the skin; the eye on the skin and the deep eye can differ by millimetres
+  const lidLevels = (pick: (e: Eye) => { lower: number[]; upper: number[] } | null): { top: number; bottom: number } => {
+    const tops: number[] = [], bottoms: number[] = []
+    for (const e of eyes) {
+      const m = pick(e)
+      if (!m) continue
+      tops.push(Math.max(...m.upper)), bottoms.push(Math.min(...m.lower))
+    }
+    return tops.length ? { top: tops.reduce((a, b) => a + b, 0) / tops.length, bottom: bottoms.reduce((a, b) => a + b, 0) / bottoms.length } : { top: eyeY + 5 * MM, bottom: eyeY - 5 * MM }
   }
-
+  const lidDeep = lidLevels((e) => e.margins)
+  const lidSkin = lidLevels((e) => e.skinMargins ?? e.margins)
   // —— 口裂 / the oral fissure ——
   const oris = parts.filter((p) => isMuscle(p) && /^orbicularis oris$/i.test(p.name))[0] ?? null
   const lipPart = parts.filter((p) => /^lip$/i.test(p.name) && body.meshes.has(p.id))[0] ?? null
@@ -372,6 +554,35 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   // 口角轴到正中的距离：唇部件（没有则口轮匝肌的 0.8）的半宽加 3 mm / distance of the modiolus from the midline: half-width of the lip part (or 0.8 of orbicularis oris) plus 3 mm
   const modiolusOffset = lipPart ? (lipPart.bbox[3] - lipPart.bbox[0]) / 2 + 3 * MM : oris ? ((oris.bbox[3] - oris.bbox[0]) / 2) * 0.8 + 3 * MM : null
 
+  // 皮肤上两唇相贴的那道褶：每一列（x）前表面最凹处，从正中向两侧逐列跟踪
+  // the crease where the lips meet on the skin: the deepest point of the front surface in each column (x), tracked outwards from the midline
+  const lipCrease = (() => {
+    const W = (modiolusOffset ?? 25 * MM) - 3 * MM
+    const stepX = 0.5 * MM, n = Math.round((2 * W) / stepX) + 1, mid = n >> 1
+    const crease = new Array<number>(n).fill(NaN)
+    const zAt = (x: number, y: number): number | null => {
+      const h = skinSurf.firstHit([x, y, 1], [x, y, -1])
+      return h ? 1 - h.distance : null
+    }
+    const deepest = (x: number, y0: number, win: number): number => {
+      let by = y0, bz = Infinity
+      for (let y = y0 - win; y <= y0 + win + 1e-9; y += 0.1 * MM) {
+        const zz = zAt(x, y)
+        if (zz !== null && zz < bz) (bz = zz), (by = y)
+      }
+      return by
+    }
+    crease[mid] = deepest(midX, skinSt, 1.5 * MM)
+    for (const dir of [1, -1]) for (let i = mid + dir; i >= 0 && i < n; i += dir) crease[i] = deepest(midX + (i - mid) * stepX, crease[i - dir]!, 0.6 * MM)
+    return { W, stepX, n, mid, crease, zAt }
+  })()
+  /** 皮肤上某 x 处口裂的高度（超出口角的地方取末端的值）。 Height of the oral fissure on the skin at x (the end value beyond the corners of the mouth). */
+  const stomionAt = (x: number): number => {
+    const f = Math.min(lipCrease.n - 1, Math.max(0, (x - midX) / lipCrease.stepX + lipCrease.mid))
+    const i = Math.min(lipCrease.n - 2, Math.floor(f)), t = f - i
+    return lipCrease.crease[i]! * (1 - t) + lipCrease.crease[i + 1]! * t
+  }
+
   // —— 通道 / channels ——
   interface Chan {
     def: MuscleDef
@@ -387,12 +598,15 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   const report: FaceReport['muscles'] = []
   const mask = (d: MuscleDef, p: V3, deep: boolean): number => {
     let m = 1
-    const st = deep && deepSt !== null ? deepSt : skinSt
+    // 皮肤按它自己那道褶（随 x 变化）分上下唇；深层部件按唇部件的口裂 / the skin is split into upper and lower lip along its own crease (which varies with x); deep parts along the fissure of the lip part
+    const st = deep ? (deepSt ?? skinSt) : stomionAt(p[0])
     for (const k of d.mask) {
       if (k === 'aboveStomion') m *= smooth((p[1] - (st - 1 * MM)) / (2 * MM))
       else if (k === 'belowStomion') m *= 1 - smooth((p[1] - (st - 1 * MM)) / (2 * MM))
-      else if (k === 'aboveEye') m *= smooth((p[1] - (eyeY + 3 * MM)) / (7 * MM))
-      else if (k === 'belowEye') m *= 1 - smooth((p[1] - (eyeY - 12 * MM)) / (8 * MM))
+      // 眉部肌肉带动的皮肤一直到上睑缘上方（眉下的皮肤是挂在眉上的）；颊部肌肉带动的到下睑缘下方为止
+      // brow muscles carry the skin down to just above the upper lid margin (the skin under the brow hangs from it); cheek muscles carry it up to just below the lower lid margin
+      else if (k === 'aboveEye') m *= smooth((p[1] - ((deep ? lidDeep : lidSkin).top - 2 * MM)) / (5 * MM))
+      else if (k === 'belowEye') m *= 1 - smooth((p[1] - ((deep ? lidDeep : lidSkin).bottom - 7 * MM)) / (6 * MM))
     }
     return m
   }
@@ -400,6 +614,32 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
 
   for (const d of defs) {
     const ps = matched.get(d.id)!
+    if (d.model === 'recess') {
+      // 口裂内陷：沿皮肤上两唇相贴的那道褶（每一列前表面最凹处，从正中向两侧逐列跟踪）把皮肤向口内推
+      // oral recess: along the crease where the lips meet on the skin (the deepest point of the front surface in each column, tracked outwards from the midline) the skin is pushed into the mouth
+      const { W, stepX, n, mid, crease, zAt } = lipCrease
+      const cP = onSkin([midX, crease[mid]!, 1])
+      const back = mul(meanNormal(cP.point, 15 * MM, cP.normal), -1)
+      const D = d.excursionMm * MM, band = d.spreadMm * MM
+      const field: Field = (_q, _n, p, deep) => {
+        if (deep) return [0, 0, 0]
+        const f = (p[0] - midX) / stepX + mid
+        if (f < 0 || f > n - 1 || p[2] < cP.point[2] - 30 * MM) return [0, 0, 0]
+        const i = Math.min(n - 2, Math.floor(f)), t = f - i
+        const yc = crease[i]! * (1 - t) + crease[i + 1]! * t
+        if (Math.abs(p[1] - yc) > 8 * MM) return [0, 0, 0]
+        // 褶里面藏着的顶点（在前表面之后 0.5 mm 以上）整个内陷，不论离褶线多远：否则张口时它们会参差不齐地露出来
+        // vertices hidden inside the fold (more than 0.5 mm behind the front surface) are recessed in full however far from the crease line: otherwise they show as ragged shards when the mouth opens
+        const zf = zAt(p[0], p[1])
+        const hidden = zf === null ? 0 : smooth((zf - p[2] - 0.5 * MM) / (1 * MM))
+        const w = Math.max(1 - smooth(Math.abs(p[1] - yc) / band), hidden) * (1 - smooth((Math.abs(p[0] - midX) / W - 0.55) / 0.45))
+        return w > 0 ? mul(back, D * w) : [0, 0, 0]
+      }
+      const c: V3 = [midX, crease[mid]!, cP.point[2]]
+      chans.push({ def: d, id: d.id, side: 'M', parts: [], line: { origin: c as Vec3, insertion: c as Vec3, originOnSkin: cP.point as Vec3, insertionOnSkin: cP.point as Vec3 }, basis: 'landmarks', excursion: D, field })
+      report.push({ id: d.id, parts: [], basis: 'landmarks', lengthMm: { M: +((2 * W) / MM).toFixed(1) }, pcaVsHintCos: {}, asymmetryMm: null, skinVertices: {} })
+      continue
+    }
     if (ps.length === 0) continue
     if (d.model === 'linear') {
       const sides = (['L', 'R', 'M'] as const).filter((s) => ps.some((p) => p.side === s))
@@ -479,12 +719,14 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         }
         const e = mul(sub(is, os), 1 / L2)
         nI = meanNormal(is, 12 * MM, nI)
-        const R2 = m.halfWidth + d.spreadMm * MM, reach = d.reachMm * MM, carry = (d.carryMm ?? 0) * MM, E = d.excursionMm * MM
+        const R2 = m.halfWidth + d.spreadMm * MM, reach = d.reachMm * MM, carry = (d.carryMm ?? 0) * MM, hang = (d.hangMm ?? 0) * MM, E = d.excursionMm * MM
         const field: Field = (q, n, p, deep) => {
           const r = sub(q, os)
           const t = dot(r, e)
           if (t <= 0 || t > L2 + carry + reach) return [0, 0, 0]
-          const perp2 = dot(r, r) - t * t
+          let perp2 = dot(r, r) - t * t
+          // 作用线下方的皮肤挂在它上面：向下多带 hang 这么远 / skin below the line hangs from it: it is carried `hang` further down
+          if (hang > 0 && r[1] - t * e[1] < 0) perp2 = Math.max(0, Math.sqrt(Math.max(0, perp2)) - hang) ** 2
           if (perp2 >= R2 * R2) return [0, 0, 0]
           const along = t <= L2 ? smooth(t / L2) : 1 - smooth((t - L2 - carry) / reach)
           const lat = (1 - perp2 / (R2 * R2)) ** 2
@@ -493,7 +735,15 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
           const facing = smooth((dot(n, nI) + 0.2) / 0.7)
           const w = along * lat * facing * mask(d, p, deep)
           if (w <= 0) return [0, 0, 0]
-          return mul(tangent(mul(e, -1), n), E * w)
+          // 沿皮肤切面滑动整个幅度：切向分量重新归一（皮肤法线几乎与作用线平行时逐渐归零），
+          // 否则皮肤离肌肉远、作用线斜穿过软组织时（厚的颊部），位移会被投影吃掉一截。
+          // Slide by the full excursion within the tangent plane: the tangential direction is renormalised (fading out where the skin normal
+          // is nearly parallel to the line); otherwise, where the skin lies far from the muscle and the line cuts obliquely through
+          // soft tissue (a thick cheek), the projection would swallow part of the displacement.
+          const tg = tangent(mul(e, -1), n)
+          const tl = len(tg)
+          if (tl < 1e-6) return [0, 0, 0]
+          return mul(tg, (E * w * smooth(tl / 0.5)) / tl)
         }
         const id = s === 'M' ? d.id : `${d.id}_${s}`
         chans.push({ def: d, id, side: s, parts: ps.filter((p) => p.side === s), line: { origin: o as Vec3, insertion: i as Vec3, originOnSkin: os as Vec3, insertionOnSkin: is as Vec3 }, basis, excursion: E, field })
@@ -505,20 +755,25 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     } else if (d.model === 'sphincter') {
       const E = d.excursionMm * MM
       const sec = d.sectors ?? { inferior: 1, lateral: 1, superior: 1, medial: 1 }
-      const make = (side: Side, part: Part, centre: V3, a: number, b: number, s0: number): void => {
+      const make = (side: Side, part: Part, centre: V3, a: number, b: number, s0: number, centreDeep: V3 | null = null): void => {
         const cP = onSkin(centre)
         const cs = cP.point, nC = meanNormal(cP.point, Math.max(a, b), cP.normal)
+        // 深层部件以深层的环心为准，皮肤以皮肤上的为准 / deep parts use the deep centre, the skin its own
+        const cDeep = centreDeep ? onSkin(centreDeep).point : cs
         const sgn = side === 'R' ? -1 : 1
         const field: Field = (q, n, p, deep) => {
-          const dx = (q[0] - cs[0]) * sgn, dy = q[1] - cs[1]
+          const c = deep ? cDeep : cs
+          const dx = (q[0] - c[0]) * sgn, dy = q[1] - c[1]
           const s = Math.hypot(dx / a, dy / b)
-          if (s <= s0 || s >= 1.6) return [0, 0, 0]
-          const prof = s < 1 ? smooth((s - s0) / Math.max(1e-6, (1 - s0) * 0.6)) : 1 - smooth((s - 1) / 0.6)
+          if (s <= s0 || s >= 1.8) return [0, 0, 0]
+          // 从 s0 平缓升到环的外缘，再平缓降到 1.8：越平缓，环的边界越不显眼
+          // a gentle rise from s0 to the outer edge of the ring and a gentle fall to 1.8: the gentler, the less the edge of the ring shows
+          const prof = s < 1 ? smooth((s - s0) / Math.max(1e-6, 1 - s0)) : 1 - smooth((s - 1) / 0.8)
           const r = Math.hypot(dx, dy) || 1
           // 单个居中的环（口）：两侧都算“外侧” / a single midline ring (the mouth): both sides count as lateral
           const cx = side === 'M' ? Math.abs(dx) / r : dx / r, sy = dy / r
           const w = cx * cx * (cx >= 0 ? sec.lateral : sec.medial) + sy * sy * (sy >= 0 ? sec.superior : sec.inferior)
-          const dir = tangent(sub(cs, q), n)
+          const dir = tangent(sub(c, q), n)
           const l = len(dir)
           if (l < 1e-9) return [0, 0, 0]
           // 只作用于与环心同一侧的皮肤 / only skin facing the same way as the centre of the ring
@@ -537,7 +792,16 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         const a = dims.reduce((s, x) => s + x.a, 0) / Math.max(1, dims.length), b = dims.reduce((s, x) => s + x.b, 0) / Math.max(1, dims.length), ai = dims.reduce((s, x) => s + x.ai, 0) / Math.max(1, dims.length)
         for (const e of eyes) {
           if (!e.outer) continue
-          make(e.side, e.outer, [e.globe[0], e.globe[1], e.globe[2] + e.radius], a, b, Math.min(0.8, ai / a))
+          // 皮肤上的环心：皮肤睑裂的中点 / centre on the skin: the middle of the skin's fissure
+          const deepC: V3 = [e.globe[0], e.globe[1], e.globe[2] + e.radius]
+          const sm = e.skinMargins
+          let skinC = deepC
+          if (sm) {
+            const k = sm.lower.length >> 1
+            skinC = [sm.x0 + k * sm.step, (sm.lower[k]! + sm.upper[k]!) / 2, e.globe[2] + e.radius]
+          }
+          void ai
+          make(e.side, e.outer, skinC, a, b, 0.25, deepC)
           rep.parts.push(e.outer.id)
           rep.lengthMm[e.side] = +((2 * a) / MM).toFixed(1)
         }
@@ -558,8 +822,49 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         const upper = d.lid === 'upper'
         const G = e.globe, r0 = e.radius
         const hUp = lidCfg.upperLidHeightMm * MM, hLow = lidCfg.lowerLidHeightMm * MM
-        const field: Field = (_q, _n, p) => {
+        const sm = e.skinMargins
+        const field: Field = (_q, _n, p, deep) => {
           if (p[2] < G[2] + 2 * MM) return [0, 0, 0]
+          if (!deep) {
+            // 皮肤：没有开口，只能让睑裂的“形状”变窄——上睑的皮肤滑下来，盖到两睑之间那片眼球形的皮肤上，
+            // 那片皮肤本身被压向闭合线。所有顶点保持它在那片皮肤的拟合曲面之上（或之下）的高度：
+            // 眼睑顶点原本高出一个睑缘台阶，滑进睑裂后仍高出这么多；藏在褶皱里的顶点仍然藏着。
+            // The skin has no opening, so only the SHAPE of the fissure can narrow: upper-lid skin slides down over the globe-shaped
+            // patch between the lids, and that patch itself is compressed towards the closure line. Every vertex keeps its height
+            // above (or below) the surface fitted to the patch: lid vertices stand proud by the step at the margin and stay so once
+            // inside the fissure; vertices hidden in the fold stay hidden.
+            if (!sm) return [0, 0, 0]
+            const f = (p[0] - sm.x0) / sm.step
+            if (f < 0 || f > sm.lower.length - 1) return [0, 0, 0]
+            const i = Math.min(sm.lower.length - 2, Math.floor(f)), t = f - i
+            const lerp = (a: number[]): number => a[i]! * (1 - t) + a[i + 1]! * t
+            const yl = lerp(sm.lower), yu = lerp(sm.upper)
+            // 两端各 3 mm 内逐渐收拢，免得眦部出现断崖 / taper over 3 mm at both ends so that no cliff appears at the canthi
+            const edge = smooth(Math.min(f, sm.lower.length - 1 - f) * sm.step / (3 * MM))
+            const H = yu - yl
+            if (H <= 0) return [0, 0, 0]
+            const ov = Math.min((lidCfg.overlapMm ?? 0) * MM, H / 2)
+            const yc = yl + lidCfg.closureFraction * H + (upper ? -ov : ov)
+            let dy = 0
+            if (upper) {
+              if (p[1] >= yu) dy = -(yu - yc) * (1 - smooth((p[1] - yu) / hUp))
+              else if (p[1] > yc) dy = -(p[1] - yc)
+            } else {
+              if (p[1] <= yl) dy = (yc - yl) * (1 - smooth((yl - p[1]) / hLow))
+              else if (p[1] < yc) dy = yc - p[1]
+            }
+            dy *= edge
+            if (dy === 0) return [0, 0, 0]
+            const c = sm.patch, u = p[0] - G[0]
+            // 曲面只在睑裂的高度范围内有意义，范围之外取边界上的值 / the surface only means something within the height of the fissure; beyond it the value at the boundary is used
+            const S = (y: number): number => {
+              const v = Math.min(yu + 1 * MM, Math.max(yl - 1 * MM, y)) - G[1]
+              return c[0]! + c[1]! * u + c[2]! * v + c[3]! * u * u + c[4]! * u * v + c[5]! * v * v
+            }
+            // 离那片皮肤很远的顶点（眉、颊）不跟曲面走 / vertices far from the patch (brow, cheek) do not follow the surface
+            const near = 1 - smooth((Math.abs(p[2] - G[2] - S(p[1])) - 6 * MM) / (6 * MM))
+            return [0, dy, (S(p[1] + dy) - S(p[1])) * near]
+          }
           const mg = marginsAt(e, p[0])
           if (!mg) return [0, 0, 0]
           const [yl, yu] = mg
@@ -611,11 +916,101 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     f.index.push(v)
     f.delta.push(d[0], d[1], d[2])
   }
-  for (let v = 0; v < skinN; v++) {
-    const p: V3 = [skin.positions[v * 3]!, skin.positions[v * 3 + 1]!, skin.positions[v * 3 + 2]!]
-    if (p[1] < regionMinY) continue
-    const n: V3 = [normals[v * 3]!, normals[v * 3 + 1]!, normals[v * 3 + 2]!]
-    for (let ci = 0; ci < chans.length; ci++) put(ci, skinPart.id, v, chans[ci]!.field(p, n, p, false))
+  // 皮肤上的场分两部分：沿切面的滑动（上面各通道的场函数），和由它引起的厚度变化。
+  // 软组织近似不可压：皮肤表面滑动 u、到骨面处减为 0，则厚度为 H 的一层因面内压缩而增厚
+  //   w = −(H / 2) · div_s(u)        （div_s 是曲面上的散度；线性剪切剖面下的体积守恒）
+  // 沿法线向外。H 取皮肤到骨的距离，限制在 bulge.minMm–bulge.maxMm；|w| 不超过 bulge.limitMm。
+  // 这是一阶近似：被挤压的地方鼓起（眉间、鼻旁、颊部），被拉开的地方变薄；它给不出皱纹（屈曲）。
+  // The field on the skin has two parts: sliding within the tangent plane (the channel field functions above) and the change of
+  // thickness it causes. Soft tissue is nearly incompressible: if the skin surface slides by u and the sliding falls to zero at the
+  // bone, a layer of thickness H thickens under in-plane compression by
+  //   w = −(H / 2) · div_s(u)        (div_s is the surface divergence; volume conservation for a linear shear profile)
+  // along the outward normal. H is the distance from skin to bone, limited to bulge.minMm–bulge.maxMm; |w| is capped at
+  // bulge.limitMm. This is a first-order approximation: tissue bulges where it is squeezed (glabella, beside the nose, cheek) and
+  // thins where it is stretched; it cannot produce wrinkles (buckling).
+  const bulge = curated.muscles.bulge ?? { gain: 0.5, minMm: 2, maxMm: 10, limitMm: 3, smoothing: 2 }
+  const regionVerts: number[] = []
+  const regionOf = new Int32Array(skinN).fill(-1)
+  for (let v = 0; v < skinN; v++) if (skin.positions[v * 3 + 1]! >= regionMinY) (regionOf[v] = regionVerts.length), regionVerts.push(v)
+  const nr = regionVerts.length
+  const regionTris: number[] = []
+  for (let t = 0; t < skin.indices.length; t += 3) {
+    const a2 = regionOf[skin.indices[t]!]!, b2 = regionOf[skin.indices[t + 1]!]!, c2 = regionOf[skin.indices[t + 2]!]!
+    if (a2 >= 0 && b2 >= 0 && c2 >= 0) regionTris.push(a2, b2, c2)
+  }
+  const cover = new Float64Array(nr)
+  for (let r = 0; r < nr; r++) {
+    const v = regionVerts[r]! * 3
+    const d = boneSurf.distance(skin.positions[v]!, skin.positions[v + 1]!, skin.positions[v + 2]!, bulge.maxMm * MM)
+    cover[r] = Math.min(bulge.maxMm * MM, Math.max(bulge.minMm * MM, d))
+  }
+  // 每个三角形里三个形函数的梯度（常量）和面积 / the (constant) gradients of the three shape functions in every triangle, and its area
+  const ntr = regionTris.length / 3
+  const grad = new Float64Array(ntr * 9), area = new Float64Array(ntr)
+  for (let t = 0; t < ntr; t++) {
+    const P = skin.positions
+    const ia = regionVerts[regionTris[t * 3]!]! * 3, ib = regionVerts[regionTris[t * 3 + 1]!]! * 3, ic = regionVerts[regionTris[t * 3 + 2]!]! * 3
+    const A: V3 = [P[ia]!, P[ia + 1]!, P[ia + 2]!], B: V3 = [P[ib]!, P[ib + 1]!, P[ib + 2]!], C: V3 = [P[ic]!, P[ic + 1]!, P[ic + 2]!]
+    const nn = cross(sub(B, A), sub(C, A))
+    const a2 = len(nn)
+    if (a2 < 1e-14) continue
+    area[t] = a2 / 2
+    const n = mul(nn, 1 / a2)
+    // ∇φ_i = n × (对边) / (2A) / ∇φ_i = n × (opposite edge) / (2A)
+    const g = [cross(n, sub(C, B)), cross(n, sub(A, C)), cross(n, sub(B, A))]
+    for (let k = 0; k < 3; k++) for (let c = 0; c < 3; c++) grad[t * 9 + k * 3 + c] = g[k]![c]! / a2
+  }
+  const rawNormals = vertexNormals(skin, 0)
+  const creased = new Uint8Array(nr)
+  for (let r = 0; r < nr; r++) {
+    const v = regionVerts[r]! * 3
+    if (rawNormals[v]! * normals[v]! + rawNormals[v + 1]! * normals[v + 1]! + rawNormals[v + 2]! * normals[v + 2]! < 0.7) creased[r] = 1
+  }
+  const vertArea = new Float64Array(nr)
+  for (let t = 0; t < ntr; t++) for (let k = 0; k < 3; k++) vertArea[regionTris[t * 3 + k]!] = vertArea[regionTris[t * 3 + k]!]! + area[t]!
+  for (let ci = 0; ci < chans.length; ci++) {
+    const ch = chans[ci]!
+    const U = new Float64Array(nr * 3)
+    for (let r = 0; r < nr; r++) {
+      const v = regionVerts[r]!
+      const p: V3 = [skin.positions[v * 3]!, skin.positions[v * 3 + 1]!, skin.positions[v * 3 + 2]!]
+      const n: V3 = [normals[v * 3]!, normals[v * 3 + 1]!, normals[v * 3 + 2]!]
+      const d = ch.field(p, n, p, false)
+      ;(U[r * 3] = d[0]), (U[r * 3 + 1] = d[1]), (U[r * 3 + 2] = d[2])
+    }
+    if (ch.def.model !== 'lid' && ch.def.model !== 'recess' && bulge.gain > 0) {
+      let div = new Float64Array(nr)
+      for (let t = 0; t < ntr; t++) {
+        let d = 0
+        for (let k = 0; k < 3; k++) {
+          const r = regionTris[t * 3 + k]!
+          d += U[r * 3]! * grad[t * 9 + k * 3]! + U[r * 3 + 1]! * grad[t * 9 + k * 3 + 1]! + U[r * 3 + 2]! * grad[t * 9 + k * 3 + 2]!
+        }
+        for (let k = 0; k < 3; k++) div[regionTris[t * 3 + k]!] = div[regionTris[t * 3 + k]!]! + d * area[t]!
+      }
+      for (let r = 0; r < nr; r++) div[r] = vertArea[r]! > 0 ? div[r]! / vertArea[r]! : 0
+      // 在网格上平滑几遍（面积加权）/ a few smoothing passes over the mesh (area-weighted)
+      for (let pass = 0; pass < bulge.smoothing; pass++) {
+        const next = new Float64Array(nr)
+        for (let t = 0; t < ntr; t++) {
+          const m = (div[regionTris[t * 3]!]! + div[regionTris[t * 3 + 1]!]! + div[regionTris[t * 3 + 2]!]!) / 3
+          for (let k = 0; k < 3; k++) next[regionTris[t * 3 + k]!] = next[regionTris[t * 3 + k]!]! + m * area[t]!
+        }
+        for (let r = 0; r < nr; r++) next[r] = vertArea[r]! > 0 ? next[r]! / vertArea[r]! : 0
+        div = next
+      }
+      const lim = bulge.limitMm * MM
+      for (let r = 0; r < nr; r++) {
+        // 褶皱里的顶点（平滑前后的法线相差很大）不加厚度变化：那里的散度是网格折叠造成的假象
+        // no thickness change for vertices inside creases (raw and smoothed normals far apart): the divergence there is an artefact of the folded mesh
+        if (creased[r]) continue
+        if (U[r * 3] === 0 && U[r * 3 + 1] === 0 && U[r * 3 + 2] === 0 && Math.abs(div[r]!) < 1e-6) continue
+        const w = Math.max(-lim, Math.min(lim, -bulge.gain * cover[r]! * div[r]!))
+        const v = regionVerts[r]! * 3
+        ;(U[r * 3] = U[r * 3]! + w * normals[v]!), (U[r * 3 + 1] = U[r * 3 + 1]! + w * normals[v + 1]!), (U[r * 3 + 2] = U[r * 3 + 2]! + w * normals[v + 2]!)
+      }
+    }
+    for (let r = 0; r < nr; r++) put(ci, skinPart.id, regionVerts[r]!, [U[r * 3]!, U[r * 3 + 1]!, U[r * 3 + 2]!])
   }
   for (const [ci, ch] of chans.entries()) {
     const rep = report.find((r) => r.id === ch.def.id)
@@ -695,9 +1090,12 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   const dv = new DataView(bin.buffer)
   let off = 0, entries = 0
   const perPart = new Map<string, number>()
-  // 眼睑通道的幅度取实际算出的最大位移（各列睑裂高度不同，且沿眼球滑动带来前后分量）
-  // a lid channel's excursion is the largest displacement actually computed (the aperture differs per column and sliding over the globe adds a depth component)
-  const lidMax = (ci: number): number => {
+  // 通道的幅度：精编的切向幅度和实际算出的最大位移中较大的一个。眼睑通道只有后者（各列睑裂高度不同，沿眼球滑动还带来前后分量）；
+  // 其余通道的实际位移可以略大于切向幅度，因为还叠加了沿法线的厚度变化。
+  // A channel's excursion: the larger of the curated tangential excursion and the largest displacement actually computed. Lid channels
+  // have only the latter (the aperture differs per column and sliding over the globe adds a depth component); for the others the
+  // actual displacement can slightly exceed the tangential excursion because the thickness change along the normal is added.
+  const fieldMax = (ci: number): number => {
     let m = 0
     for (const s of fields[ci]!.values()) for (let i = 0; i < s.index.length; i++) m = Math.max(m, Math.hypot(s.delta[i * 3]!, s.delta[i * 3 + 1]!, s.delta[i * 3 + 2]!))
     return m
@@ -727,7 +1125,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       parts: ch.parts.map((p) => p.id),
       line: { origin: r6(ch.line.origin), insertion: r6(ch.line.insertion), originOnSkin: r6(ch.line.originOnSkin), insertionOnSkin: r6(ch.line.insertionOnSkin) },
       basis: ch.basis,
-      excursion: +(ch.def.model === 'lid' ? lidMax(ci) : ch.excursion).toFixed(6),
+      excursion: +Math.max(ch.def.model === 'lid' ? 0 : ch.excursion, fieldMax(ci)).toFixed(6),
       fields: out,
     }
   })
@@ -811,15 +1209,20 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     symmetry.push({ muscle: d.id, countL: l.n, countR: r.n, meanMmL: +(l.mag / MM).toFixed(3), meanMmR: +(r.mag / MM).toFixed(3), mirroredMeanDiffMm: +(len(sub(l.mean, r.mean)) / MM).toFixed(3) })
   }
 
+  const skinEyeOffset = eyeReport.map((e) => e.skinFissureMm).filter((x): x is NonNullable<typeof x> => !!x)
+  const offX = skinEyeOffset.length ? Math.max(...skinEyeOffset.map((x) => Math.abs(x.centreVsGlobeX))) : 0
+  const offY = skinEyeOffset.length ? Math.max(...skinEyeOffset.map((x) => Math.abs(((x.upperVsDeep ?? 0) + (x.lowerVsDeep ?? 0)) / 2))) : 0
   const cautions: Bilingual[] = [
     { zh: '这是疼痛行为（面部表情）的计算模型，用于教学；模拟人并没有主观感受。从疼痛强度到各动作单元强度的数值是构造的一种典型组合，没有出处；真人的疼痛表情因人而异。', en: 'This is a computational model of pain behaviour (the facial expression) for teaching; the simulated body has no subjective experience. The numbers from pain intensity to action unit intensities are one constructed canonical pattern without a source; real pain faces differ between people.' },
-    { zh: '皮肤是一张连续的面，没有睑裂和口裂：皮肤视图里闭眼、分唇、张口只表现为表面的移动，看不到眼球和牙齿；这些动作要在肌肉视图里看。', en: 'The skin is one continuous surface with no eye or mouth opening: in the skin view eye closure, lip parting and jaw drop only move the surface and never reveal the eyeball or teeth; look at them in the muscle view.' },
-    { zh: `面部皮肤只有约 ${faceStats.vertices} 个顶点（平均边长 ${faceStats.meanEdgeMm} mm），画不出皱纹：眉间纵纹、鼻背皱纹、鱼尾纹、鼻唇沟的加深都没有，只有大块皮肤的移动。`, en: `The facial skin has only about ${faceStats.vertices} vertices (mean edge ${faceStats.meanEdgeMm} mm) and cannot show wrinkles: no glabellar furrows, nose wrinkles, crow's feet or deepening of the nasolabial furrow, only the bulk movement of the skin.` },
-    { zh: '每块肌肉的位移场是线性的、互相叠加，皮肤只沿切面滑动：没有皮肤的隆起和堆积，没有组织之间的碰撞；深层部件跟随其上方的皮肤，肌肉会缩短但不会变粗。全激活时的位移幅度、作用范围和各动作单元里的肌肉权重都是假设。', en: 'Each muscle\'s displacement field is linear and the fields add; the skin only slides in its tangent plane: no bulging or bunching of skin and no collision between tissues; deep parts follow the skin above them, and muscles shorten without thickening. Excursions at full activation, zones of influence and the muscle weights within each action unit are assumptions.' },
+    { zh: '皮肤是一张连续的面，没有睑裂和口裂，也没有眼球和口腔内面。闭眼：上睑的皮肤滑下来盖住两睑之间那片皮肤，睑裂的形状合上，但没有真正的睑缘。张口：唇不能分开，两唇之间的皮肤被拉成一个向口内凹陷的膜，看不到牙齿；真正的张口要在肌肉视图里看。', en: 'The skin is one continuous surface with no eye or mouth opening and no eyeball or mouth interior. Eye closure: upper-lid skin slides down over the patch of skin between the lids, so the shape of the fissure closes, but there are no true lid margins. Mouth opening: the lips cannot part; the skin between them is stretched into a membrane recessed into the mouth, and no teeth show. Real mouth opening is seen in the muscle view.' },
+    { zh: `面部皮肤约 ${faceStats.vertices} 个顶点（平均边长 ${faceStats.meanEdgeMm} mm）：能表现皮肤的整体移动和被挤压处的鼓起，但画不出皱纹——眉间纵纹、鼻背皱纹、鱼尾纹都没有，鼻唇沟只是一道平缓的隆起。`, en: `The facial skin has about ${faceStats.vertices} vertices (mean edge ${faceStats.meanEdgeMm} mm): it shows the bulk movement of the skin and the bulging where it is squeezed, but no wrinkles — no glabellar furrows, nose wrinkles or crow's feet, and the nasolabial furrow is only a gentle ridge.` },
+    { zh: '每个通道的位移场是线性的、互相叠加：皮肤沿切面滑动，外加一阶的厚度变化（挤压处增厚）；没有屈曲，没有组织之间的碰撞，几个动作单元同时全强度时口周和鼻旁的皮肤会互相穿插、出现锯齿。深层部件跟随其上方的皮肤，肌肉会缩短但不会变粗。全激活时的位移幅度、作用范围和各动作单元里的肌肉权重都是假设。', en: 'Each channel\'s displacement field is linear and the fields add: the skin slides in its tangent plane, plus a first-order change of thickness (thickening where squeezed); there is no buckling and no collision between tissues, and with several action units at full intensity the skin round the mouth and beside the nose interpenetrates and turns jagged. Deep parts follow the skin above them, and muscles shorten without thickening. Excursions at full activation, zones of influence and the muscle weights within each action unit are assumptions.' },
     { zh: '数据里没有降眉肌、降鼻中隔肌和上睑板肌；AU4 只由皱眉肌和降眉间肌驱动。', en: 'The data has no depressor supercilii, depressor septi nasi or superior tarsal muscle; AU4 is driven by corrugator supercilii and procerus only.' },
   ]
-  if (eyeReport.some((e) => e.ringsByGeometry?.namesSwapped)) cautions.push({ zh: '眼轮匝肌两个部件的名字与几何相反：名为“眶部”的是贴着睑缘的内环，名为“睑部”的是外环。本层按几何（环的大小）而不是按名字来用它们。', en: 'The two orbicularis oculi parts carry names opposite to their geometry: the part named "orbital" is the inner ring at the lid margins and the part named "palpebral" is the outer ring. This layer uses them by geometry (ring size), not by name.' })
+  if (offX > 2 || offY > 2) cautions.push({ zh: `皮肤上的眼和深层的眼球没有对齐：皮肤睑裂的中点比眼球中心偏外侧最多 ${offX.toFixed(1)} mm，睑缘的高度相差最多 ${offY.toFixed(1)} mm。皮肤和深层的眼睑各按自己的位置开合，所以皮肤半透明时两层的眼睑对不上。`, en: `The eye on the skin and the deep globe are not aligned: the middle of the skin's fissure lies up to ${offX.toFixed(1)} mm lateral to the globe centre, and the lid margins differ in height by up to ${offY.toFixed(1)} mm. Skin and deep lids each open and close where they are, so with a see-through skin the two layers of lids do not coincide.` })
+  if (eyeReport.some((e) => e.rings && !e.rings.namesAgreeWithSize)) cautions.push({ zh: '眼轮匝肌两个部件的名字与环的大小不符（名为“睑部”的不是较小的内环）；本层按名字使用它们，眼周的结果不可信。', en: 'The names of the two orbicularis oculi parts disagree with their ring sizes (the part named "palpebral" is not the smaller, inner ring); this layer uses them by name, so the result round the eyes is not to be trusted.' })
 
+  const fis = (m: { x0: number; step: number; lower: number[]; upper: number[] } | null): { x0: number; x1: number; aperture: number; lowerY: number; upperY: number } | null => (m ? { x0: +m.x0.toFixed(6), x1: +(m.x0 + m.step * (m.lower.length - 1)).toFixed(6), aperture: +Math.max(...m.lower.map((l, i) => m.upper[i]! - l)).toFixed(6), lowerY: +Math.min(...m.lower).toFixed(6), upperY: +Math.max(...m.upper).toFixed(6) } : null)
   const face: FaceData = {
     schema: 1,
     body: bodyId,
@@ -832,11 +1235,11 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     aus,
     pain: { pspi: { terms: curated.pain.pspi.terms, binary: curated.pain.pspi.binary, max: curated.pain.pspi.max, basis: curated.pain.pspi.basis }, keyframes: curated.pain.keyframes, mapping: curated.pain.mapping, timing: curated.pain.timing },
     jaw: { joint: curated.muscles.jaw.joint, dof: curated.muscles.jaw.dof, max: jawMax, closers: jawRe(curated.muscles.jaw.closers), openers: jawRe(curated.muscles.jaw.openers) },
-    bounds: { channel: +(Math.ceil(maxChannel / MM * 10) / 10 * MM).toFixed(4), total: +(Math.ceil(maxTotal / MM * 10) / 10 * MM).toFixed(4) },
+    bounds: { channel: +(Math.ceil(Math.max(maxChannel, ...channels.map((c) => c.excursion)) / MM * 10) / 10 * MM).toFixed(4), total: +(Math.ceil(maxTotal / MM * 10) / 10 * MM).toFixed(4) },
     landmarks: {
       midX: +midX.toFixed(6),
       stomionY: { skin: +skinSt.toFixed(6), deep: deepSt === null ? null : +deepSt.toFixed(6) },
-      eyes: eyes.map((e) => ({ side: e.side, globe: [+e.globe[0].toFixed(6), +e.globe[1].toFixed(6), +e.globe[2].toFixed(6)] as Vec3, radius: +e.radius.toFixed(6), fissure: e.margins ? { x0: +e.margins.x0.toFixed(6), x1: +(e.margins.x0 + e.margins.step * (e.margins.lower.length - 1)).toFixed(6), aperture: +Math.max(...e.margins.lower.map((l, i) => e.margins!.upper[i]! - l)).toFixed(6) } : null })),
+      eyes: eyes.map((e) => ({ side: e.side, globe: [+e.globe[0].toFixed(6), +e.globe[1].toFixed(6), +e.globe[2].toFixed(6)] as Vec3, radius: +e.radius.toFixed(6), fissure: fis(e.margins), skinFissure: fis(e.skinMargins) })),
     },
     sources: curated.sources.sources,
     cautions,

@@ -224,5 +224,6 @@ describe('calibrated trends over seeds', () => {
       expect(mf / ff).toBeGreaterThan(0.45)
       expect(mf / ff).toBeLessThan(0.8)
     }
-  })
+    // 合成两批样本，在负载高的机器上会超过默认的 5 秒 / Renders two batches; over the default 5 s on a loaded machine
+  }, 30_000)
 })

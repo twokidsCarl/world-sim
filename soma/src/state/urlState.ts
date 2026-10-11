@@ -5,7 +5,7 @@
 //
 //   body   male | female | fixture | stress      人体 / which body
 //   embed  1                                      嵌入模式：只有舞台和必要控件 / embed mode: stage and essential controls only
-//   tab    d | t | p                              左侧面板：显示 / 结构树 / 姿势 / left panel: display / tree / pose
+//   tab    d | t | p | n                          左侧面板：显示 / 结构树 / 姿势 / 疼痛反应 / left panel: display / tree / pose / pain response
 //   sys    ske,ner:60,…                           可见的系统，可带不透明度百分数；未列出的隐藏
 //                                                 visible systems, each optionally with an opacity percent; unlisted ones are hidden
 //                                                 代码 / codes: int mus ske cv ner res dig uri rep end lym oth
@@ -26,6 +26,10 @@
 //   map    d | n                                  体表图：皮节 / 皮神经分布区 / skin map: dermatomes / nerve territories
 //   reg    14,15                                  体表图中高亮的区域下标 / highlighted region indices of the map
 //   see    1                                      体表图下皮肤半透明（露出其下的神经）/ skin drawn see-through under a skin map (to reveal the nerve beneath)
+//   pain   7                                      疼痛反应：保持在该强度（0–10）的表情；不会自动出声
+//                                                 pain response: the expression held at this intensity (0–10); never plays sound by itself
+//   au     4:3,43:5                               手动设定的 FACS 动作单元强度（AU 编号:0–5）/ manually set FACS action units (AU number:0–5)
+//   skin   1                                      皮肤画成不透明（看表情）/ skin drawn opaque (to read the expression)
 //   src    1                                      按来源着色 / colour by source
 //   cmp    ske                                    对照视图及其系统 / compare view and its system
 //
@@ -52,12 +56,13 @@ export const SYSTEM_CODES: Record<SystemId, string> = {
 }
 const CODE_TO_SYSTEM = new Map(Object.entries(SYSTEM_CODES).map(([id, code]) => [code, id as SystemId]))
 
-const TABS = { d: 'display', t: 'tree', p: 'pose' } as const
+const TABS = { d: 'display', t: 'tree', p: 'pose', n: 'pain' } as const
+const TAB_CODES = { display: 'd', tree: 't', pose: 'p', pain: 'n' } as const
 const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagittal' }
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'skin', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -65,7 +70,7 @@ export const MAX_URL_DOFS = 40
 export interface UrlState {
   body?: string
   embed?: boolean
-  tab?: 'display' | 'tree' | 'pose'
+  tab?: 'display' | 'tree' | 'pose' | 'pain'
   /** 给出时：列出的系统可见（带不透明度），其余隐藏 / When given: listed systems are visible (with opacity), the rest hidden. */
   sys?: { id: SystemId; opacity: number }[]
   peel?: number
@@ -82,6 +87,11 @@ export interface UrlState {
   map?: 'dermatome' | 'cutaneousNerve'
   reg?: number[]
   see?: boolean
+  /** 保持的疼痛强度 0–10 / held pain intensity, 0–10. */
+  pain?: number
+  /** AU id（如 "AU4"）→ 强度 0–5 / AU id (e.g. "AU4") → intensity 0–5. */
+  au?: Record<string, number>
+  skin?: boolean
   src?: boolean
   cmp?: SystemId
 }
@@ -126,6 +136,7 @@ export function parseUrl(search: string): ParsedUrl {
       case 'focus':
       case 'breath':
       case 'see':
+      case 'skin':
       case 'src': {
         const f = flag(value)
         if (f === null) warn(`${key}: 应为 1 或 0 / expected 1 or 0`)
@@ -215,6 +226,25 @@ export function parseUrl(search: string): ParsedUrl {
         else if (n.length) state.reg = [...new Set(n)].slice(0, 60)
         break
       }
+      case 'pain': {
+        const n = Number(value)
+        if (value === '' || !Number.isFinite(n) || n < 0 || n > 10) warn(`pain: 应为 0–10 的数 "${value}" / expected a number from 0 to 10`)
+        else state.pain = Math.round(n * 10) / 10
+        break
+      }
+      case 'au': {
+        const au: Record<string, number> = {}
+        let bad = false
+        for (const item of value.split(',').filter(Boolean)) {
+          const m = /^(\d{1,2}):(\d+(?:\.\d+)?)$/.exec(item)
+          const v = m ? Number(m[2]) : NaN
+          if (!m || v < 0 || v > 5) bad = true
+          else if (v > 0) au[`AU${Number(m[1])}`] = Math.round(v * 10) / 10
+        }
+        if (bad) warn('au: 忽略了无法解析的项（形式为 编号:0–5）/ ignored entries that could not be parsed (form number:0–5)')
+        if (Object.keys(au).length) state.au = au
+        break
+      }
       case 'cmp': {
         const id = CODE_TO_SYSTEM.get(value)
         if (id) state.cmp = id
@@ -238,7 +268,7 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   const put = (k: string, v: string): void => void out.push([k, v])
   if (state.body && state.body !== 'male') put('body', state.body)
   if (state.embed) put('embed', '1')
-  if (state.tab && state.tab !== 'display') put('tab', state.tab[0]!)
+  if (state.tab && state.tab !== 'display') put('tab', TAB_CODES[state.tab])
   if (state.sys) put('sys', state.sys.map((s) => SYSTEM_CODES[s.id] + (Math.round(s.opacity * 100) === 100 ? '' : `:${Math.round(s.opacity * 100)}`)).join(','))
   if (state.peel) put('peel', String(state.peel))
   if (state.iso?.length) put('iso', state.iso.join(','))
@@ -266,6 +296,15 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   if (state.map) put('map', state.map === 'dermatome' ? 'd' : 'n')
   if (state.map && state.reg?.length) put('reg', state.reg.join(','))
   if (state.map && state.see) put('see', '1')
+  if (state.pain !== undefined && state.pain > 0) put('pain', String(Math.round(state.pain * 10) / 10))
+  if (state.au) {
+    const items = Object.entries(state.au)
+      .filter(([id, v]) => /^AU\d+$/.test(id) && v > 0)
+      .sort((a, b) => Number(a[0].slice(2)) - Number(b[0].slice(2)))
+      .map(([id, v]) => `${id.slice(2)}:${Math.round(v * 10) / 10}`)
+    if (items.length) put('au', items.join(','))
+  }
+  if (state.skin) put('skin', '1')
   if (state.src) put('src', '1')
   if (state.cmp) put('cmp', SYSTEM_CODES[state.cmp])
   // 逗号、冒号在查询串里是安全的，不转义更易读 / commas and colons are safe in a query and read better unescaped

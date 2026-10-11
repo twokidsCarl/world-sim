@@ -172,6 +172,23 @@ export class SkinLayer {
     this.skinWeight.needsUpdate = true
   }
 
+  /**
+   * 皮肤的静止位置变了（面部表情）：按原始顶点顺序给出新位置，这里展开到不共享的顶点。
+   * The skin's rest positions changed (facial expression): given in original vertex order,
+   * expanded here to the unshared vertices.
+   */
+  setPositions(position: Float32Array): void {
+    const a = this.mesh.geometry.getAttribute('position') as BufferAttribute
+    const out = a.array as Float32Array
+    for (let i = 0; i < this.triangleCount * 3; i++) {
+      const v = this.source.index[i]! * 3
+      out[i * 3] = position[v]!
+      out[i * 3 + 1] = position[v + 1]!
+      out[i * 3 + 2] = position[v + 2]!
+    }
+    a.needsUpdate = true
+  }
+
   /** 与部件材质同步切换蒙皮方式 / Switch skinning in step with the part materials. */
   setSkinning(mode: SkinningMode): void {
     const node = positionNodeFor(this.skinning, mode, false)

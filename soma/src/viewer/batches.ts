@@ -162,6 +162,8 @@ export interface PartRenderer {
    * views). `indexBase` is what to subtract from index values to get part-local vertex numbers.
    */
   partBuffers(id: number): PartBuffers
+  /** 改写了某个部件的静止位置之后调用，只上传那一段 / Call after rewriting a part's rest positions; uploads just that range. */
+  markPositions(id: number): void
   /** 写入蒙皮属性之后调用，把改动上传 / Call after writing skin attributes, to upload them. */
   flushSkinAttributes(): void
   setSkinning(mode: SkinningMode): void
@@ -393,6 +395,13 @@ export class PartBatches implements PartRenderer {
       index: index.subarray(r.indexStart, r.indexStart + r.indexCount),
       indexBase: v0,
     }
+  }
+
+  markPositions(id: number): void {
+    const r = this.ranges[id]!
+    const a = this.opaque.geometry.getAttribute('position') as BufferAttribute
+    a.addUpdateRange(r.vertexStart * 3, r.vertexCount * 3)
+    a.needsUpdate = true
   }
 
   flushSkinAttributes(): void {

@@ -39,12 +39,75 @@ MARGIN = 0.0025   # 深部结构至少在皮肤下 2.5 mm / deep parts end at le
 GROUPS = {'muscle': ('muscle', 'tendon'), 'bone': ('bone', 'cartilage', 'tooth'), 'organ': ('organ', 'brain', 'heart', 'gland')}
 
 
+# 眼裂、口裂处保留 MHR 自己的眼睑和唇面：这些部件不进“必须包住”的集合（否则眼睑、唇会被顶到眼球、牙齿外面，成一个棱角分明的包）。
+# At the palpebral and oral fissures MHR's own lids and lips are kept: these parts are left out of the set that must be
+# enclosed (otherwise lids and lips are pushed out over the globe and the teeth into a faceted lump).
+FACE_EXCLUDE = ('eyeball', 'cornea', 'sclera', 'lens', 'vitreous', 'anterior chamber', 'posterior chamber', 'iris', 'retina', 'choroid', 'ciliary', 'conjunctiva',
+                'lacrimal', 'tarsal', 'tarsus', 'eyelash', 'eyebrow', 'eyelid', 'lip', 'tongue', 'gingiva', 'lingual')
+
+
+def excluded_face_parts(fb):
+    """不参与包住的面部部件的 id。眼轮匝肌的两个环按几何选：每侧离眼球中心近的那个（睑缘处的内环）排除，外环保留
+    （数据里两个环的名字是互换的，所以不按名字选）。
+    Ids of the facial parts left out of the enclosure. The two rings of orbicularis oculi are chosen by geometry: on each
+    side the one nearer the centre of the eyeball (the inner ring at the lid margins) is left out and the outer ring
+    stays (their names are swapped in the data, so names are not used)."""
+    out = set()
+    for p in fb.deep_parts():
+        n = p['name'].lower()
+        if p['tissue'] == 'tooth' or any(t in n.replace('lipid', '') for t in FACE_EXCLUDE):
+            if 'levator labii' in n or 'depressor labii' in n or 'elliptical' in n:
+                continue
+            out.add(p['id'])
+    for side in ('Left', 'Right'):
+        try:
+            c = fb.verts(f'{side} vitreous body').mean(0)
+        except Exception:
+            continue
+        rings = [p for p in fb.deep_parts() if 'orbicularis oculi' in p['name'].lower() and side.lower() in p['name'].lower()]
+        if len(rings) >= 2:
+            rings.sort(key=lambda p: float(np.linalg.norm(fb.mesh(p)[0] - c, axis=1).mean()))
+            out.add(rings[0]['id'])
+    return out
+
+
+_PROTECT = {}
+
+
+def face_protect(lod):
+    """眼区、口区的保护权重（0–1）和两个区域的顶点下标，在 MHR 的中性网格上定义，与姿势无关。
+    眼区：眼关节 19 mm 以内、在其前方的皮肤（眼睑）；口区：唇（口裂上下各约 12 mm、正中两侧各 30 mm）。
+    Protection weight (0-1) for the orbital and oral regions and the vertex indices of both, defined on MHR's neutral mesh
+    and so independent of pose. Orbital: skin within 19 mm of an eye joint and in front of it (the lids); oral: the lips
+    (about 12 mm above and below the oral fissure, 30 mm either side of the midline)."""
+    if lod not in _PROTECT:
+        V, P, _ = mhrlib.run(np.zeros(45), np.zeros(204), lod, True)
+        jn = mhrlib.joint_names(lod)
+        F = mhrlib.faces(lod)
+        reg = {}
+        for S, j in (('L', 'l_eye'), ('R', 'r_eye')):
+            e = P[jn.index(j)]
+            reg['lids' + S] = np.where((np.linalg.norm(V - e, axis=1) < 0.019) & (V[:, 2] > e[2]))[0]
+        e = 0.5 * (P[jn.index('l_eye')] + P[jn.index('r_eye')])
+        reg['lips'] = np.where((np.abs(V[:, 0]) < 0.030) & (V[:, 1] < e[1] - 0.057) & (V[:, 1] > e[1] - 0.081) & (V[:, 2] > e[2] + 0.012))[0]
+        w = np.zeros(len(V))
+        for idx in reg.values():
+            w[idx] = 1.0
+        A = adjacency(len(V), F)
+        for _ in range(2):   # 边缘过渡两圈 / two rings of transition at the rim
+            w = np.maximum(w, 0.5 * (A @ w) + 0.5 * w)
+            w = np.maximum(w, A @ w * 0.9) * (w < 1) + (w >= 1)
+        _PROTECT[lod] = (np.clip(w, 0, 1), reg)
+    return _PROTECT[lod]
+
+
 def deep_samples(fb):
     """深部结构的表面采样点（顶点 + 约每 30 mm2 一个面内点），带组别和部件下标。
     Surface samples of the deep parts (vertices plus about one point per 30 mm2), with group and part index."""
     rng = np.random.default_rng(5)
     pts, grp, pid = [], [], []
-    parts = fb.deep_parts()
+    skip = excluded_face_parts(fb)
+    parts = [p for p in fb.deep_parts() if p['id'] not in skip]
     for k, p in enumerate(parts):
         v, f = fb.mesh(p)
         g = next(i for i, (_, ts) in enumerate(GROUPS.items()) if p['tissue'] in ts)
@@ -92,6 +155,10 @@ def enclose(V0, F, P, log, cap, passes=10, step_cap=0.012):
     for _ in range(3):
         n0 = 0.5 * n0 + 0.5 * (A @ n0)
         n0 /= np.maximum(np.linalg.norm(n0, axis=1), 1e-12)[:, None]
+    # 眼睑和唇不外推 / lids and lips are not pushed
+    lodp = next((k for k, n in mhrlib.LOD_VERTICES.items() if n == len(V0)), None)
+    if lodp is not None:
+        cap = np.asarray(cap, float) * (1.0 - face_protect(lodp)[0])
     D = np.zeros(len(V0))
     best = None
     ex = exposed(V0, F)
@@ -322,6 +389,17 @@ def main():
     # hands: with the finger length scales no large push should be needed; capped at 10 mm so adjacent fingers are not pushed together
     cap[classify(V0, L) == 'hand'] = np.minimum(cap[classify(V0, L) == 'hand'], 0.010)
     V1 = enclose(V0, F, Pd, log, cap)
+    # 头面部：把外推的位移场抹平（低通），眼睑、唇区保持为 0；否则鼻软骨、眦角处逐顶点的外推会留下尖刺。
+    # Head and face: the push is low-passed there and stays 0 on lids and lips; otherwise the per-vertex push over the nasal cartilages and at the canthi leaves spikes.
+    from final_female import head_weight, spread   # 延迟导入，避免循环 / lazy import, avoids a cycle
+    whd = head_weight(lod)
+    Ah = adjacency(len(V0), F)
+    nh = vertex_normals(V0, F)
+    for _ in range(3):
+        nh = 0.5 * nh + 0.5 * (Ah @ nh)
+    nh /= np.maximum(np.linalg.norm(nh, axis=1), 1e-12)[:, None]
+    dh = spread(np.einsum('ij,ij->i', V1 - V0, nh).clip(0), Ah, cap, rings=2, smooth=5, final=3) * (1 - face_protect(lod)[0])
+    V1 = V1 + whd[:, None] * (V0 + dh[:, None] * nh - V1)
     regV0 = classify(V0, L)
     grpV = mhr_groups(lod)
     np.savez(os.path.join(out, 'enclosed-before-separation.npz'), V=V1, F=F, grp=grpV)
@@ -459,6 +537,16 @@ def main():
                    'attribution': 'MHR, Copyright (c) Meta Platforms, Inc. and affiliates, licensed under the Apache License 2.0; fitted to this body by tools/bodyshape'},
         'fittedTo': {'body': name, 'key': key},
         'frame': f'metres, Y up, +Z anterior, +X subject left; same origin as public/anatomy/{name}',
+        'face': {
+            'topology': {'zh': 'MHR LOD0 是一张封闭的单连通曲面：睑裂和口裂都不是开口，没有单独的眼球、上下睑缘、唇缘或口腔内面；眼睑是盖在眼球位置上的一片连续皮肤，上下唇在口裂处相贴成一道褶。因此没有睑缘、唇缘的顶点环可给；没有剪开网格。',
+                         'en': 'MHR LOD0 is one closed, singly connected surface: neither the palpebral nor the oral fissure is an opening, and there is no separate eyeball, upper or lower lid margin, lip margin or mouth interior; the lids are one continuous sheet of skin over the place of the globe, and the lips meet in a crease at the oral fissure. So there are no lid-margin or lip-margin vertex loops to give; the mesh was not cut.'},
+            'notEnclosed': {'zh': '眼球各部、结膜、泪器、睑板、睑缘处的眼轮匝肌内环（按几何选）、唇、牙、舌、牙龈不在“必须包住”的集合里；下面的眼睑区、唇区顶点不做任何外推，保留 MHR 自己的面。',
+                            'en': 'the parts of the eyeball, conjunctiva, lacrimal parts, tarsal plates, the inner ring of orbicularis oculi at the lid margins (chosen by geometry), lips, teeth, tongue and gingiva are not in the set that must be enclosed; the lid and lip vertices below get no push at all and keep MHR\'s own surface.',
+                            'partIds': sorted(excluded_face_parts(fb))},
+            'regions': {k: [int(i) for i in v] for k, v in face_protect(lod)[1].items()},
+            'regionsNote': {'zh': 'regions 是顶点下标（skin.obj 的顺序）：lidsL / lidsR 为眼关节 19 mm 内、其前方的皮肤（上下睑和睑裂），lips 为口裂上下约 12 mm 的唇区。它们是区域，不是睑缘或唇缘的环。',
+                            'en': 'regions are vertex indices (order of skin.obj): lidsL / lidsR are the skin within 19 mm of an eye joint and in front of it (both lids and the fissure), lips the lip region about 12 mm above and below the oral fissure. They are regions, not lid-margin or lip-margin loops.'},
+        },
         'statureM': round(float(H(V1)), 4), 'bmiByVolume': round(bmi(V1), 2), 'targetBmi': target_bmi,
         'files': {
             'skin.obj': f'{len(V1)} vertices, {len(F)} triangles; vertex order = MHR LOD{lod}; closed: {closed}',

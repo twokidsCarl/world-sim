@@ -1545,18 +1545,34 @@
       },
       {
        "at": {
-        "offset": [
-         "pubicSymphysis",
-         [
-          0.015,
-          0.045,
-          -0.04
-         ]
+        "xyz": [
+         {
+          "offset": [
+           "core",
+           [
+            0.015,
+            0,
+            0
+           ]
+          ]
+         },
+         {
+          "lerp": [
+           "umbilicusLevel",
+           "pubicSymphysis",
+           0.55
+          ]
+         },
+         "core"
         ]
        },
        "to": "ant"
       }
-     ]
+     ],
+     "note": {
+      "zh": "前皮支：自髂嵴上方经髂前上棘上方至脐与耻骨联合之间略偏下处（其下方的腹下区属髂腹下神经前皮支）。",
+      "en": "Anterior cutaneous branch: from above the iliac crest, above the anterior superior iliac spine, to a little below midway between umbilicus and pubic symphysis (the hypogastric region below belongs to the anterior cutaneous branch of the iliohypogastric nerve)."
+     }
     },
     {
      "curve": [
@@ -1659,9 +1675,9 @@
       "dir": "med",
       "beyond": {
        "offset": [
-        "asis",
+        "pubicTubercle",
         [
-         -0.03,
+         0.035,
          0,
          0
         ]
@@ -1669,8 +1685,8 @@
       }
      },
      "note": {
-      "zh": "只取髂前上棘内侧 3 cm 以内侧的终末段：神经途经髂前上棘处也贴近皮肤，但那里不是它的分布区。",
-      "en": "Only the terminal stretch medial to a point 3 cm medial of the anterior superior iliac spine: the nerve also runs close under the skin at the spine, which is not its territory."
+      "zh": "只取耻骨结节外侧 3.5 cm 以内侧的终末段（耻骨上方的腹下区）：神经途经髂前上棘和腹股沟处也贴近皮肤，但那里不是它的分布区。",
+      "en": "Only the terminal stretch medial to a point 3.5 cm lateral of the pubic tubercle (the hypogastric region above the pubis): the nerve also runs close under the skin at the anterior superior iliac spine and along the groin, which is not its territory."
      }
     }
    ]
@@ -1704,22 +1720,37 @@
       "{side} ilio-inguinal nerve"
      ],
      "maxDepthMm": 25,
-     "clip": {
-      "dir": "med",
-      "beyond": {
-       "offset": [
-        "asis",
-        [
-         -0.03,
-         0,
-         0
+     "clip": [
+      {
+       "dir": "med",
+       "beyond": {
+        "offset": [
+         "asis",
+         [
+          -0.03,
+          0,
+          0
+         ]
         ]
-       ]
+       }
+      },
+      {
+       "dir": "inf",
+       "before": {
+        "offset": [
+         "pubicTubercle",
+         [
+          0,
+          -0.025,
+          0
+         ]
+        ]
+       }
       }
-     },
+     ],
      "note": {
-      "zh": "只取髂前上棘内侧 3 cm 以内侧的终末段：神经途经髂前上棘处也贴近皮肤，但那里不是它的分布区。",
-      "en": "Only the terminal stretch medial to a point 3 cm medial of the anterior superior iliac spine: the nerve also runs close under the skin at the spine, which is not its territory."
+      "zh": "只取髂前上棘内侧 3 cm 以内侧、耻骨结节下方 2.5 cm 以上的一段：神经途经髂前上棘处也贴近皮肤，但那里不是它的分布区；再往下归生殖股神经生殖支。",
+      "en": "Only the stretch medial to a point 3 cm medial of the anterior superior iliac spine and above 2.5 cm below the pubic tubercle: the nerve also runs close under the skin at the spine, which is not its territory; lower down belongs to the genital branch of the genitofemoral nerve."
      }
     }
    ]
@@ -1789,11 +1820,20 @@
      "maxDepthMm": 12,
      "clip": {
       "dir": "inf",
-      "beyond": "pubicTubercle"
+      "beyond": {
+       "offset": [
+        "pubicTubercle",
+        [
+         0,
+         -0.025,
+         0
+        ]
+       ]
+      }
      },
      "note": {
-      "zh": "只取耻骨结节以下的终末段（至阴囊/大阴唇）。",
-      "en": "Only the terminal stretch below the pubic tubercle (to the scrotum / labium majus)."
+      "zh": "只取耻骨结节下方 2.5 cm 以下的终末段（至阴囊/大阴唇）。其上方与髂腹股沟神经的终末支走在一起，种子会落在同样的皮肤顶点上，故以此高度分界。",
+      "en": "Only the terminal stretch more than 2.5 cm below the pubic tubercle (to the scrotum / labium majus). Above that it runs with the terminal branches of the ilioinguinal nerve and would seed the same skin vertices, so the two are divided at this height."
      }
     }
    ]
@@ -3195,7 +3235,15 @@
      "nerve": [
       "{side} dorsal digital branches of deep fibular nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "facing": {
+      "frame": "foot",
+      "deg": 0
+     },
+     "note": {
+      "zh": "只取投影到足背侧皮肤的点：足趾很细（有的皮肤上足趾连成一块），趾背神经的中心线也会落到跖侧皮肤上。",
+      "en": "Only points that project onto dorsal skin: the toes are thin (one block on some skins) and the dorsal digital nerves' centrelines also land on plantar skin."
+     }
     }
    ]
   },
@@ -3319,7 +3367,15 @@
       "{side} proper plantar digital branches of medial plantar nerve",
       "{side} common plantar digital nerves"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "facing": {
+      "frame": "foot",
+      "deg": 180
+     },
+     "note": {
+      "zh": "只取投影到足底侧皮肤的点。",
+      "en": "Only points that project onto plantar skin."
+     }
     }
    ]
   },
@@ -3357,7 +3413,15 @@
       "{side} superficial branch of lateral plantar nerve",
       "{side} proper plantar digital branches of lateral plantar nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "facing": {
+      "frame": "foot",
+      "deg": 180
+     },
+     "note": {
+      "zh": "只取投影到足底侧皮肤的点。",
+      "en": "Only points that project onto plantar skin."
+     }
     }
    ]
   }

@@ -10,6 +10,7 @@ import { CautionsDialog } from './ui/CautionsDialog.tsx'
 import { DisplayPanel } from './ui/DisplayPanel.tsx'
 import { Icon } from './ui/Icon.tsx'
 import { InfoPanel } from './ui/InfoPanel.tsx'
+import { PainPanel } from './ui/PainPanel.tsx'
 import { PosePanel } from './ui/PosePanel.tsx'
 import { TopBar } from './ui/TopBar.tsx'
 import { TreePanel } from './ui/TreePanel.tsx'
@@ -127,11 +128,14 @@ export function App() {
             <button role="tab" aria-selected={leftTab === 'pose'} className={leftTab === 'pose' ? 'active' : ''} onClick={() => setLeftTab('pose')}>
               姿势 <span className="en">Pose</span>
             </button>
+            <button role="tab" aria-selected={leftTab === 'pain'} className={leftTab === 'pain' ? 'active' : ''} onClick={() => setLeftTab('pain')}>
+              疼痛 <span className="en">Pain</span>
+            </button>
             <button className="drawer-close" onClick={() => setLeftOpen(false)} aria-label="关闭">
               <Icon name="close" />
             </button>
           </div>
-          {graph && (leftTab === 'display' ? <DisplayPanel graph={graph} /> : leftTab === 'pose' ? <PosePanel graph={graph} /> : <TreePanel graph={graph} />)}
+          {graph && (leftTab === 'display' ? <DisplayPanel graph={graph} /> : leftTab === 'pose' ? <PosePanel graph={graph} /> : leftTab === 'pain' ? <PainPanel graph={graph} /> : <TreePanel graph={graph} />)}
         </aside>
 
         <main className="stage">

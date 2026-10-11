@@ -48,14 +48,12 @@ def survey_girth(model, sex, ds, var, S, B):
 def main():
     name = sys.argv[1]
     d = os.path.join(RAW, 'out', sys.argv[sys.argv.index('--dir') + 1] if '--dir' in sys.argv else f'{name}-skin')
-    fit = json.load(open(os.path.join(d, 'fit.json')))
     sex = 'F' if name == 'female' else 'M'
-    lod = fit['lod']
+    # 身份系数、参数取自包里的最终状态（包住、头部重拟合之后的），不取 fit.json：后者是最初拟合时的值。
+    # Identity and parameters come from the final state in the package (after the enclosure and the head refit), not from fit.json, which holds the values of the first fit.
+    stf = np.load(os.path.join(d, 'fit-state-final.npz'))
+    lod, ident, mp = int(stf['lod']), stf['identity'].astype(float), stf['mp'].astype(float)
     names = mhrlib.param_names()
-    mp = np.zeros(204)
-    for k, v in fit['mhrParameters'].items():
-        mp[names.index(k)] = v
-    ident = np.array(fit['identity'])
     off = np.fromfile(os.path.join(d, 'residual-offsets.f32'), dtype=np.float32).reshape(-1, 3).astype(float)
     model = json.load(open(os.path.join(CUR, 'anthro-model.json')))
     lines = []

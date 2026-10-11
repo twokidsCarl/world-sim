@@ -57,6 +57,18 @@ export function posedPart(s: FaceScene, poser: Poser, partId: string, act: Recor
   return poser.part(partId, deform(s.face.channels, s.bin, partId, rest, act), 'dqs', false)
 }
 
+/** 只画皮肤（和眉毛）的大图：正面和斜侧。 Large skin-only images (with the eyebrow hair): front and three-quarter. */
+export function renderSkin(s: FaceScene, aus: AUs, size = 760): Image[] {
+  const { channels, jaw } = activations(s.face, aus)
+  const pose = jaw > 0 ? { [s.face.jaw.joint]: Array.from({ length: s.face.jaw.dof + 1 }, (_, k) => (k === s.face.jaw.dof ? jaw : 0)) } : {}
+  const poser = new Poser(s.rig, s.rigBin, pose)
+  const skinMesh = s.body.meshes.get(s.face.skin)!
+  const items: RenderItem[] = [{ positions: posedPart(s, poser, s.face.skin, channels), indices: skinMesh.indices, color: SKIN }]
+  for (const d of s.deepParts) if (/eyebrow/i.test(d.part.name)) items.push({ positions: posedPart(s, poser, d.part.id, channels), indices: s.body.meshes.get(d.part.id)!.indices, color: d.color })
+  const view = (yaw: number): View => ({ yaw, center: [s.center[0], s.center[1] - 0.006, s.center[2]], halfHeight: s.halfHeight - 0.012, width: size, height: size })
+  return [render(items, view(0)), render(items, view(40))]
+}
+
 export function renderExpression(s: FaceScene, aus: AUs, opts: { size?: number; heat?: boolean } = {}): Image[] {
   const { channels, jaw } = activations(s.face, aus)
   const pose = jaw > 0 ? { [s.face.jaw.joint]: Array.from({ length: s.face.jaw.dof + 1 }, (_, k) => (k === s.face.jaw.dof ? jaw : 0)) } : {}
@@ -91,6 +103,16 @@ export function renderAll(s: FaceScene, outDir: string, log: (m: string) => void
     img.save(f)
     files.push(f)
   }
+  // 皮肤大图：左列静止，右列该 AU 全强度；上排正面，下排斜侧
+  // large skin images: rest on the left, the AU at full intensity on the right; front view above, three-quarter view below
+  const restSkin = renderSkin(s, {})
+  for (const au of s.face.aus) {
+    const a = renderSkin(s, { [au.id]: AU_MAX })
+    save(sheet([restSkin[0]!, a[0]!, restSkin[1]!, a[1]!], 2), `skin-${au.id}.png`)
+  }
+  const lv = [0, 2, 4, 6, 8, 10].map((l) => renderSkin(s, painAUs(s.face.pain, l), 640))
+  save(sheet(lv.map((x) => x[0]!), 3), 'skin-pain-front.png')
+  save(sheet(lv.map((x) => x[1]!), 3), 'skin-pain-oblique.png')
   const neutral = renderExpression(s, {}, { heat: true })
   for (const au of s.face.aus) {
     // 上排静止，下排该 AU 全强度 / top row at rest, bottom row this AU at full intensity

@@ -406,6 +406,152 @@
         "zh": "手指：MHR 的指关节中心与本骨架按骨拟合的中心相差 5–17 mm（拇指腕掌关节最大），握拳时 MHR 权重的皮肤拉伸更大；手指之间有空隙，距离场在这里本来就分得开，所以手指仍用距离场的权重。",
         "en": "Fingers: MHR's finger joint centres differ from this rig's bone-fitted centres by 5–17 mm (most at the thumb's carpometacarpal joint) and its weights stretch the skin more in a fist; the fingers are apart, where the distance field separates them well anyway, so the fingers keep the distance-field weights."
       }
+    },
+    {
+      "body": "female",
+      "dir": "data/raw/bodyshape/out/female-skin",
+      "why": {
+        "zh": "女性同样换成了 MHR 拓扑的皮肤，做法与男性相同。",
+        "en": "The female has a skin in MHR topology as well; same procedure as for the male."
+      },
+      "map": [
+        {
+          "match": "^(?:root|c_spine[0-3])$",
+          "axial": {
+            "mhrChain": [
+              "root",
+              "c_spine0",
+              "c_spine1",
+              "c_spine2",
+              "c_spine3",
+              "c_neck",
+              "c_head"
+            ],
+            "rigChain": [
+              "pelvis",
+              "L5",
+              "L4",
+              "L3",
+              "L2",
+              "L1",
+              "T12",
+              "T11",
+              "T10",
+              "T9",
+              "T8",
+              "T7",
+              "T6",
+              "T5",
+              "T4",
+              "T3",
+              "T2",
+              "T1",
+              "C7",
+              "C6",
+              "C5",
+              "C4",
+              "C3",
+              "C2",
+              "C1",
+              "skull"
+            ]
+          },
+          "why": {
+            "zh": "MHR 的躯干只有骨盆加 4 个脊柱关节，本骨架每个椎间关节各一个：把每个 MHR 脊柱关节的权重按顶点高度分给它所管高度范围内相邻的两个椎间关节。",
+            "en": "MHR's trunk has the pelvis and four spine joints, this rig one joint per motion segment: the weight on each MHR spine joint goes, by vertex height, to the two neighbouring segment joints within the heights that MHR joint covers."
+          }
+        },
+        {
+          "match": "^c_neck(?:_twist[01]_proc)?$",
+          "axial": {
+            "mhrChain": [
+              "root",
+              "c_spine0",
+              "c_spine1",
+              "c_spine2",
+              "c_spine3",
+              "c_neck",
+              "c_head"
+            ],
+            "rigChain": [
+              "pelvis",
+              "L5",
+              "L4",
+              "L3",
+              "L2",
+              "L1",
+              "T12",
+              "T11",
+              "T10",
+              "T9",
+              "T8",
+              "T7",
+              "T6",
+              "T5",
+              "T4",
+              "T3",
+              "T2",
+              "T1",
+              "C7",
+              "C6",
+              "C5",
+              "C4",
+              "C3",
+              "C2",
+              "C1",
+              "skull"
+            ],
+            "as": "c_neck"
+          },
+          "why": {
+            "zh": "颈部同理：分给 C7…C1。",
+            "en": "The neck likewise: spread over C7…C1."
+          }
+        },
+        {
+          "match": "^([lr])_lowarm_twist([1-4])_proc$",
+          "to": [
+            {
+              "joint": "elbow_{S}",
+              "share": "1-n/5"
+            },
+            {
+              "joint": "radioulnar_{S}",
+              "share": "n/5"
+            }
+          ],
+          "why": {
+            "zh": "前臂扭转辅助骨 1–4：旋前的 1/5…4/5，在尺骨（不转）和桡骨（全转）之间按份额分。",
+            "en": "Forearm twist helpers 1–4 carry 1/5…4/5 of pronation: shared between the ulna (no twist) and the radius (full twist)."
+          }
+        },
+        {
+          "match": "^([lr])_wrist_twist$",
+          "to": [
+            {
+              "joint": "radioulnar_{S}",
+              "share": 1
+            }
+          ],
+          "why": {
+            "zh": "腕部扭转骨随桡骨。",
+            "en": "The wrist twist joint goes with the radius."
+          }
+        },
+        {
+          "match": "^([lr])_ball$",
+          "nearest": "^mtp[1-5]_{S}$",
+          "why": {
+            "zh": "MHR 的足趾只有一个“前掌”关节；本骨架每趾各有跖趾关节：每个顶点给最近的那一趾。趾间关节没有对应，足趾皮肤只随跖趾关节。",
+            "en": "MHR has one \"ball\" joint for all toes, this rig a metatarsophalangeal joint per toe: every vertex goes to its nearest toe. The interphalangeal joints of the toes have no counterpart; toe skin follows the MTP joint only."
+          }
+        }
+      ],
+      "generic": "^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$",
+      "genericWhy": {
+        "zh": "手指：MHR 的指关节中心与本骨架按骨拟合的中心相差 5–17 mm（拇指腕掌关节最大），握拳时 MHR 权重的皮肤拉伸更大；手指之间有空隙，距离场在这里本来就分得开，所以手指仍用距离场的权重。",
+        "en": "Fingers: MHR's finger joint centres differ from this rig's bone-fitted centres by 5–17 mm (most at the thumb's carpometacarpal joint) and its weights stretch the skin more in a fist; the fingers are apart, where the distance field separates them well anyway, so the fingers keep the distance-field weights."
+      }
     }
   ]
 }

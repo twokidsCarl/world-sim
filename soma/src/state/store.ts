@@ -5,6 +5,7 @@
 import { create } from 'zustand'
 import { mapPartsBetween, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import { devShapeScales, loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
+import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
 import type { SectionState, SystemState } from './display.ts'
@@ -21,7 +22,16 @@ export interface Selection {
 
 export const EMPTY_SELECTION: Selection = { ids: [], set: new Set(), concept: null }
 
-export type LeftTab = 'display' | 'tree' | 'pose'
+export type LeftTab = 'display' | 'tree' | 'pose' | 'pain'
+
+/** 疼痛反应的设定：强度 0–10、起病方式、是否保持、是否静音。 */
+/** Settings of the pain response: intensity 0–10, onset, whether held, whether muted. */
+export interface PainSettings {
+  level: number
+  onset: 'sudden' | 'sustained'
+  hold: boolean
+  muted: boolean
+}
 
 /** 'tissue'：按组织着色；'source'：按几何来源着色。 */
 /** 'tissue': anatomical colours; 'source': colour by where the geometry came from. */
@@ -123,6 +133,20 @@ export interface AppState {
   poseJoint: string | null
   jointScales: Scales | null
   shapeDev: { stature: number; legRatio: number }
+  /** 当前人体的面部表情数据；首次使用"疼痛反应"时才加载 / This body's facial expression data, loaded when the pain response is first used. */
+  face: LoadedFace | null
+  faceStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
+  faceMessage: string
+  pain: PainSettings
+  /** 手动设定的 AU 强度（0–5），与疼痛表情逐项取较大者 / Manually set AU intensities (0–5), combined with the pain expression by maximum. */
+  aus: AUs
+  /** 每触发一次加一（让查看器开始逐帧更新）/ Bumped on every trigger (so the viewer starts updating every frame). */
+  painNonce: number
+  voiceStatus: 'idle' | 'loading' | 'ready' | 'synthetic'
+  voiceProgress: number
+  lastVoice: { source: 'recorded' | 'synthetic' | 'none'; type: string; probability: number } | null
+  /** 把皮肤画成不透明（看表情时用）/ Draw the skin opaque (for reading the expression). */
+  skinOpaque: boolean
   selection: Selection
   hover: string | null
   explode: number
@@ -177,6 +201,15 @@ export interface AppState {
   setColorMode(mode: ColorMode): void
   setProvenanceVisible(p: Provenance, visible: boolean): void
   setNerveBoost(on: boolean): void
+  /** 加载当前人体的表情数据（已加载则直接返回）/ Load this body's expression data (no-op when loaded). */
+  ensureFace(): Promise<LoadedFace | null>
+  rejectFace(message: string): void
+  setPain(patch: Partial<PainSettings>): void
+  setAU(id: string, intensity: number): void
+  clearAUs(): void
+  setSkinOpaque(on: boolean): void
+  /** 看表情的两种预设视图：肌肉（缺省，表情读得清）或不透明皮肤 / The two preset views for reading the expression: muscles (default, reads clearly) or opaque skin. */
+  setFaceView(view: 'muscle' | 'skin'): void
   /** 加载当前人体的绑定（已加载则直接返回）/ Load this body's rig (no-op when loaded). */
   ensureRig(): Promise<LoadedRig | null>
   /** 查看器发现绑定与网格不符时调用 / Called by the viewer when the rig does not match the meshes. */
@@ -230,6 +263,15 @@ export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: Syst
   return n === 1 && !!systems[id]?.visible
 }
 
+let pendingFace: { graph: AnatomyGraph; promise: Promise<LoadedFace | null> } | null = null
+let faceLoader = (dataset: string) => loadFace(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
+
+/** 测试用：替换表情数据的加载方式 / For tests: replace how the face data is fetched. */
+export function setFaceLoader(loader: typeof faceLoader): void {
+  faceLoader = loader
+  pendingFace = null
+}
+
 let pendingRig: { graph: AnatomyGraph; promise: Promise<LoadedRig | null> } | null = null
 let rigLoader = (dataset: string, onProgress: (f: number) => void) => loadRig(`${import.meta.env.BASE_URL}anatomy/${dataset}/`, onProgress)
 
@@ -270,6 +312,16 @@ export const useApp = create<AppState>()((set, get) => ({
   colorMode: 'tissue',
   provenanceHidden: new Set(),
   nerveBoost: true,
+  face: null,
+  faceStatus: 'idle',
+  faceMessage: '',
+  pain: { level: 5, onset: 'sudden', hold: false, muted: false },
+  aus: {},
+  painNonce: 0,
+  voiceStatus: 'idle',
+  voiceProgress: 0,
+  lastVoice: null,
+  skinOpaque: false,
   rig: null,
   rigStatus: 'idle',
   rigMessage: '',
@@ -371,12 +423,18 @@ export const useApp = create<AppState>()((set, get) => ({
       rigStatus: 'idle',
       rigMessage: '',
       rigProgress: 0,
+      face: null,
+      faceStatus: 'idle',
+      faceMessage: '',
+      // 嵌入模式默认静音：没有用户手势不出声 / muted by default in embed mode: no sound without a user gesture
+      pain: { ...prev.pain, muted: prev.embed ? true : prev.pain.muted },
       poseJoint: null,
       jointScales: null,
       shapeDev: { stature: 1, legRatio: 1 },
     })
     if (get().skinMapMode !== 'off') void get().ensureSkinMaps()
     if (get().leftTab === 'pose' || !poseIsRest(get().pose) || get().breathing) void get().ensureRig()
+    if (get().leftTab === 'pain' || get().pain.hold || Object.keys(get().aus).length > 0) void get().ensureFace()
   },
 
   switchBody: (body) => {
@@ -503,6 +561,59 @@ export const useApp = create<AppState>()((set, get) => ({
       return { provenanceHidden: next }
     }),
   setNerveBoost: (nerveBoost) => set({ nerveBoost }),
+
+  ensureFace: async () => {
+    const { face, faceStatus, graph, dataset } = get()
+    if (face || !graph) return face
+    if (faceStatus === 'missing' || faceStatus === 'error') return null
+    if (pendingFace && pendingFace.graph === graph) return pendingFace.promise
+    set({ faceStatus: 'loading', faceMessage: '' })
+    const promise = faceLoader(dataset)
+      .then((loaded) => {
+        if (get().graph !== graph) return null // 已换人体 / the body changed meanwhile
+        if (loaded && !graph.part(loaded.data.skin)) throw new Error(`表情数据指向的皮肤部件 ${loaded.data.skin} 不在此人体中 / skin part ${loaded.data.skin} is not in this body`)
+        set({ face: loaded, faceStatus: loaded ? 'ready' : 'missing' })
+        return loaded
+      })
+      .catch((err: unknown) => {
+        console.warn('[soma] face data failed to load', err)
+        if (get().graph === graph) set({ faceStatus: 'error', faceMessage: err instanceof Error ? err.message : String(err) })
+        return null
+      })
+      .finally(() => {
+        if (pendingFace?.graph === graph) pendingFace = null
+      })
+    pendingFace = { graph, promise }
+    return promise
+  },
+  rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
+  setPain: (patch) => {
+    set((s) => ({ pain: { ...s.pain, ...patch, level: Math.min(10, Math.max(0, patch.level ?? s.pain.level)) } }))
+    if (get().pain.hold) {
+      void get().ensureFace()
+      void get().ensureRig() // 张口要靠下颌关节 / the jaw joint is what opens the mouth
+    }
+  },
+  setAU: (id, intensity) => {
+    set((s) => {
+      const aus = { ...s.aus }
+      const v = Math.min(5, Math.max(0, intensity))
+      if (v > 0) aus[id] = v
+      else delete aus[id]
+      return { aus }
+    })
+    void get().ensureFace()
+    if (/^AU2[67]$/.test(id)) void get().ensureRig()
+  },
+  clearAUs: () => set({ aus: {} }),
+  setSkinOpaque: (skinOpaque) => set({ skinOpaque }),
+  setFaceView: (view) =>
+    set((s) => {
+      const systems: Partial<Record<SystemId, SystemState>> = {}
+      const show: SystemId[] = view === 'muscle' ? ['muscular', 'skeletal'] : ['integumentary']
+      for (const [k, v] of Object.entries(s.systems) as [SystemId, SystemState][]) systems[k] = { ...v, visible: show.includes(k) }
+      return { systems, skinOpaque: view === 'skin', isolated: null, peel: 0, skinMapMode: 'off' }
+    }),
 
   ensureRig: async () => {
     const { rig, rigStatus, graph, dataset } = get()
@@ -659,6 +770,7 @@ export const useApp = create<AppState>()((set, get) => ({
   setLeftTab: (leftTab) => {
     set({ leftTab })
     if (leftTab === 'pose') void get().ensureRig()
+    if (leftTab === 'pain') void get().ensureFace()
   },
   setTreeTab: (treeTab) => set({ treeTab }),
   toggleExpanded: (tree, id) =>

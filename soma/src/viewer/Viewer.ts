@@ -62,6 +62,8 @@ import {
   type Scales,
 } from '../anatomy/rig.ts'
 import { mergePoses } from '../../tools/rig/pose.ts'
+import { painFrame, setPainPaused } from '../pain/controller.ts'
+import { activations, displacePart, sameAUs, type AUs, type LoadedFace } from '../pain/face.ts'
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
@@ -160,6 +162,8 @@ export type ViewState = Pick<
   | 'jointScales'
   | 'leftTab'
   | 'cameraRequest'
+  | 'face'
+  | 'skinOpaque'
 >
 
 export interface ViewerOptions {
@@ -249,7 +253,15 @@ export class Viewer {
   private skinPickable = false
   private lastFace = -1
   private posedApplied = false
+  /** 已应用到顶点缓冲的表情数据，以及被它改写的部件的原始静止位置 / The face data applied to the vertex buffers, and the original rest positions of the parts it rewrote. */
+  private appliedFace: LoadedFace | null = null
+  private faceRest = new Map<number, Float32Array>()
+  private faceDisplaced = new Set<number>()
+  private faceAUs: AUs = {}
+  private faceJaw = 0
+  private faceForce = false
   private poseDirty = false
+  private jawApplied = 0
   private prewarmVersion = -1
   private prewarmNext = 0
   private skinLayerPart = -1
@@ -476,6 +488,7 @@ export class Viewer {
     else this.pauseReasons.delete(reason)
     const now = this.pauseReasons.size > 0
     if (was === now || this.disposed) return
+    if (this.source === useApp.getState) setPainPaused(now)
     if (now) {
       cancelAnimationFrame(this.raf)
       this.pausedAt = performance.now()
@@ -574,6 +587,11 @@ export class Viewer {
     this.skinMode = 'off'
     this.gizmo.clear()
     this.gizmoDrag = null
+    this.appliedFace = null
+    this.faceRest = new Map()
+    this.faceDisplaced = new Set()
+    this.faceAUs = {}
+    this.faceJaw = 0
   }
 
   /**
@@ -692,6 +710,7 @@ export class Viewer {
           this.loadedOrder.push(sys.id)
           // 绑定已经写入时，后到的部件补写它们的影响 / with a rig already applied, late parts get their influences now
           if (this.appliedRig && this.poseRt) this.writeRigParts(this.appliedRig, fresh)
+          this.faceForce = true // 新到的部件也要套上当前的表情 / parts that just arrived take the current expression too
           this.forceFull = true
           this.syncNeeded = true
           const expected = graph.partsBySystem(sys.id).length
@@ -846,6 +865,7 @@ export class Viewer {
       p.adjacentMode !== s.adjacentMode ||
       p.provenanceHidden !== s.provenanceHidden ||
       p.colorMode !== s.colorMode ||
+      p.skinOpaque !== s.skinOpaque ||
       p.selection !== s.selection
     const explodeChanged =
       !p ||
@@ -1102,8 +1122,101 @@ export class Viewer {
       pose = mergePoses(pose, breathingPose(this.poseRt.rig.rig.joints, phase))
       changed = true
     }
+    const jaw = this.jawPose()
+    if (jaw) pose = mergePoses(pose, jaw)
+    if (this.faceJaw !== this.jawApplied) {
+      this.jawApplied = this.faceJaw
+      changed = true
+    }
     if (changed) this.setDisplayPose(pose)
     return changed
+  }
+
+  /** 表情给出的下颌张开角，写成姿势的形式（没有绑定或没有张口时为 null）。 */
+  /** The jaw opening the expression asks for, as a pose (null without a rig or when the mouth is shut). */
+  private jawPose(): Pose | null {
+    const face = this.appliedFace
+    const rt = this.poseRt
+    if (!face || !rt || this.faceJaw <= 0) return null
+    const { joint, dof } = face.data.jaw
+    const j = rt.rig.rig.joints[rt.rig.jointIndex.get(joint) ?? -1]
+    const d = j?.dofs[dof]
+    if (!j || !d) return null
+    const base = this.poseTarget[joint]?.[dof] ?? 0
+    // 加在已有角度上，但不超过该自由度的活动范围 / added to the angle already there, within the dof's range
+    const add = Math.min(d.max, Math.max(d.min, base + this.faceJaw)) - base
+    return { [joint]: j.dofs.map((_, k) => (k === dof ? add : 0)) }
+  }
+
+  /**
+   * 面部表情：按当前 AU 强度改写受影响部件的静止位置（先位移、后蒙皮），只上传改动的那几段。
+   * 返回表情是否还在变化。
+   * Facial expression: rewrite the rest positions of the affected parts for the current AU
+   * intensities (displacement first, skinning after) and upload just those ranges. Returns
+   * whether the expression is still changing.
+   */
+  private stepFace(t: number): boolean {
+    if (this.source !== useApp.getState) return false
+    const s = this.source()
+    const batches = this.batches
+    const parts = this.graph.parts
+    if (s.face !== this.appliedFace) {
+      // 换了（或没有了）表情数据：先把改写过的部件恢复原状 / the face data changed (or went away): restore what was rewritten
+      if (batches) {
+        for (const [i, rest] of this.faceRest) {
+          const id = this.inst[i]!
+          if (id < 0) continue
+          batches.partBuffers(id).position.set(rest)
+          batches.markPositions(id)
+        }
+      }
+      this.faceRest.clear()
+      this.faceDisplaced.clear()
+      this.appliedFace = s.face
+      this.faceAUs = {}
+      this.faceJaw = 0
+      this.faceForce = true
+      this.dirty = true
+    }
+    const face = this.appliedFace
+    if (!face || !batches) return false
+    const frame = painFrame(t)
+    if (!this.faceForce && sameAUs(frame.aus, this.faceAUs)) return frame.animating
+    this.faceForce = false
+    this.faceAUs = frame.aus
+    const act = activations(face.data, frame.aus)
+    for (const [partId, fields] of face.fields) {
+      const i = this.graph.indexOf(partId)
+      const id = i >= 0 ? this.inst[i]! : -1
+      if (id < 0) continue
+      const active = fields.some((f) => (act.channels[f.channel] ?? 0) > 0)
+      if (!active && !this.faceDisplaced.has(i)) continue
+      const buf = batches.partBuffers(id)
+      if (buf.position.length !== face.vertexCount.get(partId)! * 3) {
+        // 顶点数对不上：表情数据是为另一版几何生成的 / vertex counts differ: the face data was built for other geometry
+        console.warn(`[soma] face data rejected: ${partId} has ${buf.position.length / 3} vertices, face.json says ${face.vertexCount.get(partId)}`)
+        useApp.getState().rejectFace(`表情数据与部件 ${partId} 的网格不符，需要重新生成 / the face data does not match the mesh of ${partId} and must be rebuilt`)
+        return false
+      }
+      let rest = this.faceRest.get(i)
+      if (!rest) this.faceRest.set(i, (rest = new Float32Array(buf.position)))
+      displacePart(face, partId, rest, act.channels, buf.position)
+      batches.markPositions(id)
+      if (active) this.faceDisplaced.add(i)
+      else this.faceDisplaced.delete(i)
+      if (i === this.skinLayerPart && this.skinLayer && this.skinIndex >= 0) this.skinLayer.setPositions(buf.position)
+    }
+    this.faceJaw = act.jaw
+    // 静止几何变了：按旧几何算出的拾取缓存作废 / the rest geometry changed: pick caches computed from the old one are stale
+    this.poseRt?.invalidate()
+    this.prewarmNext = 0
+    this.dirty = true
+    return true
+  }
+
+  /** 当前应用的 AU 强度与下颌角（验证用）/ The AU intensities and jaw angle currently applied (verification). */
+  faceState(): { aus: AUs; jaw: number; parts: number; loaded: boolean } {
+    return { aus: this.faceAUs, jaw: this.faceJaw, parts: this.faceDisplaced.size, loaded: !!this.appliedFace }
   }
 
   private updateGizmo(): void {
@@ -1239,6 +1352,8 @@ export class Viewer {
     // lifted a little so their colour can be read
     let opacity = (TISSUE_OPACITY[part.tissue] ?? 1) * (s.systems[part.system]?.opacity ?? 1)
     if (s.colorMode === 'source' && TISSUE_OPACITY[part.tissue] !== undefined) opacity = Math.min(1, opacity * 1.6)
+    // 看表情时把皮肤画成不透明 / the skin is drawn opaque to read the expression
+    if (s.skinOpaque && part.tissue === 'skin') opacity = 1
     if (selected) opacity = 1 // a selected part is shown solid so it can be found
     this.pickable[i] = id >= 0 && d === NORMAL && opacity >= PICK_OPACITY ? 1 : 0
     this.solid[i] = d === NORMAL && opacity >= 0.999 ? 1 : 0
@@ -1781,7 +1896,8 @@ export class Viewer {
     }
     this.controls.update()
     if (this.syncNeeded) this.sync()
-    const posing = this.stepPose(t)
+    const facing = this.stepFace(t)
+    const posing = this.stepPose(t) || facing
     if (this.gizmoJoint) this.updateGizmo()
 
     // 姿势在动时不做悬停拾取（每帧都要重算变形后的几何）

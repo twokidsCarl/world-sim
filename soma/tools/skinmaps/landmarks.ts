@@ -42,11 +42,14 @@ export type SkinExpr =
   | { at: PointExpr; frame: string; deg: number }
   | { frame: string; t: FrameT; deg: number }
   /**
-   * 前正中线上 A、B 之间最深的凹点（脐）。凹陷不足 minDepthMm（皮肤上没有做出脐）时改用 fallback。
+   * 前正中线上 A、B 之间最深的凹点（脐）。凹陷不足 minDepthMm（皮肤上没有做出脐），或其高度与 near 相差超过
+   * withinMm（找到的是别的凹陷，如乳房下皱襞之间）时，改用 fallback。
    * Deepest dimple of the anterior midline between A and B (the umbilicus). When it is shallower
-   * than minDepthMm (a skin without a modelled umbilicus) the fallback is used instead.
+   * than minDepthMm (a skin without a modelled umbilicus), or its height differs from that of
+   * `near` by more than withinMm (some other hollow was found, e.g. between the inframammary
+   * folds), the fallback is used instead.
    */
-  | { dimple: { between: [PointExpr, PointExpr]; minDepthMm?: number; fallback?: SkinExpr } }
+  | { dimple: { between: [PointExpr, PointExpr]; minDepthMm?: number; near?: PointExpr; withinMm?: number; fallback?: SkinExpr } }
   /**
    * 沿坐标架轴线自 t[0] 向 t[1] 逐步前进，在第一个沿 deg 方向 maxMm 以内有皮肤的位置取该皮肤点
    * （如上臂内侧皮肤的最上端，即腋窝顶）。
@@ -385,8 +388,36 @@ export class Landmarks {
     const hit = this.skinCache.get(key)
     if (hit !== undefined) return hit
     this.lastHit = null
-    const v = this.vertexUncached(e, side)
+    let v = this.vertexUncached(e, side)
     const h = this.lastHit as V3 | null
+    // 标志点是按侧别求的：若吸附到的顶点落在对侧（正中线旁、网格较粗处），改取两环以内本侧最近的顶点，
+    // 否则这一侧的种子线会从对侧的顶点起头而接不上。
+    // A landmark is evaluated for one side: when the vertex it snaps to lies on the other side
+    // (beside the midline where the mesh is coarse), the nearest vertex of this side within two
+    // rings is taken instead; otherwise this side's seed line would start on the other side and
+    // not connect.
+    if ((this.skin.left[v] === 1) !== (side === 'L')) {
+      const target = h ?? pos(this.skin, v)
+      let best = -1, bd = Infinity
+      const seen = new Set<number>([v])
+      let ring = [v]
+      for (let depth = 0; depth < 2; depth++) {
+        const next: number[] = []
+        for (const a of ring)
+          for (let k = this.skin.adjStart[a]!; k < this.skin.adjStart[a + 1]!; k++) {
+            const u = this.skin.adj[k]!
+            if (seen.has(u) || !this.skin.outer[u]) continue
+            seen.add(u)
+            next.push(u)
+            if ((this.skin.left[u] === 1) === (side === 'L')) {
+              const d = dist(pos(this.skin, u), target)
+              if (d < bd) { bd = d; best = u }
+            }
+          }
+        ring = next
+      }
+      if (best >= 0) v = best
+    }
     this.skinCache.set(key, v)
     this.surfaceCache.set(key, h && dist(h, pos(this.skin, v)) < 0.09 ? h : pos(this.skin, v))
     return v
@@ -443,7 +474,8 @@ export class Landmarks {
         const s = p[2] - zs.reduce((x, y) => x + y, 0) / zs.length
         if (s < bs) { bs = s; best = v }
       }
-      if (best < 0 || bs > -(e.dimple.minDepthMm ?? 0) / 1000) {
+      const off = best >= 0 && e.dimple.near ? Math.abs(this.skin.positions[best * 3 + 1]! - this.point(e.dimple.near, side)[1]) : 0
+      if (best < 0 || bs > -(e.dimple.minDepthMm ?? 0) / 1000 || off > (e.dimple.withinMm ?? Infinity) / 1000) {
         if (e.dimple.fallback) return this.vertex(e.dimple.fallback, side)
         throw new Error('no dimple found')
       }

@@ -11,6 +11,9 @@ import type { Mesh } from '../tools/pipeline/geometry.ts'
 import { runLandmarkChecks, type LandmarkResult } from '../tools/pipeline/landmarks.ts'
 import type { Polyline } from '../tools/pipeline/tube.ts'
 import { readGlb } from '../tools/pipeline/glb.ts'
+import { loadBuiltBody } from '../tools/pipeline/body.ts'
+import { PointIndex, surfacePoints } from '../tools/pipeline/register.ts'
+import { edgeTopology, FACE_MUSCLE_NAME, faceRegionOfSkin, skinResolution } from '../tools/pipeline/skinPackage.ts'
 import { LAYERS } from '../tools/pipeline/layers.ts'
 
 const DIR = join(import.meta.dirname, '../public/anatomy/male')
@@ -29,7 +32,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     return hits[0]!
   }
   const layerOf = (p: Part) => LAYERS[p.depth]!.key
-  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { skinPackage?: { installed?: boolean }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] } }
+  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { corrections?: { release3SwappedGeometry?: string[][] }; skinPackage?: { installed?: boolean; fittedTo?: { key: string }; internalsKey?: string; fit?: { closed: boolean; outside: number; outside5mm: number }; fitShipped?: { closed: boolean; outside: number }; face?: { cover: Record<string, { minMm: number; medianMm: number } | null>; eyeJoint?: Record<'L' | 'R', { distanceMm: number }> }; notFitted?: { thin: { outside: number } }; resolution?: Record<'source' | 'simplifiedWhole' | 'shipped', { vertices: number; triangles: number; face: { vertices: number; triangles: number; meanEdgeMm: number } }> & { shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } } }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] } }
   const skinInstalled = !!pipelineReport.skinPackage?.installed
   const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? ((JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as { shoulderGirdle?: { provenance?: { relabelledIds?: string[] } } }).shoulderGirdle?.provenance?.relabelledIds ?? []) : [])
 
@@ -232,6 +235,54 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     expect(total).toBeLessThan(2_400_000)
   })
 
+  it.skipIf(!skinInstalled)('keeps the face of the installed skin at source resolution, in one watertight part', async () => {
+    const sp = pipelineReport.skinPackage!
+    // 皮肤包是按这一版内部结构拟合的 / the package was fitted to these internals
+    expect(sp.fittedTo!.key).toBe(sp.internalsKey)
+    const res = sp.resolution!
+    // 面部区域：距表情肌 30 mm 以内的皮肤顶点。原始皮肤在那里有约 1.6 万个顶点，一个不少
+    // the face region: skin vertices within 30 mm of a muscle of facial expression. The source skin has about 16k vertices there and all are kept
+    expect(res.source.face.vertices).toBeGreaterThan(14_000)
+    expect(res.shipped.face.vertices).toBe(res.source.face.vertices)
+    expect(res.shipped.face.meanEdgeMm).toBeLessThanOrEqual(2)
+    // 整张简化时面部只剩一成左右，边长是三倍多 / simplified as a whole, about a tenth of them would be left, with edges more than three times as long
+    expect(res.simplifiedWhole.face.vertices).toBeLessThan(res.shipped.face.vertices / 5)
+    expect(res.simplifiedWhole.face.meanEdgeMm).toBeGreaterThan(5)
+    // 其余部分照旧简化 / the rest is simplified as before
+    expect(res.shipped.vertices - res.shipped.face.vertices).toBeLessThan(16_000)
+    expect(res.shippedTopology.boundaryEdges).toBe(0)
+    // 对写出的 GLB 再量一遍：一个部件、没有边界边、面部的顶点数和边长与报告一致
+    // measured again on the written GLB: one part, no boundary edge, face vertices and edge length as reported
+    const skin = byName('Skin')
+    expect(data.parts.filter((p) => p.tissue === 'skin' && p.triangles > 10_000).map((p) => p.id)).toEqual([skin.id])
+    const body = await loadBuiltBody(DIR, (p) => p.id === skin.id || (p.tissue === 'muscle' && FACE_MUSCLE_NAME.test(p.name)))
+    const mesh = body.meshes.get(skin.id)!
+    expect(mesh.indices.length / 3).toBe(res.shipped.triangles)
+    expect(mesh.positions.length / 3).toBe(res.shipped.vertices)
+    expect(edgeTopology(mesh).boundaryEdges).toBe(0)
+    const facial = [...body.parts.values()].filter((p) => p.id !== skin.id && body.meshes.has(p.id)).map((p) => body.meshes.get(p.id)!)
+    expect(facial.length).toBeGreaterThan(25)
+    const shipped = skinResolution(mesh, faceRegionOfSkin(mesh, facial))
+    // GLB 里的位置是量化过的，肌也是简化过的：边界上的顶点会有少量出入
+    // positions in the GLB are quantised and the muscles simplified: a few vertices on the border fall either way
+    expect(Math.abs(shipped.face.vertices - res.shipped.face.vertices)).toBeLessThan(400)
+    expect(shipped.face.meanEdgeMm).toBeLessThanOrEqual(2)
+    // 皮肤仍包得住深部结构（按设计不包的眼睑、唇、鼻软骨处除外，合计不到 0.1 %）
+    // the skin still encloses the deep parts (but for the lids, lips and nasal cartilages left out by design, under 0.1 % in all)
+    expect(sp.fit!.closed).toBe(true)
+    expect(sp.fit!.outside).toBeLessThan(0.001)
+    expect(sp.fit!.outside5mm).toBe(0)
+    expect(sp.fitShipped!.closed).toBe(true)
+    expect(sp.fitShipped!.outside).toBeLessThan(0.002)
+    // 眼关节与眼球中心相差不过几毫米（右侧巩膜的源网格带一粒碎屑，按包围盒算会差出 24 mm）
+    // the eye joints lie within a few millimetres of the centres of the globes (the source mesh of the right sclera carries a speck that would put a bounding-box centre 24 mm off)
+    for (const side of ['L', 'R'] as const) expect(sp.face!.eyeJoint![side].distanceMm).toBeLessThan(8)
+    // 不在拟合之列的薄结构露出多少，如实报告并写进说明 / how far the thin structures outside the fit come through is reported and stated in the cautions
+    expect(sp.notFitted!.thin.outside).toBeGreaterThan(0)
+    expect(sp.notFitted!.thin.outside).toBeLessThan(0.05)
+    expect(data.cautions!.map((c) => c.en).join(' ')).toContain('fitted to enclose muscles, bones, cartilages and organs only')
+  }, 60_000)
+
   it('gets the left femur right', () => {
     const femur = byName('Left femur')
     expect(femur).toMatchObject({ side: 'L', system: 'skeletal', tissue: 'bone', fma: 'FMA24475' })
@@ -425,6 +476,36 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
         expect(data.parts.filter((q) => q.fma === p.fma).length, p.name).toBe(1)
       }
     })
+
+    it('has the two rings of orbicularis oculi under the right names (their files are swapped in release 3.0)', async () => {
+      // 源数据把两个环的网格放进了对方的文件，读入时已换回（见 corrections.ts）。
+      // 睑部在眼睑里、贴着睑板，是内环；眶部绕着眶缘，是外环。
+      // The source has each ring's mesh in the other's file; they are swapped back on loading (see corrections.ts).
+      // The palpebral part lies in the lids on the tarsal plates and is the inner ring; the orbital part surrounds the orbital margin.
+      const body = await loadBuiltBody(DIR, (p) => /orbicularis oculi|^Tarsal plate of/.test(p.name))
+      for (const [side, fmaOrbital, fmaPalpebral] of [['right', 'FMA46782', 'FMA46785'], ['left', 'FMA46783', 'FMA46786']] as const) {
+        const orbital = byName(`Orbital part of ${side} orbicularis oculi`)
+        const palpebral = byName(`Palpebral part of ${side} orbicularis oculi`)
+        expect(orbital).toMatchObject({ id: `R3_${fmaOrbital}`, fma: fmaOrbital })
+        expect(palpebral).toMatchObject({ id: `R3_${fmaPalpebral}`, fma: fmaPalpebral })
+        // 外环更宽也更高 / the outer ring is wider and taller
+        expect(orbital.bbox[3] - orbital.bbox[0]).toBeGreaterThan(palpebral.bbox[3] - palpebral.bbox[0] + 0.005)
+        expect(orbital.bbox[4] - orbital.bbox[1]).toBeGreaterThan(palpebral.bbox[4] - palpebral.bbox[1] + 0.01)
+        // 睑板贴着睑部，而不是眶部 / the tarsal plates lie on the palpebral part, not on the orbital part
+        const tarsal: number[] = []
+        for (const t of data.parts.filter((p) => new RegExp(`^Tarsal plate of ${side} (upper|lower) eyelid$`).test(p.name))) for (const v of surfacePoints(body.meshes.get(t.id)!, 0.001)) tarsal.push(v)
+        expect(tarsal.length).toBeGreaterThan(300)
+        const near = (part: Part) => {
+          const ix = new PointIndex(surfacePoints(body.meshes.get(part.id)!, 0.001), 0.005)
+          let n = 0
+          for (let i = 0; i < tarsal.length; i += 3) if (ix.distance(tarsal[i]!, tarsal[i + 1]!, tarsal[i + 2]!, 0.05) < 0.003) n++
+          return n / (tarsal.length / 3)
+        }
+        expect(near(palpebral), `${side} palpebral`).toBeGreaterThan(0.8)
+        expect(near(orbital), `${side} orbital`).toBeLessThan(0.5)
+      }
+      expect(pipelineReport.corrections?.release3SwappedGeometry).toEqual([['FMA46782', 'FMA46785'], ['FMA46783', 'FMA46786']])
+    }, 60_000)
 
     it('has both lungs, inside the rib cage, around the heart, on the diaphragm', () => {
       const lobes = LOBES.map(byName)

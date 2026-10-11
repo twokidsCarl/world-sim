@@ -103,7 +103,12 @@ export interface PointResult { name: string; side: SideLR; got: string; expect: 
 export function regionsOver(lm: Landmarks, labels: Uint8Array, regions: RegionDef[], partName: string, side: SideLR): Record<string, number> {
   const skin = lm.skin
   const part = lm.body.byId.get(lm.partId(partName, side))!
-  const [x0, y0, z0, x1, y1] = part.bbox
+  const [bx0, y0, z0, bx1, y1] = part.bbox
+  // 正中的部件按其离正中面的最大半宽取对称的范围：部件本身偏在一侧时，另一侧前方也取得到皮肤。
+  // A midline part is given a range symmetric about the median plane (its larger half-width), so
+  // that a part lying off to one side still has skin in front of it on the other.
+  const half = Math.max(Math.abs(bx0 - skin.midX), Math.abs(bx1 - skin.midX))
+  const x0 = part.side === 'M' ? skin.midX - half : bx0, x1 = part.side === 'M' ? skin.midX + half : bx1
   const area = new Map<string, number>()
   let total = 0
   for (let i = 0; i < skin.n; i++) {

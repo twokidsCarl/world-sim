@@ -164,6 +164,78 @@
         "en": "Femur and patella are hidden; tibia, fibula and the knee ligaments and menisci remain. Look down on the tibial plateau: two menisci and the two cruciate ligaments — click each"
       },
       "url": "/?iso=FMA44580,FMA64019,FMA24476,FMA24479&cam=0.101,0.567,0.250,0.071,0.367,0.08"
+    },
+    {
+      "id": "pain",
+      "title": {
+        "zh": "疼痛表情：面部肌肉怎样动",
+        "en": "The pain expression: how the facial muscles move"
+      },
+      "hint": {
+        "zh": "拖动强度滑块看皱眉、挤眼、提上唇逐步出现；点“触发”看它按时间出现又消退。声音默认关，打开后再触发才会出声。这是行为的计算模型，模拟人没有感受",
+        "en": "Drag the intensity slider to see brow lowering, eye tightening and lip raising appear step by step; Trigger plays the time course. Sound is off by default and plays only after you turn it on and trigger. A computational model of behaviour: the simulated body feels nothing"
+      },
+      "url": "/?sys=mus,ske&pain=7&cam=0.06,1.507,0.671,-0.001,1.487,0.151"
+    },
+    {
+      "id": "f-pelvic-floor",
+      "title": {
+        "zh": "女性盆底：从上方看盆膈",
+        "en": "The female pelvic floor from above"
+      },
+      "hint": {
+        "zh": "只显示髋骨、骶骨、盆膈和会阴的肌肉。从上往下看：耻骨直肠肌像吊带一样绕过直肠后方。逐块点一点；这些肌肉是按文献建模后配准的，不是她本人的扫描",
+        "en": "Hip bones, sacrum and the muscles of the pelvic diaphragm and perineum only. Looking down: puborectalis slings round behind the rectum. Click each muscle; they are modelled from the literature and registered, not scanned from her"
+      },
+      "url": "/?body=female&iso=FMA19726,FMA9579,FMA16585,VF_sacrum&cam=0.02,1.05,0.25,0,0.71,0.04"
+    },
+    {
+      "id": "f-legs",
+      "title": {
+        "zh": "女性下肢肌肉：数据从哪来",
+        "en": "The female leg muscles: where the data comes from"
+      },
+      "hint": {
+        "zh": "按来源着色：不同颜色是不同的数据集。点任意一块肌肉，在完整界面里可以看到它的来源、许可和“配准变形”的含义",
+        "en": "Coloured by source: each colour is a different dataset. Click any muscle; the full UI shows its source, licence and what “warped” means"
+      },
+      "url": "/?body=female&iso=FMA37368,FMA9611,FMA24476,FMA24479&src=1&focus=1"
+    },
+    {
+      "id": "f-dermatomes",
+      "title": {
+        "zh": "女性：皮节图",
+        "en": "Female: dermatome map"
+      },
+      "hint": {
+        "zh": "鼠标移到皮肤上看是哪一节脊神经的皮节，点一下高亮；切换到“皮神经”对比。教学示意图，躯干处分区较粗",
+        "en": "Hover the skin to see which spinal segment supplies it, click to highlight; switch to nerve territories to compare. A teaching diagram, rough on the trunk"
+      },
+      "url": "/?body=female&sys=int&map=d"
+    },
+    {
+      "id": "f-squat",
+      "title": {
+        "zh": "女性：深蹲",
+        "en": "Female: deep squat"
+      },
+      "hint": {
+        "zh": "进来会自己蹲下，点下方按钮换别的姿势。纯运动学演示：深屈时软组织会互相穿插",
+        "en": "She squats by herself; use the buttons for other poses. Kinematics only: soft tissue interpenetrates in deep flexion"
+      },
+      "url": "/?body=female&sys=ske,mus&pose=squat"
+    },
+    {
+      "id": "f-pain",
+      "title": {
+        "zh": "女性：疼痛表情",
+        "en": "Female: the pain expression"
+      },
+      "hint": {
+        "zh": "拖动强度、点“触发”；点“看皮肤”对比肌肉和皮肤上的表情。行为的计算模型，模拟人没有感受；声音默认关",
+        "en": "Drag the intensity, press Trigger; “看皮肤” compares the expression on muscle and on skin. A computational model of behaviour — the simulated body feels nothing; sound is off by default"
+      },
+      "url": "/?body=female&sys=mus,ske&pain=7&cam=0.062,1.412,0.668,0.002,1.392,0.148"
     }
   ],
   "agent": {

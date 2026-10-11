@@ -5,10 +5,12 @@
 import { useMemo, useState } from 'react'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
+import { triggerPain } from '../pain/controller.ts'
 import { useApp } from '../state/store.ts'
 import { currentLink } from '../state/urlSync.ts'
 import { CautionList } from './CautionsDialog.tsx'
 import { Icon } from './Icon.tsx'
+import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 
 /** 卡片 URL 带了哪些参数，就显示哪些控件（见 App 中的 embedKeys）。 */
 /** Which controls appear follows from which parameters the card URL carried (see embedKeys in App). */
@@ -30,11 +32,18 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const selection = useApp((s) => s.selection)
   const regions = useApp((s) => s.skinRegions)
   const maps = useApp((s) => s.skinMaps)
+  const pain = useApp((s) => s.pain)
+  const face = useApp((s) => s.face)
+  const voiceStatus = useApp((s) => s.voiceStatus)
+  const voiceProgress = useApp((s) => s.voiceProgress)
+  const skinOpaque = useApp((s) => s.skinOpaque)
+  const painCard = embedKeys.has('pain') || embedKeys.has('au')
   const app = useApp.getState()
   const layers = graph.data.layers
   const cautions = graph.cautions
   const rigCautions = rig && (embedKeys.has('pose') || embedKeys.has('breath')) ? rig.rig.cautions : []
-  const all = [...cautions, ...rigCautions]
+  // 疼痛卡片：把"这是什么模型"的说明放在最前 / pain cards: the statement of what this model is comes first
+  const all = [...(painCard ? PAIN_STATEMENT : []), ...cautions, ...rigCautions, ...(painCard && face ? face.data.cautions : [])]
   // 姿势按钮：静止、卡片指定的预设，再加几个常用的 / pose buttons: rest, the card's preset, and a few common ones
   const presets = useMemo(() => {
     if (!rig) return []
@@ -106,11 +115,38 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
               {zh}
             </button>
           ))}
+        {painCard && face && (
+          <>
+            <label className="embed-slider" title="疼痛强度 Pain intensity (0–10)">
+              <span>强度 {pain.level.toFixed(1)}</span>
+              <input type="range" min={0} max={10} step={0.5} value={pain.level} aria-label="疼痛强度 / pain intensity" onChange={(e) => app.setPain({ level: Number(e.target.value) })} />
+            </label>
+            <button className="tool-btn" disabled={pain.level <= 0} onClick={() => void triggerPain()} title="按时间过程触发一次；未静音时同时发声 / trigger once over time, with sound unless muted">
+              触发 <span className="en">Trigger</span>
+            </button>
+            <button className={`tool-btn${pain.hold ? ' on' : ''}`} aria-pressed={pain.hold} onClick={() => app.setPain({ hold: !pain.hold })}>
+              保持
+            </button>
+            <button className={`tool-btn${pain.muted ? '' : ' on'}`} aria-pressed={!pain.muted} onClick={() => app.setPain({ muted: !pain.muted })} title="声音默认关闭；打开后点“触发”才会出声 / sound is off by default; once on, Trigger plays it">
+              {pain.muted ? '声音：关' : '声音：开'}
+            </button>
+            <button className="tool-btn" onClick={() => app.setFaceView(skinOpaque ? 'muscle' : 'skin')}>
+              {skinOpaque ? '看肌肉' : '看皮肤'}
+            </button>
+            {voiceStatus === 'loading' && <span className="embed-note">下载声音 {Math.round(voiceProgress * 100)}%</span>}
+          </>
+        )}
+        {painCard && !face && <span className="embed-note">加载表情数据…</span>}
         <a className="tool-btn embed-open" href={currentLink({ embed: false })} target="_blank" rel="noreferrer noopener" onClick={(e) => (e.currentTarget.href = currentLink({ embed: false }))}>
           在完整界面中打开 <span className="en">Open full UI</span>
         </a>
       </div>
       {label && <div className="embed-label">{label}</div>}
+      {painCard && !pain.muted && (
+        <div className="embed-attrib">
+          <VoiceAttribution compact />
+        </div>
+      )}
     </>
   )
 }

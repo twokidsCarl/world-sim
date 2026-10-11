@@ -29,6 +29,10 @@
   "insertAt": {
    "zh": "modiolus：皮肤上的活动端不取肌肉网格末端在皮肤上的最近点，而取皮肤上的口角轴（口角外侧 3 mm，从正前方投影到皮肤）。原因：皮肤比这些肌肉浅 12–18 mm，最近点会落到口角外侧 15–20 mm 的颊部。",
    "en": "modiolus: the mobile end on the skin is not the skin point nearest to the end of the muscle mesh but the modiolus on the skin (3 mm lateral to the corner of the mouth, projected onto the skin from straight ahead). Reason: the skin lies 12–18 mm superficial to these muscles, and the nearest point would fall on the cheek 15–20 mm lateral to the corner of the mouth."
+  },
+  "hangMm": {
+   "zh": "作用线下方的皮肤被多带动的距离：眉下到上睑的皮肤是挂在眉上的，眉被拉动时它整片跟着走，到睑缘上方被 mask 截住。数值是假设。",
+   "en": "how much further the skin below the line is carried: the skin from under the brow to the upper lid hangs from the brow and moves with it as a whole, until the mask stops it above the lid margin. The value is an assumption."
   }
  },
  "lid": {
@@ -152,7 +156,8 @@
    "action": {
     "zh": "把眉毛拉向内下方，眉间出现纵纹",
     "en": "draws the eyebrow medially and down; vertical glabellar furrows"
-   }
+   },
+   "hangMm": 16
   },
   {
    "id": "procerus",
@@ -201,7 +206,7 @@
     1,
     0
    ],
-   "excursionMm": 3.5,
+   "excursionMm": 5,
    "spreadMm": 10,
    "reachMm": 12,
    "mask": [
@@ -620,7 +625,7 @@
   },
   {
    "id": "orbicularis_oculi_orbital",
-   "match": "orbicularis oculi",
+   "match": "orbital part of .* orbicularis oculi",
    "name": {
     "zh": "眼轮匝肌眶部",
     "en": "orbicularis oculi, orbital part"
@@ -650,15 +655,11 @@
     "lateral": 0.8,
     "superior": 0.4,
     "medial": 0.3
-   },
-   "ringNote": {
-    "zh": "按几何选环：两个眼轮匝肌部件里平均半径较大的那个是眶部。发布的数据里这两个部件的名字与几何相反（名为“Palpebral part”的是外环），所以这里不按名字取。",
-    "en": "The ring is chosen by geometry: of the two orbicularis oculi parts the one with the larger mean radius is the orbital part. In the shipped data the names of the two parts are the opposite of their geometry (the part named \"Palpebral part\" is the outer ring), so the name is not used."
    }
   },
   {
    "id": "orbicularis_oculi_palpebral_upper",
-   "match": "orbicularis oculi",
+   "match": "palpebral part of .* orbicularis oculi",
    "name": {
     "zh": "眼轮匝肌睑部（上睑）",
     "en": "orbicularis oculi, palpebral part (upper lid)"
@@ -687,7 +688,7 @@
   },
   {
    "id": "orbicularis_oculi_palpebral_lower",
-   "match": "orbicularis oculi",
+   "match": "palpebral part of .* orbicularis oculi",
    "name": {
     "zh": "眼轮匝肌睑部（下睑）",
     "en": "orbicularis oculi, palpebral part (lower lid)"
@@ -747,6 +748,44 @@
     "superior": 0.5,
     "medial": 1.0
    }
+  },
+  {
+   "id": "oral_recess",
+   "match": "",
+   "name": {
+    "zh": "口裂内陷（皮肤的几何替代）",
+    "en": "oral recess (geometric stand-in on the skin)"
+   },
+   "model": "recess",
+   "excursionMm": 7,
+   "spreadMm": 3.5,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "无（不是肌肉）",
+     "en": "none (not a muscle)"
+    },
+    "insertion": {
+     "zh": "无",
+     "en": "none"
+    }
+   },
+   "action": {
+    "zh": "皮肤是一张闭合的面，唇不能分开。张口时把两唇相贴的那道褶向口内推 excursionMm，褶上下 spreadMm 内渐变，让下颌张开时被拉开的皮肤成为一个凹陷，而不是一张平的膜。两个数都是假设。",
+    "en": "The skin is one closed surface and the lips cannot part. On mouth opening the crease where the lips meet is pushed excursionMm into the mouth, fading over spreadMm above and below it, so that the skin stretched by the opening jaw forms a hollow rather than a flat membrane. Both numbers are assumptions."
+   }
   }
- ]
+ ],
+ "bulge": {
+  "gain": 0.5,
+  "minMm": 2,
+  "maxMm": 10,
+  "limitMm": 2,
+  "smoothing": 2,
+  "note": {
+   "zh": "皮肤滑动引起的厚度变化：w = −gain · H · div_s(u)，沿法线向外。gain = 0.5 来自不可压软组织层、线性剪切剖面的体积守恒，不是拟合出来的；H 是皮肤到骨的距离，限制在 minMm–maxMm；|w| 不超过 limitMm；散度在网格上平滑 smoothing 遍。minMm、maxMm、limitMm、smoothing 是假设。",
+   "en": "Change of thickness caused by the sliding of the skin: w = −gain · H · div_s(u), along the outward normal. gain = 0.5 follows from volume conservation of an incompressible soft-tissue layer with a linear shear profile and is not fitted; H is the distance from skin to bone, limited to minMm–maxMm; |w| is capped at limitMm; the divergence is smoothed over the mesh `smoothing` times. minMm, maxMm, limitMm and smoothing are assumptions."
+  }
+ }
 }

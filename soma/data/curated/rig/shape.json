@@ -1,0 +1,52 @@
+{
+  "_doc": {
+    "zh": "体型控制如何落到骨架上。factors 来自 data/curated/bodyshape/rig-shape.json（肢段长度、宽度、围度随身高、腿长比例、体型分布的变化；围度不含 BMI 项，BMI 由皮肤位移场表达）。assign：按关节 id（正则）指定哪个因子缩放该关节节段的长轴（along）或横截面（across），自上而下每条都生效。calibrate：某些因子量的是两个关节中心之间的距离，而承担缩放的关节只覆盖其中一部分（例如躯干长度从髋关节中心量到 C7，但骨盆不拉长），构建时数值求出增益 gain，使该距离恰好按因子变化。follow：非皮肤部件跟随皮肤位移的规则。extremes：验证和渲染用的控制量取值。",
+    "en": "How the body-shape controls land on the skeleton. `factors` come from data/curated/bodyshape/rig-shape.json (segment lengths, breadths and girths as functions of stature, relative leg length and mass distribution; girths without their BMI term, BMI being expressed by the skin displacement field). `assign`: by joint id (regular expression), which factor scales the joint's segment along its axis or across it; every matching entry applies. `calibrate`: some factors measure the distance between two joint centres while the joints that carry the scale cover only part of it (trunk length runs from hip-centre level to C7, but the pelvis is not stretched); the build solves numerically for a gain such that the distance changes exactly as the factor. `follow`: how non-skin parts follow the skin displacement. `extremes`: control values used for validation and renders."
+  },
+  "assign": [
+    { "match": "^(C7|C6|C5|C4|C3|C2|C1)$", "along": "headNeck", "across": "neck" },
+    { "match": "^(skull|tmj)$", "along": "headNeck", "across": "headNeck" },
+    { "match": "^(L5|L4|L3|L2|L1|T12|T11|T10|T9|T8|T7|T6|T5|T4|T3|T2|T1)$", "along": "trunk" },
+    { "match": "^(L5|L4|L3|L2|L1|T12|T11|T10|T9)$", "across": "waist" },
+    { "match": "^(T8|T7|T6|T5|T4|T3|T2|T1)$", "across": "chest" },
+    { "match": "^rib\\d+_[LR]$", "along": "chest", "across": "chest" },
+    { "match": "^pelvis$", "across": "pelvisWidth" },
+    { "match": "^sc_[LR]$", "along": "shoulderWidth" },
+    { "match": "^gh_[LR]$", "along": "upperArm", "across": "upperArm.girth" },
+    { "match": "^(elbow|radioulnar)_[LR]$", "along": "forearm", "across": "forearm.girth" },
+    { "match": "^(wrist|cmc1|mcp\\d|pip\\d|dip\\d|ip1)_[LR]$", "along": "hand", "across": "hand" },
+    { "match": "^hip_[LR]$", "along": "thigh", "across": "thighMid" },
+    { "match": "^patella_[LR]$", "along": "thighMid", "across": "thighMid" },
+    { "match": "^knee_[LR]$", "along": "shank", "across": "calf" },
+    { "match": "^ankle_[LR]$", "along": "ankleHeight", "across": "ankleHeight" },
+    { "match": "^subtalar_[LR]$", "along": "foot", "across": "ankleHeight" },
+    { "match": "^(mtp\\d|tip1|tpip\\d|tdip\\d)_[LR]$", "along": "foot", "across": "ankleHeight" }
+  ],
+  "calibrate": [
+    { "factor": "headNeck", "from": "C7", "to": "skull", "axis": "along", "joints": "^(C7|C6|C5|C4|C3|C2|C1)$" },
+    { "factor": "trunk", "from": "pelvis", "to": "C7", "axis": "along", "joints": "^(L5|L4|L3|L2|L1|T12|T11|T10|T9|T8|T7|T6|T5|T4|T3|T2|T1)$" },
+    { "factor": "thigh", "from": "hip_L", "to": "knee_L", "axis": "along", "joints": "^hip_[LR]$" },
+    { "factor": "shank", "from": "knee_L", "to": "ankle_L", "axis": "along", "joints": "^knee_[LR]$" },
+    { "factor": "foot", "from": "ankle_L", "to": "mtp2_L", "axis": "along", "joints": "^subtalar_[LR]$" },
+    { "factor": "upperArm", "from": "gh_L", "to": "elbow_L", "axis": "along", "joints": "^gh_[LR]$" },
+    { "factor": "forearm", "from": "elbow_L", "to": "wrist_L", "axis": "along", "joints": "^(elbow|radioulnar)_[LR]$" },
+    { "factor": "hand", "from": "wrist_L", "to": "mcp3_L", "axis": "along", "joints": "^wrist_[LR]$" },
+    { "factor": "shoulderWidth", "from": "gh_R", "to": "gh_L", "axis": "along", "joints": "^sc_[LR]$" },
+    { "factor": "pelvisWidth", "from": "hip_R", "to": "hip_L", "axis": "across", "joints": "^pelvis$" }
+  ],
+  "follow": {
+    "appendages": "^(External ear|Eyebrow|Hair of head|Pubic hair|.*nail plate.*|.*perionyx.*)$",
+    "fatTissues": ["fat"],
+    "superficialTissues": ["nerve", "vein", "artery", "fascia", "skin"],
+    "superficialDepthM": 0.010
+  },
+  "extremes": {
+    "statureDelta": { "male": 0.13, "female": 0.12, "note": { "zh": "约 ±2 个标准差（成人身高标准差约 6–7 cm；此处为近似值，未逐一核对来源）。", "en": "About ±2 SD (adult stature SD is about 6–7 cm; an approximate figure, not checked against a source here)." } },
+    "bmi": [18.5, 21.6, 25, 30],
+    "legLength": [-1.5, 1.5],
+    "centralBuild": [-1.5, 1.5]
+  },
+  "validity": {
+    "maxOver2mmPctAboveDefault": 1.0
+  }
+}

@@ -184,6 +184,13 @@ export class PartMeshes implements PartRenderer {
     }
   }
 
+  markPositions(id: number): void {
+    const r = this.ranges[id]!
+    const a = this.meshes[id]!.geometry.getAttribute('position') as BufferAttribute
+    a.addUpdateRange(r.vertexStart * 3, r.vertexCount * 3)
+    a.needsUpdate = true
+  }
+
   flushSkinAttributes(): void {
     const seen = new Set<unknown>()
     for (const m of this.meshes) {
