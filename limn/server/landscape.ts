@@ -1,15 +1,21 @@
 /**
+ * 主题 → 拥挤的细胞场景。模型写配方（哪些分子、在哪里、有多少）；代码为每种成分检索真实结构；
+ * 模型再从查到的结构里为每种成分选一个。丰度优先用 PaxDb 的实测数据，查不到的才用模型的估计，
+ * 两者在结果里分别标明。
+ *
  * Topic -> crowded cellular scene. The model writes a recipe (which
  * molecules, where, how abundant); code finds real structures for each
  * ingredient; the model picks one per ingredient from what was found.
- * Abundances are the model's estimates and are reported as such.
+ * Abundances come from PaxDb's measurements where it has them and from the
+ * model's estimate otherwise, and each is reported as what it is.
  */
 import type { Ingredient, LandscapeSpec, PanelSpec, SceneSpec, SourceRef } from '../src/scene/spec'
 import { ROLES, type Role } from '../src/style/palettes'
 import type { Deps } from './resolve'
+import { ppmToMicromolar } from './sources/paxdb'
 import type { EntryInfo } from './sources/rcsb'
 
-/** The slab that is drawn: 80 x 56 nm of cell, 30 nm deep. */
+/** 画出来的那一片：80 x 56 nm，厚 30 nm / The slab that is drawn: 80 x 56 nm of cell, 30 nm deep. */
 export const BOX = { width: 800, height: 560, depth: 300 }
 const PDB_ID = /^[0-9][A-Za-z0-9]{3}$/
 
@@ -21,6 +27,8 @@ interface Recipe {
   below: string
   density_above_g_per_L: number
   density_below_g_per_L: number
+  organism_taxid: number
+  tissue: string
   notes: string[]
   ingredients: {
     name: string
@@ -29,6 +37,7 @@ interface Recipe {
     per_square_micron: number
     membrane_anchor: string
     membrane_terminus: string
+    genes: string[]
     feature: boolean
     role: string
     queries: string[]
@@ -36,9 +45,12 @@ interface Recipe {
   }[]
 }
 
+/** PaxDb 里有整合数据集的常见组织和体液 / common tissues and fluids for which PaxDb has an integrated dataset */
+const TISSUES = ['WHOLE_ORGANISM', 'BRAIN', 'CEREBRAL_CORTEX', 'PLASMA', 'SERUM', 'CEREBROSPINAL_FLUID', 'LIVER', 'HEART', 'KIDNEY', 'LUNG', 'SKELETAL_MUSCLE', 'PANCREAS', 'SPLEEN', 'PLATELET', 'RETINA']
+
 const RECIPE_SCHEMA = {
   type: 'object',
-  required: ['title', 'caption', 'membrane', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'notes', 'ingredients'],
+  required: ['title', 'caption', 'membrane', 'above', 'below', 'density_above_g_per_L', 'density_below_g_per_L', 'organism_taxid', 'tissue', 'notes', 'ingredients'],
   properties: {
     title: { type: 'string', description: 'language of the topic' },
     caption: { type: 'string', description: '2-4 sentences, language of the topic: where in the cell this is and what is going on. Name parts by what they are.' },
@@ -47,12 +59,14 @@ const RECIPE_SCHEMA = {
     below: { type: 'string', description: 'what is below the membrane, or the whole scene if there is no membrane (e.g. cytoplasm)' },
     density_above_g_per_L: { type: 'number', description: 'total macromolecule concentration above the membrane, grams per litre (blood plasma is about 70-80); 0 if no membrane' },
     density_below_g_per_L: { type: 'number', description: 'total macromolecule concentration below the membrane, or of the whole scene (bacterial cytoplasm is about 300, eukaryotic cytosol about 100-200)' },
+    organism_taxid: { type: 'integer', description: 'NCBI taxonomy id of the organism whose cell this is, used to look up measured protein abundances: Escherichia coli K-12 = 511145, human = 9606, mouse = 10090, baker\'s yeast = 4932, Bacillus subtilis = 224308, Mycobacterium tuberculosis = 83332. 0 if unsure or if the scene is not one organism\'s cell.' },
+    tissue: { type: 'string', enum: TISSUES, description: 'for human or mouse: the tissue or fluid the scene is in, if it is one of these; otherwise WHOLE_ORGANISM' },
     notes: { type: 'array', items: { type: 'string' }, description: 'what is simplified or left out, language of the topic' },
     ingredients: {
       type: 'array', minItems: 4, maxItems: 12,
       items: {
         type: 'object',
-        required: ['name', 'compartment', 'concentration_uM', 'per_square_micron', 'membrane_anchor', 'membrane_terminus', 'feature', 'role', 'queries', 'suggested_pdb_ids'],
+        required: ['name', 'compartment', 'concentration_uM', 'per_square_micron', 'membrane_anchor', 'membrane_terminus', 'genes', 'feature', 'role', 'queries', 'suggested_pdb_ids'],
         properties: {
           name: { type: 'string', description: 'language of the topic' },
           compartment: { type: 'string', enum: ['above', 'membrane', 'below'] },
@@ -66,6 +80,7 @@ const RECIPE_SCHEMA = {
             type: 'string', enum: ['N', 'C', 'unknown'],
             description: 'for "above"/"below": which end of the polypeptide chain in the structure is nearest the membrane (C for type I proteins like haemagglutinin and coronavirus spike, N for type II like neuraminidase); "unknown" otherwise',
           },
+          genes: { type: 'array', maxItems: 6, items: { type: 'string' }, description: 'gene symbols, in that organism\'s own nomenclature, of the protein subunits of this molecule (tufA; rplB, rplC, rpsA for a ribosome; ALB). A few representative subunits are enough for a large complex. Empty if the molecule is not a protein of the scene\'s organism (a viral protein, an antibody, RNA).' },
           feature: { type: 'boolean', description: 'true for the few molecules the topic is about; they are shown at least once whatever their abundance' },
           role: { type: 'string', enum: ROLES },
           queries: { type: 'array', minItems: 1, maxItems: 2, items: { type: 'string' }, description: 'English RCSB full-text queries for a structure of this molecule, in the right organism' },
@@ -81,11 +96,13 @@ The scene is a slab ${BOX.width / 10} nm wide, ${BOX.height / 10} nm tall and ${
 
 Write the recipe:
 - List the 6 to 12 macromolecules that make up most of the mass in this place, plus the few the topic is about. Abundant, well-known molecules matter more than rare ones: a cytoplasm is mostly ribosomes, translation factors, glycolytic enzymes and chaperones; blood plasma is mostly albumin, immunoglobulins, fibrinogen and lipoproteins.
-- Give each a realistic abundance from the literature for this organism and compartment. These numbers decide how many copies are drawn, so be honest: if a molecule is rare, give its real, low value and mark it as a feature so it still appears once.
+- Give each a realistic abundance from the literature for this organism and compartment. Where the molecule is a protein of the scene's organism, also give its gene symbols: measured abundances from the PaxDb database will then replace your estimate. These numbers decide how many copies are drawn, so be honest: if a molecule is rare, give its real, low value and mark it as a feature so it still appears once.
 - A real compartment holds thousands of kinds of molecule and you can list only a dozen. The listed ones stand in for the rest: their relative proportions come from your abundances, and the number of copies is then scaled so that the total mass drawn matches the compartment's overall macromolecule density, which you also give. Molecules marked as a feature are not scaled.
 - Only include molecules for which an experimental structure of the whole molecule or assembly plausibly exists in the PDB. Nucleic acid strands and long fibres cannot be drawn yet; leave them out and say so in the notes.
 - Colour roles: focus (pink-magenta) for the subject; soluble (blue) for ordinary soluble proteins; membrane (green) for membrane proteins; nucleic-binding (orange) for ribosomes, polymerases and other nucleic-acid machines; extracellular (tan) for molecules outside the cell. Use the roles to separate inside from outside and the subject from its surroundings.
 - In the notes, say what a reader should not over-interpret: positions and orientations are random, abundances are estimates.`
+
+const fmt = (v: number) => (v >= 10 ? Math.round(v).toString() : v >= 1 ? v.toFixed(1) : v.toPrecision(2))
 
 interface Pick {
   picks: { ingredient: number; source_id: string; assembly_id: string }[]
@@ -142,6 +159,12 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
     },
   })
 
+  // 实测丰度：按物种和组织查 PaxDb；查不到就都用模型的估计值
+  // measured abundance: PaxDb by organism and tissue; with none, the model's estimates stand
+  const pax = await deps.abundances(Number(recipe.organism_taxid) || 0, recipe.tissue || 'WHOLE_ORGANISM').catch(() => null)
+  if (pax) log(`丰度取自 PaxDb：${pax.name}`)
+  const measured = new Map<number, { genes: string[]; ppm: number; uM: number }>()
+
   const volume = BOX.width * BOX.height * BOX.depth * (recipe.membrane ? 0.5 : 1) // Å^3 per compartment
   const membraneArea = BOX.width * BOX.depth // Å^2
   const DALTON_PER_HEAVY_ATOM = 13.7 // proteins and nucleic acids, hydrogens included
@@ -152,7 +175,7 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   ingredients.forEach((ing, k) => {
     const p = (pick.picks ?? []).find((x) => x.ingredient === k)
     const id = p ? String(p.source_id).toUpperCase() : ''
-    // the choice must be one of this ingredient's own candidates
+    // 选中的必须是为这种成分自己查到的候选 / the choice must be one of this ingredient's own candidates
     if (!p || !candidates[k]!.includes(id)) {
       skipped.push(ing.name)
       return
@@ -160,11 +183,29 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
     const info = infos.get(id)!
     const asm = info.assemblies.find((a) => a.id === p.assembly_id) ?? info.assemblies[0]
     const inMembrane = !!recipe.membrane && ing.compartment === 'membrane'
+    // 分子数 = µM * 1e-6 mol/L * 6.022e23 /mol * Å^3 * 1e-27 L/Å^3
     // molecules = µM * 1e-6 mol/L * 6.022e23 /mol * Å^3 * 1e-27 L/Å^3
-    const expected = inMembrane ? Math.max(0, ing.per_square_micron) * membraneArea * 1e-8 : Math.max(0, ing.concentration_uM) * volume * 6.022e-10
+    let uM = Math.max(0, ing.concentration_uM)
+    if (pax && !inMembrane) {
+      // 复合物的丰度取各亚基的中位数，再除以每种亚基在复合物里的份数
+      // a complex takes the median over its subunits, divided by how many copies of each it holds
+      const hits = (ing.genes ?? []).map((g) => [g, pax.ppm.get(String(g).toLowerCase())] as const).filter((x): x is readonly [string, number] => x[1] !== undefined && x[1] > 0)
+      if (hits.length) {
+        const sorted = hits.map((h) => h[1]).sort((a, b) => a - b)
+        const median = sorted.length % 2 ? sorted[(sorted.length - 1) / 2]! : (sorted[sorted.length / 2 - 1]! + sorted[sorted.length / 2]!) / 2
+        const kinds = Math.max(1, info.entities.filter((e) => e.kind === 'protein' || e.kind === 'rna' || e.kind === 'dna').length)
+        const perKind = Math.max(1, Math.round((asm?.chains ?? kinds) / kinds))
+        const density = (recipe.membrane && ing.compartment === 'above' ? recipe.density_above_g_per_L : recipe.density_below_g_per_L) || 200
+        uM = ppmToMicromolar(median / perKind, density)
+        measured.set(k, { genes: hits.map((h) => h[0]), ppm: median, uM })
+      }
+    }
+    const expected = inMembrane ? Math.max(0, ing.per_square_micron) * membraneArea * 1e-8 : uM * volume * 6.022e-10
     chosen.push({ k, id, assembly: asm?.id ?? 'asym', mass: (asm?.atoms || info.atoms) * DALTON_PER_HEAVY_ATOM, expected, inMembrane, compartment: recipe.membrane ? ing.compartment : 'below' })
   })
 
+  // 列出的分子代表它们所在区室里的其余一切：把普通成分的数量整体缩放，使画出的质量与区室的总密度相符；
+  // 标为主角的成分保持自己的数量。
   // The listed molecules stand in for everything else in their compartment:
   // scale the copies of the ordinary ones so the mass drawn matches the
   // compartment's overall density. Featured molecules keep their own count.
@@ -206,7 +247,12 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
       panel: panels.length - 1,
       compartment: c.compartment,
       copies,
-      abundance: c.inMembrane ? `约 ${ing.per_square_micron} 个/μm²` : `约 ${ing.concentration_uM} μM`,
+      abundance: c.inMembrane
+        ? `约 ${ing.per_square_micron} 个/μm²`
+        : measured.has(c.k)
+          ? `PaxDb：${measured.get(c.k)!.genes.join('、')} ${Math.round(measured.get(c.k)!.ppm).toLocaleString('en')} ppm，约 ${fmt(measured.get(c.k)!.uM)} μM`
+          : `约 ${ing.concentration_uM} μM`,
+      tier: !c.inMembrane && measured.has(c.k) ? 'curated' : 'estimated',
       feature: !!ing.feature,
       ...(c.inMembrane
         ? {
@@ -221,7 +267,9 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   const landscape: LandscapeSpec = { ...BOX, membrane: !!recipe.membrane, above: recipe.above ?? '', below: recipe.below ?? '', ingredients: out }
   const notes = [
     '分子是真实结构，按比例绘制；它们的位置和朝向是程序随机排布的，不是观测结果。',
-    '各成分之间的比例来自模型给出的丰度估计值，不是测量值。',
+    pax && measured.size
+      ? `${measured.size} 种成分的丰度取自 PaxDb 的整合质谱数据（${pax.name}），其余${chosen.length - measured.size > 0 ? ` ${chosen.length - measured.size} 种` : ''}是模型的估计值；每种成分各自标明。`
+      : '各成分之间的比例来自模型给出的丰度估计值，不是测量值。',
     `真实的细胞里有上千种分子，这里只列出十来种作为代表：除标为主角的成分外，数量已按比例放大，使画出的总质量与该区室的大分子总浓度（${[recipe.membrane && recipe.density_above_g_per_L > 0 ? `膜上方约 ${recipe.density_above_g_per_L} g/L` : '', recipe.density_below_g_per_L > 0 ? `${recipe.membrane ? '膜下方' : ''}约 ${recipe.density_below_g_per_L} g/L` : ''].filter(Boolean).join('，')}）相符。`,
     ...(recipe.membrane ? ['膜蛋白按分子长轴竖立在膜上或膜中；只解析了膜外段的结构立在膜面上，连膜的一端由链的末端位置判断。这是近似摆放，未使用实验确定的取向和插入深度，膜外段与膜之间缺失的柄部和跨膜段没有画。脂质用同一种磷脂（POPC）的理想构象铺成。'] : []),
     '未画出水、离子、小分子，以及核酸长链和纤维。',

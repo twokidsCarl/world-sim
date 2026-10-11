@@ -13,6 +13,7 @@ import { ask as realAsk, type AskOptions } from './llm'
 import { matchArticles } from './motm'
 import catalog from '../data/catalog.json'
 import { entryInfo, searchText, type EntryInfo } from './sources/rcsb'
+import { abundances } from './sources/paxdb'
 import { alphafold, bestStructures, findProtein } from './sources/uniprot'
 
 type Ask = <T>(o: AskOptions) => Promise<T>
@@ -25,9 +26,10 @@ export interface Deps {
   findProtein: typeof findProtein
   bestStructures: typeof bestStructures
   alphafold: typeof alphafold
+  abundances: typeof abundances
 }
 
-export const liveDeps: Deps = { ask: realAsk, searchText, entryInfo, findProtein, bestStructures, alphafold }
+export const liveDeps: Deps = { ask: realAsk, searchText, entryInfo, findProtein, bestStructures, alphafold, abundances }
 
 interface Intent {
   kind: SceneSpec['kind']
@@ -42,7 +44,7 @@ const INTENT_SCHEMA = {
   type: 'object',
   required: ['kind', 'name_en', 'steps', 'genes', 'whole_model'],
   properties: {
-    whole_model: { type: 'string', enum: ['', ...catalog.models.map((m) => m.id)], description: 'id of a ready-made whole model from the list given, when the topic asks for exactly that thing as a whole; otherwise an empty string' },
+    whole_model: { type: 'string', enum: ['', ...catalog.models.map((m) => m.id)], description: 'id of a ready-made whole model from the list given, only when the topic names exactly that subject and wants it whole; otherwise an empty string' },
     kind: { type: 'string', enum: ['molecule', 'complex', 'virus', 'gene', 'mechanism', 'landscape'] },
     name_en: { type: 'string', description: 'the topic as a short English noun phrase' },
     steps: {
@@ -73,7 +75,7 @@ The picture will be rendered from real atomic coordinates in the Protein Data Ba
 - "landscape": the user wants a crowded cellular scene (cytoplasm, blood plasma, a synapse) rather than one assembly.
 Write queries as a structural biologist would search: protein and organism names, ligands, states. Do not invent PDB ids.
 
-Some subjects exist as ready-made whole models (an entire virion, vesicle or cell, already assembled from many structures). If the topic asks for one of these as a whole, set "whole_model" to its id. If the topic is about one protein of it, a mechanism, or anything narrower or different, leave "whole_model" empty.
+Some subjects exist as ready-made whole models (an entire virion, vesicle or cell, already assembled from many structures). Set "whole_model" to a model's id only when the topic names that very thing and wants it as a whole: the same virus, the same organism, the same structure. Leave it empty in every other case: a different organism or virus (an E. coli scene is not the Mycoplasma model), a crowded scene of some compartment (that is a "landscape"), one protein of the subject, a mechanism, or a general theme that a model merely relates to. When in doubt, leave it empty.
 Ready-made whole models:
 ${catalog.models.map((m) => `- ${m.id}: ${m.titleEn}`).join('\n')}`
 

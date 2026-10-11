@@ -69,6 +69,8 @@ export interface Ingredient {
   abundance: string
   /** 即使丰度四舍五入为零，也至少显示一个 / always shown at least once even if the abundance rounds to zero */
   feature: boolean
+  /** 丰度的来历：数据库里的实测值（curated），还是模型的估计 / where the abundance comes from: measured values in a database (curated), or the model's estimate */
+  tier?: Tier
   /**
    * 用于膜蛋白：结构是跨膜的，还是只有立在膜一侧的那部分
    * （病毒刺突和受体的结构大多是这样的胞外域）。
