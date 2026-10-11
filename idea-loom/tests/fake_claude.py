@@ -71,3 +71,41 @@ def calls(log: Path) -> list[dict]:
     if not log.exists():
         return []
     return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+STREAM_SCRIPT = r'''#!{python}
+import json, os, sys, time
+stdin = sys.stdin.read()
+with open(os.environ["FAKE_LOG"], "a") as f:
+    f.write(json.dumps({{"argv": sys.argv[1:], "stdin": stdin, "cwd": os.getcwd()}}) + "\n")
+for obj in json.loads(os.environ.get("FAKE_STREAM", "[]")):
+    if obj.get("type") == "sleep":
+        time.sleep(obj["seconds"])
+        continue
+    print(json.dumps(obj, ensure_ascii=False), flush=True)
+'''
+
+
+def text_delta(text: str) -> dict:
+    return {"type": "stream_event", "event": {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": text}}}
+
+
+def tool_use(tool_id: str, name: str, args: dict) -> dict:
+    return {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": tool_id, "name": name, "input": args}]}}
+
+
+def tool_result(tool_id: str, is_error: bool = False) -> dict:
+    return {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": tool_id, "is_error": is_error, "content": "x"}]}}
+
+
+def result(text: str = "答完了", cost: float = 0.02) -> dict:
+    return {"type": "result", "subtype": "success", "is_error": False, "result": text, "total_cost_usd": cost, "usage": {"output_tokens": 40}}
+
+
+def install_stream(tmp_path: Path, monkeypatch, stream: list[dict]) -> Path:
+    """装一个会按剧本输出 stream-json 的假 claude。 / Install a fake claude that prints a scripted stream-json."""
+    log = install(tmp_path, monkeypatch)
+    binary = tmp_path / "fake-claude"
+    binary.write_text(STREAM_SCRIPT.format(python=sys.executable), encoding="utf-8")
+    monkeypatch.setenv("FAKE_STREAM", json.dumps(stream, ensure_ascii=False))
+    return log

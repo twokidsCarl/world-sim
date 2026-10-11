@@ -264,3 +264,73 @@ button:disabled { opacity: 0.45; cursor: default; }
 .english { margin-top: 12px; }
 .english summary { cursor: pointer; color: var(--ink-2); font-size: 12.5px; }
 .english div { margin-top: 8px; padding: 10px 14px; border-left: 3px solid var(--line-2); font: 15px/1.7 Georgia, 'Times New Roman', serif; }
+
+/* 小助手 / assistant */
+:root { --dock-w: 0px; }
+.shell { padding-right: var(--dock-w); }
+.a-launch { position: fixed; right: 20px; bottom: 20px; display: flex; align-items: center; gap: 10px; z-index: 30; }
+.a-fab { position: relative; width: 48px; height: 48px; border-radius: 50%; background: var(--ink); color: var(--paper); border: 0; font-size: 20px; box-shadow: 0 4px 14px rgba(40, 30, 10, 0.25); }
+.a-fab:hover { background: var(--accent); }
+.a-fab.busy::after, .a-fab.offer::after { content: ''; position: absolute; top: 2px; right: 2px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--paper); background: var(--good); }
+.a-fab.offer::after { background: var(--warn); }
+.a-offer { display: inline-flex; align-items: center; background: var(--panel); border: 1px solid var(--warn); border-radius: 999px; padding: 2px 4px 2px 12px; box-shadow: 0 2px 8px rgba(40, 30, 10, 0.12); }
+.a-offer button { border: 0; padding: 4px 6px; }
+.a-dock { position: fixed; top: 0; right: 0; bottom: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--panel); border-left: 1px solid var(--line-2); z-index: 30; }
+.a-dock.floating { top: auto; right: 16px; bottom: 16px; width: min(420px, calc(100vw - 32px)); height: min(660px, 84dvh); border: 1px solid var(--line-2); border-radius: 18px; box-shadow: 0 12px 40px rgba(40, 30, 10, 0.28); overflow: hidden; }
+.a-resize { position: absolute; left: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; }
+.a-resize:hover, .a-resize:focus-visible { background: var(--accent); opacity: 0.4; }
+.a-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.a-tools { display: flex; align-items: center; gap: 4px; }
+.a-tools button, .a-wishes { border: 0; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 15px; position: relative; }
+.a-tools button:hover, .a-wishes:hover { background: var(--sunken); }
+.a-wishes .num { position: absolute; top: -3px; right: -4px; font-size: 10.5px; background: var(--accent); color: var(--paper); border-radius: 999px; padding: 0 5px; line-height: 15px; }
+.a-log { overflow-y: auto; padding: 14px; display: grid; gap: 18px; align-content: start; }
+.a-empty { display: grid; gap: 12px; padding-top: 8px; }
+.a-hello { font: 17px/1.5 var(--serif); }
+.a-suggest { display: grid; gap: 6px; justify-items: start; }
+.a-suggest button { border-radius: 999px; padding: 5px 14px; background: var(--paper); }
+.a-turn { display: grid; gap: 8px; }
+.a-q { display: grid; justify-items: end; gap: 2px; }
+.a-bubble { max-width: 88%; padding: 8px 13px; border-radius: 16px 16px 4px 16px; background: var(--ink); color: var(--paper); white-space: pre-wrap; }
+.a-steps { gap: 2px; font-size: 12.5px; color: var(--ink-2); }
+.a-steps .s-refused { color: var(--bad); }
+.a-steps-done summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+.a-steps-done .a-steps { margin-top: 4px; padding-left: 10px; }
+.md { display: grid; gap: 8px; }
+.md ul { margin: 0; padding-left: 20px; display: grid; gap: 3px; }
+.md code { font: 12.5px 'SF Mono', Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 4px; }
+.md .md-h { font: 600 15px var(--serif); }
+.a-card { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); }
+.a-card-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 12.5px; }
+.a-card-foot button { padding: 1px 8px; }
+.a-idea-body { font: 14px/1.75 var(--serif); }
+.a-points { margin: 0; padding-left: 20px; }
+.a-foot { text-align: right; }
+.a-compose { display: grid; gap: 6px; padding: 10px 12px 12px; border-top: 1px solid var(--line); }
+.a-compose textarea { width: 100%; resize: none; max-height: 160px; font: 14px/1.5 var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 10px; }
+.a-compose-foot { display: flex; justify-content: space-between; align-items: center; }
+.a-history button { display: grid; width: 100%; text-align: left; gap: 2px; border: 1px solid var(--line); background: var(--paper); padding: 8px 10px; }
+.a-history button.current { border-color: var(--accent); }
+.a-pointed { outline: 3px solid var(--accent) !important; outline-offset: 3px; border-radius: 4px; position: relative; animation: a-pulse 1.4s ease-in-out 3; }
+@keyframes a-pulse { 50% { outline-offset: 7px; } }
+@media (prefers-reduced-motion: reduce) { .a-pointed { animation: none; } }
+
+/* 许愿池 / wish pool */
+.wish-counts { display: flex; flex-wrap: wrap; gap: 6px; }
+.wish-counts button[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.wish-kinds { display: grid; gap: 4px; max-width: 460px; margin: 16px 0 4px; }
+.wish-kind { display: grid; grid-template-columns: 130px minmax(0, 1fr) 28px; align-items: center; gap: 10px; font-size: 13px; }
+.wish-kind .bar { margin: 0; }
+.table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+.table th, .table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table th { font-weight: 600; font-size: 12.5px; color: var(--ink-2); }
+.table .r { text-align: right; }
+.badge.w-open { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.badge.w-accepted { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+.badge.w-done { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
+.halves { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; }
+.pre { white-space: pre-wrap; }
+.after-meta { margin-top: 10px; }
+.small-prompt blockquote { font: 13.5px/1.7 var(--sans); }
+.page code { font: 12.5px 'SF Mono', Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 4px; }
+@media (max-width: 980px) { .halves { grid-template-columns: minmax(0, 1fr); } }
