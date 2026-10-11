@@ -56147,6 +56147,43 @@
    "surfaceInBone": 0
   }
  ],
+ "skinPackage": {
+  "dir": "data/raw/bodyshape/out/male-skin",
+  "internalsKey": "e9d0219ab13a3818",
+  "present": true,
+  "fittedTo": null,
+  "installed": false,
+  "reason": "the package does not say which internals it was fitted to (manifest.fittedTo missing)",
+  "externalGenitalia": {
+   "parts": [
+    "Deep dorsal vein of penis",
+    "Superficial dorsal vein of penis",
+    "Corpus cavernosum of penis",
+    "Corpus spongiosum of penis",
+    "Glans penis",
+    "Left epididymis",
+    "Left testis",
+    "Right epididymis",
+    "Right testis",
+    "Left superficial dorsal vein of penis",
+    "Left dorsal artery of penis",
+    "Left dorsal artery of penis",
+    "Right dorsal artery of penis",
+    "Right dorsal artery of penis",
+    "Right superficial dorsal vein of penis"
+   ],
+   "bbox": [
+    -0.0321,
+    0.6898,
+    0.0645,
+    0.0311,
+    0.7941,
+    0.2009
+   ],
+   "reachInFrontOfPubisMm": 61.8,
+   "lowestBelowPubicSymphysisMm": 62.2
+  }
+ },
  "fat": {
   "options": {
    "voxel": 0.003,

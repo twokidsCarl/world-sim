@@ -1,3 +1,4 @@
+// 可出现在词表名词短语之前的形容词性修饰语：英文词 -> 中文前缀。手写（机器翻译，未经审核）。
 // Adjectival modifiers that may precede a lexicon noun phrase. English word -> zh prefix.
 // Hand-written (machine translation, unreviewed).
 export const MODIFIERS: Record<string, string> = {
@@ -34,5 +35,5 @@ export const MODIFIERS: Record<string, string> = {
   caudal: '尾侧', cranial: '颅', orbital: '眶', pelvic: '盆', peritoneal: '腹膜', visceral: '脏',
   free: '游离', main: '主', major: '大', minor: '小', vermian: '蚓',
   scapular: '肩胛', sternal: '胸骨', patellar: '髌', mandibular: '下颌', maxillary: '上颌', faucial: '咽门',
-  auriculotemporal: '耳颞', palpebral: '睑', basicranial: '颅底', optic: '视', axial: '中轴',
+  auriculotemporal: '耳颞', palpebral: '睑', inner: '内', outer: '外', basicranial: '颅底', optic: '视', axial: '中轴',
 }

@@ -67,7 +67,7 @@
    "female"
   ],
   "conceptsFromBodyParts3D40Lists": 3432,
-  "conceptsOnlyInDatasets": 1943,
+  "conceptsOnlyInDatasets": 1977,
   "idsNamedForOneSideButUsedByBothSides": [],
   "sidedPartsOnUnsidedConcepts": {
    "note": "Concepts used by both a left and a right part of one body: the zh name has no 左/右, so the UI must add it from Part.side. Exactly these ids.",
@@ -462,7 +462,7 @@
   ],
   "partConceptsPerBody": {
    "male": 2770,
-   "female": 2806
+   "female": 2803
   }
  },
  "elementConcepts": {
@@ -470,7 +470,7 @@
   "fromHeader": 2217,
   "fromFallback": 0,
   "unresolved": 17,
-  "distinctConcepts": 2829
+  "distinctConcepts": 2846
  },
  "propagation": {
   "maxIsaFanout": 100,
@@ -488,41 +488,41 @@
  },
  "coverage": {
   "allConcepts": {
-   "concepts": 5375,
-   "wikidataMatch": "5029/5375 (93.6%)",
-   "zhFromWikidataOwnItem": "542/5375 (10.1%)",
-   "zhAny": "5375/5375 (100.0%)",
-   "la": "1211/5375 (22.5%)",
-   "ja": "1256/5375 (23.4%)",
+   "concepts": 5409,
+   "wikidataMatch": "5055/5409 (93.5%)",
+   "zhFromWikidataOwnItem": "543/5409 (10.0%)",
+   "zhAny": "5409/5409 (100.0%)",
+   "la": "1213/5409 (22.4%)",
+   "ja": "1259/5409 (23.3%)",
    "zhBySource": {
-    "machine-translation": 3532,
-    "wikidata": 353,
+    "machine-translation": 3562,
+    "wikidata": 354,
     "wikidata:hant-converted": 185,
-    "lexicon:mainland-over-wikidata": 583,
+    "lexicon:mainland-over-wikidata": 586,
     "derived:laterality": 678,
     "machine-translation:override": 40,
     "wikidata:generic-twin": 1,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 8698,
-    "subjectsWithAnyRelation": "2023/5375 (37.6%)",
-    "objectHasFma": "8317/8698 (95.6%)",
-    "objectInDataset": "5637/8698 (64.8%)",
-    "objectLabelHasZh": "7101/8698 (81.6%)",
+    "total": 8725,
+    "subjectsWithAnyRelation": "2029/5409 (37.5%)",
+    "objectHasFma": "8344/8725 (95.6%)",
+    "objectInDataset": "5655/8725 (64.8%)",
+    "objectLabelHasZh": "7122/8725 (81.6%)",
     "byKind": {
      "origin": {
-      "total": 1257,
+      "total": 1269,
       "direct": 251,
       "is-a": 545,
       "laterality": 34,
-      "whole": 144,
+      "whole": 156,
       "wikipedia": 86,
       "zanatomy": 197,
-      "subjects": 552,
-      "objectHasFma": 1180,
-      "objectInDataset": 698,
-      "objectIsPart": 535
+      "subjects": 555,
+      "objectHasFma": 1192,
+      "objectInDataset": 707,
+      "objectIsPart": 541
      },
      "insertion": {
       "total": 943,
@@ -590,17 +590,17 @@
       "objectIsPart": 10
      },
      "connectsWith": {
-      "total": 2874,
-      "direct": 926,
+      "total": 2889,
+      "direct": 927,
       "is-a": 1780,
-      "laterality": 156,
-      "whole": 12,
+      "laterality": 158,
+      "whole": 24,
       "wikipedia": 0,
       "zanatomy": 0,
-      "subjects": 832,
-      "objectHasFma": 2806,
-      "objectInDataset": 2043,
-      "objectIsPart": 1233
+      "subjects": 838,
+      "objectHasFma": 2821,
+      "objectInDataset": 2052,
+      "objectIsPart": 1239
      },
      "antagonist": {
       "total": 330,
@@ -632,40 +632,40 @@
    }
   },
   "elementConcepts": {
-   "concepts": 2829,
-   "wikidataMatch": "2615/2829 (92.4%)",
-   "zhFromWikidataOwnItem": "117/2829 (4.1%)",
-   "zhAny": "2829/2829 (100.0%)",
-   "la": "269/2829 (9.5%)",
-   "ja": "299/2829 (10.6%)",
+   "concepts": 2846,
+   "wikidataMatch": "2627/2846 (92.3%)",
+   "zhFromWikidataOwnItem": "117/2846 (4.1%)",
+   "zhAny": "2846/2846 (100.0%)",
+   "la": "269/2846 (9.5%)",
+   "ja": "299/2846 (10.5%)",
    "zhBySource": {
-    "machine-translation": 1717,
+    "machine-translation": 1732,
     "derived:laterality": 625,
-    "lexicon:mainland-over-wikidata": 357,
+    "lexicon:mainland-over-wikidata": 359,
     "wikidata:hant-converted": 43,
     "wikidata": 71,
     "machine-translation:override": 13,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 5890,
-    "subjectsWithAnyRelation": "1317/2829 (46.6%)",
-    "objectHasFma": "5582/5890 (94.8%)",
-    "objectInDataset": "3890/5890 (66.0%)",
-    "objectLabelHasZh": "4802/5890 (81.5%)",
+    "total": 5908,
+    "subjectsWithAnyRelation": "1321/2846 (46.4%)",
+    "objectHasFma": "5600/5908 (94.8%)",
+    "objectInDataset": "3902/5908 (66.0%)",
+    "objectLabelHasZh": "4816/5908 (81.5%)",
     "byKind": {
      "origin": {
-      "total": 938,
+      "total": 946,
       "direct": 1,
       "is-a": 526,
       "laterality": 34,
-      "whole": 94,
+      "whole": 102,
       "wikipedia": 86,
       "zanatomy": 197,
-      "subjects": 401,
-      "objectHasFma": 862,
-      "objectInDataset": 534,
-      "objectIsPart": 497
+      "subjects": 403,
+      "objectHasFma": 870,
+      "objectInDataset": 540,
+      "objectIsPart": 503
      },
      "insertion": {
       "total": 727,
@@ -733,17 +733,17 @@
       "objectIsPart": 8
      },
      "connectsWith": {
-      "total": 1866,
+      "total": 1876,
       "direct": 170,
       "is-a": 1568,
-      "laterality": 120,
-      "whole": 8,
+      "laterality": 122,
+      "whole": 16,
       "wikipedia": 0,
       "zanatomy": 0,
-      "subjects": 542,
-      "objectHasFma": 1820,
-      "objectInDataset": 1354,
-      "objectIsPart": 1172
+      "subjects": 546,
+      "objectHasFma": 1830,
+      "objectInDataset": 1360,
+      "objectIsPart": 1178
      },
      "antagonist": {
       "total": 222,
@@ -775,40 +775,40 @@
    }
   },
   "importedPartConcepts": {
-   "concepts": 1165,
-   "wikidataMatch": "953/1165 (81.8%)",
-   "zhFromWikidataOwnItem": "18/1165 (1.5%)",
-   "zhAny": "1165/1165 (100.0%)",
-   "la": "28/1165 (2.4%)",
-   "ja": "19/1165 (1.6%)",
+   "concepts": 1182,
+   "wikidataMatch": "965/1182 (81.6%)",
+   "zhFromWikidataOwnItem": "18/1182 (1.5%)",
+   "zhAny": "1182/1182 (100.0%)",
+   "la": "28/1182 (2.4%)",
+   "ja": "19/1182 (1.6%)",
    "zhBySource": {
     "derived:laterality": 178,
-    "lexicon:mainland-over-wikidata": 98,
-    "machine-translation": 867,
+    "lexicon:mainland-over-wikidata": 100,
+    "machine-translation": 882,
     "wikidata:hant-converted": 8,
     "wikidata": 7,
     "machine-translation:override": 4,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 1686,
-    "subjectsWithAnyRelation": "438/1165 (37.6%)",
-    "objectHasFma": "1584/1686 (94.0%)",
-    "objectInDataset": "1049/1686 (62.2%)",
-    "objectLabelHasZh": "1393/1686 (82.6%)",
+    "total": 1704,
+    "subjectsWithAnyRelation": "442/1182 (37.4%)",
+    "objectHasFma": "1602/1704 (94.0%)",
+    "objectInDataset": "1061/1704 (62.3%)",
+    "objectLabelHasZh": "1407/1704 (82.6%)",
     "byKind": {
      "origin": {
-      "total": 129,
+      "total": 137,
       "direct": 0,
       "is-a": 0,
       "laterality": 34,
-      "whole": 24,
+      "whole": 32,
       "wikipedia": 35,
       "zanatomy": 36,
-      "subjects": 63,
-      "objectHasFma": 104,
-      "objectInDataset": 70,
-      "objectIsPart": 60
+      "subjects": 65,
+      "objectHasFma": 112,
+      "objectInDataset": 76,
+      "objectIsPart": 66
      },
      "insertion": {
       "total": 77,
@@ -876,17 +876,17 @@
       "objectIsPart": 8
      },
      "connectsWith": {
-      "total": 575,
+      "total": 585,
       "direct": 21,
       "is-a": 426,
-      "laterality": 120,
-      "whole": 8,
+      "laterality": 122,
+      "whole": 16,
       "wikipedia": 0,
       "zanatomy": 0,
-      "subjects": 196,
-      "objectHasFma": 556,
-      "objectInDataset": 297,
-      "objectIsPart": 281
+      "subjects": 200,
+      "objectHasFma": 566,
+      "objectInDataset": 303,
+      "objectIsPart": 287
      },
      "antagonist": {
       "total": 18,
@@ -918,38 +918,38 @@
    }
   },
   "syntheticIdConcepts": {
-   "concepts": 368,
-   "wikidataMatch": "154/368 (41.8%)",
-   "zhFromWikidataOwnItem": "3/368 (0.8%)",
-   "zhAny": "368/368 (100.0%)",
-   "la": "3/368 (0.8%)",
-   "ja": "3/368 (0.8%)",
+   "concepts": 386,
+   "wikidataMatch": "166/386 (43.0%)",
+   "zhFromWikidataOwnItem": "3/386 (0.8%)",
+   "zhAny": "386/386 (100.0%)",
+   "la": "3/386 (0.8%)",
+   "ja": "3/386 (0.8%)",
    "zhBySource": {
-    "machine-translation": 355,
-    "lexicon:mainland-over-wikidata": 2,
+    "machine-translation": 371,
+    "lexicon:mainland-over-wikidata": 4,
     "derived:laterality": 4,
     "machine-translation:override": 4,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 155,
-    "subjectsWithAnyRelation": "42/368 (11.4%)",
-    "objectHasFma": "152/155 (98.1%)",
-    "objectInDataset": "102/155 (65.8%)",
-    "objectLabelHasZh": "129/155 (83.2%)",
+    "total": 173,
+    "subjectsWithAnyRelation": "46/386 (11.9%)",
+    "objectHasFma": "170/173 (98.3%)",
+    "objectInDataset": "114/173 (65.9%)",
+    "objectLabelHasZh": "143/173 (82.7%)",
     "byKind": {
      "origin": {
-      "total": 0,
+      "total": 8,
       "direct": 0,
       "is-a": 0,
       "laterality": 0,
-      "whole": 0,
+      "whole": 8,
       "wikipedia": 0,
       "zanatomy": 0,
-      "subjects": 0,
-      "objectHasFma": 0,
-      "objectInDataset": 0,
-      "objectIsPart": 0
+      "subjects": 2,
+      "objectHasFma": 8,
+      "objectInDataset": 6,
+      "objectIsPart": 6
      },
      "insertion": {
       "total": 0,
@@ -1017,17 +1017,17 @@
       "objectIsPart": 0
      },
      "connectsWith": {
-      "total": 141,
+      "total": 151,
       "direct": 3,
       "is-a": 18,
-      "laterality": 120,
-      "whole": 0,
+      "laterality": 122,
+      "whole": 8,
       "wikipedia": 0,
       "zanatomy": 0,
-      "subjects": 36,
-      "objectHasFma": 138,
-      "objectInDataset": 96,
-      "objectIsPart": 86
+      "subjects": 40,
+      "objectHasFma": 148,
+      "objectInDataset": 102,
+      "objectIsPart": 92
      },
      "antagonist": {
       "total": 0,
@@ -1512,7 +1512,7 @@
  },
  "zhMainlandOverWikidata": {
   "note": "Mainland wording policy: an exact lexicon term was used instead of the Wikidata label shown here (regional, colloquial or wrong wording). zhSource = lexicon:mainland-over-wikidata. For a reviewer.",
-  "count": 581,
+  "count": 582,
   "items": [
    {
     "id": "FMA3724",
@@ -3565,6 +3565,12 @@
     "en": "lateral tarsal artery",
     "wikidata": "跗外动脉",
     "lexicon": "跗外侧动脉"
+   },
+   {
+    "id": "FMA44600",
+    "en": "tibial collateral ligament",
+    "wikidata": "内侧副韧带",
+    "lexicon": "胫侧副韧带"
    },
    {
     "id": "FMA44609",
