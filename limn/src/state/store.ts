@@ -66,6 +66,10 @@ export interface Round {
   comment: string
   edits: Edit[]
   look: Look
+  /** 这一轮的修改与改之前比较的结论，以及有没有留下；没有比较过则不设 / how this round's changes compared with what came before, and whether they were kept; unset when no comparison was made */
+  verdict?: 'better' | 'worse' | 'same'
+  kept?: boolean
+  reason?: string
 }
 
 interface State extends Look {
