@@ -498,9 +498,15 @@ class Worker:
     def _hold(self, job: jobs.Job, all_jobs: list[jobs.Job]) -> Optional[str]:
         if len(self.running) >= parallel():
             return f"已经有 {len(self.running)} 个作业在跑"
-        busy = next((j for j in all_jobs if j.job_id in self.running and j.directory == job.directory and j.job_id != job.job_id), None)
-        if busy is not None:
-            return f"`{job.directory}/` 上另一个作业还在跑"
+        if job.queued != "plan":  # 出方案只读，同目录可以并行；动手和接着做要排队 / planning is read-only and may run in parallel; execution and resuming queue
+            busy = next((j for j in all_jobs if j.job_id in self.running and j.directory == job.directory and j.job_id != job.job_id), None)
+            if busy is not None:
+                return f"等《{busy.title}》做完"
+            # 等合并那段进程可能已不在 running 里，也要算上，不然后一个会提前开始又冲突。
+            # The process may be gone from `running` while a PR waits to merge; it still counts, or the next job would start early and conflict.
+            other = jobs.executing(job, all_jobs)
+            if other is not None:
+                return f"等《{other.title}》做完"
         if job.queued == "execute":
             return gates.may_start()
         return gates.paused()

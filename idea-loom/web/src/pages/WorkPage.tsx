@@ -34,8 +34,18 @@ export function WorkPage({ state }: { state: State }) {
   const [advancing, setAdvancing] = useState<string | null>(null)
   // 连续推进由云端的 worker 来做，本地没有。 / Chains are run by the worker in the cloud; there is none locally.
   const cloud = useStore((s) => s.me?.auth_enabled === true)
-  const start = (task: Task) =>
-    void api.startJob('task', task.task_id).then((j) => (setOpenJob(j.job_id), void load()), (e: Error) => setError(e.message))
+  // 开工失败的原因就近显示在那张卡上，不只在页面顶部；点了之后在回应前不能再点。
+  // A failed start is shown on its own card, not only at the top of the page; the button is off until the answer comes.
+  const [starting, setStarting] = useState<string | null>(null)
+  const [startErrors, setStartErrors] = useState<Record<string, string>>({})
+  const start = (task: Task) => {
+    setStarting(task.task_id)
+    setStartErrors((m) => ({ ...m, [task.task_id]: '' }))
+    void api.startJob('task', task.task_id).then(
+      (j) => (setStarting(null), setOpenJob(j.job_id), void load()),
+      (e: Error) => (setStarting(null), setStartErrors((m) => ({ ...m, [task.task_id]: e.message }))),
+    )
+  }
   const advance = (dir: string) => {
     setAdvancing(dir)
     void api.advance(dir).then(() => (setAdvancing(null), void load(), void reloadState()), (e: Error) => (setAdvancing(null), setError(e.message)))
@@ -112,9 +122,12 @@ export function WorkPage({ state }: { state: State }) {
                     {task.status === 'failed' && <div className="err small">{t('失败：', 'Failed: ')}{task.notes[0]?.text}</div>}
                     <div className="row">
                       {(task.status === 'todo' || task.status === 'failed') && (
-                        <button className="primary" onClick={() => start(task)}>
-                          {t('开工', 'Start')}
+                        <button className="primary" disabled={starting === task.task_id} onClick={() => start(task)}>
+                          {starting === task.task_id ? t('正在启动…', 'Starting…') : t('开工', 'Start')}
                         </button>
+                      )}
+                      {task.job_id && ['planning', 'plan_ready', 'running'].includes(task.status) && (
+                        <span className="muted small">{t('已有作业在进行，点「看作业」。', 'A job is already under way; click "Show job".')}</span>
                       )}
                       {task.job_id && (
                         <button aria-expanded={openJob === task.job_id} onClick={() => setOpenJob(openJob === task.job_id ? null : task.job_id)}>
@@ -122,6 +135,7 @@ export function WorkPage({ state }: { state: State }) {
                         </button>
                       )}
                     </div>
+                    {startErrors[task.task_id] && <div className="err small" role="alert">{startErrors[task.task_id]}</div>}
                     <div className="row">
                       <select aria-label={t('状态', 'Status')} value={task.status} onChange={(e) => move(task, e.target.value)}>
                         {!STATUSES.some(([s]) => s === task.status) && <option value={task.status}>{label(lang, 'taskStatus', task.status, task.status_label)}</option>}

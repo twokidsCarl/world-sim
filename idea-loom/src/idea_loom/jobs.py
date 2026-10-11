@@ -65,6 +65,7 @@ PHASE_LABELS: dict[str, str] = {
 }
 ACTIVE = ("planning", "running", "testing", "pr")
 HOLDING = ACTIVE + ("plan_ready",)  # 占着目录的阶段 / phases that hold the directory
+EXECUTING = ("running", "testing", "pr")  # 正在改文件、等合并的阶段：同目录同时只能有一个 / phases that change files or wait for the merge: one per directory
 LIMIT_SECONDS = {"planning": 900, "running": 3600}
 MAX_REPAIRS = 2
 SUBMIT_ATTEMPTS = 4
@@ -122,7 +123,9 @@ def root() -> Path:
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+    # 精确到微秒：队列按 updated_at 先来后到，同一秒内批准的两个作业不能排成随机顺序。
+    # Microsecond precision: the queue is first come first served by updated_at, so two jobs approved within one second must not be ordered at random.
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="microseconds")
 
 
 def model() -> str:
@@ -251,6 +254,24 @@ def _holder(directory: str) -> Optional[Job]:
     return next((j for j in listing() if j.directory == directory and j.phase in HOLDING), None)
 
 
+def executing(job: Job, all_jobs: Optional[list[Job]] = None) -> Optional[Job]:
+    """同目录里另一个正在动手（或等合并）的作业；排着队还没开始的不算。
+
+    Another job in the same directory that is doing the work (or waiting for the merge); one still queued does not count.
+    """
+    return next((j for j in (all_jobs if all_jobs is not None else listing())
+                 if j.directory == job.directory and j.job_id != job.job_id and j.phase in EXECUTING and not j.queued), None)
+
+
+def _queue_behind(job: Job) -> None:
+    """云端：同目录有作业在动手，就在 waiting 里写明在等谁；动手阶段排队，合并后才轮到它。
+
+    Cloud: when another job in the directory is executing, say in `waiting` whom it waits for; execution queues until that one is done.
+    """
+    other = executing(job) if _cloud() else None
+    job.waiting = f"等《{other.title}》做完" if other is not None else None
+
+
 def _spawn(job: Job, phase: str) -> None:
     proc = subprocess.Popen([sys.executable, "-m", "idea_loom.jobs", phase, job.job_id], start_new_session=True,
                             stdout=subprocess.DEVNULL, stderr=(_dir(job.job_id) / "runner.log").open("ab"), cwd=_root(job))
@@ -319,7 +340,12 @@ def start(kind: str, ref: str, chain: bool = False) -> Job:
     if not _cloud() and llm.claude_bin() is None:
         raise JobError("这台机器上找不到 claude 命令")
     directory, title, what = _brief(kind, ref)
-    holder = _holder(directory)
+    same = next((j for j in listing() if j.kind == kind and j.ref == ref and j.phase in HOLDING), None)
+    if same is not None:
+        raise JobError(f"这一项已经有一个作业了（{same.title}，{same.phase_label}），作业编号 {same.job_id}")
+    # 云端每个作业有自己的工作区，出方案只读，可以并行；本地就地改的、或本地没有 worker 排队的，同目录仍然只跑一个。
+    # In the cloud every job has its own workspace and planning is read-only, so plans run in parallel; locally (in place, or without a worker queue) a directory still runs one job.
+    holder = None if _cloud() else _holder(directory)
     if holder is not None:
         raise JobError(f"`{directory}/` 上已经有一个作业（{holder.title}，{holder.phase_label}），同一个目录同时只跑一个")
     job = Job(job_id=f"job-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}", kind=kind, ref=ref, directory=directory,  # type: ignore[arg-type]
@@ -379,6 +405,7 @@ def approve(job_id: str) -> Job:
     if changed:
         raise JobError(f"`{job.directory}/` 里有还没提交的改动（{'、'.join(changed[:4])}{' 等' if len(changed) > 4 else ''}）。先把它们提交或还原，这样作业失败时才能干净地还原。")
     job.phase = "running"
+    _queue_behind(job)
     save(job)
     if job.kind == "wish":
         if wishes.get(job.ref).status == "open":
@@ -434,10 +461,11 @@ def resume(job_id: str) -> Job:
         raise JobError("只有失败了的作业才能接着做")
     if not _cloud() and not dirty(job.directory, _root(job)):
         raise JobError("它没有留下改动，没有可以接着做的。重新出方案吧。")
-    holder = _holder(job.directory)
+    holder = None if _cloud() else _holder(job.directory)
     if holder is not None:
         raise JobError(f"`{job.directory}/` 上已经有另一个作业在进行（{holder.title}）")
     job.phase, job.error = "testing", None
+    _queue_behind(job)
     save(job)
     if job.kind == "task":
         tasks.set_status(job.ref, "running", by="claude-code")
