@@ -70,7 +70,7 @@ mv <项目>/.git <项目>/.git-nested
 **开发时**每个子项目照旧用自己的开发服务器和端口。**使用时**不用启动它们：`idea-loom` 一个进程托管所有模拟。
 
 ```sh
-cd idea-loom && uv run idea-loom build-ui && uv run idea-loom serve    # 然后打开 http://localhost:8767
+cd idea-loom && uv run idea-loom serve    # 然后打开 http://localhost:8767
 ```
 
 - 每个模拟在自己的子域名下：`http://<项目>.localhost:8767/`。它是独立的源，所以项目里写的 `/api/...`、`/assets/...` 这些从根开始的路径照常能用。
@@ -124,7 +124,7 @@ cd idea-loom && uv run idea-loom build-ui && uv run idea-loom serve    # 然后�
 
 ### The single entry point and the embed contract
 
-**While developing**, each subproject keeps its own dev server and port. **For use**, none of them needs starting: one `idea-loom` process hosts every simulation (`cd idea-loom && uv run idea-loom build-ui && uv run idea-loom serve`, then open http://localhost:8767).
+**While developing**, each subproject keeps its own dev server and port. **For use**, none of them needs starting: one `idea-loom` process hosts every simulation (`cd idea-loom && uv run idea-loom serve`, then open http://localhost:8767).
 
 - Each simulation lives on its own subdomain, `http://<project>.localhost:8767/`. That is a separate origin, so root-relative paths such as `/api/...` and `/assets/...` keep working unchanged.
 - What is hosted is **the version merged into `main`**: idea-loom builds a snapshot of that directory from `origin/main` and ignores the working tree. A newly merged PR triggers a rebuild.
