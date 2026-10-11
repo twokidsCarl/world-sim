@@ -1,0 +1,53 @@
+[
+  {
+    "dir": "strata",
+    "tagline": "从微观规则到涌现",
+    "level": "L1",
+    "keywords": [
+      "strata"
+    ],
+    "ideas": [],
+    "ui_url": "http://localhost:5188"
+  },
+  {
+    "dir": "limn",
+    "tagline": "Goodsell 风格的科学插图",
+    "level": "L2",
+    "keywords": [
+      "Goodsell",
+      "limn"
+    ],
+    "ideas": [],
+    "ui_url": "http://localhost:5184"
+  },
+  {
+    "dir": "soma",
+    "tagline": "三维人体解剖",
+    "level": "L4",
+    "keywords": [
+      "soma"
+    ],
+    "ideas": [],
+    "ui_url": "http://localhost:5183"
+  },
+  {
+    "dir": "mindloop",
+    "tagline": "我知道你知道我知道",
+    "level": "L6",
+    "keywords": [
+      "mindloop"
+    ],
+    "ideas": [],
+    "ui_url": "http://localhost:8765"
+  },
+  {
+    "dir": "polis",
+    "tagline": "平行社会",
+    "level": "L8",
+    "keywords": [
+      "polis"
+    ],
+    "ideas": [],
+    "ui_url": "http://localhost:5186"
+  }
+]
