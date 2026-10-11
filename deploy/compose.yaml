@@ -73,8 +73,8 @@ services:
   worker:
     <<: *loom
     build: { context: .., dockerfile: deploy/Dockerfile, target: worker }
-    # 作业搬到 worker 的那一步做好之前不启动它。到时候用 --profile jobs 启动。
-    # Not started until jobs have moved to the worker; then start it with --profile jobs.
+    # 用 --profile jobs 启动。不启动它，hub 上的作业就一直排着队。
+    # Start it with --profile jobs. Without it, jobs queued on the hub simply stay queued.
     profiles: ["jobs"]
     # 只有这个容器拿得到订阅令牌和仓库的推送凭证。它没有对外的端口。
     # Only this container gets the subscription token and the push credential. It exposes no port.
@@ -85,6 +85,12 @@ services:
       IDEA_LOOM_REPO_URL: ${REPO_URL}
       IDEA_LOOM_WORK: /srv/work
       IDEA_LOOM_DB: /srv/state/db/loom.sqlite
+      IDEA_LOOM_JOBS_PER_DAY: ${JOBS_PER_DAY:-6}
+      IDEA_LOOM_USAGE_PAUSE: ${USAGE_PAUSE:-0.8}
+      GIT_AUTHOR_NAME: ${GIT_NAME}
+      GIT_AUTHOR_EMAIL: ${GIT_EMAIL}
+      GIT_COMMITTER_NAME: ${GIT_NAME}
+      GIT_COMMITTER_EMAIL: ${GIT_EMAIL}
     security_opt: ["no-new-privileges:true"]
     cap_drop: ["ALL"]
     pids_limit: 1024

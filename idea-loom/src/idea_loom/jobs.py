@@ -9,6 +9,13 @@
 范围靠写文件的权限规则和"PR 只含这个目录"来保证。
 每个阶段在一个独立的进程里跑，状态都写在 runs/jobs/<编号>/ 下，所以后端重启不影响它。
 
+云端不一样的地方（见 worker.py）：hub 不跑作业，只把它排进队列；worker 有自己的一份仓库，
+每个作业一个独立的工作区和分支，做完推分支、开 PR，失败了直接丢掉，不需要"还原"。
+
+In the cloud (see worker.py) the hub does not run jobs, it only queues them; the worker has
+its own clone and gives every job its own workspace and branch, pushes the branch and opens
+the PR when done, and simply discards the workspace on failure, so nothing needs reverting.
+
 Jobs: trigger Claude Code from the UI to do a wish or a development task. While
 planning, Claude only has read tools. Only after approval does a second run get write
 access to `<directory>/` and the test commands, and never git or gh. When it finishes,
@@ -33,7 +40,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from . import llm, ops, store, tasks, wishes
+from . import config, gates, llm, ops, store, tasks, wishes
 from .assistant.stream import StreamParser
 
 Phase = Literal["planning", "plan_ready", "running", "testing", "pr", "merged", "failed", "cancelled", "declined"]
@@ -73,6 +80,10 @@ class Job(BaseModel):
     restart_needed: bool = False
     cost_usd: float = 0
     pid: Optional[int] = None
+    queued: Optional[str] = None  # 排着队等 worker 来做的那一步（plan / execute / finish）/ the step waiting for the worker
+    waiting: Optional[str] = None  # 为什么还没轮到它，给人看 / why it has not started yet, for a person
+    workspace: Optional[str] = None  # 云端：这个作业自己的工作区 / in the cloud: this job's own workspace
+    branch: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -95,7 +106,7 @@ def _dir(job_id: str) -> Path:
 
 def save(job: Job) -> Job:
     job.updated_at = now()
-    job.phase_label = PHASE_LABELS[job.phase]
+    job.phase_label = "排队中" if job.queued else PHASE_LABELS[job.phase]
     store.write_json(_dir(job.job_id) / "job.json", job.model_dump())
     return job
 
@@ -105,7 +116,7 @@ def get(job_id: str) -> Job:
     if raw is None:
         raise JobError("没有这个作业")
     job = Job.model_validate(raw)
-    job.phase_label = PHASE_LABELS[job.phase]
+    job.phase_label = "排队中" if job.queued else PHASE_LABELS[job.phase]
     return job
 
 
@@ -126,6 +137,8 @@ def reap(job: Job) -> Job:
 
     The runner process is gone but the job still looks active: mark it failed and free the directory.
     """
+    if config.role() == "hub" or job.queued:  # 进程在 worker 那边，或者还在排队 / the process lives in the worker, or it is still queued
+        return job
     if job.phase in ACTIVE and not _alive(job.pid) and time.time() - datetime.fromisoformat(job.updated_at).timestamp() > 5:
         _fail(job, "作业的进程不在了（可能是机器重启或被手动结束），没有做完。")
         return get(job.job_id)
@@ -194,17 +207,43 @@ def _holder(directory: str) -> Optional[Job]:
 
 def _spawn(job: Job, phase: str) -> None:
     proc = subprocess.Popen([sys.executable, "-m", "idea_loom.jobs", phase, job.job_id], start_new_session=True,
-                            stdout=subprocess.DEVNULL, stderr=(_dir(job.job_id) / "runner.log").open("ab"), cwd=store.repo_root())
-    job.pid = proc.pid
+                            stdout=subprocess.DEVNULL, stderr=(_dir(job.job_id) / "runner.log").open("ab"), cwd=_root(job))
+    job.pid, job.queued, job.waiting = proc.pid, None, None
     save(job)
 
 
-def start(kind: str, ref: str) -> Job:
-    from . import config
+def _root(job: Job) -> Path:
+    """这个作业在哪棵树里干活：云端是它自己的工作区，本地是共用的仓库目录。
 
+    The tree this job works in: its own workspace in the cloud, the shared repository directory locally.
+    """
+    return Path(job.workspace) if job.workspace else store.repo_root()
+
+
+def _tree(job: Job) -> Optional[Path]:
+    return Path(job.workspace) if job.workspace else None
+
+
+def _dispatch(job: Job, phase: str) -> None:
+    """本地直接起进程；hub 上只排队，由 worker 来做。 / Locally start the process; on the hub only queue it for the worker."""
     if config.role() == "hub":
-        raise JobError("云端的作业由 worker 来跑，这一步还没有接上。")
-    if llm.claude_bin() is None:
+        job.queued, job.pid = phase, None
+        save(job)
+        _say(job.job_id, "已排队，等 worker 来做。")
+    else:
+        _spawn(job, phase)
+
+
+def secret_free_env() -> dict[str, str]:
+    """跑项目自己的命令（测试、安装依赖）时用的环境：不带任何凭证。
+
+    The environment for the project's own commands (tests, installing dependencies): no credentials in it.
+    """
+    return {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY", "IDEA_LOOM_INTERNAL_TOKEN")}
+
+
+def start(kind: str, ref: str) -> Job:
+    if config.role() != "hub" and llm.claude_bin() is None:
         raise JobError("这台机器上找不到 claude 命令")
     directory, title, what = _brief(kind, ref)
     holder = _holder(directory)
@@ -219,7 +258,7 @@ def start(kind: str, ref: str) -> Job:
         tasks.attach_job(ref, job.job_id)
         tasks.set_status(ref, "planning", by="claude-code")
     _say(job.job_id, "开始出方案。这一步 Claude 只读不写。")
-    _spawn(job, "plan")
+    _dispatch(job, "plan")
     return job
 
 
@@ -233,18 +272,27 @@ def revise(job_id: str, feedback: str) -> Job:
     job.phase = "planning"
     save(job)
     _say(job_id, f"收到意见，重写方案：{feedback.strip()}")
-    _spawn(job, "plan")
+    _dispatch(job, "plan")
     return job
 
 
-def dirty(directory: str) -> list[str]:
+def dirty(directory: str, repo: Optional[Path] = None) -> list[str]:
     """目录里相对 origin/main 改过或没跟踪的文件（事件日志这类数据不算）。
 
     Files in the directory that differ from origin/main or are untracked (data such as event logs excluded).
     """
-    repo = store.repo_root()
+    workspace = repo is not None and repo != store.repo_root()
+    repo = repo or store.repo_root()
     out = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=all", "--", directory], capture_output=True, text=True).stdout
     files = [line[3:].split(" -> ")[-1].strip('"') for line in out.splitlines() if line.strip()]
+    if workspace:
+        # 作业自己的工作区里，已经提交在作业分支上的也算（接着做的时候，改动早就提交过了）。
+        # 共用的目录不这样比：那里的 HEAD 可能落后于 origin/main，会把别人合并的改动当成自己的。
+        # In a job's own workspace, what is already committed on the job branch counts too (when
+        # resuming, the changes were committed earlier). The shared directory is not compared this
+        # way: its HEAD may lag behind origin/main, and other people's merged changes would look like ours.
+        committed = subprocess.run(["git", "-C", str(repo), "diff", "--name-only", "origin/main", "HEAD", "--", directory], capture_output=True, text=True).stdout
+        files += [f for f in committed.splitlines() if f.strip() and f not in files]
     return [f for f in files if not f.startswith(f"{directory}/data/")]
 
 
@@ -252,7 +300,9 @@ def approve(job_id: str) -> Job:
     job = get(job_id)
     if job.phase != "plan_ready":
         raise JobError("只有方案待批的时候才能批准")
-    changed = dirty(job.directory)
+    # 云端每个作业有自己干净的工作区，不存在"共用目录里有没提交的改动"。
+    # In the cloud every job has its own clean workspace, so there are no uncommitted changes in a shared directory to worry about.
+    changed = [] if config.role() == "hub" else dirty(job.directory)
     if changed:
         raise JobError(f"`{job.directory}/` 里有还没提交的改动（{'、'.join(changed[:4])}{' 等' if len(changed) > 4 else ''}）。先把它们提交或还原，这样作业失败时才能干净地还原。")
     job.phase = "running"
@@ -263,7 +313,7 @@ def approve(job_id: str) -> Job:
     else:
         tasks.set_status(job.ref, "running", by="claude-code")
     _say(job_id, "方案已批准，开始动手。")
-    _spawn(job, "execute")
+    _dispatch(job, "execute")
     return job
 
 
@@ -288,8 +338,8 @@ def cancel(job_id: str) -> Job:
             os.killpg(job.pid, 15)
         except (ProcessLookupError, PermissionError):
             pass
-    was_running = job.phase != "plan_ready" and job.phase != "planning"
-    job.phase = "cancelled"
+    was_running = job.phase != "plan_ready" and job.phase != "planning" and not job.workspace and config.role() != "hub"
+    job.phase, job.queued, job.waiting = "cancelled", None, None
     save(job)
     if job.kind == "task":
         tasks.set_status(job.ref, "todo", note="作业取消了", by="claude-code")
@@ -305,7 +355,7 @@ def resume(job_id: str) -> Job:
     job = get(job_id)
     if job.phase != "failed":
         raise JobError("只有失败了的作业才能接着做")
-    if not dirty(job.directory):
+    if config.role() != "hub" and not dirty(job.directory, _root(job)):
         raise JobError("它没有留下改动，没有可以接着做的。重新出方案吧。")
     holder = _holder(job.directory)
     if holder is not None:
@@ -315,7 +365,7 @@ def resume(job_id: str) -> Job:
     if job.kind == "task":
         tasks.set_status(job.ref, "running", by="claude-code")
     _say(job_id, "接着做：从跑测试开始。")
-    _spawn(job, "finish")
+    _dispatch(job, "finish")
     return job
 
 
@@ -328,6 +378,8 @@ def revert(job_id: str) -> list[str]:
     job = get(job_id)
     if job.phase not in ("failed", "cancelled"):
         raise JobError("只有失败或取消了的作业才能还原")
+    if job.workspace or config.role() == "hub":
+        raise JobError("云端的作业在自己的工作区里做，没有动过别的地方，不需要还原。")
     repo = store.repo_root()
     done = []
     for rel in dirty(job.directory):
@@ -345,9 +397,9 @@ def revert(job_id: str) -> list[str]:
 # ---------- 各阶段（在独立进程里跑）/ the phases (each in its own process) ----------
 
 
-def _commands(directory: str) -> list[list[str]]:
+def _commands(directory: str, repo: Optional[Path] = None) -> list[list[str]]:
     """这个目录的测试命令，由程序自己跑；也告诉 Claude 可以跑这些。 / The directory's test commands."""
-    repo = store.repo_root()
+    repo = repo or store.repo_root()
     out: list[list[str]] = []
     if (repo / directory / "pyproject.toml").exists():
         out.append(["uv", "run", "--project", directory, "pytest", "-q", f"{directory}/tests"])
@@ -369,8 +421,12 @@ def _claude(job: Job, prompt: str, tools: str, allowed: list[str], limit: int) -
         "--permission-mode", "dontAsk", "--permission-prompts", "none", "--setting-sources", "", "--settings", json.dumps(deny),
         "--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence",
     ]
-    parser = StreamParser(repo=str(store.repo_root()))
-    proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, cwd=store.repo_root())
+    parser = StreamParser(repo=str(_root(job)))
+    # 推送凭证不给 Claude 进程；并让它不要把自己的凭证传给它起的子进程（测试、安装脚本）。
+    # The push credential is kept from the Claude process, and it is told not to pass its own credentials on to the subprocesses it starts (tests, install scripts).
+    env = {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN", "IDEA_LOOM_INTERNAL_TOKEN")}
+    env["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1"
+    proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, cwd=_root(job), env=env)
     started = time.monotonic()
     assert proc.stdin and proc.stdout
     proc.stdin.write(prompt.encode("utf-8"))
@@ -383,6 +439,8 @@ def _claude(job: Job, prompt: str, tools: str, allowed: list[str], limit: int) -
             obj = json.loads(raw)
         except ValueError:
             continue
+        if isinstance(obj, dict) and obj.get("type") == "rate_limit_event" and isinstance(obj.get("rate_limit_info"), dict):
+            gates.note_usage(obj["rate_limit_info"])
         for event in parser.feed(obj) if isinstance(obj, dict) else []:
             if event["type"] == "step":
                 _emit(job.job_id, event)
@@ -436,7 +494,7 @@ def run_plan(job_id: str) -> None:
 
 def run_execute(job_id: str) -> None:
     job = get(job_id)
-    prompt = ops._fill("job_execute", what=job.what, plan=job.plan, directory=job.directory, commands=_commands_text(job.directory))
+    prompt = ops._fill("job_execute", what=job.what, plan=job.plan, directory=job.directory, commands=_commands_text(job.directory, _tree(job)))
     try:
         parser = _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", _allowed(job.directory), LIMIT_SECONDS["running"])
     except JobError as e:
@@ -464,8 +522,8 @@ def _allowed(directory: str) -> list[str]:
     ]
 
 
-def _commands_text(directory: str) -> str:
-    commands = _commands(directory)
+def _commands_text(directory: str, repo: Optional[Path] = None) -> str:
+    commands = _commands(directory, repo) if repo else _commands(directory)
     lines = [f"  - `{' '.join(c)}`" for c in commands] or [
         f"  - `uv sync --project {directory}`、`uv run --project {directory} pytest -q {directory}/tests`（Python）",
         f"  - `bun install --cwd {directory}`、`bun run --cwd {directory} test`（TypeScript）",
@@ -478,11 +536,11 @@ def _commands_text(directory: str) -> str:
 
 def _run_tests(job: Job) -> Optional[str]:
     """由程序自己跑测试。返回失败的那一段输出，全过返回 None。 / Run the tests; return the failing output, or None."""
-    repo = store.repo_root()
+    repo = _root(job)
     log = []
-    for command in _commands(job.directory):
+    for command in _commands(job.directory, repo) if job.workspace else _commands(job.directory):
         _say(job.job_id, f"跑测试：{' '.join(command)}")
-        proc = subprocess.run(command, cwd=repo, capture_output=True, text=True, timeout=1800)
+        proc = subprocess.run(command, cwd=repo, capture_output=True, text=True, timeout=1800, env=secret_free_env())
         output = (proc.stdout + proc.stderr)[-3000:]
         log.append(f"$ {' '.join(command)}\n{output}")
         job.test_log = "\n\n".join(log)[-8000:]
@@ -502,8 +560,8 @@ def _finish(job_id: str) -> None:
     "done" does not decide the outcome; the tests re-run here do.
     """
     job = get(job_id)
-    repo = store.repo_root()
-    job.changed = dirty(job.directory)
+    repo = _root(job)
+    job.changed = dirty(job.directory, repo)
     if not job.changed:
         return _fail(job, "Claude 结束了，但没有改任何文件。" + str(job.summary.get("not_done") or ""))
 
@@ -519,7 +577,7 @@ def _finish(job_id: str) -> None:
         job.phase = "running"
         save(job)
         _say(job_id, f"测试没过，把输出交回给 Claude 修（第 {job.repairs} 轮）。")
-        prompt = ops._fill("job_repair", what=job.what, plan=job.plan, directory=job.directory, commands=_commands_text(job.directory),
+        prompt = ops._fill("job_repair", what=job.what, plan=job.plan, directory=job.directory, commands=_commands_text(job.directory, _tree(job)),
                            changed="\n".join(f"- {f}" for f in job.changed), failure=failure)
         try:
             _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", _allowed(job.directory), LIMIT_SECONDS["running"])
@@ -528,7 +586,7 @@ def _finish(job_id: str) -> None:
         job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "denied": job.denied, "repairs": job.repairs})
         if job.phase == "cancelled":
             return
-        job.changed = dirty(job.directory)
+        job.changed = dirty(job.directory, repo)
 
     job.phase = "pr"
     save(job)
@@ -540,18 +598,25 @@ def _finish(job_id: str) -> None:
     body_zh = f"{job.summary.get('summary_zh') or zh}" + (f"\n\n它说没做的部分：{left}" if left else "") + f"\n\n由 idea-loom 的作业 {job.job_id} 完成（{ref_line}）。方案经仓库主人批准后执行，测试由作业程序在提交前重新跑过。"
     body_en = (f"{job.summary.get('summary_en') or en}\n\nDone by idea-loom job {job.job_id} ({'wish' if job.kind == 'wish' else 'task'} {job.ref}). "
                "The plan was approved by the repository owner before execution, and the job runner re-ran the tests before submitting.")
-    env = {**os.environ, "COMMIT_BODY": f"{body_zh}\n\n{body_en}",
-           "PR_BODY": f"## 中文\n\n{body_zh}\n\n### 批准的方案\n\n{job.plan}\n\n## English\n\n{body_en}\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"}
+    commit_body = f"{body_zh}\n\n{body_en}"
+    pr_body = f"## 中文\n\n{body_zh}\n\n### 批准的方案\n\n{job.plan}\n\n## English\n\n{body_en}\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
     _say(job_id, "测试通过，开 PR。")
-    proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, job.directory], cwd=repo, env=env, capture_output=True, text=True, timeout=600)
-    out = (proc.stdout + proc.stderr).strip()
-    job.pr_url = next((line.split("PR: ", 1)[1].strip() for line in out.splitlines() if line.startswith("PR: ")), None)
+    if job.workspace:
+        from . import worker
+
+        job.pr_url, problem = worker.submit(job, title, commit_body, pr_body)
+    else:
+        env = {**os.environ, "COMMIT_BODY": commit_body, "PR_BODY": pr_body}
+        proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, job.directory], cwd=repo, env=env, capture_output=True, text=True, timeout=600)
+        out = (proc.stdout + proc.stderr).strip()
+        job.pr_url = next((line.split("PR: ", 1)[1].strip() for line in out.splitlines() if line.startswith("PR: ")), None)
+        problem = None if proc.returncode == 0 and job.pr_url else (out.splitlines()[-1] if out else "没有输出")
     if job.pr_url and job.pr_url.rstrip("/").split("/")[-1].isdigit():
         job.pr = int(job.pr_url.rstrip("/").split("/")[-1])
-    if proc.returncode != 0 or not job.pr_url:
-        return _fail(job, f"PR 没有合并：{out.splitlines()[-1] if out else '没有输出'}")
+    if problem:
+        return _fail(job, f"PR 没有合并：{problem}")
     job.phase = "merged"
-    job.restart_needed = job.directory == "idea-loom" and any("/src/" in f for f in job.changed)
+    job.restart_needed = not job.workspace and job.directory == "idea-loom" and any("/src/" in f for f in job.changed)
     save(job)
     if job.kind == "wish":
         wishes.add_link(job.ref, "pr", title=zh, url=job.pr_url, pr=job.pr, by="claude-code")

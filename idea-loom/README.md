@@ -308,6 +308,8 @@ src/idea_loom/
   cloud.py      云端启动：克隆仓库、第一次取数据 / cloud start-up: clone the repository, seed the data once
   play/         统一入口：名片、快照与构建、后端进程、按主机名分发 / the single entry point: card files, snapshots and builds, backend processes, routing by host
   jobs.py       作业：出方案、批准、执行、测试、PR / jobs: plan, approve, execute, test, PR
+  worker.py     云端跑作业的进程：队列、每个作业的工作区、推分支开 PR / the process that runs jobs in the cloud: the queue, per-job workspaces, pushing and opening PRs
+  gates.py      闸门：每天的上限、订阅额度的暂停线 / gates: the daily cap and the allowance pause
   review.py     回看操作轨迹 / review of the action trail
   wishes.py     许愿池 / the wish pool
   trail.py      操作轨迹 / the action trail

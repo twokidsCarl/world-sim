@@ -80,6 +80,7 @@ export type Job = {
   job_id: string; kind: 'wish' | 'task'; ref: string; directory: string; title: string; what: string; phase: string; phase_label: string
   plan: string; feedback: string[]; error: string | null; summary: Record<string, unknown>; changed: string[]; test_log: string; denied: string[]; repairs: number
   pr: number | null; pr_url: string | null; restart_needed: boolean; cost_usd: number; created_at: string; updated_at: string
+  queued: string | null; waiting: string | null
 }
 export type JobEvent = { seq: number; at: string; type: string; text?: string; label?: string; state?: string; id?: string; message?: string }
 export type Suggestion = { title: string; kind: string; stuck: string; suggestion: string; evidence: string }

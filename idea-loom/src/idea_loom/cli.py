@@ -254,6 +254,18 @@ def db_export(out: str = typer.Argument(..., help="导出到哪个目录 / the d
         typer.echo(f"{stream:<10} {text.count(chr(10))}")
 
 
+@app.command("worker")
+def worker_(once: bool = typer.Option(False, help="只看一遍队列就退出 / look over the queue once and exit")) -> None:
+    """云端跑作业的进程：从队列里取主人批准过的事来做。 / The process that runs jobs in the cloud, taking what the owner approved from the queue."""
+    from . import worker
+
+    w = worker.Worker()
+    if once:
+        typer.echo(json.dumps(w.tick(), ensure_ascii=False))
+    else:
+        w.loop()
+
+
 @app.command("build-ui")
 def build_ui() -> None:
     """把 idea-loom 自己的界面构建成静态文件，由后端直接提供。 / Build idea-loom's own UI into static files served by the backend."""

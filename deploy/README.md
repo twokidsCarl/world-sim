@@ -5,9 +5,9 @@
 Put world-sim on one cloud host: idea-loom is the single entry point and every simulation
 lives on its own subdomain.
 
-> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"、"登录与权限"、"数据库"三期，下面"还没有的"一节列了没做的部分。
+> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"、"登录与权限"、"数据库"三期和"云端作业"的主体，下面"还没有的"一节列了没做的部分。
 >
-> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed", "sign-in and roles" and "database" stages are done so far; see "not there yet" below.
+> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed", "sign-in and roles" and "database" stages and the core of "jobs in the cloud" are done so far; see "not there yet" below.
 
 ## 结构 / Layout
 
@@ -138,21 +138,49 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env run --rm backup res
 The assistant's conversations and the jobs' logs are still files on the `state` volume and
 are not in this backup; keeping them means backing up the volume separately.
 
+## 作业 / Jobs
+
+```sh
+docker compose -f deploy/compose.yaml --env-file deploy/.env --profile jobs up -d --build
+```
+
+hub 不跑作业，只把它排进队列；`worker` 每几秒看一遍队列。每个作业有自己的工作区：从 `worker` 自己那份仓库的 `main` 开一个分支 `job/<编号>` 和一棵工作树，Claude 在里面改，测试在里面跑；过了之后由 `worker` 提交这个目录的改动、推分支、开 PR、等它合并。合并了、取消了的工作区立刻删；失败的留七天，可以"接着做"。
+
+The hub does not run jobs, it queues them, and the `worker` looks over the queue every few
+seconds. Every job has its own workspace: a branch `job/<id>` and a worktree cut from `main`
+in the worker's own clone. Claude edits there and the tests run there; once they pass, the
+worker commits that directory's changes, pushes the branch, opens the PR and waits for the
+merge. Workspaces of merged and cancelled jobs are removed at once; failed ones are kept
+for seven days so they can be resumed.
+
+- **凭证 / Credentials**：推送凭证只在"推分支、开 PR"这一步用，不给 Claude 进程，也不给测试和安装依赖的命令。订阅令牌 Claude 自己要用；起它的时候设了 `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`，让它不把自己的凭证传给它起的子进程。
+  The push credential is used only for pushing and opening the PR; neither the Claude process nor the test and install commands get it. Claude needs the subscription token itself; it is started with `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` so that it does not pass its own credentials on to the subprocesses it starts.
+- **闸门 / Gates**：每天最多开工 `JOBS_PER_DAY` 个作业；`claude` 在每次运行里会报订阅额度的使用率（五小时和七天两个窗口），任何一个到了 `USAGE_PAUSE` 就暂停队列，等那个窗口过去。排着队的作业会写明为什么还没轮到。
+  At most `JOBS_PER_DAY` jobs start per day. `claude` reports the allowance utilisation in every run (a five-hour and a seven-day window); when either reaches `USAGE_PAUSE` the queue pauses until that window resets. A queued job says why it has not started.
+- **并行 / Parallelism**：同时最多两个作业，同一个目录同时只有一个。
+  At most two jobs at once, and only one per directory.
+
 ## 还没有的 / Not there yet
 
 按顺序做 / In this order:
 
 1. **导出到仓库 / Export to the repository**。数据库里新的 idea 事件还不会自动变成 PR：导出并推送需要仓库的凭证，那在 `worker` 里，和下一条一起做。在那之前，云端写的 idea 只在数据库里。
    New idea events in the database do not become a pull request by themselves yet: exporting and pushing needs the repository credential, which lives in the `worker` and comes with the next item. Until then ideas written in the cloud exist only in the database.
-2. **云端的作业和模型调用 / Jobs and model calls in the cloud**。`worker` 容器默认不启动；hub 里没有 `claude`，所以生成、小助手、作业在云端暂时都用不了。
-   The `worker` container is not started by default; the hub has no `claude`, so generating, the assistant and jobs do not work in the cloud yet.
-3. 访客提愿望、手机布局与推送、持续运行与自动维护。
+2. **其余的模型调用 / The other model calls**。作业已经由 `worker` 来跑（见下面"作业"一节）；但生成、细化、翻译、小助手仍然是 hub 直接调 `claude`，而 hub 里没有它，所以这几样在云端暂时用不了。
+   Jobs now run in the `worker` (see "Jobs" below), but generating, refining, translating and the assistant still call `claude` from the hub, which does not have it, so those do not work in the cloud yet.
+3. **合并前的自动测试 / Tests before merging**。仓库的自动合并现在不看测试。worker 在开 PR 之前自己重跑过测试，但别的来源的 PR 没有这一关。
+   The repository's auto-merge does not look at tests yet. The worker re-runs the tests before opening its PR, but PRs from other sources have no such gate.
+4. **作业的出站网络 / Outbound network for jobs**。作业的进程能访问任何地址，还没有只放行模型接口、GitHub 和包管理源的名单。
+   A job's processes can reach any address; there is no allow-list yet limiting them to the model API, GitHub and the package registries.
+5. 访客提愿望、手机布局与推送、持续运行与自动维护。
    Visitor wishes, the phone layout and push notifications, unattended running and automatic maintenance.
 
 ## 已知的风险 / Known risks
 
 - 数据库这一段在本机测过（把现有的 350 条 idea 事件导进去，折叠出来的状态和导出的文件都和原来逐字节相同；并发新建不撞号），但 **Litestream 的备份和恢复没有跑过**，配置是照它的文档写的。
   The database was tested locally (the existing 350 idea events imported, with the folded state and the exported files byte-identical to the originals; concurrent creation never collides), but **the Litestream backup and restore have not been run**; the configuration follows its documentation.
+- 作业这一段在本机用假的 `claude` 和假的 `gh`、一个本地的远端仓库测过（排队、工作区、提交只含这个目录、推分支、开 PR、等合并、闸门、取消、接着做），但**没有在容器里对着真的 GitHub 跑过**。`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` 的效果没有单独验证过。
+  Jobs were tested locally with a fake `claude`, a fake `gh` and a local remote (queueing, the workspace, a commit holding only that directory, pushing, opening the PR, waiting for the merge, the gates, cancelling, resuming), but **have not been run in the container against the real GitHub**. The effect of `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` has not been verified separately.
 - 登录这一段在本机测过（三种身份逐个调接口、伪造和过期的 cookie、回调的 state 校验），但**没有对着真的 GitHub 走过一遍**，因为还没有域名和 OAuth 应用。
   Sign-in was tested locally (every route as each of the three roles, forged and expired cookies, the callback's state check) but **has not been run against the real GitHub**, since there is no domain or OAuth app yet.
 - 模拟的子域名不需要登录，任何人都能玩；它们的后端只有限流这一道。

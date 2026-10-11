@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-cer
     && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 # 不用 root 跑任何东西。 / Nothing runs as root.
-RUN useradd --create-home --uid 10001 loom
+RUN useradd --create-home --uid 10001 loom \
+    # 卷挂在这几个目录上；先建好并交给 loom，新卷才不是 root 的。
+    # The volumes mount here; create the directories and hand them to loom so a fresh volume is not owned by root.
+    && mkdir -p /srv/repo /srv/state /srv/work && chown loom:loom /srv/repo /srv/state /srv/work
 WORKDIR /app/idea-loom
 COPY idea-loom/pyproject.toml idea-loom/uv.lock idea-loom/README.md ./
 COPY idea-loom/src ./src
