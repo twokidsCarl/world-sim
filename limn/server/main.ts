@@ -5,6 +5,7 @@ import { resolveTopic } from './resolve'
 import { annotate } from './sources/annotations'
 import { JOURNALS, openAccess, recent, released } from './sources/literature'
 import { orientation } from './sources/opm'
+import { pdbtm, topology } from './sources/pdbtm'
 import { cached, stateDir } from './structures'
 import { alphafold } from './sources/uniprot'
 
@@ -42,7 +43,13 @@ Bun.serve({
       // 膜蛋白在膜里的取向（OPM）；没有收录时返回 null
       // a membrane protein's orientation in the membrane (OPM); null when OPM does not have it
       const mem = /^\/api\/membrane\/([0-9][A-Za-z0-9]{3})$/.exec(url.pathname)
-      if (mem) return json({ orientation: await orientation(mem[1]!) })
+      if (mem) {
+        const opm = await orientation(mem[1]!)
+        if (opm) return json({ orientation: opm })
+        // OPM 没有：退到 PDBTM 的变换，加上 UniProt 的拓扑来定朝向 / not in OPM: fall back to PDBTM's transformation, with UniProt topology to settle which way it faces
+        const frame = await pdbtm(mem[1]!)
+        return json({ orientation: null, pdbtm: frame, topology: frame ? await topology(mem[1]!) : {} })
+      }
       // 某期刊最近发布的结构 / structures recently released for a journal
       if (url.pathname === '/api/recent') {
         const journal = url.searchParams.get('journal') ?? 'Nature'

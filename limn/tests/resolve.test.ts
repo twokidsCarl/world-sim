@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseOutput } from '../server/llm'
-import { matchArticles } from '../server/motm'
+import neuroTable from '../data/neuro.json'
+import { matchArticles, matchNeuro } from '../server/motm'
 import { resolveTopic, type Deps } from '../server/resolve'
 import type { EntryInfo } from '../server/sources/rcsb'
 
@@ -159,5 +160,27 @@ describe('parseOutput', () => {
     expect(() => parseOutput(JSON.stringify({ is_error: true, result: 'rate limited' }), schema)).toThrow(/rate limited/)
     expect(() => parseOutput('not json', schema)).toThrow()
     expect(() => parseOutput(JSON.stringify({ structured_output: { b: 1 } }), schema)).toThrow(/缺少字段/)
+  })
+})
+
+// 神经相关的地标结构 / landmark structures of the nervous system
+describe('neuroscience landmarks', () => {
+  it('lists each structure once, with a name in both languages', () => {
+    const ids = neuroTable.groups.flatMap((g) => g.entries.map((e) => e.id))
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const g of neuroTable.groups) for (const e of g.entries) {
+      expect(e.id).toMatch(/^[0-9][A-Z0-9]{3}$/)
+      expect(e.title.length).toBeGreaterThan(2)
+      expect(e.titleEn.length).toBeGreaterThan(3)
+    }
+  })
+
+  it('offers a landmark when the query names it, and nothing for an unrelated query', () => {
+    expect(matchNeuro(['AMPA glutamate receptor rat']).map((x) => x.id)).toContain('3KG2')
+    expect(matchNeuro(['voltage-gated sodium channel Nav1.7 pain'])[0]!.id).toBe('6J8J')
+    expect(matchNeuro(['tubulin dimer']).map((x) => x.id)).toContain('1JFF')
+    expect(matchNeuro(['haemoglobin oxygen transport'])).toEqual([])
+    // 只碰上一个泛泛的词不算 / one generic word in common is not enough
+    expect(matchNeuro(['calcium binding protein']).map((x) => x.id)).not.toContain('5GJV')
   })
 })

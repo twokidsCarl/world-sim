@@ -1,0 +1,268 @@
+{
+ "about": "神经相关的地标结构：只存 PDB 编号和一句说明，每个编号都对过 RCSB 的标题；结构本身运行时下载。 / Landmark structures of the nervous system: PDB ids and a line each, every id checked against its RCSB title; the structures themselves are downloaded at run time.",
+ "groups": [
+  {
+   "id": "presynaptic",
+   "title": "突触前：小泡的装载、融合与回收",
+   "titleEn": "Presynaptic: loading, fusing and recycling vesicles",
+   "entries": [
+    {
+     "id": "1SFC",
+     "title": "SNARE 复合体：拉着小泡和细胞膜融合的四螺旋束",
+     "titleEn": "The SNARE complex: the four-helix bundle that pulls vesicle and membrane together",
+     "keywords": "snare synaptobrevin syntaxin snap-25 fusion"
+    },
+    {
+     "id": "5CCG",
+     "title": "SNARE 复合体与钙感受器突触结合蛋白-1",
+     "titleEn": "The SNARE complex with the calcium sensor synaptotagmin-1",
+     "keywords": "synaptotagmin calcium sensor"
+    },
+    {
+     "id": "3J96",
+     "title": "20S 超复合体：NSF 和 SNAP 把用过的 SNARE 拆开",
+     "titleEn": "The 20S supercomplex: NSF and SNAP taking used SNAREs apart",
+     "keywords": "nsf alpha-snap 20s disassembly"
+    },
+    {
+     "id": "3C98",
+     "title": "Munc18 抱着 syntaxin-1",
+     "titleEn": "Munc18 holding syntaxin-1",
+     "keywords": "munc18 syntaxin"
+    },
+    {
+     "id": "6VQ6",
+     "title": "脑里的 V-ATP 酶：给小泡泵质子",
+     "titleEn": "The brain V-ATPase, which pumps protons into vesicles",
+     "keywords": "v-atpase proton pump"
+    },
+    {
+     "id": "9BRA",
+     "title": "突触小泡上的 V-ATP 酶和突触素",
+     "titleEn": "The V-ATPase with synaptophysin on synaptic vesicles",
+     "keywords": "v-atpase synaptophysin synaptic vesicle"
+    },
+    {
+     "id": "8SBE",
+     "title": "囊泡谷氨酸转运体 VGLUT2",
+     "titleEn": "The vesicular glutamate transporter VGLUT2",
+     "keywords": "vglut glutamate transporter"
+    },
+    {
+     "id": "8JLC",
+     "title": "SV2A（抗癫痫药左乙拉西坦的靶点）与肉毒毒素",
+     "titleEn": "SV2A, the target of the antiepileptic levetiracetam, with botulinum toxin",
+     "keywords": "sv2a levetiracetam botulinum"
+    },
+    {
+     "id": "1XI4",
+     "title": "网格蛋白的笼子",
+     "titleEn": "A clathrin cage",
+     "keywords": "clathrin coat endocytosis"
+    },
+    {
+     "id": "3SNH",
+     "title": "发动蛋白 dynamin-1：掐断内吞小泡",
+     "titleEn": "Dynamin-1, which pinches off endocytic vesicles",
+     "keywords": "dynamin endocytosis"
+    },
+    {
+     "id": "1AUV",
+     "title": "突触蛋白 synapsin 的 C 结构域",
+     "titleEn": "The C domain of synapsin",
+     "keywords": "synapsin"
+    }
+   ]
+  },
+  {
+   "id": "postsynaptic",
+   "title": "突触后：接收递质的受体和支架",
+   "titleEn": "Postsynaptic: the receptors that take the transmitter, and their scaffold",
+   "entries": [
+    {
+     "id": "3KG2",
+     "title": "AMPA 型谷氨酸受体",
+     "titleEn": "The AMPA-type glutamate receptor",
+     "keywords": "ampa glutamate receptor glua2"
+    },
+    {
+     "id": "7LDD",
+     "title": "从脑里直接纯化的 AMPA 受体",
+     "titleEn": "An AMPA receptor purified straight from brain",
+     "keywords": "native ampa receptor"
+    },
+    {
+     "id": "4PE5",
+     "title": "NMDA 型谷氨酸受体",
+     "titleEn": "The NMDA-type glutamate receptor",
+     "keywords": "nmda glutamate receptor glun1 glun2b"
+    },
+    {
+     "id": "6HUO",
+     "title": "GABA-A 受体与地西泮类药物阿普唑仑",
+     "titleEn": "The GABA-A receptor with the benzodiazepine alprazolam",
+     "keywords": "gaba-a receptor benzodiazepine"
+    },
+    {
+     "id": "2BG9",
+     "title": "烟碱型乙酰胆碱受体（电鳐）",
+     "titleEn": "The nicotinic acetylcholine receptor (Torpedo)",
+     "keywords": "nicotinic acetylcholine receptor"
+    },
+    {
+     "id": "7KOO",
+     "title": "α7 烟碱型受体与银环蛇毒素",
+     "titleEn": "The alpha-7 nicotinic receptor with alpha-bungarotoxin",
+     "keywords": "alpha7 nicotinic bungarotoxin"
+    },
+    {
+     "id": "1BE9",
+     "title": "PSD-95 的 PDZ 结构域抓着受体的尾巴",
+     "titleEn": "A PDZ domain of PSD-95 holding a receptor's tail",
+     "keywords": "psd-95 pdz scaffold"
+    },
+    {
+     "id": "3SOA",
+     "title": "钙调蛋白激酶 CaMKII",
+     "titleEn": "Calcium/calmodulin-dependent kinase II",
+     "keywords": "camkii kinase memory"
+    }
+   ]
+  },
+  {
+   "id": "axon",
+   "title": "轴突：离子通道、泵和轨道",
+   "titleEn": "The axon: channels, pumps and tracks",
+   "entries": [
+    {
+     "id": "6AGF",
+     "title": "电压门控钠通道 Nav1.4",
+     "titleEn": "The voltage-gated sodium channel Nav1.4",
+     "keywords": "sodium channel nav action potential"
+    },
+    {
+     "id": "6J8J",
+     "title": "痛觉相关的钠通道 Nav1.7 与蜘蛛毒素",
+     "titleEn": "The pain-related sodium channel Nav1.7 with a spider toxin",
+     "keywords": "nav1.7 pain sodium channel"
+    },
+    {
+     "id": "2A79",
+     "title": "电压门控钾通道 Kv1.2",
+     "titleEn": "The voltage-gated potassium channel Kv1.2",
+     "keywords": "potassium channel kv shaker"
+    },
+    {
+     "id": "5GJV",
+     "title": "电压门控钙通道 Cav1.1",
+     "titleEn": "The voltage-gated calcium channel Cav1.1",
+     "keywords": "calcium channel cav"
+    },
+    {
+     "id": "7MIY",
+     "title": "突触前的 N 型钙通道 Cav2.2",
+     "titleEn": "The presynaptic N-type calcium channel Cav2.2",
+     "keywords": "cav2.2 n-type calcium channel"
+    },
+    {
+     "id": "2ZXE",
+     "title": "钠钾泵",
+     "titleEn": "The sodium-potassium pump",
+     "keywords": "sodium potassium pump na/k-atpase"
+    },
+    {
+     "id": "8Y2D",
+     "title": "多巴胺转运体与多巴胺",
+     "titleEn": "The dopamine transporter with dopamine",
+     "keywords": "dopamine transporter dat"
+    },
+    {
+     "id": "1JFF",
+     "title": "微管蛋白 αβ 二聚体",
+     "titleEn": "The alpha-beta tubulin dimer",
+     "keywords": "tubulin"
+    },
+    {
+     "id": "6DPU",
+     "title": "一段微管",
+     "titleEn": "A stretch of microtubule",
+     "keywords": "microtubule"
+    },
+    {
+     "id": "3J8Y",
+     "title": "驱动蛋白走在微管上",
+     "titleEn": "Kinesin on a microtubule",
+     "keywords": "kinesin motor microtubule transport"
+    }
+   ]
+  },
+  {
+   "id": "myelin",
+   "title": "髓鞘",
+   "titleEn": "Myelin",
+   "entries": [
+    {
+     "id": "3OAI",
+     "title": "髓鞘蛋白 P0 的胞外结构域",
+     "titleEn": "The extracellular domain of myelin protein zero",
+     "keywords": "myelin p0 mpz"
+    },
+    {
+     "id": "5LF5",
+     "title": "髓鞘相关糖蛋白 MAG",
+     "titleEn": "Myelin-associated glycoprotein",
+     "keywords": "mag myelin"
+    },
+    {
+     "id": "1PKO",
+     "title": "髓鞘少突胶质细胞糖蛋白 MOG",
+     "titleEn": "Myelin oligodendrocyte glycoprotein",
+     "keywords": "mog myelin multiple sclerosis"
+    }
+   ]
+  },
+  {
+   "id": "pathology",
+   "title": "病理纤维：阿尔茨海默病、帕金森病",
+   "titleEn": "Fibrils of disease: Alzheimer's and Parkinson's",
+   "entries": [
+    {
+     "id": "5OQV",
+     "title": "β-淀粉样蛋白 Aβ42 的纤维",
+     "titleEn": "A fibril of amyloid-beta 42",
+     "keywords": "amyloid beta abeta fibril alzheimer"
+    },
+    {
+     "id": "7Q4B",
+     "title": "取自人脑的 Aβ42 纤维",
+     "titleEn": "Amyloid-beta 42 filaments from human brain",
+     "keywords": "amyloid beta human brain alzheimer"
+    },
+    {
+     "id": "5O3L",
+     "title": "阿尔茨海默病脑里的 tau 双螺旋纤维",
+     "titleEn": "Paired helical filaments of tau from an Alzheimer's brain",
+     "keywords": "tau paired helical filament alzheimer"
+    },
+    {
+     "id": "6NWP",
+     "title": "慢性创伤性脑病的 tau 纤维",
+     "titleEn": "Tau filaments of chronic traumatic encephalopathy",
+     "keywords": "tau cte"
+    },
+    {
+     "id": "6XYO",
+     "title": "多系统萎缩的 α-突触核蛋白纤维",
+     "titleEn": "Alpha-synuclein filaments of multiple system atrophy",
+     "keywords": "alpha-synuclein msa"
+    },
+    {
+     "id": "8A9L",
+     "title": "帕金森病和路易体痴呆的 α-突触核蛋白纤维",
+     "titleEn": "Alpha-synuclein filaments of Parkinson's disease and dementia with Lewy bodies",
+     "keywords": "alpha-synuclein parkinson lewy"
+    }
+   ]
+  }
+ ]
+}

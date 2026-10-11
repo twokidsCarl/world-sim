@@ -5,7 +5,7 @@ import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
 import { loadLipids, type LipidSet } from '../landscape/lipid'
-import { fitToMembrane, type MembraneFit } from '../landscape/orient'
+import { fitFromPdbtm, fitToMembrane, type MembraneFit } from '../landscape/orient'
 import type { Annotation, ColorMode } from '../style/annotate'
 import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
@@ -80,7 +80,8 @@ interface State extends Look {
   dnaPairs: number
   repack(): void
   resolveTopic(topic: string): Promise<void>
-  loadId(id: string): Promise<void>
+  /** `title`：目录里给这个结构起的名字，有就用它作标题 / `title`: the name a catalogue gives the structure, used as the title when given */
+  loadId(id: string, title?: string): Promise<void>
   loadCatalog(id: string): Promise<void>
   setAssembly(panel: number, id: string): void
   setRole(panel: number, entity: number, role: Role): void
@@ -201,12 +202,12 @@ export const useStore = create<State>((set, get) => ({
           spec.landscape.ingredients.filter((g) => g.compartment === 'membrane').map(async (g) => {
             const p = panels[g.panel]!
             if (p.spec.source.kind !== 'pdb') return
-            const opm = await api.membrane(p.spec.source.id)
-            p.membrane = opm ? fitToMembrane(p.mol, opm) : null
-            if (p.membrane) oriented.push(p.spec.label)
+            const data = await api.membrane(p.spec.source.id)
+            p.membrane = data?.orientation ? fitToMembrane(p.mol, data.orientation) : data?.pdbtm ? fitFromPdbtm(p.mol, data.pdbtm, data.topology ?? {}) : null
+            if (p.membrane) oriented.push(`${p.spec.label}（${p.membrane.source}）`)
           }),
         )
-        if (oriented.length) spec.notes = [`${oriented.join('、')} 在膜里的位置和朝向取自 OPM 数据库（由实验结构计算得到，不是直接测量）。`, ...spec.notes.filter((n) => !/^膜蛋白按分子长轴/.test(n) || oriented.length < spec.landscape!.ingredients.filter((g) => g.compartment === 'membrane').length)]
+        if (oriented.length) spec.notes = [`${oriented.join('、')} 在膜里的位置和倾角取自膜蛋白取向数据库（OPM；OPM 没有的用 PDBTM，并按 UniProt 的拓扑注释定哪面朝外）。这些取向是由实验结构计算得到的，不是直接测量。`, ...spec.notes.filter((n) => !/^膜蛋白按分子长轴/.test(n) || oriented.length < spec.landscape!.ingredients.filter((g) => g.compartment === 'membrane').length)]
         // 拥挤场景里几种分子共用一个角色；把它们在该角色的色相范围内展开，
         // 以便分清相邻的分子。
         // Several kinds of molecule share a role in a crowded scene; fan
@@ -247,7 +248,7 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
-  async loadId(id) {
+  async loadId(id, title) {
     const clean = id.trim().toUpperCase()
     // "AF-P04637"：AlphaFold 数据库里这个 UniProt 编号的预测模型 / "AF-P04637": the AlphaFold DB model for that UniProt accession
     const af = /^AF-([A-Z0-9]{6,10})$/.exec(clean)
@@ -268,7 +269,7 @@ export const useStore = create<State>((set, get) => ({
         entities: mol.entities.map((e, i) => ({ entityId: e.id, role: coloring.roles[i]!, name: e.description || e.kind, description: e.description, organism: '' })),
         reason: '',
       }
-      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: mol.title || clean, caption: '', panels: [spec], notes: prediction ? [`这是 AlphaFold 预测模型，不是实验结构；置信度低于 50 的区域没有画（${Math.round(prediction.confident * 100)}% 的残基置信度在 70 以上）。`] : [] }
+      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, caption: '', panels: [spec], notes: prediction ? [`这是 AlphaFold 预测模型，不是实验结构；置信度低于 50 的区域没有画（${Math.round(prediction.confident * 100)}% 的残基置信度在 70 以上）。`] : [] }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {

@@ -4,6 +4,7 @@ import { refine } from './refine/loop'
 import { download, renderFigure } from './render/export'
 import { placedAtomCount } from './scene/build'
 import { CATALOG, useStore } from './state/store'
+import neuro from '../data/neuro.json'
 import { TIER_LABEL } from './scene/spec'
 import { entityLch } from './style/assign'
 import { COLOR_MODE_LABEL, COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
@@ -237,6 +238,17 @@ export function App() {
                 {m.title}
               </button>
             ))}
+            <h2>神经系统的分子</h2>
+            {neuro.groups.map((g) => (
+              <details key={g.id}>
+                <summary title={g.titleEn}>{g.title}</summary>
+                {g.entries.map((e) => (
+                  <button key={e.id} disabled={working} title={`${e.titleEn} (PDB ${e.id})`} onClick={() => void s.loadId(e.id, e.title)}>
+                    {e.title}
+                  </button>
+                ))}
+              </details>
+            ))}
           </div>
         ) : (
           <form className="row" onSubmit={(e) => (e.preventDefault(), void s.loadId(id))}>
@@ -311,7 +323,7 @@ export function App() {
                         </div>
                       )
                     })()}
-                  {p.membrane && <div className="muted">膜内取向：OPM（{p.membrane.matched} 个残基叠合，偏差 {p.membrane.rmsd.toFixed(2)} Å）</div>}
+                  {p.membrane && <div className="muted">膜内取向：{p.membrane.source === 'OPM' ? `OPM（${p.membrane.matched} 个残基叠合，偏差 ${p.membrane.rmsd.toFixed(2)} Å）` : `PDBTM，朝向按 UniProt 拓扑注释（${p.membrane.matched} 个残基）`}</div>}
                   <div className="row" style={{ margin: '4px 0' }}>
                     <select value={p.spec.assembly} onChange={(e) => s.setAssembly(pi, e.target.value)} style={{ flex: 1 }}>
                       {p.mol.assemblies.map((a) => (

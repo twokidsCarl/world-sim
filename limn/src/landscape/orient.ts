@@ -21,6 +21,8 @@ export interface MembraneFit {
   half: number
   matched: number
   rmsd: number
+  /** 取向数据的来源 / where the orientation comes from */
+  source: 'OPM' | 'PDBTM'
 }
 
 /**
@@ -51,7 +53,7 @@ export function fitToMembrane(mol: Molecule, opm: OpmData): MembraneFit | null {
   if (matched < 20) return null
   const fit = fitRigid(from, to)
   if (fit.rmsd > 1.5) return null
-  return { matrix: fit.matrix, half: opm.half, matched, rmsd: fit.rmsd }
+  return { matrix: fit.matrix, half: opm.half, matched, rmsd: fit.rmsd, source: 'OPM' }
 }
 
 /**
@@ -62,4 +64,46 @@ export function fitToMembrane(mol: Molecule, opm: OpmData): MembraneFit | null {
 export function membraneToScene(outer: 'above' | 'below'): Float32Array {
   // 上：(x, y, z) -> (x, z, -y)；下：(x, y, z) -> (x, -z, y) / up: (x, y, z) -> (x, z, -y); down: (x, y, z) -> (x, -z, y)
   return outer === 'above' ? new Float32Array([1, 0, 0, 0, 0, -1, 0, 1, 0]) : new Float32Array([1, 0, 0, 0, 0, 1, 0, -1, 0])
+}
+
+/** 本地服务关于一个膜蛋白的回答 / what the local service says about a membrane protein */
+export interface MembraneData {
+  orientation: OpmData | null
+  pdbtm?: { matrix: number[]; half: number } | null
+  topology?: Record<string, { from: number; to: number; side: 'out' | 'in' }[]>
+}
+
+/**
+ * 用 PDBTM 的变换摆进膜里，再用拓扑注释决定哪面朝外：标为外侧的残基应当在 z 为正的一边。
+ * 没有可用的拓扑注释、或者内外两侧的残基分不开时返回 null（朝向定不下来就不用它）。
+ * Set a structure into the membrane with PDBTM's transformation, then let the topology annotation
+ * decide which face is out: residues marked as outside belong at positive z. Returns null when no
+ * topology annotation applies or the two sides do not separate (an orientation that cannot be
+ * settled is not used).
+ */
+export function fitFromPdbtm(mol: Molecule, frame: { matrix: number[]; half: number }, topology: Record<string, { from: number; to: number; side: 'out' | 'in' }[]>): MembraneFit | null {
+  const m = frame.matrix
+  const sum = { out: 0, in: 0 }, n = { out: 0, in: 0 }
+  for (const ch of mol.chains) {
+    const ranges = topology[ch.asymId]
+    if (!ranges) continue
+    for (let i = ch.start; i < ch.start + ch.count; i++) {
+      if (!mol.isTrace[i]) continue
+      const r = ranges.find((x) => mol.residue[i]! >= x.from && mol.residue[i]! <= x.to)
+      if (!r) continue
+      sum[r.side] += m[2]! * mol.pos[i * 3]! + m[6]! * mol.pos[i * 3 + 1]! + m[10]! * mol.pos[i * 3 + 2]! + m[14]!
+      n[r.side]++
+    }
+  }
+  if (n.out + n.in < 10) return null
+  // 外侧残基的平均高度减去内侧的；只有一侧有注释时，就看它在膜的哪一边
+  // mean height of the outside residues minus that of the inside ones; with one side annotated only, see which side of the membrane it is on
+  const gap = n.out && n.in ? sum.out / n.out - sum.in / n.in : n.out ? sum.out / n.out : -sum.in / n.in
+  if (Math.abs(gap) < 5) return null
+  const matrix = new Float32Array(m)
+  if (gap < 0) {
+    // 绕 x 轴翻转 180 度：y 和 z 都变号 / turn 180 degrees about x: y and z change sign
+    for (const k of [1, 2, 5, 6, 9, 10, 13, 14]) matrix[k] = -matrix[k]!
+  }
+  return { matrix, half: frame.half, matched: n.out + n.in, rmsd: 0, source: 'PDBTM' }
 }

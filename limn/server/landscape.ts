@@ -13,6 +13,7 @@ import type { Ingredient, LandscapeSpec, PanelSpec, SceneSpec, SourceRef } from 
 import { ROLES, type Role } from '../src/style/palettes'
 import type { Deps } from './resolve'
 import membraneData from '../data/membranes.json'
+import { matchNeuro } from './motm'
 import { ppmToMicromolar } from './sources/paxdb'
 import type { EntryInfo } from './sources/rcsb'
 
@@ -126,6 +127,8 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   const jobs: Promise<void>[] = []
   ingredients.forEach((ing, k) => {
     for (const id of ing.suggested_pdb_ids ?? []) if (PDB_ID.test(id)) perIngredient[k]!.add(id.toUpperCase())
+    // 神经相关的地标结构，作为这种成分的又一批候选 / landmark neuroscience structures, as further candidates for this ingredient
+    for (const n of matchNeuro(ing.queries ?? [], 2)) perIngredient[k]!.add(n.id)
     for (const q of (ing.queries ?? []).slice(0, 2)) {
       jobs.push(
         deps.searchText(q, 4).then((ids) => ids.forEach((id) => perIngredient[k]!.add(id)), (e) => log(`检索“${q}”失败: ${e instanceof Error ? e.message : e}`)),
