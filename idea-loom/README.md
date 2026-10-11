@@ -58,10 +58,34 @@ generated from it.
   around in place, the assistant button lights a dot offering to explain the page, once
   per page.
 
-还没有的（按顺序做）：开发任务与统计、从许愿池触发 Claude Code。
+- **开发 / Work**：把一条 idea 交给一个子项目（写一个新目录名就是开新项目），任务看板分待开工、方案待批、进行中、已合并。每个子项目的进度读自 GitHub：按 PR 标题冒号前的项目名归类。idea 页上能看到它对应的项目和任务；子项目的开发服务在跑时，可以直接在 idea 页里嵌着用。
+  Hand an idea to a subproject (a new directory name starts a new one); the board has
+  todo, plan ready, running and merged. Each subproject's progress is read from GitHub,
+  assigning PRs by the project name before the colon in the title. The idea page shows
+  its projects and tasks, and embeds a subproject's UI when its dev server is running.
+- **统计 / Statistics**：
+  - 每个项目：模型输出的 token、Claude Code 在跑的时间、合并的 PR、代码行数，以及每行代码、每个 PR 用了多少 token。
+    Per project: model output tokens, Claude Code running time, merged PRs, lines of
+    code, and tokens per line and per PR.
+  - Claude Code 的每次运行：每个会话跑了多久、说了几句话、调了多少次工具、输出多少，中间停了几次、最后停在什么时候。两条记录相隔五分钟以上算停下。
+    Every Claude Code run: how long each session ran, how many prompts and tool calls,
+    how much output, how many times it stopped and when it last stopped. A gap of five
+    minutes or more between two records counts as a stop.
+  - 你的注意力：在每条 idea、每一格、每个页面上停了多久，哪些 idea 从没打开过，候选留下了多少。
+    Your attention: time spent per idea, per cell and per page, which ideas were never
+    opened, and how many candidates were kept.
 
-Not yet (in this order): development tasks and statistics, triggering Claude Code from
-the wish pool.
+  token 和运行情况读的是本机 `~/.claude/projects` 下属于这个仓库的会话记录，只在本机算，只显示汇总数字。从根目录启动的会话，大部分记录落在哪个子目录就归哪个；说不清的列为"未归属"，可以在 `data/sessions.json` 里按会话编号指定：`{"<会话编号>": "<项目目录>"}`。
+
+  Tokens and runs come from the transcripts under `~/.claude/projects` that belong to
+  this repository; they are computed on this machine and only aggregates are shown. A
+  session started at the root is assigned to the subdirectory most of its records fall
+  in; anything unclear is listed as unassigned and can be pinned in `data/sessions.json`
+  as `{"<session id>": "<project dir>"}`.
+
+还没有的：从许愿池和任务触发 Claude Code（先出方案、批准后再动手）。
+
+Not yet: triggering Claude Code from a wish or a task (plan first, act after approval).
 
 ## 运行 / Run
 
@@ -102,6 +126,7 @@ the world-sim git history and skips itself without it.
 | `data/frame.json` | 层、横线、内核 / levels, threads, kernels |
 | `data/projects.json` | 子项目和它们对应的层 / subprojects and their levels |
 | `data/wishes.jsonl` | 愿望的事件 / wish events |
+| `data/tasks.jsonl` | 开发任务的事件 / development task events |
 
 `runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl` 和小助手的对话 `assistant/`。
 
@@ -154,6 +179,9 @@ src/idea_loom/
   llm.py        claude -p 封装，带缓存和用量记录 / claude -p wrapper with cache and usage log
   ops.py        生成、细化、融合、归类、查重 / generate, refine, fuse, classify, dedupe
   prompts/      提示词 / prompts
+  tasks.py      开发任务 / development tasks
+  github.py     读合并请求 / read pull requests
+  stats.py      统计 / statistics
   wishes.py     许愿池 / the wish pool
   trail.py      操作轨迹 / the action trail
   assistant/    小助手：提示词、回合、事件流、工具服务 / the assistant: prompt, turns, event stream, tool server

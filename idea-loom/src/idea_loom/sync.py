@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import ideas, render, store
 
-DATA_FILES = ("ideas.jsonl", "frame.json", "projects.json", "wishes.jsonl", "tasks.jsonl")
+DATA_FILES = ("ideas.jsonl", "frame.json", "projects.json", "wishes.jsonl", "tasks.jsonl", "sessions.json")
 
 
 class SyncStatus(BaseModel):

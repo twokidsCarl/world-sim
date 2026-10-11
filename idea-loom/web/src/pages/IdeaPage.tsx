@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { api } from '../api'
+import { type ProjectView, type Task, api } from '../api'
 import type { HistoryItem, IdeaDetail, Link as Edge, State } from '../contract'
 import { formatTime } from '../state/derive'
 import { EditText, IdeaActions, PositionEditor } from '../ui/IdeaActions'
@@ -79,6 +79,8 @@ export function IdeaPage({ state }: { state: State }) {
 
           <Refine idea={idea} state={state} />
 
+          <UseIt idea={idea} />
+
           <Section title="血缘" note="它从哪来，谁接着它">
             <Lineage idea={idea} state={state} />
           </Section>
@@ -104,22 +106,7 @@ export function IdeaPage({ state }: { state: State }) {
             {kernel && <p className="muted small kernel-desc">{kernel.desc}</p>}
           </Section>
 
-          <Section title="相关的子项目">
-            {projects.length === 0 ? (
-              <Empty>正文里没有提到已有的子项目。</Empty>
-            ) : (
-              <ul className="plain">
-                {projects.map((p) => (
-                  <li key={p.dir}>
-                    <Link to={`/ideas?project=${p.dir}`} className="chip project">
-                      {p.dir}
-                    </Link>{' '}
-                    <span className="muted small">{p.tagline}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Section>
+          <ProjectsFor idea={idea} state={state} />
 
           <Section title="来历">
             <dl className="facts">
@@ -301,6 +288,87 @@ function Refine({ idea, state }: { idea: IdeaDetail; state: State }) {
           ))}
         </div>
       )}
+    </Section>
+  )
+}
+
+// 这条 idea 对应的子项目、任务和进度。 / The subprojects, tasks and progress behind this idea.
+function useWork(idea: IdeaDetail) {
+  const [projects, setProjects] = useState<ProjectView[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  useEffect(() => {
+    let live = true
+    void Promise.all([api.projects(), api.tasks()]).then(([p, t]) => {
+      if (!live) return
+      setProjects(p.filter((x) => idea.projects.includes(x.dir)))
+      setTasks(t.filter((x) => x.idea_id === idea.id && x.status !== 'cancelled'))
+    }, () => undefined)
+    return () => {
+      live = false
+    }
+  }, [idea.id, idea.projects.join(',')])
+  return { projects, tasks }
+}
+
+function ProjectsFor({ idea, state }: { idea: IdeaDetail; state: State }) {
+  const { projects, tasks } = useWork(idea)
+  return (
+    <Section title="项目与进度">
+      {projects.length === 0 && tasks.length === 0 && <Empty>还没有子项目在做它。</Empty>}
+      <ul className="plain">
+        {tasks.map((t) => (
+          <li key={t.task_id}>
+            <span className="badge">{t.status_label}</span> {t.title}
+            {t.pr != null && <span className="muted small"> #{t.pr}</span>}
+          </li>
+        ))}
+        {projects.map((p) => (
+          <li key={p.dir}>
+            <Link to={`/ideas?project=${p.dir}`} className="chip project">{p.dir}</Link>{' '}
+            <span className="muted small">
+              {p.merged} 个 PR 已合并{p.last_merged_at && `，最近 ${formatTime(p.last_merged_at)}`}
+              {p.linked.includes(idea.id) ? '' : ' · 正文里提到'}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {['pool', 'building', 'built'].includes(idea.status) && (
+        <p className="after-meta">
+          <Link to={`/work?idea=${encodeURIComponent(idea.id)}`}>交给一个子项目 →</Link>
+        </p>
+      )}
+      <span hidden>{state.counts.live}</span>
+    </Section>
+  )
+}
+
+function UseIt({ idea }: { idea: IdeaDetail }) {
+  const { projects } = useWork(idea)
+  const [open, setOpen] = useState<string | null>(null)
+  const usable = projects.filter((p) => p.ui_url)
+  if (usable.length === 0) return null
+  const shown = usable.find((p) => p.dir === open)
+  return (
+    <Section title="使用" note="做出来的东西在这里直接用">
+      <div className="row wrap">
+        {usable.map((p) =>
+          p.ui_up ? (
+            <button key={p.dir} aria-pressed={open === p.dir} onClick={() => setOpen(open === p.dir ? null : p.dir)}>
+              {open === p.dir ? `收起 ${p.dir}` : `在这里打开 ${p.dir}`}
+            </button>
+          ) : (
+            <span key={p.dir} className="muted small">
+              {p.dir} 的开发服务没在跑（{p.ui_url!.replace('http://', '')}）。在它的目录里启动之后刷新这一页。
+            </span>
+          ),
+        )}
+        {shown && (
+          <a href={shown.ui_url!} target="_blank" rel="noreferrer" className="small">
+            在新窗口打开 ↗
+          </a>
+        )}
+      </div>
+      {shown && <iframe className="embed" src={shown.ui_url!} title={`${shown.dir} 的界面`} />}
     </Section>
   )
 }
