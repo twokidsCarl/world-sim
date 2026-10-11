@@ -1,4 +1,4 @@
-"""本地服务：给浏览器界面提供计算与独白。"""
+"""本地服务：给浏览器界面提供计算与独白。 / Local server: computation and monologues for the browser UI."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def list_cases() -> dict:
 def get_case(case_id: str) -> dict:
     cases = all_cases()
     if case_id not in cases:
-        raise HTTPException(404, f"没有这个案例: {case_id}")
+        raise HTTPException(404, f"case_id：没有这个案例 {case_id} / case_id: no such case")
     return cases[case_id].model_dump()
 
 
@@ -44,17 +44,17 @@ def compute(p: runner.Params) -> dict:
     try:
         return runner.compute(p)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, e.args[0] if e.args else str(e))
     except ValueError as e:
         raise HTTPException(400, str(e))
 
 
-# ---------- 大模型：独白与自写话语（经本机 claude -p） ----------
+# ---------- 大模型：独白与自写话语（经本机 claude -p） / the model: monologues and user-written messages (via local claude -p) ----------
 
 
 class MonologueRequest(runner.Params):
-    owner: str  # 'a' | 'b'：谁脑中的塔
-    level: int  # 塔里的第几层
+    owner: str  # 'a' | 'b'：谁脑中的塔 / whose tower
+    level: int  # 塔里的第几层 / which level of the tower
     regenerate: bool = False
     persona_mode: str = "original"  # 'original' | 'neutral'
 
@@ -78,7 +78,7 @@ async def monologue(req: MonologueRequest) -> dict:
     try:
         case, _, _, towers, out = export.build(req)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, e.args[0] if e.args else str(e))
     except ValueError as e:
         raise HTTPException(400, str(e))
     tower = towers[req.owner]
@@ -94,7 +94,7 @@ async def lexicon_estimate(req: LexiconRequest) -> dict:
     try:
         case = load_case(req.case_id)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, e.args[0] if e.args else str(e))
     if not isinstance(case.game, Signaling):
         raise HTTPException(400, f"案例 {case.id} 不是信号博弈，不能自己加话")
     return await lexicon.estimate(case, req.text)
