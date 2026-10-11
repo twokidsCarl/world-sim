@@ -116,6 +116,8 @@ export interface SceneSpec {
    * A mesoscale model: every copy in the assembly is a molecule, drawn the way landscapes are.
    */
   mesoscale?: boolean
+  /** 坐标的长度单位；缺省是 Å / the length unit of the coordinates; Å when absent */
+  unit?: 'Å' | 'nm' | 'µm'
   /** 各面板共用一套坐标，叠在一起画（密度图和拟合进去的原子模型）/ the panels share one coordinate frame and are drawn on top of one another (a density map and the model fitted into it) */
   overlay?: boolean
   /** 不逐个描边的实体名（正则）/ names of entities not outlined one by one (a regular expression) */
