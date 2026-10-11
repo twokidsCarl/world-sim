@@ -1,16 +1,15 @@
-import { useState } from 'react'
 import { Link } from 'react-router'
 import type { State, ThreadId } from '../contract'
 import { pick, plural } from '../i18n'
 import { maxCell, shade } from '../state/derive'
 import { useLang, useOwner, useT } from '../state/store'
-import { Page, Section } from '../ui/Page'
+import { Page, Section, Tabs, useTab } from '../ui/Page'
 import { ideaTitle } from '../ui/bits'
 
 const THREADS: ThreadId[] = ['A', 'B', 'C', 'D', 'E']
 
 export function MapPage({ state }: { state: State }) {
-  const [view, setView] = useState<'grid' | 'kernels'>('grid')
+  const [view, setView] = useTab(['grid', 'kernels'] as const)
   const lang = useLang()
   const owner = useOwner()
   const t = useT()
@@ -29,14 +28,15 @@ export function MapPage({ state }: { state: State }) {
         `The idea pool holds ${plural(state.counts.live, 'idea')} now. Three things place each idea: its level, the threads it sits on, and the kind of computation running underneath.`,
       )}
       actions={
-        <div className="seg" role="tablist" aria-label={t('看法', 'View')}>
-          <button role="tab" aria-selected={view === 'grid'} onClick={() => setView('grid')}>
-            {t('按层和横线', 'By level and thread')}
-          </button>
-          <button role="tab" aria-selected={view === 'kernels'} onClick={() => setView('kernels')}>
-            {t('按内核', 'By kernel')}
-          </button>
-        </div>
+        <Tabs
+          label={t('看法', 'View')}
+          value={view}
+          onChange={setView}
+          items={[
+            { id: 'grid', label: t('按层和横线', 'By level and thread') },
+            { id: 'kernels', label: t('按内核', 'By kernel') },
+          ]}
+        />
       }
     >
       {view === 'grid' ? (

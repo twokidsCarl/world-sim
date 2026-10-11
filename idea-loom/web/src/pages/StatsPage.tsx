@@ -5,11 +5,16 @@ import type { State, ThreadId } from '../contract'
 import { pick, plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { useLang, useT } from '../state/store'
-import { Empty, Page, Section } from '../ui/Page'
+import { Empty, Page, Section, Tabs, useTab } from '../ui/Page'
 import { IdeaLink } from '../ui/bits'
+import { recent } from '../ui/tabs'
 import { Bar, Legend, Tile, compact, duration, heat, seriesClass } from '../ui/viz'
 
 const THREADS: ThreadId[] = ['A', 'B', 'C', 'D', 'E']
+// 总览卡固定在上面，下面分四个 tab；第一个是默认。 / The overview cards stay on top, four tabs below; the first is the default.
+const TABS = ['projects', 'runs', 'attention', 'calls'] as const
+// 横带一次先画多少条，每次再加多少条。 / How many run bands are drawn at first, and how many each "show more" adds.
+const RUNS_STEP = 20
 type SortKey = 'output' | 'active' | 'merged' | 'lines' | 'per_line' | 'per_pr'
 const SORTS: Record<SortKey, (p: ProjectStats) => number> = {
   output: (p) => p.tokens.output,
@@ -31,8 +36,9 @@ export function StatsPage({ state }: { state: State }) {
   const [sort, setSort] = useState<SortKey>('output')
   const lang = useLang()
   const t = useT()
+  const [tab, setTab] = useTab(TABS)
 
-  const load = (refresh = false) => {
+  const load =(refresh = false) => {
     setBusy(true)
     api.stats(refresh).then(
       (s) => ((lastStats = s), setStats(s), setError(null), setBusy(false)),
@@ -89,6 +95,20 @@ export function StatsPage({ state }: { state: State }) {
         <Tile label={t('读缓存', 'Cache reads')} value={compact(stats.totals.cache_read, lang)} note={t('token，重复读上文的量', 'tokens, the context read again')} />
       </div>
 
+      <Tabs
+        label={t('统计分段', 'Statistics sections')}
+        value={tab}
+        onChange={setTab}
+        items={[
+          { id: 'projects', label: t('项目', 'Projects') },
+          { id: 'runs', label: t('运行', 'Runs') },
+          { id: 'attention', label: t('注意力', 'Attention') },
+          { id: 'calls', label: t('模型调用', 'Model calls') },
+        ]}
+      />
+
+      {tab === 'projects' && (
+        <>
       <Section title={t('每个项目', 'By project')} note={t('点表头换排序；条的长短是和这一列里最大的那个比', 'Click a header to sort; bar lengths are relative to the largest in the column')}>
         <div className="grid-wrap">
           <table className="table stats-table">
@@ -139,18 +159,25 @@ export function StatsPage({ state }: { state: State }) {
         </div>
       </Section>
 
-      <Section title={t('Claude Code 的每次运行', 'Each Claude Code run')} note={t('一条横带是一个会话；实心的段是在跑，中间断开的地方是停下了', 'One band is one session; solid segments are running time, gaps are where it stopped')}>
-        <Runs sessions={stats.sessions} names={names} />
-      </Section>
-
       <Section title={t('每天', 'By day')} note={t('模型输出按项目堆起来', 'Model output stacked by project')}>
         <Days stats={stats} names={names} />
       </Section>
+        </>
+      )}
 
+      {tab === 'runs' && (
+      <Section title={t('Claude Code 的每次运行', 'Each Claude Code run')} note={t('一条横带是一个会话；实心的段是在跑，中间断开的地方是停下了', 'One band is one session; solid segments are running time, gaps are where it stopped')}>
+        <Runs sessions={stats.sessions} names={names} />
+      </Section>
+      )}
+
+      {tab === 'attention' && (
       <Section title={t('你的注意力', 'Your attention')} note={t('只统计得到在 idea-loom 里的操作；直接打开子项目自己的界面，那边统计不到', 'Only what you do inside idea-loom is counted; a subproject UI opened directly is not')}>
         <AttentionView stats={stats} state={state} />
       </Section>
+      )}
 
+      {tab === 'calls' && (
       <Section title={t('idea-loom 自己调用模型', 'Model calls by idea-loom itself')} note={t('生成、细化、翻译、小助手这些', 'Generate, refine, translate, the assistant and so on')}>
         {stats.own.calls === 0 ? (
           <Empty>{t('还没有调用过。', 'No calls yet.')}</Empty>
@@ -163,6 +190,7 @@ export function StatsPage({ state }: { state: State }) {
           </p>
         )}
       </Section>
+      )}
       <p className="muted small">{t(`算于 ${formatTime(stats.generated_at)}，结果缓存一分钟。`, `Computed at ${formatTime(stats.generated_at)}; results are cached for a minute.`)}</p>
     </Page>
   )
@@ -176,6 +204,7 @@ const PURPOSE: Record<string, [string, string]> = {
 
 function Runs({ sessions, names }: { sessions: Session[]; names: string[] }) {
   const [hover, setHover] = useState<string | null>(null)
+  const [shown, setShown] = useState(RUNS_STEP)
   const lang = useLang()
   const t = useT()
   if (sessions.length === 0) return <Empty>{t('这台机器上没有这个仓库的会话记录。', 'No session records for this repository on this machine.')}</Empty>
@@ -184,6 +213,9 @@ function Runs({ sessions, names }: { sessions: Session[]; names: string[] }) {
   const span = Math.max(1, t1 - t0)
   const pct = (iso: string) => ((Date.parse(iso) - t0) / span) * 100
   const projects = [...new Set(sessions.map((s) => s.project))]
+  // 时间轴和图例用全部会话算，只有画出来的横带按最近取。
+  // The axis and legend use all sessions; only the bands drawn are the most recent.
+  const visible = recent(sessions, shown)
   return (
     <>
       <Legend items={projects.map((p) => ({ label: p, className: seriesClass(p, names) }))} />
@@ -192,7 +224,7 @@ function Runs({ sessions, names }: { sessions: Session[]; names: string[] }) {
           <span>{formatTime(new Date(t0).toISOString())}</span>
           <span>{formatTime(new Date(t1).toISOString())}</span>
         </div>
-        {sessions.map((s) => {
+        {visible.map((s) => {
           const lastStop = s.segments[s.segments.length - 1]!
           return (
             <div key={s.id} className="run">
@@ -235,6 +267,12 @@ function Runs({ sessions, names }: { sessions: Session[]; names: string[] }) {
           )
         })}
       </div>
+      {visible.length < sessions.length && (
+        <p>
+          <button onClick={() => setShown(shown + RUNS_STEP)}>{t(`再显示 ${RUNS_STEP} 条`, `Show ${RUNS_STEP} more`)}</button>{' '}
+          <button onClick={() => setShown(sessions.length)}>{t(`全部显示（共 ${sessions.length} 条）`, `Show all (${sessions.length})`)}</button>
+        </p>
+      )}
       <details className="table-view">
         <summary>{t('用表格看每一段', 'See every segment as a table')}</summary>
         <table className="table">
@@ -249,7 +287,7 @@ function Runs({ sessions, names }: { sessions: Session[]; names: string[] }) {
             </tr>
           </thead>
           <tbody>
-            {sessions.flatMap((s) =>
+            {visible.flatMap((s) =>
               s.segments.map((g, i) => (
                 <tr key={`${s.id}:${i}`}>
                   <td>{i === 0 ? s.title : <span className="muted">{t(`同上，第 ${i + 1} 段`, `Same, segment ${i + 1}`)}</span>}</td>
