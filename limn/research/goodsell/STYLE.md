@@ -100,8 +100,9 @@ limn 这一轮的数：
 | L5 | 新冠切开后里面是白的（L4 时第一次看其余模型才发现） | 切片背面把膜的后半个也切掉了，模型里核蛋白又稀 | 膜总是衬在后面 | 新冠里面露出膜内壁的深粉色，不再露白 |
 | L6 | 突触里到处是暗灰色的碎片，线满纸都是 | 几百个小泡的膜都被留在后面；分子小而线粗 | 只有单个病毒颗粒（拷贝数不超过两万）才把膜衬在后面；密的模型线宽 0.9 | 碎片没了，但到处露白 |
 | L7 | 突触、支原体到处露白 | 密的模型里一个分子只有画幅的百分之几，20% 的切片太薄 | 密的模型切片取 50%，线宽 0.7 | 突触铺满了，白纸占比 0.10→0.00 |
+| L8 | 突触、支原体颜色杂：一个区室里橙、蓝、紫、褐都有 | 颜色按“角色”取，各角色的色相分散在整个色环上 | 目录条目新增 `hues`（每种角色在这个模型里用哪一族颜色）和 `membrane`，数值照他画同一个对象的那幅：突触是绿色细胞质加黄橙色小泡，支原体是蓝色蛋白、品红核糖体、黄色 DNA、绿色膜 | 支原体主色距离 0.114→0.088；突触 0.122→0.121（参考图是三联画，一半是紫色的突触后，这个量在这里说明不了什么），看图是对上了 |
 
-**循环到这里的状态。** 流感在结构和配色上接近他的画。我自己看仍然不对的：新冠只有 30 个刺、里面稀（数据如此）；HIV、支原体、突触一个区室里还是好几族颜色，线又黑又密，他的很柔和；支原体里的核酸是团块，不是线；所有的画都没有周围的环境。
+**循环到这里的状态。** 流感在结构和配色上接近他的画。我自己看仍然不对的：新冠只有 30 个刺、里面稀（数据如此）；HIV 一个区室里还是好几族颜色；突触和支原体的线偏黑偏密，他的很柔和；支原体里的 DNA 是团块，不是他那样的长线；所有的画都没有周围的环境。
 
 ## English
 
@@ -192,5 +193,6 @@ The user asked that problems no longer be pointed out by a person: I compare wit
 - **L5.** Seen: the coronavirus was white inside once cut (found only at L4, the first time the other models were looked at). Cause: the back of the slab cut away the far half of the membrane, and the model is sparse in nucleoprotein. Change: a membrane always lines the back. Result: the inside shows the deep pink of the membrane's inner wall, not paper.
 - **L6.** Seen: dark grey fragments all over the synapse, and line everywhere. Cause: the membranes of hundreds of vesicles were all kept behind; small molecules, heavy lines. Change: only a single virion (no more than twenty thousand copies) has its membrane line the back; dense models get a line width of 0.9. Result: the fragments are gone, but paper shows everywhere.
 - **L7.** Seen: paper showing all over the synapse and the mycoplasma. Cause: in a dense model a molecule is a few percent of the frame and a 20% slab is too thin. Change: dense models get a 50% slab and a line width of 0.7. Result: the synapse is filled, blank paper 0.10→0.00.
+- **L8.** Seen: mixed colours in the synapse and the mycoplasma, with orange, blue, violet and tan all in one compartment. Cause: colour went by "role", and the roles' hues are spread round the whole wheel. Change: catalogue entries gain `hues` (which family each role takes in this model) and `membrane`, with values after his painting of the same subject: green cytoplasm with yellow-orange vesicles for the synapse; blue proteins, magenta ribosomes, yellow DNA and a green membrane for the mycoplasma. Result: mycoplasma colour distance 0.114→0.088; synapse 0.122→0.121 (its reference is a triptych, half of it a violet postsynapse, so the quantity says little here), and by eye it now matches.
 
-**Where the loop stands.** Influenza is close to his painting in structure and colour. Still wrong, by my own eye: the coronavirus has only 30 spikes and a thin inside (the data); HIV, mycoplasma and synapse still mix several hue families in one compartment and have black, dense line where his are soft; nucleic acids in the mycoplasma are lumps, not strands; no painting has its surrounding environment.
+**Where the loop stands.** Influenza is close to his painting in structure and colour. Still wrong, by my own eye: the coronavirus has only 30 spikes and a thin inside (the data); HIV still mixes several hue families in one compartment; line in the synapse and the mycoplasma is black and dense where his is soft; DNA in the mycoplasma is lumps, not the long strands he paints; no painting has its surrounding environment.

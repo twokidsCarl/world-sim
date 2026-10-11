@@ -165,6 +165,10 @@ export interface CatalogEntry {
   points?: { url: string; voxelSpacing: number; fit?: TemplateFit }
   merge?: string
   cut?: number
+  /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
+  membrane?: [number, number, number]
+  /** 按角色指定色族 {角色: [L, C, h]} / a family of hue per role, {role: [L, C, h]} */
+  hues?: Partial<Record<Role, [number, number, number]>>
   /** 按名字给实体指定颜色 [正则, [L, C, h]]，数值量自 Goodsell 画同一个对象的那幅画 / colours for entities by name, [pattern, [L, C, h]], the numbers measured on Goodsell's painting of the same subject */
   colors?: [string, [number, number, number]][]
   /** 数据里没有、按已知结构推断补上的部分 / parts absent from the data and filled in by inference from known structures */
@@ -584,7 +588,13 @@ export const useStore = create<State>((set, get) => ({
       const base = defaultColoring(mol)
       const coloring = spreadHues({ ...base, roles: roles.map((r, i) => r ?? base.roles[i]!) })
       // 整张膜一个颜色，不按来源的拼块分色 / the whole membrane is one colour, not a patchwork of where its lipids came from
-      if (entry.perCopy) mol.entities.forEach((e, i) => e.kind === 'lipid' && (coloring.override[i] = MEMBRANE_LCH))
+      if (entry.perCopy) mol.entities.forEach((e, i) => e.kind === 'lipid' && (coloring.override[i] = entry.membrane ?? MEMBRANE_LCH))
+      // 按区室配色：这个模型里每种角色用哪一族颜色（量自 Goodsell 画同一个对象的那幅画）；同一角色的各个实体只在这一族里小幅变化
+      // colour by compartment: which family of hue each role takes in this model (measured on Goodsell's painting of the same subject); entities of one role vary only a little within the family
+      if (entry.hues) mol.entities.forEach((e, i) => {
+        const base = entry.hues![coloring.roles[i]!]
+        if (base && e.kind !== 'lipid') coloring.override[i] = [base[0] + (i % 3 === 0 ? 0.03 : i % 3 === 1 ? 0 : -0.04), base[1], (base[2] + (coloring.hueShift[i] ?? 0) * 0.3 + 360) % 360]
+      })
       for (const [pattern, lch] of entry.colors ?? []) mol.entities.forEach((e, i) => new RegExp(pattern, 'i').test(e.description) && (coloring.override[i] = lch))
       const short = (d: string) => d.split('.').pop()!.replace(/_/g, ' ')
       const spec: PanelSpec = {
