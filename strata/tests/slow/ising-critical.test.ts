@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { binderCumulant, createIsing, latticeSums, wolffStep } from '../../src/substrates/ising/ref'
 import { BINDER_CRITICAL, ISING_TC, onsagerMagnetisation } from '../../src/theory/onsager'
 
-/** Equilibrium averages by Wolff cluster updates. */
+/** 用 Wolff 团簇更新求平衡态平均。 / Equilibrium averages by Wolff cluster updates. */
 function measure(L: number, T: number, j2: number, samples: number, seed = 1) {
   const s = createIsing(L, seed, true)
   const rng = { seed: seed * 7919 + L, counter: 0 }
-  // Thermalise, measuring the mean cluster size on the way.
+  // 热化，同时测量平均团簇大小。 / Thermalise, measuring the mean cluster size on the way.
   let flipped = 0
   const warmup = 400 + 4 * L
   for (let i = 0; i < warmup; i++) flipped += wolffStep(s, T, j2, rng)
+  // 两次采样之间翻转固定数目的团簇，足以翻过大约一个晶格的自旋。
+  // 这个数目不能依赖于实际抽到的团簇：若在“翻转的自旋够多了”时停止，
+  // 就会偏向于在大团簇刚翻完之后采样，使平均值偏向有序。
   // A fixed number of cluster flips between samples, enough to turn over about one
   // lattice of spins. It must not depend on the clusters actually drawn: stopping when
   // "enough spins have flipped" samples preferentially just after large clusters, which
@@ -32,7 +35,10 @@ function measure(L: number, T: number, j2: number, samples: number, seed = 1) {
   return { abs: abs / samples, binder: binderCumulant(m2, m4, samples) }
 }
 
-/** Temperature and cumulant where the Binder curves of two lattice sizes cross, by linear interpolation. */
+/**
+ * 两种晶格大小的 Binder 曲线相交处的温度和累积量，用线性插值求得。
+ * Temperature and cumulant where the Binder curves of two lattice sizes cross, by linear interpolation.
+ */
 function crossing(sizes: [number, number], temperatures: number[], j2: number, samples: number) {
   const curves = sizes.map((L) => temperatures.map((T) => measure(L, T, j2, samples).binder))
   const diff = temperatures.map((_, i) => curves[1]![i]! - curves[0]![i]!)
@@ -70,7 +76,7 @@ describe('critical behaviour of the 2D Ising model', () => {
   it('at Tc the magnetisation falls as L^(-1/8)', () => {
     const sizes = [16, 32, 64]
     const m = sizes.map((L) => measure(L, ISING_TC, 0, 12000).abs)
-    // Least-squares slope of ln m against ln L.
+    // ln m 对 ln L 的最小二乘斜率。 / Least-squares slope of ln m against ln L.
     const x = sizes.map(Math.log)
     const y = m.map(Math.log)
     const mx = x.reduce((a, b) => a + b, 0) / 3

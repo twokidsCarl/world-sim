@@ -9,11 +9,14 @@ import { useUi } from './store'
 const SHOWN = 4
 
 /**
+ * 被模拟的晶格占满左侧的正方形；其后三级粗粒化叠成一列，
+ * 列宽为其边长的三分之一，因此画布是 4:3。
  * The simulated lattice fills a square on the left; the next three coarsenings stack in
  * a column a third of its side, so the canvas is 4:3.
  */
 function rects(w: number, h: number): [number, number, number, number][] {
   const small = h / 3
+  // 每个图块向内缩进，以免相邻晶格看起来像一幅图。
   // Inset each tile so neighbouring lattices do not read as one image.
   const gap = Math.max(1, Math.round(h / 200))
   const tile = (x: number, y: number, size: number): [number, number, number, number] => [

@@ -18,7 +18,10 @@ const liquid = (dim: 2 | 3, perSide: number) =>
 
 const energy = (s: MdState) => kineticEnergy(s) + s.pe
 
-/** Total-energy samples after an equilibration run, one per step. */
+/**
+ * 平衡化运行之后的总能量采样，每步一个。
+ * Total-energy samples after an equilibration run, one per step.
+ */
 function energyTrace(dt: number, time: number, equilibrate: number): number[] {
   const s = liquid(2, 20)
   step(s, pair, 0.002, Math.round(equilibrate / 0.002))
@@ -35,7 +38,7 @@ function std(x: number[]): number {
   return Math.sqrt(x.reduce((a, b) => a + (b - mean) * (b - mean), 0) / x.length)
 }
 
-/** Least-squares slope of x against its index. */
+/** x 对其下标的最小二乘斜率。 / Least-squares slope of x against its index. */
 function slope(x: number[]): number {
   const n = x.length
   const mi = (n - 1) / 2
@@ -61,6 +64,7 @@ describe('MD reference: micro level', () => {
     const n = dim === 2 ? 300 : 500
     const L = dim === 2 ? 20 : 9
     const a = createState(dim, n, [L, L, L])
+    // 带抖动的晶格：足够随机，能用到模板里的每个元胞，又没有重叠。
     // Jittered lattice: random enough to exercise every stencil cell, without overlaps.
     const side = Math.ceil(Math.pow(n, 1 / dim))
     for (let i = 0; i < n; i++) {

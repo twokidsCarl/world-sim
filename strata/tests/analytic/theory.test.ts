@@ -31,6 +31,8 @@ describe('Maxwell–Boltzmann', () => {
 })
 
 describe('second virial coefficient', () => {
+  // 截断半径很长时力移位可以忽略，完整三维 Lennard-Jones 势的
+  // 教科书数值适用。
   // With a very long cutoff the force shift is negligible and the textbook values for
   // the full 3D Lennard-Jones potential apply.
   const full = { ...LJ, rc: 30 }

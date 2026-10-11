@@ -2,7 +2,10 @@ import type { QuantityDef } from '../core/quantity'
 import type { IsingFrame } from '../substrates/ising/backend'
 import { BINDER_CRITICAL, onsagerEnergy, onsagerMagnetisation } from '../theory/onsager'
 
-/** The exact solution applies only to the nearest-neighbour model in zero field. */
+/**
+ * 严格解只适用于零外场下的最近邻模型。
+ * The exact solution applies only to the nearest-neighbour model in zero field.
+ */
 const exact = (p: Record<string, number>) => p.j2 === 0 && p.h === 0
 
 export const ISING_QUANTITIES: QuantityDef<IsingFrame>[] = [

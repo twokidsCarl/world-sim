@@ -8,6 +8,7 @@ export function ScenarioBar() {
   useEffect(() => scenarioPlayer.subscribe(setState), [])
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('scenario')
+    // 等待后端选择稳定下来，否则它会覆盖场景的设置。
     // Wait for the backend choice to settle, or it would override the scenario's settings.
     if (id) void engine.init().then(() => scenarioPlayer.start(id))
   }, [])

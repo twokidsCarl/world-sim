@@ -9,7 +9,10 @@ import { secondVirial } from '../../src/theory/virial'
 
 const pair = analyticPair(LJ)
 
-/** Kolmogorov–Smirnov p-value of a sample against a continuous cdf. */
+/**
+ * 样本相对于连续 cdf 的 Kolmogorov–Smirnov p 值。
+ * Kolmogorov–Smirnov p-value of a sample against a continuous cdf.
+ */
 function ksPValue(sample: Float64Array, cdf: (x: number) => number): number {
   const x = Float64Array.from(sample).sort()
   const n = x.length
@@ -62,11 +65,12 @@ describe('kinetic level', () => {
     const w = (2.3 * a) / bins
     const occupied = [...g.y.keys()].filter((b) => g.y[b]! > 0)
     const expected = [a, Math.sqrt(3) * a, 2 * a].map((r) => Math.floor(r / w))
+    // 每个壳层可能因舍入而跨在分箱边界上，所以允许落在相邻的箱里。
     // Each shell may straddle a bin edge by rounding, so allow the adjacent bin.
     expect(occupied.length).toBeLessThanOrEqual(6)
     for (const e of expected) expect(occupied.some((b) => Math.abs(b - e) <= 1)).toBe(true)
     for (const b of occupied) expect(expected.some((e) => Math.abs(b - e) <= 1)).toBe(true)
-    // Six neighbours in each of the first three shells.
+    // 前三个壳层各有六个近邻。 / Six neighbours in each of the first three shells.
     const shellCount = (e: number) =>
       occupied.filter((b) => Math.abs(b - e) <= 1).reduce((sum, b) => sum + g.y[b]! * density * Math.PI * w * w * (2 * b + 1), 0)
     for (const e of expected) expect(shellCount(e)).toBeCloseTo(6, 6)
@@ -76,6 +80,9 @@ describe('kinetic level', () => {
 describe('thermodynamic level', () => {
   it('low-density pressure follows the virial expansion to B2', () => {
     const density = 0.02
+    // T = 2.5 高于二维 Boyle 温度（B2 > 0），且碰撞足够频繁，
+    // 能在本次运行内使对关联达到平衡。T ≈ 1 以下，同样的运行长度
+    // 对近距离粒子对采样不足，读数比 B2 低 20–40%。
     // T = 2.5 is above the 2D Boyle temperature (B2 > 0) and collisions are frequent enough
     // to equilibrate pair correlations within the run. Below T ≈ 1 the same run length
     // undersamples close pairs and reads 20–40% short of B2.
@@ -94,6 +101,7 @@ describe('thermodynamic level', () => {
     const excess = p / ideal - 1
     expect(s.n / volume(s)).toBeCloseTo(density, 12)
     expect(Math.abs(p / (ideal * (1 + b2 * density)) - 1)).toBeLessThan(0.01)
+    // 单独取相互作用部分，这样测试就不能只靠理想气体项通过。
     // The interaction part on its own, so the test cannot pass on the ideal-gas term alone.
     expect(Math.abs(b2 * density)).toBeGreaterThan(0.01)
     expect(Math.abs(excess / (b2 * density) - 1)).toBeLessThan(0.15)

@@ -1,3 +1,5 @@
+// 直接求和的软化牛顿引力，配合 kick-drift-kick 蛙跳积分。
+// 与 src/substrates/gravity/ref.ts 保持一致。
 // Softened Newtonian gravity by direct summation, with a kick-drift-kick leapfrog.
 // Mirrors src/substrates/gravity/ref.ts.
 
@@ -10,14 +12,14 @@ struct Params {
   eps2: f32,
   rmax: f32,
   pad2: f32,
-  centre: vec4f,   // where radial shells are measured from
+  centre: vec4f,   // 径向壳层的量度中心 / where radial shells are measured from
 }
 
 @group(0) @binding(0) var<uniform> P: Params;
-@group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;     // xyz, w = mass
+@group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;     // xyz，w = 质量 / xyz, w = mass
 @group(0) @binding(2) var<storage, read_write> vel: array<vec4f>;
-@group(0) @binding(3) var<storage, read_write> acc: array<vec4f>;     // xyz, w = potential per unit mass
-@group(0) @binding(4) var<storage, read_write> partial: array<vec4f>; // five per chunk
+@group(0) @binding(3) var<storage, read_write> acc: array<vec4f>;     // xyz，w = 单位质量的势能 / xyz, w = potential per unit mass
+@group(0) @binding(4) var<storage, read_write> partial: array<vec4f>; // 每块五个 / five per chunk
 @group(0) @binding(5) var<storage, read_write> hist: array<atomic<u32>>;
 
 @compute @workgroup_size(64)
@@ -54,6 +56,9 @@ fn kick(@builtin(global_invocation_id) id: vec3u) {
   vel[i] = vec4f(vel[i].xyz + 0.5 * P.dt * acc[i].xyz, 0.0);
 }
 
+// 每块调用一次。除能量和动量外，还计算对束缚天体（v²/2 + φ < 0）
+// 的各项求和（由此得出束缚残余体的位力），
+// 以及势阱最深处的那个天体（它标记残余体的中心）。
 // One invocation per chunk. Besides energies and momentum, the sums over bound bodies
 // (v²/2 + φ < 0) from which the virial of the bound remnant is formed, and the body deepest
 // in the potential, which marks the remnant's centre.
@@ -103,7 +108,7 @@ fn clearHist(@builtin(global_invocation_id) id: vec3u) {
   if (id.x < P.bins) { atomicStore(&hist[id.x], 0u); }
 }
 
-// Bodies per radial shell about P.centre.
+// 以 P.centre 为中心的各径向壳层内的天体数。 / Bodies per radial shell about P.centre.
 @compute @workgroup_size(256)
 fn radialHist(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;

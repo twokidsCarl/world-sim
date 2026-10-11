@@ -1,12 +1,17 @@
+// 直接从模拟的缓冲区绘制的实例化圆盘。
 // Instanced discs drawn straight from the simulation's buffers.
 
 const SHADER = /* wgsl */ `
 struct View {
-  box: vec4f,     // xy = box lengths, w = top of the colour-map range in use
+  // xy = 盒子边长，w = 所用色图范围的上限
+  // xy = box lengths, w = top of the colour-map range in use
+  box: vec4f,
   color: vec4f,
-  radius: vec2f,   // disc radius in NDC, per axis
-  edge: f32,       // antialiasing width as a fraction of the radius
-  mode: f32,       // 0 = single colour, 1 = colour by |ψ6|, 2 = colour by species
+  radius: vec2f,   // 圆盘半径（NDC），逐轴 / disc radius in NDC, per axis
+  edge: f32,       // 抗锯齿宽度，以半径的比例计 / antialiasing width as a fraction of the radius
+  // 0 = 单色，1 = 按 |ψ6| 着色，2 = 按组分着色
+  // 0 = single colour, 1 = colour by |ψ6|, 2 = colour by species
+  mode: f32,
 }
 
 @group(0) @binding(0) var<uniform> V: View;
@@ -19,6 +24,7 @@ struct Out {
   @location(1) color: vec3f,
 }
 
+// 对 viridis 色图的多项式拟合（Matt Zucker，公有领域）。
 // Polynomial fit to the viridis colour map (Matt Zucker, public domain).
 fn viridis(t: f32) -> vec3f {
   let c0 = vec3f(0.2777273272234177, 0.005407344544966578, 0.3340998053353061);
@@ -56,7 +62,10 @@ fn fs(in: Out) -> @location(0) vec4f {
 }
 `
 
-/** The same fit as the shader, for Canvas2D rendering. Returns 0..1 RGB. */
+/**
+ * 与着色器中相同的拟合，供 Canvas2D 渲染使用。返回 0..1 的 RGB。
+ * The same fit as the shader, for Canvas2D rendering. Returns 0..1 RGB.
+ */
 export function viridis(t: number): [number, number, number] {
   const c = [
     [0.2777273272234177, 0.005407344544966578, 0.3340998053353061],
@@ -96,7 +105,7 @@ export class PointsRenderer {
         targets: [
           {
             format,
-            // Premultiplied alpha over a transparent canvas.
+            // 在透明画布上使用预乘 alpha。 / Premultiplied alpha over a transparent canvas.
             blend: {
               color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha' },
               alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha' },
@@ -108,7 +117,10 @@ export class PointsRenderer {
     this.uniform = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST })
   }
 
-  /** color is straight RGB in 0..1; size is the target in device pixels; mode 1 colours by |ψ6|, mode 2 by species. */
+  /**
+   * color 是 0..1 的非预乘 RGB；size 是以设备像素计的目标尺寸；mode 1 按 |ψ6| 着色，mode 2 按组分着色。
+   * color is straight RGB in 0..1; size is the target in device pixels; mode 1 colours by |ψ6|, mode 2 by species.
+   */
   draw(
     view: GPUTextureView,
     buffers: { pos: GPUBuffer; aux: GPUBuffer },
@@ -130,6 +142,7 @@ export class PointsRenderer {
         ],
       })
     }
+    // 半径为 0.45 σ，但不小于 0.75 个设备像素，使稀薄体系仍然可见。
     // Radius 0.45 σ, but never under 0.75 device pixels so dilute systems stay visible.
     const rx = Math.max(0.45 / box[0]!, 0.75 / size[0]) * 2
     const ry = Math.max(0.45 / box[1]!, 0.75 / size[1]) * 2
@@ -152,6 +165,8 @@ export class PointsRenderer {
 }
 
 /**
+ * 在给定背景上所用 viridis 范围的上限。它最亮的黄色在浅色页面上几乎没有对比度，
+ * 所以在浅色背景下范围会在到达它之前截止。
  * Top of the viridis range to use over the given background. Its brightest yellow has
  * almost no contrast against a light page, so the range stops short of it there.
  */
@@ -160,10 +175,13 @@ export function mapTopFor(paper: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 ? 0.85 : 1
 }
 
-/** Okabe–Ito orange, for species B. */
+/** Okabe–Ito 橙色，用于组分 B。 / Okabe–Ito orange, for species B. */
 export const SPECIES_B = '#e69f00'
 
-/** Parse #rgb or #rrggbb into straight RGB in 0..1. */
+/**
+ * 把 #rgb 或 #rrggbb 解析为 0..1 的非预乘 RGB。
+ * Parse #rgb or #rrggbb into straight RGB in 0..1.
+ */
 export function parseHex(hex: string): [number, number, number] {
   let h = hex.replace('#', '')
   if (h.length === 3) h = [...h].map((c) => c + c).join('')

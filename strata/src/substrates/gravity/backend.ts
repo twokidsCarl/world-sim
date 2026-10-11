@@ -26,19 +26,34 @@ export interface GravityFrame extends Frame {
   pe: number
   momentum: number
   boundFraction: number
-  /** 2K / |W| of the bound bodies; see GravityScalars.virialBound. */
+  /**
+   * 束缚天体的 2K / |W|；见 GravityScalars.virialBound。
+   * 2K / |W| of the bound bodies; see GravityScalars.virialBound.
+   */
   virialBound: number
-  /** Centre of the bound remnant, which radial quantities are measured from. */
+  /**
+   * 束缚残余体的中心，各径向量都从这里量起。
+   * Centre of the bound remnant, which radial quantities are measured from.
+   */
   centre: [number, number, number]
-  /** (E - E0) / |E0|, where E0 is the energy of the initial state. */
+  /**
+   * (E - E0) / |E0|，其中 E0 为初始状态的能量。
+   * (E - E0) / |E0|, where E0 is the energy of the initial state.
+   */
   drift: number
-  /** Bodies per radial shell of width RADIAL_MAX / RADIAL_BINS about `centre`. */
+  /**
+   * 以 `centre` 为中心、宽度为 RADIAL_MAX / RADIAL_BINS 的各径向壳层内的天体数。
+   * Bodies per radial shell of width RADIAL_MAX / RADIAL_BINS about `centre`.
+   */
   radial: Float64Array
 }
 
 export interface GravityBackend extends RunBackend<GravityFrame> {
   readonly n: number
-  /** Centre of the bound remnant as of the last reduction; the view follows it. */
+  /**
+   * 最近一次归约得到的束缚残余体中心；视图跟随它。
+   * Centre of the bound remnant as of the last reduction; the view follows it.
+   */
   readonly centre: [number, number, number]
 }
 
@@ -113,11 +128,14 @@ const ENTRY_BINDINGS: Record<Entry, number[]> = {
 export class GravityGpuBackend implements GravityBackend {
   readonly kind = 'gpu'
   readonly n: number
-  /** Direct summation is quadratic in n, so the engine must not batch many steps per frame. */
+  /**
+   * 直接求和的开销随 n 平方增长，所以引擎不能在一帧内批量执行很多步。
+   * Direct summation is quadratic in n, so the engine must not batch many steps per frame.
+   */
   readonly maxStepsPerFrame: number
   stepCount = 0
   centre: [number, number, number] = [0, 0, 0]
-  /** Positions (xyz) and mass (w), for the renderer. */
+  /** 位置（xyz）和质量（w），供渲染器使用。 / Positions (xyz) and mass (w), for the renderer. */
   readonly pos: GPUBuffer
 
   private device: GPUDevice
@@ -264,6 +282,7 @@ export class GravityGpuBackend implements GravityBackend {
     const radial = Float64Array.from(new Uint32Array(raw, partialBytes, RADIAL_BINS))
     staging.unmap()
     staging.destroy()
+    // 本帧的壳层是绕上一个中心量度的；下一帧改用这个中心。
     // The shells of this frame were measured about the previous centre; the next uses this one.
     const measuredFrom = this.centre
     this.centre = centre
@@ -283,7 +302,10 @@ export class GravityGpuBackend implements GravityBackend {
     }
   }
 
-  /** Full readback of accelerations and potentials, for the cross-check harness only. */
+  /**
+   * 完整回读加速度和引力势，仅供交叉校验工具使用。
+   * Full readback of accelerations and potentials, for the cross-check harness only.
+   */
   async readAccelerations(): Promise<Float32Array> {
     const bytes = this.n * 16
     const staging = this.device.createBuffer({ size: bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })

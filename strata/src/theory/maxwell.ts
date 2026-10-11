@@ -1,3 +1,4 @@
+// 单位质量粒子在二维或三维下的 Maxwell–Boltzmann 速率分布。
 // Maxwell–Boltzmann speed distribution for unit mass in 2 or 3 dimensions.
 
 export function speedPdf(dim: 2 | 3, T: number, v: number): number {
@@ -11,7 +12,10 @@ export function speedCdf(dim: 2 | 3, T: number, v: number): number {
   return erf(v / Math.sqrt(2 * T)) - Math.sqrt(2 / Math.PI) * (v / Math.sqrt(T)) * e
 }
 
-/** Abramowitz & Stegun 7.1.26; absolute error below 1.5e-7. */
+/**
+ * Abramowitz & Stegun 7.1.26；绝对误差小于 1.5e-7。
+ * Abramowitz & Stegun 7.1.26; absolute error below 1.5e-7.
+ */
 export function erf(x: number): number {
   const s = Math.sign(x)
   const a = Math.abs(x)

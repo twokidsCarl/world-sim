@@ -1,3 +1,4 @@
+// 供各分析使用的小型稠密线性代数。矩阵用行数组表示。
 // Small dense linear algebra for the analyses. Matrices are arrays of rows.
 
 export type Matrix = number[][]
@@ -17,6 +18,8 @@ export function multiply(a: Matrix, b: Matrix): Matrix {
 }
 
 /**
+ * 用循环 Jacobi 旋转对实对称矩阵做本征分解。返回按降序排列的本征值，
+ * 对应的本征向量是 `vectors` 的各列。
  * Eigen-decomposition of a real symmetric matrix by cyclic Jacobi rotations. Returns
  * eigenvalues in descending order and the matching eigenvectors as columns of `vectors`.
  */
@@ -60,7 +63,10 @@ export function symmetricEigen(input: Matrix): { values: number[]; vectors: Matr
   return { values: order.map((i) => a[i]![i]!), vectors: v.map((row) => order.map((i) => row[i]!)) }
 }
 
-/** Solve A x = b by Gaussian elimination with partial pivoting. */
+/**
+ * 用列主元高斯消元法求解 A x = b。
+ * Solve A x = b by Gaussian elimination with partial pivoting.
+ */
 export function solve(a: Matrix, b: number[]): number[] {
   const n = b.length
   const m = a.map((row, i) => [...row, b[i]!])
@@ -84,7 +90,10 @@ export function solve(a: Matrix, b: number[]): number[] {
   return x
 }
 
-/** Least squares by the normal equations; adequate for the few well-scaled columns used here. */
+/**
+ * 用正规方程求最小二乘解；对这里用到的少数几个尺度良好的列已经足够。
+ * Least squares by the normal equations; adequate for the few well-scaled columns used here.
+ */
 export function leastSquares(a: Matrix, b: number[]): number[] {
   const at = transpose(a)
   return solve(
@@ -99,12 +108,14 @@ export interface Complex {
 }
 
 /**
+ * 小型实方阵的本征值：用 Faddeev–LeVerrier 递推求特征多项式，
+ * 再用 Durand–Kerner 法求根。适用于 n 不超过约 8 的情形。
  * Eigenvalues of a small real square matrix: characteristic polynomial by the
  * Faddeev–LeVerrier recurrence, roots by Durand–Kerner. Intended for n up to about 8.
  */
 export function eigenvalues(a: Matrix): Complex[] {
   const n = a.length
-  // c[k] is the coefficient of λ^(n-k); c[0] = 1.
+  // c[k] 是 λ^(n-k) 的系数；c[0] = 1。 / c[k] is the coefficient of λ^(n-k); c[0] = 1.
   const c = [1]
   let m: Matrix = a.map((row) => row.map(() => 0))
   for (let k = 1; k <= n; k++) {

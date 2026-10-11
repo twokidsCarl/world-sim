@@ -57,6 +57,7 @@ describe('two species', () => {
   it('a symmetric matrix conserves momentum, and energy up to an error of order dt²', () => {
     const p = mix({ epsAB: 0.4, epsBB: 1.5 })
     const field = fieldOf(p)
+    // 相同物理时间内总能量相对其均值的均方根偏差。
     // RMS deviation of the total energy from its mean over the same physical time.
     const fluctuation = (dt: number) => {
       const s = start(p)

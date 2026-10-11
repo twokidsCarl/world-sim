@@ -1,18 +1,27 @@
+// 对记录下来的浓度分布做分析：它服从什么方程？
 // Analyses over the recorded concentration profile: what equation does it obey?
 
 import { dmd } from '../analysis/dmd'
+import { dominantFrequency } from '../analysis/oscillation'
 import { equationText, weakSindy } from '../analysis/sindy'
 import type { AnalysisDef, History } from '../core/quantity'
+import { boxOf, potentialSpec } from '../substrates/md/schema'
+import { virialSoundSpeed } from '../theory/sound'
 
 const SNAPSHOTS = 60
 /**
+ * 一项的贡献至少要达到最大项的这个比例才会被保留。分箱后的粒子数据噪声较大
+ * （每个箱百分之几），阈值取 0.1 时回归会留下一些拟合噪声的小的虚假项。
  * A term must contribute at least this fraction of the largest term to be kept. Binned
  * particle data are noisy (a few percent per bin), and at 0.1 the regression keeps small
  * spurious terms that fit that noise.
  */
 const SPARSITY = 0.2
 
-/** Linear interpolation of the history onto `count` equally spaced times. */
+/**
+ * 把历史记录线性插值到 `count` 个等间隔时刻上。
+ * Linear interpolation of the history onto `count` equally spaced times.
+ */
 export function resample(h: History, count: number): { data: Float64Array[]; dt: number } {
   const t0 = h.t[0]!
   const dt = (h.t[h.t.length - 1]! - t0) / (count - 1)
@@ -27,7 +36,10 @@ export function resample(h: History, count: number): { data: Float64Array[]; dt:
   return { data, dt }
 }
 
-/** Solution of ∂c/∂t = D ∂²c/∂y² on a periodic grid after `time`, by Fourier modes. */
+/**
+ * 用 Fourier 模式求 ∂c/∂t = D ∂²c/∂y² 在周期网格上经过 `time` 之后的解。
+ * Solution of ∂c/∂t = D ∂²c/∂y² on a periodic grid after `time`, by Fourier modes.
+ */
 export function diffuse(c0: ArrayLike<number>, D: number, time: number, dy: number): Float64Array {
   const n = c0.length
   const out = new Float64Array(n)
@@ -39,6 +51,7 @@ export function diffuse(c0: ArrayLike<number>, D: number, time: number, dy: numb
       b += c0[j]! * Math.sin((2 * Math.PI * m * j) / n)
     }
     const k = (2 * Math.PI * m) / (n * dy)
+    // 零模和 Nyquist 模在求和中只出现一次，其余模出现两次。
     // The zero and Nyquist modes appear once in the sum, the others twice.
     const weight = ((m === 0 || 2 * m === n ? 1 : 2) / n) * Math.exp(-D * k * k * time)
     for (let j = 0; j < n; j++) {
@@ -51,6 +64,41 @@ export function diffuse(c0: ArrayLike<number>, D: number, time: number, dy: numb
 const mixture = (p: Record<string, number>) => p.fractionB! > 0 && p.layoutB === 1 && !p.walls && p.dim !== 3
 
 export const MD_ANALYSES: AnalysisDef[] = [
+  {
+    id: 'sound',
+    level: 'hydro',
+    label: '声速：由最长密度波的振荡频率',
+    source: 'soundMode',
+    minSamples: 30,
+    when: (p) => !p.walls,
+    compute(h, p, latest) {
+      // 至少一个完整周期：记录更短会高估频率。
+      // At least one full period: shorter records overestimate the frequency.
+      const fit = dominantFrequency(
+        h.t,
+        h.y.map((y) => y[0]!),
+        1,
+      )
+      // 仅有热噪声时拟合很差；激发出的声波则拟合得很干净。
+      // Thermal noise alone gives a poor fit; a launched wave gives a clean one.
+      if (!fit || fit.quality < 0.5) {
+        return { headline: '还没有清晰的振荡', detail: '点页头的“敲一下”激发一列驻波，再等它振荡满一个周期。' }
+      }
+      const dim = p.dim === 3 ? 3 : 2
+      const k = (2 * Math.PI) / boxOf(p, p.backend === 0)[0]!
+      const c = fit.omega / k
+      // 冲击本身会使气体略微升温，所以采用实际测得的温度。
+      // The kick itself heats the gas a little, so use the temperature actually measured.
+      const T = latest('temperature') ?? p.temperature!
+      const theory = virialSoundSpeed(potentialSpec(p), p.density!, T, dim)
+      const ideal = Math.sqrt(((dim + 2) / dim) * T)
+      return {
+        headline: `声速 c = ω / k = ${c.toPrecision(3)}`,
+        detail: `维里展开到 B₂ 的绝热声速 ${theory.toPrecision(3)}（仅低密度有效），理想气体 √(γT) = ${ideal.toPrecision(3)}，都取实测温度 ${T.toFixed(2)}；实测与前者之比 ${(c / theory).toFixed(2)}。拟合优度 ${fit.quality.toFixed(2)}。`,
+        agree: Math.abs(c / theory - 1) < 0.1,
+      }
+    },
+  },
   {
     id: 'sindy',
     level: 'meta',
@@ -84,6 +132,7 @@ export const MD_ANALYSES: AnalysisDef[] = [
     compute(h) {
       const { data, dt } = resample(h, SNAPSHOTS)
       const dy = h.x[1]! - h.x[0]!
+      // 秩取 4：守恒的平均值加上衰减最慢的几个形状。
       // Rank 4: the conserved mean and the slowest decaying shapes.
       const { rates } = dmd(data, dt, 4)
       const measured = [-rates[1]!.re, -rates[2]!.re]

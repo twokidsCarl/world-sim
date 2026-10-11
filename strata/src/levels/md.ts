@@ -1,14 +1,19 @@
+// 从粒子状态导出的各层描述构成的阶梯，每一层都附有用来检验它的理论。
 // The ladder of descriptions derived from the particle state, each with the theory it
 // is checked against.
 
 import type { QuantityDef } from '../core/quantity'
 import type { MdFrame } from '../substrates/md/backend-cpu'
 import { shiftedPotential } from '../substrates/md/potential'
-import { profiles } from '../substrates/md/ref/reducers'
+import { profiles, structureFactor } from '../substrates/md/ref/reducers'
 import { speedPdf } from '../theory/maxwell'
+import { cutoffPressureCorrection2d, ljFluid2d, ljFluid2dApplies } from '../theory/ljEos'
 import { virialPressure } from '../theory/virial'
 
-/** Why a conservation law of the isolated, reciprocal system does not apply, or null if it does. */
+/**
+ * 孤立、互易体系的某条守恒律为何不适用；适用时为 null。
+ * Why a conservation law of the isolated, reciprocal system does not apply, or null if it does.
+ */
 const nonreciprocal = (p: Record<string, number>) =>
   p.walls && p.dim !== 3
     ? '有壁面换热和外力做功：系统是开放的，这条守恒律不适用'
@@ -105,8 +110,26 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     kind: 'scalar',
     reducers: ['scalars'],
     compute: (f) => f.scalars!.pressure,
-    theory: (f) => virialPressure(f.spec, f.scalars!.density, f.scalars!.temperature, f.scalars!.dim),
-    theoryLabel: '维里展开 ρT(1 + B₂ρ)，仅低密度有效',
+    theory: (f, p) => {
+      const { density, temperature, dim } = f.scalars!
+      // 已发表的状态方程只针对二维、单组分、完整的 12-6 势；截断半径够大时加上截断修正即可对照。
+      // The published equation of state is for the 2D, one-component, full 12-6 potential;
+      // with a long enough cutoff it can be compared after adding the cutoff correction.
+      const published =
+        dim === 2 &&
+        f.spec.kind === 'mie' &&
+        f.spec.n === 12 &&
+        f.spec.m === 6 &&
+        f.spec.rc >= 4 &&
+        !p.fractionB &&
+        !p.walls &&
+        ljFluid2dApplies(density, temperature)
+      return published
+        ? ljFluid2d(density, temperature).pressure + cutoffPressureCorrection2d(f.spec, density)
+        : virialPressure(f.spec, density, temperature, dim)
+    },
+    theoryLabel:
+      '二维 12-6 势、rc ≥ 4、T ≥ 0.6、ρ ≤ 0.8 时：Homes 等 (2025) 的状态方程加截断修正；其余情况：维里展开 ρT(1 + B₂ρ)，仅低密度有效',
     tolerance: { abs: 1e-3, rel: 0.05 },
   },
   {
@@ -155,6 +178,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       const pr = profiles(f.field!, f.box, BINS)
       let mean = 0
       for (const u of pr.ux) mean += u / BINS
+      // 无滑移的平面 Poiseuille 流：u(s) = 6 ū s (1 - s)。
       // Plane Poiseuille flow with no slip: u(s) = 6 ū s (1 - s).
       return { x: pr.y, y: Float64Array.from(pr.y, (s) => 6 * mean * s * (1 - s)) }
     },
@@ -172,6 +196,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       const pr = profiles(f.field!, f.box, BINS)
       let mean = 0
       for (const u of pr.ux) mean += u / BINS
+      // 宽度为 W 的平面 Poiseuille 流：ū = ρ g W² / (12 η)。
       // ū = ρ g W² / (12 η) for plane Poiseuille flow of width W.
       return mean > 0 ? (f.scalars!.density * p.drive! * f.box[1]! * f.box[1]!) / (12 * mean) : NaN
     },
@@ -195,6 +220,34 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       return { x: pr.y, y: Float64Array.from(pr.y, () => p.temperature!) }
     },
     theoryLabel: '壁面温度（参照）：粘性生热使管道中央更热',
+  },
+  {
+    id: 'soundMode',
+    level: 'hydro',
+    label: '最长密度波的振幅 Re ρₖ / N',
+    kind: 'scalar',
+    record: true,
+    reducers: ['modes', 'scalars'],
+    when: (p) => !p.walls,
+    compute: (f) => f.modes!.data[0]! / f.scalars!.n,
+    theory: () => 0,
+    theoryLabel: '平衡时在 0 附近涨落；点“敲一下”后按声波的频率振荡',
+  },
+  {
+    id: 'structureFactor',
+    level: 'structure',
+    label: '结构因子 S(k)',
+    kind: 'curve',
+    mark: 'line',
+    smooth: 0.05,
+    xLabel: '波数 k（沿 x 与沿 y）',
+    reducers: ['modes', 'scalars'],
+    compute: (f) => structureFactor(f.modes!, f.scalars!.n, f.box),
+    theory: (f) => {
+      const sk = structureFactor(f.modes!, f.scalars!.n, f.box)
+      return { x: sk.x, y: Float64Array.from(sk.x, () => 1) }
+    },
+    theoryLabel: '理想气体：1（参照）。晶体在倒格矢处出现尖峰',
   },
   {
     id: 'coordination',

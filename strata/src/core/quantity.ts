@@ -1,3 +1,5 @@
+// 一个量（quantity）是对微观状态的一种导出描述，位于层级阶梯的某一层。
+// 它由约化器（reducer）的输出算出，并可附带理论预言，由界面叠加在测量值上。
 // A quantity is one derived description of the micro state, placed on a level of the
 // ladder. It is computed from reducer outputs, and may carry a theory prediction that
 // the UI overlays on the measurement.
@@ -20,12 +22,15 @@ export interface Curve {
   y: ArrayLike<number>
 }
 
-/** A scalar field on a regular grid, row-major with y as the row. */
+/**
+ * 规则网格上的标量场，按行主序存储，y 为行。
+ * A scalar field on a regular grid, row-major with y as the row.
+ */
 export interface Field {
   nx: number
   ny: number
   data: ArrayLike<number>
-  /** Width over height of the region the grid covers. */
+  /** 网格所覆盖区域的宽高比。 / Width over height of the region the grid covers. */
   aspect: number
 }
 
@@ -39,28 +44,42 @@ export interface QuantityDef<F> {
   level: LevelId
   label: string
   kind: 'scalar' | 'curve' | 'field'
-  /** Weight of each new sample in the running average of curves and fields; 0.1 by default. */
+  /**
+   * 曲线和场做滑动平均时每个新样本的权重；默认 0.1。
+   * Weight of each new sample in the running average of curves and fields; 0.1 by default.
+   */
   smooth?: number
-  /** How a curve is drawn; bars by default. */
+  /** 曲线的绘制方式；默认为柱状。 / How a curve is drawn; bars by default. */
   mark?: 'bars' | 'line'
-  /** Reducer outputs this quantity needs in the frame. */
+  /** 该量需要帧中提供的约化器输出。 / Reducer outputs this quantity needs in the frame. */
   reducers: string[]
   xLabel?: string
   compute(frame: F, p: Params): Value
-  /** Prediction from theory, or null where no theory applies. */
+  /**
+   * 理论预言；没有适用理论时为 null。
+   * Prediction from theory, or null where no theory applies.
+   */
   theory?(frame: F, p: Params): Value | null
   theoryLabel?: string
   /**
+   * 测量与理论何时算作相符：对标量，|value - theory| <= abs + rel * |theory|；
+   * 对曲线，绝对差之和相对于理论值之和须不超过 rel。
    * When measurement and theory count as agreeing: |value - theory| <= abs + rel * |theory|
    * for scalars; for curves, the summed absolute difference relative to the summed theory
    * must be within rel.
    */
   tolerance?: { abs?: number; rel?: number }
-  /** Hide the quantity unless this holds. */
+  /** 仅当此条件成立时才显示该量。 / Hide the quantity unless this holds. */
   when?: (p: Params) => boolean
-  /** Keep the time series of this curve so analyses can use it. */
+  /**
+   * 保留该量的时间序列（曲线，或把标量当作单点曲线），供分析使用。
+   * Keep the time series of this quantity (a curve, or a scalar as a one-point curve) so analyses can use it.
+   */
   record?: boolean
-  /** A reason the quantity's theory no longer applies under these parameters, or null. */
+  /**
+   * 在当前参数下该量的理论不再适用的原因；仍适用时为 null。
+   * A reason the quantity's theory no longer applies under these parameters, or null.
+   */
   voided?: (p: Params) => string | null
 }
 
@@ -87,13 +106,19 @@ export function agreement(q: QuantityDef<never>, value: Value, theory: Value | n
 export interface Sample {
   step: number
   time: number
-  /** Incremented whenever parameters change; consumers drop samples from older epochs. */
+  /**
+   * 每当参数改变就加一；使用方丢弃更早纪元（epoch）的样本。
+   * Incremented whenever parameters change; consumers drop samples from older epochs.
+   */
   epoch: number
   value: Value
   theory: Value | null
 }
 
-/** The recorded time series of a curve quantity: y[k] is the curve at time t[k]. */
+/**
+ * 曲线量的时间序列记录：y[k] 是 t[k] 时刻的曲线。
+ * The recorded time series of a curve quantity: y[k] is the curve at time t[k].
+ */
 export interface History {
   t: number[]
   x: ArrayLike<number>
@@ -101,24 +126,36 @@ export interface History {
 }
 
 export interface AnalysisResult {
-  /** The finding in one line, e.g. a fitted equation. */
+  /**
+   * 用一行文字给出的结论，例如拟合得到的方程。
+   * The finding in one line, e.g. a fitted equation.
+   */
   headline: string
   detail?: string
   curve?: Curve
   theory?: Curve
   xLabel?: string
   theoryLabel?: string
+  /**
+   * 结论是否与理论相符（仅当该分析有对应理论时）。
+   * Whether the finding matches its theory, where the analysis has one.
+   */
+  agree?: boolean
 }
 
-/** A computation over the recorded history of one quantity. */
+/** 对某一个量的历史记录所做的计算。 / A computation over the recorded history of one quantity. */
 export interface AnalysisDef {
   id: string
   level: LevelId
   label: string
-  /** Id of the recorded quantity this reads. */
+  /** 所读取的被记录量的 id。 / Id of the recorded quantity this reads. */
   source: string
-  /** Fewest snapshots needed before running. */
+  /** 运行前至少需要的快照数。 / Fewest snapshots needed before running. */
   minSamples: number
   when?: (p: Params) => boolean
-  compute(h: History, p: Params): AnalysisResult | null
+  /**
+   * `latest` 返回某个标量量的最新值（如果它正在被计算）。
+   * `latest` returns the most recent value of a scalar quantity, if it is being computed.
+   */
+  compute(h: History, p: Params, latest: (id: string) => number | undefined): AnalysisResult | null
 }

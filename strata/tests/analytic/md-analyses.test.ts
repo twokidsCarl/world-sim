@@ -12,7 +12,7 @@ describe('analyses on a concentration history', () => {
   const k = (2 * Math.PI) / (n * dy)
   const profile = (t: number) =>
     Float64Array.from({ length: n }, (_, j) => 0.3 + 0.25 * Math.exp(-D * k * k * t) * Math.cos(k * j * dy) + 0.1 * Math.exp(-4 * D * k * k * t) * Math.cos(2 * k * j * dy))
-  // Unevenly spaced samples, as the engine records them.
+  // 非等间隔的采样，与引擎记录的方式一致。 / Unevenly spaced samples, as the engine records them.
   const times = Array.from({ length: 90 }, (_, i) => i * 0.5 + 0.2 * Math.sin(i))
   const history: History = { t: times, x: Float64Array.from({ length: n }, (_, j) => (j + 0.5) * dy), y: times.map(profile) }
 
@@ -31,7 +31,7 @@ describe('analyses on a concentration history', () => {
   })
 
   it('the SINDy analysis reports the diffusion equation and a matching forward prediction', () => {
-    const r = MD_ANALYSES.find((a) => a.id === 'sindy')!.compute(history, {})!
+    const r = MD_ANALYSES.find((a) => a.id === 'sindy')!.compute(history, {}, () => undefined)!
     const fitted = Number(/= ([\d.]+) ∂²c/.exec(r.headline)![1])
     expect(Math.abs(fitted / D - 1)).toBeLessThan(0.02)
     expect(r.headline).not.toContain('+')
@@ -39,7 +39,7 @@ describe('analyses on a concentration history', () => {
   })
 
   it('the DMD analysis finds the decay rates D k² and 4 D k² of the two modes present', () => {
-    const r = MD_ANALYSES.find((a) => a.id === 'dmd')!.compute(history, {})!
+    const r = MD_ANALYSES.find((a) => a.id === 'dmd')!.compute(history, {}, () => undefined)!
     expect(Math.abs(r.curve!.y[0]! / (D * k * k) - 1)).toBeLessThan(0.02)
     expect(Math.abs(r.curve!.y[1]! / (4 * D * k * k) - 1)).toBeLessThan(0.02)
     expect(Math.abs(r.theory!.y[1]! / r.theory!.y[0]! - 4)).toBeLessThan(1e-9)

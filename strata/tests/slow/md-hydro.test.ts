@@ -59,6 +59,8 @@ describe('coarse-grained fields', () => {
 describe('channel with thermal walls', () => {
   it('keeps every particle between the walls and holds the wall temperature without driving', () => {
     const s = channel(0, 0.9)
+    // 初始晶格熔化使气体冷却到约 0.74；壁面在约 60 个时间单位内
+    // 把温度带回来。
     // Melting the initial lattice cools the gas to about 0.74; the walls bring it back
     // over some 60 time units.
     step(s, pair, 0.005, 16000)
@@ -87,6 +89,7 @@ describe('channel with thermal walls', () => {
       const pr = profiles(fieldSums(s), s.box, bins)
       for (let b = 0; b < bins; b++) u[b]! += pr.ux[b]! / samples
     }
+    // 对 u = a s (1 - s) + b 做最小二乘：b 是壁面处的滑移速度。
     // Least squares for u = a s (1 - s) + b: b is the slip velocity at the walls.
     const x = Array.from({ length: bins }, (_, b) => ((b + 0.5) / bins) * (1 - (b + 0.5) / bins))
     const mx = x.reduce((p, c) => p + c, 0) / bins
@@ -106,7 +109,7 @@ describe('channel with thermal walls', () => {
     expect(mu).toBeGreaterThan(0.1)
     expect(a).toBeGreaterThan(0)
     expect(r2).toBeGreaterThan(0.98)
-    // Fastest in the middle, slowest at the walls.
+    // 中间最快，壁面处最慢。 / Fastest in the middle, slowest at the walls.
     expect(u[bins / 2]!).toBeGreaterThan(2 * u[0]!)
     expect(u[bins / 2 - 1]!).toBeGreaterThan(2 * u[bins - 1]!)
   })

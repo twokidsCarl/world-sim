@@ -4,15 +4,21 @@ import { computeForces, createState, kineticEnergy, type MdState } from './step'
 
 export interface LatticeInit {
   dim: 2 | 3
-  /** Particles per axis; n = perSide^dim. */
+  /** 每个轴上的粒子数；n = perSide^dim。 / Particles per axis; n = perSide^dim. */
   perSide: number
-  /** Number density n / V. */
+  /**
+   * 数密度 n / V。
+   * Number density n / V.
+   */
   density: number
   temperature: number
   seed: number
 }
 
-/** Gaussian velocities with zero net momentum, rescaled to the exact temperature; then forces. */
+/**
+ * 高斯分布的速度，净动量为零，并重标到精确的温度；随后计算受力。
+ * Gaussian velocities with zero net momentum, rescaled to the exact temperature; then forces.
+ */
 function thermalise(s: MdState, temperature: number, seed: number, pair: PairField): MdState {
   const { dim, n } = s
   for (let k = 0; k < n * dim; k++) s.vel[k] = gaussian(seed, k)
@@ -28,7 +34,7 @@ function thermalise(s: MdState, temperature: number, seed: number, pair: PairFie
   return s
 }
 
-/** Square/cubic lattice. */
+/** 正方/立方晶格。 / Square/cubic lattice. */
 export function initLattice(o: LatticeInit, pair: PairField): MdState {
   const { dim, perSide } = o
   const n = Math.pow(perSide, dim)
@@ -46,6 +52,9 @@ export function initLattice(o: LatticeInit, pair: PairField): MdState {
 }
 
 /**
+ * 有 nx 列的二维三角晶格。行数取偶数，
+ * 并使周期性盒子最接近所要求的宽高比（默认为正方形），
+ * 这样晶格与盒子是公度的。
  * 2D triangular lattice with nx columns. The row count is the even number that brings the
  * periodic box closest to the requested aspect ratio (square by default), so the lattice
  * is commensurate with the box.
@@ -58,12 +67,15 @@ export function initTriangular(
     seed: number
     fractionB?: number
     aspect?: number
-    /** Put species B in a band across the middle of the box instead of mixing it at random. */
+    /**
+     * 把组分 B 放在横贯盒子中部的一条带内，而不是随机混入。
+     * Put species B in a band across the middle of the box instead of mixing it at random.
+     */
     stripe?: boolean
   },
   pair: PairField,
 ): MdState {
-  // `aspect` is the box's width over its height.
+  // `aspect` 是盒子的宽除以高。 / `aspect` is the box's width over its height.
   const ny = Math.max(2, 2 * Math.round(o.nx / Math.sqrt(3) / (o.aspect ?? 1)))
   const a = Math.sqrt(2 / (Math.sqrt(3) * o.density))
   const s = createState(2, o.nx * ny, [o.nx * a, (ny * a * Math.sqrt(3)) / 2])
@@ -73,6 +85,7 @@ export function initTriangular(
       s.pos[2 * i] = (col + 0.25 + 0.5 * (row % 2)) * a
       s.pos[2 * i + 1] = ((row + 0.5) * a * Math.sqrt(3)) / 2
       const fractionB = o.fractionB ?? 0
+      // 要么是横贯中部的一条带，要么各粒子独立随机指定（理想混合物）。
       // Either a band across the middle, or independently at random (an ideal mixture).
       s.species[i] = (o.stripe ? Math.abs((row + 0.5) / ny - 0.5) < fractionB / 2 : uniform(o.seed ^ 0x51ec1e5, i) < fractionB) ? 1 : 0
     }
@@ -81,6 +94,7 @@ export function initTriangular(
 }
 
 /**
+ * 三维面心立方晶格，每边 `cells` 个惯用晶胞（每个晶胞 4 个粒子），置于立方周期性盒子中。
  * 3D face-centred cubic lattice of `cells` conventional cells per side (4 particles each)
  * in a cubic periodic box.
  */

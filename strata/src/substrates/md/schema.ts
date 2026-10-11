@@ -3,7 +3,10 @@ import type { PotentialSpec } from './potential'
 
 export const POTENTIAL_KINDS = ['mie', 'morse', 'soft'] as const
 
-/** Conventional fcc cells per side for the 3D box, from the `nx` knob. */
+/**
+ * 三维盒子每边的 fcc 惯用晶胞数，由 `nx` 旋钮决定。
+ * Conventional fcc cells per side for the 3D box, from the `nx` knob.
+ */
 export const fccCells = (nx: number) => Math.max(4, Math.round(nx / 4))
 
 export const MD_KNOBS: Knob[] = [
@@ -76,11 +79,11 @@ export const MD_KNOBS: Knob[] = [
     label: '截断半径 rc',
     tag: 'value',
     min: 1.5,
-    max: 4,
+    max: 6.5,
     step: 0.1,
     default: 2.5,
     rebuild: 'table',
-    note: '截断会移动相图，但不改变短程作用的普适类。',
+    note: '截断会移动相图，但不改变短程作用的普适类。取到 4 以上时，二维 12-6 势的压强可以与已发表的完整势状态方程对照。',
   },
   {
     id: 'epsBB',
@@ -255,7 +258,10 @@ export function potentialSpec(p: Params): PotentialSpec {
   }
 }
 
-/** strength[si][sj] scales epsilon for the force on species si from species sj. */
+/**
+ * strength[si][sj] 是 epsilon 的缩放系数，用于组分 sj 对组分 si 的作用力。
+ * strength[si][sj] scales epsilon for the force on species si from species sj.
+ */
 export function strengthMatrix(p: Params): number[][] {
   if (!p.fractionB) return [[1]]
   return [
@@ -264,14 +270,33 @@ export function strengthMatrix(p: Params): number[][] {
   ]
 }
 
-/** Changes whenever the pair interaction does. */
+/** 只要对相互作用改变，它就跟着改变。 / Changes whenever the pair interaction does. */
 export function fieldKey(p: Params): string {
   return JSON.stringify([potentialSpec(p), strengthMatrix(p)])
 }
 
-/** Width over height of the box: square, except for the channel and the diffusion band. */
+/**
+ * 盒子的宽高比：除管道和扩散条带两种情形外均为正方形。
+ * Width over height of the box: square, except for the channel and the diffusion band.
+ */
 export function boxAspect(p: Params): number {
   if (p.dim === 3) return 1
   if (p.walls) return 4
   return p.fractionB > 0 && p.layoutB ? 6 : 1
+}
+
+/**
+ * 由参数直接推出的盒子边长，无需构建状态：[Lx, Ly] 或 [L, L, L]。
+ * Box lengths implied by the parameters, without building the state: [Lx, Ly] or [L, L, L].
+ */
+export function boxOf(p: Params, cpu = false): number[] {
+  if (p.dim === 3) {
+    const cells = cpu ? Math.min(fccCells(p.nx), 8) : fccCells(p.nx)
+    const L = Math.cbrt((4 * cells ** 3) / p.density)
+    return [L, L, L]
+  }
+  const nx = cpu ? Math.min(p.nx, 70) : p.nx
+  const ny = Math.max(2, 2 * Math.round(nx / Math.sqrt(3) / boxAspect(p)))
+  const a = Math.sqrt(2 / (Math.sqrt(3) * p.density))
+  return [nx * a, (ny * a * Math.sqrt(3)) / 2]
 }

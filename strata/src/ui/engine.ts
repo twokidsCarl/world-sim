@@ -1,3 +1,5 @@
+// 持有正在运行的后端和帧循环。React 组件在帧回调里读取它，
+// 因此这里的任何东西都不会在每一帧触发 React 渲染。
 // Owns the running backend and the frame loop. React components read from it inside
 // frame callbacks, so nothing here triggers a React render per frame.
 
@@ -7,6 +9,7 @@ import {
   isCurve,
   isField,
   type Agreement,
+  type AnalysisResult,
   type Curve,
   type Field,
   type History,
@@ -18,7 +21,10 @@ import { getGpu, type GpuContext } from '../gpu/device'
 import { SUBSTRATES } from '../substrates'
 
 const HISTORY = 400
-/** Snapshots kept per recorded curve; when full, every other one is dropped and the stride doubles. */
+/**
+ * 每条记录曲线保留的快照数；存满后每隔一个丢弃一个，采样间隔加倍。
+ * Snapshots kept per recorded curve; when full, every other one is dropped and the stride doubles.
+ */
 const RECORD_LIMIT = 240
 const REDUCE_EVERY = 6
 const STEP_BUDGET_MS = 8
@@ -32,26 +38,41 @@ export interface ScalarTrace {
 
 export interface CurveTrace {
   x: ArrayLike<number>
-  /** Exponential time average of the measurement. */
+  /** 测量值的指数时间平均。 / Exponential time average of the measurement. */
   y: Float64Array
   theory: Curve | null
 }
 
 export interface PerfSummary {
-  /** Whether the page was visible; a hidden tab has its animation frames throttled. */
+  /**
+   * 页面是否可见；隐藏的标签页其动画帧会被节流。
+   * Whether the page was visible; a hidden tab has its animation frames throttled.
+   */
   visible: boolean
   backend: 'cpu' | 'gpu'
-  /** Frames per second over the last 120 frames. */
+  /** 最近 120 帧的每秒帧数。 / Frames per second over the last 120 frames. */
   fps: number
-  /** Median and 95th-percentile interval between frames, ms. */
+  /**
+   * 帧间隔的中位数和第 95 百分位数，单位 ms。
+   * Median and 95th-percentile interval between frames, ms.
+   */
   frameMs: number
   frameMsP95: number
-  /** Main-thread time spent in the engine per frame, ms. */
+  /**
+   * 每帧在引擎中花费的主线程时间，单位 ms。
+   * Main-thread time spent in the engine per frame, ms.
+   */
   mainMs: number
-  /** Simulation steps requested per frame, and completed per second. */
+  /**
+   * 每帧请求的模拟步数，以及每秒完成的步数。
+   * Simulation steps requested per frame, and completed per second.
+   */
   stepsPerFrame: number
   stepsPerSecond: number
-  /** GPU time of one step batch from timestamp queries, ms; null when unavailable. */
+  /**
+   * 由 timestamp query 得到的一批步进的 GPU 耗时，单位 ms；不可用时为 null。
+   * GPU time of one step batch from timestamp queries, ms; null when unavailable.
+   */
   gpuStepMs: number | null
 }
 
@@ -63,19 +84,31 @@ export class Engine {
   backend: RunBackend<Frame>
   gpu: GpuContext | null = null
   running = true
-  /** When set, stepping stops exactly at this backend step count (scenarios need exact counts). */
+  /**
+   * 设置后，步进恰好停在后端的这个步数上（场景需要精确的步数）。
+   * When set, stepping stops exactly at this backend step count (scenarios need exact counts).
+   */
   stopAt: number | null = null
-  /** Set when the last frame reported that the backend could not represent the state. */
+  /**
+   * 上一帧报告后端无法表示当前状态时置位。
+   * Set when the last frame reported that the backend could not represent the state.
+   */
   overflow = false
   readonly scalars = new Map<string, ScalarTrace>()
   readonly curves = new Map<string, CurveTrace>()
-  /** Running averages of field quantities. */
+  /** 场量的运行平均。 / Running averages of field quantities. */
   readonly fields = new Map<string, Field & { data: Float64Array }>()
-  /** Time series of the curve quantities marked `record`. */
+  /** 标记为 `record` 的曲线量的时间序列。 / Time series of the curve quantities marked `record`. */
   readonly histories = new Map<string, History & { stride: number; skipped: number }>()
-  /** Whether each watched quantity currently matches its theory. */
+  /**
+   * 每个被监视的量当前是否与其理论吻合。
+   * Whether each watched quantity currently matches its theory.
+   */
   readonly agreements = new Map<string, Agreement>()
-  /** View options that do not affect the simulation, e.g. how particles are coloured. */
+  /**
+   * 不影响模拟的视图选项，例如粒子如何着色。
+   * View options that do not affect the simulation, e.g. how particles are coloured.
+   */
   view: Record<string, number> = { colour: 0 }
   private scheduler!: Scheduler<Frame>
   private frameListeners = new Set<() => void>()
@@ -104,6 +137,8 @@ export class Engine {
   }
 
   /**
+   * 获取 GPU 设备，并在可用时切换到 GPU 后端。可以重复调用；
+   * 每次调用返回同一个 promise。
    * Acquire the GPU device and switch to the GPU backend where one is available. Safe to
    * call repeatedly; every call returns the same promise.
    */
@@ -115,7 +150,10 @@ export class Engine {
     return this.ready
   }
 
-  /** Called after parameters, the backend or the substrate change. */
+  /**
+   * 在参数、后端或底座改变之后调用。
+   * Called after parameters, the backend or the substrate change.
+   */
   onChange(fn: () => void): () => void {
     this.changeListeners.add(fn)
     return () => this.changeListeners.delete(fn)
@@ -142,7 +180,37 @@ export class Engine {
     }
   }
 
-  /** Reverse the direction of time, if the running backend can. */
+  /**
+   * 扰动系统（发出一个声波），并从此刻起重新开始记录历史。
+   * Disturb the system (launch a sound wave) and restart the recorded histories from this moment.
+   */
+  perturb(amplitude: number): void {
+    if (!this.backend.perturb) return
+    this.backend.perturb(amplitude)
+    this.histories.clear()
+  }
+
+  /**
+   * 对目前已记录的历史运行该底座的某一项分析。
+   * Run one of the substrate's analyses on the history recorded so far.
+   */
+  runAnalysis(id: string): AnalysisResult | null {
+    const a = this.substrate.analyses?.find((d) => d.id === id)
+    const h = a && this.histories.get(a.source)
+    if (!a || !h || h.t.length < a.minSamples) return null
+    try {
+      return a.compute(h, this.params, (q) => this.scalars.get(q)?.value.at(-1))
+    } catch {
+      // 退化数据上的奇异拟合不是值得上报的错误。
+      // A singular fit on degenerate data is not an error worth surfacing.
+      return null
+    }
+  }
+
+  /**
+   * 反转时间方向（如果正在运行的后端支持）。
+   * Reverse the direction of time, if the running backend can.
+   */
   reverse(): void {
     this.backend.reverse?.()
   }
@@ -159,6 +227,7 @@ export class Engine {
   private rebuild(): void {
     this.backend.dispose()
     this.backend = this.substrate.create(this.params, this.seed, this.gpu)
+    // 步数计数器重新开始，因此之前的标量历史不再共用同一条 x 轴。
     // The step counter restarts, so earlier scalar history no longer shares an x axis.
     this.scalars.clear()
     this.stopAt = null
@@ -169,7 +238,10 @@ export class Engine {
     for (const fn of this.changeListeners) fn()
   }
 
-  /** Start a new epoch: samples in flight are dropped and curve averages restart. */
+  /**
+   * 开启新一轮（epoch）：在途的采样被丢弃，曲线平均重新开始。
+   * Start a new epoch: samples in flight are dropped and curve averages restart.
+   */
   private invalidate(): void {
     this.scheduler.epoch++
     this.curves.clear()
@@ -177,8 +249,12 @@ export class Engine {
     this.histories.clear()
   }
 
-  /** Keep a quantity computed while the returned function has not been called. */
+  /**
+   * 在返回的函数被调用之前，保持对某个量的计算。
+   * Keep a quantity computed while the returned function has not been called.
+   */
   watch(id: string): () => void {
+    // 上一个底座的视图可能还会多挂载一次渲染；忽略它。
     // A view from the previous substrate may still be mounted for one render; ignore it.
     if (!this.substrate.quantities.some((q) => q.id === id)) return () => {}
     return this.scheduler.subscribe(id, (s) => this.record(id, s))
@@ -186,11 +262,12 @@ export class Engine {
 
   private record(id: string, s: Sample): void {
     const q = this.substrate.quantities.find((d) => d.id === id)!
-    // A voided conservation law has no theory to agree with.
+    // 已作废的守恒律没有理论可供对照。 / A voided conservation law has no theory to agree with.
     this.agreements.set(id, q.voided?.(this.params) ? 'none' : agreement(q as never, s.value, s.theory))
     if (typeof s.value === 'number') {
       let t = this.scalars.get(id)
       if (!t) this.scalars.set(id, (t = { step: [], value: [], theory: [] }))
+      if (q.record) this.remember(id, s.time, { x: [0], y: [s.value] })
       t.step.push(s.step)
       t.value.push(s.value)
       t.theory.push(typeof s.theory === 'number' ? s.theory : NaN)
@@ -222,6 +299,7 @@ export class Engine {
       prev.x = s.value.x
       prev.theory = theory
     }
+    // 曲线是否吻合按其运行平均判断，而不是按单个有噪声的采样。
     // Agreement of a curve is judged on its running average, not on one noisy sample.
     const averaged = this.curves.get(id)!
     this.agreements.set(id, q.voided?.(this.params) ? 'none' : agreement(q as never, averaged, theory))
@@ -247,6 +325,8 @@ export class Engine {
   }
 
   /**
+   * 推进一个显示帧：步进模拟，按计划启动一次归约，通知各视图。
+   * 返回的 promise 在该次归约送达后 resolve。
    * Advance one display frame: step the simulation, start a reduction on schedule, notify
    * views. The returned promise resolves when that reduction has been delivered.
    */
@@ -271,7 +351,7 @@ export class Engine {
     return reduced
   }
 
-  /** Frame pacing over the last 120 animation frames. */
+  /** 最近 120 个动画帧的帧节奏。 / Frame pacing over the last 120 animation frames. */
   perf(): PerfSummary {
     const count = Math.min(this.frameIndex, PERF_FRAMES)
     const times = Array.from(this.frameTimes.subarray(0, count)).sort((a, b) => a - b)
@@ -316,5 +396,6 @@ export class Engine {
 
 export const engine = new Engine()
 
+// 仅用于开发的句柄，供在浏览器控制台中驱动和检查引擎。
 // Dev-only handle for driving and inspecting the engine from the browser console.
 if (import.meta.env.DEV) (globalThis as { __strata?: Engine }).__strata = engine

@@ -1,3 +1,5 @@
+// f64 的 CPU 参考分子动力学。它是校验 GPU 内核时所依据的规范。
+// 约化单位、单位质量、周期性盒子，维数为 2 或 3。
 // CPU reference molecular dynamics in f64. This is the specification the GPU kernels
 // are checked against. Reduced units, unit mass, periodic box, dimension 2 or 3.
 
@@ -8,27 +10,32 @@ import { buildCells, makeGrid, type CellGrid } from './cells'
 export interface MdState {
   dim: 2 | 3
   n: number
-  /** Box lengths, length 3; unused axes are 1. */
+  /** 盒子边长，长度为 3；未使用的轴为 1。 / Box lengths, length 3; unused axes are 1. */
   box: Float64Array
-  /** n * dim, wrapped into [0, box). */
+  /** n * dim，已折回到 [0, box)。 / n * dim, wrapped into [0, box). */
   pos: Float64Array
   vel: Float64Array
   force: Float64Array
-  /** Species index per particle; all zero for a one-component system. */
+  /**
+   * 每个粒子的组分索引；单组分体系全为零。
+   * Species index per particle; all zero for a one-component system.
+   */
   species: Uint8Array
-  /** Total potential energy for the current positions. */
+  /** 当前位置下的总势能。 / Total potential energy for the current positions. */
   pe: number
-  /** Sum over pairs of r · f, for the virial pressure. */
+  /** 对粒子对求 r · f 之和，用于位力压强。 / Sum over pairs of r · f, for the virial pressure. */
   virial: number
   step: number
   grid: CellGrid | null
   /**
+   * 在 y = 0 和 y = box[1] 处设热壁，取代周期性的 y 轴：
+   * 越过壁面的粒子被放回盒内，并以按壁面温度抽取的速度重新出射。
    * Thermal walls at y = 0 and y = box[1] instead of a periodic y axis: a particle that
    * crosses is put back and re-emitted with a velocity drawn from the wall temperature.
    */
   walls: boolean
   wallTemperature: number
-  /** Uniform body force per particle along x. */
+  /** 每个粒子沿 x 方向受到的均匀体力。 / Uniform body force per particle along x. */
   drive: number
   seed: number
 }
@@ -58,11 +65,15 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
 const out: PairOut = { g: 0, u: 0 }
 const back: PairOut = { g: 0, u: 0 }
 
-/** Recompute forces, potential energy and virial. Each particle scans the full 3^dim stencil. */
+/**
+ * 重新计算受力、势能和位力。每个粒子扫描完整的 3^dim 模板。
+ * Recompute forces, potential energy and virial. Each particle scans the full 3^dim stencil.
+ */
 export function computeForces(s: MdState, pair: PairField, allPairs = false): void {
   const { dim, n, pos, force, box, species } = s
   const bx = box[0]
   const by = box[1]
+  // 有壁面时 y 轴不是周期性的，因此沿该方向不取最小镜像。
   // With walls the y axis is not periodic, so no minimum image is taken along it.
   const wrapY = !s.walls
   const bz = box[2]
@@ -86,6 +97,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
         dz -= bz * Math.round(dz / bz)
         const r2 = dx * dx + dy * dy + dz * dz
         if (r2 >= rc2) continue
+        // j 所受的力单独计算：相互作用非互易时它与前者不同。
         // The force on j is evaluated separately: it differs when the interaction is not reciprocal.
         pair.eval(r2, out, species[i], species[j])
         pair.eval(r2, back, species[j], species[i])
@@ -152,7 +164,10 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
   s.virial = virial
 }
 
-/** Velocity Verlet. Forces must be current on entry and are current on exit. */
+/**
+ * 速度 Verlet 算法。进入时受力必须是最新的，退出时也是最新的。
+ * Velocity Verlet. Forces must be current on entry and are current on exit.
+ */
 export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void {
   const { dim, n, pos, vel, force, box } = s
   const len = n * dim
@@ -175,6 +190,8 @@ export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void 
 }
 
 /**
+ * 漫反射：把粒子镜像折回盒内，并从壁面的麦克斯韦分布中重新抽取速度
+ * （法向分量服从瑞利分布，切向分量服从高斯分布）。
  * Diffuse reflection: mirror the particle back inside and draw a fresh velocity from the
  * wall's Maxwellian (Rayleigh-distributed normal component, Gaussian tangential ones).
  */
@@ -182,7 +199,7 @@ function hitWall(s: MdState, i: number, lower: boolean): void {
   const { dim, pos, vel, box } = s
   const L = box[1]
   const y = pos[i * dim + 1]
-  // Clamped so that an extreme overshoot still lands inside the box.
+  // 加以钳制，使极端的越界也仍落在盒内。 / Clamped so that an extreme overshoot still lands inside the box.
   pos[i * dim + 1] = Math.min(Math.max(lower ? -y : 2 * L - y, 0), L * (1 - 1e-12))
   const key = s.seed ^ Math.imul(s.step + 1, 0x632be5ab)
   const sd = Math.sqrt(s.wallTemperature)
@@ -198,7 +215,10 @@ export function kineticEnergy(s: MdState): number {
   return 0.5 * ke
 }
 
-/** Kinetic temperature, with the dim centre-of-mass degrees of freedom removed. */
+/**
+ * 动理学温度，已扣除质心的 dim 个自由度。
+ * Kinetic temperature, with the dim centre-of-mass degrees of freedom removed.
+ */
 export function temperature(s: MdState): number {
   return (2 * kineticEnergy(s)) / (s.dim * (s.n - 1))
 }
@@ -213,7 +233,10 @@ export function volume(s: MdState): number {
   return s.box[0] * s.box[1] * s.box[2]
 }
 
-/** Virial pressure P = (N T + W / dim) / V. */
+/**
+ * 位力压强 P = (N T + W / dim) / V。
+ * Virial pressure P = (N T + W / dim) / V.
+ */
 export function pressure(s: MdState): number {
   return (s.n * temperature(s) + s.virial / s.dim) / volume(s)
 }

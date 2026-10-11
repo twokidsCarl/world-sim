@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { DE_BOER_QUANTUM, unitSystem } from '../theory/scaling'
 import { useUi } from './store'
 
-/** Slider position in [-1, 1] mapped to a ratio in [1/span, span]. */
+/**
+ * 滑块位置 [-1, 1] 映射为 [1/span, span] 内的比值。
+ * Slider position in [-1, 1] mapped to a ratio in [1/span, span].
+ */
 function LogSlider(props: { label: string; span: number; value: number; onChange: (v: number) => void }) {
   const position = Math.log(props.value) / Math.log(props.span)
   return (

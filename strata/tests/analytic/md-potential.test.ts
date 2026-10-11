@@ -54,6 +54,7 @@ describe('pair potentials', () => {
     const table = tablePair(buildTable(spec))
     const a = { g: 0, u: 0 }
     const b = { g: 0, u: 0 }
+    // 容差中绝对部分的尺度：零点附近的值很小。
     // Scale for the absolute part of the tolerance: values near the zero crossings are tiny.
     const ref = { g: 0, u: 0 }
     exact.eval(1, ref)
