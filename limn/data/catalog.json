@@ -91,6 +91,70 @@
       "merge": "Glutamate"
     },
     {
+      "id": "presynaptic-bouton",
+      "title": "突触前膨体（整个）",
+      "titleEn": "A whole presynaptic bouton",
+      "keywords": [
+        "突触前",
+        "突触前膨体",
+        "presynaptic bouton",
+        "presynapse",
+        "突触小体"
+      ],
+      "source": {
+        "kind": "prepared",
+        "url": "http://download.yasara.org/petworld/presynapse/presynapse_2.cif.gz"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "tier": "curated",
+      "licence": "CC BY-SA 4.0",
+      "attribution": "Burkhard Rammner, Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
+      "roles": [
+        ["V$", "focus"],
+        ["F$|^Actin$|^Tubulin$|^Septin$", "nucleic"],
+        ["M$|ME$", "membrane"],
+        ["Bassoon|Piccolo|RIM|MUNC|CAPS|Complexin|NSF|ASNAP|^Syntaxin$", "nucleic-binding"],
+        ["Clathrin|AP180|AP2|Dynamin|Endophilin|Epsin|Amphiphysin|Intersectin|Syndapin|Synaptojanin|SGIP1|HSC70", "extracellular"],
+        [".", "soluble"]
+      ],
+      "caption": "一整个突触前膨体的模型，从中间剖开：307 个装着谷氨酸的突触小泡、细胞骨架、内体、线粒体的外壳和质膜，以及几十种参与小泡释放与回收的蛋白，数量来自对分离出的突触小体的定量测量。",
+      "captionEn": "A model of an entire presynaptic bouton, cut through the middle: 307 synaptic vesicles filled with glutamate, cytoskeleton, endosomes, the mitochondrial envelope and the plasma membrane, with dozens of the proteins that release and recycle vesicles, in numbers taken from quantitative measurements of isolated synaptic boutons.",
+      "citation": "Wilhelm et al., Science 2014, doi:10.1126/science.1252884; Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
+      "link": "http://download.yasara.org/petworld/presynapse/index.html",
+      "merge": "Glutamate"
+    },
+    {
+      "id": "postsynaptic-spine",
+      "title": "突触后的树突棘（蘑菇型，整个）",
+      "titleEn": "A whole postsynaptic spine (mushroom type)",
+      "keywords": [
+        "突触后",
+        "树突棘",
+        "dendritic spine",
+        "postsynapse",
+        "postsynaptic density"
+      ],
+      "source": {
+        "kind": "prepared",
+        "url": "http://download.yasara.org/petworld/postsynmushroom/postsynmushroom_2.cif.gz"
+      },
+      "perCopy": true,
+      "cut": 0.5,
+      "tier": "curated",
+      "licence": "CC BY-SA 4.0",
+      "attribution": "Burkhard Rammner, Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
+      "roles": [
+        ["F$|^Actin|^Tubulin|^Septin", "nucleic"],
+        ["M$|ME$", "membrane"],
+        [".", "soluble"]
+      ],
+      "caption": "一整个蘑菇型树突棘的模型，从中间剖开：细胞骨架、内体、线粒体的外壳和质膜，以及一百多种突触后的蛋白，数量来自对树突棘的超分辨成像和生化定量。",
+      "captionEn": "A model of an entire mushroom-type dendritic spine, cut through the middle: cytoskeleton, endosomes, the mitochondrial envelope and the plasma membrane, with over a hundred kinds of postsynaptic protein, in numbers taken from super-resolution imaging and biochemical quantification of dendritic spines.",
+      "citation": "Helm et al., Nat. Neurosci. 2021, doi:10.1038/s41593-021-00874-w; Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
+      "link": "http://download.yasara.org/petworld/postsynmushroom/index.html"
+    },
+    {
       "id": "hiv-virion-cellpack",
       "title": "HIV-1 病毒颗粒（cellPACK 模型）",
       "titleEn": "HIV-1 virion (cellPACK model)",

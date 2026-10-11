@@ -160,7 +160,8 @@ export function Stage() {
         // 有网格或圆台时报它们的数目 / with a mesh or cones, report how many of those there are
         if (r.lastTriangles > 0) setInfo(t(r.lastAtoms > 0 ? 'stage.trianglesAtoms' : 'stage.triangles', { ids, n: r.lastTriangles.toLocaleString(), atoms: r.lastAtoms.toLocaleString(), ms }))
         else if (r.lastSegments > 0) setInfo(t('stage.segments', { ids, n: r.lastSegments.toLocaleString(), ms }))
-        else setInfo(t(s.spec?.kind === 'neuron' ? 'stage.spheres' : 'stage.atoms', { ids, n: r.lastAtoms.toLocaleString(), ms }))
+        // 粗粒度的模型画的是球，不是原子 / a coarse model is drawn in spheres, not atoms
+        else setInfo(t(s.spec?.kind === 'neuron' || s.panels.every((p) => p.mol.radius) ? 'stage.spheres' : 'stage.atoms', { ids, n: r.lastAtoms.toLocaleString(), ms }))
       }
     })
     clearTimeout(settle.current)
