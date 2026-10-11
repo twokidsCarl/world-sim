@@ -15,6 +15,24 @@ tools/pr.sh "<项目>: <做了什么>" <项目目录>
 - 提交信息的正文用环境变量 `COMMIT_BODY` 传入，PR 描述用 `PR_BODY`。
 - 脚本报"还没有合并"时，用 `gh pr checks <url>` 看原因。通常是和刚合并的改动冲突，重新运行脚本即可（它每次都基于最新的 `origin/main`）。
 
+## 中英双语
+
+进 git 的内容都要有中文和英文两个版本：
+
+- **文档**（README 等）：同一个文件里中文在前、英文在后，或者成对的两个文件。
+- **PR**：标题写成 `<项目>: 中文 / English`；描述里先中文一节，再英文一节。提交信息的正文同样。
+- **代码注释和文档字符串**：中文一行，英文一行（短的可以写在同一行，用 ` / ` 隔开）。
+- **PR 和 issue 里的评论**：同上。
+
+Everything that goes into git is written in both Chinese and English: documentation,
+PR titles and descriptions, commit message bodies, code comments and docstrings, and
+PR or issue comments. Chinese first, then English.
+
+已有的内容不必一次补齐，改到哪个文件就把哪个文件补上。
+
+Existing content need not be converted in one go; bring a file up to date when you
+next touch it.
+
 ## 仓库是公开的
 
 提交前确认：
