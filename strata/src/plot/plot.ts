@@ -107,7 +107,18 @@ function extent(series: Series[], pick: 'x' | 'y', clip?: [number, number]): [nu
   return [lo, hi]
 }
 
-export function drawPlot(canvas: HTMLCanvasElement, series: Series[], opts: PlotOptions = {}): void {
+/**
+ * 画布横向像素与数据 x 值之间的换算，供悬停时反查。
+ * The mapping between horizontal canvas pixels and data x values, for looking up what is under the pointer.
+ */
+export interface PlotScale {
+  left: number
+  width: number
+  x0: number
+  x1: number
+}
+
+export function drawPlot(canvas: HTMLCanvasElement, series: Series[], opts: PlotOptions = {}): PlotScale | null {
   const { ctx, w, h } = fitCanvas(canvas)
   const t = theme()
   ctx.clearRect(0, 0, w, h)
@@ -117,7 +128,7 @@ export function drawPlot(canvas: HTMLCanvasElement, series: Series[], opts: Plot
   const bottom = opts.xLabel ? 34 : 20
   const pw = w - left - right
   const ph = h - top - bottom
-  if (pw <= 0 || ph <= 0) return
+  if (pw <= 0 || ph <= 0) return null
 
   const [x0, x1] = opts.xRange ?? extent(series, 'x')
   let [y0, y1] = opts.yRange ?? extent(series, 'y', opts.yClip)
@@ -189,4 +200,5 @@ export function drawPlot(canvas: HTMLCanvasElement, series: Series[], opts: Plot
     ctx.setLineDash([])
   }
   ctx.restore()
+  return { left, width: pw, x0, x1 }
 }

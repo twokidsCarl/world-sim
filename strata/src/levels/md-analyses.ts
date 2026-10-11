@@ -6,6 +6,7 @@ import { dominantFrequency } from '../analysis/oscillation'
 import { equationText, weakSindy } from '../analysis/sindy'
 import type { AnalysisDef, History } from '../core/quantity'
 import { boxOf, potentialSpec } from '../substrates/md/schema'
+import { cutoffPressureCorrection2d, ljFluid2d, ljFluid2dApplies } from '../theory/ljEos'
 import { virialSoundSpeed } from '../theory/sound'
 
 const SNAPSHOTS = 60
@@ -85,7 +86,52 @@ export function blockAverage(values: number[]): { mean: number; error: number } 
   return { mean, error: Math.sqrt(variance / blocks) }
 }
 
+/**
+ * 长波极限 S(k→0) = ρ T κ_T = T / (∂P/∂ρ)_T，压强取已发表的状态方程加截断修正。
+ * 只在该状态方程适用时有值。
+ * The long-wavelength limit S(k→0) = ρ T κ_T = T / (∂P/∂ρ)_T, with the pressure from the
+ * published equation of state plus the cutoff correction. Defined only where that
+ * equation of state applies.
+ */
+export function compressibilityLimit(p: Record<string, number>, T: number): number | null {
+  const spec = potentialSpec(p)
+  const applies =
+    p.dim !== 3 &&
+    spec.kind === 'mie' &&
+    spec.n === 12 &&
+    spec.m === 6 &&
+    spec.rc >= 4 &&
+    !p.fractionB &&
+    !p.walls &&
+    ljFluid2dApplies(p.density!, T)
+  if (!applies) return null
+  const pressure = (rho: number) => ljFluid2d(rho, T).pressure + cutoffPressureCorrection2d(spec, rho)
+  const h = 1e-4
+  return T / ((pressure(p.density! + h) - pressure(p.density! - h)) / (2 * h))
+}
+
 export const MD_ANALYSES: AnalysisDef[] = [
+  {
+    id: 'compressibility',
+    level: 'structure',
+    label: '长波极限：S(k→0) 对压缩率',
+    source: 'lowK',
+    minSamples: 100,
+    when: (p) => !p.walls && p.dim !== 3,
+    compute(h, p, latest) {
+      const { mean, error } = blockAverage(h.y.map((y) => y[0]!))
+      const T = latest('temperature') ?? p.temperature!
+      const theory = compressibilityLimit(p, T)
+      return {
+        headline: `最长波处 S = ${mean.toPrecision(3)} ± ${error.toPrecision(2)}`,
+        detail:
+          theory === null
+            ? '理想气体为 1；越不可压缩越小。这一组参数下没有可用的状态方程来给出理论值（需要二维 12-6 势、rc ≥ 4）。'
+            : `涨落–压缩率关系给出 T / (∂P/∂ρ) = ${theory.toPrecision(3)}（压强取已发表的状态方程）。密度的自发涨落有多大，由流体有多难压缩决定。`,
+        agree: theory === null ? undefined : Math.abs(mean - theory) < Math.max(3 * error, 0.15 * theory),
+      }
+    },
+  },
   {
     id: 'wake',
     level: 'hydro',

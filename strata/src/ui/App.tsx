@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { SUBSTRATES } from '../substrates'
+import { Bench, lastBench } from './Bench'
 import { ConstantsPanel } from './ConstantsPanel'
 import { engine } from './engine'
 import { GravityStage } from './GravityStage'
@@ -30,6 +31,9 @@ const THEMES: { id: ThemeChoice; label: string }[] = [
 ]
 
 const SHOW_PERF = new URLSearchParams(location.search).has('perf')
+const RUN_BENCH = new URLSearchParams(location.search).has('bench')
+// 上次基准的结果随时可从控制台读到。 / The last benchmark's results can always be read from the console.
+;(globalThis as { __strataLastBench?: unknown }).__strataLastBench = lastBench()
 
 export function App() {
   const [themeChoice, setThemeChoice] = useState<ThemeChoice>(storedTheme)
@@ -90,6 +94,7 @@ export function App() {
       </main>
       <ScenarioBar />
       {SHOW_PERF && <PerfHud />}
+      {RUN_BENCH && <Bench />}
     </div>
   )
 }

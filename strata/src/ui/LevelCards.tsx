@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Agreement, AnalysisDef, AnalysisResult } from '../core/quantity'
 import { LEVELS, type QuantityDef } from '../core/quantity'
-import { drawPlot, fitCanvas, theme, type Series } from '../plot/plot'
+import { drawPlot, fitCanvas, theme, type PlotScale, type Series } from '../plot/plot'
 import { viridis } from '../render/points'
 import type { Frame } from '../core/substrate'
 import { engine } from './engine'
@@ -87,6 +87,8 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const valueRef = useRef<HTMLSpanElement>(null)
   const chipRef = useRef<HTMLSpanElement>(null)
+  const legendRef = useRef<HTMLParagraphElement>(null)
+  const scaleRef = useRef<PlotScale | null>(null)
 
   useEffect(() => {
     const unwatch = engine.watch(q.id)
@@ -94,6 +96,12 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
       const canvas = canvasRef.current
       if (!canvas) return
       setChip(chipRef.current, engine.agreements.get(q.id) ?? 'none')
+      // 当前没有理论值时不显示理论说明。 / Hide the theory legend while there is no theory value.
+      if (legendRef.current) {
+        const scalar = engine.scalars.get(q.id)
+        const has = q.kind === 'scalar' ? Number.isFinite(scalar?.theory.at(-1) ?? NaN) : engine.curves.get(q.id)?.theory != null
+        legendRef.current.hidden = !has && q.theory !== undefined
+      }
       const t = theme()
       const series: Series[] = []
       if (q.kind === 'scalar') {
@@ -122,7 +130,7 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
         if (trace.theory) series.push({ x: trace.theory.x, y: trace.theory.y, color: t.ink, mark: 'dash' })
         const inRegion = engine.curves.get(`${q.id}@region`)
         if (inRegion) series.push({ x: inRegion.x, y: inRegion.y, color: t.accent, mark: 'line' })
-        drawPlot(canvas, series, { xLabel: q.xLabel, yClip: [-6, 6] })
+        scaleRef.current = drawPlot(canvas, series, { xLabel: q.xLabel, yClip: [-6, 6] })
       }
     })
     return () => {
@@ -140,12 +148,28 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
         </span>
         <span ref={valueRef} className="value" />
       </h3>
-      <canvas ref={canvasRef} className="plot" />
+      <canvas
+        ref={canvasRef}
+        className="plot"
+        onPointerMove={
+          q.hoverRadius
+            ? (e) => {
+                // 把鼠标的横坐标换成距离，交给舞台去画圆。 / Turn the pointer's x into a distance for the stage to draw.
+                const sc = scaleRef.current
+                if (!sc) return
+                const x = e.clientX - e.currentTarget.getBoundingClientRect().left
+                const r = sc.x0 + ((x - sc.left) / sc.width) * (sc.x1 - sc.x0)
+                engine.view.shell = r > 0 && x >= sc.left ? r : 0
+              }
+            : undefined
+        }
+        onPointerLeave={q.hoverRadius ? () => (engine.view.shell = 0) : undefined}
+      />
       {voided ? (
         <p className="note broken">{voided}</p>
       ) : (
         q.theoryLabel && (
-          <p className="note">
+          <p className="note" ref={legendRef}>
             <i className="dash" />
             {q.theoryLabel}
           </p>

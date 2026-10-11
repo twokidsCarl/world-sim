@@ -84,6 +84,11 @@ export interface QuantityDef<F> {
    */
   record?: boolean
   /**
+   * 横轴是到粒子的距离：鼠标悬停时在舞台上画出对应半径的圆。
+   * The x axis is a distance from a particle: hovering draws a circle of that radius on the stage.
+   */
+  hoverRadius?: boolean
+  /**
    * 在当前参数下该量的理论不再适用的原因；仍适用时为 null。
    * A reason the quantity's theory no longer applies under these parameters, or null.
    */

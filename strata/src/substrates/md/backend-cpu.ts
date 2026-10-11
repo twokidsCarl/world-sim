@@ -73,6 +73,11 @@ export interface RegionFrame {
 }
 
 export interface MdBackend extends RunBackend<MdFrame> {
+  /**
+   * 第 0 号粒子的位置，供舞台在它周围画标尺；未知时为 null。
+   * Position of particle 0, for the stage to draw a ruler around it; null while unknown.
+   */
+  readonly tracked: ArrayLike<number> | null
   readonly n: number
   readonly dim: 2 | 3
   readonly box: Float64Array
@@ -148,6 +153,10 @@ export class MdCpuBackend implements MdBackend {
 
   get n(): number {
     return this.state.n
+  }
+
+  get tracked(): ArrayLike<number> {
+    return this.state.pos.subarray(0, this.state.dim)
   }
 
   get dim(): 2 | 3 {

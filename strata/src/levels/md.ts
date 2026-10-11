@@ -52,6 +52,31 @@ function wakeVelocity(f: MdFrame, radius: number): number {
 }
 
 /**
+ * 由分箱的平均速度用中心差分得到涡量；x 方向周期，y 方向在壁面处用单侧差分。
+ * Vorticity from the binned mean velocity by central differences; periodic along x,
+ * one-sided at the walls along y.
+ */
+function vorticity(f: MdFrame): { nx: number; ny: number; data: Float64Array; aspect: number; signed: boolean } {
+  const { gx, gy, count, vx, vy } = f.field!
+  const dx = f.box[0]! / gx
+  const dy = f.box[1]! / gy
+  const u = (cx: number, cy: number, v: Float64Array) => {
+    const c = cy * gx + ((cx + gx) % gx)
+    return count[c]! > 0 ? v[c]! / count[c]! : 0
+  }
+  const data = new Float64Array(gx * gy)
+  for (let cy = 0; cy < gy; cy++) {
+    const up = Math.max(cy - 1, 0)
+    const down = Math.min(cy + 1, gy - 1)
+    for (let cx = 0; cx < gx; cx++) {
+      data[cy * gx + cx] =
+        (u(cx + 1, cy, vy) - u(cx - 1, cy, vy)) / (2 * dx) - (u(cx, down, vx) - u(cx, up, vx)) / ((down - up) * dy)
+    }
+  }
+  return { nx: gx, ny: gy, data, aspect: f.box[0]! / f.box[1]!, signed: true }
+}
+
+/**
  * 对流的度量：取高度居中的三分之一，把 x 方向分成 16 段，各段的平均竖直流速的均方根。
  * 同时给出没有对流时仅由热运动造成的期望值 √(T / 每段粒子数)。
  * A measure of convection: in the middle third of the height, split x into 16 segments
@@ -145,6 +170,7 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     xLabel: '距离 r',
     reducers: ['scalars', 'rdf'],
     compute: (f) => f.rdf!,
+    hoverRadius: true,
     regional: (f) => f.region?.rdf ?? null,
     theory: (f) => {
       const { x } = f.rdf!
@@ -232,6 +258,16 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       const { gx, gy, count, vy } = f.field!
       return { nx: gx, ny: gy, data: Float64Array.from(vy, (v, c) => (count[c]! > 0 ? v / count[c]! : 0)), aspect: f.box[0]! / f.box[1]!, signed: true }
     },
+  },
+  {
+    id: 'vorticity',
+    level: 'hydro',
+    label: '涡量场 ω = ∂u_y/∂x − ∂uₓ/∂y',
+    kind: 'field',
+    smooth: 0.02,
+    reducers: ['field'],
+    when: (p) => p.walls === 1 && p.dim !== 3,
+    compute: (f) => vorticity(f),
   },
   {
     id: 'wakeVelocity',
@@ -347,6 +383,18 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     compute: (f) => f.modes!.data[0]! / f.scalars!.n,
     theory: () => 0,
     theoryLabel: '平衡时在 0 附近涨落；点“敲一下”后按声波的频率振荡',
+  },
+  {
+    id: 'lowK',
+    level: 'structure',
+    label: '最长波处的结构因子（瞬时值，噪声大）',
+    kind: 'scalar',
+    record: true,
+    reducers: ['modes', 'scalars'],
+    when: (p) => !p.walls,
+    // 沿 x 最长的那个波：单个模的 |ρ_k|²/N 服从指数分布，要靠时间平均。
+    // The longest wave along x: |ρ_k|²/N of a single mode is exponentially distributed, so it needs time averaging.
+    compute: (f) => (f.modes!.data[0]! ** 2 + f.modes!.data[1]! ** 2) / f.scalars!.n,
   },
   {
     id: 'structureFactor',
