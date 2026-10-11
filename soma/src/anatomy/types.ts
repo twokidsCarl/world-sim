@@ -12,6 +12,7 @@
 //   /anatomy/<body>/skinmaps.bin      territories painted on the skin, one byte per skin vertex
 //   /anatomy/<body>/rig.json          Rig          (optional) joints and how every part follows them
 //   /anatomy/<body>/rig.bin           per-vertex joint influences referenced by rig.json
+//   /anatomy/<body>/rig-report.json   fit residuals and validation numbers of the rig (not read by the UI)
 //   /anatomy/knowledge/names.json    Record<fmaId, NameEntry>      (optional, shared by bodies)
 //   /anatomy/knowledge/relations.json Relation[]                   (optional, shared by bodies)
 
@@ -212,9 +213,22 @@ export interface JointDof {
   axis: 0 | 1 | 2
   /** Movement at positive / negative angles, e.g. flexion / extension. */
   name: { zh: string; en: string }
-  /** Range of motion in radians relative to the rest pose (anatomical position). */
+  /**
+   * 活动范围，弧度，相对于静止姿势（即存储的网格所在的姿势，不一定是解剖学姿势）。
+   * Range of motion in radians relative to the rest pose (the pose the stored meshes are in,
+   * which is not necessarily the anatomical position).
+   */
   min: number
   max: number
+  /** 解剖学零位对应的角度 / The dof angle at the anatomical zero position. */
+  neutral?: number
+  /** false 表示该范围是估计值，没有出处 / false when the range is an estimate without a source. */
+  sourced?: boolean
+  /**
+   * 耦合：有效角度 = 自身角度 + ratio × 驱动关节的该自由度（如髌骨随膝关节）。
+   * Coupling: effective angle = own angle + ratio × the driver joint's dof (e.g. patella with the knee).
+   */
+  driver?: { joint: string; dof: number; ratio: number }
   source: { name: string; url: string; license: string }
 }
 
@@ -224,8 +238,24 @@ export interface Joint {
   parent: string | null
   /** Centre of rotation in the rest pose, metres, body frame. */
   center: Vec3
-  /** Unit axes of the joint frame in the rest pose (body frame). */
+  /**
+   * 节段远端在静止姿势下的位置；center → tail 给出节段轴和长度，体型缩放沿这条轴进行。
+   * Distal end of the segment in the rest pose; center → tail gives the segment axis and length
+   * along which body-shape scaling acts.
+   */
+  tail?: Vec3
+  /**
+   * 静止姿势下关节坐标系的单位轴（身体坐标系）。两两正交，但不保证右手系：
+   * 符号的选取使同名运动在左右两侧都为正。
+   * Unit axes of the joint frame in the rest pose (body frame). Orthonormal but not necessarily
+   * right-handed: signs are chosen so that the named movement is positive on both sides.
+   */
   axes: [Vec3, Vec3, Vec3]
+  /**
+   * 关节的旋转 = 按 dofs 顺序、绕静止姿势下的轴的各旋转之积，第一个自由度固定在近端。
+   * The joint rotation is the product of rotations about the rest-pose axes in `dofs` order,
+   * the first dof being fixed to the proximal segment.
+   */
   dofs: JointDof[]
   /** How the centre and axes were obtained, for display. */
   basis: { zh: string; en: string }
@@ -241,7 +271,19 @@ export interface MuscleLine {
   /** Rest-pose end points, metres, and the joints they move with. */
   origin: { point: Vec3; joint: string }
   insertion: { point: Vec3; joint: string }
+  /**
+   * 横截面缩放 = (静止长度 / 当前长度)^(gain / 2)；缺省为 1。按肌肉标定。
+   * Cross-section scale = (restLength / length)^(gain / 2); defaults to 1. Calibrated per muscle.
+   */
+  gain?: number
 }
+
+/**
+ * 体型缩放：每个关节的节段沿轴向和横截面方向的缩放；子节段被带到新位置，但自身不缩放。
+ * Body-shape scaling: per joint, scale of its segment along the axis and in cross-section;
+ * child segments are carried to their new position but are not scaled themselves.
+ */
+export type JointScales = Record<string, { along?: number; across?: number }>
 
 export interface RigBinding {
   part: string

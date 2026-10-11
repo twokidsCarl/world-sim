@@ -1,0 +1,274 @@
+{
+  "_doc": {
+    "zh": "各类组织如何跟随骨架。defaults 按组织类型给出默认方法；rules 按部件英文名（正则）覆盖，自上而下取第一条匹配的。method：rigid = 整个部件跟随权重最大的一个关节；field = 按体内距离场逐顶点取权重；attach = 两端（或多处）附着在骨上，沿途只跟随附着骨之间那条关节链上的骨（肌肉、肌腱、韧带）；centreline = 先在神经中心线上取权重，再传给管壁顶点。beta 是过渡带相对宽度，smooth 是沿网格平滑权重的迭代次数，allow 是允许的关节 id（正则）。 attachmentExcludes：Z-Anatomy 附着斑块中落在邻近骨上的错误位置（按肌肉名和骨名的子串匹配），不用作附着。 hingeBlend：在这些关节中心 radius（米）以内，按绕屈伸轴的方位角而不是按距离决定跟随近端还是远端（见 tools/rig/bind.ts 的 HingeBlend）。deny：部件不得附着或跟随的关节 id（正则）。 externalWeights：自带外部蒙皮权重的部件（见 tools/rig/external.ts）。",
+    "en": "How each kind of tissue follows the skeleton. `defaults` gives the method per tissue; `rules` override it by the part's English name (regular expression), first match from the top wins. method: rigid = the whole part follows its single heaviest joint; field = per-vertex weights from the in-body distance field; attach = attached to bone at its ends (or at several sites) and following only the bones on the chain of joints between its attachments (muscles, tendons, ligaments); centreline = weights taken on the nerve's centreline and handed to the tube vertices. `beta` is the relative width of the blend zone, `smooth` the number of smoothing passes of the weights over the mesh, `allow` a regular expression of permitted joint ids. `attachmentExcludes`: Z-Anatomy attachment patches that landed on a neighbouring bone (matched by substrings of the muscle and bone names); they are not used as attachments. `hingeBlend`: within `radius` (metres) of these joints' centres, whether tissue follows the proximal or the distal side is decided by its angular position about the flexion axis instead of by distance (see HingeBlend in tools/rig/bind.ts). `deny`: joint ids (regular expression) a part must neither attach to nor follow. `externalWeights`: parts that come with skin weights from elsewhere (see tools/rig/external.ts)."
+  },
+  "defaults": {
+    "bone": {
+      "method": "rigid"
+    },
+    "tooth": {
+      "method": "rigid"
+    },
+    "muscle": {
+      "method": "attach",
+      "beta": 0.5,
+      "smooth": 3
+    },
+    "tendon": {
+      "method": "attach",
+      "beta": 0.5,
+      "smooth": 3
+    },
+    "ligament": {
+      "method": "attach",
+      "beta": 0.5,
+      "smooth": 2
+    },
+    "cartilage": {
+      "method": "field",
+      "beta": 0.5,
+      "smooth": 2
+    },
+    "fascia": {
+      "method": "field",
+      "beta": 0.55,
+      "smooth": 6
+    },
+    "skin": {
+      "method": "field",
+      "beta": 0.4,
+      "smooth": 8
+    },
+    "fat": {
+      "method": "field",
+      "beta": 0.4,
+      "smooth": 8
+    },
+    "artery": {
+      "method": "field",
+      "beta": 0.6,
+      "smooth": 12
+    },
+    "vein": {
+      "method": "field",
+      "beta": 0.6,
+      "smooth": 12
+    },
+    "nerve": {
+      "method": "centreline",
+      "beta": 0.6,
+      "smooth": 12
+    },
+    "heart": {
+      "method": "field",
+      "beta": 1.0,
+      "smooth": 10
+    },
+    "brain": {
+      "method": "field",
+      "beta": 1.0,
+      "smooth": 4
+    },
+    "organ": {
+      "method": "field",
+      "beta": 1.0,
+      "smooth": 10
+    },
+    "gland": {
+      "method": "field",
+      "beta": 1.0,
+      "smooth": 10
+    },
+    "space": {
+      "method": "field",
+      "beta": 1.0,
+      "smooth": 10
+    },
+    "other": {
+      "method": "field",
+      "beta": 1.0,
+      "smooth": 10
+    }
+  },
+  "rules": [
+    {
+      "match": "intercostal|subcostal|levator(es)? costarum|transversus thoracis|serratus posterior|iliocostalis|longissimus|spinalis|semispinalis|multifid|rotator(es)? |erector spinae|external oblique|intertransvers|interspinal",
+      "deny": "^(sc|ac|gh)_[LR]$",
+      "why": {
+        "zh": "肩胛骨贴着胸壁滑动：胸壁和背部深层的肌肉虽然与肩胛骨相邻，但不附着于它，也不随它运动。",
+        "en": "The scapula glides over the chest wall: the muscles of the chest wall and the deep back lie next to it but neither attach to it nor move with it."
+      }
+    },
+    {
+      "match": "^(Manubrium|Body of sternum|Xiphoid process)$",
+      "method": "field",
+      "allow": "^rib[1-7]_[LR]$",
+      "beta": 1.0,
+      "smooth": 6,
+      "why": {
+        "zh": "胸骨没有自己的关节：它骑在第 1–7 肋上，肋上提时被抬起，脊柱弯曲时随胸廓整体弯曲。",
+        "en": "The sternum has no joint of its own: it rides on ribs 1–7, is lifted when they rise and bends with the rib cage when the spine bends."
+      }
+    },
+    {
+      "match": "costal cartilage",
+      "method": "field",
+      "allow": "^rib([1-9]|10)_[LR]$",
+      "beta": 1.0,
+      "smooth": 4,
+      "why": {
+        "zh": "肋软骨连接肋与胸骨，只跟随肋。",
+        "en": "Costal cartilages join ribs and sternum and follow the ribs only."
+      }
+    },
+    {
+      "match": "^Hyoid bone$",
+      "method": "rigid",
+      "allow": "^C3$",
+      "why": {
+        "zh": "舌骨悬吊在肌肉上，没有关节；这里让它随第 3 颈椎运动。",
+        "en": "The hyoid hangs in muscles and has no joint; here it moves with the third cervical vertebra."
+      }
+    },
+    {
+      "match": "menisc",
+      "method": "rigid",
+      "allow": "^knee_[LR]$",
+      "why": {
+        "zh": "半月板附着于胫骨平台，随胫骨运动。",
+        "en": "The menisci are fixed to the tibial plateau and move with the tibia."
+      }
+    },
+    {
+      "match": "Interosseous membrane of (left|right) forearm",
+      "method": "field",
+      "allow": "^(elbow|radioulnar)_[LR]$",
+      "beta": 1.5,
+      "smooth": 4,
+      "why": {
+        "zh": "前臂骨间膜张在尺、桡骨之间。",
+        "en": "The interosseous membrane of the forearm spans ulna and radius."
+      }
+    },
+    {
+      "match": "^(Hair of head|Eyebrow|External ear)$",
+      "method": "rigid",
+      "allow": "^skull$",
+      "why": {
+        "zh": "头部附属结构随颅骨运动。",
+        "en": "Appendages of the head move with the skull."
+      }
+    }
+  ],
+  "attachmentExcludes": [
+    {
+      "muscle": "extensor carpi ulnaris",
+      "bone": "triquetr",
+      "why": {
+        "zh": "止于第五掌骨底；斑块被匹配到了邻近的三角骨。",
+        "en": "Inserts on the base of the fifth metacarpal; the patch was matched to the neighbouring triquetrum."
+      }
+    },
+    {
+      "muscle": "extensor hallucis longus",
+      "bone": "proximal phalanx",
+      "why": {
+        "zh": "止于𧿹趾远节趾骨；斑块被匹配到了近节趾骨。",
+        "en": "Inserts on the distal phalanx of the great toe; the patch was matched to the proximal phalanx."
+      }
+    },
+    {
+      "muscle": "latissimus dorsi",
+      "bone": "scapula",
+      "why": {
+        "zh": "止于肱骨结节间沟；肩胛骨上的斑块不作为附着。",
+        "en": "Inserts on the humerus (intertubercular sulcus); the patch on the scapula is not used as an attachment."
+      }
+    },
+    {
+      "muscle": "adductor pollicis",
+      "bone": "capitate",
+      "why": {
+        "zh": "止于拇指近节指骨；头状骨上的斑块不作为止点。",
+        "en": "Inserts on the proximal phalanx of the thumb; the patch on the capitate is not used."
+      }
+    },
+    {
+      "muscle": "lateral pterygoid",
+      "bone": "maxilla",
+      "why": {
+        "zh": "起于蝶骨；斑块被匹配到了上颌骨。",
+        "en": "Arises from the sphenoid; the patch was matched to the maxilla."
+      }
+    },
+    {
+      "muscle": "lateral pterygoid",
+      "bone": "palatine",
+      "why": {
+        "zh": "起于蝶骨；斑块被匹配到了腭骨。",
+        "en": "Arises from the sphenoid; the patch was matched to the palatine bone."
+      }
+    },
+    {
+      "muscle": "nasalis",
+      "bone": "nasal bone",
+      "why": {
+        "zh": "起于上颌骨；斑块被匹配到了鼻骨。",
+        "en": "Arises from the maxilla; the patch was matched to the nasal bone."
+      }
+    },
+    {
+      "muscle": "procerus",
+      "bone": "frontal",
+      "why": {
+        "zh": "起于鼻骨；斑块被匹配到了额骨。",
+        "en": "Arises from the nasal bone; the patch was matched to the frontal bone."
+      }
+    }
+  ],
+  "hingeBlend": [
+    {
+      "match": "^knee_[LR]$",
+      "radius": 0.11,
+      "theta0": 35
+    },
+    {
+      "match": "^elbow_[LR]$",
+      "radius": 0.075,
+      "theta0": 35
+    },
+    {
+      "match": "^hip_[LR]$",
+      "radius": 0.13,
+      "theta0": 40,
+      "proximal": "straight"
+    },
+    {
+      "match": "^ankle_[LR]$",
+      "radius": 0.06,
+      "theta0": 40
+    },
+    {
+      "match": "^(mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$",
+      "radius": 0.02,
+      "theta0": 35
+    },
+    {
+      "match": "^(mtp[1-5]|tip1|tpip[2-5]|tdip[2-5])_[LR]$",
+      "radius": 0.016,
+      "theta0": 35
+    }
+  ],
+  "externalWeights": [
+    {
+      "tissue": "skin",
+      "body": "male",
+      "dir": "data/raw/bodyshape/out/male-skin",
+      "why": {
+        "zh": "原男性皮肤把上臂和胸壁连在一起，任何权重都摆不好。换用 MHR 拓扑的单层皮肤后，直接采用 MHR 学到的蒙皮权重（关节按 joints.json 的 mapping 对应到本骨架）。只有当皮肤部件的顶点数与该目录的权重一致时才生效；否则仍按距离场绑定。",
+        "en": "The original male skin joins the upper arm to the chest wall and cannot be posed well with any weights. Once the single-walled skin in MHR topology replaces it, MHR's learned skin weights are used directly (joints mapped onto this rig by `mapping` in joints.json). This takes effect only when the skin part has as many vertices as the weights in that directory; otherwise the skin is bound by the distance field as before."
+      }
+    }
+  ]
+}

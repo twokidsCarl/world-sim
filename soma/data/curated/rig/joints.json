@@ -1,0 +1,1873 @@
+{
+ "_doc": {
+  "zh": "soma 骨架的关节定义。tools/rig/joints.ts 按每条定义的 recipe（做法）去拟合所列骨的关节面，得到一个 Joint。sides: true 会展开 {s}=L|R、{Side}=Left|Right、{side}=left|right、{zh}=左|右；for 再展开其它变量。bones 是随该关节刚性运动的部件（按英文名）。tail 是该关节所带动节段的远端（另一个关节的中心，或 recipe 算出的解剖标志）。frame.keep：axis = 保持拟合/指定的轴 0 不变，长轴取与它垂直的方向（铰链）；long = 以节段长轴为轴 2，轴 0 取与它垂直的方向。自由度的 sign: [参考点, 方向] 规定轴的指向：绕该轴作小的正向转动时，参考点（tail | front | up | down | lateral，相对关节中心）必须朝所给的身体方向移动。rom 是 rom.json 里的键。rest 说明如何在本模型上测出该自由度在静止姿势下的解剖学角度，以便把活动范围换算成相对静止姿势的角度。branch 标出所属的指（趾），仅供参考。",
+  "en": "Joint definitions of the soma rig. tools/rig/joints.ts turns each entry into a Joint by fitting the articular surfaces of the named bones as its `recipe` says. `sides: true` expands {s}=L|R, {Side}=Left|Right, {side}=left|right, {zh}=左|右; `for` expands further variables. `bones` are the parts (by English name) that move rigidly with the joint. `tail` is the distal end of the segment the joint moves (another joint's centre, or a landmark computed by the recipe). `frame.keep`: 'axis' keeps the fitted or declared axis 0 exact and makes the long axis perpendicular to it (hinges); 'long' keeps the segment axis as axis 2 and squares axis 0 to it. A dof's `sign: [ref, direction]` fixes the sense of its axis: a small positive rotation must move the reference point (tail | front | up | down | lateral, relative to the centre) in that body direction. `rom` is a key of rom.json. `rest` says how the dof's anatomical angle in the rest pose is measured on this body, so that ranges can be expressed about the model's own rest pose. `branch` names the digit a joint belongs to, for information only."
+ },
+ "joints": [
+  {
+   "id": "pelvis",
+   "name": {
+    "en": "Pelvis (root)",
+    "zh": "骨盆（根）"
+   },
+   "parent": null,
+   "bones": [
+    "Sacrum"
+   ],
+   "recipe": "pelvis",
+   "args": {
+    "femurL": "Left femur",
+    "femurR": "Right femur",
+    "hipL": "Left hip bone",
+    "hipR": "Right hip bone"
+   },
+   "tail": {
+    "joint": "L5"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "long"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "anterior tilt / posterior tilt",
+      "zh": "前倾 / 后倾"
+     },
+     "rom": "pelvis.tilt",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "list to the left / to the right",
+      "zh": "左侧倾 / 右侧倾"
+     },
+     "rom": "pelvis.list",
+     "sign": [
+      "tail",
+      "left"
+     ]
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "rotation to the left / to the right",
+      "zh": "左旋 / 右旋"
+     },
+     "rom": "pelvis.rotation",
+     "sign": [
+      "front",
+      "left"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "si_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} sacroiliac joint",
+    "zh": "{zh}骶髂关节"
+   },
+   "parent": "pelvis",
+   "bones": [
+    "{Side} hip bone"
+   ],
+   "recipe": "contact",
+   "args": {
+    "a": "{Side} hip bone",
+    "b": "Sacrum",
+    "margin": 0.003
+   },
+   "tail": {
+    "joint": "hip_{s}"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "long"
+   },
+   "dofs": []
+  },
+  {
+   "id": "{id}",
+   "name": {
+    "en": "{en}",
+    "zh": "{zhn}"
+   },
+   "parent": "{parent}",
+   "for": [
+    {
+     "id": "L5",
+     "parent": "pelvis",
+     "bone": "Fifth lumbar vertebra",
+     "below": "Sacrum",
+     "en": "L5–S1 (lumbosacral joint)",
+     "zhn": "L5–S1（腰骶关节）",
+     "rom": "L5-S1",
+     "next": "L4"
+    },
+    {
+     "id": "L4",
+     "parent": "L5",
+     "bone": "Fourth lumbar vertebra",
+     "below": "Fifth lumbar vertebra",
+     "en": "L4–L5",
+     "zhn": "L4–L5",
+     "rom": "L4-L5",
+     "next": "L3"
+    },
+    {
+     "id": "L3",
+     "parent": "L4",
+     "bone": "Third lumbar vertebra",
+     "below": "Fourth lumbar vertebra",
+     "en": "L3–L4",
+     "zhn": "L3–L4",
+     "rom": "L3-L4",
+     "next": "L2"
+    },
+    {
+     "id": "L2",
+     "parent": "L3",
+     "bone": "Second lumbar vertebra",
+     "below": "Third lumbar vertebra",
+     "en": "L2–L3",
+     "zhn": "L2–L3",
+     "rom": "L2-L3",
+     "next": "L1"
+    },
+    {
+     "id": "L1",
+     "parent": "L2",
+     "bone": "First lumbar vertebra",
+     "below": "Second lumbar vertebra",
+     "en": "L1–L2",
+     "zhn": "L1–L2",
+     "rom": "L1-L2",
+     "next": "T12"
+    },
+    {
+     "id": "T12",
+     "parent": "L1",
+     "bone": "Twelfth thoracic vertebra",
+     "below": "First lumbar vertebra",
+     "en": "T12–L1",
+     "zhn": "T12–L1",
+     "rom": "T12-L1",
+     "next": "T11"
+    },
+    {
+     "id": "T11",
+     "parent": "T12",
+     "bone": "Eleventh thoracic vertebra",
+     "below": "Twelfth thoracic vertebra",
+     "en": "T11–T12",
+     "zhn": "T11–T12",
+     "rom": "T11-T12",
+     "next": "T10"
+    },
+    {
+     "id": "T10",
+     "parent": "T11",
+     "bone": "Tenth thoracic vertebra",
+     "below": "Eleventh thoracic vertebra",
+     "en": "T10–T11",
+     "zhn": "T10–T11",
+     "rom": "T10-T11",
+     "next": "T9"
+    },
+    {
+     "id": "T9",
+     "parent": "T10",
+     "bone": "Ninth thoracic vertebra",
+     "below": "Tenth thoracic vertebra",
+     "en": "T9–T10",
+     "zhn": "T9–T10",
+     "rom": "T9-T10",
+     "next": "T8"
+    },
+    {
+     "id": "T8",
+     "parent": "T9",
+     "bone": "Eighth thoracic vertebra",
+     "below": "Ninth thoracic vertebra",
+     "en": "T8–T9",
+     "zhn": "T8–T9",
+     "rom": "T8-T9",
+     "next": "T7"
+    },
+    {
+     "id": "T7",
+     "parent": "T8",
+     "bone": "Seventh thoracic vertebra",
+     "below": "Eighth thoracic vertebra",
+     "en": "T7–T8",
+     "zhn": "T7–T8",
+     "rom": "T7-T8",
+     "next": "T6"
+    },
+    {
+     "id": "T6",
+     "parent": "T7",
+     "bone": "Sixth thoracic vertebra",
+     "below": "Seventh thoracic vertebra",
+     "en": "T6–T7",
+     "zhn": "T6–T7",
+     "rom": "T6-T7",
+     "next": "T5"
+    },
+    {
+     "id": "T5",
+     "parent": "T6",
+     "bone": "Fifth thoracic vertebra",
+     "below": "Sixth thoracic vertebra",
+     "en": "T5–T6",
+     "zhn": "T5–T6",
+     "rom": "T5-T6",
+     "next": "T4"
+    },
+    {
+     "id": "T4",
+     "parent": "T5",
+     "bone": "Fourth thoracic vertebra",
+     "below": "Fifth thoracic vertebra",
+     "en": "T4–T5",
+     "zhn": "T4–T5",
+     "rom": "T4-T5",
+     "next": "T3"
+    },
+    {
+     "id": "T3",
+     "parent": "T4",
+     "bone": "Third thoracic vertebra",
+     "below": "Fourth thoracic vertebra",
+     "en": "T3–T4",
+     "zhn": "T3–T4",
+     "rom": "T3-T4",
+     "next": "T2"
+    },
+    {
+     "id": "T2",
+     "parent": "T3",
+     "bone": "Second thoracic vertebra",
+     "below": "Third thoracic vertebra",
+     "en": "T2–T3",
+     "zhn": "T2–T3",
+     "rom": "T2-T3",
+     "next": "T1"
+    },
+    {
+     "id": "T1",
+     "parent": "T2",
+     "bone": "First thoracic vertebra",
+     "below": "Second thoracic vertebra",
+     "en": "T1–T2",
+     "zhn": "T1–T2",
+     "rom": "T1-T2",
+     "next": "C7"
+    },
+    {
+     "id": "C7",
+     "parent": "T1",
+     "bone": "Seventh cervical vertebra",
+     "below": "First thoracic vertebra",
+     "en": "C7–T1",
+     "zhn": "C7–T1",
+     "rom": "C7-T1",
+     "next": "C6"
+    },
+    {
+     "id": "C6",
+     "parent": "C7",
+     "bone": "Sixth cervical vertebra",
+     "below": "Seventh cervical vertebra",
+     "en": "C6–C7",
+     "zhn": "C6–C7",
+     "rom": "C6-C7",
+     "next": "C5"
+    },
+    {
+     "id": "C5",
+     "parent": "C6",
+     "bone": "Fifth cervical vertebra",
+     "below": "Sixth cervical vertebra",
+     "en": "C5–C6",
+     "zhn": "C5–C6",
+     "rom": "C5-C6",
+     "next": "C4"
+    },
+    {
+     "id": "C4",
+     "parent": "C5",
+     "bone": "Fourth cervical vertebra",
+     "below": "Fifth cervical vertebra",
+     "en": "C4–C5",
+     "zhn": "C4–C5",
+     "rom": "C4-C5",
+     "next": "C3"
+    },
+    {
+     "id": "C3",
+     "parent": "C4",
+     "bone": "Third cervical vertebra",
+     "below": "Fourth cervical vertebra",
+     "en": "C3–C4",
+     "zhn": "C3–C4",
+     "rom": "C3-C4",
+     "next": "C2"
+    },
+    {
+     "id": "C2",
+     "parent": "C3",
+     "bone": "Axis",
+     "below": "Third cervical vertebra",
+     "en": "C2–C3",
+     "zhn": "C2–C3",
+     "rom": "C2-C3",
+     "next": "C1"
+    }
+   ],
+   "bones": [
+    "{bone}"
+   ],
+   "recipe": "disc",
+   "args": {
+    "upper": "{bone}",
+    "lower": "{below}"
+   },
+   "tail": {
+    "joint": "{next}"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "long"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "前屈 / 后伸"
+     },
+     "rom": "spine.{rom}.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "lateral bending to the left / to the right",
+      "zh": "左侧屈 / 右侧屈"
+     },
+     "rom": "spine.{rom}.lateral",
+     "sign": [
+      "tail",
+      "left"
+     ]
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "rotation to the left / to the right",
+      "zh": "左旋 / 右旋"
+     },
+     "rom": "spine.{rom}.rotation",
+     "sign": [
+      "front",
+      "left"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C1",
+   "name": {
+    "en": "C1–C2 (atlanto-axial joint)",
+    "zh": "C1–C2（寰枢关节）"
+   },
+   "parent": "C2",
+   "bones": [
+    "Atlas"
+   ],
+   "recipe": "dens",
+   "args": {
+    "atlas": "Atlas",
+    "axis": "Axis"
+   },
+   "tail": {
+    "joint": "skull"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "axis2",
+    "axis2": "y"
+   },
+   "dofs": [
+    {
+     "axis": 2,
+     "name": {
+      "en": "rotation to the left / to the right",
+      "zh": "左旋 / 右旋"
+     },
+     "rom": "spine.C1-C2.rotation",
+     "sign": [
+      "front",
+      "left"
+     ]
+    },
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "前屈 / 后伸"
+     },
+     "rom": "spine.C1-C2.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "lateral bending to the left / to the right",
+      "zh": "左侧屈 / 右侧屈"
+     },
+     "rom": "spine.C1-C2.lateral",
+     "sign": [
+      "tail",
+      "left"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "skull",
+   "name": {
+    "en": "C0–C1 (atlanto-occipital joint)",
+    "zh": "C0–C1（寰枕关节）"
+   },
+   "parent": "C1",
+   "bones": [
+    "Occipital bone",
+    "Frontal bone",
+    "Ethmoid",
+    "Sphenoid bone",
+    "Vomer",
+    "Left parietal bone",
+    "Right parietal bone",
+    "Left temporal bone",
+    "Right temporal bone",
+    "Left maxilla",
+    "Right maxilla",
+    "Left zygomatic bone",
+    "Right zygomatic bone",
+    "Left nasal bone",
+    "Right nasal bone",
+    "Left lacrimal bone",
+    "Right lacrimal bone",
+    "Left palatine bone",
+    "Right palatine bone",
+    "Left inferior nasal concha",
+    "Right inferior nasal concha"
+   ],
+   "recipe": "occipital",
+   "args": {
+    "occipital": "Occipital bone",
+    "atlas": "Atlas"
+   },
+   "tail": {
+    "landmark": "vertex"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension (nodding)",
+      "zh": "前屈 / 后伸（点头）"
+     },
+     "rom": "spine.C0-C1.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "lateral bending to the left / to the right",
+      "zh": "左侧屈 / 右侧屈"
+     },
+     "rom": "spine.C0-C1.lateral",
+     "sign": [
+      "tail",
+      "left"
+     ]
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "rotation to the left / to the right",
+      "zh": "左旋 / 右旋"
+     },
+     "rom": "spine.C0-C1.rotation",
+     "sign": [
+      "front",
+      "left"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tmj",
+   "name": {
+    "en": "Temporomandibular joints",
+    "zh": "颞下颌关节"
+   },
+   "parent": "skull",
+   "bones": [
+    "Mandible"
+   ],
+   "recipe": "tmj",
+   "args": {
+    "mandible": "Mandible",
+    "temporalL": "Left temporal bone",
+    "temporalR": "Right temporal bone"
+   },
+   "tail": {
+    "landmark": "chin"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "mouth opening / closing",
+      "zh": "张口 / 闭口"
+     },
+     "rom": "tmj.opening",
+     "sign": [
+      "tail",
+      "down"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "lateral excursion to the left / to the right",
+      "zh": "左侧方运动 / 右侧方运动"
+     },
+     "rom": "tmj.lateral",
+     "sign": [
+      "tail",
+      "left"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "rib{n}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} costovertebral joints of rib {n}",
+    "zh": "{zh}第{n}肋肋椎关节"
+   },
+   "parent": "T{n}",
+   "for": [
+    {
+     "n": "1",
+     "ord": "first",
+     "vert": "First thoracic vertebra"
+    },
+    {
+     "n": "2",
+     "ord": "second",
+     "vert": "Second thoracic vertebra"
+    },
+    {
+     "n": "3",
+     "ord": "third",
+     "vert": "Third thoracic vertebra"
+    },
+    {
+     "n": "4",
+     "ord": "fourth",
+     "vert": "Fourth thoracic vertebra"
+    },
+    {
+     "n": "5",
+     "ord": "fifth",
+     "vert": "Fifth thoracic vertebra"
+    },
+    {
+     "n": "6",
+     "ord": "sixth",
+     "vert": "Sixth thoracic vertebra"
+    },
+    {
+     "n": "7",
+     "ord": "seventh",
+     "vert": "Seventh thoracic vertebra"
+    },
+    {
+     "n": "8",
+     "ord": "eighth",
+     "vert": "Eighth thoracic vertebra"
+    },
+    {
+     "n": "9",
+     "ord": "ninth",
+     "vert": "Ninth thoracic vertebra"
+    },
+    {
+     "n": "10",
+     "ord": "tenth",
+     "vert": "Tenth thoracic vertebra"
+    },
+    {
+     "n": "11",
+     "ord": "eleventh",
+     "vert": "Eleventh thoracic vertebra"
+    },
+    {
+     "n": "12",
+     "ord": "twelfth",
+     "vert": "Twelfth thoracic vertebra"
+    }
+   ],
+   "bones": [
+    "{Side} {ord} rib"
+   ],
+   "recipe": "rib",
+   "args": {
+    "rib": "{Side} {ord} rib",
+    "vertebra": "{vert}"
+   },
+   "tail": {
+    "landmark": "anteriorEnd"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "elevation (inspiration) / depression (expiration)",
+      "zh": "上提（吸气） / 下降（呼气）"
+     },
+     "rom": "rib.{n}",
+     "sign": [
+      "tail",
+      "up"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sc_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} sternoclavicular joint",
+    "zh": "{zh}胸锁关节"
+   },
+   "parent": "T1",
+   "bones": [
+    "{Side} clavicle"
+   ],
+   "recipe": "contact",
+   "args": {
+    "a": "{Side} clavicle",
+    "b": "Manubrium",
+    "margin": 0.003
+   },
+   "tail": {
+    "joint": "ac_{s}"
+   },
+   "frame": {
+    "axis0": "z",
+    "keep": "long"
+   },
+   "dofs": [
+    {
+     "axis": 1,
+     "name": {
+      "en": "protraction / retraction",
+      "zh": "前伸 / 后缩"
+     },
+     "rom": "sc.protraction",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 0,
+     "name": {
+      "en": "elevation / depression",
+      "zh": "上提 / 下降"
+     },
+     "rom": "sc.elevation",
+     "sign": [
+      "tail",
+      "up"
+     ]
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "posterior rotation / anterior rotation",
+      "zh": "后旋 / 前旋"
+     },
+     "rom": "sc.rotation",
+     "sign": [
+      "up",
+      "posterior"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ac_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} acromioclavicular joint (scapula on thorax)",
+    "zh": "{zh}肩锁关节（肩胛骨相对胸廓）"
+   },
+   "parent": "sc_{s}",
+   "bones": [
+    "{Side} scapula"
+   ],
+   "recipe": "scapula",
+   "args": {
+    "clavicle": "{Side} clavicle",
+    "scapula": "{Side} scapula",
+    "margin": 0.003
+   },
+   "tail": {
+    "joint": "gh_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "frame"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "upward rotation / downward rotation",
+      "zh": "上回旋 / 下回旋"
+     },
+     "rom": "ac.upwardRotation",
+     "sign": [
+      "down",
+      "lateral"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "internal rotation (protraction) / external rotation",
+      "zh": "内旋（前伸） / 外旋"
+     },
+     "rom": "ac.internalRotation",
+     "sign": [
+      "lateral",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "posterior tilt / anterior tilt",
+      "zh": "后倾 / 前倾"
+     },
+     "rom": "ac.posteriorTilt",
+     "sign": [
+      "up",
+      "posterior"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gh_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} glenohumeral joint",
+    "zh": "{zh}盂肱关节"
+   },
+   "parent": "ac_{s}",
+   "bones": [
+    "{Side} humerus"
+   ],
+   "recipe": "ball",
+   "args": {
+    "head": "{Side} humerus",
+    "socket": "{Side} scapula",
+    "d": 0.01
+   },
+   "tail": {
+    "joint": "elbow_{s}"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "long"
+   },
+   "restProx": "down",
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "前屈 / 后伸"
+     },
+     "rom": "shoulder.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ],
+     "rest": "bend"
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "abduction / adduction",
+      "zh": "外展 / 内收"
+     },
+     "rom": "shoulder.abduction",
+     "sign": [
+      "tail",
+      "lateral"
+     ],
+     "rest": "bend"
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "internal rotation / external rotation",
+      "zh": "内旋 / 外旋"
+     },
+     "rom": "shoulder.rotation",
+     "sign": [
+      "front",
+      "medial"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "elbow_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} elbow (humero-ulnar joint)",
+    "zh": "{zh}肘关节（肱尺关节）"
+   },
+   "parent": "gh_{s}",
+   "bones": [
+    "{Side} ulna"
+   ],
+   "recipe": "elbow",
+   "args": {
+    "humerus": "{Side} humerus",
+    "ulna": "{Side} ulna",
+    "radius": "{Side} radius"
+   },
+   "tail": {
+    "landmark": "ulnarHead"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "elbow.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "radioulnar_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} radio-ulnar joints (forearm rotation)",
+    "zh": "{zh}桡尺关节（前臂旋转）"
+   },
+   "parent": "elbow_{s}",
+   "bones": [
+    "{Side} radius"
+   ],
+   "recipe": "pronation",
+   "args": {
+    "radius": "{Side} radius",
+    "ulna": "{Side} ulna",
+    "humerus": "{Side} humerus"
+   },
+   "tail": {
+    "joint": "wrist_{s}"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "axis2",
+    "axis2": "fit"
+   },
+   "dofs": [
+    {
+     "axis": 2,
+     "name": {
+      "en": "pronation / supination",
+      "zh": "旋前 / 旋后"
+     },
+     "rom": "forearm.pronation",
+     "sign": [
+      "front",
+      "medial"
+     ],
+     "rest": "forearm"
+    }
+   ]
+  },
+  {
+   "id": "wrist_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} wrist (radiocarpal and midcarpal joints, lumped)",
+    "zh": "{zh}腕关节（桡腕与腕中关节合并）"
+   },
+   "parent": "radioulnar_{s}",
+   "bones": [
+    "{Side} scaphoid",
+    "{Side} lunate",
+    "{Side} triquetral",
+    "{Side} pisiform",
+    "{Side} trapezium",
+    "{Side} trapezoid",
+    "{Side} capitate",
+    "{Side} hamate",
+    "{Side} second metacarpal bone",
+    "{Side} third metacarpal bone",
+    "{Side} fourth metacarpal bone",
+    "{Side} fifth metacarpal bone"
+   ],
+   "recipe": "wrist",
+   "args": {
+    "capitate": "{Side} capitate",
+    "lunate": "{Side} lunate",
+    "scaphoid": "{Side} scaphoid",
+    "radius": "{Side} radius",
+    "ulna": "{Side} ulna"
+   },
+   "tail": {
+    "joint": "mcp3_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "long"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "掌屈 / 背伸"
+     },
+     "rom": "wrist.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ],
+     "rest": "bend"
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "ulnar deviation / radial deviation",
+      "zh": "尺偏 / 桡偏"
+     },
+     "rom": "wrist.ulnarDeviation",
+     "sign": [
+      "tail",
+      "medial"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "cmc1_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} carpometacarpal joint of the thumb",
+    "zh": "{zh}拇指腕掌关节"
+   },
+   "parent": "wrist_{s}",
+   "branch": "thumb_{s}",
+   "bones": [
+    "{Side} first metacarpal bone"
+   ],
+   "recipe": "thumbBase",
+   "args": {
+    "metacarpal": "{Side} first metacarpal bone",
+    "trapezium": "{Side} trapezium",
+    "axisFrom": "mcp1_{s}"
+   },
+   "tail": {
+    "joint": "mcp1_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "long"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "thumb.cmc.flexion",
+     "sign": [
+      "tail",
+      "medial"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "palmar abduction / adduction",
+      "zh": "掌侧外展 / 内收"
+     },
+     "rom": "thumb.cmc.abduction",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mcp1_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} metacarpophalangeal joint of the thumb",
+    "zh": "{zh}拇指掌指关节"
+   },
+   "parent": "cmc1_{s}",
+   "branch": "thumb_{s}",
+   "bones": [
+    "Proximal phalanx of {side} thumb"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "{Side} first metacarpal bone",
+    "distal": "Proximal phalanx of {side} thumb",
+    "axisFrom": "ip1_{s}"
+   },
+   "tail": {
+    "joint": "ip1_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "thumb.mcp.flexion",
+     "sign": [
+      "tail",
+      "medial"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "ip1_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} interphalangeal joint of the thumb",
+    "zh": "{zh}拇指指间关节"
+   },
+   "parent": "mcp1_{s}",
+   "branch": "thumb_{s}",
+   "bones": [
+    "Distal phalanx of {side} thumb"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "Proximal phalanx of {side} thumb",
+    "distal": "Distal phalanx of {side} thumb",
+    "sweep": [
+     -10,
+     80
+    ]
+   },
+   "tail": {
+    "landmark": "tip"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "thumb.ip.flexion",
+     "sign": [
+      "tail",
+      "medial"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "mcp{d}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} metacarpophalangeal joint of the {finger}",
+    "zh": "{zh}{fzh}掌指关节"
+   },
+   "parent": "wrist_{s}",
+   "branch": "finger{d}_{s}",
+   "for": [
+    {
+     "d": "2",
+     "ord": "second",
+     "finger": "index finger",
+     "fzh": "示指"
+    },
+    {
+     "d": "3",
+     "ord": "third",
+     "finger": "middle finger",
+     "fzh": "中指"
+    },
+    {
+     "d": "4",
+     "ord": "fourth",
+     "finger": "ring finger",
+     "fzh": "环指"
+    },
+    {
+     "d": "5",
+     "ord": "fifth",
+     "finger": "little finger",
+     "fzh": "小指"
+    }
+   ],
+   "bones": [
+    "Proximal phalanx of {side} {finger}"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "{Side} {ord} metacarpal bone",
+    "distal": "Proximal phalanx of {side} {finger}",
+    "axisFrom": "pip{d}_{s}"
+   },
+   "tail": {
+    "joint": "pip{d}_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "finger.mcp.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ],
+     "rest": "bend"
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "ulnar deviation / radial deviation",
+      "zh": "尺偏 / 桡偏"
+     },
+     "rom": "finger.mcp.deviation",
+     "sign": [
+      "tail",
+      "medial"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "pip{d}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} proximal interphalangeal joint of the {finger}",
+    "zh": "{zh}{fzh}近侧指间关节"
+   },
+   "parent": "mcp{d}_{s}",
+   "branch": "finger{d}_{s}",
+   "for": [
+    {
+     "d": "2",
+     "finger": "index finger",
+     "fzh": "示指"
+    },
+    {
+     "d": "3",
+     "finger": "middle finger",
+     "fzh": "中指"
+    },
+    {
+     "d": "4",
+     "finger": "ring finger",
+     "fzh": "环指"
+    },
+    {
+     "d": "5",
+     "finger": "little finger",
+     "fzh": "小指"
+    }
+   ],
+   "bones": [
+    "Middle phalanx of {side} {finger}"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "Proximal phalanx of {side} {finger}",
+    "distal": "Middle phalanx of {side} {finger}",
+    "sweep": [
+     -10,
+     95
+    ]
+   },
+   "tail": {
+    "joint": "dip{d}_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "finger.pip.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "dip{d}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} distal interphalangeal joint of the {finger}",
+    "zh": "{zh}{fzh}远侧指间关节"
+   },
+   "parent": "pip{d}_{s}",
+   "branch": "finger{d}_{s}",
+   "for": [
+    {
+     "d": "2",
+     "finger": "index finger",
+     "fzh": "示指"
+    },
+    {
+     "d": "3",
+     "finger": "middle finger",
+     "fzh": "中指"
+    },
+    {
+     "d": "4",
+     "finger": "ring finger",
+     "fzh": "环指"
+    },
+    {
+     "d": "5",
+     "finger": "little finger",
+     "fzh": "小指"
+    }
+   ],
+   "bones": [
+    "Distal phalanx of {side} {finger}"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "Middle phalanx of {side} {finger}",
+    "distal": "Distal phalanx of {side} {finger}",
+    "sweep": [
+     -10,
+     70
+    ]
+   },
+   "tail": {
+    "landmark": "tip"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "finger.dip.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "hip_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} hip joint",
+    "zh": "{zh}髋关节"
+   },
+   "parent": "si_{s}",
+   "bones": [
+    "{Side} femur"
+   ],
+   "recipe": "ball",
+   "args": {
+    "head": "{Side} femur",
+    "socket": "{Side} hip bone",
+    "d": 0.01
+   },
+   "tail": {
+    "joint": "knee_{s}"
+   },
+   "frame": {
+    "axis0": "x",
+    "keep": "long"
+   },
+   "restProx": "down",
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "hip.flexion",
+     "sign": [
+      "tail",
+      "anterior"
+     ]
+    },
+    {
+     "axis": 1,
+     "name": {
+      "en": "abduction / adduction",
+      "zh": "外展 / 内收"
+     },
+     "rom": "hip.abduction",
+     "sign": [
+      "tail",
+      "lateral"
+     ]
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "internal rotation / external rotation",
+      "zh": "内旋 / 外旋"
+     },
+     "rom": "hip.rotation",
+     "sign": [
+      "front",
+      "medial"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "knee_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} knee (tibiofemoral joint)",
+    "zh": "{zh}膝关节（胫股关节）"
+   },
+   "parent": "hip_{s}",
+   "bones": [
+    "{Side} tibia",
+    "{Side} fibula"
+   ],
+   "recipe": "condyles",
+   "args": {
+    "femur": "{Side} femur",
+    "tibia": "{Side} tibia"
+   },
+   "tail": {
+    "joint": "ankle_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "屈 / 伸"
+     },
+     "rom": "knee.flexion",
+     "sign": [
+      "tail",
+      "posterior"
+     ],
+     "rest": "bend"
+    },
+    {
+     "axis": 2,
+     "name": {
+      "en": "internal rotation / external rotation of the tibia (available in flexion)",
+      "zh": "胫骨内旋 / 外旋（屈膝时才有）"
+     },
+     "rom": "knee.rotation",
+     "sign": [
+      "front",
+      "medial"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "patella_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} patellofemoral joint",
+    "zh": "{zh}髌股关节"
+   },
+   "parent": "hip_{s}",
+   "bones": [
+    "{Side} patella"
+   ],
+   "recipe": "patella",
+   "args": {
+    "knee": "knee_{s}",
+    "patella": "{Side} patella",
+    "tibia": "{Side} tibia",
+    "femur": "{Side} femur"
+   },
+   "tail": {
+    "landmark": "apex"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "patellar flexion / extension (follows the knee)",
+      "zh": "髌骨屈 / 伸（随膝关节）"
+     },
+     "rom": "patella.flexion",
+     "sign": [
+      "tail",
+      "posterior"
+     ],
+     "driver": {
+      "joint": "knee_{s}",
+      "dof": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ankle_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} ankle (talocrural joint)",
+    "zh": "{zh}踝关节（距小腿关节）"
+   },
+   "parent": "knee_{s}",
+   "bones": [
+    "{Side} talus"
+   ],
+   "recipe": "malleolar",
+   "args": {
+    "tibia": "{Side} tibia",
+    "fibula": "{Side} fibula",
+    "talus": "{Side} talus",
+    "foot": "{Side} second metatarsal bone"
+   },
+   "tail": {
+    "joint": "mtp2_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "restNeutral": 90,
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "dorsiflexion / plantar flexion",
+      "zh": "背屈 / 跖屈"
+     },
+     "rom": "ankle.dorsiflexion",
+     "sign": [
+      "tail",
+      "up"
+     ],
+     "rest": "foot"
+    }
+   ]
+  },
+  {
+   "id": "subtalar_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} subtalar joint (with the rest of the foot)",
+    "zh": "{zh}距下关节（带动足的其余部分）"
+   },
+   "parent": "ankle_{s}",
+   "bones": [
+    "{Side} calcaneus",
+    "Navicular bone of {side} foot",
+    "{Side} cuboid bone",
+    "{Side} medial cuneiform bone",
+    "{Side} intermediate cuneiform bone",
+    "{Side} lateral cuneiform bone",
+    "{Side} first metatarsal bone",
+    "{Side} second metatarsal bone",
+    "{Side} third metatarsal bone",
+    "{Side} fourth metatarsal bone",
+    "{Side} fifth metatarsal bone",
+    "Sesamoid bone of {side} foot"
+   ],
+   "recipe": "subtalar",
+   "args": {
+    "talus": "{Side} talus",
+    "calcaneus": "{Side} calcaneus",
+    "mt1": "{Side} first metatarsal bone",
+    "mt5": "{Side} fifth metatarsal bone"
+   },
+   "tail": {
+    "joint": "mtp2_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "inversion / eversion",
+      "zh": "内翻 / 外翻"
+     },
+     "rom": "subtalar.inversion",
+     "sign": [
+      "down",
+      "medial"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mtp{d}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} metatarsophalangeal joint of the {toe}",
+    "zh": "{zh}{tzh}跖趾关节"
+   },
+   "parent": "subtalar_{s}",
+   "branch": "toe{d}_{s}",
+   "for": [
+    {
+     "d": "1",
+     "ord": "first",
+     "toe": "big toe",
+     "tzh": "𧿹趾",
+     "next": "tip1",
+     "rk": "hallux"
+    },
+    {
+     "d": "2",
+     "ord": "second",
+     "toe": "second toe",
+     "tzh": "第二趾",
+     "next": "tpip2",
+     "rk": "toe"
+    },
+    {
+     "d": "3",
+     "ord": "third",
+     "toe": "third toe",
+     "tzh": "第三趾",
+     "next": "tpip3",
+     "rk": "toe"
+    },
+    {
+     "d": "4",
+     "ord": "fourth",
+     "toe": "fourth toe",
+     "tzh": "第四趾",
+     "next": "tpip4",
+     "rk": "toe"
+    },
+    {
+     "d": "5",
+     "ord": "fifth",
+     "toe": "little toe",
+     "tzh": "小趾",
+     "next": "tpip5",
+     "rk": "toe"
+    }
+   ],
+   "bones": [
+    "Proximal phalanx of {side} {toe}"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "{Side} {ord} metatarsal bone",
+    "distal": "Proximal phalanx of {side} {toe}",
+    "slab": "metatarsal"
+   },
+   "tail": {
+    "joint": "{next}_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "extension (dorsiflexion) / flexion",
+      "zh": "背伸 / 跖屈"
+     },
+     "rom": "{rk}.mtp.extension",
+     "sign": [
+      "tail",
+      "up"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "tip1_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} interphalangeal joint of the big toe",
+    "zh": "{zh}𧿹趾趾间关节"
+   },
+   "parent": "mtp1_{s}",
+   "branch": "toe1_{s}",
+   "bones": [
+    "Distal phalanx of {side} big toe"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "Proximal phalanx of {side} big toe",
+    "distal": "Distal phalanx of {side} big toe",
+    "slab": "metatarsal"
+   },
+   "tail": {
+    "landmark": "tip"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "跖屈 / 背伸"
+     },
+     "rom": "hallux.ip.flexion",
+     "sign": [
+      "tail",
+      "down"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "tpip{d}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} proximal interphalangeal joint of the {toe}",
+    "zh": "{zh}{tzh}近侧趾间关节"
+   },
+   "parent": "mtp{d}_{s}",
+   "branch": "toe{d}_{s}",
+   "for": [
+    {
+     "d": "2",
+     "toe": "second toe",
+     "tzh": "第二趾"
+    },
+    {
+     "d": "3",
+     "toe": "third toe",
+     "tzh": "第三趾"
+    },
+    {
+     "d": "4",
+     "toe": "fourth toe",
+     "tzh": "第四趾"
+    },
+    {
+     "d": "5",
+     "toe": "little toe",
+     "tzh": "小趾"
+    }
+   ],
+   "bones": [
+    "Middle phalanx of {side} {toe}"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "Proximal phalanx of {side} {toe}",
+    "distal": "Middle phalanx of {side} {toe}",
+    "slab": "metatarsal"
+   },
+   "tail": {
+    "joint": "tdip{d}_{s}"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "跖屈 / 背伸"
+     },
+     "rom": "toe.pip.flexion",
+     "sign": [
+      "tail",
+      "down"
+     ],
+     "rest": "bend"
+    }
+   ]
+  },
+  {
+   "id": "tdip{d}_{s}",
+   "sides": true,
+   "name": {
+    "en": "{Side} distal interphalangeal joint of the {toe}",
+    "zh": "{zh}{tzh}远侧趾间关节"
+   },
+   "parent": "tpip{d}_{s}",
+   "branch": "toe{d}_{s}",
+   "for": [
+    {
+     "d": "2",
+     "toe": "second toe",
+     "tzh": "第二趾"
+    },
+    {
+     "d": "3",
+     "toe": "third toe",
+     "tzh": "第三趾"
+    },
+    {
+     "d": "4",
+     "toe": "fourth toe",
+     "tzh": "第四趾"
+    },
+    {
+     "d": "5",
+     "toe": "little toe",
+     "tzh": "小趾"
+    }
+   ],
+   "bones": [
+    "Distal phalanx of {side} {toe}"
+   ],
+   "recipe": "digit",
+   "args": {
+    "proximal": "Middle phalanx of {side} {toe}",
+    "distal": "Distal phalanx of {side} {toe}",
+    "slab": "metatarsal"
+   },
+   "tail": {
+    "landmark": "tip"
+   },
+   "frame": {
+    "axis0": "fit",
+    "keep": "axis"
+   },
+   "dofs": [
+    {
+     "axis": 0,
+     "name": {
+      "en": "flexion / extension",
+      "zh": "跖屈 / 背伸"
+     },
+     "rom": "toe.dip.flexion",
+     "sign": [
+      "tail",
+      "down"
+     ],
+     "rest": "bend"
+    }
+   ]
+  }
+ ]
+}
