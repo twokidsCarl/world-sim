@@ -70,6 +70,8 @@ generated from it.
   Wishes for improving this tool itself. They only come out of conversations with the
   assistant, and meeting the same problem again bumps the existing wish. A wish can be
   edited or withdrawn while open and is frozen once accepted.
+  **处理愿望用 Claude Code 的 `/wishes`。** 在这个仓库里开着的 Claude Code 会话里运行：不带编号，它把全部待处理的愿望取来、读代码、给你一个分诊（先做哪几条、哪几条是一回事、哪几条不该做）；带编号（结尾四位就够，可以给好几个），它先出计划，你批准之后才动手，做完用 `tools/pr.sh` 提交并把结果标回许愿池。愿望页上有一键复制的命令。网页里的自动作业还在，收在愿望页的折叠里，只适合很小、很明确的改动。
+  **Wishes are handled with `/wishes` in Claude Code.** Run it in a Claude Code session opened in this repository: without an id it fetches every pending wish, reads the code and gives you a triage (which to do first, which are the same thing, which should not be done); with ids (the last four characters suffice, several allowed) it plans first and acts only after you approve, then submits through `tools/pr.sh` and reports the result back to the pool. The wish page has the command ready to copy. The automatic job in the web UI remains, folded away on the wish page, and suits only very small, clear-cut changes.
 - **观察 / Watching**：记下你换页、点了什么、每页停留多久（只算窗口在前台且最近有操作的时间），存在本机 `runs/trail.jsonl`，不进 git，不记输入的文字。来回跳、连续报错、原地反复点时，小助手的按钮亮一个点问要不要解释这一页，同一页只问一次。
   Records navigation, clicks and the dwell time on each page (foreground time with
   recent activity only) in `runs/trail.jsonl` on this machine, never in git and never

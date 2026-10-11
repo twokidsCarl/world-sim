@@ -39,8 +39,8 @@ export function WishesPage() {
     <Page
       title={t('许愿池', 'Wish pool')}
       lead={t(
-        '对 idea-loom 这个工具本身的改进愿望。愿望不是在这里填的：和右边的小助手说话时，它发现工具哪里不顺手就会记一条，你也可以直接跟它说"把这个记下来"。',
-        'Wishes for improving the idea-loom tool itself. Wishes are not filled in here: while you talk to the assistant on the right, it records one whenever it notices the tool getting in your way, and you can also just tell it "write this down".',
+        '对 idea-loom 这个工具本身的改进愿望。愿望不是在这里填的：和右边的小助手说话时，它发现工具哪里不顺手就会记一条，你也可以直接跟它说"把这个记下来"。处理它们：在 Claude Code 里运行 /wishes。',
+        'Wishes for improving the idea-loom tool itself. Wishes are not filled in here: while you talk to the assistant on the right, it records one whenever it notices the tool getting in your way, and you can also just tell it "write this down". To handle them, run /wishes in Claude Code.',
       )}
     >
       {error && <div className="notice bad" role="alert">{error}</div>}
@@ -281,24 +281,17 @@ export function WishPage() {
         </Section>
       </div>
 
-      <Section title={t('交给 Claude 去做', 'Hand it to Claude')} note={t('先出方案，你批准之后它才动手', 'It writes a plan first and only acts after you approve')}>
+      <Section title={t('在 Claude Code 里处理', 'Handle it in Claude Code')} note={t('它拿到这条愿望的数据，先出计划，你批准之后才动手', 'It fetches this wish, plans first and only acts after you approve')}>
+        <WishCommand id={wish.wish_id} />
         {job ? (
           <JobPanel jobId={job.job_id} onChange={() => (void reload(), void refresh(), void loadJob())} />
         ) : null}
-        {job && !['failed', 'cancelled', 'declined'].includes(job.phase) && ['open', 'accepted'].includes(wish.status) && (
-          <div className="row">
-            <button className="primary" disabled>
-              {t('开工：让 Claude 先出方案', 'Start: have Claude write a plan first')}
-            </button>
-            <span className="muted small">
-              {t('这条愿望已经有一个作业在进行，见上面的作业。', 'This wish already has a job under way; see the job above.')}{' '}
-              <Link to={`/work/jobs/${job.job_id}`}>{t('打开作业', 'Open the job')}</Link>
-              {job.queued && job.waiting ? ` · ${t(`排队中：${job.waiting}`, `Queued: ${job.waiting}`)}` : ''}
-            </span>
-          </div>
-        )}
-        {startError && <div className="notice bad" role="alert">{startError}</div>}
         {canStart && (
+          <details className="table-view">
+            <summary>{t('或者让网页里的自动作业来做', 'Or have the automatic job in this page do it')}</summary>
+            <p className="muted small">
+              {t('它在后台跑、中途问不了你问题，适合很小、很明确的改动；别的还是用上面的 /wishes。', 'It runs in the background and cannot ask you anything along the way, which suits very small, clear-cut changes; for anything else use /wishes above.')}
+            </p>
           <div className="row">
             <button
               className="primary"
@@ -316,6 +309,7 @@ export function WishPage() {
             </button>
             <span className="muted small">{t('它先只读代码、写一份方案给你看，不改任何东西。', 'At first it only reads the code and writes a plan for you to read; it changes nothing.')}</span>
           </div>
+          </details>
         )}
         <details className="table-view">
           <summary>{t('想自己开一个 Claude Code 会话去做', 'Do it in a Claude Code session of your own')}</summary>
@@ -428,6 +422,29 @@ function Review({ onRecorded }: { onRecorded: () => void }) {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+
+// 主入口：在这个仓库里开着的 Claude Code 会话里运行 /wishes。编号只写结尾四位就够。
+// The main way in: run /wishes in a Claude Code session opened in this repository. The last four characters of the id are enough.
+function WishCommand({ id }: { id: string }) {
+  const t = useT()
+  const [copied, setCopied] = useState(false)
+  const command = `/wishes ${id.slice(-4)}`
+  return (
+    <div className="row wish-command">
+      <code className="pre">{command}</code>
+      <button
+        className="primary"
+        onClick={() => void navigator.clipboard.writeText(command).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1500)), () => undefined)}
+      >
+        {copied ? t('已复制', 'Copied') : t('复制', 'Copy')}
+      </button>
+      <span className="muted small">
+        {t('贴进在这个仓库里开着的 Claude Code。不带编号的 /wishes 会先把全部待处理的愿望分一遍诊。', 'Paste it into a Claude Code session opened in this repository. /wishes without an id first triages every pending wish.')}
+      </span>
     </div>
   )
 }
