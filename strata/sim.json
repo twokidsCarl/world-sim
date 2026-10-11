@@ -541,12 +541,12 @@
       {
         "id": "run_md",
         "title": {
-          "zh": "跑一次分子动力学",
-          "en": "Run molecular dynamics once"
+          "zh": "跑一次：分子动力学",
+          "en": "Run once: Molecular dynamics"
         },
         "description": {
-          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次分子动力学：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（nx ≤ 70），最多 20000 步数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
-          "en": "Runs molecular dynamics once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (nx ≤ 70) and at most 20000 steps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
+          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次“分子动力学”：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（nx ≤ 70），最多 20000 步数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
+          "en": "Runs the substrate \"Molecular dynamics\" once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (nx ≤ 70) and at most 20000 steps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
         },
         "http": {
           "method": "POST",
@@ -963,12 +963,12 @@
       {
         "id": "run_ising",
         "title": {
-          "zh": "跑一次Ising 自旋",
-          "en": "Run ising spins once"
+          "zh": "跑一次：Ising 自旋",
+          "en": "Run once: Ising spins"
         },
         "description": {
-          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次Ising 自旋：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（L ≤ 8, L3 ≤ 5），最多 20000 扫描数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
-          "en": "Runs ising spins once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (L ≤ 8, L3 ≤ 5) and at most 20000 sweeps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
+          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次“Ising 自旋”：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（L ≤ 8, L3 ≤ 5），最多 20000 扫描数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
+          "en": "Runs the substrate \"Ising spins\" once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (L ≤ 8, L3 ≤ 5) and at most 20000 sweeps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
         },
         "http": {
           "method": "POST",
@@ -1146,12 +1146,12 @@
       {
         "id": "run_potts",
         "title": {
-          "zh": "跑一次Potts 模型",
-          "en": "Run potts model once"
+          "zh": "跑一次：Potts 模型",
+          "en": "Run once: Potts model"
         },
         "description": {
-          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次Potts 模型：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（L ≤ 8），最多 20000 扫描数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
-          "en": "Runs potts model once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (L ≤ 8) and at most 20000 sweeps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
+          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次“Potts 模型”：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（L ≤ 8），最多 20000 扫描数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
+          "en": "Runs the substrate \"Potts model\" once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (L ≤ 8) and at most 20000 sweeps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
         },
         "http": {
           "method": "POST",
@@ -1301,12 +1301,12 @@
       {
         "id": "run_gravity",
         "title": {
-          "zh": "跑一次引力 N 体",
-          "en": "Run gravitational n-body once"
+          "zh": "跑一次：引力 N 体",
+          "en": "Run once: Gravitational N-body"
         },
         "description": {
-          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次引力 N 体：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（n ≤ 10），最多 10000 步数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
-          "en": "Runs gravitational n-body once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (n ≤ 10) and at most 10000 steps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
+          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次“引力 N 体”：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（n ≤ 10），最多 10000 步数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
+          "en": "Runs the substrate \"Gravitational N-body\" once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (n ≤ 10) and at most 10000 steps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
         },
         "http": {
           "method": "POST",
@@ -1462,12 +1462,12 @@
       {
         "id": "run_mesh",
         "title": {
-          "zh": "跑一次引力成团",
-          "en": "Run gravitational clustering once"
+          "zh": "跑一次：引力成团",
+          "en": "Run once: Gravitational clustering"
         },
         "description": {
-          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次引力成团：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（side ≤ 5, grid ≤ 5），最多 2000 步数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
-          "en": "Runs gravitational clustering once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (side ≤ 5, grid ≤ 5) and at most 2000 steps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
+          "zh": "不用浏览器，用 CPU 参考实现（双精度）跑一次“引力成团”：给旋钮取值、步数和种子，返回各层的派生量。和界面用的是同一套规则和同一套派生量定义。CPU 比界面里的 GPU 慢得多，所以体系要小（side ≤ 5, grid ≤ 5），最多 2000 步数；超过约 30 秒会报错并告诉你大约能跑多少步。不调用模型，不写文件。",
+          "en": "Runs the substrate \"Gravitational clustering\" once without a browser, on the CPU reference implementation (double precision): give knob values, a step count and a seed, and get the derived quantities of every level. The rules and the quantity definitions are the ones the UI uses. The CPU is far slower than the GPU behind the UI, so systems must be small (side ≤ 5, grid ≤ 5) and at most 2000 steps; past about 30 seconds it returns an error saying roughly how many steps fit. No model is called and nothing is written."
         },
         "http": {
           "method": "POST",
