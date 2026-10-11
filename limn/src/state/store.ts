@@ -94,7 +94,11 @@ interface State extends Look {
   repack(): void
   resolveTopic(topic: string): Promise<void>
   /** `title`、`titleEn`：目录里给这个结构起的名字，有就用它作标题 / `title`, `titleEn`: the name a catalogue gives the structure, used as the title when given */
-  loadId(id: string, title?: string, titleEn?: string): Promise<void>
+  loadId(id: string, title?: string, titleEn?: string, iptm?: number): Promise<void>
+  /** 当前这个预测蛋白所在的预测复合物；null 表示还没查或不适用 / predicted complexes containing the current predicted protein; null when not looked up or not applicable */
+  complexes: api.PredictedComplex[] | null
+  /** 画一个或几个检索到的神经元，几个时并排 / draw one or several neurons found by search, side by side when several */
+  loadNeurons(hits: api.NeuronHit[]): Promise<void>
   loadCatalog(id: string): Promise<void>
   /** 载入目录里的一个神经元形态重建 / load a neuron reconstruction from the catalogue */
   loadNeuron(id: string): Promise<void>
@@ -209,6 +213,7 @@ export const useStore = create<State>((set, get) => ({
   seed: 1,
   placed: [],
   dnaPairs: 0,
+  complexes: null,
 
   repack() {
     set((s) => ({ seed: s.seed + 1, sceneRev: s.sceneRev + 1 }))
@@ -279,13 +284,15 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
-  async loadId(id, title, titleEn) {
+  async loadId(id, title, titleEn, iptm) {
     const clean = id.trim().toUpperCase()
     // "AF-P04637"：AlphaFold 数据库里这个 UniProt 编号的预测模型 / "AF-P04637": the AlphaFold DB model for that UniProt accession
     // "EMD-21317"：EMDB 里的一张密度图 / "EMD-21317": a density map in the EMDB
     const em = /^EMD-?(\d{4,6})$/.exec(clean)
     if (em) return get().loadEmdb(em[1]!)
-    const af = /^AF-([A-Z0-9]{6,10})$/.exec(clean)
+    // "AF-0000000211046780"：AlphaFold 数据库里的一个预测复合物 / "AF-0000000211046780": a predicted complex in the AlphaFold DB
+    const af = /^AF-([A-Z0-9]{6,10}|\d{10,20})$/.exec(clean)
+    const isComplex = !!af && /^\d+$/.test(af[1]!)
     if (!af && !/^[0-9][A-Z0-9]{3}$/.test(clean)) {
       set({ error: t('error.badId') })
       return
@@ -296,16 +303,19 @@ export const useStore = create<State>((set, get) => ({
       if (af && !prediction) throw new Error(t('error.noAlphafold', { id: af[1]! }))
       const mol = await loadMolecule(prediction ? { kind: 'url', id: clean, url: prediction.url, minConfidence: 50 } : { kind: 'pdb', id: clean }, progress(clean))
       const coloring = defaultColoring(mol)
+      const methodKey = isComplex ? 'method.complex' : prediction?.source === 'BFVD' ? 'method.bfvd' : 'method.alphafold'
       const spec: PanelSpec = {
         label: clean,
-        source: prediction ? { id: clean, kind: 'alphafold', url: prediction.url, title: mol.title, method: tIn('zh', 'method.alphafold'), methodEn: tIn('en', 'method.alphafold'), resolution: null, year: null, tier: 'predicted' } : { id: clean, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
+        source: prediction ? { id: clean, kind: 'alphafold', url: prediction.url, title: mol.title, method: tIn('zh', methodKey), methodEn: tIn('en', methodKey), resolution: null, year: null, tier: 'predicted', ...(prediction.source === 'BFVD' ? { licence: 'CC BY 4.0', attribution: 'BFVD (Steinegger lab)', link: 'https://bfvd.steineggerlab.workers.dev/' } : { licence: 'CC BY 4.0', attribution: 'AlphaFold Protein Structure Database', link: `https://alphafold.ebi.ac.uk/entry/${isComplex ? clean : af![1]}` }) } : { id: clean, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
         assembly: defaultAssembly(mol),
         entities: mol.entities.map((e, i) => ({ entityId: e.id, role: coloring.roles[i]!, name: e.description || e.kind, description: e.description, organism: '' })),
         reason: '',
       }
-      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, ...(title && titleEn ? { titleEn } : {}), caption: '', panels: [spec], notes: prediction ? [{ key: 'note.alphafold', params: { percent: Math.round(prediction.confident * 100) } }] : [] }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, ...(title && titleEn ? { titleEn } : {}), caption: '', panels: [spec], notes: !prediction ? [] : isComplex ? [{ key: 'note.complex', params: { iptm: iptm ?? '?' } }] : prediction.source === 'BFVD' ? [{ key: 'note.bfvd' }] : [{ key: 'note.alphafold', params: { percent: Math.round(prediction.confident * 100) } }] }
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
       fetchPapers()
+      // 单个蛋白的预测模型：顺便查含有它的预测复合物 / for a single predicted protein, also look up the predicted complexes that contain it
+      if (af && !isComplex) void api.complexes(af[1]!).then((list) => useStore.getState().spec?.topic === clean && useStore.setState({ complexes: list }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }
@@ -593,6 +603,53 @@ export const useStore = create<State>((set, get) => ({
       ]
       const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: '', panels: [spec], notes, unit: 'µm' }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+    } catch (e) {
+      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+    }
+  },
+
+  async loadNeurons(hits) {
+    const list = hits.slice(0, 4)
+    if (list.length === 0) return
+    set({ busy: t('busy.downloading', { name: list.map((h) => h.name).join(', ') }), error: '' })
+    try {
+      const roleOf: Record<string, Role> = { '1': 'focus', '2': 'nucleic-binding', '3': 'soluble', '4': 'membrane', '0': 'extracellular' }
+      const panels: Panel[] = []
+      for (const h of list) {
+        const url = neuromorphoUrl(h.archive, h.name)
+        let text = ''
+        for (const u of [`/api/structure?url=${encodeURIComponent(url)}`, url]) {
+          const res = await fetch(u).catch(() => null)
+          if (res?.ok) {
+            text = await res.text()
+            break
+          }
+        }
+        if (!text) throw new Error(t('error.neuronFetch', { title: h.name, titleEn: h.name }))
+        const mol = neuronMolecule(parseSwc(text), h.name, h.name)
+        const roles = mol.entities.map((e) => roleOf[e.id] ?? 'soluble')
+        const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
+        const label = `${h.species} · ${h.cellType.split(',')[0]} · ${h.name}`
+        const spec: PanelSpec = {
+          label,
+          source: {
+            id: h.name, kind: 'neuron', url, title: label, method: tIn('zh', 'method.reconstruction'), methodEn: tIn('en', 'method.reconstruction'), resolution: null, year: null, tier: 'measured',
+            licence: 'CC BY 4.0', attribution: tIn('zh', 'source.neuromorpho', { archive: h.archive }), attributionEn: tIn('en', 'source.neuromorpho', { archive: h.archive }), citation: h.doi ? `doi:${h.doi}` : '', link: `https://neuromorpho.org/neuron_info.jsp?neuron_name=${encodeURIComponent(h.name)}`,
+          },
+          assembly: 'asym',
+          entities: mol.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, nameEn: e.description.split(' / ')[1], description: e.description, organism: h.species })),
+          reason: '',
+        }
+        panels.push({ spec, mol, coloring, align: null, paper: null, annotation: null })
+      }
+      const notes: Note[] = [
+        ...list.map((h): Note => ({ key: 'note.neuron.found', params: { species: h.species, region: h.region, cellType: h.cellType, domain: h.domain } })),
+        ...(list.length > 1 ? [{ key: 'note.neuron.sideBySide' } as Note] : []),
+        { key: 'note.neuron.thin' },
+      ]
+      const title = list.map((h) => h.name).join(' · ')
+      const scene: SceneSpec = { topic: title, kind: 'neuron', title, caption: '', panels: panels.map((p) => p.spec), notes, unit: 'µm' }
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
     }

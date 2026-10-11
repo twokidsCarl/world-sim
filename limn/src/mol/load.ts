@@ -1,3 +1,4 @@
+import { parsePdb } from './pdb'
 import { CIF, type CifBlock, type CifCategory } from 'molstar/lib/mol-io/reader/cif'
 import { mul4, parseOperExpression } from './assembly'
 import { El, IDENTITY, type Assembly, type Chain, type Entity, type EntityKind, type Molecule } from './types'
@@ -373,6 +374,10 @@ export async function loadMolecule(src: Source, onProgress?: (received: number, 
   if (!buf) throw new Error(t('error.fetchStructure', { id: src.id, host: new URL(urls[0]!).hostname }))
   // BinaryCIF 是 MessagePack；文本 CIF 以 "data_" 开头。
   // BinaryCIF is MessagePack; text CIF starts with "data_".
+  // PDB 格式的文本（BFVD 只提供这种）：以 MODEL、ATOM、HEADER 等记录开头
+  // PDB-format text (all BFVD offers): it starts with a MODEL, ATOM, HEADER or similar record
+  const head = new TextDecoder().decode(buf.subarray(0, 6))
+  if (/^(MODEL|ATOM|HEADER|REMARK|TITLE|CRYST1)/.test(head)) return parsePdb(new TextDecoder().decode(buf), src.id, src.kind === 'url' ? src.minConfidence : undefined)
   const isText = buf[0] === 0x64 && buf[1] === 0x61 && buf[2] === 0x74 && buf[3] === 0x61
   return parseCif(isText ? new TextDecoder().decode(buf) : buf, src.id, { minConfidence: src.kind === 'url' ? src.minConfidence : undefined })
 }

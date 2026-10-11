@@ -27,7 +27,7 @@ function deps(recipe: any, picks: any): Deps {
     ask: (async () => (call++ === 0 ? recipe : picks)) as Deps['ask'],
     searchText: async (q) => (q === 'small' ? ['1AAA'] : q === 'medium' ? ['2BBB'] : q === 'big' ? ['3CCC'] : []),
     entryInfo: async (ids) => ids.map((i) => known.get(i)).filter((x): x is EntryInfo => !!x),
-    findProtein: async () => [], bestStructures: async () => [], alphafold: async () => null, abundances: async () => null,
+    findProtein: async () => [], bestStructures: async () => [], alphafold: async () => null, abundances: async () => null, curatedComplexes: async () => [], copyTable: async () => null,
   }
 }
 
@@ -212,6 +212,42 @@ describe('membrane proteins that are only an ectodomain', () => {
         expect(Math.abs(near)).toBeLessThan(40)
       }
     }
+  })
+})
+
+// 复合物配比与用户提供的拷贝数表 / curated stoichiometry and a copy-number table supplied by the user
+describe('curated stoichiometry and supplied copy numbers', () => {
+  const file = ['#name: T', '#gene_name\tid\tabundance', 'groL\t1.b1\t7000', ''].join('\n')
+  const groel = (): EntryInfo => ({ ...entry('1AAA', 3000), assemblies: [{ id: '1', atoms: 42000, chains: 7, symmetry: 'C7' }], entities: [{ entityId: '1', kind: 'protein', description: 'GroEL', organism: 'E. coli', chains: 7, length: 548, uniprot: ['P0A6F5'] }] })
+  const run = (over: Partial<Deps>) => {
+    const d = deps(recipe([ing('GroEL', 'small', 1, { genes: ['groL'] })], { organism_taxid: 1, tissue: 'WHOLE_ORGANISM' }), pick('1AAA'))
+    return resolveLandscape('x', { ...d, entryInfo: async () => [groel()], abundances: async (t) => parsePaxdb(file, t, 'WHOLE_ORGANISM'), ...over })
+  }
+  const params = (n: unknown) => (n as { key: string; params: Record<string, string | number> })
+
+  it('uses the database\'s copies per complex in place of the chain count of the structure', async () => {
+    // 结构里只有一个七聚环（7 条链），数据库说完整的复合物有 14 份 / the structure holds one ring of seven chains; the database says the whole complex has 14
+    const byChains = await run({})
+    const byDb = await run({ curatedComplexes: async (acc) => (acc === 'P0A6F5' ? [{ id: 'CPX-2113', name: 'GroEL-GroES complex', organism: 'E. coli', subunits: { P0A6F5: 14, P0A6F9: 7 } }] : []) })
+    expect(params(byChains.landscape!.ingredients[0]!.abundance).key).toBe('abundance.paxdb')
+    const a = params(byDb.landscape!.ingredients[0]!.abundance)
+    expect(a.key).toBe('abundance.paxdbComplex')
+    expect(a.params.per).toBe(14)
+    expect(String(a.params.complex)).toContain('CPX-2113')
+    // 7000 ppm / 14 是 / 7 的一半 / 7,000 ppm over 14 is half of that over 7
+    expect(Number(a.params.uM) / Number(params(byChains.landscape!.ingredients[0]!.abundance).params.uM)).toBeCloseTo(0.5, 1)
+  })
+
+  it('prefers the user\'s table when it gives a volume, and ignores it when it does not', async () => {
+    const table = (volume: number | null) => ({ label: 'mine', volume, copies: new Map([['grol', 6022]]) })
+    const used = await run({ copyTable: async () => table(1) })
+    const a = params(used.landscape!.ingredients[0]!.abundance)
+    expect(a.key).toBe('abundance.supplied')
+    // 1 立方微米里 6022 个是 10 µM / 6,022 in a cubic micron is 10 µM
+    expect(Number(a.params.uM)).toBeCloseTo(10, 0)
+    expect(used.landscape!.ingredients[0]!.tier).toBe('curated')
+    const ignored = await run({ copyTable: async () => table(null) })
+    expect(params(ignored.landscape!.ingredients[0]!.abundance).key).toBe('abundance.paxdb')
   })
 })
 

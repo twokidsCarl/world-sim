@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 三期 | 界面实测与版面修正；比例尺；界面中英双语（`?lang=en`）；AlphaFold 预测复合物；BFVD 病毒蛋白预测；Complex Portal 复合物配比；NeuroMorpho 检索与多神经元并排；自备拷贝数表的导入口 | 完成。MICrONS 等连接组数据没有接入（没查到许可声明） |
 | 二期·7 | 整个细胞的细胞器：OpenOrganelle 的电镜分割（HeLa 细胞的细胞核、内质网、线粒体、高尔基体、内体） | 第一版完成，见 `src/volume/n5.ts`、`data/cells.json` |
 | 二期·8 | 电镜密度图：按 `EMD-编号` 载入 EMDB 的图，画作者建议阈值处的等值面，拟合的原子模型叠在里面 | 第一版完成，见 `src/volume/mrc.ts`、`server/sources/emdb.ts` |
 | 二期·6 | 神经元形态：NeuroMorpho.Org 的显微重建（锥体细胞、浦肯野细胞等），按胞体、树突、轴突分色 | 第一版完成，见 `src/neuro/swc.ts`、`data/neurons.json` |
@@ -49,6 +50,8 @@ bun run typecheck
 拖动旋转，滚轮缩放，Shift 拖动平移。每张图（包括导出的 PNG）右下角有一条比例尺；画面是正交投影，所以它对整张图都准确。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
 
 单个分子的图可以换“上色”方式：按功能角色（默认）、按结构域、标出活性与结合位点（都来自 UniProt，PDB 的残基号经 PDBe SIFTS 对应过去）、按 AlphaFold 置信度（只对预测模型）、按 AlphaMissense 预测的突变致病性（只覆盖人类蛋白；是预测，不是临床结论）。图例里写明每种颜色的含义和数据来源。
+
+预测结构有三种来源，界面上都标为“预测”：`AF-<UniProt 编号>` 先查 AlphaFold 数据库；查不到时用 [BFVD](https://bfvd.steineggerlab.workers.dev/)（CC BY 4.0），它收录了 AlphaFold 数据库里没有的许多病毒蛋白，例如 HIV-1 的 Gag（`AF-P04591`）。载入一个预测蛋白后，侧栏会列出 AlphaFold 数据库里含有它的预测复合物和各自的界面可信度 ipTM（低于 0.6 的不列），点一下即可画出；复合物里链与链怎样结合是预测，不是实验结果。
 
 主题如果是一个拥挤的细胞场景（“大肠杆菌细胞质的拥挤场景”“流感病毒包膜表面的横截面全景”），会画成全景：80×56 nm、厚 30 nm 的一片截面，可以带一层水平的膜。
 
@@ -102,7 +105,9 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 - 分支的走向是重建数据；粗细也来自重建，但重建里的粗细常常不如走向可靠。
 - 比线还细的分支画粗了一点，否则会整条被描边盖住。
 - 目录里四个重建都没有轴突（原作者没有描），界面上写明了。
-- 目前只能从目录里选，一次画一个；还不能按物种和细胞类型检索，也没有接入 MICrONS、H01 这类连接组数据。
+- “检索 NeuroMorpho.Org”可以按物种、脑区、细胞类型（用英文，如 mouse、cerebellum、Purkinje）查它的三十万个重建。点名字单独画，点 “+” 并排加入，最多四个，同一比例。
+- 并排不等于相邻：NeuroMorpho 的标准化文件把每个神经元的胞体都放在原点，它们在脑里的相对位置不在数据里，所以只能比较形状和大小。
+- 没有接入 MICrONS、H01 这类连接组数据（那里的神经元才有共同的坐标系）：我查了 MICrONS 的主页、数据页、服务条款页和 BossDB 的项目页，都没有找到许可声明，所以没有接。
 
 ## 全景图里什么是真的，什么不是
 
@@ -111,7 +116,8 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 不是观测结果，界面上也都写明了：
 
 - **位置和朝向是随机排布的。** 可溶分子在各自区室里随机放置；真实细胞里的结合关系、排列（例如贴在膜内侧的基质蛋白层）没有体现。
-- **丰度优先用实测数据，查不到才是估计值。** 配方由模型拟定：列出十来种有代表性的分子。场景属于某个物种的细胞时，蛋白的丰度取自 [PaxDb](https://pax-db.org/)（整合了多项质谱研究的丰度数据库，覆盖大肠杆菌、酵母、人和小鼠的各种组织等四百多个物种）；复合物取各亚基的中位数，再除以每种亚基的份数。PaxDb 里查不到的成分和膜蛋白的面密度仍是模型的估计。界面上每种成分都标明是“实测数据”还是“估计”。除标为主角的成分外，数量按比例放大到区室总浓度，用这十来种代表其余上千种。
+- **丰度优先用实测数据，查不到才是估计值。** 配方由模型拟定：列出十来种有代表性的分子。场景属于某个物种的细胞时，蛋白的丰度取自 [PaxDb](https://pax-db.org/)（整合了多项质谱研究的丰度数据库，覆盖大肠杆菌、酵母、人和小鼠的各种组织等四百多个物种）；复合物取各亚基的中位数，再除以每种亚基的份数。PaxDb 里查不到的成分和膜蛋白的面密度仍是模型的估计。界面上每种成分都标明是“实测数据”还是“估计”。把亚基丰度换成复合物丰度时，“一个复合物里每种亚基有几份”优先取自 [Complex Portal](https://www.ebi.ac.uk/complexportal/) 的人工整理（例如 GroEL 是 14 份），查不到才按结构里的链数推。
+- **可以用你自己的拷贝数表。** 有些定量数据不开放（例如 Wilhelm 等 2014 年测的突触小体里各种蛋白的拷贝数），不能放进仓库。有权限的话，把它存成 `<状态目录>/copy-numbers.tsv`：每行“基因名、拷贝数”，并加一行 `# volume_um3: 0.37` 写明这些拷贝数对应的体积；配方会优先用它，并标为“你提供的拷贝数表”。这条路只用我自己造的小表测过，没有用真实的表验证过。除标为主角的成分外，数量按比例放大到区室总浓度，用这十来种代表其余上千种。
 - **膜蛋白的取向优先用 OPM，其次 PDBTM。** OPM 没有收录的跨膜结构，用 [PDBTM](https://pdbtm.unitmp.org/) 给出的变换摆进膜里，再按 UniProt 的拓扑注释（哪些残基在胞外、哪些在胞质）决定哪面朝外；拓扑注释不够用时不采用。 [OPM](https://opm.phar.umich.edu/) 数据库收录的结构，按它给出的位置、倾角和内外朝向嵌进膜里（这是由实验结构计算出来的取向，不是直接测量）；界面上会标出。OPM 没有收录的（多数只解析了膜外段的结构）仍是近似摆放：沿分子长轴竖立，立在膜面上，连膜的一端由链末端的位置判断，缺失的柄部和跨膜段不画。膜蛋白正前方的脂质不画，好让跨膜的部分露出来。
 - **膜的脂质组成取自文献，构象是示意的。** 八类膜（哺乳动物质膜、内质网、线粒体内膜、大肠杆菌内膜和外膜、HIV 和新冠病毒的包膜、突触小泡）的组成写在 `data/membranes.json` 里，每条都有出处，并说明哪些是分小叶实测的、哪些只有整膜数据、哪些是综述给的范围（例如质膜两个小叶的磷脂是实测的，胆固醇在两叶之间怎么分没有测到）。画的时候两个小叶各按比例混排。每种脂质用数据库里的理想坐标，尾链整体转到头基的另一侧（键长不变，但头基附近有少数原子会靠得过近）；所有同种脂质构象相同，位置随机，不是模拟得到的膜。缩醛磷脂并入 PE，糖脂和脂多糖的长糖链没有画。配方没有指明膜的类型时，仍用单一的 POPC。
 - **DNA 是程序生成的。** 场景里有 DNA 时（细菌拟核、细胞核），画成双螺旋长链：每个碱基对的原子位置量自晶体结构 1BNA，螺旋参数用溶液中 B 型 DNA 的通用值（每对升 3.4 Å、每圈 10.5 对），走向是按 DNA 的刚度（持久长度约 50 nm）随机弯曲的曲线，序列随机，总长度按模型估计的 DNA 密度换算。DNA 上结合的蛋白、超螺旋和核小体没有画。
@@ -175,6 +181,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 3 | The interface checked by hand, with layout fixes; scale bars; a bilingual interface (`?lang=en`); AlphaFold predicted complexes; BFVD predictions of viral proteins; Complex Portal stoichiometry; NeuroMorpho search and several neurons side by side; an import path for a copy-number table of your own | Done. Connectome datasets such as MICrONS are not connected (no licence statement was found) |
 | Round 2, phase 7 | Whole-cell organelles: electron-microscopy segmentations from OpenOrganelle (the nucleus, endoplasmic reticulum, mitochondria, Golgi and endosomes of a HeLa cell) | First version done, see `src/volume/n5.ts`, `data/cells.json` |
 | Round 2, phase 8 | Electron-microscopy density maps: an EMDB map loads as `EMD-<number>`, drawn as the isosurface at its authors' recommended level, with the fitted atomic model inside | First version done, see `src/volume/mrc.ts`, `server/sources/emdb.ts` |
 | Round 2, phase 6 | Neuron morphologies: microscopy reconstructions from NeuroMorpho.Org (pyramidal cells, a Purkinje cell and others), coloured by soma, dendrite and axon | First version done, see `src/neuro/swc.ts`, `data/neurons.json` |
@@ -209,6 +216,8 @@ Four ways in:
 Drag to rotate, scroll to zoom, shift-drag to pan. Every picture, exported PNGs included, has a scale bar at bottom right; the projection is orthographic, so the bar holds across the whole picture. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
 
 A picture of a single molecule can be recoloured: by functional role (the default), by domain, with active and binding sites picked out (both from UniProt, with PDB residue numbers mapped through PDBe SIFTS), by AlphaFold confidence (predicted models only), or by AlphaMissense's predicted pathogenicity of mutations (human proteins only; a prediction, not a clinical finding). The legend says what each colour means and where the data is from.
+
+Predicted structures come from three places, all labelled as predictions: `AF-<UniProt accession>` looks in the AlphaFold DB first and, failing that, in [BFVD](https://bfvd.steineggerlab.workers.dev/) (CC BY 4.0), which holds many viral proteins the AlphaFold DB lacks, such as HIV-1 Gag (`AF-P04591`). Once a predicted protein is loaded, the sidebar lists the predicted complexes in the AlphaFold DB that contain it, each with its interface confidence ipTM (those under 0.6 are left out); one click draws it. How the chains of such a complex bind is a prediction, not an experimental result.
 
 A topic that asks for a crowded cellular scene ("the crowded cytoplasm of E. coli", "a cross-section of the influenza envelope") is drawn as a landscape: a slab 80 × 56 nm and 30 nm thick, optionally with a horizontal membrane.
 
@@ -262,7 +271,9 @@ Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and 
 - Where a branch runs is the reconstruction's data; so is its thickness, though thickness in reconstructions is often less reliable than course.
 - A branch thinner than the line is drawn a little fatter, or its outline would cover it from side to side.
 - None of the four reconstructions in the catalogue has an axon (the original authors did not trace it), and the interface says so.
-- For now a neuron can only be chosen from the catalogue, one at a time; there is no search by species and cell type yet, and connectome datasets such as MICrONS and H01 are not connected.
+- "Search NeuroMorpho.Org" queries its three hundred thousand reconstructions by species, region and cell type (in English: mouse, cerebellum, Purkinje). Click a name to draw it alone, or "+" to add it alongside, up to four at one scale.
+- Side by side is not next to each other: NeuroMorpho's standardised files put every neuron's soma at the origin, and where neurons lie relative to one another in the brain is not in the data, so only shape and size can be compared.
+- Connectome datasets such as MICrONS and H01, where neurons do share a coordinate frame, are not connected: I looked at MICrONS's home page, data page and terms page and at BossDB's project page and found no licence statement, so it was left out.
 
 ## What is real in a landscape, and what is not
 
@@ -271,7 +282,8 @@ Real: every molecule is an experimental structure from the PDB, drawn at one sca
 Not observed, and said so in the interface:
 
 - **Positions and orientations are random.** Soluble molecules are scattered within their compartment; real binding partners and arrangements (a matrix layer under a membrane, say) are not represented.
-- **Abundances are measured where possible and estimated otherwise.** The recipe is proposed by the model: a dozen representative molecules. When the scene is one organism's cell, protein abundances come from [PaxDb](https://pax-db.org/), a database that integrates many mass-spectrometry studies and covers over four hundred organisms, including E. coli, yeast, and many human and mouse tissues; a complex takes the median over its subunits, divided by the number of copies of each. Ingredients PaxDb does not have, and the surface density of membrane proteins, are still the model's estimates. The interface marks every ingredient as measured data or an estimate. Apart from the featured ones, counts are scaled up to the compartment's total concentration, so that a dozen kinds stand in for the thousand others.
+- **Abundances are measured where possible and estimated otherwise.** The recipe is proposed by the model: a dozen representative molecules. When the scene is one organism's cell, protein abundances come from [PaxDb](https://pax-db.org/), a database that integrates many mass-spectrometry studies and covers over four hundred organisms, including E. coli, yeast, and many human and mouse tissues; a complex takes the median over its subunits, divided by the number of copies of each. Ingredients PaxDb does not have, and the surface density of membrane proteins, are still the model's estimates. The interface marks every ingredient as measured data or an estimate. When subunit abundance is turned into complex abundance, the number of copies of each subunit per complex comes from the hand-curated [Complex Portal](https://www.ebi.ac.uk/complexportal/) where it has the complex (14 for GroEL, say), and from the chain count of the structure otherwise.
+- **You can bring a copy-number table of your own.** Some quantitative data is not open (the copy numbers of proteins in a synaptic bouton measured by Wilhelm et al. 2014, for one) and cannot be in the repository. With access, save it as `<state directory>/copy-numbers.tsv`: one "gene, copies" per line, plus a line `# volume_um3: 0.37` giving the volume the copy numbers refer to; recipes then prefer it and label it as your table. This path was tested only with a small table I made up, never with the real one. Apart from the featured ones, counts are scaled up to the compartment's total concentration, so that a dozen kinds stand in for the thousand others.
 - **Membrane proteins follow OPM where it has them, and PDBTM next.** A transmembrane structure that OPM lacks is set into the membrane by the transformation [PDBTM](https://pdbtm.unitmp.org/) gives, and UniProt's topology annotation (which residues are extracellular and which cytoplasmic) decides which face is out; when that annotation is not enough, the orientation is not used. A structure listed in the [OPM](https://opm.phar.umich.edu/) database is set into the membrane at the position, tilt and inside-outside sense OPM gives (an orientation computed from the experimental structure, not measured directly), and the interface says so. Structures OPM does not list (mostly those that cover only the part outside the membrane) are still placed approximately: standing along their long axis on the membrane face, with the membrane end judged from where the chain terminus is, and with missing stalks and transmembrane segments not drawn. Lipids straight in front of a membrane protein are left out so that the part spanning the membrane can be seen.
 - **The membrane's lipid composition is from the literature; its conformations are schematic.** The compositions of eight membranes (the mammalian plasma membrane, the endoplasmic reticulum, the inner mitochondrial membrane, the inner and outer membranes of E. coli, the envelopes of HIV and SARS-CoV-2, and the synaptic vesicle) are in `data/membranes.json`, each with its source and a statement of what was measured per leaflet, what is known only for the whole membrane, and what is a range from a review (in the plasma membrane, for instance, the phospholipids of each leaflet were measured, but how cholesterol divides between the leaflets was not). Each leaflet is mixed to its own proportions. Each lipid uses its ideal coordinates from the database with its tails turned as a whole to the side away from the head group (bond lengths are unchanged, but a few atoms near the head group end up too close together); all copies of a lipid share one conformation and are placed at random, so this is not a simulated membrane. Plasmalogens are counted with PE, and glycolipids and the long sugar chains of lipopolysaccharide are not drawn. When the recipe names no kind of membrane, a single phospholipid (POPC) is still used.
 - **DNA is generated.** Where a scene holds DNA (a bacterial nucleoid, a nucleus) it is drawn as long double helix: the atoms of each base pair were measured from the crystal structure 1BNA, the helix uses the usual figures for B-DNA in solution (a rise of 3.4 Å per pair, 10.5 pairs per turn), its course is a curve that bends at random with DNA's own stiffness (a persistence length of about 50 nm), the sequence is random, and the total length follows the DNA density the model estimates. Proteins bound to the DNA, supercoiling and nucleosomes are not drawn.

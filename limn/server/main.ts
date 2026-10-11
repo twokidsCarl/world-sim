@@ -8,7 +8,8 @@ import { JOURNALS, openAccess, recent, released } from './sources/literature'
 import { orientation } from './sources/opm'
 import { pdbtm, topology } from './sources/pdbtm'
 import { cached, stateDir } from './structures'
-import { alphafold } from './sources/uniprot'
+import { alphafold, complexes } from './sources/uniprot'
+import { searchNeurons } from './sources/neuromorpho'
 
 const PORT = Number(process.env.LIMN_PORT || 5185)
 
@@ -67,8 +68,16 @@ Bun.serve({
       const em = /^\/api\/emdb\/(\d{4,6})$/.exec(url.pathname)
       if (em) return json({ entry: await emdb(em[1]!) })
       // AlphaFold 预测模型的下载地址 / where to download an AlphaFold predicted model
-      const afm = /^\/api\/alphafold\/([A-Za-z0-9]{6,10})$/.exec(url.pathname)
+      const afm = /^\/api\/alphafold\/([A-Za-z0-9]{6,20})$/.exec(url.pathname)
       if (afm) return json({ prediction: await alphafold(afm[1]!.toUpperCase()) })
+      // 含有某个蛋白的预测复合物（界面可信度不够的已滤掉）/ predicted complexes containing a protein, unreliable interfaces already dropped
+      const cpx = /^\/api\/complexes\/([A-Za-z0-9]{6,10})$/.exec(url.pathname)
+      if (cpx) return json({ complexes: await complexes(cpx[1]!.toUpperCase()) })
+      // 按物种、脑区、细胞类型检索神经元形态重建 / search neuron reconstructions by species, region and cell type
+      if (url.pathname === '/api/neurons') {
+        const q = url.searchParams
+        return json(await searchNeurons({ species: q.get('species') ?? '', region: q.get('region') ?? '', cellType: q.get('cellType') ?? '' }))
+      }
       // 逐残基注释：结构域、位点、致病性预测 / per-residue annotation: domains, sites, predicted pathogenicity
       const ann = /^\/api\/annotations\/([A-Za-z0-9-]{4,16})$/.exec(url.pathname)
       if (ann) return json({ annotation: await annotate(ann[1]!) })
