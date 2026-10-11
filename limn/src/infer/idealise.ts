@@ -122,6 +122,29 @@ export function ringSites(n: number, axis: V3, behind = 0.02): V3[] {
   const count = share.map((v) => Math.floor(v))
   const order = share.map((v, k) => ({ k, f: v - Math.floor(v) })).sort((x, y) => y.f - x.f)
   for (let i = 0, left = n - count.reduce((s, c) => s + c, 0); i < left; i++) count[order[i % order.length]!.k]!++
+  // 赤道那一圈和它前后各一圈取同样的数目：这样错开的半步处处一致，后一圈的每个位置正好在前一圈的空隙里。
+  // （数目不同的话，错位绕一圈会慢慢漂移，有的地方对齐、有的地方重叠，看上去就乱。）多出或少掉的几个摊给其余各圈。
+  // The equatorial ring and the one either side of it take the same count, so that the half-step
+  // offset holds all the way round and every site of the ring behind sits in a gap of the ring in
+  // front. (With different counts the offset drifts round the ring, aligned here and overlapping
+  // there, which reads as disorder.) The few gained or lost are spread over the other rings.
+  const mid = thetas.reduce((best, t, k) => (Math.abs(t - Math.PI / 2 - behind) < Math.abs(thetas[best]! - Math.PI / 2 - behind) ? k : best), 0)
+  let spare = 0
+  for (const k of [mid - 1, mid + 1]) if (k >= 0 && k < count.length) {
+    spare += count[k]! - count[mid]!
+    count[k] = count[mid]!
+  }
+  const others = count.map((_, k) => k).filter((k) => Math.abs(k - mid) > 1)
+  for (let i = 0; spare !== 0 && others.length > 0 && i < 10_000; i++) {
+    const k = others[i % others.length]!
+    if (spare > 0) {
+      count[k]!++
+      spare--
+    } else if (count[k]! > 1) {
+      count[k]!--
+      spare++
+    }
+  }
   const out: V3[] = []
   thetas.forEach((theta, k) => {
     const m = count[k]!, r = Math.sin(theta)
