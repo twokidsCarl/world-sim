@@ -21,7 +21,7 @@ import { buildCell, decodeCell, type CellGeometry } from '../volume/cell'
 import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
-import { fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
+import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
 import { chainCentre, complexes, placeTemplate, ringSites, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -239,7 +239,11 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
   // 一段 RNP 螺旋里有多少个核苷酸：数它的 RNA 链上的磷原子 / nucleotides in one stretch of RNP helix: count the phosphorus atoms on its RNA chains
   let nt = 0
   for (const c of rnp.chains) if (rnp.entities[c.entity]!.kind === 'rna') for (let i = c.start; i < c.start + c.count; i++) if (rnp.isTrace[i]) nt++
-  const bundle = rnpBundle(rnp, pol, membrane.centre, membrane.inner - 55, [0, 1, 0], nt || 616)
+  const cavity = membrane.inner - 55
+  // 手绘画法：照 Goodsell 的做法，每条杆一直画到内壁、在内壁处截断，里面是满的；Illustrate 画法：每条只放完整的螺旋段
+  // painted drawing: as Goodsell does, every rod runs up to the inner wall and is cut there, so the inside is full; Illustrate drawing: whole helical stretches only
+  const bundle = rnpBundle(rnp, pol, membrane.centre, cavity, [0, 1, 0], nt || 616, undefined, idealise)
+  const filled = idealise ? clipToCavity(rnp, bundle.stretches, membrane.centre, cavity, [0, 1, 0], bundle.tops, spec.rnp) : null
   const make = (mol: Molecule, id: string, title: string, titleEn: string, operators: Float32Array[], colors: (e: Molecule['entities'][number]) => [number, number, number], names: (e: Molecule['entities'][number]) => [string, string]): Panel => {
     mol.assemblies.push({ id: 'inferred', groups: [{ chains: mol.chains.map((_, i) => i), operators }] })
     const roles: Role[] = mol.entities.map((e) => (e.kind === 'rna' || e.kind === 'dna' ? 'nucleic' : 'soluble'))
@@ -254,8 +258,10 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     return { spec: panelSpec, mol, coloring, align: null }
   }
   const isRna = (e: Molecule['entities'][number]) => e.kind === 'rna' || e.kind === 'dna'
-  const wanted = bundle.rods.reduce((s, r) => s + r.wanted, 0), placed = bundle.rods.reduce((s, r) => s + r.placed, 0)
-  notes.push({ key: 'note.inferred.influenza', params: { matrix: spec.matrix, rnp: spec.rnp, polymerase: spec.polymerase, m1: matrix.length.toLocaleString('en-US'), nt: nt || 616, wanted, placed } })
+  const wanted = bundle.rods.reduce((s, r) => s + r.wanted, 0)
+  // 画出来的相当于几段完整的螺旋 / how many whole helical stretches what is drawn amounts to
+  const placed = filled ? Math.round(filled.kept * bundle.stretches.length * 10) / 10 : bundle.rods.reduce((s, r) => s + r.placed, 0)
+  notes.push({ key: filled ? 'note.inferred.influenzaFilled' : 'note.inferred.influenza', params: { matrix: spec.matrix, rnp: spec.rnp, polymerase: spec.polymerase, m1: matrix.length.toLocaleString('en-US'), nt: nt || 616, wanted, placed } })
   const outside: Panel[] = []
   if (idealise) {
     // 外面的刺：种类、数量和结构照模拟，位置和朝向排成一圈圈（见 src/infer/idealise.ts）
@@ -306,17 +312,35 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
   }
   // 基因组 RNA 画成一条线：走向取自 RNP 结构里的 RNA 链 / the genomic RNA as a line, its course taken from the RNA chains of the RNP structure
-  const path = rnaPath(rnp, bundle.stretches, 9)
+  let path = rnaPath(rnp, bundle.stretches, 9)
+  if (filled) {
+    // 线也在内壁处截断：留在空腔里的点才要，两端都在的线段才连 / the line is cut at the inner wall too: only points inside the cavity are kept, and only segments with both ends kept are joined
+    const per = path.pos.length / 3 / bundle.stretches.length
+    const keep = new Int32Array(path.pos.length / 3).fill(-1)
+    const kp: number[] = [], ks: number[] = []
+    for (let i = 0; i < keep.length; i++) {
+      const d = [path.pos[i * 3]! - membrane.centre[0], path.pos[i * 3 + 1]! - membrane.centre[1], path.pos[i * 3 + 2]! - membrane.centre[2]]
+      if (Math.hypot(d[0]!, d[1]!, d[2]!) > cavity - 4 || d[1]! > (bundle.tops?.[Math.floor(i / per)] ?? Infinity)) continue
+      keep[i] = kp.length / 3
+      kp.push(path.pos[i * 3]!, path.pos[i * 3 + 1]!, path.pos[i * 3 + 2]!)
+    }
+    for (let k = 0; k < path.segments.length; k += 2) if (keep[path.segments[k]!]! >= 0 && keep[path.segments[k + 1]!]! >= 0) ks.push(keep[path.segments[k]!]!, keep[path.segments[k + 1]!]!)
+    path = { pos: new Float32Array(kp), segments: new Uint32Array(ks) }
+  }
   const np = path.pos.length / 3
   const strand: Molecule = {
     id: `${spec.rnp}:RNA`, title: 'genomic RNA', atomCount: np, pos: path.pos, element: new Uint8Array(np).fill(El.N), radius: new Float32Array(np).fill(5.5),
     chainOf: new Uint32Array(np), isTrace: new Uint8Array(np).fill(1), residue: new Int32Array(np).fill(1), segments: path.segments,
     chains: [{ asymId: 'RNA', authAsymId: 'RNA', entity: 0, start: 0, count: np, model: 1 }], entities: [{ id: 'rna', description: 'genomic RNA', kind: 'rna' }], assemblies: [],
   }
+  const rnpPanel = make(filled?.mol ?? rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', filled ? [IDENTITY] : bundle.stretches, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.72, 0.135, 62]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP']))
+  // 填满时每个核蛋白单独描边：他画里的核糖核蛋白是一串看得出一个个核蛋白的珠子
+  // when filled, every nucleoprotein is outlined on its own: in his painting a ribonucleoprotein is a string of beads in which each nucleoprotein can be told
+  if (filled) filled.mol.assemblies[filled.mol.assemblies.length - 1]!.groups = filled.mol.chains.map((_, i) => ({ chains: [i], operators: [IDENTITY] }))
   return [
     ...outside,
     make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1']),
-    make(rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', bundle.stretches, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.72, 0.135, 62]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP'])),
+    rnpPanel,
     ...(np > 1 ? [make(strand, spec.rnp, '基因组 RNA 的走向', 'The course of the genomic RNA', [IDENTITY], () => [0.88, 0.16, 92], () => ['基因组 RNA', 'genomic RNA'])] : []),
     make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.66, 0.13, 25]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
   ]

@@ -185,6 +185,8 @@ export interface RnpBundle {
   polymerases: Float32Array[]
   /** 每条杆：按核苷酸数该有几段，实际放了几段 / for each rod: stretches called for by its nucleotide count, and stretches placed */
   rods: { wanted: number; placed: number }[]
+  /** 填满时：每一段沿杆方向允许到多高（相对空腔中心），超过的部分截掉，给聚合酶让位 / when filling: how high along the rod each stretch may reach (relative to the cavity's centre); what lies above is cut off, leaving room for the polymerase */
+  tops?: number[]
 }
 
 /**
@@ -194,7 +196,7 @@ export interface RnpBundle {
  * Rods run along `up` with every polymerase at the upper end. `cavity` is the radius of the
  * spherical space available. Each helical stretch holds `ntPerStretch` nucleotides.
  */
-export function rnpBundle(rnp: Molecule, polymerase: Molecule, centre: V3, cavity: number, up: V3, ntPerStretch: number, segments = SEGMENTS): RnpBundle {
+export function rnpBundle(rnp: Molecule, polymerase: Molecule, centre: V3, cavity: number, up: V3, ntPerStretch: number, segments = SEGMENTS, fill = false): RnpBundle {
   const ax = principalAxis(rnp.pos)
   const length = ax.max - ax.min
   // 杆的半径：各球到轴的距离的第 95 百分位 / the rod's radius: the 95th percentile of sphere distances from the axis
@@ -232,6 +234,23 @@ export function rnpBundle(rnp: Molecule, polymerase: Molecule, centre: V3, cavit
     const wanted = Math.max(1, Math.round(s.nt / ntPerStretch))
     const placed = Math.max(1, Math.min(wanted, Math.floor(room / length)))
     const base = add(centre, add(mulS(e1, s.x), mulS(e2, s.y)))
+    if (fill) {
+      // 填满：从这个位置的弦的下端一段接一段往上摆，直到顶上留给聚合酶的地方；超出空腔的部分之后截掉。
+      // Goodsell 的画就是这样：每条杆都画到贴着内壁为止。
+      // filling: stretches are stacked from the lower end of the chord here up to the room left for the polymerase on top; what falls outside the cavity is cut off afterwards. This is what Goodsell paints: every rod runs right up to the inner wall.
+      const full = Math.sqrt(Math.max(0, cavity * cavity - off * off))
+      const limit = full - polyHalf * 1.5
+      const n = Math.max(1, Math.ceil((limit + full) / length))
+      const from = add(ax.centre, mulS(ax.axis, (ax.min + ax.max) / 2))
+      for (let k = 0; k < n; k++) {
+        out.stretches.push(frameToFrame(from, lx, ly, ax.axis, add(base, mulS(u, limit - (k + 0.5) * length)), e1, e2, u))
+        ;(out.tops ??= []).push(limit)
+      }
+      const px = norm(cross(Math.abs(pr.axis[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0], pr.axis))
+      out.polymerases.push(frameToFrame(pc, px, cross(pr.axis, px), pr.axis, add(base, mulS(u, limit + polyHalf * 0.75)), e1, e2, u))
+      out.rods.push({ wanted, placed: n })
+      continue
+    }
     const total = placed * length
     const top = (total + polyHalf * 1.2) / 2 - polyHalf * 1.2
     for (let k = 0; k < placed; k++) {
@@ -324,4 +343,45 @@ export function rnaPath(rnp: Molecule, stretches: Float32Array[], lift: number, 
       })
     }
   return { pos: new Float32Array(pos), segments: new Uint32Array(seg) }
+}
+
+/**
+ * 把一个结构按若干变换摆好之后，只留下落在球形空腔里（并且沿 `up` 不高于各自上限）的球，合成一个显式的结构。
+ * 每个变换下的每条链各成一条链，这样每一份仍然单独描边。返回结构和留下的球占全部的比例。
+ * Lay a structure out under several transforms and keep only the spheres that fall inside a
+ * spherical cavity (and no higher along `up` than each one's limit), gathered into one explicit
+ * structure. Every chain under every transform is a chain of its own, so each copy is still
+ * outlined separately. Returns the structure and the share of spheres kept.
+ */
+export function clipToCavity(mol: Molecule, transforms: Float32Array[], centre: V3, radius: number, up: V3, tops: number[] | undefined, id: string): { mol: Molecule; kept: number } {
+  const u = norm(up)
+  const pos: number[] = [], element: number[] = [], isTrace: number[] = [], residue: number[] = [], rad: number[] = []
+  const chains: Molecule['chains'] = []
+  let seen = 0
+  transforms.forEach((m, t) => {
+    const top = tops?.[t] ?? Infinity
+    for (const c of mol.chains) {
+      const start = pos.length / 3
+      for (let i = c.start; i < c.start + c.count; i++) {
+        const p = apply(m, [mol.pos[i * 3]!, mol.pos[i * 3 + 1]!, mol.pos[i * 3 + 2]!])
+        const d = sub(p, centre)
+        seen++
+        if (d[0] * d[0] + d[1] * d[1] + d[2] * d[2] > radius * radius || dot(d, u) > top) continue
+        pos.push(p[0], p[1], p[2])
+        element.push(mol.element[i]!)
+        isTrace.push(mol.isTrace[i]!)
+        residue.push(mol.residue[i]!)
+        if (mol.radius) rad.push(mol.radius[i]!)
+      }
+      const count = pos.length / 3 - start
+      if (count > 0) chains.push({ ...c, asymId: `${c.asymId}.${t}`, start, count })
+    }
+  })
+  const n = pos.length / 3
+  const chainOf = new Uint32Array(n)
+  chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
+  return {
+    kept: seen ? n / seen : 0,
+    mol: { id, title: mol.title, atomCount: n, pos: new Float32Array(pos), element: new Uint8Array(element), ...(mol.radius ? { radius: new Float32Array(rad) } : {}), chainOf, isTrace: new Uint8Array(isTrace), residue: new Int32Array(residue), chains, entities: mol.entities.map((e) => ({ ...e })), assemblies: [] },
+  }
 }
