@@ -306,6 +306,32 @@
       },
       "idea": "1.6",
       "url": "/?substrate=gravity"
+    },
+    {
+      "id": "web",
+      "title": {
+        "zh": "几乎均匀的物质自己长出丝和团块",
+        "en": "Nearly uniform matter grows filaments and clumps by itself"
+      },
+      "hint": {
+        "zh": "二十六万个粒子只有引力，从 3% 的涨落出发；把显示切到“中间的薄片”",
+        "en": "260,000 particles under gravity alone, starting from 3% fluctuations; switch the display to the middle slab"
+      },
+      "idea": "1.6",
+      "url": "/?scenario=web"
+    },
+    {
+      "id": "pancake",
+      "title": {
+        "zh": "一个密度波自己塌成一张薄片",
+        "en": "A density wave collapses into a sheet by itself"
+      },
+      "hint": {
+        "zh": "幅度按 e^{γt} 增长，塌缩的时刻可以事先算出来",
+        "en": "The amplitude grows as e^{γt}, and the moment of collapse can be computed in advance"
+      },
+      "idea": "1.6",
+      "url": "/?scenario=pancake"
     }
   ]
 }

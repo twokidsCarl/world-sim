@@ -509,4 +509,40 @@ export const SCENARIOS: Scenario[] = [
       },
     ],
   },
+  {
+    id: 'pancake',
+    title: '一个密度波自己塌成一张薄片',
+    substrate: 'mesh',
+    steps: [
+      {
+        text: '二十六万个粒子几乎均匀地铺满周期盒子，只沿 x 有一个幅度 2% 的密度波。粒子之间只有引力。密的地方引力更强，于是更密：幅度按 e^{γt} 增长，γ = √(4πG)。壳层交叉之前这有严格解。',
+        set: { G: 1, initial: 0, amplitude: 0.02, side: 6, grid: 6, dt: 0.002 },
+        run: 500,
+        expect: { quantity: 'mode', agree: true, text: '基频模的幅度沿 Zel’dovich 严格解增长（到壳层交叉时刻的九成）' },
+      },
+      {
+        text: '再往前走，过了理论预言的壳层交叉时刻（t ≈ 1.10）：密度波的波峰塌成一张垂直于 x 的薄片，粒子流从两侧穿过它。',
+        run: 140,
+        expect: { quantity: 'peak', min: 5, text: '薄片处的密度是平均密度的好几倍' },
+      },
+    ],
+  },
+  {
+    id: 'web',
+    title: '几乎均匀的物质自己长出丝和团块',
+    substrate: 'mesh',
+    steps: [
+      {
+        text: '这一次的初始扰动是随机的，密度涨落的均方根只有 3%。先看线性阶段：所有波长按同一个速率 γ = √(4πG) 增长。',
+        set: { G: 1, initial: 1, amplitude: 0.03, side: 6, grid: 6, dt: 0.002 },
+        run: 250,
+        expect: { quantity: 'sigma', agree: true, text: '密度涨落按 e^{γt} 增长（线性理论）' },
+      },
+      {
+        text: '继续走。涨落长到 1 的量级之后不再是线性的：先塌成薄片，薄片相交成丝，丝的交点长出团块。把显示切到“中间的薄片”看得最清楚。',
+        run: 500,
+        expect: { quantity: 'peak', min: 30, text: '团块里的密度是平均密度的几十倍以上' },
+      },
+    ],
+  },
 ]

@@ -6,7 +6,7 @@ English version below / 英文版见下文。
 
 ## 模拟什么
 
-四个底座，在界面右上角切换：
+五个底座，在界面右上角切换：
 
 - **分子动力学**：牛顿定律加一条可编辑的两体势（Mie n–m、Morse、纯排斥），二维或三维周期盒。维度是一个旋钮，标为“改变普适类”：换维度后速率分布的形状、第二维里系数、密堆积的配位数（6 对 12）都随之改变。三维画面可只看中间一片薄层。由粒子数据算出：
   - 微观：能量与动量守恒仪表。CPU 后端另有整数坐标的逐位可逆积分器（Levesque–Verlet）：点“倒放”后一位不差地回到起点，而普通浮点积分器因混沌放大舍入误差回不去。
@@ -39,13 +39,19 @@ English version below / 英文版见下文。
   - 热力学：束缚部分的位力比 2K / |Σ m x·a| 对位力定理的 1。
   - 结构：束缚比例、半质量半径、径向密度（Plummer 初始状态下对 Plummer 模型）。径向量都以势阱最深处为中心。
 
-分子动力学（二维）的舞台上可以拖出一个矩形选区：温度、速率分布、g(r)、六角序、配位数会同时画出选区内的取值（橙色线），用来比较晶粒内部与晶界、液滴与蒸气。在舞台上单击清除选区。
+- **引力成团（粒子网格法）**：周期盒子里最多二十六万个等质量粒子，只受引力。密度用云在格中（CIC）分配到网格上，快速傅里叶变换解泊松方程，势的中心差分给出加速度，再插值回粒子；蛙跳积分。均匀背景被减掉，只有密度的涨落产生引力。引力常数 G 是标为“仅改变数值”的旋钮：它只改变时间的尺度。由粒子数据算出：
+  - 微观：动量守恒；能量的相对变化（从纯增长模出发时总能量为零）。
+  - 流体：沿 x 的基频密度模的幅度，对一个平面波在壳层交叉之前的 Zel’dovich 严格解 2 J₁(A₀ e^{γt})，γ = √(4πG)；网格上密度涨落的均方根，随机初始条件下对线性理论 e^{γt}。
+  - 结构：最高密度与平均密度之比。
+  - 测试：三维 FFT 对直接傅里叶求和；单个密度波的加速度对解析值乘上网格的已知折扣；两个粒子在几个格距外的引力对平方反比律（6% 以内）；平面波的增长率实测 3.527，√(4π) = 3.545（计入网格折扣后是 3.522），到壳层交叉时刻的九成为止与 Zel’dovich 解相差不超过 1.1%。
+
+分子动力学的舞台上可以拖出一个矩形选区（三维要先把视角切到“正视”）：温度、速率分布、g(r)、六角序、配位数会同时画出选区内的取值（橙色线），用来比较晶粒内部与晶界、液滴与蒸气。在舞台上单击清除选区。
 
 每个可调参数都带标签，说明它是改变普适类、仅改变数值、状态变量还是数值方法。每个带理论的量旁边实时标出“吻合”或“偏离”。
 
-页面底部有引导实验（Potts 模型多一种状态相变就从连续变成不连续、同一个 Ising 模型换一个维度、三维过冷液体里等一个晶核、流过圆盘、圆盘尾迹的脱落频率、从下面加热出现对流卷、对流从多强的重力开始、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、三维里的管道流、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=pottsOrder`、`/?scenario=isingDimension`、`/?scenario=nucleation`、`/?scenario=wake`、`/?scenario=shedding`、`/?scenario=convection`、`/?scenario=convectionOnset`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=poiseuille3d`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
+页面底部有引导实验（一个密度波自己塌成一张薄片、几乎均匀的物质自己长出丝和团块、Potts 模型多一种状态相变就从连续变成不连续、同一个 Ising 模型换一个维度、三维过冷液体里等一个晶核、流过圆盘、圆盘尾迹的脱落频率、从下面加热出现对流卷、对流从多强的重力开始、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、三维里的管道流、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=pancake`、`/?scenario=web`、`/?scenario=pottsOrder`、`/?scenario=isingDimension`、`/?scenario=nucleation`、`/?scenario=wake`、`/?scenario=shedding`、`/?scenario=convection`、`/?scenario=convectionOnset`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=poiseuille3d`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
 
-地址栏还可以直接选底座和旋钮取值：`?substrate=md|ising|potts|gravity`，其余与旋钮同名的参数设置该旋钮（超出范围的值被截到范围内），例如 `/?substrate=ising&dim=3&T=4.51`、`/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1`。有 `?scenario=` 时这些参数被忽略。加上 `?embed=1` 只留舞台、暂停与重置，以及正在播放的引导实验，供 world-sim 的统一入口（idea-loom）把它嵌进卡片；卡片列表在 `sim.json`。页面看不见时模拟循环停下，回来再继续。没有 WebGPU 时落到 CPU 参考实现，并在画面上说明；在跨源的 iframe 里实测 WebGPU 可用（`localhost` 的页面嵌 `strata.localhost`）。
+地址栏还可以直接选底座和旋钮取值：`?substrate=md|ising|potts|gravity|mesh`，其余与旋钮同名的参数设置该旋钮（超出范围的值被截到范围内），例如 `/?substrate=ising&dim=3&T=4.51`、`/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1`。有 `?scenario=` 时这些参数被忽略。加上 `?embed=1` 只留舞台、暂停与重置，以及正在播放的引导实验，供 world-sim 的统一入口（idea-loom）把它嵌进卡片；卡片列表在 `sim.json`。页面看不见时模拟循环停下，回来再继续。没有 WebGPU 时落到 CPU 参考实现，并在画面上说明；在跨源的 iframe 里实测 WebGPU 可用（`localhost` 的页面嵌 `strata.localhost`）。
 
 ## 运行
 
@@ -71,10 +77,10 @@ GPU 内核没有独立的单元测试，而是逐个对照 f64 的 CPU 参考实
 
 ```
 src/core/         底座、派生量、调度器的接口；计数器式随机数
-src/substrates/   md/、ising/、potts/ 与 gravity/：参数表、CPU 参考实现（ref）、WGSL 内核、后端
+src/substrates/   md/、ising/、potts/、gravity/ 与 mesh/：参数表、CPU 参考实现（ref）、WGSL 内核、后端
 src/levels/       每个底座的层级阶梯：派生量及其理论对照，以及基于时间序列的分析
 src/analysis/     小型线性代数、DMD、弱形式 SINDy
-src/theory/       麦克斯韦分布、维里系数、Onsager 精确解、Plummer 模型、常量到单位的标度关系
+src/theory/       麦克斯韦分布、维里系数、Onsager 精确解、Plummer 模型、Potts 模型的严格结果、Jeans 增长率与 Zel’dovich 解、常量到单位的标度关系
 src/scenarios/    引导实验（数据）
 src/render/       WebGPU 粒子与晶格渲染
 src/plot/         Canvas2D 绘图
@@ -103,6 +109,7 @@ CPU 参考实现先写，是规范；WGSL 内核是它的优化，并用同一�
 - Potts 模型只有二维、只有最近邻耦合、没有外场。相变点附近 Metropolis 更新平衡极慢：引导实验里 q = 3、L = 256 跑八万次扫描后，两种出发点的能量是 −1.569 和 −1.588（严格值 −1.577），还在涨落；q = 4 有对数修正，序参量的实测指数是 −0.10（L = 16 到 128），与 1/8 差两成，没有写成断言。q > 4 时两相在相变点上的共存是亚稳的：小晶格（128 以下）会在两相之间跳，引导实验因此用 512。序参量取的是“占比最大的状态”，不是按状态分量定义的矢量序参量。
 - 三维 Ising 只有最近邻耦合，没有次近邻耦合，也没有“有效信息”那张卡片；它没有精确解，磁化强度和能量不画理论线，临界温度与指数取文献里的数值结果。测试用的晶格很小（8 到 32），Binder 交点处的累积量是 0.490，比文献的大晶格值 0.465 高，这是小晶格的修正。
 - 方程发现只做了扩散这一种情形。SINDy 的稀疏阈值取 0.2（分箱的粒子数据每箱有百分之几的噪声，取 0.1 会留下拟合噪声的小项）；浓度趋于均匀后信号被噪声淹没，拟合会失效。DMD 的衰减率与扩散方程的预言只在量级上吻合，而且随记录长度变化很大：一次运行里，两个最慢模态与预言之比在 1.2 万步时是 3.5 和 1.4，到 4 万步时是 0.99 和 1.42。试过前向–后向 DMD：在加了噪声的合成数据上它把最慢衰减率的平均误差从 264% 降到 81%，但在真实粒子数据上并不更准（4 万步时 0.86 和 1.62）。可见主要误差不是噪声带来的偏差，而是初始台阶里高阶模混进了前几个模态。界面仍用标准 DMD。
+- 粒子网格法的力在两三个格距以下被抹平，比这更小的结构不可信；最高密度的读数因此受网格限制（平面波塌成的薄片实测只有平均密度的 6 到 8 倍，而理论上那里是发散的）。背景是静态的（没有宇宙膨胀），所以增长是指数的而不是幂律的，长出的丝和团块只是定性的图像，不能和观测的星系分布比。粒子从规则格点出发，薄片里能看见格点留下的条纹。能量只是近似守恒（引导实验里漂移约 0.5%）。随机初始条件只含波数不超过 4 的模。GPU 上分配用定点整数，与 CPU 参考实现在舍入上有差别（初始加速度相差不到 0.2%）。
 - 引力是 O(N²) 直接求和，最多 16384 个天体；没有气体、辐射和核反应，所以只有无碰撞的坍缩与弛豫，没有恒星。
 - 冷坍缩后“全体的 2K/|U|”不会回到 1：约两成天体被抛出带走动能，而且软化势下 |U| 不等于力的位力。位力定理的检验只对束缚部分、用力的位力来做。
 - 逐位可逆积分器只在 CPU 后端，不支持恒温器、壁面和驱动力；GPU 后端的“倒放”只是把速度反号，回不到起点。
@@ -120,7 +127,7 @@ From microscopic rules to emergence. Only the lowest-level rules are simulated; 
 
 ## What is simulated
 
-Four substrates, switched at the top right of the interface:
+Five substrates, switched at the top right of the interface:
 
 - **Molecular dynamics**: Newton's laws plus an editable pair potential (Mie n–m, Morse, purely repulsive), in a 2D or 3D periodic box. The dimension is a knob, labelled "changes the universality class": on changing the dimension, the shape of the speed distribution, the second virial coefficient and the coordination number of close packing (6 versus 12) all change with it. The 3D view can be restricted to a thin slice through the middle. Computed from the particle data:
   - Microscopic: energy and momentum conservation gauges. The CPU backend additionally has a bit-reversible integrator on integer coordinates (Levesque–Verlet): after clicking "play backwards" it returns to the starting point bit for bit, whereas the ordinary floating-point integrator cannot get back, because chaos amplifies the rounding error.
@@ -153,13 +160,19 @@ Four substrates, switched at the top right of the interface:
   - Thermodynamic: the virial ratio 2K / |Σ m x·a| of the bound part against the value 1 of the virial theorem.
   - Structure: bound fraction, half-mass radius, radial density (against the Plummer model when the initial state is Plummer). All radial quantities are centred on the deepest point of the potential well.
 
-On the molecular dynamics stage (2D) you can drag a rectangle to select a region: temperature, the speed distribution, g(r), hexatic order and the coordination number are then also drawn for the particles inside it (orange lines), to compare the inside of a grain with a grain boundary, or a droplet with its vapour. Click on the stage to clear the region.
+- **Gravitational clustering (particle mesh)**: up to 260,000 equal-mass particles in a periodic box, under gravity alone. The density is deposited on a grid by cloud-in-cell (CIC), Poisson's equation is solved by fast Fourier transform, accelerations come from central differences of the potential and are interpolated back to the particles; leapfrog integration. The uniform background is subtracted, so only density fluctuations gravitate. The gravitational constant G is a knob tagged "changes values only": it only sets the time scale. Computed from the particle data:
+  - Micro: momentum conservation; the relative change in energy (the total energy is zero when starting in the pure growing mode).
+  - Fluid: the amplitude of the fundamental density mode along x, against the exact Zel'dovich solution 2 J₁(A₀ e^{γt}) for one plane wave before shell crossing, γ = √(4πG); the rms density contrast on the grid, against linear theory e^{γt} for random initial conditions.
+  - Structure: the ratio of the highest density to the mean.
+  - Tests: the 3D FFT against a direct Fourier sum; the acceleration of a single density wave against its analytic value times the known mesh factor; the attraction of two particles several cells apart against the inverse-square law (within 6%); a plane wave's measured growth rate of 3.527 against √(4π) = 3.545 (3.522 once the mesh factor is included), staying within 1.1% of the Zel'dovich solution up to nine tenths of the shell-crossing time.
+
+On the molecular dynamics stage you can drag a rectangle (in 3D, switch the view to "front" first) to select a region: temperature, the speed distribution, g(r), hexatic order and the coordination number are then also drawn for the particles inside it (orange lines), to compare the inside of a grain with a grain boundary, or a droplet with its vapour. Click on the stage to clear the region.
 
 Every adjustable parameter carries a label saying whether it changes the universality class, only changes numerical values, is a state variable, or is a numerical method. Next to every quantity that has a theory, "agrees" or "deviates" is shown in real time.
 
-At the bottom of the page there are guided experiments (a Potts model whose transition turns from continuous to discontinuous with more states, the same Ising model in a different dimension, waiting for a nucleus in a supercooled 3D liquid, flow past a disc, the shedding frequency of the disc's wake, heating from below until convection rolls appear, how strong gravity must be for convection to start, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, the same channel flow in 3D, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=pottsOrder`, `/?scenario=isingDimension`, `/?scenario=nucleation`, `/?scenario=wake`, `/?scenario=shedding`, `/?scenario=convection`, `/?scenario=convectionOnset`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=poiseuille3d`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
+At the bottom of the page there are guided experiments (a density wave collapsing into a sheet by itself, nearly uniform matter growing filaments and clumps by itself, a Potts model whose transition turns from continuous to discontinuous with more states, the same Ising model in a different dimension, waiting for a nucleus in a supercooled 3D liquid, flow past a disc, the shedding frequency of the disc's wake, heating from below until convection rolls appear, how strong gravity must be for convection to start, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, the same channel flow in 3D, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=pancake`, `/?scenario=web`, `/?scenario=pottsOrder`, `/?scenario=isingDimension`, `/?scenario=nucleation`, `/?scenario=wake`, `/?scenario=shedding`, `/?scenario=convection`, `/?scenario=convectionOnset`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=poiseuille3d`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
 
-The address bar can also pick the substrate and knob values directly: `?substrate=md|ising|potts|gravity`, and any other parameter named after a knob sets that knob (values outside its range are clamped), e.g. `/?substrate=ising&dim=3&T=4.51` or `/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1`. These are ignored when `?scenario=` is present. Adding `?embed=1` leaves only the stage, pause and reset, and the guided experiment being played, so that world-sim's single entry point (idea-loom) can embed it in a card; the card list is in `sim.json`. The simulation loop stops while the page is hidden and resumes on return. Without WebGPU the CPU reference implementation runs instead and the page says so; WebGPU was measured to work inside a cross-origin iframe (a `localhost` page embedding `strata.localhost`).
+The address bar can also pick the substrate and knob values directly: `?substrate=md|ising|potts|gravity|mesh`, and any other parameter named after a knob sets that knob (values outside its range are clamped), e.g. `/?substrate=ising&dim=3&T=4.51` or `/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1`. These are ignored when `?scenario=` is present. Adding `?embed=1` leaves only the stage, pause and reset, and the guided experiment being played, so that world-sim's single entry point (idea-loom) can embed it in a card; the card list is in `sim.json`. The simulation loop stops while the page is hidden and resumes on return. Without WebGPU the CPU reference implementation runs instead and the page says so; WebGPU was measured to work inside a cross-origin iframe (a `localhost` page embedding `strata.localhost`).
 
 ## Running
 
@@ -185,10 +198,10 @@ The GPU kernels have no separate unit tests; instead each one is checked against
 
 ```
 src/core/         interfaces of substrates, derived quantities and the scheduler; counter-based random numbers
-src/substrates/   md/, ising/, potts/ and gravity/: parameter tables, CPU reference implementation (ref), WGSL kernels, backends
+src/substrates/   md/, ising/, potts/, gravity/ and mesh/: parameter tables, CPU reference implementation (ref), WGSL kernels, backends
 src/levels/       the ladder of levels of each substrate: derived quantities and their theory comparisons, and analyses based on time series
 src/analysis/     small linear algebra, DMD, weak-form SINDy
-src/theory/       Maxwell distribution, virial coefficients, Onsager exact solution, Plummer model, scaling relations from constants to units
+src/theory/       Maxwell distribution, virial coefficients, Onsager exact solution, Plummer model, exact Potts results, the Jeans growth rate and Zel'dovich solution, scaling relations from constants to units
 src/scenarios/    guided experiments (data)
 src/render/       WebGPU particle and lattice rendering
 src/plot/         Canvas2D plotting
@@ -217,6 +230,7 @@ The CPU reference implementation is written first and is the specification; the 
 - The Potts model is 2D only, with nearest-neighbour coupling and no field. Metropolis updates equilibrate extremely slowly near the transition: in the guided experiment, q = 3 at L = 256 after eighty thousand sweeps gives energies of −1.569 and −1.588 from the two starts (exact −1.577), still fluctuating; q = 4 has logarithmic corrections, and its measured order-parameter exponent is −0.10 (L = 16 to 128), a fifth away from 1/8, so it is not asserted. For q > 4 the coexistence of the two phases at the transition is metastable: small lattices (128 and below) hop between them, which is why the guided experiment uses 512. The order parameter is "the most populated state", not the vector order parameter defined per state.
 - The 3D Ising model has nearest-neighbour coupling only: no next-nearest-neighbour coupling and no "effective information" card. It has no exact solution, so magnetisation and energy have no theory line, and the critical temperature and exponents are numerical results from the literature. The lattices used in the tests are small (8 to 32); the cumulant at the Binder crossing is 0.490, above the literature's large-lattice value of 0.465, which is a small-lattice correction.
 - Equation discovery has been done only for the single case of diffusion. The SINDy sparsity threshold is set to 0.2 (the binned particle data have a few percent of noise per bin, and 0.1 would leave small terms that fit the noise); once the concentration approaches uniformity the signal is drowned in noise and the fit fails. The DMD decay rates agree with the prediction of the diffusion equation only in order of magnitude, and vary strongly with the length of the record: in one run the ratios of the two slowest modes to the prediction were 3.5 and 1.4 at 12,000 steps and 0.99 and 1.42 at 40,000 steps. Forward–backward DMD was tried: on synthetic data with added noise it lowers the mean error of the slowest decay rate from 264% to 81%, but on the real particle data it is no more accurate (0.86 and 1.62 at 40,000 steps). So the main error is not noise bias but higher modes of the initial step leaking into the first few. The interface still uses standard DMD.
+- The particle-mesh force is smoothed below two or three grid spacings, and structure smaller than that is not to be trusted; the reading of the highest density is limited by the grid accordingly (the sheet a plane wave collapses into measures only 6 to 8 times the mean density, where theory has it diverge). The background is static (no cosmic expansion), so growth is exponential rather than a power law, and the filaments and clumps are a qualitative picture that cannot be compared with the observed galaxy distribution. The particles start on a regular lattice, whose stripes remain visible in the sheets. Energy is only approximately conserved (a drift of about 0.5% in the guided experiment). The random initial conditions contain only modes with wave number up to 4. On the GPU the deposit uses fixed-point integers, so it differs from the CPU reference by rounding (initial accelerations agree to within 0.2%).
 - Gravity is O(N²) direct summation, with at most 16384 bodies; there is no gas, radiation or nuclear reactions, so there is only collisionless collapse and relaxation, and no stars.
 - After a cold collapse the "2K/|U| of the whole system" does not return to 1: about twenty percent of the bodies are ejected and carry away kinetic energy, and with a softened potential |U| is not equal to the virial of the forces. The virial theorem is tested only on the bound part, using the virial of the forces.
 - The bit-reversible integrator exists only on the CPU backend and does not support the thermostat, walls or the driving force; "play backwards" on the GPU backend merely flips the sign of the velocities and does not return to the starting point.

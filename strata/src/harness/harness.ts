@@ -12,6 +12,9 @@ import { IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
 import { Ising3dCpuBackend, Ising3dGpuBackend } from '../substrates/ising/backend3d'
 import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
+import { MeshGpuBackend } from '../substrates/mesh/backend'
+import { initMesh, meshScalars, step as meshStep } from '../substrates/mesh/ref'
+import { MESH_KNOBS } from '../substrates/mesh/schema'
 import { PottsCpuBackend, PottsGpuBackend } from '../substrates/potts/backend'
 import { POTTS_KNOBS } from '../substrates/potts/schema'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
@@ -425,6 +428,38 @@ export async function runHarness(): Promise<HarnessResult> {
   }
   check('引力 400 步能量相对漂移', Math.abs((await gravGpu.reduce()).drift), 1e-2)
   gravGpu.dispose()
+
+  // 粒子网格法：初始加速度（一次完整的分配、FFT、差分、插值），再跑一段。
+  // Particle mesh: the initial accelerations (one full deposit, FFT, difference and interpolation), then a short run.
+  for (const initial of [1, 0]) {
+    const mp2: Params = { ...defaults(MESH_KNOBS), initial, side: 5, grid: 5, amplitude: 0.05 }
+    const meshRef = initMesh(32, 32, initial, 0.05, 3)
+    const meshGpu = new MeshGpuBackend(gpu, mp2, 3)
+    const mesh0 = await meshGpu.readState()
+    let meshMax = 0
+    let meshErr = 0
+    for (let i = 0; i < meshRef.n; i++) {
+      for (let d = 0; d < 3; d++) {
+        meshMax = Math.max(meshMax, Math.abs(meshRef.acc[3 * i + d]!))
+        meshErr = Math.max(meshErr, Math.abs(meshRef.acc[3 * i + d]! - mesh0.acc[4 * i + d]!))
+      }
+    }
+    const kind = initial ? '随机场' : '平面波'
+    check(`粒子网格（${kind}）：加速度最大误差 / 最大加速度`, meshErr / meshMax, 2e-3)
+    for (let i = 0; i < 25; i++) {
+      meshGpu.step(4)
+      await meshGpu.idle()
+    }
+    meshStep(meshRef, mp2.dt!, 100)
+    const meshFrame = await meshGpu.reduce()
+    const meshSc = meshScalars(meshRef)
+    check(`粒子网格（${kind}）：100 步后动能相对误差`, Math.abs(meshFrame.ke / meshSc.ke - 1), 5e-3)
+    check(`粒子网格（${kind}）：100 步后势能相对误差`, Math.abs(meshFrame.pe / meshSc.pe - 1), 5e-3)
+    check(`粒子网格（${kind}）：100 步后 σ 相对误差`, Math.abs(meshFrame.sigma / meshSc.sigma - 1), 5e-3)
+    check(`粒子网格（${kind}）：100 步后基频模幅度差`, Math.abs(meshFrame.mode - meshSc.mode), 1e-4)
+    check(`粒子网格（${kind}）：总动量`, meshFrame.momentum, 1e-5)
+    meshGpu.dispose()
+  }
 
   const error = await gpu.device.popErrorScope()
   if (error) result.error = error.message
