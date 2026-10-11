@@ -112,6 +112,31 @@ export function compressibilityLimit(p: Record<string, number>, T: number): numb
 
 export const MD_ANALYSES: AnalysisDef[] = [
   {
+    id: 'selfDiffusion',
+    level: 'kinetic',
+    label: '自扩散系数：由均方位移的斜率',
+    source: 'msd',
+    minSamples: 60,
+    when: (p) => p.backend === 0 && !p.walls && p.integrator !== 1,
+    compute(h, p) {
+      // 后半段记录上 ⟨Δr²⟩ 对 t 的最小二乘斜率；爱因斯坦关系 ⟨Δr²⟩ = 2 d D t。
+      // Least-squares slope of ⟨Δr²⟩ against t over the second half of the record; the
+      // Einstein relation is ⟨Δr²⟩ = 2 d D t.
+      const from = Math.floor(h.t.length / 2)
+      const t = h.t.slice(from)
+      const y = h.y.slice(from).map((v) => v[0]!)
+      const mt = t.reduce((a, c) => a + c, 0) / t.length
+      const my = y.reduce((a, c) => a + c, 0) / y.length
+      const slope = t.reduce((a, ti, i) => a + (ti - mt) * (y[i]! - my), 0) / t.reduce((a, ti) => a + (ti - mt) ** 2, 0)
+      const dim = p.dim === 3 ? 3 : 2
+      const D = slope / (2 * dim)
+      return {
+        headline: `自扩散系数 D = ${D.toPrecision(3)}`,
+        detail: `取均方位移对时间的斜率除以 ${2 * dim}，用了 ${(t[t.length - 1]! - t[0]!).toFixed(0)} 个时间单位。两种粒子相互作用完全相同时，“方程发现”里拟合出的扩散系数应当与它相等。二维里 D 会随时间和盒子大小缓慢增长（长时尾），不是一个严格的常数。`,
+      }
+    },
+  },
+  {
     id: 'compressibility',
     level: 'structure',
     label: '长波极限：S(k→0) 对压缩率',

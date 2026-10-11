@@ -5,6 +5,7 @@
 import type { QuantityDef } from '../core/quantity'
 import type { MdFrame } from '../substrates/md/backend-cpu'
 import { shiftedPotential } from '../substrates/md/potential'
+import { runningIntegral } from '../analysis/autocorrelation'
 import { profiles, structureFactor } from '../substrates/md/ref/reducers'
 import { speedPdf } from '../theory/maxwell'
 import { cutoffPressureCorrection2d, ljFluid2d, ljFluid2dApplies } from '../theory/ljEos'
@@ -49,6 +50,26 @@ function wakeVelocity(f: MdFrame, radius: number): number {
     }
   }
   return n > 0 ? sum / n : NaN
+}
+
+/**
+ * 由累计的切应力自相关算粘度的累积积分 η(τ) = (V/T) ∫₀^τ C(t) dt。
+ * 累计的步数还不到最长时间差的四倍时返回空曲线。
+ * The running integral of the viscosity, η(τ) = (V/T) ∫₀^τ C(t) dt, from the accumulated
+ * shear-stress autocorrelation. Returns an empty curve until at least four times the
+ * longest lag has been accumulated.
+ */
+function greenKubo(f: MdFrame): { x: Float64Array; y: Float64Array } {
+  const t = f.transport
+  if (!t || t.samples < 4 * t.acf.length) return { x: new Float64Array(0), y: new Float64Array(0) }
+  const integral = runningIntegral(t.acf, t.dt)
+  // 每 5 步取一个点，够画曲线了。 / Every fifth lag is enough for the plot.
+  const every = 5
+  const count = Math.floor((t.acf.length - 1) / every) + 1
+  return {
+    x: Float64Array.from({ length: count }, (_, k) => k * every * t.dt),
+    y: Float64Array.from({ length: count }, (_, k) => (t.volume / t.temperature) * integral[k * every]!),
+  }
 }
 
 /**
@@ -144,6 +165,16 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
     theory: (f) => (f.clock === 0 && f.step > 0 ? 0 : null),
     theoryLabel: '倒放回到第 0 步时：应当恰好为 0',
     tolerance: { abs: 0 },
+  },
+  {
+    id: 'msd',
+    level: 'kinetic',
+    label: '均方位移 ⟨Δr²⟩',
+    kind: 'scalar',
+    record: true,
+    reducers: ['transport'],
+    when: (p) => p.backend === 0 && !p.walls && p.integrator !== 1,
+    compute: (f) => f.transport?.msd ?? NaN,
   },
   {
     id: 'speedDist',
@@ -258,6 +289,20 @@ export const MD_QUANTITIES: QuantityDef<MdFrame>[] = [
       const { gx, gy, count, vy } = f.field!
       return { nx: gx, ny: gy, data: Float64Array.from(vy, (v, c) => (count[c]! > 0 ? v / count[c]! : 0)), aspect: f.box[0]! / f.box[1]!, signed: true }
     },
+  },
+  {
+    id: 'gkViscosity',
+    level: 'hydro',
+    label: 'Green–Kubo：粘度的累积积分 η(τ)',
+    kind: 'curve',
+    mark: 'line',
+    smooth: 1,
+    xLabel: '积分上限 τ',
+    reducers: ['transport'],
+    when: (p) => p.backend === 0 && !p.walls && p.integrator !== 1,
+    compute: (f) => greenKubo(f),
+    theoryLabel:
+      'η(τ) = (V/T) ∫₀^τ ⟨σ_xy(0) σ_xy(t)⟩ dt，由平衡态下切应力的自发涨落算出，不需要让流体流动。自参数上次改动起累计，收敛很慢：60 个时间单位的记录给出的值可以相差一倍，要上千个时间单位才稳定到一两成。二维里这个积分还会随 τ 缓慢地对数增长，不会停在一个平台上。只有 CPU 后端提供。',
   },
   {
     id: 'vorticity',

@@ -209,7 +209,12 @@ export class Engine {
     const h = a && this.histories.get(a.source)
     if (!a || !h || h.t.length < a.minSamples) return null
     try {
-      return a.compute(h, this.params, (q) => this.scalars.get(q)?.value.at(-1))
+      return a.compute(
+        h,
+        this.params,
+        (q) => this.scalars.get(q)?.value.at(-1),
+        (q) => this.histories.get(q),
+      )
     } catch {
       // 退化数据上的奇异拟合不是值得上报的错误。
       // A singular fit on degenerate data is not an error worth surfacing.
