@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { Attached } from './images'
 import { currentLang, tr } from '../i18n'
 import type { PageSnapshot } from './pageSnapshot'
 import { note, recentActions } from './trail'
@@ -22,7 +23,7 @@ type AssistantState = {
   setWidth: (width: number) => void
   setOffer: (offer: boolean) => void
   refresh: () => Promise<void>
-  ask: (question: string, page: PageSnapshot, ideaId: string | null) => Promise<void>
+  ask: (question: string, page: PageSnapshot, ideaId: string | null, images?: Attached[]) => Promise<void>
   stop: () => Promise<void>
   newConversation: () => void
   loadHistory: () => Promise<void>
@@ -124,7 +125,7 @@ export const useAssistant = create<AssistantState>((set, get) => {
         set({ ready: false, notReadyReason: tr(currentLang(), '连不上后端', 'Cannot reach the backend') })
       }
     },
-    ask: async (question, page, ideaId) => {
+    ask: async (question, page, ideaId, images = []) => {
       if (get().running || !question.trim()) return
       set({ error: null, offer: false })
       note('ask', question)
@@ -135,11 +136,11 @@ export const useAssistant = create<AssistantState>((set, get) => {
           save('conversation', id)
           set({ conversationId: id })
         }
-        set((s) => ({ running: true, turns: [...s.turns, emptyTurn(question.trim(), page.title)] }))
+        set((s) => ({ running: true, turns: [...s.turns, emptyTurn(question.trim(), page.title, images.map((i) => i.url))] }))
         const res = await fetch(`/api/assistant/conversations/${id}/turns`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ question, page, actions: recentActions(), idea_id: ideaId }),
+          body: JSON.stringify({ question, page, actions: recentActions(), idea_id: ideaId, images: images.map(({ media_type, data, name }) => ({ media_type, data, name })) }),
         })
         if (!res.ok) {
           const detail = await res.json().then((b: { detail?: unknown }) => (typeof b.detail === 'string' ? b.detail : null), () => null)

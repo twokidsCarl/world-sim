@@ -13,6 +13,8 @@ export type Block =
 export type TurnView = {
   question: string
   page_title: string
+  images: string[] // 附的图的地址：刚发的是本地的，回看的是服务器上的 / URLs of attached images: local for a fresh turn, on the server when looking back
+  imageCount: number
   steps: Step[]
   blocks: Block[]
   status: 'running' | 'done' | 'stopped' | 'failed'
@@ -21,8 +23,8 @@ export type TurnView = {
   lastSeq: number
 }
 
-export function emptyTurn(question = '', page_title = ''): TurnView {
-  return { question, page_title, steps: [], blocks: [], status: 'running', seconds: null, message: null, lastSeq: 0 }
+export function emptyTurn(question = '', page_title = '', images: string[] = []): TurnView {
+  return { question, page_title, images, imageCount: images.length, steps: [], blocks: [], status: 'running', seconds: null, message: null, lastSeq: 0 }
 }
 
 export function fold(view: TurnView, events: TurnEvent[]): TurnView {
@@ -33,6 +35,7 @@ export function fold(view: TurnView, events: TurnEvent[]): TurnView {
     if (e.type === 'started') {
       next.question = String(e.question ?? next.question)
       next.page_title = String(e.page_title ?? next.page_title)
+      next.imageCount = typeof e.images === 'number' ? e.images : next.imageCount
     } else if (e.type === 'text') {
       const last = next.blocks[next.blocks.length - 1]
       if (last?.kind === 'text') next.blocks[next.blocks.length - 1] = { kind: 'text', text: last.text + String(e.delta ?? '') }
