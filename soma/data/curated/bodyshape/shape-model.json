@@ -1,0 +1,1028 @@
+{
+ "schema": 1,
+ "description": {
+  "zh": "体型模型方案（Rig.shape 的建议内容）。控制量经人体测量模型换算成各肢段长度、各部位围度和皮下脂肪厚度；运行时取相对静止值的比值。详见 tools/bodyshape/REPORT.md。",
+  "en": "Proposed body-shape model (what Rig.shape would hold). Controls are turned into segment lengths, girths and subcutaneous-fat thickness through the anthropometric model; the runtime uses ratios to the rest values. See tools/bodyshape/REPORT.md."
+ },
+ "controls": [
+  {
+   "id": "stature",
+   "name": {
+    "zh": "身高",
+    "en": "Stature"
+   },
+   "unit": "m",
+   "min": 1.4,
+   "max": 2.0,
+   "rest": {
+    "F": 1.67,
+    "M": 1.72
+   }
+  },
+  {
+   "id": "bmi",
+   "name": {
+    "zh": "体重指数（胖瘦）",
+    "en": "Body-mass index (fatness)"
+   },
+   "unit": "kg/m2",
+   "min": 16,
+   "max": 40,
+   "rest": {
+    "F": null,
+    "M": 23.9
+   },
+   "note": {
+    "zh": "男性静止值由皮肤体积得出；女性取决于换用哪张皮肤（参考体表为 22）",
+    "en": "male rest value from the skin volume; female depends on the skin adopted (22 for the reference surface)"
+   }
+  },
+  {
+   "id": "legLength",
+   "name": {
+    "zh": "腿长比例",
+    "en": "Relative leg length"
+   },
+   "unit": "sd",
+   "min": -2,
+   "max": 2,
+   "rest": {
+    "F": 0,
+    "M": 0
+   }
+  },
+  {
+   "id": "centralBuild",
+   "name": {
+    "zh": "体型分布（腰腹型–四肢型）",
+    "en": "Mass distribution (waist-heavy vs limb-heavy)"
+   },
+   "unit": "sd",
+   "min": -2,
+   "max": 2,
+   "rest": {
+    "F": 0,
+    "M": 0
+   }
+  }
+ ],
+ "formula": {
+  "zh": "ln y = a + bStature*ln(S/1650) + cBmi*ln(B/22) + L1*legLength + L2*centralBuild（系数在 anthro-model.json）；scale = y(控制量)/y(静止)",
+  "en": "ln y = a + bStature*ln(S/1650) + cBmi*ln(B/22) + L1*legLength + L2*centralBuild (coefficients in anthro-model.json); scale = y(controls) / y(rest)"
+ },
+ "segments": [
+  {
+   "id": "headNeck",
+   "name": {
+    "zh": "头颈",
+    "en": "Head and neck"
+   },
+   "lengthMm": {
+    "stature": 1,
+    "cervicaleheight": -1
+   }
+  },
+  {
+   "id": "trunk",
+   "name": {
+    "zh": "躯干（C7 至大转子）",
+    "en": "Trunk (C7 to trochanterion)"
+   },
+   "lengthMm": {
+    "cervicaleheight": 1,
+    "trochanterionheight": -1
+   }
+  },
+  {
+   "id": "thigh",
+   "name": {
+    "zh": "大腿",
+    "en": "Thigh"
+   },
+   "lengthMm": {
+    "trochanterionheight": 1,
+    "lateralfemoralepicondyleheight": -1
+   }
+  },
+  {
+   "id": "shank",
+   "name": {
+    "zh": "小腿",
+    "en": "Lower leg"
+   },
+   "lengthMm": {
+    "lateralfemoralepicondyleheight": 1,
+    "lateralmalleolusheight": -1
+   }
+  },
+  {
+   "id": "ankleHeight",
+   "name": {
+    "zh": "踝高",
+    "en": "Ankle height"
+   },
+   "lengthMm": {
+    "lateralmalleolusheight": 1
+   }
+  },
+  {
+   "id": "foot",
+   "name": {
+    "zh": "足长",
+    "en": "Foot length"
+   },
+   "lengthMm": {
+    "footlength": 1
+   }
+  },
+  {
+   "id": "upperArm",
+   "name": {
+    "zh": "上臂",
+    "en": "Upper arm"
+   },
+   "lengthMm": {
+    "acromionradialelength": 1
+   }
+  },
+  {
+   "id": "forearm",
+   "name": {
+    "zh": "前臂",
+    "en": "Forearm"
+   },
+   "lengthMm": {
+    "radialestylionlength": 1
+   }
+  },
+  {
+   "id": "hand",
+   "name": {
+    "zh": "手长",
+    "en": "Hand length"
+   },
+   "lengthMm": {
+    "handlength": 1
+   }
+  },
+  {
+   "id": "shoulderWidth",
+   "name": {
+    "zh": "肩宽（肩峰间）",
+    "en": "Shoulder width (biacromial)"
+   },
+   "lengthMm": {
+    "biacromialbreadth": 1
+   }
+  },
+  {
+   "id": "pelvisWidth",
+   "name": {
+    "zh": "骨盆宽（髂嵴间）",
+    "en": "Pelvis width (bicristal)"
+   },
+   "lengthMm": {
+    "bicristalbreadth": 1
+   }
+  }
+ ],
+ "girthSites": [
+  {
+   "id": "neck",
+   "name": {
+    "zh": "颈",
+    "en": "Neck"
+   },
+   "dataset": "ansur",
+   "variable": "neckcircumference"
+  },
+  {
+   "id": "chest",
+   "name": {
+    "zh": "胸",
+    "en": "Chest / bust"
+   },
+   "dataset": "ansur",
+   "variable": "chestcircumference"
+  },
+  {
+   "id": "waist",
+   "name": {
+    "zh": "腰（脐水平）",
+    "en": "Waist (navel level)"
+   },
+   "dataset": "ansur",
+   "variable": "waistcircumference"
+  },
+  {
+   "id": "waistIliac",
+   "name": {
+    "zh": "腰（髂嵴上缘）",
+    "en": "Waist (above iliac crest)"
+   },
+   "dataset": "nhanes",
+   "variable": "waist"
+  },
+  {
+   "id": "hip",
+   "name": {
+    "zh": "臀",
+    "en": "Hip / buttock"
+   },
+   "dataset": "nhanes",
+   "variable": "hip"
+  },
+  {
+   "id": "thighProximal",
+   "name": {
+    "zh": "大腿根",
+    "en": "Proximal thigh"
+   },
+   "dataset": "ansur",
+   "variable": "thighcircumference"
+  },
+  {
+   "id": "thighMid",
+   "name": {
+    "zh": "大腿中部",
+    "en": "Mid-thigh"
+   },
+   "dataset": "nhanes",
+   "variable": "thigh"
+  },
+  {
+   "id": "thighLower",
+   "name": {
+    "zh": "大腿下部",
+    "en": "Lower thigh"
+   },
+   "dataset": "ansur",
+   "variable": "lowerthighcircumference"
+  },
+  {
+   "id": "calf",
+   "name": {
+    "zh": "小腿",
+    "en": "Calf"
+   },
+   "dataset": "nhanes",
+   "variable": "calf"
+  },
+  {
+   "id": "ankle",
+   "name": {
+    "zh": "踝",
+    "en": "Ankle"
+   },
+   "dataset": "ansur",
+   "variable": "anklecircumference"
+  },
+  {
+   "id": "upperArm",
+   "name": {
+    "zh": "上臂（放松）",
+    "en": "Upper arm, relaxed"
+   },
+   "dataset": "nhanes",
+   "variable": "armcirc"
+  },
+  {
+   "id": "forearm",
+   "name": {
+    "zh": "前臂",
+    "en": "Forearm"
+   },
+   "dataset": "ansur",
+   "variable": "forearmcircumferenceflexed"
+  },
+  {
+   "id": "wrist",
+   "name": {
+    "zh": "腕",
+    "en": "Wrist"
+   },
+   "dataset": "ansur",
+   "variable": "wristcircumference"
+  }
+ ],
+ "fatSites": [
+  {
+   "id": "abdomen",
+   "name": {
+    "zh": "腹前壁",
+    "en": "Anterior abdomen"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": -8.47,
+     "b": 1.14
+    },
+    "M": {
+     "a": -13.82,
+     "b": 1.14
+    },
+    "min": 3.0
+   },
+   "basis": "sim2014 regression at age 22 (Korean adults with type-2 diabetes, ultrasound)",
+   "quality": "measured regression, both sexes"
+  },
+  {
+   "id": "upperArmPosterior",
+   "name": {
+    "zh": "上臂后侧",
+    "en": "Posterior upper arm"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": 2.09,
+     "b": 0.403
+    },
+    "M": {
+     "a": -1.25,
+     "b": 0.403
+    },
+    "min": 2.0
+   },
+   "basis": "sim2014 regression at age 22",
+   "quality": "measured regression, both sexes"
+  },
+  {
+   "id": "deltoid",
+   "name": {
+    "zh": "三角肌区",
+    "en": "Deltoid"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": -2.1,
+     "b": 0.4
+    },
+    "M": {
+     "a": -3.9,
+     "b": 0.39
+    },
+    "min": 2.0
+   },
+   "basis": "kowatari2023 (Japanese, age 22, ultrasound)",
+   "quality": "measured regression, both sexes"
+  },
+  {
+   "id": "thighAnterior",
+   "name": {
+    "zh": "大腿前侧",
+    "en": "Anterior thigh"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": -4.79,
+     "b": 0.71
+    },
+    "M": {
+     "a": -7.1,
+     "b": 0.647
+    },
+    "min": 2.0
+   },
+   "basis": "jain2013 class means, line fitted here (Indian adults, small cells)",
+   "quality": "derived from class means"
+  },
+  {
+   "id": "buttock",
+   "name": {
+    "zh": "臀部",
+    "en": "Buttock"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": 11.5,
+     "b": 0.239
+    },
+    "M": {
+     "a": 5.8,
+     "b": 0.239
+    },
+    "min": 5.0
+   },
+   "basis": "gibney2010 pooled class means, line fitted here, +/- half the sex difference (5.7 mm)",
+   "quality": "derived; sex and BMI never stratified together"
+  },
+  {
+   "id": "calf",
+   "name": {
+    "zh": "小腿",
+    "en": "Calf"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": -7.7,
+     "b": 0.495
+    },
+    "M": {
+     "a": -5.1,
+     "b": 0.33
+    },
+    "min": 1.5
+   },
+   "basis": "stoerchle2018: 10 men, 2.8 mm at BMI 24, slope 0.33/BMI; women taken as 1.5 x men (one woman measured 4.0 mm)",
+   "quality": "weak: men n=10; female factor assumed"
+  },
+  {
+   "id": "forearm",
+   "name": {
+    "zh": "前臂",
+    "en": "Forearm"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": 0.4,
+     "b": 0.075
+    },
+    "M": {
+     "a": 0.0,
+     "b": 0.05
+    },
+    "min": 1.0
+   },
+   "basis": "stoerchle2018 men 1.15 mm, slope 0.05/BMI; women 1.5 x (one woman measured 2.2 mm)",
+   "quality": "weak"
+  },
+  {
+   "id": "chestAnterior",
+   "name": {
+    "zh": "胸前壁（乳房以外）",
+    "en": "Anterior chest (outside the breast)"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": -2.7,
+     "b": 0.405
+    },
+    "M": {
+     "a": -1.8,
+     "b": 0.27
+    },
+    "min": 2.0
+   },
+   "basis": "stoerchle2018 anterior trunk men 4.7 mm, slope 0.27/BMI; women 1.5 x assumed",
+   "quality": "weak; female factor assumed"
+  },
+  {
+   "id": "back",
+   "name": {
+    "zh": "背部",
+    "en": "Back"
+   },
+   "thicknessMm": {
+    "F": {
+     "a": 0.7,
+     "b": 0.21
+    },
+    "M": {
+     "a": 0.4,
+     "b": 0.14
+    },
+    "min": 2.0
+   },
+   "basis": "stoerchle2018 posterior trunk men 3.8 mm, slope 0.14/BMI; women 1.5 x assumed",
+   "quality": "weak; female factor assumed"
+  }
+ ],
+ "fatFormula": {
+  "zh": "t = max(min, a + b*BMI)，毫米，不含皮肤（皮肤另加约 2 mm）",
+  "en": "t = max(min, a + b*BMI), mm, skin excluded (add about 2 mm of skin)"
+ },
+ "examples": {
+  "F": {
+   "statureMm": 1606.0,
+   "note": {
+    "zh": "身高取中国 20–24 岁均值（2020 国民体质监测）",
+    "en": "stature = Chinese 20-24 mean (2020 fitness surveillance)"
+   },
+   "byBmi": {
+    "18.5": {
+     "segmentsMm": {
+      "headNeck": 232.4,
+      "trunk": 543.7,
+      "thigh": 375.2,
+      "shank": 393.4,
+      "ankleHeight": 61.3,
+      "foot": 237.7,
+      "upperArm": 302.3,
+      "forearm": 235.2,
+      "hand": 174.9,
+      "shoulderWidth": 353.9,
+      "pelvisWidth": 243.0
+     },
+     "girthsMm": {
+      "neck": 298.0,
+      "chest": 796.5,
+      "waist": 678.8,
+      "waistIliac": 722.9,
+      "hip": 855.0,
+      "thighProximal": 508.2,
+      "thighMid": 418.9,
+      "thighLower": 339.2,
+      "calf": 316.5,
+      "ankle": 197.4,
+      "upperArm": 242.1,
+      "forearm": 231.7,
+      "wrist": 144.4
+     },
+     "fatMm": {
+      "abdomen": 12.6,
+      "upperArmPosterior": 9.5,
+      "deltoid": 5.3,
+      "thighAnterior": 8.3,
+      "buttock": 15.9,
+      "calf": 1.5,
+      "forearm": 1.8,
+      "chestAnterior": 4.8,
+      "back": 4.6
+     }
+    },
+    "22.0": {
+     "segmentsMm": {
+      "headNeck": 231.6,
+      "trunk": 543.6,
+      "thigh": 374.2,
+      "shank": 395.0,
+      "ankleHeight": 61.6,
+      "foot": 240.6,
+      "upperArm": 304.5,
+      "forearm": 236.4,
+      "hand": 177.0,
+      "shoulderWidth": 358.2,
+      "pelvisWidth": 257.7
+     },
+     "girthsMm": {
+      "neck": 314.1,
+      "chest": 871.9,
+      "waist": 769.5,
+      "waistIliac": 808.4,
+      "hip": 936.6,
+      "thighProximal": 561.7,
+      "thighMid": 460.2,
+      "thighLower": 369.6,
+      "calf": 340.3,
+      "ankle": 206.2,
+      "upperArm": 270.5,
+      "forearm": 247.8,
+      "wrist": 149.2
+     },
+     "fatMm": {
+      "abdomen": 16.6,
+      "upperArmPosterior": 11.0,
+      "deltoid": 6.7,
+      "thighAnterior": 10.8,
+      "buttock": 16.8,
+      "calf": 3.2,
+      "forearm": 2.0,
+      "chestAnterior": 6.2,
+      "back": 5.3
+     }
+    },
+    "25.0": {
+     "segmentsMm": {
+      "headNeck": 231.0,
+      "trunk": 543.6,
+      "thigh": 373.4,
+      "shank": 396.2,
+      "ankleHeight": 61.8,
+      "foot": 242.8,
+      "upperArm": 306.1,
+      "forearm": 237.3,
+      "hand": 178.5,
+      "shoulderWidth": 361.4,
+      "pelvisWidth": 269.0
+     },
+     "girthsMm": {
+      "neck": 326.5,
+      "chest": 932.2,
+      "waist": 844.0,
+      "waistIliac": 877.8,
+      "hip": 1001.6,
+      "thighProximal": 604.7,
+      "thighMid": 493.2,
+      "thighLower": 393.7,
+      "calf": 359.0,
+      "ankle": 212.9,
+      "upperArm": 293.5,
+      "forearm": 260.4,
+      "wrist": 152.9
+     },
+     "fatMm": {
+      "abdomen": 20.0,
+      "upperArmPosterior": 12.2,
+      "deltoid": 7.9,
+      "thighAnterior": 13.0,
+      "buttock": 17.5,
+      "calf": 4.7,
+      "forearm": 2.3,
+      "chestAnterior": 7.4,
+      "back": 6.0
+     }
+    },
+    "30.0": {
+     "segmentsMm": {
+      "headNeck": 230.2,
+      "trunk": 543.5,
+      "thigh": 372.4,
+      "shank": 397.9,
+      "ankleHeight": 62.1,
+      "foot": 245.9,
+      "upperArm": 308.4,
+      "forearm": 238.6,
+      "hand": 180.7,
+      "shoulderWidth": 366.0,
+      "pelvisWidth": 286.1
+     },
+     "girthsMm": {
+      "neck": 345.1,
+      "chest": 1025.4,
+      "waist": 963.0,
+      "waistIliac": 987.3,
+      "hip": 1102.4,
+      "thighProximal": 671.9,
+      "thighMid": 544.6,
+      "thighLower": 430.9,
+      "calf": 387.5,
+      "ankle": 222.9,
+      "upperArm": 329.9,
+      "forearm": 279.5,
+      "wrist": 158.2
+     },
+     "fatMm": {
+      "abdomen": 25.7,
+      "upperArmPosterior": 14.2,
+      "deltoid": 9.9,
+      "thighAnterior": 16.5,
+      "buttock": 18.7,
+      "calf": 7.1,
+      "forearm": 2.6,
+      "chestAnterior": 9.4,
+      "back": 7.0
+     }
+    },
+    "35.0": {
+     "segmentsMm": {
+      "headNeck": 229.4,
+      "trunk": 543.4,
+      "thigh": 371.5,
+      "shank": 399.4,
+      "ankleHeight": 62.3,
+      "foot": 248.5,
+      "upperArm": 310.3,
+      "forearm": 239.7,
+      "hand": 182.5,
+      "shoulderWidth": 370.0,
+      "pelvisWidth": 301.4
+     },
+     "girthsMm": {
+      "neck": 361.6,
+      "chest": 1111.4,
+      "waist": 1076.7,
+      "waistIliac": 1090.5,
+      "hip": 1195.4,
+      "thighProximal": 734.4,
+      "thighMid": 592.1,
+      "thighLower": 465.0,
+      "calf": 413.3,
+      "ankle": 231.7,
+      "upperArm": 364.1,
+      "forearm": 296.7,
+      "wrist": 162.9
+     },
+     "fatMm": {
+      "abdomen": 31.4,
+      "upperArmPosterior": 16.2,
+      "deltoid": 11.9,
+      "thighAnterior": 20.1,
+      "buttock": 19.9,
+      "calf": 9.6,
+      "forearm": 3.0,
+      "chestAnterior": 11.5,
+      "back": 8.0
+     }
+    }
+   },
+   "ourSkeletonVsStandard": {
+    "headNeck": {
+     "measuredMm": 252.0,
+     "expectedMm": 237.4,
+     "ratio": 1.062
+    },
+    "trunk": {
+     "measuredMm": 595.9,
+     "expectedMm": 564.2,
+     "ratio": 1.056
+    },
+    "thigh": {
+     "measuredMm": 375.5,
+     "expectedMm": 390.8,
+     "ratio": 0.961
+    },
+    "shank": {
+     "measuredMm": 360.3,
+     "expectedMm": 414.2,
+     "ratio": 0.87
+    },
+    "ankleHeight": {
+     "measuredMm": 86.7,
+     "expectedMm": 63.8,
+     "ratio": 1.358
+    },
+    "upperArm": {
+     "measuredMm": 297.1,
+     "expectedMm": 318.0,
+     "ratio": 0.934
+    },
+    "forearm": {
+     "measuredMm": 217.6,
+     "expectedMm": 246.6,
+     "ratio": 0.883
+    },
+    "hand": {
+     "measuredMm": 210.0,
+     "expectedMm": 183.2,
+     "ratio": 1.146
+    },
+    "shoulderWidth": {
+     "measuredMm": 326.3,
+     "expectedMm": 368.1,
+     "ratio": 0.887
+    },
+    "pelvisWidth": {
+     "measuredMm": 295.6,
+     "expectedMm": 265.3,
+     "ratio": 1.114
+    }
+   }
+  },
+  "M": {
+   "statureMm": 1726.0,
+   "note": {
+    "zh": "身高取中国 20–24 岁均值（2020 国民体质监测）",
+    "en": "stature = Chinese 20-24 mean (2020 fitness surveillance)"
+   },
+   "byBmi": {
+    "18.5": {
+     "segmentsMm": {
+      "headNeck": 245.0,
+      "trunk": 591.6,
+      "thigh": 406.7,
+      "shank": 413.8,
+      "ankleHeight": 69.0,
+      "foot": 261.1,
+      "upperArm": 326.8,
+      "forearm": 262.6,
+      "hand": 187.1,
+      "shoulderWidth": 392.1,
+      "pelvisWidth": 249.7
+     },
+     "girthsMm": {
+      "neck": 343.9,
+      "chest": 857.5,
+      "waist": 694.9,
+      "waistIliac": 744.4,
+      "hip": 837.3,
+      "thighProximal": 492.1,
+      "thighMid": 426.5,
+      "thighLower": 339.1,
+      "calf": 321.9,
+      "ankle": 203.4,
+      "upperArm": 262.9,
+      "forearm": 264.9,
+      "wrist": 161.1
+     },
+     "fatMm": {
+      "abdomen": 7.3,
+      "upperArmPosterior": 6.2,
+      "deltoid": 3.3,
+      "thighAnterior": 4.9,
+      "buttock": 10.2,
+      "calf": 1.5,
+      "forearm": 1.0,
+      "chestAnterior": 3.2,
+      "back": 3.0
+     }
+    },
+    "22.0": {
+     "segmentsMm": {
+      "headNeck": 241.1,
+      "trunk": 598.8,
+      "thigh": 403.9,
+      "shank": 412.0,
+      "ankleHeight": 70.1,
+      "foot": 263.6,
+      "upperArm": 327.8,
+      "forearm": 262.7,
+      "hand": 188.5,
+      "shoulderWidth": 400.3,
+      "pelvisWidth": 258.9
+     },
+     "girthsMm": {
+      "neck": 365.5,
+      "chest": 936.0,
+      "waist": 788.0,
+      "waistIliac": 840.9,
+      "hip": 911.6,
+      "thighProximal": 543.5,
+      "thighMid": 465.7,
+      "thighLower": 366.3,
+      "calf": 346.9,
+      "ankle": 213.3,
+      "upperArm": 290.7,
+      "forearm": 282.6,
+      "wrist": 166.6
+     },
+     "fatMm": {
+      "abdomen": 11.3,
+      "upperArmPosterior": 7.6,
+      "deltoid": 4.7,
+      "thighAnterior": 7.1,
+      "buttock": 11.1,
+      "calf": 2.2,
+      "forearm": 1.1,
+      "chestAnterior": 4.1,
+      "back": 3.5
+     }
+    },
+    "25.0": {
+     "segmentsMm": {
+      "headNeck": 238.3,
+      "trunk": 604.2,
+      "thigh": 401.9,
+      "shank": 410.7,
+      "ankleHeight": 71.0,
+      "foot": 265.5,
+      "upperArm": 328.5,
+      "forearm": 262.8,
+      "hand": 189.5,
+      "shoulderWidth": 406.4,
+      "pelvisWidth": 265.9
+     },
+     "girthsMm": {
+      "neck": 382.3,
+      "chest": 998.5,
+      "waist": 864.7,
+      "waistIliac": 920.0,
+      "hip": 970.5,
+      "thighProximal": 584.8,
+      "thighMid": 496.9,
+      "thighLower": 387.8,
+      "calf": 366.5,
+      "ankle": 220.9,
+      "upperArm": 313.2,
+      "forearm": 296.3,
+      "wrist": 170.8
+     },
+     "fatMm": {
+      "abdomen": 14.7,
+      "upperArmPosterior": 8.8,
+      "deltoid": 5.8,
+      "thighAnterior": 9.1,
+      "buttock": 11.8,
+      "calf": 3.2,
+      "forearm": 1.2,
+      "chestAnterior": 5.0,
+      "back": 3.9
+     }
+    },
+    "30.0": {
+     "segmentsMm": {
+      "headNeck": 234.2,
+      "trunk": 611.8,
+      "thigh": 399.0,
+      "shank": 408.8,
+      "ankleHeight": 72.2,
+      "foot": 268.2,
+      "upperArm": 329.5,
+      "forearm": 262.9,
+      "hand": 191.0,
+      "shoulderWidth": 415.4,
+      "pelvisWidth": 276.3
+     },
+     "girthsMm": {
+      "neck": 407.6,
+      "chest": 1094.9,
+      "waist": 987.1,
+      "waistIliac": 1045.9,
+      "hip": 1061.3,
+      "thighProximal": 649.3,
+      "thighMid": 545.0,
+      "thighLower": 420.7,
+      "calf": 396.4,
+      "ankle": 232.3,
+      "upperArm": 348.2,
+      "forearm": 317.1,
+      "wrist": 176.9
+     },
+     "fatMm": {
+      "abdomen": 20.4,
+      "upperArmPosterior": 10.8,
+      "deltoid": 7.8,
+      "thighAnterior": 12.3,
+      "buttock": 13.0,
+      "calf": 4.8,
+      "forearm": 1.5,
+      "chestAnterior": 6.3,
+      "back": 4.6
+     }
+    },
+    "35.0": {
+     "segmentsMm": {
+      "headNeck": 230.7,
+      "trunk": 618.2,
+      "thigh": 396.6,
+      "shank": 407.2,
+      "ankleHeight": 73.2,
+      "foot": 270.5,
+      "upperArm": 330.3,
+      "forearm": 263.0,
+      "hand": 192.2,
+      "shoulderWidth": 423.1,
+      "pelvisWidth": 285.3
+     },
+     "girthsMm": {
+      "neck": 430.2,
+      "chest": 1183.6,
+      "waist": 1104.0,
+      "waistIliac": 1165.7,
+      "hip": 1144.6,
+      "thighProximal": 709.3,
+      "thighMid": 589.4,
+      "thighLower": 450.6,
+      "calf": 423.6,
+      "ankle": 242.3,
+      "upperArm": 380.9,
+      "forearm": 335.9,
+      "wrist": 182.3
+     },
+     "fatMm": {
+      "abdomen": 26.1,
+      "upperArmPosterior": 12.9,
+      "deltoid": 9.8,
+      "thighAnterior": 15.5,
+      "buttock": 14.2,
+      "calf": 6.5,
+      "forearm": 1.8,
+      "chestAnterior": 7.7,
+      "back": 5.3
+     }
+    }
+   },
+   "ourSkeletonVsStandard": {
+    "headNeck": {
+     "measuredMm": 272.5,
+     "expectedMm": 240.5,
+     "ratio": 1.133
+    },
+    "trunk": {
+     "measuredMm": 559.9,
+     "expectedMm": 596.9,
+     "ratio": 0.938
+    },
+    "thigh": {
+     "measuredMm": 413.5,
+     "expectedMm": 402.1,
+     "ratio": 1.028
+    },
+    "shank": {
+     "measuredMm": 402.8,
+     "expectedMm": 410.1,
+     "ratio": 0.982
+    },
+    "ankleHeight": {
+     "measuredMm": 70.7,
+     "expectedMm": 69.9,
+     "ratio": 1.012
+    },
+    "upperArm": {
+     "measuredMm": 316.8,
+     "expectedMm": 326.4,
+     "ratio": 0.97
+    },
+    "forearm": {
+     "measuredMm": 237.1,
+     "expectedMm": 261.7,
+     "ratio": 0.906
+    },
+    "hand": {
+     "measuredMm": 182.3,
+     "expectedMm": 187.9,
+     "ratio": 0.97
+    },
+    "shoulderWidth": {
+     "measuredMm": 332.7,
+     "expectedMm": 399.3,
+     "ratio": 0.833
+    },
+    "pelvisWidth": {
+     "measuredMm": 289.4,
+     "expectedMm": 258.1,
+     "ratio": 1.121
+    }
+   }
+  }
+ }
+}

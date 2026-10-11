@@ -1,0 +1,3756 @@
+{
+ "description": {
+  "zh": "皮下脂肪厚度、内脏/皮下脂肪分配、体脂率的文献数值摘录（逐条注明来源和是否读到全文）。条目内的说明文字为英文。",
+  "en": "Numbers extracted from the literature on subcutaneous-fat thickness, visceral/subcutaneous partition and body-fat percentage (each row cites its source and whether the full text was opened). Row-level notes are in English."
+ },
+ "schemaVersion": 1,
+ "title": "Subcutaneous fat thickness by site, sex and BMI; VAT/SAT partition; body-fat formulas - literature extraction",
+ "extracted": "2026-10-11",
+ "units": {
+  "thickness": "mm",
+  "volume": "L",
+  "bmi": "kg/m2"
+ },
+ "sources": [
+  {
+   "id": "gibney2010",
+   "citation": "Gibney MA, Arce CH, Byron KJ, Hirsch LJ. Skin and subcutaneous adipose layer thickness in adults with diabetes at sites used for insulin injections: implications for needle length recommendations. Curr Med Res Opin 2010;26(6):1519-1530.",
+   "doi": "10.1185/03007995.2010.481203",
+   "pmcid": null,
+   "url": "https://doi.org/10.6084/m9.figshare.11815833.v1",
+   "licence": "Online supplementary appendix deposited on figshare under CC BY 4.0 (the PDF itself carries an Informa copyright watermark; main article is paywalled)",
+   "access": "opened-fulltext",
+   "accessNote": "Only the online supplementary appendix (Tables 1-5) was opened, not the main article. Site landmarks and the sex x BMI cross-tabulation are therefore not available here."
+  },
+  {
+   "id": "jain2013",
+   "citation": "Jain SM, Pandey K, Lahoti A, Rao PK. Evaluation of skin and subcutaneous tissue thickness at insulin injection sites in Indian, insulin naive, type-2 diabetic adult population. Indian J Endocrinol Metab 2013;17(5):864-870.",
+   "doi": "10.4103/2230-8210.117249",
+   "pmcid": "PMC3784870",
+   "url": "https://europepmc.org/article/PMC/PMC3784870",
+   "licence": "CC BY-NC-SA 3.0",
+   "access": "opened-fulltext",
+   "accessNote": "Tables are published as images; values were read from the table images (Tables 1, 5, 6, 7)."
+  },
+  {
+   "id": "sim2014",
+   "citation": "Sim KH, Hwang MS, Kim SY, Lee HM, Chang JY, Lee MK. The appropriateness of the length of insulin needles based on determination of skin and subcutaneous fat thickness in the abdomen and upper arm in patients with type 2 diabetes. Diabetes Metab J 2014;38(2):120-133.",
+   "doi": "10.4093/dmj.2014.38.2.120",
+   "pmcid": "PMC4021299",
+   "url": "https://europepmc.org/article/PMC/PMC4021299",
+   "licence": "CC BY-NC 3.0",
+   "access": "opened-fulltext",
+   "accessNote": "Tables are images; values read from Table 1, 4, 5 images."
+  },
+  {
+   "id": "tai2026",
+   "citation": "Tai C, Remli Y, Yunus MN. Ultrasound-guided skin and subcutaneous fat thickness profiling for insulin delivery in overweight and obese adults with type 2 diabetes: a cross-sectional Malaysian study. J ASEAN Fed Endocr Soc 2026.",
+   "doi": "10.15605/jafes.041.02.6339",
+   "pmcid": "PMC13616070",
+   "url": "https://europepmc.org/article/PMC/PMC13616070",
+   "licence": "CC BY-NC 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "storchle2018",
+   "citation": "Storchle P, Muller W, Sengeis M, Lackner S, Holasek S, Furhapter-Rieger A. Measurement of mean subcutaneous fat thickness: eight standardised ultrasound sites compared to 216 randomly selected sites. Sci Rep 2018;8:16268.",
+   "doi": "10.1038/s41598-018-34213-0",
+   "pmcid": "PMC6214952",
+   "url": "https://europepmc.org/article/PMC/PMC6214952",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "muller2016",
+   "citation": "Muller W, Lohman TG, Stewart AD, Maughan RJ, Meyer NL, Sardinha LB, et al. Subcutaneous fat patterning in athletes: selection of appropriate sites and standardisation of a novel ultrasound measurement technique: ad hoc working group on body composition, health and performance, under the auspices of the IOC Medical Commission. Br J Sports Med 2016;50(1):45-54.",
+   "doi": "10.1136/bjsports-2015-095641",
+   "pmcid": "PMC4717413",
+   "url": "https://europepmc.org/article/PMC/PMC4717413",
+   "licence": "CC BY-NC 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "muller2020",
+   "citation": "Muller W, Furhapter-Rieger A, Ahammer H, Lohman TG, Meyer NL, Sardinha LB, et al. Relative body weight and standardised brightness-mode ultrasound measurement of subcutaneous fat in athletes: an international multicentre reliability study, under the auspices of the IOC Medical Commission. Sports Med 2020;50(3):597-614.",
+   "doi": "10.1007/s40279-019-01192-9",
+   "pmcid": "PMC7018793",
+   "url": "https://europepmc.org/article/PMC/PMC7018793",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "storchle2017",
+   "citation": "Storchle P, Muller W, Sengeis M, Ahammer H, Furhapter-Rieger A, Bachl N, et al. Standardized ultrasound measurement of subcutaneous fat patterning: high reliability and accuracy in groups ranging from lean to obese. Ultrasound Med Biol 2017;43(2):427-438.",
+   "doi": "10.1016/j.ultrasmedbio.2016.09.014",
+   "pmcid": null,
+   "url": "https://doi.org/10.1016/j.ultrasmedbio.2016.09.014",
+   "licence": "Hybrid OA, CC BY-NC-ND 4.0 per Crossref/Unpaywall",
+   "access": "read-about",
+   "accessNote": "Publisher site refused automated retrieval (HTTP 403); NO numbers from this paper are included. It is the paper most likely to hold per-site values for normal-weight/overweight/obese groups at the 8 IOC sites and should be opened manually."
+  },
+  {
+   "id": "ozen2019",
+   "citation": "Ozen O, Gunaydin M, Tosun A, Coskun ZU, Aytekin K, Takir S. Assessment rate of true dorsogluteal intramuscular drug injection using ultrasonography. Pak J Med Sci 2019;35(4):1132-1137.",
+   "doi": "10.12669/pjms.35.4.313",
+   "pmcid": "PMC6659072",
+   "url": "https://europepmc.org/article/PMC/PMC6659072",
+   "licence": "CC BY 3.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "kowatari2023",
+   "citation": "Kowatari R, Sasaki H, Murata K, et al. Establishment of prediction equations for subcutaneous tissue thickness in two representative intramuscular deltoid injections. Vaccine X 2023;14:100316.",
+   "doi": "10.1016/j.jvacx.2023.100316",
+   "pmcid": "PMC10239006",
+   "url": "https://europepmc.org/article/PMC/PMC10239006",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "sebro2022",
+   "citation": "Sebro R. Statistical estimation of deltoid subcutaneous fat pad thickness: implications for needle length for vaccination. Sci Rep 2022;12:1069.",
+   "doi": "10.1038/s41598-022-05020-5",
+   "pmcid": "PMC8776900",
+   "url": "https://europepmc.org/article/PMC/PMC8776900",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "nhanes2007_2010",
+   "citation": "Fryar CD, Gu Q, Ogden CL. Anthropometric reference data for children and adults: United States, 2007-2010. National Center for Health Statistics. Vital Health Stat 11(252). 2012.",
+   "doi": null,
+   "pmcid": null,
+   "url": "https://www.cdc.gov/nchs/data/series/sr_11/sr11_252.pdf",
+   "licence": "US Government work, public domain (stated in the report)",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "liu2018",
+   "citation": "Liu Y, Li Y, He J, Ma P, Yu L, Zheng L, Sun Y. Gender stratified analyses of the association of skinfold thickness with hypertension: a cross-sectional study in general Northeastern Chinese residents. Int J Environ Res Public Health 2018;15(12):2748.",
+   "doi": "10.3390/ijerph15122748",
+   "pmcid": "PMC6313501",
+   "url": "https://europepmc.org/article/PMC/PMC6313501",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "chiyanika2021",
+   "citation": "Chiyanika C, Wong VW, Wong GL, Chan HL, Hui SCN, Yeung DKW, Chu WCW. Implications of abdominal adipose tissue distribution on nonalcoholic fatty liver disease and metabolic syndrome: a Chinese general population study. Clin Transl Gastroenterol 2021;12(2):e00300.",
+   "doi": "10.14309/ctg.0000000000000300",
+   "pmcid": "PMC7889374",
+   "url": "https://europepmc.org/article/PMC/PMC7889374",
+   "licence": "CC BY-NC-ND 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "linge2018",
+   "citation": "Linge J, Borga M, West J, Tuthill T, Miller MR, Dumitriu A, et al. Body composition profiling in the UK Biobank Imaging Study. Obesity 2018;26(11):1785-1795.",
+   "doi": "10.1002/oby.22210",
+   "pmcid": "PMC6220857",
+   "url": "https://europepmc.org/article/PMC/PMC6220857",
+   "licence": "CC BY-NC-ND 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "west2016",
+   "citation": "West J, Dahlqvist Leinhard O, Romu T, Collins R, Garratt S, Bell JD, et al. Feasibility of MR-based body composition analysis in large scale population studies. PLoS One 2016;11(9):e0163332.",
+   "doi": "10.1371/journal.pone.0163332",
+   "pmcid": "PMC5035023",
+   "url": "https://europepmc.org/article/PMC/PMC5035023",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "kalimeri2021",
+   "citation": "Kalimeri M, Totman JJ, Baum T, Diefenbach MN, Hauner H, Makowski MR, et al. Postmenopausal Chinese-Singaporean women have a higher ratio of visceral to subcutaneous adipose tissue volume than Caucasian women of the same age and BMI. Diagnostics 2021;11(11):2127.",
+   "doi": "10.3390/diagnostics11112127",
+   "pmcid": "PMC8623581",
+   "url": "https://europepmc.org/article/PMC/PMC8623581",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "camhi2011",
+   "citation": "Camhi SM, Bray GA, Bouchard C, Greenway FL, Johnson WD, Newton RL, et al. The relationship of waist circumference and BMI to visceral, subcutaneous, and total body fat: sex and race differences. Obesity 2011;19(2):402-408.",
+   "doi": "10.1038/oby.2010.248",
+   "pmcid": "PMC3960785",
+   "url": "https://europepmc.org/article/PMC/PMC3960785",
+   "licence": "PMC author manuscript, not CC (free to read; text-mining permitted)",
+   "access": "opened-fulltext",
+   "accessNote": "Regression lines are only shown in figures; no coefficients are printed in the text."
+  },
+  {
+   "id": "ofenheimer2020",
+   "citation": "Ofenheimer A, Breyer-Kohansal R, Hartl S, Burghuber OC, Krach F, Schrott A, et al. Reference values of body composition parameters and visceral adipose tissue (VAT) by DXA in adults aged 18-81 years - results from the LEAD cohort. Eur J Clin Nutr 2020;74(8):1181-1191.",
+   "doi": "10.1038/s41430-020-0596-5",
+   "pmcid": "PMC7402993",
+   "url": "https://europepmc.org/article/PMC/PMC7402993",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "staynor2020",
+   "citation": "Staynor JMD, Smith MK, Donnelly CJ, Sallam AE, Ackland TR. DXA reference values and anthropometric screening for visceral obesity in Western Australian adults. Sci Rep 2020;10:18731.",
+   "doi": "10.1038/s41598-020-73631-x",
+   "pmcid": "PMC7599223",
+   "url": "https://europepmc.org/article/PMC/PMC7599223",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "kelly2009",
+   "citation": "Kelly TL, Wilson KE, Heymsfield SB. Dual energy X-ray absorptiometry body composition reference values from NHANES. PLoS One 2009;4(9):e7038.",
+   "doi": "10.1371/journal.pone.0007038",
+   "pmcid": "PMC2737140",
+   "url": "https://europepmc.org/article/PMC/PMC2737140",
+   "licence": "CC BY",
+   "access": "opened-fulltext",
+   "accessNote": "Main text and Tables 1-4 opened. The paper reports %fat-trunk/%fat-legs and trunk/limb ratios (NOT android/gynoid), and those reference curves are in supplementary tables S1-S20 which were not opened."
+  },
+  {
+   "id": "deurenberg1991",
+   "citation": "Deurenberg P, Weststrate JA, Seidell JC. Body mass index as a measure of body fatness: age- and sex-specific prediction formulas. Br J Nutr 1991;65(2):105-114.",
+   "doi": "10.1079/BJN19910073",
+   "pmcid": null,
+   "url": "https://doi.org/10.1079/BJN19910073",
+   "licence": "Free to read at publisher (bronze OA, no CC licence)",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "gallagher2000",
+   "citation": "Gallagher D, Heymsfield SB, Heo M, Jebb SA, Murgatroyd PR, Sakamoto Y. Healthy percentage body fat ranges: an approach for developing guidelines based on body mass index. Am J Clin Nutr 2000;72(3):694-701.",
+   "doi": "10.1093/ajcn/72.3.694",
+   "pmcid": null,
+   "url": "https://doi.org/10.1093/ajcn/72.3.694",
+   "licence": "Free to read at publisher (bronze OA, no CC licence)",
+   "access": "read-about",
+   "accessNote": "Could not be retrieved; NO numbers included. Contains the Asian/White/African-American %BF = f(1/BMI, age, sex) equation that would be the best choice for Chinese users."
+  },
+  {
+   "id": "steele2020",
+   "citation": "Steele JR, Coltman CE, McGhee DE. Effects of obesity on breast size, thoracic spine structure and function, upper torso musculoskeletal pain and physical activity in women. J Sport Health Sci 2020;9(2):140-148.",
+   "doi": "10.1016/j.jshs.2019.05.003",
+   "pmcid": "PMC7031809",
+   "url": "https://europepmc.org/article/PMC/PMC7031809",
+   "licence": "CC BY-NC-ND 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "lim2018",
+   "citation": "Lim LY, Ho PJ, Liu J, Chay WY, Tan MH, Hartman M, Li J. Determinants of breast size in Asian women. Sci Rep 2018;8:1201.",
+   "doi": "10.1038/s41598-018-19437-4",
+   "pmcid": "PMC5775321",
+   "url": "https://europepmc.org/article/PMC/PMC5775321",
+   "licence": "CC BY 4.0",
+   "access": "opened-fulltext"
+  },
+  {
+   "id": "wang2016",
+   "citation": "Wang W, Guo X, Shen G, Bai G, Wei Z, Liu J, et al. Skin and subcutaneous tissue thickness at insulin injection sites in Chinese diabetes patients: clinical implications. Diabetes Metab 2016;42(5):374-377.",
+   "doi": "10.1016/j.diabet.2016.04.010",
+   "pmcid": null,
+   "url": "https://doi.org/10.1016/j.diabet.2016.04.010",
+   "licence": "Closed (no OA copy per Unpaywall)",
+   "access": "read-about",
+   "accessNote": "Not opened; NO numbers included."
+  },
+  {
+   "id": "ludescher2011",
+   "citation": "Ludescher B, Rommel M, Willmer T, Fritsche A, Schick F, Machann J. Subcutaneous adipose tissue thickness in adults - correlation with BMI and recommendations for pen needle lengths for subcutaneous self-injection. Clin Endocrinol 2011;75(6):786-790.",
+   "doi": "10.1111/j.1365-2265.2011.04132.x",
+   "pmcid": null,
+   "url": "https://doi.org/10.1111/j.1365-2265.2011.04132.x",
+   "licence": "Closed",
+   "access": "read-about",
+   "accessNote": "Not opened; NO numbers included. Whole-body MRI SAT thickness by site, sex and BMI - likely the best single source if a copy can be obtained."
+  }
+ ],
+ "siteThickness": [
+  {
+   "sourceId": "gibney2010",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<25",
+   "n": 112,
+   "statistic": "mean",
+   "value_mm": 7.739,
+   "sd_mm": 3.915,
+   "median_mm": 7.272,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "25-29.9",
+   "n": 110,
+   "statistic": "mean",
+   "value_mm": 9.923,
+   "sd_mm": 4.547,
+   "median_mm": 9.0,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": ">=30",
+   "n": 160,
+   "statistic": "mean",
+   "value_mm": 13.476,
+   "sd_mm": 6.029,
+   "median_mm": 13.155,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<25",
+   "n": 114,
+   "statistic": "mean",
+   "value_mm": 7.842,
+   "sd_mm": 3.84,
+   "median_mm": 6.722,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "25-29.9",
+   "n": 110,
+   "statistic": "mean",
+   "value_mm": 9.646,
+   "sd_mm": 5.324,
+   "median_mm": 8.884,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": ">=30",
+   "n": 163,
+   "statistic": "mean",
+   "value_mm": 12.589,
+   "sd_mm": 6.067,
+   "median_mm": 12.678,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "abdomen",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<25",
+   "n": 113,
+   "statistic": "mean",
+   "value_mm": 9.476,
+   "sd_mm": 4.516,
+   "median_mm": 9.1,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "abdomen",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "25-29.9",
+   "n": 106,
+   "statistic": "mean",
+   "value_mm": 13.865,
+   "sd_mm": 6.362,
+   "median_mm": 12.911,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "abdomen",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": ">=30",
+   "n": 152,
+   "statistic": "mean",
+   "value_mm": 17.252,
+   "sd_mm": 7.748,
+   "median_mm": 15.627,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "buttock",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<25",
+   "n": 113,
+   "statistic": "mean",
+   "value_mm": 13.676,
+   "sd_mm": 6.357,
+   "median_mm": 12.522,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "buttock",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "25-29.9",
+   "n": 109,
+   "statistic": "mean",
+   "value_mm": 15.738,
+   "sd_mm": 7.691,
+   "median_mm": 13.822,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "buttock",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": ">=30",
+   "n": 147,
+   "statistic": "mean",
+   "value_mm": 16.589,
+   "sd_mm": 7.383,
+   "median_mm": 15.033,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 1",
+   "note": "Sexes pooled (schema sex F|M not applicable). US adults with diabetes, multi-ethnic. Skin thickness reported separately (about 1.7-2.7 mm)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "all",
+   "n": 172,
+   "statistic": "mean",
+   "value_mm": 13.664,
+   "sd_mm": 5.438,
+   "median_mm": 13.277,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "all",
+   "n": 210,
+   "statistic": "mean",
+   "value_mm": 8.401,
+   "sd_mm": 4.556,
+   "median_mm": 7.3,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "all",
+   "n": 174,
+   "statistic": "mean",
+   "value_mm": 13.884,
+   "sd_mm": 5.214,
+   "median_mm": 14.189,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "all",
+   "n": 213,
+   "statistic": "mean",
+   "value_mm": 7.471,
+   "sd_mm": 4.158,
+   "median_mm": 6.378,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "abdomen",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "all",
+   "n": 166,
+   "statistic": "mean",
+   "value_mm": 15.937,
+   "sd_mm": 7.716,
+   "median_mm": 14.283,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "abdomen",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "all",
+   "n": 205,
+   "statistic": "mean",
+   "value_mm": 12.279,
+   "sd_mm": 6.443,
+   "median_mm": 10.922,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "buttock",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "all",
+   "n": 165,
+   "statistic": "mean",
+   "value_mm": 18.615,
+   "sd_mm": 7.705,
+   "median_mm": 18.244,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "buttock",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "all",
+   "n": 204,
+   "statistic": "mean",
+   "value_mm": 12.882,
+   "sd_mm": 5.742,
+   "median_mm": 12.011,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 2",
+   "note": "All BMI classes pooled; cohort is heavy (largest BMI class is >=30)."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "all (Asian subgroup)",
+   "n": 96,
+   "statistic": "mean",
+   "value_mm": 9.176,
+   "sd_mm": 3.839,
+   "median_mm": 8.572,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 3",
+   "note": "Asian-ethnicity subgroup of a US cohort, sexes and BMI pooled."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "all (Asian subgroup)",
+   "n": 98,
+   "statistic": "mean",
+   "value_mm": 8.887,
+   "sd_mm": 4.556,
+   "median_mm": 8.406,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 3",
+   "note": "Asian-ethnicity subgroup of a US cohort, sexes and BMI pooled."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "abdomen",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "all (Asian subgroup)",
+   "n": 94,
+   "statistic": "mean",
+   "value_mm": 15.179,
+   "sd_mm": 7.47,
+   "median_mm": 13.867,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 3",
+   "note": "Asian-ethnicity subgroup of a US cohort, sexes and BMI pooled."
+  },
+  {
+   "sourceId": "gibney2010",
+   "site": "buttock",
+   "siteDefinition": "Insulin-injection site; landmark definition not given in the supplementary appendix (main article not opened)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "all (Asian subgroup)",
+   "n": 96,
+   "statistic": "mean",
+   "value_mm": 13.718,
+   "sd_mm": 7.158,
+   "median_mm": 12.116,
+   "includesSkin": false,
+   "whereInPaper": "Supplementary appendix Table 3",
+   "note": "Asian-ethnicity subgroup of a US cohort, sexes and BMI pooled."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI<17",
+   "n": 8,
+   "statistic": "mean",
+   "value_mm": 2.63,
+   "sd_mm": 1.13,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "17-19",
+   "n": 11,
+   "statistic": "mean",
+   "value_mm": 3.9,
+   "sd_mm": 1.18,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "19-23",
+   "n": 29,
+   "statistic": "mean",
+   "value_mm": 6.36,
+   "sd_mm": 2.12,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "23-25",
+   "n": 11,
+   "statistic": "mean",
+   "value_mm": 7.18,
+   "sd_mm": 2.08,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": ">25",
+   "n": 9,
+   "statistic": "mean",
+   "value_mm": 9.07,
+   "sd_mm": 2.23,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "BMI<17",
+   "n": 4,
+   "statistic": "mean",
+   "value_mm": 4.68,
+   "sd_mm": 1.82,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "17-19",
+   "n": 3,
+   "statistic": "mean",
+   "value_mm": 7.82,
+   "sd_mm": 1.78,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "19-23",
+   "n": 14,
+   "statistic": "mean",
+   "value_mm": 9.84,
+   "sd_mm": 3.91,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "23-25",
+   "n": 5,
+   "statistic": "mean",
+   "value_mm": 12.82,
+   "sd_mm": 3.57,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "upper arm (posterior)",
+   "siteDefinition": "Rear upper arm, mid-section between acromion and olecranon",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": ">25",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 12.01,
+   "sd_mm": 3.36,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI<17",
+   "n": 8,
+   "statistic": "mean",
+   "value_mm": 3.05,
+   "sd_mm": 1.03,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "17-19",
+   "n": 11,
+   "statistic": "mean",
+   "value_mm": 4.98,
+   "sd_mm": 1.72,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "19-23",
+   "n": 29,
+   "statistic": "mean",
+   "value_mm": 6.6,
+   "sd_mm": 2.25,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "23-25",
+   "n": 11,
+   "statistic": "mean",
+   "value_mm": 7.69,
+   "sd_mm": 3.51,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": ">25",
+   "n": 9,
+   "statistic": "mean",
+   "value_mm": 10.79,
+   "sd_mm": 4.16,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "BMI<17",
+   "n": 4,
+   "statistic": "mean",
+   "value_mm": 4.84,
+   "sd_mm": 1.79,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "17-19",
+   "n": 3,
+   "statistic": "mean",
+   "value_mm": 10.12,
+   "sd_mm": 0.8,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "19-23",
+   "n": 14,
+   "statistic": "mean",
+   "value_mm": 8.56,
+   "sd_mm": 2.64,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "23-25",
+   "n": 5,
+   "statistic": "mean",
+   "value_mm": 15.39,
+   "sd_mm": 3.51,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "thigh (anterior)",
+   "siteDefinition": "Anterior upper thigh, mid-distance between iliac crest and top edge of patella",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": ">25",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 12.44,
+   "sd_mm": 6.85,
+   "includesSkin": false,
+   "whereInPaper": "Table 6 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI<17",
+   "n": 8,
+   "statistic": "mean",
+   "value_mm": 4.2,
+   "sd_mm": 2.85,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "17-19",
+   "n": 11,
+   "statistic": "mean",
+   "value_mm": 5.18,
+   "sd_mm": 1.65,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "19-23",
+   "n": 29,
+   "statistic": "mean",
+   "value_mm": 8.52,
+   "sd_mm": 3.59,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "23-25",
+   "n": 11,
+   "statistic": "mean",
+   "value_mm": 11.16,
+   "sd_mm": 4.13,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": ">25",
+   "n": 9,
+   "statistic": "mean",
+   "value_mm": 15.11,
+   "sd_mm": 7.46,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "BMI<17",
+   "n": 4,
+   "statistic": "mean",
+   "value_mm": 3.66,
+   "sd_mm": 0.18,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "17-19",
+   "n": 3,
+   "statistic": "mean",
+   "value_mm": 9.67,
+   "sd_mm": 1.39,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "19-23",
+   "n": 14,
+   "statistic": "mean",
+   "value_mm": 9.41,
+   "sd_mm": 3.58,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "23-25",
+   "n": 5,
+   "statistic": "mean",
+   "value_mm": 16.7,
+   "sd_mm": 2.51,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "jain2013",
+   "site": "abdomen (lateral)",
+   "siteDefinition": "Anterior abdomen, midway between umbilicus and iliac crest",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": ">25",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 16.56,
+   "sd_mm": 5.87,
+   "includesSkin": false,
+   "whereInPaper": "Table 7 (n per cell from Table 1)",
+   "note": "Indian insulin-naive type-2 diabetics, 11 MHz probe. Very small cells (n=3-29); female rows are noisy/non-monotonic. Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "all",
+   "n": 84,
+   "statistic": "mean",
+   "value_mm": 7.75,
+   "sd_mm": 5.03,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "all",
+   "n": 72,
+   "statistic": "mean",
+   "value_mm": 12.95,
+   "sd_mm": 7.0,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<18.5",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 4.05,
+   "sd_mm": 2.89,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "18.5-<23",
+   "n": 58,
+   "statistic": "mean",
+   "value_mm": 7.2,
+   "sd_mm": 5.45,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "23-<25",
+   "n": 33,
+   "statistic": "mean",
+   "value_mm": 10.79,
+   "sd_mm": 5.22,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "25-<30",
+   "n": 51,
+   "statistic": "mean",
+   "value_mm": 12.66,
+   "sd_mm": 6.43,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "abdomen",
+   "siteDefinition": "Mean of 10 abdominal points (injection-site chart around the umbilicus)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": ">=30",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 19.35,
+   "sd_mm": 6.43,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "all",
+   "n": 84,
+   "statistic": "mean",
+   "value_mm": 4.06,
+   "sd_mm": 1.79,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "all",
+   "n": 72,
+   "statistic": "mean",
+   "value_mm": 7.19,
+   "sd_mm": 2.56,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<18.5",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 3.08,
+   "sd_mm": 1.45,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "18.5-<23",
+   "n": 58,
+   "statistic": "mean",
+   "value_mm": 4.72,
+   "sd_mm": 2.34,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "23-<25",
+   "n": 33,
+   "statistic": "mean",
+   "value_mm": 5.2,
+   "sd_mm": 2.63,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "25-<30",
+   "n": 51,
+   "statistic": "mean",
+   "value_mm": 6.35,
+   "sd_mm": 2.4,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "sim2014",
+   "site": "upper arm",
+   "siteDefinition": "Mean of 8 points on the upper arm (2 columns, injection-site chart)",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": ">=30",
+   "n": 7,
+   "statistic": "mean",
+   "value_mm": 9.68,
+   "sd_mm": 2.6,
+   "includesSkin": false,
+   "whereInPaper": "Table 4 (n from Table 1)",
+   "note": "Korean type-2 diabetics, mean age 62, 10 MHz. BMI classes are sexes pooled; sex rows are BMI pooled. Skin thickness separately 2.29 (abdomen) / 2.00 mm (arm). Read from table image."
+  },
+  {
+   "sourceId": "tai2026",
+   "site": "abdomen",
+   "siteDefinition": "Composite of 10 abdominal injection-chart points",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI>=23 (Asian pre-obese to obese III; mean BMI 29.9)",
+   "n": 98,
+   "statistic": "mean",
+   "value_mm": 17.23,
+   "sd_mm": 4.25,
+   "median_mm": 16.75,
+   "iqr_mm": [
+    14.83,
+    19.28
+   ],
+   "includesSkin": false,
+   "whereInPaper": "Table 3",
+   "note": "Malaysian T2DM on insulin (Malay 59%, Chinese 15%, Indian 26%); sexes pooled."
+  },
+  {
+   "sourceId": "tai2026",
+   "site": "upper arm",
+   "siteDefinition": "Composite of 8 upper-arm injection-chart points",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI>=23 (Asian pre-obese to obese III; mean BMI 29.9)",
+   "n": 98,
+   "statistic": "mean",
+   "value_mm": 15.0,
+   "sd_mm": 3.78,
+   "median_mm": 15.38,
+   "iqr_mm": [
+    12.1,
+    17.73
+   ],
+   "includesSkin": false,
+   "whereInPaper": "Table 3",
+   "note": "As above. Arm value is much higher than Sim 2014/Jain 2013 at similar BMI - treat with caution (possible lipohypertrophy in insulin users or method difference)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "head",
+   "siteDefinition": "Mean over 16 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 1.27,
+   "median_mm": 1.17,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "neck",
+   "siteDefinition": "Mean over 4 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 1.5,
+   "median_mm": 1.31,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "anterior trunk",
+   "siteDefinition": "Mean over 28 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 4.69,
+   "median_mm": 4.49,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "posterior trunk",
+   "siteDefinition": "Mean over 28 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 3.76,
+   "median_mm": 3.71,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "upper arm",
+   "siteDefinition": "Mean over 16 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 3.0,
+   "median_mm": 2.82,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "forearm",
+   "siteDefinition": "Mean over 12 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 1.15,
+   "median_mm": 1.15,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "hand",
+   "siteDefinition": "Mean over 12 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 0.33,
+   "median_mm": 0.27,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "buttock",
+   "siteDefinition": "Mean over 12 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 12.04,
+   "median_mm": 11.85,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "thigh",
+   "siteDefinition": "Mean over 40 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 5.72,
+   "median_mm": 4.55,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "lower leg (calf/shin)",
+   "siteDefinition": "Mean over 32 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 2.8,
+   "median_mm": 2.43,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "foot",
+   "siteDefinition": "Mean over 16 randomly placed ultrasound sites within the Lund-Browder body segment (whole-segment average, not a single landmark)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4 (mean 23.6), age 20-31",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 0.39,
+   "median_mm": 0.34,
+   "includesSkin": false,
+   "whereInPaper": "Table 5 (d_IM,BS; fibrous structures included)",
+   "note": "Skin excluded; SAT incl. embedded fascia. n=10 young Austrian men chosen to span lean to moderately fat. Individual values with each man's BMI are in Tables 1 and 5."
+  },
+  {
+   "sourceId": "storchle2018",
+   "site": "whole body mean (216 random sites)",
+   "siteDefinition": "Mean SAT thickness over 216 random sites covering the body surface",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "BMI 20.0-28.4",
+   "n": 10,
+   "statistic": "mean",
+   "value_mm": 3.69,
+   "includesSkin": false,
+   "whereInPaper": "Table 3 (d_IM216); range 1.91-6.14",
+   "note": "Mean of the 8 IOC standard sites in the same men was 5.75 mm; whole-body mean = 0.65 x mean of 8 sites (Table 4)."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "upper abdomen",
+   "siteDefinition": "2% of height lateral and 2% superior to umbilicus centre",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 4.26,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "lower abdomen",
+   "siteDefinition": "2% of height lateral and 2% inferior to umbilicus centre",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 8.3,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "external oblique (flank, above ASIS)",
+   "siteDefinition": "On line ASIS to costal arch apex, 2% of height from ASIS",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 2.44,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "erector spinae (lumbar back)",
+   "siteDefinition": "14% of height above seat surface, 2% of height lateral to spinous process",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 4.29,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "distal triceps",
+   "siteDefinition": "Posterior arm, 5% of height above the table surface with forearm resting on table",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 7.11,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "brachioradialis (forearm)",
+   "siteDefinition": "Anterior surface of brachioradialis, 2% of height distal to biceps tendon",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 2.24,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "front thigh",
+   "siteDefinition": "Anterior thigh, 14% of height from wall with thigh horizontal, knee touching wall",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 8.99,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "medial calf",
+   "siteDefinition": "Most medial aspect of calf, 18% of height above foot support",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 4.04,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2016",
+   "site": "lateral thigh",
+   "siteDefinition": "Lateral thigh at gluteal-fold height, midpoint of sagittal thigh diameter",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "single individual, BMI 20.5 (artistic gymnast, reduced training)",
+   "n": 1,
+   "statistic": "mean",
+   "value_mm": 9.85,
+   "includesSkin": false,
+   "whereInPaper": "Figure 3 caption (site definitions: Table 1)",
+   "note": "ONE athlete, illustrative only - shows a lean female pattern (thigh > lower abdomen > triceps > upper abdomen/back/calf > flank/forearm). Not a population value."
+  },
+  {
+   "sourceId": "muller2020",
+   "site": "SUM of 8 sites (UA, LA, EO, ES, DT, BR, FT, MC)",
+   "siteDefinition": "IOC standardised ultrasound sites (external oblique used instead of lateral thigh)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "elite athletes, median BMI 23.1",
+   "n": 37,
+   "statistic": "median",
+   "value_mm": 17.2,
+   "iqr_mm": [
+    8.8,
+    35.5
+   ],
+   "includesSkin": false,
+   "whereInPaper": "Table 1 (D_I)",
+   "note": "This is a SUM over 8 sites, not a thickness: divide by 8 for mean site thickness (M 2.2 mm, F 6.4 mm). Athletes; SAT did not correlate with BMI in this group."
+  },
+  {
+   "sourceId": "muller2020",
+   "site": "SUM of 8 sites (UA, LA, EO, ES, DT, BR, FT, MC)",
+   "siteDefinition": "IOC standardised ultrasound sites (external oblique used instead of lateral thigh)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "elite athletes, median BMI 22.1",
+   "n": 39,
+   "statistic": "median",
+   "value_mm": 51.1,
+   "iqr_mm": [
+    31.9,
+    73.6
+   ],
+   "includesSkin": false,
+   "whereInPaper": "Table 1 (D_I)",
+   "note": "This is a SUM over 8 sites, not a thickness: divide by 8 for mean site thickness (M 2.2 mm, F 6.4 mm). Athletes; SAT did not correlate with BMI in this group."
+  },
+  {
+   "sourceId": "ozen2019",
+   "site": "buttock (dorsogluteal injection site)",
+   "siteDefinition": "Dorsogluteal IM injection site (upper outer quadrant of buttock); skin-to-muscle-fascia distance on ultrasound",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI<25 (mean 24.7)",
+   "n": 40,
+   "statistic": "mean",
+   "value_mm": 20.85,
+   "sem_mm": 1.2,
+   "includesSkin": true,
+   "whereInPaper": "Table I",
+   "note": "Dispersion is standard ERROR, not SD. Turkish emergency-room adults, sexes pooled. includesSkin is inferred (paper says SAT thickness; not explicit about dermis). Sex counts are inconsistent between text and table."
+  },
+  {
+   "sourceId": "ozen2019",
+   "site": "buttock (dorsogluteal injection site)",
+   "siteDefinition": "Dorsogluteal IM injection site (upper outer quadrant of buttock); skin-to-muscle-fascia distance on ultrasound",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "BMI>25 (mean 34.2)",
+   "n": 20,
+   "statistic": "mean",
+   "value_mm": 32.34,
+   "sem_mm": 2.17,
+   "includesSkin": true,
+   "whereInPaper": "Table I",
+   "note": "Dispersion is standard ERROR, not SD. Turkish emergency-room adults, sexes pooled. includesSkin is inferred (paper says SAT thickness; not explicit about dermis). Sex counts are inconsistent between text and table."
+  },
+  {
+   "sourceId": "ozen2019",
+   "site": "buttock (dorsogluteal injection site)",
+   "siteDefinition": "Dorsogluteal IM injection site (upper outer quadrant of buttock); skin-to-muscle-fascia distance on ultrasound",
+   "method": "ultrasound",
+   "sex": "both",
+   "group": "all (mean BMI 28.1)",
+   "n": 60,
+   "statistic": "mean",
+   "value_mm": 24.68,
+   "sem_mm": 1.28,
+   "includesSkin": true,
+   "whereInPaper": "Table I",
+   "note": "Dispersion is standard ERROR, not SD. Turkish emergency-room adults, sexes pooled. includesSkin is inferred (paper says SAT thickness; not explicit about dermis). Sex counts are inconsistent between text and table."
+  },
+  {
+   "sourceId": "kowatari2023",
+   "site": "deltoid (shoulder), T point",
+   "siteDefinition": "Three-finger-breadths below acromion (about 49 mm below acromion)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "young adults, BMI 22.1 +/- 3.3",
+   "n": 134,
+   "statistic": "mean",
+   "value_mm": 4.7,
+   "sd_mm": 1.7,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "Japanese, mean age 22 - closest demographic match to Chinese medical students. 'Subcutaneous thickness' = skin surface to muscle (includesSkin inferred)."
+  },
+  {
+   "sourceId": "kowatari2023",
+   "site": "deltoid (shoulder), A point",
+   "siteDefinition": "Axillary-line method point (about 80-90 mm below acromion)",
+   "method": "ultrasound",
+   "sex": "M",
+   "group": "young adults, BMI 22.1 +/- 3.3",
+   "n": 134,
+   "statistic": "mean",
+   "value_mm": 5.9,
+   "sd_mm": 2.5,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "As above."
+  },
+  {
+   "sourceId": "kowatari2023",
+   "site": "deltoid (shoulder), T point",
+   "siteDefinition": "Three-finger-breadths below acromion (about 49 mm below acromion)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "young adults, BMI 20.6 +/- 1.8",
+   "n": 111,
+   "statistic": "mean",
+   "value_mm": 6.2,
+   "sd_mm": 1.7,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "Japanese, mean age 22 - closest demographic match to Chinese medical students. 'Subcutaneous thickness' = skin surface to muscle (includesSkin inferred)."
+  },
+  {
+   "sourceId": "kowatari2023",
+   "site": "deltoid (shoulder), A point",
+   "siteDefinition": "Axillary-line method point (about 80-90 mm below acromion)",
+   "method": "ultrasound",
+   "sex": "F",
+   "group": "young adults, BMI 20.6 +/- 1.8",
+   "n": 111,
+   "statistic": "mean",
+   "value_mm": 8.0,
+   "sd_mm": 2.2,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "As above."
+  },
+  {
+   "sourceId": "sebro2022",
+   "site": "deltoid (shoulder)",
+   "siteDefinition": "Deltoid subcutaneous fat pad 5.0 cm inferior to acromion, skin surface to muscle, coronal CT",
+   "method": "CT",
+   "sex": "M",
+   "group": "all (mean BMI 27.4 M / 27.8 F; mean age 67.5)",
+   "n": 219,
+   "statistic": "mean",
+   "value_mm": 9.6,
+   "sd_mm": 4.9,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "US oncology surveillance patients, 86.5% White, elderly."
+  },
+  {
+   "sourceId": "sebro2022",
+   "site": "deltoid (shoulder)",
+   "siteDefinition": "Deltoid subcutaneous fat pad 5.0 cm inferior to acromion, skin surface to muscle, coronal CT",
+   "method": "CT",
+   "sex": "F",
+   "group": "all (mean BMI 27.4 M / 27.8 F; mean age 67.5)",
+   "n": 167,
+   "statistic": "mean",
+   "value_mm": 15.5,
+   "sd_mm": 8.3,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "US oncology surveillance patients, 86.5% White, elderly."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "subscapular skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "F",
+   "group": "all BMI, age 20+, all race/ethnicity",
+   "n": 4723,
+   "statistic": "mean",
+   "value_mm": 21.7,
+   "sem_mm": 0.17,
+   "median_mm": 21.2,
+   "iqr_mm": [
+    14.5,
+    28.1
+   ],
+   "percentiles_mm": {
+    "p5": 8.6,
+    "p10": 10.3,
+    "p15": 11.9,
+    "p25": 14.5,
+    "p50": 21.2,
+    "p75": 28.1,
+    "p85": 31.6,
+    "p90": 33.9,
+    "p95": 36.0
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 28",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "subscapular skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "F",
+   "group": "all BMI, age 20-29, all race/ethnicity",
+   "n": 740,
+   "statistic": "mean",
+   "value_mm": 20.0,
+   "sem_mm": 0.53,
+   "median_mm": 18.9,
+   "iqr_mm": [
+    13.0,
+    25.9
+   ],
+   "percentiles_mm": {
+    "p5": 8.5,
+    "p10": 9.6,
+    "p15": 10.9,
+    "p25": 13.0,
+    "p50": 18.9,
+    "p75": 25.9,
+    "p85": 30.7,
+    "p90": 33.6,
+    "p95": 35.9
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 28",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "subscapular skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "M",
+   "group": "all BMI, age 20+, all race/ethnicity",
+   "n": 4645,
+   "statistic": "mean",
+   "value_mm": 20.2,
+   "sem_mm": 0.21,
+   "median_mm": 19.6,
+   "iqr_mm": [
+    14.2,
+    25.2
+   ],
+   "percentiles_mm": {
+    "p5": 8.9,
+    "p10": 10.3,
+    "p15": 11.5,
+    "p25": 14.2,
+    "p50": 19.6,
+    "p75": 25.2,
+    "p85": 28.6,
+    "p90": 30.5,
+    "p95": 33.3
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 29",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "subscapular skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "M",
+   "group": "all BMI, age 20-29, all race/ethnicity",
+   "n": 792,
+   "statistic": "mean",
+   "value_mm": 17.8,
+   "sem_mm": 0.4,
+   "median_mm": 16.5,
+   "iqr_mm": [
+    11.0,
+    23.2
+   ],
+   "percentiles_mm": {
+    "p5": 7.6,
+    "p10": 8.8,
+    "p15": 9.5,
+    "p25": 11.0,
+    "p50": 16.5,
+    "p75": 23.2,
+    "p85": 27.0,
+    "p90": 28.9,
+    "p95": 31.4
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 29",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "triceps skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "F",
+   "group": "all BMI, age 20+, all race/ethnicity",
+   "n": 5198,
+   "statistic": "mean",
+   "value_mm": 23.7,
+   "sem_mm": 0.17,
+   "median_mm": 23.5,
+   "iqr_mm": [
+    18.0,
+    29.0
+   ],
+   "percentiles_mm": {
+    "p5": 11.9,
+    "p10": 14.0,
+    "p15": 15.8,
+    "p25": 18.0,
+    "p50": 23.5,
+    "p75": 29.0,
+    "p85": 31.9,
+    "p90": 33.7,
+    "p95": 35.9
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 31",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "triceps skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "F",
+   "group": "all BMI, age 20-29, all race/ethnicity",
+   "n": 815,
+   "statistic": "mean",
+   "value_mm": 22.2,
+   "sem_mm": 0.44,
+   "median_mm": 21.3,
+   "iqr_mm": [
+    16.5,
+    27.7
+   ],
+   "percentiles_mm": {
+    "p5": 11.0,
+    "p10": 13.2,
+    "p15": 14.0,
+    "p25": 16.5,
+    "p50": 21.3,
+    "p75": 27.7,
+    "p85": 31.1,
+    "p90": 32.6,
+    "p95": 35.1
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 31",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "triceps skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "M",
+   "group": "all BMI, age 20+, all race/ethnicity",
+   "n": 5307,
+   "statistic": "mean",
+   "value_mm": 14.9,
+   "sem_mm": 0.17,
+   "median_mm": 13.4,
+   "iqr_mm": [
+    9.9,
+    18.6
+   ],
+   "percentiles_mm": {
+    "p5": 6.2,
+    "p10": 7.5,
+    "p15": 8.4,
+    "p25": 9.9,
+    "p50": 13.4,
+    "p75": 18.6,
+    "p85": 22.0,
+    "p90": 24.3,
+    "p95": 27.8
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 32",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "nhanes2007_2010",
+   "site": "triceps skinfold",
+   "siteDefinition": "NHANES anthropometry protocol caliper skinfold (triceps: posterior mid upper arm; subscapular: below inferior angle of scapula)",
+   "method": "skinfold",
+   "sex": "M",
+   "group": "all BMI, age 20-29, all race/ethnicity",
+   "n": 846,
+   "statistic": "mean",
+   "value_mm": 14.0,
+   "sem_mm": 0.28,
+   "median_mm": 12.5,
+   "iqr_mm": [
+    8.5,
+    17.9
+   ],
+   "percentiles_mm": {
+    "p5": 5.5,
+    "p10": 6.6,
+    "p15": 7.2,
+    "p25": 8.5,
+    "p50": 12.5,
+    "p75": 17.9,
+    "p85": 21.9,
+    "p90": 23.3,
+    "p95": 26.4
+   },
+   "includesSkin": true,
+   "whereInPaper": "Table 32",
+   "note": "RAW skinfold = compressed double layer of skin+fat; NOT converted. US population 2007-2010. Not stratified by BMI; percentiles can serve as a fatness axis. Very thick folds exceed caliper range and are missing, biasing the top percentiles down."
+  },
+  {
+   "sourceId": "liu2018",
+   "site": "subscapular skinfold",
+   "siteDefinition": "Caliper (10 g/mm2); subscapular about 20 mm below scapular tip at 45 degrees; triceps per paper Methods",
+   "method": "skinfold",
+   "sex": "M",
+   "group": "all BMI (mean BMI 24.7 M / 24.2 F; mean age 58)",
+   "n": 767,
+   "statistic": "mean",
+   "value_mm": 24.1,
+   "sd_mm": 9.3,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "RAW skinfold, not converted. Shenyang, China, 2015. CAUTION: male triceps (25.7 mm) is implausibly high vs NHANES men (14.9 mm) and shows no sex difference - possible measurement/protocol issue; do not use for sex patterning."
+  },
+  {
+   "sourceId": "liu2018",
+   "site": "subscapular skinfold",
+   "siteDefinition": "Caliper (10 g/mm2); subscapular about 20 mm below scapular tip at 45 degrees; triceps per paper Methods",
+   "method": "skinfold",
+   "sex": "F",
+   "group": "all BMI (mean BMI 24.7 M / 24.2 F; mean age 58)",
+   "n": 1569,
+   "statistic": "mean",
+   "value_mm": 23.7,
+   "sd_mm": 8.7,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "RAW skinfold, not converted. Shenyang, China, 2015. CAUTION: male triceps (25.7 mm) is implausibly high vs NHANES men (14.9 mm) and shows no sex difference - possible measurement/protocol issue; do not use for sex patterning."
+  },
+  {
+   "sourceId": "liu2018",
+   "site": "triceps skinfold",
+   "siteDefinition": "Caliper (10 g/mm2); subscapular about 20 mm below scapular tip at 45 degrees; triceps per paper Methods",
+   "method": "skinfold",
+   "sex": "M",
+   "group": "all BMI (mean BMI 24.7 M / 24.2 F; mean age 58)",
+   "n": 767,
+   "statistic": "mean",
+   "value_mm": 25.7,
+   "sd_mm": 11.2,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "RAW skinfold, not converted. Shenyang, China, 2015. CAUTION: male triceps (25.7 mm) is implausibly high vs NHANES men (14.9 mm) and shows no sex difference - possible measurement/protocol issue; do not use for sex patterning."
+  },
+  {
+   "sourceId": "liu2018",
+   "site": "triceps skinfold",
+   "siteDefinition": "Caliper (10 g/mm2); subscapular about 20 mm below scapular tip at 45 degrees; triceps per paper Methods",
+   "method": "skinfold",
+   "sex": "F",
+   "group": "all BMI (mean BMI 24.7 M / 24.2 F; mean age 58)",
+   "n": 1569,
+   "statistic": "mean",
+   "value_mm": 24.8,
+   "sd_mm": 9.9,
+   "includesSkin": true,
+   "whereInPaper": "Table 1",
+   "note": "RAW skinfold, not converted. Shenyang, China, 2015. CAUTION: male triceps (25.7 mm) is implausibly high vs NHANES men (14.9 mm) and shows no sex difference - possible measurement/protocol issue; do not use for sex patterning."
+  }
+ ],
+ "regressions": [
+  {
+   "sourceId": "sim2014",
+   "y": "abdomen SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI, age (y), female (0/1)",
+   "sex": "both (sex as covariate)",
+   "formula": "SAT_abdomen = -13.420 + 1.140*BMI + 5.345*female - 0.018*age",
+   "r2": 0.544,
+   "r2Type": "adjusted",
+   "whereInPaper": "Table 5",
+   "derived": false,
+   "note": "Korean T2DM n=156. At age 22: M = -13.82 + 1.14*BMI; F = -8.47 + 1.14*BMI (goes negative below BMI ~12 M; clamp)."
+  },
+  {
+   "sourceId": "sim2014",
+   "y": "upper-arm SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI, age (y), female (0/1)",
+   "sex": "both (sex as covariate)",
+   "formula": "SAT_arm = -0.614 + 0.403*BMI + 3.345*female - 0.029*age",
+   "r2": 0.632,
+   "r2Type": "adjusted",
+   "whereInPaper": "Table 5",
+   "derived": false,
+   "note": "Constant not significant (p=0.59)."
+  },
+  {
+   "sourceId": "sim2014",
+   "y": "abdomen skin thickness (mm)",
+   "x": "BMI, age, female",
+   "sex": "both",
+   "formula": "ST_abdomen = 1.424 + 0.040*BMI - 0.142*female - 0.003*age",
+   "r2": 0.185,
+   "r2Type": "adjusted",
+   "whereInPaper": "Table 5",
+   "derived": false,
+   "note": "Skin itself thickens only ~0.04 mm per BMI unit."
+  },
+  {
+   "sourceId": "sim2014",
+   "y": "upper-arm skin thickness (mm)",
+   "x": "BMI, age, female",
+   "sex": "both",
+   "formula": "ST_arm = 1.284 + 0.029*BMI - 0.283*female - 0.002*age",
+   "r2": 0.274,
+   "r2Type": "adjusted",
+   "whereInPaper": "Table 5",
+   "derived": false,
+   "note": ""
+  },
+  {
+   "sourceId": "kowatari2023",
+   "y": "deltoid subcutaneous thickness (mm), T point",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SCT = 0.39*BMI - 3.9",
+   "r2": 0.56,
+   "whereInPaper": "Table 3",
+   "derived": false,
+   "note": "Japanese young men n=134"
+  },
+  {
+   "sourceId": "kowatari2023",
+   "y": "deltoid subcutaneous thickness (mm), A point",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SCT = 0.62*BMI - 7.7",
+   "r2": 0.66,
+   "whereInPaper": "Table 3",
+   "derived": false,
+   "note": ""
+  },
+  {
+   "sourceId": "kowatari2023",
+   "y": "deltoid subcutaneous thickness (mm), T point",
+   "x": "BMI",
+   "sex": "F",
+   "formula": "SCT = 0.40*BMI - 2.1",
+   "r2": 0.2,
+   "whereInPaper": "Table 3",
+   "derived": false,
+   "note": "Japanese young women n=111; narrow BMI range (20.6 +/- 1.8)"
+  },
+  {
+   "sourceId": "kowatari2023",
+   "y": "deltoid subcutaneous thickness (mm), A point",
+   "x": "BMI",
+   "sex": "F",
+   "formula": "SCT = 0.66*BMI - 5.5",
+   "r2": 0.31,
+   "whereInPaper": "Table 3",
+   "derived": false,
+   "note": ""
+  },
+  {
+   "sourceId": "sebro2022",
+   "y": "deltoid subcutaneous fat pad thickness (mm), CT, 5 cm below acromion",
+   "x": "BMI, age, male (0/1)",
+   "sex": "both (sex as covariate)",
+   "formula": "DSFP = 6.267199 - 2.711159*male + 0.228407*BMI + 0.012295*BMI^2 - 0.294211*BMI*male - 0.110063*age + 0.085589*age*male",
+   "r2": null,
+   "whereInPaper": "Equation 1 (Model 2)",
+   "derived": false,
+   "note": "Elderly US oncology cohort; r(BMI) = 0.74 M, 0.75 F."
+  },
+  {
+   "sourceId": "tai2026",
+   "y": "abdomen SAT",
+   "x": "BMI, age, gender",
+   "sex": "both",
+   "formula": "B(BMI) = 0.039 (units inconsistent with mm; appears to be cm or transformed)",
+   "r2": 0.206,
+   "r2Type": "adjusted",
+   "whereInPaper": "Table 4",
+   "derived": false,
+   "note": "Coefficient scale is unclear in the paper; do not use quantitatively."
+  },
+  {
+   "sourceId": "jain2013",
+   "y": "upper arm (posterior) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -6.35 + 0.575*BMI",
+   "r2": 0.98,
+   "whereInPaper": "derived from Tables 5-7",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 16,
+     "mm": 2.63
+    },
+    {
+     "bmi": 18,
+     "mm": 3.9
+    },
+    {
+     "bmi": 21,
+     "mm": 6.36
+    },
+    {
+     "bmi": 24,
+     "mm": 7.18
+    },
+    {
+     "bmi": 27,
+     "mm": 9.07
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <17 -> 16, 17-19 -> 18, 19-23 -> 21, 23-25 -> 24, >25 -> 27. r2 is of the 5 class means, not of individuals. Valid roughly BMI 16-28 only."
+  },
+  {
+   "sourceId": "jain2013",
+   "y": "upper arm (posterior) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "F",
+   "formula": "SAT = -5.15 + 0.688*BMI",
+   "r2": 0.86,
+   "whereInPaper": "derived from Tables 5-7",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 16,
+     "mm": 4.68
+    },
+    {
+     "bmi": 18,
+     "mm": 7.82
+    },
+    {
+     "bmi": 21,
+     "mm": 9.84
+    },
+    {
+     "bmi": 24,
+     "mm": 12.82
+    },
+    {
+     "bmi": 27,
+     "mm": 12.01
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <17 -> 16, 17-19 -> 18, 19-23 -> 21, 23-25 -> 24, >25 -> 27. r2 is of the 5 class means, not of individuals. Valid roughly BMI 16-28 only."
+  },
+  {
+   "sourceId": "jain2013",
+   "y": "thigh (anterior) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -7.10 + 0.647*BMI",
+   "r2": 0.97,
+   "whereInPaper": "derived from Tables 5-7",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 16,
+     "mm": 3.05
+    },
+    {
+     "bmi": 18,
+     "mm": 4.98
+    },
+    {
+     "bmi": 21,
+     "mm": 6.6
+    },
+    {
+     "bmi": 24,
+     "mm": 7.69
+    },
+    {
+     "bmi": 27,
+     "mm": 10.79
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <17 -> 16, 17-19 -> 18, 19-23 -> 21, 23-25 -> 24, >25 -> 27. r2 is of the 5 class means, not of individuals. Valid roughly BMI 16-28 only."
+  },
+  {
+   "sourceId": "jain2013",
+   "y": "thigh (anterior) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "F",
+   "formula": "SAT = -4.79 + 0.710*BMI",
+   "r2": 0.63,
+   "whereInPaper": "derived from Tables 5-7",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 16,
+     "mm": 4.84
+    },
+    {
+     "bmi": 18,
+     "mm": 10.12
+    },
+    {
+     "bmi": 21,
+     "mm": 8.56
+    },
+    {
+     "bmi": 24,
+     "mm": 15.39
+    },
+    {
+     "bmi": 27,
+     "mm": 12.44
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <17 -> 16, 17-19 -> 18, 19-23 -> 21, 23-25 -> 24, >25 -> 27. r2 is of the 5 class means, not of individuals. Valid roughly BMI 16-28 only."
+  },
+  {
+   "sourceId": "jain2013",
+   "y": "abdomen (lateral) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -12.36 + 1.000*BMI",
+   "r2": 0.99,
+   "whereInPaper": "derived from Tables 5-7",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 16,
+     "mm": 4.2
+    },
+    {
+     "bmi": 18,
+     "mm": 5.18
+    },
+    {
+     "bmi": 21,
+     "mm": 8.52
+    },
+    {
+     "bmi": 24,
+     "mm": 11.16
+    },
+    {
+     "bmi": 27,
+     "mm": 15.11
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <17 -> 16, 17-19 -> 18, 19-23 -> 21, 23-25 -> 24, >25 -> 27. r2 is of the 5 class means, not of individuals. Valid roughly BMI 16-28 only."
+  },
+  {
+   "sourceId": "jain2013",
+   "y": "abdomen (lateral) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "F",
+   "formula": "SAT = -13.27 + 1.154*BMI",
+   "r2": 0.86,
+   "whereInPaper": "derived from Tables 5-7",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 16,
+     "mm": 3.66
+    },
+    {
+     "bmi": 18,
+     "mm": 9.67
+    },
+    {
+     "bmi": 21,
+     "mm": 9.41
+    },
+    {
+     "bmi": 24,
+     "mm": 16.7
+    },
+    {
+     "bmi": 27,
+     "mm": 16.56
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <17 -> 16, 17-19 -> 18, 19-23 -> 21, 23-25 -> 24, >25 -> 27. r2 is of the 5 class means, not of individuals. Valid roughly BMI 16-28 only."
+  },
+  {
+   "sourceId": "gibney2010",
+   "y": "upper arm SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "both pooled",
+   "formula": "SAT = -2.98 + 0.480*BMI",
+   "r2": 0.99,
+   "whereInPaper": "derived from supplementary appendix Table 1",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 22,
+     "mm": 7.739
+    },
+    {
+     "bmi": 27.5,
+     "mm": 9.923
+    },
+    {
+     "bmi": 34,
+     "mm": 13.476
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <25 -> 22, 25-29.9 -> 27.5, >=30 -> 34 (true class mean BMIs not in the appendix). Only 3 points. Sex offset from Table 2 (F minus M, BMI pooled): arm +5.3, thigh +6.4, abdomen +3.7, buttock +5.7 mm."
+  },
+  {
+   "sourceId": "gibney2010",
+   "y": "thigh (anterior) SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "both pooled",
+   "formula": "SAT = -1.03 + 0.397*BMI",
+   "r2": 0.99,
+   "whereInPaper": "derived from supplementary appendix Table 1",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 22,
+     "mm": 7.842
+    },
+    {
+     "bmi": 27.5,
+     "mm": 9.646
+    },
+    {
+     "bmi": 34,
+     "mm": 12.589
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <25 -> 22, 25-29.9 -> 27.5, >=30 -> 34 (true class mean BMIs not in the appendix). Only 3 points. Sex offset from Table 2 (F minus M, BMI pooled): arm +5.3, thigh +6.4, abdomen +3.7, buttock +5.7 mm."
+  },
+  {
+   "sourceId": "gibney2010",
+   "y": "abdomen SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "both pooled",
+   "formula": "SAT = -4.40 + 0.644*BMI",
+   "r2": 0.99,
+   "whereInPaper": "derived from supplementary appendix Table 1",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 22,
+     "mm": 9.476
+    },
+    {
+     "bmi": 27.5,
+     "mm": 13.865
+    },
+    {
+     "bmi": 34,
+     "mm": 17.252
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <25 -> 22, 25-29.9 -> 27.5, >=30 -> 34 (true class mean BMIs not in the appendix). Only 3 points. Sex offset from Table 2 (F minus M, BMI pooled): arm +5.3, thigh +6.4, abdomen +3.7, buttock +5.7 mm."
+  },
+  {
+   "sourceId": "gibney2010",
+   "y": "buttock SAT thickness (mm), ultrasound, skin excluded",
+   "x": "BMI",
+   "sex": "both pooled",
+   "formula": "SAT = 8.67 + 0.239*BMI",
+   "r2": 0.92,
+   "whereInPaper": "derived from supplementary appendix Table 1",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 22,
+     "mm": 13.676
+    },
+    {
+     "bmi": 27.5,
+     "mm": 15.738
+    },
+    {
+     "bmi": 34,
+     "mm": 16.589
+    }
+   ],
+   "note": "DERIVED by this extraction (ordinary least squares through published class means, unweighted); not reported by the authors. Class midpoints ASSUMED: <25 -> 22, 25-29.9 -> 27.5, >=30 -> 34 (true class mean BMIs not in the appendix). Only 3 points. Sex offset from Table 2 (F minus M, BMI pooled): arm +5.3, thigh +6.4, abdomen +3.7, buttock +5.7 mm."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "anterior trunk segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -1.59 + 0.266*BMI",
+   "r2": 0.19,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 1.98
+    },
+    {
+     "bmi": 21.1,
+     "mm": 3.19
+    },
+    {
+     "bmi": 21.8,
+     "mm": 4.13
+    },
+    {
+     "bmi": 25.8,
+     "mm": 2.9
+    },
+    {
+     "bmi": 25.8,
+     "mm": 4.14
+    },
+    {
+     "bmi": 20.4,
+     "mm": 4.84
+    },
+    {
+     "bmi": 28.4,
+     "mm": 5.27
+    },
+    {
+     "bmi": 22.7,
+     "mm": 6.4
+    },
+    {
+     "bmi": 23.2,
+     "mm": 6.12
+    },
+    {
+     "bmi": 27.0,
+     "mm": 7.98
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "posterior trunk segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = 0.40 + 0.142*BMI",
+   "r2": 0.13,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 2.66
+    },
+    {
+     "bmi": 21.1,
+     "mm": 2.03
+    },
+    {
+     "bmi": 21.8,
+     "mm": 3.56
+    },
+    {
+     "bmi": 25.8,
+     "mm": 3.2
+    },
+    {
+     "bmi": 25.8,
+     "mm": 2.84
+    },
+    {
+     "bmi": 20.4,
+     "mm": 4.04
+    },
+    {
+     "bmi": 28.4,
+     "mm": 3.86
+    },
+    {
+     "bmi": 22.7,
+     "mm": 4.54
+    },
+    {
+     "bmi": 23.2,
+     "mm": 4.99
+    },
+    {
+     "bmi": 27.0,
+     "mm": 5.91
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "upper arm segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -3.93 + 0.293*BMI",
+   "r2": 0.48,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 0.97
+    },
+    {
+     "bmi": 21.1,
+     "mm": 2.19
+    },
+    {
+     "bmi": 21.8,
+     "mm": 2.02
+    },
+    {
+     "bmi": 25.8,
+     "mm": 2.74
+    },
+    {
+     "bmi": 25.8,
+     "mm": 3.29
+    },
+    {
+     "bmi": 20.4,
+     "mm": 2.65
+    },
+    {
+     "bmi": 28.4,
+     "mm": 3.49
+    },
+    {
+     "bmi": 22.7,
+     "mm": 2.9
+    },
+    {
+     "bmi": 23.2,
+     "mm": 4.19
+    },
+    {
+     "bmi": 27.0,
+     "mm": 5.53
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "forearm segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -0.11 + 0.053*BMI",
+   "r2": 0.07,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 0.52
+    },
+    {
+     "bmi": 21.1,
+     "mm": 0.58
+    },
+    {
+     "bmi": 21.8,
+     "mm": 1.37
+    },
+    {
+     "bmi": 25.8,
+     "mm": 0.63
+    },
+    {
+     "bmi": 25.8,
+     "mm": 0.99
+    },
+    {
+     "bmi": 20.4,
+     "mm": 1.3
+    },
+    {
+     "bmi": 28.4,
+     "mm": 1.61
+    },
+    {
+     "bmi": 22.7,
+     "mm": 0.73
+    },
+    {
+     "bmi": 23.2,
+     "mm": 2.41
+    },
+    {
+     "bmi": 27.0,
+     "mm": 1.37
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "buttock segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -4.81 + 0.713*BMI",
+   "r2": 0.33,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 7.71
+    },
+    {
+     "bmi": 21.1,
+     "mm": 8.1
+    },
+    {
+     "bmi": 21.8,
+     "mm": 7.92
+    },
+    {
+     "bmi": 25.8,
+     "mm": 12.62
+    },
+    {
+     "bmi": 25.8,
+     "mm": 10.83
+    },
+    {
+     "bmi": 20.4,
+     "mm": 12.85
+    },
+    {
+     "bmi": 28.4,
+     "mm": 16.99
+    },
+    {
+     "bmi": 22.7,
+     "mm": 17.93
+    },
+    {
+     "bmi": 23.2,
+     "mm": 11.08
+    },
+    {
+     "bmi": 27.0,
+     "mm": 14.36
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "thigh segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -8.99 + 0.623*BMI",
+   "r2": 0.46,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 2.57
+    },
+    {
+     "bmi": 21.1,
+     "mm": 3.28
+    },
+    {
+     "bmi": 21.8,
+     "mm": 3.8
+    },
+    {
+     "bmi": 25.8,
+     "mm": 4.58
+    },
+    {
+     "bmi": 25.8,
+     "mm": 4.25
+    },
+    {
+     "bmi": 20.4,
+     "mm": 4.52
+    },
+    {
+     "bmi": 28.4,
+     "mm": 8.49
+    },
+    {
+     "bmi": 22.7,
+     "mm": 7.06
+    },
+    {
+     "bmi": 23.2,
+     "mm": 7.59
+    },
+    {
+     "bmi": 27.0,
+     "mm": 11.08
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "y": "lower leg segment-mean SAT thickness (mm), ultrasound",
+   "x": "BMI",
+   "sex": "M",
+   "formula": "SAT = -5.03 + 0.332*BMI",
+   "r2": 0.52,
+   "whereInPaper": "derived from Table 1 (BMI) and Table 5 (d_IM,BS)",
+   "derived": true,
+   "points": [
+    {
+     "bmi": 20.0,
+     "mm": 1.53
+    },
+    {
+     "bmi": 21.1,
+     "mm": 1.48
+    },
+    {
+     "bmi": 21.8,
+     "mm": 1.56
+    },
+    {
+     "bmi": 25.8,
+     "mm": 2.03
+    },
+    {
+     "bmi": 25.8,
+     "mm": 3.23
+    },
+    {
+     "bmi": 20.4,
+     "mm": 2.64
+    },
+    {
+     "bmi": 28.4,
+     "mm": 4.08
+    },
+    {
+     "bmi": 22.7,
+     "mm": 2.22
+    },
+    {
+     "bmi": 23.2,
+     "mm": 3.6
+    },
+    {
+     "bmi": 27.0,
+     "mm": 5.63
+    }
+   ],
+   "note": "DERIVED by this extraction: OLS over the 10 individual men (P1-P10). Weak fits - BMI explains little of SAT in lean young men (the participants were ordered by fatness, not BMI). Better used as a PATTERN: scale all segments by a common fatness factor (segment thickness as a ratio to whole-body mean 3.69 mm: buttock 3.26, thigh 1.55, ant. trunk 1.27, post. trunk 1.02, upper arm 0.81, lower leg 0.76, neck 0.41, head 0.34, forearm 0.31, foot 0.11, hand 0.09)."
+  }
+ ],
+ "partition": [
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "lean (BMI<23), no fatty liver",
+   "meanBMI": 21.1,
+   "VAT_L": 1.6,
+   "VAT_sd": 1.12,
+   "SAT_L": 3.58,
+   "SAT_sd": 1.17,
+   "VAT_SAT_ratio": 0.43,
+   "ratio_sd": 0.23,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "overweight (23-24.9), no fatty liver",
+   "meanBMI": 25.0,
+   "VAT_L": 2.61,
+   "VAT_sd": 1.62,
+   "SAT_L": 5.6,
+   "SAT_sd": 1.67,
+   "VAT_SAT_ratio": 0.46,
+   "ratio_sd": 0.23,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "obese (>=25), no fatty liver",
+   "meanBMI": 28.7,
+   "VAT_L": 2.43,
+   "VAT_sd": 1.92,
+   "SAT_L": 6.19,
+   "SAT_sd": 1.87,
+   "VAT_SAT_ratio": 0.39,
+   "ratio_sd": 0.23,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "lean (BMI<23), fatty liver",
+   "meanBMI": 21.9,
+   "VAT_L": 3.13,
+   "VAT_sd": 1.98,
+   "SAT_L": 4.42,
+   "SAT_sd": 1.23,
+   "VAT_SAT_ratio": 0.69,
+   "ratio_sd": 0.35,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "overweight (23-24.9), fatty liver",
+   "meanBMI": 25.1,
+   "VAT_L": 3.08,
+   "VAT_sd": 1.82,
+   "SAT_L": 4.86,
+   "SAT_sd": 1.54,
+   "VAT_SAT_ratio": 0.62,
+   "ratio_sd": 0.29,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "obese (>=25), fatty liver",
+   "meanBMI": 29.5,
+   "VAT_L": 3.51,
+   "VAT_sd": 2.05,
+   "SAT_L": 6.84,
+   "SAT_sd": 2.5,
+   "VAT_SAT_ratio": 0.55,
+   "ratio_sd": 0.33,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "M",
+   "group": "all",
+   "meanBMI": 23.7,
+   "VAT_L": 2.48,
+   "VAT_sd": 1.74,
+   "SAT_L": 4.69,
+   "SAT_sd": 1.82,
+   "VAT_SAT_ratio": 0.52,
+   "ratio_sd": 0.28,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "lean (BMI<23), no fatty liver",
+   "meanBMI": 20.3,
+   "VAT_L": 1.19,
+   "VAT_sd": 0.76,
+   "SAT_L": 5.57,
+   "SAT_sd": 1.52,
+   "VAT_SAT_ratio": 0.21,
+   "ratio_sd": 0.13,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "overweight (23-24.9), no fatty liver",
+   "meanBMI": 24.8,
+   "VAT_L": 1.84,
+   "VAT_sd": 0.91,
+   "SAT_L": 7.78,
+   "SAT_sd": 1.9,
+   "VAT_SAT_ratio": 0.24,
+   "ratio_sd": 0.12,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "obese (>=25), no fatty liver",
+   "meanBMI": 30.6,
+   "VAT_L": 2.21,
+   "VAT_sd": 1.07,
+   "SAT_L": 9.28,
+   "SAT_sd": 2.98,
+   "VAT_SAT_ratio": 0.28,
+   "ratio_sd": 0.28,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "lean (BMI<23), fatty liver",
+   "meanBMI": 21.6,
+   "VAT_L": 2.3,
+   "VAT_sd": 1.6,
+   "SAT_L": 5.95,
+   "SAT_sd": 1.93,
+   "VAT_SAT_ratio": 0.38,
+   "ratio_sd": 0.2,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "overweight (23-24.9), fatty liver",
+   "meanBMI": 25.2,
+   "VAT_L": 2.33,
+   "VAT_sd": 0.99,
+   "SAT_L": 7.4,
+   "SAT_sd": 1.84,
+   "VAT_SAT_ratio": 0.34,
+   "ratio_sd": 0.21,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "obese (>=25), fatty liver",
+   "meanBMI": 30.3,
+   "VAT_L": 2.54,
+   "VAT_sd": 1.42,
+   "SAT_L": 9.92,
+   "SAT_sd": 3.39,
+   "VAT_SAT_ratio": 0.26,
+   "ratio_sd": 0.13,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "chiyanika2021",
+   "quantity": "abdominal VAT and SAT volume, VAT/SAT ratio",
+   "method": "MRI (3T 2-point Dixon, whole abdomen, automated)",
+   "sex": "F",
+   "group": "all",
+   "meanBMI": 22.5,
+   "VAT_L": 1.58,
+   "VAT_sd": 1.06,
+   "SAT_L": 6.49,
+   "SAT_sd": 2.3,
+   "VAT_SAT_ratio": 0.25,
+   "ratio_sd": 0.16,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Hong Kong Chinese general population, N=625 total (38% men), mean age 48. Per-sex n per cell not printed (total cell n: 326/109/19 without and 45/85/41 with fatty liver). Asian BMI cut-offs. SAT here is ABDOMINAL subcutaneous only."
+  },
+  {
+   "sourceId": "linge2018",
+   "quantity": "VAT and abdominal SAT volume",
+   "method": "MRI (UK Biobank, 1.5T Dixon neck-to-knee)",
+   "sex": "M",
+   "group": "all (median BMI 26.75, median age ~63)",
+   "n": 2864,
+   "VAT_L": 4.62,
+   "VAT_iqr": [
+    3.25,
+    6.38
+   ],
+   "SAT_L": 5.5,
+   "SAT_iqr": [
+    4.27,
+    7.06
+   ],
+   "VAT_SAT_ratio_ofMedians": 0.84,
+   "statistic": "median",
+   "whereInPaper": "Table 1",
+   "note": "Ratio of medians computed here (not reported). Mostly White British, older adults. Not stratified by BMI in the tables."
+  },
+  {
+   "sourceId": "linge2018",
+   "quantity": "VAT and abdominal SAT volume",
+   "method": "MRI (UK Biobank, 1.5T Dixon neck-to-knee)",
+   "sex": "F",
+   "group": "all (median BMI 25.38, median age ~63)",
+   "n": 3157,
+   "VAT_L": 2.33,
+   "VAT_iqr": [
+    1.46,
+    3.51
+   ],
+   "SAT_L": 7.5,
+   "SAT_iqr": [
+    5.57,
+    9.93
+   ],
+   "VAT_SAT_ratio_ofMedians": 0.31,
+   "statistic": "median",
+   "whereInPaper": "Table 1",
+   "note": "Ratio of medians computed here (not reported). Mostly White British, older adults. Not stratified by BMI in the tables."
+  },
+  {
+   "sourceId": "west2016",
+   "quantity": "VAT and abdominal SAT volume",
+   "method": "MRI (UK Biobank first 3,000)",
+   "sex": "both",
+   "group": "all",
+   "n": 3000,
+   "VAT_L": 3.73,
+   "VAT_sd": 2.23,
+   "SAT_L": 6.91,
+   "SAT_sd": 3.06,
+   "statistic": "mean",
+   "whereInPaper": "Table 4",
+   "note": "Sexes pooled."
+  },
+  {
+   "sourceId": "kalimeri2021",
+   "quantity": "VAT/SAT ratio, abdominal (liver dome to mid femoral head)",
+   "method": "MRI",
+   "sex": "F",
+   "group": "postmenopausal, BMI 18-29 (mean 24.5), Chinese-Singaporean",
+   "n": 22,
+   "VAT_L": 2.13,
+   "SAT_L": 7.13,
+   "VAT_SAT_ratio": 0.32,
+   "statistic": "median for VAT and ratio, mean for SAT",
+   "whereInPaper": "Table 2",
+   "note": "BMI-matched Caucasian women (n=22): VAT 2.11 L, SAT 6.85 L, ratio 0.25 (p=0.02). Chinese women carry relatively more visceral fat at the same BMI."
+  },
+  {
+   "sourceId": "camhi2011",
+   "quantity": "abdominal SAT:VAT area ratio at L4-L5",
+   "method": "CT single slice",
+   "sex": "both",
+   "group": "BMI 17-49 (mean ~29-31), US White and African-American, n=1667",
+   "value": "about 3.5 times more SAT than VAT",
+   "statistic": "statement in Discussion",
+   "whereInPaper": "Discussion paragraph 2; correlations in Results",
+   "note": "r(BMI,SAT)=0.86-0.93; r(BMI,VAT)=0.61-0.69 across sex-by-race groups. At a given BMI women have more SAT and total fat than men. No regression coefficients printed."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "M",
+   "group": "age 18-<82",
+   "n": 5147,
+   "meanBMI": 26.6,
+   "androidGynoidFatMassRatio": 0.7,
+   "ratio_sd": 0.2,
+   "VAT_g": 1218.1,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "M",
+   "group": "age 18-<30",
+   "n": 1233,
+   "meanBMI": 24.2,
+   "androidGynoidFatMassRatio": 0.4,
+   "ratio_sd": 0.1,
+   "VAT_g": 424.6,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "M",
+   "group": "age 30-<40",
+   "n": 885,
+   "meanBMI": 25.9,
+   "androidGynoidFatMassRatio": 0.5,
+   "ratio_sd": 0.2,
+   "VAT_g": 767.2,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "M",
+   "group": "age 40-<50",
+   "n": 830,
+   "meanBMI": 27.0,
+   "androidGynoidFatMassRatio": 0.7,
+   "ratio_sd": 0.2,
+   "VAT_g": 1243.3,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "M",
+   "group": "age 50-<60",
+   "n": 839,
+   "meanBMI": 27.8,
+   "androidGynoidFatMassRatio": 0.8,
+   "ratio_sd": 0.2,
+   "VAT_g": 1612.5,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "F",
+   "group": "age 18-<82",
+   "n": 5747,
+   "meanBMI": 25.1,
+   "androidGynoidFatMassRatio": 0.4,
+   "ratio_sd": 0.2,
+   "VAT_g": 635.1,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "F",
+   "group": "age 18-<30",
+   "n": 1324,
+   "meanBMI": 22.6,
+   "androidGynoidFatMassRatio": 0.3,
+   "ratio_sd": 0.1,
+   "VAT_g": 235.6,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "F",
+   "group": "age 30-<40",
+   "n": 861,
+   "meanBMI": 23.6,
+   "androidGynoidFatMassRatio": 0.3,
+   "ratio_sd": 0.1,
+   "VAT_g": 340.2,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "F",
+   "group": "age 40-<50",
+   "n": 1040,
+   "meanBMI": 25.0,
+   "androidGynoidFatMassRatio": 0.4,
+   "ratio_sd": 0.1,
+   "VAT_g": 522.8,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "ofenheimer2020",
+   "quantity": "android/gynoid fat-mass ratio; VAT mass",
+   "method": "DXA (GE Lunar)",
+   "sex": "F",
+   "group": "age 50-<60",
+   "n": 1010,
+   "meanBMI": 26.0,
+   "androidGynoidFatMassRatio": 0.5,
+   "ratio_sd": 0.2,
+   "VAT_g": 759.9,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Austrian general population (LEAD). Ratio is android FAT MASS / gynoid FAT MASS (printed to 1 decimal)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "F",
+   "group": "age 18-65",
+   "n": 738,
+   "medianBMI": 23.0,
+   "androidGynoidFatRatio": 0.32,
+   "ratio_sd": 0.13,
+   "percentBodyFat": 30.3,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "F",
+   "group": "age 18-24",
+   "n": 163,
+   "medianBMI": 21.8,
+   "androidGynoidFatRatio": 0.26,
+   "ratio_sd": 0.09,
+   "percentBodyFat": 27.7,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "F",
+   "group": "age 25-34",
+   "n": 208,
+   "medianBMI": 23.3,
+   "androidGynoidFatRatio": 0.3,
+   "ratio_sd": 0.11,
+   "percentBodyFat": 29.8,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "F",
+   "group": "age 35-44",
+   "n": 123,
+   "medianBMI": 23.3,
+   "androidGynoidFatRatio": 0.32,
+   "ratio_sd": 0.13,
+   "percentBodyFat": 30.2,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "F",
+   "group": "age 45-54",
+   "n": 147,
+   "medianBMI": 23.2,
+   "androidGynoidFatRatio": 0.34,
+   "ratio_sd": 0.13,
+   "percentBodyFat": 31.3,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "F",
+   "group": "age 55-65",
+   "n": 97,
+   "medianBMI": 24.0,
+   "androidGynoidFatRatio": 0.4,
+   "ratio_sd": 0.14,
+   "percentBodyFat": 34.3,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "M",
+   "group": "age 18-65",
+   "n": 677,
+   "medianBMI": 25.8,
+   "androidGynoidFatRatio": 0.51,
+   "ratio_sd": 0.2,
+   "percentBodyFat": 22.3,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "M",
+   "group": "age 18-24",
+   "n": 153,
+   "medianBMI": 24.1,
+   "androidGynoidFatRatio": 0.38,
+   "ratio_sd": 0.12,
+   "percentBodyFat": 18.7,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "M",
+   "group": "age 25-34",
+   "n": 212,
+   "medianBMI": 25.8,
+   "androidGynoidFatRatio": 0.46,
+   "ratio_sd": 0.15,
+   "percentBodyFat": 21.2,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "M",
+   "group": "age 35-44",
+   "n": 146,
+   "medianBMI": 26.0,
+   "androidGynoidFatRatio": 0.54,
+   "ratio_sd": 0.18,
+   "percentBodyFat": 23.0,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "M",
+   "group": "age 45-54",
+   "n": 85,
+   "medianBMI": 27.4,
+   "androidGynoidFatRatio": 0.67,
+   "ratio_sd": 0.19,
+   "percentBodyFat": 26.4,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "staynor2020",
+   "quantity": "android/gynoid fat ratio; percent body fat",
+   "method": "DXA (GE Lunar iDXA)",
+   "sex": "M",
+   "group": "age 55-65",
+   "n": 81,
+   "medianBMI": 26.5,
+   "androidGynoidFatRatio": 0.69,
+   "ratio_sd": 0.21,
+   "percentBodyFat": 26.3,
+   "statistic": "mean",
+   "whereInPaper": "Table 1",
+   "note": "Western Australian adults, lean-ish and predominantly White; r(BMI, A/G ratio) = 0.60 F, 0.61 M (Table 2)."
+  },
+  {
+   "sourceId": "storchle2018",
+   "quantity": "share of total SUBCUTANEOUS fat mass by body segment (%)",
+   "method": "ultrasound, 216 sites x segment surface area",
+   "sex": "M",
+   "group": "BMI 20.0-28.4, n=10",
+   "shares_percent": {
+    "head": 2.4,
+    "neck": 0.8,
+    "anterior trunk": 16.5,
+    "posterior trunk": 13.2,
+    "upper arms": 6.5,
+    "forearms": 1.9,
+    "hands": 0.4,
+    "buttocks": 16.3,
+    "thighs": 29.4,
+    "lower legs": 10.6,
+    "feet": 0.7
+   },
+   "statistic": "mean",
+   "whereInPaper": "Table 5 (SAT%,BS, fibrous structures included)",
+   "note": "Total SAT = 4.9-13.3% of body mass (mean 8.6%), Table 2. Sums to 99% (genitalia ignored)."
+  },
+  {
+   "sourceId": "lim2018",
+   "quantity": "bust-line circumference difference vs BMI 25-29 (unadjusted linear regression betas)",
+   "method": "tape measure; mammographic breast area also reported",
+   "sex": "F",
+   "group": "Singapore screening cohort, 85% Chinese, age mostly 50-64",
+   "n": 24353,
+   "value": "bust line -16.35 cm (BMI<20), -7.52 cm (20-24), 0 ref (25-29), +7.91 cm (>=30)",
+   "n_byClass": {
+    "<20": 2619,
+    "20-24": 11425,
+    "25-29": 8158,
+    ">=30": 2151
+   },
+   "mammographicBreastArea_cm2_backTransformedBeta": {
+    "<20": -27.53,
+    "20-24": -13.78,
+    "25-29": 0,
+    ">=30": 16.96
+   },
+   "statistic": "regression beta",
+   "whereInPaper": "Table 1",
+   "note": "Bust line includes the thorax, so this is NOT breast volume. Chinese are the referent ethnicity (Malay +3.70 cm, Indian +2.63 cm)."
+  },
+  {
+   "sourceId": "steele2020",
+   "quantity": "breast volume per breast (mL)",
+   "method": "3D surface scan, prone with breasts pendant",
+   "sex": "F",
+   "group": "BMI 18.5-24.9",
+   "n": 163,
+   "meanBMI": 22.5,
+   "rightBreast_mL": 367,
+   "right_se": 32,
+   "leftBreast_mL": 378,
+   "left_se": 30,
+   "statistic": "mean (age-adjusted), dispersion = SE",
+   "whereInPaper": "Table 1",
+   "note": "Australian women, mean age 37/45/54 by class. DERIVED slope through the 3 class means: about +53 mL per breast per BMI unit (mean of L and R: volume ~ -795 + 52.9*BMI, OLS through 3 class means); Asian women will have smaller absolute volumes."
+  },
+  {
+   "sourceId": "steele2020",
+   "quantity": "breast volume per breast (mL)",
+   "method": "3D surface scan, prone with breasts pendant",
+   "sex": "F",
+   "group": "BMI 25.0-29.9",
+   "n": 103,
+   "meanBMI": 27.4,
+   "rightBreast_mL": 683,
+   "right_se": 38,
+   "leftBreast_mL": 705,
+   "left_se": 37,
+   "statistic": "mean (age-adjusted), dispersion = SE",
+   "whereInPaper": "Table 1",
+   "note": "Australian women, mean age 37/45/54 by class. DERIVED slope through the 3 class means: about +53 mL per breast per BMI unit (mean of L and R: volume ~ -795 + 52.9*BMI, OLS through 3 class means); Asian women will have smaller absolute volumes."
+  },
+  {
+   "sourceId": "steele2020",
+   "quantity": "breast volume per breast (mL)",
+   "method": "3D surface scan, prone with breasts pendant",
+   "sex": "F",
+   "group": "BMI >=30",
+   "n": 112,
+   "meanBMI": 35.4,
+   "rightBreast_mL": 1077,
+   "right_se": 38,
+   "leftBreast_mL": 1052,
+   "left_se": 37,
+   "statistic": "mean (age-adjusted), dispersion = SE",
+   "whereInPaper": "Table 1",
+   "note": "Australian women, mean age 37/45/54 by class. DERIVED slope through the 3 class means: about +53 mL per breast per BMI unit (mean of L and R: volume ~ -795 + 52.9*BMI, OLS through 3 class means); Asian women will have smaller absolute volumes."
+  },
+  {
+   "sourceId": "kelly2009",
+   "quantity": "fat mass index (FMI = fat mass / height^2, kg/m2) threshold with the same population prevalence as a BMI threshold at age 25",
+   "method": "DXA (Hologic), NHANES 1999-2004",
+   "sex": "M",
+   "group": "non-Hispanic White",
+   "FMI_at_BMI": {
+    "18.5": 2.9,
+    "25": 6.0,
+    "30": 8.9,
+    "35": 11.9,
+    "40": 15.0
+   },
+   "statistic": "prevalence-matched threshold",
+   "whereInPaper": "Table 3 (classification ranges in Table 4: normal FMI 3-6 M, 5-9 F)",
+   "note": "Prevalence-matched, not a regression, but gives a usable sex-specific map: implied %fat = FMI/BMI -> M 24% at BMI 25, 30% at BMI 30; F 37% at BMI 25, 43% at BMI 30 (computed here). Mexican-American: M 6.3/9.2, F 9.4/12.8 at BMI 25/30. Android/gynoid is NOT in this paper."
+  },
+  {
+   "sourceId": "kelly2009",
+   "quantity": "fat mass index (FMI = fat mass / height^2, kg/m2) threshold with the same population prevalence as a BMI threshold at age 25",
+   "method": "DXA (Hologic), NHANES 1999-2004",
+   "sex": "F",
+   "group": "non-Hispanic White",
+   "FMI_at_BMI": {
+    "18.5": 4.9,
+    "25": 9.2,
+    "30": 12.9,
+    "35": 16.8,
+    "40": 20.6
+   },
+   "statistic": "prevalence-matched threshold",
+   "whereInPaper": "Table 3 (classification ranges in Table 4: normal FMI 3-6 M, 5-9 F)",
+   "note": "Prevalence-matched, not a regression, but gives a usable sex-specific map: implied %fat = FMI/BMI -> M 24% at BMI 25, 30% at BMI 30; F 37% at BMI 25, 43% at BMI 30 (computed here). Mexican-American: M 6.3/9.2, F 9.4/12.8 at BMI 25/30. Android/gynoid is NOT in this paper."
+  }
+ ],
+ "bodyFatPercent": [
+  {
+   "sourceId": "deurenberg1991",
+   "population": "adults >=16 y, Dutch, n=747 (BMI 13.9-40.9)",
+   "formula": "BF% = 1.20*BMI + 0.23*age - 10.8*sex - 5.4   (sex: male=1, female=0)",
+   "r2": 0.79,
+   "see_percentBF": 4.1,
+   "whereInPaper": "Abstract and Table 5 (A+B)",
+   "access": "opened-fulltext",
+   "note": "Reference = densitometry (underwater weighing). Overestimates slightly at BMI>=33 (by ~1.9 %BF). Without age: BF% = 1.63*BMI - 9.9*sex - 8.6 (R2 0.67). Observed means by BMI class (sexes pooled): <20 18.2%, 20-25 23.2%, 26-30 32.4%, >=30 39.4% (Table 8)."
+  },
+  {
+   "sourceId": "deurenberg1991",
+   "population": "children <=15 y, n=480",
+   "formula": "BF% = 1.51*BMI - 0.70*age - 3.6*sex + 1.4",
+   "r2": 0.38,
+   "see_percentBF": 4.4,
+   "whereInPaper": "Abstract and Table 3",
+   "access": "opened-fulltext",
+   "note": ""
+  },
+  {
+   "sourceId": "gallagher2000",
+   "population": "White, African-American and Asian adults",
+   "formula": null,
+   "whereInPaper": "not opened",
+   "access": "read-about",
+   "note": "Equation deliberately NOT recorded because the paper could not be opened. Known to include an Asian term (Asians have higher %BF at a given BMI); open manually before using."
+  },
+  {
+   "sourceId": "kelly2009",
+   "population": "US NHANES DXA",
+   "formula": "percent fat ~ FMI/BMI using prevalence-matched FMI thresholds (see partition entries)",
+   "whereInPaper": "Table 3",
+   "access": "opened-fulltext",
+   "note": "DXA reads ~3-5 %BF higher than densitometry-based formulas."
+  }
+ ],
+ "notes": [
+  "Scope of verification: every number in siteThickness/regressions/partition/bodyFatPercent was read from an opened full text, supplementary appendix or official table, except entries explicitly flagged derived:true (computed here from published points, which are listed) and ratio_ofMedians / implied values described in notes. Sources with access 'read-about' contribute no numbers.",
+  "Schema deviations: sex may be 'both' where the source pooled sexes; some rows carry sem_mm (standard error) instead of sd_mm; extra fields median_mm and percentiles_mm are added where available.",
+  "No single open source stratifies SAT thickness by BOTH sex and BMI at all body sites. Sex x BMI cells exist only for arm, anterior thigh and abdomen (Jain 2013, very small n) and via regression with a sex term for abdomen and arm (Sim 2014) and deltoid (Kowatari 2023, Sebro 2022). Buttock has BMI classes OR sex, never both. Forearm, calf, lateral thigh, back and flank have men-only segment means (Storchle 2018, n=10) plus one female athlete (Muller 2016).",
+  "Most injection-site data come from adults with diabetes aged ~50-65; insulin users may have lipohypertrophy at injection sites. Values for 20-year-old students are probably somewhat lower in the abdomen (Gibney: abdomen SAT 10.3 mm at 18-39 y vs 14.3-14.8 mm at 40+), similar in thigh/arm/buttock.",
+  "Ultrasound values are uncompressed single-layer SAT (skin excluded unless includesSkin is true). Skinfold values are a compressed double layer of skin + fat and are recorded raw; do not mix the two without a conversion model.",
+  "Ethnicity: at the same BMI, Asian subjects in Gibney 2010 had thicker abdominal SAT (15.2 vs 12.2 mm in Whites) but thinner arm/thigh/buttock SAT, and Chinese women had a higher VAT/SAT ratio than BMI-matched Caucasians (Kalimeri 2021). Asian BMI cut-offs (23 / 25 or 24 / 28 in mainland China) differ from WHO (25 / 30); class labels are kept exactly as each paper defined them.",
+  "Sexual dimorphism summary supported by the data: women have roughly 1.6x arm, 1.9x thigh, 1.3x abdomen and 1.45x buttock SAT thickness of men (Gibney Table 2 means, BMI pooled); elite female athletes have about 3x the 8-site SAT sum of male athletes (Muller 2020); men have about twice the VAT and a VAT/SAT ratio about 2x that of women (Chiyanika 2021, Linge 2018); android/gynoid fat ratio ~0.4-0.5 in young men vs ~0.3 in young women (Ofenheimer 2020, Staynor 2020).",
+  "Saturation: buttock SAT rises little with BMI in Gibney (13.7 -> 15.7 -> 16.6 mm) while abdomen nearly doubles; visceral fat in Chinese men plateaus between overweight and obese without fatty liver (2.61 -> 2.43 L) while abdominal SAT keeps rising.",
+  "Known data-quality flags: Liu 2018 male triceps skinfold looks implausibly high; Tai 2026 regression coefficients have unclear units; Ozen 2019 reports SEM and has inconsistent sex counts; Jain 2013 and Sim 2014 values were transcribed from table images."
+ ]
+}
