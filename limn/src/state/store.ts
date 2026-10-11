@@ -43,6 +43,8 @@ export interface Panel {
   /** 这个结构的主要引文，载入后异步取来 / the structure's primary citation, fetched after loading */
   /** 剖开时不切这个面板（密度图里的原子模型）/ this panel is left whole by a cut (the atomic model inside a density map) */
   noCut?: boolean
+  /** 切片的背面不切这个面板 / this panel is not cut at the back of a slab */
+  keepBack?: boolean
   paper?: { citation: api.Citation; open: boolean; licence: string; abstract: string } | null
 }
 
@@ -293,7 +295,13 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     const pick = (groups: number[][]) => groups.map((g) => ({ g, t: templateOf(model, g, membrane.centre) })).sort((a, b) => a.t.tilt - b.t.tilt)[0]
     const sites = ringSites(ha.length + na.length, [0, 0, 1])
     // 神经氨酸酶均匀地插在血凝素中间 / neuraminidase is spread evenly among the hemagglutinins
-    const naAt = new Set(na.map((_, k) => Math.min(sites.length - 1, Math.round(((k + 0.5) * sites.length) / Math.max(1, na.length)))))
+    // 神经氨酸酶：先在切面那一圈上等间隔地放八个（他的画里切面上看得到八九个），其余的均匀插在别处
+    // neuraminidase: eight go evenly round the ring in the cut plane first (his painting shows eight or nine there), and the rest are spread evenly elsewhere
+    const equator = sites.map((p, i) => ({ i, a: Math.atan2(p[1], p[0]) })).filter((x) => Math.abs(sites[x.i]![2] + 0.02) < 0.02).sort((x, y) => x.a - y.a)
+    const onRing = Math.min(8, na.length, equator.length)
+    const naAt = new Set<number>(Array.from({ length: onRing }, (_, k) => equator[Math.floor(((k + 0.5) * equator.length) / onRing)]!.i))
+    const elsewhere = sites.map((_, i) => i).filter((i) => !equator.some((x) => x.i === i))
+    for (let k = 0; k < na.length - onRing && elsewhere.length > 0; k++) naAt.add(elsewhere[Math.min(elsewhere.length - 1, Math.floor(((k + 0.5) * elsewhere.length) / (na.length - onRing)))]!)
     const lch = (e: Molecule['entities'][number]): [number, number, number] => colors.find(([pattern]) => new RegExp(pattern, 'i').test(e.description))?.[1] ?? [0.76, 0.086, 290]
     const kinds: [typeof ha, V3[], string, string, string][] = [
       [ha, sites.filter((_, i) => !naAt.has(i)), 'hemagglutinin', '血凝素（理想化的排布）', 'Hemagglutinin (idealised arrangement)'],
@@ -306,7 +314,9 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
       if (!chosen || where.length === 0) continue
       tilts.push(...groups.map((g) => templateOf(model, g, membrane.centre).tilt))
       const sub = subMolecule(model, [...chosen.g, ...chosen.g.flatMap((ci) => sugarOf.get(ci) ?? [])], `${model.id}:${id}`, titleEn)
-      const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(chosen.t, membrane.centre, where), lch, (e) => [e.description, e.description])
+      // 糖链和它所在的蛋白同色：他把糖链画成蛋白轮廓的一部分，不另外上色 / glycans take the colour of the protein they sit on: he paints them as part of the protein's outline, not in a colour of their own
+      const own = lch(sub.entities.find((e) => !/glycan/i.test(e.description)) ?? sub.entities[0]!)
+      const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(chosen.t, membrane.centre, where), () => own, (e) => [e.description, e.description])
       panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
       outside.push(panel)
     }
@@ -341,10 +351,16 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
   // 填满时每个核蛋白单独描边：他画里的核糖核蛋白是一串看得出一个个核蛋白的珠子
   // when filled, every nucleoprotein is outlined on its own: in his painting a ribonucleoprotein is a string of beads in which each nucleoprotein can be told
   if (filled) filled.mol.assemblies[filled.mol.assemblies.length - 1]!.groups = filled.mol.chains.map((_, i) => ({ chains: [i], operators: [IDENTITY] }))
+  // 基质蛋白层衬在里面：核糖核蛋白之间的空隙里露出的是它的深色，不是白纸
+  // the matrix layer lines the inside: gaps between ribonucleoproteins show its deep tone, not paper
+  const lining = (p: Panel): Panel => ({ ...p, keepBack: true })
   return [
     ...outside,
-    make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1']),
-    rnpPanel,
+    // 基质蛋白层也衬在后面，杆之间和杆外面的空处露出的是它 / the matrix layer lines the back as well, showing between and beyond the rods
+    lining(make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1'])),
+    // 核糖核蛋白衬在里面：切片后面的那几条仍然画出来（用深一号的橙色），空隙里露出的是它们，不是白纸，也不是基质蛋白的内壁
+    // the ribonucleoproteins line the inside: those behind the slab are still drawn (in a deeper orange), so gaps show them and neither paper nor the inner wall of matrix protein
+    filled ? lining(rnpPanel) : rnpPanel,
     ...(np > 1 ? [make(strand, spec.rnp, '基因组 RNA 的走向', 'The course of the genomic RNA', [IDENTITY], () => [0.88, 0.16, 92], () => ['基因组 RNA', 'genomic RNA'])] : []),
     make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.66, 0.13, 25]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
   ]

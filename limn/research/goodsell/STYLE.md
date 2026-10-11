@@ -6,7 +6,7 @@
 
 | 他的做法 | 在哪些画里看得最清楚 | limn |
 |---|---|---|
-| **画的是一片薄切片**：切面这一层用亮色，后面一两层用同色的深一号，再往后不画。从不画整个物体的后半个内壁。 | influenza-virus、zika-virus、ebola-virus、coronavirus、escherichia-coli | 已做（`Style.slab`，剖开时只画厚度为画幅高度 42% 的一片；更薄时后面的层不够，空隙里露白） |
+| **画的是一片薄切片**：切面这一层用亮色，后面一两层用同色的深一号，再往后不画。从不画整个物体的后半个内壁。 | influenza-virus、zika-virus、ebola-virus、coronavirus、escherichia-coli | 已做（`Style.slab`，剖开时只画厚度为画幅高度 20% 的一片；衬在后面的层另外保留，空隙里不露白） |
 | **里面总是填满的**。没有坐标的东西，按文献和已知结构画上去。 | influenza-virus（M1、RNP、聚合酶）、coronavirus（核蛋白和 RNA）、sars-cov-2-mrna-vaccine | 流感已做（`src/infer/influenza.ts`），标为推断；别的还没做 |
 | **一个区室一族颜色**，相邻的区室用对比色：病毒里面紫或蓝，包膜粉或紫，血浆黄绿，细胞质蓝，细胞核紫。 | excitatory-and-inhibitory-synapses、hiv-vaccine、autophagy | 流感按他那幅量出的颜色做了（目录条目的 `colors`）；别的模型一个区室里仍有好几族颜色 |
 | **远近只靠同色的三档深浅**，没有渐变的阴影。 | influenza-virus（血凝素三层：明度 0.76、0.60、0.45） | 已做 |
@@ -86,13 +86,23 @@ limn 这一轮的数：
 - 并排图：`out/g9-influenza.jpg`。
 - 还差：左上和左下还有几处白缝（那里前后两圈刺正好对齐）；刺的头部没有他那样的分瓣；神经氨酸酶只有少数几个在切片里。
 
+### 自己循环：看、找原因、改、再看（流感）
+
+用户要求不再由人来指出问题：我自己对照他的画看差在哪、找原因、改、再对照。每轮记在这里。并排图是 `out/g10-influenza.jpg`、`out/L<轮次>-influenza.jpg`。
+
+| 轮 | 看到的 | 原因 | 改法 | 结果 |
+|---|---|---|---|---|
+| g10 | 外面乱：刺后面叠了四五圈，有的地方对齐、有的地方重叠；刺上有一块块浅斑 | 各圈的刺数目不同，错开的半步绕一圈会漂移；切片太厚；糖链另上了浅色 | 赤道一圈和它前后各一圈取同样的数目；切片改回画幅高度的 20%；糖链和所在蛋白同色；线略收细 | 外圈成了一亮一暗交替的两层，干净了 |
+| L1 | 里面露出带格子的蓝色“碗底”；切面上品红的神经氨酸酶太少；刺被抹成平板 | 切片薄了以后后面只剩基质蛋白的内壁；神经氨酸酶是均匀撒在整个球面上的；平滑的探针偏大 | 核糖核蛋白衬在后面；先在切面那一圈上等间隔放八个神经氨酸酶；探针从 7 减到 5 像素 | 神经氨酸酶对了；里面更糟：出现白洞，核糖核蛋白成了参差的碎块 |
+| L2 | 白洞；碎块 | 切面正好从杆的中间劈开，削掉了每条杆的前半边，露出螺旋的内部 | 八条杆整条排在切面后面：前排四条并排，后面两排错开；基质蛋白和核糖核蛋白都衬在后面 | 里面是并排的几列橙色珠子，上面露着黄色的 RNA 线，顶上是聚合酶，没有白洞 |
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and the description he gives each (`gallery/index.json`). The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
 
 In order, the rows of the table are:
 
-1. **He paints a thin slab**: the cut layer in bright colour, a layer or two behind it in deeper shades of the same hue, and nothing beyond; never the far inner wall of the whole object. Done (`Style.slab`: when cut, only a slab 42% of the frame height thick is drawn; thinner, there were too few layers behind and paper showed through the gaps).
+1. **He paints a thin slab**: the cut layer in bright colour, a layer or two behind it in deeper shades of the same hue, and nothing beyond; never the far inner wall of the whole object. Done (`Style.slab`: when cut, only a slab 20% of the frame height thick is drawn; layers that line the back are kept besides, so gaps do not show paper).
 2. **The inside is always full.** What has no coordinates is painted in from the literature and from known structures. Done for influenza (`src/infer/influenza.ts`), marked as inferred; not yet for anything else.
 3. **One family of hue per compartment**, with contrast between neighbouring compartments: violet or blue inside a virus, pink or violet for the envelope, yellow-green for plasma, blue for cytoplasm, violet for the nucleus. Done for influenza with colours measured on his painting (`colors` in the catalogue entry); other models still mix several families in one compartment.
 4. **Distance is three steps of one hue**, with no graded shadows. Done.
@@ -162,3 +172,11 @@ Looking at `g8-influenza.jpg` the user asked for two things: structure where it 
 - **Filling the white**: the slab goes from 24% of the frame height to 42%, so the gaps between spikes show the rings of spikes behind; inside, the seven outer ribonucleoproteins are spread out to the wall instead of hugging the middle one, and seen from the side they cover the whole circle.
 - Side by side: `out/g9-influenza.jpg`.
 - Still short: a few white slits remain at upper and lower left (where two rings of spikes happen to line up); the heads of the spikes lack the lobes his have; only a few neuraminidases fall in the slab.
+
+### A loop of my own: look, find the cause, change, look again (influenza)
+
+The user asked that problems no longer be pointed out by a person: I compare with his painting myself, find the cause, change it and compare again. Each round is recorded in the table above; the side-by-side images are `out/g10-influenza.jpg` and `out/L<round>-influenza.jpg`.
+
+- **g10.** Seen: disorder outside, four or five rings of spikes piled up, aligned in places and overlapping in others, with pale patches on the spikes. Cause: rings held different numbers of spikes, so the half-step offset drifted round the ring; the slab was too thick; glycans had a pale colour of their own. Change: the equatorial ring and the one either side take the same count; the slab goes back to 20% of the frame height; glycans take their protein's colour; lines a little thinner. Result: the outside is two clean layers, bright and dark in alternation.
+- **L1.** Seen: a blue latticed "bowl" inside; too few magenta neuraminidases in the cut; spikes wiped flat. Cause: with a thin slab only the inner wall of matrix protein was left behind; neuraminidase was spread evenly over the whole sphere; the smoothing probe was too large. Change: the ribonucleoproteins line the back; eight neuraminidases go evenly round the cut ring first; the probe drops from 7 pixels to 5. Result: neuraminidase is right, but the inside got worse, with white holes and ribonucleoproteins as ragged fragments.
+- **L2.** Seen: white holes and fragments. Cause: the cut plane split the rods down their middle, taking the front half of each and exposing the inside of the helix. Change: the eight rods lie whole behind the cut, four side by side in the front row and two staggered rows behind; both matrix protein and ribonucleoproteins line the back. Result: the inside is columns of orange beads side by side with the yellow line of the RNA on them and the polymerases on top, and no white holes.

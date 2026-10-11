@@ -67,7 +67,8 @@ void main() {
   // 4 = 一大群小分子里的一个：彼此之间不画轮廓线 / 4 = one of a crowd of small molecules, with no contours drawn among them
   // 5 = 一整张不分块的膜：表面的小起伏不画线，按每个球自己的深度来切和上色调
   // 5 = a membrane in one piece: its small relief draws no lines, and it is cut and toned sphere by sphere at each sphere's own depth
-  v_fine = mc.w > 4.5 ? 2.0 : mc.w > 3.5 ? 1.0 : 0.0;
+  // 6 = 切片的背面不切它（衬在里面的一层，免得空隙里露出白纸）/ 6 = not cut at the back of a slab (a layer lining the inside, so that gaps do not show paper)
+  v_fine = mc.w > 4.5 && mc.w < 5.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
   // 截面之前的原子整个丢弃，和 Illustrate 一样，所以剖面上不会出现被切开的球。
   // 已知中心的分子整体保留或丢弃，所以也不会被切开。
   // Atoms in front of the cut are dropped whole, as Illustrate does, so a
@@ -77,7 +78,7 @@ void main() {
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
   if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
-  } else if (mc.w > 4.5) {
+  } else if (mc.w > 4.5 && mc.w < 5.5) {
     if (u_layer.x > 0.0) {
       // 整张膜的色调随深度连续变化，不分档：按球分档会在档与档交界处出一圈杂点
       // a membrane in one piece is toned continuously with depth, not in steps: stepping sphere by sphere leaves a ring of speckle where steps meet
@@ -98,7 +99,7 @@ void main() {
   }
   // 切片：整个分子按它的中心留或丢，所以切片里的分子都是完整的；永不切的东西（标志 3）除外
   // a slab: a molecule is kept or dropped whole by its centre, so every molecule in the slab is complete; except what is never cut (flag 3)
-  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5))) {
+  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5) && mc.w < 5.5)) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }

@@ -43,6 +43,8 @@ export interface Placement {
    * but each takes the depth layer of its own position.
    */
   strand?: boolean
+  /** 切片的背面不切它：衬在里面的一层，空隙里露出的是它而不是白纸 / not cut at the back of a slab: a layer lining the inside, so that gaps show it and not paper */
+  keepBack?: boolean
   /** 剖开时不切它（叠在密度图里的原子模型）/ left whole by a cut (an atomic model shown inside a density map) */
   noCut?: boolean
 }
@@ -175,7 +177,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           data[k + 13] = centre[1]
           data[k + 14] = centre[2]
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
-          data[k + 15] = p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
+          data[k + 15] = p.keepBack ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : p.molecule + 1 + (g.merged ? groupCopy : copy)
