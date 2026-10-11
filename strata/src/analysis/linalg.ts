@@ -91,6 +91,16 @@ export function solve(a: Matrix, b: number[]): number[] {
 }
 
 /**
+ * 方阵的逆，逐列解线性方程组。
+ * Inverse of a square matrix, by solving for one column at a time.
+ */
+export function inverse(a: Matrix): Matrix {
+  const n = a.length
+  const columns = Array.from({ length: n }, (_, j) => solve(a, Array.from({ length: n }, (_, i) => (i === j ? 1 : 0))))
+  return transpose(columns)
+}
+
+/**
  * 用正规方程求最小二乘解；对这里用到的少数几个尺度良好的列已经足够。
  * Least squares by the normal equations; adequate for the few well-scaled columns used here.
  */
