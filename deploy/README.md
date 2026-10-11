@@ -208,13 +208,16 @@ rounds fail the step, a failed step stops the chain and notifies you, the chain 
 steps run out, and the daily cap and the allowance pause still apply. It does not notice
 things like a step adding a new dependency; that is for the PR to show.
 
-**定时维护 / Scheduled maintenance**（`MAINTENANCE=1` 才开 / on only with `MAINTENANCE=1`）。worker 每小时看一次：过去 24 小时 `main` 上的提交少于 `MAINTENANCE_BELOW` 次、没有别的作业、闸门没拦，就做一件事。清单轮着来——文档一致性、代码审查、清理、测试补缺、加固、排查——并且只碰最近六小时没人提交的子项目。"查过了，没有要改的"是正常的结果。
+**自动维护 / Automatic maintenance**（`MAINTENANCE=1` 才开 / on only with `MAINTENANCE=1`）。它不是每晚定时的：worker 每五分钟取一次 `main`，数最近一小时的提交。少于 2 次、没有别的作业、闸门没拦，就立刻做一件事——也就是仓库一安静下来，几分钟之内它就开工；有人又开始提交，下一次看就不再开新的。两次之间至少隔半小时，每天最多 4 次；等你看的草稿 PR 攒到 3 个就先停。这几个数都能在 `.env` 里改。清单轮着来——文档一致性、代码审查、清理、测试补缺、加固、排查——并且只碰这段时间里没人提交的子项目。"查过了，没有要改的"是正常的结果。
 
-Checked hourly: with fewer than `MAINTENANCE_BELOW` commits on `main` in the past 24 hours,
-no other job and the gates open, the worker does one thing. The list rotates — documentation
-consistency, code review, cleanup, missing tests, hardening, triage — and only subprojects
-nobody committed to in the last six hours are touched. "Looked, nothing to change" is a normal
-result.
+It is not a nightly schedule: every five minutes the worker fetches `main` and counts the
+commits of the last hour. With fewer than 2, no other job and the gates open it does one
+thing at once — so within minutes of the repository going quiet it starts, and when commits
+resume the next look starts nothing new. Runs are at least half an hour apart and at most 4
+a day, and it holds off once 3 draft PRs are waiting for you. All of these numbers can be
+changed in `.env`. The list rotates — documentation consistency, code review, cleanup,
+missing tests, hardening, triage — and only subprojects nobody committed to within the window
+are touched. "Looked, nothing to change" is a normal result.
 
 | 档 / Tier | 条件 / When | 怎么处理 / What happens |
 |---|---|---|

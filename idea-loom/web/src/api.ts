@@ -42,7 +42,7 @@ export type WorkerStatus = {
   started_today: number; per_day: number; paused: string | null; worker_alive: boolean
   usage: { windows?: Record<string, { utilization: number | null; resets_at: number | null }> }
   chains: Record<string, number>
-  maintenance: { enabled: boolean; below: number; recent: { at: number; item: string; directory: string; job_id: string }[] }
+  maintenance: { enabled: boolean; below: number; window_minutes: number; check_seconds: number; per_day: number; last_check: { at?: number; why_not?: string | null }; recent: { at: number; item: string; directory: string; job_id: string }[] }
 }
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
