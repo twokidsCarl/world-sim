@@ -41,6 +41,14 @@ describe('number and duration formats', () => {
     expect([compact(999, 'zh'), compact(123_000, 'zh'), compact(2_500_000, 'zh'), compact(120_000_000, 'zh')]).toEqual(['999', '12.3 万', '250 万', '1.2 亿'])
     expect([duration(30, 'zh'), duration(840, 'zh'), duration(9000, 'zh')]).toEqual(['30 秒', '14 分钟', '2.5 小时'])
   })
+  it('writes billions as 亿 and trillions as 万亿, never 十亿', () => {
+    const out = [1_600_000_000, 165_000_000, 12_000, 1_500_000_000_000].map((n) => compact(n, 'zh'))
+    expect(out).toEqual(['16 亿', '1.7 亿', '1.2 万', '1.5 万亿'])
+    expect(out.join()).not.toContain('十亿')
+  })
+  it('has English billions and trillions', () => {
+    expect([compact(1_600_000_000, 'en'), compact(2_000_000_000_000, 'en')]).toEqual(['1.6B', '2T'])
+  })
   it('has English forms', () => {
     expect([compact(999, 'en'), compact(12_300, 'en'), compact(1_200_000, 'en'), compact(3_400_000_000, 'en')]).toEqual(['999', '12.3k', '1.2M', '3.4B'])
     expect([duration(30, 'en'), duration(840, 'en'), duration(9000, 'en')]).toEqual(['30 s', '14 min', '2.5 h'])
