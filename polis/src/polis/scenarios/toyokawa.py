@@ -69,6 +69,21 @@ CAST = [
          stake=0.6, venues=["车站"], hub=24),
 ]
 
+# 史料里的传话链：A 问亲戚 D，D 打电话给 E，E 告诉美容院老板 F，洗衣店老板 H 在旁听到、回家告诉妻子 I；
+# J 是来洗衣店借电话的顾客；H、I 把事情告诉了无线电爱好者。
+# The chain in the record: A asks relative D, D phones E, E tells the salon owner F, the launderer H overhears and
+# tells his wife I; J is a customer using the laundry's phone; H and I told the radio amateur.
+TIES = [
+    ("witness", "relative_d", "kin"),
+    ("relative_d", "relative_e", "kin"),
+    ("relative_e", "salon", "friend"),
+    ("salon", "laundry_h", "friend"),
+    ("laundry_h", "laundry_i", "kin"),
+    ("customer_j", "laundry_i", "friend"),
+    ("laundry_i", "radio", "friend"),
+    ("laundry_h", "radio", "friend"),
+]
+
 RUMOR = [
     (0.75, ["听说信用金库有点危险，是真的吗？", "丰川信用金库是不是不太妙？"]),
     (1.05, ["丰川信用金库好像有危险。", "都在说丰川信用金库危险。"]),
@@ -85,17 +100,21 @@ NOTICE = "丰川信用金库声明：本库经营正常，请勿听信流言。"
 GUARANTEE = "日本银行表示：丰川信用金库经营健全。各报同日报道此事系谣言，成堆的现金已摆在柜台前。"
 FAILED = "丰川信用金库付不出钱，关门了。"
 
+ERRAND_T = 5 * 24 + 3  # 12 月 13 日 11:00，J 为付货款吩咐取钱 / 13 Dec 11:00, J has money withdrawn to pay a supplier
+ERRAND_T = 5 * 24 + 3  # 12 月 13 日 11:00，J 为付货款吩咐取钱 / 11:00 on 13 December, J has money withdrawn to pay a supplier
 NOTICE_T = 6 * 24 + 1  # 12 月 14 日 09:00，金库自己的声明 / 09:00 on 14 December, the bank's own statement
 GUARANTEE_T = 6 * 24 + 10  # 12 月 14 日 18:00，媒体集中报道、日本银行表态 / 18:00 on 14 December, concerted press coverage and the Bank of Japan's statement
 
 
 def interventions(start_hour: int) -> list[Intervention]:
-    """史料里的两次回应：金库自己的声明，以及当晚起媒体辟谣、日本银行担保并摆出现金。
-    The two responses in the record: the bank's own statement, and from that evening the press debunking the rumour while the Bank of Japan vouched for the bank and cash was put on display.
+    """史料里与传闻无关的那次取款，和之后的两次回应：金库自己的声明，以及当晚起媒体辟谣、日本银行担保并摆出现金。
+    The unrelated withdrawal in the record, then the two responses: the bank's own statement, and from that evening
+    the press debunking the rumour while the Bank of Japan vouched for the bank and cash was put on display.
     """
     return [
+        Intervention(t=ERRAND_T, kind="errand", role="customer_j"),
         Intervention(t=NOTICE_T, text=NOTICE, valence=-1, strength=1.2, reach=0.35),
-        Intervention(t=GUARANTEE_T, text=GUARANTEE, valence=-1, strength=3.0, reach=0.9),
+        Intervention(t=GUARANTEE_T, text=GUARANTEE, valence=-1, strength=3.0, reach=0.9, cash=1.0),
     ]
 
 

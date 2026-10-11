@@ -15,6 +15,7 @@ import numpy as np
 from . import corpus, mind, trace
 from .engine import Result
 from .model import BELIEF_CHANNEL, Intervention, Params, Population
+from .scenarios import toyokawa as tk
 
 # 搜索范围：只动决定"信不信、取不取、传不传"的几个量。
 # bias 的下限不放得更低：再低会落进"人人都信却没人去取"的解，目标对得上，道理却不对。
@@ -140,6 +141,9 @@ def targets() -> list[Target]:
     if {"toyokawa_shinkin_1973", "bea_bank_run_2008"} <= cases.keys():
         out.append(Target("survived", "cases/toyokawa_shinkin_1973, cases/bea_bank_run_2008", 1.0, 1.0,
                           "两家银行都在当局公开担保之后撑住了"))  # fmt: skip
+    if "toyokawa_shinkin_1973" in cases:
+        out.append(Target("toyokawa_like", "cases/toyokawa_shinkin_1973", 0.3, 1.0,
+                          "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）"))  # fmt: skip
     if "sanren_chenghu" in cases:
         out.append(Target("sanren_steps", "cases/sanren_chenghu", 3.0, 3.0, "一人说不信，两人说起疑，三人说就信了"))
     return out
@@ -150,7 +154,7 @@ def guarantee(start_hour: int) -> list[Intervention]:
     The situation used for calibration, matching the sources behind the facts: the bank is sound, and on the second business day a credible party guarantees it publicly and puts cash on display.
     """
     t = (24 - start_hour) % 24 + 24 + 9
-    return [Intervention(t=t, text="官银号告示：通和钱庄银根充足，本号担保照常兑付。现银已运抵柜上。", strength=3.0, reach=0.9)]
+    return [Intervention(t=t, text="官银号告示：通和钱庄银根充足，本号担保照常兑付。现银已运抵柜上。", strength=3.0, reach=0.9, cash=0.5)]
 
 
 def run_day(pop: Population, result: Result, params: Params) -> float:
@@ -179,6 +183,32 @@ def toyokawa(over: dict[str, float], seed: int, n: int):
     params = Params(scenario="toyokawa", seed=seed, n=n, **(sc.DEFAULTS | over))
     params.interventions = sc.interventions(params.start_hour)
     return params, *trace.run_only(params)
+
+
+def record_like(over: dict[str, float], seed: int, n: int) -> dict[str, bool]:
+    """这一个丰川世界里，史料的几件事各自发生了没有。
+    For one Toyokawa world, whether each thing the record says happened did happen.
+    """
+    params, pop, r = toyokawa(over, seed, n)
+    depositors = sum(p.deposit > 0 for p in pop.persons)
+    at = _queued_at(r, len(pop.persons))
+    at = at[at >= 0]
+    before = int((at < tk.GUARANTEE_T).sum())
+    day = run_day(pop, r, params)
+    return {
+        "ran": before >= max(2, round(0.01 * depositors)),  # 担保之前确实有人去挤兑 / a run did start before the guarantee
+        "on_day": bool(5 <= day <= 7),  # 第 6 天前后开始 / it began around day 6
+        "survived": r.failed_at is None,
+        "minority": len(at) <= 0.2 * depositors,  # 去取的是少数 / only a minority ran
+        "subsided": late_share(r, len(pop.persons), tk.GUARANTEE_T + 48) <= 0.1,  # 担保两天后平息 / over two days after the guarantee
+    }
+
+
+def toyokawa_like(over: dict[str, float], seeds: list[int], n: int) -> float:
+    """多少比例的丰川世界与史料五件事全部相符。史料只是其中一个世界，所以不要求是 1。
+    The share of Toyokawa worlds in which all five things match. The record is one world among many, so 1 is not expected.
+    """
+    return float(np.mean([all(record_like(over, s, n).values()) for s in seeds]))
 
 
 def measure(over: dict[str, float], seed: int, n: int) -> dict[str, float]:
@@ -215,6 +245,9 @@ def evaluate(over: dict[str, float], seeds: list[int], n: int, ts: list[Target])
     How one parameter set does on average over several seeds: (total miss, mean of each metric).
     """
     runs = [measure(over, seed, n) for seed in seeds]
+    like = toyokawa_like(over, seeds, n)
+    for r in runs:
+        r["toyokawa_like"] = like
     mean = {k: float(np.nanmean([r[k] for r in runs])) if not all(np.isnan(r[k]) for r in runs) else float("nan") for k in runs[0]}
     score = float(np.mean([sum(miss(r[t.metric], t) for t in ts) for r in runs]))
     return score, mean

@@ -364,7 +364,8 @@
             "close_venue",
             "silence",
             "convince",
-            "insurance"
+            "insurance",
+            "errand"
           ],
           "type": "string"
         },
@@ -390,7 +391,19 @@
             }
           ],
           "default": null,
-          "description": "close_venue：场所下标；silence / convince：人的下标 / close_venue: venue index; silence and convince: person index"
+          "description": "close_venue：场所下标；silence / convince / errand：人的下标 / close_venue: venue index; silence and convince: person index"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "用主角的角色键指定对象，代替 target / name the target by cast key instead of index"
         },
         "text": {
           "default": "",
@@ -420,6 +433,12 @@
           "description": "close_venue：关几个小时，0 为一直关 / close_venue: hours closed; 0 means closed for good",
           "minimum": 0,
           "type": "integer"
+        },
+        "cash": {
+          "default": 0.0,
+          "description": "broadcast：随告示运到柜上的现银，按存款总额的比例 / cash delivered with the notice, as a share of total deposits",
+          "minimum": 0,
+          "type": "number"
         },
         "value": {
           "default": 0.0,

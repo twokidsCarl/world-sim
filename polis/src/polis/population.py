@@ -143,6 +143,9 @@ def build(params: Params, scenario: ModuleType) -> Population:
             link(i, int(j), FRIEND)
         overrides[i] = spec | {"protagonist": True}
         cast[key] = i
+    # 场景写明的关系（史料里谁认识谁）/ ties the scenario spells out (who knew whom in the record)
+    for a, b, kind in getattr(scenario, "TIES", []):
+        ties[(min(cast[a], cast[b]), max(cast[a], cast[b]))] = kind
     keys = list(cast.values())
     for a in keys:
         for b in rng.choice(keys, 2, replace=False):

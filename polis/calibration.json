@@ -1,7 +1,7 @@
 {
   "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
-  "samples": 300,
-  "seeds": 4,
+  "samples": 500,
+  "seeds": 8,
   "n": 1000,
   "targets": [
     {
@@ -33,6 +33,13 @@
       "why": "两家银行都在当局公开担保之后撑住了"
     },
     {
+      "metric": "toyokawa_like",
+      "source": "cases/toyokawa_shinkin_1973",
+      "lo": 0.3,
+      "hi": 1.0,
+      "why": "丰川：每十个平行世界里至少有三个像史料那样——第 6 天前后起挤兑、少数人取款、担保后平息、金库不倒（三成的下限是这里定的）"
+    },
+    {
       "metric": "sanren_steps",
       "source": "cases/sanren_chenghu",
       "lo": 3.0,
@@ -41,32 +48,34 @@
     }
   ],
   "default": {
-    "miss": 36.94222741053587,
+    "miss": 14.830638745965206,
     "metrics": {
-      "runner_share": 0.5769153958126784,
-      "neighbor_lift": 2.044987198239511,
-      "correction_residual": 0.8581857210202324,
-      "survived": 0.25,
-      "sanren_steps": 1.0
+      "runner_share": 0.003485367700004304,
+      "neighbor_lift": 6.232761904761905,
+      "correction_residual": 0.49414081648777514,
+      "survived": 1.0,
+      "sanren_steps": 1.0,
+      "toyokawa_like": 0.0
     }
   },
   "calibrated": {
-    "miss": 0.0,
+    "miss": 0.37972912637817946,
     "metrics": {
-      "runner_share": 0.05503356591779168,
-      "neighbor_lift": 3.359611666843305,
-      "correction_residual": 0.7618327955077768,
+      "runner_share": 0.040008927164148944,
+      "neighbor_lift": 14.004098971336575,
+      "correction_residual": 0.7496322985714148,
       "survived": 1.0,
-      "sanren_steps": 3.0
+      "sanren_steps": 3.0,
+      "toyokawa_like": 0.25
     },
     "params": {
-      "w_tell": 3.462,
-      "corroborate": 1.309,
-      "w_seen": 1.68,
-      "share": 0.116,
-      "lam": 6.889,
-      "bias": -3.806,
-      "hazard": 0.179
+      "w_tell": 3.5,
+      "corroborate": 1.255,
+      "w_seen": 2.853,
+      "share": 0.25,
+      "lam": 4.927,
+      "bias": -3.789,
+      "hazard": 0.476
     }
   }
 }

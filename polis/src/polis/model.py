@@ -109,14 +109,16 @@ class Intervention(BaseModel):
     """对模拟世界的一次外部干预。/ One outside intervention in the simulated world."""
 
     t: int
-    kind: Literal["broadcast", "close_venue", "silence", "convince", "insurance"] = "broadcast"
+    kind: Literal["broadcast", "close_venue", "silence", "convince", "insurance", "errand"] = "broadcast"
     actor: Optional[int] = Field(None, description="broadcast：出面的人 / broadcast: the person who makes the announcement")
-    target: Optional[int] = Field(None, description="close_venue：场所下标；silence / convince：人的下标 / close_venue: venue index; silence and convince: person index")
+    target: Optional[int] = Field(None, description="close_venue：场所下标；silence / convince / errand：人的下标 / close_venue: venue index; silence and convince: person index")
+    role: Optional[str] = Field(None, description="用主角的角色键指定对象，代替 target / name the target by cast key instead of index")
     text: str = ""
     valence: Literal[1, -1] = -1
     strength: float = 1.5
     reach: float = Field(0.5, ge=0, le=1, description="broadcast：触达的人口比例 / broadcast: share of the population reached")
     duration: int = Field(0, ge=0, description="close_venue：关几个小时，0 为一直关 / close_venue: hours closed; 0 means closed for good")
+    cash: float = Field(0.0, ge=0, description="broadcast：随告示运到柜上的现银，按存款总额的比例 / cash delivered with the notice, as a share of total deposits")
     value: float = Field(0.0, ge=0, le=1, description="insurance：存款保险赔付比例 / insurance: share of a lost deposit that is paid back")
 
 

@@ -56,7 +56,7 @@ export function Lab({ run }: { run: RunData }) {
       case 'notice':
         return { t, kind: 'broadcast', actor: run.population.cast.banker, valence: -1, strength: 1.2, reach: 0.35, text: '通和钱庄告示：本号银根充足，照常兑付，切勿听信谣言。' } // prettier-ignore
       case 'guarantee':
-        return { t, kind: 'broadcast', valence: -1, strength: 3, reach: 0.9, text: '官银号告示：通和钱庄银根充足，本号担保照常兑付。现银已运抵柜上。' } // prettier-ignore
+        return { t, kind: 'broadcast', valence: -1, strength: 3, reach: 0.9, cash: 0.5, text: '官银号告示：通和钱庄银根充足，本号担保照常兑付。现银已运抵柜上。' } // prettier-ignore
       case 'rumor':
         return { t, kind: 'broadcast', valence: 1, strength: 1.5, reach: 0.3, text: '街上到处有人说：通和的东家已经跑了，明天就关门！' } // prettier-ignore
       case 'close_venue':
