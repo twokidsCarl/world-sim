@@ -41,7 +41,17 @@ Everything below is read-only or a bounded, deterministic computation. No key is
   - data [range-of-motion](/api/v1/datasets/soma/range-of-motion/schema): Joint ranges of motion / 关节活动度 (CC BY-SA 4.0)
   - data [dermatomes](/api/v1/datasets/soma/dermatomes/schema): Dermatomes / 皮节 (CC BY-SA 4.0)
   - data [cutaneous-nerves](/api/v1/datasets/soma/cutaneous-nerves/schema): Cutaneous nerve territories / 皮神经分布区 (CC BY-SA 4.0)
-- **strata** — From microscopic rules to emergence / 从微观规则到涌现: From microscopic rules to emergence: molecular dynamics, Ising, Potts, gravity, meshes and more, run on the GPU in a browser. It has no headless entry point yet, so there is no callable computation or dataset here for now; its card URLs in the catalogue can be given to a person to open.
+- **strata** — From microscopic rules to emergence / 从微观规则到涌现: From microscopic rules to emergence: only the bottom level is simulated (a pair potential between particles, lattice spins, gravity), and higher-level quantities such as temperature, pressure, viscosity, phase transitions and crystalline order are computed from the microscopic data and compared with known theory. Five substrates: molecular dynamics (md), Ising spins (ising), the Potts model (potts), gravitational N-body (gravity) and particle-mesh gravitational clustering (mesh). Offered here is data: the assumptions each substrate lets you change (knobs), the quantities it measures (quantities), 19 guided experiments (scenarios), and the theoretical values they are compared with, with sources (references). Start with substrates, then query the others by their `substrate` field. There are also five computations (run_md, run_ising, run_potts, run_gravity, run_mesh): each runs a small system once on the CPU reference implementation, without a browser, and returns the quantities of every level and whether they agree with theory. The large systems of the UI run in a browser on WebGPU; the `url` fields in knobs and scenarios can be given to a person to open.
+  - data [substrates](/api/v1/datasets/strata/substrates/schema): Substrates / 底座 (MIT)
+  - data [knobs](/api/v1/datasets/strata/knobs/schema): Knobs: the assumptions you can change / 旋钮：可以改的假设 (MIT)
+  - data [quantities](/api/v1/datasets/strata/quantities/schema): Quantities: what is computed from the microscopic data / 派生量：从微观数据算出的量 (MIT)
+  - data [scenarios](/api/v1/datasets/strata/scenarios/schema): Guided experiments / 引导实验 (MIT)
+  - data [references](/api/v1/datasets/strata/references/schema): Reference values / 理论参照 (MIT (values computed by this repository's code from published formulas; cited works keep their own copyright))
+  - run [run_md](/api/v1/capabilities/strata/run_md): Run once: Molecular dynamics / 跑一次：分子动力学
+  - run [run_ising](/api/v1/capabilities/strata/run_ising): Run once: Ising spins / 跑一次：Ising 自旋
+  - run [run_potts](/api/v1/capabilities/strata/run_potts): Run once: Potts model / 跑一次：Potts 模型
+  - run [run_gravity](/api/v1/capabilities/strata/run_gravity): Run once: Gravitational N-body / 跑一次：引力 N 体
+  - run [run_mesh](/api/v1/capabilities/strata/run_mesh): Run once: Gravitational clustering / 跑一次：引力成团
 
 ## Idea pool / 想法池
 

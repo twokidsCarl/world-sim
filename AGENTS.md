@@ -74,8 +74,8 @@ curl "localhost:8767/api/v1/ideas?q=rumour"
   **Errors are `{"error": …, "hint": …}`.** The hint says how to fix the request: which fields exist, an example that works.
 - **计算是有界的。** 输入按声明的 JSON Schema 校验；有时间和返回大小的上限；结果里写明是 `main` 上哪个版本算的。
   **Computations are bounded.** Inputs are validated against the declared JSON Schema; time and reply size are capped; the result states which version on `main` computed it.
-- **卡片的地址是给人看的。** `list_cards` 给出的 URL 要在浏览器里打开；有的项目（比如 `strata`）目前只能这样看，还没有可以调用的计算。
-  **Card URLs are for people.** The URLs from `list_cards` open in a browser; some projects (`strata`, for one) can only be seen that way for now and have no callable computation yet.
+- **卡片的地址是给人看的。** `list_cards` 给出的 URL 要在浏览器里打开；要数字就用 `run`，要让人亲眼看就给卡片的地址。
+  **Card URLs are for people.** The URLs from `list_cards` open in a browser; use `run` for numbers and a card URL to let a person watch.
 
 ## 一个项目怎么把自己接出来 / How a project offers itself
 
