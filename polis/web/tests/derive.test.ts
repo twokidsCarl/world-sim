@@ -76,5 +76,6 @@ describe('clock', () => {
     expect(clockText(r, 0)).toBe('第一天 20:00')
     expect(clockText(r, 3.7)).toBe('第一天 23:00')
     expect(clockText(r, 4)).toBe('第二天 00:00')
+    expect(clockText(r, 4 + 24 * 10)).toBe('第 12 天 00:00')
   })
 })

@@ -1,6 +1,6 @@
 // 时间轴：播放控制 + 宏观曲线。人数四条线共用一根纵轴；钱庄现银是比例，单独一条窄图。
 import { useEffect, useRef, useState } from 'react'
-import { clock, clockText, type RunData } from '../state/derive.ts'
+import { clock, clockText, dayName, type RunData } from '../state/derive.ts'
 import { useApp } from '../state/store.ts'
 import { describe } from './Lab.tsx'
 
@@ -114,8 +114,8 @@ function Chart(props: {
   const ensemble = useApp((st) => st.ensemble)
   const marks: { k: number; text: string }[] = (run.manifest.params.interventions ?? []).map((iv) => ({
     k: iv.t,
-    text: describe(run, iv).split('，')[0]!.slice(0, 5),
-  }))
+    text: iv.kind === 'broadcast' ? (iv.valence === 1 ? '新谣言' : (iv.strength ?? 0) >= 2.5 ? '担保' : '告示') : describe(run, iv).split('，')[0]!.slice(0, 5),
+  })) // prettier-ignore
   if (run.manifest.summary.failed_at != null) marks.push({ k: run.manifest.summary.failed_at, text: '倒闭' })
 
   // 集成的中间八成：上沿从左到右，下沿从右到左，围成一条带；倒闭后没有值的时刻断开
@@ -177,7 +177,7 @@ function Chart(props: {
       </text>
       {days.map((d) => (
         <text key={d.k} x={x(d.k) + 4} y={height - 3}>
-          第{'一二三四五六七八九十'[d.day - 1]}天
+          {dayName(d.day)}
         </text>
       ))}
       {days.map((d) => (
@@ -207,7 +207,7 @@ function Chart(props: {
       {marks.map((m, i) => (
         <g key={i}>
           <line x1={x(m.k)} x2={x(m.k)} y1={M.t - 2} y2={height - AXIS} stroke="var(--ink-2)" strokeDasharray="3 3" />
-          <text className="mark-label" x={x(m.k)} y={M.t - 5} textAnchor="middle">
+          <text className="mark-label" x={x(m.k)} y={M.t - 5} textAnchor={i > 0 && x(m.k) - x(marks[i - 1]!.k) < 44 ? 'start' : 'middle'}>
             {m.text}
           </text>
         </g>

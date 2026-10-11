@@ -8,6 +8,9 @@ from __future__ import annotations
 from ..model import Intervention
 
 TITLE = "通和钱庄挤兑"
+# 城里人人都知道的事。给模型扮演的主角看的是这一段，不是上面那段——上面写了钱庄并不亏空，那是他们不知道的。
+# What everyone in town knows. Model-played characters are shown this, not SETTING, which gives away that the bank is sound.
+PUBLIC = "民国年间的一座县城，千余口人。城中只有一家钱庄——通和，城里人的积蓄多半存在那里。"
 DEFAULTS: dict = {}  # 这个场景对 Params 缺省值的改动
 SETTING = (
     "民国年间的一座县城，千余口人。城中只有一家钱庄——通和。"

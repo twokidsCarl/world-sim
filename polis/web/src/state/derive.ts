@@ -119,7 +119,11 @@ export function clock(run: RunData, t: number): { day: number; hour: number; nig
   return { day: Math.floor(h / 24) + 1, hour, night: hour >= 23 || hour < 6 }
 }
 
+export function dayName(day: number): string {
+  return day <= 10 ? `第${'一二三四五六七八九十'[day - 1]}天` : `第 ${day} 天`
+}
+
 export function clockText(run: RunData, t: number): string {
   const c = clock(run, t)
-  return `第${'一二三四五六七八九十'[c.day - 1] ?? c.day}天 ${String(c.hour).padStart(2, '0')}:00`
+  return `${dayName(c.day)} ${String(c.hour).padStart(2, '0')}:00`
 }

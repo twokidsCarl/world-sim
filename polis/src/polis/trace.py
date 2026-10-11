@@ -11,6 +11,7 @@ import numpy as np
 from . import population
 from .engine import Sim
 from .model import Manifest, Params, Population, Summary
+from .protagonist import Director
 
 FILES = ["manifest.json", "population.json", "messages.json", "series.json", "events.jsonl", "frames.bin"]
 SERVED = FILES + ["ensemble.json"]  # 后者是实验台按需算出来的
@@ -39,7 +40,8 @@ def simulate(
     """跑一次模拟并写入 root/<run_id>/。"""
     scenario = scenario_module(params.scenario)
     pop = population.build(params, scenario)
-    result = Sim(pop, params, scenario).run()
+    director = Director() if params.llm else None
+    result = Sim(pop, params, scenario, director).run()
 
     status = result.frames[-1, 3]
     manifest = Manifest(
@@ -59,6 +61,8 @@ def simulate(
             failed_at=result.failed_at,
             messages=len(result.messages),
             events=len(result.events),
+            llm_calls=director.calls if director else 0,
+            llm_failed=director.failed if director else 0,
         ),
     )
 
