@@ -1,9 +1,12 @@
 name: ci
 
 # 每次合并进 main 之后，跑这次改到的子项目的测试。也可以手动指定项目来跑。
+# 自动合并的 PR 由 automerge.yml 在合并后来叫它（那种合并不会触发下面的 push 事件）。
 # 现在它只报告，不拦合并：自动合并（automerge.yml）不等它。等各项目在这里都稳定通过之后，
 # 再把它设成合并的必要条件。
 #
+# PRs merged automatically start it from automerge.yml after the merge (such merges do not raise
+# the push event below).
 # After every merge into main, run the tests of the subprojects that merge touched. It can
 # also be run by hand for chosen projects. For now it only reports and does not gate merges:
 # automerge.yml does not wait for it. Once every project passes here reliably it can be made
@@ -39,7 +42,11 @@ jobs:
           GIVEN: ${{ inputs.projects }}
         run: |
           if [ -n "$GIVEN" ]; then
-            names="$GIVEN"
+            # 给的名字里只留真的是子项目的目录。 / Of the names given, keep only directories that really are subprojects.
+            names=""
+            for dir in $GIVEN; do
+              if [ -f "$dir/pyproject.toml" ] || [ -f "$dir/package.json" ] || [ -f "$dir/web/package.json" ]; then names="$names $dir"; fi
+            done
           else
             # 这次合并改到的顶层目录里，是子项目的那些（有 pyproject.toml 或 package.json）。
             # The top-level directories this merge touched that are subprojects (they have a pyproject.toml or a package.json).
@@ -48,7 +55,7 @@ jobs:
               if [ -f "$dir/pyproject.toml" ] || [ -f "$dir/package.json" ] || [ -f "$dir/web/package.json" ]; then names="$names $dir"; fi
             done
           fi
-          json=$(printf '%s\n' $names | grep -E '^[A-Za-z0-9._-]+$' | jq -R . | jq -cs .)
+          json=$(printf '%s\n' $names | { grep -E '^[A-Za-z0-9._-]+$' || true; } | jq -R . | jq -cs .)
           echo "projects=$json" >> "$GITHUB_OUTPUT"
           echo "projects: $json"
 

@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write   # 合并后触发 ci.yml / to start ci.yml after the merge
 
 jobs:
   merge:
@@ -23,3 +24,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
         run: gh pr merge "$PR" --squash --delete-branch --repo "$GITHUB_REPOSITORY"
+      # 这里的合并是用 GITHUB_TOKEN 做的，GitHub 不会因此触发 push 事件的工作流，所以要自己去叫 ci.yml。
+      # 这一步失败不影响合并（已经合完了）。
+      # The merge above is made with GITHUB_TOKEN, and GitHub does not start push-triggered workflows
+      # for that, so ci.yml is started explicitly. A failure here does not affect the merge, which is done.
+      - name: Run the tests of what this PR touched
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          projects=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json files -q '.files[].path' | grep / | cut -d/ -f1 | grep -E '^[A-Za-z0-9_-]+$' | sort -u | tr '\n' ' ')
+          echo "touched: $projects"
+          if [ -n "$projects" ]; then gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main -f projects="$projects"; fi
