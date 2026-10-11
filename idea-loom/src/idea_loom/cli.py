@@ -280,30 +280,79 @@ def worker_(once: bool = typer.Option(False, help="只看一遍队列就退出 /
         w.loop()
 
 
-@app.command("build-ui")
-def build_ui() -> None:
-    """把 idea-loom 自己的界面构建成静态文件，由后端直接提供。 / Build idea-loom's own UI into static files served by the backend."""
+def _ui_stale() -> bool:
+    """界面要不要重新构建：还没构建过，或者源码比构建产物新。 / Whether the UI needs building: never built, or the sources are newer than the build."""
+    from .play import host as play_host
+
+    built = play_host.ui_dist() / "index.html"
+    if not built.is_file():
+        return True
+    web = store.repo_root() / "idea-loom" / "web"
+    sources = [web / "index.html", web / "package.json", web / "vite.config.ts", *(web / "src").rglob("*"), *(web / "public").rglob("*")]
+    newest = max((f.stat().st_mtime for f in sources if f.is_file()), default=0.0)
+    return newest > built.stat().st_mtime
+
+
+def _build_ui() -> bool:
     import subprocess
 
     web = store.repo_root() / "idea-loom" / "web"
     for command in (["bun", "install"], ["bunx", "vite", "build"]):
         typer.echo("$ " + " ".join(command))
-        if subprocess.run(command, cwd=web).returncode != 0:
-            raise typer.Exit(1)
-    typer.echo("好了。现在只要 uv run idea-loom serve 一个进程。")
+        try:
+            if subprocess.run(command, cwd=web).returncode != 0:
+                return False
+        except FileNotFoundError:
+            typer.echo("找不到 bun，界面构建不了。 / bun was not found, so the UI cannot be built.", err=True)
+            return False
+    return True
+
+
+@app.command("build-ui")
+def build_ui() -> None:
+    """把 idea-loom 自己的界面构建成静态文件。平时不用单独跑：serve 会自己判断。 / Build idea-loom's own UI into static files. Rarely needed by hand: serve decides by itself."""
+    if not _build_ui():
+        raise typer.Exit(1)
+    typer.echo("好了。")
+
+
+def _already_running(host: str, port: int) -> Optional[bool]:
+    """这个端口上是不是已经有一个 idea-loom：是 True，被别的程序占着 False，空着 None。
+
+    Whether an idea-loom already answers on this port: True if so, False if something else holds it, None if it is free.
+    """
+    import socket
+    import urllib.request
+
+    with socket.socket() as probe:
+        probe.settimeout(0.5)
+        if probe.connect_ex((host, port)) != 0:
+            return None
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/api/health", timeout=2) as response:
+            return response.status == 200 and b"ok" in response.read(200)
+    except Exception:  # noqa: BLE001
+        return False
 
 
 @app.command()
-def serve(port: int = 8767, host: str = "127.0.0.1") -> None:
-    """启动后端。 / Start the backend."""
+def serve(port: int = 8767, host: str = "127.0.0.1", build: bool = typer.Option(True, help="界面有变化就先构建 / build the UI first when it has changed")) -> None:
+    """启动：界面需要构建就先构建，然后起后端。一个命令就够。 / Start: build the UI if it needs it, then run the backend. One command is all it takes."""
     import os
 
     import uvicorn
 
-    from .play import host as play_host
-
-    if not (play_host.ui_dist() / "index.html").is_file():
-        typer.echo("界面还没有构建：先运行 uv run idea-loom build-ui（或者另开一个终端 cd web && bun run dev 用开发服务器）。", err=True)
+    running = _already_running(host, port)
+    if running is True:
+        typer.echo(f"idea-loom 已经在运行了，直接打开 http://localhost:{port} / idea-loom is already running; just open http://localhost:{port}")
+        return
+    if running is False:
+        typer.echo(f"端口 {port} 被别的程序占着。换一个：uv run idea-loom serve --port {port + 1} / Port {port} is taken by another program; pick another with --port.", err=True)
+        raise typer.Exit(1)
+    if build and _ui_stale():
+        typer.echo("界面有变化，先构建… / The UI has changed; building it first…")
+        if not _build_ui():
+            typer.echo("界面没有构建成功，后端照常启动（界面可能是旧的或者打不开）。 / The UI build failed; the backend starts anyway (the UI may be stale or missing).", err=True)
     typer.echo(f"打开 http://localhost:{port}")
     os.environ.setdefault("IDEA_LOOM_API", f"http://{host}:{port}")  # 小助手的工具要回调这个地址 / the assistant's tools call back here
     uvicorn.run("idea_loom.server:app", host=host, port=port, log_level="warning")
