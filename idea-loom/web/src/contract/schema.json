@@ -1299,6 +1299,11 @@
           "title": "Ideas Md Stale",
           "type": "boolean"
         },
+        "other_data": {
+          "default": false,
+          "title": "Other Data",
+          "type": "boolean"
+        },
         "can_sync": {
           "title": "Can Sync",
           "type": "boolean"
@@ -1319,6 +1324,7 @@
       "required": [
         "pending",
         "ideas_md_stale",
+        "other_data",
         "can_sync",
         "reason"
       ],

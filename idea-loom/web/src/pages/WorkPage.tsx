@@ -169,7 +169,7 @@ export function WorkPage({ state }: { state: State }) {
         ) : (
           <div className="projects">
             {projects.map((p) => (
-              <article key={p.dir} className="project">
+              <article key={p.dir} className="project-card">
                 <div className="project-head">
                   <h3>{p.dir}</h3>
                   <span className="muted small">{p.level ?? ''} {p.tagline}</span>

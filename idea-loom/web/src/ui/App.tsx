@@ -56,7 +56,7 @@ export function App() {
               {sync.can_sync ? (
                 <>
                   <div className="small">
-                    {sync.pending > 0 ? `${sync.pending} 处改动还没进仓库` : 'IDEAS.md 需要更新'}
+                    {sync.pending > 0 ? `${sync.pending} 处改动还没进仓库` : sync.ideas_md_stale ? 'IDEAS.md 需要更新' : '愿望或任务有改动还没进仓库'}
                   </div>
                   <button className="primary" disabled={syncing} onClick={() => void runSync()}>
                     {syncing ? '正在同步…' : '同步到仓库'}

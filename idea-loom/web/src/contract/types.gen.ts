@@ -140,6 +140,7 @@ export type PrUrl = string | null;
 export type Message = string;
 export type Pending = number;
 export type IdeasMdStale = boolean;
+export type OtherData = boolean;
 export type CanSync = boolean;
 export type Reason2 = string | null;
 
@@ -433,6 +434,7 @@ export interface SyncResult {
 export interface SyncStatus {
   pending: Pending;
   ideas_md_stale: IdeasMdStale;
+  other_data: OtherData;
   can_sync: CanSync;
   reason: Reason2;
 }

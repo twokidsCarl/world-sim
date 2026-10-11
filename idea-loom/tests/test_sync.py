@@ -82,3 +82,11 @@ def test_failed_script_reports_its_last_line(repo):
     edits.note("1.1", "x")
     result = sync.run()
     assert result.ok is False and result.pr_url.endswith("/8") and "还没有合并" in result.message
+
+
+def test_changes_in_other_data_files_can_be_synced_too(repo):
+    from idea_loom import wishes
+
+    wishes.record(title="甲", kind="other", stuck="", suggestion="")
+    st = sync.status()
+    assert (st.pending, st.ideas_md_stale, st.other_data, st.can_sync) == (0, False, True, True)
