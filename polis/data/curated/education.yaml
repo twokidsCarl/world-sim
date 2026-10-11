@@ -62,3 +62,19 @@ profiles:
     - 0.0151
     - 0.7684
     - 0.2155
+  icici:
+    place: India
+    year: 2005
+    shares:
+    - 0.3501
+    - 0.1792
+    - 0.3897
+    - 0.0809
+  fib:
+    place: Bulgaria
+    year: 2015
+    shares:
+    - 0.0188
+    - 0.037
+    - 0.7032
+    - 0.241

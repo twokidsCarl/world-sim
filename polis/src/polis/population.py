@@ -69,7 +69,9 @@ def build(params: Params, scenario: ModuleType) -> Population:
     schooling = _curated("education").get(params.scenario)
     if schooling:
         # 用单独的随机流，主随机流照旧往下走 / drawn on a stream of its own, so the main stream carries on as before
-        education = np.random.default_rng([params.seed, 3]).choice(4, n, p=schooling["shares"])
+        # 四个比例各自四舍五入过，和可能差万分之一 / the four shares are each rounded, so their sum can be off by 0.0001
+        shares = np.array(schooling["shares"]) / sum(schooling["shares"])
+        education = np.random.default_rng([params.seed, 3]).choice(4, n, p=shares)
     income = np.clip(0.6 * rng.random(n) + 0.13 * education + rng.normal(0, 0.06, n), 0, 1)
     trust_general = rng.beta(3, 3, n)
     trust_institution = rng.beta(3, 3, n)

@@ -6,7 +6,7 @@
 
 有三个场景。虚构的「通和钱庄挤兑」（`rumor_run`）：一座千余口人的县城，更夫夜里看见钱庄后门往外抬箱子，这句话传开、走样，最后挤垮了一家并不亏空的钱庄。
 
-另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，原本是样本外检验，结果看过之后不再算。另有三个场景（`bac`、`swedbank`、`kaspi`）是改模型之前写定的样本外检验，已经跑过一次，结果见下文「数据从哪来」。
+另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，原本是样本外检验，结果看过之后不再算。另有三个场景（`bac`、`swedbank`、`kaspi`）是第一轮改模型之前写定的样本外检验，结果见下文「数据从哪来」；结果看过之后它们不再算检验。第二轮改模型之前又写定了两个（`icici`、`fib`）。
 
 - **人**：人口属性、五项稳定特质（信人、信官面文章、怕吃亏、随大流、读报听讯）、随时间变化的心智状态（信念、恐惧、估计多少人会去取钱），以及揣度他人的层数（0–2 层）。
 - **社会**：家人、邻居、同事、朋友四种关系，加上茶馆、菜场、庙、学堂这些会碰面的场所。
@@ -75,7 +75,7 @@ cd web && bun run test && bun run typecheck
 `corpus/` 是模拟的理论依据和将来的校准目标，每条都带出处。正文是中文，每个文件的 `en:` 块里是英文；`uv run polis corpus` 会报出缺英文的条目。出处的卷期页码（`locator`）没有另译。
 
 - `theory/`：12 张理论卡（谣言、阈值、级联、挤兑、从众……），每张写明机制、可观察的推论，以及引擎里哪一处实现了它——留空的就是还没实现。
-- `cases/`：10 个案例，五个出自文学与典故，五个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行，以及留作样本外检验的 2004 年 BAC 圣何塞、2011 年 Swedbank 拉脱维亚、2014 年 Kaspi）。
+- `cases/`：12 个案例，五个出自文学与典故，七个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行；第一轮留作样本外检验的 2004 年 BAC 圣何塞、2011 年 Swedbank 拉脱维亚、2014 年 Kaspi；第二轮留作检验的 2003 年 ICICI、2014 年保加利亚第一投资银行）。
 - `facts/`：10 条典型事实，带数值、得出条件和与本模拟情境的差距。
 
 出处的 `verified` 只有在实际打开过能证实它的页面之后才为真，`checked` 写明看的是哪一页、证实了什么；没能核实的如实标为假，不进入校准。文字均为转述，没有收录原作文本。
@@ -112,6 +112,7 @@ cd web && bun run test && bun run typecheck
   - 逐条检查共 480 次，对上 202 次（前两次都是 197 次），其中多数是"银行没倒""事后平息"这类什么都不发生也能对上的项。平均数有时看上去接近史料，是因为多数世界什么都没发生、少数世界闹得很大，平均下来碰巧落在那里。
   - **被否定的假设**：模型里，人要等熟人印证、看见别人去取，才会行动，所以结果非此即彼——要么不了了之，要么滚成雪崩。真实的三起挤兑都不是这样：一条群发消息在几小时内就让一小部分人各自去取了钱，规模有限而且各不相同。Kaspi 最清楚：国家银行当天就否认了，三天里仍有一成储户去取；模型里同样的否认在六小时后就把事情压没了。也就是说，"当局表态"的预设力度远大于实际，而"消息直接让一部分人行动"这条路模型里几乎没有。
   - 这三起案例的结果既然看过，下次再改模型，它们也不能再算检验，得另找新的。
+  - **第二轮的检验案例已经写定、还没有跑**：2003 年 ICICI 银行（三天取走约 1.3%）和 2014 年保加利亚第一投资银行（一周取走一成到两成）。它们的设定和同一套通过标准先于第二轮模型改动合并；写定时没有运行过。第一投资银行的设定里有一次银行午后暂时关门，引擎目前还不会因为场所关门而停止付款，这一条随模型改动一起补上。
 - 通和场景的**人物、地名、说法都是本项目原创**；丰川、东亚银行和三个样本外场景的事件顺序取自语料里的史料转述，人物是匿名代号或虚构的普通储户，街区、人口、存款和关系网是合成的。
 
 ---
@@ -124,7 +125,7 @@ A parallel-society simulator: how a crowd of people decide, how they pass words 
 
 There are three scenarios. The first is the fictional "run on Tonghe Bank (通和钱庄)" (`rumor_run`): a county town of a little over a thousand people, where the night watchman sees chests being carried out of the bank's back door; that one sentence spreads, gets distorted, and in the end brings down a bank that was never insolvent.
 
-The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and it was the out-of-sample test until its result had been seen. Three further scenarios (`bac`, `swedbank`, `kaspi`) were fixed as out-of-sample tests before the model was changed and have now been run once; for the result see "Where the data comes from" below.
+The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and it was the out-of-sample test until its result had been seen. Three further scenarios (`bac`, `swedbank`, `kaspi`) were fixed as out-of-sample tests before the first round of model changes; for the result see "Where the data comes from" below. Their results having been seen, they no longer count as tests. Two more (`icici`, `fib`) were fixed before the second round.
 
 - **People**: demographic attributes, five stable traits (trust in other people, trust in official statements, loss aversion, conformity, attention to newspapers and news), a mental state that changes over time (belief, fear, an estimate of how many others will go to withdraw), and a depth of reasoning about others (0–2 levels).
 - **Society**: four kinds of ties — family, neighbours, colleagues, friends — plus the venues where people run into each other: the teahouse, the market, the temple, the school.
@@ -193,7 +194,7 @@ cd web && bun run test && bun run typecheck
 `corpus/` holds the theoretical basis of the simulation and its future calibration targets; every entry carries its sources. The text is in Chinese, with the English in each file's `en:` block; `uv run polis corpus` reports entries that lack English. Source locators (volume, issue, pages) are not translated separately.
 
 - `theory/`: 12 theory cards (rumour, thresholds, cascades, bank runs, conformity, …), each stating the mechanism, its observable implications, and where in the engine it is implemented — a blank there means it is not implemented yet.
-- `cases/`: 10 cases — five from literature and classical allusion, five documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008, and three held out as tests: BAC San José in 2004, Swedbank in Latvia in 2011, Kaspi Bank in 2014).
+- `cases/`: 12 cases — five from literature and classical allusion, seven documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008; BAC San José in 2004, Swedbank in Latvia in 2011 and Kaspi Bank in 2014, held out in the first round; ICICI Bank in 2003 and Bulgaria's First Investment Bank in 2014, held out in the second).
 - `facts/`: 10 stylised facts, each with its values, the conditions under which it was obtained, and how far those are from the setting of this simulation.
 
 A source's `verified` is true only after a page that actually confirms it has been opened, and `checked` records which page was read and what it confirmed; sources that could not be verified are honestly marked false and do not enter calibration. All text is paraphrase; no text from the original works is included.
@@ -230,4 +231,5 @@ The engine uses three pieces of external data, all in population synthesis only:
   - Of 480 individual checks 202 pass (197 in each of the first two runs), most of them items such as "the bank survives" and "calm afterwards" that also pass when nothing happens at all. Where an average looks close to the record, it is because most worlds see nothing happen and a few see a great deal, which happens to average out there.
   - **The assumption this refutes**: in the model a person acts only after acquaintances corroborate the story and others are seen withdrawing, so outcomes are all or nothing: the rumour fizzles or it avalanches. None of the three real runs looked like that. A mass message made a small share of people go and withdraw, each on their own, within hours; the scale was limited and differed from case to case. Kaspi is the clearest: the National Bank denied the story the same day and a tenth of depositors still withdrew over three days, whereas in the model the same denial ends everything six hours in. So the preset strength of "the authorities speak" is far greater than the real thing, and the path by which a message moves some people directly hardly exists in the model.
   - Now that these three results have been seen, they cannot count as tests the next time the model changes either; new ones will be needed.
+  - **The second round's test cases are fixed and have not been run**: ICICI Bank in 2003 (about 1.3% withdrawn in three days) and Bulgaria's First Investment Bank in 2014 (between a tenth and a fifth withdrawn in a week). Their settings and the same pass criteria were merged before the second round of model changes, and they had not been run when fixed. The First Investment Bank settings include the bank closing for an afternoon; the engine does not yet stop paying out when a venue is closed, and that is added together with the model changes.
 - In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa, Bank of East Asia and three held-out scenarios the order of events comes from the corpus's paraphrase of the records, the characters are anonymous labels or invented ordinary depositors, and the districts, population, deposits and network of ties are synthetic.
