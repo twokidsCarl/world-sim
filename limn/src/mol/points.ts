@@ -2,21 +2,32 @@ import { IDENTITY, type Assembly, type Molecule } from './types'
 
 /**
  * 冷冻电镜断层扫描里挑出的粒子位置（CZ CryoET 数据门户的 ndjson 格式）：每行一个粒子，位置以体素为单位。
- * 返回 Å 为单位的坐标。文件里还有每个粒子的朝向矩阵，这里不读：它参照的是挑粒子时用的模板的坐标系，
- * 和我们用的原子模型的坐标系对不上（试过四种解释，相邻核糖体都同样互相穿插），所以不采用。
- *
+ * 返回 Å 为单位的坐标。
  * Particle positions picked from a cryo-electron tomogram, in the ndjson format of the CZ CryoET
- * Data Portal: one particle per line, located in voxels. Returns coordinates in Å. The file also
- * carries an orientation matrix per particle, which is not read here: it refers to the frame of
- * the template the particles were picked with, and that frame could not be matched to the atomic
- * model in use (under each of four readings, neighbouring ribosomes ran through one another just
- * as much), so it is not used.
+ * Data Portal: one particle per line, located in voxels. Returns coordinates in Å.
  */
 export function parsePicks(ndjson: string, voxelSpacing: number): Float32Array {
-  const out: number[] = []
+  return readPicks(ndjson, voxelSpacing).points
+}
+
+/**
+ * 同上，并读出每个粒子的朝向矩阵（按行排的 3x3）。矩阵把模板坐标系里的偏移转到断层扫描里：
+ * 断层扫描里的位置 = 粒子位置 + R · 模板里的偏移。这个读法是用断层扫描本身检验出来的
+ * （research/cryoet/orient.py）：按它叠出的平均有清楚的核糖体形状，按转置叠出的只是个球。
+ * 有任何一个粒子没给矩阵时，rotations 为 null。
+ *
+ * The same, with each particle's orientation matrix (3x3, row by row). The matrix carries an offset
+ * in the template's frame into the tomogram: position in the tomogram = particle position + R x
+ * offset in the template. That reading was checked against the tomogram itself
+ * (research/cryoet/orient.py): averaging by it gives a clear ribosome, averaging by the transpose
+ * only a ball. `rotations` is null when any particle comes without a matrix.
+ */
+export function readPicks(ndjson: string, voxelSpacing: number): { points: Float32Array; rotations: Float32Array | null } {
+  const out: number[] = [], rot: number[] = []
+  let complete = true
   for (const line of ndjson.split('\n')) {
     if (!line.trim()) continue
-    let o: { location?: { x?: unknown; y?: unknown; z?: unknown } }
+    let o: { location?: { x?: unknown; y?: unknown; z?: unknown }; xyz_rotation_matrix?: unknown }
     try {
       o = JSON.parse(line)
     } catch {
@@ -25,8 +36,76 @@ export function parsePicks(ndjson: string, voxelSpacing: number): Float32Array {
     const l = o.location
     if (!l || typeof l.x !== 'number' || typeof l.y !== 'number' || typeof l.z !== 'number') continue
     out.push(l.x * voxelSpacing, l.y * voxelSpacing, l.z * voxelSpacing)
+    const m = o.xyz_rotation_matrix
+    const flat = Array.isArray(m) ? m.flat() : []
+    if (flat.length === 9 && flat.every((v) => typeof v === 'number' && Number.isFinite(v))) rot.push(...(flat as number[]))
+    else complete = false
   }
-  return new Float32Array(out)
+  return { points: new Float32Array(out), rotations: complete && rot.length === out.length * 3 ? new Float32Array(rot) : null }
+}
+
+/**
+ * 原子模型怎样放进模板坐标系（由 research/cryoet/orient.py 拟合得到）。
+ * How the atomic model sits in the template's frame, as fitted by research/cryoet/orient.py.
+ */
+export interface TemplateFit {
+  /** 按行排的 3x3 旋转 Q / the 3x3 rotation Q, row by row */
+  rotation: number[]
+  /** 模型的参考点（Å）：拟合时放在盒子中心的那一点 / the model's reference point in Å: what the fit put at the centre of the box */
+  centre: [number, number, number]
+  /** 旋转后再平移多少（Å，模板坐标系）/ the shift applied after the rotation, in Å, in the template's frame */
+  shift: [number, number, number]
+  /**
+   * 断层扫描相对原子模型是镜像的：拟合用的是镜像后的模型。画的时候把整个场景沿 x 翻过来，
+   * 这样用的仍是真实手性的原子模型。
+   * The tomogram is a mirror image relative to the atomic model: the fit used the mirrored model.
+   * For drawing, the whole scene is flipped along x, so the atomic model keeps its true hand.
+   */
+  mirrored: boolean
+}
+
+/**
+ * 每个粒子按实测的位置和朝向放一份 `assembly`。
+ * 模型上的点 p 在断层扫描里的位置是 x + R (Q S (p - c) + k)，其中 S 在镜像时把 x 取反；
+ * 镜像时再把整个场景沿 x 翻回来，得到正常手性的变换 S R Q S 和平移 S (x + R k)。
+ *
+ * One copy of `assembly` for every particle, at its measured position and orientation.
+ * A point p of the model lies at x + R (Q S (p - c) + k) in the tomogram, where S negates x when
+ * mirrored; the whole scene is then flipped back along x, which gives the proper rotation S R Q S
+ * and the translation S (x + R k).
+ */
+export function assemblyAtPicks(mol: Molecule, assembly: string, points: Float32Array, rotations: Float32Array, fit: TemplateFit, id = 'picks'): Assembly {
+  const base = mol.assemblies.find((a) => a.id === assembly) ?? mol.assemblies[0]!
+  const Q = fit.rotation, sx = fit.mirrored ? -1 : 1
+  const placements: Float32Array[] = []
+  for (let i = 0; i < points.length / 3; i++) {
+    const R = rotations.subarray(i * 9, i * 9 + 9)
+    // A = S R Q S，按行算 / A = S R Q S, computed row by row
+    const A: number[] = []
+    for (let r = 0; r < 3; r++)
+      for (let c = 0; c < 3; c++) {
+        let v = 0
+        for (let k = 0; k < 3; k++) v += R[r * 3 + k]! * Q[k * 3 + c]!
+        A.push(v * (r === 0 ? sx : 1) * (c === 0 ? sx : 1))
+      }
+    const T = [0, 1, 2].map((r) => (points[i * 3 + r]! + R[r * 3]! * fit.shift[0] + R[r * 3 + 1]! * fit.shift[1] + R[r * 3 + 2]! * fit.shift[2]) * (r === 0 ? sx : 1))
+    // 先减去参考点，再旋转、平移 / subtract the reference point, then rotate and translate
+    const t = [0, 1, 2].map((r) => T[r]! - (A[r * 3]! * fit.centre[0] + A[r * 3 + 1]! * fit.centre[1] + A[r * 3 + 2]! * fit.centre[2]))
+    placements.push(new Float32Array([A[0]!, A[3]!, A[6]!, 0, A[1]!, A[4]!, A[7]!, 0, A[2]!, A[5]!, A[8]!, 0, t[0]!, t[1]!, t[2]!, 1]))
+  }
+  return { id, groups: base.groups.map((g) => ({ chains: g.chains, operators: placements.flatMap((m) => g.operators.map((op) => (op === IDENTITY ? m : mul4(m, op)))) })) }
+}
+
+/** 列主序 4x4 相乘 a·b / a times b for column-major 4x4 matrices */
+function mul4(a: Float32Array, b: Float32Array): Float32Array {
+  const o = new Float32Array(16)
+  for (let col = 0; col < 4; col++)
+    for (let row = 0; row < 4; row++) {
+      let s = 0
+      for (let k = 0; k < 4; k++) s += a[k * 4 + row]! * b[col * 4 + k]!
+      o[col * 4 + row] = s
+    }
+  return o
 }
 
 /**

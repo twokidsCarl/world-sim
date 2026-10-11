@@ -5,7 +5,7 @@ import catalog from '../data/catalog.json'
 import { coarsen } from '../src/mol/coarse'
 import { rng } from '../src/landscape/pack'
 import { parseCif } from '../src/mol/load'
-import { assemblyAtPoints, parsePicks } from '../src/mol/points'
+import { assemblyAtPicks, assemblyAtPoints, parsePicks, readPicks } from '../src/mol/points'
 import { buildItem, placedAtomCount } from '../src/scene/build'
 import { defaultColoring } from '../src/style/assign'
 import { ROLES, TONE_LANDSCAPE } from '../src/style/palettes'
@@ -177,5 +177,52 @@ describe('particle picks', () => {
     })
     // 两个拷贝的朝向不同 / the two copies are turned differently
     expect(ops[0]![0]).not.toBeCloseTo(ops[1]![0]!, 3)
+  })
+})
+
+// 实测的朝向 / measured orientations
+describe('oriented picks', () => {
+  const line = (x: number, m: number[][]) => JSON.stringify({ type: 'orientedPoint', location: { x, y: 0, z: 0 }, xyz_rotation_matrix: m })
+  const I = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+  // 绕 z 转 90 度：x -> y / a quarter turn about z: x goes to y
+  const Rz = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+
+  it('reads the matrices, and reports none when any is missing', () => {
+    const r = readPicks([line(1, I), line(2, Rz)].join('\n'), 10)
+    expect(Array.from(r.points)).toEqual([10, 0, 0, 20, 0, 0])
+    expect(Array.from(r.rotations!.subarray(9))).toEqual([0, -1, 0, 1, 0, 0, 0, 0, 1])
+    expect(readPicks([line(1, I), '{"type":"point","location":{"x":1,"y":2,"z":3}}'].join('\n'), 1).rotations).toBeNull()
+  })
+
+  it('puts a point of the model at x + R (Q (p - c) + k)', async () => {
+    const m = await parseCif(PETWORLD, 'pw')
+    const { points, rotations } = readPicks([line(100, I), line(200, Rz)].join('\n'), 1)
+    const fit = { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], centre: [5, 6, 7] as [number, number, number], shift: [10, 0, 0] as [number, number, number], mirrored: false }
+    const ops = assemblyAtPicks(m, 'asym', points, rotations!, fit).groups[0]!.operators
+    const at = (op: Float32Array, p: number[]) => [0, 1, 2].map((k) => op[k]! * p[0]! + op[4 + k]! * p[1]! + op[8 + k]! * p[2]! + op[12 + k]!)
+    // 参考点加 (1,0,0)：第一个粒子不转，落在 100 + 1 + 10 / the reference point plus (1,0,0): the first particle is not turned, so it lands at 100 + 1 + 10
+    expect(at(ops[0]!, [6, 6, 7])).toEqual([111, 0, 0])
+    // 第二个粒子把 x 转到 y / the second particle turns x into y
+    const b = at(ops[1]!, [6, 6, 7])
+    expect(b[0]).toBeCloseTo(200)
+    expect(b[1]).toBeCloseTo(11)
+  })
+
+  it('flips the scene, not the molecule, when the tomogram is mirrored', async () => {
+    const m = await parseCif(PETWORLD, 'pw')
+    const { points, rotations } = readPicks(line(100, Rz), 1)
+    const fit = { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], centre: [0, 0, 0] as [number, number, number], shift: [0, 0, 0] as [number, number, number], mirrored: true }
+    const op = assemblyAtPicks(m, 'asym', points, rotations!, fit).groups[0]!.operators[0]!
+    // 位置沿 x 翻转 / the position is flipped along x
+    expect(op[12]).toBe(-100)
+    // 变换仍是正常的旋转（行列式 +1），所以分子的手性没变 / the transform is still a proper rotation (determinant +1), so the molecule keeps its hand
+    const det = op[0]! * (op[5]! * op[10]! - op[6]! * op[9]!) - op[4]! * (op[1]! * op[10]! - op[2]! * op[9]!) + op[8]! * (op[1]! * op[6]! - op[2]! * op[5]!)
+    expect(det).toBeCloseTo(1, 6)
+  })
+
+  it('has a fit for the ribosome entry of the catalogue, with an orthonormal rotation', () => {
+    const fit = (catalog.models.find((x) => x.id === 'mycoplasma-ribosomes-in-situ') as { points: { fit: { rotation: number[]; mirrored: boolean } } }).points.fit
+    const q = fit.rotation
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) expect(q[i * 3]! * q[j * 3]! + q[i * 3 + 1]! * q[j * 3 + 1]! + q[i * 3 + 2]! * q[j * 3 + 2]!).toBeCloseTo(i === j ? 1 : 0, 3)
   })
 })
