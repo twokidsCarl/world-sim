@@ -126,13 +126,13 @@ def sample_surface(V, F, n, rng):
 
 
 def render_views(layers, path, views=('front', 'side', 'back'), height=1100, ylim=None, pad=0.03,
-                 title=None, n_per_m2=2.5e6, annotations=None):
+                 title=None, n_per_m2=2.5e6, annotations=None, bounds=None):
     """正交投影的点溅渲染。layers: (V, F, rgb) 列表；输出 PNG。
     Orthographic splat render. layers: list of (V, F, rgb[, alpha]). Writes a PNG."""
     from PIL import Image, ImageDraw
     rng = np.random.default_rng(1)
     allv = np.vstack([l[0] for l in layers])
-    lo, hi = allv.min(0), allv.max(0)
+    lo, hi = (allv.min(0), allv.max(0)) if bounds is None else (np.array(bounds[0], float), np.array(bounds[1], float))
     if ylim:
         lo[1], hi[1] = ylim
     scale = (height - 40) / (hi[1] - lo[1] + 2 * pad)
@@ -214,4 +214,19 @@ def render_views(layers, path, views=('front', 'side', 'back'), height=1100, yli
         ImageDraw.Draw(out).text((6, 5), title, fill=(0, 0, 0))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     out.save(path)
+    return path
+
+
+def render_overlay(skin, inner, path, alpha=0.45, **kw):
+    """半透明皮肤叠在内部结构上：分别渲染后按 alpha 混合。skin: (V, F, rgb)；inner: 图层列表。
+    Semi-transparent skin over the internal layers: both are rendered with the same framing and
+    blended. skin: (V, F, rgb); inner: list of layers."""
+    from PIL import Image
+    allv = np.vstack([skin[0]] + [l[0] for l in inner])
+    b = (allv.min(0), allv.max(0))
+    a = Image.open(render_views(inner, path + '.inner.png', bounds=b, **kw)).convert('RGB')
+    c = Image.open(render_views([skin], path + '.skin.png', bounds=b, **kw)).convert('RGB')
+    Image.blend(a, c, alpha).save(path)
+    os.remove(path + '.inner.png')
+    os.remove(path + '.skin.png')
     return path

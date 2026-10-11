@@ -563,3 +563,157 @@ $PY tools/bodyshape/reference_female.py [--bmi 28]; $PY tools/bodyshape/export_a
 ```
 
 The MHR assets (`assets.zip`, v1.0.1) and the Anny source archive go under `data/raw/bodyshape/models/` (see `mhrlib.py`, `annylib.py`). `data/raw/bodyshape/` holds 2.5 GB. The checked-in tables are in `data/curated/bodyshape/`: `anthro-model.json`, `our-bodies.json`, `model-calibration.json`, `shape-model.json`, `fat-literature.json`, `refpop-china.json`.
+
+---
+
+# 第二部分（中文）
+
+## 10. 男性肩峰间宽 −5.5 个标准差：一半是真的，一半是标志点
+
+- 锁骨长度正常：左右各 152 mm。肩胛带不是整体偏小。
+- 锁骨姿势是主因：上抬 14–15°、向后偏离冠状面 32–34°。同样的锁骨若为 10° 和 20°，肩峰间宽约多 36 mm（这两个“典型值”凭记忆，未查到出处）。这与仰卧成像时肩部后坠、上耸一致。
+- 两侧肱骨头中心相距 325–329 mm；同身高的 MHR 平均体为 352 mm（窄 7 %）。
+- 胸廓不窄：肋骨最大横径 273 mm。三角肌水平的皮肤宽 480 mm，MHR 为 468 mm。
+- 标志点因素：该肩胛骨最外侧点（x = 166 mm）只比肱骨头中心靠外 1–2 mm，比大结节靠内 24 mm；活体上摸到的肩峰点更靠外，且量在皮肤上。
+- 建议：把盂肱关节间距加宽约 25 mm（到约 350 mm），做法是把锁骨向前、向下转，而不是缩放骨骼。as-built 预设里的 shoulderWidth 0.833 是按骨性肩峰点算的，不要直接取倒数。
+- 前臂：按东亚修正后的标准，男性前臂比值为 0.998，不是离群值，无需修正。
+
+## 11. 男性新皮肤（MHR LOD0）
+
+`data/raw/bodyshape/out/male-skin/`：73639 顶点、147274 三角形，单层，手臂与躯干分开。
+
+- 做法：MHR 的 45 个身份系数、骨架缩放和姿势一起拟合（关节对 rig.json，表面贴原皮肤的可信部分），再加一层平滑的逐顶点修正（中位 2.0 mm，第 95 百分位 10.9 mm，上限 20 mm）。修正前各区域中位偏差 1–9 mm。
+- 与原皮肤外表面的距离（可信顶点，分区域）：中位 0.06–0.46 mm，第 90 百分位 0.3–1.5 mm。可信顶点占 96 %；上臂 88 %（原先相连的区域）。
+- 体积 70.0 → 69.8 L（BMI 23.9 → 23.8）。围度相差不超过 4 mm；例外是胸围 −10 mm、上臂围 +11 mm，都在原先相连的腋部。
+- 间隙：上臂到躯干 8.7 / 9.2 mm，两大腿之间 1.9 mm。
+- 肌肉穿出：躯干和上肢 ≤ 0.1 %；大腿、膝、小腿、头 1–3 %，几乎都在 5 mm 以内。最多的是右缝匠肌 3.4 mm、颞顶肌 2.3–2.8 mm、右股薄肌 2.3 mm（第 95 百分位）。缝匠肌和股薄肌在大腿内侧相贴处：把两腿分开占用了肌肉几毫米。
+- 骨穿出：除手 7.4 %（手指姿势）和足 2.3 % 外均为 0。
+- 关节残差：肩、肘、腕、髋、踝 2–4 mm；膝 16 mm；手指 PIP、DIP 多为 1–6 mm，MCP 5–8 mm。
+- 腹股沟：MHR 本身是光滑的（无外生殖器、无乳头、无脐，足趾是一整块，由渲染图看到）。修正层在原皮肤外生殖器处带回了一个压平的隆起。BodyParts3D 的阴茎、阴囊部件没有对新皮肤做检验，很可能穿出。
+- LOD：MHR 有 7 级（73639 / 18439 / 10661 / 4899 / 2461 / 971 / 595 顶点），每级都有身份形变和蒙皮权重。用 LOD0，需要 `mhr` 和 `pymomentum-cpu` 包。
+- 膝关节：MHR 的膝关节点离解剖学屈伸轴中心约 14–19 mm；硬对上会把膝部皮肤顶出（肌肉穿出达 19 mm）。现在膝关节权重很小，由表面决定。
+
+## 12. 体型场
+
+每个皮肤目录里有 `shape-fat.f32`、`shape-sex.f32`、`shape-limit.f32`、`shape-fields.json`。
+
+- 胖瘦场：每个 BMI 点的位移（米），我们的静止姿势。是 MHR 第 1、3–6 身份分量按一个方向的组合，方向由 NHANES/ANSUR 围度随 BMI 的变化校准；比单用第 1 分量略好（11 项围度 RMS 23.6 对约 26 mm）。
+- 线性：固定姿势下对系数严格线性。与真人随 BMI 的变化相比（相对静止 BMI）：
+  - 男：BMI 17–30 各围度在约 ±3 cm 内；35 时腰 +70 mm、胸 +51 mm；40 时腰 +111 mm、胸 +94 mm。
+  - 女：17–30 多数在约 ±3 cm 内，臀围在 17 时 +39 mm，腰围在 30 时 +48 mm；35 时腰 +88 mm；40 时腰 +135 mm。
+  - 体积 BMI 超出目标：男 35 / 40 时 +1.0 / +2.4，女 +2.1 / +3.8。
+- 分两段没有帮助：一条直线、拐点在 25 / 27.5 / 30 的两段、逐 BMI 最优，RMS 都是 23.7 mm（女性都是 42 mm）。残差是固定的形状偏差，不是弯曲。
+- 体积超出用查找表 `bmiToFieldUnits` 修正（如男性目标 BMI 30 → +6.02，40 → +14.28）。
+- 线性的 MHR 场表现不了：腹部悬垂的出现、乳房下垂、臀沟下移。没有数据可补。
+- 位移上限：每顶点沿场方向到对面皮肤距离的一半。0.3 % 的顶点上限小于 5 mm；男性 1.25 % 的顶点在 +15 个 BMI 点之前会碰到对面。
+- 脂肪部件：`followsSkin = dEnvelope / (dEnvelope + dSkin)`（脂肪顶点到肌肉包络和到皮肤的距离）；位移 = followsSkin × 最近皮肤点的位移。
+
+## 13. Rig.shape 数据格式（建议）
+
+`data/curated/bodyshape/rig-shape.json`，每个性别：
+
+- `controls`：身高、bmi、legLength、centralBuild 及静止值（与 `ShapeParam` 兼容）。
+- `segments`：11 个肢段，用骨架关节 id 命名（`hip`→`knee`、`gh`→`elbow`、`gh_R`↔`gh_L` 等），各有 `bStature`、`legLength`、`centralBuild`、`standardLengthMm`。缩放 = (身高/静止身高)^bStature · exp(legLength·Δ + centralBuild·Δ)；骨在固定 BMI 下求值。
+- `girths`（13 处）、`fat`（9 处）：系数和标准值。
+- `fields`：文件名、`bmiToFieldUnits`、MHR 方向。
+- `presets`：`standard`、`asBuilt`、`ansur`。
+- 静止值即已确认的默认：女 1.606 m / BMI 21.6，男 1.726 m / BMI 23.6，legLength −1，前臂 ×0.93；`restBasis` 里写明比例和围度函数来自美国数据加修正。
+- 管线要烘焙的标准长度（女 / 男，mm）：大腿 367 / 394，小腿 383 / 402，躯干 557 / 612，上臂 300 / 323，前臂 214 / 238。
+
+## 14. 骨架组用的数据，以及女性（暂定）
+
+- `male-skin/joints.json`：127 个关节的名称、父关节、拟合姿势下的位置和世界朝向，以及到骨架关节 id 的 `mapping`。`weights.bin`：218422 条（顶点、关节、权重），每顶点最多 7 个关节。拟合姿势即绑定姿势。
+- MHR 的脊柱只有 4 个关节，与椎间关节没有一一对应。
+- `skin-no-pose-correctives.f32` 是不含 MHR 姿势校正的皮肤；我没有验证用 `weights.bin` 做线性混合蒙皮能否复现它。
+- 女性：`python tools/bodyshape/reference_female.py --bmi 21.6` 一条命令完成导出、测量、拟合和体型场。当前结果基于 07:42 的重建（尚未标准化），用 BMI 22：
+  - 围度在目标的 1.3 个标准差内，体积 BMI 22.1。
+  - 肌肉穿出：腹 45 %、前臂 52 %、骨盆 22 %、膝 24 %、头 10 %（超出 5 mm 的 2 %）、手 5 %。
+  - 乳房：HRA 部件装不进 MHR 在 BMI 22 的乳房——乳头在皮肤外 43–44 mm，乳腺脂肪 74–78 %、腺叶 81–84 % 在外。
+  - 女性体表没有外生殖器。头后仰和耸肩仍在，随她的颅骨和肩胛带位置而来。
+
+## 15. 遗留问题
+
+- 女性要在标准化之后重跑。
+- 男性腹股沟的隆起留不留，他的外生殖器部件怎么办。
+- 线性混合蒙皮的复现检验没有做。
+- MHR 没有分开的足趾。
+- `data/raw/bodyshape` 现为 4.9 GB。
+- 早先的 `reference-female/`、`reference-female-bmi28/`（LOD1）已被 `female-skin/` 取代。
+- 我曾有一段时间用重建前导出的旧网格拟合女性；现在脚本先重新导出，本节数字都来自新导出。
+
+---
+
+# Part 2 (English)
+
+## 10. The male's biacromial breadth at −5.5 SD: half real, half landmark
+
+- Clavicle length is normal: 152 mm on both sides. The girdle is not scaled down.
+- Clavicle posture is the main cause: elevated 14–15° and angled 32–34° behind the frontal plane. With 10° and 20° the same clavicles would give about 36 mm more biacromial breadth (those two "typical" angles are from memory, not from a source I opened). This matches shoulders falling back and shrugging in supine imaging.
+- Humeral head centres are 325–329 mm apart; the MHR mean body at the same stature has 352 mm (7 % narrower).
+- The rib cage is not narrow: maximum rib breadth 273 mm. Skin breadth at deltoid level is 480 mm against 468 mm in MHR.
+- Landmark effect: this scapula's most lateral point (x = 166 mm) is only 1–2 mm lateral to the humeral head centre and 24 mm medial to the greater tubercle; the palpated acromion in living subjects lies further out and is measured on skin.
+- Recommendation: widen the glenohumeral separation by about 25 mm (to about 350 mm) by rotating the clavicles forward and down, not by scaling bones. The shoulderWidth 0.833 in the as-built preset is the bony-acromion figure and should not be inverted as it stands.
+- Forearm: under the East-Asian-corrected standard the male's forearm ratio is 0.998; it is not an outlier and needs no correction.
+
+## 11. The new male skin (MHR LOD 0)
+
+`data/raw/bodyshape/out/male-skin/`: 73,639 vertices, 147,274 triangles, single wall, arms separate from the trunk.
+
+- Method: MHR's 45 identity coefficients, skeleton scales and pose fitted together (joints to rig.json, surface to the trustworthy part of the old skin), then a smooth per-vertex correction (median 2.0 mm, 95th percentile 10.9 mm, capped at 20 mm). Before the correction the regional median error was 1–9 mm.
+- Distance to the old outer skin (trusted vertices, by region): median 0.06–0.46 mm, 90th percentile 0.3–1.5 mm. 96 % of vertices are trusted; 88 % on the upper arm (the formerly fused zone).
+- Volume 70.0 → 69.8 L (BMI 23.9 → 23.8). Girths differ by at most 4 mm, except chest −10 mm and upper arm +11 mm, both at the formerly fused axilla.
+- Gaps: upper arm to trunk 8.7 / 9.2 mm, between the thighs 1.9 mm.
+- Muscle poke-through: ≤ 0.1 % in trunk and arms; 1–3 % in thigh, knee, calf and head, almost all under 5 mm. Worst are right sartorius 3.4 mm, temporoparietalis 2.3–2.8 mm, right gracilis 2.3 mm (95th percentile). Sartorius and gracilis sit in the medial-thigh contact zone: separating the thighs took a few millimetres from the muscles.
+- Bone poke-through: 0 everywhere except hand 7.4 % (finger pose) and foot 2.3 %.
+- Joint residuals: shoulder, elbow, wrist, hip, ankle 2–4 mm; knee 16 mm; finger PIP and DIP mostly 1–6 mm, MCP 5–8 mm.
+- Groin: MHR itself is smooth (no external genitalia, no nipples, no navel, toes as one block — seen in renders). The correction layer brought back a flattened bump where the old skin had genitalia. The BodyParts3D penis and scrotum parts were not tested against the new skin and will likely protrude.
+- LOD: MHR ships 7 levels (73,639 / 18,439 / 10,661 / 4,899 / 2,461 / 971 / 595 vertices), each with identity blendshapes and skin weights. LOD 0 is used; it needs the `mhr` and `pymomentum-cpu` packages.
+- Knee: MHR's knee joint lies about 14–19 mm from the anatomical flexion-axis centre; pinning it there pushes the knee skin out (muscles up to 19 mm outside). The knee now has a small weight and the surface decides.
+
+## 12. Shape fields
+
+Each skin directory holds `shape-fat.f32`, `shape-sex.f32`, `shape-limit.f32`, `shape-fields.json`.
+
+- Fat field: displacement per BMI point (metres), in our rest pose. It combines MHR identity components 1 and 3–6 along a direction calibrated on how NHANES/ANSUR girths change with BMI; slightly better than component 1 alone (11-girth RMS 23.6 against about 26 mm).
+- Linearity: exact in the coefficients at a fixed pose. Against how real people change with BMI (relative to the rest BMI):
+  - Male: all girths within about ±3 cm over BMI 17–30; at 35, waist +70 mm and chest +51 mm; at 40, waist +111 mm and chest +94 mm.
+  - Female: most within about ±3 cm over 17–30, hip +39 mm at 17, waist +48 mm at 30; at 35, waist +88 mm; at 40, waist +135 mm.
+  - Volume BMI overshoot: male +1.0 / +2.4 at 35 / 40, female +2.1 / +3.8.
+- Two segments do not help: one line, two segments with a knee at 25 / 27.5 / 30, and the per-BMI optimum all give RMS 23.7 mm (42 mm for the female in every case). The residual is a constant shape offset, not curvature.
+- The volume overshoot is corrected by the lookup `bmiToFieldUnits` (e.g. male target BMI 30 → +6.02, 40 → +14.28).
+- What a linear MHR field cannot show: onset of an abdominal apron, breast ptosis, descent of the gluteal fold. There is no data to add them.
+- Displacement limit: per vertex, half the distance along the field to the facing skin. 0.3 % of vertices are limited to under 5 mm; 1.25 % of male vertices would reach the facing skin before +15 BMI points.
+- Fat part: `followsSkin = dEnvelope / (dEnvelope + dSkin)` (distances from the fat vertex to the muscle envelope and to the skin); displacement = followsSkin × the skin displacement at the nearest skin point.
+
+## 13. Proposed Rig.shape data format
+
+`data/curated/bodyshape/rig-shape.json`, per sex:
+
+- `controls`: stature, bmi, legLength, centralBuild with rest values (compatible with `ShapeParam`).
+- `segments`: 11 segments named by rig joint ids (`hip`→`knee`, `gh`→`elbow`, `gh_R`↔`gh_L`, …), each with `bStature`, `legLength`, `centralBuild`, `standardLengthMm`. Scale = (stature / rest stature)^bStature · exp(legLength·Δ + centralBuild·Δ); bones are evaluated at fixed BMI.
+- `girths` (13 sites) and `fat` (9 sites): coefficients and standard values.
+- `fields`: file names, `bmiToFieldUnits`, MHR direction.
+- `presets`: `standard`, `asBuilt`, `ansur`.
+- Rest is the confirmed default: female 1.606 m / BMI 21.6, male 1.726 m / BMI 23.6, legLength −1, forearm ×0.93; `restBasis` states that proportion and girth functions are US data plus corrections.
+- Standard lengths for the pipeline to bake (female / male, mm): thigh 367 / 394, lower leg 383 / 402, trunk 557 / 612, upper arm 300 / 323, forearm 214 / 238.
+
+## 14. Data for the rig agent, and the female (provisional)
+
+- `male-skin/joints.json`: 127 joints with names, parents, positions and world orientations in the fitted pose, and a `mapping` to rig joint ids. `weights.bin`: 218,422 records (vertex, joint, weight), up to 7 joints per vertex. The fitted pose is the bind pose.
+- MHR's spine has only four joints, with no one-to-one vertebral level.
+- `skin-no-pose-correctives.f32` is the skin without MHR's pose correctives; I did not verify that linear blend skinning of `weights.bin` reproduces it.
+- Female: `python tools/bodyshape/reference_female.py --bmi 21.6` does export, measurement, fit and shape fields in one command. The current result is against the 07:42 rebuild (not yet standardised), at BMI 22:
+  - Girths within 1.3 SD of target, volume BMI 22.1.
+  - Muscle poke-through: abdomen 45 %, forearm 52 %, pelvis 22 %, knee 24 %, head 10 % (2 % beyond 5 mm), hand 5 %.
+  - Breasts: the HRA parts do not fit inside MHR's BMI-22 breast — nipples 43–44 mm outside the skin, 74–78 % of the mammary fat and 81–84 % of the lobes outside.
+  - No external genitalia on the female surface. The head tilt and shrug remain; they follow her skull and shoulder-girdle position.
+
+## 15. Open issues
+
+- The female must be rerun after standardisation.
+- Whether to keep the male groin bump, and what to do with his external genital parts.
+- The linear-blend-skinning reproduction check was not done.
+- MHR has no separate toes.
+- `data/raw/bodyshape` is now 4.9 GB.
+- The earlier `reference-female/` and `reference-female-bmi28/` (LOD 1) are superseded by `female-skin/`.
+- For part of this session I fitted the female against meshes exported before the rebuild; the script now re-exports first, and all numbers in this part come from fresh exports.

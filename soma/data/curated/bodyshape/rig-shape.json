@@ -1,0 +1,1377 @@
+{
+ "schema": 1,
+ "description": {
+  "zh": "建议的 Rig.shape 数据（运行时读取）。控制量 -> 各肢段缩放、围度目标、皮下脂肪厚度、皮肤位移场。缩放都取“相对静止值的比”。",
+  "en": "Proposed Rig.shape data (read by the runtime). Controls -> segment scales, girth targets, subcutaneous-fat thickness, skin displacement fields. All scales are ratios to the rest values."
+ },
+ "formulas": {
+  "segmentScale": "scale = (stature / rest.stature) ^ bStature * exp(legLength * (legLength - rest.legLength) + centralBuild * (centralBuild - rest.centralBuild))",
+  "girthMm": "exp(a + bStature * ln(statureMm / 1650) + cBmi * ln(bmi / 22) + legLength * legLength + centralBuild * centralBuild)",
+  "fatThicknessMm": "max(min, a + b * bmi)",
+  "skin": "position += m(bmi) * fatField, clamped per vertex to shape-limit; m from fields.bmiToFieldUnits",
+  "fatPart": "position += followsSkin * (skin displacement at the nearest skin point); followsSkin = dEnvelope / (dEnvelope + dSkin)",
+  "muscleRadiusMm": "girthMm / (2 * pi) - fatThicknessMm - 2 (skin); muscle cross-section scale = radius(controls) / radius(rest)"
+ },
+ "sexes": {
+  "F": {
+   "controls": [
+    {
+     "id": "stature",
+     "name": {
+      "zh": "身高",
+      "en": "Stature"
+     },
+     "unit": "m",
+     "min": 1.4,
+     "max": 2.0,
+     "rest": 1.606
+    },
+    {
+     "id": "bmi",
+     "name": {
+      "zh": "体重指数（胖瘦）",
+      "en": "Body-mass index (fatness)"
+     },
+     "unit": "kg/m2",
+     "min": 16,
+     "max": 40,
+     "rest": 21.6
+    },
+    {
+     "id": "legLength",
+     "name": {
+      "zh": "腿长比例",
+      "en": "Relative leg length"
+     },
+     "unit": "sd",
+     "min": -3,
+     "max": 2,
+     "rest": -1.0
+    },
+    {
+     "id": "centralBuild",
+     "name": {
+      "zh": "体型分布（腰腹型–四肢型）",
+      "en": "Mass distribution (waist-heavy vs limb-heavy)"
+     },
+     "unit": "sd",
+     "min": -2,
+     "max": 2,
+     "rest": 0.0
+    }
+   ],
+   "restBasis": {
+    "zh": "静止值 = 标准体：中国 20–24 岁均值的身高和 BMI；腿长因子 −1 和前臂 ×0.93 是对 ANSUR 比例的修正（依据 GB/T 10000-1988 P50 与模型的对比）；其余比例和围度函数来自 ANSUR II / NHANES（美国数据），不是中国实测。",
+    "en": "rest = the standard body: stature and BMI are the Chinese 20-24 means; leg-length factor -1 and forearm x0.93 are corrections to ANSUR proportions (from GB/T 10000-1988 P50 against the model); all other proportion and girth functions come from ANSUR II / NHANES (US data), not Chinese measurements."
+   },
+   "segments": [
+    {
+     "id": "headNeck",
+     "name": {
+      "zh": "头颈",
+      "en": "Head and neck"
+     },
+     "kind": "length",
+     "from": "C7",
+     "to": "vertex",
+     "apply": {
+      "zh": "沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨",
+      "en": "C7 to vertex: spread over the C7...C1 joints, skull scaled uniformly"
+     },
+     "bStature": 0.6179,
+     "legLength": -0.02466,
+     "centralBuild": -0.0042,
+     "fitErrorMax": 0.0063,
+     "standardLengthMm": 237.1
+    },
+    {
+     "id": "trunk",
+     "name": {
+      "zh": "躯干（C7 至大转子）",
+      "en": "Trunk (C7 to trochanterion)"
+     },
+     "kind": "length",
+     "from": "hip",
+     "to": "C7",
+     "apply": {
+      "zh": "髋关节中心高度至 C7：分摊到 L5…T1 各椎间关节",
+      "en": "hip-centre level to C7: spread over the L5...T1 joints"
+     },
+     "bStature": 0.9429,
+     "legLength": -0.02514,
+     "centralBuild": 0.00097,
+     "fitErrorMax": 0.0034,
+     "standardLengthMm": 556.7
+    },
+    {
+     "id": "thigh",
+     "name": {
+      "zh": "大腿",
+      "en": "Thigh"
+     },
+     "kind": "length",
+     "from": "hip",
+     "to": "knee",
+     "apply": {
+      "zh": "沿股骨轴",
+      "en": "along the femur"
+     },
+     "bStature": 1.1083,
+     "legLength": 0.01872,
+     "centralBuild": 0.00362,
+     "fitErrorMax": 0.0003,
+     "standardLengthMm": 367.2
+    },
+    {
+     "id": "shank",
+     "name": {
+      "zh": "小腿",
+      "en": "Lower leg"
+     },
+     "kind": "length",
+     "from": "knee",
+     "to": "ankle",
+     "apply": {
+      "zh": "沿胫骨轴",
+      "en": "along the tibia"
+     },
+     "bStature": 1.2079,
+     "legLength": 0.03103,
+     "centralBuild": -0.00168,
+     "fitErrorMax": 0.0008,
+     "standardLengthMm": 382.8
+    },
+    {
+     "id": "ankleHeight",
+     "name": {
+      "zh": "踝高",
+      "en": "Ankle height"
+     },
+     "kind": "length",
+     "from": "ankle",
+     "to": "floor",
+     "apply": {
+      "zh": "足的竖向尺寸",
+      "en": "vertical size of the foot"
+     },
+     "bStature": 0.898,
+     "legLength": -0.00429,
+     "centralBuild": -0.00432,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 61.8
+    },
+    {
+     "id": "foot",
+     "name": {
+      "zh": "足长",
+      "en": "Foot length"
+     },
+     "kind": "length",
+     "from": "heel",
+     "to": "toe",
+     "apply": {
+      "zh": "足的前后尺寸",
+      "en": "antero-posterior size of the foot"
+     },
+     "bStature": 0.9155,
+     "legLength": 0.01253,
+     "centralBuild": -0.00714,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 237.6
+    },
+    {
+     "id": "upperArm",
+     "name": {
+      "zh": "上臂",
+      "en": "Upper arm"
+     },
+     "kind": "length",
+     "from": "gh",
+     "to": "elbow",
+     "apply": {
+      "zh": "沿肱骨轴",
+      "en": "along the humerus"
+     },
+     "bStature": 1.1041,
+     "legLength": 0.01633,
+     "centralBuild": 0.00365,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 299.5
+    },
+    {
+     "id": "forearm",
+     "name": {
+      "zh": "前臂",
+      "en": "Forearm"
+     },
+     "kind": "length",
+     "from": "elbow",
+     "to": "wrist",
+     "apply": {
+      "zh": "沿桡尺骨轴",
+      "en": "along radius and ulna"
+     },
+     "bStature": 1.0756,
+     "legLength": 0.02775,
+     "centralBuild": -0.00261,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 213.8
+    },
+    {
+     "id": "hand",
+     "name": {
+      "zh": "手长",
+      "en": "Hand length"
+     },
+     "kind": "length",
+     "from": "wrist",
+     "to": "fingertip",
+     "apply": {
+      "zh": "手的整体尺寸",
+      "en": "overall size of the hand"
+     },
+     "bStature": 0.8833,
+     "legLength": 0.01906,
+     "centralBuild": -0.00639,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 173.6
+    },
+    {
+     "id": "shoulderWidth",
+     "name": {
+      "zh": "肩宽（肩峰间）",
+      "en": "Shoulder width (biacromial)"
+     },
+     "kind": "breadth",
+     "from": "gh_R",
+     "to": "gh_L",
+     "apply": {
+      "zh": "左右盂肱关节间距：缩放胸锁关节到盂肱关节的横向偏移",
+      "en": "between the glenohumeral joints: scales the lateral offset sternoclavicular -> glenohumeral"
+     },
+     "bStature": 0.696,
+     "legLength": 0.0007,
+     "centralBuild": 0.00316,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 357.9
+    },
+    {
+     "id": "pelvisWidth",
+     "name": {
+      "zh": "骨盆宽（髂嵴间）",
+      "en": "Pelvis width (bicristal)"
+     },
+     "kind": "breadth",
+     "from": "hip_R",
+     "to": "hip_L",
+     "apply": {
+      "zh": "左右髋关节间距：骨盆横向缩放",
+      "en": "between the hip joints: transverse scale of the pelvis"
+     },
+     "bStature": 0.7424,
+     "legLength": -0.01737,
+     "centralBuild": 0.02842,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 262.2
+    }
+   ],
+   "girths": [
+    {
+     "id": "neck",
+     "name": {
+      "zh": "颈",
+      "en": "Neck"
+     },
+     "dataset": "ansur",
+     "a": 5.76028,
+     "bStature": 0.3952,
+     "cBmi": 0.3037,
+     "legLength": 0.00049,
+     "centralBuild": 0.0133,
+     "standardMm": 312.2
+    },
+    {
+     "id": "chest",
+     "name": {
+      "zh": "胸",
+      "en": "Chest / bust"
+     },
+     "dataset": "ansur",
+     "a": 6.78371,
+     "bStature": 0.4804,
+     "cBmi": 0.5226,
+     "legLength": -0.0049,
+     "centralBuild": 0.03442,
+     "standardMm": 867.9
+    },
+    {
+     "id": "waist",
+     "name": {
+      "zh": "腰（脐水平）",
+      "en": "Waist (navel level)"
+     },
+     "dataset": "ansur",
+     "a": 6.65954,
+     "bStature": 0.5123,
+     "cBmi": 0.7235,
+     "legLength": -0.00215,
+     "centralBuild": 0.04152,
+     "standardMm": 760.9
+    },
+    {
+     "id": "waistIliac",
+     "name": {
+      "zh": "腰（髂嵴上缘）",
+      "en": "Waist (above iliac crest)"
+     },
+     "dataset": "nhanes",
+     "a": 6.70526,
+     "bStature": 0.3792,
+     "cBmi": 0.6448,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 798.9
+    },
+    {
+     "id": "hip",
+     "name": {
+      "zh": "臀",
+      "en": "Hip / buttock"
+     },
+     "dataset": "nhanes",
+     "a": 6.85869,
+     "bStature": 0.6097,
+     "cBmi": 0.5256,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 927.6
+    },
+    {
+     "id": "thighProximal",
+     "name": {
+      "zh": "大腿根",
+      "en": "Proximal thigh"
+     },
+     "dataset": "ansur",
+     "a": 6.34745,
+     "bStature": 0.6103,
+     "cBmi": 0.5775,
+     "legLength": 0.00205,
+     "centralBuild": -0.01889,
+     "standardMm": 554.6
+    },
+    {
+     "id": "thighMid",
+     "name": {
+      "zh": "大腿中部",
+      "en": "Mid-thigh"
+     },
+     "dataset": "nhanes",
+     "a": 6.15556,
+     "bStature": 0.8859,
+     "cBmi": 0.5428,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 455.6
+    },
+    {
+     "id": "thighLower",
+     "name": {
+      "zh": "大腿下部",
+      "en": "Lower thigh"
+     },
+     "dataset": "ansur",
+     "a": 5.92959,
+     "bStature": 0.6379,
+     "cBmi": 0.4948,
+     "legLength": -0.0014,
+     "centralBuild": -0.03503,
+     "standardMm": 366.7
+    },
+    {
+     "id": "calf",
+     "name": {
+      "zh": "小腿",
+      "en": "Calf"
+     },
+     "dataset": "nhanes",
+     "a": 5.85319,
+     "bStature": 0.8634,
+     "cBmi": 0.4186,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 337.7
+    },
+    {
+     "id": "ankle",
+     "name": {
+      "zh": "踝",
+      "en": "Ankle"
+     },
+     "dataset": "ansur",
+     "a": 5.34507,
+     "bStature": 0.6055,
+     "cBmi": 0.2511,
+     "legLength": -0.01356,
+     "centralBuild": -0.02687,
+     "standardMm": 208.0
+    },
+    {
+     "id": "upperArm",
+     "name": {
+      "zh": "上臂（放松）",
+      "en": "Upper arm, relaxed"
+     },
+     "dataset": "nhanes",
+     "a": 5.61425,
+     "bStature": 0.5212,
+     "cBmi": 0.6403,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 267.3
+    },
+    {
+     "id": "forearm",
+     "name": {
+      "zh": "前臂",
+      "en": "Forearm"
+     },
+     "dataset": "ansur",
+     "a": 5.52807,
+     "bStature": 0.5701,
+     "cBmi": 0.3876,
+     "legLength": 0.00371,
+     "centralBuild": -0.00863,
+     "standardMm": 245.1
+    },
+    {
+     "id": "wrist",
+     "name": {
+      "zh": "腕",
+      "en": "Wrist"
+     },
+     "dataset": "ansur",
+     "a": 5.02385,
+     "bStature": 0.6786,
+     "cBmi": 0.1886,
+     "legLength": -0.0023,
+     "centralBuild": -0.00577,
+     "standardMm": 149.1
+    }
+   ],
+   "fat": [
+    {
+     "id": "abdomen",
+     "name": {
+      "zh": "腹前壁",
+      "en": "Anterior abdomen"
+     },
+     "a": -8.47,
+     "b": 1.14,
+     "min": 3.0,
+     "standardMm": 16.2,
+     "quality": "measured regression, both sexes"
+    },
+    {
+     "id": "upperArmPosterior",
+     "name": {
+      "zh": "上臂后侧",
+      "en": "Posterior upper arm"
+     },
+     "a": 2.09,
+     "b": 0.403,
+     "min": 2.0,
+     "standardMm": 10.8,
+     "quality": "measured regression, both sexes"
+    },
+    {
+     "id": "deltoid",
+     "name": {
+      "zh": "三角肌区",
+      "en": "Deltoid"
+     },
+     "a": -2.1,
+     "b": 0.4,
+     "min": 2.0,
+     "standardMm": 6.5,
+     "quality": "measured regression, both sexes"
+    },
+    {
+     "id": "thighAnterior",
+     "name": {
+      "zh": "大腿前侧",
+      "en": "Anterior thigh"
+     },
+     "a": -4.79,
+     "b": 0.71,
+     "min": 2.0,
+     "standardMm": 10.5,
+     "quality": "derived from class means"
+    },
+    {
+     "id": "buttock",
+     "name": {
+      "zh": "臀部",
+      "en": "Buttock"
+     },
+     "a": 11.5,
+     "b": 0.239,
+     "min": 5.0,
+     "standardMm": 16.7,
+     "quality": "derived; sex and BMI never stratified together"
+    },
+    {
+     "id": "calf",
+     "name": {
+      "zh": "小腿",
+      "en": "Calf"
+     },
+     "a": -7.7,
+     "b": 0.495,
+     "min": 1.5,
+     "standardMm": 3.0,
+     "quality": "weak: men n=10; female factor assumed"
+    },
+    {
+     "id": "forearm",
+     "name": {
+      "zh": "前臂",
+      "en": "Forearm"
+     },
+     "a": 0.4,
+     "b": 0.075,
+     "min": 1.0,
+     "standardMm": 2.0,
+     "quality": "weak"
+    },
+    {
+     "id": "chestAnterior",
+     "name": {
+      "zh": "胸前壁（乳房以外）",
+      "en": "Anterior chest (outside the breast)"
+     },
+     "a": -2.7,
+     "b": 0.405,
+     "min": 2.0,
+     "standardMm": 6.0,
+     "quality": "weak; female factor assumed"
+    },
+    {
+     "id": "back",
+     "name": {
+      "zh": "背部",
+      "en": "Back"
+     },
+     "a": 0.7,
+     "b": 0.21,
+     "min": 2.0,
+     "standardMm": 5.2,
+     "quality": "weak; female factor assumed"
+    }
+   ],
+   "fields": {
+    "topology": "MHR LOD0",
+    "vertices": 73639,
+    "fat": "shape-fat.f32",
+    "sex": "shape-sex.f32",
+    "limit": "shape-limit.f32",
+    "fittedAtBmi": 22.06,
+    "bmiToFieldUnits": [
+     [
+      18.5,
+      -3.84
+     ],
+     [
+      20.0,
+      -2.22
+     ],
+     [
+      22.0,
+      -0.16
+     ],
+     [
+      24.0,
+      1.77
+     ],
+     [
+      26.0,
+      3.65
+     ],
+     [
+      28.0,
+      5.46
+     ],
+     [
+      30.0,
+      7.19
+     ],
+     [
+      32.0,
+      8.85
+     ],
+     [
+      35.0,
+      11.26
+     ],
+     [
+      38.0,
+      13.61
+     ],
+     [
+      40.0,
+      15.1
+     ]
+    ],
+    "mhrDirectionPerBmiPoint": [
+     0.17357,
+     0.0,
+     -0.11209,
+     0.05621,
+     0.02594,
+     0.0831
+    ]
+   },
+   "presets": [
+    {
+     "id": "standard",
+     "name": {
+      "zh": "标准体（默认）",
+      "en": "Standard (default)"
+     },
+     "values": {
+      "stature": 1.606,
+      "bmi": 21.6,
+      "legLength": -1.0,
+      "centralBuild": 0.0
+     },
+     "segmentFactors": {}
+    },
+    {
+     "id": "asBuilt",
+     "name": {
+      "zh": "原始模型比例（供体/BodyParts3D）",
+      "en": "As-built proportions (donor / BodyParts3D)"
+     },
+     "values": {
+      "stature": 1.67,
+      "bmi": 21.6,
+      "legLength": -1.0,
+      "centralBuild": 0.0
+     },
+     "segmentFactors": {
+      "headNeck": 1.037,
+      "trunk": 1.031,
+      "thigh": 0.979,
+      "shank": 0.898,
+      "ankleHeight": 1.354,
+      "upperArm": 0.95,
+      "forearm": 0.976,
+      "hand": 1.169,
+      "shoulderWidth": 0.887,
+      "pelvisWidth": 1.095
+     },
+     "note": {
+      "zh": "segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的，男性应改用盂肱关节间距（见 REPORT 第 10 节）",
+      "en": "segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion; for the male use the glenohumeral separation instead (REPORT section 10)"
+     }
+    },
+    {
+     "id": "ansur",
+     "name": {
+      "zh": "ANSUR II 比例（美国军人）",
+      "en": "ANSUR II proportions (US Army)"
+     },
+     "values": {
+      "stature": 1.606,
+      "bmi": 21.6,
+      "legLength": 0.0,
+      "centralBuild": 0.0
+     },
+     "segmentFactors": {
+      "forearm": 1.075
+     }
+    }
+   ]
+  },
+  "M": {
+   "controls": [
+    {
+     "id": "stature",
+     "name": {
+      "zh": "身高",
+      "en": "Stature"
+     },
+     "unit": "m",
+     "min": 1.4,
+     "max": 2.0,
+     "rest": 1.726
+    },
+    {
+     "id": "bmi",
+     "name": {
+      "zh": "体重指数（胖瘦）",
+      "en": "Body-mass index (fatness)"
+     },
+     "unit": "kg/m2",
+     "min": 16,
+     "max": 40,
+     "rest": 23.6
+    },
+    {
+     "id": "legLength",
+     "name": {
+      "zh": "腿长比例",
+      "en": "Relative leg length"
+     },
+     "unit": "sd",
+     "min": -3,
+     "max": 2,
+     "rest": -1.0
+    },
+    {
+     "id": "centralBuild",
+     "name": {
+      "zh": "体型分布（腰腹型–四肢型）",
+      "en": "Mass distribution (waist-heavy vs limb-heavy)"
+     },
+     "unit": "sd",
+     "min": -2,
+     "max": 2,
+     "rest": 0.0
+    }
+   ],
+   "restBasis": {
+    "zh": "静止值 = 标准体：中国 20–24 岁均值的身高和 BMI；腿长因子 −1 和前臂 ×0.93 是对 ANSUR 比例的修正（依据 GB/T 10000-1988 P50 与模型的对比）；其余比例和围度函数来自 ANSUR II / NHANES（美国数据），不是中国实测。",
+    "en": "rest = the standard body: stature and BMI are the Chinese 20-24 means; leg-length factor -1 and forearm x0.93 are corrections to ANSUR proportions (from GB/T 10000-1988 P50 against the model); all other proportion and girth functions come from ANSUR II / NHANES (US data), not Chinese measurements."
+   },
+   "segments": [
+    {
+     "id": "headNeck",
+     "name": {
+      "zh": "头颈",
+      "en": "Head and neck"
+     },
+     "kind": "length",
+     "from": "C7",
+     "to": "vertex",
+     "apply": {
+      "zh": "沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨",
+      "en": "C7 to vertex: spread over the C7...C1 joints, skull scaled uniformly"
+     },
+     "bStature": 0.6892,
+     "legLength": -0.0266,
+     "centralBuild": -0.00472,
+     "fitErrorMax": 0.0056,
+     "standardLengthMm": 247.3
+    },
+    {
+     "id": "trunk",
+     "name": {
+      "zh": "躯干（C7 至大转子）",
+      "en": "Trunk (C7 to trochanterion)"
+     },
+     "kind": "length",
+     "from": "hip",
+     "to": "C7",
+     "apply": {
+      "zh": "髋关节中心高度至 C7：分摊到 L5…T1 各椎间关节",
+      "en": "hip-centre level to C7: spread over the L5...T1 joints"
+     },
+     "bStature": 0.8522,
+     "legLength": -0.02244,
+     "centralBuild": 0.00481,
+     "fitErrorMax": 0.0056,
+     "standardLengthMm": 611.5
+    },
+    {
+     "id": "thigh",
+     "name": {
+      "zh": "大腿",
+      "en": "Thigh"
+     },
+     "kind": "length",
+     "from": "hip",
+     "to": "knee",
+     "apply": {
+      "zh": "沿股骨轴",
+      "en": "along the femur"
+     },
+     "bStature": 1.1845,
+     "legLength": 0.02375,
+     "centralBuild": -0.00207,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 394.4
+    },
+    {
+     "id": "shank",
+     "name": {
+      "zh": "小腿",
+      "en": "Lower leg"
+     },
+     "kind": "length",
+     "from": "knee",
+     "to": "ankle",
+     "apply": {
+      "zh": "沿胫骨轴",
+      "en": "along the tibia"
+     },
+     "bStature": 1.2287,
+     "legLength": 0.02511,
+     "centralBuild": -0.00308,
+     "fitErrorMax": 0.0008,
+     "standardLengthMm": 401.7
+    },
+    {
+     "id": "ankleHeight",
+     "name": {
+      "zh": "踝高",
+      "en": "Ankle height"
+     },
+     "kind": "length",
+     "from": "ankle",
+     "to": "floor",
+     "apply": {
+      "zh": "足的竖向尺寸",
+      "en": "vertical size of the foot"
+     },
+     "bStature": 0.9408,
+     "legLength": 0.00023,
+     "centralBuild": 0.00507,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 70.1
+    },
+    {
+     "id": "foot",
+     "name": {
+      "zh": "足长",
+      "en": "Foot length"
+     },
+     "kind": "length",
+     "from": "heel",
+     "to": "toe",
+     "apply": {
+      "zh": "足的前后尺寸",
+      "en": "antero-posterior size of the foot"
+     },
+     "bStature": 0.8933,
+     "legLength": 0.00883,
+     "centralBuild": -0.01191,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 261.3
+    },
+    {
+     "id": "upperArm",
+     "name": {
+      "zh": "上臂",
+      "en": "Upper arm"
+     },
+     "kind": "length",
+     "from": "gh",
+     "to": "elbow",
+     "apply": {
+      "zh": "沿肱骨轴",
+      "en": "along the humerus"
+     },
+     "bStature": 1.0576,
+     "legLength": 0.01446,
+     "centralBuild": 0.00019,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 323.1
+    },
+    {
+     "id": "forearm",
+     "name": {
+      "zh": "前臂",
+      "en": "Forearm"
+     },
+     "kind": "length",
+     "from": "elbow",
+     "to": "wrist",
+     "apply": {
+      "zh": "沿桡尺骨轴",
+      "en": "along radius and ulna"
+     },
+     "bStature": 1.047,
+     "legLength": 0.02468,
+     "centralBuild": -0.00636,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 238.4
+    },
+    {
+     "id": "hand",
+     "name": {
+      "zh": "手长",
+      "en": "Hand length"
+     },
+     "kind": "length",
+     "from": "wrist",
+     "to": "fingertip",
+     "apply": {
+      "zh": "手的整体尺寸",
+      "en": "overall size of the hand"
+     },
+     "bStature": 0.8789,
+     "legLength": 0.01245,
+     "centralBuild": -0.01224,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 186.1
+    },
+    {
+     "id": "shoulderWidth",
+     "name": {
+      "zh": "肩宽（肩峰间）",
+      "en": "Shoulder width (biacromial)"
+     },
+     "kind": "breadth",
+     "from": "gh_R",
+     "to": "gh_L",
+     "apply": {
+      "zh": "左右盂肱关节间距：缩放胸锁关节到盂肱关节的横向偏移",
+      "en": "between the glenohumeral joints: scales the lateral offset sternoclavicular -> glenohumeral"
+     },
+     "bStature": 0.624,
+     "legLength": -0.00058,
+     "centralBuild": -0.01702,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 400.5
+    },
+    {
+     "id": "pelvisWidth",
+     "name": {
+      "zh": "骨盆宽（髂嵴间）",
+      "en": "Pelvis width (bicristal)"
+     },
+     "kind": "breadth",
+     "from": "hip_R",
+     "to": "hip_L",
+     "apply": {
+      "zh": "左右髋关节间距：骨盆横向缩放",
+      "en": "between the hip joints: transverse scale of the pelvis"
+     },
+     "bStature": 0.8291,
+     "legLength": -0.00857,
+     "centralBuild": 0.0137,
+     "fitErrorMax": 0.0,
+     "standardLengthMm": 261.1
+    }
+   ],
+   "girths": [
+    {
+     "id": "neck",
+     "name": {
+      "zh": "颈",
+      "en": "Neck"
+     },
+     "dataset": "ansur",
+     "a": 5.88703,
+     "bStature": 0.3168,
+     "cBmi": 0.3511,
+     "legLength": 0.00117,
+     "centralBuild": -0.0105,
+     "standardMm": 374.2
+    },
+    {
+     "id": "chest",
+     "name": {
+      "zh": "胸",
+      "en": "Chest / bust"
+     },
+     "dataset": "ansur",
+     "a": 6.81764,
+     "bStature": 0.5331,
+     "cBmi": 0.5054,
+     "legLength": 0.00235,
+     "centralBuild": 0.00078,
+     "standardMm": 967.6
+    },
+    {
+     "id": "waist",
+     "name": {
+      "zh": "腰（脐水平）",
+      "en": "Waist (navel level)"
+     },
+     "dataset": "ansur",
+     "a": 6.64095,
+     "bStature": 0.6349,
+     "cBmi": 0.7262,
+     "legLength": -0.00181,
+     "centralBuild": 0.03658,
+     "standardMm": 830.8
+    },
+    {
+     "id": "waistIliac",
+     "name": {
+      "zh": "腰（髂嵴上缘）",
+      "en": "Waist (above iliac crest)"
+     },
+     "dataset": "nhanes",
+     "a": 6.71688,
+     "bStature": 0.3902,
+     "cBmi": 0.7034,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 883.4
+    },
+    {
+     "id": "hip",
+     "name": {
+      "zh": "臀",
+      "en": "Hip / buttock"
+     },
+     "dataset": "nhanes",
+     "a": 6.78691,
+     "bStature": 0.6275,
+     "cBmi": 0.4902,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 943.5
+    },
+    {
+     "id": "thighProximal",
+     "name": {
+      "zh": "大腿根",
+      "en": "Proximal thigh"
+     },
+     "dataset": "ansur",
+     "a": 6.27083,
+     "bStature": 0.6032,
+     "cBmi": 0.5735,
+     "legLength": 0.00018,
+     "centralBuild": 0.00487,
+     "standardMm": 565.7
+    },
+    {
+     "id": "thighMid",
+     "name": {
+      "zh": "大腿中部",
+      "en": "Mid-thigh"
+     },
+     "dataset": "nhanes",
+     "a": 6.10813,
+     "bStature": 0.7845,
+     "cBmi": 0.5075,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 482.6
+    },
+    {
+     "id": "thighLower",
+     "name": {
+      "zh": "大腿下部",
+      "en": "Lower thigh"
+     },
+     "dataset": "ansur",
+     "a": 5.8758,
+     "bStature": 0.6147,
+     "cBmi": 0.4462,
+     "legLength": -0.00503,
+     "centralBuild": -0.00235,
+     "standardMm": 379.9
+    },
+    {
+     "id": "calf",
+     "name": {
+      "zh": "小腿",
+      "en": "Calf"
+     },
+     "dataset": "nhanes",
+     "a": 5.81556,
+     "bStature": 0.7415,
+     "cBmi": 0.4306,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 357.5
+    },
+    {
+     "id": "ankle",
+     "name": {
+      "zh": "踝",
+      "en": "Ankle"
+     },
+     "dataset": "ansur",
+     "a": 5.33504,
+     "bStature": 0.6163,
+     "cBmi": 0.2747,
+     "legLength": -0.00956,
+     "centralBuild": -0.01194,
+     "standardMm": 219.6
+    },
+    {
+     "id": "upperArm",
+     "name": {
+      "zh": "上臂（放松）",
+      "en": "Upper arm, relaxed"
+     },
+     "dataset": "nhanes",
+     "a": 5.64393,
+     "bStature": 0.6334,
+     "cBmi": 0.5817,
+     "legLength": 0,
+     "centralBuild": 0,
+     "standardMm": 302.9
+    },
+    {
+     "id": "forearm",
+     "name": {
+      "zh": "前臂",
+      "en": "Forearm"
+     },
+     "dataset": "ansur",
+     "a": 5.61912,
+     "bStature": 0.5498,
+     "cBmi": 0.3722,
+     "legLength": 0.00252,
+     "centralBuild": -0.02743,
+     "standardMm": 289.3
+    },
+    {
+     "id": "wrist",
+     "name": {
+      "zh": "腕",
+      "en": "Wrist"
+     },
+     "dataset": "ansur",
+     "a": 5.08644,
+     "bStature": 0.6461,
+     "cBmi": 0.1945,
+     "legLength": -0.00313,
+     "centralBuild": -0.0135,
+     "standardMm": 169.4
+    }
+   ],
+   "fat": [
+    {
+     "id": "abdomen",
+     "name": {
+      "zh": "腹前壁",
+      "en": "Anterior abdomen"
+     },
+     "a": -13.82,
+     "b": 1.14,
+     "min": 3.0,
+     "standardMm": 13.1,
+     "quality": "measured regression, both sexes"
+    },
+    {
+     "id": "upperArmPosterior",
+     "name": {
+      "zh": "上臂后侧",
+      "en": "Posterior upper arm"
+     },
+     "a": -1.25,
+     "b": 0.403,
+     "min": 2.0,
+     "standardMm": 8.3,
+     "quality": "measured regression, both sexes"
+    },
+    {
+     "id": "deltoid",
+     "name": {
+      "zh": "三角肌区",
+      "en": "Deltoid"
+     },
+     "a": -3.9,
+     "b": 0.39,
+     "min": 2.0,
+     "standardMm": 5.3,
+     "quality": "measured regression, both sexes"
+    },
+    {
+     "id": "thighAnterior",
+     "name": {
+      "zh": "大腿前侧",
+      "en": "Anterior thigh"
+     },
+     "a": -7.1,
+     "b": 0.647,
+     "min": 2.0,
+     "standardMm": 8.2,
+     "quality": "derived from class means"
+    },
+    {
+     "id": "buttock",
+     "name": {
+      "zh": "臀部",
+      "en": "Buttock"
+     },
+     "a": 5.8,
+     "b": 0.239,
+     "min": 5.0,
+     "standardMm": 11.4,
+     "quality": "derived; sex and BMI never stratified together"
+    },
+    {
+     "id": "calf",
+     "name": {
+      "zh": "小腿",
+      "en": "Calf"
+     },
+     "a": -5.1,
+     "b": 0.33,
+     "min": 1.5,
+     "standardMm": 2.7,
+     "quality": "weak: men n=10; female factor assumed"
+    },
+    {
+     "id": "forearm",
+     "name": {
+      "zh": "前臂",
+      "en": "Forearm"
+     },
+     "a": 0.0,
+     "b": 0.05,
+     "min": 1.0,
+     "standardMm": 1.2,
+     "quality": "weak"
+    },
+    {
+     "id": "chestAnterior",
+     "name": {
+      "zh": "胸前壁（乳房以外）",
+      "en": "Anterior chest (outside the breast)"
+     },
+     "a": -1.8,
+     "b": 0.27,
+     "min": 2.0,
+     "standardMm": 4.6,
+     "quality": "weak; female factor assumed"
+    },
+    {
+     "id": "back",
+     "name": {
+      "zh": "背部",
+      "en": "Back"
+     },
+     "a": 0.4,
+     "b": 0.14,
+     "min": 2.0,
+     "standardMm": 3.7,
+     "quality": "weak; female factor assumed"
+    }
+   ],
+   "fields": {
+    "topology": "MHR LOD0",
+    "vertices": 73639,
+    "fat": "shape-fat.f32",
+    "sex": "shape-sex.f32",
+    "limit": "shape-limit.f32",
+    "fittedAtBmi": 23.85,
+    "bmiToFieldUnits": [
+     [
+      18.5,
+      -5.45
+     ],
+     [
+      20.0,
+      -3.76
+     ],
+     [
+      22.0,
+      -1.62
+     ],
+     [
+      24.0,
+      0.4
+     ],
+     [
+      26.0,
+      2.35
+     ],
+     [
+      28.0,
+      4.22
+     ],
+     [
+      30.0,
+      6.02
+     ],
+     [
+      32.0,
+      7.73
+     ],
+     [
+      35.0,
+      10.28
+     ],
+     [
+      38.0,
+      12.7
+     ],
+     [
+      40.0,
+      14.28
+     ]
+    ],
+    "mhrDirectionPerBmiPoint": [
+     0.18557,
+     0.0,
+     -0.06383,
+     0.03554,
+     -0.054,
+     -0.0866
+    ]
+   },
+   "presets": [
+    {
+     "id": "standard",
+     "name": {
+      "zh": "标准体（默认）",
+      "en": "Standard (default)"
+     },
+     "values": {
+      "stature": 1.726,
+      "bmi": 23.6,
+      "legLength": -1.0,
+      "centralBuild": 0.0
+     },
+     "segmentFactors": {}
+    },
+    {
+     "id": "asBuilt",
+     "name": {
+      "zh": "原始模型比例（供体/BodyParts3D）",
+      "en": "As-built proportions (donor / BodyParts3D)"
+     },
+     "values": {
+      "stature": 1.719,
+      "bmi": 23.6,
+      "legLength": -1.0,
+      "centralBuild": 0.0
+     },
+     "segmentFactors": {
+      "headNeck": 1.105,
+      "trunk": 0.919,
+      "thigh": 1.053,
+      "shank": 1.007,
+      "ankleHeight": 1.012,
+      "upperArm": 0.984,
+      "forearm": 0.998,
+      "hand": 0.983,
+      "shoulderWidth": 0.833,
+      "pelvisWidth": 1.112
+     },
+     "note": {
+      "zh": "segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的，男性应改用盂肱关节间距（见 REPORT 第 10 节）",
+      "en": "segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion; for the male use the glenohumeral separation instead (REPORT section 10)"
+     }
+    },
+    {
+     "id": "ansur",
+     "name": {
+      "zh": "ANSUR II 比例（美国军人）",
+      "en": "ANSUR II proportions (US Army)"
+     },
+     "values": {
+      "stature": 1.726,
+      "bmi": 23.6,
+      "legLength": 0.0,
+      "centralBuild": 0.0
+     },
+     "segmentFactors": {
+      "forearm": 1.075
+     }
+    }
+   ]
+  }
+ }
+}

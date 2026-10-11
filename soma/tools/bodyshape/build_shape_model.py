@@ -147,8 +147,135 @@ def main():
                 lines.append(f'    {s[0]:14s} {own[s[0]]:7.1f} / {exp:7.1f} / {own[s[0]] / exp:.3f}')
         out['examples'][sex] = ex
     json.dump(out, open(os.path.join(CUR, 'shape-model.json'), 'w'), ensure_ascii=False, indent=1)
+    rs = rig_shape(model, meas)
+    for sx in 'FM':
+        lines.append(f'\n== rig-shape {sx}: segment  bStature  legLength  centralBuild  standard mm  as-built ratio')
+        ab = rs['sexes'][sx]['presets'][1]['segmentFactors']
+        for g in rs['sexes'][sx]['segments']:
+            lines.append(f'   {g["id"]:14s} {g["bStature"]:7.3f} {g["legLength"]:+8.4f} {g["centralBuild"]:+8.4f} {g["standardLengthMm"]:8.1f}   {ab.get(g["id"], float("nan")):.3f}  (fit err {g["fitErrorMax"]:.4f})')
+        lines.append('   girths standard mm: ' + ', '.join(f'{g["id"]} {g["standardMm"]:.0f}' for g in rs['sexes'][sx]['girths']))
+        lines.append('   fat standard mm: ' + ', '.join(f'{g["id"]} {g["standardMm"]:.1f}' for g in rs['sexes'][sx]['fat']))
     open(os.path.join(RAW, 'out', 'shape-examples.txt'), 'w').write('\n'.join(lines))
     print('\n'.join(lines))
+
+
+# ------------------------------------------------------------------ 运行时格式 / the runtime format (proposed Rig.shape data)
+
+# 肢段 -> 解剖学关节（rig.json 的关节 id，不带左右）/ segment -> anatomical joints (rig.json ids without side)
+SEGMENT_JOINTS = {
+    'headNeck': ('length', 'C7', 'vertex', '沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨', 'C7 to vertex: spread over the C7...C1 joints, skull scaled uniformly'),
+    'trunk': ('length', 'hip', 'C7', '髋关节中心高度至 C7：分摊到 L5…T1 各椎间关节', 'hip-centre level to C7: spread over the L5...T1 joints'),
+    'thigh': ('length', 'hip', 'knee', '沿股骨轴', 'along the femur'),
+    'shank': ('length', 'knee', 'ankle', '沿胫骨轴', 'along the tibia'),
+    'ankleHeight': ('length', 'ankle', 'floor', '足的竖向尺寸', 'vertical size of the foot'),
+    'foot': ('length', 'heel', 'toe', '足的前后尺寸', 'antero-posterior size of the foot'),
+    'upperArm': ('length', 'gh', 'elbow', '沿肱骨轴', 'along the humerus'),
+    'forearm': ('length', 'elbow', 'wrist', '沿桡尺骨轴', 'along radius and ulna'),
+    'hand': ('length', 'wrist', 'fingertip', '手的整体尺寸', 'overall size of the hand'),
+    'shoulderWidth': ('breadth', 'gh_R', 'gh_L', '左右盂肱关节间距：缩放胸锁关节到盂肱关节的横向偏移', 'between the glenohumeral joints: scales the lateral offset sternoclavicular -> glenohumeral'),
+    'pelvisWidth': ('breadth', 'hip_R', 'hip_L', '左右髋关节间距：骨盆横向缩放', 'between the hip joints: transverse scale of the pelvis'),
+}
+# 默认参考人群（协调者已确认）：中国 20–24 岁均值（2020 年国民体质监测）；比例修正来自 GB/T 10000-1988 P50 与模型的对比
+# default reference population (confirmed): Chinese 20-24 means (2020 fitness surveillance); proportion
+# corrections from the comparison of GB/T 10000-1988 P50 with the model
+DEFAULT = {'F': {'stature': 1.606, 'bmi': 21.6}, 'M': {'stature': 1.726, 'bmi': 23.6}}
+CN_LEG = -1.0          # 腿长因子：中国人坐高比模型高 +1.0 至 +1.1 个标准差 / sitting height +1.0 to +1.1 SD
+CN_FOREARM = 0.93      # 前臂：比模型短 17–18 mm（约 7 %）/ forearm 17-18 mm (about 7 %) shorter
+
+
+def power_fit(model, sex, comb):
+    """把肢段长度拟合成 ln L = a + b ln(S/S0) + l1 f1 + l2 f2（BMI 固定为 22）。
+    Fit a segment length as ln L = a + b ln(S/S0) + l1 f1 + l2 f2 (BMI fixed at 22)."""
+    rows, y = [], []
+    for S in np.linspace(1450, 1950, 11):
+        for f1 in (-2, -1, 0, 1, 2):
+            for f2 in (-2, 0, 2):
+                rows.append([1, np.log(S / S0), f1, f2])
+                y.append(np.log(seg_len(model, sex, comb, S, 22.0, (f1, f2))))
+    c, *_ = np.linalg.lstsq(np.array(rows), np.array(y), rcond=None)
+    err = np.exp(np.abs(np.array(rows) @ c - np.array(y)).max()) - 1
+    return c, err
+
+
+def rig_shape(model, meas):
+    out = {
+        'schema': 1,
+        'description': {
+            'zh': '建议的 Rig.shape 数据（运行时读取）。控制量 -> 各肢段缩放、围度目标、皮下脂肪厚度、皮肤位移场。缩放都取“相对静止值的比”。',
+            'en': 'Proposed Rig.shape data (read by the runtime). Controls -> segment scales, girth targets, subcutaneous-fat thickness, skin displacement fields. All scales are ratios to the rest values.'},
+        'formulas': {
+            'segmentScale': 'scale = (stature / rest.stature) ^ bStature * exp(legLength * (legLength - rest.legLength) + centralBuild * (centralBuild - rest.centralBuild))',
+            'girthMm': 'exp(a + bStature * ln(statureMm / 1650) + cBmi * ln(bmi / 22) + legLength * legLength + centralBuild * centralBuild)',
+            'fatThicknessMm': 'max(min, a + b * bmi)',
+            'skin': 'position += m(bmi) * fatField, clamped per vertex to shape-limit; m from fields.bmiToFieldUnits',
+            'fatPart': 'position += followsSkin * (skin displacement at the nearest skin point); followsSkin = dEnvelope / (dEnvelope + dSkin)',
+            'muscleRadiusMm': 'girthMm / (2 * pi) - fatThicknessMm - 2 (skin); muscle cross-section scale = radius(controls) / radius(rest)',
+        },
+        'sexes': {},
+    }
+    for sex, body in (('F', 'female'), ('M', 'male')):
+        d = DEFAULT[sex]
+        rest = {'stature': d['stature'], 'bmi': d['bmi'], 'legLength': CN_LEG, 'centralBuild': 0.0}
+        segs = []
+        for sid, zh, en, comb in SEGMENTS:
+            c, err = power_fit(model, sex, comb)
+            kind, a, b, hz, he = SEGMENT_JOINTS[sid]
+            std = float(np.exp(c[0] + c[1] * np.log(rest['stature'] * 1000 / S0) + c[2] * rest['legLength']))
+            if sid == 'forearm':
+                std *= CN_FOREARM
+            segs.append({'id': sid, 'name': {'zh': zh, 'en': en}, 'kind': kind, 'from': a, 'to': b, 'apply': {'zh': hz, 'en': he},
+                         'bStature': round(float(c[1]), 4), 'legLength': round(float(c[2]), 5), 'centralBuild': round(float(c[3]), 5),
+                         'fitErrorMax': round(float(err), 4), 'standardLengthMm': round(std, 1)})
+        girths = []
+        for gid, zh, en, ds, var in GIRTHS:
+            m = model['nhanes']['sexes'][sex]['outputs'][var] if ds == 'nhanes' else model['sexes'][sex]['outputs'][var]
+            fl = m.get('factorLoadings', [0, 0])
+            girths.append({'id': gid, 'name': {'zh': zh, 'en': en}, 'dataset': ds, 'a': m['a'], 'bStature': m['bStature'], 'cBmi': m['cBmi'],
+                           'legLength': fl[0], 'centralBuild': fl[1],
+                           'standardMm': round(girth(model, sex, ds, var, rest['stature'] * 1000, rest['bmi'], (rest['legLength'], 0)), 1)})
+        fat = [{'id': f[0], 'name': {'zh': f[1], 'en': f[2]}, 'a': (f[3] if sex == 'F' else f[4])[0], 'b': (f[3] if sex == 'F' else f[4])[1], 'min': f[5],
+                'standardMm': round(max(f[5], (f[3] if sex == 'F' else f[4])[0] + (f[3] if sex == 'F' else f[4])[1] * rest['bmi']), 1), 'quality': f[7]} for f in FAT]
+        # 现存骨架相对标准的比值：既是“标准化”要烘焙的缩放的倒数，也是“原样/供体”预设
+        # ratio of the as-built skeleton to the standard: the inverse of what standardisation bakes, and the "as built / donor" preset
+        sk = meas[body]['skeletal']
+        own = {'headNeck': sk['stature'] - sk['cervicaleheight'], 'trunk': sk['cervicaleheight'] - sk['trochanterionheight'],
+               'thigh': sk['trochanterionheight'] - sk['lateralfemoralepicondyleheight'],
+               'shank': sk['lateralfemoralepicondyleheight'] - sk['lateralmalleolusheight'], 'ankleHeight': sk['lateralmalleolusheight'],
+               'upperArm': sk['acromionradialelength'], 'forearm': sk['radialestylionlength'], 'hand': sk.get('handlength', np.nan),
+               'shoulderWidth': sk['biacromialbreadth'], 'pelvisWidth': sk['bicristalbreadth']}
+        # 比值在“原骨架自己的身高”下求：asBuilt 预设把身高设为原身高，再乘这些比值
+        # ratios are taken at the as-built stature: the asBuilt preset sets that stature and applies them on top
+        at_own = {s_['id']: s_['standardLengthMm'] * (sk['stature'] / (rest['stature'] * 1000)) ** s_['bStature'] for s_ in segs}
+        as_built = {s_['id']: round(own[s_['id']] / at_own[s_['id']], 3) for s_ in segs if s_['id'] in own and not np.isnan(own[s_['id']])}
+        fields = None
+        fp = os.path.join(RAW, 'out', f'{body}-skin', 'shape-fields.json')
+        if os.path.exists(fp):
+            sf = json.load(open(fp))
+            fields = {'topology': 'MHR LOD0', 'vertices': sf['vertices'], 'fat': 'shape-fat.f32', 'sex': 'shape-sex.f32', 'limit': 'shape-limit.f32',
+                      'fittedAtBmi': sf['restBmi'], 'bmiToFieldUnits': sf['bmiToFieldUnits']['table'],
+                      'mhrDirectionPerBmiPoint': sf['fatFieldDirectionPerBmiPoint']['mhrIdentityCoefficients1to6']}
+        out['sexes'][sex] = {
+            'controls': [
+                {'id': 'stature', 'name': {'zh': '身高', 'en': 'Stature'}, 'unit': 'm', 'min': 1.40, 'max': 2.00, 'rest': rest['stature']},
+                {'id': 'bmi', 'name': {'zh': '体重指数（胖瘦）', 'en': 'Body-mass index (fatness)'}, 'unit': 'kg/m2', 'min': 16, 'max': 40, 'rest': rest['bmi']},
+                {'id': 'legLength', 'name': {'zh': '腿长比例', 'en': 'Relative leg length'}, 'unit': 'sd', 'min': -3, 'max': 2, 'rest': rest['legLength']},
+                {'id': 'centralBuild', 'name': {'zh': '体型分布（腰腹型–四肢型）', 'en': 'Mass distribution (waist-heavy vs limb-heavy)'}, 'unit': 'sd', 'min': -2, 'max': 2, 'rest': 0.0}],
+            'restBasis': {'zh': '静止值 = 标准体：中国 20–24 岁均值的身高和 BMI；腿长因子 −1 和前臂 ×0.93 是对 ANSUR 比例的修正（依据 GB/T 10000-1988 P50 与模型的对比）；'
+                                '其余比例和围度函数来自 ANSUR II / NHANES（美国数据），不是中国实测。',
+                          'en': 'rest = the standard body: stature and BMI are the Chinese 20-24 means; leg-length factor -1 and forearm x0.93 are corrections to ANSUR proportions '
+                                '(from GB/T 10000-1988 P50 against the model); all other proportion and girth functions come from ANSUR II / NHANES (US data), not Chinese measurements.'},
+            'segments': segs, 'girths': girths, 'fat': fat, 'fields': fields,
+            'presets': [
+                {'id': 'standard', 'name': {'zh': '标准体（默认）', 'en': 'Standard (default)'}, 'values': rest, 'segmentFactors': {}},
+                {'id': 'asBuilt', 'name': {'zh': '原始模型比例（供体/BodyParts3D）', 'en': 'As-built proportions (donor / BodyParts3D)'},
+                 'values': {**rest, 'stature': round(sk['stature'] / 1000, 3)}, 'segmentFactors': as_built,
+                 'note': {'zh': 'segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的，男性应改用盂肱关节间距（见 REPORT 第 10 节）',
+                          'en': 'segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion; for the male use the glenohumeral separation instead (REPORT section 10)'}},
+                {'id': 'ansur', 'name': {'zh': 'ANSUR II 比例（美国军人）', 'en': 'ANSUR II proportions (US Army)'},
+                 'values': {**rest, 'legLength': 0.0}, 'segmentFactors': {'forearm': round(1 / CN_FOREARM, 3)}}],
+        }
+    json.dump(out, open(os.path.join(CUR, 'rig-shape.json'), 'w'), ensure_ascii=False, indent=1)
+    return out
 
 
 if __name__ == '__main__':
