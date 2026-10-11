@@ -1,6 +1,0 @@
-{
-  "summary": {
-    "zh": "从微观规则到涌现：分子动力学、伊辛、Potts、引力、网格等几种底物，在浏览器里用 GPU 跑。它现在还没有无界面的运行入口，所以这里暂时没有能调用的计算，也没有数据集；可以用 catalog 里它的卡片地址让人打开看。",
-    "en": "From microscopic rules to emergence: molecular dynamics, Ising, Potts, gravity, meshes and more, run on the GPU in a browser. It has no headless entry point yet, so there is no callable computation or dataset here for now; its card URLs in the catalogue can be given to a person to open."
-  }
-}
