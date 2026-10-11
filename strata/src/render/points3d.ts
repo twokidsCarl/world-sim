@@ -1,15 +1,18 @@
+// 三维中的天体，绕竖直轴旋转后画成半透明的小圆盘。
 // Bodies in 3D, drawn as small translucent discs after a rotation about the vertical axis.
 
 const SHADER = /* wgsl */ `
 struct View {
   color: vec4f,
-  radius: vec2f,   // disc radius in NDC, per axis
-  scale: vec2f,    // NDC per world unit, per axis
+  radius: vec2f,   // 圆盘半径（NDC），逐轴 / disc radius in NDC, per axis
+  scale: vec2f,    // 每个世界单位对应的 NDC，逐轴 / NDC per world unit, per axis
   angle: f32,
   alpha: f32,
-  slab: f32,       // half-thickness of the visible slab along the line of sight; 0 shows everything
-  species: f32,    // 1: bodies whose w is 1 are drawn in the second colour
-  centre: vec4f,   // world point drawn at the middle of the view
+  // 可见薄层沿视线方向的半厚度；0 表示全部显示
+  // half-thickness of the visible slab along the line of sight; 0 shows everything
+  slab: f32,
+  species: f32,    // 1：w 为 1 的天体用第二种颜色绘制 / 1: bodies whose w is 1 are drawn in the second colour
+  centre: vec4f,   // 画在视图中心的世界坐标点 / world point drawn at the middle of the view
   second: vec4f,
 }
 
@@ -32,6 +35,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> Out {
   let depth = p.z * cos(V.angle) - p.x * sin(V.angle);
   var out: Out;
   out.clip = vec4f(x * V.scale.x + uv.x * V.radius.x, p.y * V.scale.y + uv.y * V.radius.y, 0, 1);
+  // 在薄层之外：把圆盘塌缩掉，什么也不画。
   // Outside the slab: collapse the disc so nothing is drawn.
   if (V.slab > 0 && abs(depth) > V.slab) { out.clip = vec4f(2, 2, 0, 1); }
   out.uv = uv;
@@ -79,6 +83,9 @@ export class Points3dRenderer {
   }
 
   /**
+   * `extent` 是视图以 `centre` 为中心的半宽（世界单位）；size 是以设备像素计的
+   * 目标尺寸。默认圆盘直径 2.5 px 且半透明，适合质点；`style` 可切换为
+   * 世界单位的半径、薄层或按组分着色。
    * `extent` is the half-width of the view in world units about `centre`; size is the
    * target in device pixels. By default discs are 2.5 px across and translucent, which
    * suits point masses; `style` switches to a radius in world units, a slab, or species colours.
@@ -107,6 +114,7 @@ export class Points3dRenderer {
     const aspect = size[0] / size[1]
     const sx = 1 / extent / aspect
     const sy = 1 / extent
+    // 半径以世界单位给定，但不小于 0.75 个设备像素。
     // A world-space radius, but never under 0.75 device pixels.
     const rx = style.radius ? Math.max(style.radius * sx, 1.5 / size[0]) : 5 / size[0]
     const ry = style.radius ? Math.max(style.radius * sy, 1.5 / size[1]) : 5 / size[1]

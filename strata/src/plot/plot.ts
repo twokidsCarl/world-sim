@@ -1,3 +1,5 @@
+// 极简的 Canvas2D 绘图：直接从类数组对象绘制，不保留场景。
+// 调用方每帧重绘，因此这里不做任何逐点的内存分配。
 // Minimal Canvas2D plotting: draws straight from array-likes, no retained scene.
 // Callers redraw every frame, so nothing here allocates per point.
 
@@ -10,10 +12,13 @@ export interface Series {
 
 export interface PlotOptions {
   xLabel?: string
-  /** Fixed y range; otherwise auto-scaled to the data. */
+  /** 固定的 y 范围；否则按数据自动缩放。 / Fixed y range; otherwise auto-scaled to the data. */
   yRange?: [number, number]
   xRange?: [number, number]
-  /** Clip auto-scaling to this y range (for curves with a divergence). */
+  /**
+   * 把自动缩放限制在这个 y 范围内（用于有发散的曲线）。
+   * Clip auto-scaling to this y range (for curves with a divergence).
+   */
   yClip?: [number, number]
 }
 
@@ -36,7 +41,7 @@ export function theme(): Theme {
   return cached
 }
 
-/** Forget the cached colours; call after the theme changes. */
+/** 清除缓存的颜色；主题切换后调用。 / Forget the cached colours; call after the theme changes. */
 export function invalidateTheme(): void {
   cached = null
 }
@@ -45,7 +50,10 @@ if (typeof window !== 'undefined') {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', invalidateTheme)
 }
 
-/** Match the backing store to the CSS size; returns a context scaled to CSS pixels. */
+/**
+ * 使后备存储的尺寸与 CSS 尺寸匹配；返回已缩放到 CSS 像素的上下文。
+ * Match the backing store to the CSS size; returns a context scaled to CSS pixels.
+ */
 export function fitCanvas(canvas: HTMLCanvasElement): { ctx: CanvasRenderingContext2D; w: number; h: number } {
   const dpr = window.devicePixelRatio || 1
   const w = canvas.clientWidth
@@ -59,7 +67,10 @@ export function fitCanvas(canvas: HTMLCanvasElement): { ctx: CanvasRenderingCont
   return { ctx, w, h }
 }
 
-/** Round tick spacing: 1, 2 or 5 times a power of ten, giving about `target` ticks. */
+/**
+ * 取整的刻度间隔：10 的幂的 1、2 或 5 倍，给出大约 `target` 个刻度。
+ * Round tick spacing: 1, 2 or 5 times a power of ten, giving about `target` ticks.
+ */
 export function niceStep(span: number, target: number): number {
   const raw = span / target
   const pow = Math.pow(10, Math.floor(Math.log10(raw)))

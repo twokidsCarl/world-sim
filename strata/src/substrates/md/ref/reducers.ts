@@ -1,13 +1,17 @@
+// 把微观状态归约为构建各层级所用的少量摘要。在 GPU 上，这些归约变成计算通道，其输出被回读。
 // Reductions of the micro state to the small summaries the levels are built from.
 // On the GPU these become compute passes whose output is read back.
 
 import { buildCells, makeGrid } from './cells'
 import { kineticEnergy, momentum, pressure, temperature, volume, type MdState } from './step'
 
-/** Cells per axis of the coarse-grained fields. */
+/** 粗粒化场每个轴上的单元数。 / Cells per axis of the coarse-grained fields. */
 export const FIELD_G = 48
 
-/** Per-cell sums over the particles in each cell of a g × g grid, row-major with y as the row. */
+/**
+ * g × g 网格中各单元内粒子的逐单元求和，按行主序存储，y 为行。
+ * Per-cell sums over the particles in each cell of a g × g grid, row-major with y as the row.
+ */
 export interface FieldSums {
   g: number
   count: Float64Array
@@ -15,7 +19,7 @@ export interface FieldSums {
   vy: Float64Array
   /** Σ |v|² */
   v2: Float64Array
-  /** Number of species-B particles. */
+  /** 组分 B 的粒子数。 / Number of species-B particles. */
   countB: Float64Array
 }
 
@@ -27,39 +31,54 @@ export interface MdScalars {
   density: number
   temperature: number
   pressure: number
-  /** Magnitude of total momentum per particle. */
+  /** 每粒子总动量的大小。 / Magnitude of total momentum per particle. */
   momentum: number
-  /** Mean of |ψ6| over particles: local hexatic order, insensitive to grain orientation. */
+  /**
+   * |ψ6| 对粒子的平均：局域六角序，对晶粒取向不敏感。
+   * Mean of |ψ6| over particles: local hexatic order, insensitive to grain orientation.
+   */
   psi6Local: number
-  /** |mean of ψ6|: hexatic order coherent across the whole box. */
+  /** |ψ6 的平均|：在整个盒子内相干的六角序。 / |mean of ψ6|: hexatic order coherent across the whole box. */
   psi6Global: number
-  /** Mean number of neighbours within COORDINATION_RADIUS: 6 for a triangular lattice, 12 for fcc. */
+  /**
+   * COORDINATION_RADIUS 以内的平均近邻数：三角晶格为 6，fcc 为 12。
+   * Mean number of neighbours within COORDINATION_RADIUS: 6 for a triangular lattice, 12 for fcc.
+   */
   coordination: number
-  /** Fraction of particles that are species B. */
+  /** 组分 B 的粒子所占比例。 / Fraction of particles that are species B. */
   fractionB: number
   /**
+   * 分相序参量：1 - (异类近邻键所占比例) / (2 xA xB)。
+   * 随机混合时为 0，两种组分分离时趋近 1；单组分时为 0。
    * Demixing order parameter: 1 - (fraction of unlike neighbour bonds) / (2 xA xB).
    * 0 for a random mixture, approaching 1 as the species separate; 0 for one component.
    */
   demix: number
 }
 
-/** Neighbours for the hexatic order parameter lie within this distance. */
+/**
+ * 六角序参量所用的近邻位于此距离之内。
+ * Neighbours for the hexatic order parameter lie within this distance.
+ */
 export const PSI_RADIUS = 1.5
 
 /**
+ * 配位数所用的最近邻位于此距离之内：超出密堆积固体的第一壳层而不及第二壳层，二维和三维都如此。
  * Nearest neighbours for the coordination number lie within this distance: beyond the
  * first shell of a close-packed solid and short of the second, in 2D and in 3D.
  */
 export const COORDINATION_RADIUS = 1.35
 
 export interface Hist {
-  /** Bin centres. */
+  /** 各分箱的中心。 / Bin centres. */
   x: Float64Array
   y: Float64Array
 }
 
 /**
+ * 每个粒子的六角键取向序（二维）：ψ6 = Σ exp(6 i θ) / max(n, 6)，
+ * 对 PSI_RADIUS 以内的 n 个近邻求和。除数至少取 6，可避免孤立的粒子对或表面粒子被算作完全有序。
+ * 返回交错排列的 (Re, Im)。
  * Hexatic bond-orientational order per particle (2D): ψ6 = Σ exp(6 i θ) / max(n, 6) over
  * the n neighbours within PSI_RADIUS. Dividing by at least 6 keeps an isolated pair or a
  * surface particle from counting as perfectly ordered. Returns interleaved (Re, Im).
@@ -73,7 +92,7 @@ export function psi6(s: MdState): Float64Array {
     let dy = pos[i * dim + 1] - pos[j * dim + 1]
     dx -= box[0] * Math.round(dx / box[0])
     if (!s.walls) dy -= box[1] * Math.round(dy / box[1])
-    // exp(6 i θ) is the same for the bond seen from either end.
+    // 同一条键无论从哪一端看，exp(6 i θ) 都相同。 / exp(6 i θ) is the same for the bond seen from either end.
     const theta = 6 * Math.atan2(dy, dx)
     const re = Math.cos(theta)
     const im = Math.sin(theta)
@@ -92,7 +111,10 @@ export function psi6(s: MdState): Float64Array {
   return out
 }
 
-/** Neighbour bonds within PSI_RADIUS: total, and those joining different species. */
+/**
+ * PSI_RADIUS 以内的近邻键：总数，以及连接不同组分的键数。
+ * Neighbour bonds within PSI_RADIUS: total, and those joining different species.
+ */
 export function bondCounts(s: MdState): { total: number; unlike: number } {
   let total = 0
   let unlike = 0
@@ -103,7 +125,7 @@ export function bondCounts(s: MdState): { total: number; unlike: number } {
   return { total, unlike }
 }
 
-/** Mean number of neighbours within COORDINATION_RADIUS. */
+/** COORDINATION_RADIUS 以内的平均近邻数。 / Mean number of neighbours within COORDINATION_RADIUS. */
 export function coordination(s: MdState): number {
   let bonds = 0
   forEachPair(s, COORDINATION_RADIUS, () => bonds++)
@@ -159,7 +181,10 @@ export function speeds(s: MdState): Float64Array {
   return out
 }
 
-/** Speed histogram normalised as a probability density on [0, vmax]. */
+/**
+ * 速率直方图，归一化为 [0, vmax] 上的概率密度。
+ * Speed histogram normalised as a probability density on [0, vmax].
+ */
 export function speedHistogram(s: MdState, bins: number, vmax: number): Hist {
   const x = new Float64Array(bins)
   const y = new Float64Array(bins)
@@ -175,7 +200,10 @@ export function speedHistogram(s: MdState, bins: number, vmax: number): Hist {
   return { x, y }
 }
 
-/** Visit each unordered pair closer than r once. r is capped at half the shortest box side. */
+/**
+ * 对每个间距小于 r 的无序粒子对恰好访问一次。r 以最短盒边的一半为上限。
+ * Visit each unordered pair closer than r once. r is capped at half the shortest box side.
+ */
 export function forEachPair(s: MdState, r: number, fn: (i: number, j: number, r2: number) => void): void {
   const { dim, n, pos, box } = s
   let half = Infinity
@@ -225,7 +253,10 @@ export function forEachPair(s: MdState, r: number, fn: (i: number, j: number, r2
   }
 }
 
-/** Add this configuration's pair-distance counts to `counts`; returns the rmax actually used. */
+/**
+ * 把当前构型的粒子对间距计数累加到 `counts`；返回实际使用的 rmax。
+ * Add this configuration's pair-distance counts to `counts`; returns the rmax actually used.
+ */
 export function rdfCounts(s: MdState, rmax: number, counts: Float64Array): number {
   const bins = counts.length
   let half = Infinity
@@ -238,7 +269,10 @@ export function rdfCounts(s: MdState, rmax: number, counts: Float64Array): numbe
   return used
 }
 
-/** Turn accumulated pair counts into g(r): counts relative to an ideal gas at the same density. */
+/**
+ * 把累积的粒子对计数换算成 g(r)：即相对于同密度理想气体的计数。
+ * Turn accumulated pair counts into g(r): counts relative to an ideal gas at the same density.
+ */
 export function rdfNormalise(
   counts: Float64Array,
   rmax: number,
@@ -268,6 +302,9 @@ export function rdf(s: MdState, bins: number, rmax: number): Hist {
 }
 
 /**
+ * 用礼帽（top-hat）核把粒子粗粒化到网格上：
+ * 这是 Irving–Kirkwood/Hardy 构造的最简情形，
+ * 场的质量和动量与粒子的严格相等。
  * Coarse-grain the particles onto a grid with a top-hat kernel: the simplest case of the
  * Irving–Kirkwood/Hardy construction, in which mass and momentum of the fields equal
  * those of the particles exactly.
@@ -297,7 +334,10 @@ export function fieldSums(s: MdState, g = FIELD_G): FieldSums {
   return out
 }
 
-/** Profiles across y (averaged over x): number density, flow velocity u_x, temperature, and the fraction of species B. */
+/**
+ * 沿 y 的剖面（对 x 平均）：数密度、流速 u_x、温度以及组分 B 所占比例。
+ * Profiles across y (averaged over x): number density, flow velocity u_x, temperature, and the fraction of species B.
+ */
 export function profiles(
   f: FieldSums,
   box: ArrayLike<number>,
@@ -328,9 +368,77 @@ export function profiles(
     y[b] = (b + 0.5) / bins
     density[b] = n / ((box[0]! * box[1]!) / bins)
     ux[b] = n > 0 ? px / n : 0
+    // 相对于局域平均流的运动的动理学温度，按二维计。
     // Kinetic temperature of the motion relative to the local mean flow, in 2D.
     temperature[b] = n > 1 ? (v2 - (px * px + py * py) / n) / (2 * n) : 0
     fractionB[b] = n > 0 ? nB / n : 0
   }
   return { y, density, ux, temperature, fractionB }
+}
+
+/** 结构因子在每个轴上采样的波矢数。 / Wave vectors sampled per axis for the structure factor. */
+export const MODE_COUNT = 48
+/**
+ * 结构因子采样到大约这个波数为止，已越过它的头几个峰。
+ * The structure factor is sampled out to about this wave number, past its first peaks.
+ */
+const MODE_K_TARGET = 12
+
+/**
+ * 对边长为 L 的盒子每隔 `stride` 个波矢采样一个，使 MODE_COUNT 个波矢能达到 MODE_K_TARGET。
+ * Sample every `stride`-th wave vector of a box of length L, so MODE_COUNT of them reach MODE_K_TARGET.
+ */
+export function modeStride(L: number): number {
+  return Math.max(1, Math.ceil((L * MODE_K_TARGET) / (2 * Math.PI * MODE_COUNT)))
+}
+
+/**
+ * 密度的傅里叶模 ρ_k = Σ exp(-i k·r)，波矢分别沿 x 和沿 y。布局为 (Re, Im) 对：
+ * 先是沿 x 的最长波（n = 1）；然后是沿 x 的 MODE_COUNT 个模，n = stride, 2 stride, …；
+ * 再是沿 y 的同样一组。
+ * Fourier modes of the density, ρ_k = Σ exp(-i k·r), on wave vectors along x and along y.
+ * Layout, as (Re, Im) pairs: the longest wave along x (n = 1); then MODE_COUNT modes along
+ * x with n = stride, 2 stride, …; then the same along y.
+ */
+export interface DensityModes {
+  data: Float64Array
+  strideX: number
+  strideY: number
+}
+
+export function densityModes(s: MdState): DensityModes {
+  const strideX = modeStride(s.box[0])
+  const strideY = modeStride(s.box[1])
+  const data = new Float64Array(2 + 4 * MODE_COUNT)
+  for (let i = 0; i < s.n; i++) {
+    const tx = (2 * Math.PI * s.pos[i * s.dim]) / s.box[0]
+    const ty = (2 * Math.PI * s.pos[i * s.dim + 1]) / s.box[1]
+    data[0] += Math.cos(tx)
+    data[1] -= Math.sin(tx)
+    for (let j = 1; j <= MODE_COUNT; j++) {
+      data[2 * j] += Math.cos(j * strideX * tx)
+      data[2 * j + 1] -= Math.sin(j * strideX * tx)
+      data[2 * (MODE_COUNT + j)] += Math.cos(j * strideY * ty)
+      data[2 * (MODE_COUNT + j) + 1] -= Math.sin(j * strideY * ty)
+    }
+  }
+  return { data, strideX, strideY }
+}
+
+/**
+ * 由这些模得到静态结构因子 S(k) = |ρ_k|² / N，按波数排序。
+ * Static structure factor S(k) = |ρ_k|² / N from the modes, sorted by wave number.
+ */
+export function structureFactor(m: DensityModes, n: number, box: ArrayLike<number>): { x: Float64Array; y: Float64Array } {
+  const points: [number, number][] = []
+  for (let j = 1; j <= MODE_COUNT; j++) {
+    for (const [offset, k] of [
+      [j, (2 * Math.PI * j * m.strideX) / box[0]!],
+      [MODE_COUNT + j, (2 * Math.PI * j * m.strideY) / box[1]!],
+    ] as const) {
+      points.push([k, (m.data[2 * offset]! ** 2 + m.data[2 * offset + 1]! ** 2) / n])
+    }
+  }
+  points.sort((a, b) => a[0] - b[0])
+  return { x: Float64Array.from(points, (p) => p[0]), y: Float64Array.from(points, (p) => p[1]) }
 }

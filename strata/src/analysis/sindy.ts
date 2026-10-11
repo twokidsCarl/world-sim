@@ -1,3 +1,9 @@
+// 针对一维周期空间中偏微分方程的弱形式稀疏回归（SINDy：Brunton,
+// Proctor & Kutz 2016；弱形式：Messenger & Bortz 2021）。
+//
+// 把 ∂c/∂t 的各候选右端项与光滑、紧支的检验函数做内积来检验。
+// 分部积分把所有导数都转移到检验函数上，因此从不对含噪数据求导。
+//
 // Weak-form sparse regression for a PDE in one periodic space dimension (SINDy: Brunton,
 // Proctor & Kutz 2016; weak form: Messenger & Bortz 2021).
 //
@@ -9,9 +15,9 @@ import { leastSquares } from './linalg'
 
 export interface Term {
   label: string
-  /** The field the term differentiates, as a function of c. */
+  /** 该项所求导的场，作为 c 的函数。 / The field the term differentiates, as a function of c. */
   field: (c: number) => number
-  /** Order of the space derivative applied to that field. */
+  /** 作用在该场上的空间导数的阶数。 / Order of the space derivative applied to that field. */
   order: 0 | 1 | 2
 }
 
@@ -24,13 +30,22 @@ export const DIFFUSION_LIBRARY: Term[] = [
 ]
 
 export interface SindyResult {
-  /** One coefficient per library term; exactly 0 for terms the regression discarded. */
+  /**
+   * 库中每一项对应一个系数；被回归舍弃的项系数严格为 0。
+   * One coefficient per library term; exactly 0 for terms the regression discarded.
+   */
   coefficients: number[]
-  /** Fraction of the variance of the weak time derivative explained by the kept terms. */
+  /**
+   * 保留下来的各项所解释的弱形式时间导数的方差占比。
+   * Fraction of the variance of the weak time derivative explained by the kept terms.
+   */
   r2: number
 }
 
-/** (1 - s²)^p on [-1, 1] and its first two derivatives with respect to s. */
+/**
+ * [-1, 1] 上的 (1 - s²)^p 及其对 s 的一阶、二阶导数。
+ * (1 - s²)^p on [-1, 1] and its first two derivatives with respect to s.
+ */
 function bump(s: number, p: number): [number, number, number] {
   const q = 1 - s * s
   if (q <= 0) return [0, 0, 0]
@@ -38,6 +53,8 @@ function bump(s: number, p: number): [number, number, number] {
 }
 
 /**
+ * `data[t][j]` 是周期网格上 t * dt 时刻、位置 j * dy 处的 c。`threshold` 是
+ * 一项要被保留所需的最小贡献（相对于最大贡献）。
  * `data[t][j]` is c at time t * dt and position j * dy on a periodic grid. `threshold` is
  * the smallest contribution, relative to the largest, that a term must make to be kept.
  */
@@ -50,8 +67,9 @@ export function weakSindy(
 ): SindyResult {
   const nt = data.length
   const ny = data[0]!.length
-  // Half-widths of the test-function support, in grid points.
+  // 检验函数支集的半宽，以格点数计。 / Half-widths of the test-function support, in grid points.
   const ht = Math.max(2, Math.floor(nt / 6))
+  // 空间方向取宽一些：必须分辨的是检验函数的二阶导数。
   // Wide in space: the second derivative of the test function is what must be resolved.
   const hy = Math.max(3, Math.floor(ny / 4))
   const p = 4
@@ -67,11 +85,12 @@ export function weakSindy(
         for (let k = -hy; k <= hy; k++) {
           const [fy, dfy, d2fy] = bump(k / hy, p)
           const c = slice[(((y0 + k) % ny) + ny) % ny]!
-          // ∫∫ φ ∂c/∂t = -∫∫ ∂φ/∂t c
+          // ∫∫ φ ∂c/∂t = -∫∫ ∂φ/∂t c / ∫∫ φ ∂c/∂t = -∫∫ ∂φ/∂t c
           lhs -= (dft / (ht * dt)) * fy * c
           for (let i = 0; i < library.length; i++) {
             const term = library[i]!
             const f = term.field(c)
+            // 分部积分 n 次得到 (-1)^n ∫∫ (∂ⁿφ/∂yⁿ) f。
             // n integrations by parts give (-1)^n ∫∫ (∂ⁿφ/∂yⁿ) f.
             row[i]! +=
               term.order === 2 ? (ft * d2fy * f) / (hy * dy) ** 2 : term.order === 1 ? (-ft * dfy * f) / (hy * dy) : ft * fy * f
@@ -83,6 +102,7 @@ export function weakSindy(
     }
   }
 
+  // 序贯阈值最小二乘，按每一项贡献的大小来取舍。
   // Sequentially thresholded least squares, judging each term by the size of what it contributes.
   const norms = library.map((_, i) => Math.sqrt(rows.reduce((s, r) => s + r[i]! * r[i]!, 0)))
   let active = library.map((_, i) => i).filter((i) => norms[i]! > 0)
@@ -110,7 +130,10 @@ export function weakSindy(
   return { coefficients, r2: 1 - residual / total }
 }
 
-/** The fitted equation as text, e.g. "∂c/∂t = 0.0312 ∂²c/∂y²". */
+/**
+ * 以文本形式给出拟合得到的方程，例如 "∂c/∂t = 0.0312 ∂²c/∂y²"。
+ * The fitted equation as text, e.g. "∂c/∂t = 0.0312 ∂²c/∂y²".
+ */
 export function equationText(result: SindyResult, library: Term[] = DIFFUSION_LIBRARY): string {
   const parts = library
     .map((term, i) => ({ term, w: result.coefficients[i]! }))

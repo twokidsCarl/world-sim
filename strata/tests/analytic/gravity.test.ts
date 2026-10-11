@@ -12,6 +12,7 @@ import { FREE_FALL_TIME, PLUMMER_HALF_MASS, plummerMass } from '../../src/theory
 
 describe('gravity reference', () => {
   it('two bodies on a circular orbit keep the Kepler period', () => {
+    // 两个质量均为 0.5、相距 1：ω² = G M / d³ = 1，所以周期是 2π。
     // Equal masses 0.5 at separation 1: ω² = G M / d³ = 1, so the period is 2π.
     const s = createGravity(2)
     s.mass.set([0.5, 0.5])
@@ -26,6 +27,7 @@ describe('gravity reference', () => {
     for (let i = 1; crossings < orbits; i++) {
       leapfrog(s, 0, dt)
       const y = s.pos[4]!
+      // 天体 1 每个轨道周期向上穿过 y = 0 一次；对穿越时刻做插值。
       // Body 1 crosses y = 0 upward once per orbit; interpolate the crossing time.
       if (prevY < 0 && y >= 0) {
         crossings++
@@ -66,7 +68,7 @@ describe('gravity reference', () => {
     const sc = gravityScalars(s)
     expect(Math.abs(sc.halfMassRadius - PLUMMER_HALF_MASS)).toBeLessThan(0.08)
     expect(Math.abs(sc.virial - 1)).toBeLessThan(0.05)
-    // U = -3π/32 for the untruncated, unsoftened model.
+    // 对未截断、未软化的模型，U = -3π/32。 / U = -3π/32 for the untruncated, unsoftened model.
     expect(Math.abs(sc.pe + (3 * Math.PI) / 32)).toBeLessThan(0.02)
     const counts = radialCounts(s, 8, 4)
     let inside = 0
@@ -115,6 +117,7 @@ describe('gravity reference', () => {
     console.log(
       `cold collapse, N=500: 2K/|U| all ${ratio.toFixed(3)}, bound 2K/|W| ${boundRatio.toFixed(3)}, bound fraction ${end.boundFraction.toFixed(3)}`,
     )
+    // 有些天体被抛出；位力定理对仍然束缚的部分成立。
     // Some bodies are ejected; the virial theorem holds for what stays bound.
     expect(end.boundFraction).toBeGreaterThan(0.7)
     expect(end.boundFraction).toBeLessThan(1)

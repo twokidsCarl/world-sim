@@ -17,19 +17,25 @@ import {
 
 export interface IsingLevel {
   size: number
-  /** Magnetisation per spin, signed. */
+  /** 每个自旋的磁化强度，带符号。 / Magnetisation per spin, signed. */
   m: number
-  /** Mean nearest-neighbour product ⟨s s'⟩. */
+  /** 最近邻乘积的平均值 ⟨s s'⟩。 / Mean nearest-neighbour product ⟨s s'⟩. */
   nn: number
-  /** Mean diagonal-neighbour product. */
+  /** 对角近邻乘积的平均值。 / Mean diagonal-neighbour product. */
   nnn: number
 }
 
 export interface IsingFrame extends Frame {
   T: number
-  /** levels[0] is the simulated lattice; each next one is a 2×2 majority-rule coarsening. */
+  /**
+   * levels[0] 是被模拟的晶格；其后每一级都是前一级按 2×2 多数规则粗粒化的结果。
+   * levels[0] is the simulated lattice; each next one is a 2×2 majority-rule coarsening.
+   */
   levels: IsingLevel[]
-  /** Binder cumulant of the magnetisation, from every frame since the parameters last changed. */
+  /**
+   * 磁化强度的 Binder 累积量，取自参数上次改变以来的所有帧。
+   * Binder cumulant of the magnetisation, from every frame since the parameters last changed.
+   */
   binder: number
 }
 
@@ -37,7 +43,10 @@ export interface IsingBackend extends RunBackend<IsingFrame> {
   readonly L: number
 }
 
-/** Running sums of m² and m⁴ over the frames reduced since the last parameter change. */
+/**
+ * 自上次参数改变以来已归约各帧的 m² 与 m⁴ 累加和。
+ * Running sums of m² and m⁴ over the frames reduced since the last parameter change.
+ */
 class Moments {
   private m2 = 0
   private m4 = 0
@@ -91,7 +100,7 @@ export class IsingCpuBackend implements IsingBackend {
     sweep(this.state, this.thr, n)
   }
 
-  /** The current lattice and its coarsenings, finest first. */
+  /** 当前晶格及其各级粗粒化，最细的在前。 / The current lattice and its coarsenings, finest first. */
   pyramid(): Uint8Array[] {
     const out = [this.state.spins]
     let size = this.L
@@ -117,7 +126,7 @@ export class IsingGpuBackend implements IsingBackend {
   readonly L: number
   readonly levels: number
   stepCount = 0
-  /** Spin buffers, finest first; the renderer reads these. */
+  /** 自旋缓冲区，最细的在前；渲染器读取它们。 / Spin buffers, finest first; the renderer reads these. */
   readonly spins: GPUBuffer[] = []
 
   private device: GPUDevice
@@ -230,7 +239,10 @@ export class IsingGpuBackend implements IsingBackend {
     return this.timer.ms
   }
 
-  /** Bring the coarse levels up to date with the simulated lattice. */
+  /**
+   * 把各粗粒化层级更新到与被模拟的晶格一致。
+   * Bring the coarse levels up to date with the simulated lattice.
+   */
   encodePyramid(encoder: GPUCommandEncoder): void {
     const pass = encoder.beginComputePass()
     pass.setPipeline(this.pipelines.block)
@@ -280,12 +292,16 @@ export class IsingGpuBackend implements IsingBackend {
     }
     staging.unmap()
     staging.destroy()
+    // 参数改变之前提交的帧不得计入新的平均。
     // A frame submitted before the parameters changed must not enter the new average.
     const binder = epoch === this.epoch ? this.moments.add(levels[0]!.m) : NaN
     return { step, T, levels, binder }
   }
 
-  /** Full readback of the simulated lattice, for the cross-check harness only. */
+  /**
+   * 完整回读被模拟的晶格，仅供交叉校验工具使用。
+   * Full readback of the simulated lattice, for the cross-check harness only.
+   */
   async readSpins(): Promise<Uint32Array> {
     const bytes = this.L * this.L * 4
     const staging = this.device.createBuffer({ size: bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST })

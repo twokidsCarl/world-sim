@@ -8,11 +8,15 @@ import { KnobPanel, PotentialPreview } from './KnobPanel'
 import { LevelCards } from './LevelCards'
 import { MdStage } from './MdStage'
 import { PerfHud } from './PerfHud'
+import { SOUND_KICK } from './scenario'
 import { ScenarioBar } from './ScenarioBar'
 import { useUi } from './store'
 import { applyTheme, storedTheme, type ThemeChoice } from './theme'
 
-/** Per-substrate views: the stage, and anything shown above the knobs. */
+/**
+ * 各底座的视图：主画面，以及显示在旋钮上方的内容。
+ * Per-substrate views: the stage, and anything shown above the knobs.
+ */
 const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: ReactNode }> = {
   md: { stage: <MdStage />, extras: <PotentialPreview />, footer: <ConstantsPanel /> },
   ising: { stage: <IsingStage /> },
@@ -57,9 +61,17 @@ export function App() {
             ))}
           </div>
           {substrateId === 'md' && (
-            <button onClick={() => engine.reverse()} title="把时间方向反过来">
-              倒放
-            </button>
+            <>
+              <button
+                onClick={() => engine.perturb(SOUND_KICK * Math.sqrt(engine.params.temperature!))}
+                title="沿 x 方向激发一列最长的驻波，用来量声速"
+              >
+                敲一下
+              </button>
+              <button onClick={() => engine.reverse()} title="把时间方向反过来">
+                倒放
+              </button>
+            </>
           )}
           <button onClick={toggle}>{running ? '暂停' : '继续'}</button>
           <button onClick={() => engine.reset()}>重置</button>

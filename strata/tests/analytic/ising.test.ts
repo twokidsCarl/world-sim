@@ -20,6 +20,7 @@ describe('Onsager exact solution', () => {
   it('energy per spin: ground state, critical point, high temperature', () => {
     expect(onsagerEnergy(0.3)).toBeCloseTo(-2, 6)
     expect(onsagerEnergy(ISING_TC)).toBeCloseTo(-Math.SQRT2, 6)
+    // 高温级数：领头阶 e = -2 tanh(1/T)。
     // High-temperature series: e = -2 tanh(1/T) to leading order.
     expect(onsagerEnergy(50)).toBeCloseTo(-2 * Math.tanh(1 / 50), 4)
   })
@@ -33,9 +34,10 @@ describe('Onsager exact solution', () => {
 describe('Ising reference', () => {
   it('thresholds: downhill flips are always accepted, uphill follow exp(-dE/T)', () => {
     const thr = thresholds(2, 0, 0)
+    // 自旋向上（s01 = 1），四个近邻全部向下：dE = -8。
     // Spin up (s01 = 1) with all four neighbours down: dE = -8.
     expect(thr[25 + 0 * 5 + 2]).toBe(0xffffffff)
-    // Spin up with all four neighbours up: dE = +8.
+    // 自旋向上，四个近邻全部向上：dE = +8。 / Spin up with all four neighbours up: dE = +8.
     expect(thr[25 + 4 * 5 + 2]! / 4294967296).toBeCloseTo(Math.exp(-4), 8)
   })
 
@@ -129,6 +131,8 @@ describe('Ising reference', () => {
     const hot = flow(3.0, false)
     for (let k = 1; k < cold.length; k++) expect(cold[k]!).toBeGreaterThan(cold[k - 1]!)
     expect(cold.at(-1)!).toBeGreaterThan(0.99)
+    // Tc 以上每个块平均的是互不关联的区域，所以最粗一级的每自旋 |m|
+    // 由剩下的寥寥几个自旋决定，而不是由有序决定：与随机自旋比较。
     // Above Tc each block averages uncorrelated regions, so per-spin |m| at the coarsest
     // level is set by the handful of spins left, not by order: compare against random spins.
     const coarse = L >> (hot.length - 1)

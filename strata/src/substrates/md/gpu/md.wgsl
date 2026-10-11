@@ -1,3 +1,9 @@
+// 分子动力学内核。与 src/substrates/md/ref 保持一致：相同的速度 Verlet 拆分、
+// 相同的查表插值对力、相同的归约。
+//
+// 近邻搜索使用固定容量的元胞表：每个元胞最多存放 `cap` 个粒子索引，用原子计数器
+// 占位。超出容量的条目被丢弃，并上报所见的最大计数，以便宿主检测溢出。
+//
 // Molecular dynamics kernels. Mirrors src/substrates/md/ref: the same velocity Verlet
 // split, the same table-interpolated pair force, the same reductions.
 //
@@ -7,51 +13,72 @@
 
 struct Params {
   box: vec4f,
-  nc: vec4u,            // cells per axis; w = cell capacity
+  nc: vec4u,            // 每个轴上的元胞数；w = 元胞容量 / cells per axis; w = cell capacity
   n: u32,
   dim: u32,
   tableK: u32,
-  chunk: u32,           // particles per reduction chunk
+  chunk: u32,           // 每个归约块的粒子数 / particles per reduction chunk
   dt: f32,
   rc2: f32,
   r2min: f32,
   tableScale: f32,
   vmax: f32,
   rdfMax: f32,
-  lambda: f32,          // velocity scale applied by `rescale`
-  rdfReach: f32,        // stencil radius in cells for the g(r) pass
-  drive: f32,           // body force per particle along x
-  wallT: f32,           // wall temperature
-  walls: u32,           // 1: thermal walls at y = 0 and y = box.y instead of a periodic y axis
-  seed: u32,            // changes every submitted batch
+  lambda: f32,          // `rescale` 施加的速度缩放因子 / velocity scale applied by `rescale`
+  rdfReach: f32,        // g(r) 通道的模板半径，以元胞为单位 / stencil radius in cells for the g(r) pass
+  drive: f32,           // 每个粒子沿 x 方向的体力 / body force per particle along x
+  wallT: f32,           // 壁面温度 / wall temperature
+  // 1：在 y = 0 和 y = box.y 处设热壁，取代周期性的 y 轴
+  // 1: thermal walls at y = 0 and y = box.y instead of a periodic y axis
+  walls: u32,
+  seed: u32,            // 每提交一批就改变一次 / changes every submitted batch
+  strideX: u32,         // 密度模沿 x 每隔 strideX 个波矢采样一个 / density modes sample every strideX-th wave vector along x
+  strideY: u32,
+  pad0: u32,
+  pad1: u32,
 }
 
 const SPEED_BINS = 64u;
 const RDF_BINS = 120u;
 const RDF_OFFSET = 64u;
 const MAX_CELL_SLOT = 192u;
+// 六角序参量所用的近邻：1.5 σ 以内，此处取平方。
 // Neighbours for the hexatic order parameter: within 1.5 σ, squared.
 const PSI_R2 = 2.25;
 const SPECIES = 2u;
+// 配位数所用的最近邻：1.35 σ 以内，此处取平方。
 // Nearest neighbours for the coordination number: within 1.35 σ, squared.
 const COORD_R2 = 1.8225;
 const FIELD_G = 48u;
+// 场求和所用的定点缩放系数，这些和用 i32 原子变量累加。
 // Fixed-point scales for the field sums, which are accumulated in i32 atomics.
 const FIELD_V = 1024.0;
 const FIELD_V2 = 256.0;
+// 密度模在每个轴上的波矢数；每个块写入 MODE_SLOTS 个浮点数。
+// Wave vectors per axis for the density modes; each chunk writes MODE_SLOTS floats.
+const MODE_COUNT = 48u;
+const MODE_SLOTS = 194u;
 
 @group(0) @binding(0) var<uniform> P: Params;
-@group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;        // xyz position, w = species (0 or 1)
+// xyz 为位置，w = 组分（0 或 1） / xyz position, w = species (0 or 1)
+@group(0) @binding(1) var<storage, read_write> pos: array<vec4f>;
 @group(0) @binding(2) var<storage, read_write> vel: array<vec4f>;
-@group(0) @binding(3) var<storage, read_write> force: array<vec4f>;      // xyz force, w = potential energy share
-@group(0) @binding(4) var<storage, read_write> aux: array<vec4f>;        // virial share, Re ψ6, Im ψ6, packed neighbour counts (see `forces`)
+// xyz 为力，w = 势能份额 / xyz force, w = potential energy share
+@group(0) @binding(3) var<storage, read_write> force: array<vec4f>;
+// 位力份额、Re ψ6、Im ψ6、打包的近邻计数（见 `forces`）
+// virial share, Re ψ6, Im ψ6, packed neighbour counts (see `forces`)
+@group(0) @binding(4) var<storage, read_write> aux: array<vec4f>;
 @group(0) @binding(5) var<storage, read_write> cellCount: array<atomic<u32>>;
 @group(0) @binding(6) var<storage, read_write> cellTable: array<u32>;
-@group(0) @binding(7) var<storage, read> potTable: array<vec2f>;         // (f/r, u) on a uniform r² grid; one table per species pair
-@group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // three per chunk
+// 均匀 r² 网格上的 (f/r, u)；每个组分对一张表 / (f/r, u) on a uniform r² grid; one table per species pair
+@group(0) @binding(7) var<storage, read> potTable: array<vec2f>;
+@group(0) @binding(8) var<storage, read_write> partial: array<vec4f>;    // 每块三个 / three per chunk
 @group(0) @binding(9) var<storage, read_write> hist: array<atomic<u32>>;
-@group(0) @binding(10) var<storage, read_write> heat: array<f32>;        // one per chunk
-@group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>; // per cell: count, Σvx, Σvy, Σv², count of species B
+@group(0) @binding(10) var<storage, read_write> heat: array<f32>;        // 每块一个 / one per chunk
+@group(0) @binding(12) var<storage, read_write> modeChunks: array<f32>;   // 每块 MODE_SLOTS 个 / MODE_SLOTS per chunk
+@group(0) @binding(13) var<storage, read_write> modes: array<f32>;        // MODE_SLOTS
+// 每个单元：计数、Σvx、Σvy、Σv²、组分 B 的计数 / per cell: count, Σvx, Σvy, Σv², count of species B
+@group(0) @binding(11) var<storage, read_write> field: array<atomic<i32>>;
 
 fn cellCoord(p: vec3f) -> vec3u {
   return min(vec3u(p / P.box.xyz * vec3f(P.nc.xyz)), P.nc.xyz - vec3u(1u));
@@ -72,7 +99,7 @@ fn minImage(d: vec3f) -> vec3f {
   return d - shift;
 }
 
-// Must match hash32 in src/core/rng.ts.
+// 必须与 src/core/rng.ts 中的 hash32 一致。 / Must match hash32 in src/core/rng.ts.
 fn hash32(seed: u32, c: u32) -> u32 {
   var h = seed ^ (c * 0x9e3779b1u);
   h = (h ^ (h >> 16u)) * 0x85ebca6bu;
@@ -83,7 +110,7 @@ fn hash32(seed: u32, c: u32) -> u32 {
   return h;
 }
 
-// Uniform in (0, 1).
+// (0, 1) 上的均匀分布。 / Uniform in (0, 1).
 fn rand(key: u32, c: u32) -> f32 {
   return (f32(hash32(key, c) >> 8u) + 0.5) / 16777216.0;
 }
@@ -96,6 +123,7 @@ fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
   var x = pos[i].xyz + P.dt * v;
   let wrapped = x - P.box.xyz * floor(x / P.box.xyz);
   if (P.walls != 0u && (x.y < 0.0 || x.y >= P.box.y)) {
+    // 热壁上的漫反射。若干子步共用同一个种子，所以混入位置的比特位，使各次抽样保持相互独立。
     // Diffuse reflection from a thermal wall. Several substeps share one seed, so the
     // position bits are mixed in to keep their draws independent.
     let lower = x.y < 0.0;
@@ -169,16 +197,16 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
             unlike += f32(si != sj);
             nb += 1.0;
           }
-          // The hexatic order parameter is defined in the plane only.
+          // 六角序参量只在平面内定义。 / The hexatic order parameter is defined in the plane only.
           if (r2 < PSI_R2 && P.dim == 2u) {
-            // exp(6 i θ) as the sixth power of the unit bond vector.
+            // exp(6 i θ) 取为单位键矢量的六次幂。 / exp(6 i θ) as the sixth power of the unit bond vector.
             let u = d.xy * inverseSqrt(r2);
             let u2 = vec2f(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);
             let u4 = vec2f(u2.x * u2.x - u2.y * u2.y, 2.0 * u2.x * u2.y);
             psi += vec2f(u4.x * u2.x - u4.y * u2.y, u4.x * u2.y + u4.y * u2.x);
           }
           let t = max((r2 - P.r2min) * P.tableScale, 0.0);
-          // Table for the force on species si from species sj.
+          // 组分 sj 作用于组分 si 的力所用的表。 / Table for the force on species si from species sj.
           let k0 = (si * SPECIES + sj) * (P.tableK + 1u) + min(u32(t), P.tableK - 1u);
           let e = mix(potTable[k0], potTable[k0 + 1u], min(t - floor(min(t, f32(P.tableK - 1u))), 1.0));
           f += e.x * d;
@@ -189,11 +217,15 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
     }
   }
   force[i] = vec4f(f, pe);
+  // 三个小整数计数精确地共用一个浮点数：
+  // ψ6 半径内的近邻数、其中属于另一组分的数目，
+  // 以及配位半径内的最近邻数。
   // Three small integer counts share one float exactly: neighbours within the ψ6 radius,
   // those of the other species, and nearest neighbours within the coordination radius.
   aux[i] = vec4f(vir, psi / max(nb, 6.0), nb + 64.0 * unlike + 4096.0 * coord);
 }
 
+// 每块调用一次，因此各块的和在写入时没有竞争。
 // One invocation per chunk, so each chunk's sums are written without contention.
 @compute @workgroup_size(64)
 fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
@@ -227,6 +259,7 @@ fn reduceChunks(@builtin(global_invocation_id) id: vec3u) {
   partial[3u * id.x + 2u] = vec4f(psi, unlike);
 }
 
+// 把速度乘以 lambda，并按块记录由此增加的动能。
 // Scale velocities by lambda and record the kinetic energy this adds, per chunk.
 @compute @workgroup_size(64)
 fn rescale(@builtin(global_invocation_id) id: vec3u) {
@@ -260,6 +293,7 @@ fn speedHist(@builtin(global_invocation_id) id: vec3u) {
   if (b < SPEED_BINS) { atomicAdd(&hist[b], 1u); }
 }
 
+// 粒子对间距直方图；每个无序粒子对只计一次（j > i）。
 // Pair-distance histogram; each unordered pair is counted once (j > i).
 @compute @workgroup_size(256)
 fn rdfHist(@builtin(global_invocation_id) id: vec3u) {
@@ -294,7 +328,7 @@ fn clearField(@builtin(global_invocation_id) id: vec3u) {
   if (id.x < FIELD_G * FIELD_G * 5u) { atomicStore(&field[id.x], 0); }
 }
 
-// Top-hat coarse-graining onto a FIELD_G × FIELD_G grid.
+// 用礼帽核粗粒化到 FIELD_G × FIELD_G 网格上。 / Top-hat coarse-graining onto a FIELD_G × FIELD_G grid.
 @compute @workgroup_size(256)
 fn fieldBin(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
@@ -307,4 +341,55 @@ fn fieldBin(@builtin(global_invocation_id) id: vec3u) {
   atomicAdd(&field[base + 2u], i32(round(v.y * FIELD_V)));
   atomicAdd(&field[base + 3u], i32(round(dot(v, v) * FIELD_V2)));
   atomicAdd(&field[base + 4u], i32(pos[i].w > 0.5));
+}
+
+// 密度的傅里叶模 ρ_k = Σ exp(-i k·r)，按块计算。布局为 (Re, Im) 对：沿 x 的最长波；
+// 沿 x、取 strideX 各整数倍的 MODE_COUNT 个模；沿 y 的同样一组。相继的倍数由反复做复数乘法得到。
+// Fourier modes of the density, ρ_k = Σ exp(-i k·r), per chunk. Layout as (Re, Im) pairs:
+// the longest wave along x; MODE_COUNT modes along x at multiples of strideX; the same
+// along y. Successive multiples come from repeated complex multiplication.
+@compute @workgroup_size(64)
+fn densityModes(@builtin(global_invocation_id) id: vec3u) {
+  let start = id.x * P.chunk;
+  if (start >= P.n) { return; }
+  let end = min(start + P.chunk, P.n);
+  var acc: array<f32, 194>;
+  for (var i = start; i < end; i++) {
+    let t = 6.283185307 * pos[i].xy / P.box.xy;
+    acc[0] += cos(t.x);
+    acc[1] -= sin(t.x);
+    let stepX = vec2f(cos(f32(P.strideX) * t.x), sin(f32(P.strideX) * t.x));
+    let stepY = vec2f(cos(f32(P.strideY) * t.y), sin(f32(P.strideY) * t.y));
+    var cx = stepX;
+    var cy = stepY;
+    for (var j = 1u; j <= MODE_COUNT; j++) {
+      acc[2u * j] += cx.x;
+      acc[2u * j + 1u] -= cx.y;
+      acc[2u * (MODE_COUNT + j)] += cy.x;
+      acc[2u * (MODE_COUNT + j) + 1u] -= cy.y;
+      cx = vec2f(cx.x * stepX.x - cx.y * stepX.y, cx.x * stepX.y + cx.y * stepX.x);
+      cy = vec2f(cy.x * stepY.x - cy.y * stepY.y, cy.x * stepY.y + cy.y * stepY.x);
+    }
+  }
+  for (var k = 0u; k < MODE_SLOTS; k++) { modeChunks[id.x * MODE_SLOTS + k] = acc[k]; }
+}
+
+// 对各块求和：每个模分量调用一次。 / Sum the chunks: one invocation per mode component.
+@compute @workgroup_size(64)
+fn mergeModes(@builtin(global_invocation_id) id: vec3u) {
+  if (id.x >= MODE_SLOTS) { return; }
+  var sum = 0.0;
+  for (var c = 0u; c * P.chunk < P.n; c++) { sum += modeChunks[c * MODE_SLOTS + id.x]; }
+  modes[id.x] = sum;
+}
+
+// 激发一个驻声波：沿 x 方向的速度按盒内最长的正弦波变化，振幅为 P.lambda。
+// Launch a standing sound wave: a velocity along x varying as the longest sine wave in
+// the box, with amplitude P.lambda.
+@compute @workgroup_size(256)
+fn soundKick(@builtin(global_invocation_id) id: vec3u) {
+  let i = id.x;
+  if (i >= P.n) { return; }
+  let v = vel[i];
+  vel[i] = vec4f(v.x + P.lambda * sin(6.283185307 * pos[i].x / P.box.x), v.yzw);
 }

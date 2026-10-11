@@ -1,3 +1,11 @@
+// 用标度关系从基本常数推出 Lennard-Jones 物质的各个尺度。
+//
+// 原子尺寸随 Bohr 半径 a0 = ħ / (m_e c α) 变化，结合能随 Rydberg 能量
+// Ry = α² m_e c² / 2 变化。对势参数取为它们的固定倍数（以氩标定），
+// 原子质量取为质子质量的固定倍数。这是 Weisskopf (1975) 和
+// Press & Lightman (1983) 式的量纲分析，而不是量子力学计算：
+// 前置系数是拟合出来的，只有标度关系是推导出来的。
+//
 // From fundamental constants to the scales of a Lennard-Jones substance, by scaling.
 //
 // Atomic sizes follow the Bohr radius a0 = ħ / (m_e c α) and binding energies the Rydberg
@@ -27,23 +35,28 @@ const EPSILON_IN_RYDBERG = (ARGON.epsilonOverKB * CODATA.kB) / rydberg(CODATA.al
 const MASS_IN_PROTONS = ARGON.mass / CODATA.protonMass
 
 export interface UnitSystem {
-  /** Length unit σ, metres. */
+  /** 长度单位 σ，米。 / Length unit σ, metres. */
   sigma: number
-  /** Energy unit ε, joules. */
+  /** 能量单位 ε，焦耳。 / Energy unit ε, joules. */
   epsilon: number
-  /** Particle mass, kilograms. */
+  /** 粒子质量，千克。 / Particle mass, kilograms. */
   mass: number
-  /** Time unit σ √(m / ε), seconds. */
+  /** 时间单位 σ √(m / ε)，秒。 / Time unit σ √(m / ε), seconds. */
   tau: number
-  /** Temperature unit ε / kB, kelvin. */
+  /** 温度单位 ε / kB，开尔文。 / Temperature unit ε / kB, kelvin. */
   kelvin: number
-  /** Speed unit σ / τ, metres per second. */
+  /** 速度单位 σ / τ，米每秒。 / Speed unit σ / τ, metres per second. */
   speed: number
-  /** de Boer parameter h / (σ √(m ε)): the thermal-free measure of how quantum the substance is. */
+  /**
+   * de Boer 参数 h / (σ √(m ε))：与温度无关的、衡量该物质量子性强弱的量。
+   * de Boer parameter h / (σ √(m ε)): the thermal-free measure of how quantum the substance is.
+   */
   deBoer: number
 }
 
 /**
+ * 当精细结构常数为真实值的 alphaRatio 倍、电子与质子质量比为真实值的
+ * massRatio 倍（电子质量保持不变）时，所模拟物质的各单位。
  * Units of the simulated substance when the fine-structure constant is alphaRatio times
  * its real value and the electron-to-proton mass ratio is massRatio times its real value
  * (electron mass held fixed).
@@ -65,5 +78,8 @@ export function unitSystem(alphaRatio = 1, massRatio = 1): UnitSystem {
   }
 }
 
-/** Above roughly this de Boer parameter (neon is 0.59) classical dynamics is a poor description. */
+/**
+ * de Boer 参数大致超过此值（氖为 0.59）时，经典动力学就不再是好的描述。
+ * Above roughly this de Boer parameter (neon is 0.59) classical dynamics is a poor description.
+ */
 export const DE_BOER_QUANTUM = 0.5

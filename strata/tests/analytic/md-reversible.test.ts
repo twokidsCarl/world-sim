@@ -14,16 +14,17 @@ describe('bit-reversible integrator', () => {
     stepReversible(r, pair, 0.005, 1)
     const x1 = r.x.slice()
     stepReversible(r, pair, 0.005, 2999)
-    // The system has melted: it is nowhere near where it started.
+    // 系统已经熔化：它离起点很远。 / The system has melted: it is nowhere near where it started.
     let moved = 0
     for (let k = 0; k < x0.length; k++) moved = Math.max(moved, Math.abs(r.x[k]! - x0[k]!))
     expect(moved).toBeGreaterThan(2 ** 32)
     const here = r.x.slice()
     reverseTime(r, pair, 0.005)
-    // Reversing does not move anything.
+    // 反转不会移动任何东西。 / Reversing does not move anything.
     expect(r.x).toEqual(here)
     expect(r.md.step).toBe(3000)
     stepReversible(r, pair, 0.005, 3000)
+    // 回到第 0 步，并以第 1 步作为“上一”时间层，因为时间在倒流。
     // Back at step 0, with step 1 as the "previous" level because time runs backwards.
     expect(r.x).toEqual(x0)
     expect(r.xPrev).toEqual(x1)
@@ -53,6 +54,7 @@ describe('bit-reversible integrator', () => {
       const d = s.pos[k]! - pos0[k]!
       off = Math.max(off, Math.abs(d - L * Math.round(d / L)))
     }
+    // 混沌在 15 个时间单位内放大舍入误差，直到轨迹丢失。
     // Chaos amplifies the rounding error over 15 time units until the trajectory is lost.
     expect(off).toBeGreaterThan(0.1)
   })

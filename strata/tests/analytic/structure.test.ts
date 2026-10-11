@@ -32,6 +32,7 @@ describe('hexatic order', () => {
   })
 
   it('a rotated lattice keeps |ψ6| = 1 but changes its phase', () => {
+    // 两个粒子的键在角度 θ 处贡献 exp(6iθ)：旋转 30° 使符号翻转。
     // Two particles' bond at angle θ contributes exp(6iθ): rotating by 30° flips the sign.
     const a = createState(2, 2, [20, 20])
     a.pos.set([5, 5, 6, 5])

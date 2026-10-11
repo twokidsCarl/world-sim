@@ -14,12 +14,13 @@ describe('linear algebra', () => {
     expect(values[0]).toBeCloseTo(2 + Math.SQRT2, 12)
     expect(values[1]).toBeCloseTo(2, 12)
     expect(values[2]).toBeCloseTo(2 - Math.SQRT2, 12)
-    // The middle eigenvector is (1, 0, -1) / √2.
+    // 中间的本征向量是 (1, 0, -1) / √2。 / The middle eigenvector is (1, 0, -1) / √2.
     expect(Math.abs(vectors[1]![1]!)).toBeLessThan(1e-12)
     expect(Math.abs(vectors[0]![1]! + vectors[2]![1]!)).toBeLessThan(1e-12)
   })
 
   it('eigenvalues of a non-symmetric matrix, including a complex pair', () => {
+    // 分块对角：一个旋转–缩放块（0.9 e^{±0.5i}）和一个实本征值 0.5。
     // Block diagonal: a rotation-scaling block (0.9 e^{±0.5i}) and a real eigenvalue 0.5.
     const c = 0.9 * Math.cos(0.5)
     const s = 0.9 * Math.sin(0.5)
@@ -63,6 +64,7 @@ describe('dynamic mode decomposition', () => {
         )
       }),
     )
+    // 秩：常数项、两个实模态和一个行波（一对复共轭）。
     // Rank: the constant, two real modes, and a travelling wave (a complex pair).
     const { rates } = dmd(snapshots, dt, 5)
     expect(rates.length).toBe(5)
@@ -101,6 +103,7 @@ describe('weak-form SINDy', () => {
     const step = 0.004
     const dt = 1
     const D = (step * step) / (2 * dt)
+    // 行走者从一条带出发，这条带占周期单位区间的四分之一。
     // Walkers start in a stripe covering a quarter of the periodic unit interval.
     const x = Float64Array.from({ length: walkers }, (_, i) => 0.375 + 0.25 * uniform(1, i))
     const data: Float64Array[] = []

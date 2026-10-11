@@ -1,18 +1,22 @@
+// 用计数排序构建的均匀元胞网格：逐元胞计数 -> 前缀和 -> 散射写入。GPU 近邻搜索采用同样的三遍流程。
 // Uniform cell grid built by counting sort: count per cell -> prefix sum -> scatter.
 // The GPU neighbour search follows the same three passes.
 
 export interface CellGrid {
   rc: number
-  /** Cells per axis; unused axes are 1. */
+  /** 每个轴上的元胞数；未使用的轴为 1。 / Cells per axis; unused axes are 1. */
   nc: [number, number, number]
-  /** start[c] .. start[c + 1] indexes into items. */
+  /** start[c] .. start[c + 1] 是 items 中的下标范围。 / start[c] .. start[c + 1] indexes into items. */
   start: Int32Array
   items: Int32Array
   cellOf: Int32Array
   cursor: Int32Array
 }
 
-/** Returns null when the box is under 3 cells wide on some axis; callers fall back to all pairs. */
+/**
+ * 当盒子在某个轴上不足 3 个元胞宽时返回 null；调用方退回到遍历所有粒子对。
+ * Returns null when the box is under 3 cells wide on some axis; callers fall back to all pairs.
+ */
 export function makeGrid(dim: 2 | 3, box: Float64Array, rc: number, n: number): CellGrid | null {
   const nc: [number, number, number] = [1, 1, 1]
   for (let d = 0; d < dim; d++) {

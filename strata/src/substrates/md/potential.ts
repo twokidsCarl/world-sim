@@ -1,3 +1,9 @@
+// 约化单位下的对势。每种势都在截断处做力平移（force-shifted），使 u(r) 和 f(r)
+// 在 rc 处都连续地趋于零：
+//   u_fs(r) = u(r) - u(rc) - (r - rc) u'(rc),   f_fs(r) = f(r) - f(rc)
+// 模拟内核从不接触势的函数形式：它们使用 PairEval，后者返回 g = f(r)/r
+// （于是力矢量为 g * dr）和 u，二者都是 r² 的函数。
+//
 // Pair potentials in reduced units. Every potential is force-shifted at the cutoff so
 // that both u(r) and f(r) go continuously to zero at rc:
 //   u_fs(r) = u(r) - u(rc) - (r - rc) u'(rc),   f_fs(r) = f(r) - f(rc)
@@ -5,11 +11,17 @@
 // returns g = f(r)/r (so the force vector is g * dr) and u, both as functions of r².
 
 export type PotentialSpec =
-  /** Mie n-m, normalised so the well depth is epsilon. n=12, m=6 is Lennard-Jones. */
+  /**
+   * Mie n-m 势，归一化使势阱深度为 epsilon。n=12、m=6 即 Lennard-Jones 势。
+   * Mie n-m, normalised so the well depth is epsilon. n=12, m=6 is Lennard-Jones.
+   */
   | { kind: 'mie'; epsilon: number; sigma: number; n: number; m: number; rc: number }
-  /** Morse: epsilon * ((1 - exp(-a (r - r0)))² - 1). */
+  /** Morse 势：epsilon * ((1 - exp(-a (r - r0)))² - 1)。 / Morse: epsilon * ((1 - exp(-a (r - r0)))² - 1). */
   | { kind: 'morse'; epsilon: number; r0: number; a: number; rc: number }
-  /** Purely repulsive inverse power: epsilon * (sigma / r)^n. */
+  /**
+   * 纯排斥的反幂律势：epsilon * (sigma / r)^n。
+   * Purely repulsive inverse power: epsilon * (sigma / r)^n.
+   */
   | { kind: 'soft'; epsilon: number; sigma: number; n: number; rc: number }
 
 export interface PairOut {
@@ -25,7 +37,7 @@ export interface PairEval {
 
 export const LJ: PotentialSpec = { kind: 'mie', epsilon: 1, sigma: 1, n: 12, m: 6, rc: 2.5 }
 
-/** Unshifted u(r) and du/dr. */
+/** 未移位的 u(r) 与 du/dr。 / Unshifted u(r) and du/dr. */
 export function rawPotential(spec: PotentialSpec, r: number): { u: number; du: number } {
   switch (spec.kind) {
     case 'mie': {
@@ -46,7 +58,10 @@ export function rawPotential(spec: PotentialSpec, r: number): { u: number; du: n
   }
 }
 
-/** Force-shifted u(r) and f(r) = -du/dr; zero at and beyond rc. */
+/**
+ * 力平移后的 u(r) 与 f(r) = -du/dr；在 rc 及更远处为零。
+ * Force-shifted u(r) and f(r) = -du/dr; zero at and beyond rc.
+ */
 export function shiftedPotential(spec: PotentialSpec, r: number): { u: number; f: number } {
   if (r >= spec.rc) return { u: 0, f: 0 }
   const a = rawPotential(spec, r)
@@ -54,7 +69,7 @@ export function shiftedPotential(spec: PotentialSpec, r: number): { u: number; f
   return { u: a.u - c.u - (r - spec.rc) * c.du, f: -(a.du - c.du) }
 }
 
-/** Exact f64 evaluation. Used by the reference tests. */
+/** 精确的 f64 求值。供参考测试使用。 / Exact f64 evaluation. Used by the reference tests. */
 export function analyticPair(spec: PotentialSpec): PairEval {
   const c = rawPotential(spec, spec.rc)
   const rc = spec.rc
@@ -72,13 +87,15 @@ export function analyticPair(spec: PotentialSpec): PairEval {
 export interface PairTable {
   r2min: number
   rc2: number
-  /** Number of intervals; arrays hold k + 1 samples. */
+  /** 区间数；数组存有 k + 1 个采样点。 / Number of intervals; arrays hold k + 1 samples. */
   k: number
   g: Float64Array
   u: Float64Array
 }
 
 /**
+ * 在 [rMin², rc²] 上按 r² 的均匀网格对 g 和 u 列表。
+ * rMin 以内的值钳制为最内侧的采样点，从而给陡峭芯区内的力封顶。
  * Tabulate g and u on a uniform grid in r² over [rMin², rc²]. Below rMin the values are
  * clamped to the innermost sample, which caps the force in the steep core.
  */
@@ -96,7 +113,10 @@ export function buildTable(spec: PotentialSpec, k = 2048, rMin = 0.5): PairTable
   return { r2min, rc2, k, g, u }
 }
 
-/** Linear interpolation in r². This is the form the GPU kernel uses. */
+/**
+ * 按 r² 线性插值。GPU 内核用的就是这种形式。
+ * Linear interpolation in r². This is the form the GPU kernel uses.
+ */
 export function tablePair(t: PairTable): PairEval {
   const scale = t.k / (t.rc2 - t.r2min)
   const { g, u, k, r2min } = t
@@ -112,14 +132,22 @@ export function tablePair(t: PairTable): PairEval {
   }
 }
 
-/** A pair interaction that may depend on the species of both particles. */
+/**
+ * 可依赖于两个粒子各自组分的对相互作用。
+ * A pair interaction that may depend on the species of both particles.
+ */
 export interface PairField {
   rc2: number
-  /** g and u for the force on a particle of species si due to one of species sj. */
+  /**
+   * 组分 sj 的粒子作用于组分 si 的粒子的力所对应的 g 和 u。
+   * g and u for the force on a particle of species si due to one of species sj.
+   */
   eval(r2: number, out: PairOut, si: number, sj: number): void
 }
 
 /**
+ * 按组分对分别列表：strength[si][sj] 是 epsilon 的缩放系数，用于 sj 对 si 的作用力。
+ * 对称矩阵给出互易的力（牛顿第三定律）；非对称矩阵则不然，此时动量和能量不再守恒。
  * Per-species-pair tables: strength[si][sj] scales epsilon for the force on si from sj.
  * A symmetric matrix gives reciprocal forces (Newton's third law); an asymmetric one
  * does not, and then momentum and energy are no longer conserved.

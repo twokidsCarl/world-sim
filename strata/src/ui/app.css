@@ -6,12 +6,18 @@
   --accent: #c2410c;
   --data: #0072b2;
   --agree: #00735a;
-  /* Brightest colour of the |ψ₆| map; matches mapTopFor in render/points.ts. */
+  /*
+   * |ψ₆| 图的最亮颜色；与 render/points.ts 中的 mapTopFor 一致。
+   * Brightest colour of the |ψ₆| map; matches mapTopFor in render/points.ts.
+   */
   --map-top: #a5db36;
   color-scheme: light dark;
 }
 
-/* Dark values apply when chosen explicitly, or when the system asks and no choice overrides it. */
+/*
+ * 显式选择深色，或系统要求深色且没有被选择覆盖时，采用深色取值。
+ * Dark values apply when chosen explicitly, or when the system asks and no choice overrides it.
+ */
 :root[data-theme='dark'] {
   --paper: #141413;
   --ink: #ecebe6;

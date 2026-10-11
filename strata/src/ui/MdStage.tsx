@@ -8,7 +8,10 @@ import type { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { engine } from './engine'
 import { useUi } from './store'
 
-/** The 3D view turns slowly about the vertical axis so the depth structure can be read. */
+/**
+ * 三维视图绕竖直轴缓慢转动，以便看出纵深结构。
+ * The 3D view turns slowly about the vertical axis so the depth structure can be read.
+ */
 const viewAngle = () => performance.now() * 1e-4
 
 function caption(el: HTMLElement | null): void {
@@ -33,6 +36,7 @@ function CpuCanvas() {
         const { ctx, w } = fitCanvas(canvas)
         ctx.clearRect(0, 0, w, canvas.clientHeight)
         if (s.dim === 3) {
+          // 绕竖直轴旋转之后做正交投影。
           // Orthographic projection after a rotation about the vertical axis.
           const angle = viewAngle()
           const slab = engine.view.slab ? SLAB_HALF : Infinity
@@ -59,6 +63,7 @@ function CpuCanvas() {
         }
         const scale = w / s.box[0]
         const r = Math.max(0.75, 0.45 * scale)
+        // 按填充颜色分批绘制，每批一种颜色：单独一批，或按 |ψ6| 分成 16 档。
         // Draw in batches of one fill colour each: a single batch, or 16 bins of |ψ6|.
         const BINS = 16
         const mode = engine.view.colour ?? 0
@@ -128,7 +133,10 @@ function GpuCanvas() {
 }
 
 const COLOURS = ['单色', '局域六角序 |ψ₆|', '粒子种类']
-/** Half-thickness, in σ, of the slice through the middle of a 3D box. */
+/**
+ * 穿过三维盒子中部的薄层的半厚度，以 σ 为单位。
+ * Half-thickness, in σ, of the slice through the middle of a 3D box.
+ */
 const SLAB_HALF = 1.5
 
 export function MdStage() {
@@ -137,7 +145,7 @@ export function MdStage() {
   const mixture = useUi((s) => s.params.fractionB! > 0)
   const three = useUi((s) => s.params.dim === 3)
   const [slab, setSlab] = useState(engine.view.slab ?? 0)
-  // Show the species as soon as there are two of them.
+  // 一旦有两种粒子就显示粒子种类。 / Show the species as soon as there are two of them.
   useEffect(() => {
     const next = mixture ? 2 : engine.view.colour === 2 ? 0 : (engine.view.colour ?? 0)
     engine.view.colour = next

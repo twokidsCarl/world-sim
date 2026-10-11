@@ -1,3 +1,5 @@
+// 拉取式求值：只计算至少有一个订阅者的量，
+// 并且只向后端请求这些量所需的约化器。
 // Pull-based evaluation: only quantities with at least one subscriber are computed,
 // and only the reducers those quantities need are requested from the backend.
 
@@ -11,7 +13,10 @@ export class Scheduler<F extends { step: number; time?: number }> {
   epoch = 0
   private byId = new Map<string, QuantityDef<F>>()
   private listeners = new Map<string, Set<Listener>>()
-  /** Called with every frame that is delivered, before the quantities computed from it. */
+  /**
+   * 每交付一帧就调用一次，先于由该帧算出的各个量。
+   * Called with every frame that is delivered, before the quantities computed from it.
+   */
   onFrame: ((frame: F) => void) | null = null
 
   constructor(quantities: QuantityDef<F>[]) {
@@ -29,7 +34,7 @@ export class Scheduler<F extends { step: number; time?: number }> {
     }
   }
 
-  /** Reducers needed by the currently subscribed quantities. */
+  /** 当前被订阅的量所需的约化器。 / Reducers needed by the currently subscribed quantities. */
   activeReducers(): string[] {
     const ids = new Set<string>()
     for (const id of this.listeners.keys()) for (const r of this.byId.get(id)!.reducers) ids.add(r)

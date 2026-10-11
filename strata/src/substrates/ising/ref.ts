@@ -1,3 +1,6 @@
+// 二维 Ising 模型的 CPU 参考实现：含最近邻（J = 1）与对角（J2）耦合以及外场 h，
+// 在四个交错子格上按 Metropolis 算法更新。决定是否翻转的全部运算都是整数运算，
+// 因此 GPU 内核能逐位复现。
 // CPU reference for the 2D Ising model with nearest (J = 1) and diagonal (J2) couplings
 // and a field h, updated by Metropolis on four interleaved sublattices. Everything that
 // decides a flip is integer arithmetic, so the GPU kernel reproduces it bit for bit.
@@ -8,6 +11,9 @@ export const TIE_KEY = 0x40000000
 const ALWAYS = 0xffffffff
 
 /**
+ * 接受阈值表，索引为 s01 * 25 + ((nn + 4) / 2) * 5 + (nnn + 4) / 2，
+ * 其中 s01 是以 0/1 表示的自旋，nn、nnn 是近邻自旋之和。
+ * 阈值为 ALWAYS 或随机 u32 小于阈值时接受翻转。
  * Acceptance thresholds indexed by s01 * 25 + ((nn + 4) / 2) * 5 + (nnn + 4) / 2, where
  * s01 is the spin as 0/1 and nn, nnn are the neighbour sums. A flip is accepted when the
  * threshold is ALWAYS or the random u32 is below it.
@@ -27,10 +33,10 @@ export function thresholds(T: number, j2: number, h: number): Uint32Array {
 
 export interface IsingState {
   L: number
-  /** 0 or 1 per site, row-major. */
+  /** 每个格点取 0 或 1，按行主序存储。 / 0 or 1 per site, row-major. */
   spins: Uint8Array
   seed: number
-  /** Number of sublattice passes done; four make one sweep. */
+  /** 已完成的子格遍数；四遍构成一次扫描。 / Number of sublattice passes done; four make one sweep. */
   pass: number
 }
 
@@ -42,7 +48,10 @@ export function createIsing(L: number, seed: number, ordered = false): IsingStat
 
 const pm = (b: number) => 2 * b - 1
 
-/** One sublattice pass. Sites with (x & 1) + 2 (y & 1) equal to pass & 3 are updated. */
+/**
+ * 一遍子格更新。更新满足 (x & 1) + 2 (y & 1) 等于 pass & 3 的格点。
+ * One sublattice pass. Sites with (x & 1) + 2 (y & 1) equal to pass & 3 are updated.
+ */
 export function sublatticePass(s: IsingState, thr: Uint32Array): void {
   const { L, spins } = s
   const colour = s.pass & 3
@@ -68,7 +77,10 @@ export function sweep(s: IsingState, thr: Uint32Array, n = 1): void {
   for (let i = 0; i < 4 * n; i++) sublatticePass(s, thr)
 }
 
-/** Majority rule over 2×2 blocks; ties are broken by a fixed per-site hash. */
+/**
+ * 对 2×2 块取多数规则；平局由固定的逐格点哈希决定。
+ * Majority rule over 2×2 blocks; ties are broken by a fixed per-site hash.
+ */
 export function blockSpins(src: Uint8Array, L: number, seed: number, level: number): Uint8Array {
   const M = L >> 1
   const dst = new Uint8Array(M * M)
@@ -86,9 +98,9 @@ export function blockSpins(src: Uint8Array, L: number, seed: number, level: numb
 export interface LatticeSums {
   /** Σ s */
   s: number
-  /** Σ over nearest-neighbour bonds of s s' (2 per site). */
+  /** 对最近邻键求 s s' 之和（每个格点 2 条）。 / Σ over nearest-neighbour bonds of s s' (2 per site). */
   nn: number
-  /** Σ over diagonal bonds of s s' (2 per site). */
+  /** 对对角键求 s s' 之和（每个格点 2 条）。 / Σ over diagonal bonds of s s' (2 per site). */
   nnn: number
 }
 
@@ -110,7 +122,10 @@ export function latticeSums(spins: Uint8Array, L: number): LatticeSums {
   return { s, nn, nnn }
 }
 
-/** Number of lattices in the pyramid: halve until the side would drop below 8. */
+/**
+ * 金字塔中的晶格层数：边长不断减半，直到再减就小于 8 为止。
+ * Number of lattices in the pyramid: halve until the side would drop below 8.
+ */
 export function pyramidLevels(L: number): number {
   let levels = 1
   for (let size = L; size >= 16 && size % 2 === 0; size >>= 1) levels++
@@ -118,6 +133,11 @@ export function pyramidLevels(L: number): number {
 }
 
 /**
+ * 零场下的一次 Wolff 集团翻转（Wolff 1989），含最近邻（J = 1）与对角（J2 >= 0）耦合。
+ * 从随机选取的种子格点出发生长同向自旋集团，每个同向近邻以概率 1 - exp(-2 J / T) 加入，
+ * 然后整体翻转。与单自旋 Metropolis 不同，它在临界点不会出现临界慢化，
+ * 所以临界行为的测试用的是它；它不属于被模拟的动力学。`rng` 保存随机数流的位置，并会被推进。
+ * 返回集团大小。
  * One Wolff cluster flip (Wolff 1989) in zero field, with nearest (J = 1) and diagonal
  * (J2 >= 0) couplings. Grow a cluster of aligned spins from a random seed site, adding
  * each aligned neighbour with probability 1 - exp(-2 J / T), and flip it whole. Unlike
@@ -164,7 +184,10 @@ export function wolffStep(s: IsingState, T: number, j2: number, rng: { seed: num
   return size
 }
 
-/** Binder's fourth-order cumulant U4 = 1 - <m⁴> / (3 <m²>²) from accumulated moments. */
+/**
+ * 由累积的矩计算 Binder 四阶累积量 U4 = 1 - <m⁴> / (3 <m²>²)。
+ * Binder's fourth-order cumulant U4 = 1 - <m⁴> / (3 <m²>²) from accumulated moments.
+ */
 export function binderCumulant(m2: number, m4: number, samples: number): number {
   if (samples === 0 || m2 === 0) return NaN
   return 1 - m4 / samples / (3 * (m2 / samples) ** 2)

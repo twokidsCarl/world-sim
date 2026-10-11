@@ -1,3 +1,5 @@
+// GPU 与 CPU 的交叉校验。对同一输入，把每个 GPU 内核与 f64 参考实现对比运行，
+// 并报告两者的偏差。打开 /?harness；结果写入 window.__strataHarness。
 // GPU-vs-CPU cross-check. Runs each GPU kernel against the f64 reference on the same
 // input and reports the discrepancy. Open /?harness; results land in window.__strataHarness.
 
@@ -11,14 +13,17 @@ import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
 import { initFcc, initTriangular } from '../substrates/md/ref/init'
-import { rdf, scalars, speedHistogram } from '../substrates/md/ref/reducers'
+import { densityModes, rdf, scalars, speedHistogram } from '../substrates/md/ref/reducers'
 import { computeForces, step } from '../substrates/md/ref/step'
 import { MD_KNOBS, fccCells, potentialSpec, strengthMatrix } from '../substrates/md/schema'
 
 export interface HarnessRow {
   name: string
   value: number
-  /** Upper bound for a pass; null for informational rows. */
+  /**
+   * 通过判定的上限；仅供参考的行为 null。
+   * Upper bound for a pass; null for informational rows.
+   */
   limit: number | null
   pass: boolean
 }
@@ -58,6 +63,7 @@ export async function runHarness(): Promise<HarnessResult> {
   const p: Params = { ...defaults(MD_KNOBS), nx: 40, density: 0.6, temperature: 1 }
   const pair = tablePair(buildTable(potentialSpec(p)))
 
+  // 一个无序的参考状态，位置和速度都舍入到 f32，使两边从逐位相同的输入出发。
   // A disordered reference state, with positions and velocities rounded to f32 so both
   // sides start from bit-identical input.
   const ref = initTriangular({ nx: p.nx, density: p.density, temperature: p.temperature, seed: 1 }, pair)
@@ -82,7 +88,7 @@ export async function runHarness(): Promise<HarnessResult> {
   }
   check('受力：最大误差 / 最大受力', ferr / fmax, 1e-4)
 
-  const frame = await gpuBackend.reduce(['scalars', 'speedHist', 'rdf'])
+  const frame = await gpuBackend.reduce(['scalars', 'speedHist', 'rdf', 'modes'])
   const sc = scalars(ref)
   const g = frame.scalars!
   check('动能相对误差', Math.abs(g.ke - sc.ke) / sc.ke, 1e-5)
@@ -96,7 +102,12 @@ export async function runHarness(): Promise<HarnessResult> {
   const rdfMax = frame.rdf!.x[119]! + frame.rdf!.x[0]!
   check('g(r) 直方图 L1 差', l1(frame.rdf!.y, rdf(ref, 120, rdfMax).y), 1e-3)
   check('邻居表溢出', frame.overflow ? 1 : 0, 0)
+  const refModes = densityModes(ref).data
+  let modeErr = 0
+  for (let k = 0; k < refModes.length; k++) modeErr = Math.max(modeErr, Math.abs(frame.modes!.data[k]! - refModes[k]!))
+  check('密度傅里叶模：最大误差 / 粒子数', modeErr / ref.n, 1e-5)
 
+  // 短轨迹保持接近：一个时间单位太短，混沌来不及放大 f32 的舍入误差。
   // Short trajectories stay close: one time unit is too brief for chaos to amplify f32 rounding.
   gpuBackend.step(200)
   step(ref, pair, p.dt, 200)
@@ -112,9 +123,9 @@ export async function runHarness(): Promise<HarnessResult> {
   check('GPU 2000 步每粒子能量漂移（ε）', Math.abs((await gpuBackend.reduce([])).drift), 1e-3)
   gpuBackend.dispose()
 
-  // Throughput at about 1e5 particles; informational.
+  // 约 1e5 个粒子时的吞吐量；仅供参考。 / Throughput at about 1e5 particles; informational.
   const big = new MdGpuBackend(gpu, { ...p, nx: 296 }, 1)
-  await big.reduce([]) // sets the baseline the drift is measured from
+  await big.reduce([]) // 设定漂移量的测量基准 / sets the baseline the drift is measured from
   const steps = 2000
   const t0 = performance.now()
   for (let i = 0; i < steps / 8; i++) {
@@ -128,7 +139,7 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`${big.n} 粒子：2000 步每粒子能量漂移（ε）`, Math.abs(bigFrame.drift), 1e-3)
   big.dispose()
 
-  // Three dimensions: the same kernels with a z axis.
+  // 三维：同样的内核，多一个 z 轴。 / Three dimensions: the same kernels with a z axis.
   const p3: Params = { ...p, dim: 3, nx: 32, density: 0.8, temperature: 1.5 }
   const ref3 = initFcc({ cells: fccCells(p3.nx!), density: 0.8, temperature: 1.5, seed: 1 }, pair)
   step(ref3, pair, p3.dt!, 300)
@@ -175,6 +186,7 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`三维 ${big3.n} 粒子：邻居表溢出`, (await big3.reduce(['scalars'])).overflow ? 1 : 0, 0)
   big3.dispose()
 
+  // 带非互易矩阵的双组分混合物会用到每一张粒子对参数表。
   // A two-species mixture with a non-reciprocal matrix exercises every per-pair table.
   const mp: Params = { ...p, fractionB: 0.4, epsAB: 0.5, epsBB: 1.4, nonreciprocal: 0.3 }
   const field = speciesField(speciesTables(potentialSpec(mp), strengthMatrix(mp)))
@@ -201,6 +213,7 @@ export async function runHarness(): Promise<HarnessResult> {
   check('两种粒子：分相程度差', Math.abs(mixFrame.demix - scalars(mixRef).demix), 1e-6)
   mixGpu.dispose()
 
+  // Ising：每次翻转判定都是整数运算，所以两边的晶格必须完全一致。
   // Ising: every flip decision is integer arithmetic, so the lattices must agree exactly.
   const ip: Params = { ...defaults(ISING_KNOBS), L: 7, T: 2.3, j2: 0.2, h: 0.05 }
   const isingCpu = new IsingCpuBackend(ip, 3)
@@ -224,6 +237,7 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`Ising ${cpuLevels.length} 层金字塔统计量差`, levelDiff, 0)
   isingGpu.dispose()
 
+  // 引力：先用直接求和计算加速度和势，再跑一段短轨迹。
   // Gravity: accelerations and potentials by direct summation, then a short trajectory.
   const gp: Params = { ...defaults(GRAVITY_KNOBS), n: 10, virial0: 0.5, eps: 0.03 }
   const gravRef = uniformSphere(1024, 0.5, 0.03, 1)

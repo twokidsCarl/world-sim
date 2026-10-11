@@ -1,3 +1,5 @@
+// 以数据形式描述的引导实验：每一步设置参数、运行一段时间，并可给出一个预期，
+// 用测得的量加以检验。
 // Guided experiments as data: each step sets parameters, runs for a while, and may state
 // an expectation that is checked against the measured quantity.
 
@@ -7,21 +9,35 @@ export interface Expectation {
   quantity: string
   min?: number
   max?: number
-  /** Require the quantity to agree with its theory overlay instead of bounding its value. */
+  /**
+   * 要求该量与其理论叠加曲线相符，而不是限定其取值范围。
+   * Require the quantity to agree with its theory overlay instead of bounding its value.
+   */
   agree?: boolean
-  /** Judge the single latest sample instead of the average of the last ten. */
+  /**
+   * 要求这个分析（按 id）报告与理论相符，而不是检验某个量。
+   * Require this analysis (by id) to report agreement with its theory, instead of a quantity.
+   */
+  analysis?: string
+  /**
+   * 只判断最新的单个样本，而不是最近十个样本的平均。
+   * Judge the single latest sample instead of the average of the last ten.
+   */
   latest?: boolean
-  /** What the user should see, in words. */
+  /** 用文字描述用户应当看到的现象。 / What the user should see, in words. */
   text: string
 }
 
 export interface ScenarioStep {
   text: string
   set?: Params
-  /** Simulation steps (or sweeps) to run before moving on. */
+  /**
+   * 进入下一步之前要运行的模拟步数（或扫描次数）。
+   * Simulation steps (or sweeps) to run before moving on.
+   */
   run: number
-  /** Something to do on entering the step, after `set`. */
-  action?: 'reverse'
+  /** 进入该步时在 `set` 之后执行的操作。 / Something to do on entering the step, after `set`. */
+  action?: 'reverse' | 'perturb'
   expect?: Expectation
 }
 
@@ -32,6 +48,8 @@ export interface Scenario {
   steps: ScenarioStep[]
 }
 
+// ⟨|ψ₆|⟩ 的阈值取在该状态点测得的两个平台值之间：
+// 密度 0.8 时，液体约为 0.52，布满空洞的晶体约为 0.76。
 // Thresholds for ⟨|ψ₆|⟩ sit between the two measured plateaus at this state point:
 // about 0.52 in the liquid and 0.76 in the void-riddled crystal at density 0.8.
 export const SCENARIOS: Scenario[] = [
@@ -125,6 +143,33 @@ export const SCENARIOS: Scenario[] = [
         set: { temperature: 2.5 },
         run: 4000,
         expect: { quantity: 'coordination', max: 11, text: '三维液体：配位数降到 11 以下' },
+      },
+    ],
+  },
+  {
+    id: 'sound',
+    title: '敲一下，量声速',
+    substrate: 'md',
+    steps: [
+      {
+        text: '一盒稀薄的气体，先让它平衡。粒子之间只有两体碰撞，没有人规定声音怎么传。',
+        set: {
+          dim: 2,
+          nx: 120,
+          density: 0.1,
+          temperature: 2,
+          thermostat: 0,
+          walls: 0,
+          fractionB: 0,
+          integrator: 0,
+        },
+        run: 3000,
+      },
+      {
+        text: '给所有粒子加一个沿 x 的小速度，大小按盒子里最长的正弦波变化。密度随即来回晃动：这就是一列驻波，它的频率除以波数就是声速。',
+        action: 'perturb',
+        run: 60000,
+        expect: { quantity: 'soundMode', analysis: 'sound', text: '声速与维里展开的绝热声速相差不到一成' },
       },
     ],
   },

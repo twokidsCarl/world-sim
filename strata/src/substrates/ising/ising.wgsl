@@ -1,10 +1,12 @@
+// 二维 Ising 内核。与 src/substrates/ising/ref.ts 逐位一致：
+// 相同的哈希、相同的阈值表、相同的子格顺序、相同的块自旋平局处理。
 // 2D Ising kernels. Bit-for-bit mirror of src/substrates/ising/ref.ts: the same hash, the
 // same threshold table, the same sublattice order, the same tie-breaking in block spins.
 
 struct Level {
-  L: u32,        // side of this level's lattice
+  L: u32,        // 本层晶格的边长 / side of this level's lattice
   seed: u32,
-  level: u32,    // 0 for the original lattice
+  level: u32,    // 原始晶格为 0 / 0 for the original lattice
   pad: u32,
 }
 
@@ -14,11 +16,11 @@ const TIE_KEY = 0x40000000u;
 @group(0) @binding(0) var<uniform> U: Level;
 @group(0) @binding(1) var<storage, read_write> spins: array<u32>;
 @group(0) @binding(2) var<storage, read> thr: array<u32>;
-@group(0) @binding(3) var<storage, read_write> counter: array<u32>;   // [0] = sublattice passes done
+@group(0) @binding(3) var<storage, read_write> counter: array<u32>;   // [0] = 已完成的子格遍数 / [0] = sublattice passes done
 @group(0) @binding(4) var<storage, read_write> coarse: array<u32>;
-@group(0) @binding(5) var<storage, read_write> partial: array<vec4i>; // one per row
+@group(0) @binding(5) var<storage, read_write> partial: array<vec4i>; // 每行一个 / one per row
 
-// Must match hash32 in src/core/rng.ts.
+// 必须与 src/core/rng.ts 中的 hash32 一致。 / Must match hash32 in src/core/rng.ts.
 fn hash32(seed: u32, c: u32) -> u32 {
   var h = seed ^ (c * 0x9e3779b1u);
   h = (h ^ (h >> 16u)) * 0x85ebca6bu;
@@ -59,6 +61,7 @@ fn bump() {
   counter[0] = counter[0] + 1u;
 }
 
+// 多数规则：`spins` 是较细的晶格（边长 2 L），`coarse` 是本层的晶格（边长 L）。
 // Majority rule: `spins` is the finer lattice (side 2 L), `coarse` this level's (side L).
 @compute @workgroup_size(16, 16)
 fn block(@builtin(global_invocation_id) id: vec3u) {
@@ -72,6 +75,7 @@ fn block(@builtin(global_invocation_id) id: vec3u) {
   coarse[site] = v;
 }
 
+// 每行调用一次：Σ s、Σ 最近邻键、Σ 对角键。
 // One invocation per row: Σ s, Σ nearest-neighbour bonds, Σ diagonal bonds.
 @compute @workgroup_size(64)
 fn reduceRows(@builtin(global_invocation_id) id: vec3u) {

@@ -87,6 +87,7 @@ export const GRAVITY_QUANTITIES: QuantityDef<GravityFrame>[] = [
     kind: 'scalar',
     reducers: [],
     compute: (f) => {
+      // 在累积计数越过一半的那个球壳内做插值。
       // Interpolate within the shell where the cumulative count crosses half.
       let inside = 0
       for (let b = 0; b < RADIAL_BINS; b++) {

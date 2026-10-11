@@ -16,6 +16,7 @@ describe('3D molecular dynamics', () => {
     expect(s.n).toBe(500)
     expect(s.n / volume(s)).toBeCloseTo(density, 12)
     expect(coordination(s)).toBe(12)
+    // 最近邻距离为 a/√2，其中 a = (4/ρ)^(1/3)；第二壳层在 a 处。
     // Nearest-neighbour distance a/√2 with a = (4/ρ)^(1/3); the second shell is at a.
     const a = Math.cbrt(4 / density)
     const g = rdf(s, 400, 2)

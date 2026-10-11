@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { engine, type PerfSummary } from './engine'
 
-/** Frame pacing readout, shown with ?perf. The same numbers are in window.__strataPerf. */
+/**
+ * 帧节奏读数，加 ?perf 时显示。同样的数字在 window.__strataPerf 中。
+ * Frame pacing readout, shown with ?perf. The same numbers are in window.__strataPerf.
+ */
 export function PerfHud() {
   const [perf, setPerf] = useState<PerfSummary | null>(null)
   useEffect(() => {

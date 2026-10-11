@@ -14,7 +14,10 @@ function format(v: number): string {
   return (a < 1e-3 || a >= 1e4) ? v.toExponential(2) : v.toFixed(4)
 }
 
-/** Heat map of a field, scaled between its own minimum and maximum. Returns that range. */
+/**
+ * 场的热图，在其自身的最小值与最大值之间缩放。返回该范围。
+ * Heat map of a field, scaled between its own minimum and maximum. Returns that range.
+ */
 function drawField(canvas: HTMLCanvasElement, f: { nx: number; ny: number; data: ArrayLike<number>; aspect: number }): [number, number] {
   canvas.style.height = `${Math.min(220, canvas.clientWidth / f.aspect)}px`
   const { ctx, w, h } = fitCanvas(canvas)
@@ -41,7 +44,10 @@ drawField.scratch = null as HTMLCanvasElement | null
 
 const AGREEMENT_TEXT: Record<Agreement, string> = { agree: '吻合', differ: '偏离', none: '' }
 
-/** Worst agreement among a level's quantities: any deviation wins, then agreement, then none. */
+/**
+ * 一个层级各量中最差的吻合状态：有任何偏离则取偏离，其次是吻合，最后是无。
+ * Worst agreement among a level's quantities: any deviation wins, then agreement, then none.
+ */
 function levelAgreement(ids: string[]): Agreement {
   let out: Agreement = 'none'
   for (const id of ids) {
@@ -127,7 +133,10 @@ function Card({ q }: { q: QuantityDef<Frame> }) {
   )
 }
 
-/** Re-runs an analysis on the recorded history about once a second. */
+/**
+ * 大约每秒一次，对已记录的历史重新运行分析。
+ * Re-runs an analysis on the recorded history about once a second.
+ */
 function AnalysisCard({ a }: { a: AnalysisDef }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [result, setResult] = useState<AnalysisResult | null>(null)
@@ -138,18 +147,8 @@ function AnalysisCard({ a }: { a: AnalysisDef }) {
     let frame = 0
     const unframe = engine.onFrame(() => {
       if (frame++ % 60 !== 0) return
-      const h = engine.histories.get(a.source)
-      setHave(h ? h.t.length : 0)
-      if (!h || h.t.length < a.minSamples) {
-        setResult(null)
-        return
-      }
-      try {
-        setResult(a.compute(h, engine.params))
-      } catch {
-        // A singular fit on degenerate data is not an error worth surfacing.
-        setResult(null)
-      }
+      setHave(engine.histories.get(a.source)?.t.length ?? 0)
+      setResult(engine.runAnalysis(a.id))
     })
     return () => {
       unwatch()
@@ -169,7 +168,14 @@ function AnalysisCard({ a }: { a: AnalysisDef }) {
   return (
     <div className="card">
       <h3>
-        <span className="label">{a.label}</span>
+        <span>
+          <span className="label">{a.label}</span>
+          {result?.agree !== undefined && (
+            <span className="chip" data-state={result.agree ? 'agree' : 'differ'}>
+              {result.agree ? '吻合' : '偏离'}
+            </span>
+          )}
+        </span>
       </h3>
       {result ? (
         <>
@@ -185,7 +191,7 @@ function AnalysisCard({ a }: { a: AnalysisDef }) {
         </>
       ) : (
         <p className="note">
-          正在积累数据：{have} / {a.minSamples} 张剖面
+          正在积累数据：{have} / {a.minSamples} 个样本
         </p>
       )}
     </div>

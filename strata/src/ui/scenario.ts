@@ -1,8 +1,16 @@
+// 对引擎播放一个场景：应用每一步的参数，等待步数计数器，
+// 然后用该量的近期平均检验预期。
 // Plays a scenario against the engine: applies each step's parameters, waits for the
 // step counter, then checks the expectation against the recent average of the quantity.
 
 import { SCENARIOS, type Scenario } from '../scenarios'
 import { engine } from './engine'
+
+/**
+ * 声波扰动的速度振幅，以热速度 √T 的分数表示。
+ * Velocity amplitude of the sound kick, as a fraction of the thermal speed √T.
+ */
+export const SOUND_KICK = 0.15
 
 export interface StepResult {
   text: string
@@ -13,10 +21,13 @@ export interface StepResult {
 export interface ScenarioState {
   id: string
   title: string
-  /** Index of the step now running; equals the step count when finished. */
+  /**
+   * 当前正在运行的步骤的索引；结束时等于步骤总数。
+   * Index of the step now running; equals the step count when finished.
+   */
   index: number
   stepText: string
-  /** Progress through the current step, 0..1. */
+  /** 当前步骤的进度，0..1。 / Progress through the current step, 0..1. */
   progress: number
   results: StepResult[]
   done: boolean
@@ -51,6 +62,7 @@ class ScenarioPlayer {
     this.stop()
     this.scenario = scenario
     engine.setSubstrate(scenario.substrate)
+    // 即使对应的卡片没有挂载，也保持对预期量的计算。
     // Keep the expected quantities computed even if their cards are not mounted.
     const ids = new Set(scenario.steps.flatMap((s) => (s.expect ? [s.expect.quantity] : [])))
     this.unwatch = [...ids].map((q) => engine.watch(q))
@@ -75,6 +87,7 @@ class ScenarioPlayer {
       this.emit()
       return
     }
+    // 会重建状态的参数将重置步数计数器，所以先应用它们。
     // Parameters that rebuild the state reset the step counter, so apply them first.
     const knobs = engine.substrate.knobs
     const entries = Object.entries(step.set ?? {}).sort(
@@ -83,7 +96,9 @@ class ScenarioPlayer {
     )
     for (const [id, value] of entries) if (engine.params[id] !== value) engine.setParam(id, value)
     if (step.action === 'reverse') engine.reverse()
+    if (step.action === 'perturb') engine.perturb(SOUND_KICK * Math.sqrt(engine.params.temperature ?? 1))
     this.startedAt = engine.backend.stepCount
+    // 恰好运行这么多步：反转必须发生在已知的步数上。
     // Run exactly this many steps: reversing must happen at a known step count.
     engine.stopAt = this.startedAt + step.run
     this.state = { ...this.state!, index, stepText: step.text, progress: 0 }
@@ -105,15 +120,18 @@ class ScenarioPlayer {
       return
     }
     if (step.expect) {
-      const { quantity, min, max, agree, latest } = step.expect
+      const { quantity, min, max, agree, latest, analysis } = step.expect
       const trace = engine.scalars.get(quantity)
+      // 等待一次在本阶段最后一步之后取得的测量。
       // Wait for a measurement taken after the last step of this stage.
       if (!agree && (!trace || trace.step[trace.step.length - 1]! < engine.backend.stepCount)) return
       const recent = trace ? trace.value.slice(latest ? -1 : -10) : []
       const value = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : NaN
-      const pass = agree
-        ? engine.agreements.get(quantity) === 'agree'
-        : Number.isFinite(value) && (min === undefined || value >= min) && (max === undefined || value <= max)
+      const pass = analysis
+        ? engine.runAnalysis(analysis)?.agree === true
+        : agree
+          ? engine.agreements.get(quantity) === 'agree'
+          : Number.isFinite(value) && (min === undefined || value >= min) && (max === undefined || value <= max)
       this.state = { ...state, results: [...state.results, { text: step.expect.text, value, pass }] }
     }
     this.enter(state.index + 1)

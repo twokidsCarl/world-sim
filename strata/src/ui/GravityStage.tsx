@@ -6,9 +6,12 @@ import type { GravityBackend, GravityCpuBackend, GravityGpuBackend } from '../su
 import { engine } from './engine'
 import { useUi } from './store'
 
-/** Half-width of the view in units of the initial radius. */
+/** 视图的半宽，以初始半径为单位。 / Half-width of the view in units of the initial radius. */
 const EXTENT = 2.2
-/** The view turns slowly about the vertical axis so the depth structure can be read. */
+/**
+ * 视图绕竖直轴缓慢转动，以便看出纵深结构。
+ * The view turns slowly about the vertical axis so the depth structure can be read.
+ */
 const viewAngle = () => performance.now() * 1e-4
 
 function CpuCanvas() {

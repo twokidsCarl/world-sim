@@ -1,3 +1,4 @@
+// 从存储缓冲区绘制由 0/1 格子组成的正方晶格，每个晶格画在各自的视口中。
 // Draws square lattices of 0/1 cells from storage buffers, each into its own viewport.
 
 const SHADER = /* wgsl */ `
@@ -33,7 +34,7 @@ fn fs(in: Out) -> @location(0) vec4f {
 export interface LatticeView {
   buffer: GPUBuffer
   size: number
-  /** Viewport in device pixels: x, y, width, height. */
+  /** 以设备像素计的视口：x、y、宽、高。 / Viewport in device pixels: x, y, width, height. */
   rect: [number, number, number, number]
 }
 
@@ -53,7 +54,10 @@ export class LatticeRenderer {
     })
   }
 
-  /** `encoder` may already hold compute passes that prepare the buffers. Up-cells get `color`. */
+  /**
+   * `encoder` 中可以已经含有准备这些缓冲区的计算通道。取值为 1 的格子用 `color` 着色。
+   * `encoder` may already hold compute passes that prepare the buffers. Up-cells get `color`.
+   */
   draw(encoder: GPUCommandEncoder, view: GPUTextureView, lattices: LatticeView[], color: [number, number, number]): void {
     const pass = encoder.beginRenderPass({
       colorAttachments: [{ view, loadOp: 'clear', storeOp: 'store', clearValue: { r: 0, g: 0, b: 0, a: 0 } }],
