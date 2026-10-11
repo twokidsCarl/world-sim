@@ -33,7 +33,7 @@ function fakeDeps(choice: unknown, over: Partial<Deps> = {}): { deps: Deps; prom
     findProtein: async () => [],
     bestStructures: async () => [],
     alphafold: async () => null,
-    abundances: async () => null,
+    abundances: async () => null, curatedComplexes: async () => [], copyTable: async () => null,
     ...over,
   }
   return { deps, prompts, schemas }

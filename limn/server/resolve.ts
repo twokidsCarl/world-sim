@@ -14,6 +14,8 @@ import { matchArticles, matchNeuro } from './motm'
 import catalog from '../data/catalog.json'
 import { entryInfo, searchText, type EntryInfo } from './sources/rcsb'
 import { abundances } from './sources/paxdb'
+import { curatedComplexes } from './sources/complexes'
+import { copyTable } from './sources/copies'
 import { alphafold, bestStructures, findProtein } from './sources/uniprot'
 
 type Ask = <T>(o: AskOptions) => Promise<T>
@@ -27,9 +29,11 @@ export interface Deps {
   bestStructures: typeof bestStructures
   alphafold: typeof alphafold
   abundances: typeof abundances
+  curatedComplexes: typeof curatedComplexes
+  copyTable: typeof copyTable
 }
 
-export const liveDeps: Deps = { ask: realAsk, searchText, entryInfo, findProtein, bestStructures, alphafold, abundances }
+export const liveDeps: Deps = { ask: realAsk, searchText, entryInfo, findProtein, bestStructures, alphafold, abundances, curatedComplexes, copyTable }
 
 interface Intent {
   kind: SceneSpec['kind']

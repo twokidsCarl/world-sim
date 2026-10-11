@@ -71,12 +71,14 @@ export interface Prediction {
  * which stands in roughly for the share of confidently placed residues.
  */
 export async function alphafold(accession: string): Promise<Prediction | null> {
-  const res = await fetch(`https://alphafold.ebi.ac.uk/api/prediction/${accession}`, { headers: UA }).catch(() => null)
+  // 纯数字的是复合物模型的编号，接口要带上 AF- 前缀 / all digits is the id of a complex model, which the API wants with its AF- prefix
+  const res = await fetch(`https://alphafold.ebi.ac.uk/api/prediction/${/^\d+$/.test(accession) ? 'AF-' + accession : accession}`, { headers: UA }).catch(() => null)
   if (res?.ok) {
     const json = (await res.json().catch(() => [])) as any[]
     const m = json[0]
     if (m?.bcifUrl || m?.cifUrl) return { accession, url: m.bcifUrl ?? m.cifUrl, confident: (m.fractionPlddtConfident ?? 0) + (m.fractionPlddtVeryHigh ?? 0), source: 'AlphaFold DB' }
   }
+  if (/^\d+$/.test(accession)) return null
   // BFVD 的编号区分大小写，要大写 / BFVD accessions are case-sensitive and upper case
   const acc = accession.toUpperCase()
   const meta = await fetch(`https://bfvd.foldseek.com/api/${acc}`, { headers: UA }).catch(() => null)

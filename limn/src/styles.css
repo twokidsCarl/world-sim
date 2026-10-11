@@ -86,3 +86,13 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 /* 侧栏顶上：名字在左，语言切换在右 / the top of the sidebar: the name on the left, the language switch on the right */
 .side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .side-head .lang { padding: 2px 8px; font-size: 12px; color: #55524b; }
+
+.neuron-search form { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; }
+.neuron-search .row { margin-top: 4px; }
+.complex-list button { display: block; width: 100%; text-align: left; margin-top: 4px; }
+/* 检索结果：名字占满一行，+ 是右边的小按钮 / search results: the name takes the row, + is a small button on the right */
+.catalog .neuron-search .row button { display: inline-block; width: auto; margin-top: 0; white-space: nowrap; }
+.catalog .neuron-search .row button:last-child { flex: none; }
+.catalog .neuron-search form button { width: 100%; }
+/* 侧栏是弹性列：可滚动的列表不许被压扁到看不见 / the sidebar is a flex column: a scrolling list must not be squeezed out of sight */
+.side > * { flex-shrink: 0; }

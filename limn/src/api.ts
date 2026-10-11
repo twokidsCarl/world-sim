@@ -59,10 +59,10 @@ export async function annotations(id: string): Promise<import('./style/annotate'
 }
 
 /** AlphaFold 数据库里某个 UniProt 编号的预测模型 / the AlphaFold DB model for a UniProt accession */
-export async function alphafold(accession: string): Promise<{ accession: string; url: string; confident: number } | null> {
+export async function alphafold(accession: string): Promise<{ accession: string; url: string; confident: number; source: 'AlphaFold DB' | 'BFVD' } | null> {
   try {
     const res = await fetch(`/api/alphafold/${accession}`)
-    return res.ok ? ((await res.json()) as { prediction: { accession: string; url: string; confident: number } | null }).prediction : null
+    return res.ok ? ((await res.json()) as { prediction: { accession: string; url: string; confident: number; source: 'AlphaFold DB' | 'BFVD' } | null }).prediction : null
   } catch {
     return null
   }
@@ -98,5 +98,29 @@ export async function emdb(n: string): Promise<EmdbEntry | null> {
     return res.ok ? ((await res.json()) as { entry: EmdbEntry | null }).entry : null
   } catch {
     return null
+  }
+}
+
+export interface PredictedComplex { id: string; name: string; iptm: number; parts: { accession: string; copies: number }[]; url: string }
+
+/** 含有某个蛋白的预测复合物 / predicted complexes that contain a protein */
+export async function complexes(accession: string): Promise<PredictedComplex[]> {
+  try {
+    const res = await fetch(`/api/complexes/${accession}`)
+    return res.ok ? ((await res.json()) as { complexes: PredictedComplex[] }).complexes : []
+  } catch {
+    return []
+  }
+}
+
+export interface NeuronHit { name: string; archive: string; species: string; region: string; cellType: string; domain: string; doi: string }
+
+/** 检索 NeuroMorpho.Org / search NeuroMorpho.Org */
+export async function neurons(q: { species: string; region: string; cellType: string }): Promise<{ total: number; hits: NeuronHit[] }> {
+  try {
+    const res = await fetch(`/api/neurons?species=${encodeURIComponent(q.species)}&region=${encodeURIComponent(q.region)}&cellType=${encodeURIComponent(q.cellType)}`)
+    return res.ok ? await res.json() : { total: 0, hits: [] }
+  } catch {
+    return { total: 0, hits: [] }
   }
 }

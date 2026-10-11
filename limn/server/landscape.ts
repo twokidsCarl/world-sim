@@ -15,6 +15,8 @@ import type { Deps } from './resolve'
 import membraneData from '../data/membranes.json'
 import { matchNeuro } from './motm'
 import { ppmToMicromolar } from './sources/paxdb'
+import { copiesPerComplex, type CuratedComplex } from './sources/complexes'
+import { copiesToMicromolar } from './sources/copies'
 import type { EntryInfo } from './sources/rcsb'
 
 /** 画出来的那一片：80 x 56 nm，厚 30 nm / The slab that is drawn: 80 x 56 nm of cell, 30 nm deep. */
@@ -176,7 +178,23 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
   // measured abundance: PaxDb by organism and tissue; with none, the model's estimates stand
   const pax = await deps.abundances(Number(recipe.organism_taxid) || 0, recipe.tissue || 'WHOLE_ORGANISM').catch(() => null)
   if (pax) log(`丰度取自 PaxDb：${pax.name}`)
-  const measured = new Map<number, { genes: string[]; ppm: number; uM: number }>()
+  const measured = new Map<number, { genes: string[]; ppm: number; uM: number; complex?: string; perComplex?: number }>()
+  // 用户自备的拷贝数表（不开放的数据，如 Wilhelm 2014），有体积才能换成浓度
+  // a copy-number table supplied by the user (closed data such as Wilhelm 2014); it needs a volume to become concentrations
+  const table = await deps.copyTable().catch(() => null)
+  const supplied = new Map<number, { genes: string[]; copies: number; uM: number }>()
+  if (table) log(`使用用户提供的拷贝数表（${table.copies.size} 个基因）`)
+  // 整理过的复合物配比：为每种选中的结构查它第一个蛋白所在的复合物
+  // curated stoichiometry: for each chosen structure, look up the complexes its first protein belongs to
+  const curated = new Map<number, CuratedComplex[]>()
+  if (pax || table)
+    await Promise.all(
+      ingredients.map(async (_, k) => {
+        const p = (pick.picks ?? []).find((x) => x.ingredient === k)
+        const acc = p && infos.get(String(p.source_id).toUpperCase())?.entities.find((e) => e.kind === 'protein' && e.uniprot.length)?.uniprot[0]
+        if (acc) curated.set(k, await deps.curatedComplexes(acc).catch(() => []))
+      }),
+    )
 
   const volume = BOX.width * BOX.height * BOX.depth * (recipe.membrane ? 0.5 : 1) // Å^3 per compartment
   const membraneArea = BOX.width * BOX.depth // Å^2
@@ -209,10 +227,29 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
         const sorted = hits.map((h) => h[1]).sort((a, b) => a - b)
         const median = sorted.length % 2 ? sorted[(sorted.length - 1) / 2]! : (sorted[sorted.length / 2 - 1]! + sorted[sorted.length / 2]!) / 2
         const kinds = Math.max(1, info.entities.filter((e) => e.kind === 'protein' || e.kind === 'rna' || e.kind === 'dna').length)
-        const perKind = Math.max(1, Math.round((asm?.chains ?? kinds) / kinds))
+        let perKind = Math.max(1, Math.round((asm?.chains ?? kinds) / kinds))
+        // 数据库里有这个复合物的配比时用它，没有才用结构里的链数来推
+        // when a database gives this complex's stoichiometry it is used; chain counts in the structure are only the fallback
+        const first = info.entities.find((e) => e.kind === 'protein' && e.uniprot.length)
+        const byAcc: Record<string, number> = {}
+        for (const e of info.entities) if (e.kind === 'protein' && e.uniprot[0]) byAcc[e.uniprot[0]] = e.chains
+        const fromDb = first ? copiesPerComplex(curated.get(k) ?? [], first.uniprot[0]!, byAcc) : null
+        if (fromDb) perKind = fromDb.copies
         const density = (recipe.membrane && ing.compartment === 'above' ? recipe.density_above_g_per_L : recipe.density_below_g_per_L) || 200
         uM = ppmToMicromolar(median / perKind, density)
-        measured.set(k, { genes: hits.map((h) => h[0]), ppm: median, uM })
+        measured.set(k, { genes: hits.map((h) => h[0]), ppm: median, uM, ...(fromDb ? { complex: `${fromDb.complex.name} (${fromDb.complex.id})`, perComplex: fromDb.copies } : {}) })
+      }
+    }
+    if (table?.volume && !inMembrane) {
+      // 用户的表优先于 PaxDb：它是这个区室直接测的拷贝数 / the user's table wins over PaxDb: it is copy numbers measured for this very compartment
+      const hits = (ing.genes ?? []).map((g) => [g, table.copies.get(String(g).toLowerCase())] as const).filter((x): x is readonly [string, number] => x[1] !== undefined)
+      if (hits.length) {
+        const sorted = hits.map((h) => h[1]).sort((a, b) => a - b)
+        const median = sorted[Math.floor((sorted.length - 1) / 2)]!
+        const per = measured.get(k)?.perComplex ?? 1
+        uM = copiesToMicromolar(median / per, table.volume)
+        supplied.set(k, { genes: hits.map((h) => h[0]), copies: median, uM })
+        measured.delete(k)
       }
     }
     const expected = inMembrane ? Math.max(0, ing.per_square_micron) * membraneArea * 1e-8 : uM * volume * 6.022e-10
@@ -266,10 +303,12 @@ export async function resolveLandscape(topic: string, deps: Deps, log: (s: strin
       // figures only; the web app words them in the interface language (abundance.* in src/i18n.ts)
       abundance: c.inMembrane
         ? { key: 'abundance.perArea', params: { n: ing.per_square_micron } }
+        : supplied.has(c.k)
+          ? { key: 'abundance.supplied', params: { ...names('genes', supplied.get(c.k)!.genes), copies: Math.round(supplied.get(c.k)!.copies).toLocaleString('en'), uM: fmt(supplied.get(c.k)!.uM) } }
         : measured.has(c.k)
-          ? { key: 'abundance.paxdb', params: { ...names('genes', measured.get(c.k)!.genes), ppm: Math.round(measured.get(c.k)!.ppm).toLocaleString('en'), uM: fmt(measured.get(c.k)!.uM) } }
+          ? { key: measured.get(c.k)!.complex ? 'abundance.paxdbComplex' : 'abundance.paxdb', params: { ...names('genes', measured.get(c.k)!.genes), ppm: Math.round(measured.get(c.k)!.ppm).toLocaleString('en'), uM: fmt(measured.get(c.k)!.uM), complex: measured.get(c.k)!.complex ?? '', per: measured.get(c.k)!.perComplex ?? 1 } }
           : { key: 'abundance.concentration', params: { uM: ing.concentration_uM } },
-      tier: !c.inMembrane && measured.has(c.k) ? 'curated' : 'estimated',
+      tier: !c.inMembrane && (measured.has(c.k) || supplied.has(c.k)) ? 'curated' : 'estimated',
       feature: !!ing.feature,
       ...(c.inMembrane
         ? {

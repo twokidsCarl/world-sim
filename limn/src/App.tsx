@@ -95,6 +95,46 @@ function Recent({ disabled }: { disabled: boolean }) {
 /** 成对字段里另一种语言的那个，用作悬停提示 / of a pair of fields, the one in the other language, for a tooltip */
 const other = (zh: string, en: string) => pick(en, zh)
 
+/** 检索 NeuroMorpho.Org 并画出结果 / search NeuroMorpho.Org and draw what is found */
+function NeuronSearch({ disabled }: { disabled: boolean }) {
+  const loadNeurons = useStore((s) => s.loadNeurons)
+  useStore((s) => s.lang)
+  const [q, setQ] = useState({ species: '', region: '', cellType: '' })
+  const [res, setRes] = useState<{ total: number; hits: api.NeuronHit[] } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [picked, setPicked] = useState<api.NeuronHit[]>([])
+  const go = async () => {
+    setBusy(true)
+    setRes(await api.neurons(q))
+    setBusy(false)
+  }
+  const add = (h: api.NeuronHit) => {
+    const next = [...picked.filter((x) => x.name !== h.name), h].slice(-4)
+    setPicked(next)
+    void loadNeurons(next)
+  }
+  return (
+    <details className="neuron-search">
+      <summary>{t('neurons.search')}</summary>
+      <form onSubmit={(e) => (e.preventDefault(), void go())}>
+        <input type="text" value={q.species} placeholder={t('neurons.species')} onChange={(e) => setQ({ ...q, species: e.target.value })} />
+        <input type="text" value={q.region} placeholder={t('neurons.region')} onChange={(e) => setQ({ ...q, region: e.target.value })} />
+        <input type="text" value={q.cellType} placeholder={t('neurons.cellType')} onChange={(e) => setQ({ ...q, cellType: e.target.value })} />
+        <button className="primary" disabled={busy || !(q.species || q.region || q.cellType).trim()}>{t('neurons.go')}</button>
+      </form>
+      {res && <div className="muted">{res.hits.length ? t('neurons.total', { n: res.total, shown: res.hits.length }) : t('neurons.noHits')}</div>}
+      {res?.hits.map((h) => (
+        <div className="row" key={h.name}>
+          <button style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }} disabled={disabled} title={`${h.species} · ${h.region} · ${h.cellType} · ${h.domain}`} onClick={() => (setPicked([h]), void loadNeurons([h]))}>
+            {h.name}
+          </button>
+          <button disabled={disabled} onClick={() => add(h)}>+</button>
+        </div>
+      ))}
+    </details>
+  )
+}
+
 const sw = (lch: [number, number, number]) => <span className="swatch" style={{ background: hex(oklch(...lch)), display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} />
 
 /** 按残基上色时的图例：颜色各代表什么，数据从哪来 / the legend for per-residue colouring: what each colour means and where the data is from */
@@ -268,6 +308,7 @@ export function App() {
                 {pick(n.title, n.titleEn)}
               </button>
             ))}
+            <NeuronSearch disabled={working} />
             <h2>{t('catalog.neuro')}</h2>
             {neuro.groups.map((g) => (
               <details key={g.id}>
@@ -381,6 +422,17 @@ export function App() {
                   })}
                 </div>
               ))}
+              {s.complexes && (
+                <div className="complex-list">
+                  <h2>{t('complexes.title')}</h2>
+                  {s.complexes.length === 0 && <div className="muted">{t('complexes.none')}</div>}
+                  {s.complexes.slice(0, 8).map((c) => (
+                    <button key={c.id} disabled={working} title={c.id} onClick={() => void s.loadId(c.id, undefined, undefined, c.iptm)}>
+                      {c.parts.map((p) => `${p.accession}${p.copies > 1 ? ' ×' + p.copies : ''}`).join(' + ')} · ipTM {c.iptm.toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+              )}
               {!s.spec.landscape && !s.spec.mesoscale && s.spec.kind !== 'neuron' && (
                 <div style={{ margin: '6px 0' }}>
                   <div className="row">
