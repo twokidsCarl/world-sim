@@ -17,15 +17,19 @@ export function seriesClass(project: string, extra: string[] = []): string {
 // 大数的短写法：中文用万、亿，英文用 k、M、B。
 // Short forms of large numbers: 万 and 亿 in Chinese, k, M and B in English.
 export function compact(n: number, lang: Lang): string {
+  // 一百以上取整，否则留一位小数，并去掉多余的 .0。
+  // At 100 or more round to a whole number, otherwise keep one decimal and drop a trailing .0.
+  const digits = (x: number): string => (x >= 100 ? String(Math.round(x)) : String(Math.round(x * 10) / 10))
   if (lang === 'en') {
-    if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`
-    if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
-    if (n >= 1e3) return `${(n / 1e3).toFixed(1)}k`
+    if (n >= 1e12) return `${digits(n / 1e12)}T`
+    if (n >= 1e9) return `${digits(n / 1e9)}B`
+    if (n >= 1e6) return `${digits(n / 1e6)}M`
+    if (n >= 1e3) return `${digits(n / 1e3)}k`
     return n.toLocaleString('en-US')
   }
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} 十亿`
-  if (n >= 1e8) return `${(n / 1e8).toFixed(1)} 亿`
-  if (n >= 1e4) return `${(n / 1e4).toFixed(n >= 1e6 ? 0 : 1)} 万`
+  if (n >= 1e12) return `${digits(n / 1e12)} 万亿`
+  if (n >= 1e8) return `${digits(n / 1e8)} 亿`
+  if (n >= 1e4) return `${digits(n / 1e4)} 万`
   return n.toLocaleString('zh-CN')
 }
 
