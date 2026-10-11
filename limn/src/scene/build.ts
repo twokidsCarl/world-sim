@@ -7,6 +7,13 @@ import type { Tone } from '../style/palettes'
 /** 残基编号可以为负；而 id 缓冲是无符号的 / Residue numbers can be negative; the id buffer is unsigned. */
 const RESIDUE_OFFSET = 100_000
 
+/**
+ * 网格的各部分（细胞器）之间的线从不淡出：剖面上它们在同一个平面里，没有深度差，只能靠这条线分开。
+ * Lines between the parts of a mesh (organelles) never fade: on a cut they lie in one plane with
+ * no step in depth between them, and this line is all that separates them.
+ */
+const MESH_PART_SIZE = 1e9
+
 export interface Placement {
   /** 画该分子的哪个组装体 / which assembly of the molecule to draw */
   assembly: string
@@ -171,7 +178,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
       }
     for (const r of g.runs) draws.push({ ...r, opStart: first, opCount: o - first })
   }
-  return { posr, color: atomColors(mol, coloring, tone, annotation), ids, draws, instances: { count: total, data, ids: iids }, subunitSize: subunitSize(mol) }
+  return { posr, color: atomColors(mol, coloring, tone, annotation), ids, draws, instances: { count: total, data, ids: iids }, subunitSize: mol.triangles ? MESH_PART_SIZE : subunitSize(mol), segments: mol.segments, triangles: mol.triangles, solid: mol.solid }
 }
 
 /**

@@ -56,6 +56,19 @@ export interface Molecule {
    */
   radius?: Float32Array
   chainOf: Uint32Array
+  /**
+   * 线段：每段两个球的下标，画成连着这两个球的一段圆台（神经元的分支）。
+   * Segments: two sphere indices each, drawn as a round cone joining those two spheres (the branches of a neuron).
+   */
+  segments?: Uint32Array
+  /**
+   * 三角形：每个三个球的下标，顶点是这些球的位置（密度图和细胞器的表面）。有它时球本身不画。
+   * Triangles: three sphere indices each, with those spheres' positions as vertices (the surface of
+   * a density map or an organelle). When present the spheres themselves are not drawn.
+   */
+  triangles?: Uint32Array
+  /** 三角形围着的是实心的东西（细胞器），剖开时切口画成平的断面；不设时剖开看到壳的里面 / the triangles enclose something solid (organelles), so a cut is drawn as a flat section; when unset a cut shows the inside of the shell */
+  solid?: boolean
   /** 主链骨架原子为 1：蛋白质的 Cα 和核酸的 P / 1 for backbone trace atoms: protein Cα and nucleic acid P */
   isTrace: Uint8Array
   /** 链内的残基编号，只用来找残基级的描边 / residue number within its chain, used only to find residue-level outlines */

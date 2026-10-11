@@ -32,8 +32,35 @@ describe('SWC', () => {
     expect(Array.from(m.pos.subarray(0, 3))).toEqual([0, 0, 0])
   })
 
-  it('fills each segment with spheres close enough to read as one tube, tapering between the ends', () => {
-    const m = neuronMolecule(parseSwc(SWC), 'n', 'n')
+  it('joins every node to its parent with a cone, starting thin where a branch leaves the soma', () => {
+    const nodes = parseSwc(SWC)
+    const m = neuronMolecule(nodes, 'n', 'n')
+    const seg = m.segments!
+    // 三点式胞体的两个辅助点不算；其余每个有父节点的节点一段 / the two helper points of a three-point soma do not count; every other node with a parent gives one segment
+    expect(seg.length / 2).toBe(nodes.filter((n) => n.parent !== -1 && n.type !== 1).length)
+    const at = (i: number) => [m.pos[i * 3]!, m.pos[i * 3 + 1]!, m.pos[i * 3 + 2]!, m.radius![i]!]
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    let fromSoma = 0
+    for (let k = 0; k < seg.length; k += 2) {
+      const a = at(seg[k]!), b = at(seg[k + 1]!)
+      // 终点是某个节点，起点在它父节点的位置上 / the end is a node, and the start lies where its parent is
+      const node = nodes.find((n) => n.type !== 1 && n.x === b[0] && n.y === b[1] && n.z === b[2])!
+      const parent = byId.get(node.parent)!
+      expect(a.slice(0, 3)).toEqual([parent.x, parent.y, parent.z])
+      // 同一种类型，所以同一个颜色 / the same type, hence the same colour
+      expect(m.chainOf[seg[k]!]).toBe(m.chainOf[seg[k + 1]!])
+      if (parent.type === 1) {
+        fromSoma++
+        expect(a[3]).toBeLessThan(parent.r)
+        expect(a[3]).toBeCloseTo(Math.max(node.r, 0.08))
+      }
+    }
+    expect(fromSoma).toBeGreaterThan(0)
+    expect(neuronMolecule(nodes, 'n', 'n', true).segments).toBeUndefined()
+  })
+
+  it('when dense, fills each segment with spheres close enough to read as one tube, tapering between the ends', () => {
+    const m = neuronMolecule(parseSwc(SWC), 'n', 'n', true)
     const basal = m.chains[1]!
     // 从 x = 20 到 50 的那一段上的球，按 x 排序 / the spheres on the stretch from x = 20 to 50, in order of x
     const on = [] as { x: number; r: number }[]
@@ -51,8 +78,8 @@ describe('SWC', () => {
   })
 
   it('widens the spacing rather than exceed the sphere budget', () => {
-    const full = neuronMolecule(parseSwc(SWC), 'n', 'n').atomCount
-    const capped = neuronMolecule(parseSwc(SWC), 'n', 'n', 60).atomCount
+    const full = neuronMolecule(parseSwc(SWC), 'n', 'n', true).atomCount
+    const capped = neuronMolecule(parseSwc(SWC), 'n', 'n', true, 60).atomCount
     expect(full).toBeGreaterThan(200)
     expect(capped).toBeLessThan(120)
   })
@@ -78,7 +105,7 @@ describe('connectome cells in a shared frame', () => {
     const nodes = parseSwc('0 1 0 0 0 5 -1\n1 3 10 0 0 1 0\n2 3 300 0 0 1 1\n3 3 20 0 0 1 2\n')
     const kept = within(nodes, [0, 0, 0], 100)
     expect(kept.map((n) => n.id)).toEqual([0, 1, 3])
-    const mol = neuronMolecule(kept, 'x', 'x')
+    const mol = neuronMolecule(kept, 'x', 'x', true)
     // 没有任何球落在 20 和 300 之间 / no sphere lies between 20 and 300
     let far = 0
     for (let i = 0; i < mol.atomCount; i++) if (mol.pos[i * 3]! > 21) far++

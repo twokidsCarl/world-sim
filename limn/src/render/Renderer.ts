@@ -1,4 +1,4 @@
-import { COMPOSITE_FS, EDGE_FS, QUAD_VS, SPHERE_FS, SPHERE_VS } from './shaders'
+import { CAPSULE_FS, CAPSULE_VS, COMPOSITE_FS, EDGE_FS, MESH_FS, MESH_VS, QUAD_VS, SPHERE_FS, SPHERE_VS } from './shaders'
 import type { Style } from './style'
 // 这个文件里 `t` 另有所指，所以换个名字 / `t` means something else in this file, hence the other name
 import { t as tr } from '../i18n'
@@ -59,6 +59,22 @@ export interface RenderItem {
    * typical diameter of one chain in Å; lines between chains fade when this gets small on screen
    */
   subunitSize: number
+  /**
+   * 胶囊：每段两个原子下标，把这两个球连成一段圆台（神经元的分支）。只按第一个实例画。
+   * Capsules: two atom indices per segment, joining those two spheres into a round cone (the
+   * branches of a neuron). Drawn for the first instance only.
+   */
+  segments?: Uint32Array
+  /**
+   * 三角网格：每个三角形三个原子下标，顶点就是这些原子的位置（密度图和细胞器的表面）。
+   * 有网格时这一项的球不画，只用来取景和上色。只按第一个实例画。
+   * A triangle mesh: three atom indices per triangle, the vertices being those atoms' positions
+   * (the surface of a density map or an organelle). With a mesh the item's spheres are not drawn
+   * and serve only for framing and colour. Drawn for the first instance only.
+   */
+  triangles?: Uint32Array
+  /** 网格围着的是实心的东西：剖开时切口画成平的断面 / the mesh encloses something solid: a cut through it is drawn as a flat section */
+  solid?: boolean
 }
 
 export interface View {
@@ -111,6 +127,11 @@ interface GpuItem {
   local: Bounds
   /** 列主序 4x4，在绘制矩阵之后施加 / column-major 4x4 applied after the draw matrices */
   place: Float32Array
+  seg: WebGLTexture | null
+  segCount: number
+  tri: WebGLBuffer | null
+  triCount: number
+  solid: boolean
 }
 
 const IDENTITY4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
@@ -118,6 +139,12 @@ const IDENTITY4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0,
 export class Renderer {
   readonly gl: WebGL2RenderingContext
   private sphere: WebGLProgram
+  private capsule: WebGLProgram
+  private mesh: WebGLProgram
+  private meshVao: WebGLVertexArrayObject
+  /** 上一帧画出的线段数和三角形数 / segments and triangles drawn in the last frame */
+  lastSegments = 0
+  lastTriangles = 0
   private edgeProg: WebGLProgram
   private compProg: WebGLProgram
   private quad: WebGLBuffer
@@ -137,6 +164,9 @@ export class Renderer {
     if (!gl) throw new Error(tr('error.webgl2'))
     this.gl = gl
     this.sphere = this.program(SPHERE_VS, SPHERE_FS)
+    this.capsule = this.program(CAPSULE_VS, CAPSULE_FS)
+    this.mesh = this.program(MESH_VS, MESH_FS)
+    this.meshVao = gl.createVertexArray()!
     this.edgeProg = this.program(QUAD_VS, EDGE_FS)
     this.compProg = this.program(QUAD_VS, COMPOSITE_FS)
 
@@ -206,9 +236,22 @@ export class Renderer {
     return t
   }
 
+  private indexBuffer(indices: Uint32Array): WebGLBuffer {
+    const gl = this.gl
+    const b = gl.createBuffer()!
+    gl.bindVertexArray(this.meshVao)
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b)
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+    gl.bindVertexArray(null)
+    return b
+  }
+
   setScene(items: RenderItem[]): void {
     const gl = this.gl
-    for (const it of this.items) for (const t of [it.posr, it.color, it.ids, it.inst, it.instIds]) gl.deleteTexture(t)
+    for (const it of this.items) {
+      for (const t of [it.posr, it.color, it.ids, it.inst, it.instIds, it.seg]) if (t) gl.deleteTexture(t)
+      if (it.tri) gl.deleteBuffer(it.tri)
+    }
     this.items = items.map((it) => {
       // 原子和实例各有两张纹理：浮点数据一张，整数编号一张（RG 两个分量）
       // atoms and instances each get two textures: one of floats, one of integer ids (two channels, RG)
@@ -222,6 +265,11 @@ export class Renderer {
         atoms: it.posr.length / 4,
         local: sceneBounds([it]),
         place: IDENTITY4,
+        seg: it.segments?.length ? this.dataTexture(gl.RG32UI, gl.RG_INTEGER, gl.UNSIGNED_INT, it.segments, 2) : null,
+        segCount: (it.segments?.length ?? 0) / 2,
+        tri: it.triangles?.length ? this.indexBuffer(it.triangles) : null,
+        triCount: it.triangles?.length ?? 0,
+        solid: !!it.solid,
       }
     })
     this.bounds = this.placedBounds()
@@ -343,33 +391,43 @@ export class Renderer {
     gl.clearBufferuiv(gl.COLOR, 1, new Uint32Array(4))
     gl.clearBufferfi(gl.DEPTH_STENCIL, 0, 1, 0)
 
-    const p = this.sphere
-    gl.useProgram(p)
-    gl.uniformMatrix3fv(this.u(p, 'u_rot'), false, view.rot)
-    gl.uniform3fv(this.u(p, 'u_center'), view.center)
-    gl.uniform2f(this.u(p, 'u_toClip'), (2 * pxPerA) / w, (2 * pxPerA) / h)
-    gl.uniform2f(this.u(p, 'u_z'), zFront, zBack)
-    gl.uniform1f(this.u(p, 'u_clipFront'), Number.isFinite(view.clipFront) ? view.clipFront : 1e30)
-    gl.uniform1f(this.u(p, 'u_radiusScale'), style.radiusScale)
-    gl.uniform1f(this.u(p, 'u_minRadius'), (style.minRadius * Math.max(1, (Math.max(w, h) / 1500) * style.lineWidth)) / pxPerA)
-    gl.uniform1i(this.u(p, 'u_outlineByMolecule'), style.outlineBy === 'molecule' ? 1 : 0)
-    gl.bindVertexArray(this.vao)
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad)
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
-    let atoms = 0
     const layers = style.fog.layers
     const span = view.fogSpan ?? [Math.min(zc + b.radius, zFront), zc - b.radius]
-    gl.uniform1i(this.u(p, 'u_w'), this.texW)
-    gl.uniform3f(this.u(p, 'u_layer'), layers, span[0], span[1])
-    gl.uniform2f(this.u(p, 'u_fogKeep'), style.fog.front, style.fog.back)
     const names = ['u_posr', 'u_color', 'u_ids', 'u_inst', 'u_instIds']
-    names.forEach((n, i) => gl.uniform1i(this.u(p, n), i))
-    for (const it of this.items) {
+    // 三种图元共用的取景参数 / the framing shared by the three kinds of primitive
+    const common = (p: WebGLProgram) => {
+      gl.useProgram(p)
+      gl.uniformMatrix3fv(this.u(p, 'u_rot'), false, view.rot)
+      gl.uniform3fv(this.u(p, 'u_center'), view.center)
+      gl.uniform2f(this.u(p, 'u_toClip'), (2 * pxPerA) / w, (2 * pxPerA) / h)
+      gl.uniform2f(this.u(p, 'u_z'), zFront, zBack)
+      gl.uniform1f(this.u(p, 'u_clipFront'), Number.isFinite(view.clipFront) ? view.clipFront : 1e30)
+      gl.uniform1f(this.u(p, 'u_radiusScale'), style.radiusScale)
+      gl.uniform1f(this.u(p, 'u_minRadius'), (style.minRadius * Math.max(1, (Math.max(w, h) / 1500) * style.lineWidth)) / pxPerA)
+      gl.uniform1i(this.u(p, 'u_outlineByMolecule'), style.outlineBy === 'molecule' ? 1 : 0)
+      gl.uniform1i(this.u(p, 'u_w'), this.texW)
+      names.forEach((n, i) => gl.uniform1i(this.u(p, n), i))
+    }
+    const bindItem = (p: WebGLProgram, it: GpuItem) => {
       ;[it.posr, it.color, it.ids, it.inst, it.instIds].forEach((t, i) => {
         gl.activeTexture(gl.TEXTURE0 + i)
         gl.bindTexture(gl.TEXTURE_2D, t)
       })
       gl.uniformMatrix4fv(this.u(p, 'u_place'), false, it.place)
+    }
+
+    const p = this.sphere
+    common(p)
+    gl.bindVertexArray(this.vao)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad)
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
+    let atoms = 0
+    gl.uniform3f(this.u(p, 'u_layer'), layers, span[0], span[1])
+    gl.uniform2f(this.u(p, 'u_fogKeep'), style.fog.front, style.fog.back)
+    for (const it of this.items) {
+      // 有网格的项，球只用来取景 / an item with a mesh keeps its spheres for framing only
+      if (it.tri) continue
+      bindItem(p, it)
       for (const d of it.draws) {
         if (d.count <= 0 || d.opCount <= 0) continue
         // 一次绘制的实例数上限是 2^31；超过就按实例分批
@@ -383,6 +441,38 @@ export class Renderer {
         }
       }
     }
+
+    let segments = 0
+    if (this.items.some((it) => it.seg)) {
+      const c = this.capsule
+      common(c)
+      gl.uniform1i(this.u(c, 'u_seg'), 5)
+      for (const it of this.items) {
+        if (!it.seg) continue
+        bindItem(c, it)
+        gl.activeTexture(gl.TEXTURE5)
+        gl.bindTexture(gl.TEXTURE_2D, it.seg)
+        gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, it.segCount)
+        segments += it.segCount
+      }
+    }
+    this.lastSegments = segments
+
+    let triangles = 0
+    if (this.items.some((it) => it.tri)) {
+      const m = this.mesh
+      common(m)
+      gl.bindVertexArray(this.meshVao)
+      for (const it of this.items) {
+        if (!it.tri) continue
+        bindItem(m, it)
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, it.tri)
+        gl.uniform1i(this.u(m, 'u_solid'), it.solid ? 1 : 0)
+        gl.drawElements(gl.TRIANGLES, it.triCount, gl.UNSIGNED_INT, 0)
+        triangles += it.triCount / 3
+      }
+    }
+    this.lastTriangles = triangles
     this.lastAtoms = atoms
 
     gl.disable(gl.DEPTH_TEST)
@@ -430,6 +520,8 @@ export class Renderer {
     gl.uniform3f(this.u(e, 'u_residue'), style.residue.low, style.residue.high, style.residue.diff)
     gl.uniform4f(this.u(e, 'u_shadow'), style.shadow.strength, style.shadow.cone, style.shadow.floor, reach)
     gl.uniform1i(this.u(e, 'u_shadowN'), fast ? 5 : 10)
+    const capped = this.items.some((it) => it.tri && it.solid) && Number.isFinite(view.clipFront)
+    gl.uniform2f(this.u(e, 'u_cap'), capped ? 1 : 0, capped ? view.clipFront : 0)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
     const c = this.compProg
@@ -438,6 +530,8 @@ export class Renderer {
     bind(c, 0, 'u_color', t.color)
     bind(c, 1, 'u_edge', t.edge)
     bind(c, 2, 'u_depth', t.depth)
+    bind(c, 3, 'u_ids', t.ids)
+    gl.uniform2f(this.u(c, 'u_cap'), capped ? 1 : 0, capped ? view.clipFront : 0)
     gl.uniform2f(this.u(c, 'u_z'), zFront, zBack)
     if (view.fogSpan) gl.uniform2f(this.u(c, 'u_zSpan'), view.fogSpan[0], view.fogSpan[1])
     else gl.uniform2f(this.u(c, 'u_zSpan'), Math.min(zc + b.radius, zFront), zc - b.radius)

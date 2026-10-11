@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import * as api from '../api'
 import { download, loadMolecule } from '../mol/load'
-import { bin, dilate, parseMrc, surfacePoints, voxelIndex } from '../volume/mrc'
+import { bin, dilate, pad, parseMrc, surfaceMesh, voxelIndex } from '../volume/mrc'
 import { El, IDENTITY } from '../mol/types'
 import { superpose } from '../mol/superpose'
 import type { Molecule } from '../mol/types'
@@ -170,6 +170,15 @@ export interface CatalogEntry {
 export const MEMBRANE_LCH: [number, number, number] = [0.8, 0.085, 112]
 
 export const CATALOG = catalog.models as CatalogEntry[]
+
+/**
+ * 地址里带 ?prim=spheres 时，神经元的分支和体数据的表面都改回用密排小球来画（加入圆台和三角网格之前的画法），
+ * 用来对照两种画法。
+ * With ?prim=spheres in the address, the branches of neurons and the surfaces of volumes go back
+ * to being drawn with closely packed spheres (as they were before cones and triangle meshes), so
+ * that the two ways of drawing can be compared.
+ */
+const DENSE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('prim') === 'spheres'
 
 const freshLook = (): Pick<Look, 'rot' | 'zoom' | 'shift'> => ({ rot: identity3(), zoom: 1, shift: [0, 0] })
 
@@ -425,6 +434,8 @@ export const useStore = create<State>((set, get) => ({
       if (info.contour === null) throw noteError('error.emdbNoContour', { n })
       if (info.megabytes > 420) throw noteError('error.emdbTooBig', { n, mb: info.megabytes })
       const report = progress(t('busy.mapName', { id: info.id, mb: info.megabytes }))
+      // 第一次取时，本地服务要先把整张图下完才开始回传，这段时间没有进度可报 / the first time, the local service fetches the whole map before it starts replying, and there is no progress to report meanwhile
+      set({ busy: say('busy.downloading', { name: `${info.id} (${info.megabytes} MB)` }) })
       let buf: Uint8Array | null = null
       for (const u of [`/api/structure?url=${encodeURIComponent(info.url)}`, info.url]) {
         buf = await download(u, report).catch(() => null)
@@ -436,14 +447,18 @@ export const useStore = create<State>((set, get) => ({
       const full = parseMrc(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer)
       // 最长边合并到 200 个体素以内，够画，也不至于太慢 / bin to at most 200 voxels a side: enough to draw, and not too slow
       const vol = bin(full, 200)
-      const pts = surfacePoints(vol, info.contour)
+      // 四周补一层空体素，密度贴着盒子边界的地方表面也是封闭的 / one layer of empty voxels all round, so the surface is closed even where density touches the box
+      const surface = surfaceMesh(DENSE ? vol : pad(vol, Math.min(0, info.contour - 1)), info.contour)
+      const pts = surface.positions
       if (pts.length === 0) throw noteError('error.emdbNoSurface', { id: info.id, contour: info.contour })
       const count = pts.length / 3
       const map: Molecule = {
         id: info.id, title: info.title, atomCount: count, pos: pts,
         element: new Uint8Array(count).fill(El.N),
-        // 每个点一个球，半径略小于一个体素，相邻的球正好连成面 / a sphere per point, a little under a voxel in radius, so that neighbours just join into a surface
+        // 每个点一个球，半径略小于一个体素，相邻的球正好连成面；画三角网格时这些球只用来取景
+        // a sphere per point, a little under a voxel in radius, so that neighbours just join into a surface; when the triangle mesh is drawn the spheres serve only for framing
         radius: new Float32Array(count).fill(vol.voxel[0] * 0.9),
+        ...(DENSE ? {} : { triangles: surface.triangles }),
         chainOf: new Uint32Array(count), isTrace: new Uint8Array(count), residue: new Int32Array(count).fill(1),
         chains: [{ asymId: 'map', authAsymId: 'map', entity: 0, start: 0, count, model: 1 }],
         entities: [{ id: 'map', description: `${tIn('zh', 'entity.isosurface')} / ${tIn('en', 'entity.isosurface')}`, kind: 'protein' }],
@@ -461,7 +476,7 @@ export const useStore = create<State>((set, get) => ({
       const panels: Panel[] = [{ spec: mapSpec, mol: map, coloring: mapColoring, align: null, paper: null, annotation: null }]
       const notes: Note[] = [
         { key: binned > 1 ? 'note.emdb.mapBinned' : 'note.emdb.map', params: { dims: info.dims.join('×'), voxel: info.voxel.toFixed(2), contour: info.contour, ...(binned > 1 ? { binned } : {}) } },
-        { key: 'note.spheresSurface' },
+        { key: DENSE ? 'note.spheresSurface' : 'note.meshSurface' },
       ]
       // 拟合进这张图的原子模型和它在同一个坐标系里，直接叠进去 / the atomic model fitted into this map shares its coordinate frame and goes straight in
       const pdbId = info.pdb[0]
@@ -498,7 +513,7 @@ export const useStore = create<State>((set, get) => ({
     }
     set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
-      const pos: number[] = [], radius: number[] = []
+      const pos: number[] = [], radius: number[] = [], triangles: number[] = []
       const chains: Molecule['chains'] = [], entities: Molecule['entities'] = []
       const roles: Role[] = []
       const missing: { name: string; nameEn: string }[] = []
@@ -513,7 +528,22 @@ export const useStore = create<State>((set, get) => ({
         voxel = vol.voxel
         set({ busy: say('busy.surface', { name: o.name, nameEn: o.nameEn }) })
         await new Promise((r) => setTimeout(r, 20))
-        const pts = surfacePoints(vol, 0.5)
+        // 核膜算在内质网的分割里，紧贴着细胞核的表面；两层表面叠在一起会互相抢，所以别的细胞器贴着细胞核的那部分不画。
+        // 画网格时在取表面之前就把这些体素去掉，表面仍是封闭的，剖开时才能画出实心的断面；四周也补一层空体素。
+        // the nuclear envelope belongs to the ER segmentation and lies right on the nucleus's surface; two coincident surfaces fight over every pixel, so the part of any other organelle that hugs the nucleus is not drawn.
+        // For the mesh those voxels are removed before the surface is taken, which keeps it closed, as a solid section at a cut requires; a layer of empty voxels is added all round as well.
+        if (!DENSE && nearNucleus && o.label !== 'nucleus_seg') {
+          const nn = nearNucleus
+          for (let z = 0, i = 0; z < vol.nz; z++)
+            for (let y = 0; y < vol.ny; y++)
+              for (let x = 0; x < vol.nx; x++, i++) {
+                if (!vol.data[i]) continue
+                const k = voxelIndex(nn.vol, vol.origin[0] + x * vol.voxel[0], vol.origin[1] + y * vol.voxel[1], vol.origin[2] + z * vol.voxel[2])
+                if (k >= 0 && nn.mask[k]) vol.data[i] = 0
+              }
+        }
+        const surface = surfaceMesh(DENSE ? vol : pad(vol), 0.5)
+        const pts = surface.positions
         if (pts.length === 0) {
           missing.push(o)
           continue
@@ -524,14 +554,22 @@ export const useStore = create<State>((set, get) => ({
         // 核膜算在内质网的分割里，紧贴着细胞核的表面；两层表面叠在一起会互相抢，所以别的细胞器贴着细胞核的那部分不画
         // the nuclear envelope belongs to the ER segmentation and lies right on the nucleus's surface; two coincident surfaces fight over every pixel, so the part of any other organelle that hugs the nucleus is not drawn
         if (o.label === 'nucleus_seg') nearNucleus = { vol, mask: dilate(vol, 2) }
-        const near = o.label !== 'nucleus_seg' ? nearNucleus : null
+        const near = DENSE && o.label !== 'nucleus_seg' ? nearNucleus : null
+        // 表面的每个点在总表里排第几；没画的是 -1 / where each point of this surface lands in the whole list, -1 if it is not drawn
+        const placed = new Int32Array(pts.length / 3).fill(-1)
         for (let i = 0; i < pts.length; i += 3) {
           if (near) {
             const k = voxelIndex(near.vol, pts[i]!, pts[i + 1]!, pts[i + 2]!)
             if (k >= 0 && near.mask[k]) continue
           }
+          placed[i / 3] = pos.length / 3
           pos.push(pts[i]!, pts[i + 1]!, pts[i + 2]!)
           radius.push(r)
+        }
+        // 三个顶点都还在的三角形才留下 / a triangle is kept only when all three of its vertices are
+        for (let t = 0; t < surface.triangles.length; t += 3) {
+          const a = placed[surface.triangles[t]!]!, b = placed[surface.triangles[t + 1]!]!, c = placed[surface.triangles[t + 2]!]!
+          if (a >= 0 && b >= 0 && c >= 0) triangles.push(a, b, c)
         }
         if (pos.length / 3 === start) {
           missing.push(o)
@@ -548,6 +586,7 @@ export const useStore = create<State>((set, get) => ({
       const mol: Molecule = {
         id: entry.id, title: entry.titleEn, atomCount: count, pos: new Float32Array(pos), element: new Uint8Array(count).fill(El.N), radius: new Float32Array(radius),
         chainOf, isTrace: new Uint8Array(count), residue: new Int32Array(count).fill(1), chains, entities,
+        ...(DENSE ? {} : { triangles: new Uint32Array(triangles), solid: true }),
         assemblies: [{ id: 'asym', groups: [{ chains: chains.map((_, i) => i), operators: [IDENTITY] }] }],
       }
       const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
@@ -562,6 +601,7 @@ export const useStore = create<State>((set, get) => ({
       const notes: Note[] = [
         { key: 'note.cell.scale', params: { voxel: voxel.map((v) => Math.round(v)).join('×') } },
         { key: 'note.cell.segmentation' },
+        { key: DENSE ? 'note.cell.spheres' : 'note.cell.mesh' },
         { key: 'note.cell.envelope' },
         ...(missing.length ? [{ key: 'note.cell.missing', params: listParams('names', (lang) => missing.map((o) => (lang === 'zh' ? o.name : o.nameEn))) }] : []),
       ]
@@ -597,7 +637,7 @@ export const useStore = create<State>((set, get) => ({
         }
       }
       if (!text) throw noteError('error.neuronFetch', { title: entry.title, titleEn: entry.titleEn })
-      const mol = neuronMolecule(parseSwc(text), entry.name, entry.titleEn)
+      const mol = neuronMolecule(parseSwc(text), entry.name, entry.titleEn, DENSE)
       // 胞体是主角；轴突、基树突、顶树突各用一个色相区 / the soma is the subject; axon, basal and apical dendrites each take a hue sector
       const roleOf: Record<string, Role> = { '1': 'focus', '2': 'nucleic-binding', '3': 'soluble', '4': 'membrane', '0': 'extracellular' }
       const roles = mol.entities.map((e) => roleOf[e.id] ?? 'soluble')
@@ -657,7 +697,7 @@ export const useStore = create<State>((set, get) => ({
       cells.forEach((c, i) => {
         const kept = within(c.nodes, mid, group.radius)
         dropped += c.nodes.length - kept.length
-        const mol = neuronMolecule(kept.map((n) => ({ ...n, x: n.x - mid[0], y: -(n.y - mid[1]), z: -(n.z - mid[2]) })), c.id, c.id)
+        const mol = neuronMolecule(kept.map((n) => ({ ...n, x: n.x - mid[0], y: -(n.y - mid[1]), z: -(n.z - mid[2]) })), c.id, c.id, DENSE)
         const roles = mol.entities.map(() => hues[i % hues.length]!)
         const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
         const spec: PanelSpec = {
@@ -703,7 +743,7 @@ export const useStore = create<State>((set, get) => ({
           }
         }
         if (!text) throw noteError('error.neuronFetch', { title: h.name, titleEn: h.name })
-        const mol = neuronMolecule(parseSwc(text), h.name, h.name)
+        const mol = neuronMolecule(parseSwc(text), h.name, h.name, DENSE)
         const roles = mol.entities.map((e) => roleOf[e.id] ?? 'soluble')
         const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
         const label = `${h.species} · ${h.cellType.split(',')[0]} · ${h.name}`
