@@ -237,7 +237,7 @@ the world-sim git history and skips itself without it.
 | `data/projects.json` | 子项目和它们对应的层 / subprojects and their levels |
 | `data/wishes.jsonl` | 愿望的事件 / wish events |
 | `data/tasks.jsonl` | 开发任务的事件 / development task events |
-| `data/play/*.json` | 各项目的临时名片 / interim card files for the projects |
+| `data/play/*.json` | 还没有自己的 `sim.json` 的项目的临时名片（现在是空的：五个项目都有自己的了）/ interim card files for projects without their own `sim.json` (empty now: all five have their own) |
 
 `runs/`（不进 git）里是模型的提议 `proposals.jsonl`、每次调用的用量 `llm.jsonl`、操作轨迹 `trail.jsonl`、小助手的对话 `assistant/` 和作业 `jobs/`。
 
