@@ -423,3 +423,22 @@ with an odd preferred label (FMA's plain "Ulnar collateral ligament" is the wris
   of the lateral and medial cords (FMA65385), so it appears when a tree is built from FMA parents.
 - The build now ignores already-merged `ZA…` parts in `anatomy.json`, so it is repeatable after a
   merge.
+
+## Addendum 3: batch 2 (remaining missing structures) and attachment table
+
+- `out/import/` now also holds 745 `batch: 2` items: 104 for structures asked for explicitly
+  (`batchGroup: "requested: …"`) and 641 other non-brain candidates the current model lacks by
+  FMA id or name (`"extra: …"`). 376 of the extras carry `duplicateRisk: "high"` (vessels,
+  bronchi, discs: BodyParts3D names these differently, so absence by name proves little).
+- Not available in Z-Anatomy or Open3DModel: pericardium, parietal peritoneum, lymphatic vessels
+  and thoracic duct, subcutaneous fat, cranial dura/arachnoid/pia, ligamenta flava, caecum and
+  anal canal as separate objects. BodyParts3D 3.0 lists a spinal cord (FMA7647), which would be a
+  native alternative to the Z-Anatomy cord surface.
+- Z-Anatomy's "Pleura" is four concentric offsets of one lung-shaped surface per side; the
+  parietal layer therefore follows the lung, not the chest wall.
+- `attachments.json`: 705 origin/insertion patches of 167 muscle names, tested against
+  Z-Anatomy's own bones (697 lie on bone). Against `muscle-gaps.json` (59 groups lacking origin
+  and/or insertion): 3 fully and 12 partly covered by the muscle's own patches, 16 more only by
+  the whole muscle's patches, 28 not covered.
+- The surface regions are TA body regions and auricle/face landmarks. None is a dermatome or a
+  cutaneous nerve territory.

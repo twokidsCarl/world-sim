@@ -48,6 +48,8 @@ export class PointIndex {
     let c = cell
     for (;;) {
       const n = [0, 1, 2].map((k) => Math.floor((max[k]! - min[k]!) / c) + 1)
+      // 非有限坐标会让这个循环永不结束：直接报错 / non-finite coordinates would keep this loop going for ever: fail instead
+      if (!Number.isFinite(n[0]! * n[1]! * n[2]!)) throw new Error('PointIndex: points contain non-finite coordinates')
       if (n[0]! * n[1]! * n[2]! <= 1 << 26) break
       c *= 1.5
     }

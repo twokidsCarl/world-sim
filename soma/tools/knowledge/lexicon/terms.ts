@@ -1,3 +1,8 @@
+// 英文解剖学术语 -> 简体中文（大陆《人体解剖学名词》用法）。
+// 为本项目手写：机器翻译，未经医学专业人员审核。
+// 键是小写英文术语，与 FMA / BodyParts3D 名称（或 lib/translate.ts 切出的片段）完全一致。
+// 关于“𧿹”：标准用字 𧿹（U+27FF9）多数字体缺字，这里用教材中常见的替代字 踇（U+8E07）。
+//
 // English anatomical term -> Simplified Chinese (mainland usage, 《人体解剖学名词》 style).
 // Hand-written for this project: MACHINE TRANSLATION, NOT REVIEWED by a medical professional.
 // Keys are lower-case English terms exactly as they appear in FMA / BodyParts3D names
@@ -6,10 +11,10 @@
 // Note on the hallux: the standard character is 𧿹 (U+27FF9), which most fonts lack;
 // the common textbook substitute 踇 (U+8E07) is used here.
 
-import { EXTENSION_TERMS, FEMALE_TERMS, MAINLAND_TERMS, NERVE_LIGAMENT_LYMPH_TERMS } from './terms-nerves-ligaments-lymph.ts'
+import { CARTILAGE_PELVIC_FLOOR_TERMS, EXTENSION_TERMS, FEMALE_TERMS, MAINLAND_TERMS, NERVE_LIGAMENT_LYMPH_TERMS } from './terms-nerves-ligaments-lymph.ts'
 
 const GENERIC: Record<string, string> = {
-  // head nouns used by the "A of B" rule
+  // “A of B” 规则使用的中心名词 / head nouns used by the "A of B" rule
   branch: '支', segment: '段', subdivision: '分部', zone: '区', region: '区域',
   part: '部', wall: '壁', tributary: '属支', tree: '树', content: '内容物', compartment: '分区',
   cavity: '腔', lobe: '叶', lobule: '小叶', layer: '层', side: '侧', division: '支',
@@ -40,7 +45,7 @@ const GENERIC: Record<string, string> = {
   'ventricular system': '脑室系统', 'cardinal segment': '主要节段', 'internal gray matter component': '内部灰质成分',
   'cell part cluster': '细胞部分簇', 'organ component': '器官组成部分',
 
-  // FMA upper-level classes
+  // FMA 上位类 / FMA upper-level classes
   anastomosis: '吻合', 'arterial anastomosis': '动脉吻合', 'venous anastomosis': '静脉吻合',
   'vascular anastomosis': '血管吻合', 'anatomical boundary entity': '解剖学边界实体',
   'anatomical cavity': '解剖腔', 'anatomical cluster': '解剖学簇', 'anatomical compartment space': '解剖分区腔隙',
@@ -72,7 +77,7 @@ const GENERIC: Record<string, string> = {
   'heterogeneous clusters': '异质簇', organs: '器官', 'organ parts': '器官部分', 'organ regions': '器官区',
   'skeleton (in vivo)': '骨骼（活体）',
 
-  // body regions
+  // 身体分区 / body regions
   abdomen: '腹部', thorax: '胸部', head: '头', neck: '颈', trunk: '躯干', pelvis: '骨盆', face: '面部',
   mouth: '口', nose: '鼻', 'external nose': '外鼻', 'internal nose': '鼻腔', eye: '眼', eyeball: '眼球',
   arm: '臂', forearm: '前臂', hand: '手', wrist: '腕', thigh: '大腿', leg: '小腿', foot: '足', knee: '膝',
@@ -97,7 +102,7 @@ const GENERIC: Record<string, string> = {
   'orbital part of eye': '眼眶部', 'interpeduncular fossa': '脚间窝', 'subarachnoid space': '蛛网膜下隙',
   'subarachnoid incisure': '蛛网膜下切迹', 'space of compartment of head': '头部分区腔隙',
 
-  // organs and viscera
+  // 器官和内脏 / organs and viscera
   heart: '心', lung: '肺', liver: '肝', testis: '睾丸', 'seminal vesicle': '精囊', 'deferent duct': '输精管',
   penis: '阴茎', 'corpus spongiosum of penis': '尿道海绵体', pancreas: '胰', ileum: '回肠', jejunum: '空肠',
   colon: '结肠', 'large intestine': '大肠', 'small intestine': '小肠', 'gastrointestinal tract': '胃肠道',
@@ -126,7 +131,7 @@ const GENERIC: Record<string, string> = {
   'plantar tarsal ligament': '跗跖侧韧带', 'tarsal ligament': '跗骨韧带', 'dura mater': '硬膜',
   'cranial dura mater': '硬脑膜', 'facial hairs': '面部毛发', 'hair of head': '头发', 'hair of trunk': '躯干毛',
 
-  // heart
+  // 心 / heart
   ventricle: '心室', atrium: '心房', 'left ventricle': '左心室', 'right ventricle': '右心室',
   'left atrium': '左心房', 'right atrium': '右心房', 'cardiac chamber': '心腔', 'cardiac valve': '心瓣膜',
   'aortic valve': '主动脉瓣', 'pulmonary valve': '肺动脉瓣', 'mitral valve': '二尖瓣', 'tricuspid valve': '三尖瓣',
@@ -140,7 +145,7 @@ const GENERIC: Record<string, string> = {
   'pulmonary arterial trunk': '肺动脉干', 'pulmonary arterial tree': '肺动脉树',
   'pulmonary venous tree organ': '肺静脉树', 'pulmonary vascular system': '肺血管系统',
 
-  // nervous system
+  // 神经系统 / nervous system
   neuraxis: '神经轴', brain: '脑', forebrain: '前脑', midbrain: '中脑', hindbrain: '菱脑',
   'lateral ventricle': '侧脑室', 'third ventricle': '第三脑室', 'fourth ventricle': '第四脑室',
   telencephalon: '端脑', diencephalon: '间脑', metencephalon: '后脑', hypothalamus: '下丘脑', thalamus: '丘脑',
@@ -158,7 +163,7 @@ const GENERIC: Record<string, string> = {
   'nasociliary nerve': '鼻睫神经', 'posterior ethmoidal nerve': '筛后神经', 'short ciliary nerve': '睫状短神经',
   'supra-orbital nerve': '眶上神经', 'subdivisionof autonomic nervous system': '自主神经系统分部',
 
-  // bones and joints
+  // 骨和关节 / bones and joints
   capitate: '头状骨', hamate: '钩骨', lunate: '月骨', pisiform: '豌豆骨', scaphoid: '手舟骨',
   trapezoid: '小多角骨', triquetral: '三角骨', 'cuneiform bone': '楔骨', 'navicular bone of foot': '足舟骨',
   'metatarsal bone': '跖骨', manubrium: '胸骨柄', 'body of sternum': '胸骨体', sternum: '胸骨',
@@ -169,7 +174,7 @@ const GENERIC: Record<string, string> = {
   'axial skeletal system': '中轴骨骼系统', 'pelvic skeleton': '骨盆骨骼', 'nasal skeleton': '鼻骨骼',
   symphysis: '联合',
 
-  // muscles
+  // 肌 / muscles
   'abductor digiti minimi of foot': '小趾展肌', 'abductor digiti minimi of hand': '小指展肌',
   'abductor hallucis': '踇展肌', 'abductor pollicis brevis': '拇短展肌', 'abductor pollicis longus': '拇长展肌',
   'adductor brevis': '短收肌', 'adductor longus': '长收肌', 'adductor magnus': '大收肌',
@@ -239,7 +244,7 @@ const GENERIC: Record<string, string> = {
   'deep extrinsic muscle of shoulder': '肩外来肌深层', 'deep postvertebral muscle': '椎后深层肌',
   'intermediate postvertebral muscle': '椎后中间层肌', 'superficial postvertebral muscle': '椎后浅层肌', 'intrinsic muscle of shoulder': '肩固有肌',
 
-  // arteries
+  // 动脉 / arteries
   aorta: '主动脉', 'arch of aorta': '主动脉弓', 'thoracic aorta': '胸主动脉',
   'descending thoracic aorta': '胸主动脉（降部）', 'celiac trunk': '腹腔干', 'celiac artery': '腹腔干',
   'coeliac artery': '腹腔干', 'hepatic artery': '肝动脉', 'common hepatic artery': '肝总动脉',
@@ -314,7 +319,7 @@ const GENERIC: Record<string, string> = {
   'systemic arterial tree': '体循环动脉树', 'systemic arterial trunk': '体循环动脉干',
   'bronchial artery': '支气管动脉', arteries: '动脉',
 
-  // veins
+  // 静脉 / veins
   'portal vein': '门静脉', 'hepatic portal vein': '肝门静脉', 'pre-hepatic portal vein': '肝前门静脉',
   'portal venous system': '门静脉系统', 'portal venous tree': '门静脉树', 'hepatic vein': '肝静脉',
   'middle hepatic vein': '肝中静脉', 'left hepatic vein': '肝左静脉', 'right hepatic vein': '肝右静脉',
@@ -356,10 +361,10 @@ const GENERIC: Record<string, string> = {
   'inferior systemic venous tree': '下腔静脉系', 'superior systemic venous tree': '上腔静脉系',
   'inferior vena caval tree': '下腔静脉树', 'superior vena caval tree': '上腔静脉树', veins: '静脉',
 
-  // lungs: segmental bronchi / trees
+  // 肺：段支气管和支气管树 / lungs: segmental bronchi / trees
   'segmental bronchial tree': '段支气管树', 'basal segmental bronchial tree': '底段支气管树',
   'lingular bronchial tree': '舌段支气管树', 'lingular artery': '舌段动脉',
   'lingular bronchopulmonary segment': '舌段支气管肺段',
 }
 
-export const TERMS: Record<string, string> = { ...GENERIC, ...NERVE_LIGAMENT_LYMPH_TERMS, ...MAINLAND_TERMS, ...FEMALE_TERMS, ...EXTENSION_TERMS }
+export const TERMS: Record<string, string> = { ...GENERIC, ...NERVE_LIGAMENT_LYMPH_TERMS, ...MAINLAND_TERMS, ...FEMALE_TERMS, ...EXTENSION_TERMS, ...CARTILAGE_PELVIC_FLOOR_TERMS }

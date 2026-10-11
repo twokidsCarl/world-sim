@@ -275,6 +275,62 @@ for p in PARTS:
 OUR_NAMES = set(PART_BY_NAME) | {c["name"].lower() for t in A["trees"].values() for c in t if c["id"] in OUR_FMA}
 log(f"our anatomy.json (BodyParts3D base only, {len(A['parts']) - len(PARTS)} already-merged ZA parts ignored): {len(PARTS)} parts, {len(OUR_FMA)} FMA concepts")
 
+# Current model = BodyParts3D base + already merged ZA / R3 parts.  Used only for batch 2 ("what is still missing").
+CUR_FMA = {p["fma"] for p in A["parts"]}
+CUR_NAMES = {p["name"].lower() for p in A["parts"]}
+CUR_IDS = {p["id"] for p in A["parts"]}
+
+
+def in_current(rec, base, side):
+    if rec.get("fma") and (rec["fma"] in CUR_FMA or rec.get("fmaUnsided") in CUR_FMA):
+        return True
+    w = {"L": "left ", "R": "right "}.get(side, "")
+    return any(x in CUR_NAMES for x in (norm(base), w + norm(base), w + norm(base).replace(" muscle", "")))
+
+
+def mesh_quality(v, f):
+    """Closedness / wall thickness of a mesh (source units: metres)."""
+    e = np.sort(np.concatenate([f[:, [0, 1]], f[:, [1, 2]], f[:, [2, 0]]]), 1)
+    _, c = np.unique(e, axis=0, return_counts=True)
+    nc, _ = components(len(v), f)
+    a, b, cc = v[f[:, 0]], v[f[:, 1]], v[f[:, 2]]
+    area = float(np.linalg.norm(np.cross(b - a, cc - a), axis=1).sum() / 2)
+    closed = bool((c == 1).sum() == 0)
+    q = {"closed": closed, "boundaryEdges": int((c == 1).sum()), "nonManifoldEdges": int((c > 2).sum()), "components": int(nc),
+         "areaCm2": round(area * 1e4, 2)}
+    if closed and area > 0:
+        vol = abs(float(np.einsum("ij,ij->i", a, np.cross(b, cc)).sum() / 6))
+        q["volumeCm3"] = round(vol * 1e6, 3)
+        q["meanThicknessMm"] = round(2 * vol / area * 1e3, 2)  # 2V/A: wall thickness for a sheet, ~diameter/2 for a tube
+    return q
+
+
+REQUESTED = [("spinal cord", r"spinal cord|^central canal"), ("meninges", r"\bdura\b|arachnoid|pia mater|falx|tentorium|diaphragma sellae"),
+             ("pleura", r"pleura"), ("pericardium", r"pericardium"), ("salivary gland", r"parotid (gland|duct)|submandibular (gland|duct)|sublingual gland"),
+             ("meniscus", r"menisc(us|i)\b|horn of (lateral|medial) meniscus"), ("cruciate ligament", r"cruciate ligament"),
+             ("fat", r"\bfat\b|adipose"), ("peritoneum / omentum", r"periton|omentum|mesocolon|meso-?appendix|mesentery"),
+             ("joint capsule", r"capsule"), ("vertebral ligament", r"supraspinous|interspinous|flav|intertransverse|longitudinal ligament|nuchal"),
+             ("large intestine / anal canal", r"caecum|cecum|sigmoid colon|anal canal|\banal\b|rectum|pubo-analis"),
+             ("nail", r"nail plate|perionyx")]
+
+
+def batch2_group(base, s0, tissue):
+    """None = stays a listed-only candidate.  Otherwise the batchGroup label."""
+    b = base.lower()
+    if not re.search(r"[a-z]{3}", b):
+        return None  # junk object names ('????????', '?x')
+    if base in ("Malleus", "Incus", "Stapes", "Tympanic membrane", "Auditory tube"):
+        return None  # middle ear: left alone (NC-risk)
+    for label, rx in REQUESTED:
+        if re.search(rx, b) and not re.search(r"\bnodes?\b|artery|vein|nerve|region", b):
+            return "requested: " + label
+    if s0 in "1345" or s0 == "8":
+        return "extra: " + {"1": "skeletal", "3": "joint", "4": "muscular", "5": "vessel", "8": "viscera"}[s0]
+    if s0 == "7" and tissue != "brain":
+        return "extra: sense organ"
+    return None
+
+
 FINGER_H = {"first": "thumb", "second": "index finger", "third": "middle finger", "fourth": "ring finger", "fifth": "little finger"}
 FINGER_F = {"first": "big toe", "second": "second toe", "third": "third toe", "fourth": "fourth toe", "fifth": "little toe"}
 ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth"]
@@ -976,7 +1032,23 @@ def classify(base, system):
     return "integumentary", "skin" if not re.search(r"hair|nail|eyelash|perionyx", b) else "other"
 
 
-n_parts = n_cand = 0
+n_parts = n_cand = n_b2 = 0
+B2_NOTES = {
+    "White matter of spinal cord": {"proxyFor": {"name": "Spinal cord", "fma": "FMA7647"},
+        "note": "Outer surface of the spinal cord (Z-Anatomy has no object named 'Spinal cord'). Procedural: one cross-section arrayed along a curve "
+                "(Mirror+Array+Curve), foramen magnum to the conus at L2/L3; mild cervical and lumbar enlargements (x-width 12.2-14.7 mm), conus "
+                "tapers to 3.5 mm; ends are open. The anterior/posterior root units of batch 1 start 3 mm from the midline on this surface. "
+                "Use as the spinal cord proper via proxyFor; `fma` is the white-matter class."},
+    "Anterior horn of spinal cord": {"note": "grey matter column, same procedural construction as the cord surface; both sides in one object"},
+    "Posterior horn of spinal cord": {"note": "grey matter column, same procedural construction as the cord surface; both sides in one object"},
+    "Spinal dura": {"note": "dural sac with root sleeves, foramen magnum to L2/L3 only (same length as the cord, does not reach S2); 36 components, open and non-manifold edges: needs cleanup"},
+    "Falx cerebri": {"note": "thin sheet (solidified, about 0.1 mm), 5 components"},
+    "Greater omentum": {"note": "closed thin shell about 0.7 mm; apron in front of the intestines, must be fitted to our stomach / transverse colon"},
+    "Lesser omentum": {"note": "closed thin shell about 0.7 mm between liver and stomach"},
+    "Mesocolon": {"note": "closed thin shell about 0.7 mm; by position this is the transverse mesocolon region"},
+    "Sigmoid colon": {"note": "closed tube wall (solidified, about 2 mm)"},
+    "Parotid gland": {"note": "closed, 5.6 cm3 (small for a parotid, real glands are 15-25 cm3)"},
+}
 nerve_objs = {it["sourceObject"] for it in items} | {it.get("splitFrom") for it in items}
 cat_count = Counter()
 for r in ZA_IDX:
@@ -1022,6 +1094,32 @@ for r in ZA_IDX:
             continue
         if s0 == "7" and r["type"] == "CURVE":
             continue
+        grp = batch2_group(base, s0, tissue)
+        if grp and in_current(rec0, base, sd):
+            grp = None
+            FMA_STATS["batch-2 structure already in the current model, left as candidate"] += 1
+        if grp:
+            v, f = za_mesh(r)
+            bl2 = base.lower()
+            if re.search(r"omentum|mesocolon|pleura|\bdura\b|falx|capsule|nail plate|perionyx", bl2) and tissue in ("organ", "brain"):
+                tissue = "other"
+            if "fat pad" in bl2:
+                tissue = "fat"
+            if re.search(r"\bdura\b|falx|white matter of spinal cord|horn of spinal cord", bl2):
+                system = "nervous"
+            x2 = dict(extra, batch=2, batchGroup=grp, zaType=r["type"], quality=mesh_quality(v, f))
+            x2.update(B2_NOTES.get(base, {}))
+            if grp.startswith("extra"):
+                # "missing" was decided by FMA id / name only.  BodyParts3D names vessels and bronchi by segment and discs by
+                # vertebra, so the same structure can already exist there under another concept.
+                hi = s0 == "5" or re.search(r"bronch|intervertebral disc|nucleus pulposus|pharynx|mesocolon|taenia", bl2)
+                x2["duplicateRisk"] = "high" if hi else "low"
+            elif re.search(r"^mesocolon$", bl2):
+                x2["duplicateRisk"] = "high"
+            rec = add_item("z-anatomy", r["name"], "", base, side, "mesh", system, tissue, v, f, extra=x2)
+            rec["category"] = "batch2"
+            n_b2 += 1
+            continue
         extra.update(candidate=True, zaType=r["type"], zaTriangles=r["nf"],
                      zaBbox=bbox6(ax(np.array([r["bbox_min"], r["bbox_max"]]))))
         extra["conceptCheck"] = "fma" if rec0.get("fma") else "name-only"
@@ -1033,7 +1131,90 @@ for r in ZA_IDX:
         rec = add_item("z-anatomy", r["name"], "", base, side, "mesh", system, tissue, extra=extra)
         rec["category"] = "candidate"
         n_cand += 1
-log(f"Z-Anatomy mesh parts exported: {n_parts} {dict(cat_count)}; candidates listed (no geometry): {n_cand}")
+log(f"Z-Anatomy mesh parts exported: {n_parts} {dict(cat_count)}; batch 2 exported: {n_b2}; candidates listed (no geometry): {n_cand}")
+
+# ----------------------------------------------------------------------------- batch 2: pleura layers, Open3DModel joint structures
+r = ZA["Pleura"]
+v, f = za_mesh(r)
+nc, lab = components(len(v), f)
+shells = []
+for c in range(nc):
+    vidx = np.nonzero(lab == c)[0]
+    sv, sf = submesh(v, f, vidx)
+    a_, b_, c_ = sv[sf[:, 0]], sv[sf[:, 1]], sv[sf[:, 2]]
+    shells.append({"vidx": vidx, "side": "L" if sv[:, 0].mean() > 0 else "R", "vol": abs(float(np.einsum("ij,ij->i", a_, np.cross(b_, c_)).sum() / 6))})
+pleura_log = []
+for sd in ("L", "R"):
+    ss = sorted([s_ for s_ in shells if s_["side"] == sd], key=lambda s_: s_["vol"])
+    pleura_log.append((sd, [round(s_["vol"] * 1e6) for s_ in ss]))
+    if len(ss) == 4:  # two nested walls (inner, outer surface each): the inner pair is visceral, the outer pair parietal
+        for layer, pair, labels in (("visceral", ss[:2], ["Visceral pleura"]), ("parietal", ss[2:], ["Parietal pleura"])):
+            vidx = np.sort(np.concatenate([p_["vidx"] for p_ in pair]))
+            sv, sf = submesh(v, f, vidx)
+            gap = (pair[1]["vol"] - pair[0]["vol"])
+            rec = add_item("z-anatomy", "Pleura", f"{layer}-{sd}", f"{layer.capitalize()} pleura", sd, "mesh", "respiratory", "other", sv, sf,
+                           fma_labels=labels, ta2name=f"{layer.capitalize()} pleura",
+                           extra={"batch": 2, "batchGroup": "requested: pleura", "splitFrom": "Pleura", "layer": layer, "zaCollection": r["system"],
+                                  "quality": mesh_quality(sv, sf),
+                                  "note": f"{layer} layer of the {'left' if sd == 'L' else 'right'} pleura: a closed double-walled shell (inner and outer surface, "
+                                          "wall about 0.5 mm) cut out of the single Z-Anatomy 'Pleura' object by nesting order of its 8 closed surfaces. "
+                                          "The four surfaces per lung are concentric offsets of ONE lung-shaped surface, 0.5 mm apart: visceral wall, a 0.5 mm "
+                                          "cavity, parietal wall. So the parietal layer follows the lung, not the chest wall, diaphragm and mediastinum, and has "
+                                          "no recesses. Shaped around Z-Anatomy's lungs; must be refitted to our lungs."})
+            rec["category"] = "batch2"
+            n_b2 += 1
+log(f"pleura: {nc} closed surfaces; enclosed volumes per side (cm3) {pleura_log}")
+
+O3D_EXTRA = [  # model, object, english, FMA labels, Z-Anatomy counterpart, system, tissue, group
+    ("lower-limb", "Lateral meniscus.r", "Lateral meniscus", ["Lateral meniscus"], "Lateral meniscus", "skeletal", "cartilage", "requested: meniscus"),
+    ("lower-limb", "Medial meniscus.r", "Medial meniscus", ["Medial meniscus"], "Medial meniscus", "skeletal", "cartilage", "requested: meniscus"),
+    ("lower-limb", "Anterior horn of Lateral meniscus.r", "Anterior horn of lateral meniscus", ["Anterior horn of lateral meniscus"], None, "skeletal", "cartilage", "requested: meniscus"),
+    ("lower-limb", "Posterior horn of Lateral meniscus.r", "Posterior horn of lateral meniscus", ["Posterior horn of lateral meniscus"], None, "skeletal", "cartilage", "requested: meniscus"),
+    ("lower-limb", "Anterior horn of Medial meniscus.r", "Anterior horn of medial meniscus", ["Anterior horn of medial meniscus"], None, "skeletal", "cartilage", "requested: meniscus"),
+    ("lower-limb", "Posterior horn of Medial meniscus.r", "Posterior horn of medial meniscus", ["Posterior horn of medial meniscus"], None, "skeletal", "cartilage", "requested: meniscus"),
+    ("lower-limb", "Anterior cruciate ligament.r", "Anterior cruciate ligament", ["Anterior cruciate ligament"], "Anterior cruciate ligament", "skeletal", "ligament", "requested: cruciate ligament"),
+    ("lower-limb", "Posterior cruciate ligament.r", "Posterior cruciate ligament", ["Posterior cruciate ligament"], "Posterior cruciate ligament", "skeletal", "ligament", "requested: cruciate ligament"),
+    ("lower-limb", "Posterior meniscofemoral ligament.r", "Posterior meniscofemoral ligament", ["Posterior meniscofemoral ligament"], None, "skeletal", "ligament", "requested: meniscus"),
+    ("lower-limb", "Articular capsule of knee joint.r", "Articular capsule of knee joint", ["Articular capsule of knee joint"], "Articular capsule of knee joint", "skeletal", "ligament", "requested: joint capsule"),
+    ("lower-limb", "Hip joint capsule.r", "Articular capsule of hip joint", ["Articular capsule of hip joint"], "Articular capsule of hip joint", "skeletal", "ligament", "requested: joint capsule"),
+    ("lower-limb", "Capsule of talocrural joint.r", "Articular capsule of ankle joint", ["Articular capsule of ankle joint", "Articular capsule of talocrural joint"], None, "skeletal", "ligament", "requested: joint capsule"),
+    ("lower-limb", "Infrapatellar fat pad.r", "Infrapatellar fat pad", ["Infrapatellar fat pad"], "Infrapatellar fat pad", "skeletal", "fat", "requested: fat"),
+    ("upper-limb", "Articular capsule of glenohumeral joint.r", "Articular capsule of glenohumeral joint", ["Articular capsule of glenohumeral joint"], "Articular capsule of glenohumeral joint", "skeletal", "ligament", "requested: joint capsule"),
+    ("upper-limb", "Articular capsule of elbow joint.r", "Articular capsule of elbow joint", ["Articular capsule of elbow joint"], "Articular capsule of elbow joint", "skeletal", "ligament", "requested: joint capsule"),
+    ("upper-limb", "Acromioclavicular capsule.r", "Articular capsule of acromioclavicular joint", ["Articular capsule of acromioclavicular joint"], "Articular capsule of acromioclavicular joint", "skeletal", "ligament", "requested: joint capsule"),
+    ("upper-limb", "Sternoclavicular capsule.r", "Articular capsule of sternoclavicular joint", ["Articular capsule of sternoclavicular joint"], "Articular capsule of sternoclavicular joint", "skeletal", "ligament", "requested: joint capsule"),
+    ("lower-limb", "Arachnoid mater", "Spinal arachnoid mater (lumbosacral part)", ["Spinal arachnoid mater", "Arachnoid mater of spinal cord"], None, "nervous", "other", "requested: meninges"),
+]
+za_items_by = defaultdict(list)
+for it in items:
+    if it["source"] == "z-anatomy":
+        za_items_by[(it["name"], it["side"])].append(it)
+n_o3x = 0
+for m, on, english, labels, zac, system, tissue, grp in O3D_EXTRA:
+    idx_, npz_ = O3D[m]
+    rr = [q for q in idx_ if q["name"] == on]
+    if not rr:
+        log(f"  Open3DModel object not found: {m}/{on}")
+        continue
+    rr = rr[0]
+    v, f = npz_[f"v{rr['i']}"].astype(np.float64), npz_[f"f{rr['i']}"].astype(np.int64)
+    midline = english.startswith("Spinal arachnoid")
+    for side in (("M",) if midline else ("R", "L")):
+        vv, ff = (v, f) if side in ("R", "M") else mirror_x(v, f)
+        x = {"batch": 2, "batchGroup": grp, "o3dModel": m, "o3dGroup": rr["group"], "quality": mesh_quality(vv, ff)}
+        if side == "L":
+            x["mirroredFrom"] = zid("open3dmodel", f"{m}/{on}", "R")
+        alts = [it["id"] for it in za_items_by.get((zac, side), [])] if zac else []
+        if alts:
+            x["alternateOf"] = alts
+            x["preferred"] = False
+            x["note"] = "Open3DModel version (remodelled, anatomist-reviewed) of a structure also exported from Z-Anatomy; register with open3dmodel anchors"
+        if midline:
+            x["note"] = "partial: spinal arachnoid / dural sac below about T12 with root sleeves, from the lower-limb model; 47 components"
+        rec = add_item("open3dmodel", f"{m}/{on}", side, english, side, "mesh", system, tissue, vv, ff, fma_labels=labels, extra=x, frame="o3d")
+        rec["category"] = "batch2"
+        n_o3x += 1
+log(f"batch 2: {n_b2} Z-Anatomy items, {n_o3x} Open3DModel items")
 
 # ----------------------------------------------------------------------------- anchors
 anchors = []
@@ -1138,6 +1319,68 @@ if len(res):
 
 for b in (BIN_N, BIN_P, BIN_A):
     b.close()
+
+# ----------------------------------------------------------------------------- muscle attachment table (not exported as parts)
+bone_pts, bone_lab, bone_names = [], [], []
+anchor_by_obj = {a["sourceObject"]: a for a in anchors if a["source"] == "z-anatomy"}
+for r in ZA_IDX:
+    if r["system"].startswith("1") and r.get("nf", 0) >= 20:
+        v, f = za_mesh(r)
+        pts = sample(v, f, int(np.clip(len(f), 400, 4000)))
+        bone_pts.append(pts)
+        bone_lab += [len(bone_names)] * len(pts)
+        bone_names.append(r["name"])
+bone_tree = cKDTree(np.concatenate(bone_pts))
+bone_lab = np.array(bone_lab)
+bone_info = {}
+
+
+def bone_rec(obj):
+    if obj not in bone_info:
+        base, sd = split_side(obj)
+        a = anchor_by_obj.get(obj)
+        if a and a["fma"]:
+            bone_info[obj] = {"name": base, "side": sd or "M", "fma": a["fma"], "bp3dIds": a["bp3dIds"], "fmaSource": "bp3d-anchor"}
+        else:
+            rf = resolve_fma(base, sd or "M", (ta2_of(base) or {}).get("ta2"))
+            bone_info[obj] = {"name": base, "side": sd or "M", "fma": rf.get("fma"), "bp3dIds": a["bp3dIds"] if a else [], "fmaSource": rf.get("fmaSource")}
+    return bone_info[obj]
+
+
+attachments = []
+for r in ZA_IDX:
+    m = re.match(r"(.*)\.([oe])(\d*)([lr])$", r["name"])
+    if not (r["system"].startswith("2") and m and r.get("nf")):
+        continue
+    muscle, kind, num, s_ = m.group(1), {"o": "origin", "e": "insertion"}[m.group(2)], m.group(3), m.group(4).upper()
+    v, f = za_mesh(r)
+    pts = sample(v, f, 300)
+    d, j = bone_tree.query(pts)
+    near = d < 0.004
+    shares = Counter(bone_names[k] for k in bone_lab[j[near]])
+    tot = max(1, int(near.sum()))
+    bones = [dict(bone_rec(n), share=round(c / len(pts), 2)) for n, c in shares.most_common() if c / len(pts) >= 0.1]
+    nearest = bone_rec(bone_names[int(np.bincount(bone_lab[j]).argmax())])
+    a_, b_, c_ = v[f[:, 0]], v[f[:, 1]], v[f[:, 2]]
+    area = float(np.linalg.norm(np.cross(b_ - a_, c_ - a_), axis=1).sum() / 2)
+    mf = resolve_fma(muscle, s_, (ta2_of(muscle) or {}).get("ta2"))
+    attachments.append({
+        "id": zid("z-anatomy", r["name"], "attachment"), "sourceObject": r["name"], "muscle": muscle, "side": s_, "kind": kind,
+        "index": int(num) if num else None,
+        "muscleFma": mf.get("fma"), "muscleFmaUnsided": mf.get("fmaUnsided"), "muscleFmaSource": mf.get("fmaSource"), "muscleFmaMatch": mf.get("fmaMatch"),
+        "bones": bones, "nearestBone": {"name": nearest["name"], "side": nearest["side"], "fma": nearest["fma"]},
+        "onBone": bool(np.median(d) < 0.004), "medianDistanceToBoneMm": round(float(np.median(d)) * 1e3, 2),
+        "centroid": np.round(ax(pts.mean(0)), 5).tolist(), "areaCm2": round(area * 1e4 / (2 if "SOLIDIFY" in r["modifiers"] else 1), 2)})
+json.dump({"schema": 1, "source": "Z-Anatomy (collection '2: Muscular insertions')", "license": "CC-BY-SA-4.0", "provenance": "curated (artist-modelled)",
+           "attribution": "Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0",
+           "frame": "Z-Anatomy frame, metres, Y up, anterior +Z, left +X (not registered)",
+           "method": "Each patch is sampled (300 points) and tested against the surfaces of Z-Anatomy's own skeletal objects. `bones` lists every "
+                     "bone/cartilage within 4 mm of at least 10% of the patch (share = fraction of the patch). onBone=false: the patch lies more than "
+                     "4 mm (median) from any bone, i.e. it attaches to fascia, a ligament, a tendon or skin. 'origin' = Z-Anatomy suffix .o, "
+                     "'insertion' = suffix .e; `index` numbers several patches of one muscle.",
+           "attachments": attachments}, open(f"{OUT}/attachments.json", "w"), indent=1)
+log(f"attachments: {len(attachments)} patches, {len({(a['muscle']) for a in attachments})} muscle names; on bone {sum(a['onBone'] for a in attachments)}; "
+    f"muscle FMA resolved {sum(1 for a in attachments if a['muscleFma'])}; with >=1 bone FMA {sum(1 for a in attachments if any(b['fma'] for b in a['bones']))}")
 
 # ----------------------------------------------------------------------------- write
 ids = Counter(i["id"] for i in items + anchors)

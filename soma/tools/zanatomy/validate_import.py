@@ -171,6 +171,86 @@ print("checked", len(CHECK), "names; missing:", missing)
 lv_have = sorted({r["level"] for r in ner if r.get("level") and r["name"].startswith("Anterior root")}, key=lambda l: ("CTLS".index(l[0]), int(l[1:])))
 print("spinal root levels present (anterior roots):", lv_have, "+ cauda equina roots:", sorted({r['level'] for r in ner if r.get('splitFrom') == 'Cauda equina' and r.get('level')}))
 
+print("\n== 6. batch 2")
+b2 = [r for r in items if r.get("batch") == 2]
+check(all(r["files"] and r.get("quality") and r.get("batchGroup") for r in b2), "batch-2 item without files/quality/batchGroup")
+check(not any(r.get("candidate") for r in b2), "batch-2 item still flagged candidate")
+print(f"batch-2 items: {len(b2)}; by source {dict(Counter(r['source'] for r in b2))}; triangles {sum(r['triangles'] for r in b2)}")
+for gname in sorted({r["batchGroup"] for r in b2}):
+    g = [r for r in b2 if r["batchGroup"] == gname]
+    names_ = sorted({r["name"] for r in g})
+    print(f"  {gname:38s} items {len(g):4d}  names {len(names_):4d}  FMA {sum(1 for r in g if r['fma']):4d}  closed {sum(1 for r in g if r['quality']['closed']):4d}  "
+          f"duplicateRisk high {sum(1 for r in g if r.get('duplicateRisk') == 'high'):4d}")
+    if gname.startswith("requested"):
+        print("      " + "; ".join(f"{n} [{'/'.join(sorted({r['source'][0] for r in g if r['name'] == n}))}]" for n in names_))
+f2 = sum(1 for r in b2 if r["fma"])
+print(f"batch-2 FMA coverage: {f2}/{len(b2)} ({f2/len(b2):.0%}); fmaMatch {dict(Counter(r.get('fmaMatch') or 'none' for r in b2))}; "
+      f"lateralised with unsided id {sum(1 for r in b2 if r.get('fmaIsUnsided'))}")
+old_ids = None
+print("remaining candidates (listed only):", dict(Counter(r["zaCollection"] for r in cand)))
+
+print("\n== 7. attachments.json")
+AT = json.load(open(f"{D}/attachments.json"))["attachments"]
+check(len({a["id"] for a in AT}) == len(AT), "duplicate attachment ids")
+print(f"patches: {len(AT)}; muscles (unsided names): {len({a['muscle'] for a in AT})}; origin {sum(a['kind']=='origin' for a in AT)}, insertion {sum(a['kind']=='insertion' for a in AT)}")
+print(f"on bone (median distance < 4 mm): {sum(a['onBone'] for a in AT)}; muscle FMA resolved: {sum(1 for a in AT if a['muscleFma'])}; "
+      f"patches with at least one bone carrying an FMA id: {sum(1 for a in AT if any(b['fma'] for b in a['bones']))}; "
+      f"patches spanning more than one bone: {sum(1 for a in AT if len(a['bones']) > 1)}")
+print("not on bone:", sorted({f"{a['muscle']} ({a['kind']})" for a in AT if not a["onBone"]}))
+gp = f"{ROOT}/data/curated/knowledge/muscle-gaps.json"
+if os.path.exists(gp):
+    G = json.load(open(gp))["muscles"]
+    by_fma = defaultdict(set)
+    by_name = defaultdict(set)
+    for a in AT:
+        for k in (a["muscleFma"], a["muscleFmaUnsided"]):
+            if k:
+                by_fma[k].add(a["kind"])
+        by_name[re.sub(r" muscle$", "", a["muscle"].lower()).strip("() ")].add(a["kind"])
+    need = cov_full = cov_part = whole = 0
+    rows = []
+    for g in G:
+        want = {k for k in g["missing"] + g.get("wholeMuscleOnly", []) if k in ("origin", "insertion")}
+        if not want:
+            continue
+        need += 1
+        got = set()
+        for k in g["fma"]:
+            got |= by_fma.get(k, set())
+        got |= by_name.get(g["name"].lower(), set())
+        viaw = set()
+        if g.get("wholeMuscle"):
+            viaw = by_name.get(g["wholeMuscle"].lower(), set())
+        if want <= got:
+            cov_full += 1
+        elif want & got:
+            cov_part += 1
+        elif want & viaw:
+            whole += 1
+        rows.append((g["name"], sorted(want), sorted(got), sorted(viaw)))
+    print(f"muscle-gaps.json: {len(G)} gap muscles, {need} lack origin and/or insertion (missing or whole-muscle-only)")
+    print(f"  covered by a patch of that very muscle/part: fully {cov_full}, partly {cov_part}; only via the whole muscle's patches: {whole}; not covered: {need - cov_full - cov_part - whole}")
+    print("  not covered:", [r[0] for r in rows if not (set(r[1]) & set(r[2])) and not (set(r[1]) & set(r[3]))])
+    with open(f"{D}/attachments_gap_coverage.tsv", "w") as fh:
+        fh.write("gapMuscle\twanted\tpatchesOfThisMuscle\tpatchesOfWholeMuscle\n")
+        for r in rows:
+            fh.write(f"{r[0]}\t{','.join(r[1])}\t{','.join(r[2])}\t{','.join(r[3])}\n")
+reg = defaultdict(lambda: [set(), 0])
+for r in cand:
+    if r["zaCollection"].startswith("9"):
+        reg[r["name"]][0].add(r["side"])
+        reg[r["name"]][1] = r["zaTriangles"]
+with open(f"{D}/surface_regions.tsv", "w") as fh:
+    fh.write("name\tsides\ttriangles\tfma\n")
+    fm = {r["name"]: r.get("fmaUnsided") for r in cand}
+    for n in sorted(reg):
+        fh.write(f"{n}\t{''.join(sorted(reg[n][0]))}\t{reg[n][1]}\t{fm.get(n) or ''}\n")
+print(f"surface regions still listed only: {len(reg)} names (surface_regions.tsv); names mentioning dermatome/nerve territory: "
+      f"{[n for n in reg if re.search('dermatom|nerve|cutaneous', n, re.I)]}")
+mid = {p_["id"] for p_ in A["parts"] if p_["id"].startswith("ZA")}
+check(mid <= set(ids), "an already-merged ZA id is no longer in the manifest")
+print(f"ids of the {len(mid)} ZA parts already merged in anatomy.json all still present: {mid <= set(ids)}")
+
 print("\n== result:", "FAIL" if fails else "PASS")
 for f_ in fails[:40]:
     print("  FAIL", f_)

@@ -440,3 +440,39 @@ export const EXTENSION_TERMS: Record<string, string> = {
   'right gastric lymph node': '胃右淋巴结', 'left gastric lymph node': '胃左淋巴结',
   'great toe': '踇趾', 'interphalangeal joint of great toe': '踇趾趾骨间关节',
 }
+
+// 关节软骨（女性体 Denver 数据）和女性盆底肌群词汇。大陆用语；机器翻译，未经审核。
+// Articular cartilages (female body, Denver data) and female pelvic floor vocabulary.
+// Mainland usage; machine translation, unreviewed.
+export const CARTILAGE_PELVIC_FLOOR_TERMS: Record<string, string> = {
+  // ---- 关节软骨 / articular cartilage
+  'articular cartilage': '关节软骨', 'cartilage tissue': '软骨组织', 'regular connective tissue': '规则结缔组织',
+  epiphysis: '骺', femur: '股骨', tibia: '胫骨', patella: '髌骨', talus: '距骨', acetabulum: '髋臼',
+  'distal epiphysis of femur': '股骨远端', 'proximal epiphysis of femur': '股骨近端',
+  'distal epiphysis of tibia': '胫骨远端', 'proximal epiphysis of tibia': '胫骨近端',
+  'lateral condyle of tibia': '胫骨外侧髁', 'medial condyle of tibia': '胫骨内侧髁',
+  'lateral condyle of femur': '股骨外侧髁', 'medial condyle of femur': '股骨内侧髁',
+  'trochlea of talus': '距骨滑车',
+  // ---- 盆底与会阴 / pelvic floor and perineum
+  'pubovisceral muscle': '耻骨内脏肌', pubovisceralis: '耻骨内脏肌', 'inner layer': '内层', 'outer layer': '外层',
+  'internal anal sphincter': '肛门内括约肌', 'conjoint longitudinal muscle': '联合纵肌',
+  'conjoined longitudinal muscle': '联合纵肌', 'longitudinal muscle of anal canal': '联合纵肌',
+  'intersphincteric septum': '肛门括约肌间隔', 'anal intersphincteric septum': '肛门括约肌间隔',
+  'intersphincteric space': '括约肌间隙', rectococcygeus: '直肠尾骨肌', 'rectococcygeal muscle': '直肠尾骨肌',
+  rectoperinealis: '直肠会阴肌', 'rectoperineal muscle': '直肠会阴肌', 'anococcygeal ligament': '肛尾韧带',
+  'anococcygeal body': '肛尾体', mesorectum: '直肠系膜', 'urethral sphincter': '尿道括约肌',
+  'external urethral sphincter': '尿道外括约肌', 'internal urethral sphincter': '尿道内括约肌',
+  'compressor urethrae': '尿道压肌', 'urethrovaginal sphincter': '尿道阴道括约肌',
+  'sphincter urethrovaginalis': '尿道阴道括约肌', submucosa: '黏膜下层', 'urethral submucosa': '尿道黏膜下层',
+  'submucosa of urethra': '尿道黏膜下层', urethra: '尿道', 'pubovesical ligament': '耻骨膀胱韧带',
+  'deep transverse perineal muscle': '会阴深横肌', 'superficial transverse perineal muscle': '会阴浅横肌',
+  'deep transverse perineal': '会阴深横肌', 'superficial transverse perineal': '会阴浅横肌',
+  'perineal body': '会阴体', bulbospongiosus: '球海绵体肌', ischiocavernosus: '坐骨海绵体肌',
+  'rectovesical septum': '直肠膀胱隔', 'rectovaginal septum': '直肠阴道隔',
+  "denonvilliers' fascia": '直肠阴道隔', 'denonvilliers fascia': '直肠阴道隔',
+  'rectoprostatic fascia': '直肠前列腺筋膜', clitoris: '阴蒂', 'corpus cavernosum of clitoris': '阴蒂海绵体',
+  'bulb of vestibule': '前庭球', 'vestibular bulb': '前庭球', 'greater vestibular gland': '前庭大腺',
+  perineum: '会阴', 'skin of perineum': '会阴皮肤', 'perineal skin': '会阴皮肤', 'anal canal': '肛管',
+  anus: '肛门', rectum: '直肠', pubovaginalis: '耻骨阴道肌', puboanalis: '耻骨肛门肌',
+  puboperinealis: '耻骨会阴肌', 'tibial collateral ligament of knee joint': '胫侧副韧带',
+}

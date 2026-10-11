@@ -1,7 +1,12 @@
+// 读取 tools/register 生成的女性锚点包（data/raw/female/out/anchors，见其 README.md）：
+// 由 Visible Human Female CT 分割出的结构（VF_*，scanned）、丹佛大学同一供体的冰冻切片模型
+// （VD_*：下肢与骨盆的肌、单块跗骨、膝韧带、关节软骨）以及 Human Reference Atlas 的女性器官
+// （HRA_*，curated），全部处于同一坐标系，轴向和单位与本项目一致。
 // Reader for the female anchor package built by tools/register (data/raw/female/out/anchors, see
-// its README.md): structures segmented from the Visible Human Female CT (VF_*, scanned) and
-// female-specific organs from the Human Reference Atlas (HRA_*, curated), all in one frame that
-// uses our axes and units.
+// its README.md): structures segmented from the Visible Human Female CT (VF_*, scanned), the
+// University of Denver cryosection models of the same donor (VD_*: leg and pelvis muscles, single
+// tarsals, knee ligaments, articular cartilages) and female-specific organs from the Human
+// Reference Atlas (HRA_*, curated), all in one frame that uses our axes and units.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -28,10 +33,19 @@ export interface FemaleItem {
   quality: 'good' | 'usable' | 'poor'
   quality_reasons: string[]
   pose: 'both' | 'scanned-only'
-  /** row-major 4x4, scanned → re-posed (null = unchanged) */
+  /** 行主序 4x4，扫描姿势 → 重新摆姿势（null 表示不变） / row-major 4x4, scanned → re-posed (null = unchanged) */
   repose: number[] | null
   volume_ml: number
   mesh: { scanned: MeshRef; reposed: MeshRef | null }
+  /** 两个来源覆盖同一结构时：是否用本条目，以及另一来源的条目 id / where two sources cover one structure: use this one or not, and the other source's ids */
+  preferred?: boolean
+  alternatives?: string[]
+  /** （Denver 骨）与之重合的 CT 锚点 / (Denver bones) the CT anchor this bone coincides with */
+  duplicates?: string
+  /** （Denver）骨骼摆姿势时本条目跟随的骨：肌和韧带有起点、止点 / (Denver) bones the item moves with when the skeleton is re-posed: origin and insertion for muscles and ligaments */
+  follows?: { origin?: string[]; insertion?: string[]; bones: string[] }
+  attribution?: string
+  license?: string
 }
 
 export interface FemaleAnchors {
@@ -39,9 +53,9 @@ export interface FemaleAnchors {
   byId: Map<string, FemaleItem>
   sources: { id: string; name: string; url: string; license: string; attribution: string }[]
   jointCentres: Record<string, { scanned: [number, number, number]; reposed: [number, number, number]; male: [number, number, number] }>
-  /** mesh as scanned (supine, hands on the pelvis) */
+  /** 扫描时的网格（仰卧，手放在骨盆上） / mesh as scanned (supine, hands on the pelvis) */
   scanned(item: FemaleItem): Mesh
-  /** mesh with the package's arm re-posing applied; null for scanned-only items */
+  /** 应用了包内上肢重摆姿势的网格；仅限扫描姿势的条目为 null / mesh with the package's arm re-posing applied; null for scanned-only items */
   reposed(item: FemaleItem): Mesh | null
 }
 

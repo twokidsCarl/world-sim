@@ -19,6 +19,7 @@ import { depthOf, EXPOSURE_MAX_DISTANCE, LAYERS, SUPERFICIAL_EXPOSURE, usesExpos
 import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT3_DEFAULTS, overlapWith, pairStructures, placeConcept, pushOutOfSolids, register3to4, SOLID_TISSUES, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
 import { canalFor, isaPathFromFma, localJointWarp, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type JointCacheEntry, type TreePath } from './importZa.ts'
 import { capHoles, envelopeOf } from './derive.ts'
+import { checkSkinFit, internalsKey, loadSkinPackage } from './skinPackage.ts'
 import { deriveFat, FAT_DEEP_TISSUES, FAT_OPTIONS, FAT_REGIONS, fatRegionOfBone, isFatPart } from './fat.ts'
 import { PointIndex } from './register.ts'
 import { nerveAgreement, runLandmarkChecks, type LandmarkResult } from './landmarks.ts'
@@ -122,6 +123,16 @@ const SOURCE_O3D: SourceInfo = {
   license: 'CC BY-SA 4.0',
   attribution: 'Open3DModel, Open 3D Model project (LUMC, UMC Utrecht, Maastricht UMC+, KU Leuven KULAK), anatomytool.org - CC BY-SA 4.0; based on Z-Anatomy and BodyParts3D.' + ZA_NOTE,
 }
+/** 男性外部皮肤包的位置（相对项目根） / where the male external skin package lives (relative to the project root) */
+const MALE_SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/male-skin'
+let externalSkinSource: SourceInfo | null = null
+
+/** 肩带姿势校正的目标：盂肱关节（肱骨头中心）间距、锁骨上抬角；形变场作用范围（米） / targets of the shoulder posture correction: glenohumeral (humeral head centre) separation, clavicle elevation; reach of the field (m) */
+const SHOULDER_GH_SEPARATION = 0.35
+const SHOULDER_ELEVATION_DEG = 6
+const SHOULDER_RETRACTION_DEG = 16
+const SHOULDER_REACH = 0.12
+
 const SOURCE_DERIVED: SourceInfo = {
   name: 'soma (derived)',
   url: 'https://github.com/',
@@ -985,6 +996,204 @@ async function main() {
     }
   }
 
+  // ── 3c′. 肩带姿势校正 / shoulder girdle posture correction ───────────────────────────────────
+  // BodyParts3D 的锁骨长度正常，但姿势是仰卧成像时的样子：上抬约 15°、后缩约 33°，两侧肱骨头中心只相距约 327 mm。
+  // 每侧锁骨绕其胸骨端向前、向下转（不缩放任何骨），使盂肱关节间距达到约 350 mm；肩胛骨和整条上肢的骨
+  // 随锁骨肩峰端平移，周围的软组织（肩部肌、臂丛、腋血管和锁骨下血管、皮肤）随由骨表面锚点建立的局部形变场移动。
+  // The BodyParts3D clavicles have a normal length but the posture of supine imaging: raised by about
+  // 15° and drawn back by about 33°, the humeral head centres only about 327 mm apart. Each clavicle
+  // is turned forwards and downwards about its sternal end (no bone is scaled) until the glenohumeral
+  // separation is about 350 mm; the scapula and the bones of the whole upper limb are translated with
+  // the acromial end of the clavicle, and the soft tissue around them (shoulder muscles, brachial
+  // plexus, axillary and subclavian vessels, skin) follows a local field built from anchors on the bone surfaces.
+  // 默认不启用：按现在的做法，肩胛骨会贴进肋骨（间距 p10 由 6–7 mm 降到约 2 mm），桡神经沟处的检查也不过；
+  // 设 SOMA_SHOULDER_FIX=1 才执行。
+  // Off by default: as it stands the scapula ends up against the ribs (p10 gap from 6–7 mm down to about
+  // 2 mm) and the radial-groove landmark check fails; it runs only with SOMA_SHOULDER_FIX=1.
+  if (process.env.SOMA_SHOULDER_FIX) {
+    const bones = kept.filter((e) => e.cls.tissue === 'bone')
+    const one = (name: string) => bones.find((e) => e.name === name)
+    const headCentre = (e: Element): [number, number, number] => {
+      // 肱骨头中心：取近端 14 % 的顶点质心（与校正前后的差值无关紧要，只要前后一致）
+      // humeral head centre: centroid of the proximal 14 % of the vertices (the same definition before and after is what matters)
+      const p = e.mesh.positions
+      const top = e.stats.bbox[4] - 0.14 * (e.stats.bbox[4] - e.stats.bbox[1])
+      const c: [number, number, number] = [0, 0, 0]
+      let n = 0
+      for (let i = 0; i < p.length; i += 3) if (p[i + 1]! > top) {
+        c[0] += p[i]!
+        c[1] += p[i + 1]!
+        c[2] += p[i + 2]!
+        n++
+      }
+      return [c[0] / n, c[1] / n, c[2] / n]
+    }
+    const hl = one('Left humerus')
+    const hr = one('Right humerus')
+    const row: Record<string, unknown> = {}
+    if (hl && hr && one('Left clavicle') && one('Right clavicle')) {
+      const sep0 = headCentre(hl)[0] - headCentre(hr)[0]
+      const from: Float32Array[] = []
+      const to: Float32Array[] = []
+      const boneMap = new Map<string, (x: number, y: number, z: number) => [number, number, number]>()
+      const sides: Record<string, unknown> = {}
+      for (const [Name, sgn] of [['Left', 1], ['Right', -1]] as const) {
+        const cl = one(`${Name} clavicle`)!
+        const p = cl.mesh.positions
+        let sc = 0
+        let lat = 0
+        for (let i = 0; i < p.length / 3; i++) {
+          if (sgn * p[3 * i]! < sgn * p[3 * sc]!) sc = i
+          if (sgn * p[3 * i]! > sgn * p[3 * lat]!) lat = i
+        }
+        const S0 = [p[3 * sc]!, p[3 * sc + 1]!, p[3 * sc + 2]!] as const
+        const u = [p[3 * lat]! - S0[0], p[3 * lat + 1]! - S0[1], p[3 * lat + 2]! - S0[2]]
+        const len = Math.hypot(u[0]!, u[1]!, u[2]!)
+        const elev0 = Math.asin(u[1]! / len)
+        const retr0 = Math.atan2(-u[2]!, sgn * u[0]!)
+        // 上抬角降到目标值（原本更低则不动）；后缩角用二分法求，使肱骨头中心外移 dx。
+        // 肩胛骨随锁骨绕胸骨端做同一个刚性旋转（前伸时肩胛骨绕胸廓滑向前外侧，而不是平移进肋骨）。
+        // Elevation comes down to the target (left alone if already lower); retraction is found by
+        // bisection so that the humeral head centre moves outwards by dx. The scapula takes the same
+        // rigid rotation about the sternal end as the clavicle (in protraction the scapula glides
+        // forwards and outwards round the rib cage instead of being pushed into the ribs).
+        const elev1 = Math.min(elev0, (SHOULDER_ELEVATION_DEG * Math.PI) / 180)
+        const e0 = u.map((v) => v / len)
+        const rotationFor = (retr: number) => {
+          const e1 = [sgn * Math.cos(elev1) * Math.cos(retr), Math.sin(elev1), -Math.cos(elev1) * Math.sin(retr)]
+          const axr = [e0[1]! * e1[2]! - e0[2]! * e1[1]!, e0[2]! * e1[0]! - e0[0]! * e1[2]!, e0[0]! * e1[1]! - e0[1]! * e1[0]!]
+          const sin = Math.hypot(axr[0]!, axr[1]!, axr[2]!)
+          const cos = e0[0]! * e1[0]! + e0[1]! * e1[1]! + e0[2]! * e1[2]!
+          const ax = sin > 1e-9 ? axr.map((v) => v / sin) : [0, 1, 0]
+          return (x: number, y: number, z: number): [number, number, number] => {
+            const q = [x - S0[0], y - S0[1], z - S0[2]]
+            const cr = [ax[1]! * q[2]! - ax[2]! * q[1]!, ax[2]! * q[0]! - ax[0]! * q[2]!, ax[0]! * q[1]! - ax[1]! * q[0]!]
+            const ad = (ax[0]! * q[0]! + ax[1]! * q[1]! + ax[2]! * q[2]!) * (1 - cos)
+            return [S0[0] + q[0]! * cos + cr[0]! * sin + ax[0]! * ad, S0[1] + q[1]! * cos + cr[1]! * sin + ax[1]! * ad, S0[2] + q[2]! * cos + cr[2]! * sin + ax[2]! * ad]
+          }
+        }
+        // 后缩角降到目标值（原本更小则不动）。只靠转动锁骨把盂肱间距加到 350 mm 需要把后缩角减到约 11°，
+        // 肩会前移 3 cm 以上并把肩胛骨推进肋骨；这里取解剖上常见的站立位角度，达不到的部分如实报告。
+        // Retraction comes down to the target (left alone if already smaller). Reaching 350 mm between
+        // the glenohumeral joints by turning the clavicles alone would need a retraction of about 11°,
+        // which carries the shoulders more than 3 cm forwards and pushes the scapulae into the ribs;
+        // the usual standing angles are used instead and the shortfall is reported.
+        const retr1 = Math.min(retr0, (SHOULDER_RETRACTION_DEG * Math.PI) / 180)
+        const rot = rotationFor(retr1)
+        // 肩胛骨随锁骨绕胸骨端做同一个刚性旋转（沿胸廓滑动，而不是平移进肋骨）；上肢各骨按肱骨头中心的位移平移
+        // the scapula takes the clavicle's rigid rotation about the sternal end (gliding round the rib cage rather than being pushed into the ribs); the bones of the upper limb are translated by the displacement of the humeral head centre
+        const hc = headCentre(one(`${Name} humerus`)!)
+        const hc1 = rot(hc[0], hc[1], hc[2])
+        const d: [number, number, number] = [hc1[0] - hc[0], hc1[1] - hc[1], hc1[2] - hc[2]]
+        boneMap.set(cl.id, rot)
+        const scap = one(`${Name} scapula`)
+        if (scap) boneMap.set(scap.id, rot)
+        const ARM = new RegExp(`^${Name} (humerus|radius|ulna|scaphoid|lunate|triquetral|pisiform|trapezium|trapezoid|capitate|hamate)$|${Name.toLowerCase()} (thumb|index finger|middle finger|ring finger|little finger)|^${Name} (first|second|third|fourth|fifth) metacarpal`, 'i')
+        for (const e of bones) if (ARM.test(e.name)) boneMap.set(e.id, (x, y, z) => [x + d[0], y + d[1], z + d[2]])
+        sides[Name.toLowerCase()] = { clavicleLengthMm: round(len * 1000, 1), elevationDeg: [round((elev0 * 180) / Math.PI, 1), round((elev1 * 180) / Math.PI, 1)], retractionDeg: [round((retr0 * 180) / Math.PI, 1), round((retr1 * 180) / Math.PI, 1)], humeralHeadMovedMm: d.map((v) => round(v * 1000, 1)) }
+      }
+      const apply = (f: (x: number, y: number, z: number) => [number, number, number], pts: Float32Array) => {
+        const out = new Float32Array(pts.length)
+        for (let i = 0; i < pts.length; i += 3) {
+          const q = f(pts[i]!, pts[i + 1]!, pts[i + 2]!)
+          out[i] = q[0]
+          out[i + 1] = q[1]
+          out[i + 2] = q[2]
+        }
+        return out
+      }
+      // 肩胛骨与肋骨的最小间距（校正前后） / smallest scapula-to-rib distance (before and after)
+      const ribs = bones.filter((e) => /\brib$/i.test(e.name))
+      const ribIndex = new PointIndex(Float32Array.from(ribs.flatMap((e) => Array.from(thinPoints(surfacePoints(e.mesh, 0.003), 0.003)))), 0.01)
+      const scapGap = (name: string) => {
+        const sp = thinPoints(surfacePoints(one(name)!.mesh, 0.004), 0.004)
+        const dd: number[] = []
+        for (let i = 0; i < sp.length; i += 3) dd.push(ribIndex.distance(sp[i]!, sp[i + 1]!, sp[i + 2]!, 0.1))
+        dd.sort((a, b) => a - b)
+        return { minMm: round(dd[0]! * 1000, 1), p10Mm: round(dd[Math.floor(dd.length / 10)]! * 1000, 1) }
+      }
+      const gapBefore = { left: scapGap('Left scapula'), right: scapGap('Right scapula') }
+      const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity]
+      for (const e of bones) {
+        const a = thinPoints(surfacePoints(e.mesh, 0.006), 0.006)
+        const f = boneMap.get(e.id)
+        from.push(a)
+        to.push(f ? apply(f, a) : a)
+        if (f) for (let k = 0; k < 3; k++) {
+          b[k] = Math.min(b[k]!, e.stats.bbox[k]! - SHOULDER_REACH)
+          b[k + 3] = Math.max(b[k + 3]!, e.stats.bbox[k + 3]! + SHOULDER_REACH)
+        }
+      }
+      const cat = (list: Float32Array[]) => {
+        const out = new Float32Array(list.reduce((n, a) => n + a.length, 0))
+        let o = 0
+        for (const a of list) {
+          out.set(a, o)
+          o += a.length
+        }
+        return out
+      }
+      // 局部形变场：每个点取最近的“被移动的骨”表面点的位移，再按它到被移动的骨和到不动的骨的距离
+      // 以 1/(d + 2 mm)⁴ 加权（贴着肱骨的桡神经完全随肱骨走，贴着肋骨的组织不动，腋窝处平滑过渡）。
+      // The local field: a point takes the displacement of the nearest surface point of a moved bone,
+      // weighted against the nearest unmoved bone by 1/(d + 2 mm)⁴ (the radial nerve on the humerus
+      // follows the humerus entirely, tissue on the ribs stays, the axilla passes smoothly between).
+      const allFrom = cat(from)
+      const allTo = cat(to)
+      const mv: number[] = []
+      const mvD: number[] = []
+      const st: number[] = []
+      for (let i = 0; i < allFrom.length; i += 3) {
+        const dxx = allTo[i]! - allFrom[i]!
+        const dyy = allTo[i + 1]! - allFrom[i + 1]!
+        const dzz = allTo[i + 2]! - allFrom[i + 2]!
+        if (dxx || dyy || dzz) {
+          mv.push(allFrom[i]!, allFrom[i + 1]!, allFrom[i + 2]!)
+          mvD.push(dxx, dyy, dzz)
+        } else st.push(allFrom[i]!, allFrom[i + 1]!, allFrom[i + 2]!)
+      }
+      const mvIndex = new PointIndex(Float32Array.from(mv), 0.02)
+      const stIndex = new PointIndex(Float32Array.from(st), 0.02)
+      const NI = new Int32Array(1)
+      const ND = new Float64Array(1)
+      const fieldG = {
+        apply(pts: Float32Array): Float32Array {
+          const out = Float32Array.from(pts)
+          for (let i = 0; i < pts.length; i += 3) {
+            if (!mvIndex.nearest(pts[i]!, pts[i + 1]!, pts[i + 2]!, 1, NI, ND, SHOULDER_REACH)) continue
+            const q = 3 * NI[0]!
+            const dm = Math.sqrt(ND[0]!)
+            const ds = stIndex.distance(pts[i]!, pts[i + 1]!, pts[i + 2]!, 0.3)
+            const wm = 1 / (dm + 0.002) ** 4
+            const ws = 1 / (ds + 0.002) ** 4
+            // 在作用范围边缘平滑收到零 / fades smoothly to zero at the edge of the reach
+            const edge = Math.min(1, (SHOULDER_REACH - dm) / 0.02)
+            const w = (wm / (wm + ws)) * edge
+            out[i] = pts[i]! + w * mvD[q]!
+            out[i + 1] = pts[i + 1]! + w * mvD[q + 1]!
+            out[i + 2] = pts[i + 2]! + w * mvD[q + 2]!
+          }
+          return out
+        },
+      }
+      let moved = 0
+      for (const e of kept) {
+        const f = boneMap.get(e.id)
+        const eb = e.stats.bbox
+        if (!f && (e.cls.tissue === 'bone' || eb[0] > b[3]! || eb[3] < b[0]! || eb[1] > b[4]! || eb[4] < b[1]! || eb[2] > b[5]! || eb[5] < b[2]!)) continue
+        e.mesh = { positions: f ? apply(f, e.mesh.positions) : fieldG.apply(e.mesh.positions), indices: e.mesh.indices }
+        e.stats = measure(e.mesh)
+        if (e.centrelines) e.centrelines = e.centrelines.map((l) => ({ points: fieldG.apply(l.points), radius: l.radius }))
+        moved++
+      }
+      const sep1 = headCentre(hl)[0] - headCentre(hr)[0]
+      Object.assign(row, { glenohumeralSeparationMm: [round(sep0 * 1000, 1), round(sep1 * 1000, 1)], targetMm: SHOULDER_GH_SEPARATION * 1000, sides, scapulaToRibs: { before: gapBefore, after: { left: scapGap('Left scapula'), right: scapGap('Right scapula') } }, partsMoved: moved })
+      console.log(`\nShoulder girdle: glenohumeral separation ${(sep0 * 1000).toFixed(1)} → ${(sep1 * 1000).toFixed(1)} mm; ${JSON.stringify(sides)}; scapula to ribs ${JSON.stringify(row.scapulaToRibs)}; ${moved} parts moved`)
+    }
+    report.shoulderGirdle = row
+    lap('shoulder girdle posture')
+  }
+
   // ── 3d. 由我们自身几何推导的结构 / 3d. Structures derived from our own geometry ────────────────────────────────────────────
   // 没有哪个图谱能与本体吻合的薄壳：按它们所覆盖器官的封闭包络计算。
   // 标记为 `curated`，数据源为 "soma (derived)"。
@@ -1039,6 +1248,43 @@ async function main() {
     // Subcutaneous fat: the space between the inner wall of the skin and the deep envelope
     // (muscle, bone, cartilage, organs), cut by region. See fat.ts.
     const skinEl = kept.find((e) => e.name === 'Skin' && e.cls.tissue === 'skin')
+    // 外部皮肤包（见 skinPackage.ts）：只有当包声明它是按本次内部结构拟合的（fittedTo.key 与指纹一致）才装入。
+    // 同时报告男性外生殖器各部件伸出骨盆前方多远，供拟合皮肤时把它们包在皮肤之内。
+    // External skin package (see skinPackage.ts): installed only when the package says it was fitted to
+    // these internals (fittedTo.key equals the fingerprint). Also reported: how far the male external
+    // genital parts reach in front of the pelvis, so that a fitted skin can enclose them.
+    if (skinEl) {
+      const key = internalsKey(kept.filter((e) => e.cls.tissue === 'bone').map((e) => ({ name: e.name, bbox: e.stats.bbox })))
+      const pkg = loadSkinPackage(join(ROOT, MALE_SKIN_PACKAGE_DIR))
+      const row: Record<string, unknown> = { dir: MALE_SKIN_PACKAGE_DIR, internalsKey: key, present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false }
+      if (pkg && pkg.fittedTo?.body === 'male' && pkg.fittedTo.key === key) {
+        skinEl.mesh = pkg.mesh
+        skinEl.stats = measure(pkg.mesh)
+        skinEl.sourceTriangles = pkg.mesh.indices.length / 3
+        skinEl.provenance = 'curated'
+        skinEl.source = pkg.source.name
+        externalSkinSource = pkg.source
+        const fit = checkSkinFit(pkg.mesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ name: e.name, mesh: e.mesh })))
+        Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit })
+        console.log(`\nSkin package ${MALE_SKIN_PACKAGE_DIR} installed (${pkg.source.name}); deep-part surface outside the skin ${(fit.outside * 100).toFixed(1)}%`)
+      } else {
+        row.reason = !pkg ? 'no package' : !pkg.fittedTo ? 'the package does not say which internals it was fitted to (manifest.fittedTo missing)' : 'fitted to other internals'
+        console.log(`\nSkin: BodyParts3D skin kept (${row.reason}); a skin package for these internals must carry "fittedTo": {"body": "male", "key": "${key}"} in its manifest.json`)
+      }
+      const genital = kept.filter((e) => /penis|scrotum|testis|epididymis/i.test(e.name))
+      const pubis = kept.filter((e) => /hip bone/i.test(e.name))
+      if (genital.length && pubis.length) {
+        const front = Math.max(...pubis.map((e) => e.stats.bbox[5]))
+        const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity]
+        for (const e of genital) for (let k = 0; k < 3; k++) {
+          b[k] = Math.min(b[k]!, e.stats.bbox[k]!)
+          b[k + 3] = Math.max(b[k + 3]!, e.stats.bbox[k + 3]!)
+        }
+        row.externalGenitalia = { parts: genital.map((e) => e.name), bbox: b.map((v) => round(v, 4)), reachInFrontOfPubisMm: round((b[5]! - front) * 1000, 1), lowestBelowPubicSymphysisMm: round((Math.min(...pubis.map((e) => e.stats.bbox[1])) - b[1]!) * 1000, 1) }
+        console.log(`  external genital parts kept (${genital.length}); they reach ${((b[5]! - front) * 1000).toFixed(0)} mm in front of the pubis — a fitted skin must enclose bbox ${b.map((v) => v.toFixed(3)).join(', ')}`)
+      }
+      report.skinPackage = row
+    }
     if (skinEl) {
       const deep = kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary')
       const byRegion = new Map<string, number[]>()
@@ -1382,7 +1628,7 @@ async function main() {
     schema: 1,
     body: 'male',
     cautions,
-    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : []), ...(derived.length ? [SOURCE_DERIVED] : [])],
+    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : []), ...(derived.length ? [SOURCE_DERIVED] : []), ...(externalSkinSource ? [externalSkinSource] : [])],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
     parts,
