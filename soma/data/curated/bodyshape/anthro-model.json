@@ -1,0 +1,3589 @@
+{
+ "schema": 1,
+ "description": {
+  "zh": "精简人体测量模型：ln y = a + bStature*ln(S/S0) + cBmi*ln(B/B0) + sum_j factorLoadings[j]*f_j。y、S 单位毫米，B 为 kg/m2。用 ANSUR II（美国陆军，2012）拟合；说明见 tools/bodyshape/REPORT.md。",
+  "en": "Compact anthropometric model: ln y = a + bStature*ln(S/S0) + cBmi*ln(B/B0) + sum_j factorLoadings[j]*f_j. y and S in mm, B in kg/m2. Fitted to ANSUR II (US Army, 2012); see tools/bodyshape/REPORT.md."
+ },
+ "S0": 1650.0,
+ "B0": 22.0,
+ "controls": [
+  {
+   "id": "stature",
+   "name": {
+    "zh": "身高",
+    "en": "Stature"
+   },
+   "unit": "mm"
+  },
+  {
+   "id": "bmi",
+   "name": {
+    "zh": "体重指数（胖瘦）",
+    "en": "Body-mass index (fatness)"
+   },
+   "unit": "kg/m2"
+  },
+  {
+   "id": "legLength",
+   "name": {
+    "zh": "腿长比例（腿长–躯干长）",
+    "en": "Relative leg length (long legs vs long trunk)"
+   },
+   "unit": "sd",
+   "note": {
+    "zh": "体型因子 f1：身高、BMI 不变时，+1 使会阴高增加约 2.5 %、坐高减少约 2 %",
+    "en": "build factor f1: at fixed stature and BMI, +1 raises crotch height by about 2.5 % and lowers sitting height by about 2 %"
+   }
+  },
+  {
+   "id": "centralBuild",
+   "name": {
+    "zh": "体型分布（腰腹型–四肢/肩臂型）",
+    "en": "Mass distribution (waist-heavy vs limb/shoulder-heavy)"
+   },
+   "unit": "sd",
+   "note": {
+    "zh": "体型因子 f2：身高、BMI 不变时，+1 使腰围增加约 4 %，四肢围度减少 1–3 %（女性：大腿下部、小腿；男性：上臂、前臂、肩）。可近似理解为同体重下“偏软”与“偏肌肉”的差别。",
+    "en": "build factor f2: at fixed stature and BMI, +1 adds about 4 % to waist girth and takes 1-3 % off limb girths (women: lower thigh, calf; men: upper arm, forearm, shoulders). A proxy for soft vs muscular build at equal weight."
+   }
+  }
+ ],
+ "outputs": [
+  {
+   "id": "cervicaleheight",
+   "group": "length",
+   "name": {
+    "zh": "颈椎点高",
+    "en": "Cervicale (C7) height"
+   },
+   "definition": {
+    "zh": "站立，地面至第七颈椎棘突尖",
+    "en": "floor to C7 spinous tip, standing"
+   }
+  },
+  {
+   "id": "acromialheight",
+   "group": "length",
+   "name": {
+    "zh": "肩峰高",
+    "en": "Acromial height"
+   },
+   "definition": {
+    "zh": "站立，地面至肩峰点",
+    "en": "floor to acromion, standing"
+   }
+  },
+  {
+   "id": "suprasternaleheight",
+   "group": "length",
+   "name": {
+    "zh": "胸骨上点高",
+    "en": "Suprasternale height"
+   },
+   "definition": {
+    "zh": "地面至胸骨上切迹",
+    "en": "floor to jugular notch"
+   }
+  },
+  {
+   "id": "axillaheight",
+   "group": "length",
+   "name": {
+    "zh": "腋窝高",
+    "en": "Axilla height"
+   },
+   "definition": {
+    "zh": "地面至腋前襞",
+    "en": "floor to anterior axillary fold"
+   }
+  },
+  {
+   "id": "chestheight",
+   "group": "length",
+   "name": {
+    "zh": "乳头点高",
+    "en": "Chest (bust point) height"
+   },
+   "definition": {
+    "zh": "地面至乳头点",
+    "en": "floor to nipple / bust point"
+   }
+  },
+  {
+   "id": "tenthribheight",
+   "group": "length",
+   "name": {
+    "zh": "第十肋高",
+    "en": "Tenth rib height"
+   },
+   "definition": {
+    "zh": "地面至第十肋最低点",
+    "en": "floor to lowest point of rib 10"
+   }
+  },
+  {
+   "id": "waistheightomphalion",
+   "group": "length",
+   "name": {
+    "zh": "脐高",
+    "en": "Waist (navel) height"
+   },
+   "definition": {
+    "zh": "地面至脐",
+    "en": "floor to navel"
+   }
+  },
+  {
+   "id": "iliocristaleheight",
+   "group": "length",
+   "name": {
+    "zh": "髂嵴点高",
+    "en": "Iliocristale height"
+   },
+   "definition": {
+    "zh": "地面至髂嵴最高点",
+    "en": "floor to top of iliac crest"
+   }
+  },
+  {
+   "id": "buttockheight",
+   "group": "length",
+   "name": {
+    "zh": "臀突点高",
+    "en": "Buttock height"
+   },
+   "definition": {
+    "zh": "地面至臀部最后突点",
+    "en": "floor to most posterior point of buttock"
+   }
+  },
+  {
+   "id": "trochanterionheight",
+   "group": "length",
+   "name": {
+    "zh": "大转子点高",
+    "en": "Trochanterion height"
+   },
+   "definition": {
+    "zh": "地面至大转子尖",
+    "en": "floor to tip of greater trochanter"
+   }
+  },
+  {
+   "id": "crotchheight",
+   "group": "length",
+   "name": {
+    "zh": "会阴高",
+    "en": "Crotch height"
+   },
+   "definition": {
+    "zh": "地面至会阴",
+    "en": "floor to crotch"
+   }
+  },
+  {
+   "id": "tibialheight",
+   "group": "length",
+   "name": {
+    "zh": "胫骨点高",
+    "en": "Tibiale height"
+   },
+   "definition": {
+    "zh": "地面至胫骨内侧髁上缘",
+    "en": "floor to medial tibial plateau edge"
+   }
+  },
+  {
+   "id": "lateralfemoralepicondyleheight",
+   "group": "length",
+   "name": {
+    "zh": "股骨外上髁高",
+    "en": "Lateral femoral epicondyle height"
+   },
+   "definition": {
+    "zh": "地面至股骨外上髁",
+    "en": "floor to lateral femoral epicondyle"
+   }
+  },
+  {
+   "id": "kneeheightmidpatella",
+   "group": "length",
+   "name": {
+    "zh": "髌骨中点高",
+    "en": "Mid-patella height"
+   },
+   "definition": {
+    "zh": "地面至髌骨中心",
+    "en": "floor to centre of patella"
+   }
+  },
+  {
+   "id": "lateralmalleolusheight",
+   "group": "length",
+   "name": {
+    "zh": "外踝高",
+    "en": "Lateral malleolus height"
+   },
+   "definition": {
+    "zh": "地面至外踝",
+    "en": "floor to lateral malleolus"
+   }
+  },
+  {
+   "id": "sittingheight",
+   "group": "length",
+   "name": {
+    "zh": "坐高",
+    "en": "Sitting height"
+   },
+   "definition": {
+    "zh": "挺直坐姿，座面至头顶",
+    "en": "seat to vertex, sitting erect"
+   }
+  },
+  {
+   "id": "acromionradialelength",
+   "group": "length",
+   "name": {
+    "zh": "上臂长（肩峰–桡骨点）",
+    "en": "Acromion-radiale length"
+   },
+   "definition": {
+    "zh": "肩峰点至桡骨点",
+    "en": "acromion to radiale"
+   }
+  },
+  {
+   "id": "radialestylionlength",
+   "group": "length",
+   "name": {
+    "zh": "前臂长（桡骨点–茎突点）",
+    "en": "Radiale-stylion length"
+   },
+   "definition": {
+    "zh": "桡骨点至桡骨茎突尖",
+    "en": "radiale to radial styloid tip"
+   }
+  },
+  {
+   "id": "shoulderelbowlength",
+   "group": "length",
+   "name": {
+    "zh": "肩肘长",
+    "en": "Shoulder-elbow length"
+   },
+   "definition": {
+    "zh": "屈肘 90 度，肩峰至鹰嘴",
+    "en": "acromion to olecranon, elbow at 90 deg"
+   }
+  },
+  {
+   "id": "handlength",
+   "group": "length",
+   "name": {
+    "zh": "手长",
+    "en": "Hand length"
+   },
+   "definition": {
+    "zh": "腕横纹至中指尖",
+    "en": "wrist crease to tip of middle finger"
+   }
+  },
+  {
+   "id": "footlength",
+   "group": "length",
+   "name": {
+    "zh": "足长",
+    "en": "Foot length"
+   },
+   "definition": {
+    "zh": "足跟至最长趾尖",
+    "en": "heel to longest toe"
+   }
+  },
+  {
+   "id": "span",
+   "group": "length",
+   "name": {
+    "zh": "两臂展开宽",
+    "en": "Arm span"
+   },
+   "definition": {
+    "zh": "两臂平伸，指尖至指尖",
+    "en": "fingertip to fingertip, arms horizontal"
+   }
+  },
+  {
+   "id": "wristheight",
+   "group": "length",
+   "name": {
+    "zh": "腕高（茎突点高）",
+    "en": "Wrist (stylion) height"
+   },
+   "definition": {
+    "zh": "上肢下垂，地面至桡骨茎突",
+    "en": "floor to stylion, arm hanging"
+   }
+  },
+  {
+   "id": "biacromialbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "肩宽（肩峰间距）",
+    "en": "Biacromial breadth"
+   },
+   "definition": {
+    "zh": "两肩峰点间距",
+    "en": "between acromia"
+   }
+  },
+  {
+   "id": "bideltoidbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "最大肩宽",
+    "en": "Bideltoid breadth"
+   },
+   "definition": {
+    "zh": "上肢下垂，两侧三角肌最外点间距",
+    "en": "across deltoids, arms at sides"
+   }
+  },
+  {
+   "id": "chestbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "胸宽",
+    "en": "Chest breadth"
+   },
+   "definition": {
+    "zh": "乳头水平的胸宽",
+    "en": "at nipple level"
+   }
+  },
+  {
+   "id": "chestdepth",
+   "group": "breadth",
+   "name": {
+    "zh": "胸厚",
+    "en": "Chest depth"
+   },
+   "definition": {
+    "zh": "乳头水平的胸厚",
+    "en": "at nipple level"
+   }
+  },
+  {
+   "id": "waistbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "腰宽",
+    "en": "Waist breadth"
+   },
+   "definition": {
+    "zh": "脐水平的腰宽",
+    "en": "at navel level"
+   }
+  },
+  {
+   "id": "waistdepth",
+   "group": "breadth",
+   "name": {
+    "zh": "腰厚",
+    "en": "Waist depth"
+   },
+   "definition": {
+    "zh": "脐水平的腰厚",
+    "en": "at navel level"
+   }
+  },
+  {
+   "id": "bicristalbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "髂嵴间宽",
+    "en": "Bicristal breadth"
+   },
+   "definition": {
+    "zh": "两髂嵴间距（压至骨面）",
+    "en": "between iliac crests, compressed to bone"
+   }
+  },
+  {
+   "id": "hipbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "臀宽",
+    "en": "Hip breadth"
+   },
+   "definition": {
+    "zh": "站立，臀部最宽处",
+    "en": "widest point of hips, standing"
+   }
+  },
+  {
+   "id": "buttockdepth",
+   "group": "breadth",
+   "name": {
+    "zh": "臀厚",
+    "en": "Buttock depth"
+   },
+   "definition": {
+    "zh": "臀突水平的厚度",
+    "en": "at buttock level"
+   }
+  },
+  {
+   "id": "footbreadthhorizontal",
+   "group": "breadth",
+   "name": {
+    "zh": "足宽",
+    "en": "Foot breadth"
+   },
+   "definition": {
+    "zh": "跖骨头处足宽",
+    "en": "across metatarsal heads"
+   }
+  },
+  {
+   "id": "handbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "手宽",
+    "en": "Hand breadth"
+   },
+   "definition": {
+    "zh": "掌骨头处手宽",
+    "en": "across metacarpal heads"
+   }
+  },
+  {
+   "id": "headbreadth",
+   "group": "breadth",
+   "name": {
+    "zh": "头宽",
+    "en": "Head breadth"
+   },
+   "definition": {
+    "zh": "耳上方头最大宽",
+    "en": "maximum, above ears"
+   }
+  },
+  {
+   "id": "headlength",
+   "group": "breadth",
+   "name": {
+    "zh": "头长",
+    "en": "Head length"
+   },
+   "definition": {
+    "zh": "眉间点至枕后点",
+    "en": "glabella to opisthocranion"
+   }
+  },
+  {
+   "id": "headcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "头围",
+    "en": "Head circumference"
+   },
+   "definition": {
+    "zh": "经眉弓上方的头围",
+    "en": "above brow ridges"
+   }
+  },
+  {
+   "id": "neckcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "颈围",
+    "en": "Neck circumference"
+   },
+   "definition": {
+    "zh": "甲状软骨下方、垂直于颈轴的围度",
+    "en": "at infrathyroid level, perpendicular to neck"
+   }
+  },
+  {
+   "id": "neckcircumferencebase",
+   "group": "girth",
+   "name": {
+    "zh": "颈根围",
+    "en": "Neck-base circumference"
+   },
+   "definition": {
+    "zh": "颈根部围度",
+    "en": "around base of neck"
+   }
+  },
+  {
+   "id": "shouldercircumference",
+   "group": "girth",
+   "name": {
+    "zh": "肩围",
+    "en": "Shoulder circumference"
+   },
+   "definition": {
+    "zh": "经三角肌的水平围度",
+    "en": "around deltoids, horizontal"
+   }
+  },
+  {
+   "id": "chestcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "胸围",
+    "en": "Chest circumference"
+   },
+   "definition": {
+    "zh": "乳头点水平的水平围度",
+    "en": "horizontal at nipple / bust point"
+   }
+  },
+  {
+   "id": "waistcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "腰围（脐水平）",
+    "en": "Waist circumference (navel level)"
+   },
+   "definition": {
+    "zh": "脐水平的水平围度",
+    "en": "horizontal at navel"
+   }
+  },
+  {
+   "id": "buttockcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "臀围",
+    "en": "Buttock (hip) circumference"
+   },
+   "definition": {
+    "zh": "臀部最后突点水平的水平围度",
+    "en": "horizontal at most posterior point of buttock"
+   }
+  },
+  {
+   "id": "thighcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "大腿围（臀沟下）",
+    "en": "Thigh circumference (proximal)"
+   },
+   "definition": {
+    "zh": "臀沟下方、垂直于大腿轴的围度",
+    "en": "just below gluteal furrow, perpendicular to thigh"
+   }
+  },
+  {
+   "id": "lowerthighcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "大腿下围",
+    "en": "Lower thigh circumference"
+   },
+   "definition": {
+    "zh": "髌骨上缘处围度",
+    "en": "just above patella"
+   }
+  },
+  {
+   "id": "calfcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "小腿围",
+    "en": "Calf circumference"
+   },
+   "definition": {
+    "zh": "小腿最大水平围度",
+    "en": "maximum, horizontal"
+   }
+  },
+  {
+   "id": "anklecircumference",
+   "group": "girth",
+   "name": {
+    "zh": "踝围",
+    "en": "Ankle circumference"
+   },
+   "definition": {
+    "zh": "踝上最小围度",
+    "en": "minimum, above malleoli"
+   }
+  },
+  {
+   "id": "bicepscircumferenceflexed",
+   "group": "girth",
+   "name": {
+    "zh": "上臂围（屈肘）",
+    "en": "Biceps circumference, flexed"
+   },
+   "definition": {
+    "zh": "屈肘 90 度握拳时的上臂围",
+    "en": "elbow at 90 deg, fist clenched"
+   }
+  },
+  {
+   "id": "forearmcircumferenceflexed",
+   "group": "girth",
+   "name": {
+    "zh": "前臂围（屈肘）",
+    "en": "Forearm circumference, flexed"
+   },
+   "definition": {
+    "zh": "屈肘 90 度握拳时的前臂最大围",
+    "en": "maximum, elbow at 90 deg, fist clenched"
+   }
+  },
+  {
+   "id": "wristcircumference",
+   "group": "girth",
+   "name": {
+    "zh": "腕围",
+    "en": "Wrist circumference"
+   },
+   "definition": {
+    "zh": "桡骨茎突处腕围",
+    "en": "at stylion"
+   }
+  }
+ ],
+ "sexes": {
+  "F": {
+   "source": "ANSUR II",
+   "n": 1986,
+   "nTrain": 1589,
+   "nTest": 397,
+   "statureMm": {
+    "p5": 1525.0,
+    "p50": 1626.0,
+    "p95": 1740.0
+   },
+   "bmi": {
+    "p1": 18.8,
+    "p5": 20.3,
+    "p50": 25.3,
+    "p95": 31.7,
+    "p99": 34.8
+   },
+   "ageMedian": 27.0,
+   "factorScoring": {
+    "note": {
+     "zh": "因子得分 score_j = ((z @ W)[j] - mean[j]) / sd[j]，z 为扣除身高、BMI 后各测量项的标准化残差",
+     "en": "score_j = ((z @ W)[j] - mean[j]) / sd[j], z = residual_k / sd_k over `measures` after the stature+BMI fit"
+    },
+    "measures": [
+     "cervicaleheight",
+     "acromialheight",
+     "suprasternaleheight",
+     "axillaheight",
+     "chestheight",
+     "tenthribheight",
+     "waistheightomphalion",
+     "iliocristaleheight",
+     "buttockheight",
+     "trochanterionheight",
+     "crotchheight",
+     "tibialheight",
+     "lateralfemoralepicondyleheight",
+     "kneeheightmidpatella",
+     "lateralmalleolusheight",
+     "sittingheight",
+     "acromionradialelength",
+     "radialestylionlength",
+     "handlength",
+     "footlength",
+     "biacromialbreadth",
+     "bideltoidbreadth",
+     "chestbreadth",
+     "chestdepth",
+     "waistbreadth",
+     "waistdepth",
+     "bicristalbreadth",
+     "hipbreadth",
+     "buttockdepth",
+     "neckcircumference",
+     "neckcircumferencebase",
+     "shouldercircumference",
+     "chestcircumference",
+     "waistcircumference",
+     "buttockcircumference",
+     "thighcircumference",
+     "lowerthighcircumference",
+     "calfcircumference",
+     "anklecircumference",
+     "bicepscircumferenceflexed",
+     "forearmcircumferenceflexed",
+     "wristcircumference"
+    ],
+    "residualSdLog": [
+     0.00748,
+     0.01002,
+     0.00793,
+     0.01138,
+     0.01866,
+     0.01615,
+     0.02048,
+     0.02009,
+     0.02955,
+     0.02718,
+     0.02958,
+     0.02972,
+     0.03458,
+     0.03089,
+     0.07279,
+     0.02482,
+     0.03317,
+     0.04519,
+     0.04086,
+     0.03354,
+     0.03964,
+     0.0306,
+     0.04829,
+     0.06264,
+     0.06118,
+     0.07636,
+     0.06011,
+     0.04164,
+     0.04841,
+     0.03641,
+     0.03623,
+     0.02808,
+     0.04517,
+     0.05621,
+     0.0284,
+     0.03644,
+     0.04739,
+     0.04498,
+     0.05416,
+     0.04417,
+     0.03916,
+     0.03404
+    ],
+    "W": [
+     [
+      0.0575,
+      0.02279
+     ],
+     [
+      0.0503,
+      0.0401
+     ],
+     [
+      0.06645,
+      -0.00435
+     ],
+     [
+      0.05837,
+      0.00564
+     ],
+     [
+      0.04683,
+      -0.03182
+     ],
+     [
+      0.08052,
+      -0.00632
+     ],
+     [
+      0.07064,
+      -0.04885
+     ],
+     [
+      0.08378,
+      -0.00114
+     ],
+     [
+      0.08892,
+      0.02395
+     ],
+     [
+      0.08839,
+      0.01159
+     ],
+     [
+      0.09035,
+      -0.0042
+     ],
+     [
+      0.08765,
+      0.01353
+     ],
+     [
+      0.07912,
+      -0.00402
+     ],
+     [
+      0.08784,
+      0.01182
+     ],
+     [
+      -0.00673,
+      -0.0119
+     ],
+     [
+      -0.09063,
+      -0.01916
+     ],
+     [
+      0.05256,
+      0.02568
+     ],
+     [
+      0.06372,
+      -0.00521
+     ],
+     [
+      0.04733,
+      -0.02547
+     ],
+     [
+      0.03708,
+      -0.03718
+     ],
+     [
+      0.0026,
+      0.01539
+     ],
+     [
+      0.00524,
+      0.08461
+     ],
+     [
+      -0.02185,
+      0.09385
+     ],
+     [
+      0.00089,
+      0.12029
+     ],
+     [
+      -0.01461,
+      0.12412
+     ],
+     [
+      0.02596,
+      0.11452
+     ],
+     [
+      -0.02576,
+      0.08767
+     ],
+     [
+      -0.03125,
+      -0.02694
+     ],
+     [
+      0.02488,
+      -0.01086
+     ],
+     [
+      0.00487,
+      0.06996
+     ],
+     [
+      -0.00624,
+      0.0536
+     ],
+     [
+      0.01323,
+      0.05121
+     ],
+     [
+      -0.00413,
+      0.1447
+     ],
+     [
+      0.00301,
+      0.14088
+     ],
+     [
+      -0.01696,
+      -0.0493
+     ],
+     [
+      0.00096,
+      -0.09863
+     ],
+     [
+      -0.01011,
+      -0.14166
+     ],
+     [
+      -0.02446,
+      -0.1324
+     ],
+     [
+      -0.0309,
+      -0.09723
+     ],
+     [
+      0.00849,
+      -0.02038
+     ],
+     [
+      0.00781,
+      -0.04124
+     ],
+     [
+      -0.00869,
+      -0.03306
+     ]
+    ],
+    "mean": [
+     0.0,
+     0.0
+    ],
+    "sd": [
+     1.0,
+     1.0
+    ]
+   },
+   "residualPcaShare": [
+    0.23,
+    0.124,
+    0.094,
+    0.052,
+    0.045,
+    0.039
+   ],
+   "outputs": {
+    "cervicaleheight": {
+     "a": 7.25449,
+     "bStature": 1.0629,
+     "cBmi": 0.0034,
+     "factorLoadings": [
+      0.00405,
+      0.00069
+     ],
+     "residualSdLog": 0.00625,
+     "fit": {
+      "r2Train": 0.968,
+      "r2Test": 0.971,
+      "residualSdMmTest": 10.8,
+      "r2TestWithFactors": 0.98,
+      "residualSdMmTestWithFactors": 9.1
+     },
+     "sampleMedianMm": 1393.0
+    },
+    "acromialheight": {
+     "a": 7.20859,
+     "bStature": 1.0663,
+     "cBmi": 0.0149,
+     "factorLoadings": [
+      0.00464,
+      0.00187
+     ],
+     "residualSdLog": 0.00868,
+     "fit": {
+      "r2Train": 0.945,
+      "r2Test": 0.953,
+      "residualSdMmTest": 13.6,
+      "r2TestWithFactors": 0.962,
+      "residualSdMmTestWithFactors": 12.1
+     },
+     "sampleMedianMm": 1332.0
+    },
+    "suprasternaleheight": {
+     "a": 7.20417,
+     "bStature": 1.0625,
+     "cBmi": 0.0173,
+     "factorLoadings": [
+      0.00507,
+      -0.00043
+     ],
+     "residualSdLog": 0.00608,
+     "fit": {
+      "r2Train": 0.965,
+      "r2Test": 0.971,
+      "residualSdMmTest": 10.5,
+      "r2TestWithFactors": 0.983,
+      "residualSdMmTestWithFactors": 8.0
+     },
+     "sampleMedianMm": 1326.5
+    },
+    "axillaheight": {
+     "a": 7.13744,
+     "bStature": 1.0999,
+     "cBmi": -0.0082,
+     "factorLoadings": [
+      0.00634,
+      2e-05
+     ],
+     "residualSdLog": 0.00944,
+     "fit": {
+      "r2Train": 0.934,
+      "r2Test": 0.947,
+      "residualSdMmTest": 13.9,
+      "r2TestWithFactors": 0.965,
+      "residualSdMmTestWithFactors": 11.4
+     },
+     "sampleMedianMm": 1236.0
+    },
+    "chestheight": {
+     "a": 7.08393,
+     "bStature": 1.0915,
+     "cBmi": -0.027,
+     "factorLoadings": [
+      0.00867,
+      -0.00354
+     ],
+     "residualSdLog": 0.01614,
+     "fit": {
+      "r2Train": 0.838,
+      "r2Test": 0.863,
+      "residualSdMmTest": 22.5,
+      "r2TestWithFactors": 0.901,
+      "residualSdMmTestWithFactors": 19.1
+     },
+     "sampleMedianMm": 1169.0
+    },
+    "tenthribheight": {
+     "a": 6.97559,
+     "bStature": 1.1153,
+     "cBmi": 0.0076,
+     "factorLoadings": [
+      0.01253,
+      -0.00116
+     ],
+     "residualSdLog": 0.01013,
+     "fit": {
+      "r2Train": 0.877,
+      "r2Test": 0.895,
+      "residualSdMmTest": 17.6,
+      "r2TestWithFactors": 0.961,
+      "residualSdMmTestWithFactors": 10.7
+     },
+     "sampleMedianMm": 1054.0
+    },
+    "waistheightomphalion": {
+     "a": 6.90845,
+     "bStature": 1.1814,
+     "cBmi": -0.044,
+     "factorLoadings": [
+      0.01436,
+      -0.00594
+     ],
+     "residualSdLog": 0.01333,
+     "fit": {
+      "r2Train": 0.834,
+      "r2Test": 0.857,
+      "residualSdMmTest": 20.0,
+      "r2TestWithFactors": 0.942,
+      "residualSdMmTestWithFactors": 12.8
+     },
+     "sampleMedianMm": 977.5
+    },
+    "iliocristaleheight": {
+     "a": 6.91729,
+     "bStature": 1.1496,
+     "cBmi": 0.0061,
+     "factorLoadings": [
+      0.01616,
+      -0.00092
+     ],
+     "residualSdLog": 0.01189,
+     "fit": {
+      "r2Train": 0.83,
+      "r2Test": 0.864,
+      "residualSdMmTest": 19.8,
+      "r2TestWithFactors": 0.955,
+      "residualSdMmTestWithFactors": 11.3
+     },
+     "sampleMedianMm": 993.0
+    },
+    "buttockheight": {
+     "a": 6.73694,
+     "bStature": 1.1594,
+     "cBmi": 0.0245,
+     "factorLoadings": [
+      0.02488,
+      0.00247
+     ],
+     "residualSdLog": 0.01574,
+     "fit": {
+      "r2Train": 0.698,
+      "r2Test": 0.743,
+      "residualSdMmTest": 24.5,
+      "r2TestWithFactors": 0.927,
+      "residualSdMmTestWithFactors": 13.0
+     },
+     "sampleMedianMm": 831.0
+    },
+    "trochanterionheight": {
+     "a": 6.75315,
+     "bStature": 1.1404,
+     "cBmi": 0.0062,
+     "factorLoadings": [
+      0.02291,
+      0.00051
+     ],
+     "residualSdLog": 0.01462,
+     "fit": {
+      "r2Train": 0.725,
+      "r2Test": 0.773,
+      "residualSdMmTest": 22.7,
+      "r2TestWithFactors": 0.935,
+      "residualSdMmTestWithFactors": 12.2
+     },
+     "sampleMedianMm": 844.0
+    },
+    "crotchheight": {
+     "a": 6.68108,
+     "bStature": 1.2253,
+     "cBmi": -0.0284,
+     "factorLoadings": [
+      0.02571,
+      -0.00193
+     ],
+     "residualSdLog": 0.0145,
+     "fit": {
+      "r2Train": 0.719,
+      "r2Test": 0.745,
+      "residualSdMmTest": 24.2,
+      "r2TestWithFactors": 0.944,
+      "residualSdMmTestWithFactors": 11.3
+     },
+     "sampleMedianMm": 780.0
+    },
+    "tibialheight": {
+     "a": 6.09586,
+     "bStature": 1.2242,
+     "cBmi": 0.0084,
+     "factorLoadings": [
+      0.02481,
+      0.00087
+     ],
+     "residualSdLog": 0.01634,
+     "fit": {
+      "r2Train": 0.719,
+      "r2Test": 0.751,
+      "residualSdMmTest": 13.4,
+      "r2TestWithFactors": 0.935,
+      "residualSdMmTestWithFactors": 6.9
+     },
+     "sampleMedianMm": 437.0
+    },
+    "lateralfemoralepicondyleheight": {
+     "a": 6.15528,
+     "bStature": 1.1666,
+     "cBmi": 0.0238,
+     "factorLoadings": [
+      0.02633,
+      -0.00203
+     ],
+     "residualSdLog": 0.02233,
+     "fit": {
+      "r2Train": 0.636,
+      "r2Test": 0.657,
+      "residualSdMmTest": 17.1,
+      "r2TestWithFactors": 0.867,
+      "residualSdMmTestWithFactors": 10.6
+     },
+     "sampleMedianMm": 465.0
+    },
+    "kneeheightmidpatella": {
+     "a": 6.12027,
+     "bStature": 1.2206,
+     "cBmi": 0.0136,
+     "factorLoadings": [
+      0.02587,
+      0.00063
+     ],
+     "residualSdLog": 0.01687,
+     "fit": {
+      "r2Train": 0.702,
+      "r2Test": 0.742,
+      "residualSdMmTest": 14.3,
+      "r2TestWithFactors": 0.933,
+      "residualSdMmTestWithFactors": 7.3
+     },
+     "sampleMedianMm": 448.0
+    },
+    "lateralmalleolusheight": {
+     "a": 4.14467,
+     "bStature": 0.898,
+     "cBmi": 0.0245,
+     "factorLoadings": [
+      -0.00429,
+      -0.00432
+     ],
+     "residualSdLog": 0.07254,
+     "fit": {
+      "r2Train": 0.187,
+      "r2Test": 0.205,
+      "residualSdMmTest": 4.8,
+      "r2TestWithFactors": 0.211,
+      "residualSdMmTestWithFactors": 4.7
+     },
+     "sampleMedianMm": 63.0
+    },
+    "sittingheight": {
+     "a": 6.76382,
+     "bStature": 0.7643,
+     "cBmi": -0.0024,
+     "factorLoadings": [
+      -0.02136,
+      -0.00143
+     ],
+     "residualSdLog": 0.01255,
+     "fit": {
+      "r2Train": 0.589,
+      "r2Test": 0.56,
+      "residualSdMmTest": 21.6,
+      "r2TestWithFactors": 0.878,
+      "residualSdMmTestWithFactors": 11.4
+     },
+     "sampleMedianMm": 857.0
+    },
+    "acromionradialelength": {
+     "a": 5.74845,
+     "bStature": 1.1041,
+     "cBmi": 0.0408,
+     "factorLoadings": [
+      0.01633,
+      0.00365
+     ],
+     "residualSdLog": 0.02865,
+     "fit": {
+      "r2Train": 0.63,
+      "r2Test": 0.671,
+      "residualSdMmTest": 10.3,
+      "r2TestWithFactors": 0.737,
+      "residualSdMmTestWithFactors": 9.2
+     },
+     "sampleMedianMm": 311.0
+    },
+    "radialestylionlength": {
+     "a": 5.49462,
+     "bStature": 1.0756,
+     "cBmi": 0.0297,
+     "factorLoadings": [
+      0.02775,
+      -0.00261
+     ],
+     "residualSdLog": 0.03557,
+     "fit": {
+      "r2Train": 0.462,
+      "r2Test": 0.526,
+      "residualSdMmTest": 11.2,
+      "r2TestWithFactors": 0.73,
+      "residualSdMmTestWithFactors": 8.5
+     },
+     "sampleMedianMm": 240.5
+    },
+    "shoulderelbowlength": {
+     "a": 5.82391,
+     "bStature": 1.0757,
+     "cBmi": 0.0125,
+     "factorLoadings": [
+      0.01293,
+      0.00299
+     ],
+     "residualSdLog": 0.02604,
+     "fit": {
+      "r2Train": 0.67,
+      "r2Test": 0.686,
+      "residualSdMmTest": 10.2,
+      "r2TestWithFactors": 0.732,
+      "residualSdMmTestWithFactors": 9.4
+     },
+     "sampleMedianMm": 334.0
+    },
+    "handlength": {
+     "a": 5.19979,
+     "bStature": 0.8833,
+     "cBmi": 0.067,
+     "factorLoadings": [
+      0.01906,
+      -0.00639
+     ],
+     "residualSdLog": 0.03558,
+     "fit": {
+      "r2Train": 0.436,
+      "r2Test": 0.468,
+      "residualSdMmTest": 7.7,
+      "r2TestWithFactors": 0.598,
+      "residualSdMmTestWithFactors": 6.8
+     },
+     "sampleMedianMm": 180.0
+    },
+    "footlength": {
+     "a": 5.50782,
+     "bStature": 0.9155,
+     "cBmi": 0.0701,
+     "factorLoadings": [
+      0.01253,
+      -0.00714
+     ],
+     "residualSdLog": 0.03028,
+     "fit": {
+      "r2Train": 0.552,
+      "r2Test": 0.558,
+      "residualSdMmTest": 8.5,
+      "r2TestWithFactors": 0.633,
+      "residualSdMmTestWithFactors": 7.8
+     },
+     "sampleMedianMm": 246.0
+    },
+    "span": {
+     "a": 7.42399,
+     "bStature": 1.0252,
+     "cBmi": 0.0255,
+     "factorLoadings": [
+      0.01715,
+      -0.00024
+     ],
+     "residualSdLog": 0.02204,
+     "fit": {
+      "r2Train": 0.671,
+      "r2Test": 0.694,
+      "residualSdMmTest": 49.4,
+      "r2TestWithFactors": 0.81,
+      "residualSdMmTestWithFactors": 39.1
+     },
+     "sampleMedianMm": 1657.0
+    },
+    "wristheight": {
+     "a": 6.68698,
+     "bStature": 1.0342,
+     "cBmi": 0.0278,
+     "factorLoadings": [
+      -0.00521,
+      0.0027
+     ],
+     "residualSdLog": 0.02365,
+     "fit": {
+      "r2Train": 0.734,
+      "r2Test": 0.736,
+      "residualSdMmTest": 20.8,
+      "r2TestWithFactors": 0.753,
+      "residualSdMmTestWithFactors": 20.1
+     },
+     "sampleMedianMm": 794.0
+    },
+    "biacromialbreadth": {
+     "a": 5.89984,
+     "bStature": 0.696,
+     "cBmi": 0.07,
+     "factorLoadings": [
+      0.0007,
+      0.00316
+     ],
+     "residualSdLog": 0.03951,
+     "fit": {
+      "r2Train": 0.352,
+      "r2Test": 0.367,
+      "residualSdMmTest": 15.7,
+      "r2TestWithFactors": 0.373,
+      "residualSdMmTestWithFactors": 15.6
+     },
+     "sampleMedianMm": 365.0
+    },
+    "bideltoidbreadth": {
+     "a": 6.06302,
+     "bStature": 0.4988,
+     "cBmi": 0.3748,
+     "factorLoadings": [
+      0.00031,
+      0.01353
+     ],
+     "residualSdLog": 0.02745,
+     "fit": {
+      "r2Train": 0.763,
+      "r2Test": 0.76,
+      "residualSdMmTest": 14.4,
+      "r2TestWithFactors": 0.797,
+      "residualSdMmTestWithFactors": 13.3
+     },
+     "sampleMedianMm": 450.0
+    },
+    "chestbreadth": {
+     "a": 5.5578,
+     "bStature": 0.5421,
+     "cBmi": 0.3155,
+     "factorLoadings": [
+      -0.01228,
+      0.02431
+     ],
+     "residualSdLog": 0.03988,
+     "fit": {
+      "r2Train": 0.5,
+      "r2Test": 0.542,
+      "residualSdMmTest": 12.7,
+      "r2TestWithFactors": 0.681,
+      "residualSdMmTestWithFactors": 10.6
+     },
+     "sampleMedianMm": 268.0
+    },
+    "chestdepth": {
+     "a": 5.4228,
+     "bStature": 0.5306,
+     "cBmi": 0.6451,
+     "factorLoadings": [
+      -0.00306,
+      0.03956
+     ],
+     "residualSdLog": 0.04848,
+     "fit": {
+      "r2Train": 0.682,
+      "r2Test": 0.73,
+      "residualSdMmTest": 14.2,
+      "r2TestWithFactors": 0.803,
+      "residualSdMmTestWithFactors": 12.1
+     },
+     "sampleMedianMm": 245.0
+    },
+    "waistbreadth": {
+     "a": 5.61931,
+     "bStature": 0.6409,
+     "cBmi": 0.6376,
+     "factorLoadings": [
+      -0.01219,
+      0.04032
+     ],
+     "residualSdLog": 0.04437,
+     "fit": {
+      "r2Train": 0.69,
+      "r2Test": 0.734,
+      "residualSdMmTest": 16.5,
+      "r2TestWithFactors": 0.845,
+      "residualSdMmTestWithFactors": 12.6
+     },
+     "sampleMedianMm": 298.0
+    },
+    "waistdepth": {
+     "a": 5.2333,
+     "bStature": 0.3419,
+     "cBmi": 0.8934,
+     "factorLoadings": [
+      0.01486,
+      0.04499
+     ],
+     "residualSdLog": 0.05988,
+     "fit": {
+      "r2Train": 0.719,
+      "r2Test": 0.722,
+      "residualSdMmTest": 16.1,
+      "r2TestWithFactors": 0.817,
+      "residualSdMmTestWithFactors": 13.0
+     },
+     "sampleMedianMm": 209.0
+    },
+    "bicristalbreadth": {
+     "a": 5.5717,
+     "bStature": 0.7424,
+     "cBmi": 0.3374,
+     "factorLoadings": [
+      -0.01737,
+      0.02842
+     ],
+     "residualSdLog": 0.05004,
+     "fit": {
+      "r2Train": 0.466,
+      "r2Test": 0.483,
+      "residualSdMmTest": 15.8,
+      "r2TestWithFactors": 0.649,
+      "residualSdMmTestWithFactors": 13.0
+     },
+     "sampleMedianMm": 273.0
+    },
+    "hipbreadth": {
+     "a": 5.81947,
+     "bStature": 0.6699,
+     "cBmi": 0.4066,
+     "factorLoadings": [
+      -0.01195,
+      -0.00527
+     ],
+     "residualSdLog": 0.03953,
+     "fit": {
+      "r2Train": 0.686,
+      "r2Test": 0.72,
+      "residualSdMmTest": 14.3,
+      "r2TestWithFactors": 0.749,
+      "residualSdMmTestWithFactors": 13.5
+     },
+     "sampleMedianMm": 353.0
+    },
+    "buttockdepth": {
+     "a": 5.36274,
+     "bStature": 0.5098,
+     "cBmi": 0.6467,
+     "factorLoadings": [
+      0.01181,
+      -0.00334
+     ],
+     "residualSdLog": 0.04683,
+     "fit": {
+      "r2Train": 0.777,
+      "r2Test": 0.8,
+      "residualSdMmTest": 11.0,
+      "r2TestWithFactors": 0.814,
+      "residualSdMmTestWithFactors": 10.7
+     },
+     "sampleMedianMm": 231.0
+    },
+    "footbreadthhorizontal": {
+     "a": 4.51519,
+     "bStature": 0.4928,
+     "cBmi": 0.1433,
+     "factorLoadings": [
+      0.00146,
+      -0.00736
+     ],
+     "residualSdLog": 0.04272,
+     "fit": {
+      "r2Train": 0.294,
+      "r2Test": 0.33,
+      "residualSdMmTest": 3.9,
+      "r2TestWithFactors": 0.342,
+      "residualSdMmTestWithFactors": 3.9
+     },
+     "sampleMedianMm": 93.0
+    },
+    "handbreadth": {
+     "a": 4.35005,
+     "bStature": 0.5486,
+     "cBmi": 0.107,
+     "factorLoadings": [
+      0.00252,
+      -0.00397
+     ],
+     "residualSdLog": 0.04077,
+     "fit": {
+      "r2Train": 0.291,
+      "r2Test": 0.363,
+      "residualSdMmTest": 3.1,
+      "r2TestWithFactors": 0.356,
+      "residualSdMmTestWithFactors": 3.2
+     },
+     "sampleMedianMm": 78.0
+    },
+    "headbreadth": {
+     "a": 4.99043,
+     "bStature": 0.1284,
+     "cBmi": 0.0489,
+     "factorLoadings": [
+      -0.00265,
+      0.00101
+     ],
+     "residualSdLog": 0.03399,
+     "fit": {
+      "r2Train": 0.057,
+      "r2Test": 0.064,
+      "residualSdMmTest": 5.0,
+      "r2TestWithFactors": 0.074,
+      "residualSdMmTestWithFactors": 4.9
+     },
+     "sampleMedianMm": 147.0
+    },
+    "headlength": {
+     "a": 5.24299,
+     "bStature": 0.3528,
+     "cBmi": 0.0556,
+     "factorLoadings": [
+      0.00365,
+      -0.0055
+     ],
+     "residualSdLog": 0.03551,
+     "fit": {
+      "r2Train": 0.161,
+      "r2Test": 0.185,
+      "residualSdMmTest": 6.5,
+      "r2TestWithFactors": 0.194,
+      "residualSdMmTestWithFactors": 6.5
+     },
+     "sampleMedianMm": 190.0
+    },
+    "headcircumference": {
+     "a": 6.32465,
+     "bStature": 0.2712,
+     "cBmi": 0.0621,
+     "factorLoadings": [
+      0.00504,
+      -0.00454
+     ],
+     "residualSdLog": 0.03058,
+     "fit": {
+      "r2Train": 0.16,
+      "r2Test": 0.162,
+      "residualSdMmTest": 17.8,
+      "r2TestWithFactors": 0.176,
+      "residualSdMmTestWithFactors": 17.6
+     },
+     "sampleMedianMm": 560.0
+    },
+    "neckcircumference": {
+     "a": 5.76028,
+     "bStature": 0.3952,
+     "cBmi": 0.3037,
+     "factorLoadings": [
+      0.00049,
+      0.0133
+     ],
+     "residualSdLog": 0.03389,
+     "fit": {
+      "r2Train": 0.598,
+      "r2Test": 0.601,
+      "residualSdMmTest": 12.2,
+      "r2TestWithFactors": 0.657,
+      "residualSdMmTestWithFactors": 11.3
+     },
+     "sampleMedianMm": 328.0
+    },
+    "neckcircumferencebase": {
+     "a": 5.8901,
+     "bStature": 0.5283,
+     "cBmi": 0.2346,
+     "factorLoadings": [
+      -0.00309,
+      0.01031
+     ],
+     "residualSdLog": 0.0346,
+     "fit": {
+      "r2Train": 0.533,
+      "r2Test": 0.539,
+      "residualSdMmTest": 12.9,
+      "r2TestWithFactors": 0.578,
+      "residualSdMmTestWithFactors": 12.3
+     },
+     "sampleMedianMm": 370.0
+    },
+    "shouldercircumference": {
+     "a": 6.9062,
+     "bStature": 0.5748,
+     "cBmi": 0.2596,
+     "factorLoadings": [
+      0.00288,
+      0.00738
+     ],
+     "residualSdLog": 0.02694,
+     "fit": {
+      "r2Train": 0.695,
+      "r2Test": 0.692,
+      "residualSdMmTest": 30.1,
+      "r2TestWithFactors": 0.722,
+      "residualSdMmTestWithFactors": 28.6
+     },
+     "sampleMedianMm": 1027.0
+    },
+    "chestcircumference": {
+     "a": 6.78371,
+     "bStature": 0.4804,
+     "cBmi": 0.5226,
+     "factorLoadings": [
+      -0.0049,
+      0.03442
+     ],
+     "residualSdLog": 0.02883,
+     "fit": {
+      "r2Train": 0.728,
+      "r2Test": 0.777,
+      "residualSdMmTest": 38.8,
+      "r2TestWithFactors": 0.88,
+      "residualSdMmTestWithFactors": 28.2
+     },
+     "sampleMedianMm": 940.0
+    },
+    "waistcircumference": {
+     "a": 6.65954,
+     "bStature": 0.5123,
+     "cBmi": 0.7235,
+     "factorLoadings": [
+      -0.00215,
+      0.04152
+     ],
+     "residualSdLog": 0.03783,
+     "fit": {
+      "r2Train": 0.762,
+      "r2Test": 0.794,
+      "residualSdMmTest": 43.9,
+      "r2TestWithFactors": 0.892,
+      "residualSdMmTestWithFactors": 31.8
+     },
+     "sampleMedianMm": 852.0
+    },
+    "buttockcircumference": {
+     "a": 6.87109,
+     "bStature": 0.6286,
+     "cBmi": 0.4605,
+     "factorLoadings": [
+      -0.00396,
+      -0.00713
+     ],
+     "residualSdLog": 0.02721,
+     "fit": {
+      "r2Train": 0.849,
+      "r2Test": 0.879,
+      "residualSdMmTest": 26.7,
+      "r2TestWithFactors": 0.89,
+      "residualSdMmTestWithFactors": 25.5
+     },
+     "sampleMedianMm": 1018.5
+    },
+    "thighcircumference": {
+     "a": 6.34745,
+     "bStature": 0.6103,
+     "cBmi": 0.5775,
+     "factorLoadings": [
+      0.00205,
+      -0.01889
+     ],
+     "residualSdLog": 0.03109,
+     "fit": {
+      "r2Train": 0.834,
+      "r2Test": 0.857,
+      "residualSdMmTest": 21.0,
+      "r2TestWithFactors": 0.886,
+      "residualSdMmTestWithFactors": 18.8
+     },
+     "sampleMedianMm": 613.0
+    },
+    "lowerthighcircumference": {
+     "a": 5.92959,
+     "bStature": 0.6379,
+     "cBmi": 0.4948,
+     "factorLoadings": [
+      -0.0014,
+      -0.03503
+     ],
+     "residualSdLog": 0.03188,
+     "fit": {
+      "r2Train": 0.696,
+      "r2Test": 0.745,
+      "residualSdMmTest": 17.9,
+      "r2TestWithFactors": 0.88,
+      "residualSdMmTestWithFactors": 12.3
+     },
+     "sampleMedianMm": 398.0
+    },
+    "calfcircumference": {
+     "a": 5.87072,
+     "bStature": 0.5833,
+     "cBmi": 0.4085,
+     "factorLoadings": [
+      -0.00772,
+      -0.03076
+     ],
+     "residualSdLog": 0.0319,
+     "fit": {
+      "r2Train": 0.643,
+      "r2Test": 0.674,
+      "residualSdMmTest": 16.7,
+      "r2TestWithFactors": 0.82,
+      "residualSdMmTestWithFactors": 12.4
+     },
+     "sampleMedianMm": 372.0
+    },
+    "anklecircumference": {
+     "a": 5.34507,
+     "bStature": 0.6055,
+     "cBmi": 0.2511,
+     "factorLoadings": [
+      -0.01356,
+      -0.02687
+     ],
+     "residualSdLog": 0.04503,
+     "fit": {
+      "r2Train": 0.371,
+      "r2Test": 0.417,
+      "residualSdMmTest": 11.3,
+      "r2TestWithFactors": 0.565,
+      "residualSdMmTestWithFactors": 9.8
+     },
+     "sampleMedianMm": 215.0
+    },
+    "bicepscircumferenceflexed": {
+     "a": 5.63699,
+     "bStature": 0.5146,
+     "cBmi": 0.6309,
+     "factorLoadings": [
+      0.00403,
+      -0.00491
+     ],
+     "residualSdLog": 0.04371,
+     "fit": {
+      "r2Train": 0.799,
+      "r2Test": 0.787,
+      "residualSdMmTest": 14.6,
+      "r2TestWithFactors": 0.791,
+      "residualSdMmTestWithFactors": 14.5
+     },
+     "sampleMedianMm": 304.0
+    },
+    "forearmcircumferenceflexed": {
+     "a": 5.52807,
+     "bStature": 0.5701,
+     "cBmi": 0.3876,
+     "factorLoadings": [
+      0.00371,
+      -0.00863
+     ],
+     "residualSdLog": 0.03802,
+     "fit": {
+      "r2Train": 0.685,
+      "r2Test": 0.664,
+      "residualSdMmTest": 10.6,
+      "r2TestWithFactors": 0.686,
+      "residualSdMmTestWithFactors": 10.3
+     },
+     "sampleMedianMm": 263.0
+    },
+    "wristcircumference": {
+     "a": 5.02385,
+     "bStature": 0.6786,
+     "cBmi": 0.1886,
+     "factorLoadings": [
+      -0.0023,
+      -0.00577
+     ],
+     "residualSdLog": 0.03347,
+     "fit": {
+      "r2Train": 0.548,
+      "r2Test": 0.533,
+      "residualSdMmTest": 5.2,
+      "r2TestWithFactors": 0.547,
+      "residualSdMmTestWithFactors": 5.1
+     },
+     "sampleMedianMm": 154.0
+    }
+   }
+  },
+  "M": {
+   "source": "ANSUR II",
+   "n": 4082,
+   "nTrain": 3266,
+   "nTest": 816,
+   "statureMm": {
+    "p5": 1648.0,
+    "p50": 1755.0,
+    "p95": 1870.0
+   },
+   "bmi": {
+    "p1": 19.5,
+    "p5": 21.4,
+    "p50": 27.5,
+    "p95": 34.8,
+    "p99": 38.2
+   },
+   "ageMedian": 28.0,
+   "factorScoring": {
+    "note": {
+     "zh": "因子得分 score_j = ((z @ W)[j] - mean[j]) / sd[j]，z 为扣除身高、BMI 后各测量项的标准化残差",
+     "en": "score_j = ((z @ W)[j] - mean[j]) / sd[j], z = residual_k / sd_k over `measures` after the stature+BMI fit"
+    },
+    "measures": [
+     "cervicaleheight",
+     "acromialheight",
+     "suprasternaleheight",
+     "axillaheight",
+     "chestheight",
+     "tenthribheight",
+     "waistheightomphalion",
+     "iliocristaleheight",
+     "buttockheight",
+     "trochanterionheight",
+     "crotchheight",
+     "tibialheight",
+     "lateralfemoralepicondyleheight",
+     "kneeheightmidpatella",
+     "lateralmalleolusheight",
+     "sittingheight",
+     "acromionradialelength",
+     "radialestylionlength",
+     "handlength",
+     "footlength",
+     "biacromialbreadth",
+     "bideltoidbreadth",
+     "chestbreadth",
+     "chestdepth",
+     "waistbreadth",
+     "waistdepth",
+     "bicristalbreadth",
+     "hipbreadth",
+     "buttockdepth",
+     "neckcircumference",
+     "neckcircumferencebase",
+     "shouldercircumference",
+     "chestcircumference",
+     "waistcircumference",
+     "buttockcircumference",
+     "thighcircumference",
+     "lowerthighcircumference",
+     "calfcircumference",
+     "anklecircumference",
+     "bicepscircumferenceflexed",
+     "forearmcircumferenceflexed",
+     "wristcircumference"
+    ],
+    "residualSdLog": [
+     0.00709,
+     0.01062,
+     0.00755,
+     0.01094,
+     0.01411,
+     0.01801,
+     0.01955,
+     0.02032,
+     0.0317,
+     0.02855,
+     0.02755,
+     0.02857,
+     0.02765,
+     0.03154,
+     0.06765,
+     0.02447,
+     0.03185,
+     0.04039,
+     0.03733,
+     0.03238,
+     0.03478,
+     0.02895,
+     0.0442,
+     0.04825,
+     0.04849,
+     0.06787,
+     0.04541,
+     0.03684,
+     0.04514,
+     0.03648,
+     0.03697,
+     0.02731,
+     0.02964,
+     0.04669,
+     0.02477,
+     0.03428,
+     0.03536,
+     0.04058,
+     0.04375,
+     0.05139,
+     0.04087,
+     0.03404
+    ],
+    "W": [
+     [
+      0.06989,
+      0.03089
+     ],
+     [
+      0.06647,
+      0.06415
+     ],
+     [
+      0.06547,
+      0.03916
+     ],
+     [
+      0.07553,
+      0.04898
+     ],
+     [
+      0.06595,
+      0.00892
+     ],
+     [
+      0.0881,
+      0.01961
+     ],
+     [
+      0.07273,
+      -0.04461
+     ],
+     [
+      0.08452,
+      -0.00039
+     ],
+     [
+      0.08805,
+      -0.0033
+     ],
+     [
+      0.08722,
+      -0.00389
+     ],
+     [
+      0.0895,
+      -0.01491
+     ],
+     [
+      0.0849,
+      0.00694
+     ],
+     [
+      0.08585,
+      -0.00396
+     ],
+     [
+      0.08939,
+      0.00611
+     ],
+     [
+      0.00137,
+      0.01567
+     ],
+     [
+      -0.09305,
+      -0.00132
+     ],
+     [
+      0.0508,
+      0.00726
+     ],
+     [
+      0.0662,
+      -0.02472
+     ],
+     [
+      0.03293,
+      -0.0639
+     ],
+     [
+      0.02561,
+      -0.07306
+     ],
+     [
+      -0.00835,
+      -0.1022
+     ],
+     [
+      -0.00867,
+      -0.08111
+     ],
+     [
+      -0.02044,
+      -0.01749
+     ],
+     [
+      0.02271,
+      0.03707
+     ],
+     [
+      -0.01144,
+      0.14429
+     ],
+     [
+      0.01914,
+      0.13341
+     ],
+     [
+      -0.01708,
+      0.06037
+     ],
+     [
+      -0.0201,
+      0.08965
+     ],
+     [
+      0.00863,
+      0.08888
+     ],
+     [
+      -0.00024,
+      -0.05957
+     ],
+     [
+      -0.01251,
+      -0.06684
+     ],
+     [
+      -0.0044,
+      -0.12819
+     ],
+     [
+      0.0092,
+      0.00654
+     ],
+     [
+      0.00605,
+      0.16279
+     ],
+     [
+      -0.01188,
+      0.093
+     ],
+     [
+      0.00247,
+      0.02966
+     ],
+     [
+      -0.01679,
+      -0.01574
+     ],
+     [
+      -0.02262,
+      -0.05529
+     ],
+     [
+      -0.02803,
+      -0.05977
+     ],
+     [
+      -0.00012,
+      -0.12495
+     ],
+     [
+      -0.002,
+      -0.1391
+     ],
+     [
+      -0.01555,
+      -0.08391
+     ]
+    ],
+    "mean": [
+     0.0,
+     0.0
+    ],
+    "sd": [
+     1.0,
+     1.0
+    ]
+   },
+   "residualPcaShare": [
+    0.217,
+    0.113,
+    0.094,
+    0.055,
+    0.046,
+    0.04
+   ],
+   "outputs": {
+    "cervicaleheight": {
+     "a": 7.25578,
+     "bStature": 1.0508,
+     "cBmi": 0.015,
+     "factorLoadings": [
+      0.00434,
+      0.00077
+     ],
+     "residualSdLog": 0.00555,
+     "fit": {
+      "r2Train": 0.971,
+      "r2Test": 0.97,
+      "residualSdMmTest": 10.7,
+      "r2TestWithFactors": 0.982,
+      "residualSdMmTestWithFactors": 8.4
+     },
+     "sampleMedianMm": 1517.0
+    },
+    "acromialheight": {
+     "a": 7.19944,
+     "bStature": 1.0892,
+     "cBmi": 0.0247,
+     "factorLoadings": [
+      0.00598,
+      0.00289
+     ],
+     "residualSdLog": 0.00829,
+     "fit": {
+      "r2Train": 0.942,
+      "r2Test": 0.937,
+      "residualSdMmTest": 15.4,
+      "r2TestWithFactors": 0.96,
+      "residualSdMmTestWithFactors": 12.4
+     },
+     "sampleMedianMm": 1439.0
+    },
+    "suprasternaleheight": {
+     "a": 7.19978,
+     "bStature": 1.0708,
+     "cBmi": 0.0219,
+     "factorLoadings": [
+      0.00429,
+      0.00115
+     ],
+     "residualSdLog": 0.00611,
+     "fit": {
+      "r2Train": 0.969,
+      "r2Test": 0.968,
+      "residualSdMmTest": 10.7,
+      "r2TestWithFactors": 0.979,
+      "residualSdMmTestWithFactors": 8.7
+     },
+     "sampleMedianMm": 1437.0
+    },
+    "axillaheight": {
+     "a": 7.12415,
+     "bStature": 1.1108,
+     "cBmi": -0.006,
+     "factorLoadings": [
+      0.00714,
+      0.00212
+     ],
+     "residualSdLog": 0.00801,
+     "fit": {
+      "r2Train": 0.941,
+      "r2Test": 0.933,
+      "residualSdMmTest": 15.2,
+      "r2TestWithFactors": 0.963,
+      "residualSdMmTestWithFactors": 11.2
+     },
+     "sampleMedianMm": 1328.0
+    },
+    "chestheight": {
+     "a": 7.09613,
+     "bStature": 1.0671,
+     "cBmi": 0.0017,
+     "factorLoadings": [
+      0.00831,
+      7e-05
+     ],
+     "residualSdLog": 0.01139,
+     "fit": {
+      "r2Train": 0.898,
+      "r2Test": 0.9,
+      "residualSdMmTest": 17.9,
+      "r2TestWithFactors": 0.935,
+      "residualSdMmTestWithFactors": 14.3
+     },
+     "sampleMedianMm": 1289.0
+    },
+    "tenthribheight": {
+     "a": 6.94819,
+     "bStature": 1.1298,
+     "cBmi": 0.0129,
+     "factorLoadings": [
+      0.0141,
+      0.0008
+     ],
+     "residualSdLog": 0.01117,
+     "fit": {
+      "r2Train": 0.858,
+      "r2Test": 0.856,
+      "residualSdMmTest": 20.2,
+      "r2TestWithFactors": 0.941,
+      "residualSdMmTestWithFactors": 12.9
+     },
+     "sampleMedianMm": 1119.0
+    },
+    "waistheightomphalion": {
+     "a": 6.90094,
+     "bStature": 1.1408,
+     "cBmi": -0.0442,
+     "factorLoadings": [
+      0.01332,
+      -0.00503
+     ],
+     "residualSdLog": 0.0134,
+     "fit": {
+      "r2Train": 0.843,
+      "r2Test": 0.839,
+      "residualSdMmTest": 21.1,
+      "r2TestWithFactors": 0.926,
+      "residualSdMmTestWithFactors": 14.3
+     },
+     "sampleMedianMm": 1055.0
+    },
+    "iliocristaleheight": {
+     "a": 6.89927,
+     "bStature": 1.1369,
+     "cBmi": -0.0125,
+     "factorLoadings": [
+      0.01549,
+      -0.00102
+     ],
+     "residualSdLog": 0.01311,
+     "fit": {
+      "r2Train": 0.828,
+      "r2Test": 0.83,
+      "residualSdMmTest": 21.3,
+      "r2TestWithFactors": 0.924,
+      "residualSdMmTestWithFactors": 14.2
+     },
+     "sampleMedianMm": 1061.0
+    },
+    "buttockheight": {
+     "a": 6.71806,
+     "bStature": 1.1819,
+     "cBmi": -0.0172,
+     "factorLoadings": [
+      0.02522,
+      -0.00211
+     ],
+     "residualSdLog": 0.01908,
+     "fit": {
+      "r2Train": 0.681,
+      "r2Test": 0.696,
+      "residualSdMmTest": 27.3,
+      "r2TestWithFactors": 0.888,
+      "residualSdMmTestWithFactors": 16.5
+     },
+     "sampleMedianMm": 885.0
+    },
+    "trochanterionheight": {
+     "a": 6.73339,
+     "bStature": 1.1856,
+     "cBmi": -0.022,
+     "factorLoadings": [
+      0.02251,
+      -0.00197
+     ],
+     "residualSdLog": 0.01744,
+     "fit": {
+      "r2Train": 0.726,
+      "r2Test": 0.726,
+      "residualSdMmTest": 25.3,
+      "r2TestWithFactors": 0.898,
+      "residualSdMmTestWithFactors": 15.4
+     },
+     "sampleMedianMm": 899.0
+    },
+    "crotchheight": {
+     "a": 6.6736,
+     "bStature": 1.2015,
+     "cBmi": -0.0402,
+     "factorLoadings": [
+      0.02247,
+      -0.0034
+     ],
+     "residualSdLog": 0.01558,
+     "fit": {
+      "r2Train": 0.747,
+      "r2Test": 0.749,
+      "residualSdMmTest": 23.3,
+      "r2TestWithFactors": 0.92,
+      "residualSdMmTestWithFactors": 13.1
+     },
+     "sampleMedianMm": 845.0
+    },
+    "tibialheight": {
+     "a": 6.07098,
+     "bStature": 1.2517,
+     "cBmi": -0.0041,
+     "factorLoadings": [
+      0.02175,
+      -0.00043
+     ],
+     "residualSdLog": 0.01851,
+     "fit": {
+      "r2Train": 0.747,
+      "r2Test": 0.723,
+      "residualSdMmTest": 14.0,
+      "r2TestWithFactors": 0.893,
+      "residualSdMmTestWithFactors": 8.7
+     },
+     "sampleMedianMm": 467.5
+    },
+    "lateralfemoralepicondyleheight": {
+     "a": 6.12478,
+     "bStature": 1.1865,
+     "cBmi": -0.0074,
+     "factorLoadings": [
+      0.02147,
+      -0.00189
+     ],
+     "residualSdLog": 0.01733,
+     "fit": {
+      "r2Train": 0.739,
+      "r2Test": 0.731,
+      "residualSdMmTest": 13.7,
+      "r2TestWithFactors": 0.896,
+      "residualSdMmTestWithFactors": 8.5
+     },
+     "sampleMedianMm": 491.0
+    },
+    "kneeheightmidpatella": {
+     "a": 6.11413,
+     "bStature": 1.2243,
+     "cBmi": -0.0005,
+     "factorLoadings": [
+      0.02531,
+      -0.00069
+     ],
+     "residualSdLog": 0.01881,
+     "fit": {
+      "r2Train": 0.698,
+      "r2Test": 0.683,
+      "residualSdMmTest": 15.9,
+      "r2TestWithFactors": 0.889,
+      "residualSdMmTestWithFactors": 9.4
+     },
+     "sampleMedianMm": 487.0
+    },
+    "lateralmalleolusheight": {
+     "a": 4.20776,
+     "bStature": 0.9408,
+     "cBmi": 0.0936,
+     "factorLoadings": [
+      0.00023,
+      0.00507
+     ],
+     "residualSdLog": 0.06746,
+     "fit": {
+      "r2Train": 0.253,
+      "r2Test": 0.234,
+      "residualSdMmTest": 4.9,
+      "r2TestWithFactors": 0.238,
+      "residualSdMmTestWithFactors": 4.8
+     },
+     "sampleMedianMm": 73.0
+    },
+    "sittingheight": {
+     "a": 6.77083,
+     "bStature": 0.7818,
+     "cBmi": 0.0122,
+     "factorLoadings": [
+      -0.02051,
+      0.00115
+     ],
+     "residualSdLog": 0.0133,
+     "fit": {
+      "r2Train": 0.614,
+      "r2Test": 0.589,
+      "residualSdMmTest": 22.1,
+      "r2TestWithFactors": 0.878,
+      "residualSdMmTestWithFactors": 12.0
+     },
+     "sampleMedianMm": 918.0
+    },
+    "acromionradialelength": {
+     "a": 5.74465,
+     "bStature": 1.0576,
+     "cBmi": 0.0168,
+     "factorLoadings": [
+      0.01446,
+      0.00019
+     ],
+     "residualSdLog": 0.02838,
+     "fit": {
+      "r2Train": 0.629,
+      "r2Test": 0.659,
+      "residualSdMmTest": 10.1,
+      "r2TestWithFactors": 0.713,
+      "residualSdMmTestWithFactors": 9.3
+     },
+     "sampleMedianMm": 335.0
+    },
+    "radialestylionlength": {
+     "a": 5.52401,
+     "bStature": 1.047,
+     "cBmi": 0.002,
+     "factorLoadings": [
+      0.02468,
+      -0.00636
+     ],
+     "residualSdLog": 0.03133,
+     "fit": {
+      "r2Train": 0.505,
+      "r2Test": 0.534,
+      "residualSdMmTest": 10.4,
+      "r2TestWithFactors": 0.694,
+      "residualSdMmTestWithFactors": 8.4
+     },
+     "sampleMedianMm": 267.0
+    },
+    "shoulderelbowlength": {
+     "a": 5.83168,
+     "bStature": 1.0398,
+     "cBmi": -0.0025,
+     "factorLoadings": [
+      0.01252,
+      -0.00079
+     ],
+     "residualSdLog": 0.02614,
+     "fit": {
+      "r2Train": 0.663,
+      "r2Test": 0.681,
+      "residualSdMmTest": 10.3,
+      "r2TestWithFactors": 0.727,
+      "residualSdMmTestWithFactors": 9.6
+     },
+     "sampleMedianMm": 363.0
+    },
+    "handlength": {
+     "a": 5.1994,
+     "bStature": 0.8789,
+     "cBmi": 0.0423,
+     "factorLoadings": [
+      0.01245,
+      -0.01224
+     ],
+     "residualSdLog": 0.033,
+     "fit": {
+      "r2Train": 0.466,
+      "r2Test": 0.473,
+      "residualSdMmTest": 7.3,
+      "r2TestWithFactors": 0.61,
+      "residualSdMmTestWithFactors": 6.3
+     },
+     "sampleMedianMm": 193.0
+    },
+    "footlength": {
+     "a": 5.53436,
+     "bStature": 0.8933,
+     "cBmi": 0.0557,
+     "factorLoadings": [
+      0.00883,
+      -0.01191
+     ],
+     "residualSdLog": 0.02878,
+     "fit": {
+      "r2Train": 0.552,
+      "r2Test": 0.511,
+      "residualSdMmTest": 9.1,
+      "r2TestWithFactors": 0.6,
+      "residualSdMmTestWithFactors": 8.3
+     },
+     "sampleMedianMm": 271.0
+    },
+    "span": {
+     "a": 7.43741,
+     "bStature": 0.9745,
+     "cBmi": 0.0218,
+     "factorLoadings": [
+      0.01294,
+      -0.00805
+     ],
+     "residualSdLog": 0.0213,
+     "fit": {
+      "r2Train": 0.68,
+      "r2Test": 0.689,
+      "residualSdMmTest": 47.8,
+      "r2TestWithFactors": 0.804,
+      "residualSdMmTestWithFactors": 37.9
+     },
+     "sampleMedianMm": 1812.0
+    },
+    "wristheight": {
+     "a": 6.66092,
+     "bStature": 1.0885,
+     "cBmi": 0.06,
+     "factorLoadings": [
+      -0.00171,
+      0.00695
+     ],
+     "residualSdLog": 0.023,
+     "fit": {
+      "r2Train": 0.767,
+      "r2Test": 0.745,
+      "residualSdMmTest": 19.8,
+      "r2TestWithFactors": 0.767,
+      "residualSdMmTestWithFactors": 18.9
+     },
+     "sampleMedianMm": 847.0
+    },
+    "biacromialbreadth": {
+     "a": 5.9641,
+     "bStature": 0.624,
+     "cBmi": 0.1191,
+     "factorLoadings": [
+      -0.00058,
+      -0.01702
+     ],
+     "residualSdLog": 0.03033,
+     "fit": {
+      "r2Train": 0.43,
+      "r2Test": 0.428,
+      "residualSdMmTest": 14.7,
+      "r2TestWithFactors": 0.57,
+      "residualSdMmTestWithFactors": 12.8
+     },
+     "sampleMedianMm": 415.0
+    },
+    "bideltoidbreadth": {
+     "a": 6.12093,
+     "bStature": 0.5206,
+     "cBmi": 0.3638,
+     "factorLoadings": [
+      -0.00092,
+      -0.01121
+     ],
+     "residualSdLog": 0.02668,
+     "fit": {
+      "r2Train": 0.797,
+      "r2Test": 0.782,
+      "residualSdMmTest": 14.7,
+      "r2TestWithFactors": 0.82,
+      "residualSdMmTestWithFactors": 13.4
+     },
+     "sampleMedianMm": 509.0
+    },
+    "chestbreadth": {
+     "a": 5.57296,
+     "bStature": 0.5506,
+     "cBmi": 0.2675,
+     "factorLoadings": [
+      -0.0077,
+      -0.00322
+     ],
+     "residualSdLog": 0.04341,
+     "fit": {
+      "r2Train": 0.506,
+      "r2Test": 0.494,
+      "residualSdMmTest": 13.1,
+      "r2TestWithFactors": 0.515,
+      "residualSdMmTestWithFactors": 12.8
+     },
+     "sampleMedianMm": 289.0
+    },
+    "chestdepth": {
+     "a": 5.36173,
+     "bStature": 0.5935,
+     "cBmi": 0.6065,
+     "factorLoadings": [
+      0.00885,
+      0.00802
+     ],
+     "residualSdLog": 0.04675,
+     "fit": {
+      "r2Train": 0.783,
+      "r2Test": 0.783,
+      "residualSdMmTest": 12.3,
+      "r2TestWithFactors": 0.793,
+      "residualSdMmTestWithFactors": 12.0
+     },
+     "sampleMedianMm": 253.0
+    },
+    "waistbreadth": {
+     "a": 5.60348,
+     "bStature": 0.6861,
+     "cBmi": 0.6225,
+     "factorLoadings": [
+      -0.00902,
+      0.03414
+     ],
+     "residualSdLog": 0.03323,
+     "fit": {
+      "r2Train": 0.798,
+      "r2Test": 0.771,
+      "residualSdMmTest": 16.3,
+      "r2TestWithFactors": 0.884,
+      "residualSdMmTestWithFactors": 11.6
+     },
+     "sampleMedianMm": 325.0
+    },
+    "waistdepth": {
+     "a": 5.23708,
+     "bStature": 0.5913,
+     "cBmi": 0.8529,
+     "factorLoadings": [
+      0.00652,
+      0.04302
+     ],
+     "residualSdLog": 0.05208,
+     "fit": {
+      "r2Train": 0.776,
+      "r2Test": 0.765,
+      "residualSdMmTest": 16.7,
+      "r2TestWithFactors": 0.849,
+      "residualSdMmTestWithFactors": 13.4
+     },
+     "sampleMedianMm": 234.0
+    },
+    "bicristalbreadth": {
+     "a": 5.51912,
+     "bStature": 0.8291,
+     "cBmi": 0.2091,
+     "factorLoadings": [
+      -0.00857,
+      0.0137
+     ],
+     "residualSdLog": 0.04244,
+     "fit": {
+      "r2Train": 0.498,
+      "r2Test": 0.459,
+      "residualSdMmTest": 12.8,
+      "r2TestWithFactors": 0.542,
+      "residualSdMmTestWithFactors": 11.7
+     },
+     "sampleMedianMm": 275.0
+    },
+    "hipbreadth": {
+     "a": 5.72277,
+     "bStature": 0.6744,
+     "cBmi": 0.362,
+     "factorLoadings": [
+      -0.00857,
+      0.01639
+     ],
+     "residualSdLog": 0.03186,
+     "fit": {
+      "r2Train": 0.721,
+      "r2Test": 0.715,
+      "residualSdMmTest": 12.6,
+      "r2TestWithFactors": 0.791,
+      "residualSdMmTestWithFactors": 10.8
+     },
+     "sampleMedianMm": 344.0
+    },
+    "buttockdepth": {
+     "a": 5.32066,
+     "bStature": 0.5696,
+     "cBmi": 0.6521,
+     "factorLoadings": [
+      0.00121,
+      0.01917
+     ],
+     "residualSdLog": 0.04084,
+     "fit": {
+      "r2Train": 0.827,
+      "r2Test": 0.831,
+      "residualSdMmTest": 10.8,
+      "r2TestWithFactors": 0.863,
+      "residualSdMmTestWithFactors": 9.7
+     },
+     "sampleMedianMm": 246.0
+    },
+    "footbreadthhorizontal": {
+     "a": 4.55544,
+     "bStature": 0.5962,
+     "cBmi": 0.1385,
+     "factorLoadings": [
+      0.00114,
+      -0.01166
+     ],
+     "residualSdLog": 0.03897,
+     "fit": {
+      "r2Train": 0.369,
+      "r2Test": 0.343,
+      "residualSdMmTest": 4.2,
+      "r2TestWithFactors": 0.401,
+      "residualSdMmTestWithFactors": 4.0
+     },
+     "sampleMedianMm": 102.0
+    },
+    "handbreadth": {
+     "a": 4.41421,
+     "bStature": 0.6127,
+     "cBmi": 0.1248,
+     "factorLoadings": [
+      0.00029,
+      -0.0144
+     ],
+     "residualSdLog": 0.03739,
+     "fit": {
+      "r2Train": 0.363,
+      "r2Test": 0.29,
+      "residualSdMmTest": 3.5,
+      "r2TestWithFactors": 0.361,
+      "residualSdMmTestWithFactors": 3.4
+     },
+     "sampleMedianMm": 88.0
+    },
+    "headbreadth": {
+     "a": 5.01532,
+     "bStature": 0.0742,
+     "cBmi": 0.0851,
+     "factorLoadings": [
+      -0.00209,
+      -0.00457
+     ],
+     "residualSdLog": 0.03303,
+     "fit": {
+      "r2Train": 0.127,
+      "r2Test": 0.108,
+      "residualSdMmTest": 5.2,
+      "r2TestWithFactors": 0.132,
+      "residualSdMmTestWithFactors": 5.1
+     },
+     "sampleMedianMm": 154.0
+    },
+    "headlength": {
+     "a": 5.26017,
+     "bStature": 0.3428,
+     "cBmi": 0.0625,
+     "factorLoadings": [
+      -0.00237,
+      -0.00448
+     ],
+     "residualSdLog": 0.03096,
+     "fit": {
+      "r2Train": 0.212,
+      "r2Test": 0.139,
+      "residualSdMmTest": 6.5,
+      "r2TestWithFactors": 0.16,
+      "residualSdMmTestWithFactors": 6.4
+     },
+     "sampleMedianMm": 200.0
+    },
+    "headcircumference": {
+     "a": 6.32067,
+     "bStature": 0.2519,
+     "cBmi": 0.076,
+     "factorLoadings": [
+      -0.00283,
+      -0.00445
+     ],
+     "residualSdLog": 0.02317,
+     "fit": {
+      "r2Train": 0.283,
+      "r2Test": 0.223,
+      "residualSdMmTest": 13.8,
+      "r2TestWithFactors": 0.249,
+      "residualSdMmTestWithFactors": 13.6
+     },
+     "sampleMedianMm": 574.0
+    },
+    "neckcircumference": {
+     "a": 5.88703,
+     "bStature": 0.3168,
+     "cBmi": 0.3511,
+     "factorLoadings": [
+      0.00117,
+      -0.0105
+     ],
+     "residualSdLog": 0.03492,
+     "fit": {
+      "r2Train": 0.674,
+      "r2Test": 0.659,
+      "residualSdMmTest": 15.0,
+      "r2TestWithFactors": 0.692,
+      "residualSdMmTestWithFactors": 14.2
+     },
+     "sampleMedianMm": 395.0
+    },
+    "neckcircumferencebase": {
+     "a": 5.98372,
+     "bStature": 0.4072,
+     "cBmi": 0.2915,
+     "factorLoadings": [
+      -0.00275,
+      -0.01168
+     ],
+     "residualSdLog": 0.03497,
+     "fit": {
+      "r2Train": 0.602,
+      "r2Test": 0.587,
+      "residualSdMmTest": 16.5,
+      "r2TestWithFactors": 0.638,
+      "residualSdMmTestWithFactors": 15.5
+     },
+     "sampleMedianMm": 433.0
+    },
+    "shouldercircumference": {
+     "a": 6.97544,
+     "bStature": 0.5395,
+     "cBmi": 0.2823,
+     "factorLoadings": [
+      0.00093,
+      -0.01685
+     ],
+     "residualSdLog": 0.02147,
+     "fit": {
+      "r2Train": 0.743,
+      "r2Test": 0.729,
+      "residualSdMmTest": 32.9,
+      "r2TestWithFactors": 0.834,
+      "residualSdMmTestWithFactors": 25.8
+     },
+     "sampleMedianMm": 1176.0
+    },
+    "chestcircumference": {
+     "a": 6.81764,
+     "bStature": 0.5331,
+     "cBmi": 0.5054,
+     "factorLoadings": [
+      0.00235,
+      0.00078
+     ],
+     "residualSdLog": 0.02953,
+     "fit": {
+      "r2Train": 0.87,
+      "r2Test": 0.864,
+      "residualSdMmTest": 32.1,
+      "r2TestWithFactors": 0.864,
+      "residualSdMmTestWithFactors": 32.2
+     },
+     "sampleMedianMm": 1056.0
+    },
+    "waistcircumference": {
+     "a": 6.64095,
+     "bStature": 0.6349,
+     "cBmi": 0.7262,
+     "factorLoadings": [
+      -0.00181,
+      0.03658
+     ],
+     "residualSdLog": 0.02896,
+     "fit": {
+      "r2Train": 0.848,
+      "r2Test": 0.844,
+      "residualSdMmTest": 43.7,
+      "r2TestWithFactors": 0.935,
+      "residualSdMmTestWithFactors": 28.2
+     },
+     "sampleMedianMm": 937.0
+    },
+    "buttockcircumference": {
+     "a": 6.7855,
+     "bStature": 0.6458,
+     "cBmi": 0.4525,
+     "factorLoadings": [
+      -0.00398,
+      0.0113
+     ],
+     "residualSdLog": 0.02168,
+     "fit": {
+      "r2Train": 0.889,
+      "r2Test": 0.877,
+      "residualSdMmTest": 26.6,
+      "r2TestWithFactors": 0.905,
+      "residualSdMmTestWithFactors": 23.4
+     },
+     "sampleMedianMm": 1017.0
+    },
+    "thighcircumference": {
+     "a": 6.27083,
+     "bStature": 0.6032,
+     "cBmi": 0.5735,
+     "factorLoadings": [
+      0.00018,
+      0.00487
+     ],
+     "residualSdLog": 0.03393,
+     "fit": {
+      "r2Train": 0.861,
+      "r2Test": 0.836,
+      "residualSdMmTest": 23.6,
+      "r2TestWithFactors": 0.841,
+      "residualSdMmTestWithFactors": 23.2
+     },
+     "sampleMedianMm": 624.0
+    },
+    "lowerthighcircumference": {
+     "a": 5.8758,
+     "bStature": 0.6147,
+     "cBmi": 0.4462,
+     "factorLoadings": [
+      -0.00503,
+      -0.00235
+     ],
+     "residualSdLog": 0.03492,
+     "fit": {
+      "r2Train": 0.793,
+      "r2Test": 0.766,
+      "residualSdMmTest": 15.1,
+      "r2TestWithFactors": 0.77,
+      "residualSdMmTestWithFactors": 15.0
+     },
+     "sampleMedianMm": 408.0
+    },
+    "calfcircumference": {
+     "a": 5.84473,
+     "bStature": 0.5285,
+     "cBmi": 0.418,
+     "factorLoadings": [
+      -0.00699,
+      -0.01032
+     ],
+     "residualSdLog": 0.03862,
+     "fit": {
+      "r2Train": 0.715,
+      "r2Test": 0.697,
+      "residualSdMmTest": 15.7,
+      "r2TestWithFactors": 0.72,
+      "residualSdMmTestWithFactors": 15.0
+     },
+     "sampleMedianMm": 392.0
+    },
+    "anklecircumference": {
+     "a": 5.33504,
+     "bStature": 0.6163,
+     "cBmi": 0.2747,
+     "factorLoadings": [
+      -0.00956,
+      -0.01194
+     ],
+     "residualSdLog": 0.04099,
+     "fit": {
+      "r2Train": 0.535,
+      "r2Test": 0.502,
+      "residualSdMmTest": 10.0,
+      "r2TestWithFactors": 0.557,
+      "residualSdMmTestWithFactors": 9.4
+     },
+     "sampleMedianMm": 228.0
+    },
+    "bicepscircumferenceflexed": {
+     "a": 5.72542,
+     "bStature": 0.4788,
+     "cBmi": 0.5542,
+     "factorLoadings": [
+      0.00363,
+      -0.03104
+     ],
+     "residualSdLog": 0.0408,
+     "fit": {
+      "r2Train": 0.716,
+      "r2Test": 0.685,
+      "residualSdMmTest": 18.5,
+      "r2TestWithFactors": 0.795,
+      "residualSdMmTestWithFactors": 15.0
+     },
+     "sampleMedianMm": 357.0
+    },
+    "forearmcircumferenceflexed": {
+     "a": 5.61912,
+     "bStature": 0.5498,
+     "cBmi": 0.3722,
+     "factorLoadings": [
+      0.00252,
+      -0.02743
+     ],
+     "residualSdLog": 0.03019,
+     "fit": {
+      "r2Train": 0.67,
+      "r2Test": 0.629,
+      "residualSdMmTest": 12.8,
+      "r2TestWithFactors": 0.814,
+      "residualSdMmTestWithFactors": 9.1
+     },
+     "sampleMedianMm": 310.0
+    },
+    "wristcircumference": {
+     "a": 5.08644,
+     "bStature": 0.6461,
+     "cBmi": 0.1945,
+     "factorLoadings": [
+      -0.00313,
+      -0.0135
+     ],
+     "residualSdLog": 0.03109,
+     "fit": {
+      "r2Train": 0.559,
+      "r2Test": 0.514,
+      "residualSdMmTest": 6.1,
+      "r2TestWithFactors": 0.609,
+      "residualSdMmTestWithFactors": 5.4
+     },
+     "sampleMedianMm": 176.0
+    }
+   }
+  }
+ },
+ "nhanes": {
+  "description": {
+   "zh": "同一函数形式，用 NHANES 1999–2023 成人（20 岁以上、未孕）对 NHANES 有的测量项拟合。平民人群、BMI 范围完整；超出 ANSUR 的 BMI 范围时围度用这一组。部分定义与 ANSUR 不同（见各项）。",
+   "en": "Same functional form fitted to NHANES 1999-2023 adults (20+, not pregnant) for the measures NHANES takes. Civilian, full BMI range; use these for girths outside the ANSUR BMI range. Definitions differ from ANSUR where noted."
+  },
+  "sexes": {
+   "F": {
+    "n": 30082,
+    "outputs": {
+     "waist": {
+      "name": {
+       "zh": "腰围（髂嵴上缘水平）",
+       "en": "Waist circumference (NHANES: just above iliac crest)"
+      },
+      "definition": {
+       "zh": "水平，紧贴右髂嵴最上外侧缘上方",
+       "en": "horizontal, just above the uppermost lateral border of the right ilium"
+      },
+      "n": 28687,
+      "a": 6.70526,
+      "bStature": 0.3792,
+      "cBmi": 0.6448,
+      "residualSdLog": 0.06314,
+      "fit": {
+       "r2Test": 0.852,
+       "residualSdMmTest": 63.6
+      },
+      "agePerDecadeLog": 0.0141
+     },
+     "hip": {
+      "name": {
+       "zh": "臀围",
+       "en": "Hip circumference"
+      },
+      "definition": {
+       "zh": "臀部最大后突处的水平围度",
+       "en": "horizontal at maximum extension of the buttocks"
+      },
+      "n": 7141,
+      "a": 6.85869,
+      "bStature": 0.6097,
+      "cBmi": 0.5256,
+      "residualSdLog": 0.04055,
+      "fit": {
+       "r2Test": 0.916,
+       "residualSdMmTest": 44.9
+      },
+      "agePerDecadeLog": 0.003
+     },
+     "thigh": {
+      "name": {
+       "zh": "大腿中部围",
+       "en": "Mid-thigh circumference"
+      },
+      "definition": {
+       "zh": "腹股沟皱襞与髌骨上缘连线中点处",
+       "en": "midway between inguinal crease and proximal patella"
+      },
+      "n": 8202,
+      "a": 6.15556,
+      "bStature": 0.8859,
+      "cBmi": 0.5428,
+      "residualSdLog": 0.06962,
+      "fit": {
+       "r2Test": 0.785,
+       "residualSdMmTest": 38.5
+      },
+      "agePerDecadeLog": -0.0145
+     },
+     "calf": {
+      "name": {
+       "zh": "小腿围",
+       "en": "Maximal calf circumference"
+      },
+      "definition": {
+       "zh": "最大围度",
+       "en": "maximum"
+      },
+      "n": 8332,
+      "a": 5.85319,
+      "bStature": 0.8634,
+      "cBmi": 0.4186,
+      "residualSdLog": 0.06319,
+      "fit": {
+       "r2Test": 0.733,
+       "residualSdMmTest": 24.3
+      },
+      "agePerDecadeLog": -0.0068
+     },
+     "armcirc": {
+      "name": {
+       "zh": "上臂围（放松）",
+       "en": "Mid-upper-arm circumference, relaxed"
+      },
+      "definition": {
+       "zh": "肩峰与鹰嘴连线中点，上肢下垂",
+       "en": "midway between acromion and olecranon, arm hanging"
+      },
+      "n": 29069,
+      "a": 5.61425,
+      "bStature": 0.5212,
+      "cBmi": 0.6403,
+      "residualSdLog": 0.06015,
+      "fit": {
+       "r2Test": 0.863,
+       "residualSdMmTest": 20.5
+      },
+      "agePerDecadeLog": -0.0018
+     },
+     "armlen": {
+      "name": {
+       "zh": "上臂长",
+       "en": "Upper arm length"
+      },
+      "definition": {
+       "zh": "屈肘 90 度，肩峰至鹰嘴",
+       "en": "acromion to olecranon, elbow at 90 deg"
+      },
+      "n": 29069,
+      "a": 5.88067,
+      "bStature": 0.9314,
+      "cBmi": 0.0974,
+      "residualSdLog": 0.04325,
+      "fit": {
+       "r2Test": 0.542,
+       "residualSdMmTest": 15.6
+      },
+      "agePerDecadeLog": 0.0054
+     },
+     "upperleglen": {
+      "name": {
+       "zh": "大腿长",
+       "en": "Upper leg length"
+      },
+      "definition": {
+       "zh": "坐姿，腹股沟皱襞至髌骨上缘",
+       "en": "inguinal crease to proximal patella, seated"
+      },
+      "n": 28532,
+      "a": 5.95587,
+      "bStature": 1.3183,
+      "cBmi": -0.0346,
+      "residualSdLog": 0.07224,
+      "fit": {
+       "r2Test": 0.404,
+       "residualSdMmTest": 26.4
+      },
+      "agePerDecadeLog": -0.0097
+     },
+     "sad": {
+      "name": {
+       "zh": "腹部矢状径（仰卧）",
+       "en": "Sagittal abdominal diameter, supine"
+      },
+      "definition": {
+       "zh": "仰卧，髂嵴水平",
+       "en": "at iliac crest level, supine"
+      },
+      "n": 7465,
+      "a": 5.18837,
+      "bStature": 0.1918,
+      "cBmi": 0.7698,
+      "residualSdLog": 0.08016,
+      "fit": {
+       "r2Test": 0.835,
+       "residualSdMmTest": 18.3
+      },
+      "agePerDecadeLog": 0.0205
+     }
+    }
+   },
+   "M": {
+    "n": 28908,
+    "outputs": {
+     "waist": {
+      "name": {
+       "zh": "腰围（髂嵴上缘水平）",
+       "en": "Waist circumference (NHANES: just above iliac crest)"
+      },
+      "definition": {
+       "zh": "水平，紧贴右髂嵴最上外侧缘上方",
+       "en": "horizontal, just above the uppermost lateral border of the right ilium"
+      },
+      "n": 27863,
+      "a": 6.71688,
+      "bStature": 0.3902,
+      "cBmi": 0.7034,
+      "residualSdLog": 0.05767,
+      "fit": {
+       "r2Test": 0.867,
+       "residualSdMmTest": 57.4
+      },
+      "agePerDecadeLog": 0.0199
+     },
+     "hip": {
+      "name": {
+       "zh": "臀围",
+       "en": "Hip circumference"
+      },
+      "definition": {
+       "zh": "臀部最大后突处的水平围度",
+       "en": "horizontal at maximum extension of the buttocks"
+      },
+      "n": 6483,
+      "a": 6.78691,
+      "bStature": 0.6275,
+      "cBmi": 0.4902,
+      "residualSdLog": 0.03579,
+      "fit": {
+       "r2Test": 0.889,
+       "residualSdMmTest": 41.1
+      },
+      "agePerDecadeLog": 0.0008
+     },
+     "thigh": {
+      "name": {
+       "zh": "大腿中部围",
+       "en": "Mid-thigh circumference"
+      },
+      "definition": {
+       "zh": "腹股沟皱襞与髌骨上缘连线中点处",
+       "en": "midway between inguinal crease and proximal patella"
+      },
+      "n": 8424,
+      "a": 6.10813,
+      "bStature": 0.7845,
+      "cBmi": 0.5075,
+      "residualSdLog": 0.06171,
+      "fit": {
+       "r2Test": 0.738,
+       "residualSdMmTest": 32.6
+      },
+      "agePerDecadeLog": -0.021
+     },
+     "calf": {
+      "name": {
+       "zh": "小腿围",
+       "en": "Maximal calf circumference"
+      },
+      "definition": {
+       "zh": "最大围度",
+       "en": "maximum"
+      },
+      "n": 8501,
+      "a": 5.81556,
+      "bStature": 0.7415,
+      "cBmi": 0.4306,
+      "residualSdLog": 0.05193,
+      "fit": {
+       "r2Test": 0.748,
+       "residualSdMmTest": 20.2
+      },
+      "agePerDecadeLog": -0.0094
+     },
+     "armcirc": {
+      "name": {
+       "zh": "上臂围（放松）",
+       "en": "Mid-upper-arm circumference, relaxed"
+      },
+      "definition": {
+       "zh": "肩峰与鹰嘴连线中点，上肢下垂",
+       "en": "midway between acromion and olecranon, arm hanging"
+      },
+      "n": 28072,
+      "a": 5.64393,
+      "bStature": 0.6334,
+      "cBmi": 0.5817,
+      "residualSdLog": 0.05658,
+      "fit": {
+       "r2Test": 0.814,
+       "residualSdMmTest": 19.5
+      },
+      "agePerDecadeLog": -0.0113
+     },
+     "armlen": {
+      "name": {
+       "zh": "上臂长",
+       "en": "Upper arm length"
+      },
+      "definition": {
+       "zh": "屈肘 90 度，肩峰至鹰嘴",
+       "en": "acromion to olecranon, elbow at 90 deg"
+      },
+      "n": 28080,
+      "a": 5.89525,
+      "bStature": 0.9387,
+      "cBmi": 0.078,
+      "residualSdLog": 0.04163,
+      "fit": {
+       "r2Test": 0.539,
+       "residualSdMmTest": 16.3
+      },
+      "agePerDecadeLog": 0.0053
+     },
+     "upperleglen": {
+      "name": {
+       "zh": "大腿长",
+       "en": "Upper leg length"
+      },
+      "definition": {
+       "zh": "坐姿，腹股沟皱襞至髌骨上缘",
+       "en": "inguinal crease to proximal patella, seated"
+      },
+      "n": 27744,
+      "a": 5.95406,
+      "bStature": 1.2389,
+      "cBmi": -0.0241,
+      "residualSdLog": 0.06215,
+      "fit": {
+       "r2Test": 0.438,
+       "residualSdMmTest": 24.9
+      },
+      "agePerDecadeLog": -0.0086
+     },
+     "sad": {
+      "name": {
+       "zh": "腹部矢状径（仰卧）",
+       "en": "Sagittal abdominal diameter, supine"
+      },
+      "definition": {
+       "zh": "仰卧，髂嵴水平",
+       "en": "at iliac crest level, supine"
+      },
+      "n": 7394,
+      "a": 5.22254,
+      "bStature": 0.2929,
+      "cBmi": 0.8169,
+      "residualSdLog": 0.07827,
+      "fit": {
+       "r2Test": 0.822,
+       "residualSdMmTest": 18.4
+      },
+      "agePerDecadeLog": 0.0232
+     }
+    }
+   }
+  }
+ },
+ "presets": [
+  {
+   "id": "ansur2-F",
+   "sex": "F",
+   "name": {
+    "zh": "ANSUR II 美国陆军女性中位数",
+    "en": "ANSUR II US Army female median"
+   },
+   "statureMm": 1626.0,
+   "bmi": 25.3,
+   "weightKg": 66.8,
+   "source": "ANSUR II public release (2012), computed here",
+   "n": 1986
+  },
+  {
+   "id": "nhanes-F-20-39",
+   "sex": "F",
+   "name": {
+    "zh": "NHANES 美国女性 20–39 岁 中位数（2017–2023）",
+    "en": "NHANES US female 20-39 median (2017-2023)"
+   },
+   "statureMm": 1628.0,
+   "bmi": 27.2,
+   "weightKg": 71.8,
+   "waistMm": 904.0,
+   "hipMm": 1057.0,
+   "source": "NHANES 2017-Mar 2020 + Aug 2021-Aug 2023, MEC-weighted, computed here",
+   "n": 2138
+  },
+  {
+   "id": "nhanes-F-20+",
+   "sex": "F",
+   "name": {
+    "zh": "NHANES 美国女性 20 岁以上 中位数（2017–2023）",
+    "en": "NHANES US female 20+ median (2017-2023)"
+   },
+   "statureMm": 1611.0,
+   "bmi": 28.4,
+   "weightKg": 73.6,
+   "waistMm": 962.0,
+   "hipMm": 1069.0,
+   "source": "NHANES 2017-Mar 2020 + Aug 2021-Aug 2023, MEC-weighted, computed here",
+   "n": 7493
+  },
+  {
+   "id": "nhanes-asian-F-20-39",
+   "sex": "F",
+   "name": {
+    "zh": "NHANES 美国亚裔女性 20–39 岁中位数",
+    "en": "NHANES US non-Hispanic Asian female 20-39 median"
+   },
+   "statureMm": 1583.0,
+   "bmi": 22.9,
+   "weightKg": 59.2,
+   "source": "NHANES 2017-2023, RIDRETH3 = 6, MEC-weighted, computed here",
+   "n": 245
+  },
+  {
+   "id": "ansur2-M",
+   "sex": "M",
+   "name": {
+    "zh": "ANSUR II 美国陆军男性中位数",
+    "en": "ANSUR II US Army male median"
+   },
+   "statureMm": 1755.0,
+   "bmi": 27.5,
+   "weightKg": 84.6,
+   "source": "ANSUR II public release (2012), computed here",
+   "n": 4082
+  },
+  {
+   "id": "nhanes-M-20-39",
+   "sex": "M",
+   "name": {
+    "zh": "NHANES 美国男性 20–39 岁 中位数（2017–2023）",
+    "en": "NHANES US male 20-39 median (2017-2023)"
+   },
+   "statureMm": 1761.0,
+   "bmi": 27.7,
+   "weightKg": 85.9,
+   "waistMm": 960.0,
+   "hipMm": 1035.0,
+   "source": "NHANES 2017-Mar 2020 + Aug 2021-Aug 2023, MEC-weighted, computed here",
+   "n": 1849
+  },
+  {
+   "id": "nhanes-M-20+",
+   "sex": "M",
+   "name": {
+    "zh": "NHANES 美国男性 20 岁以上 中位数（2017–2023）",
+    "en": "NHANES US male 20+ median (2017-2023)"
+   },
+   "statureMm": 1751.0,
+   "bmi": 28.5,
+   "weightKg": 87.1,
+   "waistMm": 1014.0,
+   "hipMm": 1037.0,
+   "source": "NHANES 2017-Mar 2020 + Aug 2021-Aug 2023, MEC-weighted, computed here",
+   "n": 6731
+  },
+  {
+   "id": "nhanes-asian-M-20-39",
+   "sex": "M",
+   "name": {
+    "zh": "NHANES 美国亚裔男性 20–39 岁中位数",
+    "en": "NHANES US non-Hispanic Asian male 20-39 median"
+   },
+   "statureMm": 1732.0,
+   "bmi": 26.0,
+   "weightKg": 79.4,
+   "source": "NHANES 2017-2023, RIDRETH3 = 6, MEC-weighted, computed here",
+   "n": 183
+  },
+  {
+   "id": "cn-fitness2020-F-20-24",
+   "sex": "F",
+   "name": {
+    "zh": "中国女性 20-24 岁均值（第五次国民体质监测，2020）",
+    "en": "China female 20-24 mean (5th National Physical Fitness Surveillance, 2020)"
+   },
+   "statureMm": 1606.0,
+   "bmi": 21.6,
+   "weightKg": 55.7,
+   "waistMm": 728.0,
+   "hipMm": 914.0,
+   "source": "refpop-china.json: cn-fitness-2020 (means, not medians; BMI here = mean weight / mean stature^2)"
+  },
+  {
+   "id": "cn-fitness2020-F-25-29",
+   "sex": "F",
+   "name": {
+    "zh": "中国女性 25-29 岁均值（第五次国民体质监测，2020）",
+    "en": "China female 25-29 mean (5th National Physical Fitness Surveillance, 2020)"
+   },
+   "statureMm": 1598.0,
+   "bmi": 22.2,
+   "weightKg": 56.7,
+   "waistMm": 744.0,
+   "hipMm": 922.0,
+   "source": "refpop-china.json: cn-fitness-2020 (means, not medians; BMI here = mean weight / mean stature^2)"
+  },
+  {
+   "id": "cn-gbt10000-1988-F",
+   "sex": "F",
+   "name": {
+    "zh": "中国成年女性 P50（GB/T 10000-1988，1986–87 年调查）",
+    "en": "Chinese adult female P50 (GB/T 10000-1988, 1986-87 survey)"
+   },
+   "statureMm": 1570,
+   "bmi": 21.1,
+   "weightKg": 52,
+   "source": "refpop-china.json: gbt10000-1988-reprint-sun (secondary reprint; superseded by GB/T 10000-2023, whose tables we could not obtain)"
+  },
+  {
+   "id": "cn-fitness2020-M-20-24",
+   "sex": "M",
+   "name": {
+    "zh": "中国男性 20-24 岁均值（第五次国民体质监测，2020）",
+    "en": "China male 20-24 mean (5th National Physical Fitness Surveillance, 2020)"
+   },
+   "statureMm": 1726.0,
+   "bmi": 23.6,
+   "weightKg": 70.4,
+   "waistMm": 824.0,
+   "hipMm": 958.0,
+   "source": "refpop-china.json: cn-fitness-2020 (means, not medians; BMI here = mean weight / mean stature^2)"
+  },
+  {
+   "id": "cn-fitness2020-M-25-29",
+   "sex": "M",
+   "name": {
+    "zh": "中国男性 25-29 岁均值（第五次国民体质监测，2020）",
+    "en": "China male 25-29 mean (5th National Physical Fitness Surveillance, 2020)"
+   },
+   "statureMm": 1721.0,
+   "bmi": 24.6,
+   "weightKg": 72.8,
+   "waistMm": 853.0,
+   "hipMm": 972.0,
+   "source": "refpop-china.json: cn-fitness-2020 (means, not medians; BMI here = mean weight / mean stature^2)"
+  },
+  {
+   "id": "cn-gbt10000-1988-M",
+   "sex": "M",
+   "name": {
+    "zh": "中国成年男性 P50（GB/T 10000-1988，1986–87 年调查）",
+    "en": "Chinese adult male P50 (GB/T 10000-1988, 1986-87 survey)"
+   },
+   "statureMm": 1678,
+   "bmi": 21.0,
+   "weightKg": 59,
+   "source": "refpop-china.json: gbt10000-1988-reprint-sun (secondary reprint; superseded by GB/T 10000-2023, whose tables we could not obtain)"
+  }
+ ]
+}

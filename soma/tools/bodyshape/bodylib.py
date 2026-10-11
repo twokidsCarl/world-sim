@@ -1,0 +1,217 @@
+"""tools/bodyshape 的公用函数：读取导出的人体、切片、渲染。
+Shared helpers for tools/bodyshape: loading exported bodies, slicing, rendering.
+
+坐标系统一为：米，Y 向上，前 +Z，受试者左侧 +X。各工具都在 soma 项目根目录下运行。
+Frame everywhere: metres, Y up, anterior +Z, subject's left +X.
+Run the tools from the soma project root.
+"""
+import json
+import os
+import numpy as np
+
+RAW = 'data/raw/bodyshape'
+CUR = 'data/curated/bodyshape'
+
+
+class Body:
+    """我们某一个人体的皮肤、骨、肌肉网格（由 export-parts.ts 导出）。
+    Skin / bone / muscle meshes of one of our bodies (written by export-parts.ts)."""
+
+    def __init__(self, name, root=None):
+        d = os.path.join(root or os.path.join(RAW, 'bodies'), name)
+        self.name = name
+        self.parts = json.load(open(os.path.join(d, 'index.json')))['parts']
+        self._v = {}
+        self._i = {}
+        for s in ('integumentary', 'skeletal', 'muscular'):
+            self._v[s] = np.fromfile(os.path.join(d, s + '.f32'), dtype=np.float32).reshape(-1, 3).astype(np.float64)
+            self._i[s] = np.fromfile(os.path.join(d, s + '.u32'), dtype=np.uint32).reshape(-1, 3).astype(np.int64)
+        self.by_name = {}
+        for p in self.parts:
+            self.by_name.setdefault(p['name'].lower(), []).append(p)
+
+    def mesh(self, part):
+        v = self._v[part['system']][part['v0']:part['v0'] + part['nv']]
+        f = self._i[part['system']][part['i0'] // 3:(part['i0'] + part['ni']) // 3]
+        return v, f
+
+    def find(self, name):
+        """名称等于 `name` 的部件（不分大小写）。
+        Parts whose name equals `name` (case-insensitive)."""
+        return self.by_name.get(name.lower(), [])
+
+    def verts(self, name):
+        ps = self.find(name)
+        if not ps:
+            raise KeyError(name)
+        return np.vstack([self.mesh(p)[0] for p in ps])
+
+    def merged(self, pred):
+        """把 pred(part) 为真的部件合并成一个 (V, F)。
+        One (V, F) soup of every part for which pred(part) is true."""
+        vs, fs, n = [], [], 0
+        for p in self.parts:
+            if pred(p):
+                v, f = self.mesh(p)
+                vs.append(v)
+                fs.append(f + n)
+                n += len(v)
+        return np.vstack(vs), np.vstack(fs)
+
+    def skin(self):
+        return self.merged(lambda p: p['name'] == 'Skin')
+
+
+# ---------------------------------------------------------------- 切片
+# ---------------------------------------------------------------- slicing
+
+def slice_segments(V, F, origin, normal):
+    """三角网格与平面求交，返回 (n, 2, 3) 线段。
+    Intersect a triangle soup with a plane; returns (n, 2, 3) segments."""
+    d = (V - origin) @ normal
+    df = d[F]
+    s = df > 0
+    cut = (s.any(1)) & (~s.all(1))
+    Fc, dc = F[cut], df[cut]
+    segs = []
+    for a, b in ((0, 1), (1, 2), (2, 0)):
+        da, db = dc[:, a], dc[:, b]
+        cross = (da > 0) != (db > 0)
+        t = np.where(cross, da / np.where(cross, da - db, 1), 0)
+        p = V[Fc[:, a]] + t[:, None] * (V[Fc[:, b]] - V[Fc[:, a]])
+        segs.append((cross, p))
+    out = np.zeros((len(Fc), 2, 3))
+    k = np.zeros(len(Fc), dtype=int)
+    for cross, p in segs:
+        idx = np.where(cross)[0]
+        out[idx, k[idx]] = p[idx]
+        k[idx] += 1
+    return out[k == 2]
+
+
+def plane_basis(normal):
+    n = normal / np.linalg.norm(normal)
+    a = np.array([1.0, 0, 0]) if abs(n[0]) < 0.9 else np.array([0, 0, 1.0])
+    u = np.cross(n, a)
+    u /= np.linalg.norm(u)
+    w = np.cross(n, u)
+    return u, w
+
+
+def hull_perimeter(pts2):
+    from scipy.spatial import ConvexHull
+    if len(pts2) < 3:
+        return 0.0, pts2
+    try:
+        h = ConvexHull(pts2)
+    except Exception:
+        return 0.0, pts2
+    hp = pts2[h.vertices]
+    return float(np.linalg.norm(hp - np.roll(hp, -1, axis=0), axis=1).sum()), hp
+
+
+# ---------------------------------------------------------------- 渲染
+# ---------------------------------------------------------------- rendering
+
+def sample_surface(V, F, n, rng):
+    a, b, c = V[F[:, 0]], V[F[:, 1]], V[F[:, 2]]
+    nrm = np.cross(b - a, c - a)
+    area = np.linalg.norm(nrm, axis=1)
+    nrm = nrm / np.maximum(area, 1e-20)[:, None]
+    idx = rng.choice(len(F), size=n, p=area / area.sum())
+    r1 = np.sqrt(rng.random(n))
+    r2 = rng.random(n)
+    p = (1 - r1)[:, None] * a[idx] + (r1 * (1 - r2))[:, None] * b[idx] + (r1 * r2)[:, None] * c[idx]
+    return p, nrm[idx]
+
+
+def render_views(layers, path, views=('front', 'side', 'back'), height=1100, ylim=None, pad=0.03,
+                 title=None, n_per_m2=2.5e6, annotations=None):
+    """正交投影的点溅渲染。layers: (V, F, rgb) 列表；输出 PNG。
+    Orthographic splat render. layers: list of (V, F, rgb[, alpha]). Writes a PNG."""
+    from PIL import Image, ImageDraw
+    rng = np.random.default_rng(1)
+    allv = np.vstack([l[0] for l in layers])
+    lo, hi = allv.min(0), allv.max(0)
+    if ylim:
+        lo[1], hi[1] = ylim
+    scale = (height - 40) / (hi[1] - lo[1] + 2 * pad)
+    imgs = []
+    for view in views:
+        # 屏幕横轴与深度轴（深度越大越靠近相机）
+        # screen x axis and depth axis (larger depth = nearer the camera)
+        if view == 'front':
+            sx, dz, flip = 0, 2, -1  # viewer sees subject's left on the right? no: mirror like facing them
+        elif view == 'back':
+            sx, dz, flip = 0, 2, 1
+        elif view == 'side':  # from subject's left
+            sx, dz, flip = 2, 0, -1
+        else:  # 'right'
+            sx, dz, flip = 2, 0, 1
+        wlo, whi = lo[sx], hi[sx]
+        W = int((whi - wlo + 2 * pad) * scale)
+        H = height
+        zbuf = np.full((H, W), -1e9)
+        img = np.ones((H, W, 3))
+        for layer in layers:
+            V, F, rgb = layer[0], layer[1], np.asarray(layer[2], float)
+            if ylim:
+                m = (V[F][:, :, 1].max(1) > lo[1] - 0.05) & (V[F][:, :, 1].min(1) < hi[1] + 0.05)
+                F = F[m]
+            if len(F) == 0:
+                continue
+            a = np.linalg.norm(np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]]), axis=1).sum() / 2
+            n = int(min(max(a * n_per_m2, 2e5), 8e6))
+            p, nr = sample_surface(V, F, n, rng)
+            depth = p[:, dz] * (1 if (view in ('front', 'side')) else -1)
+            if view == 'front':
+                x = (hi[sx] - p[:, sx] + pad) * scale  # subject's left on viewer's right
+                x = W - 1 - x
+                x = (p[:, sx] - wlo + pad) * scale
+            elif view == 'back':
+                x = (whi - p[:, sx] + pad) * scale
+            elif view == 'side':
+                x = (whi - p[:, sx] + pad) * scale
+            else:
+                x = (p[:, sx] - wlo + pad) * scale
+            y = (hi[1] - p[:, 1] + pad) * scale
+            xi, yi = x.astype(int), y.astype(int)
+            ok = (xi >= 0) & (xi < W) & (yi >= 0) & (yi < H)
+            xi, yi, depth, nr = xi[ok], yi[ok], depth[ok], nr[ok]
+            vdir = np.zeros(3)
+            vdir[dz] = 1 if view in ('front', 'side') else -1
+            light = vdir + np.array([0.3, 0.5, 0.0])
+            light /= np.linalg.norm(light)
+            sh = 0.35 + 0.65 * np.abs(nr @ light)
+            flat = yi * W + xi
+            order = np.argsort(depth)
+            flat, depth, sh = flat[order], depth[order], sh[order]
+            # 每个像素保留最近的采样点：按深度排序后取最后一个
+            # keep the nearest sample per pixel: last occurrence after sorting by depth
+            uniq, last = np.unique(flat[::-1], return_index=True)
+            last = len(flat) - 1 - last
+            zb = zbuf.reshape(-1)
+            win = depth[last] > zb[uniq]
+            u2, l2 = uniq[win], last[win]
+            zb[u2] = depth[l2]
+            img.reshape(-1, 3)[u2] = sh[l2][:, None] * rgb[None, :]
+        im = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
+        if annotations:
+            dr = ImageDraw.Draw(im)
+            for (yy, label, col) in annotations:
+                ypix = (hi[1] - yy + pad) * scale
+                dr.line([(0, ypix), (W, ypix)], fill=col, width=1)
+                if view == views[0]:
+                    dr.text((2, ypix - 11), label, fill=col)
+        imgs.append(im)
+    Wt = sum(i.width for i in imgs)
+    out = Image.new('RGB', (Wt, height + (24 if title else 0)), 'white')
+    x = 0
+    for i in imgs:
+        out.paste(i, (x, 24 if title else 0))
+        x += i.width
+    if title:
+        ImageDraw.Draw(out).text((6, 5), title, fill=(0, 0, 0))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    out.save(path)
+    return path
