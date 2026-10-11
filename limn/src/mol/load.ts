@@ -2,7 +2,7 @@ import { parsePdb } from './pdb'
 import { CIF, type CifBlock, type CifCategory } from 'molstar/lib/mol-io/reader/cif'
 import { mul4, parseOperExpression } from './assembly'
 import { El, IDENTITY, type Assembly, type Chain, type Entity, type EntityKind, type Molecule } from './types'
-import { t } from '../i18n'
+import { t, noteError } from '../i18n'
 
 const WATER = new Set(['HOH', 'DOD', 'WAT'])
 const SUGAR = new Set(['NAG', 'NDG', 'MAN', 'BMA', 'FUC', 'FUL', 'GAL', 'GLA', 'GLC', 'BGC', 'SIA', 'XYP', 'A2G', 'NGA', 'BGL', 'AMA', 'AFU', 'BGA', 'ANE', 'AGA'])
@@ -35,7 +35,7 @@ function elementOf(sym: string): El {
 
 function col(cat: CifCategory, name: string) {
   const f = cat.getField(name)
-  if (!f) throw new Error(t('error.cif.field', { field: `${cat.name}.${name}` }))
+  if (!f) throw noteError('error.cif.field', { field: `${cat.name}.${name}` })
   return f
 }
 
@@ -114,7 +114,7 @@ function readAssemblies(block: CifBlock, chains: Chain[]): Assembly[] {
       let m: Float32Array = IDENTITY
       for (const oid of seq) {
         const o = opById.get(oid)
-        if (!o) throw new Error(t('error.assemblyOperator', { id, op: oid }))
+        if (!o) throw noteError('error.assemblyOperator', { id, op: oid })
         m = mul4(m, o)
       }
       operators.push(m)
@@ -141,12 +141,12 @@ export interface ParseOptions {
 
 export async function parseCif(data: Uint8Array | string, id: string, opts: ParseOptions = {}): Promise<Molecule> {
   const parsed = await (typeof data === 'string' ? CIF.parseText(data) : CIF.parseBinary(data)).run()
-  if (parsed.isError) throw new Error(t('error.parse', { id, message: parsed.message }))
+  if (parsed.isError) throw noteError('error.parse', { id, message: parsed.message })
   const block = parsed.result.blocks[0]
-  if (!block) throw new Error(t('error.noBlock', { id }))
+  if (!block) throw noteError('error.noBlock', { id })
   // 整合结构可以完全由粗粒度小球组成，没有原子 / an integrative structure may consist of coarse spheres only, with no atoms
   const beads = block.categories['ihm_sphere_obj_site']
-  if (!block.categories['atom_site']?.rowCount && !beads?.rowCount) throw new Error(t('error.noCoordinates', { id }))
+  if (!block.categories['atom_site']?.rowCount && !beads?.rowCount) throw noteError('error.noCoordinates', { id })
   if (!block.categories['atom_site']?.rowCount) return parseBeads(block, id)
   const site = block.categories['atom_site']!
 
@@ -231,7 +231,7 @@ export async function parseCif(data: Uint8Array | string, id: string, opts: Pars
     cur.count++
     count++
   }
-  if (count === 0) throw new Error(t('error.noAtomsLeft', { id }))
+  if (count === 0) throw noteError('error.noAtomsLeft', { id })
 
   // 实体的种类：有 entity_poly 时只细分非聚合物；没有时按链的内容来定，一个实体取它最大的链
   // Kinds: with entity_poly only non-polymers are refined; without it the chain contents
@@ -371,7 +371,7 @@ export async function loadMolecule(src: Source, onProgress?: (received: number, 
     buf = await download(url, onProgress).catch(() => null)
     if (buf) break
   }
-  if (!buf) throw new Error(t('error.fetchStructure', { id: src.id, host: new URL(urls[0]!).hostname }))
+  if (!buf) throw noteError('error.fetchStructure', { id: src.id, host: new URL(urls[0]!).hostname })
   // BinaryCIF 是 MessagePack；文本 CIF 以 "data_" 开头。
   // BinaryCIF is MessagePack; text CIF starts with "data_".
   // PDB 格式的文本（BFVD 只提供这种）：以 MODEL、ATOM、HEADER 等记录开头

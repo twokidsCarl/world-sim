@@ -1,6 +1,6 @@
 import membranes from '../../data/membranes.json'
 import { El, IDENTITY, type Molecule } from '../mol/types'
-import { t, tIn } from '../i18n'
+import { t, tIn, noteError } from '../i18n'
 
 interface Graph {
   pos: number[]
@@ -14,7 +14,7 @@ function readSdf(text: string, id: string): Graph {
   const lines = text.split(/\r?\n/)
   const counts = lines[3] ?? ''
   const n = Number(counts.slice(0, 3)), nb = Number(counts.slice(3, 6))
-  if (!Number.isFinite(n) || n <= 0) throw new Error(t('error.lipid.parse', { id }))
+  if (!Number.isFinite(n) || n <= 0) throw noteError('error.lipid.parse', { id })
   const pos: number[] = [], element: number[] = []
   const index = new Map<number, number>()
   for (let i = 0; i < n; i++) {
@@ -25,7 +25,7 @@ function readSdf(text: string, id: string): Graph {
     pos.push(Number(l.slice(0, 10)), Number(l.slice(10, 20)), Number(l.slice(20, 30)))
     element.push(sym === 'C' ? El.C : sym === 'N' ? El.N : sym === 'O' ? El.O : sym === 'S' ? El.S : sym === 'P' ? El.P : El.Other)
   }
-  if (element.length === 0) throw new Error(t('error.lipid.empty', { id }))
+  if (element.length === 0) throw noteError('error.lipid.empty', { id })
   const bonds: number[][] = element.map(() => [])
   for (let i = 0; i < (Number.isFinite(nb) ? nb : 0); i++) {
     const l = lines[4 + n + i] ?? ''
@@ -218,7 +218,7 @@ const CCD = membranes.lipids as Record<string, { ccd: string; name: string; name
 /** 取某个化学组分的理想坐标（经本地服务）/ fetch a chemical component's ideal coordinates through the local service */
 async function fetchLipid(ccd: string): Promise<{ mol: Molecule; tails: number }> {
   const res = await fetch(`/api/ligand/${ccd}`)
-  if (!res.ok) throw new Error(t('error.lipid.fetch', { id: ccd }))
+  if (!res.ok) throw noteError('error.lipid.fetch', { id: ccd })
   return parseLipid(await res.text(), ccd)
 }
 

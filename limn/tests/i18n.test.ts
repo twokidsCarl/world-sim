@@ -6,7 +6,7 @@ import cells from '../data/cells.json'
 import membranes from '../data/membranes.json'
 import neuro from '../data/neuro.json'
 import neurons from '../data/neurons.json'
-import { en, getLang, listParams, noteKey, noteText, pick, syncLang, t, tIn, zh } from '../src/i18n'
+import { en, errorNote, getLang, listParams, noteError, noteKey, noteText, pick, say, shown, syncLang, t, tIn, zh } from '../src/i18n'
 import { COLOR_MODES } from '../src/style/annotate'
 import { ROLES } from '../src/style/palettes'
 
@@ -170,5 +170,30 @@ describe('数据文件里成对的字段 / paired fields in the data files', () 
       both(m, 'name', String(m.id))
       both(m, 'basis', String(m.id))
     }
+  })
+})
+
+// 可重译的消息 / messages that can be re-worded
+describe('messages kept as keys', () => {
+  it('re-words a status and an error when the language changes', () => {
+    const busy = say('busy.downloading', { name: '2HHB' })
+    const err = errorNote(noteError('error.badId'))
+    syncLang('zh')
+    const zhBusy = shown(busy), zhErr = shown(err)
+    syncLang('en')
+    expect(shown(busy)).not.toBe(zhBusy)
+    expect(shown(busy)).toContain('2HHB')
+    expect(shown(err)).not.toBe(zhErr)
+    syncLang('zh')
+  })
+
+  it('keeps only the current half of a bilingual server error, and leaves other text alone', () => {
+    syncLang('en')
+    expect(shown('没有找到配体 X / No ligand X found')).toBe('No ligand X found')
+    syncLang('zh')
+    expect(shown('没有找到配体 X / No ligand X found')).toBe('没有找到配体 X')
+    expect(shown('HTTP 500 / gateway')).toBe('HTTP 500 / gateway')
+    expect(shown('')).toBe('')
+    expect(errorNote(new Error('plain'))).toBe('plain')
   })
 })

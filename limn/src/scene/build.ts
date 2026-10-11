@@ -56,6 +56,11 @@ interface Group {
    * molecules. All copies of such a group share one molecule id.
    */
   merged: boolean
+  /**
+   * 一大群小分子（小泡里的谷氨酸等）：除了共用编号，它们彼此之间也不画深度轮廓线，只留整群的外轮廓。
+   * A crowd of small molecules (the glutamates in a vesicle, say): besides sharing an id, no depth contours are drawn among them, only the outline of the crowd.
+   */
+  fine: boolean
 }
 
 /**
@@ -95,6 +100,7 @@ function assemblyGroups(mol: Molecule, assembly: string, merge?: RegExp): Group[
       byKey.set(key, {
         runs, operators: g.operators.slice(), lipid: g.chains.every(isLipid),
         merged: g.chains.every((ci) => mol.chains[ci]!.count < 40) || g.chains.some((ci) => /\.fibers?\./i.test(mol.entities[mol.chains[ci]!.entity]!.description) || !!merge?.test(mol.entities[mol.chains[ci]!.entity]!.description)),
+        fine: g.chains.every((ci) => mol.chains[ci]!.count < 40) || g.chains.some((ci) => !!merge?.test(mol.entities[mol.chains[ci]!.entity]!.description)),
       })
   }
   return [...byKey.values()]
@@ -156,7 +162,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           data[k + 13] = centre[1]
           data[k + 14] = centre[2]
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
-          data[k + 15] = p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
+          data[k + 15] = p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : p.molecule + 1 + (g.merged ? groupCopy : copy)

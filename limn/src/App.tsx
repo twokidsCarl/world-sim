@@ -7,7 +7,7 @@ import { CATALOG, useStore } from './state/store'
 import neuro from '../data/neuro.json'
 import neurons from '../data/neurons.json'
 import cells from '../data/cells.json'
-import { colorModeLabel, noteText, pick, roleLabel, t, tierLabel } from './i18n'
+import { colorModeLabel, noteText, pick, roleLabel, t, tierLabel, shown } from './i18n'
 import { entityLch } from './style/assign'
 import { COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
 import { hex, oklch } from './style/oklab'
@@ -327,7 +327,7 @@ export function App() {
             <button className="primary" disabled={working}>{t('id.submit')}</button>
           </form>
         )}
-        {s.error && <div className="error">{s.error}</div>}
+        {s.error && <div className="error">{shown(s.error)}</div>}
 
         {s.spec && s.panels.length > 0 && (
           <>

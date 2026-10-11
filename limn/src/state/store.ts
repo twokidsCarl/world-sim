@@ -13,7 +13,7 @@ import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, STYLE_NEU
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
 import type { Note, PanelSpec, SceneSpec, Tier } from '../scene/spec'
-import { getLang, listParams, noteKey, pick, saveLang, syncLang, t, tIn, type Lang } from '../i18n'
+import { getLang, listParams, noteKey, pick, saveLang, syncLang, t, tIn, type Lang, noteError, errorNote, say } from '../i18n'
 import catalog from '../../data/catalog.json'
 import neuronTable from '../../data/neurons.json'
 import cellTable from '../../data/cells.json'
@@ -79,8 +79,11 @@ interface State extends Look {
   sceneRev: number
   /** 加一以要求舞台重画 / bumped to ask the stage to draw again */
   drawRev: number
-  busy: string
-  error: string
+  /** 正在做什么 / 出了什么错：存成消息键，显示时才写成文字 / what is going on, and what went wrong: kept as message keys and worded when shown */
+  busy: Note | ''
+  error: Note | ''
+  /** 这张图载入时的“剖开”值，“重置视角”回到它 / the cut this picture loaded with, which "reset view" returns to */
+  cutDefault: number
   rounds: Round[]
   refining: string
   /** 膜脂质，全景有膜时加载 / the membrane lipid, loaded when a landscape has a membrane */
@@ -172,7 +175,7 @@ function progress(name: string): (received: number, total: number) => void {
     if (now - last < 250) return
     last = now
     const mb = (n: number) => (n / 1e6).toFixed(1)
-    useStore.setState({ busy: total ? t('busy.progressOf', { name, received: mb(received), total: mb(total) }) : t('busy.progress', { name, received: mb(received) }) })
+    useStore.setState({ busy: total ? say('busy.progressOf', { name, received: mb(received), total: mb(total) }) : say('busy.progress', { name, received: mb(received) }) })
   }
 }
 
@@ -207,6 +210,7 @@ export const useStore = create<State>((set, get) => ({
   drawRev: 0,
   busy: '',
   error: '',
+  cutDefault: 0,
   rounds: [],
   refining: '',
   lipids: null,
@@ -220,11 +224,11 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async resolveTopic(topic) {
-    set({ busy: t('busy.resolving'), error: '' })
+    set({ busy: say('busy.resolving'), error: '' })
     try {
       const { spec } = await api.resolve(topic)
       if (spec.catalog) return await get().loadCatalog(spec.catalog)
-      set({ busy: t('busy.downloading', { name: spec.panels.map((p) => p.source.id).join(t('punct.list')) }) })
+      set({ busy: say('busy.downloading', { name: spec.panels.map((p) => p.source.id).join(t('punct.list')) }) })
       const panels = await Promise.all(spec.panels.map(loadPanel))
       if (spec.landscape) {
         const lipids = spec.landscape.membrane ? await loadLipids(spec.landscape.membraneType) : null
@@ -261,7 +265,7 @@ export const useStore = create<State>((set, get) => ({
             colorings[pi] = { ...colorings[pi]!, hueShift: colorings[pi]!.hueShift.map(() => 0), nudge: colorings[pi]!.nudge.map(() => shift) }
           })
         }
-        set((s) => ({ spec, panels, colorings, lipids, ...freshLook(), cut: 0, style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
+        set((s) => ({ spec, panels, colorings, lipids, ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_LANDSCAPE), rounds: [], placed: [], busy: '', sceneRev: s.sceneRev + 1 }))
         return
       }
       // 同一蛋白质的各个面板转到共同的朝向，
@@ -277,10 +281,10 @@ export const useStore = create<State>((set, get) => ({
         }
       }
       if (aligned.length) spec.notes = [...spec.notes, { key: 'note.aligned', params: { ...listParams('list', (lang) => aligned.map((a) => tIn(lang, 'note.aligned.item', a))), ref: panels[0]!.mol.id } }]
-      set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
@@ -294,13 +298,13 @@ export const useStore = create<State>((set, get) => ({
     const af = /^AF-([A-Z0-9]{6,10}|\d{10,20})$/.exec(clean)
     const isComplex = !!af && /^\d+$/.test(af[1]!)
     if (!af && !/^[0-9][A-Z0-9]{3}$/.test(clean)) {
-      set({ error: t('error.badId') })
+      set({ error: say('error.badId') })
       return
     }
-    set({ busy: t('busy.downloading', { name: clean }), error: '' })
+    set({ busy: say('busy.downloading', { name: clean }), error: '' })
     try {
       const prediction = af ? await api.alphafold(af[1]!) : null
-      if (af && !prediction) throw new Error(t('error.noAlphafold', { id: af[1]! }))
+      if (af && !prediction) throw noteError('error.noAlphafold', { id: af[1]! })
       const mol = await loadMolecule(prediction ? { kind: 'url', id: clean, url: prediction.url, minConfidence: 50 } : { kind: 'pdb', id: clean }, progress(clean))
       const coloring = defaultColoring(mol)
       const methodKey = isComplex ? 'method.complex' : prediction?.source === 'BFVD' ? 'method.bfvd' : 'method.alphafold'
@@ -312,22 +316,22 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, ...(title && titleEn ? { titleEn } : {}), caption: '', panels: [spec], notes: !prediction ? [] : isComplex ? [{ key: 'note.complex', params: { iptm: iptm ?? '?' } }] : prediction.source === 'BFVD' ? [{ key: 'note.bfvd' }] : [{ key: 'note.alphafold', params: { percent: Math.round(prediction.confident * 100) } }] }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
       fetchPapers()
       // 单个蛋白的预测模型：顺便查含有它的预测复合物 / for a single predicted protein, also look up the predicted complexes that contain it
       if (af && !isComplex) void api.complexes(af[1]!).then((list) => useStore.getState().spec?.topic === clean && useStore.setState({ complexes: list }))
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
   async loadCatalog(id) {
     const entry = (catalog.models as CatalogEntry[]).find((m) => m.id === id)
     if (!entry) {
-      set({ error: t('error.notInCatalog', { id }) })
+      set({ error: say('error.notInCatalog', { id }) })
       return
     }
-    set({ busy: t('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
+    set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const src = entry.source
       let mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(pick(entry.title, entry.titleEn)))
@@ -335,11 +339,11 @@ export const useStore = create<State>((set, get) => ({
       let assembly = defaultAssembly(mol)
       if (entry.points) {
         // 实测的粒子位置：每个位置放一份原子模型 / measured particle positions: one copy of the atomic model at each
-        set({ busy: t('busy.picks', { name: pick(entry.title, entry.titleEn) }) })
+        set({ busy: say('busy.picks', { name: pick(entry.title, entry.titleEn) }) })
         const res = await fetch(entry.points.url)
-        if (!res.ok) throw new Error(t('error.picksFetch', { status: res.status, host: new URL(entry.points.url).hostname }))
+        if (!res.ok) throw noteError('error.picksFetch', { status: res.status, host: new URL(entry.points.url).hostname })
         const pts = parsePicks(await res.text(), entry.points.voxelSpacing)
-        if (pts.length === 0) throw new Error(t('error.picksEmpty'))
+        if (pts.length === 0) throw noteError('error.picksEmpty')
         mol.assemblies.push(assemblyAtPoints(mol, assembly, pts, rng(1)))
         assembly = 'picks'
         notes.push({ key: 'note.picks', params: { count: pts.length / 3 } })
@@ -392,37 +396,38 @@ export const useStore = create<State>((set, get) => ({
         colorings: [coloring],
         ...freshLook(),
         cut: entry.cut ?? 0,
+        cutDefault: entry.cut ?? 0,
         style: cloneStyle(mesoscale ? STYLE_MESOSCALE : STYLE_MOLECULE),
         rounds: [],
         busy: '',
         sceneRev: s.sceneRev + 1,
       }))
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
   async loadEmdb(n) {
-    set({ busy: t('busy.emdbQuery', { n }), error: '' })
+    set({ busy: say('busy.emdbQuery', { n }), error: '' })
     try {
       const info = await api.emdb(n)
-      if (!info) throw new Error(t('error.emdbMissing', { n }))
-      if (info.contour === null) throw new Error(t('error.emdbNoContour', { n }))
-      if (info.megabytes > 420) throw new Error(t('error.emdbTooBig', { n, mb: info.megabytes }))
+      if (!info) throw noteError('error.emdbMissing', { n })
+      if (info.contour === null) throw noteError('error.emdbNoContour', { n })
+      if (info.megabytes > 420) throw noteError('error.emdbTooBig', { n, mb: info.megabytes })
       const report = progress(t('busy.mapName', { id: info.id, mb: info.megabytes }))
       let buf: Uint8Array | null = null
       for (const u of [`/api/structure?url=${encodeURIComponent(info.url)}`, info.url]) {
         buf = await download(u, report).catch(() => null)
         if (buf) break
       }
-      if (!buf) throw new Error(t('error.emdbFetch', { id: info.id }))
-      set({ busy: t('busy.isosurface', { id: info.id }) })
+      if (!buf) throw noteError('error.emdbFetch', { id: info.id })
+      set({ busy: say('busy.isosurface', { id: info.id }) })
       await new Promise((r) => setTimeout(r, 30))
       const full = parseMrc(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer)
       // 最长边合并到 200 个体素以内，够画，也不至于太慢 / bin to at most 200 voxels a side: enough to draw, and not too slow
       const vol = bin(full, 200)
       const pts = surfacePoints(vol, info.contour)
-      if (pts.length === 0) throw new Error(t('error.emdbNoSurface', { id: info.id, contour: info.contour }))
+      if (pts.length === 0) throw noteError('error.emdbNoSurface', { id: info.id, contour: info.contour })
       const count = pts.length / 3
       const map: Molecule = {
         id: info.id, title: info.title, atomCount: count, pos: pts,
@@ -451,7 +456,7 @@ export const useStore = create<State>((set, get) => ({
       // 拟合进这张图的原子模型和它在同一个坐标系里，直接叠进去 / the atomic model fitted into this map shares its coordinate frame and goes straight in
       const pdbId = info.pdb[0]
       if (pdbId) {
-        set({ busy: t('busy.fittedModel', { id: pdbId }) })
+        set({ busy: say('busy.fittedModel', { id: pdbId }) })
         const mol = await loadMolecule({ kind: 'pdb', id: pdbId }, progress(pdbId)).catch(() => null)
         if (mol) {
           const coloring = defaultColoring(mol)
@@ -468,20 +473,20 @@ export const useStore = create<State>((set, get) => ({
       }
       const overlay = panels.length > 1
       const scene: SceneSpec = { topic: info.id, kind: 'molecule', title: info.title || info.id, caption: '', panels: panels.map((p) => p.spec), notes, overlay }
-      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: overlay ? 0.5 : 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: overlay ? 0.5 : 0, cutDefault: overlay ? 0.5 : 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
   async loadCell(id) {
     const entry = cellTable.cells.find((c) => c.id === id)
     if (!entry) {
-      set({ error: t('error.notInCatalog', { id }) })
+      set({ error: say('error.notInCatalog', { id }) })
       return
     }
-    set({ busy: t('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
+    set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const pos: number[] = [], radius: number[] = []
       const chains: Molecule['chains'] = [], entities: Molecule['entities'] = []
@@ -490,13 +495,13 @@ export const useStore = create<State>((set, get) => ({
       let voxel = [0, 0, 0]
       let nearNucleus: { vol: Awaited<ReturnType<typeof readN5Mask>>; mask: Uint8Array } | null = null
       for (const o of entry.organelles) {
-        const vol = await readN5Mask(`${entry.base}/${o.label}/${entry.scale}`, (done, total) => set({ busy: t('busy.segmentation', { name: o.name, nameEn: o.nameEn, done, total }) })).catch(() => null)
+        const vol = await readN5Mask(`${entry.base}/${o.label}/${entry.scale}`, (done, total) => set({ busy: say('busy.segmentation', { name: o.name, nameEn: o.nameEn, done, total }) })).catch(() => null)
         if (!vol) {
           missing.push(o)
           continue
         }
         voxel = vol.voxel
-        set({ busy: t('busy.surface', { name: o.name, nameEn: o.nameEn }) })
+        set({ busy: say('busy.surface', { name: o.name, nameEn: o.nameEn }) })
         await new Promise((r) => setTimeout(r, 20))
         const pts = surfacePoints(vol, 0.5)
         if (pts.length === 0) {
@@ -527,7 +532,7 @@ export const useStore = create<State>((set, get) => ({
         roles.push(o.role as Role)
       }
       const count = pos.length / 3
-      if (count === 0) throw new Error(t('error.cellFetch', { title: entry.title, titleEn: entry.titleEn }))
+      if (count === 0) throw noteError('error.cellFetch', { title: entry.title, titleEn: entry.titleEn })
       const chainOf = new Uint32Array(count)
       chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
       const mol: Molecule = {
@@ -556,19 +561,19 @@ export const useStore = create<State>((set, get) => ({
       const thin = cloneStyle(STYLE_MOLECULE)
       thin.lineWidth = 0.6
       thin.shadow.floor = 0.8
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), rot: axisAngle(1, 0, 0, Math.PI / 2), cut: 0.45, style: thin, rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), rot: axisAngle(1, 0, 0, Math.PI / 2), cut: 0.45, cutDefault: 0.45, style: thin, rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
   async loadNeuron(id) {
     const entry = neuronTable.neurons.find((n) => n.id === id)
     if (!entry) {
-      set({ error: t('error.notInCatalog', { id }) })
+      set({ error: say('error.notInCatalog', { id }) })
       return
     }
-    set({ busy: t('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
+    set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const url = neuromorphoUrl(entry.archive, entry.name)
       // 先走本地服务的缓存，不行再直接取 / through the local service's cache first, then directly
@@ -580,7 +585,7 @@ export const useStore = create<State>((set, get) => ({
           break
         }
       }
-      if (!text) throw new Error(t('error.neuronFetch', { title: entry.title, titleEn: entry.titleEn }))
+      if (!text) throw noteError('error.neuronFetch', { title: entry.title, titleEn: entry.titleEn })
       const mol = neuronMolecule(parseSwc(text), entry.name, entry.titleEn)
       // 胞体是主角；轴突、基树突、顶树突各用一个色相区 / the soma is the subject; axon, basal and apical dendrites each take a hue sector
       const roleOf: Record<string, Role> = { '1': 'focus', '2': 'nucleic-binding', '3': 'soluble', '4': 'membrane', '0': 'extracellular' }
@@ -602,16 +607,16 @@ export const useStore = create<State>((set, get) => ({
         { key: 'note.neuron.thin' },
       ]
       const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: '', panels: [spec], notes, unit: 'µm' }
-      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+      set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
   async loadNeurons(hits) {
     const list = hits.slice(0, 4)
     if (list.length === 0) return
-    set({ busy: t('busy.downloading', { name: list.map((h) => h.name).join(', ') }), error: '' })
+    set({ busy: say('busy.downloading', { name: list.map((h) => h.name).join(', ') }), error: '' })
     try {
       const roleOf: Record<string, Role> = { '1': 'focus', '2': 'nucleic-binding', '3': 'soluble', '4': 'membrane', '0': 'extracellular' }
       const panels: Panel[] = []
@@ -625,7 +630,7 @@ export const useStore = create<State>((set, get) => ({
             break
           }
         }
-        if (!text) throw new Error(t('error.neuronFetch', { title: h.name, titleEn: h.name }))
+        if (!text) throw noteError('error.neuronFetch', { title: h.name, titleEn: h.name })
         const mol = neuronMolecule(parseSwc(text), h.name, h.name)
         const roles = mol.entities.map((e) => roleOf[e.id] ?? 'soluble')
         const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
@@ -649,9 +654,9 @@ export const useStore = create<State>((set, get) => ({
       ]
       const title = list.map((h) => h.name).join(' · ')
       const scene: SceneSpec = { topic: title, kind: 'neuron', title, caption: '', panels: panels.map((p) => p.spec), notes, unit: 'µm' }
-      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
     } catch (e) {
-      set({ busy: '', error: e instanceof Error ? e.message : String(e) })
+      set({ busy: '', error: errorNote(e) })
     }
   },
 
@@ -678,7 +683,7 @@ export const useStore = create<State>((set, get) => ({
   async setColorMode(mode) {
     const needs = mode === 'domains' || mode === 'sites' || mode === 'pathogenicity'
     if (needs && get().panels.some((p) => p.annotation === undefined)) {
-      set({ busy: t('busy.annotations') })
+      set({ busy: say('busy.annotations') })
       const panels = await Promise.all(get().panels.map(async (p) => (p.annotation !== undefined ? p : { ...p, annotation: await api.annotations(p.spec.source.id) })))
       set({ panels, busy: '' })
     }
@@ -701,7 +706,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   resetView() {
-    set(freshLook())
+    set((s) => ({ ...freshLook(), cut: s.cutDefault }))
   },
 
   applyEdits(edits) {

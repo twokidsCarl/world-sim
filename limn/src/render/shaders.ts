@@ -38,6 +38,7 @@ out vec3 v_color;
 out float v_z;
 out float v_r;
 flat out float v_keep;
+flat out float v_fine;
 flat out uvec2 v_ids;
 flat out uvec2 v_inst;
 void main() {
@@ -61,6 +62,8 @@ void main() {
   v_ids = texelFetch(u_ids, at, 0).rg;
   v_inst = texelFetch(u_instIds, ivec2(o % u_w, o / u_w), 0).rg;
   v_keep = 1.0;
+  // 4 = 一大群小分子里的一个：彼此之间不画轮廓线 / 4 = one of a crowd of small molecules, with no contours drawn among them
+  v_fine = mc.w > 3.5 ? 1.0 : 0.0;
   // 截面之前的原子整个丢弃，和 Illustrate 一样，所以剖面上不会出现被切开的球。
   // 已知中心的分子整体保留或丢弃，所以也不会被切开。
   // Atoms in front of the cut are dropped whole, as Illustrate does, so a
@@ -68,7 +71,7 @@ void main() {
   // known is kept or dropped as a whole, so none is sliced either.
   float zcut = view.z;
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
-  if (mc.w > 2.5) {
+  if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
   } else if (mc.w > 0.5) {
     float zc = (u_rot * ((u_place * vec4(mc.xyz, 1.0)).xyz - u_center)).z;
@@ -97,7 +100,8 @@ in float v_z;
 in float v_r;
 flat in uvec2 v_ids;
 flat in uvec2 v_inst;  // 该拷贝的链编号偏移、分子编号 / chain-index offset of this copy, molecule id
-flat in float v_keep;  // 该分子保留的本色比例（景深层） / share of true colour this molecule keeps (depth layers)
+flat in float v_keep;
+flat in float v_fine;  // 该分子保留的本色比例（景深层） / share of true colour this molecule keeps (depth layers)
 uniform vec2 u_z; // 前、后（视图空间，Å） / front, back (view-space Å)
 uniform bool u_outlineByMolecule;
 layout(location = 0) out vec4 o_color;
@@ -109,7 +113,8 @@ void main() {
   gl_FragDepth = clamp((u_z.x - z) / (u_z.x - u_z.y), 0.0, 0.999999);
   o_color = vec4(v_color, v_keep);
   uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
-  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, 1u);
+  // 第四个分量：0 = 没有东西，1 = 普通原子，2 = 小分子群里的原子 / fourth channel: 0 = nothing, 1 = an ordinary atom, 2 = an atom of a crowd of small molecules
+  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, v_fine > 0.5 ? 2u : 1u);
 }`
 
 export const QUAD_VS = /* glsl */ `#version 300 es
@@ -153,8 +158,10 @@ void main() {
       if (abs(i * j) == 4) continue;
       ivec2 q = p + ivec2(round(vec2(float(i), float(j)) * u_pen));
       float rd = abs(z0 - zAt(q));
-      if (rd > u_contour.z) l += min((rd - u_contour.z) / (u_contour.w - u_contour.z), 1.0);
       uvec4 id = texelFetch(u_ids, clampP(q), 0);
+      // 同一群小分子内部的深度台阶不算轮廓 / a depth step inside one crowd of small molecules is not a contour
+      bool within = id0.a == 2u && id.a == 2u && id.b == id0.b;
+      if (rd > u_contour.z && !within) l += min((rd - u_contour.z) / (u_contour.w - u_contour.z), 1.0);
       if (id.r != id0.r) r += 1.0;
       if (atom0 && id.a != 0u && abs(float(int(id.g) - int(id0.g))) > u_residue.z) g += 1.0;
     }

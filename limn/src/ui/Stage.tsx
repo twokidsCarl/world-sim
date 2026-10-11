@@ -8,7 +8,7 @@ import { MEMBRANE_LCH, useStore, type Look } from '../state/store'
 import { atomColors, type Coloring } from '../style/assign'
 import { TONE_LANDSCAPE, TONE_MOLECULE } from '../style/palettes'
 import { scaleBar, type ScaleBar } from '../render/scalebar'
-import { pick, t } from '../i18n'
+import { pick, t, shown } from '../i18n'
 
 /** 双层膜是一片淡黄绿色，如同 Goodsell 画的膜 / The bilayer is one pale yellow-green wash, as in Goodsell's membranes. */
 const LIPID_COLORING: Coloring = { roles: ['membrane'], hueShift: [0], nudge: [0], override: [MEMBRANE_LCH] }
@@ -272,7 +272,7 @@ export function Stage() {
   }, [])
 
   // 嵌入模式没有输入框，所以不显示“输入…开始”的提示 / embed mode has no input box, so the prompt to type something is not shown
-  const status = fatal || busy || error || info || (new URLSearchParams(location.search).get('embed') === '1' ? '' : t('stage.empty'))
+  const status = fatal || shown(busy) || shown(error) || info || (new URLSearchParams(location.search).get('embed') === '1' ? '' : t('stage.empty'))
   return (
     <div className="stage">
       <canvas ref={canvasRef} />
