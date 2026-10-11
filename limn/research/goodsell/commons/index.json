@@ -1,0 +1,533 @@
+{
+ "about": "维基共享资源上作者一栏写着 David S. Goodsell、许可是 CC 或公有领域的图：文件名、许可、署名、出处页。图本身不在仓库里，用 fetch.py 取到 limn/.cache/goodsell/commons/（宽 1200 像素的版本）。skipped 是搜到但没收的，以及原因所在的字段。 / Files on Wikimedia Commons whose author field names David S. Goodsell and whose licence is CC or public domain: file name, licence, credit, description page. The pictures are not in the repository; fetch.py puts them (at 1200 pixels wide) in limn/.cache/goodsell/commons/. `skipped` lists what the search found and was not taken, with the fields that decided it.",
+ "source": "https://commons.wikimedia.org/",
+ "files": [
+  {
+   "file": "014-Insulin-4ins-figure.jpg",
+   "title": "File:014-Insulin-4ins-figure.tiff",
+   "licence": "CC BY 3.0",
+   "artist": "David S. Goodsell",
+   "credit": "https://dx.doi.org/10.2210/rcsb_pdb/mom_2001_2",
+   "page": "https://commons.wikimedia.org/wiki/File:014-Insulin-4ins-figure.tiff",
+   "width": 492,
+   "height": 945
+  },
+  {
+   "file": "020-Polyovirus-2plv.jpg",
+   "title": "File:020-Polyovirus-2plv.jpg",
+   "licence": "CC BY 3.0",
+   "artist": "David S. Goodsell (The Scripps Research Institute)\nThe original uploader was Greatpatton at French Wikipedia.",
+   "credit": "https://pdb101.rcsb.org/motm/20",
+   "page": "https://commons.wikimedia.org/wiki/File:020-Polyovirus-2plv.jpg",
+   "width": 200,
+   "height": 206
+  },
+  {
+   "file": "041-Hemoglobin-2hbs-fiber_Turkish.jpg",
+   "title": "File:041-Hemoglobin-2hbs-fiber Turkish.jpg",
+   "licence": "Public domain",
+   "artist": "derivative work: Noumenon talk\nSickle_cell_hemoglobin.png: Illustration by David S. Goodsell of The Scripps Research Ins",
+   "credit": "Sickle_cell_hemoglobin.png",
+   "page": "https://commons.wikimedia.org/wiki/File:041-Hemoglobin-2hbs-fiber_Turkish.jpg",
+   "width": 205,
+   "height": 451
+  },
+  {
+   "file": "086-Exosomes_preparing_for_destruction-2a1s_1st0.jpg",
+   "title": "File:086-Exosomes preparing for destruction-2a1s 1st0.tiff",
+   "licence": "CC BY-SA 3.0",
+   "artist": "David S. Goodsell",
+   "credit": "Molecule of the month, PDB",
+   "page": "https://commons.wikimedia.org/wiki/File:086-Exosomes_preparing_for_destruction-2a1s_1st0.tiff",
+   "width": 1774,
+   "height": 934
+  },
+  {
+   "file": "121-_RCSB_Molecule-of-Month_70S_3-step_Ribosome_elongation.jpg",
+   "title": "File:121- RCSB Molecule-of-Month 70S 3-step Ribosome elongation.tif",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "RCSB Molecule of the Month",
+   "page": "https://commons.wikimedia.org/wiki/File:121-_RCSB_Molecule-of-Month_70S_3-step_Ribosome_elongation.tif",
+   "width": 3460,
+   "height": 1148
+  },
+  {
+   "file": "178-EbolaVirusProteins_VP40.jpg",
+   "title": "File:178-EbolaVirusProteins VP40.png",
+   "licence": "CC BY 4.0",
+   "artist": "David Goodsell",
+   "credit": "RCSB PDB Molecule of the Month",
+   "page": "https://commons.wikimedia.org/wiki/File:178-EbolaVirusProteins_VP40.png",
+   "width": 1527,
+   "height": 1518
+  },
+  {
+   "file": "5-aminolaevulinic_acid_dehydratase_ALAD_poisoned_by_lead_ions.jpg",
+   "title": "File:5-aminolaevulinic acid dehydratase (ALAD) poisoned by lead ions.jpg",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "https://pdb101.rcsb.org/motm/196",
+   "page": "https://commons.wikimedia.org/wiki/File:5-aminolaevulinic_acid_dehydratase_(ALAD)_poisoned_by_lead_ions.jpg",
+   "width": 800,
+   "height": 724
+  },
+  {
+   "file": "Autophagy.jpg",
+   "title": "File:Autophagy.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/autophagy",
+   "page": "https://commons.wikimedia.org/wiki/File:Autophagy.tif",
+   "width": 2478,
+   "height": 3317
+  },
+  {
+   "file": "Bacteriophage_T4_Infection.jpg",
+   "title": "File:Bacteriophage T4 Infection.jpg",
+   "licence": "CC BY 4.0",
+   "artist": "DavidGoodsell",
+   "credit": "Own work",
+   "page": "https://commons.wikimedia.org/wiki/File:Bacteriophage_T4_Infection.jpg",
+   "width": 4924,
+   "height": 6588
+  },
+  {
+   "file": "Casein-micelle-and-fat-globule-in-milk.jpg",
+   "title": "File:Casein-micelle-and-fat-globule-in-milk.tif",
+   "licence": "CC BY 4.0",
+   "artist": "Acknowledgement: Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-039",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/casein-micelle-and-fat-globule-in-milk",
+   "page": "https://commons.wikimedia.org/wiki/File:Casein-micelle-and-fat-globule-in-milk.tif",
+   "width": 4800,
+   "height": 3660
+  },
+  {
+   "file": "Caulobacter-polar-microdomain.jpg",
+   "title": "File:Caulobacter-polar-microdomain.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell & Keren Lasker",
+   "credit": "Illustration by David S. Goodsell and Keren Lasker, RCSB Protein Data Bank and Scripps Research. doi: 10.2210/rcsb_pdb/goodsell-gallery-046 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/caulob",
+   "page": "https://commons.wikimedia.org/wiki/File:Caulobacter-polar-microdomain.tif",
+   "width": 3528,
+   "height": 4698
+  },
+  {
+   "file": "Cellulose-synthase.jpg",
+   "title": "File:Cellulose-synthase.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/cellulose-synthase",
+   "page": "https://commons.wikimedia.org/wiki/File:Cellulose-synthase.tif",
+   "width": 3510,
+   "height": 4506
+  },
+  {
+   "file": "Chloroplast.jpg",
+   "title": "File:Chloroplast.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/chloroplast",
+   "page": "https://commons.wikimedia.org/wiki/File:Chloroplast.tif",
+   "width": 2584,
+   "height": 3459
+  },
+  {
+   "file": "Collagen-and-extracellular-matrix.jpg",
+   "title": "File:Collagen-and-extracellular-matrix.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-033",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/collagen-and-extracellular-matrix",
+   "page": "https://commons.wikimedia.org/wiki/File:Collagen-and-extracellular-matrix.tif",
+   "width": 5396,
+   "height": 1872
+  },
+  {
+   "file": "Cytoskeleton-2021.jpg",
+   "title": "File:Cytoskeleton-2021.png",
+   "licence": "CC BY 4.0",
+   "artist": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-036",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/cytoskeleton",
+   "page": "https://commons.wikimedia.org/wiki/File:Cytoskeleton-2021.png",
+   "width": 400,
+   "height": 538
+  },
+  {
+   "file": "David_S._Goodsell.jpg",
+   "title": "File:David S. Goodsell.jpg",
+   "licence": "CC BY-SA 4.0",
+   "artist": "DavidGoodsell",
+   "credit": "Own work",
+   "page": "https://commons.wikimedia.org/wiki/File:David_S._Goodsell.jpg",
+   "width": 1116,
+   "height": 1644
+  },
+  {
+   "file": "Dominios_inmlunoglobulina.jpg",
+   "title": "File:Dominios inmlunoglobulina.PNG",
+   "licence": "Public domain",
+   "artist": "Illustration by David S. Goodsell of The Scripps Research Institute see this site and then modified by gustavocarra",
+   "credit": "see below",
+   "page": "https://commons.wikimedia.org/wiki/File:Dominios_inmlunoglobulina.PNG",
+   "width": 600,
+   "height": 476
+  },
+  {
+   "file": "Ebola-virus_1_.jpg",
+   "title": "File:Ebola-virus(1).tif",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell, RCSB Protein Data Bank",
+   "credit": "http://pdb101.rcsb.org/sci-art/goodsell-gallery/ebola-virus",
+   "page": "https://commons.wikimedia.org/wiki/File:Ebola-virus(1).tif",
+   "width": 2059,
+   "height": 3597
+  },
+  {
+   "file": "Escherichia-coli-bacterium_1_.jpg",
+   "title": "File:Escherichia-coli-bacterium(1).tif",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell, RCSB Protein Data Bank",
+   "credit": "http://pdb101.rcsb.org/sci-art/goodsell-gallery/escherichia-coli-bacterium",
+   "page": "https://commons.wikimedia.org/wiki/File:Escherichia-coli-bacterium(1).tif",
+   "width": 3439,
+   "height": 3439
+  },
+  {
+   "file": "HIV-vaccine-2022.jpg",
+   "title": "File:HIV-vaccine-2022.png",
+   "licence": "CC BY 4.0",
+   "artist": "Illustrated by David S. Goodsell, RCSB Protein Data Bank and Scripps Research. doi: 10.2210/rcsb_pdb/goodsell-gallery-04",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/hiv-vaccine",
+   "page": "https://commons.wikimedia.org/wiki/File:HIV-vaccine-2022.png",
+   "width": 400,
+   "height": 573
+  },
+  {
+   "file": "Immunological-synapse.jpg",
+   "title": "File:Immunological-synapse.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/immunological-synapse",
+   "page": "https://commons.wikimedia.org/wiki/File:Immunological-synapse.tif",
+   "width": 3638,
+   "height": 3638
+  },
+  {
+   "file": "Insulin-action.jpg",
+   "title": "File:Insulin-action.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/insulin-action",
+   "page": "https://commons.wikimedia.org/wiki/File:Insulin-action.tif",
+   "width": 4866,
+   "height": 3664
+  },
+  {
+   "file": "Integrin_activation.jpg",
+   "title": "File:Integrin activation.tif",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell and the RCSB PDB",
+   "credit": "https://cdn.rcsb.org/pdb101/motm/tiff/134-Integrin_integrins.tif",
+   "page": "https://commons.wikimedia.org/wiki/File:Integrin_activation.tif",
+   "width": 1716,
+   "height": 1732
+  },
+  {
+   "file": "JCVI-syn3A_Minimal_Cell_2022.jpg",
+   "title": "File:JCVI-syn3A Minimal Cell, 2022.tif",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/jcvi-syn3a-minimal-cell",
+   "page": "https://commons.wikimedia.org/wiki/File:JCVI-syn3A_Minimal_Cell,_2022.tif",
+   "width": 5612,
+   "height": 3748
+  },
+  {
+   "file": "JCVI-syn3A_Minimal_Cell_2022.jpg",
+   "title": "File:JCVI-syn3A Minimal Cell, 2022.tif",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/jcvi-syn3a-minimal-cell",
+   "page": "https://commons.wikimedia.org/wiki/File:JCVI-syn3A_Minimal_Cell,_2022.tif",
+   "width": 5612,
+   "height": 3748
+  },
+  {
+   "file": "Kinetochore-2024.jpg",
+   "title": "File:Kinetochore-2024.png",
+   "licence": "CC BY 4.0",
+   "artist": "Illustration by David S. Goodsell, RCSB Protein Data Bank and the Scripps Research Institute. doi: 10.2210/rcsb_pdb/good",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/kinetochore",
+   "page": "https://commons.wikimedia.org/wiki/File:Kinetochore-2024.png",
+   "width": 400,
+   "height": 533
+  },
+  {
+   "file": "Myelin.jpg",
+   "title": "File:Myelin.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/myelin",
+   "page": "https://commons.wikimedia.org/wiki/File:Myelin.tif",
+   "width": 3628,
+   "height": 4812
+  },
+  {
+   "file": "Pbio.3000815.g001.PNG_L.jpg",
+   "title": "File:Pbio.3000815.g001.PNG L.png",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell, Maria Voigt, Christine Zardecki, Stephen K. Burley",
+   "credit": "David S. Goodsell, Maria Voigt, Christine Zardecki, Stephen K. Burley (2020) Integrative illustration for coronavirus outreach. PLoS Biology.\n\nhttps://journals.plos.org/plosbiology/article?id=10.1371/",
+   "page": "https://commons.wikimedia.org/wiki/File:Pbio.3000815.g001.PNG_L.png",
+   "width": 2050,
+   "height": 1010
+  },
+  {
+   "file": "Pbio.3000815.g002.PNG_L.jpg",
+   "title": "File:Pbio.3000815.g002.PNG L.png",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell, Maria Voigt, Christine Zardecki, Stephen K. Burley",
+   "credit": "David S. Goodsell, Maria Voigt, Christine Zardecki, Stephen K. Burley (2020) Integrative illustration for coronavirus outreach. PLoS Biology.\n\nhttps://journals.plos.org/plosbiology/article?id=10.1371/",
+   "page": "https://commons.wikimedia.org/wiki/File:Pbio.3000815.g002.PNG_L.png",
+   "width": 2050,
+   "height": 1399
+  },
+  {
+   "file": "Pbio.3000815.g003.PNG_L.jpg",
+   "title": "File:Pbio.3000815.g003.PNG L.png",
+   "licence": "CC BY 4.0",
+   "artist": "David S. Goodsell, Maria Voigt, Christine Zardecki, Stephen K. Burley",
+   "credit": "David S. Goodsell, Maria Voigt, Christine Zardecki, Stephen K. Burley (2020) Integrative illustration for coronavirus outreach. PLoS Biology.\n\nhttps://journals.plos.org/plosbiology/article?id=10.1371/",
+   "page": "https://commons.wikimedia.org/wiki/File:Pbio.3000815.g003.PNG_L.png",
+   "width": 1855,
+   "height": 738
+  },
+  {
+   "file": "Reca-and-dna.jpg",
+   "title": "File:Reca-and-dna.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-038 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/reca-and-dna",
+   "page": "https://commons.wikimedia.org/wiki/File:Reca-and-dna.tif",
+   "width": 3568,
+   "height": 4784
+  },
+  {
+   "file": "Transfer-rna-and-gag-protein.jpg",
+   "title": "File:Transfer-rna-and-gag-protein.tif",
+   "licence": "CC BY-SA 4.0",
+   "artist": "David S. Goodsell",
+   "credit": "Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-030 from https://pdb101.rcsb.org/sci-art/goodsell-gallery/transfer-rna-and-gag-protein",
+   "page": "https://commons.wikimedia.org/wiki/File:Transfer-rna-and-gag-protein.tif",
+   "width": 3672,
+   "height": 4902
+  },
+  {
+   "file": "Vascular-endothelial-growth-factor-vegf-signaling-2011.jpg",
+   "title": "File:Vascular-endothelial-growth-factor-vegf-signaling-2011.tif",
+   "licence": "CC BY 4.0",
+   "artist": "Acknowledgement: Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-041",
+   "credit": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/vascular-endothelial-growth-factor-vegf-signaling",
+   "page": "https://commons.wikimedia.org/wiki/File:Vascular-endothelial-growth-factor-vegf-signaling-2011.tif",
+   "width": 7555,
+   "height": 3768
+  }
+ ],
+ "skipped": [
+  {
+   "title": "File:010 large subunit-1FFK.gif",
+   "licence": "CC BY 4.0",
+   "artist": "Animation by David S. Goodsell, RCSB Protein Data Bank"
+  },
+  {
+   "title": "File:010 small subunit-1FKA.gif",
+   "licence": "Public domain",
+   "artist": "Animation by David S. Goodsell, RCSB Protein Data Bank"
+  },
+  {
+   "title": "File:ATP Synthase Animation.gif",
+   "licence": "CC BY 4.0",
+   "artist": "\"Exploring the Structural Biology of Bioenergy\" is an educational feature and on"
+  },
+  {
+   "title": "File:Amivantamab binding MET 6wvz.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Atezolizumab PD-L1 5X8L.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Belimumab 5Y9K binding BAFF homotrimer.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Belimumab 5Y9K.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:CertolizumaB 5WUV.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Certolizumab binding TNF-alpha homotrimer 5WUX.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Crowded cytosol.png",
+   "licence": "Public domain",
+   "artist": "TimVickers"
+  },
+  {
+   "title": "File:Daratumumab CD38 7DHA.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Durvalumab PD-L1 5X8M.pdb.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Gantenerumab Aβ(1–11) 5CSZ.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Glutamate carboxypeptidase 1CG2.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Hemoglobin-animation.gif",
+   "licence": "CC BY 4.0",
+   "artist": "Molecule of the Month illustrations are attributable to David S. Goodsell"
+  },
+  {
+   "title": "File:Insulin degludec hexamer 4AKJ.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Insulin glulisine 6GV0 spacefill.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Insuline1.png",
+   "licence": "Public domain",
+   "artist": ""
+  },
+  {
+   "title": "File:Ipilimumab 5TRU.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Isatuximab 4CMH.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Monkeypox viruses scale.png",
+   "licence": "CC BY 4.0",
+   "artist": "PDB-101.rcsb.org"
+  },
+  {
+   "title": "File:Myosine.gif",
+   "licence": "Attribution",
+   "artist": "David S. Goodsell of The Scripps Research Institute"
+  },
+  {
+   "title": "File:Natalizumab 4IRZ.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Necitumumab EGFR 6B3S.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Nivolumab 5GGR.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Ofatumumab 3GIZ.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Pembrolizumab 5DK3.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Poliovirus binding receptor 1DGI.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos 21:57, 12 November 2007 (UTC)"
+  },
+  {
+   "title": "File:REGN-COV2 binding SARS-CoV-2 spike protein.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Sifalimumab 4YPG.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:The artistry of the cell spanning 50 years (51072145036).jpg",
+   "licence": "CC BY 2.0",
+   "artist": "Steve Jurvetson from Los Altos, USA"
+  },
+  {
+   "title": "File:Threepol.gif",
+   "licence": "Public domain",
+   "artist": "Illustration by David S. Goodsell of The Scripps Research Institute (see this si"
+  },
+  {
+   "title": "File:Thyroxine-binding globulin 2CEO.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos 03:14, 3 October 2007 (UTC)"
+  },
+  {
+   "title": "File:Tirzepatide GIPR complex 7rbt.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Tirzepatide GLP1R complex 7rgp.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Tislelizumab PB-1 7BXA.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Tixagevimab-cilgavimab binding SARS-CoV-2 spike protein 7L7E.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Tralokinumab 5L6Y.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  },
+  {
+   "title": "File:Tremelimumab 5GGV.png",
+   "licence": "Public domain",
+   "artist": "Fvasconcellos (talk · contribs)"
+  }
+ ]
+}
