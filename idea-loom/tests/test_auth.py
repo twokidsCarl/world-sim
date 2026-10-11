@@ -30,7 +30,7 @@ def cloud(seeded, monkeypatch):
 
 def test_local_mode_everyone_is_the_owner(seeded):
     c = TestClient(app, base_url="http://localhost:8767")
-    assert c.get("/api/me").json() == {"role": "owner", "login": "local", "name": "", "avatar": "", "auth_enabled": False}
+    assert c.get("/api/me").json() == {"role": "owner", "login": "local", "name": "", "avatar": "", "auth_enabled": False, "agent": "", "scopes": []}
     assert c.post("/api/ideas/1.2/discard", json={}).status_code == 200
     assert c.get("/auth/login").status_code == 404
 
@@ -73,7 +73,7 @@ def test_guests_can_read_but_not_change_or_reach_the_model(cloud):
 
 def test_members_are_stopped_at_owner_only_routes(cloud):
     member = cloud("someone")
-    assert member.get("/api/me").json() == {"role": "member", "login": "someone", "name": "someone", "avatar": "", "auth_enabled": True}
+    assert member.get("/api/me").json() == {"role": "member", "login": "someone", "name": "someone", "avatar": "", "auth_enabled": True, "agent": "", "scopes": []}
     assert member.get("/api/state").status_code == 200
     for path in ["/api/ideas/1.2/discard", "/api/ops/generate", "/api/jobs", "/api/assistant/conversations", "/api/play/demo/build"]:
         r = member.post(path, json={})
@@ -113,7 +113,7 @@ def test_github_sign_in_flow(cloud, monkeypatch):
     assert done.status_code == 302 and done.headers["location"] == "/"
     cookie = done.headers["set-cookie"]
     assert "HttpOnly" in cookie and "Secure" in cookie and "samesite=lax" in cookie.lower()
-    assert c.get("/api/me").json() == {"role": "owner", "login": "carl", "name": "Carl Li", "avatar": "https://a/x.png", "auth_enabled": True}
+    assert c.get("/api/me").json() == {"role": "owner", "login": "carl", "name": "Carl Li", "avatar": "https://a/x.png", "auth_enabled": True, "agent": "", "scopes": []}
     c.post("/auth/logout")
     assert c.get("/api/me").json()["role"] == "guest"
     fresh = cloud()

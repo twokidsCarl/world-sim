@@ -37,6 +37,8 @@ class Suggestion(BaseModel):
     by: str  # 提的人的 GitHub 用户名 / the GitHub login of who sent it
     title: str
     stuck: str = ""
+    kind: Literal["wish", "idea"] = "wish"
+    idea: dict[str, Any] = {}  # 提议的是 idea 时：body、level、threads、kernel、why / when an idea is proposed: body, level, threads, kernel, why
     where_url: str = ""
     where_title: str = ""
     status: Status = "waiting"
@@ -65,6 +67,7 @@ def load() -> dict[str, Suggestion]:
         sid = str(row.get("id") or "")
         if row.get("event") == "sent":
             out[sid] = Suggestion(id=sid, by=str(row.get("by") or ""), title=str(row.get("title") or ""), stuck=str(row.get("stuck") or ""),
+                                  kind="idea" if row.get("kind") == "idea" else "wish", idea=row.get("idea") if isinstance(row.get("idea"), dict) else {},
                                   where_url=str(row.get("where_url") or ""), where_title=str(row.get("where_title") or ""),
                                   created_at=str(row.get("at") or ""), updated_at=str(row.get("at") or ""))
         elif sid in out and row.get("event") in ("accepted", "dismissed"):
@@ -80,7 +83,7 @@ def listing(by: Optional[str] = None) -> list[Suggestion]:
     return sorted(items, key=lambda s: s.created_at, reverse=True)
 
 
-def send(by: str, title: str, stuck: str = "", where_url: str = "", where_title: str = "") -> Suggestion:
+def send(by: str, title: str, stuck: str = "", where_url: str = "", where_title: str = "", idea: Optional[dict[str, Any]] = None) -> Suggestion:
     if not by:
         raise SuggestionError("要先登录")
     title = _clip(title, MAX_TITLE)
@@ -90,10 +93,23 @@ def send(by: str, title: str, stuck: str = "", where_url: str = "", where_title:
     if sum(1 for s in load().values() if s.by == by and s.created_at > since) >= PER_DAY:
         raise SuggestionError(f"一天最多提 {PER_DAY} 条，明天再来")
     sid = f"sug-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{secrets.token_hex(2)}"
+    if idea is not None:
+        from . import ideas as idea_store
+        from . import ops
+
+        frame = idea_store.load_frame()
+        level, threads, kernel = ops._clean_position(frame, idea.get("level"), idea.get("threads"), idea.get("kernel"))
+        body = _clip(str(idea.get("body") or ""), MAX_TEXT)
+        if not body:
+            raise SuggestionError("idea 要有正文（三行左右）")
+        if level is None:
+            raise SuggestionError("level 要从这些里选：" + "、".join(lv.id for lv in frame.levels))
+        idea = {"body": body, "level": level, "threads": threads, "kernel": kernel, "why": _clip(str(idea.get("why") or ""), MAX_TEXT)}
     row: dict[str, Any] = {"at": now(), "id": sid, "event": "sent", "by": by, "title": title, "stuck": _clip(stuck, MAX_TEXT),
+                           **({"kind": "idea", "idea": idea} if idea is not None else {}),
                            "where_url": _clip(where_url, 300) if where_url.startswith("/") else "", "where_title": _clip(where_title, MAX_TITLE)}
     store.append(path(), [row])
-    notify.send("有访客提了愿望，等你过目", f"{by}：{title}", url="/wishes", tag="suggestions")
+    notify.send("有人提了一条 idea，等你过目" if idea is not None else "有访客提了愿望，等你过目", f"{by}：{title}", url="/wishes", tag="suggestions")
     return load()[sid]
 
 
@@ -109,8 +125,19 @@ def _waiting(suggestion_id: str) -> Suggestion:
 def accept(suggestion_id: str) -> Suggestion:
     """主人看过，放进许愿池。 / The owner has looked at it; put it into the wish pool."""
     item = _waiting(suggestion_id)
+    if item.kind == "idea":
+        # 提议的 idea 放行之后进想法池的"候选"，和模型生成的候选一样，留不留还要主人在那里决定。
+        # An accepted idea proposal becomes a candidate in the idea pool, like a model-generated one; keeping it is still decided there.
+        from . import ops
+
+        proposal = ops._new("assistant", "idea", f"由 {item.by} 提议", title=item.title, body=item.idea.get("body", ""), level=item.idea.get("level"),
+                            threads=item.idea.get("threads") or [], kernel=item.idea.get("kernel"), why=item.idea.get("why", ""), sources=[])
+        ops._save([proposal])
+        store.append(path(), [{"at": now(), "id": suggestion_id, "event": "accepted", "wish_id": None, "note": f"候选 {proposal.id}"}])
+        return load()[suggestion_id]
     where = {"url": item.where_url, "title": item.where_title or item.where_url} if item.where_url else None
-    wish_id = wishes.record(title=item.title, kind="other", stuck=item.stuck, suggestion="", by=f"visitor:{item.by}", where=where)
+    source = item.by if item.by.startswith("agent:") else f"visitor:{item.by}"
+    wish_id = wishes.record(title=item.title, kind="other", stuck=item.stuck, suggestion="", by=source, where=where)
     store.append(path(), [{"at": now(), "id": suggestion_id, "event": "accepted", "wish_id": wish_id}])
     return load()[suggestion_id]
 

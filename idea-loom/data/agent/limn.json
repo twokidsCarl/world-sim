@@ -1,0 +1,256 @@
+{
+  "summary": {
+    "zh": "Goodsell 风格的分子与细胞插图。渲染只在浏览器里；这里给 Agent 的是它整理的指针数据（哪些大模型可看、\"月度分子\"对应哪些 PDB 结构、各种生物膜的脂质组成）和几个对公开数据库的查询。查询结果来自外部数据库，随它们更新而变。",
+    "en": "Goodsell-style illustrations of molecules and cells. Rendering happens in the browser only; what agents get here is its curated pointer data (which large models can be viewed, which PDB structures each Molecule of the Month covers, the lipid make-up of biological membranes) and a few lookups against public databases. Lookup results come from external databases and change as they do."
+  },
+  "datasets": [
+    {
+      "id": "models",
+      "title": {
+        "zh": "可看的大模型",
+        "en": "Viewable large models"
+      },
+      "description": {
+        "zh": "19 个整装的大模型（病毒颗粒、细胞片段等）：标题、关键词、来源、说明。",
+        "en": "19 assembled large models (virions, cell fragments and more): title, keywords, source and caption."
+      },
+      "path": "data/catalog.json",
+      "records": "models",
+      "key": "id",
+      "licence": "MIT (this index; each model keeps the licence stated in its record)",
+      "provenance": {
+        "zh": "每条的 source 写明模型从哪里取，许可在记录里逐条写明。",
+        "en": "Each record's `source` says where the model is fetched from, and its licence is stated per record."
+      }
+    },
+    {
+      "id": "molecule-of-the-month",
+      "title": {
+        "zh": "月度分子",
+        "en": "Molecule of the Month"
+      },
+      "description": {
+        "zh": "RCSB PDB\"月度分子\"专栏的 322 期：期号、标题、涉及的 PDB 编号。",
+        "en": "The 322 instalments of RCSB PDB's Molecule of the Month: number, title and the PDB ids covered."
+      },
+      "path": "data/motm.json",
+      "key": "n",
+      "licence": "MIT (this index of titles and ids; the articles themselves belong to RCSB PDB)",
+      "provenance": {
+        "zh": "由仓库里的脚本从 RCSB PDB 的专栏页面整理；只有标题和编号，没有正文。",
+        "en": "Compiled from RCSB PDB's column pages by a script in the repository; titles and ids only, no article text."
+      }
+    },
+    {
+      "id": "membranes",
+      "title": {
+        "zh": "生物膜的脂质组成",
+        "en": "Lipid make-up of membranes"
+      },
+      "description": {
+        "zh": "八种膜内外两叶的脂质比例、胆固醇含量和依据。",
+        "en": "Lipid proportions of both leaflets, cholesterol content and the basis, for eight membranes."
+      },
+      "path": "data/membranes.json",
+      "records": "membranes",
+      "key": "id",
+      "licence": "MIT",
+      "provenance": {
+        "zh": "basis 字段写明每种膜的数字依据的文献；是整理后的近似值。",
+        "en": "The `basis` field cites the literature behind each membrane's numbers; they are curated approximations."
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "ligand",
+      "title": {
+        "zh": "配体的三维结构",
+        "en": "Ligand 3D structure"
+      },
+      "description": {
+        "zh": "按化学成分编号取一个配体的理想三维坐标（SDF 文本，来自 RCSB）。",
+        "en": "Fetch the ideal 3D coordinates of a ligand by its chemical component id (SDF text, from RCSB)."
+      },
+      "http": {
+        "method": "GET",
+        "path": "/api/ligand/{id}"
+      },
+      "input": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9]{1,5}$",
+            "description": "化学成分编号，例如 ATP / a chemical component id, e.g. ATP"
+          }
+        }
+      },
+      "output": {
+        "zh": "一段 SDF 格式的文本。",
+        "en": "A text in SDF format."
+      },
+      "deterministic": false,
+      "seconds": 20,
+      "example": {
+        "id": "ATP"
+      }
+    },
+    {
+      "id": "membrane-placement",
+      "title": {
+        "zh": "膜蛋白在膜里的位置",
+        "en": "Placement of a membrane protein"
+      },
+      "description": {
+        "zh": "一个膜蛋白结构在脂双层里的朝向和厚度（来自 OPM / PDBTM）。",
+        "en": "Orientation and thickness of a membrane protein structure in the bilayer (from OPM / PDBTM)."
+      },
+      "http": {
+        "method": "GET",
+        "path": "/api/membrane/{pdb}"
+      },
+      "input": {
+        "type": "object",
+        "required": [
+          "pdb"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "pdb": {
+            "type": "string",
+            "pattern": "^[0-9][A-Za-z0-9]{3}$",
+            "description": "四位 PDB 编号 / a four-character PDB id"
+          }
+        }
+      },
+      "output": {
+        "zh": "orientation 对象：膜的半厚度、跨膜的残基等，带来源。",
+        "en": "An `orientation` object: the membrane half-thickness, the membrane-spanning residues and more, with its source."
+      },
+      "deterministic": false,
+      "seconds": 20,
+      "example": {
+        "pdb": "1BL8"
+      }
+    },
+    {
+      "id": "citation",
+      "title": {
+        "zh": "结构的概要和出处",
+        "en": "Summary and citation of a structure"
+      },
+      "description": {
+        "zh": "一个 PDB 结构的标题、方法、分辨率、原子数和原始文献（来自 RCSB）。",
+        "en": "Title, method, resolution, atom count and primary publication of a PDB structure (from RCSB)."
+      },
+      "http": {
+        "method": "GET",
+        "path": "/api/citation/{pdb}"
+      },
+      "input": {
+        "type": "object",
+        "required": [
+          "pdb"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "pdb": {
+            "type": "string",
+            "pattern": "^[0-9][A-Za-z0-9]{3}$",
+            "description": "四位 PDB 编号 / a four-character PDB id"
+          }
+        }
+      },
+      "output": {
+        "zh": "entry 对象：标题、发布日期、方法、分辨率、文献。",
+        "en": "An `entry` object: title, release date, method, resolution and citation."
+      },
+      "deterministic": false,
+      "seconds": 20,
+      "example": {
+        "pdb": "1BL8"
+      }
+    },
+    {
+      "id": "alphafold",
+      "title": {
+        "zh": "预测结构",
+        "en": "Predicted structure"
+      },
+      "description": {
+        "zh": "一个蛋白的 AlphaFold 预测结构的地址和置信度信息。",
+        "en": "Where to fetch the AlphaFold prediction for a protein, with confidence information."
+      },
+      "http": {
+        "method": "GET",
+        "path": "/api/alphafold/{acc}"
+      },
+      "input": {
+        "type": "object",
+        "required": [
+          "acc"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "acc": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{6,10}$",
+            "description": "UniProt 编号 / a UniProt accession"
+          }
+        }
+      },
+      "output": {
+        "zh": "prediction 对象：模型文件的地址、高置信残基的比例、来源。",
+        "en": "A `prediction` object: the model file's URL, the share of confident residues and the source."
+      },
+      "deterministic": false,
+      "seconds": 20,
+      "example": {
+        "acc": "P69905"
+      }
+    },
+    {
+      "id": "complexes",
+      "title": {
+        "zh": "预测的复合物",
+        "en": "Predicted complexes"
+      },
+      "description": {
+        "zh": "一个蛋白参与的预测复合物（AlphaFold DB）：名称、界面置信度、组成、模型地址。",
+        "en": "Predicted complexes a protein takes part in (AlphaFold DB): name, interface confidence, composition and model URL."
+      },
+      "http": {
+        "method": "GET",
+        "path": "/api/complexes/{acc}"
+      },
+      "input": {
+        "type": "object",
+        "required": [
+          "acc"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "acc": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{6,10}$",
+            "description": "UniProt 编号 / a UniProt accession"
+          }
+        }
+      },
+      "output": {
+        "zh": "complexes 列表。",
+        "en": "A `complexes` list."
+      },
+      "deterministic": false,
+      "seconds": 20,
+      "example": {
+        "acc": "P69905"
+      }
+    }
+  ]
+}

@@ -34,7 +34,7 @@ const idea = (id: string, action = '') => `/api/ideas/${encodeURIComponent(id)}$
 // 现在是谁在用。auth_enabled 为假是本地模式：不用登录，就是主人。
 // Who is using it now. auth_enabled false means local mode: no sign-in, you are the owner.
 export type Me = { role: 'guest' | 'member' | 'owner'; login: string; name: string; avatar: string; auth_enabled: boolean }
-export type VisitorWish = { id: string; by: string; title: string; stuck: string; where_url: string; where_title: string; status: 'waiting' | 'accepted' | 'dismissed'; wish_id: string | null; note: string; created_at: string; updated_at: string }
+export type VisitorWish = { id: string; by: string; title: string; stuck: string; where_url: string; where_title: string; status: 'waiting' | 'accepted' | 'dismissed'; kind: 'wish' | 'idea'; idea: { body?: string; level?: string; why?: string }; wish_id: string | null; note: string; created_at: string; updated_at: string }
 export type WorkerStatus = {
   queued: { job_id: string; title: string; step: string | null; waiting: string | null }[]
   active: { job_id: string; title: string; phase: string }[]
@@ -44,6 +44,7 @@ export type WorkerStatus = {
   chains: Record<string, number>
   maintenance: { enabled: boolean; below: number; window_minutes: number; check_seconds: number; per_day: number; last_check: { at?: number; why_not?: string | null }; recent: { at: number; item: string; directory: string; job_id: string }[] }
 }
+export type AgentToken = { id: string; name: string; scopes: string[]; created_at: number; revoked: boolean; token?: string }
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type Wish = {
@@ -140,6 +141,9 @@ export const api = {
   startJob: (kind: 'wish' | 'task', ref: string) => call<Job>('/api/jobs', { kind, ref }),
   jobAction: (id: string, action: 'approve' | 'cancel' | 'revert' | 'resume') => call<unknown>(`/api/jobs/${id}/${action}`, {}),
   jobText: (id: string, action: 'revise' | 'decline', text: string) => call<Job>(`/api/jobs/${id}/${action}`, { text }),
+  agentTokens: () => call<AgentToken[]>('/api/agent-tokens'),
+  createAgentToken: (name: string, scopes: string[]) => call<AgentToken>('/api/agent-tokens', { name, scopes }),
+  revokeAgentToken: (id: string) => call<{ revoked: boolean }>(`/api/agent-tokens/${id}/revoke`, {}),
   worker: () => call<WorkerStatus>('/api/worker'),
   chain: (directory: string, steps: number) => call<Record<string, number>>('/api/chains', { directory, steps }),
   advance: (dir: string) => call<Task>(`/api/projects/${dir}/advance`, {}),

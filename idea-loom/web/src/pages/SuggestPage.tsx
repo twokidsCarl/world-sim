@@ -113,17 +113,18 @@ export function VisitorQueue({ onAccepted }: { onAccepted: () => void }) {
   }
   if (items.length === 0) return null
   return (
-    <Section title={t('访客提的，等你过目', 'From visitors, waiting for you')} note={t('这是别人写的原文。放进许愿池不会触发任何改动。', 'This is what other people wrote, unedited. Putting one into the wish pool triggers no change by itself.')}>
+    <Section title={t('外面提的，等你过目', 'From outside, waiting for you')} note={t('这是别人写的原文。放进许愿池不会触发任何改动。', 'This is what other people wrote, unedited. Putting one into the wish pool triggers no change by itself.')}>
       {error && <div className="notice bad" role="alert">{error}</div>}
       <ul className="plain-list">
         {items.map((s) => (
           <li key={s.id} className="visitor-item">
             <div>
-              <strong>{s.title}</strong> <span className="muted small">{s.by}{s.where_url && <> · <Link to={s.where_url}>{s.where_url}</Link></>}</span>
+              {s.kind === 'idea' && <span className="chip">{t('提议的 idea', 'Proposed idea')} {s.idea.level}</span>} <strong>{s.title}</strong> <span className="muted small">{s.by}{s.where_url && <> · <Link to={s.where_url}>{s.where_url}</Link></>}</span>
               {s.stuck && <p className="pre small">{s.stuck}</p>}
+              {s.kind === 'idea' && <p className="pre small">{s.idea.body}{s.idea.why && `\n— ${s.idea.why}`}</p>}
             </div>
             <div className="row">
-              <button className="primary" onClick={() => void act(() => api.acceptSuggestion(s.id), true)}>{t('放进许愿池', 'Put into the wish pool')}</button>
+              <button className="primary" onClick={() => void act(() => api.acceptSuggestion(s.id), true)}>{s.kind === 'idea' ? t('放进候选', 'Make it a candidate') : t('放进许愿池', 'Put into the wish pool')}</button>
               <button onClick={() => void act(() => api.dismissSuggestion(s.id), false)}>{t('不要', 'Dismiss')}</button>
             </div>
           </li>

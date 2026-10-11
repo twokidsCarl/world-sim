@@ -1,0 +1,117 @@
+{
+  "summary": {
+    "zh": "两个人互相猜：我知道你知道我知道。25 个有出处的案例（空城计、福尔摩斯与莫里亚蒂、爱伦·坡的猜单双……），每个都能按\"双方各猜几层\"算出结果。先在 cases 里找案例的编号，再用 compute 跑。",
+    "en": "Two people guessing each other: I know that you know that I know. 25 sourced cases (the Empty Fort, Holmes and Moriarty, Poe's odd-or-even…), each of which can be computed for \"how many levels each side reasons\". Find a case id in `cases`, then run `compute`."
+  },
+  "datasets": [
+    {
+      "id": "cases",
+      "title": {
+        "zh": "案例",
+        "en": "Cases"
+      },
+      "description": {
+        "zh": "每个案例：故事梗概、两个人物、博弈的结构、出处。_id 就是 compute 要的 case_id，_group 是类别（bluff、cheap_talk、common_knowledge、coordination、implicature）。",
+        "en": "Each case: the story, the two characters, the structure of the game and the source. `_id` is the case_id that `compute` takes and `_group` the category (bluff, cheap_talk, common_knowledge, coordination, implicature)."
+      },
+      "path": "cases/*/*.yaml",
+      "search": [
+        "_id",
+        "title",
+        "hook",
+        "summary",
+        "source"
+      ],
+      "fields": [
+        "_id",
+        "_group",
+        "title",
+        "hook",
+        "summary",
+        "source",
+        "a",
+        "b"
+      ],
+      "licence": "MIT (summaries written for this repository; quoted works keep their own copyright)",
+      "provenance": {
+        "zh": "source 字段写明作品、作者、位置、引文和网址；verified 为 true 的是对着原文核对过引文的。只有中文。",
+        "en": "The `source` field gives the work, author, locator, quotation and URL; `verified: true` means the quotation was checked against the original. Chinese only."
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "compute",
+      "title": {
+        "zh": "算一个案例",
+        "en": "Compute a case"
+      },
+      "description": {
+        "zh": "给定案例和双方各猜几层，算出每个人在每一层怎么想、最后各自怎么选、结果如何。确定性，不调用模型。",
+        "en": "Given a case and how many levels each side reasons, compute what each thinks at every level, what each finally chooses and the outcome. Deterministic; no model is called."
+      },
+      "http": {
+        "method": "POST",
+        "path": "/api/compute"
+      },
+      "input": {
+        "type": "object",
+        "required": [
+          "case_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "description": "cases 数据集里的 _id，例如 kongchengji / the _id from the `cases` dataset, e.g. kongchengji"
+          },
+          "depth_a": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12,
+            "description": "甲猜几层；不给就用原作里的 / levels A reasons; the original story's when omitted"
+          },
+          "depth_b": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12,
+            "description": "乙猜几层 / levels B reasons"
+          },
+          "lam_a": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 50,
+            "description": "甲的理性度，越大越接近最优反应 / A's rationality; higher is closer to best response"
+          },
+          "lam_b": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 50,
+            "description": "乙的理性度 / B's rationality"
+          },
+          "true_state": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "信号博弈里真实的状态是第几个 / index of the true state in a signalling game"
+          },
+          "ladder_depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "\"多猜一层会怎样\"的阶梯算到几层 / how far the what-if-one-level-deeper ladder goes"
+          }
+        }
+      },
+      "output": {
+        "zh": "一个对象：两个人每一层的信念和选择、最终的选择和收益、与均衡的比较、阶梯。",
+        "en": "An object: each side's beliefs and choices per level, the final choices and payoffs, a comparison with equilibrium, and the ladder."
+      },
+      "seconds": 5,
+      "example": {
+        "case_id": "kongchengji",
+        "depth_a": 3,
+        "depth_b": 3
+      }
+    }
+  ]
+}
