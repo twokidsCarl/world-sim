@@ -74,6 +74,32 @@
       "url": "/?model=synaptic-vesicle"
     },
     {
+      "id": "presynaptic-bouton",
+      "title": {
+        "zh": "一整个突触前膨体：307 个小泡和它们周围的一切",
+        "en": "A whole presynaptic bouton: 307 vesicles and everything around them"
+      },
+      "hint": {
+        "zh": "几十亿个原子的模型，粗化成三千万个球来画；拖动旋转，用“剖开”滑杆看内部。第一次打开时本机要下载并处理原文件，需要联网，约两三分钟；之后直接用存下来的结果",
+        "en": "A model of billions of atoms, coarsened to thirty million spheres for drawing; drag to rotate, and use the cut slider to look inside. The first time, the original is downloaded and processed on this machine, which needs a network connection and takes two or three minutes; afterwards the stored result is used"
+      },
+      "idea": "2.1",
+      "url": "/?model=presynaptic-bouton"
+    },
+    {
+      "id": "postsynaptic-spine",
+      "title": {
+        "zh": "一整个树突棘：突触的接收端",
+        "en": "A whole dendritic spine: the receiving side of a synapse"
+      },
+      "hint": {
+        "zh": "几十亿个原子的模型，粗化成三千万个球来画；拖动旋转，用“剖开”滑杆看内部。第一次打开时本机要下载并处理原文件，需要联网，约两三分钟；之后直接用存下来的结果",
+        "en": "A model of billions of atoms, coarsened to thirty million spheres for drawing; drag to rotate, and use the cut slider to look inside. The first time, the original is downloaded and processed on this machine, which needs a network connection and takes two or three minutes; afterwards the stored result is used"
+      },
+      "idea": "2.1",
+      "url": "/?model=postsynaptic-spine"
+    },
+    {
       "id": "exosome",
       "title": {
         "zh": "外泌体：细胞送出的一个小包裹",

@@ -20,6 +20,7 @@ import cellTable from '../../data/cells.json'
 import { readN5Mask } from '../volume/n5'
 import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
+import { preparedMolecule } from '../mol/prepared'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
@@ -179,6 +180,22 @@ export const CATALOG = catalog.models as CatalogEntry[]
  * that the two ways of drawing can be compared.
  */
 const DENSE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('prim') === 'spheres'
+
+/** 向本地服务要一个预处理过的模型；还在准备就隔几秒再问 / ask the local service for a prepared model, asking again every few seconds while it is being prepared */
+async function fetchPrepared(url: string, waiting: () => void): Promise<Uint8Array> {
+  for (let tries = 0; tries < 400; tries++) {
+    const res = await fetch(`/api/prepared?url=${encodeURIComponent(url)}`).catch(() => null)
+    if (!res) throw noteError('error.preparedNoServer')
+    if (res.status === 202) {
+      waiting()
+      await new Promise((r) => setTimeout(r, 3000))
+      continue
+    }
+    if (!res.ok) throw new Error(((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? t('error.preparedNoServer'))
+    return new Uint8Array(await res.arrayBuffer())
+  }
+  throw noteError('error.preparedTimeout')
+}
 
 const freshLook = (): Pick<Look, 'rot' | 'zoom' | 'shift'> => ({ rot: identity3(), zoom: 1, shift: [0, 0] })
 
@@ -349,8 +366,18 @@ export const useStore = create<State>((set, get) => ({
     set({ busy: say('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const src = entry.source
-      let mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(pick(entry.title, entry.titleEn)))
       const notes: Note[] = []
+      let mol: Molecule
+      if (src.kind === 'prepared') {
+        // 几十亿个原子的模型：本地服务先把它粗化成球（第一次要一两分钟），这里取粗化后的小文件
+        // a model of billions of atoms: the local service coarsens it into spheres first (a minute or two the first time), and the small result is fetched here
+        const buf = await fetchPrepared(src.url!, () => set({ busy: say('busy.preparing', { name: pick(entry.title, entry.titleEn) }) }))
+        const made = preparedMolecule(buf, entry.id, entry.titleEn)
+        mol = made.mol
+        const h = made.header
+        const n = (v: number) => v.toLocaleString('en-US')
+        notes.push({ key: 'note.prepared', params: { atoms: n(h.atomsPlaced), heavy: n(h.heavyPlaced), per: h.atomsPerSphere, spheres: n(h.spheresPlaced), kinds: h.objects.length, copies: n(h.ops) } })
+      } else mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(pick(entry.title, entry.titleEn)))
       let assembly = defaultAssembly(mol)
       if (entry.points) {
         // 实测的粒子位置：每个位置放一份原子模型 / measured particle positions: one copy of the atomic model at each
@@ -369,7 +396,7 @@ export const useStore = create<State>((set, get) => ({
       }
       // 原子太多就改画每个残基一个球 / with too many atoms, draw one sphere per residue instead
       const full = placedAtomCount(mol, assembly)
-      if (full > ATOM_BUDGET) {
+      if (full > ATOM_BUDGET && src.kind !== 'prepared') {
         mol = coarsen(mol)
         notes.push({ key: 'note.coarse', params: { millions: (full / 1e6).toFixed(0) } })
       }

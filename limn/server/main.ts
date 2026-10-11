@@ -8,6 +8,7 @@ import { JOURNALS, openAccess, recent, released } from './sources/literature'
 import { orientation } from './sources/opm'
 import { pdbtm, topology } from './sources/pdbtm'
 import { cached, stateDir } from './structures'
+import { poll } from './tools/petworld'
 import { alphafold, complexes } from './sources/uniprot'
 import { searchNeurons } from './sources/neuromorpho'
 
@@ -40,6 +41,14 @@ Bun.serve({
       if (url.pathname === '/api/structure') {
         const target = url.searchParams.get('url') ?? ''
         const file = Bun.file(await cached(target))
+        return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })
+      }
+      // 预处理过的超大模型：第一次请求时下载原文件并粗化（要一两分钟），之后直接给
+      // a prepared very large model: the first request downloads and coarsens the original (a minute or two), later ones are served straight away
+      if (url.pathname === '/api/prepared') {
+        const state = await poll(url.searchParams.get('url') ?? '')
+        if ('preparing' in state) return json(state, 202)
+        const file = Bun.file(state.path)
         return new Response(file, { headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.size), 'Cache-Control': 'max-age=86400' } })
       }
       // 膜蛋白在膜里的取向（OPM）；没有收录时返回 null
