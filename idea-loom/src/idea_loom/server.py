@@ -12,9 +12,14 @@ from pydantic import BaseModel
 
 from . import edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
+from .play import host as play_host
+from .play import manifest as play_manifest
+from .play import snapshot as play_snapshot
+from .play import supervisor as play_supervisor
 from .model import IdeaDetail, State
 
 app = FastAPI(title="idea-loom")
+app.add_middleware(play_host.HostRouter)
 
 
 class CreateBody(BaseModel):
@@ -386,24 +391,28 @@ class LinkBody(BaseModel):
     linked: bool = True
 
 
-def _port_open(url: Optional[str]) -> bool:
-    """子项目的开发服务是不是在跑。 / Whether the subproject's dev server is running."""
-    import socket
-    from urllib.parse import urlparse
+def _play_port(request: Request) -> str:
+    """idea-loom 自己监听的端口。不能用请求的 Host 头：经开发服务器转发过来时，那是开发服务器的端口。
 
-    if not url:
-        return False
-    parsed = urlparse(url)
-    try:
-        with socket.create_connection((parsed.hostname or "127.0.0.1", parsed.port or 80), timeout=0.15):
-            return True
-    except OSError:
-        return False
+    The port idea-loom itself listens on. Not the request's Host header: behind the dev
+    server's proxy that would be the dev server's port.
+    """
+    import os
+
+    server = request.scope.get("server")
+    return os.environ.get("IDEA_LOOM_PORT") or str(server[1] if server and server[1] else request.url.port or 80)
 
 
 @app.get("/api/projects", response_model=list[ProjectView])
-def list_projects() -> list[ProjectView]:
+def list_projects(request: Request) -> list[ProjectView]:
     from . import store
+
+    hosted = {s.name for s in play_manifest.load_all()[0] if s.ready}
+    port = _play_port(request)
+
+    def playable(name: str) -> bool:
+        state = play_snapshot.status(name)
+        return state.status == "ready" or bool(state.serving)
 
     pool, _, _, _ = ideas.current()
     prs = github.pull_requests()
@@ -414,7 +423,10 @@ def list_projects() -> list[ProjectView]:
         mentioned = [i.id for i in pool.values() if p.dir in i.projects and i.status in ideas.LIVE]
         out.append(ProjectView(
             dir=p.dir, tagline=p.tagline, level=p.level, ideas=sorted(set(mentioned) | set(p.ideas), key=ideas.sort_key), linked=p.ideas,
-            ui_url=p.ui_url, ui_up=_port_open(p.ui_url), prs=len(mine), merged=len(merged),
+            # 界面的地址是它在统一入口里的子域名，不再探测开发服务器的端口。
+            # The UI address is its subdomain on the single entry point; dev-server ports are no longer probed.
+            ui_url=f"http://{p.dir}.localhost:{port}" if p.dir in hosted else None, ui_up=p.dir in hosted and playable(p.dir),
+            prs=len(mine), merged=len(merged),
             last_merged_at=max((x.merged_at for x in merged if x.merged_at), default=None), recent=list(reversed(mine))[:8],
             has_readme=(store.repo_root() / p.dir / "README.md").exists(),
         ))
@@ -568,3 +580,80 @@ def advance_project(project_dir: str) -> tasks.Task:
     value = _do(llm.ask, prompt, system="你在帮一个人决定一个模拟项目下一步做什么。只依据给你的材料，不要编造项目里没有的东西。", schema=schema, use_cache=False, purpose="advance")
     task_id = _do(tasks.create, project=project_dir, title=str(value["title"]), brief=str(value["brief"]), idea_id=linked[0].id if linked else None)
     return tasks.get(task_id)
+
+
+# ---------- 统一入口：托管的模拟 / the single entry point: hosted simulations ----------
+
+
+class SimView(BaseModel):
+    name: str
+    title: play_manifest.Text
+    level: Optional[str]
+    ready: bool
+    source: str
+    origin: str  # 这个模拟自己的源，例如 http://strata.localhost:8767 / the simulation's own origin
+    status: str  # 最新版本的构建状态 / build state of the newest version
+    playable: bool  # 有一个构建成功的版本可以用（可能是上一个）/ some good build can be served (possibly the previous one)
+    stale: bool
+    version: str
+    log: str
+    built_at: Optional[str]
+    has_api: bool
+    api_running: bool
+    cards: int
+
+
+class CardView(BaseModel):
+    key: str  # <项目>/<卡片编号> / <project>/<card id>
+    sim: str
+    sim_title: play_manifest.Text
+    level: Optional[str]
+    id: str
+    title: play_manifest.Text
+    hint: play_manifest.Text
+    idea: Optional[str]
+    url: str  # 完整地址 / the full address
+    status: str
+
+
+class PlayView(BaseModel):
+    sims: list[SimView]
+    cards: list[CardView]
+    problems: list[play_manifest.Problem]
+
+
+@app.get("/api/play", response_model=PlayView)
+def play_view(request: Request) -> PlayView:
+    """所有托管的模拟和它们的卡片。读这个接口会顺带：取一次远端、给需要的项目启动构建、停掉空闲的后端。
+
+    All hosted simulations and their cards. Reading this also fetches the remote, starts
+    builds that are needed and stops idle backends.
+    """
+    play_snapshot.fetch()
+    play_supervisor.reap_idle()
+    sims, problems = play_manifest.load_all()
+    pool, _, _, _ = ideas.current()
+    port = _play_port(request)
+    sim_views, cards = [], []
+    for sim in sims:
+        state = play_snapshot.ensure(sim.name) if sim.ready else play_snapshot.status(sim.name)
+        origin = f"http://{sim.name}.localhost:{port}"
+        sim_views.append(SimView(
+            name=sim.name, title=sim.title, level=sim.level, ready=sim.ready, source=sim.source, origin=origin, status=state.status,
+            playable=state.status == "ready" or bool(state.serving), stale=state.stale, version=state.version[:12], log=state.log[-2000:], built_at=state.built_at, has_api=sim.api is not None,
+            api_running=play_supervisor.running(sim.name) is not None, cards=len(sim.cards),
+        ))
+        if not sim.ready:
+            continue
+        for card in sim.cards:
+            cards.append(CardView(key=f"{sim.name}/{card.id}", sim=sim.name, sim_title=sim.title, level=sim.level, id=card.id, title=card.title,
+                                  hint=card.hint, idea=card.idea if card.idea in pool else None, url=origin + card.url, status="ready" if state.status == "ready" or state.serving else state.status))
+    return PlayView(sims=sim_views, cards=cards, problems=problems)
+
+
+@app.post("/api/play/{name}/build")
+def play_build(name: str) -> dict[str, str]:
+    if name not in play_manifest.names():
+        raise HTTPException(404, "没有这个模拟")
+    play_supervisor.stop(name)
+    return {"status": play_snapshot.ensure(name, force=True).status}

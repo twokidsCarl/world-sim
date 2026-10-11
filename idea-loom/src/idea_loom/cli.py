@@ -172,6 +172,57 @@ def wishes_decline(wish_id: str, note: str = typer.Option(..., help="为什么�
     _wish(wish_store.set_status, wish_id, "declined", note=note)
 
 
+play_app = typer.Typer(help="统一入口里托管的模拟 / the simulations hosted by the single entry point", no_args_is_help=True)
+app.add_typer(play_app, name="play")
+
+
+@play_app.command("status")
+def play_status() -> None:
+    """每个模拟的构建状态。 / The build state of every simulation."""
+    from .play import manifest, snapshot, supervisor
+
+    sims, problems = manifest.load_all()
+    for sim in sims:
+        state = snapshot.status(sim.name)
+        api = "后端在跑" if supervisor.running(sim.name) else ("有后端" if sim.api else "纯静态")
+        typer.echo(f"{sim.name:10} {state.status:9} {state.version[:12] or '-':12} {len(sim.cards):3} 张卡  {api}  名片来自{'项目' if sim.source == 'project' else ' idea-loom（临时）'}{'  有新版本' if state.stale else ''}")
+    for p in problems:
+        typer.echo(f"{p.name}: 名片读不出来：{p.error}", err=True)
+
+
+@play_app.command("build")
+def play_build(name: Optional[str] = typer.Argument(None, help="不给就全部构建"), wait: bool = typer.Option(True, help="等它做完")) -> None:
+    """取 main 的快照并构建。 / Take a snapshot of main and build it."""
+    import time
+
+    from .play import manifest, snapshot
+
+    snapshot.fetch(max_age=0)
+    targets = [name] if name else manifest.names()
+    for n in targets:
+        snapshot.ensure(n, force=True)
+    while wait and any(snapshot.status(n).status == "building" for n in targets):
+        time.sleep(1)
+    for n in targets:
+        state = snapshot.status(n)
+        typer.echo(f"{n}: {state.status}")
+        if state.status == "failed":
+            typer.echo(state.log[-1200:], err=True)
+
+
+@app.command("build-ui")
+def build_ui() -> None:
+    """把 idea-loom 自己的界面构建成静态文件，由后端直接提供。 / Build idea-loom's own UI into static files served by the backend."""
+    import subprocess
+
+    web = store.repo_root() / "idea-loom" / "web"
+    for command in (["bun", "install"], ["bunx", "vite", "build"]):
+        typer.echo("$ " + " ".join(command))
+        if subprocess.run(command, cwd=web).returncode != 0:
+            raise typer.Exit(1)
+    typer.echo("好了。现在只要 uv run idea-loom serve 一个进程。")
+
+
 @app.command()
 def serve(port: int = 8767, host: str = "127.0.0.1") -> None:
     """启动后端。 / Start the backend."""
@@ -179,6 +230,11 @@ def serve(port: int = 8767, host: str = "127.0.0.1") -> None:
 
     import uvicorn
 
+    from .play import host as play_host
+
+    if not (play_host.ui_dist() / "index.html").is_file():
+        typer.echo("界面还没有构建：先运行 uv run idea-loom build-ui（或者另开一个终端 cd web && bun run dev 用开发服务器）。", err=True)
+    typer.echo(f"打开 http://localhost:{port}")
     os.environ.setdefault("IDEA_LOOM_API", f"http://{host}:{port}")  # 小助手的工具要回调这个地址 / the assistant's tools call back here
     uvicorn.run("idea_loom.server:app", host=host, port=port, log_level="warning")
 

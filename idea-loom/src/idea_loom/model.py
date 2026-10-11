@@ -204,7 +204,7 @@ class Project(BaseModel):
     level: Optional[Level] = None
     keywords: list[str] = Field(default_factory=list)  # 正文里出现这些词就算提到它 / words that count as a mention
     ideas: list[str] = Field(default_factory=list)  # 明确关联的 idea / explicitly linked ideas
-    ui_url: Optional[str] = None  # 开发服务的地址 / dev server address
+    ui_url: Optional[str] = None  # 不再使用：界面的地址由统一入口给出 / no longer used: the UI address comes from the single entry point
 
 
 class KernelCount(BaseModel):
