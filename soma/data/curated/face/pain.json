@@ -1,0 +1,156 @@
+{
+ "_doc": {
+  "zh": "疼痛强度（0–10）到面部动作单元强度的映射，以及时间过程。这是疼痛行为（面部表情）的计算模型，用于教学；模拟人并没有主观感受。出处能支持的只有：哪些 AU 与疼痛有关、PSPI 的公式和量程、AU 的强度量表。从 0–10 的强度到各 AU 强度的具体数值是本项目构造的一种典型组合，没有出处；文献明确指出真人的疼痛表情因人而异，这些 AU 多数时候并不同时出现（kunz2019）。没有找到可以公开核对的起始 / 峰值 / 消退时间统计，时间参数全部是假设。",
+  "en": "The mapping from pain intensity (0–10) to action unit intensities, and the time course. This is a computational model of pain behaviour (the facial expression) for teaching; the simulated body has no subjective experience. The sources support only: which AUs are pain-related, the PSPI formula and its range, and the AU intensity scale. The actual numbers from a 0–10 intensity to AU intensities are one canonical pattern constructed by this project and have no source; the literature is explicit that real pain faces differ between people and that these AUs are most often not shown all at once (kunz2019). No openly checkable statistics of onset, apex or offset times were found; every timing parameter is an assumption."
+ },
+ "pspi": {
+  "formula": "PSPI = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43",
+  "terms": [
+   "AU4",
+   [
+    "AU6",
+    "AU7"
+   ],
+   [
+    "AU9",
+    "AU10"
+   ],
+   "AU43"
+  ],
+  "binary": [
+   "AU43"
+  ],
+  "max": 16,
+  "basis": {
+   "source": "egede2017",
+   "note": {
+    "zh": "公式见 chen2018 和 egede2017（原始出处 prkachin2008 未打开）。各 AU 0–5，AU43 取 0 或 1，共 16 级。本模型里 AU43 连续取值，计入 PSPI 时：强度 ≥ 2.5 记 1，否则记 0；另给一个连续版本（AU43 / 5）便于检验单调性。",
+    "en": "Formula as given by chen2018 and egede2017 (the original, prkachin2008, was not opened). Each AU is 0–5 and AU43 is 0 or 1, 16 levels in all. AU43 is continuous in this model; for the PSPI it counts 1 at intensity ≥ 2.5 and 0 below, and a continuous variant (AU43 / 5) is provided to test monotonicity."
+   }
+  }
+ },
+ "painAUs": {
+  "core": [
+   "AU4",
+   "AU6",
+   "AU7",
+   "AU9",
+   "AU10",
+   "AU25",
+   "AU26",
+   "AU27",
+   "AU43"
+  ],
+  "alsoCoded": [
+   "AU12",
+   "AU20"
+  ],
+  "basis": {
+   "source": "prkachin2021",
+   "note": {
+    "zh": "核心动作：降眉、眼眶收紧、提肌收缩、张口；临床疼痛中闭眼也常见（prkachin2021、kunz2019）。UNBC-McMaster 库另外编码了 AU12 和 AU20（egede2017）。AU12 在本映射里不使用。",
+    "en": "Core actions: brow lowering, orbit tightening, levator contraction, mouth opening; eye closure too in clinical pain (prkachin2021, kunz2019). The UNBC-McMaster archive also codes AU12 and AU20 (egede2017). AU12 is not used by this mapping."
+   }
+  }
+ },
+ "keyframes": [
+  {
+   "level": 0,
+   "aus": {}
+  },
+  {
+   "level": 2,
+   "aus": {
+    "AU4": 1,
+    "AU7": 1
+   }
+  },
+  {
+   "level": 4,
+   "aus": {
+    "AU4": 2,
+    "AU6": 1,
+    "AU7": 2,
+    "AU10": 1,
+    "AU25": 1
+   }
+  },
+  {
+   "level": 6,
+   "aus": {
+    "AU4": 3,
+    "AU6": 2,
+    "AU7": 3,
+    "AU9": 1,
+    "AU10": 2,
+    "AU20": 1,
+    "AU25": 2
+   }
+  },
+  {
+   "level": 8,
+   "aus": {
+    "AU4": 4,
+    "AU6": 3,
+    "AU7": 4,
+    "AU9": 2,
+    "AU10": 3,
+    "AU20": 2,
+    "AU25": 3,
+    "AU26": 2,
+    "AU43": 2
+   }
+  },
+  {
+   "level": 10,
+   "aus": {
+    "AU4": 5,
+    "AU6": 5,
+    "AU7": 5,
+    "AU9": 4,
+    "AU10": 5,
+    "AU20": 3,
+    "AU25": 4,
+    "AU26": 3,
+    "AU43": 5
+   }
+  }
+ ],
+ "mapping": {
+  "source": null,
+  "note": {
+   "zh": "假设。构造原则：强度越高，PSPI 各项不减；先出现降眉和睑收紧，再出现提颊和提上唇，高强度时才皱鼻、张口、闭眼；强度 10 时 PSPI 达到上限 16。关键帧之间线性插值。",
+   "en": "Assumption. Constructed so that no PSPI term decreases with intensity; brow lowering and lid tightening appear first, then cheek raising and upper-lip raising, and nose wrinkling, mouth opening and eye closure only at high intensity; the PSPI reaches its maximum of 16 at intensity 10. Linear between keyframes."
+  }
+ },
+ "timing": {
+  "latency": 0.3,
+  "onset": 0.6,
+  "offset": 1.5,
+  "basis": {
+   "source": null,
+   "note": {
+    "zh": "假设。没有找到可公开核对的疼痛表情起始、峰值、消退时间统计；这三个数只是为了让动画不突兀。",
+    "en": "Assumption. No openly checkable statistics of the onset, apex and offset times of pain expressions were found; the three numbers only keep the animation from snapping."
+   }
+  }
+ },
+ "datasetFacts": [
+  {
+   "value": "48,398 frames, 200 sequences, 25 participants",
+   "source": "egede2017",
+   "note": {
+    "zh": "UNBC-McMaster 库的规模。仅引用，未下载该库（需要签署协议）。",
+    "en": "Size of the UNBC-McMaster archive. Cited only; the archive (which needs a signed agreement) was not downloaded."
+   }
+  },
+  {
+   "value": "82.71% of frames have PSPI = 0",
+   "source": "egede2017",
+   "note": {
+    "zh": "即使在有肩痛的病人做活动度测试时，绝大多数时间面部也没有疼痛表情；所以本映射在低强度时表情很弱。",
+    "en": "Even in shoulder-pain patients during range-of-motion tests the face shows no pain expression most of the time; hence this mapping stays weak at low intensity."
+   }
+  }
+ ]
+}
