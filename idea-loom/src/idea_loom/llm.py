@@ -33,7 +33,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from . import store
+from . import calls, store
 
 DEFAULT_MODEL = "sonnet"
 DEFAULT_TIMEOUT = 180.0
@@ -58,6 +58,8 @@ def claude_bin() -> Optional[str]:
 
 
 def available() -> bool:
+    if calls.remote():  # hub 自己没有 claude，看 worker 在不在 / the hub has no claude of its own; ask whether the worker is up
+        return calls.worker_alive()
     return claude_bin() is not None
 
 
@@ -257,16 +259,23 @@ async def aask(
         if hit is not None:
             return hit
     binary = claude_bin()
-    if binary is None:
+    if binary is None and not calls.remote():
         raise LLMError("找不到 claude 命令（可用环境变量 IDEA_LOOM_CLAUDE_BIN 指定）")
-    argv = build_argv(binary, model, system, schema)
+    argv = build_argv(binary or "claude", model, system, schema)
     timeout = _timeout() if timeout is None else timeout
     last: Exception | None = None
     async with _semaphore():
         for _ in range(ATTEMPTS):
             started = time.monotonic()
             try:
-                stdout = await _spawn(argv, prompt, timeout)
+                if calls.remote():
+                    # hub 上：交给 worker 去跑，这里只给数据。 / On the hub: the worker runs it; only data is handed over.
+                    try:
+                        stdout = await asyncio.to_thread(calls.run, "llm", {"model": model, "system": system, "schema": schema, "prompt": prompt, "timeout": timeout}, timeout)
+                    except RuntimeError as e:
+                        raise LLMError(str(e)) from e
+                else:
+                    stdout = await _spawn(argv, prompt, timeout)
             except TimeoutError:
                 log_call(purpose, model, time.monotonic() - started, {}, ok=False)
                 raise LLMError(f"claude 超时（{timeout:g} 秒）") from None  # 超时不重试 / no retry after a timeout
