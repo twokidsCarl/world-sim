@@ -16,7 +16,7 @@ predicts:
 - 挤兑是否发生由基本面决定，但在一段基本面区间内，银行本可存活却仍被恐慌挤垮。
 - 挤兑概率可以事前算出，并随合约给提前取款者的承诺越慷慨而上升。
 - 货币攻击的发生不只取决于基本面，还取决于热钱规模和投机交易成本。
-in_engine: ''
+in_engine: 只取了一点：群发消息是公共信号，收到的人知道别人也收到了，据此估计别人会去取（mind.expectation 的 public，参数 Params.public）。私人信号的噪声和由此得到的唯一均衡没有实现。
 en:
   field: >-
     Economics (game theory / finance)
@@ -40,7 +40,8 @@ en:
     The probability of a run can be calculated ex ante, and rises the more generous the contract's promise to early withdrawers.
   - >-
     The occurrence of a currency attack depends not only on the fundamentals but also on the size of hot money and the transaction costs of speculation.
-  in_engine: ''
+  in_engine: >-
+    Only one piece is taken. A mass message is a public signal, so its recipients know others received it too and estimate from that how many will withdraw (public in mind.expectation, parameter Params.public). Noisy private signals and the unique equilibrium they give are not implemented.
   checked:
   - >-
     The IDEAS/RePEc article page confirms the title, the two authors, American Economic Review, June 1998, volume 88 issue 3, pages 587–597, and gives the abstract. The original AEA or JSTOR pages were not opened.

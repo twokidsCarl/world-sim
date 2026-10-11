@@ -97,7 +97,7 @@ def bea(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
 # 第一轮的三起：结果已经看过（挤兑要么不发生、要么太大），并据此决定再改一轮模型，所以不再算检验。
 # The first round's three: their results have been seen (a run either did not happen or was far too large) and prompted
 # another round of model changes, so they no longer count as tests.
-SEEN = ("bac", "swedbank", "kaspi")
+SEEN = cal.SEEN
 # 第二轮的两起：设定和标准在第二轮模型改动之前合并。
 # The second round's two: their settings and criteria were merged before the second round of model changes.
 HELD_OUT = ("icici", "fib")

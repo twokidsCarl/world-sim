@@ -1,7 +1,7 @@
 {
   "note": "随机搜索得到的一组与目标不矛盾的参数；目标少、参数多，不是唯一解。",
   "note_en": "A parameter set found by random search that does not contradict the targets; with few targets and many parameters it is not unique.",
-  "samples": 500,
+  "samples": 800,
   "seeds": 8,
   "n": 600,
   "targets": [
@@ -54,6 +54,14 @@
       "why_en": "Bank of East Asia: under 2% of deposits withdrawn (the chairman's later account; the bank reported 0.67%). The result of this case has been seen, so it is used for calibration and no longer counts as a test"
     },
     {
+      "metric": "seen_like",
+      "source": "cases/bac_san_jose_2004, cases/swedbank_latvia_2011, cases/kaspi_bank_2014",
+      "lo": 0.3,
+      "hi": 1.0,
+      "why": "第一轮的三起检验案例：每十个平行世界里至少有三个银行不倒、取走的比例在史料数字的一半到两倍之间（三成的下限是这里定的）。它们的结果已经看过，所以拿来校准、不再算检验",
+      "why_en": "The first round's three test cases: in at least three of ten parallel worlds the bank survives and the share withdrawn is between half and twice the recorded figure (the three-in-ten floor is set here). Their results have been seen, so they are used for calibration and no longer count as tests"
+    },
+    {
       "metric": "sanren_steps",
       "source": "cases/sanren_chenghu",
       "lo": 3.0,
@@ -63,7 +71,7 @@
     }
   ],
   "default": {
-    "miss": 16.822385102673337,
+    "miss": 17.191432721720957,
     "metrics": {
       "runner_share": 0.12466352433231162,
       "neighbor_lift": 0.3131037615234506,
@@ -71,29 +79,33 @@
       "survived": 1.0,
       "sanren_steps": 1.0,
       "bea_amount": 0.05046125577294898,
-      "toyokawa_like": 0.125
+      "toyokawa_like": 0.125,
+      "seen_like": 0.041666666666666664
     }
   },
   "calibrated": {
-    "miss": 0.548883203721298,
+    "miss": 0.654132639544492,
     "metrics": {
-      "runner_share": 0.028122219769128903,
-      "neighbor_lift": 8.701010744420913,
-      "correction_residual": 0.7580936631494115,
+      "runner_share": 0.017835402995742794,
+      "neighbor_lift": 3.7618047192533495,
+      "correction_residual": 0.8651132276336688,
       "survived": 1.0,
       "sanren_steps": 3.0,
-      "bea_amount": 0.023586466948498627,
-      "toyokawa_like": 0.375
+      "bea_amount": 0.015338068070858833,
+      "toyokawa_like": 0.25,
+      "seen_like": 0.20833333333333334
     },
     "params": {
-      "w_tell": 3.366,
-      "corroborate": 1.423,
-      "w_seen": 1.72,
-      "share": 0.125,
-      "lam": 15.304,
-      "bias": -3.0,
-      "hazard": 0.205,
-      "spread": 3.6
+      "w_tell": 3.5,
+      "corroborate": 1.418,
+      "w_seen": 3.823,
+      "share": 0.235,
+      "lam": 4.0,
+      "bias": -4.427,
+      "hazard": 0.468,
+      "spread": 2.228,
+      "public": 0.0,
+      "authority": 0.2
     }
   }
 }

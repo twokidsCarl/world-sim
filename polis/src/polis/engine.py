@@ -109,6 +109,7 @@ class Sim:
         self.believed = np.zeros(n, dtype=bool)
         self.verified[self.banker] = True
         self.silenced = np.zeros(n, dtype=bool)
+        self.public = np.zeros(n)  # 群发消息让人估计别人会去取的比例 / the share of others a mass message leads each person to expect at the bank
         self.closed_until = np.zeros(len(pop.venues), dtype=int)  # 场所关到第几个小时 / the tick until which each venue stays closed
 
         # 钱庄 / the bank
@@ -212,7 +213,10 @@ class Sim:
         self.reserve += iv.cash * self.total  # 最后贷款人运来的现银 / cash shipped in by the lender of last resort
         reached = np.flatnonzero(self.rng.random(self.n) < iv.reach)
         confirm = 1.0 + self.p.confirm * iv.valence * np.tanh(self.L[reached] / 2.0)
-        self.L[reached] += iv.valence * iv.strength * (0.3 + self.trust_institution[reached]) * confirm
+        # 辟谣和担保按 authority 打折：告示上写的力度，落到人心里没有那么多
+        # A denial or guarantee is discounted by authority: less of its stated strength lands than is written on it
+        strength = iv.strength * (self.p.authority if iv.valence < 0 else 1.0)
+        self.L[reached] += iv.valence * strength * (0.3 + self.trust_institution[reached]) * confirm
         # 告示也让原本不知情的人知道了有这回事
         # A notice also tells people who had not heard that there is something to hear about
         self.status[reached] = np.maximum(self.status[reached], AWARE)
@@ -223,7 +227,13 @@ class Sim:
             self.held[won] = m
             self.zeal[won] = 1.0
             others = np.setdiff1d(reached, won)
-            self.zeal[others] *= max(0.0, 1 - iv.strength / 4)
+            self.zeal[others] *= max(0.0, 1 - strength / 4)
+            # 辟谣同样是人人都收到的：别人会去取的估计跟着减退
+            # A denial reaches everyone too, so the estimate that others will withdraw recedes with it
+            self.public[reached] *= max(0.0, 1 - strength / 4)
+        elif self.p.public > 0:
+            # 群发的坏消息：收到的人知道不只自己收到 / a mass message of bad news: those reached know they are not the only ones
+            self.public[reached] = np.maximum(self.public[reached], min(1.0, self.p.public * iv.reach))
         self._emit("broadcast", a=iv.actor, m=m, x=round(len(reached) / self.n, 3))
         if iv.actor is not None:
             self.held[iv.actor] = m
@@ -332,7 +342,7 @@ class Sim:
             self.held[noticed] = self.queue_msg
 
         self.talk = np.clip(0.85 * self.talk + self._talk_new / self.degree, 0, 1)
-        self.expect = mind.expectation(seen, self.talk, self.depth)
+        self.expect = mind.expectation(seen, self.talk, self.depth, self.public)
         belief = mind.sigmoid(self.L)
         self.fear += 0.3 * (mind.fear_target(belief, self._urgent(), self.expect, self.stake, self.risk_aversion) - self.fear)
         self.L += p.forget * (self.L0 - self.L)
@@ -461,6 +471,8 @@ class Sim:
             hour = (p.start_hour + t) % 24
             awake = 6 <= hour < 23
             bank = self.pop.venues[self.pop.bank]
+            # 被勒令关门或自己暂时关门的时候，柜上不付款 / while ordered shut or closed of its own accord, the counter pays nothing
+            bank_open = bank.hours[0] <= hour < bank.hours[1] and t >= self.closed_until[bank.idx]
             self._talk_new = np.zeros(self.n)
             if self.failed_at is None:
                 for iv in p.interventions:
@@ -469,15 +481,15 @@ class Sim:
                 pub = min(1.0, len(self.queue) / (QUEUE_FULL * self.n))
                 if awake:
                     self._spread(hour)
-                    if bank.hours[0] <= hour < bank.hours[1]:
+                    if bank_open:
                         self._verify(pub)
                 self._observe(pub, awake)
                 if awake:
                     if self.director is not None:
-                        self._direct(hour, pub, bank.hours[0] <= hour < bank.hours[1])
+                        self._direct(hour, pub, bank_open)
                     self._decide()
                     self._crossings()
-                if bank.hours[0] <= hour < bank.hours[1]:
+                if bank_open:
                     self._serve()
             frames.append(self._frame())
             self._measure(series)

@@ -272,6 +272,14 @@ export interface Params {
    */
   spread?: number;
   /**
+   * 收到群发消息的人，估计同样收到的人里有多少会去取（乘以消息触达的比例）；0 表示群发消息不带来这种估计 / of those a mass message reached, the share a recipient assumes will withdraw (times the message's reach); 0 means a mass message carries no such assumption
+   */
+  public?: number;
+  /**
+   * 辟谣和担保的告示实际有几成力度 / the fraction of a denial's or guarantee's stated strength that actually lands
+   */
+  authority?: number;
+  /**
    * 与银行的往来把门槛抬高多少 / how much ties to the bank raise the threshold
    */
   attach?: number;

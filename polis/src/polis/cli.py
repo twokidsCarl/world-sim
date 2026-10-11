@@ -21,7 +21,7 @@ runs_dir = trace.runs_dir
 # 统一入口的卡片要用的几次运行：(场景, 种子, 回应)。都用校准后的参数，引擎按种子确定，所以不必进 git。
 # The runs the shared host's cards point at: (scenario, seed, response). All use the calibrated parameters and the
 # engine is deterministic per seed, so they need not be in git.
-SHOWCASE = [("rumor_run", 7, "guarantee"), ("rumor_run", 7, "none"), ("toyokawa", 53, "notice"), ("bea", 10, "notice")]
+SHOWCASE = [("rumor_run", 7, "guarantee"), ("rumor_run", 7, "none"), ("toyokawa", 36, "notice"), ("bea", 10, "notice")]
 
 
 def _line(m: model.Manifest) -> str:
