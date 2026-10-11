@@ -361,7 +361,9 @@ class Worker:
             mine = [j for j in all_jobs if j.directory == directory]
             if any(j.phase in jobs.HOLDING for j in mine):
                 continue
-            last = max((j for j in mine if j.chain), key=lambda j: j.created_at, default=None)
+            # 按记下的编号找上一步，不按时间比：同一秒里开的两个作业时间是一样的。
+            # The previous step is found by its recorded id, not by time: two jobs started within the same second share a timestamp.
+            last = next((j for j in mine if j.job_id == chains.last_job(directory)), None)
             if last is not None and last.phase in ("failed", "cancelled"):
                 chains.stop(directory)
                 notify.send(f"连续推进停了：{directory}", f"上一步没做成（{last.title}），剩下的 {left} 步没有做。", url="/work", tag=f"chain-{directory}")
@@ -373,8 +375,9 @@ class Worker:
                 continue
             try:
                 task_id = chains.propose(directory)
-                chains.use(directory)
-                started.append(jobs.start("task", task_id, chain=True).job_id)
+                job = jobs.start("task", task_id, chain=True)
+                chains.use(directory, job.job_id)
+                started.append(job.job_id)
             except Exception as e:  # noqa: BLE001 — 提议不出来就停掉这条线，别每几秒试一次 / stop the chain instead of retrying every few seconds
                 chains.stop(directory)
                 notify.send(f"连续推进停了：{directory}", f"提议下一步时出错：{e}"[:200], url="/work", tag=f"chain-{directory}")

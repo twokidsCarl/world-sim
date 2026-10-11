@@ -27,9 +27,19 @@ def _path() -> Path:
     return store.runs_dir() / "worker" / "chains.json"
 
 
-def load() -> dict[str, int]:
+def _read() -> dict[str, dict]:
     raw = store.read_json(_path(), {})
-    return {str(k): int(v) for k, v in raw.items() if isinstance(v, int)} if isinstance(raw, dict) else {}
+    return {str(k): v for k, v in raw.items() if isinstance(v, dict)} if isinstance(raw, dict) else {}
+
+
+def load() -> dict[str, int]:
+    """每个子项目还剩几步。 / How many steps each subproject has left."""
+    return {k: int(v.get("left") or 0) for k, v in _read().items()}
+
+
+def last_job(directory: str) -> str:
+    """这条线最近开的那个作业。 / The job this chain started most recently."""
+    return str(_read().get(directory, {}).get("last") or "")
 
 
 def approve(directory: str, steps: int) -> dict[str, int]:
@@ -38,27 +48,28 @@ def approve(directory: str, steps: int) -> dict[str, int]:
         raise ValueError("没有这个子项目")
     if not 0 <= steps <= MAX_STEPS:
         raise ValueError(f"步数要在 0 到 {MAX_STEPS} 之间")
-    chains = load()
+    chains = _read()
     if steps:
-        chains[directory] = steps
+        chains[directory] = {"left": steps, "last": ""}
     else:
         chains.pop(directory, None)
     store.write_json(_path(), chains)
-    return chains
+    return load()
 
 
 def stop(directory: str) -> None:
-    chains = load()
+    chains = _read()
     if chains.pop(directory, None) is not None:
         store.write_json(_path(), chains)
 
 
-def use(directory: str) -> int:
-    """用掉一步。 / Use up one step."""
-    chains = load()
-    chains[directory] = max(0, chains.get(directory, 0) - 1)
+def use(directory: str, job_id: str) -> int:
+    """用掉一步，并记下这一步是哪个作业。 / Use up one step and record which job it is."""
+    chains = _read()
+    left = max(0, int(chains.get(directory, {}).get("left") or 0) - 1)
+    chains[directory] = {"left": left, "last": job_id}
     store.write_json(_path(), chains)
-    return chains[directory]
+    return left
 
 
 def propose(directory: str, repo: Path | None = None) -> str:
