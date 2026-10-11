@@ -40,7 +40,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from . import config, gates, llm, ops, store, tasks, wishes
+from . import config, gates, llm, notify, ops, store, tasks, wishes
 from .assistant.stream import StreamParser
 
 Phase = Literal["planning", "plan_ready", "running", "testing", "pr", "merged", "failed", "cancelled", "declined"]
@@ -228,6 +228,11 @@ def _root(job: Job) -> Path:
     The tree this job works in: its own workspace in the cloud, the shared repository directory locally.
     """
     return Path(job.workspace) if job.workspace else store.repo_root()
+
+
+def _page(job: Job) -> str:
+    """这个作业在界面上的那一页，通知点开就到这里。 / The job's page in the UI, where a notification leads."""
+    return f"/wishes/{job.ref}" if job.kind == "wish" else "/work"
 
 
 def _tree(job: Job) -> Optional[Path]:
@@ -472,6 +477,7 @@ def _fail(job: Job, message: str) -> None:
     job.phase, job.error = "failed", message[:2000]
     save(job)
     _emit(job.job_id, {"type": "failed", "message": job.error})
+    notify.send(f"作业没做成：{job.title}", job.error[:200], url=_page(job), tag=job.job_id, wait=True)
     if job.kind == "task":
         tasks.set_status(job.ref, "failed", note=job.error[:300], by="claude-code")
     else:
@@ -500,6 +506,7 @@ def run_plan(job_id: str) -> None:
     if job.kind == "task":
         tasks.set_status(job.ref, "plan_ready", by="claude-code")
     _emit(job_id, {"type": "plan", "text": job.plan})
+    notify.send(f"方案出来了，等你批准：{job.title}", job.plan[:200], url=_page(job), tag=job.job_id, wait=True)
 
 
 def run_execute(job_id: str) -> None:
@@ -634,6 +641,7 @@ def _finish(job_id: str) -> None:
     else:
         tasks.set_status(job.ref, "merged", note=str(job.summary.get("summary_zh") or ""), pr=job.pr, pr_url=job.pr_url, by="claude-code")
     _emit(job_id, {"type": "merged", "pr": job.pr, "url": job.pr_url})
+    notify.send(f"做完并合并了：{job.title}", str(job.summary.get("summary_zh") or f"PR #{job.pr}")[:200], url=_page(job), tag=job.job_id, wait=True)
 
 
 def main(argv: list[str]) -> None:

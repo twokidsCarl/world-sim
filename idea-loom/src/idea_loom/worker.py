@@ -41,7 +41,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 
-from . import calls, gates, jobs, store
+from . import calls, gates, jobs, notify, store
 
 POLL_SECONDS = 5.0
 MAX_CALLS = 3
@@ -293,6 +293,8 @@ class Worker:
                     job.waiting = reason
                     jobs.save(job)
                     jobs._say(job.job_id, f"还没轮到：{reason}")
+                    if "订阅额度" in reason or "上限" in reason:  # 闸门拦下的才通知；只是在排队的不吵 / notify for the gates only, not for ordinary queueing
+                        notify.send("队列暂停了", reason, url="/work", tag="gate")
                 continue
             phase = str(job.queued)
             try:

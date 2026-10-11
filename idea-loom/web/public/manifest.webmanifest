@@ -1,0 +1,14 @@
+{
+  "name": "idea-loom",
+  "short_name": "idea-loom",
+  "description": "world-sim 的想法池和所有模拟的入口 / the idea pool of world-sim and the way into every simulation",
+  "start_url": "/play",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf6ed",
+  "theme_color": "#faf6ed",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 织机：三根经线，一根纬线穿过。 / A loom: three warp threads and one weft passing through. -->
+  <rect width="512" height="512" rx="112" fill="#211e1a"/>
+  <g fill="none" stroke="#faf6ed" stroke-width="28" stroke-linecap="round">
+    <path d="M156 120v272M256 120v272M356 120v272"/>
+    <path d="M96 256c40-56 80-56 120 0s80 56 120 0 60-42 80-28" stroke="#d9772b"/>
+  </g>
+</svg>
