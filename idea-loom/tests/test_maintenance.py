@@ -29,7 +29,7 @@ def quiet(cloud, repo, monkeypatch):  # noqa: F811
 
 def run_until_idle(w, limit=8):
     for _ in range(limit):
-        w.maintained_at = 0.0
+        w.maintained_at = float("-inf")
         if not w.tick() and not any(j.queued or j.phase in jobs.ACTIVE for j in jobs.listing()):
             break
 
@@ -61,7 +61,7 @@ def test_it_stays_off_unless_switched_on_and_waits_for_a_quiet_repository(quiet,
     origin = subprocess.run(["git", "-C", str(worker.clone()), "remote", "get-url", "origin"], capture_output=True, text=True).stdout.strip()
     for n in range(2):
         git(origin, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "--allow-empty", "-m", f"busy {n}")
-    w.maintained_at = 0.0
+    w.maintained_at = float("-inf")
     assert w.maybe_maintain([]) is None and w.maintenance_note == "最近 60 分钟有 2 次提交，不算少"
     assert maintenance.check_seconds() == 300 and worker.status()["maintenance"]["last_check"]["why_not"] == w.maintenance_note
     import time as _t
@@ -119,12 +119,12 @@ def test_maintenance_gives_way_to_other_jobs_and_to_the_gates(quiet, wish, monke
     mine = jobs.start("wish", wish)
     monkeypatch.setenv("IDEA_LOOM_ROLE", "worker")
     w.tick()
-    w.maintained_at = 0.0
+    w.maintained_at = float("-inf")
     assert w.maybe_maintain(jobs.listing()) is None                        # 有主人的作业在等批准 / an owner's job is waiting for approval
     jobs.cancel(mine.job_id)
     soon = time.time() + 3600
     gates.note_usage({"status": "allowed", "resetsAt": soon, "unifiedWindows": {"seven_day": {"utilization": 0.95, "resetsAt": soon}}})
-    w.maintained_at = 0.0
+    w.maintained_at = float("-inf")
     assert w.maybe_maintain(jobs.listing()) is None                        # 额度到线 / the allowance is at the threshold
 
 
