@@ -174,6 +174,8 @@
         ["Clathrin|AP180|AP2|Dynamin|Endophilin|Epsin|Amphiphysin|Intersectin|Syndapin|Synaptojanin|SGIP1|HSC70", "extracellular"],
         [".", "soluble"]
       ],
+      "hues": {"soluble": [0.72, 0.12, 138], "extracellular": [0.76, 0.11, 128], "nucleic-binding": [0.68, 0.11, 150], "nucleic": [0.7, 0.1, 132], "focus": [0.78, 0.15, 82], "membrane": [0.8, 0.13, 95]},
+      "membrane": [0.9, 0.08, 100],
       "caption": "一整个突触前膨体的模型，从中间剖开：307 个装着谷氨酸的突触小泡、细胞骨架、内体、线粒体的外壳和质膜，以及几十种参与小泡释放与回收的蛋白，数量来自对分离出的突触小体的定量测量。",
       "captionEn": "A model of an entire presynaptic bouton, cut through the middle: 307 synaptic vesicles filled with glutamate, cytoskeleton, endosomes, the mitochondrial envelope and the plasma membrane, with dozens of the proteins that release and recycle vesicles, in numbers taken from quantitative measurements of isolated synaptic boutons.",
       "citation": "Wilhelm et al., Science 2014, doi:10.1126/science.1252884; Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
@@ -323,6 +325,8 @@
         ["\\.surface\\.", "membrane"],
         [".", "soluble"]
       ],
+      "hues": {"soluble": [0.76, 0.09, 222], "nucleic-binding": [0.7, 0.12, 345], "nucleic": [0.84, 0.14, 88], "membrane": [0.72, 0.13, 140]},
+      "membrane": [0.86, 0.09, 125],
       "caption": "一整只生殖支原体细胞的模型，从中间剖开：膜、核糖体、基因组 DNA 和几百种蛋白，数量来自全细胞模拟的一个时刻。",
       "captionEn": "A model of an entire Mycoplasma genitalium cell, cut through the middle: membrane, ribosomes, genomic DNA and several hundred kinds of protein, in numbers taken from one moment of a whole-cell simulation.",
       "tier": "curated",
