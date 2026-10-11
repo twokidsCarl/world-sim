@@ -1,0 +1,52 @@
+# world-sim
+
+> world-sim: from the laws of physics up to civilisation, one layer at a time. A set of simulation projects, the data they curated, and a pool of ideas.
+> world-sim：从物理定律一层层往上，一直模拟到文明。这里是一组模拟项目、它们整理的数据，和一个想法池。
+
+Everything below is read-only or a bounded, deterministic computation. No key is needed to read; nothing here calls a language model.
+以下都是只读的，或者是有界的、确定性的计算。读不需要密钥；这里没有任何东西会调用语言模型。
+
+## Start here / 从这里开始
+
+- [Catalogue](/api/v1/catalog): every project, dataset and computation as JSON. Call this first. / 目录：全部项目、数据集和计算，JSON。先调它。
+- [Full reference](/llms-full.txt): every dataset and computation with its fields, input schema and a runnable example. / 完整说明：每个数据集和计算的字段、输入和能直接跑的例子。
+- [OpenAPI](/openapi.json) · MCP endpoint: `/mcp` (or locally `uv run idea-loom mcp`).
+
+## Projects / 项目
+
+- **limn** — Goodsell-style scientific illustration / Goodsell 风格的科学插图: Goodsell-style illustrations of molecules and cells. Rendering happens in the browser only; what agents get here is its curated pointer data (which large models can be viewed, which PDB structures each Molecule of the Month covers, the lipid make-up of biological membranes) and a few lookups against public databases. Lookup results come from external databases and change as they do.
+  - data [models](/api/v1/datasets/limn/models/schema): Viewable large models / 可看的大模型 (MIT (this index; each model keeps the licence stated in its record))
+  - data [molecule-of-the-month](/api/v1/datasets/limn/molecule-of-the-month/schema): Molecule of the Month / 月度分子 (MIT (this index of titles and ids; the articles themselves belong to RCSB PDB))
+  - data [membranes](/api/v1/datasets/limn/membranes/schema): Lipid make-up of membranes / 生物膜的脂质组成 (MIT)
+  - run [ligand](/api/v1/capabilities/limn/ligand): Ligand 3D structure / 配体的三维结构
+  - run [membrane-placement](/api/v1/capabilities/limn/membrane-placement): Placement of a membrane protein / 膜蛋白在膜里的位置
+  - run [citation](/api/v1/capabilities/limn/citation): Summary and citation of a structure / 结构的概要和出处
+  - run [alphafold](/api/v1/capabilities/limn/alphafold): Predicted structure / 预测结构
+  - run [complexes](/api/v1/capabilities/limn/complexes): Predicted complexes / 预测的复合物
+- **mindloop** — I know that you know that I know / 我知道你知道我知道: Two people guessing each other: I know that you know that I know. 25 sourced cases (the Empty Fort, Holmes and Moriarty, Poe's odd-or-even…), each of which can be computed for "how many levels each side reasons". Find a case id in `cases`, then run `compute`.
+  - data [cases](/api/v1/datasets/mindloop/cases/schema): Cases / 案例 (MIT (summaries written for this repository; quoted works keep their own copyright))
+  - run [compute](/api/v1/capabilities/mindloop/compute): Compute a case / 算一个案例
+- **polis** — A parallel society: how one remark brings down a bank / 平行社会：一句闲话怎么挤垮一家钱庄: A parallel society: how rumours, bank runs and conformity spread through a small town. Offered here is the corpus it rests on — theories, historical cases and quantitative facts, each with sources and verification flags — plus the model's calibration targets and results. Starting a new simulation is command-line only for now.
+  - data [theory](/api/v1/datasets/polis/theory/schema): Theories / 理论 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
+  - data [cases](/api/v1/datasets/polis/cases/schema): Historical cases / 历史案例 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
+  - data [facts](/api/v1/datasets/polis/facts/schema): Quantitative facts / 量化的事实 (MIT (text paraphrased and written for this repository; cited works keep their own copyright))
+  - data [calibration-targets](/api/v1/datasets/polis/calibration-targets/schema): Calibration targets / 校准目标 (MIT)
+- **soma** — 3D human anatomy / 三维人体解剖: 3D human anatomy: 3,332 anatomical parts (with FMA ids), 8,760 relations between them (origins, insertions, innervation, blood supply and more), Chinese names, joint ranges of motion and dermatome maps. Nothing to simulate; this is data. To answer "which nerve innervates this muscle": find its fma id in `parts` by English name, then query `relations` with key=<fma>&where=kind=innervatedBy.
+  - data [parts](/api/v1/datasets/soma/parts/schema): Anatomical parts / 解剖部件 (CC BY-SA 4.0)
+  - data [relations](/api/v1/datasets/soma/relations/schema): Anatomical relations / 解剖关系 (CC BY-SA 4.0 (each record carries its own source licence, mostly CC0 1.0 from Wikidata))
+  - data [names](/api/v1/datasets/soma/names/schema): Chinese names / 中文名称 (CC BY-SA 4.0)
+  - data [range-of-motion](/api/v1/datasets/soma/range-of-motion/schema): Joint ranges of motion / 关节活动度 (CC BY-SA 4.0)
+  - data [dermatomes](/api/v1/datasets/soma/dermatomes/schema): Dermatomes / 皮节 (CC BY-SA 4.0)
+- **strata** — From microscopic rules to emergence / 从微观规则到涌现: From microscopic rules to emergence: molecular dynamics, Ising, Potts, gravity, meshes and more, run on the GPU in a browser. It has no headless entry point yet, so there is no callable computation or dataset here for now; its card URLs in the catalogue can be given to a person to open.
+
+## Idea pool / 想法池
+
+- [Search](/api/v1/ideas?q=rumour): `/api/v1/ideas?q=&level=&thread=&kernel=&project=&full=` — titles by default, bodies with `full=true`; 105 live ideas, each a short prompt that can be handed to an agent to build a simulation. / 搜索想法池。
+- One idea with history and lineage: `/api/v1/ideas/{id}` / 一条 idea 的全文、历史和血缘。
+
+## Conventions / 约定
+
+- JSON in, JSON out. Errors are `{"error": …, "hint": …}`; the hint says how to fix the request. / 只收发 JSON；错误带 hint，说明怎么改。
+- Dataset queries: `?q=words&where=field=value&key=K&fields=a,b&limit=20&after=0`; `next` in the reply is the `after` for the next page. / 数据集的查询参数。
+- Every dataset reply carries `licence` and `provenance`. Read them: some data is machine-gathered and unreviewed. / 每次返回都带许可和出处，有些数据是机器汇集、没有经人核对的。
+- Text fields come in Chinese and English where both exist (`zh`/`en`, or `x`/`x_en`). / 文字有中英两版时都给。

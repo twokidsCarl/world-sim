@@ -143,6 +143,72 @@ Every subproject should meet these seven points. The first two decide whether it
 
 Notes on `sim.json`: exactly one of `web` (a frontend to build) and `static` (`{"dir": "…"}`, files served as they are). The `build` commands run in order inside `web.dir`, and `web.dir/dist` must then contain an `index.html`. `api` is optional; `{port}` must appear in `run` or `env`, and `{state}` (a directory it may write to) and `{repo}` (the repository root) are also available; `prepare` runs once at build time. `cards[].url` is relative to the simulation's own root and starts with `/`; `cards[].idea` is an id from the idea pool and is optional. A project with `ready: false` stays off the play page. The build runs no type checks or tests; those belong to each project before it submits. `uv run idea-loom play status` shows every project's build state and `uv run idea-loom play build <project>` rebuilds one.
 
+## Agent 约定：把项目接给外面的 AI Agent
+
+仓库里的数据和计算要能被外来的 Agent 直接用上（怎么用见 [`AGENTS.md`](AGENTS.md)）。idea-loom 提供三个出口——生成的文档、`/api/v1`、MCP——三个都从各项目 `sim.json` 里的 `agent` 一节生成。
+
+每个子项目要做到下面七条：
+
+1. **在 `sim.json` 里提供 `agent` 一节**（格式见下）。没有的项目，idea-loom 暂时用自己带的临时说明（`idea-loom/data/agent/<项目>.json`）；项目自己的进了 `main` 就以它为准。
+2. **计算要确定**：同样的输入和种子得到同样的输出。依赖外部服务的要把 `deterministic` 写成 `false`。
+3. **计算要有界**：声明大致耗时（`seconds`，hub 在三倍时掐掉）；返回不超过 1 MB；不依赖浏览器。
+4. **对外的计算不调用模型、不写仓库**。要写的只能写到 `WORLD_SIM_STATE`。调用 `claude` 的接口不要列进来。
+5. **每个数据集写明许可和来历**（`licence`、`provenance`）。没有许可声明的数据不要列；机器汇集、没有核对过的要照实写。
+6. **输入有 JSON Schema**（`additionalProperties: false`，数值给上下限），字段名用英文，说明中英都有，并给一个能直接跑的 `example`。
+7. **错误信息要能让 Agent 自己改对**：说哪个字段、允许什么值。
+
+```json
+"agent": {
+  "summary": { "zh": "一段话：这个项目能回答什么问题、先调哪个", "en": "…" },
+  "datasets": [
+    { "id": "relations", "title": { "zh": "解剖关系", "en": "Anatomical relations" },
+      "description": { "zh": "…", "en": "…" },
+      "path": "public/anatomy/knowledge/relations.json", "records": "", "key": "subject",
+      "search": ["subject", "kind", "objectLabel"], "fields": [],
+      "licence": "CC BY-SA 4.0", "provenance": { "zh": "谁整理的、核实到什么程度", "en": "…" } }
+  ],
+  "capabilities": [
+    { "id": "compute", "title": { "zh": "算一个案例", "en": "Compute a case" },
+      "description": { "zh": "…", "en": "…" },
+      "http": { "method": "POST", "path": "/api/compute" },
+      "input": { "type": "object", "required": ["case_id"], "additionalProperties": false,
+                 "properties": { "case_id": { "type": "string" } } },
+      "output": { "zh": "返回的是什么", "en": "…" },
+      "deterministic": true, "seconds": 5, "example": { "case_id": "kongchengji" } }
+  ]
+}
+```
+
+- **数据集**指向项目里的 JSON 或 YAML 文件（相对于项目目录），hub 从 `origin/main` 读，项目不用写代码。`records` 是文件里记录所在的点分路径（空是根）：是列表就逐项取，是对象就把键放进 `_id`。`path` 里带 `*` 时每个文件是一条记录（`_id` 是文件名，`_group` 是所在目录）。`key` 是用来按键取的字段，`search` 是搜索时看的字段，`fields` 是默认返回的字段（空是全部）。
+- **计算**是项目自己后端的一个接口（路径在 `/api/` 下，可以带 `{参数}`）。没有后端的项目先只列数据集；要给出计算，需要一个不依赖浏览器的入口。
+- 改完用 `cd idea-loom && uv run idea-loom agent docs --full` 看生成的说明，确认字段、样例和例子都对。
+
+### The agent contract: offering a project to outside AI agents
+
+The data and computations in this repository should be directly usable by outside agents
+(see [`AGENTS.md`](AGENTS.md) for how). idea-loom provides three outlets — generated
+documents, `/api/v1` and MCP — all generated from the `agent` section of each project's
+`sim.json`. Every subproject should meet these seven points:
+
+1. **Provide an `agent` section in `sim.json`** (format above). Until it exists, idea-loom uses an interim description of its own (`idea-loom/data/agent/<project>.json`); the project's own wins as soon as it is on `main`.
+2. **Computations are deterministic**: the same input and seed give the same output. One that depends on an external service sets `deterministic` to `false`.
+3. **Computations are bounded**: state the rough time (`seconds`; the hub cuts off at three times that); replies stay under 1 MB; no browser is needed.
+4. **Offered computations call no model and write nothing to the repository.** Anything written goes under `WORLD_SIM_STATE`. Do not list routes that call `claude`.
+5. **Every dataset states its licence and provenance.** Do not list data without a stated licence; say so plainly when data was gathered by machine and not checked.
+6. **Inputs have a JSON Schema** (`additionalProperties: false`, bounds on numbers), field names in English, descriptions in both languages, and an `example` that runs as it is.
+7. **Error messages let an agent fix its own request**: which field, which values are allowed.
+
+A dataset points at JSON or YAML files inside the project (relative to its directory); the hub
+reads them from `origin/main`, so the project writes no code. `records` is the dotted path to
+the records in the file (empty for the root): a list is taken item by item, an object has its
+keys put into `_id`. With a `*` in `path`, each file is one record (`_id` is the file name,
+`_group` its directory). `key` is the field used to fetch by key, `search` the fields searched
+and `fields` those returned by default (all when empty). A computation is a route of the
+project's own backend (under `/api/`, may contain `{parameters}`); a project without a backend
+lists datasets only until it has an entry point that needs no browser. After editing, run
+`cd idea-loom && uv run idea-loom agent docs --full` and check the fields, samples and
+examples in the generated reference.
+
 ## IDEAS.md 和想法池
 
 - `IDEAS.md` 里用注释标记圈出来的三块（想法池、内核表、覆盖表）由 `idea-loom/` 生成，**不要手改**。要加、改、合并、丢弃 idea，在 idea-loom 的界面里做，或者直接往 `idea-loom/data/ideas.jsonl` 追加事件，然后运行 `cd idea-loom && uv run idea-loom sync`。
