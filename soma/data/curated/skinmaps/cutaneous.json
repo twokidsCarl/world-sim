@@ -1,0 +1,3044 @@
+{
+ "_doc": {
+  "zh": "皮神经分布区图定义。各分布区的种子取自其神经部件的中心线中距皮肤不超过 maxDepthMm 的部分（“nerve” 种子，basis 为 nerve-geometry），和/或体表标志曲线（“curve” 种子；basis 为 landmark-rule 时仅有此类种子）。标签自全部种子沿皮肤表面按测地距离扩散，左右两侧分别计算。segments 为教科书所载的脊髓节段来源及其出处；via 为按部件名称列出的、通向神经丛的上级神经链。",
+  "en": "Cutaneous nerve territory map definition. A territory is seeded from the centrelines of its nerve parts where they run within maxDepthMm of the skin ('nerve' seeds, basis nerve-geometry) and/or from landmark curves ('curve' seeds; the only seeds when basis is landmark-rule). Labels spread from all seeds by geodesic distance on the skin, each side separately. 'segments' are textbook root values with their source; 'via' is the parent chain towards the plexus, by part name."
+ },
+ "sources": [
+  {
+   "id": "gray1918-200",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918: The trigeminal nerve",
+   "url": "https://www.bartleby.com/107/200.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-209",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918: The posterior divisions of the spinal nerves",
+   "url": "https://www.bartleby.com/107/209.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-210",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918: The anterior divisions: cervical and brachial plexuses",
+   "url": "https://www.bartleby.com/107/210.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-211",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918: The thoracic nerves",
+   "url": "https://www.bartleby.com/107/211.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-212",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918: The lumbosacral plexus",
+   "url": "https://www.bartleby.com/107/212.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-213",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918: The sacral and coccygeal nerves",
+   "url": "https://www.bartleby.com/107/213.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-fig812",
+   "name": "Gray 1918, figs. 812/814 (segmental distribution of the cutaneous nerves of the upper extremity), labels as redrawn on Wikimedia Commons (Gray812and814.svg); not checked against the original plates",
+   "url": "https://commons.wikimedia.org/wiki/File:Gray812and814.svg",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-fig826",
+   "name": "Gray 1918, fig. 826 (segmental distribution, lower extremity, front), labels as redrawn on Wikimedia Commons (Gray826and831.svg); not checked against the original plate",
+   "url": "https://commons.wikimedia.org/wiki/File:Gray826and831.svg",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-fig831",
+   "name": "Gray 1918, fig. 831 (segmental distribution, lower extremity, back), labels as redrawn on Wikimedia Commons (Gray826and831.svg); not checked against the original plate",
+   "url": "https://commons.wikimedia.org/wiki/File:Gray826and831.svg",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-fig834",
+   "name": "Gray 1918, fig. 834 (segmental distribution of the cutaneous nerves of the sole)",
+   "url": "https://commons.wikimedia.org/wiki/File:Gray834.png",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "wikipedia-saphenous",
+   "name": "Wikipedia, Saphenous nerve (root value L3-L4)",
+   "url": "https://en.wikipedia.org/wiki/Saphenous_nerve",
+   "license": "CC BY-SA 4.0",
+   "consulted": true
+  },
+  {
+   "id": "wikipedia-radial",
+   "name": "Root value C5-C6 for the inferior lateral brachial cutaneous nerve: from memory, not verified against a source in this work (Gray 1918 does not name this nerve)",
+   "url": "https://en.wikipedia.org/wiki/Inferior_lateral_cutaneous_nerve_of_arm",
+   "license": "CC BY-SA 4.0",
+   "consulted": false
+  }
+ ],
+ "smoothIterations": 8,
+ "minIslandCm2": 6,
+ "barriers": [],
+ "regions": [
+  {
+   "key": "V1",
+   "name": {
+    "zh": "眼神经（V1：眶上、滑车上神经等）",
+    "en": "Ophthalmic nerve (V1: supra-orbital, supratrochlear and others)"
+   },
+   "color": "#e6194b",
+   "basis": "landmark-rule",
+   "conceptFrom": "{side} ophthalmic nerve",
+   "via": [
+    "{side} trigeminal nerve (V)"
+   ],
+   "segments": [
+    "V"
+   ],
+   "segmentsSource": "gray1918-200",
+   "territory": {
+    "zh": "额部和头皮向后至颅顶附近、上睑、鼻背、鼻翼和鼻尖。",
+    "en": "Forehead and scalp back towards the vertex, upper eyelid, dorsum, ala and apex of the nose."
+   },
+   "territorySource": "gray1918-200",
+   "note": {
+    "zh": "模型中有眼神经部件，但无中心线，其皮支亦未建模。",
+    "en": "The ophthalmic nerve is a part of the model but has no centreline and its cutaneous branches are not modelled."
+   },
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.03,
+          0,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.035,
+          0.04,
+          -0.04
+         ]
+        ]
+       },
+       "to": "sup+ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.03,
+          0.05,
+          -0.075
+         ]
+        ]
+       },
+       "to": "sup"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Tarsal plate of {side} upper eyelid"
+       },
+       "to": "nearestAny"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "nasalBone",
+         [
+          0.006,
+          0,
+          -0.01
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "nasalBone",
+         [
+          0.006,
+          -0.03,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "infraorbital",
+   "name": {
+    "zh": "眶下神经（V2）",
+    "en": "Infra-orbital nerve (V2)"
+   },
+   "color": "#3cb44b",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} maxillary nerve"
+   ],
+   "via": [
+    "{side} trigeminal nerve (V)"
+   ],
+   "segments": [
+    "V"
+   ],
+   "segmentsSource": "gray1918-200",
+   "territory": {
+    "zh": "下睑、鼻侧、上唇。",
+    "en": "Lower eyelid, side of the nose, upper lip."
+   },
+   "territorySource": "gray1918-200",
+   "note": {
+    "zh": "种子取自模型中上颌神经的终末支，并补以下睑和上唇的体表标志点。",
+    "en": "Seeded from the terminal branches of the modelled maxillary nerve plus landmark points for eyelid and lip."
+   },
+   "seeds": [
+    {
+     "nerve": [
+      "{side} maxillary nerve"
+     ],
+     "maxDepthMm": 14
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Tarsal plate of {side} lower eyelid"
+       },
+       "to": "nearestAny"
+      },
+      {
+       "at": "maxilla",
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "maxilla",
+         [
+          -0.004,
+          -0.028,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "zygomatic",
+   "name": {
+    "zh": "颧神经（V2：颧面支、颧颞支）",
+    "en": "Zygomatic nerve (V2: zygomaticofacial and zygomaticotemporal)"
+   },
+   "color": "#ffe119",
+   "basis": "landmark-rule",
+   "via": [
+    "{side} maxillary nerve",
+    "{side} trigeminal nerve (V)"
+   ],
+   "segments": [
+    "V"
+   ],
+   "segmentsSource": "gray1918-200",
+   "territory": {
+    "zh": "颧部隆起和额外侧。",
+    "en": "Prominence of the cheek and side of the forehead."
+   },
+   "territorySource": "gray1918-200",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": "zygoma",
+       "to": "ant+lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "zygoma",
+         [
+          0.012,
+          0.03,
+          -0.02
+         ]
+        ]
+       },
+       "to": "lat"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "mental",
+   "name": {
+    "zh": "颏神经（V3）",
+    "en": "Mental nerve (V3)"
+   },
+   "color": "#4363d8",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} mental nerve"
+   ],
+   "via": [
+    "{side} inferior alveolar nerve",
+    "{side} posterior division of mandibular nerve",
+    "{side} trigeminal nerve (V)"
+   ],
+   "segments": [
+    "V"
+   ],
+   "segmentsSource": "gray1918-200",
+   "territory": {
+    "zh": "颏部和下唇。",
+    "en": "Chin and lower lip."
+   },
+   "territorySource": "gray1918-200",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} mental nerve"
+     ],
+     "maxDepthMm": 15
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "chin",
+         [
+          0.012,
+          0.022,
+          -0.005
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "chin",
+         [
+          0.012,
+          0.004,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "buccal",
+   "name": {
+    "zh": "颊神经（V3）",
+    "en": "Buccal nerve (V3)"
+   },
+   "color": "#f58231",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} buccal nerve"
+   ],
+   "via": [
+    "{side} anterior division of mandibular nerve",
+    "{side} trigeminal nerve (V)"
+   ],
+   "segments": [
+    "V"
+   ],
+   "segmentsSource": "gray1918-200",
+   "territory": {
+    "zh": "颊肌表面皮肤。",
+    "en": "Skin over the buccinator."
+   },
+   "territorySource": "gray1918-200",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} buccal nerve"
+     ],
+     "maxDepthMm": 20
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "lerp": [
+         "chin",
+         "gonion",
+         0.5
+        ]
+       },
+       "to": "lat+0.4*ant"
+      }
+     ],
+     "note": {
+      "zh": "下颌体表面皮肤，因无更合适的归属暂归本区",
+      "en": "skin over the body of the mandible, assigned here for want of a better owner"
+     }
+    }
+   ]
+  },
+  {
+   "key": "auriculotemporal",
+   "name": {
+    "zh": "耳颞神经（V3）",
+    "en": "Auriculotemporal nerve (V3)"
+   },
+   "color": "#911eb4",
+   "basis": "landmark-rule",
+   "via": [
+    "{side} posterior division of mandibular nerve",
+    "{side} trigeminal nerve (V)"
+   ],
+   "segments": [
+    "V"
+   ],
+   "segmentsSource": "gray1918-200",
+   "territory": {
+    "zh": "颞区、耳轮前部和耳屏。",
+    "en": "Temporal region, front of the helix and tragus."
+   },
+   "territorySource": "gray1918-200",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": "condyle",
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "condyle",
+         [
+          0,
+          0.04,
+          0.005
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "condyle",
+         [
+          0,
+          0.075,
+          0.0
+         ]
+        ]
+       },
+       "to": "lat"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "greaterOccipital",
+   "name": {
+    "zh": "枕大神经",
+    "en": "Greater occipital nerve"
+   },
+   "color": "#42d4f4",
+   "basis": "landmark-rule",
+   "segments": [
+    "C2",
+    "C3"
+   ],
+   "segmentsSource": "gray1918-209",
+   "territory": {
+    "zh": "枕部头皮，向前至颅顶。",
+    "en": "Scalp of the back of the head as far forward as the vertex."
+   },
+   "territorySource": "gray1918-209",
+   "seeds": [
+    {
+     "curve": [
+      "K_C2",
+      {
+       "at": "parietal",
+       "to": "sup+0.5*post"
+      },
+      {
+       "at": "parietal",
+       "to": "sup"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "lesserOccipital",
+   "name": {
+    "zh": "枕小神经",
+    "en": "Lesser occipital nerve"
+   },
+   "color": "#f032e6",
+   "basis": "landmark-rule",
+   "segments": [
+    "C2"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "耳郭后方的头侧部。",
+    "en": "Side of the head behind the auricle."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "mastoid",
+         [
+          0,
+          0.03,
+          -0.02
+         ]
+        ]
+       },
+       "to": "lat+post"
+      },
+      {
+       "at": {
+        "offset": [
+         "mastoid",
+         [
+          0.0,
+          0.06,
+          -0.02
+         ]
+        ]
+       },
+       "to": "lat+0.5*post"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "greatAuricular",
+   "name": {
+    "zh": "耳大神经",
+    "en": "Great auricular nerve"
+   },
+   "color": "#bfef45",
+   "basis": "landmark-rule",
+   "segments": [
+    "C2",
+    "C3"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "腮腺和乳突表面皮肤、耳郭下部。",
+    "en": "Skin over the parotid gland and mastoid process, lower auricle."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "mastoid",
+         [
+          0,
+          0.005,
+          0.0
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": "mastoid",
+       "to": "lat+0.5*inf"
+      },
+      {
+       "at": "gonion",
+       "to": "lat+0.6*inf"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "transverseCervical",
+   "name": {
+    "zh": "颈横神经",
+    "en": "Transverse cervical nerve"
+   },
+   "color": "#fabed4",
+   "basis": "landmark-rule",
+   "segments": [
+    "C2",
+    "C3"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "颈前外侧部，向下至胸骨。",
+    "en": "Antero-lateral parts of the neck, as low as the sternum."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Hyoid bone"
+         },
+         [
+          0.02,
+          -0.01,
+          -0.01
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Hyoid bone"
+         },
+         [
+          0.035,
+          -0.04,
+          -0.02
+         ]
+        ]
+       },
+       "to": "ant+0.5*lat"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "lerp": [
+           "chin",
+           {
+            "part": "Hyoid bone"
+           },
+           0.55
+          ]
+         },
+         [
+          0.014,
+          0,
+          0
+         ]
+        ]
+       },
+       "to": "inf+0.4*ant"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "supraclavicular",
+   "name": {
+    "zh": "锁骨上神经",
+    "en": "Supraclavicular nerves"
+   },
+   "color": "#469990",
+   "basis": "landmark-rule",
+   "segments": [
+    "C3",
+    "C4"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "锁骨表面至中线、胸大肌和三角肌表面、肩上部和后部的皮肤。",
+    "en": "Skin over the clavicle to the midline, over pectoralis major and deltoid, upper and posterior shoulder."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "curve": [
+      "K_C3",
+      {
+       "at": {
+        "lerp": [
+         "acJoint",
+         {
+          "part": "Seventh cervical vertebra"
+         },
+         0.5
+        ]
+       },
+       "to": "sup"
+      },
+      "K_C4"
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "acJoint",
+         [
+          -0.01,
+          -0.025,
+          0.02
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "clavicleMid",
+         [
+          0,
+          -0.022,
+          0.02
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Manubrium"
+         },
+         [
+          0.014,
+          0,
+          -0.02
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "acromion",
+         [
+          -0.05,
+          0.02,
+          -0.02
+         ]
+        ]
+       },
+       "to": "post+sup"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "cervicalDorsalRami",
+   "name": {
+    "zh": "颈神经后支",
+    "en": "Posterior rami of cervical nerves"
+   },
+   "color": "#dcbeff",
+   "basis": "landmark-rule",
+   "segments": [
+    "C3",
+    "C4",
+    "C5"
+   ],
+   "segmentsSource": "gray1918-209",
+   "territory": {
+    "zh": "项部皮肤（第三枕神经及其下方各内侧支）。",
+    "en": "Skin of the back of the neck (third occipital nerve and medial branches below it)."
+   },
+   "territorySource": "gray1918-209",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Third cervical vertebra",
+          "pick": {
+           "extreme": "post"
+          }
+         },
+         [
+          0.02,
+          0,
+          0.006
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      "sp_C5",
+      "sp_C7"
+     ],
+     "widthMm": 12
+    }
+   ]
+  },
+  {
+   "key": "thoracicDorsalRami",
+   "name": {
+    "zh": "胸神经后支",
+    "en": "Posterior rami of thoracic nerves"
+   },
+   "color": "#9a6324",
+   "basis": "landmark-rule",
+   "segments": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9",
+    "T10",
+    "T11",
+    "T12"
+   ],
+   "segmentsSource": "gray1918-209",
+   "territory": {
+    "zh": "脊柱两旁的背部皮肤，向外约至肩胛线。",
+    "en": "Skin of the back beside the spine out to about the scapular line."
+   },
+   "territorySource": "gray1918-209",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "First thoracic vertebra",
+          "pick": {
+           "extreme": "post"
+          }
+         },
+         [
+          0.035,
+          0,
+          0.01
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Sixth thoracic vertebra",
+          "pick": {
+           "extreme": "post"
+          }
+         },
+         [
+          0.045,
+          0,
+          0.01
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Twelfth thoracic vertebra",
+          "pick": {
+           "extreme": "post"
+          }
+         },
+         [
+          0.045,
+          0,
+          0.01
+         ]
+        ]
+       },
+       "to": "post"
+      }
+     ],
+     "widthMm": 20
+    }
+   ]
+  },
+  {
+   "key": "intercostalLateral",
+   "name": {
+    "zh": "肋间神经外侧皮支",
+    "en": "Lateral cutaneous branches of intercostal nerves"
+   },
+   "color": "#fffac8",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} third intercostal nerve",
+    "{side} fourth intercostal nerve",
+    "{side} fifth intercostal nerve",
+    "{side} sixth intercostal nerve",
+    "{side} seventh intercostal nerve",
+    "{side} eighth intercostal nerve",
+    "{side} ninth intercostal nerve",
+    "{side} tenth intercostal nerve",
+    "{side} eleventh intercostal nerve"
+   ],
+   "segments": [
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9",
+    "T10",
+    "T11"
+   ],
+   "segmentsSource": "gray1918-211",
+   "territory": {
+    "zh": "胸腹侧壁，自腋中线分出前支和后支。",
+    "en": "Side of the chest and abdomen, branches running forwards and backwards from the mid-axillary line."
+   },
+   "territorySource": "gray1918-211",
+   "note": {
+    "zh": "皮支本身未建模；种子取自各肋间神经干位于躯干侧面的一段。",
+    "en": "The cutaneous branches themselves are not modelled; seeded from the part of each intercostal nerve trunk that lies at the side of the trunk."
+   },
+   "seeds": [
+    {
+     "curve": [
+      {
+       "nerve": "{side} third intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} fourth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} fifth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} sixth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} seventh intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} eighth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} ninth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} tenth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} eleventh intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.105,
+           0,
+           0
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "scapulaInferiorAngle",
+         [
+          0.04,
+          0.05,
+          0.0
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         "scapulaInferiorAngle",
+         [
+          0.045,
+          -0.04,
+          0.01
+         ]
+        ]
+       },
+       "to": "post+0.5*lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "scapulaInferiorAngle",
+         [
+          0.05,
+          -0.12,
+          0.03
+         ]
+        ]
+       },
+       "to": "lat+0.5*post"
+      }
+     ],
+     "note": {
+      "zh": "腋后线（外侧皮支的后支；体表标志规则）",
+      "en": "posterior axillary line (posterior branches of the lateral cutaneous branches; landmark rule)"
+     }
+    }
+   ]
+  },
+  {
+   "key": "intercostalAnterior",
+   "name": {
+    "zh": "肋间神经前皮支",
+    "en": "Anterior cutaneous branches of intercostal nerves"
+   },
+   "color": "#800000",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} second intercostal nerve",
+    "{side} third intercostal nerve",
+    "{side} fourth intercostal nerve",
+    "{side} fifth intercostal nerve",
+    "{side} sixth intercostal nerve",
+    "{side} seventh intercostal nerve",
+    "{side} eighth intercostal nerve",
+    "{side} ninth intercostal nerve",
+    "{side} tenth intercostal nerve",
+    "{side} eleventh intercostal nerve"
+   ],
+   "segments": [
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9",
+    "T10",
+    "T11"
+   ],
+   "segmentsSource": "gray1918-211",
+   "territory": {
+    "zh": "胸腹前壁中线两旁。",
+    "en": "Front of the chest and abdomen beside the midline."
+   },
+   "territorySource": "gray1918-211",
+   "note": {
+    "zh": "种子取自各肋间神经干的前端。",
+    "en": "Seeded from the anterior end of each intercostal nerve trunk."
+   },
+   "seeds": [
+    {
+     "curve": [
+      {
+       "nerve": "{side} second intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} third intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} fourth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} fifth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} sixth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} seventh intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} eighth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} ninth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} tenth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "nerve": "{side} eleventh intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "2*ant+med",
+        "beyond": {
+         "offset": [
+          "core",
+          [
+           0.045,
+           0,
+           0.072
+          ]
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "subcostal",
+   "name": {
+    "zh": "肋下神经（T12）",
+    "en": "Subcostal nerve (T12)"
+   },
+   "color": "#aaffc3",
+   "basis": "landmark-rule",
+   "segments": [
+    "T12"
+   ],
+   "segmentsSource": "gray1918-211",
+   "territory": {
+    "zh": "下腹壁；外侧皮支至臀区前部，向下达大转子。",
+    "en": "Lower abdominal wall; lateral branch to the front part of the gluteal region as low as the greater trochanter."
+   },
+   "territorySource": "gray1918-211",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "iliacCrestTop",
+         [
+          0,
+          0.035,
+          0.01
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "asis",
+         [
+          -0.005,
+          0.035,
+          -0.04
+         ]
+        ]
+       },
+       "to": "ant+0.5*lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "pubicSymphysis",
+         [
+          0.015,
+          0.06,
+          -0.04
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "iliacCrestTop",
+         [
+          0.0,
+          -0.03,
+          0.03
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "greaterTrochanter",
+         [
+          0,
+          0.03,
+          0.02
+         ]
+        ]
+       },
+       "to": "lat"
+      }
+     ],
+     "note": {
+      "zh": "越过髂嵴的外侧皮支",
+      "en": "lateral cutaneous branch over the iliac crest"
+     }
+    }
+   ]
+  },
+  {
+   "key": "iliohypogastricLateral",
+   "name": {
+    "zh": "髂腹下神经外侧皮支",
+    "en": "Lateral cutaneous branch of iliohypogastric nerve"
+   },
+   "color": "#808000",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} lateral cutaneous branch of iliohypogastric nerve"
+   ],
+   "via": [
+    "{side} L1 root of lumbar plexus"
+   ],
+   "segments": [
+    "L1"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "臀区皮肤，位于末位胸神经外侧皮支分布区的后方。",
+    "en": "Skin of the gluteal region behind the lateral branch of the last thoracic nerve."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} lateral cutaneous branch of iliohypogastric nerve"
+     ],
+     "maxDepthMm": 18
+    }
+   ]
+  },
+  {
+   "key": "iliohypogastricAnterior",
+   "name": {
+    "zh": "髂腹下神经前皮支",
+    "en": "Anterior cutaneous branch of iliohypogastric nerve"
+   },
+   "color": "#ffd8b1",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} anterior cutaneous branch of iliohypogastric nerve"
+   ],
+   "via": [
+    "{side} L1 root of lumbar plexus"
+   ],
+   "segments": [
+    "L1"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "腹下区（耻区）皮肤。",
+    "en": "Skin of the hypogastric region."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} anterior cutaneous branch of iliohypogastric nerve"
+     ],
+     "maxDepthMm": 40
+    }
+   ]
+  },
+  {
+   "key": "ilioinguinal",
+   "name": {
+    "zh": "髂腹股沟神经",
+    "en": "Ilio-inguinal nerve"
+   },
+   "color": "#000075",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} ilio-inguinal nerve"
+   ],
+   "via": [
+    "{side} L1 root of lumbar plexus"
+   ],
+   "segments": [
+    "L1"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "股内侧上部、阴茎根和阴囊上部（女性为阴阜和大阴唇）。",
+    "en": "Upper medial thigh, root of the penis and upper scrotum (mons pubis and labium majus)."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} ilio-inguinal nerve"
+     ],
+     "maxDepthMm": 25
+    }
+   ]
+  },
+  {
+   "key": "genitofemoralFemoral",
+   "name": {
+    "zh": "生殖股神经股支",
+    "en": "Femoral branch of genitofemoral nerve"
+   },
+   "color": "#a9a9a9",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} femoral branch of genitofemoral nerve"
+   ],
+   "via": [
+    "{side} genitofemoral nerve"
+   ],
+   "segments": [
+    "L1",
+    "L2"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "股上部前面。",
+    "en": "Anterior surface of the upper thigh."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} femoral branch of genitofemoral nerve"
+     ],
+     "maxDepthMm": 22
+    }
+   ]
+  },
+  {
+   "key": "genitofemoralGenital",
+   "name": {
+    "zh": "生殖股神经生殖支",
+    "en": "Genital branch of genitofemoral nerve"
+   },
+   "color": "#e6beff",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} genital branch of genitofemoral nerve"
+   ],
+   "via": [
+    "{side} genitofemoral nerve"
+   ],
+   "segments": [
+    "L1",
+    "L2"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "少数细支至阴囊皮肤。",
+    "en": "A few filaments to the skin of the scrotum."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} genital branch of genitofemoral nerve"
+     ],
+     "maxDepthMm": 12
+    }
+   ]
+  },
+  {
+   "key": "superiorClunial",
+   "name": {
+    "zh": "臀上皮神经（腰神经后支）",
+    "en": "Superior clunial nerves (posterior rami of lumbar nerves)"
+   },
+   "color": "#1f77b4",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} superior clunial nerves"
+   ],
+   "segments": [
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "segmentsSource": "gray1918-209",
+   "territory": {
+    "zh": "越过髂嵴至臀部皮肤，远达大转子。",
+    "en": "Across the iliac crest to the skin of the buttock as far as the greater trochanter."
+   },
+   "territorySource": "gray1918-209",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} superior clunial nerves"
+     ],
+     "maxDepthMm": 20
+    },
+    {
+     "curve": [
+      "sp_L1",
+      "sp_L3"
+     ],
+     "widthMm": 15,
+     "note": {
+      "zh": "腰椎两旁皮肤",
+      "en": "skin beside the lumbar spine"
+     }
+    }
+   ]
+  },
+  {
+   "key": "middleClunial",
+   "name": {
+    "zh": "臀中皮神经（骶神经后支）",
+    "en": "Middle clunial nerves (posterior rami of sacral nerves)"
+   },
+   "color": "#ff7f0e",
+   "basis": "landmark-rule",
+   "segments": [
+    "S1",
+    "S2",
+    "S3"
+   ],
+   "segmentsSource": "gray1918-209",
+   "territory": {
+    "zh": "臀后部皮肤。",
+    "en": "Skin over the posterior part of the buttock."
+   },
+   "territorySource": "gray1918-209",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Sacrum"
+         },
+         [
+          0.02,
+          0.02,
+          -0.01
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Sacrum"
+         },
+         [
+          0.035,
+          -0.025,
+          -0.01
+         ]
+        ]
+       },
+       "to": "post"
+      }
+     ],
+     "widthMm": 12
+    }
+   ]
+  },
+  {
+   "key": "inferiorClunial",
+   "name": {
+    "zh": "臀下皮神经",
+    "en": "Inferior clunial nerves"
+   },
+   "color": "#2ca02c",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} inferior clunial nerves"
+   ],
+   "via": [
+    "{side} posterior femoral cutaneous nerve"
+   ],
+   "segments": [
+    "S1",
+    "S2",
+    "S3"
+   ],
+   "segmentsSource": "gray1918-213",
+   "territory": {
+    "zh": "臀大肌下部和外侧部表面皮肤。",
+    "en": "Skin over the lower and lateral part of gluteus maximus."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} inferior clunial nerves"
+     ],
+     "maxDepthMm": 25
+    }
+   ]
+  },
+  {
+   "key": "pudendal",
+   "name": {
+    "zh": "阴部神经（会阴神经、阴茎背神经、肛神经）",
+    "en": "Pudendal nerve (perineal, dorsal nerve of penis/clitoris, inferior rectal)"
+   },
+   "color": "#d62728",
+   "basis": "landmark-rule",
+   "nerves": [
+    "{side} pudendal nerve"
+   ],
+   "via": [
+    "{side} sacral plexus"
+   ],
+   "segments": [
+    "S2",
+    "S3",
+    "S4"
+   ],
+   "segmentsSource": "gray1918-213",
+   "territory": {
+    "zh": "肛周、会阴、阴囊（大阴唇）、阴茎背皮肤。",
+    "en": "Skin around the anus, perineum, scrotum (labium majus), dorsum of the penis."
+   },
+   "territorySource": "gray1918-213",
+   "note": {
+    "zh": "模型中有阴部神经干，但无其皮支；分布区按体表标志规则确定。",
+    "en": "The pudendal trunk is modelled but none of its cutaneous branches; territory by landmark rule."
+   },
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "pubicSymphysis",
+         [
+          0.006,
+          -0.02,
+          0
+         ]
+        ]
+       },
+       "to": "ant+inf"
+      },
+      {
+       "at": {
+        "offset": [
+         "pubicSymphysis",
+         [
+          0.012,
+          -0.03,
+          -0.01
+         ]
+        ]
+       },
+       "to": "inf+0.2*ant"
+      },
+      {
+       "at": {
+        "xyz": [
+         {
+          "offset": [
+           "coccyxTip",
+           [
+            0.012,
+            0,
+            0
+           ]
+          ]
+         },
+         {
+          "offset": [
+           "ischialTuberosity",
+           [
+            0,
+            0.03,
+            0
+           ]
+          ]
+         },
+         {
+          "lerp": [
+           "coccyxTip",
+           "pubicSymphysis",
+           0.55
+          ]
+         }
+        ]
+       },
+       "to": "inf"
+      }
+     ]
+    },
+    {
+     "curve": [
+      "K_S45"
+     ],
+     "widthMm": 20
+    }
+   ]
+  },
+  {
+   "key": "anococcygeal",
+   "name": {
+    "zh": "肛尾神经（尾神经）",
+    "en": "Anococcygeal nerves (coccygeal plexus)"
+   },
+   "color": "#9467bd",
+   "basis": "landmark-rule",
+   "nerves": [
+    "{side} coccygeal nerve"
+   ],
+   "segments": [
+    "S4",
+    "S5",
+    "Co"
+   ],
+   "segmentsSource": "gray1918-213",
+   "territory": {
+    "zh": "尾骨区皮肤。",
+    "en": "Skin in the region of the coccyx."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "coccyxTip",
+         [
+          0.007,
+          0.0,
+          0.01
+         ]
+        ]
+       },
+       "to": "post"
+      }
+     ],
+     "widthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "axillary",
+   "name": {
+    "zh": "腋神经（臂外侧上皮神经）",
+    "en": "Axillary nerve (superior lateral brachial cutaneous nerve)"
+   },
+   "color": "#8c564b",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} axillary nerve (with superior lateral brachial cutaneous nerve)"
+   ],
+   "via": [
+    "{side} posterior cord of brachial plexus"
+   ],
+   "segments": [
+    "C5",
+    "C6"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "三角肌后部下三分之二和肱三头肌长头表面皮肤。",
+    "en": "Skin over the lower two-thirds of the posterior part of the deltoid and the long head of triceps."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} axillary nerve (with superior lateral brachial cutaneous nerve)"
+     ],
+     "maxDepthMm": 15
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": 0.2,
+       "deg": 110
+      },
+      {
+       "frame": "arm",
+       "t": 0.33,
+       "deg": 100
+      }
+     ],
+     "note": {
+      "zh": "三角肌下部（“臂章区”）",
+      "en": "lower deltoid (regimental badge area)"
+     }
+    }
+   ]
+  },
+  {
+   "key": "inferiorLateralBrachial",
+   "name": {
+    "zh": "臂外侧下皮神经（桡神经）",
+    "en": "Inferior lateral brachial cutaneous nerve (radial)"
+   },
+   "color": "#e377c2",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} inferior lateral brachial cutaneous nerve"
+   ],
+   "via": [
+    "{side} radial nerve",
+    "{side} posterior cord of brachial plexus"
+   ],
+   "segments": [
+    "C5",
+    "C6"
+   ],
+   "segmentsSource": "wikipedia-radial",
+   "territory": {
+    "zh": "臂外侧下半皮肤。",
+    "en": "Skin of the lower half of the lateral arm."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} inferior lateral brachial cutaneous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "posteriorBrachial",
+   "name": {
+    "zh": "臂后皮神经（桡神经）",
+    "en": "Posterior brachial cutaneous nerve (radial)"
+   },
+   "color": "#7f7f7f",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} posterior brachial cutaneous nerve"
+   ],
+   "via": [
+    "{side} radial nerve",
+    "{side} posterior cord of brachial plexus"
+   ],
+   "segments": [
+    "C5",
+    "C6",
+    "C7",
+    "C8"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "臂后面，几达鹰嘴。",
+    "en": "Dorsal surface of the arm nearly as far as the olecranon."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} posterior brachial cutaneous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "posteriorAntebrachial",
+   "name": {
+    "zh": "前臂后皮神经（桡神经）",
+    "en": "Posterior antebrachial cutaneous nerve (radial)"
+   },
+   "color": "#bcbd22",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} posterior antebrachial cutaneous nerve"
+   ],
+   "via": [
+    "{side} radial nerve",
+    "{side} posterior cord of brachial plexus"
+   ],
+   "segments": [
+    "C5",
+    "C6",
+    "C7",
+    "C8"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "臂和肘的外侧，继而沿前臂后面至腕。",
+    "en": "Lateral side of the arm and elbow, then the back of the forearm to the wrist."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} posterior antebrachial cutaneous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "medialBrachial",
+   "name": {
+    "zh": "臂内侧皮神经",
+    "en": "Medial brachial cutaneous nerve"
+   },
+   "color": "#17becf",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} medial brachial cutaneous nerve"
+   ],
+   "via": [
+    "{side} medial cord of brachial plexus"
+   ],
+   "segments": [
+    "C8",
+    "T1"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "臂尺侧；臂下三分之一后面至肘。",
+    "en": "Ulnar side of the arm; back of the lower third of the arm as far as the elbow."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} medial brachial cutaneous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "intercostobrachial",
+   "name": {
+    "zh": "肋间臂神经",
+    "en": "Intercostobrachial nerve"
+   },
+   "color": "#e6194b",
+   "basis": "landmark-rule",
+   "via": [
+    "{side} second intercostal nerve"
+   ],
+   "segments": [
+    "T2"
+   ],
+   "segmentsSource": "gray1918-211",
+   "territory": {
+    "zh": "臂内侧和后面的上半，以及腋窝。",
+    "en": "Upper half of the medial and posterior part of the arm, and the axilla."
+   },
+   "territorySource": "gray1918-211",
+   "seeds": [
+    {
+     "curve": [
+      "K_T2",
+      {
+       "frame": "arm",
+       "t": 0.2,
+       "deg": 255
+      },
+      {
+       "frame": "arm",
+       "t": 0.38,
+       "deg": 240
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "medialAntebrachial",
+   "name": {
+    "zh": "前臂内侧皮神经",
+    "en": "Medial antebrachial cutaneous nerve"
+   },
+   "color": "#3cb44b",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} medial antebrachial cutaneous nerve"
+   ],
+   "via": [
+    "{side} medial cord of brachial plexus"
+   ],
+   "segments": [
+    "C8",
+    "T1"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "肱二头肌表面皮肤几达肘部；前臂尺侧前、后面至腕。",
+    "en": "Skin over biceps nearly to the elbow; front and back of the ulnar side of the forearm to the wrist."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} medial antebrachial cutaneous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "lateralAntebrachial",
+   "name": {
+    "zh": "前臂外侧皮神经（肌皮神经）",
+    "en": "Lateral antebrachial cutaneous nerve (musculocutaneous)"
+   },
+   "color": "#ffe119",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} lateral antebrachial cutaneous nerve"
+   ],
+   "via": [
+    "{side} musculocutaneous nerve",
+    "{side} lateral cord of brachial plexus"
+   ],
+   "segments": [
+    "C5",
+    "C6",
+    "C7"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "前臂前面外侧半至鱼际；前臂后外侧下三分之二。",
+    "en": "Lateral half of the front of the forearm to the ball of the thumb; lower two-thirds of the dorso-lateral forearm."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} lateral antebrachial cutaneous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "superficialRadial",
+   "name": {
+    "zh": "桡神经浅支",
+    "en": "Superficial branch of radial nerve"
+   },
+   "color": "#4363d8",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} superficial branch of radial nerve",
+    "{side} dorsal digital branches of radial nerve"
+   ],
+   "via": [
+    "{side} radial nerve",
+    "{side} posterior cord of brachial plexus"
+   ],
+   "segments": [
+    "C6",
+    "C7",
+    "C8"
+   ],
+   "segmentsSource": "gray1918-fig812",
+   "territory": {
+    "zh": "拇指桡侧和鱼际；拇指、示指、中指和环指桡侧半的背面，至中节指骨。",
+    "en": "Radial side and ball of the thumb; back of the thumb, index, middle and radial half of ring finger as far as the middle phalanges."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} superficial branch of radial nerve"
+     ],
+     "maxDepthMm": 12,
+     "where": {
+      "frame": "forearm",
+      "t": [
+       0.6,
+       1.4
+      ]
+     }
+    },
+    {
+     "nerve": [
+      "{side} dorsal digital branches of radial nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "median",
+   "name": {
+    "zh": "正中神经（掌支、指掌侧神经）",
+    "en": "Median nerve (palmar branch and palmar digital nerves)"
+   },
+   "color": "#f58231",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} palmar branch of median nerve",
+    "{side} proper palmar digital branches of median nerve",
+    "{side} proper palmar digital branches of median nerve to thumb",
+    "{side} common palmar digital branches of median nerve",
+    "{side} first common palmar digital branch of median nerve"
+   ],
+   "conceptFrom": "{side} median nerve",
+   "via": [
+    "{side} median nerve",
+    "{side} lateral root of median nerve",
+    "{side} medial root of median nerve"
+   ],
+   "segments": [
+    "C6",
+    "C7",
+    "C8",
+    "T1"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "鱼际和手掌；拇指、示指、中指和环指桡侧半的掌面及其远节指骨背面。",
+    "en": "Ball of the thumb and palm; palmar thumb, index, middle and radial half of ring finger, and the dorsum of their distal phalanges."
+   },
+   "territorySource": "gray1918-210",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} palmar branch of median nerve",
+      "{side} proper palmar digital branches of median nerve",
+      "{side} proper palmar digital branches of median nerve to thumb",
+      "{side} common palmar digital branches of median nerve"
+     ],
+     "maxDepthMm": 15
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Distal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "远节指骨背面（指掌侧固有神经绕至背侧）",
+      "en": "dorsum of the distal phalanx (palmar digital nerves wrap round)"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} index finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Distal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "远节指骨背面（指掌侧固有神经绕至背侧）",
+      "en": "dorsum of the distal phalanx (palmar digital nerves wrap round)"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} thumb"
+       },
+       "frame": "hand",
+       "deg": 330
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} thumb"
+       },
+       "frame": "hand",
+       "deg": 330
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "ulnar",
+   "name": {
+    "zh": "尺神经（掌支、手背支、指神经）",
+    "en": "Ulnar nerve (palmar, dorsal and digital branches)"
+   },
+   "color": "#911eb4",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} palmar branch of ulnar nerve",
+    "{side} proper palmar digital branches of ulnar nerve",
+    "{side} common palmar digital branch of ulnar nerve"
+   ],
+   "conceptFrom": "{side} ulnar nerve",
+   "via": [
+    "{side} ulnar nerve",
+    "{side} medial cord of brachial plexus"
+   ],
+   "segments": [
+    "C8",
+    "T1"
+   ],
+   "segmentsSource": "gray1918-210",
+   "territory": {
+    "zh": "手尺侧的掌面和背面；小指和环指的相邻侧。",
+    "en": "Ulnar side of the hand, palm and back; little finger and the adjoining side of the ring finger."
+   },
+   "territorySource": "gray1918-210",
+   "note": {
+    "zh": "尺神经手背支未建模；手背尺侧按体表标志规则设种子。",
+    "en": "The dorsal branch of the ulnar nerve is not modelled; the back of the ulnar side of the hand is seeded by landmark rule."
+   },
+   "seeds": [
+    {
+     "nerve": [
+      "{side} palmar branch of ulnar nerve",
+      "{side} proper palmar digital branches of ulnar nerve",
+      "{side} common palmar digital branch of ulnar nerve"
+     ],
+     "maxDepthMm": 15
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} fifth metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 200
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "尺神经手背支（未建模）：手背尺侧和小指",
+      "en": "dorsal branch of ulnar nerve (not modelled): ulnar side of the back of the hand and little finger"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} fifth metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 290
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "frame": "forearm",
+       "t": 0.97,
+       "deg": 270
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "lateralFemoral",
+   "name": {
+    "zh": "股外侧皮神经",
+    "en": "Lateral femoral cutaneous nerve"
+   },
+   "color": "#42d4f4",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} lateral femoral cutaneous nerve"
+   ],
+   "via": [
+    "{side} L2 root of lumbar plexus",
+    "{side} L3 root of lumbar plexus"
+   ],
+   "segments": [
+    "L2",
+    "L3"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "股前面和外侧面至膝；后支自大转子至股中部。",
+    "en": "Anterior and lateral thigh as far as the knee; posterior branch from the greater trochanter to the middle of the thigh."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} lateral femoral cutaneous nerve"
+     ],
+     "maxDepthMm": 18
+    }
+   ]
+  },
+  {
+   "key": "femoralAnterior",
+   "name": {
+    "zh": "股神经前皮支",
+    "en": "Anterior cutaneous branches of femoral nerve"
+   },
+   "color": "#f032e6",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} anterior cutaneous branches of femoral nerve"
+   ],
+   "via": [
+    "{side} femoral nerve"
+   ],
+   "segments": [
+    "L2",
+    "L3",
+    "L4"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "股前面，向下至膝及膝内侧。",
+    "en": "Front of the thigh as low as the knee and its medial side."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} anterior cutaneous branches of femoral nerve"
+     ],
+     "maxDepthMm": 18
+    }
+   ]
+  },
+  {
+   "key": "obturator",
+   "name": {
+    "zh": "闭孔神经皮支",
+    "en": "Cutaneous branch of obturator nerve"
+   },
+   "color": "#bfef45",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} cutaneous branch of anterior branch of obturator nerve"
+   ],
+   "via": [
+    "{side} anterior branch of obturator nerve",
+    "{side} obturator nerve"
+   ],
+   "segments": [
+    "L2",
+    "L3",
+    "L4"
+   ],
+   "segmentsSource": "gray1918-212",
+   "territory": {
+    "zh": "股内侧（此支不恒定；Gray 描述为偶见，可达小腿内侧）。",
+    "en": "Medial side of the thigh (an inconstant branch; Gray describes it as occasional, reaching the medial leg)."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} cutaneous branch of anterior branch of obturator nerve"
+     ],
+     "maxDepthMm": 15,
+     "where": {
+      "frame": "thigh",
+      "t": [
+       0.2,
+       1.1
+      ]
+     },
+     "offsetMm": 15
+    }
+   ]
+  },
+  {
+   "key": "posteriorFemoral",
+   "name": {
+    "zh": "股后皮神经",
+    "en": "Posterior femoral cutaneous nerve"
+   },
+   "color": "#fabed4",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} posterior femoral cutaneous nerve"
+   ],
+   "via": [
+    "{side} sacral plexus"
+   ],
+   "segments": [
+    "S1",
+    "S2",
+    "S3"
+   ],
+   "segmentsSource": "gray1918-213",
+   "territory": {
+    "zh": "股后面和内侧面、腘窝和小腿后面上部；有会阴支。",
+    "en": "Back and medial side of the thigh, popliteal fossa and upper back of the leg; perineal branch."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} posterior femoral cutaneous nerve"
+     ],
+     "maxDepthMm": 25
+    }
+   ]
+  },
+  {
+   "key": "saphenous",
+   "name": {
+    "zh": "隐神经",
+    "en": "Saphenous nerve"
+   },
+   "color": "#469990",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} saphenous nerve",
+    "{side} infrapatellar branch of saphenous nerve",
+    "{side} medial crural cutaneous branches of saphenous nerve"
+   ],
+   "via": [
+    "{side} femoral nerve"
+   ],
+   "segments": [
+    "L3",
+    "L4"
+   ],
+   "segmentsSource": "wikipedia-saphenous",
+   "territory": {
+    "zh": "髌前（髌下支）、小腿前面和内侧面、足内侧缘至𧿹趾球。",
+    "en": "Front of the patella (infrapatellar branch), front and medial side of the leg, medial side of the foot to the ball of the great toe."
+   },
+   "territorySource": "gray1918-212",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} saphenous nerve",
+      "{side} infrapatellar branch of saphenous nerve",
+      "{side} medial crural cutaneous branches of saphenous nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "lateralSural",
+   "name": {
+    "zh": "腓肠外侧皮神经",
+    "en": "Lateral sural cutaneous nerve"
+   },
+   "color": "#dcbeff",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} lateral sural cutaneous nerve"
+   ],
+   "via": [
+    "{side} common fibular nerve",
+    "{side} sciatic nerve"
+   ],
+   "segments": [
+    "L4",
+    "L5",
+    "S1",
+    "S2"
+   ],
+   "segmentsSource": "gray1918-213",
+   "territory": {
+    "zh": "小腿后面和外侧面。",
+    "en": "Posterior and lateral surfaces of the leg."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} lateral sural cutaneous nerve"
+     ],
+     "maxDepthMm": 18
+    }
+   ]
+  },
+  {
+   "key": "superficialFibular",
+   "name": {
+    "zh": "腓浅神经",
+    "en": "Superficial fibular nerve"
+   },
+   "color": "#9a6324",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} superficial fibular nerve",
+    "{side} medial dorsal cutaneous nerve of foot",
+    "{side} intermediate dorsal cutaneous nerve of foot",
+    "{side} dorsal digital branches of superficial fibular nerve"
+   ],
+   "via": [
+    "{side} common fibular nerve",
+    "{side} sciatic nerve"
+   ],
+   "segments": [
+    "L4",
+    "L5",
+    "S1"
+   ],
+   "segmentsSource": "gray1918-fig826",
+   "territory": {
+    "zh": "小腿外侧下部和足背、趾背大部，第 1 趾蹼和小趾外侧除外。",
+    "en": "Lower lateral leg and most of the dorsum of the foot and toes, except the first web and the lateral side of the little toe."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} superficial fibular nerve"
+     ],
+     "maxDepthMm": 12
+    },
+    {
+     "nerve": [
+      "{side} medial dorsal cutaneous nerve of foot",
+      "{side} intermediate dorsal cutaneous nerve of foot",
+      "{side} dorsal digital branches of superficial fibular nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "deepFibular",
+   "name": {
+    "zh": "腓深神经",
+    "en": "Deep fibular nerve"
+   },
+   "color": "#fffac8",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} dorsal digital branches of deep fibular nerve"
+   ],
+   "via": [
+    "{side} medial terminal branch of deep fibular nerve",
+    "{side} deep fibular nerve",
+    "{side} common fibular nerve"
+   ],
+   "segments": [
+    "L4",
+    "L5"
+   ],
+   "segmentsSource": "gray1918-fig826",
+   "territory": {
+    "zh": "𧿹趾和第 2 趾的相对缘。",
+    "en": "Adjacent sides of the great and second toes."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} dorsal digital branches of deep fibular nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "sural",
+   "name": {
+    "zh": "腓肠神经",
+    "en": "Sural nerve"
+   },
+   "color": "#800000",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} sural nerve",
+    "{side} medial sural cutaneous nerve",
+    "{side} lateral dorsal cutaneous nerve",
+    "{side} lateral dorsal cutaneous nerve (sural part)",
+    "{side} lateral calcaneal branches of sural nerve"
+   ],
+   "via": [
+    "{side} tibial nerve",
+    "{side} sciatic nerve"
+   ],
+   "segments": [
+    "S1",
+    "S2"
+   ],
+   "segmentsSource": "gray1918-fig831",
+   "territory": {
+    "zh": "小腿后面下部、足跟外侧、足外侧缘和小趾外侧。",
+    "en": "Back of the lower leg, lateral side of the heel and foot and of the little toe."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} sural nerve",
+      "{side} medial sural cutaneous nerve"
+     ],
+     "maxDepthMm": 12
+    },
+    {
+     "nerve": [
+      "{side} lateral dorsal cutaneous nerve",
+      "{side} lateral dorsal cutaneous nerve (sural part)",
+      "{side} lateral calcaneal branches of sural nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "medialCalcaneal",
+   "name": {
+    "zh": "跟内侧支（胫神经）",
+    "en": "Medial calcaneal branches of tibial nerve"
+   },
+   "color": "#aaffc3",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} medial calcaneal branches of tibial nerve"
+   ],
+   "via": [
+    "{side} tibial nerve",
+    "{side} sciatic nerve"
+   ],
+   "segments": [
+    "S1",
+    "S2"
+   ],
+   "segmentsSource": "gray1918-fig834",
+   "territory": {
+    "zh": "足跟和足底内侧皮肤。",
+    "en": "Skin of the heel and medial side of the sole."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} medial calcaneal branches of tibial nerve"
+     ],
+     "maxDepthMm": 18
+    }
+   ]
+  },
+  {
+   "key": "medialPlantar",
+   "name": {
+    "zh": "足底内侧神经",
+    "en": "Medial plantar nerve"
+   },
+   "color": "#808000",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} medial plantar nerve",
+    "{side} proper plantar digital branches of medial plantar nerve",
+    "{side} common plantar digital nerves"
+   ],
+   "via": [
+    "{side} tibial nerve",
+    "{side} sciatic nerve"
+   ],
+   "segments": [
+    "L4",
+    "L5"
+   ],
+   "segmentsSource": "gray1918-fig834",
+   "territory": {
+    "zh": "足底内侧；第 1–3 趾和第 4 趾内侧半的跖面。",
+    "en": "Medial sole; plantar great, second, third and medial half of fourth toes."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} medial plantar nerve",
+      "{side} proper plantar digital branches of medial plantar nerve",
+      "{side} common plantar digital nerves"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  },
+  {
+   "key": "lateralPlantar",
+   "name": {
+    "zh": "足底外侧神经",
+    "en": "Lateral plantar nerve"
+   },
+   "color": "#ffd8b1",
+   "basis": "nerve-geometry",
+   "nerves": [
+    "{side} lateral plantar nerve",
+    "{side} superficial branch of lateral plantar nerve",
+    "{side} proper plantar digital branches of lateral plantar nerve"
+   ],
+   "via": [
+    "{side} tibial nerve",
+    "{side} sciatic nerve"
+   ],
+   "segments": [
+    "S1",
+    "S2"
+   ],
+   "segmentsSource": "gray1918-fig834",
+   "territory": {
+    "zh": "足底外侧；第 5 趾和第 4 趾外侧半。",
+    "en": "Lateral sole; fifth toe and lateral half of the fourth."
+   },
+   "territorySource": "gray1918-213",
+   "seeds": [
+    {
+     "nerve": [
+      "{side} lateral plantar nerve",
+      "{side} superficial branch of lateral plantar nerve",
+      "{side} proper plantar digital branches of lateral plantar nerve"
+     ],
+     "maxDepthMm": 15
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,3181 @@
+{
+ "_doc": {
+  "zh": "皮节图定义。种子为体表标志连成的曲线（见 landmarks.json / README.md）；标签自种子沿皮肤表面按测地距离扩散，左右两侧分别计算，不越过屏障线。修改种子只需改本文件，无需改代码。",
+  "en": "Dermatome map definition. Seeds are landmark curves (see landmarks.json / README.md); labels spread from the seeds by geodesic distance on the skin, each side separately, never across a barrier. Edit seeds here; no code change is needed."
+ },
+ "scheme": {
+  "primary": {
+   "zh": "以 ISNCSCI 关键感觉点（2011 年修订版）为锚点；关键点之间各区的排列，在 ISNCSCI 评定表图示所画出的部位（躯干和四肢前面、下肢后面）依该图，其余部位（躯干后面、上肢后面、手指）参照 Lee、McPhee 和 Stringer（2008）。Lee 等因变异大而留白的区域，由最近的已设种子皮节填充。",
+   "en": "ISNCSCI key sensory points (2011 revision) as anchors; arrangement of the areas between them as on the ISNCSCI worksheet figure where it shows the body (front of trunk and limbs, back of lower limb), and after Lee, McPhee & Stringer 2008 elsewhere (posterior trunk, back of arm, digits). Areas that Lee et al. leave blank as highly variable are filled by the nearest seeded dermatome."
+  },
+  "deviations": [
+   {
+    "zh": "T3–T11 关键点取本模型第 n 肋间神经的体表投影与锁骨中线的交点（2011 年版定义为“第 n 肋间隙”）；括注的体表平面（T6 剑胸结合、T10 脐）只作报告，不强制对齐。",
+    "en": "T3-T11 key points are taken where the skin projection of this body's nth intercostal nerve crosses the midclavicular line (the 2011 definition is 'nth intercostal space'); the parenthetical surface levels (xiphisternum for T6, umbilicus for T10) are reported, not enforced."
+   },
+   {
+    "zh": "S4 与 S5 合为一区（ISNCSCI 将 S4–5 作为一个平面检查）。",
+    "en": "S4 and S5 are one region (ISNCSCI tests S4-5 as one level)."
+   },
+   {
+    "zh": "未表示相邻皮节之间的重叠；每个皮肤顶点只有一个标签。",
+    "en": "Overlap between neighbouring dermatomes is not represented; each skin vertex has exactly one label."
+   }
+  ]
+ },
+ "sources": [
+  {
+   "id": "isncsci2011",
+   "name": "Kirshblum SC et al. International standards for neurological classification of spinal cord injury (revised 2011). J Spinal Cord Med 34(6):535-546 (key sensory point definitions; facts only)",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3232636/",
+   "license": "© American Spinal Injury Association, all rights reserved; definitions paraphrased",
+   "consulted": true
+  },
+  {
+   "id": "isncsci-worksheet",
+   "name": "ASIA/ISCoS ISNCSCI worksheet (rev. 04/19), dermatome figure",
+   "url": "https://asia-spinalinjury.org/wp-content/uploads/2019/10/ASIA-ISCOS-Worksheet_10.2019_PRINT-Page-1-2.pdf",
+   "license": "© ASIA; 'may be copied freely but should not be altered'; figure consulted, not reproduced",
+   "consulted": true
+  },
+  {
+   "id": "lee2008",
+   "name": "Lee MWL, McPhee RW, Stringer MD. An evidence-based approach to human dermatomes. Clin Anat 2008;21(5):363-373",
+   "url": "https://doi.org/10.1002/ca.20636",
+   "license": "© Wiley; facts only",
+   "consulted": true
+  },
+  {
+   "id": "statpearls",
+   "name": "Whitman PA, Launico MV, Adigun OO. Anatomy, Skin, Dermatomes. StatPearls (NBK535401) (independent checkpoints)",
+   "url": "https://www.ncbi.nlm.nih.gov/books/NBK535401/",
+   "license": "CC BY-NC-ND 4.0; facts only",
+   "consulted": true
+  },
+  {
+   "id": "challoumas",
+   "name": "Challoumas D, Ferro A, Walker A, Brassett C. Observations on the inconsistency of dermatome maps... Clin Anat, doi 10.1002/ca.23031 (accepted manuscript; Cambridge teaching checkpoints, Foerster vs Keegan & Garrett)",
+   "url": "https://www.repository.cam.ac.uk/bitstream/1810/270591/1/Clin%20Anat%20article.pdf",
+   "license": "© Wiley / authors; facts only",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-200",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918, The trigeminal nerve",
+   "url": "https://www.bartleby.com/107/200.html",
+   "license": "Public domain",
+   "consulted": true
+  },
+  {
+   "id": "gray1918-211",
+   "name": "Gray H. Anatomy of the Human Body, 20th ed. 1918, The thoracic nerves",
+   "url": "https://www.bartleby.com/107/211.html",
+   "license": "Public domain",
+   "consulted": true
+  }
+ ],
+ "smoothIterations": 8,
+ "minIslandCm2": 6,
+ "checks": [
+  {
+   "name": {
+    "zh": "乳头平面（锁骨中线第 4 肋间隙，按肋骨定位）",
+    "en": "Nipple line (4th intercostal space at the midclavicular line, located from the ribs)"
+   },
+   "at": "nippleLevelRibs",
+   "expect": [
+    "T4"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "剑突表面",
+    "en": "Over the xiphoid process"
+   },
+   "at": {
+    "at": {
+     "offset": [
+      "xiphisternum",
+      [
+       0.012,
+       -0.01,
+       -0.05
+      ]
+     ]
+    },
+    "to": "ant"
+   },
+   "expect": [
+    "T6",
+    "T7"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401)"
+  },
+  {
+   "name": {
+    "zh": "脐旁",
+    "en": "Beside the umbilicus"
+   },
+   "at": {
+    "at": {
+     "offset": [
+      "umbilicus",
+      [
+       0.02,
+       0,
+       -0.06
+      ]
+     ]
+    },
+    "to": "ant"
+   },
+   "expect": [
+    "T10"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "腹股沟韧带中点下方 2.5 cm",
+    "en": "2.5 cm below the midpoint of the inguinal ligament"
+   },
+   "at": {
+    "at": {
+     "offset": [
+      "inguinalMid",
+      [
+       0,
+       -0.025,
+       -0.03
+      ]
+     ]
+    },
+    "to": "ant"
+   },
+   "expect": [
+    "L1"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "股前面中部",
+    "en": "Mid-anterior thigh"
+   },
+   "at": {
+    "frame": "thigh",
+    "t": 0.45,
+    "deg": 0
+   },
+   "expect": [
+    "L2"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "髌骨表面（膝前）",
+    "en": "Over the patella (anterior knee)"
+   },
+   "at": {
+    "at": "patella",
+    "to": "ant"
+   },
+   "expect": [
+    "L3",
+    "L4"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "膝内侧",
+    "en": "Medial knee"
+   },
+   "at": {
+    "at": "medialFemoralCondyle",
+    "to": "nearest"
+   },
+   "expect": [
+    "L3"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401)"
+  },
+  {
+   "name": {
+    "zh": "小腿内侧中部",
+    "en": "Medial leg, middle"
+   },
+   "at": {
+    "frame": "leg",
+    "t": 0.5,
+    "deg": 280
+   },
+   "expect": [
+    "L4"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "小腿外侧中部",
+    "en": "Lateral leg, middle"
+   },
+   "at": {
+    "frame": "leg",
+    "t": 0.5,
+    "deg": 80
+   },
+   "expect": [
+    "L5"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "𧿹趾背面",
+    "en": "Dorsum of the great toe"
+   },
+   "at": {
+    "at": {
+     "part": "Proximal phalanx of {side} big toe"
+    },
+    "to": "sup"
+   },
+   "expect": [
+    "L5"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401) (L5); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map) gives L4"
+  },
+  {
+   "name": {
+    "zh": "小趾",
+    "en": "Little toe"
+   },
+   "at": {
+    "at": {
+     "part": "Proximal phalanx of {side} little toe"
+    },
+    "to": "sup"
+   },
+   "expect": [
+    "S1"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "足跟底",
+    "en": "Under the heel"
+   },
+   "at": {
+    "at": "calcaneus",
+    "to": "inf"
+   },
+   "expect": [
+    "S1"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "外踝",
+    "en": "Lateral malleolus"
+   },
+   "at": {
+    "at": "lateralMalleolus",
+    "to": "lat"
+   },
+   "expect": [
+    "S1"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401)"
+  },
+  {
+   "name": {
+    "zh": "股后面中部",
+    "en": "Mid-posterior thigh"
+   },
+   "at": {
+    "frame": "thigh",
+    "t": 0.5,
+    "deg": 180
+   },
+   "expect": [
+    "S2"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "拇指指腹",
+    "en": "Pad of the thumb"
+   },
+   "at": {
+    "at": {
+     "part": "Distal phalanx of {side} thumb"
+    },
+    "frame": "hand",
+    "deg": 330
+   },
+   "expect": [
+    "C6"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "中指指腹",
+    "en": "Pad of the middle finger"
+   },
+   "at": {
+    "at": {
+     "part": "Distal phalanx of {side} middle finger"
+    },
+    "frame": "hand",
+    "deg": 0
+   },
+   "expect": [
+    "C7"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "小指指腹",
+    "en": "Pad of the little finger"
+   },
+   "at": {
+    "at": {
+     "part": "Distal phalanx of {side} little finger"
+    },
+    "frame": "hand",
+    "deg": 0
+   },
+   "expect": [
+    "C8"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "前臂内侧中部",
+    "en": "Medial forearm, middle"
+   },
+   "at": {
+    "frame": "forearm",
+    "t": 0.4,
+    "deg": 290
+   },
+   "expect": [
+    "T1"
+   ],
+   "source": "StatPearls, Anatomy, Skin, Dermatomes (NBK535401); Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "三角肌下部（臂章区）",
+    "en": "Lower deltoid (regimental badge area)"
+   },
+   "at": {
+    "frame": "arm",
+    "t": 0.25,
+    "deg": 100
+   },
+   "expect": [
+    "C5",
+    "C6"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "肛周",
+    "en": "Perianal skin"
+   },
+   "at": "K_S45",
+   "expect": [
+    "S4-5"
+   ],
+   "source": "Challoumas et al., Clin Anat, doi 10.1002/ca.23031 (Cambridge teaching map)"
+  },
+  {
+   "name": {
+    "zh": "枕部",
+    "en": "Occiput"
+   },
+   "at": {
+    "at": {
+     "offset": [
+      "eop",
+      [
+       0.03,
+       0.02,
+       0.01
+      ]
+     ]
+    },
+    "to": "post"
+   },
+   "expect": [
+    "C2"
+   ],
+   "source": "Physiopedia, Dermatomes, table 1"
+  },
+  {
+   "name": {
+    "zh": "颅顶后方",
+    "en": "Scalp just behind the vertex"
+   },
+   "at": {
+    "at": "parietal",
+    "to": "sup+0.5*post"
+   },
+   "expect": [
+    "C2"
+   ],
+   "source": "Gray 1918 (great auricular nerve, C2-C3)"
+  },
+  {
+   "name": {
+    "zh": "下颌角",
+    "en": "Angle of the mandible"
+   },
+   "at": {
+    "at": "gonion",
+    "to": "lat+0.6*inf"
+   },
+   "expect": [
+    "C2",
+    "C3"
+   ],
+   "source": "Gray 1918 (great auricular nerve, C2-C3); Physiopedia, Dermatomes, table 1"
+  }
+ ],
+ "barriers": [
+  {
+   "name": "ventral axial line of upper limb",
+   "curve": [
+    {
+     "at": {
+      "offset": [
+       "shoulder",
+       [
+        -0.03,
+        -0.035,
+        0.02
+       ]
+      ]
+     },
+     "to": "ant"
+    },
+    {
+     "frame": "arm",
+     "t": 0.3,
+     "deg": 12
+    },
+    {
+     "frame": "arm",
+     "t": 0.8,
+     "deg": 8
+    },
+    {
+     "frame": "forearm",
+     "t": 0.15,
+     "deg": 5
+    },
+    {
+     "frame": "forearm",
+     "t": 0.55,
+     "deg": 0
+    },
+    {
+     "frame": "forearm",
+     "t": 0.85,
+     "deg": 350
+    }
+   ],
+   "note": {
+    "zh": "C4/C5/C6 与 T2/T1/C8 直接相邻，中间节段缺如",
+    "en": "C4/C5/C6 meet T2/T1/C8 without the intervening segments"
+   }
+  },
+  {
+   "name": "dorsal axial line of upper limb",
+   "curve": [
+    "sp_C7",
+    {
+     "at": {
+      "offset": [
+       "acromion",
+       [
+        -0.07,
+        0.0,
+        -0.03
+       ]
+      ]
+     },
+     "to": "post"
+    },
+    {
+     "at": {
+      "offset": [
+       "acromion",
+       [
+        -0.01,
+        -0.035,
+        -0.02
+       ]
+      ]
+     },
+     "to": "post"
+    },
+    {
+     "frame": "arm",
+     "t": 0.3,
+     "deg": 180
+    },
+    {
+     "frame": "arm",
+     "t": 0.75,
+     "deg": 185
+    },
+    {
+     "frame": "forearm",
+     "t": 0.03,
+     "deg": 185
+    }
+   ],
+   "note": {
+    "zh": "肩后和臂后 C4/C5 与 T2/T1 直接相邻",
+    "en": "C4/C5 meet T2/T1 on the back of the shoulder and arm"
+   }
+  },
+  {
+   "name": "ventral axial line of lower limb",
+   "curve": [
+    {
+     "at": {
+      "offset": [
+       "pubicTubercle",
+       [
+        0.0,
+        -0.045,
+        -0.02
+       ]
+      ]
+     },
+     "to": "ant+0.3*med"
+    },
+    {
+     "frame": "thigh",
+     "t": 0.25,
+     "deg": 248
+    },
+    {
+     "frame": "thigh",
+     "t": 0.6,
+     "deg": 240
+    },
+    {
+     "frame": "thigh",
+     "t": 0.95,
+     "deg": 232
+    },
+    {
+     "frame": "leg",
+     "t": 0.3,
+     "deg": 235
+    },
+    {
+     "frame": "leg",
+     "t": 0.7,
+     "deg": 232
+    },
+    {
+     "frame": "leg",
+     "t": 0.95,
+     "deg": 225
+    }
+   ],
+   "note": {
+    "zh": "股内侧和小腿内侧 L1–L4 与 S3/S2 直接相邻",
+    "en": "L1-L4 meet S3/S2 on the medial thigh and leg"
+   }
+  },
+  {
+   "name": "dorsal axial line of lower limb",
+   "curve": [
+    {
+     "at": "psis",
+     "to": "post"
+    },
+    {
+     "at": {
+      "offset": [
+       "greaterTrochanter",
+       [
+        -0.035,
+        0.0,
+        -0.05
+       ]
+      ]
+     },
+     "to": "post"
+    },
+    {
+     "frame": "thigh",
+     "t": 0.3,
+     "deg": 150
+    },
+    {
+     "frame": "thigh",
+     "t": 0.7,
+     "deg": 140
+    },
+    {
+     "at": "fibularHead",
+     "to": "lat+post"
+    }
+   ],
+   "note": {
+    "zh": "股后外侧 L2/L3 与 S2 直接相邻",
+    "en": "L2/L3 meet S2 on the posterolateral thigh"
+   }
+  }
+ ],
+ "regions": [
+  {
+   "key": "V1",
+   "name": {
+    "zh": "三叉神经眼支（V1）",
+    "en": "Ophthalmic division of trigeminal (V1)"
+   },
+   "color": "#e6194b",
+   "basis": "landmark-rule",
+   "rule": {
+    "zh": "额部、上睑、鼻背和鼻尖，头皮向后约至颅顶。",
+    "en": "Forehead, upper eyelid, dorsum and tip of nose, scalp back to about the vertex."
+   },
+   "cite": [
+    "gray1918-200"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.03,
+          0,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.035,
+          0.04,
+          -0.04
+         ]
+        ]
+       },
+       "to": "sup+ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "frontal",
+         [
+          0.03,
+          0.05,
+          -0.075
+         ]
+        ]
+       },
+       "to": "sup"
+      }
+     ],
+     "note": {
+      "zh": "额部至头皮前部，未达颅顶",
+      "en": "forehead to the anterior scalp, short of the vertex"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Tarsal plate of {side} upper eyelid"
+       },
+       "to": "nearestAny"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "nasalBone",
+         [
+          0.006,
+          0,
+          -0.01
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "nasalBone",
+         [
+          0.006,
+          -0.03,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ],
+     "note": {
+      "zh": "鼻背至鼻尖（鼻外支）",
+      "en": "dorsum to tip of nose (external nasal branch)"
+     }
+    }
+   ]
+  },
+  {
+   "key": "V2",
+   "name": {
+    "zh": "三叉神经上颌支（V2）",
+    "en": "Maxillary division of trigeminal (V2)"
+   },
+   "color": "#3cb44b",
+   "basis": "landmark-rule",
+   "rule": {
+    "zh": "下睑、鼻侧、颊部、上唇、颞部前份。",
+    "en": "Lower eyelid, side of nose, cheek, upper lip, anterior temple."
+   },
+   "cite": [
+    "gray1918-200"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Tarsal plate of {side} lower eyelid"
+       },
+       "to": "nearestAny"
+      },
+      {
+       "at": "maxilla",
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "maxilla",
+         [
+          -0.004,
+          -0.028,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ],
+     "note": {
+      "zh": "下睑、鼻旁颊部、上唇",
+      "en": "lower eyelid, cheek beside the nose, upper lip"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": "zygoma",
+       "to": "ant+lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "zygoma",
+         [
+          0.012,
+          0.03,
+          -0.02
+         ]
+        ]
+       },
+       "to": "lat"
+      }
+     ],
+     "note": {
+      "zh": "颧部隆起、颞部前份",
+      "en": "prominence of the cheek, anterior temple"
+     }
+    }
+   ]
+  },
+  {
+   "key": "V3",
+   "name": {
+    "zh": "三叉神经下颌支（V3）",
+    "en": "Mandibular division of trigeminal (V3)"
+   },
+   "color": "#ffe119",
+   "basis": "landmark-rule",
+   "rule": {
+    "zh": "下唇、颏部、下颌骨表面皮肤（下颌角除外）、耳前至颞部的条带。",
+    "en": "Lower lip, chin, skin over the mandible except its angle, strip in front of the ear to the temple."
+   },
+   "cite": [
+    "gray1918-200"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "chin",
+         [
+          0.012,
+          0.022,
+          -0.005
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "chin",
+         [
+          0.012,
+          0.004,
+          0
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "lerp": [
+         "chin",
+         "gonion",
+         0.45
+        ]
+       },
+       "to": "lat+0.4*ant"
+      }
+     ],
+     "note": {
+      "zh": "下唇、颏部、下颌体（不含下颌角）",
+      "en": "lower lip, chin, body of mandible (not its angle)"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": "condyle",
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "condyle",
+         [
+          0,
+          0.04,
+          0.005
+         ]
+        ]
+       },
+       "to": "lat"
+      }
+     ],
+     "note": {
+      "zh": "耳前向上至颞部（耳颞神经）",
+      "en": "in front of the ear and up the temple (auriculotemporal)"
+     }
+    }
+   ]
+  },
+  {
+   "key": "C2",
+   "name": {
+    "zh": "C2",
+    "en": "C2"
+   },
+   "color": "#4363d8",
+   "keyPoint": {
+    "zh": "枕外隆凸外侧至少 1 cm 处。",
+    "en": "At least 1 cm lateral to the external occipital protuberance."
+   },
+   "rule": {
+    "zh": "枕部至颅顶、耳后、下颌角。",
+    "en": "Occiput to the vertex, behind the ear, angle of the mandible."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C2"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "K_C2",
+      {
+       "at": "parietal",
+       "to": "sup+0.5*post"
+      },
+      {
+       "at": {
+        "offset": [
+         "parietal",
+         [
+          0,
+          0.0,
+          0.0
+         ]
+        ]
+       },
+       "to": "sup"
+      }
+     ],
+     "note": {
+      "zh": "枕部向上至颅顶",
+      "en": "occiput up to the vertex"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "mastoid",
+         [
+          0,
+          0.025,
+          -0.015
+         ]
+        ]
+       },
+       "to": "lat+post"
+      },
+      {
+       "at": "mastoid",
+       "to": "lat+0.5*inf"
+      },
+      {
+       "at": "gonion",
+       "to": "lat+0.6*inf"
+      }
+     ],
+     "note": {
+      "zh": "耳后向下至下颌角",
+      "en": "behind the ear down to the angle of the mandible"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "C3",
+   "name": {
+    "zh": "C3",
+    "en": "C3"
+   },
+   "color": "#f58231",
+   "keyPoint": {
+    "zh": "锁骨中线上的锁骨上窝。",
+    "en": "Supraclavicular fossa at the midclavicular line."
+   },
+   "rule": {
+    "zh": "颈前、颈后，向前延至下颌下方。",
+    "en": "Neck, front and back, forward under the mandible."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C3"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Third cervical vertebra",
+          "pick": {
+           "extreme": "post"
+          }
+         },
+         [
+          0.012,
+          -0.005,
+          0.006
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Fourth cervical vertebra"
+         },
+         [
+          0.03,
+          0,
+          0.02
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Hyoid bone"
+         },
+         [
+          0.02,
+          -0.01,
+          -0.01
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ],
+     "note": {
+      "zh": "环颈一周",
+      "en": "collar round the neck"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "lerp": [
+           "chin",
+           {
+            "part": "Hyoid bone"
+           },
+           0.55
+          ]
+         },
+         [
+          0.014,
+          0,
+          0
+         ]
+        ]
+       },
+       "to": "inf+0.4*ant"
+      }
+     ],
+     "note": {
+      "zh": "颏下",
+      "en": "under the chin"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "C4",
+   "name": {
+    "zh": "C4",
+    "en": "C4"
+   },
+   "color": "#911eb4",
+   "keyPoint": {
+    "zh": "肩锁关节表面。",
+    "en": "Over the acromioclavicular joint."
+   },
+   "rule": {
+    "zh": "披肩区：颈下部、肩顶、胸上部约至第 2 肋。",
+    "en": "Shoulder cape: lower neck, top of shoulder, upper chest to about the second rib."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C4"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "sp_C5",
+      {
+       "at": {
+        "lerp": [
+         "acJoint",
+         {
+          "part": "Seventh cervical vertebra"
+         },
+         0.5
+        ]
+       },
+       "to": "sup"
+      },
+      "K_C4"
+     ],
+     "note": {
+      "zh": "肩顶",
+      "en": "top of the shoulder"
+     }
+    },
+    {
+     "curve": [
+      "sp_C6",
+      {
+       "at": {
+        "offset": [
+         "acromion",
+         [
+          -0.07,
+          0.025,
+          -0.02
+         ]
+        ]
+       },
+       "to": "post+sup"
+      }
+     ],
+     "note": {
+      "zh": "肩胛冈以上的肩后部",
+      "en": "back of the shoulder above the spine of the scapula"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "acJoint",
+         [
+          -0.01,
+          -0.025,
+          0.02
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         "clavicleMid",
+         [
+          0,
+          -0.022,
+          0.02
+         ]
+        ]
+       },
+       "to": "ant"
+      },
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Manubrium"
+         },
+         [
+          0.014,
+          0,
+          -0.02
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ],
+     "note": {
+      "zh": "锁骨下方至胸骨柄",
+      "en": "below the clavicle to the manubrium"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "C5",
+   "name": {
+    "zh": "C5",
+    "en": "C5"
+   },
+   "color": "#42d4f4",
+   "keyPoint": {
+    "zh": "肘窝外侧（桡侧），肘横纹近侧。",
+    "en": "Lateral side of the antecubital fossa just proximal to the elbow crease."
+   },
+   "rule": {
+    "zh": "臂外侧。",
+    "en": "Lateral arm."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C5"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": 0.14,
+       "deg": 90
+      },
+      {
+       "frame": "arm",
+       "t": 0.5,
+       "deg": 85
+      },
+      {
+       "frame": "arm",
+       "t": 0.8,
+       "deg": 70
+      },
+      "K_C5"
+     ],
+     "note": {
+      "zh": "臂外侧，自三角肌至肘",
+      "en": "lateral arm from the deltoid to the elbow"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": 0.3,
+       "deg": 50
+      },
+      {
+       "frame": "arm",
+       "t": 0.6,
+       "deg": 50
+      }
+     ],
+     "note": {
+      "zh": "臂前外侧",
+      "en": "anterolateral arm"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "C6",
+   "name": {
+    "zh": "C6",
+    "en": "C6"
+   },
+   "color": "#f032e6",
+   "keyPoint": {
+    "zh": "拇指近节指骨背面。",
+    "en": "Dorsal surface of the proximal phalanx of the thumb."
+   },
+   "rule": {
+    "zh": "前臂桡侧、拇指。",
+    "en": "Radial side of forearm, thumb."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C6"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "forearm",
+       "t": 0.15,
+       "deg": 70
+      },
+      {
+       "frame": "forearm",
+       "t": 0.55,
+       "deg": 80
+      },
+      {
+       "frame": "forearm",
+       "t": 0.93,
+       "deg": 85
+      },
+      {
+       "at": {
+        "part": "{side} first metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 120
+      },
+      "K_C6",
+      {
+       "at": {
+        "part": "Distal phalanx of {side} thumb"
+       },
+       "frame": "hand",
+       "deg": 150
+      }
+     ],
+     "note": {
+      "zh": "前臂桡侧至拇指",
+      "en": "radial forearm to the thumb"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "forearm",
+       "t": 0.4,
+       "deg": 35
+      },
+      {
+       "frame": "forearm",
+       "t": 0.9,
+       "deg": 45
+      },
+      {
+       "at": {
+        "part": "{side} first metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 20
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} thumb"
+       },
+       "frame": "hand",
+       "deg": 330
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} thumb"
+       },
+       "frame": "hand",
+       "deg": 330
+      }
+     ],
+     "note": {
+      "zh": "前臂前外侧、鱼际、拇指掌面",
+      "en": "anterolateral forearm, thenar eminence, palmar thumb"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "C7",
+   "name": {
+    "zh": "C7",
+    "en": "C7"
+   },
+   "color": "#bfef45",
+   "keyPoint": {
+    "zh": "中指近节指骨背面。",
+    "en": "Dorsal surface of the proximal phalanx of the middle finger."
+   },
+   "rule": {
+    "zh": "中指、手中部、前臂后面的条带；示指和环指归于 C6/C7/C8 中距离最近者。",
+    "en": "Middle finger, centre of hand, strip on the back of the forearm; index and ring fingers are left to the nearest of C6/C7/C8."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C7"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} third metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      "K_C7",
+      {
+       "at": {
+        "part": "Middle phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} third metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Middle phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} middle finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "frame": "forearm",
+       "t": 0.45,
+       "deg": 180
+      },
+      {
+       "frame": "forearm",
+       "t": 0.9,
+       "deg": 180
+      },
+      {
+       "at": {
+        "part": "{side} third metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ],
+     "note": {
+      "zh": "前臂后面向上的条带（推定；评定表图示未画上肢后面）",
+      "en": "strip up the back of the forearm (interpolated; the worksheet figure does not show the back of the arm)"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "C8",
+   "name": {
+    "zh": "C8",
+    "en": "C8"
+   },
+   "color": "#fabed4",
+   "keyPoint": {
+    "zh": "小指近节指骨背面。",
+    "en": "Dorsal surface of the proximal phalanx of the little finger."
+   },
+   "rule": {
+    "zh": "小指、手尺侧缘和前臂远端尺侧。",
+    "en": "Little finger, ulnar border of hand and distal forearm."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_C8"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "forearm",
+       "t": 0.7,
+       "deg": 265
+      },
+      {
+       "frame": "forearm",
+       "t": 0.95,
+       "deg": 265
+      },
+      {
+       "at": {
+        "part": "{side} fifth metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 250
+      },
+      "K_C8",
+      {
+       "at": {
+        "part": "Distal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 180
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "{side} fifth metacarpal bone"
+       },
+       "frame": "hand",
+       "deg": 330
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} little finger"
+       },
+       "frame": "hand",
+       "deg": 0
+      }
+     ]
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "T1",
+   "name": {
+    "zh": "T1",
+    "en": "T1"
+   },
+   "color": "#469990",
+   "keyPoint": {
+    "zh": "肘窝内侧（尺侧），肱骨内上髁近侧。",
+    "en": "Medial side of the antecubital fossa just proximal to the medial epicondyle."
+   },
+   "rule": {
+    "zh": "前臂内侧和臂内侧远段。",
+    "en": "Medial forearm and distal medial arm."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T1"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": 0.75,
+       "deg": 335
+      },
+      "K_T1",
+      {
+       "frame": "forearm",
+       "t": 0.2,
+       "deg": 300
+      },
+      {
+       "frame": "forearm",
+       "t": 0.5,
+       "deg": 300
+      }
+     ],
+     "note": {
+      "zh": "肘内侧和前臂内侧",
+      "en": "medial elbow and forearm"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "T2",
+   "name": {
+    "zh": "T2",
+    "en": "T2"
+   },
+   "color": "#dcbeff",
+   "keyPoint": {
+    "zh": "腋窝顶。",
+    "en": "Apex of the axilla."
+   },
+   "rule": {
+    "zh": "第 2 肋间神经带、腋窝、臂内侧上部。",
+    "en": "Band of the 2nd intercostal nerve, axilla, upper medial arm."
+   },
+   "cite": [
+    "isncsci2011",
+    "gray1918-211"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T2"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T2BackMid",
+      "T2BackLat",
+      {
+       "nerve": "{side} second intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 2 肋间神经的条带；背部按其平面水平延至中线",
+      "en": "band over the second intercostal nerve; level on the back carried straight to the midline"
+     }
+    },
+    {
+     "curve": [
+      "K_T2",
+      {
+       "frame": "arm",
+       "t": 0.25,
+       "deg": 270
+      },
+      {
+       "frame": "arm",
+       "t": 0.5,
+       "deg": 270
+      }
+     ],
+     "note": {
+      "zh": "腋窝和臂内侧上部（肋间臂神经）",
+      "en": "axilla and upper medial arm (intercostobrachial)"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "arm",
+       "t": 0.3,
+       "deg": 335
+      },
+      {
+       "frame": "arm",
+       "t": 0.55,
+       "deg": 335
+      }
+     ],
+     "note": {
+      "zh": "臂前内侧",
+      "en": "anteromedial arm"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T3",
+   "name": {
+    "zh": "T3",
+    "en": "T3"
+   },
+   "color": "#9a6324",
+   "keyPoint": {
+    "zh": "锁骨中线第 3 肋间隙；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the third intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T3"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T3BackMid",
+      "T3BackLat",
+      {
+       "nerve": "{side} third intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 3 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the third intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T4",
+   "name": {
+    "zh": "T4",
+    "en": "T4"
+   },
+   "color": "#fffac8",
+   "keyPoint": {
+    "zh": "锁骨中线第 4 肋间隙（乳头平面）；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the fourth (nipple line) intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T4"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T4BackMid",
+      "T4BackLat",
+      {
+       "nerve": "{side} fourth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 4 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the fourth intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T5",
+   "name": {
+    "zh": "T5",
+    "en": "T5"
+   },
+   "color": "#800000",
+   "keyPoint": {
+    "zh": "锁骨中线第 5 肋间隙；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the fifth intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T5"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T5BackMid",
+      "T5BackLat",
+      {
+       "nerve": "{side} fifth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 5 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the fifth intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T6",
+   "name": {
+    "zh": "T6",
+    "en": "T6"
+   },
+   "color": "#aaffc3",
+   "keyPoint": {
+    "zh": "锁骨中线第 6 肋间隙（剑胸结合平面）；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the sixth (level of the xiphisternum) intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T6"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T6BackMid",
+      "T6BackLat",
+      {
+       "nerve": "{side} sixth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 6 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the sixth intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T7",
+   "name": {
+    "zh": "T7",
+    "en": "T7"
+   },
+   "color": "#808000",
+   "keyPoint": {
+    "zh": "锁骨中线第 7 肋间隙；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the seventh intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T7"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T7BackMid",
+      "T7BackLat",
+      {
+       "nerve": "{side} seventh intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 7 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the seventh intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T8",
+   "name": {
+    "zh": "T8",
+    "en": "T8"
+   },
+   "color": "#ffd8b1",
+   "keyPoint": {
+    "zh": "锁骨中线第 8 肋间隙；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the eighth intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T8"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T8BackMid",
+      "T8BackLat",
+      {
+       "nerve": "{side} eighth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 8 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the eighth intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T9",
+   "name": {
+    "zh": "T9",
+    "en": "T9"
+   },
+   "color": "#000075",
+   "keyPoint": {
+    "zh": "锁骨中线第 9 肋间隙；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the ninth intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T9"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T9BackMid",
+      "T9BackLat",
+      {
+       "nerve": "{side} ninth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 9 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the ninth intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T10",
+   "name": {
+    "zh": "T10",
+    "en": "T10"
+   },
+   "color": "#a9a9a9",
+   "keyPoint": {
+    "zh": "锁骨中线第 10 肋间隙（脐平面）；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the tenth (umbilicus) intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T10"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T10BackMid",
+      "T10BackLat",
+      {
+       "nerve": "{side} tenth intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 10 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the tenth intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T11",
+   "name": {
+    "zh": "T11",
+    "en": "T11"
+   },
+   "color": "#e6194b",
+   "keyPoint": {
+    "zh": "锁骨中线第 11 肋间隙；取本模型该肋间神经的体表投影与锁骨中线的交点。",
+    "en": "Midclavicular line in the eleventh intercostal space; taken where the skin projection of this body's intercostal nerve crosses the midclavicular line."
+   },
+   "rule": {
+    "zh": "沿肋间神经环绕躯干的条带。",
+    "en": "Band following the intercostal nerve round the trunk."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_T11"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "T11BackMid",
+      "T11BackLat",
+      {
+       "nerve": "{side} eleventh intercostal nerve",
+       "project": "trunkRadial",
+       "clip": {
+        "dir": "lat+2*ant",
+        "beyond": "backLat"
+       }
+      }
+     ],
+     "note": {
+      "zh": "沿第 11 肋间神经的条带；肋角以内按其平面水平延至中线（属后支分布区，无对应的建模神经）",
+      "en": "band over the eleventh intercostal nerve; medial to the angle of the ribs its level is carried straight to the midline (dorsal ramus territory, no modelled nerve)"
+     }
+    }
+   ],
+   "basis": "nerve-geometry"
+  },
+  {
+   "key": "T12",
+   "name": {
+    "zh": "T12",
+    "en": "T12"
+   },
+   "color": "#3cb44b",
+   "keyPoint": {
+    "zh": "腹股沟韧带中点。",
+    "en": "Midpoint of the inguinal ligament."
+   },
+   "rule": {
+    "zh": "髂嵴上方、沿腹股沟韧带至耻骨上方的条带（体表标志规则；模型中无肋下神经）。",
+    "en": "Band above the iliac crest and along the inguinal ligament to above the pubis (landmark rule; subcostal nerve not modelled)."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "basis": "landmark-rule",
+   "seeds": [
+    {
+     "curve": [
+      "K_T12"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "sp_T12",
+      {
+       "at": {
+        "offset": [
+         "iliacCrestTop",
+         [
+          0,
+          0.035,
+          0.01
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "asis",
+         [
+          -0.005,
+          0.035,
+          -0.04
+         ]
+        ]
+       },
+       "to": "ant+0.5*lat"
+      },
+      "K_T12",
+      {
+       "at": {
+        "offset": [
+         "pubicSymphysis",
+         [
+          0.015,
+          0.04,
+          -0.04
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ],
+     "note": {
+      "zh": "模型中无肋下神经：自 T12 棘突经髂嵴上方至腹股沟韧带的连线",
+      "en": "no subcostal nerve in the model: line from the T12 spinous process above the iliac crest to the inguinal ligament"
+     }
+    }
+   ]
+  },
+  {
+   "key": "L1",
+   "name": {
+    "zh": "L1",
+    "en": "L1"
+   },
+   "color": "#ffe119",
+   "keyPoint": {
+    "zh": "T12 与 L2 关键点连线的中点。",
+    "en": "Midway between the T12 and L2 key points."
+   },
+   "rule": {
+    "zh": "腹股沟和股最上部，绕髋至 L1 棘突。",
+    "en": "Groin and uppermost thigh, round the hip to the L1 spinous process."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_L1"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "sp_L1",
+      {
+       "at": {
+        "offset": [
+         "iliacCrestTop",
+         [
+          0,
+          -0.025,
+          0
+         ]
+        ]
+       },
+       "to": "lat"
+      },
+      {
+       "at": {
+        "offset": [
+         "asis",
+         [
+          0,
+          -0.045,
+          -0.04
+         ]
+        ]
+       },
+       "to": "ant+0.5*lat"
+      },
+      "K_L1",
+      {
+       "at": {
+        "offset": [
+         "pubicTubercle",
+         [
+          0,
+          -0.03,
+          -0.03
+         ]
+        ]
+       },
+       "to": "ant"
+      }
+     ],
+     "note": {
+      "zh": "腰部、髋部、腹股沟韧带下方",
+      "en": "loin, over the hip, groin below the inguinal ligament"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "L2",
+   "name": {
+    "zh": "L2",
+    "en": "L2"
+   },
+   "color": "#4363d8",
+   "keyPoint": {
+    "zh": "股前内侧，腹股沟韧带中点与股骨内侧髁连线的中点。",
+    "en": "Anterior-medial thigh, midpoint of the line from the mid-inguinal point to the medial femoral condyle."
+   },
+   "rule": {
+    "zh": "斜跨股前面上、中部的条带。",
+    "en": "Oblique band across the upper/mid anterior thigh."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_L2"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "sp_L2",
+      {
+       "at": {
+        "offset": [
+         "greaterTrochanter",
+         [
+          -0.02,
+          0.07,
+          -0.03
+         ]
+        ]
+       },
+       "to": "lat+post"
+      },
+      {
+       "frame": "thigh",
+       "t": 0.16,
+       "deg": 80
+      },
+      {
+       "frame": "thigh",
+       "t": 0.3,
+       "deg": 30
+      },
+      "K_L2",
+      {
+       "frame": "thigh",
+       "t": 0.5,
+       "deg": 300
+      }
+     ],
+     "note": {
+      "zh": "臀上部，斜跨股前面",
+      "en": "upper buttock, obliquely across the front of the thigh"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "L3",
+   "name": {
+    "zh": "L3",
+    "en": "L3"
+   },
+   "color": "#f58231",
+   "keyPoint": {
+    "zh": "膝上方股骨内侧髁处。",
+    "en": "Medial femoral condyle above the knee."
+   },
+   "rule": {
+    "zh": "股前面下部至膝内侧。",
+    "en": "Lower anterior thigh to the medial side of the knee."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_L3"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "sp_L3",
+      {
+       "at": {
+        "offset": [
+         "greaterTrochanter",
+         [
+          -0.02,
+          0.02,
+          -0.045
+         ]
+        ]
+       },
+       "to": "lat+post"
+      },
+      {
+       "frame": "thigh",
+       "t": 0.42,
+       "deg": 100
+      },
+      {
+       "frame": "thigh",
+       "t": 0.65,
+       "deg": 45
+      },
+      {
+       "frame": "thigh",
+       "t": 0.85,
+       "deg": 350
+      },
+      "K_L3"
+     ],
+     "note": {
+      "zh": "股外侧斜行至膝内侧",
+      "en": "lateral thigh obliquely to the medial knee"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "L4",
+   "name": {
+    "zh": "L4",
+    "en": "L4"
+   },
+   "color": "#911eb4",
+   "keyPoint": {
+    "zh": "内踝。",
+    "en": "Medial malleolus."
+   },
+   "rule": {
+    "zh": "膝前、小腿内侧、足内侧缘至第 1 跖骨底。",
+    "en": "Front of knee, medial leg, medial border of the foot to the base of the first metatarsal."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_L4"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "thigh",
+       "t": 0.86,
+       "deg": 80
+      },
+      {
+       "at": "patella",
+       "to": "ant"
+      },
+      {
+       "frame": "leg",
+       "t": 0.2,
+       "deg": 335
+      },
+      {
+       "frame": "leg",
+       "t": 0.55,
+       "deg": 310
+      },
+      {
+       "frame": "leg",
+       "t": 0.85,
+       "deg": 300
+      },
+      "K_L4",
+      {
+       "at": {
+        "part": "Navicular bone of {side} foot"
+       },
+       "to": "med+0.3*sup"
+      },
+      {
+       "at": "mt1Base",
+       "to": "med"
+      }
+     ],
+     "note": {
+      "zh": "膝、小腿内侧、内踝、足内侧缘",
+      "en": "knee, medial leg, medial malleolus, medial border of the foot"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "L5",
+   "name": {
+    "zh": "L5",
+    "en": "L5"
+   },
+   "color": "#42d4f4",
+   "keyPoint": {
+    "zh": "足背第 3 跖趾关节处。",
+    "en": "Dorsum of the foot at the third metatarsophalangeal joint."
+   },
+   "rule": {
+    "zh": "小腿前外侧、足背、第 1–3 趾、足底前内侧。",
+    "en": "Anterolateral leg, dorsum of foot, great to third toes, medial forefoot of the sole."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_L5"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "leg",
+       "t": 0.12,
+       "deg": 80
+      },
+      {
+       "frame": "leg",
+       "t": 0.5,
+       "deg": 55
+      },
+      {
+       "frame": "leg",
+       "t": 0.9,
+       "deg": 30
+      },
+      {
+       "at": {
+        "part": "{side} intermediate cuneiform bone"
+       },
+       "to": "sup"
+      },
+      "K_L5"
+     ],
+     "note": {
+      "zh": "小腿前外侧至足背",
+      "en": "anterolateral leg to the dorsum of the foot"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": "mt1Head",
+       "to": "sup"
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} big toe"
+       },
+       "to": "sup"
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} big toe"
+       },
+       "to": "sup"
+      }
+     ],
+     "note": {
+      "zh": "𧿹趾背面",
+      "en": "great toe, dorsal"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": "mt1Head",
+       "to": "inf"
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} big toe"
+       },
+       "to": "inf"
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} big toe"
+       },
+       "to": "inf"
+      }
+     ],
+     "note": {
+      "zh": "𧿹趾和前足掌，跖面",
+      "en": "great toe and ball of foot, plantar"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} second toe"
+       },
+       "to": "sup"
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} second toe"
+       },
+       "to": "sup"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} third toe"
+       },
+       "to": "sup"
+      },
+      {
+       "at": {
+        "part": "Distal phalanx of {side} third toe"
+       },
+       "to": "sup"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} second toe"
+       },
+       "to": "inf"
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} third toe"
+       },
+       "to": "inf"
+      }
+     ]
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "S1",
+   "name": {
+    "zh": "S1",
+    "en": "S1"
+   },
+   "color": "#f032e6",
+   "keyPoint": {
+    "zh": "足跟外侧（跟骨）。",
+    "en": "Lateral heel (calcaneus)."
+   },
+   "rule": {
+    "zh": "小腿后外侧下部、足跟、足外侧和足底外侧、第 4 趾和小趾。",
+    "en": "Lower posterolateral calf, heel, lateral foot and sole, fourth and little toes."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_S1"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "frame": "leg",
+       "t": 0.45,
+       "deg": 150
+      },
+      {
+       "frame": "leg",
+       "t": 0.75,
+       "deg": 150
+      },
+      {
+       "at": "lateralMalleolus",
+       "to": "lat+post"
+      },
+      "K_S1",
+      {
+       "at": "mt5Base",
+       "to": "lat"
+      },
+      {
+       "at": "mt5Head",
+       "to": "lat"
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} little toe"
+       },
+       "to": "lat"
+      }
+     ],
+     "note": {
+      "zh": "小腿后外侧下部、足跟外侧、足外侧缘、小趾",
+      "en": "posterolateral lower calf, lateral heel, lateral border of foot, little toe"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": "calcaneus",
+       "to": "inf"
+      },
+      {
+       "at": {
+        "part": "{side} cuboid bone"
+       },
+       "to": "inf"
+      },
+      {
+       "at": "mt5Head",
+       "to": "inf"
+      }
+     ],
+     "note": {
+      "zh": "足跟和足底外侧",
+      "en": "heel and lateral sole"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} fourth toe"
+       },
+       "to": "sup"
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} little toe"
+       },
+       "to": "sup"
+      }
+     ]
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} fourth toe"
+       },
+       "to": "inf"
+      },
+      {
+       "at": {
+        "part": "Proximal phalanx of {side} little toe"
+       },
+       "to": "inf"
+      }
+     ]
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "S2",
+   "name": {
+    "zh": "S2",
+    "en": "S2"
+   },
+   "color": "#bfef45",
+   "keyPoint": {
+    "zh": "腘窝中点。",
+    "en": "Midpoint of the popliteal fossa."
+   },
+   "rule": {
+    "zh": "股后面、腘窝，向下至小腿后面中线。",
+    "en": "Posterior thigh and popliteal fossa down the middle of the calf."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_S2"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "ischialTuberosity",
+         [
+          0.045,
+          0.085,
+          -0.03
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "frame": "thigh",
+       "t": 0.2,
+       "deg": 180
+      },
+      {
+       "frame": "thigh",
+       "t": 0.6,
+       "deg": 180
+      },
+      "K_S2",
+      {
+       "frame": "leg",
+       "t": 0.3,
+       "deg": 195
+      },
+      {
+       "frame": "leg",
+       "t": 0.55,
+       "deg": 205
+      }
+     ],
+     "note": {
+      "zh": "股后面、腘窝、小腿后面上部中线",
+      "en": "back of thigh, popliteal fossa, upper mid-calf"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "S3",
+   "name": {
+    "zh": "S3",
+    "en": "S3"
+   },
+   "color": "#fabed4",
+   "keyPoint": {
+    "zh": "坐骨结节或臀沟处。",
+    "en": "Ischial tuberosity or infragluteal fold."
+   },
+   "rule": {
+    "zh": "臀内侧、会阴和外生殖器（与 S4–5 共同支配）；骶骨表面皮肤为推定归入本区。",
+    "en": "Medial buttock, perineum and external genitalia (with S4-5); skin over the sacrum is assigned here by interpolation."
+   },
+   "cite": [
+    "isncsci2011",
+    "lee2008"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_S3"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         {
+          "part": "Sacrum"
+         },
+         [
+          0.02,
+          0.0,
+          -0.01
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      {
+       "at": {
+        "offset": [
+         "ischialTuberosity",
+         [
+          0.0,
+          0.06,
+          -0.02
+         ]
+        ]
+       },
+       "to": "post"
+      },
+      "K_S3",
+      {
+       "frame": "thigh",
+       "t": 0.08,
+       "deg": 222
+      }
+     ],
+     "note": {
+      "zh": "骶骨表面、臀内侧、臀沟",
+      "en": "over the sacrum, medial buttock, infragluteal fold"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "pubicSymphysis",
+         [
+          0.006,
+          -0.02,
+          0
+         ]
+        ]
+       },
+       "to": "ant+inf"
+      },
+      {
+       "at": {
+        "offset": [
+         "pubicSymphysis",
+         [
+          0.012,
+          -0.03,
+          -0.01
+         ]
+        ]
+       },
+       "to": "inf+0.2*ant"
+      },
+      {
+       "at": {
+        "xyz": [
+         {
+          "offset": [
+           "coccyxTip",
+           [
+            0.012,
+            0,
+            0
+           ]
+          ]
+         },
+         {
+          "offset": [
+           "ischialTuberosity",
+           [
+            0,
+            0.03,
+            0
+           ]
+          ]
+         },
+         {
+          "lerp": [
+           "coccyxTip",
+           "pubicSymphysis",
+           0.55
+          ]
+         }
+        ]
+       },
+       "to": "inf"
+      }
+     ],
+     "note": {
+      "zh": "阴茎、阴囊和会阴",
+      "en": "penis, scrotum and perineum"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  },
+  {
+   "key": "S4-5",
+   "name": {
+    "zh": "S4–S5",
+    "en": "S4–S5"
+   },
+   "color": "#469990",
+   "keyPoint": {
+    "zh": "肛周皮肤黏膜交界外侧 1 cm 以内（作为一个平面）。",
+    "en": "Perianal skin within 1 cm of the mucocutaneous junction (taken as one level)."
+   },
+   "rule": {
+    "zh": "肛周皮肤和臀裂。",
+    "en": "Perianal skin and natal cleft."
+   },
+   "cite": [
+    "isncsci2011"
+   ],
+   "seeds": [
+    {
+     "curve": [
+      "K_S45"
+     ],
+     "pin": true,
+     "note": {
+      "zh": "ISNCSCI 关键感觉点",
+      "en": "ISNCSCI key sensory point"
+     }
+    },
+    {
+     "curve": [
+      "K_S45"
+     ],
+     "widthMm": 28,
+     "note": {
+      "zh": "肛周皮肤",
+      "en": "perianal skin"
+     }
+    },
+    {
+     "curve": [
+      {
+       "at": {
+        "offset": [
+         "coccyxTip",
+         [
+          0.007,
+          0.0,
+          0.01
+         ]
+        ]
+       },
+       "to": "post"
+      }
+     ],
+     "widthMm": 15,
+     "note": {
+      "zh": "尾骨表面的臀裂",
+      "en": "natal cleft over the coccyx"
+     }
+    }
+   ],
+   "basis": "landmark-rule"
+  }
+ ]
+}
