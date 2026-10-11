@@ -344,6 +344,39 @@
       "attribution": "wwPDB / PDB-IHM",
       "citation": "Shi et al., Mol. Cell. Proteomics 2014, doi:10.1074/mcp.M114.041673",
       "link": "https://www.rcsb.org/structure/8ZZ1"
+    },
+    {
+      "id": "mycoplasma-ribosomes-in-situ",
+      "title": "细胞里核糖体的真实分布（冷冻电镜断层扫描）",
+      "titleEn": "Where the ribosomes really are in a cell (cryo-electron tomography)",
+      "keywords": [
+        "断层扫描",
+        "cryo-et",
+        "原位",
+        "in situ",
+        "核糖体分布",
+        "肺炎支原体"
+      ],
+      "source": {
+        "kind": "pdb",
+        "id": "7P6Z"
+      },
+      "points": {
+        "url": "https://files.cryoetdataportal.cziscience.com/10003/TS_04/Reconstructions/VoxelSpacing6.802/Annotations/100/chloramphenicol_bound_70s_ribosome-1.0_orientedpoint.ndjson",
+        "voxelSpacing": 6.802
+      },
+      "perCopy": true,
+      "cut": 0,
+      "roles": [
+        ["RNA", "nucleic"],
+        [".", "nucleic-binding"]
+      ],
+      "caption": "一只肺炎支原体细胞的一片冷冻电镜断层扫描里，331 个核糖体各自所在的位置。位置是实测的；每个位置上放的是同一种细胞里解出的 70S 核糖体原子模型。朝向没有采用数据集里的值，是随机的。细胞膜和其他分子没有画。",
+      "tier": "measured",
+      "licence": "CC0 1.0（粒子位置，CZ CryoET Data Portal；原子模型，wwPDB）",
+      "attribution": "CZ CryoET Data Portal 数据集 10003，TS_04；PDB 7P6Z",
+      "citation": "Xue et al., Nature 2022, doi:10.1038/s41586-022-05255-2",
+      "link": "https://cryoetdataportal.czscience.com/datasets/10003"
     }
   ]
 }

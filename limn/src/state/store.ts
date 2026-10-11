@@ -12,6 +12,8 @@ import { defaultAssembly } from '../scene/build'
 import type { PanelSpec, SceneSpec, Tier } from '../scene/spec'
 import catalog from '../../data/catalog.json'
 import { coarsen } from '../mol/coarse'
+import { assemblyAtPoints, parsePicks } from '../mol/points'
+import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
 import { defaultColoring, spreadHues, type Coloring } from '../style/assign'
 import { parseHex } from '../style/oklab'
@@ -108,6 +110,8 @@ export interface CatalogEntry {
   keywords: string[]
   source: { kind: string; url?: string; id?: string }
   perCopy?: boolean
+  /** 粒子的实测位置：文件地址和体素大小（Å）/ measured particle positions: the file's address and the voxel size in Å */
+  points?: { url: string; voxelSpacing: number }
   merge?: string
   cut?: number
   roles?: string[][]
@@ -256,7 +260,18 @@ export const useStore = create<State>((set, get) => ({
       const src = entry.source
       let mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(entry.title))
       const notes: string[] = []
-      const assembly = defaultAssembly(mol)
+      let assembly = defaultAssembly(mol)
+      if (entry.points) {
+        // 实测的粒子位置：每个位置放一份原子模型 / measured particle positions: one copy of the atomic model at each
+        set({ busy: `正在下载 ${entry.title} 的粒子位置…` })
+        const res = await fetch(entry.points.url)
+        if (!res.ok) throw new Error(`没能取到粒子位置（HTTP ${res.status}）：${new URL(entry.points.url).hostname}`)
+        const pts = parsePicks(await res.text(), entry.points.voxelSpacing)
+        if (pts.length === 0) throw new Error('粒子位置文件里没有读到位置')
+        mol.assemblies.push(assemblyAtPoints(mol, assembly, pts, rng(1)))
+        assembly = 'picks'
+        notes.push(`${pts.length / 3} 个粒子的位置取自断层扫描的标注（实测）；每个粒子的朝向没有采用数据集里的值，是随机的：数据集的朝向参照的坐标系和这里用的原子模型对不上。`)
+      }
       // 原子太多就改画每个残基一个球 / with too many atoms, draw one sphere per residue instead
       const full = placedAtomCount(mol, assembly)
       if (full > ATOM_BUDGET) {
@@ -294,7 +309,7 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const mesoscale = !!entry.perCopy
-      if (mesoscale) notes.push('这是别人已发表的整体模型：其中每个分子是真实结构，位置和数量由模型作者依据实验数据排布，不是直接观测到的。')
+      if (mesoscale && !entry.points) notes.push('这是别人已发表的整体模型：其中每个分子是真实结构，位置和数量由模型作者依据实验数据排布，不是直接观测到的。')
       const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, caption: entry.caption, panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({
         spec: scene,

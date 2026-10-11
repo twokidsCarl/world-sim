@@ -3,7 +3,9 @@
 import { describe, expect, it } from 'vitest'
 import catalog from '../data/catalog.json'
 import { coarsen } from '../src/mol/coarse'
+import { rng } from '../src/landscape/pack'
 import { parseCif } from '../src/mol/load'
+import { assemblyAtPoints, parsePicks } from '../src/mol/points'
 import { buildItem, placedAtomCount } from '../src/scene/build'
 import { defaultColoring } from '../src/style/assign'
 import { ROLES, TONE_LANDSCAPE } from '../src/style/palettes'
@@ -137,5 +139,43 @@ describe('模型目录 / the catalogue', () => {
         expect(ROLES as string[]).toContain(role)
       }
     }
+  })
+})
+
+// 实测的粒子位置 / measured particle positions
+describe('particle picks', () => {
+  const ndjson = [
+    '{"type": "orientedPoint", "location": {"x": 10, "y": 20, "z": 30}, "xyz_rotation_matrix": [[1,0,0],[0,1,0],[0,0,1]]}',
+    '',
+    'not json',
+    '{"type": "orientedPoint", "location": {"x": 1.5, "y": 0, "z": -2}}',
+    '{"type": "point"}',
+  ].join('\n')
+
+  it('reads positions in voxels and returns Å', () => {
+    expect(Array.from(parsePicks(ndjson, 2))).toEqual([20, 40, 60, 3, 0, -4])
+  })
+
+  it('puts the centre of the molecule at every position, whatever the orientation', async () => {
+    const m = await parseCif(PETWORLD, 'pw')
+    const pts = parsePicks(ndjson, 2)
+    const asm = assemblyAtPoints(m, 'asym', pts, rng(3))
+    m.assemblies.push(asm)
+    expect(placedAtomCount(m, 'picks')).toBe(m.atomCount * 2)
+    // 分子自己的中心 / the molecule's own centre
+    const c = [0, 0, 0]
+    for (let i = 0; i < m.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += m.pos[i * 3 + k]! / m.atomCount
+    const ops = asm.groups[0]!.operators
+    expect(ops.length).toBe(2)
+    ops.forEach((op, i) => {
+      const moved = [0, 1, 2].map((k) => op[k]! * c[0]! + op[4 + k]! * c[1]! + op[8 + k]! * c[2]! + op[12 + k]!)
+      // 采样估计的中心与精确中心差不了几 Å / the sampled centre is within a few Å of the exact one
+      for (let k = 0; k < 3; k++) expect(Math.abs(moved[k]! - pts[i * 3 + k]!)).toBeLessThan(6)
+      // 旋转矩阵是正交的、行列式为 1 / the rotation is orthonormal with determinant 1
+      const det = op[0]! * (op[5]! * op[10]! - op[6]! * op[9]!) - op[4]! * (op[1]! * op[10]! - op[2]! * op[9]!) + op[8]! * (op[1]! * op[6]! - op[2]! * op[5]!)
+      expect(det).toBeCloseTo(1, 5)
+    })
+    // 两个拷贝的朝向不同 / the two copies are turned differently
+    expect(ops[0]![0]).not.toBeCloseTo(ops[1]![0]!, 3)
   })
 })
