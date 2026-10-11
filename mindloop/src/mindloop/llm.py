@@ -1,5 +1,7 @@
 """通过本机的 `claude -p` 命令行调用大模型（子进程，不用 SDK，不需要 API key）。
 
+Call the model through the local `claude -p` command line (a subprocess; no SDK, no API key).
+
     claude -p --output-format json --model <m> --tools "" --no-session-persistence
            --strict-mcp-config --setting-sources "" --system-prompt <s> [--json-schema <schema>]
 
@@ -7,13 +9,19 @@
 这样不会把任何项目上下文带进去。返回的 JSON 里 `result` 是文本，带 schema 时
 `structured_output` 是结构化结果。
 
-环境变量：
+The prompt goes in on standard input (no shell involved, no command-line length limit); the
+command runs in a neutral temporary directory so that no project context comes along. In the
+returned JSON, `result` is the text and, when a schema is given, `structured_output` is the
+structured result.
+
+环境变量 / Environment variables:
     MINDLOOP_CLAUDE_BIN  claude 可执行文件（缺省在 PATH 里找 `claude`）
+                         claude executable (default: look up `claude` on PATH)
     MINDLOOP_CACHE       磁盘缓存目录 / disk cache directory
                          （缺省 $WORLD_SIM_STATE/llm；再没有就是 <项目根>/.cache/llm）
                          (default $WORLD_SIM_STATE/llm, else <project root>/.cache/llm)
-    MINDLOOP_MODEL       缺省模型（缺省 sonnet）
-    MINDLOOP_TIMEOUT     单次调用超时秒数（缺省 90）
+    MINDLOOP_MODEL       缺省模型（缺省 sonnet） / default model (default sonnet)
+    MINDLOOP_TIMEOUT     单次调用超时秒数（缺省 90） / per-call timeout in seconds (default 90)
 """
 
 from __future__ import annotations
@@ -34,20 +42,26 @@ DEFAULT_MODEL = "sonnet"
 DEFAULT_TIMEOUT = 90.0
 DEFAULT_SYSTEM = "你是一个简洁、准确的助手，只按要求输出，不加多余的话。"
 CONCURRENCY = 4
-ATTEMPTS = 2  # 首次 + 重试一次
+ATTEMPTS = 2  # 首次 + 重试一次 / first try + one retry
 
 _semaphores: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore]" = weakref.WeakKeyDictionary()
 
 
 class LLMError(RuntimeError):
-    """claude 不可用、超时、出错，或输出不合要求。"""
+    """claude 不可用、超时、出错，或输出不合要求。
+
+    claude is unavailable, timed out, failed, or produced output that does not meet the requirements.
+    """
 
 
-# ---------- 配置 ----------
+# ---------- 配置 / Configuration ----------
 
 
 def claude_bin() -> Optional[str]:
-    """claude 可执行文件的路径；找不到返回 None。"""
+    """claude 可执行文件的路径；找不到返回 None。
+
+    Path of the claude executable; None if it cannot be found.
+    """
     env = os.environ.get("MINDLOOP_CLAUDE_BIN")
     if env:
         if os.path.isfile(env) and os.access(env, os.X_OK):
@@ -93,7 +107,10 @@ def _neutral_cwd() -> str:
 
 
 def _semaphore() -> asyncio.Semaphore:
-    """全模块共用的并发上限（每个事件循环一把，避免跨循环复用出错）。"""
+    """全模块共用的并发上限（每个事件循环一把，避免跨循环复用出错）。
+
+    Module-wide concurrency limit (one semaphore per event loop, so none is reused across loops).
+    """
     loop = asyncio.get_running_loop()
     sem = _semaphores.get(loop)
     if sem is None:
@@ -101,7 +118,7 @@ def _semaphore() -> asyncio.Semaphore:
     return sem
 
 
-# ---------- 缓存 ----------
+# ---------- 缓存 / Cache ----------
 
 
 def cache_key(model: str, system: Optional[str], prompt: str, schema: Optional[dict]) -> str:
@@ -124,10 +141,10 @@ def _cache_write(key: str, record: dict) -> None:
         tmp.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
         os.replace(tmp, d / f"{key}.json")
     except OSError:
-        pass  # 缓存写不进去不影响结果
+        pass  # 缓存写不进去不影响结果 / a failed cache write does not affect the result
 
 
-# ---------- 调用 ----------
+# ---------- 调用 / Calling ----------
 
 
 def build_argv(binary: str, model: str, system: Optional[str], schema: Optional[dict]) -> list[str]:
@@ -148,7 +165,10 @@ def build_argv(binary: str, model: str, system: Optional[str], schema: Optional[
 
 
 def extract_json(text: str) -> Any:
-    """从一段文字里抠出 JSON（容忍 ```json 围栏和前后的闲话）。"""
+    """从一段文字里抠出 JSON（容忍 ```json 围栏和前后的闲话）。
+
+    Dig the JSON out of a piece of text (tolerates ```json fences and chatter before or after).
+    """
     text = text.strip()
     fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
     for candidate in ([fenced.group(1)] if fenced else []) + [text]:
@@ -166,12 +186,15 @@ def extract_json(text: str) -> Any:
 
 
 def parse_output(stdout: str, schema: Optional[dict]) -> str | dict:
-    """解析 `claude -p --output-format json` 的标准输出。"""
+    """解析 `claude -p --output-format json` 的标准输出。
+
+    Parse the standard output of `claude -p --output-format json`.
+    """
     try:
         data = json.loads(stdout)
     except ValueError as e:
         raise LLMError(f"claude 输出不是 JSON: {stdout[:200]!r}") from e
-    if isinstance(data, list):  # 个别版本输出事件数组，最后一个是 result
+    if isinstance(data, list):  # 个别版本输出事件数组，最后一个是 result / some versions emit an event array; the last item is the result
         data = next((x for x in reversed(data) if isinstance(x, dict) and x.get("type") == "result"), None)
     if not isinstance(data, dict):
         raise LLMError("claude 输出里没有 result 对象")
@@ -232,7 +255,10 @@ async def aask_meta(
     use_cache: bool = True,
     timeout: Optional[float] = None,
 ) -> tuple[str | dict, bool]:
-    """同 aask，另外告诉你结果是否来自缓存：返回 (结果, 是否命中缓存)。"""
+    """同 aask，另外告诉你结果是否来自缓存：返回 (结果, 是否命中缓存)。
+
+    Same as aask, but also tells you whether the result came from the cache: returns (result, cache hit).
+    """
     model = model or default_model()
     key = cache_key(model, system, prompt, schema)
     if use_cache:
@@ -250,7 +276,7 @@ async def aask_meta(
             try:
                 value = parse_output(await _spawn(argv, prompt, timeout), schema)
             except TimeoutError:
-                raise LLMError(f"claude 超时（{timeout:g} 秒）") from None  # 超时不重试，免得再等一轮
+                raise LLMError(f"claude 超时（{timeout:g} 秒）") from None  # 超时不重试，免得再等一轮 / no retry on timeout, to avoid waiting a whole round again
             except LLMError as e:
                 last = e
                 continue
@@ -270,12 +296,19 @@ async def aask(
     """问一次。不带 schema 返回文本，带 schema 返回 dict。失败抛 LLMError。
 
     use_cache=False 只跳过读缓存（强制重新生成），结果仍会写入缓存。
+
+    Ask once. Returns text without a schema, a dict with one. Raises LLMError on failure.
+
+    use_cache=False only skips the cache read (forcing regeneration); the result is still written to the cache.
     """
     return (await aask_meta(prompt, system, model, schema, use_cache, timeout))[0]
 
 
 def run_sync(coro):
-    """在同步代码里跑一个协程；若当前线程已有事件循环在跑，就换个线程。"""
+    """在同步代码里跑一个协程；若当前线程已有事件循环在跑，就换个线程。
+
+    Run a coroutine from synchronous code; if this thread already has a running event loop, use another thread.
+    """
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -285,7 +318,7 @@ def run_sync(coro):
     def work():
         try:
             box["value"] = asyncio.run(coro)
-        except BaseException as e:  # noqa: BLE001 — 原样带回调用线程
+        except BaseException as e:  # noqa: BLE001 — 原样带回调用线程 / carried back to the calling thread as-is
             box["error"] = e
 
     t = threading.Thread(target=work, daemon=True)
@@ -304,5 +337,5 @@ def ask(
     use_cache: bool = True,
     timeout: Optional[float] = None,
 ) -> str | dict:
-    """aask 的同步版本。"""
+    """aask 的同步版本。 / Synchronous version of aask."""
     return run_sync(aask(prompt, system, model, schema, use_cache, timeout))
