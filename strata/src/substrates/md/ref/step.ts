@@ -25,6 +25,17 @@ export interface MdState {
   pe: number
   /** 对粒子对求 r · f 之和，用于位力压强。 / Sum over pairs of r · f, for the virial pressure. */
   virial: number
+  /**
+   * 位力张量的 xy 分量：对所有粒子对求 Σ x_ij f_ij,y，用于切应力。
+   * The xy component of the virial tensor, Σ over pairs of x_ij f_ij,y, for the shear stress.
+   */
+  virialXY: number
+  /**
+   * 不折回周期边界的累计位移（n * dim），用于均方位移；null 表示不记录。
+   * Displacement accumulated without wrapping at the periodic boundaries (n * dim), for
+   * the mean-square displacement; null when not being recorded.
+   */
+  disp: Float64Array | null
   step: number
   grid: CellGrid | null
   /**
@@ -63,6 +74,8 @@ export function createState(dim: 2 | 3, n: number, box: ArrayLike<number>): MdSt
     species: new Uint8Array(n),
     pe: 0,
     virial: 0,
+    virialXY: 0,
+    disp: null,
     step: 0,
     grid: null,
     walls: false,
@@ -94,6 +107,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
   force.fill(0)
   let pe = 0
   let virial = 0
+  let virialXY = 0
 
   const rc = Math.sqrt(rc2)
   if (!allPairs && (!s.grid || s.grid.rc !== rc)) s.grid = makeGrid(dim, box, rc, n)
@@ -124,6 +138,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
         }
         pe += 0.5 * (out.u + back.u)
         virial += 0.5 * (out.g + back.g) * r2
+        virialXY += 0.5 * (out.g + back.g) * dx * dy
       }
     }
   } else {
@@ -164,6 +179,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
               fz += out.g * dz
               pe += 0.5 * out.u
               virial += 0.5 * out.g * r2
+              virialXY += 0.5 * out.g * dx * dy
             }
           }
         }
@@ -176,6 +192,7 @@ export function computeForces(s: MdState, pair: PairField, allPairs = false): vo
   if (s.obstacle) pe += obstacleForces(s)
   s.pe = pe
   s.virial = virial
+  s.virialXY = virialXY
 }
 
 /** 圆盘表面排斥势的作用范围：Lennard-Jones 势阱的位置。 / Range of the disc's surface repulsion: the Lennard-Jones minimum. */
@@ -227,6 +244,7 @@ export function step(s: MdState, pair: PairField, dt: number, nSteps = 1): void 
       vel[k] += half * (force[k] + (d === 0 ? s.drive : d === 1 ? s.gravity : 0))
       const L = box[d]
       const x = pos[k] + dt * vel[k]
+      if (s.disp) s.disp[k] += dt * vel[k]
       if (s.walls && d === 1) {
         pos[k] = x
         if (x < 0 || x >= L) hitWall(s, (k - 1) / dim, x < 0)
@@ -295,4 +313,22 @@ export function volume(s: MdState): number {
  */
 export function pressure(s: MdState): number {
   return (s.n * temperature(s) + s.virial / s.dim) / volume(s)
+}
+
+/**
+ * 切应力 σ_xy = (Σ v_x v_y + Σ_对 x_ij f_ij,y) / V（单位质量）。
+ * Shear stress σ_xy = (Σ v_x v_y + Σ_pairs x_ij f_ij,y) / V (unit mass).
+ */
+export function shearStress(s: MdState): number {
+  let kinetic = 0
+  for (let i = 0; i < s.n; i++) kinetic += s.vel[i * s.dim] * s.vel[i * s.dim + 1]
+  return (kinetic + s.virialXY) / volume(s)
+}
+
+/** 均方位移，需要 s.disp 在记录。 / Mean-square displacement; needs s.disp to be recording. */
+export function meanSquareDisplacement(s: MdState): number {
+  if (!s.disp) return NaN
+  let sum = 0
+  for (let k = 0; k < s.disp.length; k++) sum += s.disp[k] * s.disp[k]
+  return sum / s.n
 }

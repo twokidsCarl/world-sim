@@ -1,5 +1,6 @@
 import type { Params } from '../../core/params'
 import type { Frame, RunBackend } from '../../core/substrate'
+import { Correlator } from '../../analysis/autocorrelation'
 import { speciesField, speciesTables, type PairField, type PotentialSpec } from './potential'
 import { initFcc, initTriangular } from './ref/init'
 import {
@@ -17,7 +18,16 @@ import {
   type MdScalars,
 } from './ref/reducers'
 import { reverseTime, stepReversible, toReversible, type ReversibleState } from './ref/reversible'
-import { computeForces, kineticEnergy, step, temperature, type MdState } from './ref/step'
+import {
+  computeForces,
+  kineticEnergy,
+  meanSquareDisplacement,
+  shearStress,
+  step,
+  temperature,
+  volume,
+  type MdState,
+} from './ref/step'
 import { boxAspect, fccCells, fieldKey, obstacleOf, potentialSpec, strengthMatrix } from './schema'
 
 export interface MdFrame extends Frame {
@@ -43,6 +53,22 @@ export interface MdFrame extends Frame {
   modes?: DensityModes
   /** Steinhardt q₆ 的汇总，仅三维 / Summary of Steinhardt q₆, 3D only */
   q6?: Q6Summary
+  /**
+   * 输运系数用的记录，只有 CPU 后端提供：切应力的自相关、均方位移及其起算以来的时间。
+   * Records for transport coefficients, from the CPU backend only: the shear-stress
+   * autocorrelation, the mean-square displacement, and the time since it started.
+   */
+  transport?: {
+    dt: number
+    /** 切应力的自相关 C(k dt)，自记录开始以来累计 / Shear-stress autocorrelation C(k dt), accumulated since recording began */
+    acf: Float64Array
+    /** 累计的步数 / Steps accumulated */
+    samples: number
+    msd: number
+    elapsed: number
+    volume: number
+    temperature: number
+  }
   /** 设了选区时才有 / Present only while a region is set */
   region?: RegionFrame
   /**
@@ -91,6 +117,9 @@ export interface MdBackend extends RunBackend<MdFrame> {
  * 参考实现是单线程的；更大的体系应交给 GPU 后端。
  * The reference implementation is single-threaded; larger systems belong on the GPU backend.
  */
+/** 切应力自相关算到多长的时间差。 / The longest time lag for which the shear-stress autocorrelation is kept. */
+export const STRESS_SPAN = 3
+
 export const CPU_MAX_NX = 70
 /**
  * 三维时：每边至多这么多个 fcc 晶胞（2048 个粒子）。
@@ -111,6 +140,10 @@ export class MdCpuBackend implements MdBackend {
   private heat = 0
   private e0 = 0
   private reversible: ReversibleState | null = null
+  /** 逐步累计的切应力自相关。 / Shear-stress autocorrelation, accumulated step by step. */
+  private stress: Correlator | null = null
+  private transportStart = 0
+  private recording = false
   private start: Float64Array
   private direction = 1
   private clock = 0
@@ -192,6 +225,14 @@ export class MdCpuBackend implements MdBackend {
   private rebase(): void {
     this.heat = 0
     this.e0 = this.energy()
+    this.restartTransport()
+  }
+
+  /** 参数或状态被改动后，位移与应力序列从头记起。 / After the parameters or the state were changed, displacement and stress records start afresh. */
+  private restartTransport(): void {
+    this.stress = this.p ? new Correlator(Math.round(STRESS_SPAN / this.p.dt)) : null
+    this.transportStart = this.time
+    if (this.state?.disp) this.state.disp.fill(0)
   }
 
   setParams(p: Params): void {
@@ -210,8 +251,11 @@ export class MdCpuBackend implements MdBackend {
       for (let k = 0; k < this.state.vel.length; k++) this.state.vel[k] *= scale
       this.rebase()
     }
+    const dtChanged = p.dt !== this.p.dt
     this.p = { ...p }
     this.applyDrive()
+    // 自相关按步数存放，步长变了就得重新累计。 / The autocorrelation is stored by step, so a new step size means starting over.
+    if (dtChanged) this.restartTransport()
   }
 
   /** 给所有粒子加上沿 x 的同一个速度。 / Add the same velocity along x to every particle. */
@@ -269,6 +313,7 @@ export class MdCpuBackend implements MdBackend {
     for (let i = 0; i < n; i++) {
       step(this.state, this.pair, dt)
       this.time += dt
+      if (this.recording) this.stress?.add(shearStress(this.state))
       if (thermostat) {
         // Berendsen 弱耦合；它注入的动能记作热量。
         // Berendsen weak coupling; the kinetic energy it adds is tracked as heat.
@@ -298,6 +343,23 @@ export class MdCpuBackend implements MdBackend {
     if (ids.includes('field')) frame.field = fieldSums(s)
     if (ids.includes('distance')) frame.distance = this.distance()
     if (ids.includes('modes')) frame.modes = densityModes(s)
+    if (ids.includes('transport') && !this.reversible) {
+      // 第一次被请求时才开始记录，免得平时白算。 / Recording starts on the first request, so nothing is computed needlessly.
+      if (!this.recording) {
+        this.recording = true
+        s.disp = new Float64Array(s.n * s.dim)
+        this.restartTransport()
+      }
+      frame.transport = {
+        dt: this.p.dt,
+        acf: this.stress?.result() ?? new Float64Array(0),
+        samples: this.stress?.samples ?? 0,
+        msd: meanSquareDisplacement(s),
+        elapsed: this.time - this.transportStart,
+        volume: volume(s),
+        temperature: sc.temperature,
+      }
+    }
     if (ids.includes('q6') && s.dim === 3) frame.q6 = q6Summary(s)
     if (region && s.dim === 2) frame.region = regionFrame(s, region, ids, 4 * Math.sqrt(sc.temperature))
     return frame

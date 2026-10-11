@@ -171,5 +171,11 @@ export interface AnalysisDef {
    * `latest` 返回某个标量量的最新值（如果它正在被计算）。
    * `latest` returns the most recent value of a scalar quantity, if it is being computed.
    */
-  compute(h: History, p: Params, latest: (id: string) => number | undefined): AnalysisResult | null
+  compute(
+    h: History,
+    p: Params,
+    latest: (id: string) => number | undefined,
+    /** 其他被记录的量的历史，若有。 / The recorded history of another quantity, if any. */
+    history?: (id: string) => History | undefined,
+  ): AnalysisResult | null
 }
