@@ -72,6 +72,13 @@ export type Stats = {
   totals: Tokens; attention: Attention; own: { calls: number; cost_usd: number; output_tokens: number; by_purpose: Record<string, number> }
   transcripts_found: boolean; notes: string[]
 }
+export type Job = {
+  job_id: string; kind: 'wish' | 'task'; ref: string; directory: string; title: string; what: string; phase: string; phase_label: string
+  plan: string; feedback: string[]; error: string | null; summary: Record<string, unknown>; changed: string[]; test_log: string
+  pr: number | null; pr_url: string | null; restart_needed: boolean; cost_usd: number; created_at: string; updated_at: string
+}
+export type JobEvent = { seq: number; at: string; type: string; text?: string; label?: string; state?: string; id?: string; message?: string }
+export type Suggestion = { title: string; kind: string; stuck: string; suggestion: string; evidence: string }
 export type NewIdea = { title: string; body: string; level: string; threads: string[]; kernel: string | null }
 
 export const api = {
@@ -104,6 +111,15 @@ export const api = {
   taskStatus: (id: string, status: string, note = '') => call<Task>(`/api/tasks/${id}/status`, { status, note }),
   linkProject: (dir: string, idea_id: string, linked: boolean) => call<{ ok: boolean }>(`/api/projects/${dir}/link`, { idea_id, linked }),
   stats: (refresh = false) => call<Stats>(`/api/stats${refresh ? '?refresh=true' : ''}`),
+  jobs: () => call<Job[]>('/api/jobs'),
+  job: (id: string, after = 0) => call<{ job: Job; events: JobEvent[] }>(`/api/jobs/${id}?after=${after}`),
+  startJob: (kind: 'wish' | 'task', ref: string) => call<Job>('/api/jobs', { kind, ref }),
+  jobAction: (id: string, action: 'approve' | 'cancel' | 'revert') => call<unknown>(`/api/jobs/${id}/${action}`, {}),
+  jobText: (id: string, action: 'revise' | 'decline', text: string) => call<Job>(`/api/jobs/${id}/${action}`, { text }),
+  advance: (dir: string) => call<Task>(`/api/projects/${dir}/advance`, {}),
+  reviewStatus: () => call<{ actions_since: number; due: boolean; last_at: string | null }>('/api/review'),
+  review: () => call<Suggestion[]>('/api/review', {}),
+  recordWish: (body: { title: string; kind: string; stuck: string; suggestion: string }) => call<WishDetail>('/api/wishes', body),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),
 }

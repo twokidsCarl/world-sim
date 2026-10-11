@@ -200,6 +200,7 @@ def build_argv(binary: str, token: str) -> list[str]:
     return [
         binary, "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
         "--model", model(), "--tools", "Read,Grep,Glob", "--allowedTools", "Read", "Grep", "Glob", *TOOLS,
+        "--permission-mode", "dontAsk", "--permission-prompts", "none",
         "--strict-mcp-config", "--mcp-config", json.dumps(mcp), "--setting-sources", "", "--settings", json.dumps(deny),
         "--disable-slash-commands", "--no-session-persistence", "--append-system-prompt", system_prompt(),
     ]

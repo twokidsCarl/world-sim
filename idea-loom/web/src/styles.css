@@ -414,3 +414,19 @@ button:disabled { opacity: 0.45; cursor: default; }
 .pr-list .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .embed { width: 100%; height: 520px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel); }
 @media (max-width: 1100px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } .heat-pair { grid-template-columns: minmax(0, 1fr); } }
+
+/* 作业 / jobs */
+.job { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel); margin-bottom: 12px; }
+.job-wrap { margin-top: 14px; }
+.job-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.job-head button { margin-left: auto; }
+.badge.j-failed { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+.spin { display: inline-block; animation: spin 1.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.job-plan summary, .job-log summary { cursor: pointer; font-weight: 600; }
+.job-plan .md { margin-top: 8px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--paper); border-radius: 0 6px 6px 0; }
+.job-actions { display: grid; gap: 8px; }
+.job-events { gap: 2px; margin-top: 8px; }
+.job-pre { margin: 8px 0 0; padding: 10px 12px; max-height: 260px; overflow: auto; background: var(--sunken); border-radius: 6px; font: 12px/1.5 'SF Mono', Menlo, monospace; white-space: pre-wrap; }
+.review { display: grid; gap: 10px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
