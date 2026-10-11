@@ -209,3 +209,58 @@ def test_card_history_and_attention_from_play_events(repo):
     assert get("/api/play").json()["history"]["demo/one"]["liked"] is True
     a = stats.attention(trail.load())
     assert a.by_page == {"/play": 45.0} and [(i.id, i.seconds) for i in a.ideas] == [("1.2", 42.0)]
+
+
+def test_cloud_domain_and_roles(repo, monkeypatch):
+    from idea_loom import config
+    from idea_loom.play import keeper
+
+    monkeypatch.setenv("IDEA_LOOM_SIM_DOMAIN", "sim.example.com")
+    monkeypatch.setenv("IDEA_LOOM_PUBLIC_URL", "https://loom.example.com")
+    assert host.sim_name("demo.sim.example.com") == "demo" and host.sim_name("demo.localhost:8767") is None
+    assert host.sim_name("loom.example.com") is None and host.sim_name("sim.example.com") is None
+    assert config.sim_origin("demo", "8767") == "https://demo.sim.example.com"
+    assert host.origin_allowed("https://loom.example.com") and not host.origin_allowed("https://demo.sim.example.com")
+    assert not host.origin_allowed("http://localhost:5187")  # 云端不认本机的来源 / local origins are not trusted in the cloud
+
+    cloud = lambda h: TestClient(app, base_url=f"https://{h}")
+    assert "版本一" in cloud("demo.sim.example.com").get("/").text
+    view = cloud("loom.example.com").get("/api/play").json()
+    assert next(s for s in view["sims"] if s["name"] == "demo")["origin"] == "https://demo.sim.example.com"
+    assert cloud("loom.example.com").get("/internal/tls-ask?domain=demo.sim.example.com").status_code == 200
+    assert cloud("loom.example.com").get("/internal/tls-ask?domain=loom.example.com").status_code == 200
+    assert cloud("loom.example.com").get("/internal/tls-ask?domain=evil.sim.example.com").status_code == 404
+    assert cloud("loom.example.com").get("/internal/tls-ask?domain=example.org").status_code == 404
+
+    # hub 角色不提供模拟；play 角色不提供 idea-loom 的接口。
+    # The hub role serves no simulations; the play role serves no idea-loom API.
+    monkeypatch.setenv("IDEA_LOOM_ROLE", "hub")
+    assert cloud("demo.sim.example.com").get("/").status_code == 404
+    assert cloud("loom.example.com").get("/api/health").status_code == 200
+    assert cloud("loom.example.com").post("/api/play/demo/build").status_code == 503  # 没配 play 的地址 / no play address configured
+    monkeypatch.setenv("IDEA_LOOM_ROLE", "play")
+    monkeypatch.setenv("IDEA_LOOM_INTERNAL_TOKEN", "s3cret")
+    assert cloud("demo.sim.example.com").get("/").status_code == 200
+    assert cloud("loom.example.com").get("/api/state").status_code == 404
+    assert cloud("play").get("/healthz").json()["role"] == "play"
+    assert cloud("play").post("/internal/play/build/demo", headers={"x-internal-token": "wrong"}).status_code == 403
+    assert cloud("play").post("/internal/play/build/demo", headers={"x-internal-token": "s3cret"}).json()["status"] == "ready"
+    assert keeper.tick()["demo"] == "ready"
+
+
+def test_cloud_bootstrap_clones_once_and_seeds_only_missing_data(repo, tmp_path, monkeypatch):
+    from idea_loom import cloud
+
+    clone = tmp_path / "srv" / "repo"
+    data = tmp_path / "srv" / "data"
+    monkeypatch.setenv("IDEA_LOOM_REPO", str(clone))
+    monkeypatch.setenv("IDEA_LOOM_DATA", str(data))
+    assert cloud.has_clone() is False and cloud.seed_data() == [] and cloud.ensure_clone() is False  # 没给地址 / no URL given
+    monkeypatch.setenv("IDEA_LOOM_REPO_URL", str(repo))
+    assert cloud.ensure_clone() is True and cloud.ensure_clone() is True
+    git(clone, "update-ref", "refs/remotes/origin/main", "HEAD")
+    copied = cloud.seed_data()
+    assert "idea-loom/data/ideas.jsonl" in copied and "idea-loom/data/play/flat.json" in copied
+    assert (data / "ideas.jsonl").read_bytes() == (repo / "idea-loom" / "data" / "ideas.jsonl").read_bytes()
+    (data / "ideas.jsonl").write_text("云端后来写的\n")
+    assert cloud.seed_data() == [] and (data / "ideas.jsonl").read_text() == "云端后来写的\n"

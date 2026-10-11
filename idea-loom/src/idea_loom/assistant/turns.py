@@ -261,6 +261,9 @@ def _run(ctx: _Running, binary: str) -> None:
     except Exception as e:  # noqa: BLE001 — 回合失败要告诉界面，不能悄悄没了 / a failed turn must reach the UI
         final = {"type": "failed", "message": f"小助手出错了：{e}"[:300]}
     seconds = round(time.monotonic() - started, 1)
+    # 先把"这段对话正在回答"摘掉，再写结束事件：界面一看到结束就可能马上问下一句。
+    # Clear "this conversation is answering" before writing the closing event: the UI may ask again the moment it sees it.
+    _by_conversation.pop(ctx.conversation_id, None)
     ctx.emit({**final, "seconds": seconds})
     if final["type"] == "done":
         llm.log_call("assistant", model(), seconds, {"cost_usd": final.get("cost_usd"), "output_tokens": final.get("output_tokens")}, ok=True)
@@ -292,7 +295,12 @@ def follow(conversation_id: str, turn: int, after: int = 0, idle_limit: float = 
             waited = 0.0
             continue
         if conversation_id not in _by_conversation or waited >= idle_limit:
-            return  # 回合已经不在跑，或者太久没动静：让界面自己再来问 / not running, or idle too long: the UI asks again
+            # 回合已经不在跑，或者太久没动静。结束事件是在"摘掉正在回答"之后才写的，所以走之前再读一次。
+            # Not running, or idle too long. The closing event is written after the running mark is cleared, so read once more before leaving.
+            time.sleep(0.05)
+            for event in events(conversation_id, turn, after):
+                yield event
+            return
         time.sleep(0.15)
         waited += 0.15
 
