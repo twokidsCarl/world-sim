@@ -88,6 +88,15 @@ describe.skipIf(!has('male'))('skin maps (public/anatomy/male)', () => {
     expect(report.dermatome.keyPointsFailed).toEqual([])
   })
 
+  it('starts the back of T11, T12 and L1-L3 in order down the spine, at least 2 cm apart', () => {
+    // 回归：原先 T12、L1 用棘突尖，与 T11 带的后部重叠，使 L1 在脊柱旁出现孤立小块。
+    // Regression: T12 and L1 used the spinous process tips, which overlapped the back of the T11 band and left an island of L1 beside the spine.
+    for (const side of ['L', 'R'] as const) {
+      const ys = ['T11BackMid', 'T12BackMid', 'L1BackMid', 'L2BackMid', 'L3BackMid'].map((k) => g.ctx.lm.surfacePoint(k, side)[1])
+      for (let i = 1; i < ys.length; i++) expect(ys[i - 1]! - ys[i]!, `${side} ${i}`).toBeGreaterThan(0.02)
+    }
+  })
+
   it('passes the classic checkpoints from independent sources', () => {
     const failed = [...new Set(report.dermatome.checks.filter((c) => !c.ok).map((c) => c.name))]
     expect(failed).toEqual(KNOWN.failedChecks)
@@ -101,6 +110,8 @@ describe.skipIf(!has('male'))('skin maps (public/anatomy/male)', () => {
     expect(got('Little toe')).toEqual(['S1', 'S1'])
     expect(got('Perianal skin')).toEqual(['S4-5', 'S4-5'])
     for (const v of got('Angle of the mandible')) expect(['C2', 'C3']).toContain(v)
+    // 剑突：其前方皮肤的大部分应属 T6，而不是恰好过半 / Xiphoid: most of the skin in front of it is T6, not a bare majority.
+    for (const c of report.dermatome.checks.filter((c) => c.name.startsWith('Over the xiphoid'))) expect(c.shares!.T6, c.side).toBeGreaterThan(0.65)
   })
 
   it('is roughly symmetric and contiguous, with only the known exceptions', () => {

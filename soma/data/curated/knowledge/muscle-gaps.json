@@ -1,13 +1,13 @@
 {
  "note": "Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. \"wholeMuscleOnly\" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray's Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0). Bone-level attachments from Z-Anatomy patches count as present.",
- "muscleElementConcepts": 451,
- "complete": 335,
- "withGaps": 116,
- "unlateralisedGroups": 61,
+ "muscleElementConcepts": 470,
+ "complete": 341,
+ "withGaps": 129,
+ "unlateralisedGroups": 69,
  "missingCounts": {
-  "origin": 52,
-  "insertion": 48,
-  "innervatedBy": 21
+  "origin": 63,
+  "insertion": 61,
+  "innervatedBy": 32
  },
  "muscles": [
   {
@@ -35,6 +35,17 @@
     "insertion"
    ],
    "wholeMuscle": "deltoid"
+  },
+  {
+   "name": "bulbospongiosus",
+   "fma": [
+    "FMA21922",
+    "FMA21921"
+   ],
+   "missing": [
+    "insertion"
+   ],
+   "wholeMuscleOnly": []
   },
   {
    "name": "cervical rotator",
@@ -76,6 +87,18 @@
    "wholeMuscle": "pectoralis major"
   },
   {
+   "name": "compressor urethrae",
+   "fma": [
+    "FMA30438"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
    "name": "deep part of masseter",
    "fma": [
     "FMA49004",
@@ -87,6 +110,20 @@
     "insertion"
    ],
    "wholeMuscle": "masseter"
+  },
+  {
+   "name": "deep part of puborectalis",
+   "fma": [
+    "WUC_puborectalis_deep_part_L",
+    "WUC_puborectalis_deep_part_R"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "puborectalis"
   },
   {
    "name": "external anal sphincter",
@@ -107,6 +144,19 @@
    "missing": [
     "origin",
     "insertion"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
+   "name": "external layer of pubovisceral muscle",
+   "fma": [
+    "WUC_pubovisceral_muscle_external_layer_L",
+    "WUC_pubovisceral_muscle_external_layer_R"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
    ],
    "wholeMuscleOnly": []
   },
@@ -195,6 +245,19 @@
    ],
    "wholeMuscleOnly": [],
    "wholeMuscle": "longus colli"
+  },
+  {
+   "name": "inner layer of pubovisceral muscle",
+   "fma": [
+    "WUC_pubovisceral_muscle_inner_layer_L",
+    "WUC_pubovisceral_muscle_inner_layer_R"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
   },
   {
    "name": "interspinalis thoracis",
@@ -547,6 +610,18 @@
    "wholeMuscle": "biceps femoris"
   },
   {
+   "name": "sphincter urethrovaginalis",
+   "fma": [
+    "FMA30439"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
+  },
+  {
    "name": "spinal part of deltoid",
    "fma": [
     "FMA34684",
@@ -633,6 +708,20 @@
     "insertion"
    ],
    "wholeMuscle": "masseter"
+  },
+  {
+   "name": "superficial part of puborectalis",
+   "fma": [
+    "WUC_puborectalis_superficial_part_L",
+    "WUC_puborectalis_superficial_part_R"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": [],
+   "wholeMuscle": "puborectalis"
   },
   {
    "name": "superior oblique part of longus colli",
@@ -733,6 +822,18 @@
    ],
    "wholeMuscleOnly": [],
    "wholeMuscle": "lateral pterygoid"
+  },
+  {
+   "name": "urethral sphincter proper",
+   "fma": [
+    "WUC_urethral_sphincter_proper"
+   ],
+   "missing": [
+    "origin",
+    "insertion",
+    "innervatedBy"
+   ],
+   "wholeMuscleOnly": []
   },
   {
    "name": "vertical intermediate part of longus colli",

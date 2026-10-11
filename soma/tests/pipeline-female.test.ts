@@ -33,13 +33,13 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(data.schema).toBe(1)
     expect(data.body).toBe('female')
     const names = data.sources.map((s) => s.name)
-    expect(names).toEqual(expect.arrayContaining(['BodyParts3D 4.0', 'Visible Human Female CT', 'Human Reference Atlas']))
+    expect(names).toEqual(expect.arrayContaining(['BodyParts3D 4.0', 'Visible Human Female CT', 'Human Reference Atlas', 'Wu et al. 2015 pelvic floor']))
     expect(data.sources.find((s) => s.name === 'Visible Human Female CT')!.attribution).toContain('Courtesy of the U.S. National Library of Medicine')
     expect(data.sources.find((s) => s.name === 'Human Reference Atlas')!.license).toBe('CC BY 4.0')
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
       expect(names, p.id).toContain(p.source)
-      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|VD_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+|SOMA_skin)$/)
+      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|VD_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+|WU_[a-z_]+(_[LR])?|SOMA_skin)$/)
       if (p.id.startsWith('W_')) {
         // 形变后的男性部件：保留男性部件的身份，并标明其几何的来源
         // warped male part: keeps the male part's identity, names where its geometry came from
@@ -53,6 +53,10 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       } else if (p.id.startsWith('HRA_')) {
         expect(p.provenance, p.id).toBe('curated')
         expect(p.source).toBe('Human Reference Atlas')
+      } else if (p.id.startsWith('WU_')) {
+        // Wu 等 2015 的盆底结构：另一位女性，作者重建并平滑 / pelvic-floor structures of Wu et al. 2015: another woman, reconstructed and smoothed by the authors
+        expect(p.provenance, p.id).toBe('curated')
+        expect(p.source).toBe('Wu et al. 2015 pelvic floor')
       } else if (p.id.startsWith('VD_')) {
         // Denver 的冰冻切片模型：同一供体，经重新摆姿势和标准化，标为 warped
         // Denver cryosection models: the same donor, re-posed and standardised, labelled warped
@@ -77,7 +81,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     const maleOnly = data.parts.filter((p) => /\bpenis\b|\btest(is|es|icular)\b|prostat|seminal vesicle|deferent|epididym/i.test(p.name) || p.name === 'Urethra')
     expect(maleOnly.map((p) => p.name)).toEqual([])
     expect(data.parts.filter((p) => p.system === 'reproductive').every((p) => p.provenance === 'curated')).toBe(true)
-    for (const n of ['Body of uterus', 'Fundus of uterus', 'Uterine cervix', 'Vagina', 'Left ovary', 'Right ovary', 'Left uterine artery', 'Right round ligament of uterus', 'Left mammary lobe', 'Right mammary lobe']) expect(byName(n).provenance, n).toBe('curated')
+    for (const n of ['Uterus', 'Vagina', 'Left ovary', 'Right ovary', 'Left uterine tube', 'Left uterine artery', 'Right round ligament of uterus', 'Left mammary lobe', 'Right mammary lobe']) expect(byName(n).provenance, n).toBe('curated')
     // 男性模型有、她也必须仍然有的结构 / what the male model has and she must still have
     for (const n of ['Urinary bladder', 'Rectum', 'Left kidney', 'Stomach', 'Skin', 'Left sciatic nerve', 'Thyroid gland', 'Upper lobe of left lung']) expect(byName(n)).toBeDefined()
     expect(report.sexChecks.noMaleOnlyParts.pass).toBe(true)
@@ -203,7 +207,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
   })
 
   it('puts the female organs where they belong', () => {
-    const uterus = byName('Body of uterus')
+    const uterus = byName('Uterus')
     expect(byName('Urinary bladder').centroid[2]).toBeGreaterThan(uterus.centroid[2])
     expect(uterus.centroid[2]).toBeGreaterThan(byName('Rectum').centroid[2])
     expect(Math.abs(uterus.centroid[0])).toBeLessThan(0.02)
@@ -244,25 +248,15 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
   })
 
   it('clears the uterus, ovaries and tubes from the bowel and the bladder', () => {
-    const pelvis = report.collisions.pelvis
-    // 修正前：左卵巢 100 %、左输卵管 98 %、子宫 30 % 位于形变后的乙状结肠内
-    // was: left ovary 100 %, left tube 98 %, uterus 30 % inside the warped sigmoid colon
-    for (const k of ['uterus', 'left ovary', 'left uterine tube', 'right ovary', 'right uterine tube']) {
-      expect(pelvis.insideDescendingColon.after[k], k).toBeLessThan(0.02)
-      expect(pelvis.insideBladder.after[k], k).toBeLessThan(0.02)
-    }
-    expect(pelvis.insideDescendingColon.before['left ovary']).toBeGreaterThan(0.9)
-    expect(pelvis.insideBladder.after.vagina).toBeLessThan(0.05)
-    // 肠管仍是一条大小相近的管，位于她的骨和膀胱之外
-    // the bowel stayed a tube of about the same size, outside her bones and bladder
-    expect(pelvis.colon.volumeMlAfter / pelvis.colon.volumeMlBefore).toBeGreaterThan(0.75)
-    expect(pelvis.colon.surfaceInsideBone).toBeLessThan(0.02)
-    expect(pelvis.colon.surfaceInsideBladder).toBeLessThan(0.02)
-    expect(report.collisions.hraSetMovedPosteriorMm).toBeLessThanOrEqual(12)
-    // 不再有任何生殖结构大部分位于另一个器官内
-    // nothing reproductive is mostly inside another organ any more
-    const worst = Math.max(0, ...Object.values(report.collisions.hraInsideOthers as Record<string, { inside: number }>).map((v) => v.inside))
-    expect(worst).toBeLessThan(0.3)
+    const bowel = report.pelvis.bowel
+    // 修正前：左侧附件约 80 %、子宫约 23 % 位于形变后的乙状结肠内
+    // was: about 80 % of the left adnexa and 23 % of the uterus inside the warped sigmoid colon
+    for (const k of ['uterus', 'left adnexa', 'right adnexa']) expect(bowel.adnexaAndUterusInsideColonPct.after[k], k).toBeLessThan(1)
+    expect(bowel.adnexaAndUterusInsideColonPct.before['left adnexa']).toBeGreaterThan(50)
+    // 肠管仍是一条大小相近的管 / the bowel stayed a tube of about the same size
+    expect(bowel.colonVolumeMl / report.pelvis.rectosigmoid.colonVolumeMl.before).toBeGreaterThan(0.75)
+    expect(bowel.colonVolumeMl / report.pelvis.rectosigmoid.colonVolumeMl.before).toBeLessThan(1.25)
+    for (const sh of bowel.shifts) expect(sh.bowelInBoneBladderOrRectumPct, sh.organ).toBeLessThan(2)
   })
 
   it('wraps the skin over the breasts', () => {
@@ -366,7 +360,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect([...names].some((n) => /ovary/.test(n))).toBe(true)
     const genital = data.trees.partOf.find((c) => c.name === 'genital system')!
     const under = data.trees.partOf.filter((c) => c.parent === genital.id).flatMap((c) => c.parts)
-    expect(under).toContain('HRA_left_ovary')
+    expect(under).toContain('WU_ovary_L')
   })
 
   it('has a subcutaneous fat layer derived on her own body', () => {
@@ -387,22 +381,22 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(data.cautions!.some((c) => /subcutaneous fat/i.test(c.en) && /皮下脂肪/.test(c.zh))).toBe(true)
   })
 
-  it('opens a passage for the vagina through the pelvic floor and keeps the pelvic order', () => {
-    const h = report.collisions.hiatus
-    // 阴道表面基本不在肛提肌各部和直肠之内 / the vaginal surface is essentially outside every levator part and the rectum
-    for (const [k, v] of Object.entries(h.vaginaInside.after as Record<string, number>)) if (k !== 'Urinary bladder') expect(v, k).toBeLessThan(0.01)
-    expect(h.vaginaInside.before['Right puborectalis']).toBeGreaterThan(0.05)
-    // 已知的残留：阴道与膀胱仍有少量重叠 / known residue: the vagina still overlaps the bladder slightly
-    expect(h.vaginaInside.after['Urinary bladder']).toBeLessThan(0.07)
-    expect(h.hiatus.transverseMm).toBeGreaterThan(25)
-    expect(h.hiatus.transverseMm).toBeLessThan(50)
-    expect(h.vagina.lengthMm).toBeGreaterThan(45)
-    expect(h.vagina.lengthMm).toBeLessThan(110)
-    expect(h.vagina.upperEndIsPosterior).toBe(true)
+  it('says honestly whose pelvic organs these are', () => {
     const z = report.sexChecks.uterusBetweenBladderAndRectum.zMm
     expect(z.bladder).toBeGreaterThan(z.uterus)
     expect(z.uterus).toBeGreaterThan(z.rectum)
-    expect(data.cautions!.map((c) => c.en).join(' ')).toMatch(/arrangement of the pelvic organs is constructed/)
-    expect(data.cautions!.map((c) => c.zh).join(' ')).toMatch(/盆腔器官的排列是构造出来的/)
+    const en = data.cautions!.map((c) => c.en).join(' ')
+    const zh = data.cautions!.map((c) => c.zh).join(' ')
+    expect(en).toMatch(/of ANOTHER woman/)
+    expect(en).toMatch(/enlarged 1\.096 times/)
+    expect(en).toMatch(/is a join, not anatomy/)
+    expect(en).toMatch(/Absent from the pelvis/)
+    expect(zh).toMatch(/来自另一位女性/)
+    expect(zh).toMatch(/放大 1\.096 倍/)
+    expect(zh).toMatch(/盆腔中缺失的结构/)
+    const wu = data.sources.find((x) => x.name === 'Wu et al. 2015 pelvic floor')!
+    expect(wu.license).toBe('CC BY 4.0')
+    expect(wu.url).toContain('10.1371/journal.pone.0140736')
+    expect(wu.attribution).toContain('10.1371/journal.pone.0132226')
   })
 })

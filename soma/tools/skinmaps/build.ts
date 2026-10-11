@@ -12,7 +12,7 @@
 import type { Body } from './io.ts'
 import { grow, path, type Seed } from './geodesic.ts'
 import type { Dir, Landmarks, PointExpr, SideLR, SkinExpr } from './landmarks.ts'
-import { add, dist, dot, mul, pos, sub, type Skin, type V3 } from './mesh.ts'
+import { add, dist, dot, mul, nrm, pos, sub, type Skin, type V3 } from './mesh.ts'
 
 export type CurveItem =
   | SkinExpr
@@ -48,6 +48,12 @@ export interface SeedDef {
    * Keep only centreline points whose position along a limb frame's axis lies in the range.
    */
   where?: { frame: string; t: [number, number] }
+  /**
+   * 只保留投影到朝向某方向的皮肤上的点（坐标架绕轴角度，如手的 180 = 手背）：指背神经的中心线离掌侧皮肤可能更近。
+   * Keep only points that project onto skin facing a direction (angle round a frame's axis, e.g.
+   * 180 on the hand = dorsal): a dorsal digital nerve's centreline may lie nearer the palmar skin.
+   */
+  facing?: { frame: string; deg: number }
   /**
    * 距种子测地距离在此值以内的皮肤，起始距离均为 0（有宽度的种子）。
    * All skin within this geodesic distance of the seed starts at distance 0 (a seed with width).
@@ -142,7 +148,7 @@ export class Builder {
    * 神经中心线下方的皮肤顶点（按顺序），及各自的精确表面点。
    * Skin vertices under a nerve's centreline, in order, with the exact surface point of each.
    */
-  private projectNerve(branch: V3[], mode: 'trunkRadial' | 'beneath', side: SideLR, maxDepth: number, where?: SeedDef['where']): Line {
+  private projectNerve(branch: V3[], mode: 'trunkRadial' | 'beneath', side: SideLR, maxDepth: number, where?: SeedDef['where'], facing?: SeedDef['facing']): Line {
     const out: Line = { verts: [], pts: [] }
     for (const p of branch) {
       if (where) {
@@ -165,6 +171,7 @@ export class Builder {
         if (this.skin.outerBvh.faceVerts(c.face).includes(v)) q = c.point
       }
       if ((side === 'L') !== this.skin.positions[v * 3]! >= this.skin.midX) continue
+      if (facing && dot(nrm(this.skin, v), this.lm.frameDir(facing.frame, this.lm.frameT(facing.frame, p, side), facing.deg, side)) < 0) continue
       if (out.verts[out.verts.length - 1] === v) continue
       out.verts.push(v)
       out.pts.push(q)
@@ -303,7 +310,7 @@ export class Builder {
         if (!br) { notes.push(`${region}: nerve "${this.lm.partName(pattern, side)}" has no centreline; seed skipped`); continue }
         let used = 0
         for (const b of br) {
-          const raw = this.projectNerve(b, 'beneath', side, (def.maxDepthMm ?? 15) / 1000, def.where)
+          const raw = this.projectNerve(b, 'beneath', side, (def.maxDepthMm ?? 15) / 1000, def.where, def.facing)
           used += raw.verts.length
           const line: Line = { verts: [], pts: [], gap: [] }
           for (let i = 0; i < raw.verts.length; i++) {
@@ -336,6 +343,10 @@ export class Builder {
     const pinned: BuiltMap['pinned'] = []
     const label = new Int16Array(skin.n).fill(-1)
     const pinMask = new Uint8Array(skin.n)
+    // 每个顶点若位于某分区的种子曲线（curve 种子）上，记下该分区（先到先得）。神经种子分支多而密，不在此列。
+    // The region whose seed curve a vertex lies on, if any (first come, first served). Nerve
+    // seeds, with their many close branches, are not included.
+    const coreOf = new Int16Array(skin.n).fill(-1)
     for (const side of ['L', 'R'] as SideLR[]) {
       const ok = this.sameSide(side)
       const blocked = new Uint8Array(skin.n)
@@ -359,6 +370,7 @@ export class Builder {
           for (const [v, d] of [...field].sort((a, b) => a[0] - b[0])) seeds.push({ vertex: v, label: ri, d0: d + (s.offsetMm ?? 0) / 1000 })
           if (s.pin) for (const v of core) { pinned.push({ vertex: v, region: ri, side }); pinMask[v] = 1 }
           for (const v of core) isCore[v] = 1
+          if (s.curve) for (const v of core) if (coreOf[v]! < 0) coreOf[v] = ri
           mine.push(...core)
         }
         seedVerts.set(`${r.key}|${side}`, mine)
@@ -386,6 +398,10 @@ export class Builder {
       const next = label.slice()
       for (let i = 0; i < skin.n; i++) {
         if (!skin.outer[i] || pinMask[i] || label[i]! < 0) continue
+        // 种子线上的顶点只要仍属本区就不参与平滑：在粗网格上，细带的种子链会被邻点多数否决而断开。
+        // A vertex on a seed line keeps its own region's label through smoothing: on the coarse
+        // parts of the mesh the seed chain of a narrow band is otherwise outvoted and broken.
+        if (coreOf[i] === label[i]) continue
         count.clear()
         let total = 0, same = 0
         for (let k = skin.adjStart[i]!; k < skin.adjStart[i + 1]!; k++) {

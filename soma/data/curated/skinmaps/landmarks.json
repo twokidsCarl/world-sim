@@ -1562,6 +1562,419 @@
    "nervePoint": "{side} eleventh intercostal nerve",
    "x": "backLat",
    "back": true
+  },
+  "foramen_T11": {
+   "lerp": [
+    {
+     "part": "Eleventh thoracic vertebra"
+    },
+    {
+     "part": "Twelfth thoracic vertebra"
+    },
+    0.5
+   ]
+  },
+  "foramen_T12": {
+   "lerp": [
+    {
+     "part": "Twelfth thoracic vertebra"
+    },
+    {
+     "part": "First lumbar vertebra"
+    },
+    0.5
+   ]
+  },
+  "foramen_L1": {
+   "lerp": [
+    {
+     "part": "First lumbar vertebra"
+    },
+    {
+     "part": "Second lumbar vertebra"
+    },
+    0.5
+   ]
+  },
+  "foramen_L2": {
+   "lerp": [
+    {
+     "part": "Second lumbar vertebra"
+    },
+    {
+     "part": "Third lumbar vertebra"
+    },
+    0.5
+   ]
+  },
+  "foramen_L3": {
+   "lerp": [
+    {
+     "part": "Third lumbar vertebra"
+    },
+    {
+     "part": "Fourth lumbar vertebra"
+    },
+    0.5
+   ]
+  },
+  "T12BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     {
+      "shift": [
+       "foramen_T12",
+       "foramen_T11",
+       "T11BackPoint"
+      ]
+     },
+     {
+      "part": "Twelfth thoracic vertebra"
+     }
+    ]
+   },
+   "to": "post"
+  },
+  "L1BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     {
+      "shift": [
+       "foramen_L1",
+       "foramen_T11",
+       "T11BackPoint"
+      ]
+     },
+     {
+      "part": "First lumbar vertebra"
+     }
+    ]
+   },
+   "to": "post"
+  },
+  "L2BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     {
+      "shift": [
+       "foramen_L2",
+       "foramen_T11",
+       "T11BackPoint"
+      ]
+     },
+     {
+      "part": "Second lumbar vertebra"
+     }
+    ]
+   },
+   "to": "post"
+  },
+  "L3BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     {
+      "shift": [
+       "foramen_L3",
+       "foramen_T11",
+       "T11BackPoint"
+      ]
+     },
+     {
+      "part": "Third lumbar vertebra"
+     }
+    ]
+   },
+   "to": "post"
+  },
+  "frontMedX": {
+   "offset": [
+    "core",
+    [
+     0.0,
+     0,
+     0
+    ]
+   ]
+  },
+  "T2FrontPoint": {
+   "nervePoint": "{side} second intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T2FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T2FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T3FrontPoint": {
+   "nervePoint": "{side} third intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T3FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T3FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T4FrontPoint": {
+   "nervePoint": "{side} fourth intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T4FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T4FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T5FrontPoint": {
+   "nervePoint": "{side} fifth intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T5FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T5FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T6FrontPoint": {
+   "nervePoint": "{side} sixth intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T6FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T6FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T7FrontPoint": {
+   "nervePoint": "{side} seventh intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T7FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T7FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T8FrontPoint": {
+   "nervePoint": "{side} eighth intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T8FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T8FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T9FrontPoint": {
+   "nervePoint": "{side} ninth intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T9FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T9FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T10FrontPoint": {
+   "nervePoint": "{side} tenth intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T10FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T10FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "T11FrontPoint": {
+   "nervePoint": "{side} eleventh intercostal nerve",
+   "x": "frontMedX"
+  },
+  "T11FrontMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T11FrontPoint",
+     "core"
+    ]
+   },
+   "to": "ant"
+  }
+ },
+ "notes": {
+  "T12BackMid, L1BackMid, L2BackMid, L3BackMid": {
+   "zh": "T12 和 L1–L3 皮节带在后正中线旁的起点。与 T2–T11 取同一约定：T2–T11 取肋间神经在肋角处的高度；这四个节段没有可用的神经模型，故取其椎间孔平面（本椎与下一椎椎体中心的中点），再下移与 T11 相同的量（T11 椎间孔平面到 T11 神经在肋角处的高度差）。原先用棘突尖，其高度与 T11 带的后部重叠，使 L1 在脊柱旁出现孤立小块。",
+   "en": "Where the T12 and L1–L3 bands start beside the posterior midline. Same convention as T2–T11, whose level on the back is that of the intercostal nerve at the angle of the ribs: these four segments have no usable nerve model, so their level is that of the intervertebral foramen (midway between the centres of the vertebra and the next one) lowered by the same amount as T11 (from the T11 foramen level to the T11 nerve at the rib angle). The spinous process tips used before overlapped the back of the T11 band and left an island of L1 beside the spine."
+  },
+  "T2FrontMid … T11FrontMid": {
+   "zh": "T2–T11 皮节带在前正中线旁的终点：取肋间神经最靠近正中线的前端的高度，水平延至正中线旁。这样胸骨前和两乳之间的皮肤按神经前端的高度归属，而不是按沿皮肤表面绕行的距离归属。",
+   "en": "Where the T2–T11 bands end beside the anterior midline: the height of the intercostal nerve's anterior end (its point nearest the midline), carried horizontally to the midline. Skin over the sternum and between the breasts then follows the level of the nerve ends instead of the distance round the surface."
   }
  }
 }

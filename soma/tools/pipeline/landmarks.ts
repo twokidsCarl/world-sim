@@ -261,15 +261,25 @@ export function runLandmarkChecks(ctx: LandmarkContext): LandmarkResult[] {
         const idx = surfaceIndex(humerus)
         const h = hb[4] - hb[1]
         const axisAt = (y: number) => slabCentroid(humerus, y - 0.01, y + 0.01)
+        // 取贴骨（15 mm 以内）的采样点中最靠后的一个：桡神经沟里的主干。到肱三头肌的分支离骨 2 cm 以上，
+        // 它们是否比主干更靠后与“神经绕过肱骨干后面”无关（在男性静息位上两者只差 0.1 mm）。没有贴骨的采样点时退回到全部采样点。
+        // The most posterior of the samples lying on the bone (within 15 mm): the trunk in the radial
+        // groove. Branches to triceps run 2 cm and more from the bone, and whether one of them is further
+        // back than the trunk says nothing about the nerve wrapping the shaft (on the male at rest the
+        // two differ by 0.1 mm). With no sample on the bone, all samples are used as before.
         let best: { post: number; d: number } | null = null
+        let bestNear: { post: number; d: number } | null = null
         for (const q of r.n[0]!) {
           const f = (q[1] - hb[1]) / h
           if (f < 0.3 || f > 0.7) continue
           const a = axisAt(q[1])
           if (!a) continue
           const post = a[2] - q[2]
-          if (!best || post > best.post) best = { post, d: idx.distance(q[0], q[1], q[2]) }
+          const d = idx.distance(q[0], q[1], q[2])
+          if (!best || post > best.post) best = { post, d }
+          if (d < 0.015 && (!bestNear || post > bestNear.post)) bestNear = { post, d }
         }
+        if (bestNear) best = bestNear
         const medialAt = (f0: number, f1: number): number | null => {
           const v: number[] = []
           for (const q of r.n[0]!) {

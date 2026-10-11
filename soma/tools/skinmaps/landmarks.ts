@@ -17,6 +17,11 @@ export type PointExpr =
   | { lerp: [PointExpr, PointExpr, number] }
   | { xyz: [PointExpr, PointExpr, PointExpr] }
   | { offset: [PointExpr, [number, number, number]] }
+  /**
+   * 把点 A 平移 (to − from)：用于把一处量得的位移照搬到另一处。
+   * Point A moved by (to − from): carries a displacement measured in one place over to another.
+   */
+  | { shift: [PointExpr, PointExpr, PointExpr] }
   | { frame: string; t: number }
   /**
    * 神经中心线与过 x 的矢状面相交处的点（躯干前面或后面）。
@@ -210,6 +215,7 @@ export class Landmarks {
     }
     if ('lerp' in e) return lerp(this.point(e.lerp[0], side), this.point(e.lerp[1], side), e.lerp[2])
     if ('xyz' in e) return [this.point(e.xyz[0], side)[0], this.point(e.xyz[1], side)[1], this.point(e.xyz[2], side)[2]]
+    if ('shift' in e) return add(this.point(e.shift[0], side), sub(this.point(e.shift[2], side), this.point(e.shift[1], side)))
     if ('offset' in e) {
       const p = this.point(e.offset[0], side), o = e.offset[1]
       return [p[0] + (side === 'L' ? o[0] : -o[0]), p[1] + o[1], p[2] + o[2]]
