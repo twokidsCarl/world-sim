@@ -715,6 +715,10 @@ export const useStore = create<State>((set, get) => ({
             // 密的模型里一个分子只有画幅的百分之几，切片要厚些才连得成片，否则到处露白
             // in a dense model a molecule is a few percent of the frame, and the slab has to be thicker for the picture to hold together, or paper shows everywhere
             if (st.slab) st.slab = 0.5
+            // 线用填色的深一号，不用近黑：分子又小又密时黑线会盖住颜色，他画密的场景时线很柔和
+            // lines take a deeper shade of the fill rather than near-black: with small, crowded molecules black line smothers the colour, and his line is soft in crowded scenes
+            st.inkTint = 0.9
+            st.inkShade = 0.34
           }
           return st
         })(),

@@ -102,10 +102,11 @@ limn 这一轮的数：
 | L7 | 突触、支原体到处露白 | 密的模型里一个分子只有画幅的百分之几，20% 的切片太薄 | 密的模型切片取 50%，线宽 0.7 | 突触铺满了，白纸占比 0.10→0.00 |
 | L8 | 突触、支原体颜色杂：一个区室里橙、蓝、紫、褐都有 | 颜色按“角色”取，各角色的色相分散在整个色环上 | 目录条目新增 `hues`（每种角色在这个模型里用哪一族颜色）和 `membrane`，数值照他画同一个对象的那幅：突触是绿色细胞质加黄橙色小泡，支原体是蓝色蛋白、品红核糖体、黄色 DNA、绿色膜 | 支原体主色距离 0.114→0.088；突触 0.122→0.121（参考图是三联画，一半是紫色的突触后，这个量在这里说明不了什么），看图是对上了 |
 | L9 | 新冠刺少（30 个）、里面稀；HIV 里面粉、紫、橙混着 | 新冠：模型里的数量在实测范围的下端；切片后面的核糖核蛋白被切掉了。HIV：没有按区室配色 | 新冠的刺按文献推断到 74 个并排成等间隔的环（目录条目的 `respike`，写明出处）；核糖核蛋白衬在后面（`lining`），数量不动。HIV 用他的红色一族，RNA 黄色 | 新冠外圈成了亮暗两层交替的一整圈；白纸占比 0.65→0.48 |
+| L10 | 突触、支原体的线又黑又密，盖住了颜色 | 密的模型也用了近黑的墨色 | 密的模型的线改用填色的深一号（inkTint 0.9、inkShade 0.34） | 支原体：线的明度 0.39→0.48、彩度 0.046→0.069（他的 0.48、0.072），主色距离 0.088→0.082。突触：线的明度 0.37→0.45（他的 0.35，偏浅了），主色距离 0.121→0.150（参考是三联画，见 L8） |
 
 **新冠的数量是怎么推断的（L9）。** 查了开放获取的全文：Klein 等 2020（*Nat. Commun.*，doi:10.1038/s41467-020-19619-7，新冠的原位冷冻电镜断层扫描）给出每个病毒颗粒平均 48 个刺三聚体，范围 25–127，平均 38 ± 10 个核糖核蛋白；Neuman 等 2011（*J. Struct. Biol.*，doi:10.1016/j.jsb.2010.11.021，冠状病毒）给出平均 74 个刺。PetWorld 的模型里是 30 个刺、36 个核糖核蛋白：刺在实测范围的下端，核糖核蛋白和实测一致。所以刺取 74（Neuman 的平均值，在 Klein 的范围之内，高于 Klein 的平均值；Goodsell 2020 年那幅的密度与它相近），核糖核蛋白的数量不动。M 蛋白的数量我没有查到可以直接引用的数字，没有改。
 
-**循环到这里的状态。** 流感在结构和配色上接近他的画。我自己看仍然不对的：新冠里面仍比他的稀（36 个核糖核蛋白与实测一致，他画的是填满的）；突触和支原体的线偏黑偏密，他的很柔和；支原体里的 DNA 是团块，不是他那样的长线；所有的画都没有周围的环境。
+**循环到这里的状态。** 流感在结构和配色上接近他的画。我自己看仍然不对的：新冠里面仍比他的稀（36 个核糖核蛋白与实测一致，他画的是填满的）；支原体里的 DNA 是团块，不是他那样的长线；所有的画都没有周围的环境。
 
 ## English
 
@@ -200,6 +201,8 @@ The user asked that problems no longer be pointed out by a person: I compare wit
 
 - **L9.** Seen: few spikes (30) and a thin inside for the coronavirus; pink, violet and orange mixed inside HIV. Cause: the model's spike count is at the low end of what has been measured, and the ribonucleoproteins behind the slab were cut away; HIV was not coloured by compartment. Change: the coronavirus spikes are inferred at 74 from the literature and set in evenly spaced rings (`respike` in the catalogue entry, with its source); the ribonucleoproteins line the back (`lining`), their number unchanged; HIV takes his red family with yellow RNA. Result: the outside of the coronavirus is one full ring of alternating bright and dark spikes; blank paper 0.65→0.48.
 
+- **L10.** Seen: black, dense line in the synapse and the mycoplasma, smothering the colour. Cause: dense models used the near-black ink too. Change: their lines take a deeper shade of the fill (inkTint 0.9, inkShade 0.34). Result: for the mycoplasma line lightness 0.39→0.48 and chroma 0.046→0.069 (his: 0.48, 0.072), colour distance 0.088→0.082; for the synapse line lightness 0.37→0.45 (his 0.35, so now a little pale) and colour distance 0.121→0.150 (its reference is a triptych; see L8).
+
 **How the coronavirus numbers were inferred (L9).** From open-access full texts: Klein et al. 2020 (*Nat. Commun.*, doi:10.1038/s41467-020-19619-7, in situ cryo-electron tomography of SARS-CoV-2) give 48 spike trimers per virion on average, range 25–127, and 38 ± 10 ribonucleoproteins; Neuman et al. 2011 (*J. Struct. Biol.*, doi:10.1016/j.jsb.2010.11.021, coronaviruses) give 74 spikes on average. The PetWorld model has 30 spikes and 36 ribonucleoproteins: the spikes at the low end of the measured range, the ribonucleoproteins in agreement. So spikes are set to 74 (Neuman's average, inside Klein's range and above Klein's mean; the density of Goodsell's 2020 painting is close to it) and the number of ribonucleoproteins is left alone. For M protein I found no figure I could cite directly, and it was not changed.
 
-**Where the loop stands.** Influenza is close to his painting in structure and colour. Still wrong, by my own eye: the coronavirus is still thinner inside than his (36 ribonucleoproteins agree with measurement; he paints it packed); line in the synapse and the mycoplasma is black and dense where his is soft; DNA in the mycoplasma is lumps, not the long strands he paints; no painting has its surrounding environment.
+**Where the loop stands.** Influenza is close to his painting in structure and colour. Still wrong, by my own eye: the coronavirus is still thinner inside than his (36 ribonucleoproteins agree with measurement; he paints it packed); DNA in the mycoplasma is lumps, not the long strands he paints; no painting has its surrounding environment.
