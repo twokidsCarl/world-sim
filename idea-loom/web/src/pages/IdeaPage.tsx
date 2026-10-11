@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import { api } from '../api'
 import type { HistoryItem, IdeaDetail, Link as Edge, State } from '../contract'
 import { formatTime } from '../state/derive'
+import { EditText, IdeaActions, PositionEditor } from '../ui/IdeaActions'
 import { Empty, Page, Section } from '../ui/Page'
 import { IdeaLink, StatusBadge, ThreadChips, levelName } from '../ui/bits'
 
@@ -10,10 +11,15 @@ export function IdeaPage({ state }: { state: State }) {
   const { id = '' } = useParams()
   const [idea, setIdea] = useState<IdeaDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
+
+  useEffect(() => {
+    setIdea(null)
+    setEditing(false)
+  }, [id])
 
   useEffect(() => {
     let live = true
-    setIdea(null)
     setError(null)
     api.idea(id).then(
       (d) => live && setIdea(d),
@@ -47,7 +53,8 @@ export function IdeaPage({ state }: { state: State }) {
       <div className="two-col">
         <div>
           <Section title="正文" note="这段就是给 Claude 的输入">
-            <Prompt text={idea.prompt_text} />
+            {editing ? <EditText idea={idea} onDone={() => setEditing(false)} /> : <Prompt text={idea.prompt_text} />}
+            {!editing && <IdeaActions idea={idea} state={state} onEdit={() => setEditing(true)} />}
           </Section>
 
           <Section title="血缘" note="它从哪来，谁接着它">
@@ -70,22 +77,9 @@ export function IdeaPage({ state }: { state: State }) {
               <dd>
                 <Link to={`/ideas?level=${idea.level}`}>{levelName(state, idea.level)}</Link>
               </dd>
-              <dt>横线</dt>
-              <dd>
-                <ThreadChips threads={idea.threads} state={state} />
-              </dd>
-              <dt>内核</dt>
-              <dd>
-                {kernel ? (
-                  <>
-                    <Link to={`/ideas?kernel=${encodeURIComponent(kernel.name)}`}>{kernel.name}</Link>
-                    <div className="muted small">{kernel.desc}</div>
-                  </>
-                ) : (
-                  <span className="muted">还没归类</span>
-                )}
-              </dd>
             </dl>
+            <PositionEditor idea={idea} state={state} />
+            {kernel && <p className="muted small kernel-desc">{kernel.desc}</p>}
           </Section>
 
           <Section title="相关的子项目">

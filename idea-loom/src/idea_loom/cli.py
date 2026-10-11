@@ -8,7 +8,7 @@ from typing import Optional
 
 import typer
 
-from . import ideas, importer, render, store
+from . import ideas, importer, render, store, sync
 
 app = typer.Typer(help="idea-loom：world-sim 的想法池", no_args_is_help=True)
 
@@ -52,6 +52,17 @@ def render_(
     typer.echo(parts[block] if block else "\n\n".join(parts[b] for b in render.BLOCKS))
 
 
+@app.command("sync")
+def sync_(title: Optional[str] = typer.Option(None, help="PR 的标题 / PR title")) -> None:
+    """重新生成 IDEAS.md，把想法池的改动提交成一个 PR。 / Regenerate IDEAS.md and open a PR."""
+    st = sync.status()
+    typer.echo(f"未同步的事件：{st.pending}；IDEAS.md {'需要更新' if st.ideas_md_stale else '是最新的'}。")
+    result = sync.run(title)
+    typer.echo(result.message + (f" {result.pr_url}" if result.pr_url else ""))
+    if not result.ok:
+        raise typer.Exit(1)
+
+
 @app.command()
 def schema() -> None:
     """输出数据契约的 JSON Schema，前端类型由它生成。 / Print the JSON Schema of the data contract."""
@@ -59,7 +70,7 @@ def schema() -> None:
 
     from .model import IdeaDetail, State
 
-    _, defs = models_json_schema([(State, "serialization"), (IdeaDetail, "serialization")])
+    _, defs = models_json_schema([(State, "serialization"), (IdeaDetail, "serialization"), (sync.SyncStatus, "serialization"), (sync.SyncResult, "serialization")])
     # 后端序列化时每个字段都会写出来，所以在类型里全部标成必有。
     # The backend always serialises every field, so mark them all required in the types.
     for definition in defs["$defs"].values():

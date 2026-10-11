@@ -948,6 +948,73 @@
       "title": "State",
       "type": "object"
     },
+    "SyncResult": {
+      "properties": {
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "pr_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pr Url"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ok",
+        "pr_url",
+        "message"
+      ],
+      "title": "SyncResult",
+      "type": "object"
+    },
+    "SyncStatus": {
+      "properties": {
+        "pending": {
+          "title": "Pending",
+          "type": "integer"
+        },
+        "ideas_md_stale": {
+          "title": "Ideas Md Stale",
+          "type": "boolean"
+        },
+        "can_sync": {
+          "title": "Can Sync",
+          "type": "boolean"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "pending",
+        "ideas_md_stale",
+        "can_sync",
+        "reason"
+      ],
+      "title": "SyncStatus",
+      "type": "object"
+    },
     "ThreadInfo": {
       "properties": {
         "id": {

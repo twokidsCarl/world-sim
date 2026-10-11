@@ -209,3 +209,37 @@ button.chip.thread.on { color: var(--ink); border-color: var(--tc); background: 
   .page { padding: 20px 16px 48px; }
   .page-head { flex-direction: column; align-items: flex-start; }
 }
+
+/* 表单和操作 / forms and actions */
+.form { display: grid; gap: 12px; max-width: 760px; }
+.form.wide { max-width: 820px; }
+.form.inline { margin-top: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.form label, .form .label { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+.form input, .form textarea, .form select { font: 14px/1.6 var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--line-2); border-radius: 6px; padding: 6px 9px; width: 100%; }
+.form textarea { font: 15px/1.8 var(--serif); resize: vertical; }
+.row { display: flex; align-items: center; gap: 8px; }
+.row.wrap { flex-wrap: wrap; align-items: flex-end; gap: 16px; }
+.row.wrap label { min-width: 200px; }
+button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+button.primary:hover { background: var(--accent); border-color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: default; }
+.err { color: var(--bad); }
+.actions { margin-top: 14px; }
+.pos-edit { display: grid; gap: 8px; margin-top: 10px; }
+.pos-edit .thread-toggles { flex-wrap: wrap; }
+.pos-edit .chip { line-height: 24px; cursor: pointer; }
+.kernel-desc { margin-top: 6px; }
+.notice.good { border-left-color: var(--good); }
+.nav-new { margin-top: 10px; border: 1px dashed var(--line-2); justify-content: center; }
+.sync { display: grid; gap: 6px; margin-bottom: 12px; }
+.sync button { width: 100%; }
+
+/* 血缘 / lineage */
+.batches { list-style: none; margin: 0; padding: 0 0 0 16px; border-left: 1px solid var(--line-2); display: grid; gap: 26px; }
+.batch { position: relative; }
+.batch::before { content: ''; position: absolute; left: -21px; top: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.batch-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.batch-n { font-size: 12px; letter-spacing: 0.15em; color: var(--accent); }
+.batch-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 22px; }
+.batch-level .muted { margin-bottom: 3px; }
+.rel { white-space: nowrap; }

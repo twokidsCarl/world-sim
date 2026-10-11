@@ -19,16 +19,22 @@ generated from it.
   and the two branches; a view by kernel.
 - **想法池 / Pool**：按层、横线、内核、状态、子项目筛选，全文搜索。
   Filter by level, thread, kernel, status and subproject; full-text search.
-- **idea 页 / Idea page**：正文（可以复制给 Claude）、位置、血缘、每一次改动的历史。
-  The text (ready to hand to Claude), its position, its lineage and the history
-  of every change.
+- **idea 页 / Idea page**：正文（可以复制给 Claude）、位置、血缘、每一次改动的历史；改写、改横线和内核、并入另一条、丢弃、恢复。
+  The text (ready to hand to Claude), its position, its lineage and the history of
+  every change; rewrite it, change its threads and kernel, merge it into another,
+  discard it, restore it.
+- **血缘 / Lineage**：想法池一批一批长出来的过程，谁并入了谁。
+  How the pool grew batch by batch, and what was merged into what.
+- **手写一条 / Write one**：编号由层自动决定，用过的编号不复用。
+  The id follows the level; used ids are never reused.
+- **同步到仓库 / Sync**：重新生成 `IDEAS.md` 里的三块，用 `tools/pr.sh` 开一个 PR。
+  Regenerates the three blocks of `IDEAS.md` and opens a PR through `tools/pr.sh`.
 
-还没有的（按顺序做）：在界面里编辑和合并、用模型生成和细化、右侧小助手和许愿池、开发任务与统计、
-从许愿池触发 Claude Code。
+还没有的（按顺序做）：用模型生成和细化、右侧小助手和许愿池、开发任务与统计、从许愿池触发 Claude Code。
 
-Not yet (in this order): editing and merging in the UI, generating and refining
-with a model, the assistant sidebar and the wish pool, development tasks and
-statistics, triggering Claude Code from the wish pool.
+Not yet (in this order): generating and refining with a model, the assistant sidebar
+and the wish pool, development tasks and statistics, triggering Claude Code from the
+wish pool.
 
 ## 运行 / Run
 
@@ -82,7 +88,9 @@ There is no third-party data.
 
 ```sh
 uv run idea-loom status             # 现在有多少条 / how many ideas
-uv run idea-loom render             # 生成 IDEAS.md 的三块 / render the generated blocks
+uv run idea-loom render             # 输出 IDEAS.md 的三块 / print the generated blocks
+uv run idea-loom render --write     # 写回 IDEAS.md / write them into IDEAS.md
+uv run idea-loom sync               # 生成并开 PR / regenerate and open a PR
 uv run idea-loom import --force     # 重新导入 / re-import from git history
 uv run idea-loom schema             # 数据契约的 JSON Schema / JSON Schema of the contract
 cd web && bun run gen:types         # 重新生成前端类型 / regenerate the TS types
@@ -98,6 +106,8 @@ src/idea_loom/
   markdown.py   读 IDEAS.md / parse IDEAS.md
   importer.py   从 git 历史导入 / import from git history
   render.py     生成 IDEAS.md 的三块 / render the generated blocks
+  edits.py      手动改动，先检查再写事件 / manual changes, validated then appended
+  sync.py       同步到仓库 / sync to the repository
   server.py     HTTP 接口 / HTTP API
   cli.py        命令行 / command line
 web/            React + Vite + zustand

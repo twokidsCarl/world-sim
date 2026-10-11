@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { NavLink, Route, Routes } from 'react-router'
 import { IdeaPage } from '../pages/IdeaPage'
+import { LineagePage } from '../pages/LineagePage'
+import { NewIdeaPage } from '../pages/NewIdeaPage'
 import { MapPage } from '../pages/MapPage'
 import { PoolPage } from '../pages/PoolPage'
 import { useStore } from '../state/store'
@@ -8,10 +10,11 @@ import { useStore } from '../state/store'
 const NAV = [
   { to: '/', label: '地图', end: true },
   { to: '/ideas', label: '想法池', end: false },
+  { to: '/lineage', label: '血缘', end: false },
 ]
 
 export function App() {
-  const { state, error, load, theme, toggleTheme } = useStore()
+  const { state, error, load, theme, toggleTheme, sync, syncing, syncResult, runSync, clearSyncResult } = useStore()
   useEffect(() => {
     void load()
   }, [load])
@@ -31,7 +34,26 @@ export function App() {
             {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
           </NavLink>
         ))}
+        <NavLink to="/new" className="nav-item nav-new">
+          ＋ 手写一条
+        </NavLink>
         <div className="nav-foot">
+          {sync && (
+            <div className="sync">
+              {sync.can_sync ? (
+                <>
+                  <div className="small">
+                    {sync.pending > 0 ? `${sync.pending} 处改动还没进仓库` : 'IDEAS.md 需要更新'}
+                  </div>
+                  <button className="primary" disabled={syncing} onClick={() => void runSync()}>
+                    {syncing ? '正在同步…' : '同步到仓库'}
+                  </button>
+                </>
+              ) : (
+                <div className="muted small">{sync.reason ?? '已和仓库同步'}</div>
+              )}
+            </div>
+          )}
           <button onClick={toggleTheme} aria-label="切换昼夜配色">
             {theme === 'dark' ? '昼' : '夜'}
           </button>
@@ -43,6 +65,20 @@ export function App() {
             {error} <button onClick={() => void load()}>重试</button>
           </div>
         )}
+        {syncResult && (
+          <div className={`notice ${syncResult.ok ? 'good' : 'bad'}`} role="status">
+            {syncResult.message}
+            {syncResult.pr_url && (
+              <>
+                {' '}
+                <a href={syncResult.pr_url} target="_blank" rel="noreferrer">
+                  看这个合并请求
+                </a>
+              </>
+            )}{' '}
+            <button onClick={clearSyncResult}>知道了</button>
+          </div>
+        )}
         {state && state.unreadable > 0 && <div className="notice warn">事件日志里有 {state.unreadable} 行读不出来，已跳过。</div>}
         {!state && !error && <p className="muted pad">正在读取想法池…</p>}
         {state && (
@@ -50,6 +86,8 @@ export function App() {
             <Route path="/" element={<MapPage state={state} />} />
             <Route path="/ideas" element={<PoolPage state={state} />} />
             <Route path="/ideas/:id" element={<IdeaPage state={state} />} />
+            <Route path="/lineage" element={<LineagePage state={state} />} />
+            <Route path="/new" element={<NewIdeaPage state={state} />} />
             <Route path="*" element={<p className="pad">没有这个页面。</p>} />
           </Routes>
         )}

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../api'
-import type { State } from '../contract'
+import type { State, SyncResult, SyncStatus } from '../contract'
 
 type Theme = 'light' | 'dark'
 
@@ -15,6 +15,11 @@ type Store = {
   loading: boolean
   theme: Theme
   page: PageIdentity
+  sync: SyncStatus | null
+  syncing: boolean
+  syncResult: SyncResult | null
+  runSync: () => Promise<void>
+  clearSyncResult: () => void
   load: () => Promise<void>
   toggleTheme: () => void
   setPage: (page: PageIdentity) => void
@@ -36,10 +41,25 @@ export const useStore = create<Store>((set, get) => ({
   loading: false,
   theme: initialTheme(),
   page: { title: '', lead: '' },
+  sync: null,
+  syncing: false,
+  syncResult: null,
+  runSync: async () => {
+    set({ syncing: true, syncResult: null })
+    try {
+      set({ syncResult: await api.sync() })
+    } catch (e) {
+      set({ syncResult: { ok: false, pr_url: null, message: e instanceof Error ? e.message : String(e) } })
+    }
+    set({ syncing: false })
+    await get().load()
+  },
+  clearSyncResult: () => set({ syncResult: null }),
   load: async () => {
     set({ loading: true })
     try {
-      set({ state: await api.state(), error: null, loading: false })
+      const [state, sync] = await Promise.all([api.state(), api.syncStatus().catch(() => null)])
+      set({ state, sync, error: null, loading: false })
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e), loading: false })
     }

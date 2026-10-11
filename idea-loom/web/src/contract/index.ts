@@ -15,6 +15,8 @@ export type {
   Link,
   Coverage,
   Project1 as Project,
+  SyncStatus,
+  SyncResult,
 } from './types.gen'
 
 export type LevelId = import('./types.gen').LevelInfo['id']
