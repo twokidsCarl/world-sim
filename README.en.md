@@ -64,3 +64,7 @@ tools/pr.sh "strata: 加入三维盒子 / add a 3D box" strata
 The script commits only the listed paths, switches no branch and touches nothing else in the working tree, so several sessions can work in the same directory at once.
 
 Everything that goes into git is written in both Chinese and English: documentation, PRs, commit messages, code comments. See [`CLAUDE.md`](CLAUDE.md) for the details.
+
+## License
+
+The code and documentation are released under the [MIT License](LICENSE). Third-party data and assets used by the subprojects are not covered by it and keep their own licences; sources and licences are listed in each subproject's README.
