@@ -98,3 +98,65 @@ describe('inferred placement', () => {
     expect(s.outer).toBeCloseTo(440, 0)
   })
 })
+
+describe('an orderly arrangement of membrane proteins', () => {
+  it('lays sites in rings about the viewing direction, evenly spaced, the middle ring just behind the equator', async () => {
+    const { ringSites } = await import('../src/infer/idealise')
+    for (const n of [41, 120, 266]) {
+      const sites = ringSites(n, [0, 0, 1])
+      expect(sites.length).toBe(n)
+      for (const s of sites) expect(Math.hypot(...s)).toBeCloseTo(1, 6)
+      // 最近邻的间距处处相近 / nearest-neighbour spacing is about the same everywhere
+      const nn = sites.map((a, i) => Math.min(...sites.map((b, j) => (i === j ? 9 : Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])))))
+      const mean = nn.reduce((s, v) => s + v, 0) / nn.length
+      expect(Math.min(...nn)).toBeGreaterThan(mean * 0.6)
+      expect(Math.max(...nn)).toBeLessThan(mean * 1.5)
+      // 赤道那一圈：z 略小于 0，所以沿赤道从正面剖开时它整圈都在切片里；圈上等间隔
+      // the equatorial ring: z a little below 0, so a cut from the front along the equator keeps all of it; evenly spaced round the ring
+      const ring = sites.filter((s) => Math.abs(s[2] + 0.02) < 0.01)
+      expect(ring.length).toBeGreaterThan(8)
+      for (const s of ring) expect(s[2]).toBeLessThan(0)
+      const angles = ring.map((s) => Math.atan2(s[1], s[0])).sort((a, b) => a - b)
+      const gaps = angles.map((a, i) => (i ? a - angles[i - 1]! : a + 2 * Math.PI - angles[angles.length - 1]!))
+      expect(Math.max(...gaps) - Math.min(...gaps)).toBeLessThan(1e-6)
+    }
+  })
+
+  it('groups chains into complexes, copies a complex out, and stands it upright at every site', async () => {
+    const { complexes, placeTemplate, subMolecule, templateOf, chainCentre } = await import('../src/infer/idealise')
+    // 两个“三聚体”：各三条沿某个方向伸出的短链；一条落单的链
+    // two "trimers" of three short chains each, reaching out along some direction; and one stray chain
+    const pos: number[] = [], chains: Molecule['chains'] = []
+    const chain = (base: number[], dir: number[]) => {
+      const start = pos.length / 3
+      for (let i = 0; i < 20; i++) pos.push(base[0]! + dir[0]! * i, base[1]! + dir[1]! * i, base[2]! + dir[2]! * i)
+      chains.push({ asymId: `c${chains.length}`, authAsymId: 'A', entity: 0, start, count: 20, model: 1 })
+    }
+    // 第一个直立在 +x 方向的球面上（半径 100），第二个斜着 / the first stands upright on a sphere of radius 100 towards +x, the second leans
+    for (const off of [[0, 0, 0], [0, 6, 0], [0, 0, 6]]) chain([100 + off[0]!, off[1]!, off[2]!], [1, 0, 0])
+    for (const off of [[0, 0, 0], [6, 0, 0], [0, 0, 6]]) chain([off[0]!, 100 + off[1]!, off[2]!], [0.6, 0.8, 0])
+    chain([-500, 0, 0], [0, 1, 0])
+    const n = pos.length / 3
+    const m: Molecule = {
+      id: 'x', title: 'x', atomCount: n, pos: new Float32Array(pos), element: new Uint8Array(n).fill(El.C), chainOf: new Uint32Array(n), isTrace: new Uint8Array(n), residue: new Int32Array(n).fill(1),
+      chains, entities: [{ id: '1', description: 'spike', kind: 'protein' }], assemblies: [{ id: '1', groups: [{ chains: chains.map((_, i) => i), operators: [IDENTITY] }] }],
+    }
+    const groups = complexes(m, [0, 1, 2, 3, 4, 5, 6], 3, 30)
+    expect(groups.map((g) => g.slice().sort())).toEqual([[0, 1, 2], [3, 4, 5]])
+    const t0 = templateOf(m, groups[0]!, [0, 0, 0]), t1 = templateOf(m, groups[1]!, [0, 0, 0])
+    expect(t0.tilt).toBeLessThan(2)
+    expect(t1.tilt).toBeGreaterThan(20)
+    expect(t0.up[0]).toBeGreaterThan(0.99)
+    const sub = subMolecule(m, groups[0]!, 's', 's')
+    expect([sub.atomCount, sub.chains.length, sub.entities.length]).toEqual([60, 3, 1])
+    expect(Array.from(sub.pos.subarray(0, 3))).toEqual([100, 0, 0])
+    expect(chainCentre(sub, 1)[1]).toBeCloseTo(6, 4)
+    // 放到 +z 和 −y 两个位置：质心到中心的距离不变，轴沿法线 / placed at +z and −y: the centroid keeps its distance from the centre and the axis runs along the normal
+    const ops = placeTemplate(t0, [0, 0, 0], [[0, 0, 1], [0, -1, 0]])
+    const c0 = at(ops[0]!, t0.origin), tip0 = at(ops[0]!, [t0.origin[0] + t0.up[0], t0.origin[1] + t0.up[1], t0.origin[2] + t0.up[2]])
+    expect(Math.hypot(...c0)).toBeCloseTo(t0.distance, 3)
+    expect(c0[2]! / t0.distance).toBeCloseTo(1, 5)
+    expect(tip0[2]! - c0[2]!).toBeCloseTo(1, 5)
+    expect(at(ops[1]!, t0.origin)[1]! / t0.distance).toBeCloseTo(-1, 5)
+  })
+})

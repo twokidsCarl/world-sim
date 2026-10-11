@@ -135,8 +135,8 @@ export const STYLE_MESOSCALE: Style = {
   background: [0.992, 0.988, 0.976],
   // 线是旁边填色的深一号，细一些 / lines are a deeper shade of the fill beside them, and thinner
   inkTint: 1,
-  inkShade: 0.3,
-  lineWidth: 0.85,
+  inkShade: 0.24,
+  lineWidth: 1.05,
   // 平涂：不要原子之间的阴影，明暗只来自景深的三档 / flat washes: no shadows between atoms, tone comes from the three depth steps alone
   shadow: { strength: 0, cone: 2, floor: 1, radius: 0 },
   fog: { color: [0.16, 0.14, 0.13], front: 1, back: 0, layers: 3, shade: 0.5 },
