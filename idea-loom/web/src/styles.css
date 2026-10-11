@@ -261,3 +261,6 @@ button:disabled { opacity: 0.45; cursor: default; }
 .idea-li .idea-row { border-bottom: 0; }
 .idea-li input { margin: 0 0 0 4px; }
 .cell a.none { text-decoration: none; }
+.english { margin-top: 12px; }
+.english summary { cursor: pointer; color: var(--ink-2); font-size: 12.5px; }
+.english div { margin-top: 8px; padding: 10px 14px; border-left: 3px solid var(--line-2); font: 15px/1.7 Georgia, 'Times New Roman', serif; }

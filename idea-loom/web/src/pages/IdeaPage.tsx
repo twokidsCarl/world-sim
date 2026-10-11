@@ -56,6 +56,24 @@ export function IdeaPage({ state }: { state: State }) {
         <div>
           <Section title="正文" note="这段就是给 Claude 的输入">
             {editing ? <EditText idea={idea} onDone={() => setEditing(false)} /> : <Prompt text={idea.prompt_text} />}
+            {!editing && (
+              <details className="english">
+                <summary>
+                  英文版{!idea.title_en && '（还没有翻译）'}
+                  {idea.en_stale && '（中文改过了，英文还是旧的）'}
+                </summary>
+                {idea.title_en ? (
+                  <div lang="en">
+                    <h4>{idea.title_en}</h4>
+                    {(idea.body_en ?? '').split('\n').map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted small">去"生成与候选"页的"整理"里翻译。</p>
+                )}
+              </details>
+            )}
             {!editing && <IdeaActions idea={idea} state={state} onEdit={() => setEditing(true)} />}
           </Section>
 

@@ -10,19 +10,29 @@ export type Name = string;
 export type Unit = string;
 export type Emerges = string;
 export type Intro = string;
+export type NameEn = string;
+export type UnitEn = string;
+export type EmergesEn = string;
+export type IntroEn = string;
 export type Kind = "ladder" | "vertical" | "branch";
 export type Levels = LevelInfo[];
 export type Id1 = "A" | "B" | "C" | "D" | "E";
 export type Name1 = string;
 export type Short = string;
 export type Desc = string;
+export type NameEn1 = string;
+export type ShortEn = string;
+export type DescEn = string;
 export type Threads = ThreadInfo[];
 export type Name2 = string;
 export type Desc1 = string;
 export type Project = string | null;
+export type NameEn2 = string;
+export type DescEn1 = string;
 export type Kernels = KernelInfo[];
 export type Dir = string;
 export type Tagline = string;
+export type TaglineEn = string;
 export type Level = ("L1" | "L2" | "L3" | "L4" | "L5" | "L6" | "L7" | "L8" | "L9" | "L10" | "纵" | "造" | "规") | null;
 export type Keywords = string[];
 export type Ideas = string[];
@@ -49,6 +59,9 @@ export type Prompt = string | null;
 export type CreatedAt = string;
 export type UpdatedAt = string;
 export type Versions = number;
+export type TitleEn = string | null;
+export type BodyEn = string | null;
+export type EnStale = boolean;
 export type Mentions = string[];
 export type Projects1 = string[];
 export type Ideas1 = Idea[];
@@ -62,6 +75,8 @@ export type Name3 = string;
 export type Desc2 = string;
 export type Project2 = string | null;
 export type Ideas2 = string[];
+export type NameEn3 = string;
+export type DescEn2 = string;
 export type Kernels1 = KernelCount[];
 export type Total = number;
 export type Live = number;
@@ -80,13 +95,17 @@ export type Reason1 = string | null;
 export type CreatedAt1 = string;
 export type UpdatedAt1 = string;
 export type Versions1 = number;
+export type TitleEn1 = string | null;
+export type BodyEn1 = string | null;
+export type EnStale1 = boolean;
 export type Mentions1 = string[];
 export type Projects2 = string[];
 export type PromptText = string;
 export type At = string;
 export type By = string;
 export type ByLabel = string;
-export type Event = "created" | "edited" | "moved" | "status" | "merged_into" | "discarded" | "restored" | "noted";
+export type Event =
+  "created" | "edited" | "moved" | "status" | "merged_into" | "discarded" | "restored" | "noted" | "translated";
 export type EventLabel = string;
 export type Text = string;
 export type Pr1 = number | null;
@@ -164,6 +183,10 @@ export interface LevelInfo {
   unit: Unit;
   emerges: Emerges;
   intro: Intro;
+  name_en: NameEn;
+  unit_en: UnitEn;
+  emerges_en: EmergesEn;
+  intro_en: IntroEn;
   kind: Kind;
 }
 /**
@@ -175,6 +198,9 @@ export interface ThreadInfo {
   name: Name1;
   short: Short;
   desc: Desc;
+  name_en: NameEn1;
+  short_en: ShortEn;
+  desc_en: DescEn;
 }
 /**
  * This interface was referenced by `Contract`'s JSON-Schema
@@ -184,6 +210,8 @@ export interface KernelInfo {
   name: Name2;
   desc: Desc1;
   project: Project;
+  name_en: NameEn2;
+  desc_en: DescEn1;
 }
 /**
  * This interface was referenced by `Contract`'s JSON-Schema
@@ -192,6 +220,7 @@ export interface KernelInfo {
 export interface Project1 {
   dir: Dir;
   tagline: Tagline;
+  tagline_en: TaglineEn;
   level: Level;
   keywords: Keywords;
   ideas: Ideas;
@@ -217,6 +246,9 @@ export interface Idea {
   created_at: CreatedAt;
   updated_at: UpdatedAt;
   versions: Versions;
+  title_en: TitleEn;
+  body_en: BodyEn;
+  en_stale: EnStale;
   mentions: Mentions;
   projects: Projects1;
 }
@@ -283,6 +315,8 @@ export interface KernelCount {
   desc: Desc2;
   project: Project2;
   ideas: Ideas2;
+  name_en: NameEn3;
+  desc_en: DescEn2;
 }
 /**
  * This interface was referenced by `Contract`'s JSON-Schema
@@ -321,6 +355,9 @@ export interface IdeaDetail {
   created_at: CreatedAt1;
   updated_at: UpdatedAt1;
   versions: Versions1;
+  title_en: TitleEn1;
+  body_en: BodyEn1;
+  en_stale: EnStale1;
   mentions: Mentions1;
   projects: Projects2;
   prompt_text: PromptText;

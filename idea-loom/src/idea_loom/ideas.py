@@ -110,6 +110,8 @@ def _apply(ideas: dict[str, Idea], history: dict[str, list[Version]], e: IdeaEve
             idea.title = e.title
         if e.body is not None:
             idea.body = e.body
+        if idea.title_en or idea.body_en:
+            idea.en_stale = True
         history[e.id].append(Version(at=e.at, by=e.by, title=idea.title, body=idea.body))
     elif e.event == "moved":
         if e.level is not None:
@@ -118,6 +120,8 @@ def _apply(ideas: dict[str, Idea], history: dict[str, list[Version]], e: IdeaEve
             idea.threads = sorted(e.threads)
         if "kernel" in e.model_fields_set:
             idea.kernel = e.kernel
+    elif e.event == "translated":
+        idea.title_en, idea.body_en, idea.en_stale = e.title_en, e.body_en, False
     elif e.event == "status":
         if e.status is not None:
             idea.status = e.status
@@ -206,7 +210,7 @@ def kernel_counts(ideas: dict[str, Idea], frame: Frame) -> list[KernelCount]:
     out = []
     for k in frame.kernels:
         ids = [i.id for i in ideas.values() if i.kernel == k.name and i.status in LIVE]
-        out.append(KernelCount(name=k.name, desc=k.desc, project=k.project, ideas=sorted(ids, key=sort_key)))
+        out.append(KernelCount(name=k.name, desc=k.desc, project=k.project, ideas=sorted(ids, key=sort_key), name_en=k.name_en, desc_en=k.desc_en))
     out.sort(key=lambda k: -len(k.ideas))
     return out
 
@@ -285,6 +289,8 @@ def _event_text(e: IdeaEvent, ideas: dict[str, Idea]) -> str:
         return "丢弃" + (f"：{e.reason}" if e.reason else "")
     if e.event == "restored":
         return "恢复到想法池"
+    if e.event == "translated":
+        return f"英文：{e.title_en}"
     if e.event == "status":
         return f"状态改为「{STATUS_LABELS.get(e.status or '', e.status)}」"
     return e.text or ""

@@ -136,3 +136,32 @@ def test_api(log, monkeypatch):
     assert client.post(f"/api/proposals/{pid}/dismiss").status_code == 409
     monkeypatch.setenv("FAKE_MODE", "always_fail")
     assert client.post("/api/ops/refine", json={"idea_id": "1.1"}).status_code == 502
+
+
+def test_translate_writes_events_and_marks_stale_after_a_rewrite(log, monkeypatch):
+    reply(monkeypatch, {"items": [
+        {"id": "1.1", "title_en": "One level up", "body_en": "Following strata: only particles so far."},
+        {"id": "1.2", "title_en": "A sandpile", "body_en": "Grain by grain.\nSame kernel as 1.1?"},
+        {"id": "1.3", "title_en": "A spark", "body_en": "It burns."},
+        {"id": "纵 1", "title_en": "A glass of wine", "body_en": "From molecules to society."},
+        {"id": "7.7", "title_en": "Unknown", "body_en": "ignored"},
+    ]})
+    assert ops.translate() == ["1.1", "1.2", "1.3", "纵 1"]
+    assert "id: 1.2\ntitle: 沙堆" in fake_claude.calls(log)[0]["stdin"]
+    d = ideas.detail("1.2")
+    assert (d.title_en, d.en_stale) == ("A sandpile", False)
+    assert ops.untranslated(ideas.current()[0]) == []
+    from idea_loom import edits
+    edits.edit("1.2", body="改过的正文。")
+    assert ideas.detail("1.2").en_stale is True
+    assert [i.id for i in ops.untranslated(ideas.current()[0])] == ["1.2"]
+    edits.set_english("1.2", title_en="A sandpile", body_en="Rewritten.")
+    assert ideas.detail("1.2").en_stale is False
+
+
+def test_english_render_falls_back_to_chinese_for_untranslated(seeded):
+    from idea_loom import edits, render
+    edits.set_english("1.1", title_en="One level up", body_en="Following strata.")
+    text = render.pool_en(ideas.state())
+    assert "**1.1 One level up** (E)\nFollowing strata." in text
+    assert "**1.2 沙堆** (B) *(not translated yet)*" in text

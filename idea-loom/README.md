@@ -36,6 +36,11 @@ generated from it.
   Refine on the idea page; tick several ideas in the pool to fuse them. Everything
   the model returns is a candidate, and the pool does not change until you accept.
 
+- **英文版 / English edition**：每条 idea 有英文译文（模型翻译，中文是原文；中文改写后英文标为过期，等重新翻译）。同步时同时生成 `IDEAS.md` 和 `IDEAS.en.md`。
+  Every idea has an English translation (by a model; the Chinese is the original, and
+  a rewrite marks the English stale until it is translated again). A sync regenerates
+  both `IDEAS.md` and `IDEAS.en.md`.
+
 还没有的（按顺序做）：右侧小助手和许愿池、开发任务与统计、从许愿池触发 Claude Code。
 
 Not yet (in this order): the assistant sidebar and the wish pool, development tasks
@@ -103,6 +108,7 @@ There is no third-party data.
 uv run idea-loom status             # 现在有多少条 / how many ideas
 uv run idea-loom render             # 输出 IDEAS.md 的三块 / print the generated blocks
 uv run idea-loom render --write     # 写回 IDEAS.md / write them into IDEAS.md
+uv run idea-loom translate          # 把还没有英文的译成英文 / translate what has no English yet
 uv run idea-loom sync               # 生成并开 PR / regenerate and open a PR
 uv run idea-loom import --force     # 重新导入 / re-import from git history
 uv run idea-loom schema             # 数据契约的 JSON Schema / JSON Schema of the contract

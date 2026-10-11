@@ -23,6 +23,7 @@ export function InboxPage({ state }: { state: State }) {
   const [showDone, setShowDone] = useState(false)
   const open = proposals?.proposals.filter((p) => p.status === 'open') ?? []
   const done = proposals?.proposals.filter((p) => p.status !== 'open') ?? []
+  const untranslated = state.ideas.filter((i) => ['pool', 'building', 'built'].includes(i.status) && (!i.title_en || i.en_stale)).length
   const kept = done.filter((p) => p.status === 'accepted').length
 
   const run = async (label: string, fn: () => Promise<unknown>) => {
@@ -130,6 +131,11 @@ export function InboxPage({ state }: { state: State }) {
           >
             {busy === '查重' ? '正在查重…' : `在${target.level ? levelName(state, target.level) : target.kernel || '选定的范围'}里查重`}
           </button>
+          {untranslated > 0 && (
+            <button disabled={busy !== null} onClick={() => void run('翻译', () => api.translate())}>
+              {busy === '翻译' ? '正在翻译…' : `把 ${untranslated} 条还没有英文的译成英文`}
+            </button>
+          )}
           <span className="muted small">融合：去想法池勾选两条以上。细化：去那一条 idea 的页面。</span>
         </div>
       </Section>

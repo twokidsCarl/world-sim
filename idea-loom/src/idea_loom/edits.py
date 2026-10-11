@@ -130,3 +130,12 @@ def note(idea_id: str, text: str, *, by: str = "human") -> None:
     if not text.strip():
         raise EditError("说明不能空")
     ideas.append_events([IdeaEvent(at=now(), by=by, id=idea_id, event="noted", text=text.strip())])
+
+
+def set_english(idea_id: str, *, title_en: str, body_en: str, by: str = "human") -> None:
+    """手动改英文版。 / Edit the English version by hand."""
+    pool, _, _, _ = ideas.current()
+    _get(pool, idea_id)
+    if not title_en.strip() or not body_en.strip():
+        raise EditError("英文标题和正文都不能空")
+    ideas.append_events([IdeaEvent(at=now(), by=by, id=idea_id, event="translated", title_en=title_en.strip(), body_en=body_en.strip())])
