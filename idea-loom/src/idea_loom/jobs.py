@@ -53,6 +53,16 @@ ACTIVE = ("planning", "running", "testing", "pr")
 HOLDING = ACTIVE + ("plan_ready",)  # 占着目录的阶段 / phases that hold the directory
 LIMIT_SECONDS = {"planning": 900, "running": 3600}
 MAX_REPAIRS = 2
+SUBMIT_ATTEMPTS = 4
+SUBMIT_WAIT = 8.0
+TRANSIENT = ("cannot lock ref", "unable to lock", "index.lock", "timed out", "timeout", "could not resolve host", "connection reset", "connection refused",
+             "early eof", "http 5", "502", "503", "504", "rpc failed", "tls", "unexpected disconnect")
+
+
+def transient(output: str) -> bool:
+    """这段输出像不像一个等一会儿就会好的错误。 / Whether this output looks like an error that waiting a moment would fix."""
+    text = output.lower()
+    return any(mark in text for mark in TRANSIENT)
 
 
 class JobError(ValueError):
@@ -665,10 +675,20 @@ def _finish(job_id: str) -> None:
         job.pr_url, problem = worker.submit(job, title, commit_body, pr_body, draft=draft)
     else:
         env = {**os.environ, "COMMIT_BODY": commit_body, "PR_BODY": pr_body}
-        proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, job.directory], cwd=repo, env=env, capture_output=True, text=True, timeout=600)
-        out = (proc.stdout + proc.stderr).strip()
-        job.pr_url = next((line.split("PR: ", 1)[1].strip() for line in out.splitlines() if line.startswith("PR: ")), None)
-        problem = None if proc.returncode == 0 and job.pr_url else (out.splitlines()[-1] if out else "没有输出")
+        # 提交这一步会遇到一闪而过的错误：别的会话正好也在更新同一个仓库（git 的锁冲突）、网络超时、
+        # GitHub 一时没应答。这些不是这次改动的问题，等一会儿重来就好，所以重试几次再认输。
+        # Submitting can hit passing errors: another session updating the same repository at that
+        # moment (a git lock conflict), a network timeout, GitHub briefly not answering. None of
+        # these is about the change itself and waiting a moment fixes them, so retry before giving up.
+        for attempt in range(SUBMIT_ATTEMPTS):
+            proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, job.directory], cwd=repo, env=env, capture_output=True, text=True, timeout=600)
+            out = (proc.stdout + proc.stderr).strip()
+            job.pr_url = next((line.split("PR: ", 1)[1].strip() for line in out.splitlines() if line.startswith("PR: ")), None) or job.pr_url
+            problem = None if proc.returncode == 0 and job.pr_url else (out.splitlines()[-1] if out else "没有输出")
+            if problem is None or not transient(out) or attempt == SUBMIT_ATTEMPTS - 1:
+                break
+            _say(job_id, f"提交时遇到一个一闪而过的错误，{SUBMIT_WAIT * (attempt + 1):g} 秒后重试（第 {attempt + 2} 次）：{problem[:160]}")
+            time.sleep(SUBMIT_WAIT * (attempt + 1))
     if job.pr_url and job.pr_url.rstrip("/").split("/")[-1].isdigit():
         job.pr = int(job.pr_url.rstrip("/").split("/")[-1])
     if problem:

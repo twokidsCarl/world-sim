@@ -249,3 +249,24 @@ def test_denied_operations_are_kept_for_the_owner_to_see(repo, wish, monkeypatch
     job = jobs.start("wish", wish)
     jobs.approve(job.job_id)
     assert jobs.get(job.job_id).denied == ["Bash: cd idea-loom/web && npm run typecheck"]
+
+
+def test_a_passing_error_while_submitting_is_retried_not_fatal(repo, wish, monkeypatch):
+    """提交时别的会话正好也在更新仓库：git 报锁冲突。等一下重来就好，不该让整个作业失败。
+
+    Another session updates the repository just as the job submits and git reports a lock conflict. Waiting and retrying fixes it; the whole job must not fail.
+    """
+    monkeypatch.setattr(jobs, "SUBMIT_WAIT", 0)
+    (repo / "tools" / "pr.sh").write_text('#!/bin/sh\nn=$(cat "$(dirname "$0")/n" 2>/dev/null || echo 0)\necho $((n+1)) > "$(dirname "$0")/n"\n'
+                                          "if [ \"$n\" -lt 2 ]; then echo \"error: cannot lock ref 'refs/remotes/origin/main': is at 21 but expected 2a\" >&2; exit 1; fi\n"
+                                          'echo "PR: https://example.test/pull/12"\necho "已合并。"\n')
+    (repo / ".gitignore").write_text("runs/\ntools/n\n")
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "pr")
+    git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    job = jobs.start("wish", wish)
+    jobs.approve(job.job_id)
+    job = jobs.get(job.job_id)
+    assert (job.phase, job.pr) == ("merged", 12) and (repo / "tools" / "n").read_text().strip() == "3"
+    assert len([e for e in jobs.events(job.job_id) if "一闪而过" in e.get("text", "")]) == 2
+    assert jobs.transient("fatal: unable to access: Operation timed out") and not jobs.transient("error: 测试没过") and not jobs.transient("还没有合并（状态: OPEN）。")
