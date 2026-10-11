@@ -10,6 +10,9 @@ function channel(drive: number, temperature = 1): MdState {
   const s = initTriangular({ nx: 40, density: 0.7, temperature, seed: 8, aspect: 4 }, pair)
   s.walls = true
   s.wallTemperature = temperature
+  // 两面壁同温。漏设远壁时它停在默认的 1.0，气体会落在两个壁温之间。
+  // Both walls at the same temperature. Left unset, the far wall stays at its default of 1.0 and the gas settles between the two.
+  s.wallTemperatureFar = temperature
   s.drive = drive
   s.seed = 8
   computeForces(s, pair)
@@ -59,11 +62,12 @@ describe('coarse-grained fields', () => {
 describe('channel with thermal walls', () => {
   it('keeps every particle between the walls and holds the wall temperature without driving', () => {
     const s = channel(0, 0.9)
-    // 初始晶格熔化使气体冷却到约 0.74；壁面在约 60 个时间单位内
-    // 把温度带回来。
-    // Melting the initial lattice cools the gas to about 0.74; the walls bring it back
-    // over some 60 time units.
-    step(s, pair, 0.005, 16000)
+    // 初始晶格熔化使气体冷却到约 0.74；壁面在约 60 个时间单位内把温度带回来。等 80 个时间单位
+    // 时还残留约 0.015 的偏低（四个种子的平均），所以等 200。
+    // Melting the initial lattice cools the gas to about 0.74; the walls bring it back over some
+    // 60 time units. After 80 time units about 0.015 of the deficit remains (the mean over four
+    // seeds), so wait 200.
+    step(s, pair, 0.005, 40000)
     let T = 0
     const samples = 1600
     for (let k = 0; k < samples; k++) {

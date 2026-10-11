@@ -25,12 +25,17 @@ describe('gravity between thermal walls', () => {
     const g = 0.03
     const s = channel(0.03, T)
     s.gravity = g
-    step(s, pair, 0.005, 12000)
+    // 加上重力后气体先往下落、再弹回来，密度剖面来回晃荡；实测它在约 240 个时间单位之后才稳下来
+    // （在 60 到 120 之间去量，斜率会偏大一成半）。所以先等 240，再平均 240。
+    // Once gravity is on the gas first falls and then rebounds, and the density profile sloshes;
+    // it is measured to settle only after about 240 time units (sampled between 60 and 120, the
+    // slope comes out some 15% too steep). So wait 240, then average over 240.
+    step(s, pair, 0.005, 48000)
     const bins = 8
     const density = new Float64Array(bins)
-    const samples = 600
+    const samples = 1200
     for (let k = 0; k < samples; k++) {
-      step(s, pair, 0.005, 20)
+      step(s, pair, 0.005, 40)
       const pr = profiles(fieldSums(s), s.box, bins)
       for (let b = 0; b < bins; b++) density[b]! += pr.density[b]! / samples
     }

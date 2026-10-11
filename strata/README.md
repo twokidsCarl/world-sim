@@ -68,7 +68,9 @@ bun run dev        # http://localhost:5188
 ## 测试
 
 ```sh
-bun run test       # CPU 参考实现的解析与统计测试
+bun run test       # CPU 参考实现的解析测试（快，CI 跑的是这一套）
+bun run test:slow  # 统计测试：要跑出平衡态再取平均，几分钟
+bun run test:all   # 两套都跑；改了物理之后提交前跑这个
 bun run typecheck
 ```
 
@@ -191,7 +193,9 @@ The rightmost button in the page header switches the colour scheme between "foll
 ## Tests
 
 ```sh
-bun run test       # analytic and statistical tests of the CPU reference implementation
+bun run test       # analytic tests of the CPU reference implementation (fast; this is what CI runs)
+bun run test:slow  # statistical tests: they run to equilibrium and then average; several minutes
+bun run test:all   # both sets; run this before submitting a change to the physics
 bun run typecheck
 ```
 

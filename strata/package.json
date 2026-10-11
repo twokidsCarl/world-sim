@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run tests/analytic",
+    "test:slow": "vitest run tests/slow",
+    "test:all": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
