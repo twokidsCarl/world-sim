@@ -6,7 +6,10 @@
       "unit": "粒子",
       "emerges": "温度、压强、相变",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Matter",
+      "unit_en": "particles",
+      "emerges_en": "temperature, pressure, phase transitions"
     },
     {
       "id": "L2",
@@ -14,7 +17,10 @@
       "unit": "分子",
       "emerges": "结构、催化、拥挤中的秩序",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Molecules and cells",
+      "unit_en": "molecules",
+      "emerges_en": "structure, catalysis, order within crowding"
     },
     {
       "id": "L3",
@@ -22,7 +28,10 @@
       "unit": "细胞",
       "emerges": "形态、节律、防御",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Tissues and organs",
+      "unit_en": "cells",
+      "emerges_en": "form, rhythm, defence"
     },
     {
       "id": "L4",
@@ -30,7 +39,10 @@
       "unit": "器官",
       "emerges": "一个活着的整体、疼痛",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "The body",
+      "unit_en": "organs",
+      "emerges_en": "a living whole, pain"
     },
     {
       "id": "L5",
@@ -38,7 +50,10 @@
       "unit": "念头、习惯",
       "emerges": "自我、欲望、选择",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "One person",
+      "unit_en": "thoughts, habits",
+      "emerges_en": "self, desire, choice"
     },
     {
       "id": "L6",
@@ -46,7 +61,10 @@
       "unit": "人",
       "emerges": "互猜、信任、讨价还价",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Two people",
+      "unit_en": "people",
+      "emerges_en": "mutual guessing, trust, bargaining"
     },
     {
       "id": "L7",
@@ -54,7 +72,10 @@
       "unit": "人",
       "emerges": "结盟、秘密、教与学",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "A small group",
+      "unit_en": "people",
+      "emerges_en": "alliances, secrets, teaching and learning"
     },
     {
       "id": "L8",
@@ -62,7 +83,10 @@
       "unit": "人群",
       "emerges": "市场、谣言、货币、城市",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Society",
+      "unit_en": "crowds",
+      "emerges_en": "markets, rumours, money, cities"
     },
     {
       "id": "L9",
@@ -70,7 +94,10 @@
       "unit": "社会",
       "emerges": "语言、制度、观念的寿命",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Civilisation",
+      "unit_en": "societies",
+      "emerges_en": "language, institutions, the lifespan of ideas"
     },
     {
       "id": "L10",
@@ -78,7 +105,10 @@
       "unit": "物种、圈层",
       "emerges": "演替、协同演化、气候",
       "intro": "",
-      "kind": "ladder"
+      "kind": "ladder",
+      "name_en": "Life and the planet",
+      "unit_en": "species, spheres",
+      "emerges_en": "succession, co-evolution, climate"
     },
     {
       "id": "纵",
@@ -86,7 +116,9 @@
       "unit": "",
       "emerges": "",
       "intro": "主干和横线之外的第三种：挑一个具体的事件，让它从最底层一路走到最高层，或者从最高层一路落到最底层，或者绕一圈回到出发的地方；也可以反过来固定尺度、拉动时间。每一层只做最简单的一版，要检验的是层与层之间接不接得上。",
-      "kind": "vertical"
+      "kind": "vertical",
+      "name_en": "Verticals: one event through every level",
+      "intro_en": "A third kind besides the trunk and the threads: take one concrete event and follow it from the lowest level to the highest, or from the highest down to the lowest, or round in a loop back to where it began; or the other way, fix the scale and stretch time. Each level gets only its simplest version. What is tested is whether the levels connect."
     },
     {
       "id": "造",
@@ -94,7 +126,9 @@
       "unit": "",
       "emerges": "",
       "intro": "从零件到会学的机器。前面几条是\"人写的规则怎么长出人没写的行为\"，后面几条是\"造出来的东西开始自己学\"。",
-      "kind": "branch"
+      "kind": "branch",
+      "name_en": "Branch 造: made things",
+      "intro_en": "From parts to machines that learn. The first few are about how rules written by people grow behaviour nobody wrote; the last few are about made things starting to learn on their own."
     },
     {
       "id": "规",
@@ -102,7 +136,9 @@
       "unit": "",
       "emerges": "",
       "intro": "从所有规则的全貌，到规则里长出的东西，再到规则更底下的东西。这条支线没有现实数据可以对齐，它的对齐对象是数学上已经证明的事实，和主干上那些现象的\"形状\"。",
-      "kind": "branch"
+      "kind": "branch",
+      "name_en": "Branch 规: worlds of pure rules",
+      "intro_en": "From the whole space of rules, to what grows inside rules, to what lies underneath rules. This branch has no real-world data to align with; it aligns with facts already proven in mathematics, and with the shapes of the phenomena on the trunk."
     }
   ],
   "threads": [
@@ -110,98 +146,139 @@
       "id": "A",
       "name": "传播",
       "short": "传播",
-      "desc": "一个东西从一个单位传给下一个。电波在心肌里 → 病毒在细胞间 → 谣言在人群里 → 观念在世代间"
+      "desc": "一个东西从一个单位传给下一个。电波在心肌里 → 病毒在细胞间 → 谣言在人群里 → 观念在世代间",
+      "name_en": "Propagation",
+      "short_en": "spread",
+      "desc_en": "Something passes from one unit to the next. A wave in heart muscle → a virus between cells → a rumour in a crowd → an idea across generations"
     },
     {
       "id": "B",
       "name": "临界与崩溃",
       "short": "崩溃",
-      "desc": "平时没事，突然全局垮掉。相变 → 沙堆 → 心脏乱颤 → 挤兑 → 王朝覆灭"
+      "desc": "平时没事，突然全局垮掉。相变 → 沙堆 → 心脏乱颤 → 挤兑 → 王朝覆灭",
+      "name_en": "Criticality and collapse",
+      "short_en": "collapse",
+      "desc_en": "Nothing happens for a long time, then everything gives way at once. Phase transition → sandpile → a fibrillating heart → a bank run → the fall of a dynasty"
     },
     {
       "id": "C",
       "name": "互猜的深度",
       "short": "互猜",
-      "desc": "\"我知道你知道\"。两人 → 谈判 → 三人 → 谎言网 → 大家都收所以我也收的\"钱\""
+      "desc": "\"我知道你知道\"。两人 → 谈判 → 三人 → 谎言网 → 大家都收所以我也收的\"钱\"",
+      "name_en": "Depth of mutual guessing",
+      "short_en": "guessing",
+      "desc_en": "\"I know that you know.\" Two people → a negotiation → three people → a web of lies → money that I accept because everyone accepts it"
     },
     {
       "id": "D",
       "name": "记忆",
       "short": "记忆",
-      "desc": "过去怎么留在现在。免疫记忆 → 神经记忆 → 记仇与原谅 → 传抄与误读"
+      "desc": "过去怎么留在现在。免疫记忆 → 神经记忆 → 记仇与原谅 → 传抄与误读",
+      "name_en": "Memory",
+      "short_en": "memory",
+      "desc_en": "How the past stays in the present. Immune memory → neural memory → grudges and forgiveness → copying and misreading"
     },
     {
       "id": "E",
       "name": "层与层的接口",
       "short": "接口",
-      "desc": "下一层的一群怎么变成上一层的一个。粒子→流体，细胞→身体，神经元→念头，交换→货币"
+      "desc": "下一层的一群怎么变成上一层的一个。粒子→流体，细胞→身体，神经元→念头，交换→货币",
+      "name_en": "Interfaces between levels",
+      "short_en": "interface",
+      "desc_en": "How a crowd on one level becomes a single thing on the next. Particles → fluid, cells → body, neurons → thought, exchange → money"
     }
   ],
   "kernels": [
     {
       "name": "存量与流量",
       "desc": "几个量互相流入流出，带反馈和延迟",
-      "project": null
+      "project": null,
+      "name_en": "Stocks and flows",
+      "desc_en": "A few quantities flowing into and out of each other, with feedback and delay"
     },
     {
       "name": "递归互猜",
       "desc": "每个人脑子里装着对方的脑子，一层套一层",
-      "project": "mindloop"
+      "project": "mindloop",
+      "name_en": "Recursive guessing",
+      "desc_en": "Each mind holds a model of the other mind, nested level upon level"
     },
     {
       "name": "重复相处与约定",
       "desc": "同样的人反复打交道，记得过去，慢慢形成默契或规矩",
-      "project": null
+      "project": null,
+      "name_en": "Repeated dealings and conventions",
+      "desc_en": "The same people deal with each other again and again, remember the past, and settle into habits or rules"
     },
     {
       "name": "学习的个体",
       "desc": "一个会感知、会记、会从结果里学的单个主体",
-      "project": null
+      "project": null,
+      "name_en": "A learning individual",
+      "desc_en": "A single agent that perceives, remembers and learns from outcomes"
     },
     {
       "name": "网络上的传播",
       "desc": "一样东西沿着人和人的关系传开，边传边变",
-      "project": "polis"
+      "project": "polis",
+      "name_en": "Spreading on a network",
+      "desc_en": "Something spreads along the ties between people and changes as it goes"
     },
     {
       "name": "阈值与级联",
       "desc": "每个单元攒够了就翻转，并推一把邻居",
-      "project": null
+      "project": null,
+      "name_en": "Thresholds and cascades",
+      "desc_en": "Each unit flips once enough has built up, and nudges its neighbours"
     },
     {
       "name": "离散规则的反复应用",
       "desc": "一组符号，一条改写它的规则，一遍一遍地用",
-      "project": null
+      "project": null,
+      "name_en": "Discrete rules applied over and over",
+      "desc_en": "A set of symbols and a rule that rewrites them, applied again and again"
     },
     {
       "name": "粒子",
       "desc": "很多个点，两两之间有力，按运动定律走",
-      "project": "strata"
+      "project": "strata",
+      "name_en": "Particles",
+      "desc_en": "Many points with pairwise forces, moving by the laws of motion"
     },
     {
       "name": "空间里的个体",
       "desc": "很多主体在地图上移动，只看身边",
-      "project": null
+      "project": null,
+      "name_en": "Individuals in space",
+      "desc_en": "Many agents moving on a map, each seeing only what is nearby"
     },
     {
       "name": "分子的随机反应",
       "desc": "数得清个数的分子，按概率相遇和反应",
-      "project": null
+      "project": null,
+      "name_en": "Random molecular reactions",
+      "desc_en": "Countable molecules that meet and react by chance"
     },
     {
       "name": "场与形态",
       "desc": "浓度和形状在空间里扩散、生长",
-      "project": null
+      "project": null,
+      "name_en": "Fields and form",
+      "desc_en": "Concentrations and shapes diffusing and growing in space"
     },
     {
       "name": "代际演化",
       "desc": "一代代复制、变异、被筛选",
-      "project": null
+      "project": null,
+      "name_en": "Evolution over generations",
+      "desc_en": "Copying, varying and being selected, generation after generation"
     },
     {
       "name": "连续体力学",
       "desc": "会变形、会断、会被切开的连续体",
-      "project": null
+      "project": null,
+      "name_en": "Continuum mechanics",
+      "desc_en": "A continuous body that deforms, breaks and can be cut"
     }
   ]
 }

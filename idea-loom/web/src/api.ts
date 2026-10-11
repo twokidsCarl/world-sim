@@ -48,6 +48,7 @@ export const api = {
   fuse: (idea_ids: string[]) => call<Proposal>('/api/ops/fuse', { idea_ids }),
   classify: (idea_ids?: string[]) => call<Proposal[]>('/api/ops/classify', { idea_ids: idea_ids ?? null }),
   dedupe: (scope: { level?: string; kernel?: string }) => call<Proposal[]>('/api/ops/dedupe', scope),
+  translate: () => call<{ translated: string[] }>('/api/ops/translate', { idea_ids: null }),
   accept: (id: string, body: { as_new?: boolean; title?: string; body?: string } = {}) => call<Proposal>(`/api/proposals/${id}/accept`, body),
   dismiss: (id: string) => call<Proposal>(`/api/proposals/${id}/dismiss`, {}),
   syncStatus: () => call<SyncStatus>('/api/sync'),

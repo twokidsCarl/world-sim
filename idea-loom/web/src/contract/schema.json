@@ -163,7 +163,8 @@
             "merged_into",
             "discarded",
             "restored",
-            "noted"
+            "noted",
+            "translated"
           ],
           "title": "Event",
           "type": "string"
@@ -349,6 +350,35 @@
           "title": "Versions",
           "type": "integer"
         },
+        "title_en": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title En"
+        },
+        "body_en": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body En"
+        },
+        "en_stale": {
+          "default": false,
+          "title": "En Stale",
+          "type": "boolean"
+        },
         "mentions": {
           "items": {
             "type": "string"
@@ -380,6 +410,9 @@
         "created_at",
         "updated_at",
         "versions",
+        "title_en",
+        "body_en",
+        "en_stale",
         "mentions",
         "projects"
       ],
@@ -510,6 +543,35 @@
           "title": "Versions",
           "type": "integer"
         },
+        "title_en": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title En"
+        },
+        "body_en": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body En"
+        },
+        "en_stale": {
+          "default": false,
+          "title": "En Stale",
+          "type": "boolean"
+        },
         "mentions": {
           "items": {
             "type": "string"
@@ -566,6 +628,9 @@
         "created_at",
         "updated_at",
         "versions",
+        "title_en",
+        "body_en",
+        "en_stale",
         "mentions",
         "projects",
         "prompt_text",
@@ -603,13 +668,25 @@
           },
           "title": "Ideas",
           "type": "array"
+        },
+        "name_en": {
+          "default": "",
+          "title": "Name En",
+          "type": "string"
+        },
+        "desc_en": {
+          "default": "",
+          "title": "Desc En",
+          "type": "string"
         }
       },
       "required": [
         "name",
         "desc",
         "project",
-        "ideas"
+        "ideas",
+        "name_en",
+        "desc_en"
       ],
       "title": "KernelCount",
       "type": "object"
@@ -636,12 +713,24 @@
           ],
           "default": null,
           "title": "Project"
+        },
+        "name_en": {
+          "default": "",
+          "title": "Name En",
+          "type": "string"
+        },
+        "desc_en": {
+          "default": "",
+          "title": "Desc En",
+          "type": "string"
         }
       },
       "required": [
         "name",
         "desc",
-        "project"
+        "project",
+        "name_en",
+        "desc_en"
       ],
       "title": "KernelInfo",
       "type": "object"
@@ -686,6 +775,26 @@
           "title": "Intro",
           "type": "string"
         },
+        "name_en": {
+          "default": "",
+          "title": "Name En",
+          "type": "string"
+        },
+        "unit_en": {
+          "default": "",
+          "title": "Unit En",
+          "type": "string"
+        },
+        "emerges_en": {
+          "default": "",
+          "title": "Emerges En",
+          "type": "string"
+        },
+        "intro_en": {
+          "default": "",
+          "title": "Intro En",
+          "type": "string"
+        },
         "kind": {
           "default": "ladder",
           "enum": [
@@ -703,6 +812,10 @@
         "unit",
         "emerges",
         "intro",
+        "name_en",
+        "unit_en",
+        "emerges_en",
+        "intro_en",
         "kind"
       ],
       "title": "LevelInfo",
@@ -815,6 +928,11 @@
           "title": "Tagline",
           "type": "string"
         },
+        "tagline_en": {
+          "default": "",
+          "title": "Tagline En",
+          "type": "string"
+        },
         "level": {
           "anyOf": [
             {
@@ -872,6 +990,7 @@
       "required": [
         "dir",
         "tagline",
+        "tagline_en",
         "level",
         "keywords",
         "ideas",
@@ -1231,13 +1350,31 @@
           "default": "",
           "title": "Desc",
           "type": "string"
+        },
+        "name_en": {
+          "default": "",
+          "title": "Name En",
+          "type": "string"
+        },
+        "short_en": {
+          "default": "",
+          "title": "Short En",
+          "type": "string"
+        },
+        "desc_en": {
+          "default": "",
+          "title": "Desc En",
+          "type": "string"
         }
       },
       "required": [
         "id",
         "name",
         "short",
-        "desc"
+        "desc",
+        "name_en",
+        "short_en",
+        "desc_en"
       ],
       "title": "ThreadInfo",
       "type": "object"

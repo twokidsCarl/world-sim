@@ -44,12 +44,24 @@ def render_(
     """生成 IDEAS.md 里由程序维护的部分。 / Generate the machine-maintained parts of IDEAS.md."""
     s = ideas.state()
     if write:
-        path = store.repo_root() / "IDEAS.md"
-        path.write_text(render.apply(path.read_text(encoding="utf-8"), s), encoding="utf-8")
-        typer.echo(f"已更新 {path}")
+        for name, apply in (("IDEAS.md", render.apply), ("IDEAS.en.md", render.apply_en)):
+            path = store.repo_root() / name
+            if path.exists():
+                path.write_text(apply(path.read_text(encoding="utf-8"), s), encoding="utf-8")
+                typer.echo(f"已更新 {path}")
         return
     parts = render.blocks(s)
     typer.echo(parts[block] if block else "\n\n".join(parts[b] for b in render.BLOCKS))
+
+
+@app.command()
+def translate() -> None:
+    """把还没有英文的 idea 译成英文。 / Translate ideas that have no English yet."""
+    pool, _, _, _ = ideas.current()
+    todo = ops.untranslated(pool)
+    typer.echo(f"要翻译 {len(todo)} 条…")
+    done = ops.translate()
+    typer.echo(f"译好 {len(done)} 条。")
 
 
 @app.command("sync")

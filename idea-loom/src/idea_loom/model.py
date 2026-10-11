@@ -18,7 +18,7 @@ Thread = Literal["A", "B", "C", "D", "E"]
 Status = Literal["draft", "pool", "building", "built", "merged", "discarded"]
 EdgeKind = Literal["refined_from", "fused_from", "split_from", "inspired_by", "merged_into"]
 EventKind = Literal[
-    "created", "edited", "moved", "status", "merged_into", "discarded", "restored", "noted"
+    "created", "edited", "moved", "status", "merged_into", "discarded", "restored", "noted", "translated"
 ]
 
 STATUS_LABELS: dict[str, str] = {
@@ -46,6 +46,7 @@ EVENT_LABELS: dict[str, str] = {
     "discarded": "丢弃",
     "restored": "恢复",
     "noted": "说明",
+    "translated": "译成英文",
 }
 BY_LABELS: dict[str, str] = {
     "import": "导入",
@@ -83,6 +84,8 @@ class IdeaEvent(BaseModel):
     event: EventKind
     title: Optional[str] = None
     body: Optional[str] = None
+    title_en: Optional[str] = None  # translated 事件带的英文 / the English carried by a translated event
+    body_en: Optional[str] = None
     level: Optional[Level] = None
     threads: Optional[list[Thread]] = None
     kernel: Optional[str] = None
@@ -117,6 +120,12 @@ class Idea(BaseModel):
     created_at: str
     updated_at: str
     versions: int = 1
+    # 英文版。中文改写之后英文就过期了，en_stale 为真，等重新翻译。
+    # The English version. It goes stale when the Chinese is rewritten; en_stale is
+    # then true until it is translated again.
+    title_en: Optional[str] = None
+    body_en: Optional[str] = None
+    en_stale: bool = False
     mentions: list[str] = Field(default_factory=list)  # 正文里提到的其他 idea / other ideas named in the body
     projects: list[str] = Field(default_factory=list)  # 提到或已关联的子项目 / subprojects named or linked
 
@@ -155,6 +164,10 @@ class LevelInfo(BaseModel):
     unit: str = ""  # 基元 / the basic unit at this level
     emerges: str = ""  # 这一层新出现的东西 / what first appears at this level
     intro: str = ""  # 支线和纵线的一段说明 / intro paragraph for branches and verticals
+    name_en: str = ""
+    unit_en: str = ""
+    emerges_en: str = ""
+    intro_en: str = ""
     kind: Literal["ladder", "vertical", "branch"] = "ladder"
 
 
@@ -163,12 +176,17 @@ class ThreadInfo(BaseModel):
     name: str
     short: str
     desc: str = ""
+    name_en: str = ""
+    short_en: str = ""
+    desc_en: str = ""
 
 
 class KernelInfo(BaseModel):
     name: str
     desc: str = ""
     project: Optional[str] = None
+    name_en: str = ""
+    desc_en: str = ""
 
 
 class Frame(BaseModel):
@@ -182,6 +200,7 @@ class Frame(BaseModel):
 class Project(BaseModel):
     dir: str
     tagline: str = ""
+    tagline_en: str = ""
     level: Optional[Level] = None
     keywords: list[str] = Field(default_factory=list)  # 正文里出现这些词就算提到它 / words that count as a mention
     ideas: list[str] = Field(default_factory=list)  # 明确关联的 idea / explicitly linked ideas
@@ -193,6 +212,8 @@ class KernelCount(BaseModel):
     desc: str
     project: Optional[str]
     ideas: list[str]
+    name_en: str = ""
+    desc_en: str = ""
 
 
 class Coverage(BaseModel):

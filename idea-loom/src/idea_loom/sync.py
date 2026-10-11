@@ -44,19 +44,30 @@ def _committed_lines(repo: Path, rel: str) -> int:
     return shown.stdout.count("\n") if shown.returncode == 0 else 0
 
 
-def rendered_ideas_md(repo: Path) -> tuple[Optional[str], Optional[str]]:
-    """（现在的 IDEAS.md，重新生成后的 IDEAS.md）。没有标记时第二项是 None。
+def rendered(repo: Path) -> tuple[dict[str, str], Optional[str]]:
+    """要改写的文件：{相对路径: 新内容}；标记缺失时第二项是原因。
 
-    (IDEAS.md as it is, IDEAS.md regenerated). The second is None without markers.
+    Files to rewrite as {relative path: new content}; the second item is the
+    reason when a marker is missing.
     """
-    path = repo / "IDEAS.md"
-    if not path.exists():
-        return None, None
-    text = path.read_text(encoding="utf-8")
-    try:
-        return text, render.apply(text, ideas.state())
-    except ValueError:
-        return text, None
+    state = ideas.state()
+    out: dict[str, str] = {}
+    for name, apply in (("IDEAS.md", render.apply), ("IDEAS.en.md", render.apply_en)):
+        path = repo / name
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        try:
+            fresh = apply(text, state)
+        except ValueError:
+            return {}, f"{name} 里还没有 idea-loom 的标记"
+        if fresh != text:
+            out[name] = fresh
+    return out, None
+
+
+def _generated_files(repo: Path) -> list[str]:
+    return [name for name in ("IDEAS.md", "IDEAS.en.md") if (repo / name).exists()]
 
 
 def status(repo: Optional[Path] = None) -> SyncStatus:
@@ -68,11 +79,10 @@ def status(repo: Optional[Path] = None) -> SyncStatus:
         return SyncStatus(pending=0, ideas_md_stale=False, can_sync=False, reason="数据目录不在仓库里")
     local, _ = store.read_lines(data / "ideas.jsonl")
     pending = max(0, len(local) - _committed_lines(repo, rel))
-    text, fresh = rendered_ideas_md(repo)
-    if text is not None and fresh is None:
-        return SyncStatus(pending=pending, ideas_md_stale=False, can_sync=False, reason="IDEAS.md 里还没有 idea-loom 的标记")
-    stale = text is not None and fresh is not None and text != fresh
-    return SyncStatus(pending=pending, ideas_md_stale=stale, can_sync=pending > 0 or stale)
+    changed, reason = rendered(repo)
+    if reason:
+        return SyncStatus(pending=pending, ideas_md_stale=False, can_sync=False, reason=reason)
+    return SyncStatus(pending=pending, ideas_md_stale=bool(changed), can_sync=pending > 0 or bool(changed))
 
 
 def run(title: Optional[str] = None, repo: Optional[Path] = None) -> SyncResult:
@@ -80,15 +90,15 @@ def run(title: Optional[str] = None, repo: Optional[Path] = None) -> SyncResult:
     st = status(repo)
     if not st.can_sync:
         return SyncResult(ok=False, message=st.reason or "没有要同步的改动")
-    text, fresh = rendered_ideas_md(repo)
-    if fresh is not None and fresh != text:
-        (repo / "IDEAS.md").write_text(fresh, encoding="utf-8")
+    changed, _ = rendered(repo)
+    for name, text in changed.items():
+        (repo / name).write_text(text, encoding="utf-8")
     data = store.data_dir()
-    paths = [_rel(repo, data / name) for name in DATA_FILES if (data / name).exists()] + ["IDEAS.md"]
+    paths = [_rel(repo, data / name) for name in DATA_FILES if (data / name).exists()] + _generated_files(repo)
     n = st.pending
     title = title or f"ideas: 同步想法池（{n} 处改动）/ sync the idea pool ({n} change{'s' if n != 1 else ''})"
-    summary_zh = f"由 idea-loom 同步：{n} 条新事件，并重新生成 IDEAS.md 里的想法池、内核表和覆盖表。"
-    summary_en = f"Synced by idea-loom: {n} new event{'s' if n != 1 else ''}, and the pool, kernel table and coverage table in IDEAS.md regenerated."
+    summary_zh = f"由 idea-loom 同步：{n} 条新事件，并重新生成 IDEAS.md 和 IDEAS.en.md 里的想法池、内核表和覆盖表。"
+    summary_en = f"Synced by idea-loom: {n} new event{'s' if n != 1 else ''}, and the pool, kernel table and coverage table in IDEAS.md and IDEAS.en.md regenerated."
     env = {**os.environ, "COMMIT_BODY": f"{summary_zh}\n\n{summary_en}", "PR_BODY": f"## 中文\n\n{summary_zh}\n\n## English\n\n{summary_en}"}
     proc = subprocess.run([str(repo / "tools" / "pr.sh"), title, *paths], cwd=repo, env=env, capture_output=True, text=True, timeout=300)
     out = (proc.stdout + proc.stderr).strip()

@@ -18,7 +18,7 @@ from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 from . import edits, ideas, llm, store
-from .model import Edge, Frame, Idea, Origin
+from .model import Edge, Frame, Idea, IdeaEvent, Origin
 
 PROMPTS = Path(__file__).parent / "prompts"
 ProposalKind = Literal["idea", "rewrite", "position", "merge"]
@@ -312,6 +312,44 @@ def dedupe(level: Optional[str] = None, kernel: Optional[str] = None) -> list[Pr
                             title=f"{source} {pool[source].title} → {target} {pool[target].title}", why=str(x.get("why", "")).strip()))
     _save(out)
     return out
+
+
+def untranslated(pool: dict[str, Idea]) -> list[Idea]:
+    return [i for i in _live(pool) if not i.title_en or not i.body_en or i.en_stale]
+
+
+def translate(idea_ids: Optional[list[str]] = None, batch: int = 12) -> list[str]:
+    """把还没有英文（或英文已过期）的 idea 译成英文，直接写成事件。
+
+    翻译不是取舍，所以不走提议；译得不好就在界面里改英文，或改中文后重新翻译。
+
+    Translate ideas that have no English yet (or whose English is stale) and write
+    the result as events. A translation is not a judgement call, so it skips the
+    proposal step; fix a poor one by editing, or re-translate after a rewrite.
+    """
+    pool, _, _, _ = ideas.current()
+    todo = [pool[i] for i in idea_ids if i in pool] if idea_ids else untranslated(pool)
+    schema = _list_schema("items", {
+        "type": "object",
+        "properties": {"id": {"type": "string"}, "title_en": {"type": "string"}, "body_en": {"type": "string"}},
+        "required": ["id", "title_en", "body_en"],
+    })
+    done: list[str] = []
+    for start in range(0, len(todo), batch):
+        group = {i.id: i for i in todo[start:start + batch]}
+        prompt = _fill("translate", ideas="\n\n".join(f"id: {i.id}\ntitle: {i.title}\nbody:\n{i.body}" for i in group.values()))
+        value = llm.ask(prompt, system="You are a careful translator from Chinese to English. Output only what is asked.",
+                        schema=schema, purpose="translate", timeout=300)
+        events = []
+        for x in _items(value, "items"):
+            idea = group.get(str(x.get("id", "")).strip())
+            title_en, body_en = str(x.get("title_en", "")).strip(), str(x.get("body_en", "")).strip()
+            if idea is None or not title_en or not body_en:
+                continue
+            events.append(IdeaEvent(at=edits.now(), by="generator", id=idea.id, event="translated", title_en=title_en, body_en=body_en))
+            done.append(idea.id)
+        ideas.append_events(events)
+    return done
 
 
 # ---------- 取舍 / accept or dismiss ----------

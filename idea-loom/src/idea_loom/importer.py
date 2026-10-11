@@ -118,6 +118,21 @@ def frame_from(parsed: Parsed) -> Frame:
     return Frame(levels=levels, threads=threads, kernels=kernels)
 
 
+def _keep_english(frame: Frame, path: Path) -> Frame:
+    """重新导入时，把已经写好的英文名称带过来。 / Carry hand-written English names over a re-import."""
+    old = Frame.model_validate(store.read_json(path, {"levels": [], "threads": [], "kernels": []}))
+    for new_items, old_items, key in ((frame.levels, old.levels, "id"), (frame.threads, old.threads, "id"), (frame.kernels, old.kernels, "name")):
+        known = {getattr(o, key): o for o in old_items}
+        for item in new_items:
+            prev = known.get(getattr(item, key))
+            if prev is None:
+                continue
+            for field in type(item).model_fields:
+                if field.endswith("_en") and not getattr(item, field):
+                    setattr(item, field, getattr(prev, field))
+    return frame
+
+
 def run(repo: Optional[Path] = None, force: bool = False) -> dict[str, int]:
     repo = repo or store.repo_root()
     data = store.data_dir()
@@ -132,7 +147,7 @@ def run(repo: Optional[Path] = None, force: bool = False) -> dict[str, int]:
     if target.exists():
         target.unlink()
     store.append(target, [e.model_dump(exclude_unset=True) for e in events])
-    store.write_json(data / "frame.json", frame_from(final).model_dump())
+    store.write_json(data / "frame.json", _keep_english(frame_from(final), data / "frame.json").model_dump())
     if force or not (data / "projects.json").exists():
         store.write_json(data / "projects.json", [p.model_dump() for p in PROJECTS])
     return {"commits": len(snapshots), "events": len(events), "ideas": len(final.entries)}

@@ -207,3 +207,20 @@ def accept_proposal(proposal_id: str, body: AcceptBody) -> ops.Proposal:
 @app.post("/api/proposals/{proposal_id}/dismiss", response_model=ops.Proposal)
 def dismiss_proposal(proposal_id: str) -> ops.Proposal:
     return _do(ops.dismiss, proposal_id)
+
+
+class EnglishBody(BaseModel):
+    title_en: str
+    body_en: str
+
+
+@app.post("/api/ops/translate")
+def op_translate(body: ClassifyBody) -> dict[str, object]:
+    done = _do(ops.translate, body.idea_ids)
+    return {"translated": done}
+
+
+@app.post("/api/ideas/{idea_id}/english", response_model=IdeaDetail)
+def english_idea(idea_id: str, body: EnglishBody) -> IdeaDetail:
+    _do(edits.set_english, idea_id, title_en=body.title_en, body_en=body.body_en)
+    return _detail(idea_id)
