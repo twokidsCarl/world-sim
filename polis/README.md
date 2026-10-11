@@ -33,11 +33,32 @@ uv run polis canon                      # 对照原作与史料，逐条看模�
 uv run polis run -s 1 -c -r none --llm  # 主角交给大模型扮演（约 30 次调用，一分钟左右）
 uv run polis list                       # 已有的记录
 uv run polis serve                      # API，端口 8766
+uv run polis prepare                    # 生成统一入口的卡片要用的几次运行，写入 built/
 uv run polis corpus                     # 检查语料，列出出处还没核实的条目
 cd web && bun install && bun run dev    # 回放界面，http://localhost:5186
 ```
 
 `runs/` 不入库，按上面的命令重新生成即可。
+
+## 直达链接与统一入口
+
+界面的状态可以写在地址里，所以每个场景都有一个能直接打开的链接：
+
+| 参数 | 作用 |
+|---|---|
+| `run=<记录名>` | 打开哪一次运行；不写则打开通和场景的第一条 |
+| `t=<小时>` | 停在哪一刻 |
+| `person=<角色键或下标>` | 选中谁，例如 `person=widow` |
+| `tab=lab` | 直接进实验台 |
+| `view=library` | 直接打开依据页 |
+| `embed=1` | 嵌入模式：只留城和时间轴，进来就播放；点了人或进了实验台才出现右侧面板 |
+| `play=1` / `play=0` | 强制播放或不播放 |
+
+页面隐藏时播放和渲染循环会停下，回来再继续。
+
+`sim.json` 是给仓库统一入口（`idea-loom`）看的名片：怎么构建、怎么起后端、有哪几张卡片。卡片要用的运行不在 git 里，由 `uv run polis prepare` 按种子生成到 `built/`；主角由模型扮演的那一次生成它需要调用模型，所以它的记录直接放在 `samples/` 里。
+
+记录从三处读：可写的运行目录、`built/`、`samples/`，后两处只读。可写目录依次取环境变量 `POLIS_RUNS`、`WORLD_SIM_STATE` 下的 `runs/`、项目下的 `runs/`；分叉和集成的结果都写在那里。
 
 ## 怎么测试
 
@@ -109,11 +130,32 @@ uv run polis canon                      # check the simulation item by item agai
 uv run polis run -s 1 -c -r none --llm  # hand the cast to an LLM (about 30 calls, roughly one minute)
 uv run polis list                       # existing records
 uv run polis serve                      # API, port 8766
+uv run polis prepare                    # generate the runs behind the shared host's cards, into built/
 uv run polis corpus                     # check the corpus and list entries whose sources are not yet verified
 cd web && bun install && bun run dev    # replay interface, http://localhost:5186
 ```
 
 `runs/` is not committed; regenerate it with the commands above.
+
+## Deep links and the shared host
+
+The UI's state can be written into the address, so every scene has a link that opens it directly:
+
+| Parameter | Effect |
+|---|---|
+| `run=<run id>` | Which run to open; without it, the first run of the Tonghe scenario |
+| `t=<hour>` | The moment to stop at |
+| `person=<cast key or index>` | Who is selected, e.g. `person=widow` |
+| `tab=lab` | Go straight to the lab |
+| `view=library` | Open the evidence page |
+| `embed=1` | Embed mode: stage and timeline only, playing on arrival; the side panel appears once a person is picked or the lab is opened |
+| `play=1` / `play=0` | Force playing or not playing |
+
+Playback and the render loop stop while the page is hidden and resume on return.
+
+`sim.json` is the project's card for the repository's shared host (`idea-loom`): how to build it, how to start the backend, and which cards it offers. The runs behind the cards are not in git; `uv run polis prepare` generates them from their seeds into `built/`. The run with model-played protagonists needs model calls to produce, so its record is committed under `samples/`.
+
+Runs are read from three places: the writable runs directory, `built/` and `samples/`, the last two read-only. The writable directory is `POLIS_RUNS`, else `runs/` under `WORLD_SIM_STATE`, else `runs/` in the project; forks and ensembles are written there.
 
 ## How to test
 

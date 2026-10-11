@@ -94,6 +94,9 @@ export class Stage {
       this.fitView()
     })
 
+    document.addEventListener('visibilitychange', this.onVisibility)
+    this.cleanup.push(() => document.removeEventListener('visibilitychange', this.onVisibility))
+
     this.setRun(useApp.getState().run)
     this.resize()
     this.raf = requestAnimationFrame(this.tick)
@@ -232,6 +235,16 @@ export class Stage {
 
   // ---- 时钟与绘制 / Clock and drawing ----
 
+  /** 页面隐藏时停掉循环，回来再接着走；时钟从回来的那一刻重新计，不补走隐藏期间的时间
+   *  Stop the loop while the page is hidden and resume on return; the clock restarts from that moment, so hidden time is not replayed */
+  private onVisibility = (): void => {
+    cancelAnimationFrame(this.raf)
+    if (document.hidden) return
+    this.last = performance.now()
+    this.dirty = true
+    this.raf = requestAnimationFrame(this.tick)
+  }
+
   private tick = (now: number): void => {
     const dt = Math.min(0.1, (now - this.last) / 1000)
     this.last = now
@@ -241,7 +254,8 @@ export class Stage {
       if (t >= s.run.manifest.ticks) useApp.setState({ t: s.run.manifest.ticks, playing: false })
       else useApp.setState({ t })
     }
-    this.raf = requestAnimationFrame(this.tick)
+    // 页面看不见时整个循环停下，见 onVisibility / the whole loop stops while the page is hidden, see onVisibility
+    if (!document.hidden) this.raf = requestAnimationFrame(this.tick)
     if (this.dirty && this.w > 0 && this.h > 0) {
       this.dirty = false
       this.draw()

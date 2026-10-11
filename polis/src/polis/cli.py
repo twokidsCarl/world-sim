@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -17,8 +16,12 @@ app = typer.Typer(add_completion=False, help="polis：平行社会模拟器 / po
 CALIBRATION = Path(__file__).resolve().parents[2] / "calibration.json"
 
 
-def runs_dir() -> Path:
-    return Path(os.environ.get("POLIS_RUNS", Path(__file__).resolve().parents[2] / "runs"))
+runs_dir = trace.runs_dir
+
+# 统一入口的卡片要用的几次运行：(场景, 种子, 回应)。都用校准后的参数，引擎按种子确定，所以不必进 git。
+# The runs the shared host's cards point at: (scenario, seed, response). All use the calibrated parameters and the
+# engine is deterministic per seed, so they need not be in git.
+SHOWCASE = [("rumor_run", 1, "guarantee"), ("rumor_run", 1, "none"), ("toyokawa", 7, "notice"), ("bea", 1, "notice")]
 
 
 def _line(m: model.Manifest) -> str:
@@ -39,16 +42,10 @@ def run(
     label: str = typer.Option("", "--label", "-l", help="记录名后缀 / suffix for the run id"),
 ):
     """跑一次模拟，记录写入 runs/。/ Run one simulation and write the record to runs/."""
-    from . import calibrate as cal
-
     over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"] if calibrated else {}
     sc = trace.scenario_module(scenario)
     params = model.Params(scenario=scenario, seed=seed, n=n, **(sc.DEFAULTS | over | ({"ticks": ticks} if ticks else {})))
-    responses = {
-        "notice": sc.interventions,
-        "guarantee": cal.guarantee,
-        "none": lambda start_hour: [],
-    }
+    responses = _responses(sc)
     if response not in responses:
         raise typer.BadParameter(f"只能是 {' / '.join(responses)}", param_hint="--response")
     params.interventions = responses[response](params.start_hour)
@@ -58,6 +55,24 @@ def run(
     typer.echo(_line(m))
     if llm:
         typer.echo(f"模型调用 {m.summary.llm_calls} 次，其中 {m.summary.llm_failed} 次失败后退回数值规则")
+
+
+@app.command()
+def prepare():
+    """生成统一入口的卡片要用的那几次运行，写入 built/。/ Generate the runs the shared host's cards point at, into built/."""
+    over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"]
+    for scenario, seed, response in SHOWCASE:
+        sc = trace.scenario_module(scenario)
+        params = model.Params(scenario=scenario, seed=seed, **(sc.DEFAULTS | over))
+        params.interventions = _responses(sc)[response](params.start_hour)
+        label = "-".join(x for x in ["cal", "" if response == "notice" else response] if x)
+        typer.echo(_line(trace.simulate(params, trace.PROJECT / "built", label)))
+
+
+def _responses(sc):
+    from . import calibrate as cal
+
+    return {"notice": sc.interventions, "guarantee": cal.guarantee, "none": lambda start_hour: []}
 
 
 @app.command("list")

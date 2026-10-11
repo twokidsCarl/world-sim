@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Stage } from '../stage/stage.ts'
-import { useApp } from '../state/store.ts'
+import { EMBED, OPEN_LIBRARY, useApp } from '../state/store.ts'
 import { Library } from './Library.tsx'
 import { Side } from './Side.tsx'
 import { Timeline } from './Timeline.tsx'
@@ -12,7 +12,9 @@ export function App() {
   const runs = useApp((s) => s.runs)
   const run = useApp((s) => s.run)
   const theme = useApp((s) => s.theme)
-  const [library, setLibrary] = useState(false)
+  const [library, setLibrary] = useState(OPEN_LIBRARY)
+  // 嵌入时平常不显示右侧面板；进了实验台或点了某个人才显示 / when embedded the side panel appears only in the lab or once a person is picked
+  const side = useApp((s) => s.tab === 'lab' || s.selected != null)
   const closeLibrary = useCallback(() => setLibrary(false), [])
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function App() {
   }, [])
 
   return (
-    <div className="app">
+    <div className={EMBED ? (side ? 'app embed with-side' : 'app embed') : 'app'}>
       <header className="header">
         <span className="mark">
           polis<small>城邦</small>
