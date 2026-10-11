@@ -233,6 +233,8 @@ button:disabled { opacity: 0.45; cursor: default; }
 a.button { display: block; text-align: center; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 6px; text-decoration: none; color: var(--ink); background: var(--panel); }
 a.button:hover { background: var(--sunken); }
 a.button.inline { display: inline-block; }
+.wish-command { align-items: center; margin-bottom: 12px; }
+.wish-command code { padding: 6px 10px; border-radius: 6px; background: var(--sunken); font-size: 14px; }
 .plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .visitor-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .visitor-item p { margin: 6px 0 0; }
