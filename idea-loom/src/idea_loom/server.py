@@ -5,12 +5,13 @@ from __future__ import annotations
 from typing import Optional
 
 import json
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
+from . import config, edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .play import host as play_host
 from .play import manifest as play_manifest
@@ -18,7 +19,24 @@ from .play import snapshot as play_snapshot
 from .play import supervisor as play_supervisor
 from .model import IdeaDetail, State
 
-app = FastAPI(title="idea-loom")
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    if config.role() == "play":
+        from . import cloud
+        from .play import keeper
+
+        cloud.ensure_clone()
+        keeper.start()
+    elif config.role() == "hub":
+        import threading
+
+        from . import cloud
+
+        threading.Thread(target=cloud.wait_and_seed, daemon=True, name="seed-data").start()
+    yield
+
+
+app = FastAPI(title="idea-loom", lifespan=_lifespan)
 app.add_middleware(play_host.HostRouter)
 
 
@@ -425,7 +443,7 @@ def list_projects(request: Request) -> list[ProjectView]:
             dir=p.dir, tagline=p.tagline, level=p.level, ideas=sorted(set(mentioned) | set(p.ideas), key=ideas.sort_key), linked=p.ideas,
             # 界面的地址是它在统一入口里的子域名，不再探测开发服务器的端口。
             # The UI address is its subdomain on the single entry point; dev-server ports are no longer probed.
-            ui_url=f"http://{p.dir}.localhost:{port}" if p.dir in hosted else None, ui_up=p.dir in hosted and playable(p.dir),
+            ui_url=config.sim_origin(p.dir, port) if p.dir in hosted else None, ui_up=p.dir in hosted and playable(p.dir),
             prs=len(mine), merged=len(merged),
             last_merged_at=max((x.merged_at for x in merged if x.merged_at), default=None), recent=list(reversed(mine))[:8],
             has_readme=(store.repo_root() / p.dir / "README.md").exists(),
@@ -630,15 +648,16 @@ def play_view(request: Request) -> PlayView:
     All hosted simulations and their cards. Reading this also fetches the remote, starts
     builds that are needed and stops idle backends.
     """
-    play_snapshot.fetch()
-    play_supervisor.reap_idle()
+    if config.serves_sims():
+        play_snapshot.fetch()
+        play_supervisor.reap_idle()
     sims, problems = play_manifest.load_all()
     pool, _, _, _ = ideas.current()
     port = _play_port(request)
     sim_views, cards = [], []
     for sim in sims:
-        state = play_snapshot.ensure(sim.name) if sim.ready else play_snapshot.status(sim.name)
-        origin = f"http://{sim.name}.localhost:{port}"
+        state = play_snapshot.ensure(sim.name) if sim.ready and config.serves_sims() else play_snapshot.status(sim.name)
+        origin = config.sim_origin(sim.name, port)
         sim_views.append(SimView(
             name=sim.name, title=sim.title, level=sim.level, ready=sim.ready, source=sim.source, origin=origin, status=state.status,
             playable=state.status == "ready" or bool(state.serving), stale=state.stale, version=state.version[:12], log=state.log[-2000:], built_at=state.built_at, has_api=sim.api is not None,
@@ -652,9 +671,57 @@ def play_view(request: Request) -> PlayView:
     return PlayView(sims=sim_views, cards=cards, problems=problems, history=trail.card_history())
 
 
+def _rebuild(name: str) -> str:
+    play_supervisor.stop(name)
+    return play_snapshot.ensure(name, force=True).status
+
+
 @app.post("/api/play/{name}/build")
 def play_build(name: str) -> dict[str, str]:
     if name not in play_manifest.names():
         raise HTTPException(404, "没有这个模拟")
-    play_supervisor.stop(name)
-    return {"status": play_snapshot.ensure(name, force=True).status}
+    if config.serves_sims():
+        return {"status": _rebuild(name)}
+    # hub 自己不构建：转给 play。 / The hub does not build; it asks the play role.
+    import urllib.error
+    import urllib.request
+
+    if not config.play_url():
+        raise HTTPException(503, "没有配置 play 的内部地址")
+    request = urllib.request.Request(f"{config.play_url()}/internal/play/build/{name}", data=b"{}", method="POST",
+                                     headers={"x-internal-token": config.internal_token(), "content-type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (OSError, ValueError) as e:
+        raise HTTPException(502, f"play 没有回应：{e}")
+
+
+@app.post("/internal/play/build/{name}")
+def internal_play_build(name: str, x_internal_token: str = Header(default="")) -> dict[str, str]:
+    """只给 hub 调。 / For the hub only."""
+    import hmac
+
+    if not config.serves_sims() or not config.internal_token() or not hmac.compare_digest(x_internal_token, config.internal_token()):
+        raise HTTPException(403, "不接受")
+    if name not in play_manifest.names():
+        raise HTTPException(404, "没有这个模拟")
+    return {"status": _rebuild(name)}
+
+
+@app.get("/healthz")
+def healthz() -> dict[str, str]:
+    return {"ok": "true", "role": config.role()}
+
+
+@app.get("/internal/tls-ask")
+def tls_ask(domain: str = "") -> dict[str, bool]:
+    """反向代理在为一个主机名申请证书之前来问：这是不是我们的。只对 idea-loom 自己的主机名和已知的模拟答是。
+
+    The reverse proxy asks this before requesting a certificate for a host name. It says
+    yes only for idea-loom's own host names and for known simulations.
+    """
+    host = domain.lower()
+    if host in config.own_hosts() or play_host.sim_name(host) in set(play_manifest.names()):
+        return {"ok": True}
+    raise HTTPException(404, "不是这里的主机名")

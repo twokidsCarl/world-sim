@@ -200,6 +200,10 @@ def _spawn(job: Job, phase: str) -> None:
 
 
 def start(kind: str, ref: str) -> Job:
+    from . import config
+
+    if config.role() == "hub":
+        raise JobError("云端的作业由 worker 来跑，这一步还没有接上。")
     if llm.claude_bin() is None:
         raise JobError("这台机器上找不到 claude 命令")
     directory, title, what = _brief(kind, ref)

@@ -1,0 +1,39 @@
+# 反向代理：自动证书；主域名给 hub，模拟的子域名给 play。
+# The reverse proxy: automatic certificates; the main domain goes to hub and the
+# simulations' subdomains go to play.
+{
+	email {$ACME_EMAIL}
+	# 按需签发证书之前先问 hub：这个主机名是不是我们的。这样不需要通配证书，也不会被人拿随便一个子域名来刷证书。
+	# Ask the hub before issuing a certificate on demand: is this host name ours. No wildcard
+	# certificate is needed, and nobody can farm certificates with arbitrary subdomains.
+	on_demand_tls {
+		ask http://hub:8767/internal/tls-ask
+	}
+}
+
+{$HUB_DOMAIN} {
+	encode zstd gzip
+	# 登录和权限（K2）做好之前，整个站点挡在一道口令后面。做好之后删掉这一段。
+	# Until sign-in and roles (K2) exist the whole site sits behind one password. Remove this block afterwards.
+	basic_auth {
+		{$GATE_USER} {$GATE_HASH}
+	}
+	# 内部接口不对外。 / Internal routes are not exposed.
+	@internal path /internal/*
+	respond @internal 404
+	reverse_proxy hub:8767 {
+		flush_interval -1
+	}
+}
+
+*.{$SIM_DOMAIN} {
+	tls {
+		on_demand
+	}
+	encode zstd gzip
+	@internal path /internal/* /healthz
+	respond @internal 404
+	reverse_proxy play:8768 {
+		flush_interval -1
+	}
+}

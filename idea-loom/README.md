@@ -197,9 +197,12 @@ uv run idea-loom play status          # 每个模拟的构建状态 / build stat
 uv run idea-loom play build [项目]     # 取 main 的快照并构建 / snapshot main and build
 ```
 
-子域名只在本机有效。要给别的机器看，需要换成真正的域名。
+`.localhost` 的子域名只在本机有效。放到云端时，域名和进程的分工由几个环境变量决定（见 `src/idea_loom/config.py`），容器和反向代理的配置在仓库根目录的 [`deploy/`](../deploy)。
 
-The subdomains only work on this machine; serving other machines needs real host names.
+The `.localhost` subdomains only work on this machine. In the cloud the domain and the
+split into processes are set by a few environment variables (see
+`src/idea_loom/config.py`); the containers and the reverse proxy are configured under
+[`deploy/`](../deploy) at the repository root.
 
 环境变量（都可以不设）/ Environment (all optional)：`IDEA_LOOM_MODEL`（缺省 `sonnet`，生成、细化、翻译用 / default `sonnet`, for generate, refine, translate）、`IDEA_LOOM_ASSISTANT_MODEL`（小助手 / the assistant）、`IDEA_LOOM_JOB_MODEL`（作业 / jobs）。
 
@@ -282,6 +285,8 @@ src/idea_loom/
   tasks.py      开发任务 / development tasks
   github.py     读合并请求 / read pull requests
   stats.py      统计 / statistics
+  config.py     部署配置：域名、角色 / deployment configuration: domain, roles
+  cloud.py      云端启动：克隆仓库、第一次取数据 / cloud start-up: clone the repository, seed the data once
   play/         统一入口：名片、快照与构建、后端进程、按主机名分发 / the single entry point: card files, snapshots and builds, backend processes, routing by host
   jobs.py       作业：出方案、批准、执行、测试、PR / jobs: plan, approve, execute, test, PR
   review.py     回看操作轨迹 / review of the action trail

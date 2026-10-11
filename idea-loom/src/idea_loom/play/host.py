@@ -25,18 +25,18 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from .. import store
+from .. import config, store
 from . import manifest, snapshot, supervisor
 
-OWN_HOSTS = {"localhost", "127.0.0.1", "[::1]", "testserver"}
 HOP = {"connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade", "proxy-authorization", "proxy-authenticate", "host", "content-length"}
 
 
 def sim_name(host: str) -> Optional[str]:
     """`strata.localhost:8767` → `strata`；idea-loom 自己的主机名 → None。 / The simulation named by a host header, if any."""
     name = host.split(":")[0].lower()
-    if name.endswith(".localhost"):
-        sub = name[: -len(".localhost")]
+    suffix = "." + config.sim_domain()
+    if name.endswith(suffix):
+        sub = name[: -len(suffix)]
         return sub if manifest.NAME.match(sub) else None
     return None
 
@@ -48,7 +48,7 @@ def origin_allowed(origin: Optional[str]) -> bool:
     """
     if not origin:
         return True
-    return (urlparse(origin).hostname or "") in OWN_HOSTS
+    return (urlparse(origin).hostname or "").lower() in config.own_hosts()
 
 
 def ui_dist() -> Path:
@@ -113,7 +113,9 @@ async def serve_sim(name: str, request: Request) -> Response:
         sim = await run_in_threadpool(manifest.load, name)
     except (FileNotFoundError, ValueError) as e:
         return HTMLResponse(f"<p>没有名叫 {html.escape(name)} 的模拟。 / No simulation called {html.escape(name)}.</p><pre>{html.escape(str(e))}</pre>", status_code=404)
-    state = await run_in_threadpool(snapshot.ensure, name)
+    # 只有带构建能力的角色（all、play）才在请求里触发构建。
+    # Only roles that can build (all, play) trigger a build from a request.
+    state = await run_in_threadpool(snapshot.ensure if config.serves_sims() else snapshot.status, name)
     is_api = sim.api is not None and (request.url.path == "/api" or request.url.path.startswith("/api/"))
     # 新版本在构建或构建失败时，继续用上一个构建成功的版本。
     # While a newer version builds or fails, keep serving the last good build.
@@ -144,10 +146,18 @@ class HostRouter:
             return await self.app(scope, receive, send)
         request = Request(scope, receive)
         name = sim_name(request.headers.get("host", ""))
-        if name is not None:
-            return await (await serve_sim(name, request))(scope, receive, send)
         path = request.url.path
-        if path.startswith(("/api/", "/internal/")) or path in ("/api", "/docs", "/openapi.json"):
+        if name is not None:
+            if not config.serves_sims():
+                return await Response("not found", status_code=404)(scope, receive, send)
+            return await (await serve_sim(name, request))(scope, receive, send)
+        if config.role() == "play":
+            # play 角色只提供模拟和几个内部接口，没有 idea-loom 的界面和接口。
+            # The play role serves simulations and a few internal routes; no idea-loom UI or API.
+            if path.startswith("/internal/play/") or path == "/healthz":
+                return await self.app(scope, receive, send)
+            return await Response("not found", status_code=404)(scope, receive, send)
+        if path.startswith(("/api/", "/internal/")) or path in ("/api", "/docs", "/openapi.json", "/healthz"):
             if not origin_allowed(request.headers.get("origin")):
                 return await JSONResponse({"detail": "只接受来自 idea-loom 自己页面的请求"}, status_code=403)(scope, receive, send)
             return await self.app(scope, receive, send)
