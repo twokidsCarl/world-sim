@@ -9,6 +9,8 @@ import { orientation } from './sources/opm'
 import { pdbtm, topology } from './sources/pdbtm'
 import { cached, stateDir } from './structures'
 import catalog from '../data/catalog.json'
+import sim from '../sim.json'
+import { shouldWarm, warm, warmList, warmState } from './warm'
 import { bigPdbKey, makeBigPdb, type BigPdbSource } from './tools/bigpdb'
 import { groKey, makeGro } from './tools/gro'
 import { makePetworld, petworldKey } from './tools/petworld'
@@ -33,6 +35,8 @@ Bun.serve({
     const url = new URL(req.url)
     try {
       if (url.pathname === '/api/health') return json({ ok: true, claude: await available() })
+      // 预热进行到哪了 / how far the warm-up has got
+      if (url.pathname === '/api/warm') return json(warmState)
       // 化学组分的理想坐标（用于膜脂质）。
       // Ideal coordinates of a chemical component (used for the membrane lipid).
       const lig = /^\/api\/ligand\/([A-Za-z0-9]{1,5})$/.exec(url.pathname)
@@ -137,3 +141,6 @@ Bun.serve({
   },
 })
 console.log(`limn server on http://127.0.0.1:${PORT}`)
+
+// 托管时在后台把各张卡片要用的文件预先取好，见 server/warm.ts / when hosted, fetch what the cards need ahead of time in the background; see server/warm.ts
+if (shouldWarm(process.env)) setTimeout(() => void warm(warmList((sim.cards as { url: string }[]).map((c) => c.url))), 2000)
