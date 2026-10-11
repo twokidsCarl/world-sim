@@ -91,6 +91,12 @@ class Wish(BaseModel):
     occurrences: int = 1
     created_at: str
     updated_at: str
+    # 正在做这条愿望的作业走到哪一步；没有作业在做就都是空的。由接口那一层填，这里不存、也不算。
+    # Where the job working on this wish has got to; all empty when no job is. Filled by the API layer; nothing here stores or computes them.
+    job_id: Optional[str] = None
+    job_phase: Optional[str] = None
+    job_label: Optional[str] = None
+    job_queued: bool = False
 
 
 class WishDetail(Wish):

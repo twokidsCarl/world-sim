@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { VisitorQueue } from './SuggestPage'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
-import { type Job, type Suggestion, type WishDetail, type WishList, api } from '../api'
+import { type Job, type Suggestion, type Wish, type WishDetail, type WishList, api } from '../api'
 import { JobPanel } from '../ui/JobPanel'
 import { useAssistant } from '../assistant/store'
 import { label, plural } from '../i18n'
@@ -17,6 +17,32 @@ export function WishBadge({ status, label: text }: { status: string; label: stri
   return (
     <span className={`badge ${TONE[status] ?? ''}`}>
       <span aria-hidden="true">{MARK[status]}</span> {label(lang, 'wishStatus', status, text)}
+    </span>
+  )
+}
+
+// 有作业正在做这条愿望时，在状态旁边标出它走到哪一步。等你批方案的那一步用醒目的徽标，其余的是转圈的小字。
+// When a job is working on the wish, show its stage next to the status. The step waiting for your approval gets a badge that stands out; the rest are small text with a spinner.
+function JobStage({ wish }: { wish: Wish }) {
+  const lang = useLang()
+  const t = useT()
+  if (!wish.job_phase) return null
+  if (wish.job_queued) return <span className="muted small"> {t('排队中', 'Queued')}</span>
+  const text = label(lang, 'phase', wish.job_phase, wish.job_label ?? wish.job_phase)
+  if (wish.job_phase === 'plan_ready') {
+    return (
+      <>
+        {' '}
+        <span className="badge status-draft">
+          <span aria-hidden="true">!</span> {text}
+        </span>
+      </>
+    )
+  }
+  return (
+    <span className="muted small">
+      {' '}
+      <span className="spin" aria-hidden="true">◌</span> {text}
     </span>
   )
 }
@@ -110,6 +136,7 @@ export function WishesPage() {
                     <td className="r num">{w.occurrences}</td>
                     <td>
                       <WishBadge status={w.status} label={w.status_label} />
+                      <JobStage wish={w} />
                       {w.pr != null && <span className="muted small"> {t(`合并请求 #${w.pr}`, `Pull request #${w.pr}`)}</span>}
                     </td>
                     <td className="muted small">{formatTime(w.updated_at)}</td>
