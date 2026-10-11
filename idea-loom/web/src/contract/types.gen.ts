@@ -97,6 +97,13 @@ export type Body2 = string;
 export type History = HistoryItem[];
 export type LinksOut = Link[];
 export type LinksIn = Link[];
+export type Ok = boolean;
+export type PrUrl = string | null;
+export type Message = string;
+export type Pending = number;
+export type IdeasMdStale = boolean;
+export type CanSync = boolean;
+export type Reason2 = string | null;
 
 export interface Contract {
   state: State;
@@ -326,4 +333,23 @@ export interface Version {
   by: By1;
   title: Title2;
   body: Body2;
+}
+/**
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "SyncResult".
+ */
+export interface SyncResult {
+  ok: Ok;
+  pr_url: PrUrl;
+  message: Message;
+}
+/**
+ * This interface was referenced by `Contract`'s JSON-Schema
+ * via the `definition` "SyncStatus".
+ */
+export interface SyncStatus {
+  pending: Pending;
+  ideas_md_stale: IdeasMdStale;
+  can_sync: CanSync;
+  reason: Reason2;
 }
