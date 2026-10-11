@@ -10,7 +10,7 @@ import type { EntitySpec, PanelSpec, SceneSpec, SourceRef } from '../src/scene/s
 import { ROLES, type Role } from '../src/style/palettes'
 import { resolveLandscape } from './landscape'
 import { ask as realAsk, type AskOptions } from './llm'
-import { matchArticles } from './motm'
+import { matchArticles, matchNeuro } from './motm'
 import catalog from '../data/catalog.json'
 import { entryInfo, searchText, type EntryInfo } from './sources/rcsb'
 import { abundances } from './sources/paxdb'
@@ -193,6 +193,7 @@ export async function resolveTopic(topic: string, deps: Deps = liveDeps, log: (s
 
   const allQueries = [intent.name_en, ...intent.steps.flatMap((s) => s.queries)]
   for (const a of matchArticles(allQueries)) for (const id of a.pdb.slice(0, 6)) add(id, `PDB-101 Molecule of the Month "${a.title}"`)
+  for (const n of matchNeuro(allQueries)) add(n.id, `landmark neuroscience structure "${n.title}"`)
   for (const [k, step] of intent.steps.entries()) {
     for (const id of step.suggested_pdb_ids) add(id, `recalled for step ${k + 1}`)
     for (const q of step.queries.slice(0, 3)) {

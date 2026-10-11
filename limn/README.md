@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·5 | 分子尺度的脑神经：38 个神经相关的地标结构（突触前、突触后、轴突、髓鞘、病理纤维）；膜蛋白取向增加 PDBTM 后备 | 完成，见 `data/neuro.json`、`server/sources/pdbtm.ts` |
 | 二期·4 | 最新发表：按期刊（Nature、Science、Cell 等）列出最近公开的结构，点一下出图；出处里显示论文 | 完成，见 `server/sources/literature.ts` |
 | 二期·2d | 膜的真实脂质组成（八类膜，分小叶混排），脂质尾链转到同一侧 | 完成，见 `data/membranes.json`、`src/landscape/lipid.ts` |
 | 二期·3a | 逐残基上色：结构域、活性与结合位点、AlphaFold 置信度、AlphaMissense 致病性；按 `AF-<UniProt 编号>` 直接载入预测模型 | 完成，见 `src/style/annotate.ts`、`server/sources/annotations.ts` |
@@ -40,7 +41,7 @@ bun run typecheck
 - **按编号**：直接输入 4 位 PDB 编号，或 `AF-` 加 UniProt 编号（如 `AF-P04637`）载入 AlphaFold 预测模型。不需要 `claude`。例如 `2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
 
 - **最新发表**：选一个期刊和时间范围，列出 RCSB 里这段时间公开的结构，按论文归并，点编号出图。需要本地服务，不需要 `claude`。
-- **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
+- **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。同一页下面是“神经系统的分子”：按突触前、突触后、轴突、髓鞘、病理纤维分组的 38 个地标结构。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
 
 拖动旋转，滚轮缩放，Shift 拖动平移。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
 
@@ -89,7 +90,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 
 - **位置和朝向是随机排布的。** 可溶分子在各自区室里随机放置；真实细胞里的结合关系、排列（例如贴在膜内侧的基质蛋白层）没有体现。
 - **丰度优先用实测数据，查不到才是估计值。** 配方由模型拟定：列出十来种有代表性的分子。场景属于某个物种的细胞时，蛋白的丰度取自 [PaxDb](https://pax-db.org/)（整合了多项质谱研究的丰度数据库，覆盖大肠杆菌、酵母、人和小鼠的各种组织等四百多个物种）；复合物取各亚基的中位数，再除以每种亚基的份数。PaxDb 里查不到的成分和膜蛋白的面密度仍是模型的估计。界面上每种成分都标明是“实测数据”还是“估计”。除标为主角的成分外，数量按比例放大到区室总浓度，用这十来种代表其余上千种。
-- **膜蛋白的取向优先用 OPM。** [OPM](https://opm.phar.umich.edu/) 数据库收录的结构，按它给出的位置、倾角和内外朝向嵌进膜里（这是由实验结构计算出来的取向，不是直接测量）；界面上会标出。OPM 没有收录的（多数只解析了膜外段的结构）仍是近似摆放：沿分子长轴竖立，立在膜面上，连膜的一端由链末端的位置判断，缺失的柄部和跨膜段不画。膜蛋白正前方的脂质不画，好让跨膜的部分露出来。
+- **膜蛋白的取向优先用 OPM，其次 PDBTM。** OPM 没有收录的跨膜结构，用 [PDBTM](https://pdbtm.unitmp.org/) 给出的变换摆进膜里，再按 UniProt 的拓扑注释（哪些残基在胞外、哪些在胞质）决定哪面朝外；拓扑注释不够用时不采用。 [OPM](https://opm.phar.umich.edu/) 数据库收录的结构，按它给出的位置、倾角和内外朝向嵌进膜里（这是由实验结构计算出来的取向，不是直接测量）；界面上会标出。OPM 没有收录的（多数只解析了膜外段的结构）仍是近似摆放：沿分子长轴竖立，立在膜面上，连膜的一端由链末端的位置判断，缺失的柄部和跨膜段不画。膜蛋白正前方的脂质不画，好让跨膜的部分露出来。
 - **膜的脂质组成取自文献，构象是示意的。** 八类膜（哺乳动物质膜、内质网、线粒体内膜、大肠杆菌内膜和外膜、HIV 和新冠病毒的包膜、突触小泡）的组成写在 `data/membranes.json` 里，每条都有出处，并说明哪些是分小叶实测的、哪些只有整膜数据、哪些是综述给的范围（例如质膜两个小叶的磷脂是实测的，胆固醇在两叶之间怎么分没有测到）。画的时候两个小叶各按比例混排。每种脂质用数据库里的理想坐标，尾链整体转到头基的另一侧（键长不变，但头基附近有少数原子会靠得过近）；所有同种脂质构象相同，位置随机，不是模拟得到的膜。缩醛磷脂并入 PE，糖脂和脂多糖的长糖链没有画。配方没有指明膜的类型时，仍用单一的 POPC。
 - **DNA 是程序生成的。** 场景里有 DNA 时（细菌拟核、细胞核），画成双螺旋长链：每个碱基对的原子位置量自晶体结构 1BNA，螺旋参数用溶液中 B 型 DNA 的通用值（每对升 3.4 Å、每圈 10.5 对），走向是按 DNA 的刚度（持久长度约 50 nm）随机弯曲的曲线，序列随机，总长度按模型估计的 DNA 密度换算。DNA 上结合的蛋白、超螺旋和核小体没有画。
 - **没有画**：水、离子、小分子，以及 RNA 长链和细胞骨架纤维。
@@ -119,6 +120,8 @@ bun run dev                    # 然后打开 http://127.0.0.1:5184/research/ill
 ## 数据与参考图
 
 - **结构数据**：运行时从 RCSB PDB（`models.rcsb.org`，CC0）按编号下载，不入库。检索还用到 UniProt、PDBe SIFTS 和 AlphaFold DB 的公开接口。
+- **`data/neuro.json`**：38 个神经相关结构的 PDB 编号和一句说明，每个编号都对过 RCSB 的标题。
+- **膜蛋白取向（后备）**：运行时查询 [PDBTM](https://pdbtm.unitmp.org/)；它的条款只允许非营利使用且不得修改，所以只在运行时取用、注明来源，不入库。
 - **膜蛋白取向**：运行时从 [OPM](https://opm.phar.umich.edu/) 下载预先定向的坐标，只取 Cα 位置和膜的半厚度，缓存在本机，不入库。OPM 的许可条款我没有查到原文，所以只在运行时取用、标明来源。
 - **蛋白丰度**：运行时从 [PaxDb](https://pax-db.org/) 下载对应物种和组织的整合数据集，缓存在本机，不入库。
 - **现成模型**（`data/catalog.json`，只存指针）：[Mesoscale Explorer](https://mesoscope.scripps.edu/explorer/) 的示例文件，包括 YASARA [PetWorld](http://download.yasara.org/petworld/)（CC BY-SA 4.0；Ozvoldik 等，*J. Chem. Inf. Model.* 2021）和 [cellPACK](https://github.com/mesoscope/cellPACK_data)（数据仓库为 MIT）的模型、生殖支原体整细胞模型（MIT；Maritan 等，*J. Mol. Biol.* 2022），以及 RCSB 里的整合结构（PDB-IHM，CC0）。
@@ -147,6 +150,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 5 | The nervous system at molecular scale: 38 landmark structures (presynaptic, postsynaptic, axon, myelin, fibrils of disease); a PDBTM fallback for membrane protein orientation | Done, see `data/neuro.json`, `server/sources/pdbtm.ts` |
 | Round 2, phase 4 | Recently published: the structures most recently released for a journal (Nature, Science, Cell and others), one click to draw; the provenance shows the paper | Done, see `server/sources/literature.ts` |
 | Round 2, phase 2d | Real lipid compositions of membranes (eight kinds, mixed per leaflet), with lipid tails turned to one side | Done, see `data/membranes.json`, `src/landscape/lipid.ts` |
 | Round 2, phase 3a | Per-residue colouring: domains, active and binding sites, AlphaFold confidence, AlphaMissense pathogenicity; predicted models load directly as `AF-<UniProt accession>` | Done, see `src/style/annotate.ts`, `server/sources/annotations.ts` |
@@ -172,7 +176,7 @@ Four ways in:
 - **By topic**: type something like "CRISPR-Cas9 cutting DNA", "the SARS-CoV-2 spike bound to ACE2" or "TP53". This needs [Claude Code](https://claude.com/claude-code) installed and signed in on the machine (it is called as `claude -p`; no API key is needed). One resolution takes about half a minute.
 - **By id**: type a four-character PDB id, or `AF-` followed by a UniProt accession (`AF-P04637`) for an AlphaFold predicted model; `claude` is not needed. Examples: `2hhb` (haemoglobin), `6vxx` (the SARS-CoV-2 spike), `1m4x` (the PBCV-1 capsid, 16 million atoms).
 - **Recently published**: choose a journal and a period to list the structures the RCSB released in it, grouped by paper; click an id to draw it. This needs the local service but not `claude`.
-- **Ready-made models**: pick a published whole model from the list; `claude` is not needed. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
+- **Ready-made models**: pick a published whole model from the list; `claude` is not needed. Below it on the same tab are "molecules of the nervous system": 38 landmark structures grouped as presynaptic, postsynaptic, axon, myelin and fibrils of disease. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
 
 Drag to rotate, scroll to zoom, shift-drag to pan. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
 
@@ -221,7 +225,7 @@ Not observed, and said so in the interface:
 
 - **Positions and orientations are random.** Soluble molecules are scattered within their compartment; real binding partners and arrangements (a matrix layer under a membrane, say) are not represented.
 - **Abundances are measured where possible and estimated otherwise.** The recipe is proposed by the model: a dozen representative molecules. When the scene is one organism's cell, protein abundances come from [PaxDb](https://pax-db.org/), a database that integrates many mass-spectrometry studies and covers over four hundred organisms, including E. coli, yeast, and many human and mouse tissues; a complex takes the median over its subunits, divided by the number of copies of each. Ingredients PaxDb does not have, and the surface density of membrane proteins, are still the model's estimates. The interface marks every ingredient as measured data or an estimate. Apart from the featured ones, counts are scaled up to the compartment's total concentration, so that a dozen kinds stand in for the thousand others.
-- **Membrane proteins follow OPM where it has them.** A structure listed in the [OPM](https://opm.phar.umich.edu/) database is set into the membrane at the position, tilt and inside-outside sense OPM gives (an orientation computed from the experimental structure, not measured directly), and the interface says so. Structures OPM does not list (mostly those that cover only the part outside the membrane) are still placed approximately: standing along their long axis on the membrane face, with the membrane end judged from where the chain terminus is, and with missing stalks and transmembrane segments not drawn. Lipids straight in front of a membrane protein are left out so that the part spanning the membrane can be seen.
+- **Membrane proteins follow OPM where it has them, and PDBTM next.** A transmembrane structure that OPM lacks is set into the membrane by the transformation [PDBTM](https://pdbtm.unitmp.org/) gives, and UniProt's topology annotation (which residues are extracellular and which cytoplasmic) decides which face is out; when that annotation is not enough, the orientation is not used. A structure listed in the [OPM](https://opm.phar.umich.edu/) database is set into the membrane at the position, tilt and inside-outside sense OPM gives (an orientation computed from the experimental structure, not measured directly), and the interface says so. Structures OPM does not list (mostly those that cover only the part outside the membrane) are still placed approximately: standing along their long axis on the membrane face, with the membrane end judged from where the chain terminus is, and with missing stalks and transmembrane segments not drawn. Lipids straight in front of a membrane protein are left out so that the part spanning the membrane can be seen.
 - **The membrane's lipid composition is from the literature; its conformations are schematic.** The compositions of eight membranes (the mammalian plasma membrane, the endoplasmic reticulum, the inner mitochondrial membrane, the inner and outer membranes of E. coli, the envelopes of HIV and SARS-CoV-2, and the synaptic vesicle) are in `data/membranes.json`, each with its source and a statement of what was measured per leaflet, what is known only for the whole membrane, and what is a range from a review (in the plasma membrane, for instance, the phospholipids of each leaflet were measured, but how cholesterol divides between the leaflets was not). Each leaflet is mixed to its own proportions. Each lipid uses its ideal coordinates from the database with its tails turned as a whole to the side away from the head group (bond lengths are unchanged, but a few atoms near the head group end up too close together); all copies of a lipid share one conformation and are placed at random, so this is not a simulated membrane. Plasmalogens are counted with PE, and glycolipids and the long sugar chains of lipopolysaccharide are not drawn. When the recipe names no kind of membrane, a single phospholipid (POPC) is still used.
 - **DNA is generated.** Where a scene holds DNA (a bacterial nucleoid, a nucleus) it is drawn as long double helix: the atoms of each base pair were measured from the crystal structure 1BNA, the helix uses the usual figures for B-DNA in solution (a rise of 3.4 Å per pair, 10.5 pairs per turn), its course is a curve that bends at random with DNA's own stiffness (a persistence length of about 50 nm), the sequence is random, and the total length follows the DNA density the model estimates. Proteins bound to the DNA, supercoiling and nucleosomes are not drawn.
 - **Not drawn**: water, ions, small molecules, and long RNA and cytoskeletal filaments.
@@ -251,6 +255,8 @@ Rebuilding the Molecule of the Month table (`data/motm.json`, article titles and
 ## Data and reference pictures
 
 - **Structures**: downloaded by id at run time from the RCSB PDB (`models.rcsb.org`, CC0); none are in this repository. Lookups also use the public interfaces of UniProt, PDBe SIFTS and the AlphaFold DB.
+- **`data/neuro.json`**: the PDB ids of 38 structures of the nervous system with a line each, every id checked against its RCSB title.
+- **Membrane protein orientation (fallback)**: [PDBTM](https://pdbtm.unitmp.org/) is queried at run time; its terms allow non-profit use without modification only, so it is fetched at run time and credited, and nothing of it is in the repository.
 - **Membrane protein orientation**: pre-oriented coordinates are downloaded from [OPM](https://opm.phar.umich.edu/) at run time; only Cα positions and the membrane half-thickness are used, cached locally, and none of it is in this repository. I could not find the text of OPM's licence, so the data is only fetched at run time and credited.
 - **Protein abundance**: the integrated dataset for the organism and tissue is downloaded from [PaxDb](https://pax-db.org/) at run time and cached locally; none of it is in this repository.
 - **Ready-made models** (`data/catalog.json`, pointers only): the example files of the [Mesoscale Explorer](https://mesoscope.scripps.edu/explorer/), which include models from YASARA [PetWorld](http://download.yasara.org/petworld/) (CC BY-SA 4.0; Ozvoldik et al., *J. Chem. Inf. Model.* 2021) and [cellPACK](https://github.com/mesoscope/cellPACK_data) (the data repository is MIT), the whole-cell model of Mycoplasma genitalium (MIT; Maritan et al., *J. Mol. Biol.* 2022), and integrative structures in the RCSB (PDB-IHM, CC0).

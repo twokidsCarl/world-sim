@@ -60,3 +60,7 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .paper-group .ids button { padding: 1px 6px; font-family: ui-monospace, monospace; }
 .paper { margin-top: 2px; }
 .paper details { margin-top: 2px; }
+
+.catalog details { display: flex; flex-direction: column; }
+.catalog details button { display: block; width: 100%; margin-top: 4px; }
+.catalog summary { cursor: pointer; padding: 2px 0; }

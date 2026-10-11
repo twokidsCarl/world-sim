@@ -9,7 +9,8 @@ import { BOX, resolveLandscape } from '../server/landscape'
 import type { Deps } from '../server/resolve'
 import { parseOpm } from '../server/sources/opm'
 import { parsePaxdb, ppmToMicromolar } from '../server/sources/paxdb'
-import { fitToMembrane } from '../src/landscape/orient'
+import { readPdbtm, sideOf } from '../server/sources/pdbtm'
+import { fitFromPdbtm, fitToMembrane } from '../src/landscape/orient'
 import type { EntryInfo } from '../server/sources/rcsb'
 
 const entry = (id: string, atoms: number): EntryInfo => ({
@@ -266,7 +267,7 @@ describe('OPM orientation', () => {
   it('stands an oriented protein with its outer end on the outer side', () => {
     // 分子的 +z 端在膜坐标系里也是 +z（外侧）/ the molecule's +z end is +z (outside) in the membrane frame too
     const mol = helix(40)
-    const fit = { matrix: IDENTITY, half: 15, matched: 40, rmsd: 0 }
+    const fit = { matrix: IDENTITY, half: 15, matched: 40, rmsd: 0, source: 'OPM' as const }
     const scene = (outer: 'above' | 'below'): LandscapeSpec => ({ width: 300, height: 300, depth: 100, membrane: true, outer, above: '', below: '', ingredients: [{ panel: 0, compartment: 'membrane', copies: 3, abundance: '', feature: false }] })
     for (const outer of ['above', 'below'] as const) {
       const packed = packScene([{ mol, assembly: 'asym', membrane: fit }], scene(outer), null, 1)
@@ -276,6 +277,56 @@ describe('OPM orientation', () => {
         expect(outer === 'above' ? y : -y).toBeCloseTo(30, 3)
       }
     }
+  })
+})
+
+// OPM 没有时的后备 / the fallback when OPM has no entry
+describe('PDBTM fallback', () => {
+  const record = { additional_entry_annotations: { membrane: { normal: { x: 0, y: 0, z: 15 }, transformation_matrix: { rowx: { x: 1, y: 0, z: 0, t: -1 }, rowy: { x: 0, y: 1, z: 0, t: -2 }, rowz: { x: 0, y: 0, z: 1, t: -3 } } } } }
+  /** 沿 z 的一条链，30 个残基，z 从 -43.5 到 +43.5 / a chain along z, 30 residues, z from -43.5 to +43.5 */
+  const rod = (): Molecule => {
+    const n = 30
+    return {
+      id: 'R', title: 'R', atomCount: n, pos: Float32Array.from({ length: n * 3 }, (_, k) => (k % 3 === 2 ? (Math.floor(k / 3) - 14.5) * 3 : 0)), element: new Uint8Array(n), chainOf: new Uint32Array(n),
+      isTrace: new Uint8Array(n).fill(1), residue: Int32Array.from({ length: n }, (_, i) => i + 1),
+      chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count: n, model: 1 }],
+      entities: [{ id: '1', description: 'R', kind: 'protein' }],
+      assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
+    }
+  }
+
+  it('reads the transformation and the half-thickness', () => {
+    const f = readPdbtm(record)!
+    expect(f.half).toBe(15)
+    expect(f.matrix.slice(12)).toEqual([-1, -2, -3, 1])
+    expect(readPdbtm({})).toBeNull()
+  })
+
+  it('sorts topology wording into outside and inside', () => {
+    expect(['Extracellular', 'Lumenal', 'Periplasmic', 'Virion surface'].map(sideOf)).toEqual(['out', 'out', 'out', 'out'])
+    expect(['Cytoplasmic', 'Mitochondrial matrix', 'Intravirion'].map(sideOf)).toEqual(['in', 'in', 'in'])
+    expect(sideOf('Helical')).toBeNull()
+  })
+
+  it('keeps the frame when outside residues are already up, and flips it when they are down', () => {
+    const frame = { matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], half: 15 }
+    // 残基 21-30 在 +z 一端 / residues 21-30 are at the +z end
+    const up = fitFromPdbtm(rod(), frame, { A: [{ from: 21, to: 30, side: 'out' }, { from: 1, to: 10, side: 'in' }] })!
+    expect(up.source).toBe('PDBTM')
+    expect(up.matrix[10]).toBe(1)
+    const down = fitFromPdbtm(rod(), frame, { A: [{ from: 1, to: 10, side: 'out' }, { from: 21, to: 30, side: 'in' }] })!
+    expect(down.matrix[10]).toBe(-1)
+    expect(down.matrix[5]).toBe(-1)
+    expect(down.matrix[0]).toBe(1)
+    // 只有一侧有注释也能定 / one annotated side is enough
+    expect(fitFromPdbtm(rod(), frame, { A: [{ from: 1, to: 10, side: 'in' }] })!.matrix[10]).toBe(1)
+  })
+
+  it('declines when topology says nothing, or the two sides do not separate', () => {
+    const frame = { matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], half: 15 }
+    expect(fitFromPdbtm(rod(), frame, {})).toBeNull()
+    expect(fitFromPdbtm(rod(), frame, { A: [{ from: 13, to: 15, side: 'out' }, { from: 16, to: 18, side: 'in' }] })).toBeNull()
+    expect(fitFromPdbtm(rod(), frame, { A: [{ from: 1, to: 30, side: 'out' }] })).toBeNull()
   })
 })
 
