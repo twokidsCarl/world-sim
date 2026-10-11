@@ -4,13 +4,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from . import mind
 from .model import AWARE, LOST, QUEUEING, UNAWARE, WITHDREW, Intervention, Message, Params, Population, Series
 
+if TYPE_CHECKING:
+    from .protagonist import Context, Director
+
 KINDS = ["kin", "neighbor", "colleague", "friend"]
+TIE_NAMES = {"kin": "家人", "neighbor": "邻居", "colleague": "同事", "friend": "朋友"}
 VENUE_TRUST = 0.3
 VENUE_ATTEND = 0.3
 QUEUE_FULL = 0.04  # 队伍排到人口的这个比例，就算全城都看得见
@@ -37,8 +42,12 @@ def _activity(hour: int) -> np.ndarray:
 
 
 class Sim:
-    def __init__(self, pop: Population, params: Params, scenario: ModuleType):
+    def __init__(self, pop: Population, params: Params, scenario: ModuleType, director: "Director | None" = None):
+        """director 不为空时，主角的行动与心里话交给大模型；为空时全体都走数值规则。
+        With a director, protagonists' actions and thoughts come from the model; without one everybody follows the numeric rules.
+        """
         self.pop, self.p, self.sc = pop, params, scenario
+        self.director = director
         self.rng = np.random.default_rng([params.seed, 1])
         ps = pop.persons
         n = self.n = len(ps)
@@ -58,6 +67,12 @@ class Sim:
         self.protagonist = col("protagonist", bool)
         self.near_bank = col("district", int) == ps[pop.cast["banker"]].district
         self.banker = pop.cast["banker"]
+        # 交给模型的人：除掌柜外的主角 / who the model plays: every protagonist but the banker
+        self.directed = self.protagonist.copy() if director else np.zeros(n, dtype=bool)
+        self.directed[self.banker] = False
+        self.asked: set[int] = set()  # 已经问过第一次的人 / protagonists already asked once
+        self.wants_verify: set[int] = set()  # 决定去柜上看、但钱庄还没开门的人 / decided to go and look while the bank was shut
+        self.memory: dict[int, list[str]] = {}  # 主角听到过的话 / what each protagonist has been told
 
         # 有向边：每条关系两个方向各一条
         a = np.array([t.a for t in pop.ties] + [t.b for t in pop.ties])
@@ -111,6 +126,10 @@ class Sim:
         return m.id
 
     def _think(self, i: int, kind: str, **kw) -> None:
+        # 模型扮演的人，听到消息和去排队时的心里话由模型来写
+        # For model-played characters the model writes the thought on hearing and on queueing
+        if self.directed[i] and kind in ("heard", "queue", "believe", "doubt"):
+            return
         if self.protagonist[i]:
             b = float(mind.sigmoid(self.L[i]))
             text = self.sc.thought(kind, depth=int(self.depth[i]), belief=b, expect=float(self.expect[i]), **kw)
@@ -126,7 +145,8 @@ class Sim:
         p = self.p
         m = int(self.held[src])
         msg = self.messages[m]
-        if msg.valence == 1 and self.rng.random() < p.mutate:
+        # 模型扮演的人说什么由模型定，不替他们走样 / model-played characters choose their own words, so no drift for them
+        if msg.valence == 1 and not self.directed[src] and self.rng.random() < p.mutate:
             # 转述走样：越怕说得越重
             severity = float(np.clip(msg.severity * np.exp(self.rng.normal(0.12 + 0.3 * self.fear[src], 0.25)), 0.4, 2.5))
             text = self.sc.rumor_text(severity, int(self.rng.integers(8)))
@@ -149,6 +169,10 @@ class Sim:
         p1 = float(mind.sigmoid(self.L[dst]))
         self._emit("tell", a=src, b=dst, m=m, via=via, p0=round(p0 * 100), p1=round(p1 * 100))
 
+        if self.directed[dst]:
+            who = self.pop.persons[src]
+            place = self.pop.venues[int(via[6:])].name if via.startswith("venue:") else TIE_NAMES[via]
+            self.memory.setdefault(dst, []).append(f"{who.name}（{place}）说：「{msg.text}」")
         if msg.valence == 1:
             self._talk_new[dst] += 1
             if not self.verified[dst] and (self.held[dst] < 0 or msg.severity > self.messages[self.held[dst]].severity):
@@ -235,20 +259,25 @@ class Sim:
         belief = mind.sigmoid(self.L)
         ok = (self.status == AWARE) & ~self.verified
         prob = p.verify * (0.4 + self.education / 3 + self.media_use) * (1 - self.conformity) * 4 * belief * (1 - belief)
-        for i in np.flatnonzero(ok & (self.rng.random(self.n) < prob)):
-            p0 = float(belief[i])
-            # 柜上确实在兑付；但门口队伍越长，这一眼越不能叫人放心
-            self.L[i] -= p.w_verify * (0.5 + self.trust_institution[i]) * (1 - pub)
-            p1 = float(mind.sigmoid(self.L[i]))
-            m = None
-            if p1 < 0.3:
-                self.verified[i] = True
-                m = self._message(int(self.held[i]) if self.held[i] >= 0 else None, int(i), -1, 1.0,
-                                  self.sc.REBUTTAL[int(self.rng.integers(len(self.sc.REBUTTAL)))])  # fmt: skip
-                self.held[i] = m
-                self.zeal[i] = 1.0
-            self._emit("verify", a=int(i), m=m, p0=round(p0 * 100), p1=round(p1 * 100))
-            self._think(int(i), "verify")
+        for i in np.flatnonzero(ok & ~self.directed & (self.rng.random(self.n) < prob)):
+            self._verify_one(int(i), pub)
+
+    def _verify_one(self, i: int, pub: float) -> None:
+        """一个人亲自去柜上看。/ One person goes to the counter to see for themselves."""
+        p0 = float(mind.sigmoid(self.L[i]))
+        # 柜上确实在兑付；但门口队伍越长，这一眼越不能叫人放心
+        # The counter is paying out, but the longer the queue outside, the less reassuring the visit
+        self.L[i] -= self.p.w_verify * (0.5 + self.trust_institution[i]) * (1 - pub)
+        p1 = float(mind.sigmoid(self.L[i]))
+        m = None
+        if p1 < 0.3:
+            self.verified[i] = True
+            m = self._message(int(self.held[i]) if self.held[i] >= 0 else None, i, -1, 1.0,
+                              self.sc.REBUTTAL[int(self.rng.integers(len(self.sc.REBUTTAL)))])  # fmt: skip
+            self.held[i] = m
+            self.zeal[i] = 1.0
+        self._emit("verify", a=i, m=m, p0=round(p0 * 100), p1=round(p1 * 100))
+        self._think(i, "verify")
 
     def _observe(self, pub: float, awake: bool) -> None:
         p = self.p
@@ -276,13 +305,68 @@ class Sim:
 
     def _decide(self) -> None:
         belief = mind.sigmoid(self.L)
-        ok = (self.status == AWARE) & (self.deposit > 0)
+        ok = (self.status == AWARE) & (self.deposit > 0) & ~self.directed
         hazard = mind.withdraw_hazard(belief, self.expect, self.fear, self.stake, self.risk_aversion, self.conformity, self.p)
         for i in np.flatnonzero(ok & (self.rng.random(self.n) < hazard)):
-            self.status[i] = QUEUEING
-            self.queue.append(int(i))
-            self._emit("queue", a=int(i))
-            self._think(int(i), "queue")
+            self._join_queue(int(i))
+
+    def _join_queue(self, i: int) -> None:
+        self.status[i] = QUEUEING
+        self.queue.append(i)
+        self._emit("queue", a=i)
+        self._think(i, "queue")
+
+    def _direct(self, hour: int, pub: float, bank_open: bool) -> None:
+        """问模型扮演的主角：刚听说的人立刻问一次，此后每天上午十点（钱庄已开门）再问一次。
+        Ask the model-played protagonists: once when they first hear, then at ten every morning, when the bank is open.
+        """
+        # 夜里想好了要去柜上看的人，等开门了再去 / those who decided overnight to go and look do so once the bank opens
+        if bank_open:
+            for i in sorted(self.wants_verify):
+                if self.status[i] == AWARE:
+                    self._verify_one(i, pub)
+            self.wants_verify.clear()
+        due = [int(i) for i in np.flatnonzero(self.directed & (self.status == AWARE)) if i not in self.asked or hour == 10]
+        if not due:
+            return
+        decisions = self.director.decide([self._context(i) for i in due])
+        for i, d in zip(due, decisions):
+            self.asked.add(i)
+            if d is None:
+                # 模型没答上来：这一次按数值规则办 / no answer from the model: fall back to the numeric rule this once
+                b = float(mind.sigmoid(self.L[i]))
+                h = mind.withdraw_hazard(b, self.expect[i], self.fear[i], self.stake[i], self.risk_aversion[i], self.conformity[i], self.p)
+                if self.deposit[i] > 0 and self.rng.random() < h * 8:  # 一天只问一次，所以把一天的机会并在一起
+                    self._join_queue(i)
+                continue
+            self._emit("thought", a=i, x=d.thought, via="llm")
+            if d.action == "withdraw" and self.deposit[i] > 0:
+                self._join_queue(i)
+            elif d.action == "verify":
+                if bank_open:
+                    self._verify_one(i, pub)
+                else:
+                    self.wants_verify.add(i)
+            elif d.action in ("tell", "reassure") and d.say:
+                valence = 1 if d.action == "tell" else -1
+                parent = int(self.held[i]) if self.held[i] >= 0 else None
+                self.held[i] = self._message(parent, i, valence, d.tone if valence == 1 else 1.0, d.say)
+                self.zeal[i] = 1.2
+                self._emit("mutate", a=i, m=int(self.held[i]))
+
+    def _context(self, i: int) -> "Context":
+        from .protagonist import Context
+
+        x = self.pop.persons[i]
+        hour = (self.p.start_hour + self.t) % 24
+        day = (self.p.start_hour + self.t) // 24 + 1
+        return Context(
+            setting=self.sc.PUBLIC, bank=self.pop.venues[self.pop.bank].name, clock=f"第 {day} 天 {hour} 点",
+            name=x.name, role=x.role, age=x.age, persona=x.persona, deposit=x.deposit, stake=float(self.stake[i]),
+            risk_aversion=x.risk_aversion, conformity=x.conformity, trust_institution=x.trust_institution, depth=x.depth,
+            belief=float(mind.sigmoid(self.L[i])), fear=float(self.fear[i]), heard=self.memory.get(i, [])[-6:],
+            queue=len(self.queue), acquaintances_ran=float(self.seen[i]), can_withdraw=x.deposit > 0,
+        )  # fmt: skip
 
     def _serve(self) -> None:
         for _ in range(min(len(self.queue), max(1, round(self.p.tellers * self.n)))):
@@ -349,6 +433,8 @@ class Sim:
                         self._verify(pub)
                 self._observe(pub, awake)
                 if awake:
+                    if self.director is not None:
+                        self._direct(hour, pub, bank.hours[0] <= hour < bank.hours[1])
                     self._decide()
                     self._crossings()
                 if bank.hours[0] <= hour < bank.hours[1]:

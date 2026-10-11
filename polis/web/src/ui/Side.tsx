@@ -221,6 +221,7 @@ function Entry({ run, e, self }: { run: RunData; e: SimEvent; self: number | nul
         <span className="thought">
           {self == null && <b>{name(e.a)}：</b>}
           {String(e.x)}
+          {e.via === 'llm' && <span className="tag llm">模型所写</span>}
         </span>
       )
       break

@@ -149,6 +149,7 @@ class Params(BaseModel):
     reserve_ratio: float = 0.30
     tellers: float = 0.02
     interventions: list[Intervention] = []
+    llm: bool = Field(False, description="主角是否交给大模型扮演")
 
 
 class Event(BaseModel):
@@ -183,6 +184,8 @@ class Summary(BaseModel):
     failed_at: Optional[int]
     messages: int
     events: int
+    llm_calls: int = 0
+    llm_failed: int = 0
 
 
 class Manifest(BaseModel):

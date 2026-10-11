@@ -23,7 +23,7 @@ def runs_dir() -> Path:
 
 def _line(m: model.Manifest) -> str:
     s = m.summary
-    end = f"第 {s.failed_at} 小时钱庄倒闭，{s.lost} 人受损" if s.failed_at is not None else "钱庄撑住了"
+    end = f"第 {s.failed_at} 小时倒闭，{s.lost} 人受损" if s.failed_at is not None else "撑住了"
     return f"{m.run_id}  {m.n} 人 × {m.ticks} 小时  最多 {s.peak_believers} 人相信  {s.withdrew} 人取款  {end}"
 
 
@@ -35,6 +35,7 @@ def run(
     ticks: Optional[int] = typer.Option(None, "--ticks", "-t", help="模拟多少小时（缺省由场景决定）"),
     response: str = typer.Option("notice", "--response", "-r", help="谁出面回应：notice 场景里原有的回应 / guarantee 可信一方担保 / none 无人回应"),
     calibrated: bool = typer.Option(False, "--calibrated", "-c", help="用 calibration.json 里校准过的参数"),
+    llm: bool = typer.Option(False, "--llm", help="主角交给大模型扮演（走本机 claude 命令）/ let the model play the protagonists"),
     label: str = typer.Option("", "--label", "-l", help="记录名后缀"),
 ):
     """跑一次模拟，记录写入 runs/。"""
@@ -51,9 +52,12 @@ def run(
     if response not in responses:
         raise typer.BadParameter(f"只能是 {' / '.join(responses)}", param_hint="--response")
     params.interventions = responses[response](params.start_hour)
-    parts = ["cal" if calibrated else "", "" if response == "notice" else response]
+    params.llm = llm
+    parts = ["cal" if calibrated else "", "" if response == "notice" else response, "llm" if llm else ""]
     m = trace.simulate(params, runs_dir(), label or "-".join(x for x in parts if x))
     typer.echo(_line(m))
+    if llm:
+        typer.echo(f"模型调用 {m.summary.llm_calls} 次，其中 {m.summary.llm_failed} 次失败后退回数值规则")
 
 
 @app.command("list")
