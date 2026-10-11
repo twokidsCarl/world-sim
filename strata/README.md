@@ -40,6 +40,8 @@ English version below / 英文版见下文。
 
 页面底部有引导实验（同一个 Ising 模型换一个维度、三维过冷液体里等一个晶核、流过圆盘、圆盘尾迹的脱落频率、从下面加热出现对流卷、对流从多强的重力开始、敲一下量声速、同一条势换一个维度、把时间倒过来、冷却液体直到结晶、粒子在管道里流成抛物线、让机器从粒子数据里发现扩散方程、冷的天体团坍缩后自己找到平衡、Ising 淬火穿过临界温度）：每一步改参数、运行一段，再用实测值检验一句预期。也可以用 `/?scenario=isingDimension`、`/?scenario=nucleation`、`/?scenario=wake`、`/?scenario=shedding`、`/?scenario=convection`、`/?scenario=convectionOnset`、`/?scenario=sound`、`/?scenario=dimension`、`/?scenario=reverse`、`/?scenario=freeze`、`/?scenario=poiseuille`、`/?scenario=diffusion`、`/?scenario=collapse` 或 `/?scenario=quench` 直接启动，结果写入 `window.__strataScenario`。
 
+地址栏还可以直接选底座和旋钮取值：`?substrate=md|ising|gravity`，其余与旋钮同名的参数设置该旋钮（超出范围的值被截到范围内），例如 `/?substrate=ising&dim=3&T=4.51`、`/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1`。有 `?scenario=` 时这些参数被忽略。加上 `?embed=1` 只留舞台、暂停与重置，以及正在播放的引导实验，供 world-sim 的统一入口（idea-loom）把它嵌进卡片；卡片列表在 `sim.json`。页面看不见时模拟循环停下，回来再继续。没有 WebGPU 时落到 CPU 参考实现，并在画面上说明；在跨源的 iframe 里实测 WebGPU 可用（`localhost` 的页面嵌 `strata.localhost`）。
+
 ## 运行
 
 需要 [Bun](https://bun.sh)。WebGPU 可用时自动使用 GPU 后端（Chrome 113 以上），否则退回 CPU 参考实现。
@@ -144,6 +146,8 @@ On the molecular dynamics stage (2D) you can drag a rectangle to select a region
 Every adjustable parameter carries a label saying whether it changes the universality class, only changes numerical values, is a state variable, or is a numerical method. Next to every quantity that has a theory, "agrees" or "deviates" is shown in real time.
 
 At the bottom of the page there are guided experiments (the same Ising model in a different dimension, waiting for a nucleus in a supercooled 3D liquid, flow past a disc, the shedding frequency of the disc's wake, heating from below until convection rolls appear, how strong gravity must be for convection to start, knocking the gas to measure the speed of sound, the same potential in a different dimension, running time backwards, cooling a liquid until it crystallizes, particles flowing in a channel with a parabolic profile, letting the machine discover the diffusion equation from particle data, a cold cluster of bodies collapsing and then finding equilibrium by itself, an Ising quench through the critical temperature): each step changes parameters, runs for a while, and then tests a one-sentence expectation against the measured value. They can also be started directly with `/?scenario=isingDimension`, `/?scenario=nucleation`, `/?scenario=wake`, `/?scenario=shedding`, `/?scenario=convection`, `/?scenario=convectionOnset`, `/?scenario=sound`, `/?scenario=dimension`, `/?scenario=reverse`, `/?scenario=freeze`, `/?scenario=poiseuille`, `/?scenario=diffusion`, `/?scenario=collapse` or `/?scenario=quench`; the result is written to `window.__strataScenario`.
+
+The address bar can also pick the substrate and knob values directly: `?substrate=md|ising|gravity`, and any other parameter named after a knob sets that knob (values outside its range are clamped), e.g. `/?substrate=ising&dim=3&T=4.51` or `/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1`. These are ignored when `?scenario=` is present. Adding `?embed=1` leaves only the stage, pause and reset, and the guided experiment being played, so that world-sim's single entry point (idea-loom) can embed it in a card; the card list is in `sim.json`. The simulation loop stops while the page is hidden and resumes on return. Without WebGPU the CPU reference implementation runs instead and the page says so; WebGPU was measured to work inside a cross-origin iframe (a `localhost` page embedding `strata.localhost`).
 
 ## Running
 

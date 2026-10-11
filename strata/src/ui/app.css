@@ -426,3 +426,27 @@ dd.broken {
   border-radius: 50%;
   pointer-events: none;
 }
+
+.notice {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+/* 嵌入模式：没有标题栏、旋钮和层卡片，舞台占满宽度。 */
+/* Embed mode: no title bar, knobs or level cards; the stage takes the full width. */
+.app.embed {
+  padding: 8px;
+}
+
+.app.embed main {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app.embed > .controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}

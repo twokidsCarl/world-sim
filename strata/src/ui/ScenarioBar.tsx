@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { SCENARIOS } from '../scenarios'
 import { engine } from './engine'
 import { scenarioPlayer, type ScenarioState } from './scenario'
+import { EMBED } from './url'
 
 export function ScenarioBar() {
   const [state, setState] = useState<ScenarioState | null>(scenarioPlayer.state)
@@ -13,6 +14,8 @@ export function ScenarioBar() {
     if (id) void engine.init().then(() => scenarioPlayer.start(id))
   }, [])
 
+  // 嵌入模式下不列出实验库。 / The library of experiments is not listed in embed mode.
+  if (!state && EMBED) return null
   if (!state) {
     return (
       <footer className="scenario">
@@ -33,7 +36,7 @@ export function ScenarioBar() {
       <div className="scenario-head">
         <strong>{state.title}</strong>
         <span className="caption">{state.done ? '完成' : `第 ${state.index + 1} / ${total} 步`}</span>
-        <button onClick={() => scenarioPlayer.stop()}>结束</button>
+        {!EMBED && <button onClick={() => scenarioPlayer.stop()}>结束</button>}
       </div>
       {!state.done && (
         <>

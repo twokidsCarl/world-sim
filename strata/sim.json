@@ -1,0 +1,272 @@
+{
+  "title": {
+    "zh": "从微观规则到涌现",
+    "en": "From microscopic rules to emergence"
+  },
+  "level": "L1",
+  "ready": true,
+  "web": {
+    "dir": ".",
+    "build": [
+      [
+        "bun",
+        "install"
+      ],
+      [
+        "bunx",
+        "vite",
+        "build"
+      ]
+    ],
+    "dist": "dist"
+  },
+  "cards": [
+    {
+      "id": "freeze",
+      "title": {
+        "zh": "冷却液体直到结晶，再把它熔化",
+        "en": "Cool a liquid until it crystallises, then melt it"
+      },
+      "hint": {
+        "zh": "粒子之间只有一条两体势；看有序是怎么自己长出来、又怎么消失的",
+        "en": "Only a pair potential acts between the particles; watch order appear by itself, then vanish"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=freeze"
+    },
+    {
+      "id": "reverse",
+      "title": {
+        "zh": "把时间倒过来：晶体熔化，再自己拼回去",
+        "en": "Run time backwards: a crystal melts, then reassembles itself"
+      },
+      "hint": {
+        "zh": "把所有速度反号，熔化的晶体一步不差地退回原样",
+        "en": "Flip every velocity and the melted crystal retraces its path exactly"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=reverse"
+    },
+    {
+      "id": "poiseuille",
+      "title": {
+        "zh": "粒子在管道里流成抛物线",
+        "en": "Particles in a pipe settle into a parabola"
+      },
+      "hint": {
+        "zh": "没有人写过流体方程；流速剖面由粒子碰撞自己长成抛物线",
+        "en": "Nobody wrote a fluid equation; collisions alone shape the velocity profile into a parabola"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=poiseuille"
+    },
+    {
+      "id": "wake",
+      "title": {
+        "zh": "流过一个圆盘：背后出现回流",
+        "en": "Flow past a disc: backflow appears behind it"
+      },
+      "hint": {
+        "zh": "十一万个粒子流过圆盘，看背风面的流体怎么倒着走",
+        "en": "110,000 particles flow past a disc; watch the fluid behind it run backwards"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=wake"
+    },
+    {
+      "id": "shedding",
+      "title": {
+        "zh": "圆盘后面的尾迹有没有周期",
+        "en": "Does the wake behind the disc have a period"
+      },
+      "hint": {
+        "zh": "在尾迹里放一个探测区，量它左右摆动的频率（要跑几分钟）",
+        "en": "A probe in the wake measures how often it swings from side to side (takes a few minutes)"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=shedding"
+    },
+    {
+      "id": "convection",
+      "title": {
+        "zh": "从下面加热：对流卷",
+        "en": "Heat from below: convection rolls"
+      },
+      "hint": {
+        "zh": "下壁热、上壁冷，把重力加大，气体自己分成一对对的卷",
+        "en": "Hot wall below, cold above: turn gravity up and the gas sorts itself into pairs of rolls"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=convection"
+    },
+    {
+      "id": "convectionOnset",
+      "title": {
+        "zh": "对流从多强的重力开始",
+        "en": "How strong must gravity be for convection to start"
+      },
+      "hint": {
+        "zh": "重力分六档往上加，看对流强度在哪一档离开热噪声",
+        "en": "Gravity rises in six steps; see at which one the convection measure leaves the thermal noise"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=convectionOnset"
+    },
+    {
+      "id": "sound",
+      "title": {
+        "zh": "敲一下，量声速",
+        "en": "Tap it and measure the speed of sound"
+      },
+      "hint": {
+        "zh": "推一下气体，看驻波来回摆，再和由粒子数据算出的声速比",
+        "en": "Push the gas, watch the standing wave swing, and compare with the sound speed computed from the particles"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=sound"
+    },
+    {
+      "id": "diffusion",
+      "title": {
+        "zh": "让机器从粒子数据里发现扩散方程",
+        "en": "Let the machine find the diffusion equation in particle data"
+      },
+      "hint": {
+        "zh": "两种粒子慢慢混合；程序从浓度的记录里拟合出它服从的方程",
+        "en": "Two species slowly mix; the program fits the equation they obey from the recorded concentration"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=diffusion"
+    },
+    {
+      "id": "dimension",
+      "title": {
+        "zh": "同一条势，换一个维度",
+        "en": "The same potential in another dimension"
+      },
+      "hint": {
+        "zh": "同一条两体势，从二维换到三维，压强和结构跟着变",
+        "en": "The same pair potential, moved from 2D to 3D: pressure and structure change with it"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=dimension"
+    },
+    {
+      "id": "nucleation",
+      "title": {
+        "zh": "三维过冷液体：等一个晶核",
+        "en": "A supercooled 3D liquid: waiting for one nucleus"
+      },
+      "hint": {
+        "zh": "把三维液体冷到凝固点以下，等晶体从某一处长出来",
+        "en": "Cool a 3D liquid below freezing and wait for the crystal to start somewhere"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=nucleation"
+    },
+    {
+      "id": "md3d",
+      "title": {
+        "zh": "三维的一团粒子",
+        "en": "A cloud of particles in 3D"
+      },
+      "hint": {
+        "zh": "不带引导的三维分子动力学；可以暂停和重置",
+        "en": "Unguided 3D molecular dynamics; pause and reset as you like"
+      },
+      "idea": "1.1",
+      "url": "/?substrate=md&dim=3"
+    },
+    {
+      "id": "demix",
+      "title": {
+        "zh": "两种互相不喜欢的粒子自己分开",
+        "en": "Two species that dislike each other separate by themselves"
+      },
+      "hint": {
+        "zh": "同种粒子相吸、异种粒子吸得弱，看混在一起的两种颜色怎么分成块",
+        "en": "Like attracts like more than unlike; watch two mixed colours sort into patches"
+      },
+      "idea": "1.1",
+      "url": "/?substrate=md&fractionB=0.5&epsAB=0.3&temperature=0.6&thermostat=1"
+    },
+    {
+      "id": "isingDimension",
+      "title": {
+        "zh": "同一个模型，同一个温度，换一个维度",
+        "en": "The same model at the same temperature in another dimension"
+      },
+      "hint": {
+        "zh": "同一个温度，二维的自旋是乱的，三维的排整齐了",
+        "en": "At one temperature the 2D spins are disordered while the 3D ones line up"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=isingDimension"
+    },
+    {
+      "id": "quench",
+      "title": {
+        "zh": "把 Ising 晶格淬火穿过临界温度",
+        "en": "Quench an Ising lattice through the critical temperature"
+      },
+      "hint": {
+        "zh": "突然降温，看畴怎么长大",
+        "en": "Cool it suddenly and watch the domains grow"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=quench"
+    },
+    {
+      "id": "isingCritical",
+      "title": {
+        "zh": "停在临界点上的 Ising 晶格",
+        "en": "An Ising lattice held at its critical point"
+      },
+      "hint": {
+        "zh": "临界温度下各种大小的团块同时存在；旁边是逐级粗粒化后的样子",
+        "en": "At the critical temperature clusters of every size coexist; beside it, the lattice coarse-grained level by level"
+      },
+      "idea": "1.1",
+      "url": "/?substrate=ising&T=2.27"
+    },
+    {
+      "id": "ising3d",
+      "title": {
+        "zh": "三维 Ising 模型的一个切片",
+        "en": "A slice through the 3D Ising model"
+      },
+      "hint": {
+        "zh": "三维晶格停在它自己的临界温度附近，显示其中一层",
+        "en": "A 3D lattice near its own critical temperature, showing one layer of it"
+      },
+      "idea": "1.1",
+      "url": "/?substrate=ising&dim=3&T=4.51"
+    },
+    {
+      "id": "collapse",
+      "title": {
+        "zh": "一团静止的天体坍缩，然后自己找到平衡",
+        "en": "A cloud of bodies at rest collapses, then finds its own balance"
+      },
+      "hint": {
+        "zh": "只有引力；看它怎么自己稳下来",
+        "en": "Gravity only; watch it settle by itself"
+      },
+      "idea": "1.6",
+      "url": "/?scenario=collapse"
+    },
+    {
+      "id": "gravity",
+      "title": {
+        "zh": "四千个天体，只有引力",
+        "en": "Four thousand bodies under gravity alone"
+      },
+      "hint": {
+        "zh": "不带引导的引力 N 体；可以暂停和重置",
+        "en": "Unguided gravitational N-body; pause and reset as you like"
+      },
+      "idea": "1.6",
+      "url": "/?substrate=gravity"
+    }
+  ]
+}

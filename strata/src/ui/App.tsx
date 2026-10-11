@@ -13,6 +13,7 @@ import { SOUND_KICK } from './scenario'
 import { ScenarioBar } from './ScenarioBar'
 import { useUi } from './store'
 import { applyTheme, storedTheme, type ThemeChoice } from './theme'
+import { applyUrl, EMBED } from './url'
 
 /**
  * 各底座的视图：主画面，以及显示在旋钮上方的内容。
@@ -43,11 +44,38 @@ export function App() {
   const substrateId = useUi((s) => s.substrateId)
   const view = VIEWS[substrateId]!
 
+  // 没有 WebGPU（或拿不到设备）时落到 CPU 参考实现，并在画面上说明。
+  // Without WebGPU (or without a device) the CPU reference runs instead, and the page says so.
+  const [noGpu, setNoGpu] = useState(false)
+
   useEffect(() => {
     engine.start()
-    void engine.init()
+    void engine.init().then(() => {
+      setNoGpu(engine.gpu === null)
+      applyUrl()
+    })
     return () => engine.stop()
   }, [])
+
+  const notice = noGpu && (
+    <p className="notice">这个环境里用不了 WebGPU，现在跑的是 CPU 参考实现：粒子数和晶格都小得多，引导实验会很慢。</p>
+  )
+
+  // 嵌入模式：只留舞台、暂停与重置，以及正在播放的引导实验。
+  // Embed mode: only the stage, pause and reset, and the guided experiment being played.
+  if (EMBED) {
+    return (
+      <div className="app embed">
+        {notice}
+        <main key={substrateId}>{view.stage}</main>
+        <div className="controls">
+          <button onClick={toggle}>{running ? '暂停' : '继续'}</button>
+          <button onClick={() => engine.reset()}>重置</button>
+        </div>
+        <ScenarioBar />
+      </div>
+    )
+  }
 
   return (
     <div className="app">
@@ -87,6 +115,7 @@ export function App() {
           </button>
         </div>
       </header>
+      {notice}
       <main key={substrateId}>
         <KnobPanel footer={view.footer}>{view.extras}</KnobPanel>
         {view.stage}
