@@ -60,6 +60,8 @@ export function warmList(cards: string[]): WarmItem[] {
     if (id && /^[0-9][A-Za-z0-9]{3}$/.test(id)) pdb(id.toUpperCase())
   }
   for (const m of models) if (m.source.kind === 'pdb' && m.source.id) pdb(m.source.id)
+  // 推断着补上的部分用到的结构 / the structures used by parts filled in by inference
+  for (const m of catalog.models as { infer?: Record<string, string> }[]) for (const [k, v] of Object.entries(m.infer ?? {})) if (k !== 'kind' && /^[0-9][A-Za-z0-9]{3}$/.test(v)) pdb(v.toUpperCase())
   for (const n of neurons.neurons) out.push({ label: n.name, run: () => cached(neuromorphoUrl(n.archive, n.name)) })
   for (const g of neurons.groups) for (const c of g.cells) out.push({ label: `MICrONS ${c}`, run: () => cached(micronsUrl(c)) })
   for (const url of cards) {

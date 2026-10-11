@@ -60,10 +60,15 @@ export function viewFor(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'> 
   const half = v.halfDepth ?? r.bounds.radius
   const cut = look.cut ?? 0
   const clipFront = cut > 0 ? half * (1 - 2 * cut) : Infinity
+  // 切片的厚度按画幅高度的比例定，所以放大之后切片也跟着变薄，看到的始终是切面附近的几层
+  // the slab's thickness is a share of the frame height, so zooming in thins it too, and what is seen is always the few layers near the cut
+  const slab = useStore.getState().style.slab ?? 0
+  const clipBack = cut > 0 && slab > 0 ? clipFront - slab * height : undefined
   return {
     ...v,
     clipFront,
-    fogSpan: cut > 0 ? [clipFront, -half] : undefined,
+    ...(clipBack !== undefined ? { clipBack } : {}),
+    fogSpan: cut > 0 ? [clipFront, clipBack ?? -half] : undefined,
     height,
     center: [v.center[0] + dx * rot[0]! + dy * rot[1]!, v.center[1] + dx * rot[3]! + dy * rot[4]!, v.center[2] + dx * rot[6]! + dy * rot[7]!],
   }
@@ -220,7 +225,7 @@ export function Stage() {
       r.setScene(items)
       useStore.setState({ placed: packed.places.map((p) => p.length), dnaPairs: packed.dna ? packed.dna.assemblies.slice(1).reduce((s, a) => s + a.groups.reduce((t, g) => t + g.operators.length, 0), 0) : 0 })
     } else if (st.spec?.mesoscale) {
-      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: 0, perCopy: true, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: i * 4_000_000, perCopy: true, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
     } else {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, st.drawing === 'painted' ? TONE_PAINTED : TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined, noCut: p.noCut }, p.annotation)))
     }

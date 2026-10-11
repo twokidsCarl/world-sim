@@ -1,24 +1,27 @@
 # 以 Goodsell 的原画为基线 / Goodsell's paintings as the baseline
 
+> 从整个图集归纳出的做法、limn 做到了哪几条、以及第四轮的记录，在 [`STYLE.md`](STYLE.md)。
+> The practices drawn from the whole gallery, which of them limn follows, and the record of round 4 are in [`STYLE.md`](STYLE.md).
+
 ## 中文
 
 limn 以前对齐的是 Goodsell 的电脑出图程序 Illustrate（见 `../illustrate/`）。这个目录对齐的是另一样东西：他**手绘的全景画**。做法是把同一个对象的“他的画”和“limn 的图”并排放，逐条看差在哪，改一步量一步。
 
 ### 参考图
 
-取自 PDB-101 的 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery)，页面写明 “These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration.” `refs/` 里是 800 像素宽的版本（转成了 JPEG）；原尺寸在 `https://cdn.rcsb.org/pdb101/goodsell/tif/<名字>.tif`。各幅的署名：
+取自 PDB-101 的 [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery)，页面写明 “These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration.” `gallery/` 里是整个图集 800 像素宽的版本（转成了 JPEG），`gallery/index.json` 是每幅的标题、署名和他自己写的说明；原尺寸在 `https://cdn.rcsb.org/pdb101/goodsell/tif/<名字>.tif`。各幅的署名：
 
 | 文件 | 署名 |
 |---|---|
-| `refs/zika-virus.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-015 |
-| `refs/coronavirus.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank; doi: 10.2210/rcsb_pdb/goodsell-gallery-019 |
-| `refs/hiv-in-blood-plasma.jpg` | Illustration by David S. Goodsell, The Scripps Research Institute. doi: 10.2210/rcsb_pdb/goodsell-gallery-002 |
-| `refs/influenza-virus.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-049 |
-| `refs/excitatory-and-inhibitory-synapses.jpg` | Illustration by David S. Goodsell. doi: 10.2210/rcsb_pdb/goodsell-gallery-016 |
-| `refs/mycoplasma-mycoides.jpg` | Illustration by David S. Goodsell, The Scripps Research Institute. doi: 10.2210/rcsb_pdb/goodsell-gallery-011 |
-| `refs/escherichia-coli.jpg` | Illustration by David S. Goodsell, The Scripps Research Institute. doi: 10.2210/rcsb_pdb/goodsell-gallery-001 |
-| `refs/biosites-cytoplasm.jpg` | Illustration by David S. Goodsell. doi: 10.2210/rcsb_pdb/goodsell-gallery-006 |
-| `refs/jcvi-syn3a-minimal-cell.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-042 |
+| `gallery/zika-virus.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-015 |
+| `gallery/coronavirus.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank; doi: 10.2210/rcsb_pdb/goodsell-gallery-019 |
+| `gallery/hiv-in-blood-plasma.jpg` | Illustration by David S. Goodsell, The Scripps Research Institute. doi: 10.2210/rcsb_pdb/goodsell-gallery-002 |
+| `gallery/influenza-virus.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-049 |
+| `gallery/excitatory-and-inhibitory-synapses.jpg` | Illustration by David S. Goodsell. doi: 10.2210/rcsb_pdb/goodsell-gallery-016 |
+| `gallery/mycoplasma-mycoides.jpg` | Illustration by David S. Goodsell, The Scripps Research Institute. doi: 10.2210/rcsb_pdb/goodsell-gallery-011 |
+| `gallery/escherichia-coli.jpg` | Illustration by David S. Goodsell, The Scripps Research Institute. doi: 10.2210/rcsb_pdb/goodsell-gallery-001 |
+| `gallery/biosites-cytoplasm.jpg` | Illustration by David S. Goodsell. doi: 10.2210/rcsb_pdb/goodsell-gallery-006 |
+| `gallery/jcvi-syn3a-minimal-cell.jpg` | Illustration by David S. Goodsell, RCSB Protein Data Bank. doi: 10.2210/rcsb_pdb/goodsell-gallery-042 |
 
 配对写在 `pairs.json`。`jcvi-syn3a-minimal-cell`、`escherichia-coli`、`biosites-cytoplasm` 三幅先取了回来，还没有配上场景。
 
@@ -113,7 +116,7 @@ limn used to be matched against Illustrate, Goodsell's own program (see `../illu
 
 ### References
 
-From PDB-101's [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery), whose page states: "These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration." `refs/` holds the 800-pixel versions (converted to JPEG); full size is at `https://cdn.rcsb.org/pdb101/goodsell/tif/<name>.tif`. The acknowledgement of each is in the table above.
+From PDB-101's [Goodsell Gallery](https://pdb101.rcsb.org/sci-art/goodsell-gallery), whose page states: "These illustrations are free for use under CC-BY-4.0 license. Acknowledgement should be given as shown for each illustration." `gallery/` holds the whole gallery at 800 pixels (converted to JPEG), and `gallery/index.json` each painting's title, acknowledgement and his own description; full size is at `https://cdn.rcsb.org/pdb101/goodsell/tif/<name>.tif`. The acknowledgement of each is in the table above.
 
 The pairs are in `pairs.json`. Three paintings (`jcvi-syn3a-minimal-cell`, `escherichia-coli`, `biosites-cytoplasm`) have been fetched but not yet paired with a scene.
 

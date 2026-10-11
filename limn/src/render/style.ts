@@ -59,6 +59,14 @@ export interface Style {
    * smooth blobs at the scale of a whole virion and lets atoms show again when zoomed in on one.
    */
   smooth?: number
+  /**
+   * 剖开时只画一片切片，厚度是画幅高度的这个比例；0 或缺省 = 一直画到最远处。
+   * 看 Goodsell 的图集：每一幅都是一片薄切片，切面这一层用亮色，后面一两层用同色的深一号，再往后就不画了。
+   * When cut, only a slab is drawn, this share of the frame height thick; 0 or absent = drawn to
+   * the far end. Across Goodsell's gallery every painting is a thin slab: the cut layer in bright
+   * colour, a layer or two behind it in deeper shades of the same hue, and nothing beyond.
+   */
+  slab?: number
   /** 纸纹，0 = 关闭 / paper grain, 0 = off */
   grain: number
   radiusScale: number
@@ -136,6 +144,7 @@ export const STYLE_MESOSCALE: Style = {
   // 形状靠平滑来变光滑，球就按真实大小画 / shapes are made smooth by the smoothing pass, so spheres are drawn at their true size
   smooth: 7,
   radiusScale: 1,
+  slab: 0.16,
 }
 
 /**

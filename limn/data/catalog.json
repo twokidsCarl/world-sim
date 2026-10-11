@@ -89,8 +89,8 @@
         ["M2", "extracellular"],
         ["glycan", "glycan"]
       ],
-      "caption": "一整个甲型流感病毒颗粒的包膜，从中间剖开：膜上插着 236 个血凝素三聚体和 30 个神经氨酸酶四聚体，带着它们的糖链，还有 11 个 M2 质子通道（只有跨膜的那一段）。这是一次全原子分子动力学模拟的最后一帧；模型里只有包膜和膜上的蛋白，病毒内部的基质蛋白和基因组不在其中。",
-      "captionEn": "The envelope of an entire influenza A virion, cut through the middle: 236 hemagglutinin trimers and 30 neuraminidase tetramers stand in the membrane with their glycans, along with 11 M2 proton channels (their membrane-spanning part only). This is the last frame of an all-atom molecular dynamics simulation; the model holds the envelope and its proteins only, without the matrix protein and genome inside the virus.",
+      "caption": "一整个甲型流感病毒颗粒的包膜，从中间剖开：膜上插着 236 个血凝素三聚体和 30 个神经氨酸酶四聚体，带着它们的糖链，还有 11 个 M2 质子通道（只有跨膜的那一段）。包膜和膜上的蛋白是一次全原子分子动力学模拟的最后一帧。模拟里没有病毒内部的东西；里面那层基质蛋白、八条核糖核蛋白和聚合酶是按已知结构推断着补上的，位置不是测到的。",
+      "captionEn": "The envelope of an entire influenza A virion, cut through the middle: 236 hemagglutinin trimers and 30 neuraminidase tetramers stand in the membrane with their glycans, along with 11 M2 proton channels (their membrane-spanning part only). The envelope and its proteins are the last frame of an all-atom molecular dynamics simulation. The simulation holds nothing of the inside of the virus; the matrix layer, the eight ribonucleoproteins and the polymerases there are filled in by inference from known structures, and where they sit was not measured.",
       "tier": "curated",
       "licence": "没有找到许可声明",
       "licenceEn": "no licence statement found",
@@ -98,7 +98,14 @@
       "attributionEn": "Lorenzo Casalino, Christian Seitz, Rommie Amaro and colleagues (Amaro Lab, UC San Diego)",
       "citation": "Casalino et al., ACS Cent. Sci. 2022, doi:10.1021/acscentsci.2c00981",
       "link": "https://amarolab.ucsd.edu/influenza.php",
-      "merge": "glycan"
+      "merge": "glycan",
+      "colors": [
+        ["hemagglutinin", [0.76, 0.086, 290]],
+        ["neuraminidase", [0.68, 0.144, 321]],
+        ["M2", [0.7, 0.1, 300]],
+        ["glycan", [0.85, 0.06, 295]]
+      ],
+      "infer": {"kind": "influenza-interior", "matrix": "7JM3", "rnp": "4BBL", "polymerase": "6RR7"}
     },
     {
       "id": "synaptic-vesicle",

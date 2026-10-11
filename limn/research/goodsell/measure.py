@@ -112,7 +112,7 @@ def main():
     print('|' + '---|' * (len(keys) + 3))
     rows = {}
     for p in pairs:
-        ref = load(os.path.join(HERE, 'refs', p['ref']))
+        ref = load(os.path.join(HERE, 'gallery', p['ref']))
         mine_path = os.path.join(ROOT, '.cache', 'snapshots', f"{rnd}-{p['name']}.png")
         if not os.path.exists(mine_path):
             print(f"| {p['name']} | (no picture for round {rnd}) |")

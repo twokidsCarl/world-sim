@@ -29,6 +29,7 @@ uniform mat3 u_rot;
 uniform vec3 u_center;
 uniform vec2 u_toClip;
 uniform float u_clipFront;
+uniform float u_clipBack;   // 视图 z 比这更靠后的丢弃（切片的背面）；没有切片时是一个很大的负数 / dropped when farther back than this view z (the back of the slab); a large negative number without a slab
 uniform float u_radiusScale;
 uniform float u_minRadius; // Å
 uniform float u_inflate;   // 平滑用的探针半径（Å），加在每个球上；见 SMOOTH_FS / the probe radius for smoothing in Å, added to every sphere; see SMOOTH_FS
@@ -80,8 +81,9 @@ void main() {
     if (u_layer.x > 0.0) {
       // 整张膜的色调随深度连续变化，不分档：按球分档会在档与档交界处出一圈杂点
       // a membrane in one piece is toned continuously with depth, not in steps: stepping sphere by sphere leaves a ring of speckle where steps meet
-      float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 1.0);
-      v_keep = mix(u_fogKeep.x, u_fogKeep.y, t);
+      // 整张膜平涂，不随深度变：他画里的膜是一条颜色均匀的浅带子，切片里露出来的那一小段内壁不另加明暗
+      // a membrane in one piece is a flat wash that does not change with depth: in his paintings a membrane is an even pale band, and the short stretch of inner wall a slab exposes gets no shading of its own
+      v_keep = u_fogKeep.x;
     }
   } else if (mc.w > 0.5) {
     float zc = (u_rot * ((u_place * vec4(mc.xyz, 1.0)).xyz - u_center)).z;
@@ -94,7 +96,9 @@ void main() {
       v_keep = mix(u_fogKeep.x, u_fogKeep.y, s);
     }
   }
-  if (zcut > u_clipFront || r <= 0.0) {
+  // 切片：整个分子按它的中心留或丢，所以切片里的分子都是完整的；永不切的东西（标志 3）除外
+  // a slab: a molecule is kept or dropped whole by its centre, so every molecule in the slab is complete; except what is never cut (flag 3)
+  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5))) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
