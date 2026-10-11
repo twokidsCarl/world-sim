@@ -34,6 +34,7 @@ const idea = (id: string, action = '') => `/api/ideas/${encodeURIComponent(id)}$
 // 现在是谁在用。auth_enabled 为假是本地模式：不用登录，就是主人。
 // Who is using it now. auth_enabled false means local mode: no sign-in, you are the owner.
 export type Me = { role: 'guest' | 'member' | 'owner'; login: string; name: string; avatar: string; auth_enabled: boolean }
+export type VisitorWish = { id: string; by: string; title: string; stuck: string; where_url: string; where_title: string; status: 'waiting' | 'accepted' | 'dismissed'; wish_id: string | null; note: string; created_at: string; updated_at: string }
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type Wish = {
@@ -135,6 +136,11 @@ export const api = {
   review: () => call<Suggestion[]>('/api/review', {}),
   recordWish: (body: { title: string; kind: string; stuck: string; suggestion: string }) => call<WishDetail>('/api/wishes', body),
   play: () => call<PlayView>('/api/play'),
+  sendSuggestion: (body: { title: string; stuck: string; where_url: string; where_title: string }) => call<VisitorWish>('/api/suggestions', body),
+  mySuggestions: () => call<VisitorWish[]>('/api/suggestions/mine'),
+  suggestions: () => call<VisitorWish[]>('/api/suggestions'),
+  acceptSuggestion: (id: string) => call<VisitorWish>(`/api/suggestions/${id}/accept`, {}),
+  dismissSuggestion: (id: string) => call<VisitorWish>(`/api/suggestions/${id}/dismiss`, { note: '' }),
   rebuildSim: (name: string) => call<{ status: string }>(`/api/play/${name}/build`, {}),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),

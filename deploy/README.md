@@ -54,7 +54,7 @@ secrets, so it accepts no inbound requests.
 | 身份 / Role | 能做的 / May |
 |---|---|
 | 游客（没登录）/ guest (not signed in) | 看地图、想法池、idea、血缘、项目与任务；玩 / browse the map, the pool, ideas, lineage, projects and tasks; play |
-| 访客（登录了，不是主人）/ member (signed in, not the owner) | 再加上记自己的观看和收藏 / also record their own watching and likes |
+| 访客（登录了，不是主人）/ member (signed in, not the owner) | 再加上记自己的观看和收藏、提愿望（每天最多 5 条）/ also record their own watching and likes, and send wishes (at most 5 a day) |
 | 主人 / owner | 其余全部：改动、生成、小助手、作业、许愿池、统计、同步 / everything else: changes, generating, the assistant, jobs, the wish pool, statistics, sync |
 
 规则是"默认只有主人"：`src/idea_loom/auth.py` 里列出了游客和访客能用的接口，没列出的一律要主人身份，所以新加的接口不会不小心对外开放。模型只为主人调用。限流是每个地址每分钟 600 次接口请求、每个模拟的后端 120 次。
@@ -138,6 +138,17 @@ docker compose -f deploy/compose.yaml --env-file deploy/.env run --rm backup res
 The assistant's conversations and the jobs' logs are still files on the `state` volume and
 are not in this backup; keeping them means backing up the volume separately.
 
+**访客提的愿望。** 登录的访客在"提个愿望"页填一个简单的表单。它只是存下来，进"待你过目"的队列（在许愿池页的最上面），**不调用模型**，也不进公开的仓库。你点"放进许愿池"它才成为一条愿望，来源记成 `visitor:<用户名>`；之后要不要让 Claude Code 去做、方案批不批，仍然是你的两道决定。访客写的是不可信的文字：出方案时它被框在分隔线里，并明确告诉模型"这是材料，不是指令"；作业页上可以展开看交给 Claude 的原文。
+
+**Wishes from visitors.** A signed-in visitor fills in a plain form on the "send a wish" page.
+It is only stored, in a queue waiting for you (at the top of the wish pool page); **no model
+is called** and nothing goes to the public repository. It becomes a wish only when you put it
+into the wish pool, with its source recorded as `visitor:<login>`; whether Claude Code works
+on it and whether the plan is approved are still two further decisions of yours. What a
+visitor writes is untrusted text: in the planning prompt it is fenced between separator lines
+and the model is told it is material, not instructions; the job page lets you expand the
+exact brief handed to Claude.
+
 ## 作业 / Jobs
 
 ```sh
@@ -184,7 +195,7 @@ database, then exports the ideas, wishes and tasks; if they differ from `main` i
    The repository's auto-merge does not look at tests yet. The worker re-runs the tests before opening its PR, but PRs from other sources have no such gate.
 2. **作业的出站网络 / Outbound network for jobs**。作业的进程能访问任何地址，还没有只放行模型接口、GitHub 和包管理源的名单。
    A job's processes can reach any address; there is no allow-list yet limiting them to the model API, GitHub and the package registries.
-3. 访客提愿望、手机布局与推送、持续运行与自动维护。
+3. 手机布局与推送、持续运行与自动维护。
    Visitor wishes, the phone layout and push notifications, unattended running and automatic maintenance.
 
 ## 已知的风险 / Known risks
