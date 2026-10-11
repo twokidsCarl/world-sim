@@ -163,19 +163,28 @@ def calibrate(
 
 
 @app.command()
-def canon(seeds: int = typer.Option(30, "--seeds", help="丰川场景跑几个种子 / seeds for the Toyokawa replay")):
+def canon(
+    seeds: int = typer.Option(30, "--seeds", help="每个场景跑几个种子 / seeds per scenario"),
+    held_out: bool = typer.Option(False, "--held-out", help="同时跑样本外的三个案例；它们只该在模型定稿后跑一次 / also run the three held-out cases, which should be run once, after the model is final"),
+):
     """对照原作与史料，逐条看模拟对上了没有。/ Check the simulation against the source texts and records."""
     from . import canon as cn
 
     over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"] if CALIBRATION.is_file() else {}
     fresh = list(range(101, 101 + seeds))  # 校准用的是 1 起的种子，这里换一批 / calibration used seeds from 1; these are different
     checks = cn.sanren(model.Params(**over)) + cn.toyokawa(over, fresh) + cn.bea(over, fresh)
+    if held_out:
+        for name in cn.HELD_OUT:
+            checks += cn.held_out(name, over, fresh)
     for c in checks:
         mark = "对上" if c.passed == c.runs else ("部分" if c.passed else "没对上")
         kind = "校准过" if c.fitted else "样本外"
         typer.echo(f"[{mark}] {c.case}  {c.what}  →  {c.got}  （{kind}）")
     held = [c for c in checks if not c.fitted]
-    typer.echo(f"样本外检验：{sum(c.passed for c in held)}/{sum(c.runs for c in held)} 次对上")
+    if held:
+        typer.echo(f"样本外检验：{sum(c.passed for c in held)}/{sum(c.runs for c in held)} 次对上")
+    else:
+        typer.echo("样本外的三个案例没有跑（加 --held-out）/ the three held-out cases were not run (add --held-out)")
 
 
 @app.command()

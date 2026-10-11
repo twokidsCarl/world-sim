@@ -1,0 +1,55 @@
+title: BAC 圣何塞银行挤兑（2004年8月，哥斯达黎加）
+kind: history
+setting: 2004年8月9日至13日的哥斯达黎加；BAC San José 是一家私营银行，在全国有32家分行。此前几天，监管机构刚冻结了一家券商的资金，7月初还冻结过另一家银行的资产。
+summary: >-
+  一家经营正常的私营银行，因为“政府要冻结它的资金、监管机构要接管它”的传闻，在两天里被储户挤兑。
+  传闻从周一开始流传，来源始终不明，靠口耳相传，也有人收到手机短信。周二，约五千名客户到柜台取款，是平日的十倍，
+  取走约五百万美元，银行说相当于其存款总额的百分之一；总行营业到周三凌晨三点，有分行现金用完，改付开在中央银行账户上的本票。
+  周三，中央银行行长在电视直播的记者会上说传闻是假的、从未讨论过干预这家银行；到当天下午累计取走约九百万美元。
+  周四已有约五百万美元存回，周五报纸报道恢复平静。
+people:
+  - {name: 储户们, role: BAC San José 的存款人, traits: 刚见过券商和另一家银行被冻结，听说“这家也要被冻结”就去取钱；也有人收到短信却不当回事}
+  - {name: Gerardo Corrales, role: BAC San José 总经理, traits: 提前给分行备足现金、延长营业，公开说传闻毫无根据、取款正在减少}
+  - {name: Francisco de Paula Gutiérrez, role: 哥斯达黎加中央银行行长, traits: 在电视记者会上否认传闻，说这家银行偿付得起、流动性充足}
+  - {name: 金融监管官员, role: 金融监管委员会（CONASSIF）主席 Luis Diego Vargas 与金融机构监管局（SUGEF）局长 Oscar Rodríguez, traits: 起初以为传闻是玩笑；事后呼吁公众分辨金融消息，并要求查清来源}
+events:
+  - {what: 8月初，证券监管机构暂时冻结了券商 Financorp 的资金；7月初监管机构还冻结过 Banco Elca 约8000万美元的资产。, who: [金融监管官员]}
+  - {what: 8月9日（周一），关于政府可能冻结 BAC San José 资金、监管机构将要介入的传闻开始流传。, who: [储户们]}
+  - {what: 8月10日（周二），约5000名客户取走约500万美元（平日约500人），银行称相当于存款总额的1%；圣何塞总行营业到周三凌晨3点，部分分行现金用完，以开在中央银行的本票支付。, who: [储户们, Gerardo Corrales]}
+  - {what: 8月11日（周三），中央银行行长在电视记者会上说传闻不实、从未讨论过对该行采取措施；到当天下午累计被取走约900万美元。, who: [Francisco de Paula Gutiérrez, 储户们]}
+  - {what: 8月12日（周四），约500万美元已经存回。8月13日（周五）报道称银行恢复正常。, who: [储户们]}
+outcome: 银行没有倒闭，也没有被接管：挤兑集中在周一、周二两天，中央银行否认传闻后平息；累计被取走的约为存款总额的2%，其中一半以上在周四前已经存回。
+theories: [informational_cascade, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: The run on BAC San José (Costa Rica, August 2004)
+  setting: Costa Rica, 9–13 August 2004. BAC San José was a private bank with 32 branches; days earlier regulators had frozen a brokerage's funds, and in early July another bank's assets.
+  summary: >-
+    A sound private bank was run on for two days over a rumour that the government would freeze its funds. The rumour began on Monday, its source never found,
+    spreading by word of mouth and some text messages. On Tuesday about 5,000 customers (ten times a normal day) withdrew about $5 million, 1% of deposits by the
+    bank's account. On Wednesday the central bank president denied the rumour on television; about $9 million had gone by that afternoon. By Thursday about
+    $5 million had been redeposited.
+  outcome: The bank neither failed nor was taken over. The run was confined to Monday and Tuesday and subsided after the central bank's denial; about 2% of deposits left in total, more than half of which was back by Thursday.
+sources:
+  - work: Bank Back to Normal after Rumors, Chaos
+    author: The Tico Times
+    year: 2004
+    locator: 2004年8月13日
+    url: https://ticotimes.net/2004/08/13/bank-back-to-normal-after-rumors-chaos
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：32家分行；周一传闻开始；周二约5000名客户（平日约500）取走约500万美元、银行称为存款总额的1%，
+      总行营业至周三凌晨3点，部分分行付本票；周三中央银行行长 Francisco de Paula Gutiérrez 电视记者会否认，至当天下午共约900万美元；
+      周四约500万美元已存回；总经理 Gerardo Corrales 与监管官员的说法；此前 Financorp 与 Banco Elca 被冻结。
+      “累计约2%”是我用 900万 ÷（500万 ÷ 1%）算的，报道没有直接印这个比例。报道没有给出客户总数，所以没有按人头的比例。
+      Confirmed: branch count, the Monday start, Tuesday's 5,000 customers and $5 million (1% of deposits), the Wednesday denial and the $9 million total,
+      and the $5 million redeposited by Thursday. The 2% cumulative share is my own division; the article gives no total customer count.
+  - work: 'Costa Rica: Rumours trigger run on a bank'
+    author: LatinNews（Caribbean & Central America Report）
+    year: 2004
+    locator: 2004年8月17日；只读到免费摘要 / only the free summary was read
+    url: https://www.latinnews.com/component/k2/item/10210-costa-rica--rumours-trigger-run-on-a-bank%20%20.html
+    verified: true
+    checked: >-
+      取回该页的摘要段 / fetched the summary paragraph. 摘要写明：储户在8月9日和10日挤兑 BAC San José，起因是监管机构 SUGEF 将要介入的传闻，
+      传闻“纯靠口耳相传”，在多位知名银行家出面安抚后恢复平静。全文需订阅，没有读到。与 Tico Times 的出入：后者提到有人收到短信。
+      The summary gives the run dates (9 and 10 August), the rumour about SUGEF, word-of-mouth spread and the return to calm. The full text is paywalled.

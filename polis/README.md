@@ -6,7 +6,7 @@
 
 有三个场景。虚构的「通和钱庄挤兑」（`rumor_run`）：一座千余口人的县城，更夫夜里看见钱庄后门往外抬箱子，这句话传开、走样，最后挤垮了一家并不亏空的钱庄。
 
-另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，只作样本外检验。
+另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，原本是样本外检验，结果看过之后不再算。另有三个只作样本外检验的场景（`bac`、`swedbank`、`kaspi`），见下文「数据从哪来」。
 
 - **人**：人口属性、五项稳定特质（信人、信官面文章、怕吃亏、随大流、读报听讯）、随时间变化的心智状态（信念、恐惧、估计多少人会去取钱），以及揣度他人的层数（0–2 层）。
 - **社会**：家人、邻居、同事、朋友四种关系，加上茶馆、菜场、庙、学堂这些会碰面的场所。
@@ -74,7 +74,7 @@ cd web && bun run test && bun run typecheck
 `corpus/` 是模拟的理论依据和将来的校准目标，每条都带出处：
 
 - `theory/`：12 张理论卡（谣言、阈值、级联、挤兑、从众……），每张写明机制、可观察的推论，以及引擎里哪一处实现了它——留空的就是还没实现。
-- `cases/`：7 个案例，五个出自文学与典故，两个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行）。
+- `cases/`：10 个案例，五个出自文学与典故，五个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行，以及留作样本外检验的 2004 年 BAC 圣何塞、2011 年 Swedbank 拉脱维亚、2014 年 Kaspi）。
 - `facts/`：10 条典型事实，带数值、得出条件和与本模拟情境的差距。
 
 出处的 `verified` 只有在实际打开过能证实它的页面之后才为真，`checked` 写明看的是哪一页、证实了什么；没能核实的如实标为假，不进入校准。文字均为转述，没有收录原作文本。
@@ -88,9 +88,15 @@ cd web && bun run test && bun run typecheck
 - **校准只是起步**：`polis calibrate` 用语料里六个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎、丰川的平行世界里至少三成像史料）随机搜索七个参数，结果存在 `calibration.json`。前五个命中；丰川那一条在校准用的 8 个种子上是 25%，没到三成。目标少、参数多，得到的是"与这几条事实大体不矛盾"的一组参数；"可信担保"的力度本身也是手设的。
 - **模型还不能复现真实的挤兑**。`polis canon` 换一批种子各跑 30 个平行世界：
   - 丰川（参与过校准）：19 个世界金库撑住、11 个倒闭；五件事全部像史料的只有 1 个。一半的世界里玩笑不了了之，这本身说得通，但不该有三分之一的世界以倒闭收场。
-  - 东亚银行（样本外）：时间对得上（平均第 2.2 天起挤兑，担保后两天内平息），规模完全对不上——模拟里平均提走存款的 50%，20 个世界银行倒闭；史料里银行公布的是 0.67%，银行没倒。
+  - 东亚银行（当时是样本外）：时间对得上（平均第 2.2 天起挤兑，担保后两天内平息），规模完全对不上——模拟里平均提走存款的 50%，20 个世界银行倒闭；史料里银行公布的是 0.67%，银行没倒。
   - 两个案例指向同一个毛病：挤兑一旦开始，模型里几乎人人都去取；现实里即使在高峰也只是少数人。
   - 这一轮为此改过的规则：说法含糊时不催人行动也不值得逢人便讲、拿不准时只问亲近的人、估下来不值得跑一趟的人不去、担保可以带来现银。它们让丰川从"第 3 天必倒"变成"多数世界不倒"，但没有解决规模问题。
+- **下一轮检验已经写定，还没有跑。** 东亚银行的结果既然看过、并且要据此重新设计"谁会去取"，它就不能再算检验。为此另找了三起有金额记录的谣言挤兑，逐条核实出处后写进 `corpus/cases/`，并在改模型之前把场景设定和通过标准（各场景模块里的 `RECORD`）合并进来：
+  - BAC 圣何塞银行（哥斯达黎加，2004）：两天里约 2% 的存款被取走。
+  - Swedbank（拉脱维亚，2011）：一个周日里约 1.5% 的存款从取款机被取走。
+  - Kaspi 银行（哈萨克斯坦，2014）：三天里约一成储户取走约 9% 的存款。
+  - 通过标准对三个场景一视同仁：银行不倒、挤兑在史料所记的那一天开始、取走的比例落在史料数字的一半到两倍之间、当局表态两天后基本没人再去。史料没给数字的地方沿用东亚银行场景的预设；只有日期没有钟点的事件，钟点在场景文件里逐条注明是这里定的。
+  - 这三个场景在写定时没有运行过。`polis canon` 默认不跑它们；模型定稿后用 `polis canon --held-out` 跑一次，结果无论好坏都写在这里。
 - 通和场景的**人物、地名、说法都是本项目原创**；丰川和东亚银行场景的事件顺序取自语料里的史料转述，人物是匿名代号或虚构的普通储户，街区、人口、存款和关系网是合成的。
 
 ---
@@ -103,7 +109,7 @@ A parallel-society simulator: how a crowd of people decide, how they pass words 
 
 There are three scenarios. The first is the fictional "run on Tonghe Bank (通和钱庄)" (`rumor_run`): a county town of a little over a thousand people, where the night watchman sees chests being carried out of the bank's back door; that one sentence spreads, gets distorted, and in the end brings down a bank that was never insolvent.
 
-The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and serve only as the out-of-sample test.
+The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and it was the out-of-sample test until its result had been seen. Three further scenarios (`bac`, `swedbank`, `kaspi`) exist only as out-of-sample tests; see "Where the data comes from" below.
 
 - **People**: demographic attributes, five stable traits (trust in other people, trust in official statements, loss aversion, conformity, attention to newspapers and news), a mental state that changes over time (belief, fear, an estimate of how many others will go to withdraw), and a depth of reasoning about others (0–2 levels).
 - **Society**: four kinds of ties — family, neighbours, colleagues, friends — plus the venues where people run into each other: the teahouse, the market, the temple, the school.
@@ -171,7 +177,7 @@ cd web && bun run test && bun run typecheck
 `corpus/` holds the theoretical basis of the simulation and its future calibration targets; every entry carries its sources:
 
 - `theory/`: 12 theory cards (rumour, thresholds, cascades, bank runs, conformity, …), each stating the mechanism, its observable implications, and where in the engine it is implemented — a blank there means it is not implemented yet.
-- `cases/`: 7 cases — five from literature and classical allusion, two documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008).
+- `cases/`: 10 cases — five from literature and classical allusion, five documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008, and three held out as tests: BAC San José in 2004, Swedbank in Latvia in 2011, Kaspi Bank in 2014).
 - `facts/`: 10 stylised facts, each with its values, the conditions under which it was obtained, and how far those are from the setting of this simulation.
 
 A source's `verified` is true only after a page that actually confirms it has been opened, and `checked` records which page was read and what it confirmed; sources that could not be verified are honestly marked false and do not enter calibration. All text is paraphrase; no text from the original works is included.
@@ -185,7 +191,13 @@ The engine currently uses no external data at all; the corpus is only paraphrase
 - **Calibration is only a beginning**: `polis calibrate` runs a random search over seven parameters against six targets from the corpus (3%–9% of depositors withdraw, a person is more likely to run when acquaintances have, corrections work but leave a residue, the bank holds under a credible guarantee, three men make a tiger, and at least three in ten parallel Toyokawa worlds resemble the record); the result is stored in `calibration.json`. The first five are hit; the Toyokawa one reaches 25% on the 8 calibration seeds, short of three in ten. With few targets and many parameters this is a parameter set that is "broadly not contradicted by these few facts"; the strength of the "credible guarantee" is itself set by hand.
 - **The model cannot yet reproduce a real bank run.** `polis canon` runs 30 parallel worlds per case on a fresh set of seeds:
   - Toyokawa (used in calibration): the bank holds in 19 worlds and fails in 11; only 1 world matches the record on all five points. The joke going nowhere in half the worlds is plausible in itself, but a third of worlds should not end in failure.
-  - Bank of East Asia (out of sample): the timing matches (the run starts on day 2.2 on average and subsides within two days of the guarantee) and the scale does not match at all — the simulation withdraws 50% of deposits on average and the bank fails in 20 worlds; in the record the bank reported 0.67% and did not fail.
+  - Bank of East Asia (out of sample at the time): the timing matches (the run starts on day 2.2 on average and subsides within two days of the guarantee) and the scale does not match at all — the simulation withdraws 50% of deposits on average and the bank fails in 20 worlds; in the record the bank reported 0.67% and did not fail.
   - Both cases point to the same defect: once a run starts, nearly everyone in the model goes to withdraw; in reality only a minority does, even at the peak.
   - Rules changed in this round because of it: a vague version neither presses people to act nor is worth telling everyone, people who are unsure ask only those close to them, nobody goes when the trip is not worth it by their own estimate, and a guarantee can bring cash. These took Toyokawa from "always fails on day 3" to "holds in most worlds" but did not fix the scale.
+- **The next round of tests is fixed and has not been run.** The Bank of East Asia result has been seen and is the reason "who withdraws" is being redesigned, so it can no longer count as a test. Three more rumour-driven runs with recorded amounts were found, their sources verified one by one and written into `corpus/cases/`, and their scenario settings and pass criteria (`RECORD` in each scenario module) were merged before the model was changed:
+  - BAC San José (Costa Rica, 2004): about 2% of deposits withdrawn over two days.
+  - Swedbank (Latvia, 2011): about 1.5% of deposits withdrawn from cash machines on one Sunday.
+  - Kaspi Bank (Kazakhstan, 2014): about a tenth of depositors withdrew roughly 9% of deposits over three days.
+  - The criteria are the same for all three: the bank survives, the run starts on the day the record says, the share withdrawn falls between half and twice the recorded figure, and almost nobody still goes two days after the authorities speak. Where the record gives no number the Bank of East Asia presets are reused; where it gives a date but no hour, the scenario file marks the hour as set here.
+  - None of the three had been run when they were fixed. `polis canon` leaves them out by default; once the model is final, `polis canon --held-out` is run once and the result is reported here whatever it is.
 - In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa and Bank of East Asia scenarios the order of events comes from the corpus's paraphrase of the records, the characters are anonymous labels or invented ordinary depositors, and the districts, population, deposits and network of ties are synthetic.

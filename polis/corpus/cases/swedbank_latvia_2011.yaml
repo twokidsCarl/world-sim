@@ -1,0 +1,65 @@
+title: Swedbank 拉脱维亚挤兑（2011年12月）
+kind: history
+setting: 2011年12月9日至13日的拉脱维亚。约三周前当局刚接管了 Latvijas Krajbanka，上个月立陶宛的 Snoras 银行倒闭；Swedbank 是瑞典银行，占拉脱维亚市场约两成。
+summary: >-
+  一家经营正常的外资银行，因为社交网络和手机短信上“Swedbank 要破产了、它在瑞典和爱沙尼亚的取款机已经取不出钱”的传闻，在一个周日被储户挤到取款机前。
+  传闻在 Krajbanka 被接管后就有，周五加剧；周日下午现金需求升到平日的十倍，外省先排起长队，随后蔓延到里加，Swedbank 的取款机取空之后人们转向别家银行的取款机。
+  周日当晚，银行管理层和金融监管机构公开否认；周一上午 298 台取款机里仍有 126 台是空的，总理说传闻是有人蓄意散布，安全警察立案调查。
+  周初银行运作恢复正常。银行说自周日起客户取走约3000万拉特，相当于其存款总额的1.5%。
+people:
+  - {name: 储户们, role: Swedbank 在拉脱维亚的存款人, traits: 刚经历过一家本地银行被接管；从社交网络和短信上看到传闻就去取款机取现，一台取空了换下一台}
+  - {name: Swedbank 管理层, role: 拉脱维亚 Swedbank 首席执行官 Māris Mančinskis 与发言人, traits: 说传闻“有些根本不属实，有些相当荒唐”，加紧给取款机补钞，保证照常营业}
+  - {name: 金融与资本市场委员会, role: 拉脱维亚金融监管机构（FKTK）, traits: 周日当晚与银行一同否认传闻}
+  - {name: Valdis Dombrovskis, role: 拉脱维亚总理, traits: 周一在政府会议上说传闻毫无根据、是蓄意散布，银行体系稳定}
+  - {name: 地方政府, role: 叶尔加瓦地区与市政当局, traits: 周六把账上的钱从 Swedbank 转到国库，事后被安全警察传唤}
+events:
+  - {what: 11月下旬，当局接管 Latvijas Krajbanka，关于银行的传闻开始出现。12月9日（周五）传闻加剧。, who: [储户们]}
+  - {what: 12月10日（周六），叶尔加瓦地区政府把100多万拉特从 Swedbank 账户转到国库，叶尔加瓦市议会也取走了资金。, who: [地方政府]}
+  - {what: 12月11日（周日）下午起，现金需求升到平日的十倍；泽姆加莱、叶尔加瓦、文茨皮尔斯等地的取款机前排起长队，随后蔓延到里加。到周日晚约三分之一的 Swedbank 取款机被取空；当天被取走1000多万拉特。, who: [储户们]}
+  - {what: 周日当晚，金融与资本市场委员会和 Swedbank 管理层公开否认传闻；银行表示取款机取空后几小时内会补钞。, who: [金融与资本市场委员会, Swedbank 管理层]}
+  - {what: 12月12日（周一）上午，298台取款机中126台是空的；总理在政府会议上说传闻毫无根据、是蓄意散布。安全警察就散布虚假信息立案。周初银行运作恢复正常。, who: [Valdis Dombrovskis, Swedbank 管理层]}
+  - {what: 银行发言人说，自周日起客户取走约3000万拉特，相当于银行存款总额的1.5%。, who: [Swedbank 管理层]}
+outcome: 银行没有倒闭：挤兑集中在周日一天，当晚银行和监管机构否认、次日总理表态后平息；被取走的约为存款总额的1.5%。
+theories: [informational_cascade, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: The run on Swedbank in Latvia (December 2011)
+  setting: Latvia, 9–13 December 2011. About three weeks earlier the authorities had taken over Latvijas Krajbanka; Swedbank, a Swedish bank, held about a fifth of the Latvian market.
+  summary: >-
+    A sound foreign-owned bank was run on at its cash machines one Sunday over rumours on social media and in text messages that it was going bankrupt.
+    The rumours intensified on Friday; on Sunday afternoon demand for cash rose tenfold, first in the provinces and then in Riga. That night the bank and the
+    regulator rejected the rumours; on Monday morning 126 of 298 machines were empty and the prime minister called the rumours deliberate. Operations returned to
+    normal early in the week. The bank said about 30 million lats, 1.5% of its deposits, had been withdrawn since Sunday.
+  outcome: The bank did not fail. The run was confined to one Sunday and subsided after the denials that night and the prime minister's statement the next day; about 1.5% of deposits left.
+sources:
+  - work: Rumors hit Swedbank
+    author: The Baltic Times（据通讯社报道 / from wire reports）
+    year: 2011
+    locator: 2011年12月14日，里加
+    url: https://www.baltictimes.com/news/articles/30152/
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：传闻自 Krajbanka 被接管起、周五加剧、经社交媒体传播；周日外省数百人聚到取款机前、随后到里加，
+      周日晚约三分之一取款机被取空；周六叶尔加瓦地区政府转走100多万拉特；总理12月12日的说法与安全警察立案；
+      发言人 Kristine Jakubovska 称自周日起取走约3000万拉特、为存款总额的1.5%；“周初银行运作恢复正常”。
+      Confirmed the Friday intensification, Sunday's queues, the Jelgava transfer, the prime minister's statement, the 30 million lats / 1.5% figure
+      and the return to normal at the start of the week.
+  - work: Swedbank denies rumors of financial crisis
+    author: The Baltic Times（TBT Staff，引 LETA）
+    year: 2011
+    locator: 2011年12月12日
+    url: https://www.baltictimes.com/news/articles/30145/
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：金融与资本市场委员会和 Swedbank 管理层“周日晚”否认传闻；周日客户取走1000多万拉特（LETA）；
+      队伍最长的是泽姆加莱、叶尔加瓦、文茨皮尔斯；取款机取空后几小时内补钞；首席执行官称传闻是“彻头彻尾的谎言”。
+      Confirmed the Sunday-night denial by regulator and bank, the 10 million lats on Sunday, where the queues were longest, and the refilling of machines.
+  - work: Swedbank hit by 'Twitter-generated' Latvia panic
+    author: The Local（瑞典 / Sweden）
+    year: 2011
+    locator: 2011年12月12日
+    url: https://www.thelocal.se/20111212/37880
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：周日下午起现金需求升至十倍；周一上午298台取款机中126台取空；总理称周日取走1000多万拉特（1900万美元）；
+      监管机构负责人称传闻似经社交媒体和短信传播；Swedbank 约占拉脱维亚市场两成；周一中午里加一家分行门口约20人排队。
+      Confirmed the tenfold demand from Sunday afternoon, 126 of 298 machines empty on Monday morning, the channels, and the market share.

@@ -1,0 +1,83 @@
+title: Kaspi 银行挤兑（2014年2月，哈萨克斯坦）
+kind: history
+setting: 2014年2月18日至21日的哈萨克斯坦，以阿拉木图和阿斯塔纳为主。一周前的2月11日，国家银行让坚戈一次贬值约19%。
+summary: >-
+  货币刚刚贬值一周，一条匿名群发的手机短信和 WhatsApp 消息说 Kaspi、Alliance、CenterCredit 三家银行即将破产，催人把存款取出来。
+  2月18日，数百名储户涌到三家银行的分行和取款机前，19日阿拉木图一些分行门前仍排着长队。国家银行当天就说消息是假的、是挑衅；三家银行联合发表声明。
+  Kaspi 悬赏一亿坚戈征集消息来源的线索，并往分行运送平日五倍的现金。20日的记者会上，Kaspi 管理层说约一成储户在三天里取走了400亿坚戈，
+  而银行的存款总额是4420亿坚戈。21日，总统说不会让任何一家银行倒闭。检方认定消息是蓄意散布的假消息并立案。
+people:
+  - {name: 匿名消息发送者, role: 群发短信和 WhatsApp 消息的人, traits: 借货币刚贬值的不安，点名三家银行“即将破产”；检方后来说嫌疑人里有其中一家银行的雇员}
+  - {name: 储户们, role: Kaspi 等三家银行的存款人, traits: 一周前刚眼看着存款缩水近两成，收到消息就去分行和取款机取钱}
+  - {name: Kaspi 管理层, role: 董事长 Vyacheslav Kim、行长 Mikhail Lomtadze 与股东 Baring Vostok 的 Michael Calvi, traits: 往分行运五倍的现金、公开数字、悬赏追查；说按行业经验这类恐慌里短期会有一成到一成半的客户取钱，几个月内多半回来}
+  - {name: Kairat Kelimbetov, role: 哈萨克斯坦国家银行行长, traits: 当天说消息虚假、是挑衅，与十大银行行长会面后称银行稳定}
+  - {name: Nursultan Nazarbayev, role: 哈萨克斯坦总统, traits: 周五表态不会让任何银行倒闭}
+events:
+  - {what: 2月11日，国家银行让坚戈贬值约19%（从1美元兑155坚戈到185坚戈）。, who: [Kairat Kelimbetov]}
+  - {what: 2月18日（周二），匿名的短信和 WhatsApp 消息称 Kaspi、Alliance、CenterCredit 三家银行即将破产；数百名储户涌到三家银行的分行。国家银行同日称消息“虚假、投机、有误导性”，意在动摇银行体系。, who: [匿名消息发送者, 储户们, Kairat Kelimbetov]}
+  - {what: 2月19日（周三），阿拉木图一些分行门前第二天排起长队。检察机关表示正在调查，已查明部分嫌疑人。, who: [储户们]}
+  - {what: 2月20日（周四），Kaspi 管理层开记者会：约一成储户在过去三天取走400亿坚戈，存款总额为4420亿坚戈；银行往分行运送平日五倍的现金；悬赏一亿坚戈，已收到一千多封来信。, who: [Kaspi 管理层]}
+  - {what: 2月21日（周五），总统说2009年没有让银行倒闭，现在也不会。, who: [Nursultan Nazarbayev]}
+outcome: 银行没有倒闭：三天里约一成储户取走了约占存款总额9%的钱，当局和银行表态、现金照付之后平息。银行预期这些钱会在几个月内回来，这一点没有找到后续报道证实。
+theories: [informational_cascade, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: The run on Kaspi Bank (Kazakhstan, February 2014)
+  setting: Kazakhstan, 18–21 February 2014, mainly Almaty and Astana. A week earlier, on 11 February, the National Bank had devalued the tenge by about 19% in one step.
+  summary: >-
+    A week after the devaluation, anonymous text and WhatsApp messages said three banks (Kaspi, Alliance, CenterCredit) were about to go bankrupt and urged people
+    to withdraw. On 18 February hundreds of depositors rushed to branches; queues were still there on the 19th. The National Bank called the messages false the same
+    day. At a press conference on the 20th Kaspi said about a tenth of its depositors had withdrawn 40 billion tenge over three days, out of a deposit base of
+    442 billion. On the 21st the president said no bank would be allowed to fail.
+  outcome: The bank did not fail. Over three days about a tenth of depositors withdrew roughly 9% of deposits; the run subsided after the official statements, with cash paid on demand. The bank expected the money back within months; no follow-up confirming this was found.
+sources:
+  - work: Kaspi bank погасил панику 4 тоннами долларов
+    author: Forbes Kazakhstan
+    year: 2014
+    locator: 2014年2月20日
+    url: https://forbes.kz/articles/kaspi_bank_pogasil_paniku_4_tonnami_dollarov
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：2月20日记者会上 Lomtadze、Kim、Calvi 的说法；约10%的储户在“过去三天”取走400亿坚戈；存款基数4420亿坚戈；
+      往分行运送平日五倍的现金；悬赏一亿坚戈、收到一千多封来信；Calvi 称短期内通常有10–15%的客户取钱。
+      “约9%”是我用 400 ÷ 4420 算的，报道没有印这个比例。报道没有说流出何时停止。
+      Confirmed: about 10% of depositors withdrew 40 billion tenge over the previous three days; deposit base 442 billion; five times the usual cash shipped.
+      The 9% share is my own division. The article does not say when the outflow stopped.
+  - work: Kazakh leader insists banks safe from collapse
+    author: APA（引 RIA Novosti / citing RIA Novosti）
+    year: 2014
+    locator: 2014年2月21日
+    url: https://en.apa.az/cis-countries/xeber_kazakhstan_leader_insists_banks_safe_fro_-207498
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：周内早些时候经手机短信传播的传闻点名 Kaspi、Alliance、Center Credit；Kaspi 周四称10%的存款被取走，
+      预期客户几个月内存回；中央银行周二称传闻“false, speculative and misleading”；三家银行联合声明；总统周五的表态；2月11日贬值18.9%。
+      Confirmed the three banks, Kaspi's 10% figure on Thursday, the central bank's statement on Tuesday, and the president's statement on Friday.
+  - work: Kazakh police searching for bank bankruptcy rumor mongers
+    author: Interfax
+    year: 2014
+    locator: 2014年2月20日，阿斯塔纳
+    url: https://interfax.com/newsroom/top-stories/45001/
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：消息经“text messages and WhatsApp Messenger”传播；点名三家银行；总检察长办公室发言人称已查明部分嫌疑人、
+      已立案，消息“deliberately false and aimed at destabilization”。没有金额。
+      Confirmed the channels (text messages and WhatsApp), the three banks, and the prosecutor's statement. No amounts.
+  - work: Kazakh Officials Say Sources Of Bank-Run Rumors Identified
+    author: RFE/RL
+    year: 2014
+    locator: 2014年2月19日
+    url: https://www.rferl.org/a/kazakhstan-bank-run-information-source-identified/25269569.html
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：数百名储户2月18日涌到三家银行的分行；此前收到短信和网上的警告；上周贬值19%；检方2月19日的说法。
+      Confirmed that hundreds of depositors rushed to branches of the three banks on 18 February, and the prosecutor's statements of the 19th.
+  - work: Damage dealt to Kazakh banks by SMS-campaign being calculated
+    author: Tengrinews
+    year: 2014
+    locator: 2014年2月20日
+    url: https://en.tengrinews.kz/news/26168
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：2月11日汇率从155到185坚戈兑1美元；国家银行行长 Kelimbetov 说“看到人们排长队取钱”、
+      与十大银行行长会面后确认银行稳定、各行正在计算流出；Kaspi 悬赏50万美元。
+      Confirmed the exchange-rate step, the governor's remarks about long queues and stable banks, and the bounty.
