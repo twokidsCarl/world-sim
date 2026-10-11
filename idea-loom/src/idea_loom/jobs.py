@@ -40,6 +40,7 @@ PHASE_LABELS: dict[str, str] = {
 ACTIVE = ("planning", "running", "testing", "pr")
 HOLDING = ACTIVE + ("plan_ready",)  # 占着目录的阶段 / phases that hold the directory
 LIMIT_SECONDS = {"planning": 900, "running": 3600}
+MAX_REPAIRS = 2
 
 
 class JobError(ValueError):
@@ -61,6 +62,8 @@ class Job(BaseModel):
     summary: dict[str, Any] = Field(default_factory=dict)
     changed: list[str] = Field(default_factory=list)
     test_log: str = ""
+    denied: list[str] = Field(default_factory=list)  # 被拒绝的操作，给人看它卡在哪 / denied operations, to show where it got stuck
+    repairs: int = 0  # 测试没过之后让它修了几轮 / repair rounds after failing tests
     pr: Optional[int] = None
     pr_url: Optional[str] = None
     restart_needed: bool = False
@@ -159,10 +162,9 @@ def _brief(kind: str, ref: str) -> tuple[str, str, str]:
         wish = wishes.get(ref)
         if wish.status not in ("open", "accepted"):
             raise JobError(f"这条愿望已经是「{wish.status_label}」")
-        seen = "\n".join(f"- {s.question}" for s in wish.seen if s.question)
         what = (f"idea-loom 许愿池里的一条愿望（{wish.wish_id}），种类：{wish.kind_label}，遇到 {wish.occurrences} 次。\n\n"
                 f"**{wish.title}**\n\n卡在哪：{wish.stuck}\n\n建议：{wish.suggestion}\n\n"
-                + (f"出在页面：{wish.where.title} {wish.where.url}\n\n" if wish.where else "") + (f"当时的问题：\n{seen}\n" if seen else ""))
+                + (f"出在页面：{wish.where.title} {wish.where.url}\n" if wish.where else ""))
         return "idea-loom", wish.title, what
     if kind == "task":
         task = tasks.get(ref)
@@ -295,6 +297,28 @@ def cancel(job_id: str) -> Job:
     return job
 
 
+def resume(job_id: str) -> Job:
+    """失败的作业已经改了文件：不重来，直接从"跑测试"接着走到开 PR。
+
+    A failed job that already changed files: instead of starting over, continue from the tests to the PR.
+    """
+    job = get(job_id)
+    if job.phase != "failed":
+        raise JobError("只有失败了的作业才能接着做")
+    if not dirty(job.directory):
+        raise JobError("它没有留下改动，没有可以接着做的。重新出方案吧。")
+    holder = _holder(job.directory)
+    if holder is not None:
+        raise JobError(f"`{job.directory}/` 上已经有另一个作业在进行（{holder.title}）")
+    job.phase, job.error = "testing", None
+    save(job)
+    if job.kind == "task":
+        tasks.set_status(job.ref, "running", by="claude-code")
+    _say(job_id, "接着做：从跑测试开始。")
+    _spawn(job, "finish")
+    return job
+
+
 def revert(job_id: str) -> list[str]:
     """把作业改过的文件还原成 origin/main 上的样子，新建的删掉。只动这个目录、不动数据文件。
 
@@ -367,6 +391,11 @@ def _claude(job: Job, prompt: str, tools: str, allowed: list[str], limit: int) -
     if final["type"] != "done":
         raise JobError(str(final.get("message") or "Claude 没有做完"))
     job.cost_usd = round(job.cost_usd + float(final.get("cost_usd") or 0), 4)
+    for denial in (parser.result or {}).get("permission_denials") or []:
+        tool, args = denial.get("tool_name", ""), denial.get("tool_input") or {}
+        text = f"{tool}: {args.get('command') or args.get('file_path') or ''}"[:200]
+        if text not in job.denied:
+            job.denied.append(text)
     llm.log_call("job", model(), time.monotonic() - started, {"cost_usd": final.get("cost_usd"), "output_tokens": final.get("output_tokens")}, ok=True)
     return parser
 
@@ -407,24 +436,12 @@ def run_plan(job_id: str) -> None:
 
 def run_execute(job_id: str) -> None:
     job = get(job_id)
-    repo = store.repo_root()
-    commands = _commands(job.directory)
-    allowed = ["Read", "Grep", "Glob", f"Edit({job.directory}/**)", "Bash(ls:*)"] + [f"Bash({' '.join(c)}:*)" for c in commands]
-    if not (repo / job.directory).exists():
-        # 新项目：依赖还没装，测试命令也还不存在，放开这个目录下的 uv 和 bun。
-        # A new project: no dependencies or test commands yet, so allow uv and bun under this directory.
-        allowed += [f"Bash(uv run --project {job.directory}:*)", f"Bash(uv sync --project {job.directory}:*)",
-                    f"Bash(bun run --cwd {job.directory}:*)", f"Bash(bun install --cwd {job.directory}:*)", f"Bash(mkdir -p {job.directory}:*)"]
-        commands_text = (f"  - `uv sync --project {job.directory}`、`uv run --project {job.directory} pytest -q {job.directory}/tests`（Python）\n"
-                         f"  - `bun install --cwd {job.directory}`、`bun run --cwd {job.directory} test`（TypeScript）\n  都从仓库根目录运行，不要先 cd。")
-    else:
-        commands_text = "\n".join(f"  - `{' '.join(c)}`" for c in commands) + "\n  都从仓库根目录运行，不要先 cd。" if commands else "  （这个目录没有找到测试命令）"
-    prompt = ops._fill("job_execute", what=job.what, plan=job.plan, directory=job.directory, commands=commands_text)
+    prompt = ops._fill("job_execute", what=job.what, plan=job.plan, directory=job.directory, commands=_commands_text(job.directory))
     try:
-        parser = _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", allowed, LIMIT_SECONDS["running"])
+        parser = _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", _allowed(job.directory), LIMIT_SECONDS["running"])
     except JobError as e:
         return _fail(job, f"动手时出错：{e}")
-    job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd})
+    job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "denied": job.denied})
     if job.phase == "cancelled":
         return
     try:
@@ -432,27 +449,98 @@ def run_execute(job_id: str) -> None:
     except ValueError:
         summary = {}
     job.summary = summary if isinstance(summary, dict) else {}
-    job.changed = dirty(job.directory)
-    before = set(store.read_json(_dir(job_id) / "outside.json", []))
+    save(job)
+    _finish(job_id)
+
+
+def _allowed(directory: str) -> list[str]:
+    """执行阶段放行的操作。没列在这里的一律被拒绝。 / What the execute phase may do; anything else is denied."""
+    d = directory
+    return [
+        "Read", "Grep", "Glob", f"Edit({d}/**)", "Bash(ls:*)",
+        f"Bash(uv run --project {d}:*)", f"Bash(uv sync --project {d}:*)",
+        f"Bash(bun run --cwd {d}:*)", f"Bash(bun run --cwd {d}/web:*)",
+        f"Bash(bun install --cwd {d}:*)", f"Bash(bun install --cwd {d}/web:*)", f"Bash(mkdir -p {d}:*)",
+    ]
+
+
+def _commands_text(directory: str) -> str:
+    commands = _commands(directory)
+    lines = [f"  - `{' '.join(c)}`" for c in commands] or [
+        f"  - `uv sync --project {directory}`、`uv run --project {directory} pytest -q {directory}/tests`（Python）",
+        f"  - `bun install --cwd {directory}`、`bun run --cwd {directory} test`（TypeScript）",
+    ]
+    return "\n".join(lines) + (
+        "\n  这些命令必须原样从仓库根目录运行。**不要用 `cd`，不要用 `&&` 连接，不要换成 npm 或 npx**：那样会被拒绝。"
+        f"\n  可以在后面加参数（比如只跑一个测试文件），前缀要保持 `uv run --project {directory} …` 或 `bun run --cwd {directory}[/web] …`。"
+    )
+
+
+def _check_scope(job: Job) -> Optional[str]:
+    before = set(store.read_json(_dir(job.job_id) / "outside.json", []))
     strayed = sorted(_outside(job.directory) - before)
-    if strayed:
-        return _fail(job, f"它改到了 `{job.directory}/` 外面的文件：{'、'.join(strayed[:6])}。没有开 PR。这些文件需要你自己看一下。")
-    if job.summary.get("done") is False:
-        return _fail(job, f"Claude 说没做完：{job.summary.get('not_done') or '没有说明'}")
+    return f"它改到了 `{job.directory}/` 外面的文件：{'、'.join(strayed[:6])}。没有开 PR。这些文件需要你自己看一下。" if strayed else None
+
+
+def _run_tests(job: Job) -> Optional[str]:
+    """由程序自己跑测试。返回失败的那一段输出，全过返回 None。 / Run the tests; return the failing output, or None."""
+    repo = store.repo_root()
+    log = []
+    for command in _commands(job.directory):
+        _say(job.job_id, f"跑测试：{' '.join(command)}")
+        proc = subprocess.run(command, cwd=repo, capture_output=True, text=True, timeout=1800)
+        output = (proc.stdout + proc.stderr)[-3000:]
+        log.append(f"$ {' '.join(command)}\n{output}")
+        job.test_log = "\n\n".join(log)[-8000:]
+        save(job)
+        if proc.returncode != 0:
+            return f"$ {' '.join(command)}\n{output}"
+    return None
+
+
+def _finish(job_id: str) -> None:
+    """Claude 结束之后的事：查范围 → 跑测试 →（没过就让它修，最多两轮）→ 开 PR → 标回。
+
+    它自己有没有跑测试、说没说"做完了"，都不决定成败：以程序重跑的测试为准。
+
+    What happens after Claude ends: check the scope, run the tests (letting it repair up to
+    twice on failure), open the PR and report back. Whether the agent ran the tests or said
+    "done" does not decide the outcome; the tests re-run here do.
+    """
+    job = get(job_id)
+    repo = store.repo_root()
+    job.changed = dirty(job.directory)
+    stray = _check_scope(job)
+    if stray:
+        return _fail(job, stray)
     if not job.changed:
         return _fail(job, "Claude 结束了，但没有改任何文件。" + str(job.summary.get("not_done") or ""))
 
-    job.phase = "testing"
-    save(job)
-    log = []
-    for command in _commands(job.directory):
-        _say(job_id, f"跑测试：{' '.join(command)}")
-        proc = subprocess.run(command, cwd=repo, capture_output=True, text=True, timeout=1800)
-        log.append(f"$ {' '.join(command)}\n{(proc.stdout + proc.stderr)[-3000:]}")
-        job.test_log = "\n\n".join(log)[-8000:]
-        if proc.returncode != 0:
-            return _fail(job, f"测试没过：{' '.join(command)}\n{(proc.stdout + proc.stderr)[-1200:]}")
-    save(job)
+    while True:
+        job.phase = "testing"
+        save(job)
+        failure = _run_tests(job)
+        if failure is None:
+            break
+        if job.repairs >= MAX_REPAIRS:
+            return _fail(job, f"测试没过，已经让它修了 {job.repairs} 轮：\n{failure[-1500:]}")
+        job.repairs += 1
+        job.phase = "running"
+        save(job)
+        _say(job_id, f"测试没过，把输出交回给 Claude 修（第 {job.repairs} 轮）。")
+        prompt = ops._fill("job_repair", what=job.what, plan=job.plan, directory=job.directory, commands=_commands_text(job.directory),
+                           changed="\n".join(f"- {f}" for f in job.changed), failure=failure)
+        try:
+            _claude(job, prompt, "Read,Grep,Glob,Edit,Write,Bash", _allowed(job.directory), LIMIT_SECONDS["running"])
+        except JobError as e:
+            return _fail(job, f"修的时候出错：{e}")
+        job = Job.model_validate({**get(job_id).model_dump(), "cost_usd": job.cost_usd, "denied": job.denied, "repairs": job.repairs})
+        if job.phase == "cancelled":
+            return
+        job.changed = dirty(job.directory)
+        stray = _check_scope(job)
+        if stray:
+            return _fail(job, stray)
 
     job.phase = "pr"
     save(job)
@@ -460,7 +548,8 @@ def run_execute(job_id: str) -> None:
     en = str(job.summary.get("title_en") or "").strip()
     title = f"{job.directory}: {zh}" + (f" / {en}" if en else "")
     ref_line = f"愿望 {job.ref}" if job.kind == "wish" else f"任务 {job.ref}"
-    body_zh = f"{job.summary.get('summary_zh') or zh}\n\n由 idea-loom 的作业 {job.job_id} 完成（{ref_line}）。方案经仓库主人批准后执行，测试由作业程序在提交前重新跑过。"
+    left = str(job.summary.get("not_done") or "").strip()
+    body_zh = f"{job.summary.get('summary_zh') or zh}" + (f"\n\n它说没做的部分：{left}" if left else "") + f"\n\n由 idea-loom 的作业 {job.job_id} 完成（{ref_line}）。方案经仓库主人批准后执行，测试由作业程序在提交前重新跑过。"
     body_en = (f"{job.summary.get('summary_en') or en}\n\nDone by idea-loom job {job.job_id} ({'wish' if job.kind == 'wish' else 'task'} {job.ref}). "
                "The plan was approved by the repository owner before execution, and the job runner re-ran the tests before submitting.")
     env = {**os.environ, "COMMIT_BODY": f"{body_zh}\n\n{body_en}",
@@ -487,7 +576,7 @@ def run_execute(job_id: str) -> None:
 def main(argv: list[str]) -> None:
     phase, job_id = argv[0], argv[1]
     try:
-        {"plan": run_plan, "execute": run_execute}[phase](job_id)
+        {"plan": run_plan, "execute": run_execute, "finish": _finish}[phase](job_id)
     except Exception as e:  # noqa: BLE001 — 作业不能悄悄死掉 / a job must not die silently
         try:
             _fail(get(job_id), f"作业程序出错：{e}")

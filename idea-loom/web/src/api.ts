@@ -74,7 +74,7 @@ export type Stats = {
 }
 export type Job = {
   job_id: string; kind: 'wish' | 'task'; ref: string; directory: string; title: string; what: string; phase: string; phase_label: string
-  plan: string; feedback: string[]; error: string | null; summary: Record<string, unknown>; changed: string[]; test_log: string
+  plan: string; feedback: string[]; error: string | null; summary: Record<string, unknown>; changed: string[]; test_log: string; denied: string[]; repairs: number
   pr: number | null; pr_url: string | null; restart_needed: boolean; cost_usd: number; created_at: string; updated_at: string
 }
 export type JobEvent = { seq: number; at: string; type: string; text?: string; label?: string; state?: string; id?: string; message?: string }
@@ -114,7 +114,7 @@ export const api = {
   jobs: () => call<Job[]>('/api/jobs'),
   job: (id: string, after = 0) => call<{ job: Job; events: JobEvent[] }>(`/api/jobs/${id}?after=${after}`),
   startJob: (kind: 'wish' | 'task', ref: string) => call<Job>('/api/jobs', { kind, ref }),
-  jobAction: (id: string, action: 'approve' | 'cancel' | 'revert') => call<unknown>(`/api/jobs/${id}/${action}`, {}),
+  jobAction: (id: string, action: 'approve' | 'cancel' | 'revert' | 'resume') => call<unknown>(`/api/jobs/${id}/${action}`, {}),
   jobText: (id: string, action: 'revise' | 'decline', text: string) => call<Job>(`/api/jobs/${id}/${action}`, { text }),
   advance: (dir: string) => call<Task>(`/api/projects/${dir}/advance`, {}),
   reviewStatus: () => call<{ actions_since: number; due: boolean; last_at: string | null }>('/api/review'),

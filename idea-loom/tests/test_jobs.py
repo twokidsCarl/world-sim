@@ -95,6 +95,9 @@ def test_approve_executes_tests_submits_and_reports_back(repo, wish):
     argv = fc.calls(repo.parent / "calls.jsonl")[1]["argv"]
     allowed = argv[argv.index("--allowedTools") + 1:argv.index("--permission-mode")]
     assert "Edit(idea-loom/**)" in allowed and not any(a.startswith(("Bash(git", "Bash(gh")) for a in allowed)
+    assert "Bash(uv run --project idea-loom:*)" in allowed and "Bash(bun run --cwd idea-loom/web:*)" in allowed
+    stdin = fc.calls(repo.parent / "calls.jsonl")[1]["stdin"]
+    assert "不要用 `cd`" in stdin and "被拒绝了不算没做完" in stdin and "哪格是空的？" not in stdin
     assert json.loads(argv[argv.index("--settings") + 1])["permissions"]["deny"][:2] == ["Bash(git:*)", "Bash(gh:*)"]
     args = (repo / "tools" / "args.txt").read_text().splitlines()
     assert args == ["idea-loom: 空格画斜线 / Hatch empty cells", "idea-loom"]
@@ -147,10 +150,13 @@ def test_unmerged_pr_and_agent_saying_not_done(repo, wish, monkeypatch):
     assert "PR 没有合并" in jobs.get(job.job_id).error
     jobs.revert(job.job_id)
     monkeypatch.delenv("FAKE_PR_FAIL")
-    monkeypatch.setenv("FAKE_STREAM_EXEC", json.dumps([fc.text_delta(json.dumps({"done": False, "not_done": "需要改根目录的文件"}, ensure_ascii=False)), fc.result()], ensure_ascii=False))
+    # 它说"没法亲自验证"不算失败：以程序重跑的测试为准，没做的部分写进 PR。
+    # "Could not verify it myself" is not a failure: the runner's tests decide, and what was left goes into the PR body.
+    monkeypatch.setenv("FAKE_STREAM_EXEC", json.dumps([fc.text_delta(json.dumps({"done": False, "title_zh": "空格画斜线", "not_done": "没有在浏览器里看"}, ensure_ascii=False)), fc.result()], ensure_ascii=False))
     job = jobs.start("wish", wish)
     jobs.approve(job.job_id)
-    assert "需要改根目录的文件" in jobs.get(job.job_id).error
+    assert jobs.get(job.job_id).phase == "merged"
+    assert "它说没做的部分：没有在浏览器里看" in (repo / "tools" / "body.txt").read_text()
 
 
 def test_decline_and_task_jobs(repo):
@@ -191,3 +197,57 @@ def test_api(repo, wish):
     assert client.post(f"/api/jobs/{jid}/approve").json()["phase"] == "running" or client.get(f"/api/jobs/{jid}").json()["job"]["phase"] == "merged"
     assert client.get("/api/jobs").json()[0]["job_id"] == jid
     assert client.post("/api/jobs", json={"kind": "wish", "ref": "nope"}).status_code == 409
+
+
+def test_failing_tests_go_back_to_claude_for_repair(repo, wish, monkeypatch):
+    marker = repo.parent / "fixed"
+    # 第一次跑测试失败，修过之后通过。 / The tests fail the first time and pass after the repair.
+    monkeypatch.setattr(jobs, "_commands", lambda directory: [["sh", "-c", f'if [ -f "{marker}" ]; then echo ok; else echo "1 failed: a.py"; exit 1; fi']])
+    job = jobs.start("wish", wish)
+    real = jobs._claude
+
+    def claude(job, prompt, tools, allowed, limit):
+        if "没有通过" in prompt:
+            marker.write_text("x")
+        return real(job, prompt, tools, allowed, limit)
+
+    monkeypatch.setattr(jobs, "_claude", claude)
+    jobs.approve(job.job_id)
+    done = jobs.get(job.job_id)
+    assert (done.phase, done.repairs) == ("merged", 1)
+    repair = fc.calls(repo.parent / "calls.jsonl")[2]["stdin"]
+    assert "1 failed: a.py" in repair and "idea-loom/src/a.py" in repair and "不要为了让它过而删掉" in repair
+
+
+def test_repair_gives_up_after_two_rounds(repo, wish, monkeypatch):
+    monkeypatch.setattr(jobs, "_commands", lambda directory: [["sh", "-c", "echo still failing; exit 1"]])
+    job = jobs.start("wish", wish)
+    jobs.approve(job.job_id)
+    done = jobs.get(job.job_id)
+    assert done.phase == "failed" and done.repairs == 2 and "已经让它修了 2 轮" in done.error
+    assert not (repo / "tools" / "args.txt").exists()
+
+
+def test_resume_continues_a_failed_job_from_the_tests(repo, wish, monkeypatch):
+    monkeypatch.setenv("FAKE_PR_FAIL", "1")
+    job = jobs.start("wish", wish)
+    jobs.approve(job.job_id)
+    assert jobs.get(job.job_id).phase == "failed"
+    calls_before = len(fc.calls(repo.parent / "calls.jsonl"))
+    monkeypatch.delenv("FAKE_PR_FAIL")
+    jobs.resume(job.job_id)
+    done = jobs.get(job.job_id)
+    assert (done.phase, done.pr) == ("merged", 12)
+    assert len(fc.calls(repo.parent / "calls.jsonl")) == calls_before  # 没有再叫 Claude / Claude was not called again
+    assert wishes.get(wish).status == "done"
+    with pytest.raises(jobs.JobError):
+        jobs.resume(job.job_id)
+
+
+def test_denied_operations_are_kept_for_the_owner_to_see(repo, wish, monkeypatch):
+    denied = dict(fc.result())
+    denied["permission_denials"] = [{"tool_name": "Bash", "tool_input": {"command": "cd idea-loom/web && npm run typecheck"}}]
+    monkeypatch.setenv("FAKE_STREAM_EXEC", json.dumps([fc.text_delta(json.dumps(DONE, ensure_ascii=False)), denied], ensure_ascii=False))
+    job = jobs.start("wish", wish)
+    jobs.approve(job.job_id)
+    assert jobs.get(job.job_id).denied == ["Bash: cd idea-loom/web && npm run typecheck"]
