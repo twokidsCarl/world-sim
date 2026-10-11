@@ -1,8 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { AnatomyGraph } from './anatomy/graph.ts'
 import { loadDataset, requestedDataset } from './anatomy/load.ts'
 import { debug } from './debug.ts'
 import { useApp } from './state/store.ts'
+import { readLocation, restoreFromUrl } from './state/urlSync.ts'
+import { setEmbedKeys } from './ui/EmbedControls.tsx'
 import { AboutDialog } from './ui/AboutDialog.tsx'
 import { CautionsDialog } from './ui/CautionsDialog.tsx'
 import { DisplayPanel } from './ui/DisplayPanel.tsx'
@@ -26,10 +28,16 @@ export function App() {
 
   const requestedBody = useApp((s) => s.requestedBody)
 
-  // 第一个人体由 URL 指定；之后由顶栏的切换控件驱动 `requestedBody`
-  // the URL names the first body; after that the top-bar switch drives `requestedBody`
+  const embed = useApp((s) => s.embed)
+
+  // 第一个人体和初始状态由 URL 指定；之后状态的变化写回地址栏
+  // the URL names the first body and the initial state; later changes are written back to the address bar
+  const url = useRef<ReturnType<typeof readLocation> | null>(null)
   useEffect(() => {
-    useApp.setState({ requestedBody: requestedDataset(location.search) })
+    const u = readLocation()
+    url.current = u
+    setEmbedKeys(u.keys)
+    useApp.setState({ requestedBody: requestedDataset(location.search), embed: !!u.state.embed })
   }, [])
 
   useEffect(() => {
@@ -39,7 +47,7 @@ export function App() {
     if (app.graph && app.dataset === requestedBody) return
     app.setLoad({ phase: 'loading', progress: 0.02, message: '读取解剖数据…', loaded: [] })
     loadDataset(requestedBody)
-      .then((ds) => {
+      .then(async (ds) => {
         if (cancelled) return
         const g = new AnatomyGraph(ds.data, ds.names, ds.relations)
         debug.graph = g
@@ -49,12 +57,15 @@ export function App() {
         // a missing body falls back to the fixture; the switch then shows what is really loaded
         useApp.setState({ requestedBody: ds.dataset })
         app.setLoad({ progress: 0.1, message: '加载模型…' })
-        // 不刷新页面也让地址保持可分享
-        // keep the address shareable without reloading the page
-        const url = new URL(location.href)
-        if (ds.dataset === 'male') url.searchParams.delete('body')
-        else url.searchParams.set('body', ds.dataset)
-        history.replaceState(null, '', url)
+        const u = url.current
+        if (u) {
+          // 只在第一次加载时按 URL 恢复；之后开始把状态写回 URL
+          // restore from the URL on the first load only, then start writing state back to it
+          url.current = null
+          const warnings = await restoreFromUrl(u.state)
+          for (const w of warnings) console.warn(`[soma] URL: ${w}`)
+          u.begin()
+        }
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -80,6 +91,26 @@ export function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  if (embed) {
+    // 嵌入模式：只有舞台；没有顶栏、侧栏和任何对话框
+    // embed mode: the stage only; no top bar, side panels or dialogs
+    return (
+      <div className="app app-embed">
+        <main className="stage">
+          {graph ? <ViewerPane graph={graph} /> : null}
+          {phase === 'error' && (
+            <div className="overlay-center">
+              <div className="error-card">
+                <strong>无法启动 Unable to start</strong>
+                <p>{message}</p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="app">
