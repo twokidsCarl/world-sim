@@ -1,0 +1,8 @@
+{
+ "_doc": {
+  "zh": "手工修正：按身体（male / female）和关节 id 覆盖拟合得到的关节中心或轴 0。每条必须写明理由（note）。目前为空。",
+  "en": "Hand corrections: per body (male / female) and joint id, overrides of the fitted joint centre or axis 0. Every entry must state its reason (note). Empty for now."
+ },
+ "male": {},
+ "female": {}
+}

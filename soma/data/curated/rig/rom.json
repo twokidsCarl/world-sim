@@ -1,0 +1,1144 @@
+{
+ "_doc": {
+  "zh": "各自由度的正常活动范围（度），自解剖学零位起算：positive 为该自由度正方向运动的范围，negative 为反方向运动的范围（自由度名称“甲 / 乙”中甲为正方向）。status 为 sourced 表示数值在所列公开来源的页面上核对过；estimate 表示估计值或未能在公开页面核实的数值。tools/rig 会按模型静止姿势与解剖学零位之差，把范围换算成相对静止姿势的角度。",
+  "en": "Normal range of motion per degree of freedom, in degrees from the anatomical zero position: `positive` is the range of the movement in the dof's positive direction, `negative` that of the opposite movement (in a dof name \"A / B\", A is positive). `status: sourced` means the number was checked on the page of the open source listed; `estimate` means an estimate, or a number that could not be verified on an open page. tools/rig converts the ranges to angles about the model's rest pose using the measured difference between the rest pose and the anatomical zero position."
+ },
+ "sources": {
+  "cdc": {
+   "name": "Soucie et al. 2011, Haemophilia 17:500–507 — CDC Normal Joint Range of Motion Study, reference values, males 20–44 y",
+   "url": "https://archive.cdc.gov/www_cdc_gov/ncbddd/jointrom/index.html",
+   "license": "US federal government work (public domain)"
+  },
+  "cfr": {
+   "name": "38 CFR 4.71 Plates I–II and 4.71a (US Department of Veterans Affairs schedule: normal ranges of joint motion)",
+   "url": "https://www.govinfo.gov/content/pkg/CFR-2023-title38-vol1/xml/CFR-2023-title38-vol1-sec4-71a.xml",
+   "license": "US federal regulation (public domain)"
+  },
+  "dshs": {
+   "name": "Washington State DSHS form 13-585A, Range of Joint Motion Evaluation Chart",
+   "url": "https://www.dshs.wa.gov/sites/default/files/forms/pdf/13-585a.pdf",
+   "license": "State government public form, free to access"
+  },
+  "botman": {
+   "name": "Botman, Hendriks et al. 2020, PRS Global Open 8:e2907, Supplemental Digital Content 1: normal range of motion according to the AAOS",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7413812/supplementaryFiles",
+   "license": "CC BY-NC-ND 4.0"
+  },
+  "turley": {
+   "name": "Turley et al. 2012, Med Biol Eng Comput (PMC3589629), Table 1: hip range of motion",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3589629/fullTextXML",
+   "license": "CC BY 2.0"
+  },
+  "zarins": {
+   "name": "Zarins et al. 1983, Am J Sports Med 11:152–156 (abstract): passive rotation of the knee",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:6869656%20AND%20SRC:MED&format=json&resultType=core",
+   "license": "Abstract only; free to read"
+  },
+  "panjabi": {
+   "name": "Panjabi & Myers 1995, The Cervical Spine: kinematics (NOCSAE report), Table 1 — representative values after White & Panjabi, Clinical Biomechanics of the Spine",
+   "url": "https://nocsae.org/wp-content/uploads/2015/11/CSpine_Report.pdf",
+   "license": "Free to read; no open licence"
+  },
+  "liebsch": {
+   "name": "Liebsch et al. 2017, PLoS ONE 12:e0177823 (PMC5453693), Table 5 — thoracic segmental ranges after White & Panjabi",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5453693/fullTextXML",
+   "license": "CC BY 4.0"
+  },
+  "cheng": {
+   "name": "Cheng et al. 2013 (PMC3699246): lumbar segmental flexion–extension, cited from White & Panjabi 1990",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3699246/fullTextXML",
+   "license": "Free to read in PMC; © Thieme"
+  },
+  "wilson": {
+   "name": "Wilson et al. 2001, J Physiol 530:319–330 (PMC2278403), Table 1: pump- and bucket-handle angles of ribs 2–9 at FRC and TLC",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2278403/",
+   "license": "Free to read in PMC; © The Physiological Society"
+  },
+  "ludewig": {
+   "name": "Ludewig et al. 2009, J Bone Joint Surg Am 91:378–389 (PMC2657311): motion of the shoulder complex during humeral elevation",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2657311/",
+   "license": "Free to read in PMC; © JBJS"
+  },
+  "gupta": {
+   "name": "Maximal mouth opening in young adults (PMC6182881) and Muto & Kanazawa 1996 (abstract): mandibular rotation at full opening",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6182881/fullTextXML",
+   "license": "CC BY 4.0"
+  },
+  "patrev": {
+   "name": "Review of patellofemoral kinematics, J Healthc Eng 2019 (PMC6451817): patellar flexion is 60–70 % of knee flexion",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6451817/fullTextXML",
+   "license": "CC BY"
+  },
+  "none": {
+   "name": "Estimate by the rig authors; no openly verifiable source found",
+   "url": "",
+   "license": ""
+  }
+ },
+ "entries": {
+  "pelvis.tilt": {
+   "positive": 180,
+   "negative": 180,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "并非关节：表示整个身体的朝向。",
+    "en": "Not a joint: orientation of the whole body."
+   }
+  },
+  "pelvis.list": {
+   "positive": 180,
+   "negative": 180,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "并非关节：表示整个身体的朝向。",
+    "en": "Not a joint: orientation of the whole body."
+   }
+  },
+  "pelvis.rotation": {
+   "positive": 180,
+   "negative": 180,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "并非关节：表示整个身体的朝向。",
+    "en": "Not a joint: orientation of the whole body."
+   }
+  },
+  "hip.flexion": {
+   "positive": 130.4,
+   "negative": 17.4,
+   "source": "cdc",
+   "status": "sourced"
+  },
+  "hip.abduction": {
+   "positive": 45,
+   "negative": 20,
+   "source": "cfr",
+   "status": "sourced",
+   "note": {
+    "zh": "外展 45° 取自 38 CFR 图 II；内收 20° 取自华盛顿州 DSHS 表以及 Botman 等 2020 转载的 AAOS 表。",
+    "en": "Abduction 45° from 38 CFR Plate II; adduction 20° from the Washington DSHS chart and the AAOS table reproduced by Botman et al. 2020."
+   }
+  },
+  "hip.rotation": {
+   "positive": 45,
+   "negative": 45,
+   "source": "turley",
+   "status": "sourced",
+   "note": {
+    "zh": "二手表格（AAOS 一类的数值）；在屈髋位测量。",
+    "en": "A secondary table (values of the AAOS kind); measured with the hip flexed."
+   }
+  },
+  "knee.flexion": {
+   "positive": 137.7,
+   "negative": 1.0,
+   "source": "cdc",
+   "status": "sourced"
+  },
+  "knee.rotation": {
+   "positive": 25,
+   "negative": 45,
+   "source": "zarins",
+   "status": "sourced",
+   "note": {
+    "zh": "屈膝 30–90° 时的被动旋转范围。完全伸直时几乎不能旋转（屈膝 5° 时约 10° / 23°）；本骨架没有让该范围随屈膝角变化。",
+    "en": "Passive rotation at 30–90° of knee flexion. In full extension the knee allows almost none (about 10° / 23° at 5° of flexion); the rig does not make the range depend on flexion."
+   }
+  },
+  "patella.flexion": {
+   "positive": 150,
+   "negative": 10,
+   "source": "patrev",
+   "status": "estimate",
+   "note": {
+    "zh": "由膝关节带动；此范围只用于限制耦合量。所引综述给出的比例是膝屈曲角的 60–70%；这里使用的比例由本模型的骨骼拟合得到。",
+    "en": "Driven by the knee; the range only bounds the coupling. The cited review gives 60–70 % of knee flexion; the ratio used here is fitted to this body's bones."
+   }
+  },
+  "ankle.dorsiflexion": {
+   "positive": 12.7,
+   "negative": 54.6,
+   "source": "cdc",
+   "status": "sourced"
+  },
+  "subtalar.inversion": {
+   "positive": 30,
+   "negative": 20,
+   "source": "dshs",
+   "status": "sourced"
+  },
+  "hallux.mtp.extension": {
+   "positive": 70,
+   "negative": 45,
+   "source": "botman",
+   "status": "sourced"
+  },
+  "toe.mtp.extension": {
+   "positive": 40,
+   "negative": 40,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "常见的临床数值（背伸 40°、跖屈 40°）；未能在公开页面上核实。",
+    "en": "Commonly quoted clinical values (extension 40°, flexion 40°); not verified on an open page."
+   }
+  },
+  "hallux.ip.flexion": {
+   "positive": 60,
+   "negative": 0,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "各临床表格给出 30–90°；未能在公开页面上核实。",
+    "en": "Clinical tables give 30–90°; not verified on an open page."
+   }
+  },
+  "toe.pip.flexion": {
+   "positive": 35,
+   "negative": 0,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "常见的临床数值；未能在公开页面上核实。",
+    "en": "Commonly quoted clinical value; not verified on an open page."
+   }
+  },
+  "toe.dip.flexion": {
+   "positive": 60,
+   "negative": 30,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "常见的临床数值；未能在公开页面上核实。",
+    "en": "Commonly quoted clinical value; not verified on an open page."
+   }
+  },
+  "shoulder.flexion": {
+   "positive": 168.8,
+   "negative": 50,
+   "source": "cdc",
+   "status": "sourced",
+   "note": {
+    "zh": "前屈取自 CDC 研究；后伸 50° 取自华盛顿州 DSHS 表。两者都是上臂相对躯干的测量值，其中约三分之一来自肩胛骨和锁骨的运动。",
+    "en": "Flexion from the CDC study; extension 50° from the Washington DSHS chart. Both are measured for the arm against the trunk, i.e. they include the movement of scapula and clavicle (about one third)."
+   }
+  },
+  "shoulder.abduction": {
+   "positive": 180,
+   "negative": 30,
+   "source": "cfr",
+   "status": "sourced",
+   "note": {
+    "zh": "外展 180° 取自 38 CFR 图 I（上臂相对躯干，包含肩带运动）；内收 30° 取自华盛顿州 DSHS 表。",
+    "en": "Abduction 180° from 38 CFR Plate I (arm against trunk, includes the shoulder girdle); adduction 30° from the Washington DSHS chart."
+   }
+  },
+  "shoulder.rotation": {
+   "positive": 90,
+   "negative": 90,
+   "source": "cfr",
+   "status": "sourced",
+   "note": {
+    "zh": "在肩外展 90° 位测量。",
+    "en": "Measured with the arm abducted to 90°."
+   }
+  },
+  "sc.protraction": {
+   "positive": 30,
+   "negative": 30,
+   "source": "ludewig",
+   "status": "estimate",
+   "note": {
+    "zh": "Ludewig 等测得抬臂过程中锁骨后缩 16°；关节本身的极限为教科书数值，未能在公开页面上核实。",
+    "en": "Ludewig et al. measured 16° of retraction during arm elevation; the limits of the joint itself are textbook figures not verified on an open page."
+   }
+  },
+  "sc.elevation": {
+   "positive": 45,
+   "negative": 10,
+   "source": "ludewig",
+   "status": "estimate",
+   "note": {
+    "zh": "Ludewig 等测得抬臂过程中锁骨上提 6°；极限为教科书数值，未能在公开页面上核实。",
+    "en": "Ludewig et al. measured 6° of elevation during arm elevation; the limits are textbook figures not verified on an open page."
+   }
+  },
+  "sc.rotation": {
+   "positive": 45,
+   "negative": 5,
+   "source": "ludewig",
+   "status": "estimate",
+   "note": {
+    "zh": "Ludewig 等测得抬臂过程中锁骨后旋 31°；极限为估计值。",
+    "en": "Ludewig et al. measured 31° of posterior rotation during arm elevation; the limit is an estimate."
+   }
+  },
+  "ac.upwardRotation": {
+   "positive": 45,
+   "negative": 15,
+   "source": "ludewig",
+   "status": "estimate",
+   "note": {
+    "zh": "Ludewig 等：抬臂过程中肩胛骨相对胸廓上回旋 39°，其中 11° 发生在肩锁关节。这里把肩胛骨相对锁骨的全部运动都放在此关节上；极限为估计值。",
+    "en": "Ludewig et al.: 39° of scapulothoracic upward rotation during arm elevation, of which 11° at the acromioclavicular joint. Here the whole movement of the scapula against the clavicle is put on this joint; the limit is an estimate."
+   }
+  },
+  "ac.internalRotation": {
+   "positive": 30,
+   "negative": 20,
+   "source": "ludewig",
+   "status": "estimate",
+   "note": {
+    "zh": "Ludewig 等：抬臂过程中内旋 8°；极限为估计值。",
+    "en": "Ludewig et al.: 8° of internal rotation during arm elevation; the limit is an estimate."
+   }
+  },
+  "ac.posteriorTilt": {
+   "positive": 30,
+   "negative": 10,
+   "source": "ludewig",
+   "status": "estimate",
+   "note": {
+    "zh": "Ludewig 等：抬臂过程中后倾 19°；极限为估计值。",
+    "en": "Ludewig et al.: 19° of posterior tilt during arm elevation; the limit is an estimate."
+   }
+  },
+  "elbow.flexion": {
+   "positive": 144.6,
+   "negative": 0.8,
+   "source": "cdc",
+   "status": "sourced"
+  },
+  "forearm.pronation": {
+   "positive": 76.9,
+   "negative": 85.0,
+   "source": "cdc",
+   "status": "sourced",
+   "note": {
+    "zh": "自拇指朝上的中立位、屈肘 90° 测量；解剖学姿势接近完全旋后。",
+    "en": "Measured from the thumb-up neutral position with the elbow at 90°; the anatomical position is close to full supination."
+   }
+  },
+  "wrist.flexion": {
+   "positive": 80,
+   "negative": 70,
+   "source": "cfr",
+   "status": "sourced"
+  },
+  "wrist.ulnarDeviation": {
+   "positive": 45,
+   "negative": 20,
+   "source": "cfr",
+   "status": "sourced"
+  },
+  "thumb.cmc.flexion": {
+   "positive": 30,
+   "negative": 40,
+   "source": "botman",
+   "status": "estimate",
+   "note": {
+    "zh": "AAOS 表给出桡侧外展（掌面内的伸）60°；但本模型拇指的静止位置与临床零位相差多少并未测量，因此相对静止姿势的范围只是估计。",
+    "en": "The AAOS table gives 60° of radial abduction (extension in the plane of the palm); how far this body's thumb already stands from the clinical zero position was not measured, so the range about the rest pose is an estimate."
+   }
+  },
+  "thumb.cmc.abduction": {
+   "positive": 40,
+   "negative": 30,
+   "source": "botman",
+   "status": "estimate",
+   "note": {
+    "zh": "AAOS 表给出自临床零位起掌侧外展 60°；本模型拇指的静止位置未与该零位对照测量。",
+    "en": "The AAOS table gives 60° of palmar abduction from the clinical zero position; the rest position of this body's thumb was not measured against it."
+   }
+  },
+  "thumb.mcp.flexion": {
+   "positive": 50,
+   "negative": 0,
+   "source": "botman",
+   "status": "sourced"
+  },
+  "thumb.ip.flexion": {
+   "positive": 80,
+   "negative": 0,
+   "source": "botman",
+   "status": "sourced"
+  },
+  "finger.mcp.flexion": {
+   "positive": 90,
+   "negative": 20,
+   "source": "cfr",
+   "status": "sourced",
+   "note": {
+    "zh": "屈 90° 取自 38 CFR 4.71a；过伸 20° 为常见数值，未能在公开页面上核实。",
+    "en": "Flexion 90° from 38 CFR 4.71a; 20° of hyperextension is a commonly quoted figure not verified on an open page."
+   }
+  },
+  "finger.mcp.deviation": {
+   "positive": 20,
+   "negative": 20,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "手指在掌指关节处的外展–内收；常见数值。",
+    "en": "Abduction–adduction of the fingers at the knuckles; commonly quoted figure."
+   }
+  },
+  "finger.pip.flexion": {
+   "positive": 100,
+   "negative": 0,
+   "source": "cfr",
+   "status": "sourced"
+  },
+  "finger.dip.flexion": {
+   "positive": 70,
+   "negative": 0,
+   "source": "cfr",
+   "status": "sourced",
+   "note": {
+    "zh": "38 CFR 4.71a 给出 70–80°。",
+    "en": "38 CFR 4.71a gives 70–80°."
+   }
+  },
+  "tmj.opening": {
+   "positive": 29,
+   "negative": 0,
+   "source": "gupta",
+   "status": "estimate",
+   "note": {
+    "zh": "年轻男性最大张口度为 47.9 ± 5.0 mm（女性 42.5 mm）。真实张口约为转动 39° 加下颌头前移约 20 mm（Muto 与 Kanazawa 1996）；通过下颌头的纯铰链转到约 29° 即达到 48 mm，故取此为极限。",
+    "en": "Maximal mouth opening is 47.9 ± 5.0 mm in young men (42.5 mm in women). Real opening is about 39° of rotation plus about 20 mm of forward translation of the mandibular heads (Muto & Kanazawa 1996); a pure hinge through the heads reaches 48 mm at about 29°, which is the limit used."
+   }
+  },
+  "tmj.lateral": {
+   "positive": 5,
+   "negative": 5,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "切牙处侧方运动约 7.5 mm（儿童测量值；未在公开页面找到成人数值），相当于绕两侧下颌头之间的垂直轴转动约 5°。",
+    "en": "Lateral excursion at the incisors is about 7.5 mm (measured in children; no adult value found on an open page), about 5° of a turn about a vertical axis between the mandibular heads."
+   }
+  },
+  "spine.C0-C1.flexion": {
+   "positive": 12.5,
+   "negative": 12.5,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（25°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (25°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C0-C1.lateral": {
+   "positive": 5,
+   "negative": 5,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C0-C1.rotation": {
+   "positive": 5,
+   "negative": 5,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C1-C2.flexion": {
+   "positive": 10.0,
+   "negative": 10.0,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（20°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (20°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C1-C2.lateral": {
+   "positive": 5,
+   "negative": 5,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C1-C2.rotation": {
+   "positive": 40,
+   "negative": 40,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C2-C3.flexion": {
+   "positive": 5.0,
+   "negative": 5.0,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（10°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (10°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C2-C3.lateral": {
+   "positive": 10,
+   "negative": 10,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C2-C3.rotation": {
+   "positive": 3,
+   "negative": 3,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C3-C4.flexion": {
+   "positive": 7.5,
+   "negative": 7.5,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（15°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (15°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C3-C4.lateral": {
+   "positive": 11,
+   "negative": 11,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C3-C4.rotation": {
+   "positive": 7,
+   "negative": 7,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C4-C5.flexion": {
+   "positive": 10.0,
+   "negative": 10.0,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（20°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (20°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C4-C5.lateral": {
+   "positive": 11,
+   "negative": 11,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C4-C5.rotation": {
+   "positive": 7,
+   "negative": 7,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C5-C6.flexion": {
+   "positive": 10.0,
+   "negative": 10.0,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（20°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (20°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C5-C6.lateral": {
+   "positive": 8,
+   "negative": 8,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C5-C6.rotation": {
+   "positive": 7,
+   "negative": 7,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C6-C7.flexion": {
+   "positive": 8.5,
+   "negative": 8.5,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（17°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (17°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C6-C7.lateral": {
+   "positive": 7,
+   "negative": 7,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C6-C7.rotation": {
+   "positive": 6,
+   "negative": 6,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C7-T1.flexion": {
+   "positive": 4.5,
+   "negative": 4.5,
+   "source": "panjabi",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（9°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (9°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.C7-T1.lateral": {
+   "positive": 4,
+   "negative": 4,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.C7-T1.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "panjabi",
+   "status": "sourced"
+  },
+  "spine.T1-T2.flexion": {
+   "positive": 2.0,
+   "negative": 2.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（4°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (4°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T1-T2.lateral": {
+   "positive": 5,
+   "negative": 5,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T1-T2.rotation": {
+   "positive": 9,
+   "negative": 9,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T2-T3.flexion": {
+   "positive": 2.0,
+   "negative": 2.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（4°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (4°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T2-T3.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T2-T3.rotation": {
+   "positive": 8,
+   "negative": 8,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T3-T4.flexion": {
+   "positive": 2.0,
+   "negative": 2.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（4°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (4°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T3-T4.lateral": {
+   "positive": 5,
+   "negative": 5,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T3-T4.rotation": {
+   "positive": 8,
+   "negative": 8,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T4-T5.flexion": {
+   "positive": 2.0,
+   "negative": 2.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（4°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (4°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T4-T5.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T4-T5.rotation": {
+   "positive": 8,
+   "negative": 8,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T5-T6.flexion": {
+   "positive": 2.0,
+   "negative": 2.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（4°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (4°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T5-T6.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T5-T6.rotation": {
+   "positive": 8,
+   "negative": 8,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T6-T7.flexion": {
+   "positive": 2.5,
+   "negative": 2.5,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（5°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (5°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T6-T7.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T6-T7.rotation": {
+   "positive": 7,
+   "negative": 7,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T7-T8.flexion": {
+   "positive": 3.0,
+   "negative": 3.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（6°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (6°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T7-T8.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T7-T8.rotation": {
+   "positive": 7,
+   "negative": 7,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T8-T9.flexion": {
+   "positive": 3.0,
+   "negative": 3.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（6°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (6°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T8-T9.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T8-T9.rotation": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T9-T10.flexion": {
+   "positive": 3.0,
+   "negative": 3.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（6°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (6°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T9-T10.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T9-T10.rotation": {
+   "positive": 4,
+   "negative": 4,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T10-T11.flexion": {
+   "positive": 4.5,
+   "negative": 4.5,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（9°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (9°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T10-T11.lateral": {
+   "positive": 7,
+   "negative": 7,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T10-T11.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T11-T12.flexion": {
+   "positive": 6.0,
+   "negative": 6.0,
+   "source": "liebsch",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（12°）；这里按屈 50%、伸 50% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (12°); it is split 50 % flexion / 50 % extension here, which is our assumption."
+   }
+  },
+  "spine.T11-T12.lateral": {
+   "positive": 9,
+   "negative": 9,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T11-T12.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "liebsch",
+   "status": "sourced"
+  },
+  "spine.T12-L1.flexion": {
+   "positive": 6.0,
+   "negative": 6.0,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值（屈伸合计），凭记忆引用并按假设比例拆分；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi (flexion and extension combined), quoted from memory and split by our assumption; not verified on an open page."
+   }
+  },
+  "spine.T12-L1.lateral": {
+   "positive": 8,
+   "negative": 8,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.T12-L1.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L1-L2.flexion": {
+   "positive": 9.0,
+   "negative": 3.0,
+   "source": "cheng",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（12°）；这里按屈 75%、伸 25% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (12°); it is split 75 % flexion / 25 % extension here, which is our assumption."
+   }
+  },
+  "spine.L1-L2.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L1-L2.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L2-L3.flexion": {
+   "positive": 10.5,
+   "negative": 3.5,
+   "source": "cheng",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（14°）；这里按屈 75%、伸 25% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (14°); it is split 75 % flexion / 25 % extension here, which is our assumption."
+   }
+  },
+  "spine.L2-L3.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L2-L3.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L3-L4.flexion": {
+   "positive": 11.2,
+   "negative": 3.8,
+   "source": "cheng",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（15°）；这里按屈 75%、伸 25% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (15°); it is split 75 % flexion / 25 % extension here, which is our assumption."
+   }
+  },
+  "spine.L3-L4.lateral": {
+   "positive": 8,
+   "negative": 8,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L3-L4.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L4-L5.flexion": {
+   "positive": 12.8,
+   "negative": 4.2,
+   "source": "cheng",
+   "status": "sourced",
+   "note": {
+    "zh": "White 与 Panjabi 给出的是屈伸合计值（17°）；这里按屈 75%、伸 25% 拆分，这一拆分是我们的假设。",
+    "en": "White & Panjabi give flexion and extension combined (17°); it is split 75 % flexion / 25 % extension here, which is our assumption."
+   }
+  },
+  "spine.L4-L5.lateral": {
+   "positive": 6,
+   "negative": 6,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L4-L5.rotation": {
+   "positive": 2,
+   "negative": 2,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L5-S1.flexion": {
+   "positive": 12.8,
+   "negative": 4.2,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值（屈伸合计），凭记忆引用并按假设比例拆分；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi (flexion and extension combined), quoted from memory and split by our assumption; not verified on an open page."
+   }
+  },
+  "spine.L5-S1.lateral": {
+   "positive": 3,
+   "negative": 3,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "spine.L5-S1.rotation": {
+   "positive": 1,
+   "negative": 1,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "White 与 Panjabi 的代表值，凭记忆引用；未能在公开页面上核实。",
+    "en": "Representative value of White & Panjabi quoted from memory; not verified on an open page."
+   }
+  },
+  "rib.2": {
+   "positive": 19.8,
+   "negative": 5.9,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 14.3° 与桶柄角 13.7° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 14.3° and bucket-handle 13.7° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.3": {
+   "positive": 17.5,
+   "negative": 5.2,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 11.4° 与桶柄角 13.3° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 11.4° and bucket-handle 13.3° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.4": {
+   "positive": 14.7,
+   "negative": 4.4,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 10.7° 与桶柄角 10.1° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 10.7° and bucket-handle 10.1° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.5": {
+   "positive": 13.1,
+   "negative": 3.9,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 9.6° 与桶柄角 8.9° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 9.6° and bucket-handle 8.9° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.6": {
+   "positive": 11.7,
+   "negative": 3.5,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 9.4° 与桶柄角 6.9° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 9.4° and bucket-handle 6.9° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.7": {
+   "positive": 10.3,
+   "negative": 3.1,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 7.9° 与桶柄角 6.6° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 7.9° and bucket-handle 6.6° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.8": {
+   "positive": 10.0,
+   "negative": 3.0,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 7.9° 与桶柄角 6.2° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 7.9° and bucket-handle 6.2° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.9": {
+   "positive": 8.7,
+   "negative": 2.6,
+   "source": "wilson",
+   "status": "sourced",
+   "note": {
+    "zh": "自平静呼气末（FRC）到深吸气末（TLC）的上提：把泵柄角 6.0° 与桶柄角 6.3° 按 √(p² + b²) 合成为绕肋颈单轴的转角。FRC 以下的下降量（取其 30%）为估计值；本模型扫描时的肺容积未知。",
+    "en": "Elevation from the end of a quiet expiration (FRC) to full inspiration (TLC): pump-handle 6.0° and bucket-handle 6.3° combined as √(p² + b²) for a single axis along the neck of the rib. Depression below FRC (30 % of that) is an estimate, and the lung volume at which this body was scanned is unknown."
+   }
+  },
+  "rib.1": {
+   "positive": 15,
+   "negative": 4.5,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "由 Wilson 等 2001 对第 2–9 肋的测量外推；该研究未测量此肋。",
+    "en": "Extrapolated from ribs 2–9 of Wilson et al. 2001, which did not measure this rib."
+   }
+  },
+  "rib.10": {
+   "positive": 8,
+   "negative": 2.4,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "由 Wilson 等 2001 对第 2–9 肋的测量外推；该研究未测量此肋。",
+    "en": "Extrapolated from ribs 2–9 of Wilson et al. 2001, which did not measure this rib."
+   }
+  },
+  "rib.11": {
+   "positive": 6,
+   "negative": 1.8,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "由 Wilson 等 2001 对第 2–9 肋的测量外推；该研究未测量此肋。",
+    "en": "Extrapolated from ribs 2–9 of Wilson et al. 2001, which did not measure this rib."
+   }
+  },
+  "rib.12": {
+   "positive": 5,
+   "negative": 1.5,
+   "source": "none",
+   "status": "estimate",
+   "note": {
+    "zh": "由 Wilson 等 2001 对第 2–9 肋的测量外推；该研究未测量此肋。",
+    "en": "Extrapolated from ribs 2–9 of Wilson et al. 2001, which did not measure this rib."
+   }
+  }
+ }
+}
