@@ -1,8 +1,13 @@
 /* mindloop 界面：状态、接口、案例库、舞台、层级走向条、亲自下场。 */
+/* mindloop UI: state, API, case library, stage, level-trend strip, playing it yourself. */
 (function () {
   'use strict';
 
   const MAXD = 12;
+  // ?embed=1：被嵌在卡片里，只留舞台和必要的控件
+  // ?embed=1: shown inside a card, keep only the stage and the essential controls
+  const EMBED = new URLSearchParams(location.search).get('embed') === '1';
+  if (EMBED) document.documentElement.classList.add('embed');
   const { bars, pct, argmax } = window.Bubbles;
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -31,10 +36,10 @@
     forced: { a: null, b: null }, pins: { a: {}, b: {} }, extra: [],
     play: null, // {as:'a'|'b', chosen:bool}
     persona: 'original', root: { a: null, b: null }, expanded: new Set(), pinOpen: null,
-    data: null, prevSig: {}, prevDepth: { a: -1, b: -1 }, seq: 0, anim: null, claude: false,
+    data: null, prevSig: {}, prevDepth: { a: -1, b: -1 }, seq: 0, anim: null, animTarget: null, animPaused: false, touched: false, claude: false,
   };
 
-  // ───────────── 接口 ─────────────
+  // ───────────── 接口 / API ─────────────
 
   async function api(path, body, ms) {
     const ctl = new AbortController();
@@ -45,7 +50,7 @@
         : { signal: ctl.signal });
       if (!r.ok) {
         let d = '';
-        try { d = (await r.json()).detail; } catch (_) { /* 非 JSON */ }
+        try { d = (await r.json()).detail; } catch (_) { /* 非 JSON / not JSON */ }
         const e = new Error(typeof d === 'string' && d ? d : 'HTTP ' + r.status);
         e.status = r.status;
         throw e;
@@ -80,7 +85,7 @@
     return p;
   }
 
-  // ───────────── 案例库 ─────────────
+  // ───────────── 案例库 / Case library ─────────────
 
   async function loadLibrary() {
     try {
@@ -139,7 +144,7 @@
     $$('.case-item').forEach((b) => b.classList.toggle('active', b.dataset.id === S.caseId));
   }
 
-  // ───────────── 地址栏 ─────────────
+  // ───────────── 地址栏 / URL hash ─────────────
 
   function writeHash() {
     if (!S.caseId) return;
@@ -155,7 +160,7 @@
     return { id: q.get('c'), a: num('a'), b: num('b') };
   }
 
-  // ───────────── 打开案例 ─────────────
+  // ───────────── 打开案例 / Open a case ─────────────
 
   async function openCase(id, depths) {
     const card = findCard(id);
@@ -207,7 +212,7 @@
     return true;
   }
 
-  // ───────────── 读本（不可运行的案例） ─────────────
+  // ───────────── 读本（不可运行的案例） / Reader (non-runnable cases) ─────────────
 
   function sourceBlock(s) {
     const bits = [s.work, s.author, s.year, s.locator].filter(Boolean).join(' · ');
@@ -249,10 +254,10 @@
         c.canonical && c.canonical.note && h('p', { class: 'canon-note', text: c.canonical.note })));
   }
 
-  // ───────────── 舞台骨架（每个案例建一次） ─────────────
+  // ───────────── 舞台骨架（每个案例建一次） / Stage skeleton (built once per case) ─────────────
 
   function avatarSvg(r) {
-    const ex = r === 'a' ? 37 : 27; // 眼睛朝向对方
+    const ex = r === 'a' ? 37 : 27; // 眼睛朝向对方 / the eye faces the other person
     return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle class="av-head" cx="32" cy="22" r="14"/>` +
       `<path class="av-body" d="M8 62c0-14 10.5-22 24-22s24 8 24 22z"/><circle class="av-eye" cx="${ex}" cy="21" r="2.1"/></svg>`;
   }
@@ -334,7 +339,7 @@
         h('p', { class: 'strip-hint', text: '每一格 = 两人都恰好想到这一层时各自会怎么做。左上角的小菱形 = 和上一层想的相反。点任意一格，把两人的层数都设到那里。' })));
   }
 
-  // ───────────── 每次重算后的刷新 ─────────────
+  // ───────────── 每次重算后的刷新 / Refresh after every recompute ─────────────
 
   function update() {
     renderMinds();
@@ -461,9 +466,10 @@
       })));
   }
 
-  // ───────────── 层级走向条 ─────────────
+  // ───────────── 层级走向条 / Level-trend strip ─────────────
 
   // 第 i 个选项的深浅：选项 0 最浓，往后渐淡，一眼看出「又翻回去了」
+  // Shade of option i: option 0 is darkest, later ones fade, so a flip back is visible at a glance
   const shade = (i, n) => (n <= 1 ? 100 : Math.round(100 - (i / (n - 1)) * 86));
 
   function ladderPick(lv, g, t) {
@@ -506,13 +512,14 @@
 
     const grid = h('div', { class: 'sgrid', style: `--n:${n}` });
     // 括号：周期 / 收敛段
+    // Brackets: cycle / converged span
     grid.append(h('div', { class: 'sg-corner', style: 'grid-row:1;grid-column:1' }));
     if (A.period && A.settles_at != null) {
       const seg = (s, e, text) => grid.append(h('div', { class: 'brk ' + A.verdict, style: `grid-column:${s + 2} / ${e + 3}` }, text && h('span', { text })));
       if (A.verdict === 'converged') seg(A.settles_at, n - 1, `从第 ${A.settles_at} 层起收敛`);
       else for (let s = A.settles_at, first = true; s < n; s += A.period, first = false) seg(s, Math.min(s + A.period - 1, n - 1), first ? `周期 ${A.period}` : '');
     }
-    // 层号
+    // 层号 / Level numbers
     grid.append(h('div', { class: 'sg-label muted', style: 'grid-row:2;grid-column:1', text: '层数' }));
     const picks = L.map((lv) => ladderPick(lv, g, t));
     L.forEach((lv, i) => {
@@ -524,7 +531,7 @@
       }, h('span', { class: 'sg-d', text: i })));
     });
     grid.append(h('div', { class: 'sg-d inf', style: `grid-column:${n + 2};grid-row:2`, title: '无限层的极限（近似均衡）', text: '∞' }));
-    // 两人的结论
+    // 两人的结论 / Each person's conclusion
     for (const r of ['a', 'b']) {
       const row = r === 'a' ? 3 : 4;
       grid.append(h('div', { class: 'sg-label role-' + r, style: `grid-row:${row};grid-column:1`, text: names[r] }));
@@ -542,7 +549,7 @@
       cell.append(bars(E.cols, E.policy[er], argmax(E.policy[er]), 'act mini', 3));
       grid.append(cell);
     }
-    // 指标小图
+    // 指标小图 / Metric sparklines
     const mv = (k) => L.map((lv) => lv.metrics[k]);
     const em = d.equilibrium.metrics || {};
     const f2 = (v) => v.toFixed(2);
@@ -560,7 +567,7 @@
     box.append(grid);
   }
 
-  // ───────────── 控件同步 ─────────────
+  // ───────────── 控件同步 / Sync controls ─────────────
 
   function syncControls() {
     const d = S.data;
@@ -610,19 +617,54 @@
     recompute();
   }
 
-  // ───────────── 一起加深（动画） ─────────────
+  // ───────────── 一起加深（动画） / Deepen together (animation) ─────────────
 
   function stopAnim() {
     if (!S.anim) return;
     clearInterval(S.anim);
     S.anim = null;
+    S.animTarget = null;
+    S.animPaused = false;
     if (S.data && S.built) { syncControls(); hydrateMonologues(); }
   }
 
   function stepAnim() {
-    if (S.depth.a >= MAXD && S.depth.b >= MAXD) { stopAnim(); return; }
-    const x = setDepth('a', S.depth.a + 1), y = setDepth('b', S.depth.b + 1);
+    // 有终点就停在终点（嵌入时自动播到原作的层数），没有就一路到最深
+    // Stop at the target if there is one (embedded autoplay ends at the source depths), else run to the maximum
+    const t = S.animTarget || { a: MAXD, b: MAXD };
+    if (S.depth.a >= t.a && S.depth.b >= t.b) { stopAnim(); return; }
+    const x = setDepth('a', Math.min(t.a, S.depth.a + 1)), y = setDepth('b', Math.min(t.b, S.depth.b + 1));
     if (x || y) recompute();
+  }
+
+  // 嵌入时进来就自己播一遍：从第 0 层一层层加深到原作的层数
+  // When embedded, play once on arrival: deepen level by level from 0 to the source depths
+  async function autoplay() {
+    if (!EMBED || !S.card || !S.card.runnable || !S.data || S.anim) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const target = { a: S.depth.a, b: S.depth.b };
+    if (target.a + target.b === 0) return;
+    setDepth('a', 0); setDepth('b', 0);
+    await recompute();
+    S.animTarget = target;
+    S.anim = setInterval(stepAnim, 1400);
+    S.animPaused = false;
+    syncControls();
+    if (document.hidden) pauseAnim();
+  }
+
+  // 页面看不见时停下，回来再继续
+  // Pause while the page is hidden, resume on return
+  function pauseAnim() {
+    if (!S.anim || S.animPaused) return;
+    clearInterval(S.anim);
+    S.animPaused = true;
+  }
+
+  function resumeAnim() {
+    if (!S.anim || !S.animPaused) return;
+    S.anim = setInterval(stepAnim, 1400);
+    S.animPaused = false;
   }
 
   function toggleAnim() {
@@ -633,7 +675,7 @@
     if (S.depth.a < MAXD || S.depth.b < MAXD) setTimeout(() => S.anim && stepAnim(), 250);
   }
 
-  // ───────────── 亲自下场 ─────────────
+  // ───────────── 亲自下场 / Play it yourself ─────────────
 
   function togglePlayAs(r) {
     stopAnim();
@@ -710,7 +752,7 @@
     return p;
   }
 
-  // ───────────── 内心独白（慢，逐个气泡异步补上） ─────────────
+  // ───────────── 内心独白（慢，逐个气泡异步补上） / Inner monologues (slow, filled in bubble by bubble, asynchronously) ─────────────
 
   const M = { cache: new Map(), queue: [], busy: new Set(), dead: false, timer: null, limit: 4 };
 
@@ -733,7 +775,10 @@
     clearTimeout(M.timer);
     M.queue = [];
     const nodes = $$('.bubble > .mono');
-    const live = S.claude && !M.dead && !S.anim;
+    // 嵌入在卡片里时，先不调用模型：一页可能同时排着很多张卡，等人点进来再生成（已缓存的照常显示）
+    // Inside a card, hold off calling the model: a page may show many cards at once, so generate
+    // only after someone interacts (cached monologues still show)
+    const live = S.claude && !M.dead && !S.anim && (!EMBED || S.touched);
     const want = [];
     for (const node of nodes) {
       const b = node.parentElement;
@@ -746,6 +791,7 @@
     }
     if (!want.length) return;
     // 稍等一下再发：拖滑块时不为每个中间状态都叫一次模型
+    // Wait a moment before sending: dragging a slider should not call the model for every intermediate state
     M.timer = setTimeout(() => { M.queue = want; pump(); }, 500);
   }
 
@@ -763,6 +809,7 @@
       }).finally(() => {
         M.busy.delete(job.key);
         // 状态已经变了的话，页面上就不再有这把钥匙对应的气泡，结果只进缓存
+        // If the state has moved on, no bubble on the page carries this key any more; the result just goes into the cache
         for (const node of $$('.bubble > .mono')) {
           if (node.dataset.key !== job.key) continue;
           if (job.failed) { node.hidden = true; node.classList.remove('pending'); } else paintMono(node, M.cache.get(job.key));
@@ -789,24 +836,42 @@
       });
   }
 
-  // ───────────── 启动 ─────────────
+  // ───────────── 启动 / Boot ─────────────
 
   async function boot() {
     await Promise.all([loadLibrary(), checkHealth()]);
     const hsh = readHash();
     const start = (hsh.id && findCard(hsh.id)) || firstCard();
-    if (start) await openCase(start.id, hsh.id === start.id ? hsh : null);
+    if (start) { await openCase(start.id, hsh.id === start.id ? hsh : null); autoplay(); }
     else $('#view').replaceChildren(h('p', { class: 'empty', text: '案例库还是空的。' }));
     window.addEventListener('hashchange', () => {
       const x = readHash();
       if (!x.id || !findCard(x.id)) return;
-      if (x.id !== S.caseId) { openCase(x.id, x); return; }
+      if (x.id !== S.caseId) { openCase(x.id, x).then(autoplay); return; }
       if (S.card && S.card.runnable && S.data) {
         const p = x.a != null && setDepth('a', x.a), q = x.b != null && setDepth('b', x.b);
         if (p || q) recompute();
       }
     });
-    setInterval(() => { loadLibrary().then(markActive); checkHealth(); }, 15000);
+    // 定时刷新案例库和 claude 是否可用；页面看不见时不轮询
+    // Refresh the library and claude availability on a timer; no polling while hidden
+    let poll = null;
+    const refresh = () => { loadLibrary().then(markActive); checkHealth(); };
+    const startPoll = () => { if (!poll) poll = setInterval(refresh, 15000); };
+    const stopPoll = () => { clearInterval(poll); poll = null; };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { stopPoll(); pauseAnim(); }
+      else { refresh(); startPoll(); resumeAnim(); }
+    });
+    if (!document.hidden) startPoll();
+  }
+
+  if (EMBED) {
+    // 第一次有人动手：停掉自动播放之外的等待，开始生成独白
+    // First interaction: start generating the monologues that were being held back
+    const wake = () => { if (S.touched) return; S.touched = true; if (S.data && S.built && !S.anim) hydrateMonologues(); };
+    window.addEventListener('pointerdown', wake, { once: true, capture: true });
+    window.addEventListener('keydown', wake, { once: true, capture: true });
   }
 
   boot();
