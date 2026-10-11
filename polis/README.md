@@ -61,6 +61,13 @@ cd web && bun install && bun run dev    # 回放界面，http://localhost:5186
 
 记录从三处读：可写的运行目录、`built/`、`samples/`，后两处只读。可写目录依次取环境变量 `POLIS_RUNS`、`WORLD_SIM_STATE` 下的 `runs/`、项目下的 `runs/`；分叉和集成的结果都写在那里。
 
+### 给外面的 AI Agent 用
+
+按仓库的 Agent 约定，`sim.json` 的 `agent` 一节列出对外提供的东西，由 idea-loom 生成文档、`/api/v1` 和 MCP 工具：
+
+- **数据集**：语料的理论、案例、典型事实，校准目标，以及年龄结构（联合国数据，CC BY 3.0 IGO）。学历（Barro–Lee 保留版权）和信任（Wellcome 没有写明许可）两份汇总数没有列。
+- **计算**：`POST /api/simulate`，输入场景、种子、人口（100–2000）、回应方式、是否用校准参数，返回一次运行的摘要和逐日数字。同样的输入得到同样的输出；不调用模型，不写任何文件；多出的字段或越界的值会报出是哪个字段。返回里带一段说明：这个模型没有通过样本外检验。
+
 ## 怎么测试
 
 ```sh
@@ -191,6 +198,13 @@ Playback and the render loop stop while the page is hidden and resume on return.
 `sim.json` is the project's card for the repository's shared host (`idea-loom`): how to build it, how to start the backend, and which cards it offers. The runs behind the cards are not in git; `uv run polis prepare` generates them from their seeds into `built/`. The run with model-played protagonists needs model calls to produce, so its record is committed under `samples/`.
 
 Runs are read from three places: the writable runs directory, `built/` and `samples/`, the last two read-only. The writable directory is `POLIS_RUNS`, else `runs/` under `WORLD_SIM_STATE`, else `runs/` in the project; forks and ensembles are written there.
+
+### For outside AI agents
+
+Under the repository's agent contract, the `agent` section of `sim.json` lists what is offered, and idea-loom generates the documents, `/api/v1` and the MCP tools from it:
+
+- **Datasets**: the corpus's theories, cases and stylised facts, the calibration targets, and the age structures (UN data, CC BY 3.0 IGO). The education aggregates (Barro–Lee keep copyright) and the trust aggregates (Wellcome state no licence) are not listed.
+- **Computation**: `POST /api/simulate` takes a scenario, a seed, a population size (100–2000), a response and whether to use the calibrated parameters, and returns a summary of one run with day-by-day figures. The same input gives the same output; no model is called and nothing is written; an unknown field or an out-of-range value is reported by field name. The reply carries a note that the model has not passed its out-of-sample tests.
 
 ## How to test
 

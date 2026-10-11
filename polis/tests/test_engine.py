@@ -238,3 +238,18 @@ def test_a_closed_bank_pays_nothing_until_it_reopens():
     paid = [e["t"] for e in r.events if e["k"] == "withdraw"]
     assert any(e["k"] == "queue" and e["t"] < 41 for e in r.events)  # 关着门也有人来排队 / people queue even while it is shut
     assert paid and min(paid) >= 41
+
+
+def test_api_runs_a_bounded_simulation_and_explains_bad_input():
+    from polis.server import app
+
+    client = TestClient(app)
+    body = {"scenario": "rumor_run", "seed": 7, "n": 300, "response": "none"}
+    a = client.post("/api/simulate", json=body).json()
+    assert a == client.post("/api/simulate", json=body).json()  # 同样的输入，同样的输出 / same input, same output
+    assert a["input"]["calibrated"] and len(a["by_day"]) == a["ticks"] // 24 and a["record"] is None
+    assert 0 <= a["withdrawn_share"] <= 1 and "zh" in a["caveat"]
+    assert client.post("/api/simulate", json={"scenario": "kaspi", "n": 300}).json()["record"]["case"] == "kaspi_bank_2014"
+    for bad, field in (({"scenario": "nope"}, "scenario"), ({"n": 5}, "n"), ({"llm": True}, "llm")):
+        r = client.post("/api/simulate", json=bad)
+        assert r.status_code == 422 and r.json()["detail"][0]["loc"][-1] == field
