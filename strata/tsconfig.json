@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "types": ["bun", "vite/client", "@webgpu/types"]
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests", "scripts", "server"]
 }

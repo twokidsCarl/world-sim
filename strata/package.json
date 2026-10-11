@@ -10,7 +10,8 @@
     "test": "vitest run tests/analytic",
     "test:slow": "vitest run tests/slow",
     "test:all": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "agent": "bun --preload ./server/raw.ts scripts/agent.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

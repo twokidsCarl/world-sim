@@ -1,0 +1,1154 @@
+[
+ {
+  "id": "md.dim",
+  "substrate": "md",
+  "name": "dim",
+  "label": "空间维度",
+  "label_en": "Space dimension",
+  "tag": "class",
+  "tag_en": "changes the universality class",
+  "min": 2,
+  "max": 3,
+  "step": 1,
+  "default": 2,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 2,
+    "label": "二维",
+    "label_en": "2D"
+   },
+   {
+    "value": 3,
+    "label": "三维",
+    "label_en": "3D"
+   }
+  ],
+  "note": "同一条势，换一个维度：速率分布的形状、密堆积的配位数（6 对 12）、维里系数都随之改变，二维里也没有真正的长程晶体序。壁面、条带和六角序只在二维下提供。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&dim=2"
+ },
+ {
+  "id": "md.kind",
+  "substrate": "md",
+  "name": "kind",
+  "label": "势的形式",
+  "label_en": "Form of the potential",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 0,
+  "max": 2,
+  "step": 1,
+  "default": 0,
+  "rebuild": "table",
+  "options": [
+   {
+    "value": 0,
+    "label": "Mie n–m",
+    "label_en": "Mie n–m"
+   },
+   {
+    "value": 1,
+    "label": "Morse",
+    "label_en": "Morse"
+   },
+   {
+    "value": 2,
+    "label": "纯排斥",
+    "label_en": "purely repulsive"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=md&kind=0"
+ },
+ {
+  "id": "md.n",
+  "substrate": "md",
+  "name": "n",
+  "label": "排斥指数 n",
+  "label_en": "Repulsive exponent n",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 7,
+  "max": 18,
+  "step": 1,
+  "default": 12,
+  "rebuild": "table",
+  "shown_by_default": true,
+  "url": "/?substrate=md&n=12"
+ },
+ {
+  "id": "md.m",
+  "substrate": "md",
+  "name": "m",
+  "label": "吸引指数 m",
+  "label_en": "Attractive exponent m",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 3,
+  "max": 6,
+  "step": 1,
+  "default": 6,
+  "rebuild": "table",
+  "note": "m 大于空间维度时作用是短程的；降到维度以下才会改变普适类。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&m=6"
+ },
+ {
+  "id": "md.a",
+  "substrate": "md",
+  "name": "a",
+  "label": "Morse 势阱宽度 a",
+  "label_en": "Morse well width a",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 3,
+  "max": 10,
+  "step": 0.5,
+  "default": 6,
+  "rebuild": "table",
+  "shown_by_default": false,
+  "url": "/?substrate=md&a=6"
+ },
+ {
+  "id": "md.rc",
+  "substrate": "md",
+  "name": "rc",
+  "label": "截断半径 rc",
+  "label_en": "Cutoff radius rc",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 1.5,
+  "max": 6.5,
+  "step": 0.1,
+  "default": 2.5,
+  "rebuild": "table",
+  "note": "截断会移动相图，但不改变短程作用的普适类。取到 4 以上时，二维 12-6 势的压强可以与已发表的完整势状态方程对照。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&rc=2.5"
+ },
+ {
+  "id": "md.epsBB",
+  "substrate": "md",
+  "name": "epsBB",
+  "label": "B–B 吸引强度 ε_BB",
+  "label_en": "B–B attraction strength ε_BB",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 0.2,
+  "max": 4,
+  "step": 0.05,
+  "default": 1,
+  "rebuild": "table",
+  "shown_by_default": false,
+  "url": "/?substrate=md&epsBB=1"
+ },
+ {
+  "id": "md.epsAB",
+  "substrate": "md",
+  "name": "epsAB",
+  "label": "A–B 吸引强度 ε_AB",
+  "label_en": "A–B attraction strength ε_AB",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 0,
+  "max": 2,
+  "step": 0.05,
+  "default": 0.3,
+  "rebuild": "table",
+  "note": "低于同种吸引时，两种粒子在低温下分相。A–A 强度固定为 1。",
+  "shown_by_default": false,
+  "url": "/?substrate=md&epsAB=0.3"
+ },
+ {
+  "id": "md.nonreciprocal",
+  "substrate": "md",
+  "name": "nonreciprocal",
+  "label": "打破作用力与反作用力 δ",
+  "label_en": "Break action–reaction, δ",
+  "tag": "toy",
+  "tag_en": "toy rule",
+  "min": 0,
+  "max": 1,
+  "step": 0.05,
+  "default": 0,
+  "rebuild": "table",
+  "note": "A 受 B 的力乘 (1+δ)，B 受 A 的力乘 (1−δ)。δ>0 时不存在势能函数：这是“粒子生命”一类玩具规则的做法，不是封闭系统的物理。",
+  "breaks": "动量和能量不再守恒",
+  "shown_by_default": false,
+  "url": "/?substrate=md&nonreciprocal=0"
+ },
+ {
+  "id": "md.chain",
+  "substrate": "md",
+  "name": "chain",
+  "label": "两亲分子：每个分子的珠子数",
+  "label_en": "Amphiphiles: beads per molecule",
+  "tag": "class",
+  "tag_en": "changes the universality class",
+  "min": 0,
+  "max": 4,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "不成键",
+    "label_en": "unbonded"
+   },
+   {
+    "value": 2,
+    "label": "2（头–尾）",
+    "label_en": "2 (head–tail)"
+   },
+   {
+    "value": 3,
+    "label": "3（头–尾–尾）",
+    "label_en": "3 (head–tail–tail)"
+   },
+   {
+    "value": 4,
+    "label": "4",
+    "label_en": "4"
+   }
+  ],
+  "note": "把粒子用弹簧串成短链：第一个珠子是头（A），其余是尾（B）。尾与尾相吸（强度 ε_BB），头与任何珠子之间只有排斥。没有溶剂粒子：溶剂的作用折算进了这两条规则里。温度够低时分子自己聚成尾朝里、头朝外的小团。需要打开恒温器。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&chain=0"
+ },
+ {
+  "id": "md.fractionB",
+  "substrate": "md",
+  "name": "fractionB",
+  "label": "B 粒子比例",
+  "label_en": "Fraction of B particles",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 0.5,
+  "step": 0.05,
+  "default": 0,
+  "rebuild": "state",
+  "note": "大于 0 时出现第二种粒子，以及它与 A 的相互作用矩阵。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&fractionB=0"
+ },
+ {
+  "id": "md.layoutB",
+  "substrate": "md",
+  "name": "layoutB",
+  "label": "B 的初始分布",
+  "label_en": "Initial layout of B",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "随机混合",
+    "label_en": "randomly mixed"
+   },
+   {
+    "value": 1,
+    "label": "中间一条带",
+    "label_en": "a band in the middle"
+   }
+  ],
+  "note": "条带：盒子变成扁长形，B 从中间向两侧扩散，可以从浓度剖面里发现扩散方程。",
+  "shown_by_default": false,
+  "url": "/?substrate=md&layoutB=0"
+ },
+ {
+  "id": "md.walls",
+  "substrate": "md",
+  "name": "walls",
+  "label": "边界",
+  "label_en": "Boundary",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "周期",
+    "label_en": "periodic"
+   },
+   {
+    "value": 1,
+    "label": "上下热壁（管道）",
+    "label_en": "thermal walls above and below (a channel)"
+   }
+  ],
+  "note": "热壁：撞到壁面的粒子按壁面温度重新发射，速度方向随机，因此流体贴壁处流速为零。壁面温度取上面的温度 T。三维时壁面垂直于 y，x 和 z 方向仍是周期的。",
+  "breaks": "有壁面换热和外力做功：系统是开放的，能量和动量不再守恒",
+  "shown_by_default": true,
+  "url": "/?substrate=md&walls=0"
+ },
+ {
+  "id": "md.drive",
+  "substrate": "md",
+  "name": "drive",
+  "label": "沿管道的驱动力 g",
+  "label_en": "Driving force along the channel, g",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 0.02,
+  "step": 0.0002,
+  "default": 0.006,
+  "rebuild": "none",
+  "shown_by_default": false,
+  "url": "/?substrate=md&drive=0.006"
+ },
+ {
+  "id": "md.obstacle",
+  "substrate": "md",
+  "name": "obstacle",
+  "label": "圆盘障碍物的半径",
+  "label_en": "Radius of the disc obstacle",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 40,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "note": "0 表示没有。圆盘固定在管道上游四分之一处的正中，粒子受它表面的短程排斥。",
+  "shown_by_default": false,
+  "url": "/?substrate=md&obstacle=0"
+ },
+ {
+  "id": "md.gravity",
+  "substrate": "md",
+  "name": "gravity",
+  "label": "重力（指向下壁）",
+  "label_en": "Gravity (towards the lower wall)",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 0.1,
+  "step": 0.002,
+  "default": 0,
+  "rebuild": "none",
+  "shown_by_default": false,
+  "url": "/?substrate=md&gravity=0"
+ },
+ {
+  "id": "md.deltaT",
+  "substrate": "md",
+  "name": "deltaT",
+  "label": "下壁比上壁热多少 ΔT",
+  "label_en": "How much hotter the lower wall is, ΔT",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 10,
+  "step": 0.1,
+  "default": 0,
+  "rebuild": "none",
+  "note": "上壁温度是上面的温度 T，下壁是 T + ΔT。从下面加热、重力向下时，温差够大就会出现对流。",
+  "shown_by_default": false,
+  "url": "/?substrate=md&deltaT=0"
+ },
+ {
+  "id": "md.density",
+  "substrate": "md",
+  "name": "density",
+  "label": "数密度 ρ",
+  "label_en": "Number density ρ",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0.02,
+  "max": 1,
+  "step": 0.01,
+  "default": 0.6,
+  "rebuild": "state",
+  "shown_by_default": true,
+  "url": "/?substrate=md&density=0.6"
+ },
+ {
+  "id": "md.temperature",
+  "substrate": "md",
+  "name": "temperature",
+  "label": "温度 T",
+  "label_en": "Temperature T",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0.05,
+  "max": 3,
+  "step": 0.05,
+  "default": 1,
+  "rebuild": "none",
+  "note": "孤立系统下拖动是一次性干预：把速度缩放到该温度，之后任其演化。接热浴时是热浴温度。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&temperature=1"
+ },
+ {
+  "id": "md.thermostat",
+  "substrate": "md",
+  "name": "thermostat",
+  "label": "恒温器",
+  "label_en": "Thermostat",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "none",
+  "options": [
+   {
+    "value": 0,
+    "label": "关（孤立系统）",
+    "label_en": "off (isolated system)"
+   },
+   {
+    "value": 1,
+    "label": "开（接热浴）",
+    "label_en": "on (coupled to a bath)"
+   }
+  ],
+  "note": "开启后系统与热浴交换能量，总能量不再守恒；漂移仪表改为扣除热交换后的值。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&thermostat=0"
+ },
+ {
+  "id": "md.integrator",
+  "substrate": "md",
+  "name": "integrator",
+  "label": "积分器",
+  "label_en": "Integrator",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "浮点 Verlet",
+    "label_en": "floating-point Verlet"
+   },
+   {
+    "value": 1,
+    "label": "整数坐标（逐位可逆）",
+    "label_en": "integer coordinates (bit-reversible)"
+   }
+  ],
+  "note": "牛顿力学在微观上是时间可逆的。浮点运算的舍入会破坏这一点；把坐标取成整数后，倒放能一位不差地回到起点。整数积分器不支持恒温器、壁面和驱动力。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&integrator=0"
+ },
+ {
+  "id": "md.backend",
+  "substrate": "md",
+  "name": "backend",
+  "label": "计算后端",
+  "label_en": "Compute backend",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "CPU 参考（f64）",
+    "label_en": "CPU reference (f64)"
+   },
+   {
+    "value": 1,
+    "label": "WebGPU（f32）",
+    "label_en": "WebGPU (f32)"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=md&backend=0"
+ },
+ {
+  "id": "md.nx",
+  "substrate": "md",
+  "name": "nx",
+  "label": "每行粒子数",
+  "label_en": "Particles per row",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 20,
+  "max": 400,
+  "step": 4,
+  "default": 40,
+  "rebuild": "state",
+  "note": "二维：粒子总数约为该值的平方乘 1.15，CPU 参考实现最多取 70。三维：每边 nx/4 个面心立方晶胞，共 4(nx/4)³ 个粒子，CPU 最多 2048 个。",
+  "shown_by_default": true,
+  "url": "/?substrate=md&nx=40"
+ },
+ {
+  "id": "md.dt",
+  "substrate": "md",
+  "name": "dt",
+  "label": "时间步长 dt",
+  "label_en": "Time step dt",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0.001,
+  "max": 0.01,
+  "step": 0.001,
+  "default": 0.005,
+  "rebuild": "none",
+  "shown_by_default": true,
+  "url": "/?substrate=md&dt=0.005"
+ },
+ {
+  "id": "ising.dim",
+  "substrate": "ising",
+  "name": "dim",
+  "label": "空间维度",
+  "label_en": "Space dimension",
+  "tag": "class",
+  "tag_en": "changes the universality class",
+  "min": 2,
+  "max": 3,
+  "step": 1,
+  "default": 2,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 2,
+    "label": "二维",
+    "label_en": "2D"
+   },
+   {
+    "value": 3,
+    "label": "三维",
+    "label_en": "3D"
+   }
+  ],
+  "note": "同一条规则，换一个维度就换了普适类：临界温度从 2.269 变成 4.512，临界点磁化强度随晶格大小的衰减指数从 1/8 变成约 0.52。三维画的是正中间的一个截面。",
+  "shown_by_default": true,
+  "url": "/?substrate=ising&dim=2"
+ },
+ {
+  "id": "ising.T",
+  "substrate": "ising",
+  "name": "T",
+  "label": "温度 T",
+  "label_en": "Temperature T",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0.5,
+  "max": 6.5,
+  "step": 0.01,
+  "default": 2.6,
+  "rebuild": "none",
+  "note": "二维 J₂=0、h=0 时临界温度 Tc ≈ 2.269；三维 Tc ≈ 4.512。临界点附近 Metropolis 更新平衡极慢，大晶格可能长时间达不到平衡。",
+  "shown_by_default": true,
+  "url": "/?substrate=ising&T=2.6"
+ },
+ {
+  "id": "ising.h",
+  "substrate": "ising",
+  "name": "h",
+  "label": "外场 h",
+  "label_en": "External field h",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": -0.5,
+  "max": 0.5,
+  "step": 0.01,
+  "default": 0,
+  "rebuild": "none",
+  "note": "外场显式破坏上下对称，相变消失。",
+  "shown_by_default": true,
+  "url": "/?substrate=ising&h=0"
+ },
+ {
+  "id": "ising.j2",
+  "substrate": "ising",
+  "name": "j2",
+  "label": "次近邻耦合 J₂ / J",
+  "label_en": "Next-nearest-neighbour coupling J₂ / J",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 0,
+  "max": 1,
+  "step": 0.05,
+  "default": 0,
+  "rebuild": "none",
+  "note": "改变微观相互作用的细节：Tc 会移动，但临界指数不变（仍是二维 Ising 普适类）。",
+  "shown_by_default": true,
+  "url": "/?substrate=ising&j2=0"
+ },
+ {
+  "id": "ising.L3",
+  "substrate": "ising",
+  "name": "L3",
+  "label": "晶格边长 L（三维）",
+  "label_en": "Lattice side L (3D)",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 5,
+  "max": 7,
+  "step": 1,
+  "default": 6,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 5,
+    "label": "32",
+    "label_en": "32"
+   },
+   {
+    "value": 6,
+    "label": "64",
+    "label_en": "64"
+   },
+   {
+    "value": 7,
+    "label": "128",
+    "label_en": "128"
+   }
+  ],
+  "note": "CPU 参考实现最多取 32。",
+  "shown_by_default": false,
+  "url": "/?substrate=ising&L3=6"
+ },
+ {
+  "id": "ising.L",
+  "substrate": "ising",
+  "name": "L",
+  "label": "晶格边长 L",
+  "label_en": "Lattice side L",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 6,
+  "max": 10,
+  "step": 1,
+  "default": 9,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 6,
+    "label": "64",
+    "label_en": "64"
+   },
+   {
+    "value": 7,
+    "label": "128",
+    "label_en": "128"
+   },
+   {
+    "value": 8,
+    "label": "256",
+    "label_en": "256"
+   },
+   {
+    "value": 9,
+    "label": "512",
+    "label_en": "512"
+   },
+   {
+    "value": 10,
+    "label": "1024",
+    "label_en": "1024"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=ising&L=9"
+ },
+ {
+  "id": "ising.backend",
+  "substrate": "ising",
+  "name": "backend",
+  "label": "计算后端",
+  "label_en": "Compute backend",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "CPU 参考",
+    "label_en": "CPU reference"
+   },
+   {
+    "value": 1,
+    "label": "WebGPU",
+    "label_en": "WebGPU"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=ising&backend=0"
+ },
+ {
+  "id": "potts.q",
+  "substrate": "potts",
+  "name": "q",
+  "label": "状态数 q",
+  "label_en": "Number of states q",
+  "tag": "class",
+  "tag_en": "changes the universality class",
+  "min": 2,
+  "max": 8,
+  "step": 1,
+  "default": 3,
+  "rebuild": "state",
+  "note": "每个格点可以取 q 种状态，相邻两格同态时能量降低 1。q = 2 就是 Ising 模型。q ≤ 4 时相变是连续的，每个 q 一个普适类；q > 4 时相变变成一级的，有潜热。",
+  "shown_by_default": true,
+  "url": "/?substrate=potts&q=3"
+ },
+ {
+  "id": "potts.tau",
+  "substrate": "potts",
+  "name": "tau",
+  "label": "温度 T / Tc(q)",
+  "label_en": "Temperature T / Tc(q)",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0.5,
+  "max": 1.5,
+  "step": 0.005,
+  "default": 1,
+  "rebuild": "none",
+  "note": "以该 q 的相变温度 Tc = 1 / ln(1 + √q) 为单位，所以 1 总是相变点。相变点附近 Metropolis 更新平衡极慢。",
+  "shown_by_default": true,
+  "url": "/?substrate=potts&tau=1"
+ },
+ {
+  "id": "potts.start",
+  "substrate": "potts",
+  "name": "start",
+  "label": "初始状态",
+  "label_en": "Initial state",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "随机（无序）",
+    "label_en": "random (disordered)"
+   },
+   {
+    "value": 1,
+    "label": "全同（有序）",
+    "label_en": "all alike (ordered)"
+   }
+  ],
+  "note": "q > 4 时，在相变点上从哪一相出发就停在哪一相：两种出发点的能量相差一份潜热。",
+  "shown_by_default": true,
+  "url": "/?substrate=potts&start=0"
+ },
+ {
+  "id": "potts.L",
+  "substrate": "potts",
+  "name": "L",
+  "label": "晶格边长 L",
+  "label_en": "Lattice side L",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 6,
+  "max": 10,
+  "step": 1,
+  "default": 8,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 6,
+    "label": "64",
+    "label_en": "64"
+   },
+   {
+    "value": 7,
+    "label": "128",
+    "label_en": "128"
+   },
+   {
+    "value": 8,
+    "label": "256",
+    "label_en": "256"
+   },
+   {
+    "value": 9,
+    "label": "512",
+    "label_en": "512"
+   },
+   {
+    "value": 10,
+    "label": "1024",
+    "label_en": "1024"
+   }
+  ],
+  "note": "CPU 参考实现最多取 256。",
+  "shown_by_default": true,
+  "url": "/?substrate=potts&L=8"
+ },
+ {
+  "id": "potts.backend",
+  "substrate": "potts",
+  "name": "backend",
+  "label": "计算后端",
+  "label_en": "Compute backend",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "CPU 参考",
+    "label_en": "CPU reference"
+   },
+   {
+    "value": 1,
+    "label": "WebGPU",
+    "label_en": "WebGPU"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=potts&backend=0"
+ },
+ {
+  "id": "gravity.initial",
+  "substrate": "gravity",
+  "name": "initial",
+  "label": "初始状态",
+  "label_en": "Initial state",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "均匀球",
+    "label_en": "uniform sphere"
+   },
+   {
+    "value": 1,
+    "label": "Plummer 球（平衡）",
+    "label_en": "Plummer sphere (in equilibrium)"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=gravity&initial=0"
+ },
+ {
+  "id": "gravity.virial0",
+  "substrate": "gravity",
+  "name": "virial0",
+  "label": "初始位力比 2K/|U|",
+  "label_en": "Initial virial ratio 2K/|U|",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 1.5,
+  "step": 0.05,
+  "default": 0,
+  "rebuild": "state",
+  "note": "0 是完全静止的冷球，会整体坍缩；1 是位力平衡；更大则膨胀。",
+  "shown_by_default": true,
+  "url": "/?substrate=gravity&virial0=0"
+ },
+ {
+  "id": "gravity.n",
+  "substrate": "gravity",
+  "name": "n",
+  "label": "天体数",
+  "label_en": "Number of bodies",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 10,
+  "max": 14,
+  "step": 1,
+  "default": 12,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 10,
+    "label": "1024",
+    "label_en": "1024"
+   },
+   {
+    "value": 12,
+    "label": "4096",
+    "label_en": "4096"
+   },
+   {
+    "value": 13,
+    "label": "8192",
+    "label_en": "8192"
+   },
+   {
+    "value": 14,
+    "label": "16384",
+    "label_en": "16384"
+   }
+  ],
+  "note": "每一步都对所有天体对直接求和。CPU 参考实现最多取 1024。",
+  "shown_by_default": true,
+  "url": "/?substrate=gravity&n=12"
+ },
+ {
+  "id": "gravity.eps",
+  "substrate": "gravity",
+  "name": "eps",
+  "label": "软化长度 ε",
+  "label_en": "Softening length ε",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0.005,
+  "max": 0.2,
+  "step": 0.005,
+  "default": 0.03,
+  "rebuild": "state",
+  "note": "把 1/r 换成 1/√(r²+ε²)，避免两个天体贴近时受力发散。它是数值手段，不是物理：小于 ε 的结构不可信。",
+  "shown_by_default": true,
+  "url": "/?substrate=gravity&eps=0.03"
+ },
+ {
+  "id": "gravity.dt",
+  "substrate": "gravity",
+  "name": "dt",
+  "label": "时间步长 dt",
+  "label_en": "Time step dt",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0.0005,
+  "max": 0.01,
+  "step": 0.0005,
+  "default": 0.002,
+  "rebuild": "none",
+  "shown_by_default": true,
+  "url": "/?substrate=gravity&dt=0.002"
+ },
+ {
+  "id": "gravity.backend",
+  "substrate": "gravity",
+  "name": "backend",
+  "label": "计算后端",
+  "label_en": "Compute backend",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "CPU 参考（f64）",
+    "label_en": "CPU reference (f64)"
+   },
+   {
+    "value": 1,
+    "label": "WebGPU（f32）",
+    "label_en": "WebGPU (f32)"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=gravity&backend=0"
+ },
+ {
+  "id": "mesh.G",
+  "substrate": "mesh",
+  "name": "G",
+  "label": "引力常数 G",
+  "label_en": "Gravitational constant G",
+  "tag": "value",
+  "tag_en": "changes numbers only",
+  "min": 0.25,
+  "max": 4,
+  "step": 0.25,
+  "default": 1,
+  "rebuild": "state",
+  "note": "平均密度取 1。扰动的增长率是 √(4πG)，与波长无关；G 只改变时间的尺度，不改变长出来的结构。",
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&G=1"
+ },
+ {
+  "id": "mesh.initial",
+  "substrate": "mesh",
+  "name": "initial",
+  "label": "初始扰动",
+  "label_en": "Initial perturbation",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 1,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "一个平面波",
+    "label_en": "one plane wave"
+   },
+   {
+    "value": 1,
+    "label": "随机场",
+    "label_en": "a random field"
+   }
+  ],
+  "note": "平面波在壳层交叉之前有严格解（Zel’dovich），可以逐点对照。随机场由波数不超过 4 的平面波叠加而成。两者都从纯增长模出发。",
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&initial=1"
+ },
+ {
+  "id": "mesh.amplitude",
+  "substrate": "mesh",
+  "name": "amplitude",
+  "label": "初始幅度",
+  "label_en": "Initial amplitude",
+  "tag": "state",
+  "tag_en": "state variable",
+  "min": 0.005,
+  "max": 0.2,
+  "step": 0.005,
+  "default": 0.03,
+  "rebuild": "state",
+  "note": "平面波：基频密度模的幅度。随机场：密度涨落的均方根。",
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&amplitude=0.03"
+ },
+ {
+  "id": "mesh.side",
+  "substrate": "mesh",
+  "name": "side",
+  "label": "每边粒子数",
+  "label_en": "Particles per side",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 4,
+  "max": 6,
+  "step": 1,
+  "default": 6,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 4,
+    "label": "16（4096 个）",
+    "label_en": "16 (4096 particles)"
+   },
+   {
+    "value": 5,
+    "label": "32（3.3 万个）",
+    "label_en": "32 (33 thousand)"
+   },
+   {
+    "value": 6,
+    "label": "64（26 万个）",
+    "label_en": "64 (260 thousand)"
+   }
+  ],
+  "note": "CPU 参考实现最多取 32。",
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&side=6"
+ },
+ {
+  "id": "mesh.grid",
+  "substrate": "mesh",
+  "name": "grid",
+  "label": "网格每边格点数",
+  "label_en": "Mesh points per side",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 5,
+  "max": 7,
+  "step": 1,
+  "default": 6,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 5,
+    "label": "32",
+    "label_en": "32"
+   },
+   {
+    "value": 6,
+    "label": "64",
+    "label_en": "64"
+   },
+   {
+    "value": 7,
+    "label": "128",
+    "label_en": "128"
+   }
+  ],
+  "note": "力在两三个格距以下被抹平：比这更小的结构是不可信的。CPU 参考实现最多取 32。",
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&grid=6"
+ },
+ {
+  "id": "mesh.dt",
+  "substrate": "mesh",
+  "name": "dt",
+  "label": "时间步长 dt",
+  "label_en": "Time step dt",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0.0005,
+  "max": 0.005,
+  "step": 0.0005,
+  "default": 0.002,
+  "rebuild": "none",
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&dt=0.002"
+ },
+ {
+  "id": "mesh.backend",
+  "substrate": "mesh",
+  "name": "backend",
+  "label": "计算后端",
+  "label_en": "Compute backend",
+  "tag": "numerical",
+  "tag_en": "numerical method",
+  "min": 0,
+  "max": 1,
+  "step": 1,
+  "default": 0,
+  "rebuild": "state",
+  "options": [
+   {
+    "value": 0,
+    "label": "CPU 参考",
+    "label_en": "CPU reference"
+   },
+   {
+    "value": 1,
+    "label": "WebGPU",
+    "label_en": "WebGPU"
+   }
+  ],
+  "shown_by_default": true,
+  "url": "/?substrate=mesh&backend=0"
+ }
+]

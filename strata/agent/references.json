@@ -1,0 +1,540 @@
+[
+ {
+  "id": "ising2d-tc",
+  "substrate": "ising",
+  "value": 2.269185314,
+  "formula": "Tc = 2 / ln(1 + √2), J = 1, h = 0, square lattice, nearest neighbours",
+  "status": "exact",
+  "source": "Onsager, Phys. Rev. 65, 117 (1944)",
+  "title": "二维 Ising 模型的临界温度",
+  "title_en": "Critical temperature of the 2D Ising model",
+  "measured": "慢测试里不同大小晶格的 Binder 曲线在这个温度相交。",
+  "measured_en": "In the slow tests the Binder curves of lattices of different sizes cross at this temperature."
+ },
+ {
+  "id": "ising2d-magnetisation",
+  "substrate": "ising",
+  "value": null,
+  "formula": "m(T) = (1 − sinh(2/T)⁻⁴)^(1/8) for T < Tc, 0 otherwise",
+  "status": "exact",
+  "source": "Yang, Phys. Rev. 85, 808 (1952)",
+  "table": {
+   "columns": [
+    "T",
+    "m"
+   ],
+   "rows": [
+    [
+     1,
+     0.999275752
+    ],
+    [
+     1.5,
+     0.9864996026
+    ],
+    [
+     1.8,
+     0.9568570172
+    ],
+    [
+     2,
+     0.9113193779
+    ],
+    [
+     2.1,
+     0.8687476244
+    ],
+    [
+     2.2,
+     0.7847551314
+    ],
+    [
+     2.25,
+     0.6718540267
+    ],
+    [
+     2.26,
+     0.6133708069
+    ]
+   ]
+  },
+  "title": "二维 Ising 模型的自发磁化强度",
+  "title_en": "Spontaneous magnetisation of the 2D Ising model"
+ },
+ {
+  "id": "ising2d-energy",
+  "substrate": "ising",
+  "value": -1.414213562,
+  "formula": "u(T) = −coth(2/T) [1 + (2/π)(2 tanh²(2/T) − 1) K(κ)], κ = 2 sinh(2/T) / cosh²(2/T); the value given is u(Tc) = −√2",
+  "status": "exact",
+  "source": "Onsager, Phys. Rev. 65, 117 (1944)",
+  "table": {
+   "columns": [
+    "T",
+    "u"
+   ],
+   "rows": [
+    [
+     1,
+     -1.997160204
+    ],
+    [
+     1.5,
+     -1.951116573
+    ],
+    [
+     2,
+     -1.745564575
+    ],
+    [
+     2.2,
+     -1.546489144
+    ],
+    [
+     2.5,
+     -1.106079204
+    ],
+    [
+     3,
+     -0.8173095925
+    ],
+    [
+     4,
+     -0.5572722406
+    ]
+   ]
+  },
+  "title": "二维 Ising 模型每个自旋的能量",
+  "title_en": "Energy per spin of the 2D Ising model"
+ },
+ {
+  "id": "ising2d-beta-over-nu",
+  "substrate": "ising",
+  "value": 0.125,
+  "formula": "|m|(Tc, L) ∝ L^(−β/ν), β = 1/8, ν = 1",
+  "status": "exact",
+  "source": "Onsager (1944); Yang (1952)",
+  "title": "二维 Ising：临界点磁化强度随晶格边长衰减的指数",
+  "title_en": "2D Ising: exponent of the decay of the critical magnetisation with lattice side"
+ },
+ {
+  "id": "ising2d-binder",
+  "substrate": "ising",
+  "value": 0.61069,
+  "formula": "U₄ = 1 − ⟨m⁴⟩ / 3⟨m²⟩²; isotropic nearest-neighbour square lattice, periodic boundaries, large-lattice limit",
+  "status": "numerical",
+  "source": "Selke, Eur. Phys. J. B 51, 223 (2006), arXiv:cond-mat/0603411",
+  "title": "二维 Ising：临界点的 Binder 累积量",
+  "title_en": "2D Ising: Binder cumulant at the critical point"
+ },
+ {
+  "id": "ising3d-tc",
+  "substrate": "ising",
+  "value": 4.511535998,
+  "formula": "Tc = 1 / β_c, β_c = 0.221654(2); simple cubic lattice, no exact solution",
+  "status": "numerical",
+  "source": "numerical literature value; the code records the number but no citation",
+  "title": "三维 Ising 模型的临界温度",
+  "title_en": "Critical temperature of the 3D Ising model",
+  "measured": "慢测试里小晶格（8 到 32）的 Binder 曲线交于 4.504。",
+  "measured_en": "In the slow tests the Binder curves of small lattices (8 to 32) cross at 4.504."
+ },
+ {
+  "id": "ising3d-beta-over-nu",
+  "substrate": "ising",
+  "value": 0.518,
+  "formula": "|m|(Tc, L) ∝ L^(−β/ν)",
+  "status": "numerical",
+  "source": "numerical literature value; the code records the number but no citation",
+  "title": "三维 Ising：临界点磁化强度随晶格边长衰减的指数",
+  "title_en": "3D Ising: exponent of the decay of the critical magnetisation with lattice side",
+  "measured": "慢测试量到 0.510。",
+  "measured_en": "The slow tests measure 0.510."
+ },
+ {
+  "id": "ising3d-binder",
+  "substrate": "ising",
+  "value": 0.465,
+  "formula": "U₄ at Tc for a periodic cube, large-lattice limit; quoted as 0.465(3)",
+  "status": "numerical",
+  "source": "numerical literature value; the code records the number but no citation",
+  "title": "三维 Ising：临界点的 Binder 累积量",
+  "title_en": "3D Ising: Binder cumulant at the critical point",
+  "measured": "小晶格（8 到 32）的交点处是 0.490，比大晶格值高，是有限尺寸修正。",
+  "measured_en": "At the crossing of small lattices (8 to 32) it is 0.490, above the large-lattice value: a finite-size correction."
+ },
+ {
+  "id": "potts-q3-beta-over-nu",
+  "substrate": "potts",
+  "value": 0.1333333333,
+  "formula": "m(Tc, L) ∝ L^(−β/ν), β = 1/9, ν = 5/6",
+  "status": "exact",
+  "source": "standard value, written from memory and not checked against a source; see Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "title": "三态 Potts：临界点序参量随晶格边长衰减的指数",
+  "title_en": "Three-state Potts: exponent of the decay of the critical order parameter with lattice side",
+  "measured": "慢测试量到的指数与它相差不到 0.015。",
+  "measured_en": "The slow tests measure an exponent within 0.015 of it."
+ },
+ {
+  "id": "jeans-rate",
+  "substrate": "mesh",
+  "value": 3.544907702,
+  "formula": "γ = √(4πGρ̄) with G = 1 and mean density 1 on a static uniform background; independent of wavelength",
+  "status": "exact",
+  "source": "Jeans, Phil. Trans. R. Soc. A 199, 1 (1902)",
+  "title": "冷物质引力不稳定性的线性增长率",
+  "title_en": "Linear growth rate of the gravitational instability of cold matter",
+  "measured": "平面波实测 3.527；计入粒子网格法的已知折扣后理论是 3.522。",
+  "measured_en": "Measured 3.527 for a plane wave; with the known weakening of the particle-mesh force the prediction is 3.522."
+ },
+ {
+  "id": "zeldovich-mode",
+  "substrate": "mesh",
+  "value": null,
+  "formula": "x = q + A(t) sin(2πkq) / (2πk), A(t) = A₀ exp(γt); fundamental density mode 2 J₁(A); shells cross at A = 1, t = ln(1/A₀) / γ",
+  "status": "exact",
+  "source": "Zel'dovich, Astron. Astrophys. 5, 84 (1970)",
+  "title": "平面波在壳层交叉之前的严格解",
+  "title_en": "Exact solution for a plane wave before shell crossing",
+  "measured": "到壳层交叉时刻的九成为止，实测与它相差不超过 1.1%。",
+  "measured_en": "Up to nine tenths of the crossing time the measurement stays within 1.1% of it."
+ },
+ {
+  "id": "plummer-half-mass",
+  "substrate": "gravity",
+  "value": 1.304766027,
+  "formula": "r_h = (2^(2/3) − 1)^(−1/2), total mass 1, scale radius 1, G = 1",
+  "status": "exact",
+  "source": "Plummer, Mon. Not. R. Astron. Soc. 71, 460 (1911)",
+  "title": "Plummer 球的半质量半径",
+  "title_en": "Half-mass radius of the Plummer sphere"
+ },
+ {
+  "id": "free-fall-time",
+  "substrate": "gravity",
+  "value": 1.110720735,
+  "formula": "t_ff = π / (2√2), mass 1, radius 1, G = 1",
+  "status": "exact",
+  "source": "textbook result",
+  "title": "冷均匀球的自由落体时间",
+  "title_en": "Free-fall time of a cold uniform sphere"
+ },
+ {
+  "id": "virial-equilibrium",
+  "substrate": "gravity",
+  "value": 1,
+  "formula": "2K / |U| = 1",
+  "status": "exact",
+  "source": "virial theorem (Clausius 1870)",
+  "title": "自引力系统平衡时的位力比",
+  "title_en": "Virial ratio of a self-gravitating system in equilibrium"
+ },
+ {
+  "id": "lj2d-critical-point",
+  "substrate": "md",
+  "value": 0.515,
+  "formula": "Tc = 0.515, ρc = 0.336 (full 12-6 potential; the critical parameters used by the equation-of-state fit)",
+  "status": "fit",
+  "source": "Homes, Mausbach, Thol, Nitzke & Vrabec, J. Mol. Liq. 429, 127529 (2025), https://doi.org/10.14279/depositonce-22253",
+  "title": "二维 Lennard-Jones 流体的临界点",
+  "title_en": "Critical point of the 2D Lennard-Jones fluid"
+ },
+ {
+  "id": "q6-ideal-structures",
+  "substrate": "md",
+  "value": 0.5745,
+  "formula": "q₆ = √(4π/13 · Σₘ |q₆ₘ|²); the value given is face-centred cubic",
+  "status": "reference",
+  "source": "Steinhardt, Nelson & Ronchetti, Phys. Rev. B 28, 784 (1983)",
+  "title": "理想结构的 Steinhardt q₆",
+  "title_en": "Steinhardt q₆ of ideal structures",
+  "measured": "测试里由理想晶格算出：面心立方 0.5745，六方密堆 0.4848，二十面体 0.6633；这三个是代码里断言的值。",
+  "measured_en": "Computed from ideal lattices in the tests: face-centred cubic 0.5745, hexagonal close-packed 0.4848, icosahedron 0.6633; these three are the values asserted in the code."
+ },
+ {
+  "id": "close-packed-coordination",
+  "substrate": "md",
+  "value": 6,
+  "formula": "6 for the 2D triangular lattice, 12 for face-centred cubic in 3D",
+  "status": "reference",
+  "source": "geometry",
+  "title": "密堆积晶体的配位数",
+  "title_en": "Coordination number of close-packed crystals"
+ },
+ {
+  "id": "ideal-gas-sound",
+  "substrate": "md",
+  "value": null,
+  "formula": "c = √(γT), γ = (d + 2) / d, unit mass; with interactions the simulation uses the virial equation of state truncated at B₂, valid at low density only",
+  "status": "exact",
+  "source": "textbook result",
+  "title": "理想气体的声速",
+  "title_en": "Speed of sound of an ideal gas"
+ },
+ {
+  "id": "maxwell-speed-distribution",
+  "substrate": "md",
+  "value": null,
+  "formula": "2D: f(v) = (v/T) exp(−v²/2T); 3D: f(v) = √(2/π) v² T^(−3/2) exp(−v²/2T); unit mass",
+  "status": "exact",
+  "source": "Maxwell (1860); Boltzmann (1872)",
+  "title": "Maxwell–Boltzmann 速率分布",
+  "title_en": "Maxwell–Boltzmann speed distribution"
+ },
+ {
+  "id": "poiseuille-profile",
+  "substrate": "md",
+  "value": null,
+  "formula": "uₓ(y) = (ρg / 2η) y (H − y) plus a slip velocity at the walls, for a body force g per particle",
+  "status": "exact",
+  "source": "Navier–Stokes equations, plane Poiseuille flow",
+  "title": "管道流的流速剖面",
+  "title_en": "Velocity profile of channel flow",
+  "measured": "二维和三维的流速剖面都与抛物线吻合；粘度是由流量反推的，三维约 1.07，没有独立对照。",
+  "measured_en": "The profile matches a parabola in 2D and in 3D; the viscosity is inferred from the flow rate (about 1.07 in 3D) and has no independent check."
+ },
+ {
+  "id": "potts-q2",
+  "substrate": "potts",
+  "value": 1.134592657,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     2,
+     1.134592657,
+     -1.707106781,
+     0,
+     -1.707106781,
+     -1.707106781
+    ]
+   ]
+  },
+  "title": "2 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 2-state Potts model"
+ },
+ {
+  "id": "potts-q3",
+  "substrate": "potts",
+  "value": 0.9949728611,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     3,
+     0.9949728611,
+     -1.577350269,
+     0,
+     -1.577350269,
+     -1.577350269
+    ]
+   ]
+  },
+  "title": "3 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 3-state Potts model"
+ },
+ {
+  "id": "potts-q4",
+  "substrate": "potts",
+  "value": 0.9102392266,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     4,
+     0.9102392266,
+     -1.5,
+     0,
+     -1.5,
+     -1.5
+    ]
+   ]
+  },
+  "title": "4 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 4-state Potts model"
+ },
+ {
+  "id": "potts-q5",
+  "substrate": "potts",
+  "value": 0.8515283616,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     5,
+     0.8515283616,
+     -1.447213595,
+     0.05291875791,
+     -1.473672974,
+     -1.420754217
+    ]
+   ]
+  },
+  "title": "5 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 5-state Potts model"
+ },
+ {
+  "id": "potts-q6",
+  "substrate": "potts",
+  "value": 0.8076068036,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     6,
+     0.8076068036,
+     -1.40824829,
+     0.20146414,
+     -1.50898036,
+     -1.30751622
+    ]
+   ]
+  },
+  "title": "6 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 6-state Potts model"
+ },
+ {
+  "id": "potts-q7",
+  "substrate": "potts",
+  "value": 0.7730589182,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     7,
+     0.7730589182,
+     -1.377964473,
+     0.3532767795,
+     -1.554602863,
+     -1.201326083
+    ]
+   ]
+  },
+  "title": "7 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 7-state Potts model"
+ },
+ {
+  "id": "potts-q8",
+  "substrate": "potts",
+  "value": 0.7449044551,
+  "formula": "Tc = 1 / ln(1 + √q); mean energy per site at Tc is −(1 + 1/√q); for q > 4 the latent heat is 2 (1 + 1/√q) tanh(Θ/2) Π tanh²(nΘ), 2 cosh Θ = √q",
+  "status": "exact",
+  "source": "Baxter, J. Phys. C 6, L445 (1973); Wu, Rev. Mod. Phys. 54, 235 (1982)",
+  "table": {
+   "columns": [
+    "q",
+    "Tc",
+    "energy_at_Tc",
+    "latent_heat",
+    "energy_ordered",
+    "energy_disordered"
+   ],
+   "rows": [
+    [
+     8,
+     0.7449044551,
+     -1.353553391,
+     0.4863580795,
+     -1.59673243,
+     -1.110374351
+    ]
+   ]
+  },
+  "title": "8 态 Potts 模型的相变点",
+  "title_en": "Transition point of the 8-state Potts model",
+  "measured": "在相变点上从有序和无序出发，能量分别停在 −1.598 和 −1.106。",
+  "measured_en": "Started ordered and disordered at the transition, the energy stays at −1.598 and −1.106 respectively."
+ },
+ {
+  "id": "argon-units",
+  "substrate": "md",
+  "value": null,
+  "formula": "σ, ε/kB and the mass are those of argon; time unit τ = σ √(m/ε); de Boer parameter h / (σ √(mε))",
+  "status": "fit",
+  "source": "argon Lennard-Jones parameters σ = 3.405 Å, ε/kB = 119.8 K; CODATA 2018 constants",
+  "table": {
+   "columns": [
+    "sigma_m",
+    "epsilon_J",
+    "mass_kg",
+    "tau_s",
+    "kelvin",
+    "speed_m_per_s",
+    "de_boer"
+   ],
+   "rows": [
+    [
+     3.405e-10,
+     1.654017502e-21,
+     6.633521463e-26,
+     2.156349414e-12,
+     119.8,
+     157.9057632,
+     0.1857790738
+    ]
+   ]
+  },
+  "title": "约化单位换成氩的实际单位",
+  "title_en": "Reduced units converted to real units for argon"
+ }
+]
