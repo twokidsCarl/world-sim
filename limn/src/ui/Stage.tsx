@@ -115,6 +115,7 @@ export function Stage() {
   const shift = useStore((s) => s.shift)
   const cut = useStore((s) => s.cut)
   const busy = useStore((s) => s.busy)
+  const error = useStore((s) => s.error)
   const drawRev = useStore((s) => s.drawRev)
   const pending = useRef(0)
   const settle = useRef(0)
@@ -255,13 +256,15 @@ export function Stage() {
     }
   }, [])
 
+  // 嵌入模式没有输入框，所以不显示“输入…开始”的提示 / embed mode has no input box, so the prompt to type something is not shown
+  const status = fatal || busy || error || info || (new URLSearchParams(location.search).get('embed') === '1' ? '' : '输入一个主题或 PDB 编号开始')
   return (
     <div className="stage">
       <canvas ref={canvasRef} />
       {labels.map((l, i) => (
         <div className="panel-label" key={i} style={{ left: l.x, top: l.y + 6 }}>{l.text}</div>
       ))}
-      <div className={'status' + (fatal ? ' error' : '')}>{fatal || busy || info || '输入一个主题或 PDB 编号开始'}</div>
+      {status && <div className={'status' + (fatal || (error && !busy) ? ' error' : '')}>{status}</div>}
     </div>
   )
 }

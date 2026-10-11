@@ -1,0 +1,233 @@
+{
+  "title": {
+    "zh": "Goodsell 风格的科学插图",
+    "en": "Goodsell-style scientific illustration"
+  },
+  "level": "L2",
+  "ready": true,
+  "web": {
+    "dir": ".",
+    "build": [
+      [
+        "bun",
+        "install"
+      ],
+      [
+        "bunx",
+        "vite",
+        "build"
+      ]
+    ],
+    "dist": "dist"
+  },
+  "api": {
+    "dir": ".",
+    "prepare": [],
+    "run": [
+      "bun",
+      "server/main.ts"
+    ],
+    "health": "/api/health",
+    "env": {
+      "LIMN_PORT": "{port}",
+      "WORLD_SIM_STATE": "{state}"
+    }
+  },
+  "cards": [
+    {
+      "id": "sars-cov-2-virion",
+      "title": {
+        "zh": "新冠病毒颗粒，从中间剖开",
+        "en": "A SARS-CoV-2 virion, cut through the middle"
+      },
+      "hint": {
+        "zh": "拖动旋转，用“剖开”滑杆看内部。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate; use the cut slider to look inside. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=sars-cov-2-virion"
+    },
+    {
+      "id": "hiv-virion",
+      "title": {
+        "zh": "HIV-1 病毒颗粒：包膜、基质、锥形衣壳和 RNA",
+        "en": "An HIV-1 virion: envelope, matrix, the conical capsid and its RNA"
+      },
+      "hint": {
+        "zh": "拖动旋转，用“剖开”滑杆看内部。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate; use the cut slider to look inside. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=hiv-virion-petworld"
+    },
+    {
+      "id": "synaptic-vesicle",
+      "title": {
+        "zh": "突触小泡：装满谷氨酸的一个小囊",
+        "en": "A synaptic vesicle, filled with glutamate"
+      },
+      "hint": {
+        "zh": "拖动旋转，用“剖开”滑杆看内部。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate; use the cut slider to look inside. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=synaptic-vesicle"
+    },
+    {
+      "id": "exosome",
+      "title": {
+        "zh": "外泌体：细胞送出的一个小包裹",
+        "en": "An exosome: a small parcel sent out by a cell"
+      },
+      "hint": {
+        "zh": "拖动旋转，用“剖开”滑杆看内部。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate; use the cut slider to look inside. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=exosome"
+    },
+    {
+      "id": "mycoplasma",
+      "title": {
+        "zh": "一整只细菌：生殖支原体的全细胞模型",
+        "en": "A whole bacterium: the whole-cell model of Mycoplasma genitalium"
+      },
+      "hint": {
+        "zh": "滚轮放大看核糖体和 DNA（53 MB，第一次要等一会儿）。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Scroll to zoom in on ribosomes and DNA (53 MB; the first load takes a while). The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=mycoplasma-genitalium"
+    },
+    {
+      "id": "machinery-of-life",
+      "title": {
+        "zh": "《生命的机器》里的分子，按同一比例排开",
+        "en": "The molecules of The Machinery of Life, laid out at one scale"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=machinery-of-life"
+    },
+    {
+      "id": "nuclear-pore",
+      "title": {
+        "zh": "人的核孔复合体",
+        "en": "The human nuclear pore complex"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=human-npc"
+    },
+    {
+      "id": "zika",
+      "title": {
+        "zh": "寨卡病毒的外壳",
+        "en": "The shell of Zika virus"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=zika-virus"
+    },
+    {
+      "id": "hiv-capsid",
+      "title": {
+        "zh": "完整的 HIV-1 衣壳：1356 条蛋白链",
+        "en": "The entire HIV-1 capsid: 1,356 protein chains"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?model=hiv-capsid"
+    },
+    {
+      "id": "2hhb",
+      "title": {
+        "zh": "血红蛋白",
+        "en": "Haemoglobin"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?id=2hhb"
+    },
+    {
+      "id": "6vxx",
+      "title": {
+        "zh": "新冠病毒的刺突蛋白",
+        "en": "The SARS-CoV-2 spike protein"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?id=6vxx"
+    },
+    {
+      "id": "1aoi",
+      "title": {
+        "zh": "核小体：DNA 绕在组蛋白上",
+        "en": "A nucleosome: DNA wound around histones"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?id=1aoi"
+    },
+    {
+      "id": "7k00",
+      "title": {
+        "zh": "细菌的核糖体",
+        "en": "A bacterial ribosome"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?id=7k00"
+    },
+    {
+      "id": "1igt",
+      "title": {
+        "zh": "一个完整的抗体",
+        "en": "A whole antibody"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?id=1igt"
+    },
+    {
+      "id": "5t4o",
+      "title": {
+        "zh": "ATP 合酶",
+        "en": "ATP synthase"
+      },
+      "hint": {
+        "zh": "拖动旋转，滚轮缩放。结构是现取的，需要联网；取过一次后会缓存在本机",
+        "en": "Drag to rotate, scroll to zoom. The structure is fetched on demand and needs a network connection; after the first time it is cached locally"
+      },
+      "idea": "2.1",
+      "url": "/?id=5t4o"
+    }
+  ]
+}

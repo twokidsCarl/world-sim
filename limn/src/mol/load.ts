@@ -357,11 +357,13 @@ export async function loadMolecule(src: Source, onProgress?: (received: number, 
   // RCSB 的压缩版小三倍；没有时退回未压缩的 / RCSB's gzipped files are a third the size; fall back to the plain one
   const urls = src.kind === 'pdb' ? [`https://models.rcsb.org/${src.id.toLowerCase()}.bcif.gz`, `https://models.rcsb.org/${src.id.toLowerCase()}.bcif`] : [src.url]
   let buf: Uint8Array | null = null
-  for (const url of urls) {
+  // 先走本地服务（它会把文件缓存在本机），不行再直接从原地址取
+  // go through the local service first (it caches the file on this machine), then straight to the source
+  for (const url of urls.flatMap((u) => [`/api/structure?url=${encodeURIComponent(u)}`, u])) {
     buf = await download(url, onProgress).catch(() => null)
     if (buf) break
   }
-  if (!buf) throw new Error(`下载 ${src.id} 失败`)
+  if (!buf) throw new Error(`没能取到 ${src.id}：它要从外网的公共数据库现取（${new URL(urls[0]!).hostname}），请检查网络后重试。`)
   // BinaryCIF 是 MessagePack；文本 CIF 以 "data_" 开头。
   // BinaryCIF is MessagePack; text CIF starts with "data_".
   const isText = buf[0] === 0x64 && buf[1] === 0x61 && buf[2] === 0x74 && buf[3] === 0x61
