@@ -31,6 +31,9 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
 
 const idea = (id: string, action = '') => `/api/ideas/${encodeURIComponent(id)}${action && `/${action}`}`
 
+// 现在是谁在用。auth_enabled 为假是本地模式：不用登录，就是主人。
+// Who is using it now. auth_enabled false means local mode: no sign-in, you are the owner.
+export type Me = { role: 'guest' | 'member' | 'owner'; login: string; name: string; avatar: string; auth_enabled: boolean }
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type Wish = {
@@ -91,6 +94,7 @@ export type PlayView = { sims: SimView[]; cards: CardView[]; problems: { name: s
 export type NewIdea = { title: string; body: string; level: string; threads: string[]; kernel: string | null }
 
 export const api = {
+  me: () => call<Me>('/api/me'),
   state: () => call<State>('/api/state'),
   idea: (id: string) => call<IdeaDetail>(idea(id)),
   create: (body: NewIdea) => call<IdeaDetail>('/api/ideas', body),

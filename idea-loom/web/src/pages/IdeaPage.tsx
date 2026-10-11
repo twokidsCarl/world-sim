@@ -7,7 +7,7 @@ import { type T, label, pick, plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { EditText, IdeaActions, PositionEditor } from '../ui/IdeaActions'
 import { ProposalCard } from '../ui/ProposalCard'
-import { useLang, useStore, useT } from '../state/store'
+import { useLang, useOwner, useStore, useT } from '../state/store'
 import { Empty, Page, Section } from '../ui/Page'
 import { IdeaLink, StatusBadge, ideaTitle, levelName } from '../ui/bits'
 
@@ -16,6 +16,7 @@ export function IdeaPage({ state }: { state: State }) {
   const [idea, setIdea] = useState<IdeaDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
+  const owner = useOwner()
   const lang = useLang()
   const t = useT()
 
@@ -86,10 +87,10 @@ export function IdeaPage({ state }: { state: State }) {
                 )}
               </details>
             )}
-            {!editing && <IdeaActions idea={idea} state={state} onEdit={() => setEditing(true)} />}
+            {owner && !editing && <IdeaActions idea={idea} state={state} onEdit={() => setEditing(true)} />}
           </Section>
 
-          <Refine idea={idea} state={state} />
+          {owner && <Refine idea={idea} state={state} />}
 
           <UseIt idea={idea} />
 
@@ -114,7 +115,7 @@ export function IdeaPage({ state }: { state: State }) {
                 <Link to={`/ideas?level=${idea.level}`}>{levelName(state, idea.level, lang)}</Link>
               </dd>
             </dl>
-            <PositionEditor idea={idea} state={state} />
+            {owner && <PositionEditor idea={idea} state={state} />}
             {kernel && <p className="muted small kernel-desc">{pick(lang, kernel.desc, kernel.desc_en)}</p>}
           </Section>
 

@@ -235,6 +235,12 @@ button:disabled { opacity: 0.45; cursor: default; }
 .nav-new { margin-top: 10px; border: 1px dashed var(--line-2); justify-content: center; }
 .sync { display: grid; gap: 6px; margin-bottom: 12px; }
 .sync button { width: 100%; }
+/* 登录的人和登录入口 / who is signed in, and the way in */
+.who { margin-bottom: 12px; }
+.who .row { align-items: center; justify-content: space-between; gap: 8px; }
+.who-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+a.button { display: block; text-align: center; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 6px; text-decoration: none; color: var(--ink); background: var(--panel); }
+a.button:hover { background: var(--sunken); }
 
 /* 血缘 / lineage */
 .batches { list-style: none; margin: 0; padding: 0 0 0 16px; border-left: 1px solid var(--line-2); display: grid; gap: 26px; }

@@ -5,9 +5,9 @@
 Put world-sim on one cloud host: idea-loom is the single entry point and every simulation
 lives on its own subdomain.
 
-> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止只完成了"能部署"这一期，下面"还没有的"一节列了没做的部分。
+> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"和"登录与权限"两期，下面"还没有的"一节列了没做的部分。
 >
-> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. Only the "can be deployed" stage is done so far; see "not there yet" below.
+> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed" and "sign-in and roles" stages are done so far; see "not there yet" below.
 
 ## 结构 / Layout
 
@@ -22,7 +22,7 @@ Internet  (Caddy)   └─ *.SIM_DOMAIN ───────── play   各�
 | 容器 / Container | 做什么 / What it does | 持有的密钥 / Secrets it holds |
 |---|---|---|
 | `proxy` | 自动证书、按域名分流 / automatic certificates, routing by host | 证书 / certificates |
-| `hub` | 界面、接口、登录 / UI, API, sign-in | 内部口令 / the internal token |
+| `hub` | 界面、接口、登录 / UI, API, sign-in | 内部口令、登录的密钥 / the internal token and the sign-in secrets |
 | `play` | 取 `main` 的快照、构建、按需运行各模拟的后端 / snapshots `main`, builds, runs simulation backends on demand | **没有 / none** |
 | `worker` | 出方案、改代码、跑测试、开 PR / plans, changes code, runs tests, opens PRs | 订阅令牌、仓库的推送凭证 / the subscription token and the push credential |
 
@@ -42,6 +42,27 @@ secrets, so it accepts no inbound requests.
    The subscription token: run `claude setup-token` on **your own computer** for a token valid for a year.
 4. 仓库的推送凭证：一个只对这一个仓库有"内容读写 + 合并请求读写"的细粒度令牌。
    The push credential: a fine-grained token limited to this one repository, with contents and pull requests read/write.
+5. 一个 GitHub OAuth 应用（Settings → Developer settings → OAuth Apps），回调地址填 `https://<HUB_DOMAIN>/auth/callback`。它只用来认人，只要 `read:user`。
+   A GitHub OAuth app (Settings → Developer settings → OAuth Apps) whose callback URL is `https://<HUB_DOMAIN>/auth/callback`. It is only used to tell people apart and asks for `read:user` only.
+
+## 谁能做什么 / Who may do what
+
+`.env` 里的 `OWNER_GITHUB` 是主人。身份用 GitHub 登录来认，会话是一个签了名的 cookie，服务器不存会话。
+
+`OWNER_GITHUB` in `.env` is the owner. People are told apart by GitHub sign-in; the session is a signed cookie and nothing is stored on the server.
+
+| 身份 / Role | 能做的 / May |
+|---|---|
+| 游客（没登录）/ guest (not signed in) | 看地图、想法池、idea、血缘、项目与任务；玩 / browse the map, the pool, ideas, lineage, projects and tasks; play |
+| 访客（登录了，不是主人）/ member (signed in, not the owner) | 再加上记自己的观看和收藏 / also record their own watching and likes |
+| 主人 / owner | 其余全部：改动、生成、小助手、作业、许愿池、统计、同步 / everything else: changes, generating, the assistant, jobs, the wish pool, statistics, sync |
+
+规则是"默认只有主人"：`src/idea_loom/auth.py` 里列出了游客和访客能用的接口，没列出的一律要主人身份，所以新加的接口不会不小心对外开放。模型只为主人调用。限流是每个地址每分钟 600 次接口请求、每个模拟的后端 120 次。
+
+The rule is owner-only by default: `src/idea_loom/auth.py` lists the routes a guest or a
+member may use and everything unlisted needs the owner, so a newly added route is never
+open by accident. The model is only called for the owner. Rate limits are 600 API requests
+per address per minute, and 120 to each simulation's backend.
 
 ## 启动 / Start
 
@@ -89,16 +110,19 @@ domain and for known simulations, and only then is a certificate issued.
 
 按顺序做 / In this order:
 
-1. **登录与权限 / Sign-in and roles**。做好之前整个站点挡在 `Caddyfile` 里的一道口令后面（`GATE_USER` / `GATE_HASH`），**包括模拟的子域名以外的所有页面**。注意：模拟的子域名现在是公开的。
-   Until then the whole site sits behind one password in the `Caddyfile`. Note that the simulations' subdomains are public already.
-2. **数据库 / Database**。现在云端的数据仍是持久盘上的事件文件，没有连续备份。
+1. **数据库 / Database**。现在云端的数据仍是持久盘上的事件文件，没有连续备份。
    For now the cloud's data is still event files on the volume, without continuous backup.
-3. **云端的作业和模型调用 / Jobs and model calls in the cloud**。`worker` 容器默认不启动；hub 里没有 `claude`，所以生成、小助手、作业在云端暂时都用不了。
+2. **云端的作业和模型调用 / Jobs and model calls in the cloud**。`worker` 容器默认不启动；hub 里没有 `claude`，所以生成、小助手、作业在云端暂时都用不了。
    The `worker` container is not started by default; the hub has no `claude`, so generating, the assistant and jobs do not work in the cloud yet.
-4. 访客提愿望、手机布局与推送、持续运行与自动维护。
+3. 访客提愿望、手机布局与推送、持续运行与自动维护。
    Visitor wishes, the phone layout and push notifications, unattended running and automatic maintenance.
 
 ## 已知的风险 / Known risks
+
+- 登录这一段在本机测过（三种身份逐个调接口、伪造和过期的 cookie、回调的 state 校验），但**没有对着真的 GitHub 走过一遍**，因为还没有域名和 OAuth 应用。
+  Sign-in was tested locally (every route as each of the three roles, forged and expired cookies, the callback's state check) but **has not been run against the real GitHub**, since there is no domain or OAuth app yet.
+- 模拟的子域名不需要登录，任何人都能玩；它们的后端只有限流这一道。
+  The simulations' subdomains need no sign-in, so anyone can play; their backends are protected by rate limits only.
 
 - 模拟的后端是各子项目自己写的，没有按公网服务的标准审过。`play` 不带密钥、不能提权、有资源上限，但上线前仍应逐个看一遍它们的写接口。
   The simulations' backends were written by each subproject and not reviewed as public services. `play` holds no secrets, cannot gain privileges and has resource limits, but their write routes should still be reviewed one by one before going live.

@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+import time
+
 from typing import Optional
 
 import json
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Request
-from fastapi.responses import PlainTextResponse, StreamingResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import config, edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
+from . import auth, config, edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .play import host as play_host
 from .play import manifest as play_manifest
@@ -302,7 +304,10 @@ class TrailBody(BaseModel):
 
 
 @app.post("/api/trail")
-def post_trail(body: TrailBody) -> dict[str, int]:
+def post_trail(body: TrailBody, request: Request) -> dict[str, int]:
+    user = current_user(request)
+    for action in body.actions:
+        action.user = "" if user.role == "owner" else user.login  # 以登录的身份为准，不信请求里带的 / trust the session, not the request body
     return {"saved": trail.append(body.actions)}
 
 
@@ -668,7 +673,10 @@ def play_view(request: Request) -> PlayView:
         for card in sim.cards:
             cards.append(CardView(key=f"{sim.name}/{card.id}", sim=sim.name, sim_title=sim.title, level=sim.level, id=card.id, title=card.title,
                                   hint=card.hint, idea=card.idea if card.idea in pool else None, url=origin + card.url, status="ready" if state.status == "ready" or state.serving else state.status))
-    return PlayView(sims=sim_views, cards=cards, problems=problems, history=trail.card_history())
+    user = current_user(request)
+    # 每个人看到的是自己的观看记录；游客没有。 / Everyone sees their own watch history; a guest has none.
+    history = {} if user.role == "guest" else trail.card_history(user="" if user.role == "owner" else user.login)
+    return PlayView(sims=sim_views, cards=cards, problems=problems, history=history)
 
 
 def _rebuild(name: str) -> str:
@@ -725,3 +733,56 @@ def tls_ask(domain: str = "") -> dict[str, bool]:
     if host in config.own_hosts() or play_host.sim_name(host) in set(play_manifest.names()):
         return {"ok": True}
     raise HTTPException(404, "不是这里的主机名")
+
+
+# ---------- 登录 / sign-in ----------
+
+
+def current_user(request: Request) -> auth.User:
+    user = request.scope.get("state", {}).get("user")
+    return user if isinstance(user, auth.User) else auth.user_from_cookie(request.cookies.get(auth.COOKIE))
+
+
+@app.get("/api/me", response_model=auth.User)
+def me(request: Request) -> auth.User:
+    return current_user(request)
+
+
+def _cookie_kwargs() -> dict[str, object]:
+    return {"httponly": True, "secure": not config.is_local(), "samesite": "lax", "path": "/"}
+
+
+@app.get("/auth/login")
+def auth_login() -> RedirectResponse:
+    if not auth.enabled() or not auth.client_id():
+        raise HTTPException(404, "这里没有开启登录")
+    state = auth.new_state()
+    response = RedirectResponse(auth.authorize_url(state), status_code=302)
+    response.set_cookie(auth.STATE_COOKIE, auth.sign({"state": state, "exp": time.time() + 600}), max_age=600, **_cookie_kwargs())
+    return response
+
+
+@app.get("/auth/callback")
+def auth_callback(request: Request, code: str = "", state: str = "") -> RedirectResponse:
+    if not auth.enabled():
+        raise HTTPException(404, "这里没有开启登录")
+    saved = auth.unsign(request.cookies.get(auth.STATE_COOKIE) or "")
+    # state 要和发起登录时存在 cookie 里的一样，否则可能是别人伪造的回调。
+    # The state must match the one stored in the cookie when sign-in began, or the callback may be forged.
+    if not code or not saved or not state or saved.get("state") != state:
+        raise HTTPException(400, "登录的回调不对，请重新登录")
+    try:
+        who = auth.exchange(code)
+    except ValueError as e:
+        raise HTTPException(502, str(e))
+    response = RedirectResponse("/", status_code=302)
+    response.delete_cookie(auth.STATE_COOKIE, path="/")
+    response.set_cookie(auth.COOKIE, auth.session_cookie(**who), max_age=auth.SESSION_SECONDS, **_cookie_kwargs())
+    return response
+
+
+@app.post("/auth/logout")
+def auth_logout() -> RedirectResponse:
+    response = RedirectResponse("/", status_code=303)
+    response.delete_cookie(auth.COOKIE, path="/")
+    return response

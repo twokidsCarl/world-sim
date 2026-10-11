@@ -18,6 +18,8 @@ def ev(at: int, idea_id: str, event: str, **kw) -> IdeaEvent:
 def data(tmp_path, monkeypatch):
     """一个空的数据目录，带最小的骨架。 / An empty data directory with a minimal frame."""
     monkeypatch.setenv("IDEA_LOOM_DATA", str(tmp_path))
+    # 运行时的文件也隔开，免得测试写进真实的操作轨迹。 / Isolate runtime files too, so tests never write into the real trail.
+    monkeypatch.setenv("IDEA_LOOM_RUNS", str(tmp_path / "runs"))
     levels = [LevelInfo(id=f"L{n}", name=f"层{n}") for n in range(1, 11)]  # type: ignore[arg-type]
     levels += [LevelInfo(id="纵", name="纵线", kind="vertical"), LevelInfo(id="造", name="支线 造", kind="branch"), LevelInfo(id="规", name="支线 规", kind="branch")]
     frame = Frame(
