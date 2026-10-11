@@ -165,7 +165,8 @@ def test_new_person_fields_do_not_disturb_the_old_ones():
 
 
 def test_age_structure_follows_the_un_figures_where_a_scenario_has_them():
-    assert population.age_profile("rumor_run") is None
+    assert population.age_profile("nowhere") is None
+    assert population.age_profile("rumor_run")["place"] == "China"
     raw = np.arange(population.AGE_LO, population.AGE_HI)
     assert np.array_equal(population.ages(raw, None), raw)
     profile = population.age_profile("swedbank")
@@ -179,4 +180,25 @@ def test_age_structure_follows_the_un_figures_where_a_scenario_has_them():
     age = np.array([x.age for x in pop.persons if not x.protagonist])
     assert age.min() >= 14 and age.max() <= 79
     assert (age >= 65).mean() == pytest.approx(w[51:].sum(), abs=0.03)
-    assert "Latvia 2011" in pop.note and pop.synthetic
+    assert "Latvia 2011" in pop.note and "Barro–Lee" in pop.note_en and pop.synthetic
+
+
+def test_education_and_trust_follow_the_curated_aggregates():
+    import yaml
+
+    load = lambda name: yaml.safe_load((population.CURATED / f"{name}.yaml").read_text(encoding="utf-8"))["profiles"]  # noqa: E731
+    sc = trace.scenario_module("kaspi")
+    pop = population.build(Params(scenario="kaspi", n=4000, **sc.DEFAULTS), sc)
+    people = [x for x in pop.persons if not x.protagonist]
+    shares = load("education")["kaspi"]["shares"]
+    assert sum(shares) == pytest.approx(1, abs=1e-3)
+    for level, share in enumerate(shares):
+        assert np.mean([x.education == level for x in people]) == pytest.approx(share, abs=0.03)
+    survey = load("trust")["kaspi"]
+    assert np.mean([x.trust_general for x in people]) == pytest.approx(survey["neighbours"]["mean"], abs=0.03)
+    assert np.mean([x.trust_institution for x in people]) == pytest.approx(survey["government"]["mean"], abs=0.03)
+    # 虚构的通和场景有年龄和学历，没有信任 / the fictional scenario has age and education data but no trust data
+    assert "rumor_run" in load("education") and "rumor_run" not in load("trust")
+    flat = np.zeros(4)
+    assert np.allclose(population.trusting(np.full(4, 0.5), survey["government"], np.array([0, 1, 2, 3]), np.full(4, 40)) - flat,
+                       [survey["government"]["by_education"][0], survey["government"]["by_education"][0], survey["government"]["by_education_and_age"][1][1], survey["government"]["by_education_and_age"][2][1]])  # fmt: skip

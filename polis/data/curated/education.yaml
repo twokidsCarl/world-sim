@@ -1,0 +1,64 @@
+# 15–64 岁人口按最高学历的构成。只有汇总数。
+# Educational attainment of the population aged 15–64. Aggregates only.
+#
+# 来源 / Source: Robert J. Barro and Jong-Wha Lee, "A New Data Set of Educational Attainment in the World, 1950–2010",
+#   Journal of Development Economics 104 (2013): 184–198; 数据集第 3 版 / dataset version 3 (2021 update),
+#   https://barrolee.github.io/BarroLeeDataSet/
+# 版权归 Barro 与 Lee 所有；这里只引用了六个国家/年份各四个百分比，并注明出处。原始文件不在仓库里。
+# Copyright Barro and Lee. Only four percentages for each of six country-years are quoted here, with attribution.
+# The raw file is not in the repository.
+#
+# shares 依次是：没上过学、小学、中学、高等（原表的 lu、lp、ls、lh，归一到 1）。
+# shares are, in order: no schooling, primary, secondary, tertiary (lu, lp, ls, lh in the original, rescaled to 1).
+# 年份是原表里离事件最近的一年；通和场景是虚构的民国县城，取的是能拿到的最早的中国数字。
+# The year is the one in the original nearest the event; Tonghe is a fictional Republican-era county town and takes
+# the earliest Chinese figure available.
+profiles:
+  rumor_run:
+    place: China
+    year: 1950
+    shares:
+    - 0.6859
+    - 0.2227
+    - 0.0875
+    - 0.0039
+  toyokawa:
+    place: Japan
+    year: 1975
+    shares:
+    - 0.0023
+    - 0.4087
+    - 0.4654
+    - 0.1236
+  bea:
+    place: China, Hong Kong Special Administrative Region
+    year: 2010
+    shares:
+    - 0.0141
+    - 0.1344
+    - 0.6501
+    - 0.2014
+  bac:
+    place: Costa Rica
+    year: 2005
+    shares:
+    - 0.0253
+    - 0.4017
+    - 0.4193
+    - 0.1537
+  swedbank:
+    place: Latvia
+    year: 2010
+    shares:
+    - 0.0046
+    - 0.0294
+    - 0.7188
+    - 0.2472
+  kaspi:
+    place: Kazakhstan
+    year: 2015
+    shares:
+    - 0.001
+    - 0.0151
+    - 0.7684
+    - 0.2155

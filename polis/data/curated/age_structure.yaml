@@ -9,10 +9,11 @@
 #   五个年龄组是 Our World in Data 把联合国的单岁数据加总得到的，这里没有再改动。
 #   The five age groups are Our World in Data's sums of the UN's single-year figures; nothing was altered here.
 #
-# 通和钱庄场景是虚构的，没有对应的地方和年份，不在此列。
-# The fictional Tonghe scenario has no place or year and is not listed.
+# 通和钱庄场景是虚构的民国县城，取的是这份数据里最早的中国数字（1950 年）。
+# The fictional Tonghe scenario is a Republican-era county town and takes the earliest Chinese figure in this data (1950).
 groups: ["0-4", "5-14", "15-24", "25-64", "65+"]
 profiles:
+  rumor_run: {place: China, year: 1950, counts: [77984534, 111284331, 98019452, 229321633, 27433877]}
   toyokawa: {place: Japan, year: 1973, counts: [9990801, 16112461, 18594141, 57543658, 8373155]}
   bea: {place: Hong Kong, year: 2008, counts: [245719, 672359, 927213, 4277951, 895832]}
   bac: {place: Costa Rica, year: 2004, counts: [377711, 813848, 797183, 1951454, 259792]}

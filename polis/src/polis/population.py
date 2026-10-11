@@ -1,11 +1,11 @@
 """人口合成：个体属性、住处、关系网、场所。只依赖种子，与干预无关。
 Population synthesis: personal attributes, homes, the tie network and venues. It depends only on the seed, never on interventions.
 
-年龄结构在有对应地方和年份的场景里取自联合国《世界人口展望》（data/curated/age_structure.yaml）；
+年龄结构、学历构成、对人和对官面的信任取自 data/curated/ 里的汇总数（来源和年份见各文件开头）；
 其余的边际分布都是占位假设，所以 Population.synthetic 仍为 True。
-Where a scenario has a real place and year, the age structure comes from the UN World Population Prospects
-(data/curated/age_structure.yaml). Every other marginal distribution is a placeholder assumption, so
-Population.synthetic stays True.
+Age structure, educational attainment, and trust in people and in institutions come from the aggregates in
+data/curated/ (sources and years are at the top of each file). Every other marginal distribution is a placeholder
+assumption, so Population.synthetic stays True.
 """
 
 from __future__ import annotations
@@ -66,9 +66,19 @@ def build(params: Params, scenario: ModuleType) -> Population:
     age = ages(rng.integers(AGE_LO, AGE_HI, n), profile)
     sex = rng.choice(["f", "m"], n)
     education = rng.choice(4, n, p=[0.35, 0.35, 0.22, 0.08])
+    schooling = _curated("education").get(params.scenario)
+    if schooling:
+        # 用单独的随机流，主随机流照旧往下走 / drawn on a stream of its own, so the main stream carries on as before
+        education = np.random.default_rng([params.seed, 3]).choice(4, n, p=schooling["shares"])
     income = np.clip(0.6 * rng.random(n) + 0.13 * education + rng.normal(0, 0.06, n), 0, 1)
     trust_general = rng.beta(3, 3, n)
-    trust_institution = np.clip(rng.beta(3, 3, n) + 0.002 * (age - 40), 0, 1)
+    trust_institution = rng.beta(3, 3, n)
+    surveyed = _curated("trust").get(params.scenario)
+    if surveyed:
+        trust_general = trusting(trust_general, surveyed["neighbours"], education, age)
+        trust_institution = trusting(trust_institution, surveyed["government"], education, age)
+    else:
+        trust_institution = np.clip(trust_institution + 0.002 * (age - 40), 0, 1)
     risk_aversion = rng.beta(4, 3, n)
     conformity = np.clip(rng.beta(4, 3, n) - 0.05 * education, 0, 1)
     media_use = np.clip(0.15 + 0.22 * education + rng.normal(0, 0.12, n), 0, 1)
@@ -194,16 +204,8 @@ def build(params: Params, scenario: ModuleType) -> Population:
 
     return Population(
         synthetic=True,
-        note=(
-            f"合成人口：年龄结构取自联合国《世界人口展望》（{profile['place']} {profile['year']}），其余属性与特质的分布是占位假设。"
-            if profile
-            else "合成人口：属性与特质的分布都是占位假设，没有对齐任何数据。"
-        ),
-        note_en=(
-            f"Synthetic population: the age structure follows the UN World Population Prospects ({profile['place']} {profile['year']}); every other distribution is a placeholder assumption."
-            if profile
-            else "Synthetic population: every distribution is a placeholder assumption, aligned with no data."
-        ),
+        note=_note(profile, schooling, surveyed, "zh"),
+        note_en=_note(profile, schooling, surveyed, "en"),
         extent=EXTENT,
         bank=bank,
         cast=cast,
@@ -215,13 +217,52 @@ def build(params: Params, scenario: ModuleType) -> Population:
 
 
 @cache
-def _age_table() -> dict:
-    return yaml.safe_load((CURATED / "age_structure.yaml").read_text(encoding="utf-8"))
+def _curated(name: str) -> dict:
+    """data/curated/<name>.yaml 里各场景的汇总数。/ The per-scenario aggregates in data/curated/<name>.yaml."""
+    return yaml.safe_load((CURATED / f"{name}.yaml").read_text(encoding="utf-8"))["profiles"]
 
 
 def age_profile(scenario: str) -> dict | None:
-    """这个场景的年龄结构；虚构的场景没有。/ The age structure for a scenario; fictional ones have none."""
-    return _age_table()["profiles"].get(scenario)
+    """这个场景的年龄结构；没有数据的场景返回 None。/ The age structure for a scenario; None where there is no data."""
+    return _curated("age_structure").get(scenario)
+
+
+BETA_SD = 0.189  # Beta(3, 3) 的标准差 / the standard deviation of Beta(3, 3)
+
+
+def trusting(draw: np.ndarray, survey: dict, education: np.ndarray, age: np.ndarray) -> np.ndarray:
+    """把占位的信任分数换成调查里同学历、同年龄段的人的水平，个体差异的幅度取全国的标准差。
+    Replace placeholder trust scores with the level the survey gives for people of the same education and age
+    group, with individual variation scaled to the national standard deviation.
+
+    调查的学历分三档，模拟里的"没上过学"和"小学"并作第一档。格子里人数不够时退回这一学历的平均，再不够退回全国平均。
+    The survey has three education levels; the model's "no schooling" and "primary" both map to the first. Where a
+    cell has too few respondents it falls back to that education level's mean, and then to the national mean.
+    """
+    level = np.maximum(education, 1) - 1
+    band = np.where(age < 30, 0, np.where(age < 50, 1, 2))
+    mean = np.empty(len(draw))
+    for i in range(len(draw)):
+        cell = survey["by_education_and_age"][level[i]][band[i]]
+        mean[i] = cell if cell is not None else (survey["by_education"][level[i]] or survey["mean"])
+    return np.clip(mean + (draw - 0.5) * survey["sd"] / BETA_SD, 0, 1)
+
+
+def _note(age: dict | None, schooling: dict | None, trust: dict | None, lang: str) -> str:
+    """这份人口里哪些来自数据、哪些是假设。/ Which parts of this population come from data and which are assumptions."""
+    zh, en = [], []
+    if age:
+        zh.append(f"年龄结构（联合国《世界人口展望》，{age['place']} {age['year']}）")
+        en.append(f"age structure (UN World Population Prospects, {age['place']} {age['year']})")
+    if schooling:
+        zh.append(f"学历构成（Barro–Lee，{schooling['place']} {schooling['year']}）")
+        en.append(f"educational attainment (Barro–Lee, {schooling['place']} {schooling['year']})")
+    if trust:
+        zh.append(f"对邻里和政府的信任（Wellcome Global Monitor，{trust['place']} {trust['year']}，与事件年份不同）")
+        en.append(f"trust in neighbours and government (Wellcome Global Monitor, {trust['place']} {trust['year']}, not the year of the events)")
+    if lang == "zh":
+        return "合成人口。" + (f"取自数据的有：{'；'.join(zh)}。其余属性与特质的分布是占位假设。" if zh else "属性与特质的分布都是占位假设。")
+    return "Synthetic population. " + (f"From data: {'; '.join(en)}. Every other distribution is a placeholder assumption." if en else "Every distribution is a placeholder assumption.")
 
 
 def age_weights(counts: list[int]) -> np.ndarray:
