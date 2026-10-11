@@ -33,13 +33,25 @@ class ReviewStatus(BaseModel):
     last_at: str | None = None
 
 
+def _ts(text: str) -> float | None:
+    from datetime import datetime
+
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
 def _state() -> dict[str, Any]:
     return store.read_json(llm.runs_dir() / "review.json", {})
 
 
 def status() -> ReviewStatus:
     last = _state().get("last_at")
-    since = sum(1 for a in trail.load() if not last or str(a.get("at", "")) > last)
+    cut = _ts(last) if last else None
+    # 浏览器记的时间是 UTC，后端记的带本地时区，所以要化成时刻再比。
+    # The browser records UTC and the backend a local offset, so compare instants, not strings.
+    since = sum(1 for a in trail.load() if cut is None or (_ts(str(a.get("at", ""))) or 0) > cut)
     return ReviewStatus(actions_since=since, due=since >= DUE_AFTER, last_at=last)
 
 
