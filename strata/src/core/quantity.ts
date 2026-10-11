@@ -32,6 +32,8 @@ export interface Field {
   data: ArrayLike<number>
   /** 网格所覆盖区域的宽高比。 / Width over height of the region the grid covers. */
   aspect: number
+  /** 有正有负的场：以 0 为中心用发散色图 / A signed field: drawn with a diverging colour map centred on 0 */
+  signed?: boolean
 }
 
 export type Value = number | Curve | Field

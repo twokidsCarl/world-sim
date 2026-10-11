@@ -51,6 +51,8 @@ export interface RunBackend<F extends Frame> extends Backend<F> {
    * 反转时间方向（动力学允许时）。
    * Reverse the direction of time, where the dynamics allow it.
    */
+  /** 给整个系统加上沿 x 的同一个速度 / Add the same velocity along x to the whole system */
+  push?(velocity: number): void
   reverse?(): void
 }
 

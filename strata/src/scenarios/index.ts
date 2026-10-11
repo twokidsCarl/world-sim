@@ -37,7 +37,9 @@ export interface ScenarioStep {
    */
   run: number
   /** 进入该步时在 `set` 之后执行的操作。 / Something to do on entering the step, after `set`. */
-  action?: 'reverse' | 'perturb'
+  action?: 'reverse' | 'perturb' | 'push'
+  /** `push` 动作所加的整体速度 / Bulk velocity added by the `push` action */
+  velocity?: number
   expect?: Expectation
 }
 
@@ -170,6 +172,70 @@ export const SCENARIOS: Scenario[] = [
         action: 'perturb',
         run: 60000,
         expect: { quantity: 'soundMode', analysis: 'sound', text: '声速与维里展开的绝热声速相差不到一成' },
+      },
+    ],
+  },
+  {
+    id: 'wake',
+    title: '流过一个圆盘：背后出现回流',
+    substrate: 'md',
+    steps: [
+      {
+        text: '十一万多个粒子在管道里流过一个固定的圆盘，流速约为声速的一半。粒子只知道两两相撞和被圆盘、壁面弹开。先让流动建立起来，这一步在 GPU 上约一分钟。',
+        set: {
+          dim: 2,
+          walls: 1,
+          nx: 640,
+          density: 0.5,
+          temperature: 1,
+          thermostat: 0,
+          obstacle: 30,
+          drive: 0.001,
+          gravity: 0,
+          deltaT: 0,
+          fractionB: 0,
+          integrator: 0,
+        },
+        action: 'push',
+        velocity: 1.4,
+        run: 50000,
+      },
+      {
+        text: '看右侧“沿管道的流速场”：圆盘背后拖着一条尾迹，紧贴圆盘的地方流速为负——流体在那里打转。再往下游，尾迹左右摆动，“横向流速场”里出现正负交替的斑块。',
+        run: 40000,
+        expect: { quantity: 'wakeVelocity', analysis: 'wake', text: '圆盘背风面的时间平均流速为负（有回流）' },
+      },
+    ],
+  },
+  {
+    id: 'convection',
+    title: '从下面加热：对流卷',
+    substrate: 'md',
+    steps: [
+      {
+        text: '上冷下热的两面壁之间是一层气体，下壁的温度是上壁的十倍，重力很弱。热量只靠分子碰撞一层层往上传：竖直方向的流速在热噪声里看不出规律。',
+        set: {
+          dim: 2,
+          walls: 1,
+          nx: 320,
+          density: 0.3,
+          temperature: 1,
+          thermostat: 0,
+          obstacle: 0,
+          drive: 0,
+          gravity: 0.02,
+          deltaT: 9,
+          fractionB: 0,
+          integrator: 0,
+        },
+        run: 50000,
+        expect: { quantity: 'convection', max: 0.2, text: '弱重力：竖直流速的起伏与热噪声同量级（纯导热）' },
+      },
+      {
+        text: '把重力加大到三倍。贴近下壁的热气体更轻，现在浮力足以克服粘性：气体自己分成几对一上一下的对流卷。看右侧“横向流速场”里红蓝相间的条带。',
+        set: { gravity: 0.06 },
+        run: 60000,
+        expect: { quantity: 'convection', min: 0.3, text: '强重力：竖直流速的起伏是热噪声的数倍（对流）' },
       },
     ],
   },

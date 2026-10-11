@@ -197,6 +197,39 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`三维 ${big3.n} 粒子：邻居表溢出`, (await big3.reduce(['scalars'])).overflow ? 1 : 0, 0)
   big3.dispose()
 
+  // 管道里的圆盘障碍物：圆盘的排斥力与壁面（y 方向不取最小像）。
+  // A disc obstacle in the channel: the disc's repulsion, and walls (no minimum image along y).
+  const po: Params = { ...p, walls: 1, obstacle: 5, nx: 60, density: 0.7 }
+  const refO = initTriangular(
+    { nx: 60, density: 0.7, temperature: 1, seed: 1, aspect: 4, obstacle: { fx: 0.25, fy: 0.5, r: 5 } },
+    pair,
+  )
+  refO.walls = true
+  computeForces(refO, pair)
+  step(refO, pair, po.dt!, 200)
+  for (let k = 0; k < refO.pos.length; k++) {
+    refO.pos[k] = Math.fround(refO.pos[k]!)
+    refO.vel[k] = Math.fround(refO.vel[k]!)
+  }
+  computeForces(refO, pair)
+  const gpuO = new MdGpuBackend(gpu, po, 1)
+  check('圆盘：粒子数差', Math.abs(gpuO.n - refO.n), 0)
+  gpuO.writeState(refO.pos, refO.vel)
+  const stateO = await gpuO.readState()
+  let fmaxO = 0
+  let ferrO = 0
+  for (let i = 0; i < refO.n; i++) {
+    for (let d = 0; d < 2; d++) {
+      fmaxO = Math.max(fmaxO, Math.abs(refO.force[2 * i + d]!))
+      ferrO = Math.max(ferrO, Math.abs(refO.force[2 * i + d]! - stateO.force[4 * i + d]!))
+    }
+  }
+  check('圆盘与壁面：受力最大误差 / 最大受力', ferrO / fmaxO, 1e-4)
+  const frameO = await gpuO.reduce(['scalars', 'field'])
+  check('圆盘：势能相对误差', Math.abs(frameO.scalars!.pe - scalars(refO).pe) / Math.abs(scalars(refO).pe), 1e-4)
+  check('矩形场网格：粒子总数差', Math.abs(frameO.field!.count.reduce((a, c) => a + c, 0) - refO.n), 0)
+  gpuO.dispose()
+
   // 带非互易矩阵的双组分混合物会用到每一张粒子对参数表。
   // A two-species mixture with a non-reciprocal matrix exercises every per-pair table.
   const mp: Params = { ...p, fractionB: 0.4, epsAB: 0.5, epsBB: 1.4, nonreciprocal: 0.3 }

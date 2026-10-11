@@ -39,6 +39,12 @@ struct Params {
   pad1: u32,
   // 选区矩形 (x0, y0, x1, y1) / region rectangle (x0, y0, x1, y1)
   region: vec4f,
+  // 粗粒化网格沿 x、y 的格数 / cells of the coarse-graining grid along x and y
+  grid: vec4u,
+  // 固定圆盘障碍物：圆心 x、y，半径，是否启用 / fixed disc obstacle: centre x, y, radius, enabled
+  obstacle: vec4f,
+  // x：沿 +y 的重力；y：y = box.y 处壁面的温度 / x: gravity along +y; y: temperature of the wall at y = box.y
+  extra: vec4f,
 }
 
 const SPEED_BINS = 64u;
@@ -52,7 +58,6 @@ const SPECIES = 2u;
 // 配位数所用的最近邻：1.35 σ 以内，此处取平方。
 // Nearest neighbours for the coordination number: within 1.35 σ, squared.
 const COORD_R2 = 1.8225;
-const FIELD_G = 48u;
 // 场求和所用的定点缩放系数，这些和用 i32 原子变量累加。
 // Fixed-point scales for the field sums, which are accumulated in i32 atomics.
 const FIELD_V = 1024.0;
@@ -128,7 +133,7 @@ fn rand(key: u32, c: u32) -> f32 {
 fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
-  var v = vel[i].xyz + 0.5 * P.dt * (force[i].xyz + vec3f(P.drive, 0.0, 0.0));
+  var v = vel[i].xyz + 0.5 * P.dt * (force[i].xyz + vec3f(P.drive, P.extra.x, 0.0));
   var x = pos[i].xyz + P.dt * v;
   let wrapped = x - P.box.xyz * floor(x / P.box.xyz);
   if (P.walls != 0u && (x.y < 0.0 || x.y >= P.box.y)) {
@@ -137,7 +142,7 @@ fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
     // position bits are mixed in to keep their draws independent.
     let lower = x.y < 0.0;
     let key = hash32(hash32(P.seed, i), bitcast<u32>(x.x));
-    let sd = sqrt(P.wallT);
+    let sd = sqrt(select(P.extra.y, P.wallT, lower));
     let normal = sd * sqrt(-2.0 * log(rand(key, 0u)));
     let tangent = sd * sqrt(-2.0 * log(rand(key, 1u))) * cos(6.2831853 * rand(key, 2u));
     v = vec3f(tangent, select(-normal, normal, lower), 0.0);
@@ -155,7 +160,7 @@ fn kickDrift(@builtin(global_invocation_id) id: vec3u) {
 fn kick(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
-  vel[i] = vec4f(vel[i].xyz + 0.5 * P.dt * (force[i].xyz + vec3f(P.drive, 0.0, 0.0)), vel[i].w);
+  vel[i] = vec4f(vel[i].xyz + 0.5 * P.dt * (force[i].xyz + vec3f(P.drive, P.extra.x, 0.0)), vel[i].w);
 }
 
 @compute @workgroup_size(256)
@@ -223,6 +228,20 @@ fn forces(@builtin(global_invocation_id) id: vec3u) {
           vir += 0.5 * e.x * r2;
         }
       }
+    }
+  }
+  if (P.obstacle.w > 0.5) {
+    // 固定圆盘的表面排斥，与 ref/step.ts 的 obstacleForces 相同。
+    // Surface repulsion of the fixed disc, as obstacleForces in ref/step.ts.
+    var od = xi.xy - P.obstacle.xy;
+    od.x = od.x - P.box.x * round(od.x / P.box.x);
+    if (P.walls == 0u) { od.y = od.y - P.box.y * round(od.y / P.box.y); }
+    let dist = length(od);
+    let t = max(dist - P.obstacle.z + 1.0, 0.5);
+    if (t < 1.122462048 && dist > 0.0) {
+      let i6 = pow(t, -6.0);
+      f += vec3f(24.0 * (2.0 * i6 * i6 - i6) / t * od / dist, 0.0);
+      pe += 4.0 * (i6 * i6 - i6) + 1.0;
     }
   }
   force[i] = vec4f(f, pe);
@@ -342,16 +361,16 @@ fn rdfHist(@builtin(global_invocation_id) id: vec3u) {
 
 @compute @workgroup_size(256)
 fn clearField(@builtin(global_invocation_id) id: vec3u) {
-  if (id.x < FIELD_G * FIELD_G * 5u) { atomicStore(&field[id.x], 0); }
+  if (id.x < P.grid.x * P.grid.y * 5u) { atomicStore(&field[id.x], 0); }
 }
 
-// 用礼帽核粗粒化到 FIELD_G × FIELD_G 网格上。 / Top-hat coarse-graining onto a FIELD_G × FIELD_G grid.
+// 用礼帽核粗粒化到 grid.x × grid.y 网格上。 / Top-hat coarse-graining onto a grid.x × grid.y grid.
 @compute @workgroup_size(256)
 fn fieldBin(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= P.n) { return; }
-  let c = min(vec2u(pos[i].xy / P.box.xy * f32(FIELD_G)), vec2u(FIELD_G - 1u));
-  let base = 5u * (c.y * FIELD_G + c.x);
+  let c = min(vec2u(pos[i].xy / P.box.xy * vec2f(P.grid.xy)), P.grid.xy - vec2u(1u));
+  let base = 5u * (c.y * P.grid.x + c.x);
   let v = vel[i].xy;
   atomicAdd(&field[base], 1);
   atomicAdd(&field[base + 1u], i32(round(v.x * FIELD_V)));
@@ -409,4 +428,15 @@ fn soundKick(@builtin(global_invocation_id) id: vec3u) {
   if (i >= P.n) { return; }
   let v = vel[i];
   vel[i] = vec4f(v.x + P.lambda * sin(6.283185307 * pos[i].x / P.box.x), v.yzw);
+}
+
+// 给所有粒子加上沿 x 的同一个速度 P.lambda：让流动一开始就有整体速度，不必等驱动力慢慢加速。
+// Add the same velocity P.lambda along x to every particle: the flow starts with a bulk
+// velocity instead of waiting for the driving force to build it up.
+@compute @workgroup_size(256)
+fn addVelocity(@builtin(global_invocation_id) id: vec3u) {
+  let i = id.x;
+  if (i >= P.n) { return; }
+  let v = vel[i];
+  vel[i] = vec4f(v.x + P.lambda, v.yzw);
 }

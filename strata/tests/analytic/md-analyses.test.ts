@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { History } from '../../src/core/quantity'
-import { MD_ANALYSES, diffuse, resample } from '../../src/levels/md-analyses'
+import { MD_ANALYSES, blockAverage, diffuse, resample } from '../../src/levels/md-analyses'
+import { gaussian } from '../../src/core/rng'
 import { LJ, analyticPair } from '../../src/substrates/md/potential'
 import { initTriangular } from '../../src/substrates/md/ref/init'
 import { fieldSums, profiles } from '../../src/substrates/md/ref/reducers'
@@ -59,5 +60,36 @@ describe('stripe layout', () => {
     const c = profiles(fieldSums(s), s.box, 12).fractionB
     expect(c[0]).toBe(0)
     expect(c[6]).toBe(1)
+  })
+})
+
+describe('block average', () => {
+  // 用后半段、分 10 块：均值应落在真值的几个标准误之内，误差估计与理论值同量级。
+  // Second half, 10 blocks: the mean should lie within a few standard errors of the truth,
+  // and the error estimate should be of the size theory gives.
+  it('recovers the mean of noisy data with an honest error bar', () => {
+    const values = Array.from({ length: 2000 }, (_, i) => -0.2 + 0.5 * gaussian(3, i))
+    const { mean, error } = blockAverage(values)
+    expect(Math.abs(mean + 0.2)).toBeLessThan(4 * error)
+    // 1000 个独立样本：标准误约 0.5 / √1000 = 0.016。 / 1000 independent samples: standard error about 0.5 / √1000 = 0.016.
+    expect(error).toBeGreaterThan(0.005)
+    expect(error).toBeLessThan(0.04)
+  })
+
+  it('ignores the first half, where a transient may still be decaying', () => {
+    const values = [...Array.from({ length: 500 }, () => 5), ...Array.from({ length: 500 }, () => 1)]
+    expect(blockAverage(values)).toEqual({ mean: 1, error: 0 })
+  })
+
+  it('the wake analysis reports backflow only when the mean is clearly negative', () => {
+    const wake = MD_ANALYSES.find((a) => a.id === 'wake')!
+    const history = (centre: number) => ({
+      t: Array.from({ length: 400 }, (_, i) => i),
+      x: [0],
+      y: Array.from({ length: 400 }, (_, i) => Float64Array.of(centre + 0.3 * gaussian(5, i))),
+    })
+    expect(wake.compute(history(-0.2), {}, () => undefined)!.agree).toBe(true)
+    expect(wake.compute(history(0.1), {}, () => undefined)!.agree).toBe(false)
+    expect(wake.compute(history(0), {}, () => undefined)!.agree).toBe(false)
   })
 })

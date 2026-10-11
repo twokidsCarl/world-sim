@@ -195,6 +195,11 @@ export class Engine {
     this.histories.clear()
   }
 
+  /** 给整个系统一个沿 x 的整体速度 / Give the whole system a bulk velocity along x */
+  push(velocity: number): void {
+    this.backend.push?.(velocity)
+  }
+
   /**
    * 对目前已记录的历史运行该底座的某一项分析。
    * Run one of the substrate's analyses on the history recorded so far.

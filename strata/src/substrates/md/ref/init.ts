@@ -72,24 +72,41 @@ export function initTriangular(
      * Put species B in a band across the middle of the box instead of mixing it at random.
      */
     stripe?: boolean
+    /**
+     * 圆盘障碍物，位置用盒子宽高的分数给出，半径用 σ。圆盘内及紧贴表面处不放粒子。
+     * A disc obstacle: its position as fractions of the box width and height, its radius in σ.
+     * No particles are placed inside the disc or right against its surface.
+     */
+    obstacle?: { fx: number; fy: number; r: number }
   },
   pair: PairField,
 ): MdState {
   // `aspect` 是盒子的宽除以高。 / `aspect` is the box's width over its height.
   const ny = Math.max(2, 2 * Math.round(o.nx / Math.sqrt(3) / (o.aspect ?? 1)))
   const a = Math.sqrt(2 / (Math.sqrt(3) * o.density))
-  const s = createState(2, o.nx * ny, [o.nx * a, (ny * a * Math.sqrt(3)) / 2])
+  const box = [o.nx * a, (ny * a * Math.sqrt(3)) / 2]
+  const disc = o.obstacle && { x: o.obstacle.fx * box[0]!, y: o.obstacle.fy * box[1]!, r: o.obstacle.r }
+  const sites: { x: number; y: number; species: number }[] = []
   for (let row = 0; row < ny; row++) {
     for (let col = 0; col < o.nx; col++) {
       const i = row * o.nx + col
-      s.pos[2 * i] = (col + 0.25 + 0.5 * (row % 2)) * a
-      s.pos[2 * i + 1] = ((row + 0.5) * a * Math.sqrt(3)) / 2
+      const x = (col + 0.25 + 0.5 * (row % 2)) * a
+      const y = ((row + 0.5) * a * Math.sqrt(3)) / 2
+      if (disc && Math.hypot(x - disc.x, y - disc.y) < disc.r + 0.6) continue
       const fractionB = o.fractionB ?? 0
       // 要么是横贯中部的一条带，要么各粒子独立随机指定（理想混合物）。
       // Either a band across the middle, or independently at random (an ideal mixture).
-      s.species[i] = (o.stripe ? Math.abs((row + 0.5) / ny - 0.5) < fractionB / 2 : uniform(o.seed ^ 0x51ec1e5, i) < fractionB) ? 1 : 0
+      const species = (o.stripe ? Math.abs((row + 0.5) / ny - 0.5) < fractionB / 2 : uniform(o.seed ^ 0x51ec1e5, i) < fractionB) ? 1 : 0
+      sites.push({ x, y, species })
     }
   }
+  const s = createState(2, sites.length, box)
+  sites.forEach((site, i) => {
+    s.pos[2 * i] = site.x
+    s.pos[2 * i + 1] = site.y
+    s.species[i] = site.species
+  })
+  if (disc) s.obstacle = disc
   return thermalise(s, o.temperature, o.seed, pair)
 }
 
