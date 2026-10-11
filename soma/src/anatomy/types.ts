@@ -8,6 +8,10 @@
 //                                    Y up, anterior +Z, the body's left at +X. Normals included.
 //                                    EXT_meshopt_compression + KHR_mesh_quantization.
 //   /anatomy/<body>/nerves.json       NervePath[]  (optional) centrelines of nerve parts
+//   /anatomy/<body>/skinmaps.json     SkinMaps     (optional) dermatomes and cutaneous nerve
+//   /anatomy/<body>/skinmaps.bin      territories painted on the skin, one byte per skin vertex
+//   /anatomy/<body>/rig.json          Rig          (optional) joints and how every part follows them
+//   /anatomy/<body>/rig.bin           per-vertex joint influences referenced by rig.json
 //   /anatomy/knowledge/names.json    Record<fmaId, NameEntry>      (optional, shared by bodies)
 //   /anatomy/knowledge/relations.json Relation[]                   (optional, shared by bodies)
 
@@ -171,4 +175,104 @@ export interface Relation {
   objectLabel: { en: string; zh?: string }
   source: { name: string; url: string; license: string }
   status: ReviewStatus
+}
+
+/** A partition of the skin surface into named regions (dermatomes, cutaneous nerve territories). */
+export interface SkinMap {
+  id: 'dermatome' | 'cutaneousNerve'
+  name: { zh: string; en: string }
+  regions: {
+    name: { zh: string; en: string }
+    /** Concept id of the spinal nerve or cutaneous nerve supplying the region, when it is in the trees. */
+    concept?: string
+    /** Display colour, hex. */
+    color: string
+  }[]
+  /**
+   * Byte offset into skinmaps.bin of `vertexCount` uint8 region indices (255 = unassigned),
+   * in the vertex order of the skin part's mesh as decoded from its GLB.
+   */
+  offset: number
+  /** How the map was made, in one or two sentences, for display. */
+  method: { zh: string; en: string }
+  sources: { name: string; url: string; license: string }[]
+  status: ReviewStatus
+}
+
+export interface SkinMaps {
+  /** Part.id of the skin part the maps are painted on. */
+  part: string
+  vertexCount: number
+  maps: SkinMap[]
+}
+
+/** One rotational degree of freedom of a joint, about one of the joint's local axes. */
+export interface JointDof {
+  /** Index into Joint.axes. */
+  axis: 0 | 1 | 2
+  /** Movement at positive / negative angles, e.g. flexion / extension. */
+  name: { zh: string; en: string }
+  /** Range of motion in radians relative to the rest pose (anatomical position). */
+  min: number
+  max: number
+  source: { name: string; url: string; license: string }
+}
+
+export interface Joint {
+  id: string
+  name: { zh: string; en: string }
+  parent: string | null
+  /** Centre of rotation in the rest pose, metres, body frame. */
+  center: Vec3
+  /** Unit axes of the joint frame in the rest pose (body frame). */
+  axes: [Vec3, Vec3, Vec3]
+  dofs: JointDof[]
+  /** How the centre and axes were obtained, for display. */
+  basis: { zh: string; en: string }
+}
+
+/**
+ * A muscle's line of action, used to keep its volume when its length changes:
+ * the runtime measures the current distance between the two ends and scales the
+ * cross-section about the line by sqrt(restLength / length).
+ */
+export interface MuscleLine {
+  part: string
+  /** Rest-pose end points, metres, and the joints they move with. */
+  origin: { point: Vec3; joint: string }
+  insertion: { point: Vec3; joint: string }
+}
+
+export interface RigBinding {
+  part: string
+  /** The part moves rigidly with this joint (bones). Mutually exclusive with `offset`. */
+  joint?: string
+  /**
+   * Byte offset into rig.bin of this part's per-vertex influences, in the vertex order of the
+   * part's mesh as decoded from its GLB: for each vertex 4 x uint16 joint indices (into
+   * Rig.joints) followed by 4 x uint8 weights that sum to 255.
+   */
+  offset?: number
+  vertexCount?: number
+}
+
+/** A scalar control of body shape, applied at runtime on top of the pose. */
+export interface ShapeParam {
+  id: string
+  name: { zh: string; en: string }
+  unit: string
+  min: number
+  max: number
+  /** Value at which the body is exactly the stored meshes. */
+  rest: number
+}
+
+export interface Rig {
+  joints: Joint[]
+  bindings: RigBinding[]
+  muscles: MuscleLine[]
+  /** Reserved for the body-shape model; empty until that is defined. */
+  shape?: ShapeParam[]
+  /** What the rig does not model, for display. */
+  cautions: { zh: string; en: string }[]
 }

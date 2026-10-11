@@ -1,0 +1,1567 @@
+{
+ "_doc": {
+  "zh": "体表标志：由模型中具名骨骼计算，并投影到皮肤外表面。语法见 README.md。“{side}” 代入 left/right；“lat” 指各侧自身的外侧方向。偏移量为 [外侧, 上, 前]，单位米。",
+  "en": "Landmarks on the body, computed from the named bones of the model and projected to the outer skin. Grammar in README.md. '{side}' becomes left/right; 'lat' is the body's own lateral direction on each side. Offsets are [lateral, superior, anterior] in metres."
+ },
+ "frames": {
+  "trunk": {
+   "origin": {
+    "lerp": [
+     {
+      "part": "First thoracic vertebra"
+     },
+     {
+      "part": "Manubrium"
+     },
+     0.5
+    ]
+   },
+   "end": {
+    "lerp": [
+     {
+      "part": "Fifth lumbar vertebra"
+     },
+     {
+      "part": "Superior pubic ligament"
+     },
+     0.5
+    ]
+   },
+   "lat0": [
+    {
+     "part": "Manubrium"
+    },
+    {
+     "offset": [
+      {
+       "part": "Manubrium"
+      },
+      [
+       0.1,
+       0,
+       0
+      ]
+     ]
+    }
+   ],
+   "armLimit": "shoulder"
+  },
+  "arm": {
+   "origin": "shoulder",
+   "end": "elbow",
+   "lat0": [
+    "medialEpicondyle",
+    "lateralEpicondyle"
+   ]
+  },
+  "forearm": {
+   "origin": "elbow",
+   "end": "wrist",
+   "lat0": [
+    "medialEpicondyle",
+    "lateralEpicondyle"
+   ],
+   "lat1": [
+    "ulnarStyloid",
+    "radialStyloid"
+   ]
+  },
+  "hand": {
+   "origin": "wrist",
+   "end": "mc3Head",
+   "lat0": [
+    "mc5Head",
+    "mc2Head"
+   ]
+  },
+  "thigh": {
+   "origin": "hip",
+   "end": "knee",
+   "lat0": [
+    "medialFemoralCondyle",
+    "lateralFemoralCondyle"
+   ]
+  },
+  "leg": {
+   "origin": "knee",
+   "end": "ankle",
+   "lat0": [
+    "medialFemoralCondyle",
+    "lateralFemoralCondyle"
+   ],
+   "lat1": [
+    "medialMalleolus",
+    "lateralMalleolus"
+   ]
+  },
+  "foot": {
+   "origin": "heelBack",
+   "end": "mt2Head",
+   "lat0": [
+    "mt1Head",
+    "mt5Head"
+   ]
+  }
+ },
+ "points": {
+  "shoulder": {
+   "part": "{side} humerus",
+   "pick": {
+    "slice": {
+     "axis": "sup",
+     "frac": [
+      0,
+      0.08
+     ]
+    }
+   }
+  },
+  "medialEpicondyle": {
+   "part": "{side} humerus",
+   "pick": {
+    "extreme": "med",
+    "within": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.12
+     ]
+    }
+   }
+  },
+  "lateralEpicondyle": {
+   "part": "{side} humerus",
+   "pick": {
+    "extreme": "lat",
+    "within": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.12
+     ]
+    }
+   }
+  },
+  "elbow": {
+   "lerp": [
+    "medialEpicondyle",
+    "lateralEpicondyle",
+    0.5
+   ]
+  },
+  "radialStyloid": {
+   "part": "{side} radius",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "ulnarStyloid": {
+   "part": "{side} ulna",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "wrist": {
+   "lerp": [
+    "ulnarStyloid",
+    "radialStyloid",
+    0.5
+   ]
+  },
+  "mc2Head": {
+   "part": "{side} second metacarpal bone",
+   "pick": {
+    "slice": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mc3Head": {
+   "part": "{side} third metacarpal bone",
+   "pick": {
+    "slice": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mc5Head": {
+   "part": "{side} fifth metacarpal bone",
+   "pick": {
+    "slice": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "hip": {
+   "part": "{side} femur",
+   "pick": {
+    "slice": {
+     "axis": "sup",
+     "frac": [
+      0,
+      0.08
+     ]
+    }
+   }
+  },
+  "greaterTrochanter": {
+   "part": "{side} femur",
+   "pick": {
+    "extreme": "lat",
+    "within": {
+     "axis": "sup",
+     "frac": [
+      0,
+      0.2
+     ]
+    }
+   }
+  },
+  "medialFemoralCondyle": {
+   "part": "{side} femur",
+   "pick": {
+    "extreme": "med",
+    "within": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.1
+     ]
+    }
+   }
+  },
+  "lateralFemoralCondyle": {
+   "part": "{side} femur",
+   "pick": {
+    "extreme": "lat",
+    "within": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.1
+     ]
+    }
+   }
+  },
+  "knee": {
+   "part": "{side} femur",
+   "pick": {
+    "slice": {
+     "axis": "inf",
+     "frac": [
+      0,
+      0.05
+     ]
+    }
+   }
+  },
+  "patella": {
+   "part": "{side} patella"
+  },
+  "medialMalleolus": {
+   "part": "{side} tibia",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "lateralMalleolus": {
+   "part": "{side} fibula",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "ankle": {
+   "lerp": [
+    "medialMalleolus",
+    "lateralMalleolus",
+    0.5
+   ]
+  },
+  "fibularHead": {
+   "part": "{side} fibula",
+   "pick": {
+    "slice": {
+     "axis": "sup",
+     "frac": [
+      0,
+      0.06
+     ]
+    }
+   }
+  },
+  "heelBack": {
+   "part": "{side} calcaneus",
+   "pick": {
+    "extreme": "post"
+   }
+  },
+  "calcaneus": {
+   "part": "{side} calcaneus"
+  },
+  "mt1Head": {
+   "part": "{side} first metatarsal bone",
+   "pick": {
+    "slice": {
+     "axis": "ant",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mt2Head": {
+   "part": "{side} second metatarsal bone",
+   "pick": {
+    "slice": {
+     "axis": "ant",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mt3Head": {
+   "part": "{side} third metatarsal bone",
+   "pick": {
+    "slice": {
+     "axis": "ant",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mt5Head": {
+   "part": "{side} fifth metatarsal bone",
+   "pick": {
+    "slice": {
+     "axis": "ant",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mt5Base": {
+   "part": "{side} fifth metatarsal bone",
+   "pick": {
+    "slice": {
+     "axis": "post",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "mt1Base": {
+   "part": "{side} first metatarsal bone",
+   "pick": {
+    "slice": {
+     "axis": "post",
+     "frac": [
+      0,
+      0.15
+     ]
+    }
+   }
+  },
+  "core": {
+   "lerp": [
+    {
+     "part": "Eighth thoracic vertebra"
+    },
+    {
+     "part": "Body of sternum"
+    },
+    0.5
+   ]
+  },
+  "clavicleMid": {
+   "part": "{side} clavicle"
+  },
+  "acJoint": {
+   "part": "{side} clavicle",
+   "pick": {
+    "extreme": "lat"
+   }
+  },
+  "acromion": {
+   "part": "{side} scapula",
+   "pick": {
+    "extreme": "lat+0.5*sup"
+   }
+  },
+  "scapulaInferiorAngle": {
+   "part": "{side} scapula",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "sternalNotch": {
+   "part": "Manubrium",
+   "pick": {
+    "extreme": "sup"
+   }
+  },
+  "sternalAngle": {
+   "part": "Body of sternum",
+   "pick": {
+    "extreme": "sup"
+   }
+  },
+  "xiphisternum": {
+   "part": "Xiphoid process",
+   "pick": {
+    "extreme": "sup"
+   }
+  },
+  "pubicSymphysis": {
+   "part": "Superior pubic ligament"
+  },
+  "asis": {
+   "part": "{side} hip bone",
+   "pick": {
+    "extreme": "ant",
+    "within": {
+     "axis": "sup",
+     "frac": [
+      0,
+      0.45
+     ]
+    }
+   }
+  },
+  "iliacCrestTop": {
+   "part": "{side} hip bone",
+   "pick": {
+    "extreme": "sup"
+   }
+  },
+  "psis": {
+   "part": "{side} hip bone",
+   "pick": {
+    "extreme": "post",
+    "within": {
+     "axis": "sup",
+     "frac": [
+      0,
+      0.5
+     ]
+    }
+   }
+  },
+  "ischialTuberosity": {
+   "part": "{side} hip bone",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "pubicTubercle": {
+   "part": "{side} inguinal ligament",
+   "pick": {
+    "extreme": "med"
+   }
+  },
+  "inguinalMid": {
+   "part": "{side} inguinal ligament"
+  },
+  "coccyxTip": {
+   "part": "Sacrum",
+   "pick": {
+    "extreme": "inf"
+   }
+  },
+  "umbilicus": {
+   "dimple": {
+    "between": [
+     {
+      "offset": [
+       "xiphisternum",
+       [
+        0,
+        -0.08,
+        0
+       ]
+      ]
+     },
+     {
+      "offset": [
+       "pubicSymphysis",
+       [
+        0,
+        0.06,
+        0
+       ]
+      ]
+     }
+    ]
+   }
+  },
+  "eop": {
+   "part": "Occipital bone",
+   "pick": {
+    "extreme": "post"
+   }
+  },
+  "mastoid": {
+   "part": "{side} temporal bone",
+   "pick": {
+    "extreme": "inf+post+lat"
+   }
+  },
+  "gonion": {
+   "part": "Mandible",
+   "pick": {
+    "extreme": "inf+post+0.5*lat",
+    "half": true
+   }
+  },
+  "chin": {
+   "part": "Mandible",
+   "pick": {
+    "extreme": "ant+0.5*inf"
+   }
+  },
+  "condyle": {
+   "part": "Mandible",
+   "pick": {
+    "extreme": "sup+post",
+    "half": true
+   }
+  },
+  "zygoma": {
+   "part": "{side} zygomatic bone"
+  },
+  "maxilla": {
+   "part": "{side} maxilla"
+  },
+  "nasalBone": {
+   "part": "{side} nasal bone"
+  },
+  "frontal": {
+   "part": "Frontal bone"
+  },
+  "parietal": {
+   "part": "{side} parietal bone"
+  },
+  "K_C2": {
+   "at": {
+    "offset": [
+     "eop",
+     [
+      0.02,
+      0,
+      0.01
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "K_C3": {
+   "at": {
+    "offset": [
+     "clavicleMid",
+     [
+      0,
+      0.012,
+      -0.02
+     ]
+    ]
+   },
+   "to": "sup"
+  },
+  "K_C4": {
+   "at": "acJoint",
+   "to": "sup"
+  },
+  "K_C5": {
+   "frame": "arm",
+   "t": 0.93,
+   "deg": 40
+  },
+  "K_C6": {
+   "at": {
+    "part": "Proximal phalanx of {side} thumb"
+   },
+   "frame": "hand",
+   "deg": 150
+  },
+  "K_C7": {
+   "at": {
+    "part": "Proximal phalanx of {side} middle finger"
+   },
+   "frame": "hand",
+   "deg": 180
+  },
+  "K_C8": {
+   "at": {
+    "part": "Proximal phalanx of {side} little finger"
+   },
+   "frame": "hand",
+   "deg": 180
+  },
+  "K_T1": {
+   "frame": "arm",
+   "t": 0.9,
+   "deg": 320
+  },
+  "K_T2": {
+   "at": {
+    "offset": [
+     "shoulder",
+     [
+      -0.035,
+      -0.06,
+      0
+     ]
+    ]
+   },
+   "to": "nearestAny"
+  },
+  "mcl": "clavicleMid",
+  "ics3": {
+   "lerp": [
+    {
+     "part": "{side} third rib",
+     "pick": {
+      "extreme": "ant"
+     }
+    },
+    {
+     "part": "{side} fourth rib",
+     "pick": {
+      "extreme": "ant"
+     }
+    },
+    0.5
+   ]
+  },
+  "ics4": {
+   "lerp": [
+    {
+     "part": "{side} fourth rib",
+     "pick": {
+      "extreme": "ant"
+     }
+    },
+    {
+     "part": "{side} fifth rib",
+     "pick": {
+      "extreme": "ant"
+     }
+    },
+    0.5
+   ]
+  },
+  "ics5": {
+   "lerp": [
+    {
+     "part": "{side} fifth rib",
+     "pick": {
+      "extreme": "ant"
+     }
+    },
+    {
+     "part": "{side} sixth rib",
+     "pick": {
+      "extreme": "ant"
+     }
+    },
+    0.5
+   ]
+  },
+  "K_T12": {
+   "at": {
+    "offset": [
+     "inguinalMid",
+     [
+      0,
+      0,
+      -0.03
+     ]
+    ]
+   },
+   "to": "ant"
+  },
+  "K_L3": {
+   "at": "medialFemoralCondyle",
+   "to": "nearest"
+  },
+  "K_L2": {
+   "at": {
+    "lerp": [
+     "K_T12",
+     "K_L3",
+     0.5
+    ]
+   },
+   "to": "nearestAny"
+  },
+  "K_L1": {
+   "at": {
+    "lerp": [
+     "K_T12",
+     "K_L2",
+     0.5
+    ]
+   },
+   "to": "nearestAny"
+  },
+  "K_L4": {
+   "at": {
+    "part": "{side} tibia",
+    "pick": {
+     "extreme": "med",
+     "within": {
+      "axis": "inf",
+      "frac": [
+       0,
+       0.06
+      ]
+     }
+    }
+   },
+   "to": "nearest"
+  },
+  "K_L5": {
+   "at": {
+    "lerp": [
+     "mt3Head",
+     {
+      "part": "Proximal phalanx of {side} third toe"
+     },
+     0.3
+    ]
+   },
+   "to": "sup"
+  },
+  "K_S1": {
+   "at": "calcaneus",
+   "to": "lat"
+  },
+  "K_S2": {
+   "frame": "leg",
+   "t": 0.0,
+   "deg": 180
+  },
+  "K_S3": {
+   "at": "ischialTuberosity",
+   "to": "post+0.7*inf"
+  },
+  "K_S45": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "coccyxTip",
+       [
+        0.008,
+        0,
+        0
+       ]
+      ]
+     },
+     {
+      "offset": [
+       "ischialTuberosity",
+       [
+        0,
+        0.03,
+        0
+       ]
+      ]
+     },
+     {
+      "lerp": [
+       "coccyxTip",
+       "ischialTuberosity",
+       0.45
+      ]
+     }
+    ]
+   },
+   "to": "inf"
+  },
+  "sp_C3": {
+   "at": {
+    "offset": [
+     {
+      "part": "Third cervical vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_C4": {
+   "at": {
+    "offset": [
+     {
+      "part": "Fourth cervical vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_C5": {
+   "at": {
+    "offset": [
+     {
+      "part": "Fifth cervical vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_C6": {
+   "at": {
+    "offset": [
+     {
+      "part": "Sixth cervical vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_C7": {
+   "at": {
+    "offset": [
+     {
+      "part": "Seventh cervical vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T1": {
+   "at": {
+    "offset": [
+     {
+      "part": "First thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T2": {
+   "at": {
+    "offset": [
+     {
+      "part": "Second thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T3": {
+   "at": {
+    "offset": [
+     {
+      "part": "Third thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T4": {
+   "at": {
+    "offset": [
+     {
+      "part": "Fourth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T5": {
+   "at": {
+    "offset": [
+     {
+      "part": "Fifth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T6": {
+   "at": {
+    "offset": [
+     {
+      "part": "Sixth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T7": {
+   "at": {
+    "offset": [
+     {
+      "part": "Seventh thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T8": {
+   "at": {
+    "offset": [
+     {
+      "part": "Eighth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T9": {
+   "at": {
+    "offset": [
+     {
+      "part": "Ninth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T10": {
+   "at": {
+    "offset": [
+     {
+      "part": "Tenth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T11": {
+   "at": {
+    "offset": [
+     {
+      "part": "Eleventh thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_T12": {
+   "at": {
+    "offset": [
+     {
+      "part": "Twelfth thoracic vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_L1": {
+   "at": {
+    "offset": [
+     {
+      "part": "First lumbar vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_L2": {
+   "at": {
+    "offset": [
+     {
+      "part": "Second lumbar vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_L3": {
+   "at": {
+    "offset": [
+     {
+      "part": "Third lumbar vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_L4": {
+   "at": {
+    "offset": [
+     {
+      "part": "Fourth lumbar vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "sp_L5": {
+   "at": {
+    "offset": [
+     {
+      "part": "Fifth lumbar vertebra",
+      "pick": {
+       "extreme": "post"
+      }
+     },
+     [
+      0.012,
+      0,
+      0.006
+     ]
+    ]
+   },
+   "to": "post"
+  },
+  "midAxillary": {
+   "offset": [
+    "core",
+    [
+     0,
+     0,
+     0.02
+    ]
+   ]
+  },
+  "K_T3": {
+   "nerveCross": "{side} third intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T4": {
+   "nerveCross": "{side} fourth intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T5": {
+   "nerveCross": "{side} fifth intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T6": {
+   "nerveCross": "{side} sixth intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T7": {
+   "nerveCross": "{side} seventh intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T8": {
+   "nerveCross": "{side} eighth intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T9": {
+   "nerveCross": "{side} ninth intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T10": {
+   "nerveCross": "{side} tenth intercostal nerve",
+   "x": "mcl"
+  },
+  "K_T11": {
+   "nerveCross": "{side} eleventh intercostal nerve",
+   "x": "mcl"
+  },
+  "nippleLevelRibs": {
+   "at": {
+    "xyz": [
+     "mcl",
+     "ics4",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "xiphisternumAtMcl": {
+   "at": {
+    "xyz": [
+     "mcl",
+     "xiphisternum",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "umbilicusAtMcl": {
+   "at": {
+    "xyz": [
+     "mcl",
+     "umbilicus",
+     "core"
+    ]
+   },
+   "to": "ant"
+  },
+  "backLat": {
+   "offset": [
+    {
+     "part": "Eighth thoracic vertebra"
+    },
+    [
+     0.085,
+     0,
+     -0.03
+    ]
+   ]
+  },
+  "T2BackLat": {
+   "at": "T2BackPoint",
+   "to": "post"
+  },
+  "T2BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T2BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T3BackLat": {
+   "at": "T3BackPoint",
+   "to": "post"
+  },
+  "T3BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T3BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T4BackLat": {
+   "at": "T4BackPoint",
+   "to": "post"
+  },
+  "T4BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T4BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T5BackLat": {
+   "at": "T5BackPoint",
+   "to": "post"
+  },
+  "T5BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T5BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T6BackLat": {
+   "at": "T6BackPoint",
+   "to": "post"
+  },
+  "T6BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T6BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T7BackLat": {
+   "at": "T7BackPoint",
+   "to": "post"
+  },
+  "T7BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T7BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T8BackLat": {
+   "at": "T8BackPoint",
+   "to": "post"
+  },
+  "T8BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T8BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T9BackLat": {
+   "at": "T9BackPoint",
+   "to": "post"
+  },
+  "T9BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T9BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T10BackLat": {
+   "at": "T10BackPoint",
+   "to": "post"
+  },
+  "T10BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T10BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T11BackLat": {
+   "at": "T11BackPoint",
+   "to": "post"
+  },
+  "T11BackMid": {
+   "at": {
+    "xyz": [
+     {
+      "offset": [
+       "core",
+       [
+        0.012,
+        0,
+        0
+       ]
+      ]
+     },
+     "T11BackPoint",
+     "core"
+    ]
+   },
+   "to": "post"
+  },
+  "T2BackPoint": {
+   "nervePoint": "{side} second intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T3BackPoint": {
+   "nervePoint": "{side} third intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T4BackPoint": {
+   "nervePoint": "{side} fourth intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T5BackPoint": {
+   "nervePoint": "{side} fifth intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T6BackPoint": {
+   "nervePoint": "{side} sixth intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T7BackPoint": {
+   "nervePoint": "{side} seventh intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T8BackPoint": {
+   "nervePoint": "{side} eighth intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T9BackPoint": {
+   "nervePoint": "{side} ninth intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T10BackPoint": {
+   "nervePoint": "{side} tenth intercostal nerve",
+   "x": "backLat",
+   "back": true
+  },
+  "T11BackPoint": {
+   "nervePoint": "{side} eleventh intercostal nerve",
+   "x": "backLat",
+   "back": true
+  }
+ }
+}
