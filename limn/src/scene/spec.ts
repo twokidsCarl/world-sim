@@ -17,7 +17,7 @@ export interface SourceRef {
    */
   id: string
   /** 'model'：目录里的现成介观模型 / 'model': a ready-made mesoscale model from the catalogue */
-  kind: 'pdb' | 'alphafold' | 'model' | 'neuron'
+  kind: 'pdb' | 'alphafold' | 'model' | 'neuron' | 'emdb' | 'cell'
   /**
    * AlphaFold 和目录模型的下载 URL；PDB 条目按 id 获取
    * download URL for AlphaFold and catalogue models; PDB entries are fetched by id
@@ -116,6 +116,8 @@ export interface SceneSpec {
    * A mesoscale model: every copy in the assembly is a molecule, drawn the way landscapes are.
    */
   mesoscale?: boolean
+  /** 各面板共用一套坐标，叠在一起画（密度图和拟合进去的原子模型）/ the panels share one coordinate frame and are drawn on top of one another (a density map and the model fitted into it) */
+  overlay?: boolean
   /** 不逐个描边的实体名（正则）/ names of entities not outlined one by one (a regular expression) */
   merge?: string
   /** 主题解析选中了目录里的一个现成模型 / the resolver chose a ready-made model from the catalogue */

@@ -1,0 +1,49 @@
+{
+  "about": "整个细胞的电镜分割数据的目录：只存地址和出处，数据运行时从 OpenOrganelle 下载。 / A catalogue of whole-cell electron-microscopy segmentations: addresses and sources only; the data is downloaded from OpenOrganelle at run time.",
+  "cells": [
+    {
+      "id": "hela-organelles",
+      "title": "一个 HeLa 细胞里的细胞器",
+      "titleEn": "The organelles of a HeLa cell",
+      "base": "https://janelia-cosem-datasets.s3.amazonaws.com/jrc_hela-2/jrc_hela-2.n5/labels",
+      "scale": "s4",
+      "organelles": [
+        {
+          "label": "nucleus_seg",
+          "name": "细胞核",
+          "nameEn": "nucleus",
+          "role": "nucleic"
+        },
+        {
+          "label": "er_seg",
+          "name": "内质网",
+          "nameEn": "endoplasmic reticulum",
+          "role": "membrane"
+        },
+        {
+          "label": "mito_seg",
+          "name": "线粒体",
+          "nameEn": "mitochondria",
+          "role": "focus"
+        },
+        {
+          "label": "golgi_seg",
+          "name": "高尔基体",
+          "nameEn": "Golgi apparatus",
+          "role": "nucleic-binding"
+        },
+        {
+          "label": "endo_seg",
+          "name": "内体",
+          "nameEn": "endosomes",
+          "role": "soluble"
+        }
+      ],
+      "caption": "聚焦离子束扫描电镜拍下的一整个 HeLa 细胞，各种细胞器由机器学习逐个体素分割出来。从上往下看，在半高处剖开；细胞膜没有画（它的褶皱会盖住里面的细胞器）。",
+      "licence": "CC BY 4.0",
+      "attribution": "Janelia COSEM / OpenOrganelle，数据集 jrc_hela-2",
+      "citation": "Heinrich et al., Nature 2021, doi:10.1038/s41586-021-03977-3; Xu et al., Nature 2021, doi:10.1038/s41586-021-03992-4",
+      "link": "https://openorganelle.janelia.org/datasets/jrc_hela-2"
+    }
+  ]
+}

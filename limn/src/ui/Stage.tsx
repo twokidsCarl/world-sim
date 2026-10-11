@@ -36,7 +36,9 @@ export function viewFor(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'> 
     const cy = Math.max(-(land.height - height) / 2, Math.min((land.height - height) / 2, -look.shift[1] * height))
     return { rot: identity3(), center: [cx, cy, -land.depth / 2], height, clipFront: Infinity, fogSpan: [-8, -land.depth - 30] }
   }
-  const n = useStore.getState().panels.length
+  const overlay = !!useStore.getState().spec?.overlay
+  const n = overlay ? 1 : useStore.getState().panels.length
+  if (overlay) r.setPlacements([])
   if (n > 1) {
     const locals = Array.from({ length: n }, (_, i) => r.localBounds(i)!).filter(Boolean)
     if (locals.length === n) {
@@ -69,7 +71,7 @@ export function viewFor(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'> 
 export function figureAspect(r: Renderer, look: Pick<Look, 'rot' | 'zoom' | 'shift'>): number {
   const land = useStore.getState().spec?.landscape
   if (land) return land.width / land.height
-  const n = useStore.getState().panels.length
+  const n = useStore.getState().spec?.overlay ? 1 : useStore.getState().panels.length
   if (n > 1) {
     const locals = Array.from({ length: n }, (_, i) => r.localBounds(i)!).filter(Boolean)
     let best = 1.5, bestFit = 0
@@ -209,7 +211,7 @@ export function Stage() {
     } else if (st.spec?.mesoscale) {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: 0, perCopy: true, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
     } else {
-      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined }, p.annotation)))
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined, noCut: p.noCut }, p.annotation)))
     }
     draw(false)
   }, [sceneRev])

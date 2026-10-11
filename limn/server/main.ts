@@ -3,6 +3,7 @@ import { critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
 import { annotate } from './sources/annotations'
+import { emdb } from './sources/emdb'
 import { JOURNALS, openAccess, recent, released } from './sources/literature'
 import { orientation } from './sources/opm'
 import { pdbtm, topology } from './sources/pdbtm'
@@ -62,6 +63,9 @@ Bun.serve({
         const [entry] = await released([cit[1]!])
         return json({ entry: entry ?? null, paper: entry?.citation?.doi ? await openAccess(entry.citation.doi) : null })
       }
+      // 一张电镜密度图的基本信息 / the basics of an electron-microscopy density map
+      const em = /^\/api\/emdb\/(\d{4,6})$/.exec(url.pathname)
+      if (em) return json({ entry: await emdb(em[1]!) })
       // AlphaFold 预测模型的下载地址 / where to download an AlphaFold predicted model
       const afm = /^\/api\/alphafold\/([A-Za-z0-9]{6,10})$/.exec(url.pathname)
       if (afm) return json({ prediction: await alphafold(afm[1]!.toUpperCase()) })

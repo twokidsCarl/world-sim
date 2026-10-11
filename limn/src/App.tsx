@@ -6,6 +6,7 @@ import { placedAtomCount } from './scene/build'
 import { CATALOG, useStore } from './state/store'
 import neuro from '../data/neuro.json'
 import neurons from '../data/neurons.json'
+import cells from '../data/cells.json'
 import { TIER_LABEL } from './scene/spec'
 import { entityLch } from './style/assign'
 import { COLOR_MODE_LABEL, COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
@@ -167,8 +168,9 @@ export function App() {
 
   useEffect(() => {
     void api.health().then(setServer)
-    if (embed && !params.get('model') && !params.get('id') && !params.get('topic') && !params.get('neuron')) void s.loadCatalog(DEFAULT_MODEL)
+    if (embed && !params.get('model') && !params.get('id') && !params.get('topic') && !params.get('neuron') && !params.get('cell')) void s.loadCatalog(DEFAULT_MODEL)
     else if (params.get('neuron')) void s.loadNeuron(params.get('neuron')!)
+    else if (params.get('cell')) void s.loadCell(params.get('cell')!)
     else if (params.get('model')) void s.loadCatalog(params.get('model')!)
     else if (params.get('id')) void s.loadId(params.get('id')!)
     else if (params.get('topic')) void s.resolveTopic(params.get('topic')!)
@@ -240,6 +242,12 @@ export function App() {
                 {m.title}
               </button>
             ))}
+            <h2>整个细胞（电镜）</h2>
+            {cells.cells.map((c) => (
+              <button key={c.id} disabled={working} title={c.titleEn} onClick={() => void s.loadCell(c.id)}>
+                {c.title}
+              </button>
+            ))}
             <h2>神经元的形态</h2>
             {neurons.neurons.map((n) => (
               <button key={n.id} disabled={working} title={`${n.titleEn} (NeuroMorpho.Org: ${n.name})`} onClick={() => void s.loadNeuron(n.id)}>
@@ -260,7 +268,7 @@ export function App() {
           </div>
         ) : (
           <form className="row" onSubmit={(e) => (e.preventDefault(), void s.loadId(id))}>
-            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="例如 2hhb，或 AF-P04637" spellCheck={false} />
+            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="2hhb、AF-P04637 或 EMD-1080" spellCheck={false} />
             <button className="primary" disabled={working}>载入</button>
           </form>
         )}

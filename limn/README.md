@@ -14,6 +14,8 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·7 | 整个细胞的细胞器：OpenOrganelle 的电镜分割（HeLa 细胞的细胞核、内质网、线粒体、高尔基体、内体） | 第一版完成，见 `src/volume/n5.ts`、`data/cells.json` |
+| 二期·8 | 电镜密度图：按 `EMD-编号` 载入 EMDB 的图，画作者建议阈值处的等值面，拟合的原子模型叠在里面 | 第一版完成，见 `src/volume/mrc.ts`、`server/sources/emdb.ts` |
 | 二期·6 | 神经元形态：NeuroMorpho.Org 的显微重建（锥体细胞、浦肯野细胞等），按胞体、树突、轴突分色 | 第一版完成，见 `src/neuro/swc.ts`、`data/neurons.json` |
 | 二期·5 | 分子尺度的脑神经：38 个神经相关的地标结构（突触前、突触后、轴突、髓鞘、病理纤维）；膜蛋白取向增加 PDBTM 后备 | 完成，见 `data/neuro.json`、`server/sources/pdbtm.ts` |
 | 二期·4 | 最新发表：按期刊（Nature、Science、Cell 等）列出最近公开的结构，点一下出图；出处里显示论文 | 完成，见 `server/sources/literature.ts` |
@@ -39,10 +41,10 @@ bun run typecheck
 四种用法：
 
 - **按主题**：输入“CRISPR-Cas9 切割 DNA”“新冠刺突蛋白结合 ACE2”“TP53”这样的话。需要本机装有并登录了 [Claude Code](https://claude.com/claude-code)（用 `claude -p` 调用，不需要 API key）。一次解析约半分钟。
-- **按编号**：直接输入 4 位 PDB 编号，或 `AF-` 加 UniProt 编号（如 `AF-P04637`）载入 AlphaFold 预测模型。不需要 `claude`。例如 `2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
+- **按编号**：直接输入 4 位 PDB 编号，或 `AF-` 加 UniProt 编号（如 `AF-P04637`）载入 AlphaFold 预测模型，或 `EMD-` 加数字（如 `EMD-1080`）载入一张电镜密度图。不需要 `claude`。例如 `2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
 
 - **最新发表**：选一个期刊和时间范围，列出 RCSB 里这段时间公开的结构，按论文归并，点编号出图。需要本地服务，不需要 `claude`。
-- **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。同一页下面是“神经系统的分子”：按突触前、突触后、轴突、髓鞘、病理纤维分组的 38 个地标结构。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
+- **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。同一页还有“整个细胞（电镜）”和“神经元的形态”，以及“神经系统的分子”：按突触前、突触后、轴突、髓鞘、病理纤维分组的 38 个地标结构。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
 
 拖动旋转，滚轮缩放，Shift 拖动平移。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
 
@@ -82,6 +84,14 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 - 原子数超过约 4500 万的模型（整只支原体有 1.61 亿）自动改成每个残基画一个球，界面上会说明。
 
 目录只存指针、出处和许可，模型在运行时从原地址下载，不入库。各模型的许可不同（CC0、MIT、CC BY-SA 4.0，有几个文件没有附许可声明），界面上逐条列出；用这些图时请按原作者的许可署名。
+
+## 密度图和细胞器：表面是怎么画的
+
+电镜密度图（[EMDB](https://www.ebi.ac.uk/emdb/)，CC0）和整个细胞的细胞器分割（[OpenOrganelle](https://openorganelle.janelia.org/)，CC BY 4.0）都不是原子，而是三维的体数据。limn 仍然只用小球来画：先找出表面穿过的每个小格，在每格里放一个点（“表面网”法），再在每个点上放一个略小于一个体素的球，球连成面。这样描边、阴影、剖开都照旧可用，不需要另写一套网格画法。
+
+- **密度图**画的是作者建议的阈值处的等值面；阈值高一点或低一点，表面会瘦一点或胖一点。大的图会先把体素合并到最长边 200 以内。条目里有拟合的原子模型时，模型叠在里面：密度图从正中剖开，模型不切。
+- **细胞器**用的是原数据缩小 16 倍的版本（每个体素约 64×64×84 nm），比这更细的结构看不出来或者断开；边界是机器学习模型逐个体素判断的，不是人工描的。默认从上往下看、在半高处剖开，细胞膜没有画。核膜算在内质网的分割里，紧贴着细胞核表面；贴着细胞核两个体素以内的其他细胞器没有画，免得两层表面叠在一起。
+- 这两类图的长度单位分别是 Å 和 nm，不是同一个比例尺。
 
 ## 神经元形态图
 
@@ -130,6 +140,8 @@ bun run dev                    # 然后打开 http://127.0.0.1:5184/research/ill
 ## 数据与参考图
 
 - **结构数据**：运行时从 RCSB PDB（`models.rcsb.org`，CC0）按编号下载，不入库。检索还用到 UniProt、PDBe SIFTS 和 AlphaFold DB 的公开接口。
+- **`data/cells.json`**：整细胞分割数据在 OpenOrganelle 上的地址和出处（Heinrich 等，*Nature* 2021；Xu 等，*Nature* 2021；CC BY 4.0）；数据运行时下载。
+- **电镜密度图**：运行时按编号从 EMDB 下载（CC0），经本地服务缓存。
 - **`data/neurons.json`**：四个神经元重建在 NeuroMorpho.Org 上的名字、档案和原始论文的 DOI；重建文件运行时下载，不入库。NeuroMorpho.Org 以 CC BY 4.0 发布。
 - **`data/neuro.json`**：38 个神经相关结构的 PDB 编号和一句说明，每个编号都对过 RCSB 的标题。
 - **膜蛋白取向（后备）**：运行时查询 [PDBTM](https://pdbtm.unitmp.org/)；它的条款只允许非营利使用且不得修改，所以只在运行时取用、注明来源，不入库。
@@ -161,6 +173,8 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 7 | Whole-cell organelles: electron-microscopy segmentations from OpenOrganelle (the nucleus, endoplasmic reticulum, mitochondria, Golgi and endosomes of a HeLa cell) | First version done, see `src/volume/n5.ts`, `data/cells.json` |
+| Round 2, phase 8 | Electron-microscopy density maps: an EMDB map loads as `EMD-<number>`, drawn as the isosurface at its authors' recommended level, with the fitted atomic model inside | First version done, see `src/volume/mrc.ts`, `server/sources/emdb.ts` |
 | Round 2, phase 6 | Neuron morphologies: microscopy reconstructions from NeuroMorpho.Org (pyramidal cells, a Purkinje cell and others), coloured by soma, dendrite and axon | First version done, see `src/neuro/swc.ts`, `data/neurons.json` |
 | Round 2, phase 5 | The nervous system at molecular scale: 38 landmark structures (presynaptic, postsynaptic, axon, myelin, fibrils of disease); a PDBTM fallback for membrane protein orientation | Done, see `data/neuro.json`, `server/sources/pdbtm.ts` |
 | Round 2, phase 4 | Recently published: the structures most recently released for a journal (Nature, Science, Cell and others), one click to draw; the provenance shows the paper | Done, see `server/sources/literature.ts` |
@@ -186,9 +200,9 @@ bun run typecheck
 Four ways in:
 
 - **By topic**: type something like "CRISPR-Cas9 cutting DNA", "the SARS-CoV-2 spike bound to ACE2" or "TP53". This needs [Claude Code](https://claude.com/claude-code) installed and signed in on the machine (it is called as `claude -p`; no API key is needed). One resolution takes about half a minute.
-- **By id**: type a four-character PDB id, or `AF-` followed by a UniProt accession (`AF-P04637`) for an AlphaFold predicted model; `claude` is not needed. Examples: `2hhb` (haemoglobin), `6vxx` (the SARS-CoV-2 spike), `1m4x` (the PBCV-1 capsid, 16 million atoms).
+- **By id**: type a four-character PDB id, or `AF-` followed by a UniProt accession (`AF-P04637`) for an AlphaFold predicted model, or `EMD-` followed by a number (`EMD-1080`) for an electron-microscopy density map; `claude` is not needed. Examples: `2hhb` (haemoglobin), `6vxx` (the SARS-CoV-2 spike), `1m4x` (the PBCV-1 capsid, 16 million atoms).
 - **Recently published**: choose a journal and a period to list the structures the RCSB released in it, grouped by paper; click an id to draw it. This needs the local service but not `claude`.
-- **Ready-made models**: pick a published whole model from the list; `claude` is not needed. Below it on the same tab are "molecules of the nervous system": 38 landmark structures grouped as presynaptic, postsynaptic, axon, myelin and fibrils of disease. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
+- **Ready-made models**: pick a published whole model from the list; `claude` is not needed. The same tab also holds "a whole cell (electron microscopy)" and "shapes of neurons", and "molecules of the nervous system": 38 landmark structures grouped as presynaptic, postsynaptic, axon, myelin and fibrils of disease. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
 
 Drag to rotate, scroll to zoom, shift-drag to pan. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
 
@@ -228,6 +242,14 @@ Three things about how they are drawn:
 - A model with more than about 45 million atoms (the whole mycoplasma cell has 161 million) is drawn with one sphere per residue instead, and the interface says so.
 
 The catalogue stores pointers, provenance and licences only; models are downloaded from their home at run time and are not in this repository. Licences differ (CC0, MIT, CC BY-SA 4.0, and a few files carry no licence statement) and are listed per model in the interface. If you use the pictures, credit the original authors as their licence requires.
+
+## Density maps and organelles: how surfaces are drawn
+
+Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and whole-cell organelle segmentations ([OpenOrganelle](https://openorganelle.janelia.org/), CC BY 4.0) are not atoms but three-dimensional volumes. limn still draws them with small spheres: every cell of the grid that the surface passes through gets one point (the "surface nets" method), and a sphere a little smaller than a voxel goes on every point, so that the spheres join into a surface. Outlines, shadows and cut-aways all keep working, and no separate mesh drawing is needed.
+
+- A **density map** is drawn as the isosurface at the level its authors recommend; a slightly higher or lower level gives a slightly thinner or fatter surface. A large map is first binned to at most 200 voxels a side. When the entry has a fitted atomic model, the model goes inside: the map is cut through the middle and the model is left whole.
+- **Organelles** use the data reduced sixteen-fold (voxels of about 64 × 64 × 84 nm), so anything finer is lost or broken up; the boundaries were decided voxel by voxel by a machine-learning model, not traced by hand. By default the cell is seen from above and cut at mid-height, and the plasma membrane is not drawn. The nuclear envelope belongs to the ER segmentation and lies right on the surface of the nucleus; whatever of another organelle is within two voxels of the nucleus is not drawn, so that two coincident surfaces do not fight.
+- Lengths in these two kinds of picture are in Å and in nm respectively: they are not at one scale.
 
 ## Neuron morphology pictures
 
@@ -276,6 +298,8 @@ Rebuilding the Molecule of the Month table (`data/motm.json`, article titles and
 ## Data and reference pictures
 
 - **Structures**: downloaded by id at run time from the RCSB PDB (`models.rcsb.org`, CC0); none are in this repository. Lookups also use the public interfaces of UniProt, PDBe SIFTS and the AlphaFold DB.
+- **`data/cells.json`**: where the whole-cell segmentations are on OpenOrganelle, and their sources (Heinrich et al., *Nature* 2021; Xu et al., *Nature* 2021; CC BY 4.0); the data is downloaded at run time.
+- **Electron-microscopy density maps**: downloaded by id from the EMDB at run time (CC0) and cached by the local service.
 - **`data/neurons.json`**: the names, archives and original papers' DOIs of four neuron reconstructions on NeuroMorpho.Org; the reconstruction files are downloaded at run time and are not in this repository. NeuroMorpho.Org is released under CC BY 4.0.
 - **`data/neuro.json`**: the PDB ids of 38 structures of the nervous system with a line each, every id checked against its RCSB title.
 - **Membrane protein orientation (fallback)**: [PDBTM](https://pdbtm.unitmp.org/) is queried at run time; its terms allow non-profit use without modification only, so it is fetched at run time and credited, and nothing of it is in the repository.
