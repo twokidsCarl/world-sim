@@ -46,7 +46,7 @@ bun run typecheck
 - **最新发表**：选一个期刊和时间范围，列出 RCSB 里这段时间公开的结构，按论文归并，点编号出图。需要本地服务，不需要 `claude`。
 - **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。同一页还有“整个细胞（电镜）”和“神经元的形态”，以及“神经系统的分子”：按突触前、突触后、轴突、髓鞘、病理纤维分组的 38 个地标结构。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
 
-拖动旋转，滚轮缩放，Shift 拖动平移。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
+拖动旋转，滚轮缩放，Shift 拖动平移。每张图（包括导出的 PNG）右下角有一条比例尺；画面是正交投影，所以它对整张图都准确。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
 
 单个分子的图可以换“上色”方式：按功能角色（默认）、按结构域、标出活性与结合位点（都来自 UniProt，PDB 的残基号经 PDBe SIFTS 对应过去）、按 AlphaFold 置信度（只对预测模型）、按 AlphaMissense 预测的突变致病性（只覆盖人类蛋白；是预测，不是临床结论）。图例里写明每种颜色的含义和数据来源。
 
@@ -91,7 +91,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 
 - **密度图**画的是作者建议的阈值处的等值面；阈值高一点或低一点，表面会瘦一点或胖一点。大的图会先把体素合并到最长边 200 以内。条目里有拟合的原子模型时，模型叠在里面：密度图从正中剖开，模型不切。
 - **细胞器**用的是原数据缩小 16 倍的版本（每个体素约 64×64×84 nm），比这更细的结构看不出来或者断开；边界是机器学习模型逐个体素判断的，不是人工描的。默认从上往下看、在半高处剖开，细胞膜没有画。核膜算在内质网的分割里，紧贴着细胞核表面；贴着细胞核两个体素以内的其他细胞器没有画，免得两层表面叠在一起。
-- 这两类图的长度单位分别是 Å 和 nm，不是同一个比例尺。
+- 这两类图的坐标单位分别是 Å 和 nm。每张图右下角都有比例尺，自动换成读起来顺的单位。
 
 ## 神经元形态图
 
@@ -204,7 +204,7 @@ Four ways in:
 - **Recently published**: choose a journal and a period to list the structures the RCSB released in it, grouped by paper; click an id to draw it. This needs the local service but not `claude`.
 - **Ready-made models**: pick a published whole model from the list; `claude` is not needed. The same tab also holds "a whole cell (electron microscopy)" and "shapes of neurons", and "molecules of the nervous system": 38 landmark structures grouped as presynaptic, postsynaptic, axon, myelin and fibrils of disease. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
 
-Drag to rotate, scroll to zoom, shift-drag to pan. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
+Drag to rotate, scroll to zoom, shift-drag to pan. Every picture, exported PNGs included, has a scale bar at bottom right; the projection is orthographic, so the bar holds across the whole picture. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
 
 A picture of a single molecule can be recoloured: by functional role (the default), by domain, with active and binding sites picked out (both from UniProt, with PDB residue numbers mapped through PDBe SIFTS), by AlphaFold confidence (predicted models only), or by AlphaMissense's predicted pathogenicity of mutations (human proteins only; a prediction, not a clinical finding). The legend says what each colour means and where the data is from.
 
@@ -249,7 +249,7 @@ Electron-microscopy density maps ([EMDB](https://www.ebi.ac.uk/emdb/), CC0) and 
 
 - A **density map** is drawn as the isosurface at the level its authors recommend; a slightly higher or lower level gives a slightly thinner or fatter surface. A large map is first binned to at most 200 voxels a side. When the entry has a fitted atomic model, the model goes inside: the map is cut through the middle and the model is left whole.
 - **Organelles** use the data reduced sixteen-fold (voxels of about 64 × 64 × 84 nm), so anything finer is lost or broken up; the boundaries were decided voxel by voxel by a machine-learning model, not traced by hand. By default the cell is seen from above and cut at mid-height, and the plasma membrane is not drawn. The nuclear envelope belongs to the ER segmentation and lies right on the surface of the nucleus; whatever of another organelle is within two voxels of the nucleus is not drawn, so that two coincident surfaces do not fight.
-- Lengths in these two kinds of picture are in Å and in nm respectively: they are not at one scale.
+- Coordinates in these two kinds of picture are in Å and in nm respectively. Every picture carries a scale bar at bottom right, in whichever unit reads well.
 
 ## Neuron morphology pictures
 

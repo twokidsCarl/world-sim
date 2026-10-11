@@ -7,6 +7,7 @@ import { gridLayout, type Slot } from '../scene/layout'
 import { MEMBRANE_LCH, useStore, type Look } from '../state/store'
 import { atomColors, type Coloring } from '../style/assign'
 import { TONE_LANDSCAPE, TONE_MOLECULE } from '../style/palettes'
+import { scaleBar, type ScaleBar } from '../render/scalebar'
 
 /** 双层膜是一片淡黄绿色，如同 Goodsell 画的膜 / The bilayer is one pale yellow-green wash, as in Goodsell's membranes. */
 const LIPID_COLORING: Coloring = { roles: ['membrane'], hueShift: [0], nudge: [0], override: [MEMBRANE_LCH] }
@@ -110,6 +111,7 @@ export function Stage() {
   const [info, setInfo] = useState('')
   const [fatal, setFatal] = useState('')
   const [labels, setLabels] = useState<{ x: number; y: number; text: string }[]>([])
+  const [bar, setBar] = useState<ScaleBar | null>(null)
   const panels = useStore((s) => s.panels)
   const sceneRev = useStore((s) => s.sceneRev)
   const colorings = useStore((s) => s.colorings)
@@ -146,6 +148,7 @@ export function Stage() {
       r.render(v, s.style, fast)
       const el = r.canvas as HTMLCanvasElement
       setLabels(panelLabels(v, el.clientWidth, el.clientHeight))
+      setBar(scaleBar(v.height / el.clientHeight, el.clientWidth, s.spec?.unit ?? 'Å'))
       if (!fast) {
         // 读一个像素是等待 GPU 的唯一可靠办法
         // reading a pixel is the only reliable way to wait for the GPU
@@ -273,6 +276,12 @@ export function Stage() {
       {labels.map((l, i) => (
         <div className="panel-label" key={i} style={{ left: l.x, top: l.y + 6 }}>{l.text}</div>
       ))}
+      {bar && panels.length > 0 && (
+        <div className={'scalebar' + (style.background[0] * 0.3 + style.background[1] * 0.6 + style.background[2] * 0.1 < 0.5 ? ' dark' : '')}>
+          {bar.label}
+          <div style={{ width: bar.px }} />
+        </div>
+      )}
       {status && <div className={'status' + (fatal || (error && !busy) ? ' error' : '')}>{status}</div>}
     </div>
   )

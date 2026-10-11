@@ -519,7 +519,7 @@ export const useStore = create<State>((set, get) => ({
         '核膜在数据里算作内质网，紧贴着细胞核；贴着细胞核两个体素以内的内质网等没有画，免得和细胞核的表面叠在一起。',
         ...(missing.length ? [`没能取到：${missing.join('、')}。`] : []),
       ]
-      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: entry.caption, panels: [spec], notes }
+      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: entry.caption, panels: [spec], notes, unit: 'nm' }
       // 贴壁的细胞是扁的：从上往下看，在半高处剖开；结构很碎，线画细一些
       // a cell grown on a surface is flat: look down on it, cut at mid-height; the structures are fine-grained, so lines are drawn thinner
       const thin = cloneStyle(STYLE_MOLECULE)
@@ -569,7 +569,7 @@ export const useStore = create<State>((set, get) => ({
         `这是从显微图像描出来的神经元形态（${entry.species}，${entry.region}）：${entry.has}。坐标和粗细的单位是微米，不是原子图。`,
         '比线还细的分支画粗了一点，否则看不见；每一段按两端的半径线性过渡。重建本身的粗细常常不如走向可靠。',
       ]
-      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: '', panels: [spec], notes }
+      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: '', panels: [spec], notes, unit: 'µm' }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })

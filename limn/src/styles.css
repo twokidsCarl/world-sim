@@ -72,3 +72,13 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 /* 下拉框的选项文字再长，也不撑出侧栏 / however long its options, a select never pushes past the sidebar */
 .side select { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
 .side .row > label { flex: none; }
+
+/* 比例尺：右下角，一条线加标注 / the scale bar: bottom right, a line with its label */
+.scalebar { position: absolute; right: 14px; bottom: 12px; text-align: right; color: #26241f; pointer-events: none; font-variant-numeric: tabular-nums; }
+.scalebar > div { height: 2px; background: currentColor; margin-top: 2px; margin-left: auto; }
+.scalebar.dark { color: #f2efe8; }
+/* 状态栏给比例尺让出位置 / the status line leaves room for the scale bar */
+.status { max-width: calc(100% - 150px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box; }
+.status.error { white-space: normal; }
+/* 全景图画面很花，比例尺垫一块底色才读得清 / a landscape is busy, so the scale bar gets a backing to stay legible */
+.scalebar.dark { background: #1a1816cc; padding: 2px 6px 4px; border-radius: 4px; }
