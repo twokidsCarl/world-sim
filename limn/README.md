@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·4 | 最新发表：按期刊（Nature、Science、Cell 等）列出最近公开的结构，点一下出图；出处里显示论文 | 完成，见 `server/sources/literature.ts` |
 | 二期·2d | 膜的真实脂质组成（八类膜，分小叶混排），脂质尾链转到同一侧 | 完成，见 `data/membranes.json`、`src/landscape/lipid.ts` |
 | 二期·3a | 逐残基上色：结构域、活性与结合位点、AlphaFold 置信度、AlphaMissense 致病性；按 `AF-<UniProt 编号>` 直接载入预测模型 | 完成，见 `src/style/annotate.ts`、`server/sources/annotations.ts` |
 | 二期·2e | 冷冻电镜断层扫描里粒子的实测位置：一片支原体细胞里 331 个核糖体 | 完成，见 `src/mol/points.ts` 和目录里的 `mycoplasma-ribosomes-in-situ` |
@@ -33,11 +34,12 @@ bun run test
 bun run typecheck
 ```
 
-三种用法：
+四种用法：
 
 - **按主题**：输入“CRISPR-Cas9 切割 DNA”“新冠刺突蛋白结合 ACE2”“TP53”这样的话。需要本机装有并登录了 [Claude Code](https://claude.com/claude-code)（用 `claude -p` 调用，不需要 API key）。一次解析约半分钟。
 - **按编号**：直接输入 4 位 PDB 编号，或 `AF-` 加 UniProt 编号（如 `AF-P04637`）载入 AlphaFold 预测模型。不需要 `claude`。例如 `2hhb`（血红蛋白）、`6vxx`（新冠刺突蛋白）、`1m4x`（PBCV-1 病毒衣壳，1600 万原子）。
 
+- **最新发表**：选一个期刊和时间范围，列出 RCSB 里这段时间公开的结构，按论文归并，点编号出图。需要本地服务，不需要 `claude`。
 - **现成模型**：从列表里点一个已发表的整体模型，不需要 `claude`。按主题输入“新冠病毒长什么样”这类话时，也会自动用上对应的现成模型。
 
 拖动旋转，滚轮缩放，Shift 拖动平移。“剖开”滑杆从前面切掉一部分，看病毒或细胞的内部；切的时候整个分子一起保留或去掉，不会出现被切了一半的蛋白。
@@ -59,7 +61,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 1. **模型不出像素，也不出坐标。** 画面完全由 PDB 的原子坐标确定性渲染。
 2. **模型不能编造结构编号。** 解析分三步：模型说要找什么 → 代码去 RCSB、UniProt、PDBe 查 → 模型只能在查回来的候选里选（选项是候选编号的枚举，不在其中的一律丢弃）。模型凭记忆提到的编号只当作检索线索，要经 RCSB 确认存在并取回真实的描述后才会成为候选。
 3. **看图精修只能改呈现。** 评审能做的操作是一份白名单：转视角、缩放、改颜色角色、调线条和阴影。换结构、动坐标不在其中，见 `src/refine/edits.ts`。
-4. **说明出处和局限。** 界面列出每个面板的 PDB 编号、实验方法、分辨率、年份和选它的理由；AlphaFold 预测模型会明确标注，低置信度区域不画。
+4. **说明出处和局限。** 界面列出每个面板的 PDB 编号、实验方法、分辨率、年份和选它的理由，以及这个结构的论文（标题、作者、期刊、年份、DOI 链接）；AlphaFold 预测模型会明确标注，低置信度区域不画。论文大多不是开放获取的，所以只显示书目信息并链接到原文；只有 Europe PMC 标明开放获取并带知识共享许可的论文才显示摘要。不转载论文的图和正文。
 
 多个面板的机理图里，各面板比例相同，并按共同的蛋白链叠合到同一朝向。
 
@@ -145,6 +147,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 4 | Recently published: the structures most recently released for a journal (Nature, Science, Cell and others), one click to draw; the provenance shows the paper | Done, see `server/sources/literature.ts` |
 | Round 2, phase 2d | Real lipid compositions of membranes (eight kinds, mixed per leaflet), with lipid tails turned to one side | Done, see `data/membranes.json`, `src/landscape/lipid.ts` |
 | Round 2, phase 3a | Per-residue colouring: domains, active and binding sites, AlphaFold confidence, AlphaMissense pathogenicity; predicted models load directly as `AF-<UniProt accession>` | Done, see `src/style/annotate.ts`, `server/sources/annotations.ts` |
 | Round 2, phase 2e | Measured particle positions from a cryo-electron tomogram: 331 ribosomes in a slice of mycoplasma cells | Done, see `src/mol/points.ts` and `mycoplasma-ribosomes-in-situ` in the catalogue |
@@ -164,10 +167,11 @@ bun run test
 bun run typecheck
 ```
 
-Three ways in:
+Four ways in:
 
 - **By topic**: type something like "CRISPR-Cas9 cutting DNA", "the SARS-CoV-2 spike bound to ACE2" or "TP53". This needs [Claude Code](https://claude.com/claude-code) installed and signed in on the machine (it is called as `claude -p`; no API key is needed). One resolution takes about half a minute.
 - **By id**: type a four-character PDB id, or `AF-` followed by a UniProt accession (`AF-P04637`) for an AlphaFold predicted model; `claude` is not needed. Examples: `2hhb` (haemoglobin), `6vxx` (the SARS-CoV-2 spike), `1m4x` (the PBCV-1 capsid, 16 million atoms).
+- **Recently published**: choose a journal and a period to list the structures the RCSB released in it, grouped by paper; click an id to draw it. This needs the local service but not `claude`.
 - **Ready-made models**: pick a published whole model from the list; `claude` is not needed. A topic such as "what does the coronavirus look like" also resolves to the matching ready-made model.
 
 Drag to rotate, scroll to zoom, shift-drag to pan. The "cut" slider removes the front of the subject to show the inside of a virus or a cell; whole molecules are kept or dropped together, so no protein is ever shown sliced in half.
@@ -189,7 +193,7 @@ idea-loom, the single entry point of world-sim, hosts limn at `http://limn.local
 1. **The model produces neither pixels nor coordinates.** The picture is rendered deterministically from atomic coordinates.
 2. **The model cannot invent a structure id.** Resolution has three steps: the model says what to look for; code looks it up in RCSB, UniProt and PDBe; the model may then choose only among what came back (the choice is an enumeration of the candidate ids, and anything else is discarded). Ids the model recalls from memory are search hints only; each must be confirmed by RCSB, and its real description fetched, before it becomes a candidate.
 3. **The review loop can change presentation only.** What a reviewer may do is a whitelist: turn the view, zoom, cut, change colour roles, adjust lines and shadows. Swapping structures or moving atoms is not on it; see `src/refine/edits.ts`.
-4. **Provenance and limits are stated.** The interface lists each panel's PDB id, method, resolution, year and the reason it was chosen. AlphaFold predictions are labelled as such, and their low-confidence regions are not drawn.
+4. **Provenance and limits are stated.** The interface lists each panel's PDB id, method, resolution, year and the reason it was chosen, and the structure's paper (title, authors, journal, year, a DOI link). AlphaFold predictions are labelled as such, and their low-confidence regions are not drawn. Most papers are not open access, so only bibliographic facts are shown, with a link to the original; an abstract appears only when Europe PMC marks the paper open access under a Creative Commons licence. No figure or body text of a paper is reproduced.
 
 In a multi-panel mechanism figure every panel is at the same scale, and panels are superposed on their shared protein chain so that they face the same way.
 

@@ -24,6 +24,70 @@ function Slider(p: { label: string; value: number; min: number; max: number; ste
   )
 }
 
+/** 某期刊最近发布的结构，按论文归并；点一个结构就画它 / structures recently released for a journal, grouped by paper; click one to draw it */
+function Recent({ disabled }: { disabled: boolean }) {
+  const loadId = useStore((s) => s.loadId)
+  const [journal, setJournal] = useState('Nature')
+  const [days, setDays] = useState(90)
+  const [data, setData] = useState<{ journals: string[]; total: number; entries: api.Released[] } | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let live = true
+    setData(null)
+    setError('')
+    api.recent(journal, days).then((d) => live && setData(d), (e) => live && setError(e instanceof Error ? e.message : String(e)))
+    return () => {
+      live = false
+    }
+  }, [journal, days])
+  // 同一篇论文的结构排在一起 / entries of one paper are listed together
+  const papers = new Map<string, api.Released[]>()
+  for (const e of data?.entries ?? []) {
+    const key = e.citation?.doi || e.citation?.title || e.id
+    papers.set(key, [...(papers.get(key) ?? []), e])
+  }
+  return (
+    <div className="recent">
+      <div className="row">
+        <select value={journal} onChange={(e) => setJournal(e.target.value)} style={{ flex: 1 }}>
+          {(data?.journals ?? [journal]).map((j) => (
+            <option key={j} value={j}>{j}</option>
+          ))}
+        </select>
+        <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
+          <option value={30}>近 30 天</option>
+          <option value={90}>近 90 天</option>
+          <option value={365}>近一年</option>
+        </select>
+      </div>
+      {error && <div className="error">{error}</div>}
+      {!data && !error && <div className="muted">正在查询 RCSB…</div>}
+      {data && (
+        <div className="muted">
+          {data.total} 个结构{data.total > data.entries.length && `，显示最新的 ${data.entries.length} 个`}；按发布日期排序。
+        </div>
+      )}
+      {[...papers.values()].map((list) => (
+        <div className="paper-group" key={list[0]!.id}>
+          <div>{list[0]!.citation?.title ?? list[0]!.title}</div>
+          <div className="muted">
+            {list[0]!.citation?.authors[0]}
+            {(list[0]!.citation?.authors.length ?? 0) > 1 && ' 等'} · {list[0]!.released}
+          </div>
+          <div className="ids">
+            {list.slice(0, 8).map((e) => (
+              <button key={e.id} disabled={disabled} title={`${e.title}\n${e.method}${e.resolution ? `, ${e.resolution.toFixed(1)} Å` : ''}, ${e.atoms.toLocaleString()} 原子`} onClick={() => void loadId(e.id)}>
+                {e.id}
+              </button>
+            ))}
+            {list.length > 8 && <span className="muted">+{list.length - 8}</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const sw = (lch: [number, number, number]) => <span className="swatch" style={{ background: hex(oklch(...lch)), display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} />
 
 /** 按残基上色时的图例：颜色各代表什么，数据从哪来 / the legend for per-residue colouring: what each colour means and where the data is from */
@@ -88,7 +152,7 @@ function Legend() {
 export function App() {
   const s = useStore()
   const params = new URLSearchParams(location.search)
-  const [mode, setMode] = useState<'topic' | 'id' | 'model'>(params.get('id') ? 'id' : params.get('model') ? 'model' : 'topic')
+  const [mode, setMode] = useState<'topic' | 'id' | 'model' | 'recent'>(params.get('id') ? 'id' : params.get('model') ? 'model' : 'topic')
   const [topic, setTopic] = useState(params.get('topic') ?? '')
   const [id, setId] = useState(params.get('id') ?? '')
   const [feedback, setFeedback] = useState('')
@@ -154,6 +218,7 @@ export function App() {
           <button className={mode === 'topic' ? 'on' : ''} onClick={() => setMode('topic')}>按主题</button>
           <button className={mode === 'model' ? 'on' : ''} onClick={() => setMode('model')}>现成模型</button>
           <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>按编号</button>
+          <button className={mode === 'recent' ? 'on' : ''} onClick={() => setMode('recent')}>最新发表</button>
         </div>
         {mode === 'topic' ? (
           <form onSubmit={(e) => (e.preventDefault(), void s.resolveTopic(topic))}>
@@ -163,6 +228,8 @@ export function App() {
               {server && !canAsk && <span className="muted">{server.ok ? '本机没有找到 claude 命令' : '本地服务未启动（bun run dev）'}</span>}
             </div>
           </form>
+        ) : mode === 'recent' ? (
+          <Recent disabled={working} />
         ) : mode === 'model' ? (
           <div className="catalog">
             {CATALOG.map((m) => (
@@ -197,6 +264,26 @@ export function App() {
                     {[p.spec.source.method, p.spec.source.resolution ? `${p.spec.source.resolution.toFixed(2)} Å` : '', p.spec.source.year].filter(Boolean).join(' · ') || p.spec.source.title}
                   </div>
                   {p.spec.reason && <div className="muted">{p.spec.reason}</div>}
+                  {p.paper && (
+                    <div className="muted paper">
+                      {p.paper.citation.title}
+                      <br />
+                      {p.paper.citation.authors.slice(0, 3).join(', ')}
+                      {p.paper.citation.authors.length > 3 && ' 等'} · <i>{p.paper.citation.journal}</i> {p.paper.citation.year}
+                      {p.paper.citation.doi && (
+                        <>
+                          {' · '}
+                          <a href={`https://doi.org/${p.paper.citation.doi}`} target="_blank" rel="noreferrer">论文</a>
+                        </>
+                      )}
+                      {p.paper.open && p.paper.abstract && (
+                        <details>
+                          <summary>摘要（开放获取，{p.paper.licence}）</summary>
+                          {p.paper.abstract}
+                        </details>
+                      )}
+                    </div>
+                  )}
                   {p.spec.source.attribution && (
                     <div className="muted">
                       {p.spec.source.tier && `${TIER_LABEL[p.spec.source.tier]} · `}

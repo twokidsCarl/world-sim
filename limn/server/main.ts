@@ -3,6 +3,7 @@ import { critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
 import { annotate } from './sources/annotations'
+import { JOURNALS, openAccess, recent, released } from './sources/literature'
 import { orientation } from './sources/opm'
 import { cached, stateDir } from './structures'
 import { alphafold } from './sources/uniprot'
@@ -42,6 +43,18 @@ Bun.serve({
       // a membrane protein's orientation in the membrane (OPM); null when OPM does not have it
       const mem = /^\/api\/membrane\/([0-9][A-Za-z0-9]{3})$/.exec(url.pathname)
       if (mem) return json({ orientation: await orientation(mem[1]!) })
+      // 某期刊最近发布的结构 / structures recently released for a journal
+      if (url.pathname === '/api/recent') {
+        const journal = url.searchParams.get('journal') ?? 'Nature'
+        const days = Math.min(365, Math.max(7, Number(url.searchParams.get('days')) || 90))
+        return json({ journals: JOURNALS, journal, days, ...(await recent(journal, days)) })
+      }
+      // 一个结构的主要引文；开放获取的论文带摘要 / a structure's primary citation, with the abstract when the paper is open access
+      const cit = /^\/api\/citation\/([0-9][A-Za-z0-9]{3})$/.exec(url.pathname)
+      if (cit) {
+        const [entry] = await released([cit[1]!])
+        return json({ entry: entry ?? null, paper: entry?.citation?.doi ? await openAccess(entry.citation.doi) : null })
+      }
       // AlphaFold 预测模型的下载地址 / where to download an AlphaFold predicted model
       const afm = /^\/api\/alphafold\/([A-Za-z0-9]{6,10})$/.exec(url.pathname)
       if (afm) return json({ prediction: await alphafold(afm[1]!.toUpperCase()) })

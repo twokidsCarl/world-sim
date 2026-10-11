@@ -66,3 +66,24 @@ export async function alphafold(accession: string): Promise<{ accession: string;
     return null
   }
 }
+
+export interface Citation { title: string; authors: string[]; journal: string; year: number | null; doi: string; pubmed: number | null }
+export interface Released { id: string; title: string; released: string; method: string; resolution: number | null; atoms: number; citation: Citation | null }
+
+/** 某期刊最近发布的结构 / structures recently released for a journal */
+export async function recent(journal: string, days: number): Promise<{ journals: string[]; total: number; entries: Released[] }> {
+  const res = await fetch(`/api/recent?journal=${encodeURIComponent(journal)}&days=${days}`)
+  const json = (await res.json().catch(() => null)) as ({ journals: string[]; total: number; entries: Released[] } & { error?: string }) | null
+  if (!res.ok || !json) throw new Error(json?.error ?? '本地服务没有启动（bun run dev）')
+  return json
+}
+
+/** 一个结构的主要引文；开放获取的论文带摘要 / a structure's primary citation, with the abstract when the paper is open access */
+export async function citation(id: string): Promise<{ entry: Released | null; paper: { open: boolean; licence: string; abstract: string } | null } | null> {
+  try {
+    const res = await fetch(`/api/citation/${id}`)
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
+  }
+}
