@@ -45,6 +45,33 @@ export type WishDetail = Wish & {
   history: { at: string; event_label: string; by_label: string; text: string }[]
 }
 export type WishList = { wishes: Wish[]; counts: Record<string, number>; kinds: Record<string, number>; statuses: Record<string, string>; kind_labels: Record<string, string>; unreadable: number }
+export type PullRequest = { number: number; title: string; scope: string; state: string; created_at: string; merged_at: string | null; additions: number; deletions: number; url: string }
+export type ProjectView = {
+  dir: string; tagline: string; level: string | null; ideas: string[]; linked: string[]; ui_url: string | null; ui_up: boolean
+  prs: number; merged: number; last_merged_at: string | null; recent: PullRequest[]; has_readme: boolean
+}
+export type Task = {
+  task_id: string; idea_id: string | null; project: string; title: string; brief: string; status: string; status_label: string
+  pr: number | null; pr_url: string | null; job_id: string | null; created_at: string; updated_at: string; notes: { at: string; by: string; text: string }[]
+}
+export type Tokens = { input: number; output: number; cache_read: number; cache_write: number; messages: number }
+export type Segment = { start: string; end: string; seconds: number; output_tokens: number }
+export type Session = { id: string; project: string; title: string; first_at: string; last_at: string; active_seconds: number; prompts: number; tool_calls: number; subagents: number; tokens: Tokens; segments: Segment[] }
+export type ProjectStats = {
+  dir: string; tokens: Tokens; sessions: number; active_seconds: number; prs: number; merged: number; first_pr_at: string | null; last_pr_at: string | null
+  median_merge_seconds: number | null; additions: number; deletions: number; lines: number; files: number; by_language: Record<string, number>
+  tokens_per_line: number | null; tokens_per_pr: number | null
+}
+export type Attention = {
+  total_seconds: number; by_page: Record<string, number>; ideas: { id: string; title: string; seconds: number; opens: number; last_at: string | null }[]
+  never_opened: string[]; cells: Record<string, Record<string, number>>; by_level: Record<string, number>; by_kernel: Record<string, number>
+  clicks: number; questions: number; feature_uses: Record<string, number>; proposals_kept: number; proposals_dropped: number; days: number
+}
+export type Stats = {
+  generated_at: string; projects: ProjectStats[]; sessions: Session[]; days: { day: string; project: string; merged: number; additions: number; output_tokens: number }[]
+  totals: Tokens; attention: Attention; own: { calls: number; cost_usd: number; output_tokens: number; by_purpose: Record<string, number> }
+  transcripts_found: boolean; notes: string[]
+}
 export type NewIdea = { title: string; body: string; level: string; threads: string[]; kernel: string | null }
 
 export const api = {
@@ -71,6 +98,12 @@ export const api = {
   editWish: (id: string, body: { title?: string; kind?: string; stuck?: string; suggestion?: string }) => call<WishDetail>(`/api/wishes/${id}/edit`, body),
   withdrawWish: (id: string) => call<WishDetail>(`/api/wishes/${id}/withdraw`, {}),
   restoreWish: (id: string) => call<WishDetail>(`/api/wishes/${id}/restore`, {}),
+  projects: () => call<ProjectView[]>('/api/projects'),
+  tasks: () => call<Task[]>('/api/tasks'),
+  createTask: (body: { project: string; title: string; brief: string; idea_id: string | null }) => call<Task>('/api/tasks', body),
+  taskStatus: (id: string, status: string, note = '') => call<Task>(`/api/tasks/${id}/status`, { status, note }),
+  linkProject: (dir: string, idea_id: string, linked: boolean) => call<{ ok: boolean }>(`/api/projects/${dir}/link`, { idea_id, linked }),
+  stats: (refresh = false) => call<Stats>(`/api/stats${refresh ? '?refresh=true' : ''}`),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),
 }

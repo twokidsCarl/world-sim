@@ -10,7 +10,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import edits, ideas, llm, ops, sync, trail, wishes
+from . import edits, github, ideas, llm, ops, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .model import IdeaDetail, State
 
@@ -63,7 +63,7 @@ def _detail(idea_id: str) -> IdeaDetail:
 def _do(fn, *args, **kw):
     try:
         return fn(*args, **kw)
-    except (edits.EditError, ops.OpError, wishes.WishError, turns.TurnError) as e:
+    except (edits.EditError, ops.OpError, wishes.WishError, turns.TurnError, tasks.TaskError) as e:
         raise HTTPException(409, str(e))
     except llm.LLMError as e:
         raise HTTPException(502, f"模型调用失败：{e}")
@@ -349,3 +349,101 @@ async def assistant_tool(name: str, request: Request, x_assistant_turn: str = He
         return PlainTextResponse(await anyio.to_thread.run_sync(turns.call_tool, name, x_assistant_turn, args if isinstance(args, dict) else {}))
     except turns.ToolError as e:
         return PlainTextResponse(str(e), status_code=403)
+
+
+# ---------- 子项目、任务、统计 / subprojects, tasks, statistics ----------
+
+
+class ProjectView(BaseModel):
+    dir: str
+    tagline: str
+    level: Optional[str]
+    ideas: list[str]  # 明确关联的，加上正文里提到它的 / explicitly linked plus those that mention it
+    linked: list[str]
+    ui_url: Optional[str]
+    ui_up: bool
+    prs: int
+    merged: int
+    last_merged_at: Optional[str]
+    recent: list[github.PullRequest]
+    has_readme: bool
+
+
+class TaskBody(BaseModel):
+    project: str
+    title: str
+    brief: str = ""
+    idea_id: Optional[str] = None
+
+
+class TaskStatusBody(BaseModel):
+    status: str
+    note: str = ""
+
+
+class LinkBody(BaseModel):
+    idea_id: str
+    linked: bool = True
+
+
+def _port_open(url: Optional[str]) -> bool:
+    """子项目的开发服务是不是在跑。 / Whether the subproject's dev server is running."""
+    import socket
+    from urllib.parse import urlparse
+
+    if not url:
+        return False
+    parsed = urlparse(url)
+    try:
+        with socket.create_connection((parsed.hostname or "127.0.0.1", parsed.port or 80), timeout=0.15):
+            return True
+    except OSError:
+        return False
+
+
+@app.get("/api/projects", response_model=list[ProjectView])
+def list_projects() -> list[ProjectView]:
+    from . import store
+
+    pool, _, _, _ = ideas.current()
+    prs = github.pull_requests()
+    out = []
+    for p in ideas.load_projects():
+        mine = [x for x in prs if x.scope == p.dir]
+        merged = [x for x in mine if x.merged_at]
+        mentioned = [i.id for i in pool.values() if p.dir in i.projects and i.status in ideas.LIVE]
+        out.append(ProjectView(
+            dir=p.dir, tagline=p.tagline, level=p.level, ideas=sorted(set(mentioned) | set(p.ideas), key=ideas.sort_key), linked=p.ideas,
+            ui_url=p.ui_url, ui_up=_port_open(p.ui_url), prs=len(mine), merged=len(merged),
+            last_merged_at=max((x.merged_at for x in merged if x.merged_at), default=None), recent=list(reversed(mine))[:8],
+            has_readme=(store.repo_root() / p.dir / "README.md").exists(),
+        ))
+    return out
+
+
+@app.post("/api/projects/{project_dir}/link")
+def link_project(project_dir: str, body: LinkBody) -> dict[str, bool]:
+    _do(tasks.link_project, project_dir, body.idea_id, body.linked)
+    return {"ok": True}
+
+
+@app.get("/api/tasks", response_model=list[tasks.Task])
+def list_tasks() -> list[tasks.Task]:
+    return tasks.listing()
+
+
+@app.post("/api/tasks", response_model=tasks.Task)
+def create_task(body: TaskBody) -> tasks.Task:
+    task_id = _do(tasks.create, project=body.project, title=body.title, brief=body.brief, idea_id=body.idea_id)
+    return tasks.get(task_id)
+
+
+@app.post("/api/tasks/{task_id}/status", response_model=tasks.Task)
+def task_status(task_id: str, body: TaskStatusBody) -> tasks.Task:
+    _do(tasks.set_status, task_id, body.status, note=body.note)
+    return tasks.get(task_id)
+
+
+@app.get("/api/stats", response_model=stats.Stats)
+def get_stats(refresh: bool = False) -> stats.Stats:
+    return stats.compute(force=refresh)

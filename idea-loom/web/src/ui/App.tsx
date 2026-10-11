@@ -6,6 +6,8 @@ import { LineagePage } from '../pages/LineagePage'
 import { NewIdeaPage } from '../pages/NewIdeaPage'
 import { MapPage } from '../pages/MapPage'
 import { PoolPage } from '../pages/PoolPage'
+import { StatsPage } from '../pages/StatsPage'
+import { WorkPage } from '../pages/WorkPage'
 import { WishPage, WishesPage } from '../pages/WishesPage'
 import { AssistantDock } from '../assistant/AssistantDock'
 import { useAssistant } from '../assistant/store'
@@ -16,7 +18,9 @@ const NAV = [
   { to: '/ideas', label: '想法池', end: false },
   { to: '/inbox', label: '生成与候选', end: false },
   { to: '/lineage', label: '血缘', end: false },
+  { to: '/work', label: '开发', end: false },
   { to: '/wishes', label: '许愿池', end: false },
+  { to: '/stats', label: '统计', end: false },
 ]
 
 export function App() {
@@ -97,6 +101,8 @@ export function App() {
             <Route path="/ideas/:id" element={<IdeaPage state={state} />} />
             <Route path="/inbox" element={<InboxPage state={state} />} />
             <Route path="/lineage" element={<LineagePage state={state} />} />
+            <Route path="/work" element={<WorkPage state={state} />} />
+            <Route path="/stats" element={<StatsPage state={state} />} />
             <Route path="/wishes" element={<WishesPage />} />
             <Route path="/wishes/:id" element={<WishPage />} />
             <Route path="/new" element={<NewIdeaPage state={state} />} />
