@@ -204,6 +204,61 @@ export async function runHarness(): Promise<HarnessResult> {
   check(`三维 ${big3.n} 粒子：邻居表溢出`, (await big3.reduce(['scalars'])).overflow ? 1 : 0, 0)
   big3.dispose()
 
+  // 三维的壁面与选区：y 方向不取最小像；选区是矩形沿 z 贯穿盒子的柱体。
+  // Walls and a region in 3D: no minimum image along y; the region is a rectangle extruded through the box along z.
+  const pw: Params = { ...p3, walls: 1, drive: 0 }
+  const refW = initFcc({ cells: fccCells(pw.nx!), density: 0.8, temperature: 1.5, seed: 1 }, pair)
+  refW.walls = true
+  refW.wallTemperature = refW.wallTemperatureFar = 1.5
+  computeForces(refW, pair)
+  step(refW, pair, pw.dt!, 200)
+  for (let k = 0; k < refW.pos.length; k++) {
+    refW.pos[k] = Math.fround(refW.pos[k]!)
+    refW.vel[k] = Math.fround(refW.vel[k]!)
+  }
+  computeForces(refW, pair)
+  const gpuW = new MdGpuBackend(gpu, pw, 1)
+  gpuW.writeState(refW.pos, refW.vel)
+  const stateW = await gpuW.readState()
+  let fmaxW = 0
+  let ferrW = 0
+  for (let i = 0; i < refW.n; i++) {
+    for (let d = 0; d < 3; d++) {
+      fmaxW = Math.max(fmaxW, Math.abs(refW.force[3 * i + d]!))
+      ferrW = Math.max(ferrW, Math.abs(refW.force[3 * i + d]! - stateW.force[4 * i + d]!))
+    }
+  }
+  check('三维壁面：受力最大误差 / 最大受力', ferrW / fmaxW, 1e-4)
+  const column: [number, number, number, number] = [0.2 * refW.box[0]!, 0.1 * refW.box[1]!, 0.7 * refW.box[0]!, 0.6 * refW.box[1]!]
+  const regionW = (await gpuW.reduce(['scalars', 'speedHist'], column)).region!
+  const regionWRef = regionFrame(refW, column, [], 4)
+  check('三维选区：粒子数差', Math.abs(regionW.n - regionWRef.n), 0)
+  check('三维选区：密度相对误差', Math.abs(regionW.density / regionWRef.density - 1), 1e-6)
+  check('三维选区：温度相对误差', Math.abs(regionW.temperature / regionWRef.temperature - 1), 1e-5)
+  check('三维选区：配位数差', Math.abs(regionW.coordination - regionWRef.coordination), 1e-6)
+  // 再走八千步（初始晶格熔化会使气体变冷，要等壁面把温度带回来）：粒子都留在两壁之间，
+  // 壁面重新发射的速度在 z 方向上也是热的。
+  // Run eight thousand more steps (melting the initial lattice cools the gas, and the walls need
+  // time to bring it back): every particle stays between the walls, and the velocities the walls
+  // re-emit are thermal along z as well.
+  for (let i = 0; i < 1000; i++) {
+    gpuW.step(8)
+    await gpuW.idle()
+  }
+  const afterW = await gpuW.readState()
+  let outside = 0
+  let vx2 = 0
+  let vz2 = 0
+  for (let i = 0; i < gpuW.n; i++) {
+    outside += afterW.pos[4 * i + 1]! < 0 || afterW.pos[4 * i + 1]! >= refW.box[1]! ? 1 : 0
+    vx2 += afterW.vel[4 * i]! ** 2 / gpuW.n
+    vz2 += afterW.vel[4 * i + 2]! ** 2 / gpuW.n
+  }
+  check('三维壁面：跑出两壁之间的粒子数', outside, 0)
+  check('三维壁面：z 方向的 ⟨v²⟩ 与壁面温度的相对差', Math.abs(vz2 / 1.5 - 1), 0.1)
+  check('三维壁面：z 与 x 方向 ⟨v²⟩ 的相对差', Math.abs(vz2 / vx2 - 1), 0.1)
+  gpuW.dispose()
+
   // 管道里的圆盘障碍物：圆盘的排斥力与壁面（y 方向不取最小像）。
   // A disc obstacle in the channel: the disc's repulsion, and walls (no minimum image along y).
   const po: Params = { ...p, walls: 1, obstacle: 5, nx: 60, density: 0.7 }

@@ -162,8 +162,7 @@ export const MD_KNOBS: Knob[] = [
       { value: 0, label: '周期' },
       { value: 1, label: '上下热壁（管道）' },
     ],
-    note: '热壁：撞到壁面的粒子按壁面温度重新发射，速度方向随机，因此流体贴壁处流速为零。壁面温度取上面的温度 T。',
-    when: (p) => p.dim === 2,
+    note: '热壁：撞到壁面的粒子按壁面温度重新发射，速度方向随机，因此流体贴壁处流速为零。壁面温度取上面的温度 T。三维时壁面垂直于 y，x 和 z 方向仍是周期的。',
   },
   {
     id: 'drive',
@@ -209,7 +208,7 @@ export const MD_KNOBS: Knob[] = [
     default: 0,
     rebuild: 'none',
     note: '上壁温度是上面的温度 T，下壁是 T + ΔT。从下面加热、重力向下时，温差够大就会出现对流。',
-    when: (p) => p.walls === 1 && p.dim === 2,
+    when: (p) => p.walls === 1,
   },
   { id: 'density', label: '数密度 ρ', tag: 'state', min: 0.02, max: 1.0, step: 0.01, default: 0.6, rebuild: 'state' },
   {

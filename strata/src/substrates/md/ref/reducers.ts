@@ -379,10 +379,12 @@ export function profiles(
       }
     }
     y[b] = (b + 0.5) / bins
-    density[b] = n / ((box[0]! * box[1]!) / bins)
+    // 二维时 box[2] 为 1。 / box[2] is 1 in 2D.
+    density[b] = n / ((box[0]! * box[1]! * (box[2] ?? 1)) / bins)
     ux[b] = n > 0 ? px / n : 0
-    // 相对于局域平均流的运动的动理学温度，按二维计。
-    // Kinetic temperature of the motion relative to the local mean flow, in 2D.
+    // 相对于局域平均流的运动的动理学温度；场里只累计了 x、y 两个分量，三维时也按这两个分量算。
+    // Kinetic temperature of the motion relative to the local mean flow; the field holds only the
+    // x and y components, so in 3D too it is the temperature of those two.
     temperature[b] = n > 1 ? (v2 - (px * px + py * py) / n) / (2 * n) : 0
     fractionB[b] = n > 0 ? nB / n : 0
   }
@@ -459,7 +461,7 @@ export function structureFactor(m: DensityModes, n: number, box: ArrayLike<numbe
 /**
  * 选区内粒子的统计（仅二维）。g(r) 以区内每个粒子为中心统计它的所有邻居，
  * 并用选区自己的密度归一化。
- * Statistics over the particles inside a rectangle (2D only). g(r) is centred on each
+ * Statistics over the particles inside a rectangle; in 3D the rectangle is extruded through the box along z. g(r) is centred on each
  * particle inside and counts all of its neighbours, normalised by the region's own density.
  */
 export function regionFrame(
@@ -477,31 +479,38 @@ export function regionFrame(
   rdf?: Hist
 } {
   const [x0, y0, x1, y1] = region
+  const dim = s.dim
   const inside = (i: number) => {
-    const x = s.pos[2 * i]
-    const y = s.pos[2 * i + 1]
+    const x = s.pos[dim * i]
+    const y = s.pos[dim * i + 1]
     return x >= x0 && x < x1 && y >= y0 && y < y1
   }
-  const psi = psi6(s)
+  const speed2 = (i: number) => {
+    let v2 = 0
+    for (let d = 0; d < dim; d++) v2 += s.vel[dim * i + d] ** 2
+    return v2
+  }
+  // 六角序参量只在二维有定义。 / The hexatic order parameter is defined in 2D only.
+  const psi = dim === 2 ? psi6(s) : null
   let n = 0
   let ke = 0
   let psiAbs = 0
   for (let i = 0; i < s.n; i++) {
     if (!inside(i)) continue
     n++
-    ke += 0.5 * (s.vel[2 * i] ** 2 + s.vel[2 * i + 1] ** 2)
-    psiAbs += Math.hypot(psi[2 * i], psi[2 * i + 1])
+    ke += 0.5 * speed2(i)
+    if (psi) psiAbs += Math.hypot(psi[2 * i], psi[2 * i + 1])
   }
   let neighbours = 0
   forEachPair(s, COORDINATION_RADIUS, (i, j) => {
     neighbours += (inside(i) ? 1 : 0) + (inside(j) ? 1 : 0)
   })
-  const area = (x1 - x0) * (y1 - y0)
+  const measure = (x1 - x0) * (y1 - y0) * s.box[2]
   const out: ReturnType<typeof regionFrame> = {
     n,
-    density: n / area,
+    density: n / measure,
     // 选区不是孤立系统，不扣除质心自由度。 / The region is not isolated, so no centre-of-mass degrees of freedom are removed.
-    temperature: n > 0 ? ke / n : 0,
+    temperature: n > 0 ? (2 * ke) / (dim * n) : 0,
     psi6Local: n > 0 ? psiAbs / n : 0,
     coordination: n > 0 ? neighbours / n : 0,
   }
@@ -512,7 +521,7 @@ export function regionFrame(
     const y = new Float64Array(bins)
     for (let i = 0; i < s.n; i++) {
       if (!inside(i)) continue
-      const b = Math.floor(Math.hypot(s.vel[2 * i], s.vel[2 * i + 1]) / w)
+      const b = Math.floor(Math.sqrt(speed2(i)) / w)
       if (b < bins) y[b]++
     }
     for (let b = 0; b < bins; b++) {
@@ -524,32 +533,35 @@ export function regionFrame(
   if (ids.includes('rdf')) {
     const bins = 120
     let half = Infinity
-    for (let d = 0; d < 2; d++) half = Math.min(half, s.box[d] / 2)
+    for (let d = 0; d < dim; d++) half = Math.min(half, s.box[d] / 2)
     const rmax = Math.min(4, half)
     const counts = new Float64Array(bins)
     forEachPair(s, rmax, (i, j, r2) => {
       const b = Math.floor((Math.sqrt(r2) / rmax) * bins)
       if (b < bins) counts[b] += (inside(i) ? 1 : 0) + (inside(j) ? 1 : 0)
     })
-    out.rdf = regionRdf(counts, rmax, n, area)
+    out.rdf = regionRdf(counts, rmax, n, measure, dim)
   }
   return out
 }
 
 /**
- * 把以区内粒子为中心的有序对计数化为 g(r)：除以 n · ρ_区 · 环面积。
+ * 把以区内粒子为中心的有序对计数化为 g(r)：除以 n · ρ_区 · 环面积（三维是球壳体积）。
+ * `measure` 是选区的面积（三维是体积）。
  * Turn ordered pair counts centred on the region's particles into g(r): divide by
- * n · ρ_region · ring area.
+ * n · ρ_region · ring area (shell volume in 3D). `measure` is the region's area (volume in 3D).
  */
-export function regionRdf(counts: ArrayLike<number>, rmax: number, n: number, area: number): Hist {
+export function regionRdf(counts: ArrayLike<number>, rmax: number, n: number, measure: number, dim: 2 | 3 = 2): Hist {
   const bins = counts.length
   const w = rmax / bins
   const x = new Float64Array(bins)
   const y = new Float64Array(bins)
   for (let b = 0; b < bins; b++) {
-    const ring = Math.PI * (((b + 1) * w) ** 2 - (b * w) ** 2)
+    const r0 = b * w
+    const r1 = (b + 1) * w
+    const ring = dim === 2 ? Math.PI * (r1 * r1 - r0 * r0) : (4 / 3) * Math.PI * (r1 ** 3 - r0 ** 3)
     x[b] = (b + 0.5) * w
-    y[b] = n > 0 ? counts[b]! / (n * (n / area) * ring) : 0
+    y[b] = n > 0 ? counts[b]! / (n * (n / measure) * ring) : 0
   }
   return { x, y }
 }

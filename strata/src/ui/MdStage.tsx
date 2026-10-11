@@ -12,7 +12,7 @@ import { useUi } from './store'
  * 三维视图绕竖直轴缓慢转动，以便看出纵深结构。
  * The 3D view turns slowly about the vertical axis so the depth structure can be read.
  */
-const viewAngle = () => performance.now() * 1e-4
+const viewAngle = () => (engine.view.front ? 0 : performance.now() * 1e-4)
 
 function caption(el: HTMLElement | null): void {
   if (!el) return
@@ -20,7 +20,7 @@ function caption(el: HTMLElement | null): void {
   const box = Array.from(b.box.subarray(0, b.dim), (v) => v.toFixed(1)).join(' × ')
   el.textContent =
     `${b.n} 个粒子 · 第 ${b.stepCount} 步 · 盒子 ${box} σ` +
-    (b.dim === 3 ? ' · 视角绕竖直轴缓慢转动' : '') +
+    (b.dim === 3 ? (engine.view.front ? ' · 正视：x 向右，y 向上' : ' · 视角绕竖直轴缓慢转动') : '') +
     (engine.overflow ? ' · 邻居表溢出，受力不完整' : '')
 }
 
@@ -181,7 +181,10 @@ function ShellRing() {
  * 在舞台上拖出一个矩形选区；右侧各层会同时画出选区内的取值。仅二维。
  * Drag a rectangle on the stage; the level cards then also draw the values inside it. 2D only.
  */
-function RegionBrush() {
+/** 三维正视图里盒子只占画面的 2/3（见投影的缩放）。 / In the 3D front view the box spans only 2/3 of the picture (see the projection's scale). */
+const VIEW3D_SPAN = 1.5
+
+function RegionBrush({ three = false }: { three?: boolean }) {
   type Rect = { x0: number; y0: number; x1: number; y1: number }
   const [drag, setDragState] = useState<Rect | null>(null)
   // 拖动的当前值另存一份在 ref 里：事件可能在下一次渲染之前接连到来，闭包里的 state 会是旧的。
@@ -203,13 +206,27 @@ function RegionBrush() {
     }
   }
   const box = () => (engine.backend as MdBackend).box
-  // 已定下的选区，换回相对坐标来画 / The committed region, back in fractions for drawing
-  const committed = engine.region && {
-    x0: engine.region[0] / box()[0]!,
-    y0: engine.region[1] / box()[1]!,
-    x1: engine.region[2] / box()[0]!,
-    y1: engine.region[3] / box()[1]!,
+  // 画面上的相对坐标与盒子坐标互换。二维：画面就是盒子，y 向下。三维正视：盒子居中、占 2/3，y 向上。
+  // Between fractions of the picture and box coordinates. 2D: the picture is the box, y downwards.
+  // 3D front view: the box is centred, spans 2/3, and y points up.
+  const toBox = (fx: number, fy: number): [number, number] => {
+    const [lx, ly] = [box()[0]!, box()[1]!]
+    if (!three) return [fx * lx, fy * ly]
+    const clamp = (v: number, L: number) => Math.min(L, Math.max(0, v))
+    return [clamp(lx / 2 + (fx - 0.5) * VIEW3D_SPAN * lx, lx), clamp(ly / 2 - (fy - 0.5) * VIEW3D_SPAN * lx, ly)]
   }
+  const toPicture = (x: number, y: number): [number, number] => {
+    const [lx, ly] = [box()[0]!, box()[1]!]
+    if (!three) return [x / lx, y / ly]
+    return [0.5 + (x - lx / 2) / (VIEW3D_SPAN * lx), 0.5 - (y - ly / 2) / (VIEW3D_SPAN * lx)]
+  }
+  // 已定下的选区，换回相对坐标来画 / The committed region, back in fractions for drawing
+  const committed = (() => {
+    if (!engine.region) return null
+    const [x0, y0] = toPicture(engine.region[0], engine.region[1])
+    const [x1, y1] = toPicture(engine.region[2], engine.region[3])
+    return { x0, y0, x1, y1 }
+  })()
   const shown = drag ?? (hasRegion ? committed : null)
   return (
     <div
@@ -236,7 +253,18 @@ function RegionBrush() {
         setDrag(null)
         // 太小的拖动当作点击：清除选区 / A tiny drag is a click: clear the region
         if (x1 - x0 < 0.01 || y1 - y0 < 0.01) engine.setRegion(null)
-        else engine.setRegion([x0 * box()[0]!, y0 * box()[1]!, x1 * box()[0]!, y1 * box()[1]!])
+        else {
+          const a = toBox(x0, y0)
+          const b = toBox(x1, y1)
+          const region: [number, number, number, number] = [
+            Math.min(a[0], b[0]),
+            Math.min(a[1], b[1]),
+            Math.max(a[0], b[0]),
+            Math.max(a[1], b[1]),
+          ]
+          // 拖在盒子外面：选区是空的，当作清除。 / Dragged outside the box: an empty region, treated as a clear.
+          engine.setRegion(region[2] > region[0] && region[3] > region[1] ? region : null)
+        }
       }}
     >
       {shown && (
@@ -261,6 +289,7 @@ export function MdStage() {
   const hasRegion = useUi((s) => s.hasRegion)
   const [slab, setSlab] = useState(engine.view.slab ?? 0)
   const [colour3d, setColour3d] = useState(engine.view.colour3d ?? 0)
+  const [front, setFront] = useState(engine.view.front ?? 0)
   // 一旦有两种粒子就显示粒子种类。 / Show the species as soon as there are two of them.
   useEffect(() => {
     const next = mixture ? 2 : engine.view.colour === 2 ? 0 : (engine.view.colour ?? 0)
@@ -273,13 +302,14 @@ export function MdStage() {
     <section className="stage-wrap">
       <div className="stage-frame">
         {kind === 'gpu' ? <GpuCanvas /> : <CpuCanvas />}
-        {!three && <RegionBrush />}
+        {(!three || front === 1) && <RegionBrush three={three} key={three ? 'front' : 'flat'} />}
         {!three && <ShellRing />}
       </div>
       <span ref={infoRef} className="caption" />
-      {!three && (
+      {(!three || front === 1) && (
         <span className="caption">
           {hasRegion ? '橙色线是选区内的取值；在舞台上单击可清除选区。' : '在舞台上拖出一个矩形，可单独统计那一块区域。'}
+          {three && '三维里选区是这个矩形沿视线方向贯穿整个盒子的柱体。'}
         </span>
       )}
       {three ? (
@@ -298,6 +328,21 @@ export function MdStage() {
             </button>
           ))}
           {colour3d === 1 && <span className="colourbar" title="q̄₆ 从 0 到 0.6" />}
+          <span className="caption">视角</span>
+          {['转动', '正视（可框选区）'].map((label, i) => (
+            <button
+              key={label}
+              aria-pressed={i === front}
+              onClick={() => {
+                engine.view.front = i
+                setFront(i)
+                // 选区只在正视图里看得见，转动时清掉。 / The region is visible only in the front view; clear it when rotating.
+                if (i === 0) engine.setRegion(null)
+              }}
+            >
+              {label}
+            </button>
+          ))}
           <span className="caption">显示</span>
           {['整个盒子', '中间 3σ 厚的切片'].map((label, i) => (
             <button
