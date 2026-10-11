@@ -254,10 +254,11 @@ in the repository become an exported record. `uv run idea-loom db import` merges
 existing files into the database (repeatable, never duplicating), `db export <dir>` writes
 files byte-identical to the originals, and `db status` shows how many events each log has.
 
-愿望进 git，也就是公开的。如果不想公开，把 `data/wishes.jsonl` 移到 `runs/` 下并改 `wishes.py` 里的路径。
+愿望和任务的数据进 git，也就是公开的——这是定下来的做法。访客提的、还没经主人放行的愿望不在其内，它们只在运行目录（云端是数据库）里。
 
-Wishes are in git and therefore public. To keep them private, move `data/wishes.jsonl`
-under `runs/` and change the path in `wishes.py`.
+Wish and task data are in git and therefore public; this is the settled choice. Wishes sent
+by visitors that the owner has not yet let through are not included: they stay in the runs
+directory (the database in the cloud).
 
 事件有这几种 / Event kinds：`created`、`edited`、`moved`、`status`、`merged_into`、`discarded`、
 `restored`、`noted`。编号永不复用，合并和丢弃的条目留在日志里。
