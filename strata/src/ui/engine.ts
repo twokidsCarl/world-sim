@@ -435,26 +435,46 @@ export class Engine {
     }
   }
 
+  /**
+   * 开始动画循环。页面看不见时（切到别的标签页、窗口最小化）循环停下，回来再继续。
+   * Start the animation loop. It stops while the page is hidden (another tab, a minimised
+   * window) and resumes on return.
+   */
   start(): void {
-    const tick = () => {
-      const now = performance.now()
-      const before = this.backend.stepCount
-      void this.frameOnce()
-      if (this.lastFrameAt > 0) {
-        const slot = this.frameIndex++ % PERF_FRAMES
-        this.frameTimes[slot] = now - this.lastFrameAt
-        this.frameSteps[slot] = this.backend.stepCount - before
-      }
-      this.lastFrameAt = now
-      this.mainMs = 0.9 * this.mainMs + 0.1 * (performance.now() - now)
-      this.raf = requestAnimationFrame(tick)
-    }
-    cancelAnimationFrame(this.raf)
-    this.raf = requestAnimationFrame(tick)
+    document.addEventListener('visibilitychange', this.onVisibility)
+    this.resume()
   }
 
   stop(): void {
+    document.removeEventListener('visibilitychange', this.onVisibility)
     cancelAnimationFrame(this.raf)
+  }
+
+  private tick = (): void => {
+    const now = performance.now()
+    const before = this.backend.stepCount
+    void this.frameOnce()
+    if (this.lastFrameAt > 0) {
+      const slot = this.frameIndex++ % PERF_FRAMES
+      this.frameTimes[slot] = now - this.lastFrameAt
+      this.frameSteps[slot] = this.backend.stepCount - before
+    }
+    this.lastFrameAt = now
+    this.mainMs = 0.9 * this.mainMs + 0.1 * (performance.now() - now)
+    this.raf = requestAnimationFrame(this.tick)
+  }
+
+  private resume(): void {
+    cancelAnimationFrame(this.raf)
+    if (document.hidden) return
+    // 不把暂停的那段时间算进帧节奏里。 / Keep the paused interval out of the frame pacing.
+    this.lastFrameAt = 0
+    this.raf = requestAnimationFrame(this.tick)
+  }
+
+  private onVisibility = (): void => {
+    if (document.hidden) cancelAnimationFrame(this.raf)
+    else this.resume()
   }
 }
 
