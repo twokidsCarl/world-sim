@@ -1,12 +1,19 @@
-// 从存储缓冲区绘制由 0/1 格子组成的正方晶格，每个晶格画在各自的视口中。
-// Draws square lattices of 0/1 cells from storage buffers, each into its own viewport.
+// 从存储缓冲区绘制正方晶格，每个晶格画在各自的视口中。格子取 0/1 时用一种颜色画出取 1 的格子；
+// 取多种离散状态时按调色板着色。
+// Draws square lattices from storage buffers, each into its own viewport. With 0/1 cells
+// the 1-cells get one colour; with several discrete states the cells are coloured from a palette.
+
+import { STATE_COLOURS } from './palette'
 
 const SHADER = /* wgsl */ `
 struct View {
   up: vec4f,
   size: u32,
   offset: u32,   // 这张方格在缓冲里的起始下标 / index in the buffer where this lattice starts
+  palette: u32,  // 1 = 按调色板给状态着色 / 1 = colour the states from the palette
 }
+
+const PALETTE = array<vec3f, 8>(${STATE_COLOURS.map(([r, g, b]) => `vec3f(${r / 255}, ${g / 255}, ${b / 255})`).join(', ')});
 
 @group(0) @binding(0) var<uniform> V: View;
 @group(0) @binding(1) var<storage, read> cells: array<u32>;
@@ -28,7 +35,9 @@ fn vs(@builtin(vertex_index) vi: u32) -> Out {
 @fragment
 fn fs(in: Out) -> @location(0) vec4f {
   let c = min(vec2u(in.uv * f32(V.size)), vec2u(V.size - 1));
-  return V.up * f32(cells[V.offset + c.y * V.size + c.x]);
+  let v = cells[V.offset + c.y * V.size + c.x];
+  if (V.palette == 1u) { return vec4f(PALETTE[min(v, 7u)], 1); }
+  return V.up * f32(v);
 }
 `
 
@@ -60,8 +69,15 @@ export class LatticeRenderer {
   /**
    * `encoder` 中可以已经含有准备这些缓冲区的计算通道。取值为 1 的格子用 `color` 着色。
    * `encoder` may already hold compute passes that prepare the buffers. Up-cells get `color`.
+   * `palette` 为真时改按调色板给各状态着色。 / With `palette` set, the states are coloured from the palette instead.
    */
-  draw(encoder: GPUCommandEncoder, view: GPUTextureView, lattices: LatticeView[], color: [number, number, number]): void {
+  draw(
+    encoder: GPUCommandEncoder,
+    view: GPUTextureView,
+    lattices: LatticeView[],
+    color: [number, number, number],
+    palette = false,
+  ): void {
     const pass = encoder.beginRenderPass({
       colorAttachments: [{ view, loadOp: 'clear', storeOp: 'store', clearValue: { r: 0, g: 0, b: 0, a: 0 } }],
     })
@@ -81,7 +97,7 @@ export class LatticeRenderer {
       }
       const data = new ArrayBuffer(32)
       new Float32Array(data, 0, 4).set([...color, 1])
-      new Uint32Array(data, 16, 2).set([l.size, l.offset ?? 0])
+      new Uint32Array(data, 16, 3).set([l.size, l.offset ?? 0, Number(palette)])
       this.device.queue.writeBuffer(entry.uniform, 0, data)
       pass.setViewport(...l.rect, 0, 1)
       pass.setBindGroup(0, entry.group)

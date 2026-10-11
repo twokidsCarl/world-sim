@@ -243,6 +243,32 @@
       "url": "/?substrate=ising&dim=3&T=4.51"
     },
     {
+      "id": "pottsOrder",
+      "title": {
+        "zh": "多一种状态，相变就换一种：连续的变成不连续的",
+        "en": "More states, a different transition: continuous turns discontinuous"
+      },
+      "hint": {
+        "zh": "三种状态时两种出发点到同一个能量；八种状态时停在两个能量上，差的就是潜热",
+        "en": "With three states both starts reach one energy; with eight they settle at two, a latent heat apart"
+      },
+      "idea": "1.1",
+      "url": "/?scenario=pottsOrder"
+    },
+    {
+      "id": "pottsCritical",
+      "title": {
+        "zh": "停在相变点上的三态 Potts 模型",
+        "en": "A three-state Potts model held at its transition"
+      },
+      "hint": {
+        "zh": "三种颜色的团块，各种大小都有；旁边是逐级粗粒化后的样子",
+        "en": "Patches of three colours at every size; beside it, the lattice coarse-grained level by level"
+      },
+      "idea": "1.1",
+      "url": "/?substrate=potts&q=3&tau=1"
+    },
+    {
       "id": "collapse",
       "title": {
         "zh": "一团静止的天体坍缩，然后自己找到平衡",

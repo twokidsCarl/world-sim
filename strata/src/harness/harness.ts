@@ -12,6 +12,8 @@ import { IsingCpuBackend, IsingGpuBackend } from '../substrates/ising/backend'
 import { Ising3dCpuBackend, Ising3dGpuBackend } from '../substrates/ising/backend3d'
 import { ISING_KNOBS } from '../substrates/ising/schema'
 import { MdGpuBackend } from '../substrates/md/backend-gpu'
+import { PottsCpuBackend, PottsGpuBackend } from '../substrates/potts/backend'
+import { POTTS_KNOBS } from '../substrates/potts/schema'
 import { buildTable, speciesField, speciesTables, tablePair } from '../substrates/md/potential'
 import { initFcc, initTriangular } from '../substrates/md/ref/init'
 import { densityModes, q6Summary, rdf, regionFrame, scalars, speedHistogram } from '../substrates/md/ref/reducers'
@@ -314,6 +316,30 @@ export async function runHarness(): Promise<HarnessResult> {
   cpuLevels3.forEach((l, k) => (levelDiff3 += Math.abs(l.m - gpuLevels3[k]!.m) + Math.abs(l.nn - gpuLevels3[k]!.nn)))
   check(`三维 Ising ${cpuLevels3.length} 层金字塔统计量差`, levelDiff3, 0)
   ising3Gpu.dispose()
+
+  // Potts：同样要求逐位一致，取状态数最多、提议分支最多的 q = 8 和最少的 q = 2。
+  // Potts: bit-for-bit agreement again, at q = 8 (most states and proposal branches) and q = 2 (fewest).
+  for (const q of [8, 2]) {
+    const pp: Params = { ...defaults(POTTS_KNOBS), q, L: 7, tau: 0.98, start: 0 }
+    const pottsCpu = new PottsCpuBackend(pp, 5)
+    const pottsGpu = new PottsGpuBackend(gpu, pp, 5)
+    for (let i = 0; i < 4; i++) {
+      pottsCpu.step(8)
+      pottsGpu.step(8)
+      await pottsGpu.idle()
+    }
+    const gpuStates = await pottsGpu.readSpins()
+    let mismatchedStates = 0
+    for (let i = 0; i < gpuStates.length; i++) mismatchedStates += gpuStates[i] === pottsCpu.state.spins[i] ? 0 : 1
+    check(`Potts q=${q} 32 次扫描后不一致的格点数`, mismatchedStates, 0)
+    const cpuFrame = pottsCpu.reduce()
+    const gpuFrame = await pottsGpu.reduce()
+    let pottsDiff = 0
+    cpuFrame.levels.forEach((l, k) => (pottsDiff += Math.abs(l.order - gpuFrame.levels[k]!.order) + Math.abs(l.like - gpuFrame.levels[k]!.like)))
+    cpuFrame.fractions.forEach((f, k) => (pottsDiff += Math.abs(f - gpuFrame.fractions[k]!)))
+    check(`Potts q=${q} ${cpuFrame.levels.length} 层金字塔统计量差`, pottsDiff, 0)
+    pottsGpu.dispose()
+  }
 
   // 引力：先用直接求和计算加速度和势，再跑一段短轨迹。
   // Gravity: accelerations and potentials by direct summation, then a short trajectory.

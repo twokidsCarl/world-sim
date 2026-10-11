@@ -4,7 +4,7 @@ import { Bench, lastBench } from './Bench'
 import { ConstantsPanel } from './ConstantsPanel'
 import { engine } from './engine'
 import { GravityStage } from './GravityStage'
-import { IsingStage } from './IsingStage'
+import { IsingStage, PottsStage } from './IsingStage'
 import { KnobPanel, PotentialPreview } from './KnobPanel'
 import { LevelCards } from './LevelCards'
 import { MdStage } from './MdStage'
@@ -22,6 +22,7 @@ import { applyUrl, EMBED } from './url'
 const VIEWS: Record<string, { stage: ReactNode; extras?: ReactNode; footer?: ReactNode }> = {
   md: { stage: <MdStage />, extras: <PotentialPreview />, footer: <ConstantsPanel /> },
   ising: { stage: <IsingStage /> },
+  potts: { stage: <PottsStage /> },
   gravity: { stage: <GravityStage /> },
 }
 

@@ -460,4 +460,35 @@ export const SCENARIOS: Scenario[] = [
       },
     ],
   },
+  {
+    id: 'pottsOrder',
+    title: '多一种状态，相变就换一种：连续的变成不连续的',
+    substrate: 'potts',
+    steps: [
+      {
+        text: '三种状态的 Potts 模型，停在它的相变点上，从全同（有序）的状态出发。等能量稳定下来。',
+        set: { q: 3, L: 8, tau: 1, start: 1 },
+        run: 80000,
+        expect: { quantity: 'energy', agree: true, text: 'q = 3，有序出发：能量到达严格值 −(1 + 1/√3) ≈ −1.577' },
+      },
+      {
+        text: '同一个 q、同一个温度，改从随机（无序）的状态出发。',
+        set: { start: 0 },
+        run: 80000,
+        expect: { quantity: 'energy', agree: true, text: 'q = 3，无序出发：到达同一个能量（连续相变，没有潜热）' },
+      },
+      {
+        text: '把状态数加到八种，仍停在相变点上，从有序出发。',
+        set: { q: 8, L: 9, tau: 1, start: 1 },
+        run: 12000,
+        expect: { quantity: 'energy', agree: true, text: 'q = 8，有序出发：停在有序相的能量 ≈ −1.597' },
+      },
+      {
+        text: '同一个温度，从无序出发。这一次它停在另一个能量上：两相在同一个温度共存，相差的就是潜热。',
+        set: { start: 0 },
+        run: 12000,
+        expect: { quantity: 'energy', agree: true, text: 'q = 8，无序出发：停在无序相的能量 ≈ −1.110（比有序相高 0.486）' },
+      },
+    ],
+  },
 ]
