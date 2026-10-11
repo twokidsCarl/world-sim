@@ -91,7 +91,7 @@ p {
   display: block;
 }
 
-/* ---------------------------------------------------------------- layout */
+/* ---------------------------------------------------------------- 布局 / layout */
 
 .app {
   height: 100%;
@@ -183,7 +183,7 @@ p {
   display: none !important;
 }
 
-/* ---------------------------------------------------------------- top bar */
+/* ---------------------------------------------------------------- 顶栏 / top bar */
 
 .topbar {
   display: flex;
@@ -289,7 +289,7 @@ p {
   background: var(--accent-soft);
 }
 
-/* ---------------------------------------------------------------- search */
+/* ---------------------------------------------------------------- 搜索 / search */
 
 .search {
   position: relative;
@@ -403,7 +403,7 @@ p {
   white-space: nowrap;
 }
 
-/* ---------------------------------------------------------------- viewer */
+/* ---------------------------------------------------------------- 三维视图 / viewer */
 
 .viewer,
 .viewer-host {
@@ -582,6 +582,7 @@ p {
   content: '✓ ';
 }
 
+/* 对照视图：舞台一分为二，另一人体在右侧 */
 /* compare view: the stage splits in two, the other body on the right */
 .viewer.comparing .viewer-host {
   right: 50%;
@@ -704,7 +705,7 @@ p {
   font-size: 12px;
 }
 
-/* ---------------------------------------------------------------- controls */
+/* ---------------------------------------------------------------- 控件 / controls */
 
 .group {
   padding: 12px 12px 14px;
@@ -971,7 +972,112 @@ input[type='checkbox'] {
   white-space: nowrap;
 }
 
-/* ---------------------------------------------------------------- tree */
+/* 体表图图例 / skin map legend */
+.skin-caveat {
+  margin: 0 0 4px;
+}
+
+.skin-about {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.skin-about ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+}
+
+.legend-head {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.legend {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+
+.legend button {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 3px 8px;
+  text-align: left;
+}
+
+.legend li.hover button,
+.legend button:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.legend li.selected button {
+  background: var(--accent-soft);
+}
+
+.legend li.empty {
+  opacity: 0.45;
+}
+
+.legend-name {
+  min-width: 0;
+}
+
+.info-stack > .info + .info {
+  border-top: 1px solid var(--line);
+}
+
+.info-stack > .panel-body {
+  flex: none;
+  overflow: visible;
+}
+
+.skin-region-kind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.skin-region-item + .skin-region-item {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.skin-region-item .props {
+  margin-top: 8px;
+}
+
+.skin-region .hint {
+  margin-top: 8px;
+}
+
+.skin-sources {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.skin-sources .tag {
+  margin-left: 6px;
+}
+
+/* ---------------------------------------------------------------- 结构树 / tree */
 
 .tree-panel {
   display: flex;
@@ -1099,7 +1205,7 @@ input[type='checkbox'] {
   opacity: 0.55;
 }
 
-/* ---------------------------------------------------------------- info */
+/* ---------------------------------------------------------------- 信息面板 / info */
 
 .info {
   padding: 12px;
@@ -1343,7 +1449,7 @@ input[type='checkbox'] {
   margin: 2px 0 0 12px;
 }
 
-/* ---------------------------------------------------------------- dialog */
+/* ---------------------------------------------------------------- 对话框 / dialog */
 
 .dialog-backdrop {
   position: fixed;
@@ -1449,7 +1555,7 @@ input[type='checkbox'] {
   display: none;
 }
 
-/* ---------------------------------------------------------------- narrow screens */
+/* ---------------------------------------------------------------- 窄屏 / narrow screens */
 
 @media (max-width: 1100px) {
   .workspace {
@@ -1539,6 +1645,7 @@ input[type='checkbox'] {
     display: none;
   }
 
+  /* 窄屏时对照视图上下排列 */
   /* compare stacks vertically on narrow screens */
   .viewer.comparing .viewer-host {
     right: 0;
@@ -1577,6 +1684,7 @@ input[type='checkbox'] {
     padding: 6px 4px;
   }
 
+  /* 详情面板变为底部抽屉，模型仍可在其上方看到 */
   /* the details panel becomes a bottom sheet so the model stays visible above it */
   .panel-right {
     top: auto;

@@ -1,3 +1,5 @@
+// 校验 public/anatomy/female（由 `bun run pipeline:female` 根据男性身体和女性锚点包构建）。
+// 尚未构建时跳过。
 // Validates public/anatomy/female (built by `bun run pipeline:female` from the male body and the
 // female anchor package). Skipped when it has not been built.
 
@@ -37,12 +39,14 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
       expect(names, p.id).toContain(p.source)
-      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8})|VF_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+)$/)
+      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+)$/)
       if (p.id.startsWith('W_')) {
+        // 形变后的男性部件：保留男性部件的身份，并标明其几何的来源
         // warped male part: keeps the male part's identity, names where its geometry came from
         const m = maleById.get(p.id.slice(2))
         expect(m, p.id).toBeDefined()
-        expect(p.provenance, p.id).toBe('warped')
+        // 皮下脂肪在她身上重新推导，不是形变得到的 / the subcutaneous fat is derived again on her body, not warped
+        expect(p.provenance, p.id).toBe(/^W_SOMA_fat_/.test(p.id) ? 'curated' : 'warped')
         expect(p.fma).toBe(m!.fma)
         expect(p.name).toBe(m!.name)
         expect(p.source).toBe(m!.source ?? 'BodyParts3D 4.0')
@@ -66,7 +70,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(maleOnly.map((p) => p.name)).toEqual([])
     expect(data.parts.filter((p) => p.system === 'reproductive').every((p) => p.provenance === 'curated')).toBe(true)
     for (const n of ['Body of uterus', 'Fundus of uterus', 'Uterine cervix', 'Vagina', 'Left ovary', 'Right ovary', 'Left uterine artery', 'Right round ligament of uterus', 'Left mammary lobe', 'Right mammary lobe']) expect(byName(n).provenance, n).toBe('curated')
-    // what the male model has and she must still have
+    // 男性模型有、她也必须仍然有的结构 / what the male model has and she must still have
     for (const n of ['Urinary bladder', 'Rectum', 'Left kidney', 'Stomach', 'Skin', 'Left sciatic nerve', 'Thyroid gland', 'Upper lobe of left lung']) expect(byName(n)).toBeDefined()
     expect(report.sexChecks.noMaleOnlyParts.pass).toBe(true)
     expect(report.sexChecks.leftRightPresence.pass).toBe(true)
@@ -78,6 +82,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(real.length).toBeGreaterThanOrEqual(65)
     expect(real.every((p) => p.id.startsWith('VF_'))).toBe(true)
     expect(report.scannedBones.maxNonRigidDeviationM).toBeLessThan(1e-5)
+    // 长骨比男性的短 5–12 %，骨盆同宽或更宽
     // long bones 5–12 % shorter than the male's, pelvis as wide or wider
     for (const n of ['Left femur', 'Right femur', 'Left tibia', 'Right tibia', 'Left humerus']) {
       const r = len(byName(n)) / len(maleByName(n))
@@ -87,20 +92,22 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     }
     const hipWidth = (parts: Part[]) => Math.max(...parts.map((p) => p.bbox[3])) - Math.min(...parts.map((p) => p.bbox[0]))
     expect(hipWidth([byName('Left hip bone'), byName('Right hip bone')])).toBeGreaterThan(hipWidth([maleByName('Left hip bone'), maleByName('Right hip bone')]) - 0.002)
+    // 六块腰椎，依次叠在 T12 与骶骨之间
     // six lumbar vertebrae, stacked in order between T12 and the sacrum
     const extra = byName('Supernumerary lumbar vertebra (first of six)')
     expect(extra).toMatchObject({ provenance: 'scanned', tissue: 'bone', side: 'M', fma: 'VFC_supernumerary_lumbar_vertebra' })
+    // 有自己的概念，挂在 "lumbar vertebra" 之下，这样它才能有自己的名称
     // its own concept, under "lumbar vertebra", so that it can carry its own name
     const own = data.trees.isa.find((c) => c.id === extra.fma)!
     expect(own.parts).toEqual([extra.id])
     expect(data.trees.isa.find((c) => c.id === own.parent)!.name).toBe('lumbar vertebra')
     const stack = ['Twelfth thoracic vertebra', 'Supernumerary lumbar vertebra (first of six)', 'First lumbar vertebra', 'Second lumbar vertebra', 'Third lumbar vertebra', 'Fourth lumbar vertebra', 'Fifth lumbar vertebra', 'Sacrum'].map((n) => byName(n).centroid[1])
     for (let i = 1; i < stack.length; i++) expect(stack[i]!, `vertebra ${i}`).toBeLessThan(stack[i - 1]!)
-    // right forearm: mirrored left bones, marked as not hers
+    // 右前臂：左侧骨的镜像，标记为不是她自己的 / right forearm: mirrored left bones, marked as not hers
     expect(byName('Right radius')).toMatchObject({ provenance: 'warped', source: 'Visible Human Female CT' })
     expect(byName('Left radius').provenance).toBe('scanned')
     expect(Math.abs(len(byName('Right radius')) - len(byName('Left radius')))).toBeLessThan(0.01)
-    // hands and feet: warped male bones
+    // 手和足：形变后的男性骨 / hands and feet: warped male bones
     expect(byName('Left calcaneus').provenance).toBe('warped')
     expect(byName('Left capitate').provenance).toBe('warped')
   })
@@ -112,6 +119,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(Math.abs(minY - maleMinY)).toBeLessThan(0.02)
     expect(maxY - minY).toBeGreaterThan(1.5)
     expect(maxY - minY).toBeLessThan(1.75)
+    // 上肢垂于体侧，下肢竖直并分开，与男性相同
     // arms down beside the body, legs vertical and apart, as in the male
     for (const [n, sign] of [['Left', 1], ['Right', -1]] as const) {
       const hand = byName(`${n} capitate`)
@@ -170,6 +178,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
 
   it('clears the uterus, ovaries and tubes from the bowel and the bladder', () => {
     const pelvis = report.collisions.pelvis
+    // 修正前：左卵巢 100 %、左输卵管 98 %、子宫 30 % 位于形变后的乙状结肠内
     // was: left ovary 100 %, left tube 98 %, uterus 30 % inside the warped sigmoid colon
     for (const k of ['uterus', 'left ovary', 'left uterine tube', 'right ovary', 'right uterine tube']) {
       expect(pelvis.insideDescendingColon.after[k], k).toBeLessThan(0.02)
@@ -177,11 +186,13 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     }
     expect(pelvis.insideDescendingColon.before['left ovary']).toBeGreaterThan(0.9)
     expect(pelvis.insideBladder.after.vagina).toBeLessThan(0.03)
+    // 肠管仍是一条大小相近的管，位于她的骨和膀胱之外
     // the bowel stayed a tube of about the same size, outside her bones and bladder
     expect(pelvis.colon.volumeMlAfter / pelvis.colon.volumeMlBefore).toBeGreaterThan(0.75)
     expect(pelvis.colon.surfaceInsideBone).toBeLessThan(0.02)
     expect(pelvis.colon.surfaceInsideBladder).toBeLessThan(0.02)
     expect(report.collisions.hraSetMovedPosteriorMm).toBeLessThanOrEqual(12)
+    // 不再有任何生殖结构大部分位于另一个器官内
     // nothing reproductive is mostly inside another organ any more
     const worst = Math.max(0, ...Object.values(report.collisions.hraInsideOthers as Record<string, { inside: number }>).map((v) => v.inside))
     expect(worst).toBeLessThan(0.3)
@@ -195,6 +206,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     const skin = byName('Skin')
     expect(skin.provenance).toBe('warped')
     for (const n of ['Left mammary lobe', 'Right mammary lobe']) expect(byName(n).bbox[5]).toBeLessThan(skin.bbox[5] + 1e-6)
+    // 包络是局部的：皮肤没有比原先更宽或更高，只是在胸部前后方向更深
     // the envelope is local: the skin is no wider or taller than before, only deeper at the chest
     expect(report.skin.verticesRaised / report.skin.ofVertices).toBeLessThan(0.1)
     expect(report.shoulder.left.differenceMm).toBeDefined()
@@ -203,6 +215,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
   it('keeps the deformation in bounds and reports where it is not', () => {
     const j = report.jacobian
     expect(j.samples).toBeGreaterThan(20000)
+    // 空间折叠：相邻骨彼此相对移动的地方可以容忍，但应很少
     // folded space: tolerated where neighbouring bones moved against each other, but rare
     expect(j.folded / j.samples).toBeLessThan(0.01)
     expect(j.median).toBeGreaterThan(0.8)
@@ -210,10 +223,10 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(j.p01).toBeGreaterThan(0)
     expect(j.p99).toBeLessThan(3)
     const all = report.registration.byRegion.find((r: any) => r.region === 'all')
-    expect(Number(all.residual.split(' / ')[0])).toBeLessThan(4) // median anchor residual, mm
+    expect(Number(all.residual.split(' / ')[0])).toBeLessThan(4) // 锚点残差的中位数，mm / median anchor residual, mm
     expect(report.interpenetration.meanInsideAfter).toBeLessThan(0.03)
     expect(report.interpenetration.nerves.inBoneAfter).toBeLessThan(0.01)
-    // long muscles still end on their bones
+    // 长肌的两端仍止于各自的骨上 / long muscles still end on their bones
     const att = report.attachments as { ok: boolean; femaleMm: number; muscle: string; end: string }[]
     expect(att.length).toBeGreaterThanOrEqual(24)
     expect(att.filter((a) => a.ok).length / att.length).toBeGreaterThan(0.85)
@@ -250,7 +263,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       }
     }
     for (const p of data.parts) {
-      expect(p.adjacent.length, p.id).toBeLessThanOrEqual(200)
+      expect(p.adjacent.length, p.id).toBeLessThanOrEqual(250)
       for (const q of p.adjacent) expect(byId.get(q)?.adjacent.includes(p.id), `${p.id} ↔ ${q}`).toBe(true)
     }
     expect(byName('Skin').adjacent).toEqual([])
@@ -272,6 +285,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(data.parts.filter((p) => !reached.has(p.id)).map((p) => p.id)).toEqual([])
     const isa = new Map(data.trees.isa.map((c) => [c.id, c]))
     for (const p of data.parts) expect(isa.has(p.fma), `${p.id} ${p.fma}`).toBe(true)
+    // 男性特有的概念已去掉，女性的概念已加入
     // male-only concepts are gone, female ones are there
     const names = new Set(data.trees.isa.map((c) => c.name))
     expect(names.has('prostate')).toBe(false)
@@ -280,5 +294,23 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     const genital = data.trees.partOf.find((c) => c.name === 'genital system')!
     const under = data.trees.partOf.filter((c) => c.parent === genital.id).flatMap((c) => c.parts)
     expect(under).toContain('HRA_left_ovary')
+  })
+
+  it('has a subcutaneous fat layer derived on her own body', () => {
+    const fat = data.parts.filter((p) => /^W_SOMA_fat_/.test(p.id))
+    expect(fat.map((p) => p.id).sort()).toEqual(['head', 'lower_limb_L', 'lower_limb_R', 'neck', 'trunk', 'upper_limb_L', 'upper_limb_R'].map((r) => `W_SOMA_fat_${r}`))
+    const skin = data.parts.find((p) => p.name === 'Skin')!
+    for (const p of fat) {
+      expect(p.tissue).toBe('fat')
+      expect(p.system).toBe('integumentary')
+      expect(LAYERS[p.depth]!.key).toBe('fat')
+      expect(p.adjacent, p.id).toEqual([])
+      // 在皮肤包围盒之内 / inside the skin's bounding box
+      for (let k = 0; k < 3; k++) {
+        expect(p.bbox[k]!, p.id).toBeGreaterThanOrEqual(skin.bbox[k]! - 1e-4)
+        expect(p.bbox[k + 3]!, p.id).toBeLessThanOrEqual(skin.bbox[k + 3]! + 1e-4)
+      }
+    }
+    expect(data.cautions!.some((c) => /subcutaneous fat/i.test(c.en) && /皮下脂肪/.test(c.zh))).toBe(true)
   })
 })

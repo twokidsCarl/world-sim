@@ -1,3 +1,7 @@
+// 组合式英译中（简体）翻译器，用于 FMA 风格的解剖学名称。
+// 这是机器翻译：手写词表（tools/knowledge/lexicon/，遵循大陆《人体解剖学名词》用法）加少量结构规则。
+// 这里产生的内容都没有经过医学专业人员审核，调用方必须如实标注。
+//
 // Compositional English -> Simplified Chinese translator for FMA-style anatomical names.
 //
 // This is MACHINE TRANSLATION: a hand-written lexicon (tools/knowledge/lexicon/) that follows
@@ -32,15 +36,25 @@ const PLURALS: [RegExp, string][] = [
 const SIDED_PART_HEADS = /(branch|branches|trunk|lobe|cusp|leaflet|division|tributary|wall|side|limb|duct)$/
 
 export interface Translator {
-  /** Returns undefined when any piece of the name is outside the lexicon and rules. */
+  /**
+   * 名称中任何一部分超出词表和规则时返回 undefined。
+   * Returns undefined when any piece of the name is outside the lexicon and rules.
+   */
   translate(name: string): string | undefined
-  /** How the last successful top-level translation was obtained: pure lexicon hit or composed. */
+  /**
+   * 该名称是否为词表中的完整词条（而非组合得到）。
+   * Whether the name is a whole lexicon term (pure lexicon hit rather than composed).
+   */
   isLexiconTerm(name: string): boolean
-  /** See `exact` in the implementation: a whole-term lexicon hit, modulo side / set / ordinal. */
+  /**
+   * 见实现中的 `exact`：整词命中词表，只允许侧别 / “set of” / 序数的包装。
+   * See `exact` in the implementation: a whole-term lexicon hit, modulo side / set / ordinal.
+   */
   exact(name: string): string | undefined
 }
 
 /**
+ * @param subTerm 可选：按完整英文词查询已知中文名（如 Wikidata 标签），仅用于词表未覆盖的片段。
  * @param subTerm optional lookup of an already-known zh name for an exact English term
  *                (e.g. a Wikidata label); used only for pieces the lexicon does not cover.
  */
@@ -59,26 +73,44 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
 
   function compute(name: string, d: number): string | undefined {
     if (name in TERMS) return TERMS[name]
+    // 整词词条（允许侧别 / set of / 序数包装）优先于逐段组合
+    // a whole lexicon term (modulo side / set of / ordinal) beats piecewise composition
+    const whole = exact(name)
+    if (whole) return whole
     const known = subTerm(name)
     if (known) return known
     let m: RegExpExecArray | null
 
+    // “(in-vivo)” 一类的限定语
     // "(in-vivo)" style qualifiers
     if ((m = /^(.*) \((in[- ]vivo)\)$/.exec(name))) {
       const x = t(m[1]!, d)
       return x && `${x}（活体）`
     }
 
+    // 结尾括号里的限定语：“nail plate (foot)” -> 甲板（足）
+    // Trailing parenthetical qualifier: "nail plate (foot)" -> 甲板（足）
+    if ((m = /^(.+) \(([^()]+)\)$/.exec(name))) {
+      const x = t(m[1]!, d)
+      const q = x && t(m[2]!, d)
+      if (x && q) return `${x}（${q}）`
+    }
+
     const direct = structural(name, d)
     if (direct) return direct
 
+    // 侧别兜底：恰有一个侧别词且其余部分可译 -> 加 左/右 前缀。
+    // （在结构规则之后运行，使 “left hepatic artery” 这类词表词条优先。）
     // Laterality fallback: exactly one side word and the rest is translatable -> 左/右 prefix.
     // (Runs after the structural rules so lexicon terms such as "left hepatic artery" win.)
     const sides = name.match(/\b(left|right)\b/g) ?? []
     if (sides.length === 1) {
       const zhSide = sides[0] === 'left' ? '左' : '右'
+      // “right branch of portal vein”：侧别属于局部而非整体 -> 门静脉右支
       // "right branch of portal vein": the side belongs to the part, not the whole -> 门静脉右支
       const ofAt = name.indexOf(' of ')
+      // 仅用于在同一整体内本身分左右的局部（支、叶、瓣尖……）；
+      // “left superficial part of tibial collateral ligament” 指左侧韧带的局部。
       // Only for parts that are themselves left/right within one whole (branch, lobe, cusp ...);
       // "left superficial part of tibial collateral ligament" is the left ligament's part.
       if (ofAt > 0 && /\b(left|right)\b/.test(name.slice(0, ofAt)) && SIDED_PART_HEADS.test(name.slice(0, ofAt))) {
@@ -96,7 +128,7 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
 
   function structural(name: string, d: number): string | undefined {
     let m: RegExpExecArray | null
-    // Permanent teeth, e.g. "upper first secondary molar tooth".
+    // 恒牙 / Permanent teeth, e.g. "upper first secondary molar tooth".
     if ((m = /^(?:(upper|lower) )?(?:(central|lateral|first|second|third) )?secondary (incisor|canine|premolar|molar) tooth$/.exec(name))) {
       const jaw = m[1] === 'upper' ? '上颌' : m[1] === 'lower' ? '下颌' : ''
       const kind = { incisor: '切牙', canine: '尖牙', premolar: '前磨牙', molar: '磨牙' }[m[3]!]!
@@ -107,19 +139,31 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       return `${jaw}恒${kind}`
     }
 
-    // Numbered spinal ganglia: "eighth cervical spinal ganglion" -> 第8颈神经脊神经节
+    // “articular capsule of knee joint” -> 膝关节囊（而不是 膝关节关节囊）；指甲/趾甲按指（趾）命名
+    // "articular capsule of knee joint" -> 膝关节囊 (not 膝关节关节囊); nails by digit
+    if ((m = /^(?:articular |joint )?capsule of (.+)$/.exec(name))) {
+      const j = t(m[1]!, d)
+      if (j?.endsWith('关节')) return `${j}囊`
+    }
+    if ((m = /^nail of (.+)$/.exec(name))) {
+      const digit = t(m[1]!, d)
+      return digit && `${digit}${/toe/.test(m[1]!) ? '趾甲' : '指甲'}`
+    }
+
+    // 带序号的脊神经节 / Numbered spinal ganglia: "eighth cervical spinal ganglion" -> 第8颈神经脊神经节
     if ((m = /^(\w+) (cervical|thoracic|lumbar|sacral) spinal ganglion$/.exec(name)) && ORDINALS[m[1]!]) {
       const seg = { cervical: '颈', thoracic: '胸', lumbar: '腰', sacral: '骶' }[m[2]!]!
       return `第${ORDINALS[m[1]!]}${seg}神经脊神经节`
     }
 
-    // "nerve(s) to X [and Y]" -> X[和Y]神经
+    // “nerve(s) to X [and Y]” -> X[和Y]神经 / "nerve(s) to X [and Y]" -> X[和Y]神经
     if ((m = /^nerves? to (.+?)(?: and (.+))?$/.exec(name))) {
       const a = t(m[1]!, d)
       const b = m[2] ? t(m[2], d) : ''
       return a && b !== undefined ? `${a}${b ? `和${b}` : ''}神经` : undefined
     }
 
+    // 淋巴结群，以及 “X node(s)” 的简写
     // Lymph node groups and the "X node(s)" shorthand
     if ((m = /^(.+) lymph node group$/.exec(name))) {
       const x = t(`${m[1]} lymph node`, d) ?? t(`${m[1]} lymph nodes`, d)
@@ -135,6 +179,7 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       const direct = t(inner, d)
       if (direct) return direct
       for (const [re, sing] of PLURALS) {
+        // 把中心名词变为单数：第一个 “ of ” 之前的最后一个词，或整个短语的最后一个词
         // singularise the head noun: the last word before the first " of ", or the last word
         const [head, ...tail] = inner.split(' of ')
         if (re.test(head!)) {
@@ -161,6 +206,7 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       return a && b && `${a}至${b}支`
     }
 
+    // 指（趾）骨：手指用 指骨，足趾用 趾骨。
     // Phalanges: 指骨 for fingers, 趾骨 for toes.
     if ((m = /^(?:(proximal|middle|distal) )?phalanx of (.+)$/.exec(name))) {
       const digit = t(m[2]!, d)
@@ -187,9 +233,11 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
     }
     if ((m = /^myocardial zone (\d+)$/.exec(name))) return `心肌第${m[1]}区`
 
+    // “first lumbrical of foot”：序数词加完整词表词条。
     // "first lumbrical of foot": ordinal in front of a whole lexicon term.
     if ((m = /^(\w+) (.+)$/.exec(name)) && ORDINALS[m[1]!] && m[2]! in TERMS) return `第${ORDINALS[m[1]!]}${TERMS[m[2]!]}`
 
+    // “A of B” -> B + A（中文里整体在前）。在第一个 “ of ” 处切分。
     // "A of B" -> B + A (the whole comes first in Chinese). Split at the first " of ".
     const ofAt = name.indexOf(' of ')
     if (ofAt > 0) {
@@ -197,7 +245,7 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
       const b = name.slice(ofAt + 4)
       const tb = t(b, d)
       if (tb && a === 'branch') return `${tb}分支`
-      if (tb && a === 'trunk') return `${tb}干` // vessel/nerve trunk, not the body region
+      if (tb && a === 'trunk') return `${tb}干` // 血管/神经的“干”，不是躯干 / vessel/nerve trunk, not the body region
       const ta = tb && headPhrase(a, d)
       if (ta && tb) return tb + ta
       return undefined
@@ -212,7 +260,10 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
     return undefined
   }
 
-  /** [ordinal] [modifiers...] noun-phrase, where the noun phrase is the longest lexicon suffix. */
+  /**
+   * [序数] [修饰语...] 名词短语，其中名词短语取词表中能匹配的最长后缀。
+   * [ordinal] [modifiers...] noun-phrase, where the noun phrase is the longest lexicon suffix.
+   */
   function headPhrase(phrase: string, d: number): string | undefined {
     if (phrase in TERMS) return TERMS[phrase]
     const known = subTerm(phrase)
@@ -233,6 +284,9 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
   }
 
   /**
+   * 建立在一个完整词表词条之上的译名，只允许不改变词条本身的包装：侧别词、“set of”、序数或带序号的规则。
+   * 大陆用语优先策略把它视为“确切、可信”的词表词条。
+   *
    * A translation that rests on one whole lexicon term, allowing only wrappers that cannot change
    * the term itself: a side word, "set of", an ordinal, or a numbered-level rule. This is what
    * the mainland-wording policy treats as an "exact, confident" lexicon entry.
@@ -240,6 +294,7 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
   function exact(raw: string): string | undefined {
     const direct = exactCore(norm(raw))
     if (direct) return direct
+    // “right infraspinatus muscle”：词表按不带 muscle 的拉丁式名称收录肌肉
     // "right infraspinatus muscle": the lexicon lists muscles by their bare Latin-style name
     const bare = norm(raw).replace(/ muscle$/, '')
     const viaBare = bare !== norm(raw) ? exactCore(bare) : undefined
@@ -253,6 +308,7 @@ export function createTranslator(subTerm: (en: string) => string | undefined = (
     let prefix = ''
     if (sides.length === 1) {
       const stripped = norm(name.replace(/\b(left|right)\b/, ''))
+      // 仅当侧别词位于名称开头，或去掉侧别后本身就是词条时
       // only when the side leads the name or the stripped name is itself a term
       if (!(stripped in TERMS) && !/^(left|right) /.test(name) && !/^set of (left|right) /.test(name)) return undefined
       prefix = sides[0] === 'left' ? '左' : '右'

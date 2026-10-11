@@ -9,3 +9,4 @@ export const PUBLIC_DIR = resolve(ROOT, 'public/anatomy/knowledge')
 export const ANATOMY_DIR = resolve(ROOT, 'public/anatomy')
 /** Bodies whose anatomy.json drives the build when present. */
 export const BODIES = ['male', 'female'] as const
+export const ZANATOMY_ATTACHMENTS = resolve(ROOT, 'data/raw/z-anatomy/out/import/attachments.json')

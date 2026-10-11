@@ -1,3 +1,4 @@
+// 知识层工具的单元测试（不需要网络和原始数据）。
 // Unit tests for the knowledge-layer tooling (no network, no raw data needed).
 import { describe, expect, it } from 'vitest'
 import { plausible, sideOf, stripSide } from '../tools/knowledge/lib/model'
@@ -31,6 +32,11 @@ describe('compositional zh translator', () => {
     ['retrocaval nodes', '腔静脉后淋巴结'],
     ['left anterior talofibular ligament', '左距腓前韧带'],
     ['ligament of knee joint', '膝关节韧带'],
+    ['articular capsule of left knee joint', '左膝关节囊'],
+    ['anterior horn of left medial meniscus', '左内侧半月板前角'],
+    ['anterior meniscotibial ligament (lateral meniscus)', '半月板胫骨前韧带（外侧半月板）'],
+    ['nail of right big toe', '右踇趾趾甲'],
+    ['superficial fascia of left upper limb', '左上肢皮下脂肪（浅筋膜）'],
   ])('%s -> %s', (en, zh) => expect(t.translate(en)).toBe(zh))
 
   it('exact() accepts whole lexicon terms only (plus side, set-of, ordinal)', () => {

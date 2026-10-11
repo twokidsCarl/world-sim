@@ -23872,6 +23872,356 @@
    }
   ]
  },
+ "spinalCord": {
+  "openEndsCapped": 2,
+  "closedVolumeMl": 41.3,
+  "surfaceInBone": 0.0002,
+  "yRange": [
+   0.998,
+   1.474
+  ],
+  "roots": 84,
+  "rootGapMedianMm": 0.6,
+  "rootGapMaxMm": 2.75,
+  "rootGaps": [
+   {
+    "name": "Left anterior root of L1 spinal nerve",
+    "mm": 0.84
+   },
+   {
+    "name": "Left anterior root of L2 spinal nerve",
+    "mm": 0.58
+   },
+   {
+    "name": "Left anterior root of T10 spinal nerve",
+    "mm": 2.04
+   },
+   {
+    "name": "Left anterior root of T9 spinal nerve",
+    "mm": 0.41
+   },
+   {
+    "name": "Left anterior root of T7 spinal nerve",
+    "mm": 0.97
+   },
+   {
+    "name": "Left anterior root of C6 spinal nerve",
+    "mm": 0.69
+   },
+   {
+    "name": "Left anterior root of C5 spinal nerve",
+    "mm": 0.44
+   },
+   {
+    "name": "Left anterior root of C4 spinal nerve",
+    "mm": 0.41
+   },
+   {
+    "name": "Left anterior root of C3 spinal nerve",
+    "mm": 2.64
+   },
+   {
+    "name": "Left anterior root of C2 spinal nerve",
+    "mm": 1.24
+   },
+   {
+    "name": "Left anterior root of C7 spinal nerve",
+    "mm": 0.96
+   },
+   {
+    "name": "Left anterior root of C8 spinal nerve",
+    "mm": 0.81
+   },
+   {
+    "name": "Left anterior root of T12 spinal nerve",
+    "mm": 0.84
+   },
+   {
+    "name": "Left anterior root of T11 spinal nerve",
+    "mm": 0.93
+   },
+   {
+    "name": "Left anterior root of T8 spinal nerve",
+    "mm": 0.97
+   },
+   {
+    "name": "Left anterior root of T6 spinal nerve",
+    "mm": 0.51
+   },
+   {
+    "name": "Left anterior root of T5 spinal nerve",
+    "mm": 0.25
+   },
+   {
+    "name": "Left anterior root of T4 spinal nerve",
+    "mm": 0.22
+   },
+   {
+    "name": "Left anterior root of T3 spinal nerve",
+    "mm": 0.94
+   },
+   {
+    "name": "Left anterior root of T2 spinal nerve",
+    "mm": 0.56
+   },
+   {
+    "name": "Left anterior root of T1 spinal nerve",
+    "mm": 0.6
+   },
+   {
+    "name": "Left posterior root of T12 spinal nerve",
+    "mm": 0.55
+   },
+   {
+    "name": "Left posterior root of T11 spinal nerve",
+    "mm": 0.42
+   },
+   {
+    "name": "Left posterior root of T8 spinal nerve",
+    "mm": 0.57
+   },
+   {
+    "name": "Left posterior root of T6 spinal nerve",
+    "mm": 0.87
+   },
+   {
+    "name": "Left posterior root of T5 spinal nerve",
+    "mm": 0.62
+   },
+   {
+    "name": "Left posterior root of T4 spinal nerve",
+    "mm": 0.26
+   },
+   {
+    "name": "Left posterior root of T3 spinal nerve",
+    "mm": 0.84
+   },
+   {
+    "name": "Left posterior root of T2 spinal nerve",
+    "mm": 0.72
+   },
+   {
+    "name": "Left posterior root of T1 spinal nerve",
+    "mm": 0.52
+   },
+   {
+    "name": "Left posterior root of C8 spinal nerve",
+    "mm": 0.26
+   },
+   {
+    "name": "Left posterior root of C7 spinal nerve",
+    "mm": 0.77
+   },
+   {
+    "name": "Left posterior root of C2 spinal nerve",
+    "mm": 0.77
+   },
+   {
+    "name": "Left posterior root of C3 spinal nerve",
+    "mm": 0.39
+   },
+   {
+    "name": "Left posterior root of C4 spinal nerve",
+    "mm": 0.43
+   },
+   {
+    "name": "Left posterior root of C5 spinal nerve",
+    "mm": 0.21
+   },
+   {
+    "name": "Left posterior root of C6 spinal nerve",
+    "mm": 0.64
+   },
+   {
+    "name": "Left posterior root of L1 spinal nerve",
+    "mm": 0.63
+   },
+   {
+    "name": "Left posterior root of T10 spinal nerve",
+    "mm": 0.57
+   },
+   {
+    "name": "Left posterior root of T9 spinal nerve",
+    "mm": 0.3
+   },
+   {
+    "name": "Left posterior root of T7 spinal nerve",
+    "mm": 0.38
+   },
+   {
+    "name": "Left posterior root of L2 spinal nerve",
+    "mm": 0.66
+   },
+   {
+    "name": "Right anterior root of L1 spinal nerve",
+    "mm": 0.51
+   },
+   {
+    "name": "Right anterior root of L2 spinal nerve",
+    "mm": 0.63
+   },
+   {
+    "name": "Right anterior root of T10 spinal nerve",
+    "mm": 0.46
+   },
+   {
+    "name": "Right anterior root of T9 spinal nerve",
+    "mm": 0.29
+   },
+   {
+    "name": "Right anterior root of T7 spinal nerve",
+    "mm": 1.23
+   },
+   {
+    "name": "Right anterior root of C6 spinal nerve",
+    "mm": 0.84
+   },
+   {
+    "name": "Right anterior root of C5 spinal nerve",
+    "mm": 0.49
+   },
+   {
+    "name": "Right anterior root of C4 spinal nerve",
+    "mm": 0.55
+   },
+   {
+    "name": "Right anterior root of C3 spinal nerve",
+    "mm": 2.75
+   },
+   {
+    "name": "Right anterior root of C2 spinal nerve",
+    "mm": 1.47
+   },
+   {
+    "name": "Right anterior root of C7 spinal nerve",
+    "mm": 0.95
+   },
+   {
+    "name": "Right anterior root of C8 spinal nerve",
+    "mm": 0.87
+   },
+   {
+    "name": "Right anterior root of T12 spinal nerve",
+    "mm": 1.06
+   },
+   {
+    "name": "Right anterior root of T11 spinal nerve",
+    "mm": 0.72
+   },
+   {
+    "name": "Right anterior root of T8 spinal nerve",
+    "mm": 1.08
+   },
+   {
+    "name": "Right anterior root of T6 spinal nerve",
+    "mm": 0.93
+   },
+   {
+    "name": "Right anterior root of T5 spinal nerve",
+    "mm": 0.81
+   },
+   {
+    "name": "Right anterior root of T4 spinal nerve",
+    "mm": 0.31
+   },
+   {
+    "name": "Right anterior root of T3 spinal nerve",
+    "mm": 0.77
+   },
+   {
+    "name": "Right anterior root of T2 spinal nerve",
+    "mm": 0.43
+   },
+   {
+    "name": "Right anterior root of T1 spinal nerve",
+    "mm": 0.46
+   },
+   {
+    "name": "Right posterior root of T12 spinal nerve",
+    "mm": 0.49
+   },
+   {
+    "name": "Right posterior root of T11 spinal nerve",
+    "mm": 0.59
+   },
+   {
+    "name": "Right posterior root of T8 spinal nerve",
+    "mm": 0.42
+   },
+   {
+    "name": "Right posterior root of T6 spinal nerve",
+    "mm": 0.75
+   },
+   {
+    "name": "Right posterior root of T5 spinal nerve",
+    "mm": 0.58
+   },
+   {
+    "name": "Right posterior root of T4 spinal nerve",
+    "mm": 0.6
+   },
+   {
+    "name": "Right posterior root of T3 spinal nerve",
+    "mm": 0.61
+   },
+   {
+    "name": "Right posterior root of T2 spinal nerve",
+    "mm": 0.56
+   },
+   {
+    "name": "Right posterior root of T1 spinal nerve",
+    "mm": 0.74
+   },
+   {
+    "name": "Right posterior root of C8 spinal nerve",
+    "mm": 0.36
+   },
+   {
+    "name": "Right posterior root of C7 spinal nerve",
+    "mm": 1.08
+   },
+   {
+    "name": "Right posterior root of C2 spinal nerve",
+    "mm": 0.6
+   },
+   {
+    "name": "Right posterior root of C3 spinal nerve",
+    "mm": 0.42
+   },
+   {
+    "name": "Right posterior root of C4 spinal nerve",
+    "mm": 0.36
+   },
+   {
+    "name": "Right posterior root of C5 spinal nerve",
+    "mm": 0.63
+   },
+   {
+    "name": "Right posterior root of C6 spinal nerve",
+    "mm": 0.66
+   },
+   {
+    "name": "Right posterior root of L1 spinal nerve",
+    "mm": 0.6
+   },
+   {
+    "name": "Right posterior root of T10 spinal nerve",
+    "mm": 0.5
+   },
+   {
+    "name": "Right posterior root of T9 spinal nerve",
+    "mm": 0.35
+   },
+   {
+    "name": "Right posterior root of T7 spinal nerve",
+    "mm": 0.37
+   },
+   {
+    "name": "Right posterior root of L2 spinal nerve",
+    "mm": 0.67
+   }
+  ]
+ },
  "landmarks": [
   {
    "id": "median-wrist",
@@ -24186,12 +24536,22 @@
   "anchorsUsed": 501,
   "anchorsSkipped": [],
   "imported": {
+   "Open3DModel nervous/fascia": 1,
    "Open3DModel nervous/nerve": 228,
+   "Open3DModel skeletal/cartilage": 12,
+   "Open3DModel skeletal/fat": 2,
+   "Open3DModel skeletal/ligament": 12,
+   "Z-Anatomy digestive/fascia": 2,
+   "Z-Anatomy digestive/gland": 4,
+   "Z-Anatomy digestive/organ": 2,
    "Z-Anatomy endocrine/gland": 3,
-   "Z-Anatomy lymphatic/organ": 126,
+   "Z-Anatomy integumentary/skin": 8,
+   "Z-Anatomy lymphatic/organ": 156,
    "Z-Anatomy muscular/fascia": 56,
+   "Z-Anatomy nervous/brain": 3,
+   "Z-Anatomy nervous/fascia": 2,
    "Z-Anatomy nervous/nerve": 227,
-   "Z-Anatomy skeletal/ligament": 240
+   "Z-Anatomy skeletal/ligament": 305
   },
   "dropped": [
    {
@@ -24231,88 +24591,40 @@
     "reason": "BodyParts3D 4.0 already has it (FJ1381)"
    },
    {
-    "id": "ZAB7B64ABE",
-    "name": "Left anterior tibial node",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 0% deeper than 4 mm (Left tibialis anterior 100%)"
-   },
-   {
-    "id": "ZADF88D6E8",
-    "name": "Right anterior tibial node",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 0% deeper than 4 mm (Right tibialis anterior 100%)"
-   },
-   {
-    "id": "ZAB89928DB",
-    "name": "Left fibular node",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 0% deeper than 4 mm (Left fibularis longus 100%)"
-   },
-   {
-    "id": "ZA04FDF731",
-    "name": "Right fibular node",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 0% deeper than 4 mm (Right fibularis longus 100%)"
-   },
-   {
-    "id": "ZA88BD1C05",
-    "name": "Left anterior axillary nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 79% of its surface inside existing solids, 9% deeper than 4 mm (Left pectoralis minor 77%, External intercostal muscle 2%)"
-   },
-   {
-    "id": "ZAE85E6756",
-    "name": "Right anterior axillary nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 89% of its surface inside existing solids, 18% deeper than 4 mm (Right pectoralis minor 89%)"
-   },
-   {
     "id": "ZA0D2CB9D6",
     "name": "Left anterior cruciate ligament",
     "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 51% of its surface inside existing solids, 37% deeper than 4 mm (Left tibia 51%)"
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZAE9A69F6E",
-    "name": "Left anterior ligament of fibular head",
+    "id": "ZAACB54577",
+    "name": "Right anterior cruciate ligament",
     "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 62% of its surface inside existing solids, 0% deeper than 4 mm (Left extensor digitorum longus 60%, Left fibularis longus 3%)"
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZA7B3C9E7D",
-    "name": "Left anterior meniscotibial ligament (Lateral meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 100% of its surface inside existing solids, 96% deeper than 4 mm (Left tibia 100%)"
+    "id": "ZA03643329",
+    "name": "Left articular capsule of hip joint",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZA0AEEE33D",
-    "name": "Left anterior meniscotibial ligament (Medial meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 100% of its surface inside existing solids, 77% deeper than 4 mm (Left tibia 100%)"
+    "id": "ZAD1B23A70",
+    "name": "Right articular capsule of hip joint",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZA054400D7",
-    "name": "Right arcuate popliteal ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 63% of its surface inside existing solids, 0% deeper than 4 mm (Right plantaris 25%, Short head of right biceps femoris 13%, Lateral head of right gastrocnemius 11%)"
+    "id": "ZA919D5802",
+    "name": "Left articular capsule of knee joint",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZA39981AF0",
-    "name": "Left coraco-acromial ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 83% of its surface inside existing solids, 10% deeper than 4 mm (Clavicular part of left deltoid 61%, Acromial part of left deltoid 14%, Left scapula 8%)"
-   },
-   {
-    "id": "ZA02A9C180",
-    "name": "Right coraco-acromial ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 76% of its surface inside existing solids, 6% deeper than 4 mm (Clavicular part of right deltoid 56%, Acromial part of right deltoid 12%, Right scapula 8%)"
-   },
-   {
-    "id": "ZADA77DB9E",
-    "name": "Right coracohumeral ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 63% of its surface inside existing solids, 8% deeper than 4 mm (Clavicular part of right deltoid 48%, Right supraspinatus 11%, Acromial part of right deltoid 3%)"
+    "id": "ZAAA66EEBD",
+    "name": "Right articular capsule of knee joint",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
     "id": "ZAF7E8BF7E",
@@ -24325,18 +24637,6 @@
     "name": "Right cuneocuboid interosseous ligament",
     "kind": "ligament-bursa-fascia",
     "reason": "misplaced: 100% of its surface inside existing solids, 0% deeper than 4 mm (Right lateral cuneiform bone 100%)"
-   },
-   {
-    "id": "ZAC7CC57BB",
-    "name": "Left dorsal cuneocuboid ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 65% of its surface inside existing solids, 0% deeper than 4 mm (Left extensor digitorum brevis 61%, Left cuboid bone 3%)"
-   },
-   {
-    "id": "ZAE319E7A1",
-    "name": "Right dorsal cuneocuboid ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 83% of its surface inside existing solids, 0% deeper than 4 mm (Right extensor digitorum brevis 72%, Right lateral cuneiform bone 8%, Right cuboid bone 3%)"
    },
    {
     "id": "ZA1E352A5D",
@@ -24363,64 +24663,22 @@
     "reason": "flagged inBp3d40: the dataset already has this structure"
    },
    {
-    "id": "ZAA4601838",
-    "name": "Left inferior deep lateral cervical nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 35% deeper than 4 mm (Upper lobe of left lung 100%)"
-   },
-   {
-    "id": "ZA84389368",
-    "name": "Left inferior glenohumeral ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 62% of its surface inside existing solids, 0% deeper than 4 mm (Left subscapularis 62%)"
-   },
-   {
-    "id": "ZADCB4F842",
-    "name": "Right inferior glenohumeral ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 69% of its surface inside existing solids, 0% deeper than 4 mm (Right subscapularis 69%)"
-   },
-   {
-    "id": "ZAC987BA4D",
-    "name": "Inferior pancreatic nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 2% deeper than 4 mm (Pancreas 100%)"
-   },
-   {
     "id": "ZAD4A1069C",
     "name": "Left inferior parathyroid gland",
     "kind": "endocrine",
     "reason": "misplaced: 67% of its surface inside existing solids, 0% deeper than 4 mm (Vertical intermediate part of left longus colli 67%)"
    },
    {
-    "id": "ZAD3C996DF",
-    "name": "Left intermediate external iliac nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 38% of its surface inside existing solids, 38% deeper than 4 mm (Descending colon 38%)"
+    "id": "ZA6204A144",
+    "name": "Left infrapatellar fat pad",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZAD1BB8DD6",
-    "name": "Left interpectoral nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 14% deeper than 4 mm (Sternocostal part of left pectoralis major 84%, Left pectoralis minor 16%)"
-   },
-   {
-    "id": "ZAE78D42E4",
-    "name": "Right interpectoral nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 28% deeper than 4 mm (Sternocostal part of right pectoralis major 95%, Right pectoralis minor 5%)"
-   },
-   {
-    "id": "ZA35A49F75",
-    "name": "Left intersesamoid ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 79% of its surface inside existing solids, 0% deeper than 4 mm (Lateral head of left flexor hallucis brevis 53%, Sesamoid bone of left foot 16%, Left flexor hallucis longus 11%)"
-   },
-   {
-    "id": "ZAB56750CA",
-    "name": "Right intersesamoid ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 84% of its surface inside existing solids, 0% deeper than 4 mm (Lateral head of right flexor hallucis brevis 63%, Right flexor hallucis longus 11%, Sesamoid bone of right foot 11%)"
+    "id": "ZA541EFE72",
+    "name": "Right infrapatellar fat pad",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
     "id": "ZACB2FA840",
@@ -24447,34 +24705,16 @@
     "reason": "misplaced: 100% of its surface inside existing solids, 28% deeper than 4 mm (Lower lobe of left lung 30%, Upper lobe of left lung 22%, Lower lobe of right lung 13%)"
    },
    {
-    "id": "ZAEAAD9F8D",
-    "name": "Lateral aortic nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 79% of its surface inside existing solids, 32% deeper than 4 mm (Pancreas 56%, Duodenum 24%)"
+    "id": "ZA2AB55DA6",
+    "name": "Left lateral meniscus",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZAD7E428D7",
-    "name": "Lateral caval nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 73% of its surface inside existing solids, 14% deeper than 4 mm (Pancreas 32%, Caudate lobe of liver 22%, Duodenum 19%)"
-   },
-   {
-    "id": "ZAF6BB9D9E",
-    "name": "Lateral pericardial nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 71% of its surface inside existing solids, 0% deeper than 4 mm (Middle lobe of lung 46%, Wall of right atrium 14%, Lower lobe of right lung 11%)"
-   },
-   {
-    "id": "ZA85BAF67D",
-    "name": "Right lateral temporomandibular ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 80% of its surface inside existing solids, 0% deeper than 4 mm (Superficial part of right masseter 80%)"
-   },
-   {
-    "id": "ZA6E7E61F3",
-    "name": "Left lateral temporomandibular ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 75% of its surface inside existing solids, 0% deeper than 4 mm (Superficial part of left masseter 75%)"
+    "id": "ZA902164B0",
+    "name": "Right lateral meniscus",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
     "id": "ZA10064C6F",
@@ -24501,10 +24741,16 @@
     "reason": "flagged inBp3d40: the dataset already has this structure"
    },
    {
-    "id": "ZAD1BBD67B",
-    "name": "Left medial external iliac nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 52% of its surface inside existing solids, 39% deeper than 4 mm (Descending colon 52%)"
+    "id": "ZA66FB0670",
+    "name": "Left medial meniscus",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
+   },
+   {
+    "id": "ZAEBF00ED4",
+    "name": "Right medial meniscus",
+    "kind": "batch2",
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
     "id": "ZA80D28DEE",
@@ -24517,6 +24763,12 @@
     "name": "Median thyrohyoid ligament",
     "kind": "ligament-bursa-fascia",
     "reason": "flagged inBp3d40: the dataset already has this structure"
+   },
+   {
+    "id": "ZA0E9E55AA",
+    "name": "Mesocolon",
+    "kind": "batch2",
+    "reason": "not imported: duplicates the transverse mesocolon of BodyParts3D"
    },
    {
     "id": "ZAB27AB1AD",
@@ -24537,100 +24789,40 @@
     "reason": "misplaced: 67% of its surface inside existing solids, 23% deeper than 4 mm (Descending colon 28%, Transverse colon 22%, Ascending colon 11%)"
    },
    {
-    "id": "ZA0F9A3D43",
-    "name": "Pararectal nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 81% of its surface inside existing solids, 0% deeper than 4 mm (Rectum 81%)"
-   },
-   {
-    "id": "ZA5144CF97",
-    "name": "Right plantar tarsometatarsal ligaments",
+    "id": "ZAABC6152A",
+    "name": "Left posterior cruciate ligament",
     "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 62% of its surface inside existing solids, 0% deeper than 4 mm (Oblique head of right adductor hallucis 27%, Lateral head of right flexor hallucis brevis 15%, Right tibialis posterior 11%)"
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZA7C79158C",
-    "name": "Left popliteofibular ligament",
+    "id": "ZA815AD5F9",
+    "name": "Right posterior cruciate ligament",
     "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 63% of its surface inside existing solids, 0% deeper than 4 mm (Left popliteus 49%, Left soleus 13%, Left tibia 1%)"
+    "reason": "not imported: the Open3DModel version is used"
    },
    {
-    "id": "ZA359ECC7C",
-    "name": "Left posterior ligament of fibular head",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 86% of its surface inside existing solids, 0% deeper than 4 mm (Left soleus 82%, Left popliteus 4%)"
+    "id": "ZAF635C113",
+    "name": "Left pubo-analis muscle",
+    "kind": "batch2",
+    "reason": "misplaced: 75% of its surface inside existing solids, 0% deeper than 4 mm (Left puborectalis 38%, Left pubococcygeus 22%, Left obturator internus 6%)"
    },
    {
-    "id": "ZA4313CD8E",
-    "name": "Right posterior ligament of fibular head",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 88% of its surface inside existing solids, 0% deeper than 4 mm (Right soleus 72%, Right popliteus 16%)"
-   },
-   {
-    "id": "ZA647468E8",
-    "name": "Left posterior meniscotibial ligament (Lateral meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 100% of its surface inside existing solids, 52% deeper than 4 mm (Left tibia 100%)"
-   },
-   {
-    "id": "ZA1B1E3FEF",
-    "name": "Left posterior meniscotibial ligament (Medial meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 86% of its surface inside existing solids, 57% deeper than 4 mm (Left tibia 86%)"
-   },
-   {
-    "id": "ZAC85DADCD",
-    "name": "Right posterior tibiotalar ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 49% of its surface inside existing solids, 24% deeper than 4 mm (Right tibia 49%)"
-   },
-   {
-    "id": "ZA6285196D",
-    "name": "Pre-aortic nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 60% of its surface inside existing solids, 19% deeper than 4 mm (Pancreas 42%, Duodenum 19%)"
-   },
-   {
-    "id": "ZAEA5E11EA",
-    "name": "Precaecal nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 100% deeper than 4 mm (Ascending colon 100%)"
-   },
-   {
-    "id": "ZADE5ADCAA",
-    "name": "Precaval nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 38% of its surface inside existing solids, 21% deeper than 4 mm (Pancreas 21%, Caudate lobe of liver 18%)"
-   },
-   {
-    "id": "ZA751E6E66",
-    "name": "Prepericardial nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 64% of its surface inside existing solids, 0% deeper than 4 mm (Upper lobe of right lung 64%)"
-   },
-   {
-    "id": "ZACC6086F3",
-    "name": "Retrocaecal nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 100% of its surface inside existing solids, 79% deeper than 4 mm (Right psoas major 100%)"
-   },
-   {
-    "id": "ZAD56FDB29",
-    "name": "Left retropharyngeal nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 64% of its surface inside existing solids, 0% deeper than 4 mm (Left salpingopharyngeus 21%, Left palatopharyngeus 14%, Left levator veli palatini 14%)"
-   },
-   {
-    "id": "ZA2470701A",
-    "name": "Right retropharyngeal nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 69% of its surface inside existing solids, 0% deeper than 4 mm (Right salpingopharyngeus 31%, Right palatopharyngeus 25%, Right levator veli palatini 13%)"
+    "id": "ZAFCD3011E",
+    "name": "Right pubo-analis muscle",
+    "kind": "batch2",
+    "reason": "misplaced: 78% of its surface inside existing solids, 0% deeper than 4 mm (Right puborectalis 38%, Right pubococcygeus 24%, Right obturator internus 5%)"
    },
    {
     "id": "ZAB086ECBA",
     "name": "Right gastro-omental nodes",
     "kind": "lymph",
     "reason": "misplaced: 89% of its surface inside existing solids, 32% deeper than 4 mm (Hepatovenous segment IV 89%)"
+   },
+   {
+    "id": "ZA2D263998",
+    "name": "Sigmoid colon",
+    "kind": "batch2",
+    "reason": "not imported: duplicates the distal part of BodyParts3D \"Descending colon\""
    },
    {
     "id": "ZAF95ABD3E",
@@ -24651,22 +24843,16 @@
     "reason": "flagged inBp3d40: the dataset already has this structure"
    },
    {
-    "id": "ZAB5BC578C",
-    "name": "Left submental nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 71% of its surface inside existing solids, 0% deeper than 4 mm (Left platysma 71%)"
+    "id": "ZA7A9BECD4",
+    "name": "Left submandibular duct",
+    "kind": "batch2",
+    "reason": "misplaced: 62% of its surface inside existing solids, 0% deeper than 4 mm (Left mylohyoid 38%, Tongue 14%, Gingiva of lower jaw 8%)"
    },
    {
-    "id": "ZA2D843DDF",
-    "name": "Supraspinous ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 80% of its surface inside existing solids, 0% deeper than 4 mm (Ascending part of right trapezius 25%, Ascending part of left trapezius 13%, Right latissimus dorsi 8%)"
-   },
-   {
-    "id": "ZA171582D4",
-    "name": "Left supratrochlear nodes",
-    "kind": "lymph",
-    "reason": "misplaced: 83% of its surface inside existing solids, 0% deeper than 4 mm (Humeral head of left pronator teres 25%, Left palmaris longus 22%, Left flexor carpi radialis 22%)"
+    "id": "ZABF583F07",
+    "name": "Right submandibular duct",
+    "kind": "batch2",
+    "reason": "misplaced: 67% of its surface inside existing solids, 0% deeper than 4 mm (Right mylohyoid 35%, Tongue 15%, Gingiva of lower jaw 13%)"
    },
    {
     "id": "ZAD63B8609",
@@ -24681,142 +24867,82 @@
     "reason": "flagged inBp3d40: the dataset already has this structure"
    },
    {
-    "id": "ZA0F2FA6EB",
-    "name": "Left transverse ligament of knee",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 90% of its surface inside existing solids, 45% deeper than 4 mm (Left tibia 77%, Left rectus femoris 9%, Left vastus intermedius 3%)"
+    "id": "ZA6E6B8A6B",
+    "name": "Left visceral pleura",
+    "kind": "batch2",
+    "reason": "not imported: both pleural layers are offsets of one lung-shaped atlas surface; the pleura is derived from our own lungs instead"
    },
    {
-    "id": "ZA1ED6D225",
-    "name": "Left trapezoid ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 81% of its surface inside existing solids, 2% deeper than 4 mm (Clavicular part of left deltoid 81%)"
+    "id": "ZA38901C60",
+    "name": "Left parietal pleura",
+    "kind": "batch2",
+    "reason": "not imported: both pleural layers are offsets of one lung-shaped atlas surface; the pleura is derived from our own lungs instead"
    },
    {
-    "id": "ZAA4952AD9",
-    "name": "Right trapezoid ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 81% of its surface inside existing solids, 1% deeper than 4 mm (Clavicular part of right deltoid 80%, Right scapula 1%)"
+    "id": "ZABFCFD15A",
+    "name": "Right visceral pleura",
+    "kind": "batch2",
+    "reason": "not imported: both pleural layers are offsets of one lung-shaped atlas surface; the pleura is derived from our own lungs instead"
    },
    {
-    "id": "ZA805CE94D",
-    "name": "Left ulnar collateral ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 66% of its surface inside existing solids, 4% deeper than 4 mm (Left flexor digitorum superficialis 23%, Humeral head of left pronator teres 18%, Left brachialis 17%)"
+    "id": "ZA7F8530A0",
+    "name": "Right parietal pleura",
+    "kind": "batch2",
+    "reason": "not imported: both pleural layers are offsets of one lung-shaped atlas surface; the pleura is derived from our own lungs instead"
    },
    {
-    "id": "ZA94A29B50",
-    "name": "Right ulnar collateral ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "misplaced: 76% of its surface inside existing solids, 4% deeper than 4 mm (Right flexor digitorum superficialis 28%, Humeral head of right pronator teres 20%, Right flexor carpi radialis 11%)"
+    "id": "ZAD0737B34",
+    "name": "Right articular capsule of glenohumeral joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZA4C830E03",
-    "name": "Right transverse ligament of knee",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left transverse ligament of knee\" is misplaced"
+    "id": "ZAFA962189",
+    "name": "Left articular capsule of glenohumeral joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZA262D3764",
-    "name": "Right supratrochlear nodes",
-    "kind": "lymph",
-    "reason": "its twin \"Left supratrochlear nodes\" is misplaced"
+    "id": "ZAC8ADF736",
+    "name": "Right articular capsule of elbow joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZAD219C868",
-    "name": "Right submental nodes",
-    "kind": "lymph",
-    "reason": "its twin \"Left submental nodes\" is misplaced"
+    "id": "ZAAB4A3766",
+    "name": "Left articular capsule of elbow joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZA4318732D",
-    "name": "Left posterior tibiotalar ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Right posterior tibiotalar ligament\" is misplaced"
+    "id": "ZA9BBA3F3A",
+    "name": "Right articular capsule of acromioclavicular joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZA5B6FD7F2",
-    "name": "Right posterior meniscotibial ligament (Medial meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left posterior meniscotibial ligament (Medial meniscus)\" is misplaced"
+    "id": "ZA4BA42D2D",
+    "name": "Left articular capsule of acromioclavicular joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZA8D1CDDF1",
-    "name": "Right posterior meniscotibial ligament (Lateral meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left posterior meniscotibial ligament (Lateral meniscus)\" is misplaced"
+    "id": "ZAD9E7821A",
+    "name": "Right articular capsule of sternoclavicular joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
-    "id": "ZA6C75C0FD",
-    "name": "Right popliteofibular ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left popliteofibular ligament\" is misplaced"
-   },
-   {
-    "id": "ZAE64A3D5A",
-    "name": "Left plantar tarsometatarsal ligaments",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Right plantar tarsometatarsal ligaments\" is misplaced"
-   },
-   {
-    "id": "ZAC43D42EB",
-    "name": "Right medial external iliac nodes",
-    "kind": "lymph",
-    "reason": "its twin \"Left medial external iliac nodes\" is misplaced"
-   },
-   {
-    "id": "ZA99A92807",
-    "name": "Right intermediate external iliac nodes",
-    "kind": "lymph",
-    "reason": "its twin \"Left intermediate external iliac nodes\" is misplaced"
+    "id": "ZAEE9D8E55",
+    "name": "Left articular capsule of sternoclavicular joint",
+    "kind": "batch2",
+    "reason": "not imported: the Z-Anatomy version is used"
    },
    {
     "id": "ZA2EB22AFD",
     "name": "Right inferior parathyroid gland",
     "kind": "endocrine",
     "reason": "its twin \"Left inferior parathyroid gland\" is misplaced"
-   },
-   {
-    "id": "ZAB5757FA6",
-    "name": "Right inferior deep lateral cervical nodes",
-    "kind": "lymph",
-    "reason": "its twin \"Left inferior deep lateral cervical nodes\" is misplaced"
-   },
-   {
-    "id": "ZA8BB2028D",
-    "name": "Left coracohumeral ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Right coracohumeral ligament\" is misplaced"
-   },
-   {
-    "id": "ZA4DE8C757",
-    "name": "Left arcuate popliteal ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Right arcuate popliteal ligament\" is misplaced"
-   },
-   {
-    "id": "ZA2F66F1D3",
-    "name": "Right anterior meniscotibial ligament (Medial meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left anterior meniscotibial ligament (Medial meniscus)\" is misplaced"
-   },
-   {
-    "id": "ZAC6DF69FE",
-    "name": "Right anterior meniscotibial ligament (Lateral meniscus)",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left anterior meniscotibial ligament (Lateral meniscus)\" is misplaced"
-   },
-   {
-    "id": "ZAC6F757F5",
-    "name": "Right anterior ligament of fibular head",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left anterior ligament of fibular head\" is misplaced"
-   },
-   {
-    "id": "ZAACB54577",
-    "name": "Right anterior cruciate ligament",
-    "kind": "ligament-bursa-fascia",
-    "reason": "its twin \"Left anterior cruciate ligament\" is misplaced"
    }
   ],
   "nerves": {
@@ -31833,6 +31959,34 @@
   },
   "meshes": [
    {
+    "id": "ZA1E5A1D5B",
+    "name": "Left accessory parotid gland",
+    "category": "batch2",
+    "inside": 0.3235,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.3235
+    },
+    "pushed": 0,
+    "top": [
+     "Deep part of left masseter 32%"
+    ]
+   },
+   {
+    "id": "ZA7D774256",
+    "name": "Right accessory parotid gland",
+    "category": "batch2",
+    "inside": 0.3906,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.3906
+    },
+    "pushed": 0,
+    "top": [
+     "Deep part of right masseter 39%"
+    ]
+   },
+   {
     "id": "ZAB7B64ABE",
     "name": "Left anterior tibial node",
     "category": "lymph",
@@ -32173,31 +32327,18 @@
     ]
    },
    {
-    "id": "ZA0D2CB9D6",
-    "name": "Left anterior cruciate ligament",
-    "category": "ligament-bursa-fascia",
-    "inside": 0.5132,
-    "deep": 0.3666,
-    "byTissue": {
-     "bone": 0.5132
-    },
-    "pushed": 0.3131,
-    "top": [
-     "Left tibia 51%"
-    ]
-   },
-   {
-    "id": "ZAACB54577",
-    "name": "Right anterior cruciate ligament",
-    "category": "ligament-bursa-fascia",
-    "inside": 0.1546,
+    "id": "ZAECBBE9A1",
+    "name": "Anterior horn of spinal cord",
+    "category": "batch2",
+    "inside": 0.0158,
     "deep": 0,
     "byTissue": {
-     "muscle": 0.1546
+     "brain": 0.0158
     },
-    "pushed": 0.2096,
+    "pushed": 0,
     "top": [
-     "Right plantaris 15%"
+     "Medulla oblongata 1%",
+     "Medulla oblongata 1%"
     ]
    },
    {
@@ -33956,6 +34097,23 @@
     ]
    },
    {
+    "id": "ZA532CCE40",
+    "name": "Falx cerebri",
+    "category": "batch2",
+    "inside": 0.028,
+    "deep": 0,
+    "byTissue": {
+     "brain": 0.0275,
+     "bone": 0.0005
+    },
+    "pushed": 0.0381,
+    "top": [
+     "Corpus callosum 1%",
+     "Right superior parietal lobule 1%",
+     "Cerebellum 0%"
+    ]
+   },
+   {
     "id": "ZAE8457450",
     "name": "Left fascia lata",
     "category": "ligament-bursa-fascia",
@@ -34057,6 +34215,23 @@
      "Right flexor digitorum longus 10%",
      "Right plantaris 4%",
      "Right tibia 4%"
+    ]
+   },
+   {
+    "id": "ZA4AEB584D",
+    "name": "Greater omentum",
+    "category": "batch2",
+    "inside": 0.5721,
+    "deep": 0.0583,
+    "byTissue": {
+     "organ": 0.5244,
+     "muscle": 0.0476
+    },
+    "pushed": 0,
+    "top": [
+     "Transverse colon 11%",
+     "Right transversus abdominis 4%",
+     "Descending colon 3%"
     ]
    },
    {
@@ -35272,6 +35447,22 @@
     "top": []
    },
    {
+    "id": "ZA80C90BE7",
+    "name": "Lesser omentum",
+    "category": "batch2",
+    "inside": 0.3567,
+    "deep": 0.0436,
+    "byTissue": {
+     "organ": 0.3567
+    },
+    "pushed": 0,
+    "top": [
+     "Hepatovenous segment III 27%",
+     "Stomach 4%",
+     "Esophagus 2%"
+    ]
+   },
+   {
     "id": "ZAEE544645",
     "name": "Left ligament of head of femur",
     "category": "ligament-bursa-fascia",
@@ -35654,6 +35845,56 @@
      "Right quadratus lumborum 45%",
      "Right iliocostalis lumborum 17%",
      "Right longissimus thoracis 14%"
+    ]
+   },
+   {
+    "id": "ZA14BC3763",
+    "name": "Left nail plate (foot)",
+    "category": "batch2",
+    "inside": 0,
+    "deep": 0,
+    "byTissue": {},
+    "pushed": 0,
+    "top": []
+   },
+   {
+    "id": "ZAAC30ACB8",
+    "name": "Right nail plate (foot)",
+    "category": "batch2",
+    "inside": 0,
+    "deep": 0,
+    "byTissue": {},
+    "pushed": 0,
+    "top": []
+   },
+   {
+    "id": "ZA5997EA05",
+    "name": "Left nail plate",
+    "category": "batch2",
+    "inside": 0.0032,
+    "deep": 0,
+    "byTissue": {
+     "bone": 0.0032
+    },
+    "pushed": 0.0295,
+    "top": [
+     "Distal phalanx of left ring finger 0%"
+    ]
+   },
+   {
+    "id": "ZA8207950D",
+    "name": "Right nail plate",
+    "category": "batch2",
+    "inside": 0.0126,
+    "deep": 0,
+    "byTissue": {
+     "bone": 0.0125
+    },
+    "pushed": 0.0245,
+    "top": [
+     "Distal phalanx of right ring finger 1%",
+     "Distal phalanx of right middle finger 0%",
+     "Distal phalanx of right index finger 0%"
     ]
    },
    {
@@ -36188,6 +36429,46 @@
     ]
    },
    {
+    "id": "ZA3C9B09E5",
+    "name": "Left perionyx (foot)",
+    "category": "batch2",
+    "inside": 0,
+    "deep": 0,
+    "byTissue": {},
+    "pushed": 0,
+    "top": []
+   },
+   {
+    "id": "ZACE12C340",
+    "name": "Right perionyx (foot)",
+    "category": "batch2",
+    "inside": 0,
+    "deep": 0,
+    "byTissue": {},
+    "pushed": 0,
+    "top": []
+   },
+   {
+    "id": "ZA9AD6057D",
+    "name": "Left perionyx",
+    "category": "batch2",
+    "inside": 0,
+    "deep": 0,
+    "byTissue": {},
+    "pushed": 0,
+    "top": []
+   },
+   {
+    "id": "ZAC16237A5",
+    "name": "Right perionyx",
+    "category": "batch2",
+    "inside": 0,
+    "deep": 0,
+    "byTissue": {},
+    "pushed": 0,
+    "top": []
+   },
+   {
     "id": "ZA626ADD37",
     "name": "Left piriformis fascia",
     "category": "ligament-bursa-fascia",
@@ -36639,35 +36920,18 @@
     ]
    },
    {
-    "id": "ZAABC6152A",
-    "name": "Left posterior cruciate ligament",
-    "category": "ligament-bursa-fascia",
-    "inside": 0.3517,
-    "deep": 0.0642,
+    "id": "ZA0DB56333",
+    "name": "Posterior horn of spinal cord",
+    "category": "batch2",
+    "inside": 0.0225,
+    "deep": 0,
     "byTissue": {
-     "muscle": 0.0092,
-     "bone": 0.3425
+     "brain": 0.0225
     },
-    "pushed": 0.4419,
+    "pushed": 0,
     "top": [
-     "Left tibia 34%",
-     "Left popliteus 1%"
-    ]
-   },
-   {
-    "id": "ZA815AD5F9",
-    "name": "Right posterior cruciate ligament",
-    "category": "ligament-bursa-fascia",
-    "inside": 0.1107,
-    "deep": 0.0041,
-    "byTissue": {
-     "bone": 0.0902,
-     "muscle": 0.0205
-    },
-    "pushed": 0.2576,
-    "top": [
-     "Right tibia 9%",
-     "Right plantaris 2%"
+     "Medulla oblongata 1%",
+     "Medulla oblongata 1%"
     ]
    },
    {
@@ -36925,6 +37189,41 @@
     "byTissue": {},
     "pushed": 0.375,
     "top": []
+   },
+   {
+    "id": "ZAF635C113",
+    "name": "Left pubo-analis muscle",
+    "category": "batch2",
+    "inside": 0.75,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.697,
+     "organ": 0.053
+    },
+    "pushed": 0.1243,
+    "top": [
+     "Left puborectalis 38%",
+     "Left pubococcygeus 22%",
+     "Left obturator internus 6%"
+    ]
+   },
+   {
+    "id": "ZAFCD3011E",
+    "name": "Right pubo-analis muscle",
+    "category": "batch2",
+    "inside": 0.7791,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.7177,
+     "organ": 0.0607,
+     "bone": 0.0007
+    },
+    "pushed": 0.1117,
+    "top": [
+     "Right puborectalis 38%",
+     "Right pubococcygeus 24%",
+     "Right obturator internus 5%"
+    ]
    },
    {
     "id": "ZAB00CC261",
@@ -37204,6 +37503,69 @@
     "pushed": 0.4041,
     "top": [
      "Mandible 18%"
+    ]
+   },
+   {
+    "id": "ZA396DAAA2",
+    "name": "Left parotid duct",
+    "category": "batch2",
+    "inside": 0.0357,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.0357
+    },
+    "pushed": 0,
+    "top": [
+     "Deep part of left masseter 4%"
+    ]
+   },
+   {
+    "id": "ZA7A42F616",
+    "name": "Right parotid duct",
+    "category": "batch2",
+    "inside": 0.0755,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.0754
+    },
+    "pushed": 0,
+    "top": [
+     "Deep part of right masseter 4%",
+     "Right buccinator 4%"
+    ]
+   },
+   {
+    "id": "ZAA6175F22",
+    "name": "Left parotid gland",
+    "category": "batch2",
+    "inside": 0.2347,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.2314,
+     "bone": 0.0033
+    },
+    "pushed": 0.1546,
+    "top": [
+     "Superficial part of left masseter 13%",
+     "Deep part of left masseter 9%",
+     "Left stylohyoid 1%"
+    ]
+   },
+   {
+    "id": "ZA217E8478",
+    "name": "Right parotid gland",
+    "category": "batch2",
+    "inside": 0.2467,
+    "deep": 0,
+    "byTissue": {
+     "muscle": 0.2378,
+     "bone": 0.0089
+    },
+    "pushed": 0.1546,
+    "top": [
+     "Superficial part of right masseter 13%",
+     "Deep part of right masseter 10%",
+     "Mandible 1%"
     ]
    },
    {
@@ -37671,6 +38033,23 @@
     "top": []
    },
    {
+    "id": "ZA743C006C",
+    "name": "Spinal dura",
+    "category": "batch2",
+    "inside": 0.0078,
+    "deep": 0,
+    "byTissue": {
+     "bone": 0.0014,
+     "brain": 0.0066
+    },
+    "pushed": 0.0208,
+    "top": [
+     "Medulla oblongata 0%",
+     "Medulla oblongata 0%",
+     "Fifth cervical vertebra 0%"
+    ]
+   },
+   {
     "id": "ZAF95ABD3E",
     "name": "Splenic nodes",
     "category": "lymph",
@@ -37721,6 +38100,42 @@
     "byTissue": {},
     "pushed": 0,
     "top": []
+   },
+   {
+    "id": "ZA7A9BECD4",
+    "name": "Left submandibular duct",
+    "category": "batch2",
+    "inside": 0.62,
+    "deep": 0,
+    "byTissue": {
+     "organ": 0.22,
+     "muscle": 0.38,
+     "gland": 0.02
+    },
+    "pushed": 0,
+    "top": [
+     "Left mylohyoid 38%",
+     "Tongue 14%",
+     "Gingiva of lower jaw 8%"
+    ]
+   },
+   {
+    "id": "ZABF583F07",
+    "name": "Right submandibular duct",
+    "category": "batch2",
+    "inside": 0.6727,
+    "deep": 0,
+    "byTissue": {
+     "organ": 0.2728,
+     "gland": 0.0545,
+     "muscle": 0.3455
+    },
+    "pushed": 0,
+    "top": [
+     "Right mylohyoid 35%",
+     "Tongue 15%",
+     "Gingiva of lower jaw 13%"
+    ]
    },
    {
     "id": "ZAA3400A8C",
@@ -38903,6 +39318,40 @@
     "byTissue": {},
     "pushed": 0.3333,
     "top": []
+   },
+   {
+    "id": "ZA430FF62B",
+    "name": "White matter of spinal cord",
+    "category": "batch2",
+    "inside": 0.0139,
+    "deep": 0,
+    "byTissue": {
+     "brain": 0.0137,
+     "bone": 0.0002
+    },
+    "pushed": 0,
+    "top": [
+     "Medulla oblongata 1%",
+     "Medulla oblongata 0%",
+     "Central canal of spinal cord 0%"
+    ]
+   },
+   {
+    "id": "ZA9DB7973F",
+    "name": "Spinal arachnoid mater (lumbosacral part)",
+    "category": "batch2",
+    "inside": 0.2136,
+    "deep": 0.0488,
+    "byTissue": {
+     "bone": 0.1673,
+     "muscle": 0.0463
+    },
+    "pushed": 0.2689,
+    "top": [
+     "Sacrum 16%",
+     "Right longissimus thoracis 2%",
+     "Left longissimus thoracis 2%"
+    ]
    }
   ],
   "comparisons": [
@@ -38981,6 +39430,2996 @@
       "cartilage": 0
      }
     }
+   }
+  ],
+  "jointRefits": [
+   {
+    "id": "ZAE9A69F6E",
+    "name": "Left anterior ligament of fibular head",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.623,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.327,
+     "deep": 0,
+     "inBone": 0.144,
+     "in": [
+      "Left fibula 14%",
+      "Left extensor digitorum longus 14%",
+      "Long head of left biceps femoris 4%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fibula",
+      "gapMm": 0.29,
+      "atlasGapMm": 0.3
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 2.38,
+      "atlasGapMm": 1.29
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA7B3C9E7D",
+    "name": "Left anterior meniscotibial ligament (Lateral meniscus)",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 1,
+     "deep": 0.962,
+     "inBone": 1
+    },
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.14,
+      "atlasGapMm": 0.14
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA0AEEE33D",
+    "name": "Left anterior meniscotibial ligament (Medial meniscus)",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 1,
+     "deep": 0.772,
+     "inBone": 1
+    },
+    "after": {
+     "inside": 0.031,
+     "deep": 0,
+     "inBone": 0.031,
+     "in": [
+      "Left tibia 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.2,
+      "atlasGapMm": 0.11
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.34,
+      "atlasGapMm": 0.16
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA054400D7",
+    "name": "Right arcuate popliteal ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.632,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.376,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Lateral head of right gastrocnemius 11%",
+      "Right popliteus 11%",
+      "Right plantaris 10%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right femur",
+      "gapMm": 0.06,
+      "atlasGapMm": 0.04
+     },
+     {
+      "bone": "right fibula",
+      "gapMm": 0.34,
+      "atlasGapMm": 0.25
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 1.06,
+      "atlasGapMm": 1.06
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA6AF7A6E9",
+    "name": "Left articular capsule of acromioclavicular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.193,
+     "deep": 0,
+     "inBone": 0.026,
+     "in": [
+      "Transverse part of left trapezius 11%",
+      "Clavicular part of left deltoid 5%",
+      "Left clavicle 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left scapula",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "left clavicle",
+      "gapMm": 0.18,
+      "atlasGapMm": 0.15
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA06E3F891",
+    "name": "Right articular capsule of acromioclavicular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.177,
+     "deep": 0,
+     "inBone": 0.002,
+     "in": [
+      "Transverse part of right trapezius 10%",
+      "Clavicular part of right deltoid 5%",
+      "Right platysma 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right scapula",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "right clavicle",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.15
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA364ED89A",
+    "name": "Left articular capsule of elbow joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.607,
+     "deep": 0.06,
+     "inBone": 0.014,
+     "in": [
+      "Left brachialis 16%",
+      "Medial head of left triceps brachii 14%",
+      "Left brachioradialis 6%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left radius",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "left ulna",
+      "gapMm": 0.19,
+      "atlasGapMm": 0.16
+     },
+     {
+      "bone": "left humerus",
+      "gapMm": 0.21,
+      "atlasGapMm": 0.22
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA3BA78F3A",
+    "name": "Right articular capsule of elbow joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.608,
+     "deep": 0.055,
+     "inBone": 0.012,
+     "in": [
+      "Right brachialis 16%",
+      "Medial head of right triceps brachii 14%",
+      "Humeral head of right pronator teres 6%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right ulna",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.16
+     },
+     {
+      "bone": "right radius",
+      "gapMm": 0.17,
+      "atlasGapMm": 0.16
+     },
+     {
+      "bone": "right humerus",
+      "gapMm": 0.21,
+      "atlasGapMm": 0.22
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA27BD8E99",
+    "name": "Left articular capsule of glenohumeral joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.453,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Left supraspinatus 20%",
+      "Left subscapularis 11%",
+      "Left infraspinatus muscle 9%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left humerus",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.06
+     },
+     {
+      "bone": "left scapula",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.08
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA205F5350",
+    "name": "Right articular capsule of glenohumeral joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.463,
+     "deep": 0.001,
+     "inBone": 0,
+     "in": [
+      "Right supraspinatus 21%",
+      "Right subscapularis 11%",
+      "Right infraspinatus muscle 9%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right humerus",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.06
+     },
+     {
+      "bone": "right scapula",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.08
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA839B58DC",
+    "name": "Left articular capsule of interphalangeal joint of great toe",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.142,
+     "deep": 0,
+     "inBone": 0.046,
+     "in": [
+      "Left flexor hallucis longus 10%",
+      "Proximal phalanx of left big toe 2%",
+      "Distal phalanx of left big toe 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left distal phalanx of first finger of foot",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "left proximal phalanx of first finger of foot",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.15
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAB1D22F0B",
+    "name": "Right articular capsule of interphalangeal joint of great toe",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.155,
+     "deep": 0,
+     "inBone": 0.032,
+     "in": [
+      "Right flexor hallucis longus 12%",
+      "Distal phalanx of right big toe 2%",
+      "Proximal phalanx of right big toe 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right distal phalanx of first finger of foot",
+      "gapMm": 0.14,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "right proximal phalanx of first finger of foot",
+      "gapMm": 0.15,
+      "atlasGapMm": 0.15
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA94E0BA7D",
+    "name": "Left articular capsule of radiocarpal joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.238,
+     "deep": 0.001,
+     "inBone": 0.064,
+     "in": [
+      "Left extensor digitorum 3%",
+      "Left radius 3%",
+      "Left extensor indicis 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left ulna",
+      "gapMm": 0.2,
+      "atlasGapMm": 0.04
+     },
+     {
+      "bone": "left second metacarpal bone",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left fourth metacarpal bone",
+      "gapMm": 0.06,
+      "atlasGapMm": 0.13
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAB3597A83",
+    "name": "Right articular capsule of radiocarpal joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.224,
+     "deep": 0.001,
+     "inBone": 0.057,
+     "in": [
+      "Right extensor digitorum 3%",
+      "Right opponens pollicis 2%",
+      "Right extensor indicis 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right second metacarpal bone",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "right fourth metacarpal bone",
+      "gapMm": 0.24,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "right ulna",
+      "gapMm": 0.26,
+      "atlasGapMm": 0.16
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA172B267E",
+    "name": "Left articular capsule of sternoclavicular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.321,
+     "deep": 0,
+     "inBone": 0.038,
+     "in": [
+      "Left sternocleidomastoid 16%",
+      "Left sternohyoid 6%",
+      "Left first costal cartilage 4%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left clavicle",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "manubrium of sternum",
+      "gapMm": 0.2,
+      "atlasGapMm": 0.14
+     },
+     {
+      "bone": "left costal cartilage of first rib",
+      "gapMm": 0.46,
+      "atlasGapMm": 0.3
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA0EF31A6F",
+    "name": "Right articular capsule of sternoclavicular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.439,
+     "deep": 0,
+     "inBone": 0.033,
+     "in": [
+      "Right sternocleidomastoid 14%",
+      "Upper lobe of right lung 8%",
+      "Right sternohyoid 7%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right clavicle",
+      "gapMm": 0.06,
+      "atlasGapMm": 0.09
+     },
+     {
+      "bone": "manubrium of sternum",
+      "gapMm": 0.15,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "right costal cartilage of first rib",
+      "gapMm": 0.4,
+      "atlasGapMm": 0.29
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA00E0DFB0",
+    "name": "Left articular capsule of superior tibiofibular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.39,
+     "deep": 0,
+     "inBone": 0.038,
+     "in": [
+      "Left soleus 15%",
+      "Short head of left biceps femoris 8%",
+      "Left extensor digitorum longus 5%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fibula",
+      "gapMm": 0.15,
+      "atlasGapMm": 0.14
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 0.65,
+      "atlasGapMm": 0.17
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA409B9FC1",
+    "name": "Right articular capsule of superior tibiofibular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.432,
+     "deep": 0,
+     "inBone": 0.038,
+     "in": [
+      "Right soleus 17%",
+      "Short head of right biceps femoris 9%",
+      "Right extensor digitorum longus 5%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right fibula",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.2
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.78,
+      "atlasGapMm": 0.22
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA54D9B96E",
+    "name": "Left articular capsule of temporomandibular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.083,
+     "deep": 0,
+     "inBone": 0.032,
+     "in": [
+      "Mandible 3%",
+      "Lower head of left lateral pterygoid 3%",
+      "Upper head of left lateral pterygoid 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left temporal bone",
+      "gapMm": 0.14,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "mandible",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.12
+     },
+     {
+      "bone": "sphenoid bone",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.14
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA44F92212",
+    "name": "Right articular capsule of temporomandibular joint",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.113,
+     "deep": 0,
+     "inBone": 0.066,
+     "in": [
+      "Right temporal bone 5%",
+      "Lower head of right lateral pterygoid 3%",
+      "Upper head of right lateral pterygoid 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "mandible",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.05
+     },
+     {
+      "bone": "right temporal bone",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "sphenoid bone",
+      "gapMm": 0.17,
+      "atlasGapMm": 0.07
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA3BDB7890",
+    "name": "Left articular capsules of distal interphalangeal joints of foot",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.138,
+     "deep": 0,
+     "inBone": 0.048,
+     "in": [
+      "Left extensor digitorum longus 6%",
+      "Left flexor digitorum longus 3%",
+      "Middle phalanx of left third toe 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left middle phalanx of fourth finger of foot",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left middle phalanx of third finger of foot",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "left middle phalanx of fifth finger of foot",
+      "gapMm": 0.18,
+      "atlasGapMm": 0.11
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA877369E6",
+    "name": "Right articular capsules of distal interphalangeal joints of foot",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.198,
+     "deep": 0,
+     "inBone": 0.114,
+     "in": [
+      "Right extensor digitorum longus 4%",
+      "Middle phalanx of right little toe 4%",
+      "Right flexor digitorum longus 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right middle phalanx of fourth finger of foot",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "right middle phalanx of third finger of foot",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "right distal phalanx of fifth finger of foot",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.11
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAAB1A9D64",
+    "name": "Left articular capsules of distal interphalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.229,
+     "deep": 0,
+     "inBone": 0.169,
+     "in": [
+      "Proximal phalanx of left thumb 4%",
+      "Left flexor digitorum profundus 3%",
+      "Distal phalanx of left thumb 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left middle phalanx of third finger of hand",
+      "gapMm": 0.14,
+      "atlasGapMm": 0.05
+     },
+     {
+      "bone": "left distal phalanx of fifth finger of hand",
+      "gapMm": 0.17,
+      "atlasGapMm": 0.09
+     },
+     {
+      "bone": "left middle phalanx of fourth finger of hand",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.12
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA8327915A",
+    "name": "Right articular capsules of distal interphalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.214,
+     "deep": 0,
+     "inBone": 0.165,
+     "in": [
+      "Distal phalanx of right middle finger 3%",
+      "Middle phalanx of right middle finger 2%",
+      "Right flexor digitorum profundus 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right distal phalanx of second finger of hand",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right middle phalanx of third finger of hand",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "right middle phalanx of fourth finger of hand",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.12
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA42265BB4",
+    "name": "Left articular capsules of metacarpophalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.243,
+     "deep": 0,
+     "inBone": 0.041,
+     "in": [
+      "Set of lumbricals of left hand 4%",
+      "Set of dorsal interossei of left hand 3%",
+      "Left flexor digitorum profundus 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left third metacarpal bone",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "left proximal phalanx of first finger of hand",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.09
+     },
+     {
+      "bone": "left fifth metacarpal bone",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAA7946A55",
+    "name": "Right articular capsules of metacarpophalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.271,
+     "deep": 0,
+     "inBone": 0.048,
+     "in": [
+      "Set of lumbricals of right hand 5%",
+      "Set of dorsal interossei of right hand 3%",
+      "Right extensor digitorum 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right third metacarpal bone",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right first metacarpal bone",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.09
+     },
+     {
+      "bone": "right fifth metacarpal bone",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA3691AC21",
+    "name": "Left articular capsules of metatarsophalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.208,
+     "deep": 0,
+     "inBone": 0.042,
+     "in": [
+      "Left flexor digitorum longus 4%",
+      "Medial head of left flexor hallucis brevis 3%",
+      "Left extensor digitorum brevis 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fifth metatarsal bone",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.12
+     },
+     {
+      "bone": "left third metatarsal bone",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "left first metatarsal bone",
+      "gapMm": 0.2,
+      "atlasGapMm": 0.16
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAD71C9873",
+    "name": "Right articular capsules of metatarsophalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.217,
+     "deep": 0,
+     "inBone": 0.052,
+     "in": [
+      "Right flexor digitorum longus 4%",
+      "Medial head of right flexor hallucis brevis 2%",
+      "Right extensor hallucis brevis 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right third metatarsal bone",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "right proximal phalanx of fourth finger of foot",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.16
+     },
+     {
+      "bone": "right proximal phalanx of third finger of foot",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.17
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA79DAE5E3",
+    "name": "Left articular capsules of proximal interphalangeal joints of foot",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.269,
+     "deep": 0,
+     "inBone": 0.09,
+     "in": [
+      "Left flexor digitorum longus 8%",
+      "Left flexor digitorum brevis 6%",
+      "Left extensor digitorum longus 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left proximal phalanx of second finger of foot",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.05
+     },
+     {
+      "bone": "left proximal phalanx of third finger of foot",
+      "gapMm": 0.05,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left middle phalanx of second finger of foot",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.08
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAE2648CC5",
+    "name": "Right articular capsules of proximal interphalangeal joints of foot",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.285,
+     "deep": 0,
+     "inBone": 0.131,
+     "in": [
+      "Right flexor digitorum longus 6%",
+      "Right flexor digitorum brevis 6%",
+      "Middle phalanx of right second toe 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right proximal phalanx of fourth finger of foot",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right proximal phalanx of third finger of foot",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "right middle phalanx of second finger of foot",
+      "gapMm": 0.15,
+      "atlasGapMm": 0.08
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA4975BEBC",
+    "name": "Left articular capsules of proximal interphalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.23,
+     "deep": 0,
+     "inBone": 0.066,
+     "in": [
+      "Left flexor digitorum profundus 6%",
+      "Left extensor digitorum 6%",
+      "Left flexor digitorum superficialis 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left proximal phalanx of fourth finger of hand",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "left proximal phalanx of second finger of hand",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left middle phalanx of second finger of hand",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.09
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA0252F487",
+    "name": "Right articular capsules of proximal interphalangeal joints",
+    "source": "Z-Anatomy",
+    "before": null,
+    "after": {
+     "inside": 0.233,
+     "deep": 0,
+     "inBone": 0.092,
+     "in": [
+      "Right extensor digitorum 5%",
+      "Right flexor digitorum profundus 4%",
+      "Right flexor digitorum superficialis 4%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right proximal phalanx of second finger of hand",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right proximal phalanx of fourth finger of hand",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right proximal phalanx of fifth finger of hand",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.14
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA39981AF0",
+    "name": "Left coraco-acromial ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.826,
+     "deep": 0.098,
+     "inBone": 0.076
+    },
+    "after": {
+     "inside": 0.821,
+     "deep": 0.073,
+     "inBone": 0.133,
+     "in": [
+      "Clavicular part of left deltoid 57%",
+      "Left scapula 13%",
+      "Acromial part of left deltoid 12%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left scapula",
+      "gapMm": 0.34,
+      "atlasGapMm": 0.36
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA02A9C180",
+    "name": "Right coraco-acromial ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.76,
+     "deep": 0.062,
+     "inBone": 0.077
+    },
+    "after": {
+     "inside": 0.904,
+     "deep": 0.088,
+     "inBone": 0.12,
+     "in": [
+      "Clavicular part of right deltoid 64%",
+      "Acromial part of right deltoid 14%",
+      "Right scapula 12%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right scapula",
+      "gapMm": 0.25,
+      "atlasGapMm": 0.22
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZADA77DB9E",
+    "name": "Right coracohumeral ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.626,
+     "deep": 0.077,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.591,
+     "deep": 0.085,
+     "inBone": 0,
+     "in": [
+      "Clavicular part of right deltoid 47%",
+      "Right supraspinatus 10%",
+      "Acromial part of right deltoid 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right humerus",
+      "gapMm": 0.23,
+      "atlasGapMm": 0.14
+     },
+     {
+      "bone": "right scapula",
+      "gapMm": 0.43,
+      "atlasGapMm": 0.34
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAF7E8BF7E",
+    "name": "Left cuneocuboid interosseous ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.8,
+     "deep": 0,
+     "inBone": 0.8
+    },
+    "after": {
+     "inside": 0.667,
+     "deep": 0,
+     "inBone": 0.667,
+     "in": [
+      "Left lateral cuneiform bone 67%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left cuboid bone",
+      "gapMm": 0.19,
+      "atlasGapMm": 0.09
+     },
+     {
+      "bone": "left lateral cuneiform bone",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.09
+     }
+    ],
+    "shipped": false
+   },
+   {
+    "id": "ZABBF5DAE6",
+    "name": "Right cuneocuboid interosseous ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 1,
+     "deep": 0,
+     "inBone": 1
+    },
+    "after": {
+     "inside": 1,
+     "deep": 0,
+     "inBone": 1,
+     "in": [
+      "Right lateral cuneiform bone 100%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right lateral cuneiform bone",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.04
+     },
+     {
+      "bone": "right cuboid bone",
+      "gapMm": 0.43,
+      "atlasGapMm": 0.09
+     }
+    ],
+    "shipped": false
+   },
+   {
+    "id": "ZAC7CC57BB",
+    "name": "Left dorsal cuneocuboid ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.645,
+     "deep": 0,
+     "inBone": 0.032
+    },
+    "after": {
+     "inside": 0.759,
+     "deep": 0,
+     "inBone": 0.103,
+     "in": [
+      "Left extensor digitorum brevis 66%",
+      "Left cuboid bone 7%",
+      "Left lateral cuneiform bone 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left cuboid bone",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "left lateral cuneiform bone",
+      "gapMm": 0.32,
+      "atlasGapMm": 0.26
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAE319E7A1",
+    "name": "Right dorsal cuneocuboid ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.833,
+     "deep": 0,
+     "inBone": 0.111
+    },
+    "after": {
+     "inside": 0.688,
+     "deep": 0,
+     "inBone": 0.063,
+     "in": [
+      "Right extensor digitorum brevis 63%",
+      "Right cuboid bone 6%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right cuboid bone",
+      "gapMm": 0.27,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "right lateral cuneiform bone",
+      "gapMm": 0.35,
+      "atlasGapMm": 0.26
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA84389368",
+    "name": "Left inferior glenohumeral ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.618,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.579,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Left subscapularis 58%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left humerus",
+      "gapMm": 0.25,
+      "atlasGapMm": 0.25
+     },
+     {
+      "bone": "left scapula",
+      "gapMm": 0.25,
+      "atlasGapMm": 0.33
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZADCB4F842",
+    "name": "Right inferior glenohumeral ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.689,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.593,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Right subscapularis 59%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right scapula",
+      "gapMm": 0.19,
+      "atlasGapMm": 0.19
+     },
+     {
+      "bone": "right humerus",
+      "gapMm": 0.3,
+      "atlasGapMm": 0.31
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA35A49F75",
+    "name": "Left intersesamoid ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.789,
+     "deep": 0,
+     "inBone": 0.158
+    },
+    "after": {
+     "inside": 0.81,
+     "deep": 0,
+     "inBone": 0.143,
+     "in": [
+      "Lateral head of left flexor hallucis brevis 62%",
+      "Sesamoid bone of left foot 14%",
+      "Left flexor hallucis longus 5%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left first metatarsal bone",
+      "gapMm": 1.98,
+      "atlasGapMm": 1.98
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAB56750CA",
+    "name": "Right intersesamoid ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.842,
+     "deep": 0,
+     "inBone": 0.105
+    },
+    "after": {
+     "inside": 0.7,
+     "deep": 0,
+     "inBone": 0.1,
+     "in": [
+      "Lateral head of right flexor hallucis brevis 60%",
+      "Sesamoid bone of right foot 10%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right first metatarsal bone",
+      "gapMm": 1.92,
+      "atlasGapMm": 1.92
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZACB2FA840",
+    "name": "Interspinous ligaments",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.604,
+     "deep": 0.013,
+     "inBone": 0.461
+    },
+    "after": {
+     "inside": 0.581,
+     "deep": 0.028,
+     "inBone": 0.417,
+     "in": [
+      "Ascending part of right trapezius 4%",
+      "Eleventh thoracic vertebra 4%",
+      "Ninth thoracic vertebra 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "vertebra t12",
+      "gapMm": 0.34,
+      "atlasGapMm": 0.11
+     },
+     {
+      "bone": "vertebra c6",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.23
+     },
+     {
+      "bone": "atlas (c1)",
+      "gapMm": 0.26,
+      "atlasGapMm": 0.26
+     }
+    ],
+    "shipped": false
+   },
+   {
+    "id": "ZA628AD22B",
+    "name": "Left intra-articular ligament of head of rib",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.871,
+     "deep": 0,
+     "inBone": 0.872
+    },
+    "after": {
+     "inside": 0.679,
+     "deep": 0,
+     "inBone": 0.679,
+     "in": [
+      "Left seventh rib 15%",
+      "Intervertebral disk of third thoracic vertebra 10%",
+      "Left eighth rib 8%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fourth rib",
+      "gapMm": 0.46,
+      "atlasGapMm": 0.22
+     },
+     {
+      "bone": "vertebra t2",
+      "gapMm": 0.26,
+      "atlasGapMm": 0.24
+     },
+     {
+      "bone": "left fifth rib",
+      "gapMm": 0.22,
+      "atlasGapMm": 0.31
+     }
+    ],
+    "shipped": false
+   },
+   {
+    "id": "ZA693F21A9",
+    "name": "Right intra-articular ligament of head of rib",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.697,
+     "deep": 0,
+     "inBone": 0.697
+    },
+    "after": {
+     "inside": 0.631,
+     "deep": 0,
+     "inBone": 0.631,
+     "in": [
+      "Intervertebral disk of third thoracic vertebra 12%",
+      "Intervertebral disk of seventh thoracic vertebra 12%",
+      "Right second rib 11%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right fourth rib",
+      "gapMm": 0.23,
+      "atlasGapMm": 0.22
+     },
+     {
+      "bone": "vertebra t2",
+      "gapMm": 0.46,
+      "atlasGapMm": 0.24
+     },
+     {
+      "bone": "right fifth rib",
+      "gapMm": 0.25,
+      "atlasGapMm": 0.31
+     }
+    ],
+    "shipped": false
+   },
+   {
+    "id": "ZA85BAF67D",
+    "name": "Right lateral temporomandibular ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.804,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.827,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Superficial part of right masseter 83%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right temporal bone",
+      "gapMm": 0.25,
+      "atlasGapMm": 0.38
+     },
+     {
+      "bone": "mandible",
+      "gapMm": 0.42,
+      "atlasGapMm": 0.49
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA6E7E61F3",
+    "name": "Left lateral temporomandibular ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.747,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.783,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Superficial part of left masseter 78%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left temporal bone",
+      "gapMm": 0.42,
+      "atlasGapMm": 0.38
+     },
+     {
+      "bone": "mandible",
+      "gapMm": 0.47,
+      "atlasGapMm": 0.52
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA5144CF97",
+    "name": "Right plantar tarsometatarsal ligaments",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.62,
+     "deep": 0,
+     "inBone": 0.076
+    },
+    "after": {
+     "inside": 0.556,
+     "deep": 0,
+     "inBone": 0.056,
+     "in": [
+      "Oblique head of right adductor hallucis 28%",
+      "Lateral head of right flexor hallucis brevis 13%",
+      "Right tibialis posterior 7%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right second metatarsal bone",
+      "gapMm": 0.41,
+      "atlasGapMm": 0.04
+     },
+     {
+      "bone": "right fourth metatarsal bone",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.11
+     },
+     {
+      "bone": "right medial cuneiform bone",
+      "gapMm": 0.17,
+      "atlasGapMm": 0.17
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA7C79158C",
+    "name": "Left popliteofibular ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.625,
+     "deep": 0,
+     "inBone": 0.007
+    },
+    "after": {
+     "inside": 0.656,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Left plantaris 39%",
+      "Left popliteus 15%",
+      "Left soleus 12%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fibula",
+      "gapMm": 0.3,
+      "atlasGapMm": 0.11
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA359ECC7C",
+    "name": "Left posterior ligament of fibular head",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.858,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.5,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Left soleus 36%",
+      "Left popliteus 14%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fibula",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.15
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 0.26,
+      "atlasGapMm": 0.4
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA4313CD8E",
+    "name": "Right posterior ligament of fibular head",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.88,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.453,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Right soleus 32%",
+      "Right popliteus 13%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right fibula",
+      "gapMm": 0.15,
+      "atlasGapMm": 0.18
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.41,
+      "atlasGapMm": 0.44
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA647468E8",
+    "name": "Left posterior meniscotibial ligament (Lateral meniscus)",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 1,
+     "deep": 0.521,
+     "inBone": 1
+    },
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.2,
+      "atlasGapMm": 0.2
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA1B1E3FEF",
+    "name": "Left posterior meniscotibial ligament (Medial meniscus)",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.86,
+     "deep": 0.567,
+     "inBone": 0.86
+    },
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.26,
+      "atlasGapMm": 0.23
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAC85DADCD",
+    "name": "Right posterior tibiotalar ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.486,
+     "deep": 0.236,
+     "inBone": 0.486
+    },
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "right talus",
+      "gapMm": 0.17,
+      "atlasGapMm": 0.17
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.44,
+      "atlasGapMm": 0.23
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA2D843DDF",
+    "name": "Supraspinous ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.799,
+     "deep": 0,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.667,
+     "deep": 0,
+     "inBone": 0.144,
+     "in": [
+      "Ascending part of right trapezius 7%",
+      "Ascending part of left trapezius 6%",
+      "Right rhomboid major 5%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "vertebra t1",
+      "gapMm": 0.24,
+      "atlasGapMm": 0.21
+     },
+     {
+      "bone": "vertebra t5",
+      "gapMm": 0.04,
+      "atlasGapMm": 0.25
+     },
+     {
+      "bone": "vertebra c7",
+      "gapMm": 0.21,
+      "atlasGapMm": 0.26
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA0F2FA6EB",
+    "name": "Left transverse ligament of knee",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.903,
+     "deep": 0.448,
+     "inBone": 0.779
+    },
+    "after": {
+     "inside": 0.042,
+     "deep": 0,
+     "inBone": 0.017,
+     "in": [
+      "Left rectus femoris 3%",
+      "Left tibia 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.21
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.51,
+      "atlasGapMm": 0.3
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA1ED6D225",
+    "name": "Left trapezoid ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.815,
+     "deep": 0.019,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.808,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Clavicular part of left deltoid 81%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left scapula",
+      "gapMm": 0.18,
+      "atlasGapMm": 0.19
+     },
+     {
+      "bone": "left clavicle",
+      "gapMm": 0.46,
+      "atlasGapMm": 0.35
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAA4952AD9",
+    "name": "Right trapezoid ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.806,
+     "deep": 0.009,
+     "inBone": 0.009
+    },
+    "after": {
+     "inside": 0.8,
+     "deep": 0,
+     "inBone": 0,
+     "in": [
+      "Clavicular part of right deltoid 80%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right scapula",
+      "gapMm": 0.48,
+      "atlasGapMm": 0.21
+     },
+     {
+      "bone": "right clavicle",
+      "gapMm": 0.46,
+      "atlasGapMm": 0.35
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA805CE94D",
+    "name": "Left ulnar collateral ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.659,
+     "deep": 0.037,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.751,
+     "deep": 0.027,
+     "inBone": 0,
+     "in": [
+      "Left flexor digitorum superficialis 26%",
+      "Humeral head of left pronator teres 24%",
+      "Left flexor carpi radialis 11%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left humerus",
+      "gapMm": 0.24,
+      "atlasGapMm": 0.24
+     },
+     {
+      "bone": "left radius",
+      "gapMm": 0.28,
+      "atlasGapMm": 0.3
+     },
+     {
+      "bone": "left ulna",
+      "gapMm": 0.5,
+      "atlasGapMm": 0.56
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA94A29B50",
+    "name": "Right ulnar collateral ligament",
+    "source": "Z-Anatomy",
+    "before": {
+     "inside": 0.764,
+     "deep": 0.035,
+     "inBone": 0
+    },
+    "after": {
+     "inside": 0.708,
+     "deep": 0.027,
+     "inBone": 0,
+     "in": [
+      "Right flexor digitorum superficialis 24%",
+      "Humeral head of right pronator teres 22%",
+      "Right flexor carpi radialis 12%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right humerus",
+      "gapMm": 0.24,
+      "atlasGapMm": 0.24
+     },
+     {
+      "bone": "right radius",
+      "gapMm": 0.4,
+      "atlasGapMm": 0.3
+     },
+     {
+      "bone": "right ulna",
+      "gapMm": 0.5,
+      "atlasGapMm": 0.66
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZABF47C1A9",
+    "name": "Right lateral meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.004,
+     "deep": 0,
+     "inBone": 0.004,
+     "in": [
+      "Right tibia 0%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.09,
+      "atlasGapMm": 0.15
+     },
+     {
+      "bone": "right femur",
+      "gapMm": 0.79,
+      "atlasGapMm": 2.33
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAF6D4577E",
+    "name": "Left lateral meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.009,
+     "deep": 0,
+     "inBone": 0.009,
+     "in": [
+      "Left tibia 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.14
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.31,
+      "atlasGapMm": 2.38
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA0E5371C2",
+    "name": "Right medial meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.02,
+     "deep": 0,
+     "inBone": 0.014,
+     "in": [
+      "Right tibia 1%",
+      "Right semimembranosus 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.22
+     },
+     {
+      "bone": "right femur",
+      "gapMm": 0.81,
+      "atlasGapMm": 0.84
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAFBF19A79",
+    "name": "Left medial meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.029,
+     "deep": 0,
+     "inBone": 0.013,
+     "in": [
+      "Left semimembranosus 2%",
+      "Left tibia 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.75,
+      "atlasGapMm": 0.84
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA12485C3E",
+    "name": "Right anterior horn of lateral meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.11
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA805990FF",
+    "name": "Left anterior horn of lateral meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.07
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZABEFD6AEB",
+    "name": "Right posterior horn of lateral meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.18
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA7AA06462",
+    "name": "Left posterior horn of lateral meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.14,
+      "atlasGapMm": 0.13
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA1F0709F4",
+    "name": "Right anterior horn of medial meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.074,
+     "deep": 0,
+     "inBone": 0.074,
+     "in": [
+      "Right tibia 7%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     },
+     {
+      "bone": "right femur",
+      "gapMm": 1.01,
+      "atlasGapMm": 0.98
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA5FCF7182",
+    "name": "Left anterior horn of medial meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.185,
+     "deep": 0,
+     "inBone": 0.185,
+     "in": [
+      "Left tibia 19%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.75,
+      "atlasGapMm": 0.98
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA2C1F44C2",
+    "name": "Right posterior horn of medial meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right femur",
+      "gapMm": 0.55,
+      "atlasGapMm": 1.39
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA03DEED9F",
+    "name": "Left posterior horn of medial meniscus",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.04,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.61,
+      "atlasGapMm": 1.42
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA87A36C0F",
+    "name": "Right anterior cruciate ligament",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.07,
+     "deep": 0,
+     "inBone": 0.03,
+     "in": [
+      "Right plantaris 4%",
+      "Right tibia 2%",
+      "Right femur 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right femur",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.11
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.16,
+      "atlasGapMm": 0.2
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZABD636AA0",
+    "name": "Left anterior cruciate ligament",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.073,
+     "deep": 0,
+     "inBone": 0.029,
+     "in": [
+      "Left plantaris 4%",
+      "Left femur 1%",
+      "Left tibia 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left femur",
+      "gapMm": 0.14,
+      "atlasGapMm": 0.11
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.13
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA07B75AD4",
+    "name": "Right posterior cruciate ligament",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "right femur",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.13
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.27,
+      "atlasGapMm": 0.22
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA15B474A3",
+    "name": "Left posterior cruciate ligament",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.27,
+      "atlasGapMm": 0.09
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.02,
+      "atlasGapMm": 0.13
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAC7D01EAF",
+    "name": "Right posterior meniscofemoral ligament",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "right femur",
+      "gapMm": 0.36,
+      "atlasGapMm": 0.14
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.43,
+      "atlasGapMm": 0.8
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA8CC7AF92",
+    "name": "Left posterior meniscofemoral ligament",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0,
+     "deep": 0,
+     "inBone": 0,
+     "in": []
+    },
+    "ends": [
+     {
+      "bone": "left femur",
+      "gapMm": 0.24,
+      "atlasGapMm": 0.14
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 0.5,
+      "atlasGapMm": 0.5
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA7A7F94E7",
+    "name": "Right articular capsule of knee joint",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.31,
+     "deep": 0.001,
+     "inBone": 0.004,
+     "in": [
+      "Right semimembranosus 8%",
+      "Right plantaris 5%",
+      "Right popliteus 5%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right femur",
+      "gapMm": 0.04,
+      "atlasGapMm": 0.05
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "right patella",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.09
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA2398DFE8",
+    "name": "Left articular capsule of knee joint",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.309,
+     "deep": 0.002,
+     "inBone": 0.005,
+     "in": [
+      "Left semimembranosus 8%",
+      "Left popliteus 5%",
+      "Left plantaris 5%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left femur",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left fibula",
+      "gapMm": 0.12,
+      "atlasGapMm": 0.1
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA4F3ABD3B",
+    "name": "Right articular capsule of hip joint",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.177,
+     "deep": 0.003,
+     "inBone": 0.017,
+     "in": [
+      "Right iliacus 5%",
+      "Right obturator externus 4%",
+      "Right psoas major 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right femur",
+      "gapMm": 0.04,
+      "atlasGapMm": 0.04
+     },
+     {
+      "bone": "right hip bone",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.05
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAD8D6B197",
+    "name": "Left articular capsule of hip joint",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.173,
+     "deep": 0.002,
+     "inBone": 0.011,
+     "in": [
+      "Left iliacus 5%",
+      "Left obturator externus 4%",
+      "Left psoas major 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left femur",
+      "gapMm": 0.04,
+      "atlasGapMm": 0.04
+     },
+     {
+      "bone": "left hip bone",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.1
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZACBC1681C",
+    "name": "Right articular capsule of ankle joint",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.118,
+     "deep": 0.021,
+     "inBone": 0.072,
+     "in": [
+      "Right fibula 7%",
+      "Right fibularis brevis 3%",
+      "Right flexor hallucis longus 1%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right fibula",
+      "gapMm": 0.08,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "right tibia",
+      "gapMm": 0.11,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "right talus",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA1C75DD34",
+    "name": "Left articular capsule of ankle joint",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.042,
+     "deep": 0,
+     "inBone": 0.002,
+     "in": [
+      "Left fibularis brevis 3%",
+      "Left flexor hallucis longus 1%",
+      "Left fibula 0%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left fibula",
+      "gapMm": 0.13,
+      "atlasGapMm": 0.07
+     },
+     {
+      "bone": "left tibia",
+      "gapMm": 0.07,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "left talus",
+      "gapMm": 0.1,
+      "atlasGapMm": 0.1
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZA241B008C",
+    "name": "Right infrapatellar fat pad",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.36,
+     "deep": 0,
+     "inBone": 0.021,
+     "in": [
+      "Right rectus femoris 21%",
+      "Right vastus intermedius 10%",
+      "Right tibia 2%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "right tibia",
+      "gapMm": 0.01,
+      "atlasGapMm": 0.02
+     },
+     {
+      "bone": "right patella",
+      "gapMm": 0.06,
+      "atlasGapMm": 0.08
+     },
+     {
+      "bone": "right femur",
+      "gapMm": 0.33,
+      "atlasGapMm": 0.4
+     }
+    ],
+    "shipped": true
+   },
+   {
+    "id": "ZAB1E61F5F",
+    "name": "Left infrapatellar fat pad",
+    "source": "Open3DModel",
+    "before": null,
+    "after": {
+     "inside": 0.338,
+     "deep": 0,
+     "inBone": 0.027,
+     "in": [
+      "Left rectus femoris 18%",
+      "Left vastus intermedius 9%",
+      "Left vastus medialis 3%"
+     ]
+    },
+    "ends": [
+     {
+      "bone": "left tibia",
+      "gapMm": 0.06,
+      "atlasGapMm": 0.02
+     },
+     {
+      "bone": "left patella",
+      "gapMm": 0.17,
+      "atlasGapMm": 0.11
+     },
+     {
+      "bone": "left femur",
+      "gapMm": 0.25,
+      "atlasGapMm": 0.12
+     }
+    ],
+    "shipped": true
+   }
+  ],
+  "lymphMoved": [
+   {
+    "id": "ZAB7B64ABE",
+    "name": "Left anterior tibial node",
+    "insideBefore": 1,
+    "in": [
+     "Left tibialis anterior 100%"
+    ],
+    "movedMm": 6,
+    "insideAfter": 0
+   },
+   {
+    "id": "ZADF88D6E8",
+    "name": "Right anterior tibial node",
+    "insideBefore": 1,
+    "in": [
+     "Right tibialis anterior 100%"
+    ],
+    "movedMm": 6,
+    "insideAfter": 0
+   },
+   {
+    "id": "ZAB89928DB",
+    "name": "Left fibular node",
+    "insideBefore": 1,
+    "in": [
+     "Left fibularis longus 100%"
+    ],
+    "movedMm": 16,
+    "insideAfter": 0
+   },
+   {
+    "id": "ZA04FDF731",
+    "name": "Right fibular node",
+    "insideBefore": 1,
+    "in": [
+     "Right fibularis longus 100%"
+    ],
+    "movedMm": 16,
+    "insideAfter": 0
+   },
+   {
+    "id": "ZA88BD1C05",
+    "name": "Left anterior axillary nodes",
+    "insideBefore": 0.787,
+    "in": [
+     "Left pectoralis minor 77%",
+     "External intercostal muscle 2%"
+    ],
+    "movedMm": 24,
+    "insideAfter": 0.056
+   },
+   {
+    "id": "ZAE85E6756",
+    "name": "Right anterior axillary nodes",
+    "insideBefore": 0.891,
+    "in": [
+     "Right pectoralis minor 89%"
+    ],
+    "movedMm": 22,
+    "insideAfter": 0.077
+   },
+   {
+    "id": "ZAA4601838",
+    "name": "Left inferior deep lateral cervical nodes",
+    "insideBefore": 1,
+    "in": [
+     "Upper lobe of left lung 100%"
+    ],
+    "movedMm": 10,
+    "insideAfter": 0.081
+   },
+   {
+    "id": "ZAC987BA4D",
+    "name": "Inferior pancreatic nodes",
+    "insideBefore": 1,
+    "in": [
+     "Pancreas 100%"
+    ],
+    "movedMm": 10,
+    "insideAfter": 0.045
+   },
+   {
+    "id": "ZAD3C996DF",
+    "name": "Left intermediate external iliac nodes",
+    "insideBefore": 0.385,
+    "in": [
+     "Descending colon 38%"
+    ],
+    "movedMm": 30,
+    "insideAfter": 0.011
+   },
+   {
+    "id": "ZAD1BB8DD6",
+    "name": "Left interpectoral nodes",
+    "insideBefore": 1,
+    "in": [
+     "Sternocostal part of left pectoralis major 84%",
+     "Left pectoralis minor 16%"
+    ],
+    "movedMm": 28,
+    "insideAfter": 0.056
+   },
+   {
+    "id": "ZAE78D42E4",
+    "name": "Right interpectoral nodes",
+    "insideBefore": 1,
+    "in": [
+     "Sternocostal part of right pectoralis major 95%",
+     "Right pectoralis minor 5%"
+    ],
+    "movedMm": 30,
+    "insideAfter": 0
+   },
+   {
+    "id": "ZA3000C9A9",
+    "name": "Intrapulmonary nodes",
+    "insideBefore": 1,
+    "in": [
+     "Lower lobe of left lung 30%",
+     "Upper lobe of left lung 22%",
+     "Lower lobe of right lung 13%"
+    ],
+    "movedMm": null,
+    "insideAfter": null
+   },
+   {
+    "id": "ZAEAAD9F8D",
+    "name": "Lateral aortic nodes",
+    "insideBefore": 0.794,
+    "in": [
+     "Pancreas 56%",
+     "Duodenum 24%"
+    ],
+    "movedMm": 8,
+    "insideAfter": 0.083
+   },
+   {
+    "id": "ZAD7E428D7",
+    "name": "Lateral caval nodes",
+    "insideBefore": 0.73,
+    "in": [
+     "Pancreas 32%",
+     "Caudate lobe of liver 22%",
+     "Duodenum 19%"
+    ],
+    "movedMm": 8,
+    "insideAfter": 0.088
+   },
+   {
+    "id": "ZAF6BB9D9E",
+    "name": "Lateral pericardial nodes",
+    "insideBefore": 0.714,
+    "in": [
+     "Middle lobe of lung 46%",
+     "Wall of right atrium 14%",
+     "Lower lobe of right lung 11%"
+    ],
+    "movedMm": 10,
+    "insideAfter": 0.042
+   },
+   {
+    "id": "ZAD1BBD67B",
+    "name": "Left medial external iliac nodes",
+    "insideBefore": 0.522,
+    "in": [
+     "Descending colon 52%"
+    ],
+    "movedMm": 24,
+    "insideAfter": 0.009
+   },
+   {
+    "id": "ZA4A78639E",
+    "name": "Paracolic superior mesenteric nodes",
+    "insideBefore": 0.674,
+    "in": [
+     "Descending colon 28%",
+     "Transverse colon 22%",
+     "Ascending colon 11%"
+    ],
+    "movedMm": null,
+    "insideAfter": null
+   },
+   {
+    "id": "ZA0F9A3D43",
+    "name": "Pararectal nodes",
+    "insideBefore": 0.811,
+    "in": [
+     "Rectum 81%"
+    ],
+    "movedMm": 10,
+    "insideAfter": 0.08
+   },
+   {
+    "id": "ZA6285196D",
+    "name": "Pre-aortic nodes",
+    "insideBefore": 0.605,
+    "in": [
+     "Pancreas 42%",
+     "Duodenum 19%"
+    ],
+    "movedMm": 8,
+    "insideAfter": 0.015
+   },
+   {
+    "id": "ZAEA5E11EA",
+    "name": "Precaecal nodes",
+    "insideBefore": 1,
+    "in": [
+     "Ascending colon 100%"
+    ],
+    "movedMm": 12,
+    "insideAfter": 0
+   },
+   {
+    "id": "ZADE5ADCAA",
+    "name": "Precaval nodes",
+    "insideBefore": 0.385,
+    "in": [
+     "Pancreas 21%",
+     "Caudate lobe of liver 18%"
+    ],
+    "movedMm": 10,
+    "insideAfter": 0.036
+   },
+   {
+    "id": "ZA751E6E66",
+    "name": "Prepericardial nodes",
+    "insideBefore": 0.636,
+    "in": [
+     "Upper lobe of right lung 64%"
+    ],
+    "movedMm": 14,
+    "insideAfter": 0.06
+   },
+   {
+    "id": "ZACC6086F3",
+    "name": "Retrocaecal nodes",
+    "insideBefore": 1,
+    "in": [
+     "Right psoas major 100%"
+    ],
+    "movedMm": 16,
+    "insideAfter": 0.024
+   },
+   {
+    "id": "ZAD56FDB29",
+    "name": "Left retropharyngeal nodes",
+    "insideBefore": 0.643,
+    "in": [
+     "Left salpingopharyngeus 21%",
+     "Left palatopharyngeus 14%",
+     "Left levator veli palatini 14%"
+    ],
+    "movedMm": 2,
+    "insideAfter": 0.053
+   },
+   {
+    "id": "ZA2470701A",
+    "name": "Right retropharyngeal nodes",
+    "insideBefore": 0.688,
+    "in": [
+     "Right salpingopharyngeus 31%",
+     "Right palatopharyngeus 25%",
+     "Right levator veli palatini 13%"
+    ],
+    "movedMm": 2,
+    "insideAfter": 0.05
+   },
+   {
+    "id": "ZAB086ECBA",
+    "name": "Right gastro-omental nodes",
+    "insideBefore": 0.889,
+    "in": [
+     "Hepatovenous segment IV 89%"
+    ],
+    "movedMm": null,
+    "insideAfter": null
+   },
+   {
+    "id": "ZAF95ABD3E",
+    "name": "Splenic nodes",
+    "insideBefore": 1,
+    "in": [
+     "Stomach 100%"
+    ],
+    "movedMm": null,
+    "insideAfter": null
+   },
+   {
+    "id": "ZAB5BC578C",
+    "name": "Left submental nodes",
+    "insideBefore": 0.71,
+    "in": [
+     "Left platysma 71%"
+    ],
+    "movedMm": 2,
+    "insideAfter": 0.024
+   },
+   {
+    "id": "ZA171582D4",
+    "name": "Left supratrochlear nodes",
+    "insideBefore": 0.833,
+    "in": [
+     "Humeral head of left pronator teres 25%",
+     "Left palmaris longus 22%",
+     "Left flexor carpi radialis 22%"
+    ],
+    "movedMm": 4,
+    "insideAfter": 0
    }
   ],
   "placement": [
@@ -45260,6 +48699,90 @@
     "partOf": false
    },
    {
+    "id": "ZA1E5A1D5B",
+    "fma": "FMA59826",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "major salivary gland",
+    "isaPath": [
+     "left accessory parotid gland",
+     "accessory parotid gland"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA7D774256",
+    "fma": "FMA59825",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "major salivary gland",
+    "isaPath": [
+     "right accessory parotid gland",
+     "accessory parotid gland"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB7B64ABE",
+    "fma": "FMA276025",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "left anterior tibial lymph node",
+     "anterior tibial lymph node",
+     "tibial lymph node",
+     "lymph node of lower limb",
+     "lymph node of limb",
+     "lymph node",
+     "organ component of lymphatic tree organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZADF88D6E8",
+    "fma": "FMA276023",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "right anterior tibial lymph node",
+     "anterior tibial lymph node",
+     "tibial lymph node",
+     "lymph node of lower limb",
+     "lymph node of limb",
+     "lymph node",
+     "organ component of lymphatic tree organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB89928DB",
+    "fma": "FMA275985",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "left fibular lymph node",
+     "fibular lymph node",
+     "lymph node of lower limb",
+     "lymph node of limb",
+     "lymph node",
+     "organ component of lymphatic tree organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA04FDF731",
+    "fma": "FMA275983",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "right fibular lymph node",
+     "fibular lymph node",
+     "lymph node of lower limb",
+     "lymph node of limb",
+     "lymph node",
+     "organ component of lymphatic tree organ"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZAF54F2317",
     "fma": "FMA276021",
     "isaHow": "FMA is-a chain",
@@ -45571,6 +49094,46 @@
     "partOf": false
    },
    {
+    "id": "ZA88BD1C05",
+    "fma": "FMA224524",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of left anterior axillary lymph nodes",
+     "set of anterior axillary lymph nodes",
+     "lymph node group of upper limb",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAE85E6756",
+    "fma": "FMA224522",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of right anterior axillary lymph nodes",
+     "set of anterior axillary lymph nodes",
+     "lymph node group of upper limb",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAECBBE9A1",
+    "fma": "FMA256541",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cell part cluster of neuraxis",
+    "isaPath": [
+     "ventral gray column of spinal cord",
+     "segment of gray matter of spinal cord",
+     "region of gray matter of neuraxis"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA3FD91F82",
     "fma": "ZAC_anterior_inferior_jugular_nodes_L",
     "isaHow": "by hand",
@@ -45617,6 +49180,30 @@
     "partOf": false
    },
    {
+    "id": "ZAE9A69F6E",
+    "fma": "FMA312041",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "anterior ligament of proximal epiphysis of left fibula",
+     "anterior ligament of proximal epiphysis of fibula",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC6F757F5",
+    "fma": "FMA312039",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "anterior ligament of proximal epiphysis of right fibula",
+     "anterior ligament of proximal epiphysis of fibula",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA934E4140",
     "fma": "FMA31893",
     "isaHow": "FMA is-a chain",
@@ -45624,6 +49211,50 @@
     "isaPath": [
      "anterior longitudinal ligament",
      "ligament of vertebral column"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA7B3C9E7D",
+    "fma": "ZAC_anterior_meniscotibial_ligament_lateral_meniscus_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left anterior meniscotibial ligament (Lateral meniscus)",
+     "anterior meniscotibial ligament (Lateral meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC6DF69FE",
+    "fma": "ZAC_anterior_meniscotibial_ligament_lateral_meniscus_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right anterior meniscotibial ligament (Lateral meniscus)",
+     "anterior meniscotibial ligament (Lateral meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA0AEEE33D",
+    "fma": "ZAC_anterior_meniscotibial_ligament_medial_meniscus_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left anterior meniscotibial ligament (Medial meniscus)",
+     "anterior meniscotibial ligament (Medial meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA2F66F1D3",
+    "fma": "ZAC_anterior_meniscotibial_ligament_medial_meniscus_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right anterior meniscotibial ligament (Medial meniscus)",
+     "anterior meniscotibial ligament (Medial meniscus)"
     ],
     "partOf": false
    },
@@ -45791,6 +49422,372 @@
      "lymph node group of body proper",
      "lymph node group",
      "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4DE8C757",
+    "fma": "FMA44599",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "left arcuate popliteal ligament",
+     "arcuate popliteal ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA054400D7",
+    "fma": "FMA44597",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "right arcuate popliteal ligament",
+     "arcuate popliteal ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA6AF7A6E9",
+    "fma": "FMA26043",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left acromioclavicular joint",
+     "articular capsule of acromioclavicular joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA06E3F891",
+    "fma": "FMA26042",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right acromioclavicular joint",
+     "articular capsule of acromioclavicular joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA364ED89A",
+    "fma": "FMA38889",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left elbow joint",
+     "articular capsule of elbow joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA3BA78F3A",
+    "fma": "FMA38888",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right elbow joint",
+     "articular capsule of elbow joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA27BD8E99",
+    "fma": "FMA34946",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left glenohumeral joint",
+     "articular capsule of glenohumeral joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA205F5350",
+    "fma": "FMA34945",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right glenohumeral joint",
+     "articular capsule of glenohumeral joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA839B58DC",
+    "fma": "FMA323851_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "left articular capsule of interphalangeal joint of great toe",
+     "articular capsule of interphalangeal joint of great toe",
+     "articular capsule of interphalangeal joint of toe",
+     "articular capsule of interphalangeal joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB1D22F0B",
+    "fma": "FMA323851_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "right articular capsule of interphalangeal joint of great toe",
+     "articular capsule of interphalangeal joint of great toe",
+     "articular capsule of interphalangeal joint of toe",
+     "articular capsule of interphalangeal joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA94E0BA7D",
+    "fma": "FMA40038",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left wrist joint",
+     "articular capsule of wrist joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB3597A83",
+    "fma": "FMA40037",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right wrist joint",
+     "articular capsule of wrist joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA172B267E",
+    "fma": "FMA26016",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left sternoclavicular joint",
+     "articular capsule of sternoclavicular joint",
+     "articular capsule of sternal joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA0EF31A6F",
+    "fma": "FMA26015",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right sternoclavicular joint",
+     "articular capsule of sternoclavicular joint",
+     "articular capsule of sternal joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA00E0DFB0",
+    "fma": "ZAC_articular_capsule_of_superior_tibiofibular_joint_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsule of superior tibiofibular joint",
+     "articular capsule of superior tibiofibular joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA409B9FC1",
+    "fma": "ZAC_articular_capsule_of_superior_tibiofibular_joint_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsule of superior tibiofibular joint",
+     "articular capsule of superior tibiofibular joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA54D9B96E",
+    "fma": "FMA57052",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left temporomandibular joint",
+     "articular capsule of temporomandibular joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA44F92212",
+    "fma": "FMA57051",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right temporomandibular joint",
+     "articular capsule of temporomandibular joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA3BDB7890",
+    "fma": "ZAC_articular_capsules_of_distal_interphalangeal_joints_of_foot_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsules of distal interphalangeal joints of foot",
+     "articular capsules of distal interphalangeal joints of foot"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA877369E6",
+    "fma": "ZAC_articular_capsules_of_distal_interphalangeal_joints_of_foot_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsules of distal interphalangeal joints of foot",
+     "articular capsules of distal interphalangeal joints of foot"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAAB1A9D64",
+    "fma": "ZAC_articular_capsules_of_distal_interphalangeal_joints_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsules of distal interphalangeal joints",
+     "articular capsules of distal interphalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA8327915A",
+    "fma": "ZAC_articular_capsules_of_distal_interphalangeal_joints_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsules of distal interphalangeal joints",
+     "articular capsules of distal interphalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA42265BB4",
+    "fma": "ZAC_articular_capsules_of_metacarpophalangeal_joints_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsules of metacarpophalangeal joints",
+     "articular capsules of metacarpophalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAA7946A55",
+    "fma": "ZAC_articular_capsules_of_metacarpophalangeal_joints_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsules of metacarpophalangeal joints",
+     "articular capsules of metacarpophalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA3691AC21",
+    "fma": "ZAC_articular_capsules_of_metatarsophalangeal_joints_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsules of metatarsophalangeal joints",
+     "articular capsules of metatarsophalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAD71C9873",
+    "fma": "ZAC_articular_capsules_of_metatarsophalangeal_joints_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsules of metatarsophalangeal joints",
+     "articular capsules of metatarsophalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA79DAE5E3",
+    "fma": "ZAC_articular_capsules_of_proximal_interphalangeal_joints_of_foot_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsules of proximal interphalangeal joints of foot",
+     "articular capsules of proximal interphalangeal joints of foot"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAE2648CC5",
+    "fma": "ZAC_articular_capsules_of_proximal_interphalangeal_joints_of_foot_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsules of proximal interphalangeal joints of foot",
+     "articular capsules of proximal interphalangeal joints of foot"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4975BEBC",
+    "fma": "ZAC_articular_capsules_of_proximal_interphalangeal_joints_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left articular capsules of proximal interphalangeal joints",
+     "articular capsules of proximal interphalangeal joints"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA0252F487",
+    "fma": "ZAC_articular_capsules_of_proximal_interphalangeal_joints_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right articular capsules of proximal interphalangeal joints",
+     "articular capsules of proximal interphalangeal joints"
     ],
     "partOf": false
    },
@@ -46207,6 +50204,58 @@
     "partOf": false
    },
    {
+    "id": "ZA39981AF0",
+    "fma": "FMA26003",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "left coraco-acromial ligament",
+     "coraco-acromial ligament",
+     "ligament of glenohumeral joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA02A9C180",
+    "fma": "FMA26002",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "right coraco-acromial ligament",
+     "coraco-acromial ligament",
+     "ligament of glenohumeral joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA8BB2028D",
+    "fma": "FMA34953",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "left coracohumeral ligament",
+     "coracohumeral ligament",
+     "ligament of glenohumeral joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZADA77DB9E",
+    "fma": "FMA34952",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "right coracohumeral ligament",
+     "coracohumeral ligament",
+     "ligament of glenohumeral joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZAF516475C",
     "fma": "FMA26024",
     "isaHow": "FMA is-a chain",
@@ -46611,6 +50660,30 @@
     "partOf": false
    },
    {
+    "id": "ZAC7CC57BB",
+    "fma": "FMA44230",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "tarsal ligament",
+    "isaPath": [
+     "left dorsal cuneocuboid ligament",
+     "dorsal cuneocuboid ligament",
+     "dorsal tarsal ligament"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAE319E7A1",
+    "fma": "FMA44229",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "tarsal ligament",
+    "isaPath": [
+     "right dorsal cuneocuboid ligament",
+     "dorsal cuneocuboid ligament",
+     "dorsal tarsal ligament"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA16F2B48B",
     "fma": "FMA44241",
     "isaHow": "FMA is-a chain",
@@ -46905,6 +50978,16 @@
     "partOf": false
    },
    {
+    "id": "ZA532CCE40",
+    "fma": "FMA83967",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "subdivision of cranial dura mater",
+    "isaPath": [
+     "falx cerebri"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZAE8457450",
     "fma": "FMA13902_L",
     "isaHow": "FMA is-a chain",
@@ -46969,6 +51052,17 @@
     "isaPath": [
      "flexor retinaculum of right ankle",
      "flexor retinaculum of ankle"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4AEB584D",
+    "fma": "FMA9580",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "greater omentum",
+     "omentum"
     ],
     "partOf": false
    },
@@ -47040,6 +51134,36 @@
      "zone of endoabdominal fascia",
      "zone of abdominal fascia",
      "zone of internal fascia"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAA4601838",
+    "fma": "FMA224496",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of left inferior deep lateral cervical lymph nodes",
+     "set of inferior deep lateral cervical lymph nodes",
+     "lymph node group of neck",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB5757FA6",
+    "fma": "FMA224494",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of right inferior deep lateral cervical lymph nodes",
+     "set of inferior deep lateral cervical lymph nodes",
+     "lymph node group of neck",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
     ],
     "partOf": false
    },
@@ -47143,6 +51267,34 @@
     "partOf": false
    },
    {
+    "id": "ZA84389368",
+    "fma": "FMA35444",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "left inferior glenohumeral ligament",
+     "inferior glenohumeral ligament",
+     "glenohumeral ligament",
+     "ligament of glenohumeral joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZADCB4F842",
+    "fma": "FMA35443",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "right inferior glenohumeral ligament",
+     "inferior glenohumeral ligament",
+     "glenohumeral ligament",
+     "ligament of glenohumeral joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA98BCF7E2",
     "fma": "FMA71834_L",
     "isaHow": "FMA is-a chain",
@@ -47168,6 +51320,23 @@
      "right inferior gluteal nodes",
      "set of inferior gluteal lymph nodes",
      "lymph node group of pelvis",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC987BA4D",
+    "fma": "FMA71795",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "inferior pancreatic lymph node group",
+     "visceral lymph node group of abdomen proper",
+     "lymph node group of abdomen proper",
      "lymph node group of abdomen",
      "lymph node group of trunk",
      "lymph node group of body proper",
@@ -47433,6 +51602,40 @@
     "partOf": false
    },
    {
+    "id": "ZAD3C996DF",
+    "fma": "FMA71827_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "left intermediate external iliac nodes",
+     "intermediate external iliac lymph node group",
+     "lymph node group of pelvis",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA99A92807",
+    "fma": "FMA71827_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "right intermediate external iliac nodes",
+     "intermediate external iliac lymph node group",
+     "lymph node group of pelvis",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA1017731B",
     "fma": "FMA71779",
     "isaHow": "FMA is-a chain",
@@ -47494,6 +51697,56 @@
      "right interosseous sacroiliac ligament",
      "interosseous sacroiliac ligament",
      "ligament of sacroiliac joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAD1BB8DD6",
+    "fma": "FMA224532",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of left interpectoral lymph nodes",
+     "set of interpectoral lymph nodes",
+     "lymph node group of upper limb",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAE78D42E4",
+    "fma": "FMA224530",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of right interpectoral lymph nodes",
+     "set of interpectoral lymph nodes",
+     "lymph node group of upper limb",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA35A49F75",
+    "fma": "ZAC_intersesamoid_ligament_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left intersesamoid ligament",
+     "intersesamoid ligament"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB56750CA",
+    "fma": "ZAC_intersesamoid_ligament_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right intersesamoid ligament",
+     "intersesamoid ligament"
     ],
     "partOf": false
    },
@@ -47661,6 +51914,23 @@
     "partOf": false
    },
    {
+    "id": "ZAEAAD9F8D",
+    "fma": "FMA71776",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "lateral aortic lymph node group",
+     "parietal lymph node group of abdomen proper",
+     "lymph node group of abdomen proper",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA69331931",
     "fma": "FMA232564",
     "isaHow": "FMA is-a chain",
@@ -47691,6 +51961,23 @@
      "lymph node of limb",
      "lymph node",
      "organ component of lymphatic tree organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAD7E428D7",
+    "fma": "FMA71781",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "lateral caval lymph node group",
+     "parietal lymph node group of abdomen proper",
+     "lymph node group of abdomen proper",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
     ],
     "partOf": false
    },
@@ -47729,6 +52016,21 @@
     "isaPath": [
      "right lateral patellar retinaculum",
      "lateral patellar retinaculum"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAF6BB9D9E",
+    "fma": "FMA71765",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "lateral pericardial lymph node group",
+     "lymph node group of thorax",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
     ],
     "partOf": false
    },
@@ -47803,6 +52105,30 @@
     "partOf": false
    },
    {
+    "id": "ZA85BAF67D",
+    "fma": "FMA57072",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "skeletal ligament",
+    "isaPath": [
+     "lateral ligament of right temporomandibular joint",
+     "lateral ligament of temporomandibular joint",
+     "ligament of temporomandibular joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA6E7E61F3",
+    "fma": "FMA57073",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "skeletal ligament",
+    "isaPath": [
+     "lateral ligament of left temporomandibular joint",
+     "lateral ligament of temporomandibular joint",
+     "ligament of temporomandibular joint"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA471ECB59",
     "fma": "FMA71840_L",
     "isaHow": "FMA is-a chain",
@@ -47851,6 +52177,17 @@
      "lymph node group of body proper",
      "lymph node group",
      "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA80C90BE7",
+    "fma": "FMA9715",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "lesser omentum",
+     "omentum"
     ],
     "partOf": false
    },
@@ -48010,6 +52347,40 @@
     "partOf": false
    },
    {
+    "id": "ZAD1BBD67B",
+    "fma": "FMA71826_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "left medial external iliac nodes",
+     "medial external iliac lymph node group",
+     "lymph node group of pelvis",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC43D42EB",
+    "fma": "FMA71826_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "right medial external iliac nodes",
+     "medial external iliac lymph node group",
+     "lymph node group of pelvis",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA960C9ACA",
     "fma": "FMA44589",
     "isaHow": "FMA is-a chain",
@@ -48156,6 +52527,56 @@
      "glenohumeral ligament",
      "ligament of glenohumeral joint",
      "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA14BC3763",
+    "fma": "ZAC_nail_plate_foot_L",
+    "isaHow": "by hand",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "left nail plate (foot)",
+     "nail plate (foot)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAAC30ACB8",
+    "fma": "ZAC_nail_plate_foot_R",
+    "isaHow": "by hand",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "right nail plate (foot)",
+     "nail plate (foot)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA5997EA05",
+    "fma": "FMA323399_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cardinal tissue part",
+    "isaPath": [
+     "left nail plate",
+     "nail plate",
+     "subdivision of body of nail",
+     "region of nail",
+     "region of tissue component"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA8207950D",
+    "fma": "FMA323399_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cardinal tissue part",
+    "isaPath": [
+     "right nail plate",
+     "nail plate",
+     "subdivision of body of nail",
+     "region of nail",
+     "region of tissue component"
     ],
     "partOf": false
    },
@@ -48562,6 +52983,22 @@
     "partOf": false
    },
    {
+    "id": "ZA0F9A3D43",
+    "fma": "FMA71841",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "pararectal lymph node group",
+     "set of visceral abdominal lymph nodes",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA5A1147F3",
     "fma": "FMA71760_L",
     "isaHow": "FMA is-a chain",
@@ -48634,6 +53071,66 @@
      "right pectoral fascia",
      "pectoral fascia",
      "zone of investing thoracic fascia"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA3C9B09E5",
+    "fma": "ZAC_perionyx_foot_L",
+    "isaHow": "by hand",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "left perionyx (foot)",
+     "perionyx (foot)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZACE12C340",
+    "fma": "ZAC_perionyx_foot_R",
+    "isaHow": "by hand",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "right perionyx (foot)",
+     "perionyx (foot)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA9AD6057D",
+    "fma": "FMA60870_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "left perionyx",
+     "perionyx",
+     "subdivision of proximal nail fold of finger",
+     "segment of skin of dorsal part of finger",
+     "segment of skin of finger",
+     "skin of part of hand",
+     "segment of skin of free upper limb",
+     "segment of skin of upper limb",
+     "skin of limb",
+     "segment of skin"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC16237A5",
+    "fma": "FMA60870_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "right perionyx",
+     "perionyx",
+     "subdivision of proximal nail fold of finger",
+     "segment of skin of dorsal part of finger",
+     "segment of skin of finger",
+     "skin of part of hand",
+     "segment of skin of free upper limb",
+     "segment of skin of upper limb",
+     "skin of limb",
+     "segment of skin"
     ],
     "partOf": false
    },
@@ -48934,6 +53431,30 @@
     "partOf": false
    },
    {
+    "id": "ZAE64A3D5A",
+    "fma": "FMA71419_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organs",
+    "isaPath": [
+     "left plantar tarsometatarsal ligaments",
+     "set of plantar tarsometatarsal ligaments",
+     "set of ligaments"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA5144CF97",
+    "fma": "FMA71419_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organs",
+    "isaPath": [
+     "right plantar tarsometatarsal ligaments",
+     "set of plantar tarsometatarsal ligaments",
+     "set of ligaments"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA8A932E04",
     "fma": "ZAC_popliteal_fascia_L",
     "isaHow": "by hand",
@@ -48952,6 +53473,30 @@
     "isaPath": [
      "right popliteal fascia",
      "popliteal fascia"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA7C79158C",
+    "fma": "FMA311977",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "left popliteofibular ligament",
+     "popliteofibular ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA6C75C0FD",
+    "fma": "FMA311975",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "right popliteofibular ligament",
+     "popliteofibular ligament",
+     "ligament of knee joint"
     ],
     "partOf": false
    },
@@ -48990,28 +53535,14 @@
     "partOf": false
    },
    {
-    "id": "ZAABC6152A",
-    "fma": "FMA44619",
+    "id": "ZA0DB56333",
+    "fma": "FMA256530",
     "isaHow": "FMA is-a chain",
-    "isaAnchor": "ligament of lower limb",
+    "isaAnchor": "cell part cluster of neuraxis",
     "isaPath": [
-     "left posterior cruciate ligament",
-     "posterior cruciate ligament",
-     "cruciate ligament",
-     "ligament of knee joint"
-    ],
-    "partOf": false
-   },
-   {
-    "id": "ZA815AD5F9",
-    "fma": "FMA44618",
-    "isaHow": "FMA is-a chain",
-    "isaAnchor": "ligament of lower limb",
-    "isaPath": [
-     "right posterior cruciate ligament",
-     "posterior cruciate ligament",
-     "cruciate ligament",
-     "ligament of knee joint"
+     "dorsal gray column of spinal cord",
+     "segment of gray matter of spinal cord",
+     "region of gray matter of neuraxis"
     ],
     "partOf": false
    },
@@ -49036,6 +53567,30 @@
      "right posterior layer of thoracolumbar fascia",
      "posterior layer of thoracolumbar fascia",
      "zone of thoracolumbar fascia"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA359ECC7C",
+    "fma": "FMA76858_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "left posterior ligament of fibular head",
+     "posterior ligament of proximal epiphysis of fibula",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4313CD8E",
+    "fma": "FMA76858_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "right posterior ligament of fibular head",
+     "posterior ligament of proximal epiphysis of fibula",
+     "ligament of knee joint"
     ],
     "partOf": false
    },
@@ -49469,6 +54024,54 @@
     "partOf": false
    },
    {
+    "id": "ZA396DAAA2",
+    "fma": "FMA59867",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "left parotid duct",
+     "parotid duct",
+     "segment of parotid gland",
+     "segment of salivary gland"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA7A42F616",
+    "fma": "FMA59866",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "right parotid duct",
+     "parotid duct",
+     "segment of parotid gland",
+     "segment of salivary gland"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAA6175F22",
+    "fma": "FMA59798",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "major salivary gland",
+    "isaPath": [
+     "left parotid gland",
+     "parotid gland"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA217E8478",
+    "fma": "FMA59797",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "major salivary gland",
+    "isaPath": [
+     "right parotid gland",
+     "parotid gland"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZAB19F2C87",
     "fma": "FMA44256",
     "isaHow": "FMA is-a chain",
@@ -49513,6 +54116,78 @@
     "partOf": false
    },
    {
+    "id": "ZA647468E8",
+    "fma": "ZAC_posterior_meniscotibial_ligament_lateral_meniscus_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left posterior meniscotibial ligament (Lateral meniscus)",
+     "posterior meniscotibial ligament (Lateral meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA8D1CDDF1",
+    "fma": "ZAC_posterior_meniscotibial_ligament_lateral_meniscus_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right posterior meniscotibial ligament (Lateral meniscus)",
+     "posterior meniscotibial ligament (Lateral meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA1B1E3FEF",
+    "fma": "ZAC_posterior_meniscotibial_ligament_medial_meniscus_L",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "left posterior meniscotibial ligament (Medial meniscus)",
+     "posterior meniscotibial ligament (Medial meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA5B6FD7F2",
+    "fma": "ZAC_posterior_meniscotibial_ligament_medial_meniscus_R",
+    "isaHow": "by hand",
+    "isaAnchor": "ligament organ",
+    "isaPath": [
+     "right posterior meniscotibial ligament (Medial meniscus)",
+     "posterior meniscotibial ligament (Medial meniscus)"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4318732D",
+    "fma": "FMA44071",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "posterior tibiotalar part of medial ligament of left ankle joint",
+     "posterior tibiotalar part of medial ligament of ankle joint",
+     "tibiotalar part of medial ligament of ankle joint",
+     "zone of medial ligament of ankle joint",
+     "zone of ligament of ankle joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC85DADCD",
+    "fma": "FMA44070",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "posterior tibiotalar part of medial ligament of right ankle joint",
+     "posterior tibiotalar part of medial ligament of ankle joint",
+     "tibiotalar part of medial ligament of ankle joint",
+     "zone of medial ligament of ankle joint",
+     "zone of ligament of ankle joint"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA0074ACD8",
     "fma": "FMA71839",
     "isaHow": "FMA is-a chain",
@@ -49525,6 +54200,16 @@
      "lymph node group of body proper",
      "lymph node group",
      "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA6285196D",
+    "fma": "ZAC_pre_aortic_nodes",
+    "isaHow": "by hand",
+    "isaAnchor": "organ component",
+    "isaPath": [
+     "pre-aortic nodes"
     ],
     "partOf": false
    },
@@ -49551,6 +54236,56 @@
      "set of right anterior auricular lymph nodes",
      "set of anterior auricular lymph nodes",
      "lymph node group of head",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAEA5E11EA",
+    "fma": "FMA71805",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "anterior ileocolic lymph node group",
+     "ileocolic lymph node group",
+     "visceral lymph node group of abdomen proper",
+     "lymph node group of abdomen proper",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZADE5ADCAA",
+    "fma": "FMA71782",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "precaval lymph node group",
+     "parietal lymph node group of abdomen proper",
+     "lymph node group of abdomen proper",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA751E6E66",
+    "fma": "FMA71763",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "prepericardial lymph node group",
+     "lymph node group of thorax",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
      "lymph node group",
      "set of organ components"
     ],
@@ -49680,12 +54415,60 @@
     "partOf": false
    },
    {
+    "id": "ZACC6086F3",
+    "fma": "FMA71806",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "posterior ileocolic lymph node group",
+     "ileocolic lymph node group",
+     "visceral lymph node group of abdomen proper",
+     "lymph node group of abdomen proper",
+     "lymph node group of abdomen",
+     "lymph node group of trunk",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZAC710517F",
     "fma": "ZAC_retrocaval_nodes",
     "isaHow": "by hand",
     "isaAnchor": "organ component",
     "isaPath": [
      "retrocaval nodes"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAD56FDB29",
+    "fma": "FMA224476",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of left retropharyngeal lymph nodes",
+     "set of retropharyngeal lymph nodes",
+     "lymph node group of neck",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA2470701A",
+    "fma": "FMA224474",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of right retropharyngeal lymph nodes",
+     "set of retropharyngeal lymph nodes",
+     "lymph node group of neck",
+     "lymph node group of body proper",
+     "lymph node group",
+     "set of organ components"
     ],
     "partOf": false
    },
@@ -49766,6 +54549,16 @@
     "partOf": false
    },
    {
+    "id": "ZA743C006C",
+    "fma": "FMA71237",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "region of dura mater",
+    "isaPath": [
+     "spinal dura mater"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA403D792C",
     "fma": "FMA57086",
     "isaHow": "FMA is-a chain",
@@ -49827,6 +54620,34 @@
     "isaPath": [
      "set of right submandibular lymph nodes",
      "set of submandibular lymph nodes",
+     "lymph node group of head",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB5BC578C",
+    "fma": "FMA71720_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "left submental nodes",
+     "set of submental lymph nodes",
+     "lymph node group of head",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAD219C868",
+    "fma": "FMA71720_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "right submental nodes",
+     "set of submental lymph nodes",
      "lymph node group of head",
      "lymph node group",
      "set of organ components"
@@ -50327,6 +55148,46 @@
     "partOf": false
    },
    {
+    "id": "ZA2D843DDF",
+    "fma": "FMA13425",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "skeletal ligament",
+    "isaPath": [
+     "supraspinous ligament",
+     "ligament of intervertebral syndesmosis",
+     "ligament of vertebral column"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA171582D4",
+    "fma": "FMA233514",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of left supratrochlear lymph nodes",
+     "set of supratrochlear lymph nodes",
+     "lymph node group of upper limb",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA262D3764",
+    "fma": "FMA233512",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "set of organ parts",
+    "isaPath": [
+     "set of right supratrochlear lymph nodes",
+     "set of supratrochlear lymph nodes",
+     "lymph node group of upper limb",
+     "lymph node group",
+     "set of organ components"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZAC057BDA8",
     "fma": "FMA44203",
     "isaHow": "FMA is-a chain",
@@ -50531,6 +55392,30 @@
     "partOf": false
    },
    {
+    "id": "ZA0F2FA6EB",
+    "fma": "FMA312037",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "transverse ligament of left knee",
+     "transverse ligament of knee",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4C830E03",
+    "fma": "FMA312035",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "transverse ligament of right knee",
+     "transverse ligament of knee",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
     "id": "ZA8391F3CA",
     "fma": "FMA43039",
     "isaHow": "FMA is-a chain",
@@ -50597,6 +55482,32 @@
     "isaPath": [
      "right trapeziotrapezoidal interosseous ligament",
      "trapeziotrapezoidal interosseous ligament"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA1ED6D225",
+    "fma": "FMA26035",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "trapezoid part of left coracoclavicular ligament",
+     "trapezoid part of coracoclavicular ligament",
+     "segment of coracoclavicular ligament",
+     "segment of ligament"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAA4952AD9",
+    "fma": "FMA26034",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ segment",
+    "isaPath": [
+     "trapezoid part of right coracoclavicular ligament",
+     "trapezoid part of coracoclavicular ligament",
+     "segment of coracoclavicular ligament",
+     "segment of ligament"
     ],
     "partOf": false
    },
@@ -50688,6 +55599,32 @@
      "right ulnar collateral ligament of wrist joint",
      "ulnar collateral ligament",
      "ligament of wrist joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA805CE94D",
+    "fma": "FMA38869_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "left ulnar collateral ligament",
+     "ulnar collateral ligament of elbow joint",
+     "ligament of elbow joint",
+     "ligament of upper limb"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA94A29B50",
+    "fma": "FMA38869_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of limb",
+    "isaPath": [
+     "right ulnar collateral ligament",
+     "ulnar collateral ligament of elbow joint",
+     "ligament of elbow joint",
      "ligament of upper limb"
     ],
     "partOf": false
@@ -50787,29 +55724,576 @@
      "ulnotriquetral ligament"
     ],
     "partOf": false
+   },
+   {
+    "id": "ZA430FF62B",
+    "fma": "FMA7647",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "segment of neuraxis",
+    "isaPath": [
+     "spinal cord"
+    ],
+    "partOf": true
+   },
+   {
+    "id": "ZABF47C1A9",
+    "fma": "FMA44632",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cartilage organ",
+    "isaPath": [
+     "right lateral meniscus",
+     "lateral meniscus",
+     "articular disk of knee joint",
+     "articular disk of synovial joint",
+     "skeletal cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAF6D4577E",
+    "fma": "FMA44633",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cartilage organ",
+    "isaPath": [
+     "left lateral meniscus",
+     "lateral meniscus",
+     "articular disk of knee joint",
+     "articular disk of synovial joint",
+     "skeletal cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA0E5371C2",
+    "fma": "FMA44622",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cartilage organ",
+    "isaPath": [
+     "right medial meniscus",
+     "medial meniscus",
+     "articular disk of knee joint",
+     "articular disk of synovial joint",
+     "skeletal cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAFBF19A79",
+    "fma": "FMA44623",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "cartilage organ",
+    "isaPath": [
+     "left medial meniscus",
+     "medial meniscus",
+     "articular disk of knee joint",
+     "articular disk of synovial joint",
+     "skeletal cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA12485C3E",
+    "fma": "FMA44640",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "anterior horn of right lateral meniscus",
+     "anterior horn of lateral meniscus",
+     "horn of lateral meniscus",
+     "zone of lateral meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA805990FF",
+    "fma": "FMA44641",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "anterior horn of left lateral meniscus",
+     "anterior horn of lateral meniscus",
+     "horn of lateral meniscus",
+     "zone of lateral meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZABEFD6AEB",
+    "fma": "FMA44642",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "posterior horn of right lateral meniscus",
+     "posterior horn of lateral meniscus",
+     "horn of lateral meniscus",
+     "zone of lateral meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA7AA06462",
+    "fma": "FMA44643",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "posterior horn of left lateral meniscus",
+     "posterior horn of lateral meniscus",
+     "horn of lateral meniscus",
+     "zone of lateral meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA1F0709F4",
+    "fma": "FMA44626",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "anterior horn of right medial meniscus",
+     "anterior horn of medial meniscus",
+     "horn of medial meniscus",
+     "zone of medial meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA5FCF7182",
+    "fma": "FMA44627",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "anterior horn of left medial meniscus",
+     "anterior horn of medial meniscus",
+     "horn of medial meniscus",
+     "zone of medial meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA2C1F44C2",
+    "fma": "FMA44628",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "posterior horn of right medial meniscus",
+     "posterior horn of medial meniscus",
+     "horn of medial meniscus",
+     "zone of medial meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA03DEED9F",
+    "fma": "FMA44629",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "organ zone",
+    "isaPath": [
+     "posterior horn of left medial meniscus",
+     "posterior horn of medial meniscus",
+     "horn of medial meniscus",
+     "zone of medial meniscus",
+     "zone of cartilage organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA87A36C0F",
+    "fma": "FMA44615",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "right anterior cruciate ligament",
+     "anterior cruciate ligament",
+     "cruciate ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZABD636AA0",
+    "fma": "FMA44616",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "left anterior cruciate ligament",
+     "anterior cruciate ligament",
+     "cruciate ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA07B75AD4",
+    "fma": "FMA44618",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "right posterior cruciate ligament",
+     "posterior cruciate ligament",
+     "cruciate ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA15B474A3",
+    "fma": "FMA44619",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "left posterior cruciate ligament",
+     "posterior cruciate ligament",
+     "cruciate ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAC7D01EAF",
+    "fma": "FMA312023",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "right posterior meniscofemoral ligament",
+     "posterior meniscofemoral ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA8CC7AF92",
+    "fma": "FMA312025",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "ligament of lower limb",
+    "isaPath": [
+     "left posterior meniscofemoral ligament",
+     "posterior meniscofemoral ligament",
+     "ligament of knee joint"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA7A7F94E7",
+    "fma": "FMA43610",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right knee joint",
+     "articular capsule of knee joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA2398DFE8",
+    "fma": "FMA43611",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left knee joint",
+     "articular capsule of knee joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA4F3ABD3B",
+    "fma": "FMA42979",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right hip joint",
+     "articular capsule of hip joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAD8D6B197",
+    "fma": "FMA42980",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left hip joint",
+     "articular capsule of hip joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZACBC1681C",
+    "fma": "FMA44047",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of right ankle joint",
+     "articular capsule of ankle joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA1C75DD34",
+    "fma": "FMA44048",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "membrane organ",
+    "isaPath": [
+     "articular capsule of left ankle joint",
+     "articular capsule of ankle joint",
+     "articular capsule",
+     "skeletal membrane organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA241B008C",
+    "fma": "FMA58772_R",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "nonparenchymatous organ",
+    "isaPath": [
+     "right infrapatellar fat pad",
+     "infrapatellar fat pad",
+     "fat body",
+     "fascia organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZAB1E61F5F",
+    "fma": "FMA58772_L",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "nonparenchymatous organ",
+    "isaPath": [
+     "left infrapatellar fat pad",
+     "infrapatellar fat pad",
+     "fat body",
+     "fascia organ"
+    ],
+    "partOf": false
+   },
+   {
+    "id": "ZA9DB7973F",
+    "fma": "FMA83982",
+    "isaHow": "FMA is-a chain",
+    "isaAnchor": "region of organ component",
+    "isaPath": [
+     "spinal arachnoid mater",
+     "region of arachnoid mater",
+     "region of leptomeningeal sac"
+    ],
+    "partOf": false
+   }
+  ]
+ },
+ "derived": [
+  {
+   "id": "SOMA_visceral_pleura_L",
+   "name": "Left visceral pleura",
+   "from": [
+    "Upper lobe of left lung",
+    "Lower lobe of left lung"
+   ],
+   "offsetMm": 2,
+   "triangles": 90164,
+   "areaCm2": 1200,
+   "volumeMl": 1698,
+   "contentInside": 0.9856,
+   "surfaceInBone": 0.0867
+  },
+  {
+   "id": "SOMA_visceral_pleura_R",
+   "name": "Right visceral pleura",
+   "from": [
+    "Upper lobe of right lung",
+    "Lower lobe of right lung",
+    "Middle lobe of lung"
+   ],
+   "offsetMm": 2,
+   "triangles": 91032,
+   "areaCm2": 1227,
+   "volumeMl": 1962,
+   "contentInside": 0.992,
+   "surfaceInBone": 0.091
+  },
+  {
+   "id": "SOMA_pericardium",
+   "name": "Pericardial sac",
+   "from": [
+    "Cavity of left ventricle",
+    "Cavity of right ventricle",
+    "Cavity of right atrium",
+    "Cavity of left atrium",
+    "Wall of ventricle",
+    "Wall of left atrium",
+    "Wall of right atrium"
+   ],
+   "offsetMm": 4,
+   "triangles": 34036,
+   "areaCm2": 458,
+   "volumeMl": 781,
+   "contentInside": 1,
+   "surfaceInBone": 0
+  }
+ ],
+ "fat": {
+  "options": {
+   "voxel": 0.003,
+   "closing": 0.012,
+   "maxDepth": 0.03,
+   "smooth": 2
+  },
+  "bodyVolumeL": 62.9,
+  "fatVolumeL": 13.8,
+  "deepParts": 1359,
+  "regions": [
+   {
+    "id": "SOMA_fat_head",
+    "name": "Subcutaneous tissue of head",
+    "fma": "FMA53659",
+    "sourceTriangles": 13844,
+    "areaCm2": 368,
+    "volumeMl": 219,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 3,
+     "p90": 9,
+     "max": 18
+    },
+    "skinCovered": 0.577,
+    "verticesPulledIn": 0
+   },
+   {
+    "id": "SOMA_fat_neck",
+    "name": "Subcutaneous tissue of neck",
+    "fma": "FMA53660",
+    "sourceTriangles": 12384,
+    "areaCm2": 362,
+    "volumeMl": 190,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 12,
+     "p90": 18,
+     "max": 24
+    },
+    "skinCovered": 0.83,
+    "verticesPulledIn": 0
+   },
+   {
+    "id": "SOMA_fat_trunk",
+    "name": "Subcutaneous tissue of trunk",
+    "fma": "FMA50257",
+    "sourceTriangles": 269928,
+    "areaCm2": 8107,
+    "volumeMl": 5464,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 12,
+     "p90": 24,
+     "max": 30
+    },
+    "skinCovered": 0.88,
+    "verticesPulledIn": 0.0015
+   },
+   {
+    "id": "SOMA_fat_upper_limb_L",
+    "name": "Subcutaneous tissue of left upper limb",
+    "fma": "FMA58392",
+    "sourceTriangles": 68072,
+    "areaCm2": 2017,
+    "volumeMl": 1125,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 18,
+     "max": 30
+    },
+    "skinCovered": 0.905,
+    "verticesPulledIn": 0
+   },
+   {
+    "id": "SOMA_fat_upper_limb_R",
+    "name": "Subcutaneous tissue of right upper limb",
+    "fma": "FMA58391",
+    "sourceTriangles": 69264,
+    "areaCm2": 2057,
+    "volumeMl": 1156,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 18,
+     "max": 30
+    },
+    "skinCovered": 0.895,
+    "verticesPulledIn": 0
+   },
+   {
+    "id": "SOMA_fat_lower_limb_L",
+    "name": "Subcutaneous tissue of left lower limb",
+    "fma": "FMA58396",
+    "sourceTriangles": 146124,
+    "areaCm2": 4479,
+    "volumeMl": 2812,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 21,
+     "max": 30
+    },
+    "skinCovered": 0.882,
+    "verticesPulledIn": 0.0003
+   },
+   {
+    "id": "SOMA_fat_lower_limb_R",
+    "name": "Subcutaneous tissue of right lower limb",
+    "fma": "FMA58395",
+    "sourceTriangles": 145972,
+    "areaCm2": 4458,
+    "volumeMl": 2861,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 21,
+     "max": 30
+    },
+    "skinCovered": 0.881,
+    "verticesPulledIn": 0.0004
    }
   ]
  },
  "classification": {
   "counts": {
    "cardiovascular/artery": 635,
+   "cardiovascular/fascia": 1,
    "cardiovascular/heart": 19,
    "cardiovascular/space": 4,
    "cardiovascular/vein": 395,
-   "digestive/fascia": 3,
-   "digestive/gland": 6,
-   "digestive/organ": 100,
+   "digestive/fascia": 5,
+   "digestive/gland": 10,
+   "digestive/organ": 102,
    "digestive/tooth": 28,
    "endocrine/gland": 7,
    "integumentary/fascia": 4,
-   "integumentary/skin": 5,
-   "lymphatic/organ": 129,
+   "integumentary/fat": 7,
+   "integumentary/skin": 13,
+   "lymphatic/organ": 159,
    "muscular/fascia": 60,
    "muscular/ligament": 4,
    "muscular/muscle": 490,
    "muscular/tendon": 13,
-   "nervous/brain": 106,
-   "nervous/fascia": 1,
+   "nervous/brain": 109,
+   "nervous/fascia": 4,
    "nervous/gland": 2,
    "nervous/nerve": 491,
    "nervous/organ": 28,
@@ -50817,27 +56301,30 @@
    "reproductive/gland": 5,
    "reproductive/organ": 7,
    "respiratory/cartilage": 14,
+   "respiratory/fascia": 2,
    "respiratory/ligament": 12,
    "respiratory/organ": 106,
    "skeletal/bone": 205,
-   "skeletal/cartilage": 37,
-   "skeletal/ligament": 252,
+   "skeletal/cartilage": 49,
+   "skeletal/fat": 2,
+   "skeletal/ligament": 329,
    "urinary/organ": 6
   },
   "bySignal": {
-   "isa": 3155,
-   "partOf": 24
+   "isa": 3298,
+   "partOf": 24,
+   "none": 10
   },
   "byName": [],
   "other": []
  },
  "side": {
   "counts": {
-   "L": 1468,
-   "R": 1495,
-   "M": 216
+   "L": 1533,
+   "R": 1567,
+   "M": 232
   },
-  "fromName": 2644,
+  "fromName": 2774,
   "nameVsCentroidConflicts": [
    {
     "id": "FJ1874",
@@ -51105,40 +56592,45 @@
   {
    "depth": 0,
    "name": "Skin",
-   "parts": 5
+   "parts": 13
   },
   {
    "depth": 1,
+   "name": "Subcutaneous fat",
+   "parts": 7
+  },
+  {
+   "depth": 2,
    "name": "Fascia",
    "parts": 64
   },
   {
-   "depth": 2,
-   "name": "Superficial muscles",
-   "parts": 139
-  },
-  {
    "depth": 3,
-   "name": "Deep muscles",
-   "parts": 368
+   "name": "Superficial muscles",
+   "parts": 135
   },
   {
    "depth": 4,
+   "name": "Deep muscles",
+   "parts": 372
+  },
+  {
+   "depth": 5,
    "name": "Vessels and nerves",
    "parts": 1521
   },
   {
-   "depth": 5,
-   "name": "Organs",
-   "parts": 560
-  },
-  {
    "depth": 6,
-   "name": "Cartilage and ligaments",
-   "parts": 289
+   "name": "Organs",
+   "parts": 607
   },
   {
    "depth": 7,
+   "name": "Cartilage and ligaments",
+   "parts": 380
+  },
+  {
+   "depth": 8,
    "name": "Skeleton",
    "parts": 233
   }
@@ -51483,12 +56975,12 @@
   "FJ1553M": 0,
   "FJ1554": 0.334,
   "FJ1554M": 0.334,
-  "FJ1555": 0.01,
-  "FJ1556": 0.01,
+  "FJ1555": 0.008,
+  "FJ1556": 0.008,
   "FJ1557": 0,
-  "FJ1558": 0.347,
+  "FJ1558": 0.346,
   "FJ1559": 0,
-  "FJ1560": 0.01,
+  "FJ1560": 0.008,
   "FJ1561": 0,
   "FJ1562": 0,
   "FJ1563": 0,
@@ -51501,13 +56993,13 @@
   "FJ1570": 0,
   "FJ1571": 0.018,
   "FJ1572": 0,
-  "FJ1573": 0.159,
+  "FJ1573": 0.158,
   "FJ1574": 0.003,
   "FJ1575": 0,
-  "FJ1576": 0.001,
+  "FJ1576": 0,
   "FJ1577": 0,
-  "FJ1578": 0.01,
-  "FJ1579": 0.01,
+  "FJ1578": 0.008,
+  "FJ1579": 0.008,
   "FJ1580": 0,
   "FJ1581": 0,
   "FJ1582": 0,
@@ -51515,7 +57007,7 @@
   "FJ1584": 0,
   "FJ1585": 0.018,
   "FJ1586": 0.002,
-  "FJ1587": 0.347,
+  "FJ1587": 0.346,
   "FJ1588": 0,
   "FJ1589": 0.045,
   "FJ1590": 0,
@@ -51523,10 +57015,10 @@
   "FJ1592": 0,
   "FJ1593": 0.018,
   "FJ1594": 0,
-  "FJ1595": 0.159,
+  "FJ1595": 0.158,
   "FJ1596": 0.003,
   "FJ1597": 0,
-  "FJ1598": 0.001,
+  "FJ1598": 0,
   "FJ1599": 0,
   "FJ1600": 0,
   "FJ1601": 0,
@@ -51631,10 +57123,10 @@
   "R3_FMA46839": 0.257,
   "R3_FMA46840": 0.257,
   "R3_FMA46841": 0.248,
-  "R3_FMA49001": 0.156,
-  "R3_FMA49002": 0.156,
-  "R3_FMA49004": 0.265,
-  "R3_FMA49005": 0.265,
+  "R3_FMA49001": 0.013,
+  "R3_FMA49002": 0.013,
+  "R3_FMA49004": 0.118,
+  "R3_FMA49005": 0.118,
   "R3_FMA49007": 0.103,
   "R3_FMA49008": 0.103,
   "R3_FMA49012": 0,
@@ -51655,66 +57147,101 @@
  "adjacency": {
   "thresholdM": 0.002,
   "spacingM": 0.002,
-  "samples": 45680457,
-  "pairs": 27005,
+  "samples": 51162703,
+  "pairs": 30226,
   "envelopes": [
    {
     "id": "FJ2810",
     "name": "Skin",
-    "rawDegree": 520
+    "rawDegree": 566
+   },
+   {
+    "id": "SOMA_fat_head",
+    "name": "Subcutaneous tissue of head",
+    "rawDegree": 105
+   },
+   {
+    "id": "SOMA_fat_neck",
+    "name": "Subcutaneous tissue of neck",
+    "rawDegree": 35
+   },
+   {
+    "id": "SOMA_fat_trunk",
+    "name": "Subcutaneous tissue of trunk",
+    "rawDegree": 257
+   },
+   {
+    "id": "SOMA_fat_upper_limb_L",
+    "name": "Subcutaneous tissue of left upper limb",
+    "rawDegree": 171
+   },
+   {
+    "id": "SOMA_fat_upper_limb_R",
+    "name": "Subcutaneous tissue of right upper limb",
+    "rawDegree": 175
+   },
+   {
+    "id": "SOMA_fat_lower_limb_L",
+    "name": "Subcutaneous tissue of left lower limb",
+    "rawDegree": 215
+   },
+   {
+    "id": "SOMA_fat_lower_limb_R",
+    "name": "Subcutaneous tissue of right lower limb",
+    "rawDegree": 216
    }
   ],
   "degree": {
    "min": 0,
    "p10": 4,
    "median": 13,
-   "p90": 34,
-   "p99": 76,
-   "max": 192,
-   "isolated": 8
+   "p90": 36,
+   "p99": 83,
+   "max": 211,
+   "isolated": 6
   },
   "highest": [
    {
+    "name": "Spinal dura",
+    "degree": 211
+   },
+   {
+    "name": "Left visceral pleura",
+    "degree": 208
+   },
+   {
     "name": "Diaphragm",
-    "degree": 192
+    "degree": 196
    },
    {
     "name": "Transversalis fascia",
-    "degree": 171
+    "degree": 172
+   },
+   {
+    "name": "Right visceral pleura",
+    "degree": 172
    },
    {
     "name": "Upper lobe of left lung",
-    "degree": 160
+    "degree": 163
    },
    {
     "name": "Wall of ventricle",
-    "degree": 136
+    "degree": 139
    },
    {
     "name": "Left transversus abdominis",
-    "degree": 132
-   },
-   {
-    "name": "Lower lobe of left lung",
-    "degree": 126
-   },
-   {
-    "name": "Sphenoid bone",
-    "degree": 124
-   },
-   {
-    "name": "Left crural fascia",
-    "degree": 121
+    "degree": 134
    }
   ]
  },
  "triangles": {
   "source": 6681030,
   "importedFromRelease3": 821404,
-  "afterWeldAndMerge": 8234711,
-  "written": 2128123,
-  "simplifiedParts": 1895,
-  "maxErrorM": 0.0007999090012162924,
+  "afterWeldAndMerge": 9518453,
+  "written": 2315415,
+  "simplifiedParts": 2001,
+  "maxErrorM": 0.0007999273366294801,
   "worstVolumeChange": {
    "id": "FJ2093",
    "name": "Set of dorsal digital arteries",
@@ -51722,8 +57249,8 @@
   },
   "byTissue": {
    "organ": {
-    "source": 741348,
-    "written": 178080
+    "source": 765324,
+    "written": 194926
    },
    "tooth": {
     "source": 39744,
@@ -51734,8 +57261,8 @@
     "written": 349297
    },
    "ligament": {
-    "source": 201658,
-    "written": 100936
+    "source": 295530,
+    "written": 156818
    },
    "tendon": {
     "source": 113972,
@@ -51746,24 +57273,24 @@
     "written": 592124
    },
    "gland": {
-    "source": 26156,
-    "written": 7038
+    "source": 29988,
+    "written": 8262
    },
    "space": {
     "source": 8646,
     "written": 2630
    },
    "fascia": {
-    "source": 242423,
-    "written": 66750
+    "source": 612239,
+    "written": 123039
    },
    "artery": {
     "source": 975594,
     "written": 308926
    },
    "brain": {
-    "source": 466156,
-    "written": 63108
+    "source": 503678,
+    "written": 67687
    },
    "vein": {
     "source": 945916,
@@ -51774,27 +57301,31 @@
     "written": 18220
    },
    "cartilage": {
-    "source": 81104,
-    "written": 20084
+    "source": 90852,
+    "written": 25680
    },
    "bone": {
     "source": 512450,
     "written": 92414
    },
    "skin": {
-    "source": 235168,
-    "written": 89792
+    "source": 248712,
+    "written": 94536
+   },
+   "fat": {
+    "source": 731432,
+    "written": 42132
    }
   }
  },
  "trees": {
   "isa": {
-   "concepts": 4492,
-   "parts": 3179
+   "concepts": 4750,
+   "parts": 3332
   },
   "partOf": {
    "concepts": 1442,
-   "parts": 1331
+   "parts": 1332
   }
  },
  "conceptAudit": {
@@ -51805,20 +57336,20 @@
   "examples": []
  },
  "output": {
-  "parts": 3179,
-  "anatomyJsonBytes": 2118697,
+  "parts": 3332,
+  "anatomyJsonBytes": 2279883,
   "glbBytes": {
-   "integumentary.glb": 575568,
+   "integumentary.glb": 886960,
    "muscular.glb": 5153084,
-   "skeletal.glb": 1974256,
-   "cardiovascular.glb": 4905308,
-   "nervous.glb": 3605944,
-   "respiratory.glb": 484772,
-   "digestive.glb": 709268,
+   "skeletal.glb": 2533004,
+   "cardiovascular.glb": 4912688,
+   "nervous.glb": 3820788,
+   "respiratory.glb": 514096,
+   "digestive.glb": 885332,
    "urinary.glb": 28060,
    "reproductive.glb": 48848,
    "endocrine.glb": 28168,
-   "lymphatic.glb": 568808
+   "lymphatic.glb": 710404
   },
   "bounds": [
    -0.334,
@@ -51837,7 +57368,7 @@
   "SIMPLIFY_MAX_EDGE": 0.012,
   "ADJACENCY_THRESHOLD": 0.002,
   "ADJACENCY_SPACING": 0.002,
-  "ADJACENCY_MAX_DEGREE": 200,
+  "ADJACENCY_MAX_DEGREE": 250,
   "SUPERFICIAL_EXPOSURE": 0.15,
   "EXPOSURE_MAX_DISTANCE": 0.06
  }

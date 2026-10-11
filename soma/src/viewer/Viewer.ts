@@ -1,3 +1,4 @@
+// 三维视图：渲染器、相机、部件几何、拾取，以及把 store 状态映射到场景。WebGPU 下部件合批绘制，WebGL2 下每个部件一个网格；按需渲染。
 // The 3D view: renderer, camera, part meshes, picking, and the mirror from store state to
 // scene state. One Mesh per part, shared materials; rendering is on demand.
 
@@ -43,18 +44,23 @@ import {
 import { useApp, type AppState } from '../state/store.ts'
 import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, type BakedPart, type PartRenderer } from './batches.ts'
 import { PartMeshes, centroidTransparentSort } from './meshes.ts'
+import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
 const GHOST_RGB = new Color('#8d99a6')
 const GHOST_OPACITY = 0.07
+/** 比这更透明的部件不可拾取（指针穿过它们）。 */
 /** Parts drawn more transparent than this are not pickable (the pointer passes through). */
 const PICK_OPACITY = 0.4
 const ACCENT_RGB = new Color(ACCENT)
 const WHITE = new Color(0xffffff)
+/** 开启加粗时神经被加粗到的屏幕半径（CSS 像素）。 */
 /** On-screen radius (CSS px) nerves are thickened to when the aid is on. */
 const NERVE_MIN_RADIUS_PX = 0.75
+/** 细小部件在距指针多远（CSS 像素）以内仍会被拾取。 */
 /** How far from the pointer (CSS px) a thin part is still picked. */
 const THIN_PICK_PX = { mouse: 5, touch: 12 }
+/** 细小部件可以位于其视线上最近表面之后这么远（米）仍被选中（神经常半埋在表面里）。 */
 /** A thin part may sit this far (m) behind the nearest surface on its own line of sight and still win (nerves lie half-embedded). */
 const THIN_DEPTH_SLACK = 0.004
 
@@ -62,14 +68,18 @@ export type { BakedPart }
 
 export interface ViewerStats {
   backend: 'webgpu' | 'webgl2'
+  /** 每秒 requestAnimationFrame 次数（页面实际得到的刷新率）。 */
   /** requestAnimationFrame ticks per second (display rate the page is getting). */
   tickFps: number
+  /** 最近一秒实际渲染的帧数（空闲时为 0：按需渲染）。 */
   /** Frames actually rendered in the last second (0 when idle: rendering is on demand). */
   renderedFps: number
+  /** 最近一秒 renderer.render() 在主线程的平均耗时，毫秒。 */
   /** Mean main-thread time of renderer.render() over the last second, ms. */
   renderCpuMs: number
   drawCalls: number
   triangles: number
+  /** 有几何的部件数。 */
   /** Parts that have geometry. */
   meshes: number
   bvhBuilt: number
@@ -92,8 +102,10 @@ export interface BenchResult {
   size: [number, number]
 }
 
+/** 所选部件超过这个数量时不再绘制透视色（它会使绘制调用翻倍）。 */
 /** Above this many selected parts the see-through tint is skipped (it doubles their draw calls). */
 const XRAY_MAX = 300
+/** 场景所映射的那部分应用状态。对照窗格提供自己的一份。 */
 /** The slice of app state the scene mirrors. A compare pane supplies its own. */
 export type ViewState = Pick<
   AppState,
@@ -112,19 +124,28 @@ export type ViewState = Pick<
   | 'nerveBoost'
   | 'focusRequest'
   | 'homeRequest'
+  | 'skinMapMode'
+  | 'skinMaps'
+  | 'skinRegions'
+  | 'skinHover'
+  | 'skinSeeThrough'
 >
 
 export interface ViewerOptions {
   forceWebGL?: boolean
+  /** 显示状态的来源；默认是应用 store。 */
   /** Where display state comes from; defaults to the app store. */
   state?: () => ViewState
+  /** false：只能环绕，不悬停、不选择（对照窗格）。 */
   /** false: orbit only — no hover, no selection (compare pane). */
   interactive?: boolean
 }
 
 export interface CameraPose {
+  /** 相机相对环绕目标的位置。 */
   /** Camera position relative to the orbit target. */
   offset: [number, number, number]
+  /** 环绕目标相对查看器锚点的位置（见 `setAnchor`）。 */
   /** Orbit target relative to the viewer's anchor (see `setAnchor`). */
   target: [number, number, number]
 }
@@ -132,6 +153,7 @@ export interface CameraPose {
 export interface LoadProgress {
   done: number
   total: number
+  /** 几何已到达的系统，按到达顺序。 */
   /** Systems whose geometry has arrived, in arrival order. */
   loaded: SystemId[]
 }
@@ -146,28 +168,41 @@ export class Viewer {
   readonly camera = new PerspectiveCamera(35, 1, 0.005, 60)
   readonly controls: OrbitControls
   backend: 'webgpu' | 'webgl2' = 'webgl2'
+  /** 鼠标在画布上悬停时以客户区坐标调用，离开时传 null。 */
   /** Called with client coordinates while the mouse hovers the canvas, and null when it leaves. */
   onPointer: ((xy: { x: number; y: number } | null) => void) | null = null
 
   private readonly root = new ClippingGroup()
   private readonly plane = new Plane(new Vector3(0, -1, 0), 0)
   private batches: PartRenderer | null = null
+  /** 'batched'（WebGPU）或 'meshes'（WebGL2 回退）；原因见 meshes.ts。 */
   /** 'batched' (WebGPU) or 'meshes' (WebGL2 fallback); see meshes.ts for why. */
   scenePath: 'batched' | 'meshes' = 'batched'
+  /** 每个部件的批次实例 id（与 graph.parts 同序），没有几何时为 -1。 */
   /** Batch instance id per part (indexed like graph.parts), -1 when the part has no geometry. */
   private inst: Int32Array
   private bvh: (MeshBVH | null)[]
+  /** 每个部件的等效管半径，米（未知为 0）。 */
   /** Equivalent tube radius per part, metres (0 when unknown). */
   private radius: Float32Array
+  /** 细到需要容差拾取的部件。 */
   /** Parts thin enough to get tolerant picking. */
   private thinParts: number[] = []
   private baseColor: Color[]
   private display: Uint8Array
   private offsets: Float32Array
   private pickable: Uint8Array
+  /** 部件当前以不透明方式绘制时为 1（剖切时显示其填充的背面）。 */
   /** 1 when the part is currently drawn opaque (so a section shows its filled back faces). */
   private solid: Uint8Array
   private planeEq: PlaneEq | null = null
+  /** 皮肤类部件烘焙后的几何，供体表图图层使用 / Baked geometry of skin parts, kept for the skin map layer. */
+  private skinGeometry = new Map<number, SkinGeometry>()
+  private skinLayer: SkinLayer | null = null
+  /** 体表图所在皮肤部件的索引；-1 表示当前没有显示体表图 / Index of the mapped skin part; -1 when no map is shown. */
+  private skinIndex = -1
+  private skinPickable = false
+  private lastFace = -1
 
   private readonly raycaster = new Raycaster()
   private readonly ndc = new Vector2()
@@ -180,6 +215,7 @@ export class Viewer {
   private prev: ViewState | null = null
   private graph: AnatomyGraph
   private baseUrl: string
+  /** setBody 时递增，使上一个人体的加载不再改动场景。 */
   /** Bumped by setBody so loads of a previous body stop touching the scene. */
   private bodyToken = 0
   private bvhVersion = 0
@@ -187,6 +223,7 @@ export class Viewer {
   private readonly interactive: boolean
   private readonly anchor = new Vector3()
   private applyingPose = false
+  /** 相机移动时调用（通过 setPose 应用姿态时不调用）。 */
   /** Called when the camera moves (not when a pose is applied through setPose). */
   onCamera: ((pose: CameraPose) => void) | null = null
   private forceFull = false
@@ -215,6 +252,7 @@ export class Viewer {
   private bvhBuilt = 0
   private bvhTotal = 0
 
+  // 滚动统计
   // rolling stats
   private statT = 0
   private statTicks = 0
@@ -253,6 +291,7 @@ export class Viewer {
     this.solid = new Uint8Array(0)
     this.allocate()
 
+    // 光照：柔和的天空 / 地面补光，加一盏随相机移动的主光，这样无论模型怎么转，朝向观察者的表面总是被照亮
     // lighting: soft sky/ground fill plus a key light that travels with the camera, so the
     // surface facing the viewer is always lit however the model is turned
     this.scene.add(new HemisphereLight(0xf2f5fa, 0x4a443e, 1.25))
@@ -323,11 +362,12 @@ export class Viewer {
     el.removeEventListener('contextmenu', this.onContextMenu)
     this.controls.dispose()
     this.batches?.dispose()
+    this.skinLayer?.dispose()
     this.renderer.dispose()
     el.remove()
   }
 
-  // ------------------------------------------------------------ geometry loading
+  // ------------------------------------------------------------ 几何加载 / geometry loading
 
   private allocate(): void {
     const n = this.graph.parts.length
@@ -343,9 +383,18 @@ export class Viewer {
     this.bvhQueue = []
     this.bvhBuilt = 0
     this.bvhTotal = 0
+    this.skinGeometry = new Map()
+    if (this.skinLayer) {
+      this.root.remove(this.skinLayer.mesh)
+      this.skinLayer.dispose()
+      this.skinLayer = null
+    }
+    this.skinIndex = -1
+    this.skinPickable = false
   }
 
   /**
+   * 替换显示的人体：释放旧人体的 GPU 缓冲和 BVH，保留渲染器、相机和控制器。之后调用 `loadSystems`。
    * Replace the body on show: frees the old body's GPU buffers and BVHs and keeps the
    * renderer, camera and controls. Follow with `loadSystems`.
    */
@@ -367,6 +416,7 @@ export class Viewer {
   }
 
   /**
+   * 加载各系统的 GLB（全部，或仅 `only`），把每个部件烘焙到世界坐标。每个系统的文件一到就显示；缺失或损坏的文件会被报告并跳过。返回可读的问题列表。
    * Load the systems' GLBs (all, or just `only`), baking each part to world space. Each
    * system appears as soon as its file has arrived; a missing or broken file is reported
    * and skipped. Returns human-readable problems.
@@ -381,6 +431,7 @@ export class Viewer {
     const loaded: SystemId[] = []
     let done = 0
 
+    // 索引数可由数据文件得知；顶点数未知，所以先用估计值，某个人体需要更多时批次会扩容。
     // The index count is known from the data file; the vertex count is not, so it starts
     // from an estimate and the batch grows if a body needs more.
     let triangles = 0
@@ -410,6 +461,15 @@ export class Viewer {
           for (const [i, b] of baked) {
             if (this.inst[i]! >= 0) continue
             const part = graph.parts[i]!
+            if (part.tissue === 'skin') {
+              // 体表图按 GLB 解码的顶点顺序索引皮肤，这里保留一份
+              // skin maps index the skin in GLB decode order, so keep a copy of it
+              this.skinGeometry.set(i, {
+                position: new Float32Array(b.geometry.getAttribute('position').array),
+                normal: new Float32Array(b.geometry.getAttribute('normal').array),
+                index: new Uint32Array(b.geometry.index!.array),
+              })
+            }
             this.radius[i] = b.radius
             if (b.radius > 0 && b.radius < THIN_RADIUS) this.thinParts.push(i)
             this.inst[i] = batches.add(b, part.tissue === 'nerve' ? b.radius : null, part.bbox, part.centroid)
@@ -437,6 +497,7 @@ export class Viewer {
     return problems
   }
 
+  /** 烘焙一个已加载 GLB 中的部件，按部件索引存放。 */
   /** Bake the parts found in one loaded GLB, keyed by part index. */
   private bake(gltfScene: Object3D): Map<number, BakedPart> {
     gltfScene.updateMatrixWorld(true)
@@ -444,6 +505,7 @@ export class Viewer {
     gltfScene.traverse((o) => {
       const mesh = o as Mesh
       if (!mesh.isMesh) return
+      // 部件 id 是网格节点的名字；当含多个图元的网格被加载器拆成子节点时，取其祖先的名字
       // the part id is the name of the mesh's node, or of an ancestor when a mesh with
       // several primitives was split into children by the loader
       let cur: Object3D | null = mesh
@@ -470,6 +532,7 @@ export class Viewer {
     return out
   }
 
+  /** 查看器显示的已不是 `graph`（或已销毁）时为真。 */
   /** True once this viewer shows a different body than `graph` (or is disposed). */
   isStale(graph: AnatomyGraph): boolean {
     return this.disposed || this.graph !== graph
@@ -479,6 +542,7 @@ export class Viewer {
     return (this.inst[partIndex] ?? -1) >= 0
   }
 
+  /** 由网格测得的部件等效管半径，米（0 表示没有几何）。 */
   /** Equivalent tube radius of a part in metres, as measured from its mesh (0 = no geometry). */
   radiusOf(partId: string): number {
     const i = this.graph.indexOf(partId)
@@ -488,13 +552,15 @@ export class Viewer {
   private updateBoost(): void {
     const on = this.source().nerveBoost
     const h = Math.max(1, this.container.clientHeight)
+    // 每米距离上一个 CSS 像素对应的世界尺寸，乘以想要的像素半径
     // world size of one CSS pixel per metre of distance, times the wanted pixel radius
     const perMetre = (2 * Math.tan((this.camera.fov * Math.PI) / 360)) / h
     this.batches?.setBoost(on ? perMetre * NERVE_MIN_RADIUS_PX : 0)
   }
 
-  // ------------------------------------------------------------ state → scene
+  // ------------------------------------------------------------ 状态 → 场景 / state → scene
 
+  /** 通知使用自有状态来源的查看器：状态变了。 */
   /** Tell a viewer with its own state source that the state changed. */
   invalidateState(): void {
     this.syncNeeded = true
@@ -529,7 +595,14 @@ export class Viewer {
     const sectionChanged = !p || p.section !== s.section
     const hoverChanged = !p || p.hover !== s.hover
     const boostChanged = !p || p.nerveBoost !== s.nerveBoost
-    if (!displayChanged && !explodeChanged && !sectionChanged && !hoverChanged && !boostChanged) {
+    const skinChanged =
+      !p ||
+      p.skinMapMode !== s.skinMapMode ||
+      p.skinMaps !== s.skinMaps ||
+      p.skinRegions !== s.skinRegions ||
+      p.skinHover !== s.skinHover ||
+      p.skinSeeThrough !== s.skinSeeThrough
+    if (!displayChanged && !explodeChanged && !sectionChanged && !hoverChanged && !boostChanged && !skinChanged) {
       if (wantHome) this.home(true)
       if (wantFocus) this.focus(s.focusRequest.ids)
       return
@@ -547,6 +620,7 @@ export class Viewer {
       }
       this.root.enabled = sec.enabled
       batches?.setCapped(sec.enabled)
+      this.skinLayer?.setCapped(sec.enabled)
     }
 
     const parts = this.graph.parts
@@ -562,6 +636,7 @@ export class Viewer {
           const z = this.offsets[i * 3 + 2]!
           batches.setOffset(id, x, y, z, c[0] + x, c[1] + y, c[2] + z)
           if (LEGACY_SORT) {
+            // 仅用于验证：按未合批版本的方式排序，即按网格原点（包围盒的一角）
             // verification only: sort the way the unbatched build did, by the mesh origin (a bbox corner)
             const bb = parts[i]!.bbox
             batches.setOffset(id, x, y, z, bb[0] + x, bb[1] + y, bb[2] + z)
@@ -569,6 +644,14 @@ export class Viewer {
         }
       }
     }
+
+    // 体表图图层先于部件状态更新：皮肤部件是否交给图层绘制取决于它
+    // the skin layer is settled before part states: it decides whether the skin part hands over to it
+    const skinIndexBefore = this.skinIndex
+    if (skinChanged || explodeChanged || sectionChanged) this.updateSkinLayer(s)
+    if (!displayChanged && this.skinIndex !== skinIndexBefore) {
+      for (const i of [skinIndexBefore, this.skinIndex]) if (i >= 0) this.applyPart(i, parts[i]!, s)
+    } else if (!displayChanged && skinChanged && this.skinIndex >= 0) this.applyPart(this.skinIndex, parts[this.skinIndex]!, s)
 
     if (displayChanged) {
       if (!p || p.colorMode !== s.colorMode) this.computeBaseColors(s)
@@ -593,11 +676,53 @@ export class Viewer {
         if (i >= 0) this.applyPart(i, this.graph.parts[i]!, s)
       }
     }
+    // 相机请求放在最后，这样能用上刚应用的显示状态和爆炸位移
     // camera requests last, so they see the display state and explode offsets just applied
     if (wantHome) this.home(true)
     if (wantFocus) this.focus(s.focusRequest.ids)
   }
 
+  /**
+   * 按状态显示或隐藏体表图图层。打开体表图时皮肤层强制可见（不受剥离、系统开关影响）。
+   * Show or hide the skin map layer from state. A map that is on forces the skin layer
+   * visible (peel and system toggles do not apply to it).
+   */
+  private updateSkinLayer(s: ViewState): void {
+    const map = s.skinMapMode === 'off' ? undefined : s.skinMaps?.maps.find((m) => m.id === s.skinMapMode)
+    const index = map && s.skinMaps ? this.graph.indexOf(s.skinMaps.part) : -1
+    const geo = index >= 0 ? this.skinGeometry.get(index) : undefined
+    if (!map || !s.skinMaps || index < 0 || !geo || this.inst[index]! < 0) {
+      this.skinLayer?.update(null)
+      this.skinIndex = -1
+      this.skinPickable = false
+      return
+    }
+    if (!this.skinLayer) {
+      this.skinLayer = new SkinLayer(geo)
+      this.skinLayer.setCapped(this.batches?.isCapped ?? false)
+      this.root.add(this.skinLayer.mesh)
+    }
+    if (!this.skinLayer.fits(s.skinMaps.vertexCount)) {
+      // 体表图与皮肤网格的顶点数不符：不画，以免颜色错位
+      // the map does not match the skin mesh: do not draw it rather than paint it misaligned
+      console.warn(`[soma] skin map has ${s.skinMaps.vertexCount} vertices but the skin mesh has ${geo.position.length / 3}`)
+      this.skinLayer.update(null)
+      this.skinIndex = -1
+      this.skinPickable = false
+      return
+    }
+    this.skinLayer.update({ map, selected: s.skinRegions, hover: s.skinHover, seeThrough: s.skinSeeThrough })
+    this.skinLayer.setOffset(this.offsets[index * 3]!, this.offsets[index * 3 + 1]!, this.offsets[index * 3 + 2]!)
+    this.skinIndex = index
+    this.skinPickable = !s.skinSeeThrough
+  }
+
+  /** 体表图是否已显示在皮肤上（验证用）/ Whether a skin map is currently drawn (verification). */
+  skinMapShown(): boolean {
+    return this.skinIndex >= 0
+  }
+
+  /** 悬停 / 选中着色之前每个部件的颜色。 */
   /** Colour each part is drawn with before hover / selection tinting. */
   private computeBaseColors(s: ViewState): void {
     const systemColor = new Map<SystemId, string>(this.graph.data.systems.map((x) => [x.id, x.color]))
@@ -616,6 +741,7 @@ export class Viewer {
     const id = this.inst[i]!
     const d = this.display[i]!
     const selected = s.selection.set.has(part.id)
+    // 组织默认值 × 系统滑块；按来源着色时把半透明组织稍微提亮，以便看清颜色
     // tissue default × the system's slider; in colour-by-source mode see-through tissues are
     // lifted a little so their colour can be read
     let opacity = (TISSUE_OPACITY[part.tissue] ?? 1) * (s.systems[part.system]?.opacity ?? 1)
@@ -625,6 +751,15 @@ export class Viewer {
     this.solid[i] = d === NORMAL && opacity >= 0.999 ? 1 : 0
     const batches = this.batches
     if (id < 0 || !batches) return
+    if (i === this.skinIndex) {
+      // 体表图打开时，皮肤由图层绘制并可点选（半透明时让位给其下的结构）
+      // with a skin map on, the layer draws the skin and it is pickable (not while see-through)
+      batches.setState(id, MODE_HIDDEN, 0, 0, 0, 0)
+      batches.setXray(id, false)
+      this.pickable[i] = this.skinPickable ? 1 : 0
+      this.solid[i] = this.skinPickable ? 1 : 0
+      return
+    }
     if (d === HIDDEN) {
       batches.setState(id, MODE_HIDDEN, 0, 0, 0, 0)
     } else if (d === GHOST) {
@@ -635,13 +770,15 @@ export class Viewer {
       else if (s.hover === part.id) c.lerp(WHITE, 0.32)
       batches.setState(id, opacity >= 0.999 ? MODE_OPAQUE : MODE_BLEND, c.r, c.g, c.b, opacity)
     }
+    // 被选中的部件还会透过遮挡物画一层淡淡的颜色
     // selected parts also get a faint tint drawn through whatever covers them
     batches.setXray(id, d !== HIDDEN && selected && s.selection.ids.length <= XRAY_MAX)
   }
 
-  // ------------------------------------------------------------ picking
+  // ------------------------------------------------------------ 拾取 / picking
 
   /**
+   * 给定客户区坐标下的部件，没有则为 null。遵循可见性与剖切面。细小部件（神经、小血管）只要没有被指针下的表面挡住，就在 `tolerancePx` 像素内被拾取；传 0 为精确拾取。
    * Part under the given client coordinates, or null. Honours visibility and the section
    * plane. Thin parts (nerves, small vessels) are picked within `tolerancePx` of the
    * pointer when they are not hidden behind the surface under it; pass 0 for an exact pick.
@@ -656,10 +793,12 @@ export class Viewer {
     if (tolerancePx <= 0 || this.thinParts.length === 0) return exact ? parts[exact.part]!.id : null
     if (exact && this.radius[exact.part]! < THIN_RADIUS && this.radius[exact.part]! > 0) return parts[exact.part]!.id
 
+    // 表面经过指针容差范围内的细小部件，按屏幕距离由近到远
     // thin parts whose surface passes within the tolerance of the pointer, nearest on screen first
     const near = this.nearThin(clientX, clientY, rect, tolerancePx)
     for (let k = 0; k < near.length && k < 4; k++) {
       const c = near[k]!
+      // 它必须是它经过指针处实际可见的东西，而不是被旁边结构挡住的
       // it must be what is actually visible where it passes the pointer, not something behind a neighbour
       this.tmpV.copy(c.point).project(this.camera)
       const cx = rect.left + ((this.tmpV.x + 1) / 2) * rect.width
@@ -677,6 +816,7 @@ export class Viewer {
   private readonly tmpOnSeg = new Vector3()
 
   /**
+   * 表面与过某像素的射线在屏幕上相距不超过 `tolerancePx` 的可拾取细小部件，按该屏幕距离排序。这里量的是射线到网格的真实距离（BVH shapecast），所以半个像素宽的神经不会从采样点之间漏掉。
    * Thin pickable parts whose surface comes within `tolerancePx` (on screen) of the ray
    * through a pixel, sorted by that on-screen distance. This measures the true distance from
    * the ray to the mesh (BVH shapecast), so a nerve half a pixel wide cannot slip between samples.
@@ -694,6 +834,7 @@ export class Viewer {
       near = span[0]
       far = Math.min(far, span[1])
     }
+    // 距相机一米处一个 CSS 像素对应的世界尺寸
     // world size of one CSS pixel at one metre from the camera
     const perMetre = (2 * Math.tan((this.camera.fov * Math.PI) / 360)) / rect.height
     const parts = this.graph.parts
@@ -705,6 +846,7 @@ export class Viewer {
       const ox = this.offsets[i * 3]!
       const oy = this.offsets[i * 3 + 1]!
       const oz = this.offsets[i * 3 + 2]!
+      // 粗筛：射线对部件包围盒，包围盒按其远端处的容差放大
       // broad phase: the ray against the part's box grown by the tolerance at the box's far side
       const cxm = (b[0] + b[3]) / 2 + ox - o.x
       const cym = (b[1] + b[4]) / 2 + oy - o.y
@@ -715,6 +857,7 @@ export class Viewer {
       this.tmpBox.max.set(b[3] + ox + pad, b[4] + oy + pad, b[5] + oz + pad)
       if (!this.raycaster.ray.intersectsBox(this.tmpBox)) continue
 
+      // 精确阶段，在部件自身坐标系中进行（世界坐标减去爆炸位移）
       // exact phase in the part's frame (world minus its explode offset)
       ray.origin.set(o.x - ox, o.y - oy, o.z - oz)
       ray.direction.copy(d)
@@ -750,6 +893,22 @@ export class Viewer {
     return out.sort((x, y) => x.px - y.px || x.distance - y.distance)
   }
 
+  /**
+   * 指针下的部件；若命中的是带体表图的皮肤，同时给出区域索引。
+   * The part under the pointer; when it is the mapped skin, also the region index.
+   */
+  pickDetail(clientX: number, clientY: number, tolerancePx?: number): { id: string; region: number | null } | null {
+    const id = this.pick(clientX, clientY, tolerancePx)
+    if (!id) return null
+    if (this.skinIndex < 0 || this.graph.indexOf(id) !== this.skinIndex || !this.skinLayer) return { id, region: null }
+    // 重新对皮肤做一次精确投射以取得命中的三角形 / cast again on the skin alone for the hit triangle
+    const rect = this.renderer.domElement.getBoundingClientRect()
+    this.lastFace = -1
+    const h = this.cast(clientX, clientY, rect, [this.skinIndex])
+    return { id, region: h && this.lastFace >= 0 ? this.skinLayer.regionOfFace(this.lastFace) : null }
+  }
+
+  /** 某像素下的精确命中及其到相机的距离（调试 / 验证）。 */
   /** Exact hit under a pixel with its distance from the camera (debug / verification). */
   probe(clientX: number, clientY: number): { id: string; distance: number } | null {
     if (this.syncNeeded) this.sync()
@@ -758,6 +917,7 @@ export class Viewer {
     return h ? { id: this.graph.parts[h.part]!.id, distance: h.distance } : null
   }
 
+  /** 让相机立即跳到对准目标（验证用；平时是渐变过去）。 */
   /** Jump the camera to its focus target immediately (verification; normally it tweens). */
   focusNow(ids: readonly string[] | null = null): void {
     if (this.syncNeeded) this.sync()
@@ -771,6 +931,7 @@ export class Viewer {
     this.camera.updateMatrixWorld()
   }
 
+  /** 过某像素的射线上最近的命中，范围为 `only`（部件索引）或全部可拾取部件。 */
   /** Nearest hit along the ray through a pixel, among `only` (part indices) or all pickable parts. */
   private cast(clientX: number, clientY: number, rect: DOMRect, only: readonly number[] | null): { part: number; distance: number } | null {
     this.ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1)
@@ -785,6 +946,7 @@ export class Viewer {
       ;[near, far] = span
     }
 
+    // 粗筛：射线对每个候选部件（爆炸后）的包围盒
     // broad phase: ray vs each candidate's (exploded) bounding box
     const parts = this.graph.parts
     const cand: number[] = []
@@ -828,14 +990,17 @@ export class Viewer {
     for (const k of order) {
       if (candT[k]! > best) break
       const i = cand[k]!
+      // 几何已烘焙到世界坐标，所以部件坐标系只差一个爆炸位移
       // geometry is baked in world space, so the part's frame is just the explode translation
       this.localRay.origin.set(o.x - this.offsets[i * 3]!, o.y - this.offsets[i * 3 + 1]!, o.z - this.offsets[i * 3 + 2]!)
       this.localRay.direction.copy(d)
+      // 剖切时，不透明部件的背面会被绘制（填充的切面），因此可拾取
       // with a section on, an opaque part's back faces are drawn (the filled cut), so they are pickable
       const h = this.bvhFor(i).raycastFirst(this.localRay, capped && this.solid[i] ? DoubleSide : FrontSide, near, Math.min(far, best))
       if (h && h.distance < best) {
         best = h.distance
         bestPart = i
+        this.lastFace = h.faceIndex ?? -1
       }
     }
     return bestPart >= 0 ? { part: bestPart, distance: best } : null
@@ -844,6 +1009,7 @@ export class Viewer {
   private bvhFor(i: number): MeshBVH {
     const version = this.batches!.geometryVersion
     if (version !== this.bvhVersion) {
+      // 共享缓冲被重新分配了（批次扩容）：所有 BVH 都指向旧缓冲
       // the shared buffers were reallocated (the batch grew): every BVH points at the old ones
       this.bvhVersion = version
       this.bvh.fill(null)
@@ -853,6 +1019,7 @@ export class Viewer {
     }
     let bvh = this.bvh[i]
     if (!bvh) {
+      // indirect：索引缓冲是批次自己的（已在 GPU 上），不能重排
       // indirect: the index buffer is the batch's own (already on the GPU) and must not be reordered
       bvh = new MeshBVH(this.batches!.pickGeometry(this.inst[i]!), { indirect: true })
       this.bvh[i] = bvh
@@ -861,6 +1028,7 @@ export class Viewer {
     return bvh
   }
 
+  /** 在 `budgetMs` 毫秒内构建待建的 BVH；在空闲帧调用。 */
   /** Build pending BVHs for up to `budgetMs`; called from idle frames. */
   private buildBvhs(budgetMs: number): void {
     const t0 = performance.now()
@@ -870,7 +1038,7 @@ export class Viewer {
     }
   }
 
-  // ------------------------------------------------------------ camera
+  // ------------------------------------------------------------ 相机 / camera
 
   private boundsOf(ids: readonly string[] | null): Box3 | null {
     const box = new Box3()
@@ -921,6 +1089,7 @@ export class Viewer {
     this.dirty = true
   }
 
+  /** 对准给定部件，或所选结构，或全部可见结构。保持观察方向。 */
   /** Frame the given parts, or the selection, or everything visible. Keeps the view direction. */
   focus(ids: readonly string[] | null = null): void {
     const sel = this.source().selection.ids
@@ -930,6 +1099,7 @@ export class Viewer {
     this.frame(box, dir, true)
   }
 
+  /** 正面全身视角。 */
   /** Whole body from the front. */
   home(animate: boolean): void {
     const b = this.graph.bodyBounds
@@ -937,6 +1107,7 @@ export class Viewer {
     this.frame(box, new Vector3(0, 0.08, 1).normalize(), animate)
   }
 
+  /** 联动相机姿态所相对的点（例如所显示系统的中心）。 */
   /** Point the linked-camera pose is expressed relative to (e.g. the shown system's centre). */
   setAnchor(x: number, y: number, z: number): void {
     this.anchor.set(x, y, z)
@@ -948,6 +1119,7 @@ export class Viewer {
     return { offset: [p.x - t.x, p.y - t.y, p.z - t.z], target: [t.x - this.anchor.x, t.y - this.anchor.y, t.z - this.anchor.z] }
   }
 
+  /** 应用来自联动查看器的姿态，不回传。 */
   /** Apply a pose from a linked viewer without echoing it back. */
   setPose(pose: CameraPose): void {
     this.tween = null
@@ -960,6 +1132,7 @@ export class Viewer {
     this.dirty = true
   }
 
+  /** 渲染器的资源计数，用于检查泄漏。 */
   /** Counts from the renderer, for leak checks. */
   memory(): { geometries: number; attributes: number; textures: number; programs: number } {
     const m = this.renderer.info.memory as unknown as Record<string, number>
@@ -976,7 +1149,7 @@ export class Viewer {
     this.dirty = true
   }
 
-  // ------------------------------------------------------------ pointer input
+  // ------------------------------------------------------------ 指针输入 / pointer input
 
   private onContextMenu = (e: Event): void => e.preventDefault()
 
@@ -998,19 +1171,22 @@ export class Viewer {
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > TAP_MAX_MOVE || now - d.t > TAP_MAX_MS) return
     const app = useApp.getState()
     if (this.syncNeeded) this.sync()
-    const id = this.pick(e.clientX, e.clientY)
+    const hit = this.pickDetail(e.clientX, e.clientY)
+    const id = hit?.id ?? null
     const additive = e.ctrlKey || e.metaKey || e.shiftKey
     const last = this.lastTap
     const isDouble = !!last && now - last.t < DOUBLE_TAP_MS && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 24
     this.lastTap = isDouble ? null : { x: e.clientX, y: e.clientY, t: now }
     if (isDouble) {
-      if (id) {
+      // 体表图区域上的双击不改选择 / a double tap on a skin map region leaves the selection alone
+      if (id && hit?.region == null) {
         if (!app.selection.set.has(id)) app.selectParts([id])
         app.requestFocus()
       }
       return
     }
-    if (id) app.selectParts([id], { additive })
+    if (hit && hit.region !== null) app.selectSkinRegions([hit.region], { additive })
+    else if (id) app.selectParts([id], { additive })
     else if (!additive) app.clearSelection()
   }
 
@@ -1029,10 +1205,13 @@ export class Viewer {
   private onPointerLeave = (): void => {
     this.hoverXY = null
     this.onPointer?.(null)
-    if (this.interactive) useApp.getState().setHover(null)
+    if (this.interactive) {
+      useApp.getState().setHover(null)
+      useApp.getState().setSkinHover(null)
+    }
   }
 
-  // ------------------------------------------------------------ loop
+  // ------------------------------------------------------------ 主循环 / loop
 
   private tick = (t: number): void => {
     if (this.disposed) return
@@ -1052,7 +1231,9 @@ export class Viewer {
       const { x, y } = this.hoverXY
       this.hoverXY = null
       if (this.syncNeeded) this.sync()
-      useApp.getState().setHover(this.pick(x, y))
+      const hit = this.pickDetail(x, y)
+      useApp.getState().setHover(hit?.id ?? null)
+      useApp.getState().setSkinHover(hit?.region ?? null)
     }
     if (this.syncNeeded) this.sync()
 
@@ -1088,12 +1269,13 @@ export class Viewer {
     }
   }
 
+  /** 请求在下一帧重绘。 */
   /** Ask for a redraw on the next frame. */
   invalidate(): void {
     this.dirty = true
   }
 
-  // ------------------------------------------------------------ debug / verification
+  // ------------------------------------------------------------ 调试与验证 / debug / verification
 
   stats(): ViewerStats {
     const info = this.renderer.info.render as { drawCalls: number; triangles: number }
@@ -1110,6 +1292,7 @@ export class Viewer {
     }
   }
 
+  /** 在 `seconds` 秒内每帧都渲染并让相机环绕，报告帧时间。 */
   /** Render every frame for `seconds` while orbiting the camera, and report frame times. */
   bench(seconds = 3): Promise<BenchResult> {
     return new Promise((resolve) => {
@@ -1156,6 +1339,7 @@ export class Viewer {
   }
 
   /**
+   * 不依赖 requestAnimationFrame 的吞吐量基准（浏览器会在隐藏或被遮挡的窗口中对它限速）：一边环绕一边连续渲染 `frames` 帧，每帧等 GPU 完成。报告每帧毫秒数，不受垂直同步限制。
    * Throughput benchmark that does not depend on requestAnimationFrame (which browsers
    * throttle in hidden or occluded windows): render `frames` frames back to back while
    * orbiting, waiting for the GPU to finish each one. Reports ms per frame, un-vsynced.
@@ -1211,6 +1395,7 @@ export class Viewer {
     }
   }
 
+  /** 部件（爆炸后）质心的客户区坐标，用于从控制台驱动拾取。 */
   /** Client coordinates of a part's (exploded) centroid — for driving picks from the console. */
   screenOf(partId: string): { x: number; y: number } | null {
     const i = this.graph.indexOf(partId)
@@ -1223,6 +1408,7 @@ export class Viewer {
     return { x: rect.left + ((v.x + 1) / 2) * rect.width, y: rect.top + ((1 - v.y) / 2) * rect.height }
   }
 
+  /** 场景中某部件当前的显示状态。 */
   /** Display state of a part as the scene currently has it. */
   displayOf(partId: string): { state: 'hidden' | 'normal' | 'ghost'; pickable: boolean; hasGeometry: boolean; thin: boolean; radiusMm: number } | null {
     const i = this.graph.indexOf(partId)

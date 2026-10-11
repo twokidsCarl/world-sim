@@ -3,6 +3,7 @@ import { PROVENANCE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import type { SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
+import { SkinMapPanel } from './SkinMapPanel.tsx'
 
 const AXES: { id: SectionAxis; zh: string; en: string }[] = [
   { id: 'axial', zh: '横断面', en: 'Axial' },
@@ -125,6 +126,8 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
           })}
         </ul>
       </section>
+
+      <SkinMapPanel graph={graph} />
 
       <section className="group">
         <h3>

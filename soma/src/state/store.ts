@@ -1,15 +1,19 @@
+// 应用状态。查看器订阅这个 store 并把它映射到场景；React 组件通过 `useApp` 读取。
 // Application state. The viewer subscribes to this store and mirrors it into the scene;
 // React components read it through `useApp`.
 
 import { create } from 'zustand'
 import { mapPartsBetween, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
+import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
 import type { SectionState, SystemState } from './display.ts'
 
 export interface Selection {
+  /** 所选部件的 id，顺序稳定。 */
   /** Selected part ids, in a stable order. */
   ids: readonly string[]
   set: ReadonlySet<string>
+  /** 选择来自某个概念（结构树、搜索、路径）时设置。 */
   /** Set when the selection came from choosing a concept (tree, search, breadcrumb). */
   concept: { tree: TreeKind; id: string } | null
 }
@@ -18,18 +22,22 @@ export const EMPTY_SELECTION: Selection = { ids: [], set: new Set(), concept: nu
 
 export type LeftTab = 'display' | 'tree'
 
+/** 'tissue'：按组织着色；'source'：按几何来源着色。 */
 /** 'tissue': anatomical colours; 'source': colour by where the geometry came from. */
 export type ColorMode = 'tissue' | 'source'
 
 export interface LoadState {
   phase: 'loading' | 'ready' | 'error'
+  /** 0 到 1 */
   /** 0..1 */
   progress: number
   message: string
+  /** 几何已到达的系统（用于逐系统的加载状态）。 */
   /** Systems whose geometry has arrived (for the per-system loading status). */
   loaded: readonly SystemId[]
 }
 
+/** 按人体记录其注意事项已读。存储可能不可用。 */
 /** Remembers, per body, that its caution list has been read. Storage may be unavailable. */
 export function cautionsSeenKey(dataset: string, count: number): string {
   return `soma.cautions.${dataset}.${count}`
@@ -47,20 +55,25 @@ function storageSet(key: string, value: string): void {
   try {
     globalThis.localStorage?.setItem(key, value)
   } catch {
+    // 隐私模式或存储被禁用：下次再显示一次即可
     // private mode / blocked storage: the list simply shows again next time
   }
 }
 
 export interface AppState {
   load: LoadState
+  /** 实际使用的数据集目录（"male"、"fixture" 等）。 */
   /** Dataset directory actually in use ("male", "fixture", …). */
   dataset: string
+  /** 用户请求的数据集；应用加载后 `dataset` 随之更新。 */
   /** Dataset the user asked for; the app loads it and then `dataset` follows. */
   requestedBody: string
   cautionsOpen: boolean
+  /** 与另一人体并排对照，限定一个系统。 */
   /** Side-by-side comparison with the other body, restricted to one system. */
   compare: { system: SystemId } | null
   systemsBeforeCompare: Partial<Record<SystemId, SystemState>> | null
+  /** 可关闭横幅中显示的非致命提示（回退、缺文件）。 */
   /** Non-fatal notices shown in a dismissible banner (fallbacks, missing files). */
   notices: string[]
   graph: AnatomyGraph | null
@@ -72,21 +85,35 @@ export interface AppState {
   adjacentMode: boolean
   colorMode: ColorMode
   provenanceHidden: ReadonlySet<Provenance>
+  /** 神经至少按固定的屏幕宽度绘制，全身视图下也能看见。 */
   /** Draw nerves at a minimum on-screen width so they can be seen at body scale. */
   nerveBoost: boolean
+  /** 体表图：关闭，或显示哪一张 / Skin map: off, or which one is shown. */
+  skinMapMode: 'off' | SkinMapId
+  /** 当前人体的体表图；首次使用时才加载 / This body's skin maps, loaded on first use. */
+  skinMaps: LoadedSkinMaps | null
+  skinMapsStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
+  /** 当前体表图中高亮的区域索引 / Highlighted region indices in the active map. */
+  skinRegions: readonly number[]
+  skinHover: number | null
+  /** 皮肤半透明以露出其下的支配神经 / Skin drawn see-through to reveal the supplying nerve. */
+  skinSeeThrough: boolean
   selection: Selection
   hover: string | null
   explode: number
   explodeSelectionOnly: boolean
   section: SectionState
+  /** 递增以请求查看器对准 `ids`（或所选结构，或全部可见结构）。 */
   /** Bumped to ask the viewer to frame `ids` (or the selection, or everything visible). */
   focusRequest: { nonce: number; ids: readonly string[] | null }
+  /** 递增以请求查看器回到初始视角。 */
   /** Bumped to ask the viewer to return to the home view. */
   homeRequest: number
 
   leftTab: LeftTab
   treeTab: TreeKind
   expanded: Record<TreeKind, ReadonlySet<string>>
+  /** 结构树要滚动到的概念；nonce 使同一概念可重复定位。 */
   /** Concept the tree should scroll to; nonce makes repeated reveals of one concept work. */
   reveal: { tree: TreeKind; id: string; nonce: number } | null
   leftOpen: boolean
@@ -97,9 +124,11 @@ export interface AppState {
   addNotice(text: string): void
   dismissNotices(): void
   init(graph: AnatomyGraph, dataset: string): void
+  /** 切换到另一人体，保留所选结构、开关和视角。 */
   /** Switch to another body, carrying over selection, toggles and the camera. */
   switchBody(body: string): void
   setCautionsOpen(open: boolean): void
+  /** 关闭注意事项并记录该人体的列表已读。 */
   /** Close the caution list and remember that this body's list has been read. */
   dismissCautions(): void
   setCompare(system: SystemId | null): void
@@ -123,6 +152,18 @@ export interface AppState {
   setColorMode(mode: ColorMode): void
   setProvenanceVisible(p: Provenance, visible: boolean): void
   setNerveBoost(on: boolean): void
+  /** 打开 / 关闭体表图；首次打开时加载数据 / Turn a skin map on or off; loads the data on first use. */
+  setSkinMapMode(mode: 'off' | SkinMapId): void
+  /** 加载当前人体的体表图（已加载则直接返回）/ Load this body's skin maps (no-op when loaded). */
+  ensureSkinMaps(): Promise<LoadedSkinMaps | null>
+  selectSkinRegions(regions: readonly number[], opts?: { additive?: boolean }): void
+  setSkinHover(region: number | null): void
+  setSkinSeeThrough(on: boolean): void
+  /** 选中区域的支配神经并让皮肤半透明 / Select a region's supplying nerve and make the skin see-through. */
+  showRegionNerve(region: number): boolean
+  /** 反向：为所选神经打开对应体表图并高亮其分布区；返回高亮的区域数。 */
+  /** Reverse: turn on the map that has regions for the selected nerve and highlight them; returns how many. */
+  showSkinForSelection(): Promise<number>
   showAll(): void
   setExplode(amount: number): void
   setExplodeSelectionOnly(on: boolean): void
@@ -144,11 +185,22 @@ function makeSelection(ids: readonly string[], concept: Selection['concept'] = n
   return set.size === 0 ? EMPTY_SELECTION : { ids: [...set], set, concept }
 }
 
+/** 恰好只有 `id` 这一个系统可见时为真。 */
 /** True when exactly one system is visible and it is `id`. */
 export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: SystemId): boolean {
   let n = 0
   for (const s of Object.values(systems)) if (s.visible) n++
   return n === 1 && !!systems[id]?.visible
+}
+
+let pendingSkinMaps: { graph: AnatomyGraph; promise: Promise<LoadedSkinMaps | null> } | null = null
+let skinMapLoader: (dataset: string) => Promise<LoadedSkinMaps | null> = (dataset) =>
+  loadSkinMaps(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
+
+/** 测试用：替换体表图的加载方式 / For tests: replace how skin maps are fetched. */
+export function setSkinMapLoader(loader: (dataset: string) => Promise<LoadedSkinMaps | null>): void {
+  skinMapLoader = loader
+  pendingSkinMaps = null
 }
 
 export const useApp = create<AppState>()((set, get) => ({
@@ -169,6 +221,12 @@ export const useApp = create<AppState>()((set, get) => ({
   colorMode: 'tissue',
   provenanceHidden: new Set(),
   nerveBoost: true,
+  skinMapMode: 'off',
+  skinMaps: null,
+  skinMapsStatus: 'idle',
+  skinRegions: [],
+  skinHover: null,
+  skinSeeThrough: false,
   selection: EMPTY_SELECTION,
   hover: null,
   explode: 0,
@@ -192,12 +250,14 @@ export const useApp = create<AppState>()((set, get) => ({
   init: (graph, dataset) => {
     const prev = get()
     const from = prev.graph
+    // 切换人体时保留用户的设置；首次加载从干净状态开始
     // switching bodies keeps what the user set up; a first load starts clean
     const carry = !!from && from !== graph
     const systems: Partial<Record<SystemId, SystemState>> = {}
     for (const sys of graph.data.systems) {
       systems[sys.id] = (carry && prev.systemsBeforeCompare?.[sys.id]) || (carry && prev.systems[sys.id]) || { visible: true, opacity: 1 }
     }
+    // 展开每棵树的第一层，免得面板只有一行折叠项
     // open the first level of each tree so the panel is not a single collapsed row
     const expanded = {
       isa: new Set(graph.roots('isa').map((c) => c.id)),
@@ -237,7 +297,15 @@ export const useApp = create<AppState>()((set, get) => ({
       compare: null,
       systemsBeforeCompare: null,
       cautionsOpen: cautions > 0 && storageGet(cautionsSeenKey(dataset, cautions)) === null,
+      // 体表图属于具体人体：换人体后重新加载，区域索引不沿用
+      // skin maps belong to one body: reload after a switch, region indices do not carry over
+      skinMaps: null,
+      skinMapsStatus: 'idle',
+      skinRegions: [],
+      skinHover: null,
+      skinSeeThrough: false,
     })
+    if (get().skinMapMode !== 'off') void get().ensureSkinMaps()
   },
 
   switchBody: (body) => {
@@ -304,7 +372,7 @@ export const useApp = create<AppState>()((set, get) => ({
     return false
   },
 
-  clearSelection: () => set({ selection: EMPTY_SELECTION }),
+  clearSelection: () => set({ selection: EMPTY_SELECTION, skinRegions: [], skinSeeThrough: false }),
   setHover: (id) => {
     if (get().hover !== id) set({ hover: id })
   },
@@ -342,6 +410,7 @@ export const useApp = create<AppState>()((set, get) => ({
     const { selection } = get()
     if (!selection.ids.length) return
     get().hideParts(selection.ids)
+    // 被选中的部件总会绘制，所以隐藏时必须同时取消选择
     // a selected part is always drawn, so hiding has to drop the selection too
     set((s) => ({
       selection: EMPTY_SELECTION,
@@ -363,6 +432,80 @@ export const useApp = create<AppState>()((set, get) => ({
       return { provenanceHidden: next }
     }),
   setNerveBoost: (nerveBoost) => set({ nerveBoost }),
+
+  setSkinMapMode: (mode) => {
+    if (get().skinMapMode === mode) return
+    set({ skinMapMode: mode, skinRegions: [], skinHover: null, skinSeeThrough: false })
+    if (mode !== 'off') void get().ensureSkinMaps()
+  },
+
+  ensureSkinMaps: async () => {
+    const { skinMaps, skinMapsStatus, graph, dataset } = get()
+    if (skinMaps || !graph) return skinMaps
+    if (skinMapsStatus === 'missing' || skinMapsStatus === 'error') return null
+    if (pendingSkinMaps && pendingSkinMaps.graph === graph) return pendingSkinMaps.promise
+    set({ skinMapsStatus: 'loading' })
+    const promise = skinMapLoader(dataset)
+      .then((maps) => {
+        if (get().graph !== graph) return null // 已换人体 / the body changed meanwhile
+        if (maps && !graph.part(maps.part)) throw new Error(`体表图指向的皮肤部件 ${maps.part} 不在此人体中 / skin part ${maps.part} is not in this body`)
+        set({ skinMaps: maps, skinMapsStatus: maps ? 'ready' : 'missing' })
+        return maps
+      })
+      .catch((err: unknown) => {
+        console.warn('[soma] skin maps failed to load', err)
+        if (get().graph === graph) set({ skinMapsStatus: 'error' })
+        return null
+      })
+      .finally(() => {
+        if (pendingSkinMaps?.graph === graph) pendingSkinMaps = null
+      })
+    pendingSkinMaps = { graph, promise }
+    return promise
+  },
+
+  selectSkinRegions: (regions, opts) =>
+    set((s) => {
+      let next: number[]
+      if (opts?.additive) {
+        const cur = new Set(s.skinRegions)
+        for (const r of regions) {
+          if (cur.has(r) && regions.length === 1) cur.delete(r)
+          else cur.add(r)
+        }
+        next = [...cur]
+      } else next = [...new Set(regions)]
+      // 点选区域即离开"显示支配神经"状态，并清除结构选择
+      // picking a region leaves the "show nerve" state and drops the part selection
+      return { skinRegions: next, skinSeeThrough: false, selection: opts?.additive ? s.selection : EMPTY_SELECTION }
+    }),
+  setSkinHover: (skinHover) => {
+    if (get().skinHover !== skinHover) set({ skinHover })
+  },
+  setSkinSeeThrough: (skinSeeThrough) => set({ skinSeeThrough }),
+
+  showRegionNerve: (region) => {
+    const { graph, skinMaps, skinMapMode } = get()
+    const map = skinMaps?.maps.find((m) => m.id === skinMapMode)
+    if (!graph || !map) return false
+    const ids = regionParts(graph, map, region)
+    if (ids.length === 0) return false
+    set({ selection: makeSelection(ids), skinRegions: [region], skinSeeThrough: true })
+    return true
+  },
+
+  showSkinForSelection: async () => {
+    const maps = await get().ensureSkinMaps()
+    const { graph, selection, skinMapMode } = get()
+    if (!maps || !graph || selection.ids.length === 0) return 0
+    const refs = regionsForParts(graph, maps, selection.ids)
+    if (refs.length === 0) return 0
+    // 优先保持当前打开的那张图 / prefer the map that is already on
+    const map = refs.some((r) => r.map === skinMapMode) ? (skinMapMode as SkinMapId) : refs[0]!.map
+    const regions = refs.filter((r) => r.map === map).map((r) => r.region)
+    set({ skinMapMode: map, skinRegions: regions, skinSeeThrough: false, skinHover: null })
+    return regions.length
+  },
   showAll: () =>
     set((s) => {
       const systems: Partial<Record<SystemId, SystemState>> = {}

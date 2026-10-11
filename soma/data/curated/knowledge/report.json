@@ -67,7 +67,7 @@
    "female"
   ],
   "conceptsFromBodyParts3D40Lists": 3432,
-  "conceptsOnlyInDatasets": 1686,
+  "conceptsOnlyInDatasets": 1943,
   "idsNamedForOneSideButUsedByBothSides": [],
   "sidedPartsOnUnsidedConcepts": {
    "note": "Concepts used by both a left and a right part of one body: the zh name has no 左/右, so the UI must add it from Part.side. Exactly these ids.",
@@ -461,8 +461,8 @@
    "UBERON_0015134"
   ],
   "partConceptsPerBody": {
-   "male": 2617,
-   "female": 2653
+   "male": 2770,
+   "female": 2806
   }
  },
  "elementConcepts": {
@@ -470,7 +470,7 @@
   "fromHeader": 2217,
   "fromFallback": 0,
   "unresolved": 17,
-  "distinctConcepts": 2676
+  "distinctConcepts": 2829
  },
  "propagation": {
   "maxIsaFanout": 100,
@@ -488,112 +488,119 @@
  },
  "coverage": {
   "allConcepts": {
-   "concepts": 5118,
-   "wikidataMatch": "4849/5118 (94.7%)",
-   "zhFromWikidataOwnItem": "529/5118 (10.3%)",
-   "zhAny": "5118/5118 (100.0%)",
-   "la": "1179/5118 (23.0%)",
-   "ja": "1241/5118 (24.2%)",
+   "concepts": 5375,
+   "wikidataMatch": "5029/5375 (93.6%)",
+   "zhFromWikidataOwnItem": "542/5375 (10.1%)",
+   "zhAny": "5375/5375 (100.0%)",
+   "la": "1211/5375 (22.5%)",
+   "ja": "1256/5375 (23.4%)",
    "zhBySource": {
-    "machine-translation": 3311,
-    "wikidata": 346,
-    "wikidata:hant-converted": 179,
-    "lexicon:mainland-over-wikidata": 575,
-    "derived:laterality": 666,
-    "machine-translation:override": 37,
+    "machine-translation": 3532,
+    "wikidata": 353,
+    "wikidata:hant-converted": 185,
+    "lexicon:mainland-over-wikidata": 583,
+    "derived:laterality": 678,
+    "machine-translation:override": 40,
     "wikidata:generic-twin": 1,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 8157,
-    "subjectsWithAnyRelation": "1967/5118 (38.4%)",
-    "objectHasFma": "7782/8157 (95.4%)",
-    "objectInDataset": "5147/8157 (63.1%)",
-    "objectLabelHasZh": "6571/8157 (80.6%)",
+    "total": 8698,
+    "subjectsWithAnyRelation": "2023/5375 (37.6%)",
+    "objectHasFma": "8317/8698 (95.6%)",
+    "objectInDataset": "5637/8698 (64.8%)",
+    "objectLabelHasZh": "7101/8698 (81.6%)",
     "byKind": {
      "origin": {
-      "total": 1048,
+      "total": 1257,
       "direct": 251,
       "is-a": 545,
       "laterality": 34,
-      "whole": 132,
+      "whole": 144,
       "wikipedia": 86,
-      "subjects": 548,
-      "objectHasFma": 971,
-      "objectInDataset": 486,
-      "objectIsPart": 324
+      "zanatomy": 197,
+      "subjects": 552,
+      "objectHasFma": 1180,
+      "objectInDataset": 698,
+      "objectIsPart": 535
      },
      "insertion": {
-      "total": 751,
+      "total": 943,
       "direct": 162,
       "is-a": 355,
       "laterality": 20,
-      "whole": 117,
+      "whole": 155,
       "wikipedia": 97,
-      "subjects": 542,
-      "objectHasFma": 641,
-      "objectInDataset": 298,
-      "objectIsPart": 185
+      "zanatomy": 154,
+      "subjects": 550,
+      "objectHasFma": 833,
+      "objectInDataset": 490,
+      "objectIsPart": 377
      },
      "innervatedBy": {
-      "total": 1184,
-      "direct": 268,
-      "is-a": 494,
+      "total": 1190,
+      "direct": 270,
+      "is-a": 498,
       "laterality": 128,
       "whole": 279,
       "wikipedia": 15,
-      "subjects": 678,
-      "objectHasFma": 1120,
-      "objectInDataset": 696,
-      "objectIsPart": 465
+      "zanatomy": 0,
+      "subjects": 681,
+      "objectHasFma": 1126,
+      "objectInDataset": 702,
+      "objectIsPart": 469
      },
      "arterialSupply": {
-      "total": 632,
-      "direct": 166,
-      "is-a": 231,
+      "total": 636,
+      "direct": 167,
+      "is-a": 233,
       "laterality": 78,
-      "whole": 157,
+      "whole": 158,
       "wikipedia": 0,
-      "subjects": 468,
-      "objectHasFma": 625,
-      "objectInDataset": 406,
+      "zanatomy": 0,
+      "subjects": 472,
+      "objectHasFma": 629,
+      "objectInDataset": 407,
       "objectIsPart": 259
      },
      "venousDrainage": {
-      "total": 439,
+      "total": 440,
       "direct": 148,
       "is-a": 194,
       "laterality": 36,
-      "whole": 61,
+      "whole": 62,
       "wikipedia": 0,
-      "subjects": 374,
-      "objectHasFma": 428,
-      "objectInDataset": 315,
+      "zanatomy": 0,
+      "subjects": 375,
+      "objectHasFma": 429,
+      "objectInDataset": 316,
       "objectIsPart": 178
      },
      "lymphaticDrainage": {
-      "total": 57,
-      "direct": 26,
-      "is-a": 27,
+      "total": 66,
+      "direct": 29,
+      "is-a": 33,
       "laterality": 4,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 55,
-      "objectHasFma": 31,
-      "objectInDataset": 18,
-      "objectIsPart": 8
+      "zanatomy": 0,
+      "subjects": 64,
+      "objectHasFma": 37,
+      "objectInDataset": 21,
+      "objectIsPart": 10
      },
      "connectsWith": {
-      "total": 2760,
-      "direct": 886,
-      "is-a": 1714,
-      "laterality": 148,
+      "total": 2874,
+      "direct": 926,
+      "is-a": 1780,
+      "laterality": 156,
       "whole": 12,
       "wikipedia": 0,
-      "subjects": 786,
-      "objectHasFma": 2695,
-      "objectInDataset": 1974,
-      "objectIsPart": 1181
+      "zanatomy": 0,
+      "subjects": 832,
+      "objectHasFma": 2806,
+      "objectInDataset": 2043,
+      "objectIsPart": 1233
      },
      "antagonist": {
       "total": 330,
@@ -602,94 +609,100 @@
       "laterality": 10,
       "whole": 101,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 278,
       "objectHasFma": 321,
       "objectInDataset": 223,
       "objectIsPart": 160
      },
      "innervates": {
-      "total": 956,
-      "direct": 280,
-      "is-a": 492,
+      "total": 962,
+      "direct": 282,
+      "is-a": 496,
       "laterality": 26,
       "whole": 154,
       "wikipedia": 4,
+      "zanatomy": 0,
       "subjects": 249,
-      "objectHasFma": 950,
-      "objectInDataset": 731,
-      "objectIsPart": 491
+      "objectHasFma": 956,
+      "objectInDataset": 737,
+      "objectIsPart": 495
      }
     }
    }
   },
   "elementConcepts": {
-   "concepts": 2676,
-   "wikidataMatch": "2507/2676 (93.7%)",
-   "zhFromWikidataOwnItem": "111/2676 (4.1%)",
-   "zhAny": "2676/2676 (100.0%)",
-   "la": "261/2676 (9.8%)",
-   "ja": "291/2676 (10.9%)",
+   "concepts": 2829,
+   "wikidataMatch": "2615/2829 (92.4%)",
+   "zhFromWikidataOwnItem": "117/2829 (4.1%)",
+   "zhAny": "2829/2829 (100.0%)",
+   "la": "269/2829 (9.5%)",
+   "ja": "299/2829 (10.6%)",
    "zhBySource": {
-    "machine-translation": 1590,
-    "derived:laterality": 613,
-    "lexicon:mainland-over-wikidata": 351,
-    "wikidata:hant-converted": 40,
-    "wikidata": 68,
-    "machine-translation:override": 11,
+    "machine-translation": 1717,
+    "derived:laterality": 625,
+    "lexicon:mainland-over-wikidata": 357,
+    "wikidata:hant-converted": 43,
+    "wikidata": 71,
+    "machine-translation:override": 13,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 5393,
-    "subjectsWithAnyRelation": "1278/2676 (47.8%)",
-    "objectHasFma": "5090/5393 (94.4%)",
-    "objectInDataset": "3425/5393 (63.5%)",
-    "objectLabelHasZh": "4309/5393 (79.9%)",
+    "total": 5890,
+    "subjectsWithAnyRelation": "1317/2829 (46.6%)",
+    "objectHasFma": "5582/5890 (94.8%)",
+    "objectInDataset": "3890/5890 (66.0%)",
+    "objectLabelHasZh": "4802/5890 (81.5%)",
     "byKind": {
      "origin": {
-      "total": 729,
+      "total": 938,
       "direct": 1,
       "is-a": 526,
       "laterality": 34,
-      "whole": 82,
+      "whole": 94,
       "wikipedia": 86,
-      "subjects": 397,
-      "objectHasFma": 653,
-      "objectInDataset": 323,
-      "objectIsPart": 286
+      "zanatomy": 197,
+      "subjects": 401,
+      "objectHasFma": 862,
+      "objectInDataset": 534,
+      "objectIsPart": 497
      },
      "insertion": {
-      "total": 535,
+      "total": 727,
       "direct": 6,
       "is-a": 336,
       "laterality": 20,
-      "whole": 76,
+      "whole": 114,
       "wikipedia": 97,
-      "subjects": 395,
-      "objectHasFma": 433,
-      "objectInDataset": 204,
-      "objectIsPart": 179
+      "zanatomy": 154,
+      "subjects": 403,
+      "objectHasFma": 625,
+      "objectInDataset": 396,
+      "objectIsPart": 371
      },
      "innervatedBy": {
-      "total": 812,
+      "total": 816,
       "direct": 43,
-      "is-a": 456,
+      "is-a": 460,
       "laterality": 114,
       "whole": 184,
       "wikipedia": 15,
-      "subjects": 464,
-      "objectHasFma": 767,
-      "objectInDataset": 479,
-      "objectIsPart": 450
+      "zanatomy": 0,
+      "subjects": 466,
+      "objectHasFma": 771,
+      "objectInDataset": 483,
+      "objectIsPart": 454
      },
      "arterialSupply": {
-      "total": 392,
+      "total": 394,
       "direct": 40,
-      "is-a": 213,
+      "is-a": 215,
       "laterality": 32,
       "whole": 107,
       "wikipedia": 0,
-      "subjects": 296,
-      "objectHasFma": 388,
+      "zanatomy": 0,
+      "subjects": 298,
+      "objectHasFma": 390,
       "objectInDataset": 253,
       "objectIsPart": 223
      },
@@ -700,34 +713,37 @@
       "laterality": 4,
       "whole": 41,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 229,
       "objectHasFma": 264,
       "objectInDataset": 200,
       "objectIsPart": 144
      },
      "lymphaticDrainage": {
-      "total": 33,
+      "total": 39,
       "direct": 9,
-      "is-a": 24,
+      "is-a": 30,
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 31,
-      "objectHasFma": 18,
-      "objectInDataset": 11,
-      "objectIsPart": 6
+      "zanatomy": 0,
+      "subjects": 37,
+      "objectHasFma": 22,
+      "objectInDataset": 13,
+      "objectIsPart": 8
      },
      "connectsWith": {
-      "total": 1786,
-      "direct": 164,
-      "is-a": 1502,
-      "laterality": 112,
+      "total": 1866,
+      "direct": 170,
+      "is-a": 1568,
+      "laterality": 120,
       "whole": 8,
       "wikipedia": 0,
-      "subjects": 509,
-      "objectHasFma": 1743,
-      "objectInDataset": 1302,
-      "objectIsPart": 1120
+      "zanatomy": 0,
+      "subjects": 542,
+      "objectHasFma": 1820,
+      "objectInDataset": 1354,
+      "objectIsPart": 1172
      },
      "antagonist": {
       "total": 222,
@@ -736,94 +752,100 @@
       "laterality": 10,
       "whole": 66,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 186,
       "objectHasFma": 216,
       "objectInDataset": 160,
       "objectIsPart": 160
      },
      "innervates": {
-      "total": 612,
+      "total": 616,
       "direct": 40,
-      "is-a": 454,
+      "is-a": 458,
       "laterality": 18,
       "whole": 100,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 161,
-      "objectHasFma": 608,
-      "objectInDataset": 493,
-      "objectIsPart": 462
+      "objectHasFma": 612,
+      "objectInDataset": 497,
+      "objectIsPart": 466
      }
     }
    }
   },
   "importedPartConcepts": {
-   "concepts": 1013,
-   "wikidataMatch": "846/1013 (83.5%)",
-   "zhFromWikidataOwnItem": "13/1013 (1.3%)",
-   "zhAny": "1013/1013 (100.0%)",
-   "la": "21/1013 (2.1%)",
-   "ja": "12/1013 (1.2%)",
+   "concepts": 1165,
+   "wikidataMatch": "953/1165 (81.8%)",
+   "zhFromWikidataOwnItem": "18/1165 (1.5%)",
+   "zhAny": "1165/1165 (100.0%)",
+   "la": "28/1165 (2.4%)",
+   "ja": "19/1165 (1.6%)",
    "zhBySource": {
-    "derived:laterality": 166,
-    "lexicon:mainland-over-wikidata": 92,
-    "machine-translation": 740,
-    "wikidata:hant-converted": 5,
-    "wikidata": 5,
-    "machine-translation:override": 2,
+    "derived:laterality": 178,
+    "lexicon:mainland-over-wikidata": 98,
+    "machine-translation": 867,
+    "wikidata:hant-converted": 8,
+    "wikidata": 7,
+    "machine-translation:override": 4,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 1533,
-    "subjectsWithAnyRelation": "400/1013 (39.5%)",
-    "objectHasFma": "1437/1533 (93.7%)",
-    "objectInDataset": "955/1533 (62.3%)",
-    "objectLabelHasZh": "1269/1533 (82.8%)",
+    "total": 1686,
+    "subjectsWithAnyRelation": "438/1165 (37.6%)",
+    "objectHasFma": "1584/1686 (94.0%)",
+    "objectInDataset": "1049/1686 (62.2%)",
+    "objectLabelHasZh": "1393/1686 (82.6%)",
     "byKind": {
      "origin": {
-      "total": 85,
+      "total": 129,
       "direct": 0,
       "is-a": 0,
       "laterality": 34,
-      "whole": 16,
+      "whole": 24,
       "wikipedia": 35,
-      "subjects": 59,
-      "objectHasFma": 60,
-      "objectInDataset": 26,
-      "objectIsPart": 16
+      "zanatomy": 36,
+      "subjects": 63,
+      "objectHasFma": 104,
+      "objectInDataset": 70,
+      "objectIsPart": 60
      },
      "insertion": {
-      "total": 63,
+      "total": 77,
       "direct": 0,
       "is-a": 0,
       "laterality": 20,
-      "whole": 4,
+      "whole": 8,
       "wikipedia": 39,
-      "subjects": 57,
-      "objectHasFma": 26,
-      "objectInDataset": 16,
-      "objectIsPart": 10
+      "zanatomy": 10,
+      "subjects": 61,
+      "objectHasFma": 40,
+      "objectInDataset": 30,
+      "objectIsPart": 24
      },
      "innervatedBy": {
-      "total": 179,
+      "total": 183,
       "direct": 3,
-      "is-a": 32,
+      "is-a": 36,
       "laterality": 114,
       "whole": 24,
       "wikipedia": 6,
-      "subjects": 89,
-      "objectHasFma": 169,
-      "objectInDataset": 113,
-      "objectIsPart": 94
+      "zanatomy": 0,
+      "subjects": 91,
+      "objectHasFma": 173,
+      "objectInDataset": 117,
+      "objectIsPart": 98
      },
      "arterialSupply": {
-      "total": 69,
+      "total": 71,
       "direct": 5,
-      "is-a": 10,
+      "is-a": 12,
       "laterality": 30,
       "whole": 24,
       "wikipedia": 0,
-      "subjects": 51,
-      "objectHasFma": 69,
+      "zanatomy": 0,
+      "subjects": 53,
+      "objectHasFma": 71,
       "objectInDataset": 25,
       "objectIsPart": 20
      },
@@ -834,34 +856,37 @@
       "laterality": 2,
       "whole": 8,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 15,
       "objectHasFma": 17,
       "objectInDataset": 6,
       "objectIsPart": 2
      },
      "lymphaticDrainage": {
-      "total": 16,
+      "total": 22,
       "direct": 2,
-      "is-a": 14,
+      "is-a": 20,
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 16,
-      "objectHasFma": 11,
-      "objectInDataset": 6,
-      "objectIsPart": 6
+      "zanatomy": 0,
+      "subjects": 22,
+      "objectHasFma": 15,
+      "objectInDataset": 8,
+      "objectIsPart": 8
      },
      "connectsWith": {
-      "total": 496,
-      "direct": 16,
-      "is-a": 360,
-      "laterality": 112,
+      "total": 575,
+      "direct": 21,
+      "is-a": 426,
+      "laterality": 120,
       "whole": 8,
       "wikipedia": 0,
-      "subjects": 164,
-      "objectHasFma": 481,
-      "objectInDataset": 271,
-      "objectIsPart": 255
+      "zanatomy": 0,
+      "subjects": 196,
+      "objectHasFma": 556,
+      "objectInDataset": 297,
+      "objectIsPart": 281
      },
      "antagonist": {
       "total": 18,
@@ -870,45 +895,48 @@
       "laterality": 10,
       "whole": 4,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 14,
       "objectHasFma": 18,
       "objectInDataset": 10,
       "objectIsPart": 10
      },
      "innervates": {
-      "total": 590,
+      "total": 594,
       "direct": 38,
-      "is-a": 434,
+      "is-a": 438,
       "laterality": 18,
       "whole": 100,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 142,
-      "objectHasFma": 586,
-      "objectInDataset": 482,
-      "objectIsPart": 458
+      "objectHasFma": 590,
+      "objectInDataset": 486,
+      "objectIsPart": 462
      }
     }
    }
   },
   "syntheticIdConcepts": {
-   "concepts": 305,
-   "wikidataMatch": "138/305 (45.2%)",
-   "zhFromWikidataOwnItem": "3/305 (1.0%)",
-   "zhAny": "305/305 (100.0%)",
-   "la": "3/305 (1.0%)",
-   "ja": "3/305 (1.0%)",
+   "concepts": 368,
+   "wikidataMatch": "154/368 (41.8%)",
+   "zhFromWikidataOwnItem": "3/368 (0.8%)",
+   "zhAny": "368/368 (100.0%)",
+   "la": "3/368 (0.8%)",
+   "ja": "3/368 (0.8%)",
    "zhBySource": {
-    "machine-translation": 296,
+    "machine-translation": 355,
+    "lexicon:mainland-over-wikidata": 2,
     "derived:laterality": 4,
-    "machine-translation:override": 2,
+    "machine-translation:override": 4,
     "wikidata:via-uberon-id": 3
    },
    "relations": {
-    "total": 147,
-    "subjectsWithAnyRelation": "38/305 (12.5%)",
-    "objectHasFma": "144/147 (98.0%)",
-    "objectInDataset": "102/147 (69.4%)",
-    "objectLabelHasZh": "125/147 (85.0%)",
+    "total": 155,
+    "subjectsWithAnyRelation": "42/368 (11.4%)",
+    "objectHasFma": "152/155 (98.1%)",
+    "objectInDataset": "102/155 (65.8%)",
+    "objectLabelHasZh": "129/155 (83.2%)",
     "byKind": {
      "origin": {
       "total": 0,
@@ -917,6 +945,7 @@
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 0,
       "objectHasFma": 0,
       "objectInDataset": 0,
@@ -929,6 +958,7 @@
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 0,
       "objectHasFma": 0,
       "objectInDataset": 0,
@@ -941,6 +971,7 @@
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 0,
       "objectHasFma": 0,
       "objectInDataset": 0,
@@ -953,6 +984,7 @@
       "laterality": 0,
       "whole": 2,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 3,
       "objectHasFma": 4,
       "objectInDataset": 2,
@@ -965,6 +997,7 @@
       "laterality": 0,
       "whole": 1,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 2,
       "objectHasFma": 2,
       "objectInDataset": 1,
@@ -977,20 +1010,22 @@
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 1,
       "objectHasFma": 1,
       "objectInDataset": 0,
       "objectIsPart": 0
      },
      "connectsWith": {
-      "total": 133,
+      "total": 141,
       "direct": 3,
       "is-a": 18,
-      "laterality": 112,
+      "laterality": 120,
       "whole": 0,
       "wikipedia": 0,
-      "subjects": 32,
-      "objectHasFma": 130,
+      "zanatomy": 0,
+      "subjects": 36,
+      "objectHasFma": 138,
       "objectInDataset": 96,
       "objectIsPart": 86
      },
@@ -1001,6 +1036,7 @@
       "laterality": 0,
       "whole": 0,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 0,
       "objectHasFma": 0,
       "objectInDataset": 0,
@@ -1013,6 +1049,7 @@
       "laterality": 4,
       "whole": 0,
       "wikipedia": 0,
+      "zanatomy": 0,
       "subjects": 5,
       "objectHasFma": 7,
       "objectInDataset": 3,
@@ -1025,8 +1062,8 @@
  "innervates": {
   "note": "Kind \"innervates\" on nerves. direct = Wikidata P3190 statements on the nerve item (incl. propagated); mirrored = inverse of an innervatedBy relation whose object is a dataset concept.",
   "directFromP3190": 676,
-  "mirrored": 280,
-  "mirroredFromStructureSideStatements": 218,
+  "mirrored": 286,
+  "mirroredFromStructureSideStatements": 224,
   "mirroredViaNamedBranchOfTheNerve": 12,
   "mirroredFromP3190AfterPropagation": 50,
   "nerveSubjects": 249
@@ -1121,14 +1158,342 @@
    "thoracic rotator"
   ]
  },
+ "zanatomyAttachments": {
+  "available": true,
+  "patches": 705,
+  "minBoneShare": 0.25,
+  "addedNoExistingRelation": 68,
+  "addedBoneNotYetTargeted": 333,
+  "addedOwnPatch": 351,
+  "addedViaWholeMuscle": 50,
+  "skipped": {
+   "existing relation already resolves to this bone": 117,
+   "muscle not in the dataset": 64,
+   "bone not a concept of the dataset": 6,
+   "patch not on bone (fascia, tendon, skin)": 8,
+   "part has its own statement": 8,
+   "bone on the other side": 21,
+   "patch without a muscle id": 2
+  },
+  "rejectedPatches": [
+   {
+    "muscle": "(Opponens digiti minimi muscle of foot)",
+    "kind": "origin",
+    "bones": "Fifth metatarsal bone",
+    "patches": 2,
+    "reason": "the fifth metatarsal is the insertion"
+   },
+   {
+    "muscle": "Adductor pollicis",
+    "kind": "insertion",
+    "bones": "Capitate bone",
+    "patches": 2,
+    "reason": "the capitate is an origin of the oblique head, not an insertion"
+   },
+   {
+    "muscle": "Anterior belly of digastric muscle",
+    "kind": "insertion",
+    "bones": "Mandible",
+    "patches": 2,
+    "reason": "the digastric fossa of the mandible is conventionally the origin of the anterior belly"
+   },
+   {
+    "muscle": "Ascending part of trapezius muscle",
+    "kind": "insertion",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is an origin of the upper fibres)"
+   },
+   {
+    "muscle": "Ascending part of trapezius muscle",
+    "kind": "origin",
+    "bones": "Clavicle",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (clavicle is an insertion) and the patch belongs to the upper fibres"
+   },
+   {
+    "muscle": "Descending part of trapezius muscle",
+    "kind": "origin",
+    "bones": "Scapula",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (scapula is the insertion)"
+   },
+   {
+    "muscle": "Extensor carpi ulnaris",
+    "kind": "insertion",
+    "bones": "Triquetrum bone",
+    "patches": 2,
+    "reason": "inserts on the base of the fifth metacarpal; the patch was matched to the triquetrum"
+   },
+   {
+    "muscle": "Extensor hallucis longus",
+    "kind": "insertion",
+    "bones": "Proximal phalanx of first finger of foot",
+    "patches": 2,
+    "reason": "inserts on the distal phalanx of the great toe; the patch was matched to the proximal phalanx"
+   },
+   {
+    "muscle": "External abdominal oblique muscle",
+    "kind": "origin",
+    "bones": "Hip bone",
+    "patches": 2,
+    "reason": "the iliac crest is an insertion of the external oblique"
+   },
+   {
+    "muscle": "Frontalis muscle",
+    "kind": "origin",
+    "bones": "Frontal bone",
+    "patches": 2,
+    "reason": "arises from the epicranial aponeurosis, not from bone"
+   },
+   {
+    "muscle": "Internal abdominal oblique muscle",
+    "kind": "origin",
+    "bones": "Costal cartilage of ninth rib, Costal cartilage of tenth rib, Eleventh rib, Tenth rib, Twelfth rib",
+    "patches": 8,
+    "reason": "the lower ribs and costal cartilages are the insertion of the internal oblique"
+   },
+   {
+    "muscle": "Lateral pterygoid muscle",
+    "kind": "origin",
+    "bones": "Maxilla, Palatine bone",
+    "patches": 4,
+    "reason": "arises from the sphenoid (greater wing, lateral pterygoid plate); the patches were matched to maxilla / palatine bone"
+   },
+   {
+    "muscle": "Latissimus dorsi muscle",
+    "kind": "insertion",
+    "bones": "Scapula",
+    "patches": 2,
+    "reason": "inserts on the humerus (intertubercular sulcus); the scapular slip is an origin"
+   },
+   {
+    "muscle": "Longus capitis muscle",
+    "kind": "origin",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is the insertion)"
+   },
+   {
+    "muscle": "Nasalis muscle",
+    "kind": "origin",
+    "bones": "Nasal bone",
+    "patches": 2,
+    "reason": "arises from the maxilla; the patch was matched to the nasal bone"
+   },
+   {
+    "muscle": "Obliquus inferior capitis muscle",
+    "kind": "insertion",
+    "bones": "Axis (C2)",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (axis is the origin)"
+   },
+   {
+    "muscle": "Obliquus inferior capitis muscle",
+    "kind": "origin",
+    "bones": "Atlas (C1)",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (atlas is the insertion)"
+   },
+   {
+    "muscle": "Obliquus superior capitis muscle",
+    "kind": "origin",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is the insertion)"
+   },
+   {
+    "muscle": "Orbicularis oris muscle",
+    "kind": "origin",
+    "bones": "Mandible",
+    "patches": 2,
+    "reason": "has no direct bony origin (modiolus and neighbouring muscles)"
+   },
+   {
+    "muscle": "Pectoralis minor muscle",
+    "kind": "insertion",
+    "bones": "Fifth rib, Fourth rib, Third rib",
+    "patches": 6,
+    "reason": "origin and insertion are the reverse of the textbook convention (ribs 3-5 are the origin)"
+   },
+   {
+    "muscle": "Pectoralis minor muscle",
+    "kind": "origin",
+    "bones": "Scapula",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (coracoid process is the insertion)"
+   },
+   {
+    "muscle": "Procerus muscle",
+    "kind": "origin",
+    "bones": "Frontal bone, Sinus of frontal bone",
+    "patches": 2,
+    "reason": "arises from the nasal bone; the patch was matched to the frontal bone"
+   },
+   {
+    "muscle": "Rectus abdominis muscle",
+    "kind": "origin",
+    "bones": "Costal cartilage of fifth rib, Costal cartilage of seventh rib",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (costal cartilages 5-7 are the insertion; origin is the pubis)"
+   },
+   {
+    "muscle": "Rectus anterior capitis muscle",
+    "kind": "insertion",
+    "bones": "Atlas (C1)",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (atlas is the origin)"
+   },
+   {
+    "muscle": "Rectus anterior capitis muscle",
+    "kind": "origin",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is the insertion)"
+   },
+   {
+    "muscle": "Rectus lateralis capitis muscle",
+    "kind": "origin",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is the insertion)"
+   },
+   {
+    "muscle": "Rectus posterior major capitis muscle",
+    "kind": "insertion",
+    "bones": "Axis (C2)",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (axis is the origin)"
+   },
+   {
+    "muscle": "Rectus posterior major capitis muscle",
+    "kind": "origin",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is the insertion)"
+   },
+   {
+    "muscle": "Rectus posterior minor capitis muscle",
+    "kind": "insertion",
+    "bones": "Atlas (C1)",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (atlas is the origin)"
+   },
+   {
+    "muscle": "Rectus posterior minor capitis muscle",
+    "kind": "origin",
+    "bones": "Occipital bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (occipital bone is the insertion)"
+   },
+   {
+    "muscle": "Scalenus anterior muscle",
+    "kind": "insertion",
+    "bones": "Vertebra C4, Vertebra C5, Vertebra C6",
+    "patches": 6,
+    "reason": "origin and insertion are the reverse of the textbook convention (cervical vertebrae are the origin)"
+   },
+   {
+    "muscle": "Scalenus anterior muscle",
+    "kind": "origin",
+    "bones": "First rib",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (first rib is the insertion)"
+   },
+   {
+    "muscle": "Scalenus medius muscle",
+    "kind": "insertion",
+    "bones": "Vertebra C6, Vertebra C7",
+    "patches": 4,
+    "reason": "origin and insertion are the reverse of the textbook convention (cervical vertebrae are the origin)"
+   },
+   {
+    "muscle": "Scalenus medius muscle",
+    "kind": "origin",
+    "bones": "First rib",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (first rib is the insertion)"
+   },
+   {
+    "muscle": "Scalenus posterior muscle",
+    "kind": "insertion",
+    "bones": "Vertebra C5",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (cervical vertebrae are the origin)"
+   },
+   {
+    "muscle": "Serratus anterior muscle",
+    "kind": "insertion",
+    "bones": "Eighth rib, Fifth rib, First rib, Fourth rib, Ninth rib, Second rib, Seventh rib, Sixth rib, Third rib",
+    "patches": 16,
+    "reason": "origin and insertion are the reverse of the textbook convention (ribs are the origin)"
+   },
+   {
+    "muscle": "Serratus anterior muscle",
+    "kind": "origin",
+    "bones": "Scapula",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (scapula is the insertion)"
+   },
+   {
+    "muscle": "Sternocostal head of pectoralis major muscle",
+    "kind": "insertion",
+    "bones": "Body of sternum, Costal cartilage of sixth rib, Manubrium of sternum",
+    "patches": 6,
+    "reason": "origin and insertion are the reverse of the textbook convention (sternum and costal cartilages are the origin)"
+   },
+   {
+    "muscle": "Subclavius muscle",
+    "kind": "origin",
+    "bones": "Clavicle",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (clavicle is the insertion; origin is the first rib)"
+   },
+   {
+    "muscle": "Thyrohyoid muscle",
+    "kind": "insertion",
+    "bones": "Thyroid cartilage",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (thyroid cartilage is the origin)"
+   },
+   {
+    "muscle": "Thyrohyoid muscle",
+    "kind": "origin",
+    "bones": "Hyoid bone",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (hyoid bone is the insertion)"
+   },
+   {
+    "muscle": "Transverse head of adductor hallucis",
+    "kind": "insertion",
+    "bones": "Fifth metatarsal bone, Fourth metatarsal bone, Third metatarsal bone",
+    "patches": 6,
+    "reason": "origin and insertion are the reverse of the textbook convention (the metatarsophalangeal ligaments of toes 3-5 are the origin)"
+   },
+   {
+    "muscle": "Transverse head of adductor hallucis",
+    "kind": "origin",
+    "bones": "Sesamoid bones of foot",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (sesamoid / proximal phalanx is the insertion)"
+   },
+   {
+    "muscle": "Transverse part of trapezius muscle",
+    "kind": "origin",
+    "bones": "Scapula",
+    "patches": 2,
+    "reason": "origin and insertion are the reverse of the textbook convention (scapula is the insertion)"
+   }
+  ]
+ },
  "muscleGaps": {
   "muscleElementConcepts": 451,
-  "complete": 333,
-  "withGaps": 118,
-  "unlateralisedGroups": 62,
+  "complete": 335,
+  "withGaps": 116,
+  "unlateralisedGroups": 61,
   "missingCounts": {
-   "origin": 56,
-   "insertion": 56,
+   "origin": 52,
+   "insertion": 48,
    "innervatedBy": 21
   }
  },
@@ -1147,7 +1512,7 @@
  },
  "zhMainlandOverWikidata": {
   "note": "Mainland wording policy: an exact lexicon term was used instead of the Wikidata label shown here (regional, colloquial or wrong wording). zhSource = lexicon:mainland-over-wikidata. For a reviewer.",
-  "count": 575,
+  "count": 581,
   "items": [
    {
     "id": "FMA3724",
@@ -3214,6 +3579,24 @@
     "lexicon": "左腓侧副韧带"
    },
    {
+    "id": "FMA44614",
+    "en": "anterior cruciate ligament",
+    "wikidata": "前十字韧带",
+    "lexicon": "前交叉韧带"
+   },
+   {
+    "id": "FMA44615",
+    "en": "right anterior cruciate ligament",
+    "wikidata": "右前十字韧带",
+    "lexicon": "右前交叉韧带"
+   },
+   {
+    "id": "FMA44616",
+    "en": "left anterior cruciate ligament",
+    "wikidata": "左前十字韧带",
+    "lexicon": "左前交叉韧带"
+   },
+   {
     "id": "FMA44687",
     "en": "medial sural cutaneous nerve",
     "wikidata": "内侧腓肠神经",
@@ -4108,6 +4491,12 @@
     "lexicon": "左眼球血管膜"
    },
    {
+    "id": "FMA58772",
+    "en": "infrapatellar fat pad",
+    "wikidata": "髌骨下脂肪垫",
+    "lexicon": "髌下脂肪垫"
+   },
+   {
     "id": "FMA58791",
     "en": "right crural fascia",
     "wikidata": "右小腿深筋膜",
@@ -4598,12 +4987,24 @@
     "en": "ventricular system of brain",
     "wikidata": "脑室",
     "lexicon": "脑室系统"
+   },
+   {
+    "id": "FMA256530",
+    "en": "dorsal gray column of spinal cord",
+    "wikidata": "脊髓的后角",
+    "lexicon": "脊髓后角"
+   },
+   {
+    "id": "FMA256541",
+    "en": "ventral gray column of spinal cord",
+    "wikidata": "前灰质柱",
+    "lexicon": "脊髓前角"
    }
   ]
  },
  "zhWikidataVsLexicon": {
   "note": "Wikidata zh labels kept because the lexicon has no exact term for the whole name; its word-by-word composition differs. For a reviewer.",
-  "count": 28,
+  "count": 27,
   "items": [
    {
     "fma": "FMA3862",
@@ -4772,13 +5173,6 @@
     "wikidata": "足底深动脉",
     "lexicon": "深足底动脉",
     "zhSource": "wikidata"
-   },
-   {
-    "fma": "FMA70801",
-    "en": "set of dorsal digital arteries",
-    "wikidata": "趾背动脉",
-    "lexicon": "背侧指动脉",
-    "zhSource": "wikidata:hant-converted"
    },
    {
     "fma": "FMA71564",

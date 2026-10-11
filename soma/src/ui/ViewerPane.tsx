@@ -27,12 +27,16 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   const provenanceHiddenCount = useApp((s) => s.provenanceHidden.size)
   const selection = useApp((s) => s.selection)
   const compare = useApp((s) => s.compare)
+  const skinHover = useApp((s) => s.skinHover)
+  const skinSeeThrough = useApp((s) => s.skinSeeThrough)
+  const skinMap = useApp((s) => (s.skinMapMode === 'off' ? undefined : s.skinMaps?.maps.find((m) => m.id === s.skinMapMode)))
   const hasSelection = selection.ids.length > 0
 
   const viewerRef = useRef<Viewer | null>(null)
   const [ready, setReady] = useState(false)
   const firstGraph = useRef(graph)
 
+  // 整个页面只用一个渲染器；人体在其中替换
   // one renderer for the life of the page; bodies are swapped into it
   useEffect(() => {
     const host = hostRef.current
@@ -43,6 +47,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
     let cancelled = false
     ;(async () => {
       try {
+        // three.js 与加载器是单独的代码块，界面先显示、随后再取
         // three.js and the loaders are a separate chunk, fetched while the UI is already up
         const { Viewer } = await import('../viewer/Viewer.ts')
         if (cancelled) return
@@ -55,6 +60,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
         debug.viewer = viewer
         debug.backend = viewer.backend
         setBackend(viewer.backend)
+        // 提示框跟随鼠标，且只对来自画布的悬停显示（信息面板的列表行也会设置悬停高亮）
         // the tooltip follows the mouse and only shows for hovers that came from the canvas
         // (list rows in the info panel also set the hover highlight)
         viewer.onPointer = (xy) => {
@@ -77,6 +83,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
     }
   }, [])
 
+  // 加载当前人体的几何；切换人体时释放旧的并保留视角
   // load the current body's geometry; a body switch frees the old one and keeps the camera
   useEffect(() => {
     const viewer = viewerRef.current
@@ -104,7 +111,13 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
 
   const app = useApp.getState()
   const hoverPart = hover ? graph.part(hover) : undefined
-  const hoverName = hoverPart ? graph.partName(hoverPart) : null
+  // 悬停在体表图上时，提示区域名而不是"皮肤" / over a skin map, the tooltip names the region, not "skin"
+  const hoverRegion = skinMap && skinHover !== null && hoverPart ? skinMap.regions[skinHover] : undefined
+  const hoverName = hoverRegion
+    ? { primary: hoverRegion.name.zh, en: hoverRegion.name.en, zh: hoverRegion.name.zh, broader: undefined }
+    : hoverPart
+      ? graph.partName(hoverPart)
+      : null
 
   let selectionLabel: string | null = null
   if (selection.concept) {
@@ -161,6 +174,16 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
         {provenanceHiddenCount > 0 && !isolated && (
           <button className="chip chip-action" onClick={() => { for (const p of [...useApp.getState().provenanceHidden]) app.setProvenanceVisible(p, true) }}>
             已按来源隐藏 {provenanceHiddenCount} 类 · 恢复
+          </button>
+        )}
+        {skinMap && (
+          <button className="chip chip-action" onClick={() => app.setSkinMapMode('off')} title="教学示意图，未经临床审校 / teaching map, not clinically reviewed">
+            体表图：{skinMap.name.zh} <Icon name="close" size={12} />
+          </button>
+        )}
+        {skinSeeThrough && (
+          <button className="chip chip-action" onClick={() => app.setSkinSeeThrough(false)}>
+            皮肤半透明 · 恢复
           </button>
         )}
         {section && (

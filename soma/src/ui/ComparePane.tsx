@@ -1,3 +1,4 @@
+// 并排对照：另一人体，限定一个系统，使用独立的渲染器，视角与主视图双向联动。
 // Side-by-side comparison: the other body, restricted to one system, in its own renderer
 // with the camera linked to the main view (both ways).
 
@@ -26,6 +27,7 @@ function otherGraph(dataset: string): Promise<AnatomyGraph> {
   return g
 }
 
+/** 某个系统在人体中的中心：两个联动相机都相对它环绕。 */
 /** Centre of one system in a body: the point both linked cameras orbit relative to. */
 function systemCenter(graph: AnatomyGraph, system: SystemId): [number, number, number] {
   const b = graph.bounds(graph.partsBySystem(system).map((p) => p.id)) ?? graph.bodyBounds
@@ -52,6 +54,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
       try {
         const [{ Viewer }, g] = await Promise.all([import('../viewer/Viewer.ts'), otherGraph(other)])
         if (cancelled) return
+        // 显示它加载的全部内容（一个系统）；跟随主视图的着色方式、剖切和神经加粗
         // shows everything it loads (one system); follows the main view's colour mode, section and nerve aid
         const state = (): ViewState => {
           const s = useApp.getState()
@@ -71,6 +74,12 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             nerveBoost: s.nerveBoost,
             focusRequest: { nonce: 0, ids: null },
             homeRequest: 0,
+            // 对照窗格不显示体表图 / the compare pane does not show skin maps
+            skinMapMode: 'off',
+            skinMaps: null,
+            skinRegions: [],
+            skinHover: null,
+            skinSeeThrough: false,
           }
         }
         viewer = new Viewer(host, g, `${import.meta.env.BASE_URL}anatomy/${other}/`, {
@@ -85,6 +94,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
         unsubscribe = useApp.subscribe(() => v.invalidateState())
         main.setAnchor(...systemCenter(graph, system))
         v.setAnchor(...systemCenter(g, system))
+        // 先在主视图中对准该系统，然后让两个相机保持同步
         // frame the system in the main view, then keep the two cameras in step
         useApp.getState().requestFocus(graph.partsBySystem(system).map((p) => p.id))
         main.onCamera = (pose) => v.setPose(pose)

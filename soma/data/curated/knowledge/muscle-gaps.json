@@ -1,12 +1,12 @@
 {
- "note": "Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. \"wholeMuscleOnly\" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray's Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0).",
+ "note": "Element-level muscles (and named muscle parts) of BodyParts3D that lack an origin, insertion or innervation after the Wikidata and Wikipedia passes. \"wholeMuscleOnly\" kinds exist only as statements about the whole muscle and still need a part-specific source. Candidates: OpenStax Anatomy & Physiology (CC BY 4.0), Gray's Anatomy 1918 (public domain), Wikipedia (CC BY-SA 4.0). Bone-level attachments from Z-Anatomy patches count as present.",
  "muscleElementConcepts": 451,
- "complete": 333,
- "withGaps": 118,
- "unlateralisedGroups": 62,
+ "complete": 335,
+ "withGaps": 116,
+ "unlateralisedGroups": 61,
  "missingCounts": {
-  "origin": 56,
-  "insertion": 56,
+  "origin": 52,
+  "insertion": 48,
   "innervatedBy": 21
  },
  "muscles": [
@@ -81,11 +81,11 @@
     "FMA49004",
     "FMA49005"
    ],
-   "missing": [
+   "missing": [],
+   "wholeMuscleOnly": [
     "origin",
     "insertion"
    ],
-   "wholeMuscleOnly": [],
    "wholeMuscle": "masseter"
   },
   {
@@ -155,8 +155,7 @@
     "FMA22745"
    ],
    "missing": [
-    "origin",
-    "insertion"
+    "origin"
    ],
    "wholeMuscleOnly": []
   },
@@ -208,19 +207,6 @@
     "insertion"
    ],
    "wholeMuscleOnly": []
-  },
-  {
-   "name": "lateral head of flexor hallucis brevis",
-   "fma": [
-    "FMA45973",
-    "FMA45974"
-   ],
-   "missing": [],
-   "wholeMuscleOnly": [
-    "origin",
-    "insertion"
-   ],
-   "wholeMuscle": "flexor hallucis brevis"
   },
   {
    "name": "lateral head of gastrocnemius",
@@ -277,7 +263,6 @@
    ],
    "missing": [],
    "wholeMuscleOnly": [
-    "origin",
     "insertion"
    ],
    "wholeMuscle": "biceps femoris"
@@ -325,8 +310,7 @@
     "FMA22753"
    ],
    "missing": [
-    "origin",
-    "insertion"
+    "origin"
    ],
    "wholeMuscleOnly": []
   },
@@ -364,8 +348,7 @@
    ],
    "missing": [],
    "wholeMuscleOnly": [
-    "origin",
-    "insertion"
+    "origin"
    ],
    "wholeMuscle": "flexor hallucis brevis"
   },
@@ -460,7 +443,6 @@
    ],
    "missing": [],
    "wholeMuscleOnly": [
-    "origin",
     "insertion"
    ],
    "wholeMuscle": "orbicularis oculi"
@@ -645,11 +627,11 @@
     "FMA49001",
     "FMA49002"
    ],
-   "missing": [
+   "missing": [],
+   "wholeMuscleOnly": [
     "origin",
     "insertion"
    ],
-   "wholeMuscleOnly": [],
    "wholeMuscle": "masseter"
   },
   {
