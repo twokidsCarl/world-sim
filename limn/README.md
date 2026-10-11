@@ -14,6 +14,7 @@
 | M3 | 主题解析：自由文本 → 真实结构 | 完成，见 `server/resolve.ts` |
 | M4 | 看图精修：让模型看渲染结果、给反馈、迭代 | 完成，见 `server/critique.ts`、`src/refine/` |
 | M5 | 细胞全景：按浓度自动排布的截面图 | 第一版完成，见 `server/landscape.ts`、`src/landscape/`；局限见下 |
+| 二期·2e | 冷冻电镜断层扫描里粒子的实测位置：一片支原体细胞里 331 个核糖体 | 完成，见 `src/mol/points.ts` 和目录里的 `mycoplasma-ribosomes-in-situ` |
 | 二期·2c | 全景图里的 DNA 长链（程序生成的双螺旋） | 完成，见 `src/landscape/fiber.ts`、`data/bdna.json` |
 | 二期·2b | 膜蛋白按 OPM 的取向嵌进膜里 | 完成，见 `server/sources/opm.ts`、`src/landscape/orient.ts` |
 | 二期·2a | 全景图的蛋白丰度改用 PaxDb 实测数据 | 完成，见 `server/sources/paxdb.ts` |
@@ -63,6 +64,7 @@ world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767
 目录（`data/catalog.json`）里有两类东西，界面上分别标为“实测”和“整理的模型”：
 
 - **实测**：PDB 里的实验结构，例如完整的 HIV-1 衣壳（3J3Q）、寨卡病毒（5IRE）。
+- **实测位置**：目录里有一项来自冷冻电镜断层扫描（[CZ CryoET Data Portal](https://cryoetdataportal.czscience.com/) 数据集 10003，CC0）：一片肺炎支原体细胞里 331 个核糖体各自的位置是实测的，每个位置上放的是同种细胞里解出的 70S 核糖体原子模型（PDB 7P6Z）。**朝向没有采用数据集里的值**：它参照的坐标系和原子模型对不上（试了四种解释，相邻核糖体都同样互相穿插），所以朝向是随机的。细胞膜和其他分子没有画。
 - **整理的模型**：别人已发表的整体模型，例如 PetWorld 的新冠病毒颗粒、cellPACK 的 HIV 和整只生殖支原体。其中每个分子是真实结构或同源模型，**位置和数量是模型作者依据实验数据排布的，不是直接观测到的**。核孔复合体这类整合结构同理：由多种实验数据拼合而成。
 
 画法上做了三件要说明的事：
@@ -138,6 +140,7 @@ Molecular and cellular illustrations in the manner of David S. Goodsell, generat
 | M3 | Topic resolution: free text to real structures | Done, see `server/resolve.ts` |
 | M4 | Review loop: the model looks at the render, gives feedback, iterates | Done, see `server/critique.ts`, `src/refine/` |
 | M5 | Cellular landscapes: cross-sections packed automatically by concentration | First version done, see `server/landscape.ts`, `src/landscape/`; limits below |
+| Round 2, phase 2e | Measured particle positions from a cryo-electron tomogram: 331 ribosomes in a slice of mycoplasma cells | Done, see `src/mol/points.ts` and `mycoplasma-ribosomes-in-situ` in the catalogue |
 | Round 2, phase 2c | Long DNA in landscapes, as a generated double helix | Done, see `src/landscape/fiber.ts`, `data/bdna.json` |
 | Round 2, phase 2b | Membrane proteins sit in the membrane as OPM orients them | Done, see `server/sources/opm.ts`, `src/landscape/orient.ts` |
 | Round 2, phase 2a | Protein abundances in landscapes come from PaxDb measurements | Done, see `server/sources/paxdb.ts` |
@@ -186,6 +189,7 @@ In a multi-panel mechanism figure every panel is at the same scale, and panels a
 The catalogue (`data/catalog.json`) holds two kinds of thing, labelled "measured" and "curated model" in the interface:
 
 - **Measured**: experimental structures in the PDB, such as the entire HIV-1 capsid (3J3Q) or Zika virus (5IRE).
+- **Measured positions**: one catalogue entry comes from cryo-electron tomography ([CZ CryoET Data Portal](https://cryoetdataportal.czscience.com/) dataset 10003, CC0): the positions of 331 ribosomes in a slice of Mycoplasma pneumoniae cells are measured, and at each stands the atomic model of the 70S ribosome solved in the same kind of cell (PDB 7P6Z). **The dataset's orientations are not used**: the frame they refer to could not be matched to the atomic model (under four readings, neighbouring ribosomes ran through one another just as much), so orientations are random. The cell membrane and all other molecules are not drawn.
 - **Curated models**: whole models that others have published, such as PetWorld's SARS-CoV-2 virion and cellPACK's HIV virion and whole Mycoplasma genitalium cell. Each molecule in them is a real structure or a homology model; **where the molecules are and how many there are was arranged by the model's authors from experimental data, and was not observed directly**. The same holds for integrative structures such as the nuclear pore complex, which are assembled from several kinds of experiment.
 
 Three things about how they are drawn:
