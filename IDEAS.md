@@ -1,5 +1,7 @@
 # world-sim：模拟的结构、领域地图与 idea 池
 
+English: [IDEAS.en.md](IDEAS.en.md)
+
 world-sim 各子项目的对比，从中抽出的模拟通用结构，以及按原始输入风格持续追加的 idea。
 
 这份文件有两种内容。**想法池、内核表、覆盖表**（第 6、7、8 节里用注释标记圈出来的三块）由 [`idea-loom/`](idea-loom) 从它的事件日志生成，不要手改：改 idea 请在 idea-loom 的界面里改，再点"同步到仓库"。其余文字是手写的分析。
