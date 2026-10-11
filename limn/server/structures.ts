@@ -20,7 +20,7 @@ export function stateDir(): string {
 }
 
 /** 允许代为下载的主机 / hosts this server will download from on the page's behalf */
-const ALLOWED = new Set(['models.rcsb.org', 'files.rcsb.org', 'mesoscope.scripps.edu', 'alphafold.ebi.ac.uk', 'raw.githubusercontent.com', 'neuromorpho.org', 'ftp.ebi.ac.uk'])
+const ALLOWED = new Set(['models.rcsb.org', 'files.rcsb.org', 'mesoscope.scripps.edu', 'alphafold.ebi.ac.uk', 'raw.githubusercontent.com', 'neuromorpho.org', 'ftp.ebi.ac.uk', 'bossdb-open-data.s3.amazonaws.com'])
 const MAX_BYTES = 400_000_000
 
 const pending = new Map<string, Promise<string>>()

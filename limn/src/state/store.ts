@@ -18,7 +18,7 @@ import catalog from '../../data/catalog.json'
 import neuronTable from '../../data/neurons.json'
 import cellTable from '../../data/cells.json'
 import { readN5Mask } from '../volume/n5'
-import { neuromorphoUrl, neuronMolecule, parseSwc } from '../neuro/swc'
+import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -109,6 +109,8 @@ interface State extends Look {
   loadCatalog(id: string): Promise<void>
   /** 载入目录里的一个神经元形态重建 / load a neuron reconstruction from the catalogue */
   loadNeuron(id: string): Promise<void>
+  /** 载入目录里的一组连接组细胞，按它们共用的坐标系叠在一起 / load a set of connectome cells from the catalogue, overlaid in the frame they share */
+  loadNeuronGroup(id: string): Promise<void>
   /** 载入一张 EMDB 密度图（编号的数字部分），有拟合的原子模型就叠在里面 / load an EMDB density map (the digits of its id), with its fitted atomic model inside when there is one */
   loadEmdb(n: string): Promise<void>
   /** 载入一个细胞的细胞器分割（目录里的 id）/ load the organelle segmentation of a cell (an id in the catalogue) */
@@ -576,6 +578,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async loadNeuron(id) {
+    if (neuronTable.groups.some((g) => g.id === id)) return get().loadNeuronGroup(id)
     const entry = neuronTable.neurons.find((n) => n.id === id)
     if (!entry) {
       set({ error: say('error.notInCatalog', { id }) })
@@ -616,6 +619,67 @@ export const useStore = create<State>((set, get) => ({
       ]
       const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: '', panels: [spec], notes, unit: 'µm' }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
+    } catch (e) {
+      set({ busy: '', error: errorNote(e) })
+    }
+  },
+
+  async loadNeuronGroup(id) {
+    const group = neuronTable.groups.find((g) => g.id === id)
+    if (!group) {
+      set({ error: say('error.notInCatalog', { id }) })
+      return
+    }
+    set({ busy: say('busy.downloading', { name: pick(group.title, group.titleEn) }), error: '' })
+    try {
+      const cells: { id: string; url: string; nodes: ReturnType<typeof parseSwc> }[] = []
+      for (const cell of group.cells) {
+        const url = micronsUrl(cell)
+        let text = ''
+        for (const u of [`/api/structure?url=${encodeURIComponent(url)}`, url]) {
+          const res = await fetch(u).catch(() => null)
+          if (res?.ok) {
+            text = await res.text()
+            break
+          }
+        }
+        if (!text) throw noteError('error.micronsFetch', { id: cell })
+        cells.push({ id: cell, url, nodes: parseSwc(text) })
+      }
+      // 以胞体的平均位置为原点；数据的 y 轴从皮层表面指向深处，绕 x 轴转半圈让表面朝上（不改变手性）
+      // the mean soma position becomes the origin; the data's y axis runs from the cortical surface downwards, so a half turn about x puts the surface on top (handedness unchanged)
+      const somas = cells.map((c) => c.nodes.find((n) => n.type === 1) ?? c.nodes[0]!)
+      const mid: [number, number, number] = [0, 1, 2].map((k) => somas.reduce((a, n) => a + [n.x, n.y, n.z][k]!, 0) / somas.length) as [number, number, number]
+      // 每个细胞一个色相 / one hue per cell
+      const hues: Role[] = ['focus', 'soluble', 'membrane', 'nucleic-binding', 'extracellular', 'nucleic']
+      const panels: Panel[] = []
+      let dropped = 0
+      cells.forEach((c, i) => {
+        const kept = within(c.nodes, mid, group.radius)
+        dropped += c.nodes.length - kept.length
+        const mol = neuronMolecule(kept.map((n) => ({ ...n, x: n.x - mid[0], y: -(n.y - mid[1]), z: -(n.z - mid[2]) })), c.id, c.id)
+        const roles = mol.entities.map(() => hues[i % hues.length]!)
+        const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
+        const spec: PanelSpec = {
+          label: c.id,
+          source: {
+            id: c.id, kind: 'neuron', url: c.url, title: c.id, method: tIn('zh', 'method.emSkeleton'), methodEn: tIn('en', 'method.emSkeleton'), resolution: null, year: 2025, tier: 'measured',
+            licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: tIn('zh', 'source.microns'), attributionEn: tIn('en', 'source.microns'), citation: `doi:${group.doi}`, link: group.link,
+          },
+          assembly: 'asym',
+          entities: mol.entities.map((e, k) => ({ entityId: e.id, role: roles[k]!, name: e.description.split(' / ')[0]!, nameEn: e.description.split(' / ')[1], description: e.description, organism: group.species })),
+          reason: '',
+        }
+        panels.push({ spec, mol, coloring, align: null, paper: null, annotation: null })
+      })
+      const notes: Note[] = [
+        { key: 'note.microns.about', params: { n: cells.length } },
+        ...(dropped > 0 ? [{ key: 'note.microns.cropped', params: { radius: group.radius } } as Note] : []),
+        { key: 'note.microns.licence' },
+        { key: 'note.neuron.thin' },
+      ]
+      const scene: SceneSpec = { topic: group.title, kind: 'neuron', title: group.title, titleEn: group.titleEn, caption: group.about, captionEn: group.aboutEn, panels: panels.map((p) => p.spec), notes, unit: 'µm', overlay: true }
+      set((s) => ({ spec: scene, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, cutDefault: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1, complexes: null }))
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
     }

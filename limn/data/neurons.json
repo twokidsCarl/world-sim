@@ -1,5 +1,5 @@
 {
-  "about": "神经元形态重建的目录：只存 NeuroMorpho.Org 上的名字、档案和出处，重建文件（SWC）运行时下载。NeuroMorpho.Org 的内容以 CC BY 4.0 发布，使用时要引用每个重建的原始论文。 / A catalogue of neuron reconstructions: names, archives and sources on NeuroMorpho.Org only; the reconstruction files (SWC) are downloaded at run time. NeuroMorpho.Org is released under CC BY 4.0, and the original paper of each reconstruction is to be cited.",
+  "about": "神经元形态重建的目录：只存 NeuroMorpho.Org 上的名字、档案和出处，重建文件（SWC）运行时下载。NeuroMorpho.Org 的内容以 CC BY 4.0 发布，使用时要引用每个重建的原始论文。 / A catalogue of neuron reconstructions: names, archives and sources on NeuroMorpho.Org only; the reconstruction files (SWC) are downloaded at run time. NeuroMorpho.Org is released under CC BY 4.0, and the original paper of each reconstruction is to be cited. 另有 groups：MICrONS 连接组里的几组细胞，同样只存编号，骨架运行时从 BossDB 的公开存储下载；MICrONS 的页面上没有找到许可声明。 / Also `groups`: sets of cells from the MICrONS connectome, again ids only, with skeletons downloaded at run time from BossDB's open storage; no licence statement was found on the MICrONS pages.",
   "neurons": [
     {
       "id": "human-pyramidal",
@@ -48,6 +48,27 @@
       "has": "胞体和树突，没有重建轴突",
       "hasEn": "soma and dendrites; the axon was not reconstructed",
       "doi": "10.1016/j.cub.2018.03.001"
+    }
+  ],
+  "groups": [
+    {
+      "id": "microns-neighbours",
+      "title": "小鼠视皮层里五个相邻的神经元",
+      "titleEn": "Five neighbouring neurons of the mouse visual cortex",
+      "about": "MICrONS 一立方毫米电镜连接组（minnie65，v661 版骨架）里胞体彼此相距不到 20 微米的五个细胞。它们在同一个坐标系里，按真实的相对位置叠在一起画，每个细胞一个色相。",
+      "aboutEn": "Five cells of the MICrONS cubic-millimetre electron-microscopy connectome (minnie65, skeletons v661) whose somas lie within 20 microns of one another. They share one coordinate frame and are drawn where they really lie, one hue per cell.",
+      "species": "mouse",
+      "region": "primary visual cortex and higher visual areas",
+      "radius": 260,
+      "cells": [
+        "864691135122934055_294557",
+        "864691135274631397_294561",
+        "864691135338381030_294547",
+        "864691134941194851_294539",
+        "864691135272867601_294576"
+      ],
+      "doi": "10.1038/s41586-025-08790-w",
+      "link": "https://www.microns-explorer.org/cortical-mm3"
     }
   ]
 }

@@ -152,6 +152,19 @@
       "url": "/?neuron=rat-ca1-pyramidal"
     },
     {
+      "id": "microns-neighbours",
+      "title": {
+        "zh": "皮层里五个相邻的神经元",
+        "en": "Five neighbouring neurons of the cortex"
+      },
+      "hint": {
+        "zh": "五个细胞按它们在小鼠视皮层里的真实位置叠在一起，每个一种颜色；拖动旋转。电镜连接组 MICrONS 的骨架，单位是微米；没有找到这份数据的许可声明，使用时现取。需要联网",
+        "en": "Five cells overlaid where they really lie in the mouse visual cortex, one colour each; drag to rotate. Skeletons from the MICrONS electron-microscopy connectome, in microns; no licence statement was found for this data, which is fetched when used. It needs a network connection"
+      },
+      "idea": "2.1",
+      "url": "/?neuron=microns-neighbours"
+    },
+    {
       "id": "hela-organelles",
       "title": {
         "zh": "一个 HeLa 细胞里的细胞器（电镜）",
