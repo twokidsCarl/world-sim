@@ -7,8 +7,11 @@ dist/
 # Downloaded source data and caches; fetched again by the tools.
 data/raw/
 
-# Generated dev-only datasets (bun tools/fixture/make-fixture.ts).
-public/anatomy/fixture/
+# 开发用的压力测试数据集，由 bun tools/fixture/make-fixture.ts 生成，不入库。
+# 小的 fixture 数据集（public/anatomy/fixture/，约 0.4 MB）入库：测试在干净的检出里要读它；构建时仍被排除。
+# The dev-only stress dataset is generated (bun tools/fixture/make-fixture.ts) and not committed.
+# The small fixture dataset (public/anatomy/fixture/, about 0.4 MB) is committed: the tests read it
+# in a clean checkout; the build still leaves it out.
 public/anatomy/stress/
 
 # Scratch output of the assessment/registration tools.

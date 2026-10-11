@@ -1,0 +1,540 @@
+{
+ "FMA900001": {
+  "zh": "皮肤",
+  "la": "Cutis",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900002": {
+  "zh": "左胸大肌",
+  "la": "Musculus pectoralis major sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900003": {
+  "zh": "右胸大肌",
+  "la": "Musculus pectoralis major dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900004": {
+  "zh": "腹直肌",
+  "la": "Musculus rectus abdominis",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900005": {
+  "zh": "左三角肌",
+  "la": "Musculus deltoideus sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900006": {
+  "zh": "右三角肌",
+  "la": "Musculus deltoideus dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900007": {
+  "zh": "左肱二头肌",
+  "la": "Musculus biceps brachii sinister",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900008": {
+  "zh": "右肱二头肌",
+  "la": "Musculus biceps brachii dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900009": {
+  "zh": "左股四头肌",
+  "la": "Musculus quadriceps femoris sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900010": {
+  "zh": "右股四头肌",
+  "la": "Musculus quadriceps femoris dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900011": {
+  "zh": "左腓肠肌",
+  "la": "Musculus gastrocnemius sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900012": {
+  "zh": "右腓肠肌",
+  "la": "Musculus gastrocnemius dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900013": {
+  "zh": "颅骨",
+  "la": "Cranium",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900014": {
+  "zh": "颈椎",
+  "la": "Vertebrae cervicales",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900015": {
+  "zh": "胸椎",
+  "la": "Vertebrae thoracicae",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900016": {
+  "zh": "腰椎",
+  "la": "Vertebrae lumbales",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900017": {
+  "zh": "胸骨",
+  "la": "Sternum",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900018": {
+  "zh": "骨盆",
+  "la": "Pelvis",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900019": {
+  "zh": "左第三肋",
+  "la": "Costa III sinister",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900020": {
+  "zh": "右第三肋",
+  "la": "Costa III dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900021": {
+  "zh": "左第五肋",
+  "la": "Costa V sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900022": {
+  "zh": "右第五肋",
+  "la": "Costa V dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900023": {
+  "zh": "左第七肋",
+  "la": "Costa VII sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900024": {
+  "zh": "右第七肋",
+  "la": "Costa VII dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900025": {
+  "zh": "左肱骨",
+  "la": "Humerus sinister",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900026": {
+  "zh": "右肱骨",
+  "la": "Humerus dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900027": {
+  "zh": "左桡骨",
+  "la": "Radius sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900028": {
+  "zh": "右桡骨",
+  "la": "Radius dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900029": {
+  "zh": "左股骨",
+  "la": "Femur sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900030": {
+  "zh": "右股骨",
+  "la": "Femur dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900031": {
+  "zh": "左胫骨",
+  "la": "Tibia sinister",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900032": {
+  "zh": "右胫骨",
+  "la": "Tibia dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900033": {
+  "zh": "心脏",
+  "la": "Cor",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900034": {
+  "zh": "主动脉",
+  "la": "Aorta",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900035": {
+  "zh": "下腔静脉",
+  "la": "Vena cava inferior",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900036": {
+  "zh": "左股动脉",
+  "la": "Arteria femoralis sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900037": {
+  "zh": "右股动脉",
+  "la": "Arteria femoralis dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900038": {
+  "zh": "左股静脉",
+  "la": "Vena femoralis sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900039": {
+  "zh": "右股静脉",
+  "la": "Vena femoralis dexter",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900040": {
+  "zh": "脑",
+  "la": "Encephalon",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900041": {
+  "zh": "脊髓",
+  "la": "Medulla spinalis",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900042": {
+  "zh": "左坐骨神经",
+  "la": "Nervus ischiadicus sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900043": {
+  "zh": "右坐骨神经",
+  "la": "Nervus ischiadicus dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "ZAC_musculocutaneous_nerve": {
+  "zh": "肌皮神经",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "ZAC_ulnar_nerve": {
+  "zh": "尺神经",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900044": {
+  "zh": "左肺",
+  "la": "Pulmo sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900045": {
+  "zh": "右肺",
+  "la": "Pulmo dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900046": {
+  "zh": "气管",
+  "la": "Trachea",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900047": {
+  "zh": "肝",
+  "la": "Hepar",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900048": {
+  "zh": "胃",
+  "la": "Gaster",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900049": {
+  "zh": "小肠",
+  "la": "Intestinum tenue",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900050": {
+  "zh": "左肾",
+  "la": "Ren sinister",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900051": {
+  "zh": "右肾",
+  "la": "Ren dexter",
+  "zhSource": "fixture",
+  "status": "reviewed"
+ },
+ "FMA900052": {
+  "zh": "膀胱",
+  "la": "Vesica urinaria",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900053": {
+  "zh": "甲状腺",
+  "la": "Glandula thyroidea",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900054": {
+  "zh": "解剖结构",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900055": {
+  "zh": "皮肤被覆",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900056": {
+  "zh": "肌器官",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900062": {
+  "zh": "骨器官",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900069": {
+  "zh": "长骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900063": {
+  "zh": "不规则骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900064": {
+  "zh": "扁骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900065": {
+  "zh": "肋骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900075": {
+  "zh": "血管",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900076": {
+  "zh": "动脉",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900077": {
+  "zh": "静脉",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900074": {
+  "zh": "内脏器官",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900080": {
+  "zh": "神经结构",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900081": {
+  "zh": "神经",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900085": {
+  "zh": "腺体",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900057": {
+  "zh": "胸大肌",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900058": {
+  "zh": "三角肌",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900059": {
+  "zh": "肱二头肌",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900060": {
+  "zh": "股四头肌",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900061": {
+  "zh": "腓肠肌",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900066": {
+  "zh": "第三肋",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900067": {
+  "zh": "第五肋",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900068": {
+  "zh": "第七肋",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900070": {
+  "zh": "肱骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900071": {
+  "zh": "桡骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900072": {
+  "zh": "股骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900073": {
+  "zh": "胫骨",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900078": {
+  "zh": "股动脉",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900079": {
+  "zh": "股静脉",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900082": {
+  "zh": "坐骨神经",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900083": {
+  "zh": "肺",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900084": {
+  "zh": "肾",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900086": {
+  "zh": "人体",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900087": {
+  "zh": "头部",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900088": {
+  "zh": "颈部",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900089": {
+  "zh": "躯干",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900090": {
+  "zh": "胸部",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900091": {
+  "zh": "腹部",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900092": {
+  "zh": "左上肢",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900093": {
+  "zh": "右上肢",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900094": {
+  "zh": "左下肢",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ },
+ "FMA900095": {
+  "zh": "右下肢",
+  "zhSource": "fixture",
+  "status": "unreviewed"
+ }
+}

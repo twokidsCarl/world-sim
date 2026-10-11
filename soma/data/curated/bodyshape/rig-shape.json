@@ -73,10 +73,10 @@
      },
      "kind": "length",
      "from": "C7",
-     "to": "vertex",
+     "to": "skull",
      "apply": {
-      "zh": "沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨",
-      "en": "C7 to vertex: spread over the C7...C1 joints, skull scaled uniformly"
+      "zh": "沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨（长度量到颅顶，不止到寰枕关节）",
+      "en": "C7 to the vertex: spread over the C7...C1 joints, skull scaled uniformly (the length runs to the top of the head, beyond the atlanto-occipital joint)"
      },
      "bStature": 0.6179,
      "legLength": -0.02466,
@@ -149,10 +149,10 @@
      },
      "kind": "length",
      "from": "ankle",
-     "to": "floor",
+     "to": null,
      "apply": {
-      "zh": "足的竖向尺寸",
-      "en": "vertical size of the foot"
+      "zh": "足的竖向尺寸：踝关节到地面（to 为空表示地面，不是关节）",
+      "en": "vertical size of the foot: ankle joint to the floor (to = null means the floor, not a joint)"
      },
      "bStature": 0.898,
      "legLength": -0.00429,
@@ -167,11 +167,11 @@
       "en": "Foot length"
      },
      "kind": "length",
-     "from": "heel",
-     "to": "toe",
+     "from": "ankle",
+     "to": "mtp2",
      "apply": {
-      "zh": "足的前后尺寸",
-      "en": "antero-posterior size of the foot"
+      "zh": "足的前后尺寸：整只足沿足跟–趾尖方向缩放（长度量的是足跟到最长趾尖）",
+      "en": "antero-posterior size of the foot: the whole foot scales along the heel-toe axis (the length is heel to longest toe)"
      },
      "bStature": 0.9155,
      "legLength": 0.01253,
@@ -225,10 +225,10 @@
      },
      "kind": "length",
      "from": "wrist",
-     "to": "fingertip",
+     "to": "mcp3",
      "apply": {
-      "zh": "手的整体尺寸",
-      "en": "overall size of the hand"
+      "zh": "手的整体尺寸：整只手等比缩放（长度量的是腕横纹到中指尖）",
+      "en": "overall size of the hand: the whole hand scales uniformly (the length is wrist crease to middle fingertip)"
      },
      "bStature": 0.8833,
      "legLength": 0.01906,
@@ -653,26 +653,26 @@
       "en": "As-built proportions (donor / BodyParts3D)"
      },
      "values": {
-      "stature": 1.67,
+      "stature": 1.636,
       "bmi": 21.6,
       "legLength": -1.0,
       "centralBuild": 0.0
      },
      "segmentFactors": {
-      "headNeck": 1.037,
-      "trunk": 1.031,
-      "thigh": 0.979,
-      "shank": 0.898,
-      "ankleHeight": 1.354,
-      "upperArm": 0.95,
-      "forearm": 0.976,
-      "hand": 1.169,
-      "shoulderWidth": 0.887,
-      "pelvisWidth": 1.095
+      "headNeck": 1.058,
+      "trunk": 0.987,
+      "thigh": 1.006,
+      "shank": 0.919,
+      "ankleHeight": 1.369,
+      "upperArm": 0.968,
+      "forearm": 0.999,
+      "shoulderWidth": 0.902,
+      "pelvisWidth": 1.114
      },
+     "basis": "public/anatomy/female/pipeline-report.json standard.donorMm (the donor before standardisation)",
      "note": {
-      "zh": "segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的，男性应改用盂肱关节间距（见 REPORT 第 10 节）",
-      "en": "segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion; for the male use the glenohumeral separation instead (REPORT section 10)"
+      "zh": "segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的（见 REPORT 第 10 节）",
+      "en": "segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion (REPORT section 10)"
      }
     },
     {
@@ -753,10 +753,10 @@
      },
      "kind": "length",
      "from": "C7",
-     "to": "vertex",
+     "to": "skull",
      "apply": {
-      "zh": "沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨",
-      "en": "C7 to vertex: spread over the C7...C1 joints, skull scaled uniformly"
+      "zh": "沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨（长度量到颅顶，不止到寰枕关节）",
+      "en": "C7 to the vertex: spread over the C7...C1 joints, skull scaled uniformly (the length runs to the top of the head, beyond the atlanto-occipital joint)"
      },
      "bStature": 0.6892,
      "legLength": -0.0266,
@@ -829,10 +829,10 @@
      },
      "kind": "length",
      "from": "ankle",
-     "to": "floor",
+     "to": null,
      "apply": {
-      "zh": "足的竖向尺寸",
-      "en": "vertical size of the foot"
+      "zh": "足的竖向尺寸：踝关节到地面（to 为空表示地面，不是关节）",
+      "en": "vertical size of the foot: ankle joint to the floor (to = null means the floor, not a joint)"
      },
      "bStature": 0.9408,
      "legLength": 0.00023,
@@ -847,11 +847,11 @@
       "en": "Foot length"
      },
      "kind": "length",
-     "from": "heel",
-     "to": "toe",
+     "from": "ankle",
+     "to": "mtp2",
      "apply": {
-      "zh": "足的前后尺寸",
-      "en": "antero-posterior size of the foot"
+      "zh": "足的前后尺寸：整只足沿足跟–趾尖方向缩放（长度量的是足跟到最长趾尖）",
+      "en": "antero-posterior size of the foot: the whole foot scales along the heel-toe axis (the length is heel to longest toe)"
      },
      "bStature": 0.8933,
      "legLength": 0.00883,
@@ -905,10 +905,10 @@
      },
      "kind": "length",
      "from": "wrist",
-     "to": "fingertip",
+     "to": "mcp3",
      "apply": {
-      "zh": "手的整体尺寸",
-      "en": "overall size of the hand"
+      "zh": "手的整体尺寸：整只手等比缩放（长度量的是腕横纹到中指尖）",
+      "en": "overall size of the hand: the whole hand scales uniformly (the length is wrist crease to middle fingertip)"
      },
      "bStature": 0.8789,
      "legLength": 0.01245,
@@ -1344,15 +1344,16 @@
       "thigh": 1.053,
       "shank": 1.007,
       "ankleHeight": 1.012,
-      "upperArm": 0.984,
+      "upperArm": 0.974,
       "forearm": 0.998,
       "hand": 0.983,
-      "shoulderWidth": 0.833,
+      "shoulderWidth": 0.913,
       "pelvisWidth": 1.112
      },
+     "basis": "tools/bodyshape/measure.py on public/anatomy/male as now built",
      "note": {
-      "zh": "segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的，男性应改用盂肱关节间距（见 REPORT 第 10 节）",
-      "en": "segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion; for the male use the glenohumeral separation instead (REPORT section 10)"
+      "zh": "segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的（见 REPORT 第 10 节）",
+      "en": "segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion (REPORT section 10)"
      }
     },
     {

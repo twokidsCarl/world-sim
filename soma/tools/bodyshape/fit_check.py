@@ -100,10 +100,14 @@ def summarise(d, reg):
 
 
 def signed_distance(P, V, F):
-    """到闭合曲面的有符号距离（外正内负）。Signed distance to a closed surface (+ outside)."""
+    """到闭合曲面的有符号距离（外正内负）。用伪法线判号：在手臂与躯干、两腿之间的窄缝旁，
+    快速环绕数的近似会判错内外。
+    Signed distance to a closed surface (+ outside). The sign comes from pseudonormals: next to narrow
+    gaps (arm against trunk, thigh against thigh) the fast winding number approximation gets inside
+    and outside wrong."""
     import igl
     s = igl.signed_distance(np.ascontiguousarray(P, dtype=np.float64), np.ascontiguousarray(V, dtype=np.float64),
-                            np.ascontiguousarray(F, dtype=np.int64), igl.SIGNED_DISTANCE_TYPE_FAST_WINDING_NUMBER)
+                            np.ascontiguousarray(F, dtype=np.int64), igl.SIGNED_DISTANCE_TYPE_PSEUDONORMAL)
     return s[0]
 
 

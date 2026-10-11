@@ -18,7 +18,15 @@ import { NodeIO } from '@gltf-transform/core'
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions'
 import { MeshoptDecoder } from 'meshoptimizer'
 
-const SYSTEMS = ['integumentary', 'skeletal', 'muscular']
+// 全部系统都导出：皮肤要包住所有深部结构（肌、骨、软骨、器官等）
+// every system is exported: the skin has to enclose all deep parts (muscle, bone, cartilage, organs ...)
+const SYSTEMS: string[] = data0Systems()
+
+function data0Systems(): string[] {
+  const body = process.argv[2] ?? 'male'
+  const d = JSON.parse(readFileSync(join('public/anatomy', body, 'anatomy.json'), 'utf8'))
+  return d.systems.filter((s: any) => s.glb && s.partCount > 0).map((s: any) => s.id)
+}
 
 await MeshoptDecoder.ready
 const io = new NodeIO()
@@ -60,7 +68,7 @@ for (const body of process.argv.slice(2)) {
       idx.push(t)
       index.push({
         id: part.id, name: part.name, system, tissue: part.tissue, side: part.side,
-        provenance: part.provenance, v0, nv: n, i0, ni: t.length,
+        provenance: part.provenance, bbox: part.bbox, v0, nv: n, i0, ni: t.length,
       })
       v0 += n
       i0 += t.length
@@ -75,5 +83,5 @@ for (const body of process.argv.slice(2)) {
     writeFileSync(join(out, `${system}.u32`), new Uint8Array(I.buffer))
     console.log(body, system, pos.length, 'parts', v0, 'vertices', i0 / 3, 'triangles')
   }
-  writeFileSync(join(out, 'index.json'), JSON.stringify({ body, parts: index }))
+  writeFileSync(join(out, 'index.json'), JSON.stringify({ body, systems: SYSTEMS, parts: index }))
 }

@@ -163,15 +163,15 @@ def main():
 
 # 肢段 -> 解剖学关节（rig.json 的关节 id，不带左右）/ segment -> anatomical joints (rig.json ids without side)
 SEGMENT_JOINTS = {
-    'headNeck': ('length', 'C7', 'vertex', '沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨', 'C7 to vertex: spread over the C7...C1 joints, skull scaled uniformly'),
+    'headNeck': ('length', 'C7', 'skull', '沿 C7 至颅顶：分摊到 C7…C1 各椎间关节，并等比缩放颅骨（长度量到颅顶，不止到寰枕关节）', 'C7 to the vertex: spread over the C7...C1 joints, skull scaled uniformly (the length runs to the top of the head, beyond the atlanto-occipital joint)'),
     'trunk': ('length', 'hip', 'C7', '髋关节中心高度至 C7：分摊到 L5…T1 各椎间关节', 'hip-centre level to C7: spread over the L5...T1 joints'),
     'thigh': ('length', 'hip', 'knee', '沿股骨轴', 'along the femur'),
     'shank': ('length', 'knee', 'ankle', '沿胫骨轴', 'along the tibia'),
-    'ankleHeight': ('length', 'ankle', 'floor', '足的竖向尺寸', 'vertical size of the foot'),
-    'foot': ('length', 'heel', 'toe', '足的前后尺寸', 'antero-posterior size of the foot'),
+    'ankleHeight': ('length', 'ankle', None, '足的竖向尺寸：踝关节到地面（to 为空表示地面，不是关节）', 'vertical size of the foot: ankle joint to the floor (to = null means the floor, not a joint)'),
+    'foot': ('length', 'ankle', 'mtp2', '足的前后尺寸：整只足沿足跟–趾尖方向缩放（长度量的是足跟到最长趾尖）', 'antero-posterior size of the foot: the whole foot scales along the heel-toe axis (the length is heel to longest toe)'),
     'upperArm': ('length', 'gh', 'elbow', '沿肱骨轴', 'along the humerus'),
     'forearm': ('length', 'elbow', 'wrist', '沿桡尺骨轴', 'along radius and ulna'),
-    'hand': ('length', 'wrist', 'fingertip', '手的整体尺寸', 'overall size of the hand'),
+    'hand': ('length', 'wrist', 'mcp3', '手的整体尺寸：整只手等比缩放（长度量的是腕横纹到中指尖）', 'overall size of the hand: the whole hand scales uniformly (the length is wrist crease to middle fingertip)'),
     'shoulderWidth': ('breadth', 'gh_R', 'gh_L', '左右盂肱关节间距：缩放胸锁关节到盂肱关节的横向偏移', 'between the glenohumeral joints: scales the lateral offset sternoclavicular -> glenohumeral'),
     'pelvisWidth': ('breadth', 'hip_R', 'hip_L', '左右髋关节间距：骨盆横向缩放', 'between the hip joints: transverse scale of the pelvis'),
 }
@@ -235,9 +235,18 @@ def rig_shape(model, meas):
                            'standardMm': round(girth(model, sex, ds, var, rest['stature'] * 1000, rest['bmi'], (rest['legLength'], 0)), 1)})
         fat = [{'id': f[0], 'name': {'zh': f[1], 'en': f[2]}, 'a': (f[3] if sex == 'F' else f[4])[0], 'b': (f[3] if sex == 'F' else f[4])[1], 'min': f[5],
                 'standardMm': round(max(f[5], (f[3] if sex == 'F' else f[4])[0] + (f[3] if sex == 'F' else f[4])[1] * rest['bmi']), 1), 'quality': f[7]} for f in FAT]
-        # 现存骨架相对标准的比值：既是“标准化”要烘焙的缩放的倒数，也是“原样/供体”预设
-        # ratio of the as-built skeleton to the standard: the inverse of what standardisation bakes, and the "as built / donor" preset
-        sk = meas[body]['skeletal']
+        # asBuilt 预设：女性取管线报告里供体的测量值（standard.donorMm，标准化之前的她）；男性取现在这具模型的测量值。
+        # 女性没有手长、足长的供体值（手足是形变的男性结构），这两项不给。
+        # asBuilt preset: for the female, the donor's measures from the pipeline report (standard.donorMm, i.e. before
+        # standardisation); for the male, the body as now built. The donor has no hand or foot length (hers are warped male parts).
+        sk = dict(meas[body]['skeletal'])
+        basis = 'tools/bodyshape/measure.py on public/anatomy/male as now built'
+        rp = os.path.join('public/anatomy', body, 'pipeline-report.json')
+        if sex == 'F' and os.path.exists(rp):
+            donor = json.load(open(rp)).get('standard', {}).get('donorMm')
+            if donor:
+                sk = {k: float(v) for k, v in donor.items()}
+                basis = 'public/anatomy/female/pipeline-report.json standard.donorMm (the donor before standardisation)'
         own = {'headNeck': sk['stature'] - sk['cervicaleheight'], 'trunk': sk['cervicaleheight'] - sk['trochanterionheight'],
                'thigh': sk['trochanterionheight'] - sk['lateralfemoralepicondyleheight'],
                'shank': sk['lateralfemoralepicondyleheight'] - sk['lateralmalleolusheight'], 'ankleHeight': sk['lateralmalleolusheight'],
@@ -268,9 +277,9 @@ def rig_shape(model, meas):
             'presets': [
                 {'id': 'standard', 'name': {'zh': '标准体（默认）', 'en': 'Standard (default)'}, 'values': rest, 'segmentFactors': {}},
                 {'id': 'asBuilt', 'name': {'zh': '原始模型比例（供体/BodyParts3D）', 'en': 'As-built proportions (donor / BodyParts3D)'},
-                 'values': {**rest, 'stature': round(sk['stature'] / 1000, 3)}, 'segmentFactors': as_built,
-                 'note': {'zh': 'segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的，男性应改用盂肱关节间距（见 REPORT 第 10 节）',
-                          'en': 'segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion; for the male use the glenohumeral separation instead (REPORT section 10)'}},
+                 'values': {**rest, 'stature': round(sk['stature'] / 1000, 3)}, 'segmentFactors': as_built, 'basis': basis,
+                 'note': {'zh': 'segmentFactors = 原骨架肢段长度 / 同身高标准长度；标准化时管线先烘焙它的倒数，再按身高缩放到默认身高。肩宽一项是按骨性肩峰点量的（见 REPORT 第 10 节）',
+                          'en': 'segmentFactors = as-built segment length / standard length at the same stature; standardisation bakes the inverse, then scales to the default stature. Shoulder width here is from the bony acromion (REPORT section 10)'}},
                 {'id': 'ansur', 'name': {'zh': 'ANSUR II 比例（美国军人）', 'en': 'ANSUR II proportions (US Army)'},
                  'values': {**rest, 'legLength': 0.0}, 'segmentFactors': {'forearm': round(1 / CN_FOREARM, 3)}}],
         }

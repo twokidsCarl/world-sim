@@ -1,0 +1,1 @@
+{"schema":1,"body":"male","inputs":{"anatomy.json":"195eb00c0cdee7ea"},"joints":[{"id":"elbow_L","fits":[{"what":"fixture hinge axis","rmsMm":0.5,"samples":100}]}]}
