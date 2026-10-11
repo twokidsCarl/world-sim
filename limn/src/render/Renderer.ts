@@ -86,6 +86,14 @@ export interface View {
   /** 视图空间 z 比这更靠前的原子被丢弃；Infinity = 不截 / atoms nearer than this view-space z are dropped; Infinity = no cut */
   clipFront: number
   /**
+   * 切片的背面：视图空间 z 比这更靠后的丢弃。缺省不设（画到最远处）。
+   * Goodsell 的画都是一片切片：切面这一层和后面一两层，从不画整个物体的后半个内壁。
+   * The back of the slab: what lies farther back than this view-space z is dropped. Absent by
+   * default (everything is drawn, to the far end). Goodsell's paintings are all slabs: the cut
+   * layer and a layer or two behind it, never the far inner wall of the whole object.
+   */
+  clipBack?: number
+  /**
    * 景深淡出开始和结束处的视图空间 z；默认取场景的包围球
    * view-space z where depth fading starts and ends; default: the scene's bounding sphere
    */
@@ -414,6 +422,7 @@ export class Renderer {
       gl.uniform2f(this.u(p, 'u_toClip'), (2 * pxPerA) / w, (2 * pxPerA) / h)
       gl.uniform2f(this.u(p, 'u_z'), zFront, zBack)
       gl.uniform1f(this.u(p, 'u_clipFront'), Number.isFinite(view.clipFront) ? view.clipFront : 1e30)
+      gl.uniform1f(this.u(p, 'u_clipBack'), view.clipBack ?? -1e30)
       gl.uniform1f(this.u(p, 'u_radiusScale'), style.radiusScale)
       gl.uniform1f(this.u(p, 'u_minRadius'), (style.minRadius * Math.max(1, (Math.max(w, h) / 1500) * style.lineWidth)) / pxPerA)
       gl.uniform1f(this.u(p, 'u_inflate'), probe)

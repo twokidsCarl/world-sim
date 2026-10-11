@@ -21,6 +21,7 @@ import { buildCell, decodeCell, type CellGeometry } from '../volume/cell'
 import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
+import { helicalLayer, layerOnSphere, rnpBundle, shell } from '../infer/influenza'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
@@ -161,6 +162,10 @@ export interface CatalogEntry {
   points?: { url: string; voxelSpacing: number; fit?: TemplateFit }
   merge?: string
   cut?: number
+  /** 按名字给实体指定颜色 [正则, [L, C, h]]，数值量自 Goodsell 画同一个对象的那幅画 / colours for entities by name, [pattern, [L, C, h]], the numbers measured on Goodsell's painting of the same subject */
+  colors?: [string, [number, number, number]][]
+  /** 数据里没有、按已知结构推断补上的部分 / parts absent from the data and filled in by inference from known structures */
+  infer?: { kind: 'influenza-interior'; matrix: string; rnp: string; polymerase: string }
   /** 打开时的放大倍数，缺省 1 / the zoom it opens at, 1 by default */
   zoom?: number
   roles?: string[][]
@@ -207,6 +212,53 @@ async function fetchPrepared(path: string, waiting: () => void): Promise<Uint8Ar
 
 /** 起始的画法：地址里带 ?style=illustrate 时用 Illustrate，否则手绘 / the drawing to start with: Illustrate when the address carries ?style=illustrate, painted otherwise */
 const START_DRAWING: Drawing = typeof location !== 'undefined' && new URLSearchParams(location.search).get('style') === 'illustrate' ? 'illustrate' : 'painted'
+
+/**
+ * 流感病毒的内部（见 src/infer/influenza.ts）：基质蛋白一层、八条核糖核蛋白、八个聚合酶。
+ * 颜色量自 Goodsell 的《Influenza Virus》：M1 蓝，核蛋白橙，RNA 黄，聚合酶红。
+ * The inside of an influenza virion (see src/infer/influenza.ts): a layer of matrix protein, eight
+ * ribonucleoproteins and eight polymerases. Colours are measured on Goodsell's "Influenza Virus":
+ * M1 blue, nucleoprotein orange, RNA yellow, polymerase red.
+ */
+async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void): Promise<Panel[]> {
+  const lipids = model.chains.filter((c) => model.entities[c.entity]!.kind === 'lipid')
+  if (lipids.length === 0) return []
+  const start = Math.min(...lipids.map((c) => c.start)), end = Math.max(...lipids.map((c) => c.start + c.count))
+  const membrane = shell(model.pos, start, end - start)
+  const load = async (id: string) => {
+    busy(id)
+    return loadMolecule({ kind: 'pdb', id })
+  }
+  const [m1, rnp, pol] = [await load(spec.matrix), await load(spec.rnp), await load(spec.polymerase)]
+  const layer = helicalLayer(m1, defaultAssembly(m1))
+  // M1 的质心放在膜内表面往里 25 Å；再往里 30 Å 之内是给 RNP 的空腔 / M1 centroids sit 25 Å inside the membrane's inner face; the space for the RNPs starts 30 Å further in
+  const matrix = layerOnSphere(layer, membrane.centre, membrane.inner - 25)
+  // 一段 RNP 螺旋里有多少个核苷酸：数它的 RNA 链上的磷原子 / nucleotides in one stretch of RNP helix: count the phosphorus atoms on its RNA chains
+  let nt = 0
+  for (const c of rnp.chains) if (rnp.entities[c.entity]!.kind === 'rna') for (let i = c.start; i < c.start + c.count; i++) if (rnp.isTrace[i]) nt++
+  const bundle = rnpBundle(rnp, pol, membrane.centre, membrane.inner - 55, [0, 1, 0], nt || 616)
+  const make = (mol: Molecule, id: string, title: string, titleEn: string, operators: Float32Array[], colors: (e: Molecule['entities'][number]) => [number, number, number], names: (e: Molecule['entities'][number]) => [string, string]): Panel => {
+    mol.assemblies.push({ id: 'inferred', groups: [{ chains: mol.chains.map((_, i) => i), operators }] })
+    const roles: Role[] = mol.entities.map((e) => (e.kind === 'rna' || e.kind === 'dna' ? 'nucleic' : 'soluble'))
+    const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: mol.entities.map((e) => colors(e)) }
+    const panelSpec: PanelSpec = {
+      label: title, labelEn: titleEn,
+      source: { id, kind: 'pdb', title: mol.title, method: tIn('zh', 'method.inferredPlacement'), methodEn: tIn('en', 'method.inferredPlacement'), resolution: null, year: null, tier: 'estimated', licence: 'CC0 1.0', attribution: 'RCSB PDB', citation: `PDB ${id}`, link: `https://www.rcsb.org/structure/${id}` },
+      assembly: 'inferred',
+      entities: mol.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: names(e)[0], nameEn: names(e)[1], description: e.description, organism: '' })),
+      reason: '',
+    }
+    return { spec: panelSpec, mol, coloring, align: null }
+  }
+  const isRna = (e: Molecule['entities'][number]) => e.kind === 'rna' || e.kind === 'dna'
+  const wanted = bundle.rods.reduce((s, r) => s + r.wanted, 0), placed = bundle.rods.reduce((s, r) => s + r.placed, 0)
+  notes.push({ key: 'note.inferred.influenza', params: { matrix: spec.matrix, rnp: spec.rnp, polymerase: spec.polymerase, m1: matrix.length.toLocaleString('en-US'), nt: nt || 616, wanted, placed } })
+  return [
+    make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1']),
+    make(rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', bundle.stretches, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.72, 0.135, 62]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP'])),
+    make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.66, 0.13, 25]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
+  ]
+}
 
 const freshLook = (): Pick<Look, 'rot' | 'zoom' | 'shift'> => ({ rot: identity3(), zoom: 1, shift: [0, 0] })
 
@@ -424,6 +476,7 @@ export const useStore = create<State>((set, get) => ({
       const coloring = spreadHues({ ...base, roles: roles.map((r, i) => r ?? base.roles[i]!) })
       // 整张膜一个颜色，不按来源的拼块分色 / the whole membrane is one colour, not a patchwork of where its lipids came from
       if (entry.perCopy) mol.entities.forEach((e, i) => e.kind === 'lipid' && (coloring.override[i] = MEMBRANE_LCH))
+      for (const [pattern, lch] of entry.colors ?? []) mol.entities.forEach((e, i) => new RegExp(pattern, 'i').test(e.description) && (coloring.override[i] = lch))
       const short = (d: string) => d.split('.').pop()!.replace(/_/g, ' ')
       const spec: PanelSpec = {
         label: entry.title,
@@ -452,11 +505,14 @@ export const useStore = create<State>((set, get) => ({
       // 没有找到许可声明的数据，在说明里写明 / data for which no licence statement was found says so in its notes
       if (entry.licenceEn === 'no licence statement found') notes.push({ key: 'note.noLicence' })
       if (mesoscale && !entry.points) notes.push({ key: 'note.publishedModel' })
-      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, panels: [spec], notes, mesoscale, merge: entry.merge }
+      // 数据里没有的部分，按已知结构推断着补上，各自是一个面板，和模型在同一个坐标系里
+      // what the data lacks is filled in by inference from known structures, each part a panel of its own in the model's coordinate frame
+      const inferred: Panel[] = entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
+      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({
         spec: scene,
-        panels: [{ spec, mol, coloring, align: null }],
-        colorings: [coloring],
+        panels: [{ spec, mol, coloring, align: null }, ...inferred],
+        colorings: [coloring, ...inferred.map((p) => p.coloring)],
         ...freshLook(),
         // 很大的模型默认放大到中间一块：整个画出来时每个分子只有几个像素，什么也看不清
         // a very large model opens zoomed in on its middle: drawn whole, each molecule is a few pixels and nothing can be made out

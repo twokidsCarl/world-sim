@@ -1,0 +1,100 @@
+// 数据里没有、按已知结构推断补上的部分 / parts absent from the data, filled in by inference from known structures
+import { describe, expect, it } from 'vitest'
+import { fibonacciSphere, frameToFrame, helicalLayer, layerOnSphere, principalAxis, rnpBundle, SEGMENTS, shell } from '../src/infer/influenza'
+import { El, IDENTITY, type Molecule } from '../src/mol/types'
+
+const mol = (pos: number[], operators: Float32Array[] = [IDENTITY]): Molecule => {
+  const n = pos.length / 3
+  return {
+    id: 'x', title: 'x', atomCount: n, pos: new Float32Array(pos), element: new Uint8Array(n).fill(El.C), chainOf: new Uint32Array(n), isTrace: new Uint8Array(n), residue: new Int32Array(n).fill(1),
+    chains: [{ asymId: 'A', authAsymId: 'A', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id: '1', description: 'p', kind: 'protein' }],
+    assemblies: [{ id: '1', groups: [{ chains: [0], operators }] }],
+  }
+}
+const at = (m: Float32Array, p: number[]) => [m[0]! * p[0]! + m[4]! * p[1]! + m[8]! * p[2]! + m[12]!, m[1]! * p[0]! + m[5]! * p[1]! + m[9]! * p[2]! + m[13]!, m[2]! * p[0]! + m[6]! * p[1]! + m[10]! * p[2]! + m[14]!]
+
+describe('inferred placement', () => {
+  it('finds the long axis of a rod and its extent', () => {
+    const pts: number[] = []
+    for (let i = 0; i <= 100; i++) pts.push(5 + i * 0.6, 2 + i * 0.8, 1 + Math.sin(i) * 0.3)
+    const a = principalAxis(pts)
+    expect(Math.abs(a.axis[0] * 0.6 + a.axis[1] * 0.8)).toBeGreaterThan(0.999)
+    expect(a.max - a.min).toBeGreaterThan(99)
+    expect(a.max - a.min).toBeLessThan(101)
+  })
+
+  it('carries one frame onto another as a rigid motion', () => {
+    const m = frameToFrame([1, 2, 3], [1, 0, 0], [0, 1, 0], [0, 0, 1], [10, 0, 0], [0, 1, 0], [-1, 0, 0], [0, 0, 1])
+    expect(at(m, [1, 2, 3])).toEqual([10, 0, 0])
+    // 局部的 x 方向变成 +y / the local x direction becomes +y
+    expect(at(m, [2, 2, 3]).map((v) => Math.round(v * 1e6) / 1e6)).toEqual([10, 1, 0])
+    const det = m[0]! * (m[5]! * m[10]! - m[6]! * m[9]!) - m[4]! * (m[1]! * m[10]! - m[2]! * m[9]!) + m[8]! * (m[1]! * m[6]! - m[2]! * m[5]!)
+    expect(det).toBeCloseTo(1, 6)
+  })
+
+  it('measures area per copy and the outward direction from a helical arrangement', () => {
+    // 半径 100、每转 20 个、每个升 2 的螺旋：每个拷贝的面积 = 2π·100·(60·2)/60 = 2π·100·2
+    // a helix of radius 100 with 20 copies a turn rising 2 each: area per copy = 2π·100·(60·2)/60 = 2π·100·2
+    const ops: Float32Array[] = []
+    for (let k = 0; k < 60; k++) {
+      const a = (k / 20) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a)
+      ops.push(new Float32Array([c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, k * 2, 1]))
+    }
+    // 单个拷贝在 x = 100 附近，沿 x 伸出一点 / the single copy sits near x = 100, reaching out a little along x
+    const layer = helicalLayer(mol([98, 0, 0, 100, 0, 0, 102, 0, 0], ops), '1')
+    expect(layer.radius).toBeCloseTo(100, 3)
+    expect(layer.area / (2 * Math.PI * 100 * 2)).toBeCloseTo(1, 2)
+    expect(layer.outward[0]).toBeGreaterThan(0.999)
+    expect(Math.abs(layer.along[1])).toBeGreaterThan(0.999)
+  })
+
+  it('covers the inside of a sphere at that density, every copy facing out', () => {
+    const layer = { area: 1000, origin: [0, 0, 0] as [number, number, number], outward: [1, 0, 0] as [number, number, number], along: [0, 1, 0] as [number, number, number], radius: 100 }
+    const R = 300
+    const ops = layerOnSphere(layer, [5, 6, 7], R)
+    expect(ops.length).toBe(Math.round((4 * Math.PI * R * R) / 1000))
+    for (const m of ops.filter((_, i) => i % 37 === 0)) {
+      const c = at(m, [0, 0, 0]), tip = at(m, [1, 0, 0])
+      const d = [c[0]! - 5, c[1]! - 6, c[2]! - 7]
+      expect(Math.hypot(...d)).toBeCloseTo(R, 3)
+      // “朝外”的方向沿半径 / the "outward" direction runs along the radius
+      expect(((tip[0]! - c[0]!) * d[0]! + (tip[1]! - c[1]!) * d[1]! + (tip[2]! - c[2]!) * d[2]!) / R).toBeCloseTo(1, 5)
+    }
+    const pts = fibonacciSphere(500)
+    expect(Math.abs(pts.reduce((s, p) => s + p[1], 0))).toBeLessThan(1e-9)
+  })
+
+  it('bundles eight parallel rods that stay inside the cavity, and says how much was cut', () => {
+    // 一段长 400、半径约 70 的杆；聚合酶是个小球 / a stretch 400 long and about 70 in radius; the polymerase is a small blob
+    const rod: number[] = []
+    for (let i = 0; i <= 40; i++) for (let k = 0; k < 6; k++) rod.push(Math.cos(k) * 70, Math.sin(k) * 70, i * 10)
+    const blob: number[] = []
+    for (let i = 0; i < 30; i++) blob.push(Math.cos(i) * 40, Math.sin(i * 1.7) * 40, Math.sin(i) * 60)
+    const cavity = 420
+    const b = rnpBundle(mol(rod), mol(blob), [0, 0, 0], cavity, [0, 1, 0], 616)
+    expect(b.rods.length).toBe(8)
+    expect(b.polymerases.length).toBe(8)
+    expect(b.rods.reduce((s, r) => s + r.wanted, 0)).toBe(SEGMENTS.reduce((s, nt) => s + Math.max(1, Math.round(nt / 616)), 0))
+    expect(b.stretches.length).toBe(b.rods.reduce((s, r) => s + r.placed, 0))
+    for (const r of b.rods) expect(r.placed).toBeLessThanOrEqual(r.wanted)
+    // 每一段的两端都在空腔里；杆沿 y / both ends of every stretch are inside the cavity; rods run along y
+    for (const m of b.stretches) {
+      const a = at(m, [0, 0, 0]), z = at(m, [0, 0, 400])
+      expect(Math.hypot(...a)).toBeLessThan(cavity)
+      expect(Math.hypot(...z)).toBeLessThan(cavity)
+      expect(Math.abs(z[1]! - a[1]!)).toBeCloseTo(400, 3)
+    }
+    // 聚合酶在各自的杆的上方 / each polymerase sits above its rod
+    const tops = b.stretches.map((m) => Math.max(at(m, [0, 0, 0])[1]!, at(m, [0, 0, 400])[1]!))
+    for (const m of b.polymerases) expect(at(m, [0, 0, 0])[1]!).toBeGreaterThan(Math.min(...tops))
+  })
+
+  it('finds the centre and inner radius of a membrane from its spheres', () => {
+    const pos: number[] = []
+    for (const p of fibonacciSphere(4000)) for (const r of [400, 420, 440]) pos.push(10 + p[0] * r, 20 + p[1] * r, 30 + p[2] * r)
+    const s = shell(new Float32Array(pos), 0, pos.length / 3)
+    expect(s.centre.map((v) => Math.round(v))).toEqual([10, 20, 30])
+    expect(s.inner).toBeCloseTo(400, 0)
+    expect(s.outer).toBeCloseTo(440, 0)
+  })
+})
