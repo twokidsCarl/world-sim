@@ -296,6 +296,15 @@ a.button.inline { display: inline-block; }
 .a-turn { display: grid; gap: 8px; }
 .a-q { display: grid; justify-items: end; gap: 2px; }
 .a-bubble { max-width: 88%; padding: 8px 13px; border-radius: 16px 16px 4px 16px; background: var(--ink); color: var(--paper); white-space: pre-wrap; }
+/* 窄的时候不能被长网址、长代码撑宽：格子的列允许缩到零，文字在任何位置都可以断行，代码块自己横向滚动。
+   Never let a long URL or long code widen the narrow dock: grid columns may shrink to zero, text may break anywhere, and code blocks scroll sideways by themselves. */
+.a-log { grid-template-columns: minmax(0, 1fr); overflow-x: hidden; }
+.a-turn, .a-q { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.a-log, .a-bubble { overflow-wrap: anywhere; word-break: break-word; }
+.a-bubble { min-width: 0; }
+.a-log pre { max-width: 100%; overflow-x: auto; }
+.a-log table { display: block; max-width: 100%; overflow-x: auto; }
+.a-log img, .a-log svg { max-width: 100%; height: auto; }
 .a-steps { gap: 2px; font-size: 12.5px; color: var(--ink-2); }
 .a-steps .s-refused { color: var(--bad); }
 .a-steps-done summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
