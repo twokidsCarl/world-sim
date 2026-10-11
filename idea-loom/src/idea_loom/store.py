@@ -28,6 +28,7 @@ import fcntl
 import hashlib
 import json
 import os
+import secrets
 import sqlite3
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Optional
@@ -251,7 +252,20 @@ def read_json(path: Path, default: Any) -> Any:
 
 
 def write_json(path: Path, value: Any) -> None:
+    """先写到一个临时文件再整个换上去，读的人永远看不到写了一半的内容。
+
+    临时文件名每次都不一样：两个请求同时写同一个文件时，各写各的临时文件，后换上去的那个算数。
+    （原来用固定的名字，后一个会发现临时文件已经被前一个挪走而报错。）
+
+    Write to a temporary file and swap it in whole, so a reader never sees a half-written file.
+    The temporary name differs every time: when two requests write the same file at once, each
+    writes its own temporary file and the later swap wins. (A fixed name used to make the second
+    writer fail on finding its temporary file already moved away by the first.)
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, path)
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{secrets.token_hex(4)}.tmp")
+    try:
+        tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
