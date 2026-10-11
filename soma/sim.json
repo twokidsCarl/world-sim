@@ -165,5 +165,205 @@
       },
       "url": "/?iso=FMA44580,FMA64019,FMA24476,FMA24479&cam=0.101,0.567,0.250,0.071,0.367,0.08"
     }
-  ]
+  ],
+  "agent": {
+    "summary": {
+      "zh": "三维人体解剖（教学用模型，不是临床依据）：男性 3,332 个、女性 3,369 个解剖部件（带概念编号，多数是 FMA 编号），8,760 条关系（起止点、神经支配、血供等），中文名称，关节活动度，皮节和皮神经分布区。没有模拟可跑，是数据。全部名称和关系都未经人工审校。查\"某块肌肉由什么神经支配\"：先在 parts 里按英文名找到它的 fma 字段，再在 relations 里用 key=<fma>&where=kind=innervatedBy。",
+      "en": "3D human anatomy (a teaching model, not a clinical reference): 3,332 male and 3,369 female anatomical parts (each with a concept id, mostly an FMA id), 8,760 relations (origins, insertions, innervation, blood supply and more), Chinese names, joint ranges of motion, dermatomes and cutaneous nerve territories. Nothing to simulate; this is data. No name or relation has been reviewed by a person. To answer \"which nerve innervates this muscle\": find the `fma` field of the part in `parts` by English name, then query `relations` with key=<fma>&where=kind=innervatedBy."
+    },
+    "datasets": [
+      {
+        "id": "parts",
+        "title": {
+          "zh": "解剖部件",
+          "en": "Anatomical parts"
+        },
+        "description": {
+          "zh": "男性身体模型里的每一个部件：名称、概念编号（fma 字段；多数是 FMA 编号，少数是本项目为没有 FMA 类的结构起的编号，如 ZAC_…，左右成对的写作 FMA…_L/_R）、所属系统、组织类型、左右、剥离层、体积（立方厘米，部分部件没有）、相邻部件。",
+          "en": "Every part of the male body model: name, concept id (the `fma` field; mostly an FMA id, a few are ids this project coined for structures without an FMA class, e.g. ZAC_…, and sided pairs are written FMA…_L/_R), system, tissue type, side, peel depth, volume (cm³, absent on some parts) and adjacent parts."
+        },
+        "path": "public/anatomy/male/anatomy.json",
+        "records": "parts",
+        "key": "id",
+        "search": [
+          "name",
+          "fma",
+          "system",
+          "tissue"
+        ],
+        "fields": [
+          "id",
+          "fma",
+          "name",
+          "system",
+          "tissue",
+          "side",
+          "depth",
+          "provenance",
+          "volume"
+        ],
+        "licence": "CC BY-SA 4.0 for the dataset as a whole; upstream sources are CC BY 4.0, CC BY-SA 2.1 JP, CC BY-SA 4.0 and Apache-2.0, listed under `sources` in the file",
+        "provenance": {
+          "zh": "几何来自 BodyParts3D 4.0 和 3.0、Z-Anatomy、Open3DModel，皮肤是按内部结构拟合的参数化体表（MHR），逐个来源和许可见该文件的 sources 字段。provenance 字段：scanned 是来自真实人体数据的重建；warped 是经配准或姿势校正变形过的；curated 是人工建模、拟合或由本项目推导的。文件的 cautions 字段列出了已知的错误和缺失，引用前应先读。没有经过医学专业人员审校。",
+          "en": "Geometry from BodyParts3D 4.0 and 3.0, Z-Anatomy and Open3DModel; the skin is a parametric surface (MHR) fitted to the internals; every source and licence is listed under `sources` in the file. The `provenance` field: `scanned` is reconstructed from real human data; `warped` was deformed by registration or posture correction; `curated` is artist-modelled, fitted or derived by this project. The file's `cautions` list known errors and omissions and should be read before quoting anything. Not reviewed by medical professionals."
+        }
+      },
+      {
+        "id": "parts-female",
+        "title": {
+          "zh": "解剖部件（女性）",
+          "en": "Anatomical parts (female)"
+        },
+        "description": {
+          "zh": "女性身体模型里的每一个部件，字段同 parts。比男性模型粗糙得多。",
+          "en": "Every part of the female body model, same fields as `parts`. Far coarser than the male model."
+        },
+        "path": "public/anatomy/female/anatomy.json",
+        "records": "parts",
+        "key": "id",
+        "search": [
+          "name",
+          "fma",
+          "system",
+          "tissue"
+        ],
+        "fields": [
+          "id",
+          "fma",
+          "name",
+          "system",
+          "tissue",
+          "side",
+          "depth",
+          "provenance",
+          "volume"
+        ],
+        "licence": "CC BY-SA 4.0 for the dataset as a whole; upstream sources (CC BY 4.0, CC BY-SA, Apache-2.0, NLM terms with attribution) are listed under `sources` in the file",
+        "provenance": {
+          "zh": "没有一个部件是 scanned：骨架来自 Visible Human 女性 CT 但按标准比例缩放过；下肢肌肉来自丹佛大学的数据；盆底、阴道、子宫、附件来自另一位女性的标本（Wu 等 2015）；其余大部分是从男性模型配准变形而来，并按标准女性体表调整过软组织分布。皮肤目前是占位。文件的 cautions 字段列出了已知问题。没有经过医学专业人员审校。",
+          "en": "No part is `scanned`: the skeleton is from the Visible Human Female CT but rescaled to standard proportions; leg muscles are from the University of Denver data; pelvic floor, vagina, uterus and adnexa are from another woman's specimen (Wu et al. 2015); most of the rest was warped from the male model and its soft-tissue distribution adjusted toward a standard female body surface. The skin is a placeholder for now. The file's `cautions` list the known problems. Not reviewed by medical professionals."
+        }
+      },
+      {
+        "id": "relations",
+        "title": {
+          "zh": "解剖关系",
+          "en": "Anatomical relations"
+        },
+        "description": {
+          "zh": "三元组：subject（FMA 编号）—kind—object。kind 有 origin、insertion、innervatedBy、innervates、arterialSupply、venousDrainage、antagonist、connectsWith、lymphaticDrainage。key 是 subject，所以 key=FMA… 给出这个部件的全部关系。",
+          "en": "Triples: subject (an FMA id) — kind — object. Kinds are origin, insertion, innervatedBy, innervates, arterialSupply, venousDrainage, antagonist, connectsWith, lymphaticDrainage. The key is the subject, so key=FMA… returns every relation of that part."
+        },
+        "path": "public/anatomy/knowledge/relations.json",
+        "key": "subject",
+        "search": [
+          "subject",
+          "kind",
+          "object",
+          "objectLabel"
+        ],
+        "licence": "CC BY-SA 4.0 (each record carries its own source licence: 8,151 are CC0 1.0 from Wikidata, 609 are CC BY-SA 4.0 from Wikipedia and Z-Anatomy)",
+        "provenance": {
+          "zh": "每条带 source（名称、网址、许可）。**全部 8,760 条的 status 都是 unreviewed**：是从 Wikidata 等来源机器汇集的，没有经人逐条核对；有些是从整块肌肉推到它的分部的，source 里会写明。",
+          "en": "Each record carries its source (name, URL, licence). **All 8,760 have status `unreviewed`**: they were gathered by machine from Wikidata and other sources and not checked one by one by a person; some were propagated from a whole muscle to its parts, which the source text says."
+        }
+      },
+      {
+        "id": "names",
+        "title": {
+          "zh": "中文名称",
+          "en": "Chinese names"
+        },
+        "description": {
+          "zh": "按概念编号（即 parts 的 fma 字段）给出中文名和 Wikidata 条目，共 5,441 个概念。英文名在 parts 的 name 字段里。",
+          "en": "Chinese name and Wikidata item for each of 5,441 concepts, keyed by concept id (the `fma` field of `parts`). English names are in the `name` field of `parts`."
+        },
+        "path": "public/anatomy/knowledge/names.json",
+        "licence": "CC BY-SA 4.0",
+        "provenance": {
+          "zh": "zhSource 字段写明每个中文名的来历：3,638 个是按术语表机器生成的（machine-translation），682 个是由别的名称推导的（derived），574 个取自术语表（lexicon），547 个来自 Wikidata。全部 status 都是 unreviewed。",
+          "en": "`zhSource` states where each Chinese name comes from: 3,638 are machine-generated from a term lexicon (`machine-translation`), 682 derived from other names, 574 from the lexicon and 547 from Wikidata. Every entry has status `unreviewed`."
+        }
+      },
+      {
+        "id": "range-of-motion",
+        "title": {
+          "zh": "关节活动度",
+          "en": "Joint ranges of motion"
+        },
+        "description": {
+          "zh": "每个自由度正负两个方向的活动范围（度），带来源和可信程度。",
+          "en": "The range in each direction (degrees) for every degree of freedom, with its source and how reliable it is."
+        },
+        "path": "data/curated/rig/rom.json",
+        "records": "entries",
+        "licence": "CC BY-SA 4.0",
+        "provenance": {
+          "zh": "source 字段指向文件里 sources 表的一项；status 是 estimate 的是估计值，不是测量值。",
+          "en": "The `source` field points into the `sources` table of the file; entries with status `estimate` are estimates, not measurements."
+        }
+      },
+      {
+        "id": "dermatomes",
+        "title": {
+          "zh": "皮节",
+          "en": "Dermatomes"
+        },
+        "description": {
+          "zh": "31 个皮节区：名称、依据、划分规则、引用。",
+          "en": "The 31 dermatome regions: name, basis, rule and citations."
+        },
+        "path": "data/curated/skinmaps/dermatomes.json",
+        "records": "regions",
+        "key": "key",
+        "fields": [
+          "key",
+          "name",
+          "basis",
+          "rule",
+          "cite"
+        ],
+        "licence": "CC BY-SA 4.0",
+        "provenance": {
+          "zh": "cite 指向文件里 sources 表；不同教科书的皮节图互相有出入，文件的 scheme 字段说明了采用哪一套以及偏离之处。这是按规则构造的教学用图，皮节因人而异；未经审校。",
+          "en": "`cite` points into the `sources` table of the file; dermatome maps differ between textbooks, and the `scheme` field of the file says which one is followed and where it deviates. This is a rule-constructed teaching map and dermatomes vary between people; not reviewed."
+        }
+      },
+      {
+        "id": "cutaneous-nerves",
+        "title": {
+          "zh": "皮神经分布区",
+          "en": "Cutaneous nerve territories"
+        },
+        "description": {
+          "zh": "49 个皮神经分布区：名称、对应的脊髓节段及其出处、分布范围的文字描述及其出处、上级神经。",
+          "en": "The 49 cutaneous nerve territories: name, spinal segments with their source, a text description of the territory with its source, and the parent nerves."
+        },
+        "path": "data/curated/skinmaps/cutaneous.json",
+        "records": "regions",
+        "key": "key",
+        "search": [
+          "key",
+          "name",
+          "segments"
+        ],
+        "fields": [
+          "key",
+          "name",
+          "segments",
+          "segmentsSource",
+          "territory",
+          "territorySource",
+          "conceptFrom",
+          "via",
+          "note"
+        ],
+        "licence": "CC BY-SA 4.0",
+        "provenance": {
+          "zh": "segmentsSource 和 territorySource 指向文件里 sources 表（主要是 Gray 1918）。分布区在模型体表上的划分是按规则构造的，有些与皮节图不一致，文件和 README 里有说明；未经审校。",
+          "en": "`segmentsSource` and `territorySource` point into the `sources` table of the file (mainly Gray 1918). How the territories are drawn on the model's skin is rule-constructed and some disagree with the dermatome map, as the file and its README explain; not reviewed."
+        }
+      }
+    ]
+  }
 }
