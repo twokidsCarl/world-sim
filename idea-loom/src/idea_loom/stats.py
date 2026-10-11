@@ -350,10 +350,12 @@ def attention(actions: Iterable[dict[str, Any]]) -> Attention:
             item = per_idea.setdefault(row["idea"], IdeaAttention(id=row["idea"], title=pool[row["idea"]].title))
             item.opens += 1
             item.last_at = max(item.last_at or "", at)
-        elif kind == "dwell":
+        elif kind in ("dwell", "play"):
+            # play 页上一张卡的观看时间，也算到它所属的 idea 上。
+            # Time spent on a card of the play page also counts toward the idea it belongs to.
             seconds = float(row.get("seconds") or 0)
             a.total_seconds += seconds
-            page = "/" + str(row.get("url", "")).split("?")[0].strip("/").split("/")[0]
+            page = "/play" if kind == "play" else "/" + str(row.get("url", "")).split("?")[0].strip("/").split("/")[0]
             a.by_page[page] = round(a.by_page.get(page, 0) + seconds, 1)
             idea = pool.get(str(row.get("idea") or ""))
             if idea is not None:

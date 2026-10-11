@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { api } from '../api'
 import type { IdeaDetail, State, ThreadId } from '../contract'
 import { LIVE } from '../state/derive'
-import { useStore } from '../state/store'
+import { label, pick } from '../i18n'
+import { useLang, useStore, useT } from '../state/store'
+import { ideaTitle } from './bits'
 
 const THREADS: ThreadId[] = ['A', 'B', 'C', 'D', 'E']
 
@@ -31,6 +33,7 @@ export function EditText({ idea, onDone }: { idea: IdeaDetail; onDone: () => voi
   const [title, setTitle] = useState(idea.title)
   const [body, setBody] = useState(idea.body)
   const { busy, error, run } = useAction()
+  const t = useT()
   const changed = title.trim() !== idea.title || body.trim() !== idea.body
   return (
     <form
@@ -41,21 +44,21 @@ export function EditText({ idea, onDone }: { idea: IdeaDetail; onDone: () => voi
       }}
     >
       <label>
-        标题
+        {t('标题', 'Title')}
         <input value={title} onChange={(e) => setTitle(e.target.value)} />
       </label>
       <label>
-        正文
+        {t('正文', 'Body')}
         <textarea rows={7} value={body} onChange={(e) => setBody(e.target.value)} />
       </label>
-      <p className="muted small">改写会留下旧版本，在历史里可以看前后对比。</p>
+      <p className="muted small">{t('改写会留下旧版本，在历史里可以看前后对比。', 'A rewrite keeps the old version; the history shows before and after.')}</p>
       {error && <p className="err" role="alert">{error}</p>}
       <div className="row">
         <button type="submit" className="primary" disabled={busy || !changed || !title.trim() || !body.trim()}>
-          保存改写
+          {t('保存改写', 'Save rewrite')}
         </button>
         <button type="button" onClick={onDone}>
-          取消
+          {t('取消', 'Cancel')}
         </button>
       </div>
     </form>
@@ -64,33 +67,35 @@ export function EditText({ idea, onDone }: { idea: IdeaDetail; onDone: () => voi
 
 export function PositionEditor({ idea, state }: { idea: IdeaDetail; state: State }) {
   const { busy, error, run } = useAction()
-  const toggle = (t: ThreadId) => {
-    const next = idea.threads.includes(t) ? idea.threads.filter((x) => x !== t) : [...idea.threads, t]
+  const lang = useLang()
+  const t = useT()
+  const toggle = (id: ThreadId) => {
+    const next = idea.threads.includes(id) ? idea.threads.filter((x) => x !== id) : [...idea.threads, id]
     void run(() => api.move(idea.id, { threads: next }))
   }
   return (
     <div className="pos-edit">
-      <div className="thread-toggles" role="group" aria-label="横线">
-        {THREADS.map((t) => {
-          const info = state.frame.threads.find((x) => x.id === t)
-          const on = idea.threads.includes(t)
+      <div className="thread-toggles" role="group" aria-label={t('横线', 'Threads')}>
+        {THREADS.map((id) => {
+          const info = state.frame.threads.find((x) => x.id === id)
+          const on = idea.threads.includes(id)
           return (
-            <button key={t} disabled={busy} aria-pressed={on} title={info?.desc} className={`chip thread thread-${t}${on ? ' on' : ''}`} onClick={() => toggle(t)}>
-              {t} {info?.short}
+            <button key={id} disabled={busy} aria-pressed={on} title={pick(lang, info?.desc, info?.desc_en)} className={`chip thread thread-${id}${on ? ' on' : ''}`} onClick={() => toggle(id)}>
+              {id} {pick(lang, info?.short, info?.short_en)}
             </button>
           )
         })}
       </div>
       <select
-        aria-label="内核"
+        aria-label={t('内核', 'Kernel')}
         disabled={busy}
         value={idea.kernel ?? ''}
         onChange={(e) => void run(() => (e.target.value ? api.move(idea.id, { kernel: e.target.value }) : api.move(idea.id, { clear_kernel: true })))}
       >
-        <option value="">还没归类</option>
+        <option value="">{t('还没归类', 'Not classified yet')}</option>
         {state.frame.kernels.map((k) => (
           <option key={k.name} value={k.name}>
-            {k.name}
+            {pick(lang, k.name, k.name_en)}
           </option>
         ))}
       </select>
@@ -104,6 +109,8 @@ export function IdeaActions({ idea, state, onEdit }: { idea: IdeaDetail; state: 
   const [target, setTarget] = useState('')
   const [reason, setReason] = useState('')
   const { busy, error, run } = useAction()
+  const lang = useLang()
+  const t = useT()
   const live = LIVE.includes(idea.status) || idea.status === 'draft'
   const close = () => {
     setOpen(null)
@@ -118,7 +125,7 @@ export function IdeaActions({ idea, state, onEdit }: { idea: IdeaDetail; state: 
     return (
       <div className="actions">
         <button disabled={busy} onClick={() => void run(() => api.restore(idea.id))}>
-          恢复到想法池
+          {t('恢复到想法池', 'Restore to the idea pool')}
         </button>
         {error && <p className="err" role="alert">{error}</p>}
       </div>
@@ -127,17 +134,17 @@ export function IdeaActions({ idea, state, onEdit }: { idea: IdeaDetail; state: 
   return (
     <div className="actions">
       <div className="row">
-        <button onClick={onEdit}>改写</button>
+        <button onClick={onEdit}>{t('改写', 'Rewrite')}</button>
         <button aria-expanded={open === 'merge'} onClick={() => setOpen(open === 'merge' ? null : 'merge')}>
-          并入另一条
+          {t('并入另一条', 'Merge into another')}
         </button>
         <button aria-expanded={open === 'discard'} onClick={() => setOpen(open === 'discard' ? null : 'discard')}>
-          丢弃
+          {t('丢弃', 'Discard')}
         </button>
-        <select aria-label="状态" disabled={busy} value={idea.status} onChange={(e) => void run(() => api.setStatus(idea.id, e.target.value))}>
+        <select aria-label={t('状态', 'Status')} disabled={busy} value={idea.status} onChange={(e) => void run(() => api.setStatus(idea.id, e.target.value))}>
           {(['draft', 'pool', 'building', 'built'] as const).map((s) => (
             <option key={s} value={s}>
-              {state.labels.status?.[s]}
+              {label(lang, 'status', s, state.labels.status?.[s])}
             </option>
           ))}
         </select>
@@ -151,36 +158,36 @@ export function IdeaActions({ idea, state, onEdit }: { idea: IdeaDetail; state: 
           }}
         >
           <label>
-            把这一条并入
+            {t('把这一条并入', 'Merge this one into')}
             <select value={target} onChange={(e) => setTarget(e.target.value)}>
-              <option value="">选一条…</option>
-              <optgroup label="同一层">
+              <option value="">{t('选一条…', 'Choose one…')}</option>
+              <optgroup label={t('同一层', 'Same level')}>
                 {sameLevel.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {i.id} {i.title}
+                    {i.id} {ideaTitle(lang, i)}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="其他层">
+              <optgroup label={t('其他层', 'Other levels')}>
                 {others.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {i.id} {i.title}
+                    {i.id} {ideaTitle(lang, i)}
                   </option>
                 ))}
               </optgroup>
             </select>
           </label>
           <label>
-            为什么（可以不填）
-            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="比如：做出来会是同一个项目" />
+            {t('为什么（可以不填）', 'Why (optional)')}
+            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('比如：做出来会是同一个项目', 'For example: built, they would be the same project')} />
           </label>
-          <p className="muted small">这一条会标成"已并入"，编号保留不再使用。目标那一条的正文不会自动改，需要的话去改写它。</p>
+          <p className="muted small">{t('这一条会标成"已并入"，编号保留不再使用。目标那一条的正文不会自动改，需要的话去改写它。', 'This one will be marked "Merged"; its number is kept and not reused. The body of the target does not change by itself; rewrite it if needed.')}</p>
           <div className="row">
             <button type="submit" className="primary" disabled={busy || !target}>
-              并入
+              {t('并入', 'Merge')}
             </button>
             <button type="button" onClick={close}>
-              取消
+              {t('取消', 'Cancel')}
             </button>
           </div>
         </form>
@@ -194,16 +201,16 @@ export function IdeaActions({ idea, state, onEdit }: { idea: IdeaDetail; state: 
           }}
         >
           <label>
-            为什么丢弃（可以不填）
+            {t('为什么丢弃（可以不填）', 'Why discard it (optional)')}
             <input value={reason} onChange={(e) => setReason(e.target.value)} />
           </label>
-          <p className="muted small">丢弃的条目留在历史里，可以恢复。</p>
+          <p className="muted small">{t('丢弃的条目留在历史里，可以恢复。', 'Discarded ideas stay in the history and can be restored.')}</p>
           <div className="row">
             <button type="submit" className="primary" disabled={busy}>
-              丢弃
+              {t('丢弃', 'Discard')}
             </button>
             <button type="button" onClick={close}>
-              取消
+              {t('取消', 'Cancel')}
             </button>
           </div>
         </form>

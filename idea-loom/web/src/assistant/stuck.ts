@@ -1,6 +1,6 @@
 // 卡住了的三条规则。纯函数，不调用模型；这些数是定下的，不做成设置。
 // Three rules for "stuck". Pure functions, no model call; the numbers are fixed, not settings.
-export type Action = { at: string; kind: 'navigate' | 'filter' | 'click' | 'error' | 'ask' | 'dwell' | 'op'; url: string; text: string; seconds?: number; idea?: string }
+export type Action = { at: string; kind: 'navigate' | 'filter' | 'click' | 'error' | 'ask' | 'dwell' | 'op' | 'play' | 'like' | 'unlike'; url: string; text: string; seconds?: number; idea?: string; card?: string }
 
 export type Stuck = 'bounce' | 'errors' | 'spin' | null
 

@@ -1,6 +1,7 @@
 // 纯函数：从状态和筛选条件算出界面要显示的东西。
 // Pure functions: derive what the UI shows from the state and the filters.
 import type { Idea, LevelId, State, Status, ThreadId } from '../contract'
+import type { Lang } from '../i18n'
 
 export const LIVE: Status[] = ['pool', 'building', 'built']
 
@@ -41,7 +42,9 @@ export function queryFromFilters(f: Filters): string {
   return s ? `?${s}` : ''
 }
 
-export function matches(idea: Idea, f: Filters): boolean {
+// 英文界面下，搜索也查英文的标题和正文。
+// In the English UI the search also looks at the English title and body.
+export function matches(idea: Idea, f: Filters, lang: Lang = 'zh'): boolean {
   if (f.status === 'live' ? !LIVE.includes(idea.status) : f.status !== 'all' && idea.status !== f.status) return false
   if (f.level && idea.level !== f.level) return false
   if (f.kernel && (f.kernel === '—' ? idea.kernel != null : idea.kernel !== f.kernel)) return false
@@ -49,13 +52,14 @@ export function matches(idea: Idea, f: Filters): boolean {
   if (f.threads.length && !f.threads.every((t) => (idea.threads ?? []).includes(t))) return false
   if (f.q) {
     const q = f.q.trim().toLowerCase()
-    if (q && !`${idea.id} ${idea.title} ${idea.body}`.toLowerCase().includes(q)) return false
+    const text = lang === 'en' ? `${idea.id} ${idea.title} ${idea.body} ${idea.title_en ?? ''} ${idea.body_en ?? ''}` : `${idea.id} ${idea.title} ${idea.body}`
+    if (q && !text.toLowerCase().includes(q)) return false
   }
   return true
 }
 
-export function filterIdeas(state: State, f: Filters): Idea[] {
-  return state.ideas.filter((i) => matches(i, f))
+export function filterIdeas(state: State, f: Filters, lang: Lang = 'zh'): Idea[] {
+  return state.ideas.filter((i) => matches(i, f, lang))
 }
 
 export function activeFilterCount(f: Filters): number {

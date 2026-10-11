@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from . import llm, store
 
-Kind = Literal["navigate", "filter", "click", "error", "ask", "dwell", "op"]
+Kind = Literal["navigate", "filter", "click", "error", "ask", "dwell", "op", "play", "like", "unlike"]
 
 
 class Action(BaseModel):
@@ -23,6 +23,7 @@ class Action(BaseModel):
     text: str = Field(default="", max_length=160)
     seconds: float = 0  # 只有 dwell 用：在这一页前台且有操作的时长 / dwell only: active foreground time on the page
     idea: str = ""  # 这一页是哪条 idea 的页面 / the idea this page belongs to, if any
+    card: str = ""  # play 页的卡片：<项目>/<卡片编号> / a card on the play page: <project>/<card id>
 
 
 def path() -> Path:
@@ -35,3 +36,37 @@ def append(actions: list[Action]) -> int:
 
 def load() -> list[dict[str, Any]]:
     return store.read_lines(path())[0]
+
+
+class CardHistory(BaseModel):
+    """一张卡片被看过的情况，推荐顺序靠它。 / How a card has been watched; the feed order relies on it."""
+
+    views: int = 0
+    seconds: float = 0
+    quick_skips: int = 0  # 进来不到几秒就划走的次数 / times it was left within a few seconds
+    liked: bool = False
+    last_at: str = ""
+
+
+QUICK_SKIP_SECONDS = 5.0
+
+
+def card_history(actions: list[dict[str, Any]] | None = None) -> dict[str, CardHistory]:
+    out: dict[str, CardHistory] = {}
+    for a in actions if actions is not None else load():
+        key, kind = str(a.get("card") or ""), a.get("kind")
+        if not key or kind not in ("play", "like", "unlike"):
+            continue
+        h = out.setdefault(key, CardHistory())
+        h.last_at = max(h.last_at, str(a.get("at", "")))
+        if kind == "like":
+            h.liked = True
+        elif kind == "unlike":
+            h.liked = False
+        else:
+            seconds = float(a.get("seconds") or 0)
+            h.views += 1
+            h.seconds = round(h.seconds + seconds, 1)
+            if seconds < QUICK_SKIP_SECONDS:
+                h.quick_skips += 1
+    return out

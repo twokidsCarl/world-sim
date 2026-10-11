@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { type Job, type JobEvent, api } from '../api'
 import { Markdown } from '../assistant/Markdown'
+import { label, plural } from '../i18n'
 import { formatTime } from '../state/derive'
+import { useLang, useT } from '../state/store'
 
 const ACTIVE = ['planning', 'running', 'testing', 'pr']
 const TONE: Record<string, string> = { plan_ready: 'w-accepted', merged: 'w-done', failed: 'j-failed' }
@@ -15,6 +17,8 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
   const [feedback, setFeedback] = useState('')
   const [mode, setMode] = useState<'revise' | 'decline' | null>(null)
   const [busy, setBusy] = useState(false)
+  const lang = useLang()
+  const t = useT()
   const last = useRef(0)
   const phase = useRef('')
 
@@ -63,50 +67,54 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
     setBusy(false)
   }
 
-  if (!job) return <p className="muted small">{error ?? '正在读取作业…'}</p>
+  if (!job) return <p className="muted small">{error ?? t('正在读取作业…', 'Loading the job…')}</p>
   const active = ACTIVE.includes(job.phase)
   const steps = events.filter((e) => e.type === 'step' && e.state === 'running')
   const notes = events.filter((e) => e.type === 'note')
+  // 作业的小结有中英两份；英文界面优先用英文的。
+  // The job summary comes in both languages; the English UI prefers the English one.
+  const pickSummary = (key: string) => (typeof job.summary[key] === 'string' ? (job.summary[key] as string) : '')
+  const summary = (lang === 'en' && pickSummary('summary_en')) || pickSummary('summary_zh')
 
   return (
     <div className="job">
       <div className="job-head">
         <span className={`badge ${TONE[job.phase] ?? ''}`}>
-          {active && <span className="spin" aria-hidden="true">◌</span>} {job.phase_label}
+          {active && <span className="spin" aria-hidden="true">◌</span>} {label(lang, 'phase', job.phase, job.phase_label)}
         </span>
         <span className="muted small">
-          在 <code>{job.directory}/</code> · 开始于 {formatTime(job.created_at)}
-          {job.cost_usd > 0 && ` · 约 ${job.cost_usd.toFixed(2)} 美元`}
+          {t('在', 'In')} <code>{job.directory}/</code> · {t('开始于', 'started')} {formatTime(job.created_at)}
+          {job.cost_usd > 0 && t(` · 约 ${job.cost_usd.toFixed(2)} 美元`, ` · about $${job.cost_usd.toFixed(2)}`)}
         </span>
         {active && (
           <button disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'cancel'))}>
-            取消
+            {t('取消', 'Cancel')}
           </button>
         )}
       </div>
 
       {active && (
         <p className="muted small" role="status">
-          {job.phase === 'planning' && 'Claude 正在读代码、写方案。这一步它只读不写。'}
-          {job.phase === 'running' && `Claude 正在按方案动手，只能改 ${job.directory}/ 下面的文件。`}
-          {job.phase === 'testing' && '它做完了，现在由程序自己把测试再跑一遍。'}
-          {job.phase === 'pr' && '测试通过，正在开 PR 并等它自动合并。'}
-          {steps.length > 0 && ` 已经读、改了 ${steps.length} 处，最近：${steps[steps.length - 1]!.label}`}
+          {job.phase === 'planning' && t('Claude 正在读代码、写方案。这一步它只读不写。', 'Claude is reading the code and writing a plan. In this step it only reads and writes nothing.')}
+          {job.phase === 'running' && t(`Claude 正在按方案动手，只能改 ${job.directory}/ 下面的文件。`, `Claude is carrying out the plan and may only change files under ${job.directory}/.`)}
+          {job.phase === 'testing' && t('它做完了，现在由程序自己把测试再跑一遍。', 'It has finished; the program is now running the tests again by itself.')}
+          {job.phase === 'pr' && t('测试通过，正在开 PR 并等它自动合并。', 'The tests passed; opening a PR and waiting for it to merge automatically.')}
+          {steps.length > 0 && t(` 已经读、改了 ${steps.length} 处，最近：${steps[steps.length - 1]!.label}`, ` ${plural(steps.length, 'read or edit')} so far, latest: ${steps[steps.length - 1]!.label}`)}
         </p>
       )}
 
       {job.error && <div className="notice bad pre" role="alert">{job.error}</div>}
       {job.phase === 'merged' && (
         <div className="notice good" role="status">
-          已合并{job.pr_url && <>：<a href={job.pr_url} target="_blank" rel="noreferrer">合并请求 #{job.pr}</a></>}。
-          {typeof job.summary.summary_zh === 'string' && ` ${job.summary.summary_zh}`}
-          {job.restart_needed && ' 后端的代码变了，重启后端之后才生效。'}
+          {t('已合并', 'Merged')}{job.pr_url && <>{t('：', ': ')}<a href={job.pr_url} target="_blank" rel="noreferrer">{t(`合并请求 #${job.pr}`, `pull request #${job.pr}`)}</a></>}{t('。', '.')}
+          {summary && ` ${summary}`}
+          {job.restart_needed && t(' 后端的代码变了，重启后端之后才生效。', ' The backend code changed; it takes effect after the backend is restarted.')}
         </div>
       )}
 
       {job.plan && (
         <details open={job.phase === 'plan_ready'} className="job-plan">
-          <summary>方案{job.feedback.length > 0 && `（按你的意见改过 ${job.feedback.length} 次）`}</summary>
+          <summary>{t('方案', 'Plan')}{job.feedback.length > 0 && t(`（按你的意见改过 ${job.feedback.length} 次）`, ` (revised ${plural(job.feedback.length, 'time')} after your feedback)`)}</summary>
           <Markdown text={job.plan} />
         </details>
       )}
@@ -116,10 +124,10 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
           {mode === null ? (
             <div className="row">
               <button className="primary" disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'approve'))}>
-                批准，开始动手
+                {t('批准，开始动手', 'Approve and start')}
               </button>
-              <button onClick={() => setMode('revise')}>提意见，重写方案</button>
-              <button onClick={() => setMode('decline')}>不做</button>
+              <button onClick={() => setMode('revise')}>{t('提意见，重写方案', 'Give feedback, rewrite the plan')}</button>
+              <button onClick={() => setMode('decline')}>{t('不做', 'Decline')}</button>
             </div>
           ) : (
             <form
@@ -130,40 +138,40 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
               }}
             >
               <label>
-                {mode === 'revise' ? '你的意见' : '为什么不做（可以不填）'}
+                {mode === 'revise' ? t('你的意见', 'Your feedback') : t('为什么不做（可以不填）', 'Why decline (optional)')}
                 <textarea rows={3} value={feedback} onChange={(e) => setFeedback(e.target.value)} />
               </label>
               <div className="row">
                 <button type="submit" className="primary" disabled={busy || (mode === 'revise' && !feedback.trim())}>
-                  {mode === 'revise' ? '让它重写' : '标为不做'}
+                  {mode === 'revise' ? t('让它重写', 'Have it rewrite') : t('标为不做', 'Mark as declined')}
                 </button>
                 <button type="button" onClick={() => setMode(null)}>
-                  取消
+                  {t('取消', 'Cancel')}
                 </button>
               </div>
             </form>
           )}
-          <p className="muted small">批准之前它不会改任何文件。批准之后：它动手 → 程序重跑测试 → 开 PR → 自动合并。</p>
+          <p className="muted small">{t('批准之前它不会改任何文件。批准之后：它动手 → 程序重跑测试 → 开 PR → 自动合并。', 'It changes no file before you approve. After approval: it does the work → the program reruns the tests → opens a PR → merges automatically.')}</p>
         </div>
       )}
 
       {(job.phase === 'failed' || job.phase === 'cancelled') && job.changed.length + (job.phase === 'cancelled' ? 1 : 0) > 0 && (
         <div className="row">
           {job.phase === 'failed' && job.changed.length > 0 && (
-            <button className="primary" disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'resume'))} title="不重来：用它已经改好的文件，从跑测试接着走到开 PR">
-              接着做：重跑测试并提交
+            <button className="primary" disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'resume'))} title={t('不重来：用它已经改好的文件，从跑测试接着走到开 PR', 'No restart: keep the files it already changed and continue from running the tests to opening a PR')}>
+              {t('接着做：重跑测试并提交', 'Continue: rerun the tests and submit')}
             </button>
           )}
           <button disabled={busy} onClick={() => void act(() => api.jobAction(job.job_id, 'revert'))}>
-            还原它改过的文件
+            {t('还原它改过的文件', 'Revert the files it changed')}
           </button>
-          <span className="muted small">把 {job.directory}/ 里改过的文件恢复成仓库里的样子，新建的删掉。数据文件不动。</span>
+          <span className="muted small">{t(`把 ${job.directory}/ 里改过的文件恢复成仓库里的样子，新建的删掉。数据文件不动。`, `Restores the changed files in ${job.directory}/ to what the repository has and deletes new ones. Data files are left alone.`)}</span>
         </div>
       )}
 
       {(job.changed.length > 0 || job.test_log || notes.length > 0 || job.denied.length > 0) && (
         <details className="job-log">
-          <summary>经过{job.changed.length > 0 && `，改了 ${job.changed.length} 个文件`}</summary>
+          <summary>{t('经过', 'Log')}{job.changed.length > 0 && t(`，改了 ${job.changed.length} 个文件`, `, ${plural(job.changed.length, 'file')} changed`)}</summary>
           {job.changed.length > 0 && (
             <ul className="plain small">
               {job.changed.map((f) => (
@@ -178,10 +186,10 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
               </li>
             ))}
           </ol>
-          {job.repairs > 0 && <p className="small">测试没过之后，让它修了 {job.repairs} 轮。</p>}
+          {job.repairs > 0 && <p className="small">{t(`测试没过之后，让它修了 ${job.repairs} 轮。`, `After the tests failed, it was asked to fix things for ${plural(job.repairs, 'round')}.`)}</p>}
           {job.denied.length > 0 && (
             <>
-              <p className="small">这些操作被拒绝了（不在放行的范围里）：</p>
+              <p className="small">{t('这些操作被拒绝了（不在放行的范围里）：', 'These actions were refused (outside what is allowed):')}</p>
               <ul className="plain small">
                 {job.denied.map((d) => (
                   <li key={d}><code>{d}</code></li>

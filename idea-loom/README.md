@@ -14,6 +14,23 @@ generated from it.
 
 ## 现在能做什么 / What works now
 
+- **玩 / Play**：单列的卡片流，一屏一张，一张卡是某个模拟的一个可以直达的场景。可以直接在里面玩，也可以切到下一张（按钮、上下键或 j / k、在卡片两侧的空白处滚动）。只有当前这张卡在运行，划走就卸载。可以收藏、重来、在新窗口打开完整版、带着这张卡问小助手。
+  A single-column feed, one card per screen; a card is one directly reachable scenario of
+  a simulation. Play it in place or move to the next (buttons, arrow keys or j / k, or
+  scrolling in the margins beside the card). Only the current card runs and it is
+  unmounted when you move on. Like it, restart it, open the full UI in a new window, or
+  ask the assistant with the card attached.
+
+  推荐顺序是写明的打分：没看过的排前面；你收藏过同一条 idea（或同一层）的往前提；进来几秒就划走、从没停下来看过的往后放；看得越多越靠后；相邻两张尽量不是同一个项目。每张卡可以点开看"为什么推这张"。每张卡看了多久记进操作轨迹，统计页把它算到那条 idea 的注意力上。
+  The order is an explicit score: unseen cards first; cards of an idea (or a level) you
+  liked move up; cards you left within seconds and never really watched move back; the
+  more often seen, the further back; neighbours are kept from the same project where
+  possible. Each card can show why it is where it is. Watch time goes into the action
+  trail, and the statistics page counts it toward that idea's attention.
+- **中 / EN**：界面可以在中文和英文之间切换（左下角）。idea、层、横线、内核有英文的就显示英文；后端给的自由文本（历史、愿望、方案、报错）保持原样。
+  The UI switches between Chinese and English (bottom left). Ideas, levels, threads and
+  kernels show their English where it exists; free text from the backend (history,
+  wishes, plans, errors) stays as written.
 - **地图 / Map**：十层 × 五条横线的格子，每格有几条、是哪几条；纵线和两条支线；按内核看。
   The ten levels × five threads grid with what sits in each cell; the verticals
   and the two branches; a view by kernel.

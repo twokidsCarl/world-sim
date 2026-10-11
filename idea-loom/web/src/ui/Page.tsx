@@ -4,13 +4,13 @@ import { useStore } from '../state/store'
 // 每个页面都包在这里面：统一的标题和导语，并把页面身份报给全局状态。
 // Every page is wrapped in this: one heading and lead, and it reports the page
 // identity to the global store.
-export function Page(props: { title: string; lead?: string; actions?: ReactNode; children: ReactNode }) {
+export function Page(props: { title: string; lead?: string; idea?: string; actions?: ReactNode; children: ReactNode }) {
   const setPage = useStore((s) => s.setPage)
   const { title, lead = '' } = props
   useEffect(() => {
-    setPage({ title, lead })
+    setPage({ title, lead, idea: props.idea })
     document.title = `${title} · idea-loom`
-  }, [title, lead, setPage])
+  }, [title, lead, props.idea, setPage])
   return (
     <div className="page">
       <header className="page-head">

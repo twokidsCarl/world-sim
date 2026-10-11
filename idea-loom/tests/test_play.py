@@ -196,3 +196,16 @@ def test_play_listing(repo):
     assert cards["demo/one"]["url"] == "http://demo.localhost:8767/?scenario=one" and cards["demo/one"]["idea"] == "1.2"
     assert cards["demo/two"]["idea"] is None  # 指向不存在的 idea 就不挂 / a card pointing at a missing idea is left unlinked
     assert TestClient(app, base_url="http://localhost:8767").post("/api/play/nope/build").status_code == 404
+
+
+def test_card_history_and_attention_from_play_events(repo):
+    from idea_loom import stats, trail
+
+    A = lambda kind, card, seconds=0.0, idea="": trail.Action(at="2026-10-11T08:00:00Z", kind=kind, url="/play", text=card, seconds=seconds, idea=idea, card=card)
+    trail.append([A("play", "demo/one", 40, "1.2"), A("play", "demo/one", 2, "1.2"), A("like", "demo/one"), A("play", "demo/two", 3), A("like", "demo/two"), A("unlike", "demo/two")])
+    h = trail.card_history()
+    assert (h["demo/one"].views, h["demo/one"].seconds, h["demo/one"].quick_skips, h["demo/one"].liked) == (2, 42.0, 1, True)
+    assert (h["demo/two"].views, h["demo/two"].quick_skips, h["demo/two"].liked) == (1, 1, False)
+    assert get("/api/play").json()["history"]["demo/one"]["liked"] is True
+    a = stats.attention(trail.load())
+    assert a.by_page == {"/play": 45.0} and [(i.id, i.seconds) for i in a.ideas] == [("1.2", 42.0)]
