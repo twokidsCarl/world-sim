@@ -271,7 +271,7 @@ whole-body deformation, densest in the trunk and weakest in forearms, hands, low
 
 | | |
 |---|---|
-| Items | 182 CT (`VF_`) + 128 Denver (`VD_`) + 59 HRA (`HRA_`) = 369; 1.9 M triangles |
+| Items | 182 CT (`VF_`) + 128 Denver (`VD_`) + 59 HRA (`HRA_`) + 47 Wu 2015 pelvic floor (`WU_`, another individual) = 416 |
 | CT items | 74 bones, 12 bone groups, 3 cartilages, 1 tooth group, 24 organs, 18 vessel trunks, 47 muscles, 3 surfaces; 123 good, 52 usable, 7 poor |
 | Denver items | 76 muscles, 26 bones + 2 forefoot groups, 16 cartilages, 8 ligaments; scanned pose; each with the bones it follows (`follows`: origin / insertion) |
 | HRA items | 38 organ parts, 16 ligaments, 4 uterine vessels, 1 skin (with a per-vertex registration weight) |
@@ -279,7 +279,7 @@ whole-body deformation, densest in the trunk and weakest in forearms, hands, low
 | Meshing | marching cubes on a blurred mask, 12 Taubin iterations, quadric decimation, sub-voxel normal offset restoring the voxel volume |
 | Seam | CT leg exam moved 0.42° + 5.3/−3.8 mm. Cross-checked with the Denver femur: step at the seam 7–9 mm before, 1.3–1.8 mm after |
 | Lumbar | six lumbar bodies confirmed two ways (endplates; HRA L1–L6 fit at 0.8–0.9 mm RMS). Female L2–L6 ↔ male L1–L5, female L1 has no counterpart |
-| Bone surfaces | CT label surfaces lie 0.3–1.0 mm outside the CT's own cortical edge, Denver surfaces 0.3–1.1 mm inside it. Not corrected |
+| Bone surfaces | CT label surfaces lie 0.1–1.0 mm outside the CT's own cortical edge, Denver surfaces 0.3–1.1 mm inside it. Defaults unchanged; `alt_edge_corrected.bin` offers 20 hip and limb bones moved onto the edge (residual ≤ 0.13 mm, volume −2.5 to −20 %) |
 | Re-posing | arms only, per-bone rigid transforms; left arm usable, right arm poor (clipped elbow); Denver items are not re-posed here |
 | HRA placement | 37 bone pairs, median ICP RMS 0.74 mm; uterus between bladder and rectum; right ovary collides with the scanned right common iliac vein |
 | Coverage | 631 of 3,325 male parts named by an anchor (550 before Denver); thigh 38 and leg 36 parts now anchored (4 each before) |
@@ -325,12 +325,38 @@ sub-agent and are not re-verified):
 
 | Candidate | Licence | Content | Status |
 |---|---|---|---|
-| Wu et al., *PLoS ONE* 10(8): e0132226 (2015), interactive 3D-PDF of the female pelvic floor, S3 Fig of the correction (doi:10.1371/journal.pone.0140736.s004) | "Creative Commons Attribution License" (PLOS) | Young adult female (Chinese Visible Human specimen CVH5, cryosections, remodelled). **Inspected:** 10.4 MB U3D stream with 45 named structures, including pubovisceral and puborectal muscle (two parts each), coccygeal muscle, external and internal anal sphincter, urethral sphincter proper, urethral compressor, urethro-vaginal sphincter, deep and superficial transverse perineal muscle, bulbospongiosus, ischiocavernosus, perineal body, **cavernous body of clitoris, vestibular bulb, Bartholin gland**, vaginal and uterine wall, bladder, rectum, pelvic bone | Best candidate. Geometry not extracted: U3D needs a converter this machine does not have. Scale and frame unknown; pelvic bone and sacrum are in the file, so it can be registered like HRA |
+| Wu et al., *PLoS ONE* 10(8): e0132226 (2015), interactive 3D-PDF of the female pelvic floor, S3 Fig of the correction (doi:10.1371/journal.pone.0140736.s004) | "Creative Commons Attribution License" (PLOS) | Young adult female (Chinese Visible Human specimen CVH5, cryosections, remodelled). **Inspected:** 10.4 MB U3D stream with 47 named structures, including pubovisceral and puborectal muscle (two parts each), coccygeal muscle, external and internal anal sphincter, urethral sphincter proper, urethral compressor, urethro-vaginal sphincter, deep and superficial transverse perineal muscle, bulbospongiosus, ischiocavernosus, perineal body, **cavernous body of clitoris, vestibular bulb, Bartholin gland**, vaginal and uterine wall, bladder, rectum, pelvic bone | **Decoded and imported** as 47 `WU_` items (see below) |
 | Routzong et al., Mendeley Data doi:10.17632/75vnsc24wk.1 | CC BY 4.0 (per DataCite) | Mean shape of the levator / coccygeus / perineal / anal sphincter complex from MRI of 48 women, as **one fused surface**. **Inspected:** VTK, 8,327 points, extent 138 × 113 × 91 (millimetre-like; Procrustes-aligned, so scale is not guaranteed) | Shape and position check only; no separate muscles |
 | Wu et al., *Clin Anat* 33:275 (2020), female pelvic floor 3D-PDF | CC BY 4.0 per PMC | Same specimen, teaching model | Download blocked by a captcha; same content family as the first row |
 | Oklahoma State University "Pelvic Organs from MRI" (Sketchfab) | CC BY 4.0 per Sketchfab | 25-year-old living woman: uterus, tubes, ovaries, vagina, **vulva**, bladder, rectum; no muscles | Not downloaded (login). Only real-data vulva found |
 | Clitoris STL (Fillod / Carrefour numérique) on Wikimedia Commons | CC0 per Commons; not confirmed at the original source | Artist-modelled from measurements | Unconfirmed licence |
 | Geneva MRI clitoris models (Thingiverse) | mixed: some "Attribution", some NC-SA | MRI of four women | Unconfirmed licence |
+
+**Wu 2015 盆底模型已解码并入包（2026-10-11 更正）。** 之前写的“没有公开规范、无法解码”是错的：Adobe 在
+《U3D Supported Elements》（Acrobat 8.1 SDK，2007）第 2 章和附录 A 中公布了 RHAdobeMeshResource 的格式。
+`rh_mesh.py` 按该规范和 ECMA-363 的算术编码器实现了解码，47 个结构全部解出（341,454 个顶点，688,510 个三角形，
+每个数据块恰好读完，网格闭合）。`wu_place.py` 把它配准到 CT 坐标系，生成 47 个 `WU_` 条目（另一个体，标为 curated）。
+
+**The Wu 2015 pelvic floor is decoded and in the package (correction, 2026-10-11).** My earlier statement that
+the mesh format had no published specification was wrong. Adobe documented `RHAdobeMeshResource` in "U3D Supported
+Elements" (Acrobat 8.1 SDK, April 2007), chapter 2 and appendix A; the archived PDF is at
+`web.archive.org/web/20160621183205id_/http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/U3DElements.pdf`.
+`rh_mesh.py` implements it together with the ECMA-363 arithmetic coder (after Intel's Apache-2.0 sample code):
+47 structures, 341,454 vertices, 688,510 triangles, every payload consumed exactly, closed manifolds, and the first
+mesh identical to an independent decode published in `github.com/peterdoubell/Primer` (an unlicensed repository;
+three format facts were taken from its notes, no code).
+
+| Route | Outcome |
+|---|---|
+| `aspose-3d` 25.6 (evaluation) | Loads 5 of 47 nodes and **no geometry**; documented limits: "Each node can have no more than 5 child nodes", "Each node can have no more than 2 attached entities", watermark in outputs. Unusable; no attempt to get round the limits. Its EULA text could not be retrieved (JavaScript viewer), so it was never relied on |
+| Open-source decoders | None with a licence. `ralovich/u3d` (Rust, MIT) recognises the block but its decoder is a stub; IFX sample software, assimp, MeshLab, trimesh, Open3D, vtk, Blender have nothing. Own decoder written from the Adobe specification instead |
+| Acrobat Pro DC 26 (installed) | Not needed. Its 3D JavaScript API exposes per-mesh `computeBoundingBox` and `faceCount` but no vertices or triangles, and this build has no 3D export; `acrobat_3d_dump.js` (untested) dumps that metadata only |
+
+Registration (`SANITY.md` has the tables): the model covers only the lower lesser pelvis. Best of 24 orientations
+1.83 mm RMS (runner-up 3.5 mm); the subject's pelvis is 0.91 of the donor's; per-piece rigid fits 1.5–1.6 mm.
+Obturator internus lands 4–5 mm from the donor's own Denver muscle. The levator hiatus encloses the model's
+urethra, vagina and anorectum and also our HRA vagina and CT rectum. The Wu uterus, ovaries and vagina sit 26–44 mm
+behind the HRA-placed ones. Left/right of the source cannot be verified independently.
 
 Rejected: Wu et al. 2018 *J Anat* (CC BY-NC), UBC and Lyon models (NC), VIVA+ (LGPL, no pelvic floor anatomy),
 Open3DAnatomy pelvic floor (male, no download). No public female pelvic MRI with pelvic-floor labels was found.
@@ -357,4 +383,7 @@ Open3DAnatomy pelvic floor (male, no download). No public female pelvic MRI with
 | `write_reports.py` | `README.md` and `SANITY.md` from the manifest |
 | `denver_import.py` | Denver STLs → CT frame (per-bone fits, soft-tissue field), seam and bone-edge checks, origin / insertion bones |
 | `fat_thickness.py` | Subcutaneous fat thickness and body composition from the CT |
-| `pelvic_floor_refs.py` | Fetches and lists the two pelvic-floor reference candidates (not part of the package) |
+| `pelvic_floor_refs.py` | 下载盆底参考数据并取出 U3D 流 / fetches the pelvic-floor references and extracts the U3D stream |
+| `rh_mesh.py` | RHAdobeMeshResource 解码器 / decoder for RHAdobeMeshResource meshes in U3D (positions and triangles) |
+| `wu_place.py` | 把 Wu 2015 模型配准到 CT 坐标系 / registers the Wu 2015 model into the CT frame, `WU_` items and checks |
+| `acrobat_3d_dump.js` | Acrobat 控制台脚本，仅导出元数据，未经运行 / Acrobat console script, metadata only, untested |

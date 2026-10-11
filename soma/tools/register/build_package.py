@@ -25,12 +25,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import anchor_spec  # noqa: E402
 import denver_import  # noqa: E402
 import hra_place  # noqa: E402
-from anchorlib import (BinWriter, apply, end_slab, frame, kabsch, load_bp3d_obj, pca_axis, ransac_sphere,  # noqa: E402
+import wu_place  # noqa: E402
+from anchorlib import (BinWriter, apply, ct_edge_offset, end_slab, frame, kabsch, load_bp3d_obj, pca_axis, ransac_sphere,  # noqa: E402
                        render, rigid_about, rot_angle_deg, sample_surface, unit)
 
 NLM = "Courtesy of the U.S. National Library of Medicine"
 SIDES = {"L": "left", "R": "right"}
 DENVER_DIR = "data/raw/female/denver"       # hook: see README section "Denver hook"
+PELVIC_FLOOR_DIR = "data/raw/female/pelvic_floor"   # Wu 等 2015 盆底模型（由 pelvic_floor_refs.py 下载）/ Wu et al. 2015 pelvic floor model (fetched by pelvic_floor_refs.py)
 
 
 # ── male model ───────────────────────────────────────────────────────────────────────────────
@@ -461,6 +463,42 @@ def main():
             # a CT item stays preferred unless every part of it is covered by a preferred Denver item
             r["preferred"] = not any(rec_by[o].get("preferred") for o in r["alternatives"])
 
+    # ── Wu 等 2015 女性盆底（另一个体，CC BY）/ Wu et al. 2015 female pelvic floor (another individual, CC BY) ──
+    wu_report = {"present": False}
+    if wu_place.available(PELVIC_FLOOR_DIR):
+        wu_recs, wu_report = wu_place.place(PELVIC_FLOOR_DIR, items, male, V2A, recs)
+        for r in wu_recs:
+            for i in r["male_parts"]:
+                claimed[i].append(r["id"])
+            for a in r["alternatives"]:               # 反向登记，既有条目仍为首选 / back-link; the existing item stays preferred
+                rec_by[a]["alternatives"] = sorted(set(rec_by[a]["alternatives"]) | {r["id"]})
+        recs += wu_recs
+
+    # ── optional alternative: CT limb bones moved onto the CT's own cortical edge ─────────────
+    # TotalSegmentator / MOOSE label surfaces (plus the volume-restoring offset) lie 0.3-1.0 mm outside
+    # the cortical edge seen in the CT. For the limb and hip bones a per-bone uniform normal offset
+    # equal to the measured edge position is offered as a separate mesh set; defaults are unchanged.
+    ctvol = np.asarray(nib.load(os.path.join(work, "ct_fixed.nii.gz")).dataobj)
+    A2V = np.linalg.inv(V2A)
+    edge_alt, edge_report = {}, []
+    for r in recs:
+        if r["source"] != "vhf-ct" or not re.match(r"VF_(hip|femur|patella|tibia|fibula|humerus|radius|ulna|clavicula|scapula)_", r["id"]):
+            continue
+        v, f = r["_v"], r["_f"]
+        e0 = ct_edge_offset(ctvol, A2V, v, f)
+        if e0 is None or abs(e0) > 1.5:
+            edge_report.append({"id": r["id"], "edge_mm": None if e0 is None else round(e0, 2), "applied": False})
+            continue
+        tm = trimesh.Trimesh(v, f, process=False)
+        v2 = v + (e0 / 1000.0) * np.asarray(tm.vertex_normals)
+        e1 = ct_edge_offset(ctvol, A2V, v2, f)
+        vol2 = abs(float(np.einsum("ij,ij->i", v2[f[:, 0]], np.cross(v2[f[:, 1]], v2[f[:, 2]])).sum() / 6.0)) * 1e6
+        edge_alt[r["id"]] = v2
+        r["edge_correction"] = {"offset_mm": round(e0, 2), "residual_edge_mm": None if e1 is None else round(e1, 2),
+                                "volume_ml": round(vol2, 2), "volume_change": round(vol2 / r["volume_ml"] - 1, 3)}
+        edge_report.append({"id": r["id"], "edge_mm": round(e0, 2), "applied": True, **r["edge_correction"]})
+    del ctvol
+
     # ── binaries ──────────────────────────────────────────────────────────────────────────────
     wS, wR = BinWriter(os.path.join(out, "scanned.bin")), BinWriter(os.path.join(out, "reposed.bin"))
     for r in recs:
@@ -475,6 +513,11 @@ def main():
         r["_v"], r["_f"], r["_T"] = v, f, T
     wS.close()
     wR.close()
+    wE = BinWriter(os.path.join(out, "alt_edge_corrected.bin"))
+    for r in recs:
+        if r["id"] in edge_alt:
+            r["mesh"]["scanned_edge_corrected"] = wE.add(edge_alt[r["id"]], r["_f"])
+    wE.close()
 
     # ── sanity numbers ───────────────────────────────────────────────────────────────────────
     by_id = {r["id"]: r for r in recs}
@@ -608,7 +651,11 @@ def main():
             {"id": "denver", "name": "Three-dimensional lower extremity musculoskeletal geometry of the Visible Human Female (Final 3D STL Models)",
              "provider": "University of Denver, Center for Orthopaedic Biomechanics", "url": "https://digitalcommons.du.edu/visiblehuman/1",
              "doi": "10.56902/COB.vh.2022.1", "license": "CC BY 4.0", "license_url": "https://creativecommons.org/licenses/by/4.0/",
-             "attribution": denver_import.ATTR, "provenance": "scanned (manual segmentation of the donor's cryosections)"}],
+             "attribution": denver_import.ATTR, "provenance": "scanned (manual segmentation of the donor's cryosections)"},
+            {"id": "wu2015", "name": "3D Topography of the Young Adult Anal Sphincter Complex (interactive 3D-PDF of the female pelvic floor, specimen CVH5)",
+             "provider": "Wu Y. et al., Academic Medical Center Amsterdam / Maastricht University", "url": "https://doi.org/10.1371/journal.pone.0140736.s004",
+             "doi": "10.1371/journal.pone.0132226", "license": "CC BY 4.0", "license_url": "https://creativecommons.org/licenses/by/4.0/",
+             "attribution": wu_place.ATTR, "provenance": "curated (a different individual; remodelled surfaces)"}],
         "tools": [
             {"name": "TotalSegmentator 2.18.0", "license": "Apache-2.0 (open tasks only were used)",
              "cite": "Wasserthal J. et al. TotalSegmentator: Robust Segmentation of 104 Anatomic Structures in CT Images. Radiology: Artificial Intelligence 2023;5(5):e230024."},
@@ -625,10 +672,16 @@ def main():
         "meshes": {"format": "little-endian; per item float32 xyz positions (count = vertices) followed by uint32 triangle indices (count = 3 x triangles), "
                              "outward counter-clockwise winding",
                    "scanned": "scanned.bin", "reposed": "reposed.bin",
+                   "alternatives": {"scanned_edge_corrected": {
+                       "file": "alt_edge_corrected.bin", "default": False,
+                       "doc": "OPTIONAL. CT hip and limb bones in the scanned pose with a per-bone uniform normal offset that puts the surface on the "
+                              "CT's own cortical edge (item.edge_correction; item.mesh.scanned_edge_corrected). Same triangles as the default mesh. "
+                              "Apply item.repose yourself for the re-posed arm bones.", "items": edge_report}},
                    "reposed_doc": "same items as scanned minus pose == 'scanned-only'; upper-limb bones have their `repose` transform applied"},
         "pose": pose,
         "hra_placement": hra_report,
         "denver_import": den_report,
+        "wu_import": wu_report,
         "fat": json.load(open(os.path.join(work, "fat_report.json"))) if os.path.exists(os.path.join(work, "fat_report.json")) else None,
         "hooks": {"denver": {"present": bool(den_report["present"]), "expected_directory": DENVER_DIR + "/" + denver_import.SUBDIR,
                              "import_status": "implemented (denver_import.py); items VD_*" if den_report["present"] else
@@ -671,6 +724,13 @@ def main():
         render([G(lambda r: r["id"].startswith("VF_tarsal") or r["id"].startswith("VF_metatarsal") or r["id"].startswith("VF_toes"), (255, 120, 60)),
                 G(lambda r: r["source"] == "denver" and r["kind"] in ("bone", "bone-group") and re.search(r"talus|calcaneus|navicular|cuboid|cuneiform", r["id"]) is not None, (120, 220, 255))],
                os.path.join(out, "preview", "denver_tarsals_vs_ct.png"), height=700, crop=([-0.2, 0.0, -0.12], [0.2, 0.2, 0.2]))
+    if wu_report["present"]:
+        wu = lambda rx: (lambda r: r["source"] == "wu2015" and re.search(rx, r["id"]) is not None)
+        render([G(lambda r: r["id"] in ("VF_hip_left", "VF_hip_right", "VF_sacrum"), (110, 110, 95)),
+                G(wu(r"pubovisceral|puborectal|coccygeal"), (230, 90, 80)), G(wu(r"anal_sphincter|rectococc|rectoperineal|conjoint"), (255, 190, 80)),
+                G(wu(r"urethra|bulbospong|ischiocavern|perineal"), (120, 200, 255)), G(wu(r"clitoris|vestibular|bartholin"), (255, 110, 220)),
+                G(lambda r: r["id"] in ("HRA_vagina", "HRA_body_of_uterus", "HRA_cervix", "VF_urinary_bladder"), (120, 255, 150))],
+               os.path.join(out, "preview", "wu_pelvic_floor.png"), height=900, crop=([-0.17, 0.78, -0.12], [0.17, 1.0, 0.16]))
     render([G(skin, (150, 150, 150), True), G(lambda r: r["id"] == "HRA_skin", (255, 120, 170))],
            os.path.join(out, "preview", "skin_ct_vs_hra.png"))
     # re-posed arms against the male (male drawn after rigid trunk alignment + translation to the female shoulders' midpoint)
@@ -689,7 +749,8 @@ def main():
            os.path.join(out, "preview", "arms_scanned_vs_reposed.png"), crop=box)
     print(json.dumps({"counts": manifest["counts"], "pose": pose["sides"], "trunk_deg": pose["trunk_alignment_female_to_male_deg"],
                       "pelvis": pelvis, "median_ratio": med, "outliers": [s for s in sizes if s["outlier"]],
-                      "coverage_by_system": sanity["coverage_by_system"], "hra": hra_report.get("summary"), "denver": den_report.get("summary")}, indent=1))
+                      "coverage_by_system": sanity["coverage_by_system"], "hra": hra_report.get("summary"), "denver": den_report.get("summary"),
+                      "wu": {k: wu_report.get(k) for k in ("decoded", "scale_applied", "bones", "orientation_search")}}, indent=1))
 
 
 if __name__ == "__main__":

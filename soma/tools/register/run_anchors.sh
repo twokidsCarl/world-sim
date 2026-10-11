@@ -23,6 +23,11 @@ MOOSE=$(ls -d $D/moose_in/VHF/moosez-* | tail -1)/segmentations/clin_CT_peripher
 $PY -I $T/fix_volume.py $D/vhf_ct_1mm.nii.gz $D/seg "$MOOSE" $OUT/work > $T/out/fix_volume.log
 # 2. cleaned, smoothed, decimated meshes -> work/meshes.npz
 $PY -I $T/build_meshes.py $OUT/work > $T/out/build_meshes.log
+# 0. 盆底参考模型：下载 PLoS ONE 的 3D-PDF 并取出 U3D 流（需要联网；失败则数据包不含 WU_ 条目）
+# 0. pelvic floor reference: fetch the PLoS ONE 3D-PDF and extract its U3D stream (needs network;
+#    if it fails the package is built without WU_ items)
+$PY -c "import pypdf" 2>/dev/null || uv pip install --python $PY -q pypdf
+[ -s $RAW/pelvic_floor/wu2015_corr_pone.0140736.s004.u3d ] || $PY -I $T/pelvic_floor_refs.py $RAW/pelvic_floor > $T/out/pelvic_floor_refs.log 2>&1 || true
 # 2b. subcutaneous fat thickness and body composition from the fixed CT -> work/fat_report.json
 $PY -I $T/fat_thickness.py $OUT/work > $T/out/fat_thickness.log
 # 3. frame, kinematics, re-posing, male correspondences, HRA organs + skin, Denver import (if
