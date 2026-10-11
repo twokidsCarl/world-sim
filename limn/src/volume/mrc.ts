@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 /**
  * MRC / CCP4 密度图：电镜数据库 EMDB 存放三维密度的格式。文件头 1024 字节，后面可以有一段扩展头，
  * 然后是体素值。这里读成 x 最快、z 最慢的 32 位浮点数组，并给出每个体素的大小和第一个体素的坐标（Å）。
@@ -20,7 +22,7 @@ export interface Volume {
 }
 
 export function parseMrc(buffer: ArrayBuffer): Volume {
-  if (buffer.byteLength < 1024) throw new Error('密度图文件太短')
+  if (buffer.byteLength < 1024) throw new Error(t('error.mrc.short'))
   let little = true
   let v = new DataView(buffer)
   // 字节序：模式号应当是个小整数 / byte order: the mode number should be a small integer
@@ -32,12 +34,12 @@ export function parseMrc(buffer: ArrayBuffer): Volume {
   const axis = [i32(16), i32(17), i32(18)]
   const ext = i32(23)
   const shift = [f32(49), f32(50), f32(51)]
-  if (!n.every((k) => k > 0 && k < 4096) || ![1, 2, 3].every((a) => axis.includes(a))) throw new Error('密度图的文件头无法识别')
+  if (!n.every((k) => k > 0 && k < 4096) || ![1, 2, 3].every((a) => axis.includes(a))) throw new Error(t('error.mrc.header'))
   const count = n[0]! * n[1]! * n[2]!
   const offset = 1024 + Math.max(0, ext)
   const bytes = mode === 0 ? 1 : mode === 1 || mode === 6 || mode === 12 ? 2 : mode === 2 ? 4 : 0
-  if (!bytes) throw new Error(`不支持的密度图数据类型（模式 ${mode}）`)
-  if (buffer.byteLength < offset + count * bytes) throw new Error('密度图文件不完整')
+  if (!bytes) throw new Error(t('error.mrc.mode', { mode }))
+  if (buffer.byteLength < offset + count * bytes) throw new Error(t('error.mrc.truncated'))
   v = new DataView(buffer, offset)
   const half = (h: number) => {
     // IEEE 半精度浮点 / IEEE half-precision float

@@ -1,5 +1,6 @@
 import membranes from '../../data/membranes.json'
 import { El, IDENTITY, type Molecule } from '../mol/types'
+import { t, tIn } from '../i18n'
 
 interface Graph {
   pos: number[]
@@ -13,7 +14,7 @@ function readSdf(text: string, id: string): Graph {
   const lines = text.split(/\r?\n/)
   const counts = lines[3] ?? ''
   const n = Number(counts.slice(0, 3)), nb = Number(counts.slice(3, 6))
-  if (!Number.isFinite(n) || n <= 0) throw new Error(`${id} 的坐标文件无法解析`)
+  if (!Number.isFinite(n) || n <= 0) throw new Error(t('error.lipid.parse', { id }))
   const pos: number[] = [], element: number[] = []
   const index = new Map<number, number>()
   for (let i = 0; i < n; i++) {
@@ -24,7 +25,7 @@ function readSdf(text: string, id: string): Graph {
     pos.push(Number(l.slice(0, 10)), Number(l.slice(10, 20)), Number(l.slice(20, 30)))
     element.push(sym === 'C' ? El.C : sym === 'N' ? El.N : sym === 'O' ? El.O : sym === 'S' ? El.S : sym === 'P' ? El.P : El.Other)
   }
-  if (element.length === 0) throw new Error(`${id} 没有原子`)
+  if (element.length === 0) throw new Error(t('error.lipid.empty', { id }))
   const bonds: number[][] = element.map(() => [])
   for (let i = 0; i < (Number.isFinite(nb) ? nb : 0); i++) {
     const l = lines[4 + n + i] ?? ''
@@ -202,6 +203,9 @@ export interface LipidSet {
   id: string
   name: string
   basis: string
+  /** 名称和依据的英文 / the name and the basis in English */
+  nameEn: string
+  basisEn: string
   citation: string
   outer: LipidShare[]
   inner: LipidShare[]
@@ -214,7 +218,7 @@ const CCD = membranes.lipids as Record<string, { ccd: string; name: string; name
 /** 取某个化学组分的理想坐标（经本地服务）/ fetch a chemical component's ideal coordinates through the local service */
 async function fetchLipid(ccd: string): Promise<{ mol: Molecule; tails: number }> {
   const res = await fetch(`/api/ligand/${ccd}`)
-  if (!res.ok) throw new Error(`下载脂质 ${ccd} 的坐标失败`)
+  if (!res.ok) throw new Error(t('error.lipid.fetch', { id: ccd }))
   return parseLipid(await res.text(), ccd)
 }
 
@@ -239,7 +243,7 @@ export async function loadLipids(membraneId?: string): Promise<LipidSet> {
   }
   if (!entry) {
     const pc = [{ cls: 'PC', ...loaded.get('PC')!, fraction: 1 }]
-    return { id: 'generic', name: '只有 POPC 的膜', basis: '没有这类膜的组成数据，用同一种磷脂（POPC）铺成。', citation: '', outer: pc, inner: pc }
+    return { id: 'generic', name: tIn('zh', 'lipid.generic.name'), nameEn: tIn('en', 'lipid.generic.name'), basis: tIn('zh', 'lipid.generic.basis'), basisEn: tIn('en', 'lipid.generic.basis'), citation: '', outer: pc, inner: pc }
   }
-  return { id: entry.id, name: entry.name, basis: entry.basis, citation: entry.citation, outer: leaflet(entry.outer, entry.cholesterol), inner: leaflet(entry.inner, entry.cholesterol) }
+  return { id: entry.id, name: entry.name, nameEn: entry.nameEn, basis: entry.basis, basisEn: entry.basisEn, citation: entry.citation, outer: leaflet(entry.outer, entry.cholesterol), inner: leaflet(entry.inner, entry.cholesterol) }
 }

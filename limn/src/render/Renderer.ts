@@ -1,5 +1,7 @@
 import { COMPOSITE_FS, EDGE_FS, QUAD_VS, SPHERE_FS, SPHERE_VS } from './shaders'
 import type { Style } from './style'
+// 这个文件里 `t` 另有所指，所以换个名字 / `t` means something else in this file, hence the other name
+import { t as tr } from '../i18n'
 
 /**
  * 一段连续的原子，由实例表里连续的若干个实例各画一次。
@@ -132,7 +134,7 @@ export class Renderer {
 
   constructor(readonly canvas: HTMLCanvasElement | OffscreenCanvas) {
     const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: true }) as WebGL2RenderingContext | null
-    if (!gl) throw new Error('这个浏览器不支持 WebGL2')
+    if (!gl) throw new Error(tr('error.webgl2'))
     this.gl = gl
     this.sphere = this.program(SPHERE_VS, SPHERE_FS)
     this.edgeProg = this.program(QUAD_VS, EDGE_FS)
@@ -165,11 +167,11 @@ export class Renderer {
       const s = gl.createShader(type)!
       gl.shaderSource(s, src)
       gl.compileShader(s)
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error('着色器编译失败: ' + gl.getShaderInfoLog(s))
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(tr('error.shaderCompile', { log: gl.getShaderInfoLog(s) ?? '' }))
       gl.attachShader(p, s)
     }
     gl.linkProgram(p)
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('着色器链接失败: ' + gl.getProgramInfoLog(p))
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(tr('error.shaderLink', { log: gl.getProgramInfoLog(p) ?? '' }))
     this.uniforms.set(p, new Map())
     return p
   }
@@ -299,7 +301,7 @@ export class Renderer {
       const f = gl.createFramebuffer()!
       gl.bindFramebuffer(gl.FRAMEBUFFER, f)
       for (const [a, x] of attach) gl.framebufferTexture2D(gl.FRAMEBUFFER, a, gl.TEXTURE_2D, x, 0)
-      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error(`无法创建 ${w}×${h} 的渲染目标`)
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error(tr('error.renderTarget', { w, h }))
       return f
     }
     const color = tex(gl.RGBA8), ids = tex(gl.RGBA32UI), depth = tex(gl.DEPTH_COMPONENT32F), edge = tex(gl.RGBA8), out = tex(gl.RGBA8)

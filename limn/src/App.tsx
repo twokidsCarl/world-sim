@@ -7,11 +7,11 @@ import { CATALOG, useStore } from './state/store'
 import neuro from '../data/neuro.json'
 import neurons from '../data/neurons.json'
 import cells from '../data/cells.json'
-import { TIER_LABEL } from './scene/spec'
+import { colorModeLabel, noteText, pick, roleLabel, t, tierLabel } from './i18n'
 import { entityLch } from './style/assign'
-import { COLOR_MODE_LABEL, COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
+import { COLOR_MODES, confidenceLch, domainLch, domainsOf, pathogenicityLch, SITE_LCH, type ColorMode } from './style/annotate'
 import { hex, oklch } from './style/oklab'
-import { ROLE_LABEL, ROLES, TONE_MOLECULE, type Role } from './style/palettes'
+import { ROLES, TONE_MOLECULE, type Role } from './style/palettes'
 import { Stage, stage } from './ui/Stage'
 
 /** 嵌入模式下不带参数打开时画的模型 / the model drawn when embed mode is opened with no parameters */
@@ -30,6 +30,7 @@ function Slider(p: { label: string; value: number; min: number; max: number; ste
 /** 某期刊最近发布的结构，按论文归并；点一个结构就画它 / structures recently released for a journal, grouped by paper; click one to draw it */
 function Recent({ disabled }: { disabled: boolean }) {
   const loadId = useStore((s) => s.loadId)
+  useStore((s) => s.lang) // 换语言时重新渲染 / re-render when the language changes
   const [journal, setJournal] = useState('Nature')
   const [days, setDays] = useState(90)
   const [data, setData] = useState<{ journals: string[]; total: number; entries: api.Released[] } | null>(null)
@@ -58,16 +59,16 @@ function Recent({ disabled }: { disabled: boolean }) {
           ))}
         </select>
         <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
-          <option value={30}>近 30 天</option>
-          <option value={90}>近 90 天</option>
-          <option value={365}>近一年</option>
+          <option value={30}>{t('recent.days30')}</option>
+          <option value={90}>{t('recent.days90')}</option>
+          <option value={365}>{t('recent.year')}</option>
         </select>
       </div>
       {error && <div className="error">{error}</div>}
-      {!data && !error && <div className="muted">正在查询 RCSB…</div>}
+      {!data && !error && <div className="muted">{t('recent.loading')}</div>}
       {data && (
         <div className="muted">
-          {data.total} 个结构{data.total > data.entries.length && `，显示最新的 ${data.entries.length} 个`}；按发布日期排序。
+          {data.total > data.entries.length ? t('recent.countShown', { total: data.total, shown: data.entries.length }) : t('recent.count', { total: data.total })}
         </div>
       )}
       {[...papers.values()].map((list) => (
@@ -75,11 +76,11 @@ function Recent({ disabled }: { disabled: boolean }) {
           <div>{list[0]!.citation?.title ?? list[0]!.title}</div>
           <div className="muted">
             {list[0]!.citation?.authors[0]}
-            {(list[0]!.citation?.authors.length ?? 0) > 1 && ' 等'} · {list[0]!.released}
+            {(list[0]!.citation?.authors.length ?? 0) > 1 && t('etAl')} · {list[0]!.released}
           </div>
           <div className="ids">
             {list.slice(0, 8).map((e) => (
-              <button key={e.id} disabled={disabled} title={`${e.title}\n${e.method}${e.resolution ? `, ${e.resolution.toFixed(1)} Å` : ''}, ${e.atoms.toLocaleString()} 原子`} onClick={() => void loadId(e.id)}>
+              <button key={e.id} disabled={disabled} title={`${e.title}\n${e.method}${e.resolution ? `, ${e.resolution.toFixed(1)} Å` : ''}, ${t('unit.atoms', { n: e.atoms.toLocaleString() })}`} onClick={() => void loadId(e.id)}>
                 {e.id}
               </button>
             ))}
@@ -90,6 +91,9 @@ function Recent({ disabled }: { disabled: boolean }) {
     </div>
   )
 }
+
+/** 成对字段里另一种语言的那个，用作悬停提示 / of a pair of fields, the one in the other language, for a tooltip */
+const other = (zh: string, en: string) => pick(en, zh)
 
 const sw = (lch: [number, number, number]) => <span className="swatch" style={{ background: hex(oklch(...lch)), display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} />
 
@@ -104,25 +108,25 @@ function Legend() {
       <div className="muted legend">
         {any ? (
           <>
-            {sw(confidenceLch(95))}很高（≥90） {sw(confidenceLch(80))}较高（70–90） {sw(confidenceLch(60))}低（50–70）
+            {sw(confidenceLch(95))}{t('legend.confidence.veryHigh')} {sw(confidenceLch(80))}{t('legend.confidence.high')} {sw(confidenceLch(60))}{t('legend.confidence.low')}
             <br />
-            pLDDT 是 AlphaFold 对每个残基位置的置信度；低于 50 的没有画。
+            {t('legend.confidence.about')}
           </>
         ) : (
-          '置信度只有预测模型才有；这是实验结构，颜色不变。'
+          t('legend.confidence.none')
         )}
       </div>
     )
   }
   const proteins = s.panels.flatMap((p) => Object.values(p.annotation?.proteins ?? {}))
-  if (proteins.length === 0) return <div className="muted legend">没有查到这个结构的注释（或本地服务没有启动），颜色不变。</div>
+  if (proteins.length === 0) return <div className="muted legend">{t('legend.noAnnotation')}</div>
   if (mode === 'domains')
     return (
       <div className="muted legend">
         {proteins.map((p) => (
           <div key={p.accession}>
-            <b>{p.name}</b>（UniProt {p.accession}）
-            {domainsOf(p).length === 0 && ' 没有标注结构域'}
+            <b>{p.name}</b>{t('legend.uniprot', { accession: p.accession })}
+            {domainsOf(p).length === 0 && t('legend.noDomains')}
             {domainsOf(p).map((d, k) => (
               <div key={k}>{sw(domainLch(k))}{d.name} {d.start}–{d.end}</div>
             ))}
@@ -133,21 +137,21 @@ function Legend() {
   if (mode === 'sites')
     return (
       <div className="muted legend">
-        {sw(SITE_LCH.active)}活性位点 {sw(SITE_LCH.binding)}结合位点 {sw(SITE_LCH.site)}其他位点
+        {sw(SITE_LCH.active)}{t('legend.site.active')} {sw(SITE_LCH.binding)}{t('legend.site.binding')} {sw(SITE_LCH.site)}{t('legend.site.other')}
         {proteins.map((p) => (
           <div key={p.accession}>
-            <b>{p.name}</b>：{p.features.filter((f) => f.kind !== 'domain').slice(0, 12).map((f) => `${f.name} ${f.start}${f.end > f.start ? '–' + f.end : ''}`).join('；') || '没有标注位点'}
+            <b>{p.name}</b>{t('punct.colon')}{p.features.filter((f) => f.kind !== 'domain').slice(0, 12).map((f) => `${f.name} ${f.start}${f.end > f.start ? '–' + f.end : ''}`).join(t('punct.semicolon')) || t('legend.noSites')}
           </div>
         ))}
-        <div>来源：UniProt。</div>
+        <div>{t('legend.sourceUniprot')}</div>
       </div>
     )
   return (
     <div className="muted legend">
-      {sw(pathogenicityLch(0.05))}多半无害 {sw(pathogenicityLch(0.5))}不确定 {sw(pathogenicityLch(0.95))}多半致病
+      {sw(pathogenicityLch(0.05))}{t('legend.path.benign')} {sw(pathogenicityLch(0.5))}{t('legend.path.uncertain')} {sw(pathogenicityLch(0.95))}{t('legend.path.pathogenic')}
       <br />
-      每个位置上 19 种氨基酸替换的 AlphaMissense 预测值的平均。这是预测，不是临床结论。
-      {proteins.some((p) => !p.pathogenicity) && ' 有的蛋白没有这项数据（只覆盖人类蛋白），颜色不变。'}
+      {t('legend.path.about')}
+      {proteins.some((p) => !p.pathogenicity) && t('legend.path.missing')}
     </div>
   )
 }
@@ -196,17 +200,19 @@ export function App() {
 
   if (embed) {
     const src = s.panels[0]?.spec.source
+    const title = s.spec ? pick(s.spec.title, s.spec.titleEn) : ''
+    const credit = src ? [pick(src.attribution, src.attributionEn), pick(src.licence, src.licenceEn)] : []
     return (
       <div className="app embed">
         {/* 标题条单独占一行，不压在画面上 / the title strip has a row of its own and never sits on the picture */}
         <div className="embed-info">
           {s.spec && s.panels.length > 0 && (
             <>
-              <b title={s.spec.title}>{s.spec.title}</b>
-              {src && <span className="muted" title={[src.attribution, src.licence].filter(Boolean).join(' · ')}>{[src.kind === 'pdb' ? `PDB ${src.id}` : '', src.attribution, src.licence].filter(Boolean).join(' · ')}</span>}
+              <b title={title}>{title}</b>
+              {src && <span className="muted" title={credit.filter(Boolean).join(' · ')}>{[src.kind === 'pdb' ? `PDB ${src.id}` : '', ...credit].filter(Boolean).join(' · ')}</span>}
               {!s.spec.landscape && s.spec.kind !== 'neuron' && (
                 <label className="embed-cut">
-                  剖开 / Cut
+                  {t('look.cut')}
                   <input type="range" min={0} max={0.9} step={0.01} value={s.cut} onChange={(e) => s.setLook({ cut: Number(e.target.value) })} />
                 </label>
               )}
@@ -221,49 +227,54 @@ export function App() {
   return (
     <div className="app">
       <div className="side">
-        <h1>limn</h1>
+        <div className="side-head">
+          <h1>limn</h1>
+          {/* 按钮上写的是要换成的那种语言 / the button names the language it switches to */}
+          <button className="lang" onClick={() => s.setLang(s.lang === 'zh' ? 'en' : 'zh')}>{t('lang.switch')}</button>
+        </div>
         <div className="tabs">
-          <button className={mode === 'topic' ? 'on' : ''} onClick={() => setMode('topic')}>按主题</button>
-          <button className={mode === 'model' ? 'on' : ''} onClick={() => setMode('model')}>现成模型</button>
-          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>按编号</button>
-          <button className={mode === 'recent' ? 'on' : ''} onClick={() => setMode('recent')}>最新发表</button>
+          <button className={mode === 'topic' ? 'on' : ''} onClick={() => setMode('topic')}>{t('tab.topic')}</button>
+          <button className={mode === 'model' ? 'on' : ''} onClick={() => setMode('model')}>{t('tab.model')}</button>
+          <button className={mode === 'id' ? 'on' : ''} onClick={() => setMode('id')}>{t('tab.id')}</button>
+          <button className={mode === 'recent' ? 'on' : ''} onClick={() => setMode('recent')}>{t('tab.recent')}</button>
         </div>
         {mode === 'topic' ? (
           <form onSubmit={(e) => (e.preventDefault(), void s.resolveTopic(topic))}>
-            <textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="一个病毒、基因、蛋白或机理，例如：CRISPR-Cas9 切割 DNA" />
+            <textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={t('topic.placeholder')} />
             <div className="row" style={{ marginTop: 6 }}>
-              <button className="primary" disabled={working || !canAsk || !topic.trim()}>生成</button>
-              {server && !canAsk && <span className="muted">{server.ok ? '本机没有找到 claude 命令' : '本地服务未启动（bun run dev）'}</span>}
+              <button className="primary" disabled={working || !canAsk || !topic.trim()}>{t('topic.submit')}</button>
+              {server && !canAsk && <span className="muted">{server.ok ? t('server.noClaude') : t('server.down')}</span>}
             </div>
           </form>
         ) : mode === 'recent' ? (
           <Recent disabled={working} />
         ) : mode === 'model' ? (
           <div className="catalog">
+            {/* 按钮上是当前语言的名字，悬停提示里是另一种语言的 / each button carries the name in the current language, and its tooltip the name in the other */}
             {CATALOG.map((m) => (
-              <button key={m.id} disabled={working} className={s.spec?.topic === m.title ? 'on' : ''} title={m.titleEn} onClick={() => void s.loadCatalog(m.id)}>
-                {m.title}
+              <button key={m.id} disabled={working} className={s.spec?.topic === m.title ? 'on' : ''} title={other(m.title, m.titleEn)} onClick={() => void s.loadCatalog(m.id)}>
+                {pick(m.title, m.titleEn)}
               </button>
             ))}
-            <h2>整个细胞（电镜）</h2>
+            <h2>{t('catalog.cells')}</h2>
             {cells.cells.map((c) => (
-              <button key={c.id} disabled={working} title={c.titleEn} onClick={() => void s.loadCell(c.id)}>
-                {c.title}
+              <button key={c.id} disabled={working} title={other(c.title, c.titleEn)} onClick={() => void s.loadCell(c.id)}>
+                {pick(c.title, c.titleEn)}
               </button>
             ))}
-            <h2>神经元的形态</h2>
+            <h2>{t('catalog.neurons')}</h2>
             {neurons.neurons.map((n) => (
-              <button key={n.id} disabled={working} title={`${n.titleEn} (NeuroMorpho.Org: ${n.name})`} onClick={() => void s.loadNeuron(n.id)}>
-                {n.title}
+              <button key={n.id} disabled={working} title={`${other(n.title, n.titleEn)} (NeuroMorpho.Org: ${n.name})`} onClick={() => void s.loadNeuron(n.id)}>
+                {pick(n.title, n.titleEn)}
               </button>
             ))}
-            <h2>神经系统的分子</h2>
+            <h2>{t('catalog.neuro')}</h2>
             {neuro.groups.map((g) => (
               <details key={g.id}>
-                <summary title={g.titleEn}>{g.title}</summary>
+                <summary title={other(g.title, g.titleEn)}>{pick(g.title, g.titleEn)}</summary>
                 {g.entries.map((e) => (
-                  <button key={e.id} disabled={working} title={`${e.titleEn} (PDB ${e.id})`} onClick={() => void s.loadId(e.id, e.title)}>
-                    {e.title}
+                  <button key={e.id} disabled={working} title={`${other(e.title, e.titleEn)} (PDB ${e.id})`} onClick={() => void s.loadId(e.id, e.title, e.titleEn)}>
+                    {pick(e.title, e.titleEn)}
                   </button>
                 ))}
               </details>
@@ -271,8 +282,8 @@ export function App() {
           </div>
         ) : (
           <form className="row" onSubmit={(e) => (e.preventDefault(), void s.loadId(id))}>
-            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="2hhb、AF-P04637 或 EMD-1080" spellCheck={false} />
-            <button className="primary" disabled={working}>载入</button>
+            <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder={t('id.placeholder')} spellCheck={false} />
+            <button className="primary" disabled={working}>{t('id.submit')}</button>
           </form>
         )}
         {s.error && <div className="error">{s.error}</div>}
@@ -280,19 +291,19 @@ export function App() {
         {s.spec && s.panels.length > 0 && (
           <>
             <div className="caption">
-              <b>{s.spec.title}</b>
-              {s.spec.caption && <div>{s.spec.caption}</div>}
+              <b>{pick(s.spec.title, s.spec.titleEn)}</b>
+              {s.spec.caption && <div>{pick(s.spec.caption, s.spec.captionEn)}</div>}
             </div>
 
             <div>
-              <h2>数据来源</h2>
+              <h2>{t('section.sources')}</h2>
               {s.panels.map((p, pi) => (
                 <div className="source" key={pi}>
                   <div>
-                    <b>{p.spec.source.id}</b> {p.spec.label !== p.spec.source.id && p.spec.label}
+                    <b>{p.spec.source.id}</b> {p.spec.label !== p.spec.source.id && pick(p.spec.label, p.spec.labelEn)}
                   </div>
                   <div className="muted">
-                    {[p.spec.source.method, p.spec.source.resolution ? `${p.spec.source.resolution.toFixed(2)} Å` : '', p.spec.source.year].filter(Boolean).join(' · ') || p.spec.source.title}
+                    {[pick(p.spec.source.method, p.spec.source.methodEn), p.spec.source.resolution ? `${p.spec.source.resolution.toFixed(2)} Å` : '', p.spec.source.year].filter(Boolean).join(' · ') || p.spec.source.title}
                   </div>
                   {p.spec.reason && <div className="muted">{p.spec.reason}</div>}
                   {p.paper && (
@@ -300,16 +311,16 @@ export function App() {
                       {p.paper.citation.title}
                       <br />
                       {p.paper.citation.authors.slice(0, 3).join(', ')}
-                      {p.paper.citation.authors.length > 3 && ' 等'} · <i>{p.paper.citation.journal}</i> {p.paper.citation.year}
+                      {p.paper.citation.authors.length > 3 && t('etAl')} · <i>{p.paper.citation.journal}</i> {p.paper.citation.year}
                       {p.paper.citation.doi && (
                         <>
                           {' · '}
-                          <a href={`https://doi.org/${p.paper.citation.doi}`} target="_blank" rel="noreferrer">论文</a>
+                          <a href={`https://doi.org/${p.paper.citation.doi}`} target="_blank" rel="noreferrer">{t('paper.link')}</a>
                         </>
                       )}
                       {p.paper.open && p.paper.abstract && (
                         <details>
-                          <summary>摘要（开放获取，{p.paper.licence}）</summary>
+                          <summary>{t('paper.abstract', { licence: p.paper.licence })}</summary>
                           {p.paper.abstract}
                         </details>
                       )}
@@ -317,16 +328,16 @@ export function App() {
                   )}
                   {p.spec.source.attribution && (
                     <div className="muted">
-                      {p.spec.source.tier && `${TIER_LABEL[p.spec.source.tier]} · `}
-                      {p.spec.source.attribution}
+                      {p.spec.source.tier && `${tierLabel(p.spec.source.tier)} · `}
+                      {pick(p.spec.source.attribution, p.spec.source.attributionEn)}
                       <br />
                       {p.spec.source.citation}
                       <br />
-                      许可：{p.spec.source.licence}
+                      {t('source.licence', { licence: pick(p.spec.source.licence, p.spec.source.licenceEn) })}
                       {p.spec.source.link && (
                         <>
                           {' · '}
-                          <a href={p.spec.source.link} target="_blank" rel="noreferrer">来源</a>
+                          <a href={p.spec.source.link} target="_blank" rel="noreferrer">{t('source.link')}</a>
                         </>
                       )}
                     </div>
@@ -338,81 +349,86 @@ export function App() {
                       if (!ing) return null
                       return (
                         <div className="muted">
-                          {ing.abundance}（{ing.tier === 'curated' ? '实测数据' : '估计'}） → {ing.copies} 个{placed !== undefined && placed < ing.copies ? `，放下了 ${placed} 个` : ''}
+                          {t(placed !== undefined && placed < ing.copies ? 'ingredient.linePlaced' : 'ingredient.line', { abundance: noteText(ing.abundance), basis: t(ing.tier === 'curated' ? 'ingredient.measured' : 'ingredient.estimated'), copies: ing.copies, placed: placed ?? ing.copies })}
                         </div>
                       )
                     })()}
-                  {p.membrane && <div className="muted">膜内取向：{p.membrane.source === 'OPM' ? `OPM（${p.membrane.matched} 个残基叠合，偏差 ${p.membrane.rmsd.toFixed(2)} Å）` : `PDBTM，朝向按 UniProt 拓扑注释（${p.membrane.matched} 个残基）`}</div>}
+                  {p.membrane && <div className="muted">{p.membrane.source === 'OPM' ? t('membrane.opm', { matched: p.membrane.matched, rmsd: p.membrane.rmsd.toFixed(2) }) : t('membrane.pdbtm', { matched: p.membrane.matched })}</div>}
                   <div className="row" style={{ margin: '4px 0' }}>
                     <select value={p.spec.assembly} onChange={(e) => s.setAssembly(pi, e.target.value)} style={{ flex: 1 }}>
                       {p.mol.assemblies.map((a) => (
                         <option key={a.id} value={a.id}>
-                          {a.id === 'asym' ? '非对称单元' : `组装体 ${a.id}`} · {placedAtomCount(p.mol, a.id).toLocaleString()} 原子
+                          {a.id === 'asym' ? t('assembly.asym') : t('assembly.n', { id: a.id })} · {t('unit.atoms', { n: placedAtomCount(p.mol, a.id).toLocaleString() })}
                         </option>
                       ))}
                     </select>
                   </div>
-                  {p.mol.entities.map((e, i) => (
-                    <div className="entity" key={e.id} title={e.description}>
+                  {p.mol.entities.map((e, i) => {
+                    // 有两种语言名字的实体（细胞器、神经元的各部分、密度图）只显示当前语言的
+                    // entities named in both languages (organelles, parts of a neuron, a density map) show the current one only
+                    const named = p.spec.entities.find((x) => x.entityId === e.id)
+                    return (
+                    <div className="entity" key={e.id} title={named?.nameEn ? pick(named.name, named.nameEn) : e.description}>
                       <div className="swatch" style={{ background: s.colorings[pi] ? hex(oklch(...entityLch(s.colorings[pi]!, i, TONE_MOLECULE))) : '#ccc' }} />
-                      <span>{p.spec.entities.find((x) => x.entityId === e.id)?.name || e.description || e.kind}</span>
+                      <span>{pick(named?.name, named?.nameEn) || e.description || e.kind}</span>
                       <select value={s.colorings[pi]?.roles[i]} onChange={(ev) => s.setRole(pi, i, ev.target.value as Role)}>
                         {ROLES.map((r) => (
-                          <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                          <option key={r} value={r}>{roleLabel(r)}</option>
                         ))}
                       </select>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ))}
               {!s.spec.landscape && !s.spec.mesoscale && s.spec.kind !== 'neuron' && (
                 <div style={{ margin: '6px 0' }}>
                   <div className="row">
-                    <label>上色</label>
+                    <label>{t('color.label')}</label>
                     <select value={s.colorings[0]?.mode ?? 'role'} disabled={working} style={{ flex: 1 }} onChange={(e) => void s.setColorMode(e.target.value as ColorMode)}>
                       {COLOR_MODES.map((m) => (
-                        <option key={m} value={m}>{COLOR_MODE_LABEL[m]}</option>
+                        <option key={m} value={m}>{colorModeLabel(m)}</option>
                       ))}
                     </select>
                   </div>
                   <Legend />
                 </div>
               )}
-              {s.spec.kind !== 'neuron' && <div className="muted">由真实原子坐标绘制；未画出水和氢原子。{s.panels.length > 1 && !s.spec.landscape && '各面板比例相同。'}</div>}
+              {s.spec.kind !== 'neuron' && <div className="muted">{t('scene.realAtoms')}{s.panels.length > 1 && !s.spec.landscape && t('scene.sameScale')}</div>}
               {s.spec.landscape && (
                 <div className="row" style={{ margin: '6px 0' }}>
-                  <button disabled={working} onClick={() => s.repack()}>重新随机排布</button>
+                  <button disabled={working} onClick={() => s.repack()}>{t('landscape.repack')}</button>
                   <span className="muted">
-                    {s.spec.landscape.width / 10}×{s.spec.landscape.height / 10} nm，厚 {s.spec.landscape.depth / 10} nm
-                    {s.dnaPairs > 0 && `；DNA ${s.dnaPairs.toLocaleString()} 个碱基对（程序生成）`}
+                    {t('landscape.size', { w: s.spec.landscape.width / 10, h: s.spec.landscape.height / 10, d: s.spec.landscape.depth / 10 })}
+                    {s.dnaPairs > 0 && t('landscape.dna', { pairs: s.dnaPairs.toLocaleString() })}
                   </span>
                 </div>
               )}
               {s.spec.notes.length > 0 && (
                 <ul className="notes">
                   {s.spec.notes.map((n, i) => (
-                    <li key={i}>{n}</li>
+                    <li key={i}>{noteText(n)}</li>
                   ))}
                 </ul>
               )}
             </div>
 
             <div>
-              <h2>看图精修</h2>
-              <textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="可选：你的要求，例如“让 DNA 更突出”“转到能看见结合界面的角度”" />
+              <h2>{t('refine.title')}</h2>
+              <textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={t('refine.placeholder')} />
               <div className="row" style={{ marginTop: 6 }}>
                 <button className="primary" disabled={working || !canAsk} onClick={() => void refine({ maxRounds: 3, feedback, chooseView: s.rounds.length === 0 && !feedback.trim() && !s.spec!.landscape })}>
-                  {s.refining ? '精修中…' : '让 Claude 看图并修改'}
+                  {s.refining ? t('refine.running') : t('refine.start')}
                 </button>
               </div>
               {s.refining && <div className="muted" style={{ marginTop: 6 }}>{s.refining}</div>}
               {s.rounds.length > 0 && (
                 <div className="rounds" style={{ marginTop: 8 }}>
                   {s.rounds.map((r, i) => (
-                    <button className="round" key={i} title="回到这一版" onClick={() => s.setLook(structuredClone(r.look))}>
+                    <button className="round" key={i} title={t('refine.back')} onClick={() => s.setLook(structuredClone(r.look))}>
                       <img src={r.image} alt="" />
                       <div>
-                        <span className="score">{r.overall === null ? '选角度' : `${r.overall.toFixed(1)} 分`}</span>
+                        <span className="score">{r.overall === null ? t('refine.viewRound') : t('refine.score', { score: r.overall.toFixed(1) })}</span>
                         <p>{r.comment}</p>
                       </div>
                     </button>
@@ -422,29 +438,29 @@ export function App() {
             </div>
 
             <div>
-              <h2>线条与阴影</h2>
-              {!s.spec.landscape && <Slider label="剖开" value={s.cut} min={0} max={0.9} step={0.01} onChange={(v) => s.setLook({ cut: v })} />}
-              <Slider label="线宽" value={s.style.lineWidth} min={0.5} max={3} step={0.1} onChange={(v) => s.setStyle((x) => (x.lineWidth = v))} />
-              <Slider label="内部轮廓" value={s.style.contour.diffMax} min={1} max={60} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />
-              <Slider label="阴影强度" value={s.style.shadow.strength} min={0} max={0.006} step={0.0001} onChange={(v) => s.setStyle((x) => (x.shadow.strength = v))} />
-              <Slider label="最暗" value={s.style.shadow.floor} min={0.4} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.shadow.floor = v))} />
-              <Slider label="远处淡出" value={s.style.fog.back} min={0.4} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.fog.back = v))} />
+              <h2>{t('style.title')}</h2>
+              {!s.spec.landscape && <Slider label={t('look.cut')} value={s.cut} min={0} max={0.9} step={0.01} onChange={(v) => s.setLook({ cut: v })} />}
+              <Slider label={t('style.lineWidth')} value={s.style.lineWidth} min={0.5} max={3} step={0.1} onChange={(v) => s.setStyle((x) => (x.lineWidth = v))} />
+              <Slider label={t('style.innerLines')} value={s.style.contour.diffMax} min={1} max={60} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />
+              <Slider label={t('style.shadow')} value={s.style.shadow.strength} min={0} max={0.006} step={0.0001} onChange={(v) => s.setStyle((x) => (x.shadow.strength = v))} />
+              <Slider label={t('style.darkest')} value={s.style.shadow.floor} min={0.4} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.shadow.floor = v))} />
+              <Slider label={t('style.fog')} value={s.style.fog.back} min={0.4} max={1} step={0.01} onChange={(v) => s.setStyle((x) => (x.fog.back = v))} />
             </div>
 
             <div>
-              <h2>导出</h2>
+              <h2>{t('export.title')}</h2>
               <div className="row">
                 <button disabled={exporting} onClick={() => void save(2400)}>PNG 2400</button>
                 <button disabled={exporting} onClick={() => void save(4800)}>PNG 4800</button>
-                <button onClick={() => s.resetView()}>重置视角</button>
+                <button onClick={() => s.resetView()}>{t('view.reset')}</button>
               </div>
             </div>
           </>
         )}
         <div className="muted" style={{ marginTop: 'auto' }}>
-          {s.spec?.landscape ? '拖动平移 · 滚轮缩放' : '拖动旋转 · 滚轮缩放 · Shift 拖动平移'}
+          {s.spec?.landscape ? t('hint.landscape') : t('hint.molecule')}
           <br />
-          画法致敬 David S. Goodsell；数据来源和许可见上方各条。
+          {t('footer.credit')}
         </div>
       </div>
       <Stage />

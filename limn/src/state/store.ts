@@ -12,7 +12,8 @@ import type { Annotation, ColorMode } from '../style/annotate'
 import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, STYLE_NEURON, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
-import type { PanelSpec, SceneSpec, Tier } from '../scene/spec'
+import type { Note, PanelSpec, SceneSpec, Tier } from '../scene/spec'
+import { getLang, listParams, noteKey, pick, saveLang, syncLang, t, tIn, type Lang } from '../i18n'
 import catalog from '../../data/catalog.json'
 import neuronTable from '../../data/neurons.json'
 import cellTable from '../../data/cells.json'
@@ -68,6 +69,10 @@ export interface Round {
 }
 
 interface State extends Look {
+  /** 界面语言；`t` 读的就是它 / the interface language; it is what `t` reads */
+  lang: Lang
+  /** 换界面语言，并记住这次的选择 / change the interface language and remember the choice */
+  setLang(lang: Lang): void
   spec: SceneSpec | null
   panels: Panel[]
   /** 每当 GPU 上的原子必须重建时加一 / bumped whenever the atoms on the GPU must be rebuilt */
@@ -88,8 +93,8 @@ interface State extends Look {
   dnaPairs: number
   repack(): void
   resolveTopic(topic: string): Promise<void>
-  /** `title`：目录里给这个结构起的名字，有就用它作标题 / `title`: the name a catalogue gives the structure, used as the title when given */
-  loadId(id: string, title?: string): Promise<void>
+  /** `title`、`titleEn`：目录里给这个结构起的名字，有就用它作标题 / `title`, `titleEn`: the name a catalogue gives the structure, used as the title when given */
+  loadId(id: string, title?: string, titleEn?: string): Promise<void>
   loadCatalog(id: string): Promise<void>
   /** 载入目录里的一个神经元形态重建 / load a neuron reconstruction from the catalogue */
   loadNeuron(id: string): Promise<void>
@@ -129,6 +134,9 @@ export interface CatalogEntry {
   id: string
   title: string
   titleEn: string
+  captionEn: string
+  licenceEn?: string
+  attributionEn?: string
   keywords: string[]
   source: { kind: string; url?: string; id?: string }
   perCopy?: boolean
@@ -160,7 +168,7 @@ function progress(name: string): (received: number, total: number) => void {
     if (now - last < 250) return
     last = now
     const mb = (n: number) => (n / 1e6).toFixed(1)
-    useStore.setState({ busy: `正在下载 ${name}… ${mb(received)}${total ? ' / ' + mb(total) : ''} MB` })
+    useStore.setState({ busy: total ? t('busy.progressOf', { name, received: mb(received), total: mb(total) }) : t('busy.progress', { name, received: mb(received) }) })
   }
 }
 
@@ -178,6 +186,13 @@ function fetchPapers(): void {
 }
 
 export const useStore = create<State>((set, get) => ({
+  lang: getLang(),
+  setLang(lang) {
+    saveLang(lang)
+    syncLang(lang)
+    // 画面上的图注和状态栏也是文字，重画一次 / the labels on the stage and the status line are text too, so draw again
+    set((s) => ({ lang, drawRev: s.drawRev + 1 }))
+  },
   spec: null,
   panels: [],
   ...freshLook(),
@@ -200,28 +215,30 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async resolveTopic(topic) {
-    set({ busy: '正在理解主题并检索结构数据库（约半分钟）…', error: '' })
+    set({ busy: t('busy.resolving'), error: '' })
     try {
       const { spec } = await api.resolve(topic)
       if (spec.catalog) return await get().loadCatalog(spec.catalog)
-      set({ busy: `正在下载 ${spec.panels.map((p) => p.source.id).join('、')}…` })
+      set({ busy: t('busy.downloading', { name: spec.panels.map((p) => p.source.id).join(t('punct.list')) }) })
       const panels = await Promise.all(spec.panels.map(loadPanel))
       if (spec.landscape) {
         const lipids = spec.landscape.membrane ? await loadLipids(spec.landscape.membraneType) : null
-        if (lipids) spec.notes = [...spec.notes.filter((n) => !/脂质用同一种磷脂/.test(n)), `膜的脂质组成：${lipids.name}。${lipids.basis}${lipids.citation ? `出处：${lipids.citation}。` : ''}每种脂质用数据库里的理想坐标，尾链已转到同一侧；位置随机，构象都相同。`]
+        // 服务端那条“近似摆放、只用一种磷脂”的说明，换成实际用的脂质组成
+        // the server's note on approximate placement and a single phospholipid gives way to the lipid composition actually used
+        if (lipids) spec.notes = [...spec.notes.filter((n) => noteKey(n) !== 'note.land.membranePlacement'), { key: lipids.citation ? 'note.lipidsCited' : 'note.lipids', params: { name: lipids.name, nameEn: lipids.nameEn, basis: lipids.basis, basisEn: lipids.basisEn, ...(lipids.citation ? { citation: lipids.citation } : {}) } }]
         // 膜蛋白：向 OPM 要它在膜里的取向，叠合到我们手上的坐标
         // membrane proteins: ask OPM how each sits in the membrane and fit that to the coordinates in hand
-        const oriented: string[] = []
+        const oriented: { label: string; source: string }[] = []
         await Promise.all(
           spec.landscape.ingredients.filter((g) => g.compartment === 'membrane').map(async (g) => {
             const p = panels[g.panel]!
             if (p.spec.source.kind !== 'pdb') return
             const data = await api.membrane(p.spec.source.id)
             p.membrane = data?.orientation ? fitToMembrane(p.mol, data.orientation) : data?.pdbtm ? fitFromPdbtm(p.mol, data.pdbtm, data.topology ?? {}) : null
-            if (p.membrane) oriented.push(`${p.spec.label}（${p.membrane.source}）`)
+            if (p.membrane) oriented.push({ label: p.spec.label, source: p.membrane.source })
           }),
         )
-        if (oriented.length) spec.notes = [`${oriented.join('、')} 在膜里的位置和倾角取自膜蛋白取向数据库（OPM；OPM 没有的用 PDBTM，并按 UniProt 的拓扑注释定哪面朝外）。这些取向是由实验结构计算得到的，不是直接测量。`, ...spec.notes.filter((n) => !/^膜蛋白按分子长轴/.test(n) || oriented.length < spec.landscape!.ingredients.filter((g) => g.compartment === 'membrane').length)]
+        if (oriented.length) spec.notes = [{ key: 'note.oriented', params: listParams('list', (lang) => oriented.map((o) => tIn(lang, 'note.oriented.item', o))) }, ...spec.notes.filter((n) => noteKey(n) !== 'note.land.membranePlacement' || oriented.length < spec.landscape!.ingredients.filter((g) => g.compartment === 'membrane').length)]
         // 拥挤场景里几种分子共用一个角色；把它们在该角色的色相范围内展开，
         // 以便分清相邻的分子。
         // Several kinds of molecule share a role in a crowded scene; fan
@@ -246,15 +263,15 @@ export const useStore = create<State>((set, get) => ({
       // 这样它们之间变化的是分子而不是相机。
       // Panels of the same protein are turned to a common orientation, so
       // that what changes between them is the molecule and not the camera.
-      const aligned: string[] = []
+      const aligned: { id: string; matched: number; rmsd: string }[] = []
       for (const p of panels.slice(1)) {
         const fit = superpose(p.mol, panels[0]!.mol)
         if (fit) {
           p.align = fit.matrix
-          aligned.push(`${p.mol.id}（${fit.matched} 个残基，偏差 ${fit.rmsd.toFixed(1)} Å）`)
+          aligned.push({ id: p.mol.id, matched: fit.matched, rmsd: fit.rmsd.toFixed(1) })
         }
       }
-      if (aligned.length) spec.notes = [...spec.notes, `为便于比较，已按共同的蛋白链把 ${aligned.join('、')} 叠合到 ${panels[0]!.mol.id} 的朝向。`]
+      if (aligned.length) spec.notes = [...spec.notes, { key: 'note.aligned', params: { ...listParams('list', (lang) => aligned.map((a) => tIn(lang, 'note.aligned.item', a))), ref: panels[0]!.mol.id } }]
       set((s) => ({ spec, panels, colorings: panels.map((p) => p.coloring), ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {
@@ -262,7 +279,7 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
-  async loadId(id, title) {
+  async loadId(id, title, titleEn) {
     const clean = id.trim().toUpperCase()
     // "AF-P04637"：AlphaFold 数据库里这个 UniProt 编号的预测模型 / "AF-P04637": the AlphaFold DB model for that UniProt accession
     // "EMD-21317"：EMDB 里的一张密度图 / "EMD-21317": a density map in the EMDB
@@ -270,23 +287,23 @@ export const useStore = create<State>((set, get) => ({
     if (em) return get().loadEmdb(em[1]!)
     const af = /^AF-([A-Z0-9]{6,10})$/.exec(clean)
     if (!af && !/^[0-9][A-Z0-9]{3}$/.test(clean)) {
-      set({ error: 'PDB 编号是 4 位，以数字开头，例如 2HHB；AlphaFold 预测模型写成 AF-加 UniProt 编号，例如 AF-P04637；电镜密度图写成 EMD-加数字，例如 EMD-1080' })
+      set({ error: t('error.badId') })
       return
     }
-    set({ busy: `正在下载 ${clean}…`, error: '' })
+    set({ busy: t('busy.downloading', { name: clean }), error: '' })
     try {
       const prediction = af ? await api.alphafold(af[1]!) : null
-      if (af && !prediction) throw new Error(`AlphaFold 数据库里没有 ${af[1]} 的预测模型（或本地服务没有启动）`)
+      if (af && !prediction) throw new Error(t('error.noAlphafold', { id: af[1]! }))
       const mol = await loadMolecule(prediction ? { kind: 'url', id: clean, url: prediction.url, minConfidence: 50 } : { kind: 'pdb', id: clean }, progress(clean))
       const coloring = defaultColoring(mol)
       const spec: PanelSpec = {
         label: clean,
-        source: prediction ? { id: clean, kind: 'alphafold', url: prediction.url, title: mol.title, method: 'AlphaFold 预测', resolution: null, year: null, tier: 'predicted' } : { id: clean, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
+        source: prediction ? { id: clean, kind: 'alphafold', url: prediction.url, title: mol.title, method: tIn('zh', 'method.alphafold'), methodEn: tIn('en', 'method.alphafold'), resolution: null, year: null, tier: 'predicted' } : { id: clean, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
         assembly: defaultAssembly(mol),
         entities: mol.entities.map((e, i) => ({ entityId: e.id, role: coloring.roles[i]!, name: e.description || e.kind, description: e.description, organism: '' })),
         reason: '',
       }
-      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, caption: '', panels: [spec], notes: prediction ? [`这是 AlphaFold 预测模型，不是实验结构；置信度低于 50 的区域没有画（${Math.round(prediction.confident * 100)}% 的残基置信度在 70 以上）。`] : [] }
+      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: title || mol.title || clean, ...(title && titleEn ? { titleEn } : {}), caption: '', panels: [spec], notes: prediction ? [{ key: 'note.alphafold', params: { percent: Math.round(prediction.confident * 100) } }] : [] }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
       fetchPapers()
     } catch (e) {
@@ -297,31 +314,31 @@ export const useStore = create<State>((set, get) => ({
   async loadCatalog(id) {
     const entry = (catalog.models as CatalogEntry[]).find((m) => m.id === id)
     if (!entry) {
-      set({ error: `目录里没有 ${id}` })
+      set({ error: t('error.notInCatalog', { id }) })
       return
     }
-    set({ busy: `正在下载 ${entry.title}…`, error: '' })
+    set({ busy: t('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const src = entry.source
-      let mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(entry.title))
-      const notes: string[] = []
+      let mol = await loadMolecule(src.kind === 'pdb' ? { kind: 'pdb', id: src.id! } : { kind: 'url', id: entry.id, url: src.url! }, progress(pick(entry.title, entry.titleEn)))
+      const notes: Note[] = []
       let assembly = defaultAssembly(mol)
       if (entry.points) {
         // 实测的粒子位置：每个位置放一份原子模型 / measured particle positions: one copy of the atomic model at each
-        set({ busy: `正在下载 ${entry.title} 的粒子位置…` })
+        set({ busy: t('busy.picks', { name: pick(entry.title, entry.titleEn) }) })
         const res = await fetch(entry.points.url)
-        if (!res.ok) throw new Error(`没能取到粒子位置（HTTP ${res.status}）：${new URL(entry.points.url).hostname}`)
+        if (!res.ok) throw new Error(t('error.picksFetch', { status: res.status, host: new URL(entry.points.url).hostname }))
         const pts = parsePicks(await res.text(), entry.points.voxelSpacing)
-        if (pts.length === 0) throw new Error('粒子位置文件里没有读到位置')
+        if (pts.length === 0) throw new Error(t('error.picksEmpty'))
         mol.assemblies.push(assemblyAtPoints(mol, assembly, pts, rng(1)))
         assembly = 'picks'
-        notes.push(`${pts.length / 3} 个粒子的位置取自断层扫描的标注（实测）；每个粒子的朝向没有采用数据集里的值，是随机的：数据集的朝向参照的坐标系和这里用的原子模型对不上。`)
+        notes.push({ key: 'note.picks', params: { count: pts.length / 3 } })
       }
       // 原子太多就改画每个残基一个球 / with too many atoms, draw one sphere per residue instead
       const full = placedAtomCount(mol, assembly)
       if (full > ATOM_BUDGET) {
         mol = coarsen(mol)
-        notes.push(`完整模型有 ${(full / 1e6).toFixed(0)} 百万个原子，超出了能流畅绘制的范围，这里每个残基只画一个球（脂质每个分子画三个球）。`)
+        notes.push({ key: 'note.coarse', params: { millions: (full / 1e6).toFixed(0) } })
       }
       const roles: Role[] = mol.entities.map((e) => {
         if (e.kind === 'lipid') return 'membrane'
@@ -335,6 +352,7 @@ export const useStore = create<State>((set, get) => ({
       const short = (d: string) => d.split('.').pop()!.replace(/_/g, ' ')
       const spec: PanelSpec = {
         label: entry.title,
+        labelEn: entry.titleEn,
         source: {
           id: src.kind === 'pdb' ? src.id! : entry.id,
           kind: src.kind === 'pdb' ? 'pdb' : 'model',
@@ -345,6 +363,8 @@ export const useStore = create<State>((set, get) => ({
           year: null,
           licence: entry.licence,
           attribution: entry.attribution,
+          ...(entry.licenceEn ? { licenceEn: entry.licenceEn } : {}),
+          ...(entry.attributionEn ? { attributionEn: entry.attributionEn } : {}),
           citation: entry.citation,
           link: entry.link,
           tier: entry.tier as Tier,
@@ -354,8 +374,8 @@ export const useStore = create<State>((set, get) => ({
         reason: '',
       }
       const mesoscale = !!entry.perCopy
-      if (mesoscale && !entry.points) notes.push('这是别人已发表的整体模型：其中每个分子是真实结构，位置和数量由模型作者依据实验数据排布，不是直接观测到的。')
-      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, caption: entry.caption, panels: [spec], notes, mesoscale, merge: entry.merge }
+      if (mesoscale && !entry.points) notes.push({ key: 'note.publishedModel' })
+      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({
         spec: scene,
         panels: [{ spec, mol, coloring, align: null }],
@@ -373,26 +393,26 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async loadEmdb(n) {
-    set({ busy: `正在查询 EMD-${n}…`, error: '' })
+    set({ busy: t('busy.emdbQuery', { n }), error: '' })
     try {
       const info = await api.emdb(n)
-      if (!info) throw new Error(`没有找到 EMD-${n}（或本地服务没有启动）`)
-      if (info.contour === null) throw new Error(`EMD-${n} 没有给出等值面阈值，画不了`)
-      if (info.megabytes > 420) throw new Error(`EMD-${n} 的密度图有 ${info.megabytes} MB，太大了`)
-      const report = progress(`${info.id} 的密度图（共约 ${info.megabytes} MB，压缩后更小）`)
+      if (!info) throw new Error(t('error.emdbMissing', { n }))
+      if (info.contour === null) throw new Error(t('error.emdbNoContour', { n }))
+      if (info.megabytes > 420) throw new Error(t('error.emdbTooBig', { n, mb: info.megabytes }))
+      const report = progress(t('busy.mapName', { id: info.id, mb: info.megabytes }))
       let buf: Uint8Array | null = null
       for (const u of [`/api/structure?url=${encodeURIComponent(info.url)}`, info.url]) {
         buf = await download(u, report).catch(() => null)
         if (buf) break
       }
-      if (!buf) throw new Error(`没能取到 ${info.id} 的密度图：它要从 ftp.ebi.ac.uk 现取，请检查网络后重试。`)
-      set({ busy: `正在从 ${info.id} 的密度图取等值面…` })
+      if (!buf) throw new Error(t('error.emdbFetch', { id: info.id }))
+      set({ busy: t('busy.isosurface', { id: info.id }) })
       await new Promise((r) => setTimeout(r, 30))
       const full = parseMrc(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer)
       // 最长边合并到 200 个体素以内，够画，也不至于太慢 / bin to at most 200 voxels a side: enough to draw, and not too slow
       const vol = bin(full, 200)
       const pts = surfacePoints(vol, info.contour)
-      if (pts.length === 0) throw new Error(`${info.id} 在阈值 ${info.contour} 处没有等值面`)
+      if (pts.length === 0) throw new Error(t('error.emdbNoSurface', { id: info.id, contour: info.contour }))
       const count = pts.length / 3
       const map: Molecule = {
         id: info.id, title: info.title, atomCount: count, pos: pts,
@@ -401,27 +421,27 @@ export const useStore = create<State>((set, get) => ({
         radius: new Float32Array(count).fill(vol.voxel[0] * 0.9),
         chainOf: new Uint32Array(count), isTrace: new Uint8Array(count), residue: new Int32Array(count).fill(1),
         chains: [{ asymId: 'map', authAsymId: 'map', entity: 0, start: 0, count, model: 1 }],
-        entities: [{ id: 'map', description: '密度图的等值面 / isosurface of the density map', kind: 'protein' }],
+        entities: [{ id: 'map', description: `${tIn('zh', 'entity.isosurface')} / ${tIn('en', 'entity.isosurface')}`, kind: 'protein' }],
         assemblies: [{ id: 'asym', groups: [{ chains: [0], operators: [IDENTITY] }] }],
       }
       const binned = vol.voxel[0] / full.voxel[0]
       const mapColoring: Coloring = { roles: ['soluble'], hueShift: [0], nudge: [0], override: [[0.87, 0.035, 250]] }
       const mapSpec: PanelSpec = {
         label: info.id,
-        source: { id: info.id, kind: 'emdb', url: info.url, title: info.title, method: '电镜密度图', resolution: info.resolution, year: null, tier: 'measured', licence: 'CC0 1.0', attribution: 'EMDB', citation: info.id, link: `https://www.ebi.ac.uk/emdb/${info.id}` },
+        source: { id: info.id, kind: 'emdb', url: info.url, title: info.title, method: tIn('zh', 'method.emMap'), methodEn: tIn('en', 'method.emMap'), resolution: info.resolution, year: null, tier: 'measured', licence: 'CC0 1.0', attribution: 'EMDB', citation: info.id, link: `https://www.ebi.ac.uk/emdb/${info.id}` },
         assembly: 'asym',
-        entities: [{ entityId: 'map', role: 'soluble', name: '密度图的等值面', description: info.title, organism: '' }],
+        entities: [{ entityId: 'map', role: 'soluble', name: tIn('zh', 'entity.isosurface'), nameEn: tIn('en', 'entity.isosurface'), description: info.title, organism: '' }],
         reason: '',
       }
       const panels: Panel[] = [{ spec: mapSpec, mol: map, coloring: mapColoring, align: null, paper: null, annotation: null }]
-      const notes = [
-        `这是电镜实验得到的三维密度图（${info.dims.join('×')} 个体素，每个 ${info.voxel.toFixed(2)} Å），画的是作者建议的阈值 ${info.contour} 处的等值面${binned > 1 ? `；为了画得动，体素按 ${binned} 倍合并过` : ''}。`,
-        '表面是用一个个小球拼出来的（每个被等值面穿过的小格一个球），不是三角网格；阈值取得高一点或低一点，表面会瘦一点或胖一点。',
+      const notes: Note[] = [
+        { key: binned > 1 ? 'note.emdb.mapBinned' : 'note.emdb.map', params: { dims: info.dims.join('×'), voxel: info.voxel.toFixed(2), contour: info.contour, ...(binned > 1 ? { binned } : {}) } },
+        { key: 'note.spheresSurface' },
       ]
       // 拟合进这张图的原子模型和它在同一个坐标系里，直接叠进去 / the atomic model fitted into this map shares its coordinate frame and goes straight in
       const pdbId = info.pdb[0]
       if (pdbId) {
-        set({ busy: `正在下载拟合的原子模型 ${pdbId}…` })
+        set({ busy: t('busy.fittedModel', { id: pdbId }) })
         const mol = await loadMolecule({ kind: 'pdb', id: pdbId }, progress(pdbId)).catch(() => null)
         if (mol) {
           const coloring = defaultColoring(mol)
@@ -433,7 +453,7 @@ export const useStore = create<State>((set, get) => ({
             reason: '',
           }
           panels.push({ spec, mol, coloring, align: null, noCut: true })
-          notes.push(`里面是拟合进这张图的原子模型 ${pdbId}。密度图从正中剖开（“剖开”滑杆可调），原子模型不切，这样能看到模型怎样填在密度里。`)
+          notes.push({ key: 'note.emdb.fitted', params: { id: pdbId } })
         }
       }
       const overlay = panels.length > 1
@@ -448,29 +468,29 @@ export const useStore = create<State>((set, get) => ({
   async loadCell(id) {
     const entry = cellTable.cells.find((c) => c.id === id)
     if (!entry) {
-      set({ error: `目录里没有 ${id}` })
+      set({ error: t('error.notInCatalog', { id }) })
       return
     }
-    set({ busy: `正在下载 ${entry.title}…`, error: '' })
+    set({ busy: t('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const pos: number[] = [], radius: number[] = []
       const chains: Molecule['chains'] = [], entities: Molecule['entities'] = []
       const roles: Role[] = []
-      const missing: string[] = []
+      const missing: { name: string; nameEn: string }[] = []
       let voxel = [0, 0, 0]
       let nearNucleus: { vol: Awaited<ReturnType<typeof readN5Mask>>; mask: Uint8Array } | null = null
       for (const o of entry.organelles) {
-        const vol = await readN5Mask(`${entry.base}/${o.label}/${entry.scale}`, (done, total) => set({ busy: `正在下载 ${o.name}的分割数据… ${done}/${total} 块` })).catch(() => null)
+        const vol = await readN5Mask(`${entry.base}/${o.label}/${entry.scale}`, (done, total) => set({ busy: t('busy.segmentation', { name: o.name, nameEn: o.nameEn, done, total }) })).catch(() => null)
         if (!vol) {
-          missing.push(o.name)
+          missing.push(o)
           continue
         }
         voxel = vol.voxel
-        set({ busy: `正在取 ${o.name}的表面…` })
+        set({ busy: t('busy.surface', { name: o.name, nameEn: o.nameEn }) })
         await new Promise((r) => setTimeout(r, 20))
         const pts = surfacePoints(vol, 0.5)
         if (pts.length === 0) {
-          missing.push(o.name)
+          missing.push(o)
           continue
         }
         const start = pos.length / 3
@@ -489,7 +509,7 @@ export const useStore = create<State>((set, get) => ({
           radius.push(r)
         }
         if (pos.length / 3 === start) {
-          missing.push(o.name)
+          missing.push(o)
           continue
         }
         entities.push({ id: o.label, description: `${o.name} / ${o.nameEn}`, kind: 'protein' })
@@ -497,7 +517,7 @@ export const useStore = create<State>((set, get) => ({
         roles.push(o.role as Role)
       }
       const count = pos.length / 3
-      if (count === 0) throw new Error(`没能取到 ${entry.title} 的数据：它要从 OpenOrganelle（亚马逊云存储）现取，请检查网络后重试。`)
+      if (count === 0) throw new Error(t('error.cellFetch', { title: entry.title, titleEn: entry.titleEn }))
       const chainOf = new Uint32Array(count)
       chains.forEach((c, i) => chainOf.fill(i, c.start, c.start + c.count))
       const mol: Molecule = {
@@ -508,18 +528,19 @@ export const useStore = create<State>((set, get) => ({
       const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
       const spec: PanelSpec = {
         label: entry.title,
-        source: { id: entry.id, kind: 'cell', url: entry.base, title: entry.titleEn, method: '聚焦离子束扫描电镜 + 机器学习分割', resolution: null, year: null, tier: 'measured', licence: entry.licence, attribution: entry.attribution, citation: entry.citation, link: entry.link },
+        labelEn: entry.titleEn,
+        source: { id: entry.id, kind: 'cell', url: entry.base, title: entry.titleEn, method: tIn('zh', 'method.fibsem'), methodEn: tIn('en', 'method.fibsem'), resolution: null, year: null, tier: 'measured', licence: entry.licence, attribution: entry.attribution, attributionEn: entry.attributionEn, citation: entry.citation, link: entry.link },
         assembly: 'asym',
-        entities: entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, description: e.description, organism: 'Homo sapiens' })),
+        entities: entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, nameEn: e.description.split(' / ')[1], description: e.description, organism: 'Homo sapiens' })),
         reason: '',
       }
-      const notes = [
-        `这不是原子图，是电镜下一整个细胞的细胞器轮廓，长度单位是纳米。用的是原数据缩小 16 倍的版本：每个体素约 ${voxel.map((v) => Math.round(v)).join('×')} nm，比它细的结构（细的内质网小管、小泡）看不出来或者断开。`,
-        '细胞器的边界是机器学习模型逐个体素判断出来的，不是人工描的，局部会有错。表面是用一个个小球拼出来的。',
-        '核膜在数据里算作内质网，紧贴着细胞核；贴着细胞核两个体素以内的内质网等没有画，免得和细胞核的表面叠在一起。',
-        ...(missing.length ? [`没能取到：${missing.join('、')}。`] : []),
+      const notes: Note[] = [
+        { key: 'note.cell.scale', params: { voxel: voxel.map((v) => Math.round(v)).join('×') } },
+        { key: 'note.cell.segmentation' },
+        { key: 'note.cell.envelope' },
+        ...(missing.length ? [{ key: 'note.cell.missing', params: listParams('names', (lang) => missing.map((o) => (lang === 'zh' ? o.name : o.nameEn))) }] : []),
       ]
-      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: entry.caption, panels: [spec], notes, unit: 'nm' }
+      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, panels: [spec], notes, unit: 'nm' }
       // 贴壁的细胞是扁的：从上往下看，在半高处剖开；结构很碎，线画细一些
       // a cell grown on a surface is flat: look down on it, cut at mid-height; the structures are fine-grained, so lines are drawn thinner
       const thin = cloneStyle(STYLE_MOLECULE)
@@ -534,10 +555,10 @@ export const useStore = create<State>((set, get) => ({
   async loadNeuron(id) {
     const entry = neuronTable.neurons.find((n) => n.id === id)
     if (!entry) {
-      set({ error: `目录里没有 ${id}` })
+      set({ error: t('error.notInCatalog', { id }) })
       return
     }
-    set({ busy: `正在下载 ${entry.title}…`, error: '' })
+    set({ busy: t('busy.downloading', { name: pick(entry.title, entry.titleEn) }), error: '' })
     try {
       const url = neuromorphoUrl(entry.archive, entry.name)
       // 先走本地服务的缓存，不行再直接取 / through the local service's cache first, then directly
@@ -549,7 +570,7 @@ export const useStore = create<State>((set, get) => ({
           break
         }
       }
-      if (!text) throw new Error(`没能取到 ${entry.title}：它要从 neuromorpho.org 现取，请检查网络后重试。`)
+      if (!text) throw new Error(t('error.neuronFetch', { title: entry.title, titleEn: entry.titleEn }))
       const mol = neuronMolecule(parseSwc(text), entry.name, entry.titleEn)
       // 胞体是主角；轴突、基树突、顶树突各用一个色相区 / the soma is the subject; axon, basal and apical dendrites each take a hue sector
       const roleOf: Record<string, Role> = { '1': 'focus', '2': 'nucleic-binding', '3': 'soluble', '4': 'membrane', '0': 'extracellular' }
@@ -557,19 +578,20 @@ export const useStore = create<State>((set, get) => ({
       const coloring: Coloring = { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => null) }
       const spec: PanelSpec = {
         label: entry.title,
+        labelEn: entry.titleEn,
         source: {
-          id: entry.name, kind: 'neuron', url, title: entry.titleEn, method: '显微重建', resolution: null, year: null, tier: 'measured',
-          licence: 'CC BY 4.0', attribution: `NeuroMorpho.Org，${entry.archive} 档案`, citation: `doi:${entry.doi}`, link: `https://neuromorpho.org/neuron_info.jsp?neuron_name=${encodeURIComponent(entry.name)}`,
+          id: entry.name, kind: 'neuron', url, title: entry.titleEn, method: tIn('zh', 'method.reconstruction'), methodEn: tIn('en', 'method.reconstruction'), resolution: null, year: null, tier: 'measured',
+          licence: 'CC BY 4.0', attribution: tIn('zh', 'source.neuromorpho', { archive: entry.archive }), attributionEn: tIn('en', 'source.neuromorpho', { archive: entry.archive }), citation: `doi:${entry.doi}`, link: `https://neuromorpho.org/neuron_info.jsp?neuron_name=${encodeURIComponent(entry.name)}`,
         },
         assembly: 'asym',
-        entities: mol.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, description: e.description, organism: entry.species })),
+        entities: mol.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description.split(' / ')[0]!, nameEn: e.description.split(' / ')[1], description: e.description, organism: entry.species })),
         reason: '',
       }
-      const notes = [
-        `这是从显微图像描出来的神经元形态（${entry.species}，${entry.region}）：${entry.has}。坐标和粗细的单位是微米，不是原子图。`,
-        '比线还细的分支画粗了一点，否则看不见；每一段按两端的半径线性过渡。重建本身的粗细常常不如走向可靠。',
+      const notes: Note[] = [
+        { key: 'note.neuron.about', params: { species: entry.species, region: entry.region, has: entry.has, hasEn: entry.hasEn } },
+        { key: 'note.neuron.thin' },
       ]
-      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, caption: '', panels: [spec], notes, unit: 'µm' }
+      const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: '', panels: [spec], notes, unit: 'µm' }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_NEURON), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
@@ -599,7 +621,7 @@ export const useStore = create<State>((set, get) => ({
   async setColorMode(mode) {
     const needs = mode === 'domains' || mode === 'sites' || mode === 'pathogenicity'
     if (needs && get().panels.some((p) => p.annotation === undefined)) {
-      set({ busy: '正在查询结构域和位点注释…' })
+      set({ busy: t('busy.annotations') })
       const panels = await Promise.all(get().panels.map(async (p) => (p.annotation !== undefined ? p : { ...p, annotation: await api.annotations(p.spec.source.id) })))
       set({ panels, busy: '' })
     }
@@ -664,3 +686,7 @@ export const useStore = create<State>((set, get) => ({
     set({ rot, zoom, shift, style, colorings, cut })
   },
 }))
+
+// `t` 读的是 i18n 里的镜像；不管语言是怎么改的，都让它跟上
+// `t` reads the mirror kept in i18n; keep it in step however the language was changed
+useStore.subscribe((s) => s.lang !== getLang() && syncLang(s.lang))

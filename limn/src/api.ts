@@ -1,14 +1,15 @@
 import type { SceneSpec } from './scene/spec'
+import { t } from './i18n'
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   let res: Response
   try {
     res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   } catch {
-    throw new Error('连不上本地服务。用 bun run dev 同时启动网页和服务。')
+    throw new Error(t('error.noServer'))
   }
   const json = (await res.json().catch(() => null)) as (T & { error?: string }) | null
-  if (!res.ok || !json) throw new Error(json?.error ?? `本地服务出错（HTTP ${res.status}）`)
+  if (!res.ok || !json) throw new Error(json?.error ?? t('error.serverHttp', { status: res.status }))
   return json
 }
 
@@ -74,7 +75,7 @@ export interface Released { id: string; title: string; released: string; method:
 export async function recent(journal: string, days: number): Promise<{ journals: string[]; total: number; entries: Released[] }> {
   const res = await fetch(`/api/recent?journal=${encodeURIComponent(journal)}&days=${days}`)
   const json = (await res.json().catch(() => null)) as ({ journals: string[]; total: number; entries: Released[] } & { error?: string }) | null
-  if (!res.ok || !json) throw new Error(json?.error ?? '本地服务没有启动（bun run dev）')
+  if (!res.ok || !json) throw new Error(json?.error ?? t('server.down'))
   return json
 }
 

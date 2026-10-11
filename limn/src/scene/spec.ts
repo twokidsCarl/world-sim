@@ -7,7 +7,14 @@ import type { Role } from '../style/palettes'
  */
 export type Tier = 'measured' | 'curated' | 'predicted' | 'estimated'
 
-export const TIER_LABEL: Record<Tier, string> = { measured: '实测', curated: '整理的模型', predicted: '预测', estimated: '估计' }
+/**
+ * 给读者的一条说明。模型写的是字符串，保持它写的语言；代码写的是字典键加参数，跟随界面语言
+ * （文字在 src/i18n.ts）。参数里 `x` 和 `xEn` 成对时，英文界面用 `xEn`。
+ * A note for the reader. One the model wrote is a string, left in the language it was written in;
+ * one the code wrote is a dictionary key with parameters, and follows the interface language
+ * (the text is in src/i18n.ts). Where parameters come as a pair `x` and `xEn`, English uses `xEn`.
+ */
+export type Note = string | { key: string; params?: Record<string, string | number> }
 
 /** 结构的坐标从哪来，以及有多可信 / Where a structure's coordinates come from, and how far they can be trusted. */
 export interface SourceRef {
@@ -26,6 +33,10 @@ export interface SourceRef {
   /** 数据的许可、作者、论文和主页，显示在出处面板 / licence, authors, paper and home page, shown with the provenance */
   licence?: string
   attribution?: string
+  /** 许可、署名和方法的英文；没有就用上面那个 / English for the licence, attribution and method; the fields above stand in when absent */
+  licenceEn?: string
+  attributionEn?: string
+  methodEn?: string
   citation?: string
   link?: string
   /** 可信度等级 / how far the content can be trusted */
@@ -41,6 +52,8 @@ export interface EntitySpec {
   role: Role
   /** 简短的显示名 / short display name */
   name: string
+  /** 显示名的英文；没有就用 `name` / the display name in English; `name` when absent */
+  nameEn?: string
   description: string
   organism: string
 }
@@ -48,6 +61,8 @@ export interface EntitySpec {
 /** 画面里的一个结构。一个机制是并排的几个面板 / One structure in the picture. A mechanism is several panels side by side. */
 export interface PanelSpec {
   label: string
+  /** 图注的英文；没有就用 `label` / the label in English; `label` when absent */
+  labelEn?: string
   source: SourceRef
   assembly: string
   entities: EntitySpec[]
@@ -65,8 +80,8 @@ export interface Ingredient {
   compartment: 'above' | 'membrane' | 'below'
   /** 按所述丰度，场景体积里有多少个拷贝 / how many copies the stated abundance gives in the scene's volume */
   copies: number
-  /** 数量所依据的丰度，照模型所述原样记录 / the abundance the count came from, as the model stated it */
-  abundance: string
+  /** 数量所依据的丰度：字典键加数值，显示时按界面语言写出 / the abundance the count came from: a dictionary key with the figures, worded in the interface language when shown */
+  abundance: Note
   /** 即使丰度四舍五入为零，也至少显示一个 / always shown at least once even if the abundance rounds to zero */
   feature: boolean
   /** 丰度的来历：数据库里的实测值（curated），还是模型的估计 / where the abundance comes from: measured values in a database (curated), or the model's estimate */
@@ -108,9 +123,12 @@ export interface SceneSpec {
   kind: 'molecule' | 'complex' | 'virus' | 'gene' | 'mechanism' | 'landscape' | 'model' | 'neuron'
   title: string
   caption: string
+  /** 标题和说明的英文（目录里的条目才有）；没有就用上面那个 / title and caption in English (catalogue entries only); the fields above stand in when absent */
+  titleEn?: string
+  captionEn?: string
   panels: PanelSpec[]
   /** 读者应当知道的事：哪些是预测的、建模的或省略的 / things a reader should know: what is predicted, modelled or left out */
-  notes: string[]
+  notes: Note[]
   /**
    * 介观模型：组装体的每个拷贝是一个分子，按全景的画法画。
    * A mesoscale model: every copy in the assembly is a molecule, drawn the way landscapes are.

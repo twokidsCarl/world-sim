@@ -14,19 +14,8 @@ export type Role =
   | 'glycan'
   | 'ion'
 
+/** 角色的显示名在 src/i18n.ts（`roleLabel`），跟随界面语言 / the display names of the roles are in src/i18n.ts (`roleLabel`) and follow the interface language */
 export const ROLES: Role[] = ['soluble', 'membrane', 'nucleic', 'nucleic-binding', 'focus', 'extracellular', 'ligand', 'glycan', 'ion']
-
-export const ROLE_LABEL: Record<Role, string> = {
-  soluble: '可溶蛋白',
-  membrane: '膜与膜蛋白',
-  nucleic: '核酸',
-  'nucleic-binding': '核酸结合蛋白',
-  focus: '焦点（病毒等）',
-  extracellular: '胞外分子',
-  ligand: '配体',
-  glycan: '糖链',
-  ion: '离子',
-}
 
 /** Base hue in OKLCh degrees, and how far entities of the same role may spread. */
 export const ROLE_HUE: Record<Role, { h: number; spread: number; C: number; L: number }> = {

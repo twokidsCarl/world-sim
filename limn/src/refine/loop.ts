@@ -10,7 +10,8 @@ import type { Mat3 } from '../render/camera'
 import type { Renderer } from '../render/Renderer'
 import { useStore, type Look, type Round } from '../state/store'
 import { hex } from '../style/oklab'
-import { ROLE_LABEL } from '../style/palettes'
+import { ROLES } from '../style/palettes'
+import { t } from '../i18n'
 import { renderFigure } from '../render/export'
 import { stage, viewFor } from '../ui/Stage'
 import { sanitizeEdits, type Edit } from './edits'
@@ -83,7 +84,7 @@ function describeSettings(look: Look): string {
     `fog_back ${st.fog.back}`,
     `background ${hex(st.background)}`,
     `zoom ${look.zoom.toFixed(2)}`,
-    `roles available: ${Object.keys(ROLE_LABEL).join(', ')}`,
+    `roles available: ${ROLES.join(', ')}`,
   ].join('\n')
 }
 
@@ -142,10 +143,10 @@ export async function refine(opts: RefineOptions): Promise<void> {
 
   try {
     if (opts.chooseView) {
-      say('正在比较 12 个观察方向…')
+      say(t('refine.comparing'))
       const pick = await chooseView(r, store.getState().getLook(), title)
       store.getState().setLook({ rot: pick.rot, zoom: 1, shift: [0, 0] })
-      push({ image: pick.sheet, overall: null, scores: null, comment: `选定观察方向：${pick.reason}`, edits: [], look: store.getState().getLook() })
+      push({ image: pick.sheet, overall: null, scores: null, comment: t('refine.viewChosen', { reason: pick.reason }), edits: [], look: store.getState().getLook() })
     }
 
     const entityIds = () => store.getState().panels.map((p) => p.mol.entities.map((e) => e.id))
@@ -154,7 +155,7 @@ export async function refine(opts: RefineOptions): Promise<void> {
     let prev = -Infinity
     for (let k = 0; k <= opts.maxRounds; k++) {
       const scoringOnly = k === opts.maxRounds
-      say(scoringOnly ? '正在给最后一版打分…' : `第 ${k + 1} 轮：正在看图评审…`)
+      say(scoringOnly ? t('refine.finalScore') : t('refine.round', { n: k + 1 }))
       const look = store.getState().getLook()
       const shot = await capture(r, look)
       const image = shot.image

@@ -60,6 +60,8 @@ bun run typecheck
 
 world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767/`），卡片列表在 `sim.json`。每张卡是一个直达链接：`/?model=<目录 id>` 或 `/?id=<PDB 编号>`。加上 `?embed=1` 时只留画面，上面一条标题栏（标题、出处、“剖开”滑杆），在 320–400 px 宽的卡片里实测过不压画面；不带其他参数时画新冠病毒颗粒。
 
+界面有中文和英文两种语言：侧栏顶上的按钮切换，选择记在浏览器里；网址里加 `?lang=zh` 或 `?lang=en` 可以指定（嵌入模式也认）。界面文字都在 `src/i18n.ts` 的两张表里；模型写的标题、说明和注释保持主题所用的语言。
+
 ## 它怎么保证画的是真的
 
 1. **模型不出像素，也不出坐标。** 画面完全由 PDB 的原子坐标确定性渲染。
@@ -217,6 +219,8 @@ The local service caches every structure file it has fetched under `structures/`
 ### Inside idea-loom
 
 idea-loom, the single entry point of world-sim, hosts limn at `http://limn.localhost:8767/`; the cards are listed in `sim.json`. Each card is a deep link: `/?model=<catalogue id>` or `/?id=<PDB id>`. With `?embed=1` only the stage remains under a title strip (title, provenance, cut slider), checked in cards 320-400 px wide so that nothing sits on the picture; with no other parameter it draws the SARS-CoV-2 virion.
+
+The interface comes in Chinese and English: the button at the top of the sidebar switches, and the choice is remembered in the browser; `?lang=zh` or `?lang=en` in the address sets it (embed mode follows it too). All interface text is in the two tables of `src/i18n.ts`; titles, captions and notes written by the model stay in the language of the topic.
 
 ## How it keeps the picture true
 
