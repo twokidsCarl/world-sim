@@ -41,6 +41,7 @@ services:
       IDEA_LOOM_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       IDEA_LOOM_GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       IDEA_LOOM_SESSION_SECRET: ${SESSION_SECRET}
+      IDEA_LOOM_DB: /srv/state/db/loom.sqlite
     volumes:
       - repo:/srv/repo:ro          # 只读：读名片和版本号 / read-only: card files and versions
       - state:/srv/state           # 数据库和运行数据 / the database and run data
@@ -67,7 +68,7 @@ services:
     cpus: 2.0
     volumes:
       - repo:/srv/repo             # 它负责定时从远端取新的提交 / it fetches new commits on a timer
-      - state:/srv/state
+      - play-state:/srv/state      # 它自己的卷：快照和构建。数据库所在的卷它碰不到 / its own volume for snapshots and builds; it cannot reach the volume the database is on
 
   worker:
     <<: *loom
@@ -83,6 +84,7 @@ services:
       GH_TOKEN: ${GH_TOKEN}
       IDEA_LOOM_REPO_URL: ${REPO_URL}
       IDEA_LOOM_WORK: /srv/work
+      IDEA_LOOM_DB: /srv/state/db/loom.sqlite
     security_opt: ["no-new-privileges:true"]
     cap_drop: ["ALL"]
     pids_limit: 1024
@@ -91,8 +93,28 @@ services:
       - state:/srv/state
       - work:/srv/work             # 它自己的一份仓库和每个作业的工作区 / its own clone and per-job workspaces
 
+  backup:
+    # 数据库的连续备份。填好 .env 里的 BACKUP_* 之后用 --profile backup 启动。
+    # Continuous backup of the database. Fill in BACKUP_* in .env, then start it with --profile backup.
+    image: litestream/litestream:0.3
+    profiles: ["backup"]
+    restart: unless-stopped
+    user: "10001"                  # 和 hub 里的用户一样，免得把数据库文件的属主改掉 / the same user as in the hub, so the database files keep their owner
+    command: ["replicate"]
+    environment:
+      BACKUP_BUCKET: ${BACKUP_BUCKET}
+      BACKUP_ENDPOINT: ${BACKUP_ENDPOINT}
+      BACKUP_REGION: ${BACKUP_REGION}
+      LITESTREAM_ACCESS_KEY_ID: ${BACKUP_ACCESS_KEY_ID}
+      LITESTREAM_SECRET_ACCESS_KEY: ${BACKUP_SECRET_ACCESS_KEY}
+    volumes:
+      - ./litestream.yml:/etc/litestream.yml:ro
+      - state:/srv/state
+    depends_on: [hub]
+
 volumes:
   caddy-data:
   repo:
   state:
+  play-state:
   work:

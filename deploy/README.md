@@ -5,9 +5,9 @@
 Put world-sim on one cloud host: idea-loom is the single entry point and every simulation
 lives on its own subdomain.
 
-> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"和"登录与权限"两期，下面"还没有的"一节列了没做的部分。
+> **状态 / Status**：这些文件是按方案写的，**还没有在真实的主机上跑过**（写的时候手边没有 Docker、主机和域名）。第一次部署时请当它是初稿：遇到的问题记下来改掉。到目前为止完成了"能部署"、"登录与权限"、"数据库"三期，下面"还没有的"一节列了没做的部分。
 >
-> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed" and "sign-in and roles" stages are done so far; see "not there yet" below.
+> These files follow the plan but **have not been run on a real host yet** (there was no Docker, host or domain at hand when they were written). Treat the first deployment as a first draft and fix what you hit. The "can be deployed", "sign-in and roles" and "database" stages are done so far; see "not there yet" below.
 
 ## 结构 / Layout
 
@@ -104,14 +104,46 @@ domain and for known simulations, and only then is a certificate issued.
 
 ## 数据在哪 / Where the data is
 
-四个卷 / Four volumes：`state`（数据和运行记录，**要备份的就是它** / data and run records, **the one to back up**）、`repo`（仓库的副本，可重建 / the clone, rebuildable）、`work`（作业的工作区，可重建 / job workspaces, rebuildable）、`caddy-data`（证书 / certificates）。
+五个卷 / Five volumes：`state`（数据库和运行记录，**要备份的就是它** / the database and run records, **the one to back up**）、`play-state`（快照和构建，可重建 / snapshots and builds, rebuildable）、`repo`（仓库的副本，可重建 / the clone, rebuildable）、`work`（作业的工作区，可重建 / job workspaces, rebuildable）、`caddy-data`（证书 / certificates）。`play` 挂的是 `play-state`，数据库所在的卷它碰不到。
+
+`play` mounts `play-state`; it cannot reach the volume the database is on.
+
+**数据库。** 云端的 idea、愿望、任务、操作轨迹、候选、模型用量存在一个 SQLite 文件里（`state` 卷的 `db/loom.sqlite`），它是事实来源；仓库里 `idea-loom/data/` 的事件文件是导出的记录。hub 启动时把卷里原有的事件文件和 `main` 上的事件文件并进数据库，之后每五分钟再并一次 `main` 上新的——别的会话直接提交进仓库的 idea 就是这样到云端的。每条事件的编号由内容算出，所以反复导入不会重复。
+
+**The database.** In the cloud, ideas, wishes, tasks, the action trail, candidates and model
+usage live in one SQLite file (`db/loom.sqlite` on the `state` volume), which is the source
+of truth; the event files under `idea-loom/data/` in the repository are an exported record.
+On start the hub merges the event files already on the volume and those on `main` into the
+database, then merges anything new on `main` every five minutes — this is how ideas that
+other sessions commit straight to the repository reach the cloud. Each event's id is
+computed from its content, so repeated imports never duplicate.
+
+```sh
+docker compose -f deploy/compose.yaml exec hub idea-loom db status       # 每条日志有多少事件 / events per log
+docker compose -f deploy/compose.yaml exec hub idea-loom db export /tmp/out   # 导出成仓库里那种文件 / export as the repository's files
+```
+
+**备份与恢复 / Backup and restore.** 填好 `.env` 里的 `BACKUP_*`，加上 `--profile backup` 启动，Litestream 会把数据库连续复制到对象存储。恢复：在新主机上先不启动 hub，运行
+
+Fill in `BACKUP_*` in `.env` and start with `--profile backup`; Litestream then replicates
+the database to object storage continuously. To restore on a new host, before starting the
+hub, run
+
+```sh
+docker compose -f deploy/compose.yaml --env-file deploy/.env run --rm backup restore -o /srv/state/db/loom.sqlite /srv/state/db/loom.sqlite
+```
+
+小助手的对话和作业的日志仍是 `state` 卷里的文件，不在这份备份里；要保留它们得另外备份这个卷。
+
+The assistant's conversations and the jobs' logs are still files on the `state` volume and
+are not in this backup; keeping them means backing up the volume separately.
 
 ## 还没有的 / Not there yet
 
 按顺序做 / In this order:
 
-1. **数据库 / Database**。现在云端的数据仍是持久盘上的事件文件，没有连续备份。
-   For now the cloud's data is still event files on the volume, without continuous backup.
+1. **导出到仓库 / Export to the repository**。数据库里新的 idea 事件还不会自动变成 PR：导出并推送需要仓库的凭证，那在 `worker` 里，和下一条一起做。在那之前，云端写的 idea 只在数据库里。
+   New idea events in the database do not become a pull request by themselves yet: exporting and pushing needs the repository credential, which lives in the `worker` and comes with the next item. Until then ideas written in the cloud exist only in the database.
 2. **云端的作业和模型调用 / Jobs and model calls in the cloud**。`worker` 容器默认不启动；hub 里没有 `claude`，所以生成、小助手、作业在云端暂时都用不了。
    The `worker` container is not started by default; the hub has no `claude`, so generating, the assistant and jobs do not work in the cloud yet.
 3. 访客提愿望、手机布局与推送、持续运行与自动维护。
@@ -119,6 +151,8 @@ domain and for known simulations, and only then is a certificate issued.
 
 ## 已知的风险 / Known risks
 
+- 数据库这一段在本机测过（把现有的 350 条 idea 事件导进去，折叠出来的状态和导出的文件都和原来逐字节相同；并发新建不撞号），但 **Litestream 的备份和恢复没有跑过**，配置是照它的文档写的。
+  The database was tested locally (the existing 350 idea events imported, with the folded state and the exported files byte-identical to the originals; concurrent creation never collides), but **the Litestream backup and restore have not been run**; the configuration follows its documentation.
 - 登录这一段在本机测过（三种身份逐个调接口、伪造和过期的 cookie、回调的 state 校验），但**没有对着真的 GitHub 走过一遍**，因为还没有域名和 OAuth 应用。
   Sign-in was tested locally (every route as each of the three roles, forged and expired cookies, the callback's state check) but **has not been run against the real GitHub**, since there is no domain or OAuth app yet.
 - 模拟的子域名不需要登录，任何人都能玩；它们的后端只有限流这一道。

@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from . import ideas
+from . import ideas, store
 from .model import Edge, Idea, IdeaEvent, Origin
 
 
@@ -45,15 +45,18 @@ def create(
     if not title or not body:
         raise EditError("标题和正文都不能空")
     _check_position(level, threads, kernel)
-    pool, _, _, _ = ideas.current()
-    for e in edges or []:
-        _get(pool, e.target)
-    new_id = ideas.next_id(level, pool)
-    ideas.append_events([
-        IdeaEvent(at=now(), by=by, id=new_id, event="created", title=title, body=body, level=level,  # type: ignore[arg-type]
-                  threads=sorted(threads or []), kernel=kernel, status=status, edges=edges or None,  # type: ignore[arg-type]
-                  origin=origin or Origin(how=by))
-    ])
+    # 取号和写入连成一步：两个人同时新建不会拿到同一个编号。
+    # Allocating the id and writing are one step, so two people creating at once never get the same id.
+    with store.locked("idea-id"):
+        pool, _, _, _ = ideas.current()
+        for e in edges or []:
+            _get(pool, e.target)
+        new_id = ideas.next_id(level, pool)
+        ideas.append_events([
+            IdeaEvent(at=now(), by=by, id=new_id, event="created", title=title, body=body, level=level,  # type: ignore[arg-type]
+                      threads=sorted(threads or []), kernel=kernel, status=status, edges=edges or None,  # type: ignore[arg-type]
+                      origin=origin or Origin(how=by))
+        ])
     return new_id
 
 
