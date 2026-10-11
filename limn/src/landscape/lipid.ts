@@ -2,7 +2,7 @@ import membranes from '../../data/membranes.json'
 import { El, IDENTITY, type Molecule } from '../mol/types'
 import { t, tIn, noteError } from '../i18n'
 
-interface Graph {
+export interface Graph {
   pos: number[]
   element: number[]
   /** 重原子之间的键，邻接表 / bonds between heavy atoms, as adjacency lists */
@@ -181,11 +181,104 @@ export function reposeTails(g: Graph): { pos: number[]; tails: number } {
 /** 尾链向外张开的程度（正切值，约 9 度）/ how far tails lean outward, as a tangent (about 9 degrees) */
 const SPLAY = 0.16
 
+/** 图上两个原子之间隔几根键（只算到 4，更远的记 4）/ how many bonds apart two atoms are in the graph, counted up to 4 and capped there */
+function bondDistances(g: Graph): Uint8Array {
+  const n = g.element.length
+  const d = new Uint8Array(n * n).fill(4)
+  for (let a = 0; a < n; a++) {
+    d[a * n + a] = 0
+    let frontier = [a]
+    for (let step = 1; step <= 3; step++) {
+      const next: number[] = []
+      for (const x of frontier)
+        for (const y of g.bonds[x]!)
+          if (d[a * n + y]! > step) {
+            d[a * n + y] = step
+            next.push(y)
+          }
+      frontier = next
+    }
+  }
+  return d
+}
+
+/** 不直接相连的原子至少隔这么远（Å）：隔三根键的允许近一些 / the least distance, in Å, between atoms not bonded to each other: those three bonds apart may come closer */
+const CLEAR_14 = 2.6
+const CLEAR = 3.1
+
+/**
+ * 几何松弛：把挤在一起的原子推开，同时保持每根键的长度和每个键角（用隔一个原子的两原子间距来约束），
+ * 并让每个原子不要离转完尾链后的位置太远。这不是力场，也不是分子模拟：只是让示意构象里没有原子叠在一起。
+ * `rest` 给出该保持的键长和键角（数据库里的原始坐标），`pos` 是要松弛的坐标。
+ *
+ * A geometric relaxation: atoms that crowd each other are pushed apart while every bond length and
+ * bond angle is held (angles through the distance between atoms two bonds apart), and no atom is
+ * let stray far from where turning the tails left it. This is neither a force field nor a
+ * simulation; it only makes sure no atoms sit on top of one another in a schematic conformer.
+ * `rest` gives the bond lengths and angles to keep (the database's own coordinates); `pos` is what is relaxed.
+ */
+export function relax(g: Graph, pos: number[], rest: number[] = g.pos, iterations = 400): number[] {
+  const n = g.element.length
+  const sep = bondDistances(g)
+  const p = pos.slice(), home = pos.slice()
+  const dist = (q: number[], a: number, b: number) => Math.hypot(q[a * 3]! - q[b * 3]!, q[a * 3 + 1]! - q[b * 3 + 1]!, q[a * 3 + 2]! - q[b * 3 + 2]!)
+  const fixed: [number, number, number][] = [], apart: [number, number, number][] = []
+  for (let a = 0; a < n; a++)
+    for (let b = a + 1; b < n; b++) {
+      const s = sep[a * n + b]!
+      if (s === 1 || s === 2) fixed.push([a, b, dist(rest, a, b)])
+      else apart.push([a, b, s === 3 ? CLEAR_14 : CLEAR])
+    }
+  /** 把 a、b 的距离向 target 拉近一个比例 / move a and b a share of the way towards being `target` apart */
+  const pull = (a: number, b: number, target: number, share: number) => {
+    const dx = p[b * 3]! - p[a * 3]!, dy = p[b * 3 + 1]! - p[a * 3 + 1]!, dz = p[b * 3 + 2]! - p[a * 3 + 2]!
+    const d = Math.hypot(dx, dy, dz) || 1e-6
+    const k = ((d - target) / d) * 0.5 * share
+    p[a * 3] = p[a * 3]! + dx * k
+    p[a * 3 + 1] = p[a * 3 + 1]! + dy * k
+    p[a * 3 + 2] = p[a * 3 + 2]! + dz * k
+    p[b * 3] = p[b * 3]! - dx * k
+    p[b * 3 + 1] = p[b * 3 + 1]! - dy * k
+    p[b * 3 + 2] = p[b * 3 + 2]! - dz * k
+  }
+  // 两个原子正好重合时，先错开一点，否则没有方向可推 / atoms that coincide exactly are first nudged apart, or there is no direction to push along
+  for (let i = 0; i < n * 3; i++) p[i] = p[i]! + Math.sin(i * 12.9898) * 0.01
+  for (let it = 0; it < iterations; it++) {
+    for (const [a, b, min] of apart) if (dist(p, a, b) < min) pull(a, b, min, 0.5)
+    // 向“家”的位置轻轻拉回，保住整体形状（越往后越松）/ a light pull towards home keeps the overall shape, weaker as the run goes on
+    const back = 0.02 * (1 - it / iterations)
+    for (let i = 0; i < n * 3; i++) p[i] = p[i]! + (home[i]! - p[i]!) * back
+    for (let pass = 0; pass < 3; pass++) for (const [a, b, d0] of fixed) pull(a, b, d0, 1)
+  }
+  // 最后只做键长和键角，保证它们准确 / finish with bonds and angles alone, so that they come out exact
+  for (let pass = 0; pass < 40; pass++) for (const [a, b, d0] of fixed) pull(a, b, d0, 1)
+  return p
+}
+
+/** 一个构象里不直接相连（隔三根键以上）的原子之间的最小距离，和键长的最大偏差 / the least distance between atoms not bonded together (three or more bonds apart) in a conformer, and the greatest deviation of a bond length */
+export function conformerQuality(g: Graph, pos: number[], rest: number[] = g.pos): { closest: number; bondError: number } {
+  const n = g.element.length
+  const sep = bondDistances(g)
+  const dist = (q: number[], a: number, b: number) => Math.hypot(q[a * 3]! - q[b * 3]!, q[a * 3 + 1]! - q[b * 3 + 1]!, q[a * 3 + 2]! - q[b * 3 + 2]!)
+  let closest = Infinity, bondError = 0
+  for (let a = 0; a < n; a++)
+    for (let b = a + 1; b < n; b++) {
+      const s = sep[a * n + b]!
+      if (s === 1) bondError = Math.max(bondError, Math.abs(dist(pos, a, b) - dist(rest, a, b)))
+      else if (s >= 3) closest = Math.min(closest, dist(pos, a, b))
+    }
+  return { closest, bondError }
+}
+
+/** 读 SDF 成图（供检验用）/ read an SDF into a graph, for checks */
+export const readLipidGraph = (text: string, id: string): Graph => readSdf(text, id)
+
 /** 读一个脂质并把尾链摆到一侧 / read a lipid and turn its tails to one side */
 export function parseLipid(text: string, id: string): { mol: Molecule; tails: number } {
   const g = readSdf(text, id)
   const r = reposeTails(g)
-  return { mol: molecule({ ...g, pos: r.pos }, id), tails: r.tails }
+  // 有尾链的才需要松弛；胆固醇这样的刚性分子原样使用 / only a molecule with tails needs relaxing; a rigid one such as cholesterol is used as it is
+  return { mol: molecule({ ...g, pos: r.tails ? relax(g, r.pos) : r.pos }, id), tails: r.tails }
 }
 
 /** 一个小叶里的一种脂质和它所占的份额 / one kind of lipid in a leaflet and its share */
