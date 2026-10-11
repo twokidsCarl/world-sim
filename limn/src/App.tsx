@@ -198,19 +198,22 @@ export function App() {
     const src = s.panels[0]?.spec.source
     return (
       <div className="app embed">
+        {/* 标题条单独占一行，不压在画面上 / the title strip has a row of its own and never sits on the picture */}
+        <div className="embed-info">
+          {s.spec && s.panels.length > 0 && (
+            <>
+              <b title={s.spec.title}>{s.spec.title}</b>
+              {src && <span className="muted" title={[src.attribution, src.licence].filter(Boolean).join(' · ')}>{[src.kind === 'pdb' ? `PDB ${src.id}` : '', src.attribution, src.licence].filter(Boolean).join(' · ')}</span>}
+              {!s.spec.landscape && s.spec.kind !== 'neuron' && (
+                <label className="embed-cut">
+                  剖开 / Cut
+                  <input type="range" min={0} max={0.9} step={0.01} value={s.cut} onChange={(e) => s.setLook({ cut: Number(e.target.value) })} />
+                </label>
+              )}
+            </>
+          )}
+        </div>
         <Stage />
-        {s.spec && s.panels.length > 0 && (
-          <div className="embed-info">
-            <b>{s.spec.title}</b>
-            {src && <span className="muted">{[src.kind === 'pdb' ? `PDB ${src.id}` : '', src.attribution, src.licence].filter(Boolean).join(' · ')}</span>}
-            {!s.spec.landscape && (
-              <label className="embed-cut">
-                剖开 / Cut
-                <input type="range" min={0} max={0.9} step={0.01} value={s.cut} onChange={(e) => s.setLook({ cut: Number(e.target.value) })} />
-              </label>
-            )}
-          </div>
-        )}
       </div>
     )
   }

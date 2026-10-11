@@ -58,7 +58,7 @@ bun run typecheck
 
 ### 在 idea-loom 里
 
-world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767/`），卡片列表在 `sim.json`。每张卡是一个直达链接：`/?model=<目录 id>` 或 `/?id=<PDB 编号>`。加上 `?embed=1` 时只留画面、标题、出处和“剖开”滑杆；不带其他参数时画新冠病毒颗粒。
+world-sim 的统一入口 idea-loom 会托管 limn（`http://limn.localhost:8767/`），卡片列表在 `sim.json`。每张卡是一个直达链接：`/?model=<目录 id>` 或 `/?id=<PDB 编号>`。加上 `?embed=1` 时只留画面，上面一条标题栏（标题、出处、“剖开”滑杆），在 320–400 px 宽的卡片里实测过不压画面；不带其他参数时画新冠病毒颗粒。
 
 ## 它怎么保证画的是真的
 
@@ -216,7 +216,7 @@ The local service caches every structure file it has fetched under `structures/`
 
 ### Inside idea-loom
 
-idea-loom, the single entry point of world-sim, hosts limn at `http://limn.localhost:8767/`; the cards are listed in `sim.json`. Each card is a deep link: `/?model=<catalogue id>` or `/?id=<PDB id>`. With `?embed=1` only the stage, the title, the provenance and the cut slider remain; with no other parameter it draws the SARS-CoV-2 virion.
+idea-loom, the single entry point of world-sim, hosts limn at `http://limn.localhost:8767/`; the cards are listed in `sim.json`. Each card is a deep link: `/?model=<catalogue id>` or `/?id=<PDB id>`. With `?embed=1` only the stage remains under a title strip (title, provenance, cut slider), checked in cards 320-400 px wide so that nothing sits on the picture; with no other parameter it draws the SARS-CoV-2 virion.
 
 ## How it keeps the picture true
 
