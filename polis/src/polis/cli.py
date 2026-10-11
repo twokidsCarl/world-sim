@@ -1,4 +1,4 @@
-"""命令行：跑模拟、看记录、起服务。"""
+"""命令行：跑模拟、看记录、起服务。/ The command line: run simulations, list records, start the server."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import typer
 
 from . import model, trace
 
-app = typer.Typer(add_completion=False, help="polis：平行社会模拟器")
+app = typer.Typer(add_completion=False, help="polis：平行社会模拟器 / polis: a parallel-society simulator")
 
 
 CALIBRATION = Path(__file__).resolve().parents[2] / "calibration.json"
@@ -31,14 +31,14 @@ def _line(m: model.Manifest) -> str:
 def run(
     scenario: str = typer.Argument("rumor_run"),
     seed: int = typer.Option(1, "--seed", "-s"),
-    n: int = typer.Option(1000, "--n", "-n", help="人口"),
-    ticks: Optional[int] = typer.Option(None, "--ticks", "-t", help="模拟多少小时（缺省由场景决定）"),
-    response: str = typer.Option("notice", "--response", "-r", help="谁出面回应：notice 场景里原有的回应 / guarantee 可信一方担保 / none 无人回应"),
-    calibrated: bool = typer.Option(False, "--calibrated", "-c", help="用 calibration.json 里校准过的参数"),
+    n: int = typer.Option(1000, "--n", "-n", help="人口 / population size"),
+    ticks: Optional[int] = typer.Option(None, "--ticks", "-t", help="模拟多少小时（缺省由场景决定）/ hours to simulate (the scenario sets the default)"),
+    response: str = typer.Option("notice", "--response", "-r", help="谁出面回应：notice 场景里原有的回应 / guarantee 可信一方担保 / none 无人回应 / who responds: notice = the scenario's own response, guarantee = a guarantee from a credible party, none = nobody"),
+    calibrated: bool = typer.Option(False, "--calibrated", "-c", help="用 calibration.json 里校准过的参数 / use the calibrated parameters in calibration.json"),
     llm: bool = typer.Option(False, "--llm", help="主角交给大模型扮演（走本机 claude 命令）/ let the model play the protagonists"),
-    label: str = typer.Option("", "--label", "-l", help="记录名后缀"),
+    label: str = typer.Option("", "--label", "-l", help="记录名后缀 / suffix for the run id"),
 ):
-    """跑一次模拟，记录写入 runs/。"""
+    """跑一次模拟，记录写入 runs/。/ Run one simulation and write the record to runs/."""
     from . import calibrate as cal
 
     over = json.loads(CALIBRATION.read_text(encoding="utf-8"))["calibrated"]["params"] if calibrated else {}
@@ -62,14 +62,14 @@ def run(
 
 @app.command("list")
 def list_():
-    """列出已有的运行记录。"""
+    """列出已有的运行记录。/ List the existing run records."""
     for m in trace.list_runs(runs_dir()):
         typer.echo(_line(m))
 
 
 @app.command()
 def schema():
-    """输出数据契约的 JSON Schema（供生成 TypeScript 类型）。"""
+    """输出数据契约的 JSON Schema（供生成 TypeScript 类型）。/ Print the JSON Schema of the data contract, from which the TypeScript types are generated."""
     from pydantic.json_schema import models_json_schema
 
     from . import corpus
@@ -80,7 +80,9 @@ def schema():
 
 
 def _plain(node, top: bool = True):
-    """去掉字段级 title，把元组写成 json2ts 认得的形式，否则生成的类型满是别名和 unknown。"""
+    """去掉字段级 title，把元组写成 json2ts 认得的形式，否则生成的类型满是别名和 unknown。
+    Drop field-level titles and write tuples in the form json2ts understands; otherwise the generated types are full of aliases and unknown.
+    """
     if isinstance(node, list):
         return [_plain(x, False) for x in node]
     if not isinstance(node, dict):
@@ -93,12 +95,12 @@ def _plain(node, top: bool = True):
 
 @app.command("corpus")
 def corpus_check():
-    """检查语料：格式、交叉引用，并列出还没核实出处的条目。"""
+    """检查语料：格式、交叉引用，并列出还没核实出处的条目。/ Check the corpus: format and cross-references, and list entries whose sources are not yet verified."""
     from . import corpus
 
     try:
         entries, problems = corpus.check()
-    except ValueError as e:  # 含 pydantic 的校验错误
+    except ValueError as e:  # 含 pydantic 的校验错误 / includes pydantic validation errors
         typer.echo(f"语料格式有误：{e}", err=True)
         raise typer.Exit(1)
     names = {"theory": "理论卡", "cases": "案例", "facts": "典型事实"}
@@ -117,12 +119,12 @@ def corpus_check():
 
 @app.command()
 def calibrate(
-    samples: int = typer.Option(60, "--samples", help="随机试多少组参数"),
-    seeds: int = typer.Option(3, "--seeds", help="每组参数跑几个种子"),
-    n: int = typer.Option(600, "--n", "-n", help="人口"),
-    save: bool = typer.Option(False, "--save", help="把找到的参数写入 calibration.json"),
+    samples: int = typer.Option(60, "--samples", help="随机试多少组参数 / how many random parameter sets to try"),
+    seeds: int = typer.Option(3, "--seeds", help="每组参数跑几个种子 / seeds to run for each parameter set"),
+    n: int = typer.Option(600, "--n", "-n", help="人口 / population size"),
+    save: bool = typer.Option(False, "--save", help="把找到的参数写入 calibration.json / write the parameters found to calibration.json"),
 ):
-    """对照语料里的典型事实，报告默认参数的偏差，并搜索更合的参数。"""
+    """对照语料里的典型事实，报告默认参数的偏差，并搜索更合的参数。/ Report how far the default parameters miss the stylised facts in the corpus, and search for a better fit."""
     from . import calibrate as cal
 
     ts, default, over, best = cal.search(samples, list(range(1, seeds + 1)), n, log=typer.echo)
@@ -162,7 +164,7 @@ def canon(seeds: int = typer.Option(5, "--seeds", help="丰川场景跑几个种
 
 @app.command()
 def serve(port: int = typer.Option(8766, "--port", "-p")):
-    """启动 API，供 web/ 读取运行记录。"""
+    """启动 API，供 web/ 读取运行记录。/ Start the API that web/ reads run records from."""
     import uvicorn
 
     uvicorn.run("polis.server:app", host="127.0.0.1", port=port)

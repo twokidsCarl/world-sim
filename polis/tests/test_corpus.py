@@ -1,4 +1,6 @@
-"""语料的格式约束：出处必须有据可查，引用必须对得上。"""
+"""语料的格式约束：出处必须有据可查，引用必须对得上。
+Format constraints on the corpus: sources must be traceable, and references must resolve.
+"""
 
 from __future__ import annotations
 

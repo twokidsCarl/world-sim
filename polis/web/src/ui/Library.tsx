@@ -1,4 +1,5 @@
 // 文献页：模拟的依据（理论、案例、事实）和校准结果。每条出处都标明是否核实过。
+// Library page: what the simulation rests on (theory, cases, facts) and the calibration results. Every source is marked as verified or not.
 import { useEffect, useState } from 'react'
 import type { Case, Fact, Source, Theory } from '../contract/types.gen.ts'
 

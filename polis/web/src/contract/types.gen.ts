@@ -16,6 +16,7 @@ export interface Beat {
 }
 /**
  * 一个可以拿来做输入和校准的故事：谁、什么关系、依次发生了什么。
+ * A story that can serve as input and as a calibration case: who was involved, how they were related, and what happened in what order.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Case".
@@ -32,20 +33,21 @@ export interface Case {
   summary: string;
   people: Character[];
   /**
-   * 原作或史料里的事件顺序
+   * 原作或史料里的事件顺序 / the order of events in the source text or historical record
    */
   events: Beat[];
   /**
-   * 结局；模拟要复现的就是它
+   * 结局；模拟要复现的就是它 / the outcome; this is what the simulation has to reproduce
    */
   outcome: string;
   /**
-   * 这个故事体现了哪些理论卡，写 id
+   * 这个故事体现了哪些理论卡，写 id / ids of the theory cards this story illustrates
    */
   theories: string[];
 }
 /**
  * 一条出处。verified 只有在打开过能证实它的页面之后才能为真，checked 写明看的是哪一页、证实了什么。
+ * One source. verified may be true only after someone has opened a page that confirms it; checked records which page that was and what it confirmed.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Source".
@@ -55,13 +57,13 @@ export interface Source {
   author: string;
   year?: number | null;
   /**
-   * 期刊卷期页码、章回、幕次
+   * 期刊卷期页码、章回、幕次 / journal volume, issue and pages; chapter; act and scene
    */
   locator?: string;
   url?: string;
   verified?: boolean;
   /**
-   * 核实方式：哪个页面证实了哪些信息
+   * 核实方式：哪个页面证实了哪些信息 / how it was verified: which page confirmed what
    */
   checked?: string;
 }
@@ -90,6 +92,7 @@ export interface District {
 }
 /**
  * events.jsonl 的一行。键名取短，因为行数很多。
+ * One line of events.jsonl. Keys are short because there are a great many lines.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Event".
@@ -98,36 +101,37 @@ export interface Event {
   t: number;
   k: "seed" | "tell" | "mutate" | "queue" | "withdraw" | "verify" | "broadcast" | "intervene" | "fail" | "thought";
   /**
-   * 行动者
+   * 行动者 / actor
    */
   a?: number | null;
   /**
-   * 对象
+   * 对象 / target
    */
   b?: number | null;
   /**
-   * 消息 id
+   * 消息 id / message id
    */
   m?: number | null;
   /**
-   * 关系类型，或 venue:<idx>
+   * 关系类型，或 venue:<idx> / tie kind, or venue:<idx>
    */
   via?: string | null;
   /**
-   * 对象事前信念，百分数
+   * 对象事前信念，百分数 / target's belief beforehand, in percent
    */
   p0?: number | null;
   /**
-   * 对象事后信念，百分数
+   * 对象事后信念，百分数 / target's belief afterwards, in percent
    */
   p1?: number | null;
   /**
-   * 文本或金额
+   * 文本或金额 / text or amount
    */
   x?: string | number | null;
 }
 /**
  * 一条典型事实：研究里反复出现、模拟应当复现的定量或定性规律。
+ * A stylised fact: a quantitative or qualitative regularity that recurs in the research and that the simulation should reproduce.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Fact".
@@ -145,21 +149,21 @@ export interface Fact {
   range?: [number, number] | null;
   unit?: string;
   /**
-   * 这个结果是在什么条件下得到的
+   * 这个结果是在什么条件下得到的 / the conditions under which this result was obtained
    */
   conditions: string;
   /**
-   * 复现争议、适用范围
+   * 复现争议、适用范围 / replication disputes and limits of applicability
    */
   caveats?: string;
   theories?: string[];
   /**
-   * polis 里对应的可计算指标；留空表示尚未定义
+   * polis 里对应的可计算指标；留空表示尚未定义 / the corresponding computable metric in polis; empty means not yet defined
    */
   metric?: string;
 }
 /**
- * 对模拟世界的一次外部干预。
+ * 对模拟世界的一次外部干预。/ One outside intervention in the simulated world.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Intervention".
@@ -168,26 +172,26 @@ export interface Intervention {
   t: number;
   kind?: "broadcast" | "close_venue" | "silence" | "convince" | "insurance";
   /**
-   * broadcast：出面的人
+   * broadcast：出面的人 / broadcast: the person who makes the announcement
    */
   actor?: number | null;
   /**
-   * close_venue：场所下标；silence / convince：人的下标
+   * close_venue：场所下标；silence / convince：人的下标 / close_venue: venue index; silence and convince: person index
    */
   target?: number | null;
   text?: string;
   valence?: 1 | -1;
   strength?: number;
   /**
-   * broadcast：触达的人口比例
+   * broadcast：触达的人口比例 / broadcast: share of the population reached
    */
   reach?: number;
   /**
-   * close_venue：关几个小时，0 为一直关
+   * close_venue：关几个小时，0 为一直关 / close_venue: hours closed; 0 means closed for good
    */
   duration?: number;
   /**
-   * insurance：存款保险赔付比例
+   * insurance：存款保险赔付比例 / insurance: share of a lost deposit that is paid back
    */
   value?: number;
 }
@@ -210,6 +214,7 @@ export interface Manifest {
 }
 /**
  * 一次运行的全部可调参数。相同参数必须产生相同记录。
+ * Every tunable parameter of a run. The same parameters must produce the same record.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Params".
@@ -224,6 +229,7 @@ export interface Params {
   w_tell?: number;
   w_seen?: number;
   novelty?: number;
+  corroborate?: number;
   confirm?: number;
   forget?: number;
   share?: number;
@@ -241,6 +247,10 @@ export interface Params {
   reserve_ratio?: number;
   tellers?: number;
   interventions?: Intervention[];
+  /**
+   * 主角是否交给大模型扮演 / whether the model plays the protagonists
+   */
+  llm?: boolean;
 }
 /**
  * This interface was referenced by `Contract`'s JSON-Schema
@@ -253,9 +263,12 @@ export interface Summary {
   failed_at: number | null;
   messages: number;
   events: number;
+  llm_calls?: number;
+  llm_failed?: number;
 }
 /**
  * 一条说法。转述变形时产生子消息，parent 连成谱系。
+ * One version of the story. When it changes in the retelling a child message is created; the parent links form its lineage.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Message".
@@ -266,7 +279,7 @@ export interface Message {
   t: number;
   author?: number | null;
   /**
-   * 1 谣言，-1 辟谣
+   * 1 谣言，-1 辟谣 / 1 rumour, -1 correction
    */
   valence: 1 | -1;
   severity: number;
@@ -282,6 +295,7 @@ export interface Parameter {
 }
 /**
  * 一个人的静态表征；随时间变化的心智状态在帧里。
+ * The static description of one person; the mental state that changes over time lives in the frames.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Person".
@@ -295,11 +309,11 @@ export interface Person {
   age: number;
   sex: "f" | "m";
   /**
-   * 0 不识字 1 蒙学 2 中学 3 高等
+   * 0 不识字 1 蒙学 2 中学 3 高等 / 0 illiterate, 1 elementary, 2 secondary, 3 higher
    */
   education: number;
   /**
-   * 收入分位
+   * 收入分位 / income quantile
    */
   income: number;
   trust_general: number;
@@ -308,15 +322,15 @@ export interface Person {
   conformity: number;
   media_use: number;
   /**
-   * 揣度他人的层数 k
+   * 揣度他人的层数 k / k, how many levels deep this person reasons about others
    */
   depth: number;
   /**
-   * 存款，单位：元
+   * 存款，单位：元 / deposit, in yuan
    */
   deposit: number;
   /**
-   * 这笔存款对他有多要紧
+   * 这笔存款对他有多要紧 / how much this deposit matters to them
    */
   stake: number;
   household: number;
@@ -338,15 +352,15 @@ export interface Population {
   synthetic: boolean;
   note: string;
   /**
-   * 坐标范围 [0, extent]
+   * 坐标范围 [0, extent] / coordinates run over [0, extent]
    */
   extent: number;
   /**
-   * 钱庄在 venues 里的下标
+   * 钱庄在 venues 里的下标 / index of the bank in venues
    */
   bank: number;
   /**
-   * 主角的角色键 → persons 下标
+   * 主角的角色键 → persons 下标 / protagonist role key → index into persons
    */
   cast: {
     [k: string]: number;
@@ -373,14 +387,14 @@ export interface Tie {
 export interface Venue {
   idx: number;
   name: string;
-  kind: "bank" | "teahouse" | "market" | "temple" | "school";
+  kind: "bank" | "teahouse" | "market" | "temple" | "school" | "salon" | "shop" | "station";
   /**
    * @minItems 2
    * @maxItems 2
    */
   pos: [number, number];
   /**
-   * 营业时段 [开, 关)，24 小时制
+   * 营业时段 [开, 关)，24 小时制 / opening hours [open, close), 24-hour clock
    *
    * @minItems 2
    * @maxItems 2
@@ -389,6 +403,7 @@ export interface Venue {
 }
 /**
  * 每个 tick 的宏观量，长度都是 ticks + 1。
+ * Aggregate quantities per tick; every list has length ticks + 1.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Series".
@@ -399,13 +414,13 @@ export interface Series {
   queue: number[];
   withdrew: number[];
   /**
-   * 钱庄现银占初始存款的比例
+   * 钱庄现银占初始存款的比例 / the bank's cash as a share of initial deposits
    */
   reserve: number[];
   fear: number[];
 }
 /**
- * 一个机制：它说人群里会发生什么、为什么。
+ * 一个机制：它说人群里会发生什么、为什么。/ A mechanism: what it says happens in a population, and why.
  *
  * This interface was referenced by `Contract`'s JSON-Schema
  * via the `definition` "Theory".
@@ -420,20 +435,20 @@ export interface Theory {
   title_en: string;
   field: string;
   /**
-   * 机制，用自己的话写
+   * 机制，用自己的话写 / the mechanism, in our own words
    */
   claim: string;
   /**
-   * 公式或规则的文字表述
+   * 公式或规则的文字表述 / the formula or rule, stated in words
    */
   formal?: string;
   parameters?: Parameter[];
   /**
-   * 如果机制成立，应当观察到什么
+   * 如果机制成立，应当观察到什么 / what should be observed if the mechanism holds
    */
   predicts: string[];
   /**
-   * polis 引擎里哪一处实现了它；留空表示尚未实现
+   * polis 引擎里哪一处实现了它；留空表示尚未实现 / where the polis engine implements it; empty means not yet implemented
    */
   in_engine?: string;
 }

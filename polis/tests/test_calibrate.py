@@ -1,4 +1,6 @@
-"""校准：指标量的是它说的东西，目标只来自核实过的语料。"""
+"""校准：指标量的是它说的东西，目标只来自核实过的语料。
+Calibration: each metric measures what it claims to, and targets come only from verified corpus entries.
+"""
 
 from __future__ import annotations
 
@@ -36,6 +38,7 @@ def test_neighbor_lift_is_high_when_running_follows_ties():
     deposit = {p.idx: p.deposit > 0 for p in pop.persons}
     a = next(t for t in pop.ties if deposit[t.a] and deposit[t.b])
     # 只有一对熟人先后去排队：跑的人里有人是跟着熟人跑的，没有熟人跑过的人里也有一个跑了
+    # Only one pair of acquaintances queue, one after the other: one runner followed an acquaintance, and one person with no acquaintance who had run also ran
     assert cal.neighbor_lift(pop, fake(pop, {a.a: 3, a.b: 9})) > 1
 
 

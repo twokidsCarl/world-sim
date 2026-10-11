@@ -1,6 +1,8 @@
 """首个场景：一句闲话如何挤垮一家钱庄。这里只放内容（地点、人物、说法），机制在 engine。
+The first scenario: how a piece of idle talk brings down a bank. Only content lives here (places, people, wording); the mechanics are in engine.
 
 人物与地名均为本项目原创，不取自任何作品。
+The characters and place names are original to this project and are not taken from any existing work.
 """
 
 from __future__ import annotations
@@ -11,13 +13,14 @@ TITLE = "通和钱庄挤兑"
 # 城里人人都知道的事。给模型扮演的主角看的是这一段，不是上面那段——上面写了钱庄并不亏空，那是他们不知道的。
 # What everyone in town knows. Model-played characters are shown this, not SETTING, which gives away that the bank is sound.
 PUBLIC = "民国年间的一座县城，千余口人。城中只有一家钱庄——通和，城里人的积蓄多半存在那里。"
-DEFAULTS: dict = {}  # 这个场景对 Params 缺省值的改动
+DEFAULTS: dict = {}  # 这个场景对 Params 缺省值的改动 / this scenario's changes to the Params defaults
 SETTING = (
     "民国年间的一座县城，千余口人。城中只有一家钱庄——通和。"
     "头一天夜里，更夫老周看见钱庄后门往外抬箱子。钱庄其实并不亏空。"
 )
 
 # (名字, 相对城心的方位角比例 0..1；None 为城心)
+# (name, bearing from the town centre as a fraction of a full turn, 0..1; None is the centre itself)
 DISTRICTS = [
     ("庙前", None),
     ("东门", 0 / 7),
@@ -30,6 +33,7 @@ DISTRICTS = [
 ]
 
 # (名字, 类型, 所在街区, 相对街区中心的偏移, 营业时段)
+# (name, kind, district, offset from the district centre, opening hours)
 VENUES = [
     ("通和钱庄", "bank", "庙前", (0, 0), (9, 16)),
     ("吴记茶馆", "teahouse", "庙前", (-70, 60), (13, 22)),
@@ -41,6 +45,7 @@ VENUES = [
 ]
 
 # 主角。未写的字段沿用合成值。hub 为额外结交的人数。
+# The protagonists. Fields left out keep their synthesised values. hub is the number of extra acquaintances.
 CAST = [
     dict(key="banker", name="沈砚秋", role="通和钱庄掌柜", district="庙前", age=52, sex="m", education=2,
          persona="守了半辈子柜台，把信用看得比命重，不屑于向街坊解释。",
@@ -86,6 +91,7 @@ CAST = [
 ]
 
 # 谣言按严重程度分档：(严重度上限, 几种说法)
+# Rumour wording by severity band: (upper bound on severity, alternative wordings)
 RUMOR = [
     (0.75, ["听说通和钱庄近来周转有些紧。", "通和那边好像不大顺，你听说了没有？"]),
     (1.05, ["有人看见通和钱庄半夜往外抬箱子。", "更夫说，通和后门昨夜抬出去好几口箱子。"]),
@@ -94,8 +100,8 @@ RUMOR = [
     (9.99, ["通和明天就关门，存的钱一个子儿也拿不回来！", "官府明天就来封通和的门，快去取钱！"]),
 ]
 ORIGIN = "我昨夜亲眼看见，通和钱庄后门往外抬箱子。"
-ORIGIN_SEVERITY = 1.0  # 最初那句话有多重
-ORIGIN_BELIEF = 0.6  # 说出它的人自己信几分
+ORIGIN_SEVERITY = 1.0  # 最初那句话有多重 / how harsh the original statement is
+ORIGIN_BELIEF = 0.6  # 说出它的人自己信几分 / how far the person who says it believes it
 QUEUE_SEEN = "我看见有人急着去通和取钱。"
 REBUTTAL = [
     "我亲自去柜上看了，通和照常兑付。",
@@ -108,7 +114,9 @@ FAILED = "通和钱庄兑不出银子，关门了。"
 
 
 def interventions(start_hour: int) -> list[Intervention]:
-    """默认剧本里唯一的干预：第二个营业日开门时掌柜贴出告示。"""
+    """默认剧本里唯一的干预：第二个营业日开门时掌柜贴出告示。
+    The only intervention in the default script: the banker posts a notice when the bank opens on the second business day.
+    """
     t = (24 - start_hour) % 24 + 24 + 9
     return [Intervention(t=t, text=NOTICE, valence=-1, strength=1.2, reach=0.35)]
 
@@ -121,7 +129,9 @@ def rumor_text(severity: float, pick: int) -> str:
 
 
 def thought(kind: str, *, depth: int, src: str = "", text: str = "", belief: float = 0, expect: float = 0) -> str:
-    """主角在关键时刻的一句心里话，由状态直接拼出（M6 换成 LLM 独白）。"""
+    """主角在关键时刻的一句心里话，由状态直接拼出（M6 换成 LLM 独白）。
+    A protagonist's one-line inner thought at a key moment, assembled directly from state (M6 replaces this with an LLM monologue).
+    """
     pct = round(belief * 100)
     others = round(expect * 100)
     if kind == "seed":

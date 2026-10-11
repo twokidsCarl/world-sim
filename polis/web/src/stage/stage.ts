@@ -1,4 +1,5 @@
 // 舞台：把回放位置 t 画成一座城。命令式 Canvas 渲染器，订阅 store，自己不持有业务状态。
+// Stage: draws replay position t as a town. An imperative Canvas renderer that subscribes to the store and holds no domain state of its own.
 import {
   AWARE, BELIEF, FEAR, LOST, QUEUEING, STATUS, STATUS_NAMES, UNAWARE, WITHDREW,
   channel, clock, eventsAt, queueRanks, queueSlot, type RunData,
@@ -33,7 +34,7 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255]
 }
 
-/** 信念 0..255 → 颜色：一个色相，由浅到深 */
+/** 信念 0..255 → 颜色：一个色相，由浅到深 / Belief 0..255 → colour: a single hue, light to dark */
 function beliefRamp(stops: string[]): string[] {
   const rgb = stops.map(hexToRgb)
   return Array.from({ length: 256 }, (_, i) => {
@@ -164,7 +165,7 @@ export class Stage {
     this.dirty = true
   }
 
-  // ---- 交互 ----
+  // ---- 交互 / Interaction ----
 
   private onDown = (e: PointerEvent): void => {
     this.drag = { x: e.clientX, y: e.clientY, moved: false }
@@ -219,6 +220,7 @@ export class Stage {
     let bestD = 12
     for (const p of run.population.persons) {
       // 主角的点大，给它更大的命中范围
+      // Cast members have bigger dots, so give them a bigger hit area
       const d = Math.hypot(this.px[p.idx]! - mx, this.py[p.idx]! - my) - (p.protagonist ? 6 : 0)
       if (d < bestD) {
         bestD = d
@@ -228,7 +230,7 @@ export class Stage {
     return best
   }
 
-  // ---- 时钟与绘制 ----
+  // ---- 时钟与绘制 / Clock and drawing ----
 
   private tick = (now: number): void => {
     const dt = Math.min(0.1, (now - this.last) / 1000)
@@ -274,6 +276,7 @@ export class Stage {
     const zoom = Math.pow(Math.max(1, this.scale / this.fit), 0.6)
 
     // 每个人此刻站在哪：在家，或者在钱庄门口的队伍里
+    // Where everyone stands right now: at home, or in the queue outside the bank
     const st0 = channel(run, k, STATUS)
     const st1 = channel(run, k1, STATUS)
     const r0 = this.rankAt(k)
@@ -287,7 +290,7 @@ export class Stage {
       this.py[i] = this.sy(a[1] + (b[1] - a[1]) * f)
     }
 
-    // 街区：一团淡墨
+    // 街区：一团淡墨 / Districts: a blot of pale ink
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     for (const d of pop.districts) {
@@ -305,7 +308,7 @@ export class Stage {
 
     this.drawEdges()
 
-    // 选中的人：把他的关系描出来
+    // 选中的人：把他的关系描出来 / Selected person: trace out their ties
     if (s.selected != null) {
       ctx.strokeStyle = pal.ink
       ctx.globalAlpha = 0.45
@@ -319,7 +322,7 @@ export class Stage {
       ctx.globalAlpha = 1
     }
 
-    // 这一小时里正在传的话
+    // 这一小时里正在传的话 / Words being passed on during this hour
     const kk = frac > 0 ? k1 : k
     const prog = frac > 0 ? frac : 1
     const now = eventsAt(run, kk)
@@ -345,7 +348,7 @@ export class Stage {
     }
     ctx.globalAlpha = 1
 
-    // 告示：从钱庄荡开的一圈
+    // 告示：从钱庄荡开的一圈 / Notice: a ring rippling out from the bank
     for (const e of now) {
       if (e.k !== 'broadcast' || prog >= 1) continue
       ctx.strokeStyle = pal.rebut
@@ -357,7 +360,7 @@ export class Stage {
       ctx.globalAlpha = 1
     }
 
-    // 人
+    // 人 / People
     const b0 = channel(run, k, BELIEF)
     const b1 = channel(run, k1, BELIEF)
     const f0 = channel(run, k, FEAR)
@@ -375,6 +378,7 @@ export class Stage {
       ctx.arc(x, y, r, 0, Math.PI * 2)
       if (big) {
         // 主角：纸色衬底把它从人群里托出来
+        // Cast: a paper-coloured backing lifts them out of the crowd
         ctx.fillStyle = pal.paper
         ctx.fill()
         ctx.beginPath()
@@ -400,7 +404,7 @@ export class Stage {
     }
     for (const p of pop.persons) if (!p.protagonist) dot(p.idx, false)
 
-    // 场所
+    // 场所 / Venues
     for (const v of pop.venues) {
       const x = this.sx(v.pos[0])
       const y = this.sy(v.pos[1])
@@ -422,7 +426,7 @@ export class Stage {
       ctx.font = `${Math.round(size * 1.25)}px ${SERIF}`
       ctx.fillText(VENUE_GLYPH[v.kind] ?? '', x, y + 1)
       if (isBank && !failed) {
-        // 钱庄外的一圈：库里还剩多少现银
+        // 钱庄外的一圈：库里还剩多少现银 / Ring around the bank: how much cash is left in the vault
         const left = run.series.reserve[k]! + (run.series.reserve[k1]! - run.series.reserve[k]!) * frac
         const full = run.manifest.params.reserve_ratio ?? 0.3
         ctx.strokeStyle = pal.ink
@@ -435,7 +439,7 @@ export class Stage {
 
     for (const p of pop.persons) if (p.protagonist) dot(p.idx, true)
 
-    // 字：街区名、场所名、主角名
+    // 字：街区名、场所名、主角名 / Labels: district, venue and cast names
     const label = (text: string, x: number, y: number, font: string, color: string, alpha = 1): void => {
       ctx.font = font
       ctx.lineJoin = 'round'
@@ -459,7 +463,7 @@ export class Stage {
       label(p.name, this.px[p.idx]! + 8 * zoom, this.py[p.idx]!, `600 12.5px ${SERIF}`, pal.ink)
     }
 
-    // 选中与悬停
+    // 选中与悬停 / Selection and hover
     const ring = (i: number, r: number, width: number): void => {
       ctx.strokeStyle = pal.ink
       ctx.lineWidth = width
@@ -478,7 +482,7 @@ export class Stage {
       }
     }
 
-    // 夜色
+    // 夜色 / Night shading
     const c = clock(run, s.t)
     const hour = c.hour + frac
     const night = hour >= 23 || hour < 5 ? 1 : hour >= 21 ? (hour - 21) / 2 : hour < 7 ? (7 - hour) / 2 : 0
@@ -490,7 +494,10 @@ export class Stage {
     }
   }
 
-  /** 关系网几千条线，画一次存起来；视图或主题变了再重画 */
+  /**
+   * 关系网几千条线，画一次存起来；视图或主题变了再重画
+   * The tie network is thousands of lines: draw it once and cache it; redraw only when the view or theme changes
+   */
   private drawEdges(): void {
     const run = this.run!
     if (!this.edges) {

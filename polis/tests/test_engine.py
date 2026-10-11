@@ -1,4 +1,6 @@
-"""引擎的不变量：可复现、守恒、退化情形，以及记录能读回来。"""
+"""引擎的不变量：可复现、守恒、退化情形，以及记录能读回来。
+Engine invariants: reproducibility, conservation, degenerate cases, and records that read back.
+"""
 
 from __future__ import annotations
 
@@ -53,7 +55,7 @@ def test_only_depositors_queue():
 
 def test_nobody_believes_words_that_carry_no_weight():
     _, r = simulate(w_tell=0, w_seen=0)
-    assert max(r.series.believers) <= 1  # 只有亲眼看见的更夫
+    assert max(r.series.believers) <= 1  # 只有亲眼看见的更夫 / only the watchman, who saw it himself
     assert r.failed_at is None
 
 

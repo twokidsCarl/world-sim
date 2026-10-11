@@ -1,6 +1,8 @@
 """实验台：在一条记录上加干预分叉重跑；同一设定换种子看分布。
+The lab: branch a run by adding interventions and re-running it; vary the seed under the same settings to see the distribution.
 
 引擎是确定性的，所以分叉不需要存档点：用同样的种子从头重跑，干预之前的每一帧都与父记录相同。
+The engine is deterministic, so branching needs no checkpoints: re-running from the start with the same seed gives frames identical to the parent's up to the intervention.
 """
 
 from __future__ import annotations
@@ -34,7 +36,9 @@ def branch(root: Path, parent_id: str, added: list[Intervention]) -> Manifest:
 
 
 def ensemble(root: Path, run_id: str, k: int = 20) -> dict:
-    """同一设定跑 k 个种子，给出各时刻的分位带和倒闭次数。结果缓存在记录目录里。"""
+    """同一设定跑 k 个种子，给出各时刻的分位带和倒闭次数。结果缓存在记录目录里。
+    Run k seeds under the same settings and return the quantile bands at each tick and the number of failures. The result is cached in the run directory.
+    """
     path = root / run_id / "ensemble.json"
     if path.exists():
         cached = json.loads(path.read_text(encoding="utf-8"))
@@ -50,11 +54,11 @@ def ensemble(root: Path, run_id: str, k: int = 20) -> dict:
         for name in series:
             values = np.array(getattr(r.series, name), dtype=float)
             if name == "believers" and r.failed_at is not None:
-                values[r.failed_at :] = np.nan  # 倒闭之后人人都信，不计入分布
+                values[r.failed_at :] = np.nan  # 倒闭之后人人都信，不计入分布 / after a failure everyone believes, so those ticks are left out of the distribution
             series[name].append(values)
     out = {"k": k, "seeds": seeds, "failed": sum(f is not None for f in failed_at), "failed_at": failed_at, "bands": {}}
     for name, runs in series.items():
-        with warnings.catch_warnings():  # 全部种子都已倒闭的时刻没有值，记为空
+        with warnings.catch_warnings():  # 全部种子都已倒闭的时刻没有值，记为空 / ticks at which every seed has failed have no value and are recorded as null
             warnings.simplefilter("ignore", RuntimeWarning)
             lo, mid, hi = np.nanquantile(np.array(runs), [0.1, 0.5, 0.9], axis=0)
         out["bands"][name] = {"lo": _clean(lo), "mid": _clean(mid), "hi": _clean(hi)}

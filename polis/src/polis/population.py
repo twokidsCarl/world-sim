@@ -1,6 +1,8 @@
 """人口合成：个体属性、住处、关系网、场所。只依赖种子，与干预无关。
+Population synthesis: personal attributes, homes, the tie network and venues. It depends only on the seed, never on interventions.
 
 目前的边际分布是占位假设（Population.synthetic = True），M4 换成调查数据。
+For now the marginal distributions are placeholder assumptions (Population.synthetic = True); M4 replaces them with survey data.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ GIVEN_M = "福贵顺发财旺根生水木金土山海林森明亮德仁义礼智
 GIVEN_F = "秀英兰芳桂珍凤翠梅菊莲荷云霞月娥巧慧淑贞玉珠银香春秋冬雪琴素"
 
 # 各类场所：一个成年人成为常客的概率（学校只收读书的年轻人）
+# Per kind of venue, the probability that an adult becomes a regular (schools take only young people with some schooling)
 JOIN = {"teahouse": 0.18, "market": 0.40, "temple": 0.15, "school": 0.5, "salon": 0.12, "shop": 0.2, "station": 0.25}
 
 KIN, NEIGHBOR, COLLEAGUE, FRIEND = "kin", "neighbor", "colleague", "friend"
@@ -33,7 +36,7 @@ def build(params: Params, scenario: ModuleType) -> Population:
     venues = _venues(scenario, districts)
     bank = next(v.idx for v in venues if v.kind == "bank")
 
-    # 住户与住处
+    # 住户与住处 / households and homes
     district_of = np.sort(rng.integers(0, len(districts), n))
     household = np.zeros(n, dtype=int)
     pos = np.zeros((n, 2))
@@ -49,7 +52,7 @@ def build(params: Params, scenario: ModuleType) -> Population:
         pos[i] = np.clip(home + rng.normal(0, 7, 2), 10, EXTENT - 10)
         left -= 1
 
-    # 属性与特质
+    # 属性与特质 / attributes and traits
     age = rng.integers(14, 80, n)
     sex = rng.choice(["f", "m"], n)
     education = rng.choice(4, n, p=[0.35, 0.35, 0.22, 0.08])
@@ -72,7 +75,7 @@ def build(params: Params, scenario: ModuleType) -> Population:
 
     names = [_name(rng, s) for s in sex]
 
-    # 场所的常客
+    # 场所的常客 / venue regulars
     member: list[list[int]] = [[] for _ in range(n)]
     for kind, p_join in JOIN.items():
         places = [v for v in venues if v.kind == kind]
@@ -87,7 +90,7 @@ def build(params: Params, scenario: ModuleType) -> Population:
                 near = min(places, key=lambda v: math.dist(v.pos, pos[i]))
                 member[i].append(near.idx)
 
-    # 关系
+    # 关系 / ties
     ties: dict[tuple[int, int], str] = {}
 
     def link(a: int, b: int, kind: str) -> None:
@@ -119,7 +122,7 @@ def build(params: Params, scenario: ModuleType) -> Population:
         if rng.random() < 0.8:
             link(i, int(rng.integers(0, n)), FRIEND)
 
-    # 主角：在指定街区里挑一个成年人，覆写其属性
+    # 主角：在指定街区里挑一个成年人，覆写其属性 / protagonists: pick an adult in the named district and override their attributes
     overrides: dict[int, dict] = {}
     cast: dict[str, int] = {}
     venue_by_name = {v.name: v.idx for v in venues}
