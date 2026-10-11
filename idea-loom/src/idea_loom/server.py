@@ -9,7 +9,7 @@ from typing import Optional
 import json
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import Body, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -887,3 +887,225 @@ def approve_chain(body: ChainBody) -> dict[str, int]:
         return chains.approve(body.directory, body.steps)
     except ValueError as e:
         raise HTTPException(422, str(e))
+
+
+# ---------- 给外来的 AI Agent：/api/v1 / for outside AI agents: /api/v1 ----------
+#
+# 这一层是稳定的、有版本的，和上面给界面用的接口分开。只读和有界的计算对所有人开放；
+# 错误一律是 {"error", "hint"}，hint 告诉 Agent 怎么把请求改对。
+# This layer is stable and versioned, separate from the routes above that serve the UI. Reading
+# and bounded computation are open to everyone; every error is {"error", "hint"}, the hint
+# telling an agent how to fix its request.
+
+from fastapi.responses import JSONResponse  # noqa: E402
+
+from .agentapi import catalog as agent_catalog  # noqa: E402
+from .agentapi import datasets as agent_datasets  # noqa: E402
+from .agentapi import docs as agent_docs  # noqa: E402
+
+
+def _port(request: Request) -> str:
+    server = request.scope.get("server") or ("", 8767)
+    return str(server[1])
+
+
+def _base(request: Request) -> str:
+    return config.public_url() or f"http://localhost:{_port(request)}"
+
+
+def _agent_error(status: int, error: str, hint: str = "") -> JSONResponse:
+    return JSONResponse({"error": error, "hint": hint or "GET /api/v1/catalog lists what exists."}, status_code=status)
+
+
+@app.get("/api/v1/catalog")
+def v1_catalog(request: Request) -> dict:
+    return agent_catalog.catalog(_port(request))
+
+
+@app.get("/api/v1/ideas")
+def v1_ideas(q: str = "", level: str = "", thread: str = "", kernel: str = "", project: str = "", status: str = "", limit: int = 50, after: int = 0, full: bool = False):
+    try:
+        return agent_catalog.search_ideas(q, level, thread, kernel, project, status, limit, max(0, after), full)
+    except ValueError as e:
+        return _agent_error(422, str(e), "limit is 1 to 200; page with after=<next>.")
+
+
+@app.get("/api/v1/ideas/{idea_id}")
+def v1_idea(idea_id: str):
+    try:
+        return agent_catalog.get_idea(idea_id)
+    except agent_catalog.NotFound as e:
+        return _agent_error(404, str(e), "Search with GET /api/v1/ideas?q=words; ids look like 4.2, 纵 1, 造 3.")
+
+
+@app.get("/api/v1/cards")
+def v1_cards(request: Request, project: str = "", idea: str = ""):
+    return {"cards": agent_catalog.cards(project, idea, _port(request))}
+
+
+@app.get("/api/v1/datasets/{project}/{dataset_id}/schema")
+def v1_dataset_schema(project: str, dataset_id: str):
+    try:
+        return agent_datasets.describe(project, agent_catalog.dataset(project, dataset_id))
+    except agent_catalog.NotFound as e:
+        return _agent_error(404, str(e))
+    except agent_datasets.DatasetError as e:
+        return _agent_error(503, str(e), "The dataset's files could not be read on main; try again later or report it.")
+
+
+@app.get("/api/v1/datasets/{project}/{dataset_id}")
+def v1_dataset(project: str, dataset_id: str, request: Request, q: str = "", key: str = "", fields: str = "", limit: int = agent_datasets.DEFAULT_LIMIT, after: int = 0):
+    try:
+        ds = agent_catalog.dataset(project, dataset_id)
+        return agent_datasets.query(project, ds, q=q, key=key, where=request.query_params.getlist("where"), fields=fields, limit=limit, after=after)
+    except agent_catalog.NotFound as e:
+        return _agent_error(404, str(e))
+    except agent_datasets.DatasetError as e:
+        return _agent_error(422, str(e), f"GET /api/v1/datasets/{project}/{dataset_id}/schema shows the fields, the key and a sample record.")
+
+
+@app.get("/api/v1/capabilities/{project}/{capability_id}")
+def v1_capability(project: str, capability_id: str):
+    try:
+        return agent_catalog.describe_capability(project, capability_id)
+    except agent_catalog.NotFound as e:
+        return _agent_error(404, str(e))
+
+
+@app.get("/llms.txt", response_class=PlainTextResponse)
+def llms_txt(request: Request) -> PlainTextResponse:
+    return PlainTextResponse(agent_docs.llms_txt(_base(request)), media_type="text/markdown; charset=utf-8")
+
+
+@app.get("/llms-full.txt", response_class=PlainTextResponse)
+def llms_full(request: Request) -> PlainTextResponse:
+    return PlainTextResponse(agent_docs.llms_full(_base(request)), media_type="text/markdown; charset=utf-8")
+
+
+@app.post("/api/v1/run/{project}/{capability_id}")
+def v1_run(project: str, capability_id: str, request: Request, payload: dict = Body(default_factory=dict)):
+    """跑一次有界的计算。 / Run one bounded computation."""
+    from .agentapi import run as agent_run
+
+    try:
+        return agent_run.run(project, agent_catalog.capability(project, capability_id), payload, _port(request))
+    except agent_catalog.NotFound as e:
+        return _agent_error(404, str(e))
+    except agent_run.RunError as e:
+        return _agent_error(e.status, e.error, e.hint)
+
+
+class ProposeIdeaBody(BaseModel):
+    title: str
+    body: str
+    level: str
+    why: str = ""
+    threads: list[str] = []
+    kernel: Optional[str] = None
+
+
+class ProposeWishBody(BaseModel):
+    title: str
+    stuck: str = ""
+
+
+def _proposer(request: Request) -> str:
+    user = current_user(request)
+    return f"agent:{user.agent}" if user.agent else (user.login or "owner")
+
+
+@app.post("/api/v1/proposals/idea")
+def v1_propose_idea(body: ProposeIdeaBody, request: Request):
+    """提一条 idea：进待主人过目的队列，不直接进想法池，也不调用模型。 / Propose an idea: it enters the owner's review queue, not the pool, and no model is called."""
+    try:
+        item = suggestions.send(_proposer(request), body.title, idea=body.model_dump(exclude={"title"}))
+    except suggestions.SuggestionError as e:
+        return _agent_error(422, str(e), "Fields: title, body (about three short lines), level (L1…L10, 纵, 造, 规), why; optional threads (A–E) and kernel.")
+    return {"queued": item.id, "status": item.status, "note": "It is waiting for the owner to look at it. / 等主人过目。"}
+
+
+@app.post("/api/v1/proposals/wish")
+def v1_propose_wish(body: ProposeWishBody, request: Request):
+    try:
+        item = suggestions.send(_proposer(request), body.title, body.stuck)
+    except suggestions.SuggestionError as e:
+        return _agent_error(422, str(e), "Fields: title (one sentence), stuck (optional).")
+    return {"queued": item.id, "status": item.status, "note": "It is waiting for the owner to look at it. / 等主人过目。"}
+
+
+def _loopback(request: Request):
+    """MCP 的工具在进程里直接走 /api/v1，带上调用方的令牌和地址。 / MCP tools go through /api/v1 in-process, carrying the caller's token and address."""
+    import httpx
+
+    headers = {k: v for k, v in (("authorization", request.headers.get("authorization")), ("cookie", request.headers.get("cookie"))) if v}
+    host = request.headers.get("host", "localhost")
+    client_addr = (request.client.host, request.client.port) if request.client else ("127.0.0.1", 0)
+
+    async def api(method: str, path: str, params, body):
+        transport = httpx.ASGITransport(app=app, client=client_addr)
+        async with httpx.AsyncClient(transport=transport, base_url=f"http://{host}", headers=headers, timeout=130) as client:
+            response = await client.request(method, path, params=params, json=body)
+        try:
+            return response.status_code, response.json()
+        except ValueError:
+            return response.status_code, response.text
+
+    return api
+
+
+@app.post("/mcp")
+async def mcp_endpoint(request: Request):
+    """远程的 MCP（Streamable HTTP，无状态）：每个 POST 是一条 JSON-RPC 消息，回一个 JSON。
+
+    Remote MCP (Streamable HTTP, stateless): each POST carries one JSON-RPC message and gets one JSON reply.
+    """
+    from .agentapi import mcp as agent_mcp
+
+    try:
+        message = await request.json()
+    except ValueError:
+        return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}}, status_code=400)
+    api = _loopback(request)
+    if isinstance(message, list):
+        replies = [r for r in [await agent_mcp.handle(m, api) for m in message] if r is not None]
+        return JSONResponse(replies) if replies else Response(status_code=202)
+    reply = await agent_mcp.handle(message, api)
+    return JSONResponse(reply) if reply is not None else Response(status_code=202)
+
+
+@app.get("/mcp")
+def mcp_get() -> Response:
+    # 这个服务不主动推消息，所以没有 GET 的事件流。 / This server pushes nothing, so there is no GET event stream.
+    return Response(status_code=405, headers={"allow": "POST"})
+
+
+# ---------- Agent 的令牌（只有主人）/ agent tokens (owner only) ----------
+
+
+class TokenBody(BaseModel):
+    name: str
+    scopes: list[str] = ["read"]
+
+
+@app.get("/api/agent-tokens")
+def list_agent_tokens() -> list[dict]:
+    from .agentapi import tokens
+
+    return tokens.listing()
+
+
+@app.post("/api/agent-tokens")
+def create_agent_token(body: TokenBody) -> dict:
+    from .agentapi import tokens
+
+    try:
+        return tokens.create(body.name, body.scopes)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.post("/api/agent-tokens/{token_id}/revoke")
+def revoke_agent_token(token_id: str) -> dict:
+    from .agentapi import tokens
+
+    return {"revoked": tokens.revoke(token_id)}

@@ -7,6 +7,7 @@ import { NewIdeaPage } from '../pages/NewIdeaPage'
 import { MapPage } from '../pages/MapPage'
 import { PlayPage } from '../pages/PlayPage'
 import { PoolPage } from '../pages/PoolPage'
+import { ConnectPage } from '../pages/ConnectPage'
 import { StatsPage } from '../pages/StatsPage'
 import { SuggestPage } from '../pages/SuggestPage'
 import { WorkPage } from '../pages/WorkPage'
@@ -27,6 +28,7 @@ const NAV = [
   { to: '/work', zh: '开发', en: 'Work', end: false, owner: true },
   { to: '/wishes', zh: '许愿池', en: 'Wish pool', end: false, owner: true },
   { to: '/stats', zh: '统计', en: 'Statistics', end: false, owner: true },
+  { to: '/connect', zh: '接入', en: 'Connect', end: false, owner: true },
 ]
 
 export function App() {
@@ -180,6 +182,7 @@ export function App() {
             <Route path="/wishes/:id" element={gate(<WishPage />)} />
             <Route path="/new" element={gate(<NewIdeaPage state={state} />)} />
             <Route path="/suggest" element={<SuggestPage />} />
+            <Route path="/connect" element={gate(<ConnectPage />)} />
             <Route path="*" element={<p className="pad">{t('没有这个页面。', 'There is no such page.')}</p>} />
           </Routes>
         )}

@@ -1,0 +1,96 @@
+{
+  "summary": {
+    "zh": "平行社会：一个小镇上谣言、挤兑、从众怎么传开。这里给出它依据的语料——理论、历史案例、量化的事实，每条都有出处和核实标记——以及模型校准的目标和结果。开一次新的模拟现在还只能用命令行。",
+    "en": "A parallel society: how rumours, bank runs and conformity spread through a small town. Offered here is the corpus it rests on — theories, historical cases and quantitative facts, each with sources and verification flags — plus the model's calibration targets and results. Starting a new simulation is command-line only for now."
+  },
+  "datasets": [
+    {
+      "id": "theory",
+      "title": {
+        "zh": "理论",
+        "en": "Theories"
+      },
+      "description": {
+        "zh": "社会传播的理论模型：阈值、复杂传染、从众、谣言公式等。",
+        "en": "Theoretical models of social spread: thresholds, complex contagion, conformity, rumour laws and more."
+      },
+      "path": "corpus/theory/*.yaml",
+      "search": [],
+      "fields": [],
+      "licence": "MIT (text paraphrased and written for this repository; cited works keep their own copyright)",
+      "provenance": {
+        "zh": "每条的 sources 里逐个写明出处，以及有没有核实（verified / checked）；caveats 字段写明了没能核对的地方。有英文版在 en 字段里。",
+        "en": "Each entry lists its sources one by one with whether they were verified (`verified` / `checked`); the `caveats` field states what could not be checked. An English version sits under `en`."
+      }
+    },
+    {
+      "id": "cases",
+      "title": {
+        "zh": "历史案例",
+        "en": "Historical cases"
+      },
+      "description": {
+        "zh": "真实发生过的谣言和挤兑事件，模拟的场景以它们为蓝本。",
+        "en": "Rumours and bank runs that really happened, on which the simulated scenarios are modelled."
+      },
+      "path": "corpus/cases/*.yaml",
+      "search": [],
+      "fields": [],
+      "licence": "MIT (text paraphrased and written for this repository; cited works keep their own copyright)",
+      "provenance": {
+        "zh": "每条的 sources 里逐个写明出处，以及有没有核实（verified / checked）；caveats 字段写明了没能核对的地方。有英文版在 en 字段里。",
+        "en": "Each entry lists its sources one by one with whether they were verified (`verified` / `checked`); the `caveats` field states what could not be checked. An English version sits under `en`."
+      }
+    },
+    {
+      "id": "facts",
+      "title": {
+        "zh": "量化的事实",
+        "en": "Quantitative facts"
+      },
+      "description": {
+        "zh": "带数值、单位、适用条件和注意事项的经验发现。",
+        "en": "Empirical findings with a value, a unit, the conditions they hold under and caveats."
+      },
+      "path": "corpus/facts/*.yaml",
+      "search": [],
+      "fields": [
+        "_id",
+        "title",
+        "statement",
+        "kind",
+        "value",
+        "unit",
+        "conditions",
+        "caveats",
+        "theories",
+        "sources",
+        "en"
+      ],
+      "licence": "MIT (text paraphrased and written for this repository; cited works keep their own copyright)",
+      "provenance": {
+        "zh": "每条的 sources 里逐个写明出处，以及有没有核实（verified / checked）；caveats 字段写明了没能核对的地方。有英文版在 en 字段里。",
+        "en": "Each entry lists its sources one by one with whether they were verified (`verified` / `checked`); the `caveats` field states what could not be checked. An English version sits under `en`."
+      }
+    },
+    {
+      "id": "calibration-targets",
+      "title": {
+        "zh": "校准目标",
+        "en": "Calibration targets"
+      },
+      "description": {
+        "zh": "模型要对上的七个现实指标：区间、来源、为什么选它。",
+        "en": "The seven real-world metrics the model must match: the interval, the source and why it was chosen."
+      },
+      "path": "calibration.json",
+      "records": "targets",
+      "key": "metric",
+      "licence": "MIT",
+      "provenance": {
+        "zh": "每个目标的 source 字段指向语料里的一条事实或案例。",
+        "en": "Each target's `source` points to a fact or case in the corpus."
+      }
+    }
+  ]
+}

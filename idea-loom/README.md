@@ -219,6 +219,29 @@ everything else is the owner's. Which role each route needs is written in one pl
 
 环境变量（都可以不设）/ Environment (all optional)：`IDEA_LOOM_MODEL`（缺省 `sonnet`，生成、细化、翻译用 / default `sonnet`, for generate, refine, translate）、`IDEA_LOOM_ASSISTANT_MODEL`（小助手 / the assistant）、`IDEA_LOOM_JOB_MODEL`（作业 / jobs）。
 
+## 给 AI Agent / For AI agents
+
+仓库里的数据和计算可以直接接给外面的 AI Agent，三个出口，都从各项目 `sim.json` 的 `agent` 一节生成（还没有这一节的项目用 `data/agent/<项目>.json` 里的临时说明）：
+
+The data and computations in the repository can be handed straight to outside AI agents
+through three outlets, all generated from the `agent` section of each project's `sim.json`
+(projects without one use the interim description in `data/agent/<project>.json`):
+
+| 出口 / Outlet | 地址 / Where |
+|---|---|
+| 文档 / Documents | `/llms.txt`、`/llms-full.txt`；仓库根目录的 `AGENTS.md` / the root `AGENTS.md` |
+| HTTP | `/api/v1/catalog`、`/ideas`、`/datasets/{项目}/{数据集}`、`/capabilities/…`、`/run/{项目}/{能力}`、`/proposals/idea|wish` |
+| MCP | 远程 / remote `POST /mcp`；本机 / local `uv run idea-loom mcp`（根目录的 `.mcp.json` 已配好 / configured by the root `.mcp.json`） |
+
+- 读数据和跑计算不要令牌。提议要带 `propose` 权限的令牌（界面的"接入"页，或 `uv run idea-loom agent token <名字> --propose`），而且只进"待你过目"的队列：愿望放行后进许愿池，idea 放行后进候选。全程不调用模型。
+  Reading and computing need no token. Proposing needs a token with the `propose` scope (the Connect page, or `uv run idea-loom agent token <name> --propose`) and only reaches the review queue: an accepted wish enters the wish pool, an accepted idea becomes a candidate. No model is called anywhere.
+- 数据集从 `origin/main` 上的文件里读；每次返回都带许可、出处和版本。
+  Datasets are read from the files on `origin/main`; every reply carries the licence, the provenance and the version.
+- 计算转给项目自己的后端：输入按声明的 JSON Schema 校验，时间和返回大小有上限，同时最多跑四个。
+  Computations go to the project's own backend: the input is validated against the declared JSON Schema, time and reply size are capped, and at most four run at once.
+- `uv run idea-loom agent check` 是验收：起一个看不到仓库、只有这套工具的 `claude`，让它做五个固定的任务，打印每个任务调了哪些工具。它会真的调用模型（一轮约 0.5 美元）。
+  `uv run idea-loom agent check` is the acceptance test: it starts a `claude` that cannot see the repository and has only these tools, gives it five fixed tasks and prints which tools each one called. It really calls the model (about $0.50 a round).
+
 ## 测试 / Test
 
 ```sh
@@ -322,7 +345,8 @@ src/idea_loom/
   review.py     回看操作轨迹 / review of the action trail
   wishes.py     许愿池 / the wish pool
   notify.py     推送通知：方案待批、作业结果、访客的愿望、队列暂停 / push notifications: plans to approve, job results, visitors' wishes, queue pauses
-  suggestions.py 访客提的愿望：待主人过目的队列 / wishes from visitors: the queue the owner looks over
+  agentapi/     给外来 Agent 的那一层：说明、目录、数据集、计算、文档、MCP、令牌、验收 / the layer for outside agents: descriptions, catalogue, datasets, runs, documents, MCP, tokens, acceptance
+  suggestions.py 访客和 Agent 提的愿望与 idea：待主人过目的队列 / wishes from visitors: the queue the owner looks over
   trail.py      操作轨迹 / the action trail
   assistant/    小助手：提示词、回合、事件流、工具服务 / the assistant: prompt, turns, event stream, tool server
   edits.py      手动改动，先检查再写事件 / manual changes, validated then appended

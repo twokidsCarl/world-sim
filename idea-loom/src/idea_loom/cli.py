@@ -268,6 +268,63 @@ def push_keys() -> None:
     typer.echo(f"IDEA_LOOM_VAPID_PRIVATE={pair['private']}")
 
 
+@app.command("mcp")
+def mcp_(url: str = typer.Option("", help="world-sim 的地址，缺省是本机的 http://127.0.0.1:8767 / where world-sim runs; this machine by default"),
+         token: str = typer.Option("", help="令牌（可以不给）/ a token (optional)", envvar="WORLD_SIM_TOKEN")) -> None:
+    """给 AI Agent 的 MCP 服务（标准输入输出）。要先有一个在运行的 idea-loom serve。 / The MCP server for AI agents (stdio). An `idea-loom serve` must be running."""
+    import os
+
+    from .agentapi import mcp
+
+    mcp.stdio(url or os.environ.get("WORLD_SIM_URL", "http://127.0.0.1:8767"), token)
+
+
+agent_app = typer.Typer(help="给外来的 AI Agent 的那一层 / the layer for outside AI agents", no_args_is_help=True)
+app.add_typer(agent_app, name="agent")
+
+
+@agent_app.command("docs")
+def agent_docs(full: bool = typer.Option(False, help="完整的那份 / the full reference"), base: str = typer.Option("", help="写进链接里的地址 / the base URL to put in links")) -> None:
+    """打印生成的 llms.txt（或完整说明）。 / Print the generated llms.txt (or the full reference)."""
+    from .agentapi import docs
+
+    typer.echo(docs.llms_full(base) if full else docs.llms_txt(base), nl=False)
+
+
+@agent_app.command("check")
+def agent_check(url: str = typer.Option("http://127.0.0.1:8767", help="正在运行的 idea-loom / the running idea-loom"),
+                token: str = typer.Option("", help="带 propose 权限的令牌，用来试提议 / a token with the propose scope, to try proposing"),
+                model: str = typer.Option("sonnet"), only: str = typer.Option("", help="只跑这一个任务 / run this task only")) -> None:
+    """验收：让一个只有这套工具、看不到仓库的 Agent 做几个固定的任务。会真的调用模型。
+
+    Acceptance: have an agent with only these tools and no view of the repository do a few fixed tasks. It really calls the model.
+    """
+    from .agentapi import check
+
+    total = 0.0
+    for r in check.run_all(url, token, model, only):
+        total += r["cost_usd"]
+        typer.echo(f"\n== {r['id']}: {r['task']}")
+        typer.echo(f"   工具 / tools ({len(r['calls'])}, {r['errors']} 次出错 / failed): " + " → ".join(c["tool"] for c in r["calls"]))
+        if r["missing"]:
+            typer.echo(f"   答案里没有 / missing from the answer: {r['missing']}")
+        typer.echo("   " + r["answer"].strip().replace("\n", "\n   ")[:900])
+    typer.echo(f"\n花费 / cost: ${total:.2f}")
+
+
+@agent_app.command("token")
+def agent_token(name: str, propose: bool = typer.Option(False, help="允许提议 idea 和愿望 / allow proposing ideas and wishes")) -> None:
+    """创建一个令牌。只显示这一次。 / Create a token. It is shown this once only."""
+    from .agentapi import tokens
+
+    try:
+        made = tokens.create(name, ["read", "propose"] if propose else ["read"])
+    except ValueError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1)
+    typer.echo(made["token"])
+
+
 @app.command("worker")
 def worker_(once: bool = typer.Option(False, help="只看一遍队列就退出 / look over the queue once and exit")) -> None:
     """云端跑作业的进程：从队列里取主人批准过的事来做。 / The process that runs jobs in the cloud, taking what the owner approved from the queue."""

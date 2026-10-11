@@ -58,6 +58,8 @@ class User(BaseModel):
     login: str = ""
     name: str = ""
     avatar: str = ""
+    agent: str = ""  # 带着令牌来的 Agent 的名字 / the name of an agent that came with a token
+    scopes: list[str] = []
     auth_enabled: bool = False  # 假就是本地模式：不用登录，人人是主人 / false means local mode: no sign-in, everyone is the owner
 
 
@@ -119,6 +121,8 @@ def session_cookie(login: str, name: str = "", avatar: str = "") -> str:
 # is owner-only by default.
 GUEST_GET = [
     r"^/api/health$", r"^/api/me$", r"^/api/state$", r"^/api/ideas/[^/]+$", r"^/api/play$", r"^/api/projects$", r"^/api/tasks$",
+    # 给外来的 Agent 的那一层：只读的全部对所有人开放。 / The layer for outside agents: everything read-only is open to all.
+    r"^/api/v1/catalog$", r"^/api/v1/ideas(/[^/]+)?$", r"^/api/v1/cards$", r"^/api/v1/datasets/[^/]+/[^/]+(/schema)?$", r"^/api/v1/capabilities/[^/]+/[^/]+$",
 ]
 # 登录的访客另外能做的。 / What a signed-in member may do in addition.
 MEMBER = [
@@ -130,8 +134,31 @@ _GUEST_GET = [re.compile(p) for p in GUEST_GET]
 _MEMBER = [(m, re.compile(p)) for m, p in MEMBER]
 
 
+# 没登录也能发的 POST：只有"跑一次有界的计算"。 / The only POST open without signing in: running one bounded computation.
+_GUEST_POST = [re.compile(r"^/api/v1/run/[^/]+/[^/]+$")]
+# 提议：登录的访客，或者带着有 propose 权限的令牌的 Agent。 / Proposals: a signed-in member, or an agent whose token has the propose scope.
+_PROPOSE = re.compile(r"^/api/v1/proposals/(idea|wish)$")
+
+
+def user_from_request(cookie: Optional[str], authorization: Optional[str]) -> User:
+    """先看令牌，再看登录的 cookie。令牌不给登录身份，只给 Agent 的名字和权限。
+
+    A token is looked at first, then the sign-in cookie. A token grants no signed-in role, only the agent's name and scopes.
+    """
+    user = user_from_cookie(cookie)
+    if authorization and authorization.lower().startswith("bearer "):
+        from .agentapi import tokens
+
+        found = tokens.lookup(authorization[7:].strip())
+        if found:
+            user.agent, user.scopes = found["name"], found["scopes"]
+    return user
+
+
 def required_role(method: str, path: str) -> Role:
     if method in ("GET", "HEAD") and any(p.match(path) for p in _GUEST_GET):
+        return "guest"
+    if method == "POST" and any(p.match(path) for p in _GUEST_POST):
         return "guest"
     if any(m == method and p.match(path) for m, p in _MEMBER):
         return "member"
@@ -139,6 +166,8 @@ def required_role(method: str, path: str) -> Role:
 
 
 def allowed(user: User, method: str, path: str) -> bool:
+    if method == "POST" and _PROPOSE.match(path):
+        return RANK[user.role] >= RANK["member"] or "propose" in user.scopes
     return RANK[user.role] >= RANK[required_role(method, path)]
 
 
