@@ -21,7 +21,8 @@ import { buildCell, decodeCell, type CellGeometry } from '../volume/cell'
 import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '../neuro/swc'
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
-import { helicalLayer, layerOnSphere, rnpBundle, shell } from '../infer/influenza'
+import { fibonacciSphere, helicalLayer, layerOnSphere, rnpBundle, shell } from '../infer/influenza'
+import { chainCentre, complexes, placeTemplate, ringSites, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
@@ -220,7 +221,9 @@ const START_DRAWING: Drawing = typeof location !== 'undefined' && new URLSearchP
  * ribonucleoproteins and eight polymerases. Colours are measured on Goodsell's "Influenza Virus":
  * M1 blue, nucleoprotein orange, RNA yellow, polymerase red.
  */
-async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void): Promise<Panel[]> {
+type V3 = [number, number, number]
+
+async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void, idealise: boolean, colors: NonNullable<CatalogEntry['colors']>): Promise<Panel[]> {
   const lipids = model.chains.filter((c) => model.entities[c.entity]!.kind === 'lipid')
   if (lipids.length === 0) return []
   const start = Math.min(...lipids.map((c) => c.start)), end = Math.max(...lipids.map((c) => c.start + c.count))
@@ -253,7 +256,57 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
   const isRna = (e: Molecule['entities'][number]) => e.kind === 'rna' || e.kind === 'dna'
   const wanted = bundle.rods.reduce((s, r) => s + r.wanted, 0), placed = bundle.rods.reduce((s, r) => s + r.placed, 0)
   notes.push({ key: 'note.inferred.influenza', params: { matrix: spec.matrix, rnp: spec.rnp, polymerase: spec.polymerase, m1: matrix.length.toLocaleString('en-US'), nt: nt || 616, wanted, placed } })
+  const outside: Panel[] = []
+  if (idealise) {
+    // 外面的刺：种类、数量和结构照模拟，位置和朝向排成一圈圈（见 src/infer/idealise.ts）
+    // the spikes outside: kinds, numbers and structures as in the simulation, positions and orientations set in rings (see src/infer/idealise.ts)
+    const named = (re: RegExp) => model.chains.map((_, i) => i).filter((i) => re.test(model.entities[model.chains[i]!.entity]!.description))
+    const ha = complexes(model, named(/hemagglutinin/i), 3, 70), na = complexes(model, named(/neuraminidase/i), 4, 80), m2 = complexes(model, named(/^M2/i), 4, 45)
+    const glycans = named(/glycan/i)
+    const proteins = [...ha.flat(), ...na.flat()]
+    const centres = new Map(proteins.map((ci) => [ci, chainCentre(model, ci)]))
+    // 每棵糖链归到离它最近的那条蛋白链 / each glycan goes with the protein chain nearest to it
+    const sugarOf = new Map<number, number[]>()
+    for (const g of glycans) {
+      const c = chainCentre(model, g)
+      let best = -1, bd = Infinity
+      for (const [ci, p] of centres) {
+        const d = Math.hypot(p[0] - c[0], p[1] - c[1], p[2] - c[2])
+        if (d < bd) {
+          bd = d
+          best = ci
+        }
+      }
+      if (best >= 0) sugarOf.set(best, [...(sugarOf.get(best) ?? []), g])
+    }
+    // 样板：最直立的那一个 / the template: the most upright one
+    const pick = (groups: number[][]) => groups.map((g) => ({ g, t: templateOf(model, g, membrane.centre) })).sort((a, b) => a.t.tilt - b.t.tilt)[0]
+    const sites = ringSites(ha.length + na.length, [0, 0, 1])
+    // 神经氨酸酶均匀地插在血凝素中间 / neuraminidase is spread evenly among the hemagglutinins
+    const naAt = new Set(na.map((_, k) => Math.min(sites.length - 1, Math.round(((k + 0.5) * sites.length) / Math.max(1, na.length)))))
+    const lch = (e: Molecule['entities'][number]): [number, number, number] => colors.find(([pattern]) => new RegExp(pattern, 'i').test(e.description))?.[1] ?? [0.76, 0.086, 290]
+    const kinds: [typeof ha, V3[], string, string, string][] = [
+      [ha, sites.filter((_, i) => !naAt.has(i)), 'hemagglutinin', '血凝素（理想化的排布）', 'Hemagglutinin (idealised arrangement)'],
+      [na, sites.filter((_, i) => naAt.has(i)), 'neuraminidase', '神经氨酸酶（理想化的排布）', 'Neuraminidase (idealised arrangement)'],
+      [m2, fibonacciSphere(Math.max(1, m2.length)), 'M2', 'M2 质子通道（理想化的排布）', 'M2 proton channel (idealised arrangement)'],
+    ]
+    const tilts: number[] = []
+    for (const [groups, where, id, title, titleEn] of kinds) {
+      const chosen = pick(groups)
+      if (!chosen || where.length === 0) continue
+      tilts.push(...groups.map((g) => templateOf(model, g, membrane.centre).tilt))
+      const sub = subMolecule(model, [...chosen.g, ...chosen.g.flatMap((ci) => sugarOf.get(ci) ?? [])], `${model.id}:${id}`, titleEn)
+      const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(chosen.t, membrane.centre, where), lch, (e) => [e.description, e.description])
+      panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
+      outside.push(panel)
+    }
+    // 原模型里只留膜 / only the membrane is kept from the original model
+    for (const a of model.assemblies) a.groups = a.groups.filter((g) => g.chains.every((ci) => model.entities[model.chains[ci]!.entity]!.kind === 'lipid'))
+    tilts.sort((a, b) => a - b)
+    notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
+  }
   return [
+    ...outside,
     make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1']),
     make(rnp, spec.rnp, '核糖核蛋白（推断的位置）', 'Ribonucleoprotein (inferred placement)', bundle.stretches, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.72, 0.135, 62]), (e) => (isRna(e) ? ['基因组 RNA', 'genomic RNA'] : ['核蛋白 NP', 'nucleoprotein NP'])),
     make(pol, spec.polymerase, '聚合酶（推断的位置）', 'Polymerase (inferred placement)', bundle.polymerases, (e) => (isRna(e) ? [0.84, 0.15, 86] : [0.66, 0.13, 25]), (e) => (isRna(e) ? ['RNA', 'RNA'] : ['聚合酶', 'polymerase'])),
@@ -507,8 +560,8 @@ export const useStore = create<State>((set, get) => ({
       if (mesoscale && !entry.points) notes.push({ key: 'note.publishedModel' })
       // 数据里没有的部分，按已知结构推断着补上，各自是一个面板，和模型在同一个坐标系里
       // what the data lacks is filled in by inference from known structures, each part a panel of its own in the model's coordinate frame
-      const inferred: Panel[] = entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
-      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
+      const inferred: Panel[] = entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
+      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({
         spec: scene,
         panels: [{ spec, mol, coloring, align: null }, ...inferred],
@@ -864,6 +917,13 @@ export const useStore = create<State>((set, get) => ({
 
   setDrawing(drawing) {
     const sp = get().spec
+    // 带“理想化排布”的模型两种画法用的排布不同，要重新载入 / a model with an idealised arrangement uses a different arrangement in each drawing and has to be reloaded
+    const entry = sp?.catalog ? (catalog.models as CatalogEntry[]).find((m) => m.id === sp.catalog) : undefined
+    if (entry?.infer) {
+      set({ drawing })
+      void get().loadCatalog(entry.id)
+      return
+    }
     // 细胞和密度图这类网格场景有自己调过的画法，不跟着换 / mesh scenes such as cells and density maps keep their own tuned style
     const kind = sp?.landscape ? 'landscape' : sp?.mesoscale ? 'mesoscale' : sp?.kind === 'neuron' ? 'neuron' : 'molecule'
     set((s) => ({ drawing, style: sp && !get().panels.some((p) => p.mol.triangles) ? styleFor(kind, drawing) : s.style, colorings: s.colorings.slice() }))
