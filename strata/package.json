@@ -11,7 +11,8 @@
     "test:slow": "vitest run tests/slow",
     "test:all": "vitest run",
     "typecheck": "tsc --noEmit",
-    "agent": "bun --preload ./server/raw.ts scripts/agent.ts"
+    "agent": "bun --preload ./server/raw.ts scripts/agent.ts",
+    "api": "bun --preload ./server/raw.ts server/api.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

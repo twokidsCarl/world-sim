@@ -89,6 +89,8 @@ src/render/       WebGPU 粒子与晶格渲染
 src/plot/         Canvas2D 绘图
 src/harness/      GPU 与 CPU 交叉校验
 src/agent/        给外面的 AI Agent 的数据：由上面的定义生成，另有英文名对照表
+src/headless/     不用浏览器跑一次：请求的校验、界限、输入的 JSON Schema
+server/           只绑 127.0.0.1 的小 HTTP 服务
 agent/            生成出来的 JSON（提交进仓库）
 tests/            analytic/（解析）与 slow/（统计）
 ```
@@ -115,7 +117,32 @@ bun run agent      # 重新生成 agent/*.json
 
 `tests/analytic/agent.test.ts` 检查提交进仓库的文件与源码生成的一致，所以改了旋钮、派生量、引导实验或理论之后要重新生成。界面是中文的；英文名在 `src/agent/english.ts`，新增旋钮或派生量时漏了英文名，测试会报出是哪一项。
 
-没做到的：旋钮的说明（`note`）、理论说明（`theory_note`）和引导实验每一步的文字只有中文。`references` 里一部分期刊卷页是凭记忆写的，没有逐条核对，数据集的 `provenance` 里写明了是哪些。还没有可以调用的计算，模拟只能在浏览器里跑。
+没做到的：旋钮的说明（`note`）、理论说明（`theory_note`）和引导实验每一步的文字只有中文。`references` 里一部分期刊卷页是凭记忆写的，没有逐条核对，数据集的 `provenance` 里写明了是哪些。
+
+### 不用浏览器跑一次
+
+五个计算（`run_md`、`run_ising`、`run_potts`、`run_gravity`、`run_mesh`）走一个小的后端，用 CPU 参考实现（双精度）推进，和界面用的是同一套规则、同一套派生量定义：
+
+```sh
+bun run api                                   # 127.0.0.1:8790；端口用 --port 或环境变量 PORT 改
+curl -X POST localhost:8790/api/run/ising -H 'content-type: application/json' \
+     -d '{"params":{"T":2.1,"L":6},"steps":10000,"seed":1,"quantities":["magnetisation","energy"]}'
+```
+
+- 请求：`params`（旋钮取值，没给的用默认值）、`steps`、`seed`、`samples`（全程采样几次）、`quantities`（要哪些量）、`then`（后续阶段：改几个旋钮接着跑，比如降温）。
+- 返回：每个标量在各采样点的瞬时值（`series`）；最后一个阶段后半段的平均、对应的理论值和是否相符（`summary`）；曲线在同一段上的平均（`curves`）。
+- 同样的输入和种子得到同样的输出，与机器快慢无关（测试里用假时钟把步数拆成一步一步来验证，逐位相同）。
+- 输入的 JSON Schema 和 `sim.json` 里的 `api`、`agent.capabilities` 都由旋钮表生成（`bun run agent`）。请求有错时，错误信息说明是哪个字段、允许什么值。
+
+界限和没做到的：
+
+- CPU 比界面里的 GPU 慢两三个数量级，所以体系要小：粒子每行最多 70 个（三维 32），Ising 和 Potts 边长最多 256（三维 Ising 32），引力 1024 个天体，粒子网格每边 32。界面里的大体系和多数引导实验照原样在这里跑不动。
+- 一次最多约 30 秒，超过就报错并给出这组参数大约能跑多少步，不返回半截结果。能不能在时限内跑完取决于机器；跑完了，结果是确定的。
+- 场（密度场、流速场、涡量场）不返回。基于历史记录的分析（声速、自扩散、方程发现等）和动作（敲一下、推一把、时间反演）没有接出来。
+- “是否相符”用的是界面里那套容差和理论线，理论超出适用范围时照样会给出一个数（例如稠密流体对低密度的维里展开），适用条件见 `quantities` 数据集的 `theory_note`。
+- Ising 的“有效信息”每采样一次会让模拟多推进一次扫描，返回的 `steps` 是实际步数。
+- 一次只算一个请求，其余的排队。
+- 只在本机经 idea-loom 的校验和转发代码试过；合并后由 idea-loom 托管的那一份还没有实测。
 
 ## 已知边界
 
@@ -238,6 +265,8 @@ src/render/       WebGPU particle and lattice rendering
 src/plot/         Canvas2D plotting
 src/harness/      GPU versus CPU cross-check
 src/agent/        the data offered to outside AI agents: generated from the definitions above, plus a table of English names
+src/headless/     running once without a browser: request validation, bounds, the input JSON Schema
+server/           a small HTTP server bound to 127.0.0.1
 agent/            the generated JSON (committed)
 tests/            analytic/ (analytic) and slow/ (statistical)
 ```
@@ -264,7 +293,32 @@ bun run agent      # regenerate agent/*.json
 
 `tests/analytic/agent.test.ts` checks that the committed files match what the source generates, so regenerate after changing a knob, a quantity, a guided experiment or the theory. The UI is in Chinese; the English names live in `src/agent/english.ts`, and when a new knob or quantity lacks one the test names it.
 
-Not done: knob notes (`note`), theory notes (`theory_note`) and the text of each guided-experiment step are in Chinese only. Some journal references in `references` were written from memory and not checked one by one; the dataset's `provenance` says which. There is no callable computation yet; the simulations only run in a browser.
+Not done: knob notes (`note`), theory notes (`theory_note`) and the text of each guided-experiment step are in Chinese only. Some journal references in `references` were written from memory and not checked one by one; the dataset's `provenance` says which.
+
+### Running once without a browser
+
+Five computations (`run_md`, `run_ising`, `run_potts`, `run_gravity`, `run_mesh`) go through a small backend that advances the CPU reference implementation (double precision), with the same rules and the same quantity definitions as the UI:
+
+```sh
+bun run api                                   # 127.0.0.1:8790; change the port with --port or the PORT environment variable
+curl -X POST localhost:8790/api/run/ising -H 'content-type: application/json' \
+     -d '{"params":{"T":2.1,"L":6},"steps":10000,"seed":1,"quantities":["magnetisation","energy"]}'
+```
+
+- Request: `params` (knob values, defaults where omitted), `steps`, `seed`, `samples` (how many samples over the run), `quantities` (which to return) and `then` (later stages: change some knobs and keep running, to cool for instance).
+- Reply: the instantaneous value of every scalar at each sample (`series`); the mean over the second half of the last stage, the matching theory value and whether they agree (`summary`); curves averaged over the same stretch (`curves`).
+- The same input and seed give the same output, however fast the machine is (a test uses a fake clock to split the run into single steps and checks the result is bit-identical).
+- The input JSON Schema and the `api` and `agent.capabilities` entries of `sim.json` are generated from the knob tables (`bun run agent`). A bad request is answered with which field is wrong and what is allowed.
+
+Limits, and what is not done:
+
+- The CPU is two to three orders of magnitude slower than the GPU behind the UI, so systems must be small: at most 70 particles per row (32 in 3D), Ising and Potts sides up to 256 (32 for 3D Ising), 1024 gravitating bodies, 32 per side for the particle mesh. The large systems of the UI and most guided experiments cannot be run here as they stand.
+- A run may take about 30 seconds; past that it returns an error saying roughly how many steps these parameters manage, never a partial result. Whether a run finishes in time depends on the machine; when it does, the result is deterministic.
+- Fields (density, velocity, vorticity) are not returned. Analyses over a recorded history (speed of sound, self-diffusion, equation discovery and so on) and actions (tap, push, time reversal) are not offered.
+- Agreement uses the UI's own tolerances and theory lines; where a theory is outside its range a number is still given (a dense fluid against the low-density virial expansion, for example). The conditions are in `theory_note` of the `quantities` dataset.
+- Ising's effective information advances the simulation by one extra sweep per sample; the `steps` returned is the actual count.
+- One request is computed at a time; the others queue.
+- Tried only on this machine through idea-loom's validation and forwarding code; the copy hosted by idea-loom after the merge has not been exercised yet.
 
 ## Known limits
 
