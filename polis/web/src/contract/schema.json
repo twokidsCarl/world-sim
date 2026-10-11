@@ -21,7 +21,7 @@
       "type": "object"
     },
     "Case": {
-      "description": "一个可以拿来做输入和校准的故事：谁、什么关系、依次发生了什么。",
+      "description": "一个可以拿来做输入和校准的故事：谁、什么关系、依次发生了什么。\nA story that can serve as input and as a calibration case: who was involved, how they were related, and what happened in what order.",
       "properties": {
         "id": {
           "type": "string"
@@ -58,18 +58,18 @@
           "type": "array"
         },
         "events": {
-          "description": "原作或史料里的事件顺序",
+          "description": "原作或史料里的事件顺序 / the order of events in the source text or historical record",
           "items": {
             "$ref": "#/$defs/Beat"
           },
           "type": "array"
         },
         "outcome": {
-          "description": "结局；模拟要复现的就是它",
+          "description": "结局；模拟要复现的就是它 / the outcome; this is what the simulation has to reproduce",
           "type": "string"
         },
         "theories": {
-          "description": "这个故事体现了哪些理论卡，写 id",
+          "description": "这个故事体现了哪些理论卡，写 id / ids of the theory cards this story illustrates",
           "items": {
             "type": "string"
           },
@@ -143,7 +143,7 @@
       "type": "object"
     },
     "Event": {
-      "description": "events.jsonl 的一行。键名取短，因为行数很多。",
+      "description": "events.jsonl 的一行。键名取短，因为行数很多。\nOne line of events.jsonl. Keys are short because there are a great many lines.",
       "properties": {
         "t": {
           "type": "integer"
@@ -173,7 +173,7 @@
             }
           ],
           "default": null,
-          "description": "行动者"
+          "description": "行动者 / actor"
         },
         "b": {
           "anyOf": [
@@ -185,7 +185,7 @@
             }
           ],
           "default": null,
-          "description": "对象"
+          "description": "对象 / target"
         },
         "m": {
           "anyOf": [
@@ -197,7 +197,7 @@
             }
           ],
           "default": null,
-          "description": "消息 id"
+          "description": "消息 id / message id"
         },
         "via": {
           "anyOf": [
@@ -209,7 +209,7 @@
             }
           ],
           "default": null,
-          "description": "关系类型，或 venue:<idx>"
+          "description": "关系类型，或 venue:<idx> / tie kind, or venue:<idx>"
         },
         "p0": {
           "anyOf": [
@@ -221,7 +221,7 @@
             }
           ],
           "default": null,
-          "description": "对象事前信念，百分数"
+          "description": "对象事前信念，百分数 / target's belief beforehand, in percent"
         },
         "p1": {
           "anyOf": [
@@ -233,7 +233,7 @@
             }
           ],
           "default": null,
-          "description": "对象事后信念，百分数"
+          "description": "对象事后信念，百分数 / target's belief afterwards, in percent"
         },
         "x": {
           "anyOf": [
@@ -248,7 +248,7 @@
             }
           ],
           "default": null,
-          "description": "文本或金额"
+          "description": "文本或金额 / text or amount"
         }
       },
       "required": [
@@ -258,7 +258,7 @@
       "type": "object"
     },
     "Fact": {
-      "description": "一条典型事实：研究里反复出现、模拟应当复现的定量或定性规律。",
+      "description": "一条典型事实：研究里反复出现、模拟应当复现的定量或定性规律。\nA stylised fact: a quantitative or qualitative regularity that recurs in the research and that the simulation should reproduce.",
       "properties": {
         "id": {
           "type": "string"
@@ -320,12 +320,12 @@
           "type": "string"
         },
         "conditions": {
-          "description": "这个结果是在什么条件下得到的",
+          "description": "这个结果是在什么条件下得到的 / the conditions under which this result was obtained",
           "type": "string"
         },
         "caveats": {
           "default": "",
-          "description": "复现争议、适用范围",
+          "description": "复现争议、适用范围 / replication disputes and limits of applicability",
           "type": "string"
         },
         "theories": {
@@ -337,7 +337,7 @@
         },
         "metric": {
           "default": "",
-          "description": "polis 里对应的可计算指标；留空表示尚未定义",
+          "description": "polis 里对应的可计算指标；留空表示尚未定义 / the corresponding computable metric in polis; empty means not yet defined",
           "type": "string"
         }
       },
@@ -352,7 +352,7 @@
       "type": "object"
     },
     "Intervention": {
-      "description": "对模拟世界的一次外部干预。",
+      "description": "对模拟世界的一次外部干预。/ One outside intervention in the simulated world.",
       "properties": {
         "t": {
           "type": "integer"
@@ -378,7 +378,7 @@
             }
           ],
           "default": null,
-          "description": "broadcast：出面的人"
+          "description": "broadcast：出面的人 / broadcast: the person who makes the announcement"
         },
         "target": {
           "anyOf": [
@@ -390,7 +390,7 @@
             }
           ],
           "default": null,
-          "description": "close_venue：场所下标；silence / convince：人的下标"
+          "description": "close_venue：场所下标；silence / convince：人的下标 / close_venue: venue index; silence and convince: person index"
         },
         "text": {
           "default": "",
@@ -410,20 +410,20 @@
         },
         "reach": {
           "default": 0.5,
-          "description": "broadcast：触达的人口比例",
+          "description": "broadcast：触达的人口比例 / broadcast: share of the population reached",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
         },
         "duration": {
           "default": 0,
-          "description": "close_venue：关几个小时，0 为一直关",
+          "description": "close_venue：关几个小时，0 为一直关 / close_venue: hours closed; 0 means closed for good",
           "minimum": 0,
           "type": "integer"
         },
         "value": {
           "default": 0.0,
-          "description": "insurance：存款保险赔付比例",
+          "description": "insurance：存款保险赔付比例 / insurance: share of a lost deposit that is paid back",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
@@ -508,7 +508,7 @@
       "type": "object"
     },
     "Message": {
-      "description": "一条说法。转述变形时产生子消息，parent 连成谱系。",
+      "description": "一条说法。转述变形时产生子消息，parent 连成谱系。\nOne version of the story. When it changes in the retelling a child message is created; the parent links form its lineage.",
       "properties": {
         "id": {
           "type": "integer"
@@ -539,7 +539,7 @@
           "default": null
         },
         "valence": {
-          "description": "1 谣言，-1 辟谣",
+          "description": "1 谣言，-1 辟谣 / 1 rumour, -1 correction",
           "enum": [
             1,
             -1
@@ -578,7 +578,7 @@
       "type": "object"
     },
     "Params": {
-      "description": "一次运行的全部可调参数。相同参数必须产生相同记录。",
+      "description": "一次运行的全部可调参数。相同参数必须产生相同记录。\nEvery tunable parameter of a run. The same parameters must produce the same record.",
       "properties": {
         "scenario": {
           "default": "rumor_run",
@@ -614,6 +614,10 @@
         },
         "novelty": {
           "default": 0.6,
+          "type": "number"
+        },
+        "corroborate": {
+          "default": 0.5,
           "type": "number"
         },
         "confirm": {
@@ -686,12 +690,17 @@
             "$ref": "#/$defs/Intervention"
           },
           "type": "array"
+        },
+        "llm": {
+          "default": false,
+          "description": "主角是否交给大模型扮演 / whether the model plays the protagonists",
+          "type": "boolean"
         }
       },
       "type": "object"
     },
     "Person": {
-      "description": "一个人的静态表征；随时间变化的心智状态在帧里。",
+      "description": "一个人的静态表征；随时间变化的心智状态在帧里。\nThe static description of one person; the mental state that changes over time lives in the frames.",
       "properties": {
         "idx": {
           "type": "integer"
@@ -722,13 +731,13 @@
           "type": "string"
         },
         "education": {
-          "description": "0 不识字 1 蒙学 2 中学 3 高等",
+          "description": "0 不识字 1 蒙学 2 中学 3 高等 / 0 illiterate, 1 elementary, 2 secondary, 3 higher",
           "maximum": 3,
           "minimum": 0,
           "type": "integer"
         },
         "income": {
-          "description": "收入分位",
+          "description": "收入分位 / income quantile",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
@@ -749,17 +758,17 @@
           "type": "number"
         },
         "depth": {
-          "description": "揣度他人的层数 k",
+          "description": "揣度他人的层数 k / k, how many levels deep this person reasons about others",
           "maximum": 2,
           "minimum": 0,
           "type": "integer"
         },
         "deposit": {
-          "description": "存款，单位：元",
+          "description": "存款，单位：元 / deposit, in yuan",
           "type": "number"
         },
         "stake": {
-          "description": "这笔存款对他有多要紧",
+          "description": "这笔存款对他有多要紧 / how much this deposit matters to them",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
@@ -836,18 +845,18 @@
           "type": "string"
         },
         "extent": {
-          "description": "坐标范围 [0, extent]",
+          "description": "坐标范围 [0, extent] / coordinates run over [0, extent]",
           "type": "number"
         },
         "bank": {
-          "description": "钱庄在 venues 里的下标",
+          "description": "钱庄在 venues 里的下标 / index of the bank in venues",
           "type": "integer"
         },
         "cast": {
           "additionalProperties": {
             "type": "integer"
           },
-          "description": "主角的角色键 → persons 下标",
+          "description": "主角的角色键 → persons 下标 / protagonist role key → index into persons",
           "type": "object"
         },
         "persons": {
@@ -889,7 +898,7 @@
       "type": "object"
     },
     "Series": {
-      "description": "每个 tick 的宏观量，长度都是 ticks + 1。",
+      "description": "每个 tick 的宏观量，长度都是 ticks + 1。\nAggregate quantities per tick; every list has length ticks + 1.",
       "properties": {
         "aware": {
           "items": {
@@ -916,7 +925,7 @@
           "type": "array"
         },
         "reserve": {
-          "description": "钱庄现银占初始存款的比例",
+          "description": "钱庄现银占初始存款的比例 / the bank's cash as a share of initial deposits",
           "items": {
             "type": "number"
           },
@@ -940,7 +949,7 @@
       "type": "object"
     },
     "Source": {
-      "description": "一条出处。verified 只有在打开过能证实它的页面之后才能为真，checked 写明看的是哪一页、证实了什么。",
+      "description": "一条出处。verified 只有在打开过能证实它的页面之后才能为真，checked 写明看的是哪一页、证实了什么。\nOne source. verified may be true only after someone has opened a page that confirms it; checked records which page that was and what it confirmed.",
       "properties": {
         "work": {
           "type": "string"
@@ -961,7 +970,7 @@
         },
         "locator": {
           "default": "",
-          "description": "期刊卷期页码、章回、幕次",
+          "description": "期刊卷期页码、章回、幕次 / journal volume, issue and pages; chapter; act and scene",
           "type": "string"
         },
         "url": {
@@ -974,7 +983,7 @@
         },
         "checked": {
           "default": "",
-          "description": "核实方式：哪个页面证实了哪些信息",
+          "description": "核实方式：哪个页面证实了哪些信息 / how it was verified: which page confirmed what",
           "type": "string"
         }
       },
@@ -1010,6 +1019,14 @@
         },
         "events": {
           "type": "integer"
+        },
+        "llm_calls": {
+          "default": 0,
+          "type": "integer"
+        },
+        "llm_failed": {
+          "default": 0,
+          "type": "integer"
         }
       },
       "required": [
@@ -1023,7 +1040,7 @@
       "type": "object"
     },
     "Theory": {
-      "description": "一个机制：它说人群里会发生什么、为什么。",
+      "description": "一个机制：它说人群里会发生什么、为什么。/ A mechanism: what it says happens in a population, and why.",
       "properties": {
         "id": {
           "type": "string"
@@ -1045,12 +1062,12 @@
           "type": "string"
         },
         "claim": {
-          "description": "机制，用自己的话写",
+          "description": "机制，用自己的话写 / the mechanism, in our own words",
           "type": "string"
         },
         "formal": {
           "default": "",
-          "description": "公式或规则的文字表述",
+          "description": "公式或规则的文字表述 / the formula or rule, stated in words",
           "type": "string"
         },
         "parameters": {
@@ -1061,7 +1078,7 @@
           "type": "array"
         },
         "predicts": {
-          "description": "如果机制成立，应当观察到什么",
+          "description": "如果机制成立，应当观察到什么 / what should be observed if the mechanism holds",
           "items": {
             "type": "string"
           },
@@ -1069,7 +1086,7 @@
         },
         "in_engine": {
           "default": "",
-          "description": "polis 引擎里哪一处实现了它；留空表示尚未实现",
+          "description": "polis 引擎里哪一处实现了它；留空表示尚未实现 / where the polis engine implements it; empty means not yet implemented",
           "type": "string"
         }
       },
@@ -1127,7 +1144,10 @@
             "teahouse",
             "market",
             "temple",
-            "school"
+            "school",
+            "salon",
+            "shop",
+            "station"
           ],
           "type": "string"
         },
@@ -1145,7 +1165,7 @@
           ]
         },
         "hours": {
-          "description": "营业时段 [开, 关)，24 小时制",
+          "description": "营业时段 [开, 关)，24 小时制 / opening hours [open, close), 24-hour clock",
           "maxItems": 2,
           "minItems": 2,
           "type": "array",

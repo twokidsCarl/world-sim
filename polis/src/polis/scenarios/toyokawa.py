@@ -1,6 +1,8 @@
 """第二个场景：1973 年丰川信用金库挤兑。人物、事件顺序取自 corpus/cases/toyokawa_shinkin_1973.yaml。
+The second scenario: the 1973 run on Toyokawa Shinkin Bank. The people and the order of events come from corpus/cases/toyokawa_shinkin_1973.yaml.
 
 人物沿用史料里的匿名代号。街区是示意，不是真实地理；人口、存款、关系网都是合成的。
+People keep the anonymous letters used in the record. The districts are schematic, not real geography; the population, deposits and tie network are synthetic.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ SETTING = (
     "金库经营正常。"
 )
 PUBLIC = "1973 年 12 月，日本爱知县的一座小镇，石油危机之后物价飞涨、人心不定。镇上人的存款多在丰川信用金库。"
-DEFAULTS = dict(ticks=264, start_hour=8)  # 12 月 8 日 08:00 起，共十一天
+DEFAULTS = dict(ticks=264, start_hour=8)  # 12 月 8 日 08:00 起，共十一天 / from 08:00 on 8 December, eleven days in all
 
 DISTRICTS = [
     ("站前", None),
@@ -83,12 +85,14 @@ NOTICE = "丰川信用金库声明：本库经营正常，请勿听信流言。"
 GUARANTEE = "日本银行表示：丰川信用金库经营健全。各报同日报道此事系谣言，成堆的现金已摆在柜台前。"
 FAILED = "丰川信用金库付不出钱，关门了。"
 
-NOTICE_T = 6 * 24 + 1  # 12 月 14 日 09:00，金库自己的声明
-GUARANTEE_T = 6 * 24 + 10  # 12 月 14 日 18:00，媒体集中报道、日本银行表态
+NOTICE_T = 6 * 24 + 1  # 12 月 14 日 09:00，金库自己的声明 / 09:00 on 14 December, the bank's own statement
+GUARANTEE_T = 6 * 24 + 10  # 12 月 14 日 18:00，媒体集中报道、日本银行表态 / 18:00 on 14 December, concerted press coverage and the Bank of Japan's statement
 
 
 def interventions(start_hour: int) -> list[Intervention]:
-    """史料里的两次回应：金库自己的声明，以及当晚起媒体辟谣、日本银行担保并摆出现金。"""
+    """史料里的两次回应：金库自己的声明，以及当晚起媒体辟谣、日本银行担保并摆出现金。
+    The two responses in the record: the bank's own statement, and from that evening the press debunking the rumour while the Bank of Japan vouched for the bank and cash was put on display.
+    """
     return [
         Intervention(t=NOTICE_T, text=NOTICE, valence=-1, strength=1.2, reach=0.35),
         Intervention(t=GUARANTEE_T, text=GUARANTEE, valence=-1, strength=3.0, reach=0.9),

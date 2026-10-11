@@ -1,4 +1,5 @@
 // 从运行记录到画面所需量的纯函数推导。不碰 DOM，可单测（tests/derive.test.ts）。
+// Pure functions deriving what the screen needs from a run record. No DOM access; unit-testable (tests/derive.test.ts).
 import type { Event as SimEvent, Manifest, Message, Person, Population, Series } from '../contract/types.gen.ts'
 
 export type { SimEvent }
@@ -21,11 +22,17 @@ export interface RunData {
   series: Series
   events: SimEvent[]
   frames: Uint8Array
-  /** tickStart[k] 是第 k 个 tick 的第一条事件在 events 里的下标，长度 ticks + 2 */
+  /**
+   * tickStart[k] 是第 k 个 tick 的第一条事件在 events 里的下标，长度 ticks + 2
+   * tickStart[k] is the index in events of the first event of tick k; length is ticks + 2
+   */
   tickStart: number[]
-  /** 每个人第几个去排队；没排过的是 -1 */
+  /**
+   * 每个人第几个去排队；没排过的是 -1
+   * Order in which each person first joined the queue; -1 if they never queued
+   */
   queueOrder: Int32Array
-  /** 每个人的邻居下标 */
+  /** 每个人的邻居下标 / Neighbour indices for each person */
   neighbors: number[][]
   cast: Person[]
 }
@@ -78,19 +85,25 @@ export function assemble(
   }
 }
 
-/** 第 k 帧里某通道某人的值，0..255（status 通道是状态码） */
+/**
+ * 第 k 帧里某通道某人的值，0..255（status 通道是状态码）
+ * One person's value in one channel at frame k, 0..255 (the status channel holds a status code)
+ */
 export function value(run: RunData, k: number, channel: number, i: number): number {
   const n = run.manifest.n
   return run.frames[(k * 4 + channel) * n + i] ?? 0
 }
 
-/** 第 k 帧整条通道，零拷贝 */
+/** 第 k 帧整条通道，零拷贝 / A whole channel at frame k, zero-copy */
 export function channel(run: RunData, k: number, c: number): Uint8Array {
   const n = run.manifest.n
   return run.frames.subarray((k * 4 + c) * n, (k * 4 + c + 1) * n)
 }
 
-/** 第 k 帧正在排队的人各自排第几（0 起）；不在队里的是 -1 */
+/**
+ * 第 k 帧正在排队的人各自排第几（0 起）；不在队里的是 -1
+ * Queue position (0-based) of everyone queuing at frame k; -1 for those not in the queue
+ */
 export function queueRanks(run: RunData, k: number): Int32Array {
   const status = channel(run, k, STATUS)
   const inLine: number[] = []
@@ -101,14 +114,20 @@ export function queueRanks(run: RunData, k: number): Int32Array {
   return rank
 }
 
-/** 队伍里第 rank 个人站在钱庄周围的哪里：向日葵排布，人越多围得越厚 */
+/**
+ * 队伍里第 rank 个人站在钱庄周围的哪里：向日葵排布，人越多围得越厚
+ * Where the rank-th person in the queue stands around the bank: a sunflower layout, so the ring thickens as the crowd grows
+ */
 export function queueSlot(bank: [number, number], rank: number): [number, number] {
   const r = 16 + 4.2 * Math.sqrt(rank)
   const a = rank * 2.39996
   return [bank[0] + r * Math.cos(a), bank[1] + r * Math.sin(a)]
 }
 
-/** 与某人有关的全部事件：他做的，和别人对他说的 */
+/**
+ * 与某人有关的全部事件：他做的，和别人对他说的
+ * Every event involving a person: what they did, and what others said to them
+ */
 export function personLog(run: RunData, i: number): SimEvent[] {
   return run.events.filter((e) => e.a === i || (e.k === 'tell' && e.b === i))
 }

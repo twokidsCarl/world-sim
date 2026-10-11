@@ -1,4 +1,6 @@
-"""运行记录：把一次模拟写成 UI 能回放的一组文件，并读回来。"""
+"""运行记录：把一次模拟写成 UI 能回放的一组文件，并读回来。
+Run records: write one simulation out as a set of files the UI can replay, and read them back.
+"""
 
 from __future__ import annotations
 
@@ -14,7 +16,7 @@ from .model import Manifest, Params, Population, Summary
 from .protagonist import Director
 
 FILES = ["manifest.json", "population.json", "messages.json", "series.json", "events.jsonl", "frames.bin"]
-SERVED = FILES + ["ensemble.json"]  # 后者是实验台按需算出来的
+SERVED = FILES + ["ensemble.json"]  # 后者是实验台按需算出来的 / the latter is computed on demand by the lab
 
 
 def _dump(obj) -> str:
@@ -37,7 +39,7 @@ def simulate(
     parent: str | None = None,
     branch_t: int | None = None,
 ) -> Manifest:
-    """跑一次模拟并写入 root/<run_id>/。"""
+    """跑一次模拟并写入 root/<run_id>/。/ Run one simulation and write it to root/<run_id>/."""
     scenario = scenario_module(params.scenario)
     pop = population.build(params, scenario)
     director = Director() if params.llm else None
@@ -55,6 +57,7 @@ def simulate(
         branch_t=branch_t,
         summary=Summary(
             # 倒闭之后人人都信了，那不算；看的是倒闭之前谣言自己走到了多远
+            # After a failure everyone believes, which does not count; this measures how far the rumour got on its own before that
             peak_believers=max(result.series.believers[: result.failed_at]),
             withdrew=int((status == 3).sum()),
             lost=int((status == 4).sum()),
@@ -99,7 +102,7 @@ def load_events(run: Path) -> list[dict]:
 
 
 def run_only(params: Params):
-    """只跑不写，供集成与校准使用。"""
+    """只跑不写，供集成与校准使用。/ Run without writing anything; used by ensembles and calibration."""
     scenario = scenario_module(params.scenario)
     pop = population.build(params, scenario)
     return pop, Sim(pop, params, scenario).run()

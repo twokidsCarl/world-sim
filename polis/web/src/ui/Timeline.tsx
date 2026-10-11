@@ -1,4 +1,5 @@
 // 时间轴：播放控制 + 宏观曲线。人数四条线共用一根纵轴；钱庄现银是比例，单独一条窄图。
+// Timeline: playback controls plus the aggregate curves. The four head-count lines share one y-axis; the bank's cash is a ratio and gets its own narrow strip.
 import { useEffect, useRef, useState } from 'react'
 import { clock, clockText, dayName, type RunData } from '../state/derive.ts'
 import { useApp } from '../state/store.ts'
@@ -96,7 +97,7 @@ function Chart(props: {
   const height = top2 + H2 + AXIS
   const line = (vals: number[], y: (v: number) => number) => vals.map((v, k) => `${k ? 'L' : 'M'}${x(k).toFixed(1)},${y(v).toFixed(1)}`).join('') // prettier-ignore
 
-  // 夜里（23 点到 6 点）与每天的零点
+  // 夜里（23 点到 6 点）与每天的零点 / Night (23:00 to 06:00) and each day's midnight
   const nights: [number, number][] = []
   const days: { k: number; day: number }[] = []
   let from: number | null = null
@@ -119,6 +120,7 @@ function Chart(props: {
   if (run.manifest.summary.failed_at != null) marks.push({ k: run.manifest.summary.failed_at, text: '倒闭' })
 
   // 集成的中间八成：上沿从左到右，下沿从右到左，围成一条带；倒闭后没有值的时刻断开
+  // Middle 80% of the ensemble: upper edge left to right, lower edge right to left, closing into a band; it breaks wherever there is no value after the bank has failed
   const band = (b: { lo: (number | null)[]; hi: (number | null)[] }, y: (v: number) => number): string => {
     let d = ''
     let from = -1

@@ -1,4 +1,5 @@
 // 全局状态。React 经 useApp 读；舞台渲染器订阅它并镜像到画布。
+// Global state. React reads it through useApp; the stage renderer subscribes to it and mirrors it onto the canvas.
 import { create } from 'zustand'
 import type { Intervention, Manifest, Message, Population, Series } from '../contract/types.gen.ts'
 import { assemble, parseEvents, type RunData } from './derive.ts'
@@ -18,19 +19,25 @@ export interface AppState {
   run: RunData | null
   phase: 'loading' | 'ready' | 'error'
   error: string
-  /** 回放位置，单位 tick，可以是小数 */
+  /** 回放位置，单位 tick，可以是小数 / Replay position in ticks; may be fractional */
   t: number
   playing: boolean
-  /** 每秒走几个 tick */
+  /** 每秒走几个 tick / Ticks advanced per second */
   speed: number
   selected: number | null
   hovered: number | null
   theme: Theme
   tab: Tab
-  /** 分叉记录的父记录，画成虚线作对比 */
+  /**
+   * 分叉记录的父记录，画成虚线作对比
+   * Parent of a forked run, drawn dashed for comparison
+   */
   compare: { manifest: Manifest; series: Series } | null
   ensemble: Ensemble | null
-  /** 实验台里已选好、还没重跑的干预 */
+  /**
+   * 实验台里已选好、还没重跑的干预
+   * Interventions picked in the lab but not yet re-run
+   */
   pending: Intervention[]
   busy: '' | 'branch' | 'ensemble'
   labError: string
@@ -57,6 +64,7 @@ async function get(path: string): Promise<Response> {
 }
 
 // 主题要在渲染器读取配色之前就写到文档上
+// The theme must be written to the document before the renderer reads the palette
 const initialTheme: Theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 document.documentElement.dataset.theme = initialTheme
 
@@ -110,6 +118,7 @@ export const useApp = create<AppState>((set, getState) => ({
             .catch(() => null)
         : null
       // 集成结果是按需算的，没算过时接口返回 null
+      // Ensemble results are computed on demand; the API returns null until they have been
       const ensemble = await json<Ensemble | null>(`${base}/ensemble.json`).catch(() => null)
       const s = getState()
       set({
@@ -172,7 +181,7 @@ export const useApp = create<AppState>((set, getState) => ({
   toggle: () => {
     const s = getState()
     if (!s.run) return
-    // 播到头再按播放，从头开始
+    // 播到头再按播放，从头开始 / Pressing play at the end restarts from the beginning
     if (!s.playing && s.t >= s.run.manifest.ticks) set({ t: 0, playing: true })
     else set({ playing: !s.playing })
   },

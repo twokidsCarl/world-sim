@@ -1,4 +1,6 @@
-"""实验台：分叉只改变干预之后的世界；各种干预确实起作用；集成给出分布。"""
+"""实验台：分叉只改变干预之后的世界；各种干预确实起作用；集成给出分布。
+The lab: a branch changes the world only after its intervention; each kind of intervention has an effect; an ensemble yields a distribution.
+"""
 
 from __future__ import annotations
 

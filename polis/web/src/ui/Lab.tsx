@@ -1,4 +1,5 @@
 // 实验台：在回放的此刻加一条干预，分叉重跑，和原来那条世界线对比；或者同一设定换种子看分布。
+// Lab: add an intervention at the current replay moment, fork and re-run, and compare against the original world line; or keep the setup and vary the seed to see the distribution.
 import { useState } from 'react'
 import type { Intervention } from '../contract/types.gen.ts'
 import { clockText, type RunData } from '../state/derive.ts'

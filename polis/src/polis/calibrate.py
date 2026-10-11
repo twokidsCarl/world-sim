@@ -1,6 +1,8 @@
 """校准：把语料里的典型事实变成可计算的指标，看模拟落在不在范围里，并搜索更合的参数。
+Calibration: turn the stylised facts in the corpus into computable metrics, check whether the simulation falls inside their ranges, and search for parameters that fit better.
 
 目标很少而参数很多，所以这里得到的只是"与这几条事实不矛盾"的一组参数，不是被验证过的模型。
+There are few targets and many parameters, so what comes out is only a parameter set that does not contradict these few facts, not a validated model.
 """
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ SPACE: dict[str, tuple[float, float]] = {
 
 
 def _queued_at(result: Result, n: int) -> np.ndarray:
-    """每个人第几个小时去排的队；没去的是 -1。"""
+    """每个人第几个小时去排的队；没去的是 -1。/ The tick at which each person joined the queue; -1 if they never did."""
     at = np.full(n, -1)
     for e in result.events:
         if e["k"] == "queue":
@@ -38,19 +40,21 @@ def _queued_at(result: Result, n: int) -> np.ndarray:
 
 
 def runner_share(pop: Population, result: Result) -> float:
-    """储户里去取款（或去排了队）的比例。"""
+    """储户里去取款（或去排了队）的比例。/ Share of depositors who withdrew or joined the queue."""
     depositors = np.array([p.deposit > 0 for p in pop.persons])
     return float((_queued_at(result, len(pop.persons))[depositors] >= 0).mean())
 
 
 def neighbor_lift(pop: Population, result: Result) -> float:
     """熟人先跑过的储户，自己跑的概率是没有这种熟人的储户的几倍。
+    How many times more likely a depositor is to run when an acquaintance ran first, compared with depositors who had no such acquaintance.
 
     没跑的人按整段时间算"有没有熟人跑过"，所以这个比值偏保守。
+    For those who never ran, "an acquaintance ran" is judged over the whole run, so the ratio errs on the low side.
     """
     n = len(pop.persons)
     at = _queued_at(result, n)
-    first = np.full(n, np.inf)  # 熟人里最早跑的那个时刻
+    first = np.full(n, np.inf)  # 熟人里最早跑的那个时刻 / when the earliest of their acquaintances ran
     for t in pop.ties:
         for i, j in ((t.a, t.b), (t.b, t.a)):
             if at[j] >= 0:
@@ -84,8 +88,10 @@ def survived(pop: Population, result: Result) -> float:
 
 def sanren_chenghu(params: Params) -> list[float]:
     """三人成虎：一位不轻信的听者，先后从三个同僚口中听到同一件离奇的事，每次之后信了几分。
+    Three men make a tiger: a sceptical listener hears the same unlikely story from three colleagues in turn; returns their belief after each telling.
 
     只用 mind.tell_delta，不跑模拟。听者的设定是这里定的：事前只信 3%，对同僚是寻常的信任。
+    Uses only mind.tell_delta, with no simulation run. The listener is defined here: a 3% prior and ordinary trust in colleagues.
     """
     L = float(mind.logit(0.03))
     trust = 0.5 * (0.4 + 0.6 * 0.5)
@@ -98,8 +104,10 @@ def sanren_chenghu(params: Params) -> list[float]:
 
 def sanren_steps(params: Params) -> float:
     """《战国策》里魏王的三句回答对上了几句：一人言——否；二人言——疑之；三人言——信之。
+    How many of the King of Wei's three answers in the Zhanguo Ce are matched: one man says it, no; two, I begin to doubt; three, I believe it.
 
     "否 / 疑 / 信"与信念数值的对应是这里定的：不到两成、两成到五成、过半。
+    The mapping from no / doubt / believe to belief values is set here: under 20%, 20% to 50%, and over half.
     """
     one, two, three = sanren_chenghu(params)
     return float((one < 0.2) + (0.2 <= two < 0.5) + (three >= 0.5))
@@ -107,7 +115,9 @@ def sanren_steps(params: Params) -> float:
 
 @dataclass(frozen=True)
 class Target:
-    """一个校准目标。source 是语料条目，范围优先取自它；定性事实的范围写在这里。"""
+    """一个校准目标。source 是语料条目，范围优先取自它；定性事实的范围写在这里。
+    One calibration target. source is the corpus entry, and the range is taken from it where it gives one; ranges for qualitative facts are set here.
+    """
 
     metric: str
     source: str
@@ -136,13 +146,17 @@ def targets() -> list[Target]:
 
 
 def guarantee(start_hour: int) -> list[Intervention]:
-    """校准用的情境：与事实来源一致——钱庄健康，第二个营业日有可信的一方公开担保并当众摆出现银。"""
+    """校准用的情境：与事实来源一致——钱庄健康，第二个营业日有可信的一方公开担保并当众摆出现银。
+    The situation used for calibration, matching the sources behind the facts: the bank is sound, and on the second business day a credible party guarantees it publicly and puts cash on display.
+    """
     t = (24 - start_hour) % 24 + 24 + 9
     return [Intervention(t=t, text="官银号告示：通和钱庄银根充足，本号担保照常兑付。现银已运抵柜上。", strength=3.0, reach=0.9)]
 
 
 def run_day(pop: Population, result: Result, params: Params) -> float:
-    """挤兑从第几天开始：累计去排队的人达到储户的 1% 的那一天（开场当天算第 1 天）。没发生则为 nan。"""
+    """挤兑从第几天开始：累计去排队的人达到储户的 1% 的那一天（开场当天算第 1 天）。没发生则为 nan。
+    The day the run starts: the day on which the people who have joined the queue so far reach 1% of depositors, counting the opening day as day 1. nan if that never happens.
+    """
     depositors = sum(p.deposit > 0 for p in pop.persons)
     at = np.sort(_queued_at(result, len(pop.persons)))
     at = at[at >= 0]
@@ -160,7 +174,7 @@ def late_share(result: Result, n: int, after: int) -> float:
 
 
 def toyokawa(over: dict[str, float], seed: int, n: int):
-    """按史料的回应时间跑一遍丰川场景。"""
+    """按史料的回应时间跑一遍丰川场景。/ Run the Toyokawa scenario once with the recorded response times."""
     sc = trace.scenario_module("toyokawa")
     params = Params(scenario="toyokawa", seed=seed, n=n, **(sc.DEFAULTS | over))
     params.interventions = sc.interventions(params.start_hour)
@@ -187,7 +201,9 @@ def measure(over: dict[str, float], seed: int, n: int) -> dict[str, float]:
 
 
 def miss(value: float, t: Target) -> float:
-    """离目标范围有多远，按范围宽度归一；在范围内是 0。量不出来按完全没中算。"""
+    """离目标范围有多远，按范围宽度归一；在范围内是 0。量不出来按完全没中算。
+    Distance from the target range, normalised by the width of the range; 0 inside it. A metric that cannot be measured counts as a full miss.
+    """
     if np.isnan(value):
         return 1.0
     width = max(t.hi - t.lo, 0.05 * max(abs(t.hi), 1.0))
@@ -195,7 +211,9 @@ def miss(value: float, t: Target) -> float:
 
 
 def evaluate(over: dict[str, float], seeds: list[int], n: int, ts: list[Target]) -> tuple[float, dict[str, float]]:
-    """一组参数在几个种子上的平均表现：(总偏差, 各指标均值)。"""
+    """一组参数在几个种子上的平均表现：(总偏差, 各指标均值)。
+    How one parameter set does on average over several seeds: (total miss, mean of each metric).
+    """
     runs = [measure(over, seed, n) for seed in seeds]
     mean = {k: float(np.nanmean([r[k] for r in runs])) if not all(np.isnan(r[k]) for r in runs) else float("nan") for k in runs[0]}
     score = float(np.mean([sum(miss(r[t.metric], t) for t in ts) for r in runs]))
@@ -203,7 +221,9 @@ def evaluate(over: dict[str, float], seeds: list[int], n: int, ts: list[Target])
 
 
 def search(samples: int, seeds: list[int], n: int, rng_seed: int = 0, log: Callable[[str], None] = print):
-    """随机搜索。返回 (目标, 默认参数的结果, 找到的最好参数, 它的结果)。"""
+    """随机搜索。返回 (目标, 默认参数的结果, 找到的最好参数, 它的结果)。
+    Random search. Returns (targets, result for the default parameters, best parameters found, their result).
+    """
     ts = targets()
     rng = np.random.default_rng(rng_seed)
     default = evaluate({}, seeds, n, ts)
@@ -211,8 +231,10 @@ def search(samples: int, seeds: list[int], n: int, rng_seed: int = 0, log: Calla
     best = default
     for i in range(samples):
         # 前一半在整个范围里撒点，后一半在当前最好的一组附近微调
+        # The first half samples the whole space; the second half perturbs the best set found so far
         local = i >= samples // 2 and best_over
         # 只看参数就能判的目标先过一遍筛，省下跑模拟的时间
+        # Targets that can be judged from the parameters alone are screened first, which saves simulation runs
         for _ in range(2000):
             over = {
                 k: round(float(np.clip(rng.normal(best_over[k], 0.08 * (hi - lo)), lo, hi) if local else rng.uniform(lo, hi)), 3)

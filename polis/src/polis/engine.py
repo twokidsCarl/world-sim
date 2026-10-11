@@ -1,4 +1,6 @@
-"""引擎：按小时推进的 tick 循环。相同的人口与参数必须产生逐字节相同的记录。"""
+"""引擎：按小时推进的 tick 循环。相同的人口与参数必须产生逐字节相同的记录。
+The engine: a tick loop that advances one hour at a time. The same population and parameters must produce a byte-identical record.
+"""
 
 from __future__ import annotations
 
@@ -18,7 +20,7 @@ KINDS = ["kin", "neighbor", "colleague", "friend"]
 TIE_NAMES = {"kin": "家人", "neighbor": "邻居", "colleague": "同事", "friend": "朋友"}
 VENUE_TRUST = 0.3
 VENUE_ATTEND = 0.3
-QUEUE_FULL = 0.04  # 队伍排到人口的这个比例，就算全城都看得见
+QUEUE_FULL = 0.04  # 队伍排到人口的这个比例，就算全城都看得见 / once the queue reaches this share of the population, the whole town can see it
 
 
 @dataclass
@@ -31,7 +33,9 @@ class Result:
 
 
 def _activity(hour: int) -> np.ndarray:
-    """各类关系在这个钟点碰面说话的活跃度，顺序同 KINDS。夜里都睡了。"""
+    """各类关系在这个钟点碰面说话的活跃度，顺序同 KINDS。夜里都睡了。
+    How likely people joined by each kind of tie are to meet and talk at this hour, in KINDS order. At night everyone is asleep.
+    """
     if hour >= 23 or hour < 6:
         return np.zeros(4)
     kin = 1.0 if hour < 8 or hour >= 18 else 0.3
@@ -74,7 +78,7 @@ class Sim:
         self.wants_verify: set[int] = set()  # 决定去柜上看、但钱庄还没开门的人 / decided to go and look while the bank was shut
         self.memory: dict[int, list[str]] = {}  # 主角听到过的话 / what each protagonist has been told
 
-        # 有向边：每条关系两个方向各一条
+        # 有向边：每条关系两个方向各一条 / directed edges: one in each direction for every tie
         a = np.array([t.a for t in pop.ties] + [t.b for t in pop.ties])
         b = np.array([t.b for t in pop.ties] + [t.a for t in pop.ties])
         order = np.lexsort((b, a))
@@ -85,7 +89,7 @@ class Sim:
         self.degree = np.maximum(np.bincount(self.dst, minlength=n), 1)
         self.members = [np.array([x.idx for x in ps if v.idx in x.venues], dtype=int) for v in pop.venues]
 
-        # 心智状态
+        # 心智状态 / mental state
         self.L0 = mind.logit(np.clip(params.prior + 0.08 * (1 - self.trust_institution), 0.005, 0.5))
         self.L = self.L0.copy()
         self.fear = np.zeros(n)
@@ -94,16 +98,16 @@ class Sim:
         self.seen = np.zeros(n)
         self.status = np.full(n, UNAWARE)
         self.held = np.full(n, -1)
-        self.heard = np.zeros((n, 2), dtype=int)  # [辟谣, 谣言] 各从几个不同的人那里听过
-        self.told: dict[tuple[int, int, int], int] = {}  # (谁, 对谁, 哪一类话) 说过几次
+        self.heard = np.zeros((n, 2), dtype=int)  # [辟谣, 谣言] 各从几个不同的人那里听过 / [correction, rumour]: how many different people each was heard from
+        self.told: dict[tuple[int, int, int], int] = {}  # (谁, 对谁, 哪一类话) 说过几次 / (speaker, listener, side) → times said
         self.zeal = np.ones(n)
         self.verified = np.zeros(n, dtype=bool)
         self.believed = np.zeros(n, dtype=bool)
         self.verified[self.banker] = True
         self.silenced = np.zeros(n, dtype=bool)
-        self.closed_until = np.zeros(len(pop.venues), dtype=int)  # 场所关到第几个小时
+        self.closed_until = np.zeros(len(pop.venues), dtype=int)  # 场所关到第几个小时 / the tick until which each venue stays closed
 
-        # 钱庄
+        # 钱庄 / the bank
         self.total = float(self.deposit.sum())
         self.reserve = params.reserve_ratio * self.total
         self.queue: list[int] = []
@@ -114,7 +118,7 @@ class Sim:
         self.queue_msg = -1
         self.t = 0
 
-    # ---- 记录 ----
+    # ---- 记录 / recording ----
 
     def _emit(self, k: str, **kw) -> None:
         self.events.append({"t": self.t, "k": k} | kw)
@@ -139,7 +143,7 @@ class Sim:
         q = lambda x: np.round(np.clip(x, 0, 1) * 255).astype(np.uint8)  # noqa: E731
         return np.stack([q(mind.sigmoid(self.L)), q(self.fear), q(self.expect), self.status.astype(np.uint8)])
 
-    # ---- 一句话从 src 到 dst ----
+    # ---- 一句话从 src 到 dst / one telling, from src to dst ----
 
     def _tell(self, src: int, dst: int, via: str, trust: float) -> None:
         p = self.p
@@ -147,7 +151,7 @@ class Sim:
         msg = self.messages[m]
         # 模型扮演的人说什么由模型定，不替他们走样 / model-played characters choose their own words, so no drift for them
         if msg.valence == 1 and not self.directed[src] and self.rng.random() < p.mutate:
-            # 转述走样：越怕说得越重
+            # 转述走样：越怕说得越重 / drift in the retelling: the more frightened the teller, the harsher the version
             severity = float(np.clip(msg.severity * np.exp(self.rng.normal(0.12 + 0.3 * self.fear[src], 0.25)), 0.4, 2.5))
             text = self.sc.rumor_text(severity, int(self.rng.integers(8)))
             if text != msg.text:
@@ -161,7 +165,7 @@ class Sim:
         side = (msg.valence + 1) // 2
         repeats = self.told.get((src, dst, side), 0)
         others = int(self.heard[dst, side]) - (repeats > 0)
-        if dst != self.banker:  # 掌柜知道库里有多少银子，谁说什么都一样
+        if dst != self.banker:  # 掌柜知道库里有多少银子，谁说什么都一样 / the banker knows what is in the vault, so nothing anyone says moves him
             self.L[dst] += mind.tell_delta(msg.valence, msg.severity, trust, repeats, others,
                                            float(self.L[dst]), int(self.education[dst]), p)  # fmt: skip
         self.told[(src, dst, side)] = repeats + 1
@@ -178,10 +182,10 @@ class Sim:
             if not self.verified[dst] and (self.held[dst] < 0 or msg.severity > self.messages[self.held[dst]].severity):
                 self.held[dst] = m
         elif p1 < 0.15 and self.status[dst] <= AWARE:
-            self.held[dst] = m  # 被说服的人会接着替钱庄说话
+            self.held[dst] = m  # 被说服的人会接着替钱庄说话 / someone who has been persuaded goes on to speak up for the bank
 
         if was_aware:
-            self.zeal[src] *= p.stifle  # 对方早知道了，讲的兴致就减一分
+            self.zeal[src] *= p.stifle  # 对方早知道了，讲的兴致就减一分 / the listener already knew, so the teller loses a little of the urge to tell
         else:
             self.status[dst] = AWARE
             self._think(dst, "heard", src=self.pop.persons[src].name, text=msg.text)
@@ -230,7 +234,7 @@ class Sim:
             self.stake *= 1 - iv.value
             self._emit("intervene", x=f"官府宣布：存款若有损失，赔付 {round(iv.value * 100)}%")
 
-    # ---- 一个 tick 的各步 ----
+    # ---- 一个 tick 的各步 / the steps of one tick ----
 
     def _spread(self, hour: int) -> None:
         p = self.p
@@ -284,9 +288,10 @@ class Sim:
         acting = ((self.status == QUEUEING) | (self.status == WITHDREW)).astype(float)
         near = np.bincount(self.dst, weights=self.strength * acting[self.src], minlength=self.n) / self.wsum
         # 钱庄门口的队伍：住在附近的人天天看得见，住得远的要先听说了才会留意
+        # The queue outside the bank: people living nearby see it every day; those further off notice it only once they have heard the story
         sight = np.where(self.near_bank, 1.0, np.where(self.status != UNAWARE, 0.35, 0.0))
         seen = np.maximum(near, pub * sight) if awake else self.seen
-        self.L += p.w_seen * np.maximum(seen - self.seen, 0)  # 亲眼看见有人去取，比听说更有分量
+        self.L += p.w_seen * np.maximum(seen - self.seen, 0)  # 亲眼看见有人去取，比听说更有分量 / seeing someone withdraw counts for more than hearing about it
         self.seen = np.maximum(self.seen, seen)
 
         noticed = (self.status == UNAWARE) & (seen > 0.12)
@@ -336,7 +341,7 @@ class Sim:
                 # 模型没答上来：这一次按数值规则办 / no answer from the model: fall back to the numeric rule this once
                 b = float(mind.sigmoid(self.L[i]))
                 h = mind.withdraw_hazard(b, self.expect[i], self.fear[i], self.stake[i], self.risk_aversion[i], self.conformity[i], self.p)
-                if self.deposit[i] > 0 and self.rng.random() < h * 8:  # 一天只问一次，所以把一天的机会并在一起
+                if self.deposit[i] > 0 and self.rng.random() < h * 8:  # 一天只问一次，所以把一天的机会并在一起 / asked only once a day, so the whole day's chances are pooled into this one draw
                     self._join_queue(i)
                 continue
             self._emit("thought", a=i, x=d.thought, via="llm")
@@ -400,7 +405,7 @@ class Sim:
             self._think(int(i), "believe" if now[i] else "doubt")
         self.believed = now
 
-    # ---- 主循环 ----
+    # ---- 主循环 / main loop ----
 
     def run(self) -> Result:
         p = self.p

@@ -1,4 +1,6 @@
-"""API：列出运行记录，把记录文件原样交给 UI；实验台的分叉与集成也从这里进。"""
+"""API：列出运行记录，把记录文件原样交给 UI；实验台的分叉与集成也从这里进。
+The API: lists runs and hands their files to the UI unchanged; the lab's branches and ensembles also come in through here.
+"""
 
 from __future__ import annotations
 
@@ -31,7 +33,7 @@ def runs() -> list[dict]:
 def run_file(run_id: str, name: str):
     path = _run_dir(run_id) / name
     if name == "ensemble.json" and not path.is_file():
-        return None  # 还没算过集成，不是错误
+        return None  # 还没算过集成，不是错误 / no ensemble has been computed yet, which is not an error
     if name not in trace.SERVED or not path.is_file():
         raise HTTPException(404)
     return FileResponse(path)
@@ -39,7 +41,9 @@ def run_file(run_id: str, name: str):
 
 @app.get("/api/corpus")
 def corpus_all() -> dict:
-    """语料全文，每条附带 verified（出处是否全部核实）。"""
+    """语料全文，每条附带 verified（出处是否全部核实）。
+    The whole corpus; each entry carries verified (whether all of its sources have been checked).
+    """
     entries, _ = corpus.check()
     return {kind: [e.model_dump() | {"verified": e.verified} for e in items] for kind, items in entries.items()}
 

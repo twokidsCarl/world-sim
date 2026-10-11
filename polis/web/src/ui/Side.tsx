@@ -1,4 +1,5 @@
 // 右侧面板：没选人时是场景、主角与此刻的动静；选了人就是这个人的心智与经历。
+// Side panel: with nobody selected it shows the scenario, the cast and what is happening right now; with a person selected it shows that person's mind and history.
 import { useMemo } from 'react'
 import type { Person } from '../contract/types.gen.ts'
 import {
@@ -177,7 +178,10 @@ function Meter({ label, v, belief }: { label: string; v: number; belief?: boolea
   )
 }
 
-/** 这个人的信念从头到尾怎么走，竖线是此刻 */
+/**
+ * 这个人的信念从头到尾怎么走，竖线是此刻
+ * This person's belief over the whole run; the vertical line marks the current moment
+ */
 function BeliefSpark({ run, i, k }: { run: RunData; i: number; k: number }) {
   const ticks = run.manifest.ticks
   const W = 326
