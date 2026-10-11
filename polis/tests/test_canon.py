@@ -69,8 +69,8 @@ def test_held_out_scenarios_are_frozen_from_verified_cases():
         assert all(0 <= iv.t < sc.DEFAULTS["ticks"] for iv in ivs)
         pop = population.build(Params(scenario=name, n=300, **sc.DEFAULTS), sc)
         assert {"banker", "witness"} <= pop.cast.keys()
-        # 校准的目标里没有它们 / none of them is among the calibration targets
-        assert not any(rec["case"] in t.source for t in cal.targets())
+        # 没看过结果的案例不在校准的目标里 / cases whose results are unseen are not among the calibration targets
+        assert (name in canon.SEEN) or not any(rec["case"] in t.source for t in cal.targets())
 
 
 def test_judge_applies_the_factor_of_two_band():

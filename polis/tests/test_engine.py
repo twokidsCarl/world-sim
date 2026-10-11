@@ -202,3 +202,39 @@ def test_education_and_trust_follow_the_curated_aggregates():
     flat = np.zeros(4)
     assert np.allclose(population.trusting(np.full(4, 0.5), survey["government"], np.array([0, 1, 2, 3]), np.full(4, 40)) - flat,
                        [survey["government"]["by_education"][0], survey["government"]["by_education"][0], survey["government"]["by_education_and_age"][1][1], survey["government"]["by_education_and_age"][2][1]])  # fmt: skip
+
+
+def test_a_mass_message_makes_those_who_reason_about_others_expect_company():
+    from polis import mind
+
+    depth = np.array([0, 1, 2])
+    quiet = mind.expectation(0.0, 0.0, depth)
+    told = mind.expectation(0.0, 0.0, depth, public=0.3)
+    assert np.allclose(quiet, 0) and told[0] == 0  # 0 层的人只数亲眼看见的 / level 0 counts only what it sees
+    assert told[1] == pytest.approx(0.3) and told[2] > told[1]
+    # 熟人说得更多时，以熟人的为准 / when acquaintances say more, their word wins
+    assert mind.expectation(0.0, 1.0, 1, public=0.3) == pytest.approx(0.6)
+    text = Intervention(t=5, text="群发", valence=1, strength=1.5, reach=0.5)
+    _, off = simulate(interventions=[text], share=0, venue_share=0)
+    _, on = simulate(interventions=[text], share=0, venue_share=0, public=1.0)
+    assert np.array_equal(off.frames[:5], on.frames[:5])
+    assert on.frames[6, 2].mean() > off.frames[6, 2].mean()  # 第 2 路是"估计别人会去取" / channel 2 is the expectation of others
+
+
+def test_authority_scales_how_much_of_a_denial_lands():
+    notice = Intervention(t=30, text="告示", strength=3.0, reach=1.0)
+    _, none = simulate()
+    _, full = simulate(interventions=[notice])
+    _, half = simulate(interventions=[notice], authority=0.5)
+    _, mute = simulate(interventions=[notice], authority=0.0)
+    belief = lambda r: r.frames[30, 0].mean()  # noqa: E731
+    assert belief(full) < belief(half) < belief(mute) == belief(none)
+
+
+def test_a_closed_bank_pays_nothing_until_it_reopens():
+    shut = Intervention(t=1, kind="close_venue", target=0, duration=40)
+    pop, r = simulate(interventions=[shut], bias=3.0, w_tell=6.0, share=0.5)
+    assert pop.venues[0].kind == "bank"
+    paid = [e["t"] for e in r.events if e["k"] == "withdraw"]
+    assert any(e["k"] == "queue" and e["t"] < 41 for e in r.events)  # 关着门也有人来排队 / people queue even while it is shut
+    assert paid and min(paid) >= 41

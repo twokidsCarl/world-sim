@@ -37,7 +37,7 @@ def tell_delta(valence: int, severity: float, trust: float, repeats: int, others
     return float(valence * p.w_tell * severity * trust * novelty * corroborate * confirm * skeptic)
 
 
-def expectation(seen, talk, depth):
+def expectation(seen, talk, depth, public=0.0):
     """我估计身边有多少人会去取钱。
     My estimate of how many of the people around me will withdraw.
 
@@ -47,9 +47,15 @@ def expectation(seen, talk, depth):
     Level 0: count only the people I have seen withdraw.
     Level 1: those who told me about it mostly believe it, and believers will withdraw.
     Level 2: others are making the same estimate, which pushes the estimate itself up further.
+
+    public 是群发消息带来的估计：这条消息不只我一个人收到，收到的人里总有一些会去取。
+    会揣度别人的人（1 层以上）不必等熟人来说、不必看见队伍，就有了这个估计；0 层的人不这样想。
+    public is the estimate a mass message brings: I am not the only one who got this, and some of the others
+    will withdraw. Anyone who reasons about others (level 1 and up) holds it without waiting for an acquaintance
+    to say so or for a queue to appear; level 0 does not think this way.
     """
     e0 = seen
-    e1 = e0 + (1.0 - e0) * 0.6 * talk
+    e1 = np.maximum(e0 + (1.0 - e0) * 0.6 * talk, public)
     e2 = e1 + (1.0 - e1) * 0.5 * e1
     return np.where(depth == 0, e0, np.where(depth == 1, e1, e2))
 
