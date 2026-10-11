@@ -1,4 +1,5 @@
 import { El, type Molecule } from '../mol/types'
+import { chainPainter, type Annotation, type ColorMode } from './annotate'
 import { oklch, type RGB } from './oklab'
 import { ROLE_HUE, TONE_MOLECULE, type Role, type Tone } from './palettes'
 
@@ -14,6 +15,8 @@ export interface Coloring {
   nudge: number[]
   /** 每个实体的覆盖值 [L, C, h]；优先于角色和偏移 / per-entity override as [L, C, h]; wins over role and shift */
   override: (null | [number, number, number])[]
+  /** 上色方式；缺省是按角色 / the colour mode; by role when absent */
+  mode?: ColorMode
 }
 
 /** 在不了解结构是什么的情况下，给出一套合理的配色 / A reasonable colouring with no outside knowledge of what the structure is. */
@@ -64,10 +67,12 @@ export function entityLch(c: Coloring, entity: number, tone: Tone): [number, num
  * lightness so that neighbouring copies can be told apart; carbons are a
  * little greyer than the other atoms of their chain.
  */
-export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECULE): Uint8Array {
+export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECULE, annotation?: Annotation | null): Uint8Array {
   const out = new Uint8Array(mol.atomCount * 4)
   const seen = new Map<number, number>()
+  let chainIndex = -1
   for (const ch of mol.chains) {
+    chainIndex++
     const k = seen.get(ch.entity) ?? 0
     seen.set(ch.entity, k + 1)
     const [L, C, h] = entityLch(c, ch.entity, tone)
@@ -80,7 +85,26 @@ export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECUL
     const dL = flat ? 0 : (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
     const other = to8(oklch(L + dL, C, h + dh))
     const carbon = to8(oklch(L + dL + tone.carbonLift, Math.max(0, C - tone.carbonDrop), h + dh))
+    // 按残基上色的方式（置信度、结构域、位点、致病性）：有数据的链整条改用残基的颜色
+    // per-residue modes (confidence, domains, sites, pathogenicity): a chain with data takes its residues' colours instead
+    const paint = c.mode && c.mode !== 'role' ? chainPainter(c.mode, mol, chainIndex, annotation) : null
+    const cache = new Map<string, [RGB, RGB]>()
     for (let i = ch.start; i < ch.start + ch.count; i++) {
+      const lch = paint ? paint(i) : null
+      if (lch) {
+        const key = lch.join()
+        let pair = cache.get(key)
+        if (!pair) {
+          pair = [to8(oklch(lch[0], lch[1], lch[2])), to8(oklch(lch[0] + tone.carbonLift, Math.max(0, lch[1] - tone.carbonDrop), lch[2]))]
+          cache.set(key, pair)
+        }
+        const col = pair[mol.element[i] === El.C ? 1 : 0]
+        out[i * 4] = col[0]
+        out[i * 4 + 1] = col[1]
+        out[i * 4 + 2] = col[2]
+        out[i * 4 + 3] = 255
+        continue
+      }
       const col = mol.element[i] === El.C ? carbon : other
       out[i * 4] = col[0]
       out[i * 4 + 1] = col[1]

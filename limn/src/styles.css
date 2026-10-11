@@ -51,3 +51,5 @@ textarea { width: 100%; resize: vertical; min-height: 54px; }
 .embed-info > * { background: #ffffffd9; padding: 2px 8px; border-radius: 4px; }
 .embed-cut { display: flex; align-items: center; gap: 6px; pointer-events: auto; margin-left: auto; }
 .embed-cut input { width: 120px; }
+
+.legend { margin-top: 4px; line-height: 1.6; }

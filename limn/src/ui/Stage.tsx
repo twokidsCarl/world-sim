@@ -209,7 +209,7 @@ export function Stage() {
     } else if (st.spec?.mesoscale) {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: 0, perCopy: true, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
     } else {
-      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined })))
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined }, p.annotation)))
     }
     draw(false)
   }, [sceneRev])
@@ -220,7 +220,7 @@ export function Stage() {
     if (!r) return
     const sp = useStore.getState().spec
     const tone = sp?.landscape || sp?.mesoscale ? TONE_LANDSCAPE : TONE_MOLECULE
-    panels.forEach((p, i) => colorings[i] && r.setColors(i, atomColors(p.mol, colorings[i]!, tone)))
+    panels.forEach((p, i) => colorings[i] && r.setColors(i, atomColors(p.mol, colorings[i]!, tone, p.annotation)))
     draw(false)
   }, [colorings])
 

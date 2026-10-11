@@ -2,8 +2,10 @@
 import { critique, pickView, type CritiqueRequest } from './critique'
 import { available } from './llm'
 import { resolveTopic } from './resolve'
+import { annotate } from './sources/annotations'
 import { orientation } from './sources/opm'
 import { cached, stateDir } from './structures'
+import { alphafold } from './sources/uniprot'
 
 const PORT = Number(process.env.LIMN_PORT || 5185)
 
@@ -40,6 +42,12 @@ Bun.serve({
       // a membrane protein's orientation in the membrane (OPM); null when OPM does not have it
       const mem = /^\/api\/membrane\/([0-9][A-Za-z0-9]{3})$/.exec(url.pathname)
       if (mem) return json({ orientation: await orientation(mem[1]!) })
+      // AlphaFold 预测模型的下载地址 / where to download an AlphaFold predicted model
+      const afm = /^\/api\/alphafold\/([A-Za-z0-9]{6,10})$/.exec(url.pathname)
+      if (afm) return json({ prediction: await alphafold(afm[1]!.toUpperCase()) })
+      // 逐残基注释：结构域、位点、致病性预测 / per-residue annotation: domains, sites, predicted pathogenicity
+      const ann = /^\/api\/annotations\/([A-Za-z0-9-]{4,16})$/.exec(url.pathname)
+      if (ann) return json({ annotation: await annotate(ann[1]!) })
       if (req.method !== 'POST') return json({ error: 'not found' }, 404)
       const body = (await req.json()) as Record<string, unknown>
       if (url.pathname === '/api/resolve') {

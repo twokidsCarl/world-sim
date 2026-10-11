@@ -46,3 +46,23 @@ export async function membrane(pdbId: string): Promise<import('./landscape/orien
     return null
   }
 }
+
+/** 一个结构的逐残基注释；没有或服务不可用时为 null / per-residue annotation of a structure; null when there is none or the service is down */
+export async function annotations(id: string): Promise<import('./style/annotate').Annotation | null> {
+  try {
+    const res = await fetch(`/api/annotations/${encodeURIComponent(id)}`)
+    return res.ok ? ((await res.json()) as { annotation: import('./style/annotate').Annotation | null }).annotation : null
+  } catch {
+    return null
+  }
+}
+
+/** AlphaFold 数据库里某个 UniProt 编号的预测模型 / the AlphaFold DB model for a UniProt accession */
+export async function alphafold(accession: string): Promise<{ accession: string; url: string; confident: number } | null> {
+  try {
+    const res = await fetch(`/api/alphafold/${accession}`)
+    return res.ok ? ((await res.json()) as { prediction: { accession: string; url: string; confident: number } | null }).prediction : null
+  } catch {
+    return null
+  }
+}

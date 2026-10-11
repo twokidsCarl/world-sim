@@ -6,6 +6,7 @@ import type { Molecule } from '../mol/types'
 import { axisAngle, identity3, mul3, type Mat3 } from '../render/camera'
 import { loadLipid } from '../landscape/lipid'
 import { fitToMembrane, type MembraneFit } from '../landscape/orient'
+import type { Annotation, ColorMode } from '../style/annotate'
 import { cloneStyle, STYLE_LANDSCAPE, STYLE_MESOSCALE, STYLE_MOLECULE, type Style } from '../render/style'
 import type { Edit } from '../refine/edits'
 import { defaultAssembly } from '../scene/build'
@@ -27,6 +28,8 @@ export interface Panel {
   align: Float32Array | null
   /** 全景里的膜蛋白：OPM 给出的膜内取向 / for a membrane protein in a landscape: its orientation in the membrane from OPM */
   membrane?: MembraneFit | null
+  /** 逐残基注释，第一次用到按残基上色时才取；null 表示取过但没有 / per-residue annotation, fetched the first time a per-residue colour mode is used; null means fetched and absent */
+  annotation?: Annotation | null
 }
 
 /** 评审或用户能改变的、关于场景外观的一切 / Everything a reviewer or the user can change about how the scene looks. */
@@ -79,6 +82,8 @@ interface State extends Look {
   loadCatalog(id: string): Promise<void>
   setAssembly(panel: number, id: string): void
   setRole(panel: number, entity: number, role: Role): void
+  /** 换上色方式；需要时先去取注释 / change the colour mode, fetching annotation first when it is needed */
+  setColorMode(mode: ColorMode): Promise<void>
   setStyle(patch: (s: Style) => void): void
   setLook(patch: Partial<Look>): void
   applyEdits(edits: Edit[]): void
@@ -227,22 +232,26 @@ export const useStore = create<State>((set, get) => ({
 
   async loadId(id) {
     const clean = id.trim().toUpperCase()
-    if (!/^[0-9][A-Z0-9]{3}$/.test(clean)) {
-      set({ error: 'PDB 编号是 4 位，以数字开头，例如 2HHB' })
+    // "AF-P04637"：AlphaFold 数据库里这个 UniProt 编号的预测模型 / "AF-P04637": the AlphaFold DB model for that UniProt accession
+    const af = /^AF-([A-Z0-9]{6,10})$/.exec(clean)
+    if (!af && !/^[0-9][A-Z0-9]{3}$/.test(clean)) {
+      set({ error: 'PDB 编号是 4 位，以数字开头，例如 2HHB；AlphaFold 预测模型写成 AF-加 UniProt 编号，例如 AF-P04637' })
       return
     }
     set({ busy: `正在下载 ${clean}…`, error: '' })
     try {
-      const mol = await loadMolecule({ kind: 'pdb', id: clean }, progress(clean))
+      const prediction = af ? await api.alphafold(af[1]!) : null
+      if (af && !prediction) throw new Error(`AlphaFold 数据库里没有 ${af[1]} 的预测模型（或本地服务没有启动）`)
+      const mol = await loadMolecule(prediction ? { kind: 'url', id: clean, url: prediction.url, minConfidence: 50 } : { kind: 'pdb', id: clean }, progress(clean))
       const coloring = defaultColoring(mol)
       const spec: PanelSpec = {
         label: clean,
-        source: { id: clean, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
+        source: prediction ? { id: clean, kind: 'alphafold', url: prediction.url, title: mol.title, method: 'AlphaFold 预测', resolution: null, year: null, tier: 'predicted' } : { id: clean, kind: 'pdb', title: mol.title, method: '', resolution: null, year: null },
         assembly: defaultAssembly(mol),
         entities: mol.entities.map((e, i) => ({ entityId: e.id, role: coloring.roles[i]!, name: e.description || e.kind, description: e.description, organism: '' })),
         reason: '',
       }
-      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: mol.title || clean, caption: '', panels: [spec], notes: [] }
+      const scene: SceneSpec = { topic: clean, kind: 'molecule', title: mol.title || clean, caption: '', panels: [spec], notes: prediction ? [`这是 AlphaFold 预测模型，不是实验结构；置信度低于 50 的区域没有画（${Math.round(prediction.confident * 100)}% 的残基置信度在 70 以上）。`] : [] }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null }], colorings: [coloring], ...freshLook(), cut: 0, style: cloneStyle(STYLE_MOLECULE), rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: e instanceof Error ? e.message : String(e) })
@@ -347,6 +356,16 @@ export const useStore = create<State>((set, get) => ({
     }))
   },
 
+  async setColorMode(mode) {
+    const needs = mode === 'domains' || mode === 'sites' || mode === 'pathogenicity'
+    if (needs && get().panels.some((p) => p.annotation === undefined)) {
+      set({ busy: '正在查询结构域和位点注释…' })
+      const panels = await Promise.all(get().panels.map(async (p) => (p.annotation !== undefined ? p : { ...p, annotation: await api.annotations(p.spec.source.id) })))
+      set({ panels, busy: '' })
+    }
+    set((s) => ({ colorings: s.colorings.map((c) => ({ ...c, mode })) }))
+  },
+
   setStyle(patch) {
     const style = cloneStyle(get().style)
     patch(style)
@@ -393,6 +412,7 @@ export const useStore = create<State>((set, get) => ({
           break
         }
         case 'cut': cut = e.value; break
+        case 'color_mode': void get().setColorMode(e.mode); break
         case 'line_width': style.lineWidth = e.value; break
         case 'inner_lines': style.contour.diffMax = e.value; break
         case 'shadow_strength': style.shadow.strength = e.value; break

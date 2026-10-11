@@ -167,6 +167,7 @@ export async function parseCif(data: Uint8Array | string, id: string, opts: Pars
   const isTrace = new Uint8Array(n)
   const pos = new Float32Array(n * 3), element = new Uint8Array(n), chainOf = new Uint32Array(n), residue = new Int32Array(n)
   const authResidue = aseq ? new Int32Array(n) : undefined
+  const confidence = bfac ? new Float32Array(n) : undefined
   const chains: Chain[] = []
   const firstRow: number[] = []
   const entities: Entity[] = []
@@ -223,6 +224,7 @@ export async function parseCif(data: Uint8Array | string, id: string, opts: Pars
     }
     chainOf[count] = chains.length - 1
     residue[count] = seq.valueKind(i) === 0 ? seq.int(i) : aseq && aseq.valueKind(i) === 0 ? aseq.int(i) : 0
+    if (confidence) confidence[count] = bfac!.float(i)
     if (authResidue) authResidue[count] = aseq!.valueKind(i) === 0 ? aseq!.int(i) : residue[count]!
     cur.count++
     count++
@@ -261,6 +263,7 @@ export async function parseCif(data: Uint8Array | string, id: string, opts: Pars
     isTrace: isTrace.slice(0, count),
     residue: residue.slice(0, count),
     authResidue: authResidue?.slice(0, count),
+    confidence: confidence?.slice(0, count),
     chains,
     entities,
     assemblies: readAssemblies(block, chains),
