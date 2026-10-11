@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { VisitorQueue } from './SuggestPage'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { type Job, type Suggestion, type WishDetail, type WishList, api } from '../api'
 import { JobPanel } from '../ui/JobPanel'
@@ -50,6 +51,7 @@ export function WishesPage() {
           <button onClick={() => setParams({})}>{t('知道了', 'Got it')}</button>
         </div>
       )}
+      <VisitorQueue onAccepted={() => api.wishes(status).then(setList, () => undefined)} />
       <Review onRecorded={() => api.wishes(status).then(setList, () => undefined)} />
       {list && (
         <>

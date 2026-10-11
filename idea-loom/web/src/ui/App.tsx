@@ -8,6 +8,7 @@ import { MapPage } from '../pages/MapPage'
 import { PlayPage } from '../pages/PlayPage'
 import { PoolPage } from '../pages/PoolPage'
 import { StatsPage } from '../pages/StatsPage'
+import { SuggestPage } from '../pages/SuggestPage'
 import { WorkPage } from '../pages/WorkPage'
 import { WishPage, WishesPage } from '../pages/WishesPage'
 import { AssistantDock } from '../assistant/AssistantDock'
@@ -64,6 +65,11 @@ export function App() {
             {n.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </NavLink>
         ))}
+        {me?.auth_enabled && !owner && (
+          <NavLink to="/suggest" className="nav-item nav-new">
+            {t('提个愿望', 'Send a wish')}
+          </NavLink>
+        )}
         {owner && (
           <NavLink to="/new" className="nav-item nav-new">
             {t('＋ 手写一条', '＋ Write one')}
@@ -156,6 +162,7 @@ export function App() {
             <Route path="/wishes" element={gate(<WishesPage />)} />
             <Route path="/wishes/:id" element={gate(<WishPage />)} />
             <Route path="/new" element={gate(<NewIdeaPage state={state} />)} />
+            <Route path="/suggest" element={<SuggestPage />} />
             <Route path="*" element={<p className="pad">{t('没有这个页面。', 'There is no such page.')}</p>} />
           </Routes>
         )}

@@ -123,6 +123,8 @@ GUEST_GET = [
 # 登录的访客另外能做的。 / What a signed-in member may do in addition.
 MEMBER = [
     ("POST", r"^/api/trail$"),
+    ("GET", r"^/api/suggestions/mine$"),   # 自己提过的愿望 / the wishes one has sent
+    ("POST", r"^/api/suggestions$"),       # 提一条，进待主人过目的队列；不调用模型 / send one into the owner's queue; no model call
 ]
 _GUEST_GET = [re.compile(p) for p in GUEST_GET]
 _MEMBER = [(m, re.compile(p)) for m, p in MEMBER]

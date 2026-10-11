@@ -103,6 +103,11 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
         </p>
       )}
 
+      {/* 交给 Claude 的原文，批准之前可以对照着看；访客提的愿望尤其要看。 / The exact brief handed to Claude, to check against before approving, above all for a visitor's wish. */}
+      <details className="small">
+        <summary>{t('交给 Claude 的原文', 'The brief handed to Claude')}</summary>
+        <pre className="job-pre">{job.what}</pre>
+      </details>
       {job.error && <div className="notice bad pre" role="alert">{job.error}</div>}
       {job.queued && job.waiting && <div className="notice warn" role="status">{t(`还没轮到：${job.waiting}`, `Not started yet: ${job.waiting}`)}</div>}
       {job.phase === 'merged' && (

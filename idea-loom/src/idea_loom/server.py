@@ -13,7 +13,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import auth, config, edits, github, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
+from . import auth, config, edits, github, suggestions, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .play import host as play_host
 from .play import manifest as play_manifest
@@ -795,3 +795,51 @@ def auth_logout() -> RedirectResponse:
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie(auth.COOKIE, path="/")
     return response
+
+
+# ---------- 访客提的愿望 / wishes from visitors ----------
+
+
+class SuggestionBody(BaseModel):
+    title: str
+    stuck: str = ""
+    where_url: str = ""
+    where_title: str = ""
+
+
+class DismissBody(BaseModel):
+    note: str = ""
+
+
+def _suggest(fn, *args, **kw):
+    try:
+        return fn(*args, **kw)
+    except suggestions.SuggestionError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.post("/api/suggestions", response_model=suggestions.Suggestion)
+def send_suggestion(body: SuggestionBody, request: Request) -> suggestions.Suggestion:
+    """登录的访客提一条愿望。只存下来等主人过目，不调用模型。 / A signed-in visitor sends a wish. It is only stored for the owner to look over; no model is called."""
+    user = current_user(request)
+    return _suggest(suggestions.send, user.login, body.title, body.stuck, body.where_url, body.where_title)
+
+
+@app.get("/api/suggestions/mine", response_model=list[suggestions.Suggestion])
+def my_suggestions(request: Request) -> list[suggestions.Suggestion]:
+    return suggestions.listing(by=current_user(request).login)
+
+
+@app.get("/api/suggestions", response_model=list[suggestions.Suggestion])
+def all_suggestions() -> list[suggestions.Suggestion]:
+    return suggestions.listing()
+
+
+@app.post("/api/suggestions/{suggestion_id}/accept", response_model=suggestions.Suggestion)
+def accept_suggestion(suggestion_id: str) -> suggestions.Suggestion:
+    return _suggest(suggestions.accept, suggestion_id)
+
+
+@app.post("/api/suggestions/{suggestion_id}/dismiss", response_model=suggestions.Suggestion)
+def dismiss_suggestion(suggestion_id: str, body: DismissBody) -> suggestions.Suggestion:
+    return _suggest(suggestions.dismiss, suggestion_id, body.note)
