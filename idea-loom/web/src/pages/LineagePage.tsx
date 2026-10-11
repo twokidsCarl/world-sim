@@ -1,5 +1,7 @@
 import type { Idea, State } from '../contract'
+import { type Lang, label, plural, tr } from '../i18n'
 import { formatTime } from '../state/derive'
+import { useLang, useT } from '../state/store'
 import { Page } from '../ui/Page'
 import { IdeaLink, levelName } from '../ui/bits'
 
@@ -7,12 +9,12 @@ type Batch = { key: string; subject: string; at: string; pr: number | null; idea
 
 // 按"哪一次进来的"把 idea 分成批，时间从早到晚。
 // Group ideas into batches by when they entered the pool, oldest first.
-export function batches(ideas: Idea[]): Batch[] {
+export function batches(ideas: Idea[], lang: Lang = 'zh'): Batch[] {
   const out = new Map<string, Batch>()
   for (const idea of ideas) {
     const o = idea.origin
     const key = o.commit ?? `${o.how}:${idea.created_at.slice(0, 10)}`
-    const subject = o.subject ?? (o.how === 'human' ? '手写' : o.how === 'generate' ? '生成' : o.how === 'assistant' ? '小助手提议' : o.how)
+    const subject = o.subject ?? (o.how === 'human' ? tr(lang, '手写', 'Written by hand') : o.how === 'generate' ? tr(lang, '生成', 'Generated') : o.how === 'assistant' ? tr(lang, '小助手提议', 'Proposed by the assistant') : o.how)
     const batch = out.get(key) ?? { key, subject, at: idea.created_at, pr: o.pr, ideas: [] }
     batch.ideas.push(idea)
     if (idea.created_at < batch.at) batch.at = idea.created_at
@@ -22,10 +24,18 @@ export function batches(ideas: Idea[]): Batch[] {
 }
 
 export function LineagePage({ state }: { state: State }) {
-  const all = batches(state.ideas)
+  const lang = useLang()
+  const t = useT()
+  const all = batches(state.ideas, lang)
   const merges = state.links.filter((l) => l.kind !== 'mentions')
   return (
-    <Page title="血缘" lead="想法池是一批一批长出来的。这里按进来的先后排列，标出谁并入了谁、谁是从谁细化或融合来的。">
+    <Page
+      title={t('血缘', 'Lineage')}
+      lead={t(
+        '想法池是一批一批长出来的。这里按进来的先后排列，标出谁并入了谁、谁是从谁细化或融合来的。',
+        'The idea pool grew batch by batch. This lists the batches in the order they arrived and marks which idea was merged into which, and which was refined or fused from which.',
+      )}
+    >
       <ol className="batches">
         {all.map((b, i) => {
           const byLevel = new Map<string, Idea[]>()
@@ -33,10 +43,10 @@ export function LineagePage({ state }: { state: State }) {
           return (
             <li key={b.key} className="batch">
               <div className="batch-head">
-                <span className="batch-n num">第 {i + 1} 批</span>
+                <span className="batch-n num">{t(`第 ${i + 1} 批`, `Batch ${i + 1}`)}</span>
                 <h2>{b.subject}</h2>
                 <span className="muted small">
-                  {formatTime(b.at)} · {b.ideas.length} 条
+                  {formatTime(b.at)} · {t(`${b.ideas.length} 条`, plural(b.ideas.length, 'idea'))}
                   {b.pr != null && (
                     <>
                       {' · '}
@@ -52,7 +62,7 @@ export function LineagePage({ state }: { state: State }) {
                   .filter((l) => byLevel.has(l.id))
                   .map((l) => (
                     <div key={l.id} className="batch-level">
-                      <div className="muted small">{levelName(state, l.id)}</div>
+                      <div className="muted small">{levelName(state, l.id, lang)}</div>
                       <ul className="plain">
                         {byLevel.get(l.id)!.map((idea) => {
                           const out = merges.filter((m) => m.source === idea.id)
@@ -63,13 +73,13 @@ export function LineagePage({ state }: { state: State }) {
                               {out.map((m) => (
                                 <span key={m.target + m.kind} className="muted small rel">
                                   {' '}
-                                  → {m.label} <IdeaLink id={m.target} state={state} showTitle={false} />
+                                  → {label(lang, 'edge', m.kind, m.label)} <IdeaLink id={m.target} state={state} showTitle={false} />
                                 </span>
                               ))}
                               {into.length > 0 && (
                                 <span className="muted small rel">
                                   {' '}
-                                  ← {into.map((m) => m.source).join('、')}
+                                  ← {into.map((m) => m.source).join(t('、', ', '))}
                                 </span>
                               )}
                             </li>

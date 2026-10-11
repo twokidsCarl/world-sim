@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { api } from '../api'
 import type { Proposal, State } from '../contract'
-import { useStore } from '../state/store'
-import { IdeaLink, ThreadChips, levelName } from './bits'
+import { label } from '../i18n'
+import { useLang, useStore, useT } from '../state/store'
+import { IdeaLink, ThreadChips, kernelName, levelName } from './bits'
 
 // 模型的一条提议：看、改、接受或不要。接受之前想法池不变。
 // One proposal from the model: read it, edit it, accept or dismiss. The pool does
 // not change until it is accepted.
 export function ProposalCard({ proposal: p, state }: { proposal: Proposal; state: State }) {
   const load = useStore((s) => s.load)
+  const lang = useLang()
+  const t = useT()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(p.title ?? '')
   const [body, setBody] = useState(p.body ?? '')
@@ -32,18 +35,18 @@ export function ProposalCard({ proposal: p, state }: { proposal: Proposal; state
   return (
     <article className={`proposal p-${p.status}`}>
       <header>
-        <span className="badge">{p.op_label}</span>
-        <span className="muted small">{p.kind_label}</span>
+        <span className="badge">{label(lang, 'op', p.op, p.op_label)}</span>
+        <span className="muted small">{label(lang, 'proposalKind', p.kind, p.kind_label)}</span>
         {p.direction && <span className="chip">{p.direction}</span>}
-        {p.status !== 'open' && <span className="badge">{p.status === 'accepted' ? '已接受' : '没要'}</span>}
+        {p.status !== 'open' && <span className="badge">{p.status === 'accepted' ? t('已接受', 'Accepted') : t('没要', 'Dismissed')}</span>}
         {p.result_id && p.status === 'accepted' && <IdeaLink id={p.result_id} state={state} />}
       </header>
 
       {hasText &&
         (editing ? (
           <div className="form">
-            <input aria-label="标题" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <textarea aria-label="正文" rows={6} value={body} onChange={(e) => setBody(e.target.value)} />
+            <input aria-label={t('标题', 'Title')} value={title} onChange={(e) => setTitle(e.target.value)} />
+            <textarea aria-label={t('正文', 'Body')} rows={6} value={body} onChange={(e) => setBody(e.target.value)} />
           </div>
         ) : (
           <>
@@ -59,26 +62,26 @@ export function ProposalCard({ proposal: p, state }: { proposal: Proposal; state
       {p.kind === 'position' && p.idea_id && (
         <p>
           <IdeaLink id={p.idea_id} state={state} /> → <ThreadChips threads={p.threads as never} state={state} />{' '}
-          <span className="chip">{p.kernel ?? '不归类'}</span>
+          <span className="chip">{p.kernel ? kernelName(state, p.kernel, lang) : t('不归类', 'Unclassified')}</span>
         </p>
       )}
       {p.kind === 'merge' && p.idea_id && p.target && (
         <p>
-          把 <IdeaLink id={p.idea_id} state={state} /> 并入 <IdeaLink id={p.target} state={state} />
+          {t('把 ', 'Merge ')}<IdeaLink id={p.idea_id} state={state} />{t(' 并入 ', ' into ')}<IdeaLink id={p.target} state={state} />
         </p>
       )}
 
       {hasText && (
         <div className="p-where">
-          {p.level && <span className="muted small">{levelName(state, p.level)}</span>}
+          {p.level && <span className="muted small">{levelName(state, p.level, lang)}</span>}
           <ThreadChips threads={p.threads as never} state={state} />
-          <span className="muted small">{p.kernel ?? '还没归类'}</span>
+          <span className="muted small">{p.kernel ? kernelName(state, p.kernel, lang) : t('还没归类', 'Not classified yet')}</span>
         </div>
       )}
-      {p.why && <p className="muted small p-why">它的理由：{p.why}</p>}
+      {p.why && <p className="muted small p-why">{t('它的理由：', 'Its reason: ')}{p.why}</p>}
       {(p.sources?.length ?? 0) > 0 && p.kind === 'idea' && (
         <p className="muted small">
-          {p.op === 'fuse' ? '融合自 ' : '由它想到 '}
+          {p.op === 'fuse' ? t('融合自 ', 'Fused from ') : t('由它想到 ', 'Inspired by ')}
           {p.sources.map((s) => (
             <span key={s}>
               <IdeaLink id={s} state={state} />{' '}
@@ -93,20 +96,26 @@ export function ProposalCard({ proposal: p, state }: { proposal: Proposal; state
           {p.kind === 'rewrite' ? (
             <>
               <button className="primary" disabled={busy} onClick={() => void act(() => api.accept(p.id, text))}>
-                用它替换原文
+                {t('用它替换原文', 'Replace the original with it')}
               </button>
               <button disabled={busy} onClick={() => void act(() => api.accept(p.id, { ...text, as_new: true }))}>
-                另存为新的一条
+                {t('另存为新的一条', 'Save as a new idea')}
               </button>
             </>
           ) : (
             <button className="primary" disabled={busy} onClick={() => void act(() => api.accept(p.id, text))}>
-              {p.kind === 'idea' ? (p.op === 'fuse' ? '接受融合' : '放进想法池') : p.kind === 'merge' ? '并入' : '照这样归类'}
+              {p.kind === 'idea'
+                ? p.op === 'fuse'
+                  ? t('接受融合', 'Accept the fusion')
+                  : t('放进想法池', 'Add to the idea pool')
+                : p.kind === 'merge'
+                  ? t('并入', 'Merge')
+                  : t('照这样归类', 'Classify like this')}
             </button>
           )}
-          {hasText && <button onClick={() => setEditing(!editing)}>{editing ? '改好了' : '先改一改'}</button>}
+          {hasText && <button onClick={() => setEditing(!editing)}>{editing ? t('改好了', 'Done editing') : t('先改一改', 'Edit first')}</button>}
           <button disabled={busy} onClick={() => void act(() => api.dismiss(p.id))}>
-            不要
+            {t('不要', 'Dismiss')}
           </button>
         </div>
       )}

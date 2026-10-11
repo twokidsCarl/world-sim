@@ -1,5 +1,6 @@
 import { note } from './assistant/trail'
 import type { IdeaDetail, Proposal, State, SyncResult, SyncStatus } from './contract'
+import { currentLang, tr } from './i18n'
 
 export class ApiError extends Error {
   constructor(
@@ -15,15 +16,15 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
   try {
     res = await fetch(path, body === undefined ? undefined : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
   } catch {
-    throw new ApiError(0, '连不上后端。先在 idea-loom 目录下运行 uv run idea-loom serve。')
+    throw new ApiError(0, tr(currentLang(), '连不上后端。先在 idea-loom 目录下运行 uv run idea-loom serve。', 'Cannot reach the backend. Run uv run idea-loom serve in the idea-loom directory first.'))
   }
   if (!res.ok) {
     const detail = await res.json().then(
       (b: { detail?: unknown }) => (typeof b.detail === 'string' ? b.detail : undefined),
       () => undefined,
     )
-    note('error', `${path.split('?')[0]}：${detail ?? res.status}`)
-    throw new ApiError(res.status, detail ?? `请求失败（${res.status}）`)
+    note('error', `${path.split('?')[0]}${tr(currentLang(), '：', ': ')}${detail ?? res.status}`)
+    throw new ApiError(res.status, detail ?? tr(currentLang(), `请求失败（${res.status}）`, `Request failed (${res.status})`))
   }
   return (await res.json()) as T
 }
@@ -40,9 +41,9 @@ export type Wish = {
 export type WishDetail = Wish & {
   copy_text: string
   seen: { at: string; question: string }[]
-  notes: { at: string; by_label: string; text: string }[]
+  notes: { at: string; by?: string; by_label: string; text: string }[]
   links: { at: string; kind: string; pr: number | null; url: string | null; title: string }[]
-  history: { at: string; event_label: string; by_label: string; text: string }[]
+  history: { at: string; event?: string; event_label: string; by?: string; by_label: string; text: string }[]
 }
 export type WishList = { wishes: Wish[]; counts: Record<string, number>; kinds: Record<string, number>; statuses: Record<string, string>; kind_labels: Record<string, string>; unreadable: number }
 export type PullRequest = { number: number; title: string; scope: string; state: string; created_at: string; merged_at: string | null; additions: number; deletions: number; url: string }
@@ -79,6 +80,14 @@ export type Job = {
 }
 export type JobEvent = { seq: number; at: string; type: string; text?: string; label?: string; state?: string; id?: string; message?: string }
 export type Suggestion = { title: string; kind: string; stuck: string; suggestion: string; evidence: string }
+export type Text2 = { zh: string; en: string }
+export type SimView = {
+  name: string; title: Text2; level: string | null; ready: boolean; source: string; origin: string; status: string; playable: boolean
+  stale: boolean; version: string; log: string; built_at: string | null; has_api: boolean; api_running: boolean; cards: number
+}
+export type CardView = { key: string; sim: string; sim_title: Text2; level: string | null; id: string; title: Text2; hint: Text2; idea: string | null; url: string; status: string }
+export type CardHistory = { views: number; seconds: number; quick_skips: number; liked: boolean; last_at: string }
+export type PlayView = { sims: SimView[]; cards: CardView[]; problems: { name: string; source: string; error: string }[]; history: Record<string, CardHistory> }
 export type NewIdea = { title: string; body: string; level: string; threads: string[]; kernel: string | null }
 
 export const api = {
@@ -120,6 +129,8 @@ export const api = {
   reviewStatus: () => call<{ actions_since: number; due: boolean; last_at: string | null }>('/api/review'),
   review: () => call<Suggestion[]>('/api/review', {}),
   recordWish: (body: { title: string; kind: string; stuck: string; suggestion: string }) => call<WishDetail>('/api/wishes', body),
+  play: () => call<PlayView>('/api/play'),
+  rebuildSim: (name: string) => call<{ status: string }>(`/api/play/${name}/build`, {}),
   syncStatus: () => call<SyncStatus>('/api/sync'),
   sync: () => call<SyncResult>('/api/sync', {}),
 }

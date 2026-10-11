@@ -620,6 +620,7 @@ class PlayView(BaseModel):
     sims: list[SimView]
     cards: list[CardView]
     problems: list[play_manifest.Problem]
+    history: dict[str, trail.CardHistory]
 
 
 @app.get("/api/play", response_model=PlayView)
@@ -648,7 +649,7 @@ def play_view(request: Request) -> PlayView:
         for card in sim.cards:
             cards.append(CardView(key=f"{sim.name}/{card.id}", sim=sim.name, sim_title=sim.title, level=sim.level, id=card.id, title=card.title,
                                   hint=card.hint, idea=card.idea if card.idea in pool else None, url=origin + card.url, status="ready" if state.status == "ready" or state.serving else state.status))
-    return PlayView(sims=sim_views, cards=cards, problems=problems)
+    return PlayView(sims=sim_views, cards=cards, problems=problems, history=trail.card_history())
 
 
 @app.post("/api/play/{name}/build")

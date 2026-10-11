@@ -1,19 +1,22 @@
+import { useCallback } from 'react'
 import { create } from 'zustand'
 import { type Proposals, api } from '../api'
 import type { State, SyncResult, SyncStatus } from '../contract'
+import { type Lang, type T, applyLang, initialLang } from '../i18n'
 
 type Theme = 'light' | 'dark'
 
 // 当前页面的身份，由共用的 Page 组件上报；以后小助手靠它知道你在看什么。
 // The identity of the current page, reported by the shared Page component; the
 // assistant will later use it to know what you are looking at.
-export type PageIdentity = { title: string; lead: string }
+export type PageIdentity = { title: string; lead: string; idea?: string }
 
 type Store = {
   state: State | null
   error: string | null
   loading: boolean
   theme: Theme
+  lang: Lang
   page: PageIdentity
   sync: SyncStatus | null
   proposals: Proposals | null
@@ -23,6 +26,7 @@ type Store = {
   clearSyncResult: () => void
   load: () => Promise<void>
   toggleTheme: () => void
+  toggleLang: () => void
   setPage: (page: PageIdentity) => void
 }
 
@@ -41,6 +45,7 @@ export const useStore = create<Store>((set, get) => ({
   error: null,
   loading: false,
   theme: initialTheme(),
+  lang: initialLang(),
   page: { title: '', lead: '' },
   sync: null,
   proposals: null,
@@ -75,5 +80,18 @@ export const useStore = create<Store>((set, get) => ({
     }
     set({ theme })
   },
+  toggleLang: () => {
+    const lang: Lang = get().lang === 'en' ? 'zh' : 'en'
+    applyLang(lang)
+    set({ lang })
+  },
   setPage: (page) => set({ page }),
 }))
+
+// 界面语言，和按它二选一的 t。 / The UI language, and the t that chooses by it.
+export const useLang = (): Lang => useStore((s) => s.lang)
+
+export function useT(): T {
+  const lang = useLang()
+  return useCallback((zh: string, en: string) => (lang === 'en' ? en : zh), [lang])
+}

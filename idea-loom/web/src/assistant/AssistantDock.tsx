@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { api } from '../api'
+import { plural } from '../i18n'
 import { formatTime } from '../state/derive'
-import { useStore } from '../state/store'
+import { useStore, useT } from '../state/store'
 import { Markdown } from './Markdown'
 import { clearRefs, snapshot } from './pageSnapshot'
 import { MAX_WIDTH, MIN_WIDTH, useAssistant } from './store'
@@ -10,8 +11,15 @@ import { stuck } from './stuck'
 import { arrive, install, note, recentActions, subscribe } from './trail'
 import type { Block, TurnView } from './turnView'
 
-const SUGGESTIONS = ['这一页是讲什么的？', '我下一步该点哪里？', '想法池现在哪里最薄？']
-const EXPLAIN = '请解释一下这一页：它在回答什么，我接下来可以做什么。'
+// 建议的问题和"解释这一页"的那句话：[中文, 英文]。界面是英文时，发出去的也是英文。
+// The suggested questions and the canned "explain this page" question: [Chinese, English].
+// When the UI is English, the English one is what gets sent.
+const SUGGESTIONS: [string, string][] = [
+  ['这一页是讲什么的？', 'What is this page about?'],
+  ['我下一步该点哪里？', 'Where should I click next?'],
+  ['想法池现在哪里最薄？', 'Where is the idea pool thinnest right now?'],
+]
+const EXPLAIN: [string, string] = ['请解释一下这一页：它在回答什么，我接下来可以做什么。', 'Please explain this page: what it answers and what I can do next.']
 const FLOAT_BELOW = 1180 // 窗口比这窄就不停靠，改成浮层 / below this the dock floats instead
 
 function ideaIdFrom(pathname: string): string | null {
@@ -35,6 +43,7 @@ function showPoints(points: { ref: string; note: string }[]) {
 export function AssistantDock() {
   const a = useAssistant()
   const { page, load } = useStore()
+  const t = useT()
   const location = useLocation()
   const [draft, setDraft] = useState('')
   const [floating, setFloating] = useState(typeof window !== 'undefined' && window.innerWidth < FLOAT_BELOW)
@@ -105,7 +114,7 @@ export function AssistantDock() {
     const snap = snapshot(main, page, url)
     follow.current = true
     setDraft('')
-    void a.ask(question, snap, ideaIdFrom(location.pathname))
+    void a.ask(question, snap, page.idea ?? ideaIdFrom(location.pathname))
   }
 
   const startDrag = (e: React.PointerEvent) => {
@@ -127,17 +136,17 @@ export function AssistantDock() {
             <button
               onClick={() => {
                 a.setOpen(true)
-                ask(EXPLAIN)
+                ask(t(...EXPLAIN))
               }}
             >
-              要我解释这一页吗
+              {t('要我解释这一页吗', 'Shall I explain this page?')}
             </button>
-            <button className="a-x" aria-label="不用" onClick={() => a.setOffer(false)}>
+            <button className="a-x" aria-label={t('不用', 'No thanks')} onClick={() => a.setOffer(false)}>
               ×
             </button>
           </span>
         )}
-        <button className={`a-fab${a.running ? ' busy' : a.offer ? ' offer' : ''}`} aria-label="打开小助手" onClick={() => a.setOpen(true)}>
+        <button className={`a-fab${a.running ? ' busy' : a.offer ? ' offer' : ''}`} aria-label={t('打开小助手', 'Open the assistant')} onClick={() => a.setOpen(true)}>
           ✦
         </button>
       </div>
@@ -149,7 +158,7 @@ export function AssistantDock() {
       className={`a-dock${floating ? ' floating' : ''}`}
       style={floating ? undefined : { width: a.width }}
       data-assistant
-      aria-label="小助手"
+      aria-label={t('小助手', 'Assistant')}
       onKeyDown={(e) => floating && e.key === 'Escape' && a.setOpen(false)}
     >
       {!floating && (
@@ -157,7 +166,7 @@ export function AssistantDock() {
           className="a-resize"
           role="separator"
           aria-orientation="vertical"
-          aria-label="调整宽度"
+          aria-label={t('调整宽度', 'Resize')}
           tabIndex={0}
           aria-valuemin={MIN_WIDTH}
           aria-valuemax={MAX_WIDTH}
@@ -171,13 +180,13 @@ export function AssistantDock() {
       )}
       <header className="a-head">
         <div>
-          <strong>小助手</strong>
-          <div className="muted small">{a.running ? '正在回答…' : '读得到这一页和这个仓库'}</div>
+          <strong>{t('小助手', 'Assistant')}</strong>
+          <div className="muted small">{a.running ? t('正在回答…', 'Answering…') : t('读得到这一页和这个仓库', 'Can read this page and this repository')}</div>
         </div>
         <div className="a-tools">
           <button
-            aria-label="以前的对话"
-            title="以前的对话"
+            aria-label={t('以前的对话', 'Earlier conversations')}
+            title={t('以前的对话', 'Earlier conversations')}
             aria-expanded={showHistory}
             onClick={() => {
               setShowHistory(!showHistory)
@@ -186,13 +195,13 @@ export function AssistantDock() {
           >
             ☰
           </button>
-          <button aria-label="新对话" title="新对话" disabled={a.running} onClick={() => (a.newConversation(), setShowHistory(false))}>
+          <button aria-label={t('新对话', 'New conversation')} title={t('新对话', 'New conversation')} disabled={a.running} onClick={() => (a.newConversation(), setShowHistory(false))}>
             ＋
           </button>
-          <Link to="/wishes" className="a-wishes" title="许愿池" aria-label={`许愿池，${a.openWishes} 条未处理`}>
+          <Link to="/wishes" className="a-wishes" title={t('许愿池', 'Wish pool')} aria-label={t(`许愿池，${a.openWishes} 条未处理`, `Wish pool, ${a.openWishes} open`)}>
             ✧{a.openWishes > 0 && <span className="num">{a.openWishes}</span>}
           </Link>
-          <button aria-label="收起" title="收起" onClick={() => a.setOpen(false)}>
+          <button aria-label={t('收起', 'Collapse')} title={t('收起', 'Collapse')} onClick={() => a.setOpen(false)}>
             ⌄
           </button>
         </div>
@@ -200,7 +209,7 @@ export function AssistantDock() {
 
       {showHistory ? (
         <div className="a-log">
-          {a.history.length === 0 && <p className="muted">还没有以前的对话。</p>}
+          {a.history.length === 0 && <p className="muted">{t('还没有以前的对话。', 'No earlier conversations yet.')}</p>}
           <ul className="plain a-history">
             {a.history.map((c) => (
               <li key={c.id}>
@@ -211,9 +220,9 @@ export function AssistantDock() {
                     setShowHistory(false)
                   }}
                 >
-                  <span>{c.title || '（没有问题）'}</span>
+                  <span>{c.title || t('（没有问题）', '(no question)')}</span>
                   <span className="muted small">
-                    {formatTime(c.created_at)} · {c.turns} 问
+                    {formatTime(c.created_at)} · {t(`${c.turns} 问`, plural(c.turns, 'question'))}
                   </span>
                 </button>
               </li>
@@ -230,18 +239,18 @@ export function AssistantDock() {
             follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
           }}
         >
-          {!a.ready && <p className="notice warn">{a.notReadyReason}，小助手现在用不了。</p>}
+          {!a.ready && <p className="notice warn">{t(`${a.notReadyReason}，小助手现在用不了。`, `${a.notReadyReason}; the assistant is unavailable for now.`)}</p>}
           {a.turns.length === 0 && (
             <div className="a-empty">
-              <p className="a-hello">这一页哪里看不懂，或者想聊哪条 idea，直接问。</p>
+              <p className="a-hello">{t('这一页哪里看不懂，或者想聊哪条 idea，直接问。', 'If something on this page is unclear, or you want to talk about an idea, just ask.')}</p>
               <div className="a-suggest">
                 {SUGGESTIONS.map((q) => (
-                  <button key={q} disabled={!a.ready} onClick={() => ask(q)}>
-                    {q}
+                  <button key={q[0]} disabled={!a.ready} onClick={() => ask(t(...q))}>
+                    {t(...q)}
                   </button>
                 ))}
               </div>
-              <p className="muted small">工具本身哪里不顺手，跟我说，我会记进许愿池。</p>
+              <p className="muted small">{t('工具本身哪里不顺手，跟我说，我会记进许愿池。', 'If the tool itself gets in your way, tell me and I will record it in the wish pool.')}</p>
             </div>
           )}
           {a.turns.map((t, i) => (
@@ -259,10 +268,10 @@ export function AssistantDock() {
         }}
       >
         <textarea
-          aria-label="问小助手"
+          aria-label={t('问小助手', 'Ask the assistant')}
           rows={2}
           value={draft}
-          placeholder="问点什么…"
+          placeholder={t('问点什么…', 'Ask something…')}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -272,14 +281,14 @@ export function AssistantDock() {
           }}
         />
         <div className="a-compose-foot">
-          <span className="muted small">Enter 发出 · 会带上这一页的内容</span>
+          <span className="muted small">{t('Enter 发出 · 会带上这一页的内容', 'Enter to send · the content of this page goes along')}</span>
           {a.running ? (
             <button type="button" onClick={() => void a.stop()}>
-              停
+              {t('停', 'Stop')}
             </button>
           ) : (
             <button type="submit" className="primary" disabled={!draft.trim() || !a.ready}>
-              发出
+              {t('发出', 'Send')}
             </button>
           )}
         </div>
@@ -290,12 +299,13 @@ export function AssistantDock() {
 
 function Turn({ turn, last }: { turn: TurnView; last: boolean }) {
   const running = turn.status === 'running'
+  const t = useT()
   const refused = turn.steps.filter((s) => s.state === 'refused')
   return (
     <div className="a-turn">
       <div className="a-q">
         <div className="a-bubble">{turn.question}</div>
-        {turn.page_title && <div className="muted small">在"{turn.page_title}"这一页问的</div>}
+        {turn.page_title && <div className="muted small">{t(`在"${turn.page_title}"这一页问的`, `Asked on the "${turn.page_title}" page`)}</div>}
       </div>
       {turn.steps.length > 0 &&
         (running ? (
@@ -309,13 +319,14 @@ function Turn({ turn, last }: { turn: TurnView; last: boolean }) {
         ) : (
           <details className="a-steps-done">
             <summary>
-              过程：读了、查了 {turn.steps.length} 处{refused.length > 0 && `，其中 ${refused.length} 处没读到`}
+              {t(`过程：读了、查了 ${turn.steps.length} 处`, `Steps: ${plural(turn.steps.length, 'read or lookup')}`)}
+              {refused.length > 0 && t(`，其中 ${refused.length} 处没读到`, `, ${refused.length} of them not readable`)}
             </summary>
             <ul className="plain a-steps">
               {turn.steps.map((s) => (
                 <li key={s.id} className={`s-${s.state}`}>
                   <span aria-hidden="true">{s.state === 'refused' ? '⊘' : '✓'}</span> {s.label}
-                  {s.state === 'refused' && '（没读到）'}
+                  {s.state === 'refused' && t('（没读到）', ' (not readable)')}
                 </li>
               ))}
             </ul>
@@ -324,10 +335,10 @@ function Turn({ turn, last }: { turn: TurnView; last: boolean }) {
       {turn.blocks.map((b, i) => (
         <BlockView key={i} block={b} active={last} />
       ))}
-      {running && turn.blocks.length === 0 && turn.steps.length === 0 && <p className="muted small">在想…</p>}
-      {turn.status === 'done' && turn.seconds !== null && <div className="muted small a-foot">答完了，用时 {Math.round(turn.seconds)} 秒</div>}
-      {turn.status === 'stopped' && <div className="muted small a-foot">停下了</div>}
-      {turn.status === 'failed' && <div className="err small a-foot">{turn.message}</div>}
+      {running && turn.blocks.length === 0 && turn.steps.length === 0 && <p className="muted small">{t('在想…', 'Thinking…')}</p>}
+      {turn.status === 'done' && turn.seconds !== null && <div className="muted small a-foot">{t(`答完了，用时 ${Math.round(turn.seconds)} 秒`, `Answered in ${Math.round(turn.seconds)} s`)}</div>}
+      {turn.status === 'stopped' && <div className="muted small a-foot">{t('停下了', 'Stopped')}</div>}
+      {turn.status === 'failed' && <div className="err small a-foot">{turn.message || t('出错了', 'Something went wrong')}</div>}
     </div>
   )
 }
@@ -336,18 +347,23 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
   const load = useStore((s) => s.load)
   const refresh = useAssistant((s) => s.refresh)
   const [undone, setUndone] = useState(false)
+  const t = useT()
   if (block.kind === 'text') return <Markdown text={block.text} />
   if (block.kind === 'wish') {
     return (
       <div className="a-card">
         <div>
           <span aria-hidden="true">✧</span>{' '}
-          {undone ? '已撤销：' : block.fresh ? '已记入许愿池：' : `又遇到一次（第 ${block.occurrences} 次），记在这一条上：`}
+          {undone
+            ? t('已撤销：', 'Withdrawn: ')
+            : block.fresh
+              ? t('已记入许愿池：', 'Recorded in the wish pool: ')
+              : t(`又遇到一次（第 ${block.occurrences} 次），记在这一条上：`, `Seen again (time ${block.occurrences}), recorded on this wish: `)}
           <strong>{block.title}</strong>
         </div>
         <div className="a-card-foot">
           <span className="muted small">{block.kind_label}</span>
-          <Link to={`/wishes/${block.wish_id}`}>在许愿池里看</Link>
+          <Link to={`/wishes/${block.wish_id}`}>{t('在许愿池里看', 'See it in the wish pool')}</Link>
           {block.fresh && !undone && (
             <button
               onClick={() =>
@@ -357,7 +373,7 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
                 }, () => undefined)
               }
             >
-              撤销
+              {t('撤销', 'Withdraw')}
             </button>
           )}
         </div>
@@ -368,7 +384,7 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
     return (
       <div className="a-card">
         <div>
-          <span aria-hidden="true">＋</span> 提议了一条 idea，放在候选里：<strong>{block.title}</strong>
+          <span aria-hidden="true">＋</span> {t('提议了一条 idea，放在候选里：', 'Proposed an idea, now among the candidates: ')}<strong>{block.title}</strong>
         </div>
         <div className="a-idea-body">
           {block.body.split('\n').map((line, i) => (
@@ -378,7 +394,7 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
         <div className="a-card-foot">
           <span className="muted small">{block.level}</span>
           <Link to="/inbox" onClick={() => void load()}>
-            去候选里决定留不留
+            {t('去候选里决定留不留', 'Decide whether to keep it, among the candidates')}
           </Link>
         </div>
       </div>
@@ -386,7 +402,7 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
   }
   return (
     <div className="a-card">
-      <div>在页面上圈出了 {block.points.length} 处：</div>
+      <div>{t(`在页面上圈出了 ${block.points.length} 处：`, `Marked ${plural(block.points.length, 'place')} on the page:`)}</div>
       <ol className="a-points">
         {block.points.map((p) => (
           <li key={p.ref}>{p.note}</li>
@@ -397,10 +413,10 @@ function BlockView({ block, active }: { block: Block; active: boolean }) {
           onClick={() => {
             clearRefs()
             document.querySelectorAll('.a-pointed').forEach((el) => el.classList.remove('a-pointed'))
-            note('click', '收起圈出的标记')
+            note('click', t('收起圈出的标记', 'Hide the marks'))
           }}
         >
-          收起标记
+          {t('收起标记', 'Hide the marks')}
         </button>
       )}
     </div>

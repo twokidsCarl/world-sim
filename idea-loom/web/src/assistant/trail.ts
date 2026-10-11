@@ -4,6 +4,7 @@
 // dwell time on each page. The last forty stay in memory and go with each question;
 // everything is flushed to the backend and kept on this machine for statistics and
 // reviews. Typed text is never recorded.
+import { currentLang, tr } from '../i18n'
 import { type Action, Dwell } from './stuck'
 
 const KEEP = 40
@@ -43,7 +44,8 @@ export function arrive(url: string, title: string, idea: string) {
   if (!samePath) closeDwell()
   const before = current.url
   current = { url, title, idea }
-  if (samePath) note('filter', `${before.split('?')[1] ?? '没有'} → ${url.split('?')[1] ?? '没有'}`)
+  const none = tr(currentLang(), '没有', 'none')
+  if (samePath) note('filter', `${before.split('?')[1] ?? none} → ${url.split('?')[1] ?? none}`)
   else {
     dwell = new Dwell(Date.now())
     note('navigate', title || url)

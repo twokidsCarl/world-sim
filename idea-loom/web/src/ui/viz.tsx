@@ -2,6 +2,7 @@
 // The few small charts the statistics page uses: bars, a heat grid, a timeline strip.
 // Numbers are always written in text ink; colour is for the marks only.
 import type { ReactNode } from 'react'
+import type { Lang } from '../i18n'
 
 // 项目的颜色按固定顺序分配，跟着项目走，不跟着排名走。第九个以后归到"其它"的灰。
 // Project colours are assigned in a fixed order and follow the project, never its rank.
@@ -13,14 +14,27 @@ export function seriesClass(project: string, extra: string[] = []): string {
   return i >= 0 && i < 8 ? `series-${i + 1}` : 'series-other'
 }
 
-export function compact(n: number): string {
+// 大数的短写法：中文用万、亿，英文用 k、M、B。
+// Short forms of large numbers: 万 and 亿 in Chinese, k, M and B in English.
+export function compact(n: number, lang: Lang): string {
+  if (lang === 'en') {
+    if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`
+    if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
+    if (n >= 1e3) return `${(n / 1e3).toFixed(1)}k`
+    return n.toLocaleString('en-US')
+  }
   if (n >= 1e9) return `${(n / 1e9).toFixed(1)} 十亿`
   if (n >= 1e8) return `${(n / 1e8).toFixed(1)} 亿`
   if (n >= 1e4) return `${(n / 1e4).toFixed(n >= 1e6 ? 0 : 1)} 万`
   return n.toLocaleString('zh-CN')
 }
 
-export function duration(seconds: number): string {
+export function duration(seconds: number, lang: Lang): string {
+  if (lang === 'en') {
+    if (seconds >= 3600) return `${(seconds / 3600).toFixed(1)} h`
+    if (seconds >= 60) return `${Math.round(seconds / 60)} min`
+    return `${Math.round(seconds)} s`
+  }
   if (seconds >= 3600) return `${(seconds / 3600).toFixed(1)} 小时`
   if (seconds >= 60) return `${Math.round(seconds / 60)} 分钟`
   return `${Math.round(seconds)} 秒`

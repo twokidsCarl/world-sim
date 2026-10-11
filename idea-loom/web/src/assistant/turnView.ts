@@ -51,7 +51,8 @@ export function fold(view: TurnView, events: TurnEvent[]): TurnView {
     } else if (e.type === 'done' || e.type === 'stopped' || e.type === 'failed') {
       next.status = e.type
       next.seconds = typeof e.seconds === 'number' ? e.seconds : null
-      next.message = e.type === 'failed' ? String(e.message ?? '出错了') : null
+      // 没给原因就留空，由界面按当前语言补一句。 / No reason given: left empty, and the UI supplies a line in the current language.
+      next.message = e.type === 'failed' ? String(e.message ?? '') : null
       next.steps = next.steps.map((s) => (s.state === 'running' ? { ...s, state: 'done' } : s))
       if (e.type === 'done' && !next.blocks.some((b) => b.kind === 'text') && e.text) next.blocks.push({ kind: 'text', text: String(e.text) })
     }

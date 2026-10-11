@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { currentLang, tr } from '../i18n'
 import type { PageSnapshot } from './pageSnapshot'
 import { note, recentActions } from './trail'
 import { type TurnView, emptyTurn, fold, parseSse } from './turnView'
@@ -47,11 +48,14 @@ const save = (key: string, value: unknown) => {
   }
 }
 
+// 这里不在 React 里，语言取 i18n 里的那份副本。 / Outside React: the language is the copy kept in i18n.
+const failed = (status: number) => tr(currentLang(), `请求失败（${status}）`, `Request failed (${status})`)
+
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init)
   if (!res.ok) {
     const detail = await res.json().then((b: { detail?: unknown }) => (typeof b.detail === 'string' ? b.detail : null), () => null)
-    throw new Error(detail ?? `请求失败（${res.status}）`)
+    throw new Error(detail ?? failed(res.status))
   }
   return (await res.json()) as T
 }
@@ -85,7 +89,7 @@ export const useAssistant = create<AssistantState>((set, get) => {
       response = await fetch(`/api/assistant/conversations/${conversationId}/turns/${turn}/events?after=${last.lastSeq}`).catch(() => null)
     }
     const last = get().turns[get().turns.length - 1]
-    if (last?.status === 'running') patchLast((t) => ({ ...t, status: 'failed', message: '和后端的连接断了，没有等到回答。' }))
+    if (last?.status === 'running') patchLast((t) => ({ ...t, status: 'failed', message: tr(currentLang(), '和后端的连接断了，没有等到回答。', 'The connection to the backend dropped before an answer arrived.') }))
     set({ running: false })
     void get().refresh()
   }
@@ -117,7 +121,7 @@ export const useAssistant = create<AssistantState>((set, get) => {
         const s = await json<{ ready: boolean; not_ready_reason: string | null; open_wishes: number }>('/api/assistant')
         set({ ready: s.ready, notReadyReason: s.not_ready_reason, openWishes: s.open_wishes })
       } catch {
-        set({ ready: false, notReadyReason: '连不上后端' })
+        set({ ready: false, notReadyReason: tr(currentLang(), '连不上后端', 'Cannot reach the backend') })
       }
     },
     ask: async (question, page, ideaId) => {
@@ -139,7 +143,7 @@ export const useAssistant = create<AssistantState>((set, get) => {
         })
         if (!res.ok) {
           const detail = await res.json().then((b: { detail?: unknown }) => (typeof b.detail === 'string' ? b.detail : null), () => null)
-          throw new Error(detail ?? `请求失败（${res.status}）`)
+          throw new Error(detail ?? failed(res.status))
         }
         await consume(res, id)
       } catch (e) {
