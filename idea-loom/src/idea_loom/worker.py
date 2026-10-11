@@ -238,7 +238,8 @@ class Worker:
     def __init__(self) -> None:
         self.running: dict[str, int] = {}  # 作业编号 → 进程号 / job id → pid
         self.calls: list[threading.Thread] = []  # 正在替 hub 做的模型调用 / model calls being served for the hub
-        self.maintained_at = 0.0
+        # 负无穷：启动后第一次就看，不依赖"开机多久了"。 / Minus infinity: look on the first round after start, whatever the machine's uptime.
+        self.maintained_at = float("-inf")
         self.maintenance_note: Optional[str] = None
         self.exporting: Optional[threading.Thread] = None
         self.exported_at = time.monotonic()  # 启动后过一个间隔再导第一次 / the first export comes one interval after start
