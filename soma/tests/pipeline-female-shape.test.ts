@@ -181,16 +181,11 @@ describe.skipIf(!applied)('female body shape (pipeline-report.json bodyShape, sh
     const lm = report.landmarks as { pass: boolean; evaluated: boolean }[]
     expect(lm.length).toBe(18)
     expect(lm.filter((r) => r.pass).length).toBe(18)
-    // 原有的七项必须全过。另有两项乳房高度检查（leftBreastLevel / rightBreastLevel）只要求如实报告：
-    // 装入拟合皮肤后，乳腺按皮肤包的变换落在皮肤模型的乳房里，位置偏低，这两项目前不通过（见 pipeline-female.test.ts）。
-    // The seven original checks must all pass. The two breast level checks (leftBreastLevel / rightBreastLevel) are
-    // only required to be reported: with the fitted skin installed the gland is placed inside the skin model's
-    // breast, which sits low, and both currently fail (see pipeline-female.test.ts).
-    const LEVEL = ['leftBreastLevel', 'rightBreastLevel']
-    const sex = Object.entries(report.sexChecks as Record<string, { pass: boolean }>).filter(([k]) => !LEVEL.includes(k)).map(([, v]) => v)
-    expect(sex.length).toBe(7)
-    expect(sex.every((c) => c.pass)).toBe(true)
-    for (const k of LEVEL) expect(typeof report.sexChecks[k].pass, k).toBe('boolean')
+    // 九项：原有的七项，加上两项乳房高度检查（leftBreastLevel / rightBreastLevel），全部要过
+    // nine: the seven original checks and the two breast level checks (leftBreastLevel / rightBreastLevel), all of which must pass
+    const sex = Object.entries(report.sexChecks as Record<string, { pass: boolean }>)
+    expect(sex.length).toBe(9)
+    expect(sex.filter(([, c]) => !c.pass).map(([k]) => k)).toEqual([])
     expect(report.pelvisChecks.checks.length).toBe(12)
     expect(report.pelvisChecks.checks.filter((c: any) => !c.pass).map((c: any) => c.id)).toEqual([])
     const att = report.attachments as { ok: boolean }[]

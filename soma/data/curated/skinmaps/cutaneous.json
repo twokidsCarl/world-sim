@@ -1638,7 +1638,8 @@
      "nerve": [
       "{side} lateral cutaneous branch of iliohypogastric nerve"
      ],
-     "maxDepthMm": 18
+     "maxDepthMm": 18,
+     "bridge": true
     }
    ]
   },
@@ -1865,17 +1866,31 @@
      "nerve": [
       "{side} superior clunial nerves"
      ],
-     "maxDepthMm": 20
+     "maxDepthMm": 20,
+     "bridge": true
     },
     {
      "curve": [
       "sp_L1",
-      "sp_L3"
+      "sp_L3",
+      {
+       "at": {
+        "offset": [
+         "iliacCrestTop",
+         [
+          -0.03,
+          -0.015,
+          -0.03
+         ]
+        ]
+       },
+       "to": "post+0.5*lat"
+      }
      ],
      "widthMm": 15,
      "note": {
-      "zh": "腰椎两旁皮肤",
-      "en": "skin beside the lumbar spine"
+      "zh": "腰椎两旁皮肤，并沿神经走行连到髂嵴后部（神经在此越过髂嵴至臀部）",
+      "en": "skin beside the lumbar spine, carried along the nerves' course to the back of the iliac crest (where they cross it to the buttock)"
      }
     }
    ]
@@ -2200,7 +2215,12 @@
      "nerve": [
       "{side} posterior brachial cutaneous nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 20,
+     "bridge": true,
+     "note": {
+      "zh": "纯皮神经，模型中在臂后面走在皮下 10–15 mm 处，正压在原来 15 mm 的深度限上，种子时有时无；深度限放到 20 mm，并沿走行连成一线。",
+      "en": "A purely cutaneous nerve that runs 10–15 mm under the skin of the back of the arm in the model, right on the former 15 mm depth limit, so its seeds came and went; the limit is 20 mm and it is seeded as one line along its course."
+     }
     }
    ]
   },
@@ -2970,7 +2990,8 @@
      "nerve": [
       "{side} lateral femoral cutaneous nerve"
      ],
-     "maxDepthMm": 18
+     "maxDepthMm": 18,
+     "bridge": true
     }
    ]
   },

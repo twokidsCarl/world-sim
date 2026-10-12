@@ -1,0 +1,491 @@
+{
+ "_doc": {
+  "zh": "表情性皱纹的细节层：皮肤网格画不出皱纹（面部边长约 1.8 mm），所以用切线空间法线贴图表示，运行时按动作单元强度混合。皱纹是按解剖关系程序化生成的，没有描摹或复制任何人的照片：沟纹垂直于肌肉的拉力方向，位置由本模型已有的标志（睑裂、作用线的两端、口角轴）决定。能找到出处的只有皱纹在哪里、朝哪个方向（见各层的 basis）；条数、长度、间距、深度、宽度和强度曲线全部是假设。没有假设性别差异。这是疼痛行为的计算模型，用于教学；模拟人并没有主观感受。",
+  "en": "The detail layer of expression wrinkles: the skin mesh cannot show wrinkles (facial edges are about 1.8 mm), so they are tangent-space normal maps blended at run time by action-unit intensity. The wrinkles are generated procedurally from anatomical relations; no photograph of any person was traced or copied: furrows run perpendicular to the pull of the muscle, placed by landmarks this model already holds (palpebral fissure, ends of the lines of action, modiolus). Sources support only where the wrinkles are and which way they run (see each layer's basis); count, length, spacing, depth, width and the intensity curve are all assumptions. No sex difference is assumed. This is a computational model of pain behaviour for teaching; the simulated body has no subjective experience."
+ },
+ "tile": 1024,
+ "columns": 3,
+ "curve": {
+  "gamma": 0.7,
+  "note": {
+   "zh": "层的权重 = clamp(Σ_AU 权重 × (强度 / 5)^gamma, 0, 1)。gamma < 1 让皱纹在低强度时就出现一点。假设。",
+   "en": "Layer weight = clamp(Σ_AU weight × (intensity / 5)^gamma, 0, 1). gamma < 1 lets wrinkles begin to show at low intensity. Assumption."
+  }
+ },
+ "units": {
+  "zh": "a 是到正中矢状面的距离（毫米，向外为正，两侧镜像）；dy 是相对所给标志高度的毫米数。depthMm 沟深，widthMm 沟的高斯半宽（σ）。",
+  "en": "a is the distance from the midsagittal plane (mm, lateral positive, mirrored to both sides); dy is millimetres relative to the named landmark height. depthMm is the furrow depth, widthMm its Gaussian half-width (σ)."
+ },
+ "layers": [
+  {
+   "id": "glabella",
+   "name": {
+    "zh": "眉间纹",
+    "en": "glabellar lines"
+   },
+   "drivers": {
+    "AU4": 1,
+    "AU9": 0.3
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设。皱眉肌把眉拉向内下，皮肤在两眉之间横向受压，形成纵纹；降眉间肌把眉间皮肤下拉，在鼻根形成横纹。每侧两条纵纹、一条鼻根横纹，尺寸均为假设。眉间收缩有多种类型（de Almeida 等 2012 的五型分类，未能打开原文），这里只画了一种。",
+     "en": "Assumption. Corrugator draws the brows medially and down, compressing the skin between them sideways into vertical furrows; procerus pulls the glabellar skin down into a transverse furrow at the nasal root. Two vertical lines per side and one root line; all dimensions are assumptions. Glabellar contraction comes in several patterns (the five-pattern classification of de Almeida et al. 2012, which could not be opened); only one is drawn here."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "brow",
+     "points": [
+      [
+       4.5,
+       -5
+      ],
+      [
+       4.2,
+       3
+      ],
+      [
+       5.2,
+       13
+      ]
+     ],
+     "depthMm": 0.9,
+     "widthMm": 0.7
+    },
+    {
+     "ref": "brow",
+     "points": [
+      [
+       9.5,
+       -1
+      ],
+      [
+       10,
+       5
+      ],
+      [
+       12,
+       11
+      ]
+     ],
+     "depthMm": 0.55,
+     "widthMm": 0.6
+    },
+    {
+     "ref": "nasion",
+     "midline": true,
+     "points": [
+      [
+       -7,
+       -1.5
+      ],
+      [
+       0,
+       -2.5
+      ],
+      [
+       7,
+       -1.5
+      ]
+     ],
+     "depthMm": 0.7,
+     "widthMm": 0.7
+    }
+   ]
+  },
+  {
+   "id": "crowsfeet",
+   "name": {
+    "zh": "鱼尾纹和眶下沟",
+    "en": "crow's feet and infraorbital furrow"
+   },
+   "drivers": {
+    "AU6": 1
+   },
+   "basis": {
+    "source": "kane2003",
+    "note": {
+     "zh": "外眦皱纹呈扇形分布是 kane2003 的“全扇形”一型（转引，未核对原文）；这里每侧画四条，从外眦向外放射，另加一条沿下睑下方的眶下沟（提颊时颊部被推高形成）。条数、角度、长度、深度是假设。",
+     "en": "The fan of lateral canthal lines is the \"full fan\" pattern of kane2003 (second-hand, not checked against the paper); four lines per side radiate from the lateral canthus, plus an infraorbital furrow below the lower lid (formed as the raised cheek is pushed up). Count, angles, lengths and depths are assumptions."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "canthus",
+     "points": [
+      [
+       3,
+       2
+      ],
+      [
+       8,
+       6
+      ],
+      [
+       13,
+       11
+      ]
+     ],
+     "depthMm": 0.55,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "canthus",
+     "points": [
+      [
+       3,
+       0.5
+      ],
+      [
+       9,
+       2
+      ],
+      [
+       16,
+       4.5
+      ]
+     ],
+     "depthMm": 0.65,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "canthus",
+     "points": [
+      [
+       3,
+       -1
+      ],
+      [
+       9,
+       -3
+      ],
+      [
+       16,
+       -6
+      ]
+     ],
+     "depthMm": 0.65,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "canthus",
+     "points": [
+      [
+       2.5,
+       -2.5
+      ],
+      [
+       7,
+       -7
+      ],
+      [
+       12,
+       -12
+      ]
+     ],
+     "depthMm": 0.55,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "lowerLid",
+     "span": true,
+     "points": [
+      [
+       -0.05,
+       -5
+      ],
+      [
+       0.5,
+       -9.5
+      ],
+      [
+       1.1,
+       -6
+      ]
+     ],
+     "depthMm": 0.8,
+     "widthMm": 1.2
+    }
+   ]
+  },
+  {
+   "id": "lowerlid",
+   "name": {
+    "zh": "下睑纹",
+    "en": "lower-lid lines"
+   },
+   "drivers": {
+    "AU7": 1,
+    "AU6": 0.4
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设。睑部眼轮匝肌收紧时下睑皮肤沿睑缘方向起细纹，下睑隆起。每侧两条平行于下睑缘的细纹，尺寸为假设。",
+     "en": "Assumption. As the palpebral orbicularis tightens, the lower-lid skin gathers in fine lines along the lid margin and the lid bulges. Two fine lines per side parallel to the lower margin; dimensions are assumptions."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "lowerLid",
+     "span": true,
+     "points": [
+      [
+       0.1,
+       -1.8
+      ],
+      [
+       0.5,
+       -2.8
+      ],
+      [
+       0.95,
+       -1.6
+      ]
+     ],
+     "depthMm": 0.45,
+     "widthMm": 0.45
+    },
+    {
+     "ref": "lowerLid",
+     "span": true,
+     "points": [
+      [
+       0.15,
+       -3.6
+      ],
+      [
+       0.5,
+       -4.8
+      ],
+      [
+       0.9,
+       -3.4
+      ]
+     ],
+     "depthMm": 0.4,
+     "widthMm": 0.45
+    }
+   ]
+  },
+  {
+   "id": "nose",
+   "name": {
+    "zh": "皱鼻纹",
+    "en": "nose wrinkles"
+   },
+   "drivers": {
+    "AU9": 1
+   },
+   "basis": {
+    "source": "yi2026",
+    "note": {
+     "zh": "鼻背上外侧（鼻侧壁）的斜行细纹，见 yi2026。这里每侧画三条，从内眦一侧斜向内下到鼻背，另加一条鼻根横纹和一条加深的眶下三角沟。条数、间距、长度、深度是假设。",
+     "en": "Fine oblique lines on the upper lateral nasal bridge (sidewall), per yi2026. Three per side are drawn, running obliquely down and medially from the side of the medial canthus to the dorsum, plus a transverse line at the nasal root and a deepened infraorbital triangle furrow. Count, spacing, length and depth are assumptions."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "nasion",
+     "points": [
+      [
+       12,
+       -2
+      ],
+      [
+       7,
+       -4.5
+      ],
+      [
+       2.5,
+       -6
+      ]
+     ],
+     "depthMm": 0.65,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "nasion",
+     "points": [
+      [
+       12.5,
+       -6
+      ],
+      [
+       7.5,
+       -9
+      ],
+      [
+       2.5,
+       -10.5
+      ]
+     ],
+     "depthMm": 0.7,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "nasion",
+     "points": [
+      [
+       12.5,
+       -10.5
+      ],
+      [
+       8,
+       -13.5
+      ],
+      [
+       3,
+       -15
+      ]
+     ],
+     "depthMm": 0.6,
+     "widthMm": 0.5
+    },
+    {
+     "ref": "nasion",
+     "midline": true,
+     "points": [
+      [
+       -5.5,
+       -1
+      ],
+      [
+       0,
+       -1.8
+      ],
+      [
+       5.5,
+       -1
+      ]
+     ],
+     "depthMm": 0.7,
+     "widthMm": 0.6
+    },
+    {
+     "ref": "lowerLidMedial",
+     "points": [
+      [
+       1,
+       -5
+      ],
+      [
+       5,
+       -10
+      ],
+      [
+       10,
+       -14
+      ]
+     ],
+     "depthMm": 0.6,
+     "widthMm": 1.1
+    }
+   ]
+  },
+  {
+   "id": "nasolabial",
+   "name": {
+    "zh": "鼻唇沟",
+    "en": "nasolabial furrow"
+   },
+   "drivers": {
+    "AU10": 1,
+    "AU12": 0.8,
+    "AU9": 0.5
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设。提上唇和拉口角时，颊部软组织被推向上唇的边界，鼻翼旁到口角外侧的沟加深。走行从鼻翼旁到口角轴外侧，尺寸为假设。",
+     "en": "Assumption. As the upper lip is raised or the lip corner pulled, cheek tissue is pushed against the border of the upper lip and the furrow from beside the ala to lateral of the mouth corner deepens. It runs from beside the ala to lateral of the modiolus; dimensions are assumptions."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "alaToModiolus",
+     "points": [
+      [
+       0,
+       0
+      ],
+      [
+       0.5,
+       0
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "bowMm": 4,
+     "depthMm": 1.3,
+     "widthMm": 1.6
+    }
+   ]
+  },
+  {
+   "id": "lipcorner",
+   "name": {
+    "zh": "口角纹",
+    "en": "lip-corner lines"
+   },
+   "drivers": {
+    "AU20": 1
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设。笑肌把口角水平拉向外侧时，口角外侧的皮肤堆起，形成竖向的弧形纹。每侧两条，尺寸为假设。",
+     "en": "Assumption. As risorius pulls the mouth corner straight sideways, the skin lateral to it gathers into vertical curved lines. Two per side; dimensions are assumptions."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "modiolus",
+     "points": [
+      [
+       3,
+       6
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       3.5,
+       -6
+      ]
+     ],
+     "depthMm": 0.6,
+     "widthMm": 0.6
+    },
+    {
+     "ref": "modiolus",
+     "points": [
+      [
+       6.5,
+       4.5
+      ],
+      [
+       8.5,
+       -0.5
+      ],
+      [
+       7,
+       -5.5
+      ]
+     ],
+     "depthMm": 0.45,
+     "widthMm": 0.6
+    }
+   ]
+  }
+ ],
+ "refs": {
+  "zh": "brow：dy 相对皱眉肌作用线内侧端（眉头）在皮肤上的高度。nasion：相对降眉间肌下端在皮肤上的高度（鼻根）。canthus：a、dy 相对皮肤睑裂的外眦（a 向外）。lowerLid（span）：第一个数是沿皮肤睑裂宽度的比例（0 = 内眦，1 = 外眦），dy 相对下睑缘。lowerLidMedial：a、dy 相对内眦下方的下睑缘，a 向内。alaToModiolus：第一个数是从鼻翼旁（提上唇鼻翼肌皮肤止点外侧 3 mm）到口角轴外侧 5 mm 的比例，bowMm 是中段向外侧鼓出的量。modiolus：a、dy 相对皮肤上的口角轴。",
+  "en": "brow: dy relative to the height on the skin of the medial end of corrugator's line (head of the brow). nasion: relative to the height on the skin of the lower end of procerus (nasal root). canthus: a, dy relative to the lateral canthus of the skin fissure (a outwards). lowerLid (span): the first number is the fraction along the width of the skin fissure (0 = medial canthus, 1 = lateral), dy relative to the lower lid margin. lowerLidMedial: a, dy relative to the lower margin below the medial canthus, a pointing medially. alaToModiolus: the first number is the fraction from beside the ala (3 mm lateral to LLSAN's skin insertion) to 5 mm lateral of the modiolus; bowMm is the lateral bow at mid-length. modiolus: a, dy relative to the modiolus on the skin."
+ }
+}

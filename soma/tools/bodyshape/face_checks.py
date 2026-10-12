@@ -64,6 +64,17 @@ def main():
     EV, EF = fb.merged(lambda p: p['id'] in skip)
     render_closeup([(V, F, skin)], os.path.join(d, 'closeup-face-skin.png'), lo, hi, views=('front', 'side'), height=1000)
     render_closeup([(V, F, skin), (MV, MF, (0.75, 0.2, 0.2)), (EV, EF, (0.3, 0.45, 0.8))], os.path.join(d, 'closeup-face-muscles.png'), lo, hi, views=('front', 'side'), height=1000, alpha=0.45)
+    # 头：正面和四分之三侧面（绕竖轴转 35 度后按正面渲染）/ head: front and three-quarter view (turned 35 degrees about the vertical axis, rendered as a front view)
+    top = V[:, 1].max()
+    c0 = np.array([e[0], 0.0, e[2] - 0.08])
+    a = np.radians(-35.0)
+    R = np.array([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
+    hv = V[:, 1] > top - 0.34
+    Fh = F[hv[F].all(1)]
+    Vr = (V - c0) @ R.T + c0
+    lo2, hi2 = [e[0] - 0.16, top - 0.30, -1.0], [e[0] + 0.16, top + 0.01, 1.0]
+    render_closeup([(V, Fh, skin)], os.path.join(d, 'closeup-head-front.png'), lo2, hi2, views=('front',), height=1000)
+    render_closeup([(Vr, Fh, skin)], os.path.join(d, 'closeup-head-threequarter.png'), lo2, hi2, views=('front',), height=1000)
 
 
 if __name__ == '__main__':

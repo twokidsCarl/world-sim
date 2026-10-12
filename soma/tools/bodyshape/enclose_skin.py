@@ -43,7 +43,8 @@ GROUPS = {'muscle': ('muscle', 'tendon'), 'bone': ('bone', 'cartilage', 'tooth')
 # At the palpebral and oral fissures MHR's own lids and lips are kept: these parts are left out of the set that must be
 # enclosed (otherwise lids and lips are pushed out over the globe and the teeth into a faceted lump).
 FACE_EXCLUDE = ('eyeball', 'cornea', 'sclera', 'lens', 'vitreous', 'anterior chamber', 'posterior chamber', 'iris', 'retina', 'choroid', 'ciliary', 'conjunctiva',
-                'lacrimal', 'tarsal', 'tarsus', 'eyelash', 'eyebrow', 'eyelid', 'lip', 'tongue', 'gingiva', 'lingual')
+                'lacrimal', 'tarsal', 'tarsus', 'eyelash', 'eyebrow', 'eyelid', 'lip', 'tongue', 'gingiva', 'lingual',
+                'nasal cartilage', 'alar cartilage')   # 鼻软骨：皮肤用 MHR 自己的鼻子，软骨可以露出 / nasal cartilages: the skin keeps MHR's own nose and the cartilages may show
 
 
 def excluded_face_parts(fb):
@@ -72,13 +73,14 @@ def excluded_face_parts(fb):
 
 
 _PROTECT = {}
+FACE_PROTECT_ON = True   # 骨的最后一遍会临时关掉 / switched off for the last pass over bone
 
 
 def face_protect(lod):
     """眼区、口区的保护权重（0–1）和两个区域的顶点下标，在 MHR 的中性网格上定义，与姿势无关。
-    眼区：眼关节 19 mm 以内、在其前方的皮肤（眼睑）；口区：唇（口裂上下各约 12 mm、正中两侧各 30 mm）。
+    眼区：眼关节 22 mm 以内、在其前方的皮肤（眼睑）；口区：唇（口裂上下各约 12 mm、正中两侧各 30 mm）。
     Protection weight (0-1) for the orbital and oral regions and the vertex indices of both, defined on MHR's neutral mesh
-    and so independent of pose. Orbital: skin within 19 mm of an eye joint and in front of it (the lids); oral: the lips
+    and so independent of pose. Orbital: skin within 22 mm of an eye joint and in front of it (the lids); oral: the lips
     (about 12 mm above and below the oral fissure, 30 mm either side of the midline)."""
     if lod not in _PROTECT:
         V, P, _ = mhrlib.run(np.zeros(45), np.zeros(204), lod, True)
@@ -87,16 +89,21 @@ def face_protect(lod):
         reg = {}
         for S, j in (('L', 'l_eye'), ('R', 'r_eye')):
             e = P[jn.index(j)]
-            reg['lids' + S] = np.where((np.linalg.norm(V - e, axis=1) < 0.019) & (V[:, 2] > e[2]))[0]
+            reg['lids' + S] = np.where((np.linalg.norm(V - e, axis=1) < 0.022) & (V[:, 2] > e[2]))[0]
         e = 0.5 * (P[jn.index('l_eye')] + P[jn.index('r_eye')])
         reg['lips'] = np.where((np.abs(V[:, 0]) < 0.030) & (V[:, 1] < e[1] - 0.057) & (V[:, 1] > e[1] - 0.081) & (V[:, 2] > e[2] + 0.012))[0]
+        # 鼻：鼻背到鼻尖、鼻翼、鼻孔缘 / nose: dorsum to tip, alae and nostril rims
+        reg['nose'] = np.where((np.abs(V[:, 0]) < 0.021) & (V[:, 1] < e[1] - 0.028) & (V[:, 1] > e[1] - 0.056) & (V[:, 2] > e[2] + 0.026))[0]   # 只含软骨部：鼻骨上的皮肤仍要盖住鼻骨 / the cartilaginous part only: skin over the nasal bones must still cover them
         w = np.zeros(len(V))
         for idx in reg.values():
             w[idx] = 1.0
         A = adjacency(len(V), F)
-        for _ in range(2):   # 边缘过渡两圈 / two rings of transition at the rim
-            w = np.maximum(w, 0.5 * (A @ w) + 0.5 * w)
-            w = np.maximum(w, A @ w * 0.9) * (w < 1) + (w >= 1)
+        core = w >= 1
+        for _ in range(6):   # 向外扩六圈 / grow six rings outwards
+            w = np.maximum(w, (A @ w > 0).astype(float))
+        for _ in range(14):   # 再抹平成缓坡；核心区保持 1 / then smooth into a ramp; the core stays 1
+            w = 0.5 * w + 0.5 * (A @ w)
+            w[core] = 1.0
         _PROTECT[lod] = (np.clip(w, 0, 1), reg)
     return _PROTECT[lod]
 
@@ -157,7 +164,7 @@ def enclose(V0, F, P, log, cap, passes=10, step_cap=0.012):
         n0 /= np.maximum(np.linalg.norm(n0, axis=1), 1e-12)[:, None]
     # 眼睑和唇不外推 / lids and lips are not pushed
     lodp = next((k for k, n in mhrlib.LOD_VERTICES.items() if n == len(V0)), None)
-    if lodp is not None:
+    if lodp is not None and FACE_PROTECT_ON:
         cap = np.asarray(cap, float) * (1.0 - face_protect(lodp)[0])
     D = np.zeros(len(V0))
     best = None
@@ -400,14 +407,79 @@ def main():
     nh /= np.maximum(np.linalg.norm(nh, axis=1), 1e-12)[:, None]
     dh = spread(np.einsum('ij,ij->i', V1 - V0, nh).clip(0), Ah, cap, rings=2, smooth=5, final=3) * (1 - face_protect(lod)[0])
     V1 = V1 + whd[:, None] * (V0 + dh[:, None] * nh - V1)
+    # 骨不能露在皮肤外，即使在眼睑、鼻、唇的保护区里（例如眶外缘）：对头部仍露出的骨再做一小遍（至多 2.5 mm，低通），这一遍不受保护区限制。
+    # Bone may not show outside the skin even inside the protected lid, nose and lip regions (the lateral orbital rim, for
+    # one): a short pass over head bone still outside (at most 2.5 mm, low-passed), not limited by the protection.
+    hb = (grp == list(GROUPS).index('bone')) & (classify(Pd, L) == 'head')
+    sb = signed_distance(Pd[hb], V1, F)
+    if (sb > -0.0005).any():
+        globals()['FACE_PROTECT_ON'] = False
+        keep_b = globals()['MARGIN']
+        globals()['MARGIN'] = 0.0008
+        Vb_ = enclose(V1, F, Pd[hb][sb > -0.0008], log, np.full(len(V1), 0.0025), passes=4)
+        globals()['MARGIN'] = keep_b
+        globals()['FACE_PROTECT_ON'] = True
+        db = spread(np.einsum('ij,ij->i', Vb_ - V1, nh).clip(0), Ah, np.full(len(V1), 0.0025), rings=2, smooth=4, final=2)
+        V1 = V1 + (whd * db)[:, None] * nh
+        log.append(f'  head bone pass: {int((db > 0.0002).sum())} vertices moved, max {db.max() * 1000:.1f} mm; head bone samples outside after: {int((signed_distance(Pd[hb], V1, F) > 0).sum())}')
     regV0 = classify(V0, L)
     grpV = mhr_groups(lod)
     np.savez(os.path.join(out, 'enclosed-before-separation.npz'), V=V1, F=F, grp=grpV)
     # 打开腋下（见 axilla.py）：只改皮肤的局部形状，不改姿势；之后再做一小遍包住检查，把被带出皮肤的深部结构收回去。
     # Open the axilla (see axilla.py): local skin shape only, the pose is untouched; a short enclosure pass afterwards takes back any deep part this exposed.
+    # 浅层的薄结构（筋膜、浅静脉、皮神经、动脉、韧带）：不在上面的集合里。在腋下整形之前做（之后做会把腋下又顶回去）。离皮肤不足 0.75 mm 或露出不超过 4 mm 的，
+    # 把皮肤再外移一点盖住（单点最多 4 mm，低通）；露出更多的不硬盖（会鼓出一个包），列出来。
+    # Done before the axilla step (afterwards it pushes the axilla shut again).
+    # Thin superficial structures (fasciae, superficial veins, cutaneous nerves, arteries, ligaments) are not in the set
+    # above. Where they come within 0.75 mm of the skin or stand out by no more than 4 mm the skin moves out a little
+    # more to cover them (at most 4 mm per vertex, low-passed); those that stand out further are not forced (that would
+    # raise a bulge) and are listed instead.
+    sup_parts = [p for p in fb.parts if p['tissue'] in ('fascia', 'vein', 'nerve', 'artery', 'ligament') and p['system'] != 'integumentary']
+    sup_pts = np.vstack([fb.mesh(p)[0] for p in sup_parts])
+    sup_pid = np.concatenate([np.full(len(fb.mesh(p)[0]), k) for k, p in enumerate(sup_parts)])
+    ss = signed_distance(sup_pts, V1, F)
+    sup_before = {'shareOutside': round(float((ss > 0).mean()), 5), 'maxMm': round(float(ss.max() * 1000), 1)}
+    sel = (ss > -0.00075) & (ss < 0.004)
+    superficial = {'before': sup_before, 'notCovered': []}
+    if '--no-superficial' not in sys.argv and sel.any():
+        keep_m = globals()['MARGIN']
+        globals()['MARGIN'] = 0.00075
+        from final_female import spread as _spread
+        cap_sup = np.full(len(V1), 0.004)
+        cap_sup[classify(V1, L) == 'hand'] = 0.0   # 手不做：指神经、指静脉太多，外移会让相邻手指的皮肤贴到一起 / not on the hands: too many digital nerves and veins, and pushing brings the skins of adjacent fingers together
+        Vs = enclose(V1, F, sup_pts[sel], log, cap_sup, passes=4)
+        globals()['MARGIN'] = keep_m
+        ns = vertex_normals(V1, F)
+        As = adjacency(len(V1), F)
+        for _ in range(3):
+            ns = 0.5 * ns + 0.5 * (As @ ns)
+        ns /= np.maximum(np.linalg.norm(ns, axis=1), 1e-12)[:, None]
+        dsup = _spread(np.einsum('ij,ij->i', Vs - V1, ns).clip(0), As, cap_sup, rings=1, smooth=3, final=2) * (1 - face_protect(lod)[0])
+        V1 = V1 + dsup[:, None] * ns
+        s2 = signed_distance(sup_pts, V1, F)
+        superficial['after'] = {'shareOutside': round(float((s2 > 0).mean()), 5), 'maxMm': round(float(s2.max() * 1000), 1)}
+        superficial['skinMovedMm'] = {'vertices': int((dsup > 0.0002).sum()), 'p95': round(float(np.percentile(dsup[dsup > 0.0002], 95) * 1000), 1) if (dsup > 0.0002).any() else 0.0, 'max': round(float(dsup.max() * 1000), 1)}
+        for k, p in enumerate(sup_parts):
+            x = s2[sup_pid == k]
+            if len(x) and x.max() > 0.0005:
+                superficial['notCovered'].append({'id': p['id'], 'name': p['name'], 'tissue': p['tissue'], 'shareOutside': round(float((x > 0).mean()), 3), 'maxMm': round(float(x.max() * 1000), 1)})
+        superficial['notCovered'].sort(key=lambda r: -r['maxMm'])
+        log.append(f'  superficial structures ({len(sup_parts)} parts: fascia, vein, nerve, artery, ligament): outside the skin before {100 * sup_before["shareOutside"]:.2f} % of their points, up to {sup_before["maxMm"]} mm; '
+                   f'after {100 * superficial["after"]["shareOutside"]:.2f} %, up to {superficial["after"]["maxMm"]} mm; skin moved on {superficial["skinMovedMm"]["vertices"]} vertices (p95 {superficial["skinMovedMm"]["p95"]}, max {superficial["skinMovedMm"]["max"]} mm)')
+        log.append('  superficial parts left outside (covering them would raise a bulge); max mm outside, share of the part outside:')
+        for r in superficial['notCovered'][:30]:
+            log.append(f'     {r["maxMm"]:5.1f}  {100 * r["shareOutside"]:5.1f} %  {r["name"]} [{r["tissue"]}]')
+    json.dump(superficial, open(os.path.join(out, 'superficial.json'), 'w'), ensure_ascii=False, indent=1)
     axilla_before = axilla.sheet_gap(V1, F, grpV, L, vertex_normals, vertex_area)
     if '--no-separate' not in sys.argv:
+        if sex == 'F':
+            # 女性：肩、臂、胸侧的皮肤为包住肌肉各自外移后在腋下挤到一起，所以范围向上放到肱骨 26 % 处、单点最多 30 mm、做两轮。
+            # Female: skin of shoulder, arm and side of the chest each moved out over muscle and met in the axilla, so the
+            # range starts higher (26 % of the humerus), a vertex may move 30 mm, and two rounds are run.
+            axilla.T0, axilla.MAX_MOVE, axilla.RAMP = 0.26, 0.030, 0.16   # 起点处用更宽的渐变，免得在腋前襞撕出一道缝 / a wider ramp at the start, so no slit is torn at the anterior axillary fold
         V1, _ = axilla.open_axilla(V1, F, grpV, fb, L, adjacency, log)
+        if sex == 'F':
+            V1, _ = axilla.open_axilla(V1, F, grpV, fb, L, adjacency, log)
         keep = globals()['MARGIN']
         globals()['MARGIN'] = 0.0008
         V1 = enclose(V1, F, Pd, log, np.full(len(V1), 0.004), passes=3)
@@ -540,12 +612,12 @@ def main():
         'face': {
             'topology': {'zh': 'MHR LOD0 是一张封闭的单连通曲面：睑裂和口裂都不是开口，没有单独的眼球、上下睑缘、唇缘或口腔内面；眼睑是盖在眼球位置上的一片连续皮肤，上下唇在口裂处相贴成一道褶。因此没有睑缘、唇缘的顶点环可给；没有剪开网格。',
                          'en': 'MHR LOD0 is one closed, singly connected surface: neither the palpebral nor the oral fissure is an opening, and there is no separate eyeball, upper or lower lid margin, lip margin or mouth interior; the lids are one continuous sheet of skin over the place of the globe, and the lips meet in a crease at the oral fissure. So there are no lid-margin or lip-margin vertex loops to give; the mesh was not cut.'},
-            'notEnclosed': {'zh': '眼球各部、结膜、泪器、睑板、睑缘处的眼轮匝肌内环（按几何选）、唇、牙、舌、牙龈不在“必须包住”的集合里；下面的眼睑区、唇区顶点不做任何外推，保留 MHR 自己的面。',
-                            'en': 'the parts of the eyeball, conjunctiva, lacrimal parts, tarsal plates, the inner ring of orbicularis oculi at the lid margins (chosen by geometry), lips, teeth, tongue and gingiva are not in the set that must be enclosed; the lid and lip vertices below get no push at all and keep MHR\'s own surface.',
+            'notEnclosed': {'zh': '眼球各部、结膜、泪器、睑板、睑缘处的眼轮匝肌内环（按几何选）、唇、牙、舌、牙龈、鼻软骨不在“必须包住”的集合里；下面的眼睑区、唇区、鼻区顶点不做任何外推，保留 MHR 自己的面。',
+                            'en': 'the parts of the eyeball, conjunctiva, lacrimal parts, tarsal plates, the inner ring of orbicularis oculi at the lid margins (chosen by geometry), lips, teeth, tongue, gingiva and the nasal cartilages are not in the set that must be enclosed; the lid, lip and nose vertices below get no push at all and keep MHR\'s own surface.',
                             'partIds': sorted(excluded_face_parts(fb))},
             'regions': {k: [int(i) for i in v] for k, v in face_protect(lod)[1].items()},
-            'regionsNote': {'zh': 'regions 是顶点下标（skin.obj 的顺序）：lidsL / lidsR 为眼关节 19 mm 内、其前方的皮肤（上下睑和睑裂），lips 为口裂上下约 12 mm 的唇区。它们是区域，不是睑缘或唇缘的环。',
-                            'en': 'regions are vertex indices (order of skin.obj): lidsL / lidsR are the skin within 19 mm of an eye joint and in front of it (both lids and the fissure), lips the lip region about 12 mm above and below the oral fissure. They are regions, not lid-margin or lip-margin loops.'},
+            'regionsNote': {'zh': 'regions 是顶点下标（skin.obj 的顺序）：lidsL / lidsR 为眼关节 22 mm 内、其前方的皮肤（上下睑和睑裂），lips 为口裂上下约 12 mm 的唇区，nose 为鼻背到鼻尖、鼻翼。它们是区域，不是睑缘或唇缘的环。',
+                            'en': 'regions are vertex indices (order of skin.obj): lidsL / lidsR are the skin within 22 mm of an eye joint and in front of it (both lids and the fissure), lips the lip region about 12 mm above and below the oral fissure, nose the dorsum, tip and alae. They are regions, not lid-margin or lip-margin loops.'},
         },
         'statureM': round(float(H(V1)), 4), 'bmiByVolume': round(bmi(V1), 2), 'targetBmi': target_bmi,
         'files': {
@@ -583,6 +655,7 @@ def main():
                  title='skin BEFORE the local correction with deep parts: whatever shows is outside the skin')
     sh, hp = P[jn.index('l_uparm')], 0.5 * (P[jn.index('l_upleg')] + P[jn.index('r_upleg')])
     boxes = {'axilla': ([0.05, sh[1] - 0.24, -0.08], [0.33, sh[1] + 0.07, 0.25]),
+             'axilla-right': ([-0.33, sh[1] - 0.24, -0.08], [-0.05, sh[1] + 0.07, 0.25]),
              'chest': ([-0.22, sh[1] - 0.26, -0.10], [0.22, sh[1] + 0.02, 0.30]),
              'groin': ([-0.22, hp[1] - 0.22, -0.12], [0.22, hp[1] + 0.10, 0.28])}
     for tag, (lo, hi) in boxes.items():

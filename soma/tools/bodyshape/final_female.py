@@ -155,75 +155,195 @@ def fit_head(ident, mp, fb, log):
 
 
 def face_landmarks(ident, lod):
-    """MHR 网格（给定身份系数、中性姿势）正中矢状轮廓上的两个标志点，在眼球中心以下的高度（m）：口裂、颏下点。
-    口裂取上下唇相贴处那道褶里被埋住的顶点的平均高度；颏下点取正中轮廓上、比颏前点后退不超过 12 mm 的最低处。
-    身份系数为 0 时是 69 mm 和 119 mm。
-    Two landmarks on the midsagittal profile of the MHR mesh (given identity, neutral pose), as height below the eyeball
-    centres (m): stomion and menton. Stomion is the mean height of the vertices buried in the crease where the lips
-    meet; menton the lowest point of the midline profile that is no more than 12 mm behind the pogonion. For identity 0
-    they are 69 mm and 119 mm."""
+    """MHR 网格正中矢状轮廓上两个标志点的顶点下标（拓扑固定，所以可以在任何姿势的网格上读它们的位置）：
+    口裂 = 上下唇相贴处那道褶里被埋住的顶点；颏下点 = 正中轮廓上、比颏前点后退不超过 12 mm 的最低顶点。在给定身份系数的中性网格上找。
+    Vertex indices of two landmarks on the midsagittal profile of the MHR mesh (the topology is fixed, so their position
+    can be read on the mesh in any pose): stomion = the vertices buried in the crease where the lips meet; menton = the
+    lowest vertex of the midline profile no more than 12 mm behind the pogonion. Found on the neutral mesh of the given identity."""
     import igl
     V, P, _ = mhrlib.run(ident, np.zeros(204), lod, True)
     jn, F = mhrlib.joint_names(lod), mhrlib.faces(lod)
     e = 0.5 * (P[jn.index('l_eye')] + P[jn.index('r_eye')])
     n = vertex_normals(V, F)
     w = igl.fast_winding_number(np.ascontiguousarray(V), np.ascontiguousarray(F), np.ascontiguousarray(V + 0.002 * n))
-    lips = (w > 0.5) & (np.abs(V[:, 0]) < 0.03) & (V[:, 1] < e[1] - 0.04) & (V[:, 1] > e[1] - 0.10) & (V[:, 2] > e[2])
-    sto = float(e[1] - V[lips, 1].mean()) if lips.sum() > 10 else 0.069
-    mid = (np.abs(V[:, 0]) < 0.003) & (V[:, 2] > e[2] - 0.02) & (V[:, 1] < e[1] - sto - 0.02) & (V[:, 1] > e[1] - 0.16)
-    W = V[mid]
-    pog = W[:, 2].max()
-    men = float(e[1] - W[W[:, 2] > pog - 0.012][:, 1].min())
-    return sto, men
+    lips = np.where((w > 0.5) & (np.abs(V[:, 0]) < 0.02) & (V[:, 1] < e[1] - 0.04) & (V[:, 1] > e[1] - 0.10) & (V[:, 2] > e[2]))[0]
+    sto = float(e[1] - V[lips, 1].mean())
+    mid = np.where((np.abs(V[:, 0]) < 0.003) & (V[:, 2] > e[2] - 0.02) & (V[:, 1] < e[1] - sto - 0.02) & (V[:, 1] > e[1] - 0.16))[0]
+    pog = V[mid, 2].max()
+    cand = mid[V[mid, 2] > pog - 0.012]
+    return lips, int(cand[np.argmin(V[cand, 1])])
 
 
 CHIN_SOFT = 0.007     # 颏下点处的软组织厚度（假定值）/ soft tissue under the menton (assumption)
+INCISOR_SHOW = 0.002  # 静止时口裂在上中切牙切缘上方 2 mm（临床上常说静止露齿 1–3 mm；假定值，没有核对文献）
+#                       at rest the oral fissure lies 2 mm above the edge of the upper central incisors (a resting incisor
+#                       display of 1-3 mm is the usual clinical statement; an assumption, not checked against a source)
 
 
 def face_scale(V, F, pivot, wh, fb, log, marks):
-    """下半张脸的高度：MHR 平均脸眼以下比她的颅骨长（只对齐眼和颅盖时下颌上覆盖中位数 22 mm，颏肌上 31 mm，下巴成了“双下巴”）。
-    按两个标志点对眼以下的头部顶点做分段线性的高度重映射：口裂对到她上中切牙切缘上方 2 mm，颏下点对到她下颌骨最低点下方 7 mm；
-    颏以下整体上移，由头的蒙皮权重过渡到颈。前后方向不动（颏前点的前后位置本来就对得上）。返回施加这一重映射的函数。
-    Height of the lower face: below the eyes MHR's average face is longer than her skull (with only eyes and vault
-    aligned the median cover was 22 mm over the mandible and 31 mm over mentalis, a double chin). The head vertices below
-    the eyes get a piecewise-linear remap of height through two landmarks: stomion goes 2 mm above the edge of her upper
-    central incisors, menton 7 mm below the lowest point of her mandible; everything below the chin moves up with it and
-    blends into the neck by the head skin weight. Nothing moves front to back (the pogonion already agrees). Returns a
-    function that applies the remap."""
-    MHR_STOMION, MHR_MENTON = marks
+    """下半张脸对到她/他的牙和下颌骨上。标志点的位置直接在当前姿势的网格上读（上一版用中性姿势的数值，头有俯仰时口裂偏了约 1 cm）。
+    高度：口裂对到上中切牙切缘上方 2 mm，颏下点对到下颌骨最低点下方 7 mm，用单调三次插值（PCHIP）过渡，没有折线的拐点
+    （上一版分段线性，在鼻、口、颏的高度留下了横向的台阶）。前后：口裂处移到“唇在皮下 1 mm”，颏处移到“颏前骨面上 10 mm”。
+    The lower face is brought onto her or his teeth and mandible. The landmarks are read on the mesh in its present pose
+    (the previous version used neutral-pose numbers and put the oral fissure about 1 cm off when the head is pitched).
+    Height: stomion goes 2 mm above the edge of the upper central incisors and menton 7 mm below the lowest point of the
+    mandible, blended by a monotone cubic (PCHIP) with no corners (the previous piecewise-linear map left horizontal steps
+    at the level of nose, mouth and chin). Front to back: at the mouth as far as leaves the lips 1 mm under the skin, at
+    the chin as far as leaves 10 mm over the front of the bony chin."""
+    from scipy.interpolate import PchipInterpolator
+    crease, menton = marks
+    s0, m0 = float(pivot[1] - V[crease, 1].mean()), float(pivot[1] - V[menton, 1])
     inc = np.vstack([fb.verts(n) for n in ('Left upper central secondary incisor tooth', 'Right upper central secondary incisor tooth')])
-    sto = pivot[1] - (inc[:, 1].min() + 0.002)
-    men = pivot[1] - (fb.verts('Mandible')[:, 1].min() - CHIN_SOFT)
-    xs, ys = [0.0, MHR_STOMION, MHR_MENTON, 0.40], [0.0, sto, men, men + 0.40 - MHR_MENTON]
-    log.append(f'  lower face: stomion {MHR_STOMION * 1000:.0f} -> {sto * 1000:.1f} mm below the eyes, menton {MHR_MENTON * 1000:.0f} -> {men * 1000:.1f} mm '
-               f'(factors {sto / MHR_STOMION:.2f} above the mouth, {(men - sto) / (MHR_MENTON - MHR_STOMION):.2f} below it)')
+    sto = float(pivot[1] - (inc[:, 1].min() + INCISOR_SHOW))
+    men = float(pivot[1] - (fb.verts('Mandible')[:, 1].min() - CHIN_SOFT))
+    fy = PchipInterpolator([-0.06, -0.03, 0.0, s0, m0, m0 + 0.25], [-0.06, -0.03, 0.0, sto, men, men + 0.25])
+    log.append(f'  lower face, height: stomion {s0 * 1000:.1f} -> {sto * 1000:.1f} mm below the eyes, menton {m0 * 1000:.1f} -> {men * 1000:.1f} mm')
 
     def remap(X, zk=None):
-        d = pivot[1] - X[:, 1]
+        d = np.clip(pivot[1] - X[:, 1], -0.06, m0 + 0.25)
         Y = X.copy()
-        Y[:, 1] = X[:, 1] + wh * np.where(d > 0, d - np.interp(d, xs, ys), 0.0)
+        Y[:, 1] = X[:, 1] + wh * (d - fy(d))
         if zk is not None:
-            Y[:, 2] = X[:, 2] + wh * np.where(d > 0, np.interp(d, xs_z, zk), 0.0)
+            Y[:, 2] = X[:, 2] + wh * PchipInterpolator([-0.06, 0.0, 0.03, s0, m0, m0 + 0.25], [0.0, 0.0, 0.0, zk[0], zk[1], zk[1]])(d)
         return Y
 
-    # 前后方向：高度对上以后，她的唇（Lip 部件）还在 MHR 唇面后方约 9 mm，颏部骨面上的覆盖也偏厚。按高度分段把下半张脸向后移：
-    # 鼻根到鼻尖不动，口裂处移到“她的唇面在皮肤上”，颏下点处移到“颏前骨面上 10 mm”。鼻软骨仍在包住集合里，鼻尖由它们定。
-    # Front to back: with the heights matched her lips (the part "Lip") still lie about 9 mm behind MHR's lip surface and
-    # the cover over the bony chin is thick. The lower face moves back piecewise by height: nothing from nasion to the tip
-    # of the nose, at the stomion as far as puts her lip surface on the skin, at the menton as far as leaves 10 mm over
-    # the front of the bony chin. The nasal cartilages stay in the enclosure set and decide the tip of the nose.
-    xs_z = [0.0, 0.040, MHR_STOMION, MHR_MENTON, 0.40]
     Y0 = remap(V)
     lipv = fb.verts('Lip')
     lipv = lipv[lipv[:, 2] > np.percentile(lipv[:, 2], 70)]
     lip_cover = float(np.percentile(-signed_distance(lipv, Y0, F), 10))
     man = fb.verts('Mandible')
-    chin = man[(np.abs(man[:, 0]) < 0.015) & (man[:, 2] > man[:, 2].max() - 0.006)]
+    chin = man[(np.abs(man[:, 0] - np.median(man[:, 0])) < 0.015) & (man[:, 2] > man[:, 2].max() - 0.006)]
     chin_cover = float(np.min(-signed_distance(chin, Y0, F)))
-    zk = [0.0, 0.0, -max(lip_cover, 0.0), -max(chin_cover - 0.010, 0.0), -max(chin_cover - 0.010, 0.0)]
-    log.append(f'  lower face, front to back: the lips (part "Lip") lay {lip_cover * 1000:.1f} mm under the skin of the lips and the front of the bony chin had {chin_cover * 1000:.1f} mm of cover; '
-               f'moved back {-zk[2] * 1000:.1f} mm at the mouth and {-zk[3] * 1000:.1f} mm at the chin')
+    zk = [float(np.clip(-(lip_cover - 0.001), -0.014, 0.006)), float(np.clip(-(chin_cover - 0.010), -0.012, 0.004))]
+    log.append(f'  lower face, front to back: the lips (part "Lip") lay {lip_cover * 1000:.1f} mm under the skin and the front of the bony chin had {chin_cover * 1000:.1f} mm of cover; '
+               f'skin moved {zk[0] * 1000:+.1f} mm at the mouth and {zk[1] * 1000:+.1f} mm at the chin (+ = forwards)')
     return lambda X: remap(X, zk)
+
+
+def eye_warp(V, F, P, jn, wh, fb, lod, log):
+    """把每侧的睑裂移到眼球上：眶周皮肤的一个平滑的局部平移（半径 40 mm，按 smoothstep 衰减），在拟合之后施加。
+    睑裂中点取眼关节外侧 2.7 mm 处；目标是玻璃体的形心（左右、上下方向）。
+    然后前后方向把眼睑移到角膜最前点在皮下 0.8 mm 处（半径 25 mm）。眼睑面本身不变形，所以仍是光滑的。
+    Move each palpebral fissure onto its globe: a smooth local translation of the periorbital skin (radius 40 mm, smoothstep
+    falloff), applied after the fit. The middle of the fissure is taken 2.7 mm lateral of the eye joint; the target is the centroid of the vitreous body
+    (left-right and up-down). Then, front to back, the lids move until the front of the cornea is 0.8 mm under the skin
+    (radius 25 mm). The lid surface itself is not deformed, so it stays smooth."""
+    reg = ES.face_protect(lod)[1]
+    A = ES.adjacency(len(V), F)
+    V = V.copy()
+    info = {}
+    for S, j, side in (('L', 'l_eye', 'Left'), ('R', 'r_eye', 'Right')):
+        idx = reg['lids' + S]
+        # 睑裂中点：MHR 的内、外眦中点在眼关节外侧约 2.7 mm（我按顶点最密的睑缘量到 2.2 mm，表情层在装好的皮肤上量到约 3.2 mm，取中间）；高度取眼关节。
+        # Middle of the fissure: in MHR the midpoint of the canthi lies about 2.7 mm lateral of the eye joint (2.2 mm by my
+        # measure on the densest lid-margin vertices, about 3.2 mm by the expression layer on the installed skin; the
+        # middle is used); its height is that of the eye joint.
+        cf = P[jn.index(j)] + np.array([0.0027 if S == 'L' else -0.0027, 0.0, 0.0])
+        c = fb.verts(f'{side} vitreous body').mean(0)
+        t = np.array([c[0] - cf[0], c[1] - cf[1], 0.0])
+        r = np.linalg.norm((V - cf)[:, :2], axis=1)
+        u = np.clip(1 - r / 0.040, 0, 1)
+        w = wh * u * u * (3 - 2 * u) * (V[:, 2] > cf[2] - 0.03)
+        # 同时把眶周这一片在左右方向绕睑裂中点缩小一点（1 - |平移| / 45 mm）：MHR 的睑裂长约 34 mm，整片内移会把内眦和鼻根之间的皮肤挤出褶子。
+        # The patch is also narrowed a little left to right about the middle of the fissure (1 - |shift| / 45 mm): MHR's
+        # fissure is about 34 mm long, and moving the whole patch medially crumples the skin between inner canthus and nasal root.
+        k = 1.0 - abs(t[0]) / 0.045
+        V = V + w[:, None] * (t + np.stack([(k - 1.0) * (V[:, 0] - cf[0]), np.zeros(len(V)), np.zeros(len(V))], 1))
+        cor = np.vstack([fb.verts(p['name']) for p in fb.parts if 'cornea' in p['name'].lower() and side.lower() in p['name'].lower()])
+        cover = float(np.min(-signed_distance(cor, V, F)))
+        dz = float(np.clip(-(cover - 0.0008), -0.006, 0.006))
+        u2 = np.clip(1 - np.linalg.norm((V - (cf + t))[:, :2], axis=1) / 0.025, 0, 1)
+        V[:, 2] += wh * u2 * u2 * (3 - 2 * u2) * (V[:, 2] > cf[2] - 0.03) * dz
+        info[S] = {'fissureMiddleToGlobeCentreBeforeMm': [round(float(-t[0] * 1000), 1), round(float(-t[1] * 1000), 1)], 'corneaCoverBeforeMm': round(cover * 1000, 1), 'movedZMm': round(dz * 1000, 1)}
+        log.append(f'  eye {S}: middle of the fissure lay (x, y) {info[S]["fissureMiddleToGlobeCentreBeforeMm"]} mm from the centre of the globe; periorbital skin moved by that; cornea cover was {cover * 1000:.1f} mm, lids moved {dz * 1000:+.1f} mm front to back')
+    return V, info
+
+
+# 乳头位置的来源：Al-Qattan 等 2019（Plast Reconstr Surg Glob Open，PMC6756646）：54 名未生育的年轻女性（22.1 ± 1.2 岁，BMI 21.8 ± 3.1），
+# 胸骨上切迹到乳头 19.8 ± 2.5 cm，两乳头间距 20.3 ± 2.3 cm。人群是沙特女性，不是中国女性；BMI 与我们的默认值相近。
+# Source for the nipple position: Al-Qattan et al. 2019 (Plast Reconstr Surg Glob Open, PMC6756646): 54 young nulliparous
+# women (22.1 +/- 1.2 years, BMI 21.8 +/- 3.1), sternal notch to nipple 19.8 +/- 2.5 cm, internipple distance
+# 20.3 +/- 2.3 cm. The population is Saudi, not Chinese; the BMI is close to our default.
+NOTCH_TO_NIPPLE, INTERNIPPLE = 0.198, 0.203
+
+
+def place_breasts(Vm, F, L, A, fb, log, volume_ml):
+    """把 MHR 的乳房移到有来源的位置上，并使左右相同。做法：先取下 MHR 自己的乳房（见下），左侧的隆起作为模板，
+    加到新的乳头位置上，右侧用它的镜像；再整体缩放到每侧 volume_ml。
+    乳头位置：到胸骨上切迹的直线距离 19.8 cm，离正中 10.15 cm。
+    Move MHR's breasts to a sourced position and make left and right the same. MHR's own breasts are taken off first (below); the mound of the left side is the template, added back at the
+    new nipple position, and the right side gets its mirror image; both are then scaled to volume_ml each. Nipple position: 19.8 cm in a straight line from the sternal notch, 10.15 cm from the midline."""
+    from scipy.interpolate import LinearNDInterpolator
+    man = fb.verts('Manubrium')
+    xc = float(np.median(man[:, 0]))
+    top = man[np.abs(man[:, 0] - xc) < 0.006]
+    notch = np.array([xc, top[:, 1].max(), top[top[:, 1] > top[:, 1].max() - 0.004][:, 2].max()])
+    zc = 0.25 * (L['hip_L'][2] + L['hip_R'][2] + L['shoulder_L'][2] + L['shoulder_R'][2])
+    shy = 0.5 * (L['shoulder_L'][1] + L['shoulder_R'][1])
+    # 先把 MHR 自己的乳房“取下来”：用原来的小区域（最前点周围 75 mm）的胸壁基面 B0，隆起 h = V - B0；
+    # 皮肤在该区换成 B0（平胸），再把左侧的隆起（右侧用其镜像）加到新的位置上。
+    # First MHR's own breasts are taken off: with the chest-wall base B0 of the original small zone (75 mm round the most
+    # anterior point) the mound is h = V - B0; the skin of that zone becomes B0 (a flat chest), and the mound of the left
+    # side (its mirror image on the right) is added back at the new place.
+    mask0, B0, _ = BT.breast_base(Vm, F, L, A)
+    flat = Vm.copy()
+    flat[mask0] = B0[mask0]
+    grow = mask0.copy()
+    for _ in range(4):
+        grow = grow | (A @ grow.astype(float) > 0)
+    for _ in range(25):      # 把取下乳房后留在区域边上的折线抹平 / smooth the crease left along the rim of the zone
+        flat[grow] = (0.5 * flat + 0.5 * (A @ flat))[grow]
+    mL = np.where(mask0 & (Vm[:, 0] > xc))[0]
+    hL = Vm[mL] - B0[mL]
+    apexL = B0[mL[np.argmax(hL[:, 2])]]
+    g = LinearNDInterpolator(np.stack([B0[mL, 0] - apexL[0], B0[mL, 1] - apexL[1]], 1), hL, fill_value=0.0)
+    V = flat.copy()
+    mask = mask0.copy()
+    fac, vols, new_masks = {}, {}, {}
+    for S, sg in (('L', 1), ('R', -1)):
+        x_t = xc + sg * INTERNIPPLE / 2
+        zs = flat[(np.linalg.norm(flat[:, :2] - np.array([x_t, notch[1] - 0.14]), axis=1) < 0.02) & (flat[:, 2] > zc)][:, 2]
+        z_ap = (zs.max() if len(zs) else notch[2] + 0.04) + float(hL[:, 2].max())
+        drop = np.sqrt(max(NOTCH_TO_NIPPLE ** 2 - (INTERNIPPLE / 2) ** 2 - (z_ap - notch[2]) ** 2, 1e-6))
+        tgt = np.array([x_t, notch[1] - drop])
+        # 放上去以后量实际的隆起顶点，按它与要求位置（离正中 10.15 cm、到切迹 19.8 cm）之差修正模板中心，做三遍。
+        # After placing, the actual apex of the mound is measured and the template centre corrected by its difference from
+        # the required position (10.15 cm from the midline, 19.8 cm from the notch); three passes.
+        for _ in range(3):
+            ms = (np.linalg.norm(flat[:, :2] - tgt, axis=1) < 0.085) & (flat[:, 2] > zc) & (sg * (flat[:, 0] - xc) > 0.002)
+            h = g(np.stack([sg * (flat[ms, 0] - tgt[0]), flat[ms, 1] - tgt[1]], 1))
+            h[:, 0] *= sg
+            rr = np.clip((0.082 - np.linalg.norm(flat[ms, :2] - tgt, axis=1)) / 0.03, 0, 1)
+            hf = np.zeros_like(flat)
+            hf[ms] = h * (rr * rr * (3 - 2 * rr))[:, None]     # 边缘渐变到 0 / fades to 0 at the rim
+            for _ in range(4):                                  # 再把隆起本身抹平几遍 / and the mound itself is smoothed a few times
+                hf = 0.5 * hf + 0.5 * (A @ hf)
+            h = hf[ms]
+            W = flat.copy()
+            W[ms] = flat[ms] + h
+            v1 = BT.patch_volume(W, flat, F, ms, S) * 1e6
+            fac[S] = float(np.clip(volume_ml / max(v1, 1.0), 0.5, 2.0))
+            Vt = flat.copy()
+            Vt[ms] = flat[ms] + fac[S] * h
+            ap = Vt[ms][np.argmax(Vt[ms][:, 2] - flat[ms][:, 2])]
+            want_y = notch[1] - np.sqrt(max(NOTCH_TO_NIPPLE ** 2 - (ap[0] - notch[0]) ** 2 - (ap[2] - notch[2]) ** 2, 1e-6))
+            tgt = tgt + np.array([x_t - ap[0], want_y - ap[1]])
+        V[ms] = Vt[ms]
+        vols[S] = BT.patch_volume(V, flat, F, ms, S) * 1e6
+        new_masks[S] = ms
+        mask |= ms
+    B = flat
+    apex0 = {'L': apexL, 'R': apexL * np.array([-1, 1, 1]) + np.array([2 * xc, 0, 0])}
+    info = {'source': 'Al-Qattan et al. 2019, Plast Reconstr Surg Glob Open, PMC6756646: sternal notch to nipple 19.8 +/- 2.5 cm, internipple 20.3 +/- 2.3 cm, 54 young nulliparous Saudi women, BMI 21.8',
+            'sternalNotch': np.round(notch, 4).tolist(), 'sides': {}}
+    for S, sg in (('L', 1), ('R', -1)):
+        ms = new_masks[S]
+        ap = V[ms][np.argmax(V[ms][:, 2] - B[ms][:, 2])]
+        info['sides'][S] = {'apexBefore': np.round(apex0[S], 4).tolist(), 'apex': np.round(ap, 4).tolist(), 'notchToApexMm': round(float(np.linalg.norm(ap - notch) * 1000), 1),
+                            'apexFromMidlineMm': round(float(abs(ap[0] - xc) * 1000), 1), 'projectionMm': round(float((V[ms][:, 2] - B[ms][:, 2]).max() * 1000), 1),
+                            'volumeMl': round(vols[S]), 'templateScale': round(fac[S], 3)}
+    log.append('  breasts: ' + json.dumps(info['sides']))
+    return V, B, mask, info
 
 
 def spread(d, A, cap, rings=3, smooth=8, final=3):
@@ -279,7 +399,16 @@ def main():
         fit = Fit('female', 'targets', fb, L, jt, bone_pts=Pb, top_floor=(L['vertex'][1], L['floor'][1]), subcut=subcutaneous_points(fb))
         fit.identity = ident.copy()
         fit.bone_weight = 1.0
-        x = fit.solve(6, log, mp[fit.pidx].copy())
+        # 左拇指上一次停在一个差的局部解上（末节差 11 mm）；右拇指拟合得好，所以用右手的值作左拇指的起点（MHR 左右参数同号）。
+        # The left thumb stopped in a poor local solution last time (11 mm off at the distal joint); the right thumb fits
+        # well, so the left thumb starts from the right hand's values (MHR uses the same sign left and right).
+        names = mhrlib.param_names()
+        for nme in names:
+            if 'thumb' in nme and (nme.startswith('l_') or '_l_' in nme):
+                other = nme.replace('l_', 'r_', 1) if nme.startswith('l_') else nme.replace('_l_', '_r_', 1)
+                if other in names:
+                    mp[names.index(nme)] = mp[names.index(other)]
+        x = fit.solve(8, log, mp[fit.pidx].copy())
         mp[fit.pidx] = x
         log.append('  joint residuals after the pose fit (mm): ' + json.dumps(fit.joint_residuals(x)))
         ident, mp, hs, head_info = fit_head(ident, mp, fb, log)
@@ -291,29 +420,24 @@ def main():
     H = lambda W: W[:, 1].max() - W[:, 1].min()
     bmi_of = lambda W: mesh_volume(W, F) * 1010.0 / H(W) ** 2
 
-    # ---- 3 乳房体积与 BMI / breast volume and BMI
+    # ---- 3 头、眼、下半张脸；乳房；BMI / head, eyes, lower face; breasts; BMI
     crown = None
+    marks = face_landmarks(ident, lod)
     for it in range(3):
         Vm0, P, _ = mhrlib.run(ident, mp, lod, True)
         Vm = scale_head(Vm0, P, jn, wh, hs)
         if crown is None:
-            Pe = P.copy()
-            for j in ('l_eye', 'r_eye'):
-                Pe[jn.index(j)] = P[jn.index('c_head')] + hs * (P[jn.index(j)] - P[jn.index('c_head')])
-            crown = BT.head_scale(Vm, F, Pe, jn, lod, fb, log)
-            face = face_scale(crown(Vm), F, 0.5 * (Pe[jn.index('l_eye')] + Pe[jn.index('r_eye')]), wh, fb, log, face_landmarks(ident, lod))
-        Vm = face(crown(Vm))
-        mask, B, apex = BT.breast_base(Vm, F, L, A)
-        vols = {S: BT.patch_volume(Vm, B, F, mask, S) * 1e6 for S in 'LR'}
-        fac = {S: float(np.clip(BT.BREAST_ML / max(vols[S], 1.0), 0.5, 2.5)) for S in 'LR'}
-        V = Vm.copy()
-        for S in 'LR':
-            ms = mask & ((Vm[:, 0] > 0) == (S == 'L'))
-            V[ms] = B[ms] + fac[S] * (Vm[ms] - B[ms])
+            crown = BT.head_scale(Vm, F, P, jn, lod, fb, log)
+        Vm = crown(Vm)
+        Vm, eye_info = eye_warp(Vm, F, P, jn, wh, fb, lod, log if it == 2 else [])
+        pivot = 0.5 * (fb.verts('Left vitreous body').mean(0) + fb.verts('Right vitreous body').mean(0))
+        Vm = face_scale(Vm, F, pivot, wh, fb, log if it == 2 else [], marks)(Vm)
+        V, B, mask, breast_info = place_breasts(Vm, F, L, A, fb, log if it == 2 else [], BT.BREAST_ML)
         b = bmi_of(V)
-        log.append(f'  round {it}: breast volume of the MHR shape L {vols["L"]:.0f} / R {vols["R"]:.0f} mL -> scaled by L {fac["L"]:.2f} / R {fac["R"]:.2f}; volume BMI {b:.2f}')
+        log.append(f'  round {it}: volume BMI {b:.2f}')
         if it < 2:
             ident[0] += (bmi_t - b) / 5.3
+    head_info = dict(head_info, eyes=eye_info, breasts=breast_info)
     V_shape = V.copy()     # 目标体型（未放松）/ the target shape before any relaxation
     regV = classify(V_shape, L)
 

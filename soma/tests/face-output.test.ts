@@ -236,7 +236,11 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(v('risorius_R').lateral).toBeLessThan(-0.3)
       expect(v('depressor_anguli_oris_L').up).toBeLessThan(-0.3)
       expect(v('depressor_labii_inferioris_L').up).toBeLessThan(-0.3)
-      expect(v('mentalis_L').up).toBeGreaterThan(0.2)
+      expect(v('mentalis_L').up).toBeGreaterThan(0.5)
+      // 颏肌向上提颏部皮肤，几乎没有横向分量（网格是个团块，作用线取精编的方向）
+      // mentalis lifts the chin skin with hardly any sideways part (its mesh is a blob, so the line takes the curated direction)
+      expect(Math.abs(v('mentalis_L').lateral)).toBeLessThan(0.3)
+      expect(Math.abs(v('mentalis_R').lateral)).toBeLessThan(0.3)
       // 颈阔肌：作用到的主要是颏下和颈前的皮肤（法线朝下），所以位移以向后、向外为主，向下的分量小
       // platysma: it mostly reaches the skin under the chin and on the front of the neck (normals pointing down), so the displacement is chiefly backwards and lateral, with a small downward part
       expect(v('platysma_L').up).toBeLessThan(0)
@@ -256,11 +260,14 @@ for (const bodyId of ['male', 'female'] as const) {
     it.skipIf(!fresh)('keeps upper-lip muscles off the lower lip and lower-lip muscles off the upper lip', () => {
       const pos = body!.meshes.get(face.skin)!.positions
       const st = face.landmarks.stomionY.skin
-      const range = (id: string): [number, number] => {
+      // inMouth：只看两口角之间（正中 ±18 mm）的顶点。出了口角，上下唇的分界是有意逐渐放宽的。
+      // inMouth: only vertices between the mouth corners (midline ± 18 mm). Beyond the corners the split between the lips is widened on purpose.
+      const range = (id: string, inMouth = false): [number, number] => {
         const f = skinField(id)
         let lo = Infinity, hi = -Infinity
         for (let i = 0; i < f.index.length; i++) {
           if (Math.hypot(f.delta[i * 3]!, f.delta[i * 3 + 1]!, f.delta[i * 3 + 2]!) < 0.1 * MM) continue
+          if (inMouth && Math.abs(pos[f.index[i]! * 3]! - face.landmarks.midX) > 18 * MM) continue
           const y = pos[f.index[i]! * 3 + 1]!
           ;(lo = Math.min(lo, y)), (hi = Math.max(hi, y))
         }
@@ -268,8 +275,8 @@ for (const bodyId of ['male', 'female'] as const) {
       }
       // 皮肤按它自己那道随 x 起伏的褶分上下唇，这里只知道正中的高度，所以放宽到 6 mm
       // the skin is split along its own crease, which rises and falls with x; only its midline height is known here, hence the 6 mm allowance
-      for (const m of ['lls', 'llsan', 'zygomaticus_minor']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`)[0], `${m}_${s}`).toBeGreaterThan(st - 6 * MM)
-      for (const m of ['depressor_labii_inferioris', 'mentalis', 'platysma']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`)[1], `${m}_${s}`).toBeLessThan(st + 6 * MM)
+      for (const m of ['lls', 'llsan', 'zygomaticus_minor']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`, true)[0], `${m}_${s}`).toBeGreaterThan(st - 6 * MM)
+      for (const m of ['depressor_labii_inferioris', 'mentalis', 'platysma']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`, true)[1], `${m}_${s}`).toBeLessThan(st + 6 * MM)
       // 眉部的肌肉带动眉下的皮肤，但到上睑缘为止（留 10 mm：睑缘在两眦处比中间低，平滑过的厚度变化还会再越界几毫米）
       // brow muscles carry the skin under the brow, but stop at the upper lid margin (10 mm allowed: the margin is lower at the canthi than in the middle, and the smoothed thickness change spills a few millimetres further)
       const lidTop = Math.max(...face.landmarks.eyes.map((e) => (e.skinFissure ?? e.fissure)!.upperY!))

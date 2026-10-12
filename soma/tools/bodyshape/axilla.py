@@ -23,6 +23,7 @@ ARM = ('biceps brachii', 'triceps brachii', 'brachialis', 'coracobrachialis', 'h
 GAP = 0.006         # 希望留出的间隙 / gap asked for
 COVER = 0.0015      # 深部结构上最少留的覆盖 / least cover left over the deep parts
 MAX_MOVE = 0.022    # 单个顶点最多移动；移动后由调用方复核深部结构仍在皮肤内 / most a single vertex may move; the caller checks afterwards that the deep parts are still inside the skin
+RAMP = 0.08         # 范围起点处权重从 0 升到 1 的宽度（肱骨长度的比例）/ width over which the weight rises from 0 to 1 at the start of the range (fraction of the humerus)
 T0, T1 = 0.36, 0.90   # 沿肱骨（肩 0，肘 1）起作用的范围 / range along the humerus (shoulder 0, elbow 1) in which this acts
 
 
@@ -48,7 +49,7 @@ def zone(V, L, side):
     sh, el = L['shoulder_' + side], L['elbow_' + side]
     ax = el - sh
     t = (V - sh) @ ax / (ax @ ax)
-    w = np.clip((t - T0) / 0.08, 0, 1) * np.clip((T1 - t) / 0.06, 0, 1)
+    w = np.clip((t - T0) / RAMP, 0, 1) * np.clip((T1 - t) / 0.06, 0, 1)
     return t, w
 
 

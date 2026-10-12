@@ -203,10 +203,36 @@ def main():
     cr = checks['calibrated']['rows']
     units = np.array([r['bmiRequested'] - b0 for r in cr])
     vol = np.array([r['bmiFromVolume'] for r in cr])
+    # 这些行是在不带逐顶点偏移的纯 MHR 曲面（LOD1）上量的，它比交付的皮肤瘦；表要以交付的皮肤为零点：
+    # 把体积 BMI 整体平移，使倍数 0 对应交付皮肤的体积 BMI（restBmi）。
+    # These rows are measured on the pure MHR surface (LOD 1) without the per-vertex offsets, which is leaner than the
+    # delivered skin; the table has to have its zero at the delivered skin, so the volume BMI is shifted as a whole
+    # until multiplier 0 corresponds to the volume BMI of the delivered skin (restBmi).
+    vol = vol + (b0 - float(np.interp(0.0, units, vol)))
     tgt = [16, 17, 18.5, 20, 22, 24, 26, 28, 30, 32, 35, 38, 40]
     table = [[float(t), round(float(np.interp(t, vol, units)), 2)] for t in tgt if vol.min() <= t <= vol.max()]
     lines.append('target BMI -> field multiplier (BMI points of field): ' + ', '.join(f'{a:g}: {b:+.2f}' for a, b in table))
 
+    # 中心型体型场：BMI 不变时，中心型因子（anthro-model 的第二个因子）每 +1 SD 的皮肤位移。
+    # 只有 ANSUR 的围度带因子载荷，所以由这些围度的变化解身份系数的变化（第 2 分量和体积 BMI 不动）。
+    # Central-build field: skin displacement per +1 SD of the central-build factor (the second factor of the anthro
+    # model) at constant BMI. Only the ANSUR girths carry factor loadings, so the change of identity is solved from the
+    # change of those girths (component 2 and the volume BMI held).
+    from fit_skin import TARGETS
+    rowsA, rhsA = [], []
+    for ours, ds, var, wgt in TARGETS:
+        if ds == 'ansur':
+            mdl = model['sexes'][sex]['outputs'][var]
+            g0 = float(sur[ours][0] + sur[ours][1:] @ ident[:NCOMP])
+            rowsA.append(sur[ours][1:] / max(g0, 1e-9))
+            rhsA.append(np.exp(mdl['factorLoadings'][1]) - 1.0)
+    Ac = np.array(rowsA)
+    hold = np.vstack([10.0 * sur['bmiFromVolume'][1:] / 22.0, 10.0 * np.eye(NCOMP)[1]])
+    dc_central = np.linalg.lstsq(np.vstack([Ac, hold, 0.02 * np.eye(NCOMP)]), np.r_[rhsA, np.zeros(2 + NCOMP)], rcond=None)[0]
+    central = body(dc_central)[0] - body(np.zeros(NCOMP))[0]
+    central.astype(np.float32).tofile(os.path.join(d, 'shape-central.f32'))
+    lines.append(f'central-build field: identity change per +1 SD {np.round(dc_central, 3).tolist()}; displacement p50 {np.median(np.linalg.norm(central, axis=1)) * 1000:.1f} mm, max {np.linalg.norm(central, axis=1).max() * 1000:.1f} mm; '
+                 f'girth change wanted (ANSUR loadings) {np.round(np.array(rhsA) * 100, 1).tolist()} %, obtained by the linear model {np.round(Ac @ dc_central * 100, 1).tolist()} %')
     fat.astype(np.float32).tofile(os.path.join(d, 'shape-fat.f32'))
     d2.astype(np.float32).tofile(os.path.join(d, 'shape-sex.f32'))
     limit.tofile(os.path.join(d, 'shape-limit.f32'))
@@ -218,6 +244,7 @@ def main():
         'fields': {
             'shape-fat.f32': {'type': 'float32[n][3]', 'unit': 'm per BMI point', 'use': 'skin += m(bmi) * fat with m from bmiToFieldUnits, each vertex clamped so that |displacement| <= limit'},
             'shape-sex.f32': {'type': 'float32[n][3]', 'unit': 'm per unit of MHR identity coefficient 2 (+ = female build)', 'use': 'optional second control; not needed for the default bodies'},
+            'shape-central.f32': {'type': 'float32[n][3]', 'unit': 'm per +1 SD of the central-build control (centralBuild) at constant BMI', 'use': 'skin += centralBuild * central; from the ANSUR factor loadings of the anthro model, solved in MHR identity components 1-6 with component 2 and the volume BMI held'},
             'shape-limit.f32': {'type': 'float32[n]', 'unit': 'm', 'use': 'largest outward displacement along the fat field before the facing skin is reached (1.0 = no facing surface within 100 mm)'}},
         'fatFieldDirectionPerBmiPoint': {'mhrIdentityCoefficients1to6': [round(float(v), 5) for v in slope6]},
         'singleFieldChecks': checks,

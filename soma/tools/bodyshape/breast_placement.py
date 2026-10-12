@@ -36,12 +36,31 @@ def main():
     # 胸壁 = 除 HRA 乳腺部件以外的深部结构 / chest wall = the deep parts other than the HRA mammary parts
     DV, DF = fb.merged(lambda p: p['tissue'] in Body.DEEP and p['system'] != 'integumentary' and not p['id'].startswith('HRA_'))
     import igl
-    out, lines = {}, []
+    out, lines, xf = {}, [], {}
+    # 导出的 HRA 部件已经带着管线现在施加的那套摆放（breast-placement-installed.json）；先把它撤掉，这样给出的数字仍是针对原始部件的。
+    # The exported HRA parts already carry the placement the pipeline applies now (breast-placement-installed.json); it is
+    # undone first, so the numbers given here still refer to the original parts.
+    inst = json.load(open(os.path.join(d, 'breast-placement-installed.json')))['sides'] if os.path.exists(os.path.join(d, 'breast-placement-installed.json')) else None
+
+    def mesh0(p):
+        v = fb.mesh(p)[0]
+        if inst is None:
+            return v
+        o = inst[p['id'][-1]]
+        A0, T0 = np.array(o['aboutPoint']), np.array(o['translationM'])
+        if p['id'] in o['nippleAndAreola']['parts']:
+            v = v - np.array(o['nippleAndAreola']['extraTranslationM'])
+        return A0 + (v - A0 - T0) / o['scale']
+    # --common-scale：第二遍，两侧用同一个缩放（上一遍两侧建议值中较小的那个）/ second pass with one scale for both sides (the smaller of the two recommended in the first pass)
+    force = None
+    if '--common-scale' in sys.argv:
+        prev = json.load(open(os.path.join(d, 'breast-placement.json')))['sides']
+        force = min(prev[S]['scale'] for S in 'LR' if prev[S]['scale'])
     for S, sg in (('L', 1), ('R', -1)):
         parts = [p for p in fb.parts if p['id'].startswith('HRA_') and p['id'].endswith('_' + S) and p['system'] == 'integumentary']   # 只取乳腺部件（HRA 还有卵巢韧带等）/ mammary parts only (HRA also has ovarian ligaments and the like)
-        inner = np.vstack([fb.mesh(p)[0] for p in parts if p['tissue'] != 'skin'])
-        nip = np.vstack([fb.mesh(p)[0] for p in parts if 'nipple' in p['id']])
-        fat = np.vstack([fb.mesh(p)[0] for p in parts if p['id'].startswith('HRA_fat')])
+        inner = np.vstack([mesh0(p) for p in parts if p['tissue'] != 'skin'])
+        nip = np.vstack([mesh0(p) for p in parts if 'nipple' in p['id']])
+        fat = np.vstack([mesh0(p) for p in parts if p['id'].startswith('HRA_fat')])
         A = fat[fat[:, 2] <= np.percentile(fat[:, 2], 15)].mean(0)
         tip = nip[np.argmax(nip[:, 2])]
         # 皮肤乳房最前点：该侧、附着点上下 9 cm、离正中 3–17 cm 范围内最靠前的皮肤顶点
@@ -61,6 +80,9 @@ def main():
             if np.percentile(dg, 99) <= -3.0:
                 best = (float(sc), float(np.percentile(dg, 99)), float(dg.max()))
                 break
+        if force is not None:
+            dgf = signed_distance(A + T + force * (inner - A), V, F) * 1000
+            best = (float(force), float(np.percentile(dgf, 99)), float(dgf.max()))
         dg0 = signed_distance(A + T + s_n * (inner - A), V, F) * 1000
         sc_use = best[0] if best else s_n
         tip_new = A + T + sc_use * (tip - A)
@@ -69,9 +91,9 @@ def main():
         # A separate translation for the nipple and areola parts: after the reduced scale they lie under the skin; the
         # areola is moved onto the skin (median signed distance of its points 0) and the nipple then stands out of it.
         sk_parts = [p for p in parts if p['tissue'] == 'skin' or 'nipple' in p['id'] or 'areola' in p['id']]
-        sv = A + T + sc_use * (np.vstack([fb.mesh(p)[0] for p in sk_parts]) - A)
+        sv = A + T + sc_use * (np.vstack([mesh0(p) for p in sk_parts]) - A)
         ar = [p for p in parts if 'areola' in p['id']] or sk_parts
-        av = A + T + sc_use * (np.vstack([fb.mesh(p)[0] for p in ar]) - A)
+        av = A + T + sc_use * (np.vstack([mesh0(p) for p in ar]) - A)
         c2 = igl.point_mesh_squared_distance(np.ascontiguousarray(tip_new[None]), np.ascontiguousarray(V), np.ascontiguousarray(F))[2][0]
         dirn = (c2 - tip_new) / max(np.linalg.norm(c2 - tip_new), 1e-9) * (1.0 if tip_sd < 0 else -1.0)
         noff = -float(np.median(signed_distance(av, V, F))) * dirn
@@ -79,6 +101,7 @@ def main():
             noff = noff - float(np.median(signed_distance(av + noff, V, F))) * dirn
         sd_ar = signed_distance(av + noff, V, F) * 1000
         sd_tip = float(signed_distance((tip_new + noff)[None], V, F)[0] * 1000)
+        xf[S] = (A, T, sc_use, noff, {p['id'] for p in sk_parts}, parts)
         nip_info = {'parts': [p['id'] for p in sk_parts], 'extraTranslationM': [round(float(x), 4) for x in noff],
                     'areolaToSkinMm': {'median': round(float(np.median(sd_ar)), 1), 'p5': round(float(np.percentile(sd_ar, 5)), 1), 'p95': round(float(np.percentile(sd_ar, 95)), 1)},
                     'nippleTipOutsideSkinMm': round(sd_tip, 1)}
@@ -99,6 +122,20 @@ def main():
                'sides': out}, open(os.path.join(d, 'breast-placement.json'), 'w'), ensure_ascii=False, indent=1)
     open(os.path.join(d, 'breast-placement.txt'), 'w').write('\n'.join(lines))
     print('\n'.join(lines))
+    # 胸部特写：皮肤半透明，下面是按上面的变换摆好的 HRA 乳腺部件和胸壁 / chest close-up: the skin semi-transparent over the HRA mammary parts placed by the transform above, and the chest wall
+    from bodylib import render_closeup
+    layers = [(V, F, (0.87, 0.72, 0.62))]
+    for S in 'LR':
+        A, T, sc, noff, skin_ids, parts = xf[S]
+        for p in parts:
+            v, f = mesh0(p), fb.mesh(p)[1]
+            v2 = A + T + sc * (v - A) + (noff if p['id'] in skin_ids else 0.0)
+            layers.append((v2, f, (0.55, 0.25, 0.2) if p['id'] in skin_ids else ((0.95, 0.6, 0.7) if p['tissue'] == 'gland' else (0.95, 0.85, 0.5))))
+    layers.append((np.asarray(DV), np.asarray(DF), (0.75, 0.3, 0.3)))
+    sy = float(np.mean([xf[S][0][1] + xf[S][1][1] for S in 'LR']))
+    lo, hi = [-0.22, sy - 0.16, -0.05], [0.22, sy + 0.20, 0.32]
+    render_closeup(layers, os.path.join(d, 'closeup-chest-gland.png'), lo, hi, views=('front', 'side'), height=900, alpha=0.5)
+    render_closeup(layers[:1], os.path.join(d, 'closeup-chest-skin-only.png'), lo, hi, views=('front', 'side'), height=900)
 
 
 if __name__ == '__main__':

@@ -23,6 +23,14 @@ const present = existsSync(FILE)
 const SYSTEMS = ['integumentary', 'muscular', 'skeletal', 'cardiovascular', 'nervous', 'respiratory', 'digestive', 'urinary', 'reproductive', 'endocrine', 'lymphatic', 'other']
 const TISSUES = ['skin', 'fat', 'fascia', 'muscle', 'tendon', 'ligament', 'cartilage', 'bone', 'tooth', 'artery', 'vein', 'heart', 'nerve', 'brain', 'organ', 'gland', 'space', 'other']
 
+interface FitRow {
+  closed: boolean
+  outside: number
+  outside5mm: number
+  worst: { name: string; outside: number; maxMm: number }[]
+  notEnclosedByDesign?: { parts: number; outside: number; outside5mm: number; worst: { name: string; outside: number; maxMm: number }[] }
+}
+
 describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
   const data = (present ? JSON.parse(readFileSync(FILE, 'utf8')) : null) as AnatomyData
   const byId = new Map<string, Part>(present ? data.parts.map((p) => [p.id, p]) : [])
@@ -32,7 +40,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     return hits[0]!
   }
   const layerOf = (p: Part) => LAYERS[p.depth]!.key
-  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { corrections?: { release3SwappedGeometry?: string[][] }; skinPackage?: { installed?: boolean; fittedTo?: { key: string }; internalsKey?: string; fit?: { closed: boolean; outside: number; outside5mm: number }; fitShipped?: { closed: boolean; outside: number }; face?: { cover: Record<string, { minMm: number; medianMm: number } | null>; eyeJoint?: Record<'L' | 'R', { distanceMm: number }> }; notFitted?: { thin: { outside: number } }; resolution?: Record<'source' | 'simplifiedWhole' | 'shipped', { vertices: number; triangles: number; face: { vertices: number; triangles: number; meanEdgeMm: number } }> & { shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } } }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] } }
+  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { corrections?: { release3SwappedGeometry?: string[][] }; skinPackage?: { installed?: boolean; fittedTo?: { key: string }; internalsKey?: string; notEnclosedPartIds?: string[]; fit?: FitRow; fitShipped?: FitRow; face?: { cover: Record<string, { minMm: number; medianMm: number } | null>; eyeJoint?: Record<'L' | 'R', { distanceMm: number }> }; notFitted?: { thin: { outside: number } }; resolution?: Record<'source' | 'simplifiedWhole' | 'shipped', { vertices: number; triangles: number; face: { vertices: number; triangles: number; meanEdgeMm: number } }> & { shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } } }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] } }
   const skinInstalled = !!pipelineReport.skinPackage?.installed
   const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? ((JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as { shoulderGirdle?: { provenance?: { relabelledIds?: string[] } } }).shoulderGirdle?.provenance?.relabelledIds ?? []) : [])
 
@@ -267,13 +275,30 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     // positions in the GLB are quantised and the muscles simplified: a few vertices on the border fall either way
     expect(Math.abs(shipped.face.vertices - res.shipped.face.vertices)).toBeLessThan(400)
     expect(shipped.face.meanEdgeMm).toBeLessThanOrEqual(2)
-    // 皮肤仍包得住深部结构（按设计不包的眼睑、唇、鼻软骨处除外，合计不到 0.1 %）
-    // the skin still encloses the deep parts (but for the lids, lips and nasal cartilages left out by design, under 0.1 % in all)
-    expect(sp.fit!.closed).toBe(true)
-    expect(sp.fit!.outside).toBeLessThan(0.001)
-    expect(sp.fit!.outside5mm).toBe(0)
-    expect(sp.fitShipped!.closed).toBe(true)
-    expect(sp.fitShipped!.outside).toBeLessThan(0.002)
+    // 皮肤仍包得住它应当包住的深部结构：没有任何一处露出 5 mm 以上。
+    // 皮肤作者有意不包的部件（眼球各部、睑缘处的眼轮匝肌、唇、牙、舌、鼻软骨）取自皮肤包 manifest 的
+    // face.notEnclosed.partIds，不在这里写名字；它们露出多少另行报告（notEnclosedByDesign）。
+    // 不在那份名单上的部件只要露出 5 mm 以上，这里就不通过（checkSkinFit 的单元测试见 pipeline.test.ts）。
+    // The skin still encloses the deep parts it is meant to enclose: nowhere more than 5 mm outside.
+    // The parts the skin's author deliberately left out (parts of the eyeball, orbicularis oculi at the lid margins, lips,
+    // teeth, tongue, nasal cartilages) come from face.notEnclosed.partIds in the package manifest, not from names written
+    // here; how far they come through is reported apart (notEnclosedByDesign). Any part not on that list lying more than
+    // 5 mm outside fails here (the unit test of checkSkinFit is in pipeline.test.ts).
+    for (const fit of [sp.fit!, sp.fitShipped!]) {
+      expect(fit.closed).toBe(true)
+      expect(fit.outside).toBeLessThan(0.002)
+      expect(fit.outside5mm).toBe(0)
+      for (const w of fit.worst) expect(w.maxMm, w.name).toBeLessThanOrEqual(5)
+      expect(fit.notEnclosedByDesign!.parts).toBeGreaterThan(0)
+      expect(fit.notEnclosedByDesign!.outside).toBeGreaterThan(0)
+    }
+    // 名单上的 id 都是现有部件，且都属于“深部”那几类之一或不参与检查；名单与报告一致
+    // every id on the list is a part of this body, and the report repeats the list
+    expect(sp.notEnclosedPartIds!.length).toBeGreaterThan(0)
+    for (const id of sp.notEnclosedPartIds!) expect(byId.has(id), id).toBe(true)
+    const exemptNames = new Set(sp.notEnclosedPartIds!.map((id) => byId.get(id)!.name))
+    for (const w of sp.fit!.worst) expect(exemptNames.has(w.name), `${w.name} is exempt but counted`).toBe(false)
+    for (const w of sp.fit!.notEnclosedByDesign!.worst) expect(exemptNames.has(w.name), `${w.name} is not exempt`).toBe(true)
     // 眼关节与眼球中心相差不过几毫米（右侧巩膜的源网格带一粒碎屑，按包围盒算会差出 24 mm）
     // the eye joints lie within a few millimetres of the centres of the globes (the source mesh of the right sclera carries a speck that would put a bounding-box centre 24 mm off)
     for (const side of ['L', 'R'] as const) expect(sp.face!.eyeJoint![side].distanceMm).toBeLessThan(8)
