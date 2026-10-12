@@ -192,6 +192,13 @@ limn 这一轮的数：
 
 按编号载入的单个结构，手绘画法下改成他最近的“每月分子”那样：**看得见原子**（不做平滑），**没有黑线**，轮廓是填色的深一号。第一次试把线调得太浅又留着平滑，图是糊的；对着他的新冠刺突图（第 246 篇）改回来。量出来线的明度 0.48（他的 0.43），线占主体的比例 0.11（他的 0.10）。并排图 `out/S2-*.jpg`。颜色和视角与他的不同（他按结构域上色、带示意的膜和柄），这些没有做。
 
+### G1：总览核对，突触的底色，黏蛋白分叉
+
+- 重出了全部 25 张卡的总览（`out/sheet-G1.jpg`），Illustrate 对照重跑仍是 2.80。
+- **总览抓到一处退步**：上一步把单个分子的平滑关掉之后，寨卡和 HIV 衣壳这类几十万原子的大结构成了一片麻点。改成放置后原子数超过 20 万的仍做平滑。
+- **突触的白洞**：突触前、突触后两个场景用深色的底（目录条目的 `ground`），缝隙里露出的是深色，不再是白纸。
+- **黏蛋白分叉**：穿线工具加了 `branches`，每隔几步向旁边伸出一小段，用在新冠的黏蛋白上。离他画的刷子状还有距离：他的分叉更密、更长，而且线之间填满了。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -374,3 +381,10 @@ The user agreed to a clearly labelled "exaggeration" option. `exaggerate` (`src/
 ### S1–S2: single molecules after his way of drawing since 2015
 
 Single structures loaded by id, in the painted drawing, now follow his recent Molecule of the Month pictures: **atoms can be seen** (no smoothing), **no black lines**, the outline a deeper shade of the fill. A first try made the lines too pale and kept the smoothing, which gave a blur; it was corrected against his coronavirus spike picture (article 246). Measured, line lightness is 0.48 (his 0.43) and the share of the subject that is line 0.11 (his 0.10). Side by side: `out/S2-*.jpg`. Colours and viewpoint differ from his (he colours by domain and adds a schematic membrane and stalk); those were not done.
+
+### G1: checking the sheet, a ground for the synapse, branched mucin
+
+- The contact sheet of all 25 cards was rendered again (`out/sheet-G1.jpg`), and the Illustrate comparison rerun, still at 2.80.
+- **The sheet caught a regression**: with smoothing turned off for single molecules in the last step, large structures of hundreds of thousands of atoms such as the Zika and HIV capsids had become speckle. Structures with more than 200 thousand placed atoms are smoothed again.
+- **White holes in the synapse**: the pre- and postsynaptic scenes get a dark ground (`ground` in the catalogue entry), so gaps show a deep tone and not paper.
+- **Branched mucin**: the threading tool gained `branches`, a short side piece every few steps, used for the coronavirus's mucin. It is still some way from the brush he paints: his branches are denser and longer, and the space between strands is filled.
