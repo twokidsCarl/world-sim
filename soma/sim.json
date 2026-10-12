@@ -268,8 +268,8 @@
         "en": "Female: fatness and stature"
       },
       "hint": {
-        "zh": "拖动 BMI 和身高滑块。乳房和内脏脂肪不随 BMI 变；女性模型的 BMI 读数只是近似",
-        "en": "Drag the BMI and stature sliders. The breasts and visceral fat do not follow BMI; the BMI readout of the female body is approximate"
+        "zh": "拖动 BMI 和身高滑块。乳房和内脏脂肪不随 BMI 变",
+        "en": "Drag the BMI and stature sliders. The breasts and visceral fat do not follow BMI"
       },
       "url": "/?body=female&sys=int&skin=1&shape=b30"
     }

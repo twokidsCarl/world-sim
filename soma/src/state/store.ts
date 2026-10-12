@@ -646,15 +646,7 @@ export const useApp = create<AppState>()((set, get) => ({
       const systems: Partial<Record<SystemId, SystemState>> = {}
       const show: SystemId[] = view === 'muscle' ? ['muscular', 'skeletal'] : ['integumentary']
       for (const [k, v] of Object.entries(s.systems) as [SystemId, SystemState][]) systems[k] = { ...v, visible: show.includes(k) }
-      // 皮肤视图：头发、眉毛、阴毛的网格并不贴在新皮肤上（会从皮肤里翘出来），默认隐藏；耳、指甲照常显示
-      // skin view: the hair, eyebrow and pubic-hair meshes do not sit on the new skins (they poke out of them), so they are hidden; ears and nails stay
-      const hidden = new Set(s.hidden)
-      for (const p of s.graph?.partsBySystem('integumentary') ?? []) {
-        if (!/hair|eyebrow/i.test(p.name)) continue
-        if (view === 'skin') hidden.add(p.id)
-        else hidden.delete(p.id)
-      }
-      return { systems, hidden, skinOpaque: view === 'skin', isolated: null, peel: 0, skinMapMode: 'off' }
+      return { systems, skinOpaque: view === 'skin', isolated: null, peel: 0, skinMapMode: 'off' }
     }),
 
   ensureRig: async () => {

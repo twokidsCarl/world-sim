@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { NOCICEPTION, REFLEX, REGIONS, SOURCES, siteThreshold } from '../src/painmodel/index.ts'
+import { NOCICEPTION, REFLEX, REGIONS, SOURCES, responseGain, siteThreshold } from '../src/painmodel/index.ts'
 
 const DIR = join(import.meta.dirname, '../data/curated/pain')
 const TABLES = ['nociception.json', 'regions.json', 'reflex.json', 'autonomic.json']
@@ -135,6 +135,29 @@ describe('pain tables: coverage', () => {
       }
     }
     expect(() => siteThreshold(REGIONS.thresholds.heat, 'nowhere', 'male')).toThrow()
+  })
+
+  it('gives every modality a supra-threshold gain, and heat its documented alternatives', () => {
+    for (const [kind, m] of Object.entries(NOCICEPTION.modalities)) {
+      const g = responseGain(m)
+      expect(g.quantity.value, kind).toBeGreaterThan(0)
+      expect(g.anchor === null, kind).toBe(kind !== 'heat')
+    }
+    const r = NOCICEPTION.modalities.heat.response
+    expect(Object.keys(r.anchors!).sort()).toEqual(['noSensation', 'noSensationRescaled', 'painScale', 'toleranceRamp'])
+    expect(r.anchors![r.defaultAnchor!]).toBeDefined()
+    expect(r.anchorNote!.zh.length).toBeGreaterThan(20)
+    expect(r.anchorNote!.en.length).toBeGreaterThan(20)
+    // 每种取法都写明出处实际测了什么 / every reading states what its source actually measured
+    for (const [id, q] of Object.entries(r.anchors!)) {
+      expect(q.source, id).toBeDefined()
+      expect(q.note!.en, id).toMatch(/^Measured|^Derived/)
+      expect(responseGain(NOCICEPTION.modalities.heat, id).quantity).toBe(q)
+    }
+    expect(() => responseGain(NOCICEPTION.modalities.heat, 'nonsense')).toThrow()
+    // 逃离时间是假设 / the escape time is an assumption
+    expect(REFLEX.escape.assumption).toBe(true)
+    expect(REFLEX.escape.value).toBeGreaterThan(0)
   })
 
   it('keeps the fibre velocities inside their sourced ranges and Aδ faster than C', () => {

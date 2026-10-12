@@ -10,6 +10,7 @@
 
 import { envelope, painAUs } from '../../tools/face/model.ts'
 import { useApp } from '../state/store.ts'
+import { VOICE_PACK } from './build.ts'
 import { PainVoice, loadVoicePack, schedulePainVocalisation, type ScheduledVocalisation } from '../voice/index.ts'
 import { cleanAUs, maxAUs, type AUs } from './face.ts'
 
@@ -112,6 +113,12 @@ async function ensureVoice(): Promise<PainVoice> {
   if (voice) return voice
   if (!voiceLoading) {
     useApp.setState({ voiceStatus: 'loading', voiceProgress: 0 })
+    if (!VOICE_PACK) {
+      // 商业构建不带录音包：不发请求，直接用参数合成器 / a commercial build ships no recordings: no request, straight to the parametric synthesizer
+      voice = new PainVoice(null)
+      useApp.setState({ voiceStatus: 'synthetic', voiceProgress: 1 })
+      return Promise.resolve(voice)
+    }
     let done = 0
     // 逐个文件计数来报告进度 / progress is reported by counting files as they arrive
     const counting = (async (input: RequestInfo | URL, init?: RequestInit) => {

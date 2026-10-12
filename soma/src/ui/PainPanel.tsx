@@ -7,6 +7,7 @@ import { painAUs, pspi } from '../../tools/face/model.ts'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import type { FaceData } from '../face/types.ts'
 import { triggerPain } from '../pain/controller.ts'
+import { VOICE_PACK } from '../pain/build.ts'
 import { useApp } from '../state/store.ts'
 import { CautionList } from './CautionsDialog.tsx'
 
@@ -149,7 +150,8 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
 
   const model = face.data.pain
   const score = pspi(model, painAUs(model, pain.level))
-  const sex = graph.data.body === 'female' ? '女声' : '男声（由女声录音变调）'
+  // 只有用录音时男声才是由女声录音变调来的 / the male voice is derived from the female recordings only when recordings are used
+  const sex = graph.data.body === 'female' ? '女声' : lastVoice?.source === 'recorded' ? '男声（由女声录音变调）' : '男声'
 
   return (
     <div className="panel-body scroll pain-panel">
@@ -201,17 +203,20 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
             </div>
           </>
         )}
-        {!pain.muted && voiceStatus === 'idle' && <p className="hint">第一次有声触发时会下载声音素材（约 8.6 MB）。 The first unmuted trigger downloads the sound pack (about 8.6 MB).</p>}
-        {voiceStatus === 'synthetic' && <p className="hint">没有找到录音包，改用参数合成的声音。 No sound pack found; using the parametric synthesizer.</p>}
+        {VOICE_PACK && !pain.muted && voiceStatus === 'idle' && <p className="hint">第一次有声触发时会下载声音素材（约 8.6 MB）。 The first unmuted trigger downloads the sound pack (about 8.6 MB).</p>}
+        {VOICE_PACK && voiceStatus === 'synthetic' && <p className="hint">没有找到录音包，改用参数合成的声音。 No sound pack found; using the parametric synthesizer.</p>}
+        {!VOICE_PACK && <p className="hint">这个构建不带录音，声音由参数合成。 This build ships no recordings; the voice is synthesised parametrically.</p>}
         {lastVoice && (
           <p className="hint">
             上一次：{lastVoice.source === 'none' ? `按模型这一次不出声（该强度下出声的概率 ${Math.round(lastVoice.probability * 100)}%）` : `${lastVoice.type} · ${lastVoice.source === 'recorded' ? '录音（演员表演）' : '参数合成'} · ${sex}`}
           </p>
         )}
-        <button className="link-btn" aria-expanded={attribOpen} onClick={() => setAttribOpen(!attribOpen)}>
-          {attribOpen ? '收起' : '展开'}声音素材的署名 · 仅限非商业使用 <span className="en">Sound attribution · non-commercial only</span>
-        </button>
-        {attribOpen && <VoiceAttribution />}
+        {VOICE_PACK && (
+          <button className="link-btn" aria-expanded={attribOpen} onClick={() => setAttribOpen(!attribOpen)}>
+            {attribOpen ? '收起' : '展开'}声音素材的署名 · 仅限非商业使用 <span className="en">Sound attribution · non-commercial only</span>
+          </button>
+        )}
+        {VOICE_PACK && attribOpen && <VoiceAttribution />}
       </section>
 
       <section className="group">

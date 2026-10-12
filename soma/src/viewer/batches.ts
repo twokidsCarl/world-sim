@@ -197,7 +197,7 @@ export interface PartMaterialSet {
  * The three materials every part is drawn with. `colorNode` supplies the per-part RGBA when
  * it does not come from the batch (the per-mesh fallback passes a userData node).
  */
-export function makePartMaterials(data: SkinningData, colorNode: unknown = null): PartMaterialSet {
+export function makePartMaterials(data: SkinningData, colorNode: unknown = null, wrapPosition: ((node: unknown) => unknown) | null = null): PartMaterialSet {
   const solid = new MeshStandardNodeMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0 })
   // 剖切面：开启剖切时此材质为双面，背面写成不受光的压暗纯色，切口看起来是实心的
   // Section caps: with a section plane on, this material is double-sided and back faces are
@@ -222,7 +222,10 @@ export function makePartMaterials(data: SkinningData, colorNode: unknown = null)
   const setSkinning = (mode: SkinningMode): void => {
     if (mode === current) return
     current = mode
-    const node = positionNodeFor(data, mode)
+    // wrapPosition：合块绘制时用它把不归这一块画的部件的顶点收成一个点
+    // wrapPosition: the chunked draw uses it to collapse the vertices of parts it does not draw
+    const base = positionNodeFor(data, mode)
+    const node = wrapPosition ? wrapPosition(base) : base
     for (const m of [solid, blended, tint]) {
       m.positionNode = node as typeof m.positionNode
       m.needsUpdate = true
@@ -423,6 +426,12 @@ export class PartBatches implements PartRenderer {
     // rest bounding spheres are wrong once posed: draw everything (per-instance culling off)
     this.opaque.perObjectFrustumCulled = mode === 'off'
     this.blend.perObjectFrustumCulled = mode === 'off'
+    // 关掉逐实例裁剪后，BatchedMesh 只在可见性变化时才重排绘制列表；不强制一次的话，
+    // 列表会停在"上一次裁剪后的样子"（例如从面部特写开始摆姿势，拉远后身体其余部分不画）
+    // with per-instance culling off, BatchedMesh rebuilds its draw list only when visibility changes;
+    // unless forced once, the list stays as last culled (e.g. posing starts at a face close-up and
+    // the rest of the body is missing after zooming out)
+    for (const b of [this.opaque, this.blend]) (b as unknown as { _visibilityChanged: boolean })._visibilityChanged = true
   }
 
   /** 共享缓冲的占用情况，供诊断。 */

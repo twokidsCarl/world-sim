@@ -1920,9 +1920,52 @@ div.voice-attrib p + p {
 }
 
 @media (max-width: 600px) {
+  /* 手机：顶栏排成两行——第一行是抽屉按钮、搜索、详情按钮，第二行是其余按钮 */
+  /* phone: the top bar takes two rows — drawer button, search and details button, then the rest */
+  .app:not(.app-embed) {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
   .topbar {
     gap: 6px;
-    padding: 0 6px;
+    padding: 6px;
+    flex-wrap: wrap;
+  }
+
+  .topbar-right {
+    display: contents;
+  }
+
+  .topbar > .search {
+    order: 1;
+    /* 占满第一行里两个图标按钮之外的宽度，其余按钮因此换到第二行 */
+    /* takes the first row's width beside the two icon buttons, which pushes the other buttons to a second row */
+    flex: 1 1 calc(100% - 100px);
+    max-width: none;
+  }
+
+  .topbar-right > .icon-btn.only-narrow {
+    order: 2;
+  }
+
+  .topbar-right > :not(.only-narrow) {
+    order: 3;
+  }
+
+  .topbar-right > .body-switch {
+    margin-right: auto;
+  }
+
+  .not-phone {
+    display: none;
+  }
+
+  /* 触屏上的点按目标不小于 36 px / tap targets of at least 36 px on touch screens */
+  .topbar .icon-btn,
+  .topbar .text-btn,
+  .topbar .chip-button,
+  .body-switch button {
+    min-height: 36px;
   }
 
   .brand {
@@ -1954,5 +1997,43 @@ div.voice-attrib p + p {
 
   .viewer-footer {
     font-size: 10px;
+  }
+}
+
+/* ---------------------------------------------------------------- 触屏 / touch screens */
+
+/* 粗指针（手指）：面板和嵌入控制条里的控件加高，滑块的可按范围加大 */
+/* coarse pointers (fingers): taller controls in the panels and the embed strip, and a larger hit area on sliders */
+@media (pointer: coarse) {
+  .tabs {
+    height: 44px;
+  }
+
+  .tool-btn,
+  .text-btn,
+  .link-btn,
+  .chip-button,
+  .actions button,
+  .segmented button,
+  .preset-grid button {
+    min-height: 36px;
+  }
+
+  input[type='range'] {
+    height: 30px;
+  }
+
+  input[type='checkbox'] {
+    width: 20px;
+    height: 20px;
+  }
+
+  .check,
+  .switch {
+    min-height: 32px;
+  }
+
+  .embed-strip {
+    gap: 8px;
   }
 }

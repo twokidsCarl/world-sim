@@ -3,7 +3,6 @@
 // the limits on this body and of the model.
 
 import { useState } from 'react'
-import type { AnatomyGraph } from '../anatomy/graph.ts'
 import type { ShapeControl } from '../shape/types.ts'
 import { useApp } from '../state/store.ts'
 import { CautionList } from './CautionsDialog.tsx'
@@ -20,7 +19,7 @@ function format(c: ShapeControl, v: number): string {
 
 /** 一个控制量的滑块。滑块跨越模型的整个范围，取值被限制在这副身体的可用范围内。 */
 /** One control's slider. It spans the model's whole range; the value is kept within the range valid on this body. */
-export function ShapeSlider({ control, compact = false, approximate = false }: { control: ShapeControl; compact?: boolean; approximate?: boolean }) {
+export function ShapeSlider({ control, compact = false }: { control: ShapeControl; compact?: boolean }) {
   const value = useApp((s) => s.shapeControls[control.id] ?? control.default)
   const limit = useApp((s) => s.shapeLimit)
   const app = useApp.getState()
@@ -41,8 +40,7 @@ export function ShapeSlider({ control, compact = false, approximate = false }: {
     return (
       <label className="embed-slider" title={`${control.name.en}\n${control.valid.why.zh}\n${control.valid.why.en}`}>
         <span>
-          {control.name.zh} {approximate ? '≈' : ''}
-          {format(control, value)}
+          {control.name.zh} {format(control, value)}
         </span>
         {input}
       </label>
@@ -55,7 +53,6 @@ export function ShapeSlider({ control, compact = false, approximate = false }: {
           {control.name.zh} <span className="en">{control.name.en}</span>
         </span>
         <span className="value">
-          {approximate ? '≈ ' : ''}
           {format(control, value)}
         </span>
       </label>
@@ -77,7 +74,7 @@ export function ShapeSlider({ control, compact = false, approximate = false }: {
   )
 }
 
-export function ShapeControls({ graph }: { graph: AnatomyGraph }) {
+export function ShapeControls() {
   const shape = useApp((s) => s.shape)
   const status = useApp((s) => s.shapeStatus)
   const message = useApp((s) => s.shapeMessage)
@@ -86,7 +83,6 @@ export function ShapeControls({ graph }: { graph: AnatomyGraph }) {
   const rigStatus = useApp((s) => s.rigStatus)
   const [open, setOpen] = useState(false)
   const app = useApp.getState()
-  const female = graph.data.body === 'female'
   return (
     <section className="group">
       <h3>
@@ -106,14 +102,8 @@ export function ShapeControls({ graph }: { graph: AnatomyGraph }) {
       {shape && (
         <>
           {shape.data.controls.map((c) => (
-            <ShapeSlider key={c.id} control={c} approximate={female && c.id === 'bmi'} />
+            <ShapeSlider key={c.id} control={c} />
           ))}
-          {female && (
-            <p className="hint">
-              女性模型的默认 BMI 在数据里有两个不一致的值（脂肪场表 22.0，皮肤拟合 23.7），所以这里的 BMI 读数只是近似。
-              <span className="en"> The female body's default BMI is ambiguous in the data (22.0 from the fat-field table, 23.7 from the skin fit), so the BMI readout here is approximate.</span>
-            </p>
-          )}
           {posed && rigStatus !== 'ready' && <p className="hint">身高和比例通过关节缩放实现，正在加载骨架绑定… Stature and proportions act through the rig, which is loading…</p>}
           <button className="chip chip-warn chip-button" aria-expanded={open} onClick={() => setOpen(!open)}>
             体型模型的 {shape.data.cautions.length + 2} 条局限

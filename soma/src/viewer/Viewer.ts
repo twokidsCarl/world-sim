@@ -37,6 +37,7 @@ import {
   THIN_RADIUS,
   clipRay,
   computeDisplay,
+  skinDrawnOpaque,
   computeExplode,
   sectionPlane,
   type PlaneEq,
@@ -314,6 +315,11 @@ export class Viewer {
   private poseTween: { from: Pose; to: Pose; t0: number; ms: number } | null = null
   private poseTarget: Pose = {}
   private poseScales: Scales | null = null
+  /** 相机已经跟到的那套缩放、此刻的身体包围盒（null = 原样），以及"相机来自链接，下一次只记不动" */
+  /** The scales the camera has followed, the body bounds right now (null = as built), and "the camera came from a link: record next time, do not move". */
+  private framedScales: Scales | null = null
+  private frameBounds: [number, number, number, number, number, number] | null = null
+  private framePending = false
   private breathing = false
   private breathT0 = 0
   /** 当前是否处于摆姿势状态（着色器走蒙皮分支）/ Whether the scene is currently posed (shaders on the skinning branch). */
@@ -339,6 +345,8 @@ export class Viewer {
   private bodyToken = 0
   private bvhVersion = 0
   private readonly source: () => ViewState
+  /** 对照窗格用：姿势 / 体型 / 表情数据被拒绝时的回调 / For the compare pane: called when rig / shape / face data is refused. */
+  onReject: ((kind: 'rig' | 'shape' | 'face', message: string) => void) | null = null
   private readonly interactive: boolean
   private readonly anchor = new Vector3()
   private applyingPose = false
@@ -622,6 +630,9 @@ export class Viewer {
    */
   setBody(graph: AnatomyGraph, baseUrl: string, opts: { keepCamera?: boolean } = {}): void {
     this.bodyToken++
+    this.framedScales = null
+    this.frameBounds = null
+    this.framePending = false
     if (this.batches) {
       this.root.remove(...this.batches.objects)
       this.batches.dispose()
@@ -651,7 +662,7 @@ export class Viewer {
     const batches: PartRenderer =
       this.scenePath === 'batched'
         ? new PartBatches(this.graph.parts.length, Math.ceil(triangles * 0.62) + 2000, triangles * 3 + 3000, this.skinning)
-        : new PartMeshes(this.skinning)
+        : new PartMeshes(this.skinning, new URLSearchParams(location.search).get('chunks') !== '0')
     if (this.scenePath === 'meshes') this.renderer.setTransparentSort(centroidTransparentSort as never)
     this.batches = batches
     this.updateBoost()
@@ -870,6 +881,8 @@ export class Viewer {
       this.tween = null
       this.camera.position.set(...s.cameraRequest.p)
       this.controls.target.set(...s.cameraRequest.t)
+      // 链接里的相机是对着链接里的体型存的 / a linked camera was saved for the linked shape
+      this.framePending = s.jointScales ? s.jointScales !== this.framedScales : Object.keys(s.shapeControls).some((k) => k !== 'bmi')
       this.controls.update()
       this.dirty = true
     }
@@ -888,6 +901,7 @@ export class Viewer {
       p.provenanceHidden !== s.provenanceHidden ||
       p.colorMode !== s.colorMode ||
       p.skinOpaque !== s.skinOpaque ||
+      skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
     const explodeChanged =
       !p ||
@@ -974,6 +988,7 @@ export class Viewer {
           isolated: s.isolated,
           adjacentMode: s.adjacentMode,
           selected: s.selection.set,
+          unfitted: skinDrawnOpaque(s, this.mainSkin) ? this.graph.unfittedAppendages() : null,
         },
         this.display,
       )
@@ -1043,7 +1058,7 @@ export class Viewer {
     if (problems.length) {
       console.warn('[soma] rig rejected', problems)
       this.appliedRig = null
-      useApp.getState().rejectRig(problems.slice(0, 3).join('；'))
+      this.reject('rig', problems.slice(0, 3).join('；'))
       return
     }
     this.writeRigParts(rig, parts.map((_, i) => i))
@@ -1068,7 +1083,7 @@ export class Viewer {
         console.warn(`[soma] rig rejected: ${parts[i]!.id} has ${n} vertices, the binding ${binding.vertexCount}`)
         this.appliedRig = null
         this.poseRt = null
-        useApp.getState().rejectRig(`部件 ${parts[i]!.id} 的绑定与网格不符 / the binding of ${parts[i]!.id} does not match its mesh`)
+        this.reject('rig', `部件 ${parts[i]!.id} 的绑定与网格不符 / the binding of ${parts[i]!.id} does not match its mesh`)
         return
       }
       writeInfluences(rig, parts[i]!.id, n, b.skinIndex, b.skinWeight, 0)
@@ -1092,6 +1107,67 @@ export class Viewer {
     this.skinLayer.setInfluences(index, weight)
   }
 
+  /**
+   * 身高或比例变了：让相机跟着身体走——视线方向不变，注视点和距离按身体包围盒的新旧比例换算，
+   * 这样身体在画面里的位置和大小保持不变（长高不会顶出画面）。
+   * Stature or proportions changed: the camera follows the body. The view direction stays; target
+   * and distance are remapped by the old and new body bounds, so the body keeps its place and
+   * size on screen (growing taller does not push the head out of view).
+   */
+  private followShape(rt: PoseRuntime): void {
+    this.framedScales = this.poseScales
+    const before = this.frameBounds ?? this.graph.bodyBounds
+    const b = this.graph.bodyBounds
+    const after: [number, number, number, number, number, number] = [b[0], b[1], b[2], b[3], b[4], b[5]]
+    if (!scalesAreIdentity(this.poseScales)) {
+      // 用关节中心的点云估计：静止姿势下各轴的范围从旧到新的线性变换，套到身体包围盒上
+      // estimated from the cloud of joint centres: the per-axis linear map of its extent at rest, old to new, applied to the body bounds
+      const joints = rt.rig.rig.joints
+      const xfs = jointFrames(joints, {}, this.poseScales ?? undefined).xfs
+      const lo0 = [Infinity, Infinity, Infinity], hi0 = [-Infinity, -Infinity, -Infinity], lo1 = [Infinity, Infinity, Infinity], hi1 = [-Infinity, -Infinity, -Infinity]
+      joints.forEach((j, k) => {
+        const m = xfs[k]
+        if (!m) return
+        const c = j.center
+        const q = [m.r[0] * c[0] + m.r[1] * c[1] + m.r[2] * c[2] + m.t[0], m.r[3] * c[0] + m.r[4] * c[1] + m.r[5] * c[2] + m.t[1], m.r[6] * c[0] + m.r[7] * c[1] + m.r[8] * c[2] + m.t[2]]
+        for (let a = 0; a < 3; a++) {
+          lo0[a] = Math.min(lo0[a]!, c[a]!)
+          hi0[a] = Math.max(hi0[a]!, c[a]!)
+          lo1[a] = Math.min(lo1[a]!, q[a]!)
+          hi1[a] = Math.max(hi1[a]!, q[a]!)
+        }
+      })
+      for (let a = 0; a < 3; a++) {
+        const span = hi0[a]! - lo0[a]!
+        if (!(span > 1e-6)) continue
+        const k = (hi1[a]! - lo1[a]!) / span
+        after[a] = lo1[a]! + (b[a]! - lo0[a]!) * k
+        after[a + 3] = lo1[a]! + (b[a + 3]! - lo0[a]!) * k
+      }
+    }
+    this.frameBounds = after
+    if (this.framePending) {
+      // 相机来自链接，本来就是对着这个体型存的：只记下包围盒，不动相机
+      // the camera came from a link and was saved for this very shape: record the bounds, leave the camera
+      this.framePending = false
+      return
+    }
+    const h0 = before[4] - before[1], h1 = after[4] - after[1]
+    if (!(h0 > 1e-6) || !(h1 > 1e-6)) return
+    const k = h1 / h0
+    const t = this.controls.target
+    const view = this.camera.position.clone().sub(t).multiplyScalar(k)
+    t.set(
+      (after[0] + after[3]) / 2 + (t.x - (before[0] + before[3]) / 2) * k,
+      (after[1] + after[4]) / 2 + (t.y - (before[1] + before[4]) / 2) * k,
+      (after[2] + after[5]) / 2 + (t.z - (before[2] + before[5]) / 2) * k,
+    )
+    this.camera.position.copy(t).add(view)
+    this.tween = null
+    this.controls.update()
+    this.dirty = true
+  }
+
   /** 应用一个要显示的姿势：更新关节 / 肌肉纹理，并在静止与摆姿势之间切换着色器分支。 */
   /** Apply a pose for display: update the joint / muscle textures and switch shader branch between rest and posed. */
   private setDisplayPose(pose: Pose): void {
@@ -1103,6 +1179,8 @@ export class Viewer {
       this.skinning.update(d.joints, d.muscles)
       this.prewarmNext = 0
     }
+    // 对照窗格的相机由主视图带着走，自己不再跟一次 / the compare pane's camera is driven by the main view and does not follow a second time
+    if (rt && this.poseScales !== this.framedScales && this.source === useApp.getState) this.followShape(rt)
     const mode: SkinningMode = !active ? 'off' : scalesAreIdentity(this.poseScales) ? 'pose' : 'pose+shape'
     if (mode !== this.skinMode) {
       this.skinMode = mode
@@ -1170,6 +1248,15 @@ export class Viewer {
     return { [joint]: j.dofs.map((_, k) => (k === dof ? add : 0)) }
   }
 
+  /** 数据与网格不符：主视图记到 store 里；对照窗格交给它的回调 / Data that does not match the meshes: the main view records it in the store; the compare pane hands it to its callback. */
+  private reject(kind: 'rig' | 'shape' | 'face', message: string): void {
+    if (this.source !== useApp.getState) return this.onReject?.(kind, message)
+    const app = useApp.getState()
+    if (kind === 'rig') app.rejectRig(message)
+    else if (kind === 'shape') app.rejectShape(message)
+    else app.rejectFace(message)
+  }
+
   /** 第一次改写某个部件之前，留下它原始的位置与法线 / Keep a part's original positions and normals before first rewriting it. */
   private origOf(i: number, buf: PartBuffers): { position: Float32Array; normal: Float32Array } {
     let o = this.restOrig.get(i)
@@ -1185,7 +1272,6 @@ export class Viewer {
    * applied separately by the skinning path (the store's jointScales). Returns whether anything changed.
    */
   private stepShape(s: ViewState): boolean {
-    if (this.source !== useApp.getState) return false
     if (s.shape === this.appliedShape && s.shapeControls === this.appliedControls && !this.shapeForce) return false
     this.appliedShape = s.shape
     this.appliedControls = s.shapeControls
@@ -1209,7 +1295,7 @@ export class Viewer {
           // 顶点数对不上：体型数据是为另一版几何生成的 / vertex counts differ: the shape data was built for other geometry
           console.warn(`[soma] shape data rejected: ${t.part} has ${buf.position.length / 3} vertices, shape.json says ${t.vertexCount}`)
           this.shaped.clear()
-          useApp.getState().rejectShape(`体型数据与部件 ${t.part} 的网格不符，需要重新生成 / the shape data does not match the mesh of ${t.part} and must be rebuilt`)
+          this.reject('shape', `体型数据与部件 ${t.part} 的网格不符，需要重新生成 / the shape data does not match the mesh of ${t.part} and must be rebuilt`)
           return true
         }
         this.shaped.set(i, shaper.shapedRest(t.part, this.origOf(i, buf).position))
@@ -1228,7 +1314,6 @@ export class Viewer {
    * Returns whether the expression is still changing.
    */
   private stepFace(t: number): boolean {
-    if (this.source !== useApp.getState) return false
     const s = this.source()
     const batches = this.batches
     if (s.face !== this.appliedFace) {
@@ -1244,7 +1329,12 @@ export class Viewer {
     const face = this.appliedFace
     if (!batches) return false
     const frame = face ? painFrame(t) : { aus: {}, animating: false, airflow: 0 }
-    if (!this.faceForce && this.restDirty.size === 0 && sameAUs(frame.aus, this.faceAUs)) return frame.animating
+    // "差不多相同"不能挡住最后一步：表情已经完全放松而上次应用的还剩一点点时，必须真的归零，
+    // 否则顶点留着亚微米的位移、姿势模式也回不到静止
+    // "near enough" must not swallow the last step: when the expression has fully relaxed but a trace is
+    // still applied, it has to go to exactly zero, or sub-micron displacements linger and the posed mode never ends
+    const settled = Object.keys(frame.aus).length > 0 || Object.keys(this.faceAUs).length === 0
+    if (!this.faceForce && this.restDirty.size === 0 && settled && sameAUs(frame.aus, this.faceAUs)) return frame.animating
     this.faceForce = false
     this.faceAUs = frame.aus
     const act = face ? activations(face.data, frame.aus) : { channels: {}, jaw: 0 }
@@ -1268,7 +1358,7 @@ export class Viewer {
       if (face && activeParts.has(i) && buf.position.length !== face.vertexCount.get(partId)! * 3) {
         // 顶点数对不上：表情数据是为另一版几何生成的 / vertex counts differ: the face data was built for other geometry
         console.warn(`[soma] face data rejected: ${partId} has ${buf.position.length / 3} vertices, face.json says ${face.vertexCount.get(partId)}`)
-        useApp.getState().rejectFace(`表情数据与部件 ${partId} 的网格不符，需要重新生成 / the face data does not match the mesh of ${partId} and must be rebuilt`)
+        this.reject('face', `表情数据与部件 ${partId} 的网格不符，需要重新生成 / the face data does not match the mesh of ${partId} and must be rebuilt`)
         return false
       }
       const orig = this.origOf(i, buf)
@@ -1819,7 +1909,7 @@ export class Viewer {
   /** Whole body from the front. */
   home(animate: boolean): void {
     this.onCameraSettled?.(undefined)
-    const b = this.graph.bodyBounds
+    const b = this.frameBounds ?? this.graph.bodyBounds
     const box = new Box3(new Vector3(b[0], b[1], b[2]), new Vector3(b[3], b[4], b[5]))
     this.frame(box, new Vector3(0, 0.08, 1).normalize(), animate)
   }

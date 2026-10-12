@@ -10,6 +10,7 @@ import { useApp } from '../state/store.ts'
 import { currentLink } from '../state/urlSync.ts'
 import { CautionList } from './CautionsDialog.tsx'
 import { Icon } from './Icon.tsx'
+import { VOICE_PACK } from '../pain/build.ts'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 import { ShapeSlider } from './ShapeControls.tsx'
 
@@ -144,7 +145,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
           shape &&
           shape.data.controls
             .filter((c) => c.id === 'stature' || c.id === 'bmi')
-            .map((c) => <ShapeSlider key={c.id} control={c} compact approximate={graph.data.body === 'female' && c.id === 'bmi'} />)}
+            .map((c) => <ShapeSlider key={c.id} control={c} compact />)}
         {shapeCard && shape && (
           <button className="tool-btn" onClick={() => app.resetShape()}>
             原样
@@ -155,7 +156,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
         </a>
       </div>
       {label && <div className="embed-label">{label}</div>}
-      {painCard && !pain.muted && (
+      {VOICE_PACK && painCard && !pain.muted && (
         <div className="embed-attrib">
           <VoiceAttribution compact />
         </div>

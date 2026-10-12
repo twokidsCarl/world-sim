@@ -29,7 +29,12 @@ export interface Modality {
   threshold?: Quantity
   thresholdFactor?: Quantity
   defaultAreaMm2?: Quantity
-  response: { form: 'log2' | 'ratio' | 'linear'; gain: Quantity; exponent?: Quantity }
+  /**
+   * gain：阈上增益。热痛有几个互相不一致的出处，改用 anchors 并列给出，defaultAnchor 指定默认的一个。
+   * gain: the supra-threshold gain. Heat has several sources that disagree, listed side by side
+   * under `anchors` with `defaultAnchor` naming the default.
+   */
+  response: { form: 'log2' | 'ratio' | 'linear'; gain?: Quantity; anchors?: Record<string, Quantity>; defaultAnchor?: string; anchorNote?: Bilingual; exponent?: Quantity }
   firstPainShare: Quantity
 }
 
@@ -89,6 +94,7 @@ export interface ReflexTable {
   motorVelocity: Quantity
   spinalDelay: Quantity
   electromechanicalDelay: Quantity
+  escape: Quantity
   pose: { rise: Quantity; hold: Quantity; release: Quantity; minFraction: Quantity }
   reference: Record<'lower' | 'upper', { latency: Quantity & { sd: number }; window: Quantity<[number, number]> }>
   patterns: Record<'lower' | 'upper', ReflexPattern>
@@ -139,6 +145,26 @@ export function sourcesById(ids: Iterable<string>): SourceRef[] {
 /** 一个量的出处 id 列表 / The source ids of a quantity. */
 export function sourceIds(q: { source?: string | string[] }): string[] {
   return q.source === undefined ? [] : Array.isArray(q.source) ? q.source : [q.source]
+}
+
+/** 热痛“温度–评分”斜率的几种取法，见 nociception.json 的 heat.response.anchors。 */
+/** The readings of the heat temperature-rating slope; see heat.response.anchors in nociception.json. */
+export type HeatAnchor = 'painScale' | 'noSensation' | 'noSensationRescaled' | 'toleranceRamp'
+
+/**
+ * 某模态的阈上增益；有 anchors 时按给定的（或默认的）一个取。
+ * The supra-threshold gain of a modality; with `anchors`, the one asked for (or the default).
+ */
+export function responseGain(m: Modality, anchor?: string): { quantity: Quantity; anchor: string | null } {
+  const r = m.response
+  if (r.anchors) {
+    const id = anchor ?? r.defaultAnchor ?? Object.keys(r.anchors)[0]!
+    const quantity = r.anchors[id]
+    if (!quantity) throw new Error(`painmodel: 未知的 heatAnchor ${id} / unknown heatAnchor ${id}`)
+    return { quantity, anchor: id }
+  }
+  if (!r.gain) throw new Error('painmodel: 模态缺少增益 / the modality has no gain')
+  return { quantity: r.gain, anchor: null }
 }
 
 export interface SiteThreshold {

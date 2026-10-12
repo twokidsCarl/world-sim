@@ -101,3 +101,16 @@ export function nonDefaultControls(data: ShapeData, controls: ShapeControls): Sh
   }
   return out
 }
+
+/** 把主视图的体型控制量换到另一副身体上：保持相对默认值的偏移 / Carry the main view's shape controls over to the other body: keep the offsets from the defaults. */
+export function mapShapeControls(main: LoadedShape | null, controls: ShapeControls, other: LoadedShape): ShapeControls {
+  const out: ShapeControls = {}
+  for (const c of other.data.controls) {
+    const v = controls[c.id]
+    const from = main?.data.controls.find((x) => x.id === c.id)
+    if (v === undefined || !from) continue
+    const mapped = clampControl(c, c.default + (v - from.default)).value
+    if (Math.abs(mapped - c.default) > 1e-9) out[c.id] = mapped
+  }
+  return out
+}

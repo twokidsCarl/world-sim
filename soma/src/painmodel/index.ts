@@ -4,5 +4,5 @@
 
 export { DISCLAIMER, evaluateStimulus, locate, nearestSkinVertex, painMapWeights, prepareStimulus, sideOf, stimulusDrive, type PainEvaluation } from './model.ts'
 export { buildNerveIndex, nervePath, type NerveIndex } from './path.ts'
-export { AUTONOMIC, AUTONOMIC_SIGNS, NOCICEPTION, REFLEX, REGIONS, SOURCES, siteThreshold, sourcesById, type AutonomicSignId, type Quantity } from './tables.ts'
+export { AUTONOMIC, AUTONOMIC_SIGNS, NOCICEPTION, REFLEX, REGIONS, SOURCES, responseGain, siteThreshold, sourcesById, type AutonomicSignId, type HeatAnchor, type Quantity } from './tables.ts'
 export type * from './types.ts'

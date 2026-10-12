@@ -2,7 +2,7 @@
  "schema": 1,
  "body": "female",
  "inputs": {
-  "anatomy.json": "691689bce58e1a12",
+  "anatomy.json": "d93cd46a43d43bce",
   "integumentary.glb": "b06a27ea45f300a8",
   "muscular.glb": "0db35e4eb0832ba1",
   "skeletal.glb": "19e459169ddeea2a",
@@ -3441,7 +3441,7 @@
   "labelledVoxels": 489999,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 5817
+  "buildMs": 8643
  },
  "bindings": {
   "bone": {
@@ -33314,26 +33314,7 @@
    }
   ],
   "opensimNote": "gait2392 (Delp S.L., Loan J.P., Hoy M.G., Zajac F.E., Topp E.L., Rosen J.M., Thelen D.G., …; CC BY 3.0) for the lower limb, arm26 (CC BY 3.0) for the elbow. Lengths come from the path points (conditional and moving points, cylinder wraps) read from the .osim files; OpenSim itself was not run. Curves are compared as length change about the middle of the sweep, in mm, without scaling for body size.",
-  "renders": [
-   "tools/rig/out/female/rest.png",
-   "tools/rig/out/female/elbow90.png",
-   "tools/rig/out/female/elbow140.png",
-   "tools/rig/out/female/pronation.png",
-   "tools/rig/out/female/supination.png",
-   "tools/rig/out/female/shoulderAbd90.png",
-   "tools/rig/out/female/shoulderFlex160.png",
-   "tools/rig/out/female/hipFlex90.png",
-   "tools/rig/out/female/knee90.png",
-   "tools/rig/out/female/knee135.png",
-   "tools/rig/out/female/ankleDorsi.png",
-   "tools/rig/out/female/anklePlantar.png",
-   "tools/rig/out/female/fist.png",
-   "tools/rig/out/female/neckRot60.png",
-   "tools/rig/out/female/trunkFlex60.png",
-   "tools/rig/out/female/squat.png",
-   "tools/rig/out/female/sitting.png",
-   "tools/rig/out/female/inspiration.png"
-  ],
+  "renders": [],
   "clamped": {}
  }
 }

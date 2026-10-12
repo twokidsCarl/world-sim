@@ -1,3 +1,4 @@
+// 一副人体的 AnatomyData 加上可选的知识层，在内存里建的各种索引。纯数据：没有 three.js，没有 DOM；单元测试在 tests/graph*.test.ts。
 // In-memory indexes over one body's AnatomyData plus the optional knowledge layer.
 // Pure data: no three.js, no DOM — unit-tested in tests/graph*.test.ts.
 
@@ -21,14 +22,17 @@ export const TREE_KINDS: readonly TreeKind[] = ['isa', 'partOf']
 export type Bounds = [number, number, number, number, number, number]
 
 export interface DisplayName {
+  /** 主界面（中文）用的最佳名称：有中文用中文，否则用英文。 */
   /** Best name for the primary (Chinese) UI: zh when known, else English. */
   primary: string
   en: string
   zh?: string
   la?: string
+  /** 知识层名称的审校状态；没有条目时为 undefined。 */
   /** Review status of the knowledge-layer name; undefined when there is no entry. */
   status?: ReviewStatus
   /**
+   * 知识层的名称属于比该部件更宽的概念时设置（见 AnatomyGraph.partName）：部件保留自己的名称，这里给出那个更宽的概念。
    * Set when the knowledge-layer name belongs to a broader concept than the part (see
    * `AnatomyGraph.partName`): the part then keeps its own name and this is shown beneath it.
    */
@@ -37,12 +41,15 @@ export interface DisplayName {
 
 export interface SearchResult {
   kind: 'part' | 'concept'
+  /** 部件 id，或概念（FMA）id。 */
   /** Part id, or concept (FMA) id. */
   id: string
+  /** 概念所在的树（只有概念类结果才有）。 */
   /** Tree the concept was found in (concept results only). */
   tree?: TreeKind
   fma: string
   name: DisplayName
+  /** 选这个结果会选中多少个部件。 */
   /** Number of parts selecting this result would select. */
   partCount: number
   score: number
@@ -52,6 +59,7 @@ interface TreeIndex {
   byId: Map<string, Concept>
   children: Map<string, Concept[]>
   roots: Concept[]
+  /** 部件 id → 直接列出它的最深概念的 id */
   /** part id -> id of the deepest concept that lists it directly */
   conceptOfPart: Map<string, string>
   descendants: Map<string, readonly string[]>
@@ -64,15 +72,18 @@ interface SearchEntry {
   tree?: TreeKind
   fma: string
   en: string
+  /** 归一化后的检索串：英文、中文、拉丁文、FMA 编号、部件 id */
   /** normalised haystacks: en, zh, la, fma id, part id */
   fields: string[]
   partCount: number
 }
 
+/** 同一来源类别的部件，再按几何所来自的数据集细分。 */
 /** Parts of one provenance kind, broken down by the dataset their geometry came from. */
 export interface ProvenanceGroup {
   provenance: Provenance
   count: number
+  /** ordinal 是该来源在本类别里的序号（用来选颜色深浅）。 */
   /** `ordinal` numbers the sources within this provenance (used to pick a colour shade). */
   sources: { info: SourceInfo; count: number; ordinal: number }[]
 }
@@ -81,6 +92,7 @@ export const PROVENANCE_ORDER: readonly Provenance[] = ['scanned', 'warped', 'cu
 
 const UNKNOWN_SOURCE: SourceInfo = { name: '未声明来源', url: '', license: '', attribution: '' }
 
+/** 是否为真正的 FMA 编号（如 FMA59763）；管线也会自己造概念 id。 */
 /** True for a real FMA identifier ("FMA59763"); pipelines also mint synthetic concept ids. */
 export function isFmaId(id: string): boolean {
   return /^FMA\d+$/.test(id)
@@ -127,6 +139,7 @@ export class AnatomyGraph {
     for (const r of this.relations) push(this.relBySubject, r.subject, r)
   }
 
+  // ------------------------------------------------------------ 部件
   // ------------------------------------------------------------ parts
 
   part(id: string): Part | undefined {
@@ -134,6 +147,7 @@ export class AnatomyGraph {
     return i === undefined ? undefined : this.parts[i]
   }
 
+  /** 部件在 parts 里的位置（稳定，用于类型化数组里的状态）；没有则为 -1。 */
   /** Position of the part in `parts` (stable; used for typed-array state), or -1. */
   indexOf(id: string): number {
     return this.partIndex.get(id) ?? -1
@@ -147,12 +161,14 @@ export class AnatomyGraph {
     return this.byFma.get(fma) ?? []
   }
 
+  /** 部件几何所来自的数据集（Part.source，缺省为第一个来源）。 */
   /** The dataset a part's geometry came from (`Part.source`, defaulting to the first source). */
   sourceOf(p: Part): SourceInfo {
     const sources = this.data.sources
     return (p.source !== undefined ? sources.find((s) => s.name === p.source) : sources[0]) ?? sources[0] ?? UNKNOWN_SOURCE
   }
 
+  /** 部件的来源在同类别来源中的序号。 */
   /** Ordinal of the part's source among the sources sharing its provenance. */
   sourceOrdinal(p: Part): number {
     const g = this.provenanceGroups().find((x) => x.provenance === p.provenance)
@@ -160,6 +176,7 @@ export class AnatomyGraph {
     return g?.sources.find((x) => x.info.name === name)?.ordinal ?? 0
   }
 
+  /** 按来源类别和数据集统计的部件数，顺序固定（扫描、配准、人工）。 */
   /** Part counts by provenance and source, in a fixed order (scanned, warped, curated). */
   provenanceGroups(): readonly ProvenanceGroup[] {
     if (this._provenance) return this._provenance
@@ -186,6 +203,7 @@ export class AnatomyGraph {
     return (this._provenance = out)
   }
 
+  /** 在这副人体中确实存在的相邻部件（悬空的 id 被丢弃）。 */
   /** Adjacent parts that actually exist in this body (dangling ids are dropped). */
   adjacentParts(id: string): Part[] {
     const p = this.part(id)
@@ -198,6 +216,7 @@ export class AnatomyGraph {
     return out
   }
 
+  /** 给定部件的合并包围盒；一个都不存在时为 null。 */
   /** Union bounds of the given parts, or null when none of them exist. */
   bounds(ids: Iterable<string>): Bounds | null {
     const b: Bounds = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity]
@@ -221,6 +240,7 @@ export class AnatomyGraph {
     return this._bodyBounds
   }
 
+  // ------------------------------------------------------------ 树
   // ------------------------------------------------------------ trees
 
   concept(tree: TreeKind, id: string): Concept | undefined {
@@ -239,11 +259,13 @@ export class AnatomyGraph {
     return this.trees[tree].byId.size
   }
 
+  /** 这棵树覆盖到的不同部件数（partOf 本来就只覆盖一部分）。 */
   /** Number of distinct parts the tree reaches (partOf is partial by design). */
   coverage(tree: TreeKind): number {
     return this.trees[tree].covered
   }
 
+  /** 概念的祖先，最近的父节点在前，根在最后；不含概念自己。 */
   /** Ancestors of a concept, nearest parent first, root last. Excludes the concept itself. */
   ancestors(tree: TreeKind, id: string): Concept[] {
     const t = this.trees[tree]
@@ -261,6 +283,7 @@ export class AnatomyGraph {
     return out
   }
 
+  /** 根 → 概念（含两端）；概念不在树里时为空。 */
   /** Root → concept, inclusive. Empty when the concept is not in the tree. */
   path(tree: TreeKind, id: string): Concept[] {
     const c = this.trees[tree].byId.get(id)
@@ -268,6 +291,7 @@ export class AnatomyGraph {
     return [...this.ancestors(tree, id).reverse(), c]
   }
 
+  /** 直接列出该部件的概念（树覆盖到这个部件时）。 */
   /** The concept that lists this part directly, if the tree covers the part. */
   conceptOfPart(tree: TreeKind, partId: string): Concept | undefined {
     const t = this.trees[tree]
@@ -275,12 +299,14 @@ export class AnatomyGraph {
     return cid === undefined ? undefined : t.byId.get(cid)
   }
 
+  /** 根 → 持有该部件的概念；树没有覆盖该部件时为空。 */
   /** Root → the concept holding the part. Empty when the tree does not cover the part. */
   partChain(tree: TreeKind, partId: string): Concept[] {
     const c = this.conceptOfPart(tree, partId)
     return c ? this.path(tree, c.id) : []
   }
 
+  /** 概念之下的全部部件 id：它自己的加上所有后代的。有缓存。 */
   /** All part ids under a concept: its own plus every descendant's. Memoised. */
   descendantParts(tree: TreeKind, id: string): readonly string[] {
     const t = this.trees[tree]
@@ -309,12 +335,14 @@ export class AnatomyGraph {
     return out
   }
 
+  /** 概念之下不同部件的个数（一个部件可能被几个概念列出）。 */
   /** Number of distinct parts under a concept (a part may be listed by several concepts). */
   partCount(tree: TreeKind, id: string): number {
     return this.descendantParts(tree, id).length
   }
 
   /**
+   * 某个 FMA 编号在这副人体中对应的部件：自己带这个编号的部件；否则是 isa 树里该概念之下的全部；再否则是 partOf 树里的。
    * Parts in this body for an FMA id: parts carrying that id themselves, else everything
    * under the concept in the isa tree, else in the partOf tree.
    */
@@ -328,6 +356,7 @@ export class AnatomyGraph {
     return EMPTY
   }
 
+  // ------------------------------------------------------------ 知识层
   // ------------------------------------------------------------ knowledge
 
   nameOf(fma: string, en: string): DisplayName {
@@ -360,6 +389,7 @@ export class AnatomyGraph {
     return { ...n, zh, primary: zh }
   }
 
+  /** 概念比自己更宽的部件（见 partName）。 */
   /** Parts whose concept is a broader class (see `partName`). */
   broaderNamedParts(): Part[] {
     return this.parts.filter((p) => !!this.partName(p).broader)
@@ -386,6 +416,21 @@ export class AnatomyGraph {
     return best?.id ?? null
   }
 
+  private unfittedIds: ReadonlySet<string> | null = null
+
+  /**
+   * 还没有贴合新皮肤的附属部件（头发、眉毛、阴毛）：皮肤不透明时它们会从皮肤里翘出来，所以那时隐藏。
+   * 管线重新拟合之后，把这里改成空集即可。
+   * Appendage meshes not yet fitted to the new skins (hair of head, eyebrows, pubic hair): they
+   * poke out of an opaque skin, so they are hidden then. Once the pipeline refits them this
+   * becomes the empty set.
+   */
+  unfittedAppendages(): ReadonlySet<string> {
+    this.unfittedIds ??= new Set(this.parts.filter((p) => p.system === 'integumentary' && p.tissue === 'skin' && /\bhair\b|eyebrow/i.test(p.name)).map((p) => p.id))
+    return this.unfittedIds
+  }
+
+  /** 这副人体里用户不该轻信的地方，最重要的在前。 */
   /** What a user should not trust in this body, most important first. */
   get cautions(): readonly { zh: string; en: string }[] {
     return Array.isArray(this.data.cautions) ? this.data.cautions : []
@@ -399,6 +444,7 @@ export class AnatomyGraph {
     return this.relBySubject.get(fma) ?? []
   }
 
+  /** 某个主体的关系，按种类分组，保持首次出现的顺序。 */
   /** Relations for a subject grouped by kind, in first-seen order. */
   relationsByKind(fma: string): [RelationKind, Relation[]][] {
     const m = new Map<RelationKind, Relation[]>()
@@ -406,9 +452,11 @@ export class AnatomyGraph {
     return [...m]
   }
 
+  // ------------------------------------------------------------ 搜索
   // ------------------------------------------------------------ search
 
   /**
+   * 按中文 / 英文 / 拉丁文名称、FMA 编号（带不带 FMA 前缀都行）或部件 id 搜索部件和概念。
    * Search parts and concepts by Chinese / English / Latin name or FMA id (with or without
    * the "FMA" prefix) or part id. Every whitespace-separated token must match somewhere.
    */
@@ -432,6 +480,7 @@ export class AnatomyGraph {
         }
       }
       if (total > 0) {
+        // 分组排在其成员稍前，这样搜 femur 会先给出包含两侧的那一项
         // groups rank slightly above their members so "femur" offers both sides first
         if (e.kind === 'concept' && e.partCount > 1) total += 2
         scored.push({ e, score: total })
@@ -449,6 +498,7 @@ export class AnatomyGraph {
     }))
   }
 
+  // ------------------------------------------------------------ 内部
   // ------------------------------------------------------------ internals
 
   private buildTree(concepts: Concept[]): TreeIndex {
@@ -461,6 +511,7 @@ export class AnatomyGraph {
       if (c.parent !== null && c.parent !== c.id && byId.has(c.parent)) push(children, c.parent, c)
       else roots.push(c) // null parent, or a parent missing from this (possibly partial) file
     }
+    // 一个部件可能被几个概念列出（BodyParts3D 的 partOf 就是这样）；它自己的概念取最具体的，也就是最深的那个。
     // A part can be listed by several concepts (BodyParts3D's partOf does this); its "own"
     // concept is the most specific one, i.e. the deepest.
     const depthMemo = new Map<string, number>()
@@ -526,8 +577,10 @@ export class AnatomyGraph {
       for (const c of this.trees[tree].byId.values()) {
         if (seen.has(c.id)) continue
         const count = this.partCount(tree, c.id)
+        // 只是某一个部件自己的概念的那种概念，已经作为那个部件列出了。
         // A concept that is just one part's own concept is already listed as that part.
         if (count <= 1 && (this.byFma.get(c.id)?.length ?? 0) >= 1) continue
+        // 哪棵树给这个概念的部件更多就用哪棵。
         // Prefer whichever tree gives the concept more parts.
         const other: TreeKind = tree === 'isa' ? 'partOf' : 'isa'
         const otherCount = this.partCount(other, c.id)
@@ -550,6 +603,7 @@ export class AnatomyGraph {
 
 const NAME_STOPWORDS = new Set(['of', 'the', 'set', 'left', 'right', 'a', 'and'])
 
+/** 英文解剖名称里的实词：小写、变单数，去掉左右侧和虚词。 */
 /** Content words of an English anatomical name: lower-cased, singularised, side and filler words dropped. */
 export function nameTokens(name: string): Set<string> {
   const out = new Set<string>()
@@ -560,6 +614,7 @@ export function nameTokens(name: string): Set<string> {
 }
 
 /**
+ * 把一组部件从一副人体带到另一副：另一副有相同概念 id 和侧别的就用它，否则用相同的部件 id（带或不带前缀）。
  * Carry a set of parts from one body to another: same concept id and side where the other
  * body has one, else the same part id with or without the warped-copy prefix ("W_").
  */
@@ -607,6 +662,7 @@ function scoreField(fields: string[], q: string): number {
       const i = f.indexOf(q)
       if (i > 0) s = /[\s\-_(/,]/.test(f[i - 1]!) ? 60 : 40
     }
+    // 纯数字按 FMA 编号查：59763 应当精确命中 fma59763
     // a bare number is an FMA id lookup: "59763" should hit "fma59763" exactly
     if (digits && f === `fma${q}`) s = 100
     if (s > best) best = s
@@ -614,6 +670,7 @@ function scoreField(fields: string[], q: string): number {
   return best
 }
 
+/** 包围盒的中心。 */
 /** Centre of a bounds box. */
 export function boundsCenter(b: Bounds): Vec3 {
   return [(b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2]

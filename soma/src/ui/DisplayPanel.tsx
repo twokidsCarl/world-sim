@@ -1,6 +1,6 @@
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { PROVENANCE_LABEL, provenanceColor } from '../anatomy/labels.ts'
-import type { SectionAxis } from '../state/display.ts'
+import { skinDrawnOpaque, type SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
 import { SkinMapPanel } from './SkinMapPanel.tsx'
@@ -21,6 +21,9 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const colorMode = useApp((s) => s.colorMode)
   const provenanceHidden = useApp((s) => s.provenanceHidden)
   const nerveBoost = useApp((s) => s.nerveBoost)
+  const skinOpaque = useApp((s) => s.skinOpaque)
+  const mainSkin = graph.mainSkinId()
+  const unfittedHidden = useApp((s) => graph.unfittedAppendages().size > 0 && skinDrawnOpaque(s, mainSkin))
   const hasNerves = graph.parts.some((p) => p.tissue === 'nerve')
   const app = useApp.getState()
   const layers = graph.data.layers
@@ -79,6 +82,20 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
             <input type="checkbox" checked={nerveBoost} onChange={(e) => app.setNerveBoost(e.target.checked)} />
             加粗神经（远看时保持可见）
           </label>
+        )}
+        {mainSkin && (
+          <>
+            <label className="check" title="Draw the skin opaque instead of see-through">
+              <input type="checkbox" checked={skinOpaque} onChange={(e) => app.setSkinOpaque(e.target.checked)} />
+              皮肤不透明 <span className="en">Opaque skin</span>
+            </label>
+            {unfittedHidden && (
+              <p className="hint">
+                皮肤不透明时，头发、眉毛和阴毛暂时隐藏：这几个网格还没有贴合新的皮肤，会从皮肤里翘出来。它们仍在结构树里，选中即可单独显示。
+                <span className="en"> While the skin is opaque, the hair, eyebrows and pubic hair are hidden: these meshes are not yet fitted to the new skins and would poke out of them. They are still in the tree, and selecting one shows it.</span>
+              </p>
+            )}
+          </>
         )}
       </section>
 

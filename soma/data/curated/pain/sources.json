@@ -72,8 +72,8 @@
    "license": "Free to read on PMC (author manuscript; the fetch tool reported it as a work of the United States Government); facts only",
    "opened": "PMC page through a summarising fetch tool (first 100,000 characters); quotations not checked character by character",
    "supports": {
-    "zh": "前臂掌侧接触热刺激（16 × 16 mm 探头，1.5 s 从 32 °C 升到目标温度，持续 8 s，34–50 °C）。全体受试者的痛阈为 44.8 °C（logistic 回归）；温度每升高 1 °C，0–10 VAS 评分升高 0.82（多层回归系数 B）；皮肤电反应和瞳孔扩大随疼痛强度增大，刺激期间（4–8 s）和之后（8–12 s）都存在。量表 0 = 完全没有感觉，10 = 能想象的最痛。",
-    "en": "Contact heat on the volar forearm (16 × 16 mm thermode, 1.5 s ramp from 32 °C to target, 8 s, 34-50 °C). Pain threshold across participants 44.8 °C (logistic regression); the 0-10 VAS rating rises by 0.82 per °C (multilevel regression coefficient B); skin conductance and pupil dilation responses grow with pain intensity, during (4-8 s) and after (8-12 s) the stimulus. Scale: 0 = no sensation at all, 10 = most pain imaginable."
+    "zh": "前臂掌侧接触热刺激（16 × 16 mm 探头，1.5 s 从 32 °C 升到目标温度，持续 8 s，34–50 °C）。全体受试者的痛阈为 44.8 °C（logistic 回归）；温度每升高 1 °C，0–10 VAS 评分升高 0.82（多层回归系数 B）；皮肤电反应和瞳孔扩大随疼痛强度增大，刺激期间（4–8 s）和之后（8–12 s）都存在。量表 0 = 完全没有感觉，1 = 不痛的温热，2 = 痛阈，5 = 中度疼痛，8 = 能忍受的最大疼痛，10 = 能想象的最痛。",
+    "en": "Contact heat on the volar forearm (16 × 16 mm thermode, 1.5 s ramp from 32 °C to target, 8 s, 34-50 °C). Pain threshold across participants 44.8 °C (logistic regression); the 0-10 VAS rating rises by 0.82 per °C (multilevel regression coefficient B); skin conductance and pupil dilation responses grow with pain intensity, during (4-8 s) and after (8-12 s) the stimulus. Scale: 0 = no sensation at all, 1 = non-painful warmth, 2 = pain threshold, 5 = moderate pain, 8 = maximum tolerable pain, 10 = most pain imaginable."
    }
   },
   {
@@ -254,6 +254,30 @@
    "supports": {
     "zh": "指尖是痛觉和触觉空间分辨力最高的部位；在上肢有毛皮肤上，痛觉与触觉的空间分辨力沿近远方向的梯度相反；前额处两者相近。各部位的阈值只在图里。",
     "en": "The fingertip has the highest spatial acuity for both pain and touch; on the hairy skin of the upper limb the acuity for pain and for touch follow opposite proximal-distal gradients; on the forehead they are similar. The per-site thresholds are in figures only."
+   }
+  },
+  {
+   "id": "jurgens2014",
+   "citation": "Jürgens TP, Sawatzki A, Henrich F, Magerl W, May A. An improved model of heat-induced hyperalgesia - repetitive phasic heat pain causing primary hyperalgesia to heat and secondary hyperalgesia to pinprick and light touch. PLoS One 2014;9:e99507.",
+   "doi": "10.1371/journal.pone.0099507",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4050052/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "18 名健康志愿者，右前臂掌侧，30 × 30 mm 探头，基线 32 °C、目标 48 °C、平台 6 s、升温 10 °C/s，60 次刺激分 10 组。0–100 mm 疼痛 VAS（0 = 不痛，100 = 能想象的最痛）：第一组平均 57.4 ± 4.5，第十组 72.2 ± 5.4。刺激前该处的热痛阈（极限法，16 × 16 mm 探头）45.39 °C（95% CI 44.24–46.54）。",
+    "en": "18 healthy volunteers, right volar forearm, 30 × 30 mm thermode, baseline 32 °C, target 48 °C, 6 s plateau, 10 °C/s rise, 60 stimuli in 10 blocks. 0-100 mm pain VAS (0 = no pain, 100 = worst imaginable pain): mean of the first block 57.4 ± 4.5, of the tenth 72.2 ± 5.4. Heat pain threshold at that site before stimulation (method of limits, 16 × 16 mm thermode) 45.39 °C (95 % CI 44.24-46.54)."
+   }
+  },
+  {
+   "id": "chan2026",
+   "citation": "Chan SCC, Tsoi TCW. Effects of contact-heat stimulation intensity on the reliability of subjective pain rating of individuals with different heat tolerance. Pain Res Manag 2026.",
+   "doi": "10.1155/prm/3402006",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12933179/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "30 名无痛志愿者，左手大鱼际，基线 32 °C、70 °C/s 升温的极限法。高耐受组（18 人，“可忍受的最高疼痛”即 NRS 7 的温度 ≥ 47 °C）：痛阈 42.8 °C（SD 3.3），可忍受阈 47.7 °C（SD 2.3）。",
+    "en": "30 pain-free volunteers, left thenar, method of limits from a 32 °C baseline at 70 °C/s. High-tolerance group (18 people whose 'highest tolerable pain', i.e. NRS 7, was at 47 °C or above): pain threshold 42.8 °C (SD 3.3), tolerable threshold 47.7 °C (SD 2.3)."
    }
   }
  ]
