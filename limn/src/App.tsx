@@ -504,6 +504,12 @@ export function App() {
                   <option value="illustrate">{t('style.illustrate')}</option>
                 </select>
               </label>
+              {s.drawing === 'painted' && s.spec.notes.some((n) => typeof n !== 'string' && (n.key === 'note.idealised' || n.key === 'note.respiked')) && (
+                <label className="row">
+                  <input type="checkbox" checked={s.exaggerate} onChange={(e) => s.setExaggerate(e.target.checked)} />
+                  {t('style.exaggerate')}
+                </label>
+              )}
               {!s.spec.landscape && <Slider label={t('look.cut')} value={s.cut} min={0} max={0.9} step={0.01} onChange={(v) => s.setLook({ cut: v })} />}
               <Slider label={t('style.lineWidth')} value={s.style.lineWidth} min={0.5} max={3} step={0.1} onChange={(v) => s.setStyle((x) => (x.lineWidth = v))} />
               <Slider label={t('style.innerLines')} value={s.style.contour.diffMax} min={1} max={60} step={0.5} onChange={(v) => s.setStyle((x) => (x.contour.diffMax = v))} />

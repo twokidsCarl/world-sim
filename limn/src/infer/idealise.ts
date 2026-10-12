@@ -215,3 +215,43 @@ export function shellMembrane(centre: V3, inner: number, outer: number, id: stri
     chains: [{ asymId: 'MEM', authAsymId: 'MEM', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id: 'membrane', description: 'membrane', kind: 'lipid' }], assemblies: [],
   }
 }
+
+/**
+ * “夸张”：把一个刺沿它的轴拉长，柄收细、头放宽，像 Goodsell 画的那样。这不是真实的形状：
+ * 量他的《Influenza Virus》，刺长约为膜厚的 4.2 倍，有细柄和蘑菇状的头；真实的血凝素约 3 倍，上下差不多粗。
+ * 就地改 `mol` 的坐标，返回新的样板（轴不变，质心和它到膜中心的距离跟着变，刺的根部留在原处）。
+ * `split` 是柄和头的分界在刺上的位置（0 = 根，1 = 顶）。
+ *
+ * "Exaggeration": a spike is stretched along its axis, its stalk narrowed and its head widened, the
+ * way Goodsell paints it. This is not the real shape: on his "Influenza Virus" a spike is about 4.2
+ * membrane thicknesses long with a thin stalk and a mushroom head, where a real hemagglutinin is
+ * about 3 and much the same width throughout. Coordinates of `mol` are changed in place and the new
+ * template returned (same axis; the centroid and its distance from the membrane's centre follow,
+ * and the foot of the spike stays where it was). `split` is where stalk gives way to head along the
+ * spike (0 = foot, 1 = tip).
+ */
+export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number; stalk: number; head: number; split: number }): Template {
+  const n = mol.atomCount
+  let lo = Infinity, hi = -Infinity
+  for (let i = 0; i < n; i++) {
+    const h = (mol.pos[i * 3]! - t.origin[0]) * t.up[0] + (mol.pos[i * 3 + 1]! - t.origin[1]) * t.up[1] + (mol.pos[i * 3 + 2]! - t.origin[2]) * t.up[2]
+    if (h < lo) lo = h
+    if (h > hi) hi = h
+  }
+  const c: V3 = [0, 0, 0]
+  for (let i = 0; i < n; i++) {
+    const d: V3 = [mol.pos[i * 3]! - t.origin[0], mol.pos[i * 3 + 1]! - t.origin[1], mol.pos[i * 3 + 2]! - t.origin[2]]
+    const h = dot(d, t.up)
+    const s = (h - lo) / Math.max(1e-6, hi - lo)
+    // 柄到头之间平滑过渡 / a smooth passage from stalk to head
+    const u = Math.min(1, Math.max(0, (s - (shape.split - 0.1)) / 0.2))
+    const w = shape.stalk + (shape.head - shape.stalk) * u * u * (3 - 2 * u)
+    const h2 = lo + (h - lo) * shape.stretch
+    for (let k = 0; k < 3; k++) {
+      const v = t.origin[k]! + t.up[k]! * h2 + (d[k]! - t.up[k]! * h) * w
+      mol.pos[i * 3 + k] = v
+      c[k]! += v / n
+    }
+  }
+  return { ...t, origin: c, distance: t.distance + dot(sub(c, t.origin), t.up) }
+}

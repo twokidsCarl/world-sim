@@ -313,3 +313,30 @@ describe('filling the inside of a shell', () => {
     expect(out).toBe(0)
   })
 })
+
+describe('exaggerating a spike', () => {
+  it('stretches it along its axis, narrows the stalk, widens the head, and keeps its foot in place', async () => {
+    const { exaggerate } = await import('../src/infer/idealise')
+    // 一根沿 x 的柱子：x 从 100 到 200，半径 10 / a column along x, from x = 100 to 200, of radius 10
+    const pos: number[] = []
+    for (let i = 0; i <= 20; i++) for (let k = 0; k < 8; k++) pos.push(100 + i * 5, Math.cos(k * 0.785) * 10, Math.sin(k * 0.785) * 10)
+    const m = mol(pos)
+    const t = { origin: [150, 0, 0] as [number, number, number], up: [1, 0, 0] as [number, number, number], distance: 150, tilt: 0 }
+    const out = exaggerate(m, t, { stretch: 1.4, stalk: 0.5, head: 1.2, split: 0.5 })
+    let lo = Infinity, hi = -Infinity
+    for (let i = 0; i < m.atomCount; i++) {
+      lo = Math.min(lo, m.pos[i * 3]!)
+      hi = Math.max(hi, m.pos[i * 3]!)
+    }
+    // 根部不动，长度变成 1.4 倍 / the foot stays, and the length becomes 1.4 times
+    expect(lo).toBeCloseTo(100, 4)
+    expect(hi - lo).toBeCloseTo(140, 3)
+    const radius = (i: number) => Math.hypot(m.pos[i * 3 + 1]!, m.pos[i * 3 + 2]!)
+    expect(radius(0)).toBeCloseTo(5, 4)
+    expect(radius(m.atomCount - 1)).toBeCloseTo(12, 4)
+    // 新样板：轴不变，质心沿轴外移，到膜中心的距离跟着变 / the new template: same axis, the centroid moved out along it, its distance from the centre following
+    expect(out.up).toEqual([1, 0, 0])
+    expect(out.origin[0]).toBeCloseTo(170, 3)
+    expect(out.distance).toBeCloseTo(170, 3)
+  })
+})
