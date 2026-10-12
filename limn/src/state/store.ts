@@ -170,6 +170,8 @@ export interface CatalogEntry {
   /** 粒子的实测位置：文件地址和体素大小（Å）/ measured particle positions: the file's address and the voxel size in Å */
   points?: { url: string; voxelSpacing: number; fit?: TemplateFit }
   merge?: string
+  /** 手绘画法下把小分子画成圆点的半径（Å）；夸张，可以关 / the radius in Å of the dots small molecules become in the painted drawing; an exaggeration that can be turned off */
+  dots?: number
   cut?: number
   /** 衬在切片后面的实体（正则）/ entities that line the back of the slab (a regular expression) */
   lining?: string
@@ -807,7 +809,9 @@ export const useStore = create<State>((set, get) => ({
       const inferred: Panel[] = respiked ? [respiked] : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
       const surroundings: Panel[] = entry.environment && get().drawing === 'painted' ? await environmentPanels(entry, [mol, ...inferred.map((p) => p.mol)], inferred.map((p) => p.spec.assembly), assembly, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
       inferred.push(...surroundings)
-      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
+      const dots = entry.dots && get().drawing === 'painted' && EXAGGERATE() ? entry.dots : 0
+      if (dots) notes.push({ key: 'note.dots' })
+      const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge, ...(dots ? { dots } : {}) }
       set((s) => ({
         spec: scene,
         panels: [{ spec, mol, coloring, align: null }, ...inferred],

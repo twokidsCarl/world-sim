@@ -199,6 +199,16 @@ limn 这一轮的数：
 - **突触的白洞**：突触前、突触后两个场景用深色的底（目录条目的 `ground`），缝隙里露出的是深色，不再是白纸。
 - **黏蛋白分叉**：穿线工具加了 `branches`，每隔几步向旁边伸出一小段，用在新冠的黏蛋白上。离他画的刷子状还有距离：他的分叉更密、更长，而且线之间填满了。
 
+### H1：逐张对照，小分子画成圆点，DNA 取真实的粗细
+
+把清单里没有逐张对照过的四张（寨卡、核孔、突触小泡、外泌体）和他的画并排看了。寨卡、核孔、外泌体没有发现要改的大问题；突触小泡最差，支原体的 DNA 其次。
+
+- **概念“小分子”**（`out/H1-synaptic-vesicle.jpg`，左旧右新）：小泡里的谷氨酸原来共用一个编号、抹成一团带黑斑的色块。他画的是一粒粒圆点。现在每个小分子收成质心上的一个球（目录条目的 `dots`，半径 8 Å），各自描边。**这是夸张**：位置是模型里的，大小不是，真实的谷氨酸小得多；归在“夸张”选项里，可以关，来源栏有说明，Illustrate 画法不受影响。
+- **概念“核酸”，粗细**（`out/H1-mycoplasma-dna.jpg`，左我们右他）：支原体模型里的 DNA 是珠子模型，每个碱基对两个半径 11 Å 的珠子，画出来宽约 41 Å，是真实 DNA（20 Å）的两倍。手绘画法下每节收成中线上的一个球：双链半径 10 Å，单链 5 Å。这一条不是夸张，是把模型里过粗的珠子改回真实的粗细。
+- **核酸，长短**：纤维的切片比别的分子深一倍半，于是 DNA 是长长的一股，从前面的分子后面穿过去，而不是被切成一小段一小段。
+- **核酸，横纹**：原来每 110 Å 换一个编号，线上有一道道横纹；他的 DNA 上没有。改成 2000 Å。
+- 仍然不像的：他的 DNA 走得直、稀；模型里的 DNA 弯而密，这是数据本身，没有动。线仍然比他的黑。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -388,3 +398,13 @@ Single structures loaded by id, in the painted drawing, now follow his recent Mo
 - **The sheet caught a regression**: with smoothing turned off for single molecules in the last step, large structures of hundreds of thousands of atoms such as the Zika and HIV capsids had become speckle. Structures with more than 200 thousand placed atoms are smoothed again.
 - **White holes in the synapse**: the pre- and postsynaptic scenes get a dark ground (`ground` in the catalogue entry), so gaps show a deep tone and not paper.
 - **Branched mucin**: the threading tool gained `branches`, a short side piece every few steps, used for the coronavirus's mucin. It is still some way from the brush he paints: his branches are denser and longer, and the space between strands is filled.
+
+### H1: one by one, small molecules as dots, DNA at its true width
+
+The four cards of the list not yet compared one by one (Zika, nuclear pore, synaptic vesicle, exosome) were put beside his pictures. Zika, the nuclear pore and the exosome showed nothing large to change; the synaptic vesicle was the worst, and the mycoplasma's DNA next.
+
+- **The concept "small molecule"** (`out/H1-synaptic-vesicle.jpg`, old left, new right): the glutamates in the vesicle shared one id and were wiped into a blotched mass. He paints them as dots. Each small molecule now collapses to one sphere at its centroid (`dots` in the catalogue entry, radius 8 Å), outlined on its own. **This is an exaggeration**: positions are the model's, the size is not, and real glutamate is much smaller; it belongs to the "exaggerate" option, can be turned off, is stated under sources, and the Illustrate drawing is unaffected.
+- **The concept "nucleic acid", width** (`out/H1-mycoplasma-dna.jpg`, ours left, his right): the DNA of the mycoplasma model is a bead model, two beads of radius 11 Å per base pair, drawing about 41 Å wide, twice real DNA (20 Å). In the painted drawing each piece collapses to one sphere on the midline: radius 10 Å for a duplex, 5 Å for a single strand. This one is not an exaggeration; it brings the model's oversized beads back to the true width.
+- **Nucleic acid, length**: the slab is two and a half times as deep for fibres as for other molecules, so DNA runs long and passes behind the molecules in front and is no longer cut into short pieces.
+- **Nucleic acid, cross-marks**: the id used to change every 110 Å, leaving cross-marks along a strand; his DNA has none. It is now 2000 Å.
+- Still unlike his: his DNA runs straight and sparse; the model's is curved and dense, which is the data itself and was left alone. The lines are still blacker than his.
