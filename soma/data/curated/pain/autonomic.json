@@ -1,0 +1,74 @@
+{
+ "_doc": {
+  "zh": "疼痛时的自主神经体征：基线、效应量和时间常数，供监护面板显示。这是疼痛生理的计算模型，用于教学；被模拟的身体没有主观体验。每个体征 = 基线 +（或 ×）效应 × 滤波后的强度 / 参考强度；滤波是一阶的，上升和回落各有时间常数。效应量取自冷加压试验等实验，但那些实验没有给出对应的 0–10 评分，所以“参考强度”都是假设；时间常数除注明者外都是假设。真人的自主反应个体差异很大，不能用来推断疼痛。",
+  "en": "Autonomic signs of pain: baselines, effect sizes and time constants, for a monitor panel. This is a computational model of pain physiology for teaching; the simulated body has no subjective experience. Each sign = baseline + (or ×) effect × filtered intensity / reference intensity; the filter is first order with separate rise and fall time constants. Effect sizes come from cold pressor and similar experiments, which did not report the matching 0-10 rating, so every 'reference intensity' is an assumption; time constants are assumptions unless stated. Autonomic responses differ widely between people and cannot be used to infer pain."
+ },
+ "signs": {
+  "heartRate": {
+   "name": { "zh": "心率", "en": "Heart rate" },
+   "unit": "beats/min",
+   "baseline": { "value": 67.1, "unit": "beats/min", "source": "xia2017" },
+   "effect": { "value": 5.8, "unit": "%", "source": "rapalis2023", "derived": true, "note": { "zh": "7 °C 冷加压 2 分钟，RR 间期中位数 −5.5%，折合心率 1 / 0.945 − 1 = +5.8%。", "en": "Cold pressor at 7 °C for 2 minutes: median RR interval -5.5 %, i.e. heart rate 1 / 0.945 - 1 = +5.8 %." } },
+   "mode": "percent",
+   "referenceIntensity": { "value": 6, "unit": "NRS", "assumption": true, "note": { "zh": "假设：把该冷加压试验当作 6/10 的疼痛。", "en": "Assumption: that cold pressor test is taken as pain of 6 out of 10." } },
+   "latency": { "value": 1, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "rise": { "value": 5, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "fall": { "value": 15, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } }
+  },
+  "systolic": {
+   "name": { "zh": "收缩压", "en": "Systolic pressure" },
+   "unit": "mmHg",
+   "baseline": { "value": 111.7, "unit": "mmHg", "source": "xia2017" },
+   "effect": { "value": 12.6, "unit": "%", "source": "rapalis2023", "note": { "zh": "7 °C 冷加压 2 分钟的中位数变化。另一项研究（oka2008，4 °C 1 分钟）为 +16.2 ± 4.1 mmHg，量级相同。", "en": "Median change in a 2-minute cold pressor test at 7 °C. Another study (oka2008, 4 °C for 1 minute) found +16.2 ± 4.1 mmHg, the same order." } },
+   "mode": "percent",
+   "referenceIntensity": { "value": 6, "unit": "NRS", "assumption": true, "note": { "zh": "假设，同心率。", "en": "Assumption, as for heart rate." } },
+   "latency": { "value": 2, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "rise": { "value": 20, "unit": "s", "assumption": true, "note": { "zh": "假设；取值使血压在约 1 分钟接近最高（oka2008：开始后 1 分钟最高）。", "en": "Assumption, chosen so that pressure is near its maximum at about one minute (oka2008: highest one minute after the start)." } },
+   "fall": { "value": 45, "unit": "s", "assumption": true, "note": { "zh": "假设；取值使血压在约 3 分钟内回到基线附近（oka2008）。", "en": "Assumption, chosen so that pressure is back near baseline within about three minutes (oka2008)." } }
+  },
+  "diastolic": {
+   "name": { "zh": "舒张压", "en": "Diastolic pressure" },
+   "unit": "mmHg",
+   "baseline": { "value": 62.9, "unit": "mmHg", "source": "xia2017" },
+   "effect": { "value": 13.4, "unit": "%", "source": "rapalis2023", "note": { "zh": "7 °C 冷加压 2 分钟的中位数变化。oka2008 为 +7.7 ± 3.0 mmHg。", "en": "Median change in a 2-minute cold pressor test at 7 °C. oka2008 found +7.7 ± 3.0 mmHg." } },
+   "mode": "percent",
+   "referenceIntensity": { "value": 6, "unit": "NRS", "assumption": true, "note": { "zh": "假设，同心率。", "en": "Assumption, as for heart rate." } },
+   "latency": { "value": 2, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "rise": { "value": 20, "unit": "s", "assumption": true, "note": { "zh": "假设，同收缩压。", "en": "Assumption, as for systolic pressure." } },
+   "fall": { "value": 45, "unit": "s", "assumption": true, "note": { "zh": "假设，同收缩压。", "en": "Assumption, as for systolic pressure." } }
+  },
+  "respiratoryRate": {
+   "name": { "zh": "呼吸频率", "en": "Respiratory rate" },
+   "unit": "breaths/min",
+   "baseline": { "value": 14, "unit": "breaths/min", "assumption": true, "note": { "zh": "假设：成人静息呼吸频率的常见值，没有打开出处。", "en": "Assumption: a usual adult resting rate; no source was opened." } },
+   "effect": { "value": 3, "unit": "breaths/min", "assumption": true, "note": { "zh": "假设。只知道方向（急性疼痛使呼吸加快、加深）；找到的系统综述（Jafari 等 2017，Pain）不是开放获取，没有打开，所以连方向也没有可核对的出处。", "en": "Assumption. Only the direction is known (acute pain speeds and deepens breathing); the systematic review that was found (Jafari et al. 2017, Pain) is not open access and was not opened, so even the direction has no checkable source here." } },
+   "mode": "absolute",
+   "referenceIntensity": { "value": 6, "unit": "NRS", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "latency": { "value": 0.5, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "rise": { "value": 4, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "fall": { "value": 15, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } }
+  },
+  "pupil": {
+   "name": { "zh": "瞳孔直径", "en": "Pupil diameter" },
+   "unit": "mm",
+   "baseline": { "value": 4, "unit": "mm", "source": "wildemeersch2018", "note": { "zh": "丙泊酚麻醉下病人的中位数，不是清醒的人；清醒时还取决于光照。", "en": "Median of patients under propofol anaesthesia, not awake people; when awake it also depends on the light." } },
+   "effect": { "value": 28, "unit": "%", "source": "wildemeersch2018", "note": { "zh": "麻醉下病人对伤害性电刺激的瞳孔扩大反射（中位数），不是清醒的人。mischkowski2019 表明清醒时瞳孔扩大随疼痛强度增大，但单位是任意的。", "en": "Pupillary dilation reflex to noxious electrical stimulation in anaesthetised patients (median), not awake people. mischkowski2019 shows that the dilation grows with pain intensity when awake, but in arbitrary units." } },
+   "mode": "percent",
+   "referenceIntensity": { "value": 6, "unit": "NRS", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "latency": { "value": 0.2, "unit": "s", "assumption": true, "note": { "zh": "假设；与 0.3 s 的上升时间常数一起，使短刺激的峰在约 0.5 s（wagenaar2025 所述的预期峰时）。", "en": "Assumption; with the 0.3 s rise it puts the peak of a brief stimulus near 0.5 s (the expected peak time stated by wagenaar2025)." } },
+   "rise": { "value": 0.3, "unit": "s", "assumption": true, "note": { "zh": "假设，见上。", "en": "Assumption, see above." } },
+   "fall": { "value": 2, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } }
+  },
+  "skinConductance": {
+   "name": { "zh": "皮肤电导", "en": "Skin conductance" },
+   "unit": "μS",
+   "baseline": { "value": 2.5, "unit": "μS", "source": "scheuren2023" },
+   "effect": { "value": 1.1, "unit": "μS", "source": "scheuren2023", "note": { "zh": "评分调到 4/10 的针刺所引起的交感皮肤反应幅度；同样强度的热刺激为 1.2 μS。标准差比均值还大。", "en": "Sympathetic skin response to pinpricks adjusted to a rating of 4 out of 10; 1.2 μS for heat of the same rating. The standard deviation exceeds the mean." } },
+   "mode": "absolute",
+   "referenceIntensity": { "value": 4, "unit": "NRS", "source": "scheuren2023" },
+   "latency": { "value": 1.5, "unit": "s", "assumption": true, "note": { "zh": "假设：皮肤电反应的潜伏期取常见量级，没有打开出处。", "en": "Assumption: a usual order for the latency of an electrodermal response; no source was opened." } },
+   "rise": { "value": 1, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } },
+   "fall": { "value": 5, "unit": "s", "assumption": true, "note": { "zh": "假设。", "en": "Assumption." } }
+  }
+ }
+}

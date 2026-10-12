@@ -1,0 +1,178 @@
+{
+ "_doc": {
+  "zh": "身体部位、皮神经分布区到部位的归类，以及分部位的痛阈。这是疼痛生理的计算模型，用于教学；被模拟的身体没有主观体验。部位由刺激点所在的皮神经分布区（data/curated/skinmaps/cutaneous.json 的 key）决定，再按 refinements 细分。阈值只在少数几个部位测过；没有数据的部位按 fallback 借用另一处的值，这种借用是假设，解释数据里会写明。归类本身是本项目的解剖学分类，没有数字。",
+  "en": "Body regions, the assignment of cutaneous nerve territories to them, and per-site pain thresholds. This is a computational model of pain physiology for teaching; the simulated body has no subjective experience. The region follows from the cutaneous territory under the stimulus (the keys of data/curated/skinmaps/cutaneous.json), refined by 'refinements'. Thresholds were measured at a handful of sites only; a region without data borrows another site's value through 'fallback', which is an assumption and is stated in the explanation data. The assignment itself is this project's anatomical classification and carries no numbers."
+ },
+ "regions": {
+  "face": { "name": { "zh": "面部", "en": "Face" }, "limb": null },
+  "scalp": { "name": { "zh": "头皮", "en": "Scalp" }, "limb": null },
+  "neck": { "name": { "zh": "颈部", "en": "Neck" }, "limb": null },
+  "shoulder": { "name": { "zh": "肩和锁骨区", "en": "Shoulder and clavicular area" }, "limb": null },
+  "chest": { "name": { "zh": "胸壁", "en": "Chest wall" }, "limb": null },
+  "abdomen": { "name": { "zh": "腹壁", "en": "Abdominal wall" }, "limb": null },
+  "back": { "name": { "zh": "背部", "en": "Upper back" }, "limb": null },
+  "lowBack": { "name": { "zh": "腰部", "en": "Low back" }, "limb": null },
+  "buttock": { "name": { "zh": "臀部", "en": "Buttock" }, "limb": null },
+  "groin": { "name": { "zh": "腹股沟和外生殖器区", "en": "Groin and genital area" }, "limb": null },
+  "perineum": { "name": { "zh": "会阴", "en": "Perineum" }, "limb": null },
+  "upperArm": { "name": { "zh": "上臂", "en": "Upper arm" }, "limb": "upper" },
+  "forearm": { "name": { "zh": "前臂", "en": "Forearm" }, "limb": "upper" },
+  "hand": { "name": { "zh": "手", "en": "Hand" }, "limb": "upper" },
+  "fingertip": { "name": { "zh": "指尖", "en": "Fingertip" }, "limb": "upper" },
+  "thigh": { "name": { "zh": "大腿", "en": "Thigh" }, "limb": "lower" },
+  "leg": { "name": { "zh": "小腿", "en": "Leg" }, "limb": "lower" },
+  "footDorsum": { "name": { "zh": "足背和踝", "en": "Dorsum of foot and ankle" }, "limb": "lower" },
+  "sole": { "name": { "zh": "足底", "en": "Sole" }, "limb": "lower" }
+ },
+ "territoryRegion": {
+  "V1": "face",
+  "infraorbital": "face",
+  "zygomatic": "face",
+  "mental": "face",
+  "buccal": "face",
+  "auriculotemporal": "face",
+  "greaterOccipital": "scalp",
+  "lesserOccipital": "scalp",
+  "greatAuricular": "neck",
+  "transverseCervical": "neck",
+  "supraclavicular": "shoulder",
+  "cervicalDorsalRami": "neck",
+  "thoracicDorsalRami": "back",
+  "intercostalLateral": "chest",
+  "intercostalAnterior": "chest",
+  "subcostal": "abdomen",
+  "iliohypogastricLateral": "buttock",
+  "iliohypogastricAnterior": "abdomen",
+  "ilioinguinal": "groin",
+  "genitofemoralFemoral": "thigh",
+  "genitofemoralGenital": "groin",
+  "superiorClunial": "buttock",
+  "middleClunial": "buttock",
+  "inferiorClunial": "buttock",
+  "pudendal": "perineum",
+  "anococcygeal": "perineum",
+  "axillary": "upperArm",
+  "inferiorLateralBrachial": "upperArm",
+  "posteriorBrachial": "upperArm",
+  "posteriorAntebrachial": "forearm",
+  "medialBrachial": "upperArm",
+  "intercostobrachial": "upperArm",
+  "medialAntebrachial": "forearm",
+  "lateralAntebrachial": "forearm",
+  "superficialRadial": "hand",
+  "median": "hand",
+  "ulnar": "hand",
+  "lateralFemoral": "thigh",
+  "femoralAnterior": "thigh",
+  "obturator": "thigh",
+  "posteriorFemoral": "thigh",
+  "saphenous": "leg",
+  "lateralSural": "leg",
+  "superficialFibular": "footDorsum",
+  "deepFibular": "footDorsum",
+  "sural": "leg",
+  "medialCalcaneal": "sole",
+  "medialPlantar": "sole",
+  "lateralPlantar": "sole"
+ },
+ "refinements": [
+  {
+   "region": "hand",
+   "whenNearestJoint": "^(dip[2-5]|ip1)_",
+   "use": "fingertip",
+   "note": { "zh": "刺激点最近的骨段是远节指骨（rig.json 中 dip2–5、ip1 关节以远）时算指尖。没有 rig 数据时不细分。", "en": "A point whose nearest bone segment is a distal phalanx (beyond the dip2-5 and ip1 joints of rig.json) counts as a fingertip. Not refined when no rig is given." }
+  },
+  {
+   "region": "back",
+   "whenDermatome": ["T11", "T12", "L1", "L2", "L3", "L4", "L5", "S1", "S2", "S3", "S4-5"],
+   "use": "lowBack",
+   "note": { "zh": "胸神经后支分布区一直延伸到腰部；皮节在 T11 及以下时算腰部。", "en": "The territory of the thoracic dorsal rami runs down into the loin; with a dermatome of T11 or below the point counts as low back." }
+  }
+ ],
+ "thresholds": {
+  "heat": {
+   "unit": "°C",
+   "sites": {
+    "hand": { "value": 43.3, "unit": "°C", "source": "gonzalezduarte2016", "note": { "zh": "DFNS（n = 180）手部热痛阈均值，经 gonzalezduarte2016 表 4 转引。", "en": "DFNS (n = 180) mean heat pain threshold of the hand, as quoted in Table 4 of gonzalezduarte2016." } },
+    "footDorsum": { "value": 44.4, "unit": "°C", "source": "gonzalezduarte2016", "note": { "zh": "DFNS 足部热痛阈均值，经同一表转引。", "en": "DFNS mean heat pain threshold of the foot, quoted through the same table." } },
+    "forearm": { "value": 44.8, "unit": "°C", "source": "mischkowski2019", "note": { "zh": "前臂掌侧，全体受试者的痛阈（logistic 回归）。", "en": "Volar forearm, pain threshold across participants (logistic regression)." } },
+    "face": { "value": 40.6, "unit": "°C", "source": ["gonzalezduarte2016", "cosentino2023"], "derived": true, "note": { "zh": "推算：手的阈值 43.3 °C 加上 cosentino2023 中眶上区与手的差（18–39 岁，男 41.8 − 44.1 = −2.3，女 38.0 − 41.1 = −3.1，平均 −2.7 °C）。那项研究的判据是中等疼痛而不是阈值，所以这是把“差值在阈值处也成立”当作前提的估计。", "en": "Estimated: the hand threshold 43.3 °C plus the supraorbital-minus-hand difference of cosentino2023 (18-39 years: men 41.8 - 44.1 = -2.3, women 38.0 - 41.1 = -3.1, mean -2.7 °C). That study's criterion was moderate pain, not threshold, so the estimate presumes the difference also holds at threshold." } }
+   },
+   "fallback": {
+    "assumption": true,
+    "note": { "zh": "假设：没有测量值的部位借用下列部位的阈值（躯干和肢体近端的有毛皮肤借用前臂）。女性热痛阈低于男性（rolke2006、cosentino2023），这里没有区分。", "en": "Assumption: a region without a measurement borrows the threshold of the site listed (hairy skin of the trunk and proximal limbs borrows the forearm). Heat pain thresholds are lower in women (rolke2006, cosentino2023); no distinction is made here." },
+    "map": { "scalp": "face", "neck": "face", "shoulder": "forearm", "chest": "forearm", "abdomen": "forearm", "back": "forearm", "lowBack": "forearm", "buttock": "forearm", "groin": "forearm", "perineum": "forearm", "upperArm": "forearm", "fingertip": "hand", "thigh": "forearm", "leg": "footDorsum", "sole": "footDorsum" }
+   }
+  },
+  "cold": {
+   "unit": "°C",
+   "sites": {
+    "hand": { "value": 13.2, "unit": "°C", "source": "gonzalezduarte2016", "note": { "zh": "DFNS 手部冷痛阈均值，经 gonzalezduarte2016 表 4 转引。冷痛阈的个体差异很大（该文自己的样本为 19.7 °C）。", "en": "DFNS mean cold pain threshold of the hand, as quoted in Table 4 of gonzalezduarte2016. Cold pain thresholds vary widely (that paper's own sample gave 19.7 °C)." } },
+    "footDorsum": { "value": 12.6, "unit": "°C", "source": "gonzalezduarte2016", "note": { "zh": "DFNS 足部冷痛阈均值，经同一表转引。", "en": "DFNS mean cold pain threshold of the foot, quoted through the same table." } }
+   },
+   "fallback": {
+    "assumption": true,
+    "note": { "zh": "假设：下肢借用足的阈值，其余部位借用手的阈值。", "en": "Assumption: the lower limb borrows the foot threshold and everything else the hand threshold." },
+    "map": { "face": "hand", "scalp": "hand", "neck": "hand", "shoulder": "hand", "chest": "hand", "abdomen": "hand", "back": "hand", "lowBack": "hand", "buttock": "hand", "groin": "hand", "perineum": "hand", "upperArm": "hand", "forearm": "hand", "fingertip": "hand", "thigh": "footDorsum", "leg": "footDorsum", "sole": "footDorsum" }
+   }
+  },
+  "pressure": {
+   "unit": "kPa",
+   "sites": {
+    "lowBack": {
+     "male": { "value": 548, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "腰椎旁肌，男性中位数。mailloux2021 的腰竖脊肌均值为 551.1 kPa（不分性别）。", "en": "Lumbar paravertebral muscle, median of men. mailloux2021 gives a mean of 551.1 kPa for the lumbar erector spinae (sexes pooled)." } },
+     "female": { "value": 526, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "腰椎旁肌，女性中位数。", "en": "Lumbar paravertebral muscle, median of women." } }
+    },
+    "buttock": {
+     "male": { "value": 564, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "臀大肌，男性中位数。", "en": "Gluteus maximus, median of men." } },
+     "female": { "value": 462, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "臀大肌，女性中位数。", "en": "Gluteus maximus, median of women." } }
+    },
+    "thigh": {
+     "male": { "value": 415, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "股四头肌（髌上 10 cm），男性中位数。", "en": "Quadriceps (10 cm above the patella), median of men." } },
+     "female": { "value": 310, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "股四头肌，女性中位数。", "en": "Quadriceps, median of women." } }
+    },
+    "leg": {
+     "male": { "value": 514, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "胫骨前肌，男性中位数；小腿其他面没有数据，都用这个值。", "en": "Tibialis anterior, median of men; used for every aspect of the leg for lack of other data." } },
+     "female": { "value": 379, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "胫骨前肌，女性中位数。", "en": "Tibialis anterior, median of women." } }
+    },
+    "footDorsum": {
+     "male": { "value": 390, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "距腓前韧带（外踝前下方），男性中位数；用于整个足背和踝。", "en": "Anterior talofibular ligament (in front of and below the lateral malleolus), median of men; used for the whole dorsum of the foot and ankle." } },
+     "female": { "value": 336, "unit": "kPa", "source": "suzuki2023", "note": { "zh": "距腓前韧带，女性中位数。", "en": "Anterior talofibular ligament, median of women." } }
+    },
+    "hand": { "value": 370.5, "unit": "kPa", "source": "mailloux2021", "note": { "zh": "腕背（头状骨处）均值，不分性别。", "en": "Dorsal wrist over the capitate, mean, sexes pooled." } },
+    "forearm": { "value": 369.5, "unit": "kPa", "source": "mailloux2021", "note": { "zh": "前臂屈肌（内上髁以远 10 cm）均值，不分性别。", "en": "Wrist flexor muscles of the forearm (10 cm distal to the medial epicondyle), mean, sexes pooled." } }
+   },
+   "fallback": {
+    "assumption": true,
+    "note": { "zh": "假设：没有测量值的部位借用下列部位的阈值。", "en": "Assumption: a region without a measurement borrows the threshold of the site listed." },
+    "special": { "regions": ["face", "scalp", "neck"], "note": { "zh": "面部实际上比四肢敏感得多（rolke2006：压痛阈的面–足差别是所有参数里最大的），借用前臂的值会低估头面部的反应。", "en": "The face is in fact far more sensitive than the limbs (rolke2006: the face-foot contrast of the pressure pain threshold is the largest of all parameters), so borrowing the forearm value understates the response of the head and face." } },
+    "map": { "face": "forearm", "scalp": "forearm", "neck": "forearm", "shoulder": "forearm", "chest": "thigh", "abdomen": "thigh", "back": "lowBack", "groin": "thigh", "perineum": "thigh", "upperArm": "forearm", "fingertip": "hand", "sole": "footDorsum" }
+   }
+  },
+  "pinprick": {
+   "unit": "×",
+   "note": { "zh": "针刺阈值（nociception.json，64 mN）乘以下列系数。", "en": "Multipliers of the pinprick threshold (nociception.json, 64 mN)." },
+   "factors": {
+    "assumption": true,
+    "note": { "zh": "假设。方向有出处（rolke2006：面部最敏感，手部的针刺痛阈最高），倍数没有出处。未列出的部位为 1。", "en": "Assumption. The direction is sourced (rolke2006: the face is most sensitive and the hand has the highest pinprick threshold); the multipliers are not. Regions not listed use 1." },
+    "map": { "face": 0.5, "scalp": 0.5, "hand": 1.5, "fingertip": 1.5 }
+   }
+  }
+ },
+ "innervation": {
+  "note": { "zh": "皮肤伤害感受器密度的分部位数据。只找到小腿远端一处的开放数值，所以它只显示在解释数据里，不作为各部位的增益；部位间的差别由上面的阈值表体现。", "en": "Regional data on the density of cutaneous nociceptive endings. An open value was found for the distal leg only, so it appears in the explanation data and is not used as a regional gain; differences between sites come from the threshold tables above." },
+  "sites": {
+   "leg": {
+    "quantity": { "zh": "表皮内神经纤维密度（小腿远端）", "en": "Intraepidermal nerve fibre density (distal leg)" },
+    "unit": "fibres/mm",
+    "all": { "value": 9.29, "source": "collongues2018" },
+    "male": { "value": 7.63, "source": "collongues2018" },
+    "female": { "value": 10.74, "source": "collongues2018" }
+   }
+  },
+  "qualitative": [
+   { "regions": ["fingertip"], "source": "mancini2014", "note": { "zh": "指尖是痛觉空间分辨力最高的部位。", "en": "The fingertip has the highest spatial acuity for pain." } },
+   { "regions": ["upperArm", "forearm", "hand"], "source": "mancini2014", "note": { "zh": "上肢有毛皮肤上，痛觉的空间分辨力沿近远方向的变化与触觉相反。", "en": "On the hairy skin of the upper limb, spatial acuity for pain changes along the limb in the opposite direction to that for touch." } }
+  ]
+ }
+}
