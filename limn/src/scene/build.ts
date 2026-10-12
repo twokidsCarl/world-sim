@@ -52,6 +52,8 @@ export interface Placement {
   strand?: boolean
   /** 切片的背面不切它：衬在里面的一层，空隙里露出的是它而不是白纸 / not cut at the back of a slab: a layer lining the inside, so that gaps show it and not paper */
   keepBack?: boolean
+  /** 所有拷贝共用一个编号，彼此之间不画线（一整层蛋白读成一条带子）/ every copy shares one id, with no lines between them (a whole layer of protein reads as a band) */
+  oneId?: boolean
   /** 名字匹配的实体衬在后面（同 keepBack，但只对这些实体）/ entities whose name matches line the back (as keepBack, for those entities only) */
   lining?: RegExp
   /** 剖开时不切它（叠在密度图里的原子模型）/ left whole by a cut (an atomic model shown inside a density map) */
@@ -210,7 +212,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         }
         iids[o * 2] = copy * mol.chains.length
         // 同一种纤维的各组（模型按碱基种类分了组）共用一个编号，连成一条 / the groups of one kind of fibre (the model groups them by base) share one id and join into one strand
-        iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : segments.has(g) ? p.molecule + segments.get(g)![o - first]! : g.fibre ? p.molecule + 3_900_000 + mol.chains[g.chainIndex]!.entity : p.molecule + 1 + (g.merged ? groupCopy : copy)
+        iids[o * 2 + 1] = !p.perCopy || g.lipid || p.oneId ? p.molecule : segments.has(g) ? p.molecule + segments.get(g)![o - first]! : g.fibre ? p.molecule + 3_900_000 + mol.chains[g.chainIndex]!.entity : p.molecule + 1 + (g.merged ? groupCopy : copy)
         o++
         copy++
       }

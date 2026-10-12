@@ -281,7 +281,7 @@ export function rnpBundle(rnp: Molecule, polymerase: Molecule, centre: V3, cavit
 }
 
 /** 一批球（x, y, z…）的质心，以及到质心距离的若干百分位 / the centroid of a set of spheres (x, y, z...) and percentiles of their distance from it */
-export function shell(pos: Float32Array, start: number, count: number): { centre: V3; inner: number; outer: number } {
+export function shell(pos: Float32Array, start: number, count: number): { centre: V3; inner: number; outer: number; mid: number } {
   const c: V3 = [0, 0, 0]
   const step = Math.max(1, Math.floor(count / 200_000))
   let n = 0
@@ -297,7 +297,9 @@ export function shell(pos: Float32Array, start: number, count: number): { centre
   const r: number[] = []
   for (let i = start; i < start + count; i += step) r.push(Math.hypot(pos[i * 3]! - c[0], pos[i * 3 + 1]! - c[1], pos[i * 3 + 2]! - c[2]))
   r.sort((a, b) => a - b)
-  return { centre: c, inner: r[Math.floor(r.length * 0.02)]!, outer: r[Math.floor(r.length * 0.98)]! }
+  // mid：半径的中位数，也就是膜的中面；起伏的膜的内外百分位之差比膜的真实厚度大得多
+  // mid: the median radius, that is the membrane's mid-plane; in an undulating membrane the spread between inner and outer percentiles is far more than its true thickness
+  return { centre: c, inner: r[Math.floor(r.length * 0.02)]!, outer: r[Math.floor(r.length * 0.98)]!, mid: r[r.length >> 1]! }
 }
 
 /**

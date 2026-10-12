@@ -46,6 +46,8 @@ export interface Panel {
   noCut?: boolean
   /** 切片的背面不切这个面板 / this panel is not cut at the back of a slab */
   keepBack?: boolean
+  /** 这个面板的所有拷贝共用一个编号，彼此之间不画线 / every copy of this panel shares one id, with no lines between them */
+  oneId?: boolean
   paper?: { citation: api.Citation; open: boolean; licence: string; abstract: string } | null
 }
 
@@ -380,11 +382,13 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
   const [m1, rnp, pol] = [await load(spec.matrix), await load(spec.rnp), await load(spec.polymerase)]
   const layer = helicalLayer(m1, defaultAssembly(m1))
   // M1 的质心放在膜内表面往里 25 Å；再往里 30 Å 之内是给 RNP 的空腔 / M1 centroids sit 25 Å inside the membrane's inner face; the space for the RNPs starts 30 Å further in
-  const matrix = layerOnSphere(layer, membrane.centre, membrane.inner - 25)
+  // 理想化时膜的内表面在中面往里 19 Å；否则取数据里最靠里的脂质 / when idealised the membrane's inner face is 19 Å inside its mid-plane; otherwise where the data's innermost lipids are
+  const inner = idealise ? membrane.mid - 19 : membrane.inner
+  const matrix = layerOnSphere(layer, membrane.centre, inner - 25)
   // 一段 RNP 螺旋里有多少个核苷酸：数它的 RNA 链上的磷原子 / nucleotides in one stretch of RNP helix: count the phosphorus atoms on its RNA chains
   let nt = 0
   for (const c of rnp.chains) if (rnp.entities[c.entity]!.kind === 'rna') for (let i = c.start; i < c.start + c.count; i++) if (rnp.isTrace[i]) nt++
-  const cavity = membrane.inner - 55
+  const cavity = inner - 55
   // 手绘画法：照 Goodsell 的做法，每条杆一直画到内壁、在内壁处截断，里面是满的；Illustrate 画法：每条只放完整的螺旋段
   // painted drawing: as Goodsell does, every rod runs up to the inner wall and is cut there, so the inside is full; Illustrate drawing: whole helical stretches only
   const bundle = rnpBundle(rnp, pol, membrane.centre, cavity, [0, 1, 0], nt || 616, undefined, idealise)
@@ -466,7 +470,7 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     // 膜也理想化：一条边缘光滑、宽度均匀的球壳，厚度取自模拟里的膜。原模型里的东西在这种画法下都不画了。
     // the membrane is idealised too: a spherical shell of smooth edges and even width, as thick as the simulated one. Nothing of the original model is drawn in this drawing any more.
     for (const a of model.assemblies) a.groups = []
-    outside.unshift(make(shellMembrane(membrane.centre, membrane.inner, membrane.outer, `${model.id}:membrane`), `${model.id}:membrane`, '膜（理想化的球壳）', 'Membrane (idealised shell)', [IDENTITY], () => MEMBRANE_LCH, () => ['膜', 'membrane']))
+    outside.unshift(make(shellMembrane(membrane.centre, membrane.mid - 19, membrane.mid + 19, `${model.id}:membrane`), `${model.id}:membrane`, '膜（理想化的球壳）', 'Membrane (idealised shell)', [IDENTITY], () => MEMBRANE_LCH, () => ['膜', 'membrane']))
     outside[0]!.spec.source = { ...outside[0]!.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
     tilts.sort((a, b) => a - b)
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
@@ -503,10 +507,12 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
   // 基质蛋白层衬在里面：核糖核蛋白之间的空隙里露出的是它的深色，不是白纸
   // the matrix layer lines the inside: gaps between ribonucleoproteins show its deep tone, not paper
   const lining = (p: Panel): Panel => ({ ...p, keepBack: true })
+  // 一整层：各份拷贝之间不画线，读成一条带子 / one layer: no lines between its copies, so that it reads as a band
+  const band = (p: Panel): Panel => ({ ...p, keepBack: true, oneId: true })
   return [
     ...outside,
     // 基质蛋白层也衬在后面，杆之间和杆外面的空处露出的是它 / the matrix layer lines the back as well, showing between and beyond the rods
-    lining(make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1'])),
+    band(make(m1, spec.matrix, '基质蛋白 M1（推断的位置）', 'Matrix protein M1 (inferred placement)', matrix, () => [0.79, 0.083, 245], () => ['基质蛋白 M1', 'matrix protein M1'])),
     // 核糖核蛋白衬在里面：切片后面的那几条仍然画出来（用深一号的橙色），空隙里露出的是它们，不是白纸，也不是基质蛋白的内壁
     // the ribonucleoproteins line the inside: those behind the slab are still drawn (in a deeper orange), so gaps show them and neither paper nor the inner wall of matrix protein
     filled ? lining(rnpPanel) : rnpPanel,
