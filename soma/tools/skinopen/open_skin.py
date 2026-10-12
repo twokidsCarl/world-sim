@@ -56,6 +56,12 @@ TAGS = {
     'upperLidL': 4, 'lowerLidL': 5, 'upperLidR': 6, 'lowerLidR': 7, 'canthus': 13,
     'lidRimL': 8, 'lidRimR': 9,
     'oralPouchUpper': 10, 'oralPouchLower': 11, 'oralPouchSeam': 12,
+    # 移植（graft.py）：removed = 被切掉、不再被三角形用到的原顶点；graftScanned / graftCurated = 供体片上位置未动的顶点
+    # （扫描数据 / 人工建模数据）；graftBlend = 被移去与皮肤相接的过渡环顶点（构造物）；graftConstruction = 其他构造物
+    # grafts (graft.py): removed = delivered vertices cut away and used by no triangle; graftScanned / graftCurated = donor
+    # vertices left where they were (scanned / artist-made data); graftBlend = blend-ring vertices moved to meet the skin
+    # (construction); graftConstruction = other construction geometry
+    'removed': 14, 'graftScanned': 15, 'graftBlend': 16, 'graftCurated': 17, 'graftConstruction': 18,
 }
 
 
@@ -78,6 +84,18 @@ def read_obj(path):
     F = np.array(F, dtype=np.int64)
     F = np.where(F < 0, len(V) + F, F - 1)
     return V, F, head
+
+
+def read_face_groups(path):
+    """OBJ 里每个三角形所在的分组名（没有 g 行的归 skin）/ the group name of every triangle of an OBJ (skin when there is no g line)"""
+    names, cur = [], 'skin'
+    with open(path) as fh:
+        for line in fh:
+            if line.startswith('g '):
+                cur = line[2:].strip() or 'skin'
+            elif line.startswith('f '):
+                names += [cur] * (len(line.split()) - 3)
+    return names
 
 
 def write_obj(path, V, groups, head):
@@ -431,6 +449,11 @@ def main():
             raise SystemExit('manifest.face.regions.%s is missing: this tool needs the lip and lid regions' % r)
     V0, F0, head = read_obj(os.path.join(pkg, 'skin.obj'))
     n0 = len(V0)
+    face_group = np.array(read_face_groups(os.path.join(pkg, 'skin.obj')))
+    # 输入可以是 graft.py 的输出：沿用它的标签和来源顶点 / the input may be the output of graft.py: its tags and source vertices are carried on
+    tags_in = np.fromfile(os.path.join(pkg, 'vertex-tags.u8'), dtype=np.uint8) if os.path.exists(os.path.join(pkg, 'vertex-tags.u8')) else np.zeros(n0, np.uint8)
+    src_in = np.fromfile(os.path.join(pkg, 'source-vertex.u32'), dtype='<u4').astype(np.int64) if os.path.exists(os.path.join(pkg, 'source-vertex.u32')) else np.arange(n0)
+    prior_steps = list((manifest.get('grafted') or {}).get('steps', []))
     E0, cnt0 = unique_edges(F0, n0)
     if not (cnt0 == 2).all():
         raise SystemExit('skin.obj is not a closed manifold (%d edges not shared by exactly two triangles); this tool expects the closed skin of tools/bodyshape' % int((cnt0 != 2).sum()))
@@ -476,7 +499,7 @@ def main():
     # ── 2. 剪开口裂 / cut the oral fissure ──────────────────────────────────────────────────────
     V = [V0]
     src = [np.arange(n0)]  # 每个顶点的“来源顶点”/ the source vertex of every vertex
-    tags = np.zeros(n0, np.uint8)
+    tags = tags_in.copy()
     count = n0
 
     def append(P, source, tag):
@@ -813,7 +836,9 @@ def main():
         report['oralFissure']['againstDeep'] = cmp
 
     # ── 7. 写文件 / write the files ─────────────────────────────────────────────────────────────
-    groups = [('skin', skinF)] + rim_groups + pouch_groups
+    kept_group = face_group[keep_face]
+    order = list(dict.fromkeys(face_group.tolist()))
+    groups = [(g, skinF[kept_group == g]) for g in order if (kept_group == g).any()] + rim_groups + pouch_groups
     allF = np.concatenate([g[1] for g in groups])
     mod = '# modified by tools/skinopen: oral fissure cut, eye membranes removed, lid rims and oral pouch added (construction aids); see manifest.json'
     write_obj(os.path.join(out, 'skin.obj'), Vn, groups, head + [mod])
@@ -893,12 +918,12 @@ def main():
         else:
             carried[name] = 'NOT per-vertex (size %d): not copied' % a.size
     tags.tofile(os.path.join(out, 'vertex-tags.u8'))
-    srcn.astype('<u4').tofile(os.path.join(out, 'source-vertex.u32'))
+    src_in[srcn].astype('<u4').tofile(os.path.join(out, 'source-vertex.u32'))
 
     # 其余小文件照抄（图片、拟合状态等大文件不抄）/ other small files are copied (not images or fit states)
     for name in sorted(os.listdir(pkg)):
         p = os.path.join(pkg, name)
-        if not os.path.isfile(p) or name in ('skin.obj', 'weights.bin', 'manifest.json', 'shape-fields.json') or name.endswith(('.f32', '.png', '.npz', '.log')):
+        if not os.path.isfile(p) or name in ('skin.obj', 'weights.bin', 'manifest.json', 'shape-fields.json', 'vertex-tags.u8', 'source-vertex.u32') or name.endswith(('.f32', '.png', '.npz', '.log')):
             continue
         shutil.copyfile(p, os.path.join(out, name))
     sfp = os.path.join(pkg, 'shape-fields.json')
@@ -977,6 +1002,8 @@ def main():
         }
     m['opened'] = {
         'by': 'tools/skinopen/open_skin.py',
+        'steps': prior_steps + ['open'],
+        'stepsNote': {'zh': '各步骤的先后：先在闭合的皮肤上做移植（graft.py 的各步，见 grafted），最后开口裂和睑裂（open）。skin-closed.obj 是开口之前、移植之后的闭合皮肤。', 'en': 'Order of the steps: grafts first, on the closed skin (the steps of graft.py, see grafted), then the mouth and eye openings (open). skin-closed.obj is the closed skin after the grafts and before the openings.'},
         'modification': {
             'zh': '本包由原皮肤包（%s）修改而来（Apache-2.0 第 4(b) 条的修改声明）：剪开口裂、删除两眼的封膜、添加睑缘内卷和口腔袋、重算口裂两侧的下颌权重、把逐顶点文件扩展到新顶点。原皮肤原样保存在 skin-closed.obj。' % os.path.basename(pkg),
             'en': 'This package is a modification of the skin package %s (statement of changes under section 4(b) of the Apache License 2.0): oral fissure cut, the membranes over both eyes removed, lid rims and an oral pouch added, the jaw weight recomputed on both sides of the fissure, per-vertex files extended to the new vertices. The skin as delivered is kept unchanged in skin-closed.obj.' % os.path.basename(pkg),
@@ -987,8 +1014,8 @@ def main():
     }
     loops = boundary_loops(allF, nn)
     files = dict(m.get('files', {}))
-    files['skin.obj'] = '%d vertices, %d triangles; vertices 0…%d are those of the delivered skin in the same order (MHR LOD0), the rest are appended; groups: %s; closed: False (%d boundary loops)' % (nn, len(allF), n0 - 1, ', '.join('%s %d' % (g[0], len(g[1])) for g in groups), len(loops))
-    files['skin-closed.obj'] = 'the skin as delivered, byte for byte: %d vertices, %d triangles, closed; for every consumer that needs a closed surface' % (n0, len(F0))
+    files['skin.obj'] = '%d vertices, %d triangles; vertices 0…%d are those of skin-closed.obj in the same order, the rest are appended; groups: %s; closed: False (%d boundary loops)' % (nn, len(allF), n0 - 1, ', '.join('%s %d' % (g[0], len(g[1])) for g in groups), len(loops))
+    files['skin-closed.obj'] = 'the closed skin the openings were cut into, byte for byte (%s): %d vertices, %d triangles, closed; for every consumer that needs a closed surface' % ('the output of graft.py: ' + ', '.join(prior_steps) if prior_steps else 'the skin as delivered', n0, len(F0))
     files['weights.bin'] = '%d records (uint32 vertex, uint32 joint, float32 weight), little endian; all %d vertices' % (len(rec), nn)
     if alt_name:
         files[alt_name] = 'the same records as weights.bin but with the split of the jaw share eased in over %g mm of arc length from each mouth corner (upper margin 0.5 → 0, lower margin 0.5 → 1); %d records, all %d vertices. An alternative to weights.bin, not an addition: use one or the other' % (alt_taper, len(rec_alt), nn)
@@ -997,7 +1024,7 @@ def main():
             'en': 'weights.bin is the default: an exact split at the fissure right up to the corners (jaw share 0 on the upper margin, 1 on the lower); the opened mouth has square corners. %s is the alternative: the split eases in over %g mm of arc length from each corner, which gives an almond-shaped opening, but the margins are not split exactly over that stretch. Both files have the same record format and vertex numbering; use one or the other.' % (alt_name, alt_taper),
         }
     files['vertex-tags.u8'] = 'uint8 [%d]: what each vertex is, see opened.vertexTags' % nn
-    files['source-vertex.u32'] = 'uint32 [%d]: for each vertex the vertex of skin-closed.obj it derives its per-vertex data from (itself for the first %d)' % (nn, n0)
+    files['source-vertex.u32'] = 'uint32 [%d]: for each vertex the delivered vertex its per-vertex data derive from (itself for the delivered vertices; a grafted vertex names the nearest vertex on the rim of its hole, its data being a harmonic extension from the whole rim)' % nn
     for k, v in carried.items():
         base = files.get(k, '')
         files[k] = (base + ' — ' if base else '') + 'opened: ' + v
@@ -1018,7 +1045,9 @@ def main():
     checks['objVertices'] = len(V2) == nn
     checks['objTriangles'] = len(F2) == len(allF)
     checks['indicesInRange'] = bool(F2.min() >= 0 and F2.max() < nn)
-    checks['everyVertexUsed'] = bool(len(np.unique(F2)) == nn)
+    used2 = np.zeros(nn, bool)
+    used2[F2] = True
+    checks['unusedVerticesAreOnlyRemovedOnes'] = bool(np.array_equal(~used2, tags == TAGS['removed']))
     checks['noDegenerateTriangle'] = bool(((F2[:, 0] != F2[:, 1]) & (F2[:, 1] != F2[:, 2]) & (F2[:, 0] != F2[:, 2])).all())
     _, cnt = unique_edges(F2, nn)
     checks['noEdgeSharedByMoreThanTwo'] = bool((cnt <= 2).all())

@@ -177,6 +177,64 @@ weights-corner-taper.bin：从每个口角起 6 mm 弧长内，上唇缘由 0.5 
   · MHR 唇内面两壁静止时相穿约 0.5 mm，本工具没有改；从外面看不到。
   · 渲染图里眼睑的动作只是测试用的粗糙位移，其中的折皱不是网格的问题。
 
+8. 移植步骤（graft.py）：在开口之前、在闭合的皮肤上做
+------------------------------------------------------------------------
+先后次序：<body>-skin（原包，不动）→ graft.py 的各步 → <body>-skin-grafted/（仍然闭合）→ open_skin.py → <body>-skin-open/。
+    tools/skinopen/run.sh male genital,toes
+    tools/skinopen/run.sh female vulva,toes
+第二个参数省略时不做移植，结果与以前相同。manifest.opened.steps 记录本包试过哪些步骤（最后一项是 open）；
+真正接进去的在 manifest.grafted.grafts，定位了但没有接的在 manifest.grafted.fittedButNotGrafted（各带原因和文件名）。
+此时 skin-closed.obj 是“移植之后、开口之前”的闭合皮肤；原皮肤另存为 skin-delivered.obj。
+
+各人体现有的步骤和现状：
+  男性  genital  已接入。外生殖器（阴茎、阴囊）的皮肤取自他本人的扫描皮肤（BodyParts3D 4.0，FJ2810 外壁，
+                 坐标变换 (x, z, −y) mm → m，已用深层部件核对）。切掉拟合皮肤上的隆起（1,174 个三角形、528 个顶点），
+                 接入 3,521 个顶点、6,928 个三角形，用 232 个三角形缝合。3,334 个顶点位置未动（标签 graftScanned），
+                 靠边 187 个顶点被移去与拟合皮肤相接（标签 graftBlend，构造物；移动中位数 0.5 mm、最大 9.8 mm）。
+                 供体网格上的 10 个小破洞用 32 个三角形补上（构造物）。许可：OBJ 文件头写 CC BY-SA 2.1 Japan，
+                 README 写 CC BY 4.0，两种说法都照录在 manifest 里，没有裁断。
+                 权重：从洞口环调和延拓；离洞口 10–30 mm 过渡到完全跟随骨盆（MHR 关节 root）。阴茎和阴囊随骨盆刚性运动，
+                 不下垂、不摆动、不随大腿让开。体型场同样调和延拓。
+        toes     定位了，没有接入（见下）。
+  女性  vulva    定位了，没有接入。会阴皮肤取自 Wu 等 2015 标本的皮肤面（46_Skin.obj，CC BY 4.0），
+                 用已装入的 16 种 WU_* 结构对原始 OBJ 求映射（仿射 + 平滑残差场，各结构残差中位数 0.6 mm）。
+                 没有接入的两个原因：(1) 这一片的边缘离现有皮肤中位数 17.6 mm（最远 41.5 mm，整片中位数在皮肤之内 24.6 mm）——
+                 拟合皮肤的会阴必须先抬高到她的会阴结构处，这是皮肤作者的事；(2) 去掉标本皮肤块两端的平截面之后，
+                 这一片不是只有一个边界环的圆盘：有 57 条边界边落在尾侧的截面上，即标本的皮肤在外阴范围内被截断，
+                 接入之前要先用构造物补上。定位并平滑后的这一片写在 vulva-patch.obj。开阴道口、尿道口没有做。
+        toes     定位了，没有接入（见下）。
+  两体  toes     供体是 Blender Studio “Human Base Meshes” v1.4.1 的 “Foot - Realistic”（CC0，人工建模，不是扫描；
+                 先用 tools/zanatomy/.venv/bin/python tools/skinopen/export-foot.py 导出，.blend 里的脚本不运行）。
+                 做法：整只脚按趾尖做相似变换，每个趾再刚性转到自己的趾骨方向上。结果不合格：第 4、5 趾的近节趾骨露在趾外
+                 最多 14.5 mm（男）/ 10.9 mm（女），限值 2 mm；供体脚掌离包里的皮肤中位数 8–10 mm。所以按要求停下，没有接入；
+                 定位后的前足写在 toes-fit-L.obj / toes-fit-R.obj。要接入，需要按趾缩放并对前足做非刚性配准。
+                 接入后的权重方案（尚未实现）：从洞口环调和延拓，即基本上是 MHR 的 l_ball / r_ball；包里没有趾间关节，
+                 由绑定一侧把 ball 的权重按最近原则分给 mtp1–5。
+
+标签（vertex-tags.u8）新增：
+  14  removed            被切掉的原顶点：仍在 skin.obj 里（下标不变），但不被任何三角形用到
+  15  graftScanned       供体片上位置未动的顶点，来自扫描数据
+  16  graftBlend         被移去与皮肤相接的过渡环顶点（构造物）
+  17  graftCurated       供体片上位置未动的顶点，来自人工建模数据（留给 toes）
+  18  graftConstruction  其他构造物（留作将来用）
+manifest.grafted.grafts[] 的每一项：name、provenance、source（含许可说明）、patchVertices、blendRingVertices、
+rimOfHole、rimOfPatch、removedVertices、weights、fields。skin.obj 的分组多出 <name> 和 <name>Stitch。
+source-vertex.u32：移植顶点指向洞口环上权重最大的那个原顶点；它的逐顶点数据是整个环上的调和延拓，不是那一个顶点的拷贝。
+
+下游要注意的：
+  · skin.obj 里有不被任何三角形用到的顶点（标签 14）。parseSkinObj 会照样读入；按顶点遍历的程序（最近点、涂色、统计）要跳过它们。
+  · 男性的生殖器皮肤有悬垂和倒悬的部分；悬垂部分离其余皮肤最近 19.5 mm（在阴囊后方的会阴处），与大腿皮肤没有接触。皮下脂肪推导、距离场都会看到这块新的闭合形状。
+  · 装入时把 FACE 区域之外的移植顶点也锁住（标签 15–18），否则简化器会把 2.4 mm 的网格抹掉。
+  · 深层生殖器部件上的覆盖厚度与扫描皮肤相同：最薄处阴茎海绵体 3.5 mm、尿道海绵体 3.2 mm、阴茎头 2.9 mm、
+    左 / 右睾丸 3.0 / 2.1 mm、左 / 右附睾 4.6 / 3.2 mm；没有部件露出。
+
+仍然不对或没有验证的（移植部分）：
+  · 男性移植处周围一圈（耻骨区、腹股沟、大腿内侧上部）有不规则的小面：供体在生殖器之外的网格很粗，缝合三角形最长 37 mm。
+  · 缝合三角形与相邻皮肤有没有相交，没有检查。
+  · 外阴的尺寸核对很有限：能量的只有中线裂的长度（装入尺寸 44 mm，深 14 mm，两侧隆起顶相距 28 mm）和两个深层结构之间的距离；
+    小阴唇、阴蒂头、尿道口、阴道口、肛门在这张皮肤上认不出来；“会阴长度”一项不可靠，不要用。由 OBJ 文件求得的映射缩放是 0.981，
+    而不是管线所说的 1.096，原因没有查明。
+
 
 ========================================================================
 English
@@ -405,3 +463,83 @@ Recommendation, in two cases:
   · MHR's inner-lip walls pass through each other by about 0.5 mm at rest; this tool did not change that,
     and it cannot be seen from outside.
   · Lid movement in the renders is a crude test displacement; the creases there are not a fault of the mesh.
+
+8. Graft steps (graft.py): before the openings, on the closed skin
+------------------------------------------------------------------------
+Order: <body>-skin (delivered, untouched) → the steps of graft.py → <body>-skin-grafted/ (still closed) →
+open_skin.py → <body>-skin-open/.
+    tools/skinopen/run.sh male genital,toes
+    tools/skinopen/run.sh female vulva,toes
+Without the second argument nothing is grafted and the result is as before. manifest.opened.steps records the
+steps tried for this package (the last is `open`); what was really grafted is under manifest.grafted.grafts and
+what was fitted but not grafted under manifest.grafted.fittedButNotGrafted (each with its reason and file names).
+skin-closed.obj is then the closed skin after the grafts and before the openings; the delivered skin is kept as
+skin-delivered.obj.
+
+Steps and their state per body:
+  male    genital  grafted. The skin of the external genitalia (penis, scrotum) comes from his own scanned skin
+                   (BodyParts3D 4.0, outer wall of FJ2810; frame (x, z, −y) mm → m, verified against the deep parts).
+                   The mound of the fitted skin is cut out (1,174 triangles, 528 vertices) and 3,521 vertices /
+                   6,928 triangles are stitched in with 232 triangles. 3,334 vertices are where the scan has them
+                   (tag graftScanned); 187 at the rim were moved to meet the fitted skin (tag graftBlend,
+                   construction; moved by a median 0.5 mm, at most 9.8 mm). Ten small holes of the donor mesh were
+                   closed with 32 triangles (construction). Licence: the OBJ headers say CC BY-SA 2.1 Japan and the
+                   README says CC BY 4.0; both are quoted in the manifest and the difference is not resolved.
+                   Weights: harmonic extension from the rim of the hole, turning into the pelvis alone (MHR joint
+                   root) between 10 and 30 mm from the rim. Penis and scrotum move rigidly with the pelvis: they do
+                   not hang, swing or give way to the thighs. Shape fields are extended harmonically likewise.
+          toes     fitted, not grafted (below).
+  female  vulva    fitted, not grafted. The perineal skin is the skin surface of the specimen of Wu et al. 2015
+                   (46_Skin.obj, CC BY 4.0), mapped with the 16 kinds of installed WU_* structures against the raw
+                   OBJ files (affine + smooth residual field; median residual per structure 0.6 mm). Two reasons
+                   for not grafting: (1) the rim of the patch lies a median 17.6 mm from the present skin (up to
+                   41.5 mm; the whole patch a median 24.6 mm inside it) — the crotch of the fitted skin must first
+                   be raised to her perineal structures, which is the skin author's job; (2) with the flat cut
+                   planes at both ends of the specimen slab removed, the patch is not a disc with one boundary
+                   loop: 57 boundary edges lie on the caudal cut plane, i.e. the specimen's skin is truncated
+                   inside the vulvar region and would have to be closed by construction first. The positioned and
+                   smoothed patch is in vulva-patch.obj. Opening the vaginal and urethral orifices was not done.
+          toes     fitted, not grafted (below).
+  both    toes     The donor is "Foot - Realistic" of Blender Studio's "Human Base Meshes" v1.4.1 (CC0, artist-made,
+                   not a scan; exported first with tools/zanatomy/.venv/bin/python tools/skinopen/export-foot.py,
+                   the scripts in the .blend are not run). Method: a similarity fit of the whole foot by the toe
+                   tips, then each toe turned rigidly onto its own bones. The result fails: the proximal phalanges
+                   of the fourth and little toes lie up to 14.5 mm (male) / 10.9 mm (female) outside the toes,
+                   against a limit of 2 mm, and the ball of the donor foot lies a median 8–10 mm from the package
+                   skin. So, as asked, it stops there and nothing is grafted; the positioned forefoot is in
+                   toes-fit-L.obj / toes-fit-R.obj. Grafting needs per-toe scaling and a non-rigid registration of
+                   the forefoot. Planned weights once grafted (not implemented): harmonic extension from the rim,
+                   i.e. essentially MHR's l_ball / r_ball; the package has no toe interphalangeal joints, and the
+                   rig side spreads the ball weight onto mtp1–5 by its nearest-joint rule.
+
+New values of vertex-tags.u8:
+  14  removed            delivered vertices cut away: still in skin.obj (indices unchanged) but used by no triangle
+  15  graftScanned       donor vertices left where they were, from scanned data
+  16  graftBlend         blend-ring vertices moved to meet the skin (construction)
+  17  graftCurated       donor vertices left where they were, from artist-made data (reserved for the toes)
+  18  graftConstruction  other construction geometry (reserved)
+Each entry of manifest.grafted.grafts[] has: name, provenance, source (with the licence note), patchVertices,
+blendRingVertices, rimOfHole, rimOfPatch, removedVertices, weights, fields. skin.obj gains the groups <name> and
+<name>Stitch. source-vertex.u32: a grafted vertex names the delivered vertex on the rim of its hole with the
+largest weight; its per-vertex data are a harmonic extension from the whole rim, not a copy of that vertex.
+
+For the downstream tools:
+  · skin.obj contains vertices used by no triangle (tag 14). parseSkinObj reads them all the same; anything that
+    walks the vertices (closest point, painting, statistics) must skip them.
+  · The male genital skin has pendulous and overhanging parts; the pendulous part comes no closer than 19.5 mm to the rest of the skin (at the perineum behind the scrotum) and does not touch the thighs.
+    The fat derivation and the distance field will see this new closed shape.
+  · On installing, lock the grafted vertices outside the face region too (tags 15–18), or the simplifier will
+    erase the 2.4 mm mesh.
+  · Cover over the deep genital parts equals that of the scanned skin: least cover 3.5 mm over the corpus
+    cavernosum, 3.2 mm over the corpus spongiosum, 2.9 mm over the glans, 3.0 / 2.1 mm over the left / right
+    testis and 4.6 / 3.2 mm over the left / right epididymis; no part comes through.
+
+Still wrong or unverified (grafts):
+  · Round the male graft (pubic region, groin, upper inner thigh) the surface has irregular small facets: the
+    donor mesh is coarse outside the genitalia, and the stitch triangles are up to 37 mm long.
+  · Whether stitch triangles intersect the skin next to them was not checked.
+  · The dimension check of the vulva is very limited: only the length of the midline cleft (44 mm at installed
+    size, 14 mm deep, fold crests 28 mm apart) and two distances between deep structures could be measured;
+    labia minora, glans of the clitoris, urethral and vaginal orifices and anus cannot be identified on this
+    skin; the "perineum" figure is unreliable and must not be used. The map derived from the OBJ files has a
+    scale of 0.981, not the 1.096 the pipeline states; the reason was not established.
