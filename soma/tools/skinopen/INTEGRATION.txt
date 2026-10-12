@@ -337,6 +337,92 @@ source-vertex.u32：移植顶点指向洞口环上权重最大的那个原顶点
   · 接入脚趾后的包没有经过管线、绑定、体型各步；简化器会不会抹掉 1.3 mm 的趾网格没有试（装入时要锁住标签 15–18 的顶点）。
   · 环境变量 SKINOPEN_DEBUG=<目录> 会让 toes.py 写出调试用的 npz；平时不要设。
 
+11. 第五轮的改动（先读这一节；与第 8–10 节不一致处以这里为准）
+------------------------------------------------------------------------
+它取代的说法：第 8 节 “男性 genital” 整段和“下游要注意的”里关于悬垂部分离皮肤 19.5 mm 的一条；第 8、9、10 节里凡说
+“男性移植处的环没有改 / 缝合三角形最长 37 mm / 没有做相交检查”的；第 9 节 “外阴” 里 “没有做：尾侧截断处的构造性封闭、
+阴道口 / 尿道口 / 肛门的构造” 和 “154 个点的环……54 个在截面上” 的解释；第 8 节关于外阴 “不是圆盘” 的原因。
+代码搬了家：genital 步骤在 tools/skinopen/genital.py，vulva 步骤在 tools/skinopen/vulva.py（graft.py 只留通用部分和 toes 用的函数）。
+export-deep.ts 多导出一个部件 WU_rectal_lumen（分组 wuLumen，不参与求映射）。
+
+男性外生殖器（genital.py）
+  做法：
+    1) 隆起区域：皮肤与扫描相差 > 2.5 mm、围着深层部件连成一片的顶点，外扩 3 圈（与以前相同）。整块切掉。
+    2) 抹平：这个区域的内部顶点由周围 3 圈没有动过的皮肤解双调和方程（均匀权）得到一张光顺的耻区、会阴、大腿内侧上部的面。
+       这是构造物（标签 18 graftConstruction，分组 genitalSkinBase），不是扫描数据，也不是解剖。
+    3) 扫描片（标签 15 graftScanned，分组 genitalSkin，位置一个也不动）的规则：供体顶点“平滑后的邻边平均长度 ≤ 5 mm 且离深层部件
+       （海绵体、阴茎头、睾丸、附睾）≤ 12 mm”，再并上“高出构造面 > 4 mm 且离深层部件 ≤ 30 mm”的相连部分；取围着阴茎头和睾丸的那一块，
+       补洞、去尖角。只用边长和距离那一条会得到互不相连的三块（阴茎 1,287 个顶点、阴囊下部 969 个、会阴缝一小条 71 个）：
+       阴囊上部离睾丸超过 12 mm，阴茎与阴囊相贴处扫描得很粗，所以要第二条把它们连起来。
+    4) 构造面上，扫描片开口之下（开口片的广义绕数 > 0.25）和离片缘 3 mm 以内的顶点连同外扩一圈被挖掉。
+    5) 过渡环（标签 16 graftBlend，分组 genitalSkinStitch）：片缘与洞缘正中间新布一圈顶点，按包里皮肤当地边长的 0.7 倍重采样，
+       两条三角形带。扫描片边缘的顶点原样保留（重采样就得动扫描数据）。洞缘上太长的边对半分（加构造顶点）。
+    6) 构造面和过渡环的顶点再解一次双调和方程，与扫描片和周围皮肤相切；若解出的面与别的面相交，有关顶点朝解之前的位置退回。
+  结果（男性皮肤包 skin.obj 10-12 11:46:53 的一版；这一版里 shape-*.f32 的时间是 10:00，比 skin.obj 早，包可能还在重新发布中）：
+    切掉 1,522 个三角形、688 个顶点；构造面 596 个顶点、1,275 个三角形；过渡环 49 个顶点、252 个缝合三角形；
+    扫描片 2,331 个顶点、4,571 个三角形（其中 24 个是补供体小洞的），片内边长中位数 2.2 mm（95% 分位 6.6，最长 21.4）。
+    片缘离构造面（过渡之前）中位数 4.9 mm，最大 14.0 mm。
+    缝合三角形的边：中位数 5.6 mm，95% 分位 11.3，最长 17.3 mm（限值 = 当地边长 9.9 mm 的两倍 = 19.8 mm）。
+    相交检查：全部新三角形加 40 mm 以内的原皮肤（含大腿）共 7,416 个三角形，没有公共顶点而相交的三角形对 0 对。
+    扫描片离剩余原皮肤（大腿）最近 32.8 mm，离构造面最近 9.0 mm（只算离片缘 15 mm 以外的顶点）。
+    深层部件上的最少覆盖与扫描相同或更多：阴茎海绵体 3.51、尿道海绵体 3.23、阴茎头 2.93、左 / 右睾丸 2.96 / 2.13、左 / 右附睾 4.56 / 3.23 mm。
+    权重：从洞口环调和延拓到全部新顶点；扫描片从片缘起到 20 mm 处过渡为完全跟随骨盆（root）。
+  manifest.grafted.grafts[] 的 genitalSkin 多了 constructionVertices 和 rimOfConstructedSurface；what 里写明了哪些是构造物。
+  自检（不通过就以非 0 退出）：扫描顶点与扫描数据逐位相同；没有涉及构造面、过渡环或原皮肤的相交；深层部件的覆盖不少于扫描皮肤下的；
+    扫描片不碰大腿。“缝合边不超过当地边长两倍”只记录，不通过时不退出。
+  检查图：male-skin-grafted/renders/genitalSkin.png（三排：按分组着色 / 单一肤色 / 原皮肤；七列：正面、下面、
+    身体左侧和右侧的切片（中线两侧 45 mm 以内，否则被手和大腿挡住）、两张斜向近景、前下方近景）。
+  看图的结论：可以拿出来了——阴茎和阴囊从一张光顺的耻区、会阴面上出来，周围不再有粗糙的小面。仍有的毛病，照实说：
+    · 拟合皮肤的会阴比扫描的低：513 个网格细的扫描顶点（阴囊颈部、会阴缝）在构造面之内，最深约 28 mm，没有用上；
+      阴囊因此看起来是从一个偏低的会阴里出来的，阴茎与阴囊两侧之间有一小片过渡面像“蹼”。这要等皮肤作者把会阴抬高才能改。
+    · 阴囊两侧各有一两处过渡三角形形成的小尖角（片缘本身参差）。
+    · 构造面的范围很大（x ±100 mm，y 0.58–0.83 m）：大腿内侧上部也被换成了构造面。
+
+女性外阴片（vulva.py）
+  对标本皮肤的新认识（决定了下面的一切）：这具标本两腿并拢。外阴和会阴是两条大腿之间一道窄缝的“顶”；标本块尾侧的截面
+    （本体坐标系里 y ≈ 0.638 m，几乎水平）在深层结构之下 16–33 mm 处，沿整条缝截断了缝的两壁（大腿内侧，或皱襞的外侧面），
+    并且擦到顶上成对皱襞的最低处。所以外缘上落在截面上的 54 个点（左右两段，长 132 mm 和 118 mm）大多是陡直向下延续的壁，
+    不是“再往下几毫米就合拢的皱襞”：面与截面的夹角中位数 61°（右）和 92°（左），面没有朝合拢的方向转，估不出合拢的深度。
+    每段里各有 7–8 个点夹角 < 45°，是成对皱襞的底贴着截面、被削掉并与大腿的截面连成一片的地方。
+    真正被截面削出一个洞的只有一处：中线旁一个 5 条边的小环（半径 1.7 mm，夹角 32°），按圆弧估计它在截面之外还有 0.5 mm（0.24–0.96）。
+    估计方法和不确定度写在 graft-report.json 的 vulva.truncation.estimate 里：是几毫米台阶状表面的外推，范围取上下各两倍，是判断，不是测得的误差。
+  封闭：只封了那个 5 边小洞（1 个顶点、5 个三角形、6.8 mm²，分组 vulvaClosure；若接入则标签 18）。这一片因此成了只有一个边界环的圆盘。
+    左右两段落在截面上的外缘没有封：那里的面是往下延续的大腿内侧，用一小片构造面封不上，硬封就是凭空造皮肤。
+    所以“单一的、真实的外缘”这一条没有达到：外缘是单一的环，但 154 个点里有 54 个不是真实的皮肤边缘。照实报告，没有放宽。
+  开口（都是构造物，分组 vulvaOrificeCanals；皮肤仍然闭合——是盲管，不是通孔）：
+    阴道口   腔 = WU_uterine_and_vaginal_lumen（已发布的部件）。开口放在皮肤面上离腔末端最近的点（中线裂的顶），相距 13.7 mm；
+             皮肤面上的洞平均半径 1.1 mm（去掉 1 个标本顶点）；盲管 6 圈，由洞口平滑地扩到腔末端的截面（横 17.1 × 前后 12.4 mm），末端用扇形封住。
+    尿道口   尿道腔没有作为单独的部件发布（它在 WU_submucous_layer_of_urethra 之内）；用的是同一标本的原始文件
+             30_Bladder_and_urethral_lumen.obj，经同一个映射搬到本体上。相距 11.4 mm；洞半径 1.9 mm；末端截面 1.9 × 4.2 mm；
+             盲管与腔的轴线夹 40°（腔的轴线朝前下，延长出去碰不到那条窄裂）。
+    肛门     腔 = WU_rectal_lumen。相距 11.7 mm；洞半径 3.6 mm（去掉 12 个标本顶点）；末端截面 5.2 × 10.6 mm；
+             开口中心离肛门外括约肌 2.4 mm，在它的范围之内。
+    皮肤面上的洞不超过 4 mm 半径：标本的裂是闭着的（两三毫米宽），洞再大就要削掉皱襞的表面。标本皮肤上看不到任何开口；
+    位置和口径都来自腔，不来自皮肤。构造物共 98 个顶点、211 个三角形、931 mm²；标本皮肤 17,455 mm²。构造物与别的面没有相交。
+  vulva-rim-target.json（交给皮肤作者）：单一的有序环（154 个点）、位置、向外法线、离现有皮肤的有符号距离（中位数 −17.1 mm）、
+    onCutPlane、cutPlaneRuns（上面那些段的数）、各 WU_* 部件上需要的覆盖、三个开口的位置、graftRule。
+  自动规则（都满足才接入，否则写明原因并跳过）：(1) 外缘离现有皮肤中位数 ≤ 5 mm；(2) 单环圆盘；(3) 外缘没有点落在标本的截面上；
+    (4) 没有被两个以上三角形共用的边。(3) 和 (4) 是本轮加的。现在四条里有三条不满足：17.1 mm；54 个点在截面上；
+    标本皮肤自己有 5 条非流形边（46_Skin.obj 里中线裂两壁相贴处），接入的话皮肤就不是闭合流形。接入这条路径因此从未执行过。
+  辨认：能认出一条中线裂、裂两侧各一条成对的皱襞、再外侧是并拢的大腿内侧。认不出大阴唇与小阴唇的分界、阴蒂头和包皮、
+    尿道口、阴道口、处女膜缘、阴唇后联合、肛门。所以不给皱襞起名。
+  与 Kreklau 2018 的对应（装入后的尺寸；graft-report.json 的 vulva.dimensions.correspondence）：
+    阴蒂到尿道口 22.6 ± 7.7 ↔ 阴蒂海绵体前下端上方的皮肤点到构造的尿道口中心 31.5 mm（替代量：阴蒂头认不出，尿道口是构造的）；
+    会阴 21.3 ± 8.5 ↔ 构造的阴道口中心到肛门口中心 35.9 mm（中心到中心，按定义就偏长）；
+    大阴唇长、小阴唇长和宽、阴道口径：没有对应的量。中线裂长 44 mm、构造的尿道口到阴道口 11.3 mm 不对应任何一项。
+    Kreklau 各项的定义本轮没有打开原文核对。
+  检查图：female-skin-grafted/renders/vulva.png（单独的这一片：下面、斜下方、上面即内侧、过开口的矢状切片加 WU_* 部件；
+    标本皮肤肤色，封盖蓝色，盲管绿色）；vulva-patch.png 照旧。
+  映射的两个未解释的缩放（高 1.036、前后 0.937）没有再查；女性管线的负责人已被问到。
+
+仍然不对、没有做或没有验证的
+  · 男性：见上面“仍有的毛病”。接入了这块皮肤的包没有经过管线、绑定、体型各步。
+  · 女性：外缘上截面段的问题没有解决。可行的办法是把这一片收窄到缝的“顶”（以皱襞与大腿之间的沟为界，去掉两壁），
+    那样外缘才都是真实皮肤；沟在 z ≈ 0.045–0.065 m 一段不存在（皱襞在截面处与大腿连成一片），那一段需要构造。没有做。
+  · 盲管没有与深层部件的网格缝合（末端只是放在腔的末端处）；没有检查盲管与 WU_* 部件是否相交。
+  · 开口的位置是“离腔末端最近的皮肤点”，不是解剖上辨认出来的开口。
+  · 两条链在一台负载很重的机器上跑，中途多次长时间停顿；结果是确定的，但没有量运行时间。
+
 
 ========================================================================
 English
@@ -797,3 +883,136 @@ Still wrong, not done or unverified
   · Packages with grafted toes were not run through the pipeline, rig or shape builds; whether the simplifier erases the
     1.3 mm toe mesh is untested (lock vertices with tags 15–18 on installing).
   · The environment variable SKINOPEN_DEBUG=<directory> makes toes.py write debugging npz files; leave it unset.
+
+11. Changes of round 5 (read this first; where it differs from sections 8–10, this section holds)
+------------------------------------------------------------------------
+Superseded: the whole "male genital" paragraph of section 8 and, under "For the downstream tools", the item on the pendulous part
+coming no closer than 19.5 mm; every statement in sections 8, 9 and 10 that the ring of the male graft is unchanged, that stitch
+triangles reach 37 mm or that no intersection check was made; under "Vulva" in section 9, "not done: the construction closing the
+caudal truncation, and the construction of the vaginal and urethral orifices and the anus" and the reading of "154 points … 54 on a
+cut plane"; and the reason section 8 gives for the vulvar patch not being a disc.
+The code moved: the genital step is tools/skinopen/genital.py and the vulva step tools/skinopen/vulva.py (graft.py keeps the generic
+part and the functions the toes use). export-deep.ts exports one more part, WU_rectal_lumen (group wuLumen; it takes no part in
+fitting the map).
+
+Male external genitalia (genital.py)
+  Procedure:
+    1) The mound region: skin vertices more than 2.5 mm from the scan, connected round the deep parts, grown by 3 rings (as before).
+       It is cut out whole.
+    2) Flattening: its interior vertices are solved from the biharmonic equation (uniform weights) with three rings of undisturbed
+       skin round it fixed, giving a fair pubic, perineal and upper inner-thigh surface. This is construction (tag 18
+       graftConstruction, group genitalSkinBase): neither scanned data nor anatomy.
+    3) The scanned patch (tag 15 graftScanned, group genitalSkin, not one position changed) follows this rule: donor vertices whose
+       smoothed mean incident edge is at most 5 mm and which lie within 12 mm of a deep part (corpora, glans, testes, epididymides),
+       together with the connected donor surface standing more than 4 mm proud of the constructed surface within 30 mm of a deep
+       part; the piece round glans and testes, holes filled, ears trimmed. The edge-and-distance term alone gives three separate
+       pieces (penis 1,287 vertices, lower scrotum 969, a strip of perineal raphe 71): the upper scrotum is more than 12 mm from the
+       testes and the scan is coarse where penis and scrotum touch, so the second term is what joins them.
+    4) In the constructed surface, the vertices under the opening of the patch (generalised winding number of the open patch above
+       0.25) or within 3 mm of its rim are cut away, with one further ring.
+    5) The blend ring (tag 16 graftBlend, group genitalSkinStitch): one loop of new vertices midway between the rim of the patch and
+       the rim of the hole, resampled to 0.7 × the local edge length of the package skin, and two strips of triangles. The rim
+       vertices of the patch stay as they are (resampling them would move scanned data). Rim edges of the hole that are too long are
+       halved (a constructed vertex each).
+    6) Constructed surface and ring are solved once more (biharmonic), tangent to the patch and to the skin round them; where the
+       solved surface cuts anything, the vertices concerned are taken back towards their position before the solve.
+  Result (male skin package with skin.obj of 10-12 11:46:53; in that state shape-*.f32 are dated 10:00, earlier than skin.obj, so the
+  package may still have been in the middle of a re-issue):
+    1,522 triangles and 688 vertices cut away; constructed surface 596 vertices, 1,275 triangles; ring 49 vertices, 252 stitch
+    triangles; scanned patch 2,331 vertices, 4,571 triangles (24 of them fill small holes of the donor), median edge 2.2 mm
+    (95th percentile 6.6, longest 21.4).
+    Rim of the patch from the constructed surface, before blending: median 4.9 mm, at most 14.0 mm.
+    Stitch triangle edges: median 5.6 mm, 95th percentile 11.3, longest 17.3 mm (limit = twice the local edge of 9.9 mm = 19.8 mm).
+    Intersection check: all new triangles plus the delivered skin within 40 mm (thighs included), 7,416 triangles; pairs that
+    intersect without a common vertex: 0.
+    The scanned patch comes no closer than 32.8 mm to the remaining delivered skin (thighs) and 9.0 mm to the constructed surface
+    (vertices more than 15 mm from the rim of the patch).
+    Least cover over the deep parts equals that under the scan or exceeds it: corpus cavernosum 3.51, corpus spongiosum 3.23, glans
+    2.93, left / right testis 2.96 / 2.13, left / right epididymis 4.56 / 3.23 mm.
+    Weights: harmonic extension from the rim of the hole over every new vertex; the scanned patch turns, over 20 mm from its rim,
+    into the pelvis alone (root).
+  The genitalSkin entry of manifest.grafted.grafts[] gains constructionVertices and rimOfConstructedSurface; its `what` says which
+  parts are construction.
+  Self-checks (a failure ends with a non-zero status): scanned vertices bit-identical to the scan; no intersection involving the
+    constructed surface, the ring or the delivered skin; cover over every deep part no less than under the scan; the patch does not
+    touch the thighs. "Stitch edges at most twice the local edge" is recorded only and does not stop the run.
+  Check render: male-skin-grafted/renders/genitalSkin.png (three rows: coloured by group / one skin colour / delivered skin; seven
+    columns: front, below, slabs from the body's left and right (within 45 mm of the midline, since hands and thighs would hide
+    it), two oblique close-ups, a close-up from front and below).
+  What the renders show: presentable now — penis and scrotum come out of a smooth pubic and perineal surface and the rough facets
+  round them are gone. The faults that remain, plainly:
+    · The crotch of the fitted skin is lower than the scanned one: 513 finely meshed scan vertices (neck of the scrotum, perineal
+      raphe) lie inside the constructed surface, up to about 28 mm deep, and are not used; the scrotum therefore looks as if it
+      came out of a perineum that is too low, and a small web of transition surface lies between penis and scrotum at the sides.
+      That can only change when the skin's author raises the crotch.
+    · One or two small spikes of transition triangles on either side of the scrotum (the rim of the patch itself is ragged).
+    · The constructed surface is large (x ±100 mm, y 0.58–0.83 m): the upper inner thighs are construction too.
+
+Female vulvar patch (vulva.py)
+  A new reading of the specimen skin (it decides everything below): the specimen's legs are together. Vulva and perineum are the
+    roof of a narrow cleft between the thighs; the caudal cut plane of the slab (y ≈ 0.638 m in the body frame, almost horizontal)
+    lies 16–33 mm below the deep structures, cuts the two walls of that cleft (medial thighs, or lateral faces of the folds) all
+    along, and grazes the lowest points of the paired folds of the roof. So most of the 54 rim points on the cut plane (two
+    stretches, 132 mm on the right and 118 mm on the left) are walls running steeply on downwards, not folds that would close a few
+    millimetres further: the angle between surface and plane has a median of 61° (right) and 92° (left), the surface is not turning
+    towards closing, and no closing depth can be estimated. In each stretch 7–8 points have an angle under 45°: there the bottom of
+    a paired fold lies against the plane, sliced off and merged with the cut face of the thigh.
+    The plane cut an actual hole in one place only: a loop of 5 edges beside the midline (radius 1.7 mm, angle 32°), which by a
+    circular arc would have continued 0.5 mm beyond the plane (0.24–0.96).
+    Method and uncertainty are in vulva.truncation.estimate of graft-report.json: an extrapolation of a few millimetres of
+    stair-stepped surface, with a range of a factor of two either way that is a judgement, not a measured error.
+  Closure: only that 5-edge hole is closed (1 vertex, 5 triangles, 6.8 mm², group vulvaClosure; tag 18 if grafted). The patch is
+    thereby a disc with one boundary loop. The two stretches of the outer rim on the cut plane are not closed: the surface there is
+    medial thigh running on downwards, a small constructed surface cannot close it, and forcing one would be inventing skin.
+    The criterion "a single real outer rim" is therefore not met: the rim is a single loop, but 54 of its 154 points are not a real
+    edge of skin. This is reported, not relaxed.
+  Orifices (all construction, group vulvaOrificeCanals; the skin stays closed — these are blind canals, not through holes):
+    vaginal   lumen = WU_uterine_and_vaginal_lumen (shipped part). The opening is at the point of the skin closest to the lumen's
+              end (the apex of the midline cleft), 13.7 mm away; the hole in the skin has a mean radius of 1.1 mm (1 specimen vertex
+              removed); a canal of 6 rings widens smoothly to the cross-section of the lumen's end (17.1 transverse × 12.4 mm
+              fore-aft) and is closed there by a fan.
+    urethral  the urethral lumen is not shipped as a part of its own (it lies inside WU_submucous_layer_of_urethra); the raw file
+              30_Bladder_and_urethral_lumen.obj of the same specimen is used, carried into the body by the same map. 11.4 mm away;
+              hole radius 1.9 mm; end cross-section 1.9 × 4.2 mm; the canal makes 40° with the axis of the lumen (which points
+              forwards and down and, continued, misses the narrow cleft).
+    anal      lumen = WU_rectal_lumen. 11.7 mm away; hole radius 3.6 mm (12 specimen vertices removed); end cross-section
+              5.2 × 10.6 mm; the centre of the opening is 2.4 mm from the external anal sphincter and within its footprint.
+    The hole in the skin is at most 4 mm in radius: the specimen's cleft is closed (two or three millimetres wide) and a wider hole
+    would remove the surfaces of the folds. No orifice is visible on the specimen skin; position and bore come from the lumina, not
+    from the skin. Construction in all: 98 vertices, 211 triangles, 931 mm²; specimen skin 17,455 mm². Construction intersects
+    nothing.
+  vulva-rim-target.json (the hand-off to the skin's author): the single ordered loop (154 points), positions, outward normals, signed
+    distance from the present skin (median −17.1 mm), onCutPlane, cutPlaneRuns (the figures above), the cover needed over each WU_*
+    part, the positions of the three openings, and graftRule.
+  Automatic rule (grafted only if all hold; otherwise the reasons are written and the step is skipped): (1) rim a median of at most
+    5 mm from the present skin; (2) a disc with one loop; (3) no rim point on a cut plane of the specimen; (4) no edge used by more
+    than two triangles. (3) and (4) are new in this round. Three of the four fail at present: 17.1 mm; 54 points on the cut plane;
+    and the specimen skin itself has 5 non-manifold edges (in 46_Skin.obj, where the walls of the midline cleft touch), so the skin
+    would not be a closed manifold. The grafting path has therefore never been executed.
+  Identification: a midline cleft, one fold on either side of it (paired), and lateral to them the medial sides of the adducted
+    thighs can be identified. The boundary between labia majora and minora, the glans and prepuce of the clitoris, the urethral and
+    vaginal orifices, the hymenal ring, the posterior commissure and the anus cannot. The folds are therefore not named.
+  Correspondence with Kreklau 2018 (installed size; vulva.dimensions.correspondence of graft-report.json):
+    clitoris to urethral orifice 22.6 ± 7.7 ↔ skin point over the antero-inferior end of the corpus cavernosum to the centre of the
+      constructed urethral opening, 31.5 mm (a stand-in: the glans cannot be identified and the opening is constructed);
+    perineum 21.3 ± 8.5 ↔ centre of the constructed vaginal opening to centre of the anal opening, 35.9 mm (centre to centre, so
+      longer by construction);
+    labia majora length, labia minora length and width, introitus: no corresponding measurement. The cleft length of 44 mm and the
+    11.3 mm between the constructed urethral and vaginal openings correspond to none of the published items.
+    The definitions of Kreklau's items were not checked against the paper in this round.
+  Check renders: female-skin-grafted/renders/vulva.png (the patch alone: from below, obliquely from below, from above i.e. the inner
+    side, and a sagittal slab through the openings with the WU_* parts; specimen skin in skin colour, closure blue, canals green);
+    vulva-patch.png as before.
+  The two unexplained scales of the map (1.036 in height, 0.937 fore-aft) were not looked into again; the owner of the female
+  pipeline has been asked.
+
+Still wrong, not done or unverified
+  · Male: the faults listed above. Packages with this graft were not run through the pipeline, rig or shape builds.
+  · Female: the stretches of rim on the cut plane are unresolved. A workable way is to narrow the patch to the roof of the cleft
+    (bounded by the grooves between folds and thighs, without the walls), which would put the whole rim on real skin; the groove
+    does not exist over z ≈ 0.045–0.065 m (there the folds merge with the thighs at the plane), and that stretch would need
+    construction. Not done.
+  · The canals are not stitched to the meshes of the deep parts (their ends are merely placed at the ends of the lumina), and
+    whether a canal intersects a WU_* part was not checked.
+  · The openings are "the skin point closest to the end of the lumen", not openings identified anatomically.
+  · Both chains ran on a heavily loaded machine with long stalls; the results are deterministic, but run times were not measured.

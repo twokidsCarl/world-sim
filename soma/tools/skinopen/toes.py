@@ -462,9 +462,12 @@ def step_toes(pk, deep, donor_file, out_dir, rim_tol_mm=1.0):
             d = np.sqrt(igl.point_mesh_squared_distance(np.ascontiguousarray(Q), Pc, Fc)[0])
             inside = np.abs(igl.winding_number(Pc, Fc, np.ascontiguousarray(Q))) > 0.5
             return np.where(inside, -d, d)
-        # ── 验收 / acceptance ──
+        # 调试：设了环境变量 SKINOPEN_DEBUG=<目录> 时，把这只脚配准的中间量写成 npz（平时不要设，输出不进包）
+        # debugging: with the environment variable SKINOPEN_DEBUG=<directory> set, the intermediate quantities of this foot's fit are written
+        # to an npz file (leave it unset normally; nothing of it goes into the package)
         if os.environ.get('SKINOPEN_DEBUG'):
             np.savez(os.path.join(os.environ['SKINOPEN_DEBUG'], 'toes-debug-%s.npz' % side), S=S_, G=G, si=si, org=org, hit=hit, ctr_s=ctr_s, ctr_d=ctr_d, stations=stations, footv=pk.V[foot_v], frame=frame_b, mtpc=mtp.mean(0), P=P, F=Fd_, geo=geo_toe, phi=phi, toe_of=toe_of, pushed=pushed, BV=BV, BF=BF, free=np.array(free), chains=np.array([np.r_[c_.p.ravel(), np.zeros(12)][:12] for c_ in chains]))
+        # ── 验收 / acceptance ──
         fails, cover = [], {}
         for k in range(5):
             for bi, (bv, bf) in enumerate(segs[k]):
@@ -614,6 +617,7 @@ def step_toes(pk, deep, donor_file, out_dir, rim_tol_mm=1.0):
     stats['leastOfAllMm'] = min(final.values())
     if stats['leastOfAllMm'] < COVER_JOINT_MM - 1e-6:
         # 撤回：趾骨在接入后的皮肤上覆盖不足 / undone: a phalanx is not covered enough by the grafted skin
+        # 调试：设了 SKINOPEN_DEBUG 时，把被撤回的那张皮肤另存一份 / debugging: with SKINOPEN_DEBUG set, the skin that is being undone is saved as well
         if os.environ.get('SKINOPEN_DEBUG'):
             write_obj(os.path.join(os.environ['SKINOPEN_DEBUG'], 'toes-failed-graft.obj'), pk.V, [(g_, pk.F[m_]) for g_, m_ in pk.groups.items() if m_.any()], [])
         for k, v in saved.items():
