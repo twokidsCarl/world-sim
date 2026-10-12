@@ -60,6 +60,15 @@ export interface Style {
    */
   smooth?: number
   /**
+   * 探针半径的上限（Å），缺省 14。探针会填平比它直径窄的凹处：14 Å 时刺的头和柄之间、相邻的瓣之间都被填满，
+   * 刺成了一块板；对着原尺寸图看，他的形状保留了一两纳米大小的凹凸。
+   * The cap on the probe radius in Å, 14 by default. The probe fills any hollow narrower than its
+   * diameter: at 14 Å the space between a spike's head and stalk and between neighbouring lobes is
+   * filled and the spike becomes a slab, whereas his shapes, seen at full size, keep relief of a
+   * nanometre or two.
+   */
+  smoothMax?: number
+  /**
    * 剖开时只画一片切片，厚度是画幅高度的这个比例；0 或缺省 = 一直画到最远处。
    * 看 Goodsell 的图集：每一幅都是一片薄切片，切面这一层用亮色，后面一两层用同色的深一号，再往后就不画了。
    * When cut, only a slab is drawn, this share of the frame height thick; 0 or absent = drawn to
@@ -67,6 +76,14 @@ export interface Style {
    * colour, a layer or two behind it in deeper shades of the same hue, and nothing beyond.
    */
   slab?: number
+  /**
+   * 膜的中线：从侧面看到的膜（一条窄带子）中间画一道虚线，值是它的深浅（0 = 不画）。
+   * Goodsell 几乎每幅画的膜都有，表示两层脂质；原尺寸图上看是很淡的短痕。
+   * The mid-line of a membrane: a dashed line along the middle of a membrane seen edge-on (a narrow
+   * band), the value being its strength (0 = none). Nearly every membrane Goodsell paints has it,
+   * standing for the two leaflets; at full size it is a row of very faint short marks.
+   */
+  membraneMidline?: number
   /** 纸纹，0 = 关闭 / paper grain, 0 = off */
   grain: number
   radiusScale: number
@@ -137,9 +154,13 @@ export const STYLE_MESOSCALE: Style = {
   // 勾黑线：墨色接近黑，只带一点旁边填色的色相；线比以前粗
   // outlined in black: the ink is nearly black with only a trace of the neighbouring fill's hue, and lines are heavier than before
   ink: [0.07, 0.06, 0.09],
-  inkTint: 0.45,
-  inkShade: 0.16,
-  lineWidth: 1.35,
+  // 概念“线”（水彩）：细而深的墨线，每个形状都勾一圈，粗细均匀。这是看原尺寸图定的；在 800 像素的缩小版上量出来的“线偏浅偏彩”是缩小造成的。
+  // the concept "line" (watercolours): a thin, dark ink line round every shape, of even width. This was settled on the full-size originals; the "paler, more coloured line" measured on the 800-pixel reductions was an effect of the reduction.
+  inkTint: 0.35,
+  inkShade: 0.12,
+  lineWidth: 1.05,
+  // 概念“膜”：带子中线上一道很淡的虚线 / the concept "membrane": a very faint dashed line along the middle of the band
+  membraneMidline: 0.5,
   // 平涂：不要原子之间的阴影，明暗只来自景深的三档 / flat washes: no shadows between atoms, tone comes from the three depth steps alone
   shadow: { strength: 0, cone: 2, floor: 1, radius: 0 },
   // 最远一层压到本色的 0.64：量他的流感病毒，血凝素前后三层的明度是 0.76、0.60、0.45，也就是后层约为前层的 0.6–0.8
@@ -148,6 +169,7 @@ export const STYLE_MESOSCALE: Style = {
   grain: 0.07,
   // 形状靠平滑来变光滑，球就按真实大小画 / shapes are made smooth by the smoothing pass, so spheres are drawn at their true size
   smooth: 5,
+  smoothMax: 6.5,
   radiusScale: 1,
   slab: 0.2,
 }
@@ -174,9 +196,9 @@ export const STYLE_NEURON: Style = {
 export const STYLE_PAINTED: Style = {
   ...structuredClone(STYLE_MOLECULE),
   background: [0.992, 0.988, 0.976],
-  inkTint: 1,
-  inkShade: 0.26,
-  lineWidth: 1,
+  inkTint: 0.95,
+  inkShade: 0.22,
+  lineWidth: 1.1,
   shadow: { strength: 0.0008, cone: 2, floor: 0.86, radius: 0 },
   fog: { color: [1, 1, 1], front: 1, back: 0, layers: 0, shade: 0.72 },
   grain: 0.07,

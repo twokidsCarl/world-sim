@@ -82,7 +82,7 @@ export function atomColors(mol: Molecule, c: Coloring, tone: Tone = TONE_MOLECUL
     // 0, +1, -1, +2, -2 ... steps of 9 degrees (or the tone's own step), wrapping after five chains
     const step = flat ? 0 : ((k % 5) + 1) >> 1
     const dh = (k % 5) % 2 === 1 ? step * (tone.hueStep ?? 9) : -step * (tone.hueStep ?? 9)
-    const dL = flat ? 0 : (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
+    const dL = flat || tone.flatChains ? 0 : (k % 2 === 0 ? 0 : -0.035) + (k % 3 === 2 ? 0.02 : 0)
     const other = to8(oklch(L + dL, C, h + dh))
     const carbon = to8(oklch(L + dL + tone.carbonLift, Math.max(0, C - tone.carbonDrop), h + dh))
     // 按残基上色的方式（置信度、结构域、位点、致病性）：有数据的链整条改用残基的颜色

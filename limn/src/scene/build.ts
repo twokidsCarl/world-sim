@@ -183,7 +183,9 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         // 用线段连起来的东西（核酸的走向）：按每个球、每段线自己的深度来切，不按整体的中心 / things joined by segments (the course of a nucleic acid) are cut sphere by sphere and segment by segment at their own depth, not by a centre of the whole
         else if (p.perCopy && mol.segments?.length) data[k + 15] = 5
         // 一整张不分块的膜（只有一份、球很多的脂质）：没有“整体的中心”可言，按球来切 / a membrane in one piece (lipids in a single copy with very many spheres) has no meaningful centre and is cut sphere by sphere
-        else if (p.perCopy && g.lipid && g.operators.length === 1 && ps.length === 1 && g.runs.reduce((s, r) => s + r.count, 0) > SHEET_MIN) data[k + 15] = 5
+        // 概念“膜”：脂质一律按球来切（切口整齐），并在编号里标成膜；单个病毒颗粒的膜另外衬在后面
+        // the concept "membrane": lipids are always cut sphere by sphere (a clean cut edge) and tagged as membrane in the ids; the membrane of a single virion lines the back besides
+        else if (p.perCopy && g.lipid) data[k + 15] = total <= LINING_MAX ? 7 : 5
         else if (centre) {
           data[k + 12] = centre[0]
           data[k + 13] = centre[1]

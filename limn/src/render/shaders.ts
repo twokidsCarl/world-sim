@@ -68,7 +68,8 @@ void main() {
   // 5 = 一整张不分块的膜：表面的小起伏不画线，按每个球自己的深度来切和上色调
   // 5 = a membrane in one piece: its small relief draws no lines, and it is cut and toned sphere by sphere at each sphere's own depth
   // 6 = 切片的背面不切它（衬在里面的一层，免得空隙里露出白纸）/ 6 = not cut at the back of a slab (a layer lining the inside, so that gaps do not show paper)
-  v_fine = mc.w > 4.5 && mc.w < 5.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
+  // 7 = 膜，并且衬在后面（切片的背面不切）/ 7 = a membrane that also lines the back (not cut at the back of a slab)
+  v_fine = (mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
   // 截面之前的原子整个丢弃，和 Illustrate 一样，所以剖面上不会出现被切开的球。
   // 已知中心的分子整体保留或丢弃，所以也不会被切开。
   // Atoms in front of the cut are dropped whole, as Illustrate does, so a
@@ -78,7 +79,7 @@ void main() {
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
   if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
-  } else if (mc.w > 4.5 && mc.w < 5.5) {
+  } else if ((mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5) {
     if (u_layer.x > 0.0) {
       // 整张膜的色调随深度连续变化，不分档：按球分档会在档与档交界处出一圈杂点
       // a membrane in one piece is toned continuously with depth, not in steps: stepping sphere by sphere leaves a ring of speckle where steps meet
@@ -505,6 +506,7 @@ uniform highp usampler2D u_ids;
 uniform vec2 u_cap;     // 同描边通道 / as in the edge pass
 uniform vec3 u_inkTint; // x：线取“该处填色压暗”的比例（0 = 用固定的墨色）；y：压暗到本色的几成；z：笔宽（像素）
                         // x: how far a line takes "the fill here, darkened" (0 = the fixed ink); y: how dark, as a share of the fill; z: pen width in pixels
+uniform vec3 u_mid;      // 膜的中线：强度、带子最宽多少像素、虚线的周期（像素）/ membrane mid-line: strength, widest band in pixels, dash period in pixels
 uniform float u_fogShade; // > 0：景深不是褪向雾色，而是把本色压暗、加浓；值是最远处的明暗系数 / > 0: depth does not fade to the fog colour but darkens and enriches the fill itself; the value is the factor at the far end
 out vec4 o;
 
@@ -550,6 +552,40 @@ void main() {
     if (u_layered) keep = c.a;
     if (u_fogShade > 0.0) rgb = deepen(c.rgb, mix(u_fogShade, 1.0, keep)) * e.b;
     else rgb = mix(u_fog, c.rgb * e.b, keep);
+  }
+  if (u_mid.x > 0.0 && d < 1.0 && texelFetch(u_ids, p, 0).a == 4u) {
+    // 朝四个方向的正反两边各走到膜的边界；两边都在限度内、而且差不多一样远的地方就是中线。
+    // 正对着看的膜（一大片）两边都走不到边，不画。
+    // March both ways along four directions to the edge of the membrane; where both edges lie within the limit and about equally far, that is the mid-line.
+    // A membrane seen face-on (a broad area) reaches no edge either way and gets no line.
+    ivec2 size = textureSize(u_ids, 0);
+    int reach = int(u_mid.y);
+    float best = 1.0e9;
+    vec2 across = vec2(0.0);
+    float off = 0.0;
+    for (int k = 0; k < 8; k++) {
+      float a = float(k) * 0.3926991;
+      vec2 dir = vec2(cos(a), sin(a));
+      int plus = -1, minus = -1;
+      for (int i = 1; i <= reach; i++) {
+        ivec2 q = p + ivec2(round(dir * float(i)));
+        if (q.x < 0 || q.y < 0 || q.x >= size.x || q.y >= size.y || texelFetch(u_ids, q, 0).a != 4u) { plus = i; break; }
+      }
+      if (plus < 0) continue;
+      for (int i = 1; i <= reach; i++) {
+        ivec2 q = p - ivec2(round(dir * float(i)));
+        if (q.x < 0 || q.y < 0 || q.x >= size.x || q.y >= size.y || texelFetch(u_ids, q, 0).a != 4u) { minus = i; break; }
+      }
+      if (minus < 0) continue;
+      float w = float(plus + minus);
+      if (w < best) { best = w; across = dir; off = float(plus - minus); }
+    }
+    // 只认宽度像一层膜的带子（28–62 Å）：两个穿膜蛋白之间的那段膜沿带子方向量也是窄的，但比膜厚宽得多
+    // only a band as wide as one membrane counts (28–62 Å): the stretch of membrane between two proteins is narrow along the band too, but much wider than a membrane is thick
+    if (best <= u_mid.y && best >= u_mid.y * 0.45 && abs(off) <= max(1.0, best * 0.1)) {
+      float along = dot(vec2(p), vec2(-across.y, across.x));
+      if (fract(along / u_mid.z) < 0.55) rgb = mix(rgb, deepen(rgb, 0.72), u_mid.x);
+    }
   }
   vec3 ink = u_ink;
   if (u_inkTint.x > 0.0 && line > 0.0) {

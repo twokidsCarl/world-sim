@@ -140,6 +140,8 @@
         ["RAB|Synapsin|CSP|SNAP", "soluble"],
         [".", "membrane"]
       ],
+      "hues": {"focus": [0.74, 0.14, 70], "ligand": [0.86, 0.13, 88], "soluble": [0.78, 0.13, 95], "membrane": [0.8, 0.12, 100]},
+      "membrane": [0.92, 0.07, 100],
       "caption": "一个突触小泡的原子模型，从中间剖开：膜上有质子泵 V-ATPase、谷氨酸转运体 VGLUT、SNARE 蛋白和突触结合蛋白，里面装着谷氨酸。",
       "captionEn": "An atomic model of a synaptic vesicle, cut through the middle: its membrane carries the proton pump V-ATPase, the glutamate transporter VGLUT, SNARE proteins and synaptotagmin, and it is filled with glutamate.",
       "tier": "curated",

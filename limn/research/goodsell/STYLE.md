@@ -119,6 +119,23 @@ limn 这一轮的数：
 
 **循环到这里的状态。** 流感在结构和配色上接近他的画。我自己看仍然不对的：新冠里面仍比他的稀（36 个核糖核蛋白与实测一致，他画的是填满的）；支原体里的 DNA 是团块，不是他那样的长线；所有的画都没有周围的环境。
 
+## 用概念来画（第六阶段）
+
+十轮逐个模型调参数之后差距仍然明显，于是换了做法：把他的画法提炼成几种**所有模型共用的概念**，由“这是什么”（膜、核酸、蛋白）决定怎么画，不由“这是哪个模型”决定；数据里缺的东西用几个**通用的工具**按依据补上。验证也换了两样：取他原尺寸图的一小块和我们同样的一块并排（`out/C<n>-detail-*.jpg`），以及每一步把全部 25 张卡出成一张总览（`sheet.py`，`out/sheet-C<n>.jpg`）。
+
+### C1–C2：线、膜
+
+**对着原尺寸图发现前面量错了一件事。** 我在 800 像素的缩小版上量出“他的线是填色的深一号，偏浅偏彩”，并据此把线调浅了。看原尺寸图（`out/C2-detail-influenza.jpg` 左半）不是这样：水彩里他用的是**细而深的墨线，每个形状都勾一圈**。缩小之后细线和旁边的颜色混在一起，才量成了“浅而彩”。“每月分子”2015 年以后的图确实没有黑线，那是另一种画法。所以：
+
+- **线**（水彩）：近黑的细墨线，粗细均匀。
+- **膜**：脂质一律按球来切，切口整齐；编号里标成膜；从侧面看到的膜（宽度像一层膜的窄带子）中线上画一道很淡的虚线（合成通道里朝八个方向找带子的两边）。
+- **理想的膜**（工具）：模拟里的膜是起伏的，切开后边缘参差。流感在手绘画法下改用一层理想的球壳（`shellMembrane`），厚度取自数据。
+- **一个复合体一个颜色**：同一种分子的各条链不再在明度上交替，刺不再有深浅的条纹。
+- 平滑探针的上限从 14 Å 降到 6.5 Å，保留一两纳米大小的凹凸。
+- 突触小泡按他的黄橙色配。
+
+**总览里看到的、还没改的：** HeLa 细胞是白底黑线，很脏；syn3A 膜包层里面是空的一个圆；新冠里面有白洞；流感的刺仍是一块板，没有他那样的细柄和分瓣的头（这是真实结构平滑之后的样子，要靠“蛋白分瓣”这个概念来解决）；支原体的 DNA 是团块。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -228,3 +245,20 @@ The user asked that problems no longer be pointed out by a person: I compare wit
 **How the coronavirus numbers were inferred (L9).** From open-access full texts: Klein et al. 2020 (*Nat. Commun.*, doi:10.1038/s41467-020-19619-7, in situ cryo-electron tomography of SARS-CoV-2) give 48 spike trimers per virion on average, range 25–127, and 38 ± 10 ribonucleoproteins; Neuman et al. 2011 (*J. Struct. Biol.*, doi:10.1016/j.jsb.2010.11.021, coronaviruses) give 74 spikes on average. The PetWorld model has 30 spikes and 36 ribonucleoproteins: the spikes at the low end of the measured range, the ribonucleoproteins in agreement. So spikes are set to 74 (Neuman's average, inside Klein's range and above Klein's mean; the density of Goodsell's 2020 painting is close to it) and the number of ribonucleoproteins is left alone. For M protein I found no figure I could cite directly, and it was not changed.
 
 **Where the loop stands.** Influenza is close to his painting in structure and colour. Still wrong, by my own eye: the coronavirus is still thinner inside than his (36 ribonucleoproteins agree with measurement; he paints it packed); DNA in the mycoplasma is lumps, not the long strands he paints; no painting has its surrounding environment.
+
+## Drawing by concept (stage six)
+
+After ten rounds of tuning model by model the gap was still plain, so the approach changed: his way of painting is distilled into a few **concepts shared by every model**, with "what this is" (membrane, nucleic acid, protein) deciding how it is drawn rather than "which model this is", and what the data lacks is filled in on stated grounds by a few **general tools**. Checking changed in two ways as well: a small piece of his full-size picture set beside the same piece of ours (`out/C<n>-detail-*.jpg`), and all 25 cards rendered into one contact sheet at every step (`sheet.py`, `out/sheet-C<n>.jpg`).
+
+### C1–C2: line, membrane
+
+**The full-size originals showed that something had been measured wrongly.** On the 800-pixel reductions I had measured "his lines are a deeper shade of the fill, rather pale and coloured" and lightened ours accordingly. At full size (left half of `out/C2-detail-influenza.jpg`) that is not so: in the watercolours he uses **a thin, dark ink line drawn round every shape**. Reduced, the thin line blends with the colour beside it, which is what measured as "pale and coloured". His Molecule of the Month pictures since 2015 really have no black lines, but that is a different way of drawing. So:
+
+- **Line** (watercolours): a thin near-black ink line of even width.
+- **Membrane**: lipids are always cut sphere by sphere, giving a clean cut edge, and are tagged as membrane in the ids; a membrane seen edge-on (a narrow band as wide as one membrane) gets a very faint dashed line along its middle (the composite pass looks for the band's two edges in eight directions).
+- **An ideal membrane** (tool): a simulated membrane undulates and its cut edge is ragged. In the painted drawing the influenza virion now has an ideal spherical shell (`shellMembrane`), as thick as the data's.
+- **One colour per complex**: chains of one kind of molecule no longer alternate in lightness, so spikes are no longer striped.
+- The cap on the smoothing probe drops from 14 Å to 6.5 Å, keeping relief of a nanometre or two.
+- The synaptic vesicle takes his yellow-orange.
+
+**Seen on the contact sheet and not yet fixed:** the HeLa cell is black line on white and looks dirty; the syn3A envelope is an empty disc; the coronavirus has white holes inside; the influenza spikes are still slabs without the thin stalk and lobed head he gives them (that is the real structure once smoothed, and is for the concept "lobed protein" to solve); the mycoplasma's DNA is lumps.
