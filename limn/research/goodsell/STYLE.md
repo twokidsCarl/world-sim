@@ -146,6 +146,17 @@ limn 这一轮的数：
 - **和他的差别**：他画的 DNA 是稀疏的、近乎直的长线；模型里的染色体是按真实密度填的，又密又弯。这是数据和他的画的差别，没有改。
 - 密的模型的切片试了 30%（突触又露白）和 50%（支原体成了一堵 DNA 的墙），取 40%。
 
+### C4：场景，和两个新工具（填环境、穿线）
+
+- **概念“场景”**：对象泡在拥挤的环境里，铺满整张纸，底色是深的。先做了新冠（他那幅就是场景）。
+- **工具“填环境”**（`src/infer/environment.ts` 的 `scatter`）：把几种蛋白随机摆在对象周围切面后面的一层里，不进对象的范围，彼此不重叠。
+- **工具“穿线”**（同文件的 `threads`）：生成弯弯曲曲的长线，方向带惯性地随机变，碰到对象就沿表面滑开。用它画黏蛋白，交给圆台图元。
+- 新冠的环境照他的《Coronavirus》（2020）：黏蛋白的长链、抗体（PDB 1IGT）、小的蛋白（用血清白蛋白 PDB 1AO6 代表）。目录条目的 `environment` 里写了依据；来源栏标“示意的环境”，说明里写明位置随机、数量按铺满画面定；切到 Illustrate 画法只看模型本身。
+- 画幅裁在环境的范围之内（打开时放大 1.22 倍），四周不露底色的边。
+- 量出来的（新冠；括号里是他的画）：白纸占比 0.48→0.00（0.00），主色距离 0.110→0.094，平均明度 0.60（0.61），平均彩度 0.096（0.104）。
+- 并排图 `out/C4-coronavirus.jpg`。
+- **还差的**：他的黏蛋白是分叉的、带糖链的刷子状，我们是光滑的线；刺之间的空隙露出的是底色，他的是后一圈刺的深色；橙色的小蛋白是一个结构重复几百次，他画了好几种。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -282,3 +293,14 @@ After ten rounds of tuning model by model the gap was still plain, so the approa
 - Side by side: `out/C3-detail-mycoplasma.jpg`; contact sheet `out/sheet-C3.jpg`. Nucleic acids in the mycoplasma and the exosome now read as strands.
 - **Where it still differs from his**: he paints DNA as sparse, nearly straight long strands; the model's chromosome is packed at its real density, dense and winding. That is a difference between the data and his painting and was left alone.
 - For dense models a slab of 30% (paper shows again in the synapse) and of 50% (the mycoplasma becomes a wall of DNA) were tried; 40% is used.
+
+### C4: scenes, and two new tools (filling the environment, threading strands)
+
+- **The concept "scene"**: the subject sits in a crowded environment that fills the sheet, on a dark ground. The coronavirus comes first (his painting of it is a scene).
+- **The tool "fill the environment"** (`scatter` in `src/infer/environment.ts`): a few proteins are placed at random round the subject in one layer behind the cut, outside the subject's range and not overlapping one another.
+- **The tool "thread a strand"** (`threads`, same file): wandering long strands whose direction changes at random with inertia and slides off along the subject's surface on meeting it. Mucin is drawn with it, through the round-cone primitive.
+- The coronavirus's surroundings follow his "Coronavirus" (2020): long mucin strands, antibodies (PDB 1IGT) and small proteins (stood for by serum albumin, PDB 1AO6). The grounds are stated in `environment` in the catalogue entry; the source panel reads "schematic environment", and the notes say that positions are random and numbers set to fill the picture; the Illustrate drawing shows the model alone.
+- The frame is cropped inside the environment (it opens at 1.22 times), so no margin of ground shows.
+- Measured (coronavirus; his painting in brackets): blank paper 0.48→0.00 (0.00), colour distance 0.110→0.094, mean lightness 0.60 (0.61), mean chroma 0.096 (0.104).
+- Side by side: `out/C4-coronavirus.jpg`.
+- **Still short**: his mucin is branched and brush-like with its glycans, ours is a smooth strand; gaps between spikes show the ground where his show the deeper tone of the ring behind; the small orange proteins are one structure repeated a few hundred times, where he paints several kinds.
