@@ -23,7 +23,7 @@ import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
 import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
 import { scatter, threads } from '../infer/environment'
-import { chainCentre, complexes, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
+import { chainCentre, complexes, exaggerate, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
@@ -131,6 +131,9 @@ interface State extends Look {
   /** 画法：手绘或 Illustrate / the way of drawing: painted or Illustrate */
   drawing: Drawing
   setDrawing(d: Drawing): void
+  /** 手绘画法下把刺的形状夸张成 Goodsell 画的那样（细长的柄、宽的头）；不是真实的形状 / in the painted drawing, exaggerate spikes the way Goodsell paints them (a long thin stalk, a wide head); not their real shape */
+  exaggerate: boolean
+  setExaggerate(on: boolean): void
   setLook(patch: Partial<Look>): void
   applyEdits(edits: Edit[]): void
   getLook(): Look
@@ -243,6 +246,8 @@ const START_DRAWING: Drawing = typeof location !== 'undefined' && new URLSearchP
  * M1 blue, nucleoprotein orange, RNA yellow, polymerase red.
  */
 type V3 = [number, number, number]
+/** 刺的形状要不要夸张（见 src/infer/idealise.ts 的 exaggerate）/ whether spikes are exaggerated (see `exaggerate` in src/infer/idealise.ts) */
+const EXAGGERATE = () => useStore.getState().exaggerate
 
 /**
  * 概念“场景”：在对象周围填上环境（见 src/infer/environment.ts）。对象的范围取它各部分摆好之后离中心最远的地方。
@@ -356,7 +361,11 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
     const p = at(op, [sub.pos[i * 3]!, sub.pos[i * 3 + 1]!, sub.pos[i * 3 + 2]!])
     sub.pos.set(p, i * 3)
   }
-  const template = templateOf(sub, sub.chains.map((_, i) => i), centre)
+  let template = templateOf(sub, sub.chains.map((_, i) => i), centre)
+  if (EXAGGERATE()) {
+    template = exaggerate(sub, template, { stretch: 1, stalk: 0.8, head: 1.3, split: 0.45 })
+    notes.push({ key: 'note.exaggerated' })
+  }
   const had = group.operators.length
   const count = entry.respike!.count
   sub.assemblies.push({ id: 'inferred', groups: [{ chains: sub.chains.map((_, i) => i), operators: placeTemplate(template, centre, ringSites(count, [0, 0, 1])) }] })
@@ -468,8 +477,10 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
       tilts.push(...groups.map((g) => templateOf(model, g, membrane.centre).tilt))
       const sub = subMolecule(model, [...chosen.g, ...chosen.g.flatMap((ci) => sugarOf.get(ci) ?? [])], `${model.id}:${id}`, titleEn)
       // 糖链和它所在的蛋白同色：他把糖链画成蛋白轮廓的一部分，不另外上色 / glycans take the colour of the protein they sit on: he paints them as part of the protein's outline, not in a colour of their own
+      // 夸张：柄拉长收细、头放宽（只有刺，M2 不动）/ exaggeration: stalk stretched and narrowed, head widened (spikes only, not M2)
+      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.55, head: 1.2, split: 0.5 }) : chosen.t
       const own = lch(sub.entities.find((e) => !/glycan/i.test(e.description)) ?? sub.entities[0]!)
-      const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(chosen.t, membrane.centre, where), () => own, (e) => [e.description, e.description])
+      const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(tpl, membrane.centre, where), () => own, (e) => [e.description, e.description])
       panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
       outside.push(panel)
     }
@@ -479,6 +490,7 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     outside.unshift(make(shellMembrane(membrane.centre, membrane.mid - 19, membrane.mid + 19, `${model.id}:membrane`), `${model.id}:membrane`, '膜（理想化的球壳）', 'Membrane (idealised shell)', [IDENTITY], () => MEMBRANE_LCH, () => ['膜', 'membrane']))
     outside[0]!.spec.source = { ...outside[0]!.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
     tilts.sort((a, b) => a - b)
+    if (EXAGGERATE()) notes.push({ key: 'note.exaggerated' })
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
   }
   // 基因组 RNA 画成一条线：走向取自 RNP 结构里的 RNA 链 / the genomic RNA as a line, its course taken from the RNA chains of the RNP structure
@@ -567,6 +579,7 @@ export const useStore = create<State>((set, get) => ({
   ...freshLook(),
   cut: 0,
   drawing: START_DRAWING,
+  exaggerate: typeof location === 'undefined' || new URLSearchParams(location.search).get('exaggerate') !== '0',
   style: styleFor('molecule', START_DRAWING),
   colorings: [],
   sceneRev: 0,
@@ -1170,6 +1183,12 @@ export const useStore = create<State>((set, get) => ({
       set({ panels, busy: '' })
     }
     set((s) => ({ colorings: s.colorings.map((c) => ({ ...c, mode })) }))
+  },
+
+  setExaggerate(on) {
+    set({ exaggerate: on })
+    const id = get().spec?.catalog
+    if (id) void get().loadCatalog(id)
   },
 
   setDrawing(drawing) {

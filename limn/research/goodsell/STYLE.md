@@ -178,6 +178,16 @@ limn 这一轮的数：
 - HIV 主色距离 0.134→0.081，白纸占比 0.47→0.00。并排图 `out/E2-hiv.jpg`。
 - **和他的差别**：他那幅的比例尺小得多，病毒是完整的一个球（没有剖开），只占画面的四分之一；我们是剖开的特写。他的血浆蛋白更小更密，种类也多。
 
+### X1–X2：“夸张”选项
+
+用户同意加一个明确标注的“夸张”选项。`exaggerate`（`src/infer/idealise.ts`）把刺沿它的轴拉长、柄收细、头放宽：流感的血凝素长 1.4 倍、柄 0.55、头 1.2；神经氨酸酶 1.25、0.5、1.15；新冠的刺只把头放宽到 1.3。倍数是对着他的原尺寸图定的（他的刺长约为膜厚的 4.2 倍，真实的约 3 倍）。
+
+- 只在手绘画法下，默认开；“线条与阴影”里有开关，地址里 `?exaggerate=0` 也能关。说明里写明这不是真实的形状。Illustrate 画法不受影响。
+- 切片从 20% 加到 30%，柄变细之后空隙里要露出后一圈。
+- 流感主色距离 0.072→0.075（基本没动），看图是近了一大步：刺有了细柄和宽头，神经氨酸酶成了蘑菇状。新冠 0.089→0.081，外圈的刺基本连成一整圈。
+- 并排图 `out/X2-influenza.jpg`、`out/X2-coronavirus.jpg`。
+- **还差的**：他的刺头是分成几瓣的，我们的是一整块带锯齿的边；流感的柄之间还有几处露白。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -346,3 +356,13 @@ After ten rounds of tuning model by model the gap was still plain, so the approa
 - **One change to the environment tool**: the room a molecule takes went by its farthest atom, so long thin fibrinogen claimed a large sphere in which nothing else fitted and the picture was sparse. It now goes by the root-mean-square radius. The coronavirus scene grew a little denser with it (colour distance 0.092→0.089).
 - HIV colour distance 0.134→0.081, blank paper 0.47→0.00. Side by side: `out/E2-hiv.jpg`.
 - **Where it differs from his**: his is at a much smaller scale, with the virus a whole sphere (not cut open) taking a quarter of the picture, where ours is a cut-away close-up. His plasma proteins are smaller, denser and of more kinds.
+
+### X1–X2: the "exaggeration" option
+
+The user agreed to a clearly labelled "exaggeration" option. `exaggerate` (`src/infer/idealise.ts`) stretches a spike along its axis, narrows its stalk and widens its head: influenza hemagglutinin 1.4 times as long, stalk 0.55, head 1.2; neuraminidase 1.25, 0.5, 1.15; the coronavirus spike has only its head widened, to 1.3. The factors were set against his full-size original (his spikes are about 4.2 membrane thicknesses long, real ones about 3).
+
+- Painted drawing only, on by default; there is a switch under "Lines and shadows", and `?exaggerate=0` in the address turns it off too. The notes say that this is not the real shape. The Illustrate drawing is unaffected.
+- The slab goes from 20% to 30%: with thinner stalks the gaps have to show the ring behind.
+- Influenza colour distance 0.072→0.075 (hardly moved), yet by eye it is a large step closer: spikes have a thin stalk and a wide head, and neuraminidase is a mushroom. Coronavirus 0.089→0.081, with the spikes now nearly one continuous ring.
+- Side by side: `out/X2-influenza.jpg`, `out/X2-coronavirus.jpg`.
+- **Still short**: the heads of his spikes are split into lobes, where ours are one block with a ragged edge; paper still shows in a few places between influenza stalks.

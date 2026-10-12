@@ -171,7 +171,7 @@ export const STYLE_MESOSCALE: Style = {
   smooth: 5,
   smoothMax: 6.5,
   radiusScale: 1,
-  slab: 0.2,
+  slab: 0.3,
 }
 
 /**
