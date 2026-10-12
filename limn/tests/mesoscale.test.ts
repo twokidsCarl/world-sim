@@ -92,9 +92,11 @@ describe('cellPACK 方言 / cellPACK dialect', () => {
     expect([mol(0), mol(1), mol(2)]).toEqual([0, 0, 0])
     // 每个蛋白拷贝是一个分子 / each protein copy is a molecule of its own
     expect(mol(3)).not.toBe(mol(4))
-    // 纤维的片段共用一个编号，并标记为细丝 / segments of a fibre share one id and are flagged as strands
-    expect(mol(5)).toBe(mol(6))
-    expect([flag(3), flag(5)]).toEqual([1, 2])
+    // 纤维的各节用纤维专用的编号（沿走向每隔一段换一个，见 primitives.test.ts 里的 fibre stretches），并标记为纤维
+    // pieces of a fibre take ids from the fibre range (changing every so often along its course; see "fibre stretches" in primitives.test.ts) and are flagged as fibre
+    expect(mol(5)).toBeGreaterThanOrEqual(2_000_000)
+    expect(mol(6)).toBeGreaterThanOrEqual(2_000_000)
+    expect([flag(3), flag(5)]).toEqual([1, 8])
     // 实例的中心随算符移动 / an instance's centre moves with its operator
     expect(item.instances.data[4 * 16 + 12]! - item.instances.data[3 * 16 + 12]!).toBeCloseTo(100)
   })

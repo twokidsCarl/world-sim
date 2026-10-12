@@ -333,6 +333,7 @@
       ],
       "hues": {"soluble": [0.76, 0.09, 222], "nucleic-binding": [0.7, 0.12, 345], "nucleic": [0.84, 0.14, 88], "membrane": [0.72, 0.13, 140]},
       "membrane": [0.86, 0.09, 125],
+      "colors": [["fibers\\.RNA", [0.9, 0.05, 350]], ["fibers\\.DNA", [0.86, 0.14, 92]]],
       "caption": "一整只生殖支原体细胞的模型，从中间剖开：膜、核糖体、基因组 DNA 和几百种蛋白，数量来自全细胞模拟的一个时刻。",
       "captionEn": "A model of an entire Mycoplasma genitalium cell, cut through the middle: membrane, ribosomes, genomic DNA and several hundred kinds of protein, in numbers taken from one moment of a whole-cell simulation.",
       "tier": "curated",
