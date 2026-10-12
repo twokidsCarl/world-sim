@@ -93,8 +93,8 @@ class SimulateRequest(BaseModel):
 
 
 CAVEAT = {
-    "zh": "这个模型没有通过样本外检验：五起没参与设计的真实挤兑里，没有一起的规模能稳定对上（见 README「数据从哪来」）。结果只说明模型里会发生什么，不是对真实银行的预测。",
-    "en": "This model has not passed its out-of-sample tests: of five real runs that took no part in its design, none is matched in scale with any consistency (see the README, \"Where the data comes from\"). A result says what happens inside the model; it is not a forecast for any real bank.",
+    "zh": "这个模型没有通过样本外检验：六起事先留作检验的真实挤兑里，没有一起按事先定的标准全部对上，只有最后一起规模对上了（见 README「数据从哪来」）。结果只说明模型里会发生什么，不是对真实银行的预测。",
+    "en": "This model has not passed its out-of-sample tests: of six real runs held out as tests, none meets every criterion fixed in advance, and only the last is matched in scale (see the README, \"Where the data comes from\"). A result says what happens inside the model; it is not a forecast for any real bank.",
 }
 
 

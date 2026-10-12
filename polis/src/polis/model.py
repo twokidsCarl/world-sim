@@ -164,6 +164,7 @@ class Params(BaseModel):
     perceived_reserve: float = 0.35
     spread: float = Field(2.0, ge=0, description="各人门槛的离散程度：0 表示人人一样 / how far individual thresholds differ; 0 means everyone is alike")
     public: float = Field(0.0, ge=0, description="收到群发消息的人，估计同样收到的人里有多少会去取（乘以消息触达的比例）；0 表示群发消息不带来这种估计 / of those a mass message reached, the share a recipient assumes will withdraw (times the message's reach); 0 means a mass message carries no such assumption")
+    unease: float = Field(0.0, ge=0, description="事发前人心不稳（场景的 UNEASE，从史料里数出来）每一级把「银行可能出事」的先验对数几率抬高多少；0 表示不用这个量 / how much each level of prior unease (the scenario's UNEASE, counted from the record) raises the prior log-odds that the bank may be in trouble; 0 means the quantity is unused")
     authority: float = Field(1.0, ge=0, description="辟谣和担保的告示实际有几成力度 / the fraction of a denial's or guarantee's stated strength that actually lands")
     attach: float = Field(2.0, ge=0, description="与银行的往来把门槛抬高多少 / how much ties to the bank raise the threshold")
     # 钱庄 / the bank

@@ -276,6 +276,10 @@ export interface Params {
    */
   public?: number;
   /**
+   * 事发前人心不稳（场景的 UNEASE，从史料里数出来）每一级把「银行可能出事」的先验对数几率抬高多少；0 表示不用这个量 / how much each level of prior unease (the scenario's UNEASE, counted from the record) raises the prior log-odds that the bank may be in trouble; 0 means the quantity is unused
+   */
+  unease?: number;
+  /**
    * 辟谣和担保的告示实际有几成力度 / the fraction of a denial's or guarantee's stated strength that actually lands
    */
   authority?: number;

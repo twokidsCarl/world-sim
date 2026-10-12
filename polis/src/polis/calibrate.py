@@ -31,6 +31,7 @@ SPACE: dict[str, tuple[float, float]] = {
     "spread": (0.5, 5.0),
     "public": (0.0, 1.5),
     "authority": (0.2, 1.0),
+    "unease": (0.0, 3.0),
 }
 
 
@@ -156,10 +157,10 @@ def targets() -> list[Target]:
         out.append(Target("bea_amount", "cases/bea_bank_run_2008", 0.0, 0.02,
                           "东亚银行：被提走的存款不到总额的 2%（主席事后的说法；银行公布的是 0.67%）。这个案例的结果已经看过，所以拿来校准、不再算检验",
                           "Bank of East Asia: under 2% of deposits withdrawn (the chairman's later account; the bank reported 0.67%). The result of this case has been seen, so it is used for calibration and no longer counts as a test"))  # fmt: skip
-    if {"bac_san_jose_2004", "swedbank_latvia_2011", "kaspi_bank_2014"} <= cases.keys():
-        out.append(Target("seen_like", "cases/bac_san_jose_2004, cases/swedbank_latvia_2011, cases/kaspi_bank_2014", 0.3, 1.0,
-                          "第一轮的三起检验案例：每十个平行世界里至少有三个银行不倒、取走的比例在史料数字的一半到两倍之间（三成的下限是这里定的）。它们的结果已经看过，所以拿来校准、不再算检验",
-                          "The first round's three test cases: in at least three of ten parallel worlds the bank survives and the share withdrawn is between half and twice the recorded figure (the three-in-ten floor is set here). Their results have been seen, so they are used for calibration and no longer count as tests"))  # fmt: skip
+    if {"bac_san_jose_2004", "swedbank_latvia_2011", "kaspi_bank_2014", "icici_bank_2003", "fib_bulgaria_2014"} <= cases.keys():
+        out.append(Target("seen_like", "cases/bac_san_jose_2004, cases/swedbank_latvia_2011, cases/kaspi_bank_2014, cases/icici_bank_2003, cases/fib_bulgaria_2014", 0.3, 1.0,
+                          "前两轮的五起检验案例：每十个平行世界里至少有三个银行不倒、取走的比例在史料数字的一半到两倍之间（三成的下限是这里定的）。它们的结果已经看过，所以拿来校准、不再算检验",
+                          "The first two rounds' five test cases: in at least three of ten parallel worlds the bank survives and the share withdrawn is between half and twice the recorded figure (the three-in-ten floor is set here). Their results have been seen, so they are used for calibration and no longer count as tests"))  # fmt: skip
     if "sanren_chenghu" in cases:
         out.append(Target("sanren_steps", "cases/sanren_chenghu", 3.0, 3.0, "一人说不信，两人说起疑，三人说就信了",
                           "One man says it and is not believed, two and doubt sets in, three and it is believed"))
@@ -241,12 +242,12 @@ def bea_amount(over: dict[str, float], seed: int, n: int) -> float:
     return float(sum(e["x"] for e in r.events if e["k"] == "withdraw") / sum(p.deposit for p in pop.persons))
 
 
-SEEN = ("bac", "swedbank", "kaspi")
+SEEN = ("bac", "swedbank", "kaspi", "icici", "fib")
 
 
 def seen_like(over: dict[str, float], seeds: list[int], n: int) -> float:
-    """第一轮三起检验案例里，银行不倒且取走的比例落在史料数字一半到两倍之间的世界所占的比例。
-    Across the first round's three test cases, the share of worlds in which the bank survives and the share
+    """前两轮五起检验案例里，银行不倒且取走的比例落在史料数字一半到两倍之间的世界所占的比例。
+    Across the first two rounds' five test cases, the share of worlds in which the bank survives and the share
     withdrawn falls between half and twice the recorded figure.
     """
     hits = []

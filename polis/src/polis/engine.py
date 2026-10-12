@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from . import mind
+from .scenarios import context
 from .model import AWARE, LOST, QUEUEING, UNAWARE, WITHDREW, Intervention, Message, Params, Population, Series
 
 if TYPE_CHECKING:
@@ -94,7 +95,10 @@ class Sim:
         self.members = [np.array([x.idx for x in ps if v.idx in x.venues], dtype=int) for v in pop.venues]
 
         # 心智状态 / mental state
-        self.L0 = mind.logit(np.clip(params.prior + 0.08 * (1 - self.trust_institution), 0.005, 0.5))
+        # 事发前人心有多不稳：从史料里数出来的 0、1、2（见 scenarios/context.py）
+        # How unsettled people were beforehand: 0, 1 or 2, counted from the record (see scenarios/context.py)
+        self.uneasy = context.unease(scenario)
+        self.L0 = mind.logit(np.clip(params.prior + 0.08 * (1 - self.trust_institution), 0.005, 0.5)) + params.unease * self.uneasy
         self.L = self.L0.copy()
         self.fear = np.zeros(n)
         self.expect = np.zeros(n)
@@ -231,9 +235,10 @@ class Sim:
             # 辟谣同样是人人都收到的：别人会去取的估计跟着减退
             # A denial reaches everyone too, so the estimate that others will withdraw recedes with it
             self.public[reached] *= max(0.0, 1 - strength / 4)
-        elif self.p.public > 0:
+        elif self.p.public > 0 and self.uneasy > 0:
             # 群发的坏消息：收到的人知道不只自己收到 / a mass message of bad news: those reached know they are not the only ones
-            self.public[reached] = np.maximum(self.public[reached], min(1.0, self.p.public * iv.reach))
+            # 人心安稳的时候，一条匿名消息不会让人觉得别人都要去取 / in settled times an anonymous message does not make people think everyone else will go
+            self.public[reached] = np.maximum(self.public[reached], min(1.0, self.p.public * iv.reach * self.uneasy))
         self._emit("broadcast", a=iv.actor, m=m, x=round(len(reached) / self.n, 3))
         if iv.actor is not None:
             self.held[iv.actor] = m

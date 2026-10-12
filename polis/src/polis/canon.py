@@ -100,7 +100,7 @@ def bea(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
 # 第二轮的两起（ICICI、第一投资银行）：结果同样看过（都是 0/30），也不再算检验。
 # The second round's two (ICICI, First Investment Bank): their results have been seen as well (both 0/30), so they
 # no longer count as tests either.
-SEEN = cal.SEEN + ("icici", "fib")
+SEEN = cal.SEEN
 # 第三轮的一起：设定、标准和它的 UNEASE 在第三轮模型改动之前合并。
 # The third round's one: its settings, criteria and UNEASE were merged before the third round of model changes.
 HELD_OUT = ("sber",)
