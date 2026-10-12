@@ -10,13 +10,15 @@ const read = <T>(rel: string) => JSON.parse(readFileSync(resolve(root, rel), 'ut
 
 const names = read<Record<string, NameEntry>>('data/curated/knowledge/names.json')
 const relations = read<Relation[]>('data/curated/knowledge/relations.json')
+const signoffs = read<{ items: Record<string, { reviewedBy: string; date: string; verdict: string }> }>('data/curated/knowledge/review-signoffs.json')
+const queue = read<{ items: { id: string; type: string; risk: number; crossCheck: string; status: string; reasons: string[]; members: { count: number } }[] }>('data/curated/knowledge/review-queue.json')
 
 // Concept ids: FMA ids, or synthetic ids the dataset uses where FMA has no class.
 // ... each optionally side-qualified with _L / _R (a minted sided child of the base concept).
 const ID = /^(FMA[1-9]\d*(_[LR])?|[A-Z][A-Z0-9]*_[A-Za-z0-9_]+)$/
 const QID = /^Q[1-9]\d*$/
 const KINDS: RelationKind[] = ['origin', 'insertion', 'innervatedBy', 'innervates', 'arterialSupply', 'venousDrainage', 'lymphaticDrainage', 'connectsWith', 'antagonist']
-const ZH_SOURCES = ['wikidata', 'wikidata:hant-converted', 'wikidata:via-uberon-id', 'wikidata:generic-twin', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override']
+const ZH_SOURCES = ['reviewer', 'wikidata', 'wikidata:hant-converted', 'wikidata:via-uberon-id', 'wikidata:generic-twin', 'derived:laterality', 'lexicon:mainland-over-wikidata', 'machine-translation', 'machine-translation:override']
 const NAME_KEYS = ['zh', 'la', 'ja', 'wikidata', 'zhSource', 'status']
 const hasHan = (s: string) => /[㐀-鿿\u{20000}-\u{2ffff}]/u.test(s)
 
@@ -49,8 +51,15 @@ describe('names.json', () => {
     }
   })
 
-  it('marks everything unreviewed', () => {
-    for (const [fma, e] of entries) expect(e.status, fma).toBe('unreviewed')
+  // 只有签核文件里有记录的条目才可以是 reviewed / only what the sign-off file covers may be reviewed
+  it('is reviewed only where a reviewer signed off', () => {
+    const signed = Object.keys(signoffs.items)
+    for (const [id, e] of entries) {
+      expect(['unreviewed', 'reviewed'], id).toContain(e.status)
+      if (e.status === 'reviewed') expect(signed.some((k) => k.startsWith('name:')), id).toBe(true)
+      if (e.zhSource === 'reviewer') expect(e.status, id).toBe('reviewed')
+    }
+    if (!signed.length) for (const [id, e] of entries) expect(e.status, id).toBe('unreviewed')
   })
 
   it('records where every zh name came from, with a known source value', () => {
@@ -231,7 +240,8 @@ describe('relations.json', () => {
       expect(r.subject, at).toMatch(ID)
       expect(KINDS, at).toContain(r.kind)
       if (r.object !== undefined) expect(r.object, at).toMatch(ID)
-      expect(r.status, at).toBe('unreviewed')
+      expect(['unreviewed', 'reviewed'], at).toContain(r.status)
+      if (!Object.keys(signoffs.items).length) expect(r.status, at).toBe('unreviewed')
     }
   })
 
@@ -475,6 +485,35 @@ describe('published copies', () => {
       const pub = resolve(root, 'public/anatomy/knowledge', f)
       if (!existsSync(pub)) continue // public/anatomy is gitignored; present after a run
       expect(readFileSync(pub, 'utf8')).toBe(readFileSync(resolve(root, 'data/curated/knowledge', f), 'utf8'))
+    }
+  })
+})
+
+// 审核队列和签核机制 / the review queue and the sign-off mechanism
+describe('review queue', () => {
+  it('lists every name and relation exactly once, ordered by risk', () => {
+    const ids = new Set(queue.items.map((q) => q.id))
+    expect(ids.size).toBe(queue.items.length)
+    for (let i = 1; i < queue.items.length; i++) expect(queue.items[i]!.risk).toBeLessThanOrEqual(queue.items[i - 1]!.risk)
+    const nameMembers = queue.items.filter((q) => q.type === 'name').reduce((n, q) => n + q.members.count, 0)
+    const relMembers = queue.items.filter((q) => q.type === 'relation').reduce((n, q) => n + q.members.count, 0)
+    expect(nameMembers).toBe(Object.keys(names).length)
+    expect(relMembers).toBe(relations.length)
+    for (const q of queue.items) {
+      expect(['agree', 'disagree', 'none']).toContain(q.crossCheck)
+      expect(q.reasons.length).toBeGreaterThan(0)
+      expect(q.id).toMatch(/^(name|rel):/)
+    }
+  })
+
+  it('marks nothing reviewed that is not signed off, and knows every signed id', () => {
+    const signed = new Set(Object.keys(signoffs.items))
+    const known = new Set(queue.items.map((q) => q.id))
+    for (const q of queue.items) if (q.status === 'reviewed') expect(signed.has(q.id), q.id).toBe(true)
+    for (const id of signed) expect(known.has(id), `sign-off for unknown item ${id}`).toBe(true)
+    for (const so of Object.values(signoffs.items)) {
+      expect(so.reviewedBy && so.date, 'sign-off needs reviewedBy and date').toBeTruthy()
+      expect(['accept', 'correct', 'reject']).toContain(so.verdict)
     }
   })
 })

@@ -1,11 +1,12 @@
-// names.json: one NameEntry per BodyParts3D concept, with the origin of every zh name recorded.
+// names.json：每个概念一条 NameEntry，并记录每个中文名的来源。
+// names.json: one NameEntry per concept, with the origin of every zh name recorded.
 import type { NameEntry } from '../../../src/anatomy/types.ts'
 import { compareIds, type Bp3dConcept } from './bp3d.ts'
 import { KEEP_WIKIDATA_LABEL, ZH_ID_OVERRIDES, ZH_OVERRIDES } from '../lexicon/overrides.ts'
 import { sideOf, sidedDerivative, stripSide, type Model } from './model.ts'
 import { createTranslator } from './translate.ts'
 
-/** Values that may appear in NameEntry.zhSource. */
+/** NameEntry.zhSource 可能出现的取值 / Values that may appear in NameEntry.zhSource. */
 export const ZH_SOURCES = [
   'wikidata', // zh-cn / zh-hans / zh label of the concept's own Wikidata item, already Simplified
   'wikidata:hant-converted', // own item's label, converted from Traditional characters
@@ -15,14 +16,27 @@ export const ZH_SOURCES = [
   'lexicon:mainland-over-wikidata', // exact lexicon term used instead of a differently worded Wikidata label
   'machine-translation', // tools/knowledge lexicon + rules; not from any source
   'machine-translation:override', // hand-written replacement for a Wikidata label judged wrong
+  'reviewer', // 审核者在 review-signoffs.json 中给出的改正名称 / a corrected name given by a reviewer in review-signoffs.json
 ] as const
 
 export interface NamesResult {
   names: Record<string, NameEntry>
-  /** Wikidata zh labels kept although the lexicon composes the name differently, for a reviewer. */
+  /**
+   * 保留的 Wikidata 中文标签（词表逐段组合的结果与之不同），供审核者参考。
+   * Wikidata zh labels kept although the lexicon composes the name differently, for a reviewer.
+   */
   disagreements: { fma: string; en: string; wikidata: string; lexicon: string; zhSource: string }[]
-  /** Wikidata labels replaced by an exact lexicon term under the mainland-wording policy. */
+  /**
+   * 按“大陆用语优先”策略被词表整词词条替换掉的 Wikidata 标签。
+   * Wikidata labels replaced by an exact lexicon term under the mainland-wording policy.
+   */
   replaced: { id: string; en: string; wikidata: string; lexicon: string }[]
+  /**
+   * 每个概念的两种独立渲染，供交叉核对：纯词表译名，以及 Wikidata 标签（分侧概念为 左/右 + 基础标签）。
+   * Two independent renderings per concept for cross-checking: the pure-lexicon translation and
+   * the Wikidata label (for a lateralised concept, 左/右 + the base label).
+   */
+  evidence: Record<string, { lexicon?: string; wikidata?: string }>
 }
 
 const LATIN_ABBREVIATIONS: Record<string, string> = {
@@ -30,7 +44,10 @@ const LATIN_ABBREVIATIONS: Record<string, string> = {
   'n.': 'nervus', 'nn.': 'nervi', 'lig.': 'ligamentum', 'ligg.': 'ligamenta', 'r.': 'ramus', 'rr.': 'rami',
 }
 
-/** First candidate that looks like plain Latin (Wikidata "la" labels sometimes hold other languages). */
+/**
+ * 第一个看起来是纯拉丁文的候选（Wikidata 的 "la" 标签有时混入其他语言）。
+ * First candidate that looks like plain Latin (Wikidata "la" labels sometimes hold other languages).
+ */
 export function pickLatin(candidates: (string | undefined | false | null)[]): string | undefined {
   for (const raw of candidates) {
     if (!raw) continue
@@ -47,7 +64,10 @@ export function pickLatin(candidates: (string | undefined | false | null)[]): st
 }
 
 export function buildNames(m: Model): NamesResult {
-  /** An item with several FMA ids names only the concept its English label matches. */
+  /**
+   * 带多个 FMA id 的条目只为英文标签相符的那个概念命名。
+   * An item with several FMA ids names only the concept its English label matches.
+   */
   const itemFits = (qid: string, fma: string) => {
     const fmas = m.fmaByItem.get(qid) ?? []
     if (fmas.length < 2) return true
@@ -57,7 +77,10 @@ export function buildNames(m: Model): NamesResult {
     return !fmas.some((f) => f !== fma && nameOf(f) === label)
   }
 
-  /** A Wikidata-sourced zh for an FMA id (own item, then generic twin). */
+  /**
+   * 某个 FMA id 的 Wikidata 中文名（先用自身条目，再用不分物种的孪生条目）。
+   * A Wikidata-sourced zh for an FMA id (own item, then generic twin).
+   */
   const wikidataZh = (fma: string): { zh: string; source: string } | undefined => {
     const items = m.itemsByFma.get(fma) ?? []
     const primary = m.primaryItem.get(fma)
@@ -95,14 +118,17 @@ export function buildNames(m: Model): NamesResult {
   const names: Record<string, NameEntry> = {}
   const disagreements: NamesResult['disagreements'] = []
   const replaced: NamesResult['replaced'] = []
+  const evidence: NamesResult['evidence'] = {}
 
   const nameConcept = (c: Bp3dConcept): NameEntry => {
     const entry: NameEntry = { status: 'unreviewed' }
+    // 条目同时带有另一个 FMA id 且以那个概念命名时，不算作本概念的条目
     // an item that also carries another FMA id and is named after that other concept is not ours
     const primary = m.primaryItem.get(c.fma)
     const qid = primary && itemFits(primary, c.fma) ? primary : undefined
     if (qid) entry.wikidata = qid
 
+    // 拉丁名：条目的拉丁文标签，否则用 TA98 拉丁术语（展开缩写）。
     // Latin: the item's Latin label, else its TA98 Latin term (abbreviations expanded).
     if (qid) {
       const twin = m.twinOf.get(qid)
@@ -110,6 +136,7 @@ export function buildNames(m: Model): NamesResult {
       if (la) entry.la = la
     }
 
+    // 日文名：BodyParts3D 自带的汉字名（取第一个），否则用 Wikidata 标签。
     // Japanese: BodyParts3D's own kanji name (first alternative), else the Wikidata label.
     const ja = c.ja?.split(/[;|]/)[0]?.trim() || (qid && m.labels.get(qid)?.ja)
     if (ja) entry.ja = ja
@@ -120,7 +147,7 @@ export function buildNames(m: Model): NamesResult {
     const bare = stripSide(c.en)
     const zhSide = side === 'left' ? '左' : '右'
     const keepWikidata = KEEP_WIKIDATA_LABEL.has(bare)
-    /** Wikidata label of the unlateralised concept, for a lateralised one. */
+    /** 分侧概念对应的不分侧概念的 Wikidata 标签 / Wikidata label of the unlateralised concept, for a lateralised one. */
     const baseLabel = (): string | undefined => {
       if (!side || ZH_OVERRIDES[bare]) return undefined
       for (const fma of new Set([...[...(m.fmaByName.get(bare) ?? [])].sort(), ...m.unsidedOf(c.fma)])) {
@@ -130,6 +157,7 @@ export function buildNames(m: Model): NamesResult {
       }
       return undefined
     }
+    // 大陆用语优先：词表的整词词条优先于措辞不同的 Wikidata 标签。
     // Mainland wording policy: an exact lexicon term beats a differently worded Wikidata label.
     const lex = keepWikidata ? undefined : lexiconOnly.exact(c.en)
 
@@ -158,6 +186,7 @@ export function buildNames(m: Model): NamesResult {
         entry.zh = zhSide + base
         entry.zhSource = 'derived:laterality'
       } else {
+        // 先用纯词表加规则；只有这样译不出时才借用子词的 Wikidata 标签
         // pure lexicon + rules first; Wikidata labels of sub-terms only for what that cannot reach
         const z = lexiconOnly.translate(c.en) ?? translator.translate(c.en)
         if (z) {
@@ -167,6 +196,12 @@ export function buildNames(m: Model): NamesResult {
       }
     }
 
+    {
+      const bl = own ? undefined : baseLabel()
+      const wdLabel = own?.zh ?? (bl && zhSide + bl)
+      const lexLabel = lexiconOnly.translate(c.en)
+      evidence[c.fma] = { ...(lexLabel ? { lexicon: lexLabel } : {}), ...(wdLabel ? { wikidata: wdLabel } : {}) }
+    }
     if (entry.zhSource?.startsWith('wikidata') && entry.zh) {
       const mine = lexiconOnly.translate(c.en)
       if (mine && mine !== entry.zh) disagreements.push({ fma: c.fma, en: c.en, wikidata: entry.zh, lexicon: mine, zhSource: entry.zhSource })
@@ -180,6 +215,9 @@ export function buildNames(m: Model): NamesResult {
       names[c.fma] = nameConcept(c)
       continue
     }
+    // “<base>_L/_R”：先照常给基础概念命名，再只加一次侧别词。保留基础概念的 Wikidata 条目；
+    // 基础名称来自 Wikidata 时 zhSource 为 derived:laterality，否则沿用基础名称自己的（生成）来源，
+    // 这样生成的名称不会被当成有出处的。
     // "<base>_L/_R": name the base concept as usual, then add the side word exactly once.
     // The base's Wikidata item is kept; zhSource is derived:laterality when the base name is
     // Wikidata-sourced, otherwise the base's own (generated) source, so nothing generated is
@@ -191,7 +229,10 @@ export function buildNames(m: Model): NamesResult {
       entry.zh = (d.side === 'left' ? '左' : '右') + base.zh
       entry.zhSource = base.zhSource?.startsWith('wikidata') ? 'derived:laterality' : base.zhSource
     }
+    const mark = d.side === 'left' ? '左' : '右'
+    const be = evidence[d.base] ?? {}
+    evidence[c.fma] = { ...(be.lexicon ? { lexicon: mark + be.lexicon } : {}), ...(be.wikidata ? { wikidata: mark + be.wikidata } : {}) }
     names[c.fma] = entry
   }
-  return { names, disagreements, replaced }
+  return { names, disagreements, replaced, evidence }
 }

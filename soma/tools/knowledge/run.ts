@@ -1,4 +1,14 @@
-// Knowledge layer build: names.json + relations.json for the anatomy browser.
+// 知识层构建：为解剖浏览器生成 names.json 和 relations.json，以及审核队列。
+//   bun tools/knowledge/run.ts            用磁盘缓存重新生成（只抓取缺失的部分）
+//   bun tools/knowledge/run.ts --refresh  重新查询 Wikidata / Wikipedia 并覆盖缓存
+//   bun tools/knowledge/run.ts --offline  缓存缺失时报错而不联网
+// 输入：data/raw/bodyparts3d/*（只读）、public/anatomy/<body>/anatomy.json（只读，存在时其部件 id 和树概念并入范围）、
+//       tools/knowledge/lexicon/*、data/curated/knowledge/review-signoffs.json（审核者签核）
+// 缓存：data/raw/knowledge/**（不进 git 的原始响应）
+// 输出：data/curated/knowledge/{names,relations,report,muscle-gaps,review-queue}.json，
+//       public/anatomy/knowledge/{names,relations}.json（副本）
+//
+// Knowledge layer build: names.json + relations.json for the anatomy browser, plus the review queue.
 //
 //   bun tools/knowledge/run.ts            regenerate from the on-disk cache (fetches only what is missing)
 //   bun tools/knowledge/run.ts --refresh  re-query Wikidata / Wikipedia and overwrite the cache
@@ -7,12 +17,15 @@
 // Inputs : data/raw/bodyparts3d/*  (read-only), public/anatomy/<body>/anatomy.json (read-only, when
 //          present: its part FMA ids and tree concepts are added to the scope), tools/knowledge/lexicon/*
 // Cache  : data/raw/knowledge/**   (gitignored raw responses)
-// Outputs: data/curated/knowledge/{names,relations,report,muscle-gaps}.json
+// Inputs also: data/curated/knowledge/review-signoffs.json (reviewer sign-offs)
+// Outputs: data/curated/knowledge/{names,relations,report,muscle-gaps,review-queue}.json
 //          public/anatomy/knowledge/{names,relations}.json (copies)
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { NameEntry, Relation, RelationKind } from '../../src/anatomy/types.ts'
 import { compareIds } from './lib/bp3d.ts'
+import { checkNames, checkRelations, fetchMuscleInfoboxes, fetchSitelinks } from './lib/crosscheck.ts'
+import { buildReview, loadSignOffs, SIGNOFF_FILE } from './lib/review.ts'
 import { buildModel, sideOf, stripSide } from './lib/model.ts'
 import { buildNames } from './lib/names.ts'
 import { CURATED_DIR, PUBLIC_DIR } from './lib/paths.ts'
@@ -36,6 +49,7 @@ function linesJson(entries: [string, unknown][] | unknown[], isObject: boolean):
 }
 
 async function main() {
+  // 1. 用（缓存的）实时标签核对属性 id，防止属性被悄悄改作他用
   // 1. property ids are checked against the live labels (cached) so a silent re-purposing is caught
   const propLabels = await fetchPropertyLabels(opts)
   const expected: Record<string, string> = {
@@ -48,24 +62,48 @@ async function main() {
   }
 
   const m = await buildModel(opts)
-  const { names, disagreements, replaced } = buildNames(m)
+  const { names, disagreements, replaced, evidence } = buildNames(m)
   const wd = buildRelations(m, names)
   const wp = await buildWikipediaFill(m, names, wd.relations, opts)
   const za = buildZanatomyAttachments(m, names, [...wd.relations, ...wp.relations])
   const forward: BuiltRelation[] = [...wd.relations, ...wp.relations, ...za.relations]
   const mirrored = mirrorInnervation(m, names, forward)
-  const built: BuiltRelation[] = [...forward, ...mirrored]
+  let built: BuiltRelation[] = [...forward, ...mirrored]
   built.sort((a, b) => compareIds(a.subject, b.subject) || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind))
+
+  // ---- 交叉核对与审核 / cross-checks and review ------------------------------------------------
+  // 用第二个公开来源核对；签核文件里通过的审核项才标为 reviewed，被否决的关系从输出中删除。
+  // Cross-check against a second open source; only items signed off in the sign-off file become
+  // reviewed, and relations a reviewer rejected are dropped from the output.
+  const sitelinks = await fetchSitelinks(m, opts)
+  const infoboxes = await fetchMuscleInfoboxes(m, sitelinks, opts)
+  const nameChecks = checkNames(m, names, evidence, sitelinks)
+  const relationChecks = checkRelations(m, built, infoboxes)
+  const review = buildReview({ m, names, nameChecks, relations: built, relationChecks, signoffs: loadSignOffs() })
+  const tally = (xs: string[]) => ({ agree: xs.filter((x) => x === 'agree').length, disagree: xs.filter((x) => x === 'disagree').length, noSecondSource: xs.filter((x) => x === 'none').length })
+  const itemTally = (type: string) => tally(review.queue.filter((q) => q.type === type).map((q) => q.crossCheck))
+  const reviewReport = {
+    note: 'Cross-check = comparison with a second open source (names: Wikidata zh label, Chinese Wikipedia title; relations: English Wikipedia muscle infobox, Z-Anatomy attachment bone). "agree" is evidence, not review: nothing is marked reviewed without a sign-off. Wikidata labels and Chinese Wikipedia titles are not fully independent of each other.',
+    statusProposal: 'ReviewStatus has no value for "two open sources agree". Proposed, not applied: add "cross-checked" to ReviewStatus in src/anatomy/types.ts; until then the agreement lives only in review-queue.json (crossCheck).',
+    names: { perConcept: tally([...Object.keys(names)].map((id) => nameChecks.get(id)?.result ?? 'none')), perReviewItem: itemTally('name') },
+    relations: { perRelation: tally(relationChecks.map((c) => c.result)), perReviewItem: itemTally('relation') },
+    ...review.stats,
+    topDisagreements: review.queue.filter((q) => q.crossCheck === 'disagree').slice(0, 50).map((q) => q.type === 'name'
+      ? { id: q.id, en: q.value.en, ours: q.value.zh, zhSource: q.value.zhSource, wikidata: q.evidence.wikidata, zhwiki: q.evidence.zhwiki }
+      : { id: q.id, ours: `${(q.value.subject as { en?: string }).en} —${q.value.kind}→ ${(q.value.object as { en: string }).en}`, source: q.evidence.source, secondSource: q.evidence.secondSource, secondSourceSays: q.evidence.secondSourceSays }),
+  }
+  built = built.filter((_, i) => !review.rejectedRelations.has(i))
   const relations: Relation[] = built.map(({ via: _via, ...r }) => r)
 
-  // ---- coverage -------------------------------------------------------------------------
+  // ---- 覆盖率 / coverage -------------------------------------------------------------------------
   const partFmas = new Set([...m.dataset.partFmas.values()].flatMap((s) => [...s]))
   const scopes = {
     allConcepts: [...m.concepts.keys()],
     elementConcepts: [...m.elementConcepts].filter((f) => m.concepts.has(f)),
+    // 概念不在 BodyParts3D 4.0 清单里的部件（从其他来源导入）
     // parts whose concept is not in the BodyParts3D 4.0 lists (imported from other sources)
     importedPartConcepts: [...partFmas].filter((f) => m.concepts.get(f)?.datasetOnly),
-    // concepts with a synthetic (non-FMA) id
+    // 合成 id（非 FMA）的概念 / concepts with a synthetic (non-FMA) id
     syntheticIdConcepts: [...m.concepts.keys()].filter((f) => !/^FMA\d+$/.test(f)),
   }
   const coverage: Record<string, unknown> = {}
@@ -106,7 +144,7 @@ async function main() {
     }
   }
 
-  // ---- muscle gap list ------------------------------------------------------------------
+  // ---- 肌的缺口清单 / muscle gap list ------------------------------------------------------------------
   const NEED: RelationKind[] = ['origin', 'insertion', 'innervatedBy']
   const bySubject = new Map<string, BuiltRelation[]>()
   for (const r of built) (bySubject.get(r.subject) ?? bySubject.set(r.subject, []).get(r.subject)!).push(r)
@@ -138,6 +176,8 @@ async function main() {
     muscles: gapList,
   }
 
+  // 概念不分侧的左/右部件：names.json 无法为它们带上侧别词。只统计在同一个人体里既有左侧又有右侧部件使用的概念：
+  // 单侧器官（脾、降主动脉）也会带 Part.side。
   // Left/right parts whose concept is unsided: names.json cannot carry a side word for them.
   // Only concepts used by both a left and a right part of the same body count: Part.side is also
   // set on unpaired organs that simply lie on one side (spleen, descending aorta).
@@ -197,6 +237,7 @@ async function main() {
     zanatomyAttachments: za.report,
     muscleGaps: { muscleElementConcepts: gaps.muscleElementConcepts, complete: gaps.complete, withGaps: gaps.withGaps, unlateralisedGroups: gaps.unlateralisedGroups, missingCounts: gaps.missingCounts },
     zhRejectedWikidataLabels: { note: 'Wikidata zh labels discarded because their structure type contradicts the English label.', items: [...m.rejectedZh.values()].sort() },
+    reviewWorkflow: reviewReport,
     zhMainlandOverWikidata: {
       note: 'Mainland wording policy: an exact lexicon term was used instead of the Wikidata label shown here (regional, colloquial or wrong wording). zhSource = lexicon:mainland-over-wikidata. For a reviewer.',
       count: replaced.length,
@@ -217,6 +258,15 @@ async function main() {
   writeFileSync(resolve(CURATED_DIR, 'relations.json'), relText)
   writeFileSync(resolve(CURATED_DIR, 'report.json'), `${JSON.stringify(report, null, 1)}\n`)
   writeFileSync(resolve(CURATED_DIR, 'muscle-gaps.json'), `${JSON.stringify(gaps, null, 1)}\n`)
+  const queueFile = {
+    note: {
+      zh: `审核队列：按风险从高到低排列的审核项（名称和关系）。在 ${SIGNOFF_FILE} 里用这里的 id 签核。本文件由构建脚本生成，不要手改。crossCheck 表示与第二个公开来源比较的结果（agree / disagree / none），它是证据，不等于已审核。`,
+      en: `Review queue: review items (names and relations) ordered from highest to lowest risk. Sign them off in ${SIGNOFF_FILE} under the ids given here. Generated by the build; do not edit by hand. crossCheck is the outcome of comparing with a second open source (agree / disagree / none): evidence, not review.`,
+    },
+    counts: { items: review.queue.length, names: reviewReport.names.perReviewItem, relations: reviewReport.relations.perReviewItem },
+    items: review.queue,
+  }
+  writeFileSync(resolve(CURATED_DIR, 'review-queue.json'), `{\n"note":${JSON.stringify(queueFile.note)},\n"counts":${JSON.stringify(queueFile.counts)},\n"items":[\n${review.queue.map((q) => JSON.stringify(q)).join(',\n')}\n]\n}\n`)
   writeFileSync(resolve(PUBLIC_DIR, 'names.json'), namesText)
   writeFileSync(resolve(PUBLIC_DIR, 'relations.json'), relText)
 
