@@ -173,3 +173,72 @@ export interface FaceData {
   /** 模型没有做到的事，供显示 / what the model does not do, for display. */
   cautions: Bilingual[]
 }
+
+// —— 皱纹细节层 / The wrinkle detail layer ——
+//
+// 文件 / Files
+//   /anatomy/<body>/face/detail.json    FaceDetail
+//   /anatomy/<body>/face/uv.bin         皮肤面部顶点的 UV / UVs of the skin's face vertices
+//   /anatomy/<body>/face/wrinkles.png   法线贴图图集，每层一格 / the normal-map atlas, one tile per layer
+//
+// 运行时公式（参考实现见 tools/face/detail.ts）/ Runtime formula (reference: tools/face/detail.ts)
+//   层权重 w_l = clamp(Σ_AU drivers[AU] · (I_AU / 5)^gamma, 0, 1)
+//   每层在 (u, v) 处取样 n_l（rgb · 2 − 1），取斜率 g_l = n_l.xy / n_l.z
+//   合成的切线空间法线 n = normalize(Σ_l w_l · g_l, 1)
+//   世界空间法线 N′ = normalize(T̂ · n.x + B̂ · n.y + N · n.z)，
+//   其中 N 是位移和蒙皮之后的表面法线，T̂ 是 u 增大方向在切面内的单位向量，B̂ = N × T̂（v 增大的方向，朝上）。
+//   layer weight w_l = clamp(Σ_AU drivers[AU] · (I_AU / 5)^gamma, 0, 1);
+//   sample each layer at (u, v) as n_l (rgb · 2 − 1) and take the slope g_l = n_l.xy / n_l.z;
+//   composite tangent-space normal n = normalize(Σ_l w_l · g_l, 1);
+//   world normal N′ = normalize(T̂ · n.x + B̂ · n.y + N · n.z), where N is the surface normal after
+//   displacement and skinning, T̂ the unit direction of increasing u within the tangent plane and
+//   B̂ = N × T̂ (the direction of increasing v, upwards).
+
+export interface FaceDetailLayer {
+  id: string
+  name: Bilingual
+  /** 该层在图集里的格子：列、行（行 0 在图像顶部）/ the layer's tile in the atlas: column, row (row 0 at the top of the image). */
+  tile: [number, number]
+  /** AU id → 权重 / AU id → weight. */
+  drivers: Record<string, number>
+  /** 该层画了几条沟纹（两侧合计）/ number of furrows drawn in this layer (both sides). */
+  wrinkles: number
+  /** 该层最深的沟，米 / deepest furrow of the layer, metres. */
+  maxDepth: number
+  basis: Sourced
+}
+
+export interface FaceDetail {
+  schema: 1
+  body: BodyId
+  note: Bilingual
+  /** 皮肤部件的 Part.id 及其顶点数（校验顶点顺序）/ Part.id of the skin and its vertex count (to check the vertex order). */
+  skin: string
+  vertexCount: number
+  /** 构建所用输入的 sha256（前 16 位十六进制）/ sha256 (first 16 hex) of the inputs. */
+  inputs: Record<string, string>
+  uv: {
+    file: string
+    /**
+     * 有 UV 的顶点数。uv.bin 布局（小端）：count × uint32 顶点下标（升序），随后 count × 2 × uint16：
+     * u、v ∈ [0, 65535] 对应一个格子的 [0, 1]；u 向身体左侧增大，v 向上增大（图像行 = (1 − v) · (tile − 1)）。
+     * 没有列出的顶点不采样细节（法线不变）。
+     * Number of vertices with a UV. Layout of uv.bin (little-endian): count × uint32 vertex indices (ascending), then
+     * count × 2 × uint16: u, v ∈ [0, 65535] map to [0, 1] of one tile; u grows towards the body's left and v upwards
+     * (image row = (1 − v) · (tile − 1)). Vertices not listed take no detail (normal unchanged).
+     */
+    count: number
+    /** 投影：绕竖直轴的柱面。u = 0.5 + θ · radius / extent，θ = atan2(x − axis.x, z − axis.z)；v = (y − y0) / extent。 Projection: a cylinder about a vertical axis. */
+    projection: { kind: 'cylindrical'; axis: { x: number; z: number }; radius: number; y0: number; extent: number }
+    /** 一个纹素在参考半径处的大小，米 / size of one texel at the reference radius, metres. */
+    texel: number
+    /** 展开的质量：三角形数、翻转的比例、线性拉伸（三维长度 / UV 长度）的分位数 / quality of the unwrap: triangle count, flipped fraction, quantiles of linear stretch (3D length / UV length). */
+    stretch: { triangles: number; flipped: number; p05: number; median: number; p95: number; max: number }
+  }
+  atlas: { file: string; width: number; height: number; tile: number; columns: number; rows: number; bytes: number }
+  curve: { gamma: number }
+  layers: FaceDetailLayer[]
+  /** 切线空间的约定 / the tangent-space convention. */
+  convention: Bilingual
+  cautions: Bilingual[]
+}

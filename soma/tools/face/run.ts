@@ -22,6 +22,12 @@ import type { FaceData } from '../../src/face/types.ts'
 import { readBody } from '../rig/io.ts'
 import { type Curated, buildFace } from './build.ts'
 import { renderAll, scene } from './renders.ts'
+import { decodeAtlas, layerWeights, readUv } from './detail.ts'
+import { type WrinklesCurated, buildDetail } from './detailBuild.ts'
+import { renderSkinDetailed } from './detailRender.ts'
+import { AU_MAX, painAUs } from './model.ts'
+import { sheet } from '../rig/render.ts'
+import { readMargins } from './margins.ts'
 
 const ROOT = join(import.meta.dirname, '..', '..')
 const CURATED = ['muscles.json', 'aus.json', 'pain.json', 'sources.json'] as const
@@ -32,6 +38,20 @@ export function stale(bodyDir: string): string[] {
   const path = join(bodyDir, 'face.json')
   if (!existsSync(path)) return ['face.json is missing']
   const rec = (JSON.parse(readFileSync(path, 'utf8')) as FaceData).inputs
+  const out: string[] = []
+  for (const [name, hash] of Object.entries(rec)) {
+    const p = name.startsWith('data/') ? join(ROOT, name) : join(bodyDir, name)
+    if (!existsSync(p)) out.push(`${name}: missing`)
+    else if (sha(new Uint8Array(readFileSync(p))) !== hash) out.push(`${name}: changed`)
+  }
+  return out
+}
+
+/** face/detail.json 所记录的输入是否与磁盘上的当前文件一致。 Whether the inputs recorded in face/detail.json still match the files on disk. */
+export function staleDetail(bodyDir: string): string[] {
+  const path = join(bodyDir, 'face', 'detail.json')
+  if (!existsSync(path)) return ['face/detail.json is missing']
+  const rec = (JSON.parse(readFileSync(path, 'utf8')) as { inputs: Record<string, string> }).inputs
   const out: string[] = []
   for (const [name, hash] of Object.entries(rec)) {
     const p = name.startsWith('data/') ? join(ROOT, name) : join(bodyDir, name)
@@ -76,13 +96,49 @@ if (import.meta.main) {
   log(`face.json: ${face.channels.length} channels, ${face.aus.length} AUs, ${face.parts.length} parts, ${report.entries} entries; face.bin ${(bin.length / 1e6).toFixed(2)} MB; bounds ${(face.bounds.channel * 1000).toFixed(1)} / ${(face.bounds.total * 1000).toFixed(1)} mm`)
   log(`skin: ${report.skin.vertices} vertices, ${report.skin.faceVertices} in the face, mean edge ${report.skin.faceMeanEdgeMm} mm`)
   for (const u of report.unmatched) log(`NOT BUILT ${u.id}: ${u.why}`)
+  // —— 皱纹细节层 / the wrinkle detail layer ——
+  const wrBytes = new Uint8Array(readFileSync(join(ROOT, 'data', 'curated', 'face', 'wrinkles.json')))
+  const wrinkles = JSON.parse(new TextDecoder().decode(wrBytes)) as WrinklesCurated
+  const built = buildDetail(body, face, bin, wrinkles)
+  built.detail.inputs = { 'face.bin': sha(bin), 'face.json': sha(new Uint8Array(readFileSync(join(dir, 'face.json')))), 'data/curated/face/wrinkles.json': sha(wrBytes) }
+  const detailDir = join(dir, 'face')
+  mkdirSync(detailDir, { recursive: true })
+  writeFileSync(join(detailDir, 'detail.json'), JSON.stringify(built.detail))
+  writeFileSync(join(detailDir, 'uv.bin'), built.uvBin)
+  writeFileSync(join(detailDir, 'wrinkles.png'), built.atlas)
+  const st = built.detail.uv.stretch
+  log(`detail: ${built.detail.uv.count} UV vertices, texel ${(built.detail.uv.texel * 1000).toFixed(2)} mm, stretch p05 ${st.p05} median ${st.median} p95 ${st.p95}, flipped ${(st.flipped * 100).toFixed(1)}%; atlas ${built.detail.atlas.width}×${built.detail.atlas.height}, ${(built.atlas.length / 1e6).toFixed(2)} MB; ${built.detail.layers.map((l) => `${l.id} ${l.wrinkles}`).join(', ')}`)
+  for (const k of built.skipped) log(`WRINKLE NOT DRAWN ${k}`)
   const outDir = join(import.meta.dirname, 'out', bodyId)
   mkdirSync(outDir, { recursive: true })
   let renders: string[] = []
   if (!args.includes('--no-renders')) {
     const rigBin = new Uint8Array(readFileSync(join(dir, 'rig.bin')))
-    renders = renderAll(scene(body, rig, rigBin, face, bin), outDir, log).map((f) => f.slice(ROOT.length + 1))
+    const sc = scene(body, rig, rigBin, face, bin)
+    const all = args.includes('--detail-only') ? [] : renderAll(sc, outDir, log)
+    // 带皱纹细节的皮肤图：经由发布的文件（uv.bin、wrinkles.png）解码后合成，与运行时走同一条路
+    // skin renders with the wrinkle detail, composited from the published files (uv.bin, wrinkles.png) decoded as the runtime would
+    const uv = readUv(built.detail, built.uvBin), layers = decodeAtlas(built.detail, built.atlas)
+    const weightsOf = (aus: Record<string, number>): number[] => layerWeights(built.detail, aus)
+    const save = (images: ReturnType<typeof renderSkinDetailed>, cols: number, name: string): void => {
+      const f = join(outDir, name)
+      sheet(images, cols).save(f)
+      all.push(f)
+    }
+    for (const au of face.aus) {
+      // 列：静止、强度 3、强度 5；上排正面，下排斜侧 / columns: rest, intensity 3, intensity 5; front above, three-quarter below
+      const cols = [0, 3, AU_MAX].map((i) => renderSkinDetailed(sc, uv, layers, weightsOf, i ? { [au.id]: i } : {}, 620))
+      save([...cols.map((c) => c[0]!), ...cols.map((c) => c[1]!)], 3, `detail-${au.id}.png`)
+    }
+    const lv = [0, 2, 4, 6, 8, 10].map((l) => renderSkinDetailed(sc, uv, layers, weightsOf, painAUs(face.pain, l), 640))
+    save(lv.map((x) => x[0]!), 3, 'detail-pain-front.png')
+    save(lv.map((x) => x[1]!), 3, 'detail-pain-oblique.png')
+    log(`detail renders written`)
+    renders = all.map((f) => f.slice(ROOT.length + 1))
   }
-  writeFileSync(join(outDir, 'report.json'), JSON.stringify({ ...report, renders }, null, 1))
+  // 皮肤包清单里的睑缘、唇缘环（有的话）：目前只记录 / lid and lip margin loops from the skin package manifest, when present: only recorded for now
+  const margins = readMargins(ROOT, bodyId, body.meshes.get(face.skin)!.positions)
+  log(margins ? `margins in the skin manifest: ${Object.entries(margins.loops).map(([k, v]) => `${k} ${v!.length}`).join(', ')}; unmatched ${margins.unmatched}` : 'no margins in the skin manifest (closed skin): lips and lids are split by the measured crease and fissure')
+  writeFileSync(join(outDir, 'report.json'), JSON.stringify({ ...report, margins: margins ? { counts: Object.fromEntries(Object.entries(margins.loops).map(([k, v]) => [k, v!.length])), unmatched: margins.unmatched } : null, detail: { uv: built.detail.uv, atlas: built.detail.atlas, skipped: built.skipped }, renders }, null, 1))
   log('done')
 }
