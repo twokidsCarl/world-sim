@@ -255,3 +255,46 @@ describe('catalogue entries that infer or recolour', () => {
     expect(respiked).toBeGreaterThan(0)
   })
 })
+
+describe('filling the environment', () => {
+  const box = { centre: [10, 20, 30] as [number, number, number], hx: 600, hy: 600, z0: -200, z1: -20, exclude: 250 }
+
+  it('scatters things outside the subject, inside the box, without overlap, as rigid motions', async () => {
+    const { scatter } = await import('../src/infer/environment')
+    const { rng } = await import('../src/landscape/pack')
+    const placed: { p: [number, number, number]; r: number }[] = []
+    const ops = scatter(120, 40, [1, 2, 3], box, rng(3), placed)
+    expect(ops.length).toBeGreaterThan(80)
+    expect(placed.length).toBe(ops.length)
+    ops.forEach((m, k) => {
+      const c = at(m, [1, 2, 3])
+      // 原点被搬到了记下的位置 / the origin was carried to the recorded place
+      expect(Math.hypot(c[0]! - placed[k]!.p[0], c[1]! - placed[k]!.p[1], c[2]! - placed[k]!.p[2])).toBeLessThan(1e-2)
+      expect(Math.hypot(c[0]! - 10, c[1]! - 20, c[2]! - 30)).toBeGreaterThanOrEqual(250)
+      expect(Math.abs(c[0]! - 10)).toBeLessThanOrEqual(600)
+      expect(c[2]! - 30).toBeLessThanOrEqual(-20)
+      expect(c[2]! - 30).toBeGreaterThanOrEqual(-200)
+      const det = m[0]! * (m[5]! * m[10]! - m[6]! * m[9]!) - m[4]! * (m[1]! * m[10]! - m[2]! * m[9]!) + m[8]! * (m[1]! * m[6]! - m[2]! * m[5]!)
+      expect(det).toBeCloseTo(1, 4)
+    })
+    for (let i = 0; i < placed.length; i++) for (let j = 0; j < i; j++) expect(Math.hypot(placed[i]!.p[0] - placed[j]!.p[0], placed[i]!.p[1] - placed[j]!.p[1], placed[i]!.p[2] - placed[j]!.p[2])).toBeGreaterThanOrEqual(80 * 0.75 - 1e-6)
+    // 同一个种子，同一个结果 / the same seed gives the same result
+    expect(Array.from(scatter(5, 40, [0, 0, 0], box, rng(3), [])[0]!)).toEqual(Array.from(scatter(5, 40, [0, 0, 0], box, rng(3), [])[0]!))
+  })
+
+  it('threads smooth strands of even steps that keep out of the subject', async () => {
+    const { threads } = await import('../src/infer/environment')
+    const { rng } = await import('../src/landscape/pack')
+    const t = threads(12, 1600, 16, box, rng(5))
+    expect(t.pos.length / 3).toBe(12 * 100)
+    // 每条内部相邻的点相连，条与条之间不连 / neighbours are joined within a strand, and strands are not joined to each other
+    expect(t.segments.length / 2).toBe(12 * 99)
+    let inside = 0
+    for (let k = 0; k < t.segments.length; k += 2) {
+      const a = t.segments[k]! * 3, b = t.segments[k + 1]! * 3
+      expect(Math.hypot(t.pos[a]! - t.pos[b]!, t.pos[a + 1]! - t.pos[b + 1]!, t.pos[a + 2]! - t.pos[b + 2]!)).toBeCloseTo(16, 3)
+    }
+    for (let i = 0; i < t.pos.length; i += 3) if (Math.hypot(t.pos[i]! - 10, t.pos[i + 1]! - 20, t.pos[i + 2]! - 30) < 250 - 20) inside++
+    expect(inside).toBe(0)
+  })
+})

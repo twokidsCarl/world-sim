@@ -22,6 +22,7 @@ import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '..
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
 import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
+import { scatter, threads } from '../infer/environment'
 import { chainCentre, complexes, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -172,6 +173,11 @@ export interface CatalogEntry {
    * A membrane protein whose number is inferred from the literature and whose copies are re-set in evenly spaced rings: `pattern` names its entity, `count` is the inferred number, `source` where it comes from.
    */
   respike?: { pattern: string; count: number; source: string }
+  /**
+   * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
+   * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
+   */
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; lch: [number, number, number] }; ground: [number, number, number]; basis: string; basisEn: string }
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
   membrane?: [number, number, number]
   /** 按角色指定色族 {角色: [L, C, h]} / a family of hue per role, {role: [L, C, h]} */
@@ -235,6 +241,71 @@ const START_DRAWING: Drawing = typeof location !== 'undefined' && new URLSearchP
  * M1 blue, nucleoprotein orange, RNA yellow, polymerase red.
  */
 type V3 = [number, number, number]
+
+/**
+ * 概念“场景”：在对象周围填上环境（见 src/infer/environment.ts）。对象的范围取它各部分摆好之后离中心最远的地方。
+ * The concept "scene": the environment is filled in round the subject (see src/infer/environment.ts). The subject's extent is the farthest any of its placed parts reaches from the centre.
+ */
+async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assemblies: string[], mainAssembly: string, notes: Note[], busy: (name: string) => void): Promise<Panel[]> {
+  const env = entry.environment!
+  // 对象的中心和半径：各份拷贝的位置 / the subject's centre and radius, from where its copies stand
+  const pts: number[] = []
+  mols.forEach((m, i) => {
+    const asm = m.assemblies.find((a) => a.id === (i === 0 ? mainAssembly : assemblies[i - 1])) ?? m.assemblies[m.assemblies.length - 1]
+    for (const g of asm?.groups ?? []) {
+      const ch = m.chains[g.chains[0]!]
+      if (!ch) continue
+      const step = Math.max(1, Math.floor(ch.count / 6))
+      for (const op of g.operators) for (let a = ch.start; a < ch.start + ch.count; a += step) {
+        const x = m.pos[a * 3]!, y = m.pos[a * 3 + 1]!, z = m.pos[a * 3 + 2]!
+        pts.push(op[0]! * x + op[4]! * y + op[8]! * z + op[12]!, op[1]! * x + op[5]! * y + op[9]! * z + op[13]!, op[2]! * x + op[6]! * y + op[10]! * z + op[14]!)
+      }
+    }
+  })
+  const centre: V3 = [0, 0, 0]
+  for (let i = 0; i < pts.length; i += 3) for (let k = 0; k < 3; k++) centre[k]! += pts[i + k]! / (pts.length / 3)
+  let R = 0
+  for (let i = 0; i < pts.length; i += 3) R = Math.max(R, Math.hypot(pts[i]! - centre[0], pts[i + 1]! - centre[1], pts[i + 2]! - centre[2]))
+  // 画面是正方形的，对象占画面宽度的六成多，像他那幅；环境铺在切面后面的一层里
+  // the frame is square with the subject filling a little over six tenths of its width, as in his painting; the environment lies in one layer behind the cut
+  const box = { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
+  const rand = rng(7)
+  const placed: { p: V3; r: number }[] = []
+  const panels: Panel[] = []
+  const source = (id: string, link: string | undefined): PanelSpec['source'] => ({ id, kind: 'model', title: id, method: tIn('zh', 'method.schematicEnvironment'), methodEn: tIn('en', 'method.schematicEnvironment'), resolution: null, year: null, tier: 'estimated', licence: 'CC0 1.0', attribution: 'RCSB PDB', citation: id, link })
+  // 大的先摆 / larger ones are placed first
+  for (const p of env.proteins) {
+    busy(p.pdb)
+    const m = await loadMolecule({ kind: 'pdb', id: p.pdb })
+    const c: V3 = [0, 0, 0]
+    for (let i = 0; i < m.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += m.pos[i * 3 + k]! / m.atomCount
+    let r = 0
+    for (let i = 0; i < m.atomCount; i += 5) r = Math.max(r, Math.hypot(m.pos[i * 3]! - c[0], m.pos[i * 3 + 1]! - c[1], m.pos[i * 3 + 2]! - c[2]))
+    const ops = scatter(p.count, r, c, box, rand, placed)
+    m.assemblies.push({ id: 'inferred', groups: [{ chains: m.chains.map((_, i) => i), operators: ops }] })
+    const roles: Role[] = m.entities.map(() => 'extracellular')
+    panels.push({
+      spec: { label: `${p.name}（示意的环境）`, labelEn: `${p.nameEn} (schematic environment)`, source: source(`PDB ${p.pdb}`, `https://www.rcsb.org/structure/${p.pdb}`), assembly: 'inferred', entities: m.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: p.name, nameEn: p.nameEn, description: e.description, organism: '' })), reason: '' },
+      mol: m, coloring: { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => p.lch) }, align: null,
+    })
+  }
+  if (env.strands) {
+    const t = threads(env.strands.count, env.strands.length, 16, box, rand)
+    const n = t.pos.length / 3
+    const m: Molecule = {
+      id: 'strands', title: env.strands.nameEn, atomCount: n, pos: t.pos, element: new Uint8Array(n).fill(El.N), radius: new Float32Array(n).fill(env.strands.radius),
+      chainOf: new Uint32Array(n), isTrace: new Uint8Array(n).fill(1), residue: new Int32Array(n).fill(1), segments: t.segments,
+      chains: [{ asymId: 'S', authAsymId: 'S', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id: 'strands', description: env.strands.nameEn, kind: 'protein' }],
+      assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: [IDENTITY] }] }],
+    }
+    panels.push({
+      spec: { label: `${env.strands.name}（示意的环境）`, labelEn: `${env.strands.nameEn} (schematic environment)`, source: source(env.strands.nameEn, undefined), assembly: 'inferred', entities: [{ entityId: 'strands', role: 'extracellular', name: env.strands.name, nameEn: env.strands.nameEn, description: env.strands.nameEn, organism: '' }], reason: '' },
+      mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [env.strands.lch] }, align: null,
+    })
+  }
+  notes.push({ key: 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
+  return panels
+}
 
 /**
  * 实例化的模型里，把膜上某种蛋白的数量换成文献里的数，并排成等间隔的环（见 src/infer/idealise.ts）。
@@ -706,6 +777,8 @@ export const useStore = create<State>((set, get) => ({
       // what the data lacks is filled in by inference from known structures, each part a panel of its own in the model's coordinate frame
       const respiked = entry.respike && get().drawing === 'painted' ? respike(entry, mol, assembly, notes) : null
       const inferred: Panel[] = respiked ? [respiked] : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
+      const surroundings: Panel[] = entry.environment && get().drawing === 'painted' ? await environmentPanels(entry, [mol, ...inferred.map((p) => p.mol)], inferred.map((p) => p.spec.assembly), assembly, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
+      inferred.push(...surroundings)
       const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge }
       set((s) => ({
         spec: scene,
@@ -721,6 +794,8 @@ export const useStore = create<State>((set, get) => ({
           const st = styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing)
           // 很密的模型（几万份拷贝以上）线收细，否则满纸都是黑线 / a very dense model (tens of thousands of copies or more) gets thinner lines, or the sheet is all black line
           const copies = mol.assemblies.find((a) => a.id === assembly)?.groups.reduce((n, g) => n + g.operators.length, 0) ?? 0
+          // 场景：深色的底 / a scene: a dark ground
+          if (surroundings.length && entry.environment) st.background = entry.environment.ground
           if (mesoscale && copies > 20_000) {
             st.lineWidth = Math.min(st.lineWidth, 0.7)
             // 密的模型里一个分子只有画幅的百分之几，切片要厚些才连得成片，否则到处露白
