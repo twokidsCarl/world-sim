@@ -260,7 +260,7 @@ def rig_shape(model, meas):
         fp = os.path.join(RAW, 'out', f'{body}-skin', 'shape-fields.json')
         if os.path.exists(fp):
             sf = json.load(open(fp))
-            fields = {'topology': 'MHR LOD0', 'vertices': sf['vertices'], 'fat': 'shape-fat.f32', 'sex': 'shape-sex.f32', 'limit': 'shape-limit.f32',
+            fields = {'topology': 'MHR LOD0', 'vertices': sf['vertices'], 'fat': 'shape-fat.f32', 'sex': 'shape-sex.f32', 'limit': 'shape-limit.f32', 'central': 'shape-central.f32',
                       'fittedAtBmi': sf['restBmi'], 'bmiToFieldUnits': sf['bmiToFieldUnits']['table'],
                       'mhrDirectionPerBmiPoint': sf['fatFieldDirectionPerBmiPoint']['mhrIdentityCoefficients1to6']}
         out['sexes'][sex] = {

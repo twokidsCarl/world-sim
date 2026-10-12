@@ -1,0 +1,170 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第七部分：安装之后发现的问题——两个皮肤包重新发出
+
+两个包都在磁盘上换了（本地时间 10 月 12 日）：male-skin/skin.obj 04:27，female-skin/skin.obj 04:28，female-skin/breast-placement.json 04:37；键不变（男 4bf4e6e4b29d70ad，女 d8e55b8725377511）。上一版安装的 skin.obj 另存为 data/raw/bodyshape/out/female-skin-installed-skin.obj 和 male-skin-installed-skin.obj。
+
+### 0. 还不对的地方（先说）
+
+女性
+1. 腋前襞处每侧有一道小的缺口（正面图和腋下特写里看得见），腋窝顶有一小片不平。这是为了把腋下打开付的代价：右上臂皮肤在躯干皮肤之内的面积现在是 6.6 / 1.4 / 0 cm2（肱骨 25–40 / 40–50 / 50–60 %；上一版 33 / 12 / 3），左侧 0.3 / 1.0 / 0（上一版 15 / 5 / 0）。右侧 25–40 % 处还有 6.6 cm2。你量的“肩前屈 160 度时 11.9 % 的顶点折进另一层”我没有办法复算，请重新量。
+2. 下半张脸的覆盖仍然厚：口轮匝肌上中位数 13.6 mm（上一版 15.4），颧大肌 16.3 mm。上唇、颏的位置对了，脸颊没有动；要再薄需要把下半张脸横向收窄，我没有做。
+3. 眼：把眶周皮肤整片向内移了 6.5 mm（男性 4.8 mm），并在左右方向缩小了约 14 %（男性 11 %）。代价是内眦到鼻根之间变窄，内眦处仍有浅折痕，外眦处有小凹。睑裂中点的位置我是按“眼关节外侧 2.7 mm”取的（我量到 2.2，你那边量到约 3.2），没有用你的量法复核。
+4. 口裂：对到上中切牙切缘上方 2 mm（静止露齿 1–3 mm 是凭记忆的临床说法，未核对文献）。上一版错在用了中性姿势下的标志点高度而头是俯仰着的；现在标志点直接在摆好姿势的网格上读。我没有用你的“咬合线”量法复核，请再量。
+5. BMI 23.80（目标 21.6）。与上一版同一原因：女性比例的肌肉加她的骨架比 21.6 的女性皮肤大；这次盖住浅层结构又加了约 0.15。
+6. 乳房的来源人群是沙特女性而不是中国女性（见 §1）；乳头到切迹 196.6 / 197.6 mm，离正中 99.8 / 104.9 mm，左右差 5 mm。
+7. 浅层结构没有全部盖住（§4）：生殖股神经生殖支露出 11.2 / 10.5 mm，髂腹股沟神经 9.9 / 9.2 mm，股静脉 7.7 / 6.2 mm。
+8. 左背阔肌仍有 0.31 % 的点在皮肤外，最远 2.2 mm（腋下整形把那里的皮肤收进去了）。
+9. 左拇指：末节现在 0.9 mm（原 11 mm），但掌指关节仍差 10.4 mm。
+
+男性
+10. 鼻梁上有一道横棱（鼻骨比 MHR 的鼻梁高 4.6 mm，皮肤在那里被抬起并抹平，仍看得出）；外眦处有小折痕；下颌下的浅褶还在。
+11. 眼轮匝肌外环有 6–7 % 的点在皮肤外，最远 1.6 mm；颧小肌 0.9 / 0.7 mm。这是保留 MHR 眼睑面的直接结果（保护区内不外推；只有骨例外）。头部的骨现在没有露出的。
+12. 腋下与上一版相同（每侧约 19 cm2），没有再动。BMI 24.24（盖住浅层结构加了 0.2）。
+13. 颈静脉切迹处的坑：我把头和颈上对旧皮肤的残差偏移全部置零并抹平了边缘，但没有单独渲染那里确认，请在安装后看一眼。
+
+两个身体
+14. MHR LOD0 做不到的：睑裂、口裂不是开口，没有睑缘、唇缘的顶点环；没有头的缩放、两眼间距、面部分区的参数——这些我都是用拟合之后的平滑局部变形补的，不是 MHR 自己的自由度；没有分开的脚趾、乳头、脐、外阴。
+15. 中心型体型场很弱（§5）：这是数据本身的样子，不是没算对。
+
+### 1. 乳房
+
+来源（已打开）：Al-Qattan 等 2019，Plast Reconstr Surg Glob Open，PMC6756646：54 名未生育的年轻女性（22.1 ± 1.2 岁，BMI 21.8 ± 3.1），胸骨上切迹到乳头 19.8 ± 2.5 cm，两乳头间距 20.3 ± 2.3 cm。人群是沙特女性。我上次凭记忆说的 17–20 cm 的“垂直距离”作废。
+做法：先把 MHR 自己的乳房取下（原区域换成松弛出的胸壁基面），再把左侧的隆起作为模板加到新位置，右侧用它的镜像，各缩放到 370 mL；放上去后量实际顶点并修正三遍。
+结果：顶点 y = 1.085 / 1.082 m（上一版约 1.04），到切迹 197.6 / 196.6 mm，离正中 104.9 / 99.8 mm，突出 41.7 / 42.5 mm，体积 372 / 372 mL，模板缩放 1.06 / 1.09。
+breast-placement.json（数字是针对原始 HRA 部件的：脚本先撤掉管线现在施加的上一版摆放，见 female-skin/breast-placement-installed.json）：左 A = [0.1017, 1.1146, 0.1373]，T = [-0.0106, -0.0307, 0.0061]；右 A = [-0.0879, 1.1111, 0.1369]，T = [0.0091, -0.0335, 0.0039]；两侧同一个缩放 0.574（腺体 99 % 在皮下 3.6–3.9 mm 以上）。乳头、乳晕部件的附加平移：左 [0.0006, -0.0021, 0.0049]，右 [-0.0008, -0.0023, 0.0041] m；乳晕在皮肤上，乳头尖在皮肤外 3.1 / 3.2 mm。附着点落在 y = 1.084 / 1.078 m，在你给的胸大肌胸肋部范围（1.062–1.230 / 1.055–1.222）之内，但靠近下缘；leftBreastLevel / rightBreastLevel 能否通过要你那边跑了才知道。
+
+### 2. 头和脸（两个身体）
+
+- 下半张脸的高度重映射改成单调三次插值（PCHIP），没有折点；标志点在摆好姿势的网格上读。女性：口裂 61.2 → 62.8 mm（眼下），颏下点 112.6 → 100.3 mm，口处后移 8.7 mm，颏处后移 5.8 mm。男性：58.6 → 63.8，112.4 → 103.5，口处前移 2.0 mm（上一版他的唇在皮肤外 1.6 mm；现在唇在皮下 0.1–3.8 mm）。
+- 眼：见 §0 第 3 条。角膜上的覆盖：女性 0.7 / 1.1 / 3.6 mm（最小 / p5 / 中位数），男性 0.8 / 1.1 / 2.9。
+- 鼻：鼻软骨移出“必须包住”的集合，鼻的软骨部（鼻背下段、鼻尖、鼻翼）加入保护区，保留 MHR 自己的鼻子；鼻骨上的皮肤仍然盖住鼻骨。女性的鼻子现在是平滑的。
+- 保护区边缘的过渡加宽（六圈再抹平十四遍），头面部的外推做低通；骨是例外：头部仍露出的骨再做一小遍（至多 2.5 mm）。
+- 覆盖（最小 / p5 / 中位数，mm）。女性：颧骨 3.0 / 3.6 / 7.5，鼻骨 3.3 / 3.6 / 4.4，眼轮匝肌外环 -0.1 / 1.8 / 4.4、内环（不包住）-1.5 / -0.1 / 2.5，口轮匝肌 3.5 / 6.0 / 13.6，颧大肌 4.2 / 5.6 / 16.3，鼻肌 2.1 / 2.9 / 3.9，唇 0.1 / 2.5 / 6.0。男性：颧骨 0.6 / 1.4 / 4.3，鼻骨 1.8 / 2.0 / 3.4，外环 -1.6 / -0.3 / 3.9、内环 -2.7 / -1.1 / 2.5，口轮匝肌 2.4 / 4.3 / 8.6，颧大肌 -0.1 / 1.7 / 12.0，鼻肌 0.8 / 1.6 / 3.2，唇 0.1 / 0.3 / 3.8。
+- manifest.face：重新导出后按几何选出的内环是睑部的 id（女 W_R3_FMA46785 / 46786，男 R3_FMA46785 / 46786）。regions 现在有 lidsL / lidsR（各 1660 个顶点，眼关节 22 mm 内）、lips（2049）、nose（996）。
+
+### 3. BMI 的记法
+
+交付皮肤按体积的 BMI：女性 23.80，男性 24.24。manifest.bmiByVolume、shape-fields.json 的 restBmi、rig-shape.json 的 fields.fittedAtBmi 三处现在是同一个数，脂肪场查找表的零点也在这里（女：22 → -1.83，24 → +0.20；男：24 → -0.24，26 → +1.72）。原来的不一致是因为查找表是在不带逐顶点偏移的纯 MHR 曲面上量的，那个曲面比交付的皮肤瘦（女 22.04）；现在把表整体平移到交付皮肤上。
+
+### 4. 浅层的薄结构
+
+筋膜、静脉、神经、动脉、韧带（男 1938 个、女 1928 个部件）：离皮肤不足 0.75 mm 或露出不超过 4 mm 的，皮肤再外移盖住（单点至多 4 mm，低通；手上不做；在腋下整形之前做）。在皮肤外的点：男 0.63 % → 0.18 %（最远 6.6 → 4.2 mm），女 0.64 % → 0.34 %（12.8 → 11.2 mm）；动了 8543 / 7728 个顶点，p95 3.6 mm。
+没有硬盖、仍在外面的（要盖就会鼓包），全表在各包的 superficial.json：
+  女：生殖股神经生殖支 11.2 / 10.5 mm（12.6 / 15.1 % 的面），髂腹股沟神经 9.9 / 9.2，股静脉 7.7 / 6.2（约 10 %），左掌指关节囊 5.1，桡神经指背支 4.9 / 4.6（约 61 %，在手上）。
+  男：桡神经指背支 4.2 / 4.0（约 33 %），尺神经手背支 3.4 / 3.4（约 28 %），阔筋膜 2.7 / 2.5（0.9 %），腹部封套筋膜 2.0，其余在 1.3 mm 以下。
+女性腹股沟的那几条（生殖股神经、髂腹股沟神经、股静脉）露出 6–11 mm，是内部结构的位置问题，不像是皮肤该让的。
+
+### 5. 中心型体型场
+
+加了：各包里的 shape-central.f32，float32[n][3]，单位是“中心型控制量每 +1 SD 的位移（米）”，顶点顺序同 skin.obj；用法 skin += centralBuild × central；shape-fields.json 的 fields 里有说明，rig-shape.json 的 fields.central 指向它。做法：anthro-model 里 ANSUR 围度的第二个因子载荷给出各围度每 +1 SD 的变化，在 MHR 身份分量 1–6 里解（第 2 分量和体积 BMI 不动）。
+它确实弱：女性要求的围度变化是胸 +3.5 %、腰 +4.2 %、大腿根 -1.9 %、大腿下段 -3.4 %、踝 -2.7 %，线性模型得到 +3.3 / +3.0 / -3.0 / -2.0 / -0.6 %，位移最大 10 mm；男性几乎只有腰 +3.7 %（得到 +2.1 %），位移最大 5 mm。NHANES 的围度没有因子载荷，所以臀、小腿、上臂不在约束里。
+“降低身高时脂肪穿出皮肤”那一条我没有处理：它是运行时脂肪按距离场、皮肤按 MHR 权重两套做法之间的不一致，不在皮肤包里。
+
+### 6. 我看图看到的
+
+- female-skin/preview-skin.png：乳房比上一版高、左右一样；两侧腋前襞各有一道小缺口；其余与上一版相同（前臂背面的浅棱、脚趾成一团）。
+- female-skin/closeup-face-skin.png、closeup-head-threequarter.png：没有横向的台阶了；鼻子平滑；嘴唇平滑闭合；眼睑平滑，内眦有浅折痕、外眦有小凹；额部有几处浅的起伏。四分之三侧面读作一张自然的脸，颅顶偏高。
+- female-skin/closeup-chest-gland.png：HRA 腺体（按新的摆放）在皮肤的乳房里，乳头在皮肤面上，左右对称。
+- female-skin/closeup-axilla-right-skin.png：右腋从上臂中段起是开的；腋前襞处有一个台阶状的缺口，腋窝顶有一小片皱。
+- female-skin/closeup-groin-skin.png：腹股沟和阴阜平滑，两大腿之间是分开的，臀部平滑。
+- male-skin/closeup-face-skin.png：眼睑平滑、睑裂清楚，外眦的尖刺没有了，剩小折痕；鼻子不再是大而圆的一团，但鼻根有一道横棱；唇平滑；下颌下有浅褶。
+- 没有看的：male-skin 的全身图、头部正面 / 四分之三图、两侧腋下图，female-skin 的左腋下、胸部肌肉叠加图和眼口区肌肉叠加图（都已生成，文件名同上一版或见 §7）。
+
+### 7. 重新生成
+
+  bun tools/bodyshape/export-parts.ts male female
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose]
+  python tools/bodyshape/enclose_skin.py female ; python tools/bodyshape/final_checks.py ; python tools/bodyshape/face_checks.py female
+  python tools/bodyshape/breast_placement.py ; python tools/bodyshape/breast_placement.py --common-scale
+  python tools/bodyshape/shape_fields.py female
+  python tools/bodyshape/refit_head.py male ; python tools/bodyshape/enclose_skin.py male ; python tools/bodyshape/face_checks.py male ; python tools/bodyshape/shape_fields.py male
+  python tools/bodyshape/build_shape_model.py
+
+新的渲染：closeup-head-front.png、closeup-head-threequarter.png、closeup-face-skin.png、closeup-face-muscles.png（face_checks.py）；closeup-axilla-right-*.png（enclose_skin.py）；closeup-chest-gland.png、closeup-chest-skin-only.png（breast_placement.py）。
+注意：breast-placement-installed.json 记的是管线现在施加的摆放；你装上新的数字以后，要把它换成新的 breast-placement.json，否则下一次运行会撤错。
+
+
+## Part 7: what installing the skins turned up; both packages re-issued
+
+Both packages changed on disk (12 October, local time): male-skin/skin.obj at 04:27, female-skin/skin.obj at 04:28, female-skin/breast-placement.json at 04:37; keys unchanged (male 4bf4e6e4b29d70ad, female d8e55b8725377511). The skin.obj files that were installed are kept as data/raw/bodyshape/out/female-skin-installed-skin.obj and male-skin-installed-skin.obj.
+
+### 0. What is still wrong (first)
+
+Female
+1. A small notch on each side at the anterior axillary fold (visible in the front view and the axilla close-up) and a small uneven patch at the top of the axilla. That is the price of opening the axilla: right arm skin inside trunk skin is now 6.6 / 1.4 / 0 cm2 (25-40 / 40-50 / 50-60 % of the humerus; previously 33 / 12 / 3), left 0.3 / 1.0 / 0 (previously 15 / 5 / 0). On the right 6.6 cm2 remain at 25-40 %. I cannot recompute your "11.9 % of vertices fold inside another layer at 160 degrees of shoulder flexion"; please measure it again.
+2. Cover over the lower face is still thick: median 13.6 mm over orbicularis oris (15.4 before), 16.3 mm over zygomaticus major. Upper lip and chin are placed; the cheeks were not moved. Thinner still means narrowing the lower face transversely, which I did not do.
+3. Eyes: the periorbital skin was moved medially as a patch by 6.5 mm (male 4.8 mm) and narrowed left to right by about 14 % (male 11 %). The cost is a narrower space between inner canthus and nasal root; shallow creases remain at the inner canthi and small dimples at the outer ones. I took the middle of the fissure as "2.7 mm lateral of the eye joint" (2.2 by my measure, about 3.2 by yours) and did not check the result with your measure.
+4. Oral fissure: placed 2 mm above the edge of the upper central incisors (a resting incisor display of 1-3 mm is a clinical figure from memory, not checked against a source). The previous error was using landmark heights from the neutral pose while the head is pitched; landmarks are now read on the posed mesh. I did not check against your "occlusal line" measure; please measure again.
+5. BMI 23.80 (target 21.6). Same cause as before: muscle at the female ratio plus her skeleton is larger than a female skin at 21.6; covering the superficial structures added about 0.15 this time.
+6. The source population for the breasts is Saudi, not Chinese (section 1); nipple to notch 196.6 / 197.6 mm, 99.8 / 104.9 mm from the midline, a left-right difference of 5 mm.
+7. Not every superficial structure is covered (section 4): genital branch of the genitofemoral nerve 11.2 / 10.5 mm outside, ilio-inguinal nerve 9.9 / 9.2 mm, femoral vein 7.7 / 6.2 mm.
+8. Left latissimus dorsi still has 0.31 % of its points outside the skin, up to 2.2 mm (the axilla step drew the skin in there).
+9. Left thumb: the distal joint is now 0.9 mm off (was 11 mm), but the metacarpophalangeal joint is still 10.4 mm off.
+
+Male
+10. A transverse ridge across the nasal bridge (his nasal bones stand 4.6 mm above MHR's bridge; the skin is lifted and smoothed there and it still shows); small creases at the outer canthi; the shallow crease under the mandible remains.
+11. The outer ring of orbicularis oculi has 6-7 % of its points outside the skin, up to 1.6 mm; zygomaticus minor 0.9 / 0.7 mm. This follows directly from keeping MHR's lid surface (no push inside the protected regions, bone excepted). No head bone is outside now.
+12. The axilla is as in the previous version (about 19 cm2 per side), not touched again. BMI 24.24 (covering the superficial structures added 0.2).
+13. The pit at the jugular notch: I set the residual offsets towards the old skin to zero over head and neck and smoothed the rim, but did not render that spot separately to confirm; please look after installing.
+
+Both
+14. What MHR LOD0 cannot do: the palpebral and oral fissures are not openings and there are no lid-margin or lip-margin vertex loops; there are no parameters for head scale, eye spacing or regions of the face - all of those I supplied with smooth local deformations after the fit, not with degrees of freedom of MHR; no separate toes, nipples, navel or vulva.
+15. The central-build field is weak (section 5): that is what the data say, not a mistake in computing it.
+
+### 1. Breasts
+
+Source (opened): Al-Qattan et al. 2019, Plast Reconstr Surg Glob Open, PMC6756646: 54 young nulliparous women (22.1 +/- 1.2 years, BMI 21.8 +/- 3.1), sternal notch to nipple 19.8 +/- 2.5 cm, internipple distance 20.3 +/- 2.3 cm. The population is Saudi. The "vertical distance of 17-20 cm" I gave from memory last time is withdrawn.
+Method: MHR's own breasts are taken off first (their zone becomes a relaxed chest-wall base); the mound of the left side is the template, added at the new place, with its mirror image on the right, each scaled to 370 mL; the actual apex is measured after placing and corrected in three passes.
+Result: apex at y = 1.085 / 1.082 m (about 1.04 before), 197.6 / 196.6 mm from the notch, 104.9 / 99.8 mm from the midline, projection 41.7 / 42.5 mm, volume 372 / 372 mL, template scale 1.06 / 1.09.
+breast-placement.json (the numbers refer to the original HRA parts: the script first undoes the placement the pipeline applies now, see female-skin/breast-placement-installed.json): left A = [0.1017, 1.1146, 0.1373], T = [-0.0106, -0.0307, 0.0061]; right A = [-0.0879, 1.1111, 0.1369], T = [0.0091, -0.0335, 0.0039]; one scale for both sides, 0.574 (99 % of the gland at least 3.6-3.9 mm under the skin). Extra translation of the nipple and areola parts: left [0.0006, -0.0021, 0.0049], right [-0.0008, -0.0023, 0.0041] m; the areola is on the skin and the nipple tip 3.1 / 3.2 mm outside it. The attachment lands at y = 1.084 / 1.078 m, inside the range you gave for the sternocostal pectoralis (1.062-1.230 / 1.055-1.222) but near its lower end; whether leftBreastLevel / rightBreastLevel pass is known only when you run them.
+
+### 2. Head and face (both bodies)
+
+- The height remap of the lower face is now a monotone cubic (PCHIP) with no corners, and the landmarks are read on the posed mesh. Female: stomion 61.2 -> 62.8 mm below the eyes, menton 112.6 -> 100.3 mm, 8.7 mm back at the mouth and 5.8 mm back at the chin. Male: 58.6 -> 63.8, 112.4 -> 103.5, 2.0 mm forwards at the mouth (his lips were 1.6 mm outside the skin; they are now 0.1-3.8 mm under it).
+- Eyes: item 3 of section 0. Cover over the cornea: female 0.7 / 1.1 / 3.6 mm (min / p5 / median), male 0.8 / 1.1 / 2.9.
+- Nose: the nasal cartilages are out of the set that must be enclosed and the cartilaginous nose (lower dorsum, tip, alae) is a protected region that keeps MHR's own nose; skin over the nasal bones still covers them. The female nose is smooth now.
+- The rim of the protected regions has a wider transition (six rings, then smoothed fourteen times) and the push on head and face is low-passed; bone is the exception: a short pass (at most 2.5 mm) over head bone still outside.
+- Cover (min / p5 / median, mm). Female: zygomatic bones 3.0 / 3.6 / 7.5, nasal bones 3.3 / 3.6 / 4.4, orbicularis oculi outer ring -0.1 / 1.8 / 4.4 and inner ring (not enclosed) -1.5 / -0.1 / 2.5, orbicularis oris 3.5 / 6.0 / 13.6, zygomaticus major 4.2 / 5.6 / 16.3, nasalis 2.1 / 2.9 / 3.9, lips 0.1 / 2.5 / 6.0. Male: zygomatic bones 0.6 / 1.4 / 4.3, nasal bones 1.8 / 2.0 / 3.4, outer ring -1.6 / -0.3 / 3.9 and inner ring -2.7 / -1.1 / 2.5, orbicularis oris 2.4 / 4.3 / 8.6, zygomaticus major -0.1 / 1.7 / 12.0, nasalis 0.8 / 1.6 / 3.2, lips 0.1 / 0.3 / 3.8.
+- manifest.face: after the re-export the inner ring chosen by geometry is the palpebral id (female W_R3_FMA46785 / 46786, male R3_FMA46785 / 46786). regions now holds lidsL / lidsR (1660 vertices each, within 22 mm of the eye joint), lips (2049) and nose (996).
+
+### 3. BMI bookkeeping
+
+BMI of the delivered skin by volume: female 23.80, male 24.24. manifest.bmiByVolume, restBmi in shape-fields.json and fields.fittedAtBmi in rig-shape.json are now the same number, and the fat-field table has its zero there (female: 22 -> -1.83, 24 -> +0.20; male: 24 -> -0.24, 26 -> +1.72). The disagreement came from measuring the table on the pure MHR surface without the per-vertex offsets, which is leaner than the delivered skin (22.04 for her); the table is now shifted as a whole onto the delivered skin.
+
+### 4. Thin superficial structures
+
+Fasciae, veins, nerves, arteries, ligaments (1938 parts in the male, 1928 in the female): where they come within 0.75 mm of the skin or stand out by no more than 4 mm the skin moves out to cover them (at most 4 mm per vertex, low-passed; not on the hands; done before the axilla step). Points outside the skin: male 0.63 % -> 0.18 % (furthest 6.6 -> 4.2 mm), female 0.64 % -> 0.34 % (12.8 -> 11.2 mm); 8543 / 7728 vertices moved, p95 3.6 mm.
+Not forced and still outside (covering them would raise a bulge); the full list is superficial.json in each package:
+  Female: genital branch of the genitofemoral nerve 11.2 / 10.5 mm (12.6 / 15.1 % of its surface), ilio-inguinal nerve 9.9 / 9.2, femoral vein 7.7 / 6.2 (about 10 %), left metacarpophalangeal joint capsules 5.1, dorsal digital branches of the radial nerve 4.9 / 4.6 (about 61 %, on the hand).
+  Male: dorsal digital branches of the radial nerve 4.2 / 4.0 (about 33 %), dorsal branch of the ulnar nerve 3.4 / 3.4 (about 28 %), fascia lata 2.7 / 2.5 (0.9 %), investing abdominal fascia 2.0, the rest under 1.3 mm.
+The female groin structures (genitofemoral and ilio-inguinal nerves, femoral vein) stand 6-11 mm out; that reads as a matter of where the internals are, not something the skin should give way to.
+
+### 5. Central-build field
+
+Added: shape-central.f32 in each package, float32[n][3], displacement in metres per +1 SD of the central-build control, vertex order of skin.obj; use skin += centralBuild * central; described under fields in shape-fields.json, and fields.central in rig-shape.json points to it. Method: the second factor loadings of the ANSUR girths in the anthro model give each girth's change per +1 SD; that is solved in MHR identity components 1-6 (component 2 and the volume BMI held).
+It is weak indeed: for the female the girth changes asked for are chest +3.5 %, waist +4.2 %, proximal thigh -1.9 %, lower thigh -3.4 %, ankle -2.7 %, and the linear model gives +3.3 / +3.0 / -3.0 / -2.0 / -0.6 %, with a largest displacement of 10 mm; for the male almost only the waist, +3.7 % (obtained +2.1 %), largest displacement 5 mm. The NHANES girths carry no factor loadings, so buttock, calf and upper arm are not constrained.
+I did not address "fat comes through the skin when stature is lowered": that is a mismatch between two runtime methods (fat following a distance field, skin following MHR weights) and is not in the skin package.
+
+### 6. What I saw in the renders
+
+- female-skin/preview-skin.png: the breasts are higher than before and the same left and right; a small notch at each anterior axillary fold; otherwise as before (shallow ridges on the back of the forearms, toes as one mass).
+- female-skin/closeup-face-skin.png, closeup-head-threequarter.png: no horizontal steps any more; a smooth nose; smooth closed lips; smooth lids, with shallow creases at the inner canthi and small dimples at the outer ones; a few shallow undulations on the forehead. The three-quarter view reads as a natural face with a high crown.
+- female-skin/closeup-chest-gland.png: the HRA gland (in the new placement) lies inside the breast of the skin with the nipple on its surface, symmetric.
+- female-skin/closeup-axilla-right-skin.png: the right axilla is open from mid-arm down; a step-like notch at the anterior fold and a small crumpled patch at the top of the axilla.
+- female-skin/closeup-groin-skin.png: groin and mons are smooth, the thighs are apart, the buttocks smooth.
+- male-skin/closeup-face-skin.png: smooth lids and clear fissures, the spikes at the outer canthi are gone and small creases remain; the nose is no longer a large round mass, but a transverse ridge crosses its root; smooth lips; a shallow crease under the mandible.
+- Not looked at: the full-body, head-front, head-three-quarter and axilla renders of male-skin, and the left axilla, the chest overlay with muscles and the eye-and-mouth overlay with muscles of female-skin (all were generated; file names as before or in section 7).
+
+### 7. Regenerating
+
+  bun tools/bodyshape/export-parts.ts male female
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose]
+  python tools/bodyshape/enclose_skin.py female ; python tools/bodyshape/final_checks.py ; python tools/bodyshape/face_checks.py female
+  python tools/bodyshape/breast_placement.py ; python tools/bodyshape/breast_placement.py --common-scale
+  python tools/bodyshape/shape_fields.py female
+  python tools/bodyshape/refit_head.py male ; python tools/bodyshape/enclose_skin.py male ; python tools/bodyshape/face_checks.py male ; python tools/bodyshape/shape_fields.py male
+  python tools/bodyshape/build_shape_model.py
+
+New renders: closeup-head-front.png, closeup-head-threequarter.png, closeup-face-skin.png, closeup-face-muscles.png (face_checks.py); closeup-axilla-right-*.png (enclose_skin.py); closeup-chest-gland.png, closeup-chest-skin-only.png (breast_placement.py).
+Note: breast-placement-installed.json records the placement the pipeline applies now; once you install the new numbers, replace it with the new breast-placement.json, or the next run will undo the wrong one.

@@ -5,6 +5,7 @@ import { computeExposure } from '../tools/pipeline/exposure.ts'
 import { computeNormals, measure, simplifyMesh, sourceToRuntime, weld, type Mesh } from '../tools/pipeline/geometry.ts'
 import { depthOf, LAYERS, SUPERFICIAL_EXPOSURE } from '../tools/pipeline/layers.ts'
 import { parseObj, parseObjHeader } from '../tools/pipeline/obj.ts'
+import { checkSkinFit } from '../tools/pipeline/skinPackage.ts'
 import { buildOntology, directParts, emitConcepts, parseTsv } from '../tools/pipeline/tables.ts'
 
 const enc = (s: string) => new TextEncoder().encode(s)
@@ -305,5 +306,40 @@ describe('exposure', () => {
     expect(e[0]!).toBeGreaterThan(0.35)
     expect(e[0]!).toBeLessThan(0.6)
     expect(e[1]!).toBeLessThan(0.05)
+  })
+})
+
+describe('skin fit', () => {
+  // 一个 20 cm 的盒子当皮肤；里面一块，另一块从 +X 面伸出 2 cm
+  // a 20 cm box for a skin; one block inside it, another reaching 2 cm out through the +X face
+  const skin = box([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1])
+  const inside = { id: 'in', name: 'Inside', mesh: box([-0.03, -0.03, -0.03], [0.03, 0.03, 0.03]) }
+  const poking = { id: 'out', name: 'Poking', mesh: box([0.06, -0.02, -0.02], [0.12, 0.02, 0.02]) }
+
+  it('counts a part more than 5 mm outside the skin when it is not exempt', () => {
+    const fit = checkSkinFit(skin, [inside, poking])
+    expect(fit.closed).toBe(true)
+    expect(fit.outside).toBeGreaterThan(0)
+    expect(fit.outside5mm).toBeGreaterThan(0)
+    expect(fit.worst.map((w) => w.name)).toEqual(['Poking'])
+    expect(fit.worst[0]!.maxMm).toBeGreaterThan(15)
+    expect(fit.notEnclosedByDesign).toBeUndefined()
+    // 名单上是别的部件时照样算 / still counted when the list names some other part
+    const other = checkSkinFit(skin, [inside, poking], new Set(['in']))
+    expect(other.outside5mm).toBeGreaterThan(0)
+    expect(other.notEnclosedByDesign).toMatchObject({ parts: 1, outside: 0, outside5mm: 0, worst: [] })
+  })
+
+  it('reports an exempt part apart and leaves it out of the totals', () => {
+    const fit = checkSkinFit(skin, [inside, poking], new Set(['out']))
+    expect(fit.outside).toBe(0)
+    expect(fit.outside5mm).toBe(0)
+    expect(fit.worst).toEqual([])
+    expect(fit.notEnclosedByDesign!.parts).toBe(1)
+    expect(fit.notEnclosedByDesign!.outside5mm).toBeGreaterThan(0)
+    expect(fit.notEnclosedByDesign!.worst.map((w) => w.name)).toEqual(['Poking'])
+    // 没有 id 的部件不可能被豁免 / a part without an id can never be exempt
+    const anonymous = checkSkinFit(skin, [{ name: 'Poking', mesh: poking.mesh }], new Set(['out']))
+    expect(anonymous.outside5mm).toBeGreaterThan(0)
   })
 })

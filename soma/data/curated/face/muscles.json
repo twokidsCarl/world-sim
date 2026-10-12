@@ -33,6 +33,14 @@
   "hangMm": {
    "zh": "作用线下方的皮肤被多带动的距离：眉下到上睑的皮肤是挂在眉上的，眉被拉动时它整片跟着走，到睑缘上方被 mask 截住。数值是假设。",
    "en": "how much further the skin below the line is carried: the skin from under the brow to the upper lid hangs from the brow and moves with it as a whole, until the mask stops it above the lid margin. The value is an assumption."
+  },
+  "project": {
+   "zh": "front：作用线两端从正前方投影到皮肤，而不是取皮肤上的最近点。颏部软组织厚，最近点会偏到外侧约 20 mm，使颏肌的拉力变成横向。",
+   "en": "front: both ends of the line are projected onto the skin from straight ahead instead of taking the nearest skin point. The chin's soft tissue is thick and the nearest point falls about 20 mm laterally, which turned the pull of mentalis sideways."
+  },
+  "axis": {
+   "zh": "hint：作用线方向直接取 hint，不用网格的主轴。颏肌的网格约 14 × 14 × 7 mm，近似一个团块，主轴斜向外上，量出来的作用线把颏部皮肤拉向外侧而不是向上。",
+   "en": "hint: the line of action takes the hint direction outright instead of the mesh's principal axis. The mentalis mesh is about 14 × 14 × 7 mm, nearly a blob, whose principal axis runs obliquely up and out, so the measured line pulled the chin skin sideways rather than up."
   }
  },
  "lid": {
@@ -552,7 +560,9 @@
    "action": {
     "zh": "上提颏部皮肤，使下唇前突",
     "en": "raises the skin of the chin and pushes the lower lip up and forward"
-   }
+   },
+   "project": "front",
+   "axis": "hint"
   },
   {
    "id": "nasalis",
@@ -786,6 +796,11 @@
   "note": {
    "zh": "皮肤滑动引起的厚度变化：w = −gain · H · div_s(u)，沿法线向外。gain = 0.5 来自不可压软组织层、线性剪切剖面的体积守恒，不是拟合出来的；H 是皮肤到骨的距离，限制在 minMm–maxMm；|w| 不超过 limitMm；散度在网格上平滑 smoothing 遍。minMm、maxMm、limitMm、smoothing 是假设。",
    "en": "Change of thickness caused by the sliding of the skin: w = −gain · H · div_s(u), along the outward normal. gain = 0.5 follows from volume conservation of an incompressible soft-tissue layer with a linear shear profile and is not fitted; H is the distance from skin to bone, limited to minMm–maxMm; |w| is capped at limitMm; the divergence is smoothed over the mesh `smoothing` times. minMm, maxMm, limitMm and smoothing are assumptions."
+  },
+  "creasePasses": 6,
+  "creaseNote": {
+   "zh": "creasePasses：褶皱（口裂、鼻旁、睑缘外）附近把每个通道的位移场在网格上抹匀的遍数，用来消除口角和鼻旁的锯齿。数值是假设。",
+   "en": "creasePasses: how many times each channel's field is evened out over the mesh near creases (oral fissure, beside the nose, outside the lid margins), to remove the jagged shards at the mouth corners and beside the nose. The value is an assumption."
   }
  }
 }

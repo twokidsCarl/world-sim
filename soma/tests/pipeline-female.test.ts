@@ -227,25 +227,15 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       const pec = byName(`Sternocostal part of ${side} pectoralis major`)
       expect(breast.centroid[2]).toBeGreaterThan(pec.centroid[2])
       expect(breast.bbox[5]).toBeGreaterThan(pec.bbox[5])
-      // 高度。占位皮肤时：腺体中心距胸大肌胸肋部中心不超过 12 cm。
-      // 装入拟合皮肤后，HRA 腺体按皮肤包的变换缩小并下移约 7 cm，以落在皮肤模型的乳房里；那对乳房位置偏低，
-      // 左侧因此量得 12.8 cm，超过原来的 12 cm。这是模型的缺陷，不是量错了：界限只放到 14 cm 以免再往下掉，
-      // 缺陷本身由 sexChecks 的 leftBreastLevel / rightBreastLevel（如实记为不通过）和“使用前请注意”说明。
-      // Level. With the placeholder skin: the gland centre within 12 cm of the centre of the sternocostal pectoralis.
-      // With the fitted skin installed the HRA gland is scaled and moved about 7 cm down by the package's transform to
-      // lie inside the skin model's breast, which sits low; the left side then measures 12.8 cm, over the former 12 cm.
-      // That is a defect of the model, not a measuring error: the bound is moved to 14 cm only so that it cannot sink
-      // further, and the defect itself is carried by sexChecks leftBreastLevel / rightBreastLevel (recorded as failing)
-      // and by the cautions.
-      expect(Math.abs(breast.centroid[1] - pec.centroid[1])).toBeLessThan(report.skinPackage?.installed ? 0.14 : 0.12)
-      if (report.skinPackage?.installed) {
-        const level = report.sexChecks[`${side}BreastLevel`]
-        expect(typeof level.pass).toBe('boolean')
-        expect(Math.abs(level.glandCentroidBelowPectoralisCentroidMm - (pec.centroid[1] - breast.centroid[1]) * 1000)).toBeLessThan(2)
-        if (!level.pass) expect(data.cautions!.map((c) => c.en).join(' ')).toMatch(/They sit too low/)
-      }
+      // 高度：腺体中心距胸大肌胸肋部中心不超过 12 cm，且落在胸肋部的上下缘之间（sexChecks 的 leftBreastLevel / rightBreastLevel）。
+      // （皮肤包第一版把乳房放得偏低，这两项当时不通过，12 cm 曾临时放到 14 cm；重发的包已通过，界限已恢复。）
+      // Level: the gland centre within 12 cm of the centre of the sternocostal pectoralis, and between its upper and lower
+      // border (sexChecks leftBreastLevel / rightBreastLevel).
+      // (The first issue of the skin package put the breasts too low; both failed then and the 12 cm was moved to 14 cm
+      // for a time. The re-issued package passes and the bound is restored.)
+      expect(Math.abs(breast.centroid[1] - pec.centroid[1])).toBeLessThan(0.12)
     }
-    for (const k of ['uterusBetweenBladderAndRectum', 'leftOvaryInPelvis', 'rightOvaryInPelvis', 'leftBreastAnteriorToPectoralis', 'rightBreastAnteriorToPectoralis']) expect(report.sexChecks[k].pass, k).toBe(true)
+    for (const k of ['uterusBetweenBladderAndRectum', 'leftOvaryInPelvis', 'rightOvaryInPelvis', 'leftBreastAnteriorToPectoralis', 'rightBreastAnteriorToPectoralis', 'leftBreastLevel', 'rightBreastLevel']) expect(report.sexChecks[k].pass, k).toBe(true)
   })
 
   it('lists cautions in both languages and keeps left and right concepts apart', () => {
@@ -309,8 +299,17 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(src[0]!.attribution).toMatch(/Meta Platforms/)
     // 单层封闭曲面，包得住深部结构 / a closed single wall that encloses the deep parts
     expect(sp.fit.closed).toBe(true)
+    // 应当包住的部件没有一处露出 5 mm 以上；有意不包的部件取自皮肤包的 manifest，另行报告
+    // nothing that must be enclosed lies more than 5 mm outside; the parts left out by design come from the package manifest and are reported apart
     expect(sp.fit.outside).toBeLessThan(0.002)
-    expect(sp.fit.outside5mm).toBeLessThan(0.0005)
+    for (const fit of [sp.fit, sp.fitShipped]) {
+      expect(fit.outside5mm).toBe(0)
+      for (const w of fit.worst) expect(w.maxMm, w.name).toBeLessThanOrEqual(5)
+      expect(fit.notEnclosedByDesign.parts).toBeGreaterThan(0)
+    }
+    for (const id of sp.notEnclosedPartIds) expect(byId.has(id), id).toBe(true)
+    const exemptNames = new Set(sp.notEnclosedPartIds.map((id: string) => byId.get(id)!.name))
+    for (const w of sp.fit.worst) expect(exemptNames.has(w.name), `${w.name} is exempt but counted`).toBe(false)
     expect(sp.fitShipped.closed).toBe(true)
     expect(sp.fitShipped.outside).toBeLessThan(0.003)
     // 眼关节与眼球中心相差不过几毫米（右侧巩膜的源网格带一粒碎屑，按包围盒算会差出 24 mm）
@@ -361,7 +360,8 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     const en = data.cautions!.map((c) => c.en).join(' ')
     expect(en).not.toMatch(/PLACEHOLDER|raised into a smooth envelope/)
     expect(en).toMatch(/not a scan and not her own skin/)
-    expect(en).toMatch(/scaled to 0\.\d\d \(left\) and 0\.\d\d \(right\)/)
+    expect(en).toMatch(/scaled to 0\.\d\d (\(left\) and 0\.\d\d \(right\) of its size|of its size on both sides)/)
+    expect(en).not.toMatch(/They sit too low|horizontal steps/)
   }, 60_000)
 
   it('keeps the deformation in bounds and reports where it is not', () => {

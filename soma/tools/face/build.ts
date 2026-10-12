@@ -50,6 +50,8 @@ export interface MuscleDef {
   reachMm: number
   carryMm?: number
   hangMm?: number
+  project?: 'front'
+  axis?: 'hint'
   insertAt?: 'modiolus'
   mask: ('aboveStomion' | 'belowStomion' | 'aboveEye' | 'belowEye')[]
   attachments: { origin: Bilingual; insertion: Bilingual }
@@ -62,7 +64,7 @@ export interface MuscleDef {
 export interface Curated {
   muscles: {
     muscles: MuscleDef[]
-    bulge?: { gain: number; minMm: number; maxMm: number; limitMm: number; smoothing: number }
+    bulge?: { gain: number; minMm: number; maxMm: number; limitMm: number; smoothing: number; creasePasses?: number }
     lid: { closureFraction: number; upperLidHeightMm: number; lowerLidHeightMm: number; overlapMm?: number; followers?: string }
     jaw: { joint: string; dof: number; closers: string[]; openers: string[] }
     missing: { name: string; note: Bilingual }[]
@@ -600,9 +602,15 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     let m = 1
     // 皮肤按它自己那道褶（随 x 变化）分上下唇；深层部件按唇部件的口裂 / the skin is split into upper and lower lip along its own crease (which varies with x); deep parts along the fissure of the lip part
     const st = deep ? (deepSt ?? skinSt) : stomionAt(p[0])
+    const hw = 1 * MM + 0.8 * Math.max(0, Math.abs(p[0] - midX) - lipCrease.W)
     for (const k of d.mask) {
-      if (k === 'aboveStomion') m *= smooth((p[1] - (st - 1 * MM)) / (2 * MM))
-      else if (k === 'belowStomion') m *= 1 - smooth((p[1] - (st - 1 * MM)) / (2 * MM))
+      // 口裂以内上下唇的分界是锐利的（±1 mm）；出了口角，颊部并没有这条界线，分界逐渐放宽（每向外 1 mm 加宽 0.8 mm），
+      // 否则上唇肌和下唇肌的场会在颊部沿口裂的延长线对着拉，撕出一道口角外的裂痕。
+      // Between the corners of the mouth the split between the lips is sharp (±1 mm); beyond the corners the cheek has no such boundary
+      // and the split widens (0.8 mm per mm outwards); otherwise the fields of upper-lip and lower-lip muscles would pull against each
+      // other along the extension of the fissure and tear a line out from the mouth corner.
+      if (k === 'aboveStomion') m *= smooth((p[1] - (st - hw)) / (2 * hw))
+      else if (k === 'belowStomion') m *= 1 - smooth((p[1] - (st - hw)) / (2 * hw))
       // 眉部肌肉带动的皮肤一直到上睑缘上方（眉下的皮肤是挂在眉上的）；颊部肌肉带动的到下睑缘下方为止
       // brow muscles carry the skin down to just above the upper lid margin (the skin under the brow hangs from it); cheek muscles carry it up to just below the lower lid margin
       else if (k === 'aboveEye') m *= smooth((p[1] - ((deep ? lidDeep : lidSkin).top - 2 * MM)) / (5 * MM))
@@ -654,10 +662,20 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         const cos = dot(axis, hint)
         let basis: FaceChannel['basis'] = 'geometry'
         // 主轴与 hint 相差太大（宽而短的片状肌）：改用 hint 的方向 / principal axis too far from the hint (a wide, short sheet): use the hint direction instead
-        if (cos < 0.6) (axis = hint), (basis = 'geometry+override')
+        // 精编数据也可以直接指定用 hint（axis: 'hint'）：网格近似一个团块、主轴没有意义的肌肉（颏肌）
+        // the curated data can also demand the hint outright (axis: 'hint'): muscles whose mesh is nearly a blob with no meaningful principal axis (mentalis)
+        if (cos < 0.6 || d.axis === 'hint') (axis = hint), (basis = 'geometry+override')
         const [lo, hi] = ends(pts, axis)
         // hint 从活动端指向固定端：高端是起点 / the hint points from the mobile to the fixed end: the high end is the origin
-        const o = hi, i = lo
+        let o = hi, i = lo
+        if (d.axis === 'hint') {
+          // 作用线严格沿 hint，穿过网格质心，长度取两端沿 hint 的间距：团块状网格两端的质心会偏向一侧
+          // the line runs strictly along the hint through the mesh centroid, its length being the spacing of the two ends along the hint: the end centroids of a blob-like mesh lie off to one side
+          const c: V3 = [0, 0, 0]
+          for (const p of pts) (c[0] += p[0] / pts.length), (c[1] += p[1] / pts.length), (c[2] += p[2] / pts.length)
+          o = add(c, mul(hint, dot(sub(hi, c), hint)))
+          i = add(c, mul(hint, dot(sub(lo, c), hint)))
+        }
         const e = norm(sub(i, o))
         let s2 = 0
         for (const p of pts) {
@@ -701,10 +719,18 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         const m = measured.get(s)!
         const sgn = s === 'R' ? -1 : 1
         const o = mirror(m.o, sgn), i = mirror(m.i, sgn)
-        const os = onSkin(o).point
+        // project = 'front'：两端从正前方投影到皮肤，而不是取最近点。软组织厚的地方（颏部）最近点会偏到一侧，
+        // 把本该向上的拉力变成横向的。
+        // project = 'front': both ends are projected onto the skin from straight ahead instead of taking the nearest point. Where the
+        // soft tissue is thick (the chin) the nearest point lies off to one side and turns an upward pull into a sideways one.
+        const front = (q: V3): V3 | null => {
+          const h = skinSurf.firstHit([q[0], q[1], 1], [q[0], q[1], -1])
+          return h ? [q[0], q[1], 1 - h.distance] : null
+        }
+        const os = (d.project === 'front' ? front(o) : null) ?? onSkin(o).point
         const isP = onSkin(i)
-        let is = isP.point
-        let nI = isP.normal
+        let is = (d.project === 'front' ? front(i) : null) ?? isP.point
+        let nI = d.project === 'front' ? onSkin(is).normal : isP.normal
         let basis = m.basis
         if (d.insertAt === 'modiolus' && modiolusOffset !== null) {
           // 皮肤上的口角轴：口角外侧 3 mm，从正前方投影 / the modiolus on the skin: 3 mm lateral to the corner of the mouth, projected from straight ahead
@@ -966,6 +992,21 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     const v = regionVerts[r]! * 3
     if (rawNormals[v]! * normals[v]! + rawNormals[v + 1]! * normals[v + 1]! + rawNormals[v + 2]! * normals[v + 2]! < 0.7) creased[r] = 1
   }
+  // 邻接表，以及“褶皱附近”的标记（褶皱顶点和它们的两圈邻居）/ adjacency, and the near-crease flag (crease vertices and their two rings of neighbours)
+  const neighbourSets: Set<number>[] = Array.from({ length: nr }, () => new Set<number>())
+  for (let t = 0; t < regionTris.length; t += 3) {
+    for (let k = 0; k < 3; k++) {
+      const a2 = regionTris[t + k]!, b2 = regionTris[t + ((k + 1) % 3)]!
+      neighbourSets[a2]!.add(b2), neighbourSets[b2]!.add(a2)
+    }
+  }
+  const neighbours = neighbourSets.map((x) => [...x].sort((a2, b2) => a2 - b2))
+  let nearCrease = Uint8Array.from(creased)
+  for (let ring = 0; ring < 2; ring++) {
+    const grown = Uint8Array.from(nearCrease)
+    for (let r = 0; r < nr; r++) if (nearCrease[r]) for (const o of neighbours[r]!) grown[o] = 1
+    nearCrease = grown
+  }
   const vertArea = new Float64Array(nr)
   for (let t = 0; t < ntr; t++) for (let k = 0; k < 3; k++) vertArea[regionTris[t * 3 + k]!] = vertArea[regionTris[t * 3 + k]!]! + area[t]!
   for (let ci = 0; ci < chans.length; ci++) {
@@ -1008,6 +1049,28 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         const w = Math.max(-lim, Math.min(lim, -bulge.gain * cover[r]! * div[r]!))
         const v = regionVerts[r]! * 3
         ;(U[r * 3] = U[r * 3]! + w * normals[v]!), (U[r * 3 + 1] = U[r * 3 + 1]! + w * normals[v + 1]!), (U[r * 3 + 2] = U[r * 3 + 2]! + w * normals[v + 2]!)
+      }
+    }
+    // 褶皱附近把位移场在网格上抹匀：褶里的顶点法线乱，相邻顶点的滑动方向不一致，叠加几个通道后就撕出锯齿（口角、鼻旁）。
+    // 只动褶皱顶点及其两圈邻居；眼睑和口裂内陷本来就要在褶处不连续，不抹。
+    // Near creases the field is evened out over the mesh: inside a fold the vertex normals are erratic, neighbouring vertices slide in
+    // inconsistent directions, and with several channels added the skin tears into jagged shards (mouth corners, beside the nose).
+    // Only crease vertices and their two rings of neighbours are touched; lids and the oral recess are meant to be discontinuous at
+    // the crease and are left alone.
+    if (ch.def.model !== 'lid' && ch.def.model !== 'recess') {
+      for (let pass = 0; pass < (bulge.creasePasses ?? 0); pass++) {
+        const next = Float64Array.from(U)
+        for (let r = 0; r < nr; r++) {
+          if (!nearCrease[r]) continue
+          const nb = neighbours[r]!
+          if (nb.length === 0) continue
+          for (let c = 0; c < 3; c++) {
+            let sum = 0
+            for (const o of nb) sum += U[o * 3 + c]!
+            next[r * 3 + c] = 0.3 * U[r * 3 + c]! + 0.7 * (sum / nb.length)
+          }
+        }
+        U.set(next)
       }
     }
     for (let r = 0; r < nr; r++) put(ci, skinPart.id, regionVerts[r]!, [U[r * 3]!, U[r * 3 + 1]!, U[r * 3 + 2]!])

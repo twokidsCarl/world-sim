@@ -42,11 +42,29 @@ def main():
     F, jn = mhrlib.faces(lod), mhrlib.joint_names(lod)
     Vm, P, _ = mhrlib.run(ident, mp2, lod, True)
     wh = FF.head_weight(lod)
-    V = Vm + off * (1 - wh)[:, None]
+    # 头和颈上原来对旧皮肤的残差偏移作废（颈的姿势也变了；留着它在胸骨上切迹处成了一个锯齿状的坑）：按“头 + 颈”的蒙皮权重置零，边缘抹平。
+    # The residual offsets towards the old skin are void on head and neck (the neck pose changed too; left in place they
+    # made a jagged pit at the jugular notch): set to zero by the skin weight of head + neck, smoothed at the rim.
+    vi, ji, w, _ = mhrlib.skin_weights(lod)
+    nk = np.array([n.startswith(FF.HEAD_JOINTS + ('c_neck',)) for n in jn])
+    whn = np.zeros(len(Vm))
+    np.add.at(whn, vi, w * nk[ji])
+    import enclose_skin as ES
+    A = ES.adjacency(len(Vm), F)
+    whn = np.clip(whn, 0, 1)
+    for _ in range(6):
+        whn = np.maximum(whn, 0.5 * whn + 0.5 * (A @ whn))
+    off2 = off * (1 - whn)[:, None]
+    for _ in range(4):
+        sm = A @ off2
+        band = ((whn > 0.02) & (whn < 0.98))[:, None]
+        off2 = np.where(band, 0.5 * off2 + 0.5 * sm, off2)
+    V = Vm + off2
     V = BT.head_scale(V, F, P, jn, lod, fb, log)(V)
-    # 下半张脸：眼对上以后，他的颏比 MHR 的颏高（颏肌上覆盖中位数 34 mm，成了双下巴）；与女性相同的分段重映射。
-    # The lower face: with the eyes matched his chin sits higher than MHR's (median cover 34 mm over mentalis, a double chin); the same piecewise remap as for the female.
-    V = FF.face_scale(V, F, 0.5 * (P[jn.index('l_eye')] + P[jn.index('r_eye')]), wh, fb, log, FF.face_landmarks(ident, lod))(V)
+    V, eye_info = FF.eye_warp(V, F, P, jn, wh, fb, lod, log)
+    pivot = 0.5 * (fb.verts('Left vitreous body').mean(0) + fb.verts('Right vitreous body').mean(0))
+    V = FF.face_scale(V, F, pivot, wh, fb, log, FF.face_landmarks(ident, lod))(V)
+    info = dict(info, eyes=eye_info)
     np.savez(src, identity=ident, mp=mp2, offsets=V - Vm, lod=lod)
     json.dump(info, open(os.path.join(d, 'head-refit.json'), 'w'), ensure_ascii=False, indent=1)
     open(os.path.join(d, 'head-refit.txt'), 'w').write('\n'.join(log) + '\n')

@@ -153,16 +153,21 @@ const SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/female-skin'
 const EXTERNAL_SKIN_ID = 'SOMA_skin'
 /**
  * 皮肤作者报告、而管线自己量不出来的缺陷，按皮肤包所拟合的内部结构指纹登记（换了一版内部结构就不再引用）。
- * 出处：皮肤包里的 enclosure.txt “arm skin against the trunk skin facing it” 一节，右侧肱骨 0.25–0.40 段 insideCm2 = 33.3。
+ * 同一指纹的包重发时这里要跟着改：现在的数取自重发后的包。
+ * 出处：皮肤包里的 enclosure.txt “arm skin against the trunk skin facing it” 一节，右侧肱骨 0.25–0.40 段 insideCm2 = 6.6
+ * （上一版为 33.3）；腋前襞处的切迹见同一个包的 closeup-axilla-*.png。
  * Defects reported by the skin's author that the pipeline cannot measure itself, filed under the
- * fingerprint of the internals the package was fitted to (not quoted for any other version).
+ * fingerprint of the internals the package was fitted to (not quoted for any other version). A
+ * package re-issued under the same fingerprint needs this updated by hand: the figures are those of
+ * the re-issued package.
  * Source: the section "arm skin against the trunk skin facing it" of enclosure.txt in the skin
- * package, right side, 0.25–0.40 of the humerus, insideCm2 = 33.3.
+ * package, right side, 0.25–0.40 of the humerus, insideCm2 = 6.6 (33.3 in the earlier issue); the
+ * notch at the anterior axillary fold shows in closeup-axilla-*.png of the same package.
  */
 const SKIN_AUTHOR_NOTES: Record<string, { zh: string; en: string }> = {
   d8e55b8725377511: {
-    en: ' Under the right arm the skin of the axilla runs into the skin of the trunk (about 33 cm² between 25 % and 40 % of the length of the humerus).',
-    zh: '右腋窝处上臂内侧的皮肤穿入了躯干的皮肤（肱骨长度 25–40 % 处约 33 cm²）。',
+    en: ' Under the right arm a little of the skin of the upper arm still runs into the skin of the trunk (about 7 cm² between 25 % and 40 % of the length of the humerus), and there is a notch in the skin at each anterior axillary fold.',
+    zh: '右腋窝处上臂内侧仍有少量皮肤穿入躯干的皮肤（肱骨长度 25–40 % 处约 7 cm²），两侧腋前襞处的皮肤各有一个切迹。',
   },
 }
 /**
@@ -1955,7 +1960,7 @@ async function finish(input: FinishInput) {
     const key = shaped?.applied ? createHash('sha1').update(`${boneKey}\nbody-shape v${SHAPE_STAGE_VERSION}\n${shaped.envelopeSha1}\n${JSON.stringify(shaped.options)}\n${JSON.stringify(MUSCLE_SEX_RATIO)}`).digest('hex').slice(0, 16) : boneKey
     const pkg = skinPackage
     const skin = parts.find((p) => p.name === 'Skin' && p.tissue === 'skin')
-    const deepOf = () => parts.filter((p) => FAT_DEEP_TISSUES.has(p.tissue) && p.system !== 'integumentary').map((p) => ({ name: p.name, mesh: p.mesh }))
+    const deepOf = () => parts.filter((p) => FAT_DEEP_TISSUES.has(p.tissue) && p.system !== 'integumentary').map((p) => ({ id: p.id, name: p.name, mesh: p.mesh }))
     const row: Record<string, unknown> = { dir: SKIN_PACKAGE_DIR, internalsKey: key, ...(shaped?.applied ? { internalsKeyBeforeShape: boneKey } : {}), present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false }
     if (pkg && skin && pkg.fittedTo?.body === 'female' && pkg.fittedTo.key === key) {
       // 占位皮肤（形变来的男性皮肤）整个换掉，胸部抬升也不再做
@@ -2024,13 +2029,18 @@ async function finish(input: FinishInput) {
         row.breastPlacement = { file: `${SKIN_PACKAGE_DIR}/breast-placement.json`, signedDistances: 'mm from the installed skin at source resolution; positive = outside', sides: placed }
         console.log(`  breast placement from the skin package: ${JSON.stringify(placed)}`)
       }
-      const fit = checkSkinFit(pkg.mesh, deepOf())
+      // 皮肤作者有意不包住的部件（包的 manifest 里列出）单独报告，不计入“应当包住”的那部分
+      // the parts the skin's author deliberately did not enclose (listed in the package manifest) are reported apart from the set that must be enclosed
+      const fit = checkSkinFit(pkg.mesh, deepOf(), new Set(pkg.notEnclosed))
+      row.notEnclosedPartIds = [...pkg.notEnclosed].sort()
       // 面部几处结构在皮肤下的深度，以及皮肤模型的眼关节与眼球中心的偏差
       // how deep a few facial structures lie under the skin, and how far the skin model's eye joints are from the centres of the globes
       row.face = faceAgainstSkin(pkg.mesh, parts.map((p) => ({ name: p.name, mesh: p.mesh })), pkg.eyeJoints)
       row.author = pkg.author
       Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit })
-      console.log(`\nSkin package ${SKIN_PACKAGE_DIR} installed (${pkg.source.name}, ${pkg.mesh.indices.length / 3} triangles, ${fit.closed ? 'closed' : 'NOT closed'}); deep-part surface outside the skin ${(fit.outside * 100).toFixed(2)}% (${(fit.outside5mm * 100).toFixed(2)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
+      const nd = fit.notEnclosedByDesign!
+      console.log(`\nSkin package ${SKIN_PACKAGE_DIR} installed (${pkg.source.name}, ${pkg.mesh.indices.length / 3} triangles, ${fit.closed ? 'closed' : 'NOT closed'}); surface of the parts it must enclose outside the skin ${(fit.outside * 100).toFixed(3)}% (${(fit.outside5mm * 100).toFixed(3)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
+      console.log(`  not enclosed by design (${nd.parts} parts from the manifest): ${(nd.outside * 100).toFixed(1)}% of their surface outside (${(nd.outside5mm * 100).toFixed(1)}% by more than 5 mm); ${nd.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
     } else {
       row.reason = !pkg ? 'no package' : !pkg.fittedTo ? 'the package does not say which internals it was fitted to (manifest.fittedTo missing)' : 'fitted to other internals'
       console.log(`\nSkin: placeholder kept (${row.reason}); a skin package for these internals must carry "fittedTo": {"body": "female", "key": "${key}"} in its manifest.json`)
@@ -2094,7 +2104,7 @@ async function finish(input: FinishInput) {
       const kf = await simplifySkinKeepingFace(mesh, p.lockVertices, err, SIMPLIFY.maxEdge, SIMPLIFY.minTriangles)
       const row = report.skinPackage as Record<string, unknown>
       row.resolution = { source: skinResolution(mesh, p.lockVertices), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, kf.inFace), shippedTopology: edgeTopology(kf.mesh) }
-      row.fitShipped = checkSkinFit(kf.mesh, parts.filter((q) => FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ name: q.name, mesh: q.mesh })))
+      row.fitShipped = checkSkinFit(kf.mesh, parts.filter((q) => FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ id: q.id, name: q.name, mesh: q.mesh })), new Set((installedSkin as SkinPackage | null)?.notEnclosed ?? []))
       // 不在拟合之列的薄结构和旧体表部件露出多少（见 skinPackage.ts） / how far the thin structures and old surface parts that the fit did not cover come through (see skinPackage.ts)
       row.notFitted = notFittedAgainstSkin(
         kf.mesh,
@@ -2387,10 +2397,11 @@ async function finish(input: FinishInput) {
       const outside = skin ? inFrontOfSkin(skin.mesh, samplesOf(breast.mesh, 0.004)) : NaN
       sexChecks[`${S}BreastAnteriorToPectoralis`] = { pass: b.centroid[2] > pm.centroid[2] && b.bbox[5] > pm.bbox[5], breastCentroidZMm: round(b.centroid[2] * 1000, 1), pectoralisCentroidZMm: round(pm.centroid[2] * 1000, 1), pectoralisFrontZMm: round(pm.bbox[5] * 1000, 1), fractionInFrontOfSkin: round(outside, 3) }
       // 高度：乳腺应盖在胸大肌上（腺体中心落在胸肋部的上下缘之间），乳头不低于剑突下端太多。
-      // 按皮肤包摆放后的乳腺通不过这一项（皮肤模型的乳房位置偏低）：如实记为不通过，并写进说明。
+      // 皮肤包第一版的乳房位置偏低，通不过这一项；重发后的包已通过。不通过时如实记录，并写进说明。
       // Level: the gland should lie over pectoralis major (its centre between the upper and lower border of the
-      // sternocostal part), the nipple not far below the lower end of the xiphoid process. The gland as placed
-      // by the skin package fails this (the skin model's breasts sit low): recorded as a failure and stated in the cautions.
+      // sternocostal part), the nipple not far below the lower end of the xiphoid process. The first issue of the
+      // skin package put the breasts too low and failed this; the re-issued package passes. A failure is recorded
+      // as one and stated in the cautions.
       const xiphoid = byName('Xiphoid process')
       const nipple = parts.find((p) => p.id === `HRA_nipple_${side}`)
       const xLow = xiphoid ? measure(xiphoid.mesh).bbox[1] : NaN
@@ -2533,19 +2544,24 @@ async function finish(input: FinishInput) {
     const ring = through('palpebralOrbicularisOculi')
     const cornea = through('cornea')
     const lip = through('lip')
-    const thr = [ring ? `the inner (palpebral) ring of orbicularis oculi by up to ${ring} mm` : '', cornea ? `the cornea by ${cornea} mm` : '', lip ? `the lips by ${lip} mm` : ''].filter(Boolean)
-    const thrZh = [ring ? `眼轮匝肌内环（睑部）最多 ${ring} mm` : '', cornea ? `角膜 ${cornea} mm` : '', lip ? `唇 ${lip} mm` : ''].filter(Boolean)
+    const outer = through('orbitalOrbicularisOculi')
+    const nose = through('nasalCartilages')
+    const thr = [ring ? `the inner (palpebral) ring of orbicularis oculi by up to ${ring} mm` : '', outer ? `its outer (orbital) ring by up to ${outer} mm` : '', cornea ? `the cornea by ${cornea} mm` : '', lip ? `the lips by ${lip} mm` : '', nose ? `the nasal cartilages by up to ${nose} mm` : ''].filter(Boolean)
+    const thrZh = [ring ? `眼轮匝肌内环（睑部）最多 ${ring} mm` : '', outer ? `外环（眶部）最多 ${outer} mm` : '', cornea ? `角膜 ${cornea} mm` : '', lip ? `唇 ${lip} mm` : '', nose ? `鼻软骨最多 ${nose} mm` : ''].filter(Boolean)
     const oris = cov.orbicularisOris ? Math.round(cov.orbicularisOris.medianMm) : null
     const eye = row.face?.eyeJoint ? (row.face.eyeJoint.L.lateralMm + row.face.eyeJoint.R.lateralMm) / 2 : null
     const fv = row.resolution?.shipped.face
     skinCautions.push({
-      en: `Her head is the skin model's average head scaled to her skull, not a face of her own; the surface there has faults of its own: horizontal steps across the face at the level of the nose, the mouth and the chin, a crumpled knot of skin at the inner corner of each eye and a rough rim round the nostrils.${oris !== null ? ` The soft tissue of the lower face is too thick (about ${oris} mm of cover over orbicularis oris).` : ''}${eye !== null && Math.abs(eye) >= 1 ? ` The model's eyes sit about ${Math.abs(eye).toFixed(0)} mm ${eye > 0 ? 'further from' : 'nearer to'} the midline on each side than her eyeballs.` : ''} The eyes and the mouth are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease; there the skin was deliberately not pushed out${thr.length ? `, and what lies under it comes through: ${thr.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm); the rest of the skin is simplified.` : ''}`,
-      zh: `她的头是皮肤模型的平均头按她的颅骨缩放得到的，不是她本人的面孔；这块表面自身也有毛病：面部在鼻、口、颏的高度各有一道横向的台阶，两眼内眦处各有一团皱起的皮肤，鼻孔缘粗糙。${oris !== null ? `下面部的软组织偏厚（口轮匝肌外约有 ${oris} mm 的覆盖）。` : ''}${eye !== null && Math.abs(eye) >= 1 ? `模型的眼比她的眼球每侧${eye > 0 ? '偏外' : '偏内'}约 ${Math.abs(eye).toFixed(0)} mm。` : ''}眼和口都不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶；这些地方的皮肤有意不外推${thrZh.length ? `，因此有结构露出皮肤：${thrZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
+      en: `Her head is the skin model's average head scaled to her skull, not a face of her own.${oris !== null ? ` The soft tissue of the lower face is thick (about ${oris} mm of cover over orbicularis oris).` : ''}${eye !== null && Math.abs(eye) >= 1 ? ` The lids of the skin lie over her eyeballs, but the eye joints of the skin model, about which its eyes would turn, sit about ${Math.abs(eye).toFixed(0)} mm ${eye > 0 ? 'further from' : 'nearer to'} the midline on each side than the centres of her eyeballs.` : ''} The eyes, the mouth and the nose are the skin model's and the eyes and mouth are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease; there the skin was deliberately not pushed out${thr.length ? `, and what lies under it comes through: ${thr.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm); the rest of the skin is simplified.` : ''}`,
+      zh: `她的头是皮肤模型的平均头按她的颅骨缩放得到的，不是她本人的面孔。${oris !== null ? `下面部的软组织偏厚（口轮匝肌外约有 ${oris} mm 的覆盖）。` : ''}${eye !== null && Math.abs(eye) >= 1 ? `皮肤的眼睑盖在她的眼球上，但皮肤模型的眼关节（它的眼绕之转动的点）比她的眼球中心每侧${eye > 0 ? '偏外' : '偏内'}约 ${Math.abs(eye).toFixed(0)} mm。` : ''}眼、口、鼻都是皮肤模型的，眼和口不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶；这些地方的皮肤有意不外推${thrZh.length ? `，因此有结构露出皮肤：${thrZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
     })
     const bl = row.breastPlacement?.sides.L
     const br = row.breastPlacement?.sides.R
     if (bl && br) {
       const down = Math.round((-(bl.translationM[1]! + br.translationM[1]!) / 2) * 100)
+      const same = bl.scale.toFixed(2) === br.scale.toFixed(2)
+      const scaleEn = same ? `${bl.scale.toFixed(2)} of its size on both sides` : `${bl.scale.toFixed(2)} (left) and ${br.scale.toFixed(2)} (right) of its size`
+      const scaleZh = same ? `两侧都缩小到原大小的 ${bl.scale.toFixed(2)}` : `被缩小到原大小的 ${bl.scale.toFixed(2)}（左）和 ${br.scale.toFixed(2)}（右）`
       // 高度检查不通过时如实说明（数值取自 sexChecks） / when the level check fails it is said so (figures from sexChecks)
       type Level = { pass: boolean; glandCentroidBelowPectoralisLowerBorderMm: number; nippleBelowXiphoidLowerEndMm: number }
       const lv = ['left', 'right'].map((k) => (report.sexChecks as Record<string, Level | undefined>)[`${k}BreastLevel`]).filter((x): x is Level => !!x && !x.pass)
@@ -2554,8 +2570,8 @@ async function finish(input: FinishInput) {
         zh: `它们的位置偏低：腺体中心在胸大肌胸肋部下缘以下 ${lv.map((x) => Math.round(x.glandCentroidBelowPectoralisLowerBorderMm)).join(' 和 ')} mm（只盖在该肌的腹部之上）；乳头在剑突尖以下约 ${Math.round(lv.reduce((a, x) => a + x.nippleBelowXiphoidLowerEndMm, 0) / lv.length / 10)} cm。`,
       } : { en: '', zh: '' }
       skinCautions.push({
-        en: `The breasts on the surface are the skin model's. The gland, ducts, fat, areola and nipple inside them are an artist model (Human Reference Atlas) of a larger breast in standing shape, scaled to ${bl.scale.toFixed(2)} (left) and ${br.scale.toFixed(2)} (right) of its size and moved about ${down} cm down to fit under that skin.${low.en} Their size, their place on the chest wall and the difference between left and right are therefore not anatomical data.`,
-        zh: `体表上的乳房是皮肤模型的。其内的腺体、导管、脂肪、乳晕和乳头是美术模型（Human Reference Atlas），原本是更大的站立位乳房，被缩小到原大小的 ${bl.scale.toFixed(2)}（左）和 ${br.scale.toFixed(2)}（右），并下移约 ${down} cm，才放得进这层皮肤。${low.zh}因此它们的大小、在胸壁上的位置和左右差别都不是解剖数据。`,
+        en: `The breasts on the surface are the skin model's. The gland, ducts, fat, areola and nipple inside them are an artist model (Human Reference Atlas) of a larger breast in standing shape, scaled to ${scaleEn} and moved about ${down} cm down to fit under that skin.${low.en} Their size and their place on the chest wall are therefore not anatomical data.`,
+        zh: `体表上的乳房是皮肤模型的。其内的腺体、导管、脂肪、乳晕和乳头是美术模型（Human Reference Atlas），原本是更大的站立位乳房，${scaleZh}，并下移约 ${down} cm，才放得进这层皮肤。${low.zh}因此它们的大小和在胸壁上的位置都不是解剖数据。`,
       })
     } else {
       skinCautions.push({

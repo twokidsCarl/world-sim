@@ -93,6 +93,26 @@
     "zh": "没有打开论文本身，只核对了题录。线状肌（影响区内把皮肤拉向固定端，随距离衰减）和环状肌这两类参数化肌肉的想法出自这里；本项目的衰减函数和所有参数是自己定的，不是照搬。",
     "en": "The paper itself was not opened; only the bibliographic record was checked. The idea of two kinds of parametric muscle — a linear muscle that pulls the skin in a zone of influence towards its fixed end with a falloff, and a sphincter — comes from here; the falloff functions and every parameter are this project's own, not copied."
    }
+  },
+  {
+   "id": "yi2026",
+   "citation": "Yi KH, Kim SB. Where Should We Inject Botulinum Toxin for the Bunny Lines? J Cosmet Dermatol 2026.",
+   "url": "https://doi.org/10.1111/jocd.70673",
+   "license": "CC BY 4.0",
+   "opened": {
+    "zh": "读了全文（经 Europe PMC，PMC12828243）。给出：“兔纹”是微笑或眯眼时出现在鼻背上外侧（鼻侧壁）的细的斜行皱纹，由鼻肌横部收缩产生，有时有提上唇鼻翼肌参与；皱纹所在的区域本身没有肌肉，周围是降眉间肌、鼻肌横部、提上唇鼻翼肌和眼轮匝肌内侧纤维。没有给出皱纹的条数、长度、间距或深度。",
+    "en": "Full text read (via Europe PMC, PMC12828243). States: bunny lines are fine, oblique wrinkles on the upper lateral nasal bridge (nasal sidewall) seen on smiling or squinting, produced by contraction of the transverse part of nasalis, sometimes assisted by levator labii superioris alaeque nasi; the area where they form has no muscle of its own and is bordered by procerus, transverse nasalis, LLSAN and the medial fibres of orbicularis oculi. It gives no count, length, spacing or depth of the lines."
+   }
+  },
+  {
+   "id": "kane2003",
+   "citation": "Kane MA. Classification of crow's feet patterns among Caucasian women: the key to individualizing treatment. Plast Reconstr Surg 2003;112(5 Suppl):33S–39S.",
+   "url": "https://doi.org/10.1097/01.prs.0000082192.45787.b6",
+   "license": "Not open access. Abstract only; the patterns second-hand.",
+   "opened": {
+    "zh": "只读了摘要（经 Europe PMC），摘要没有列出分型。四种外眦皱纹分型（全扇形；下睑 / 上颊；上睑到外眦；仅外眦中央）是从网页检索结果里转述的，未能核对原文，也没有拿到各型的比例。卷期页码凭记忆写出，未核对。",
+    "en": "Abstract only (via Europe PMC), and the abstract does not list the patterns. The four lateral canthal patterns (full fan; lower lid / upper cheek; upper lid down to the lateral canthus; central zone only) are taken second-hand from web search summaries and could not be checked against the paper; no frequencies were obtained. Volume, issue and pages are written from memory and were not checked."
+   }
   }
  ]
 }

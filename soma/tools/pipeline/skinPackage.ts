@@ -36,6 +36,11 @@ export interface SkinPackage {
   /** 包声明它所拟合的内部结构；缺省表示未声明 / what the package says it was fitted to; absent when it does not say */
   fittedTo: { body: string; key: string } | null
   manifest: Record<string, unknown>
+  /**
+   * 皮肤作者有意不包住的部件的 id（manifest.face.notEnclosed.partIds：眼球各部、睑缘处的眼轮匝肌、唇、牙、舌、鼻软骨等），没有则为空
+   * ids of the parts the skin's author deliberately left out of the set to enclose (manifest.face.notEnclosed.partIds: parts of the eyeball, orbicularis oculi at the lid margins, lips, teeth, tongue, nasal cartilages …); empty when the manifest gives none
+   */
+  notEnclosed: string[]
   /** 包里参数化模型的眼关节位置（joints.json 的 l_eye / r_eye），没有则为 null / the eye joints of the parametric model (l_eye / r_eye in joints.json); null when absent */
   eyeJoints: { L: [number, number, number]; R: [number, number, number] } | null
   /** 皮肤作者自己量的数（包里的 manifest.json、final-checks.json）；管线不重算，只在说明里引用 / figures measured by the skin's author (manifest.json and final-checks.json of the package); the pipeline does not recompute them and only quotes them in the cautions */
@@ -90,7 +95,9 @@ export function loadSkinPackage(dir: string): SkinPackage | null {
   const eyeL = jointAt('l_eye')
   const eyeR = jointAt('r_eye')
   const bd = optional<{ bideltoidBreadthMm?: { target?: number; final?: number } }>('final-checks.json')?.bideltoidBreadthMm
+  const ne = ((manifest.face as { notEnclosed?: { partIds?: unknown } } | undefined)?.notEnclosed?.partIds ?? []) as unknown
   return {
+    notEnclosed: Array.isArray(ne) ? ne.filter((x): x is string => typeof x === 'string') : [],
     eyeJoints: eyeL && eyeR ? { L: eyeL, R: eyeR } : null,
     author: { bmiByVolume: num(manifest.bmiByVolume), targetBmi: num(manifest.targetBmi), bideltoidMm: num(bd?.target) !== null && num(bd?.final) !== null ? { target: bd!.target!, final: bd!.final! } : null },
     mesh: parseSkinObj(readFileSync(obj, 'utf8')),
@@ -122,6 +129,13 @@ export interface SkinFit {
   outside5mm: number
   /** 最靠外的若干部件；maxMm 为其采样点到皮肤面的最大距离（精确到三角形） / the parts that stick out most; maxMm is the largest distance of their samples from the skin surface (exact, to the triangles) */
   worst: { name: string; outside: number; maxMm: number }[]
+  /**
+   * 皮肤作者有意不包住的部件（见 SkinPackage.notEnclosed）：不计入上面的 outside / outside5mm / worst，单独在这里报告。
+   * 没有给出豁免名单时不出现。
+   * The parts the skin's author deliberately did not enclose (see SkinPackage.notEnclosed): left out of
+   * outside / outside5mm / worst above and reported here on their own. Absent when no exemption list was given.
+   */
+  notEnclosedByDesign?: { parts: number; outside: number; outside5mm: number; worst: { name: string; outside: number; maxMm: number }[] }
 }
 
 /** 边的使用次数统计：边界边（奇数次）与非流形边（多于两次） / edge use: boundary edges (odd count) and non-manifold edges (more than two) */
@@ -261,17 +275,22 @@ function pointTriangleDistance(px: number, py: number, pz: number, v: Float32Arr
 
 /**
  * 皮肤是否包得住内部结构。皮肤必须是单层封闭曲面。
+ * exempt 给出皮肤作者有意不包住的部件的 id：这些部件不计入 outside / outside5mm / worst，
+ * 而是单独报告在 notEnclosedByDesign 里。不在名单上的部件露出皮肤 5 mm 以上，outside5mm 就不为零。
  * Does the skin contain the internals? The skin must be a closed single-walled surface.
+ * `exempt` holds the ids of the parts the skin's author deliberately did not enclose: they do not
+ * count towards outside / outside5mm / worst and are reported apart, under notEnclosedByDesign. Any
+ * part not on that list that lies more than 5 mm outside the skin makes outside5mm non-zero.
  */
-export function checkSkinFit(skin: Mesh, deep: { name: string; mesh: Mesh }[]): SkinFit {
+export function checkSkinFit(skin: Mesh, deep: { id?: string; name: string; mesh: Mesh }[], exempt?: ReadonlySet<string>): SkinFit {
   const topo = edgeTopology(skin)
   const tester = new InsideTester(skin, 256)
   const surface = new SurfaceDistance(skin)
-  let total = 0
-  let out = 0
-  let out5 = 0
-  const rows: { name: string; outside: number; maxMm: number }[] = []
+  // [0] 应当包住的部件，[1] 有意不包的部件 / [0] the parts to be enclosed, [1] the parts left out by design
+  const sum = [{ total: 0, out: 0, out5: 0, parts: 0 }, { total: 0, out: 0, out5: 0, parts: 0 }]
+  const rows: { name: string; outside: number; maxMm: number }[][] = [[], []]
   for (const d of deep) {
+    const g = exempt && d.id !== undefined && exempt.has(d.id) ? 1 : 0
     const pts = thinPoints(surfacePoints(d.mesh, 0.006), 0.005)
     let o = 0
     let far = 0
@@ -279,16 +298,21 @@ export function checkSkinFit(skin: Mesh, deep: { name: string; mesh: Mesh }[]): 
       if (tester.contains(pts[i]!, pts[i + 1]!, pts[i + 2]!)) continue
       o++
       const dist = surface.distance(pts[i]!, pts[i + 1]!, pts[i + 2]!, 0.05)
-      if (dist > 0.005) out5++
+      if (dist > 0.005) sum[g]!.out5++
       if (dist > far) far = dist
     }
     const n = pts.length / 3
-    total += n
-    out += o
-    if (n) rows.push({ name: d.name, outside: o / n, maxMm: Math.round(far * 1e4) / 10 })
+    sum[g]!.total += n
+    sum[g]!.out += o
+    sum[g]!.parts++
+    if (n) rows[g]!.push({ name: d.name, outside: o / n, maxMm: Math.round(far * 1e4) / 10 })
   }
-  rows.sort((a, b) => b.outside - a.outside || (a.name < b.name ? -1 : 1))
-  return { closed: topo.boundaryEdges === 0, nonManifoldEdges: topo.nonManifoldEdges, outside: total ? out / total : 0, outside5mm: total ? out5 / total : 0, worst: rows.filter((r) => r.outside > 0).slice(0, 10) }
+  const worst = (g: number) => rows[g]!.sort((a, b) => b.outside - a.outside || (a.name < b.name ? -1 : 1)).filter((r) => r.outside > 0).slice(0, 10)
+  const share = (g: number, k: 'out' | 'out5') => (sum[g]!.total ? sum[g]![k] / sum[g]!.total : 0)
+  return {
+    closed: topo.boundaryEdges === 0, nonManifoldEdges: topo.nonManifoldEdges, outside: share(0, 'out'), outside5mm: share(0, 'out5'), worst: worst(0),
+    ...(exempt ? { notEnclosedByDesign: { parts: sum[1]!.parts, outside: share(1, 'out'), outside5mm: share(1, 'out5'), worst: worst(1) } } : {}),
+  }
 }
 
 /**
@@ -340,6 +364,7 @@ export function faceAgainstSkin(skin: Mesh, parts: { name: string; mesh: Mesh }[
     ['orbitalOrbicularisOculi', /^orbital part of (left|right) orbicularis oculi$/i],
     ['cornea', /^(left|right) cornea$/i],
     ['lip', /^lip$/i],
+    ['nasalCartilages', /\b(nasal|alar) cartilage$/i],
     ['orbicularisOris', /^orbicularis oris$/i],
     ['mandible', /^mandible$/i],
   ]

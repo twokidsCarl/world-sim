@@ -2,10 +2,10 @@
  "schema": 1,
  "body": "male",
  "inputs": {
-  "rig.json": "d9e9a6aa24df1e71",
-  "rig.bin": "7580015c0aa57fb7",
-  "anatomy.json": "5fd2fa85f50594a6",
-  "integumentary.glb": "3b7a7472c7a1aa22",
+  "rig.json": "bff6257bf77abd4d",
+  "rig.bin": "296d8875adaf94a4",
+  "anatomy.json": "4b776251826eba26",
+  "integumentary.glb": "1877228026410e71",
   "muscular.glb": "e49d9e38e938c3f0",
   "skeletal.glb": "9b3ebb9f7e9b0275",
   "cardiovascular.glb": "39ada7df786603c8",
@@ -20,25 +20,23 @@
   "../knowledge/relations.json": "903dce7ed75aae4f",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
   "data/curated/rig/shape.json": "9faf893581df66eb",
-  "data/curated/bodyshape/rig-shape.json": "fa6c2e92501b3ee7",
-  "data/raw/bodyshape/out/male-skin/skin.obj": "7ed2813448e5f0f8",
-  "data/raw/bodyshape/out/male-skin/shape-fat.f32": "8344a407bfebe850",
-  "data/raw/bodyshape/out/male-skin/shape-limit.f32": "d9183defad71ca1c",
-  "data/raw/bodyshape/out/male-skin/shape-fields.json": "1ee5a9a6d2802292",
-  "data/raw/bodyshape/out/male-skin/manifest.json": "df78027dba52a5c0"
+  "data/curated/bodyshape/rig-shape.json": "8ad7d54a345a4301",
+  "data/raw/bodyshape/out/male-skin/skin.obj": "f3b11a582ca3d781",
+  "data/raw/bodyshape/out/male-skin/shape-fat.f32": "46d50d9a9c945b96",
+  "data/raw/bodyshape/out/male-skin/shape-limit.f32": "4d560b3744412bf9",
+  "data/raw/bodyshape/out/male-skin/shape-fields.json": "c8061b06656491d1",
+  "data/raw/bodyshape/out/male-skin/manifest.json": "2033a1943b9b5107"
  },
- "binBytes": 1579744,
- "notes": [
-  "the BMI table of rig-shape.json crosses zero at 23.66, but fields.fittedAtBmi is 24.05; the default BMI is the zero of the table, so that the default leaves the body unchanged"
- ],
+ "binBytes": 1583140,
+ "notes": [],
  "skin": {
   "part": "FJ2810",
-  "vertices": 30124,
-  "farthestFromSourceMm": 0.09
+  "vertices": 30218,
+  "farthestFromSourceMm": 0.1
  },
  "followers": {
-  "parts": 388,
-  "vertices": 110664
+  "parts": 390,
+  "vertices": 110610
  },
  "calibration": [
   {
@@ -133,8 +131,8 @@
   {
    "control": "stature −2 SD",
    "factor": "trunk",
-   "expected": 0.9353,
-   "measured": 0.9353,
+   "expected": 0.9354,
+   "measured": 0.9354,
    "errorPct": 0
   },
   {
@@ -155,7 +153,7 @@
    "control": "stature −2 SD",
    "factor": "foot",
    "expected": 0.9323,
-   "measured": 0.9327,
+   "measured": 0.9328,
    "errorPct": 0.05
   },
   {
@@ -168,7 +166,7 @@
   {
    "control": "stature −2 SD",
    "factor": "forearm",
-   "expected": 0.9211,
+   "expected": 0.9212,
    "measured": 0.921,
    "errorPct": -0.02
   },
@@ -189,8 +187,8 @@
   {
    "control": "stature −2 SD",
    "factor": "pelvisWidth",
-   "expected": 0.937,
-   "measured": 0.937,
+   "expected": 0.9371,
+   "measured": 0.9371,
    "errorPct": 0
   },
   {
@@ -203,15 +201,15 @@
   {
    "control": "stature +2 SD",
    "factor": "trunk",
-   "expected": 1.064,
-   "measured": 1.064,
+   "expected": 1.0639,
+   "measured": 1.0639,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "thigh",
-   "expected": 1.09,
-   "measured": 1.09,
+   "expected": 1.0899,
+   "measured": 1.0899,
    "errorPct": 0
   },
   {
@@ -231,15 +229,15 @@
   {
    "control": "stature +2 SD",
    "factor": "upperArm",
-   "expected": 1.08,
-   "measured": 1.08,
+   "expected": 1.0799,
+   "measured": 1.0799,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "forearm",
    "expected": 1.0791,
-   "measured": 1.0793,
+   "measured": 1.0792,
    "errorPct": 0.01
   },
   {
@@ -259,8 +257,8 @@
   {
    "control": "stature +2 SD",
    "factor": "pelvisWidth",
-   "expected": 1.0622,
-   "measured": 1.0622,
+   "expected": 1.0621,
+   "measured": 1.0621,
    "errorPct": 0
   },
   {
@@ -548,18 +546,18 @@
   {
    "label": "default",
    "controls": {},
-   "skinHeightM": 1.7226,
+   "skinHeightM": 1.7237,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.4,
+    "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 5.2,
-    "worstPart": "Left lateral cutaneous branch of iliohypogastric nerve",
-    "depthP5Mm": 4.6,
-    "depthP50Mm": 28.8
+    "worstMm": 11.1,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.7,
+    "depthP50Mm": 29.1
    },
    "fat": {
-    "sampled": 3037,
+    "sampled": 3186,
     "outsidePct": 0,
     "over2mmPct": 0,
     "worstMm": 0
@@ -568,45 +566,45 @@
   {
    "label": "stature −2 SD",
    "controls": {
-    "stature": 1.5928
+    "stature": 1.5937000000000001
    },
-   "skinHeightM": 1.5928,
+   "skinHeightM": 1.5941,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.7,
+    "outsidePct": 0.5,
     "over2mmPct": 0.3,
-    "worstMm": 12.6,
-    "worstPart": "Left lateral cutaneous branch of iliohypogastric nerve",
-    "depthP5Mm": 3.9,
-    "depthP50Mm": 26.9
+    "worstMm": 10.5,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.1,
+    "depthP50Mm": 27.2
    },
    "fat": {
-    "sampled": 3037,
-    "outsidePct": 6.6,
-    "over2mmPct": 3.3,
+    "sampled": 3186,
+    "outsidePct": 6.4,
+    "over2mmPct": 2.9,
     "worstMm": 11.5
    }
   },
   {
    "label": "stature +2 SD",
    "controls": {
-    "stature": 1.8528000000000002
+    "stature": 1.8537
    },
-   "skinHeightM": 1.8527,
+   "skinHeightM": 1.8538,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.3,
+    "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 4.1,
-    "worstPart": "Left dorsal digital branches of radial nerve",
-    "depthP5Mm": 5,
-    "depthP50Mm": 30.8
+    "worstMm": 11.7,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 5.2,
+    "depthP50Mm": 31.1
    },
    "fat": {
-    "sampled": 3037,
+    "sampled": 3186,
     "outsidePct": 0.1,
     "over2mmPct": 0,
-    "worstMm": 1.8
+    "worstMm": 1.9
    }
   },
   {
@@ -614,21 +612,21 @@
    "controls": {
     "bmi": 18.5
    },
-   "skinHeightM": 1.7226,
+   "skinHeightM": 1.7236,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 6.6,
-    "over2mmPct": 5,
-    "worstMm": 27.1,
+    "outsidePct": 7.8,
+    "over2mmPct": 5.9,
+    "worstMm": 30.7,
     "worstPart": "Right external oblique",
-    "depthP5Mm": -2,
-    "depthP50Mm": 19.5
+    "depthP5Mm": -3.4,
+    "depthP50Mm": 18.8
    },
    "fat": {
-    "sampled": 3037,
-    "outsidePct": 24.1,
-    "over2mmPct": 16.4,
-    "worstMm": 23.6
+    "sampled": 3186,
+    "outsidePct": 26.5,
+    "over2mmPct": 18.8,
+    "worstMm": 27.3
    }
   },
   {
@@ -636,21 +634,21 @@
    "controls": {
     "bmi": 21.6
    },
-   "skinHeightM": 1.7226,
+   "skinHeightM": 1.7237,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 1.5,
-    "over2mmPct": 0.7,
-    "worstMm": 9.4,
-    "worstPart": "Left lateral cutaneous branch of iliohypogastric nerve",
-    "depthP5Mm": 3.4,
-    "depthP50Mm": 24.8
+    "outsidePct": 1.7,
+    "over2mmPct": 0.9,
+    "worstMm": 11.8,
+    "worstPart": "Right external oblique",
+    "depthP5Mm": 3.2,
+    "depthP50Mm": 24
    },
    "fat": {
-    "sampled": 3037,
-    "outsidePct": 9.9,
-    "over2mmPct": 3.2,
-    "worstMm": 6.2
+    "sampled": 3186,
+    "outsidePct": 12.9,
+    "over2mmPct": 6.7,
+    "worstMm": 8.6
    }
   },
   {
@@ -658,18 +656,18 @@
    "controls": {
     "bmi": 25
    },
-   "skinHeightM": 1.7226,
+   "skinHeightM": 1.7237,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.4,
+    "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 3.8,
-    "worstPart": "Left dorsal digital branches of radial nerve",
-    "depthP5Mm": 4.8,
-    "depthP50Mm": 31.4
+    "worstMm": 11.1,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.9,
+    "depthP50Mm": 30.6
    },
    "fat": {
-    "sampled": 3037,
+    "sampled": 3186,
     "outsidePct": 0,
     "over2mmPct": 0,
     "worstMm": 0
@@ -680,21 +678,21 @@
    "controls": {
     "bmi": 30
    },
-   "skinHeightM": 1.7226,
+   "skinHeightM": 1.7238,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.3,
+    "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 3.8,
-    "worstPart": "Left dorsal digital branches of radial nerve",
-    "depthP5Mm": 5.1,
-    "depthP50Mm": 39.8
+    "worstMm": 11.1,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 5.2,
+    "depthP50Mm": 39.4
    },
    "fat": {
-    "sampled": 3037,
-    "outsidePct": 0.4,
-    "over2mmPct": 0.1,
-    "worstMm": 3.4
+    "sampled": 3186,
+    "outsidePct": 0.3,
+    "over2mmPct": 0,
+    "worstMm": 3.3
    }
   },
   {
@@ -702,18 +700,18 @@
    "controls": {
     "legLength": -1.5
    },
-   "skinHeightM": 1.7224,
+   "skinHeightM": 1.7235,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.3,
+    "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 4.8,
-    "worstPart": "Left lateral cutaneous branch of iliohypogastric nerve",
-    "depthP5Mm": 4.6,
-    "depthP50Mm": 29
+    "worstMm": 11.3,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.8,
+    "depthP50Mm": 29.3
    },
    "fat": {
-    "sampled": 3037,
+    "sampled": 3186,
     "outsidePct": 0,
     "over2mmPct": 0,
     "worstMm": 0
@@ -724,21 +722,21 @@
    "controls": {
     "legLength": 1.5
    },
-   "skinHeightM": 1.7272,
+   "skinHeightM": 1.7285,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.5,
+    "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 7.2,
-    "worstPart": "Left lateral cutaneous branch of iliohypogastric nerve",
-    "depthP5Mm": 4.2,
-    "depthP50Mm": 27.9
+    "worstMm": 10.4,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.5,
+    "depthP50Mm": 28.1
    },
    "fat": {
-    "sampled": 3037,
-    "outsidePct": 2.6,
-    "over2mmPct": 0.8,
-    "worstMm": 4.5
+    "sampled": 3186,
+    "outsidePct": 4,
+    "over2mmPct": 1.6,
+    "worstMm": 5.5
    }
   },
   {
@@ -746,20 +744,20 @@
    "controls": {
     "centralBuild": -1.5
    },
-   "skinHeightM": 1.7242,
+   "skinHeightM": 1.7255,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.7,
-    "over2mmPct": 0.2,
-    "worstMm": 7.3,
-    "worstPart": "Left lateral cutaneous branch of iliohypogastric nerve",
-    "depthP5Mm": 4.2,
-    "depthP50Mm": 27.5
+    "outsidePct": 0.4,
+    "over2mmPct": 0.1,
+    "worstMm": 11.2,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.5,
+    "depthP50Mm": 27.8
    },
    "fat": {
-    "sampled": 3037,
-    "outsidePct": 5.8,
-    "over2mmPct": 2.7,
+    "sampled": 3186,
+    "outsidePct": 7.6,
+    "over2mmPct": 4,
     "worstMm": 5.8
    }
   },
@@ -768,54 +766,59 @@
    "controls": {
     "centralBuild": 1.5
    },
-   "skinHeightM": 1.7211,
+   "skinHeightM": 1.722,
    "deep": {
     "sampled": 111355,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 3.7,
-    "worstPart": "Left dorsal digital branches of radial nerve",
-    "depthP5Mm": 4.6,
-    "depthP50Mm": 30.4
-   },
-   "fat": {
-    "sampled": 3037,
     "outsidePct": 0.2,
     "over2mmPct": 0.1,
-    "worstMm": 2.8
+    "worstMm": 11,
+    "worstPart": "Right major alar cartilage",
+    "depthP5Mm": 4.8,
+    "depthP50Mm": 30.8
+   },
+   "fat": {
+    "sampled": 3186,
+    "outsidePct": 0.1,
+    "over2mmPct": 0,
+    "worstMm": 0.6
    }
   }
  ],
  "bmiScan": [
   {
+   "bmi": 24,
+   "over2mmPct": 0.1,
+   "worstMm": 11.1
+  },
+  {
    "bmi": 23.5,
    "over2mmPct": 0.1,
-   "worstMm": 5.6
+   "worstMm": 11.1
   },
   {
    "bmi": 23,
    "over2mmPct": 0.1,
-   "worstMm": 6.6
+   "worstMm": 11.1
   },
   {
    "bmi": 22.5,
-   "over2mmPct": 0.1,
-   "worstMm": 7.6
+   "over2mmPct": 0.2,
+   "worstMm": 11.1
   },
   {
    "bmi": 22,
-   "over2mmPct": 0.4,
-   "worstMm": 8.6
+   "over2mmPct": 0.5,
+   "worstMm": 11.1
   },
   {
    "bmi": 21.5,
-   "over2mmPct": 0.8,
-   "worstMm": 9.6
+   "over2mmPct": 1,
+   "worstMm": 12.4
   },
   {
    "bmi": 21,
-   "over2mmPct": 1.3,
-   "worstMm": 12.1
+   "over2mmPct": 1.6,
+   "worstMm": 15.5
   }
  ],
  "validBmi": {

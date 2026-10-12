@@ -25,7 +25,7 @@ interface Known {
   disagreeingTerritories: string[]
   /** 面积可以小于 20 cm² 的分布区 / Territories allowed to be smaller than 20 cm². */
   tinyTerritories: string[]
-  /** 肋间臂神经分布区镜像一致率的下限 / Lower bound of the intercostobrachial territory's mirror agreement. */
+  /** 肋间臂神经分布区镜像一致率的下限（腋窝做得好的皮肤上应过半）/ Lower bound of the intercostobrachial territory's mirror agreement (above half on a skin with good axillae). */
   intercostobrachialMirror: number
 }
 
@@ -73,13 +73,17 @@ const KNOWN: Record<BodyId, Known> = {
     intercostobrachialMirror: 0.5,
   },
   female: {
-    // 剑突（右侧）：她的第 5、6 肋间神经（由男性模型变形而来）两侧高度不同，右侧 T5/T6 分界落在剑突下方；
-    // 且她的剑突骨骼整体偏左约 1.2 cm。左侧为 T6。
-    // Xiphoid (right side): her 5th and 6th intercostal nerves (warped from the male model) differ in
-    // height between the sides, and on the right the T5/T6 boundary falls below the xiphoid; her
-    // xiphoid bone also lies about 1.2 cm to the left. The left side is T6.
+    // 剑突（两侧）：她的第 5、6 肋间神经（由男性模型变形而来）前端的高度分别为 1.13 和 1.08，
+    // 两者的分界正好穿过剑突的上半（剑突骨骼在 1.09–1.11，且整体偏左约 1.2 cm）。左侧 T6 占 41%，右侧为 T5。
+    // 即剑胸结合处是 T5/T6 的分界，这与 ISNCSCI“第 6 肋间隙（剑胸结合平面）”并不矛盾，但“剑突属 T6”的检查点不成立。
+    // Xiphoid (both sides): the anterior ends of her 5th and 6th intercostal nerves (warped from the
+    // male model) lie at heights 1.13 and 1.08, and the boundary between them runs through the upper
+    // half of the xiphoid (the bone spans 1.09-1.11 and lies about 1.2 cm to the left). T6 holds 41%
+    // on the left and none on the right. The xiphisternal joint is thus the T5/T6 boundary, which
+    // does not contradict ISNCSCI's "sixth intercostal space (level of xiphisternum)", but the
+    // "xiphoid is T6" checkpoint does not hold.
     failedChecks: [XIPHOID, INGUINAL],
-    xiphoidSides: ['L'],
+    xiphoidSides: [],
     // S3：她的皮肤上会阴是两股之间一条窄缝，比坐骨结节低约 5 cm；S4–5 的肛周圆盘和臀裂把缝整个占住，
     // S3 的会阴/外阴部分与臀部部分因此不相连。
     // S3: on her skin the perineum is a narrow seam between the thighs about 5 cm below the ischial
@@ -89,32 +93,27 @@ const KNOWN: Record<BodyId, Known> = {
     // 胸腹部的带沿她变形后的肋间神经，神经两侧不完全对称。
     // The thoracic and abdominal bands follow her warped intercostal nerves, which are not quite symmetric.
     asymmetricDermatomes: /^(T([3-9]|10))$/,
-    // 髂腹下神经外侧皮支、股外侧皮神经、肋下神经：她的这些神经（变形后）有几条分支各自贴近皮肤，
-    // 中间被邻近神经的分布区隔开。
-    // Lateral branch of iliohypogastric, lateral femoral cutaneous, subcostal: several branches of
-    // these (warped) nerves come close to her skin separately, with a neighbour's territory between.
-    splitTerritories: /^(obturator|pudendal|iliohypogastricLateral|lateralFemoral|subcostal)$/,
-    // 除两个人体共有的以外：
-    //  - 髂腹股沟神经：终末段落在耻骨上方，皮节图上该处属 T12（与髂腹下神经前皮支同理）。
-    //  - 生殖股神经生殖支：见 tinyTerritories，区内没有皮肤。
-    //  - 臂后皮神经在她身上只有 0.08：她的这条神经（变形后）的体表投影落在臂后内侧，即背侧轴线的 T1/T2 一侧。
-    // Besides those common to both bodies:
-    //  - ilioinguinal: its terminal stretch lies above the pubis, which is T12 in the dermatome map
-    //    (same reason as the anterior branch of the iliohypogastric).
-    //  - genital branch of genitofemoral: see tinyTerritories, it has no skin.
-    //  - posterior brachial is only 0.08 on her: the skin projection of her (warped) nerve lies
-    //    posteromedially, on the T1/T2 side of the dorsal axial line.
-    disagreeingTerritories: ['iliohypogastricLateral', 'iliohypogastricAnterior', 'ilioinguinal', 'genitofemoralGenital', 'posteriorBrachial', 'medialBrachial'],
-    // 生殖股神经生殖支：耻骨结节下方的终末段只落在两三个皮肤顶点上（她的皮肤上没有做出大阴唇），
-    // 不足 6 cm² 的小块按规则并入邻区。Gray 对此支的描述也只是“少数细支”。
-    // Genital branch of genitofemoral: its terminal stretch below the pubic tubercle lands on two or
-    // three skin vertices (her skin has no modelled labium majus), and a patch under 6 cm² is
-    // absorbed by its neighbours by rule. Gray describes this branch as "a few filaments".
+    // 髂腹下神经外侧皮支：她的这条神经（变形后）越过髂嵴处和臀外侧处各有一段贴近皮肤，中间隔着臀上皮神经的分布区。
+    // 臂后皮神经（右）：右臂上它的两条分支相距约 3 cm 各自贴近皮肤，中间是肋间臂神经的分布区。
+    // Lateral branch of iliohypogastric: her (warped) nerve comes close to the skin where it crosses
+    // the iliac crest and again on the lateral buttock, with the superior clunial territory between.
+    // Posterior brachial (right): on her right arm two of its branches surface about 3 cm apart,
+    // with intercostobrachial territory between them.
+    splitTerritories: /^(obturator|pudendal|iliohypogastricLateral|posteriorBrachial)$/,
+    // 除两个人体共有的以外：臂后皮神经在她身上只有 0.11，她的这条神经（变形后）的体表投影落在臂后内侧，
+    // 即背侧轴线的 T1/T2 一侧。髂腹下神经外侧皮支在她身上不在此列（0.5 以上）。
+    // Besides the reasons common to both bodies: posterior brachial is only 0.11 on her, because the
+    // skin projection of her (warped) nerve lies posteromedially, on the T1/T2 side of the dorsal
+    // axial line. The lateral branch of the iliohypogastric is not on her list (above 0.5).
+    disagreeingTerritories: ['iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial'],
+    // 生殖股神经生殖支：耻骨结节下方的终末段只落在少数几个皮肤顶点上（她的皮肤上没有做出大阴唇），
+    // 左侧 12 cm²，右侧不足 6 cm² 按规则并入邻区。Gray 对此支的描述也只是“少数细支”。
+    // Genital branch of genitofemoral: its terminal stretch below the pubic tubercle lands on a few
+    // skin vertices (her skin has no modelled labium majus): 12 cm² on the left, and on the right a
+    // patch under 6 cm² that is absorbed by its neighbours by rule. Gray describes this branch as
+    // "a few filaments".
     tinyTerritories: ['genitofemoralGenital'],
-    // 她的右腋窝做得不好（肱骨 25–40% 处上臂皮肤插进躯干皮肤），两侧的肋间臂神经分布区不对称。
-    // Her right axilla is poor (arm skin runs into trunk skin at 25-40% of the humerus), so the
-    // intercostobrachial territories of the two sides do not mirror each other.
-    intercostobrachialMirror: 0,
+    intercostobrachialMirror: 0.5,
   },
 }
 

@@ -65,6 +65,9 @@ if (import.meta.main) {
   const inputs: Record<string, string> = {}
   for (const [k, v] of Object.entries(body.inputs)) if (k === 'anatomy.json' || k.endsWith('.glb')) inputs[k] = v
   inputs['rig.json'] = sha(rigBytes)
+  // rig.bin 不影响位移场，但渲染和运行时的结果（下颌、唇的蒙皮）取决于它，所以也记下来
+  // rig.bin does not affect the fields, but the renders and the runtime result (skinning of jaw and lips) depend on it, so it is recorded too
+  if (existsSync(join(dir, 'rig.bin'))) inputs['rig.bin'] = sha(new Uint8Array(readFileSync(join(dir, 'rig.bin'))))
   const curated = readCurated(inputs)
   const { face, bin, report } = buildFace(body, rig, curated, log)
   face.inputs = Object.fromEntries(Object.entries(inputs).sort(([a], [b]) => (a < b ? -1 : 1)))

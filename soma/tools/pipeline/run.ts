@@ -127,6 +127,8 @@ const SOURCE_O3D: SourceInfo = {
 /** 男性外部皮肤包的位置（相对项目根） / where the male external skin package lives (relative to the project root) */
 const MALE_SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/male-skin'
 let externalSkinSource: SourceInfo | null = null
+/** 装入的皮肤包有意不包住的部件 id / ids of the parts the installed skin package deliberately does not enclose */
+let skinNotEnclosed: ReadonlySet<string> = new Set()
 
 const SOURCE_DERIVED: SourceInfo = {
   name: 'soma (derived)',
@@ -1149,12 +1151,19 @@ async function main() {
         // the face region (skin vertices within FACE_REGION_RADIUS of a muscle of facial expression) is left as it is by the simplifier, see step 8
         const facial = kept.filter((e) => e.cls.tissue === 'muscle' && FACE_MUSCLE_NAME.test(e.name))
         skinEl.lockVertices = faceRegionOfSkin(pkg.mesh, facial.map((e) => e.mesh))
-        const fit = checkSkinFit(pkg.mesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ name: e.name, mesh: e.mesh })))
+        // 皮肤作者有意不包住的部件（包的 manifest 里列出）单独报告，不计入“应当包住”的那部分
+        // the parts the skin's author deliberately did not enclose (listed in the package manifest) are reported apart from the set that must be enclosed
+        skinNotEnclosed = new Set(pkg.notEnclosed)
+        const fit = checkSkinFit(pkg.mesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ id: e.id, name: e.name, mesh: e.mesh })), skinNotEnclosed)
+        row.notEnclosedPartIds = [...pkg.notEnclosed].sort()
+        row.author = pkg.author
         // 面部几处结构在皮肤下的深度，以及皮肤模型的眼关节与眼球中心的偏差
         // how deep a few facial structures lie under the skin, and how far the skin model's eye joints are from the centres of the globes
         row.face = faceAgainstSkin(pkg.mesh, kept.map((e) => ({ name: e.name, mesh: e.mesh })), pkg.eyeJoints)
         Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit, faceRegion: { rule: `skin vertices within ${FACE_REGION_RADIUS * 1000} mm of the surface of a muscle of facial expression`, radiusM: FACE_REGION_RADIUS, muscles: facial.length } })
-        console.log(`\nSkin package ${MALE_SKIN_PACKAGE_DIR} installed (${pkg.source.name}); deep-part surface outside the skin ${(fit.outside * 100).toFixed(2)}% (${(fit.outside5mm * 100).toFixed(2)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
+        const nd = fit.notEnclosedByDesign!
+        console.log(`\nSkin package ${MALE_SKIN_PACKAGE_DIR} installed (${pkg.source.name}); surface of the parts it must enclose outside the skin ${(fit.outside * 100).toFixed(3)}% (${(fit.outside5mm * 100).toFixed(3)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
+        console.log(`  not enclosed by design (${nd.parts} parts from the manifest): ${(nd.outside * 100).toFixed(1)}% of their surface outside (${(nd.outside5mm * 100).toFixed(1)}% by more than 5 mm); ${nd.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
       } else {
         row.reason = !pkg ? 'no package' : !pkg.fittedTo ? 'the package does not say which internals it was fitted to (manifest.fittedTo missing)' : 'fitted to other internals'
         console.log(`\nSkin: BodyParts3D skin kept (${row.reason}); a skin package for these internals must carry "fittedTo": {"body": "male", "key": "${key}"} in its manifest.json`)
@@ -1357,9 +1366,9 @@ async function main() {
       const whole: Mesh = { positions: simp.positions, indices: simp.indices }
       const kf = await simplifySkinKeepingFace(e.mesh, e.lockVertices, err, SIMPLIFY_MAX_EDGE, SIMPLIFY_MIN_TRIANGLES)
       const row = report.skinPackage as Record<string, unknown>
-      const deepParts = kept.filter((x) => FAT_DEEP_TISSUES.has(x.cls.tissue) && x.cls.system !== 'integumentary').map((x) => ({ name: x.name, mesh: x.mesh }))
+      const deepParts = kept.filter((x) => FAT_DEEP_TISSUES.has(x.cls.tissue) && x.cls.system !== 'integumentary').map((x) => ({ id: x.id, name: x.name, mesh: x.mesh }))
       row.resolution = { source: skinResolution(e.mesh, e.lockVertices), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, kf.inFace), shippedTopology: edgeTopology(kf.mesh) }
-      row.fitShipped = checkSkinFit(kf.mesh, deepParts)
+      row.fitShipped = checkSkinFit(kf.mesh, deepParts, skinNotEnclosed)
       // 不在拟合之列的薄结构和旧体表部件露出多少（见 skinPackage.ts） / how far the thin structures and old surface parts that the fit did not cover come through (see skinPackage.ts)
       row.notFitted = notFittedAgainstSkin(
         kf.mesh,
@@ -1609,26 +1618,34 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
       zh: `为跟随肩带的新姿势，跨越该区域的 ${sg.provenance.relabelledToWarped} 个扫描部件发生了形变，并标为“形变”：${t.muscle ?? 0} 块肌（三角肌、胸大肌和胸小肌、斜方肌、前锯肌、菱形肌、肩胛提肌、背阔肌、肩袖各肌、肱二头肌和肱三头肌的起始部）、${(t.artery ?? 0) + (t.vein ?? 0)} 条颈根部、腋窝和肩部的动脉和静脉${t.skin ? '，以及皮肤' : ''}。该区域的神经、韧带、筋膜和淋巴结随周围组织一同移动。肩胛骨的内旋仍小于平均值（约 ${mean('scapulaInternalRotation', 'after')}° 对 41°）：在不离开本模型胸廓的前提下只能转到这里。`,
     })
   }
-  const sk = report.skinPackage as { installed?: boolean; fit?: { outside: number; worst: { name: string }[] }; face?: { cover: Record<string, { minMm: number; medianMm: number } | null> }; resolution?: { shipped: { vertices: number; face: { vertices: number; meanEdgeMm: number } }; simplifiedWhole: { face: { vertices: number } } } } | undefined
+  const sk = report.skinPackage as { installed?: boolean; author?: { bmiByVolume: number | null; targetBmi: number | null }; face?: { cover: Record<string, { minMm: number; medianMm: number } | null> }; resolution?: { shipped: { vertices: number; face: { vertices: number; meanEdgeMm: number } } } } | undefined
   if (sk?.installed) {
+    // BMI 是皮肤作者按所围体积算的（包的 manifest） / the BMI is the skin author's, from the enclosed volume (the package manifest)
+    const bmi = sk.author && sk.author.bmiByVolume !== null && sk.author.targetBmi !== null ? { en: ` By the volume it encloses it comes to BMI ${sk.author.bmiByVolume}, against a target of ${sk.author.targetBmi}.`, zh: `按所围体积算 BMI 为 ${sk.author.bmiByVolume}，目标是 ${sk.author.targetBmi}。` } : { en: '', zh: '' }
     out.push({
-      en: 'The skin is not this man\'s skin. The skin that came with BodyParts3D (a thick shell that joined the upper arms to the chest) was replaced by a parametric body surface (Momentum Human Rig, MHR) fitted to the bones and muscles of this model and pushed outwards locally until it encloses them; its head and neck were then placed again on his skull. It is a smooth generic surface: the external genital region is a faceted mound, not penile and scrotal skin; the toes are one block; the skin round the fingertips is pushed out; there are no nipples, navel or skin creases.',
-      zh: '皮肤不是此人的皮肤。BodyParts3D 自带的皮肤（一层厚壳，上臂与胸壁连在一起）已换成参数化人体表面（Momentum Human Rig，MHR）：先按本模型的骨骼和肌肉拟合，再局部外推到把它们包住，头颈部又按他的颅骨重新摆放过。它是光滑的通用体表：外生殖器区只是一个带棱面的隆起，没有阴茎和阴囊的皮肤；足趾连成一块；指尖周围的皮肤被向外推出；没有乳头、脐和皮纹。',
+      en: `The skin is not this man's skin. The skin that came with BodyParts3D (a thick shell that joined the upper arms to the chest) was replaced by a parametric body surface (Momentum Human Rig, MHR) fitted to the bones and muscles of this model and pushed outwards locally until it encloses them; its head and neck were then placed again on his skull.${bmi.en} It is a smooth generic surface: the external genital region is a faceted mound, not penile and scrotal skin; the toes are one block; there are no nipples, navel or skin creases.`,
+      zh: `皮肤不是此人的皮肤。BodyParts3D 自带的皮肤（一层厚壳，上臂与胸壁连在一起）已换成参数化人体表面（Momentum Human Rig，MHR）：先按本模型的骨骼和肌肉拟合，再局部外推到把它们包住，头颈部又按他的颅骨重新摆放过。${bmi.zh}它是光滑的通用体表：外生殖器区只是一个带棱面的隆起，没有阴茎和阴囊的皮肤；足趾连成一块；没有乳头、脐和皮纹。`,
     })
     // 面部：数值取自本次构建的测量（report.skinPackage.face、resolution） / the face: figures measured by this build (report.skinPackage.face, resolution)
     const out1 = (k: string) => {
       const c = sk.face?.cover[k]
       return c && c.minMm < 0 ? (-c.minMm).toFixed(1) : null
     }
+    const nose = out1('nasalCartilages')
+    out.push({
+      en: `The face is that surface's generic face, not his. The nose is the model's own${nose ? ` and smaller than his: his nasal cartilages come through the skin by up to ${nose} mm` : ''}; a transverse ridge crosses the bridge of the nose where the skin was lifted over his nasal bones. A ragged crease runs from the outer corner of each eye, and there is a jagged pit in the skin at the jugular notch.`,
+      zh: `面部是该体表自带的通用面孔，不是他本人的。鼻是模型自己的鼻${nose ? `，比他的小：他的鼻软骨露出皮肤最多 ${nose} mm` : ''}；鼻梁上有一道横嵴，是皮肤被他的鼻骨顶起形成的。两眼外眦处各有一道不平整的皱褶，颈静脉切迹处的皮肤有一个带棱角的小凹。`,
+    })
     const ring = out1('palpebralOrbicularisOculi')
+    const outer = out1('orbitalOrbicularisOculi')
     const cornea = out1('cornea')
     const lip = out1('lip')
-    const through = [ring ? `the inner (palpebral) ring of orbicularis oculi by up to ${ring} mm` : '', cornea ? `the cornea by ${cornea} mm` : '', lip ? `the lips by ${lip} mm` : ''].filter(Boolean)
-    const throughZh = [ring ? `眼轮匝肌内环（睑部）最多 ${ring} mm` : '', cornea ? `角膜 ${cornea} mm` : '', lip ? `唇 ${lip} mm` : ''].filter(Boolean)
+    const through = [ring ? `the inner (palpebral) ring of orbicularis oculi by up to ${ring} mm` : '', outer ? `its outer (orbital) ring by up to ${outer} mm` : '', cornea ? `the cornea by ${cornea} mm` : '', lip ? `the lips by ${lip} mm` : ''].filter(Boolean)
+    const throughZh = [ring ? `眼轮匝肌内环（睑部）最多 ${ring} mm` : '', outer ? `外环（眶部）最多 ${outer} mm` : '', cornea ? `角膜 ${cornea} mm` : '', lip ? `唇 ${lip} mm` : ''].filter(Boolean)
     const fv = sk.resolution?.shipped.face
     out.push({
-      en: `The face is that surface's generic face, not his: the nose is large and the rim of the nostrils is rough, there is a small spike of skin at the outer corner of each eye and a jagged pit at the jugular notch. The eyes and the mouth are not openings — the lids are one sheet of skin over the globe and the lips meet in a crease. There the skin was deliberately not pushed out${through.length ? `, and what lies under it comes through: ${through.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm); the rest of the skin is simplified.` : ''}`,
-      zh: `面部是该体表自带的通用面孔，不是他本人的：鼻偏大，鼻孔缘粗糙，两眼外眦处各有一个皮肤尖刺，颈静脉切迹处有一个带棱角的小凹。眼和口都不是开口——眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶。这些地方的皮肤有意不外推${throughZh.length ? `，因此有结构露出皮肤：${throughZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
+      en: `The eyes and the mouth of the skin are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease. There the skin was deliberately not pushed out${through.length ? `, and what lies under it comes through: ${through.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm); the rest of the skin is simplified.` : ''}`,
+      zh: `皮肤上的眼和口都不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶。这些地方的皮肤有意不外推${throughZh.length ? `，因此有结构露出皮肤：${throughZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
     })
   }
   const nf = (report.skinPackage as { notFitted?: { caution: { zh: string; en: string } } } | undefined)?.notFitted
