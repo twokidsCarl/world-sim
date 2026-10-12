@@ -396,7 +396,7 @@ export class Renderer {
     const zc = view.rot[2]! * dx + view.rot[5]! * dy + view.rot[8]! * dz
     // 平滑的探针半径：在画面上是固定的几个像素，所以离得越远抹得越多；换成 Å 后设个上限
     // the probe radius for smoothing: a fixed few pixels on screen, so the farther away the more is wiped; capped once converted to Å
-    const probe = (style.smooth ?? 0) > 0 ? Math.min(14, ((style.smooth ?? 0) * Math.max(1, Math.max(w, h) / 1500)) / pxPerA) : 0
+    const probe = (style.smooth ?? 0) > 0 ? Math.min(style.smoothMax ?? 14, ((style.smooth ?? 0) * Math.max(1, Math.max(w, h) / 1500)) / pxPerA) : 0
     const zFront = Math.min(zc + b.radius + 3 + probe, Number.isFinite(view.clipFront) ? view.clipFront + 3 + probe : Infinity)
     const zBack = zc - b.radius - 3 - probe
 
@@ -593,6 +593,8 @@ export class Renderer {
     gl.uniform1i(this.u(c, 'u_layered'), layers > 0 ? 1 : 0)
     gl.uniform3f(this.u(c, 'u_inkTint'), style.inkTint ?? 0, style.inkShade ?? 0.35, pen)
     gl.uniform1f(this.u(c, 'u_fogShade'), style.fog.shade ?? 0)
+    // 膜厚约 40 Å；带子比 62 Å 宽的地方不算侧面 / a membrane is about 40 Å thick; a band wider than 62 Å is not counted as edge-on
+    gl.uniform3f(this.u(c, 'u_mid'), style.membraneMidline ?? 0, 62 * pxPerA, Math.max(6, 22 * pxPerA))
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     gl.bindVertexArray(null)
     return t

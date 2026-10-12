@@ -22,7 +22,7 @@ import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '..
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
 import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
-import { chainCentre, complexes, placeTemplate, ringSites, subMolecule, templateOf } from '../infer/idealise'
+import { chainCentre, complexes, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
 import { placedAtomCount } from '../scene/build'
@@ -391,8 +391,11 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
       panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
       outside.push(panel)
     }
-    // 原模型里只留膜 / only the membrane is kept from the original model
-    for (const a of model.assemblies) a.groups = a.groups.filter((g) => g.chains.every((ci) => model.entities[model.chains[ci]!.entity]!.kind === 'lipid'))
+    // 膜也理想化：一条边缘光滑、宽度均匀的球壳，厚度取自模拟里的膜。原模型里的东西在这种画法下都不画了。
+    // the membrane is idealised too: a spherical shell of smooth edges and even width, as thick as the simulated one. Nothing of the original model is drawn in this drawing any more.
+    for (const a of model.assemblies) a.groups = []
+    outside.unshift(make(shellMembrane(membrane.centre, membrane.inner, membrane.outer, `${model.id}:membrane`), `${model.id}:membrane`, '膜（理想化的球壳）', 'Membrane (idealised shell)', [IDENTITY], () => MEMBRANE_LCH, () => ['膜', 'membrane']))
+    outside[0]!.spec.source = { ...outside[0]!.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
     tilts.sort((a, b) => a - b)
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
   }
@@ -717,8 +720,7 @@ export const useStore = create<State>((set, get) => ({
             if (st.slab) st.slab = 0.5
             // 线用填色的深一号，不用近黑：分子又小又密时黑线会盖住颜色，他画密的场景时线很柔和
             // lines take a deeper shade of the fill rather than near-black: with small, crowded molecules black line smothers the colour, and his line is soft in crowded scenes
-            st.inkTint = 0.9
-            st.inkShade = 0.34
+            st.inkShade = 0.3
           }
           return st
         })(),

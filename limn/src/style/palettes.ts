@@ -51,6 +51,13 @@ export interface Tone {
    * Goodsell's paintings copies of one molecule are nearly one colour, told apart by line and tone.
    */
   hueStep?: number
+  /**
+   * 同一种分子的各条链完全同色（不在明度上交替）。概念“蛋白”：他画的一个复合体是一个颜色的一整块，
+   * 不按链分出深浅的条纹。
+   * Chains of one kind of molecule take exactly one colour (no alternation in lightness). The
+   * concept "protein": a complex in his paintings is one block of one colour, not striped by chain.
+   */
+  flatChains?: boolean
 }
 
 /** Molecule pictures: bright on white. Sampled: L 0.75-0.84, C up to 0.20. */
@@ -64,4 +71,4 @@ export const TONE_MOLECULE: Tone = { L: 0.8, C: 0.165, carbonDrop: 0.036, carbon
  */
 export const TONE_PAINTED: Tone = { L: 0.81, C: 0.125, carbonDrop: 0.0, carbonLift: 0.0, hueStep: 4 }
 /** Landscapes: greyer and a little darker. Sampled: L about 0.72, C about 0.11. */
-export const TONE_LANDSCAPE: Tone = { L: 0.76, C: 0.125, carbonDrop: 0.0, carbonLift: 0.0, hueStep: 3 }
+export const TONE_LANDSCAPE: Tone = { L: 0.76, C: 0.125, carbonDrop: 0.0, carbonLift: 0.0, hueStep: 0, flatChains: true }

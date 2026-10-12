@@ -187,3 +187,31 @@ export function placeTemplate(t: Template, centre: V3, sites: V3[]): Float32Arra
     return frameToFrame(t.origin, x, y, t.up, [centre[0] + d[0] * t.distance, centre[1] + d[1] * t.distance, centre[2] + d[2] * t.distance], X, Y, d)
   })
 }
+
+/**
+ * 一层理想的球形膜：在内外半径之间一层层地铺小球，够密，画出来是一条光滑的带子。
+ * 模拟里的膜是起伏的，切开后边缘参差；Goodsell 画的膜是一条边缘光滑、宽度均匀的带子。厚度取自数据。
+ * An ideal spherical membrane: small spheres laid layer upon layer between the inner and outer
+ * radius, dense enough to draw as a smooth band. A simulated membrane undulates and its cut edge
+ * is ragged; the membrane Goodsell paints is a band of smooth edges and even width. The thickness
+ * is taken from the data.
+ */
+export function shellMembrane(centre: V3, inner: number, outer: number, id: string, spacing = 8): Molecule {
+  const pos: number[] = []
+  const layers = Math.max(2, Math.round((outer - inner) / spacing) + 1)
+  for (let l = 0; l < layers; l++) {
+    const r = inner + ((outer - inner) * l) / (layers - 1)
+    const n = Math.round((4 * Math.PI * r * r) / (spacing * spacing))
+    const g = Math.PI * (3 - Math.sqrt(5))
+    for (let i = 0; i < n; i++) {
+      const y = 1 - (2 * (i + 0.5)) / n, q = Math.sqrt(1 - y * y)
+      pos.push(centre[0] + Math.cos(g * i) * q * r, centre[1] + y * r, centre[2] + Math.sin(g * i) * q * r)
+    }
+  }
+  const n = pos.length / 3
+  return {
+    id, title: 'membrane', atomCount: n, pos: new Float32Array(pos), element: new Uint8Array(n).fill(1), radius: new Float32Array(n).fill(spacing * 0.8),
+    chainOf: new Uint32Array(n), isTrace: new Uint8Array(n), residue: new Int32Array(n).fill(1),
+    chains: [{ asymId: 'MEM', authAsymId: 'MEM', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id: 'membrane', description: 'membrane', kind: 'lipid' }], assemblies: [],
+  }
+}

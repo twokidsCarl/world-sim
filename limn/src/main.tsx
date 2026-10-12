@@ -23,4 +23,37 @@ async function snap(name: string, longSide = 1400): Promise<string> {
   return ((await res.json()) as { path: string }).path
 }
 import { refine } from './refine/loop'
-Object.assign(window, { limn: { stage, store: useStore, snap, refine } })
+/**
+ * 把 sim.json 里的每张卡片依次载入、各存一张图（名字是 <轮次>-<卡片 id>），用来拼总览（research/goodsell/sheet.py）。
+ * 在后台跑，进度写在 limn.sheetState 里。
+ * Load every card of sim.json in turn and save a picture of each (named <round>-<card id>), for the
+ * contact sheet (research/goodsell/sheet.py). It runs in the background, with progress in limn.sheetState.
+ */
+const sheetState = { done: 0, total: 0, failed: [] as string[], running: false }
+async function sheet(round: string, size = 520): Promise<void> {
+  if (sheetState.running) return
+  const cards = ((await (await fetch('/sim.json')).json()) as { cards: { id: string; url: string }[] }).cards
+  Object.assign(sheetState, { done: 0, total: cards.length, failed: [], running: true })
+  for (const c of cards) {
+    const q = new URLSearchParams(c.url.split('?')[1] ?? '')
+    const s = useStore.getState()
+    const before = s.sceneRev
+    useStore.setState({ error: '' })
+    if (q.get('model')) void s.loadCatalog(q.get('model')!)
+    else if (q.get('neuron')) void s.loadNeuron(q.get('neuron')!)
+    else if (q.get('cell')) void s.loadCell(q.get('cell')!)
+    else if (q.get('id')) void s.loadId(q.get('id')!)
+    for (let i = 0; i < 180; i++) {
+      await new Promise((r) => setTimeout(r, 500))
+      const now = useStore.getState()
+      if ((now.sceneRev !== before && !now.busy) || now.error) break
+    }
+    await new Promise((r) => setTimeout(r, 1800))
+    if (useStore.getState().sceneRev !== before && !useStore.getState().error) await snap(`${round}-${c.id}`, size)
+    else sheetState.failed.push(c.id)
+    sheetState.done++
+  }
+  sheetState.running = false
+}
+
+Object.assign(window, { limn: { stage, store: useStore, snap, refine, sheet, sheetState } })
