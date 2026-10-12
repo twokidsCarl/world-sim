@@ -1,0 +1,57 @@
+{
+ "_doc": {
+  "zh": "伤害性退缩反射（屈肌反射）：判定、潜伏期和姿势目标。这是疼痛行为的计算模型，用于教学；被模拟的身体没有主观体验。关节用 rig.json 的关节 id（{S} 代入 L 或 R），自由度用英文名称的开头匹配，不写死下标。角度是相对于静止姿势的增量，运行时再限制在该自由度的活动范围内。哪些关节动、往哪个方向有出处；动多少度没有出处，全部是假设。",
+  "en": "The nociceptive withdrawal (flexion) reflex: decision, latency and pose targets. This is a computational model of pain behaviour for teaching; the simulated body has no subjective experience. Joints are rig.json joint ids ({S} becomes L or R) and a dof is matched by the start of its English name, not by a fixed index. Angles are increments on the rest pose, clamped to the dof's range at run time. Which joints move and in which direction is sourced; by how many degrees is not - every angle is an assumption."
+ },
+ "threshold": { "value": 4, "unit": "NRS", "assumption": true, "note": { "zh": "假设：刺激–反应函数给出的强度达到 4/10 时发生退缩。依据只是 thorell2022 的观察——评分不到 4/10 的反射很少；真人的反射阈与痛阈相近但并不相同，且随姿势、预期而变。", "en": "Assumption: withdrawal happens when the stimulus-response function gives 4 out of 10. The only basis is the observation in thorell2022 that reflexes rated below 4 on 0-10 were rare; in people the reflex threshold is near but not equal to the pain threshold and varies with posture and expectation." } },
+ "motorVelocity": { "value": 50, "unit": "m/s", "assumption": true, "note": { "zh": "假设：运动神经传导速度取教科书的量级，没有打开出处。", "en": "Assumption: motor nerve conduction velocity of textbook order; no source was opened." } },
+ "spinalDelay": { "value": 0.005, "unit": "s", "assumption": true, "note": { "zh": "假设：脊髓内多突触传递的时间。", "en": "Assumption: time for the polysynaptic relay within the cord." } },
+ "electromechanicalDelay": { "value": 0.05, "unit": "s", "assumption": true, "note": { "zh": "假设：从肌电开始到肢体开始移动。", "en": "Assumption: from EMG onset to the limb starting to move." } },
+ "pose": {
+  "rise": { "value": 0.15, "unit": "s", "assumption": true, "note": { "zh": "假设：到达目标姿势的时间常数。", "en": "Assumption: time constant of reaching the target pose." } },
+  "hold": { "value": 1, "unit": "s", "assumption": true, "note": { "zh": "假设：刺激结束后保持屈曲的时间。", "en": "Assumption: how long flexion is held after the stimulus ends." } },
+  "release": { "value": 0.8, "unit": "s", "assumption": true, "note": { "zh": "假设：回到原姿势的时间常数。", "en": "Assumption: time constant of returning to the previous pose." } },
+  "minFraction": { "value": 0.3, "assumption": true, "note": { "zh": "假设：刚到阈值时的幅度占满幅的比例；幅度随强度线性增加，强度 10 时为满幅。", "en": "Assumption: the fraction of full amplitude right at threshold; amplitude grows linearly with intensity and is full at 10." } }
+ },
+ "reference": {
+  "lower": {
+   "latency": { "value": 0.0957, "sd": 0.0235, "unit": "s", "source": "thorell2022", "note": { "zh": "足底电刺激到同侧胫骨前肌肌电的潜伏期（健康对照）。不参与计算，用来与模型算出的潜伏期对照。", "en": "Latency from electrical stimulation of the sole to EMG of the ipsilateral tibialis anterior (healthy controls). Not used in the computation; shown against the latency the model derives." } },
+   "window": { "value": [0.05, 0.15], "unit": "s", "source": "thorell2022", "note": { "zh": "RII（50–90 ms）加 RIII（90–150 ms）两个成分的范围。", "en": "The span of the RII (50-90 ms) and RIII (90-150 ms) components." } }
+  },
+  "upper": {
+   "latency": { "value": 0.078, "sd": 0.011, "unit": "s", "source": "eckert2013", "note": { "zh": "示指电刺激到三角肌后束肌电的潜伏期；肱桡肌为 86 ± 12 ms。不参与计算。", "en": "Latency from electrical stimulation of the index finger to EMG of the posterior deltoid; 86 ± 12 ms for brachioradialis. Not used in the computation." } },
+   "window": { "value": [0.05, 0.15], "unit": "s", "assumption": true, "note": { "zh": "假设：上肢沿用下肢反射的时间窗。", "en": "Assumption: the lower-limb window is reused for the upper limb." } }
+  }
+ },
+ "patterns": {
+  "lower": {
+   "name": { "zh": "下肢屈肌退缩：髋、膝屈曲，踝背屈", "en": "Lower-limb flexor withdrawal: hip and knee flexion, ankle dorsiflexion" },
+   "source": "krewer2025",
+   "efferentJoint": "knee_{S}",
+   "targets": [
+    { "joint": "hip_{S}", "dof": "^flexion", "degrees": { "value": 40, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度；方向（屈髋）见 krewer2025。", "en": "Assumed full-scale angle; the direction (hip flexion) after krewer2025." } } },
+    { "joint": "knee_{S}", "dof": "^flexion", "degrees": { "value": 60, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度；方向（屈膝）见 krewer2025。", "en": "Assumed full-scale angle; the direction (knee flexion) after krewer2025." } } },
+    { "joint": "ankle_{S}", "dof": "^dorsiflexion", "degrees": { "value": 15, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度；刺激足底中、前部引起背屈（krewer2025）。", "en": "Assumed full-scale angle; stimulation of the mid- and forefoot sole gives dorsiflexion (krewer2025)." } } }
+   ],
+   "variants": [
+    {
+     "whenTerritory": ["medialCalcaneal"],
+     "name": { "zh": "足跟受刺激：踝改为跖屈", "en": "Heel stimulated: the ankle plantar-flexes instead" },
+     "source": "krewer2025",
+     "replace": { "joint": "ankle_{S}", "dof": "^dorsiflexion", "degrees": { "value": -15, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度；刺激足跟引起跖屈（krewer2025）。", "en": "Assumed full-scale angle; stimulation of the heel gives plantar flexion (krewer2025)." } } }
+    }
+   ]
+  },
+  "upper": {
+   "name": { "zh": "上肢退缩：屈肘，肩后伸并稍外展，把手向后外方撤回", "en": "Upper-limb withdrawal: elbow flexion with shoulder extension and slight abduction, pulling the hand back and outwards" },
+   "source": "eckert2013",
+   "efferentJoint": "elbow_{S}",
+   "targets": [
+    { "joint": "elbow_{S}", "dof": "^flexion", "degrees": { "value": 60, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度；肱桡肌、肱二头肌参与（eckert2013）。", "en": "Assumed full-scale angle; brachioradialis and biceps take part (eckert2013)." } } },
+    { "joint": "gh_{S}", "dof": "^flexion", "degrees": { "value": -20, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度（负值 = 后伸）；三角肌后束最先活动，合力指向后外侧（eckert2013）。", "en": "Assumed full-scale angle (negative = extension); the posterior deltoid is first to act and the resultant force points posterior-laterally (eckert2013)." } } },
+    { "joint": "gh_{S}", "dof": "^abduction", "degrees": { "value": 10, "unit": "deg", "assumption": true, "note": { "zh": "假设的满幅角度；合力的外侧分量（eckert2013）。", "en": "Assumed full-scale angle; the lateral component of the resultant force (eckert2013)." } } }
+   ],
+   "variants": []
+  }
+ }
+}

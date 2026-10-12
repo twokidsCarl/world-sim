@@ -1,0 +1,260 @@
+{
+ "_doc": {
+  "zh": "疼痛输入模型（src/painmodel/）所用数值的出处。这是疼痛生理与行为的计算模型，用于教学；被模拟的身体没有主观体验。每条出处都实际打开过；“opened”写明是怎么读的（Europe PMC 的开放全文、PDF 文本，或经摘要工具读取的网页——后一种的引文没有逐字核对）。只取事实和数字，不复制表格或图。",
+  "en": "Sources of the numbers used by the pain input model (src/painmodel/). This is a computational model of pain physiology and behaviour for teaching; the simulated body has no subjective experience. Every source was actually opened; 'opened' states how it was read (open full text from Europe PMC, text of a PDF, or a web page read through a summarising tool - quotations obtained that way were not checked character by character). Facts and numbers only; no table or figure is reproduced."
+ },
+ "sources": [
+  {
+   "id": "dubin2010",
+   "citation": "Dubin AE, Patapoutian A. Nociceptors: the sensors of the pain pathway. J Clin Invest 2010;120(11):3760-3772.",
+   "doi": "10.1172/JCI42843",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2964977/",
+   "license": "© 2010 American Society for Clinical Investigation; free to read on PMC; facts only",
+   "opened": "PMC page through a summarising fetch tool (first 100,000 characters of the page); the quoted sentences were returned by the tool and not checked character by character",
+   "supports": {
+    "zh": "C 纤维传导速度 0.4–1.4 m/s；A 纤维伤害感受器约 5–30 m/s（多数在较慢的 Aδ 范围）；伤害性温度约 >40–45 °C 或 <15 °C；人的 C-MH 多觉型伤害感受器在 39–51 °C 激活；冷痛阈约 15 °C 且不如热痛阈精确；第一痛（刺痛）由 A 纤维、第二痛（灼痛）由 C 纤维和 I 型 A-MH 介导；多觉型是最常见的 C 纤维类型。",
+    "en": "C-fibre conduction velocity 0.4-1.4 m/s; A-fibre nociceptors about 5-30 m/s (most in the slower Aδ range); noxious temperatures above about 40-45 °C or below about 15 °C; human C-MH polymodal nociceptors active at 39-51 °C; cold pain threshold about 15 °C and less precise than that for heat; first pain (pricking) carried by A fibres, second pain (burning) by C fibres and type I A-MH; polymodal units are the most common C-fibre type."
+   }
+  },
+  {
+   "id": "jin2018",
+   "citation": "Jin QQ, Wu GQ, Peng WW, Xia XL, et al. Somatotopic representation of second pain in the primary somatosensory cortex of humans and rodents. J Neurosci 2018.",
+   "doi": "10.1523/JNEUROSCI.3654-17.2018",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6001037/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "引言中的陈述（引自他人）：Aδ 传入约 15 m/s、C 传入约 1 m/s，因此一次强的皮肤伤害性刺激引起先后两种感觉——Aδ 相关的刺痛样第一痛和 C 相关的灼痛样第二痛；刺激手背时激光诱发电位 N2–P2 的峰在约 200–350 ms。",
+    "en": "Statements in its introduction (citing others): Aδ afferents about 15 m/s and C afferents about 1 m/s, hence a double sensation after one intense cutaneous nociceptive stimulus - an Aδ-related pricking first pain then a C-related burning second pain; the N2-P2 complex of laser-evoked potentials peaks at about 200-350 ms for the hand dorsum."
+   }
+  },
+  {
+   "id": "rolke2006",
+   "citation": "Rolke R, Baron R, Maier C, Tölle TR, Treede R-D, et al. Quantitative sensory testing in the German Research Network on Neuropathic Pain (DFNS): standardized protocol and reference values. Pain 2006;123:231-243.",
+   "doi": "10.1016/j.pain.2006.01.041",
+   "url": "https://doi.org/10.1016/j.pain.2006.01.041",
+   "license": "© 2006 International Association for the Study of Pain; not open access; facts only",
+   "opened": "text extracted from a PDF copy of the article found on the web; the online Appendix 2 with the per-region mean values was NOT opened",
+   "supports": {
+    "zh": "DFNS 方案：热刺激基线 32 °C、探头 9.0 cm²、升温 1 °C/s、上下限 0 和 50 °C；针刺刺激器平头直径 0.2 mm、力 8–512 mN，最强的力约为平均机械痛阈的 8 倍；压痛计探头 1 cm²、50 kPa/s；wind-up：同一针刺力 10 次、1 次/秒，约 5 次后达到平台；所有参数面部比足部敏感，针刺痛阈以手部最不敏感；疼痛阈女性低于男性；左右无差别。各部位的均值只在图和在线附录里，本项目没有取到。",
+    "en": "The DFNS protocol: thermode baseline 32 °C, contact area 9.0 cm², ramp 1 °C/s, cut-offs 0 and 50 °C; pinprick stimulators with a flat tip of 0.2 mm diameter and forces of 8-512 mN, the strongest being about eight times the mean mechanical pain threshold; pressure algometer with a 1 cm² probe at 50 kPa/s; wind-up: ten pinpricks of one force at 1/s, a plateau after about five stimuli; the face more sensitive than the foot for every parameter, the hand least sensitive for the pinprick threshold; pain thresholds lower in women; no left-right difference. The per-region means are only in a figure and in the online appendix and were not obtained."
+   }
+  },
+  {
+   "id": "gonzalezduarte2016",
+   "citation": "González-Duarte A, et al. Normative values of quantitative sensory testing in Hispanic Latino population. Brain Behav 2016;6(7):e00466.",
+   "doi": "10.1002/brb3.466",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4951613/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "其表 4 把 DFNS（n = 180）的均值与本研究并列：热痛阈手 43.3 °C、足 44.4 °C；冷痛阈手 13.2 °C、足 12.6 °C（DFNS 的数字是经此文转引的，没有对照原文附录）。本研究（墨西哥，n = 50）：热痛阈手 42.7 °C、足 43.7 °C；冷痛阈手 19.7 °C、足 18.9 °C。方法：30 × 30 mm 探头、基线 32 °C、1 °C/s。",
+    "en": "Its Table 4 sets the DFNS means (n = 180) beside its own: heat pain threshold 43.3 °C hand and 44.4 °C foot; cold pain threshold 13.2 °C hand and 12.6 °C foot (the DFNS figures are quoted through this paper and were not checked against the original appendix). Its own sample (Mexico, n = 50): heat pain 42.7 °C hand, 43.7 °C foot; cold pain 19.7 °C hand, 18.9 °C foot. Method: 30 × 30 mm thermode, baseline 32 °C, 1 °C/s."
+   }
+  },
+  {
+   "id": "cosentino2023",
+   "citation": "Cosentino G, Antoniazzi E, et al. Age-, gender- and body site-specific reference values of thermal Quantitative Sensory Testing in the Italian population using the Q-sense device. Neurol Sci 2023;44:4481-4489.",
+   "doi": "10.1007/s10072-023-06929-z",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10641050/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "84 名健康人，同一方法测三处（右手大鱼际、右眶上区、右足背）。此处“热痛阈”的判据是 VAS 达到 50–60 mm，不是刚开始痛。18–39 岁组中位数：男 手 44.1、眶上 41.8、足背 43.7 °C；女 手 41.1、眶上 38.0、足背 41.6 °C。足高于手、手高于三叉神经区；女性在手和面部低于男性。",
+    "en": "84 healthy people, one method at three sites (right thenar, right supraorbital region, right foot dorsum). Its 'heat pain threshold' is the temperature at which the VAS reaches 50-60 mm, not the first pain. Medians of the 18-39 group: men 44.1 hand, 41.8 supraorbital, 43.7 foot dorsum °C; women 41.1, 38.0, 41.6 °C. Foot higher than hand, hand higher than the trigeminal area; women lower than men on hand and face."
+   }
+  },
+  {
+   "id": "mischkowski2019",
+   "citation": "Mischkowski D, Palacios-Barrios EE, et al. Pain or nociception? Subjective experience mediates the effects of acute noxious heat on autonomic responses - corrected and republished. Pain 2019.",
+   "doi": "10.1097/j.pain.0000000000001573",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6553960/",
+   "license": "Free to read on PMC (author manuscript; the fetch tool reported it as a work of the United States Government); facts only",
+   "opened": "PMC page through a summarising fetch tool (first 100,000 characters); quotations not checked character by character",
+   "supports": {
+    "zh": "前臂掌侧接触热刺激（16 × 16 mm 探头，1.5 s 从 32 °C 升到目标温度，持续 8 s，34–50 °C）。全体受试者的痛阈为 44.8 °C（logistic 回归）；温度每升高 1 °C，0–10 VAS 评分升高 0.82（多层回归系数 B）；皮肤电反应和瞳孔扩大随疼痛强度增大，刺激期间（4–8 s）和之后（8–12 s）都存在。量表 0 = 完全没有感觉，10 = 能想象的最痛。",
+    "en": "Contact heat on the volar forearm (16 × 16 mm thermode, 1.5 s ramp from 32 °C to target, 8 s, 34-50 °C). Pain threshold across participants 44.8 °C (logistic regression); the 0-10 VAS rating rises by 0.82 per °C (multilevel regression coefficient B); skin conductance and pupil dilation responses grow with pain intensity, during (4-8 s) and after (8-12 s) the stimulus. Scale: 0 = no sensation at all, 10 = most pain imaginable."
+   }
+  },
+  {
+   "id": "stevensWikipedia",
+   "citation": "Wikipedia contributors. Stevens's power law (table of exponents after S. S. Stevens).",
+   "doi": "",
+   "url": "https://en.wikipedia.org/wiki/Stevens%27s_power_law",
+   "license": "CC BY-SA 4.0",
+   "opened": "web page through a summarising fetch tool; Stevens's original publications were not opened",
+   "supports": {
+    "zh": "幂函数 ψ = k·I^a 的指数：热痛（辐射热）1.0；冷（金属接触前臂）1.0；手掌受压（静力）1.1；电击 3.5。同页的保留意见：指数是多人平均数据的拟合，个体差异很大。",
+    "en": "Exponents of ψ = k·I^a: thermal pain (radiant heat) 1.0; cold (metal contact on the arm) 1.0; pressure on the palm (static force) 1.1; electric shock 3.5. The page's own caveat: exponents are fits to data averaged over observers and individuals differ widely."
+   }
+  },
+  {
+   "id": "suzuki2023",
+   "citation": "Suzuki H, Tahara S, Mitsuda M, et al. Reference intervals and sources of variation of pressure pain threshold for quantitative sensory testing in a Japanese population. Sci Rep 2023;13:13043.",
+   "doi": "10.1038/s41598-023-40201-w",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10415310/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "158 名健康日本成人（男 85、女 73），1 cm² 探头，30 kPa/s。压痛阈中位数（kPa），男 / 女：腰椎旁肌 548 / 526；臀大肌 564 / 462；股四头肌（髌上 10 cm）415 / 310；胫骨前肌 514 / 379；距腓前韧带 390 / 336。",
+    "en": "158 healthy Japanese adults (85 men, 73 women), 1 cm² probe, 30 kPa/s. Median pressure pain thresholds (kPa), men / women: lumbar paravertebral muscle 548 / 526; gluteus maximus 564 / 462; quadriceps (10 cm above the patella) 415 / 310; tibialis anterior 514 / 379; anterior talofibular ligament 390 / 336."
+   }
+  },
+  {
+   "id": "mailloux2021",
+   "citation": "Mailloux C, Beaulieu LD, et al. Within-session test-retest reliability of pressure pain threshold and mechanical temporal summation in healthy subjects. PLoS One 2021;16(1):e0245278.",
+   "doi": "10.1371/journal.pone.0245278",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7802960/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "24 名健康人，1 cm² 探头，约 0.5 kg/cm²/s。压痛阈均值 ± SD（kPa，首测、三次平均）：S1 棘突 522.9 ± 206.9；腰竖脊肌 551.1 ± 201.8；腕背（头状骨）370.5 ± 149.0；前臂屈肌 369.5 ± 122.6。时间总和：256 mN 针刺 10 次、1 Hz，10 次中最高评分减去单次评分（0–10）：手背 2.29 ± 1.45，腰部 1.92 ± 1.32。",
+    "en": "24 healthy people, 1 cm² probe, about 0.5 kg/cm²/s. Pressure pain thresholds, mean ± SD (kPa, test occasion, mean of three): S1 spinous process 522.9 ± 206.9; lumbar erector spinae 551.1 ± 201.8; dorsal wrist (capitate) 370.5 ± 149.0; wrist flexor muscles of the forearm 369.5 ± 122.6. Temporal summation: ten 256 mN pinpricks at 1 Hz, highest rating of the series minus the rating of a single stimulus (0-10): hand dorsum 2.29 ± 1.45, low back 1.92 ± 1.32."
+   }
+  },
+  {
+   "id": "kell2024",
+   "citation": "Kell PA, Vore CN, Hahn BJ, et al. Optimizing temporal summation of heat pain using a constant contact heat stimulator. J Pain Res 2024;17:583-598.",
+   "doi": "10.2147/JPR.S439862",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10860393/",
+   "license": "CC BY-NC 3.0 (Dove Medical Press); facts only",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "时间总和是 C 纤维介导的现象，需要相同的伤害性刺激以至少 0.33 Hz 重复；第二痛出现在伤害性刺激后约 1–1.5 s（均为其引言和方法中引用他人的陈述）。",
+    "en": "Temporal summation is a C-fibre-mediated phenomenon requiring identical noxious stimuli repeated at 0.33 Hz or faster; second pain occurs about 1-1.5 s after a noxious stimulus (both are statements in its introduction and methods citing others)."
+   }
+  },
+  {
+   "id": "thorell2022",
+   "citation": "Thorell O, Ydrefors J, Svantesson M, Gerdle B, Olausson H, Mahns DA, Nagi SS. Investigations into an overlooked early component of painful nociceptive withdrawal reflex responses in humans. Front Pain Res 2023;3:1112614.",
+   "doi": "10.3389/fpain.2022.1112614",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9872115/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "足底电刺激（5 个 1 ms 方波，200 Hz），记录同侧胫骨前肌肌电。健康对照的反射潜伏期 95.7 ± 23.5 ms；RIII 成分通常取 90–150 ms，更早的 50–90 ms 成分（RII）同样常见、同样疼痛；分析只纳入评分至少 4/10 的疼痛反应，不痛的反射很少。文献中 RII/RIII 的分界在 60–115 ms 之间。",
+    "en": "Electrical stimulation of the sole (five 1 ms square pulses at 200 Hz), EMG from the ipsilateral tibialis anterior. Reflex latency in healthy controls 95.7 ± 23.5 ms; the RIII component is conventionally taken at 90-150 ms, the earlier 50-90 ms component (RII) was as common and as painful; the analysis kept responses rated at least 4 on 0-10, and non-painful reflexes were rare. The RII/RIII cut-off in the literature lies anywhere between 60 and 115 ms."
+   }
+  },
+  {
+   "id": "eckert2013",
+   "citation": "Eckert N, Riley ZA. The nociceptive withdrawal reflex does not adapt to joint position change and short-term motor practice. F1000Res 2013;2:158 (version 2).",
+   "doi": "10.12688/f1000research.2-158.v2",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3886789/",
+   "license": "CC BY",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "示指电刺激（10 个 200 μs 脉冲，300 Hz），10 人。上肢退缩反射是整个肢体的回撤，不随肘、肩角度改变；腕部的合力指向后外侧；记录的肌肉有肱桡肌、肱二头肌、肱三头肌、三角肌前束和后束、拇短展肌。肌电起始潜伏期：三角肌后束 78 ± 11 ms，肱桡肌 86 ± 12 ms。",
+    "en": "Electrical stimulation of the index finger (ten 200 μs pulses at 300 Hz), 10 people. The upper-limb withdrawal reflex is a generalised withdrawal of the limb, unchanged across elbow and shoulder angles; the resultant force at the wrist points posterior-laterally; muscles recorded were brachioradialis, biceps brachii, triceps, anterior and posterior deltoid, abductor pollicis brevis. EMG onset latencies: posterior deltoid 78 ± 11 ms, brachioradialis 86 ± 12 ms."
+   }
+  },
+  {
+   "id": "krewer2025",
+   "citation": "Krewer C, Fischer E, Spaich EG, et al. Stimulation of the withdrawal reflex in gait training after stroke: a systematic review and meta-analysis. Artif Organs 2025.",
+   "doi": "10.1111/aor.14894",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12179755/",
+   "license": "CC BY-NC 4.0; facts only",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "综述中的陈述（引自他人）：反射呈模块化，各肌肉有各自的皮肤感受野；刺激足底中部和前部引起踝背屈，刺激足跟引起踝跖屈；健康人步行中，足跟离地期的刺激主要引起膝和髋屈曲，足趾离地期的刺激引起踝背屈。",
+    "en": "Statements in the review (citing others): the reflex is modular, each muscle having its own cutaneous receptive field; stimulation of the mid- and forefoot sole elicits ankle dorsiflexion, stimulation of the heel elicits plantar flexion; in healthy walkers stimulation near heel-off mainly gives knee and hip flexion and near toe-off gives ankle dorsiflexion."
+   }
+  },
+  {
+   "id": "rapalis2023",
+   "citation": "Rapalis A, Piartli P, Jankauskaitė, Marozas, Kaniusas. Induced pain affects auricular and body biosignals: from cold stressor to deep breathing. Front Physiol 2023;14:1090696.",
+   "doi": "10.3389/fphys.2023.1090696",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9887109/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "78 名健康志愿者，左手浸入 7 °C 水 2 分钟（冷加压试验）。相对于之前的静息期，中位数变化：RR 间期 −5.5%，收缩压 +12.6%，舒张压 +13.4%。",
+    "en": "78 healthy volunteers, left hand in 7 °C water for 2 minutes (cold pressor test). Median changes against the preceding rest: RR interval -5.5 %, systolic pressure +12.6 %, diastolic pressure +13.4 %."
+   }
+  },
+  {
+   "id": "oka2008",
+   "citation": "Oka T, Hayashida S, Kaneda Y, et al. Green odor attenuates a cold pressor test-induced cardiovascular response in healthy adults. Biopsychosoc Med 2008;2:2.",
+   "doi": "10.1186/1751-0759-2-2",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2259378/",
+   "license": "CC BY 2.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "对照条件（溶剂）下，右手浸入 4 °C 冰水 1 分钟：开始后 1 分钟收缩压 +16.2 ± 4.1 mmHg、舒张压 +7.7 ± 3.0 mmHg（均值 ± SEM，n = 9）；血压在开始后 1 分钟最高，3 分钟内回到基线。",
+    "en": "In the control (vehicle) condition, right hand in 4 °C ice water for 1 minute: systolic +16.2 ± 4.1 mmHg and diastolic +7.7 ± 3.0 mmHg one minute after the start (mean ± SEM, n = 9); pressure was highest at one minute and back at baseline within three minutes."
+   }
+  },
+  {
+   "id": "xia2017",
+   "citation": "Xia Y, Wu D, Gao Z, Liu X, et al. Association between beat-to-beat blood pressure variability and vascular elasticity in normal young adults during the cold pressor test. Medicine (Baltimore) 2017;96(8):e6000.",
+   "doi": "10.1097/MD.0000000000006000",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5348138/",
+   "license": "CC BY-SA 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally; its Table 2 is an image and was not read",
+   "supports": {
+    "zh": "80 名健康青年（25.2 ± 2.4 岁）仰卧静息：收缩压 111.7 ± 9.7 mmHg，舒张压 62.9 ± 6.6 mmHg，心率 67.1 ± 10.3 次/分。冷刺激期血压和心率显著高于基线和恢复期。",
+    "en": "80 healthy young adults (25.2 ± 2.4 years) resting supine: systolic 111.7 ± 9.7 mmHg, diastolic 62.9 ± 6.6 mmHg, heart rate 67.1 ± 10.3 beats/min. Pressure and heart rate were significantly higher in the cold phase than at baseline and in recovery."
+   }
+  },
+  {
+   "id": "scheuren2023",
+   "citation": "Scheuren PS, Bösch S, Rosner J, et al. Priming of the autonomic nervous system after an experimental human pain model. J Neurophysiol 2023.",
+   "doi": "10.1152/jn.00064.2023",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10625835/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "20 名健康女性，针刺和热刺激的强度逐人调到评分 4/10。交感皮肤反应幅度（基线期）：针刺 1.1 ± 1.4 μS、0.9 ± 1.0 μS；热 1.2 ± 1.3 μS、1.1 ± 1.2 μS。背景皮肤电导水平（对照条件）2.5 ± 1.3 μS（针刺时）和 3.4 ± 1.7 μS（热刺激时）。",
+    "en": "20 healthy women; pinprick and heat stimuli individually adjusted to a rating of 4 on 0-10. Sympathetic skin response amplitudes (before the pain model): pinprick 1.1 ± 1.4 μS and 0.9 ± 1.0 μS; heat 1.2 ± 1.3 μS and 1.1 ± 1.2 μS. Background skin conductance level (control condition) 2.5 ± 1.3 μS during pinprick and 3.4 ± 1.7 μS during heat."
+   }
+  },
+  {
+   "id": "wildemeersch2018",
+   "citation": "Wildemeersch D, Peeters N, Saldien V, Vercauteren M, Hans G. Pain assessment by pupil dilation reflex in response to noxious stimulation in anaesthetized adults. Acta Anaesthesiol Scand 2018.",
+   "doi": "10.1111/aas.13129",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6099429/",
+   "license": "CC BY-NC 4.0; facts only",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "34 名丙泊酚麻醉下的病人（不是清醒的人）。给阿片类药之前：基线瞳孔直径 4.00 mm（IQR 3.30–4.50），引起扩瞳所需的电刺激强度中位数 30 mA，瞳孔扩大反射幅度 1.11 mm（IQR 0.91–1.47），变化 28%（IQR 21–39）。",
+    "en": "34 patients under propofol anaesthesia (not awake people). Before opioid: baseline pupil diameter 4.00 mm (IQR 3.30-4.50), median electrical stimulation needed 30 mA, pupillary dilation reflex amplitude 1.11 mm (IQR 0.91-1.47), a variation of 28 % (IQR 21-39)."
+   }
+  },
+  {
+   "id": "wagenaar2025",
+   "citation": "Wagenaar-Tison A, Deldar Z, et al. Pupil dilation evoked by painful electrical stimulation is abolished during pain inhibition by distraction. J Physiol Sci 2025;75:100026.",
+   "doi": "10.1016/j.jphyss.2025.100026",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12150053/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "方法中的陈述：对伤害性反应这类低层次的过程，预期瞳孔反应的峰在伤害性刺激开始后约 500 ms。腓肠神经电刺激的屈肌反射潜伏期约 90 ms。",
+    "en": "A statement in its methods: for a low-level process such as a nociceptive response the pupil response is expected to peak about 500 ms after the onset of the noxious stimulus. The flexion reflex to sural nerve stimulation has a latency of about 90 ms."
+   }
+  },
+  {
+   "id": "collongues2018",
+   "citation": "Collongues N, Samama B, et al. Quantitative and qualitative normative dataset for intraepidermal nerve fibers using skin biopsy. PLoS One 2018;13(1):e0191614.",
+   "doi": "10.1371/journal.pone.0191614",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5784950/",
+   "license": "CC BY 4.0",
+   "opened": "Europe PMC open full text (XML), searched locally",
+   "supports": {
+    "zh": "300 名健康人小腿远端皮肤活检：表皮内神经纤维密度中位数 9.29 条/mm，男 7.63、女 10.74，随年龄下降。只有这一个部位。",
+    "en": "Distal-leg skin biopsies of 300 healthy people: median intraepidermal nerve fibre density 9.29 fibres/mm, 7.63 in men and 10.74 in women, falling with age. This one site only."
+   }
+  },
+  {
+   "id": "mancini2014",
+   "citation": "Mancini F, Bauleo A, Cole J, Lui F, Porro CA, Haggard P, Iannetti GD. Whole-body mapping of spatial acuity for pain and touch. Ann Neurol 2014;75(6):917-924.",
+   "doi": "10.1002/ana.24179",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4143958/",
+   "license": "CC BY",
+   "opened": "Europe PMC open full text (XML), searched locally; the per-site thresholds are only in figures and were not read",
+   "supports": {
+    "zh": "指尖是痛觉和触觉空间分辨力最高的部位；在上肢有毛皮肤上，痛觉与触觉的空间分辨力沿近远方向的梯度相反；前额处两者相近。各部位的阈值只在图里。",
+    "en": "The fingertip has the highest spatial acuity for both pain and touch; on the hairy skin of the upper limb the acuity for pain and for touch follow opposite proximal-distal gradients; on the forehead they are similar. The per-site thresholds are in figures only."
+   }
+  }
+ ]
+}

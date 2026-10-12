@@ -1,0 +1,123 @@
+{
+ "_doc": {
+  "zh": "伤害感受的外周和时间参数。这是疼痛生理的计算模型，用于教学；被模拟的身体没有主观体验。约定：每个数字都在一个带 source（sources.json 里的 id）或 assumption: true（本项目的假设，note 说明理由）的对象里；derived: true 表示由出处里的数字算出来的。各部位的阈值在 regions.json。",
+  "en": "Peripheral and temporal parameters of nociception. This is a computational model of pain physiology for teaching; the simulated body has no subjective experience. Convention: every number sits in an object that carries either a source (an id of sources.json) or assumption: true (an assumption of this project, with the reason in its note); derived: true marks a number computed from the source's figures. Per-site thresholds are in regions.json."
+ },
+ "scale": {
+  "max": { "value": 10, "unit": "NRS", "source": "mischkowski2019", "note": { "zh": "0–10 评分：0 没有痛，10 能想象的最痛；与现有输出端（表情、发声）的 0–10 强度相同。", "en": "0-10 rating: 0 no pain, 10 the worst imaginable; the same 0-10 intensity the existing output side (face, voice) takes." } }
+ },
+ "fibres": {
+  "Adelta": {
+   "name": { "zh": "Aδ 纤维（有髓，快）", "en": "Aδ fibres (thinly myelinated, fast)" },
+   "role": { "zh": "第一痛：刺痛、定位清楚", "en": "First pain: pricking, well localised" },
+   "velocity": { "value": 15, "unit": "m/s", "source": "jin2018" },
+   "velocityRange": { "value": [5, 30], "unit": "m/s", "source": "dubin2010", "note": { "zh": "A 纤维伤害感受器的范围，多数在较慢的 Aδ 一端。", "en": "Range for A-fibre nociceptors, most at the slower Aδ end." } }
+  },
+  "C": {
+   "name": { "zh": "C 纤维（无髓，慢）", "en": "C fibres (unmyelinated, slow)" },
+   "role": { "zh": "第二痛：灼痛、弥散、持续", "en": "Second pain: burning, diffuse, lasting" },
+   "velocity": { "value": 1, "unit": "m/s", "source": "jin2018" },
+   "velocityRange": { "value": [0.4, 1.4], "unit": "m/s", "source": "dubin2010" }
+  }
+ },
+ "modalities": {
+  "pinprick": {
+   "name": { "zh": "针刺（锐性机械刺激）", "en": "Pinprick (sharp mechanical)" },
+   "quantity": "force",
+   "unit": "mN",
+   "receptors": { "zh": "Aδ 机械伤害感受器（锐痛），其次是多觉型 C 纤维", "en": "Aδ mechano-nociceptors (sharp pain), then polymodal C fibres" },
+   "receptorSource": "dubin2010",
+   "probe": { "tipDiameterMm": { "value": 0.2, "unit": "mm", "source": "rolke2006", "note": { "zh": "DFNS 针刺刺激器的平头直径；本模型的针刺阈值只对这种探头成立，不随接触面积换算。", "en": "Flat tip of the DFNS pinprick stimulators; the pinprick threshold of this model holds for that probe only and is not rescaled with contact area." } } },
+   "forceRange": { "value": [8, 512], "unit": "mN", "source": "rolke2006" },
+   "threshold": { "value": 64, "unit": "mN", "source": "rolke2006", "derived": true, "note": { "zh": "由“最强的针刺力（512 mN）约为平均机械痛阈的 8 倍”得出：512 / 8 = 64 mN。各部位的均值没有取到。", "en": "From 'the strongest pinprick force (512 mN) was about eight times the mean mechanical pain threshold': 512 / 8 = 64 mN. Per-site means were not obtained." } },
+   "response": {
+    "form": "log2",
+    "gain": { "value": 1, "unit": "NRS per doubling of force above threshold", "assumption": true, "note": { "zh": "假设。没有取到针刺力–疼痛评分函数的数字（DFNS 的 MPS 只在图和附录里）。每翻一倍加 1 分，使 512 mN 得 3/10：健康人对针刺的评分很低。", "en": "Assumption. No numbers of the pinprick force-rating function were obtained (the DFNS MPS is in a figure and the appendix only). One point per doubling puts 512 mN at 3 out of 10: healthy people rate pinpricks low." } }
+   },
+   "firstPainShare": { "value": 0.8, "assumption": true, "note": { "zh": "假设：针刺的痛主要是 Aδ 介导的锐痛（方向见 dubin2010），比例没有出处。", "en": "Assumption: pinprick pain is mostly the Aδ-mediated sharp pain (direction after dubin2010); the share has no source." } }
+  },
+  "pressure": {
+   "name": { "zh": "钝性压力", "en": "Blunt pressure" },
+   "quantity": "pressure",
+   "unit": "kPa",
+   "receptors": { "zh": "深部组织（肌肉、骨膜）和皮肤的高阈值机械感受器，Aδ 和 C 纤维", "en": "High-threshold mechanoreceptors of deep tissue (muscle, periosteum) and skin, Aδ and C fibres" },
+   "receptorSource": "dubin2010",
+   "probe": { "areaMm2": { "value": 100, "unit": "mm2", "source": "suzuki2023", "note": { "zh": "压痛阈都是用 1 cm² 探头测的；别的接触面积按“压强 = 力 / 面积”换算，这个换算本身是假设。", "en": "Pressure pain thresholds were all measured with a 1 cm² probe; other contact areas are converted as pressure = force / area, a conversion that is itself an assumption." } } },
+   "response": {
+    "form": "ratio",
+    "gain": { "value": 6, "unit": "NRS per (P/PPT − 1)^exponent", "assumption": true, "note": { "zh": "假设。没有取到阈上压力–疼痛函数的数字；取 6 使压强约为阈值的 2.5 倍时接近 10。", "en": "Assumption. No numbers for the supra-threshold pressure-pain function were obtained; 6 brings the rating near 10 at about 2.5 times the threshold." } },
+    "exponent": { "value": 1.1, "source": "stevensWikipedia", "note": { "zh": "Stevens 的“手掌受压”感觉强度指数，是压力感觉而不是压痛的指数，这里借用。", "en": "Stevens's exponent for the sensation of static pressure on the palm - pressure sensation, not pressure pain; borrowed here." } }
+   },
+   "firstPainShare": { "value": 0.3, "assumption": true, "note": { "zh": "假设：钝痛以慢成分为主。", "en": "Assumption: blunt, aching pain is mostly the slow component." } }
+  },
+  "pinch": {
+   "name": { "zh": "捏夹", "en": "Pinch" },
+   "quantity": "pressure",
+   "unit": "kPa",
+   "receptors": { "zh": "皮肤和皮下的高阈值机械感受器，Aδ 和 C 纤维", "en": "High-threshold mechanoreceptors of skin and subcutis, Aδ and C fibres" },
+   "receptorSource": "dubin2010",
+   "thresholdFactor": { "value": 1, "assumption": true, "note": { "zh": "假设：没有找到皮肤捏夹痛阈的开放数据，直接用同一部位的压痛阈（那是垂直压在肌肉或骨上测的，不是捏起皮褶）。", "en": "Assumption: no open data on pinch pain thresholds were found, so the pressure pain threshold of the same site is used as it is (which was measured pressing on muscle or bone, not on a lifted skin fold)." } },
+   "defaultAreaMm2": { "value": 25, "unit": "mm2", "assumption": true, "note": { "zh": "假设：没有给接触面积时，按 5 × 5 mm 的夹口计。", "en": "Assumption: a 5 × 5 mm jaw when no contact area is given." } },
+   "response": {
+    "form": "ratio",
+    "gain": { "value": 6, "unit": "NRS per (P/PPT − 1)^exponent", "assumption": true, "note": { "zh": "假设，同钝性压力。", "en": "Assumption, as for blunt pressure." } },
+    "exponent": { "value": 1.1, "source": "stevensWikipedia", "note": { "zh": "同钝性压力，借用的指数。", "en": "As for blunt pressure; a borrowed exponent." } }
+   },
+   "firstPainShare": { "value": 0.6, "assumption": true, "note": { "zh": "假设：捏夹先是锐痛。", "en": "Assumption: a pinch is sharp at first." } }
+  },
+  "heat": {
+   "name": { "zh": "热", "en": "Heat" },
+   "quantity": "temperature",
+   "unit": "°C",
+   "receptors": { "zh": "多觉型 C 纤维（C-MH）；有毛皮肤的 II 型 A-MH 介导第一痛", "en": "Polymodal C fibres (C-MH); type II A-MH of hairy skin for first pain" },
+   "receptorSource": "dubin2010",
+   "nociceptorRange": { "value": [39, 51], "unit": "°C", "source": "dubin2010", "note": { "zh": "人的 C-MH 的激活温度范围，仅用于说明。", "en": "Activation range of human C-MH units; shown for explanation only." } },
+   "skinBaseline": { "value": 32, "unit": "°C", "source": "rolke2006", "note": { "zh": "测阈值时探头的基线温度。", "en": "Thermode baseline temperature in threshold testing." } },
+   "testedLimit": { "value": 50, "unit": "°C", "source": "rolke2006", "note": { "zh": "测试设备的上限；超过它的温度本模型仍按线性外推并封顶在 10，组织损伤（烫伤）没有模拟。", "en": "Upper cut-off of the test devices; beyond it the model still extrapolates linearly and caps at 10, and tissue injury (burns) is not modelled." } },
+   "response": {
+    "form": "linear",
+    "gain": { "value": 0.82, "unit": "NRS per °C above threshold", "source": "mischkowski2019", "note": { "zh": "前臂掌侧、8 s 接触热的回归系数。原量表的 0 是“完全没有感觉”，所以阈值处的评分并不是 0；本模型把它当作阈上每度的增量。", "en": "Regression coefficient for 8 s contact heat on the volar forearm. The original scale's 0 is 'no sensation at all', so the rating at threshold is not 0 there; the model uses it as the increment per degree above threshold." } },
+    "exponent": { "value": 1, "source": "stevensWikipedia", "note": { "zh": "Stevens 的热痛指数为 1，即线性。", "en": "Stevens's exponent for thermal pain is 1, i.e. linear." } }
+   },
+   "firstPainShare": { "value": 0.4, "assumption": true, "note": { "zh": "假设：热痛的第一痛较弱，以 C 纤维的灼痛为主。", "en": "Assumption: heat gives a weaker first pain and is dominated by the C-fibre burning pain." } }
+  },
+  "cold": {
+   "name": { "zh": "冷", "en": "Cold" },
+   "quantity": "temperature",
+   "unit": "°C",
+   "receptors": { "zh": "冷敏感的 Aδ 和 C 伤害感受器", "en": "Cold-sensitive Aδ and C nociceptors" },
+   "receptorSource": "dubin2010",
+   "approximateThreshold": { "value": 15, "unit": "°C", "source": "dubin2010", "note": { "zh": "综述给的大致冷痛阈，仅用于说明；计算用 regions.json 的分部位阈值。", "en": "The review's approximate cold pain threshold; shown for explanation only, the per-site thresholds of regions.json are what is computed with." } },
+   "testedLimit": { "value": 0, "unit": "°C", "source": "rolke2006", "note": { "zh": "测试设备的下限；冻伤没有模拟。", "en": "Lower cut-off of the test devices; cold injury is not modelled." } },
+   "response": {
+    "form": "linear",
+    "gain": { "value": 0.82, "unit": "NRS per °C below threshold", "assumption": true, "note": { "zh": "假设：没有取到冷痛的温度–评分斜率，借用热痛的斜率。", "en": "Assumption: no temperature-rating slope for cold pain was obtained; the heat slope is borrowed." } },
+    "exponent": { "value": 1, "source": "stevensWikipedia", "note": { "zh": "Stevens 的“冷”感觉指数为 1（冷觉，不是冷痛）。", "en": "Stevens's exponent for cold is 1 (cold sensation, not cold pain)." } }
+   },
+   "firstPainShare": { "value": 0.3, "assumption": true, "note": { "zh": "假设：冷痛以慢的深部酸痛为主。", "en": "Assumption: cold pain is mostly a slow, deep ache." } }
+  }
+ },
+ "temporal": {
+  "centralDelay": { "value": 0.15, "unit": "s", "assumption": true, "note": { "zh": "假设：从冲动到达脊髓（或脑干）到可以算作“感觉到”的时间，Aδ 和 C 用同一个值。取 0.15 s 使手部第一痛落在 200–350 ms（jin2018 所引手背激光诱发电位 N2–P2 的潜伏期）之内。", "en": "Assumption: the time from arrival at the spinal cord (or brainstem) to what may count as perceived, the same for Aδ and C. 0.15 s puts first pain from the hand inside 200-350 ms (the N2-P2 latency of laser-evoked potentials for the hand dorsum quoted by jin2018)." } },
+  "firstPain": {
+   "rise": { "value": 0.03, "unit": "s", "assumption": true, "note": { "zh": "假设的上升时间常数。", "en": "Assumed rise time constant." } },
+   "decay": { "value": 0.3, "unit": "s", "assumption": true, "note": { "zh": "假设的消退时间常数。", "en": "Assumed decay time constant." } },
+   "adaptTo": { "value": 0.5, "assumption": true, "note": { "zh": "假设：持续刺激下快成分适应到的比例；同时慢成分补上，使持续刺激的总强度趋于刺激–反应函数给出的值。", "en": "Assumption: the fraction the fast component adapts to under a sustained stimulus; the slow component makes up the difference so that the total tends to the value of the stimulus-response function." } },
+   "adaptTime": { "value": 2, "unit": "s", "assumption": true, "note": { "zh": "假设的适应时间常数。", "en": "Assumed adaptation time constant." } }
+  },
+  "secondPain": {
+   "rise": { "value": 0.5, "unit": "s", "assumption": true, "note": { "zh": "假设的上升时间常数。", "en": "Assumed rise time constant." } },
+   "decay": { "value": 1.5, "unit": "s", "assumption": true, "note": { "zh": "假设的消退时间常数。", "en": "Assumed decay time constant." } },
+   "reportedDelay": { "value": [1, 1.5], "unit": "s", "source": "kell2024", "note": { "zh": "文献所述第二痛出现在刺激后的时间（手、前臂）；不参与计算，用来与模型由路径长度算出的潜伏期对照。", "en": "The reported delay of second pain after a stimulus (hand, forearm); not used in the computation, shown against the latency the model derives from path length." } }
+  },
+  "temporalSummation": {
+   "minHz": { "value": 0.33, "unit": "Hz", "source": "kell2024" },
+   "plateauStimuli": { "value": 5, "source": "rolke2006" },
+   "referenceForce": { "value": 256, "unit": "mN", "source": "mailloux2021", "note": { "zh": "测得这些增量时用的针刺力（10 次、1 Hz）。本模型把同样的增量用于任何阈上的重复刺激，这是假设。", "en": "The pinprick force with which these increments were measured (ten stimuli at 1 Hz). The model applies the same increment to any supra-threshold repeated stimulus, which is an assumption." } },
+   "gain": {
+    "hand": { "value": 2.29, "unit": "NRS", "source": "mailloux2021" },
+    "other": { "value": 1.92, "unit": "NRS", "source": "mailloux2021", "note": { "zh": "腰部测得的值，用于手以外的所有部位（这一推广是假设）。", "en": "Measured on the low back; used for every site but the hand (that extension is an assumption)." } }
+   }
+  }
+ }
+}
