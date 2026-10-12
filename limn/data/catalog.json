@@ -153,7 +153,7 @@
       "attribution": "Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
       "citation": "Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
       "link": "http://download.yasara.org/petworld/synvesicle/index.html",
-      "merge": "Glutamate"
+      "merge": "Glutamate", "dots": 8
     },
     {
       "id": "presynaptic-bouton",

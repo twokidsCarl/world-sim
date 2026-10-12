@@ -56,6 +56,18 @@ export interface Placement {
   oneId?: boolean
   /** 名字匹配的实体衬在后面（同 keepBack，但只对这些实体）/ entities whose name matches line the back (as keepBack, for those entities only) */
   lining?: RegExp
+  /**
+   * 概念“小分子”：一大群小分子每个画成一粒这么大半径（Å）的圆点，各自描边。这是夸张：真实的分子小得多。
+   * The concept "small molecule": each of a crowd of small molecules is drawn as one dot of this radius in Å, outlined on its own. This is an exaggeration: the real molecule is much smaller.
+   */
+  dots?: number
+  /**
+   * 概念“核酸”：珠子模型的纤维（每节一两个大珠子）收成中线上的一个球，粗细取真实的：双链 20 Å，单链 10 Å。
+   * 模型里的珠子比真实的核酸粗一倍，画出来像一条条粗管子。
+   * The concept "nucleic acid": a fibre given as beads (one or two large beads a piece) collapses to one sphere on its midline, of the real width: 20 Å for a duplex, 10 Å for a single strand.
+   * The model's beads are twice as wide as real nucleic acid and draw as fat tubes.
+   */
+  trueFibre?: boolean
   /** 剖开时不切它（叠在密度图里的原子模型）/ left whole by a cut (an atomic model shown inside a density map) */
   noCut?: boolean
 }
@@ -187,6 +199,31 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
       }
       for (let k = 0; k < 3; k++) c[k]! /= Math.max(1, n)
     }
+    // 概念“小分子”：这一组的原子收成质心上的一粒圆点 / the concept "small molecule": the atoms of this group collapse into one dot at their centroid
+    const dots = g.fine && !g.lipid && !g.fibre && ps.every((p) => p.perCopy && p.dots) ? ps[0]!.dots! : 0
+    if (dots) {
+      let firstAtom = true
+      for (const r of g.runs)
+        for (let i = r.start; i < r.start + r.count; i++) {
+          posr[i * 4] = c[0]!
+          posr[i * 4 + 1] = c[1]!
+          posr[i * 4 + 2] = c[2]!
+          posr[i * 4 + 3] = firstAtom ? dots : 0.01
+          firstAtom = false
+        }
+    }
+    if (g.fibre && ps.every((p) => p.perCopy && p.trueFibre) && g.runs.every((r) => r.count <= 2)) {
+      const beads = g.runs.reduce((n, r) => n + r.count, 0)
+      let firstAtom = true
+      for (const r of g.runs)
+        for (let i = r.start; i < r.start + r.count; i++) {
+          posr[i * 4] = c[0]!
+          posr[i * 4 + 1] = c[1]!
+          posr[i * 4 + 2] = c[2]!
+          posr[i * 4 + 3] = firstAtom ? (beads >= 2 ? 10 : 5) : 0
+          firstAtom = false
+        }
+    }
     for (const p of ps)
       for (const op of g.operators) {
         const m = p.matrix ? mul(p.matrix, op) : op
@@ -208,11 +245,11 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
           // 膜总是衬在后面：切片的背面不切它，里面的空处露出的是膜的内壁（按深度取深一号的色调），不是白纸
           // a membrane always lines the back: it is not cut at the back of a slab, so empty space inside shows its inner wall (in the deeper tone of its depth) and not paper
-          data[k + 15] = p.keepBack || g.lined || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
+          data[k + 15] = p.keepBack || g.lined || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : dots ? 1 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         // 同一种纤维的各组（模型按碱基种类分了组）共用一个编号，连成一条 / the groups of one kind of fibre (the model groups them by base) share one id and join into one strand
-        iids[o * 2 + 1] = !p.perCopy || g.lipid || p.oneId ? p.molecule : segments.has(g) ? p.molecule + segments.get(g)![o - first]! : g.fibre ? p.molecule + 3_900_000 + mol.chains[g.chainIndex]!.entity : p.molecule + 1 + (g.merged ? groupCopy : copy)
+        iids[o * 2 + 1] = !p.perCopy || g.lipid || p.oneId ? p.molecule : segments.has(g) ? p.molecule + segments.get(g)![o - first]! : g.fibre ? p.molecule + 3_900_000 + mol.chains[g.chainIndex]!.entity : p.molecule + 1 + (g.merged && !dots ? groupCopy : copy)
         o++
         copy++
       }
@@ -221,8 +258,8 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
   return { posr, color: atomColors(mol, coloring, tone, annotation), ids, draws, instances: { count: total, data, ids: iids }, subunitSize: mol.triangles ? MESH_PART_SIZE : subunitSize(mol), segments: mol.segments, triangles: mol.triangles, solid: mol.solid }
 }
 
-/** 一小段纤维有多长（Å）：每隔这么长换一个编号，于是画出一道横线，像绳子的纹 / the length of a short stretch of fibre in Å: the id changes this often, which draws a cross-line, like the lay of a rope */
-const FIBRE_STRETCH = 110
+/** 一段纤维有多长（Å）：每隔这么长换一个编号。取得很长，线上就没有横纹（他画的 DNA 是光滑的长线）；并排的两股仍然是不同的编号 / the length of a stretch of fibre in Å: the id changes this often. It is long, so a strand has no cross-marks (he paints DNA as a smooth long strand), while two strands side by side still have different ids */
+const FIBRE_STRETCH = 2000
 
 /**
  * 模型把一条纤维（比如整条染色体）按碱基种类拆成几组，每组里的各节是按走向排的，但组与组之间的先后丢了。

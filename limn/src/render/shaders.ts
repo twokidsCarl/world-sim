@@ -108,7 +108,9 @@ void main() {
   }
   // 切片：整个分子按它的中心留或丢，所以切片里的分子都是完整的；永不切的东西（标志 3）除外
   // a slab: a molecule is kept or dropped whole by its centre, so every molecule in the slab is complete; except what is never cut (flag 3)
-  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5) && (mc.w < 5.5 || mc.w > 7.5))) {
+  // 纤维（标志 8）的切片厚一倍半：他画里的 DNA 是长长的一股，从前面的分子后面穿过去
+  // a fibre (flag 8) gets a slab two and a half times as deep: in his paintings DNA runs long, passing behind the molecules in front
+  if (zcut > u_clipFront || r <= 0.0 || (zcut < (mc.w > 7.5 ? u_clipBack - (u_clipFront - u_clipBack) * 1.5 : u_clipBack) && !(mc.w > 2.5 && mc.w < 3.5) && (mc.w < 5.5 || mc.w > 7.5))) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }

@@ -171,14 +171,33 @@ describe('fibre stretches', () => {
     const c = g(Array.from({ length: 60 }, (_, i) => at(i * 12, 300)))
     const seg = fibreSegments(m, [a, b, c])
     const ia = seg.get(a)!, ib = seg.get(b)!, ic = seg.get(c)!
-    // 每 110 Å 换一个编号：60 节 × 12 Å 大约 7 段 / a new id every 110 Å: 60 pieces of 12 Å make about 7 stretches
-    expect(new Set(ia).size).toBeGreaterThanOrEqual(6)
-    expect(new Set(ia).size).toBeLessThanOrEqual(8)
+    // 每 2000 Å 才换一个编号：60 节 × 12 Å 是同一段，线上没有横纹 / a new id only every 2000 Å: 60 pieces of 12 Å are one stretch, with no cross-marks along the strand
+    expect(new Set(ia).size).toBe(1)
     // 反着走的那一股在同一处用同一个编号 / the strand running the other way has the same id at the same place
     let same = 0
     for (let i = 0; i < 60; i++) if (ib[59 - i] === ia[i]) same++
     expect(same).toBeGreaterThan(50)
     // 远处的那一条有自己的编号 / the one far away has ids of its own
     expect(Array.from(ic).some((v) => ia.includes(v))).toBe(false)
+  })
+})
+
+describe('small molecules as dots, bead fibres at true width', () => {
+  it('collapses a small molecule to one sphere of the given radius with an id of its own per copy', async () => {
+    const { buildItem } = await import('../src/scene/build')
+    const op = (x: number) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, 0, 0, 1])
+    // 三个原子的小分子，放两份 / a small molecule of three atoms, placed twice
+    const mol = {
+      atomCount: 3, pos: new Float32Array([0, 0, 0, 3, 0, 0, 0, 3, 0]), element: new Uint8Array([6, 6, 8]), chainOf: new Uint16Array(3), residue: new Uint32Array(3), isTrace: new Uint8Array(3),
+      chains: [{ id: 'A', entity: 0, start: 0, count: 3 }], entities: [{ kind: 'ligand', description: 'Glutamate' }],
+      assemblies: [{ id: '1', groups: [{ chains: [0], operators: [op(0), op(50)] }] }],
+    } as never
+    const { defaultColoring } = await import('../src/style/assign')
+    const { TONE_LANDSCAPE } = await import('../src/style/palettes')
+    const item = buildItem(mol, defaultColoring(mol), TONE_LANDSCAPE, { assembly: '1', molecule: 0, perCopy: true, dots: 8 })
+    expect(item.posr[3]).toBe(8)
+    expect(item.posr[7]).toBeLessThan(0.1)
+    expect(item.posr[0]).toBeCloseTo(1)
+    expect(item.instances.ids[1]).not.toBe(item.instances.ids[3])
   })
 })
