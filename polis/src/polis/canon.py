@@ -97,10 +97,13 @@ def bea(over: dict[str, float], seeds: list[int], n: int = 1000) -> list[Check]:
 # 第一轮的三起：结果已经看过（挤兑要么不发生、要么太大），并据此决定再改一轮模型，所以不再算检验。
 # The first round's three: their results have been seen (a run either did not happen or was far too large) and prompted
 # another round of model changes, so they no longer count as tests.
-SEEN = cal.SEEN
-# 第二轮的两起：设定和标准在第二轮模型改动之前合并。
-# The second round's two: their settings and criteria were merged before the second round of model changes.
-HELD_OUT = ("icici", "fib")
+# 第二轮的两起（ICICI、第一投资银行）：结果同样看过（都是 0/30），也不再算检验。
+# The second round's two (ICICI, First Investment Bank): their results have been seen as well (both 0/30), so they
+# no longer count as tests either.
+SEEN = cal.SEEN + ("icici", "fib")
+# 第三轮的一起：设定、标准和它的 UNEASE 在第三轮模型改动之前合并。
+# The third round's one: its settings, criteria and UNEASE were merged before the third round of model changes.
+HELD_OUT = ("sber",)
 
 
 def judge(record: dict, survived: bool, day: float, amount: float, runners: float, calm: bool) -> dict[str, bool]:

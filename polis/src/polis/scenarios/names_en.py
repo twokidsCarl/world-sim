@@ -17,6 +17,7 @@ TITLE = {
     "kaspi": "The run on Kaspi Bank (2014)",
     "icici": "The run on ICICI Bank (2003)",
     "fib": "The run on First Investment Bank (2014)",
+    "sber": "The run on Sberbank (2014)",
 }
 
 SETTING = {
@@ -54,6 +55,10 @@ SETTING = {
         "Bulgaria, June 2014, a week after the fourth-largest bank was taken over by the central bank. On Friday text "
         "messages, e-mails and phone calls say First Investment Bank is out of cash too, and people rush to its "
         "branches. The bank is sound."
+    ),
+    "sber": (
+        "Russia, December 2014, the day after the rouble collapsed. On Wednesday evening anonymous texts say Sberbank's "
+        "cards will be blocked tomorrow and deposits frozen, and people rush to its cash machines. The bank is sound."
     ),
 }
 
@@ -100,6 +105,11 @@ NAMES = {
         "索非亚中心": "Central Sofia", "普罗夫迪夫": "Plovdiv", "瓦尔纳": "Varna", "布尔加斯": "Burgas", "鲁塞": "Ruse",
         "旧扎戈拉": "Stara Zagora", "普列文": "Pleven", "柳林区": "Lyulin",
         "第一投资银行": "First Investment Bank", "咖啡馆": "Café", "小酒馆": "Tavern", "妇女市场": "Women's Market", "地铁站": "Metro station",
+    },
+    "sber": {
+        "莫斯科中心": "Central Moscow", "圣彼得堡": "St Petersburg", "叶卡捷琳堡": "Yekaterinburg", "新西伯利亚": "Novosibirsk", "喀山": "Kazan",
+        "下诺夫哥罗德": "Nizhny Novgorod", "罗斯托夫": "Rostov", "郊区新城": "New suburb",
+        "储蓄银行": "Sberbank", "咖啡馆": "Café", "食堂": "Canteen", "集市": "Market", "地铁站": "Metro station",
     },
 }  # fmt: skip
 

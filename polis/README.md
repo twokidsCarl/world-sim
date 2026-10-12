@@ -6,7 +6,7 @@
 
 有三个场景。虚构的「通和钱庄挤兑」（`rumor_run`）：一座千余口人的县城，更夫夜里看见钱庄后门往外抬箱子，这句话传开、走样，最后挤垮了一家并不亏空的钱庄。
 
-另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，原本是样本外检验，结果看过之后不再算。另有三个场景（`bac`、`swedbank`、`kaspi`）是第一轮改模型之前写定的样本外检验，结果见下文「数据从哪来」；结果看过之后它们不再算检验。第二轮改模型之前又写定了两个（`icici`、`fib`）。
+另外两个按史料搭：「丰川信用金库挤兑（1973）」（`toyokawa`）和「东亚银行挤兑（2008）」（`bea`），事件顺序取自 `corpus/cases/`，用来检验模型。丰川参与了校准并影响过模型的改动；东亚银行的设定在第一次运行前定下，原本是样本外检验，结果看过之后不再算。另有三个场景（`bac`、`swedbank`、`kaspi`）是第一轮改模型之前写定的样本外检验，结果见下文「数据从哪来」；结果看过之后它们不再算检验。第二轮改模型之前又写定了两个（`icici`、`fib`），第三轮之前写定了一个（`sber`）。
 
 - **人**：人口属性、五项稳定特质（信人、信官面文章、怕吃亏、随大流、读报听讯）、随时间变化的心智状态（信念、恐惧、估计多少人会去取钱），以及揣度他人的层数（0–2 层）。
 - **社会**：家人、邻居、同事、朋友四种关系，加上茶馆、菜场、庙、学堂这些会碰面的场所。
@@ -82,7 +82,7 @@ cd web && bun run test && bun run typecheck
 `corpus/` 是模拟的理论依据和将来的校准目标，每条都带出处。正文是中文，每个文件的 `en:` 块里是英文；`uv run polis corpus` 会报出缺英文的条目。出处的卷期页码（`locator`）没有另译。
 
 - `theory/`：12 张理论卡（谣言、阈值、级联、挤兑、从众……），每张写明机制、可观察的推论，以及引擎里哪一处实现了它——留空的就是还没实现。
-- `cases/`：12 个案例，五个出自文学与典故，七个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行；第一轮留作样本外检验的 2004 年 BAC 圣何塞、2011 年 Swedbank 拉脱维亚、2014 年 Kaspi；第二轮留作检验的 2003 年 ICICI、2014 年保加利亚第一投资银行）。
+- `cases/`：13 个案例，五个出自文学与典故，八个是有记录的真实挤兑（1973 年丰川信用金库、2008 年东亚银行；第一轮留作样本外检验的 2004 年 BAC 圣何塞、2011 年 Swedbank 拉脱维亚、2014 年 Kaspi；第二轮留作检验的 2003 年 ICICI、2014 年保加利亚第一投资银行；第三轮留作检验的 2014 年俄罗斯储蓄银行）。
 - `facts/`：10 条典型事实，带数值、得出条件和与本模拟情境的差距。
 
 出处的 `verified` 只有在实际打开过能证实它的页面之后才为真，`checked` 写明看的是哪一页、证实了什么；没能核实的如实标为假，不进入校准。文字均为转述，没有收录原作文本。
@@ -131,7 +131,11 @@ cd web && bun run test && bun run typecheck
 
   - 同一次运行里，第一轮的三起（现在算拟合过的）也都是 0 / 30：BAC 17 个世界发生挤兑、取走平均 4.0%；Swedbank 18 个世界、平均 3.4%；Kaspi 仍然没有一个世界发生挤兑。丰川 3 个世界像史料，东亚银行 16 个世界发生挤兑、取走平均 2.8%。
   - **这一轮否定的想法**：光加一条"群发消息让人直接行动"的路、再把当局表态调弱，不够。真实案例的规模相差二十倍（0.67% 到 14%），差别来自事发前的处境——一周前货币贬值、一周前另一家银行刚被接管——这些只写在场景的文字里，数值引擎看不到。模型里决定规模的反而是"消息之前传闻流传了多久""当局隔多久表态"，方向与史料相反。
-  - 这两起案例的结果也看过了，再改模型同样要另找新的。入库的那条大模型记录（`samples/`）是按上一版参数生成的，没有重新生成。
+  - 这两起案例的结果也看过了，再改模型同样要另找新的。
+- **第三轮的准备已经写定，模型还没有改。** 想法是给每个场景一个"事发前人心有多不稳"的量，从史料里数出来，不是调出来的。
+  - 规则（`scenarios/context.py`）：挤兑第一天之前三十天内、同一个国家里，(a) 居民的储蓄普遍直接缩水（货币一次或一天之内贬值一成以上，或存款被减记），(b) 一家吸收存款的银行被关闭或接管、储户取不出钱；每有一条记 1。
+  - 前六起真实案例按这条规则的取值：Kaspi、Swedbank、第一投资银行是 1，其余是 0。这条规则是看过它们的结果之后定的，对它们不算检验；Swedbank 取值是 1 而史料里只取走 1.5%，这一处规则本身就对不上。
+  - 新的检验案例只有一起：俄罗斯储蓄银行 2014 年 12 月（卢布暴跌的次日收到群发短信，一周被取走 1.3 万亿卢布，约为个人存款的六分之一），取值是 1。设定、标准和取值先于模型改动合并，没有运行过。只有一起，而且只检验"不稳时规模大"这一个方向；想找一起"事发前平静、规模小、又有金额记录"的新案例，没有找到能核实的。入库的那条大模型记录（`samples/`）是按上一版参数生成的，没有重新生成。
 - 通和场景的**人物、地名、说法都是本项目原创**；丰川、东亚银行和五个检验场景的事件顺序取自语料里的史料转述，人物是匿名代号或虚构的普通储户，街区、人口、存款和关系网是合成的。
 
 ---
@@ -144,7 +148,7 @@ A parallel-society simulator: how a crowd of people decide, how they pass words 
 
 There are three scenarios. The first is the fictional "run on Tonghe Bank (通和钱庄)" (`rumor_run`): a county town of a little over a thousand people, where the night watchman sees chests being carried out of the bank's back door; that one sentence spreads, gets distorted, and in the end brings down a bank that was never insolvent.
 
-The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and it was the out-of-sample test until its result had been seen. Three further scenarios (`bac`, `swedbank`, `kaspi`) were fixed as out-of-sample tests before the first round of model changes; for the result see "Where the data comes from" below. Their results having been seen, they no longer count as tests. Two more (`icici`, `fib`) were fixed before the second round.
+The other two are built from historical records: the "Toyokawa Shinkin Bank run (1973)" (`toyokawa`) and the "Bank of East Asia run (2008)" (`bea`), with the order of events taken from `corpus/cases/`; they exist to test the model. Toyokawa is used in calibration and shaped changes to the model; the Bank of East Asia settings were fixed before the first run and it was the out-of-sample test until its result had been seen. Three further scenarios (`bac`, `swedbank`, `kaspi`) were fixed as out-of-sample tests before the first round of model changes; for the result see "Where the data comes from" below. Their results having been seen, they no longer count as tests. Two more (`icici`, `fib`) were fixed before the second round, and one (`sber`) before the third.
 
 - **People**: demographic attributes, five stable traits (trust in other people, trust in official statements, loss aversion, conformity, attention to newspapers and news), a mental state that changes over time (belief, fear, an estimate of how many others will go to withdraw), and a depth of reasoning about others (0–2 levels).
 - **Society**: four kinds of ties — family, neighbours, colleagues, friends — plus the venues where people run into each other: the teahouse, the market, the temple, the school.
@@ -220,7 +224,7 @@ cd web && bun run test && bun run typecheck
 `corpus/` holds the theoretical basis of the simulation and its future calibration targets; every entry carries its sources. The text is in Chinese, with the English in each file's `en:` block; `uv run polis corpus` reports entries that lack English. Source locators (volume, issue, pages) are not translated separately.
 
 - `theory/`: 12 theory cards (rumour, thresholds, cascades, bank runs, conformity, …), each stating the mechanism, its observable implications, and where in the engine it is implemented — a blank there means it is not implemented yet.
-- `cases/`: 12 cases — five from literature and classical allusion, seven documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008; BAC San José in 2004, Swedbank in Latvia in 2011 and Kaspi Bank in 2014, held out in the first round; ICICI Bank in 2003 and Bulgaria's First Investment Bank in 2014, held out in the second).
+- `cases/`: 13 cases — five from literature and classical allusion, eight documented real bank runs (Toyokawa Shinkin Bank in 1973, Bank of East Asia in 2008; BAC San José in 2004, Swedbank in Latvia in 2011 and Kaspi Bank in 2014, held out in the first round; ICICI Bank in 2003 and Bulgaria's First Investment Bank in 2014, held out in the second; Sberbank in 2014, held out in the third).
 - `facts/`: 10 stylised facts, each with its values, the conditions under which it was obtained, and how far those are from the setting of this simulation.
 
 A source's `verified` is true only after a page that actually confirms it has been opened, and `checked` records which page was read and what it confirmed; sources that could not be verified are honestly marked false and do not enter calibration. All text is paraphrase; no text from the original works is included.
@@ -269,5 +273,9 @@ The engine uses three pieces of external data, all in population synthesis only:
 
   - In the same run the first round's three (now fitted) also score 0 / 30: BAC has a run in 17 worlds with 4.0% withdrawn on average, Swedbank in 18 worlds with 3.4%, and Kaspi still has no run in any world. Toyokawa resembles the record in 3 worlds; the Bank of East Asia has a run in 16 worlds with 2.8% withdrawn on average.
   - **The idea this round refutes**: adding a path by which a mass message moves people directly, and weakening the authorities' statement, is not enough. The real cases differ twentyfold in scale (0.67% to 14%), and the difference lies in what came before: a devaluation a week earlier, another bank taken over a week earlier. Those appear only in each scenario's text; the numeric engine cannot see them. What sets the scale in the model is instead how long the rumour circulated before the message and how soon the authorities spoke, which points the opposite way from the records.
-  - These two results have now been seen as well, so another change to the model needs new cases again. The model-played record in `samples/` was generated with the previous parameters and has not been regenerated.
+  - These two results have now been seen as well, so another change to the model needs new cases again.
+- **The groundwork for a third round is fixed; the model has not been changed yet.** The idea is to give each scenario a number for how unsettled people were beforehand, counted from the record and not tuned.
+  - The rule (`scenarios/context.py`): in the same country during the thirty days before the first day of the run, (a) households at large took a direct loss on their savings (the currency lost a tenth or more in one step or one day, or deposits were written down), (b) a deposit-taking bank was closed or taken over and its depositors could not reach their money; each scores 1.
+  - Under this rule, of the six earlier real cases Kaspi, Swedbank and First Investment Bank score 1 and the rest 0. The rule was chosen after their results had been seen, so it is no test on them; Swedbank scores 1 although only 1.5% was withdrawn there, so on that case the rule itself does not fit.
+  - There is only one new test case: Sberbank in December 2014 (mass texts the day after the rouble collapsed, RUB 1.3 trillion withdrawn in a week, about a sixth of individuals' deposits), which scores 1. Its settings, criteria and score were merged before the model changed and it has not been run. It is a single case and tests one direction only, that unsettled times give a large run; a new case with calm beforehand, a small run and recorded amounts was looked for and none could be verified. The model-played record in `samples/` was generated with the previous parameters and has not been regenerated.
 - In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa, Bank of East Asia and five test scenarios the order of events comes from the corpus's paraphrase of the records, the characters are anonymous labels or invented ordinary depositors, and the districts, population, deposits and network of ties are synthetic.

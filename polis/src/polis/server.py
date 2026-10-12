@@ -85,7 +85,7 @@ class SimulateRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    scenario: Literal["rumor_run", "toyokawa", "bea", "bac", "swedbank", "kaspi", "icici", "fib"] = "rumor_run"
+    scenario: Literal["rumor_run", "toyokawa", "bea", "bac", "swedbank", "kaspi", "icici", "fib", "sber"] = "rumor_run"
     seed: int = Field(1, ge=0, le=1_000_000)
     n: int = Field(1000, ge=100, le=2000)
     response: Literal["notice", "guarantee", "none"] = "notice"
