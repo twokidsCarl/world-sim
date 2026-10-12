@@ -1,0 +1,1171 @@
+{
+ "note": {
+  "zh": "引文核查记录。逐条核对 soma 里“凭记忆”“未打开”“未核实”或没有出处的已发表事实：claim 是仓库里的说法，usedIn 是它被用到的文件和键，opened 写明这次实际打开并读到了什么（出版社全文、PMC 全文、仅摘要、某个 PDF 里的表、仓库里的数据文件，或“无法打开”），supportedValue 只记录在已打开的文字里读到的数值。verdict：verified = 打开的出处支持现用的值；corrected = 出处给出不同的值或不同的定义；unsupported = 打开的出处不支持，或属于没有出处的建模选择；could-not-open = 能定论的出处没能读到；not-audited = 只登记、这次没有核对。本文件只是记录，不改动任何代码或数据；采纳建议时请改相应文件并在那里引用这里的条目 id。数值都来自 2026-10-12 这一次会话里实际打开的文本；经 Internet Archive 读到的全文已在 opened 里注明。没有复制任何受版权保护的表格全文，只摘录事实性数值。未经专业人员审阅。",
+  "en": "A citation audit. It checks, one by one, published facts in soma that were marked 'from memory', 'not opened', 'unverified' or carried no source: `claim` is the statement in the repository, `usedIn` the files and keys that use it, `opened` exactly what was opened and read this time (publisher full text, PMC full text, abstract only, a table in a named PDF, a dataset file in this repository, or 'could not open'), and `supportedValue` holds only numbers read in the opened text. Verdicts: verified = the opened source supports the value as used; corrected = the source gives a different value or definition; unsupported = the sources opened do not support it, or it is a modelling choice with no source; could-not-open = a source that would settle it could not be read; not-audited = listed only, not checked this time. This file is a record and changes no code or data; when adopting a recommendation, edit the file concerned and cite the entry id from here. All numbers come from text actually opened in the session of 2026-10-12; full texts read through the Internet Archive are identified as such under `opened`. No copyrighted table is reproduced in full, only factual values. Not reviewed by a specialist."
+ },
+ "auditedOn": "2026-10-12",
+ "entries": [
+  {
+   "id": "janssen-2000-muscle-sex-ratio",
+   "claim": {
+    "zh": "女性与男性骨骼肌量之比：上半身约 0.60，下半身约 0.67；上下半身的分界取髂嵴最高点。",
+    "en": "Female-to-male skeletal muscle ratio: about 0.60 in the upper body and 0.67 in the lower body; upper and lower body are divided at the top of the iliac crest."
+   },
+   "usedIn": [
+    {
+     "file": "tools/pipeline/female.ts",
+     "key": "MUSCLE_SEX_RATIO",
+     "valueUsed": "upperBody 0.6, lowerBody 0.67; division: 'top of the iliac crest (assumed; not taken from the paper)'"
+    }
+   ],
+   "source": "Janssen I, Heymsfield SB, Wang ZM, Ross R. Skeletal muscle mass and distribution in 468 men and women aged 18-88 yr. J Appl Physiol 2000;89(1):81-88.",
+   "doiOrUrl": "https://doi.org/10.1152/jappl.2000.89.1.81",
+   "opened": "Publisher full text read from Internet Archive copies (the live publisher site returned HTTP 403): HTML snapshot of 2010-02-09 of jap.physiology.org/cgi/content/full/89/1/81 (Methods 'SM Measurement by MRI', Results, Fig. 1 legend, Discussion) and PDF snapshot of 2017-11-06 of jap.physiology.org/content/jap/89/1/81.full.pdf (Table 1).",
+   "supportedValue": "Table 1 (means ± SD). All women (n = 200): total SM 21.0 ± 3.8 kg, lower body 12.2 ± 2.5 kg, upper body 8.4 ± 1.8 kg. All men (n = 268): total 33.0 ± 5.3 kg, lower body 18.1 ± 3.1 kg, upper body 14.1 ± 2.6 kg. Ratios F/M: upper 8.4/14.1 = 0.596, lower 12.2/18.1 = 0.674, total 0.636. Age 18-29 only (40 women, 66 men): upper 8.7/14.3 = 0.608, lower 12.5/18.5 = 0.676, total 21.8/33.7 = 0.647. Discussion: 'women ... had 40% less muscle than men in the upper body, in the lower body gender differences in muscle mass were only 33%'. Division (Methods): transverse MRI images every 40 mm with the L4-L5 intervertebral space as origin, subject prone with arms straight overhead; 'Lower body SM mass was calculated using the images extending from one image below L4-L5 to the foot, whereas upper body SM mass was calculated using the images extending from L4-L5 to the hand'. Fig. 1 legend: upper + lower do not sum to 100 % because a 4-cm gap separates them.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "两个比值与表 1 一致（0.596、0.674，四舍五入为 0.60、0.67）；只看 18–29 岁组也几乎相同（0.61、0.68）。论文的分界是 L4–L5 椎间隙所在的那一张横断面：这一张及以上（含上肢、头颈）算上半身，往下 40 mm 的那一张及以下算下半身。管线用髂嵴最高点：按通常的解剖学说法，两侧髂嵴最高点的连线约在 L4 棘突或 L4–L5 椎间隙水平（这一条本次没有另开出处核对），所以两种分法相差不超过约一个椎体的高度，可以认为相符；female.ts 里“assumed; not taken from the paper”的说明可以改为“论文用 L4–L5 椎间隙，与髂嵴最高点大致同高”。两点差别要知道：论文是按 MRI 断层分，管线是按每块肌肉的质心分，跨过分界的肌肉（腰大肌、竖脊肌、腹壁肌）归属会不同；论文样本 18–88 岁、BMI 16–48，67 % 为白人，亚洲人只占 8 %。",
+    "en": "Both ratios agree with Table 1 (0.596 and 0.674, rounded to 0.60 and 0.67); the 18-29 group alone gives nearly the same (0.61, 0.68). The paper divides at the transverse image through the L4-L5 intervertebral space: that image and everything above it (arms, head and neck included) is upper body, the image 40 mm below and everything under it is lower body. The pipeline uses the top of the iliac crest: by the usual anatomical statement the line joining the tops of the iliac crests crosses the L4 spinous process or the L4-L5 interspace (no source was opened for that statement in this session), so the two divisions differ by no more than about one vertebral height and can be taken to match; the note 'assumed; not taken from the paper' in female.ts can become 'the paper uses the L4-L5 interspace, about level with the top of the iliac crest'. Two differences to keep in mind: the paper splits by MRI slice whereas the pipeline assigns each whole muscle by its centroid, so muscles that cross the level (psoas, erector spinae, abdominal wall) are attributed differently; and the sample is aged 18-88 with BMI 16-48, 67 % Caucasian and only 8 % Asian."
+   }
+  },
+  {
+   "id": "stomion-incisor-display-at-rest",
+   "claim": {
+    "zh": "静止时口裂（上唇下缘）在上颌中切牙切缘上方 2 mm，即静止露齿 2 mm。",
+    "en": "At rest the oral fissure (lower border of the upper lip) lies 2 mm above the incisal edge of the maxillary central incisors, i.e. 2 mm of incisor display at rest."
+   },
+   "usedIn": [
+    {
+     "file": "tools/bodyshape/final_female.py",
+     "key": "INCISOR_SHOW",
+     "valueUsed": "0.002 m; comment: 'a resting incisor display of 1-3 mm is the usual clinical statement; an assumption, not checked against a source'"
+    },
+    {
+     "file": "tools/bodyshape/report-part6.txt",
+     "key": "lower-face remapping note",
+     "valueUsed": "口裂对到上中切牙切缘上方 2 mm"
+    }
+   ],
+   "source": "No source cited in the repository (value from memory). Classic reference: Vig RG, Brundo GC. The kinetics of anterior tooth display. J Prosthet Dent 1978;39(5):502-504.",
+   "doiOrUrl": "https://doi.org/10.1016/S0022-3913(78)80179-6",
+   "opened": "Vig & Brundo 1978 itself: could not open (not open access; not attempted beyond search). Its sex means were read second-hand in the Discussion of Awad et al. 2020 (Europe PMC full text PMC7718042). Three open full texts were read; see additionalSources.",
+   "supportedValue": "Maxillary central incisor display at rest, lips relaxed, measured from the lower border of the upper lip to the incisal edge. Saudi adults (Awad 2020, n = 157): men 2.09 ± 0.92 mm, women 2.40 ± 0.79 mm; age 19-<25: 2.93 ± 0.44 mm, 25-<35: 2.57 ± 0.49, 35-<45: 2.32 ± 0.53, 45-<60: 1.47 ± 0.54, above 60: 0 mm. Pakistani orthodontic patients aged 18-30 (Jeelani 2018, 75 men, 75 women): men 3.72 ± 2.69 mm, women 4.77 ± 2.24 mm. Second-hand in Awad 2020: Vig & Brundo 3.40 mm in women and 1.91 mm in men; Connor & Moshiri 4.09 ± 2.27 mm in women and 1.82 ± 2.80 mm in men; Al-Habahbeh et al. 3.02 ± 1.96 and 2.63 ± 1.15 mm. Awad 2020 Introduction: prosthodontic guidelines recommend 2-4 mm of upper incisor below the relaxed lip.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Awad MA, Alghamdi DS, Alghamdi AT. Visible Portion of Anterior Teeth at Rest and Analysis of Different Smile Characteristics in the Saudi Population of the Jeddah Region. Int J Dent 2020;2020:8859376.",
+     "doiOrUrl": "https://doi.org/10.1155/2020/8859376",
+     "opened": "Europe PMC full text PMC7718042: Methods, Tables 2 and 3, Discussion",
+     "finding": "Caliper measurement from the lower border of the upper lip to the incisal edge; values as listed in supportedValue; display falls with age and is greater in women (P = 0.028)."
+    },
+    {
+     "reference": "Jeelani W, Fida M, Shaikh A. The maxillary incisor display at rest: analysis of the underlying components. Dental Press J Orthod 2018;23(6):48-55.",
+     "doiOrUrl": "https://doi.org/10.1590/2177-6709.23.6.048-055.oar",
+     "opened": "Europe PMC full text PMC6340193: abstract, Introduction, Table 1",
+     "finding": "Men 3.72 ± 2.69 mm, women 4.77 ± 2.24 mm (P = 0.011), ages 18-30; pretreatment orthodontic records, so not a normal-occlusion sample. Introduction: pleasing smiles have a display at rest of 2-4 mm."
+    },
+    {
+     "reference": "Yang LL, Peng P, Lin YH, Zhou T, Ren XX, Wang WQ, Li XX. Comparison of the Anterior Tooth and Lip Esthetic Characteristics of Hani and Han Youth in China When Speaking. Clin Cosmet Investig Dermatol 2021;14:285-290.",
+     "doiOrUrl": "https://doi.org/10.2147/CCID.S295149",
+     "opened": "Europe PMC full text PMC8001037: Methods, Table 1",
+     "finding": "The only Chinese sample found: upper central incisor display at rest 0.30 ± 0.10 mm in 132 Han and 0.73 ± 0.16 mm in 166 Hani subjects from Yunnan, measured on video frames; sexes pooled, men aged 18-72. The dispersion printed as 'Mean±SD' is implausibly small for an SD, and the value is far below every caliper study, so it should not be used as a norm."
+    }
+   ],
+   "notes": {
+    "zh": "2 mm 落在已打开文献的范围内：年轻成人静止露齿约 2–3.4 mm，女性比男性多 0.3–1.5 mm，随年龄减少，60 岁以上约为 0。对 20–24 岁的女性参考体，2.5–3 mm 更接近年轻女性的数值（沙特 19–25 岁组 2.93 mm；Vig 与 Brundo 女性 3.40 mm 是转引），男性 2 mm 合适；差别只有 0.5–1 mm，不必改，但可以把注释里的“没有核对文献”换成这些出处。注意量法：文献量的是“唇放松、略分开”时上唇下缘到切缘的距离；我们的皮肤是闭口的，口裂线就是上唇下缘，两者可以对应。没有找到可用的中国年轻人卡尺测量数据；云南汉族的视频测量值（0.30 mm）与其他研究差得太远，不采用。Vig 与 Brundo 1978 原文没有打开，按年龄分组的数值只在搜索摘要里见过，没有记入。",
+    "en": "2 mm is inside the range of the sources opened: young adults show about 2-3.4 mm at rest, women 0.3-1.5 mm more than men, falling with age to about 0 above 60. For the reference woman aged 20-24, 2.5-3 mm would be closer to the values for young women (2.93 mm in the Saudi 19-25 group; the 3.40 mm for women in Vig & Brundo is second-hand) and 2 mm suits the man; the difference is only 0.5-1 mm, so nothing needs changing, but the comment 'not checked against a source' can now cite these. Note the method: the literature measures from the lower border of the relaxed, slightly parted upper lip to the incisal edge; our skin has closed lips, whose fissure line is that lower border, so the two correspond. No usable caliper data for young Chinese adults were found; the video-based Yunnan Han figure (0.30 mm) is too far from every other study to adopt. Vig & Brundo 1978 itself was not opened, and its per-age values were seen only in a search-engine snippet and are not recorded here."
+   }
+  },
+  {
+   "id": "stature-sd-shape-extremes",
+   "claim": {
+    "zh": "体型控件里身高“约 ±2 个标准差”取男 0.13 m、女 0.12 m（即每个标准差约 65 mm、60 mm；注释写“成人身高标准差约 6–7 cm”）。",
+    "en": "The stature step for 'about ±2 SD' in the shape extremes is 0.13 m for men and 0.12 m for women (about 65 and 60 mm per SD; the note says 'adult stature SD is about 6-7 cm')."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/shape.json",
+     "key": "extremes.statureDelta",
+     "valueUsed": "male 0.13, female 0.12; note: 'About ±2 SD ... an approximate figure, not checked against a source here'"
+    }
+   ],
+   "source": "No source cited in the repository.",
+   "doiOrUrl": "",
+   "opened": "Dataset files in this repository: data/raw/bodyshape/ansur2/ANSUR_II_MALE_Public.csv and ANSUR_II_FEMALE_Public.csv (column 'stature', SD computed in this session); data/raw/bodyshape/nhanes/BMX*.xpt + DEMO*.xpt (BMXHT by RIAGENDR and RIDAGEYR, unweighted SD computed in this session); data/curated/bodyshape/anthro-model.json (statureMm percentiles) and refpop-china.json (all stature rows). One open paper with a Chinese adult SD (see additionalSources). GB/T 10000-2023 tables: could not open (a 5-page preview PDF found on a reseller site contains the foreword and contents only).",
+   "supportedValue": "ANSUR II (US Army, 2012): men n = 4082, mean 1756.2 mm, SD 68.6 mm; women n = 1986, mean 1628.5 mm, SD 64.2 mm; ages 20-24 only: men SD 66.8 mm (n = 1151), women 65.3 mm (n = 614). anthro-model.json keeps only P5/P50/P95 (men 1648/1755/1870, women 1525/1626/1740 mm), which imply SD 67.5 and 65.3 mm. NHANES 1999-2023 adults 20+ (unweighted, all ethnic groups and ages pooled): men SD 78.3 mm (mean 1740.7), women 71.9 mm (mean 1604.1); ages 20-24: men 76.8 mm, women 69.3 mm. refpop-china.json holds NO stature SD (every 'sd' is null); its GB/T 10000-1988 percentiles (secondary reprint) imply, under a normal approximation, SD 58.3 mm for men 18-60 ((P95 - P5)/3.29; 58.2 from P1-P99) and 53.2 mm for women 18-55 (53.3 from P1-P99).",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Wang X, Lei SM, Le S, Yang Y, Zhang B, Yao W, Gao Z, Cheng S. Bidirectional Influence of the COVID-19 Pandemic Lockdowns on Health Behaviors and Quality of Life among Chinese Adults. Int J Environ Res Public Health 2020;17(15):5575.",
+     "doiOrUrl": "https://doi.org/10.3390/ijerph17155575",
+     "opened": "Europe PMC full text PMC7432516: Methods, Table 1",
+     "finding": "Chinese adults recruited through online survey platforms (convenience sample, mean age 27.5 ± 12.0 y): height 176.1 ± 6.6 cm in 1176 men and 162.7 ± 5.8 cm in 1113 women. The data were collected in an online survey, so height was presumably self-reported (the passages read do not say how it was obtained); the means are well above the national surveillance means, so only the SDs are of interest."
+    },
+    {
+     "reference": "GB/T 10000-2023 Human dimensions of Chinese adults (Appendix C: mean and SD of stature and body mass in six regions)",
+     "doiOrUrl": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=B19DCCA575D9406856ABF87A511EE11F",
+     "opened": "could not open the tables; a 5-page English preview (cover, contents, foreword, scope) hosted by a reseller was read and contains no numbers",
+     "finding": "Confirms only that Appendix C gives means and SDs of height and weight by region; the values remain unobtained, as refpop-china.json already says."
+    },
+    {
+     "reference": "第五次国民体质监测公报 (2020), 表2",
+     "doiOrUrl": "https://www.gov.cn/guoqing/2023-03/12/content_5745851.htm",
+     "opened": "not re-opened in this session; refpop-china.json records that the bulletin publishes means without SD",
+     "finding": "No SD available from the fitness surveillance bulletin."
+    },
+    {
+     "reference": "宋逸, 闫晓晋, 张京舒, 等. 1985-2014年中国汉族18岁青少年身高长期趋势的性别差异变化. 中华流行病学杂志 2021;42(5):801-806.",
+     "doiOrUrl": "https://html.rhhz.net/zhlxbx/20210507.htm",
+     "opened": "Journal HTML page: abstract and text read; Table 2 (height, mean ± SD by year and sex) is not in the HTML text and could not be read",
+     "finding": "Would give the SD of measured height in Chinese 18-year-olds from the national student surveys; could not open the table."
+    }
+   ],
+   "notes": {
+    "zh": "作为一个取整的近似，0.13 / 0.12 m 成立：每个标准差 65 / 60 mm，正好落在仓库已有人群之间——ANSUR II 是 68.6 / 64.2 mm（2 SD = 0.137 / 0.128 m），GB/T 10000-1988 的百分位反推是 58.3 / 53.2 mm（2 SD = 0.117 / 0.106 m），NHANES 全体成人未加权是 78.3 / 71.9 mm（混合了族裔和年龄，偏大）。注释里“成人身高标准差约 6–7 cm”对美军样本成立，对中国成年人偏大：已打开的中国数据给出男 5.8–6.6 cm、女 5.3–5.8 cm。如果要让“±2 SD”对应中国参考人群，应取男约 0.117 m、女约 0.106 m（GB/T 10000-1988，1986–87 年调查，转载表格、目视读数，正态近似），比现值小约 10 %；这是换参考人群，不是纠错，所以 correctedValue 留空。NHANES 的数字是本次用仓库里的原始文件算的：未加权，P_BMX 与 BMX_J 有重叠，只作量级参考。",
+    "en": "As a rounded approximation 0.13 / 0.12 m holds: 65 / 60 mm per SD lies between the populations already in the repository — ANSUR II gives 68.6 / 64.2 mm (2 SD = 0.137 / 0.128 m), the GB/T 10000-1988 percentiles imply 58.3 / 53.2 mm (2 SD = 0.117 / 0.106 m), and NHANES adults unweighted give 78.3 / 71.9 mm (ethnic groups and ages pooled, hence larger). The note's 'adult stature SD is about 6-7 cm' is right for the US Army sample and on the high side for Chinese adults: the Chinese data opened give 5.8-6.6 cm for men and 5.3-5.8 cm for women. If '±2 SD' is meant for the Chinese reference population, use about 0.117 m for men and 0.106 m for women (GB/T 10000-1988, 1986-87 survey, reprinted table read by eye, normal approximation), about 10 % less than the present values; that is a change of reference population rather than an error, so correctedValue is left null. The NHANES figures were computed in this session from the raw files in the repository: unweighted, and P_BMX overlaps BMX_J, so they are indicative only."
+   }
+  },
+  {
+   "id": "al-qattan-2019-nipple-position",
+   "claim": {
+    "zh": "乳头位置：胸骨上切迹到乳头 19.8 ± 2.5 cm，两乳头间距 20.3 ± 2.3 cm（Al-Qattan 等 2019，54 名未生育的年轻沙特女性，22.1 ± 1.2 岁，BMI 21.8 ± 3.1）。",
+    "en": "Nipple position: sternal notch to nipple 19.8 ± 2.5 cm and internipple distance 20.3 ± 2.3 cm (Al-Qattan et al. 2019, 54 young nulliparous Saudi women, 22.1 ± 1.2 y, BMI 21.8 ± 3.1)."
+   },
+   "usedIn": [
+    {
+     "file": "tools/bodyshape/final_female.py",
+     "key": "comment above the breast placement code ('乳头位置的来源 / Source for the nipple position')",
+     "valueUsed": "SN 19.8 ± 2.5 cm, IND 20.3 ± 2.3 cm"
+    },
+    {
+     "file": "tools/bodyshape/report-part7.txt",
+     "key": "§1 乳房",
+     "valueUsed": "same values"
+    },
+    {
+     "file": "tools/bodyshape/breast_placement.py",
+     "key": "(placement script; not read line by line in this audit)",
+     "valueUsed": "same source"
+    }
+   ],
+   "source": "Al-Qattan MM, Aldakhil SS, Al-Hassan TS, Al-Qahtani A. Anthropometric Breast Measurement: Analysis of the Average Breast in Young Nulliparous Saudi Female Population. Plast Reconstr Surg Glob Open 2019;7(8):e2326.",
+   "doiOrUrl": "https://doi.org/10.1097/GOX.0000000000002326",
+   "opened": "Europe PMC full text PMC6756646: abstract, Methods, Results, Table 1, Table 4, Discussion",
+   "supportedValue": "54 nulliparous Saudi women aged 20-25 with BMI 20-25 (inclusion criteria); age 22.1 ± 1.2 y, BMI 21.8 ± 3.1, height 162.1 ± 5 cm, weight 57.4 ± 8.6 kg. Table 1: SN 19.8 ± 2.5 cm, IND 20.3 ± 2.3 cm, nipple to inframammary fold 7.7 ± 1.6 cm, lower edge of areola to fold 5.4 ± 1.4 cm, areolar diameter 4.5 ± 1.4 cm.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Qiao Q, Zhou G, Ling Y. Breast volume measurement in young Chinese women and clinical applications. Aesthetic Plast Surg 1997;21(5):362-368.",
+     "doiOrUrl": "https://doi.org/10.1007/s002669900139",
+     "opened": "abstract only (Europe PMC record of PMID 9299007); full text not open access",
+     "finding": "125 women; 'an average breast volume for Chinese women was obtained (325.36 +/- 12.66 ml)'. The abstract does not say whether ± is SD or SE (12.66 mL is small for an SD), nor the age or BMI. The linear measurements are not in the abstract; Al-Qattan 2019 (Table 4 and Discussion) quotes from this paper a sternal notch-to-nipple distance of 19.05 cm and an areolar diameter of 3.32 ± 0.35 cm for Chinese women of similar age (second-hand)."
+    },
+    {
+     "reference": "Huang NS, Quan CL, Mo M, Chen JJ, Yang BL, Huang XY, Wu J. A prospective study of breast anthropomorphic measurements, volume and ptosis in 605 Asian patients with breast cancer or benign breast disease. PLoS One 2017;12(2):e0172122.",
+     "doiOrUrl": "https://doi.org/10.1371/journal.pone.0172122",
+     "opened": "Europe PMC full text PMC5305059: abstract, Methods, Results, Table 2, Discussion",
+     "finding": "605 Chinese women with breast disease in Shanghai, age 48.8 ± 11.7 y, BMI 22.9 ± 3.0 (not young, 94.5 % parous): sternal notch-to-nipple 21.6 ± 2.8 cm (n = 1196 breasts); nipple to midline 10.0 ± 1.5 cm, i.e. internipple distance about 20.0 cm; nipple to inframammary fold 7.5 ± 1.6 cm; breast base width 14.3 ± 1.4 cm; volume 340.0 ± 109.1 mL per breast (range 91.8-919.2) from a modified BREAST-V formula, not a scan. Cited there for Caucasian women (Longo et al., n = 88 mastectomy patients): notch-to-nipple 24.73 ± 3.48 cm."
+    }
+   ],
+   "notes": {
+    "zh": "论文的数值与仓库里写的完全一致。它的人群与参考体的身高、BMI 很接近（162.1 cm / 21.8 对 160.6 cm / 21.6），只是族裔不同。中国年轻女性的同类数据只找到转引值：Al-Qattan 的表 4 引 Qiao 等 1997，中国女性胸骨上切迹到乳头 19.05 cm，比 19.8 cm 短 0.75 cm（约 4 %），在其 1 个标准差（2.5 cm）之内；Qiao 1997 的原文没有打开。乳头间距没有找到中国年轻女性的数值：上海 605 名乳腺疾病患者（平均 48.8 岁）乳头到中线 10.0 ± 1.5 cm，相当于间距约 20.0 cm，与 20.3 cm 只差 0.3 cm；同一组的切迹到乳头是 21.6 cm，反映的是年龄和哺乳后的下垂，不适用于 20–24 岁。结论：间距不用改；切迹到乳头若要贴近中国年轻女性，可降到约 19.0–19.5 cm，但依据是转引，证据不强。",
+    "en": "The paper's values are exactly those in the repository. Its sample is close to the reference body in height and BMI (162.1 cm / 21.8 against 160.6 cm / 21.6) and differs only in ancestry. For young Chinese women only a second-hand figure was found: Table 4 of Al-Qattan cites Qiao et al. 1997 for a notch-to-nipple distance of 19.05 cm in Chinese women, 0.75 cm (about 4 %) shorter than 19.8 cm and well inside one SD (2.5 cm); Qiao 1997 itself was not opened. No internipple distance for young Chinese women was found: in 605 Shanghai patients with breast disease (mean age 48.8) the nipple lay 10.0 ± 1.5 cm from the midline, i.e. about 20.0 cm between nipples, 0.3 cm from 20.3 cm; the same group's notch-to-nipple distance of 21.6 cm reflects age and post-lactation ptosis and does not apply at 20-24. Conclusion: leave the internipple distance; the notch-to-nipple distance could be lowered to about 19.0-19.5 cm to sit nearer young Chinese women, but the basis is second-hand and weak."
+   }
+  },
+  {
+   "id": "steele-2020-breast-volume",
+   "claim": {
+    "zh": "单侧乳房体积约 370 mL（BMI 18.5–25；Steele 等 2020），由子任务摘录、未复核。",
+    "en": "About 370 mL per breast at BMI 18.5-25 (Steele et al. 2020), extracted by a sub-task and not re-verified."
+   },
+   "usedIn": [
+    {
+     "file": "tools/bodyshape/build_target.py",
+     "key": "BREAST_ML",
+     "valueUsed": "370.0 (comment: 'extracted by a sub-task, not re-verified')"
+    },
+    {
+     "file": "data/curated/bodyshape/fat-literature.json",
+     "key": "partition[] rows with sourceId steele2020",
+     "valueUsed": "right 367 ± 32, left 378 ± 30 mL (BMI 18.5-24.9); 683/705 (25-29.9); 1077/1052 (>= 30)"
+    },
+    {
+     "file": "tools/bodyshape/REPORT.md",
+     "key": "§5 summary",
+     "valueUsed": "about +53 mL per BMI unit; about 370 mL at BMI 18.5-25"
+    },
+    {
+     "file": "tools/bodyshape/report-part5.txt",
+     "key": "items 7 and 9",
+     "valueUsed": "370 mL per side; 'not re-checked against the paper'"
+    }
+   ],
+   "source": "Steele JR, Coltman CE, McGhee DE. Effects of obesity on breast size, thoracic spine structure and function, upper torso musculoskeletal pain and physical activity in women. J Sport Health Sci 2020;9(2):140-148.",
+   "doiOrUrl": "https://doi.org/10.1016/j.jshs.2019.05.003",
+   "opened": "Europe PMC full text PMC7031809: Table 1 (breast volume rows). The age and n of each BMI class were not re-read in this session.",
+   "supportedValue": "Table 1, breast volume (mL): right breast 367 ± 32, 683 ± 38, 1077 ± 38 and left breast 378 ± 30, 705 ± 37, 1052 ± 37 for the three BMI classes (not overweight, overweight, obese). Mean of left and right in the first class: 372.5 mL.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Qiao Q, Zhou G, Ling Y. Breast volume measurement in young Chinese women and clinical applications. Aesthetic Plast Surg 1997;21(5):362-368.",
+     "doiOrUrl": "https://doi.org/10.1007/s002669900139",
+     "opened": "abstract only (Europe PMC record of PMID 9299007); full text not open access",
+     "finding": "125 women; 'an average breast volume for Chinese women was obtained (325.36 +/- 12.66 ml)'. The abstract does not say whether ± is SD or SE (12.66 mL is small for an SD), nor the age or BMI. The linear measurements are not in the abstract; Al-Qattan 2019 (Table 4 and Discussion) quotes from this paper a sternal notch-to-nipple distance of 19.05 cm and an areolar diameter of 3.32 ± 0.35 cm for Chinese women of similar age (second-hand)."
+    },
+    {
+     "reference": "Huang NS, Quan CL, Mo M, Chen JJ, Yang BL, Huang XY, Wu J. A prospective study of breast anthropomorphic measurements, volume and ptosis in 605 Asian patients with breast cancer or benign breast disease. PLoS One 2017;12(2):e0172122.",
+     "doiOrUrl": "https://doi.org/10.1371/journal.pone.0172122",
+     "opened": "Europe PMC full text PMC5305059: abstract, Methods, Results, Table 2, Discussion",
+     "finding": "605 Chinese women with breast disease in Shanghai, age 48.8 ± 11.7 y, BMI 22.9 ± 3.0 (not young, 94.5 % parous): sternal notch-to-nipple 21.6 ± 2.8 cm (n = 1196 breasts); nipple to midline 10.0 ± 1.5 cm, i.e. internipple distance about 20.0 cm; nipple to inframammary fold 7.5 ± 1.6 cm; breast base width 14.3 ± 1.4 cm; volume 340.0 ± 109.1 mL per breast (range 91.8-919.2) from a modified BREAST-V formula, not a scan. Cited there for Caucasian women (Longo et al., n = 88 mastectomy patients): notch-to-nipple 24.73 ± 3.48 cm."
+    },
+    {
+     "reference": "Lim LY, Ho PJ, Liu J, Chay WY, Tan MH, Hartman M, Li J. Determinants of breast size in Asian women. Sci Rep 2018;8:1201.",
+     "doiOrUrl": "https://doi.org/10.1038/s41598-018-19437-4",
+     "opened": "Europe PMC full text PMC5775321: abstract, Methods",
+     "finding": "Singaporean women aged 50-64; breast size is measured as bust line (cm) and mammographic area (cm2), not volume, so it gives no mL figure for comparison. States that Asian women are typically smaller-breasted than women of Caucasian ancestry."
+    }
+   ],
+   "notes": {
+    "zh": "370 mL 与论文表 1 一致（右 367、左 378，平均 372.5 mL）。fat-literature.json 记的是按年龄校正的均值 ± 标准误、澳大利亚女性、俯卧位三维扫描；这些说明本次没有重读，只核对了数值。与中国女性比较：Qiao 等 1997 摘要给出 125 名年轻中国女性平均 325.36 ± 12.66 mL（只读了摘要；± 的含义没有说明），比 370 mL 小约 12 %；上海 605 名患者（平均 48.8 岁，BMI 22.9）按公式估算为 340 ± 109 mL，小约 8 %。两者都说明用澳大利亚的数值会偏大约 30–45 mL。对 20–24 岁、BMI 21.6 的中国女性参考体，约 325 mL 更合适；但 Qiao 的测量方法与三维扫描不同，原文也没有打开，所以这里不作为更正，只作为建议。",
+    "en": "370 mL agrees with Table 1 of the paper (right 367, left 378, mean 372.5 mL). fat-literature.json describes these as age-adjusted means ± SE in Australian women scanned prone in 3D; that description was not re-read here, only the numbers were checked. Against Chinese women: the abstract of Qiao et al. 1997 gives a mean of 325.36 ± 12.66 mL in 125 young Chinese women (abstract only; the meaning of ± is not stated), about 12 % below 370 mL; 605 Shanghai patients (mean age 48.8, BMI 22.9) have a formula-estimated 340 ± 109 mL, about 8 % below. Both indicate that the Australian figure is some 30-45 mL high. For the Chinese reference woman aged 20-24 with BMI 21.6, about 325 mL would fit better; but Qiao's method differs from 3D scanning and the paper was not opened, so this is offered as a suggestion, not as a correction."
+   }
+  },
+  {
+   "id": "facial-soft-tissue-thickness",
+   "claim": {
+    "zh": "头面部软组织厚度的假定值：颅盖 6 mm（额 5、枕 6、顶 6；头皮 5–7 mm）、颧 7 mm、鼻骨 4 mm、颏前 9–10 mm、颏下 7 mm。",
+    "en": "Assumed soft-tissue thicknesses of head and face: vault 6 mm (frontal 5, occipital 6, parietal 6; scalp 5-7 mm), zygoma 7 mm, nasal bones 4 mm, front of the chin 9-10 mm, under the chin (menton) 7 mm."
+   },
+   "usedIn": [
+    {
+     "file": "tools/bodyshape/final_female.py",
+     "key": "HEAD_BONES",
+     "valueUsed": "vault 0.006, zygoma 0.007, nasal 0.004, chin 0.010 m ('assumption, not checked point by point')"
+    },
+    {
+     "file": "tools/bodyshape/final_female.py",
+     "key": "CHIN_SOFT",
+     "valueUsed": "0.007 m under the menton (assumption)"
+    },
+    {
+     "file": "tools/bodyshape/fit_skin.py",
+     "key": "SUBCUT",
+     "valueUsed": "Frontal 5, Occipital 6, Parietal 6, Mandible (front, lower quarter) 9, Zygomatic 7 mm"
+    },
+    {
+     "file": "tools/bodyshape/build_target.py",
+     "key": "SCALP",
+     "valueUsed": "0.006 m"
+    },
+    {
+     "file": "tools/pipeline/female.ts",
+     "key": "SCALP",
+     "valueUsed": "0.006 m"
+    }
+   ],
+   "source": "No source cited in the repository ('the order of magnitude of the tables commonly used in forensic facial reconstruction').",
+   "doiOrUrl": "",
+   "opened": "Europe PMC full text PMC10861615 (open access): Table 3 'Adult 2023 T-Table (>= 18 Years)', Methods and Results text on sex differences.",
+   "supportedValue": "Hona & Stephan 2024, adult 2023 T-Table, pooled over 139 studies, both sexes and all populations, total weighted mean (mm) [weighted SD, n]: opisthocranion 6.0 [2.0, 2273]; vertex 5.0 [1.5, 2272]; glabella 5.5 [1.0, 15937]; nasion 6.0 [1.5, 16300]; mid-nasal 4.5 [1.5, 3065]; rhinion 3.0 [1.0, 15401]; subnasale 13.5 [3.5]; mid-philtrum 11.5 [2.5]; upper lip (prosthion-labrale superius) 12.0 [3.0]; lower lip (infradentale-labrale inferius) 13.5 [3.0]; supramentale (labiomental) 11.0 [2.0]; pogonion 11.0 [2.5, 17075]; gnathion 7.5 [2.5]; menton 7.0 [2.5, 13583]; mid-supraorbital 7.0 [2.0]; mid-infraorbital 6.5 [3.0]; alare curvature 10.0 [3.0]; gonion 12.5 [6.0]; zygion 7.5 [3.0, 10399]; supra canine 10.5; infra canine 11.0; supra M2 26.0; infra M2 22.0; mid-ramus 19.5 [5.0]; mid-mandibular border 11.0 [4.0]. Values are rounded to 0.5 mm. Sex: 'males tend to possess larger rolling FSTT means than females; however, this difference is small (< 1 mm) and is unadjusted for body size'; the table is not split by sex or ancestry.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Hona TWPT, Stephan CN. Global facial soft tissue thicknesses for craniofacial identification (2023): a review of 140 years of data since Welcker's first study. Int J Legal Med 2024;138(2):519-535.",
+     "doiOrUrl": "https://doi.org/10.1007/s00414-023-03087-x",
+     "opened": "Europe PMC full text PMC10861615, Table 3",
+     "finding": "The pooled table quoted in supportedValue; it supersedes the 2008 (Stephan & Simpson) and 2018 T-Tables, which were not opened."
+    },
+    {
+     "reference": "Chinese samples: Wang J, Zhao X, Mi C, Raza I. Forensic Sci Int 2016 (Han in Xinjiang), doi 10.1016/j.forsciint.2016.04.032; Shui W et al. Forensic Sci Int 2016 (Chinese adults, dense thickness), doi 10.1016/j.forsciint.2016.07.017; Deng C et al. Leg Med 2020 (Yangtze delta Han, CBCT), doi 10.1016/j.legalmed.2020.101693; He R et al. J Craniofac Surg 2021 (central China), doi 10.1097/SCS.0000000000007827",
+     "doiOrUrl": "",
+     "opened": "could not open: all four are listed by Europe PMC as not open access; only the search listing (title, authors, DOI) was seen",
+     "finding": "No Chinese landmark values were read in this session."
+    }
+   ],
+   "notes": {
+    "zh": "所有假定值都在合并表（2023 T-Table）均值的 1 mm 以内，也都在 1 个标准差以内：颅盖 6 mm 对枕后点 6.0、颅顶 5.0、眉间 5.5；额 5 mm 对眉间 5.5；颧 7 mm 对颧点 7.5；鼻骨 4 mm 介于鼻根 6.0、鼻中点 4.5、鼻骨下端 3.0 之间；颏下 7 mm 对颏下点 7.0，完全一致；颏前 10 mm 对颏前点 11.0（fit_skin.py 用的 9 mm 低 2 mm，仍在 1 个标准差 2.5 mm 内）。可以把颏前统一成 11 mm、颧 7.5 mm，但差别小于数据本身的离散，不算更正。顶骨侧面没有对应的标志点，6 mm 只能参照颅顶 5.0 和枕后点 6.0。该表不分性别和人群；综述说男性均值比女性大不到 1 mm。中国样本的专门数据没有打开（四篇都要付费），所以“中国女性”的数值没有核对。",
+    "en": "Every assumed value is within 1 mm of the pooled 2023 T-Table mean and within one SD: vault 6 mm against opisthocranion 6.0, vertex 5.0 and glabella 5.5; frontal 5 mm against glabella 5.5; zygoma 7 mm against zygion 7.5; nasal bones 4 mm between nasion 6.0, mid-nasal 4.5 and rhinion 3.0; under the chin 7 mm against menton 7.0, an exact match; front of the chin 10 mm against pogonion 11.0 (the 9 mm in fit_skin.py is 2 mm low, still inside the SD of 2.5 mm). The chin could be unified at 11 mm and the zygoma set to 7.5 mm, but the differences are smaller than the scatter of the data, so this is not a correction. The side of the parietal bone has no matching landmark; 6 mm can only be compared with vertex 5.0 and opisthocranion 6.0. The table is not split by sex or population; the review says male means exceed female means by less than 1 mm. No Chinese-specific data were opened (all four papers are paywalled), so values for Chinese women remain unchecked."
+   }
+  },
+  {
+   "id": "pspi-formula",
+   "claim": {
+    "zh": "PSPI = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43；各 AU 0–5，AU43 取 0 或 1，共 16 级。原始出处 Prkachin 与 Solomon 2008 未打开，公式转引自 chen2018、egede2017。",
+    "en": "PSPI = AU4 + max(AU6, AU7) + max(AU9, AU10) + AU43; each AU 0-5 and AU43 0 or 1, 16 levels. The original (Prkachin & Solomon 2008) was not opened; the formula is second-hand from chen2018 and egede2017."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/pain.json",
+     "key": "pspi.formula, pspi.max, pspi.basis",
+     "valueUsed": "formula as stated; max 16"
+    },
+    {
+     "file": "data/curated/face/sources.json",
+     "key": "sources[id=prkachin2008]",
+     "valueUsed": "'Full text not opened (paywalled)'"
+    },
+    {
+     "file": "src/face/types.ts",
+     "key": "doc comment on the PSPI field",
+     "valueUsed": "same formula"
+    }
+   ],
+   "source": "Prkachin KM, Solomon PE. The structure, reliability and validity of pain expression: Evidence from patients with shoulder pain. Pain 2008;139(2):267-274.",
+   "doiOrUrl": "https://doi.org/10.1016/j.pain.2008.04.010",
+   "opened": "could not open the 2008 paper (closed access; an archived author copy at pitt.edu/~jeffcohn/PainArchive/ resolves to a redirect and then HTTP 404). Opened instead: Lucey et al. 2011, of which Prkachin and Solomon are co-authors (archived PDF, see additionalSources).",
+   "supportedValue": "Lucey et al. 2011, section III-B, equation (1): 'Pain = AU4 + (AU6 or AU7) + (AU9 or AU10) + AU43', explained as 'the sum of AU4, AU6 or AU7 (whichever is higher in intensity), AU9 or AU10 (whichever is higher in intensity) and AU43 to yield a 16-point scale'; footnote: AUs are scored on a 6-point scale from 0 (absent) to 5 (maximum) and eye closing (AU43) is binary (0 = absent, 1 = present). Worked example in the paper: 6c + 9b + 43 gives 3 + 2 + 1 = 6.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Lucey P, Cohn JF, Prkachin KM, Solomon PE, Matthews I. Painful data: The UNBC-McMaster shoulder pain expression archive database. Proc IEEE Int Conf Automatic Face and Gesture Recognition (FG 2011), pp. 57-64 (page range not checked in this session).",
+     "doiOrUrl": "https://doi.org/10.1109/FG.2011.5771462",
+     "opened": "Author PDF read from the Internet Archive (snapshot of 2016-11-08 of pitt.edu/~jeffcohn/PainArchive/PAFG2011.pdf), all 8 pages as extracted text",
+     "finding": "Equation (1) and the scale description quoted in supportedValue."
+    }
+   ],
+   "notes": {
+    "zh": "公式和 16 级量程由 Prkachin、Solomon 本人参与署名的 Lucey 等 2011 证实，与仓库所用一致。2008 年原文仍未打开，所以这里核实的是“公式是什么”，不是原文的措辞或其信度、效度数据。sources.json 里 prkachin2008 一条可以补一句：公式已在 Lucey 2011（作者稿）核对。",
+    "en": "The formula and the 16-point range are confirmed by Lucey et al. 2011, co-authored by Prkachin and Solomon themselves, and match what the repository uses. The 2008 paper is still unopened, so what is verified is the formula, not the original wording or its reliability and validity data. The prkachin2008 entry in sources.json can add that the formula was checked in Lucey 2011 (author copy)."
+   }
+  },
+  {
+   "id": "unbc-mcmaster-database-facts",
+   "claim": {
+    "zh": "UNBC-McMaster 库：25 人、200 段、48,398 帧；编码 AU4、6、7、9、10、12、20、25、26、27、43，强度 A–E，AU43 只有有 / 无；82.71 % 的帧 PSPI = 0。Lucey 等 2011 的逐 AU 统计未能取得。",
+    "en": "UNBC-McMaster archive: 25 subjects, 200 sequences, 48,398 frames; AUs 4, 6, 7, 9, 10, 12, 20, 25, 26, 27 and 43 coded at intensities A-E with AU43 present/absent; 82.71 % of frames have PSPI = 0. The per-AU statistics of Lucey et al. 2011 could not be extracted."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/pain.json",
+     "key": "datasetFacts[0..1]",
+     "valueUsed": "'48,398 frames, 200 sequences, 25 participants'; '82.71% of frames have PSPI = 0' (source egede2017)"
+    },
+    {
+     "file": "data/curated/face/aus.json",
+     "key": "_doc",
+     "valueUsed": "'the 11 AUs that the UNBC-McMaster archive codes for pain'"
+    },
+    {
+     "file": "data/curated/face/sources.json",
+     "key": "sources[id=egede2017], sources[id=chen2018]",
+     "valueUsed": "dataset size and AU list taken second-hand"
+    }
+   ],
+   "source": "Lucey P, Cohn JF, Prkachin KM, Solomon PE, Matthews I. Painful data: The UNBC-McMaster shoulder pain expression archive database. FG 2011.",
+   "doiOrUrl": "https://doi.org/10.1109/FG.2011.5771462",
+   "opened": "Author PDF read from the Internet Archive (snapshot of 2016-11-08 of pitt.edu/~jeffcohn/PainArchive/PAFG2011.pdf): abstract, sections II-III, Tables I and II (text extracted from the PDF).",
+   "supportedValue": "200 video sequences, 48,398 FACS-coded frames, 25 subjects distributed (129 participants, 63 male and 66 female, were recorded in the original study). Coded actions: AU4, 6, 7, 9, 10, 12, 20, 25, 26, 27 and 43; 'With the exception of AU 43, each action was coded on a 5 level intensity dimension (A-E)'. Table I, frames per AU (A/B/C/D/E, total): AU4 202/509/225/74/64 = 1074; AU6 1776/1663/1327/681/110 = 5557; AU7 1362/991/608/305/100 = 3366; AU9 93/151/68/76/35 = 423; AU10 171/208/63/61/22 = 525; AU12 2145/1799/2158/736/49 = 6887; AU20 286/282/118/0/20 = 706; AU25 767/803/611/138/88 = 2407; AU26 431/918/265/478/1 = 2093; AU43 2434 (present). Table I has no row for AU27. Table II, frames by PSPI: 0: 40029; 1-2: 5260; 3-4: 2214; 5-6: 512; 7-8: 132; 9-10: 99; 11-12: 124; 13-14: 23; 15-16: 5. 40029/48398 = 82.71 %. The running text says '83.6% of the frames had a PSPI score of 0, and 16.4% ... >= 1', which does not match its own Table II.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "仓库里用到的事实全部成立，而且现在有了第一手出处。82.71 % 与表 II 一致（40029 / 48398）；论文正文写的 83.6 % 与它自己的表不符，应以表为准，仓库现值不用改。逐 AU 的统计（表 I）现在已取得，可以写进 sources.json：最常见的是 AU12（6887 帧）、AU6（5557）、AU7（3366）、AU43（2434）、AU25（2407）、AU26（2093），而 AU4 只有 1074 帧、AU9 423、AU10 525，AU27 在表里没有一行。这对映射有意义：在这个库里，眼眶收紧和闭眼远比降眉、皱鼻、提上唇常见；PSPI ≥ 5 的帧只占 1.85 %（895 帧），≥ 3 占 6.4 %。库是 25 人的子集，原研究录了 129 人。",
+    "en": "Every fact used in the repository holds and now has a first-hand source. 82.71 % agrees with Table II (40029 / 48398); the 83.6 % in the paper's running text contradicts its own table, the table should be followed, and the repository's value needs no change. The per-AU statistics (Table I) are now available and can go into sources.json: the most frequent are AU12 (6887 frames), AU6 (5557), AU7 (3366), AU43 (2434), AU25 (2407) and AU26 (2093), whereas AU4 has only 1074 frames, AU9 423 and AU10 525, and AU27 has no row in the table. This matters for the mapping: in this archive orbit tightening and eye closure are far more common than brow lowering, nose wrinkling or upper-lip raising; frames with PSPI >= 5 are only 1.85 % (895 frames) and >= 3 are 6.4 %. The archive is a 25-subject subset; 129 participants were recorded in the original study."
+   }
+  },
+  {
+   "id": "facs-au-muscle-table",
+   "claim": {
+    "zh": "FACS 动作单元的肌肉基础：AU6 眼轮匝肌眶部、AU7 眼轮匝肌睑部、AU9 提上唇鼻翼肌、AU10 提上唇肌、AU12 颧大肌、AU20 笑肌与颈阔肌、AU25 降下唇肌或颏肌 / 口轮匝肌放松、AU26 咬肌及颞肌、翼内肌放松、AU27 翼肌与二腹肌、AU43 上睑提肌放松（取自维基百科；FACS 手册未打开）。",
+    "en": "Muscular basis of FACS action units: AU6 orbicularis oculi pars orbitalis, AU7 pars palpebralis, AU9 levator labii superioris alaeque nasi, AU10 levator labii superioris, AU12 zygomaticus major, AU20 risorius with platysma, AU25 depressor labii inferioris or relaxation of mentalis / orbicularis oris, AU26 masseter with relaxed temporalis and internal pterygoid, AU27 pterygoids and digastric, AU43 relaxation of levator palpebrae superioris (from Wikipedia; the FACS manual was not opened)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/aus.json",
+     "key": "aus[].basis (source wikipedia-facs)",
+     "valueUsed": "as listed in the claim"
+    },
+    {
+     "file": "data/curated/face/sources.json",
+     "key": "sources[id=wikipedia-facs]",
+     "valueUsed": "'The FACS manual itself ... is not open and was not opened'"
+    }
+   ],
+   "source": "Ekman P, Friesen WV. Facial Action Coding System. Consulting Psychologists Press, 1978; Ekman P, Friesen WV, Hager JC. Facial Action Coding System (2002 revision).",
+   "doiOrUrl": "https://www.cs.cmu.edu/~face/facs.htm",
+   "opened": "The FACS manual: could not open (not an open publication). Opened: the Carnegie Mellon 'FACS - Facial Action Coding System' page (heading 'Ekman and Friesen 1978'), table of AU number, FACS name and muscular basis, fetched as HTML.",
+   "supportedValue": "CMU table: AU4 Brow Lowerer: corrugator supercilii, depressor supercilii; AU6 Cheek Raiser: orbicularis oculi, pars orbitalis; AU7 Lid Tightener: orbicularis oculi, pars palpebralis; AU9 Nose Wrinkler: levator labii superioris alaquae nasi; AU10 Upper Lip Raiser: levator labii superioris; AU12 Lip Corner Puller: zygomaticus major; AU20 Lip Stretcher: risorius with platysma; AU25 Lips Part: depressor labii inferioris or relaxation of mentalis, or orbicularis oris; AU26 Jaw Drop: masseter, relaxed temporalis and internal pterygoid; AU27 Mouth Stretch: pterygoids, digastric; AU43 Eyes Closed: relaxation of levator palpebrae superioris; orbicularis oculi, pars palpebralis.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "AU6、7、9、10、12、20、25、26、27 的肌肉基础与卡内基梅隆大学转载的 Ekman 与 Friesen 1978 表逐项一致。两处细节：AU43 在该表里除“上睑提肌放松”外还列了眼轮匝肌睑部，aus.json 的注释把睑部收缩只归给 AU45（眨眼），可以补上；AU4 见下一条。FACS 手册本身仍未打开。",
+    "en": "The muscular basis of AU6, 7, 9, 10, 12, 20, 25, 26 and 27 agrees item by item with the Ekman & Friesen 1978 table as reproduced by Carnegie Mellon. Two details: for AU43 that table lists orbicularis oculi pars palpebralis in addition to relaxation of the levator, whereas the note in aus.json assigns palpebral contraction to AU45 (blink) only, which can be amended; AU4 is treated in the next entry. The FACS manual itself remains unopened."
+   }
+  },
+  {
+   "id": "facs-au4-procerus",
+   "claim": {
+    "zh": "AU4（降眉）的肌肉基础包括降眉间肌（procerus）：aus.json 给 AU4 的通道是皱眉肌 1、降眉间肌 1，降眉肌缺失。",
+    "en": "The muscular basis of AU4 (brow lowerer) includes procerus (depressor glabellae): aus.json drives AU4 with corrugator 1 and procerus 1, depressor supercilii missing."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/aus.json",
+     "key": "aus[id=AU4].channels and basis.note",
+     "valueUsed": "corrugator 1, procerus 1; 'Muscular basis: depressor glabellae (procerus), depressor supercilii, corrugator supercilii'"
+    }
+   ],
+   "source": "Wikipedia contributors. Facial Action Coding System (table of main action units), as recorded in data/curated/face/sources.json.",
+   "doiOrUrl": "https://en.wikipedia.org/wiki/Facial_Action_Coding_System",
+   "opened": "The Wikipedia page was not re-opened in this session (the repository records that it was read on 2026-10-11). Opened: the Carnegie Mellon FACS table (Ekman & Friesen 1978 version), HTML. The FACS manual: could not open.",
+   "supportedValue": "CMU table for AU4: 'Corrugator supercilii, Depressor supercilii' only; procerus is not listed. Lucey et al. 2011 names AU4 simply 'brow-lowering'.",
+   "verdict": "unsupported",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "降眉间肌参与 AU4 的说法只有维基百科一处出处；本次打开的 1978 年版 FACS 表只列皱眉肌和降眉肌。2002 年版手册是否加上了降眉间肌，没有打开，无法确定。解剖学上降眉间肌把眉内侧端向下拉，所以给它一个权重是合理的建模选择，但“权重为 1、与皱眉肌等同”没有出处；建议在 aus.json 里把这一点标成假设，而不是“肌肉基础”。",
+    "en": "That procerus takes part in AU4 rests on Wikipedia alone; the 1978 FACS table opened here lists only corrugator supercilii and depressor supercilii. Whether the 2002 manual adds procerus could not be determined because it was not opened. Anatomically procerus draws the medial end of the brow down, so giving it a weight is a reasonable modelling choice, but a weight of 1 equal to corrugator has no source; aus.json should label it as an assumption rather than as the muscular basis."
+   }
+  },
+  {
+   "id": "waters-1987-muscle-model",
+   "claim": {
+    "zh": "参数化肌肉的两类想法出自 Waters 1987：线状肌在影响区内把皮肤拉向固定端并随距离衰减；环状肌（括约肌）。论文未打开，只核对了题录。",
+    "en": "The idea of two kinds of parametric muscle comes from Waters 1987: a linear muscle pulling the skin in a zone of influence towards its fixed end with a falloff, and a sphincter. The paper was not opened; only the bibliographic record was checked."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/sources.json",
+     "key": "sources[id=waters1987]",
+     "valueUsed": "'The paper itself was not opened'"
+    },
+    {
+     "file": "data/curated/face/muscles.json",
+     "key": "fields.model",
+     "valueUsed": "linear / sphincter"
+    }
+   ],
+   "source": "Waters K. A muscle model for animating three-dimensional facial expression. Computer Graphics (Proc. SIGGRAPH '87) 1987;21(4):17-24.",
+   "doiOrUrl": "https://doi.org/10.1145/37401.37405",
+   "opened": "Publisher PDF (ACM Digital Library, bronze open access) read from the Internet Archive snapshot of 2024-08-30 of dl.acm.org/doi/pdf/10.1145/37402.37405; 8 pages, text extracted from the scanned PDF (OCR quality, some garbled characters). The live ACM link returned HTTP 403.",
+   "supportedValue": "Title page: 'A Muscle Model for Animating Three-Dimensional Facial Expression', Keith Waters, Computer Graphics, Volume 21, Number 4, July 1987. 'two broad types of muscles are considered: linear/parallel muscles that pull and sphincter muscles that squeeze' (sheet muscle appears only in the anatomical overview). Linear muscle: 'The direction is towards the point of attachment, and the magnitude that is zero at the point of attachment and increases to maximum at the other point of insertion into the skin'; 'the zone of influence in the simplest form can be viewed as circular, and the fall-off is along the radius'; a cosine interpolant, optionally raised to a power, gives the falloff, with parameters for the falloff start and finish radii and the angular zone of influence (e.g. 'Zone of influence 35.0, fallstart 7.0, fallfin 14.0'). Sphincter: 'can be described from a single point around which the surface contracts as if drawn together like a s[tr]ing bag' (the OCR text reads 'sizing bag'). Muscle actions are validated against FACS action units.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "sources.json 归给它的两点（线状肌向骨性附着端拉、影响区内衰减；括约肌向一点收拢）论文里都有，可以把“没有打开”改为已读。论文在解剖概述里还提到“片状肌”（颞部、颈阔肌），但模型只有这两类。DOI 有两种写法：Crossref / Semantic Scholar 记为 10.1145/37401.37405（题名印成 “animation”），ACM 的 PDF 路径是 10.1145/37402.37405；论文首页的题名是 “Animating”。",
+    "en": "Both points sources.json attributes to it (a linear muscle pulling towards its bony attachment with a falloff inside a zone of influence; a sphincter drawing the surface towards a point) are in the paper, so 'not opened' can become 'read'. The paper's anatomical overview also mentions sheet muscle (temporal region, platysma), but its model has only these two types. The DOI appears in two forms: Crossref / Semantic Scholar give 10.1145/37401.37405 (with the title printed as 'animation'), the ACM PDF path is 10.1145/37402.37405; the title on the paper's first page reads 'Animating'."
+   }
+  },
+  {
+   "id": "vivae-corpus-paper",
+   "claim": {
+    "zh": "VIVAE 语料论文（Holz、Larrouy-Maestri、Poeppel 2022，Emotion 22(1):213–225）未打开；仓库称说话人为女性非专业演员、强度四级、每条录音约 0.4–2 秒。",
+    "en": "The VIVAE corpus paper (Holz, Larrouy-Maestri & Poeppel 2022, Emotion 22(1):213-225) was not opened; the repository states that the speakers are female non-professional actors, that there are four intensity levels and that each recording lasts roughly 0.4-2 s."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/voice/calibration.json",
+     "key": "sources[id=vivae], vivae.subset, intensityMapping.vivae",
+     "valueUsed": "185 pain vocalisations of the full set; levels low / moderate / strong / peak; 'reported as female non-professional actors in Holz et al. (2021)'; '0.4-2 s'"
+    },
+    {
+     "file": "src/voice/control.ts",
+     "key": "header comment and FITTED",
+     "valueUsed": "female voice fitted to the VIVAE pain subset"
+    },
+    {
+     "file": "src/ui/PainPanel.tsx",
+     "key": "VoiceAttribution",
+     "valueUsed": "VIVAE corpus, CC BY-NC 4.0"
+    }
+   ],
+   "source": "Holz N, Larrouy-Maestri P, Poeppel D. The variably intense vocalizations of affect and emotion (VIVAE) corpus prompts new perspective on nonspeech perception. Emotion 2022;22(1):213-225.",
+   "doiOrUrl": "https://doi.org/10.1037/emo0001048",
+   "opened": "abstract only (Europe PMC record of PMID 35129996; the article is not open access and no PsyArXiv copy was found through the OSF search API). The companion paper Holz et al. 2021 was read in full (Europe PMC PMC8102532).",
+   "supportedValue": "Abstract of the corpus paper: the full set comprises 1085 stimuli from eleven speakers expressing three positive (achievement/triumph, sexual pleasure, surprise) and three negative (anger, fear, physical pain) states, 'each varying from low to peak emotion intensity'; the core set of 480 files is fully crossed (6 emotions x 4 intensities x 10 speakers x 2 items), selected on judged authenticity; perceptual validation and acoustic characterisation are provided. Holz et al. 2021, Methods: four intensity levels (low, moderate, strong, peak); 'Ten female speakers, all non-professional actors, were instructed to produce emotion expressions as spontaneously and genuinely as possible'; no verbal content or interjections; recorded at 44.1 kHz, 16 bit; 'Sound duration ranges from 400 to 2000 ms'.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Holz N, Larrouy-Maestri P, Poeppel D. The paradoxical role of emotional intensity in the perception of vocal affect. Sci Rep 2021;11:9663.",
+     "doiOrUrl": "https://doi.org/10.1038/s41598-021-88431-0",
+     "opened": "Europe PMC full text PMC8102532: Methods (Stimuli)",
+     "finding": "The statements quoted in supportedValue; they describe the 480-file core set."
+    }
+   ],
+   "notes": {
+    "zh": "仓库关于语料的三点说法（四级强度、女性非专业演员、0.4–2 秒）都有出处，但出处是 2021 年的姊妹论文对核心集（10 名说话人）的描述；语料论文的摘要说全集有 11 名说话人，第 11 人的性别在本次读到的文字里没有说明。仓库分析的是全集的 185 条疼痛发声，这个数字来自数据文件本身，论文摘要无法核对。语料论文的正文（声学特征表、强度评定的结果）仍然没有读到。要点不变：这些是按指令表演的发声。",
+    "en": "The repository's three statements about the corpus (four intensity levels, female non-professional actors, 0.4-2 s) are sourced, but the source is the 2021 companion paper describing the core set (10 speakers); the abstract of the corpus paper says the full set has eleven speakers, and the sex of the eleventh is not stated in the text read here. The repository analyses the 185 pain vocalisations of the full set, a number that comes from the data files themselves and cannot be checked from the abstract. The body of the corpus paper (acoustic tables, intensity ratings) remains unread. The main caveat stands: these are vocalisations acted on instruction."
+   }
+  },
+  {
+   "id": "pain-vocalisation-probability-by-intensity",
+   "claim": {
+    "zh": "出声的概率随疼痛强度上升：突发性刺激在强度 1 以下不出声、3 时一半、5 以上总是出声；持续性疼痛 2 以下不出声、5 时一半、8 以上总是出声。",
+    "en": "The probability of vocalising rises with pain intensity: for a sudden stimulus never below 1, half the time at 3, always from 5; for sustained pain never below 2, half the time at 5, always from 8."
+   },
+   "usedIn": [
+    {
+     "file": "src/voice/control.ts",
+     "key": "soundProbability()",
+     "valueUsed": "smoothstep((intensity - 1) / 4) for sudden, smoothstep((intensity - 2) / 6) for sustained; comment: 'An assumption; no citable figure was found'"
+    }
+   ],
+   "source": "No source (stated as an assumption in the code); Helmer et al. 2020 is cited for the general association only.",
+   "doiOrUrl": "https://doi.org/10.1002/ejp.1623",
+   "opened": "Europe PMC full text PMC7587015 (Helmer LML, Weijenberg RAF, de Vries R, et al. Crying out in pain - A systematic review into the validity of vocalization as an indicator for pain. Eur J Pain 2020): abstract, Results sections 3.x, Discussion; searched for 'intensity', 'severity', 'proportion'.",
+   "supportedValue": "Helmer 2020: 35 studies included; 'An association between vocalization and pain was found in most studies, particularly when different types of vocalizations were included'; 'Moaning and pain are associated in most studies. For verbalization or screaming an association with pain is found in just under half of the cases, whereas sighing or groaning and pain are not associated in most cases'; conclusion: vocalization as a stand-alone indicator 'indicates only a limited aspect'. The review gives no proportion of people vocalising as a function of pain intensity and no threshold.",
+   "verdict": "unsupported",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Raine J, Pisanski K, Simner J, Reby D. Vocal communication of simulated pain. Bioacoustics 2019;28(5):404-426.",
+     "doiOrUrl": "https://doi.org/10.1080/09524622.2018.1463295",
+     "opened": "not re-opened in this session (the repository records that the accepted manuscript was read)",
+     "finding": "Per the repository it reports how acoustic features change across three acted pain levels, not whether a sound is produced; it cannot support a probability."
+    }
+   ],
+   "notes": {
+    "zh": "这是建模选择，没有出处，代码里也是这样写的。Helmer 等 2020 只支持“疼痛与发声在多数研究中相关”，而且指出相关的强弱因发声类型而异（呻吟最稳定，叹气、哼声多数研究不相关）；没有任何按强度给出的出声比例。曲线的形状（阈值 1 / 2，半数点 3 / 5，饱和点 5 / 8）以及“持续性疼痛更常被忍住”都应继续标为假设。本次没有系统检索实验性疼痛研究里的发声发生率，所以不能说这样的数据不存在。",
+    "en": "This is a modelling choice without a source, as the code already says. Helmer et al. 2020 supports only that pain and vocalisation are associated in most studies, and adds that the strength of the association depends on the type of sound (moaning most consistently; sighing and groaning not associated in most studies); it gives no proportion vocalising by intensity. The shape of the curves (thresholds 1 / 2, half points 3 / 5, saturation 5 / 8) and the statement that sustained pain is more often borne silently should stay labelled as assumptions. No systematic search for vocalisation rates in experimental pain studies was made here, so it cannot be said that no such data exist."
+   }
+  },
+  {
+   "id": "rom-lumbar-white-panjabi-lateral-rotation",
+   "claim": {
+    "zh": "腰椎各节段的侧屈和旋转范围（White 与 Panjabi 的代表值，凭记忆引用）：T12–L1 侧屈 8°、旋转 2°；L1–L2 6°、2°；L2–L3 6°、2°；L3–L4 8°、2°；L4–L5 6°、2°；L5–S1 3°、1°（均为单侧）。",
+    "en": "Segmental lateral bending and axial rotation of the lumbar spine (representative values of White & Panjabi, quoted from memory): T12-L1 lateral 8°, rotation 2°; L1-L2 6°, 2°; L2-L3 6°, 2°; L3-L4 8°, 2°; L4-L5 6°, 2°; L5-S1 3°, 1° (each to one side)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['spine.T12-L1.lateral' … 'spine.L5-S1.rotation'] (12 entries, source 'none', status 'estimate')",
+     "valueUsed": "as listed in the claim; note: 'quoted from memory; not verified on an open page'"
+    }
+   ],
+   "source": "White AA III, Panjabi MM. Clinical Biomechanics of the Spine, 2nd ed. Philadelphia: Lippincott, 1990.",
+   "doiOrUrl": "",
+   "opened": "could not open: the book is not open. Open papers searched for a reproduction of its lumbar lateral-bending and rotation table: Cheng et al. 2013 (PMC3699246, Table 3: flexion-extension only), Liebsch et al. 2017 (PMC5453693, thoracic T1-T12 only), Alemi et al. 2021 (PMC8358679, gives ratios, not degrees), Wilke et al. 2025 (PMC11881816, White & Panjabi values shown only in a figure). None prints the numbers.",
+   "supportedValue": null,
+   "verdict": "could-not-open",
+   "correctedValue": null,
+   "additionalSources": [
+    {
+     "reference": "Wilke HJ, Kienle A, Werner K, Liebsch C. Range of Motion and Neutral Zone of All Human Spinal Motion Segments: A Data Collection of 30 Years of In Vitro Experiments ... (title as truncated in the Europe PMC listing). JOR Spine 2025.",
+     "doiOrUrl": "https://doi.org/10.1002/jsp2.70052",
+     "opened": "Europe PMC full text PMC11881816: Introduction and Discussion text (tables of the paper's own data not extracted)",
+     "finding": "States that White and Panjabi's overview 'was found to exhibit large discrepancies from previous in vitro and vivo studies, primarily for the thoracic spinal motion segments in lateral bending and axial rotation, but also for the lower thoracic spine in flexion/extension'. It is an open, primary alternative for every segment and could replace the from-memory values."
+    }
+   ],
+   "notes": {
+    "zh": "这 12 个数仍然没有出处。可行的办法是改用一份开放的第一手数据：Wilke 等 2025（开放获取）汇总了全部脊柱节段的离体活动范围，可以直接取表；它同时指出 White 与 Panjabi 的综述值与实测有明显出入。在换掉之前，这些条目应保持 status: estimate。",
+    "en": "These 12 numbers still have no source. The practical remedy is to switch to an open primary dataset: Wilke et al. 2025 (open access) collects in vitro ranges for every spinal segment and can be tabulated directly; it also notes that White and Panjabi's review values differ markedly from measurements. Until replaced, the entries should keep status: estimate."
+   }
+  },
+  {
+   "id": "rom-lumbar-white-panjabi-flexion",
+   "claim": {
+    "zh": "腰椎屈伸合计（White 与 Panjabi）：L1–L2 12°、L2–L3 14°、L3–L4 15°、L4–L5 17°（已标出处 cheng）；T12–L1 12° 和 L5–S1 17° 凭记忆引用。",
+    "en": "Lumbar flexion plus extension (White & Panjabi): L1-L2 12°, L2-L3 14°, L3-L4 15°, L4-L5 17° (sourced to 'cheng'); T12-L1 12° and L5-S1 17° quoted from memory."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['spine.L1-L2.flexion' … 'spine.L4-L5.flexion']",
+     "valueUsed": "12 / 14 / 15 / 17° combined, split 75 % / 25 %"
+    },
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['spine.T12-L1.flexion'], entries['spine.L5-S1.flexion']",
+     "valueUsed": "6 + 6 = 12° and 12.8 + 4.2 = 17° ('quoted from memory')"
+    }
+   ],
+   "source": "White AA III, Panjabi MM. Clinical Biomechanics of the Spine, 2nd ed., 1990, as quoted by Cheng et al. 2013 (PMC3699246), Table 3.",
+   "doiOrUrl": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3699246/fullTextXML",
+   "opened": "Europe PMC full text PMC3699246, Table 3 (column 'White and Panjabi (1990)'). The book itself: could not open.",
+   "supportedValue": "Table 3, flexion plus extension, White and Panjabi (1990): L1-L2 12.0°, L2-L3 14.0°, L3-L4 15.0°, L4-L5 17.0°. The table stops at L4-L5: no value for T12-L1 or L5-S1.",
+   "verdict": "verified",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "L1–L5 四个节段的合计值核对无误。T12–L1 的 12° 和 L5–S1 的 17° 在已打开的文献里找不到，仍是“凭记忆”，这两条维持 estimate；75 % / 25 % 的屈伸拆分是本项目的假设，不在核对范围内。",
+    "en": "The combined values for the four segments L1-L5 are confirmed. The 12° for T12-L1 and the 17° for L5-S1 are not in any source opened and remain 'from memory', so those two entries stay estimates; the 75 % / 25 % split between flexion and extension is the project's assumption and outside this audit."
+   }
+  },
+  {
+   "id": "cutaneous-inferior-lateral-brachial-root-value",
+   "claim": {
+    "zh": "臂外侧下皮神经的根值为 C5–C6（凭记忆，未对照出处）。",
+    "en": "Root value C5-C6 for the inferior lateral brachial cutaneous nerve (from memory, not verified against a source)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/skinmaps/cutaneous.json",
+     "key": "sources[id=wikipedia-radial] ('consulted': false) and the entries naming '{side} inferior lateral brachial cutaneous nerve'",
+     "valueUsed": "C5-C6"
+    }
+   ],
+   "source": "None (the listed Wikipedia page was not consulted).",
+   "doiOrUrl": "https://en.wikipedia.org/wiki/Inferior_lateral_cutaneous_nerve_of_arm",
+   "opened": "Wikipedia 'Inferior lateral cutaneous nerve of arm', wikitext of revision 1319191018 (2025-10-28), read in full; Wikipedia 'Radial nerve' wikitext (the passages naming this branch); Europe PMC full texts PMC4541174 (Sehmbi et al. 2015) and PMC5367587 (Bumbasirevic et al. 2016), the passages naming this nerve.",
+   "supportedValue": "None of the four texts gives a root value for this branch. The Wikipedia article says only that it is a branch of the radial nerve supplying 'the lower, lateral aspect of the arm'. Sehmbi 2015 gives the radial nerve as C5-T1 and says the inferior lateral cutaneous nerve of the arm and the posterior cutaneous nerve of the forearm are given off as the nerve leaves the spiral groove; Bumbasirevic 2016 gives the radial nerve fibres as C5, C6, C7, C8 and T1.",
+   "verdict": "unsupported",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "打开的四处文字都没有给这条分支的根值，所以 C5–C6 目前没有出处。它与皮节图大体相符（上臂外侧下部属 C5–C6 皮节），但这是推断，不是引用。建议在 cutaneous.json 里保留“未核实”的标记，或改写为“桡神经分支（C5–T1），该分支的根值未见出处”。解剖学教科书（如 Gray's Anatomy 现行版）应有此值，本次没有打开。",
+    "en": "None of the four texts opened gives a root value for this branch, so C5-C6 has no source at present. It is broadly consistent with dermatome maps (the lower lateral arm lies in C5-C6), but that is an inference, not a citation. cutaneous.json should keep its 'not verified' flag, or say 'branch of the radial nerve (C5-T1); no source found for the root value of this branch'. An anatomy textbook (e.g. the current Gray's Anatomy) should carry the value; none was opened here."
+   }
+  },
+  {
+   "id": "refpop-china-gbt10000-2023-tables",
+   "claim": {
+    "zh": "GB/T 10000-2023 的百分位表（表 1–表 10、附录 B、附录 C）未能取得；仓库只有一个二手数值（男性身高 P95 = 1800 mm）。",
+    "en": "The percentile tables of GB/T 10000-2023 (Tables 1-10, Appendices B and C) could not be obtained; the repository has a single second-hand value (male stature P95 = 1800 mm)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/refpop-china.json",
+     "key": "sources[id=gbt10000-2023], notes[0..1], percentiles[0]",
+     "valueUsed": "P95 1800 mm (men 18-70), secondary"
+    },
+    {
+     "file": "data/curated/bodyshape/anthro-model.json",
+     "key": "presets[] with source 'gbt10000-1988-reprint-sun'",
+     "valueUsed": "1988 values used because the 2023 tables are missing"
+    }
+   ],
+   "source": "GB/T 10000-2023 中国成年人人体尺寸 (Human dimensions of Chinese adults). SAMR / SAC, issued 2023-08-06, in force 2024-03-01.",
+   "doiOrUrl": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=B19DCCA575D9406856ABF87A511EE11F",
+   "opened": "could not open the tables. A 5-page English preview PDF of the standard hosted by a reseller (found by web search) was read in full: cover, contents, foreword, scope, clauses 3-5 headings. The official reader was not retried.",
+   "supportedValue": "The preview confirms only: replaces GB/T 10000-1988 and GB/T 13547-1992; issued 2023-08-06, implemented 2024-03-01; adds biceps circumference, thigh circumference, interpupillary distance, hand girth and ball-of-foot girth; 52 static and 16 functional dimensions; Appendix C is 'Mean and standard deviation of height and weight of adults in six natural [regions]'; men in clause 5.1, women in Tables 6-10. No numbers.",
+   "verdict": "could-not-open",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "与 refpop-china.json 里已有的说明一致，没有新数值。这仍是整个体型数据里最值得补的一项：2023 版的身高、体重均值和标准差（附录 C）可以直接回答第 3 条的问题。",
+    "en": "Consistent with the notes already in refpop-china.json; no new numbers. This remains the most valuable gap in the body-shape data: the 2023 means and SDs of stature and body mass (Appendix C) would settle entry 3 directly."
+   }
+  },
+  {
+   "id": "rom-toes-clinical-values",
+   "claim": {
+    "zh": "足趾活动范围的常见临床值：跖趾关节背伸 40° / 跖屈 40°；拇趾趾间关节屈 60°（注释称各表给 30–90°）；趾近侧趾间关节屈 35°；远侧趾间关节屈 60° / 伸 30°。",
+    "en": "Commonly quoted clinical ranges for the toes: MTP extension 40° / flexion 40°; hallux IP flexion 60° (note: tables give 30-90°); toe PIP flexion 35°; DIP flexion 60° / extension 30°."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['toe.mtp.extension'], ['hallux.ip.flexion'], ['toe.pip.flexion'], ['toe.dip.flexion']",
+     "valueUsed": "40/40, 60/0, 35/0, 60/30; 'not verified on an open page'"
+    }
+   ],
+   "source": "None cited (AAOS-style clinical tables).",
+   "doiOrUrl": "",
+   "opened": "not audited beyond one look: the wikitext of en.wikipedia.org 'Range of motion' contains no toe values",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "English Wikipedia 'Range of motion' 的正文里没有足趾的数值（本次看过其源码）。可查 AAOS《Joint Motion: Method of Measuring and Recording》的转载表，或仓库已用的 Botman 2020 附表是否包含足部。",
+    "en": "The wikitext of English Wikipedia 'Range of motion' (looked at in this session) has no toe values. Candidates: a reproduction of the AAOS 'Joint Motion: Method of Measuring and Recording' tables, or the Botman 2020 supplement already used by the repository if it covers the foot."
+   }
+  },
+  {
+   "id": "rom-finger-mcp-abduction",
+   "claim": {
+    "zh": "手指掌指关节外展–内收各 20°（常见数值）。",
+    "en": "Finger MCP abduction-adduction 20° each way (commonly quoted figure)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['finger.mcp.deviation']",
+     "valueUsed": "20 / 20, source 'none'"
+    }
+   ],
+   "source": "None cited.",
+   "doiOrUrl": "",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "可核对的已发表数值，本次未查。",
+    "en": "A checkable published value; not looked up in this session."
+   }
+  },
+  {
+   "id": "rom-sternoclavicular-limits",
+   "claim": {
+    "zh": "胸锁关节的极限：前伸 / 后缩各 30°，上提 45° / 下降 10°，后旋 45°（教科书数值，未核实）；Ludewig 等 2009 的抬臂过程数值（后缩 16°、上提 6°、后旋 31°）已标出处。",
+    "en": "Limits of the sternoclavicular joint: protraction / retraction 30° each, elevation 45° / depression 10°, posterior rotation 45° (textbook figures, not verified); the values during arm elevation from Ludewig et al. 2009 (retraction 16°, elevation 6°, posterior rotation 31°) are sourced."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['sc.protraction'], ['sc.elevation'], ['sc.rotation']",
+     "valueUsed": "30/30, 45/10, 45/5; status 'estimate'"
+    }
+   ],
+   "source": "Textbook figures (unnamed); Ludewig PM, et al. J Bone Joint Surg Am 2009;91:378-389 (PMC2657311) for the movement during elevation.",
+   "doiOrUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2657311/",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "极限值可在运动学教科书核对；Ludewig 的数值本次没有重读。",
+    "en": "The limits can be checked in a kinesiology textbook; Ludewig's values were not re-read here."
+   }
+  },
+  {
+   "id": "rom-acromioclavicular-limits",
+   "claim": {
+    "zh": "肩锁关节的极限（上回旋 45° / 15°、内旋 30° / 20°、后倾 30° / 10°）为估计值；Ludewig 等 2009 的过程值（上回旋 39° 其中 11° 在肩锁关节、内旋 8°、后倾 19°）已标出处。",
+    "en": "Limits of the acromioclavicular joint (upward rotation 45° / 15°, internal rotation 30° / 20°, posterior tilt 30° / 10°) are estimates; the values during elevation from Ludewig et al. 2009 (39° of upward rotation of which 11° at the AC joint, internal rotation 8°, posterior tilt 19°) are sourced."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['ac.upwardRotation'], ['ac.internalRotation'], ['ac.posteriorTilt']",
+     "valueUsed": "as listed; status 'estimate'"
+    }
+   ],
+   "source": "Ludewig PM, et al. 2009 (PMC2657311).",
+   "doiOrUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2657311/",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "极限本身是建模选择；Ludewig 的过程值是可核对的事实，本次未重读。",
+    "en": "The limits themselves are modelling choices; Ludewig's values are checkable facts that were not re-read here."
+   }
+  },
+  {
+   "id": "rom-tmj-lateral-excursion",
+   "claim": {
+    "zh": "切牙处下颌侧方运动约 7.5 mm（儿童测量值；未找到成人数值），折合约 5°。",
+    "en": "Lateral excursion at the incisors about 7.5 mm (measured in children; no adult value found), taken as about 5°."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['tmj.lateral']",
+     "valueUsed": "5 / 5, source 'none'"
+    }
+   ],
+   "source": "None cited.",
+   "doiOrUrl": "",
+   "opened": "not audited: only a Europe PMC search listing was seen",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "成人的侧方运动范围在开放文献里有（Europe PMC 检索到若干开放论文的题录，如健康儿童下颌活动范围的生长曲线，PMC9321901），本次没有打开正文。",
+    "en": "Adult lateral excursion is available in open literature (a Europe PMC search listed several open papers, e.g. growth curves of mandibular range of motion in healthy children, PMC9321901); no full text was opened in this session."
+   }
+  },
+  {
+   "id": "rom-tmj-opening",
+   "claim": {
+    "zh": "最大张口度：年轻男性 47.9 ± 5.0 mm、女性 42.5 mm；全张口时转动约 39° 加下颌头前移约 20 mm（Muto 与 Kanazawa 1996，仅摘要）。",
+    "en": "Maximal mouth opening 47.9 ± 5.0 mm in young men and 42.5 mm in women; full opening is about 39° of rotation plus about 20 mm of condylar translation (Muto & Kanazawa 1996, abstract only)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['tmj.opening'], sources.gupta",
+     "valueUsed": "29° hinge limit; status 'estimate'"
+    }
+   ],
+   "source": "PMC6182881 (maximal mouth opening in young adults); Muto T, Kanazawa M. 1996 (abstract).",
+   "doiOrUrl": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6182881/fullTextXML",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "仓库已记录读过 PMC 全文和摘要；本次未重读。",
+    "en": "The repository records that the PMC full text and the abstract were read; not re-read here."
+   }
+  },
+  {
+   "id": "rom-patella-and-ribs-derived",
+   "claim": {
+    "zh": "髌骨屈曲为膝屈曲角的 60–70 %（综述 PMC6451817）；第 1、10–12 肋的转角由 Wilson 等 2001 对第 2–9 肋的测量外推。",
+    "en": "Patellar flexion is 60-70 % of knee flexion (review PMC6451817); the rotations of ribs 1 and 10-12 are extrapolated from the ribs 2-9 measured by Wilson et al. 2001."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['patella.flexion'], ['rib.1'], ['rib.10'], ['rib.11'], ['rib.12']",
+     "valueUsed": "status 'estimate'"
+    }
+   ],
+   "source": "J Healthc Eng 2019 review (PMC6451817); Wilson TA, et al. J Physiol 2001;530:319-330 (PMC2278403).",
+   "doiOrUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2278403/",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "外推是建模选择；60–70 % 和 Wilson 的表 1 是可核对的事实，本次未重读。",
+    "en": "The extrapolation is a modelling choice; the 60-70 % and Wilson's Table 1 are checkable facts not re-read here."
+   }
+  },
+  {
+   "id": "rom-thumb-cmc-aaos",
+   "claim": {
+    "zh": "AAOS 表：拇指腕掌关节桡侧外展 60°、掌侧外展 60°（Botman 等 2020 附表）；相对本模型静止位的范围是估计。",
+    "en": "AAOS table: thumb CMC radial abduction 60° and palmar abduction 60° (supplement of Botman et al. 2020); the ranges about this body's rest pose are estimates."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/rig/rom.json",
+     "key": "entries['thumb.cmc.flexion'], ['thumb.cmc.abduction']",
+     "valueUsed": "30/40 and 40/30; status 'estimate'"
+    }
+   ],
+   "source": "Botman M, Hendriks TCC, et al. PRS Global Open 2020;8:e2907, Supplemental Digital Content 1.",
+   "doiOrUrl": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7413812/supplementaryFiles",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "仓库已记录读过附表；本次未重读。",
+    "en": "The repository records that the supplement was read; not re-read here."
+   }
+  },
+  {
+   "id": "cutaneous-gray-1918-plates-via-commons",
+   "claim": {
+    "zh": "皮神经分布图的标注取自维基共享资源上重绘的 Gray 1918 图 812/814、826、831（及 834），未与原版图版对照。",
+    "en": "Labels of the cutaneous nerve maps are taken from Gray 1918 figs. 812/814, 826 and 831 (and 834) as redrawn on Wikimedia Commons, not checked against the original plates."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/skinmaps/cutaneous.json",
+     "key": "sources[id=gray1918-fig812…fig834]",
+     "valueUsed": "'not checked against the original plate(s)'"
+    }
+   ],
+   "source": "Gray H. Anatomy of the Human Body, 20th ed. (Lewis WH, ed.). Philadelphia: Lea & Febiger, 1918, figs. 812, 814, 826, 831, 834.",
+   "doiOrUrl": "https://commons.wikimedia.org/wiki/File:Gray812and814.svg",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "原版图版是公有领域，网上有扫描件，可以逐个标注对照；本次未做。",
+    "en": "The original plates are in the public domain and scans exist online, so the labels can be compared one by one; not done here."
+   }
+  },
+  {
+   "id": "refpop-china-gbt10000-1988-reprint",
+   "claim": {
+    "zh": "GB/T 10000-1988 的百分位取自教科书转载的表格图片（目视读数），转载本身有可见的排印错误；例如身高：男 18–60 岁 P1/P5/P10/P50/P90/P95/P99 = 1543/1583/1604/1678/1754/1775/1814 mm，女 18–55 岁 1449/1484/1503/1570/1640/1659/1697 mm。",
+    "en": "The GB/T 10000-1988 percentiles come from table images in a textbook reprint (read by eye) that has visible typesetting errors; e.g. stature: men 18-60 P1/P5/P10/P50/P90/P95/P99 = 1543/1583/1604/1678/1754/1775/1814 mm, women 18-55 1449/1484/1503/1570/1640/1659/1697 mm."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/refpop-china.json",
+     "key": "percentiles[] with sourceId gbt10000-1988-reprint-sun (most of the 67 rows)",
+     "valueUsed": "read by eye from a secondary reprint"
+    },
+    {
+     "file": "data/curated/bodyshape/anthro-model.json",
+     "key": "presets[] citing gbt10000-1988-reprint-sun",
+     "valueUsed": "P50 statures 1678 / 1570 mm"
+    },
+    {
+     "file": "tools/bodyshape/fit_anthro.py",
+     "key": "preset construction",
+     "valueUsed": "same"
+    }
+   ],
+   "source": "GB/T 10000-1988 中国成年人人体尺寸, as reprinted in 孙丽丽, 宋魁彦 主编《人体工学及产品设计实例》表2-4～表2-7.",
+   "doiOrUrl": "https://chuangshi.qq.com/read/29975494/14",
+   "opened": "not audited: one web search only; no second reprint opened",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "本次只做了一次网络检索，没有打开第二份独立的转载来交叉核对；标准原文（已废止）也没有打开。身高一行的男女 P5–P95 与 P1–P99 反推出的标准差彼此一致（男 58.3 / 58.2 mm，女 53.2 / 53.3 mm），说明这一行内部自洽，但这不等于核对了出处。",
+    "en": "Only one web search was made; no second independent reprint was opened for a cross-check and the (superseded) standard itself was not opened. In the stature row the SDs implied by P5-P95 and by P1-P99 agree (men 58.3 / 58.2 mm, women 53.2 / 53.3 mm), so the row is internally consistent, which is not the same as checking it against the source."
+   }
+  },
+  {
+   "id": "refpop-china-fitness-2020-means",
+   "claim": {
+    "zh": "第五次国民体质监测公报（2020）的均值由表格图片目视读出，例如 20–24 岁身高男 172.6 cm、女 160.6 cm；公报不给标准差。",
+    "en": "Means of the 5th National Physical Fitness Surveillance bulletin (2020) were read by eye from table images, e.g. stature at 20-24: men 172.6 cm, women 160.6 cm; the bulletin gives no SD."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/refpop-china.json",
+     "key": "means[] with sourceId cn-fitness-2020",
+     "valueUsed": "all rows 'read by eye'; sd null"
+    },
+    {
+     "file": "data/curated/bodyshape/anthro-model.json",
+     "key": "presets[id=cn-fitness2020-*]",
+     "valueUsed": "reference statures"
+    },
+    {
+     "file": "data/curated/rig/shape.json",
+     "key": "extremes.bmi",
+     "valueUsed": "21.6 (reference BMI)"
+    }
+   ],
+   "source": "国家国民体质监测中心. 第五次国民体质监测公报 (2020), 表2、表3.",
+   "doiOrUrl": "https://www.gov.cn/guoqing/2023-03/12/content_5745851.htm",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "表格是图片，无法用文字方式核对；可以请人对照图片复核 20–24 岁一行（参考体的身高、体重由它决定）。",
+    "en": "The tables are images and cannot be checked as text; a person should re-read the 20-24 row against the image, since it fixes the reference body's stature and mass."
+   }
+  },
+  {
+   "id": "refpop-china-secondary-news-values",
+   "claim": {
+    "zh": "经新闻报道转引的数值：2015–2019 年监测 18–44 岁平均身高男 169.7 cm、女 158.0 cm；2014 年国民体质监测 20–24 岁男 171.9 cm、女 159.9 cm；2019 年学生调研 19–22 岁的五年增量（男 +0.81 cm 等）。",
+    "en": "Values quoted through news reports: mean stature at 18-44 of 169.7 cm (men) and 158.0 cm (women) from the 2015-2019 surveillance; 171.9 / 159.9 cm at 20-24 from the 2014 fitness surveillance; five-year increments at 19-22 from the 2019 student survey (men +0.81 cm, etc.)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/refpop-china.json",
+     "key": "sources[id=cn-nutrition-2020, cn-fitness-2014-news, cn-students-2019], means[], notes[6]",
+     "valueUsed": "secondary (news quotations)"
+    }
+   ],
+   "source": "《中国居民营养与慢性病状况报告(2020年)》; 2014年国民体质监测公报; 第八次全国学生体质与健康调研 (2019).",
+   "doiOrUrl": "https://www.chinanews.com/gn/2020/12-23/9369092.shtml",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "原报告和公报没有打开；这些数值目前不进入模型，只作参照。",
+    "en": "The reports and bulletins themselves were not opened; these values do not enter the model at present and serve only as context."
+   }
+  },
+  {
+   "id": "fat-literature-unopened-sources",
+   "claim": {
+    "zh": "皮下脂肪文献表里四个“未打开”的出处（没有取用任何数值）：Gallagher 等 2000（含亚洲人项的体脂率公式）、Störchle 等 2017（八个标准部位、按体重分组）、Wang 等 2016（中国糖尿病患者注射部位）、Ludescher 等 2011（全身 MRI 按部位、性别、BMI）。",
+    "en": "Four sources in the fat literature file marked not opened (no numbers taken from them): Gallagher et al. 2000 (%BF equation with an Asian term), Störchle et al. 2017 (eight standard sites by weight class), Wang et al. 2016 (injection sites in Chinese patients with diabetes), Ludescher et al. 2011 (whole-body MRI by site, sex and BMI)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/fat-literature.json",
+     "key": "sources[id=gallagher2000, storchle2017, wang2016, ludescher2011]; bodyFatPercent[] row for gallagher2000",
+     "valueUsed": "access 'read-about'; 'NO numbers included'"
+    }
+   ],
+   "source": "As cited in fat-literature.json (records not re-checked here): Gallagher D, et al. Am J Clin Nutr 2000;72(3):694-701; Storchle P, et al. Ultrasound Med Biol 2017;43(2):427-438; Wang W, et al. Diabetes Metab 2016;42(5):374-377; Ludescher B, et al. Clin Endocrinol 2011;75(6):786-790.",
+   "doiOrUrl": "https://doi.org/10.1093/ajcn/72.3.694",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "没有数值在用，所以不影响现有模型；但 Gallagher 的公式和 Wang、Ludescher 的表是补“中国人 / 按性别和 BMI 分层”这个缺口的首选，值得人工取得。",
+    "en": "No number from them is in use, so the present model is unaffected; but Gallagher's equation and the tables of Wang and Ludescher are the first choices for closing the gap on Chinese and on sex-by-BMI data and are worth obtaining by hand."
+   }
+  },
+  {
+   "id": "fat-literature-tables-read-by-eye",
+   "claim": {
+    "zh": "若干皮下脂肪厚度取自图片形式的表格（目视读数）或只读了附录：Jain 等 2013 表 1、5–7；Sim 等 2014 表 1、4、5；Gibney 等 2010 只读了网上附录（表 1–5），正文未打开，部位的定位方法不详；Kelly 等 2009 的补充表 S1–S20 未打开。",
+    "en": "Several subcutaneous fat thicknesses come from tables published as images (read by eye) or from an appendix only: Jain et al. 2013 Tables 1, 5-7; Sim et al. 2014 Tables 1, 4, 5; Gibney et al. 2010 online appendix only (Tables 1-5), main article not opened, site landmarks unknown; supplementary tables S1-S20 of Kelly et al. 2009 not opened."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/fat-literature.json",
+     "key": "sources[id=jain2013, sim2014, gibney2010, kelly2009].accessNote; siteThickness[] rows",
+     "valueUsed": "e.g. Gibney BMI < 25: arm 7.7, thigh 7.8, abdomen 9.5, buttock 13.7 mm"
+    },
+    {
+     "file": "data/curated/bodyshape/shape-model.json",
+     "key": "fatSites[].basis",
+     "valueUsed": "regressions derived from these rows"
+    },
+    {
+     "file": "data/curated/bodyshape/rig-shape.json",
+     "key": "sexes.*.fatSites[]",
+     "valueUsed": "same coefficients"
+    }
+   ],
+   "source": "As cited in fat-literature.json: Jain SM, et al. Indian J Endocrinol Metab 2013;17(5):864-870 (PMC3784870); Sim KH, et al. Diabetes Metab J 2014;38(2):120-133 (PMC4021299); Gibney MA, et al. Curr Med Res Opin 2010;26(6):1519-1530; Kelly TL, et al. PLoS One 2009;4(9):e7038 (PMC2737140).",
+   "doiOrUrl": "https://doi.org/10.1185/03007995.2010.481203",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "图片表格的读数值得抽查；Gibney 正文里的部位定义会影响“上臂后侧、大腿前侧、腹、臀”各点放在模型的什么位置。",
+    "en": "The by-eye readings deserve a spot check; the site definitions in Gibney's main article affect where 'posterior arm, anterior thigh, abdomen, buttock' are placed on the model."
+   }
+  },
+  {
+   "id": "fat-female-factor-1p5",
+   "claim": {
+    "zh": "小腿、前胸、背部的女性皮下脂肪厚度取男性的 1.5 倍（Störchle 等 2018 只有 10 名男性；一名女性测得 4.0 mm）。",
+    "en": "Female subcutaneous fat at calf, anterior chest and back taken as 1.5 times the male value (Störchle et al. 2018 has 10 men only; one woman measured 4.0 mm)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/bodyshape/shape-model.json",
+     "key": "fatSites[id=calf, chestAnterior, back].basis / quality",
+     "valueUsed": "'women 1.5 x assumed'"
+    },
+    {
+     "file": "data/curated/bodyshape/rig-shape.json",
+     "key": "sexes.F.fatSites[] quality",
+     "valueUsed": "'female factor assumed'"
+    }
+   ],
+   "source": "Storchle P, et al. Sci Rep 2018;8:16268 (PMC6214952), as cited in fat-literature.json, for the male values; no source for the factor.",
+   "doiOrUrl": "https://doi.org/10.1038/s41598-018-34213-0",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "这些部位的女 / 男比值是可以查到的已发表事实（皮褶或超声研究），本次未查。fat-literature.json 的说明给出其他部位的比值为 1.3–1.9。",
+    "en": "The female-to-male ratio at these sites is a checkable published fact (skinfold or ultrasound studies) that was not looked up here. The notes of fat-literature.json give 1.3-1.9 at other sites."
+   }
+  },
+  {
+   "id": "face-kunz-2019-abstract-only",
+   "claim": {
+    "zh": "Kunz 等 2019（Pain 160:535–549）只读了摘要：稳定出现的疼痛相关 AU 为 AU4、AU6_7、AU9_10、AU25_26_27，临床疼痛中 AU43 更常见；这些 AU 多数时候并不同时出现。",
+    "en": "Kunz et al. 2019 (Pain 160:535-549) was read as abstract only: the consistent pain-related AUs are AU4, AUs6_7, AUs9_10 and AUs25_26_27, with AU43 more frequent in clinical pain; they are mostly not shown all at once."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/sources.json",
+     "key": "sources[id=kunz2019]",
+     "valueUsed": "'Abstract only'"
+    },
+    {
+     "file": "data/curated/face/pain.json",
+     "key": "_doc, painAUs.basis",
+     "valueUsed": "cited for the absence of a uniform pain face"
+    }
+   ],
+   "source": "Kunz M, Meixner D, Lautenbacher S. Facial muscle movements encoding pain - a systematic review. Pain 2019;160(3):535-549.",
+   "doiOrUrl": "https://doi.org/10.1097/j.pain.0000000000001424",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "仓库已如实标明“仅摘要”；正文里各 AU 出现频率的表没有读到。本次未重读。",
+    "en": "The repository already states 'abstract only'; the tables of AU frequencies in the body were not read. Not re-read here."
+   }
+  },
+  {
+   "id": "face-pspi-grading-prkachin-2021",
+   "claim": {
+    "zh": "PSPI 的一种分级：0 无、1 微量、2 弱、≥ 3 强（由 Prkachin 与 Hammal 2021 转述）。",
+    "en": "A grading of the PSPI: 0 none, 1 trace, 2 weak, >= 3 strong (as reported by Prkachin & Hammal 2021)."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/pain.json",
+     "key": "datasetFacts[2]",
+     "valueUsed": "'none (PSPI = 0), trace (PSPI = 1), weak (PSPI = 2), strong (PSPI >= 3)'"
+    }
+   ],
+   "source": "Prkachin KM, Hammal Z. Computer Mediated Automatic Detection of Pain-Related Behavior: Prospect, Progress, Perils. Front Pain Res 2021;2:788606.",
+   "doiOrUrl": "https://doi.org/10.3389/fpain.2021.788606",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "开放获取，仓库记录已读全文；本次未重读。Lucey 2011 的表 II（见 unbc-mcmaster-database-facts）与之相容：PSPI ≥ 3 的帧只占 6.4 %。",
+    "en": "Open access and recorded as read in full by the repository; not re-read here. Table II of Lucey 2011 (see unbc-mcmaster-database-facts) is compatible: frames with PSPI >= 3 are only 6.4 %."
+   }
+  },
+  {
+   "id": "face-pain-expression-timing",
+   "claim": {
+    "zh": "疼痛表情的时间参数（潜伏 0.3 s、起始 0.6 s、消退 1.5 s）是假设；仓库称“没有找到可公开核对的起始 / 峰值 / 消退时间统计”。",
+    "en": "The timing of the pain expression (latency 0.3 s, onset 0.6 s, offset 1.5 s) is an assumption; the repository says no openly checkable statistics of onset, apex or offset times were found."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/face/pain.json",
+     "key": "timing",
+     "valueUsed": "latency 0.3, onset 0.6, offset 1.5; source null"
+    }
+   ],
+   "source": "None.",
+   "doiOrUrl": "",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "数值本身是建模选择；“文献里有没有疼痛表情的时程数据”是可查的事实，本次未查。",
+    "en": "The numbers are modelling choices; whether the literature holds time-course data for pain expressions is a checkable fact not searched here."
+   }
+  },
+  {
+   "id": "voice-raine-2019-values",
+   "claim": {
+    "zh": "Raine 等 2019 表 3、表 4 的各级均值（如女声基频均值 465.5 / 539.9 / 737.8 Hz）及全体 60 人的平均时长，用来从女声推出男声和设定持续性疼痛的时长。",
+    "en": "Per-level means from Tables 3 and 4 of Raine et al. 2019 (e.g. female mean F0 465.5 / 539.9 / 737.8 Hz) and the mean durations over all 60 vocalisers, used to derive the male voice and to set durations for sustained pain."
+   },
+   "usedIn": [
+    {
+     "file": "data/curated/voice/calibration.json",
+     "key": "raine2019",
+     "valueUsed": "values 'as reported in the paper'"
+    },
+    {
+     "file": "src/voice/control.ts",
+     "key": "male offsets and sustained durations",
+     "valueUsed": "derived from Tables 3 and 4"
+    }
+   ],
+   "source": "Raine J, Pisanski K, Simner J, Reby D. Vocal communication of simulated pain. Bioacoustics 2019;28(5):404-426.",
+   "doiOrUrl": "https://doi.org/10.1080/09524622.2018.1463295",
+   "opened": "not audited in this session",
+   "supportedValue": null,
+   "verdict": "not-audited",
+   "correctedValue": null,
+   "additionalSources": [],
+   "notes": {
+    "zh": "仓库记录读的是 Sussex 机构库的录用稿；本次未重读。不属于“未核实”的命中，只因与第 7 条相关而列出。",
+    "en": "The repository records that the accepted manuscript on the Sussex repository was read; not re-read here. Not a hit for 'unverified'; listed because it bears on entry 7."
+   }
+  }
+ ]
+}

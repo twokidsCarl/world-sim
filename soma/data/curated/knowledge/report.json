@@ -1506,6 +1506,474 @@
    "temporal branches of the facial nerve = 颞支"
   ]
  },
+ "reviewWorkflow": {
+  "note": "Cross-check = comparison with a second open source (names: Wikidata zh label, Chinese Wikipedia title; relations: English Wikipedia muscle infobox, Z-Anatomy attachment bone). \"agree\" is evidence, not review: nothing is marked reviewed without a sign-off. Wikidata labels and Chinese Wikipedia titles are not fully independent of each other.",
+  "statusProposal": "ReviewStatus has no value for \"two open sources agree\". Proposed, not applied: add \"cross-checked\" to ReviewStatus in src/anatomy/types.ts; until then the agreement lives only in review-queue.json (crossCheck).",
+  "names": {
+   "perConcept": {
+    "agree": 854,
+    "disagree": 575,
+    "noSecondSource": 4012
+   },
+   "perReviewItem": {
+    "agree": 465,
+    "disagree": 279,
+    "noSecondSource": 2382
+   }
+  },
+  "relations": {
+   "perRelation": {
+    "agree": 1710,
+    "disagree": 1237,
+    "noSecondSource": 5813
+   },
+   "perReviewItem": {
+    "agree": 753,
+    "disagree": 498,
+    "noSecondSource": 1969
+   }
+  },
+  "nameItems": 3126,
+  "relationItems": 3220,
+  "signOffs": {
+   "inFile": 0,
+   "applied": 0,
+   "unknownOrInvalidIds": []
+  },
+  "reviewed": {
+   "nameItems": 0,
+   "relationItems": 0
+  },
+  "riskHistogram": {
+   "0": {
+    "names": 74,
+    "relations": 41
+   },
+   "1": {
+    "names": 52,
+    "relations": 187
+   },
+   "2": {
+    "names": 204,
+    "relations": 435
+   },
+   "3": {
+    "names": 125,
+    "relations": 335
+   },
+   "4": {
+    "names": 1114,
+    "relations": 1132
+   },
+   "5": {
+    "names": 68,
+    "relations": 286
+   },
+   "6": {
+    "names": 967,
+    "relations": 136
+   },
+   "7": {
+    "names": 93,
+    "relations": 490
+   },
+   "8": {
+    "names": 226,
+    "relations": 119
+   },
+   "9": {
+    "names": 16,
+    "relations": 33
+   },
+   "10": {
+    "names": 166,
+    "relations": 24
+   },
+   "11": {
+    "names": 19,
+    "relations": 2
+   },
+   "12": {
+    "names": 2,
+    "relations": 0
+   }
+  },
+  "topDisagreements": [
+   {
+    "id": "name:FMA14824",
+    "en": "marginal colic artery",
+    "ours": "结肠缘动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "边缘动脉",
+    "zhwiki": "边缘动脉"
+   },
+   {
+    "id": "name:FMA50737",
+    "en": "celiac artery",
+    "ours": "腹腔干",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "腹腔动脉",
+    "zhwiki": "腹腔动脉干"
+   },
+   {
+    "id": "name:FMA14333",
+    "en": "common iliac vein",
+    "ours": "髂总静脉",
+    "zhSource": "machine-translation:override",
+    "wikidata": "肠骨的静脉"
+   },
+   {
+    "id": "name:FMA14348",
+    "en": "suprarenal vein",
+    "ours": "肾上腺静脉",
+    "zhSource": "machine-translation:override",
+    "wikidata": "右肾上腺静脉"
+   },
+   {
+    "id": "name:FMA16580",
+    "en": "bony pelvis",
+    "ours": "骨盆",
+    "zhSource": "machine-translation:override",
+    "zhwiki": "髋骨"
+   },
+   {
+    "id": "name:FMA18917",
+    "en": "internal pudendal vein",
+    "ours": "阴部内静脉",
+    "zhSource": "machine-translation:override",
+    "wikidata": "前庭球静脉"
+   },
+   {
+    "id": "name:FMA22593",
+    "en": "flexor hallucis longus",
+    "ours": "踇长屈肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "足部屈肌",
+    "zhwiki": "足部屈肌"
+   },
+   {
+    "id": "name:FMA22834",
+    "en": "superficial palmar arterial arch",
+    "ours": "掌浅弓",
+    "zhSource": "machine-translation:override",
+    "wikidata": "浅掌枝",
+    "zhwiki": "掌浅动脉弓"
+   },
+   {
+    "id": "name:FMA32526",
+    "en": "rectus capitis posterior minor",
+    "ours": "头后小直肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "小后头直筋"
+   },
+   {
+    "id": "name:FMA37450",
+    "en": "flexor digitorum brevis",
+    "ours": "趾短屈肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "伸趾短肌"
+   },
+   {
+    "id": "name:FMA43942",
+    "en": "plantar arch",
+    "ours": "足底弓",
+    "zhSource": "machine-translation:override",
+    "wikidata": "掌动脉弓",
+    "zhwiki": "足底动脉弓"
+   },
+   {
+    "id": "name:FMA46291",
+    "en": "digastric",
+    "ours": "二腹肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "二腹肌前腹"
+   },
+   {
+    "id": "name:FMA46320",
+    "en": "mylohyoid",
+    "ours": "下颌舌骨肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "颏舌肌"
+   },
+   {
+    "id": "name:FMA46582",
+    "en": "transverse arytenoid",
+    "ours": "杓横肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "杓肌",
+    "zhwiki": "杓肌"
+   },
+   {
+    "id": "name:FMA51141",
+    "en": "extensor hallucis brevis",
+    "ours": "踇短伸肌",
+    "zhSource": "machine-translation:override",
+    "wikidata": "伸拇短肌"
+   },
+   {
+    "id": "name:FMA55077",
+    "en": "pharyngeal raphe",
+    "ours": "咽缝",
+    "zhSource": "machine-translation:override",
+    "wikidata": "咽裂"
+   },
+   {
+    "id": "name:FMA61974",
+    "en": "stria terminalis",
+    "ours": "终纹",
+    "zhSource": "machine-translation:override",
+    "wikidata": "终纹床核"
+   },
+   {
+    "id": "name:FMA62434",
+    "en": "cingulate gyrus",
+    "ours": "扣带回",
+    "zhSource": "machine-translation:override",
+    "wikidata": "扣带皮层",
+    "zhwiki": "扣带皮层"
+   },
+   {
+    "id": "name:FMA62493",
+    "en": "hippocampus",
+    "ours": "海马",
+    "zhSource": "machine-translation",
+    "wikidata": "右海马体"
+   },
+   {
+    "id": "name:FMA83966",
+    "en": "tentorium cerebelli",
+    "ours": "小脑幕",
+    "zhSource": "machine-translation:override",
+    "wikidata": "小脑疝"
+   },
+   {
+    "id": "name:FMA9703",
+    "en": "nasolacrimal duct",
+    "ours": "鼻泪管",
+    "zhSource": "machine-translation:override",
+    "wikidata": "泪器"
+   },
+   {
+    "id": "rel:insertion|Q532798#P3491|intertubercular sulcus of the humerus|whole",
+    "ours": "clavicular part of pectoralis major —insertion→ intertubercular sulcus of the humerus",
+    "source": "Wikidata (propagated from whole muscle FMA9627 \"pectoralis major\" to its named part; whole-muscle insertion, may not apply to this part)",
+    "secondSource": "Wikipedia \"Pectoralis major\" infobox, field insertion",
+    "secondSourceSays": "lateral lip of the bicipital groove of the humerus; (anteromedial proximal humerus)"
+   },
+   {
+    "id": "rel:origin|Q532798#P3490|rectus sheath|whole",
+    "ours": "clavicular part of pectoralis major —origin→ Rectus sheath",
+    "source": "Wikidata (propagated from whole muscle FMA9627 \"pectoralis major\" to its named part; whole-muscle origin, may not apply to this part)",
+    "secondSource": "Wikipedia \"Pectoralis major\" infobox, field origin",
+    "secondSourceSays": "clavicular head: anterior surface of the medial half of the clavicle.; sternocostal head: anterior surface of the sternum, the superior six costal cartilages, a"
+   },
+   {
+    "id": "name:FMA10428",
+    "en": "thoracic wall",
+    "ours": "胸壁",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "胸腔壁"
+   },
+   {
+    "id": "name:FMA10636",
+    "en": "costocervical trunk",
+    "ours": "肋颈干",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "肋颈动脉干",
+    "zhwiki": "肋颈动脉干"
+   },
+   {
+    "id": "name:FMA10646",
+    "en": "superior epigastric artery",
+    "ours": "腹壁上动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "上腹壁动脉",
+    "zhwiki": "上腹壁动脉"
+   },
+   {
+    "id": "name:FMA10659",
+    "en": "deep cervical artery",
+    "ours": "颈深动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "深颈动脉",
+    "zhwiki": "深颈动脉"
+   },
+   {
+    "id": "name:FMA10662",
+    "en": "inferior thyroid artery",
+    "ours": "甲状腺下动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "下甲状腺动脉",
+    "zhwiki": "下甲状腺动脉"
+   },
+   {
+    "id": "name:FMA11336",
+    "en": "linea alba",
+    "ours": "白线",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "腹部白线"
+   },
+   {
+    "id": "name:FMA12265",
+    "en": "transversalis fascia",
+    "ours": "腹横筋膜",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "横筋膜"
+   },
+   {
+    "id": "name:FMA13295",
+    "en": "diaphragm",
+    "ours": "膈",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "横膈膜",
+    "zhwiki": "横膈膜"
+   },
+   {
+    "id": "name:FMA13379",
+    "en": "rhomboid major",
+    "ours": "大菱形肌",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "大菱肌"
+   },
+   {
+    "id": "name:FMA13380",
+    "en": "rhomboid minor",
+    "ours": "小菱形肌",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "小菱肌"
+   },
+   {
+    "id": "name:FMA14338",
+    "en": "right hepatic vein",
+    "ours": "肝右静脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "右肝静脉"
+   },
+   {
+    "id": "name:FMA14339",
+    "en": "left hepatic vein",
+    "ours": "肝左静脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "左肝静脉"
+   },
+   {
+    "id": "name:FMA14344",
+    "en": "testicular vein",
+    "ours": "睾丸静脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "精索静脉",
+    "zhwiki": "精索静脉"
+   },
+   {
+    "id": "name:FMA14768",
+    "en": "left gastric artery",
+    "ours": "胃左动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "左胃动脉",
+    "zhwiki": "左胃动脉"
+   },
+   {
+    "id": "name:FMA14776",
+    "en": "right gastric artery",
+    "ours": "胃右动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "右胃动脉",
+    "zhwiki": "右胃动脉"
+   },
+   {
+    "id": "name:FMA14796",
+    "en": "left gastro-epiploic artery",
+    "ours": "胃网膜左动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "左胃网膜动脉",
+    "zhwiki": "左胃网膜动脉"
+   },
+   {
+    "id": "name:FMA14816",
+    "en": "anterior cecal artery",
+    "ours": "盲肠前动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "前盲肠动脉",
+    "zhwiki": "前盲肠动脉"
+   },
+   {
+    "id": "name:FMA14817",
+    "en": "posterior cecal artery",
+    "ours": "盲肠后动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "后盲肠动脉",
+    "zhwiki": "后盲肠动脉"
+   },
+   {
+    "id": "name:FMA14832",
+    "en": "superior rectal artery",
+    "ours": "直肠上动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "上直肠动脉",
+    "zhwiki": "上直肠动脉"
+   },
+   {
+    "id": "name:FMA15394",
+    "en": "left colic vein",
+    "ours": "左结肠静脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "结肠左静脉",
+    "zhwiki": "结肠左静脉"
+   },
+   {
+    "id": "name:FMA19039",
+    "en": "common fibular nerve",
+    "ours": "腓总神经",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "总腓骨神经"
+   },
+   {
+    "id": "name:FMA20560",
+    "en": "genital branch of genitofemoral nerve",
+    "ours": "生殖股神经生殖支",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "生殖股神经生殖器分支"
+   },
+   {
+    "id": "name:FMA20686",
+    "en": "inferior epigastric artery",
+    "ours": "腹壁下动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "下腹壁动脉",
+    "zhwiki": "下腹壁动脉"
+   },
+   {
+    "id": "name:FMA20734",
+    "en": "superficial epigastric artery",
+    "ours": "腹壁浅动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "浅腹壁动脉",
+    "zhwiki": "浅腹壁动脉"
+   },
+   {
+    "id": "name:FMA20798",
+    "en": "lateral circumflex femoral artery",
+    "ours": "旋股外侧动脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "外侧旋股动脉",
+    "zhwiki": "外侧旋股动脉"
+   },
+   {
+    "id": "name:FMA21162",
+    "en": "inferior epigastric vein",
+    "ours": "腹壁下静脉",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "下腹壁静脉"
+   },
+   {
+    "id": "name:FMA21479",
+    "en": "sacrotuberous ligament",
+    "ours": "骶结节韧带",
+    "zhSource": "lexicon:mainland-over-wikidata",
+    "wikidata": "骶棘韧带"
+   }
+  ]
+ },
  "zhMainlandOverWikidata": {
   "note": "Mainland wording policy: an exact lexicon term was used instead of the Wikidata label shown here (regional, colloquial or wrong wording). zhSource = lexicon:mainland-over-wikidata. For a reviewer.",
   "count": 570,

@@ -1,0 +1,28 @@
+{
+ "note": {
+  "zh": "审核签核文件，由审核者手工编辑。键是 review-queue.json 里的审核项 id；构建脚本（bun tools/knowledge/run.ts）只把这里签核过的条目标为 reviewed。verdict：accept＝原样通过；correct＝按 corrected 改正后通过（名称用 zh，关系用 objectLabelZh / objectLabelEn）；reject＝不成立（关系从输出中删除，名称保持未审核并留待修改）。reviewedBy 写角色，不写姓名或联系方式。",
+  "en": "Reviewer sign-offs, edited by hand. Keys are item ids from review-queue.json; the build (bun tools/knowledge/run.ts) marks as reviewed only what is signed off here. verdict: accept = correct as it stands; correct = right once `corrected` is applied (zh for names; objectLabelZh / objectLabelEn for relations); reject = wrong (a relation is removed from the output, a name stays unreviewed for rework). reviewedBy is a role, never a name or contact detail."
+ },
+ "example": {
+  "name:FMA9611": {
+   "reviewedBy": "anatomy lecturer",
+   "date": "2026-01-01",
+   "verdict": "accept"
+  },
+  "name:FMA00000": {
+   "reviewedBy": "anatomy lecturer",
+   "date": "2026-01-01",
+   "verdict": "correct",
+   "corrected": {
+    "zh": "改正后的名称"
+   },
+   "note": "why"
+  },
+  "rel:innervatedBy|Q201363#P3189|musculocutaneous nerve": {
+   "reviewedBy": "anatomy lecturer",
+   "date": "2026-01-01",
+   "verdict": "accept"
+  }
+ },
+ "items": {}
+}

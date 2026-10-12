@@ -5,6 +5,10 @@ import { plausible, sideOf, stripSide } from '../tools/knowledge/lib/model'
 import { pickLatin } from '../tools/knowledge/lib/names'
 import { createTranslator } from '../tools/knowledge/lib/translate'
 import { cleanWikitext, parseMuscleInfobox } from '../tools/knowledge/lib/wikipedia'
+import { buildReview, type SignOffFile } from '../tools/knowledge/lib/review'
+import type { Model } from '../tools/knowledge/lib/model'
+import type { BuiltRelation } from '../tools/knowledge/lib/relations'
+import type { NameEntry } from '../src/anatomy/types'
 
 describe('compositional zh translator', () => {
   const t = createTranslator()
@@ -110,5 +114,71 @@ The '''rhomboid major''' is ...`
   it('refuses values it cannot fully clean', () => {
     expect(cleanWikitext('{{unknown template|a|b}}')).toBeUndefined()
     expect(cleanWikitext('<ref>only a ref</ref>')).toBeUndefined()
+  })
+})
+
+// 签核机制：只有签核过的审核项变为 reviewed；改正和否决按约定生效。
+// The sign-off mechanism: only signed-off items become reviewed; corrections and rejections apply as specified.
+describe('review sign-offs', () => {
+  const concept = (fma: string, en: string) => [fma, { fma, en, inIsa: true, inPartOf: false }] as const
+  const model = {
+    concepts: new Map([concept('FMA1', 'femur'), concept('FMA2', 'left femur'), concept('FMA3', 'tibia'), concept('FMA4', 'biceps brachii'), concept('FMA5', 'musculocutaneous nerve')]),
+    dataset: { partFmas: new Map([['male', new Set(['FMA2'])]]) },
+    unsidedOf: (id: string) => (id === 'FMA2' ? ['FMA1'] : []),
+    fmaByName: new Map<string, Set<string>>(),
+  } as unknown as Model
+  const fresh = () => {
+    const names: Record<string, NameEntry> = {
+      FMA1: { zh: '股骨', zhSource: 'wikidata', status: 'unreviewed' },
+      FMA2: { zh: '左股骨', zhSource: 'derived:laterality', status: 'unreviewed' },
+      FMA3: { zh: '胫骨头', zhSource: 'machine-translation', status: 'unreviewed' },
+      FMA4: { zh: '肱二头肌', zhSource: 'machine-translation', status: 'unreviewed' },
+      FMA5: { zh: '肌皮神经', zhSource: 'wikidata', status: 'unreviewed' },
+    }
+    const rel = (subject: string, kind: BuiltRelation['kind'], object: string, en: string, name: string, url: string): BuiltRelation => ({
+      subject, kind, object, objectLabel: { en }, source: { name, url, license: 'CC0 1.0' }, status: 'unreviewed', via: 'direct',
+    })
+    const relations = [
+      rel('FMA1', 'connectsWith', 'FMA3', 'tibia', 'Wikidata', 'https://www.wikidata.org/wiki/Q1#P2789'),
+      rel('FMA2', 'connectsWith', 'FMA3', 'tibia', 'Wikidata (propagated via BodyParts3D is-a from FMA1 "femur")', 'https://www.wikidata.org/wiki/Q1#P2789'),
+      rel('FMA4', 'innervatedBy', 'FMA5', 'musculocutaneous nerve', 'Wikidata', 'https://www.wikidata.org/wiki/Q4#P3189'),
+      rel('FMA5', 'innervates', 'FMA4', 'biceps brachii', 'Wikidata; inverse of a statement made on the innervated structure', 'https://www.wikidata.org/wiki/Q4#P3189'),
+      rel('FMA4', 'origin', 'FMA3', 'tibia', 'Wikidata', 'https://www.wikidata.org/wiki/Q4#P3490'),
+    ]
+    return { names, relations }
+  }
+  const run = (items: SignOffFile['items']) => {
+    const { names, relations } = fresh()
+    const review = buildReview({ m: model, names, nameChecks: new Map(), relations, relationChecks: relations.map(() => ({ result: 'none' as const })), signoffs: { note: { zh: '', en: '' }, example: {}, items } })
+    return { names, relations, review }
+  }
+  const by = { reviewedBy: 'anatomy lecturer', date: '2026-11-03' }
+
+  it('reviews nothing without sign-offs and groups derived items', () => {
+    const { names, relations, review } = run({})
+    expect(Object.values(names).every((e) => e.status === 'unreviewed')).toBe(true)
+    expect(relations.every((r) => r.status === 'unreviewed')).toBe(true)
+    const ids = review.queue.map((q) => q.id)
+    expect(ids).toContain('name:FMA1') // 左股骨 归入 股骨 / "left femur" is grouped under "femur"
+    expect(ids).not.toContain('name:FMA2')
+    expect(ids).toContain('rel:connectsWith|Q1#P2789|tibia')
+    expect(ids).toContain('rel:innervatedBy|Q4#P3189|musculocutaneous nerve') // 含镜像的 innervates / includes the mirrored innervates
+    expect(review.queue.find((q) => q.id === 'rel:innervatedBy|Q4#P3189|musculocutaneous nerve')!.members.count).toBe(2)
+  })
+
+  it('accept marks the whole group reviewed, correct rewrites the name with its side word', () => {
+    const { names, relations } = run({ 'name:FMA1': { ...by, verdict: 'correct', corrected: { zh: '股骨（改）' } }, 'rel:connectsWith|Q1#P2789|tibia': { ...by, verdict: 'accept' } })
+    expect(names.FMA1).toMatchObject({ zh: '股骨（改）', zhSource: 'reviewer', status: 'reviewed' })
+    expect(names.FMA2).toMatchObject({ zh: '左股骨（改）', zhSource: 'reviewer', status: 'reviewed' })
+    expect(names.FMA3!.status).toBe('unreviewed')
+    expect(relations.slice(0, 2).every((r) => r.status === 'reviewed')).toBe(true)
+    expect(relations[2]!.status).toBe('unreviewed')
+  })
+
+  it('reject drops the relations and leaves a name unreviewed; unknown ids are reported', () => {
+    const { names, review } = run({ 'rel:origin|Q4#P3490|tibia': { ...by, verdict: 'reject' }, 'name:FMA3': { ...by, verdict: 'reject' }, 'name:NOPE': { ...by, verdict: 'accept' } })
+    expect([...review.rejectedRelations]).toEqual([4])
+    expect(names.FMA3!.status).toBe('unreviewed')
+    expect((review.stats.signOffs as { unknownOrInvalidIds: string[] }).unknownOrInvalidIds).toEqual(['name:NOPE'])
   })
 })
