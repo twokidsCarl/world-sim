@@ -182,7 +182,9 @@ export interface CatalogEntry {
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
    */
-  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; basis: string; basisEn: string }
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; basis: string; basisEn: string }
+  /** 手绘画法下的底色（场景的缝隙里露出的颜色），缺省是纸白 / the ground in the painted drawing (what shows in the gaps of a scene); paper white by default */
+  ground?: [number, number, number]
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
   membrane?: [number, number, number]
   /** 按角色指定色族 {角色: [L, C, h]} / a family of hue per role, {role: [L, C, h]} */
@@ -304,7 +306,7 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
     })
   }
   if (env.strands) {
-    const t = threads(env.strands.count, env.strands.length, 16, box, rand)
+    const t = threads(env.strands.count, env.strands.length, 16, box, rand, env.strands.branches ?? 0)
     const n = t.pos.length / 3
     const m: Molecule = {
       id: 'strands', title: env.strands.nameEn, atomCount: n, pos: t.pos, element: new Uint8Array(n).fill(El.N), radius: new Float32Array(n).fill(env.strands.radius),
@@ -818,10 +820,16 @@ export const useStore = create<State>((set, get) => ({
         cutDefault: entry.cut ?? 0,
         style: (() => {
           const st = styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing)
+          // 很大的单个结构（整个衣壳）：每个原子不到一个像素，不平滑就是一片麻点 / a very large single structure (a whole capsid): an atom is under a pixel, and without smoothing it is all speckle
+          if (!mesoscale && get().drawing === 'painted' && full > 200_000) {
+            st.smooth = 7
+            st.inkShade = 0.22
+          }
           // 很密的模型（几万份拷贝以上）线收细，否则满纸都是黑线 / a very dense model (tens of thousands of copies or more) gets thinner lines, or the sheet is all black line
           const copies = mol.assemblies.find((a) => a.id === assembly)?.groups.reduce((n, g) => n + g.operators.length, 0) ?? 0
           // 场景：深色的底 / a scene: a dark ground
           if (surroundings.length && entry.environment?.ground) st.background = entry.environment.ground
+          if (entry.ground && get().drawing === 'painted') st.background = entry.ground
           if (mesoscale && copies > 20_000) {
             st.lineWidth = Math.min(st.lineWidth, 0.7)
             // 密的模型里一个分子只有画幅的百分之几，切片要厚些才连得成片，否则到处露白

@@ -82,7 +82,7 @@ export function scatter(count: number, radius: number, origin: V3, box: Box, ran
  * on meeting the subject's range or a wall of the box. Returns points (x, y, z) and the segments
  * joining neighbours, ready for the round-cone primitive.
  */
-export function threads(count: number, length: number, step: number, box: Box, rand: () => number): { pos: Float32Array; segments: Uint32Array } {
+export function threads(count: number, length: number, step: number, box: Box, rand: () => number, branches = 0): { pos: Float32Array; segments: Uint32Array } {
   const pos: number[] = [], seg: number[] = []
   const norm = (v: V3): V3 => {
     const l = Math.hypot(v[0], v[1], v[2]) || 1
@@ -98,9 +98,22 @@ export function threads(count: number, length: number, step: number, box: Box, r
     // 主要在画面平面里走，深度方向只小幅起伏 / it runs mostly in the plane of the picture, wavering only a little in depth
     let d = norm([rand() * 2 - 1, rand() * 2 - 1, (rand() * 2 - 1) * 0.2])
     const n = Math.round(length / step)
+    let last = -1
     for (let i = 0; i < n; i++) {
-      if (i > 0) seg.push(pos.length / 3 - 1, pos.length / 3)
+      if (i > 0) seg.push(last, pos.length / 3)
+      last = pos.length / 3
       pos.push(p[0], p[1], p[2])
+      // 分叉：每隔几步向旁边伸出一小段（黏蛋白上的糖链，Goodsell 把它画成刷子状）
+      // branches: every few steps a short side piece (the glycans on mucin, which Goodsell paints as a brush)
+      if (branches > 0 && i % 3 === 1) {
+        const side = norm([d[1] * (rand() < 0.5 ? 1 : -1) + (rand() - 0.5) * 0.6, -d[0] * (rand() < 0.5 ? 1 : -1) + (rand() - 0.5) * 0.6, (rand() - 0.5) * 0.6])
+        let from = last
+        for (let b = 1; b <= branches; b++) {
+          seg.push(from, pos.length / 3)
+          from = pos.length / 3
+          pos.push(p[0] + side[0] * step * 0.8 * b, p[1] + side[1] * step * 0.8 * b, p[2] + side[2] * step * 0.8 * b)
+        }
+      }
       d = norm([d[0] + (rand() * 2 - 1) * 0.45, d[1] + (rand() * 2 - 1) * 0.45, d[2] + (rand() * 2 - 1) * 0.15])
       // 碰到对象就沿着它的表面滑开；碰到盒子的边就折回 / on meeting the subject it slides off along its surface; on meeting a wall it turns back
       const q: V3 = [p[0] + d[0] * step, p[1] + d[1] * step, p[2] + d[2] * step]
