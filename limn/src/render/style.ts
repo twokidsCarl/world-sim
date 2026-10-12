@@ -196,13 +196,16 @@ export const STYLE_NEURON: Style = {
 export const STYLE_PAINTED: Style = {
   ...structuredClone(STYLE_MOLECULE),
   background: [0.992, 0.988, 0.976],
-  inkTint: 0.95,
-  inkShade: 0.22,
-  lineWidth: 1.1,
-  shadow: { strength: 0.0008, cone: 2, floor: 0.86, radius: 0 },
+  // 单个分子照他 2015 年以后的“每月分子”：没有黑线，轮廓是填色的深一号；远处的原子略暗
+  // single molecules follow his Molecule of the Month pictures since 2015: no black lines, the outline a deeper shade of the fill, atoms farther away a little darker
+  inkTint: 1,
+  inkShade: 0.36,
+  lineWidth: 0.95,
+  shadow: { strength: 0.0012, cone: 2, floor: 0.8, radius: 0 },
   fog: { color: [1, 1, 1], front: 1, back: 0, layers: 0, shade: 0.72 },
   grain: 0.07,
-  smooth: 7,
+  // 不做平滑：他画单个分子时原子是看得见的 / no smoothing: in his pictures of single molecules the atoms can be seen
+  smooth: 0,
 }
 
 /** Illustrate 画法下的整体模型：四期及以前的样子 / whole models in the Illustrate drawing, as they were up to round 4 */
