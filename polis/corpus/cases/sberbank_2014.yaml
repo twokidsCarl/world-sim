@@ -1,0 +1,136 @@
+title: 俄罗斯储蓄银行挤兑（2014年12月）
+kind: history
+setting: 2014年12月17日至23日的俄罗斯。12月15日至16日卢布暴跌，中央银行16日凌晨把利率从10.5%提到17%也没有止住。储蓄银行（Sberbank）是全国最大的银行。
+summary: >-
+  卢布暴跌的第二天，匿名短信说储蓄银行即将被国际支付系统切断、卡要被封、存款会被冻结。12月17日周三17时之后，搜索引擎上“储蓄银行12月18日是否封卡”一类的查询骤增，
+  人们涌向取款机；18日周四一天被取走约3000亿卢布，网上银行因负荷过大一度中断。银行当天声明资金充足、不限制取现；19日周五副行长在电视上说外流已开始回落。
+  一周之内储户共取走1.3万亿卢布，而该行的个人存款在2014年年中是7.96万亿卢布。银行没有借助外部援助。行长事后称这是有计划的挑衅：每个地区都发出了数十万条短信。
+people:
+  - {name: 匿名短信发送者, role: 群发短信的人, traits: 在卢布暴跌的次日，说储蓄银行要被切断、卡要被封；行长说每个地区都发了数十万条，许多来自境外网站}
+  - {name: 储户们, role: 储蓄银行的存款人, traits: 前一天刚眼看着卢布暴跌，收到短信就去取款机取钱}
+  - {name: Herman Gref, role: 储蓄银行行长, traits: 事后称这是有计划的挑衅、是“非常危险的时刻”；据《金融时报》，管理层当时认为出面安抚只会加剧恐慌}
+  - {name: Stanislav Kuznetsov, role: 储蓄银行副行长, traits: 12月19日在电视上说系统的压力已过、外流开始回落}
+events:
+  - {what: 12月15日之后的24小时里，卢布和股指下跌约三成；中央银行16日凌晨把利率从10.5%提到17%。, who: []}
+  - {what: 12月17日（周三）17时之后，关于储蓄银行封卡的搜索查询骤增，升到当日话题第三位；约一百万客户收到匿名短信。, who: [匿名短信发送者, 储户们]}
+  - {what: 12月18日（周四），储户一天取走约3000亿卢布；网上银行一度中断；封卡的查询升到第一位。银行声明资金充足、没有也不会限制取现，Visa 和万事达确认继续支持其银行卡。, who: [储户们]}
+  - {what: 12月19日（周五），副行长在电视上说外流已经开始回落。, who: [Stanislav Kuznetsov]}
+  - {what: 一周之内共被取走1.3万亿卢布。, who: [储户们]}
+outcome: 银行没有倒闭，也没有借助外部援助：一周里被取走的约为个人存款的六分之一，高峰在第二天，第三天开始回落。
+theories: [informational_cascade, diamond_dybvig_bank_run, global_games_runs]
+en:
+  title: The run on Sberbank (Russia, December 2014)
+  setting: Russia, 17–23 December 2014. The rouble collapsed on 15–16 December, and the central bank's rate rise from 10.5% to 17% in the early hours of the 16th did not stop it. Sberbank is the country's largest bank.
+  summary: >-
+    The day after the rouble collapsed, anonymous texts said Sberbank was about to be cut off from international payment networks, its cards blocked and
+    deposits frozen. After 17:00 on Wednesday 17 December search queries such as whether Sberbank cards would be blocked on 18 December surged and people
+    rushed to cash machines; about RUB 300 billion left on Thursday the 18th alone and online banking was briefly disrupted under the load. The bank said
+    that day that it had the funds and would not limit withdrawals; on Friday the 19th its deputy chairman said on television that the outflow had begun
+    to decline. Depositors withdrew RUB 1.3 trillion within a week, against individuals' deposits of RUB 7.96 trillion in mid-2014. The bank took no
+    outside help. Its chief executive later called it a planned provocation, with hundreds of thousands of texts sent in every region.
+  people:
+    - name: "Anonymous senders"
+      role: "Those who mass-sent the text messages"
+      traits: >-
+        The day after the rouble collapsed, said Sberbank would be cut off and its cards blocked; the chief executive said hundreds of thousands were sent
+        in every region, many from foreign websites.
+    - name: "Depositors"
+      role: "Depositors of Sberbank"
+      traits: >-
+        Had watched the rouble collapse the day before; went to the cash machines on receiving the texts.
+    - name: "Herman Gref"
+      role: "Chief executive of Sberbank"
+      traits: >-
+        Later called it a planned provocation and "a very dangerous moment"; according to the Financial Times, management judged at the time that
+        reassurance would only inflame the panic.
+    - name: "Stanislav Kuznetsov"
+      role: "Deputy chairman of Sberbank"
+      traits: >-
+        Said on television on 19 December that the strain on the systems had passed and the outflow had begun to decline.
+  events:
+    - >-
+      In the 24 hours after 15 December the rouble and the stock indices lost about 30%; in the early hours of the 16th the central bank raised its rate
+      from 10.5% to 17%.
+    - >-
+      After 17:00 on 17 December (Wednesday), search queries about Sberbank cards being blocked surged to third among the day's topics; about a million
+      customers received anonymous texts.
+    - >-
+      On 18 December (Thursday), depositors withdrew about RUB 300 billion in one day; online banking was briefly disrupted; the card queries rose to
+      first place. The bank stated that it had the funds and had not imposed and would not impose any limit on cash withdrawals, and that Visa and
+      MasterCard had confirmed they would keep working with its cards.
+    - >-
+      On 19 December (Friday), the deputy chairman said on television that the outflow had begun to decline.
+    - >-
+      RUB 1.3 trillion was withdrawn within a week.
+  outcome: The bank did not fail and took no outside help. About a sixth of individuals' deposits left within a week, peaking on the second day and declining from the third.
+  checked:
+    - >-
+      Fetched the article (a reprint of a Financial Times piece). Checked: about a million customers receiving anonymous texts saying the bank would be
+      cut off from international financial networks and deposits blocked; RUB 1.3 trillion withdrawn in a week; queues at ATMs and IT systems overloaded;
+      management staying silent in the belief that reassurance might inflame the panic; no outside help. I did not open the Financial Times original.
+    - >-
+      Fetched the article. Checked: Gref saying about RUB 300 billion was withdrawn on 18 December, that hundreds of thousands of texts were sent in every
+      region, many from foreign websites, and that it was a well-planned provocation.
+    - >-
+      Fetched the article. Checked: the surge in search queries after 17:00 on 17 December and their rise to first place by Thursday evening; the
+      disruption to online banking on 18 December; the bank's statement of 18 December (funds available, no limits on cash, Visa and MasterCard); the
+      deputy chairman's words on 19 December. This conflicts with the Financial Times account that management stayed silent: the bank did issue a
+      statement on the 18th. The article gives no amounts.
+    - >-
+      Fetched the article. Checked: individuals' deposits at Sberbank of RUB 7.96 trillion at mid-2014 under Russian accounting standards (ITAR-TASS). The
+      "about a sixth" is my own division, 1.3 ÷ 7.96; no source prints this ratio, the two figures are half a year apart, and the bank's own year-end
+      statements could not be opened.
+    - >-
+      Fetched the article. Checked: the rouble and stock indices losing 30% in the 24 hours after 15 December and the rate rise from 10.5% to 17% in the
+      early hours of 16 December.
+sources:
+  - work: Sberbank 的报道（转载自 Financial Times / reprinted from the Financial Times）
+    author: BusinessDay（转载 / reprint）
+    year: 2015
+    locator: 2015年
+    url: https://businessday.ng/?p=124984
+    verified: true
+    checked: >-
+      取回该报道（转载的《金融时报》文章）/ fetched the article, a reprint of a Financial Times piece. 核对了：约一百万客户收到匿名短信，称银行将被国际金融网络切断、存款将被冻结；
+      一周内被取走1.3万亿卢布；取款机前排队、系统过载；管理层认为安抚可能加剧恐慌而保持沉默；没有借助外部援助。我没有打开《金融时报》原文。
+      Confirmed: about a million customers texted, RUB 1.3 trillion withdrawn in a week, no outside help. The Financial Times original was not opened.
+  - work: Греф — атака вкладчиков в декабре была спланированной провокацией
+    author: Financial One
+    year: 2015
+    locator: 2015年5月28日
+    url: http://fomag.ru/news/gref-ataka-vkladchikov-v-dekabre-byla-splanirovannoy-provokatsiey/
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：Gref 说12月18日一天被取走约3000亿卢布，每个地区都发出了数十万条短信，许多来自境外网站，这是有计划的挑衅。
+      Confirmed: about RUB 300 billion withdrawn on 18 December; hundreds of thousands of texts in every region.
+  - work: Сбербанк справился с набегом вкладчиков
+    author: Ведомости
+    year: 2014
+    locator: 2014年12月19日
+    url: https://www.vedomosti.ru/business/articles/2014/12/19/sberbank-spravilsya-s-nabegom-vkladchikov
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：12月17日17时之后搜索查询骤增，周四晚升到第一位；12月18日网上银行中断；银行12月18日的声明（资金充足、不限制取现、Visa 和万事达）；
+      副行长12月19日的话。这与《金融时报》所说的“管理层保持沉默”不一致：银行18日确实发了声明。报道没有金额。
+      Confirmed the timing of the search surge, the bank's statement of 18 December and the deputy chairman's words on the 19th. This conflicts with
+      the Financial Times account that management stayed silent. No amounts.
+  - work: Россияне понесли деньги в Сбербанк
+    author: E1.RU（引 ИТАР-ТАСС / citing ITAR-TASS）
+    year: 2014
+    locator: 2014年7月8日
+    url: https://www.e1.ru/text/world/2014/07/08/54000511/
+    verified: true
+    checked: >-
+      取回该报道 / fetched the article. 核对了：按俄罗斯会计准则，储蓄银行的个人存款在2014年年中为7.96万亿卢布。
+      “约六分之一”是我用 1.3 ÷ 7.96 算的，没有来源印这个比例；两个数相隔半年，银行自己的年末报表我没能打开。
+      Confirmed: individuals' deposits of RUB 7.96 trillion at mid-2014 (Russian standards). The one-sixth share is my own division; the figures
+      are half a year apart.
+  - work: Project Syndicate 评论，2014年12月17日 / Project Syndicate commentary, 17 December 2014
+    author: Sergei Guriev, Project Syndicate
+    year: 2014
+    locator: 2014年12月17日
+    url: https://www.project-syndicate.org/commentary/ruble-collapse-corporate-debt-by-sergei-guriev-2014-12
+    verified: true
+    checked: >-
+      取回该文 / fetched the article. 核对了：12月15日之后的24小时里卢布和股指下跌30%；中央银行12月16日凌晨把利率从10.5%提到17%。
+      Confirmed: the rouble and stock indices lost 30% in the 24 hours after 15 December; the rate went from 10.5% to 17% early on the 16th.

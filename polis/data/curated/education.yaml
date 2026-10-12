@@ -78,3 +78,11 @@ profiles:
     - 0.037
     - 0.7032
     - 0.241
+  sber:
+    place: Russian Federation
+    year: 2015
+    shares:
+    - 0.0072
+    - 0.0156
+    - 0.3301
+    - 0.6471

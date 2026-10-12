@@ -76,7 +76,7 @@ def test_api_serves_corpus_and_calibration():
 
     client = TestClient(app)
     body = client.get("/api/corpus").json()
-    assert [len(body[k]) for k in ("theory", "cases", "facts")] == [12, 12, 10]
+    assert [len(body[k]) for k in ("theory", "cases", "facts")] == [12, 13, 10]
     assert all("verified" in e and e["sources"] for kind in body.values() for e in kind)
     cal = client.get("/api/calibration").json()
     assert {t["metric"] for t in cal["targets"]} >= {"runner_share", "survived"}

@@ -300,3 +300,43 @@ profiles:
       - - 0.223
         - 0.358
         - 0.462
+  sber:
+    place: Russia
+    year: 2020
+    respondents: 2002
+    neighbours:
+      mean: 0.636
+      sd: 0.277
+      answered: 1904
+      by_education:
+      - 0.572
+      - 0.644
+      - 0.642
+      by_education_and_age:
+      - - null
+        - 0.55
+        - null
+      - - 0.597
+        - 0.618
+        - 0.698
+      - - 0.617
+        - 0.618
+        - 0.675
+    government:
+      mean: 0.476
+      sd: 0.335
+      answered: 1931
+      by_education:
+      - 0.442
+      - 0.488
+      - 0.461
+      by_education_and_age:
+      - - null
+        - 0.427
+        - null
+      - - 0.382
+        - 0.438
+        - 0.599
+      - - 0.383
+        - 0.421
+        - 0.529

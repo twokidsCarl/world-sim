@@ -128,8 +128,8 @@
         "en": "Evidence: theories, cases, facts and calibration"
       },
       "hint": {
-        "zh": "模拟依据的 12 张理论卡、12 个案例、10 条典型事实，逐条标明出处是否核实；以及校准对上了什么、没对上什么。",
-        "en": "The 12 theory cards, 12 cases and 10 stylised facts behind the simulation, each marked with whether its sources were checked, and what calibration did and did not match."
+        "zh": "模拟依据的 12 张理论卡、13 个案例、10 条典型事实，逐条标明出处是否核实；以及校准对上了什么、没对上什么。",
+        "en": "The 12 theory cards, 13 cases and 10 stylised facts behind the simulation, each marked with whether its sources were checked, and what calibration did and did not match."
       },
       "url": "/?view=library"
     }
@@ -166,8 +166,8 @@
           "en": "Cases"
         },
         "description": {
-          "zh": "文学典故和有记录的真实挤兑（七起），模拟的场景以它们为蓝本；真实案例带日期、金额和比例。",
-          "en": "Literary cases and seven documented real bank runs on which the simulated scenarios are modelled; the real ones carry dates, amounts and shares."
+          "zh": "文学典故和有记录的真实挤兑（八起），模拟的场景以它们为蓝本；真实案例带日期、金额和比例。",
+          "en": "Literary cases and eight documented real bank runs on which the simulated scenarios are modelled; the real ones carry dates, amounts and shares."
         },
         "path": "corpus/cases/*.yaml",
         "search": [],
@@ -280,7 +280,8 @@
                 "swedbank",
                 "kaspi",
                 "icici",
-                "fib"
+                "fib",
+                "sber"
               ],
               "default": "rumor_run",
               "description": "场景：rumor_run 是虚构的通和钱庄，其余按史料搭 / the scenario: rumor_run is the fictional Tonghe Bank, the rest follow historical records"
