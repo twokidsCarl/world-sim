@@ -11,7 +11,7 @@
 // FMA ids are synthetic ("FMA9xxxxx") and must not be mistaken for real FMA concepts.
 
 import { createHash } from 'node:crypto'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { Document, NodeIO } from '@gltf-transform/core'
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions'
@@ -831,10 +831,15 @@ async function buildRig(outDir: string, anatomyText: string): Promise<{ rig: Rig
     bin.set(b, o)
     o += b.length
   }
+  const inputs: Record<string, string> = {}
+  for (const f of (await readdir(outDir)).filter((x) => x.endsWith('.glb')).sort()) inputs[f] = createHash('sha256').update(await readFile(join(outDir, f))).digest('hex').slice(0, 16)
+  void anatomyText
   const report = {
     schema: 1,
     body: 'male',
-    inputs: { 'anatomy.json': createHash('sha256').update(anatomyText).digest('hex').slice(0, 16) },
+    // 与 tools/rig/io.ts 相同的记法：各系统的 GLB 按原始字节求 sha256，取前 16 位十六进制
+    // recorded as tools/rig/io.ts does: sha256 of each system GLB's raw bytes, first 16 hex digits
+    inputs,
     joints: [{ id: 'elbow_L', fits: [{ what: 'fixture hinge axis', rmsMm: 0.5, samples: 100 }] }],
   }
   return { rig, bin, report }

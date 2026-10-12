@@ -16,6 +16,8 @@ export type { ShapeControlId, ShapeControls }
 export interface LoadedShape {
   data: ShapeData
   bin: Uint8Array
+  /** shape.report.json 记录的输入哈希（没有报告时为空）；查看器用它核对各系统的 GLB / Input hashes recorded by shape.report.json (empty without a report); the viewer checks the system GLBs against them. */
+  inputs?: Record<string, string>
 }
 
 /** URL 里各控制量的字母 / The letter of each control in the URL. */
@@ -43,7 +45,9 @@ export async function loadShape(baseUrl: string): Promise<LoadedShape | null> {
   if (!data) return null
   const res = await fetch(`${baseUrl}shape.bin`)
   if (!res.ok) return null
-  return checkShape(data, new Uint8Array(await res.arrayBuffer()))
+  const shape = checkShape(data, new Uint8Array(await res.arrayBuffer()))
+  const report = await fetchJson<{ inputs?: Record<string, string> }>(`${baseUrl}shape.report.json`)
+  return { ...shape, inputs: report?.inputs ?? {} }
 }
 
 /** 把一个控制量限制在这副身体的可用范围内；`limited` 表示请求的值被截断了。 */

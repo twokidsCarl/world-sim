@@ -34,6 +34,13 @@
 //                                                 超出该人体可用范围的值会被截断
 //                                                 body shape: h stature (m), b BMI, l leg length (SD), c central build (SD); only non-default
 //                                                 items are written, and values outside the body's valid range are cut
+//   stim   heat,48,8@forearm_L                    施加一个刺激并播放反应：种类,量值,秒数[,x次数/频率][,held][,热斜率取法]@部位。
+//                                                 量值：针刺毫牛，钝压 / 捏夹牛，热 / 冷摄氏度。部位是命名部位加侧别（fingertip palm handback
+//                                                 forearm cheek shin sole + _L/_R），或静止姿势下的坐标（毫米）p-182,1034,28。详见 src/pain/stimulus.ts。
+//                                                 applies one stimulus and plays the response: kind,magnitude,seconds[,xCount/Hz][,held]
+//                                                 [,heat reading]@site. Magnitude: mN for pinprick, N for pressure / pinch, °C for heat / cold.
+//                                                 A site is a named site with its side (list above) or a rest-pose position in mm,
+//                                                 p-182,1034,28. See src/pain/stimulus.ts.
 //   src    1                                      按来源着色 / colour by source
 //   cmp    ske                                    对照视图及其系统 / compare view and its system
 //
@@ -43,6 +50,7 @@
 
 import type { SystemId } from '../anatomy/types.ts'
 import { formatShapeParam, parseShapeParam, type ShapeControls } from '../anatomy/shape.ts'
+import { formatStimParam, parseStimParam, type StimParam } from '../pain/stimulus.ts'
 import type { SectionAxis } from './display.ts'
 
 export const SYSTEM_CODES: Record<SystemId, string> = {
@@ -67,7 +75,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'skin', 'shape', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -99,6 +107,8 @@ export interface UrlState {
   skin?: boolean
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
+  /** 一个刺激及其部位 / one stimulus and its site */
+  stim?: StimParam
   src?: boolean
   cmp?: SystemId
 }
@@ -252,6 +262,12 @@ export function parseUrl(search: string): ParsedUrl {
         if (Object.keys(au).length) state.au = au
         break
       }
+      case 'stim': {
+        const r = parseStimParam(value)
+        if (r) state.stim = r
+        else warn('stim: 无法解析（形式为 heat,48,8@forearm_L）/ could not be parsed (form heat,48,8@forearm_L)')
+        break
+      }
       case 'shape': {
         const r = parseShapeParam(value)
         if (r.bad) warn('shape: 忽略了无法解析的项（形式为 h1.80,b28,l0,c0）/ ignored entries that could not be parsed (form h1.80,b28,l0,c0)')
@@ -319,10 +335,11 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   }
   if (state.skin) put('skin', '1')
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
+  if (state.stim) put('stim', formatStimParam(state.stim))
   if (state.src) put('src', '1')
   if (state.cmp) put('cmp', SYSTEM_CODES[state.cmp])
   // 逗号、冒号在查询串里是安全的，不转义更易读 / commas and colons are safe in a query and read better unescaped
-  return [...out, ...passthrough].map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v).replace(/%2C/g, ',').replace(/%3A/g, ':')}`).join('&')
+  return [...out, ...passthrough].map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v).replace(/%2C/g, ',').replace(/%3A/g, ':').replace(/%40/g, '@').replace(/%2F/g, '/')}`).join('&')
 }
 
 /** 姿势中非零的自由度个数 / Number of non-zero dofs in a pose. */

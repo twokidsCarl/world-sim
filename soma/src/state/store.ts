@@ -6,6 +6,10 @@ import { create } from 'zustand'
 import { mapPartsBetween, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import { clampControl, loadShape, shapeScales, type LoadedShape, type ShapeControlId, type ShapeControls } from '../anatomy/shape.ts'
 import { loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, type Scales } from '../anatomy/rig.ts'
+import type { PainSample } from '../painmodel/index.ts'
+import type { ActiveStim } from '../pain/stim.ts'
+import { defaultSettings, kindSpec, withKind, type StimSettings } from '../pain/stimulus.ts'
+import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
 import type { Provenance, SystemId } from '../anatomy/types.ts'
@@ -145,6 +149,8 @@ export interface AppState {
   shapeLimit: { id: ShapeControlId; side: 'min' | 'max' } | null
   /** 当前人体的面部表情数据；首次使用"疼痛反应"时才加载 / This body's facial expression data, loaded when the pain response is first used. */
   face: LoadedFace | null
+  /** 皱纹细节层（面部 UV + 法线图集）；皮肤画成不透明时才去取 / The wrinkle detail layer (face UV + normal atlas); fetched only once the skin is drawn opaque. */
+  faceDetail: LoadedDetail | null
   faceStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
   faceMessage: string
   pain: PainSettings
@@ -152,6 +158,14 @@ export interface AppState {
   aus: AUs
   /** 每触发一次加一（让查看器开始逐帧更新）/ Bumped on every trigger (so the viewer starts updating every frame). */
   painNonce: number
+  /** 刺激工具的设置；armed 时点（或按住）皮肤就施加刺激，而不是选中 / The stimulus tool's settings; while armed, a click (or press) on the skin applies it instead of selecting. */
+  stimSettings: StimSettings
+  stimArmed: boolean
+  /** 正在进行（或刚结束）的一次刺激及其模型结果；由 src/pain/stim.ts 写入 / The stimulus in progress (or just finished) with the model's result; written by src/pain/stim.ts. */
+  stim: ActiveStim | null
+  stimNow: { t: number; sample: PainSample; running: boolean } | null
+  stimStatus: 'idle' | 'loading' | 'ready' | 'error'
+  stimMessage: string
   voiceStatus: 'idle' | 'loading' | 'ready' | 'synthetic'
   voiceProgress: number
   lastVoice: { source: 'recorded' | 'synthetic' | 'none'; type: string; probability: number } | null
@@ -213,6 +227,9 @@ export interface AppState {
   setNerveBoost(on: boolean): void
   /** 加载当前人体的表情数据（已加载则直接返回）/ Load this body's expression data (no-op when loaded). */
   ensureFace(): Promise<LoadedFace | null>
+  ensureFaceDetail(): Promise<LoadedDetail | null>
+  setStimSettings(patch: Partial<StimSettings>): void
+  setStimArmed(on: boolean): void
   rejectFace(message: string): void
   setPain(patch: Partial<PainSettings>): void
   setAU(id: string, intensity: number): void
@@ -279,6 +296,14 @@ export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: Syst
 }
 
 let pendingFace: { graph: AnatomyGraph; promise: Promise<LoadedFace | null> } | null = null
+let detailLoader = (dataset: string) => loadDetail(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
+let detailTried: AnatomyGraph | null = null
+let pendingDetail: Promise<LoadedDetail | null> = Promise.resolve(null)
+/** 测试用：替换细节层的加载方式 / For tests: replace how the detail layer is loaded. */
+export function setDetailLoader(loader: typeof detailLoader): void {
+  detailLoader = loader
+  detailTried = null
+}
 let faceLoader = (dataset: string) => loadFace(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
 
 /** 测试用：替换表情数据的加载方式 / For tests: replace how the face data is fetched. */
@@ -337,11 +362,18 @@ export const useApp = create<AppState>()((set, get) => ({
   provenanceHidden: new Set(),
   nerveBoost: true,
   face: null,
+  faceDetail: null,
   faceStatus: 'idle',
   faceMessage: '',
   pain: { level: 5, onset: 'sudden', hold: false, muted: false, always: false },
   aus: {},
   painNonce: 0,
+  stimSettings: defaultSettings(),
+  stimArmed: false,
+  stim: null,
+  stimNow: null,
+  stimStatus: 'idle',
+  stimMessage: '',
   voiceStatus: 'idle',
   voiceProgress: 0,
   lastVoice: null,
@@ -452,7 +484,12 @@ export const useApp = create<AppState>()((set, get) => ({
       rigMessage: '',
       rigProgress: 0,
       face: null,
+      faceDetail: null,
       faceStatus: 'idle',
+      stim: null,
+      stimNow: null,
+      stimStatus: 'idle',
+      stimMessage: '',
       faceMessage: '',
       // 嵌入模式默认静音：没有用户手势不出声 / muted by default in embed mode: no sound without a user gesture
       pain: { ...prev.pain, muted: prev.embed ? true : prev.pain.muted },
@@ -607,6 +644,7 @@ export const useApp = create<AppState>()((set, get) => ({
         if (get().graph !== graph) return null // 已换人体 / the body changed meanwhile
         if (loaded && !graph.part(loaded.data.skin)) throw new Error(`表情数据指向的皮肤部件 ${loaded.data.skin} 不在此人体中 / skin part ${loaded.data.skin} is not in this body`)
         set({ face: loaded, faceStatus: loaded ? 'ready' : 'missing' })
+        if (loaded && get().skinOpaque) void get().ensureFaceDetail()
         return loaded
       })
       .catch((err: unknown) => {
@@ -620,7 +658,36 @@ export const useApp = create<AppState>()((set, get) => ({
     pendingFace = { graph, promise }
     return promise
   },
+  ensureFaceDetail: async () => {
+    const { faceDetail, graph, dataset } = get()
+    if (faceDetail || !graph) return faceDetail
+    if (detailTried === graph) return pendingDetail
+    detailTried = graph
+    pendingDetail = detailLoader(dataset)
+      .then((loaded) => {
+        if (get().graph !== graph) return null
+        set({ faceDetail: loaded })
+        return loaded
+      })
+      .catch((err: unknown) => {
+        // 细节层是锦上添花：没有或坏了就不画，不影响别的 / the detail layer is an extra: absent or broken, it is simply not drawn
+        console.warn('[soma] face detail failed to load', err)
+        return null
+      })
+    return pendingDetail
+  },
   rejectFace: (message) => set({ face: null, faceStatus: 'error', faceMessage: message }),
+  setStimSettings: (patch) =>
+    set((s) => {
+      // 换种类时量值和时长换成那一种的默认值 / switching kind resets magnitude and duration to that kind's defaults
+      const base = patch.kind && patch.kind !== s.stimSettings.kind ? withKind(s.stimSettings, patch.kind) : s.stimSettings
+      const next = { ...base, ...patch }
+      const k = kindSpec(next.kind)
+      next.magnitude = Math.min(k.max, Math.max(k.min, next.magnitude))
+      next.duration = Math.min(Math.max(k.durationMax, 0.1), Math.max(0.1, next.duration))
+      return { stimSettings: next }
+    }),
+  setStimArmed: (stimArmed) => set({ stimArmed }),
   setPain: (patch) => {
     set((s) => ({ pain: { ...s.pain, ...patch, level: Math.min(10, Math.max(0, patch.level ?? s.pain.level)) } }))
     if (get().pain.hold) {
@@ -640,14 +707,19 @@ export const useApp = create<AppState>()((set, get) => ({
     if (/^AU2[67]$/.test(id)) void get().ensureRig()
   },
   clearAUs: () => set({ aus: {} }),
-  setSkinOpaque: (skinOpaque) => set({ skinOpaque }),
-  setFaceView: (view) =>
+  setSkinOpaque: (skinOpaque) => {
+    set({ skinOpaque })
+    if (skinOpaque && get().face) void get().ensureFaceDetail()
+  },
+  setFaceView: (view) => {
     set((s) => {
       const systems: Partial<Record<SystemId, SystemState>> = {}
       const show: SystemId[] = view === 'muscle' ? ['muscular', 'skeletal'] : ['integumentary']
       for (const [k, v] of Object.entries(s.systems) as [SystemId, SystemState][]) systems[k] = { ...v, visible: show.includes(k) }
       return { systems, skinOpaque: view === 'skin', isolated: null, peel: 0, skinMapMode: 'off' }
-    }),
+    })
+    if (view === 'skin' && get().face) void get().ensureFaceDetail()
+  },
 
   ensureRig: async () => {
     const { rig, rigStatus, graph, dataset } = get()

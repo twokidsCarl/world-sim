@@ -8,6 +8,7 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import type { FaceData } from '../face/types.ts'
 import { triggerPain } from '../pain/controller.ts'
 import { VOICE_PACK } from '../pain/build.ts'
+import { StimulusPanel } from './StimulusPanel.tsx'
 import { useApp } from '../state/store.ts'
 import { CautionList } from './CautionsDialog.tsx'
 
@@ -111,7 +112,8 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
     // the preset applies only while the display state is still the default; a view set by a link or by the user is left alone
     const st = useApp.getState()
     const untouched = !st.isolated && st.peel === 0 && Object.values(st.systems).every((x) => x.visible)
-    if (!untouched) return
+    // 正在看一个刺激（多半在四肢上）时也不动视图 / nor while a stimulus is being looked at (most are on a limb)
+    if (!untouched || st.stim || st.stimStatus !== 'idle' || st.stimArmed) return
     app.setFaceView('muscle')
     focusFace()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +132,7 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
   if (!face) {
     return (
       <div className="panel-body scroll">
+        <StimulusPanel />
         <section className="group">
           <h3>
             疼痛反应 <span className="en">Pain response</span>
@@ -155,6 +158,7 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
 
   return (
     <div className="panel-body scroll pain-panel">
+      <StimulusPanel />
       <section className="group">
         <h3>
           疼痛反应 <span className="en">Pain response</span>

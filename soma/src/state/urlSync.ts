@@ -4,6 +4,7 @@
 
 import { TREE_KINDS, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
+import { applyStimulus } from '../pain/stim.ts'
 import { nonDefaultControls } from '../anatomy/shape.ts'
 import type { SystemId } from '../anatomy/types.ts'
 import type { SystemState } from './display.ts'
@@ -94,6 +95,7 @@ export function snapshot(s: AppState): UrlState {
   if (s.pain.hold && s.pain.level > 0) out.pain = s.pain.level
   if (Object.keys(s.aus).length) out.au = { ...s.aus }
   if (s.skinOpaque) out.skin = true
+  if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
   if (s.colorMode === 'source') out.src = true
   return out
@@ -195,6 +197,15 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
       }
       useApp.setState({ shapeLimit: null })
     }
+  }
+  if (state.stim) {
+    // 链接里的刺激：设好工具并自己开始（没有用户手势，所以没有声音）
+    // a stimulus from a link: the tool is set and it starts by itself (no user gesture, hence no sound)
+    useApp.setState({ stimSettings: state.stim.settings })
+    const ok = await applyStimulus(state.stim.site, { settings: state.stim.settings, frame: !state.cam })
+    if (!ok) warnings.push(`stim: ${useApp.getState().stimMessage || '无法施加 / could not be applied'}`)
+    // 解释面板在"疼痛"页里 / the explanation lives in the Pain tab
+    else if (!state.tab) useApp.getState().setLeftTab('pain')
   }
   if (state.pose || state.breath) {
     const rig = await useApp.getState().ensureRig()

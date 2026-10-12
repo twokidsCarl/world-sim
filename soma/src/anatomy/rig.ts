@@ -89,7 +89,9 @@ export function validateRig(r: LoadedRig, vertexCount: (partId: string) => numbe
   return problems
 }
 
-async function sha256Prefix(bytes: ArrayBuffer): Promise<string | null> {
+/** sha256 的前 16 位十六进制，与 tools/rig/io.ts 记录输入哈希的方式相同；没有 crypto.subtle 时为 null。 */
+/** First 16 hex digits of sha256, as tools/rig/io.ts records input hashes; null without crypto.subtle. */
+export async function sha256Prefix(bytes: ArrayBuffer): Promise<string | null> {
   try {
     const d = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
     return [...d.slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('')
@@ -100,24 +102,38 @@ async function sha256Prefix(bytes: ArrayBuffer): Promise<string | null> {
 
 export type RigLoadResult = { ok: true; rig: LoadedRig } | { ok: false; reason: 'missing' | 'stale' | 'error'; message: string }
 
+export const RIG_STALE_MESSAGE = '绑定是为旧版人体数据生成的，需要重新生成 / the rig was built from an older version of the body and must be rebuilt'
+
 /**
- * 读取某个人体的绑定。rig-report.json 记录了生成时各输入文件的哈希；anatomy.json 的哈希对不上时，
- * 认为绑定已过期（"此人体暂不能摆姿势"）。
- * Fetch a body's rig. rig-report.json records a hash of every input it was built from; when
- * the hash of anatomy.json no longer matches, the rig is stale ("posing unavailable for this body").
+ * 报告里记录的输入中，哪些几何文件与实际加载到的字节对不上。只看按原始字节记录的同目录文件
+ * （键里没有 "#" 和 "/"，如 skeletal.glb）；`have` 里没有的文件（还没加载）不算。
+ * anatomy.json 不再按字节比较：改一句说明文字不应让绑定"过期"。
+ * Which geometry files recorded among a report's inputs do not match the bytes actually loaded. Only files of
+ * the same directory recorded by raw bytes count (keys without "#" or "/", e.g. skeletal.glb); files absent
+ * from `have` (not loaded yet) are not judged. anatomy.json is no longer compared by bytes: editing a sentence
+ * of prose must not make a rig "stale".
+ */
+export function staleInputs(inputs: Record<string, string> | undefined | null, have: ReadonlyMap<string, string>): string[] {
+  const out: string[] = []
+  for (const [key, want] of Object.entries(inputs ?? {})) {
+    if (key.includes('#') || key.includes('/') || !key.endsWith('.glb')) continue
+    const got = have.get(key)
+    if (got !== undefined && got !== want) out.push(key)
+  }
+  return out
+}
+
+/**
+ * 读取某个人体的绑定。rig-report.json 记录了生成时各输入文件的哈希；其中各系统 GLB 的哈希由查看器在
+ * 加载到那个 GLB 时核对（staleInputs），对不上就认为绑定已过期（"此人体暂不能摆姿势"）。
+ * Fetch a body's rig. rig-report.json records a hash of every input it was built from; the viewer checks the
+ * hashes of the system GLBs as each one is loaded (staleInputs), and a mismatch means the rig is stale
+ * ("posing unavailable for this body").
  */
 export async function loadRig(baseUrl: string, onProgress?: (fraction: number) => void): Promise<RigLoadResult> {
   const rig = await fetchJson<Rig>(`${baseUrl}rig.json`)
   if (!rig || !Array.isArray(rig.joints) || !Array.isArray(rig.bindings)) return { ok: false, reason: 'missing', message: '此人体没有绑定数据 / this body has no rig' }
   const report = await fetchJson<RigReport>(`${baseUrl}rig-report.json`)
-  const want = report?.inputs?.['anatomy.json']
-  if (want) {
-    const res = await fetch(`${baseUrl}anatomy.json`)
-    const have = res.ok ? await sha256Prefix(await res.arrayBuffer()) : null
-    if (have && have !== want) {
-      return { ok: false, reason: 'stale', message: '绑定是为旧版人体数据生成的，需要重新生成 / the rig was built from an older anatomy.json and must be rebuilt' }
-    }
-  }
   const res = await fetch(`${baseUrl}rig.bin`)
   if (!res.ok) return { ok: false, reason: 'missing', message: '缺少 rig.bin / rig.bin is missing' }
   const total = Number(res.headers.get('content-length')) || 0

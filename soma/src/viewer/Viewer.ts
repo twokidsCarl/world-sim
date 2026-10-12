@@ -16,6 +16,9 @@ import {
   Plane,
   Ray,
   Raycaster,
+  FloatType,
+  RGBAFormat,
+  RenderTarget,
   Scene,
   Sphere,
   Vector2,
@@ -52,6 +55,9 @@ import { SkinningData, type SkinningMode } from './skinning.ts'
 import {
   breathingPose,
   dofAxisWorld,
+  RIG_STALE_MESSAGE,
+  sha256Prefix,
+  staleInputs,
   jointFrames,
   lerpPose,
   poseIsRest,
@@ -62,12 +68,18 @@ import {
   type Pose,
   type Scales,
 } from '../anatomy/rig.ts'
-import { mergePoses } from '../../tools/rig/pose.ts'
+import { clampPose, mergePoses } from '../../tools/rig/pose.ts'
 import { painFrame, setPainPaused } from '../pain/controller.ts'
 import { activations, displacePart, sameAUs, type AUs, type LoadedFace } from '../pain/face.ts'
 import { Shaper } from '../../tools/rig/shape.ts'
 import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
+import { FaceDetailLayer, type DetailDebug } from './faceDetail.ts'
+import type { SkinPatch } from './skinPatch.ts'
+import { PAIN_COLORS, PainOverlay, PathVisuals, bindPath, boundPositions, resamplePolyline, type PathBinding } from './stimVisuals.ts'
+import { applyStimulus, registerStimHost, releaseStimulus, stimFrame, type ActiveStim, type StimFrame } from '../pain/stim.ts'
+import type { ResolvedSite } from '../pain/stimulus.ts'
+import { layerWeights, type LoadedDetail } from '../pain/detail.ts'
 
 const LEGACY_SORT = typeof location !== 'undefined' && new URLSearchParams(location.search).get('sort') === 'origin'
 const GHOST_RGB = new Color('#8d99a6')
@@ -76,6 +88,9 @@ const GHOST_OPACITY = 0.07
 /** Parts drawn more transparent than this are not pickable (the pointer passes through). */
 const PICK_OPACITY = 0.4
 const ACCENT_RGB = new Color(ACCENT)
+const PATH_RGB = new Color(PAIN_COLORS.path)
+/** 刺激工具：按住这么久（不移动）就算"按住施加" / Stimulus tool: a press held this long without moving applies by pressing. */
+const HOLD_MS = 380
 const WHITE = new Color(0xffffff)
 /** 开启加粗时神经被加粗到的屏幕半径（CSS 像素）。 */
 /** On-screen radius (CSS px) nerves are thickened to when the aid is on. */
@@ -166,6 +181,7 @@ export type ViewState = Pick<
   | 'leftTab'
   | 'cameraRequest'
   | 'face'
+  | 'faceDetail'
   | 'skinOpaque'
   | 'shape'
   | 'shapeControls'
@@ -261,6 +277,31 @@ export class Viewer {
   /** 已应用到顶点缓冲的表情数据，以及被它改写的部件的原始静止位置 / The face data applied to the vertex buffers, and the original rest positions of the parts it rewrote. */
   private appliedFace: LoadedFace | null = null
   private mainSkin: string | null = null
+  /** 已加载的各系统 GLB 的字节哈希（文件名 → sha256 前 16 位）/ Byte hashes of the system GLBs loaded so far (file name → first 16 hex of sha256). */
+  private glbHashes = new Map<string, string>()
+  /** 贴在皮肤本体上、跟着它变形的覆盖网格（皱纹细节、疼痛分布）/ Overlay meshes on the skin proper that deform with it (wrinkle detail, pain map). */
+  private followers: { patch: SkinPatch; setSkinning(mode: SkinningMode): void; dispose(): void }[] = []
+  private detailLayer: FaceDetailLayer | null = null
+  // —— 刺激的可视化（见 stepStim）/ the stimulus visuals (see stepStim) ——
+  private stimEval: unknown = null
+  private framedStim: unknown = null
+  private restVersion = 0
+  private stimParts: ReadonlySet<string> = new Set()
+  private stimDirty = false
+  private stimSee = false
+  private painOverlay: PainOverlay | null = null
+  private pathVisuals: PathVisuals | null = null
+  private pathRest: Float32Array | null = null
+  private pathBinding: PathBinding | null = null
+  private pathCandidates: number[] = []
+  private pathBuf = new Float32Array(0)
+  private pathVersion = -1
+  private reflexPose: Pose = {}
+  private reflexKey = '{}'
+  private holdTimer: ReturnType<typeof setTimeout> | null = null
+  private holdActive = false
+  private appliedDetail: LoadedDetail | null = null
+  private readonly detailWeights: number[] = []
   /** 被改写过静止几何的部件：原始的位置与法线 / Parts whose rest geometry was rewritten: their original positions and normals. */
   private restOrig = new Map<number, { position: Float32Array; normal: Float32Array }>()
   /** 施加体型位移之后、表情位移之前的静止位置 / Rest positions after the shape displacement, before the face displacement. */
@@ -399,6 +440,15 @@ export class Viewer {
     this.graph = graph
     this.baseUrl = baseUrl
     this.source = opts.state ?? useApp.getState
+    if (this.source === useApp.getState) {
+      registerStimHost({
+        skinRest: () => {
+          const i = this.mainSkinIndex()
+          return i >= 0 ? { part: this.mainSkin!, positions: this.skinGeometry.get(i)!.position } : null
+        },
+        request: (systems) => this.requestSystems(systems),
+      })
+    }
     this.interactive = opts.interactive ?? true
     this.embed = opts.embed ?? false
     this.renderer = new WebGPURenderer({ antialias: true, forceWebGL: opts.forceWebGL ?? false })
@@ -597,6 +647,16 @@ export class Viewer {
     }
     this.skinIndex = -1
     this.skinPickable = false
+    for (const f of this.followers) {
+      this.root.remove(f.patch.mesh)
+      f.dispose()
+    }
+    this.followers = []
+    this.glbHashes = new Map()
+    this.detailLayer = null
+    this.painOverlay = null
+    this.clearStim()
+    this.appliedDetail = null
     this.poseRt = null
     this.appliedRig = null
     this.loadComplete = false
@@ -706,12 +766,18 @@ export class Viewer {
     return Promise.all(
       wanted.map(async (sys) => {
         try {
-          const gltf = await loader.loadAsync(new URL(sys.glb!, new URL(this.baseUrl, location.href)).href, (ev) => {
+          // 自己取字节（而不是交给加载器去取）：要拿它们的哈希去核对绑定和体型数据是不是为这份几何生成的
+          // the bytes are fetched here (rather than by the loader) so that their hash can tell whether the rig and the shape data were built for this geometry
+          const url = new URL(sys.glb!, new URL(this.baseUrl, location.href)).href
+          const bytes = await fetchBytes(url, (loaded, total) => {
             if (token !== this.bodyToken) return
-            this.systemBytes.set(sys.id, { loaded: ev.loaded, total: ev.total || ev.loaded })
+            this.systemBytes.set(sys.id, { loaded, total: total || loaded })
             this.emitLoad()
           })
+          const hash = await sha256Prefix(bytes)
+          const gltf = await loader.parseAsync(bytes, url.slice(0, url.lastIndexOf('/') + 1))
           if (this.disposed || token !== this.bodyToken) return
+          if (hash) this.glbHashes.set(sys.glb!, hash)
           const baked = this.bake(gltf.scene)
           const fresh: number[] = []
           for (const [i, b] of baked) {
@@ -740,8 +806,9 @@ export class Viewer {
           this.attachedObjects = objects.length
           this.systemLoad.set(sys.id, 'loaded')
           this.loadedOrder.push(sys.id)
-          // 绑定已经写入时，后到的部件补写它们的影响 / with a rig already applied, late parts get their influences now
-          if (this.appliedRig && this.poseRt) this.writeRigParts(this.appliedRig, fresh)
+          // 绑定已经写入时，后到的部件补写它们的影响（先核对这个 GLB 是不是绑定生成时的那一份）
+          // with a rig already applied, late parts get their influences now (after checking this GLB is the one the rig was built from)
+          if (this.appliedRig && this.poseRt && !this.rigIsStale(this.appliedRig)) this.writeRigParts(this.appliedRig, fresh)
           this.shapeForce = true
           this.faceForce = true // 新到的部件也要套上当前的表情 / parts that just arrived take the current expression too
           this.forceFull = true
@@ -797,6 +864,7 @@ export class Viewer {
     for (const id of s.selection.ids) add(id)
     if (s.adjacentMode) for (const id of s.selection.ids) for (const a of this.graph.part(id)?.adjacent ?? []) add(a)
     if (s.skinMapMode !== 'off' && s.skinMaps) add(s.skinMaps.part)
+    for (const id of this.stimParts) add(id)
     return need
   }
 
@@ -900,9 +968,11 @@ export class Viewer {
       p.adjacentMode !== s.adjacentMode ||
       p.provenanceHidden !== s.provenanceHidden ||
       p.colorMode !== s.colorMode ||
+      this.stimDirty ||
       p.skinOpaque !== s.skinOpaque ||
       skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
+    this.stimDirty = false
     const explodeChanged =
       !p ||
       p.explode !== s.explode ||
@@ -911,6 +981,7 @@ export class Viewer {
     const sectionChanged = !p || p.section !== s.section
     const hoverChanged = !p || p.hover !== s.hover
     const boostChanged = !p || p.nerveBoost !== s.nerveBoost
+    this.syncDetail(s)
     this.syncPose(s, p)
     // 摆姿势时不做爆炸视图（部件各自平移会与关节运动冲突）
     // no explode while posed (per-part translation would fight the joint motion)
@@ -958,6 +1029,7 @@ export class Viewer {
           const y = this.offsets[i * 3 + 1]!
           const z = this.offsets[i * 3 + 2]!
           batches.setOffset(id, x, y, z, c[0] + x, c[1] + y, c[2] + z)
+          if (this.followers.length && parts[i]!.id === this.mainSkin) for (const f of this.followers) f.patch.setOffset(x, y, z)
           if (LEGACY_SORT) {
             // 仅用于验证：按未合批版本的方式排序，即按网格原点（包围盒的一角）
             // verification only: sort the way the unbatched build did, by the mesh origin (a bbox corner)
@@ -987,12 +1059,14 @@ export class Viewer {
           provenanceHidden: s.provenanceHidden,
           isolated: s.isolated,
           adjacentMode: s.adjacentMode,
-          selected: s.selection.set,
+          // 通路上的部件像被选中一样总是显示 / parts on the pathway are always shown, like selected ones
+          selected: this.stimParts.size ? new Set([...s.selection.set, ...this.stimParts]) : s.selection.set,
           unfitted: skinDrawnOpaque(s, this.mainSkin) ? this.graph.unfittedAppendages() : null,
         },
         this.display,
       )
       for (let i = 0; i < parts.length; i++) this.applyPart(i, parts[i]!, s)
+      this.updateDetail()
     } else if (hoverChanged) {
       for (const id of [p?.hover, s.hover]) {
         if (!id) continue
@@ -1046,6 +1120,7 @@ export class Viewer {
       this.setDisplayPose({})
       return
     }
+    if (this.rigIsStale(rig)) return
     const parts = this.graph.parts
     const count = (id: string): number | undefined => {
       const i = this.graph.indexOf(id)
@@ -1065,6 +1140,18 @@ export class Viewer {
     this.poseRt = new PoseRuntime(rig, (i) => (this.inst[i]! >= 0 ? { id: parts[i]!.id, buffers: batches.partBuffers(this.inst[i]!) } : null))
     this.applyRigToSkinLayer()
     this.poseDirty = true
+  }
+
+  /** 绑定记录的 GLB 哈希与已加载的对不上：拒绝它（store 里标为过期）/ The GLB hashes the rig recorded do not match what is loaded: refuse it (the store marks it stale). */
+  private rigIsStale(rig: LoadedRig): boolean {
+    const stale = staleInputs(rig.report?.inputs, this.glbHashes)
+    if (stale.length === 0) return false
+    console.warn('[soma] rig rejected: built from other geometry', stale)
+    this.appliedRig = null
+    this.poseRt = null
+    this.setDisplayPose({})
+    this.reject('rig', `${RIG_STALE_MESSAGE}（${stale.join('、')}）`)
+    return true
   }
 
   /** 把绑定写进给定部件的顶点属性 / Write the rig into the vertex attributes of the given parts. */
@@ -1093,6 +1180,367 @@ export class Viewer {
       if (line !== undefined) b.aux.fill(-(line + 1))
     }
     batches.flushSkinAttributes()
+    for (const f of this.followers) this.applyRigToFollower(f.patch)
+  }
+
+  /** 皮肤本体在 graph.parts 里的下标；没有几何时为 -1 / Index of the skin proper in graph.parts; -1 without geometry. */
+  private mainSkinIndex(): number {
+    const i = this.mainSkin ? this.graph.indexOf(this.mainSkin) : -1
+    return i >= 0 && this.inst[i]! >= 0 && this.skinGeometry.has(i) ? i : -1
+  }
+
+  private applyRigToFollower(patch: SkinPatch): void {
+    const rig = this.appliedRig
+    const i = this.mainSkinIndex()
+    if (!rig || i < 0 || !this.batches) return
+    const b = this.batches.partBuffers(this.inst[i]!)
+    patch.setInfluences(b.skinIndex, b.skinWeight)
+  }
+
+  /** 把一块覆盖网格挂到皮肤上：当前的位置、绑定、蒙皮方式和爆炸位移都跟上 / Attach an overlay to the skin: current positions, rig, skinning mode and explode offset all follow. */
+  private addFollower(f: { patch: SkinPatch; setSkinning(mode: SkinningMode): void; dispose(): void }): void {
+    const i = this.mainSkinIndex()
+    if (i < 0 || !this.batches) return
+    const b = this.batches.partBuffers(this.inst[i]!)
+    f.patch.setPositions(b.position, b.normal)
+    this.applyRigToFollower(f.patch)
+    f.setSkinning(this.skinMode)
+    f.patch.setOffset(this.offsets[i * 3]!, this.offsets[i * 3 + 1]!, this.offsets[i * 3 + 2]!)
+    this.followers.push(f)
+    this.root.add(f.patch.mesh)
+  }
+
+  private removeFollower(f: { patch: SkinPatch; dispose(): void }): void {
+    this.followers = this.followers.filter((x) => x !== f)
+    this.root.remove(f.patch.mesh)
+    f.dispose()
+  }
+
+  /** 皱纹细节层：数据到了（或换了）就重建；权重和可见性另由 updateDetail 管 / The wrinkle detail layer: rebuilt when its data arrives or changes; weights and visibility are updateDetail's job. */
+  private syncDetail(s: ViewState): void {
+    if (s.faceDetail === this.appliedDetail && (this.detailLayer || !s.faceDetail)) return
+    const i = this.mainSkinIndex()
+    if (s.faceDetail && i < 0) return // 皮肤还没加载，下次再来 / the skin is not loaded yet; try again later
+    if (this.detailLayer) {
+      this.removeFollower(this.detailLayer)
+      this.detailLayer = null
+    }
+    this.appliedDetail = s.faceDetail
+    if (!s.faceDetail) return
+    const geo = this.skinGeometry.get(i)!
+    if (s.faceDetail.data.skin !== this.mainSkin || !FaceDetailLayer.fits(geo, s.faceDetail)) {
+      // 细节数据是为另一版皮肤生成的：不画 / the detail data was built for another skin: not drawn
+      console.warn(`[soma] face detail rejected: it is for ${s.faceDetail.data.skin} with ${s.faceDetail.data.vertexCount} vertices, the skin ${this.mainSkin} has ${geo.position.length / 3}`)
+      return
+    }
+    this.detailLayer = new FaceDetailLayer(geo, s.faceDetail, this.skinning)
+    this.detailLayer.setColor(this.baseColor[i]!)
+    this.addFollower(this.detailLayer)
+    this.updateDetail()
+  }
+
+  /** 按当前表情设各层权重；只有皮肤画成不透明（且不是体表图）时才显示 / Set the layer weights from the current expression; shown only while the skin is drawn opaque (and not as a skin map). */
+  private updateDetail(): void {
+    const d = this.detailLayer
+    if (!d) return
+    const any = d.setWeights(layerWeights(d.detail.data, this.faceAUs, this.detailWeights))
+    const i = this.mainSkinIndex()
+    const show = any && i >= 0 && i !== this.skinIndex && this.display[i] === NORMAL && this.solid[i] === 1
+    if (d.patch.mesh.visible !== show) {
+      d.patch.mesh.visible = show
+      this.dirty = true
+    }
+  }
+
+  /**
+   * 验证用：只画细节层，用当前相机渲染到浮点目标，读回每个像素的 UV 和着色器合成的切线空间法线。
+   * alpha 为 0 的像素没有被细节层盖住。
+   * Verification: draw the detail layer alone with the current camera into a float target and read back,
+   * per pixel, the UV and the tangent-space normal the shader composed. Pixels with alpha 0 are not covered.
+   */
+  async probeDetail(size = 256): Promise<{ size: number; uv: Float32Array; normal: Float32Array } | null> {
+    const d = this.detailLayer
+    if (!d) return null
+    const mesh = d.patch.mesh
+    const wasVisible = mesh.visible
+    const scene = new Scene()
+    scene.add(mesh)
+    mesh.visible = true
+    const target = new RenderTarget(size, size, { type: FloatType, format: RGBAFormat, depthBuffer: true, samples: 0 })
+    const previous = this.renderer.getRenderTarget()
+    const clear = this.renderer.getClearColor(new Color())
+    const alpha = this.renderer.getClearAlpha()
+    const out: Float32Array[] = []
+    const aspect = this.camera.aspect
+    this.camera.aspect = 1
+    this.camera.updateProjectionMatrix()
+    try {
+      for (const mode of ['uv', 'normal'] as DetailDebug[]) {
+        d.setDebug(mode)
+        this.renderer.setRenderTarget(target)
+        this.renderer.setClearColor(0x000000, 0)
+        this.renderer.render(scene, this.camera)
+        out.push(new Float32Array((await this.renderer.readRenderTargetPixelsAsync(target, 0, 0, size, size)) as Float32Array))
+      }
+    } finally {
+      d.setDebug('off')
+      this.renderer.setRenderTarget(previous)
+      this.renderer.setClearColor(clear, alpha)
+      this.camera.aspect = aspect
+      this.camera.updateProjectionMatrix()
+      this.root.add(mesh)
+      mesh.visible = wasVisible
+      target.dispose()
+      this.dirty = true
+    }
+    return { size, uv: out[0]!, normal: out[1]! }
+  }
+
+  // ------------------------------------------------------------ 刺激 / stimulus
+
+  /**
+   * 指针下的皮肤点，换回静止空间：命中三角形的三个顶点按重心坐标在"静止姿势、默认体型"的皮肤上插值。
+   * 摆了姿势、改了体型或做着表情时都成立（命中在变形后的几何上求，位置在静止网格上取）。
+   * 皮肤半透明时也能点中（刺激工具只认皮肤）。没有点中皮肤时为 null。
+   * The skin point under the pointer, mapped back to rest space: the hit triangle's three vertices
+   * interpolated by the barycentric coordinates on the skin in the rest pose and default shape. Holds while
+   * posed, reshaped or mid-expression (the hit is found on the deformed geometry, the position taken on the
+   * rest mesh). Works on a see-through skin too (the stimulus tool only looks at the skin). Null off the skin.
+   */
+  skinHit(clientX: number, clientY: number): (ResolvedSite & { triangle: [number, number, number]; barycentric: [number, number, number] }) | null {
+    if (this.syncNeeded) this.sync()
+    const i = this.mainSkinIndex()
+    const rect = this.renderer.domElement.getBoundingClientRect()
+    if (i < 0 || !this.batches || rect.width === 0 || this.display[i] !== NORMAL) return null
+    this.camera.updateMatrixWorld()
+    this.lastFace = -1
+    const h = this.cast(clientX, clientY, rect, [i], true)
+    if (!h || this.lastFace < 0) return null
+    const buf = this.batches.partBuffers(this.inst[i]!)
+    const f = this.lastFace * 3
+    const tri: [number, number, number] = [buf.index[f]! - buf.indexBase, buf.index[f + 1]! - buf.indexBase, buf.index[f + 2]! - buf.indexBase]
+    // 命中点在求交所用的那份几何（摆姿势后的，或当前静止的）上的重心坐标
+    // barycentric coordinates of the hit on the geometry the ray was cast against (posed, or the current rest)
+    const cur = (this.posed && this.poseRt ? this.poseRt.positions(i) : null) ?? buf.position
+    const o = this.raycaster.ray.origin, d = this.raycaster.ray.direction
+    const hx = o.x + d.x * h.distance - this.offsets[i * 3]!, hy = o.y + d.y * h.distance - this.offsets[i * 3 + 1]!, hz = o.z + d.z * h.distance - this.offsets[i * 3 + 2]!
+    const [a, b, c] = tri
+    const e1 = [cur[b * 3]! - cur[a * 3]!, cur[b * 3 + 1]! - cur[a * 3 + 1]!, cur[b * 3 + 2]! - cur[a * 3 + 2]!]
+    const e2 = [cur[c * 3]! - cur[a * 3]!, cur[c * 3 + 1]! - cur[a * 3 + 1]!, cur[c * 3 + 2]! - cur[a * 3 + 2]!]
+    const hp = [hx - cur[a * 3]!, hy - cur[a * 3 + 1]!, hz - cur[a * 3 + 2]!]
+    const d11 = e1[0]! * e1[0]! + e1[1]! * e1[1]! + e1[2]! * e1[2]!, d12 = e1[0]! * e2[0]! + e1[1]! * e2[1]! + e1[2]! * e2[2]!, d22 = e2[0]! * e2[0]! + e2[1]! * e2[1]! + e2[2]! * e2[2]!
+    const p1 = hp[0]! * e1[0]! + hp[1]! * e1[1]! + hp[2]! * e1[2]!, p2 = hp[0]! * e2[0]! + hp[1]! * e2[1]! + hp[2]! * e2[2]!
+    const det = d11 * d22 - d12 * d12
+    let v = det > 0 ? (d22 * p1 - d12 * p2) / det : 0, w = det > 0 ? (d11 * p2 - d12 * p1) / det : 0
+    v = Math.min(1, Math.max(0, v))
+    w = Math.min(1 - v, Math.max(0, w))
+    const bary: [number, number, number] = [1 - v - w, v, w]
+    const rest = this.skinGeometry.get(i)!.position
+    const position: [number, number, number] = [0, 0, 0]
+    for (let k = 0; k < 3; k++) for (let x = 0; x < 3; x++) position[x] = position[x]! + bary[k]! * rest[tri[k]! * 3 + x]!
+    const vertex = tri[bary[0] >= bary[1] && bary[0] >= bary[2] ? 0 : bary[1] >= bary[2] ? 1 : 2]!
+    return { vertex, position, triangle: tri, barycentric: bary }
+  }
+
+  private clearStim(): void {
+    if (this.stimParts.size) {
+      this.stimParts = new Set()
+      this.stimDirty = true
+      this.syncNeeded = true
+    }
+    this.stimEval = null
+    this.painOverlay?.setWeights(null)
+    this.pathVisuals?.clear()
+    this.pathRest = null
+    this.pathBinding = null
+    if (this.reflexKey !== '{}') {
+      this.reflexKey = '{}'
+      this.reflexPose = {}
+      this.poseDirty = true
+    }
+    if (this.stimSee) {
+      this.stimSee = false
+      this.restyleSkin()
+    }
+    this.dirty = true
+  }
+
+  /** 皮肤本体的显示状态变了（透视开关）：只重画它 / The skin proper's look changed (the see-through switch): restyle just that part. */
+  private restyleSkin(): void {
+    const i = this.mainSkinIndex()
+    if (i >= 0) this.applyPart(i, this.graph.parts[i]!, this.source())
+    this.updateDetail()
+    this.dirty = true
+  }
+
+  private beginStim(a: ActiveStim): void {
+    this.stimEval = a.e
+    const trace = a.e.trace
+    this.stimParts = new Set([...trace.highlightParts, ...trace.path.parts].filter((id) => this.graph.part(id)))
+    this.stimDirty = true
+    this.syncNeeded = true
+    const i = this.mainSkinIndex()
+    if (!this.painOverlay && i >= 0) {
+      this.painOverlay = new PainOverlay(this.skinGeometry.get(i)!, this.skinning)
+      this.addFollower(this.painOverlay)
+    }
+    this.painOverlay?.setWeights(i >= 0 && a.weights.length * 3 === this.skinGeometry.get(i)!.position.length ? a.weights : null)
+    if (!this.pathVisuals) {
+      this.pathVisuals = new PathVisuals()
+      this.scene.add(this.pathVisuals.group)
+    }
+    this.pathRest = resamplePolyline(trace.path.polyline, 320)
+    this.bindStimPath(a)
+    if (a.frame && a.e !== this.framedStim && this.pathRest.length >= 3) {
+      // 预设部位或链接：把通路和头部（看表情）一起放进画面，视线方向不变
+      // a preset site or a link: bring the pathway and the head (for the expression) into view, keeping the view direction
+      const box = new Box3()
+      for (let k = 0; k < this.pathRest.length; k += 3) box.expandByPoint(this.tmpV.set(this.pathRest[k]!, this.pathRest[k + 1]!, this.pathRest[k + 2]!))
+      const b = this.frameBounds ?? this.graph.bodyBounds
+      box.expandByPoint(this.tmpV.set((b[0] + b[3]) / 2, b[4] - 0.08, (b[2] + b[5]) / 2))
+      box.expandByScalar(0.06)
+      this.frame(box, this.camera.position.clone().sub(this.controls.target).normalize(), true)
+    }
+    this.framedStim = a.e
+  }
+
+  /** 通路上已经有几何的部件（神经系统可能还在加载）/ Parts of the pathway that have geometry by now (the nervous system may still be loading). */
+  private stimCandidates(): number[] {
+    const out: number[] = []
+    for (const id of this.stimParts) {
+      const i = this.graph.indexOf(id)
+      if (i >= 0 && this.inst[i]! >= 0) out.push(i)
+    }
+    const skin = this.mainSkinIndex()
+    if (skin >= 0) out.push(skin)
+    return out
+  }
+
+  private bindStimPath(a: ActiveStim): void {
+    const batches = this.batches
+    if (!this.pathRest || !batches) return
+    this.pathCandidates = this.stimCandidates()
+    const skin = this.mainSkinIndex()
+    // 绑定在静止空间里做：神经用缓冲里的静止位置，皮肤用默认体型的那一份
+    // binding happens in rest space: nerves from the buffers' rest positions, the skin from its default-shape copy
+    const rest = this.pathCandidates.map((i) => (i === skin ? this.skinGeometry.get(i)!.position : batches.partBuffers(this.inst[i]!).position))
+    this.pathBinding = bindPath(this.pathRest, rest)
+    const c = this.pathCandidates.indexOf(skin)
+    if (c >= 0 && this.pathBinding.part.length) {
+      // 第一个点就是刺激点：钉在皮肤上 / the first point is the stimulus site: pinned to the skin
+      const v = a.site.vertex
+      this.pathBinding.part[0] = c
+      this.pathBinding.vertex[0] = v
+      for (let k = 0; k < 3; k++) this.pathBinding.offset[k] = this.pathRest[k]! - rest[c]![v * 3 + k]!
+    }
+    this.pathVersion = -1
+  }
+
+  /**
+   * 每帧：把刺激模型此刻的取样变成画面——疼痛分布层的亮度、通路和两个标记、退缩反射的姿势增量、
+   * 冲动上传期间让皮肤透视。返回是否还在变化。
+   * Every frame: turns the stimulus model's current sample into the picture — the brightness of the pain map
+   * layer, the pathway and its two markers, the pose increments of the withdrawal reflex, and the skin
+   * stepping aside while the volley travels. Returns whether it is still changing.
+   */
+  private stepStim(f: StimFrame | null): boolean {
+    if (!f) {
+      if (this.stimEval) this.clearStim()
+      return false
+    }
+    const a = f.stim
+    if (a.e !== this.stimEval) this.beginStim(a)
+    else if (this.pathRest && this.stimCandidates().length !== this.pathCandidates.length) {
+      // 神经的几何刚到：重新绑定，并补上疼痛分布层 / nerve geometry just arrived: rebind, and create the pain layer if it was missing
+      this.beginStim(a)
+    }
+    if (this.painOverlay) {
+      this.painOverlay.setIntensity(f.sample.intensity)
+      // 皮肤被隐藏时这一层也不画 / the layer is not drawn while the skin is hidden
+      const i = this.mainSkinIndex()
+      const show = i >= 0 && this.display[i] === NORMAL && a.weights.length * 3 === this.skinGeometry.get(i)!.position.length
+      if (this.painOverlay.patch.mesh.visible !== show) {
+        this.painOverlay.patch.mesh.visible = show
+        this.dirty = true
+      }
+    }
+    const lat = a.e.trace.latency
+    const see = f.running && a.e.peak.intensity > 0 && f.t < Math.max(lat.c, lat.secondPain) + 1
+    if (see !== this.stimSee) {
+      this.stimSee = see
+      this.restyleSkin()
+    }
+    const key = JSON.stringify(f.sample.reflexPose)
+    if (key !== this.reflexKey) {
+      this.reflexKey = key
+      this.reflexPose = f.sample.reflexPose
+      this.poseDirty = true
+    }
+    this.stimMarkers = this.markerFractions(a, f.t)
+    if (f.running) this.dirty = true
+    return f.running
+  }
+
+  private stimMarkers: { fast: number | null; slow: number | null } = { fast: null, slow: null }
+
+  /** 两个标记沿通路的位置：Aδ 在 latency.adelta 到达，C 在 latency.c 到达；重复刺激时每次重新出发 */
+  /** Where the two markers are along the pathway: Aδ arrives at latency.adelta, C at latency.c; with repeats each application starts them again. */
+  private markerFractions(a: ActiveStim, t: number): { fast: number | null; slow: number | null } {
+    if (a.e.peak.intensity <= 0 || t < 0) return { fast: null, slow: null }
+    const lat = a.e.trace.latency
+    const rep = a.e.stimulus.repeat
+    let tk = t
+    if (rep && rep.count > 1 && rep.hz > 0) tk = t - Math.min(rep.count - 1, Math.floor(t * rep.hz)) / rep.hz
+    const at = (latency: number): number | null => (tk <= latency + 0.6 ? Math.min(1, tk / Math.max(1e-3, latency)) : null)
+    return { fast: at(lat.adelta), slow: at(lat.c) }
+  }
+
+  /** 姿势算完之后：把通路折线和标记放到此刻的位置 / After the pose is settled: put the pathway line and markers where they are now. */
+  private placeStimPath(): void {
+    const pv = this.pathVisuals
+    if (!pv || !this.pathRest || !this.pathBinding || !this.stimEval || !this.batches) return
+    const batches = this.batches
+    const skin = this.mainSkinIndex()
+    const version = this.posed && this.poseRt ? this.poseRt.version : -2 - this.restVersion
+    if (version !== this.pathVersion || this.pathBuf.length !== this.pathRest.length) {
+      this.pathVersion = version
+      if (this.pathBuf.length !== this.pathRest.length) this.pathBuf = new Float32Array(this.pathRest.length)
+      const posed = this.posed ? this.poseRt : null
+      boundPositions(
+        this.pathRest,
+        this.pathBinding,
+        (c) => {
+          const i = this.pathCandidates[c]!
+          if (posed) return posed.positions(i)
+          // 静止时只有皮肤可能被体型 / 表情改写 / at rest only the skin can have been rewritten by shape or expression
+          return i === skin ? batches.partBuffers(this.inst[i]!).position : null
+        },
+        this.pathBuf,
+      )
+      pv.setLine(this.pathBuf)
+    }
+    pv.setMarkers(this.stimMarkers.fast, this.stimMarkers.slow, this.camera)
+  }
+
+  /** 刺激可视化的状态（验证用）/ State of the stimulus visuals (verification). */
+  stimState(): { parts: number; overlay: boolean; see: boolean; pathPoints: number; candidates: number; markers: { fast: number | null; slow: number | null }; reflexJoints: string[]; line: number[] } {
+    const p = this.pathVisuals?.points ?? new Float32Array(0)
+    return {
+      parts: this.stimParts.size,
+      overlay: !!this.painOverlay?.patch.mesh.visible,
+      see: this.stimSee,
+      pathPoints: this.pathRest ? this.pathRest.length / 3 : 0,
+      candidates: this.pathCandidates.length,
+      markers: this.stimMarkers,
+      reflexJoints: Object.keys(this.reflexPose),
+      line: p.length >= 6 ? [p[0]!, p[1]!, p[2]!, p[p.length - 3]!, p[p.length - 2]!, p[p.length - 1]!] : [],
+    }
+  }
+
+  /** 细节层的状态（验证用）/ State of the detail layer (verification). */
+  detailState(): { loaded: boolean; visible: boolean; weights: number[]; triangles: number; vertices: number } {
+    const d = this.detailLayer
+    return { loaded: !!d, visible: !!d?.patch.mesh.visible, weights: [...this.detailWeights], triangles: d?.patch.triangleCount ?? 0, vertices: d?.patch.vertices.length ?? 0 }
   }
 
   private applyRigToSkinLayer(): void {
@@ -1186,6 +1634,7 @@ export class Viewer {
       this.skinMode = mode
       this.batches?.setSkinning(mode)
       this.skinLayer?.setSkinning(mode)
+      for (const f of this.followers) f.setSkinning(mode)
     }
     if (this.posed !== active) {
       this.posed = active
@@ -1224,6 +1673,9 @@ export class Viewer {
     }
     const jaw = this.jawPose()
     if (jaw) pose = mergePoses(pose, jaw)
+    // 退缩反射：模型给的是静止姿势上的增量，逐自由度加到当前姿势上，再按活动范围截断
+    // the withdrawal reflex: the model gives increments on the rest pose; added per dof to the current pose, then clamped to the ranges
+    if (this.reflexKey !== '{}') pose = clampPose(this.poseRt.rig.rig.joints, mergePoses(pose, this.reflexPose))
     if (this.faceJaw !== this.jawApplied) {
       this.jawApplied = this.faceJaw
       changed = true
@@ -1283,6 +1735,12 @@ export class Viewer {
     this.shaped.clear()
     // 只有 BMI 会移动静止空间里的顶点；身高和比例只走关节缩放，此时不必改写几何（也就保留原有法线）
     // only BMI moves rest-space vertices; stature and proportions go through the joint scales alone, so the geometry (and its authored normals) is left as it is
+    const staleShape = s.shape ? staleInputs(s.shape.inputs, this.glbHashes) : []
+    if (staleShape.length) {
+      console.warn('[soma] shape data rejected: built from other geometry', staleShape)
+      this.reject('shape', `体型数据是为旧版人体数据生成的，需要重新生成 / the shape data was built from an older version of the body and must be rebuilt（${staleShape.join('、')}）`)
+      return true
+    }
     const shaper = active && s.shape ? new Shaper(s.shape.data, s.shape.bin, s.shapeControls) : null
     if (shaper && s.shape && shaper.skin.some((x) => x !== 0)) {
       const targets = [{ part: s.shape.data.skin.part, vertexCount: s.shape.data.skin.vertexCount }, ...s.shape.data.followers]
@@ -1340,6 +1798,7 @@ export class Viewer {
     const act = face ? activations(face.data, frame.aus) : { channels: {}, jaw: 0 }
     const todo = new Set(this.restDirty)
     this.restDirty.clear()
+    const part0 = this.followers.length ? this.mainSkinIndex() : -1
     const activeParts = new Set<number>()
     if (face) {
       for (const [partId, fields] of face.fields) {
@@ -1384,11 +1843,14 @@ export class Viewer {
         this.bvhBuilt = Math.max(0, this.bvhBuilt - 1)
       }
       if (i === this.skinLayerPart && this.skinLayer && this.skinIndex >= 0) this.skinLayer.setPositions(buf.position)
+      if (this.followers.length && part0 === i) for (const f of this.followers) f.patch.setPositions(buf.position, buf.normal)
     }
     this.faceJaw = act.jaw
+    this.updateDetail()
     if (todo.size) {
       // 静止几何变了：按旧几何算出的拾取缓存作废 / the rest geometry changed: pick caches computed from the old one are stale
       this.poseRt?.invalidate()
+      this.restVersion++
       this.prewarmNext = 0
       this.dirty = true
     }
@@ -1540,7 +2002,10 @@ export class Viewer {
     if (s.colorMode === 'source' && TISSUE_OPACITY[part.tissue] !== undefined) opacity = Math.min(1, opacity * 1.6)
     // 看表情时把皮肤画成不透明 / the skin is drawn opaque to read the expression
     if (s.skinOpaque && part.id === this.mainSkin) opacity = 1
-    if (selected) opacity = 1 // a selected part is shown solid so it can be found
+    // 冲动沿神经传上去的那一小段时间里，皮肤让开 / while the volley travels up the nerve, the skin steps aside
+    if (this.stimSee && part.id === this.mainSkin) opacity = Math.min(opacity, 0.22)
+    const inPath = this.stimParts.has(part.id)
+    if (selected || inPath) opacity = 1 // a selected part is shown solid so it can be found
     this.pickable[i] = id >= 0 && d === NORMAL && opacity >= PICK_OPACITY ? 1 : 0
     this.solid[i] = d === NORMAL && opacity >= 0.999 ? 1 : 0
     const batches = this.batches
@@ -1561,12 +2026,13 @@ export class Viewer {
     } else {
       const c = this.tmpColor.copy(this.baseColor[i]!)
       if (selected) c.lerp(ACCENT_RGB, 0.6)
+      else if (inPath) c.lerp(PATH_RGB, 0.8)
       else if (s.hover === part.id) c.lerp(WHITE, 0.32)
       batches.setState(id, opacity >= 0.999 ? MODE_OPAQUE : MODE_BLEND, c.r, c.g, c.b, opacity)
     }
     // 被选中的部件还会透过遮挡物画一层淡淡的颜色
     // selected parts also get a faint tint drawn through whatever covers them
-    batches.setXray(id, d !== HIDDEN && selected && s.selection.ids.length <= XRAY_MAX)
+    batches.setXray(id, d !== HIDDEN && ((selected && s.selection.ids.length <= XRAY_MAX) || inPath))
   }
 
   // ------------------------------------------------------------ 拾取 / picking
@@ -1727,7 +2193,7 @@ export class Viewer {
 
   /** 过某像素的射线上最近的命中，范围为 `only`（部件索引）或全部可拾取部件。 */
   /** Nearest hit along the ray through a pixel, among `only` (part indices) or all pickable parts. */
-  private cast(clientX: number, clientY: number, rect: DOMRect, only: readonly number[] | null): { part: number; distance: number } | null {
+  private cast(clientX: number, clientY: number, rect: DOMRect, only: readonly number[] | null, force = false): { part: number; distance: number } | null {
     this.ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1)
     this.raycaster.setFromCamera(this.ndc, this.camera)
     const o = this.raycaster.ray.origin
@@ -1749,7 +2215,7 @@ export class Viewer {
     const n = only ? only.length : parts.length
     for (let k = 0; k < n; k++) {
       const i = only ? only[k]! : k
-      if (!this.pickable[i]) continue
+      if (!this.pickable[i] && !force) continue
       const b = this.boxOf(i)
       let t0 = near
       let t1 = far
@@ -1970,17 +2436,56 @@ export class Viewer {
     this.down =
       this.pointers.size === 1 && e.button === 0 ? { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId } : null
     this.hoverXY = null
+    this.cancelHold()
+    if (this.down && this.interactive && useApp.getState().stimArmed) {
+      // 刺激工具：按住不动一会儿 = 按住施加，松手才结束 / stimulus tool: a press held still for a moment applies by pressing, until release
+      const d = this.down
+      this.holdTimer = setTimeout(() => {
+        this.holdTimer = null
+        if (this.down !== d || this.pointers.size !== 1) return
+        const site = this.skinHit(d.x, d.y)
+        if (!site) return
+        this.holdActive = true
+        // 按住期间相机不转（OrbitControls 仍然记着这根手指，松手后一切照旧）
+        // the camera does not turn while pressing (OrbitControls still tracks the finger; all is as before after release)
+        this.controls.enableRotate = false
+        this.controls.enablePan = false
+        void applyStimulus(site, { gesture: true, hold: true })
+      }, HOLD_MS)
+    }
+  }
+
+  private cancelHold(): void {
+    if (this.holdTimer) clearTimeout(this.holdTimer)
+    this.holdTimer = null
+  }
+
+  private endHold(): boolean {
+    this.cancelHold()
+    if (!this.holdActive) return false
+    this.holdActive = false
+    this.controls.enableRotate = true
+    this.controls.enablePan = true
+    void releaseStimulus()
+    return true
   }
 
   private onPointerUp = (e: PointerEvent): void => {
     this.pointers.delete(e.pointerId)
     const d = this.down
     this.down = null
+    if (this.endHold()) return
     if (!d || d.id !== e.pointerId || !this.interactive) return
     const now = performance.now()
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > TAP_MAX_MOVE || now - d.t > TAP_MAX_MS) return
     const app = useApp.getState()
     if (this.syncNeeded) this.sync()
+    if (app.stimArmed) {
+      // 刺激工具开着：点皮肤就是施加刺激，不改选择 / with the stimulus tool on, a click on the skin applies the stimulus and leaves the selection alone
+      const site = this.skinHit(e.clientX, e.clientY)
+      if (site) void applyStimulus(site, { gesture: true })
+      return
+    }
     const hit = this.pickDetail(e.clientX, e.clientY)
     const id = hit?.id ?? null
     const additive = e.ctrlKey || e.metaKey || e.shiftKey
@@ -2044,9 +2549,12 @@ export class Viewer {
   private onPointerCancel = (e: PointerEvent): void => {
     this.pointers.delete(e.pointerId)
     this.down = null
+    this.endHold()
   }
 
   private onPointerMove = (e: PointerEvent): void => {
+    // 手指动了就不是"按住施加"，而是在转相机 / once the finger moves it is an orbit, not a press-to-apply
+    if (this.holdTimer && this.down && e.pointerId === this.down.id && Math.hypot(e.clientX - this.down.x, e.clientY - this.down.y) > TAP_MAX_MOVE) this.cancelHold()
     if (e.pointerType !== 'mouse' || e.buttons !== 0 || !this.interactive) return
     this.lastPointerType = 'mouse'
     this.hoverXY = { x: e.clientX, y: e.clientY }
@@ -2082,8 +2590,11 @@ export class Viewer {
     }
     this.controls.update()
     if (this.syncNeeded) this.sync()
+    // 刺激先取样：它给表情一个强度、给姿势一个反射增量 / the stimulus is sampled first: it gives the face a level and the pose a reflex increment
+    const stimulating = this.source === useApp.getState ? this.stepStim(stimFrame(t)) : false
     const facing = this.stepFace(t)
-    const posing = this.stepPose(t) || facing
+    const posing = this.stepPose(t) || facing || stimulating
+    if (this.stimEval) this.placeStimPath()
     if (this.gizmoJoint) this.updateGizmo()
 
     // 姿势在动时不做悬停拾取（每帧都要重算变形后的几何）
@@ -2343,4 +2854,33 @@ function boundsOf(position: Float32Array): [number, number, number, number, numb
     }
   }
   return b
+}
+
+/** 取一个文件的全部字节，边取边报告进度 / Fetch all bytes of a file, reporting progress on the way. */
+async function fetchBytes(url: string, onProgress: (loaded: number, total: number) => void): Promise<ArrayBuffer> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`${res.status} ${url}`)
+  const total = Number(res.headers.get('content-length')) || 0
+  if (!res.body) {
+    const all = await res.arrayBuffer()
+    onProgress(all.byteLength, all.byteLength)
+    return all
+  }
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let loaded = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    loaded += value.length
+    onProgress(loaded, total)
+  }
+  const out = new Uint8Array(loaded)
+  let o = 0
+  for (const c of chunks) {
+    out.set(c, o)
+    o += c.length
+  }
+  return out.buffer
 }
