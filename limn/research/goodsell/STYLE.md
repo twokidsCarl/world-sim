@@ -171,6 +171,13 @@ limn 这一轮的数：
 - **基质蛋白层读成一条带子**：各份拷贝共用一个编号，彼此之间不画线（`oneId`）。原来是满是黑线的小格子。
 - 流感主色距离 0.077→0.072。并排图 `out/D2-influenza.jpg`：浅色的薄膜带中线、蓝色的基质蛋白带、填满的橙色核糖核蛋白、顶上红色的聚合酶，这几样和他那幅一一对得上；刺的形状对不上，原因如上。
 
+### E1–E2：HIV 也做成场景
+
+- HIV 周围填上血浆：白蛋白（PDB 1AO6）、抗体（PDB 1IGT）、纤维蛋白原（PDB 3GHG），照他的《HIV in Blood Plasma》。血浆里最多的三类蛋白就是这三类；数量按铺满画面定，是示意。
+- **填环境的工具改了一处**：占的地方原来按分子最远的原子算，细长的纤维蛋白原会占掉一个大球，周围什么都放不下，画面很稀。改成按均方根半径算。新冠的场景也跟着密了一点（主色距离 0.092→0.089）。
+- HIV 主色距离 0.134→0.081，白纸占比 0.47→0.00。并排图 `out/E2-hiv.jpg`。
+- **和他的差别**：他那幅的比例尺小得多，病毒是完整的一个球（没有剖开），只占画面的四分之一；我们是剖开的特写。他的血浆蛋白更小更密，种类也多。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -332,3 +339,10 @@ After ten rounds of tuning model by model the gap was still plain, so the approa
 - **The membrane's thickness had been measured wrongly**: the ideal shell took the 2nd to 98th percentile of lipid radii in the simulation, which for an undulating membrane comes to about 80 Å, twice a real membrane. It is now 38 Å about the median radius. The matrix layer and the cavity move outwards with it, leaving more room to draw ribonucleoprotein.
 - **The matrix layer reads as a band**: its copies share one id with no lines between them (`oneId`). It used to be small cells full of black line.
 - Influenza colour distance 0.077→0.072. Side by side, `out/D2-influenza.jpg`: the thin pale membrane with its mid-line, the blue band of matrix protein, the orange ribonucleoprotein filling the inside and the red polymerases on top each answer to his painting; the shape of the spikes does not, for the reason above.
+
+### E1–E2: HIV as a scene too
+
+- HIV is surrounded by plasma: albumin (PDB 1AO6), antibodies (PDB 1IGT) and fibrinogen (PDB 3GHG), after his "HIV in Blood Plasma". Those are the three most abundant classes of plasma protein; numbers are set to fill the picture and are schematic.
+- **One change to the environment tool**: the room a molecule takes went by its farthest atom, so long thin fibrinogen claimed a large sphere in which nothing else fitted and the picture was sparse. It now goes by the root-mean-square radius. The coronavirus scene grew a little denser with it (colour distance 0.092→0.089).
+- HIV colour distance 0.134→0.081, blank paper 0.47→0.00. Side by side: `out/E2-hiv.jpg`.
+- **Where it differs from his**: his is at a much smaller scale, with the virus a whole sphere (not cut open) taking a quarter of the picture, where ours is a cut-away close-up. His plasma proteins are smaller, denser and of more kinds.
