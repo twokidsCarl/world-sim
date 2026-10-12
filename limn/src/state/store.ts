@@ -282,8 +282,14 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
     const m = await loadMolecule({ kind: 'pdb', id: p.pdb })
     const c: V3 = [0, 0, 0]
     for (let i = 0; i < m.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += m.pos[i * 3 + k]! / m.atomCount
-    let r = 0
-    for (let i = 0; i < m.atomCount; i += 5) r = Math.max(r, Math.hypot(m.pos[i * 3]! - c[0], m.pos[i * 3 + 1]! - c[1], m.pos[i * 3 + 2]! - c[2]))
+    // 占的地方按均方根半径算（再放大一点），不按最远的原子：细长的分子（纤维蛋白原）按最远点算会占掉一个大球，周围什么都放不下
+    // the room it takes goes by its root-mean-square radius (a little enlarged), not its farthest atom: a long thin molecule (fibrinogen) measured by its farthest point claims a large sphere in which nothing else can be put
+    let r2 = 0, nr = 0
+    for (let i = 0; i < m.atomCount; i += 5) {
+      r2 += (m.pos[i * 3]! - c[0]) ** 2 + (m.pos[i * 3 + 1]! - c[1]) ** 2 + (m.pos[i * 3 + 2]! - c[2]) ** 2
+      nr++
+    }
+    const r = Math.sqrt(r2 / Math.max(1, nr)) * 1.25
     const ops = scatter(p.count, r, c, box, rand, placed)
     m.assemblies.push({ id: 'inferred', groups: [{ chains: m.chains.map((_, i) => i), operators: ops }] })
     const roles: Role[] = m.entities.map(() => 'extracellular')
