@@ -99,8 +99,8 @@ cd web && bun run test && bun run typecheck
   - 其余属性与特质（收入、风险厌恶、从众、推理深度、与银行的往来）的分布都是占位假设，由种子生成。
   - 没有用的：世界价值观调查和中国综合社会调查要本人注册并同意条款，没有接。
 - **默认的行为参数是手调的**，调到曲线看起来合理为止。
-- **校准只是起步，而且很脆**：`polis calibrate` 用语料里八个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎、丰川的平行世界里至少三成像史料、东亚银行被提走的存款不到 2%、第一轮三起检验案例里至少三成的世界规模对得上）随机搜索十个参数，结果存在 `calibration.json`。五个命中，三个没中：取款储户的比例平均 1.8%（目标下限 2.9%），丰川 25%（下限 30%），第一轮三起案例 21%（下限 30%）。"可信担保"的力度本身也是手设的。
-  - 脆在哪里：丰川那一条在校准用的 8 个种子上是 25%，换一批 30 个种子是 3 个世界（10%）；东亚银行在校准的种子上平均 1.5%，换种子是 2.8%；第一轮三起案例在校准的种子上有 21% 的世界规模对得上，换种子后没有一个世界全部相符。人口每换一次数据、目标每加一条，同一个搜索找到的参数和各项得分都明显不同。校准得到的是对这几个种子和这份人口的拟合，不是模型学到了什么。
+- **校准只是起步，而且很脆**：`polis calibrate` 用语料里八个目标（取款储户占 3%–9%、熟人跑了自己更可能跑、辟谣有效但消不干净、有可信担保时银行撑得住、三人成虎、丰川的平行世界里至少三成像史料、东亚银行被提走的存款不到 2%、前两轮五起检验案例里至少三成的世界规模对得上）随机搜索十一个参数，结果存在 `calibration.json`。六个命中，两个没中：通和场景里取款储户的比例平均 0.7%（目标下限 2.9%），丰川 12.5%（下限 30%）。"可信担保"的力度本身也是手设的。
+  - 脆在哪里：丰川那一条在校准用的 8 个种子上是 12.5%，换一批 30 个种子只有 1 个世界像史料；参数每加一个、目标每加一条、人口每换一次数据，同一个搜索找到的参数和各项得分都明显不同（三轮下来，丰川在新种子上依次是 1、3、1 个世界）。校准得到的是对这几个种子和这份人口的拟合，不是模型学到了什么。
 - **"谁会去取"重新设计过一次**（`mind.py`）。原来的规则是每个知情储户每小时掷一次骰子，日子一长人人都会被掷中，所以挤兑一旦开始几乎人人都去取。现在：
   - 每人有一个整场不变的门槛，动机没过门槛的人等多久也不去（Granovetter 的门槛模型）；与银行往来久、有贷款的人门槛更高（依据是 Iyer 与 Puri）。
   - 有存款保险的场景里，保得住的那部分不算在可能的损失里，去了也不一定取光。上限定在储户存款的 95 分位，这个比例是照 Iyer 与 Puri 的量级手设的。
@@ -132,10 +132,24 @@ cd web && bun run test && bun run typecheck
   - 同一次运行里，第一轮的三起（现在算拟合过的）也都是 0 / 30：BAC 17 个世界发生挤兑、取走平均 4.0%；Swedbank 18 个世界、平均 3.4%；Kaspi 仍然没有一个世界发生挤兑。丰川 3 个世界像史料，东亚银行 16 个世界发生挤兑、取走平均 2.8%。
   - **这一轮否定的想法**：光加一条"群发消息让人直接行动"的路、再把当局表态调弱，不够。真实案例的规模相差二十倍（0.67% 到 14%），差别来自事发前的处境——一周前货币贬值、一周前另一家银行刚被接管——这些只写在场景的文字里，数值引擎看不到。模型里决定规模的反而是"消息之前传闻流传了多久""当局隔多久表态"，方向与史料相反。
   - 这两起案例的结果也看过了，再改模型同样要另找新的。
-- **第三轮的准备已经写定，模型还没有改。** 想法是给每个场景一个"事发前人心有多不稳"的量，从史料里数出来，不是调出来的。
+- **第三轮：给每个场景一个从史料里数出来的"事发前人心有多不稳"，规模第一次在没见过的案例上对上了，但只有一起，而且收尾没对上。**
   - 规则（`scenarios/context.py`）：挤兑第一天之前三十天内、同一个国家里，(a) 居民的储蓄普遍直接缩水（货币一次或一天之内贬值一成以上，或存款被减记），(b) 一家吸收存款的银行被关闭或接管、储户取不出钱；每有一条记 1。
   - 前六起真实案例按这条规则的取值：Kaspi、Swedbank、第一投资银行是 1，其余是 0。这条规则是看过它们的结果之后定的，对它们不算检验；Swedbank 取值是 1 而史料里只取走 1.5%，这一处规则本身就对不上。
   - 新的检验案例只有一起：俄罗斯储蓄银行 2014 年 12 月（卢布暴跌的次日收到群发短信，一周被取走 1.3 万亿卢布，约为个人存款的六分之一），取值是 1。设定、标准和取值先于模型改动合并，没有运行过。只有一起，而且只检验"不稳时规模大"这一个方向；想找一起"事发前平静、规模小、又有金额记录"的新案例，没有找到能核实的。入库的那条大模型记录（`samples/`）是按上一版参数生成的，没有重新生成。
+  - 引擎怎么用这个量（PR #222 之后）：它抬高"银行可能出事"的先验（每一级抬多少是参数 `Params.unease`）；并且只有它大于 0 时，群发消息才让人估计别人也会去取（第二轮加的那条路）。校准这次没有再把那条路关掉：`public` 落在搜索范围上限 1.5，`unease` 是 1.2，`authority` 是 0.8。
+  - 储蓄银行只跑了这一次（30 个世界）：
+
+    | 标准 | 史料 | 模拟 | 对上 |
+    |---|---|---|---|
+    | 银行没有倒闭 | 没倒 | 都撑住 | 30 / 30 |
+    | 第 1–2 天出现挤兑 | 周三傍晚起，周四高峰 | 都在第 1 天 | 30 / 30 |
+    | 取走的比例在 16.3% 的一半到两倍之间 | 约六分之一 | 平均 20.7%（10.7%–29.0%） | 30 / 30 |
+    | 最后一次公开回应两天后基本没人再去 | 第三天起回落 | 每个世界都还有一成以上的人在那之后才去 | 0 / 30 |
+    | 全部相符 | | | 0 / 30 |
+
+  - 怎么读这个结果：规模和起始日对上了，这是三轮里第一次在没见过的案例上对上规模。按事先写定的标准它仍然是没通过，因为模型里的挤兑拖得比史料久——这起案例里没有外部当局出面，银行自己的两次声明在模型里压不住。"两天后平息"这一条的史料依据也比较弱（史料只说第三天开始回落、一周共取走 1.3 万亿），但标准是事先定的，不改。
+  - 同一次运行里拟合过的案例：第一投资银行 26 / 30 全部相符（取走平均 18.4%）；Kaspi 29 个世界当天发生挤兑，但只取走平均 2.2%（史料 9%）；Swedbank 30 个世界都发生挤兑，取走平均 8.7%（史料 1.5%），正是规则对不上的那一处；BAC 和 ICICI 几乎不发生挤兑（3 个和 0 个世界）；丰川 1 个世界像史料；东亚银行 4 个世界发生挤兑、取走平均 0.9%。
+  - 还不能说的：一起案例、一个方向，说明不了这条规则是对的。它也没有解释同样记 1 的案例之间为什么差十倍（Swedbank 对第一投资银行），没有解释"事发前平静"的案例里为什么仍有 1%–2% 的存款被取走（模型里这些案例几乎什么都不发生）。储蓄银行的结果也看过了，再改同样要另找新的。
 - 通和场景的**人物、地名、说法都是本项目原创**；丰川、东亚银行和五个检验场景的事件顺序取自语料里的史料转述，人物是匿名代号或虚构的普通储户，街区、人口、存款和关系网是合成的。
 
 ---
@@ -241,8 +255,8 @@ The engine uses three pieces of external data, all in population synthesis only:
   - The distributions of every other attribute and trait (income, risk aversion, conformity, depth of reasoning, ties to the bank) are placeholder assumptions generated from the seed.
   - Not used: the World Values Survey and the Chinese General Social Survey require registering in person and accepting terms, and were not taken up.
 - **The default behavioural parameters are hand-tuned**, adjusted until the curves looked reasonable.
-- **Calibration is only a beginning, and it is fragile**: `polis calibrate` runs a random search over ten parameters against eight targets from the corpus (3%–9% of depositors withdraw, a person is more likely to run when acquaintances have, corrections work but leave a residue, the bank holds under a credible guarantee, three men make a tiger, at least three in ten parallel Toyokawa worlds resemble the record, under 2% of deposits leave the Bank of East Asia, and in at least three of ten worlds the first round's three test cases match in scale); the result is stored in `calibration.json`. Five are hit and three missed: the share of depositors who withdraw averages 1.8% (the floor is 2.9%), Toyokawa scores 25% (the floor is 30%), and the first round's three cases score 21% (the floor is 30%). The strength of the "credible guarantee" is itself set by hand.
-  - How it is fragile: the Toyokawa target scores 25% on the 8 calibration seeds and 3 worlds in 30 (10%) on a fresh set; the Bank of East Asia averages 1.5% on the calibration seeds and 2.8% on fresh ones; the first round's three cases match in scale in 21% of worlds on the calibration seeds, and on fresh seeds not one world meets every criterion. Each time the population took on new data or a target was added, the same search found visibly different parameters and scores. What calibration yields is a fit to these seeds and this population, not something the model has learned.
+- **Calibration is only a beginning, and it is fragile**: `polis calibrate` runs a random search over eleven parameters against eight targets from the corpus (3%–9% of depositors withdraw, a person is more likely to run when acquaintances have, corrections work but leave a residue, the bank holds under a credible guarantee, three men make a tiger, at least three in ten parallel Toyokawa worlds resemble the record, under 2% of deposits leave the Bank of East Asia, and in at least three of ten worlds the first two rounds' five test cases match in scale); the result is stored in `calibration.json`. Six are hit and two missed: in the Tonghe scenario the share of depositors who withdraw averages 0.7% (the floor is 2.9%), and Toyokawa scores 12.5% (the floor is 30%). The strength of the "credible guarantee" is itself set by hand.
+  - How it is fragile: the Toyokawa target scores 12.5% on the 8 calibration seeds, and on a fresh set of 30 seeds only 1 world resembles the record. Each time a parameter or a target was added or the population took on new data, the same search found visibly different parameters and scores (over the three rounds Toyokawa on fresh seeds went 1, 3, 1 worlds). What calibration yields is a fit to these seeds and this population, not something the model has learned.
 - **"Who withdraws" has been redesigned once** (`mind.py`). The old rule rolled a die every hour for every depositor who had heard, which catches everybody in the end, so once a run started nearly everyone withdrew. Now:
   - Each person has a threshold that is fixed for the whole run, and someone whose motive stays below it never goes however long they wait (Granovetter's threshold model); long relationships with the bank and loans raise it (the evidence is Iyer and Puri).
   - Where a scenario has deposit insurance, the covered part of a deposit is left out of what can be lost, and those who do go may not take everything. The cap sits at the 95th percentile of deposits, a share set by hand to Iyer and Puri's order of magnitude.
@@ -274,8 +288,22 @@ The engine uses three pieces of external data, all in population synthesis only:
   - In the same run the first round's three (now fitted) also score 0 / 30: BAC has a run in 17 worlds with 4.0% withdrawn on average, Swedbank in 18 worlds with 3.4%, and Kaspi still has no run in any world. Toyokawa resembles the record in 3 worlds; the Bank of East Asia has a run in 16 worlds with 2.8% withdrawn on average.
   - **The idea this round refutes**: adding a path by which a mass message moves people directly, and weakening the authorities' statement, is not enough. The real cases differ twentyfold in scale (0.67% to 14%), and the difference lies in what came before: a devaluation a week earlier, another bank taken over a week earlier. Those appear only in each scenario's text; the numeric engine cannot see them. What sets the scale in the model is instead how long the rumour circulated before the message and how soon the authorities spoke, which points the opposite way from the records.
   - These two results have now been seen as well, so another change to the model needs new cases again.
-- **The groundwork for a third round is fixed; the model has not been changed yet.** The idea is to give each scenario a number for how unsettled people were beforehand, counted from the record and not tuned.
+- **Third round: each scenario gets a number, counted from the record, for how unsettled people were beforehand. For the first time the scale matches on an unseen case, but it is one case and the ending does not match.**
   - The rule (`scenarios/context.py`): in the same country during the thirty days before the first day of the run, (a) households at large took a direct loss on their savings (the currency lost a tenth or more in one step or one day, or deposits were written down), (b) a deposit-taking bank was closed or taken over and its depositors could not reach their money; each scores 1.
   - Under this rule, of the six earlier real cases Kaspi, Swedbank and First Investment Bank score 1 and the rest 0. The rule was chosen after their results had been seen, so it is no test on them; Swedbank scores 1 although only 1.5% was withdrawn there, so on that case the rule itself does not fit.
   - There is only one new test case: Sberbank in December 2014 (mass texts the day after the rouble collapsed, RUB 1.3 trillion withdrawn in a week, about a sixth of individuals' deposits), which scores 1. Its settings, criteria and score were merged before the model changed and it has not been run. It is a single case and tests one direction only, that unsettled times give a large run; a new case with calm beforehand, a small run and recorded amounts was looked for and none could be verified. The model-played record in `samples/` was generated with the previous parameters and has not been regenerated.
+  - How the engine uses the number (after PR #222): it raises the prior that the bank may be in trouble (by how much per level is the parameter `Params.unease`), and only when it is above 0 does a mass message make people expect others at the bank (the path added in the second round). This time calibration did not switch that path off: `public` came out at 1.5, the top of its range, `unease` at 1.2 and `authority` at 0.8.
+  - Sberbank was run this once (30 worlds):
+
+    | Criterion | Record | Simulation | Met |
+    |---|---|---|---|
+    | The bank survives | it did | it always does | 30 / 30 |
+    | A run on day 1–2 | from Wednesday evening, peaking Thursday | always on day 1 | 30 / 30 |
+    | Share withdrawn between half and twice 16.3% | about a sixth | 20.7% on average (10.7%–29.0%) | 30 / 30 |
+    | Almost nobody joins two days after the last public response | declining from the third day | in every world more than a tenth of runners join after that | 0 / 30 |
+    | All criteria | | | 0 / 30 |
+
+  - How to read it: the scale and the starting day match, the first time in three rounds that scale has matched on an unseen case. By the criteria fixed in advance it still fails, because the model's run drags on longer than the record's: no outside authority spoke in this case, and the bank's own two statements do not hold it down in the model. The record's support for "calm after two days" is also fairly weak (it says only that the outflow began to decline on the third day and that RUB 1.3 trillion left within a week), but the criterion was fixed beforehand and stands.
+  - Fitted cases in the same run: First Investment Bank meets every criterion in 26 / 30 worlds (18.4% withdrawn on average); Kaspi has a run on the day in 29 worlds but only 2.2% withdrawn on average (the record says 9%); Swedbank has a run in all 30 worlds with 8.7% withdrawn on average (the record says 1.5%), which is exactly where the rule does not fit; BAC and ICICI hardly ever have a run (3 worlds and 0); Toyokawa resembles the record in 1 world; the Bank of East Asia has a run in 4 worlds with 0.9% withdrawn on average.
+  - What cannot be claimed: one case in one direction does not show the rule is right. It does not explain why cases with the same score differ tenfold (Swedbank against First Investment Bank), nor why 1%–2% of deposits still left in the cases that were calm beforehand (in the model almost nothing happens there). Sberbank's result has now been seen too, so another change needs new cases again.
 - In the Tonghe scenario, **the characters, place names and wording are all original to this project**; in the Toyokawa, Bank of East Asia and five test scenarios the order of events comes from the corpus's paraphrase of the records, the characters are anonymous labels or invented ordinary depositors, and the districts, population, deposits and network of ties are synthetic.

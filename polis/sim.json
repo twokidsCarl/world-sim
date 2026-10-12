@@ -59,7 +59,7 @@
         "zh": "更夫夜里看见钱庄往外抬箱子。看这句话怎么传开、走样，队伍怎么排起来。钱庄其实并不亏空。点任何一个人看他怎么想。",
         "en": "A night watchman sees boxes carried out of the bank. Watch the remark spread and distort and the queue form. The bank is in fact sound. Click anyone to see what they think."
       },
-      "url": "/?run=rumor_run-s7-cal-none"
+      "url": "/?run=rumor_run-s39-cal-none"
     },
     {
       "id": "guarantee",
@@ -71,7 +71,7 @@
         "zh": "和上一张是同一座城、同一句话，只多了第三天早上官银号的担保。对比两条世界线差在哪里。",
         "en": "Same town and same remark as the previous card, plus a guarantee from the official bank on the third morning. Compare where the two worlds part."
       },
-      "url": "/?run=rumor_run-s7-cal-guarantee"
+      "url": "/?run=rumor_run-s39-cal-guarantee"
     },
     {
       "id": "llm",
@@ -95,7 +95,7 @@
         "zh": "按史料的时间线重演：通勤列车上的一句玩笑，一周后成了挤兑。这是像史料的一个世界：第 6 天起挤兑、少数人取款、担保后平息、金库撑住。换种子，这样的世界很少，多数世界里玩笑不了了之。",
         "en": "A replay on the recorded timeline: a joke on a commuter train becomes a bank run a week later. This is a world that resembles the record: a run from day 6, a minority withdrawing, calm after the guarantee, the bank surviving. Across seeds such worlds are rare; in most the joke goes nowhere."
       },
-      "url": "/?run=toyokawa-s36-cal&t=110"
+      "url": "/?run=toyokawa-s119-cal&t=115"
     },
     {
       "id": "bea",
@@ -107,7 +107,19 @@
         "zh": "史料里只提走了 0.67% 的存款，银行没倒。模型最初在这里错得离谱（人人都去取），据此重新设计过「谁会去取」；现在规模对上了，但它已经是拟合过的案例，不算检验。",
         "en": "In the record 0.67% of deposits left and the bank held. The model first got this badly wrong (everyone withdrew), and who withdraws was redesigned because of it; the scale now matches, but this is a fitted case and no longer a test."
       },
-      "url": "/?run=bea-s10-cal&t=40"
+      "url": "/?run=bea-s99-cal&t=40"
+    },
+    {
+      "id": "fib",
+      "title": {
+        "zh": "保加利亚第一投资银行，2014：人心不稳时的一条群发消息",
+        "en": "First Investment Bank, Bulgaria, 2014: a mass message in unsettled times"
+      },
+      "hint": {
+        "zh": "一周前另一家大银行刚被接管，储户取不出钱。周五一条群发消息说这家也没钱了，当天就排起了队；在这个世界里一周取走约 12% 的存款，银行撑住。史料是一天流出一成多、两周近两成。这是拟合过的案例，不算检验；模型靠的是一个从史料里数出来的「事发前人心有多不稳」。",
+        "en": "A week earlier another large bank had been taken over and its depositors locked out. On Friday a mass message says this one is out of cash too, and queues form that day; in this world about 12% of deposits leave within a week and the bank holds. The record shows over a tenth gone in one day and nearly a fifth within two weeks. This is a fitted case, not a test; the model relies on a number, counted from the record, for how unsettled people were beforehand."
+      },
+      "url": "/?run=fib-s6-cal&t=8"
     },
     {
       "id": "lab",
@@ -119,7 +131,7 @@
         "zh": "停在第三天上午，钱庄还没倒。在右侧选一种干预加入，点「分叉重跑」，时间轴上虚线是原来那条世界线。",
         "en": "Paused on the third morning, before the bank fails. Pick an intervention on the right, add it and press the fork button; the dashed lines on the timeline are the original world."
       },
-      "url": "/?run=rumor_run-s7-cal-none&t=37&tab=lab"
+      "url": "/?run=rumor_run-s39-cal-none&t=37&tab=lab"
     },
     {
       "id": "evidence",
@@ -216,8 +228,8 @@
           "en": "Calibration targets"
         },
         "description": {
-          "zh": "模型校准时要对上的八个指标：区间、出处、为什么选它。同一个文件的 calibrated.metrics 是校准后的实际值，有三个没落在区间里。",
-          "en": "The eight metrics the model is calibrated against: the interval, the source and why it was chosen. In the same file, calibrated.metrics holds the values actually reached; three fall outside their intervals."
+          "zh": "模型校准时要对上的八个指标：区间、出处、为什么选它。同一个文件的 calibrated.metrics 是校准后的实际值，有两个没落在区间里。",
+          "en": "The eight metrics the model is calibrated against: the interval, the source and why it was chosen. In the same file, calibrated.metrics holds the values actually reached; two fall outside their intervals."
         },
         "path": "calibration.json",
         "records": "targets",

@@ -215,10 +215,27 @@ def test_a_mass_message_makes_those_who_reason_about_others_expect_company():
     # 熟人说得更多时，以熟人的为准 / when acquaintances say more, their word wins
     assert mind.expectation(0.0, 1.0, 1, public=0.3) == pytest.approx(0.6)
     text = Intervention(t=5, text="群发", valence=1, strength=1.5, reach=0.5)
-    _, off = simulate(interventions=[text], share=0, venue_share=0)
-    _, on = simulate(interventions=[text], share=0, venue_share=0, public=1.0)
+    # Kaspi 场景事发前人心不稳（UNEASE = 1）；通和场景是 0，群发消息在那里不带来这种估计
+    # The Kaspi scenario is unsettled beforehand (UNEASE = 1); the Tonghe scenario scores 0, where a mass message brings no such estimate
+    _, off = simulate(scenario="kaspi", interventions=[text], share=0, venue_share=0)
+    _, on = simulate(scenario="kaspi", interventions=[text], share=0, venue_share=0, public=1.0)
     assert np.array_equal(off.frames[:5], on.frames[:5])
     assert on.frames[6, 2].mean() > off.frames[6, 2].mean()  # 第 2 路是"估计别人会去取" / channel 2 is the expectation of others
+    _, calm_off = simulate(interventions=[text], share=0, venue_share=0)
+    _, calm_on = simulate(interventions=[text], share=0, venue_share=0, public=1.0)
+    assert np.array_equal(calm_off.frames, calm_on.frames)
+
+
+def test_prior_unease_is_counted_from_the_record_and_raises_the_prior():
+    from polis.scenarios import context
+
+    assert [context.unease(trace.scenario_module(s)) for s in ("rumor_run", "bea", "kaspi", "fib", "sber")] == [0, 0, 1, 1, 1]
+    _, flat = simulate(scenario="kaspi")
+    _, raised = simulate(scenario="kaspi", unease=1.0)
+    assert raised.frames[0, 0].mean() > flat.frames[0, 0].mean()
+    _, a = simulate()
+    _, b = simulate(unease=1.0)
+    assert np.array_equal(a.frames, b.frames)  # 取值是 0 的场景不受影响 / a scenario scoring 0 is unaffected
 
 
 def test_authority_scales_how_much_of_a_denial_lands():

@@ -55,11 +55,11 @@
     },
     {
       "metric": "seen_like",
-      "source": "cases/bac_san_jose_2004, cases/swedbank_latvia_2011, cases/kaspi_bank_2014",
+      "source": "cases/bac_san_jose_2004, cases/swedbank_latvia_2011, cases/kaspi_bank_2014, cases/icici_bank_2003, cases/fib_bulgaria_2014",
       "lo": 0.3,
       "hi": 1.0,
-      "why": "第一轮的三起检验案例：每十个平行世界里至少有三个银行不倒、取走的比例在史料数字的一半到两倍之间（三成的下限是这里定的）。它们的结果已经看过，所以拿来校准、不再算检验",
-      "why_en": "The first round's three test cases: in at least three of ten parallel worlds the bank survives and the share withdrawn is between half and twice the recorded figure (the three-in-ten floor is set here). Their results have been seen, so they are used for calibration and no longer count as tests"
+      "why": "前两轮的五起检验案例：每十个平行世界里至少有三个银行不倒、取走的比例在史料数字的一半到两倍之间（三成的下限是这里定的）。它们的结果已经看过，所以拿来校准、不再算检验",
+      "why_en": "The first two rounds' five test cases: in at least three of ten parallel worlds the bank survives and the share withdrawn is between half and twice the recorded figure (the three-in-ten floor is set here). Their results have been seen, so they are used for calibration and no longer count as tests"
     },
     {
       "metric": "sanren_steps",
@@ -71,7 +71,7 @@
     }
   ],
   "default": {
-    "miss": 17.191432721720957,
+    "miss": 17.1795279598162,
     "metrics": {
       "runner_share": 0.12466352433231162,
       "neighbor_lift": 0.3131037615234506,
@@ -80,32 +80,33 @@
       "sanren_steps": 1.0,
       "bea_amount": 0.05046125577294898,
       "toyokawa_like": 0.125,
-      "seen_like": 0.041666666666666664
+      "seen_like": 0.05
     }
   },
   "calibrated": {
-    "miss": 0.654132639544492,
+    "miss": 0.8193906760597622,
     "metrics": {
-      "runner_share": 0.017835402995742794,
-      "neighbor_lift": 3.7618047192533495,
-      "correction_residual": 0.8651132276336688,
+      "runner_share": 0.007184128785800654,
+      "neighbor_lift": 10.789700646843503,
+      "correction_residual": 0.8433893316215324,
       "survived": 1.0,
       "sanren_steps": 3.0,
-      "bea_amount": 0.015338068070858833,
-      "toyokawa_like": 0.25,
-      "seen_like": 0.20833333333333334
+      "bea_amount": 0.010624527928910766,
+      "toyokawa_like": 0.125,
+      "seen_like": 0.3
     },
     "params": {
       "w_tell": 3.5,
-      "corroborate": 1.418,
-      "w_seen": 3.823,
-      "share": 0.235,
-      "lam": 4.0,
-      "bias": -4.427,
-      "hazard": 0.468,
-      "spread": 2.228,
-      "public": 0.0,
-      "authority": 0.2
+      "corroborate": 1.372,
+      "w_seen": 2.316,
+      "share": 0.09,
+      "lam": 14.622,
+      "bias": -4.491,
+      "hazard": 0.252,
+      "spread": 2.969,
+      "public": 1.5,
+      "authority": 0.822,
+      "unease": 1.218
     }
   }
 }
