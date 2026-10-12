@@ -29,6 +29,7 @@ const GROUPS: [string, RegExp][] = [
   // 男性外生殖器的深层部件（graft.py 的 genital 步骤用）/ deep parts of the male external genitalia (for the genital step of graft.py)
   // 足趾的骨（graft.py 的 toes 步骤用）/ bones of the toes (for the toes step of graft.py)
   ['toeBone', /^(distal|middle|proximal) phalanx of (left|right) .*toe$|^(left|right) (first|second|third|fourth|fifth) metatarsal bone$/i],
+  ['toeNail', /^(left|right) nail plate \(foot\)$/i],
   ['genitalMale', /^(glans penis|corpus (cavernosum|spongiosum) of penis|(left|right) (testis|epididymis))$/i],
 ]
 

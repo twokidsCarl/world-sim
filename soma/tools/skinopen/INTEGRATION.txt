@@ -235,6 +235,38 @@ source-vertex.u32：移植顶点指向洞口环上权重最大的那个原顶点
     小阴唇、阴蒂头、尿道口、阴道口、肛门在这张皮肤上认不出来；“会阴长度”一项不可靠，不要用。由 OBJ 文件求得的映射缩放是 0.981，
     而不是管线所说的 1.096，原因没有查明。
 
+9. 第三轮的改动（先读这一节；与第 8 节不一致处以这里为准）
+------------------------------------------------------------------------
+被切掉的顶点（标签 14）现在是安全的：每个都并到了洞口环上最近的那个保留顶点——位置、权重、各逐顶点场都等于那个顶点，
+  source-vertex.u32 也指向它。下标不变，仍不被任何三角形用到。manifest.grafted.removedVertices 给出 vertices 和 collapsedOnto。
+  这样做的理由：遍历三角形的程序根本看不到它们；按顶点算包围盒、找最近顶点的程序看到的是与真实顶点重合的点；
+  按位置焊接的程序会把它们并进那个真实顶点，没有副作用；权重和场是合法值而不是 0，不会破坏“权重和为 1”之类的检查。
+  新的自检：noTriangleReferencesARemovedVertex、removedVerticesCoincideWithAKeptVertex。
+脚趾（toes）：改成了逐趾的骨链配准——趾尖、各趾间关节、跖趾关节连成折线，供体趾按弧长映到折线上（每趾一个长度比例），
+  截面按每趾一个粗细比例缩放，趾蹼之后的面拉到包里的皮肤上；接入和权重（跟随 MHR 的 l_ball / r_ball，由绑定规则按最近分给 mtp1–5）
+  也写好了，但从未执行过，因为验收仍不通过，步骤照旧拒绝接入并写明原因：
+    · 本体的趾骨链比供体的游离趾长 1.33–2.2 倍（小趾最甚），供体趾被拉得很长；
+    · 粗细比例到了上限 1.35，骨上的覆盖仍只有约 0–1.7 mm（要求 1.5 mm），个别趾骨仍露出 0.2–1.6 mm：
+      这些趾骨偏粗（小趾各节 90% 径向半径 3.4–6 mm），供体趾偏细；
+    · 相邻趾有互相穿入的顶点（每对 15–60 个）；
+    · 解剖数据里的足趾甲板部件离“刚好盖住趾骨”的趾背面中位数约 3.5 mm（在外）：甲板与趾骨彼此对不上，
+      两条验收标准（盖住骨、甲在甲板上）在这副骨上互相矛盾。
+    · 工具还报告了相邻趾骨端点间隙超过 6 mm 的趾（男性左小趾，右大趾、第三趾、小趾等，见 graft-report.json 的 implausibleBones）。
+  定位后的前足仍写在 toes-fit-L.obj / toes-fit-R.obj。
+外阴（vulva）：
+    · 映射的各向缩放记在 graft-report.json 的 vulva.specimenMap（principalScales、scaleAlongBodyAxes）：
+      宽度方向 0.971，高度方向 1.036，前后方向 0.937。宽度与“放大 1.096 × 骨盆变窄 0.886”相符，另两个方向不是 1.096，原因没有查。
+      尺寸核对一律用装入后的尺寸。
+    · 新文件 vulva-rim-target.json（在 <body>-skin-grafted/，也被抄到 <body>-skin-open/）：这一片外缘的有序环（154 个点）、
+      位置、向外的法线、每点离现有皮肤的有符号距离、哪些点在标本的截面上（54 个，不是真实的皮肤边缘，不作目标），
+      以及这一片在各 WU_* 结构上的最近距离。这是交给皮肤作者的目标。
+    · 仍然是：边缘离皮肤中位数不超过 5 mm 且这一片是单环圆盘时自动接入，否则拒绝。
+    · 没有做：尾侧截断处的构造性封闭、阴道口 / 尿道口 / 肛门的构造。
+男性生殖器移植处的环：没有改。仍是第 8 节所说的样子（缝合三角形最长 37 mm，周围有粗糙的小面，没有做相交检查）。
+重新发布之后：两条链无人值守地运行；任何前提不满足时以非 0 退出并给出原因（找不到唇间口袋或眼的封膜、
+  区域不是单环圆盘、自检不通过、缺少 deep-face.json 里的部件、缺少供体文件）。toes 和 vulva 不满足验收时不算失败：
+  它们写出原因并跳过接入，链继续。
+
 
 ========================================================================
 English
@@ -543,3 +575,50 @@ Still wrong or unverified (grafts):
     labia minora, glans of the clitoris, urethral and vaginal orifices and anus cannot be identified on this
     skin; the "perineum" figure is unreliable and must not be used. The map derived from the OBJ files has a
     scale of 0.981, not the 1.096 the pipeline states; the reason was not established.
+
+9. Changes of round 3 (read this first; where it differs from section 8, this section holds)
+------------------------------------------------------------------------
+Removed vertices (tag 14) are now safe: each is collapsed onto the nearest kept vertex of the rim of its hole —
+  position, weights and every per-vertex field equal that vertex, and source-vertex.u32 names it. Indices are
+  unchanged and no triangle uses them. manifest.grafted.removedVertices lists `vertices` and `collapsedOnto`.
+  Why this choice: code that walks triangles never sees them; code that takes a bounding box or a nearest vertex
+  over the vertices sees a point coincident with a real vertex; code that welds by position merges them into that
+  vertex with no side effect; and weights and fields are legal values rather than zeros, so checks such as
+  "weights sum to 1" hold. New self-checks: noTriangleReferencesARemovedVertex,
+  removedVerticesCoincideWithAKeptVertex.
+Toes: the fit is now a registration along the bone chain of each toe — tip, interphalangeal joints and
+  metatarsophalangeal joint form a polyline, the donor toe is mapped onto it by arc length (one length scale per
+  toe), its cross-section scaled by one girth per toe, and the surface behind the webs drawn onto the package skin.
+  The graft and its weights (MHR's l_ball / r_ball, which the rig rule hands to the nearest of mtp1–5) are written
+  too, but have never been executed: acceptance still fails, and the step refuses as before and says why:
+    · this body's phalanx chains are 1.33–2.2 times as long as the donor's free toes (the little toe most), so the
+      donor toes are stretched a great deal;
+    · the girth scale reaches its limit of 1.35 and cover over the bones is still only about 0–1.7 mm (1.5 mm is
+      required), with a phalanx still 0.2–1.6 mm outside here and there: these phalanges are thick (90% radial
+      radius of the lesser-toe phalanges 3.4–6 mm) and the donor toes slender;
+    · neighbouring toes have vertices inside each other (15–60 per pair);
+    · the nail plate parts of the anatomy lie a median of about 3.5 mm outside the dorsal toe surface that just
+      covers the bones: nail plates and toe bones do not agree with each other, so on these bones the two
+      acceptance criteria (cover the bone; nail on the nail plate) contradict one another;
+    · the tool also reports toes whose facing bone ends are more than 6 mm apart (male: left little toe; right
+      big, third and little toe; see implausibleBones in graft-report.json).
+  The positioned forefoot is still written to toes-fit-L.obj / toes-fit-R.obj.
+Vulva:
+    · the per-axis scales of the map are in graft-report.json under vulva.specimenMap (principalScales,
+      scaleAlongBodyAxes): 0.971 in width, 1.036 in height, 0.937 fore-aft. The width agrees with "enlarged 1.096 ×
+      pelvis narrowed 0.886"; the other two are not 1.096, and why was not looked into. All dimension checks use
+      the installed size.
+    · new file vulva-rim-target.json (in <body>-skin-grafted/, also copied to <body>-skin-open/): the outer rim of
+      the patch as an ordered loop (154 points) with positions, outward normals, each point's signed distance
+      from the present skin, which points lie on a cut plane of the specimen (54; not a real edge of skin, not
+      targets) and the closest approach of the patch to each WU_* structure. It is the hand-off to the skin's author.
+    · as before: grafted automatically when the rim is within a median 5 mm of the skin and the patch is a disc
+      with one loop, refused otherwise.
+    · not done: the construction closing the caudal truncation, and the construction of the vaginal and urethral
+      orifices and the anus.
+Ring of the male genital graft: unchanged. It is still as section 8 describes (stitch triangles up to 37 mm,
+  rough facets round the graft, no intersection check).
+After a re-issue: both chains run unattended; any unmet precondition ends with a non-zero exit status and its
+  reason (no pocket between the lips or no eye membrane found, a region that is not a disc with one loop, a failed
+  self-check, parts missing from deep-face.json, a missing donor file). toes and vulva failing their acceptance is
+  not an error: they write the reason, skip the graft, and the chain goes on.
