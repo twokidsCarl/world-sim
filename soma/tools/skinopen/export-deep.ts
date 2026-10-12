@@ -13,6 +13,10 @@ import { readBody } from '../rig/io.ts'
 // 分组：名称的正则 / groups: regular expressions on the part name
 const WU_ANCHOR = /^WU_(cavernous_body_of_clitoris|vestibular_bulb|vaginal_wall|uterine_and_vaginal_lumen|submucous_layer_of_urethra|urethral_sphincter_proper|perineal_body|external_anal_sphincter|internal_anal_sphincter|bulbospongiosus_muscle|ischiocavernous_muscle|bartholin_gland|superficial_transverse_perineal_muscle|deep_perineal_muscle|urethro_vaginal_sphincter|urethral_compressor_muscle)(_[LR])?$/
 
+// 直肠腔：vulva 步骤用它的末端造肛门的开口；不参与求映射（不是锚点）
+// the rectal lumen: the vulva step builds the anal opening from its end; it takes no part in fitting the map (not an anchor)
+const WU_LUMEN = /^WU_rectal_lumen$/
+
 const GROUPS: [string, RegExp][] = [
   ['cornea', /^(left|right) cornea$/i],
   ['sclera', /^(left|right) sclera$/i],
@@ -42,7 +46,7 @@ const parts: { id: string; name: string; group: string; side: string; positions:
 for (const p of body.data.parts) {
   // Wu 等 2015 的会阴部件按 id 选（graft.py 的 vulva 步骤用它们求原始标本到本体的变换）
   // the perineal parts of Wu et al. 2015 are chosen by id (the vulva step of graft.py derives the map from the raw specimen to this body from them)
-  const g = WU_ANCHOR.test(p.id) ? (['wuAnchor', WU_ANCHOR] as [string, RegExp]) : GROUPS.find(([, rx]) => rx.test(p.name))
+  const g = WU_ANCHOR.test(p.id) ? (['wuAnchor', WU_ANCHOR] as [string, RegExp]) : WU_LUMEN.test(p.id) ? (['wuLumen', WU_LUMEN] as [string, RegExp]) : GROUPS.find(([, rx]) => rx.test(p.name))
   const m = body.meshes.get(p.id)
   if (!g || !m) continue
   parts.push({ id: p.id, name: p.name, group: g[0], side: p.side, positions: Array.from(m.positions, r5), indices: Array.from(m.indices) })
@@ -61,4 +65,4 @@ try {
 }
 mkdirSync(dirname(outFile), { recursive: true })
 writeFileSync(outFile, JSON.stringify({ body: bodyId, frame: 'metres, Y up, +Z anterior, +X subject left', inputs: body.inputs, tmj, footJoints, parts }))
-console.log(`${outFile}: ${parts.length} parts (${[...GROUPS.map(([g]) => g), 'wuAnchor'].map((g) => `${g} ${parts.filter((p) => p.group === g).length}`).filter((t) => !t.endsWith(' 0')).join(', ')}); tmj ${tmj ? 'found' : 'absent'}`)
+console.log(`${outFile}: ${parts.length} parts (${[...GROUPS.map(([g]) => g), 'wuAnchor', 'wuLumen'].map((g) => `${g} ${parts.filter((p) => p.group === g).length}`).filter((t) => !t.endsWith(' 0')).join(', ')}); tmj ${tmj ? 'found' : 'absent'}`)
