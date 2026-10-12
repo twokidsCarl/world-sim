@@ -271,6 +271,7 @@ class Package:
         self.pending = []
         self.collapsed = {}
         self.toe_fit = {}
+        self.render_specs = {}  # 名字 → render-scene.ts 的说明 / name → a spec for render-scene.ts
         self.report = {}
 
     def joint(self, anatomical):
@@ -360,6 +361,12 @@ class Package:
         m['files'] = files
         json.dump(m, open(os.path.join(out, 'manifest.json'), 'w'), ensure_ascii=False, indent=1)
 
+        # 检查图的说明文件（run.sh 用 render-scene.ts 画）；先清掉上一次留下的 / specs of the check renders (drawn by render-scene.ts from run.sh); those of an earlier run are removed first
+        for name in os.listdir(out):
+            if name.startswith('render-') and name.endswith('.json'):
+                os.remove(os.path.join(out, name))
+        for name, spec in sorted(self.render_specs.items()):
+            json.dump(spec, open(os.path.join(out, 'render-%s.json' % name), 'w'))
         # 自检 / self-check
         V2, F2, _ = read_obj(os.path.join(out, 'skin.obj'))
         _, cnt = unique_edges(F2, nn)
@@ -395,7 +402,7 @@ class Package:
 
 # ── 通用的移植 / the generic graft ───────────────────────────────────────────────────────────────
 
-def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, blend_mm=10.0, rigid_joint=None, rigid_from_mm=10.0, rigid_full_mm=30.0, tag_patch='graftScanned'):
+def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, blend_mm=10.0, rigid_joint=None, rigid_from_mm=10.0, rigid_full_mm=30.0, tag_patch='graftScanned', donor_include=None, skin_region=None):
     """
     pk 皮肤包状态；DV、DF 供体（已在我们的坐标系里，法线朝外）；seeds 种子点（要换掉的区域围着它们）。
     rigid_joint：离洞口 rigid_full_mm 以外的供体顶点完全跟随这个关节（悬垂的部分）。
@@ -419,6 +426,9 @@ def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, 
     dist = np.sqrt(d2)
     near = cKDTree(seeds).query(V)[0] < reach_mm * MM
     cand = used & near & (dist > differ_mm * MM)
+    if skin_region is not None:
+        # 调用者直接给出皮肤上要换掉的顶点（按对应关系定，而不是按距离）/ the caller names the skin vertices to replace (by correspondence rather than by distance)
+        cand = used & np.r_[skin_region, np.zeros(nv - len(skin_region), bool)]
     idx = np.where(cand)[0]
     ncomp, lab = csgraph.connected_components(A[idx][:, idx], directed=False)
     seed_v = idx[np.argmin(cKDTree(seeds).query(V[idx])[0])]
@@ -439,6 +449,9 @@ def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, 
     dmask = cut_live[fi]
     dused = np.zeros(nd, bool)
     dused[DF] = True
+    if donor_include is not None:
+        # 调用者指定必须在供体片里的顶点（如游离趾）/ donor vertices the caller requires in the patch (e.g. the free toes)
+        dmask = dmask | donor_include
     dmask &= dused
     Ad, _ = vertex_graph(nd, DF)
     idx = np.where(dmask)[0]
@@ -531,6 +544,7 @@ def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, 
         'patchVertices': [int(v) for v in ids[~blend]], 'blendRingVertices': [int(v) for v in ids[blend]],
         'rimOfHole': [int(v) for v in rimA], 'rimOfPatch': [int(v) for v in ids[rim_local]],
         'removedVertices': [int(v) for v in np.where(removed_v)[0]],
+        '_donorIndex': pv,  # 供体片各顶点在供体里的下标（调用者取走，不进 manifest）/ donor indices of the patch vertices (taken by the caller, not written to the manifest)
     }
     zl = np.linalg.norm(Vall[zf][:, [0, 1, 2]] - Vall[zf][:, [1, 2, 0]], axis=2)
     stats = {
@@ -590,6 +604,7 @@ def step_genital(pk, deep, bp3d_dir):
     DV, DF, rel, licence_line = bp3d_outer_skin(bp3d_dir)
     V0, F0 = pk.V.copy(), pk.F.copy()
     info, stats, ids, geo = graft(pk, DV, DF, seeds, 'genitalSkin', grow_rings=3, rigid_joint=pk.joint('pelvis'))
+    info.pop('_donorIndex')
     live = np.zeros(len(pk.F), bool)
     for g in pk.groups.values():
         live |= g
@@ -703,7 +718,7 @@ def fit_specimen_map(raw, shipped):
     info = {'anchors': stems, 'scale': round(float(abs(np.linalg.det(L)) ** (1 / 3)) * 1000, 4), 'singularValues': [round(float(v) * 1000, 4) for v in sv_],
             'principalScales': [{'scale': round(float(sv_[i]) * 1000, 4), 'directionInBodyFrame': [round(float(v), 3) for v in U_[:, i]]} for i in range(3)],
             'scaleAlongBodyAxes': {'what': 'length of a unit raw vector after the map, measured for the raw directions that land on body X (width), Y (height), Z (depth)', 'x': round(float(1000 / np.linalg.norm(np.linalg.inv(L)[:, 0])), 4), 'y': round(float(1000 / np.linalg.norm(np.linalg.inv(L)[:, 1])), 4), 'z': round(float(1000 / np.linalg.norm(np.linalg.inv(L)[:, 2])), 4)},
-            'scaleNote': 'the map is anisotropic because it is the composition of the pipeline\'s enlargement of the specimen (x 1.096) and the standardisation of the skeleton, which narrows the pelvis in width (x 0.886); all dimension checks use the installed size',
+            'scaleNote': 'the map is anisotropic. Width is explained: the pipeline enlarges the specimen x 1.096 and the standardisation of the skeleton narrows the pelvis x 0.8857 (pipeline-report.json, standard.scales.pelvisWidth), together 0.971. Height and depth are NOT explained by the report: it states only trunk x 0.9948 for height (expected 1.090, found about 1.036, i.e. 0.950 of the expected) and no scale at all for depth (expected 1.096, found about 0.937, i.e. 0.855 of the expected). The report says the Wu parts are carried by a blend of the rigid pose and standardisation maps of both hip bones and the sacrum (wu.carriage), which is not a similarity and may account for the difference; this was not verified. All dimension checks use the installed size',
             'medianResidualMm': {'affine': res_affine, 'withSmoothField': res_final},
             'overallMedianResidualMm': {'affine': round(float(np.median(list(res_affine.values()))), 2), 'withSmoothField': round(float(np.median(list(res_final.values()))), 2)}}
     return apply, info
@@ -877,6 +892,7 @@ def step_vulva(pk, deep, wu_dir, out_dir, max_rim_mm=5.0):
         })
     else:
         info, gstats, ids, geo = graft(pk, P, Fp, ext, 'vulvaSkin', rigid_joint=None, tag_patch='graftScanned')
+        info.pop('_donorIndex')
         stats['grafted'] = True
         stats['graft'] = gstats
         info.update({'provenance': 'curated', 'source': WU_SOURCE,
@@ -945,11 +961,10 @@ def measure_vulva(P, F, shipped, scale, enlarged=1.096):
 
 # ── 步骤：足趾 / step: the toes ──────────────────────────────────────────────────────────────────
 
-HBM_SOURCE = {'name': 'Blender Studio "Human Base Meshes" asset bundle v1.4.1, asset "Foot - Realistic"', 'url': 'https://www.blender.org/download/demo-files/', 'license': 'CC0', 'author': 'Dan Ulrich (as stated in the asset)'}
 ORDINAL = ['big', 'second', 'third', 'fourth', 'little']
 
 
-def donor_toes(V, F, t):
+def donor_toes(V, F, t, min_size=25):
     """
     把供体脚的五个脚趾分出来：沿脚的长轴从趾尖向后扫，新出现的连通块是一个脚趾，两块相连处就是趾蹼。
     Separates the five toes of the donor foot: sweeping back from the tips along the long axis of the foot, a
@@ -974,7 +989,7 @@ def donor_toes(V, F, t):
         members[v] = [v]
         roots = set(find(u) for u in A.indices[A.indptr[v]:A.indptr[v + 1]] if parent[u] >= 0)
         roots.discard(v)
-        big = [r for r in roots if len(members[r]) >= 25]
+        big = [r for r in roots if len(members[r]) >= min_size]
         if len(big) >= 2:
             for r in big:
                 if r not in frozen and not any(set(members[r]) & set(tv) for tv, _ in toes):
@@ -987,17 +1002,6 @@ def donor_toes(V, F, t):
         if len(toes) >= 5:
             break
     return toes
-
-
-def bone_ends(B, toward):
-    """骨的长轴两端（各取最外 6% 顶点的均值）；第二个返回值在 toward 方向上更远 / the two ends of a bone along its long axis (means of the outermost 6% of vertices); the second is the one further along `toward`"""
-    c = B.mean(0)
-    u = np.linalg.svd(B - c)[2][0]
-    if u @ toward < 0:
-        u = -u
-    t = (B - c) @ u
-    lo, hi = B[t <= np.percentile(t, 6)].mean(0), B[t >= np.percentile(t, 94)].mean(0)
-    return lo, hi, float(np.percentile(np.linalg.norm((B - c) - np.outer(t, u), axis=1), 90))
 
 
 class Chain:
@@ -1037,276 +1041,6 @@ class Chain:
         return best_s, best_d
 
 
-def step_toes(pk, deep, donor_file, out_dir, cover_mm=1.5, max_girth=1.35, rim_tol_mm=1.0):
-    import igl
-    if not os.path.exists(donor_file):
-        raise SystemExit('step toes needs %s (tools/skinopen/export-foot.py)' % donor_file)
-    dn = np.load(donor_file)
-    DV0, DF0 = dn['V'], dn['F']
-    bones = [p for p in (deep or {}).get('parts', []) if p['group'] == 'toeBone']
-    nails = {p['side']: np.array(p['positions']).reshape(-1, 3) for p in (deep or {}).get('parts', []) if p['group'] == 'toeNail'}
-    joints = (deep or {}).get('footJoints', {})
-    if len(bones) < 20 or len(joints) < 12:
-        raise SystemExit('step toes needs the toe bones and the ankle / mtp joints in deep-face.json (tools/skinopen/export-deep.ts)')
-    # 供体的坐标架 / the donor's frame
-    c = DV0.mean(0)
-    ax = np.linalg.svd(DV0 - c)[2]
-    long_d = ax[0]
-    t = (DV0 - c) @ long_d
-    hi_end, lo_end = DV0[t > np.percentile(t, 90)], DV0[t < np.percentile(t, 10)]
-    cand = [a for a in ax[1:]]
-    spread_hi = [np.ptp((hi_end - c) @ a) for a in cand]
-    spread_lo = [np.ptp((lo_end - c) @ a) for a in cand]
-    if max(spread_hi) < max(spread_lo):
-        long_d = -long_d
-        hi_end, spread_hi = lo_end, spread_lo
-    up_d = cand[int(np.argmax(spread_hi))]
-    if (hi_end.mean(0) - c) @ up_d < 0:
-        up_d = -up_d
-    fwd_d = -long_d
-    along0 = (DV0 - c) @ fwd_d
-    toes = donor_toes(DV0, DF0, along0)
-    if len(toes) != 5:
-        raise RuntimeError('toes: found %d separate toes on the donor, not 5' % len(toes))
-    lat_axis = np.cross(fwd_d, up_d)
-    toes.sort(key=lambda tv: float((DV0[tv[0]].mean(0) - c) @ lat_axis))
-    vol = [len(tv[0]) for tv in toes]
-    if vol[-1] > vol[0]:
-        toes, lat_axis = toes[::-1], -lat_axis
-    tips_d = np.array([DV0[tv[0]][np.argmax((DV0[tv[0]] - c) @ fwd_d)] for tv in toes])
-    base_d = np.array([DV0[[v for v in tv[0] if (DV0[v] - c) @ fwd_d < tv[1] + 0.003]].mean(0) for tv in toes])
-    frame_d = np.stack([fwd_d, up_d, np.cross(fwd_d, up_d)])
-    donor_handed = float(np.sign(frame_d[2] @ lat_axis))
-    toe_of = -np.ones(len(DV0), np.int64)
-    for i, (tv, _) in enumerate(toes):
-        toe_of[tv] = i
-    # 每个非趾顶点离哪个趾的基部最近、在趾蹼之后多远 / for every non-toe vertex the nearest toe base and how far behind the webs it lies
-    web_level = np.array([lv for _, lv in toes])
-    stats = {'donor': {'vertices': int(len(DV0)), 'triangles': int(len(DF0)), 'freeToeLengthMm': [round(float(np.linalg.norm(tips_d[i] - base_d[i])) / MM, 1) for i in range(5)]},
-             'method': 'per toe, a chain tip – interphalangeal joints – metatarsophalangeal joint taken from the bones; donor toe mapped onto it by arc length (length scale per toe) with its cross-section scaled (girth per toe) and its dorsal surface set on the nail plate; behind the webs the donor is drawn onto the package skin', 'sides': {}}
-    live = pk.groups['skin'].copy()
-    accepted = True
-    fitted = {}
-    for side, word in (('L', 'left'), ('R', 'right')):
-        def bone(kind, k):
-            name = '%s phalanx of %s %s toe' % (kind, word, ORDINAL[k])
-            m = [np.array(p['positions']).reshape(-1, 3) for p in bones if p['name'].lower() == name]
-            return m[0] if m else None
-        mtp = np.array([joints['mtp%d_%s' % (k + 1, side)] for k in range(5)])
-        ankle = np.array(joints['ankle_' + side])
-        segs = [[b for b in (bone('proximal', k), bone('middle', k), bone('distal', k)) if b is not None] for k in range(5)]
-        if any(len(sg) < 2 for sg in segs):
-            raise RuntimeError('toes: a phalanx of the %s foot is missing' % word)
-        fwd_b = np.mean([sg[-1].mean(0) for sg in segs], axis=0) - mtp.mean(0)
-        fwd_b /= np.linalg.norm(fwd_b)
-        up_b = (ankle - mtp.mean(0)) - ((ankle - mtp.mean(0)) @ fwd_b) * fwd_b
-        up_b /= np.linalg.norm(up_b)
-        body_handed = float(np.sign(np.cross(fwd_b, up_b) @ (mtp[4] - mtp[0])))
-        frame_b = np.stack([fwd_b, up_b, np.cross(fwd_b, up_b)])
-        mirror = body_handed != donor_handed
-        Fdm = frame_d.copy()
-        if mirror:
-            Fdm[2] = -Fdm[2]
-        R = frame_b.T @ Fdm
-        # 每个趾的骨链 / the bone chain of each toe
-        pad = 0.003
-        chains, seg_len, bone_notes = [], [], []
-        for k in range(5):
-            ends = [bone_ends(b, fwd_b) for b in segs[k]]
-            tip = ends[-1][1] + pad * (ends[-1][1] - ends[-1][0]) / np.linalg.norm(ends[-1][1] - ends[-1][0])
-            pts = [tip]
-            for a in range(len(ends) - 1, 0, -1):
-                pts.append((ends[a][0] + ends[a - 1][1]) / 2)  # 趾间关节：相邻两骨端点的中点 / interphalangeal joint: midpoint of the facing bone ends
-            pts.append(mtp[k])
-            chains.append(Chain(pts, up_b))
-            seg_len.append([float(np.linalg.norm(e[1] - e[0])) for e in ends])
-            # 骨是否像样：相邻骨端的间隙、长度 / is the bone plausible: gap between facing ends, lengths
-            gaps = [float(np.linalg.norm(ends[a][0] - ends[a - 1][1])) for a in range(1, len(ends))]
-            if max(gaps) > 0.006 or min(seg_len[-1]) < 0.003:
-                bone_notes.append({'toe': ORDINAL[k], 'problem': 'gap of %.1f mm between facing bone ends or a phalanx shorter than 3 mm' % (max(gaps) / MM), 'phalanxLengthsMm': [round(v / MM, 1) for v in seg_len[-1]]})
-        tgt_tip = np.array([ch.p[0] for ch in chains])
-        scale = float(np.median([np.linalg.norm(tgt_tip[i] - tgt_tip[j]) / np.linalg.norm(tips_d[i] - tips_d[j]) for i in range(5) for j in range(i + 1, 5)]))
-        tr = tgt_tip.mean(0) - scale * (tips_d.mean(0) @ R.T)
-        G = scale * (DV0 @ R.T) + tr
-        tips_g, base_g = scale * (tips_d @ R.T) + tr, scale * (base_d @ R.T) + tr
-        Fd_ = DF0[:, ::-1] if mirror else DF0
-        # 粗细从 0.85 起，只在骨盖不住时加粗；趾心比骨轴偏跖侧 1 mm（趾腹在跖侧）
-        # girth starts at 0.85 and grows only while a bone is not covered; the toe's centre lies 1 mm plantar of the bone axis (the pulp is plantar)
-        girth = np.full(5, 0.85)
-        shift = np.full(5, 0.001)
-        nail = nails.get(side)
-
-        def toe_map(k, X):
-            """供体（已做整体相似变换）上的点 → 第 k 趾的骨链上 / points of the donor (after the global similarity) → onto the chain of toe k"""
-            a = (tips_g[k] - base_g[k])
-            la = np.linalg.norm(a)
-            a = a / la
-            eu = up_b - (up_b @ a) * a
-            eu /= np.linalg.norm(eu)
-            el = np.cross(-a, eu)  # 与骨链坐标架同向：切向指向近端 / same sense as the chain frame, whose tangent points proximally
-            x = (tips_g[k] - X) @ a
-            off = (X - tips_g[k]) + x[:, None] * a
-            ch = chains[k]
-            # 游离趾的长度对应：趾尖到近节趾骨中点 / the free toe corresponds to: tip to the middle of the proximal phalanx
-            free = ch.l[-1] - 0.5 * seg_len[k][0]
-            sarc = x * (free / la)
-            C = ch.point(sarc)
-            tt, uu, ll = ch.frame(sarc)
-            return C + girth[k] * ((off @ eu)[:, None] * uu + (off @ el)[:, None] * ll) - shift[k] * uu, sarc
-
-        def build():
-            disp = np.zeros_like(G)
-            wsum = np.zeros(len(G))
-            for k, (tv, level) in enumerate(toes):
-                Tk, _ = toe_map(k, G)
-                w = np.zeros(len(G))
-                w[tv] = 1.0
-                rest = np.where(toe_of < 0)[0]
-                d = np.linalg.norm(DV0[rest] - base_d[k], axis=1) * scale
-                w[rest] = np.exp(-(d / 0.010) ** 2)
-                disp += w[:, None] * (Tk - G)
-                wsum += w
-            return G + disp / np.maximum(wsum, 1.0)[:, None]
-
-        # 趾背落到甲板上：甲板顶点高出骨链多少，供体趾背在同一处高出多少
-        # the dorsal surface goes onto the nail plate: how far the nail vertices stand above the chain, and the donor's dorsal surface at the same station
-        nail_rows = []
-        for it in range(16):
-            P = build()
-            Pc, Fc = np.ascontiguousarray(P), np.ascontiguousarray(Fd_)
-            worst = np.zeros(5)
-            for k in range(5):
-                for bi, bn in enumerate(segs[k]):
-                    if bi == 0:
-                        q = (bn - mtp[k]) @ fwd_b
-                        bn = bn[q > np.median(q)]  # 近节趾骨的远侧一半在游离趾内 / the distal half of the proximal phalanx lies in the free toe
-                    worst[k] = max(worst[k], float(igl.signed_distance(np.ascontiguousarray(bn), Pc, Fc)[0].max()) + cover_mm * MM)
-            changed = False
-            if False:
-                for k in range(5):
-                    sk, dk = chains[k].project(nail)
-                    mine = (dk < 0.012) & (np.argmin(np.stack([chains[j].project(nail)[1] for j in range(5)]), axis=0) == k)
-                    if mine.sum() < 5:
-                        continue
-                    sdn = igl.signed_distance(np.ascontiguousarray(nail[mine]), Pc, Fc)[0]
-                    off = float(np.median(sdn))  # 正 = 甲板在趾皮之外 / positive = the nail plate lies outside the toe skin
-                    if abs(off) > 0.0002:
-                        shift[k] -= off
-                        changed = True
-            for k in range(5):
-                if worst[k] > 0 and girth[k] < max_girth:
-                    girth[k] = min(max_girth, girth[k] * 1.04)
-                    changed = True
-            if not changed:
-                break
-        P = build()
-        Pc, Fc = np.ascontiguousarray(P), np.ascontiguousarray(Fd_)
-        # 趾蹼之后：供体表面拉到包里的皮肤上（包里的皮肤说了算），从趾蹼后 3 mm 起、到 11 mm 处完全贴合
-        # behind the webs the donor surface is drawn onto the package skin (the package skin is the authority there): from 3 mm behind the webs, fully by 11 mm
-        Vs, Fs = np.ascontiguousarray(pk.V), np.ascontiguousarray(pk.F[live])
-        nonto = np.where(toe_of < 0)[0]
-        kn = np.argmin(np.linalg.norm(DV0[nonto][:, None] - base_d[None], axis=2), axis=1)
-        behind = (web_level[kn] - along0[nonto]) * scale
-        x = np.clip((behind - 0.003) / 0.008, 0, 1)
-        phi = x * x * (3 - 2 * x)
-        cp = igl.point_mesh_squared_distance(np.ascontiguousarray(P[nonto]), Vs, Fs)[2]
-        before = np.linalg.norm(cp - P[nonto], axis=1)
-        P[nonto] += phi[:, None] * (cp - P[nonto])
-        # 过渡带里做几遍拉普拉斯平滑（只动过渡带的顶点）/ a few Laplacian passes inside the transition band (only its vertices move)
-        band = np.zeros(len(P), bool)
-        band[nonto[(phi > 0) & (phi < 1)]] = True
-        Ad, _ = vertex_graph(len(P), Fd_)
-        deg = np.maximum(np.asarray(Ad.sum(1)).ravel(), 1)
-        for _ in range(5):
-            Q = (Ad @ P) / deg[:, None]
-            P[band] = 0.5 * P[band] + 0.5 * Q[band]
-        Pc = np.ascontiguousarray(P)
-        # 验收 / acceptance
-        cover, fails = {}, []
-        for k in range(5):
-            for bi, bn in enumerate(segs[k]):
-                kind = ['proximal', 'middle', 'distal'][bi] if len(segs[k]) == 3 else ['proximal', 'distal'][bi]
-                full = bn
-                if bi == 0:
-                    q = (bn - mtp[k]) @ fwd_b
-                    bn = bn[q > np.median(q)]
-                sd = igl.signed_distance(np.ascontiguousarray(bn), Pc, Fc)[0]
-                row = {'leastCoverMm': round(float(-sd.max()) / MM, 2), 'lengthMm': round(seg_len[k][bi] / MM, 1), 'radiusMm': round(bone_ends(full, fwd_b)[2] / MM, 1)}
-                cover['%s %s' % (ORDINAL[k], kind)] = row
-                if -sd.max() < cover_mm * MM - 1e-5:
-                    fails.append('%s phalanx of the %s %s toe: least cover %.2f mm (needs %.1f)' % (kind, word, ORDINAL[k], -sd.max() / MM, cover_mm))
-        overlap = {}
-        for i in range(4):
-            A_, B_ = toes[i][0], toes[i + 1][0]
-            fa = Fd_[np.isin(Fd_, A_).all(1)]
-            wn = igl.winding_number(Pc, np.ascontiguousarray(fa), np.ascontiguousarray(P[B_]))
-            dmin = float(cKDTree(P[A_]).query(P[B_])[0].min())
-            overlap['%s / %s' % (ORDINAL[i], ORDINAL[i + 1])] = {'verticesOfOneInsideTheOther': int((np.abs(wn) > 0.5).sum()), 'closestApproachMm': round(dmin / MM, 2)}
-            if (np.abs(wn) > 0.5).sum() > 0:
-                fails.append('%s and %s toe of the %s foot overlap (%d vertices of one inside the other)' % (ORDINAL[i], ORDINAL[i + 1], word, int((np.abs(wn) > 0.5).sum())))
-        nail_check = None
-        if nail is not None:
-            sdn = igl.signed_distance(np.ascontiguousarray(nail), Pc, Fc)[0]
-            near = np.abs(sdn) < 0.01
-            nail_check = {'what': 'signed distance of the vertices of the nail plate part from the toe skin (positive = outside)', 'medianMm': round(float(np.median(sdn[near])) / MM, 2), 'p5Mm': round(float(np.percentile(sdn[near], 5)) / MM, 2), 'p95Mm': round(float(np.percentile(sdn[near], 95)) / MM, 2),
-                          'note': 'the donor mesh has no label for its nails: this says how far the anatomy\'s nail plates lie from the dorsal toe surface, not whether the sculpted nail outlines coincide with them'}
-            if np.percentile(np.abs(sdn[near]), 90) > 0.0015:
-                nail_check['withinTolerance'] = False
-                srow_nail_fail = ('nail plates of the %s foot lie up to %.1f mm (90th percentile) from the toe surface' % (word, np.percentile(np.abs(sdn[near]), 90) / MM))
-        full_fit = phi >= 1
-        srow = {'mirrored': bool(mirror), 'scale': round(scale, 4), 'lengthScalePerToe': [round(float((chains[k].l[-1] - 0.5 * seg_len[k][0]) / np.linalg.norm(tips_g[k] - base_g[k])), 3) for k in range(5)],
-                'girthScalePerToe': [round(float(g), 3) for g in girth], 'plantarShiftMm': [round(float(v) / MM, 2) for v in shift], 'boneCover': cover, 'neighbours': overlap, 'nailPlates': nail_check,
-                'ballBeforeConformingMm': {'what': 'distance of the donor surface behind the webs from the package skin before it was drawn onto it', 'median': round(float(np.median(before[phi > 0])) / MM, 1), 'max': round(float(before[phi > 0].max()) / MM, 1)},
-                'chainSpacingAtMiddleOfToeMm': [round(float(np.linalg.norm(chains[k].point(np.array([0.5 * chains[k].l[-1]]))[0] - chains[k + 1].point(np.array([0.5 * chains[k + 1].l[-1]]))[0])) / MM, 1) for k in range(4)],
-                'implausibleBones': bone_notes, 'failures': fails}
-        stats['sides'][side] = srow
-        accepted &= not fails
-        fitted[side] = (P, Fd_, np.concatenate([sg[-1] for sg in segs]), mtp)
-    stats['accepted'] = bool(accepted)
-    os.makedirs(out_dir, exist_ok=True)
-    for side, (P, Fd_, _, mtp) in fitted.items():
-        keep = np.linalg.norm(P - mtp.mean(0), axis=1) < 0.07
-        fsel = keep[Fd_].all(1)
-        usedv = np.unique(Fd_[fsel])
-        loc = -np.ones(len(P), np.int64)
-        loc[usedv] = np.arange(len(usedv))
-        write_obj(os.path.join(out_dir, 'toes-fit-%s.obj' % side), P[usedv], [('toesFit' + side, loc[Fd_[fsel]])], ['# forefoot of "Foot - Realistic" (Blender Studio Human Base Meshes v1.4.1, CC0, artist-made) fitted to the toe bones of this body by tools/skinopen/graft.py; metres, body frame'])
-    if not accepted:
-        stats['grafted'] = False
-        stats['notGraftedBecause'] = '; '.join(f for v in stats['sides'].values() for f in v['failures'])
-        pk.pending.append({'name': 'toes', 'status': 'fitted, not grafted', 'files': ['toes-fit-L.obj', 'toes-fit-R.obj'], 'reason': stats['notGraftedBecause'], 'provenance': 'curated', 'source': HBM_SOURCE})
-        pk.report['toes'] = stats
-        return
-    stats['grafted'] = True
-    stats['graft'] = {}
-    for side, (P, Fd_, seeds, mtp) in fitted.items():
-        ball = pk.joint('mtp2_' + side)
-        info, gstats, ids, geo = graft(pk, P, Fd_, seeds, 'toes' + side, differ_mm=0.8, reach_mm=75.0, grow_rings=2, blend_mm=6.0, rigid_joint=ball, rigid_from_mm=5.0, rigid_full_mm=15.0, tag_patch='graftCurated')
-        if gstats['rimMismatchMm']['median'] > rim_tol_mm:
-            raise RuntimeError('toes: the rim of the %s forefoot lies a median %.2f mm from the package skin (tolerance %.1f)' % (side, gstats['rimMismatchMm']['median'], rim_tol_mm))
-        info.update({
-            'provenance': 'curated', 'source': HBM_SOURCE,
-            'what': {'zh': '分开的脚趾、趾蹼和趾甲：供体是人工建模的 CC0 网格（不是扫描，也不是这个人的脚），每个趾按本体的趾骨链做了长度和粗细的缩放并弯到骨的走向上；趾蹼之后的面贴到包里原来的皮肤上。全部顶点都被这样变形过（标签 graftCurated）；靠边一圈为过渡环（graftBlend，构造物）。', 'en': 'Separate toes, web spaces and nails: the donor is an artist-made CC0 mesh (neither a scan nor this person\'s foot); each toe was scaled in length and girth and bent along this body\'s chain of toe bones, and the surface behind the webs lies on the package skin. Every vertex was deformed in this way (tag graftCurated); the band at the rim is the blend ring (graftBlend, construction).'},
-            'weights': {'zh': '权重从洞口环调和延拓；离洞口 5–15 mm 过渡到完全跟随 MHR 的 %s（前足“球”关节）。包里没有趾间关节，也只有这一个趾关节；绑定时由 data/curated/rig 的规则把 %s 的权重按“最近的 mtp1–5”分给各趾。' % (pk.joints['names'][ball], pk.joints['names'][ball]), 'en': 'Weights are a harmonic extension from the rim of the hole, turning between 5 and 15 mm from the rim into MHR\'s %s alone (the ball-of-foot joint). The package has no toe interphalangeal joints and only this one toe joint; at rig time the rule in data/curated/rig hands the weight of %s to the nearest of mtp1–5, toe by toe.' % (pk.joints['names'][ball], pk.joints['names'][ball])},
-        })
-        pk.grafts.append(info)
-        stats['graft'][side] = gstats
-    # 接入之后再核对一次：所有趾骨对最终的皮肤 / checked again after grafting: every toe bone against the final skin
-    livef = np.zeros(len(pk.F), bool)
-    for g_ in pk.groups.values():
-        livef |= g_
-    Vn, Fn = np.ascontiguousarray(pk.V), np.ascontiguousarray(pk.F[livef])
-    final = {}
-    for p in bones:
-        if 'phalanx' not in p['name'].lower():
-            continue
-        sd = igl.signed_distance(np.ascontiguousarray(np.array(p['positions']).reshape(-1, 3)), Vn, Fn)[0]
-        final['%s (%s)' % (p['name'], p['id'])] = round(float(-sd.max()) / MM, 2)
-    stats['leastCoverOfEveryPhalanxInTheGraftedSkinMm'] = final
-    stats['leastOfAllMm'] = min(final.values())
-    pk.report['toes'] = stats
-
-
 def main():
     ap = argparse.ArgumentParser(description='Graft patches of other surfaces into the closed skin of a package (writes <package>-grafted/).')
     ap.add_argument('package')
@@ -1328,6 +1062,7 @@ def main():
         elif s == 'vulva':
             step_vulva(pk, deep, args.wu, out)
         elif s == 'toes':
+            from toes import step_toes  # 在这里才引入：toes.py 要用本文件里的函数 / imported here because toes.py uses functions of this file
             step_toes(pk, deep, args.foot, out)
         else:
             raise SystemExit('unknown step "%s"' % s)
