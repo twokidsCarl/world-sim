@@ -36,6 +36,7 @@ let voiceLoading: Promise<PainVoice> | null = null
 let scheduled: ScheduledVocalisation | null = null
 let seed = 1
 let pausedAt: number | null = null
+let external = 0
 
 export interface PainFrame {
   aus: AUs
@@ -99,6 +100,12 @@ export function painFrame(now: number): PainFrame {
       for (const [id, v] of Object.entries(painAUs(face.data.pain, episode.level))) e[id] = v * env
       aus = maxAUs(aus, e)
     }
+  }
+  if (external > 0) {
+    // 刺激模型逐帧给出的强度（见 stim.ts）：直接换成表情，不经过包络
+    // the intensity the stimulus model gives frame by frame (see stim.ts): straight to the expression, no envelope
+    animating = true
+    aus = maxAUs(aus, painAUs(face.data.pain, external))
   }
   aus = maxAUs(aus, s.aus)
   const v = sampleVoice()
@@ -179,6 +186,38 @@ export async function triggerPain(): Promise<void> {
   }))
 }
 
+/** 刺激模型此刻的疼痛强度（0–10）；0 表示没有 / The stimulus model's pain intensity right now (0–10); 0 = none. */
+export function setExternalPainLevel(level: number): void {
+  external = Math.min(10, Math.max(0, level))
+}
+
+/**
+ * 在用户手势里调用：准备好音频上下文，稍后（不在手势里）才能出声。静音时什么都不做。
+ * Call inside a user gesture: readies the audio context so that sound can start a little later,
+ * outside the gesture. Does nothing while muted.
+ */
+export function primeVoice(): void {
+  if (useApp.getState().pain.muted || typeof AudioContext === 'undefined') return
+  context ??= new AudioContext()
+  if (context.state === 'suspended') void context.resume().catch(() => undefined)
+  void ensureVoice()
+}
+
+/**
+ * 按给定强度发一次声（不带表情包络；张口由声音带动）。音频上下文没有在手势里准备好时不出声。
+ * One vocalisation at the given intensity (no expression envelope; the sound drives the mouth).
+ * Silent when the audio context was not readied in a gesture.
+ */
+export async function vocalise(level: number, onset: 'sudden' | 'sustained'): Promise<void> {
+  const { pain, graph } = useApp.getState()
+  if (pain.muted || level <= 0 || !context || context.state !== 'running') return
+  const v = await ensureVoice()
+  if (context.state !== 'running') return
+  scheduled?.source?.stop()
+  scheduled = schedulePainVocalisation(context, { intensity: level, onset, sex: graph?.data.body ?? 'male', seed: seed++, vocalise: pain.always ? 'always' : 'auto' }, context.currentTime + 0.03, context.destination, v)
+  useApp.setState({ lastVoice: { source: scheduled.source ? scheduled.vocalisation.source : 'none', type: scheduled.vocalisation.type, probability: scheduled.vocalisation.soundProbability } })
+}
+
 /** 停止声音并结束当前的反应 / Stop the sound and end the current response. */
 export function stopPain(): void {
   scheduled?.source?.stop()
@@ -208,6 +247,7 @@ export function resetPainController(): void {
   lastNow = 0
   scheduled = null
   pausedAt = null
+  external = 0
 }
 
 /** 测试用：直接开始一次没有声音的反应 / For tests: start a silent response directly. */

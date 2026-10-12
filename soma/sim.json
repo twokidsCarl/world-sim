@@ -272,6 +272,102 @@
         "en": "Drag the BMI and stature sliders. The breasts and visceral fat do not follow BMI"
       },
       "url": "/?body=female&sys=int&skin=1&shape=b30"
+    },
+    {
+      "id": "stim-pinprick",
+      "title": {
+        "zh": "针刺示指尖：冲动沿正中神经走到颈髓",
+        "en": "Pinprick to the index fingertip: the volley runs up the median nerve to the cervical cord"
+      },
+      "hint": {
+        "zh": "看两个标记：Aδ 纤维的冲动先到，C 纤维的晚到。换一种刺激再点“触发”。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "Watch the two markers: the Aδ volley arrives first, the C volley later. Pick another kind and press Trigger. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?sys=int,ske,ner&stim=pinprick,256,2@fingertip_L"
+    },
+    {
+      "id": "stim-heat",
+      "title": {
+        "zh": "前臂接触 48 °C：退缩反射把刺激缩短",
+        "en": "48 °C on the forearm: the withdrawal reflex cuts the stimulus short"
+      },
+      "hint": {
+        "zh": "手臂在表情出现之前就缩回；监护条上“若持续”与实际到达的强度不同。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "The arm withdraws before the face responds; on the monitor the level “if held” differs from the level reached. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?sys=int,ske,ner&stim=heat,48,8@forearm_L"
+    },
+    {
+      "id": "stim-cold",
+      "title": {
+        "zh": "手掌浸在 4 °C 里一分钟（手被固定）",
+        "en": "Palm in 4 °C for a minute (hand held in place)"
+      },
+      "hint": {
+        "zh": "手不能缩回，强度按时长发展；看心率、血压、瞳孔和皮肤电导各自多快变化、多久回到基线。这些是群体平均的效应量。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "The hand cannot withdraw, so the intensity follows the duration; see how fast heart rate, blood pressure, pupil and skin conductance change and return. These are group-average effect sizes. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?sys=int,ske,ner&stim=cold,4,60,held@palm_L"
+    },
+    {
+      "id": "stim-pinch",
+      "title": {
+        "zh": "捏夹足底：下肢的屈曲退缩",
+        "en": "Pinch on the sole: flexion withdrawal of the lower limb"
+      },
+      "hint": {
+        "zh": "通路从足底经胫神经、坐骨神经到腰骶髓；把量值调到阈值以下再触发，什么都不会发生。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "The pathway runs from the sole through the tibial and sciatic nerves to the lumbosacral cord; set the magnitude below threshold and trigger again: nothing happens. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?sys=int,ske,ner&stim=pinch,20,1@sole_L"
+    },
+    {
+      "id": "f-stim-pinprick",
+      "title": {
+        "zh": "女性：针刺示指尖：冲动沿正中神经走到颈髓",
+        "en": "Female: Pinprick to the index fingertip: the volley runs up the median nerve to the cervical cord"
+      },
+      "hint": {
+        "zh": "看两个标记：Aδ 纤维的冲动先到，C 纤维的晚到。换一种刺激再点“触发”。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "Watch the two markers: the Aδ volley arrives first, the C volley later. Pick another kind and press Trigger. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?body=female&sys=int,ske,ner&stim=pinprick,256,2@fingertip_L"
+    },
+    {
+      "id": "f-stim-heat",
+      "title": {
+        "zh": "女性：前臂接触 48 °C：退缩反射把刺激缩短",
+        "en": "Female: 48 °C on the forearm: the withdrawal reflex cuts the stimulus short"
+      },
+      "hint": {
+        "zh": "手臂在表情出现之前就缩回；监护条上“若持续”与实际到达的强度不同。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "The arm withdraws before the face responds; on the monitor the level “if held” differs from the level reached. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?body=female&sys=int,ske,ner&stim=heat,48,8@forearm_L"
+    },
+    {
+      "id": "f-stim-cold",
+      "title": {
+        "zh": "女性：手掌浸在 4 °C 里一分钟（手被固定）",
+        "en": "Female: Palm in 4 °C for a minute (hand held in place)"
+      },
+      "hint": {
+        "zh": "手不能缩回，强度按时长发展；看心率、血压、瞳孔和皮肤电导各自多快变化、多久回到基线。这些是群体平均的效应量。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "The hand cannot withdraw, so the intensity follows the duration; see how fast heart rate, blood pressure, pupil and skin conductance change and return. These are group-average effect sizes. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?body=female&sys=int,ske,ner&stim=cold,4,60,held@palm_L"
+    },
+    {
+      "id": "f-stim-pinch",
+      "title": {
+        "zh": "女性：捏夹足底：下肢的屈曲退缩",
+        "en": "Female: Pinch on the sole: flexion withdrawal of the lower limb"
+      },
+      "hint": {
+        "zh": "通路从足底经胫神经、坐骨神经到腰骶髓；把量值调到阈值以下再触发，什么都不会发生。计算模型，模拟人没有主观体验；标为“假设”的数不是测量值；声音默认关",
+        "en": "The pathway runs from the sole through the tibial and sciatic nerves to the lumbosacral cord; set the magnitude below threshold and trigger again: nothing happens. A computational model — the simulated body has no subjective experience; numbers marked “assumption” are not measurements; sound is off by default"
+      },
+      "url": "/?body=female&sys=int,ske,ner&stim=pinch,20,1@sole_L"
     }
   ],
   "agent": {

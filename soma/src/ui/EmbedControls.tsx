@@ -11,6 +11,10 @@ import { currentLink } from '../state/urlSync.ts'
 import { CautionList } from './CautionsDialog.tsx'
 import { Icon } from './Icon.tsx'
 import { VOICE_PACK } from '../pain/build.ts'
+import { DISCLAIMER } from '../painmodel/index.ts'
+import { replayStimulus } from '../pain/stim.ts'
+import { KINDS, kindSpec } from '../pain/stimulus.ts'
+import { STIM_CAVEATS } from './StimulusPanel.tsx'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 import { ShapeSlider } from './ShapeControls.tsx'
 
@@ -42,12 +46,18 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const painCard = embedKeys.has('pain') || embedKeys.has('au')
   const shape = useApp((s) => s.shape)
   const shapeCard = embedKeys.has('shape')
+  const shapeStatus = useApp((s) => s.shapeStatus)
+  const stimCard = embedKeys.has('stim')
+  const stim = useApp((s) => s.stim)
+  const stimSettings = useApp((s) => s.stimSettings)
+  const stimStatus = useApp((s) => s.stimStatus)
+  const stimMessage = useApp((s) => s.stimMessage)
   const app = useApp.getState()
   const layers = graph.data.layers
   const cautions = graph.cautions
   const rigCautions = rig && (embedKeys.has('pose') || embedKeys.has('breath')) ? rig.rig.cautions : []
   // 疼痛卡片：把"这是什么模型"的说明放在最前 / pain cards: the statement of what this model is comes first
-  const all = [...(painCard ? PAIN_STATEMENT : []), ...cautions, ...rigCautions, ...(painCard && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
+  const all = [...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...cautions, ...rigCautions, ...(painCard && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
   // 姿势按钮：静止、卡片指定的预设，再加几个常用的 / pose buttons: rest, the card's preset, and a few common ones
   const presets = useMemo(() => {
     if (!rig) return []
@@ -141,11 +151,44 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
           </>
         )}
         {painCard && !face && <span className="embed-note">加载表情数据…</span>}
+        {stimCard && (
+          <>
+            <select
+              className="tool-btn"
+              value={stimSettings.kind}
+              aria-label="刺激种类 / stimulus kind"
+              onChange={(e) => {
+                app.setStimSettings({ kind: e.target.value as typeof stimSettings.kind })
+                void replayStimulus()
+              }}
+            >
+              {KINDS.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.zh} {k.en}
+                </option>
+              ))}
+            </select>
+            <button className="tool-btn" disabled={!stim} onClick={() => void replayStimulus()} title="在同一部位再施加一次 / apply again at the same site">
+              触发 <span className="en">Trigger</span>
+            </button>
+            <button className={`tool-btn${pain.muted ? '' : ' on'}`} aria-pressed={!pain.muted} onClick={() => app.setPain({ muted: !pain.muted })} title="声音默认关闭；打开后再点“触发”才会出声 / sound is off by default; once on, Trigger plays it">
+              {pain.muted ? '声音：关' : '声音：开'}
+            </button>
+            {stim && (
+              <span className="embed-note">
+                {kindSpec(stim.settings.kind).zh} {stim.settings.magnitude} {kindSpec(stim.settings.kind).unit} · {stim.e.trace.region.name.zh} · 到达 {stim.e.peak.intensity.toFixed(1)}/10（若持续 {stim.e.drive.toFixed(1)}）
+              </span>
+            )}
+            {stimStatus === 'loading' && <span className="embed-note">准备模型数据…</span>}
+            {stimStatus === 'error' && <span className="embed-note">无法施加刺激：{stimMessage}</span>}
+          </>
+        )}
         {shapeCard &&
           shape &&
           shape.data.controls
             .filter((c) => c.id === 'stature' || c.id === 'bmi')
             .map((c) => <ShapeSlider key={c.id} control={c} compact />)}
+        {shapeCard && !shape && (shapeStatus === 'missing' || shapeStatus === 'error') && <span className="embed-note">此人体暂时没有体型控制 No body-shape controls for this body</span>}
         {shapeCard && shape && (
           <button className="tool-btn" onClick={() => app.resetShape()}>
             原样
@@ -156,7 +199,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
         </a>
       </div>
       {label && <div className="embed-label">{label}</div>}
-      {VOICE_PACK && painCard && !pain.muted && (
+      {VOICE_PACK && (painCard || stimCard) && !pain.muted && (
         <div className="embed-attrib">
           <VoiceAttribution compact />
         </div>

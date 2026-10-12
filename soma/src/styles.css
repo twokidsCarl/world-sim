@@ -2037,3 +2037,303 @@ div.voice-attrib p + p {
     gap: 8px;
   }
 }
+
+/* ---------------------------------------------------------------- 刺激与解释 / stimulus and explanation */
+
+.viewer.stim-armed canvas {
+  cursor: crosshair;
+}
+
+.stim-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.stim-kinds button {
+  flex: 1 1 auto;
+}
+
+.stim-repeat,
+.stim-sites {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.stim-repeat input {
+  width: 64px;
+  margin-left: 6px;
+}
+
+.stim-sites select {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.stim-anchor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  color: var(--text-2);
+}
+
+.stim-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 10px;
+  margin: 6px 0 10px;
+}
+
+.stim-summary dt {
+  color: var(--text-2);
+}
+
+.stim-summary dd {
+  margin: 0;
+}
+
+.stim-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+  color: var(--text-2);
+}
+
+.stim-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.trace-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trace-steps > li {
+  border-top: 1px solid var(--line);
+  padding: 6px 0;
+}
+
+.trace-step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.trace-step-n {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.trace-text {
+  margin: 4px 0 0 28px;
+  color: var(--text-2);
+}
+
+.trace-numbers {
+  list-style: none;
+  margin: 6px 0 0 28px;
+  padding: 0;
+}
+
+.trace-number {
+  padding: 3px 0;
+  border-top: 1px dashed var(--line);
+}
+
+.trace-number-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.trace-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.trace-value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.trace-kind {
+  flex: none;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  margin-left: 6px;
+}
+
+.trace-sourced {
+  color: #7fd6a0;
+  border-color: rgba(127, 214, 160, 0.5);
+}
+
+.trace-assumed {
+  color: #ffb020;
+  border-color: rgba(255, 176, 32, 0.6);
+}
+
+.trace-computed {
+  color: var(--text-2);
+}
+
+.trace-source {
+  margin: 4px 0 4px 8px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(127, 214, 160, 0.5);
+}
+
+.trace-source p {
+  margin: 2px 0;
+}
+
+.trace-caveats-title {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.trace-caveats {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--text-2);
+}
+
+.trace-caveats li {
+  margin-bottom: 4px;
+}
+
+/* 监护条：舞台左下角 / the monitor strip: bottom left of the stage */
+.stim-monitor {
+  position: absolute;
+  left: 10px;
+  bottom: 34px;
+  z-index: 5;
+  width: min(470px, calc(100% - 20px));
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 6px 12px;
+  padding: 8px 10px;
+  background: rgba(20, 24, 30, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.viewer.embedded .stim-monitor {
+  bottom: auto;
+  top: 40px;
+}
+
+.monitor-curve svg {
+  display: block;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.monitor-line {
+  fill: none;
+  stroke: #ff6b5e;
+  stroke-width: 1.6;
+}
+
+.monitor-drive {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-dasharray: 3 3;
+}
+
+.monitor-stim {
+  fill: rgba(255, 176, 32, 0.14);
+}
+
+.monitor-cursor {
+  stroke: var(--accent);
+}
+
+.monitor-readout strong {
+  font-size: 16px;
+  color: #ff6b5e;
+}
+
+.vitals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.vital {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.vital-name {
+  color: var(--text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vital-value {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vital-value small {
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.vital-delta {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.vital.changed .vital-delta {
+  color: #ffb020;
+}
+
+.monitor-note {
+  grid-column: 1 / -1;
+  font-size: 10.5px;
+}
+
+@media (max-width: 600px) {
+  .stim-monitor {
+    grid-template-columns: minmax(0, 1fr);
+    bottom: 26px;
+  }
+
+  .monitor-note .en,
+  .monitor-curve .hint {
+    display: none;
+  }
+}

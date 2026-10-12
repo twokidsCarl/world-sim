@@ -1,6 +1,7 @@
 // 骨架绑定的运行时：打包约定与着色器公式对照 CPU 参考实现（tools/rig/pose.ts），以及姿势工具和 store 流程。
 // Rig runtime: the packing convention and the shader formulas against the CPU reference
 // (tools/rig/pose.ts), plus pose utilities and the store flows.
+import { hashInput } from '../tools/rig/io.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -30,6 +31,8 @@ import {
   writeInfluences,
   type LoadedRig,
   type Scales,
+  sha256Prefix,
+  staleInputs,
 } from '../src/anatomy/rig.ts'
 import type { AnatomyData, Joint, Part, Rig } from '../src/anatomy/types.ts'
 import { setRigLoader, useApp } from '../src/state/store.ts'
@@ -396,5 +399,51 @@ describe.skipIf(!existsSync(resolve(fixtureDir, 'rig.json')))('fixture rig', () 
     const n = skin.vertexCount
     const rest = new Float32Array(n * 3).map((_, i) => (i % 3 === 0 ? 0.25 : i % 3 === 1 ? 0.9 + (i / (n * 3)) * 0.5 : 0))
     expect(maxDeviation(r, rest, skin.part, { gh_L: [0.6, 0.8], elbow_L: [1.9] })).toBeLessThan(2e-6)
+  })
+})
+
+// 过期检查：按各系统 GLB 的字节哈希（与 tools/rig/io.ts 的 hashInput 相同），不再看 anatomy.json 的字节
+// The staleness check: by the byte hash of each system GLB (the same as hashInput of tools/rig/io.ts), no longer by the bytes of anatomy.json
+describe('rig staleness against the fixture', () => {
+  const dir = resolve(__dirname, '../public/anatomy/fixture')
+  const report = JSON.parse(readFileSync(resolve(dir, 'rig-report.json'), 'utf8')) as { inputs: Record<string, string> }
+  const bytesOf = (f: string): ArrayBuffer => {
+    const b = readFileSync(resolve(dir, f))
+    return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
+  }
+  const glbs = Object.keys(report.inputs).filter((k) => k.endsWith('.glb'))
+
+  it('the fixture rig was built for the fixture GLBs: every loaded file is fresh', async () => {
+    expect(glbs.length).toBeGreaterThan(5)
+    const have = new Map<string, string>()
+    for (const f of glbs) {
+      const h = await sha256Prefix(bytesOf(f))
+      // 与管线记录哈希的函数逐字节一致 / byte for byte the function the pipeline records hashes with
+      expect(h).toBe(hashInput(f, resolve(dir, f)))
+      have.set(f, h!)
+    }
+    expect(staleInputs(report.inputs, have)).toEqual([])
+    // 只加载了一部分系统：没加载的不判断 / only some systems loaded: the others are not judged
+    expect(staleInputs(report.inputs, new Map([['skeletal.glb', have.get('skeletal.glb')!]]))).toEqual([])
+    expect(staleInputs(undefined, have)).toEqual([])
+  })
+
+  it('one flipped byte in a GLB makes the rig stale for that file only', async () => {
+    const have = new Map<string, string>()
+    for (const f of glbs) have.set(f, (await sha256Prefix(bytesOf(f)))!)
+    const flipped = new Uint8Array(bytesOf('skeletal.glb'))
+    flipped[flipped.length >> 1] = flipped[flipped.length >> 1]! ^ 1
+    have.set('skeletal.glb', (await sha256Prefix(flipped.buffer as ArrayBuffer))!)
+    expect(staleInputs(report.inputs, have)).toEqual(['skeletal.glb'])
+  })
+
+  it('editing a caution in anatomy.json leaves the rig fresh', async () => {
+    const anatomy = JSON.parse(readFileSync(resolve(dir, 'anatomy.json'), 'utf8')) as { cautions?: unknown[] }
+    anatomy.cautions = [...(anatomy.cautions ?? []), { zh: '新加的一句说明', en: 'a newly added sentence' }]
+    const have = new Map<string, string>()
+    for (const f of glbs) have.set(f, (await sha256Prefix(bytesOf(f)))!)
+    // anatomy.json 的字节变了，但它不在按字节核对的输入里 / the bytes of anatomy.json changed, but it is not among the inputs checked by bytes
+    have.set('anatomy.json', (await sha256Prefix(new TextEncoder().encode(JSON.stringify(anatomy)).buffer as ArrayBuffer))!)
+    expect(staleInputs({ ...report.inputs, 'anatomy.json#parts': 'whatever', 'data/curated/rig/joints.json#data': 'x' }, have)).toEqual([])
   })
 })

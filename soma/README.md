@@ -40,6 +40,10 @@
 
 这是疼痛**行为**的计算模型，用于教学：被模拟的身体没有主观体验；"强度 → 表情"的数值是本项目的假设；声音是演员按指令表演的录音（没有录音包时改用参数合成）。表情由模型里的表情肌驱动（`tools/face/`、`data/curated/face/`）；现在的皮肤没有眼裂和口裂，所以面板默认用肌肉视图。
 
+**施加刺激。** "疼痛"页顶部的刺激工具：选种类（针刺、钝压、捏夹、热、冷）、量值、时长、是否重复、刺激是否被固定；打开"在皮肤上施加"后点一下皮肤按设定时长施加，按住不动则施加到松手。摆了姿势或改了体型也可以。模拟人的反应包括：皮肤上的疼痛分布层、从皮肤到神经根的通路和沿它走的 Aδ / C 两个标记、退缩反射、表情和（打开声音后的）发声，以及监护条上的心率、血压、呼吸、瞳孔、皮肤电导。解释面板按九个步骤说明原因，每个数字都标明是有出处、是假设还是算出来的。监护条上的数是群体平均的效应量，不能用来推断疼痛。模型在 `src/painmodel/`，数据表和来源在 `data/curated/pain/`。
+
+**皱纹细节。** 皮肤不透明时，面部按表情强度叠加一层法线细节（眉间、鱼尾、下睑、鼻根、鼻唇沟、口角）；皱纹是程序化生成的，条数和尺寸是假设。
+
 声音素材的许可见下文"疼痛声音包"。嵌入模式默认静音，任何声音都需要用户点击才会播放。
 
 ## 运行
@@ -80,6 +84,7 @@ bun run dev        # http://localhost:5183
 | `src` | `1` | 按数据来源着色 |
 | `cmp` | `ske` | 对照视图及其显示的系统 |
 | `shape` | `h1.80,b28,l0,c0` | 体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 体型分布（SD）；只写不在默认值的项，超出可用范围的值会被截断 |
+| `stim` | `heat,48,8@forearm_L` | 施加刺激：`种类,量值,秒数[,x次数/频率][,held][,热斜率取法]@部位`。量值：针刺毫牛，钝压和捏夹牛，热和冷摄氏度。部位：`fingertip palm handback forearm cheek shin sole` 加 `_L`/`_R`，或静止姿势下的坐标（毫米）`p-182,1034,28` |
 | `pain` | `7` | 把疼痛表情保持在该强度（0–10）；不会自动出声 |
 | `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5） |
 | `skin` | `1` | 不透明皮肤视图 |
@@ -184,10 +189,8 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 ## 接下来
 
 1. 皮肤的修正：女性乳房位置和面部缺陷，带眼裂和口裂的面部拓扑，头发等附属结构贴合新皮肤。
-2. 疼痛的输入端：刺激体表某处，按皮节和皮神经得到位置和强度，驱动表情和发声。
-3. 软组织物理：四面体化，XPBD，先在一个部位验证。
-4. 疼痛：沿神经通路的伤害感受模型，驱动生命体征、退缩反射和体表热力图。这是对疼痛生理的计算模型，模拟人并没有主观感受。
-5. 手术操作：切开、牵拉、出血、缝合。
+2. 软组织物理：四面体化，XPBD，先在一个部位验证。
+3. 手术操作：切开、牵拉、出血、缝合。
 
 ---
 
@@ -233,6 +236,10 @@ The "Pain" panel on the left demonstrates pain behaviour: set an intensity (0–
 
 This is a computational model of pain **behaviour** for teaching: the simulated body has no subjective experience; the intensity-to-expression numbers are assumptions of this project; the sounds are recordings acted on instruction (or parametric synthesis when the pack is absent). The expression is driven by the facial muscles of the model (`tools/face/`, `data/curated/face/`); the present skin has no eye or mouth opening, so the panel defaults to the muscle view.
 
+**Applying a stimulus.** The stimulus tool at the top of the Pain tab: pick the kind (pinprick, pressure, pinch, heat, cold), magnitude, duration, repeats and whether the stimulus is held; with "Apply on the skin" on, a click applies it for the set duration and pressing and holding applies it until release. It works on a posed or reshaped body. The response is shown as a pain map on the skin, the pathway from skin to nerve root with the Aδ and C markers travelling along it, the withdrawal reflex, the expression and (with sound on) the voice, and a monitor with heart rate, blood pressure, respiration, pupil and skin conductance. The explanation panel gives the reason in nine steps and marks every number as sourced, assumed or computed. The monitor shows group-average effect sizes that cannot be used to infer pain. The model is in `src/painmodel/`, its tables and sources in `data/curated/pain/`.
+
+**Wrinkle detail.** While the skin is opaque, the face gets a layer of normal detail blended by expression (glabella, crow's feet, lower lid, nasal root, nasolabial fold, lip corner); the wrinkles are procedural and their counts and sizes are assumptions.
+
 For the licence of the sound material see "Pain sound pack" below. Embed mode is muted by default and any sound needs a click.
 
 ## Run
@@ -273,6 +280,7 @@ The whole view state lives in the query string, so any view can be opened by one
 | `src` | `1` | Colour by data source |
 | `cmp` | `ske` | Compare view and the system it shows |
 | `shape` | `h1.80,b28,l0,c0` | Body shape: h stature (m), b BMI, l leg length (SD), c mass distribution (SD); only non-default items are written and values outside the valid range are clamped |
+| `stim` | `heat,48,8@forearm_L` | Apply a stimulus: `kind,magnitude,seconds[,xCount/Hz][,held][,heat reading]@site`. Magnitude: mN for pinprick, N for pressure and pinch, °C for heat and cold. Site: `fingertip palm handback forearm cheek shin sole` with `_L`/`_R`, or a rest-pose position in millimetres, `p-182,1034,28` |
 | `pain` | `7` | Hold the pain expression at this level (0–10); never plays sound by itself |
 | `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5) |
 | `skin` | `1` | Opaque-skin view |
@@ -377,7 +385,5 @@ The full list is in each body's `cautions`. The main ones:
 ## Next
 
 1. Skin corrections: female breast level and facial defects, a facial topology with eye and mouth openings, hair and other appendages fitted to the new skins.
-2. The input side of pain: a stimulus on the skin giving location and intensity through dermatomes and cutaneous nerves, driving expression and voice.
-3. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
-4. Pain: a nociception model along nerve pathways that drives vital signs, withdrawal reflexes and a heat map on the skin. This is a computational model of pain physiology; the simulated body has no subjective experience.
-5. Surgical actions: incision, retraction, bleeding, suturing.
+2. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
+3. Surgical actions: incision, retraction, bleeding, suturing.

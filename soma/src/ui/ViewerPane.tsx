@@ -6,6 +6,7 @@ import { setUrlCamera } from '../state/urlSync.ts'
 import type { Viewer } from '../viewer/Viewer.ts'
 import { ComparePane } from './ComparePane.tsx'
 import { EmbedControls } from './EmbedControls.tsx'
+import { StimMonitor } from './StimMonitor.tsx'
 import { Icon } from './Icon.tsx'
 
 function bodyUrl(dataset: string): string {
@@ -34,6 +35,7 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   const skinMap = useApp((s) => (s.skinMapMode === 'off' ? undefined : s.skinMaps?.maps.find((m) => m.id === s.skinMapMode)))
   const hasSelection = selection.ids.length > 0
   const embed = useApp((s) => s.embed)
+  const stimArmed = useApp((s) => s.stimArmed)
 
   const viewerRef = useRef<Viewer | null>(null)
   const [ready, setReady] = useState(false)
@@ -142,10 +144,11 @@ export function ViewerPane({ graph }: { graph: AnatomyGraph }) {
   } else if (selection.ids.length > 1) selectionLabel = `已选择 ${selection.ids.length} 个结构`
 
   return (
-    <div className={`viewer${compare ? ' comparing' : ''}${embed ? ' embedded' : ''}`}>
+    <div className={`viewer${compare ? ' comparing' : ''}${embed ? ' embedded' : ''}${stimArmed ? ' stim-armed' : ''}`}>
       <div className="viewer-host" ref={hostRef} />
       {compare && ready && <ComparePane graph={graph} dataset={dataset} system={compare.system} />}
 
+      <StimMonitor />
       {embed && <EmbedControls graph={graph} />}
       <div className="viewer-tools">
         <button className="tool-btn" onClick={() => app.requestHome()} title="复位视角 Reset view">
