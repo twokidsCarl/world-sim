@@ -267,6 +267,76 @@ source-vertex.u32：移植顶点指向洞口环上权重最大的那个原顶点
   区域不是单环圆盘、自检不通过、缺少 deep-face.json 里的部件、缺少供体文件）。toes 和 vulva 不满足验收时不算失败：
   它们写出原因并跳过接入，链继续。
 
+10. 第四轮的改动（先读这一节；与第 8、9 节不一致处以这里为准）
+------------------------------------------------------------------------
+本轮只做完了脚趾（两体都已接入）。男性生殖器移植处的环、女性外阴片的封闭和开口都没有做，仍是第 9 节所说的样子。
+它取代的说法：第 8 节 “toes 定位了，没有接入”、第 9 节 “脚趾” 整段（包括“趾骨不像样”“甲在甲板上”两条）；
+第 9 节 “外阴” 里“另两个方向……原因没有查”一句由下面“外阴映射的缩放”取代。
+
+脚趾（tools/skinopen/toes.py，由 graft.py 的 toes 步骤调用）
+  概念：游离趾从趾蹼开始，不是从跖趾关节开始。供体趾尖 → 远节趾骨末端 + 3 mm 软组织垫；供体趾蹼 → 近节趾骨上的“蹼位”；
+    趾蹼之后是包里皮肤的前脚掌。骨决定趾的轴线和长度；甲板部件不作依据。
+  供体：没有骨骼（.blend 里没有骨架）。资产自述为 “Realistic scan data model with multiresolution details”，是重新布线的基础网格，
+    不是这个人的脚。导出时在它唯一的一级多级细分上再加一级 Catmull-Clark 细分（否则趾上的边长约 4 mm，盖不住趾骨的弧面）；
+    同时导出作者的雕刻面组，第 2 组是五个趾甲。供体坐标架按资产自己的坐标轴取（趾朝 −Y，向上 +Z），不用主成分。
+    改了导出脚本之后要重新导出一次：
+      tools/zanatomy/.venv/bin/python -I tools/skinopen/export-foot.py <bundle.blend> data/raw/bodyshape/out/skinopen-donors/hbm-foot-realistic.npz
+  在供体上核对的结果：供体游离趾（趾尖到趾蹼，沿中心线）长 36.7 / 32.5 / 24.3 / 18.3 / 13.9 mm（脚长 236 mm）；前脚掌最宽处在大趾尖后 65–85 mm，
+    而大趾的趾蹼在趾尖后 37 mm——趾蹼确实远在跖趾关节之前。但上一轮的算法其实已经把蹼位放在近节趾骨中点，长度比例大的真正原因有两个：
+    (1) 骨链一直量到关节中心（在跖骨头里，比近节趾骨基底还靠后约 5–10 mm）；(2) 这个供体的第 3–5 趾相对这两副骨偏短。
+  蹼位（假设，记在 graft-report.json 的 toes.assumptions）：取“供体趾按整脚比例不需拉伸”的位置，限制在近节趾骨长度的 0.50–0.85（自基底起）。
+    没有打开到关于足趾蹼位的公开数据；手外科文献对手指的说法是蹼在近节指骨中点附近（下限 0.50 取自这里，未对足趾核实），
+    上限 0.85 只是让趾蹼留在近侧趾间关节的近侧。
+  得到的数（男 左/右；女 左/右，大趾 … 小趾）：
+    蹼位      男 0.64 / 0.66（大趾），其余 0.85；女 0.68 / 0.74（大趾），第二趾 0.84 / 0.85，其余 0.85
+    长度比例  男 1.00, 1.00, 1.29, 1.52, 1.54 / 1.00, 1.02, 1.31, 1.54, 1.56；女 1.00, 1.00, 1.26, 1.47, 1.50 / 1.00, 1.05, 1.36, 1.57, 1.58
+    粗细比例  男 0.90–1.27 / 0.99–1.30；女 0.94–1.34 / 1.06–1.41
+    也就是说：大趾和第二趾降到了 1；第 3–5 趾仍要拉长 1.26–1.58 倍。若要它们也到 1，蹼位就得放到近侧趾间关节之外，这在解剖上不成立——
+    所以这是供体比例与这两副骨不合，没有悄悄放宽，照实报告。
+  粗细：每趾一个比例 =（中、远节趾骨的 90% 径向半径 + 2.5 mm）÷ 供体趾中部半径，限制在 0.9–1.5；之后在骨上覆盖不足处局部外推到 2.6 mm
+    （顶点处），再对弦高作一次补推。相邻两趾以“到两趾趾骨等距的面”为界，各留 0.3 mm。
+  趾蹼之后：供体前脚掌按“截面内的方位角”对到包里的皮肤上（从这一截面里骨的中心向外射线，取第一个交点；不用最近点——
+    最近点会把外侧缘折起来），在皮肤上再理顺；趾根与 22 mm 外贴在皮肤上的一圈之间解双调和方程得到过渡面。
+    所以趾根之后约 22 mm 的皮肤（脚背前部、前脚掌前缘）被换成了构造的过渡面。
+  关于“趾骨不像样”：这一条是上一轮量法的错，不是骨的错。相邻趾骨表面到表面的间隙全部是 0.14–1.11 mm（两体各 28 个关节）；
+    原来报的 6–7 mm 是把每块骨“最外 6% 顶点的均值”当作骨端量出来的，小趾中节近乎立方体时主轴还会取错。
+    骨真正的问题在别处：男性的趾骨平直贴地（近节趾骨仰角 −16° 至 +1°），是仰卧扫描的样子；女性的趾骨是把男性的骨变形过去的，
+    近节趾骨上翘 20°–32°，从侧面看各节弯扭成一团，而且整串趾骨位于皮肤前脚掌的上部，离皮肤的脚底约 38–40 mm。
+  关于甲板部件：两体的甲板离远节趾骨表面中位数 7.1 / 6.4 mm（5%–95%：4–10 mm），并且伸到骨末端之前；真实的甲板离骨背面只有 2–3 mm。
+    它们是按旧皮肤摆的，不是按骨摆的。现在不作为验收条件，只在报告里记下数值（toes.sides.*.nailPlateParts）。
+  验收（全部通过才接入，否则写明原因并跳过）：每节趾骨在趾内，骨干处覆盖 ≥ 1.5 mm、骨端 ≥ 1.0 mm；相邻趾互不穿入
+    （每个趾在趾根封口后算绕数——以前在没有封口的网格上算，所以误报）；供体趾甲的顶点 ≥ 90% 在远节趾骨范围内且在骨链轴线的背侧
+    （或不低于轴线 1 mm：甲的游离缘）；缝合前供体片边缘离皮肤中位数 ≤ 1 mm；接入后所有趾骨对最终皮肤再核一次，不够 1.0 mm 就撤回。
+  结果：男性 接入；片边缘中位数 0.08 / 0.06 mm（最大 1.4 / 1.2），缝合边最长 6.9 mm，接入后各趾骨最少覆盖 2.11 mm，趾间无穿入，
+        趾甲高出远节趾骨中位数 2.6–3.0 mm。每脚约 8,700 个新顶点，切掉约 2,950 个三角形。
+        女性 接入；片边缘中位数 0.03 mm（最大 5.1 / 2.5），缝合边最长 5.5 mm，接入后最少覆盖 2.11 mm。
+  权重：从洞口环调和延拓，离洞口 5–15 mm 过渡到完全跟随 MHR 的 l_ball / r_ball（joints.json 里对应 mtp2_L / mtp2_R）。
+    包里五个趾都跟这一个关节；绑定规则再按最近分给 mtp1–5。manifest 的 grafts[] 里 toesL / toesR 多了 toeVertices（每趾的顶点）
+    和 nailVertices（每趾趾甲的顶点），可以直接用来分。趾甲是皮肤网格上雕出来的形状，不是甲板部件。
+  标签：17 graftCurated（供体顶点，全部被变形过）、16 graftBlend（靠边一圈）、14 removed。分组 toesL、toesLStitch、toesR、toesRStitch。
+  检查图：<body>-skin-grafted/renders/toesL.png、toesR.png（三排：按分组着色 / 单一肤色 / 原皮肤；六列：上、下、内侧、外侧、趾蹼近景、
+    过趾的水平切片加骨）。由 graft.py 写出的 render-*.json 经 tools/skinopen/render-scene.ts 画出。toes-fit-L/R.obj 是接入之前的定位结果。
+  看图的结论：男性——是一只有五个分开的趾、有趾蹼和趾甲的脚，与前脚掌的过渡光顺，可以先用；毛病是小趾尖有一处皱、
+    大趾根部有一道浅折痕、第 3–5 趾被拉长后略显细长、单色下趾甲不显眼。女性——不能发布：趾骨在皮肤前脚掌的上部，
+    趾因此悬在脚底之上，脚底在趾根处有一道约 20 mm 高、边缘参差的台阶，大趾和第二趾的趾甲被局部外推弄皱。
+    这要等她的脚骨和皮肤重做之后重跑。
+
+外阴映射的缩放（只做了这一项查证）
+  宽度 0.971 = 放大 1.096 × pelvisWidth 0.8857（pipeline-report.json 的 standard.scales），相符。
+  高度：报告里只有 trunk 0.9948，应得 1.090，实得约 1.036（是应得的 0.950）；前后：报告里没有任何前后方向的比例，应得 1.096，实得约 0.937（0.855）。
+  报告的 wu.carriage 说这些部件是由两块髋骨和骶骨各自的刚性摆位与标准化映射混合带过去的——这不是相似变换，可能就是原因，没有验证。
+  记作未解释的出入，写在 graft-report.json 的 vulva.specimenMap.scaleNote 里。
+
+所用的状态：男性皮肤包是本轮中途重新发布的那一版（skin.obj 10-12 09:36），public/anatomy/male 为 08:43 的一版；
+  女性皮肤包 04:28、public/anatomy/female 07:23。export-deep 在每次 run.sh 里都重跑。
+
+仍然不对、没有做或没有验证的
+  · 男性生殖器移植处的环：没有改（缝合三角形最长 37 mm，没有做相交检查）。
+  · 女性外阴片：尾侧截断的封闭、阴道口 / 尿道口 / 肛门、单环的 rim-target、与 Kreklau 2018 的逐项对应，都没有做。
+  · 脚趾：蹼位的取值没有公开数据支持；第 3–5 趾拉长 1.26–1.58 倍；女性不能发布（见上）。
+  · 接入脚趾后的包没有经过管线、绑定、体型各步；简化器会不会抹掉 1.3 mm 的趾网格没有试（装入时要锁住标签 15–18 的顶点）。
+  · 环境变量 SKINOPEN_DEBUG=<目录> 会让 toes.py 写出调试用的 npz；平时不要设。
+
 
 ========================================================================
 English
@@ -622,3 +692,108 @@ After a re-issue: both chains run unattended; any unmet precondition ends with a
   reason (no pocket between the lips or no eye membrane found, a region that is not a disc with one loop, a failed
   self-check, parts missing from deep-face.json, a missing donor file). toes and vulva failing their acceptance is
   not an error: they write the reason, skip the graft, and the chain goes on.
+
+10. Changes of round 4 (read this first; where it differs from sections 8 and 9, this section holds)
+------------------------------------------------------------------------
+Only the toes were finished in this round (grafted in both bodies). The ring of the male genital graft and the closure
+and orifices of the female vulvar patch were not done and are as section 9 describes.
+Superseded: "toes: fitted, not grafted" in section 8; the whole "Toes" paragraph of section 9 (including "implausible
+bones" and "nail on the nail plate"); and, under "Vulva" in section 9, "the other two are not 1.096, and why was not
+looked into", replaced by "Scales of the vulvar map" below.
+
+Toes (tools/skinopen/toes.py, called by the toes step of graft.py)
+  Concept: a free toe begins at the web, not at the metatarsophalangeal joint. Donor tip → end of the distal phalanx +
+    3 mm soft-tissue pad; donor web → a "web station" on the proximal phalanx; behind the webs the surface is the package
+    skin's ball of the foot. The bones decide axis and length; the nail plate parts are not used.
+  Donor: it has no skeleton (the .blend holds no armature). The asset describes itself as "Realistic scan data model with
+    multiresolution details"; it is a retopologised base mesh and not this person's foot. The export adds one level of
+    Catmull-Clark subdivision on top of its single multires level (otherwise edges on the toes are about 4 mm, too coarse
+    to follow the curvature over the phalanges) and exports the author's sculpt face sets, of which set 2 is the five
+    nails. The donor frame is the asset's own axes (toes towards −Y, up +Z), not principal axes. After the change to the
+    export script the donor has to be exported once more:
+      tools/zanatomy/.venv/bin/python -I tools/skinopen/export-foot.py <bundle.blend> data/raw/bodyshape/out/skinopen-donors/hbm-foot-realistic.npz
+  Verified on the donor: its free toes (tip to web along the centreline) are 36.7 / 32.5 / 24.3 / 18.3 / 13.9 mm long (foot
+    236 mm); the ball is widest 65–85 mm behind the tip of the big toe while the web of the big toe is 37 mm behind it —
+    the web does lie well distal to the metatarsophalangeal joint. But the previous fit already put the web station at the
+    middle of the proximal phalanx; the real reasons for its large length scales were (1) the chain ran to the joint
+    centre, which lies in the metatarsal head some 5–10 mm proximal to the base of the proximal phalanx, and (2) toes 3–5
+    of this donor are short for these two skeletons.
+  Web station (an assumption, recorded under toes.assumptions of graft-report.json): the station at which the donor toe, at
+    the scale of the whole foot, needs no stretch, limited to 0.50–0.85 of the proximal phalanx from its base. No published
+    figure for the toes was opened; for the fingers hand-surgery texts put the web at about the midpoint of the proximal
+    phalanx (the lower limit of 0.50 is taken from that and is not verified for toes), and the upper limit of 0.85 only
+    keeps the web proximal to the proximal interphalangeal joint.
+  Resulting figures (male left / right; female left / right; big … little toe):
+    web station    male 0.64 / 0.66 (big toe), others 0.85; female 0.68 / 0.74 (big toe), second toe 0.84 / 0.85, others 0.85
+    length scale   male 1.00, 1.00, 1.29, 1.52, 1.54 / 1.00, 1.02, 1.31, 1.54, 1.56; female 1.00, 1.00, 1.26, 1.47, 1.50 / 1.00, 1.05, 1.36, 1.57, 1.58
+    girth scale    male 0.90–1.27 / 0.99–1.30; female 0.94–1.34 / 1.06–1.41
+    So the big and second toes came down to 1, and toes 3–5 are still stretched 1.26–1.58 times. Bringing those to 1 would
+    need a web station beyond the proximal interphalangeal joint, which is anatomically impossible — the donor's
+    proportions do not match these skeletons. Nothing was relaxed to hide this.
+  Girth: one scale per toe = (90% radial radius of the middle and distal phalanges + 2.5 mm) ÷ the donor toe's radius at
+    mid-toe, held within 0.9–1.5; then a local push to 2.6 mm (at the vertices) wherever bone cover would be short, and one
+    more push for the chord error of the triangles. Neighbouring toes are parted at the surface equidistant from their two
+    sets of phalanges, each kept 0.3 mm from it.
+  Behind the webs: the donor forefoot is laid onto the package skin by direction within the cross-section (a ray from the
+    centre of the bones in that cross-section, first hit; closest points are not used because they fold the lateral border),
+    then relaxed on the skin; between the toe bases and the ring that lies on the skin 22 mm away the surface comes from the
+    biharmonic equation. So about 22 mm of skin behind the toe bases (front of the dorsum, front edge of the ball) is replaced
+    by a constructed transition.
+  On the "implausible bones": that finding was a fault of the earlier measurement, not of the bones. The least
+    surface-to-surface distance between consecutive phalanges is 0.14–1.11 mm in every joint (28 joints per body); the
+    6–7 mm reported before came from taking the mean of the outermost 6% of a bone's vertices as its end, and from a wrong
+    principal axis on the almost cubical middle phalanx of the little toe. What is really wrong with the bones is something
+    else: the male's toes are straight and flat (proximal phalanges elevated −16° to +1°), as scanned supine; the female's
+    are the male bones warped onto her, with proximal phalanges elevated 20°–32°, phalanges bent and twisted when seen from
+    the side, and the whole row of toe bones in the upper part of the forefoot of her skin, some 38–40 mm above its sole.
+  On the nail plate parts: in both bodies they lie a median 7.1 / 6.4 mm from the surface of the distal phalanges (5%–95%:
+    4–10 mm) and reach beyond the bone ends; a real nail plate lies only 2–3 mm above the dorsum of the bone. They were
+    placed for an older skin, not for the bones. They are no longer a criterion; their figures are only recorded
+    (toes.sides.*.nailPlateParts).
+  Acceptance (grafted only if all hold; otherwise the reason is written and the step skipped): every phalanx inside its toe
+    with ≥ 1.5 mm cover over the shaft and ≥ 1.0 mm at the bone ends; no toe inside its neighbour (winding numbers of each
+    toe closed at its base — the earlier test used the open mesh and reported false overlaps); ≥ 90% of the donor's nail
+    vertices over the distal phalanx and dorsal to the axis of the chain (or no more than 1 mm below it: the free edge);
+    the rim of the patch a median ≤ 1 mm from the skin before stitching; and after grafting every phalanx is checked again
+    against the final skin and the graft is undone if any has less than 1.0 mm.
+  Result: male — grafted; rim a median 0.08 / 0.06 mm from the skin (max 1.4 / 1.2), longest stitch edge 6.9 mm, least cover
+          over any phalanx in the grafted skin 2.11 mm, no interpenetration, nails a median 2.6–3.0 mm above the distal
+          phalanges. About 8,700 new vertices and 2,950 removed triangles per foot.
+          female — grafted; rim a median 0.03 mm (max 5.1 / 2.5), longest stitch edge 5.5 mm, least cover 2.11 mm.
+  Weights: harmonic extension from the rim of the hole, turning between 5 and 15 mm from the rim into MHR's l_ball / r_ball
+    alone (mapped to mtp2_L / mtp2_R in joints.json). In the package all five toes follow that one joint; the rig rule then
+    hands the weight to the nearest of mtp1–5. The entries toesL / toesR of grafts[] in the manifest now also hold
+    toeVertices (the vertices of each toe) and nailVertices (those of each nail), which can be used for that directly. The
+    nails are shapes sculpted into the skin mesh, not nail plate parts.
+  Tags: 17 graftCurated (donor vertices, all of them deformed), 16 graftBlend (band at the rim), 14 removed. Groups toesL,
+    toesLStitch, toesR, toesRStitch.
+  Check renders: <body>-skin-grafted/renders/toesL.png, toesR.png (three rows: coloured by group / one skin colour / delivered
+    skin; six columns: above, below, medial, lateral, web close-up, horizontal slab through the toes with the bones), drawn by
+    tools/skinopen/render-scene.ts from the render-*.json files graft.py writes. toes-fit-L/R.obj hold the fit before grafting.
+  What the renders show: male — a foot with five separate toes, webs and nails and a smooth transition into the forefoot;
+    usable as a first version. Its faults: a crumpled spot at the tip of the little toe, a faint crease at the base of the big
+    toe, toes 3–5 somewhat slender from the stretch, and nails that hardly show in one colour. Female — not shippable: her toe
+    bones lie in the upper part of the forefoot of her skin, so the toes hang above the sole, the sole steps up by about
+    20 mm with a ragged edge at the toe bases, and the nails of the big and second toes are crumpled by the local push. It
+    has to be re-run once her foot bones and skin are redone.
+
+Scales of the vulvar map (the only part of that job that was looked into)
+  Width 0.971 = enlargement 1.096 × pelvisWidth 0.8857 (standard.scales of pipeline-report.json): explained.
+  Height: the report states only trunk 0.9948, which gives 1.090; found about 1.036 (0.950 of that). Fore-aft: the report
+  states no scale at all in that direction, which gives 1.096; found about 0.937 (0.855 of that).
+  wu.carriage of the report says these parts are carried by a blend of the rigid pose and standardisation maps of both hip
+  bones and the sacrum — not a similarity, and possibly the cause; this was not verified.
+  Recorded as an unexplained discrepancy in vulva.specimenMap.scaleNote of graft-report.json.
+
+State used: the male skin package as re-issued during this round (skin.obj 10-12 09:36) with
+  public/anatomy/male of 08:43; the female skin package of 04:28 with public/anatomy/female of 07:23. export-deep is re-run
+  by every run.sh.
+
+Still wrong, not done or unverified
+  · Ring of the male genital graft: unchanged (stitch triangles up to 37 mm, no intersection check).
+  · Female vulvar patch: closing the caudal truncation, the vaginal / urethral / anal orifices, the single-loop rim target
+    and the item-by-item comparison with Kreklau 2018 were not done.
+  · Toes: the web station has no published support; toes 3–5 are stretched 1.26–1.58 times; the female is not shippable (above).
+  · Packages with grafted toes were not run through the pipeline, rig or shape builds; whether the simplifier erases the
+    1.3 mm toe mesh is untested (lock vertices with tags 15–18 on installing).
+  · The environment variable SKINOPEN_DEBUG=<directory> makes toes.py write debugging npz files; leave it unset.

@@ -27,6 +27,10 @@ if [ -n "$STEPS" ]; then
   for f in "$PKG-grafted"/vulva-patch.obj "$PKG-grafted"/toes-fit-L.obj "$PKG-grafted"/toes-fit-R.obj; do
     [ -f "$f" ] && bun tools/skinopen/render-patch.ts "$f" "$PKG-grafted/renders/$(basename "$f" .obj).png" "$PKG-grafted/skin.obj"
   done
+  # graft.py 写出的检查图说明 / the check-render specs written by graft.py
+  for f in "$PKG-grafted"/render-*.json; do
+    [ -f "$f" ] && bun tools/skinopen/render-scene.ts "$f"
+  done
   IN="$PKG-grafted"
 fi
 $PY tools/skinopen/open_skin.py "$IN" --out "$OUT" --deep "$OUT/deep-face.json" > "$OUT/open.log"
