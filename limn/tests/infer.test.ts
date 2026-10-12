@@ -298,3 +298,18 @@ describe('filling the environment', () => {
     expect(inside).toBe(0)
   })
 })
+
+describe('filling the inside of a shell', () => {
+  it('keeps scattered things and strands within the given radius', async () => {
+    const { scatter, threads } = await import('../src/infer/environment')
+    const { rng } = await import('../src/landscape/pack')
+    const box = { centre: [0, 0, 0] as [number, number, number], hx: 500, hy: 500, z0: -150, z1: -18, exclude: 0, within: 450 }
+    const placed: { p: [number, number, number]; r: number }[] = []
+    expect(scatter(60, 30, [0, 0, 0], box, rng(2), placed).length).toBeGreaterThan(40)
+    for (const q of placed) expect(Math.hypot(...q.p)).toBeLessThanOrEqual(450 - 30 * 0.8)
+    const t = threads(8, 1600, 16, box, rng(4))
+    let out = 0
+    for (let i = 0; i < t.pos.length; i += 3) if (Math.hypot(t.pos[i]!, t.pos[i + 1]!, t.pos[i + 2]!) > 450 + 20) out++
+    expect(out).toBe(0)
+  })
+})

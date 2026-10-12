@@ -21,6 +21,8 @@ export interface Box {
   z1: number
   /** 这个半径以内是对象自己，不放东西 / inside this radius is the subject itself, and nothing is put there */
   exclude: number
+  /** 设了的话，东西只放在这个半径以内（填对象的里面，而不是周围）/ when set, things go only inside this radius (filling the inside of the subject instead of its surroundings) */
+  within?: number
 }
 
 /** 均匀的随机旋转（列主序 3x3 的九个数）/ a uniform random rotation (nine numbers of a column-major 3x3) */
@@ -48,7 +50,8 @@ export function scatter(count: number, radius: number, origin: V3, box: Box, ran
   const out: Float32Array[] = []
   for (let tries = 0; out.length < count && tries < count * 60; tries++) {
     const p: V3 = [box.centre[0] + (rand() * 2 - 1) * box.hx, box.centre[1] + (rand() * 2 - 1) * box.hy, box.centre[2] + box.z0 + rand() * (box.z1 - box.z0)]
-    if (Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2]) < box.exclude + radius * 0.6) continue
+    const far = Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2])
+    if (far < box.exclude + radius * 0.6 || (box.within !== undefined && far > box.within - radius * 0.8)) continue
     let clash = false
     for (const q of placed) {
       const d = (q.r + radius) * squeeze
@@ -89,7 +92,8 @@ export function threads(count: number, length: number, step: number, box: Box, r
     let p: V3 = [0, 0, 0]
     for (let t = 0; t < 40; t++) {
       p = [box.centre[0] + (rand() * 2 - 1) * box.hx, box.centre[1] + (rand() * 2 - 1) * box.hy, box.centre[2] + box.z0 + rand() * (box.z1 - box.z0)]
-      if (Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2]) > box.exclude + 20) break
+      const far = Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2])
+      if (far > box.exclude + 20 && (box.within === undefined || far < box.within - 20)) break
     }
     // 主要在画面平面里走，深度方向只小幅起伏 / it runs mostly in the plane of the picture, wavering only a little in depth
     let d = norm([rand() * 2 - 1, rand() * 2 - 1, (rand() * 2 - 1) * 0.2])
@@ -105,6 +109,11 @@ export function threads(count: number, length: number, step: number, box: Box, r
       if (r < box.exclude + 12) {
         const out = norm(c), along = d[0] * out[0] + d[1] * out[1] + d[2] * out[2]
         d = norm([d[0] - out[0] * Math.min(0, along) + out[0] * 0.3, d[1] - out[1] * Math.min(0, along) + out[1] * 0.3, d[2] - out[2] * Math.min(0, along) + out[2] * 0.3])
+      }
+      // 填里面时碰到外壁就沿壁滑回来 / when filling the inside, it slides back along the wall on meeting it
+      if (box.within !== undefined && r > box.within - 14) {
+        const out = norm(c), along = d[0] * out[0] + d[1] * out[1] + d[2] * out[2]
+        d = norm([d[0] - out[0] * Math.max(0, along) - out[0] * 0.3, d[1] - out[1] * Math.max(0, along) - out[1] * 0.3, d[2] - out[2] * Math.max(0, along) - out[2] * 0.3])
       }
       if (Math.abs(c[0]) > box.hx) d[0] = -Math.sign(c[0]) * Math.abs(d[0])
       if (Math.abs(c[1]) > box.hy) d[1] = -Math.sign(c[1]) * Math.abs(d[1])

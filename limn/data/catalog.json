@@ -368,6 +368,9 @@
       "roles": [
         [".", "focus"]
       ],
+      "environment": {"inside": true, "proteins": [{"pdb": "7P6Z", "name": "核糖体", "nameEn": "ribosome", "count": 34, "lch": [0.7, 0.13, 345]}, {"pdb": "1AON", "name": "伴侣蛋白 GroEL", "nameEn": "chaperonin GroEL", "count": 14, "lch": [0.74, 0.1, 225]}, {"pdb": "2HHB", "name": "小的可溶蛋白（示意）", "nameEn": "small soluble proteins (schematic)", "count": 420, "lch": [0.78, 0.09, 215]}], "strands": {"name": "染色体 DNA", "nameEn": "chromosomal DNA", "count": 26, "length": 3200, "radius": 10, "lch": [0.86, 0.14, 92]}, "basis": "照 Goodsell 的《JCVI-syn3A Minimal Cell》（2022，doi:10.2210/rcsb_pdb/goodsell-gallery-042），他画的细胞里是黄色的染色体 DNA 长线、品红的核糖体和蓝色的可溶蛋白。这里核糖体用支原体的结构（PDB 7P6Z），伴侣蛋白用 GroEL（PDB 1AON），小的可溶蛋白用一个大小相当的蛋白（PDB 2HHB）占位，DNA 画成随机走向的长线。", "basisEn": "After Goodsell's \"JCVI-syn3A Minimal Cell\" (2022, doi:10.2210/rcsb_pdb/goodsell-gallery-042), in which the cell holds long yellow strands of chromosomal DNA, magenta ribosomes and blue soluble proteins. Here ribosomes use a mycoplasma structure (PDB 7P6Z), the chaperonin is GroEL (PDB 1AON), small soluble proteins are stood for by a protein of about the right size (PDB 2HHB), and DNA is drawn as long strands on random courses."},
+      "membrane": [0.84, 0.1, 150],
+      "hues": {"focus": [0.7, 0.13, 150]},
       "caption": "人工合成的最小细胞 JCVI-syn3A 的膜包层，从中间剖开：一个直径约 200 nm 的球形膜，上面嵌着 998 条膜蛋白链。这是一次粗粒度分子动力学模拟的起始构型，只有膜和膜蛋白，细胞里面的东西不在其中。",
       "captionEn": "The membrane envelope of the synthetic minimal cell JCVI-syn3A, cut through the middle: a spherical membrane about 200 nm across with 998 membrane protein chains set in it. This is the starting configuration of a coarse-grained molecular dynamics simulation; it holds the membrane and its proteins only, and nothing of what is inside the cell.",
       "tier": "curated",

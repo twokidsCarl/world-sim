@@ -157,6 +157,13 @@ limn 这一轮的数：
 - 并排图 `out/C4-coronavirus.jpg`。
 - **还差的**：他的黏蛋白是分叉的、带糖链的刷子状，我们是光滑的线；刺之间的空隙露出的是底色，他的是后一圈刺的深色；橙色的小蛋白是一个结构重复几百次，他画了好几种。
 
+### C5–C6：核对，以及把工具用到“里面是空的”模型上
+
+- 做完场景之后重出了全部卡片的总览（`out/sheet-C5.jpg`），没有弄坏的；Illustrate 对照重跑了，仍是 2.80。
+- **syn3A 膜包层**：数据里只有膜和膜蛋白，里面是空的。用“填环境”和“穿线”两个工具填里面（工具加了“只放在某个半径以内”的选项）：染色体 DNA 的长线、核糖体（PDB 7P6Z）、伴侣蛋白 GroEL（PDB 1AON）、小的可溶蛋白（用 PDB 2HHB 占位）。配色照他的《JCVI-syn3A Minimal Cell》（2022）：绿膜、品红核糖体、蓝色蛋白、黄色 DNA。主色距离 0.081。并排图 `out/C6-syn3a.jpg`。这些都是示意，说明里写明；小的可溶蛋白用血红蛋白占位只是因为大小合适，不代表细胞里有它。
+- **HeLa 细胞**：手绘画法下改成暖白的纸，线是填色的深一号、很细。细胞器的碎片成千上万，用黑线会盖成一片黑。
+- **没做的**：“蛋白分瓣”这个概念没有做，流感的刺仍是一块板；“排整齐”“衬一层”没有合成一个通用工具，HIV 没有用上。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -304,3 +311,10 @@ After ten rounds of tuning model by model the gap was still plain, so the approa
 - Measured (coronavirus; his painting in brackets): blank paper 0.48→0.00 (0.00), colour distance 0.110→0.094, mean lightness 0.60 (0.61), mean chroma 0.096 (0.104).
 - Side by side: `out/C4-coronavirus.jpg`.
 - **Still short**: his mucin is branched and brush-like with its glycans, ours is a smooth strand; gaps between spikes show the ground where his show the deeper tone of the ring behind; the small orange proteins are one structure repeated a few hundred times, where he paints several kinds.
+
+### C5–C6: checking, and the tools applied to a model that is empty inside
+
+- After the scene step the contact sheet of every card was rendered again (`out/sheet-C5.jpg`) with nothing broken, and the Illustrate comparison was rerun, still at 2.80.
+- **The syn3A envelope**: the data holds membrane and membrane proteins only and is empty inside. The tools "fill the environment" and "thread a strand" now fill it (they gained an option to keep within a radius): long strands of chromosomal DNA, ribosomes (PDB 7P6Z), the chaperonin GroEL (PDB 1AON), and small soluble proteins (stood for by PDB 2HHB). Colours follow his "JCVI-syn3A Minimal Cell" (2022): green membrane, magenta ribosomes, blue proteins, yellow DNA. Colour distance 0.081. Side by side: `out/C6-syn3a.jpg`. All of it is schematic, and the notes say so; hemoglobin stands in for small soluble proteins only because it is the right size, not because the cell contains it.
+- **The HeLa cell**: in the painted drawing it is on warm paper with very thin lines a deeper shade of the fill. Organelle fragments number in the thousands, and black line smothered the picture.
+- **Not done**: the concept "lobed protein" is not done, and the influenza spikes are still slabs; "arranging" and "lining" have not been merged into one general tool, and HIV does not use them.
