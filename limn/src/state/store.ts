@@ -177,7 +177,7 @@ export interface CatalogEntry {
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
    */
-  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; lch: [number, number, number] }; ground: [number, number, number]; basis: string; basisEn: string }
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; basis: string; basisEn: string }
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
   membrane?: [number, number, number]
   /** 按角色指定色族 {角色: [L, C, h]} / a family of hue per role, {role: [L, C, h]} */
@@ -268,7 +268,8 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   for (let i = 0; i < pts.length; i += 3) R = Math.max(R, Math.hypot(pts[i]! - centre[0], pts[i + 1]! - centre[1], pts[i + 2]! - centre[2]))
   // 画面是正方形的，对象占画面宽度的六成多，像他那幅；环境铺在切面后面的一层里
   // the frame is square with the subject filling a little over six tenths of its width, as in his painting; the environment lies in one layer behind the cut
-  const box = { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
+  // inside：填对象的里面（数据里只有外壳时），范围取到外壳以内 / inside: fill the inside of the subject (when the data holds only its shell), within the shell
+  const box = env.inside ? { centre, hx: R, hy: R, z0: -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
   const rand = rng(7)
   const placed: { p: V3; r: number }[] = []
   const panels: Panel[] = []
@@ -303,7 +304,7 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [env.strands.lch] }, align: null,
     })
   }
-  notes.push({ key: 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
+  notes.push({ key: env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
   return panels
 }
 
@@ -795,7 +796,7 @@ export const useStore = create<State>((set, get) => ({
           // 很密的模型（几万份拷贝以上）线收细，否则满纸都是黑线 / a very dense model (tens of thousands of copies or more) gets thinner lines, or the sheet is all black line
           const copies = mol.assemblies.find((a) => a.id === assembly)?.groups.reduce((n, g) => n + g.operators.length, 0) ?? 0
           // 场景：深色的底 / a scene: a dark ground
-          if (surroundings.length && entry.environment) st.background = entry.environment.ground
+          if (surroundings.length && entry.environment?.ground) st.background = entry.environment.ground
           if (mesoscale && copies > 20_000) {
             st.lineWidth = Math.min(st.lineWidth, 0.7)
             // 密的模型里一个分子只有画幅的百分之几，切片要厚些才连得成片，否则到处露白
@@ -955,9 +956,19 @@ export const useStore = create<State>((set, get) => ({
       const scene: SceneSpec = { topic: entry.title, kind: 'neuron', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, panels: [spec], notes, unit: 'nm' }
       // 贴壁的细胞是扁的：从上往下看，在半高处剖开；结构很碎，线画细一些
       // a cell grown on a surface is flat: look down on it, cut at mid-height; the structures are fine-grained, so lines are drawn thinner
+      // 手绘画法：暖白的纸，线是填色的深一号、很细。细胞器的碎片成千上万，用黑线会把画面盖成一片黑
+      // painted drawing: warm paper, with very thin lines a deeper shade of the fill. Organelle fragments number in the thousands, and black line would smother the picture
       const thin = cloneStyle(STYLE_MOLECULE)
       thin.lineWidth = 0.6
       thin.shadow.floor = 0.8
+      if (get().drawing === 'painted') {
+        thin.background = [0.992, 0.988, 0.976]
+        thin.inkTint = 1
+        thin.inkShade = 0.42
+        thin.lineWidth = 0.45
+        thin.shadow.strength = 0
+        thin.grain = 0.07
+      }
       set((s) => ({ spec: scene, panels: [{ spec, mol, coloring, align: null, paper: null, annotation: null }], colorings: [coloring], ...freshLook(), rot: axisAngle(1, 0, 0, Math.PI / 2), cut: 0.45, cutDefault: 0.45, style: thin, rounds: [], busy: '', sceneRev: s.sceneRev + 1 }))
     } catch (e) {
       set({ busy: '', error: errorNote(e) })
