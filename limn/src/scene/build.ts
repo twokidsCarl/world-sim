@@ -83,6 +83,13 @@ interface Group {
   fine: boolean
   /** 衬在后面：切片的背面不切它 / lines the back: not cut at the back of a slab */
   lined: boolean
+  /**
+   * 概念“核酸”：模型里一节节摆出来的纤维（DNA、RNA）。画成一条粗细均匀的线：各节之间不画线，只有深度差得多的地方（两股交叉）才画。
+   * The concept "nucleic acid": a fibre the model lays out piece by piece (DNA, RNA). It is drawn as a strand of even width: no lines between pieces, only where depth differs a good deal (two strands crossing).
+   */
+  fibre: boolean
+  /** 这一组的第一条链 / the first chain of the group */
+  chainIndex: number
 }
 
 /**
@@ -122,6 +129,8 @@ function assemblyGroups(mol: Molecule, assembly: string, merge?: RegExp, lining?
       byKey.set(key, {
         runs, operators: g.operators.slice(), lipid: g.chains.every(isLipid),
         merged: g.chains.every((ci) => mol.chains[ci]!.count < 40) || g.chains.some((ci) => /\.fibers?\./i.test(mol.entities[mol.chains[ci]!.entity]!.description) || !!merge?.test(mol.entities[mol.chains[ci]!.entity]!.description)),
+        chainIndex: sorted[0]!,
+        fibre: g.chains.some((ci) => /\.fibers?\./i.test(mol.entities[mol.chains[ci]!.entity]!.description)),
         lined: !!lining && g.chains.some((ci) => lining.test(mol.entities[mol.chains[ci]!.entity]!.description)),
         fine: g.chains.every((ci) => mol.chains[ci]!.count < 40) || g.chains.some((ci) => !!merge?.test(mol.entities[mol.chains[ci]!.entity]!.description)),
       })
@@ -154,6 +163,9 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
       total += g.operators.length * ps.length
     }
   const data = new Float32Array(total * 16), iids = new Uint32Array(total * 2)
+  // 概念“核酸”：把同一种纤维的各组按走向接成一条，每一小段一个编号（见 fibreSegments）
+  // the concept "nucleic acid": the groups of one kind of fibre are joined into one run along its course, with an id per short stretch (see fibreSegments)
+  const segments = fibreSegments(mol, plan.filter((x) => x.g.fibre && x.ps.length === 1 && x.ps[0]!.perCopy && !x.ps[0]!.matrix).map((x) => x.g))
   let o = 0, copy = 0
   for (const { g, ps } of plan) {
     const first = o
@@ -186,6 +198,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
         // 概念“膜”：脂质一律按球来切（切口整齐），并在编号里标成膜；单个病毒颗粒的膜另外衬在后面
         // the concept "membrane": lipids are always cut sphere by sphere (a clean cut edge) and tagged as membrane in the ids; the membrane of a single virion lines the back besides
         else if (p.perCopy && g.lipid) data[k + 15] = total <= LINING_MAX ? 7 : 5
+        else if (p.perCopy && g.fibre) data[k + 15] = 8
         else if (centre) {
           data[k + 12] = centre[0]
           data[k + 13] = centre[1]
@@ -196,13 +209,110 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           data[k + 15] = p.keepBack || g.lined || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
-        iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : p.molecule + 1 + (g.merged ? groupCopy : copy)
+        // 同一种纤维的各组（模型按碱基种类分了组）共用一个编号，连成一条 / the groups of one kind of fibre (the model groups them by base) share one id and join into one strand
+        iids[o * 2 + 1] = !p.perCopy || g.lipid ? p.molecule : segments.has(g) ? p.molecule + segments.get(g)![o - first]! : g.fibre ? p.molecule + 3_900_000 + mol.chains[g.chainIndex]!.entity : p.molecule + 1 + (g.merged ? groupCopy : copy)
         o++
         copy++
       }
     for (const r of g.runs) draws.push({ ...r, opStart: first, opCount: o - first })
   }
   return { posr, color: atomColors(mol, coloring, tone, annotation), ids, draws, instances: { count: total, data, ids: iids }, subunitSize: mol.triangles ? MESH_PART_SIZE : subunitSize(mol), segments: mol.segments, triangles: mol.triangles, solid: mol.solid }
+}
+
+/** 一小段纤维有多长（Å）：每隔这么长换一个编号，于是画出一道横线，像绳子的纹 / the length of a short stretch of fibre in Å: the id changes this often, which draws a cross-line, like the lay of a rope */
+const FIBRE_STRETCH = 110
+
+/**
+ * 模型把一条纤维（比如整条染色体）按碱基种类拆成几组，每组里的各节是按走向排的，但组与组之间的先后丢了。
+ * 这里给每一节一个编号：每组沿自己的走向每 FIBRE_STRETCH 换一个；后面的组经过前面的组走过的地方时沿用那里的编号
+ * （模型里同一条双链的两股是两组，走向相反，不能简单地按顺序归并）。这样相邻的两股有不同的编号（中间画线），同一股上每隔一段有一道横纹。
+ * 返回每组里每一节的编号（从 2,000,000 起，每种纤维错开 600,000）。
+ *
+ * A model splits one fibre (a whole chromosome, say) into several groups by base, each group's
+ * pieces in order along the course but the order between groups lost. Every piece gets an id here:
+ * each group changes id every FIBRE_STRETCH along its own course, and a later group passing where an
+ * earlier one has been takes the id found there (the two strands of one duplex are two groups running
+ * opposite ways, so a plain in-order merge will not do). The id thus changes every FIBRE_STRETCH, so that two strands lying side by side have different ids (and a line
+ * between them) and one strand shows a cross-mark every so often. Returns the id of every piece of
+ * every group (from 2,000,000, with 600,000 between kinds of fibre).
+ */
+export function fibreSegments(mol: Molecule, groups: Group[]): Map<Group, Uint32Array> {
+  const out = new Map<Group, Uint32Array>()
+  const byEntity = new Map<number, Group[]>()
+  for (const g of groups) {
+    const e = mol.chains[g.chainIndex]!.entity
+    byEntity.set(e, [...(byEntity.get(e) ?? []), g])
+  }
+  let kind = 0
+  for (const gs of byEntity.values()) {
+    // 每一节的位置：这一组原子的质心经过各自的变换 / where each piece is: the centroid of the group's atoms under each transform
+    const pos = gs.map((g) => {
+      const c = [0, 0, 0]
+      let n = 0
+      for (const r of g.runs) for (let i = r.start; i < r.start + r.count; i++) {
+        c[0]! += mol.pos[i * 3]!
+        c[1]! += mol.pos[i * 3 + 1]!
+        c[2]! += mol.pos[i * 3 + 2]!
+        n++
+      }
+      const x = c[0]! / n, y = c[1]! / n, z = c[2]! / n
+      const p = new Float32Array(g.operators.length * 3)
+      g.operators.forEach((m, k) => {
+        p[k * 3] = m[0]! * x + m[4]! * y + m[8]! * z + m[12]!
+        p[k * 3 + 1] = m[1]! * x + m[5]! * y + m[9]! * z + m[13]!
+        p[k * 3 + 2] = m[2]! * x + m[6]! * y + m[10]! * z + m[14]!
+      })
+      return p
+    })
+    const ids = gs.map((g) => new Uint32Array(g.operators.length))
+    const base = 2_000_000 + (kind++ % 3) * 600_000
+    // 空间格子：每格记下第一个落进来的那一节的编号。后面的组（另一股、另一种碱基）经过同一个地方时沿用它，
+    // 这样同一处的几组共用一个编号；找不到才按自己的走向另起编号。
+    // A spatial grid: each cell remembers the id of the first piece to land in it. A later group (the
+    // other strand, another base) passing the same place takes that id, so the groups share one id
+    // where they coincide; only where none is found does a group number its own course afresh.
+    const CELL = 28
+    const grid = new Map<number, number[]>()
+    const key = (x: number, y: number, z: number) => (Math.floor(x / CELL) + 4096) * 67108864 + (Math.floor(y / CELL) + 4096) * 8192 + (Math.floor(z / CELL) + 4096)
+    let segment = 0
+    gs.forEach((_, k) => {
+      const p = pos[k]!
+      let along = 0, own = segment++
+      for (let i = 0; i < ids[k]!.length; i++) {
+        const x = p[i * 3]!, y = p[i * 3 + 1]!, z = p[i * 3 + 2]!
+        if (i > 0) {
+          const d = Math.hypot(x - p[i * 3 - 3]!, y - p[i * 3 - 2]!, z - p[i * 3 - 1]!)
+          along += d
+          // 跳得很远说明换了一条新的纤维：另起一段 / a long jump means a new fibre has begun: start a new stretch
+          if (along > FIBRE_STRETCH || d > 60) {
+            own = segment++
+            along = 0
+          }
+        }
+        let found = -1, bd = CELL * CELL
+        if (k > 0)
+          for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+            const cell = grid.get(key(x + dx * CELL, y + dy * CELL, z + dz * CELL))
+            if (!cell) continue
+            for (let q = 0; q < cell.length; q += 4) {
+              const d2 = (cell[q]! - x) ** 2 + (cell[q + 1]! - y) ** 2 + (cell[q + 2]! - z) ** 2
+              if (d2 < bd) {
+                bd = d2
+                found = cell[q + 3]!
+              }
+            }
+          }
+        const id = found >= 0 ? found : own
+        ids[k]![i] = base + (id % 590_000)
+        const c = key(x, y, z)
+        const cell = grid.get(c)
+        if (!cell) grid.set(c, [x, y, z, id])
+        else if (cell.length < 16) cell.push(x, y, z, id)
+      }
+    })
+    gs.forEach((g, k) => out.set(g, ids[k]!))
+  }
+  return out
 }
 
 /**

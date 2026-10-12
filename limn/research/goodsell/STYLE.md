@@ -136,6 +136,16 @@ limn 这一轮的数：
 
 **总览里看到的、还没改的：** HeLa 细胞是白底黑线，很脏；syn3A 膜包层里面是空的一个圆；新冠里面有白洞；流感的刺仍是一块板，没有他那样的细柄和分瓣的头（这是真实结构平滑之后的样子，要靠“蛋白分瓣”这个概念来解决）；支原体的 DNA 是团块。
 
+### C3：核酸画成线
+
+- **概念**：模型里一节节摆出来的纤维（DNA、RNA）画成一条粗细均匀的线。每一节画成同样大小的球（DNA 半径 11 Å，RNA 7 Å），连起来就是一条等宽的带子；各节之间不画线。
+- **让相邻的两股分得开**：一开始整条染色体共用一个编号，并排的几股融成一大片黄色。于是沿走向每 110 Å 换一个编号（`fibreSegments`）：相邻的两股编号不同，中间有线；同一股上每隔一段有一道横纹，像他画的绳纹。
+- **这里走了两次弯路**。支原体模型把一条染色体按碱基拆成四组。我先假设四组是交错的、可以按顺序归并，结果每个球又各自成了一圈。查了才知道其中两组是双链的另一股，走向相反。改成按“位置”共用编号：后面的组经过前面的组走过的地方时，沿用那里的编号。
+- 支原体的 RNA 用他的粉白色。
+- 并排图 `out/C3-detail-mycoplasma.jpg`，总览 `out/sheet-C3.jpg`。支原体和外泌体里的核酸现在读成一股股的线。
+- **和他的差别**：他画的 DNA 是稀疏的、近乎直的长线；模型里的染色体是按真实密度填的，又密又弯。这是数据和他的画的差别，没有改。
+- 密的模型的切片试了 30%（突触又露白）和 50%（支原体成了一堵 DNA 的墙），取 40%。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -262,3 +272,13 @@ After ten rounds of tuning model by model the gap was still plain, so the approa
 - The synaptic vesicle takes his yellow-orange.
 
 **Seen on the contact sheet and not yet fixed:** the HeLa cell is black line on white and looks dirty; the syn3A envelope is an empty disc; the coronavirus has white holes inside; the influenza spikes are still slabs without the thin stalk and lobed head he gives them (that is the real structure once smoothed, and is for the concept "lobed protein" to solve); the mycoplasma's DNA is lumps.
+
+### C3: nucleic acids as strands
+
+- **Concept**: a fibre the model lays out piece by piece (DNA, RNA) is drawn as a strand of even width. Every piece is a sphere of one size (11 Å radius for DNA, 7 Å for RNA), which join into a band of constant width, with no lines between pieces.
+- **Keeping neighbouring strands apart**: at first the whole chromosome shared one id, and strands lying side by side fused into sheets of yellow. So the id now changes every 110 Å along the course (`fibreSegments`): two neighbouring strands have different ids and a line between them, and one strand shows a cross-mark every so often, like the rope lay he paints.
+- **Two wrong turns here.** The mycoplasma model splits one chromosome into four groups by base. I first assumed the four interleave and can be merged in order, and every sphere came out ringed again. It turned out that two of the groups are the other strand of the duplex, running the opposite way. Ids are now shared by place: a later group passing where an earlier one has been takes the id found there.
+- The mycoplasma's RNA takes his pinkish white.
+- Side by side: `out/C3-detail-mycoplasma.jpg`; contact sheet `out/sheet-C3.jpg`. Nucleic acids in the mycoplasma and the exosome now read as strands.
+- **Where it still differs from his**: he paints DNA as sparse, nearly straight long strands; the model's chromosome is packed at its real density, dense and winding. That is a difference between the data and his painting and was left alone.
+- For dense models a slab of 30% (paper shows again in the synapse) and of 50% (the mycoplasma becomes a wall of DNA) were tried; 40% is used.

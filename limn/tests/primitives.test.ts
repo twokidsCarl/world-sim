@@ -157,3 +157,28 @@ describe('a prepared cell', () => {
     expect(() => decodeCell(new Uint8Array(32))).toThrow()
   })
 })
+
+describe('fibre stretches', () => {
+  it('gives the two strands of one duplex the same id where they coincide, and neighbours different ids', async () => {
+    const { fibreSegments } = await import('../src/scene/build')
+    // 一个原子在原点；两组变换沿 x 轴各放 60 节，第二组反着走；第三组在 y = 300 处另走一条
+    // one atom at the origin; two groups of transforms lay 60 pieces along x, the second in reverse; a third runs elsewhere at y = 300
+    const m = { pos: new Float32Array([0, 0, 0]), chains: [{ entity: 0 }] } as never
+    const at = (x: number, y: number) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, 0, 1])
+    const g = (ops: Float32Array[]) => ({ runs: [{ start: 0, count: 1 }], operators: ops, chainIndex: 0 }) as never
+    const a = g(Array.from({ length: 60 }, (_, i) => at(i * 12, 0)))
+    const b = g(Array.from({ length: 60 }, (_, i) => at((59 - i) * 12 + 4, 3)))
+    const c = g(Array.from({ length: 60 }, (_, i) => at(i * 12, 300)))
+    const seg = fibreSegments(m, [a, b, c])
+    const ia = seg.get(a)!, ib = seg.get(b)!, ic = seg.get(c)!
+    // 每 110 Å 换一个编号：60 节 × 12 Å 大约 7 段 / a new id every 110 Å: 60 pieces of 12 Å make about 7 stretches
+    expect(new Set(ia).size).toBeGreaterThanOrEqual(6)
+    expect(new Set(ia).size).toBeLessThanOrEqual(8)
+    // 反着走的那一股在同一处用同一个编号 / the strand running the other way has the same id at the same place
+    let same = 0
+    for (let i = 0; i < 60; i++) if (ib[59 - i] === ia[i]) same++
+    expect(same).toBeGreaterThan(50)
+    // 远处的那一条有自己的编号 / the one far away has ids of its own
+    expect(Array.from(ic).some((v) => ia.includes(v))).toBe(false)
+  })
+})

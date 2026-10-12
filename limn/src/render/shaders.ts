@@ -69,7 +69,9 @@ void main() {
   // 5 = a membrane in one piece: its small relief draws no lines, and it is cut and toned sphere by sphere at each sphere's own depth
   // 6 = 切片的背面不切它（衬在里面的一层，免得空隙里露出白纸）/ 6 = not cut at the back of a slab (a layer lining the inside, so that gaps do not show paper)
   // 7 = 膜，并且衬在后面（切片的背面不切）/ 7 = a membrane that also lines the back (not cut at the back of a slab)
-  v_fine = (mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
+  // 8 = 纤维的一节（核酸）：按球切，色调按这个球自己所在的景深层
+  // 8 = a piece of a fibre (nucleic acid): cut sphere by sphere, toned by the depth layer this sphere is in
+  v_fine = mc.w > 7.5 ? 3.0 : (mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
   // 截面之前的原子整个丢弃，和 Illustrate 一样，所以剖面上不会出现被切开的球。
   // 已知中心的分子整体保留或丢弃，所以也不会被切开。
   // Atoms in front of the cut are dropped whole, as Illustrate does, so a
@@ -79,6 +81,12 @@ void main() {
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
   if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
+  } else if (mc.w > 7.5) {
+    if (u_layer.x > 0.0) {
+      float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 0.999);
+      float s = u_layer.x <= 1.0 ? 0.0 : floor(t * u_layer.x) / (u_layer.x - 1.0);
+      v_keep = mix(u_fogKeep.x, u_fogKeep.y, s);
+    }
   } else if ((mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5) {
     if (u_layer.x > 0.0) {
       // 整张膜的色调随深度连续变化，不分档：按球分档会在档与档交界处出一圈杂点
@@ -100,7 +108,7 @@ void main() {
   }
   // 切片：整个分子按它的中心留或丢，所以切片里的分子都是完整的；永不切的东西（标志 3）除外
   // a slab: a molecule is kept or dropped whole by its centre, so every molecule in the slab is complete; except what is never cut (flag 3)
-  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5) && mc.w < 4.5)) {
+  if (zcut > u_clipFront || r <= 0.0 || (zcut < u_clipBack && !(mc.w > 2.5 && mc.w < 3.5) && (mc.w < 5.5 || mc.w > 7.5))) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
@@ -131,7 +139,8 @@ void main() {
   uint subunit = u_outlineByMolecule ? v_inst.y : v_inst.x + v_ids.x;
   // 第四个分量：0 = 没有东西，1 = 普通原子，2 = 小分子群里的原子，3 = 网格被剖开露出的背面，4 = 整张膜上的球
   // fourth channel: 0 = nothing, 1 = an ordinary atom, 2 = an atom of a crowd of small molecules, 3 = the back of a mesh exposed by a cut, 4 = a sphere of a membrane in one piece
-  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, v_fine > 1.5 ? 4u : v_fine > 0.5 ? 2u : 1u);
+  // 5 = 纤维 / 5 = a fibre
+  o_ids = uvec4(subunit + 1u, v_ids.y, v_inst.y, v_fine > 2.5 ? 5u : v_fine > 1.5 ? 4u : v_fine > 0.5 ? 2u : 1u);
 }`
 
 /**
@@ -447,8 +456,13 @@ void main() {
       // 同一张膜上不到半层膜厚的起伏也不算；更大的台阶（膜的切口对着远处的膜）照常画线
       // nor is relief of under half a bilayer on one membrane; a larger step (the cut edge of the membrane against membrane far behind) draws its line as usual
       if (id0.a == 4u && id.a == 4u && id.b == id0.b && rd < 20.0) within = true;
+      // 同一条纤维上相邻的几节深度差很小；两股交叉处差一个半径以上，照常画线
+      // neighbouring pieces of one fibre differ little in depth; where two strands cross they differ by a radius or more, and the line is drawn as usual
+      if (id0.a == 5u && id.a == 5u && id.b == id0.b && rd < 7.0) within = true;
       if (rd > u_contour.z && !within) l += min((rd - u_contour.z) / (u_contour.w - u_contour.z), 1.0);
-      if (id.r != id0.r) r += 1.0;
+      // 同一张膜、同一条纤维内部，各块之间不画线 / within one membrane or one fibre, no line is drawn between its pieces
+      bool sameSheet = (id0.a == 4u || id0.a == 5u) && id.a == id0.a && id.b == id0.b;
+      if (id.r != id0.r && !sameSheet) r += 1.0;
       if (atom0 && id.a != 0u && abs(float(int(id.g) - int(id0.g))) > u_residue.z) g += 1.0;
     }
   }

@@ -645,11 +645,19 @@ export const useStore = create<State>((set, get) => ({
         notes.push(oriented ? { key: 'note.picksOriented', params: { count: pts.length / 3 } } : { key: 'note.picks', params: { count: pts.length / 3 } })
       }
       // 原子太多就改画每个残基一个球 / with too many atoms, draw one sphere per residue instead
+      const mesoscale0 = !!entry.perCopy
       const full = placedAtomCount(mol, assembly)
       if (full > ATOM_BUDGET && src.kind !== 'prepared') {
         mol = coarsen(mol)
         notes.push({ key: 'note.coarse', params: { millions: (full / 1e6).toFixed(0) } })
       }
+      // 概念“核酸”：纤维的每一节画成同样大小的球，连起来是一条粗细均匀的线（DNA 双螺旋半径约 10 Å，单链 RNA 画细一些）
+      // the concept "nucleic acid": every piece of a fibre is drawn as a sphere of one size, which join into a strand of even width (a DNA double helix is about 10 Å in radius; single-stranded RNA is drawn thinner)
+      if (mesoscale0 && mol.radius && get().drawing === 'painted')
+        for (const c of mol.chains) {
+          const d = mol.entities[c.entity]!.description
+          if (/\.fibers?\./i.test(d)) mol.radius.fill(/RNA/i.test(d) ? 7 : 11, c.start, c.start + c.count)
+        }
       const roles: Role[] = mol.entities.map((e) => {
         if (e.kind === 'lipid') return 'membrane'
         for (const [pattern, role] of entry.roles ?? []) if (new RegExp(pattern!, 'i').test(e.description)) return role as Role
@@ -717,7 +725,7 @@ export const useStore = create<State>((set, get) => ({
             st.lineWidth = Math.min(st.lineWidth, 0.7)
             // 密的模型里一个分子只有画幅的百分之几，切片要厚些才连得成片，否则到处露白
             // in a dense model a molecule is a few percent of the frame, and the slab has to be thicker for the picture to hold together, or paper shows everywhere
-            if (st.slab) st.slab = 0.5
+            if (st.slab) st.slab = 0.4
             // 线用填色的深一号，不用近黑：分子又小又密时黑线会盖住颜色，他画密的场景时线很柔和
             // lines take a deeper shade of the fill rather than near-black: with small, crowded molecules black line smothers the colour, and his line is soft in crowded scenes
             st.inkShade = 0.3
