@@ -40,6 +40,29 @@ export interface Stimulus {
   duration: number
   /** 重复刺激（时间总和）：次数和频率 / Repeated application (temporal summation): count and rate. */
   repeat?: { count: number; hz: number }
+  /**
+   * 肢体退缩后刺激是否随之结束。缺省为 true：刺激物是肢体可以躲开的（针、夹子、压头、冷热的接触物），
+   * 肢体一离开，刺激就停，强度随即消退。刺激被固定在身上或肢体被固定时（如手浸在冷水里的冷加压试验、
+   * 夹住不放的夹子）设为 false，强度按给定的时长计算。没有发生退缩时这一项不起作用。
+   * Whether the stimulus ends when the limb withdraws. True by default: the stimulating object is
+   * one the limb can escape from (a pin, a clamp, a probe, a hot or cold contact), so the stimulus
+   * stops as the limb leaves it and the intensity then decays. Set it to false when the stimulus
+   * is held on the body or the limb is held (a hand immersed for a cold pressor test, a clamp
+   * left on); the intensity then follows the stated duration. It has no effect without a withdrawal.
+   */
+  withdrawalEndsStimulus?: boolean
+}
+
+/** 模型的可选项 / Options of the model. */
+export interface PainOptions {
+  /**
+   * 热痛的“温度–评分”斜率取哪一种：painScale（默认）、noSensation、noSensationRescaled、toleranceRamp。
+   * 各自的出处和实测内容见 data/curated/pain/nociception.json 的 heat.response.anchors。
+   * Which reading of the heat temperature-rating slope to use: painScale (default), noSensation,
+   * noSensationRescaled, toleranceRamp. What each source measured is in heat.response.anchors of
+   * data/curated/pain/nociception.json.
+   */
+  heatAnchor?: 'painScale' | 'noSensation' | 'noSensationRescaled' | 'toleranceRamp'
 }
 
 /** data/curated/skinmaps/innervation.<body>.json 中用到的部分 / The part of innervation.<body>.json that is used. */
@@ -163,6 +186,12 @@ export interface ReflexResult {
   targets: ReflexTarget[]
   /** 何时放松（开始回到原姿势），秒 / When the limb starts to return, seconds. */
   releaseAt: number | null
+  /**
+   * 肢体离开刺激物、刺激因此结束的时刻，秒；刺激没有因退缩而提前结束时为 null。
+   * When the limb leaves the stimulating object and so ends the stimulus, seconds; null when the
+   * withdrawal does not cut the stimulus short.
+   */
+  stimulusEndsAt: number | null
 }
 
 export interface AutonomicState {
@@ -221,6 +250,8 @@ export interface PainTrace {
   threshold: { value: number; unit: string; site: string; borrowed: boolean }
   /** 刺激–反应函数给出的强度 0–10 / Intensity 0–10 given by the stimulus-response function. */
   drive: number
+  /** 热刺激所用的斜率取法；其他刺激为 null / The slope reading used for heat; null for other kinds. */
+  heatAnchor: string | null
   dermatome: SkinRegionHit | null
   territory: SkinRegionHit | null
   /** 脊髓节段 / Spinal segments. */

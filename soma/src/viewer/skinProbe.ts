@@ -13,6 +13,9 @@ import { attribute, float, varying, vec4 } from 'three/tsl'
 import type { PartBuffers } from './batches.ts'
 import { positionNodeFor, type SkinningData, type SkinningMode } from './skinning.ts'
 
+/** 一次读回一行，最多这么多个顶点；更多的分几次读 / One row per read-back, at most this many vertices; more are read in several passes. */
+const ROW = 256
+
 export async function probeSkinnedPositions(
   renderer: WebGPURenderer,
   data: SkinningData,
@@ -20,9 +23,16 @@ export async function probeSkinnedPositions(
   buffers: PartBuffers,
   vertexIds: readonly number[],
 ): Promise<Float32Array> {
+  // 多行的目标在两个后端上读回的行序不同，所以始终只用一行，按块读
+  // row order of a multi-row target differs between the backends on read-back, so a single row is always used and the ids are read in chunks
+  if (vertexIds.length > ROW) {
+    const all = new Float32Array(vertexIds.length * 3)
+    for (let o = 0; o < vertexIds.length; o += ROW) all.set(await probeSkinnedPositions(renderer, data, mode, buffers, vertexIds.slice(o, o + ROW)), o * 3)
+    return all
+  }
   const n = vertexIds.length
-  const width = Math.min(256, Math.max(1, n))
-  const height = Math.max(1, Math.ceil(n / width))
+  const width = Math.max(1, n)
+  const height = 1
   const position = new Float32Array(n * 9)
   const normal = new Float32Array(n * 9)
   const skinIndex = new Uint16Array(n * 12)

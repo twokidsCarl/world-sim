@@ -6,9 +6,10 @@ import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Shaper, jointScales, resolveControls } from '../tools/rig/shape.ts'
 import { AnatomyGraph } from '../src/anatomy/graph.ts'
-import { checkShape, clampControl, formatShapeParam, nonDefaultControls, parseShapeParam, shapeIsDefault, shapeScales } from '../src/anatomy/shape.ts'
+import { checkShape, clampControl, formatShapeParam, mapShapeControls, nonDefaultControls, parseShapeParam, shapeIsDefault, shapeScales } from '../src/anatomy/shape.ts'
 import type { AnatomyData, Part } from '../src/anatomy/types.ts'
 import type { ShapeData } from '../src/shape/types.ts'
+import { HIDDEN, NORMAL, computeDisplay, skinDrawnOpaque } from '../src/state/display.ts'
 import { setRigLoader, setShapeLoader, useApp } from '../src/state/store.ts'
 import { resetUrlSync, restoreFromUrl, snapshot } from '../src/state/urlSync.ts'
 import { formatUrl, parseUrl } from '../src/state/urlState.ts'
@@ -77,6 +78,18 @@ describe('shape helpers', () => {
     expect(formatUrl(parseUrl('shape=h1.8,b28').state)).toBe('shape=h1.8,b28')
     expect(parseUrl('shape=zz').warnings.join()).toMatch(/shape/)
     expect(parseUrl('shape=zz').state.shape).toBeUndefined()
+  })
+
+  it('carries controls over to the other body as offsets from its own defaults, clamped there', () => {
+    const other = tinyShape()
+    other.data.controls[0] = { ...other.data.controls[0]!, default: 1.6 }
+    other.data.controls[1] = { ...other.data.controls[1]!, default: 22, valid: { ...other.data.controls[1]!.valid, min: 18, max: 30 } }
+    const main = checkShape(data, bin), o = checkShape(other.data, other.bin)
+    const m = mapShapeControls(main, { stature: 1.82, bmi: 33.5 }, o)
+    expect(m.stature).toBeCloseTo(1.7) // +10 cm on both / +10 cm on both
+    expect(m.bmi).toBe(30) // +10 会到 32，这副身体只到 30 / +10 would be 32; this body stops at 30
+    expect(mapShapeControls(main, {}, o)).toEqual({})
+    expect(mapShapeControls(null, { stature: 1.9 }, o)).toEqual({})
   })
 
   it('rejects files that do not agree', () => {
@@ -155,13 +168,21 @@ describe('store: shape flows', () => {
     expect([S().shape, S().shapeControls, S().jointScales]).toEqual([null, {}, null])
   })
 
-  it('the skin view hides the hair meshes; the muscle view brings them back', () => {
-    expect(new AnatomyGraph(body).mainSkinId()).toBe('skin')
+  it('hair meshes are hidden whenever the skin is drawn opaque, but stay selectable from the tree', () => {
+    const g = new AnatomyGraph(body)
+    expect([...g.unfittedAppendages()]).toEqual(['hair'])
+    const input = () => ({ systems: S().systems, peel: 0, hidden: S().hidden, isolated: null, adjacentMode: false, selected: S().selection.set, unfitted: skinDrawnOpaque(S(), g.mainSkinId()) ? g.unfittedAppendages() : null })
+    expect([...computeDisplay(g, input())]).toEqual([NORMAL, NORMAL, NORMAL])
     S().setFaceView('skin')
-    expect([...S().hidden].sort()).toEqual(['hair'])
     expect(S().skinOpaque).toBe(true)
-    S().setFaceView('muscle')
-    expect(S().hidden.size).toBe(0)
+    expect([...computeDisplay(g, input())]).toEqual([HIDDEN, NORMAL, NORMAL])
+    S().selectParts(['hair'])
+    expect([...computeDisplay(g, input())]).toEqual([NORMAL, NORMAL, NORMAL])
+    S().clearSelection()
+    S().setSkinOpaque(false)
+    expect(skinDrawnOpaque(S(), 'skin')).toBe(false)
+    expect(skinDrawnOpaque({ ...S(), skinMapMode: 'dermatome' }, 'skin')).toBe(true)
+    expect(skinDrawnOpaque({ ...S(), skinMapMode: 'dermatome', skinSeeThrough: true }, 'skin')).toBe(false)
   })
 })
 

@@ -77,14 +77,14 @@ export function TopBar() {
         )}
         {cautions > 0 && (
           <button className="chip chip-warn chip-button" onClick={() => app.setCautionsOpen(true)} title="此人体模型的已知问题">
-            初版 · {cautions} 条注意事项
+            <span className="not-phone">初版 · </span>{cautions} 条注意<span className="not-phone">事项</span>
           </button>
         )}
         <button className="text-btn" onClick={() => void copyLink()} title="复制能直接打开当前视图的链接 / Copy a link that opens this view">
           {copied ? '已复制 Copied' : '复制链接'}
         </button>
         <button className="text-btn" onClick={() => app.setAboutOpen(true)}>
-          数据来源与声明
+          数据来源<span className="not-phone">与声明</span>
         </button>
         <button className="icon-btn only-narrow" aria-label="结构信息" aria-pressed={rightOpen} onClick={() => { app.setLeftOpen(false); app.setRightOpen(!rightOpen) }}>
           <Icon name="info" size={18} />

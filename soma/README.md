@@ -21,6 +21,13 @@
 - 男女切换保留视角和选中的结构；对照视图把两个体型的同一系统并排显示，视角联动。
 - 每个体型带一份"使用前请注意"，首次加载时显示。
 
+### 对照视图、触屏和 WebGL2
+
+- **对照视图**：姿势、呼吸、体型和疼痛表情在左右两个窗格里同时生效。体型按"相对各自默认值的偏移"套到另一副身体上，并限制在它的可用范围内。
+- **皮肤不透明时**头发、眉毛和阴毛暂时隐藏（这几个网格还没有贴合新皮肤）；它们仍在结构树里，选中即可显示。"显示"页有"皮肤不透明"开关。
+- **触屏**：单指旋转、双指平移和捏合缩放、点按选取；手机上顶栏分两行，详情是底部抽屉。嵌入页里第一次触摸画布之后才接管手势，之前竖向滑动仍然滚动页面。只在设备模拟里验证过，没有在真机上测过。
+- **WebGL2 回退**：每个系统里不透明的部件合成一次绘制（三千多次降到一百多次）；`?chunks=0` 可关掉用于对照。改变身高时相机跟随身体。
+
 ### 体型
 
 "姿势"页的"体型"一节有四个滑块：身高、BMI、腿长比例、体型分布。BMI 只改变皮肤和皮下脂肪（肌肉、骨、内脏不变，内脏脂肪和乳房没有模拟）；身高和比例通过各关节的节段缩放实现。每个滑块只能在这副身体上可用的范围内移动，到头时会写明原因（例如男性不能低于 BMI 21.5，否则肌肉穿出皮肤）。回归公式来自人群测量数据，给出的是平均体型，不是对某个人的预测。
@@ -151,7 +158,7 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 
 - 内容：VIVAE 语料库（Holz、Larrouy-Maestri、Poeppel，[doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)）里"身体疼痛"类的 185 条录音，重采样到 24 kHz，另加本项目做的逐条分析。这些是按指令表演出来的发声，不是真实疼痛时的录音。署名、许可和改动清单在该目录的 `ATTRIBUTION.txt` 和 `LICENSE.txt` 里。
 - 用法：`src/voice/` 在运行时加载它，在录音基础上做变化（换录音、小幅变调变速、连成持续性发声、由女声推出男声）。目录不存在时自动改用参数化合成器。
-- **商业用途的构建或部署必须删除这个目录**（构建产物里是 `dist/voice/`）。没有任何机制强制这一点。
+- **商业用途的构建或部署不得带这个目录。** 用 `SOMA_COMMERCIAL=1 bunx vite build` 构建：产物里不带 `voice/`，界面改用参数合成的声音，也不显示录音的署名。默认构建不变（带录音包）。
 - `data/curated/voice/calibration.json` 只含由该语料统计出的汇总量，不含音频。
 
 ## 已知的缺口
@@ -173,7 +180,6 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
   - 皮肤是参数化体表（Meta MHR）：先取标准女性体型（身高 1.606 m、BMI 21.6），再在肌肉仍超出的地方放宽，所以按体积算的 BMI 约 23.65，肩和上臂比标准目标饱满（两肩最宽处 467 mm，目标 443 mm）。头是模型的平均头按她的颅骨放大的，下面部偏厚，两眼每侧偏外约 5 mm，内眦有皱缩，面部有横向台阶。右腋窝的上臂皮肤嵌进躯干皮肤。会阴处是光滑的闭合面，没有外阴形态。
   - 乳房取皮肤模型的形状（每侧约 370 mL），解剖数据里的乳腺部件缩到约 0.4–0.5 倍并下移以放进去；位置偏低，乳头在剑突下约 7 cm，两项"乳房高度"检查目前不通过。
   - 右前臂和右手在 CT 里被裁切，用的是左侧镜像。
-- 触屏手势没有在真机上测过。
 
 ## 接下来
 
@@ -207,6 +213,13 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 - Two hierarchies (is-a and part-of) and search by name or id.
 - Switching between male and female keeps the camera and the selection; the compare view shows one system of both bodies side by side with linked cameras.
 - Each body carries a list of cautions, shown on first load.
+
+### Compare view, touch and WebGL2
+
+- **Compare view**: pose, breathing, body shape and the pain expression apply in both panes. Shape is carried to the other body as offsets from its own defaults, within its valid range.
+- **While the skin is opaque**, the hair, eyebrows and pubic hair are hidden (these meshes are not yet fitted to the new skins); they stay in the tree and selecting one shows it. The Display tab has an "Opaque skin" switch.
+- **Touch**: one finger orbits, two fingers pan and pinch-zoom, a tap picks; on phones the top bar takes two rows and details open as a bottom sheet. In an embed the canvas takes over gestures only after it is first touched; before that a vertical swipe still scrolls the page. Verified in device emulation only, not on a real device.
+- **WebGL2 fallback**: opaque parts of each system are drawn in one call (from over three thousand draws to about a hundred); `?chunks=0` switches this off for comparison. The camera follows the body when stature changes.
 
 ### Body shape
 
@@ -338,7 +351,7 @@ About two thirds of the Chinese names are machine-generated from a term lexicon 
 
 - Contents: the 185 physical-pain recordings of the VIVAE corpus (Holz, Larrouy-Maestri, Poeppel, [doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)), resampled to 24 kHz, plus a per-clip analysis made by this project. They are vocalisations performed on instruction, not recordings of real pain. Attribution, licence and the list of changes are in `ATTRIBUTION.txt` and `LICENSE.txt` in that directory.
 - Use: `src/voice/` loads it at run time and varies the recordings (clip choice, small pitch and time changes, sequences for sustained pain, a male voice derived from the female recordings). Without the directory it falls back to the parametric synthesizer.
-- **A build or deployment for commercial use must delete this directory** (`dist/voice/` in the build output). Nothing enforces this.
+- **A build or deployment for commercial use must not include this directory.** Build with `SOMA_COMMERCIAL=1 bunx vite build`: `dist/` then has no `voice/`, the app uses the parametric voice and the recordings' attribution is not shown. The default build is unchanged (it includes the pack).
 - `data/curated/voice/calibration.json` holds only aggregates computed from the corpus, no audio.
 
 ## Known gaps
@@ -360,7 +373,6 @@ The full list is in each body's `cautions`. The main ones:
   - The skin is a parametric surface (Meta MHR): a standard female shape (1.606 m, BMI 21.6) relaxed where muscle still lay outside it, so the volume BMI is about 23.65 and shoulders and upper arms are fuller than the target (bideltoid 467 mm against 443 mm). The head is the model's average head scaled to her skull; the lower face is thick, the eyes sit about 5 mm too far lateral on each side, the inner canthi are crumpled and there are horizontal steps across the face. On the right, upper-arm skin runs into trunk skin in the axilla. The perineum is a smooth closed surface without vulvar anatomy.
   - The breasts take the skin model's shape (about 370 mL a side); the gland parts of the anatomy data are scaled to about 0.4–0.5 and moved down to fit. They sit too low — the nipple about 7 cm below the xiphoid — and two breast-level checks currently fail.
   - The right forearm and hand were clipped in the CT and are a mirrored left.
-- Touch gestures have not been tested on a real device.
 
 ## Next
 

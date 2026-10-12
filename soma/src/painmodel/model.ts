@@ -10,12 +10,13 @@
 
 import type { Joint, Vec3 } from '../anatomy/types.ts'
 import { buildNerveIndex, nervePath, type NerveIndex } from './path.ts'
-import { AUTONOMIC, AUTONOMIC_SIGNS, NOCICEPTION, REFLEX, REGIONS, siteThreshold, sourceIds, sourcesById, type AutonomicSignId, type Quantity, type SiteThreshold } from './tables.ts'
+import { AUTONOMIC, AUTONOMIC_SIGNS, NOCICEPTION, REFLEX, REGIONS, responseGain, siteThreshold, sourceIds, sourcesById, type AutonomicSignId, type Quantity, type SiteThreshold } from './tables.ts'
 import type {
   AutonomicState,
   Bilingual,
   PainBody,
   PainMap,
+  PainOptions,
   PainResult,
   PainSample,
   PainSkinMap,
@@ -182,6 +183,9 @@ interface Drive {
   threshold: SiteThreshold
   /** 阈值上乘的系数及其来源 / Multiplier applied to the threshold, with its origin. */
   factor: { value: number; quantity: { assumption?: boolean; note?: Bilingual } } | null
+  /** 所用的阈上增益，以及（热刺激）它是哪一种取法 / The supra-threshold gain used and, for heat, which reading it is. */
+  gain: Quantity
+  anchor: string | null
   drive: number
 }
 
@@ -194,10 +198,11 @@ function need(x: number | undefined, what: string, kind: string): number {
  * 刺激–反应函数：物理量和部位 → 强度 0–10（阈值以下为 0）。
  * The stimulus-response function: physical magnitude and site → intensity 0–10 (0 below threshold).
  */
-export function stimulusDrive(stimulus: Stimulus, region: string, sex: 'male' | 'female'): Drive {
+export function stimulusDrive(stimulus: Stimulus, region: string, sex: 'male' | 'female', options: PainOptions = {}): Drive {
   const m = NOCICEPTION.modalities[stimulus.kind]
   const max = NOCICEPTION.scale.max.value
-  const gain = m.response.gain.value
+  const g = responseGain(m, stimulus.kind === 'heat' ? options.heatAnchor : undefined)
+  const gain = g.quantity.value
   const exponent = m.response.exponent?.value ?? 1
   if (stimulus.kind === 'pinprick') {
     const force = need(stimulus.forceN, 'forceN', 'pinprick') * 1000
@@ -206,7 +211,7 @@ export function stimulusDrive(stimulus: Stimulus, region: string, sex: 'male' | 
     const base = m.threshold!
     const threshold: SiteThreshold = { value: base.value * factor, unit: m.unit, site: region, borrowed: false, quantity: base, borrowNote: null }
     const drive = force > threshold.value ? gain * Math.log2(force / threshold.value) : 0
-    return { magnitude: force, unit: m.unit, threshold, factor: { value: factor, quantity: f }, drive: clamp(drive, 0, max) }
+    return { magnitude: force, unit: m.unit, threshold, factor: { value: factor, quantity: f }, gain: g.quantity, anchor: g.anchor, drive: clamp(drive, 0, max) }
   }
   if (stimulus.kind === 'pressure' || stimulus.kind === 'pinch') {
     const force = need(stimulus.forceN, 'forceN', stimulus.kind)
@@ -218,13 +223,13 @@ export function stimulusDrive(stimulus: Stimulus, region: string, sex: 'male' | 
     const factor = m.thresholdFactor ? { value: m.thresholdFactor.value, quantity: m.thresholdFactor } : null
     const threshold = { ...site, value: site.value * (factor?.value ?? 1) }
     const drive = pressure > threshold.value ? gain * Math.pow(pressure / threshold.value - 1, exponent) : 0
-    return { magnitude: pressure, unit: m.unit, threshold, factor, drive: clamp(drive, 0, max) }
+    return { magnitude: pressure, unit: m.unit, threshold, factor, gain: g.quantity, anchor: g.anchor, drive: clamp(drive, 0, max) }
   }
   const temperature = need(stimulus.temperatureC, 'temperatureC', stimulus.kind)
   const threshold = siteThreshold(REGIONS.thresholds[stimulus.kind], region, sex)
   const over = stimulus.kind === 'heat' ? temperature - threshold.value : threshold.value - temperature
   const drive = over > 0 ? gain * Math.pow(over, exponent) : 0
-  return { magnitude: temperature, unit: m.unit, threshold, factor: null, drive: clamp(drive, 0, max) }
+  return { magnitude: temperature, unit: m.unit, threshold, factor: null, gain: g.quantity, anchor: g.anchor, drive: clamp(drive, 0, max) }
 }
 
 interface Pulse {
@@ -302,8 +307,16 @@ export interface PainEvaluation {
   readonly drive: number
   /** 强度时间过程的峰值及其时刻 / Peak of the intensity time course and when it occurs. */
   readonly peak: { intensity: number; t: number }
-  /** 最后一次刺激结束的时刻，秒 / When the last application ends, seconds. */
+  /**
+   * 刺激实际结束的时刻，秒：给定的结束时刻，或者肢体退缩离开刺激物的时刻（取较早者）。
+   * When the stimulus actually ends, seconds: the stated end, or the moment the withdrawing limb
+   * leaves the stimulating object, whichever is earlier.
+   */
   readonly stimulusEnd: number
+  /** 按给定的时长和重复次数，刺激本该结束的时刻，秒 / When the stimulus would end by its stated duration and repeats, seconds. */
+  readonly statedEnd: number
+  /** 刺激是否因退缩而提前结束 / Whether the withdrawal cut the stimulus short. */
+  readonly endedByWithdrawal: boolean
   /** 此后各输出都已回到基线附近，秒 / After this every output is back near baseline, seconds. */
   readonly horizon: number
   readonly reflex: ReflexResult
@@ -325,11 +338,11 @@ export interface PainEvaluation {
  * Prepare everything for one stimulus; values can then be read at any time. The same input
  * always gives the same output.
  */
-export function prepareStimulus(body: PainBody, stimulus: Stimulus): PainEvaluation {
+export function prepareStimulus(body: PainBody, stimulus: Stimulus, options: PainOptions = {}): PainEvaluation {
   const ix = indexOf(body)
   const loc = locate(body, stimulus)
   const modality = NOCICEPTION.modalities[stimulus.kind]
-  const d = stimulusDrive(stimulus, loc.region, body.body)
+  const d = stimulusDrive(stimulus, loc.region, body.body, options)
   const regionDef = REGIONS.regions[loc.region]!
   const derm = loc.dermatome ? body.innervation.dermatomes[loc.dermatome.region]! : null
   const terr = loc.territory ? body.innervation.cutaneous[loc.territory.region]! : null
@@ -347,9 +360,17 @@ export function prepareStimulus(body: PainBody, stimulus: Stimulus): PainEvaluat
   const latency = { adelta: path.lengthM / vA, c: path.lengthM / vC, firstPain: path.lengthM / vA + central, secondPain: path.lengthM / vC + central }
 
   // ---- 强度的时间过程 / intensity time course
-  const { list, summation } = pulses(stimulus, d.drive, loc.region)
+  const stated = pulses(stimulus, d.drive, loc.region)
+  const summation = stated.summation
   const t0 = stimulus.onset ?? 0
-  const stimulusEnd = list[list.length - 1]!.start + list[list.length - 1]!.duration
+  const statedEnd = stated.list[stated.list.length - 1]!.start + stated.list[stated.list.length - 1]!.duration
+
+  // ---- 退缩反射；肢体离开刺激物时刺激随之结束（除非刺激被固定）
+  // ---- withdrawal reflex; the stimulus ends as the limb leaves the object (unless it is held)
+  const reflex = decideReflex(ix, loc, d.drive, path.lengthM, path.end, t0, statedEnd, terr?.territory ?? null, stimulus.withdrawalEndsStimulus !== false)
+  const cut = reflex.stimulusEndsAt
+  const list = cut === null ? stated.list : stated.list.filter((p) => p.start < cut).map((p) => ({ ...p, duration: Math.min(p.duration, cut - p.start) }))
+  const stimulusEnd = cut === null ? statedEnd : cut
   const wA = modality.firstPainShare.value
   const max = NOCICEPTION.scale.max.value
   // 重复刺激时取总强度最大的那一次；时间总和已经体现在逐次增加的强度里
@@ -368,8 +389,6 @@ export function prepareStimulus(body: PainBody, stimulus: Stimulus): PainEvaluat
     return { first, second, intensity: Math.min(max, first + second) }
   }
 
-  // ---- 退缩反射 / withdrawal reflex
-  const reflex = decideReflex(body, ix, loc, d.drive, path.lengthM, path.end, t0, stimulusEnd, terr?.territory ?? null)
   const poseAt = (t: number): Record<string, number[]> => {
     const out: Record<string, number[]> = {}
     if (!reflex.withdraws || reflex.movementLatency === null || reflex.releaseAt === null) return out
@@ -445,7 +464,7 @@ export function prepareStimulus(body: PainBody, stimulus: Stimulus): PainEvaluat
     for (const c of terr.chain) if (c.parts[loc.side]?.length) nerves.push({ name: c.name, parts: [...c.parts[loc.side]] })
   }
   const segments = derm?.segments ?? terr?.segments ?? []
-  const trace = buildTrace({ body, stimulus, loc, d, modality, regionName: regionDef.name, nerves, roots, segments, territorySegments: terr?.segments ?? [], path, latency, reflex, summation, wA, peak })
+  const trace = buildTrace({ body, stimulus, loc, d, modality, regionName: regionDef.name, nerves, roots, segments, territorySegments: terr?.segments ?? [], path, latency, reflex, summation, wA, peak, statedEnd })
 
   const sample = (t: number): PainSample => {
     const c = components(t)
@@ -456,6 +475,8 @@ export function prepareStimulus(body: PainBody, stimulus: Stimulus): PainEvaluat
     drive: d.drive,
     peak,
     stimulusEnd,
+    statedEnd,
+    endedByWithdrawal: cut !== null,
     horizon,
     reflex,
     trace,
@@ -485,7 +506,7 @@ function sensoryRoots(parts: readonly { id: string; name: string }[]): { chain: 
   return sensible.length ? { chain: sensible.slice(0, -1).map((p) => p.id), end: [sensible[sensible.length - 1]!.id] } : { chain: [], end: [] }
 }
 
-const memo = new WeakMap<PainBody, WeakMap<Stimulus, PainEvaluation>>()
+const memo = new WeakMap<PainBody, WeakMap<Stimulus, Map<string, PainEvaluation>>>()
 
 /**
  * evaluateStimulus(身体数据, 刺激, t) → 该时刻的强度、反射、自主体征，以及解释数据和体表图。
@@ -494,17 +515,20 @@ const memo = new WeakMap<PainBody, WeakMap<Stimulus, PainEvaluation>>()
  * with the explanation data and the skin map. The preparation for one stimulus object is done
  * once (treat stimulus objects as immutable).
  */
-export function evaluateStimulus(body: PainBody, stimulus: Stimulus, t: number): PainResult {
+export function evaluateStimulus(body: PainBody, stimulus: Stimulus, t: number, options: PainOptions = {}): PainResult {
   let perBody = memo.get(body)
   if (!perBody) memo.set(body, (perBody = new WeakMap()))
-  let e = perBody.get(stimulus)
-  if (!e) perBody.set(stimulus, (e = prepareStimulus(body, stimulus)))
+  let perStimulus = perBody.get(stimulus)
+  if (!perStimulus) perBody.set(stimulus, (perStimulus = new Map()))
+  const key = options.heatAnchor ?? ''
+  let e = perStimulus.get(key)
+  if (!e) perStimulus.set(key, (e = prepareStimulus(body, stimulus, options)))
   return e.at(t)
 }
 
-function decideReflex(body: PainBody, ix: BodyIndex, loc: Located, drive: number, lengthM: number, rootEnd: Vec3, t0: number, stimulusEnd: number, territory: string | null): ReflexResult {
+function decideReflex(ix: BodyIndex, loc: Located, drive: number, lengthM: number, rootEnd: Vec3, t0: number, statedEnd: number, territory: string | null, endsStimulus: boolean): ReflexResult {
   const limb = REGIONS.regions[loc.region]!.limb
-  const none = (reason: Bilingual): ReflexResult => ({ withdraws: false, reason, limb, side: loc.side, pattern: null, emgLatency: null, movementLatency: null, amplitude: 0, targets: [], releaseAt: null })
+  const none = (reason: Bilingual): ReflexResult => ({ withdraws: false, reason, limb, side: loc.side, pattern: null, emgLatency: null, movementLatency: null, amplitude: 0, targets: [], releaseAt: null, stimulusEndsAt: null })
   if (!limb) return none({ zh: '刺激不在肢体上：本模型只模拟肢体的屈肌退缩，躯干和头部的躲避动作没有模拟。', en: 'The stimulus is not on a limb: only the flexor withdrawal of the limbs is modelled, not the recoil of trunk or head.' })
   const thr = REFLEX.threshold.value
   if (drive < thr) return none({ zh: `强度 ${drive.toFixed(1)} 低于退缩阈 ${thr}（假设值）。`, en: `Intensity ${drive.toFixed(1)} is below the withdrawal threshold of ${thr} (an assumed value).` })
@@ -534,6 +558,10 @@ function decideReflex(body: PainBody, ix: BodyIndex, loc: Located, drive: number
   const efferentM = eff ? Math.hypot(eff.center[0] - rootEnd[0], eff.center[1] - rootEnd[1], eff.center[2] - rootEnd[2]) : lengthM / 2
   const emgLatency = lengthM / NOCICEPTION.fibres.Adelta.velocity.value + REFLEX.spinalDelay.value + efferentM / REFLEX.motorVelocity.value
   const movementLatency = emgLatency + REFLEX.electromechanicalDelay.value
+  // 肢体离开刺激物的时刻；只有比给定的结束时刻早才算提前结束
+  // when the limb leaves the object; it cuts the stimulus short only if earlier than the stated end
+  const escapeAt = t0 + movementLatency + REFLEX.escape.value
+  const stimulusEndsAt = endsStimulus && escapeAt < statedEnd ? escapeAt : null
   return {
     withdraws: true,
     reason: { zh: `强度 ${drive.toFixed(1)} 达到退缩阈 ${thr}（假设值）。`, en: `Intensity ${drive.toFixed(1)} reaches the withdrawal threshold of ${thr} (an assumed value).` },
@@ -544,7 +572,8 @@ function decideReflex(body: PainBody, ix: BodyIndex, loc: Located, drive: number
     movementLatency,
     amplitude,
     targets,
-    releaseAt: Math.max(stimulusEnd, t0 + movementLatency) + REFLEX.pose.hold.value,
+    releaseAt: Math.max(stimulusEndsAt ?? statedEnd, t0 + movementLatency) + REFLEX.pose.hold.value,
+    stimulusEndsAt,
   }
 }
 
@@ -613,6 +642,7 @@ interface TraceInput {
   summation: number
   wA: number
   peak: { intensity: number; t: number }
+  statedEnd: number
 }
 
 function buildTrace(x: TraceInput): PainTrace {
@@ -631,9 +661,14 @@ function buildTrace(x: TraceInput): PainTrace {
   const thrNumbers: TraceNumber[] = [
     keep(computed({ zh: '刺激量', en: 'Stimulus magnitude' }, d.magnitude, d.unit)),
     keep(num({ zh: `痛阈（${d.threshold.site}）`, en: `Pain threshold (${d.threshold.site})` }, d.threshold.quantity, d.threshold.value, d.unit)),
-    keep(num({ zh: '阈上增益', en: 'Supra-threshold gain' }, modality.response.gain)),
+    keep(num({ zh: d.anchor ? `阈上增益（${d.anchor}）` : '阈上增益', en: d.anchor ? `Supra-threshold gain (${d.anchor})` : 'Supra-threshold gain' }, d.gain)),
   ]
   if (modality.response.exponent) thrNumbers.push(keep(num({ zh: '指数', en: 'Exponent' }, modality.response.exponent)))
+  if (d.anchor && modality.response.anchors) {
+    // 热痛斜率的其他取法并列给出，界面可以让学生切换 / the other readings of the heat slope, so the UI can let a student switch
+    for (const [id, q] of Object.entries(modality.response.anchors)) if (id !== d.anchor) thrNumbers.push(keep(num({ zh: `另一种取法的增益（${id}）`, en: `Gain under another reading (${id})` }, q)))
+    if (modality.response.anchorNote) caveats.push(modality.response.anchorNote)
+  }
   if (d.factor && d.factor.value !== 1) thrNumbers.push(keep({ label: { zh: '部位系数', en: 'Regional multiplier' }, value: d.factor.value, unit: '×', sources: [], assumption: d.factor.quantity.assumption === true, ...(d.factor.quantity.note ? { note: d.factor.quantity.note } : {}) }))
   if (x.summation > 0) thrNumbers.push(keep(num({ zh: '时间总和的增量（平台）', en: 'Temporal summation increment (plateau)' }, loc.region === 'hand' || loc.region === 'fingertip' ? temporal.temporalSummation.gain.hand : temporal.temporalSummation.gain.other)))
   thrNumbers.push(keep(computed({ zh: '强度（刺激–反应函数）', en: 'Intensity (stimulus-response function)' }, d.drive, 'NRS')))
@@ -773,7 +808,15 @@ function buildTrace(x: TraceInput): PainTrace {
       keep(computed({ zh: '开始移动', en: 'Movement onset' }, reflex.movementLatency!, 's')),
       keep(computed({ zh: '幅度（占满幅）', en: 'Amplitude (fraction of full)' }, reflex.amplitude, '')),
     )
-    caveats.push({ zh: '退缩之后刺激并没有被移开：模型不计算肢体离开刺激物，强度仍按原定的刺激时长计算。', en: 'Withdrawal does not remove the stimulus: the model does not compute the limb leaving the stimulating object, and the intensity still follows the stated duration.' })
+    if (reflex.stimulusEndsAt !== null) {
+      reflexNumbers.push(
+        keep(num({ zh: '从开始移动到离开刺激物', en: 'From movement onset to leaving the object' }, REFLEX.escape)),
+        keep(computed({ zh: '刺激因退缩而结束', en: 'Stimulus ended by the withdrawal' }, reflex.stimulusEndsAt, 's', { zh: `原定到 ${x.statedEnd.toFixed(2)} s`, en: `Stated to last until ${x.statedEnd.toFixed(2)} s` })),
+      )
+      caveats.push({ zh: '肢体退缩离开了刺激物，刺激提前结束，此后强度按消退时间常数（假设值）回落；这里假定刺激物是可以躲开的，且没有计算皮肤的余热。刺激被固定在身上时应把 withdrawalEndsStimulus 设为 false。', en: 'The withdrawing limb left the stimulating object, so the stimulus ended early and the intensity then falls with the decay time constants (assumed values); this presumes an object that can be escaped and ignores heat remaining in the skin. For a stimulus held on the body set withdrawalEndsStimulus to false.' })
+    } else if (stimulus.withdrawalEndsStimulus === false) {
+      caveats.push({ zh: '刺激被设为固定在身上（withdrawalEndsStimulus = false）：肢体虽然退缩，刺激仍按给定的时长持续。', en: 'The stimulus is set as held on the body (withdrawalEndsStimulus = false): the limb withdraws but the stimulus lasts its stated duration.' })
+    }
   }
   steps.push({
     id: 'reflex',
@@ -817,6 +860,7 @@ function buildTrace(x: TraceInput): PainTrace {
     magnitude: { value: d.magnitude, unit: d.unit },
     threshold: { value: d.threshold.value, unit: d.unit, site: d.threshold.site, borrowed: d.threshold.borrowed },
     drive: d.drive,
+    heatAnchor: stimulus.kind === 'heat' ? d.anchor : null,
     dermatome: loc.dermatome,
     territory: loc.territory,
     segments: x.segments,

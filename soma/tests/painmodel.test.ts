@@ -106,7 +106,9 @@ describe.each(['male', 'female'] as BodyId[])('pain model on the %s body', (body
       let lastHr = -1
       let positive = 0
       for (const x of c.values) {
-        const e = prepareStimulus(body, at(c.site, c.make(x)))
+        // 峰值和体征的单调性在刺激被固定时检验；肢体可以躲开时，更强的刺激引起退缩，反而结束得更早（另有检验）
+        // peak and signs are checked with the stimulus held; when the limb can escape, a stronger stimulus triggers withdrawal and ends sooner (tested separately)
+        const e = prepareStimulus(body, at(c.site, { ...c.make(x), withdrawalEndsStimulus: false }))
         const hr = Math.max(...[2, 5, 10, 20, 30].map((t) => e.sample(t).autonomic.heartRate))
         expect(e.drive, `${c.kind} ${x} drive`).toBeGreaterThanOrEqual(lastDrive)
         expect(e.peak.intensity, `${c.kind} ${x} peak`).toBeGreaterThanOrEqual(lastPeak - 1e-9)
@@ -280,6 +282,110 @@ describe.each(['male', 'female'] as BodyId[])('pain model on the %s body', (body
     expect(bare.sample(1).reflexPose).toEqual({})
   })
 
+  it.runIf(present)('ends the stimulus when the limb withdraws, unless the stimulus is held', () => {
+    const palm = territoryCentre(body, 'median', 'L')
+    const rest = { kind: 'cold', temperatureC: 4, duration: 60 } as const
+    const free = prepareStimulus(body, at(palm, rest))
+    const explicit = prepareStimulus(body, at(palm, { ...rest, withdrawalEndsStimulus: true }))
+    const held = prepareStimulus(body, at(palm, { ...rest, withdrawalEndsStimulus: false }))
+    // 缺省就是“退缩结束刺激” / ending on withdrawal is the default
+    expect(JSON.stringify(free.at(3))).toBe(JSON.stringify(explicit.at(3)))
+    // 判定、潜伏期和姿势目标不受影响 / decision, latencies and pose targets are the same
+    expect(free.drive).toBe(held.drive)
+    expect(free.reflex.withdraws).toBe(true)
+    expect(free.reflex.emgLatency).toBe(held.reflex.emgLatency)
+    expect(free.reflex.targets).toEqual(held.reflex.targets)
+    // 固定：按给定时长；可躲开：在开始移动后不久结束 / held: the stated duration; free: ends shortly after movement onset
+    expect(held.endedByWithdrawal).toBe(false)
+    expect(held.stimulusEnd).toBe(60)
+    expect(held.reflex.stimulusEndsAt).toBeNull()
+    expect(free.endedByWithdrawal).toBe(true)
+    expect(free.statedEnd).toBe(60)
+    expect(free.stimulusEnd).toBeCloseTo(free.reflex.movementLatency! + REFLEX.escape.value, 12)
+    expect(free.reflex.stimulusEndsAt).toBe(free.stimulusEnd)
+    expect(free.stimulusEnd).toBeLessThan(1)
+    // 到刺激结束（加上传导时间）之前两者相同，之后可躲开的那个消退 / identical until the end reaches perception, then the free one decays
+    const l = free.trace.latency
+    for (const t of [0.05, l.firstPain + 0.02, free.stimulusEnd + l.firstPain - 0.01]) expect(free.sample(t).intensity).toBeCloseTo(held.sample(t).intensity, 9)
+    expect(free.peak.intensity).toBeLessThan(held.peak.intensity)
+    expect(free.sample(10).intensity).toBeLessThan(0.05)
+    expect(held.sample(10).intensity).toBeGreaterThan(5)
+    expect(free.sample(30).autonomic.systolic).toBeLessThan(held.sample(30).autonomic.systolic)
+    // 快成分在刺激结束后单调消退 / the fast component only falls after the end
+    let last = Infinity
+    for (let t = free.stimulusEnd + l.firstPain; t < free.stimulusEnd + l.firstPain + 2; t += 0.05) {
+      const v = free.sample(t).firstPain
+      expect(v).toBeLessThanOrEqual(last + 1e-12)
+      last = v
+    }
+    // 肢体收回后不久放松，而不是等到原定的 60 秒 / the limb relaxes soon after, not at the stated 60 s
+    expect(free.reflex.releaseAt!).toBeLessThan(3)
+    expect(held.reflex.releaseAt!).toBeGreaterThan(60)
+    expect(free.horizon).toBeLessThan(held.horizon)
+    // 解释数据说明了刺激为何提前结束，并标明是假设 / the trace says why the stimulus ended early and flags the assumption
+    const step = free.trace.steps.find((x) => x.id === 'reflex')!
+    expect(step.numbers.some((n) => n.assumption && /leaving the object/.test(n.label.en))).toBe(true)
+    expect(free.trace.caveats.some((c) => /withdrawalEndsStimulus/.test(c.en))).toBe(true)
+    expect(held.trace.caveats.some((c) => /held on the body/.test(c.en))).toBe(true)
+    // 没有退缩时这一项不起作用 / without a withdrawal the option changes nothing
+    const tip = segmentTip(body, 'dip2_L')
+    const a = prepareStimulus(body, at(tip, { kind: 'pinprick', forceN: 0.256, duration: 2 }))
+    const b = prepareStimulus(body, at(tip, { kind: 'pinprick', forceN: 0.256, duration: 2, withdrawalEndsStimulus: false }))
+    expect(a.reflex.withdraws).toBe(false)
+    expect(a.endedByWithdrawal).toBe(false)
+    for (const t of [0.3, 1, 2.5, 6]) expect(JSON.stringify(a.sample(t))).toBe(JSON.stringify(b.sample(t)))
+    // 比逃离时间还短的刺激不会被“提前结束” / a stimulus shorter than the escape time is not cut short
+    const brief = prepareStimulus(body, at(palm, { kind: 'cold', temperatureC: 4, duration: 0.05 }))
+    expect(brief.reflex.withdraws).toBe(true)
+    expect(brief.endedByWithdrawal).toBe(false)
+    expect(brief.stimulusEnd).toBe(0.05)
+    // 重复刺激：肢体离开后不再有后续的刺激 / repeated stimuli: none after the limb has left
+    const sole = territoryCentre(body, 'medialPlantar', 'L')
+    const train = prepareStimulus(body, at(sole, { kind: 'pinch', forceN: 30, areaMm2: 25, duration: 0.5, repeat: { count: 5, hz: 1 } }))
+    expect(train.endedByWithdrawal).toBe(true)
+    expect(train.stimulusEnd).toBeLessThan(0.5)
+    expect(train.sample(3.5 + train.trace.latency.firstPain).firstPain).toBeLessThan(0.01)
+  })
+
+  it.runIf(present)('offers the documented readings of the heat slope and defaults to the pain-scale one', () => {
+    const forearm = territoryCentre(body, 'lateralAntebrachial', 'L')
+    const stimulus = at(forearm, { kind: 'heat', temperatureC: 47, duration: 8, withdrawalEndsStimulus: false })
+    const anchors = NOCICEPTION.modalities.heat.response.anchors!
+    const thr = (REGIONS.thresholds.heat.sites.forearm as { value: number }).value
+    expect(NOCICEPTION.modalities.heat.response.defaultAnchor).toBe('painScale')
+    const byDefault = prepareStimulus(body, stimulus)
+    expect(byDefault.trace.heatAnchor).toBe('painScale')
+    expect(byDefault.drive).toBeCloseTo(anchors.painScale!.value * (47 - thr), 9)
+    const drives: Record<string, number> = {}
+    for (const id of ['noSensation', 'noSensationRescaled', 'toleranceRamp', 'painScale'] as const) {
+      const e = prepareStimulus(body, stimulus, { heatAnchor: id })
+      expect(e.trace.heatAnchor).toBe(id)
+      expect(e.drive, id).toBeCloseTo(Math.min(10, anchors[id]!.value * (47 - thr)), 9)
+      // 阈值不随取法改变 / the threshold does not depend on the reading
+      expect(e.trace.threshold.value).toBe(thr)
+      expect(prepareStimulus(body, at(forearm, { kind: 'heat', temperatureC: thr - 0.2, duration: 8 }), { heatAnchor: id }).drive).toBe(0)
+      drives[id] = e.drive
+      // 解释数据里列出所用的和其余的取法 / the trace lists the reading used and the others
+      const numbers = e.trace.steps.find((x) => x.id === 'stimulus')!.numbers
+      expect(numbers.filter((n) => /another reading/.test(n.label.en)).length).toBe(Object.keys(anchors).length - 1)
+      expect(numbers.some((n) => n.label.en === `Supra-threshold gain (${id})`)).toBe(true)
+    }
+    expect(drives.noSensation!).toBeLessThan(drives.noSensationRescaled!)
+    expect(drives.noSensationRescaled!).toBeLessThan(drives.toleranceRamp!)
+    expect(drives.toleranceRamp!).toBeLessThan(drives.painScale!)
+    // 默认取法重现它的出处：前臂 48 °C、其阈值 45.39 °C 时约 5.7/10 / the default reproduces its source: about 5.7 at 48 °C with its threshold of 45.39 °C
+    expect(anchors.painScale!.value * (48 - 45.39)).toBeCloseTo(5.74, 1)
+    // evaluateStimulus 按选项分别缓存 / evaluateStimulus keeps the options apart
+    expect(evaluateStimulus(body, stimulus, 6).intensity).toBeGreaterThan(evaluateStimulus(body, stimulus, 6, { heatAnchor: 'noSensation' }).intensity)
+    expect(evaluateStimulus(body, stimulus, 6, { heatAnchor: 'noSensation' }).trace.heatAnchor).toBe('noSensation')
+    expect(evaluateStimulus(body, stimulus, 6).trace.heatAnchor).toBe('painScale')
+    expect(() => prepareStimulus(body, stimulus, { heatAnchor: 'nonsense' as 'painScale' })).toThrow(/heatAnchor/)
+    // 其他刺激不受影响 / other kinds are untouched
+    const cold = at(territoryCentre(body, 'median', 'L'), { kind: 'cold', temperatureC: 8, duration: 5 })
+    expect(prepareStimulus(body, cold, { heatAnchor: 'noSensation' }).drive).toBe(prepareStimulus(body, cold).drive)
+    expect(prepareStimulus(body, cold).trace.heatAnchor).toBeNull()
+  })
+
   it.runIf(present)('adds temporal summation only at or above 0.33 Hz', () => {
     const hand = territoryCentre(body, 'superficialRadial', 'L')
     const single = prepareStimulus(body, at(hand, { kind: 'pinprick', forceN: 0.256, duration: 0.5 }))
@@ -296,7 +402,7 @@ describe.each(['male', 'female'] as BodyId[])('pain model on the %s body', (body
 
   it.runIf(present)('moves the autonomic signs with the intensity and brings them back', () => {
     const palm = territoryCentre(body, 'median', 'L')
-    const e = prepareStimulus(body, at(palm, { kind: 'cold', temperatureC: 4, duration: 60 }))
+    const e = prepareStimulus(body, at(palm, { kind: 'cold', temperatureC: 4, duration: 60, withdrawalEndsStimulus: false }))
     const base = e.sample(-1).autonomic
     const during = e.sample(60).autonomic
     const after = e.sample(e.horizon).autonomic

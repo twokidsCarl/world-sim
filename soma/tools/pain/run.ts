@@ -1,4 +1,4 @@
-// 入口：bun tools/pain/run.ts [male|female] [--side=R] [--trace=<场景 id>]
+// 入口：bun tools/pain/run.ts [male|female] [--side=R] [--trace=<场景 id>] [--heat=<取法>]
 // 对两个体型（或指定的一个）运行一组参考场景，打印汇总表，并把时间序列写到 tools/pain/out/（不入库）。
 // Entry point. Runs the reference scenarios for both bodies (or the one named), prints a summary
 // table and writes the time series under tools/pain/out/ (not committed).
@@ -11,7 +11,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { BodyId } from '../../src/anatomy/types.ts'
 import { DISCLAIMER, prepareStimulus, type PainEvaluation } from '../../src/painmodel/index.ts'
-import type { SideLR } from '../../src/painmodel/types.ts'
+import type { PainOptions, SideLR } from '../../src/painmodel/types.ts'
 import { hasPainBody, loadPainBody, ROOT } from './load.ts'
 import { SCENARIOS } from './scenarios.ts'
 
@@ -19,6 +19,8 @@ const args = process.argv.slice(2)
 const bodies = (['male', 'female'] as BodyId[]).filter((b) => !args.some((a) => a === 'male' || a === 'female') || args.includes(b))
 const side = (args.find((a) => a.startsWith('--side='))?.slice(7) === 'R' ? 'R' : 'L') as SideLR
 const traceId = args.find((a) => a.startsWith('--trace='))?.slice(8)
+// 热痛斜率的取法（见 nociception.json）；缺省用默认的 / reading of the heat slope (see nociception.json); the default when absent
+const heatAnchor = args.find((a) => a.startsWith('--heat='))?.slice(7) as PainOptions['heatAnchor']
 const out = join(ROOT, 'tools/pain/out')
 mkdirSync(out, { recursive: true })
 
@@ -48,12 +50,12 @@ for (const bodyId of bodies) {
   const t0 = performance.now()
   const body = await loadPainBody(bodyId)
   console.log(`\n== ${bodyId}  (skin ${body.skin.part}, ${body.skinMaps.vertexCount} vertices, side ${side})`)
-  const head = ['scenario', 'region', 'derm', 'territory', 'stimulus', 'threshold', 'drive', 'peak@s', 'path cm', 'Aδ ms', 'C s', 'reflex', 'HR', 'SBP/DBP', 'RR', 'pupil', 'SC μS']
+  const head = ['scenario', 'region', 'derm', 'territory', 'stimulus', 'threshold', 'drive', 'peak@s', 'ends s', 'path cm', 'Aδ ms', 'C s', 'reflex', 'HR', 'SBP/DBP', 'RR', 'pupil', 'SC μS']
   const rows: string[][] = [head]
   const summary: unknown[] = []
   for (const sc of SCENARIOS) {
     const stimulus = sc.build(body, side)
-    const e = prepareStimulus(body, stimulus)
+    const e = prepareStimulus(body, stimulus, heatAnchor ? { heatAnchor } : {})
     const tr = e.trace
     const { best } = extremes(e)
     const reflex = e.reflex.withdraws
@@ -68,6 +70,7 @@ for (const bodyId of bodies) {
       `${tr.threshold.value.toFixed(1)}${tr.threshold.borrowed ? `*(${tr.threshold.site})` : ''}`,
       e.drive.toFixed(2),
       `${e.peak.intensity.toFixed(2)}@${e.peak.t.toFixed(2)}`,
+      e.endedByWithdrawal ? `${e.stimulusEnd.toFixed(2)} (of ${e.statedEnd.toFixed(0)})` : e.stimulusEnd.toFixed(2),
       `${(tr.path.lengthM * 100).toFixed(1)}${tr.path.method === 'straight' ? ' straight' : tr.path.bridgedM > 0.02 ? ` (${(tr.path.bridgedM * 100).toFixed(0)} bridged)` : ''}`,
       (tr.latency.adelta * 1000).toFixed(0),
       tr.latency.c.toFixed(2),

@@ -1,0 +1,447 @@
+疼痛输入模型（src/painmodel/）的前端接入说明
+Integration note for the frontend: the pain input model (src/painmodel/)
+
+中文在前，English below.
+路径都相对于 soma/。All paths are relative to soma/.
+
+
+========================================================================
+中文
+========================================================================
+
+这是疼痛生理与行为的计算模型，用于教学：被模拟的身体没有主观体验。
+
+1. 引入
+------------------------------------------------------------------------
+  import { prepareStimulus, evaluateStimulus, painMapWeights, DISCLAIMER,
+           NOCICEPTION, type PainBody, type Stimulus, type PainOptions }
+    from '../painmodel/index.ts'
+
+模块是纯函数，不依赖 DOM 和 three.js；同样的输入给出同样的输出。
+
+
+2. 每个体型构造一次 PainBody（数据都已在内存里）
+------------------------------------------------------------------------
+  body         'male' 或 'female'
+  skin         { part: skinMaps.part, positions }
+               positions 是皮肤在“静止姿势、默认体型”下的顶点坐标（展平 xyz，米），
+               顺序与 GLB 解码后的顶点顺序相同——也就是 src/viewer/skinLayer.ts 里
+               SkinGeometry.position 所来自的那份数组。
+  skinMaps     store 里的 LoadedSkinMaps，原样传入。
+  innervation  data/curated/skinmaps/innervation.<body>.json。
+               它在 git 里，但不在 public/ 下：请直接用 JSON import 引入
+               （例如 import male from '../../data/curated/skinmaps/innervation.male.json'），
+               不要复制到别处。每个约 48 kB；可以按体型动态 import()。
+  nerves       public/anatomy/<body>/nerves.json 的内容。
+  parts        anatomy.json 的 parts（只用 id、name、centroid）。
+  joints       rig.rig.joints。可省略：省略时没有反射姿势，也不区分指尖。
+
+皮肤顶点数与体表图不一致时（皮肤重建了而体表图没有跟着重建）模型会抛出错误，
+不会悄悄用错的顶点。PainBody 对象请复用：模型按对象缓存索引。
+
+
+3. 点击 / 拖动时，拾取要给出什么
+------------------------------------------------------------------------
+- 命中的是皮肤部件时：部件 id、命中三角形的三个顶点下标、重心坐标。
+  Viewer.cast 里已经有 faceIndex（lastFace）。
+- 用三个顶点在“静止网格”上的坐标按重心坐标插值，得到 site.position；
+  site.vertex 取重心权重最大的那个顶点。
+- 不要传姿势或体型改变之后的世界坐标：体表图、神经中心线和路径都在静止空间里。
+- 拖动：每个采样点新建一个刺激对象，或者松手时生成一个刺激。
+  刺激对象当作不可变的（evaluateStimulus 按对象缓存）。
+- 现在只支持皮肤；点到别的部件时不要调用模型。
+
+
+4. 刺激的字段
+------------------------------------------------------------------------
+  { kind, site: { part, position, vertex, depthMm? },
+    forceN?, areaMm2?, temperatureC?, onset?, duration,
+    repeat?: { count, hz }, withdrawalEndsStimulus? }
+
+  kind                    'pinprick' | 'pressure' | 'heat' | 'cold' | 'pinch'
+  forceN                  牛顿。针刺、压力、捏夹必填。
+  areaMm2                 平方毫米。压力缺省 100（1 cm² 探头），捏夹缺省 25；
+                          针刺不用（阈值只对 0.2 mm 平头探头成立）；
+                          热和冷只决定画多大的接触区。
+  temperatureC            摄氏度。热、冷必填。
+  onset                   开始时刻，秒，缺省 0。
+  duration                每次刺激的时长，秒。
+  repeat                  重复刺激；频率不低于 0.33 Hz 时有时间总和。
+  withdrawalEndsStimulus  缺省 true：肢体退缩离开刺激物后刺激随之结束，强度消退。
+                          界面上表示“刺激被固定 / 肢体被固定”（冷加压式浸泡、夹住不放）
+                          时设为 false，强度按 duration 计算。没有退缩时不起作用。
+  depthMm                 只记录，尚未参与计算。
+
+缺少必填字段会抛出错误。
+
+可选项 PainOptions（prepareStimulus 的第三个参数、evaluateStimulus 的第四个参数）：
+  heatAnchor  热痛“温度–评分”斜率的取法：
+              'painScale'（默认，2.2 /°C）、'toleranceRamp'（1.43）、
+              'noSensationRescaled'（1.025）、'noSensation'（0.82）。
+              各自的出处和实测内容在 data/curated/pain/nociception.json 的
+              modalities.heat.response.anchors；可以做成界面上的一个切换。
+
+
+5. 界面的建议默认值
+------------------------------------------------------------------------
+“检验过的范围”是 tests/painmodel.test.ts 里实际跑过的范围；超出它模型仍会给出结果
+（强度封顶在 10），但没有检验过，组织损伤也没有模拟。滑块范围取出处里测试设备的范围。
+
+  刺激      默认                      滑块范围                 时长   检验过的范围
+  针刺      128 mN                    8–512 mN（DFNS 刺激器）   2 s    8–2000 mN
+  钝压      50 N / 100 mm²（500 kPa） 0–200 N（0–2000 kPa）     3 s    10–300 N / 100 mm²
+  捏夹      15 N / 25 mm²（600 kPa）  0–40 N                    1 s    1–60 N / 25 mm²
+  热        46 °C                     32–50 °C（设备上限 50）    5 s    36–70 °C
+  冷        8 °C                      0–32 °C（设备下限 0）      10 s   25 至 −10 °C
+
+默认值下大致的结果（默认取法）：针刺指尖 128 mN → 0.4/10；钝压小腿 500 kPa → 男 0、女 1.7；
+捏夹足底 600 kPa → 男 3.0、女 4.6（女性会退缩）；热 46 °C → 前臂 2.6、手 5.9（手会退缩）；
+冷 8 °C 手 → 4.3（会退缩）。把滑块推到阈值上下，学生可以直接看到“阈值以下没有反应”。
+
+
+6. 调用
+------------------------------------------------------------------------
+  const e = prepareStimulus(body, stimulus, options)   // 每个刺激一次，约 1 ms
+  e.sample(t)   // 每帧：{ intensity, firstPain, secondPain, reflexPose, autonomic }
+  e.at(t)       // 同上，另带 reflex、trace、map
+  evaluateStimulus(body, stimulus, t, options)   // 等价于 e.at(t)，内部按刺激对象缓存
+
+t 是刺激时钟上的秒数（stimulus.onset 缺省为 0）。请用会随页面隐藏而暂停的时钟推进 t
+（visibilitychange），与 src/pain/controller.ts 的做法一致。
+
+e 上还有：
+  drive               刺激–反应函数给出的强度 0–10
+  peak                { intensity, t } 时间过程的峰值
+  stimulusEnd         刺激实际结束的时刻（可能因退缩而提前）
+  statedEnd           按 duration 和 repeat 本该结束的时刻
+  endedByWithdrawal   是否因退缩而提前结束
+  horizon             此后各输出都回到基线附近
+  output              { level, onset, startAt } 给现有表情 / 发声的建议
+
+接到现有的表情和发声：
+- 最简单：在 t = e.output.startAt 时
+    setPain({ level: e.output.level, onset: e.output.onset })，然后 triggerPain()。
+  要出声，必须在用户手势的调用链里。
+- 持续的刺激：每帧 setPain({ hold: true, level: e.sample(t).intensity })，结束时 hold: false。
+- e.peak.intensity === 0（阈下）时两者都不要调用。
+
+
+7. 画什么
+------------------------------------------------------------------------
+神经通路
+  e.trace.highlightParts   要高亮的部件 id，由远及近：皮神经、上级神经链、后根 / 神经节。
+                           用 selectParts 或单独的高亮；打开 skinSeeThrough 更容易看清。
+  e.trace.path.polyline    从皮肤到神经根的折线（展平 xyz，静止空间）。
+                           要表现时间：让一个标记沿折线移动，在 trace.latency.adelta 时到达终点（快），
+                           另一个在 trace.latency.c 时到达（慢）。
+  e.trace.path.bridgedM    路径中直线跨越的长度（模型里没有建出的神经段，如神经丛）；可以画成虚线。
+
+体表图层
+  painMapWeights(body, e.map)   Float32Array(vertexCount)，0–1：
+                                接触区最高到 1，同一皮神经分布区 0.35，同一皮节 0.2，对侧为 0。
+  接触区可以再乘 sample(t).intensity / 10 让它随强度变化。
+  背景的两个亮度是显示用的值，不是那里的疼痛强度——图例里要写明。
+  也可以用现有的 skinRegions 高亮：区域下标在 e.map.dermatome.region、e.map.territory.region。
+
+监护面板
+  sample(t).autonomic   heartRate、systolic、diastolic、respiratoryRate、pupil（mm）、skinConductance（μS）。
+  基线是 e.sample(-1).autonomic。要一直采样到 e.horizon：血压要几分钟才回来。
+
+反射姿势
+  sample(t).reflexPose   Record<关节 id, number[]>，弧度，是在静止姿势上的增量，
+                         已经按活动范围截断，也已经带了时间包络。
+  逐自由度加到用户当前的姿势上，再用 clampPose 截断，不带 animate 地应用；
+  它回到 {} 时恢复用户原来的姿势。
+  e.reflex 里有 withdraws、reason、pattern、emgLatency、movementLatency、targets、
+  releaseAt、stimulusEndsAt，可用于显示。
+
+解释面板
+  e.trace.steps   九步：刺激与阈值、感受器与纤维、部位、皮神经、脊髓节段、传导、
+                  强度的时间过程、退缩反射、自主体征。每步有中英文的 title、text，
+                  numbers[]（label、value、unit、sources、assumption / computed、note）和 parts[]。
+  e.trace.sources   用到的出处的完整条目（citation、doi、url、license、opened、supports）。
+  e.trace.caveats   这一次刺激的局限。
+  e.trace.heatAnchor   热刺激所用的斜率取法。
+
+
+8. 时间
+------------------------------------------------------------------------
+  第一痛       onset + trace.latency.firstPain    约 0.16–0.24 s
+  第二痛       onset + trace.latency.secondPain   约 0.3–1.5 s
+  反射开始动   onset + reflex.movementLatency     约 0.12–0.16 s（早于表情）
+  刺激因退缩结束  reflex.stimulusEndsAt           开始动之后 0.1 s（假设值）
+  瞳孔         约 0.5 s 到峰
+  皮肤电导     约 1.5 s 之后
+  心率         几秒
+  血压         几十秒，回落要几分钟
+
+
+9. 界面必须明说的事
+------------------------------------------------------------------------
+- 始终可见：DISCLAIMER（也在 e.trace.disclaimer）——这是计算模型，被模拟的身体没有主观体验，
+  数值不能用于临床判断。
+- 每个数字旁标明它的性质：trace 里的 TraceNumber 有三种，恰好属于其一——
+    sources 非空      有出处（点开显示 e.trace.sources 里的条目，包括 opened：这条出处是怎么读的）
+    assumption: true  本项目的假设（显示 note 里的理由）
+    computed: true    由模型从几何或别的数算出
+- 下面这些全部是假设，不要让它们看起来像测量值：
+    除热以外所有的阈上增益（针刺、压力、捏夹、冷）
+    第一痛 / 第二痛的比例，所有上升、消退、适应的时间常数，0.15 s 的中枢延迟
+    退缩阈（4/10）、运动神经传导速度、脊髓延迟、电–机械延迟、逃离时间（0.1 s）
+    所有反射的关节角度（只有“哪些关节、往哪个方向”有出处）
+    自主体征的参考强度（皮肤电导除外）和几乎所有时间常数；呼吸频率整项没有出处
+    针刺的部位系数；没有测量值的部位借用别处阈值（trace.threshold.borrowed 为 true 时要显示）
+- 热：四种斜率取法相差近三倍，默认的一种只来自一项研究的一个温度点；
+  界面上最好能切换，并显示 anchorNote（已在 e.trace.caveats 里）。
+- 瞳孔的数值来自麻醉下的病人，不是清醒的人。
+- 皮节图和皮神经分布区图是构造的教学用图，未经临床医师审校。
+- 监护面板上的数是群体平均的效应量，个体差异很大，不能用来推断疼痛。
+- e.trace.caveats 里的每一条都应当显示出来。
+
+
+10. 嵌入模式
+------------------------------------------------------------------------
+这里没有任何需要对话框的东西。?embed=1 时一个场景可以用地址参数表示一个刺激
+（种类、量值、时长、体表上的位置），进来就自己开始；页面隐藏时停止推进 t。
+声音仍然需要用户点击。
+
+
+11. 命令行
+------------------------------------------------------------------------
+  bun tools/pain/run.ts [male|female] [--side=R] [--trace=<场景 id>] [--heat=<取法>]
+参考场景在 tools/pain/scenarios.ts；按解剖关系找刺激点的做法（segmentTip、territoryCentre）
+可以直接拿去做卡片的预设位置。
+
+
+
+========================================================================
+English
+========================================================================
+
+This is a computational model of pain physiology and behaviour for teaching: the simulated
+body has no subjective experience.
+
+1. Imports
+------------------------------------------------------------------------
+  import { prepareStimulus, evaluateStimulus, painMapWeights, DISCLAIMER,
+           NOCICEPTION, type PainBody, type Stimulus, type PainOptions }
+    from '../painmodel/index.ts'
+
+The module is pure, with no DOM and no three.js; the same input always gives the same output.
+
+
+2. Build one PainBody per body (everything is already in memory)
+------------------------------------------------------------------------
+  body         'male' or 'female'
+  skin         { part: skinMaps.part, positions }
+               positions are the skin's vertices in the rest pose and default shape (flat xyz,
+               metres), in GLB decode order - the array that SkinGeometry.position of
+               src/viewer/skinLayer.ts comes from.
+  skinMaps     the store's LoadedSkinMaps, as it is.
+  innervation  data/curated/skinmaps/innervation.<body>.json.
+               It is in git but not under public/: import it as JSON where it is
+               (e.g. import male from '../../data/curated/skinmaps/innervation.male.json');
+               do not copy it anywhere. About 48 kB each; a dynamic import() per body is fine.
+  nerves       the content of public/anatomy/<body>/nerves.json.
+  parts        the parts of anatomy.json (only id, name, centroid are used).
+  joints       rig.rig.joints. Optional: without it there is no reflex pose and no fingertip
+               refinement.
+
+The model throws when the skin vertex count and the skin maps disagree (a skin rebuilt without
+its maps) rather than use wrong vertices. Reuse the PainBody object: indices are cached per
+object.
+
+
+3. What the probe must return for a click or a drag
+------------------------------------------------------------------------
+- When the hit is the skin part: the part id, the three vertex indices of the hit triangle and
+  the barycentric coordinates. Viewer.cast already has faceIndex (lastFace).
+- Interpolate the three vertices' positions on the REST mesh with the barycentric coordinates
+  to get site.position; site.vertex is the vertex with the largest barycentric weight.
+- Do not pass the world position of the posed or shaped skin: the maps, the nerve centrelines
+  and the path all live in rest space.
+- Drag: a new stimulus object per sample, or one stimulus on release. Treat stimulus objects as
+  immutable (evaluateStimulus caches per object).
+- Only the skin is supported for now; do not call the model for a hit on another part.
+
+
+4. Stimulus fields
+------------------------------------------------------------------------
+  { kind, site: { part, position, vertex, depthMm? },
+    forceN?, areaMm2?, temperatureC?, onset?, duration,
+    repeat?: { count, hz }, withdrawalEndsStimulus? }
+
+  kind                    'pinprick' | 'pressure' | 'heat' | 'cold' | 'pinch'
+  forceN                  newtons. Required for pinprick, pressure, pinch.
+  areaMm2                 mm². Defaults: pressure 100 (the 1 cm² probe), pinch 25;
+                          unused for pinprick (its threshold holds for the 0.2 mm flat tip
+                          only); for heat and cold it only sets the size of the drawn area.
+  temperatureC            °C. Required for heat and cold.
+  onset                   seconds, 0 by default.
+  duration                seconds per application.
+  repeat                  repeated applications; temporal summation at 0.33 Hz or faster.
+  withdrawalEndsStimulus  true by default: the stimulus ends as the withdrawing limb leaves
+                          the object, and the intensity decays. Set it to false when the UI
+                          says the stimulus or the limb is held (cold-pressor immersion, a
+                          clamp left on); the intensity then follows `duration`. No effect
+                          without a withdrawal.
+  depthMm                 recorded only, not yet modelled.
+
+A missing required field throws.
+
+PainOptions (third argument of prepareStimulus, fourth of evaluateStimulus):
+  heatAnchor  which reading of the heat temperature-rating slope:
+              'painScale' (default, 2.2 per °C), 'toleranceRamp' (1.43),
+              'noSensationRescaled' (1.025), 'noSensation' (0.82).
+              What each source measured is in modalities.heat.response.anchors of
+              data/curated/pain/nociception.json; it makes a good toggle in the UI.
+
+
+5. Suggested UI defaults
+------------------------------------------------------------------------
+"Range tested" is what tests/painmodel.test.ts actually runs; beyond it the model still answers
+(intensity capped at 10) but nothing was checked, and tissue injury is not modelled. Slider
+ranges follow the test devices of the sources.
+
+  Kind       Default                    Slider range               Duration  Range tested
+  pinprick   128 mN                     8-512 mN (DFNS probes)     2 s       8-2000 mN
+  pressure   50 N on 100 mm² (500 kPa)  0-200 N (0-2000 kPa)       3 s       10-300 N on 100 mm²
+  pinch      15 N on 25 mm² (600 kPa)   0-40 N                     1 s       1-60 N on 25 mm²
+  heat       46 °C                      32-50 °C (device cut-off)  5 s       36-70 °C
+  cold       8 °C                       0-32 °C (device cut-off)   10 s      25 down to -10 °C
+
+Roughly what the defaults give (default reading): pinprick on a fingertip at 128 mN → 0.4 out
+of 10; pressure on the leg at 500 kPa → 0 on the male body, 1.7 on the female; pinch on the
+sole at 600 kPa → 3.0 male, 4.6 female (she withdraws); heat at 46 °C → 2.6 on the forearm,
+5.9 on the hand (which withdraws); cold at 8 °C on the hand → 4.3 (withdraws). Moving a slider
+across the threshold lets a student see that nothing happens below it.
+
+
+6. Calls
+------------------------------------------------------------------------
+  const e = prepareStimulus(body, stimulus, options)   // once per stimulus, about 1 ms
+  e.sample(t)   // per frame: { intensity, firstPain, secondPain, reflexPose, autonomic }
+  e.at(t)       // the same plus reflex, trace, map
+  evaluateStimulus(body, stimulus, t, options)   // same as e.at(t), cached per stimulus object
+
+t is seconds on the stimulus clock (stimulus.onset defaults to 0). Advance it with a clock that
+pauses while the page is hidden (visibilitychange), as src/pain/controller.ts does.
+
+Also on e:
+  drive               intensity 0-10 from the stimulus-response function
+  peak                { intensity, t } of the time course
+  stimulusEnd         when the stimulus actually ends (possibly cut short by the withdrawal)
+  statedEnd           when it would end by duration and repeat
+  endedByWithdrawal   whether the withdrawal cut it short
+  horizon             after this every output is back near baseline
+  output              { level, onset, startAt } suggested for the existing face and voice
+
+Feeding the existing face and voice:
+- Simplest: at t = e.output.startAt call
+    setPain({ level: e.output.level, onset: e.output.onset }) and then triggerPain().
+  For sound this must be inside the user's gesture chain.
+- Sustained stimuli: setPain({ hold: true, level: e.sample(t).intensity }) per frame, then
+  hold: false at the end.
+- Call neither when e.peak.intensity === 0 (below threshold).
+
+
+7. What to draw
+------------------------------------------------------------------------
+Nerve pathway
+  e.trace.highlightParts   part ids to highlight, distal to proximal: cutaneous nerve, parent
+                           chain, posterior root / ganglion. Use selectParts or a highlight of
+                           its own; skinSeeThrough makes it easier to see.
+  e.trace.path.polyline    the line from skin to root (flat xyz, rest space). To show timing,
+                           move one marker along it to arrive at trace.latency.adelta (fast)
+                           and another to arrive at trace.latency.c (slow).
+  e.trace.path.bridgedM    length of straight bridges on the path (stretches the model has no
+                           centreline for, such as a plexus); these could be dashed.
+
+Skin layer
+  painMapWeights(body, e.map)   Float32Array(vertexCount), 0-1: contact area up to 1, same
+                                cutaneous territory 0.35, same dermatome 0.2, other side 0.
+  The contact area may be scaled by sample(t).intensity / 10 so that it follows the intensity.
+  The two background levels are display values, not pain intensities there - say so in the
+  legend. The existing skinRegions highlight works too: the region indices are
+  e.map.dermatome.region and e.map.territory.region.
+
+Monitor
+  sample(t).autonomic   heartRate, systolic, diastolic, respiratoryRate, pupil (mm),
+                        skinConductance (μS).
+  Baselines are e.sample(-1).autonomic. Keep sampling until e.horizon: blood pressure takes
+  minutes to come back.
+
+Reflex pose
+  sample(t).reflexPose   Record<joint id, number[]>, radians, increments on the rest pose,
+                         already clamped to the dof ranges and already time-enveloped.
+  Add it per dof to the user's current pose, clamp with clampPose and apply without animate;
+  restore the user's pose when it returns to {}.
+  e.reflex has withdraws, reason, pattern, emgLatency, movementLatency, targets, releaseAt and
+  stimulusEndsAt for display.
+
+Explanation panel
+  e.trace.steps   nine steps: stimulus and threshold, receptors and fibres, site, cutaneous
+                  nerve, spinal segment, conduction, time course of intensity, withdrawal
+                  reflex, autonomic signs. Each has a bilingual title and text, numbers[]
+                  (label, value, unit, sources, assumption / computed, note) and parts[].
+  e.trace.sources   the full entries of the sources used (citation, doi, url, license, opened,
+                    supports).
+  e.trace.caveats   the limitations of this particular stimulus.
+  e.trace.heatAnchor   the slope reading used for a heat stimulus.
+
+
+8. Timing
+------------------------------------------------------------------------
+  First pain        onset + trace.latency.firstPain    about 0.16-0.24 s
+  Second pain       onset + trace.latency.secondPain   about 0.3-1.5 s
+  Reflex movement   onset + reflex.movementLatency     about 0.12-0.16 s (before the face)
+  Stimulus ended by the withdrawal   reflex.stimulusEndsAt   0.1 s after movement onset (assumed)
+  Pupil             peaks at about 0.5 s
+  Skin conductance  after about 1.5 s
+  Heart rate        seconds
+  Blood pressure    tens of seconds; minutes to return
+
+
+9. What the UI must state plainly
+------------------------------------------------------------------------
+- Always visible: DISCLAIMER (also e.trace.disclaimer) - this is a computational model, the
+  simulated body has no subjective experience, and the numbers are not for clinical use.
+- Beside every number, what kind it is. A TraceNumber of the trace is exactly one of:
+    sources non-empty   sourced (open the entry of e.trace.sources, including `opened`: how
+                        that source was read)
+    assumption: true    an assumption of this project (show the reason in its note)
+    computed: true      computed by the model from geometry or other numbers
+- All of the following are assumptions and must not look like measurements:
+    every supra-threshold gain except heat (pinprick, pressure, pinch, cold)
+    the first-pain / second-pain shares, every rise, decay and adaptation time constant, the
+      0.15 s central delay
+    the withdrawal threshold (4 out of 10), motor conduction velocity, spinal delay,
+      electromechanical delay, escape time (0.1 s)
+    every reflex joint angle (only which joints move and in which direction is sourced)
+    the reference intensity of the autonomic signs (except skin conductance) and nearly all
+      their time constants; respiratory rate has no source at all
+    the regional pinprick multipliers; thresholds borrowed from another site for regions
+      without a measurement (show it when trace.threshold.borrowed is true)
+- Heat: the four slope readings differ almost threefold and the default rests on one
+  temperature of one study; offer the toggle if possible and show anchorNote (it is already in
+  e.trace.caveats).
+- The pupil numbers come from anaesthetised patients, not awake people.
+- The dermatome and cutaneous nerve maps are constructed teaching maps, unreviewed by a
+  clinician.
+- The monitor shows group-average effect sizes; individuals differ widely and the signs cannot
+  be used to infer pain.
+- Every entry of e.trace.caveats should be shown.
+
+
+10. Embed mode
+------------------------------------------------------------------------
+Nothing here needs a dialog. With ?embed=1 a card can encode one stimulus in the URL (kind,
+magnitude, duration, place on the skin) and start by itself; stop advancing t while the page is
+hidden. Sound still needs a click.
+
+
+11. Command line
+------------------------------------------------------------------------
+  bun tools/pain/run.ts [male|female] [--side=R] [--trace=<scenario id>] [--heat=<reading>]
+The reference scenarios are in tools/pain/scenarios.ts; its way of finding sites by anatomy
+(segmentTip, territoryCentre) can be reused for the preset positions of cards.

@@ -86,8 +86,8 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: 'heat-face',
-    name: { zh: '面颊接触热，46 °C，3 秒', en: 'Contact heat on the cheek, 46 °C, 3 s' },
-    build: (b, s) => stim(territoryCentre(b, 'infraorbital', s), { kind: 'heat', temperatureC: 46, areaMm2: 256, duration: 3 }),
+    name: { zh: '面颊接触热，43 °C，3 秒', en: 'Contact heat on the cheek, 43 °C, 3 s' },
+    build: (b, s) => stim(territoryCentre(b, 'infraorbital', s), { kind: 'heat', temperatureC: 43, areaMm2: 256, duration: 3 }),
   },
   {
     id: 'pressure-shin',
@@ -100,8 +100,13 @@ export const SCENARIOS: Scenario[] = [
     build: (b, s) => stim(territoryCentre(b, 'medialPlantar', s), { kind: 'pinch', forceN: 20, areaMm2: 25, duration: 1 }),
   },
   {
-    id: 'cold-hand',
-    name: { zh: '手掌接触冷，4 °C，60 秒', en: 'Cold contact on the palm, 4 °C, 60 s' },
+    id: 'cold-hand-held',
+    name: { zh: '手掌浸冷，4 °C，60 秒，手被固定（冷加压式）', en: 'Cold on the palm, 4 °C, 60 s, hand held in place (cold-pressor style)' },
+    build: (b, s) => stim(territoryCentre(b, 'median', s), { kind: 'cold', temperatureC: 4, areaMm2: 900, duration: 60, withdrawalEndsStimulus: false }),
+  },
+  {
+    id: 'cold-hand-free',
+    name: { zh: '手掌接触冷物，4 °C，60 秒，手可以缩回', en: 'Cold object on the palm, 4 °C, 60 s, hand free to withdraw' },
     build: (b, s) => stim(territoryCentre(b, 'median', s), { kind: 'cold', temperatureC: 4, areaMm2: 900, duration: 60 }),
   },
 ]

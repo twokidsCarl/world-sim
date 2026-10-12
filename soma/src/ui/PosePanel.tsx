@@ -128,7 +128,7 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
           )}
         </section>
         {/* BMI 不需要骨架绑定，绑定没到也能用 / BMI needs no rig, so the shape section works before it arrives */}
-        <ShapeControls graph={graph} />
+        <ShapeControls />
       </div>
     )
   }
@@ -172,7 +172,7 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
         <p className="hint">点击模型上的骨可选中带动它的关节，再拖动彩色圆环转动。 Click a bone to pick its joint, then drag a coloured ring.</p>
       </section>
 
-      <ShapeControls graph={graph} />
+      <ShapeControls />
 
       {selected && (
         <section className="group">
