@@ -225,7 +225,7 @@ export function Stage() {
       r.setScene(items)
       useStore.setState({ placed: packed.places.map((p) => p.length), dnaPairs: packed.dna ? packed.dna.assemblies.slice(1).reduce((s, a) => s + a.groups.reduce((t, g) => t + g.operators.length, 0), 0) : 0 })
     } else if (st.spec?.mesoscale) {
-      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: i * 4_000_000, perCopy: true, keepBack: p.keepBack, lining: st.spec?.lining ? new RegExp(st.spec.lining, 'i') : undefined, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: i * 4_000_000, perCopy: true, keepBack: p.keepBack, oneId: p.oneId, lining: st.spec?.lining ? new RegExp(st.spec.lining, 'i') : undefined, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined })))
     } else {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, st.drawing === 'painted' ? TONE_PAINTED : TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined, noCut: p.noCut }, p.annotation)))
     }

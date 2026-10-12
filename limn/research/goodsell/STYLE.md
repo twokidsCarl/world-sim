@@ -164,6 +164,13 @@ limn 这一轮的数：
 - **HeLa 细胞**：手绘画法下改成暖白的纸，线是填色的深一号、很细。细胞器的碎片成千上万，用黑线会盖成一片黑。
 - **没做的**：“蛋白分瓣”这个概念没有做，流感的刺仍是一块板；“排整齐”“衬一层”没有合成一个通用工具，HIV 没有用上。
 
+### D1–D2：蛋白分瓣查下来的结论，流感再对一遍
+
+- **“蛋白分瓣”没有做，原因查清了。** 流感的刺是一块板，我先怀疑是模拟里伸展的糖链把柄撑粗了，去掉糖链试了一次：没有变化。再对着他的原尺寸图量：他的刺长约为膜厚的 4.2 倍、有细柄和蘑菇状分瓣的头；真实的血凝素三聚体长约为膜厚的 3 倍，上下差不多粗。**他的刺是夸张过的。** 把真实结构捏成那个形状就违背了“结构是真的”，所以不改，差别留着。
+- **膜的厚度量错了**：理想的球壳原来取模拟里脂质半径的 2%–98% 百分位，起伏的膜这样量出来约 80 Å，是真实膜厚的两倍。改成以半径中位数为中面、厚 38 Å。基质蛋白层和里面的空腔跟着往外移，核糖核蛋白能画的地方变大了。
+- **基质蛋白层读成一条带子**：各份拷贝共用一个编号，彼此之间不画线（`oneId`）。原来是满是黑线的小格子。
+- 流感主色距离 0.077→0.072。并排图 `out/D2-influenza.jpg`：浅色的薄膜带中线、蓝色的基质蛋白带、填满的橙色核糖核蛋白、顶上红色的聚合酶，这几样和他那幅一一对得上；刺的形状对不上，原因如上。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -318,3 +325,10 @@ After ten rounds of tuning model by model the gap was still plain, so the approa
 - **The syn3A envelope**: the data holds membrane and membrane proteins only and is empty inside. The tools "fill the environment" and "thread a strand" now fill it (they gained an option to keep within a radius): long strands of chromosomal DNA, ribosomes (PDB 7P6Z), the chaperonin GroEL (PDB 1AON), and small soluble proteins (stood for by PDB 2HHB). Colours follow his "JCVI-syn3A Minimal Cell" (2022): green membrane, magenta ribosomes, blue proteins, yellow DNA. Colour distance 0.081. Side by side: `out/C6-syn3a.jpg`. All of it is schematic, and the notes say so; hemoglobin stands in for small soluble proteins only because it is the right size, not because the cell contains it.
 - **The HeLa cell**: in the painted drawing it is on warm paper with very thin lines a deeper shade of the fill. Organelle fragments number in the thousands, and black line smothered the picture.
 - **Not done**: the concept "lobed protein" is not done, and the influenza spikes are still slabs; "arranging" and "lining" have not been merged into one general tool, and HIV does not use them.
+
+### D1–D2: what looking into "lobed proteins" found, and influenza once more
+
+- **"Lobed proteins" was not done, and the reason is now clear.** The influenza spikes are slabs; I first suspected the splayed glycans of the simulation of thickening the stalk and tried once without them: no change. Measured against his full-size original, his spikes are about 4.2 membrane thicknesses long, with a thin stalk and a lobed mushroom head; a real hemagglutinin trimer is about 3 membrane thicknesses long and much the same width top to bottom. **His spikes are exaggerated.** Moulding the real structure into that shape would go against "the structures are real", so it is left, and the difference stays.
+- **The membrane's thickness had been measured wrongly**: the ideal shell took the 2nd to 98th percentile of lipid radii in the simulation, which for an undulating membrane comes to about 80 Å, twice a real membrane. It is now 38 Å about the median radius. The matrix layer and the cavity move outwards with it, leaving more room to draw ribonucleoprotein.
+- **The matrix layer reads as a band**: its copies share one id with no lines between them (`oneId`). It used to be small cells full of black line.
+- Influenza colour distance 0.077→0.072. Side by side, `out/D2-influenza.jpg`: the thin pale membrane with its mid-line, the blue band of matrix protein, the orange ribonucleoprotein filling the inside and the red polymerases on top each answer to his painting; the shape of the spikes does not, for the reason above.
