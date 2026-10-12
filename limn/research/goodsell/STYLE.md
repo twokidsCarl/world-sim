@@ -188,6 +188,10 @@ limn 这一轮的数：
 - 并排图 `out/X2-influenza.jpg`、`out/X2-coronavirus.jpg`。
 - **还差的**：他的刺头是分成几瓣的，我们的是一整块带锯齿的边；流感的柄之间还有几处露白。
 
+### S1–S2：单个分子照他 2015 年以后的画法
+
+按编号载入的单个结构，手绘画法下改成他最近的“每月分子”那样：**看得见原子**（不做平滑），**没有黑线**，轮廓是填色的深一号。第一次试把线调得太浅又留着平滑，图是糊的；对着他的新冠刺突图（第 246 篇）改回来。量出来线的明度 0.48（他的 0.43），线占主体的比例 0.11（他的 0.10）。并排图 `out/S2-*.jpg`。颜色和视角与他的不同（他按结构域上色、带示意的膜和柄），这些没有做。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -366,3 +370,7 @@ The user agreed to a clearly labelled "exaggeration" option. `exaggerate` (`src/
 - Influenza colour distance 0.072→0.075 (hardly moved), yet by eye it is a large step closer: spikes have a thin stalk and a wide head, and neuraminidase is a mushroom. Coronavirus 0.089→0.081, with the spikes now nearly one continuous ring.
 - Side by side: `out/X2-influenza.jpg`, `out/X2-coronavirus.jpg`.
 - **Still short**: the heads of his spikes are split into lobes, where ours are one block with a ragged edge; paper still shows in a few places between influenza stalks.
+
+### S1–S2: single molecules after his way of drawing since 2015
+
+Single structures loaded by id, in the painted drawing, now follow his recent Molecule of the Month pictures: **atoms can be seen** (no smoothing), **no black lines**, the outline a deeper shade of the fill. A first try made the lines too pale and kept the smoothing, which gave a blur; it was corrected against his coronavirus spike picture (article 246). Measured, line lightness is 0.48 (his 0.43) and the share of the subject that is line 0.11 (his 0.10). Side by side: `out/S2-*.jpg`. Colours and viewpoint differ from his (he colours by domain and adds a schematic membrane and stalk); those were not done.
