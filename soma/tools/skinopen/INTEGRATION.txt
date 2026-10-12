@@ -1,0 +1,407 @@
+tools/skinopen —— 给皮肤包开口：集成说明 / opening a skin package: integration notes
+(中文在前，English below)
+
+========================================================================
+中文
+========================================================================
+
+0. 怎么重跑（皮肤包重新发布之后）
+------------------------------------------------------------------------
+在 soma/ 目录下：
+
+    tools/skinopen/run.sh male
+    tools/skinopen/run.sh female
+
+每次都从头生成，结果是确定的（同样的输入，逐字节相同的输出）。三步：
+  1) bun tools/skinopen/export-deep.ts <body> data/raw/bodyshape/out/<body>-skin-open/deep-face.json
+     从 public/anatomy/<body>/ 导出面部深层部件和颞下颌关节（只读）。
+  2) python tools/skinopen/open_skin.py data/raw/bodyshape/out/<body>-skin
+     读原包，写 data/raw/bodyshape/out/<body>-skin-open/。原包一个字节也不动。
+  3) bun tools/skinopen/render.ts <body>     写 <body>-skin-open/renders/*.png。
+重跑之后请看：
+  · 退出码非 0 = 自检失败或找不到线（错误信息会说是哪一条）。
+  · <body>-skin-open/open-report.json 的 checks 应全为 true，result.boundaryLoops 应为两个环（两眼内卷的内缘）。
+  · renders/rest-mouthFront.png 左右两格应当看不出差别；run.sh 会打印静止时口区的像素差（应为 0 或个位数）。
+顺序：export-deep 读的是当前的 public/anatomy/<body>/。深层部件只决定口腔袋的大小和睑缘内卷的长度，
+不决定剪在哪里；但若人体在皮肤重新发布之后又重建过，请再跑一次。
+工具不依赖某一次拟合：线都从几何、manifest 的 face.regions（lips、lidsL、lidsR）和 joints.json 里找。
+它假定：两唇之间有 MHR 的那个内折口袋；两睑缘之间有一条没有内部顶点的三角形带。
+皮肤作者若改了这两处的拓扑，工具会报错而不是悄悄出错。
+
+1. 方法（简述）
+------------------------------------------------------------------------
+口：MHR 两唇之间是一个向内折的口袋（深 2.7–6 mm，两壁相贴并略有相穿），袋底是一排顶点，从口角到口角。
+    袋底顶点的相邻面法线几乎相对，按“相邻面法线最大夹角 > 90°”找到袋底，两端即口角，其间走最短路。
+    沿袋底剪开：路径内部顶点复制一份，上壁保留原下标，下壁用新下标（接在文件末尾）。
+    口袋的两壁就是上、下唇的内面，所以没有另加唇的内卷。静止时外观与原皮肤逐像素相同。
+眼：原皮肤的眼是睁开的；上下睑缘之间由一条之字形三角形带封住（每眼 62 / 64 个三角形，平的，不是眼球形）。
+    把这条带删掉，睑裂就是洞，露出解剖数据里真正的眼球。沿洞口加一圈朝向眼球中心的内卷（0.5–5 mm）。
+口腔袋：接在两条唇缘后面的两片壳（上半随颅，下半随下颌），在咬合平面上的一条缝处相接；
+    大小取牙、牙龈、舌的包围盒加 3 mm；离闭合皮肤不到 3 mm 的顶点被推回体内。它和内卷都是构造物，不是解剖。
+权重：在剪开后的网格上解调和“侧别场”（上唇缘 +1，下唇缘 −1）。目标下颌份额在 |场| ≥ 0.8 处取 0 / 1；
+    口裂周围 5 mm（沿表面）内严格取目标值，到 16 mm 处平滑回到原权重。眼睑的权重不动。
+其余逐顶点文件：按 source-vertex.u32 扩展；前 73,639 项与原文件逐位相同。
+
+2. 包里有什么（<body>-skin-open/）
+------------------------------------------------------------------------
+  skin.obj            开口后的皮肤。顶点 0…73,638 与原皮肤相同、顺序相同，新顶点接在后面。
+                      分组（g 行）：skin、lidRimL、lidRimR、oralPouchUpper、oralPouchLower。不闭合（两个边界环）。
+  skin-closed.obj     原皮肤，逐字节照抄，闭合。凡是需要闭合曲面的程序用它。
+  weights.bin         默认权重：口裂处精确分开直到口角。记录 (uint32 顶点, uint32 关节, float32 权重)，小端。
+  weights-corner-taper.bin   另一份权重：从每个口角起 6 mm 弧长内渐入。与 weights.bin 二选一（见第 5 节）。
+  joints.json         照抄。
+  *.f32               全部逐顶点场，已扩展到新顶点数。
+  shape-fields.json   照抄，vertices 改为新顶点数。
+  vertex-tags.u8      每个顶点一个字节，见下表。
+  source-vertex.u32   每个顶点一个 uint32：它的逐顶点数据取自 skin-closed.obj 的哪个顶点。
+                      前 73,639 个就是自己；下唇缘的复制顶点 = 它的孪生顶点；内卷顶点 = 所属的睑缘顶点；
+                      口腔袋顶点 = 同一列的上唇缘顶点。这不是“位置最近的顶点”，只是数据的来源。
+  manifest.json       原 manifest 加上 face.margins / sheets / constructionAids / added / removedEyeMembrane /
+                      topology（原来的在 topologyAsDelivered），以及 opened（修改声明、选项、数量、标签表）。
+  open-report.json    本次运行的全部测量和自检。
+  deep-face.json      导出的深层部件（可选的输入）。
+  LICENSE-MHR.txt、NOTICE-MHR.txt   必须随包一起走（Apache-2.0）；修改声明在 manifest.opened.modification。
+
+vertex-tags.u8 的取值：
+   0  skin              普通皮肤
+   1  upperLip          上唇缘（路径内部顶点，原下标）
+   2  lowerLip          下唇缘（复制出来的顶点，新下标）
+   3  mouthCorner       口角（上下唇缘共用）
+   4  upperLidL         左眼上睑缘        5  lowerLidL   左眼下睑缘
+   6  upperLidR         右眼上睑缘        7  lowerLidR   右眼下睑缘
+  13  canthus           眦（上下睑缘共用的顶点，每眼两个）
+   8  lidRimL           左眼内卷（构造物）  9  lidRimR     右眼内卷（构造物）
+  10  oralPouchUpper    口腔袋上半（构造物）
+  11  oralPouchLower    口腔袋下半（构造物）
+  12  oralPouchSeam     口腔袋的缝（构造物）
+
+3. manifest 格式（已定稿）
+------------------------------------------------------------------------
+下标都是 skin.obj 的顺序。
+  face.margins
+    upperLip、lowerLip           从身体右侧口角（−X）到左侧口角（+X）。首尾是共用的口角顶点，
+                                 其余顶点两两重合（位置相同、下标不同）。
+    upperLidL、lowerLidL、upperLidR、lowerLidR   从内眦到外眦；两条链在每个眦共用一个顶点。
+    mouthCornerR、mouthCornerL、medialCanthusL/R、lateralCanthusL/R   单个顶点。
+  face.sheets                    剪口附近每个顶点在哪一片上（位置重合时不能靠位置区分）：
+    mouth.upper / lower / lateral；eyeL、eyeR 的 upper / lower / canthi；rim；pouch。
+  face.constructionAids
+    lidRimL、lidRimR             { vertices, of }：of[i] 是 vertices[i] 所属的睑缘顶点。
+    oralPouch                    { upper, lower, seam, rows, columns, layout }：按行存，第 r 行第 c 列 = r × columns + c；
+                                 行从唇缘到缝；第 c 列属于 upperLip / lowerLip 去掉两端口角后的第 c 个顶点。
+  face.added                     说明加了什么；都仍是皮肤网格的一部分，不是新的解剖部件。
+  face.removedEyeMembrane        被删掉的三角形（在 skin-closed.obj 里仍在）。
+  opened.cornerTaper             两份权重文件的说明。
+任务书里的叫法 → manifest 里的名字：
+  upperLipMargin / lowerLipMargin → upperLip / lowerLip
+  upperLidMarginL/R、lowerLidMarginL/R → upperLidL/R、lowerLidL/R
+  “口角” → mouthCornerR、mouthCornerL；“眦” → medialCanthusL/R、lateralCanthusL/R
+  每顶点的 upper / lower 标签 → sheets.mouth、sheets.eyeL、sheets.eyeR 之下
+
+4. 下游各程序要改什么
+------------------------------------------------------------------------
+根本的一条：唇缘的顶点成对重合，唇内面两壁相距 0.05–0.5 mm 且相穿；发布的 GLB 把位置量化到约 0.1 mm
+（POSITION_BITS = 14）。所以在唇部，任何“按位置”的做法（按位置焊接、按最近点传递）都会出错：
+口裂会被焊回去，上唇顶点会拿到下唇的权重。必须按下标对应。
+
+tools/pipeline/run.ts、female.ts（装入）
+  · 包目录改为 …-skin-open。显示用的皮肤部件取 skin.obj；需要闭合曲面的地方另读 skin-closed.obj。
+  · lockVertices 里加上 vertex-tags.u8 非 0 的全部顶点（唇缘、睑缘、内卷、口腔袋不被简化）。
+  · 保持“不焊接”；算法线时也不要按位置合并顶点。
+  · 写一个下标对照文件：发布的皮肤的每个顶点 → 包里的顶点下标。simplifySkinKeepingFace 里已有 map，
+    meshopt 不产生新顶点，所以每个发布顶点都有对应。下面各项都靠它。
+tools/pipeline/skinPackage.ts
+  · loadSkinPackage 同时返回闭合的那张网格（有 skin-closed.obj 就读它，否则就是 skin.obj）。
+  · checkSkinFit、faceAgainstSkin、signedDistanceToSkin、notFittedAgainstSkin 用射线奇偶判断内外，必须用闭合网格。
+    fit.closed 报告闭合网格的；开口皮肤的边界环另报（应为 2）。fitShipped 要么用简化后的闭合网格，要么跳过。
+tools/pipeline/fat.ts
+  · 传入闭合网格。开口皮肤会把口腔袋当成皮肤体素，skinTester.contains 在头内也不对。
+tools/rig/field.ts（BodyField）
+  · 传入闭合皮肤。口腔袋会在头内造出假的“皮肤壁”并关掉传播。
+tools/rig/external.ts、bind.ts
+  · 皮肤部件不要用 weld() 按位置合并；唯一顶点按下标对照文件定义。
+  · transfer() 直接取 rows[包里的下标]，不用 closestFace。
+  · generic 区域混合和邻域填补不要跨过重合的唇缘顶点对。
+  · build.ts 对 skin.obj、weights.bin、joints.json、manifest.json 取哈希，新目录下照常可用。
+tools/rig/shape-build.ts
+  · pkgRel 改为 …-skin-open；shape-fat.f32、shape-limit.f32 按下标取，不用 closestFace。长度检查能通过。
+tools/face/build.ts
+  · 用 manifest.face.margins 和 sheets（经下标对照）代替在皮肤上量睑缘、唇线。
+  · 去掉“口裂内陷”的替代做法和“上睑皮肤滑过那片皮肤”的闭眼；闭眼 = 上睑缘落到下睑缘上。
+  · 内卷顶点跟随它的睑缘顶点（lidRim*.of）；口腔袋的每一列跟随它的唇缘顶点。
+  · 口袋处皮肤法线不可靠（口袋是翻进去的）：分上下用 sheets，不用法线。
+tools/skinmaps/mesh.ts
+  · 涂色和测地距离跳过内卷（8、9）和口腔袋（10–12）顶点；射线和最近点查询忽略口腔袋的面。
+  · 若体表图应在口裂处断开，就不要焊接唇缘顶点对。
+src/（查看器）
+  · 口腔袋的面画成深色、不透明，不参与点选和体表图；内卷按皮肤或黏膜画。
+  · 可以背面剔除：绕向一致，口腔袋和内卷的正面朝向腔内。
+tools/bodyshape（皮肤作者）
+  · 不用改。重新发布后跑第 0 节的命令。
+
+5. 口角：两种做法，以及建议
+------------------------------------------------------------------------
+weights.bin（默认）：上唇缘下颌份额恒为 0，下唇缘恒为 1，直到口角。分得精确，但只用关节摆姿势时，
+  张口的两端是竖直的，口呈方形。
+weights-corner-taper.bin：从每个口角起 6 mm 弧长内，上唇缘由 0.5 渐变到 0，下唇缘由 0.5 渐变到 1。
+  张口 10° 时呈杏仁形，更自然；但这一段唇缘不再精确分开（每侧约 5–6 对顶点），张口 25° 时口角处有折皱和一个小缺口
+  （见 renders/mouth-corner-taper.png：上排默认，下排渐入）。
+建议：用默认的 weights.bin，口角的形状交给表情层（口角处上下唇的位移场）去做——精确分开的权重是干净的底子，
+  表情层在上面加形状比在渐入的权重上修更容易。只有在表情层暂时不处理口角时，才用渐入的那份作为权宜之计。
+两个文件格式和顶点编号完全相同，换文件即可，不必重跑本工具。别的渐入长度：--alt-corner-taper-mm N。
+
+6. 深层的“唇”部件
+------------------------------------------------------------------------
+部件 id：男性 FJ2814，女性 W_FJ2814（名称 "Lip"，消化系统）。它是一整块，上下唇连在一起，正好位于口裂开口处。
+皮肤一张口，它不动就会挡在开口里（我的渲染图里没有画它）。
+建议分两种情况：
+  · 画不透明皮肤时：隐藏这个部件。皮肤的唇和口袋的两壁已经表示了唇的外面和内面，再画它只会穿帮。
+    这是最稳妥的做法，建议先这样做。
+  · 皮肤隐藏或半透明时（肌肉视图、剥离）：它必须跟着动。按它自己的口裂（tools/face/build.ts 已经在量）
+    把顶点分成上下两组，上组绑颅（skull），下组绑颞下颌关节（tmj），口角外侧混合；
+    再跟随皮肤唇的切向位移场。它是一张连在一起的网格，口裂处的三角形会被拉长，除非也把它剪开——
+    那是解剖数据的改动，不在本工具的范围内。
+
+7. 仍未验证或需要留意的
+------------------------------------------------------------------------
+  · 没有经过管线、绑定、体型、表情各步的实际运行；只确认了 loadSkinPackage 能读开口后的目录。
+  · meshopt 简化器遇到两个边界环和口腔袋时的行为没有试过。
+  · 口角位置随拟合有约 1 mm 的出入：男女两条路径共用 43 个顶点，两端各差 1–3 个顶点，口角的顶点下标两体不同
+    （四个眦的下标两体相同）。不要把口角下标写死，从 manifest 读。
+  · 上唇离口裂 5 mm 以外仍带一些下颌份额（MHR 原来就给 0.15 左右），口角旁最多 0.34。
+  · 口腔袋很粗：牙 97.5–99.8 %、牙龈 84–92 %、舌 65–71 % 的顶点在袋内（舌根从后面出去）。
+    男性有 292 个袋顶点被推回才离皮肤 3 mm（女性 9 个）。
+  · 皮肤上的眼与深层眼球没有对齐：男性睑裂中心比眼球中心低 3.5–3.8 mm（虹膜偏上，被上睑遮住一部分）；
+    女性睑缘到眼球表面中位数 4.5 mm，内卷上限 5 mm，局部仍差约 0.5 mm。
+  · 下睑的内卷从正面看是一条 2–3 mm 宽的粉色窄台。
+  · MHR 唇内面两壁静止时相穿约 0.5 mm，本工具没有改；从外面看不到。
+  · 渲染图里眼睑的动作只是测试用的粗糙位移，其中的折皱不是网格的问题。
+
+
+========================================================================
+English
+========================================================================
+
+0. How to re-run (after a skin package is re-issued)
+------------------------------------------------------------------------
+From soma/:
+
+    tools/skinopen/run.sh male
+    tools/skinopen/run.sh female
+
+Every run regenerates everything and is deterministic (same inputs, byte-identical outputs). Three steps:
+  1) bun tools/skinopen/export-deep.ts <body> data/raw/bodyshape/out/<body>-skin-open/deep-face.json
+     exports the deep facial parts and the temporomandibular joint from public/anatomy/<body>/ (read only).
+  2) python tools/skinopen/open_skin.py data/raw/bodyshape/out/<body>-skin
+     reads the delivered package and writes data/raw/bodyshape/out/<body>-skin-open/. The delivered
+     package is not touched.
+  3) bun tools/skinopen/render.ts <body>     writes <body>-skin-open/renders/*.png.
+After a re-run, look at:
+  · a non-zero exit status = a self-check failed or a line was not found (the message says which).
+  · checks in <body>-skin-open/open-report.json must all be true, and result.boundaryLoops must hold two
+    loops (the inner edges of the two lid rims).
+  · the two panels of renders/rest-mouthFront.png must look the same; run.sh prints the pixel difference
+    of the mouth region at rest (0 or a single digit).
+Order: export-deep reads the current public/anatomy/<body>/. The deep parts only size the oral pouch and
+the lid rims; they do not decide where the cuts go. If the body is rebuilt after the skin was re-issued,
+run once more.
+The tool does not depend on a particular fit: the lines come from geometry, from face.regions of the
+manifest (lips, lidsL, lidsR) and from joints.json. It assumes that MHR's folded pocket lies between the
+lips and that a strip of triangles without interior vertices lies between the lid margins. If the skin's
+author changes either, the tool fails with an error rather than going wrong silently.
+
+1. Method (brief)
+------------------------------------------------------------------------
+Mouth: between the lips MHR has a pocket folded inwards (2.7–6 mm deep, its walls against and slightly
+    through each other) with one row of vertices at the bottom, from corner to corner. Round a bottom
+    vertex the face normals are almost opposite; the bottom is found as "largest angle between incident
+    face normals > 90°", its ends are the mouth corners, and a shortest path joins them. The cut runs along
+    it: interior path vertices are duplicated, the upper wall keeps the original indices and the lower wall
+    gets new ones (appended). The pocket's walls are the inner faces of the lips, so no further lip rim was
+    added. At rest the result is pixel-identical to the delivered skin.
+Eyes: the delivered skin has open eyes; a zigzag strip of triangles closes the space between the lid
+    margins (62 / 64 triangles per eye, flat, not globe-shaped). The strip is removed, so each fissure is a
+    hole showing the real eyeball of the anatomy data. A rim turned towards the globe centre (0.5–5 mm) is
+    added round each hole.
+Oral pouch: two shells behind the lip margins (upper with the skull, lower with the jaw) meeting at a seam
+    in the occlusal plane; sized from the bounding box of teeth, gingiva and tongue plus 3 mm; vertices
+    closer than 3 mm to the closed skin are pushed back in. Pouch and rims are construction aids, not anatomy.
+Weights: a harmonic side field is solved on the cut mesh (+1 on the upper lip margin, −1 on the lower).
+    The target jaw share is 0 / 1 where |field| ≥ 0.8; within 5 mm of the fissure (along the surface) the
+    target is taken strictly, easing back to the delivered weights at 16 mm. Lid weights are unchanged.
+Other per-vertex files are extended through source-vertex.u32; their first 73,639 entries are bit-identical.
+
+2. What the package holds (<body>-skin-open/)
+------------------------------------------------------------------------
+  skin.obj            the opened skin. Vertices 0…73,638 are those of the delivered skin in the same order;
+                      new vertices follow. Groups (g lines): skin, lidRimL, lidRimR, oralPouchUpper,
+                      oralPouchLower. Not closed (two boundary loops).
+  skin-closed.obj     the delivered skin, byte for byte, closed. For every program that needs a closed surface.
+  weights.bin         the default weights: exact split at the fissure up to the corners. Records
+                      (uint32 vertex, uint32 joint, float32 weight), little endian.
+  weights-corner-taper.bin   alternative weights: eased in over 6 mm of arc length from each mouth corner.
+                      Use it or weights.bin, not both (section 5).
+  joints.json         copied.
+  *.f32               every per-vertex field, extended to the new vertex count.
+  shape-fields.json   copied, with `vertices` set to the new count.
+  vertex-tags.u8      one byte per vertex, table below.
+  source-vertex.u32   one uint32 per vertex: the vertex of skin-closed.obj its per-vertex data come from.
+                      The first 73,639 are themselves; a duplicated lower-lip vertex = its twin; a rim vertex
+                      = the lid margin vertex it belongs to; a pouch vertex = the upper-lip margin vertex of
+                      its column. It is the source of the data, not "the nearest vertex".
+  manifest.json       the delivered manifest plus face.margins / sheets / constructionAids / added /
+                      removedEyeMembrane / topology (the original under topologyAsDelivered) and `opened`
+                      (statement of changes, options, counts, tag table).
+  open-report.json    all measurements and self-checks of the run.
+  deep-face.json      the exported deep parts (an optional input).
+  LICENSE-MHR.txt, NOTICE-MHR.txt   must travel with the package (Apache-2.0); the statement of changes is
+                      manifest.opened.modification.
+
+Values of vertex-tags.u8:
+   0  skin              ordinary skin
+   1  upperLip          upper lip margin (interior path vertices, original indices)
+   2  lowerLip          lower lip margin (the duplicates, new indices)
+   3  mouthCorner       mouth corner (shared by both lip margins)
+   4  upperLidL         left upper lid margin      5  lowerLidL   left lower lid margin
+   6  upperLidR         right upper lid margin     7  lowerLidR   right lower lid margin
+  13  canthus           canthus (the vertex shared by both lid margins; two per eye)
+   8  lidRimL           left lid rim (construction)   9  lidRimR   right lid rim (construction)
+  10  oralPouchUpper    upper half of the oral pouch (construction)
+  11  oralPouchLower    lower half of the oral pouch (construction)
+  12  oralPouchSeam     seam of the oral pouch (construction)
+
+3. Manifest format (final)
+------------------------------------------------------------------------
+All indices are in the order of skin.obj.
+  face.margins
+    upperLip, lowerLip           from the body's right mouth corner (−X) to the left one (+X). First and last
+                                 are the shared corner vertices; the others coincide in pairs (same position,
+                                 different index).
+    upperLidL, lowerLidL, upperLidR, lowerLidR   from the medial to the lateral canthus; the two chains of
+                                 an eye share one vertex at each canthus.
+    mouthCornerR, mouthCornerL, medialCanthusL/R, lateralCanthusL/R   single vertices.
+  face.sheets                    which sheet each vertex near a cut lies on (position cannot tell coincident
+                                 vertices apart): mouth.upper / lower / lateral; eyeL and eyeR with
+                                 upper / lower / canthi; rim; pouch.
+  face.constructionAids
+    lidRimL, lidRimR             { vertices, of }: of[i] is the lid margin vertex vertices[i] belongs to.
+    oralPouch                    { upper, lower, seam, rows, columns, layout }: stored row by row, row r
+                                 column c = r × columns + c; rows run from the margin to the seam; column c
+                                 belongs to vertex c of upperLip / lowerLip without the two corners.
+  face.added                     says what was added; all of it stays part of the skin mesh, not a new
+                                 anatomy part.
+  face.removedEyeMembrane        the removed triangles (still present in skin-closed.obj).
+  opened.cornerTaper             explains the two weights files.
+Names in the task text → names in the manifest:
+  upperLipMargin / lowerLipMargin → upperLip / lowerLip
+  upperLidMarginL/R, lowerLidMarginL/R → upperLidL/R, lowerLidL/R
+  "mouth corners" → mouthCornerR, mouthCornerL; "canthi" → medialCanthusL/R, lateralCanthusL/R
+  a per-vertex upper / lower label → under sheets.mouth, sheets.eyeL, sheets.eyeR
+
+4. What each downstream program must change
+------------------------------------------------------------------------
+The one fact behind all of it: lip margin vertices coincide in pairs, and the inner-lip walls lie
+0.05–0.5 mm apart and pass through each other; the shipped GLB quantises positions to about 0.1 mm
+(POSITION_BITS = 14). So at the lips anything done by position (welding by position, transfer by closest
+point) goes wrong: the fissure is welded shut and upper-lip vertices receive lower-lip weights.
+Correspondence must be by index.
+
+tools/pipeline/run.ts, female.ts (install)
+  · Point the package directory at …-skin-open. The displayed skin part takes skin.obj; wherever a closed
+    surface is needed, read skin-closed.obj as well.
+  · Add to lockVertices every vertex with a non-zero vertex-tags.u8 (margins, rims and pouch are not
+    simplified).
+  · Keep "no welding"; do not merge vertices by position when computing normals either.
+  · Write an index sidecar: for every vertex of the shipped skin, its vertex index in the package.
+    simplifySkinKeepingFace already has `map`, and meshopt creates no vertices, so every shipped vertex has
+    one. Everything below depends on it.
+tools/pipeline/skinPackage.ts
+  · loadSkinPackage also returns the closed mesh (skin-closed.obj when present, else skin.obj).
+  · checkSkinFit, faceAgainstSkin, signedDistanceToSkin and notFittedAgainstSkin decide inside / outside by
+    ray parity and need the closed mesh. Report fit.closed for the closed mesh and the boundary loops of the
+    opened skin separately (expected: 2). fitShipped needs a simplified closed mesh, or is skipped.
+tools/pipeline/fat.ts
+  · Pass the closed mesh. The opened skin would voxelise the pouch as skin, and skinTester.contains would be
+    wrong inside the head.
+tools/rig/field.ts (BodyField)
+  · Pass the closed skin. The pouch would add false skin walls inside the head and close propagation.
+tools/rig/external.ts, bind.ts
+  · Do not weld() the skin part by position; unique vertices are defined by the index sidecar.
+  · transfer() takes rows[package index] directly instead of closestFace.
+  · The `generic` region blend and the neighbour fill must not reach across a coincident margin pair.
+  · build.ts hashes skin.obj, weights.bin, joints.json and manifest.json; that works unchanged in the new
+    directory.
+tools/rig/shape-build.ts
+  · pkgRel becomes …-skin-open; shape-fat.f32 and shape-limit.f32 are taken by index, not by closestFace.
+    The length check passes.
+tools/face/build.ts
+  · Use manifest.face.margins and sheets (through the index sidecar) instead of measuring lid and lip lines
+    on the skin.
+  · Drop the "oral recess" stand-in and the "upper-lid skin slides over the patch" closure; eye closure =
+    the upper lid margin comes down onto the lower one.
+  · A rim vertex follows its lid margin vertex (lidRim*.of); each pouch column follows its lip margin vertex.
+  · Skin normals are unreliable in the pocket (it is turned inside out): tell upper from lower by sheets,
+    not by the normal.
+tools/skinmaps/mesh.ts
+  · Painting and geodesics skip rim (8, 9) and pouch (10–12) vertices; ray and closest-point queries ignore
+    pouch faces.
+  · Do not weld the lip margin pairs if a map is to stop at the fissure.
+src/ (viewer)
+  · Draw pouch faces dark and opaque and keep them out of picking and skin maps; draw the rims as skin or
+    mucosa.
+  · Back-face culling is safe: the winding is consistent, and pouch and rims face the cavity.
+tools/bodyshape (the skin's author)
+  · Nothing to change. After re-issuing, run the commands of section 0.
+
+5. Mouth corners: two behaviours, and a recommendation
+------------------------------------------------------------------------
+weights.bin (default): jaw share 0 on the whole upper margin and 1 on the whole lower margin, right up to
+  the corners. The split is exact, but posed by the joint alone the opening has vertical ends and the mouth
+  looks square.
+weights-corner-taper.bin: over 6 mm of arc length from each corner the upper margin goes from 0.5 to 0 and
+  the lower from 0.5 to 1. At 10° of opening the mouth is almond-shaped and looks more natural; but over that
+  stretch the margins are no longer split exactly (about 5–6 vertex pairs a side), and at 25° the corners
+  crinkle and show a small notch (renders/mouth-corner-taper.png: default above, tapered below).
+Recommendation: use the default weights.bin and let the expression layer shape the corners (displacement
+  fields of the lips at the corners). Exactly split weights are a clean base, and adding shape on top of
+  them is easier than repairing tapered weights. Use the tapered file only as a stopgap while the expression
+  layer does nothing at the corners.
+Both files have the same format and vertex numbering: swap the file, no re-run needed. For another taper
+length: --alt-corner-taper-mm N.
+
+6. The deep "Lip" part
+------------------------------------------------------------------------
+Part ids: male FJ2814, female W_FJ2814 (name "Lip", digestive system). It is one piece with both lips joined
+and sits exactly in the oral opening. Once the skin's mouth opens, a Lip part that does not move blocks the
+opening (it is left out of my renders).
+Recommendation, in two cases:
+  · When the skin is drawn opaque: hide this part. The skin's lips and the walls of the pocket already show
+    the outer and inner faces of the lips, and drawing it as well can only show through. This is the safe
+    choice and the one to do first.
+  · When the skin is hidden or see-through (muscle view, peeling): it has to move. Split its vertices into an
+    upper and a lower group along its own fissure (tools/face/build.ts already measures it), bind the upper
+    group to the skull and the lower to the temporomandibular joint (tmj) with a blend lateral to the corners,
+    and let it follow the tangential field of the skin lips. It is one connected mesh, so the triangles across
+    its fissure will stretch unless it is cut too — that is a change to the anatomy data and outside this tool.
+
+7. Still unverified, or to keep in mind
+------------------------------------------------------------------------
+  · Nothing was run through the pipeline, rig, shape or face builds; only that loadSkinPackage reads the
+    opened directories was checked.
+  · How meshopt's simplifier treats the two boundary loops and the pouch is untested.
+  · The corner position depends on the fit by about 1 mm: the male and female paths share 43 vertices and
+    differ by 1–3 vertices at each end, so the corner vertex indices differ between the bodies (the four
+    canthus indices are the same in both). Read the corners from the manifest; do not hard-code them.
+  · Beyond 5 mm from the fissure the upper lip still carries some jaw share (MHR itself gives about 0.15),
+    up to 0.34 beside the corners.
+  · The pouch is crude: 97.5–99.8 % of tooth vertices, 84–92 % of gingiva and 65–71 % of the tongue lie
+    inside it (the tongue root leaves it at the back). In the male 292 pouch vertices had to be pushed back
+    to keep 3 mm from the skin (9 in the female).
+  · The eye of the skin and the deep globe are not aligned: in the male the centre of the fissure is
+    3.5–3.8 mm below the globe centre (the iris sits high, partly under the upper lid); in the female the lid
+    margins are a median 4.5 mm from the globe surface, the rim is capped at 5 mm, and about 0.5 mm of gap
+    remains in places.
+  · From the front the lower lid rim shows as a pink shelf 2–3 mm wide.
+  · MHR's inner-lip walls pass through each other by about 0.5 mm at rest; this tool did not change that,
+    and it cannot be seen from outside.
+  · Lid movement in the renders is a crude test displacement; the creases there are not a fault of the mesh.
