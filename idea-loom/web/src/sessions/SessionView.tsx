@@ -3,7 +3,12 @@ import { type SessionMeta, api } from '../api'
 import { type Attached, MAX_IMAGES, fromFile, imagesIn } from '../assistant/images'
 import { Markdown } from '../assistant/Markdown'
 import { useT } from '../state/store'
+import { mark, tell } from './notify'
 import { type Item, type Question, type SessionEvent, type View, emptyView, fold, pending } from './view'
+
+const MODEL_NAMES: Record<string, string> = { 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-haiku-5-5': 'Haiku 5.5', 'claude-fable-5-1': 'Fable 5.1' }
+const MODELS = Object.keys(MODEL_NAMES)
+const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max']
 
 // 一个 Claude Code 会话的对话：它说的话、它做的每一步、等你回答的卡片（计划、权限确认、它的提问），和你的输入框。
 // One Claude Code session as a conversation: what it says, each step it takes, the cards awaiting
@@ -83,7 +88,30 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
     setAttached((now) => [...now, ...made].slice(0, MAX_IMAGES))
   }
   const mode = meta?.mode ?? view.mode ?? 'default'
-  const modes: [string, string, string][] = [['plan', '先出计划', 'Plan first'], ['default', '每次问我', 'Ask every time'], ['acceptEdits', '改文件不用问', 'Edits without asking']]
+  const modes: [string, string, string, string, string][] = [
+    ['plan', '先出计划', 'Plan first', '只调研、写计划，不动手；计划等你批准', 'It only investigates and plans; the plan waits for your approval'],
+    ['default', '每次问我', 'Ask every time', '改文件、跑命令都先问你', 'File edits and commands all ask you first'],
+    ['acceptEdits', '改文件不用问', 'Edits without asking', '改文件直接做，跑命令仍然问', 'File edits just happen; commands still ask'],
+    ['auto', '自动', 'Auto', '常规的事直接做，不停下来；删除、推送、往文件里重定向这类仍然每次问你，它有问题要问你时也会停', 'Routine steps just happen without stopping; deleting, pushing, redirecting into files and the like still ask every time, and it stops when it has a question for you'],
+  ]
+  // 需要你、或者做完了：不在这一页时通知，并在标签页标题上做记号。 / Needs you, or done: notify when you are elsewhere and mark the tab title.
+  const was = useRef<string>('')
+  const now = waiting.length ? 'waiting' : status
+  useEffect(() => {
+    if (was.current && was.current !== now) {
+      if (now === 'waiting') tell(t('Claude Code 在等你', 'Claude Code needs you'), meta?.waiting_for ?? meta?.title ?? '', id)
+      else if (now === 'idle') tell(t('Claude Code 做完了一轮', 'Claude Code finished a turn'), meta?.title ?? '', id)
+    }
+    was.current = now
+    mark(now === 'waiting' ? '●' : now === 'idle' && document.visibilityState !== 'visible' ? '✓' : null)
+    const clear = () => {
+      if (document.visibilityState === 'visible' && now !== 'waiting') mark(null)
+    }
+    document.addEventListener('visibilitychange', clear)
+    return () => document.removeEventListener('visibilitychange', clear)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now])
+  useEffect(() => () => mark(null), [])
 
   return (
     <div className="session">
@@ -93,12 +121,23 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
           {{ idle: t('等你说话', 'Waiting for you to speak'), running: t('在干活', 'Working'), waiting: t('等你回答', 'Waiting for your answer'), closed: t('已结束', 'Closed'), error: t('出错了', 'Failed') }[status]}
         </span>
         <span className="seg" role="group" aria-label={t('模式', 'Mode')}>
-          {modes.map(([key, zh, en]) => (
-            <button key={key} aria-pressed={mode === key} aria-selected={mode === key} disabled={status === 'closed'} onClick={() => void act(() => api.sessionMode(id, key))}>
+          {modes.map(([key, zh, en, hintZh, hintEn]) => (
+            <button key={key} title={t(hintZh, hintEn)} aria-pressed={mode === key} aria-selected={mode === key} disabled={status === 'closed'} onClick={() => void act(() => api.sessionMode(id, key))}>
               {t(zh, en)}
             </button>
           ))}
         </span>
+        {meta && (
+          <span className="session-engine" title={t('用哪个模型、想得多深。它闲着的时候才能换；换了之后下一句话生效，对话接着原来的。', 'Which model and how hard it thinks. Changeable only while it is idle; it takes effect on the next message and the conversation carries on.')}>
+            <select aria-label={t('模型', 'Model')} value={meta.model} disabled={busy || status === 'closed'} onChange={(e) => void act(() => api.sessionEngine(id, e.target.value, meta.effort))}>
+              {(MODELS.includes(meta.model) ? MODELS : [meta.model, ...MODELS]).map((m) => <option key={m} value={m}>{MODEL_NAMES[m] ?? m}</option>)}
+            </select>
+            <select aria-label={t('思考的努力程度', 'Reasoning effort')} value={meta.effort} disabled={busy || status === 'closed'} onChange={(e) => void act(() => api.sessionEngine(id, meta.model, e.target.value))}>
+              {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>
+            {meta.model_used && meta.model_used !== meta.model && <span className="muted small">{t(`实际在用 ${meta.model_used}`, `actually using ${meta.model_used}`)}</span>}
+          </span>
+        )}
         <span className="muted small num">{meta ? `$${meta.cost_usd.toFixed(2)}` : ''}</span>
         {status === 'running' && <button onClick={() => void act(() => api.sessionInterrupt(id))}>{t('打断', 'Interrupt')}</button>}
         {status !== 'closed' && !busy && <button onClick={() => void act(() => api.sessionClose(id))}>{t('结束会话', 'End session')}</button>}
@@ -226,7 +265,7 @@ function RequestCard({ item, live, onAnswer }: { item: Extract<Item, { kind: 're
   const [own, setOwn] = useState<Record<string, string>>({})
   const outcome: Record<string, string> = {
     allow: t('你允许了', 'You allowed it'), allow_always: t('你允许了，这一类以后不再问', 'You allowed it and this kind is no longer asked about'), deny: t('你拒绝了', 'You declined'),
-    answer: t('你回答了', 'You answered'), approve: t('你批准了', 'You approved'), approve_edits: t('你批准了，改文件不用再问', 'You approved; edits no longer ask'), reject: t('你没有批准', 'You did not approve'),
+    answer: t('你回答了', 'You answered'), approve: t('你批准了', 'You approved'), approve_edits: t('你批准了，改文件不用再问', 'You approved; edits no longer ask'), approve_auto: t('你批准了，之后自动', 'You approved; auto from here'), reject: t('你没有批准', 'You did not approve'),
   }
   const settled = item.decision !== null || !live
   const foot = settled && (
@@ -245,7 +284,8 @@ function RequestCard({ item, live, onAnswer }: { item: Extract<Item, { kind: 're
           <>
             <textarea rows={2} value={note} placeholder={t('有意见就写在这里，然后点"提意见"', 'Write your comments here, then choose "Send comments"')} onChange={(e) => setNote(e.target.value)} />
             <div className="row">
-              <button className="primary" onClick={() => onAnswer('approve')}>{t('批准，开始动手', 'Approve and start')}</button>
+              <button className="primary" onClick={() => onAnswer('approve_auto')} title={t('批准，之后常规的事它直接做、不再一步步问；删除、推送这类仍然每次问你', 'Approve; routine steps then just happen without asking one by one, while deleting, pushing and the like still ask every time')}>{t('批准，之后自动', 'Approve; auto from here')}</button>
+              <button onClick={() => onAnswer('approve')} title={t('批准，之后改文件、跑命令每一步都问你', 'Approve; every file edit and command then asks you')}>{t('批准，每步问我', 'Approve; ask each step')}</button>
               <button onClick={() => onAnswer('approve_edits')} title={t('批准，并且之后改文件不用每次问我（跑命令仍然会问）', 'Approve, and do not ask me for each file edit afterwards (commands still ask)')}>{t('批准，改文件不用问', 'Approve; edits without asking')}</button>
               <button disabled={!note.trim()} onClick={() => onAnswer('reject', note)}>{t('提意见', 'Send comments')}</button>
             </div>
@@ -293,12 +333,21 @@ function RequestCard({ item, live, onAnswer }: { item: Extract<Item, { kind: 're
       <h4>{t('它要做这件事，等你确认', 'It wants to do this and awaits your confirmation')}</h4>
       <p className="small">{item.summary}</p>
       <ToolInput tool={item.tool} input={item.input} />
+      {item.risky && <p className="small session-risky">{t(`这一类每次都问，「以后都允许」和自动模式都不会放过：${item.risky}`, `This kind is always asked about; neither "always allow" nor auto mode lets it through: ${item.risky}`)}</p>}
+      {item.segments.length > 1 && (
+        <p className="small muted">
+          {t('这条命令分成几段：', 'This command has several parts: ')}
+          {item.segments.map((s, i) => (
+            <span key={i} className={`chip${s.known ? '' : ' unseen'}`} title={s.text}>{s.kind}{s.known ? ' ✓' : t(' 没见过', ' new')}</span>
+          ))}
+        </p>
+      )}
       {!settled && (
         <>
           <input value={note} placeholder={t('拒绝的话，可以写一句为什么', 'If you decline, you may say why')} onChange={(e) => setNote(e.target.value)} />
           <div className="row">
             <button className="primary" onClick={() => onAnswer('allow')}>{t('允许', 'Allow')}</button>
-            <button onClick={() => onAnswer('allow_always')} title={t('这个会话里，同一类操作以后不再问（命令按第一个词算）', 'Within this session the same kind of action is no longer asked about (commands go by their first word)')}>{t('这一类以后都允许', 'Always allow this kind')}</button>
+            {!item.risky && <button onClick={() => onAnswer('allow_always')} title={t('这个会话里，同一类操作以后不再问。命令按每一段的程序和子命令算（比如 git status、uv run），每一段都允许过才不再问', 'Within this session the same kind of action is no longer asked about. A command goes by the program and subcommand of each part (git status, uv run…) and is skipped only when every part was allowed before')}>{t('这一类以后都允许', 'Always allow this kind')}</button>}
             <button onClick={() => onAnswer('deny', note)}>{t('拒绝', 'Decline')}</button>
           </div>
         </>
