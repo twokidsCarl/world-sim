@@ -1,0 +1,56 @@
+# soma 的语音合成后端：FastAPI + Kokoro（Apache-2.0），返回音频和音素时间线。
+# The speech-synthesis backend of soma: FastAPI + Kokoro (Apache-2.0); returns audio with a phoneme timeline.
+[project]
+name = "soma-tts"
+version = "0.1.0"
+description = "soma speech synthesis backend: English and Mandarin audio with a phoneme timeline"
+requires-python = ">=3.10,<3.13"
+license = "MIT"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+# 模型和它的文字转音素前端。测试里不需要模型的那部分不装这一组。
+# The model and its grapheme-to-phoneme front ends. Tests that need no model run without this extra.
+model = [
+  "kokoro==0.9.4",
+  "misaki[en,zh]==0.9.4",
+  "torch>=2.4",
+  "numpy>=1.26",
+  "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27", "jsonschema>=4.20"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["soma_tts"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.uv]
+# misaki[en] 会带上 espeak-ng（GPL-3）的加载器和 phonemizer（GPL-3），只用于词典外单词的兜底。这里不装：
+# 词典外的英文单词改由本服务自己的拼读规则处理（见 soma_tts/g2p_en.py）。
+# misaki[en] pulls in a loader for espeak-ng (GPL-3) and phonemizer (GPL-3), used only as a fallback for
+# out-of-dictionary words. They are left out here; such words go through this service's own letter-to-sound
+# rules instead (see soma_tts/g2p_en.py).
+exclude-dependencies = ["espeakng-loader", "phonemizer-fork"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["model: needs the downloaded model files / 需要已下载的模型文件"]

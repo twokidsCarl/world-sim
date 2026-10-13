@@ -20,6 +20,47 @@
     ],
     "dist": "dist"
   },
+  "api": {
+    "dir": "server",
+    "prepare": [
+      [
+        "uv",
+        "sync",
+        "--extra",
+        "model",
+        "--compile-bytecode"
+      ],
+      [
+        "uv",
+        "run",
+        "--extra",
+        "model",
+        "python",
+        "-m",
+        "soma_tts.fetch",
+        "--state",
+        "{state}"
+      ]
+    ],
+    "run": [
+      "uv",
+      "run",
+      "--extra",
+      "model",
+      "uvicorn",
+      "soma_tts.server:app",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "{port}",
+      "--log-level",
+      "warning"
+    ],
+    "health": "/api/health",
+    "env": {
+      "WORLD_SIM_STATE": "{state}"
+    }
+  },
   "cards": [
     {
       "id": "peel",
@@ -614,6 +655,78 @@
         "provenance": {
           "zh": "segmentsSource 和 territorySource 指向文件里 sources 表（主要是 Gray 1918）。分布区在模型体表上的划分是按规则构造的，有些与皮节图不一致，文件和 README 里有说明；未经审校。",
           "en": "`segmentsSource` and `territorySource` point into the `sources` table of the file (mainly Gray 1918). How the territories are drawn on the model's skin is rule-constructed and some disagree with the dermatome map, as the file and its README explain; not reviewed."
+        }
+      }
+    ],
+    "capabilities": [
+      {
+        "id": "tts",
+        "title": {
+          "zh": "把一句话合成语音，带音素时间线",
+          "en": "Synthesize one sentence, with a phoneme timeline"
+        },
+        "description": {
+          "zh": "用开源模型 Kokoro（Apache-2.0；英语 v1.0，普通话 v1.1-zh）在后端把一句英语或普通话合成语音，返回 base64 的 WAV（24 kHz、单声道、16 位）和音素时间线：每个音的起止时间（秒）。英语的 phone 是 ARPAbet（重音另放在 stress：0 无、1 主、2 次；另有 AX、IX、DX 三个扩展音素），普通话的 phone 是拼音的声母和韵母（ü 写作 v，声调另放在 tone，儿化是单独的一段 r），停顿是 sil；symbol 是模型自己的记号。还返回每个词的起止时间和模型的名称、版本、许可。时间线来自模型的时长预测器（每 25 毫秒一格），不是事后从声音里猜的；塞音处与声音的偏差中位数约 10 毫秒。同样的输入得到同样的字节。声音最长 13 秒，超过会报错并说明怎么改。不调用语言模型，请求时不联网。声音是机器合成的，不是真人录音。",
+          "en": "Synthesizes one English or Mandarin sentence on the backend with the open model Kokoro (Apache-2.0; v1.0 for English, v1.1-zh for Mandarin) and returns a base64 WAV (24 kHz, mono, 16-bit) with a phoneme timeline: the start and end of every sound in seconds. English `phone` values are ARPAbet (stress is separate in `stress`: 0 none, 1 primary, 2 secondary; plus the extended phones AX, IX and DX); Mandarin `phone` values are pinyin initials and finals (ü is written v, the tone is separate in `tone`, erhua is a separate stretch `r`); a pause is `sil`; `symbol` is the model's own symbol. Word start and end times and the model's name, version and licence are returned too. The timeline comes from the model's duration predictor (25 ms steps), not from guesses about the audio; at stops it is off from the audio by a median of about 10 ms. The same input gives the same bytes. Audio is capped at 13 s; longer requests are refused with a message saying how to fix them. No language model is called and nothing goes to the network at request time. The audio is machine-generated, not a recording of a person."
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/tts"
+        },
+        "input": {
+          "type": "object",
+          "required": [
+            "text",
+            "lang"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300,
+              "description": "要读的文字，1 到 300 个字符。lang 为 en 时是英文；为 zh 时是汉字（数字会读成中文，不能夹拉丁字母）。合成出的声音超过 13 秒会报错，请缩短。 / The text to speak, 1 to 300 characters. English for lang en; Chinese characters for lang zh (digits are read in Chinese; Latin letters are not accepted). Audio longer than 13 s is refused: shorten the text."
+            },
+            "lang": {
+              "type": "string",
+              "enum": [
+                "en",
+                "zh"
+              ],
+              "description": "语言：en 英语（美式），zh 普通话。 / Language: en English (American), zh Mandarin."
+            },
+            "voice": {
+              "type": "string",
+              "enum": [
+                "af_heart",
+                "af_bella",
+                "am_michael",
+                "am_fenrir",
+                "zf_001",
+                "zf_002",
+                "zm_010",
+                "zm_009"
+              ],
+              "description": "声音；不给就用这种语言的默认声音。英语：af_heart、af_bella、am_michael、am_fenrir；普通话：zf_001、zf_002、zm_010、zm_009。 / Voice; the language's default when omitted. English: af_heart, af_bella, am_michael, am_fenrir; Mandarin: zf_001, zf_002, zm_010, zm_009."
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 2.0,
+              "default": 1.0,
+              "description": "语速倍数，0.5 到 2，默认 1。 / Speaking rate multiplier, 0.5 to 2; default 1."
+            }
+          }
+        },
+        "output": {
+          "zh": "{ sampleRate, durationS, lang, voice, speed, audio（base64 的 WAV）, audioFormat, phonemes: [{ t0, t1, phone, symbol, word, stress | part + tone }], words: [{ t0, t1, text }], symbols, warnings, model: { name, version, licence, source, commit } }。出错时是 { detail, field, allowed }。",
+          "en": "{ sampleRate, durationS, lang, voice, speed, audio (base64 WAV), audioFormat, phonemes: [{ t0, t1, phone, symbol, word, stress | part + tone }], words: [{ t0, t1, text }], symbols, warnings, model: { name, version, licence, source, commit } }. On error: { detail, field, allowed }."
+        },
+        "deterministic": true,
+        "seconds": 10,
+        "example": {
+          "text": "Please bring five more books before noon.",
+          "lang": "en"
         }
       }
     ]

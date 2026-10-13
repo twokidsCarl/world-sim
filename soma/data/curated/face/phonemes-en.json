@@ -1,0 +1,282 @@
+{
+  "_doc": {
+    "zh": "英语音素（ARPAbet）→ 视位。39 个标准音素的 viseme 就是 visemes.json 里各视位 phonemes 列表的归并，没有另立一张表（tests/voice-tts.test.ts 核对两者一致）；这里只补了三样：后端会给出的三个扩展音素（AX、IX、DX），五个双元音滑动的顺序（sequence），和重音对幅度的影响（power）。后端的 phone 字段不带重音数字，重音在 stress 字段里（0 无、1 主、2 次）。停顿是 sil，不产生视位。",
+    "en": "English phones (ARPAbet) → visemes. The `viseme` of the 39 standard phones is the grouping already given by the `phonemes` lists of visemes.json; no second table is made (tests/voice-tts.test.ts checks that the two agree). Three things are added here: the three extended phones the backend emits (AX, IX, DX), the order of the glide in five diphthongs (`sequence`), and the effect of stress on amplitude (`power`). The backend's `phone` field carries no stress digit; stress is in `stress` (0 none, 1 primary, 2 secondary). A pause is `sil` and yields no viseme."
+  },
+  "pause": "sil",
+  "power": {
+    "byStress": {
+      "0": 0.8,
+      "1": 1,
+      "2": 0.9
+    },
+    "consonant": 1,
+    "basis": {
+      "source": null,
+      "note": {
+        "zh": "假设：JALI 用重音调节下颌和唇的幅度，具体数值这里自定。",
+        "en": "Assumption: JALI modulates jaw and lip amplitude with stress; the numbers are this project's."
+      }
+    }
+  },
+  "phones": {
+    "AA": {
+      "viseme": "AA",
+      "from": "visemes.json"
+    },
+    "AE": {
+      "viseme": "EH",
+      "from": "visemes.json"
+    },
+    "AH": {
+      "viseme": "AA",
+      "from": "visemes.json"
+    },
+    "AO": {
+      "viseme": "OW",
+      "from": "visemes.json"
+    },
+    "AW": {
+      "viseme": "AA",
+      "from": "visemes.json",
+      "sequence": [
+        {
+          "viseme": "AA",
+          "at": 0
+        },
+        {
+          "viseme": "UW",
+          "at": 0.6
+        }
+      ],
+      "assumption": true,
+      "note": {
+        "zh": "双元音：视位表把它归到起点的口形；这里再给出滑向终点的顺序，at 是各口形在这个音里开始的相对时刻，是假设。",
+        "en": "A diphthong: the viseme table files it under the shape it starts from; the glide to its end shape is added here. `at` is the relative moment each shape starts within the sound, an assumption."
+      }
+    },
+    "AY": {
+      "viseme": "AA",
+      "from": "visemes.json",
+      "sequence": [
+        {
+          "viseme": "AA",
+          "at": 0
+        },
+        {
+          "viseme": "IY",
+          "at": 0.6
+        }
+      ],
+      "assumption": true,
+      "note": {
+        "zh": "双元音：视位表把它归到起点的口形；这里再给出滑向终点的顺序，at 是各口形在这个音里开始的相对时刻，是假设。",
+        "en": "A diphthong: the viseme table files it under the shape it starts from; the glide to its end shape is added here. `at` is the relative moment each shape starts within the sound, an assumption."
+      }
+    },
+    "B": {
+      "viseme": "PBM",
+      "from": "visemes.json"
+    },
+    "CH": {
+      "viseme": "SH",
+      "from": "visemes.json"
+    },
+    "D": {
+      "viseme": "TDN",
+      "from": "visemes.json"
+    },
+    "DH": {
+      "viseme": "TH",
+      "from": "visemes.json"
+    },
+    "EH": {
+      "viseme": "EH",
+      "from": "visemes.json"
+    },
+    "ER": {
+      "viseme": "R",
+      "from": "visemes.json"
+    },
+    "EY": {
+      "viseme": "EH",
+      "from": "visemes.json",
+      "sequence": [
+        {
+          "viseme": "EH",
+          "at": 0
+        },
+        {
+          "viseme": "IY",
+          "at": 0.65
+        }
+      ],
+      "assumption": true,
+      "note": {
+        "zh": "双元音：视位表把它归到起点的口形；这里再给出滑向终点的顺序，at 是各口形在这个音里开始的相对时刻，是假设。",
+        "en": "A diphthong: the viseme table files it under the shape it starts from; the glide to its end shape is added here. `at` is the relative moment each shape starts within the sound, an assumption."
+      }
+    },
+    "F": {
+      "viseme": "FV",
+      "from": "visemes.json"
+    },
+    "G": {
+      "viseme": "KG",
+      "from": "visemes.json"
+    },
+    "HH": {
+      "viseme": "AX",
+      "from": "visemes.json"
+    },
+    "IH": {
+      "viseme": "IY",
+      "from": "visemes.json"
+    },
+    "IY": {
+      "viseme": "IY",
+      "from": "visemes.json"
+    },
+    "JH": {
+      "viseme": "SH",
+      "from": "visemes.json"
+    },
+    "K": {
+      "viseme": "KG",
+      "from": "visemes.json"
+    },
+    "L": {
+      "viseme": "L",
+      "from": "visemes.json"
+    },
+    "M": {
+      "viseme": "PBM",
+      "from": "visemes.json"
+    },
+    "N": {
+      "viseme": "TDN",
+      "from": "visemes.json"
+    },
+    "NG": {
+      "viseme": "KG",
+      "from": "visemes.json"
+    },
+    "OW": {
+      "viseme": "OW",
+      "from": "visemes.json",
+      "sequence": [
+        {
+          "viseme": "OW",
+          "at": 0
+        },
+        {
+          "viseme": "UW",
+          "at": 0.65
+        }
+      ],
+      "assumption": true,
+      "note": {
+        "zh": "双元音：视位表把它归到起点的口形；这里再给出滑向终点的顺序，at 是各口形在这个音里开始的相对时刻，是假设。",
+        "en": "A diphthong: the viseme table files it under the shape it starts from; the glide to its end shape is added here. `at` is the relative moment each shape starts within the sound, an assumption."
+      }
+    },
+    "OY": {
+      "viseme": "OW",
+      "from": "visemes.json",
+      "sequence": [
+        {
+          "viseme": "OW",
+          "at": 0
+        },
+        {
+          "viseme": "IY",
+          "at": 0.6
+        }
+      ],
+      "assumption": true,
+      "note": {
+        "zh": "双元音：视位表把它归到起点的口形；这里再给出滑向终点的顺序，at 是各口形在这个音里开始的相对时刻，是假设。",
+        "en": "A diphthong: the viseme table files it under the shape it starts from; the glide to its end shape is added here. `at` is the relative moment each shape starts within the sound, an assumption."
+      }
+    },
+    "P": {
+      "viseme": "PBM",
+      "from": "visemes.json"
+    },
+    "R": {
+      "viseme": "R",
+      "from": "visemes.json"
+    },
+    "S": {
+      "viseme": "SZ",
+      "from": "visemes.json"
+    },
+    "SH": {
+      "viseme": "SH",
+      "from": "visemes.json"
+    },
+    "T": {
+      "viseme": "TDN",
+      "from": "visemes.json"
+    },
+    "TH": {
+      "viseme": "TH",
+      "from": "visemes.json"
+    },
+    "UH": {
+      "viseme": "UW",
+      "from": "visemes.json"
+    },
+    "UW": {
+      "viseme": "UW",
+      "from": "visemes.json"
+    },
+    "V": {
+      "viseme": "FV",
+      "from": "visemes.json"
+    },
+    "W": {
+      "viseme": "W",
+      "from": "visemes.json"
+    },
+    "Y": {
+      "viseme": "IY",
+      "from": "visemes.json"
+    },
+    "Z": {
+      "viseme": "SZ",
+      "from": "visemes.json"
+    },
+    "ZH": {
+      "viseme": "SH",
+      "from": "visemes.json"
+    },
+    "AX": {
+      "viseme": "AX",
+      "from": "visemes.json",
+      "assumption": false,
+      "note": {
+        "zh": "央元音 ə（弱读音节）。视位表里 ax 归在 AX。",
+        "en": "The schwa ə (reduced syllables). `ax` is under AX in the viseme table."
+      }
+    },
+    "IX": {
+      "viseme": "IY",
+      "from": "this file",
+      "assumption": true,
+      "note": {
+        "zh": "弱读的 ɪ（roses 的第二个元音），视位表里没有，按 IH 归到 IY。",
+        "en": "Reduced ɪ (the second vowel of \"roses\"); absent from the viseme table and mapped like IH, to IY."
+      }
+    },
+    "DX": {
+      "viseme": "TDN",
+      "from": "this file",
+      "assumption": true,
+      "note": {
+        "zh": "闪音（water、bottle 里的 t）：舌尖很快地碰一下齿龈，视位表里没有，按 t/d 归到 TDN。",
+        "en": "The flap (the t of \"water\", \"bottle\"): a quick tap of the tongue tip on the alveolar ridge; absent from the viseme table and mapped like t/d, to TDN."
+      }
+    }
+  }
+}

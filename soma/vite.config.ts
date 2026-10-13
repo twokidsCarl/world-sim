@@ -8,13 +8,13 @@ import react from '@vitejs/plugin-react'
 // are kept out of the production build output.
 const DEV_DATASETS = ['fixture', 'stress']
 
-// 录音包（public/voice/，VIVAE，CC BY-NC 4.0）只许非商业使用。商业部署用
+// 录音包（public/voice/vivae-pain/，VIVAE，CC BY-NC 4.0）只许非商业使用。商业部署用
 //   SOMA_COMMERCIAL=1 bunx vite build
-// 构建：产物里不带 voice/，界面改用参数合成的声音，并且不显示录音的署名。默认构建不变。
-// The recorded sound pack (public/voice/, VIVAE, CC BY-NC 4.0) is for non-commercial use only. For a
+// 构建：产物里不带 voice/vivae-pain/（voice/ 下其余目录许可允许商用，照常保留），界面改用参数合成的声音，并且不显示录音的署名。默认构建不变。
+// The recorded sound pack (public/voice/vivae-pain/, VIVAE, CC BY-NC 4.0) is for non-commercial use only. For a
 // commercial deployment build with
 //   SOMA_COMMERCIAL=1 bunx vite build
-// which leaves voice/ out of dist, makes the app use the parametric voice and hides the recordings'
+// which leaves voice/vivae-pain/ out of dist (the other directories under voice/ allow commercial use and stay), makes the app use the parametric voice and hides the recordings'
 // attribution. The default build is unchanged.
 const COMMERCIAL = /^(1|true|yes)$/i.test(process.env.SOMA_COMMERCIAL ?? '')
 
@@ -28,7 +28,7 @@ function excludeDevDatasets(): Plugin {
     },
     async closeBundle() {
       for (const name of DEV_DATASETS) await rm(resolve(outDir, 'anatomy', name), { recursive: true, force: true })
-      if (COMMERCIAL) await rm(resolve(outDir, 'voice'), { recursive: true, force: true })
+      if (COMMERCIAL) await rm(resolve(outDir, 'voice', 'vivae-pain'), { recursive: true, force: true })
     },
   }
 }
