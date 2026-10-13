@@ -156,8 +156,12 @@ export const STYLE_MESOSCALE: Style = {
   ink: [0.07, 0.06, 0.09],
   // 概念“线”（水彩）：细而深的墨线，每个形状都勾一圈，粗细均匀。这是看原尺寸图定的；在 800 像素的缩小版上量出来的“线偏浅偏彩”是缩小造成的。
   // the concept "line" (watercolours): a thin, dark ink line round every shape, of even width. This was settled on the full-size originals; the "paler, more coloured line" measured on the 800-pixel reductions was an effect of the reduction.
-  inkTint: 0.35,
-  inkShade: 0.12,
+  // 后来又改了一次：我们的图是按缩小后的大小看的（一个病毒占一千像素，他的原图是三四千），同样粗的近黑线在这个大小上比他的重得多。
+  // 并排试了三档（近黑；填色压到 0.32；填色压到 0.45 并收细），取中间一档：每个形状仍然勾一圈，线是填色的深一号。
+  // Revised once more: our pictures are seen at the reduced size (a virus takes a thousand pixels, his originals three or four thousand), and at that size a near-black line of the same width is far heavier than his.
+  // Three settings were tried side by side (near-black; the fill deepened to 0.32; the fill deepened to 0.45 and thinner) and the middle one taken: every shape is still outlined, in a deeper shade of its fill.
+  inkTint: 0.85,
+  inkShade: 0.32,
   lineWidth: 1.05,
   // 概念“膜”：带子中线上一道很淡的虚线 / the concept "membrane": a very faint dashed line along the middle of the band
   membraneMidline: 0.5,

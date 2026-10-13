@@ -386,7 +386,9 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
     entities: sub.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: e.description, description: e.description, organism: '' })),
     reason: '',
   }
-  return { spec, mol: sub, coloring, align: null }
+  // 刺衬在后面：切片的背面不切它，前排的刺之间露出的是后面那一圈刺（深一号的色调），不是底色
+  // the spikes line the back: the back of the slab does not cut them, so between the spikes in front the ring behind shows (in a deeper tone) and not the ground
+  return { spec, mol: sub, coloring, align: null, keepBack: true }
 }
 
 async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void, idealise: boolean, colors: NonNullable<CatalogEntry['colors']>): Promise<Panel[]> {
