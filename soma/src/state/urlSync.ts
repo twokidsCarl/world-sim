@@ -50,6 +50,17 @@ let passthrough: [string, string][] = []
 /** 相机：由查看器报告；只有用户动过或 URL 给过才写进 URL / Camera, reported by the viewer; written only once the user moved it or the URL set it. */
 let camera: UrlState['cam'] | undefined
 
+/**
+ * 更新一个不归本模块管的参数（肌肉活动的 act / load / grav），并安排写回地址栏；value 为 null 时去掉它。
+ * Update a parameter this module does not own (act / load / grav of the muscle-activity display) and schedule the
+ * write-back; null removes it.
+ */
+export function setPassthroughParam(key: string, value: string | null): void {
+  passthrough = passthrough.filter(([k]) => k !== key)
+  if (value !== null) passthrough.push([key, value])
+  schedule()
+}
+
 export function setUrlCamera(cam: UrlState['cam'] | undefined): void {
   camera = cam
   if (cam) hints.focus = false

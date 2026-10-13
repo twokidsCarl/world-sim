@@ -1,0 +1,217 @@
+{
+  "_doc": {
+    "zh": "“肌肉活动”显示所用的参数。每个数值要么带出处（sources 里的键），要么标 assumption: true。由 tools/activity/build.ts 读取，写进 public/anatomy/<body>/activity.json。",
+    "en": "Parameters of the muscle-activity display. Every number either names a source (a key of `sources`) or is marked assumption: true. Read by tools/activity/build.ts and written into public/anatomy/<body>/activity.json."
+  },
+  "densities": {
+    "_doc": {
+      "zh": "组织密度，kg/m³。节段质量 = 皮肤围出的节段体积 × 该身体区域的平均密度；区域平均密度由区域内各部件的体积 × 组织密度，加上“没有建模的剩余体积 × fill”得到。最后整体归一化到 BMI × 身高²。",
+      "en": "Tissue densities, kg/m³. Segment mass = the volume the skin encloses for the segment × the mean density of its body region; the regional mean comes from part volume × tissue density over the region plus the unmodelled remainder × `fill`. The whole is finally normalised to BMI × stature²."
+    },
+    "muscle": { "kgm3": 1090, "source": "itis", "where": "Density table, Muscle (average 1090.4, n = 14)" },
+    "fat": { "kgm3": 911, "source": "itis", "where": "Density table, Fat / SAT (Subcutaneous Fat) (average 911, n = 23)" },
+    "skin": { "kgm3": 1109, "source": "itis", "where": "Density table, Skin (average 1109, n = 10)" },
+    "tendon": { "kgm3": 1142, "source": "itis", "where": "Density table, Tendon\\Ligament (average 1142, n = 20)" },
+    "ligament": { "kgm3": 1142, "source": "itis", "where": "Density table, Tendon\\Ligament (average 1142, n = 20)" },
+    "cartilage": { "kgm3": 1100, "source": "itis", "where": "Density table, Cartilage (average 1099.5, n = 7)" },
+    "brain": { "kgm3": 1046, "source": "itis", "where": "Density table, Brain (average 1045.5, n = 9)" },
+    "heart": { "kgm3": 1081, "source": "itis", "where": "Density table, Heart Muscle (average 1080.8, n = 25)" },
+    "tooth": { "kgm3": 2180, "source": "itis", "where": "Density table, Tooth (average 2180, n = 12)" },
+    "gland": { "kgm3": 1050, "source": "itis", "where": "Density table, Thyroid Gland (average 1050) and Salivary Gland (1048)" },
+    "lung": { "kgm3": 394, "source": "itis", "where": "Density table, Lung (Inflated) (average 394, n = 26)" },
+    "bone": {
+      "kgm3": 1543,
+      "assumption": true,
+      "note": {
+        "zh": "整块骨的密度：假设皮质骨和松质骨各占一半体积，(1908 + 1178) / 2。两个分量取自 IT'IS 表（Bone (Cortical) 1908、Bone (Cancellous) 1178）；各占一半是本项目的假设，没有打开出处。",
+        "en": "Density of a whole bone: assumes half cortical and half cancellous by volume, (1908 + 1178) / 2. The two components are from the IT'IS table (Bone (Cortical) 1908, Bone (Cancellous) 1178); the half-and-half split is this project's assumption with no source opened."
+      }
+    },
+    "organ": {
+      "kgm3": 1070,
+      "assumption": true,
+      "note": {
+        "zh": "除肺以外的内脏取一个代表值。IT'IS 表里肝 1079、肾 1066、胃 1088、大肠 1088、小肠 1030、脾 1089；这里取 1070，没有按器官分别计算。",
+        "en": "One representative value for viscera other than lung. The IT'IS table gives liver 1079, kidney 1066, stomach 1088, large intestine 1088, small intestine 1030, spleen 1089; 1070 is used here without treating organs one by one."
+      }
+    },
+    "fill": {
+      "kgm3": 1000,
+      "assumption": true,
+      "note": {
+        "zh": "皮肤以内、没有被任何实体部件占据的体积（皮肤本身、血液、肠内容物、内脏脂肪、部件之间的缝隙）按水的密度计。没有出处。",
+        "en": "Volume inside the skin that no solid part occupies (the skin itself, blood, gut contents, visceral fat, gaps between parts) is counted at the density of water. Unsourced."
+      }
+    }
+  },
+  "regions": {
+    "_doc": {
+      "zh": "身体区域：按关节 id 归入，用来算区域平均密度，并与 de Leva 1996 的节段质量比例对照。",
+      "en": "Body regions by joint id: used for the regional mean density and for the comparison with de Leva's 1996 segment mass fractions."
+    },
+    "head": "^(skull|tmj|C[1-7])$",
+    "trunk": "^(pelvis|si_[LR]|L[1-5]|T([1-9]|1[0-2])|rib\\d+_[LR]|sc_[LR]|ac_[LR])$",
+    "upperArm": "^gh_[LR]$",
+    "forearm": "^(elbow|radioulnar)_[LR]$",
+    "hand": "^(wrist|cmc\\d|mcp\\d|pip\\d|dip\\d|ip\\d)_[LR]$",
+    "thigh": "^(hip|patella)_[LR]$",
+    "shank": "^knee_[LR]$",
+    "foot": "^(ankle|subtalar|mtp\\d|tip\\d|tpip\\d|tdip\\d)_[LR]$"
+  },
+  "massMerge": {
+    "_doc": {
+      "zh": "质量并入哪个关节：肋并入所连的胸椎，髌骨并入股骨，骶髂关节并入骨盆（这些关节不参与力矩平衡，或在皮肤上不成一段）。",
+      "en": "Which joint a joint's mass is merged into: ribs into their thoracic vertebra, the patella into the femur, the sacroiliac joints into the pelvis (joints that take no part in the torque balance, or that are not a slab of the skin)."
+    },
+    "toParent": ["^rib\\d+_[LR]$", "^patella_[LR]$", "^si_[LR]$"]
+  },
+  "lockedJoints": {
+    "_doc": {
+      "zh": "不参与力矩平衡的关节：它们上面的力矩算作由被动结构（肋椎关节、韧带）承担。髌骨的自由度由膝带动，已经并入膝关节。",
+      "en": "Joints left out of the torque balance: torque there is taken to be carried by passive structures (costovertebral joints, ligaments). The patella's dof is driven by the knee and is folded into the knee."
+    },
+    "match": ["^rib\\d+_[LR]$", "^si_[LR]$", "^sc_[LR]$", "^ac_[LR]$", "^subtalar_[LR]$", "^T([1-9]|1[0-2])$"],
+    "why": {
+      "zh": "胸椎：与肋骨一起当作刚性的胸廓（常见的全身肌骨模型也这样做），胸椎节间的力矩算由胸廓承担。肩带（胸锁、肩锁关节）：上肢的重量主要由韧带和肩胛骨贴着胸廓的接触承担，模型里没有这个接触面，硬要肌肉平衡会剩下很大的残差。距下关节：足的内外翻力矩由足底压力在内外侧的分布来平衡，模型把地面反力固定分给足跟和两个跖骨头，分不出这个量。因此这两处的肌肉作用（斜方肌和前锯肌转动肩胛骨、胫骨前后肌和腓骨肌控制内外翻）在负荷估计里显示不出来。",
+      "en": "Thoracic spine: taken with the ribs as a rigid rib cage (as common whole-body musculoskeletal models do); torque between thoracic levels is carried by the cage. Shoulder girdle (sternoclavicular and acromioclavicular joints): the weight of the limb is carried mostly by ligaments and by the scapula resting on the rib cage, a contact the model does not have, and forcing muscles to balance it leaves a large residual. Subtalar joint: inversion and eversion torque is balanced by how plantar pressure is spread from medial to lateral, which the model, with the ground reaction fixed to the heel and two metatarsal heads, cannot resolve. The muscle work at these places (trapezius and serratus anterior turning the scapula, the tibialis muscles and fibulares controlling inversion) therefore does not appear in the load estimate."
+    }
+  },
+  "dofGroups": {
+    "_doc": {
+      "zh": "腰椎和颈椎各成一组平衡（胸椎连同肋骨当作刚性的胸廓，见 lockedJoints）：每段里同一根轴上的自由度合成一行，肌肉只需平衡这一段各节上的平均力矩。原因：模型里的竖脊肌只有几条从骨盆到肋骨的直线，多裂肌没有作用线，逐节平衡 24 个椎间关节做不到，也不符合实际——真实的脊柱由许多短肌束、椎间盘、韧带和腹内压共同分担。",
+      "en": "The lumbar and the cervical spine are each balanced as one stretch (the thoracic spine with the ribs is taken as a rigid rib cage, see lockedJoints): within each, the dofs about the same axis form one row and the muscles need only balance the mean torque over its levels. Reason: the erector spinae here is a few straight lines from pelvis to ribs and multifidus has no line at all, so balancing 24 intervertebral joints one by one is neither possible nor realistic — a real spine shares the load among many short fascicles, the discs, ligaments and intra-abdominal pressure."
+    },
+    "groups": [
+      { "id": "lumbar", "name": { "zh": "腰椎", "en": "Lumbar spine" }, "joints": ["L5", "L4", "L3", "L2", "L1"] },
+      { "id": "cervical", "name": { "zh": "颈椎与头", "en": "Cervical spine and head" }, "joints": ["C7", "C6", "C5", "C4", "C3", "C2", "C1", "skull"] }
+    ]
+  },
+  "specificTension": {
+    "ncm2": 61,
+    "assumption": true,
+    "note": {
+      "zh": "比张力（最大等长力 / PCSA）。61 N/cm² 是多个下肢 OpenSim 模型采用的量级，本项目没有打开给出它的原文，所以标为假设。它只影响激活度的绝对大小，不影响谁先谁后：所有肌肉用同一个值。交叉核对见各人体 activity.report.json 的 strengthCheck（我们的 PCSA × 61 与 gait2392 模型里同名肌肉的最大等长力之比）。",
+      "en": "Specific tension (maximum isometric force / PCSA). 61 N/cm² is the order used by several lower-limb OpenSim models; this project did not open a paper stating it, hence an assumption. It only sets the absolute size of activations, not their order: one value for all muscles. For a cross-check see `strengthCheck` in each body's activity.report.json (our PCSA × 61 against the maximum isometric force of the same muscles in the gait2392 model)."
+    },
+    "method": { "source": "neck2020", "where": "Introduction: muscle force is proportional to PCSA with the specific tension as the constant; PCSA is proportional to muscle volume and inversely proportional to fibre length" }
+  },
+  "fibre": {
+    "_doc": {
+      "zh": "纤维长度。能对上 gait2392 / arm26 模型的肌肉：模型的最适纤维长度 × (我们的作用线在解剖学零位下的长度 / 模型的肌腱单元长度 ≈ 最适纤维长度 + 肌腱松弛长度)。对不上的：肌腹长度（网格沿作用线方向的延伸）× 默认比例。忽略羽状角。",
+      "en": "Fibre length. Muscles matched to the gait2392 / arm26 models: the model's optimal fibre length × (our line length at the anatomical zero / the model's muscle-tendon length ≈ optimal fibre length + tendon slack length). Unmatched ones: belly length (extent of the mesh along the line) × the default ratio. Pennation is ignored."
+    },
+    "defaultBellyRatio": {
+      "value": "median",
+      "assumption": true,
+      "note": {
+        "zh": "默认的“纤维长度 / 肌腹长度”取同一副人体上已匹配肌肉的中位数（写在 activity.report.json 里）。这是假设：没有逐条肌肉的出处。",
+        "en": "The default fibre-to-belly length ratio is the median over the matched muscles of the same body (recorded in activity.report.json). An assumption: there is no per-muscle source."
+      }
+    }
+  },
+  "quadriceps": {
+    "_doc": {
+      "zh": "股四头肌经髌骨起作用。绑定里的直线不够：股直肌的直线从髂骨直接到胫骨，膝关节力臂符号反了；股肌的直线在屈膝时穿过股骨髁。这里把四个头的路径改成 起点 → 股骨上的一个经过点 → 髌骨上的点：经过点取髌骨点绕髌骨轴往近侧转 backDeg 度的位置（固定在股骨上）。屈膝时髌骨沿它的圆轨道离开经过点，这段弦长近似弧长，于是膝关节力臂 ≈ 髌骨轨道半径 × 髌骨/膝的传动比 × cos((Δ + backDeg) / 2)，Δ 是髌骨转过的角度。弦代替弧使屈膝 90° 时偏小约两成、135° 时偏小约四成。",
+      "en": "The quadriceps act through the patella. The rig's straight lines do not: its rectus femoris runs from ilium straight to tibia with the wrong sign of knee moment arm, and the vasti lines cut through the femoral condyles in flexion. Here the four heads get the path origin → a via point on the femur → the point on the patella: the via point is the patella point turned backDeg degrees proximally about the patellar axis (fixed to the femur). In flexion the patella leaves the via point along its circular track and the chord approximates the arc, giving a knee moment arm ≈ track radius × patella/knee ratio × cos((Δ + backDeg) / 2), Δ being the patella's rotation. Chord for arc reads about a fifth low at 90° of knee flexion and about two fifths low at 135°."
+    },
+    "match": "(vastus (medialis|lateralis|intermedius)|rectus femoris)",
+    "patellaJoint": "patella_{S}",
+    "femurJoint": "hip_{S}",
+    "backDeg": 5,
+    "assumption": true
+  },
+  "retinacula": {
+    "_doc": {
+      "zh": "支持带 / 踝后滑车：长肌腱在踝和腕处被支持带或内、外踝约束，不会离开或穿过关节。这里给这些肌肉的路径加一个经过点：静止姿势下作用线上离该关节中心最近的点，固定在近端节段上。这样它们在该关节上的力臂大致保持静止姿势时的值，不会在大角度下变号。经过点的位置由我们的作用线几何决定，不是测量的滑车位置。",
+      "en": "Retinacula and the pulleys behind the malleoli: at the ankle and the wrist long tendons are held by a retinaculum or turn round a malleolus and neither leave nor cross the joint. The paths of these muscles get one via point: the point of the rest-pose line nearest the joint centre, fixed to the proximal segment. Their moment arm at that joint then stays near its rest value and does not change sign at large angles. The via point follows from our line geometry; it is not a measured pulley position."
+    },
+    "assumption": true,
+    "rules": [
+      { "match": "(tibialis anterior|extensor digitorum longus|extensor hallucis longus|fibularis tertius|tibialis posterior|flexor digitorum longus|flexor hallucis longus|fibularis longus|fibularis brevis)", "joint": "ankle_{S}", "fixTo": "knee_{S}" },
+      { "match": "(flexor digitorum superficialis|flexor digitorum profundus|flexor pollicis longus|extensor digitorum$|extensor indicis|extensor digiti minimi|extensor pollicis longus|extensor pollicis brevis|abductor pollicis longus|palmaris longus)", "joint": "wrist_{S}", "fixTo": "radioulnar_{S}" }
+    ]
+  },
+  "noLoad": {
+    "_doc": {
+      "zh": "不参与负荷估计的肌肉（仍显示长度变化）：它们不是带动骨架的肌肉，或者绑定里的作用线连的是两根肋骨，当作脊柱的肌肉会出错。",
+      "en": "Muscles left out of the load estimate (their length change is still shown): they do not move the skeleton, or their line in the rig joins two ribs and would wrongly act as a spinal muscle."
+    },
+    "rules": [
+      { "match": "(intercostal|transversus thoracis|diaphragm|levatores costarum|serratus posterior|subclavius)", "zh": "呼吸肌 / 肋间的肌肉：作用线连在肋骨之间", "en": "respiratory or intercostal muscle: its line joins ribs" },
+      { "match": "(trapezius|rhomboid|levator scapulae|serratus anterior|pectoralis minor)", "zh": "带动肩带（肩胛骨、锁骨）的肌肉：模型里肩带不参与平衡，硬算会把它们当成脊柱的肌肉", "en": "a muscle that moves the shoulder girdle (scapula, clavicle): the girdle is not balanced in this model, and they would wrongly act as spinal muscles" },
+      { "match": "(palatini|uvular|pharyn|constrictor|platysma|buccinator|orbicularis|depressor anguli|levator anguli|risorius|zygomatic|mentalis|genio|hyoid|hyoglossus|digastric|stylo)", "zh": "面部、咽、腭、舌骨的肌肉：不是为了对抗重力保持姿势", "en": "facial, pharyngeal, palatal or hyoid muscle: not a muscle that holds posture against gravity" }
+    ]
+  },
+  "wrap": [
+    { "match": "supraspinatus", "zh": "冈上肌腱越过肱骨头顶部；上臂抬高后直线作用线几乎没有外展力臂，模型会低估它", "en": "the supraspinatus tendon passes over the top of the humeral head; once the arm is raised the straight line has almost no abduction moment arm and the model under-reads the muscle" },
+    { "match": "deltoid", "zh": "三角肌包绕肱骨头，直线作用线在上臂抬高后不可靠", "en": "the deltoid wraps over the humeral head; a straight line is unreliable once the arm is raised" },
+    { "match": "gluteus maximus", "zh": "臀大肌绕过坐骨和大转子，直线作用线在屈髋时不可靠", "en": "gluteus maximus wraps round the ischium and the greater trochanter; a straight line is unreliable in hip flexion" },
+    { "match": "(vastus|rectus femoris)", "zh": "股四头肌经髌骨起作用，这里用经过点近似；屈膝超过 90° 时力臂偏小", "en": "the quadriceps act through the patella, approximated here with a via point; the moment arm reads low beyond 90° of knee flexion" },
+    { "match": "(iliacus|psoas)", "zh": "髂腰肌绕过骨盆前缘，直线作用线会低估屈髋力臂", "en": "iliopsoas wraps over the pelvic brim; a straight line under-reads its hip-flexion moment arm" },
+    { "match": "triceps brachii", "zh": "肱三头肌肌腱在屈肘时绕过肱骨远端", "en": "the triceps tendon wraps over the distal humerus in elbow flexion" },
+    { "match": "(latissimus|pectoralis major|trapezius|serratus anterior)", "zh": "宽大的扇形肌，一条直线代表不了各束的方向", "en": "a broad fan-shaped muscle; one straight line cannot stand for its fascicles" },
+    { "match": "(obliqu|rectus abdominis|transversus abdominis)", "zh": "腹壁肌是弯曲的片状肌，直线作用线只是粗略近似", "en": "abdominal wall muscles are curved sheets; a straight line is a rough stand-in" },
+    { "match": "(iliocostalis|longissimus|spinalis|semispinalis|multifidus)", "zh": "竖脊肌由许多跨不同节段的肌束组成，这里只有一条从起点到止点的直线", "en": "the erector spinae consists of many fascicles spanning different levels; here it is one straight line from end to end" },
+    { "match": "(flexor digitorum|flexor pollicis longus|flexor hallucis longus|extensor digitorum|extensor hallucis longus|extensor pollicis|extensor indicis|extensor digiti)", "zh": "长肌腱经过腕、踝的支持带和多个关节，直线作用线不经过这些滑车", "en": "long tendons run under retinacula and over several joints; the straight line misses those pulleys" },
+    { "match": "(fibularis|tibialis posterior)", "zh": "肌腱绕过内、外踝，直线作用线不绕行", "en": "the tendon turns round a malleolus, which the straight line does not" }
+  ],
+  "solver": {
+    "g": 9.81,
+    "reservePenalty": 10000,
+    "limitToleranceDeg": 3,
+    "contactToleranceMm": 15,
+    "nearCentreMm": 5,
+    "assumption": true,
+    "note": {
+      "zh": "数值方法的参数，不是生理量：备用执行器的惩罚系数（相对该自由度上肌肉的力矩能力）、判定“在关节极限上”的容差、判定足底点着地的高度容差、判定作用线“贴近关节中心”的距离。",
+      "en": "Parameters of the numerical method, not physiological quantities: the reserve penalty (relative to the muscles' torque capacity at the dof), the tolerance for being at a joint limit, the height tolerance for a sole point to be on the ground, and the distance at which a line counts as passing close to a joint centre."
+    }
+  },
+  "display": {
+    "bulgeMax": 0.1,
+    "displayFull": 0.5,
+    "assumption": true,
+    "note": {
+      "zh": "显示用：激活度达到 50% 即为满色；肌腹中段最多增粗 10%，同时两端变细使体积到一阶不变。10% 是本项目选的保守值（等长收缩时肌腹变短、肌腱被拉长，肌腹因此变粗），没有打开超声测量的出处。",
+      "en": "For display: colour saturates at 50 % activation; the mid-belly thickens by at most 10 % while the ends thin so that volume is kept to first order. 10 % is a conservative choice of this project (in an isometric contraction the belly shortens against the stretching tendon and therefore thickens); no ultrasound source was opened."
+    }
+  },
+  "sources": {
+    "itis": {
+      "name": "IT'IS Database for thermal and electromagnetic parameters of biological tissues, Version 5.0 (Baumgartner, Hasgall, Di Gennaro, Neufeld, Lloyd, Gosselin, Payne, Klingenböck, Kuster), DOI 10.13099/VIP21000-05-0",
+      "url": "https://itis.swiss/virtual-population/tissue-properties/database/density/",
+      "licence": "not stated on the pages opened; only individual numerical facts are quoted, with attribution",
+      "opened": "2026-10-13: the Density page and the spreadsheet data it loads (materialparameterdatabasecurrent20240604.xls, sheet 1, columns Tissue / Average / Standard Deviation / Sample Size), and the overview page for the citation"
+    },
+    "deleva": {
+      "name": "de Leva P. (1996) Adjustments to Zatsiorsky-Seluyanov's segment inertia parameters. J Biomech 29(9):1223-1230 — as tabulated in BMClab/BMC (Duarte & Watanabe, Notes on Scientific Computing for Biomechanics and Motor Control), data/BSPmale_ZdeLeva.txt and data/BSPfemale_ZdeLeva.txt",
+      "url": "https://github.com/BMClab/BMC/blob/master/data/BSPmale_ZdeLeva.txt",
+      "licence": "CC BY 4.0 (BMClab/BMC README: non-software content); the journal article itself was not opened",
+      "opened": "2026-10-13: the two data files (segment, endpoints, mass fraction, longitudinal CM position) and the licence section of the repository README"
+    },
+    "gait2392": {
+      "name": "OpenSim Gait2392 model (gait2392_thelen2003muscle.osim), Delp et al. 1990; Yamaguchi & Zajac 1989; Anderson & Pandy 1999, 2001",
+      "url": "https://github.com/opensim-org/opensim-models/tree/master/Models/Gait2392_Simbody",
+      "licence": "CC BY 3.0 (see <credits> in the file; copy in data/curated/rig/opensim/)",
+      "opened": "the copy in this repository: optimal_fiber_length, tendon_slack_length and max_isometric_force of every muscle; mass and mass_center of every body"
+    },
+    "arm26": {
+      "name": "OpenSim Arm26 model (arm26.osim), adapted from Holzbaur, Murray & Delp 2005",
+      "url": "https://github.com/opensim-org/opensim-models/tree/master/Models/Arm26",
+      "licence": "CC BY 3.0 (see <credits> in the file; copy in data/curated/rig/opensim/)",
+      "opened": "the copy in this repository: optimal_fiber_length, tendon_slack_length and max_isometric_force of its six muscles"
+    },
+    "neck2020": {
+      "name": "Neck musculoskeletal model generation through anthropometric scaling. PLoS One 2020",
+      "url": "https://europepmc.org/article/PMC/PMC6986765",
+      "licence": "CC BY 4.0",
+      "opened": "2026-10-13, full text (Europe PMC XML): the paragraph stating that muscle force is proportional to PCSA through the specific tension, and PCSA to volume over fibre length"
+    },
+    "calibration": {
+      "name": "This project's calibration tables: muscle moment arms against the Rajagopal 2016 OpenSim model and MyoFullBody",
+      "url": "data/curated/calibration/muscle-curves-opensim.json, data/curated/calibration/muscle-curves-myo.json",
+      "licence": "CC BY-SA 4.0 (this repository); the references' own licences are recorded in those files",
+      "opened": "read by the build: rows with `ourLineArmMm` outside the tolerance flag the muscle as unreliable"
+    }
+  }
+}

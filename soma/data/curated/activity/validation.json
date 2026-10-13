@@ -1,0 +1,2285 @@
+{
+ "_doc": {
+  "zh": "第二层（负荷估计）在有已知答案的姿势上的结果，由 tools/activity/validate.ts 生成。判定只看名次和符号：应当用力的肌肉激活度 > 0.5% 且高于应当安静的肌肉，要求力矩的符号正确。激活度的数值本身不可信（见 params.json 里的假设）。",
+  "en": "Results of layer 2 (the load estimate) on the poses with known answers, written by tools/activity/validate.ts. Only ranks and signs are judged: muscles expected to work are above 0.5 % and above those expected to stay silent, and the required torque has the right sign. The activation numbers themselves are not to be trusted (see the assumptions in params.json)."
+ },
+ "cases": [
+  {
+   "id": "elbow90",
+   "name": {
+    "zh": "屈肘 90°，前臂水平",
+    "en": "elbow flexed 90°, forearm horizontal"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "重力使前臂下落（伸肘），由屈肘肌对抗",
+    "en": "gravity drops the forearm (extends the elbow); the elbow flexors oppose it"
+   }
+  },
+  {
+   "id": "elbow90load",
+   "name": {
+    "zh": "屈肘 90°，手持 2 kg",
+    "en": "elbow flexed 90° holding 2 kg"
+   },
+   "gravity": "stand",
+   "load": {
+    "kg": 2,
+    "side": "B"
+   },
+   "basis": {
+    "zh": "同上，负荷更大，激活度应更高",
+    "en": "as above with more load: activations must be higher"
+   }
+  },
+  {
+   "id": "overhead",
+   "name": {
+    "zh": "上臂举过头、屈肘 70°",
+    "en": "arm overhead, elbow flexed 70°"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "前臂在肘的上方，重力使肘屈曲，由伸肘肌对抗",
+    "en": "the forearm is above the elbow, gravity flexes it and the elbow extensors oppose it"
+   }
+  },
+  {
+   "id": "abduction90",
+   "name": {
+    "zh": "肩外展 90°",
+    "en": "arm abducted 90°"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "重力使上臂内收，由三角肌中束和冈上肌对抗",
+    "en": "gravity adducts the arm; the middle deltoid and supraspinatus oppose it"
+   }
+  },
+  {
+   "id": "squat",
+   "name": {
+    "zh": "浅蹲（屈膝 60°）",
+    "en": "shallow squat (knees 60°)"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "体重使膝屈曲，由股四头肌对抗；只跨膝关节的屈膝肌（股二头肌短头、腘肌）应当安静。躯干前倾时跨髋和膝的腘绳肌会作为伸髋肌一起用力，所以不把它们列为\"应当安静\"",
+    "en": "body weight flexes the knees and the quadriceps oppose it; the knee flexors that span the knee alone (short head of biceps femoris, popliteus) must stay silent. With the trunk leaning forward the two-joint hamstrings work as hip extensors, so they are not listed as silent"
+   }
+  },
+  {
+   "id": "tiptoe",
+   "name": {
+    "zh": "踮脚站立",
+    "en": "standing on tiptoe"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "地面反力在前足，使踝背屈，由小腿三头肌对抗",
+    "en": "the ground reaction under the forefoot dorsiflexes the ankle; the triceps surae opposes it"
+   }
+  },
+  {
+   "id": "lean",
+   "name": {
+    "zh": "以踝为轴前倾 6°",
+    "en": "leaning forward 6° at the ankles"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "重心移到踝的前方，由跖屈肌拉住",
+    "en": "the centre of mass moves in front of the ankles and the plantar flexors hold it"
+   }
+  },
+  {
+   "id": "trunk30",
+   "name": {
+    "zh": "躯干前屈 30°",
+    "en": "trunk flexed forward 30°"
+   },
+   "gravity": "stand",
+   "load": null,
+   "basis": {
+    "zh": "上身重量使脊柱前屈，由竖脊肌对抗",
+    "en": "the weight of the upper body flexes the spine; the erector spinae opposes it"
+   }
+  },
+  {
+   "id": "slr",
+   "name": {
+    "zh": "仰卧直腿抬高 45°",
+    "en": "supine straight leg raise 45°"
+   },
+   "gravity": "supine",
+   "load": null,
+   "basis": {
+    "zh": "重力使抬起的下肢下落（伸髋），由屈髋肌对抗",
+    "en": "gravity drops the raised limb (extends the hip); the hip flexors oppose it"
+   }
+  }
+ ],
+ "outcomes": [
+  {
+   "id": "elbow90",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "biceps brachii",
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 10.1,
+     "rank": 2,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachialis",
+     "muscle": "Left brachialis",
+     "activationPct": 0.9,
+     "rank": 25,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachioradialis",
+     "muscle": "Left brachioradialis",
+     "activationPct": 1.7,
+     "rank": 20,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "triceps brachii",
+     "muscle": "Lateral head of left triceps brachii",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "elbow_L.0",
+     "requiredNm": 2.38,
+     "deliveredNm": 2.38,
+     "residualNm": 0,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 29.5,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 10.1,
+     "flags": ""
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 8.4,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 8,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 5.4,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left abductor pollicis longus",
+     "activationPct": 5.1,
+     "flags": "via,fibre"
+    },
+    {
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 4.3,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Humeral head of left flexor carpi ulnaris",
+     "activationPct": 3.8,
+     "flags": "fibre,flip"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2.53,
+     "residualNm": 0.39,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 2.56,
+     "residualNm": 0.34,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": 1.92,
+     "residualNm": 0.29,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.0",
+     "requiredNm": 2.01,
+     "residualNm": 0.27,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 3.2,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "elbow90load",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "biceps brachii",
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 34.9,
+     "rank": 3,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachialis",
+     "muscle": "Left brachialis",
+     "activationPct": 2.5,
+     "rank": 28,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachioradialis",
+     "muscle": "Left brachioradialis",
+     "activationPct": 4.6,
+     "rank": 19,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "triceps brachii",
+     "muscle": "Lateral head of left triceps brachii",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "elbow_L.0",
+     "requiredNm": 8.6,
+     "deliveredNm": 8.6,
+     "residualNm": 0,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 88.9,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left flexor carpi radialis",
+     "activationPct": 41.4,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 34.9,
+     "flags": ""
+    },
+    {
+     "muscle": "Humeral head of left flexor carpi ulnaris",
+     "activationPct": 31.3,
+     "flags": "fibre,flip"
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 28.3,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 22.8,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left abductor pollicis longus",
+     "activationPct": 12,
+     "flags": "via,fibre"
+    },
+    {
+     "muscle": "Left opponens pollicis",
+     "activationPct": 11.9,
+     "flags": "fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 4.72,
+     "residualNm": 1.09,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 4.9,
+     "residualNm": 0.96,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": 7.93,
+     "residualNm": 0.91,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.0",
+     "requiredNm": 8.01,
+     "residualNm": 0.85,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -19.38,
+     "residualNm": -0.08,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_R.1",
+     "requiredNm": -2.27,
+     "residualNm": 0.06,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 3.3,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "overhead",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "triceps brachii",
+     "muscle": "Medial head of left triceps brachii",
+     "activationPct": 21.2,
+     "rank": 1,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "biceps brachii",
+     "muscle": "Long head of left biceps brachii",
+     "activationPct": 3.5
+    },
+    {
+     "pattern": "brachialis",
+     "muscle": "Left coracobrachialis",
+     "activationPct": 0.7
+    }
+   ],
+   "torques": [
+    {
+     "dof": "elbow_L.0",
+     "requiredNm": -1.91,
+     "deliveredNm": -1.87,
+     "residualNm": -0.04,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Medial head of left triceps brachii",
+     "activationPct": 21.2,
+     "flags": "wrap"
+    },
+    {
+     "muscle": "Lateral head of left triceps brachii",
+     "activationPct": 16.9,
+     "flags": "wrap"
+    },
+    {
+     "muscle": "Left extensor carpi radialis brevis",
+     "activationPct": 11.4,
+     "flags": "fibre,flip"
+    },
+    {
+     "muscle": "Left teres minor",
+     "activationPct": 9.3,
+     "flags": "fibre,flip"
+    },
+    {
+     "muscle": "Long head of left triceps brachii",
+     "activationPct": 9.2,
+     "flags": "wrap"
+    },
+    {
+     "muscle": "Left extensor carpi ulnaris",
+     "activationPct": 6.3,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left extensor carpi ulnaris",
+     "activationPct": 5.7,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left opponens pollicis",
+     "activationPct": 3.6,
+     "flags": "fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 0.14,
+     "residualNm": 0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 2,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "abduction90",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "acromial part of .*deltoid",
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 12.7,
+     "rank": 1,
+     "unreliable": true
+    },
+    {
+     "pattern": "supraspinatus",
+     "muscle": "Left supraspinatus",
+     "activationPct": 0.1,
+     "rank": 42,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "latissimus dorsi",
+     "muscle": "Left latissimus dorsi",
+     "activationPct": 0
+    },
+    {
+     "pattern": "teres major",
+     "muscle": "Left teres major",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 8.65,
+     "deliveredNm": 8.63,
+     "residualNm": 0.02,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 12.7,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Long head of left biceps brachii",
+     "activationPct": 11.5,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 8.3,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Sternocostal part of left pectoralis major",
+     "activationPct": 7,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Clavicular part of left deltoid",
+     "activationPct": 6,
+     "flags": "wrap,fibre,flip"
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 6,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left extensor digitorum",
+     "activationPct": 5.2,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left abductor pollicis longus",
+     "activationPct": 3.9,
+     "flags": "via,fibre"
+    }
+   ],
+   "worst": [],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 0.7,
+   "pass": false,
+   "failures": [
+    "Left supraspinatus is not active (0.1 %)"
+   ]
+  },
+  {
+   "id": "squat",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "vastus lateralis",
+     "muscle": "Left vastus lateralis",
+     "activationPct": 40.5,
+     "rank": 4,
+     "unreliable": true
+    },
+    {
+     "pattern": "vastus medialis",
+     "muscle": "Left vastus medialis",
+     "activationPct": 24.7,
+     "rank": 7,
+     "unreliable": true
+    },
+    {
+     "pattern": "vastus intermedius",
+     "muscle": "Left vastus intermedius",
+     "activationPct": 21.6,
+     "rank": 9,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "short head of .*biceps femoris",
+     "muscle": "Short head of left biceps femoris",
+     "activationPct": 0
+    },
+    {
+     "pattern": "popliteus",
+     "muscle": "Left popliteus",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "knee_L.0",
+     "requiredNm": -30.26,
+     "deliveredNm": -30.08,
+     "residualNm": -0.18,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left piriformis",
+     "activationPct": 100,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Left quadratus femoris",
+     "activationPct": 100,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Left gemellus inferior",
+     "activationPct": 46.3,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Left vastus lateralis",
+     "activationPct": 40.5,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 27.5,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left gemellus superior",
+     "activationPct": 25.3,
+     "flags": ""
+    },
+    {
+     "muscle": "Left vastus medialis",
+     "activationPct": 24.7,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left semitendinosus",
+     "activationPct": 24.5,
+     "flags": "flip"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "hip_R.1",
+     "requiredNm": 5.57,
+     "residualNm": 12.17,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_R.0",
+     "requiredNm": -56.41,
+     "residualNm": -10.16,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.1",
+     "requiredNm": 4.67,
+     "residualNm": 10.08,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.0",
+     "requiredNm": -51.95,
+     "residualNm": -8.38,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.2",
+     "requiredNm": 3.44,
+     "residualNm": -0.25,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -59.29,
+     "residualNm": -0.24,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 15.6,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "tiptoe",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "soleus",
+     "muscle": "Left soleus",
+     "activationPct": 5.1,
+     "rank": 8,
+     "unreliable": false
+    },
+    {
+     "pattern": "gastrocnemius",
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 10.9,
+     "rank": 4,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "tibialis anterior",
+     "muscle": "Left tibialis anterior",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "ankle_L.0",
+     "requiredNm": -23.38,
+     "deliveredNm": -23.36,
+     "residualNm": -0.02,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 15.7,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Set of dorsal interossei of left hand",
+     "activationPct": 15.6,
+     "flags": "fibre,near"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 12.4,
+     "flags": ""
+    },
+    {
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 10.9,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 10.8,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 8.3,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 5.3,
+     "flags": ""
+    },
+    {
+     "muscle": "Left soleus",
+     "activationPct": 5.1,
+     "flags": ""
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2.94,
+     "residualNm": 0.28,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 2.93,
+     "residualNm": 0.24,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": 0.11,
+     "residualNm": 0.15,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.0",
+     "requiredNm": 0.14,
+     "residualNm": 0.13,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 3.5
+   },
+   "residualPct": 1,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "lean",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "soleus",
+     "muscle": "Left soleus",
+     "activationPct": 7.3,
+     "rank": 5,
+     "unreliable": false
+    },
+    {
+     "pattern": "gastrocnemius",
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 33.1,
+     "rank": 1,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "tibialis anterior",
+     "muscle": "Left tibialis anterior",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "ankle_L.0",
+     "requiredNm": -37.77,
+     "deliveredNm": -37.74,
+     "residualNm": -0.03,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 33.1,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Set of dorsal interossei of left hand",
+     "activationPct": 16,
+     "flags": "fibre,near"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 12.7,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 11.6,
+     "flags": ""
+    },
+    {
+     "muscle": "Left soleus",
+     "activationPct": 7.3,
+     "flags": ""
+    },
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 6.9,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 5.7,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 5.6,
+     "flags": "fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2.91,
+     "residualNm": 0.18,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 2.9,
+     "residualNm": 0.15,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": -0.89,
+     "residualNm": 0.06,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_R.1",
+     "requiredNm": -5.62,
+     "residualNm": 0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0.1
+   },
+   "residualPct": 0.6,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "trunk30",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "iliocostalis lumborum|longissimus thoracis",
+     "muscle": "Left longissimus thoracis",
+     "activationPct": 7.1,
+     "rank": 12,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "rectus abdominis",
+     "muscle": "Left rectus abdominis",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "L3.0",
+     "requiredNm": -25.02,
+     "deliveredNm": -24.88,
+     "residualNm": -0.14,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 17.8,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Set of dorsal interossei of left hand",
+     "activationPct": 16.1,
+     "flags": "fibre,near"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 15.3,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left extensor pollicis longus",
+     "activationPct": 12.7,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 12.5,
+     "flags": ""
+    },
+    {
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 10.8,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left extensor carpi ulnaris",
+     "activationPct": 10.6,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 9.6,
+     "flags": "fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -25.02,
+     "residualNm": -0.14,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 2.5,
+     "residualNm": 0.12,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2.51,
+     "residualNm": 0.12,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_R.1",
+     "requiredNm": -4.15,
+     "residualNm": 0.08,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.1",
+     "requiredNm": -4.42,
+     "residualNm": 0.07,
+     "noMuscle": false
+    },
+    {
+     "dof": "wrist_L.1",
+     "requiredNm": -0.02,
+     "residualNm": 0.06,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 0.8,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "slr",
+   "body": "male",
+   "active": [
+    {
+     "pattern": "iliacus",
+     "muscle": "Left iliacus",
+     "activationPct": 15,
+     "rank": 3,
+     "unreliable": true
+    },
+    {
+     "pattern": "psoas major",
+     "muscle": "Left psoas major",
+     "activationPct": 19.7,
+     "rank": 2,
+     "unreliable": true
+    },
+    {
+     "pattern": "rectus femoris",
+     "muscle": "Left rectus femoris",
+     "activationPct": 21.9,
+     "rank": 1,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "gluteus maximus",
+     "muscle": "Left gluteus maximus",
+     "activationPct": 0
+    },
+    {
+     "pattern": "long head of .*biceps femoris",
+     "muscle": "Long head of left biceps femoris",
+     "activationPct": 0.2
+    }
+   ],
+   "torques": [
+    {
+     "dof": "hip_L.0",
+     "requiredNm": 28.78,
+     "deliveredNm": 28.26,
+     "residualNm": 0.52,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left rectus femoris",
+     "activationPct": 21.9,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left psoas major",
+     "activationPct": 19.7,
+     "flags": "wrap,flip"
+    },
+    {
+     "muscle": "Left iliacus",
+     "activationPct": 15,
+     "flags": "wrap,arm"
+    },
+    {
+     "muscle": "Medial head of left gastrocnemius",
+     "activationPct": 11.5,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left tibialis posterior",
+     "activationPct": 11.1,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left fibularis longus",
+     "activationPct": 9.8,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left adductor longus",
+     "activationPct": 9.3,
+     "flags": ""
+    },
+    {
+     "muscle": "Left tibialis anterior",
+     "activationPct": 8.9,
+     "flags": "via"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "hip_L.0",
+     "requiredNm": 28.78,
+     "residualNm": 0.52,
+     "noMuscle": false
+    },
+    {
+     "dof": "knee_L.0",
+     "requiredNm": -6.7,
+     "residualNm": 0.16,
+     "noMuscle": false
+    },
+    {
+     "dof": "ankle_L.0",
+     "requiredNm": -0.21,
+     "residualNm": 0.12,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.2",
+     "requiredNm": 0.85,
+     "residualNm": -0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": null,
+   "residualPct": 2.3,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "elbow90",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "biceps brachii",
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 1,
+     "rank": 26,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachialis",
+     "muscle": "Left brachialis",
+     "activationPct": 7.2,
+     "rank": 6,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachioradialis",
+     "muscle": "Left brachioradialis",
+     "activationPct": 3.8,
+     "rank": 10,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "triceps brachii",
+     "muscle": "Lateral head of left triceps brachii",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "elbow_L.0",
+     "requiredNm": 1.34,
+     "deliveredNm": 1.34,
+     "residualNm": 0,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 25.4,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 15.1,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 11.3,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 10.8,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left abductor pollicis longus",
+     "activationPct": 7.9,
+     "flags": "via,fibre"
+    },
+    {
+     "muscle": "Left brachialis",
+     "activationPct": 7.2,
+     "flags": ""
+    },
+    {
+     "muscle": "Left infraspinatus muscle",
+     "activationPct": 5.2,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left iliocostalis lumborum",
+     "activationPct": 4.3,
+     "flags": "wrap,arm,fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 1.54,
+     "residualNm": 0.19,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 1.4,
+     "residualNm": 0.18,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.0",
+     "requiredNm": 1.29,
+     "residualNm": 0.07,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -10.84,
+     "residualNm": -0.06,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis1",
+     "requiredNm": 0.51,
+     "residualNm": 0.06,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": 1.29,
+     "residualNm": 0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 1.9,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "elbow90load",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "biceps brachii",
+     "muscle": "Short head of left biceps brachii",
+     "activationPct": 11.8,
+     "rank": 12,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachialis",
+     "muscle": "Left brachialis",
+     "activationPct": 20.4,
+     "rank": 8,
+     "unreliable": false
+    },
+    {
+     "pattern": "brachioradialis",
+     "muscle": "Left brachioradialis",
+     "activationPct": 27.2,
+     "rank": 7,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "triceps brachii",
+     "muscle": "Lateral head of left triceps brachii",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "elbow_L.0",
+     "requiredNm": 7.02,
+     "deliveredNm": 7.02,
+     "residualNm": 0.01,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left flexor carpi radialis",
+     "activationPct": 100,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 96.7,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 44.9,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 40.3,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 28.8,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left infraspinatus muscle",
+     "activationPct": 28.2,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left brachioradialis",
+     "activationPct": 27.2,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left brachialis",
+     "activationPct": 20.4,
+     "flags": ""
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 4.24,
+     "residualNm": 0.58,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2.48,
+     "residualNm": 0.46,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.0",
+     "requiredNm": 6.74,
+     "residualNm": 0.37,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": 6.68,
+     "residualNm": 0.24,
+     "noMuscle": false
+    },
+    {
+     "dof": "wrist_R.1",
+     "requiredNm": -0.56,
+     "residualNm": -0.18,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -22.75,
+     "residualNm": -0.13,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 2.2,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "overhead",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "triceps brachii",
+     "muscle": "Medial head of left triceps brachii",
+     "activationPct": 12.5,
+     "rank": 2,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "biceps brachii",
+     "muscle": "Long head of left biceps brachii",
+     "activationPct": 1.5
+    },
+    {
+     "pattern": "brachialis",
+     "muscle": "Left brachialis",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "elbow_L.0",
+     "requiredNm": -1.12,
+     "deliveredNm": -1.11,
+     "residualNm": -0.01,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left extensor carpi radialis brevis",
+     "activationPct": 13.6,
+     "flags": "fibre,flip"
+    },
+    {
+     "muscle": "Medial head of left triceps brachii",
+     "activationPct": 12.5,
+     "flags": "wrap"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 10.3,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Lateral head of left triceps brachii",
+     "activationPct": 9.9,
+     "flags": "wrap"
+    },
+    {
+     "muscle": "Left teres minor",
+     "activationPct": 8.3,
+     "flags": "fibre,flip"
+    },
+    {
+     "muscle": "Left rectus femoris",
+     "activationPct": 5.8,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left extensor carpi ulnaris",
+     "activationPct": 5.5,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left extensor carpi ulnaris",
+     "activationPct": 5.1,
+     "flags": "fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 0.76,
+     "residualNm": 0.09,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.2",
+     "requiredNm": -0.04,
+     "residualNm": -0.07,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.2",
+     "requiredNm": -0.21,
+     "residualNm": -0.06,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.0",
+     "requiredNm": 3.08,
+     "residualNm": 0.06,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis1",
+     "requiredNm": 0.01,
+     "residualNm": 0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 2,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "abduction90",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "acromial part of .*deltoid",
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 21.5,
+     "rank": 2,
+     "unreliable": true
+    },
+    {
+     "pattern": "supraspinatus",
+     "muscle": "Left supraspinatus",
+     "activationPct": 0,
+     "rank": 142,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "latissimus dorsi",
+     "muscle": "Left latissimus dorsi",
+     "activationPct": 0
+    },
+    {
+     "pattern": "teres major",
+     "muscle": "Left teres major",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 5.55,
+     "deliveredNm": 5.5,
+     "residualNm": 0.05,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Clavicular part of left deltoid",
+     "activationPct": 21.9,
+     "flags": "wrap,fibre,flip"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 21.5,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 11.3,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 9.2,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Long head of left biceps brachii",
+     "activationPct": 8.6,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Left tensor fasciae latae",
+     "activationPct": 6.9,
+     "flags": ""
+    },
+    {
+     "muscle": "Left adductor longus",
+     "activationPct": 6.7,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 5.9,
+     "flags": "via,wrap,fibre,near"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "hip_L.0",
+     "requiredNm": 3.96,
+     "residualNm": 0.08,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 1,
+   "pass": false,
+   "failures": [
+    "Left supraspinatus is not active (0 %)"
+   ]
+  },
+  {
+   "id": "squat",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "vastus lateralis",
+     "muscle": "Left vastus lateralis",
+     "activationPct": 23.8,
+     "rank": 6,
+     "unreliable": true
+    },
+    {
+     "pattern": "vastus medialis",
+     "muscle": "Left vastus medialis",
+     "activationPct": 16,
+     "rank": 10,
+     "unreliable": true
+    },
+    {
+     "pattern": "vastus intermedius",
+     "muscle": "Left vastus intermedius",
+     "activationPct": 27.3,
+     "rank": 5,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "short head of .*biceps femoris",
+     "muscle": "Short head of left biceps femoris",
+     "activationPct": 0
+    },
+    {
+     "pattern": "popliteus",
+     "muscle": "Left popliteus",
+     "activationPct": 0.9
+    }
+   ],
+   "torques": [
+    {
+     "dof": "knee_L.0",
+     "requiredNm": -25.95,
+     "deliveredNm": -25.88,
+     "residualNm": -0.07,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left piriformis",
+     "activationPct": 83,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 62.8,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left quadratus femoris",
+     "activationPct": 46.3,
+     "flags": "flip"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 33.8,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left vastus intermedius",
+     "activationPct": 27.3,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left vastus lateralis",
+     "activationPct": 23.8,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left obturator internus",
+     "activationPct": 23.3,
+     "flags": "fibre,flip"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 22.6,
+     "flags": "arm"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "hip_L.0",
+     "requiredNm": -52.31,
+     "residualNm": -1.18,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.1",
+     "requiredNm": 3.16,
+     "residualNm": 0.5,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 1.41,
+     "residualNm": 0.49,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis1",
+     "requiredNm": 0.82,
+     "residualNm": 0.42,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -46.74,
+     "residualNm": -0.3,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_R.0",
+     "requiredNm": -27.36,
+     "residualNm": -0.24,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 2,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "tiptoe",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "soleus",
+     "muscle": "Left soleus",
+     "activationPct": 6.7,
+     "rank": 10,
+     "unreliable": false
+    },
+    {
+     "pattern": "gastrocnemius",
+     "muscle": "Medial head of left gastrocnemius",
+     "activationPct": 7.3,
+     "rank": 9,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "tibialis anterior",
+     "muscle": "Left tibialis anterior",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "ankle_L.0",
+     "requiredNm": -20.82,
+     "deliveredNm": -20.79,
+     "residualNm": -0.02,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 25.6,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 14.4,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 12.3,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left brachialis",
+     "activationPct": 10.5,
+     "flags": "near"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 9.5,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 8.2,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left brachioradialis",
+     "activationPct": 7.7,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left opponens pollicis",
+     "activationPct": 7.5,
+     "flags": "fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2.01,
+     "residualNm": 0.28,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 1.7,
+     "residualNm": 0.26,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -8.71,
+     "residualNm": -0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 4.6
+   },
+   "residualPct": 0.8,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "lean",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "soleus",
+     "muscle": "Left soleus",
+     "activationPct": 11.9,
+     "rank": 5,
+     "unreliable": false
+    },
+    {
+     "pattern": "gastrocnemius",
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 23,
+     "rank": 1,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "tibialis anterior",
+     "muscle": "Left tibialis anterior",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "ankle_L.0",
+     "requiredNm": -27.31,
+     "deliveredNm": -27.26,
+     "residualNm": -0.04,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 23,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 21.2,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 20.6,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Left tensor fasciae latae",
+     "activationPct": 12.7,
+     "flags": ""
+    },
+    {
+     "muscle": "Left soleus",
+     "activationPct": 11.9,
+     "flags": ""
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 10.8,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left brachialis",
+     "activationPct": 9.4,
+     "flags": "near"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 9.2,
+     "flags": "arm"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 2,
+     "residualNm": 0.27,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 1.68,
+     "residualNm": 0.23,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis1",
+     "requiredNm": 0.97,
+     "residualNm": 0.12,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -14.66,
+     "residualNm": -0.09,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_R.2",
+     "requiredNm": 1.53,
+     "residualNm": 0.09,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.2",
+     "requiredNm": 1.45,
+     "residualNm": 0.05,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 1,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "trunk30",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "iliocostalis lumborum|longissimus thoracis",
+     "muscle": "Left iliocostalis lumborum",
+     "activationPct": 3.6,
+     "rank": 13,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "rectus abdominis",
+     "muscle": "Left rectus abdominis",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "L3.0",
+     "requiredNm": -23.15,
+     "deliveredNm": -22.95,
+     "residualNm": -0.21,
+     "expectedSign": -1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left quadratus lumborum",
+     "activationPct": 37.5,
+     "flags": "arm,fibre"
+    },
+    {
+     "muscle": "Acromial part of left deltoid",
+     "activationPct": 27.6,
+     "flags": "wrap,fibre"
+    },
+    {
+     "muscle": "Left opponens pollicis",
+     "activationPct": 13.9,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left subscapularis",
+     "activationPct": 12.9,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left psoas major",
+     "activationPct": 9.3,
+     "flags": "wrap,arm,flip"
+    },
+    {
+     "muscle": "Left semimembranosus",
+     "activationPct": 7.1,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left extensor pollicis brevis",
+     "activationPct": 5.9,
+     "flags": "via,wrap,fibre,near"
+    },
+    {
+     "muscle": "Left supraspinatus",
+     "activationPct": 5.1,
+     "flags": "wrap,fibre"
+    }
+   ],
+   "worst": [
+    {
+     "dof": "gh_R.1",
+     "requiredNm": 1.73,
+     "residualNm": 0.4,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis1",
+     "requiredNm": 0.9,
+     "residualNm": 0.24,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis0",
+     "requiredNm": -23.15,
+     "residualNm": -0.21,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_L.1",
+     "requiredNm": 1.46,
+     "residualNm": 0.16,
+     "noMuscle": false
+    },
+    {
+     "dof": "gh_R.0",
+     "requiredNm": -2.87,
+     "residualNm": -0.11,
+     "noMuscle": false
+    },
+    {
+     "dof": "lumbar.axis2",
+     "requiredNm": -0.85,
+     "residualNm": -0.07,
+     "noMuscle": false
+    }
+   ],
+   "balance": {
+    "feet": "L+R",
+    "offsetCm": 0
+   },
+   "residualPct": 1.7,
+   "pass": true,
+   "failures": []
+  },
+  {
+   "id": "slr",
+   "body": "female",
+   "active": [
+    {
+     "pattern": "iliacus",
+     "muscle": "Left iliacus",
+     "activationPct": 18.2,
+     "rank": 3,
+     "unreliable": true
+    },
+    {
+     "pattern": "psoas major",
+     "muscle": "Left psoas major",
+     "activationPct": 5.8,
+     "rank": 14,
+     "unreliable": true
+    },
+    {
+     "pattern": "rectus femoris",
+     "muscle": "Left rectus femoris",
+     "activationPct": 30.2,
+     "rank": 1,
+     "unreliable": true
+    }
+   ],
+   "silent": [
+    {
+     "pattern": "gluteus maximus",
+     "muscle": "Left gluteus maximus",
+     "activationPct": 0
+    },
+    {
+     "pattern": "long head of .*biceps femoris",
+     "muscle": "Long head of left biceps femoris",
+     "activationPct": 0
+    }
+   ],
+   "torques": [
+    {
+     "dof": "hip_L.0",
+     "requiredNm": 21.06,
+     "deliveredNm": 20.67,
+     "residualNm": 0.39,
+     "expectedSign": 1
+    }
+   ],
+   "top": [
+    {
+     "muscle": "Left rectus femoris",
+     "activationPct": 30.2,
+     "flags": "via,wrap"
+    },
+    {
+     "muscle": "Left obturator externus",
+     "activationPct": 18.5,
+     "flags": "fibre"
+    },
+    {
+     "muscle": "Left iliacus",
+     "activationPct": 18.2,
+     "flags": "wrap,arm,flip"
+    },
+    {
+     "muscle": "Left tensor fasciae latae",
+     "activationPct": 15.9,
+     "flags": ""
+    },
+    {
+     "muscle": "Left adductor longus",
+     "activationPct": 11.2,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left adductor brevis",
+     "activationPct": 11.1,
+     "flags": ""
+    },
+    {
+     "muscle": "Lateral head of left gastrocnemius",
+     "activationPct": 11.1,
+     "flags": "arm"
+    },
+    {
+     "muscle": "Left pectineus",
+     "activationPct": 9.5,
+     "flags": ""
+    }
+   ],
+   "worst": [
+    {
+     "dof": "hip_L.0",
+     "requiredNm": 21.06,
+     "residualNm": 0.39,
+     "noMuscle": false
+    },
+    {
+     "dof": "hip_L.1",
+     "requiredNm": -1.09,
+     "residualNm": -0.12,
+     "noMuscle": false
+    },
+    {
+     "dof": "knee_L.0",
+     "requiredNm": -5.08,
+     "residualNm": 0.08,
+     "noMuscle": false
+    }
+   ],
+   "balance": null,
+   "residualPct": 2.3,
+   "pass": true,
+   "failures": []
+  }
+ ],
+ "torqueChecks": [
+  {
+   "body": "male",
+   "check": "elbow torque, forearm horizontal",
+   "oursNm": 2.38,
+   "referenceNm": 2.7,
+   "ratio": 0.88,
+   "reference": "m·g·d with de Leva 1996 forearm and hand mass fractions and centre-of-mass positions (as tabulated in BMClab/BMC, CC BY 4.0), our joint distances and body mass"
+  },
+  {
+   "body": "male",
+   "check": "knee extensor moment, shallow squat (knee 60°, trunk leaning 45°)",
+   "oursNm": 30.26,
+   "oursNmPerKg": 0.42,
+   "oursPctBwHt": 2.49,
+   "hipExtensorNm": 51.95,
+   "referencePctBwHt": "5.7 ± 1.92 (peak knee flexion moment of an unloaded neutral squat)",
+   "reference": "Alterations in Three-dimensional Knee Kinematics and Kinetics during Neutral, Squeeze and Outward Squat, J Hum Kinet 2013, https://europepmc.org/article/PMC/PMC3916928 (CC BY 3.0), Table 2; opened 2026-10-13",
+   "note": "not like for like: the published figure is the peak over a full squat, ours a static shallow squat with the trunk leaning forward (load shifted to the hips); expected below the peak and of the same order"
+  },
+  {
+   "body": "female",
+   "check": "elbow torque, forearm horizontal",
+   "oursNm": 1.34,
+   "referenceNm": 1.88,
+   "ratio": 0.72,
+   "reference": "m·g·d with de Leva 1996 forearm and hand mass fractions and centre-of-mass positions (as tabulated in BMClab/BMC, CC BY 4.0), our joint distances and body mass"
+  },
+  {
+   "body": "female",
+   "check": "knee extensor moment, shallow squat (knee 60°, trunk leaning 45°)",
+   "oursNm": 25.95,
+   "oursNmPerKg": 0.42,
+   "oursPctBwHt": 2.65,
+   "hipExtensorNm": 52.31,
+   "referencePctBwHt": "5.7 ± 1.92 (peak knee flexion moment of an unloaded neutral squat)",
+   "reference": "Alterations in Three-dimensional Knee Kinematics and Kinetics during Neutral, Squeeze and Outward Squat, J Hum Kinet 2013, https://europepmc.org/article/PMC/PMC3916928 (CC BY 3.0), Table 2; opened 2026-10-13",
+   "note": "not like for like: the published figure is the peak over a full squat, ours a static shallow squat with the trunk leaning forward (load shifted to the hips); expected below the peak and of the same order"
+  }
+ ],
+ "emgRanks": {
+  "compared": false,
+  "why": "no open source with published EMG ranks for these static postures was opened; the expectations of the cases are textbook functional anatomy"
+ },
+ "timing": {
+  "male": {
+   "coldMedianMs": 6.36,
+   "coldP95Ms": 6.93,
+   "warmMedianMs": 1.12,
+   "warmP95Ms": 2.57,
+   "muscles": 333,
+   "dofs": 214
+  },
+  "female": {
+   "coldMedianMs": 4.35,
+   "coldP95Ms": 6.11,
+   "warmMedianMs": 0.51,
+   "warmP95Ms": 1.38,
+   "muscles": 332,
+   "dofs": 214
+  }
+ }
+}

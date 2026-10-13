@@ -1,0 +1,451 @@
+{
+ "schema": 1,
+ "body": "female",
+ "inputs": {
+  "anatomy.json#parts": "53e740ccd416be54",
+  "integumentary.glb": "45abc03c558d449d",
+  "muscular.glb": "738e6ee9f780ef4e",
+  "skeletal.glb": "c95cf6ab90593748",
+  "cardiovascular.glb": "82d4158e31b415fd",
+  "nervous.glb": "b722aa6e2a676fac",
+  "respiratory.glb": "22a6ce41a7ac973d",
+  "digestive.glb": "ea6ec78d20a5c601",
+  "urinary.glb": "bd233154d429471d",
+  "reproductive.glb": "b4fda7b4a8aada29",
+  "endocrine.glb": "8b7735cc9dc029e4",
+  "lymphatic.glb": "a864d72ce80d7d57",
+  "rig.json": "3874dd8c714f20b8",
+  "rig.bin": "889e4795c6c6c7b3",
+  "shape.json": "e0a085970132896f",
+  "data/curated/activity/params.json#data": "7afab410aa0a3e69",
+  "data/curated/activity/fibre-map.json#data": "2b7484fdeab115de",
+  "data/curated/calibration/muscle-curves-opensim.json#data": "4c69b0d8c969e2ae",
+  "data/curated/calibration/muscle-curves-myo.json#data": "f3f1dc69be352c3f",
+  "data/curated/rig/opensim/gait2392_thelen2003muscle.osim": "3af1ca20aa87bc88",
+  "data/curated/rig/opensim/arm26.osim": "e2224d0044eb393b",
+  "data/curated/activity/segments-deleva.json#data": "acf3b7d05c2f1e5c"
+ },
+ "mass": {
+  "bodyKg": 61.879,
+  "computedKg": 65.563,
+  "normalisation": 0.944,
+  "skinVolumeL": 60.468,
+  "tissueVolumeL": {
+   "bone": 5.2,
+   "cartilage": 0.257,
+   "organ": 6.948,
+   "gland": 0.188,
+   "muscle": 16.493,
+   "ligament": 0.439,
+   "tendon": 0.112,
+   "tooth": 0.021,
+   "brain": 1.044,
+   "heart": 0.215,
+   "fat": 16.243
+  },
+  "regions": [
+   {
+    "region": "head",
+    "volumeL": 6.049,
+    "densityKgM3": 1062,
+    "kg": 6.065,
+    "fraction": 0.098,
+    "deLevaFraction": 0.0668,
+    "comAlong": null,
+    "deLevaCom": null
+   },
+   {
+    "region": "trunk",
+    "volumeL": 34.227,
+    "densityKgM3": 994,
+    "kg": 32.104,
+    "fraction": 0.519,
+    "deLevaFraction": 0.4257,
+    "comAlong": null,
+    "deLevaCom": null
+   },
+   {
+    "region": "upperArm",
+    "volumeL": 1.661,
+    "densityKgM3": 1059,
+    "kg": 1.561,
+    "fraction": 0.025,
+    "deLevaFraction": 0.0255,
+    "comAlong": 0.489,
+    "deLevaCom": 0.5754
+   },
+   {
+    "region": "forearm",
+    "volumeL": 0.746,
+    "densityKgM3": 1060,
+    "kg": 0.715,
+    "fraction": 0.012,
+    "deLevaFraction": 0.0138,
+    "comAlong": 0.429,
+    "deLevaCom": 0.4559
+   },
+   {
+    "region": "hand",
+    "volumeL": 0.251,
+    "densityKgM3": 1048,
+    "kg": 0.246,
+    "fraction": 0.004,
+    "deLevaFraction": 0.0056,
+    "comAlong": null,
+    "deLevaCom": null
+   },
+   {
+    "region": "thigh",
+    "volumeL": 5.634,
+    "densityKgM3": 1072,
+    "kg": 5.654,
+    "fraction": 0.091,
+    "deLevaFraction": 0.1478,
+    "comAlong": 0.485,
+    "deLevaCom": 0.3612
+   },
+   {
+    "region": "shank",
+    "volumeL": 2.833,
+    "densityKgM3": 1064,
+    "kg": 2.879,
+    "fraction": 0.047,
+    "deLevaFraction": 0.0481,
+    "comAlong": 0.421,
+    "deLevaCom": 0.4352
+   },
+   {
+    "region": "foot",
+    "volumeL": 0.674,
+    "densityKgM3": 1030,
+    "kg": 0.695,
+    "fraction": 0.011,
+    "deLevaFraction": 0.0129,
+    "comAlong": null,
+    "deLevaCom": null
+   }
+  ],
+  "note": "paired regions: left side only; deLevaFraction and deLevaCom are de Leva 1996 values as tabulated in BMClab/BMC (see data/curated/activity/segments-deleva.json)"
+ },
+ "fibre": {
+  "matched": 86,
+  "defaultBellyRatio": 0.275
+ },
+ "strengthCheck": {
+  "specificTensionNcm2": 61,
+  "medianRatio": 0.868,
+  "rows": [
+   {
+    "muscle": "Left adductor brevis",
+    "oursN": 296.1,
+    "modelN": 429,
+    "ratio": 0.69,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left adductor longus",
+    "oursN": 339.3,
+    "modelN": 627,
+    "ratio": 0.541,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left adductor magnus",
+    "oursN": 2879.5,
+    "modelN": 1212,
+    "ratio": 2.376,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Long head of left biceps femoris",
+    "oursN": 593.3,
+    "modelN": 896,
+    "ratio": 0.662,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Short head of left biceps femoris",
+    "oursN": 241.9,
+    "modelN": 804,
+    "ratio": 0.301,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left extensor digitorum longus",
+    "oursN": 400.5,
+    "modelN": 512,
+    "ratio": 0.782,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left extensor hallucis longus",
+    "oursN": 134.4,
+    "modelN": 162,
+    "ratio": 0.83,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left flexor digitorum longus",
+    "oursN": 852,
+    "modelN": 310,
+    "ratio": 2.748,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left flexor hallucis longus",
+    "oursN": 978.5,
+    "modelN": 322,
+    "ratio": 3.039,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left gluteus maximus",
+    "oursN": 3673.1,
+    "modelN": 1944,
+    "ratio": 1.889,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left gluteus medius",
+    "oursN": 2638.7,
+    "modelN": 2045,
+    "ratio": 1.29,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left iliacus",
+    "oursN": 931.2,
+    "modelN": 1073,
+    "ratio": 0.868,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left gemellus inferior",
+    "oursN": 100.3,
+    "modelN": 164,
+    "ratio": 0.612,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left pectineus",
+    "oursN": 266.3,
+    "modelN": 266,
+    "ratio": 1.001,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left fibularis longus",
+    "oursN": 2324.9,
+    "modelN": 943,
+    "ratio": 2.465,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left piriformis",
+    "oursN": 1087,
+    "modelN": 444,
+    "ratio": 2.448,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left psoas major",
+    "oursN": 644.4,
+    "modelN": 1113,
+    "ratio": 0.579,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left quadratus femoris",
+    "oursN": 631.4,
+    "modelN": 381,
+    "ratio": 1.657,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left rectus femoris",
+    "oursN": 795,
+    "modelN": 1169,
+    "ratio": 0.68,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left soleus",
+    "oursN": 3005.7,
+    "modelN": 3549,
+    "ratio": 0.847,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left gemellus superior",
+    "oursN": 92,
+    "modelN": 164,
+    "ratio": 0.561,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left tensor fasciae latae",
+    "oursN": 909.4,
+    "modelN": 233,
+    "ratio": 3.903,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left tibialis anterior",
+    "oursN": 902.9,
+    "modelN": 905,
+    "ratio": 0.998,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left tibialis posterior",
+    "oursN": 1750,
+    "modelN": 1588,
+    "ratio": 1.102,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left vastus intermedius",
+    "oursN": 3281.6,
+    "modelN": 1365,
+    "ratio": 2.404,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left vastus lateralis",
+    "oursN": 2784.8,
+    "modelN": 1871,
+    "ratio": 1.488,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left vastus medialis",
+    "oursN": 2386,
+    "modelN": 1294,
+    "ratio": 1.844,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Lateral head of left gastrocnemius",
+    "oursN": 1500.4,
+    "modelN": 683,
+    "ratio": 2.197,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Medial head of left gastrocnemius",
+    "oursN": 2311.5,
+    "modelN": 1558,
+    "ratio": 1.484,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left fibularis brevis",
+    "oursN": 147.6,
+    "modelN": 435,
+    "ratio": 0.339,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left fibularis tertius",
+    "oursN": 10.2,
+    "modelN": 180,
+    "ratio": 0.057,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left gluteus minimus",
+    "oursN": 1023.3,
+    "modelN": 878,
+    "ratio": 1.165,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left gracilis",
+    "oursN": 170.1,
+    "modelN": 162,
+    "ratio": 1.05,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left sartorius",
+    "oursN": 71.2,
+    "modelN": 156,
+    "ratio": 0.456,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left semimembranosus",
+    "oursN": 1981.5,
+    "modelN": 1288,
+    "ratio": 1.538,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left semitendinosus",
+    "oursN": 272.1,
+    "modelN": 410,
+    "ratio": 0.664,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Left external oblique",
+    "oursN": 414.6,
+    "modelN": 900,
+    "ratio": 0.461,
+    "model": "gait2392"
+   },
+   {
+    "muscle": "Lateral head of left triceps brachii",
+    "oursN": 502.1,
+    "modelN": 624,
+    "ratio": 0.804,
+    "model": "arm26"
+   },
+   {
+    "muscle": "Long head of left biceps brachii",
+    "oursN": 399.2,
+    "modelN": 624,
+    "ratio": 0.639,
+    "model": "arm26"
+   },
+   {
+    "muscle": "Long head of left triceps brachii",
+    "oursN": 309.5,
+    "modelN": 799,
+    "ratio": 0.388,
+    "model": "arm26"
+   },
+   {
+    "muscle": "Medial head of left triceps brachii",
+    "oursN": 623.4,
+    "modelN": 624,
+    "ratio": 0.999,
+    "model": "arm26"
+   },
+   {
+    "muscle": "Left brachialis",
+    "oursN": 531.8,
+    "modelN": 987,
+    "ratio": 0.539,
+    "model": "arm26"
+   },
+   {
+    "muscle": "Short head of left biceps brachii",
+    "oursN": 317.7,
+    "modelN": 436,
+    "ratio": 0.729,
+    "model": "arm26"
+   }
+  ],
+  "note": "ours = PCSA × specific tension; model = max_isometric_force summed over the mapped fascicles (left side shown)"
+ },
+ "flags": {
+  "wrap": 108,
+  "arm": 44,
+  "fibre": 246,
+  "via": 46,
+  "volume": 0,
+  "noload": 46
+ },
+ "excluded": 172
+}

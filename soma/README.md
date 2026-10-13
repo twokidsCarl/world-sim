@@ -71,6 +71,17 @@
 
 由音素带动时另有两处处理（`src/face/visemeTrack.ts`）：双唇音紧挨着唇齿音时（five more），闭唇和"下唇碰上齿"两个约束会同时接近满值，这里让大的那个胜出，否则唇合不上；闭唇时把"唇成漏斗状"（AU22）减掉，它会把合着的唇顶开约 1 毫米。已知的不足：闭唇按 120 毫秒消退，夹在两个双唇音之间的短元音（"妈妈"）张不开。
 
+### 肌肉活动
+
+"姿势"页的"肌肉活动"开关有两层，可信程度不同：
+
+- **长度变化（几何，可靠）。** 每条肌肉的作用线在当前姿势下比静止姿势短了（暖色）或长了（冷色）多少。它不说明肌肉是否在用力。
+- **负荷（估计）。** 身体静止、只受重力（可加手持重物）时，保持这个姿势所需的肌肉激活度：由皮肤围出的体积和组织密度算节段质量，沿骨架累加出各关节的重力力矩，由作用线求力臂（−∂长度/∂角度），最大肌力 = 肌肉体积 / 纤维长度 × 比张力，再求"激活度平方和最小"的分配（静力优化）。站立时体重由足底接触点承担；仰卧 / 俯卧时没动过的肢体由床面托住。肌肉给不出的力矩作为残差逐关节列出。
+- **简化和假设。** 没有惯性、没有协同收缩、没有韧带的被动力（只有关节到头时算被动承担）；作用线是直线（股四头肌经髌骨、踝和腕的长肌腱各加一个经过点），不绕过骨；胸椎和肋当作刚性胸廓，肩带和距下关节不参与平衡，腰椎、颈椎各按一段平衡；比张力 61 N/cm² 和 247 / 333 条肌肉的纤维长度比例是假设。所以能看的是谁在用力，百分数本身不可信；力臂不可靠的肌肉在列表里带 ⚠。
+- **检验。** 九个有已知答案的姿势 × 两副人体，只判名次和符号：16 / 18 通过（屈肘托前臂、手持 2 kg、举过头时肱三头肌接手、浅蹲、踮脚、前倾、躯干前屈、仰卧直腿抬高）；肩外展 90° 时冈上肌不亮，两副人体都不通过，原因是直线作用线在抬臂后没有外展力臂。屈肘力矩与 de Leva 节段参数算出的 m·g·d 之比为 0.88（男）、0.72（女）。数字见 `data/curated/activity/validation.json`。
+
+数据由 `bun tools/activity/build.ts male`（female 同理）生成到 `public/anatomy/<人体>/activity.json`，参数和出处在 `data/curated/activity/`；绑定或几何重新生成之后要重跑，否则界面只显示长度变化。
+
 ### 标定对照
 
 "数据来源与声明"对话框里的"查看对照表"打开一个只读视图：`data/curated/calibration/` 下的十张表（节段比例、活动范围、肱骨角度、肌肉附着点和力臂、器官体积、表情位移、面部控制的覆盖、量具自检）。每张表先给出容差内外各多少行、差得最多的几行，以及参照的名称、版本、许可和网址，可按人体筛选，整张表点开才显示。这些表（合计近 1 MB）是单独的代码块，打开时才下载。**它们是把外部的开放模型和已发表的统计当作量具所做的对照，不是临床人员的审核**；参照本身也是模型或群体平均，不是真值，容差是本项目定的。
@@ -132,6 +143,9 @@ cd .. && SOMA_API_PORT=<端口> bun run dev                              # 开�
 | `say` | `zh-03` | 说一句示范片段：`en-01`…`en-06`、`zh-01`…`zh-06`。口形按音素时间线走；没有用户手势时无声地播，界面上有“声音”按钮。合成用的自由文字不进地址 |
 | `style` | `normal`、`clear` | 说话的风格：正常朗读（按实测标定）或夸张。省略时保持的口形用夸张、说话用正常 |
 | `skin` | `1` | 不透明皮肤视图 |
+| `act` | `len`、`load` | 肌肉活动：`len` 作用线长度变化（几何），`load` 抵抗重力所需的激活度（估计） |
+| `load` | `2`、`2L`、`2R` | `act=load` 时手持的重物（千克）；`L` / `R` 只一只手，省略为两手各持 |
+| `grav` | `supine`、`prone` | `act=load` 时的重力方向：仰卧、俯卧；省略为站立 |
 | `renderer` | `webgl` | 强制用 WebGL2 后端 |
 
 例：`/?body=male&sys=ske,ner&sel=FMA9611&focus=1`。完整定义见 `src/state/urlState.ts`。
@@ -320,6 +334,17 @@ Pain, emotion and speech are composed by one driver (the rule is `blendFace` in 
 
 Phoneme-driven speech adds two treatments (`src/face/visemeTrack.ts`): where a bilabial touches a labiodental ("five more") the closure and lower-lip-to-teeth constraints both approach full value, and the larger one is made to win, as the lips would not close otherwise; and with the lips sealed the funnel (AU22) is taken off, because it pushes sealed lips apart by about 1 mm. A known shortcoming: the closure decays over 120 ms, so a short vowel between two bilabials (妈妈, "mama") does not open up.
 
+### Muscle activity
+
+The "Muscle activity" switch of the Pose tab has two layers of different standing:
+
+- **Length change (geometry, reliable).** How much shorter (warm) or longer (cool) each muscle's line of action is in the current pose than at rest. It says nothing about effort.
+- **Load (an estimate).** The activations needed to hold the pose with the body still under gravity (optionally with a load in the hand): segment masses from the volume the skin encloses and tissue densities, gravitational joint torques summed along the skeleton, moment arms from the lines of action (−∂length/∂angle), maximum force = muscle volume / fibre length × specific tension, then the sharing with the least sum of squared activations (static optimisation). Standing, body weight is carried at the sole contact points; supine or prone, limbs that were not moved rest on the couch. Torque the muscles cannot deliver is listed per joint as the residual.
+- **Simplifications and assumptions.** No inertia, no co-contraction, no passive ligament force (only a joint at the end of its range is held passively); lines of action are straight (the quadriceps through the patella, and one via point each for the long tendons at ankle and wrist) and do not wrap round bone; the thoracic spine and ribs are a rigid cage, the shoulder girdle and subtalar joint are not balanced, the lumbar and cervical spine are each balanced as one stretch; the specific tension of 61 N/cm² and the fibre-length ratio of 247 of 333 muscles are assumptions. Read who works, not the percentages; muscles with unreliable moment arms carry ⚠ in the list.
+- **Validation.** Nine poses with known answers on both bodies, judged by ranks and signs only: 16 of 18 pass (holding the forearm, holding 2 kg, triceps taking over overhead, shallow squat, tiptoe, forward lean, trunk flexion, supine straight leg raise); at 90° of abduction supraspinatus stays dark on both bodies, because a straight line has no abduction moment arm once the arm is raised. Elbow torque over m·g·d from de Leva's segment parameters is 0.88 (male) and 0.72 (female). Numbers are in `data/curated/activity/validation.json`.
+
+The data is written by `bun tools/activity/build.ts male` (likewise female) to `public/anatomy/<body>/activity.json`, with parameters and sources under `data/curated/activity/`; rerun it after the rig or the geometry is rebuilt, otherwise the UI shows length change only.
+
 ### Calibration
 
 "Open the calibration tables" in the "Attribution & disclaimer" dialog opens a read-only view of the ten tables under `data/curated/calibration/` (segment proportions, range of motion, humeral angles, muscle attachments and moment arms, organ volumes, expression displacement, coverage of facial controls, and an instrument check). Each table first shows how many rows fall within and outside tolerance, the largest disagreements, and each reference's name, version, licence and URL; rows can be filtered by body and the full table appears on demand. The tables (close to 1 MB together) are separate chunks fetched when the view opens. **They are comparisons with open external models and published statistics used as measuring instruments, not validation by a clinician**; the references are models or population averages themselves, not ground truth, and the tolerances were set by this project.
@@ -381,6 +406,9 @@ The whole view state lives in the query string, so any view can be opened by one
 | `say` | `zh-03` | Say a demo clip: `en-01`…`en-06`, `zh-01`…`zh-06`. The mouth follows the phoneme timeline; without a user gesture it plays silently and the UI shows a “Sound” button. Free text for synthesis never goes into the URL |
 | `style` | `normal`, `clear` | Style of speech: normal read speech (calibrated against measurements) or exaggerated. When omitted, held shapes use clear and speech uses normal |
 | `skin` | `1` | Opaque-skin view |
+| `act` | `len`, `load` | Muscle activity: `len` length change of the lines of action (geometry), `load` activation needed against gravity (an estimate) |
+| `load` | `2`, `2L`, `2R` | With `act=load`, the load held in the hand (kg); `L` / `R` one hand, both when omitted |
+| `grav` | `supine`, `prone` | With `act=load`, the gravity direction: supine, prone; standing when omitted |
 | `renderer` | `webgl` | Force the WebGL2 backend |
 
 Example: `/?body=male&sys=ske,ner&sel=FMA9611&focus=1`. The full definition is in `src/state/urlState.ts`.

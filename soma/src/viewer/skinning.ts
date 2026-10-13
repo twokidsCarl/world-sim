@@ -47,12 +47,27 @@ function dataTexture(texels: number, rows: number): DataTexture {
 export class SkinningData {
   readonly joints: DataTexture
   readonly muscles: DataTexture
+  /**
+   * 肌肉活动的肌腹增粗量：每条作用线一个纹素，R 通道是 b（0 = 不增粗）。与体积修正分开存，这样肌肉纹理的打包约定不变。
+   * Belly thickening of the muscle-activity display: one texel per line of action, b in the R channel (0 = none).
+   * Kept apart from the volume correction so that the packing of the muscle texture is unchanged.
+   */
+  readonly bulge: DataTexture
   /** 加粗神经：每米距离保证的世界半径；0 为关闭 / Nerve aid: world radius guaranteed per metre of distance; 0 = off. */
   readonly boost = uniform(0)
 
   constructor(jointRows: number, muscleRows: number) {
     this.joints = dataTexture(JOINT_TEXELS, Math.max(1, jointRows))
     this.muscles = dataTexture(MUSCLE_TEXELS, Math.max(1, muscleRows))
+    this.bulge = dataTexture(1, Math.max(1, muscleRows))
+  }
+
+  /** 写入每条作用线的增粗量（长度不超过行数）/ Write the thickening of every line (no longer than the row count). */
+  updateBulge(bulge: Float32Array): void {
+    const d = this.bulge.image.data as Float32Array
+    const n = Math.min(bulge.length, d.length / 4)
+    for (let i = 0; i < n; i++) d[i * 4] = bulge[i]!
+    this.bulge.needsUpdate = true
   }
 
   /** 写入打包好的数据（长度必须与纹理一致）/ Write packed data (lengths must match the textures). */
@@ -66,6 +81,7 @@ export class SkinningData {
   dispose(): void {
     this.joints.dispose()
     this.muscles.dispose()
+    this.bulge.dispose()
   }
 }
 
@@ -145,7 +161,11 @@ export function positionNodeFor(data: SkinningData, mode: SkinningMode, hasThin 
         const rel = pos.sub(m0.xyz)
         const t: N = dot(rel, m1.xyz)
         const tau: N = t.mul(m0.w).clamp(0, 1)
-        const s: N = float(1).add(m1.w.mul(4).mul(tau).mul(float(1).sub(tau)))
+        const u: N = tau.mul(float(1).sub(tau)).mul(4)
+        // 肌肉活动的增粗：中段 1 + b，两端变细；5u(u − 0.8) 在 τ 上的积分为零，体积到一阶不变（u = 4τ(1−τ)）
+        // activity bulge: 1 + b mid-belly, thinner towards the ends; 5u(u − 0.8) integrates to zero over τ, so volume is kept to first order (u = 4τ(1−τ))
+        const b: N = textureLoad(data.bulge, (ivec2 as N)(int(0), line)).x
+        const s: N = float(1).add(m1.w.mul(u)).add(b.mul(5).mul(u).mul(u.sub(0.8)))
         const foot = m1.xyz.mul(t)
         pos.assign(m0.xyz.add(foot).add(rel.sub(foot).mul(s)))
       })
