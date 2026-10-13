@@ -115,6 +115,14 @@ ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .seg button { border: 0; border-radius: 0; padding: 5px 12px; color: var(--ink-2); }
 .seg button + button { border-left: 1px solid var(--line-2); }
 .seg button[aria-selected='true'] { background: var(--ink); color: var(--paper); }
+/* 「想法」的视图切换：排在页面标题上面；用链接而不是按钮，每个视图有自己的地址。
+   The view switch of "Ideas", above the page title; links rather than buttons, since each view has its own address. */
+.views { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; max-width: 1180px; padding: 20px 32px 0; }
+.views + .page { padding-top: 18px; }
+.seg a { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
+.seg a + a { border-left: 1px solid var(--line-2); }
+.seg a[aria-selected='true'] { background: var(--ink); color: var(--paper); }
+.views a.button { display: inline-block; border-style: dashed; }
 
 /* 小部件 / small parts */
 .badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 12.5px; white-space: nowrap; color: var(--ink-2); }
@@ -273,6 +281,12 @@ a.button.inline { display: inline-block; }
 .session-card h4 { margin: 0; font-size: 14px; }
 .session-card textarea, .session-card input { width: 100%; }
 .session-question { display: grid; gap: 6px; }
+.session-engine { display: inline-flex; align-items: center; gap: 6px; }
+.session-engine select, .session-start select { padding: 3px 6px; font-size: 12.5px; min-height: 0; }
+.session-start { flex-wrap: wrap; gap: 6px; }
+.session-risky { color: var(--bad); }
+.session-card .chip { margin-left: 4px; }
+.session-card .chip.unseen { border-color: var(--accent); color: var(--accent); }
 .session-compose { border-top: 0; padding: 0; }
 @media (max-width: 720px) {
   .sessions { grid-template-columns: minmax(0, 1fr); }
@@ -568,6 +582,8 @@ button.link { border: 0; padding: 0; color: var(--ink-2); text-decoration: under
   .nav-foot .who { margin: 0; }
   .nav-foot .who .row, .nav-foot .row { flex-wrap: nowrap; }
   .page { padding: 16px 14px 32px; }
+  .views { padding: 12px 14px 0; }
+  .views .seg { max-width: 100%; overflow-x: auto; }
   .pad { padding: 16px 14px; }
   .page-head { flex-direction: column; align-items: flex-start; }
   button, select, input, textarea, a.button { min-height: 40px; font-size: 16px; }  /* 16px：iOS 不会因为聚焦输入框而放大页面 / 16px keeps iOS from zooming when an input is focused */
