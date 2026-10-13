@@ -184,7 +184,7 @@ export interface CatalogEntry {
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
    */
-  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; basis: string; basisEn: string }
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; basis: string; basisEn: string }
   /** 手绘画法下的底色（场景的缝隙里露出的颜色），缺省是纸白 / the ground in the painted drawing (what shows in the gaps of a scene); paper white by default */
   ground?: [number, number, number]
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
@@ -259,6 +259,13 @@ const EXAGGERATE = () => useStore.getState().exaggerate
  */
 async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assemblies: string[], mainAssembly: string, notes: Note[], busy: (name: string) => void): Promise<Panel[]> {
   const env = entry.environment!
+  // replace：模型里名字匹配的那些东西拿掉，由下面生成的线代替（模型里的 DNA 弯而密，他画的直而稀）
+  // replace: what the model holds under a matching name is taken out and the strands generated below stand in for it (the model's DNA is curved and dense; he paints it straight and sparse)
+  if (env.replace) {
+    const re = new RegExp(env.replace, 'i'), m = mols[0]!
+    const asm = m.assemblies.find((a) => a.id === mainAssembly)
+    if (asm) asm.groups = asm.groups.filter((g) => !g.chains.every((ci) => re.test(m.entities[m.chains[ci]!.entity]!.description)))
+  }
   // 对象的中心和半径：各份拷贝的位置 / the subject's centre and radius, from where its copies stand
   const pts: number[] = []
   mols.forEach((m, i) => {
@@ -280,7 +287,8 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   // 画面是正方形的，对象占画面宽度的六成多，像他那幅；环境铺在切面后面的一层里
   // the frame is square with the subject filling a little over six tenths of its width, as in his painting; the environment lies in one layer behind the cut
   // inside：填对象的里面（数据里只有外壳时），范围取到外壳以内 / inside: fill the inside of the subject (when the data holds only its shell), within the shell
-  const box = env.inside ? { centre, hx: R, hy: R, z0: -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
+  // replace：线放在切片最靠前的一薄层里，压在蛋白上面（他的画里 DNA 是最上面的一层）/ replace: the strands lie in a thin layer at the very front of the slab, over the proteins (in his painting DNA is the topmost layer)
+  const box = env.inside ? { centre, hx: R, hy: R, z0: env.replace ? -R * 0.07 : -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
   const rand = rng(7)
   const placed: { p: V3; r: number }[] = []
   const panels: Panel[] = []
@@ -308,7 +316,7 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
     })
   }
   if (env.strands) {
-    const t = threads(env.strands.count, env.strands.length, 16, box, rand, env.strands.branches ?? 0)
+    const t = threads(env.strands.count, env.strands.length, 16, box, rand, env.strands.branches ?? 0, env.strands.wander)
     const n = t.pos.length / 3
     const m: Molecule = {
       id: 'strands', title: env.strands.nameEn, atomCount: n, pos: t.pos, element: new Uint8Array(n).fill(El.N), radius: new Float32Array(n).fill(env.strands.radius),
@@ -321,7 +329,7 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [env.strands.lch] }, align: null,
     })
   }
-  notes.push({ key: env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
+  notes.push({ key: env.replace ? 'note.rethreaded' : env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
   return panels
 }
 

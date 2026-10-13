@@ -331,6 +331,7 @@
       },
       "perCopy": true,
       "cut": 0.5,
+      "environment": {"inside": true, "replace": "fibers\\.DNA", "proteins": [], "strands": {"name": "染色体 DNA（重新画的走向）", "nameEn": "chromosomal DNA (course drawn afresh)", "count": 30, "length": 6000, "radius": 7, "wander": 0.2, "lch": [0.86, 0.14, 92]}, "basis": "照 Goodsell 的《Mycoplasma mycoides》（doi:10.2210/rcsb_pdb/goodsell-gallery-011），他把 DNA 画成直而稀的长线。生殖支原体的基因组是 58 万碱基对，拉直约 197 微米；画面里的切片约占细胞体积的五分之一，按比例应有约 42 微米，这里只画了约 18 微米（30 条，每条 600 纳米），为的是看得清，和他的画一样稀。走向是随机生成的，比真实 DNA（持久长度约 50 纳米）直得多。", "basisEn": "After Goodsell's \"Mycoplasma mycoides\" (doi:10.2210/rcsb_pdb/goodsell-gallery-011), in which DNA is long, straight and sparse. The genome of Mycoplasma genitalium is 580 thousand base pairs, about 197 micrometres stretched out; the slab in the picture is about a fifth of the cell's volume, which in proportion would hold about 42 micrometres; only about 18 are drawn here (30 strands of 600 nanometres), to keep the picture readable and as sparse as his. The courses are generated at random and are far straighter than real DNA (persistence length about 50 nanometres)."},
       "roles": [
         ["fibers|RNA|DNA", "nucleic"],
         ["RIBOSOME|POLYMERASE|GYRASE", "nucleic-binding"],
