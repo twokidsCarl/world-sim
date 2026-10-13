@@ -8,7 +8,7 @@
 export type Sex = 'male' | 'female'
 export type Onset = 'sudden' | 'sustained'
 export type VocalisationType = 'none' | 'inhalation' | 'grunt' | 'moan' | 'cry' | 'scream'
-export type Vowel = 'schwa' | 'a' | 'e' | 'o' | 'u'
+export type Vowel = 'schwa' | 'a' | 'e' | 'o' | 'u' | 'i'
 
 // 控制点：t 是段内归一化时间 0–1 / a control point; t is normalised time within the segment, 0–1
 export interface Anchor {

@@ -4,6 +4,7 @@
 
 import { painVocalisation, type PainVocalisation } from './control.ts'
 import { renderPainVocalisation, type PainVoice, type PainVoiceInput } from './recorded.ts'
+import { mouthTrack, type MouthFrame } from './mouth.ts'
 import type { RenderResult } from './types.ts'
 
 export function toAudioBuffer(ctx: BaseAudioContext, result: RenderResult): AudioBuffer {
@@ -39,4 +40,48 @@ export function schedulePainVocalisation(ctx: AudioContext, input: PainVoiceInpu
   const startTime = Math.max(when, ctx.currentTime)
   source.start(startTime)
   return { vocalisation, source, startTime, endTime: startTime + result.pcm.length / result.sampleRate }
+}
+
+export interface AnalysedAudio {
+  buffer: AudioBuffer
+  durationS: number
+  // 每秒 100 帧，第 i 帧对应时刻 i / 100 秒 / 100 frames per second, frame i at time i / 100 s
+  frames: MouthFrame[]
+  // 在共享时钟上的 when 时刻开始播放；返回的 startTime 加上帧的 t 就是这一帧的时刻。
+  // Starts playback at `when` on the shared clock; the returned startTime plus a frame's t is that frame's time.
+  play(when?: number, destination?: AudioNode): { source: AudioBufferSourceNode; startTime: number; endTime: number }
+  // 时钟时刻 contextTime 对应的帧；还没开始或已经结束时返回 null。
+  // The frame for clock time contextTime; null before the start or after the end.
+  frameAt(contextTime: number, startTime: number): MouthFrame | null
+}
+
+// 分析用户选的音频文件：在页面里解码、混成单声道、算出口型轨迹。不联网，文件不离开页面。
+// Analyses an audio file chosen by the user: decoded in the page, mixed to mono, mouth track computed.
+// No network is involved and the file never leaves the page.
+export async function analyseAudioFile(ctx: AudioContext, data: Blob | ArrayBuffer): Promise<AnalysedAudio> {
+  const bytes = data instanceof ArrayBuffer ? data.slice(0) : await data.arrayBuffer()
+  const buffer = await ctx.decodeAudioData(bytes)
+  const mono = new Float32Array(buffer.length)
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const ch = buffer.getChannelData(c)
+    for (let i = 0; i < mono.length; i++) mono[i] = mono[i]! + ch[i]! / buffer.numberOfChannels
+  }
+  const frames = mouthTrack(mono, buffer.sampleRate)
+  return {
+    buffer,
+    durationS: buffer.duration,
+    frames,
+    play(when = ctx.currentTime, destination: AudioNode = ctx.destination) {
+      const source = ctx.createBufferSource()
+      source.buffer = buffer
+      source.connect(destination)
+      const startTime = Math.max(when, ctx.currentTime)
+      source.start(startTime)
+      return { source, startTime, endTime: startTime + buffer.duration }
+    },
+    frameAt(contextTime, startTime) {
+      const i = Math.floor((contextTime - startTime) * 100)
+      return i >= 0 && i < frames.length ? frames[i]! : null
+    },
+  }
 }
