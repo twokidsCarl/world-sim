@@ -290,6 +290,12 @@ limn 这一轮的数：
 - **突触前**（右）：小泡里的谷氨酸画成圆点（`dots`），每个小泡里是满满的一粒粒，接近他的画法。
 - 出图的小工具 `limn.sheet` 可以只出指定的几张卡。
 
+### Y1：突触后的色族，两处文献改正，收尾核对
+
+- **突触后**改成他的粉紫色族（原来是蓝紫配橙）。突触前、突触后仍是两张卡：两份模型是各自独立的数据，没有共同的坐标，把它们对着摆成一幅就是凭空造一个突触间隙，没有做。
+- **两处文献对着检索结果改正**（原先凭记忆写的）：HIV 每个病毒约 14 个刺出自 Zhu 等 Nature 2006；“14 ± 7”这个范围出自同一组的会议摘要（Retrovirology 2006, doi:10.1186/1742-4690-3-S1-S5），不是那篇 Nature。新冠的 Yao 等 Cell 2020 解出的是核糖核蛋白团块的原位结构和排布；“一条线串着”的具体走向那篇文章没有解出，原来写的“看到是一串珠子”说过头了，已改。
+- **核对**：寨卡、HIV、syn3A 切到 Illustrate 后只剩模型本身一个面板，推断的说明都不在。全部 25 张卡的总览：`out/sheet-Y1.jpg`。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -570,3 +576,9 @@ The user said not to stop and ask, and to carry on with what is unfinished. This
 - **Exosome** (middle): a plasma background. He has not painted an exosome; the background follows "HIV in Blood Plasma".
 - **Presynaptic terminal** (right): the glutamates in the vesicles are drawn as dots (`dots`), each vesicle full of them, close to his way.
 - The rendering helper `limn.sheet` can render a chosen few cards.
+
+### Y1: the postsynaptic palette, two citations corrected, closing checks
+
+- **The postsynaptic scene** takes his pink-purple family (it was blue-purple with orange). Pre- and postsynaptic remain two cards: the two models are independent data with no common frame, and setting them face to face would mean inventing a synaptic cleft, which was not done.
+- **Two citations corrected against search results** (they had been written from memory): about 14 spikes per HIV virion is from Zhu et al., Nature 2006; the range "14 ± 7" is from the same group's conference abstract (Retrovirology 2006, doi:10.1186/1742-4690-3-S1-S5), not that Nature paper. Yao et al., Cell 2020, resolved the ribonucleoprotein clumps of SARS-CoV-2 in situ and their arrangement; the actual course of a strand through them was not resolved there, so "shows beads on a string" overstated it and has been reworded.
+- **Checks**: Zika, HIV and syn3A show the model's single panel after a switch to Illustrate, with none of the notes on inference. The sheet of all 25 cards: `out/sheet-Y1.jpg`.
