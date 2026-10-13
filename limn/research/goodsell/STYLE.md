@@ -282,6 +282,14 @@ limn 这一轮的数：
 - **HIV 的刺 14 → 21 个**：使用者说不够密。21 是文献范围（14 ± 7）的上端，不是平均，来源栏写明。他的画里更密，再多就超出文献了，没有再加。
 - 支原体的 DNA 30 → 60 条。试过在膜里面衬一层深紫红（他的蛋白之间是这个颜色），结果只在边上露出一圈，像第二层膜，去掉了。
 
+### W3：syn3A 画两个，寨卡和外泌体的背景，突触前小泡里的圆点
+
+- **syn3A**（`out/W3-syn3a.jpg`，左我们右他）：膜蛋白用 `arrange` 排成一圈小突起（`arrange` 现在也认一整张不分块的膜）。新字段 `twin`：把整个对象转半圈再画一份摆在旁边，像他画的正在分裂的样子。**第二个不是数据**，来源栏写明；两个相接处是直接叠在一起的，中间还隔着两层膜，他的画里那里是连通的。
+- **寨卡**（`out/W3-backgrounds.jpg` 左）：加上血浆背景，颜色改成他的粉红。他那幅还有细胞表面和一个剖开的病毒，没有画，来源栏写了。
+- **外泌体**（中）：加上血浆背景。他没有画过外泌体，背景照《HIV in Blood Plasma》的画法。
+- **突触前**（右）：小泡里的谷氨酸画成圆点（`dots`），每个小泡里是满满的一粒粒，接近他的画法。
+- 出图的小工具 `limn.sheet` 可以只出指定的几张卡。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -554,3 +562,11 @@ The user said not to stop and ask, and to carry on with what is unfinished. This
 - **Surroundings past the frame** (`SPREAD` 1.5 → 1.8, counts topped up by area, the frame zoomed back by the same ratio): the edges of the environment box no longer show at the border of the HIV picture.
 - **HIV spikes 14 → 21**: the user found them too sparse. 21 is the upper end of the literature's range (14 ± 7) and not its mean, as the sources panel says. His painting is denser still; more would go beyond the literature and was not added.
 - The mycoplasma's DNA goes from 30 strands to 60. A deep purple-red lining inside the membrane was tried (the colour between his proteins); it showed only as a ring at the edge, like a second membrane, and was removed.
+
+### W3: two syn3A cells, backgrounds for Zika and the exosome, dots in the presynaptic vesicles
+
+- **syn3A** (`out/W3-syn3a.jpg`, ours left, his right): membrane proteins are set out as a fringe of small protrusions with `arrange` (which now also reads a membrane in one piece). A new field, `twin`: the whole subject is drawn a second time, turned half a circle and set beside it, in the manner of the dividing cell he painted. **The second is not data**, as the sources panel says; where the two meet they simply overlap, with two membranes still between them, where his painting has them joined.
+- **Zika** (`out/W3-backgrounds.jpg`, left): a plasma background, and his pink. His painting also has a cell surface and a virion cut open, which are not drawn, as the sources panel says.
+- **Exosome** (middle): a plasma background. He has not painted an exosome; the background follows "HIV in Blood Plasma".
+- **Presynaptic terminal** (right): the glutamates in the vesicles are drawn as dots (`dots`), each vesicle full of them, close to his way.
+- The rendering helper `limn.sheet` can render a chosen few cards.

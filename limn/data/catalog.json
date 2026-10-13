@@ -195,7 +195,7 @@
       "captionEn": "A model of an entire presynaptic bouton, cut through the middle: 307 synaptic vesicles filled with glutamate, cytoskeleton, endosomes, the mitochondrial envelope and the plasma membrane, with dozens of the proteins that release and recycle vesicles, in numbers taken from quantitative measurements of isolated synaptic boutons.",
       "citation": "Wilhelm et al., Science 2014, doi:10.1126/science.1252884; Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
       "link": "http://download.yasara.org/petworld/presynapse/index.html",
-      "merge": "Glutamate"
+      "merge": "Glutamate", "dots": 7
     },
     {
       "id": "postsynaptic-spine",
@@ -273,6 +273,8 @@
       },
       "perCopy": true,
       "cut": 0.5,
+      "zoom": 1.2,
+      "environment": {"clear": 0.5, "proteins": [{"pdb": "1IGT", "name": "抗体", "nameEn": "antibody", "count": 40, "lch": [0.86, 0.12, 95]}, {"pdb": "1AO6", "name": "血清白蛋白", "nameEn": "serum albumin", "count": 300, "lch": [0.8, 0.11, 84]}], "ground": [0.24, 0.14, 0.08], "basis": "外泌体是细胞分泌到体液里的小泡，血浆里就有。这里把它画在血浆里：最多的两类蛋白是白蛋白和免疫球蛋白，各用一个结构代表（PDB 1AO6、1IGT）。Goodsell 没有画过外泌体，背景的画法照他的《HIV in Blood Plasma》（doi:10.2210/rcsb_pdb/goodsell-gallery-002）。", "basisEn": "Exosomes are small vesicles that cells release into body fluids, blood plasma among them. Here one is drawn in plasma: its two most abundant classes of protein, albumin and immunoglobulins, each stood for by one structure (PDB 1AO6, 1IGT). Goodsell has not painted an exosome; the background follows his \"HIV in Blood Plasma\" (doi:10.2210/rcsb_pdb/goodsell-gallery-002)."},
       "roles": [
         ["fibers|RNA|ADN|DNA", "nucleic"],
         ["\\.surface\\.", "membrane"],
@@ -379,6 +381,8 @@
       "roles": [
         [".", "focus"]
       ],
+      "arrange": {"pattern": "membrane protein"},
+      "twin": 1.8,
       "environment": {"inside": true, "proteins": [{"pdb": "7P6Z", "name": "核糖体", "nameEn": "ribosome", "count": 34, "lch": [0.7, 0.13, 345]}, {"pdb": "1AON", "name": "伴侣蛋白 GroEL", "nameEn": "chaperonin GroEL", "count": 14, "lch": [0.74, 0.1, 225]}, {"pdb": "2HHB", "name": "小的可溶蛋白（示意）", "nameEn": "small soluble proteins (schematic)", "count": 420, "lch": [0.78, 0.09, 215]}], "strands": {"name": "染色体 DNA", "nameEn": "chromosomal DNA", "count": 26, "length": 3200, "radius": 10, "lch": [0.86, 0.14, 92]}, "basis": "照 Goodsell 的《JCVI-syn3A Minimal Cell》（2022，doi:10.2210/rcsb_pdb/goodsell-gallery-042），他画的细胞里是黄色的染色体 DNA 长线、品红的核糖体和蓝色的可溶蛋白。这里核糖体用支原体的结构（PDB 7P6Z），伴侣蛋白用 GroEL（PDB 1AON），小的可溶蛋白用一个大小相当的蛋白（PDB 2HHB）占位，DNA 画成随机走向的长线。", "basisEn": "After Goodsell's \"JCVI-syn3A Minimal Cell\" (2022, doi:10.2210/rcsb_pdb/goodsell-gallery-042), in which the cell holds long yellow strands of chromosomal DNA, magenta ribosomes and blue soluble proteins. Here ribosomes use a mycoplasma structure (PDB 7P6Z), the chaperonin is GroEL (PDB 1AON), small soluble proteins are stood for by a protein of about the right size (PDB 2HHB), and DNA is drawn as long strands on random courses."},
       "membrane": [0.84, 0.1, 150],
       "hues": {"focus": [0.7, 0.13, 150]},
@@ -425,6 +429,9 @@
       },
       "caption": "成熟寨卡病毒颗粒的外壳：180 份包膜蛋白 E 和膜蛋白 M 按二十面体对称铺满表面。",
       "captionEn": "The shell of the mature Zika virion: 180 copies each of the envelope protein E and the membrane protein M cover the surface with icosahedral symmetry.",
+      "zoom": 1.3,
+      "hues": {"focus": [0.76, 0.13, 12]},
+      "environment": {"clear": 0.2, "proteins": [{"pdb": "3GHG", "name": "纤维蛋白原", "nameEn": "fibrinogen", "count": 14, "lch": [0.74, 0.13, 70]}, {"pdb": "1IGT", "name": "抗体", "nameEn": "antibody", "count": 60, "lch": [0.86, 0.12, 95]}, {"pdb": "1AO6", "name": "血清白蛋白", "nameEn": "serum albumin", "count": 260, "lch": [0.8, 0.11, 84]}], "ground": [0.24, 0.12, 0.08], "basis": "照 Goodsell 的《Zika Virus》（doi:10.2210/rcsb_pdb/goodsell-gallery-015），他画的病毒泡在血浆里，正靠近细胞表面。这里只画了血浆：最多的三类蛋白是白蛋白、免疫球蛋白和纤维蛋白原，各用一个结构代表（PDB 1AO6、1IGT、3GHG）。细胞表面和病毒里面没有画。", "basisEn": "After Goodsell's \"Zika Virus\" (doi:10.2210/rcsb_pdb/goodsell-gallery-015), in which the virus sits in blood plasma near the surface of a cell. Only the plasma is drawn here: its three most abundant classes of protein, albumin, immunoglobulins and fibrinogen, each stood for by one structure (PDB 1AO6, 1IGT, 3GHG). The cell surface and the inside of the virus are not drawn."},
       "tier": "measured",
       "licence": "CC0 1.0",
       "attribution": "wwPDB",
