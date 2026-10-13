@@ -215,6 +215,10 @@ limn 这一轮的数：
 - **刺之间的空隙**（`out/J1-coronavirus.jpg`：改前、改后、他的画）：重排的刺衬在后面（切片的背面不切），前排刺之间露出的是后面那一圈刺的深一号色调，不再是深色的底。还剩少数几处露底。
 - 全部 25 张卡的总览：`out/sheet-J1.jpg`。
 
+### K4：黏蛋白从一张网改成一根根分叉的长链
+
+（`out/K4-coronavirus.jpg`：改前、改后、他的画）新冠周围的黏蛋白原来有 70 条、每步方向偏得多，平滑之后连成一张绿色的网。试了四次：收细到 4 Å 反而更像网；减到 30 条、方向每步只偏一点之后成了一根根线，但太直太稀；最后取 34 条、半径 6.5 Å、每步偏 0.32、分叉两节。白蛋白从 240 个减到 170 个，底色从近黑调成深橄榄。穿线工具每步的偏转改小了，syn3A 里用同一个工具生成的 DNA 也跟着变直了一些，看过，没有变坏。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -420,3 +424,7 @@ The four cards of the list not yet compared one by one (Zika, nuclear pore, syna
 - **The concept "line", revised again** (`out/J1-ink.jpg`: near-black, the fill deepened to 0.32, deepened to 0.45 and thinner, his painting): lines in mesoscale models go from near-black to a deeper shade of the fill (`inkTint` 0.85, `inkShade` 0.32). This does not contradict what round C found, but the choice changed: on his originals the line is indeed thin and dark, yet our pictures are seen at the reduced size, where a near-black line of one pixel is far heavier than his. Every shape is still outlined. **This alters the "outline in black" the user asked for earlier**, and the reply says so.
 - **Gaps between spikes** (`out/J1-coronavirus.jpg`: before, after, his painting): the rearranged spikes line the back (not cut at the back of the slab), so between the spikes in front the ring behind shows in a deeper tone and not the dark ground. A few spots of ground remain.
 - The sheet of all 25 cards: `out/sheet-J1.jpg`.
+
+### K4: mucin goes from a net to separate branched chains
+
+(`out/K4-coronavirus.jpg`: before, after, his painting) The mucin round the coronavirus had 70 strands whose heading shifted a good deal each step, and after smoothing they joined into a green net. Four tries: thinning to 4 Å made it more of a net; 30 strands with a small shift per step gave separate strands, but too straight and sparse; the setting kept is 34 strands, radius 6.5 Å, a shift of 0.32 per step, branches of two pieces. Albumin went from 240 copies to 170 and the ground from near-black to a deep olive. The threading tool's shift per step is smaller now, so the DNA it generates in syn3A is somewhat straighter as well; it was looked at and is no worse.
