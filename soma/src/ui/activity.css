@@ -1,0 +1,220 @@
+/* "肌肉活动"的面板和图例 / panel and legend of the muscle-activity display */
+
+.activity-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 34px;
+  width: min(300px, calc(100% - 24px));
+  padding: 8px 10px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(21, 24, 29, 0.86);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+  z-index: 3;
+}
+.activity-legend strong {
+  display: block;
+  font-weight: 600;
+}
+.activity-legend .en,
+.activity-panel .en {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.activity-legend p {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  font-size: 11px;
+}
+.activity-legend .activity-warn,
+.activity-panel .activity-warn {
+  color: #f3b34c;
+}
+.activity-ramp {
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 3px;
+}
+.activity-ticks {
+  position: relative;
+  height: 15px;
+  margin: 2px 14px 0 4px;
+  font-size: 10px;
+  color: var(--text-2);
+}
+.activity-ticks span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-30%);
+  white-space: nowrap;
+}
+
+.activity-modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 6px 0;
+}
+.activity-modes button {
+  padding: 5px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.activity-modes button small {
+  display: block;
+  color: var(--text-3);
+  font-size: 10px;
+}
+.activity-modes button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.activity-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.activity-options select {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+.activity-statement {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border-left: 3px solid var(--accent);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.activity-statement.estimate {
+  border-left-color: #f3b34c;
+}
+.activity-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.activity-row {
+  display: grid;
+  grid-template-columns: 16px 1fr 46px;
+  gap: 2px 6px;
+  align-items: center;
+  width: 100%;
+  padding: 4px 4px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.activity-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.activity-row.selected {
+  background: var(--accent-soft);
+}
+.activity-row .flag {
+  color: #f3b34c;
+  font-size: 12px;
+}
+.activity-row .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-row .value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.activity-row .bar {
+  grid-column: 2 / 4;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.activity-row .bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+.activity-row .detail {
+  grid-column: 2 / 4;
+  color: var(--text-3);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-panel details {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.activity-panel summary {
+  cursor: pointer;
+  color: var(--text-2);
+}
+.activity-table {
+  width: 100%;
+  margin-top: 4px;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.activity-table th {
+  color: var(--text-3);
+  font-weight: 400;
+  text-align: right;
+  padding: 2px 3px;
+}
+.activity-table th:first-child,
+.activity-table td:first-child {
+  text-align: left;
+}
+.activity-table td {
+  padding: 2px 3px;
+  text-align: right;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.activity-table td.bad {
+  color: #f3b34c;
+}
+.activity-table td.note {
+  color: var(--text-3);
+}
+.activity-flaglist {
+  margin: 2px 0 0 0;
+  padding-left: 16px;
+  color: var(--text-3);
+  font-size: 11px;
+}
+/* 嵌入模式下让开底部的控件条 / in embed mode, clear the control strip at the bottom */
+.app-embed .activity-legend {
+  bottom: 52px;
+}
+
+@media (max-width: 720px) {
+  .activity-legend {
+    bottom: 58px;
+    font-size: 11px;
+  }
+}

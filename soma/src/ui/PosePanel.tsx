@@ -7,6 +7,7 @@ import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { JOINT_GROUPS, jointGroup, mirrorJointId, posePresets, poseIsRest, ribJoints, type JointGroupId } from '../anatomy/rig.ts'
 import type { Joint, JointDof } from '../anatomy/types.ts'
 import { useApp } from '../state/store.ts'
+import { ActivityPanel } from './ActivityPanel.tsx'
 import { CautionList } from './CautionsDialog.tsx'
 import { ShapeControls } from './ShapeControls.tsx'
 
@@ -171,6 +172,8 @@ export function PosePanel({ graph }: { graph: AnatomyGraph }) {
         {explode > 0 && !atRest && <p className="hint">摆姿势时爆炸视图暂停。 Explode is suspended while posed.</p>}
         <p className="hint">点击模型上的骨可选中带动它的关节，再拖动彩色圆环转动。 Click a bone to pick its joint, then drag a coloured ring.</p>
       </section>
+
+      <ActivityPanel graph={graph} />
 
       <ShapeControls />
 

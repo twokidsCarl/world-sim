@@ -53,6 +53,8 @@ import { ACCENT, MODE_BLEND, MODE_HIDDEN, MODE_OPAQUE, PartBatches, bakePart, ty
 import { PartMeshes, centroidTransparentSort } from './meshes.ts'
 import { JointGizmo } from './gizmo.ts'
 import { PoseRuntime } from './posing.ts'
+import { ActivityLayer } from './activityLayer.ts'
+import { useActivity } from '../activity/state.ts'
 import { probeSkinnedPositions } from './skinProbe.ts'
 import { SkinningData, positionNodeFor, type SkinningMode } from './skinning.ts'
 import {
@@ -352,6 +354,9 @@ export class Viewer {
   private static readonly MAX_MUSCLES = 1024
   readonly skinning = new SkinningData(Viewer.MAX_JOINT_ROWS, Viewer.MAX_MUSCLES)
   private poseRt: PoseRuntime | null = null
+  /** 肌肉活动层（只在主视图上）及其对 store 的订阅 / The muscle-activity layer (main view only) and its store subscription. */
+  private activityLayer: ActivityLayer | null = null
+  private unsubActivity: (() => void) | null = null
   /** 已写入顶点属性的绑定（与 store 中的不同则需重新写入）/ The rig whose influences are in the vertex attributes. */
   private appliedRig: LoadedRig | null = null
   private loadComplete = false
@@ -642,6 +647,8 @@ export class Viewer {
     this.skinLayer?.dispose()
     this.gizmo.dispose()
     this.skinning.dispose()
+    this.unsubActivity?.()
+    this.activityLayer?.dispose()
     this.renderer.dispose()
     el.remove()
   }
@@ -1189,6 +1196,15 @@ export class Viewer {
     this.poseRt = new PoseRuntime(rig, (i) => (this.inst[i]! >= 0 ? { id: parts[i]!.id, buffers: batches.partBuffers(this.inst[i]!) } : null))
     this.applyRigToSkinLayer()
     this.poseDirty = true
+    // 肌肉活动层：只在主视图上；模式、重力或负荷变了就重算一次 / the muscle-activity layer: main view only; recomputed when mode, gravity or load change
+    this.activityLayer?.dispose()
+    this.activityLayer = null
+    if (this.source === useApp.getState) {
+      this.activityLayer = new ActivityLayer(this.graph, rig, this.baseUrl, Viewer.MAX_MUSCLES, () => (this.poseDirty = true))
+      this.unsubActivity ??= useActivity.subscribe((a, b) => {
+        if (a.mode !== b.mode || a.gravity !== b.gravity || a.load !== b.load) this.poseDirty = true
+      })
+    }
   }
 
   /** 绑定记录的 GLB 哈希与已加载的对不上：拒绝它（store 里标为过期）/ The GLB hashes the rig recorded do not match what is loaded: refuse it (the store marks it stale). */
@@ -1792,11 +1808,24 @@ export class Viewer {
   private setDisplayPose(pose: Pose): void {
     this.displayPose = pose
     const rt = this.poseRt
-    const active = !!rt && (!poseIsRest(pose) || !scalesAreIdentity(this.poseScales))
+    // 显示肌肉活动时，静止姿势也走蒙皮分支（站着不动小腿也在用力，肌腹要能变粗）
+    // with muscle activity shown, the rest pose takes the skinning branch too (standing still loads the calf, whose belly must be able to thicken)
+    const activity = rt ? this.activityLayer : null
+    const active = !!rt && (!poseIsRest(pose) || !scalesAreIdentity(this.poseScales) || !!activity?.wanted())
     if (rt && active) {
       const d = rt.set(pose, this.poseScales)
       this.skinning.update(d.joints, d.muscles)
       this.prewarmNext = 0
+    }
+    if (rt && activity) {
+      const changed = activity.update(pose, rt.frames)
+      this.skinning.updateBulge(activity.bulge)
+      if (changed.length) {
+        const s = this.source()
+        for (const i of changed) this.applyPart(i, this.graph.parts[i]!, s)
+      }
+      // 求解没收敛：下一帧接着算 / the solve did not converge: continue on the next frame
+      if (activity.pending) this.poseDirty = true
     }
     // 对照窗格的相机由主视图带着走，自己不再跟一次 / the compare pane's camera is driven by the main view and does not follow a second time
     if (rt && this.poseScales !== this.framedScales && this.source === useApp.getState) this.followShape(rt)
@@ -2248,7 +2277,8 @@ export class Viewer {
     } else if (d === GHOST) {
       batches.setState(id, MODE_BLEND, GHOST_RGB.r, GHOST_RGB.g, GHOST_RGB.b, GHOST_OPACITY)
     } else {
-      const c = this.tmpColor.copy(this.baseColor[i]!)
+      // 肌肉活动的颜色取代肌肉的底色；选中、悬停的提示照常叠在上面 / the muscle-activity colour replaces the muscle's base colour; selection and hover tints go on top as usual
+      const c = this.tmpColor.copy(this.activityLayer?.tint.get(i) ?? this.baseColor[i]!)
       if (selected) c.lerp(ACCENT_RGB, 0.6)
       else if (inPath) c.lerp(PATH_RGB, 0.8)
       else if (s.hover === part.id) c.lerp(WHITE, 0.32)

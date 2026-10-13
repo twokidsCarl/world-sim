@@ -1,0 +1,28 @@
+{
+  "_doc": {
+    "zh": "节段质量占体重的比例和质心位置（占节段长度的比例，从近端端点量起），de Leva 1996 对 Zatsiorsky–Seluyanov 数据的调整。数值取自 BMClab/BMC 仓库里的两张表（CC BY 4.0），期刊原文没有打开。只用于对照我们由几何算出的节段质量，不参与计算。",
+    "en": "Segment mass as a fraction of body mass and longitudinal centre-of-mass position (fraction of segment length from the proximal endpoint): de Leva's 1996 adjustments of the Zatsiorsky–Seluyanov data. Values are from the two tables in the BMClab/BMC repository (CC BY 4.0); the journal article itself was not opened. Used only as a cross-check of the segment masses computed from our geometry, never in the computation."
+  },
+  "source": "deleva",
+  "endpoints": { "head": "vertex – mid-gonion", "trunk": "suprasternale – mid-hip", "upperArm": "shoulder joint centre – elbow joint centre", "forearm": "elbow joint centre – wrist joint centre", "hand": "wrist joint centre – third metacarpale", "thigh": "hip joint centre – knee joint centre", "shank": "knee joint centre – ankle joint centre", "foot": "heel – toe tip" },
+  "male": {
+    "head": { "mass": 0.0694, "cm": 0.5976 },
+    "trunk": { "mass": 0.4346, "cm": 0.4486 },
+    "upperArm": { "mass": 0.0271, "cm": 0.5772 },
+    "forearm": { "mass": 0.0162, "cm": 0.4574 },
+    "hand": { "mass": 0.0061, "cm": 0.79 },
+    "thigh": { "mass": 0.1416, "cm": 0.4095 },
+    "shank": { "mass": 0.0433, "cm": 0.4395 },
+    "foot": { "mass": 0.0137, "cm": 0.4415 }
+  },
+  "female": {
+    "head": { "mass": 0.0668, "cm": 0.5894 },
+    "trunk": { "mass": 0.4257, "cm": 0.4151 },
+    "upperArm": { "mass": 0.0255, "cm": 0.5754 },
+    "forearm": { "mass": 0.0138, "cm": 0.4559 },
+    "hand": { "mass": 0.0056, "cm": 0.7474 },
+    "thigh": { "mass": 0.1478, "cm": 0.3612 },
+    "shank": { "mass": 0.0481, "cm": 0.4352 },
+    "foot": { "mass": 0.0129, "cm": 0.4014 }
+  }
+}
