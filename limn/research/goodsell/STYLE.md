@@ -219,6 +219,12 @@ limn 这一轮的数：
 
 （`out/K4-coronavirus.jpg`：改前、改后、他的画）新冠周围的黏蛋白原来有 70 条、每步方向偏得多，平滑之后连成一张绿色的网。试了四次：收细到 4 Å 反而更像网；减到 30 条、方向每步只偏一点之后成了一根根线，但太直太稀；最后取 34 条、半径 6.5 Å、每步偏 0.32、分叉两节。白蛋白从 240 个减到 170 个，底色从近黑调成深橄榄。穿线工具每步的偏转改小了，syn3A 里用同一个工具生成的 DNA 也跟着变直了一些，看过，没有变坏。
 
+### K7：支原体的 DNA 按他的画法重新穿线（使用者定的）
+
+（`out/K7-mycoplasma-dna.jpg`：整幅、中间一块、他的画）使用者在四项里选了“按他的画法重新穿线”。“填环境”工具加了 `replace`：手绘画法下把模型里名字匹配的东西（这里是 `fibers.DNA`）拿掉，由生成的线代替；穿线工具加了 `wander`（每步方向偏多少）。试了三次：70 条、几乎笔直、放在切片后部，大多被蛋白挡住；挪到切片最前面的一薄层后成了一堆交叉的直棍，交叉处还粘成蹼；最后取 30 条、每步偏 0.2、半径 7 Å。
+
+这一项推断的成分很大，来源栏照实写了：走向是随机生成的，比真实 DNA 直得多；按基因组长度和切片体积，画面里应有约 42 微米，只画了约 18 微米。Illustrate 画法下仍是模型里原来的 DNA。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -428,3 +434,9 @@ The four cards of the list not yet compared one by one (Zika, nuclear pore, syna
 ### K4: mucin goes from a net to separate branched chains
 
 (`out/K4-coronavirus.jpg`: before, after, his painting) The mucin round the coronavirus had 70 strands whose heading shifted a good deal each step, and after smoothing they joined into a green net. Four tries: thinning to 4 Å made it more of a net; 30 strands with a small shift per step gave separate strands, but too straight and sparse; the setting kept is 34 strands, radius 6.5 Å, a shift of 0.32 per step, branches of two pieces. Albumin went from 240 copies to 170 and the ground from near-black to a deep olive. The threading tool's shift per step is smaller now, so the DNA it generates in syn3A is somewhat straighter as well; it was looked at and is no worse.
+
+### K7: the mycoplasma's DNA threaded afresh after his painting (the user's choice)
+
+(`out/K7-mycoplasma-dna.jpg`: the whole, the middle, his painting) Of the four questions put to the user, this one was answered "thread it afresh after his painting". The environment tool gained `replace`: in the painted drawing what the model holds under a matching name (here `fibers.DNA`) is taken out and generated strands stand in for it; the threading tool gained `wander` (how far the heading shifts per step). Three tries: 70 strands, almost straight, at the back of the slab, were mostly hidden by protein; moved to a thin layer at the very front they became a pile of crossing sticks, webbed where they crossed; the setting kept is 30 strands, a shift of 0.2 per step, radius 7 Å.
+
+A great deal of this is inference, and the sources panel says so plainly: the courses are generated at random and far straighter than real DNA; by genome length and the slab's volume the picture should hold about 42 micrometres, and only about 18 are drawn. The Illustrate drawing still shows the DNA as the model has it.
