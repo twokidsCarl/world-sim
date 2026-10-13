@@ -136,7 +136,7 @@ export interface LatticeMesh {
   tets: Uint32Array
   /** 每个四面体的槽位 / the slot of every tetrahedron */
   slots: Uint32Array
-  /** 每个结点的格点编号 / the lattice id of every node */
+  /** 每个结点的格点编号（结点分裂后，几个结点可以有同一个格点编号）/ the lattice id of every node (after node splitting several nodes may share one) */
   latticeId: Uint32Array
 }
 

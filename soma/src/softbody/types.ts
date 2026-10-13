@@ -2,6 +2,19 @@
 // The data format of the soft-tissue cage (proposed for the data contract in src/anatomy/types.ts; until then this is
 // its only definition).
 //
+// 这个目录里的模块 / Modules of this directory
+//   lattice.ts  BCC 格子的拓扑 / topology of the BCC lattice
+//   solver.ts   XPBD 求解器（CPU 参考实现）/ the XPBD solver (CPU reference)
+//   body.ts     笼子数据的读写，接到绑定上的运行时对象 / reading and writing the cage, the run-time object tied to the rig
+//   rest.ts     零重力参考形状的反解 / the inverse solve for the zero-gravity reference
+//   press.ts    按压工具的接口 press()：细笼子上的准静态压入 / the interface of the pressing tool, press(): quasi-static indentation on a fine cage
+//
+// 留给空腔脏器的位置（还没有做）：管腔表面和每个器官的 filling 字段到了以后，空腔脏器是嵌在笼子里的薄壳加一条
+// "包住的体积 / 压强"约束，与这里的结点体积约束同一种形式（Σ 体积 → 一个乘子）。数据格式里会多一个 hollow 段。
+// The slot kept for hollow organs (not built): once lumen surfaces and a per-organ `filling` field arrive, a hollow
+// organ is a thin shell embedded in the cage plus one "enclosed volume / pressure" constraint, of the same form as the
+// nodal volume constraints here (Σ volumes → one multiplier). The data format will then gain a `hollow` section.
+//
 // 文件 / Files
 //   /anatomy/<body>/soft.json   SoftData
 //   /anatomy/<body>/soft.bin    小端二进制，各段的字节偏移在 SoftData.sections 里，每段按 4 字节对齐
@@ -26,13 +39,14 @@
 //                                 the joint a node is pinned to (index into SoftData.joints), −1 = free
 //   nodeInfluence  12 字节 × N    与 rig.bin 相同：4 × uint16 关节下标（指向 SoftData.joints）+ 4 × uint8 权重（和为 255）
 //                                 as rig.bin: 4 × uint16 joint indices (into SoftData.joints) + 4 × uint8 weights summing to 255
-//   anchors        12 字节 × A    uint32 四面体 + 3 × uint16 重心坐标（÷ 65535，第四个 = 1 − 和）+ 2 字节填充：
-//                                 四面体里骨所在的一点，跟随笼子的蒙皮位置
-//                                 uint32 tetrahedron + 3 × uint16 barycentric (÷ 65535, the fourth = 1 − sum) + 2 bytes
-//                                 of padding: a point of bone inside a tetrahedron, which follows the skinned cage
+//   anchors        12 字节 × A    uint32 四面体 + 3 × uint16 重心坐标（÷ 65535，第四个 = 1 − 和）+ uint16 权重（÷ 65535，
+//                                 骨占四面体的体积比例；0 = 旧文件，按 1 读）：四面体里骨所在的一点，跟随笼子的蒙皮位置
+//                                 uint32 tetrahedron + 3 × uint16 barycentric (÷ 65535, the fourth = 1 − sum) + uint16
+//                                 weight (÷ 65535, the share of the tetrahedron taken by bone; 0 = an old file, read as
+//                                 1): a point of bone inside a tetrahedron, which follows the skinned cage
 //   rest0          Int16 × 3N     （可选）零重力参考形状相对 nodes 的偏移，单位 REST0_UNIT 米
 //                                 (optional) offset of the zero-gravity reference from `nodes`, in units of REST0_UNIT metres
-//   embedded[i]    12 字节 × 顶点数  与 anchors 相同的编码：部件的每个渲染顶点（GLB 解码顺序）所在的四面体和重心坐标
+//   embedded[i]    12 字节 × 顶点数  与 anchors 相同的编码（末尾两个字节不用）：部件的每个渲染顶点（GLB 解码顺序）所在的四面体和重心坐标
 //                                 same encoding as anchors: tetrahedron and barycentric coordinates of every render
 //                                 vertex of a part (GLB decode order)
 
@@ -43,6 +57,8 @@ export const REST0_UNIT = 2e-5
 export const NO_MUSCLE = 0xffff
 /** 落在体外的四面体的最小折减系数：刚度和质量不能为零 / floor of the fill factor: stiffness and mass must not vanish */
 export const MIN_FILL = 0.03
+/** 刚度折减系数的下限（高于质量的下限，见 body.ts 的 solverInput）/ floor of the fill factor for stiffness (above that for mass; see solverInput in body.ts) */
+export const STIFF_FILL = 0.12
 
 /** 求解器用的一种材料：线弹性常数 + 密度；非线性的说明见 data/curated/softbody/materials.json。 */
 /** One material as the solver uses it: linear constants and density; for the nonlinearity see data/curated/softbody/materials.json. */
@@ -58,6 +74,11 @@ export interface SoftMaterial {
   youngActive?: number
   /** 肌肉：沿纤维方向额外的模量，帕 / muscle: extra modulus along the fibres, Pa */
   fibreYoung?: number
+  /** 应变硬化系数 κ：Ψ_dev = μ/2·c + μκ/4·c²（c = I₁ − 3）；省略 = 0 / strain-stiffening coefficient κ: Ψ_dev = μ/2·c + μκ/4·c² (c = I₁ − 3); omitted = 0 */
+  stiffening?: number
+  /** 快的 Maxwell 支路：模量与 μ 之比、松弛时间（秒）；省略 = 没有 / the fast Maxwell branch: its modulus over μ and its relaxation time (s); omitted = none */
+  branchRatio?: number
+  branchTau?: number
   /** true = 不求解（骨：四个结点都钉住的四面体）/ true = not solved (bone: tetrahedra with four pinned nodes) */
   rigid?: boolean
 }

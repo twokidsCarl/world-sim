@@ -5,7 +5,7 @@ import type { Xf } from '../../tools/rig/math.ts'
 import { skin } from '../../tools/rig/pose.ts'
 import { type Lattice, barycentric, locateSlot } from './lattice.ts'
 import { type PointSet, type SolverInput, type SolverOptions, SoftSolver, lame } from './solver.ts'
-import { MIN_FILL, NO_MUSCLE, REST0_UNIT, type SoftData, type SoftSection } from './types.ts'
+import { MIN_FILL, NO_MUSCLE, REST0_UNIT, STIFF_FILL, type SoftData, type SoftSection } from './types.ts'
 
 export interface LoadedSoft {
   data: SoftData
@@ -20,6 +20,8 @@ export interface LoadedSoft {
   /** rig.bin 格式的结点影响 / node influences in rig.bin format */
   nodeInfluence: Uint8Array
   anchors: PointSet
+  /** 每个锚点的权重 = 骨占四面体的体积比例（0–1）/ weight of every anchor = share of its tetrahedron taken by bone (0–1) */
+  anchorWeight: Float32Array
   /** 零重力参考形状（没有则为 null）/ the zero-gravity reference (null when absent) */
   rest0: Float32Array | null
   embedded: Map<string, PointSet>
@@ -28,7 +30,7 @@ export interface LoadedSoft {
 }
 
 /** 嵌入点的存盘编码：uint32 四面体 + 3 × uint16 重心坐标 + 2 字节填充。 On-disk encoding of embedded points: uint32 tetrahedron + 3 × uint16 barycentric + 2 bytes of padding. */
-export function encodePoints(set: PointSet): Uint8Array {
+export function encodePoints(set: PointSet, weight?: ArrayLike<number>): Uint8Array {
   const n = set.tet.length
   const out = new Uint8Array(n * 12)
   const dv = new DataView(out.buffer)
@@ -41,6 +43,7 @@ export function encodePoints(set: PointSet): Uint8Array {
     dv.setUint16(i * 12 + 4, Math.round(b0 * 65535), true)
     dv.setUint16(i * 12 + 6, Math.round(b1 * 65535), true)
     dv.setUint16(i * 12 + 8, Math.round(b2 * 65535), true)
+    if (weight) dv.setUint16(i * 12 + 10, Math.round(Math.min(1, Math.max(0, weight[i]!)) * 65535), true)
   }
   return out
 }
@@ -56,6 +59,12 @@ export function decodePoints(bin: Uint8Array, s: SoftSection): PointSet {
   return { tet, bary }
 }
 
+/** 锚点记录末尾两个字节里的权重；旧文件里是 0，读成 1（硬锚点）。 The weight in the last two bytes of an anchor record; 0 in old files, read as 1 (a hard anchor). */
+function anchorWeights(bin: Uint8Array, s: SoftSection): Float32Array {
+  const dv = new DataView(bin.buffer, bin.byteOffset + s.offset, s.count * 12)
+  return Float32Array.from({ length: s.count }, (_, i) => dv.getUint16(i * 12 + 10, true) / 65535 || 1)
+}
+
 export interface SoftArrays {
   nodes: Float32Array
   tets: Uint32Array
@@ -67,6 +76,7 @@ export interface SoftArrays {
   nodePin: Int16Array
   nodeInfluence: Uint8Array
   anchors: PointSet
+  anchorWeight?: Float32Array
   rest0?: Float32Array | null
   embedded: { part: string; points: PointSet }[]
 }
@@ -95,7 +105,7 @@ export function encodeSoft(data: Omit<SoftData, 'sections' | 'embedded' | 'nodeC
     tetMuscle: put(a.tetMuscle, T),
     nodePin: put(a.nodePin, N),
     nodeInfluence: put(a.nodeInfluence, N),
-    anchors: put(encodePoints(a.anchors), a.anchors.tet.length),
+    anchors: put(encodePoints(a.anchors, a.anchorWeight), a.anchors.tet.length),
   }
   if (a.rest0) {
     const q = new Int16Array(N * 3)
@@ -133,6 +143,7 @@ export function decodeSoft(data: SoftData, bin: Uint8Array): LoadedSoft {
     nodePin: new Int16Array(cut(S.nodePin, N * 2)),
     nodeInfluence: new Uint8Array(cut(S.nodeInfluence, N * 12)),
     anchors: decodePoints(bin, S.anchors),
+    anchorWeight: anchorWeights(bin, S.anchors),
     embedded: new Map(data.embedded.map((e) => [e.part, decodePoints(bin, e)])),
   }
 }
@@ -165,6 +176,32 @@ export interface MixOptions {
   skin?: 'voigt' | 'none'
   /** 用零重力参考形状（需要 rest0）而不是预应力 / use the zero-gravity reference (needs rest0) instead of the pre-stress */
   useRest0?: boolean
+  /** false = 不要应变硬化（κ = 0）/ false = no strain stiffening (κ = 0) */
+  stiffening?: boolean
+  /** false = 不要 Maxwell 支路（只有长期响应）/ false = no Maxwell branch (the long-term response only) */
+  viscous?: boolean
+  /** 'hard' = 第一阶段的硬锚点；缺省按骨的体积比例给有限刚度 / 'hard' = the hard anchors of phase 1; by default a finite stiffness from the bone share */
+  anchors?: 'weighted' | 'hard'
+  /** 每种材料的杨氏模量倍数（按材料 id），做参数研究用 / a factor on the Young modulus of a material (by id), for parameter studies */
+  scale?: Record<string, number>
+  /** 覆盖某种材料的 κ / overrides κ of a material */
+  kappa?: Record<string, number>
+}
+
+/**
+ * 锚点的刚度，N/m。骨占四面体体积的比例为 φ 时，把骨看成四面体里一块边长 ∝ φ^{1/3} 的刚体，它与四面体结点之间隔着
+ * 厚约 cell·(1 − φ^{1/3})/2、面积约 cell²·φ^{2/3} 的软组织：k = G·面积/厚度 = 2·G·cell·φ^{2/3}/(1 − φ^{1/3})。
+ * φ → 0 时 k → 0（擦过一角的骨不起作用），φ → 1 时 k → ∞（硬约束）。刚度与单元大小成正比、与 G 成正比，
+ * 所以不会因为笼子粗就把组织拴死。这个公式是本项目的假设，不是文献里的。
+ * The stiffness of an anchor, N/m. With bone taking the share φ of a tetrahedron, the bone is seen as a rigid lump of
+ * size ∝ φ^{1/3} inside it, separated from the nodes by soft tissue about cell·(1 − φ^{1/3})/2 thick over an area of
+ * about cell²·φ^{2/3}: k = G·area/thickness = 2·G·cell·φ^{2/3}/(1 − φ^{1/3}). k → 0 as φ → 0 (bone grazing a corner
+ * does nothing) and k → ∞ as φ → 1 (a hard constraint). The stiffness scales with the cell and with G, so a coarse
+ * cage no longer ties tissue down. The formula is this project's assumption, not from the literature.
+ */
+export function anchorStiffness(shear: number, cell: number, boneShare: number): number {
+  const c = Math.cbrt(Math.min(0.98, Math.max(0, boneShare)))
+  return (2 * shear * cell * c * c) / (1 - c)
 }
 
 /** 由笼子数据组出求解器的输入：每个四面体的 μ、λ、密度按材料、体内比例和皮肤比例算出。 Builds the solver input from the cage: μ, λ and density of every tetrahedron from its material, fill and skin share. */
@@ -173,14 +210,30 @@ export function solverInput(soft: LoadedSoft, mix: MixOptions = {}): SolverInput
   const mats = soft.data.materials
   const skinMat = mats[soft.data.skin.material]
   const mu = new Float32Array(T), lambda = new Float32Array(T), density = new Float32Array(T)
+  const stiffening = new Float32Array(T), branchModulus = new Float32Array(T), branchTau = new Float32Array(T).fill(1)
+  const kap = (m: (typeof mats)[number]): number => (mix.stiffening === false ? 0 : (mix.kappa?.[m.id] ?? m.stiffening ?? 0))
   const fibre = new Float32Array(T * 3), fibreModulus = new Float32Array(T), muscle = new Int32Array(T).fill(-1), stiff = new Float32Array(T).fill(1)
   for (let e = 0; e < T; e++) {
     const m = mats[soft.tetMaterial[e]!]!
     if (m.rigid) continue
     const fill = Math.max(MIN_FILL, soft.tetFill[e]! / 255)
     const fs = (mix.skin ?? 'voigt') === 'voigt' && skinMat ? soft.tetSkin[e]! / 255 : 0
-    const young = fill * ((1 - fs) * m.young + fs * (skinMat?.young ?? 0))
+    const ym = m.young * (mix.scale?.[m.id] ?? 1), ys = fs ? skinMat!.young * (mix.scale?.[skinMat!.id] ?? 1) : 0
+    // 刚度的折减系数有一个比质量高的下限（"幽灵刚度"）：几乎全在体外的四面体上的结点又轻又软，快速运动时会甩出去十几厘米
+    // stiffness gets a higher floor than mass ("ghost stiffness"): nodes of tetrahedra almost wholly outside the body are light and soft and would be flung out by many centimetres in fast motion
+    const young = Math.max(STIFF_FILL, fill) * ((1 - fs) * ym + fs * ys)
     const l = lame(young, m.poisson)
+    // 混合物的四次项和 Maxwell 支路同样按体积比例加权（Voigt）：κ 按 μ 加权，τ 按支路模量加权
+    // the quartic term and the Maxwell branch of the mixture are volume-weighted likewise (Voigt): κ weighted by μ, τ by branch modulus
+    const wm = (1 - fs) * ym, ws = fs * ys
+    if (wm + ws > 0) stiffening[e] = (wm * kap(m) + ws * (fs ? kap(skinMat!) : 0)) / (wm + ws)
+    if (mix.viscous !== false) {
+      const gm = wm * (m.branchRatio ?? 0), gs = ws * (skinMat?.branchRatio ?? 0)
+      if (gm + gs > 0) {
+        branchModulus[e] = (fill * (gm + gs)) / (2 * (1 + m.poisson))
+        branchTau[e] = (gm * (m.branchTau ?? 1) + gs * (skinMat?.branchTau ?? 1)) / (gm + gs)
+      }
+    }
     mu[e] = l.mu
     lambda[e] = l.lambda
     density[e] = fill * m.density
@@ -199,7 +252,14 @@ export function solverInput(soft: LoadedSoft, mix: MixOptions = {}): SolverInput
   for (let e = 0; e < T; e++) if (density[e] === 0) density[e] = mats[soft.tetMaterial[e]!]!.density * Math.max(MIN_FILL, soft.tetFill[e]! / 255)
   const pinned = Uint8Array.from(soft.nodePin, (j) => (j >= 0 ? 1 : 0))
   void N
-  return { nodes: soft.nodes, tets: soft.tets, mu, lambda, density, pinned, fibre, fibreModulus, muscle, activeStiffening: stiff, anchors: soft.anchors }
+  // 锚点刚度用所在四面体材料本身的 μ（不按体内比例折减：骨周围是实的）/ anchor stiffness from the μ of the tetrahedron's own material (not scaled by fill: tissue round a bone is solid)
+  const anchorK = Float32Array.from(soft.anchors.tet, (e, i) => {
+    const m = mats[soft.tetMaterial[e]!]!
+    if (mix.anchors === 'hard') return Infinity
+    const shear = m.rigid ? Infinity : (m.young * (mix.scale?.[m.id] ?? 1)) / (2 * (1 + m.poisson))
+    return anchorStiffness(shear, soft.data.lattice.cell, soft.anchorWeight[i] ?? 1)
+  })
+  return { nodes: soft.nodes, tets: soft.tets, mu, lambda, density, pinned, fibre, fibreModulus, muscle, activeStiffening: stiff, anchors: soft.anchors, anchorStiffness: anchorK, stiffening, branchModulus, branchTau }
 }
 
 export interface PoseFrames {

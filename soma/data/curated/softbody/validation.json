@@ -90,11 +90,68 @@
     "zh": "转述的数值，压头和载荷范围未知；足跟垫厚度与笼子单元同量级，没有模拟。",
     "en": "A quoted value with unknown indenter and load range; the heel pad is about one cage cell thick and was not simulated."
    }
+  },
+  {
+   "id": "abdomen_umbilical_relaxed",
+   "site": {
+    "zh": "腹部，脐的高度、腹直肌中央（该文的 R2），仰卧放松",
+    "en": "abdomen, centre of the rectus abdominis at the level of the umbilicus (R2 of the paper), supine and relaxed"
+   },
+   "indenter": {
+    "kind": "hemisphere",
+    "radiusMm": 10
+   },
+   "rateMmPerS": 5,
+   "rateSdMmPerS": 1,
+   "forcePolynomialN": {
+    "note": "f(δ) = f1·δ⁴ + f2·δ³ + f3·δ² + f4·δ, δ in mm",
+    "coefficients": [
+     -2.937e-06,
+     0.000259,
+     0.002479,
+     0.2163
+    ],
+    "validToMm": 30,
+    "forceAtMaxN": 13.33,
+    "rmse": 0.963
+   },
+   "subjects": 10,
+   "source": "remus2024",
+   "where": "Table 4 (mean curve fit of region R2); Table 6: inverse Ogden fit c = 7 kPa, m = 17",
+   "caveat": {
+    "zh": "十名 25–37 岁男性的平均曲线。表 4 的 RMSE 列单位写的是 N/mm；个体曲线和取值范围只在该文的图 4 和补充材料里，没有读取，所以这里没有受试者间的离散范围。",
+    "en": "The mean curve of ten males aged 25–37. The RMSE column of Table 4 is labelled N/mm; individual curves and value ranges are only in Figure 4 and the supplement of the paper and were not read, so no between-subject spread is given here."
+   }
+  },
+  {
+   "id": "abdomen_hypogastric_relaxed",
+   "site": {
+    "zh": "腹部，脐下、腹直肌中央（该文的 R3），仰卧放松",
+    "en": "abdomen, centre of the rectus abdominis below the umbilicus (R3 of the paper), supine and relaxed"
+   },
+   "indenter": {
+    "kind": "hemisphere",
+    "radiusMm": 10
+   },
+   "rateMmPerS": 5,
+   "forcePolynomialN": {
+    "note": "f(δ) = f1·δ² + f2·δ, δ in mm",
+    "coefficients": [
+     0.008604,
+     0.126
+    ],
+    "validToMm": 30,
+    "forceAtMaxN": 11.52,
+    "rmse": 0.512
+   },
+   "subjects": 10,
+   "source": "remus2024",
+   "where": "Table 4 (R3); Table 6: c = 7 kPa, m = 12"
   }
  ],
  "notFound": {
-  "zh": "大腿、腹部、乳房、臀部的在体压入力–位移曲线：检索了 Europe PMC 的开放获取文献，没有找到可用的，所以这些部位只报告我们自己的数值，没有对照。腹部体位变化（站立与仰卧的腹部轮廓）的已发表数值同样没有找到。",
-  "en": "In-vivo indentation force–displacement curves for thigh, abdomen, breast and buttock: Europe PMC open-access literature was searched and nothing usable found, so for those sites only our own numbers are reported, without a comparison. Published numbers for the abdominal profile standing versus supine were not found either."
+  "zh": "大腿、乳房、臀部的在体压入力–位移曲线没有找到开放获取、可直接取数的来源。四肢 100 名受试者的压入数据（neumann2018）：论文说动态数据站需要注册并经管理员批准（没有注册）；DOI 10.18735/S5R97F 指向的静态存档 archive.simtk.org/multis/ 不需要账号就能浏览，按受试者分目录存放原始记录，本次没有下载和处理（要用该项目自己的脚本逐次试验处理，存档页上也没有找到许可声明）。腹部站立与仰卧轮廓的已发表数值仍然没有找到。",
+  "en": "No open, directly usable in-vivo indentation force–displacement curves were found for thigh, breast or buttock. The limb indentation data of 100 subjects (neumann2018): the paper says the dynamic data site needs registration approved by an administrator (no account was created); the static archive behind DOI 10.18735/S5R97F, archive.simtk.org/multis/, can be browsed without an account and holds raw records in per-subject directories, which were not downloaded or processed here (they need the project's own scripts trial by trial, and no licence statement was found on the archive page). Published numbers for the abdominal profile standing versus supine were still not found."
  },
  "posture": [
   {
@@ -106,10 +163,22 @@
    "meanMm": 69.7,
    "cases": 14,
    "source": "proneSupine2016",
-   "where": "abstract: combined mean TRE before registration, all fourteen clinical data sets",
+   "where": "abstract; Table 3 (initial TRE by group) and Table 4 (shear modulus per case)",
    "use": {
-    "zh": "只作方向和量级的对照。俯卧到仰卧重力反转（变化 2g）；站立到仰卧重力转 90°（变化 √2·g），按线性比例约为其 0.71 倍——这个换算是本项目的推算，不是该文的结果。",
-    "en": "For direction and order of magnitude only. Prone to supine reverses gravity (a change of 2g); standing to supine turns it by 90° (a change of √2·g), about 0.71 of that by linear scaling: this conversion is this project's inference, not a result of the paper."
+    "zh": "俯卧到仰卧，重力反转（变化 2g）。本项目直接模拟俯卧和仰卧两个状态再相减，不再用线性换算。站立到仰卧（重力转 90°，变化 √2·g）该文没有数据；按线性比例约为 0.71 倍只是本项目的推算，大变形下不成立。受试者是乳腺癌患者，乳房体积在打开的段落里没有给出；该文的乳房可沿胸壁滑动，本模型里乳房底面粘在胸壁上。",
+    "en": "Prone to supine reverses gravity (a change of 2g). This project now simulates the prone and the supine state and takes the difference instead of scaling linearly. The paper has no standing-to-supine data (gravity turned by 90°, a change of √2·g); the factor 0.71 by linear scaling is this project's inference only and does not hold at large deformation. The subjects are breast cancer patients whose breast volume is not given in the passages opened; the breast of that paper may slide along the chest wall, whereas here its base is bonded to it."
+   },
+   "byGroupMeanMm": {
+    "proneMriSupineCt_P1toP10": 73.7,
+    "proneSupineMri_M1toM4": 56.3
+   },
+   "afterGravityUnloadingSimulationMm": 14.1,
+   "modelShearModulusPa": {
+    "initial": 357.1,
+    "optimisedRange": [
+     166.6,
+     357.1
+    ]
    }
   }
  ],
@@ -155,7 +224,7 @@
    "citation": "Eiben B et al. Symmetric Biomechanically Guided Prone-to-Supine Breast Image Registration. Ann Biomed Eng 2016.",
    "url": "https://europepmc.org/article/PMC/PMC4690842",
    "licence": "CC BY 4.0",
-   "opened": "full text: abstract and the paragraph introducing Table 3",
+   "opened": "full text: abstract, Tables 3 and 4 and the surrounding paragraphs",
    "note": {
     "zh": "14 组临床影像（9 组俯卧 MRI–仰卧 CT、1 组 CT、4 组 MRI）；刚性对齐后的标志点距离即俯卧到仰卧的组织位移量级。受试者是乳腺癌患者，乳房体积没有在打开的段落里给出。",
     "en": "Fourteen clinical image pairs (nine prone MRI–supine CT, one CT, four MRI); the landmark distance after rigid alignment is the scale of tissue motion from prone to supine. The subjects are breast cancer patients; breast volume is not given in the passages opened."
@@ -180,6 +249,71 @@
     "zh": "只取了它转述的一组数（足跟垫刚度），压头形状和载荷范围在打开的句子里没有给出。",
     "en": "Only one quoted pair of numbers (heel pad stiffness) was taken; indenter shape and load range are not given in the sentence opened."
    }
+  },
+  "remus2024": {
+   "citation": "Remus R, et al. Soft tissue material properties based on human abdominal in vivo macro-indenter measurements. Front Bioeng Biotechnol 2024. doi:10.3389/fbioe.2024.1384062",
+   "url": "https://europepmc.org/article/PMC/PMC11157078",
+   "licence": "CC BY 4.0",
+   "opened": "full text XML: sections 2.2, 2.7, 2.8, Tables 2, 4 and 6"
+  },
+  "waterJet2012": {
+   "citation": "Lu MH, et al. Quantitative imaging of Young's modulus of soft tissues from ultrasound water jet indentation: a finite element study. Comput Math Methods Med 2012. doi:10.1155/2012/323848",
+   "url": "https://europepmc.org/article/PMC/PMC3426275",
+   "licence": "CC BY 3.0",
+   "opened": "full text XML: introduction with Eq. (1) and Table 1"
+  },
+  "compression2020": {
+   "citation": "Broatch JR, et al. Compression Garments Reduce Muscle Movement and Activation during Submaximal Running. Med Sci Sports Exerc 2020.",
+   "url": "https://europepmc.org/article/PMC/PMC7034367",
+   "licence": "CC BY-NC-ND 4.0",
+   "opened": "full text XML: methods (marker displacement definition) and discussion",
+   "note": {
+    "zh": "只取了数值；许可不允许改编再分发，原文没有入库。作者和期刊按 Europe PMC 的记录填写。",
+    "en": "Numbers only; the licence does not allow adapted redistribution and no text is committed. Authors and journal as in the Europe PMC record."
+   }
+  },
+  "neumann2018": {
+   "citation": "Neumann EE, et al. Reference data on thickness and mechanics of tissue layers and anthropometry of musculoskeletal extremities. Sci Data 2018. doi:10.1038/sdata.2018.193",
+   "url": "https://europepmc.org/article/PMC/PMC6154283",
+   "licence": "CC BY 4.0 (the article)",
+   "opened": "full text XML: data records and usage notes; the landing page of the static archive",
+   "note": {
+    "zh": "数据本身没有使用。",
+    "en": "The data themselves were not used."
+   }
   }
- }
+ },
+ "analytic": [
+  {
+   "id": "flat_punch_layer",
+   "formula": "F = 2·a·E·δ·κ(ν, a/h) / (1 − ν²); κ → 1 for a/h → 0 (elastic half-space)",
+   "source": "waterJet2012",
+   "where": "Eq. (1), quoting Hayes et al. 1972",
+   "caveat": {
+    "zh": "该文表 1 的 k 值是它自己的水射流压头的有限元结果（a/h = 0.17 时 k < 1），不是刚性压头的 Hayes κ，所以没有采用；Hayes 原文的 κ 表没有打开。本项目的解析算例只用 κ > 1 这一性质和网格收敛。",
+    "en": "The k values of Table 1 of that paper are finite-element results for its own water-jet indenter (k < 1 at a/h = 0.17), not Hayes' κ for a rigid punch, so they are not used; the κ table of Hayes' paper was not opened. The analytic cases of this project use only κ > 1 and mesh convergence."
+   }
+  }
+ ],
+ "softTissueMotion": [
+  {
+   "id": "calf_running",
+   "what": {
+    "zh": "跑步时小腿软组织标志点相对骨段的位移（峰–峰）",
+    "en": "displacement of soft-tissue markers on the calf relative to the segment in running (peak to peak)"
+   },
+   "derivedControlMm": {
+    "mediolateral12kmh": 10,
+    "anteroposterior": 9.5,
+    "mediolateralStudy2": 16
+   },
+   "source": "compression2020",
+   "where": "discussion: compression reduced calf displacement by 1.3 mm (~13 %), up to 1.9 mm (~20 %) and 1.8 mm (~11 %)",
+   "assumption": true,
+   "caveat": {
+    "zh": "表 2 的数值在打开的 XML 里读不出来；这里的无压缩对照值是由正文里“减少的毫米数 ÷ 减少的百分比”反推的，只作量级用：跑步时软组织相对骨的摆动是一到两厘米。",
+    "en": "The numbers of its Table 2 could not be read from the XML opened; the control values here are back-computed from the text's “millimetres reduced ÷ per cent reduced” and serve for the order of magnitude only: soft tissue swings by one to two centimetres relative to bone in running."
+   }
+  }
+ ]
 }
