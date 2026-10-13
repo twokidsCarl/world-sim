@@ -71,7 +71,9 @@ void main() {
   // 7 = 膜，并且衬在后面（切片的背面不切）/ 7 = a membrane that also lines the back (not cut at the back of a slab)
   // 8 = 纤维的一节（核酸）：按球切，色调按这个球自己所在的景深层
   // 8 = a piece of a fibre (nucleic acid): cut sphere by sphere, toned by the depth layer this sphere is in
-  v_fine = mc.w > 7.5 ? 3.0 : (mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
+  // 9 = 画成圆点的小分子：和普通分子一样按中心切，但切片深一倍半，圆点才填得满
+  // 9 = a small molecule drawn as a dot: cut by its centre like any molecule, but in a slab two and a half times as deep, so that the dots fill the space
+  v_fine = mc.w > 8.5 ? 0.0 : mc.w > 7.5 ? 3.0 : (mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5 ? 2.0 : mc.w > 3.5 && mc.w < 4.5 ? 1.0 : 0.0;
   // 截面之前的原子整个丢弃，和 Illustrate 一样，所以剖面上不会出现被切开的球。
   // 已知中心的分子整体保留或丢弃，所以也不会被切开。
   // Atoms in front of the cut are dropped whole, as Illustrate does, so a
@@ -81,13 +83,13 @@ void main() {
   // 3 = 永不切掉（叠在密度图里的原子模型）/ 3 = never cut away (an atomic model shown inside a density map)
   if (mc.w > 2.5 && mc.w < 3.5) {
     zcut = -1.0e30;
-  } else if (mc.w > 7.5) {
+  } else if (mc.w > 7.5 && mc.w < 8.5) {
     if (u_layer.x > 0.0) {
       float t = clamp((u_layer.y - view.z) / max(u_layer.y - u_layer.z, 1.0e-3), 0.0, 0.999);
       float s = u_layer.x <= 1.0 ? 0.0 : floor(t * u_layer.x) / (u_layer.x - 1.0);
       v_keep = mix(u_fogKeep.x, u_fogKeep.y, s);
     }
-  } else if ((mc.w > 4.5 && mc.w < 5.5) || mc.w > 6.5) {
+  } else if ((mc.w > 4.5 && mc.w < 5.5) || (mc.w > 6.5 && mc.w < 8.5)) {
     if (u_layer.x > 0.0) {
       // 整张膜的色调随深度连续变化，不分档：按球分档会在档与档交界处出一圈杂点
       // a membrane in one piece is toned continuously with depth, not in steps: stepping sphere by sphere leaves a ring of speckle where steps meet

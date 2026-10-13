@@ -66,7 +66,7 @@
       "membrane": [0.91, 0.04, 350],
       "colors": [["^gp160$", [0.7, 0.17, 5]]],
       "respike": {"pattern": "^gp160$", "count": 14, "source": "Zhu et al., Nature 2006, doi:10.1038/nature04817 (14 ± 7 envelope spikes per HIV-1 virion, by cryo-electron tomography; the spikes there are not evenly spread, and the even arrangement drawn here is an idealisation)"},
-      "environment": {"proteins": [{"pdb": "3GHG", "name": "纤维蛋白原", "nameEn": "fibrinogen", "count": 40, "lch": [0.72, 0.14, 62]}, {"pdb": "1IGT", "name": "抗体", "nameEn": "antibody", "count": 160, "lch": [0.88, 0.11, 92]}, {"pdb": "1AO6", "name": "血清白蛋白", "nameEn": "serum albumin", "count": 700, "lch": [0.8, 0.11, 84]}], "ground": [0.2, 0.13, 0.07], "basis": "照 Goodsell 的《HIV in Blood Plasma》（doi:10.2210/rcsb_pdb/goodsell-gallery-002），病毒泡在血浆里。血浆里最多的三类蛋白是白蛋白、免疫球蛋白和纤维蛋白原，这里各用一个结构代表（PDB 1AO6、1IGT、3GHG）。", "basisEn": "After Goodsell's \"HIV in Blood Plasma\" (doi:10.2210/rcsb_pdb/goodsell-gallery-002), in which the virus sits in blood plasma. The three most abundant classes of plasma protein are albumin, immunoglobulins and fibrinogen, each stood for here by one structure (PDB 1AO6, 1IGT, 3GHG)."},
+      "environment": {"clear": 0.45, "proteins": [{"pdb": "3GHG", "name": "纤维蛋白原", "nameEn": "fibrinogen", "count": 40, "lch": [0.72, 0.14, 62]}, {"pdb": "1IGT", "name": "抗体", "nameEn": "antibody", "count": 160, "lch": [0.88, 0.11, 92]}, {"pdb": "1AO6", "name": "血清白蛋白", "nameEn": "serum albumin", "count": 700, "lch": [0.8, 0.11, 84]}], "ground": [0.2, 0.13, 0.07], "basis": "照 Goodsell 的《HIV in Blood Plasma》（doi:10.2210/rcsb_pdb/goodsell-gallery-002），病毒泡在血浆里。血浆里最多的三类蛋白是白蛋白、免疫球蛋白和纤维蛋白原，这里各用一个结构代表（PDB 1AO6、1IGT、3GHG）。", "basisEn": "After Goodsell's \"HIV in Blood Plasma\" (doi:10.2210/rcsb_pdb/goodsell-gallery-002), in which the virus sits in blood plasma. The three most abundant classes of plasma protein are albumin, immunoglobulins and fibrinogen, each stood for here by one structure (PDB 1AO6, 1IGT, 3GHG)."},
       "zoom": 1.22,
       "caption": "成熟 HIV-1 病毒颗粒的原子模型，从中间剖开：包膜上的 gp160 刺突，膜下的基质蛋白，锥形衣壳里是两条基因组 RNA 和逆转录酶、整合酶。",
       "captionEn": "An atomic model of the mature HIV-1 virion, cut through the middle: gp160 spikes in the envelope, matrix protein beneath the membrane, and a conical capsid holding the two genomic RNAs with reverse transcriptase and integrase.",
@@ -139,7 +139,7 @@
         "url": "https://mesoscope.scripps.edu/explorer/examples/synvesicle_2-no_bonds.bcif"
       },
       "perCopy": true,
-      "cut": 0.5,
+      "cut": 0.5, "zoom": 1.7,
       "roles": [
         ["VATPase", "focus"],
         ["Glutamate", "ligand"],
@@ -155,7 +155,7 @@
       "attribution": "Kornel Ozvoldik, Elmar Krieger (YASARA PetWorld)",
       "citation": "Ozvoldik et al., J. Chem. Inf. Model. 2021, doi:10.1021/acs.jcim.1c00743",
       "link": "http://download.yasara.org/petworld/synvesicle/index.html",
-      "merge": "Glutamate", "dots": 8
+      "arrange": {"pattern": ".", "exclude": "Glutamate", "lining": [0.74, 0.13, 80]}, "environment": {"clear": 0.55, "proteins": [{"pdb": "1AON", "name": "大的复合体（示意）", "nameEn": "large complexes (schematic)", "count": 10, "lch": [0.66, 0.12, 150]}, {"pdb": "2HHB", "name": "细胞质里的可溶蛋白（示意）", "nameEn": "soluble proteins of the cytoplasm (schematic)", "count": 420, "lch": [0.72, 0.12, 138]}], "strands": {"name": "细胞骨架的细丝（示意）", "nameEn": "filaments of the cytoskeleton (schematic)", "count": 12, "length": 1400, "radius": 9, "wander": 0.25, "lch": [0.76, 0.11, 125]}, "ground": [0.1, 0.2, 0.12], "basis": "照 Goodsell 的《Excitatory and Inhibitory Synapses》（doi:10.2210/rcsb_pdb/goodsell-gallery-016），小泡泡在突触前末梢拥挤的细胞质里，周围是可溶蛋白和细丝。这里可溶蛋白用一个大小相当的蛋白（PDB 2HHB）占位，大的复合体用 GroEL（PDB 1AON）占位，细丝画成长线。", "basisEn": "After Goodsell's \"Excitatory and Inhibitory Synapses\" (doi:10.2210/rcsb_pdb/goodsell-gallery-016), where vesicles sit in the crowded cytoplasm of the presynaptic terminal among soluble proteins and filaments. Here soluble proteins are stood for by a protein of about the right size (PDB 2HHB), large complexes by GroEL (PDB 1AON), and filaments are drawn as long strands."}, "merge": "Glutamate", "dots": 8
     },
     {
       "id": "presynaptic-bouton",

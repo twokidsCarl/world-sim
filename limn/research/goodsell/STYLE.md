@@ -241,6 +241,18 @@ limn 这一轮的数：
 - **HIV**（`out/N2-hiv.jpg`：之前、现在、他的画）：模型里有 100 个刺；文献是每个病毒 14 ± 7 个（Zhu 等，Nature 2006）。手绘画法下用“排整齐”工具换成 14 个，等间隔。**等间隔是理想化**：那篇文献里刺的分布并不均匀，来源栏里写了。我原先认为这一项没有依据、不该做，使用者要做。刺的颜色定成他的粉红。
 - **分瓣**（`out/N2-coronavirus.jpg`）：“夸张”工具加了 `lobes`：头部的每个亚基朝自己那一侧推开若干 Å，越靠顶推得越多，头裂成几瓣。方向取各条链在头部的质心相对轴的方向；只有一条链时等分成几个扇区。新冠 16 Å，流感 6 Å（9 Å 时柄之间的白洞变多）。结果：HIV 的头读成三瓣；新冠和流感只在顶上有凹口，离他画的扇形分瓣还远。
 
+### R1：按逐张批注的第一步——“不细致”的原因，膜上的一圈突起
+
+使用者对 14 项对比逐张批注，归并成五个问题（里面不好看、突出的东西不细致、没有背景、细胞外面缺一圈有秩序的小突起、个别的）。计划在 `~/.claude/plans/` 里，这里记每一步的结果。
+
+- **一个判断被推翻**：我在计划里认为“不细致”是平滑按屏幕像素定造成的。读代码发现探针半径换成 Å 之后有上限（6.5 Å），已经是按分子大小定的；再在小泡上把平滑关掉、加大三倍、把切片加厚，四张图里蛋白的形状几乎没有变。原因不在平滑。
+- **真正的原因**：小泡模型的膜上一共只有 104 个蛋白（21 种），切片里看得到十来个，各朝各的方向；他画的是二十来根等间隔的须。
+- **概念“膜上的一圈突起”**（新工具 `arrange`，在 `src/state/store.ts`）：把膜上的各种蛋白重新排成等间隔的一圈圈（各种穿插着分），膜换成光滑均匀的球壳。每种蛋白的结构、数量、嵌在膜里的深浅和歪斜取自模型，只有“在球面上的哪里”是重排的。来源栏写明。
+- **里面的底色**：`arrange.lining` 在膜里面贴一层深一号的颜色，膜的切口才读得出是一条带子。
+- **圆点的切片加深**（实例标志 9）：画成圆点的小分子用深一倍半的切片。小泡里的圆点仍然不满：模型里一共只有 400 个谷氨酸。
+- **背景**：小泡泡在示意的细胞质里（占位的可溶蛋白、大复合体、细丝）。
+- **环境离对象多近**（`environment.clear`）：原来环境从对象最远的一点开始，个别伸得远的蛋白会在周围留一圈空着的底色（使用者在 HIV 上指出的）。现在可以取“九成的点以内”和“最远的点”之间的任意处：HIV 0.45，小泡 0.55，新冠保持 1（取小了黏蛋白和抗体会钻到刺之间）。环境里的蛋白整个放在切面后面，不再探到前面盖住对象伸出来的东西。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -472,3 +484,15 @@ A great deal of this is inference, and the sources panel says so plainly: the co
 
 - **HIV** (`out/N2-hiv.jpg`: before, now, his painting): the model has 100 spikes; the literature gives 14 ± 7 per virion (Zhu et al., Nature 2006). In the painted drawing the arranging tool replaces them by 14, evenly spaced. **The even spacing is an idealisation**: in that paper the spikes are not evenly spread, and the sources panel says so. I had held that this had no grounds and should not be done; the user asked for it. The spikes take his pink-red.
 - **Lobes** (`out/N2-coronavirus.jpg`): the exaggeration tool gained `lobes`: each subunit of the head is pushed some Å out to its own side, more towards the tip, so the head parts into lobes. Directions are those of each chain's centroid in the head relative to the axis; with a single chain, equal sectors are used. 16 Å for the coronavirus and 6 Å for influenza (at 9 Å more paper showed between stalks). Result: the HIV head reads as three lobes; the coronavirus and influenza heads only show notches at the tip, still far from the fanned lobes he paints.
+
+### R1: first step after the card-by-card comments — why things looked coarse, and a ring of protrusions on a membrane
+
+The user commented on the 14 comparisons one by one; the comments reduce to five problems (insides not handsome, protrusions not fine, no background, no ordered fringe outside cells, and a few particular ones). The plan is under `~/.claude/plans/`; this records what each step found.
+
+- **One judgement overturned**: the plan held that the coarseness came from smoothing being set in screen pixels. Reading the code showed the probe radius is capped once converted to Å (6.5 Å), so it already goes by molecular size; and on the vesicle, turning smoothing off, tripling it, and thickening the slab left the proteins' shapes almost unchanged in four renders. Smoothing is not the cause.
+- **The real cause**: the vesicle model has only 104 proteins on its membrane (21 kinds), a dozen visible in the slab, each facing its own way; he paints a score of evenly spaced whiskers.
+- **The concept "a ring of protrusions on a membrane"** (a new tool, `arrange`, in `src/state/store.ts`): the proteins of a membrane are set out afresh in evenly spaced rings (kinds interleaved) and the membrane becomes a smooth, even shell. Each protein's structure, number, depth in the membrane and tilt are the model's; only where on the sphere it stands is rearranged. The sources panel says so.
+- **A ground inside**: `arrange.lining` puts a layer of a deeper colour just inside the membrane, so the cut membrane reads as a band.
+- **A deeper slab for dots** (instance flag 9): small molecules drawn as dots get a slab two and a half times as deep. The vesicle's dots still do not fill it: the model holds only 400 glutamates.
+- **Background**: the vesicle sits in a schematic cytoplasm (stand-in soluble proteins, large complexes, filaments).
+- **How near the environment comes** (`environment.clear`): the environment used to begin at the subject's farthest point, so a few far-reaching proteins left an empty ring of ground (which the user pointed out on HIV). It can now begin anywhere between "nine tenths of the points" and "the farthest point": 0.45 for HIV, 0.55 for the vesicle, and 1 as before for the coronavirus (lower, and mucin and antibodies creep in between the spikes). Environment proteins lie wholly behind the cut and no longer reach in front of it to cover what the subject holds out.

@@ -245,7 +245,7 @@ export function buildItem(mol: Molecule, coloring: Coloring, tone: Tone, place: 
           // 2 = 纤维的片段：细，需要画得更粗才看得见 / 2 = a fibre segment: thin, drawn fatter to stay visible
           // 膜总是衬在后面：切片的背面不切它，里面的空处露出的是膜的内壁（按深度取深一号的色调），不是白纸
           // a membrane always lines the back: it is not cut at the back of a slab, so empty space inside shows its inner wall (in the deeper tone of its depth) and not paper
-          data[k + 15] = p.keepBack || g.lined || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : dots ? 1 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
+          data[k + 15] = p.keepBack || g.lined || (p.perCopy && g.lipid && total <= LINING_MAX) ? 6 : dots ? 9 : p.perCopy && g.fine && !g.lipid ? 4 : p.strand || (p.perCopy && g.merged && !g.lipid) ? 2 : 1
         }
         iids[o * 2] = copy * mol.chains.length
         // 同一种纤维的各组（模型按碱基种类分了组）共用一个编号，连成一条 / the groups of one kind of fibre (the model groups them by base) share one id and join into one strand
