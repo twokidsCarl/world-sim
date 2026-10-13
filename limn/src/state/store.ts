@@ -497,11 +497,12 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
       const sub = subMolecule(model, [...chosen.g, ...chosen.g.flatMap((ci) => sugarOf.get(ci) ?? [])], `${model.id}:${id}`, titleEn)
       // 糖链和它所在的蛋白同色：他把糖链画成蛋白轮廓的一部分，不另外上色 / glycans take the colour of the protein they sit on: he paints them as part of the protein's outline, not in a colour of their own
       // 夸张：柄拉长收细、头放宽（只有刺，M2 不动）/ exaggeration: stalk stretched and narrowed, head widened (spikes only, not M2)
-      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.55, head: 1.2, split: 0.5 }) : chosen.t
+      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.75, head: 1.0, split: 0.5 }) : chosen.t
       const own = lch(sub.entities.find((e) => !/glycan/i.test(e.description)) ?? sub.entities[0]!)
       const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(tpl, membrane.centre, where), () => own, (e) => [e.description, e.description])
       panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
-      outside.push(panel)
+      // 刺衬在后面：前排刺之间的缝里露出的是后排的刺（深一号），不是白纸 / spikes line the back: the slits between the front row show the rows behind (a deeper tone), not paper
+      outside.push(id === 'M2' ? panel : { ...panel, keepBack: true })
     }
     // 膜也理想化：一条边缘光滑、宽度均匀的球壳，厚度取自模拟里的膜。原模型里的东西在这种画法下都不画了。
     // the membrane is idealised too: a spherical shell of smooth edges and even width, as thick as the simulated one. Nothing of the original model is drawn in this drawing any more.
