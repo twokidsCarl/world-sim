@@ -8,12 +8,14 @@ import { Poser } from '../rig/pose.ts'
 import { Image, type Rgb, type View } from '../rig/render.ts'
 import { type DetailLayers, compositeNormal } from './detail.ts'
 import { type AUs, activations } from './model.ts'
-import { type FaceScene, posedPart } from './renders.ts'
+import { type FaceScene, skinViewItems } from './renders.ts'
 
 export interface DetailItem {
   positions: Float32Array
   indices: Uint32Array
   color: Rgb
+  /** 可选的逐顶点颜色（扁平 rgb，0–255）/ optional per-vertex colours (flat rgb 0–255). */
+  vertexColors?: Uint8Array
   /** 每顶点 (u, v)，NaN = 没有细节 / (u, v) per vertex, NaN = no detail. */
   uv?: Float32Array
 }
@@ -71,6 +73,8 @@ export function renderDetailed(items: DetailItem[], view: View, layers: DetailLa
           }
         }
       }
+      const vc = it.vertexColors
+      const cr = vc ? (vc[a * 3]! + vc[b * 3]! + vc[c * 3]!) / 3 : it.color[0], cg = vc ? (vc[a * 3 + 1]! + vc[b * 3 + 1]! + vc[c * 3 + 1]!) / 3 : it.color[1], cb = vc ? (vc[a * 3 + 2]! + vc[b * 3 + 2]! + vc[c * 3 + 2]!) / 3 : it.color[2]
       const flat = 0.35 + 0.65 * Math.max(0, N[0]! * L[0]! + N[1]! * L[1]! + N[2]! * L[2]!)
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
@@ -90,9 +94,9 @@ export function renderDetailed(items: DetailItem[], view: View, layers: DetailLa
               shade = 0.35 + 0.65 * Math.max(0, nx * L[0]! + ny * L[1]! + nz * L[2]!)
             }
           }
-          img.data[k * 3] = it.color[0] * shade
-          img.data[k * 3 + 1] = it.color[1] * shade
-          img.data[k * 3 + 2] = it.color[2] * shade
+          img.data[k * 3] = cr * shade
+          img.data[k * 3 + 1] = cg * shade
+          img.data[k * 3 + 2] = cb * shade
         }
       }
     }
@@ -101,14 +105,12 @@ export function renderDetailed(items: DetailItem[], view: View, layers: DetailLa
 }
 
 /** 皮肤（和眉毛）带细节的大图：正面和斜侧。 Large skin images (with the eyebrow hair) with detail: front and three-quarter. */
-export function renderSkinDetailed(s: FaceScene, uv: Float32Array, layers: DetailLayers, weightsOf: (aus: AUs) => number[], aus: AUs, size = 760): Image[] {
+export function renderSkinDetailed(s: FaceScene, uv: Float32Array, layers: DetailLayers, weightsOf: (aus: AUs) => number[], aus: AUs, size = 760, zoom?: { center: [number, number, number]; halfHeight: number; yaws?: [number, number] }): Image[] {
   const { channels, jaw } = activations(s.face, aus)
   const pose = jaw > 0 ? { [s.face.jaw.joint]: Array.from({ length: s.face.jaw.dof + 1 }, (_, k) => (k === s.face.jaw.dof ? jaw : 0)) } : {}
   const poser = new Poser(s.rig, s.rigBin, pose)
-  const skinMesh = s.body.meshes.get(s.face.skin)!
-  const items: DetailItem[] = [{ positions: posedPart(s, poser, s.face.skin, channels), indices: skinMesh.indices, color: [224, 180, 150], uv }]
-  for (const d of s.deepParts) if (/eyebrow/i.test(d.part.name)) items.push({ positions: posedPart(s, poser, d.part.id, channels), indices: s.body.meshes.get(d.part.id)!.indices, color: d.color })
-  const view = (yaw: number): View => ({ yaw, center: [s.center[0], s.center[1] - 0.006, s.center[2]], halfHeight: s.halfHeight - 0.012, width: size, height: size })
+  const items: DetailItem[] = skinViewItems(s, poser, channels).map((it, i) => ({ ...it, ...(i === 0 ? { uv } : {}) }))
+  const view = (yaw: number): View => ({ yaw, center: zoom?.center ?? [s.center[0], s.center[1] - 0.006, s.center[2]], halfHeight: zoom?.halfHeight ?? s.halfHeight - 0.012, width: size, height: size })
   const w = weightsOf(aus)
-  return [renderDetailed(items, view(0), layers, w), renderDetailed(items, view(40), layers, w)]
+  return [renderDetailed(items, view(zoom?.yaws?.[0] ?? 0), layers, w), renderDetailed(items, view(zoom?.yaws?.[1] ?? 40), layers, w)]
 }

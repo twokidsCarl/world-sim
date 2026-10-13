@@ -1,3 +1,4 @@
+// 契约里各个枚举的显示用文字和颜色。
 // Display labels and colours for the contract's enums.
 
 import type { Provenance, RelationKind, Side, TissueId } from './types.ts'
@@ -23,6 +24,7 @@ export const TISSUE_LABEL: Record<TissueId, { zh: string; en: string }> = {
   other: { zh: '其他', en: 'Other' },
 }
 
+/** 柔和、可读的组织颜色；null 表示用所在系统的颜色。 */
 /** Muted, readable tissue colours. null = use the system's colour. */
 export const TISSUE_COLOR: Record<TissueId, string | null> = {
   skin: '#dcb59b',
@@ -45,6 +47,7 @@ export const TISSUE_COLOR: Record<TissueId, string | null> = {
   other: null,
 }
 
+/** 默认画成半透明的组织，这样能看见里面。 */
 /** Tissues drawn see-through by default so the inside is visible. */
 export const TISSUE_OPACITY: Partial<Record<TissueId, number>> = {
   skin: 0.14,
@@ -76,6 +79,33 @@ export const PROVENANCE_LABEL: Record<Provenance, { zh: string; en: string; hint
 }
 
 /**
+ * 个别部件的外观（按英文名）：眼球前部和口内几样东西按系统色画出来不像样（眼属于神经系统，会是黄的），
+ * 而它们现在能透过皮肤的开口直接看到。颜色是示意，不是测量值。
+ * The look of a few parts (by English name): the front of the eye and the things in the mouth do not read
+ * right in their system colour (the eye belongs to the nervous system and would be yellow), and they are now
+ * seen directly through the skin's openings. The colours are illustrative, not measured.
+ */
+export const PART_LOOK: { match: RegExp; color: string; opacity?: number }[] = [
+  { match: /\bsclera$/i, color: '#efece4' },
+  { match: /\biris$/i, color: '#5a4030' },
+  { match: /\blens$/i, color: '#14110f' },
+  { match: /\bcornea$/i, color: '#dfe6ea', opacity: 0.07 },
+  { match: /^anterior chamber/i, color: '#cfd8dc', opacity: 0.06 },
+  { match: /^gingiva/i, color: '#d98a8a' },
+  { match: /^tongue$/i, color: '#c96f6f' },
+]
+
+export function partLook(name: string): { color: string; opacity?: number } | undefined {
+  return PART_LOOK.find((x) => x.match.test(name))
+}
+
+/** 构造物：为衔接或开口而造的几何（过渡环、口腔袋、睑缘内卷），不是解剖数据 / Construction: geometry built to join or open pieces (blend rings, oral pouch, lid rims); not anatomical data. */
+export const CONSTRUCTION_LABEL = { zh: '构造物', en: 'Construction', hint: '为把几片皮肤接起来、或把眼和口做成真正的开口而构造的几何；不是扫描数据，也不是解剖结构。' }
+/** 构造物用的颜色：与三种解剖来源的色相都不同 / The colour of construction: a hue apart from the three anatomical provenances. */
+export const CONSTRUCTION_COLOR = '#d04fa0'
+
+/**
+ * 按来源着色时的颜色：每种来源一个色相，同一来源有多个数据集时再分深浅。绿 = 实测，琥珀 = 推算，蓝 / 紫 = 手绘。
  * Colours for the "colour by source" mode: one hue per provenance, a second shade when
  * several datasets share a provenance. Green = measured, amber = inferred, blue/violet = drawn.
  */

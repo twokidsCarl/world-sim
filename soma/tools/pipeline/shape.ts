@@ -235,6 +235,22 @@ export interface ShapeOptions {
    */
   referenceVolumeMl?: (p: ShapePart) => number | null
   depthFloor: number
+  /**
+   * 搬运（可选）：部件 id → 位移函数（输入点坐标，输出各点的位移，米）。这些部件（须是 driver）的顶点最后恰好按该位移移动，
+   * 不经过位移场；它们的表面采样点以同一位移作软约束，使周围的组织尽量跟着走。它们不参加推入、拉出和附着端的判断，
+   * 也不受压缩上限约束。用于表面目标变了、部件应当随表面挪动、而位移场的网格又细不到那个程度的地方（唇随新的唇面前移）。
+   * Carried (optional): part id → displacement function (point coordinates in, displacement of each point out, m).
+   * The vertices of these parts (they must be drivers) end up moved by exactly that displacement, not through
+   * the field; their surface samples take the same displacement as soft constraints, so that the tissue around
+   * them follows as far as the field can. They are left out of the push, pull and attachment-end rules and of
+   * the compression cap. For places where the surface target has changed, a part should move with it, and the
+   * field's grid is too coarse to do that (the lips forwards with a new lip surface).
+   */
+  carry?: ReadonlyMap<string, (points: Float32Array) => Float32Array>
+  /** 整体搬运的锚点权重 / anchor weight of the carried parts */
+  carryWeight: number
+  /** 这些部位里的采样点既不推也不拉（包络在那里与骨架对不上时用）；包络之外的比例照常报告 / samples in these regions are neither pushed nor pulled (for where the envelope does not match the skeleton); the share outside the envelope is reported as usual */
+  leaveRegions?: readonly ShapeRegion[]
   calibrationTrials: number
 }
 
@@ -252,10 +268,11 @@ export const SHAPE_DEFAULTS: ShapeOptions = {
   grid: 0.005,
   stiffness: 20,
   sweeps: 60,
-  substeps: 4,
+  substeps: 8,
   balanceSlab: 0.04,
   flagVolumeLoss: 0.25,
   depthFloor: 0.4,
+  carryWeight: 0.5,
   calibrationTrials: 5,
 }
 
@@ -650,7 +667,7 @@ export interface ShapeReport {
   /** 整体平移的部件（淋巴结）在包络之外的比例，前后 / share outside the envelope of the parts translated whole (lymph nodes), before and after */
   rigid: { before: OutsideRow; after: OutsideRow; worstAfter: PartOutside[] }
   grid: { spacingMm: number; solvedNodes: number; hardZeroNodes: number }
-  passes: { pass: number; pushAnchors: number; pullAnchors: number; mirroredAnchors: number; onAttachments: number; cappedByDepth: number; meanPushMm: number; maxPushMm: number; pullBalance: Record<string, number>; solverLastChangeMm: number; outsideAfter: number }[]
+  passes: { pass: number; pushAnchors: number; pullAnchors: number; mirroredAnchors: number; onAttachments: number; cappedByDepth: number; meanPushMm: number; maxPushMm: number; pullBalance: Record<string, number>; solverLastChangeMm: number; outsideAfter: number; carryAnchors?: number }[]
   /** 可动的深部软组织：各部位在包络外的比例，前后 / movable deep soft tissue: share outside the envelope by region, before and after */
   outside: { before: Record<string, OutsideRow>; after: Record<string, OutsideRow> }
   worstBefore: PartOutside[]
@@ -879,6 +896,22 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
   }
   /** 每个采样点的 minDepthShare / minDepthShare of every sample */
   const share = new Float32Array(ns).fill(opts.minDepthShare)
+  /** 被搬运的部件：各采样点应有的位移 / the carried parts: the displacement wanted at each sample */
+  const carried = new Uint8Array(ns)
+  const carryWant = new Float32Array(opts.carry?.size ? 3 * ns : 0)
+  if (opts.carry?.size) {
+    let o = 0
+    drivers.forEach((p, k) => {
+      const n = chunks[k]!.length / 3
+      const fn = opts.carry!.get(p.id)
+      if (fn) {
+        carryWant.set(fn(chunks[k]!), 3 * o)
+        carried.fill(1, o, o + n)
+      }
+      o += n
+    })
+  }
+  const leave = SHAPE_REGIONS.map((r) => !!opts.leaveRegions?.includes(r))
 
   // ── 逐轮 / the passes
   const run = (levels: Grid[], say: (line: string) => void): { G: Grid; U: Float32Array; rows: ShapeReport['passes']; cur: Float32Array } => {
@@ -904,6 +937,7 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
       mirrored++
     }
     let nPush = 0
+    let nCarry = 0
     let nAttach = 0
     let capped = 0
     let pushSum = 0
@@ -916,6 +950,17 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
       const y = cur[3 * i + 1]!
       const z = cur[3 * i + 2]!
       const db = hardIndex.distance(x, y, z)
+      // 被搬运的部件：还差多少就要多少 / a carried part: asks for what is still missing of its displacement
+      if (carried[i]) {
+        const rx = carryWant[3 * i]! - (x - cur0[3 * i]!)
+        const ry = carryWant[3 * i + 1]! - (y - cur0[3 * i + 1]!)
+        const rz = carryWant[3 * i + 2]! - (z - cur0[3 * i + 2]!)
+        if (Math.hypot(rx, ry, rz) >= 0.0002) {
+          add(x, y, z, rx, ry, rz, opts.carryWeight, db, region[i]!)
+          nCarry++
+        }
+        continue
+      }
       // 附着端：贴着骨的表面不推也不拉（骨面是硬零点） / attachment ends: surface lying on bone is neither pushed nor pulled (the bone surface is a hard zero)
       if (db < opts.attachDistance) {
         nAttach++
@@ -924,7 +969,7 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
       const s = env.signed(x, y, z, group[i]!, ALLOWED[group[i]!]!)
       if (Number.isNaN(env.q[0]!)) continue
       const key = `${region[i]}_${x > opts.xMid ? 'L' : 'R'}_${Math.floor(y / opts.balanceSlab)}`
-      if (!outermost[i]) continue
+      if (!outermost[i] || leave[region[i]!]) continue
       if (s > -opts.margin) {
         // 推入：贴近表面时沿内法线，远处朝“最近点内侧 margin”走
         // push: along the inward normal near the surface, towards "margin inside the nearest point" from far away
@@ -1015,7 +1060,7 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
     const sNow = signedOf(cur)
     let out = 0
     for (let i = 0; i < ns; i++) if (sNow[i]! > 0) out++
-    passRows.push({ pass: pass + 1, pushAnchors: nPush, pullAnchors: nPull, mirroredAnchors: mirrored, onAttachments: nAttach, cappedByDepth: capped, meanPushMm: r1((pushSum / Math.max(1, nPush)) * 1000), maxPushMm: r1(pushMax * 1000), pullBalance, solverLastChangeMm: r1(lastChange * 1000, 3), outsideAfter: r1(out / ns, 4) })
+    passRows.push({ pass: pass + 1, pushAnchors: nPush, pullAnchors: nPull, mirroredAnchors: mirrored, onAttachments: nAttach, cappedByDepth: capped, meanPushMm: r1((pushSum / Math.max(1, nPush)) * 1000), maxPushMm: r1(pushMax * 1000), pullBalance, solverLastChangeMm: r1(lastChange * 1000, 3), outsideAfter: r1(out / ns, 4), ...(opts.carry?.size ? { carryAnchors: nCarry } : {}) })
     say(`${lapse()} pass ${pass + 1}: ${nPush} pushes (mean ${((pushSum / Math.max(1, nPush)) * 1000).toFixed(1)} mm, max ${(pushMax * 1000).toFixed(1)} mm, ${capped} capped by depth over bone), ${nPull} pulls, ${mirrored} mirrored, ${nAttach} samples on attachments left alone; solver last change ${(lastChange * 1000).toFixed(3)} mm → outside ${((out / ns) * 100).toFixed(1)} %`)
   }
 
@@ -1084,7 +1129,13 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
   const disp: number[] = []
   let moved = 0
   for (const p of movable) {
-    const out = applyAll(p.mesh.positions)
+    const fn = opts.carry?.get(p.id)
+    let out = applyAll(p.mesh.positions)
+    if (fn && roleOf(p) === 'driver') {
+      // 被搬运的部件：顶点恰好按给定的位移走 / a carried part: its vertices go by exactly the displacement given
+      const d = fn(p.mesh.positions)
+      out = Float32Array.from(p.mesh.positions, (v, i) => v + d[i]!)
+    }
     let m = 0
     for (let i = 0; i < out.length; i += 3) {
       const d = Math.hypot(out[i]! - p.mesh.positions[i]!, out[i + 1]! - p.mesh.positions[i + 1]!, out[i + 2]! - p.mesh.positions[i + 2]!)
@@ -1191,13 +1242,25 @@ export function reshapeIntoEnvelope(parts: ShapePart[], roleOf: (p: ShapePart) =
     for (let i = 0; i < w.length; i += 3) onBone.push(Math.hypot(w[i]! - boneSamples[i]!, w[i + 1]! - boneSamples[i + 1]!, w[i + 2]! - boneSamples[i + 2]!))
     onBone.sort((a, b) => a - b)
   }
-  const jacobian = jacobianStats(applyAll, thinPoints(cur0, 0.008), 0.002)
+  const jacobianSamples = thinPoints(cur0, 0.008)
+  const jacobian: ReturnType<typeof jacobianStats> & { foldedAt?: { atMm: number[]; region: string; determinant: number }[] } = jacobianStats(applyAll, jacobianSamples, 0.002)
+  if (jacobian.folded > 0) {
+    // 折叠在哪里：逐点再算一遍，列出前几处 / where it folds: every sample once more, the first few listed
+    const at: { atMm: number[]; region: string; determinant: number }[] = []
+    for (let i = 0; i < jacobianSamples.length && at.length < 8; i += 3) {
+      const one = jacobianStats(applyAll, jacobianSamples.subarray(i, i + 3), 0.002)
+      if (one.folded > 0) at.push({ atMm: [r1(jacobianSamples[i]! * 1000), r1(jacobianSamples[i + 1]! * 1000), r1(jacobianSamples[i + 2]! * 1000)], region: labels.label(jacobianSamples[i]!, jacobianSamples[i + 1]!, jacobianSamples[i + 2]!, lab) < 0 ? '?' : SHAPE_REGIONS[lab[0]!]!, determinant: one.min })
+    }
+    jacobian.foldedAt = at
+    log(`folded at: ${at.map((a) => `${a.region} (${a.atMm.join(', ')}) mm, det ${a.determinant}`).join('; ')}`)
+  }
   log(`${lapse()} after ${opts.passes} passes: outside ${(after.regions.all!.outside * 100).toFixed(1)} % (of those: median ${after.regions.all!.p50Mm} mm, p95 ${after.regions.all!.p95Mm} mm, max ${after.regions.all!.maxMm} mm); ${moved} parts moved, largest displacement ${(disp[disp.length - 1]! * 1000).toFixed(1)} mm; on bone p95 ${(quant(onBone, 0.95) * 1000).toFixed(2)} mm, max ${(onBone[onBone.length - 1]! * 1000).toFixed(2)} mm`)
   log(`Jacobian determinant at ${jacobian.samples} samples: min ${jacobian.min}, p01 ${jacobian.p01}, median ${jacobian.median}, p99 ${jacobian.p99}, max ${jacobian.max}; folded ${jacobian.folded}`)
   log(`muscle volume ${sum(muscles, 'beforeMl')} → ${sum(muscles, 'afterMl')} ml; ${flag(muscles).length} of ${muscles.length} muscles lost more than ${opts.flagVolumeLoss * 100} %`)
 
-  const { referenceVolumeMl: _ref, ...plainOptions } = opts
+  const { referenceVolumeMl: _ref, carry: _carry, ...plainOptions } = opts
   void _ref
+  void _carry
   return {
     options: plainOptions,
     parts: { bone: bones.length, fixed: fixed.length, driver: drivers.length, follower: movable.length - drivers.length, rigid: rigid.length, ignored: of('ignored').length, moved },

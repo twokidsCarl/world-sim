@@ -4,7 +4,7 @@
 
 import { join } from 'node:path'
 import type { Part, Rig } from '../../src/anatomy/types.ts'
-import type { FaceData } from '../../src/face/types.ts'
+import type { FaceData, FaceOpenings } from '../../src/face/types.ts'
 import type { Body } from '../rig/io.ts'
 import { Poser } from '../rig/pose.ts'
 import { type Image, type RenderItem, type Rgb, type View, render, sheet } from '../rig/render.ts'
@@ -23,9 +23,11 @@ export interface FaceScene {
   deepParts: { part: Part; color: Rgb }[]
   center: [number, number, number]
   halfHeight: number
+  /** 皮肤的开口（有的话）：皮肤视图里要画出洞里看得见的深层部件，口腔袋画成深色 / the skin's openings, when present: the skin view then draws the deep parts seen through the holes and the oral pouch dark. */
+  openings?: FaceOpenings | null
 }
 
-export function scene(body: Body, rig: Rig, rigBin: Uint8Array, face: FaceData, bin: Uint8Array): FaceScene {
+export function scene(body: Body, rig: Rig, rigBin: Uint8Array, face: FaceData, bin: Uint8Array, openings: FaceOpenings | null = null): FaceScene {
   const skin = body.byId.get(face.skin)!
   const muscles = new Set(face.channels.flatMap((c) => c.parts))
   const ys = [...muscles].map((id) => body.byId.get(id)!).filter((p) => !/platysma/i.test(p.name))
@@ -48,7 +50,7 @@ export function scene(body: Body, rig: Rig, rigBin: Uint8Array, face: FaceData, 
   // 取景：从颏到额肌上缘 / framing: from the chin to the top of frontalis
   const top = Math.max(...ys.map((p) => p.bbox[4]))
   void maxY
-  return { body, rig, rigBin, face, bin, deepParts, center: [face.landmarks.midX, (minY + top) / 2 - 0.004, 0.1], halfHeight: (top - minY) / 2 + 0.012 }
+  return { body, rig, rigBin, face, bin, deepParts, openings, center: [face.landmarks.midX, (minY + top) / 2 - 0.004, 0.1], halfHeight: (top - minY) / 2 + 0.012 }
 }
 
 /** 给定 AU 强度下，一个部件变形并摆好下颌后的顶点。 A part's vertices for the given AU intensities, deformed and with the jaw posed. */
@@ -57,14 +59,43 @@ export function posedPart(s: FaceScene, poser: Poser, partId: string, act: Recor
   return poser.part(partId, deform(s.face.channels, s.bin, partId, rest, act), 'dqs', false)
 }
 
+const POUCH: Rgb = [58, 26, 26], RIM: Rgb = [206, 128, 118]
+
+/**
+ * 皮肤视图要画的东西：皮肤（有开口时口腔袋深色、睑缘内卷粉色）、眉毛，以及有开口时从洞里看得见的眼球、牙、牙龈、舌。
+ * 深层的 Lip 部件不画（皮肤不透明时查看器也把它藏起来）。
+ * What the skin view draws: the skin (with openings: pouch dark, lid rims pink), the eyebrow hair and, with openings, what shows
+ * through the holes — eyeball, teeth, gingiva, tongue. The deep Lip part is not drawn (the viewer hides it too while the skin is opaque).
+ */
+export function skinViewItems(s: FaceScene, poser: Poser, channels: Record<string, number>): RenderItem[] {
+  const skinMesh = s.body.meshes.get(s.face.skin)!
+  const item: RenderItem = { positions: posedPart(s, poser, s.face.skin, channels), indices: skinMesh.indices, color: SKIN }
+  const O = s.openings
+  if (O) {
+    const col = new Uint8Array(skinMesh.positions.length)
+    for (let i = 0; i < col.length; i += 3) col.set(SKIN, i)
+    for (const v of [...O.oralPouch.upper, ...O.oralPouch.lower, ...O.oralPouch.seam]) col.set(POUCH, v * 3)
+    for (const r of O.lidRims) for (const v of r.vertices) col.set(RIM, v * 3)
+    item.vertexColors = col
+  }
+  const items: RenderItem[] = [item]
+  for (const d of s.deepParts) if (/eyebrow/i.test(d.part.name)) items.push({ positions: posedPart(s, poser, d.part.id, channels), indices: s.body.meshes.get(d.part.id)!.indices, color: d.color })
+  if (O) {
+    for (const part of s.body.data.parts) {
+      if (!s.body.meshes.has(part.id) || part.bbox[4] < s.center[1] - 0.2) continue
+      const color: Rgb | null = /cornea/i.test(part.name) ? [70, 60, 60] : /sclera/i.test(part.name) ? [240, 238, 232] : part.tissue === 'tooth' ? [246, 244, 232] : /gingiva/i.test(part.name) ? [214, 120, 124] : /^tongue$/i.test(part.name) ? [196, 96, 104] : null
+      if (color) items.push({ positions: posedPart(s, poser, part.id, channels), indices: s.body.meshes.get(part.id)!.indices, color })
+    }
+  }
+  return items
+}
+
 /** 只画皮肤（和眉毛）的大图：正面和斜侧。 Large skin-only images (with the eyebrow hair): front and three-quarter. */
 export function renderSkin(s: FaceScene, aus: AUs, size = 760): Image[] {
   const { channels, jaw } = activations(s.face, aus)
   const pose = jaw > 0 ? { [s.face.jaw.joint]: Array.from({ length: s.face.jaw.dof + 1 }, (_, k) => (k === s.face.jaw.dof ? jaw : 0)) } : {}
   const poser = new Poser(s.rig, s.rigBin, pose)
-  const skinMesh = s.body.meshes.get(s.face.skin)!
-  const items: RenderItem[] = [{ positions: posedPart(s, poser, s.face.skin, channels), indices: skinMesh.indices, color: SKIN }]
-  for (const d of s.deepParts) if (/eyebrow/i.test(d.part.name)) items.push({ positions: posedPart(s, poser, d.part.id, channels), indices: s.body.meshes.get(d.part.id)!.indices, color: d.color })
+  const items = skinViewItems(s, poser, channels)
   const view = (yaw: number): View => ({ yaw, center: [s.center[0], s.center[1] - 0.006, s.center[2]], halfHeight: s.halfHeight - 0.012, width: size, height: size })
   return [render(items, view(0)), render(items, view(40))]
 }

@@ -41,6 +41,15 @@ export interface SeedDef {
    */
   nerve?: string | string[]
   /**
+   * 带有这些标签的皮肤顶点（开口皮肤包的 vertex-tags.u8：1 上唇缘，2 下唇缘，4/6 上睑缘，5/7 下睑缘……）。
+   * 没有标签的皮肤上此种子为空。用于让分区止于口裂、睑裂：上唇缘与下唇缘的顶点重合但不相连。
+   * The skin vertices carrying these tags (vertex-tags.u8 of the opened skin package: 1 upper lip
+   * margin, 2 lower lip margin, 4/6 upper lid margin, 5/7 lower lid margin ...). Empty on a skin
+   * without tags. It makes a map stop at the oral and palpebral fissures: the vertices of the upper
+   * and lower lip margins coincide but are not connected.
+   */
+  tags?: number[]
+  /**
    * 只保留距皮肤不超过此深度的中心线点（默认 15 mm）。整条神经都更深时，放宽到其最浅处深度 + 5 mm。
    * Keep only centreline points at most this deep under the skin (default 15 mm). When the whole
    * nerve lies deeper, the limit becomes its own smallest depth + 5 mm.
@@ -89,6 +98,15 @@ export interface SeedDef {
    */
   pin?: boolean
   sides?: SideLR[]
+  /**
+   * 只在模型里有（ifPart）或没有（unlessPart）某个部件时才用这条种子：如男性外生殖器的种子以深层部件
+   * （阴茎头、睾丸）定位，没有这些部件的人体改用按耻骨联合定位的通用种子。
+   * Use this seed only when the body has (ifPart) or lacks (unlessPart) a part: the seeds of the male
+   * external genitalia are placed from deep parts (glans, testes), and a body without those parts
+   * uses the generic seeds placed from the pubic symphysis instead.
+   */
+  ifPart?: string
+  unlessPart?: string
   note?: { zh: string; en: string }
 }
 
@@ -325,7 +343,13 @@ export class Builder {
     const field = new Map<number, number>()
     const core: number[] = []
     const ok = this.sameSide(side)
-    if (def.curve) {
+    if (def.tags) {
+      for (let i = 0; i < this.skin.n; i++) {
+        if (!this.skin.outer[i] || !def.tags.includes(this.skin.tags[i]!) || (this.skin.left[i] === 1) !== (side === 'L')) continue
+        field.set(i, 0)
+        core.push(i)
+      }
+    } else if (def.curve) {
       const line = this.curve(def.curve, side)
       this.lineField(line, side, blocked, field)
       core.push(...line.verts)
@@ -425,6 +449,8 @@ export class Builder {
         this.avoid = taken
         for (const s of r.seeds) {
           if (s.sides && !s.sides.includes(side)) continue
+          if (s.ifPart && !this.lm.hasPart(s.ifPart, side)) continue
+          if (s.unlessPart && this.lm.hasPart(s.unlessPart, side)) continue
           const { field, core } = this.seedField(s, side, blocked, notes, r.key)
           for (const [v, d] of [...field].sort((a, b) => a[0] - b[0])) seeds.push({ vertex: v, label: ri, d0: d + (s.offsetMm ?? 0) / 1000 })
           if (s.pin) for (const v of core) { pinned.push({ vertex: v, region: ri, side }); pinMask[v] = 1 }
@@ -553,6 +579,7 @@ export class Builder {
 
     const labels = new Uint8Array(skin.n).fill(255)
     for (let i = 0; i < skin.n; i++) {
+      if (skin.excluded[i]) continue
       const l = label[skin.outerOf[i]!]!
       labels[i] = l >= 0 ? l : 255
     }

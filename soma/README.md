@@ -10,7 +10,7 @@
 
 ## 现在能做什么
 
-- 男女两个体型。男性 3,332 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,369 个（见下文，精度低得多）。
+- 男女两个体型。男性 3,332 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,372 个（见下文，精度低得多）。
 - 按系统显示或隐藏、调透明度；从皮肤到骨骼逐层剥离。
 - 点选部件，查看中/英/拉丁名、FMA 编号、所属层级、相邻结构。
 - 肌肉的起点、止点、神经支配、血供等关系，每条带出处，可点击跳转；神经列出它支配的结构，可一次全选。
@@ -38,9 +38,11 @@
 
 左侧"疼痛"面板演示疼痛行为：设定强度（0–10）和起病方式，点"触发"，面部动作单元按时间过程出现并消退，未静音时同时发声，张口与声音同步。"保持表情"把表情停在所设强度；"每次触发都出声"（默认关）让低强度时也发声；"单个动作单元"可以逐个演示 AU。
 
-这是疼痛**行为**的计算模型，用于教学：被模拟的身体没有主观体验；"强度 → 表情"的数值是本项目的假设；声音是演员按指令表演的录音（没有录音包时改用参数合成）。表情由模型里的表情肌驱动（`tools/face/`、`data/curated/face/`）；现在的皮肤没有眼裂和口裂，所以面板默认用肌肉视图。
+这是疼痛**行为**的计算模型，用于教学：被模拟的身体没有主观体验；"强度 → 表情"的数值是本项目的假设；声音是演员按指令表演的录音（没有录音包时改用参数合成）。表情由模型里的表情肌驱动（`tools/face/`、`data/curated/face/`）：闭眼时上睑沿眼球表面滑下，张口时露出牙和舌。
 
 **施加刺激。** "疼痛"页顶部的刺激工具：选种类（针刺、钝压、捏夹、热、冷）、量值、时长、是否重复、刺激是否被固定；打开"在皮肤上施加"后点一下皮肤按设定时长施加，按住不动则施加到松手。摆了姿势或改了体型也可以。模拟人的反应包括：皮肤上的疼痛分布层、从皮肤到神经根的通路和沿它走的 Aδ / C 两个标记、退缩反射、表情和（打开声音后的）发声，以及监护条上的心率、血压、呼吸、瞳孔、皮肤电导。解释面板按九个步骤说明原因，每个数字都标明是有出处、是假设还是算出来的。监护条上的数是群体平均的效应量，不能用来推断疼痛。模型在 `src/painmodel/`，数据表和来源在 `data/curated/pain/`。
+
+**有真实开口的皮肤。** 眼和口是真正的开口：皮肤不透明时，透过它们能看到眼球、牙、牙龈和舌（这些是解剖部件，不管所在系统开没开都会画出来）。口腔深处近黑色的壁（口腔袋）和睑缘向里卷的一圈是为开口构造的，不是解剖：口腔袋不能选取，也不上体表图。皮肤不透明时隐藏的部件由管线给出（外耳和深部的"唇"，皮肤自己已经有）。选中皮肤，结构信息里列出它由哪几片拼成；"构造物"单独用一种颜色和虚线标出，不是解剖来源。疼痛页默认看皮肤。
 
 **皱纹细节。** 皮肤不透明时，面部按表情强度叠加一层法线细节（眉间、鱼尾、下睑、鼻根、鼻唇沟、口角）；皱纹是程序化生成的，条数和尺寸是假设。
 
@@ -141,7 +143,8 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 
 | 来源 | 用在哪里 | 许可 |
 |---|---|---|
-| [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html) 4.0 | 男性体型的几何（2,220 个部件）与两棵层级树 | CC BY 4.0（"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"） |
+| [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html) 4.0 | 男性体型的几何（2,220 个部件）与两棵层级树 | CC BY 4.0（"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"）。注意：该数据说明页写的是 CC BY 4.0，而 4.0 版 OBJ 文件头里写的是 CC BY-SA 2.1 日本版；两种表述都如实列在这里，两者都允许本项目的用法 |
+| [Blender Studio Human Base Meshes](https://www.blender.org/download/demo-files/) v1.4.1 | 两个体型皮肤上分开的脚趾（美术建模的写实前足，按趾骨配准后移植），标记为 `curated` | CC0 |
 | BodyParts3D 3.0 | 4.0 里没有的 79 个部件：肺叶、腹壁肌、背阔肌、咀嚼肌和表情肌。经配准变形，标记为 `warped` | CC BY-SA 2.1 JP |
 | [Z-Anatomy](https://github.com/Z-Anatomy) | 颅神经和躯干神经、脊神经根、脊髓、韧带、筋膜、关节囊、淋巴结群、甲状腺、腮腺。手工建模，标记为 `curated` | CC BY-SA 4.0（"Z-Anatomy - The libre 3D atlas of anatomy"） |
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | 四肢神经（右侧建模，左侧为镜像）、膝关节交叉韧带和半月板。手工建模，标记为 `curated` | CC BY-SA 4.0 |
@@ -174,21 +177,22 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 - 没有的神经：膈神经、颈丛、肋下神经、内脏神经、自主神经丛、喉神经。
 - 没有壁胸膜、淋巴管、黄韧带、颅内脑膜；心包只是心脏的外包络；降结肠包含乙状结肠；脊髓是程序化生成的表面，止于 L2/L3。
 - 皮下脂肪是从皮肤内壁和深层结构之间推导出来的，厚度按 3 mm 量化。
-- 男性皮肤是按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤：生殖器处只是一块隆起，脚趾连成一块，没有乳头和脐，鼻子偏大、鼻孔边缘粗糙，外眦处各有一根皮肤尖刺；皮肤是一整张闭合的面，没有眼裂和口裂；腋窝内侧的皮肤贴着胸壁；筋膜、皮神经和浅静脉有约 1.7% 的表面穿出皮肤（最多 4 mm）；头发、眉毛、耳廓、指甲是按旧皮肤做的，与新皮肤对不上。大幅度姿势下（肩前屈 160°、深蹲）皮肤仍有明显拉伸，深部结构会穿出皮肤最多约 4 cm；呼吸演示时胸部皮肤不随肋骨动。皮肤包不在仓库里，由 `tools/bodyshape/` 的脚本生成到 `data/raw/bodyshape/out/`。
+- 男性皮肤是拼成的，逐片标在数据里（选中皮肤可见）：按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤；他自己扫描皮肤上的阴茎和阴囊皮肤（移植片，周围的衔接面是构造的，较粗糙）；CC0 写实人体网格的脚趾（不是他的脚，第 3–5 趾被拉长约 1.3–1.5 倍）；眼和口是剪开的真实开口，睑缘内沿和口腔袋是为此构造的，不是解剖。脐和乳头是从他的扫描皮肤转过来的浅浮雕，网格太粗，几乎看不出。腋窝从肱骨约 45% 处以下是打开的，其上手臂与腋襞本来相贴，皮肤在腋襞处有 15–27 cm² 互相遮挡并有小台阶。头显得又宽又高；眼球的颜色是示意性的。大幅度姿势下（肩外展 90°、前屈 160°、深蹲）皮肤仍有明显拉伸和皱缩。皮肤包不在仓库里，由 `tools/bodyshape/` 和 `tools/skinopen/` 的脚本生成到 `data/raw/bodyshape/out/`。
 - 体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
-- 男性的肩带姿势被校正过：原始扫描是仰卧耸肩的姿势，锁骨下降约 10°、肩胛骨沿胸廓转动，上肢整体平移。148 个跨越肩部的肌肉、血管和皮肤因此由 `scanned` 改标为 `warped`。两肩关节中心间距 338 mm，没有达到 350 mm 的目标；肩胛骨内旋仍比文献均值小约 2 个标准差。
-- 女性体型是第二版，仍比男性粗糙得多：
-  - 骨架来自 Visible Human 女性供体（59 岁、肥胖、六节腰椎），已按标准比例缩放到身高 1.606 m、五节腰椎，所以她的部件都不再标为 `scanned`。缩放系数记在 `pipeline-report.json` 里。踝仍偏高约 17 mm。
-  - 下肢的肌肉和膝关节韧带是她自己的（丹佛数据），53 块肌腹接上了从男性肌切下的腱；14 块肌没有接好，仍用男性的。约 4.9% 的神经长度深埋在她的肌肉里。
-  - 盆底、阴道、子宫、附件和直肠来自另一位女性的标本（Wu 等 2015），放大 1.096 倍后按骨配准。结构之间仍有少量穿插（最差的一对 3.8%）；阴道与直肠壁局部相贴；膀胱（她自己的，空虚）与子宫（按充盈膀胱的位置）之间有 16.6 mm 空隙；乙状结肠与直肠的连接是构造出来的。
-  - 没有阴唇和外阴皮肤、尿道腔、阔韧带、主韧带、宫骶韧带、输卵管系膜、卵巢固有韧带、卵巢和阴道血管、自主神经丛。
-  - 皮肤是参数化体表（Meta MHR）：先取标准女性体型（身高 1.606 m、BMI 21.6），再在肌肉仍超出的地方放宽，所以按体积算的 BMI 约 23.65，肩和上臂比标准目标饱满（两肩最宽处 467 mm，目标 443 mm）。头是模型的平均头按她的颅骨放大的，下面部偏厚，两眼每侧偏外约 5 mm，内眦有皱缩，面部有横向台阶。右腋窝的上臂皮肤嵌进躯干皮肤。会阴处是光滑的闭合面，没有外阴形态。
-  - 乳房取皮肤模型的形状（每侧约 370 mL），解剖数据里的乳腺部件缩到约 0.4–0.5 倍并下移以放进去；位置偏低，乳头在剑突下约 7 cm，两项"乳房高度"检查目前不通过。
+- 男性的静止姿势被改过两次：肩带（原始扫描是仰卧耸肩，锁骨下降约 10°、肩胛骨沿胸廓转动，两肩关节中心间距 338 mm，没有达到 350 mm 的目标）；上肢在冠状面外展 6.5°，以便形成腋窝（肩胛骨保持不动是建模上的选择，没有打开过出处）。跨越肩部的肌肉、血管由 `scanned` 改标为 `warped`。
+- 女性体型比男性粗糙得多：
+  - 骨架来自 Visible Human 女性供体（59 岁、肥胖、六节腰椎），已按标准比例缩放到身高 1.606 m、五节腰椎，所以她的部件都不标为 `scanned`。踝仍偏高约 16 mm；左右肘关节的屈伸轴相差 22.5°（她两侧肱骨远端不同），屈肘时两前臂不对称；脚骨和手指是修正过的男性骨。
+  - 大部分软组织是男性的结构配准到她的骨上，并按标准女性体表调整过分布；男性来源的肌肉体积不低于有出处的女/男比值（Janssen 等 2000）。上肢外展 7.5°。
+  - 下肢的肌肉和膝关节韧带是她自己的（丹佛数据）。神经长度有 2.0% 在她的肌肉内，其中 1.8% 是止于肌肉的运动支，解释不了的 0.07%。
+  - 盆底、阴道、子宫、附件和直肠来自另一位女性的标本（Wu 等 2015）。结构之间仍有少量穿插（最差的一对 3.8%）；膀胱（她自己的，空虚）与子宫之间有 16.6 mm 空隙；九条盆腔韧带只有三条（左右宫骶韧带、右主韧带）按两端重新配准放回，其余在现有器官之间没有位置。
+  - 没有外阴形态：会阴处的皮肤是抬高过的平滑闭合面。标本的皮肤没能移植（它的切面沿整条裂隙切过两侧的壁）。也没有尿道腔、卵巢和阴道血管、自主神经丛。
+  - 皮肤同样是拼成的：标准女性体型（身高 1.606 m、BMI 21.6）的参数化体表，在肌肉仍超出处放宽，按体积算的 BMI 约 23.7；头部用按她的颅骨和已发表的软组织厚度定出的面容，只保证盖住骨头，所以有九块面肌略露出皮肤（最多约 2–3 mm）。**面容仍偏男性、偏年长**（下颌宽，嘴唇薄，头发和眉毛是男性的部件）。眼和口是真实开口；脚趾来自 CC0 网格，较小几个趾的趾尖有皱缩的碎片；脚趾之间和大腿根部有筋膜薄片露在皮肤外。乳房每侧约 334 mL（中国女性的参考值），腺体部件缩到约 0.5 倍放入；脐是构造的。
+  - 她的肋间神经是从男性变形来的，与她的腹部对不上：体表图上脐在 T8（教科书 T10），剑突在 T5（教科书 T6）。
   - 右前臂和右手在 CT 里被裁切，用的是左侧镜像。
 
 ## 接下来
 
-1. 皮肤的修正：女性乳房位置和面部缺陷，带眼裂和口裂的面部拓扑，头发等附属结构贴合新皮肤。
+1. 女性面容（女性的头发和眉毛、下颌、嘴唇）；女性外阴；腋窝的两层皮碰撞求解；让神经和筋膜等薄结构与新皮肤、分开的脚趾相容。
 2. 软组织物理：四面体化，XPBD，先在一个部位验证。
 3. 手术操作：切开、牵拉、出血、缝合。
 
@@ -206,7 +210,7 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 
 ## What it does
 
-- Two bodies. Male: 3,332 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,369 (far less accurate; see below).
+- Two bodies. Male: 3,332 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,372 (far less accurate; see below).
 - Show, hide and fade systems; peel layers from skin to skeleton.
 - Select a part to see its Chinese / English / Latin names, FMA id, place in the hierarchies and adjacent structures.
 - Origin, insertion, innervation, blood supply and other relations, each with its source, clickable; a nerve lists what it supplies and can select all of it at once.
@@ -234,9 +238,11 @@ Known problems: when the body is shortened or re-proportioned, subcutaneous fat 
 
 The "Pain" panel on the left demonstrates pain behaviour: set an intensity (0–10) and an onset, press Trigger, and the facial action units rise and fade over time, with a vocalisation unless muted and the mouth in step with the sound. "Hold" keeps the expression at the set intensity; "Always vocalise" (off by default) makes a sound at low intensities too; "Single action units" shows one AU at a time.
 
-This is a computational model of pain **behaviour** for teaching: the simulated body has no subjective experience; the intensity-to-expression numbers are assumptions of this project; the sounds are recordings acted on instruction (or parametric synthesis when the pack is absent). The expression is driven by the facial muscles of the model (`tools/face/`, `data/curated/face/`); the present skin has no eye or mouth opening, so the panel defaults to the muscle view.
+This is a computational model of pain **behaviour** for teaching: the simulated body has no subjective experience; the intensity-to-expression numbers are assumptions of this project; the sounds are recordings acted on instruction (or parametric synthesis when the pack is absent). The expression is driven by the facial muscles of the model (`tools/face/`, `data/curated/face/`): the upper lid slides down over the globe to close the eye, and an opened mouth shows teeth and tongue.
 
 **Applying a stimulus.** The stimulus tool at the top of the Pain tab: pick the kind (pinprick, pressure, pinch, heat, cold), magnitude, duration, repeats and whether the stimulus is held; with "Apply on the skin" on, a click applies it for the set duration and pressing and holding applies it until release. It works on a posed or reshaped body. The response is shown as a pain map on the skin, the pathway from skin to nerve root with the Aδ and C markers travelling along it, the withdrawal reflex, the expression and (with sound on) the voice, and a monitor with heart rate, blood pressure, respiration, pupil and skin conductance. The explanation panel gives the reason in nine steps and marks every number as sourced, assumed or computed. The monitor shows group-average effect sizes that cannot be used to infer pain. The model is in `src/painmodel/`, its tables and sources in `data/curated/pain/`.
+
+**A skin with real openings.** Eyes and mouth are real openings: with the skin opaque, the eyeballs, teeth, gingiva and tongue are seen through them (anatomical parts, drawn whatever their systems' switches say). The near-black wall deep in the mouth (the oral pouch) and the rim turned in at the lid margins were constructed for the openings and are not anatomy: the pouch cannot be picked and takes no skin-map colour. The parts hidden under an opaque skin come from the pipeline (the external ear and the deep "Lip", which the skin has itself). Select the skin and its details list the pieces it is assembled from; "construction" has its own colour and a dashed mark and is not an anatomical provenance. The Pain tab defaults to the skin view.
 
 **Wrinkle detail.** While the skin is opaque, the face gets a layer of normal detail blended by expression (glabella, crow's feet, lower lid, nasal root, nasolabial fold, lip corner); the wrinkles are procedural and their counts and sizes are assumptions.
 
@@ -337,7 +343,8 @@ Apart from the code, the anatomy data in this directory (`public/anatomy/`, `dat
 
 | Source | Used for | Licence |
 |---|---|---|
-| [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html) 4.0 | Geometry of the male body (2,220 parts) and both hierarchies | CC BY 4.0 ("BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International") |
+| [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html) 4.0 | Geometry of the male body (2,220 parts) and both hierarchies | CC BY 4.0 ("BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"). Note: the dataset's description page says CC BY 4.0 while the headers of the 4.0 OBJ files say CC BY-SA 2.1 Japan; both statements are recorded here, and both permit this project's use |
+| [Blender Studio Human Base Meshes](https://www.blender.org/download/demo-files/) v1.4.1 | Separate toes on both skins (an artist-made realistic forefoot, registered to the toe bones and grafted), marked `curated` | CC0 |
 | BodyParts3D 3.0 | 79 parts missing from 4.0: lung lobes, abdominal wall muscles, latissimus dorsi, muscles of mastication and facial expression. Registered into place, marked `warped` | CC BY-SA 2.1 JP |
 | [Z-Anatomy](https://github.com/Z-Anatomy) | Cranial and trunk nerves, spinal roots, spinal cord, ligaments, fasciae, joint capsules, lymph node groups, thyroid, parotid. Artist-modelled, marked `curated` | CC BY-SA 4.0 ("Z-Anatomy - The libre 3D atlas of anatomy") |
 | [AnatomyTool Open3DModel](https://anatomytool.org/open3dmodel) | Limb nerves (right side modelled, left mirrored), cruciate ligaments and menisci. Artist-modelled, marked `curated` | CC BY-SA 4.0 |
@@ -370,20 +377,21 @@ The full list is in each body's `cautions`. The main ones:
 - Missing nerves: phrenic, cervical plexus, subcostal, splanchnic, autonomic plexuses, laryngeal.
 - No parietal pleura, lymphatic vessels, ligamenta flava or cranial meninges; the pericardium is only an envelope of the heart; the descending colon includes the sigmoid; the spinal cord is a procedurally generated surface ending at L2/L3.
 - Subcutaneous fat is derived from the space between the skin's inner wall and the deep structures; thickness is quantised to 3 mm.
-- The male skin is a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin: the genital region is only a mound, the toes are one block, there are no nipples or navel, the nose is large with rough nostril rims and a spike of skin stands at each outer canthus; the skin is one closed surface with no eye or mouth opening; medial axillary skin lies against the chest wall; about 1.7% of the surface of fasciae, cutaneous nerves and superficial veins comes through the skin (up to 4 mm); hair, eyebrows, external ears and nails were made for the old skin and do not sit on the new one. In large poses (shoulder flexion 160°, deep squat) the skin still stretches visibly and deep parts come through it by up to about 4 cm; in the breathing demonstration the chest skin does not follow the ribs. The skin package is not in the repository; the scripts in `tools/bodyshape/` write it to `data/raw/bodyshape/out/`.
+- The male skin is assembled from pieces, each recorded in the data (select the skin to see them): a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin; the penile and scrotal skin of his own scanned skin (a graft; the constructed surface round it is coarse); toes from a CC0 realistic body mesh (not his feet; toes 3–5 stretched about 1.3–1.5×); eyes and mouth are real openings cut into the surface, with lid rims and an oral pouch constructed for them, which are not anatomy. Navel and nipples are low reliefs carried over from his scanned skin and barely visible at this mesh density. The axilla is open from about 45% of the humerus down; above that arm and axillary folds lie together, and 15–27 cm² of skin is covered at the folds, with small steps. The head looks broad and high; eye colours are illustrative. In large poses (90° abduction, 160° flexion, deep squat) the skin still stretches and crumples visibly. The skin package is not in the repository; scripts in `tools/bodyshape/` and `tools/skinopen/` write it to `data/raw/bodyshape/out/`.
 - Skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
-- The male shoulder girdle was re-posed: the scan is supine with shrugged shoulders, so the clavicles were lowered by about 10°, the scapulae turned round the rib cage and each upper limb translated. 148 muscles, vessels and the skin that span the shoulder changed from `scanned` to `warped`. The glenohumeral centres are 338 mm apart, short of the 350 mm target, and scapular internal rotation is still about 2 SD below the literature mean.
-- The female body is a second version and still far coarser than the male:
-  - The skeleton is from the Visible Human Female donor (59 years old, obese, six lumbar vertebrae), rescaled to standard proportions at 1.606 m with five lumbar vertebrae, so none of her parts is marked `scanned` any more. The scale factors are in `pipeline-report.json`. The ankle is still about 17 mm too high.
-  - Leg muscles and knee ligaments are her own (Denver data); 53 bellies carry tendons cut from the male muscles, and 14 muscles could not be spliced and remain male. About 4.9% of nerve length lies deep inside her muscles.
-  - Pelvic floor, vagina, uterus, adnexa and rectum come from another woman's specimen (Wu et al. 2015), enlarged 1.096× and fitted by bone. Some interpenetration remains (worst pair 3.8%); the vaginal and rectal walls touch in places; there is a 16.6 mm gap between the bladder (her own, empty) and the uterus (positioned for a full bladder); the join between sigmoid colon and rectum is constructed.
-  - Missing: labia and vulvar skin, urethral lumen, broad, cardinal, uterosacral and ovarian ligaments, mesosalpinx, ovarian and vaginal vessels, autonomic plexuses.
-  - The skin is a parametric surface (Meta MHR): a standard female shape (1.606 m, BMI 21.6) relaxed where muscle still lay outside it, so the volume BMI is about 23.65 and shoulders and upper arms are fuller than the target (bideltoid 467 mm against 443 mm). The head is the model's average head scaled to her skull; the lower face is thick, the eyes sit about 5 mm too far lateral on each side, the inner canthi are crumpled and there are horizontal steps across the face. On the right, upper-arm skin runs into trunk skin in the axilla. The perineum is a smooth closed surface without vulvar anatomy.
-  - The breasts take the skin model's shape (about 370 mL a side); the gland parts of the anatomy data are scaled to about 0.4–0.5 and moved down to fit. They sit too low — the nipple about 7 cm below the xiphoid — and two breast-level checks currently fail.
+- The male rest posture was changed twice: the shoulder girdle (the scan is supine with shrugged shoulders; clavicles lowered by about 10°, scapulae turned round the rib cage, glenohumeral centres 338 mm apart, short of the 350 mm target), and both upper limbs abducted 6.5° in the coronal plane so that an axilla exists (keeping the scapula fixed is a modelling choice with no opened source). Muscles and vessels spanning the shoulder changed from `scanned` to `warped`.
+- The female body is far coarser than the male:
+  - The skeleton is from the Visible Human Female donor (59 years old, obese, six lumbar vertebrae), rescaled to standard proportions at 1.606 m with five lumbar vertebrae, so none of her parts is marked `scanned`. The ankle is still about 16 mm too high; the flexion axes of her two elbows differ by 22.5° (her distal humeri differ), so the forearms do not move symmetrically; foot bones and fingers are corrected male bones.
+  - Most soft tissue is male structure registered onto her bones and redistributed toward a standard female body surface; muscles of male origin are kept at or above a sourced female/male volume ratio (Janssen et al. 2000). Upper limbs abducted 7.5°.
+  - Leg muscles and knee ligaments are her own (Denver data). 2.0% of nerve length lies inside her muscles, 1.8% of it motor branches ending in muscle and 0.07% unexplained.
+  - Pelvic floor, vagina, uterus, adnexa and rectum come from another woman's specimen (Wu et al. 2015). Some interpenetration remains (worst pair 3.8%); there is a 16.6 mm gap between the bladder (her own, empty) and the uterus; of nine pelvic ligaments only three (both uterosacral, right cardinal) were re-fitted by their two ends, the others have no room between the present organs.
+  - No vulvar anatomy: the perineal skin is a raised, smooth closed surface. The specimen's skin could not be grafted (its cut plane runs through both walls of the cleft). Also missing: urethral lumen, ovarian and vaginal vessels, autonomic plexuses.
+  - Her skin is assembled likewise: a parametric surface of standard female shape (1.606 m, BMI 21.6) relaxed where muscle still lay outside, volume BMI about 23.7; the head follows a face derived from her skull and published soft-tissue depths with cover over bone only, so nine facial muscles lie slightly outside the skin (up to about 2–3 mm). **The face still reads male and older** (wide jaw, thin lips, and the hair and eyebrow parts are male). Eyes and mouth are real openings; toes come from a CC0 mesh, with crumpled fragments at the tips of the lesser toes; sheets of fascia show between the toes and at the root of the thighs. Breasts are about 334 mL a side (a Chinese reference figure) with the gland parts scaled to about 0.5; the navel is constructed.
+  - Her intercostal nerves are warped from the male and do not fit her abdomen: on the skin maps the umbilicus lies in T8 (textbook T10) and the xiphoid in T5 (textbook T6).
   - The right forearm and hand were clipped in the CT and are a mirrored left.
 
 ## Next
 
-1. Skin corrections: female breast level and facial defects, a facial topology with eye and mouth openings, hair and other appendages fitted to the new skins.
+1. The female face (female hair and eyebrows, jaw, lips); the female vulva; a two-sheet collision solve for the axillae; making thin structures such as nerves and fasciae consistent with the new skins and the separate toes.
 2. Soft-tissue physics: tetrahedral meshes, XPBD, validated on one region first.
 3. Surgical actions: incision, retraction, bleeding, suturing.

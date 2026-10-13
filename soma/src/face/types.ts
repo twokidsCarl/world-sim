@@ -58,6 +58,16 @@ export type FaceChannelKind =
    * not a muscle; `parts` is empty.
    */
   | 'recess'
+  /**
+   * 口角成形（只作用于皮肤，皮肤有真实口裂时才有）：骨架把上唇缘绑在颅骨、下唇缘绑在下颌，一直到口角，
+   * 单靠关节张口时口裂两端是竖直的。这个通道在口角附近让上下唇缘各走一半，使口裂呈杏仁形。
+   * 它的激活应等于 下颌张开角 / jaw.max（AU26、AU27 的权重就是这样定的）；不是肌肉，parts 为空。
+   * Mouth-corner shaping (skin only, present when the skin has a real oral fissure): the rig binds the upper lip margin to the
+   * skull and the lower to the jaw right up to the corners, so opened by the joint alone the fissure has vertical ends. Near
+   * the corners this channel makes both margins travel half-way each, giving an almond-shaped aperture. Its activation should
+   * equal jaw opening / jaw.max (the weights in AU26 and AU27 are set that way); not a muscle, `parts` is empty.
+   */
+  | 'corner'
 
 /** 一个通道在一个部件上的稀疏位移场。 The sparse displacement field of one channel on one part. */
 export interface FaceField {
@@ -153,6 +163,8 @@ export interface FaceData {
   jaw: { joint: string; dof: number; /** 弧度 / radians */ max: number; /** 闭口肌与开口肌的部件，仅供显示 / closers and openers, for display only. */ closers: string[]; openers: string[] }
   /** 单个通道位移的上界，以及所有通道同时全激活时位移之和的上界，米 / bound of one channel's displacement, and of the sum with every channel fully active, metres. */
   bounds: { channel: number; total: number }
+  /** 皮肤有真实的睑裂和口裂时给出开口数据的文件名（相对 face.json）/ file of the openings data (relative to face.json) when the skin has real eye and mouth openings. */
+  openings?: string
   /** 构建时在静止几何上量得的标志 / landmarks measured on the rest geometry at build time. */
   landmarks: {
     /** 头部正中矢状面的 x / x of the head's midsagittal plane. */
@@ -166,7 +178,7 @@ export interface FaceData {
       /** 深层睑裂（睑部肌肉网格上量得）：内外眦的 x、最大开度（米）/ the deep palpebral fissure (measured on the lid muscle meshes): x of both canthi, largest aperture (metres). */
       fissure: { x0: number; x1: number; aperture: number; /** 下睑缘最低处、上睑缘最高处的 y / y of the lowest point of the lower margin and the highest of the upper. */ lowerY?: number; upperY?: number } | null
       /** 皮肤上的睑裂形状（皮肤没有开口）：同上 / the shape of the fissure on the skin (which has no opening): as above. */
-      skinFissure?: { x0: number; x1: number; aperture: number; lowerY?: number; upperY?: number } | null
+      skinFissure?: { x0: number; x1: number; aperture: number; lowerY?: number; upperY?: number; /** 下睑缘的折线 [x, y]（每 2 mm 一点）/ polyline [x, y] of the lower margin (a point every 2 mm). */ lower?: [number, number][] } | null
     }[]
   }
   sources: FaceSource[]
@@ -241,4 +253,39 @@ export interface FaceDetail {
   /** 切线空间的约定 / the tangent-space convention. */
   convention: Bilingual
   cautions: Bilingual[]
+}
+
+// —— 皮肤的开口 / The openings of the skin ——
+//
+//   /anatomy/<body>/face/openings.json   FaceOpenings（只有皮肤带真实睑裂和口裂的体型才有 / only for a body whose skin has real eye and mouth openings）
+//
+// 所有下标都是皮肤部件（FaceOpenings.skin）按 GLB 解码顺序的顶点下标。上下唇缘的顶点成对重合（位置相同、下标不同），
+// 所以不要按位置合并皮肤的顶点。
+// Every index is a vertex index of the skin part (FaceOpenings.skin) in GLB decode order. Upper and lower lip-margin vertices
+// coincide in pairs (same position, different index), so the skin's vertices must not be welded by position.
+
+export interface FaceOpenings {
+  schema: 1
+  skin: string
+  vertexCount: number
+  /** skin-source.u32 的 sha256（前 16 位十六进制）：皮肤换了，这份文件就作废 / sha256 (first 16 hex) of skin-source.u32: the file is void once the skin changes. */
+  source: { sidecar: string; note: Bilingual }
+  /** 唇缘从身体右侧口角到左侧口角；睑缘从内眦到外眦。两端是共用的口角 / 眦顶点。 Lip margins run from the body's right mouth corner to the left; lid margins from the medial to the lateral canthus. Both ends are the shared corner / canthus vertices. */
+  margins: { upperLip: number[]; lowerLip: number[]; upperLidL: number[]; lowerLidL: number[]; upperLidR: number[]; lowerLidR: number[] }
+  points: { mouthCornerR: number; mouthCornerL: number; medialCanthusL: number; lateralCanthusL: number; medialCanthusR: number; lateralCanthusR: number }
+  /** 剪口附近的皮肤顶点属于哪一片 / the sheet of the skin vertices near each cut. */
+  sheets: { mouthUpper: number[]; mouthLower: number[]; mouthLateral: number[]; eyeUpperL: number[]; eyeLowerL: number[]; eyeUpperR: number[]; eyeLowerR: number[] }
+  /**
+   * 睑缘内卷（构造物，不是解剖）：vertices[i] 跟随睑缘顶点 of[i]。画成皮肤或粘膜。
+   * Lid rims (construction aids, not anatomy): vertices[i] follows the lid-margin vertex of[i]. Draw as skin or mucosa.
+   */
+  lidRims: { side: Side; vertices: number[]; of: number[] }[]
+  /**
+   * 口腔袋（构造物，不是解剖）：upper / lower 按行存放，第 r 行第 c 列 = r × columns + c；行从唇缘到缝，
+   * 第 c 列属于 upperLip / lowerLip 的第 c + 1 个顶点。画成深色、不透明，不参与拾取和体表图。
+   * The oral pouch (a construction aid, not anatomy): upper / lower are stored row by row, row r column c = r × columns + c;
+   * rows run from the lip margin to the seam, and column c belongs to vertex c + 1 of upperLip / lowerLip. Draw it dark and
+   * opaque and keep it out of picking and skin maps.
+   */
+  oralPouch: { upper: number[]; lower: number[]; seam: number[]; rows: number; columns: number }
 }

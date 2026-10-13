@@ -37,5 +37,7 @@ export default defineConfig({
   plugins: [react(), excludeDevDatasets()],
   define: { __SOMA_VOICE_PACK__: JSON.stringify(!COMMERCIAL) },
   server: { port: 5183, strictPort: true },
-  test: { include: ['tests/**/*.test.ts'] },
+  // 这些测试读入几十兆的真实几何，44 个文件并行跑时，慢机器上单项会超过默认的 5 秒。
+  // The tests read tens of megabytes of real geometry; with 44 files in parallel a single test can exceed the default 5 s on a slow machine.
+  test: { include: ['tests/**/*.test.ts'], testTimeout: 60_000, hookTimeout: 300_000 },
 })

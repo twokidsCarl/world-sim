@@ -114,7 +114,9 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
     const untouched = !st.isolated && st.peel === 0 && Object.values(st.systems).every((x) => x.visible)
     // 正在看一个刺激（多半在四肢上）时也不动视图 / nor while a stimulus is being looked at (most are on a limb)
     if (!untouched || st.stim || st.stimStatus !== 'idle' || st.stimArmed) return
-    app.setFaceView('muscle')
+    // 皮肤有真实的睑裂和口裂时，皮肤视图才是更好的视图；否则（闭合的皮肤）看肌肉
+    // with real eye and mouth openings the skin view is the better one; otherwise (a closed skin) the muscles
+    app.setFaceView(face.data.openings ? 'skin' : 'muscle')
     focusFace()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [face, graph])
@@ -236,10 +238,17 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
           </button>
           <button onClick={focusFace}>对准面部</button>
         </div>
-        <p className="hint">
-          目前的皮肤是闭合曲面，眼睑和嘴唇张不开，所以默认看肌肉；皮肤视图里只能看到皱眉、提颊等表面形变。
-          <span className="en"> The current skin is a closed surface whose lids and lips cannot part, so muscles are shown by default; the skin view shows only surface deformation such as the brow and cheeks.</span>
-        </p>
+        {face.data.openings ? (
+          <p className="hint">
+            这张皮肤的眼和口是真正的开口，所以默认看皮肤：闭眼时上睑缘落到下睑缘上，张口时能看到牙和舌。口腔深处近黑色的壁是构造物，不是解剖。
+            <span className="en"> This skin's eyes and mouth are real openings, so the skin is shown by default: the upper lid margin comes down onto the lower one, and teeth and tongue show when the mouth opens. The near-black wall deep in the mouth is a construction aid, not anatomy.</span>
+          </p>
+        ) : (
+          <p className="hint">
+            目前的皮肤是闭合曲面，眼睑和嘴唇张不开，所以默认看肌肉；皮肤视图里只能看到皱眉、提颊等表面形变。
+            <span className="en"> The current skin is a closed surface whose lids and lips cannot part, so muscles are shown by default; the skin view shows only surface deformation such as the brow and cheeks.</span>
+          </p>
+        )}
       </section>
 
       <section className="group">

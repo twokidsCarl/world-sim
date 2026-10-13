@@ -1,7 +1,7 @@
 {
   "_doc": {
-    "zh": "各类组织如何跟随骨架。defaults 按组织类型给出默认方法；rules 按部件英文名（正则）覆盖，自上而下取第一条匹配的。method：rigid = 整个部件跟随权重最大的一个关节；field = 按体内距离场逐顶点取权重；attach = 两端（或多处）附着在骨上，沿途只跟随附着骨之间那条关节链上的骨（肌肉、肌腱、韧带）；centreline = 先在神经中心线上取权重，再传给管壁顶点。beta 是过渡带相对宽度，smooth 是沿网格平滑权重的迭代次数，allow 是允许的关节 id（正则）。 attachmentExcludes：Z-Anatomy 附着斑块中落在邻近骨上的错误位置（按肌肉名和骨名的子串匹配），不用作附着。 hingeBlend：在这些关节中心 radius（米）以内，按绕屈伸轴的方位角而不是按距离决定跟随近端还是远端（见 tools/rig/bind.ts 的 HingeBlend）。deny：部件不得附着或跟随的关节 id（正则）。 externalWeights：自带外部蒙皮权重的部件（见 tools/rig/external.ts）。",
-    "en": "How each kind of tissue follows the skeleton. `defaults` gives the method per tissue; `rules` override it by the part's English name (regular expression), first match from the top wins. method: rigid = the whole part follows its single heaviest joint; field = per-vertex weights from the in-body distance field; attach = attached to bone at its ends (or at several sites) and following only the bones on the chain of joints between its attachments (muscles, tendons, ligaments); centreline = weights taken on the nerve's centreline and handed to the tube vertices. `beta` is the relative width of the blend zone, `smooth` the number of smoothing passes of the weights over the mesh, `allow` a regular expression of permitted joint ids. `attachmentExcludes`: Z-Anatomy attachment patches that landed on a neighbouring bone (matched by substrings of the muscle and bone names); they are not used as attachments. `hingeBlend`: within `radius` (metres) of these joints' centres, whether tissue follows the proximal or the distal side is decided by its angular position about the flexion axis instead of by distance (see HingeBlend in tools/rig/bind.ts). `deny`: joint ids (regular expression) a part must neither attach to nor follow. `externalWeights`: parts that come with skin weights from elsewhere (see tools/rig/external.ts)."
+    "zh": "各类组织如何跟随骨架。defaults 按组织类型给出默认方法；rules 按部件英文名（正则）覆盖，自上而下取第一条匹配的。method：rigid = 整个部件跟随权重最大的一个关节；field = 按体内距离场逐顶点取权重；attach = 两端（或多处）附着在骨上，沿途只跟随附着骨之间那条关节链上的骨（肌肉、肌腱、韧带）；centreline = 先在神经中心线上取权重，再传给管壁顶点。beta 是过渡带相对宽度，smooth 是沿网格平滑权重的迭代次数，allow 是允许的关节 id（正则）。 attachmentExcludes：Z-Anatomy 附着斑块中落在邻近骨上的错误位置（按肌肉名和骨名的子串匹配），不用作附着。 hingeBlend：在这些关节中心 radius（米）以内，按绕屈伸轴的方位角而不是按距离决定跟随近端还是远端（见 tools/rig/bind.ts 的 HingeBlend）。deny：部件不得附着或跟随的关节 id（正则）。 externalWeights：自带外部蒙皮权重的部件（见 tools/rig/external.ts）。 externalWeights[].openDir：有下标对照文件 skin-source.u32 时改用的开口皮肤包（按下标取权重）；ribFollow：胸壁皮肤随肋骨。",
+    "en": "How each kind of tissue follows the skeleton. `defaults` gives the method per tissue; `rules` override it by the part's English name (regular expression), first match from the top wins. method: rigid = the whole part follows its single heaviest joint; field = per-vertex weights from the in-body distance field; attach = attached to bone at its ends (or at several sites) and following only the bones on the chain of joints between its attachments (muscles, tendons, ligaments); centreline = weights taken on the nerve's centreline and handed to the tube vertices. `beta` is the relative width of the blend zone, `smooth` the number of smoothing passes of the weights over the mesh, `allow` a regular expression of permitted joint ids. `attachmentExcludes`: Z-Anatomy attachment patches that landed on a neighbouring bone (matched by substrings of the muscle and bone names); they are not used as attachments. `hingeBlend`: within `radius` (metres) of these joints' centres, whether tissue follows the proximal or the distal side is decided by its angular position about the flexion axis instead of by distance (see HingeBlend in tools/rig/bind.ts). `deny`: joint ids (regular expression) a part must neither attach to nor follow. `externalWeights`: parts that come with skin weights from elsewhere (see tools/rig/external.ts). `externalWeights[].openDir`: the opened skin package used instead when the index sidecar skin-source.u32 is present (weights by index); `ribFollow`: chest skin following the ribs."
   },
   "defaults": {
     "bone": {
@@ -405,6 +405,20 @@
       "genericWhy": {
         "zh": "手指：MHR 的指关节中心与本骨架按骨拟合的中心相差 5–17 mm（拇指腕掌关节最大），握拳时 MHR 权重的皮肤拉伸更大；手指之间有空隙，距离场在这里本来就分得开，所以手指仍用距离场的权重。",
         "en": "Fingers: MHR's finger joint centres differ from this rig's bone-fitted centres by 5–17 mm (most at the thumb's carpometacarpal joint) and its weights stretch the skin more in a fist; the fingers are apart, where the distance field separates them well anyway, so the fingers keep the distance-field weights."
+      },
+      "openDir": "data/raw/bodyshape/out/male-skin-open",
+      "ribFollow": {
+        "ribs": "^rib\\d+_[LR]$",
+        "from": "^T\\d+$",
+        "near": 0.02,
+        "far": 0.05,
+        "share": 1.0,
+        "beta": 0.6,
+        "why": {
+          "zh": "MHR 没有肋关节，胸部皮肤全部挂在胸椎上，吸气时肋骨上提而皮肤不动。离肋骨 20 mm 以内的皮肤顶点把挂在胸椎上的份额全部转给距离场给出的肋骨权重，到 50 mm 处渐变为不转。",
+          "en": "MHR has no rib joints, so chest skin hangs entirely on the thoracic vertebrae and stays put while the ribs rise in inspiration. Skin vertices within 20 mm of a rib hand all of their thoracic share to the rib weights of the distance field, fading to none at 50 mm."
+        },
+        "smooth": 6
       }
     },
     {
@@ -551,6 +565,20 @@
       "genericWhy": {
         "zh": "手指：MHR 的指关节中心与本骨架按骨拟合的中心相差 5–17 mm（拇指腕掌关节最大），握拳时 MHR 权重的皮肤拉伸更大；手指之间有空隙，距离场在这里本来就分得开，所以手指仍用距离场的权重。",
         "en": "Fingers: MHR's finger joint centres differ from this rig's bone-fitted centres by 5–17 mm (most at the thumb's carpometacarpal joint) and its weights stretch the skin more in a fist; the fingers are apart, where the distance field separates them well anyway, so the fingers keep the distance-field weights."
+      },
+      "openDir": "data/raw/bodyshape/out/female-skin-open",
+      "ribFollow": {
+        "ribs": "^rib\\d+_[LR]$",
+        "from": "^T\\d+$",
+        "near": 0.02,
+        "far": 0.05,
+        "share": 1.0,
+        "beta": 0.6,
+        "why": {
+          "zh": "MHR 没有肋关节，胸部皮肤全部挂在胸椎上，吸气时肋骨上提而皮肤不动。离肋骨 20 mm 以内的皮肤顶点把挂在胸椎上的份额全部转给距离场给出的肋骨权重，到 50 mm 处渐变为不转。",
+          "en": "MHR has no rib joints, so chest skin hangs entirely on the thoracic vertebrae and stays put while the ribs rise in inspiration. Skin vertices within 20 mm of a rib hand all of their thoracic share to the rib weights of the distance field, fading to none at 50 mm."
+        },
+        "smooth": 6
       }
     }
   ]

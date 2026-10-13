@@ -1,0 +1,80 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第九部分：女性面部的干净目标（female-face-target/，kind = target，不可安装）
+
+### 0. 还不对的地方（先说）
+1. 作为一张脸：没有了外推造成的棱和包，轮廓是一个下颌收窄、颏尖的成年人，比已安装的那张更像女性；但它偏瘦削、显老：鼻唇沟和口角外侧各有一道明显的沟，下颌缘下方仍有一道浅的线，两侧颞部和眶外侧有浅折痕（眼睑保护区的边缘），唇薄。我的判断是“可信的成年人，偏女性但不明显”，不是一张一眼就是女性的脸。
+2. 唇比厚度表薄：上唇处皮肤到上切牙唇面只有 5.5 mm（表 13.4），下唇 8.2 mm（表 14.1）。这是因为我按你的要求让唇由牙列定：把皮肤的唇面放在她现有的 Lip 部件外 1 mm，而那个部件（男性来源）紧贴着牙。要按表做，就得让唇向前 6–8 mm，Lip 部件也要跟着移。这是需要你定的。
+3. 鼻：鼻骨下端处皮肤有 7.8 mm（表 2.6），因为保留了 MHR 自己的鼻子；鼻根 7.4（表 5.9），眉间 3.6（表 5.2，偏薄 1.6 mm）。鼻宽 36.5 mm，没有来源可比。
+4. 没有打开任何女性面部量度的正常值（搜到的一篇是修图后的审美偏好，不是测量值，没有用），所以比值只有骨作参考。眉线相对眶上缘的位置：没有来源，不给数字。
+5. 两侧和颊部的厚度用的是不分性别、不分人群的 2023 T-Table；我没有自己再打开原文，引用的是知识库审计里记录的数值。正中仍用 Sonita 2025 的女性样本（柬埔寨）。
+6. 包络的厚度规则是我的假定（见 §2），不是文献值。
+7. 乳房和口裂的新数字（体积 325–340 mL、切迹到乳头约 19.05 cm、口裂在切缘上 2.5–3 mm）这一轮没有用，按你说的留到下一次整体重拟合；这个目标里仍是 370 mL / 19.8 cm / 2 mm。
+8. 量度里“下唇高 26 mm”“内眦间距 27 mm”是按网格上的褶和标志点近似量的，定义粗，只适合前后对比。
+
+### 1. 目标皮肤
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose] --face --target-only --out female-face-target
+  python tools/bodyshape/face_target_report.py
+skin.obj 是全身的目标皮肤（BMI 21.60，身高 1.608 m），头颈没有任何外推或放松；manifest 的 kind = target，basedOn.key = d8e55b8725377511，没有 fittedTo。
+- 26 个标志点（face-landmarks.json）：正中 10 个（Sonita 2025，女性），两侧 8 对：眶上缘中点 7.0、眶下缘中点 6.5、颧点 7.5、下颌角点 12.5、下颌支中点 19.5、上第二磨牙处 26.0、下第二磨牙处 22.0、下颌下缘中点 11.0 mm（2023 T-Table）。鼻骨下端、上唇、下唇三点不进入变形，只报告。
+- 头部身份系数（带先验、限幅 1.5）：[-1.16, -0.04, 0.91, 0.53, -0.51, 0.51, …]，其余在 ±0.6 内；然后三遍平滑变形（σ 32 mm）。
+- 进入变形的点全部在表值 ±0.3 mm 内（例如颏前点 11.8 / 11.5，下颌角点 12.6 / 12.5，颧点 7.4–7.5 / 7.5，上、下磨牙处 26.1 / 26.0、21.9 / 22.0）。已安装的皮肤在这些点上分别是 21.7、22–24、11.8、36–38、27–29 mm。颊部原来不是凹，是厚了 10–12 mm；上一版看到的“颧骨下凹陷”是没有颊部目标造成的，现在没有了。
+- 量度（骨 / 已安装 / 目标，mm）：颧宽 117.3 / 140.1 / 131.9；下颌角间宽 87.9 / 126.3 / 108.2；比值 0.749 / 0.901 / 0.820；全面高 105.1 / 120.7 / 112.1；下面高占比 0.487 → 0.453；鼻翼宽 41.3 → 36.5；眉间在鼻根前 0.4 → 1.7；皮肤下颌角（下颌支中点–下颌角点–颏顶点，矢状面）106.3° → 106.4°；颏宽 45.7 → 46.2；额部后倾 1.7° → 4.4°；内眦间距约 27.1 → 26.8；两外眦间约 78.1 → 70.7；上唇高 14.2 → 14.9；下唇高 24.7 → 26.1。
+
+### 2. 头颈的深层包络和冲突清单
+规则（假定）：d = 目标皮肤到颅骨、下颌骨的局部距离，包络在皮肤内 t = clip(d − 2.5 mm, 1.5 mm, 6 mm)，再抹平。薄处在骨面上留 2.5 mm 给薄肌或腱膜；厚处皮肤 + 脂肪按 6 mm。头部 t 的 p10 / p50 / p90 = 1.5 / 6.0 / 6.0 mm。头以外沿用 female-target/deep-envelope.obj。
+冲突（conflict-list.json，每个部件：在包络外的比例、p50 / p95 / 最大，以及在目标皮肤外的比例和最大值）：头颈共 126 个深部部件有部分在包络外（肌 58、腱 2、器官和淋巴结 38、腺 4、脑 9、骨 10、软骨 5）。
+  - 帽状腱膜 63 %，最远 12.5 mm（在皮肤外 11.0）；额肌 36–50 %，4.6 mm（皮肤外 3.1）
+  - 胸锁乳突肌 32–74 %，14.6 mm（皮肤外 10.3）；颈阔肌 3–23 %，8.1 mm（皮肤外 7.8）
+  - 眼轮匝肌各环 6–87 %，最远 8.5 mm（皮肤外 2.8；内环本来就不包住）；鼻肌 59–86 %，4.3 mm；降眉间肌 24–26 %，2.4 mm
+  - 腮腺 17–44 %，2.9 mm（在皮肤内）；淋巴结 10 个，14–88 %，最远 5.9 mm（都在皮肤内）
+  - 颧大、小肌 7–18 %，1.7 mm；咬肌 4 %，0.8 mm；颞肌 ≤1 %
+  - 不在清单里（即全部在包络内）：二腹肌、下颌舌骨肌、颏舌骨肌、颊肌、颏肌、笑肌、下颌下腺、甲状软骨、环状软骨；舌骨 2 %，0.2 mm
+  - 硬的：额骨 10 %，3.2 mm（皮肤外 1.7：眉间处皮肤薄 1.6 mm 的那一处）；鼻骨 16–17 %，2.1 mm；颧骨 2–4 %，1.7 mm；上颌骨 1–2 %；鼻软骨等 5 个软骨 35–84 %，最远 8.5 mm（鼻软骨按约定可以露出）
+所以要管线拉进去的主要是：帽状腱膜和额肌（或者说明目标在额、颅顶偏低）、胸锁乳突肌和颈阔肌（颈的目标比她的颈细）、眶周和鼻旁的薄肌、腮腺和淋巴结。颌下、颏下的肌肉不在外面——上一版下颌缘下的那道棱不是它们顶出来的，更可能是颈阔肌和收紧后的皮肤本身。
+
+### 3. 我看图看到的（compare-front / threequarter / profile.png，左已安装、右目标；face-pins.png）
+正面：目标的脸窄、下颌向颏收，额和颅顶光滑（没有放松留下的起伏），眼睑和唇光滑；鼻唇沟、口角外侧的沟明显，颞部有浅折痕，下颌缘下一道浅线；颈细而光滑。四分之三侧面：颧骨清楚，颊不再凹陷但偏平，显瘦显老。侧面：鼻梁直、没有台阶，颏的位置自然，颈颏角清楚，唇薄而后缩。针图：26 根针的位置与定义相符，颊部的两对针最长。
+
+### 4. 身高标准差
+rig-shape.json 的 stature 控制量新增 sdM（shape-model.json 里没有按性别的 stature 控制量，没有加）：男 0.0583、女 0.0532 m，以及 sdSource（GB/T 10000-1988 百分位按正态近似反推，见知识库 citation-audit.json）。“±2 SD”即 ±0.117 / ±0.106 m。原来的 0.13 / 0.12 m 不在我的文件里定义；用它的地方请改读 sdM。
+
+
+## Part 9: the clean target for the female face (female-face-target/, kind = target, not installable)
+
+### 0. What is still wrong (first)
+1. As a face: the ridges and bumps of the enclosure are gone, and the outline is an adult with a narrowed jaw and a tapered chin, more female than the installed one; but it is on the gaunt side and looks older: a marked furrow at each nasolabial fold and beside each mouth corner, a faint line still under the mandibular border, shallow creases on the temples and beside the orbits (the rim of the protected lid regions), thin lips. My judgement: a believable adult, leaning female but not obviously so; not a face that reads female at a glance.
+2. The lips are thinner than the depth table: 5.5 mm from the skin to the labial face of the upper incisors (table 13.4) and 8.2 mm at the lower lip (table 14.1). That follows from letting the dentition set the lips, as you asked: the lip surface of the skin is put 1 mm outside her present part "Lip", and that (male-derived) part lies right on the teeth. Following the table instead means bringing the lips 6-8 mm forward and moving the part "Lip" with them. That is yours to decide.
+3. Nose: 7.8 mm of skin at rhinion (table 2.6), because MHR's own nose is kept; nasion 7.4 (table 5.9), glabella 3.6 (table 5.2, thin by 1.6 mm). Alar width 36.5 mm, with no source to compare.
+4. No reference for female facial norms was opened (the one paper found gives aesthetic preferences from edited images, not measurements, and is not used), so bone is the only reference for the ratios. Brow line relative to the supraorbital rim: no source, no number.
+5. Bilateral and cheek depths are from the sex-pooled, population-pooled 2023 T-Table; I did not open the paper again and use the values recorded by the knowledge audit. The midline keeps the female sample of Sonita 2025 (Cambodian).
+6. The thickness rule of the envelope is my assumption (section 2), not from a source.
+7. The new breast and fissure figures (325-340 mL, notch to nipple about 19.05 cm, fissure 2.5-3 mm above the incisal edge) are not applied this round; as you said they wait for the next full re-fit. This target still has 370 mL / 19.8 cm / 2 mm.
+8. "Lower lip height 26 mm" and "intercanthal width 27 mm" are approximations from creases and landmarks of the mesh with coarse definitions; use them for before/after only.
+
+### 1. The target skin
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose] --face --target-only --out female-face-target
+  python tools/bodyshape/face_target_report.py
+skin.obj is the whole-body target skin (BMI 21.60, stature 1.608 m) with no push and no relaxation on head or neck; the manifest has kind = target and basedOn.key = d8e55b8725377511, no fittedTo.
+- 26 landmarks (face-landmarks.json): 10 on the midline (Sonita 2025, women) and 8 bilateral pairs: mid-supraorbital 7.0, mid-infraorbital 6.5, zygion 7.5, gonion 12.5, mid-ramus 19.5, supra-M2 26.0, infra-M2 22.0, mid-mandibular border 11.0 mm (2023 T-Table). Rhinion and the upper and lower lip are not used by the warp, only reported.
+- Head identity (with a prior, bounded at 1.5): [-1.16, -0.04, 0.91, 0.53, -0.51, 0.51, ...], the rest within +/-0.6; then three passes of the smooth warp (sigma 32 mm).
+- Every point used by the warp is within 0.3 mm of the table (pogonion 11.8 / 11.5, gonion 12.6 / 12.5, zygion 7.4-7.5 / 7.5, supra- and infra-M2 26.1 / 26.0 and 21.9 / 22.0). The installed skin has 21.7, 22-24, 11.8, 36-38 and 27-29 mm at those points. The cheeks were not hollow but 10-12 mm too thick; the hollow under the cheekbones seen last time came from having no cheek target, and it is gone.
+- Measurements (bone / installed / target, mm): bizygomatic 117.3 / 140.1 / 131.9; bigonial 87.9 / 126.3 / 108.2; ratio 0.749 / 0.901 / 0.820; total face height 105.1 / 120.7 / 112.1; lower-face share 0.487 -> 0.453; alar width 41.3 -> 36.5; glabella ahead of nasion 0.4 -> 1.7; skin gonial angle (mid-ramus, gonion, gnathion, sagittal) 106.3 -> 106.4 degrees; chin width 45.7 -> 46.2; forehead slope 1.7 -> 4.4 degrees back; intercanthal about 27.1 -> 26.8; between the outer canthi about 78.1 -> 70.7; upper lip height 14.2 -> 14.9; lower lip height 24.7 -> 26.1.
+
+### 2. Deep envelope of head and neck, and the conflict list
+Rule (assumption): d = local distance from the target skin to skull or mandible; the envelope lies t = clip(d - 2.5 mm, 1.5 mm, 6 mm) inside the skin, smoothed. Where the cover is thin, 2.5 mm is left on the bone for a thin muscle or aponeurosis; where it is thick, skin + fat counts as 6 mm. On the head t has p10 / p50 / p90 = 1.5 / 6.0 / 6.0 mm. Outside the head female-target/deep-envelope.obj is kept.
+Conflicts (conflict-list.json, per part: share outside the envelope, p50 / p95 / max, and share and max outside the target skin): 126 deep parts of head and neck have some surface outside (58 muscles, 2 tendons, 38 organs and nodes, 4 glands, 9 brain parts, 10 bones, 5 cartilages).
+  - epicranial aponeurosis 63 %, up to 12.5 mm (11.0 outside the skin); frontalis 36-50 %, 4.6 mm (3.1 outside the skin)
+  - sternocleidomastoid 32-74 %, 14.6 mm (10.3 outside the skin); platysma 3-23 %, 8.1 mm (7.8 outside the skin)
+  - rings of orbicularis oculi 6-87 %, up to 8.5 mm (2.8 outside the skin; the inner ring is not enclosed anyway); nasalis 59-86 %, 4.3 mm; procerus 24-26 %, 2.4 mm
+  - parotid 17-44 %, 2.9 mm (inside the skin); 10 nodes, 14-88 %, up to 5.9 mm (all inside the skin)
+  - zygomaticus major and minor 7-18 %, 1.7 mm; masseter 4 %, 0.8 mm; temporalis at most 1 %
+  - not in the list (wholly inside the envelope): digastric, mylohyoid, geniohyoid, buccinator, mentalis, risorius, submandibular gland, thyroid and cricoid cartilages; hyoid 2 %, 0.2 mm
+  - hard parts: frontal bone 10 %, 3.2 mm (1.7 outside the skin: the spot at glabella where the skin is 1.6 mm thin); nasal bones 16-17 %, 2.1 mm; zygomatic bones 2-4 %, 1.7 mm; maxillae 1-2 %; five cartilages including the nasal ones 35-84 %, up to 8.5 mm (the nasal cartilages may show, by the agreed policy)
+So what the pipeline has to bring in is mainly: epicranial aponeurosis and frontalis (or the target is low on forehead and crown), sternocleidomastoid and platysma (the target neck is slimmer than hers), the thin muscles round the orbit and beside the nose, the parotid and the nodes. The muscles under jaw and chin are not outside: the ridge under the mandibular border last time was not pushed out by them, more likely by platysma and by the tightened skin itself.
+
+### 3. What I saw (compare-front / threequarter / profile.png, installed left and target right; face-pins.png)
+Front: the target face is narrow and tapers to the chin, forehead and crown are smooth (no undulations from relaxation), lids and lips smooth; the nasolabial furrows and those beside the mouth corners are marked, shallow creases on the temples, a faint line under the mandibular border; a slim smooth neck. Three-quarter: clear cheekbones, cheeks no longer hollow but flat; lean and older-looking. Profile: a straight nasal bridge with no step, a natural chin position and a clear angle between chin and neck, thin and retruded lips. Pins: all 26 sit where their definitions say; the two cheek pairs are the longest.
+
+### 4. Stature SD
+The stature control in rig-shape.json now carries sdM (shape-model.json has no per-sex stature control, so nothing was added there) (men 0.0583, women 0.0532 m) and sdSource (implied by the GB/T 10000-1988 percentiles under a normal approximation; see citation-audit.json of the knowledge base). "+/-2 SD" is +/-0.117 / +/-0.106 m. The former 0.13 / 0.12 m is not defined in my files; whatever uses it should read sdM instead.

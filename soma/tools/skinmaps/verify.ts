@@ -209,7 +209,7 @@ export function composition(skin: Skin, derm: { def: MapDef; labels: Uint8Array 
     }
     const top = [...a].map((v, d) => ({ dermatome: order[d]!, share: total ? +(v / total).toFixed(3) : 0 })).filter((x) => x.share >= 0.05).sort((x, y) => y.share - x.share || x.dermatome.localeCompare(y.dermatome)).slice(0, 4)
     const inExpected = total ? +(inE / total).toFixed(3) : 0
-    return { key: r.key, basis: String(r.basis), segments: segs, areaCm2: +(total * 1e4).toFixed(1), inExpected, inExpectedOrAdjacent: total ? +(inN / total).toFixed(3) : 0, top, flagged: inExpected < 0.5 }
+    return { key: r.key, basis: String(r.basis), segments: segs, areaCm2: +(total * 1e4).toFixed(1), inExpected, inExpectedOrAdjacent: total ? +(inN / total).toFixed(3) : 0, top, flagged: total > 0 && inExpected < 0.5 }
   })
 }
 

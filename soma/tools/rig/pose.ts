@@ -366,6 +366,10 @@ export class Poser {
  * Scapulohumeral rhythm helper: splits an elevation of the arm against the trunk between the
  * glenohumeral joint and the shoulder girdle (about 2 : 1, Ludewig et al. 2009). Returns joint
  * angles to merge into a pose. plane: 0 = abduction in the frontal plane, 1 = flexion in the sagittal plane.
+ * 注意：这里只分配角度，三个关节角之和等于 angle，但上臂实际抬高多少取决于各关节轴的方向；
+ * 要让上臂真正到达某个角度，用 armElevation。
+ * Note: this only shares the angle out. The three joint angles sum to `angle`, but how far the arm
+ * really rises depends on the directions of the joint axes; use armElevation to reach a stated angle.
  */
 export function shoulderElevation(side: 'L' | 'R', angle: number, plane: 0 | 1 = 0, girdleShare = 1 / 3): Pose {
   const girdle = angle * girdleShare
@@ -384,6 +388,72 @@ export function shoulderElevation(side: 'L' | 'R', angle: number, plane: 0 | 1 =
     [`ac_${side}`]: [girdle - 6 * k, 0, 21 * k],
     [`sc_${side}`]: [-16 * k * (plane === 0 ? 1 : 0.3), 6 * k, 0],
   }
+}
+
+/**
+ * 把上臂抬到给定的“胸肱角”（弧度）：上臂长轴（盂肱关节中心 → 肘关节中心）与铅垂线的夹角，
+ * 0 = 上臂垂直向下。plane：0 = 冠状面外展，1 = 矢状面前屈。肩带部分仍按 shoulderElevation 的节律给出；
+ * 盂肱关节的屈伸、收展两个角由数值求解，使上臂在摆好之后恰好落在目标方向上。
+ * 之所以要求解：shoulderElevation 只是把角度按比例分给三个关节，而肩锁、胸锁关节的轴并不与冠状面垂直，
+ * 分给肩带的那一份只有一部分变成上臂的抬高（本模型两副身体上，开环的“外展 90°”实际只到 73° 和 79°）；
+ * 静止姿势里上臂已有的外展（由关节几何量出，不必另外记录）也在这里一并扣除。
+ * Raises the arm to a given thoracohumeral angle (radians): the angle between the long axis of the
+ * upper arm (glenohumeral centre → elbow centre) and the vertical, 0 = hanging straight down.
+ * plane: 0 = abduction in the frontal plane, 1 = flexion in the sagittal plane. The girdle moves by
+ * the rhythm of shoulderElevation; the flexion and abduction angles of the glenohumeral joint are
+ * then solved numerically so that the posed upper arm lies exactly along the target direction.
+ * The solve is needed because shoulderElevation merely shares the angle out between three joints,
+ * and the axes of the acromioclavicular and sternoclavicular joints are not perpendicular to the
+ * frontal plane: only part of the girdle's share becomes elevation of the arm (on the two bodies
+ * here the open-loop "abduction 90°" reached 73° and 79°). What the arm is already abducted by in
+ * the rest pose is measured from the joint geometry and taken off here as well.
+ */
+export function armElevation(joints: Joint[], side: 'L' | 'R', angle: number, plane: 0 | 1 = 0, girdleShare = 1 / 3): Pose {
+  const id = `gh_${side}`
+  const gi = joints.findIndex((j) => j.id === id)
+  const gh = joints[gi]
+  const tail = gh && (gh as Joint & { tail?: V3 }).tail
+  const kF = gh ? gh.dofs.findIndex((d) => d.axis === 0) : -1, kA = gh ? gh.dofs.findIndex((d) => d.axis === 1) : -1
+  if (!gh || !tail || kF < 0 || kA < 0) return shoulderElevation(side, angle, plane, girdleShare)
+  const m = side === 'L' ? 1 : -1
+  const d0 = segmentAxis(gh)
+  // 静止时上臂在该平面内已有的抬高 / what the arm is already raised by in this plane at rest
+  const rest = plane === 0 ? Math.atan2(d0[0] * m, -d0[1]) : Math.atan2(d0[2], -d0[1])
+  const base = shoulderElevation(side, angle - rest, plane, girdleShare)
+  const target: V3 = plane === 0 ? [m * Math.sin(angle), -Math.cos(angle), 0] : [0, -Math.cos(angle), Math.sin(angle)]
+  const x = gh.dofs.map(() => 0)
+  x[plane === 0 ? kA : kF] = base[id]![1 - plane]!
+  const miss = (f: number, a: number): V3 => {
+    const g = x.slice()
+    g[kF] = f
+    g[kA] = a
+    const xf = jointTransforms(joints, { ...base, [id]: g })[gi]!
+    const d = norm(sub(xfApply(xf, tail), xfApply(xf, gh.center as V3)))
+    return [d[0] - target[0], d[1] - target[1], d[2] - target[2]]
+  }
+  // 高斯–牛顿法：两个未知量（屈伸、收展），三个残差（方向之差）
+  // Gauss–Newton: two unknowns (flexion, abduction), three residuals (difference of directions)
+  const h = 1e-5
+  for (let it = 0; it < 30; it++) {
+    const r = miss(x[kF]!, x[kA]!)
+    if (Math.hypot(r[0], r[1], r[2]) < 1e-9) break
+    const rf = miss(x[kF]! + h, x[kA]!), ra = miss(x[kF]!, x[kA]! + h)
+    const jf: V3 = [(rf[0] - r[0]) / h, (rf[1] - r[1]) / h, (rf[2] - r[2]) / h], ja: V3 = [(ra[0] - r[0]) / h, (ra[1] - r[1]) / h, (ra[2] - r[2]) / h]
+    const dotv = (p: V3, q: V3): number => p[0] * q[0] + p[1] * q[1] + p[2] * q[2]
+    // 阻尼正规方程 / damped normal equations
+    const aff = dotv(jf, jf) + 1e-9, aaa = dotv(ja, ja) + 1e-9, afa = dotv(jf, ja), bf = -dotv(jf, r), ba = -dotv(ja, r)
+    const det = aff * aaa - afa * afa
+    if (Math.abs(det) < 1e-14) break
+    let df = (bf * aaa - ba * afa) / det, da = (ba * aff - bf * afa) / det
+    const step = Math.hypot(df, da)
+    if (step > 0.5) {
+      df *= 0.5 / step
+      da *= 0.5 / step
+    }
+    x[kF] = x[kF]! + df
+    x[kA] = x[kA]! + da
+  }
+  return { ...base, [id]: x }
 }
 
 /** 把若干姿势合并（同一关节的角度相加）。 Merges poses (angles of the same joint add). */

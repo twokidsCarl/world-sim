@@ -1,0 +1,80 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第八部分：女性的脸——按她的颅骨和女性软组织厚度重做（female-skin-face/，尚不能安装）
+
+### 0. 还不对的地方（先说）
+1. 这个包现在不该安装。量度上脸变窄、变短了（见 §2），但表面质量比已安装的那一版差：下颌缘下方有一圈粗糙的棱（颏下、颌下的肌肉把被收紧的皮肤又顶出来），鼻梁上有一个包（鼻骨点的目标把皮肤拉到鼻骨上 2.6 mm，随后包住鼻骨又把它顶起），两侧眶外和颞部有竖的折痕，上唇前突。这些我在对比图里都看到了。
+2. 它读起来是否像女性：轮廓上比原来像（下颌窄了 20 mm，颏不再是双下巴），但因为上面这些缺陷，我不能说它现在是一张可信的女性的脸。
+3. 来源不完整。正中 11 点的厚度是打开了的（Sonita 等 2025，柬埔寨成年女性 150 人，头颅侧位片；不是中国人群，没有报告 BMI）。两侧 5 点（眶上缘中点 6、眶下缘中点 7、颧点 6、下颌角点 10.5、下颌支中点 17.5 mm）是凭记忆取自 Stephan 的 T-Table（不分性别），原文没能打开，未核实。Cha 2013（韩国成人）的表是图片，没有读到数字。citation-audit.json 当时还不存在。
+4. 没有做到的：女性面部量度的参考值（下颌角宽 / 颧宽比、下面高 / 全面高、鼻宽、内眦间距等）我一篇也没有打开，所以 §2 只有前后对比和骨的数值，没有“女性正常值”一栏；鼻的突度 / 宽度与梨状孔的关系、唇厚和口裂宽度与牙列的关系也没有找来源，鼻和唇仍是 MHR 的。皮肤轮廓的下颌角、颏宽、额部倾斜、内眦间距、唇高没有量。
+5. 眉线相对眶上缘的位置（第 5 项）：我没有打开任何来源，不给数字。
+6. 头部身份系数：按标志点做带先验的岭回归，结果第一个系数 -1.28，其余都在 ±0.5 以内。这是按厚度目标解出来的，不是“MHR 的女性头”；MHR 里身体的性别分量（第 2 分量）不改头，我没有找到一个专门使头女性化的分量。
+
+### 1. 做了什么（可重复运行）
+  python tools/bodyshape/final_female.py --bmi 21.6 --reuse-pose --face --out female-skin-face
+  python tools/bodyshape/enclose_skin.py female --dir female-skin-face
+  python tools/bodyshape/face_checks.py female --dir female-skin-face ; python tools/bodyshape/shape_fields.py female --dir female-skin-face
+  python tools/bodyshape/face_female_checks.py
+新文件 face_female.py（标志点、身份系数、变形）和 face_female_checks.py（量度、面肌清单、头部深层包络、对比图）。内部结构重建后重新导出、去掉 --reuse-pose 再跑即可。
+- 标志点由几何在她的颅骨上找（20 个：鼻根、眉间、鼻骨下端、前鼻棘、上下切牙唇面、颏唇沟、颏前点、颏顶点、颏下点；两侧眶上缘中点、眶下缘中点、颧点、下颌角点、下颌支中点），坐标、方向、厚度和来源在 female-skin-face/face-landmarks.json。颏唇沟在骨面上没有凹陷，取的是颏前点到下切牙牙槽 45 % 高度处。
+- 头部身份系数的线性岭回归（限幅 1.5），然后高斯径向基的平滑变形（σ 32 mm，单点至多 12 mm，位移场再抹平），眼睑区不动。眼、口裂、鼻软骨的做法不变。
+- 目标点到皮肤的距离（mm；负 = 皮肤太厚）：平均头 → 解身份系数后 → 变形后：颏前点 -10.3 → -6.9 → -1.0；颏下点 -8.9 → -6.0 → +0.3；下颌角点 -11.7 / -13.2 → -3.1 / -4.6 → -0.2；颧点 -5.8 → -1.4 → 0.0；鼻骨下端 -7.2 → -6.0 → +0.3；上唇 +4.7 → +5.0 → +2.7（皮肤仍薄 2.7 mm）；鼻根 -2.9 → -2.0；眉间 +2.0 → +1.7。
+
+### 2. 量度（mm；骨 / 已安装的皮肤 / 新皮肤）
+  颧宽（两侧颧点处）        117.3 / 139.9 / 129.3
+  下颌角间宽               87.9 / 126.4 / 106.7
+  下颌角间宽 / 颧宽         0.749 / 0.903 / 0.825
+  全面高（鼻根–颏下点）     105.1 / 120.7 / 116.9
+  下面高（鼻下点–颏下点）     —   / 58.8 / 55.6；占全面高 0.487 → 0.476
+  鼻高 61.9 → 61.3；鼻翼宽 41.3 → 37.2；眉间在鼻根前 0.4 → 0.6；颏前点在鼻下点后 -1.3 → 5.9
+骨已经定下、不能“女性化”的：颧宽、下颌角间宽、面高、眶的位置、眉间和眶上缘的突度、鼻骨和梨状孔、牙列。软组织能改的：各处的厚度、鼻尖和鼻翼、唇、颊。她的骨上下颌角间宽 / 颧宽是 0.75；已安装的皮肤是 0.90，这是“脸方”的主要原因，现在是 0.83。
+最终皮肤在标志点处的覆盖（表值 / 已安装 / 新）：颏前点 11.5 / 21.7 / 约 12；下颌角点 10.5 / 22–24 / 约 11–12；颧点 6.0 / 11.8 / 6.0；颏下点 7.4 / 16.2 / 约 12（被颏下的肌肉顶回去）。面肌上的覆盖中位数：口轮匝肌 11.9（原 13.6），颧大肌 12.5（16.3），咬肌 10.5（17.4），颊肌 17.2（23.0）。BMI 23.7。
+
+### 3. 面肌与目标面；头部的深层包络
+female-skin-face/deep-envelope.obj：头部取“放松之前的新目标皮肤向内 3 mm”（3 mm 是面部皮肤 + 皮下脂肪的假定值），身体沿用 female-target/deep-envelope.obj；同拓扑。在这个包络之外的面部肌肉（占该部件的比例，p95 / 最大 mm），全表在 face-report.json：帽状腱膜 69 %（12.1 / 14.4）、额肌 83–91 %（7.2 / 8.7）、鼻肌 87–92 %（4–7 / 4–9）、提上唇鼻翼肌 54–66 %（3–5）、眼轮匝肌两环 49–70 %（3–4 / 5–6）、降眉间肌 38–47 %、颞顶肌 24–27 %、皱眉肌 34–37 %（约 2）、提上唇肌 19–20 %、颧小肌 11–15 %、颧大肌 7 %。也就是说，在外面的主要是额、眶周和鼻旁的薄肌（3 mm 的假定对它们偏紧，或者目标面在额部偏低），不是咬肌、颊肌、颧大肌——脸颊收不进去不是这些肌肉的体积造成的。
+
+### 4. 我看图看到的（compare-front / threequarter / profile.png，左为已安装、右为新；face-pins.png）
+正面：新脸明显窄，下颌向颏收，耳显得外张；下颌缘下一圈粗糙的暗棱；鼻梁中段有一个包，内眦到鼻根有折痕；两侧眶外有竖纹；唇比原来厚、前突。四分之三侧面：颧骨下方凹陷，偏瘦削；颌下的棱很显眼。侧面：颏的位置和颈颏角比原来好（不再是双下巴），但鼻根处有一个台阶，上唇前突。针图：20 根针都从骨面指到皮肤附近，位置与标志点的定义相符；颏部三根针很近（颏前点、颏唇沟、颏顶点几乎重合）。
+
+### 5. 建议的下一步
+把鼻骨下端和上唇两个目标从变形里去掉（鼻用 MHR 的，唇由牙定）；颏下点改用颏下肌肉面之上的厚度；包住之后对头颈再做一遍低通；两侧厚度换成打开过的女性数据；然后再看图。
+
+
+## Part 8: the female face rebuilt from her skull and female soft-tissue depths (female-skin-face/, not installable yet)
+
+### 0. What is still wrong (first)
+1. This package should not be installed as it is. By measurement the face is narrower and shorter (section 2), but the surface is worse than the installed version: a rough ridge runs under the mandibular border (the muscles under chin and jaw push the tightened skin back out), there is a bump on the nasal bridge (the rhinion target draws the skin to 2.6 mm over the nasal bones and the enclosure of the nasal bones lifts it again), vertical creases beside the orbits and on the temples, and a protruding upper lip. I saw all of these in the comparison renders.
+2. Whether it reads female: in outline more than before (the jaw is 20 mm narrower and the double chin is gone), but with the defects above I cannot call it a believable female face yet.
+3. Sources are incomplete. The 11 midline depths were opened (Sonita et al. 2025, 150 Cambodian adult women, lateral cephalograms; not a Chinese sample, BMI not reported). The 5 bilateral ones (mid-supraorbital 6, mid-infraorbital 7, zygion 6, gonion 10.5, mid-ramus 17.5 mm) are from memory of Stephan's T-Table (sex-pooled); the paper could not be opened, so they are unverified. Cha 2013 (South Korean adults) prints its table as an image and no number was read. citation-audit.json did not exist at the time.
+4. Not done: I opened no reference for female facial norms (bigonial/bizygomatic ratio, lower/total face height, nasal width, intercanthal width and so on), so section 2 has before, after and bone but no "female norm" column; nor did I find sources for nasal projection and width from the piriform aperture or for lip fullness and mouth width from the dentition, and nose and lips are still MHR's. Gonial angle of the skin contour, chin width, forehead slope, intercanthal width and lip height were not measured.
+5. Brow line relative to the supraorbital rim (your item 5): I opened no source and give no number.
+6. Head identity: ridge regression with a prior on the landmark targets gives -1.28 for the first coefficient and under +/-0.5 for all others. It is solved from the depth targets, not "MHR's female head"; the sex component of the body (component 2) does not change the head, and I found no component that specifically feminises it.
+
+### 1. What was done (re-runnable)
+  python tools/bodyshape/final_female.py --bmi 21.6 --reuse-pose --face --out female-skin-face
+  python tools/bodyshape/enclose_skin.py female --dir female-skin-face
+  python tools/bodyshape/face_checks.py female --dir female-skin-face ; python tools/bodyshape/shape_fields.py female --dir female-skin-face
+  python tools/bodyshape/face_female_checks.py
+New files: face_female.py (landmarks, identity, warp) and face_female_checks.py (measurements, muscle list, head envelope, comparison renders). After the internals are rebuilt: export again and run without --reuse-pose.
+- Landmarks are found on her skull by geometry (20: nasion, glabella, rhinion, anterior nasal spine, labial faces of upper and lower incisors, labiomentale, pogonion, gnathion, menton; bilateral mid-supraorbital, mid-infraorbital, zygion, gonion, mid-ramus); coordinates, directions, depths and sources are in female-skin-face/face-landmarks.json. The bone shows no labiomental concavity, so that point is taken at 45 % of the height from pogonion to the lower incisor alveolus.
+- A linear ridge fit of the head identity (bounded at 1.5), then a smooth Gaussian radial-basis warp (sigma 32 mm, at most 12 mm at a landmark, the field smoothed again); the lid regions do not move. Eyes, oral fissure and the nasal-cartilage policy are unchanged.
+- Target-to-skin distance (mm; negative = skin too thick): mean head -> after identity -> after warp: pogonion -10.3 -> -6.9 -> -1.0; menton -8.9 -> -6.0 -> +0.3; gonion -11.7 / -13.2 -> -3.1 / -4.6 -> -0.2; zygion -5.8 -> -1.4 -> 0.0; rhinion -7.2 -> -6.0 -> +0.3; upper lip +4.7 -> +5.0 -> +2.7 (the skin is still 2.7 mm thin); nasion -2.9 -> -2.0; glabella +2.0 -> +1.7.
+
+### 2. Measurements (mm; bone / installed skin / new skin)
+  bizygomatic width (at the zygia)     117.3 / 139.9 / 129.3
+  bigonial width                        87.9 / 126.4 / 106.7
+  bigonial / bizygomatic                0.749 / 0.903 / 0.825
+  total face height (nasion-menton)     105.1 / 120.7 / 116.9
+  lower face height (subnasale-menton)    -   / 58.8 / 55.6; share of total 0.487 -> 0.476
+  nasal height 61.9 -> 61.3; alar width 41.3 -> 37.2; glabella ahead of nasion 0.4 -> 0.6; pogonion behind subnasale -1.3 -> 5.9
+Fixed by her bones, so not honestly "feminisable": bizygomatic and bigonial breadth, face heights, position of the orbits, prominence of glabella and supraorbital rim, nasal bones and piriform aperture, dentition. Soft tissue can change: the depths everywhere, nasal tip and alae, lips, cheeks. On her bones bigonial/bizygomatic is 0.75; the installed skin had 0.90, the main reason the face read square, and it is 0.83 now.
+Cover of the final skin at the landmarks (table / installed / new): pogonion 11.5 / 21.7 / about 12; gonion 10.5 / 22-24 / about 11-12; zygion 6.0 / 11.8 / 6.0; menton 7.4 / 16.2 / about 12 (pushed back by the muscles under the chin). Median cover over facial muscles: orbicularis oris 11.9 (was 13.6), zygomaticus major 12.5 (16.3), masseter 10.5 (17.4), buccinator 17.2 (23.0). BMI 23.7.
+
+### 3. Facial muscles against the target; the deep envelope of the head
+female-skin-face/deep-envelope.obj: on the head it is the new target skin before any relaxation, 3 mm inwards (3 mm is an assumed thickness of facial skin plus subcutaneous fat); the body keeps female-target/deep-envelope.obj; same topology. Facial muscles outside it (share of the part, p95 / max mm), full list in face-report.json: epicranial aponeurosis 69 % (12.1 / 14.4), frontalis 83-91 % (7.2 / 8.7), nasalis 87-92 % (4-7 / 4-9), levator labii superioris alaeque nasi 54-66 % (3-5), both rings of orbicularis oculi 49-70 % (3-4 / 5-6), procerus 38-47 %, temporoparietalis 24-27 %, corrugator 34-37 % (about 2), levator labii superioris 19-20 %, zygomaticus minor 11-15 %, zygomaticus major 7 %. So what lies outside is mainly the thin muscles of forehead, orbit and side of the nose (the assumed 3 mm is tight for them, or the target sits low on the forehead), not masseter, buccinator or zygomaticus major: the bulk of those muscles is not what kept the cheeks from coming in.
+
+### 4. What I saw (compare-front / threequarter / profile.png, installed on the left and new on the right; face-pins.png)
+Front: the new face is clearly narrower and tapers to the chin, the ears look as if they stand out; a rough dark ridge runs under the mandibular border; a bump in the middle of the nasal bridge and creases from inner canthus to nasal root; vertical lines beside the orbits; lips fuller and forward. Three-quarter: a hollow under the cheekbone, on the gaunt side; the ridge under the jaw is conspicuous. Profile: chin position and the angle between chin and neck are better (no double chin), but there is a step at the nasal root and the upper lip protrudes. Pins: all 20 run from bone to about the skin and sit where the landmark definitions say; the three chin pins are close together (pogonion, labiomentale and gnathion nearly coincide).
+
+### 5. Suggested next step
+Take the rhinion and upper-lip targets out of the warp (MHR's nose stays, the teeth set the lips); take the menton depth above the submental muscle surface; low-pass head and neck once more after the enclosure; replace the bilateral depths with opened female data; then look again.

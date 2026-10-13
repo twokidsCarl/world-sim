@@ -2,31 +2,32 @@
  "schema": 1,
  "body": "male",
  "inputs": {
-  "anatomy.json": "63c5a602e77cf0c9",
-  "integumentary.glb": "1877228026410e71",
-  "muscular.glb": "e49d9e38e938c3f0",
-  "skeletal.glb": "9b3ebb9f7e9b0275",
-  "cardiovascular.glb": "39ada7df786603c8",
-  "nervous.glb": "70bbdf09e07f5434",
+  "anatomy.json#parts": "7c9fc3d69d78002f",
+  "integumentary.glb": "a42b95e41b262037",
+  "muscular.glb": "34d6d4fbefac2c2a",
+  "skeletal.glb": "b0cb3b0f29f077d4",
+  "cardiovascular.glb": "fe0588c5cd39a3b8",
+  "nervous.glb": "eb3a9d848d240df2",
   "respiratory.glb": "fa5fd49f2140ec67",
   "digestive.glb": "947b5f969dd939f8",
   "urinary.glb": "42d0cfcccc3c7951",
   "reproductive.glb": "1dcaaf6e6dfc0c8b",
   "endocrine.glb": "e2b8ff856931a867",
-  "lymphatic.glb": "3fe763c68b78402c",
-  "nerves.json": "ad3c9f50464ba751",
-  "../knowledge/relations.json": "903dce7ed75aae4f",
+  "lymphatic.glb": "af8ad72d72e9f60f",
+  "nerves.json": "374be80ae9b49c52",
+  "../knowledge/relations.json#attachments": "f05cb6f5e8ea5879",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
-  "data/curated/rig/joints.json": "b03190c864e48d38",
-  "data/curated/rig/rom.json": "a0d8466cdd47055e",
-  "data/curated/rig/bindings.json": "18246489b7a2a636",
-  "data/curated/rig/overrides.json": "7eaa2f8ae3b733ad",
-  "data/raw/bodyshape/out/male-skin/weights.bin": "ef25104540ecd691",
-  "data/raw/bodyshape/out/male-skin/joints.json": "35d5c915e880898e",
-  "data/raw/bodyshape/out/male-skin/skin.obj": "f3b11a582ca3d781",
-  "data/raw/bodyshape/out/male-skin/manifest.json": "2033a1943b9b5107"
+  "skin-source.u32": "90299c84269593d7",
+  "data/curated/rig/joints.json#data": "4cf0339dc3e6948b",
+  "data/curated/rig/rom.json#data": "70e54d91f6449e27",
+  "data/curated/rig/bindings.json#data": "e6f7c8dd3821a13e",
+  "data/curated/rig/overrides.json#data": "30eec83cd59b485a",
+  "data/raw/bodyshape/out/male-skin-open/weights.bin": "ac997ed66c17f7bb",
+  "data/raw/bodyshape/out/male-skin-open/joints.json": "bb8935a85433c32e",
+  "data/raw/bodyshape/out/male-skin-open/skin.obj": "fb705d96dcca9997",
+  "data/raw/bodyshape/out/male-skin-open/manifest.json#package": "21b32d11e24d8baf"
  },
- "binBytes": 11981196,
+ "binBytes": 12223848,
  "joints": [
   {
    "id": "pelvis",
@@ -1048,18 +1049,18 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Left humerus",
-     "rmsMm": 0.26,
-     "radiusMm": 21.85,
-     "samples": 1906,
+     "rmsMm": 0.27,
+     "radiusMm": 21.97,
+     "samples": 1889,
      "extra": {
       "sphereCoverage": 0.37,
-      "jointGapMm": 0.97
+      "jointGapMm": 1.01
      }
     }
    ],
    "rest": [
-    "flexion / extension: -1.3° at rest (bend of the segment against the vertical)",
-    "abduction / adduction: 10° at rest (bend of the segment against the vertical)"
+    "flexion / extension: -1.4° at rest (bend of the segment against the vertical)",
+    "abduction / adduction: 16.5° at rest (bend of the segment against the vertical)"
    ],
    "warnings": []
   },
@@ -1070,18 +1071,18 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Right humerus",
-     "rmsMm": 0.3,
-     "radiusMm": 21.71,
-     "samples": 2143,
+     "rmsMm": 0.24,
+     "radiusMm": 21.84,
+     "samples": 1730,
      "extra": {
-      "sphereCoverage": 0.42,
-      "jointGapMm": 1
+      "sphereCoverage": 0.33,
+      "jointGapMm": 0.97
      }
     }
    ],
    "rest": [
-    "flexion / extension: -1.3° at rest (bend of the segment against the vertical)",
-    "abduction / adduction: 10° at rest (bend of the segment against the vertical)"
+    "flexion / extension: -1.5° at rest (bend of the segment against the vertical)",
+    "abduction / adduction: 16.5° at rest (bend of the segment against the vertical)"
    ],
    "warnings": []
   },
@@ -1092,47 +1093,47 @@
    "fits": [
     {
      "what": "sphere fitted to the capitulum of the humerus",
-     "rmsMm": 2.33,
-     "radiusMm": 7.51,
-     "samples": 236,
+     "rmsMm": 2.32,
+     "radiusMm": 7.34,
+     "samples": 234,
      "extra": {
-      "sphereCoverage": 0.38
+      "sphereCoverage": 0.39
      }
     },
     {
      "what": "sphere fitted to the trochlear groove where it faces the ulna",
-     "rmsMm": 1.18,
-     "radiusMm": 11.37,
-     "samples": 295
+     "rmsMm": 1.25,
+     "radiusMm": 11.48,
+     "samples": 303
     },
     {
      "what": "widest direction of the distal humerus (epicondylar line), start of the axis search",
      "extra": {
-      "widthToThickness": 2.32
+      "widthToThickness": 2.31
      }
     },
     {
      "what": "functional axis: trochlear notch of the ulna and fovea of the radial head at constant gap to trochlea and capitulum over −15…125° of flexion",
-     "rmsMm": 0.65,
-     "samples": 196,
+     "rmsMm": 0.67,
+     "samples": 197,
      "extra": {
-      "gapChangeRmsBeforeMm": 2.97,
-      "axisTurnedDeg": 2.2,
-      "axisShiftedMm": 17.94
+      "gapChangeRmsBeforeMm": 2.98,
+      "axisTurnedDeg": 1.8,
+      "axisShiftedMm": 17.8
      }
     },
     {
      "what": "comparison with the line through the capitulum and trochlea centres (ISB) and with the humeral shaft",
      "extra": {
-      "angleToTwoCentreLineDeg": 54.9,
-      "capitulumCentreOffAxisMm": 7.85,
-      "angleToEpicondylarLineDeg": 2.2,
-      "angleToShaftDeg": 88.1
+      "angleToTwoCentreLineDeg": 54.1,
+      "capitulumCentreOffAxisMm": 8.08,
+      "angleToEpicondylarLineDeg": 1.8,
+      "angleToShaftDeg": 88.5
      }
     }
    ],
    "rest": [
-    "flexion / extension: 11.6° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 11.7° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1143,47 +1144,47 @@
    "fits": [
     {
      "what": "sphere fitted to the capitulum of the humerus",
-     "rmsMm": 2.3,
-     "radiusMm": 7.46,
-     "samples": 264,
+     "rmsMm": 2.26,
+     "radiusMm": 7.47,
+     "samples": 255,
      "extra": {
-      "sphereCoverage": 0.4
+      "sphereCoverage": 0.38
      }
     },
     {
      "what": "sphere fitted to the trochlear groove where it faces the ulna",
      "rmsMm": 1.37,
-     "radiusMm": 11.67,
+     "radiusMm": 11.69,
      "samples": 363
     },
     {
      "what": "widest direction of the distal humerus (epicondylar line), start of the axis search",
      "extra": {
-      "widthToThickness": 2.33
+      "widthToThickness": 2.34
      }
     },
     {
      "what": "functional axis: trochlear notch of the ulna and fovea of the radial head at constant gap to trochlea and capitulum over −15…125° of flexion",
-     "rmsMm": 0.64,
+     "rmsMm": 0.63,
      "samples": 155,
      "extra": {
-      "gapChangeRmsBeforeMm": 2.94,
-      "axisTurnedDeg": 2.2,
-      "axisShiftedMm": 17.64
+      "gapChangeRmsBeforeMm": 2.93,
+      "axisTurnedDeg": 1.3,
+      "axisShiftedMm": 17.47
      }
     },
     {
      "what": "comparison with the line through the capitulum and trochlea centres (ISB) and with the humeral shaft",
      "extra": {
-      "angleToTwoCentreLineDeg": 56.4,
-      "capitulumCentreOffAxisMm": 9.49,
-      "angleToEpicondylarLineDeg": 2.2,
-      "angleToShaftDeg": 88.2
+      "angleToTwoCentreLineDeg": 56.3,
+      "capitulumCentreOffAxisMm": 8.89,
+      "angleToEpicondylarLineDeg": 1.3,
+      "angleToShaftDeg": 89.7
      }
     }
    ],
    "rest": [
-    "flexion / extension: 11.7° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 11.9° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1194,20 +1195,20 @@
    "fits": [
     {
      "what": "centre of the radial head (axis of revolution of its rim)",
-     "rmsMm": 1.5,
-     "radiusMm": 6.77,
-     "samples": 766
+     "rmsMm": 1.48,
+     "radiusMm": 6.63,
+     "samples": 767
     },
     {
      "what": "centre of the ulnar head (sphere fitted to its seat facing the radius)",
-     "rmsMm": 0.29,
-     "radiusMm": 6.38,
+     "rmsMm": 0.28,
+     "radiusMm": 6.45,
      "samples": 153
     },
     {
      "what": "distance of the capitulum centre from the forearm rotation axis (should be small: the axis is said to pass through it)",
      "extra": {
-      "distanceMm": 3.43
+      "distanceMm": 3.12
      }
     }
    ],
@@ -1223,25 +1224,25 @@
    "fits": [
     {
      "what": "centre of the radial head (axis of revolution of its rim)",
-     "rmsMm": 1.34,
-     "radiusMm": 8.69,
-     "samples": 763
+     "rmsMm": 1.32,
+     "radiusMm": 9.14,
+     "samples": 747
     },
     {
      "what": "centre of the ulnar head (sphere fitted to its seat facing the radius)",
      "rmsMm": 0.23,
-     "radiusMm": 7.38,
+     "radiusMm": 7.46,
      "samples": 154
     },
     {
      "what": "distance of the capitulum centre from the forearm rotation axis (should be small: the axis is said to pass through it)",
      "extra": {
-      "distanceMm": 3.75
+      "distanceMm": 3.91
      }
     }
    ],
    "rest": [
-    "pronation / supination: -86.1° at rest in the clinical convention (0 = thumb-up neutral, −90 = full supination): the wrist's transverse line is 3.9° from the elbow axis"
+    "pronation / supination: -86.5° at rest in the clinical convention (0 = thumb-up neutral, −90 = full supination): the wrist's transverse line is 3.5° from the elbow axis"
    ],
    "warnings": []
   },
@@ -1261,8 +1262,8 @@
     }
    ],
    "rest": [
-    "flexion / extension: 0.4° at rest (bend of the segment against the proximal segment)",
-    "ulnar deviation / radial deviation: -2° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 0.3° at rest (bend of the segment against the proximal segment)",
+    "ulnar deviation / radial deviation: -1.9° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1283,7 +1284,7 @@
    ],
    "rest": [
     "flexion / extension: -0.5° at rest (bend of the segment against the proximal segment)",
-    "ulnar deviation / radial deviation: -1.6° at rest (bend of the segment against the proximal segment)"
+    "ulnar deviation / radial deviation: -1.7° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1310,7 +1311,7 @@
    "fits": [
     {
      "what": "contact patch between the first metacarpal and the trapezium",
-     "samples": 377,
+     "samples": 374,
      "extra": {
       "closestApproachMm": 0
      }
@@ -1327,8 +1328,8 @@
     {
      "what": "sphere fitted to the head of Left first metacarpal bone",
      "rmsMm": 0.39,
-     "radiusMm": 7.59,
-     "samples": 335,
+     "radiusMm": 7.58,
+     "samples": 334,
      "extra": {
       "sphereCoverage": 0.37
      }
@@ -1354,16 +1355,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Right first metacarpal bone",
-     "rmsMm": 0.37,
-     "radiusMm": 8.16,
-     "samples": 291,
+     "rmsMm": 0.36,
+     "radiusMm": 8.18,
+     "samples": 284,
      "extra": {
       "sphereCoverage": 0.24
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 1306,
+     "samples": 1307,
      "extra": {
       "widthToThickness": 1.24,
       "rule": "widest direction"
@@ -1382,16 +1383,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Proximal phalanx of left thumb",
-     "rmsMm": 0.19,
+     "rmsMm": 0.18,
      "radiusMm": 5.76,
-     "samples": 137,
+     "samples": 136,
      "extra": {
       "sphereCoverage": 0.24
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 795,
+     "samples": 792,
      "extra": {
       "widthToThickness": 1.44,
       "rule": "widest direction"
@@ -1402,9 +1403,9 @@
      "rmsMm": 0.28,
      "samples": 68,
      "extra": {
-      "gapChangeRmsBeforeMm": 1.1,
-      "axisTurnedDeg": 4.1,
-      "axisShiftedMm": 2.09
+      "gapChangeRmsBeforeMm": 1.09,
+      "axisTurnedDeg": 4,
+      "axisShiftedMm": 2.07
      }
     }
    ],
@@ -1440,14 +1441,14 @@
      "rmsMm": 0.26,
      "samples": 79,
      "extra": {
-      "gapChangeRmsBeforeMm": 1.16,
+      "gapChangeRmsBeforeMm": 1.15,
       "axisTurnedDeg": 3.2,
       "axisShiftedMm": 2.02
      }
     }
    ],
    "rest": [
-    "flexion / extension: 3° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 2.9° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1458,16 +1459,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Left second metacarpal bone",
-     "rmsMm": 0.21,
-     "radiusMm": 7.13,
-     "samples": 273,
+     "rmsMm": 0.2,
+     "radiusMm": 7.22,
+     "samples": 262,
      "extra": {
-      "sphereCoverage": 0.35
+      "sphereCoverage": 0.33
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 1169,
+     "samples": 1172,
      "extra": {
       "widthToThickness": 1.11,
       "rule": "from pip2_L"
@@ -1486,16 +1487,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Left third metacarpal bone",
-     "rmsMm": 0.36,
-     "radiusMm": 6.78,
-     "samples": 378,
+     "rmsMm": 0.35,
+     "radiusMm": 6.81,
+     "samples": 372,
      "extra": {
-      "sphereCoverage": 0.53
+      "sphereCoverage": 0.52
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 1060,
+     "samples": 1063,
      "extra": {
       "widthToThickness": 1.07,
       "rule": "from pip3_L"
@@ -1514,16 +1515,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Left fourth metacarpal bone",
-     "rmsMm": 0.25,
-     "radiusMm": 6.66,
-     "samples": 340,
+     "rmsMm": 0.27,
+     "radiusMm": 6.65,
+     "samples": 352,
      "extra": {
-      "sphereCoverage": 0.46
+      "sphereCoverage": 0.48
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 925,
+     "samples": 928,
      "extra": {
       "widthToThickness": 1.08,
       "rule": "from pip4_L"
@@ -1542,7 +1543,7 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Left fifth metacarpal bone",
-     "rmsMm": 0.2,
+     "rmsMm": 0.19,
      "radiusMm": 6.08,
      "samples": 283,
      "extra": {
@@ -1551,7 +1552,7 @@
     },
     {
      "what": "initial flexion axis",
-     "samples": 900,
+     "samples": 899,
      "extra": {
       "widthToThickness": 1.07,
       "rule": "from pip5_L"
@@ -1571,15 +1572,15 @@
     {
      "what": "sphere fitted to the head of Right second metacarpal bone",
      "rmsMm": 0.18,
-     "radiusMm": 6.72,
-     "samples": 258,
+     "radiusMm": 6.77,
+     "samples": 259,
      "extra": {
       "sphereCoverage": 0.38
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 1161,
+     "samples": 1163,
      "extra": {
       "widthToThickness": 1.12,
       "rule": "from pip2_R"
@@ -1587,7 +1588,7 @@
     }
    ],
    "rest": [
-    "flexion / extension: 12.5° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 12.4° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1598,16 +1599,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Right third metacarpal bone",
-     "rmsMm": 0.23,
-     "radiusMm": 6.73,
-     "samples": 271,
+     "rmsMm": 0.24,
+     "radiusMm": 6.74,
+     "samples": 278,
      "extra": {
-      "sphereCoverage": 0.38
+      "sphereCoverage": 0.39
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 1103,
+     "samples": 1108,
      "extra": {
       "widthToThickness": 1.07,
       "rule": "from pip3_R"
@@ -1615,7 +1616,7 @@
     }
    ],
    "rest": [
-    "flexion / extension: 13° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 13.1° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1635,7 +1636,7 @@
     },
     {
      "what": "initial flexion axis",
-     "samples": 917,
+     "samples": 913,
      "extra": {
       "widthToThickness": 1.07,
       "rule": "from pip4_R"
@@ -1663,7 +1664,7 @@
     },
     {
      "what": "initial flexion axis",
-     "samples": 892,
+     "samples": 893,
      "extra": {
       "widthToThickness": 1.09,
       "rule": "from pip5_R"
@@ -1738,11 +1739,11 @@
     {
      "what": "functional axis: base of the distal bone at constant gap to the head over -10…95°",
      "rmsMm": 0.25,
-     "samples": 93,
+     "samples": 92,
      "extra": {
       "gapChangeRmsBeforeMm": 1.31,
       "axisTurnedDeg": 1.6,
-      "axisShiftedMm": 1.86
+      "axisShiftedMm": 1.85
      }
     }
    ],
@@ -1779,13 +1780,13 @@
      "samples": 84,
      "extra": {
       "gapChangeRmsBeforeMm": 1.28,
-      "axisTurnedDeg": 0.8,
+      "axisTurnedDeg": 1,
       "axisShiftedMm": 1.78
      }
     }
    ],
    "rest": [
-    "flexion / extension: 14.8° at rest (bend of the segment against the proximal segment)"
+    "flexion / extension: 14.7° at rest (bend of the segment against the proximal segment)"
    ],
    "warnings": []
   },
@@ -1796,11 +1797,11 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Proximal phalanx of left little finger",
-     "rmsMm": 0.2,
-     "radiusMm": 4.26,
-     "samples": 124,
+     "rmsMm": 0.18,
+     "radiusMm": 4.22,
+     "samples": 116,
      "extra": {
-      "sphereCoverage": 0.4
+      "sphereCoverage": 0.38
      }
     },
     {
@@ -1816,9 +1817,9 @@
      "rmsMm": 0.24,
      "samples": 75,
      "extra": {
-      "gapChangeRmsBeforeMm": 0.87,
-      "axisTurnedDeg": 1.6,
-      "axisShiftedMm": 1.2
+      "gapChangeRmsBeforeMm": 0.89,
+      "axisTurnedDeg": 1.8,
+      "axisShiftedMm": 1.25
      }
     }
    ],
@@ -1849,7 +1850,7 @@
     },
     {
      "what": "initial flexion axis",
-     "samples": 752,
+     "samples": 749,
      "extra": {
       "widthToThickness": 1.36,
       "rule": "widest direction"
@@ -1878,16 +1879,16 @@
    "fits": [
     {
      "what": "sphere fitted to the head of Proximal phalanx of right middle finger",
-     "rmsMm": 0.28,
+     "rmsMm": 0.27,
      "radiusMm": 5.78,
-     "samples": 210,
+     "samples": 208,
      "extra": {
       "sphereCoverage": 0.39
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 857,
+     "samples": 858,
      "extra": {
       "widthToThickness": 1.32,
       "rule": "widest direction"
@@ -1899,7 +1900,7 @@
      "samples": 88,
      "extra": {
       "gapChangeRmsBeforeMm": 1.36,
-      "axisTurnedDeg": 1.6,
+      "axisTurnedDeg": 0.9,
       "axisShiftedMm": 1.92
      }
     }
@@ -1917,15 +1918,15 @@
     {
      "what": "sphere fitted to the head of Proximal phalanx of right ring finger",
      "rmsMm": 0.28,
-     "radiusMm": 5.26,
-     "samples": 213,
+     "radiusMm": 5.25,
+     "samples": 217,
      "extra": {
       "sphereCoverage": 0.42
      }
     },
     {
      "what": "initial flexion axis",
-     "samples": 692,
+     "samples": 698,
      "extra": {
       "widthToThickness": 1.31,
       "rule": "widest direction"
@@ -1936,9 +1937,9 @@
      "rmsMm": 0.28,
      "samples": 66,
      "extra": {
-      "gapChangeRmsBeforeMm": 1.28,
-      "axisTurnedDeg": 1.4,
-      "axisShiftedMm": 1.73
+      "gapChangeRmsBeforeMm": 1.27,
+      "axisTurnedDeg": 1.5,
+      "axisShiftedMm": 1.72
      }
     }
    ],
@@ -2064,7 +2065,7 @@
      "extra": {
       "gapChangeRmsBeforeMm": 0.15,
       "axisTurnedDeg": 1.2,
-      "axisShiftedMm": 0.26
+      "axisShiftedMm": 0.25
      }
     }
    ],
@@ -2284,7 +2285,7 @@
      "extra": {
       "gapChangeRmsBeforeMm": 0.16,
       "axisTurnedDeg": 2.2,
-      "axisShiftedMm": 0.2
+      "axisShiftedMm": 0.19
      }
     }
    ],
@@ -3472,25 +3473,25 @@
  ],
  "field": {
   "skinWalls": 1,
-  "airVoxelsRemoved": 48520,
-  "stepsClosed": 2468,
+  "airVoxelsRemoved": 48447,
+  "stepsClosed": 1866,
   "plug": 0,
   "voxel": 0.005,
   "dims": [
-   141,
+   168,
    351,
-   64
+   62
   ],
-  "insideVoxels": 565846,
-  "labelledVoxels": 565859,
+  "insideVoxels": 563903,
+  "labelledVoxels": 563949,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 10517
+  "buildMs": 30275
  },
  "bindings": {
   "field": {
    "parts": 1835,
-   "vertices": 465976,
+   "vertices": 465967,
    "rigid": 266
   },
   "rigid": {
@@ -3500,17 +3501,17 @@
   },
   "attach→field": {
    "parts": 193,
-   "vertices": 9376,
-   "rigid": 160
+   "vertices": 9045,
+   "rigid": 161
   },
   "attach": {
    "parts": 641,
-   "vertices": 335017,
+   "vertices": 334907,
    "rigid": 15
   },
   "external": {
    "parts": 1,
-   "vertices": 30218,
+   "vertices": 50889,
    "rigid": 0
   },
   "bone": {
@@ -3527,7 +3528,7 @@
  "muscles": {
   "parts": 490,
   "linesEstablished": 371,
-  "withLine": 227,
+  "withLine": 226,
   "ends": {
    "knowledge": 192,
    "knowledge+geometry": 122,
@@ -3836,12 +3837,12 @@
      {
       "bone": "Right fourth costal cartilage",
       "kind": "origin",
-      "mm": 58
+      "mm": 59
      },
      {
       "bone": "Right fifth costal cartilage",
       "kind": "origin",
-      "mm": 17
+      "mm": 18
      },
      {
       "bone": "Right clavicle",
@@ -3887,7 +3888,7 @@
      {
       "bone": "Left fourth costal cartilage",
       "kind": "origin",
-      "mm": 57
+      "mm": 59
      },
      {
       "bone": "Left fifth costal cartilage",
@@ -4100,13 +4101,13 @@
      {
       "bone": "Distal phalanx of left middle finger",
       "kind": "insertion",
-      "mm": 23,
+      "mm": 22,
       "via": "closest point on the bone"
      },
      {
       "bone": "Distal phalanx of left ring finger",
       "kind": "insertion",
-      "mm": 20,
+      "mm": 21,
       "via": "closest point on the bone"
      }
     ]
@@ -4206,7 +4207,7 @@
      {
       "bone": "Left radius",
       "kind": "insertion",
-      "mm": 36,
+      "mm": 38,
       "via": "closest point on the bone"
      }
     ]
@@ -6654,18 +6655,18 @@
   },
   {
    "part": "FJ1447",
-   "gain": 0.7,
-   "probes": 17,
-   "rmsAfterPct": 26.5,
-   "rmsBeforePct": 24.3,
+   "gain": 0.93,
+   "probes": 15,
+   "rmsAfterPct": 32.2,
+   "rmsBeforePct": 27,
    "kept": true
   },
   {
    "part": "FJ1447M",
-   "gain": 0.74,
-   "probes": 17,
-   "rmsAfterPct": 26.6,
-   "rmsBeforePct": 24.4,
+   "gain": 0.81,
+   "probes": 15,
+   "rmsAfterPct": 29.8,
+   "rmsBeforePct": 26,
    "kept": true
   },
   {
@@ -6846,18 +6847,18 @@
   },
   {
    "part": "FJ1464",
-   "gain": 0.05,
-   "probes": 19,
-   "rmsAfterPct": 4.5,
-   "rmsBeforePct": 4.5,
+   "gain": 0.01,
+   "probes": 15,
+   "rmsAfterPct": 5.3,
+   "rmsBeforePct": 5.3,
    "kept": false
   },
   {
    "part": "FJ1464M",
-   "gain": 0.05,
-   "probes": 19,
-   "rmsAfterPct": 4.7,
-   "rmsBeforePct": 4.7,
+   "gain": 0.04,
+   "probes": 18,
+   "rmsAfterPct": 5.3,
+   "rmsBeforePct": 5.3,
    "kept": false
   },
   {
@@ -6873,47 +6874,47 @@
    "gain": 1.25,
    "probes": 3,
    "rmsAfterPct": 4.3,
-   "rmsBeforePct": 18.2,
+   "rmsBeforePct": 18.3,
    "kept": true
   },
   {
    "part": "FJ1467",
-   "gain": 0.43,
-   "probes": 6,
-   "rmsAfterPct": 12.2,
-   "rmsBeforePct": 16.9,
+   "gain": 0.45,
+   "probes": 9,
+   "rmsAfterPct": 11.9,
+   "rmsBeforePct": 15.3,
    "kept": true
   },
   {
    "part": "FJ1467M",
-   "gain": 0.44,
-   "probes": 6,
-   "rmsAfterPct": 12,
-   "rmsBeforePct": 17.4,
+   "gain": 0.46,
+   "probes": 9,
+   "rmsAfterPct": 12.5,
+   "rmsBeforePct": 16.1,
    "kept": true
   },
   {
    "part": "FJ1468",
-   "gain": 0.39,
+   "gain": 0.42,
    "probes": 11,
-   "rmsAfterPct": 11.7,
-   "rmsBeforePct": 17.3,
+   "rmsAfterPct": 12.6,
+   "rmsBeforePct": 18.4,
    "kept": true
   },
   {
    "part": "FJ1468M",
-   "gain": 0.43,
+   "gain": 0.44,
    "probes": 11,
-   "rmsAfterPct": 12.8,
-   "rmsBeforePct": 18.4,
+   "rmsAfterPct": 12.9,
+   "rmsBeforePct": 18.9,
    "kept": true
   },
   {
    "part": "FJ1469",
    "gain": 1.25,
    "probes": 8,
-   "rmsAfterPct": 16.6,
-   "rmsBeforePct": 24.2,
+   "rmsAfterPct": 15.7,
+   "rmsBeforePct": 23.3,
    "kept": true
   },
   {
@@ -6952,23 +6953,23 @@
    "part": "FJ1472M",
    "gain": 0.09,
    "probes": 6,
-   "rmsAfterPct": 1.3,
-   "rmsBeforePct": 1.5,
+   "rmsAfterPct": 1.4,
+   "rmsBeforePct": 1.6,
    "kept": false
   },
   {
    "part": "FJ1473",
-   "gain": 0.67,
+   "gain": 0.31,
    "probes": 3,
-   "rmsAfterPct": 1.5,
-   "rmsBeforePct": 3.2,
+   "rmsAfterPct": 0.7,
+   "rmsBeforePct": 1.5,
    "kept": true
   },
   {
    "part": "FJ1473M",
-   "gain": 0.65,
+   "gain": 0.64,
    "probes": 3,
-   "rmsAfterPct": 1.7,
+   "rmsAfterPct": 1.6,
    "rmsBeforePct": 3.2,
    "kept": true
   },
@@ -6976,53 +6977,53 @@
    "part": "FJ1474",
    "gain": 1.25,
    "probes": 4,
-   "rmsAfterPct": 39.1,
-   "rmsBeforePct": 41,
+   "rmsAfterPct": 40.3,
+   "rmsBeforePct": 42.8,
    "kept": true
   },
   {
    "part": "FJ1474M",
    "gain": 1.25,
    "probes": 4,
-   "rmsAfterPct": 37.3,
-   "rmsBeforePct": 38.4,
+   "rmsAfterPct": 38.4,
+   "rmsBeforePct": 40.1,
    "kept": true
   },
   {
    "part": "FJ1475",
    "gain": 0.07,
-   "probes": 9,
-   "rmsAfterPct": 2,
-   "rmsBeforePct": 2.3,
-   "kept": false
-  },
-  {
-   "part": "FJ1475M",
-   "gain": 0.07,
    "probes": 10,
-   "rmsAfterPct": 2.2,
+   "rmsAfterPct": 2.3,
    "rmsBeforePct": 2.5,
    "kept": false
   },
   {
+   "part": "FJ1475M",
+   "gain": 0.09,
+   "probes": 9,
+   "rmsAfterPct": 2.2,
+   "rmsBeforePct": 2.6,
+   "kept": false
+  },
+  {
    "part": "FJ1477",
-   "gain": 0.26,
+   "gain": 0.2,
    "probes": 2,
-   "rmsAfterPct": 0.7,
-   "rmsBeforePct": 2,
-   "kept": true
+   "rmsAfterPct": 0.2,
+   "rmsBeforePct": 1.4,
+   "kept": false
   },
   {
    "part": "FJ1477M",
-   "gain": 0.1,
+   "gain": 0.14,
    "probes": 2,
    "rmsAfterPct": 0.1,
-   "rmsBeforePct": 0.7,
+   "rmsBeforePct": 0.9,
    "kept": false
   },
   {
    "part": "FJ1478",
-   "gain": 0.14,
+   "gain": 0.13,
    "probes": 7,
    "rmsAfterPct": 0.8,
    "rmsBeforePct": 1.9,
@@ -7030,49 +7031,49 @@
   },
   {
    "part": "FJ1478M",
-   "gain": 0.13,
+   "gain": 0.11,
    "probes": 7,
    "rmsAfterPct": 0.7,
-   "rmsBeforePct": 1.8,
+   "rmsBeforePct": 1.6,
    "kept": false
   },
   {
    "part": "FJ1479",
    "gain": 1.25,
-   "probes": 9,
-   "rmsAfterPct": 33,
-   "rmsBeforePct": 52.8,
+   "probes": 10,
+   "rmsAfterPct": 21.6,
+   "rmsBeforePct": 37.3,
    "kept": true
   },
   {
    "part": "FJ1479M",
    "gain": 1.25,
-   "probes": 9,
-   "rmsAfterPct": 33.8,
-   "rmsBeforePct": 53,
+   "probes": 10,
+   "rmsAfterPct": 23.3,
+   "rmsBeforePct": 38.5,
    "kept": true
   },
   {
    "part": "FJ1480",
-   "gain": 0.84,
+   "gain": 0.88,
    "probes": 3,
-   "rmsAfterPct": 3.2,
-   "rmsBeforePct": 12.6,
+   "rmsAfterPct": 3.5,
+   "rmsBeforePct": 13.3,
    "kept": true
   },
   {
    "part": "FJ1480M",
-   "gain": 0.85,
+   "gain": 0.91,
    "probes": 3,
-   "rmsAfterPct": 3.4,
-   "rmsBeforePct": 12.6,
+   "rmsAfterPct": 3.8,
+   "rmsBeforePct": 13.4,
    "kept": true
   },
   {
    "part": "FJ1481",
    "gain": 1.25,
    "probes": 10,
-   "rmsAfterPct": 13.7,
+   "rmsAfterPct": 13.8,
    "rmsBeforePct": 23.1,
    "kept": true
   },
@@ -7080,15 +7081,15 @@
    "part": "FJ1481M",
    "gain": 1.25,
    "probes": 10,
-   "rmsAfterPct": 13.4,
-   "rmsBeforePct": 22.9,
+   "rmsAfterPct": 13.8,
+   "rmsBeforePct": 23.1,
    "kept": true
   },
   {
    "part": "FJ1483",
    "gain": 1.25,
    "probes": 4,
-   "rmsAfterPct": 7.3,
+   "rmsAfterPct": 7.4,
    "rmsBeforePct": 14.2,
    "kept": true
   },
@@ -7097,7 +7098,7 @@
    "gain": 1.25,
    "probes": 4,
    "rmsAfterPct": 7.5,
-   "rmsBeforePct": 14.3,
+   "rmsBeforePct": 14.2,
    "kept": true
   },
   {
@@ -7120,24 +7121,24 @@
    "part": "FJ1485",
    "gain": 1.25,
    "probes": 3,
-   "rmsAfterPct": 17.8,
-   "rmsBeforePct": 29.9,
+   "rmsAfterPct": 16.6,
+   "rmsBeforePct": 28.6,
    "kept": true
   },
   {
    "part": "FJ1485M",
    "gain": 1.25,
    "probes": 3,
-   "rmsAfterPct": 16,
-   "rmsBeforePct": 28.7,
+   "rmsAfterPct": 16.6,
+   "rmsBeforePct": 28.4,
    "kept": true
   },
   {
    "part": "FJ1486",
-   "gain": 0.29,
+   "gain": 0.33,
    "probes": 2,
-   "rmsAfterPct": 1.6,
-   "rmsBeforePct": 11.4,
+   "rmsAfterPct": 1.9,
+   "rmsBeforePct": 12.4,
    "kept": true
   },
   {
@@ -7150,82 +7151,82 @@
   },
   {
    "part": "FJ1487",
-   "gain": 1.25,
+   "gain": 1.17,
    "probes": 2,
-   "rmsAfterPct": 5,
-   "rmsBeforePct": 34.6,
+   "rmsAfterPct": 4.3,
+   "rmsBeforePct": 31.5,
    "kept": true
   },
   {
    "part": "FJ1487M",
-   "gain": 1.16,
+   "gain": 1.2,
    "probes": 2,
-   "rmsAfterPct": 4.6,
-   "rmsBeforePct": 32.4,
+   "rmsAfterPct": 4.7,
+   "rmsBeforePct": 33.3,
    "kept": true
   },
   {
    "part": "FJ1488",
-   "gain": 0.44,
+   "gain": 0.49,
    "probes": 8,
-   "rmsAfterPct": 27.7,
-   "rmsBeforePct": 26.5,
+   "rmsAfterPct": 24.7,
+   "rmsBeforePct": 23.8,
    "kept": true
   },
   {
    "part": "FJ1488M",
-   "gain": 0.49,
+   "gain": 0.57,
    "probes": 8,
-   "rmsAfterPct": 25.8,
-   "rmsBeforePct": 25,
+   "rmsAfterPct": 22.7,
+   "rmsBeforePct": 22.3,
    "kept": true
   },
   {
    "part": "FJ1489",
    "gain": 0,
    "probes": 3,
-   "rmsAfterPct": 5.1,
-   "rmsBeforePct": 5.1,
+   "rmsAfterPct": 5.5,
+   "rmsBeforePct": 5.5,
    "kept": false
   },
   {
    "part": "FJ1489M",
    "gain": 0,
-   "probes": 2,
-   "rmsAfterPct": 6.9,
-   "rmsBeforePct": 6.9,
+   "probes": 3,
+   "rmsAfterPct": 5.8,
+   "rmsBeforePct": 5.8,
    "kept": false
   },
   {
    "part": "FJ1490",
    "gain": 0,
    "probes": 3,
-   "rmsAfterPct": 2.7,
-   "rmsBeforePct": 2.7,
+   "rmsAfterPct": 4.3,
+   "rmsBeforePct": 4.3,
    "kept": false
   },
   {
    "part": "FJ1490M",
    "gain": 0,
    "probes": 3,
-   "rmsAfterPct": 2.4,
-   "rmsBeforePct": 2.4,
+   "rmsAfterPct": 4.2,
+   "rmsBeforePct": 4.2,
    "kept": false
   },
   {
    "part": "FJ1491",
-   "gain": 0.07,
+   "gain": 0.04,
    "probes": 8,
-   "rmsAfterPct": 2.4,
-   "rmsBeforePct": 2.5,
+   "rmsAfterPct": 1.4,
+   "rmsBeforePct": 1.5,
    "kept": false
   },
   {
    "part": "FJ1491M",
-   "gain": 0.01,
+   "gain": 0.05,
    "probes": 8,
-   "rmsAfterPct": 0.8,
-   "rmsBeforePct": 0.8,
+   "rmsAfterPct": 2,
+   "rmsBeforePct": 2.1,
    "kept": false
   },
   {
@@ -7238,10 +7239,10 @@
   },
   {
    "part": "FJ1492M",
-   "gain": 0.01,
+   "gain": 0,
    "probes": 6,
-   "rmsAfterPct": 1.7,
-   "rmsBeforePct": 1.7,
+   "rmsAfterPct": 4.1,
+   "rmsBeforePct": 4.1,
    "kept": false
   },
   {
@@ -7254,10 +7255,10 @@
   },
   {
    "part": "FJ1493M",
-   "gain": 0.09,
+   "gain": 0.08,
    "probes": 9,
-   "rmsAfterPct": 21.2,
-   "rmsBeforePct": 20.8,
+   "rmsAfterPct": 20.2,
+   "rmsBeforePct": 19.8,
    "kept": false
   },
   {
@@ -7270,9 +7271,9 @@
   },
   {
    "part": "FJ1494M",
-   "gain": 0.09,
+   "gain": 0.08,
    "probes": 11,
-   "rmsAfterPct": 1.8,
+   "rmsAfterPct": 1.9,
    "rmsBeforePct": 2.1,
    "kept": false
   },
@@ -7288,40 +7289,40 @@
    "part": "FJ1495M",
    "gain": 0,
    "probes": 9,
-   "rmsAfterPct": 25.3,
-   "rmsBeforePct": 25.3,
+   "rmsAfterPct": 25.7,
+   "rmsBeforePct": 25.7,
    "kept": false
   },
   {
    "part": "FJ1496",
-   "gain": 0.47,
+   "gain": 0.62,
    "probes": 3,
-   "rmsAfterPct": 2.5,
-   "rmsBeforePct": 3.6,
+   "rmsAfterPct": 3.4,
+   "rmsBeforePct": 5,
    "kept": true
   },
   {
    "part": "FJ1496M",
-   "gain": 0.12,
+   "gain": 0,
    "probes": 4,
-   "rmsAfterPct": 1.3,
-   "rmsBeforePct": 1.4,
+   "rmsAfterPct": 1.1,
+   "rmsBeforePct": 1.1,
    "kept": false
   },
   {
    "part": "FJ1497",
    "gain": 0.01,
    "probes": 8,
-   "rmsAfterPct": 0.2,
-   "rmsBeforePct": 0.3,
+   "rmsAfterPct": 0.1,
+   "rmsBeforePct": 0.2,
    "kept": false
   },
   {
    "part": "FJ1497M",
-   "gain": 0,
+   "gain": 0.02,
    "probes": 8,
    "rmsAfterPct": 0.2,
-   "rmsBeforePct": 0.2,
+   "rmsBeforePct": 0.4,
    "kept": false
   },
   {
@@ -7329,7 +7330,7 @@
    "gain": 0.03,
    "probes": 12,
    "rmsAfterPct": 0.6,
-   "rmsBeforePct": 0.7,
+   "rmsBeforePct": 0.8,
    "kept": false
   },
   {
@@ -7344,16 +7345,16 @@
    "part": "FJ1500",
    "gain": 0.45,
    "probes": 9,
-   "rmsAfterPct": 10.4,
-   "rmsBeforePct": 13.6,
+   "rmsAfterPct": 11.2,
+   "rmsBeforePct": 14.4,
    "kept": true
   },
   {
    "part": "FJ1500M",
-   "gain": 0.42,
+   "gain": 0.41,
    "probes": 9,
-   "rmsAfterPct": 10,
-   "rmsBeforePct": 12.9,
+   "rmsAfterPct": 10.8,
+   "rmsBeforePct": 13.6,
    "kept": true
   },
   {
@@ -7369,87 +7370,87 @@
    "gain": 0.65,
    "probes": 8,
    "rmsAfterPct": 9.7,
-   "rmsBeforePct": 11.7,
+   "rmsBeforePct": 11.8,
    "kept": true
   },
   {
    "part": "FJ1502",
-   "gain": 0.28,
+   "gain": 0.31,
    "probes": 7,
-   "rmsAfterPct": 10,
-   "rmsBeforePct": 10.2,
+   "rmsAfterPct": 10.1,
+   "rmsBeforePct": 10.3,
    "kept": true
   },
   {
    "part": "FJ1502M",
-   "gain": 0.26,
+   "gain": 0.23,
    "probes": 7,
-   "rmsAfterPct": 9.7,
-   "rmsBeforePct": 9.8,
+   "rmsAfterPct": 8.9,
+   "rmsBeforePct": 9,
    "kept": true
   },
   {
    "part": "FJ1503",
    "gain": 1.25,
    "probes": 2,
-   "rmsAfterPct": 41.3,
-   "rmsBeforePct": 57.7,
+   "rmsAfterPct": 40.4,
+   "rmsBeforePct": 56.9,
    "kept": true
   },
   {
    "part": "FJ1503M",
    "gain": 1.25,
    "probes": 2,
-   "rmsAfterPct": 47.4,
-   "rmsBeforePct": 66.5,
+   "rmsAfterPct": 50.1,
+   "rmsBeforePct": 67.2,
    "kept": true
   },
   {
    "part": "FJ1504",
-   "gain": 0.61,
+   "gain": 0.68,
    "probes": 8,
-   "rmsAfterPct": 7.1,
-   "rmsBeforePct": 10.8,
+   "rmsAfterPct": 6.3,
+   "rmsBeforePct": 11.2,
    "kept": true
   },
   {
    "part": "FJ1504M",
-   "gain": 0.37,
+   "gain": 0.68,
    "probes": 8,
-   "rmsAfterPct": 3.9,
-   "rmsBeforePct": 6.5,
+   "rmsAfterPct": 6.2,
+   "rmsBeforePct": 11.4,
    "kept": true
   },
   {
    "part": "FJ1505",
-   "gain": 0.76,
+   "gain": 0.9,
    "probes": 2,
-   "rmsAfterPct": 36.8,
-   "rmsBeforePct": 37.2,
+   "rmsAfterPct": 36.9,
+   "rmsBeforePct": 37.7,
    "kept": true
   },
   {
    "part": "FJ1505M",
    "gain": 0,
    "probes": 1,
-   "rmsAfterPct": 28.7,
-   "rmsBeforePct": 28.7,
+   "rmsAfterPct": 28.4,
+   "rmsBeforePct": 28.4,
    "kept": false
   },
   {
    "part": "FJ1506",
    "gain": 0.27,
    "probes": 11,
-   "rmsAfterPct": 7.4,
-   "rmsBeforePct": 7.9,
+   "rmsAfterPct": 7.1,
+   "rmsBeforePct": 7.7,
    "kept": true
   },
   {
    "part": "FJ1506M",
-   "gain": 0.31,
+   "gain": 0.28,
    "probes": 11,
-   "rmsAfterPct": 8.2,
-   "rmsBeforePct": 8.7,
+   "rmsAfterPct": 7.4,
+   "rmsBeforePct": 7.9,
    "kept": true
   },
   {
@@ -7457,47 +7458,47 @@
    "gain": 1.25,
    "probes": 9,
    "rmsAfterPct": 21.5,
-   "rmsBeforePct": 55.4,
+   "rmsBeforePct": 51.5,
    "kept": true
   },
   {
    "part": "FJ1507M",
    "gain": 1.25,
    "probes": 9,
-   "rmsAfterPct": 21.3,
-   "rmsBeforePct": 54.6,
+   "rmsAfterPct": 23,
+   "rmsBeforePct": 51.7,
    "kept": true
   },
   {
    "part": "FJ1508",
    "gain": 1.25,
    "probes": 10,
-   "rmsAfterPct": 23,
-   "rmsBeforePct": 39.3,
+   "rmsAfterPct": 24.1,
+   "rmsBeforePct": 41.1,
    "kept": true
   },
   {
    "part": "FJ1508M",
    "gain": 1.25,
    "probes": 10,
-   "rmsAfterPct": 22.9,
-   "rmsBeforePct": 38.5,
+   "rmsAfterPct": 23.2,
+   "rmsBeforePct": 38.7,
    "kept": true
   },
   {
    "part": "FJ1509",
-   "gain": 1.1,
+   "gain": 1.07,
    "probes": 6,
-   "rmsAfterPct": 14.9,
-   "rmsBeforePct": 17.8,
+   "rmsAfterPct": 14.5,
+   "rmsBeforePct": 17.3,
    "kept": true
   },
   {
    "part": "FJ1509M",
-   "gain": 1.19,
+   "gain": 1.16,
    "probes": 6,
-   "rmsAfterPct": 15,
-   "rmsBeforePct": 18.3,
+   "rmsAfterPct": 14.7,
+   "rmsBeforePct": 17.7,
    "kept": true
   },
   {
@@ -7505,12 +7506,12 @@
    "gain": 0.06,
    "probes": 5,
    "rmsAfterPct": 0.8,
-   "rmsBeforePct": 1.1,
+   "rmsBeforePct": 1.2,
    "kept": false
   },
   {
    "part": "FJ1510M",
-   "gain": 0.07,
+   "gain": 0.08,
    "probes": 5,
    "rmsAfterPct": 0.8,
    "rmsBeforePct": 1.3,
@@ -7535,33 +7536,33 @@
   {
    "part": "FJ1512",
    "gain": 0.06,
-   "probes": 6,
+   "probes": 7,
+   "rmsAfterPct": 0.8,
+   "rmsBeforePct": 1,
+   "kept": false
+  },
+  {
+   "part": "FJ1512M",
+   "gain": 0.05,
+   "probes": 7,
    "rmsAfterPct": 1,
    "rmsBeforePct": 1.1,
    "kept": false
   },
   {
-   "part": "FJ1512M",
-   "gain": 0.06,
-   "probes": 7,
-   "rmsAfterPct": 0.9,
-   "rmsBeforePct": 1.1,
-   "kept": false
-  },
-  {
    "part": "FJ1513",
-   "gain": 0.91,
+   "gain": 0.78,
    "probes": 11,
    "rmsAfterPct": 50.2,
-   "rmsBeforePct": 47.4,
+   "rmsBeforePct": 47.1,
    "kept": true
   },
   {
    "part": "FJ1513M",
-   "gain": 0.85,
+   "gain": 0.76,
    "probes": 11,
-   "rmsAfterPct": 49.7,
-   "rmsBeforePct": 46.9,
+   "rmsAfterPct": 48.3,
+   "rmsBeforePct": 45.6,
    "kept": true
   },
   {
@@ -7585,46 +7586,46 @@
    "gain": 1.2,
    "probes": 10,
    "rmsAfterPct": 14.9,
-   "rmsBeforePct": 32.7,
+   "rmsBeforePct": 32.6,
    "kept": true
   },
   {
    "part": "FJ1515M",
    "gain": 1.25,
    "probes": 10,
-   "rmsAfterPct": 14.9,
-   "rmsBeforePct": 33,
+   "rmsAfterPct": 14.4,
+   "rmsBeforePct": 32.8,
    "kept": true
   },
   {
    "part": "FJ1516",
-   "gain": 1.2,
+   "gain": 1.25,
    "probes": 4,
    "rmsAfterPct": 23.7,
-   "rmsBeforePct": 25.2,
+   "rmsBeforePct": 25.4,
    "kept": true
   },
   {
    "part": "FJ1516M",
-   "gain": 0.8,
+   "gain": 0.78,
    "probes": 4,
-   "rmsAfterPct": 17.4,
-   "rmsBeforePct": 18.7,
+   "rmsAfterPct": 16.9,
+   "rmsBeforePct": 18.2,
    "kept": true
   },
   {
    "part": "FJ1517",
    "gain": 0.1,
    "probes": 6,
-   "rmsAfterPct": 1.6,
-   "rmsBeforePct": 1.9,
+   "rmsAfterPct": 1.7,
+   "rmsBeforePct": 2,
    "kept": false
   },
   {
    "part": "FJ1517M",
    "gain": 0.12,
    "probes": 6,
-   "rmsAfterPct": 1.8,
+   "rmsAfterPct": 1.9,
    "rmsBeforePct": 2.2,
    "kept": false
   },
@@ -8470,18 +8471,18 @@
   },
   {
    "part": "R3_FMA13358",
-   "gain": 1.25,
+   "gain": 1.16,
    "probes": 45,
-   "rmsAfterPct": 12.3,
-   "rmsBeforePct": 25.2,
+   "rmsAfterPct": 11,
+   "rmsBeforePct": 21.1,
    "kept": true
   },
   {
    "part": "R3_FMA13359",
-   "gain": 1.25,
-   "probes": 47,
-   "rmsAfterPct": 14.2,
-   "rmsBeforePct": 27.8,
+   "gain": 1.15,
+   "probes": 46,
+   "rmsAfterPct": 11.8,
+   "rmsBeforePct": 21.8,
    "kept": true
   },
   {
@@ -8759,9 +8760,9 @@
  ],
  "externalSkin": [
   {
-   "dir": "data/raw/bodyshape/out/male-skin",
+   "dir": "data/raw/bodyshape/out/male-skin-open",
    "source": "Momentum Human Rig (MHR) v1.0.1",
-   "vertices": 73639,
+   "vertices": 94972,
    "mapping": [
     {
      "external": "body_world",
@@ -9686,9 +9687,9 @@
   }
  ],
  "fieldQueries": {
-  "direct": 4954435,
-  "tested": 212299,
-  "obstructed": 143753
+  "direct": 4930557,
+  "tested": 245199,
+  "obstructed": 154325
  },
  "attach": [
   {
@@ -12883,12 +12884,12 @@
     {
      "bone": "Right fourth costal cartilage",
      "kind": "origin",
-     "mm": 58
+     "mm": 59
     },
     {
      "bone": "Right fifth costal cartilage",
      "kind": "origin",
-     "mm": 17
+     "mm": 18
     },
     {
      "bone": "Right clavicle",
@@ -12948,7 +12949,7 @@
     {
      "bone": "Left fourth costal cartilage",
      "kind": "origin",
-     "mm": 57
+     "mm": 59
     },
     {
      "bone": "Left fifth costal cartilage",
@@ -14218,10 +14219,11 @@
    "fromPatches": 0,
    "knowledgeReached": 1,
    "knowledgeMissed": [],
-   "touchedOnly": [],
+   "touchedOnly": [
+    "Right ulna"
+   ],
    "joints": [
     "gh_R",
-    "elbow_R",
     "wrist_R"
    ],
    "ends": "knowledge+geometry",
@@ -14319,7 +14321,7 @@
    "line": true,
    "lineEnds": [
     "Right radius: knowledge, mesh on bone",
-    "Middle phalanx of right little finger: knowledge, mesh on bone"
+    "Middle phalanx of right ring finger: knowledge, mesh on bone"
    ]
   },
   {
@@ -14348,7 +14350,7 @@
    "line": true,
    "lineEnds": [
     "Left radius: knowledge, mesh on bone",
-    "Middle phalanx of left ring finger: knowledge, mesh on bone"
+    "Middle phalanx of left little finger: knowledge, mesh on bone"
    ]
   },
   {
@@ -15064,7 +15066,7 @@
    "line": true,
    "lineEnds": [
     "Right humerus: geometry, end of the muscle on bone",
-    "Proximal phalanx of right middle finger: knowledge, mesh on bone"
+    "Proximal phalanx of right ring finger: knowledge, mesh on bone"
    ]
   },
   {
@@ -15090,21 +15092,20 @@
     {
      "bone": "Distal phalanx of left middle finger",
      "kind": "insertion",
-     "mm": 23,
+     "mm": 22,
      "via": "closest point on the bone"
     },
     {
      "bone": "Distal phalanx of left ring finger",
      "kind": "insertion",
-     "mm": 20,
+     "mm": 21,
      "via": "closest point on the bone"
     }
    ],
    "touchedOnly": [
     "Left fifth metacarpal bone",
     "Left capitate",
-    "Left hamate",
-    "Left lunate"
+    "Left hamate"
    ],
    "joints": [
     "gh_L",
@@ -15126,7 +15127,7 @@
    "line": true,
    "lineEnds": [
     "Left humerus: geometry, end of the muscle on bone",
-    "Proximal phalanx of left index finger: knowledge, mesh on bone"
+    "Proximal phalanx of left middle finger: knowledge, mesh on bone"
    ]
   },
   {
@@ -15358,7 +15359,6 @@
    "knowledgeReached": 4,
    "knowledgeMissed": [],
    "touchedOnly": [
-    "Left second metacarpal bone",
     "Left fourth metacarpal bone",
     "Proximal phalanx of left little finger"
    ],
@@ -15692,6 +15692,7 @@
    "knowledgeMissed": [],
    "touchedOnly": [
     "Right fifth rib",
+    "Right sixth rib",
     "Right seventh rib"
    ],
    "joints": [
@@ -16073,7 +16074,7 @@
     {
      "bone": "Left radius",
      "kind": "insertion",
-     "mm": 36,
+     "mm": 38,
      "via": "closest point on the bone"
     }
    ],
@@ -16087,7 +16088,7 @@
    "line": true,
    "lineEnds": [
     "Left scapula: geometry, end of the muscle on bone",
-    "Left radius: knowledge, mesh ends 36 mm short of the bone"
+    "Left radius: knowledge, mesh ends 38 mm short of the bone"
    ]
   },
   {
@@ -27977,7 +27978,7 @@
  ],
  "notes": [
   "radioulnar_L \"pronation / supination\": the rest pose (-86.4° in the anatomical convention) lies outside the normal range −85…76.9°; range widened to include the rest pose",
-  "radioulnar_R \"pronation / supination\": the rest pose (-86.1° in the anatomical convention) lies outside the normal range −85…76.9°; range widened to include the rest pose",
+  "radioulnar_R \"pronation / supination\": the rest pose (-86.5° in the anatomical convention) lies outside the normal range −85…76.9°; range widened to include the rest pose",
   "tip1_L \"flexion / extension\": the rest pose (-1° in the anatomical convention) lies outside the normal range −0…60°; range widened to include the rest pose",
   "tpip2_L \"flexion / extension\": the rest pose (-0.5° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip3_L \"flexion / extension\": the rest pose (-7° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
@@ -27986,7 +27987,7 @@
   "tpip2_R \"flexion / extension\": the rest pose (-0.6° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip3_R \"flexion / extension\": the rest pose (-5.8° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip4_R \"flexion / extension\": the rest pose (-5.4° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
-  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin, transferred by closest point on the original surface (mean 0.03 mm, max 0.1 mm away); 2358 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)"
+  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1268 chest vertices handed part of their thoracic weight to the ribs; 2409 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)"
  ],
  "validation": {
   "rest": {
@@ -28000,11 +28001,11 @@
    "badJointIndices": 0
   },
   "armSkin": {
-   "forearmVerts": 3497,
+   "forearmVerts": 3545,
    "maxTrunkWeightForearm": 0,
-   "upperArmVerts": 479,
+   "upperArmVerts": 468,
    "maxTrunkWeightDistalUpperArm": 0,
-   "trunkVerts": 1690,
+   "trunkVerts": 4060,
    "maxArmWeightTrunkBelowAxilla": 0
   },
   "postures": [
@@ -28017,9 +28018,9 @@
     "bones": [],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.3,
+      "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -28029,17 +28030,17 @@
      "muscle": {
       "insidePct": 15.5,
       "deepPct": 6.8,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.9,
-      "deepPct": 2.8,
-      "sampled": 20755
+      "insidePct": 8.8,
+      "deepPct": 2.7,
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
-      "deepPct": 4.4,
-      "sampled": 13024
+      "deepPct": 4.5,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -28157,7 +28158,7 @@
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 0,
      "medianAbsErrSkinnedPct": 0,
      "medianAbsErrUniformPct": 0,
@@ -28167,20 +28168,14 @@
      "p90AbsErrTaperedPct": 0
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 1,
      "maxEdgeStretch": 1,
      "stretchedAreaCm2": 0
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.2,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28188,8 +28183,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -28225,7 +28220,7 @@
       "insideRestPct": 0.05,
       "maxDepthMm": 0,
       "gapRestMm": 1.88,
-      "gapPosedMm": 1.76
+      "gapPosedMm": 1.83
      },
      {
       "a": "Left ulna",
@@ -28233,8 +28228,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.71,
-      "gapPosedMm": 2.71
+      "gapRestMm": 2.77,
+      "gapPosedMm": 2.77
      },
      {
       "a": "Left ulna",
@@ -28242,8 +28237,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.35,
-      "gapPosedMm": 2.35
+      "gapRestMm": 2.33,
+      "gapPosedMm": 2.33
      },
      {
       "a": "Left radius",
@@ -28251,15 +28246,15 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 1.8,
-      "gapPosedMm": 1.8
+      "gapRestMm": 1.81,
+      "gapPosedMm": 1.81
      }
     ],
     "softInBone": {
      "nerve": {
       "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -28269,17 +28264,17 @@
      "muscle": {
       "insidePct": 15.6,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.7,
+      "insidePct": 8.6,
       "deepPct": 2.7,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -28294,8 +28289,8 @@
       "p99": 1.01,
       "p999": 1.43,
       "over2Pct": 0.04,
-      "max": 6.21,
-      "worst": "Right anconeus"
+      "max": 6.84,
+      "worst": "Right extensor digiti minimi"
      },
      "tendon": {
       "p99": 1.01,
@@ -28308,21 +28303,21 @@
       "p99": 1.01,
       "p999": 1.15,
       "over2Pct": 0,
-      "max": 2.36,
+      "max": 2.2,
       "worst": "Left antebrachial fascia"
      },
      "ligament": {
       "p99": 1.01,
-      "p999": 2.29,
-      "over2Pct": 0.14,
-      "max": 7.99,
+      "p999": 2.23,
+      "over2Pct": 0.13,
+      "max": 7.96,
       "worst": "Left articular capsule of elbow joint"
      },
      "artery": {
       "p99": 1.01,
       "p999": 1.85,
-      "over2Pct": 0.07,
-      "max": 5.65,
+      "over2Pct": 0.08,
+      "max": 7.88,
       "worst": "Right brachial artery"
      },
      "brain": {
@@ -28348,9 +28343,9 @@
      },
      "vein": {
       "p99": 1.01,
-      "p999": 1.23,
+      "p999": 1.31,
       "over2Pct": 0.03,
-      "max": 10.13,
+      "max": 7.91,
       "worst": "Right cephalic vein"
      },
      "heart": {
@@ -28368,10 +28363,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.07,
-      "p999": 1.73,
-      "over2Pct": 0.03,
-      "max": 2.3,
+      "p99": 1.01,
+      "p999": 1.51,
+      "over2Pct": 0.02,
+      "max": 2.29,
       "worst": "Skin"
      },
      "bone": {
@@ -28385,42 +28380,36 @@
       "p99": 1.01,
       "p999": 1.47,
       "over2Pct": 0.01,
-      "max": 2.9,
-      "worst": "Right posterior antebrachial cutaneous nerve"
+      "max": 2.83,
+      "worst": "Left median nerve"
      },
      "fat": {
-      "p99": 1.11,
-      "p999": 1.49,
+      "p99": 1.09,
+      "p999": 1.55,
       "over2Pct": 0.01,
-      "max": 2.63,
+      "max": 2.42,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
     "volume": {
-     "muscles": 227,
-     "lengthChanged": 18,
-     "medianAbsErrSkinnedPct": 8.3,
-     "medianAbsErrUniformPct": 3.43,
-     "medianAbsErrTaperedPct": 5.34,
-     "p90AbsErrSkinnedPct": 25.66,
-     "p90AbsErrUniformPct": 15.84,
-     "p90AbsErrTaperedPct": 15.98
+     "muscles": 226,
+     "lengthChanged": 17,
+     "medianAbsErrSkinnedPct": 9.18,
+     "medianAbsErrUniformPct": 3.33,
+     "medianAbsErrTaperedPct": 5.05,
+     "p90AbsErrSkinnedPct": 24.45,
+     "p90AbsErrUniformPct": 14.65,
+     "p90AbsErrTaperedPct": 14.78
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.22,
-     "maxEdgeStretch": 2.3,
-     "stretchedAreaCm2": 37.4
+     "minAreaRatio": 0.21,
+     "maxEdgeStretch": 2.29,
+     "stretchedAreaCm2": 29.2
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.3,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28429,7 +28418,7 @@
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
       "insideBonePct": 0,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 9 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 9 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -28465,7 +28454,7 @@
       "insideRestPct": 0.05,
       "maxDepthMm": 0,
       "gapRestMm": 1.88,
-      "gapPosedMm": 2.11
+      "gapPosedMm": 1.91
      },
      {
       "a": "Left ulna",
@@ -28473,8 +28462,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.71,
-      "gapPosedMm": 2.71
+      "gapRestMm": 2.77,
+      "gapPosedMm": 2.77
      },
      {
       "a": "Left ulna",
@@ -28482,8 +28471,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.35,
-      "gapPosedMm": 2.35
+      "gapRestMm": 2.33,
+      "gapPosedMm": 2.33
      },
      {
       "a": "Left radius",
@@ -28491,15 +28480,15 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 1.8,
-      "gapPosedMm": 1.8
+      "gapRestMm": 1.81,
+      "gapPosedMm": 1.81
      }
     ],
     "softInBone": {
      "nerve": {
       "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -28509,17 +28498,17 @@
      "muscle": {
       "insidePct": 15.6,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
       "insidePct": 8.7,
       "deepPct": 2.7,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -28534,8 +28523,8 @@
       "p99": 1.01,
       "p999": 1.75,
       "over2Pct": 0.07,
-      "max": 9.7,
-      "worst": "Right anconeus"
+      "max": 10.57,
+      "worst": "Left extensor digiti minimi"
      },
      "tendon": {
       "p99": 1.01,
@@ -28548,21 +28537,21 @@
       "p99": 1.01,
       "p999": 1.29,
       "over2Pct": 0.01,
-      "max": 3.45,
+      "max": 3.17,
       "worst": "Left antebrachial fascia"
      },
      "ligament": {
       "p99": 1.01,
-      "p999": 3.13,
+      "p999": 3.09,
       "over2Pct": 0.25,
-      "max": 12.19,
+      "max": 12.15,
       "worst": "Left articular capsule of elbow joint"
      },
      "artery": {
       "p99": 1.01,
-      "p999": 2.55,
+      "p999": 2.53,
       "over2Pct": 0.17,
-      "max": 10.37,
+      "max": 14.25,
       "worst": "Right brachial artery"
      },
      "brain": {
@@ -28588,9 +28577,9 @@
      },
      "vein": {
       "p99": 1.01,
-      "p999": 1.55,
-      "over2Pct": 0.06,
-      "max": 16.36,
+      "p999": 1.71,
+      "over2Pct": 0.07,
+      "max": 12.61,
       "worst": "Right cephalic vein"
      },
      "heart": {
@@ -28608,10 +28597,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.11,
-      "p999": 2.25,
-      "over2Pct": 0.15,
-      "max": 3.32,
+      "p99": 1.01,
+      "p999": 1.87,
+      "over2Pct": 0.08,
+      "max": 3.28,
       "worst": "Skin"
      },
      "bone": {
@@ -28625,42 +28614,36 @@
       "p99": 1.01,
       "p999": 1.83,
       "over2Pct": 0.06,
-      "max": 4.37,
+      "max": 4.06,
       "worst": "Right posterior antebrachial cutaneous nerve"
      },
      "fat": {
       "p99": 1.17,
-      "p999": 1.87,
-      "over2Pct": 0.07,
-      "max": 3.54,
+      "p999": 1.93,
+      "over2Pct": 0.08,
+      "max": 4.56,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
     "volume": {
-     "muscles": 227,
-     "lengthChanged": 18,
-     "medianAbsErrSkinnedPct": 14.01,
-     "medianAbsErrUniformPct": 3.92,
-     "medianAbsErrTaperedPct": 12.77,
-     "p90AbsErrSkinnedPct": 43.42,
-     "p90AbsErrUniformPct": 25.02,
-     "p90AbsErrTaperedPct": 29.73
+     "muscles": 226,
+     "lengthChanged": 17,
+     "medianAbsErrSkinnedPct": 15.14,
+     "medianAbsErrUniformPct": 4.25,
+     "medianAbsErrTaperedPct": 11.84,
+     "p90AbsErrSkinnedPct": 43.02,
+     "p90AbsErrUniformPct": 24.78,
+     "p90AbsErrTaperedPct": 30.03
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
-     "minAreaRatio": 0.06,
-     "maxEdgeStretch": 3.32,
-     "stretchedAreaCm2": 181.5
+     "minAreaRatio": 0.03,
+     "maxEdgeStretch": 3.28,
+     "stretchedAreaCm2": 146
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.3,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28669,7 +28652,7 @@
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
       "insideBonePct": 0,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 6 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 6 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -28701,11 +28684,11 @@
      {
       "a": "Left radius",
       "b": "Left ulna",
-      "insidePct": 1.24,
+      "insidePct": 1.36,
       "insideRestPct": 0,
-      "maxDepthMm": 1.15,
-      "gapRestMm": 2.35,
-      "gapPosedMm": 0.56
+      "maxDepthMm": 1.28,
+      "gapRestMm": 2.33,
+      "gapPosedMm": 0.58
      },
      {
       "a": "Left trapezium",
@@ -28728,8 +28711,8 @@
      {
       "a": "Left second metacarpal bone",
       "b": "Proximal phalanx of left index finger",
-      "insidePct": 0.53,
-      "insideRestPct": 0.53,
+      "insidePct": 0.54,
+      "insideRestPct": 0.54,
       "maxDepthMm": 0.08,
       "gapRestMm": 1.27,
       "gapPosedMm": 1.36
@@ -28758,8 +28741,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 1.8,
-      "gapPosedMm": 1.8
+      "gapRestMm": 1.81,
+      "gapPosedMm": 1.81
      },
      {
       "a": "Left lunate",
@@ -28767,15 +28750,15 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.71,
-      "gapPosedMm": 1.15
+      "gapRestMm": 2.77,
+      "gapPosedMm": 1.28
      }
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.3,
+      "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -28785,17 +28768,17 @@
      "muscle": {
       "insidePct": 15.7,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 9.1,
+      "insidePct": 9,
       "deepPct": 2.9,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -28810,8 +28793,8 @@
       "p99": 1.05,
       "p999": 2.41,
       "over2Pct": 0.16,
-      "max": 20.2,
-      "worst": "Right pronator quadratus"
+      "max": 17.85,
+      "worst": "Right extensor digiti minimi"
      },
      "tendon": {
       "p99": 1.01,
@@ -28823,23 +28806,23 @@
      "fascia": {
       "p99": 1.03,
       "p999": 2.11,
-      "over2Pct": 0.13,
-      "max": 6.59,
-      "worst": "Right antebrachial fascia"
+      "over2Pct": 0.12,
+      "max": 6.52,
+      "worst": "Left antebrachial fascia"
      },
      "ligament": {
       "p99": 1.23,
-      "p999": 4.91,
+      "p999": 4.95,
       "over2Pct": 0.57,
-      "max": 15.75,
+      "max": 15.96,
       "worst": "Left ulnolunate ligament"
      },
      "artery": {
       "p99": 1.11,
-      "p999": 2.57,
-      "over2Pct": 0.22,
-      "max": 11.73,
-      "worst": "Right radial recurrent artery"
+      "p999": 2.49,
+      "over2Pct": 0.21,
+      "max": 15.45,
+      "worst": "Left radial artery"
      },
      "brain": {
       "p99": 1.01,
@@ -28864,9 +28847,9 @@
      },
      "vein": {
       "p99": 1.05,
-      "p999": 3.05,
+      "p999": 3.07,
       "over2Pct": 0.21,
-      "max": 14.85,
+      "max": 15.14,
       "worst": "Right median cubital vein"
      },
      "heart": {
@@ -28884,10 +28867,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.15,
-      "p999": 1.85,
-      "over2Pct": 0.08,
-      "max": 2.56,
+      "p99": 1.05,
+      "p999": 1.59,
+      "over2Pct": 0.04,
+      "max": 2.47,
       "worst": "Skin"
      },
      "bone": {
@@ -28900,43 +28883,37 @@
      "nerve": {
       "p99": 1.19,
       "p999": 2.77,
-      "over2Pct": 0.24,
-      "max": 7.6,
+      "over2Pct": 0.25,
+      "max": 8.47,
       "worst": "Left dorsal branch of ulnar nerve"
      },
      "fat": {
-      "p99": 1.43,
-      "p999": 2.87,
-      "over2Pct": 0.33,
-      "max": 9.33,
-      "worst": "Subcutaneous tissue of left upper limb"
+      "p99": 1.49,
+      "p999": 3.17,
+      "over2Pct": 0.4,
+      "max": 7.62,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
-     "muscles": 227,
-     "lengthChanged": 17,
-     "medianAbsErrSkinnedPct": 25.66,
-     "medianAbsErrUniformPct": 11.68,
-     "medianAbsErrTaperedPct": 13.01,
-     "p90AbsErrSkinnedPct": 76.81,
-     "p90AbsErrUniformPct": 54.55,
-     "p90AbsErrTaperedPct": 57.66
+     "muscles": 226,
+     "lengthChanged": 16,
+     "medianAbsErrSkinnedPct": 36.28,
+     "medianAbsErrUniformPct": 23.55,
+     "medianAbsErrTaperedPct": 21.93,
+     "p90AbsErrSkinnedPct": 75.57,
+     "p90AbsErrUniformPct": 53.41,
+     "p90AbsErrTaperedPct": 56.49
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.13,
-     "maxEdgeStretch": 2.56,
-     "stretchedAreaCm2": 72.6
+     "minAreaRatio": 0.2,
+     "maxEdgeStretch": 2.47,
+     "stretchedAreaCm2": 63.1
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.3,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -28945,7 +28922,7 @@
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
       "insideBonePct": 0,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 9 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 9 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -28986,17 +28963,17 @@
      {
       "a": "Left third metacarpal bone",
       "b": "Proximal phalanx of left middle finger",
-      "insidePct": 0.51,
+      "insidePct": 0.49,
       "insideRestPct": 0.49,
       "maxDepthMm": 0.16,
       "gapRestMm": 1.17,
-      "gapPosedMm": 1.37
+      "gapPosedMm": 1.33
      },
      {
       "a": "Left second metacarpal bone",
       "b": "Proximal phalanx of left index finger",
-      "insidePct": 0.53,
-      "insideRestPct": 0.53,
+      "insidePct": 0.54,
+      "insideRestPct": 0.54,
       "maxDepthMm": 0.08,
       "gapRestMm": 1.27,
       "gapPosedMm": 1.36
@@ -29025,8 +29002,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 1.8,
-      "gapPosedMm": 1.8
+      "gapRestMm": 1.81,
+      "gapPosedMm": 1.81
      },
      {
       "a": "Left radius",
@@ -29034,8 +29011,8 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.35,
-      "gapPosedMm": 2.34
+      "gapRestMm": 2.33,
+      "gapPosedMm": 2.33
      },
      {
       "a": "Left lunate",
@@ -29043,15 +29020,15 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.71,
-      "gapPosedMm": 2.71
+      "gapRestMm": 2.77,
+      "gapPosedMm": 2.79
      }
     ],
     "softInBone": {
      "nerve": {
       "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -29061,17 +29038,17 @@
      "muscle": {
       "insidePct": 15.6,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.7,
+      "insidePct": 8.6,
       "deepPct": 2.7,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -29086,8 +29063,8 @@
       "p99": 1.01,
       "p999": 1.43,
       "over2Pct": 0.04,
-      "max": 6.21,
-      "worst": "Right anconeus"
+      "max": 6.88,
+      "worst": "Right extensor digiti minimi"
      },
      "tendon": {
       "p99": 1.01,
@@ -29100,21 +29077,21 @@
       "p99": 1.01,
       "p999": 1.15,
       "over2Pct": 0,
-      "max": 2.36,
+      "max": 2.21,
       "worst": "Left antebrachial fascia"
      },
      "ligament": {
       "p99": 1.01,
-      "p999": 2.31,
-      "over2Pct": 0.14,
-      "max": 7.99,
+      "p999": 2.23,
+      "over2Pct": 0.13,
+      "max": 7.96,
       "worst": "Left articular capsule of elbow joint"
      },
      "artery": {
       "p99": 1.01,
       "p999": 1.85,
-      "over2Pct": 0.07,
-      "max": 5.64,
+      "over2Pct": 0.08,
+      "max": 7.84,
       "worst": "Right brachial artery"
      },
      "brain": {
@@ -29140,9 +29117,9 @@
      },
      "vein": {
       "p99": 1.01,
-      "p999": 1.23,
+      "p999": 1.29,
       "over2Pct": 0.03,
-      "max": 10.14,
+      "max": 7.91,
       "worst": "Right cephalic vein"
      },
      "heart": {
@@ -29160,10 +29137,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.07,
-      "p999": 1.73,
-      "over2Pct": 0.03,
-      "max": 2.3,
+      "p99": 1.01,
+      "p999": 1.51,
+      "over2Pct": 0.02,
+      "max": 2.29,
       "worst": "Skin"
      },
      "bone": {
@@ -29177,42 +29154,36 @@
       "p99": 1.01,
       "p999": 1.47,
       "over2Pct": 0.01,
-      "max": 2.9,
-      "worst": "Right posterior antebrachial cutaneous nerve"
+      "max": 2.82,
+      "worst": "Left median nerve"
      },
      "fat": {
-      "p99": 1.11,
-      "p999": 1.49,
+      "p99": 1.09,
+      "p999": 1.55,
       "over2Pct": 0.01,
-      "max": 2.63,
+      "max": 2.42,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
     "volume": {
-     "muscles": 227,
-     "lengthChanged": 18,
-     "medianAbsErrSkinnedPct": 8.37,
-     "medianAbsErrUniformPct": 3.43,
-     "medianAbsErrTaperedPct": 5.34,
-     "p90AbsErrSkinnedPct": 25.66,
-     "p90AbsErrUniformPct": 16.49,
-     "p90AbsErrTaperedPct": 16.63
+     "muscles": 226,
+     "lengthChanged": 17,
+     "medianAbsErrSkinnedPct": 9.28,
+     "medianAbsErrUniformPct": 3.33,
+     "medianAbsErrTaperedPct": 5.11,
+     "p90AbsErrSkinnedPct": 24.45,
+     "p90AbsErrUniformPct": 15.32,
+     "p90AbsErrTaperedPct": 15.45
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.22,
-     "maxEdgeStretch": 2.3,
-     "stretchedAreaCm2": 37.4
+     "minAreaRatio": 0.21,
+     "maxEdgeStretch": 2.29,
+     "stretchedAreaCm2": 29.2
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.3,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29221,7 +29192,7 @@
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
       "insideBonePct": 0,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 9 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 9 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 0 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -29255,7 +29226,7 @@
       "b": "Left ulna",
       "insidePct": 0.05,
       "insideRestPct": 0.05,
-      "maxDepthMm": 0.2,
+      "maxDepthMm": 0.19,
       "gapRestMm": 1.88,
       "gapPosedMm": 1.93
      },
@@ -29265,15 +29236,15 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.36,
-      "gapPosedMm": 2.44
+      "gapRestMm": 2.45,
+      "gapPosedMm": 2.39
      }
     ],
     "softInBone": {
      "nerve": {
       "insidePct": 4.5,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -29283,32 +29254,32 @@
      "muscle": {
       "insidePct": 15.8,
       "deepPct": 7,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 9.1,
+      "insidePct": 9,
       "deepPct": 2.9,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.15,
-      "p999": 1.75,
-      "over2Pct": 0.06,
-      "max": 7.95,
+      "p999": 1.79,
+      "over2Pct": 0.07,
+      "max": 7.47,
       "worst": "Left posterior basal segmental bronchial tree"
      },
      "muscle": {
       "p99": 1.21,
-      "p999": 2.79,
-      "over2Pct": 0.25,
-      "max": 28.08,
+      "p999": 3.03,
+      "over2Pct": 0.28,
+      "max": 26.08,
       "worst": "Right serratus anterior"
      },
      "tendon": {
@@ -29319,25 +29290,25 @@
       "worst": "Right calcaneal tendon"
      },
      "fascia": {
-      "p99": 1.19,
-      "p999": 2.85,
-      "over2Pct": 0.22,
-      "max": 9.19,
-      "worst": "Left brachial fascia"
+      "p99": 1.17,
+      "p999": 2.65,
+      "over2Pct": 0.21,
+      "max": 12.61,
+      "worst": "Right clavipectoral fascia"
      },
      "ligament": {
-      "p99": 1.19,
-      "p999": 4.41,
-      "over2Pct": 0.37,
-      "max": 25.69,
+      "p99": 1.25,
+      "p999": 5.61,
+      "over2Pct": 0.51,
+      "max": 20.61,
       "worst": "Left articular capsule of glenohumeral joint"
      },
      "artery": {
-      "p99": 1.41,
-      "p999": 2.87,
-      "over2Pct": 0.34,
-      "max": 8.75,
-      "worst": "Left lateral thoracic artery"
+      "p99": 1.43,
+      "p999": 2.71,
+      "over2Pct": 0.33,
+      "max": 9.33,
+      "worst": "Deltoid branch of right thoraco-acromial artery"
      },
      "brain": {
       "p99": 1.01,
@@ -29347,10 +29318,10 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.07,
+      "p99": 1.05,
       "p999": 1.25,
       "over2Pct": 0,
-      "max": 1.39,
+      "max": 1.36,
       "worst": "Cavity of right atrium"
      },
      "gland": {
@@ -29362,16 +29333,16 @@
      },
      "vein": {
       "p99": 1.45,
-      "p999": 3.43,
+      "p999": 3.51,
       "over2Pct": 0.42,
-      "max": 10.85,
+      "max": 9.21,
       "worst": "Left basilic vein"
      },
      "heart": {
-      "p99": 1.05,
-      "p999": 1.35,
+      "p99": 1.03,
+      "p999": 1.31,
       "over2Pct": 0,
-      "max": 2.14,
+      "max": 2.05,
       "worst": "Wall of right atrium"
      },
      "cartilage": {
@@ -29382,10 +29353,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.25,
-      "p999": 3.11,
-      "over2Pct": 0.27,
-      "max": 17.89,
+      "p99": 1.15,
+      "p999": 2.59,
+      "over2Pct": 0.2,
+      "max": 17.45,
       "worst": "Skin"
      },
      "bone": {
@@ -29397,44 +29368,38 @@
      },
      "nerve": {
       "p99": 1.33,
-      "p999": 3.75,
-      "over2Pct": 0.34,
-      "max": 15.47,
+      "p999": 3.87,
+      "over2Pct": 0.33,
+      "max": 14.11,
       "worst": "Right posterior brachial cutaneous nerve"
      },
      "fat": {
-      "p99": 1.55,
-      "p999": 3.45,
-      "over2Pct": 0.47,
-      "max": 14.58,
+      "p99": 1.49,
+      "p999": 2.89,
+      "over2Pct": 0.39,
+      "max": 7.71,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
     "volume": {
-     "muscles": 227,
-     "lengthChanged": 32,
-     "medianAbsErrSkinnedPct": 13.14,
-     "medianAbsErrUniformPct": 6.9,
-     "medianAbsErrTaperedPct": 5.65,
-     "p90AbsErrSkinnedPct": 31.31,
-     "p90AbsErrUniformPct": 20.4,
-     "p90AbsErrTaperedPct": 19.31
+     "muscles": 226,
+     "lengthChanged": 29,
+     "medianAbsErrSkinnedPct": 13.54,
+     "medianAbsErrUniformPct": 6.25,
+     "medianAbsErrTaperedPct": 5.53,
+     "p90AbsErrSkinnedPct": 28.18,
+     "p90AbsErrUniformPct": 11.99,
+     "p90AbsErrTaperedPct": 12.25
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.35,
-     "maxEdgeStretch": 17.89,
-     "stretchedAreaCm2": 296
+     "minAreaRatio": 0.09,
+     "maxEdgeStretch": 13.02,
+     "stretchedAreaCm2": 352
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.4,
-     "over2mmPct": 0.2,
-     "worstMm": 26.02,
-     "worstPart": "Left latissimus dorsi"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29442,8 +29407,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -29477,7 +29442,7 @@
       "b": "Left ulna",
       "insidePct": 0.05,
       "insideRestPct": 0.05,
-      "maxDepthMm": 0.2,
+      "maxDepthMm": 0.19,
       "gapRestMm": 1.88,
       "gapPosedMm": 1.93
      },
@@ -29487,15 +29452,15 @@
       "insidePct": 0,
       "insideRestPct": 0,
       "maxDepthMm": 0,
-      "gapRestMm": 2.36,
-      "gapPosedMm": 2.62
+      "gapRestMm": 2.45,
+      "gapPosedMm": 2.55
      }
     ],
     "softInBone": {
      "nerve": {
       "insidePct": 4.4,
       "deepPct": 2.5,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -29505,32 +29470,32 @@
      "muscle": {
       "insidePct": 15.9,
       "deepPct": 7,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
       "insidePct": 9,
-      "deepPct": 2.9,
-      "sampled": 20755
+      "deepPct": 2.8,
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.45,
-      "p999": 3.25,
-      "over2Pct": 0.43,
-      "max": 16.82,
+      "p999": 3.33,
+      "over2Pct": 0.46,
+      "max": 16.83,
       "worst": "Left posterior basal segmental bronchial tree"
      },
      "muscle": {
       "p99": 1.63,
-      "p999": 6.05,
+      "p999": 6.33,
       "over2Pct": 0.71,
-      "max": 72.12,
+      "max": 72.15,
       "worst": "Right serratus anterior"
      },
      "tendon": {
@@ -29541,25 +29506,25 @@
       "worst": "Right calcaneal tendon"
      },
      "fascia": {
-      "p99": 1.55,
-      "p999": 6.63,
-      "over2Pct": 0.68,
-      "max": 27.94,
-      "worst": "Left brachial fascia"
+      "p99": 1.45,
+      "p999": 5.47,
+      "over2Pct": 0.58,
+      "max": 25.92,
+      "worst": "Right clavipectoral fascia"
      },
      "ligament": {
-      "p99": 1.45,
-      "p999": 6.71,
+      "p99": 1.43,
+      "p999": 7.53,
       "over2Pct": 0.61,
-      "max": 40.01,
+      "max": 27,
       "worst": "Left articular capsule of glenohumeral joint"
      },
      "artery": {
       "p99": 1.89,
-      "p999": 4.59,
-      "over2Pct": 0.9,
-      "max": 14.49,
-      "worst": "Left anterior circumflex humeral artery"
+      "p999": 4.47,
+      "over2Pct": 0.91,
+      "max": 14.04,
+      "worst": "Right dorsal scapular artery"
      },
      "brain": {
       "p99": 1.01,
@@ -29569,10 +29534,10 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.09,
-      "p999": 1.45,
+      "p99": 1.07,
+      "p999": 1.37,
       "over2Pct": 0,
-      "max": 1.7,
+      "max": 1.66,
       "worst": "Cavity of left atrium"
      },
      "gland": {
@@ -29583,15 +29548,15 @@
       "worst": "Pineal body"
      },
      "vein": {
-      "p99": 1.95,
-      "p999": 6.41,
-      "over2Pct": 0.96,
-      "max": 29.56,
-      "worst": "Left basilic vein"
+      "p99": 1.85,
+      "p999": 5.59,
+      "over2Pct": 0.88,
+      "max": 22.95,
+      "worst": "Left lateral thoracic vein"
      },
      "heart": {
       "p99": 1.09,
-      "p999": 1.71,
+      "p999": 1.73,
       "over2Pct": 0.06,
       "max": 3.86,
       "worst": "Anterior cusp of aortic valve"
@@ -29604,10 +29569,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 2.13,
-      "p999": 9.45,
-      "over2Pct": 1.08,
-      "max": 47.55,
+      "p99": 1.61,
+      "p999": 5.95,
+      "over2Pct": 0.75,
+      "max": 46.51,
       "worst": "Skin"
      },
      "bone": {
@@ -29618,45 +29583,39 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 1.93,
-      "p999": 9.41,
-      "over2Pct": 0.92,
-      "max": 47.24,
-      "worst": "Right posterior brachial cutaneous nerve"
+      "p99": 1.85,
+      "p999": 8.83,
+      "over2Pct": 0.85,
+      "max": 38.91,
+      "worst": "Left posterior brachial cutaneous nerve"
      },
      "fat": {
-      "p99": 2.61,
-      "p999": 8.29,
-      "over2Pct": 1.57,
-      "max": 35.17,
+      "p99": 2.29,
+      "p999": 5.57,
+      "over2Pct": 1.35,
+      "max": 14.03,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
     "volume": {
-     "muscles": 227,
-     "lengthChanged": 34,
-     "medianAbsErrSkinnedPct": 16.28,
-     "medianAbsErrUniformPct": 11.46,
-     "medianAbsErrTaperedPct": 11.98,
-     "p90AbsErrSkinnedPct": 71.8,
-     "p90AbsErrUniformPct": 41.15,
-     "p90AbsErrTaperedPct": 37.45
+     "muscles": 226,
+     "lengthChanged": 33,
+     "medianAbsErrSkinnedPct": 12.24,
+     "medianAbsErrUniformPct": 12.3,
+     "medianAbsErrTaperedPct": 13.13,
+     "p90AbsErrSkinnedPct": 65.94,
+     "p90AbsErrUniformPct": 36.43,
+     "p90AbsErrTaperedPct": 36.92
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
-     "selfInsidePct": 0.9,
-     "minAreaRatio": 0.15,
-     "maxEdgeStretch": 47.55,
-     "stretchedAreaCm2": 1573
+     "selfInsidePct": 0.1,
+     "minAreaRatio": 0.02,
+     "maxEdgeStretch": 33.24,
+     "stretchedAreaCm2": 1398.3
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 2.1,
-     "over2mmPct": 1.7,
-     "worstMm": 41.72,
-     "worstPart": "Clavicular part of left deltoid"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29664,8 +29623,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -29726,7 +29685,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.5,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -29736,24 +29695,24 @@
      "muscle": {
       "insidePct": 15.6,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
       "insidePct": 8.9,
       "deepPct": 2.8,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
-      "insidePct": 10,
-      "deepPct": 4.4,
-      "sampled": 13024
+      "insidePct": 10.1,
+      "deepPct": 4.5,
+      "sampled": 13017
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.15,
-      "p999": 1.81,
-      "over2Pct": 0.06,
+      "p999": 1.79,
+      "over2Pct": 0.05,
       "max": 12.22,
       "worst": "Distal part of ileum"
      },
@@ -29774,7 +29733,7 @@
      "fascia": {
       "p99": 1.21,
       "p999": 2.73,
-      "over2Pct": 0.24,
+      "over2Pct": 0.23,
       "max": 10.54,
       "worst": "Greater omentum"
      },
@@ -29788,7 +29747,7 @@
      "artery": {
       "p99": 1.01,
       "p999": 1.77,
-      "over2Pct": 0.07,
+      "over2Pct": 0.08,
       "max": 14.14,
       "worst": "Left superficial epigastric artery"
      },
@@ -29815,8 +29774,8 @@
      },
      "vein": {
       "p99": 1.09,
-      "p999": 2.51,
-      "over2Pct": 0.16,
+      "p999": 2.47,
+      "over2Pct": 0.15,
       "max": 34.68,
       "worst": "Left superficial epigastric vein"
      },
@@ -29835,10 +29794,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.27,
-      "p999": 2.17,
-      "over2Pct": 0.12,
-      "max": 16.17,
+      "p99": 1.71,
+      "p999": 5.13,
+      "over2Pct": 0.76,
+      "max": 7.03,
       "worst": "Skin"
      },
      "bone": {
@@ -29850,21 +29809,21 @@
      },
      "nerve": {
       "p99": 1.93,
-      "p999": 4.41,
+      "p999": 4.39,
       "over2Pct": 0.92,
       "max": 26.03,
       "worst": "Right cutaneous branch of anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 1.67,
-      "p999": 3.95,
-      "over2Pct": 0.61,
-      "max": 12.72,
+      "p99": 1.61,
+      "p999": 3.61,
+      "over2Pct": 0.55,
+      "max": 16.15,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 15,
      "medianAbsErrSkinnedPct": 22.16,
      "medianAbsErrUniformPct": 8.48,
@@ -29874,20 +29833,14 @@
      "p90AbsErrTaperedPct": 34.82
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
-     "selfInsidePct": 0,
-     "minAreaRatio": 0.09,
-     "maxEdgeStretch": 16.17,
-     "stretchedAreaCm2": 89.1
+     "selfInsidePct": 0.5,
+     "minAreaRatio": 0.05,
+     "maxEdgeStretch": 7.03,
+     "stretchedAreaCm2": 218.8
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.4,
-     "over2mmPct": 0.2,
-     "worstMm": 54.69,
-     "worstPart": "Right cutaneous branch of anterior branch of obturator nerve"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -29895,8 +29848,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -29964,9 +29917,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.3,
+      "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -29976,17 +29929,17 @@
      "muscle": {
       "insidePct": 15.5,
       "deepPct": 6.8,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.9,
+      "insidePct": 8.8,
       "deepPct": 2.8,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
-      "insidePct": 10,
-      "deepPct": 4.5,
-      "sampled": 13024
+      "insidePct": 10.1,
+      "deepPct": 4.6,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -30075,10 +30028,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.03,
-      "p999": 1.47,
-      "over2Pct": 0.03,
-      "max": 2.59,
+      "p99": 1.01,
+      "p999": 1.27,
+      "over2Pct": 0.02,
+      "max": 2.5,
       "worst": "Skin"
      },
      "bone": {
@@ -30097,14 +30050,14 @@
      },
      "fat": {
       "p99": 1.07,
-      "p999": 1.69,
-      "over2Pct": 0.05,
-      "max": 3.63,
+      "p999": 1.75,
+      "over2Pct": 0.04,
+      "max": 3.92,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 10,
      "medianAbsErrSkinnedPct": 6.18,
      "medianAbsErrUniformPct": 7.25,
@@ -30114,20 +30067,14 @@
      "p90AbsErrTaperedPct": 20.15
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.23,
-     "maxEdgeStretch": 2.59,
-     "stretchedAreaCm2": 39.6
+     "minAreaRatio": 0.26,
+     "maxEdgeStretch": 2.5,
+     "stretchedAreaCm2": 37.7
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.3,
-     "over2mmPct": 0.2,
-     "worstMm": 20.12,
-     "worstPart": "Left posterior femoral cutaneous nerve"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30135,8 +30082,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -30206,7 +30153,7 @@
      "nerve": {
       "insidePct": 4.4,
       "deepPct": 2.5,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -30214,19 +30161,19 @@
       "sampled": 2738
      },
      "muscle": {
-      "insidePct": 15.5,
-      "deepPct": 6.8,
-      "sampled": 72548
+      "insidePct": 15.6,
+      "deepPct": 6.9,
+      "sampled": 72520
      },
      "artery": {
       "insidePct": 9,
-      "deepPct": 2.9,
-      "sampled": 20755
+      "deepPct": 2.8,
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 10.1,
-      "deepPct": 4.5,
-      "sampled": 13024
+      "deepPct": 4.6,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -30315,10 +30262,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.05,
-      "p999": 1.75,
-      "over2Pct": 0.06,
-      "max": 3.57,
+      "p99": 1.01,
+      "p999": 1.41,
+      "over2Pct": 0.04,
+      "max": 3.4,
       "worst": "Skin"
      },
      "bone": {
@@ -30336,15 +30283,15 @@
       "worst": "Left lateral sural cutaneous nerve"
      },
      "fat": {
-      "p99": 1.11,
-      "p999": 2.11,
-      "over2Pct": 0.12,
-      "max": 5.11,
+      "p99": 1.13,
+      "p999": 2.17,
+      "over2Pct": 0.13,
+      "max": 5.75,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 10,
      "medianAbsErrSkinnedPct": 9.8,
      "medianAbsErrUniformPct": 12.81,
@@ -30354,20 +30301,14 @@
      "p90AbsErrTaperedPct": 45.71
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 0.04,
-     "maxEdgeStretch": 3.57,
-     "stretchedAreaCm2": 109.6
+     "maxEdgeStretch": 3.4,
+     "stretchedAreaCm2": 112.7
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.3,
-     "over2mmPct": 0.2,
-     "worstMm": 14.65,
-     "worstPart": "Left great saphenous vein"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30375,8 +30316,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -30482,7 +30423,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -30492,17 +30433,17 @@
      "muscle": {
       "insidePct": 15.6,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.9,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
       "deepPct": 4.4,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -30592,7 +30533,7 @@
      },
      "skin": {
       "p99": 1.01,
-      "p999": 1.13,
+      "p999": 1.09,
       "over2Pct": 0,
       "max": 1.26,
       "worst": "Skin"
@@ -30613,14 +30554,14 @@
      },
      "fat": {
       "p99": 1.03,
-      "p999": 1.15,
+      "p999": 1.17,
       "over2Pct": 0,
-      "max": 1.47,
+      "max": 1.56,
       "worst": "Subcutaneous tissue of right lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 4,
      "medianAbsErrSkinnedPct": 3.03,
      "medianAbsErrUniformPct": 0.96,
@@ -30630,20 +30571,14 @@
      "p90AbsErrTaperedPct": 0.36
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.73,
+     "minAreaRatio": 0.76,
      "maxEdgeStretch": 1.26,
      "stretchedAreaCm2": 0
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.2,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30651,8 +30586,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -30758,7 +30693,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -30768,17 +30703,17 @@
      "muscle": {
       "insidePct": 15.5,
       "deepPct": 6.8,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.9,
+      "insidePct": 8.8,
       "deepPct": 2.8,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 10.1,
-      "deepPct": 4.5,
-      "sampled": 13024
+      "deepPct": 4.6,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -30867,10 +30802,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.03,
-      "p999": 1.45,
+      "p99": 1.01,
+      "p999": 1.33,
       "over2Pct": 0,
-      "max": 1.79,
+      "max": 1.8,
       "worst": "Skin"
      },
      "bone": {
@@ -30889,14 +30824,14 @@
      },
      "fat": {
       "p99": 1.09,
-      "p999": 1.61,
-      "over2Pct": 0.02,
-      "max": 3.09,
+      "p999": 1.57,
+      "over2Pct": 0.03,
+      "max": 3.36,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 10,
      "medianAbsErrSkinnedPct": 4.73,
      "medianAbsErrUniformPct": 6.13,
@@ -30906,20 +30841,14 @@
      "p90AbsErrTaperedPct": 15.56
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.16,
-     "maxEdgeStretch": 1.79,
+     "minAreaRatio": 0.18,
+     "maxEdgeStretch": 1.8,
      "stretchedAreaCm2": 0
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.2,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -30927,8 +30856,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -30958,15 +30887,6 @@
     },
     "bones": [
      {
-      "a": "Proximal phalanx of left middle finger",
-      "b": "Left third metacarpal bone",
-      "insidePct": 0.49,
-      "insideRestPct": 0.49,
-      "maxDepthMm": 0.29,
-      "gapRestMm": 1.17,
-      "gapPosedMm": 1.31
-     },
-     {
       "a": "Middle phalanx of left index finger",
       "b": "Distal phalanx of left index finger",
       "insidePct": 2.27,
@@ -30976,20 +30896,29 @@
       "gapPosedMm": 1.31
      },
      {
+      "a": "Proximal phalanx of left middle finger",
+      "b": "Left third metacarpal bone",
+      "insidePct": 0.26,
+      "insideRestPct": 0.49,
+      "maxDepthMm": 0.26,
+      "gapRestMm": 1.17,
+      "gapPosedMm": 1.28
+     },
+     {
       "a": "Proximal phalanx of left little finger",
       "b": "Left fifth metacarpal bone",
-      "insidePct": 0.44,
+      "insidePct": 0.55,
       "insideRestPct": 0.19,
-      "maxDepthMm": 0.19,
+      "maxDepthMm": 0.23,
       "gapRestMm": 1.32,
-      "gapPosedMm": 1.58
+      "gapPosedMm": 1.57
      },
      {
       "a": "Distal phalanx of left thumb",
       "b": "Proximal phalanx of left thumb",
       "insidePct": 0.48,
       "insideRestPct": 2.34,
-      "maxDepthMm": 0.17,
+      "maxDepthMm": 0.16,
       "gapRestMm": 1.3,
       "gapPosedMm": 1.19
      },
@@ -31006,10 +30935,10 @@
       "a": "Proximal phalanx of left index finger",
       "b": "Left second metacarpal bone",
       "insidePct": 0,
-      "insideRestPct": 0.53,
+      "insideRestPct": 0.54,
       "maxDepthMm": 0,
       "gapRestMm": 1.27,
-      "gapPosedMm": 1.29
+      "gapPosedMm": 1.32
      },
      {
       "a": "Proximal phalanx of left index finger",
@@ -31027,7 +30956,7 @@
       "insideRestPct": 0.55,
       "maxDepthMm": 0,
       "gapRestMm": 1.17,
-      "gapPosedMm": 1.13
+      "gapPosedMm": 1.14
      },
      {
       "a": "Middle phalanx of left middle finger",
@@ -31052,7 +30981,7 @@
      "nerve": {
       "insidePct": 4.9,
       "deepPct": 2.5,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -31062,17 +30991,17 @@
      "muscle": {
       "insidePct": 15.6,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.5,
+      "insidePct": 8.4,
       "deepPct": 2.8,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.8,
-      "deepPct": 4.4,
-      "sampled": 13024
+      "deepPct": 4.5,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -31087,8 +31016,8 @@
       "p99": 1.01,
       "p999": 1.45,
       "over2Pct": 0.04,
-      "max": 6.44,
-      "worst": "Set of lumbricals of left hand"
+      "max": 7.73,
+      "worst": "Set of lumbricals of right hand"
      },
      "tendon": {
       "p99": 1.01,
@@ -31099,23 +31028,23 @@
      },
      "fascia": {
       "p99": 1.01,
-      "p999": 1.45,
+      "p999": 1.47,
       "over2Pct": 0.01,
-      "max": 3.68,
-      "worst": "Left dorsal fascia of hand"
+      "max": 3.26,
+      "worst": "Right dorsal fascia of hand"
      },
      "ligament": {
       "p99": 1.01,
       "p999": 2.29,
       "over2Pct": 0.15,
-      "max": 9.49,
+      "max": 9.51,
       "worst": "Left palmar interphalangeal ligaments"
      },
      "artery": {
       "p99": 1.17,
-      "p999": 1.99,
-      "over2Pct": 0.1,
-      "max": 12.23,
+      "p999": 1.95,
+      "over2Pct": 0.09,
+      "max": 9.2,
       "worst": "Set of dorsal metacarpal arteries"
      },
      "brain": {
@@ -31141,9 +31070,9 @@
      },
      "vein": {
       "p99": 1.13,
-      "p999": 1.59,
+      "p999": 1.61,
       "over2Pct": 0.04,
-      "max": 6.74,
+      "max": 6.25,
       "worst": "Proper palmar digital vein of right little finger"
      },
      "heart": {
@@ -31161,10 +31090,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.21,
-      "p999": 1.89,
-      "over2Pct": 0.07,
-      "max": 3.8,
+      "p99": 1.09,
+      "p999": 1.71,
+      "over2Pct": 0.03,
+      "max": 3.76,
       "worst": "Skin"
      },
      "bone": {
@@ -31178,42 +31107,36 @@
       "p99": 1.13,
       "p999": 1.63,
       "over2Pct": 0.02,
-      "max": 3.97,
-      "worst": "Left dorsal branch of ulnar nerve"
+      "max": 4.63,
+      "worst": "Right dorsal branch of ulnar nerve"
      },
      "fat": {
-      "p99": 1.13,
-      "p999": 1.61,
+      "p99": 1.15,
+      "p999": 1.55,
       "over2Pct": 0.03,
-      "max": 3.72,
+      "max": 4.41,
       "worst": "Subcutaneous tissue of left upper limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 18,
-     "medianAbsErrSkinnedPct": 25.91,
-     "medianAbsErrUniformPct": 12.34,
-     "medianAbsErrTaperedPct": 9.69,
-     "p90AbsErrSkinnedPct": 38.96,
-     "p90AbsErrUniformPct": 37.62,
-     "p90AbsErrTaperedPct": 38.28
+     "medianAbsErrSkinnedPct": 26.09,
+     "medianAbsErrUniformPct": 12.44,
+     "medianAbsErrTaperedPct": 9.77,
+     "p90AbsErrSkinnedPct": 38.64,
+     "p90AbsErrUniformPct": 36.6,
+     "p90AbsErrTaperedPct": 37.26
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.4,
      "collapsedPct": 0.1,
-     "selfInsidePct": 1.7,
-     "minAreaRatio": 0.02,
-     "maxEdgeStretch": 3.8,
-     "stretchedAreaCm2": 30.1
+     "selfInsidePct": 1.1,
+     "minAreaRatio": 0,
+     "maxEdgeStretch": 3.76,
+     "stretchedAreaCm2": 24.5
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.6,
-     "over2mmPct": 0.2,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31221,8 +31144,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -31319,7 +31242,7 @@
      "nerve": {
       "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -31329,17 +31252,17 @@
      "muscle": {
       "insidePct": 15.5,
       "deepPct": 6.8,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.9,
-      "deepPct": 2.8,
-      "sampled": 20755
+      "insidePct": 8.8,
+      "deepPct": 2.7,
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 9.9,
-      "deepPct": 4.4,
-      "sampled": 13024
+      "deepPct": 4.5,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -31368,7 +31291,7 @@
       "p99": 1.01,
       "p999": 1.27,
       "over2Pct": 0.01,
-      "max": 4.17,
+      "max": 3.45,
       "worst": "Right superficial investing cervical fascia"
      },
      "ligament": {
@@ -31428,10 +31351,10 @@
       "worst": "Thyroid cartilage"
      },
      "skin": {
-      "p99": 1.25,
-      "p999": 2.13,
-      "over2Pct": 0.14,
-      "max": 7.53,
+      "p99": 1.07,
+      "p999": 1.97,
+      "over2Pct": 0.09,
+      "max": 4.19,
       "worst": "Skin"
      },
      "bone": {
@@ -31450,14 +31373,14 @@
      },
      "fat": {
       "p99": 1.05,
-      "p999": 1.71,
+      "p999": 1.87,
       "over2Pct": 0.07,
-      "max": 4.18,
+      "max": 4.95,
       "worst": "Subcutaneous tissue of neck"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 30,
      "medianAbsErrSkinnedPct": 6.24,
      "medianAbsErrUniformPct": 5.55,
@@ -31467,20 +31390,14 @@
      "p90AbsErrTaperedPct": 18.08
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
-     "selfInsidePct": 0.1,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 7.53,
-     "stretchedAreaCm2": 23.9
+     "selfInsidePct": 0,
+     "minAreaRatio": 0.17,
+     "maxEdgeStretch": 4.19,
+     "stretchedAreaCm2": 39.5
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.2,
-     "over2mmPct": 0.1,
-     "worstMm": 11.11,
-     "worstPart": "Right major alar cartilage"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31488,8 +31405,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -31649,7 +31566,7 @@
      "nerve": {
       "insidePct": 4.2,
       "deepPct": 2.4,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -31659,17 +31576,17 @@
      "muscle": {
       "insidePct": 14.5,
       "deepPct": 6.3,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 8.9,
-      "deepPct": 2.8,
-      "sampled": 20755
+      "insidePct": 8.8,
+      "deepPct": 2.7,
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 10,
-      "deepPct": 4.4,
-      "sampled": 13024
+      "deepPct": 4.5,
+      "sampled": 13017
      }
     },
     "stretch": {
@@ -31696,8 +31613,8 @@
      },
      "fascia": {
       "p99": 1.71,
-      "p999": 5.31,
-      "over2Pct": 0.74,
+      "p999": 5.33,
+      "over2Pct": 0.73,
       "max": 17.77,
       "worst": "Mesentery of small intestine"
      },
@@ -31712,7 +31629,7 @@
       "p99": 1.17,
       "p999": 2.29,
       "over2Pct": 0.15,
-      "max": 15.42,
+      "max": 15.68,
       "worst": "Left superior epigastric artery"
      },
      "brain": {
@@ -31724,9 +31641,9 @@
      },
      "space": {
       "p99": 1.13,
-      "p999": 1.41,
+      "p999": 1.37,
       "over2Pct": 0.03,
-      "max": 3.16,
+      "max": 3.13,
       "worst": "Cavity of right ventricle"
      },
      "gland": {
@@ -31738,17 +31655,17 @@
      },
      "vein": {
       "p99": 1.25,
-      "p999": 3.15,
-      "over2Pct": 0.28,
+      "p999": 3.11,
+      "over2Pct": 0.27,
       "max": 14.15,
       "worst": "Right gastroepiploic vein"
      },
      "heart": {
-      "p99": 1.79,
-      "p999": 4.11,
-      "over2Pct": 0.78,
-      "max": 5.83,
-      "worst": "Posterior papillary muscle of right ventricle"
+      "p99": 1.81,
+      "p999": 4.15,
+      "over2Pct": 0.8,
+      "max": 7.23,
+      "worst": "Posterior leaflet of tricuspid valve"
      },
      "cartilage": {
       "p99": 1.09,
@@ -31758,10 +31675,10 @@
       "worst": "Left seventh costal cartilage"
      },
      "skin": {
-      "p99": 1.09,
-      "p999": 1.33,
+      "p99": 1.05,
+      "p999": 1.31,
       "over2Pct": 0,
-      "max": 2.02,
+      "max": 2.51,
       "worst": "Skin"
      },
      "bone": {
@@ -31773,44 +31690,38 @@
      },
      "nerve": {
       "p99": 1.15,
-      "p999": 1.89,
-      "over2Pct": 0.09,
+      "p999": 1.87,
+      "over2Pct": 0.08,
       "max": 20.39,
       "worst": "Right tenth intercostal nerve"
      },
      "fat": {
       "p99": 1.23,
-      "p999": 2.77,
-      "over2Pct": 0.19,
-      "max": 8.5,
+      "p999": 2.43,
+      "over2Pct": 0.16,
+      "max": 10.07,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 31,
-     "medianAbsErrSkinnedPct": 15.13,
+     "medianAbsErrSkinnedPct": 15.17,
      "medianAbsErrUniformPct": 3.35,
      "medianAbsErrTaperedPct": 3.68,
      "p90AbsErrSkinnedPct": 38.12,
-     "p90AbsErrUniformPct": 9.47,
-     "p90AbsErrTaperedPct": 9.14
+     "p90AbsErrUniformPct": 10,
+     "p90AbsErrTaperedPct": 9.62
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.18,
-     "maxEdgeStretch": 2.02,
-     "stretchedAreaCm2": 1.8
+     "minAreaRatio": 0.07,
+     "maxEdgeStretch": 2.51,
+     "stretchedAreaCm2": 18.9
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.2,
-     "over2mmPct": 0.1,
-     "worstMm": 19.83,
-     "worstPart": "Left rectus abdominis"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -31818,8 +31729,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -31916,7 +31827,7 @@
      "nerve": {
       "insidePct": 4.6,
       "deepPct": 2.7,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -31925,31 +31836,31 @@
      },
      "muscle": {
       "insidePct": 15.8,
-      "deepPct": 6.9,
-      "sampled": 72548
+      "deepPct": 7,
+      "sampled": 72520
      },
      "artery": {
       "insidePct": 9.3,
       "deepPct": 3.1,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 10.3,
       "deepPct": 4.7,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.41,
-      "p999": 3.03,
-      "over2Pct": 0.29,
+      "p999": 2.77,
+      "over2Pct": 0.26,
       "max": 15.45,
       "worst": "Distal part of ileum"
      },
      "muscle": {
       "p99": 1.81,
-      "p999": 6.53,
+      "p999": 6.55,
       "over2Pct": 0.84,
       "max": 52.48,
       "worst": "Left quadratus femoris"
@@ -31964,7 +31875,7 @@
      "fascia": {
       "p99": 1.97,
       "p999": 4.65,
-      "over2Pct": 0.97,
+      "over2Pct": 0.96,
       "max": 16.29,
       "worst": "Right medial patellar retinaculum"
      },
@@ -31977,7 +31888,7 @@
      },
      "artery": {
       "p99": 1.49,
-      "p999": 4.03,
+      "p999": 4.05,
       "over2Pct": 0.53,
       "max": 27.91,
       "worst": "Right inferior epigastric artery"
@@ -32025,10 +31936,10 @@
       "worst": "Intervertebral disk of third lumbar vertebra"
      },
      "skin": {
-      "p99": 1.61,
-      "p999": 2.93,
-      "over2Pct": 0.45,
-      "max": 17.19,
+      "p99": 3.07,
+      "p999": 12.01,
+      "over2Pct": 1.42,
+      "max": 14.18,
       "worst": "Skin"
      },
      "bone": {
@@ -32039,22 +31950,22 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 3.09,
-      "p999": 6.91,
+      "p99": 3.07,
+      "p999": 6.93,
       "over2Pct": 2.69,
       "max": 21.76,
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 2.61,
-      "p999": 6.03,
-      "over2Pct": 1.94,
-      "max": 16.77,
+      "p99": 2.57,
+      "p999": 5.79,
+      "over2Pct": 1.88,
+      "max": 20.93,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 67,
      "medianAbsErrSkinnedPct": 17.18,
      "medianAbsErrUniformPct": 4.18,
@@ -32064,20 +31975,14 @@
      "p90AbsErrTaperedPct": 48.92
     },
     "skin": {
-     "flippedPct": 0.2,
+     "flippedPct": 0.3,
      "collapsedPct": 0.1,
-     "selfInsidePct": 0.3,
+     "selfInsidePct": 0.7,
      "minAreaRatio": 0.04,
-     "maxEdgeStretch": 9.44,
-     "stretchedAreaCm2": 739.5
+     "maxEdgeStretch": 14.18,
+     "stretchedAreaCm2": 1059.4
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 1.1,
-     "over2mmPct": 0.7,
-     "worstMm": 28.63,
-     "worstPart": "Right cutaneous branch of anterior branch of obturator nerve"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -32085,8 +31990,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -32165,7 +32070,7 @@
      "nerve": {
       "insidePct": 4.4,
       "deepPct": 2.5,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -32175,24 +32080,24 @@
      "muscle": {
       "insidePct": 15.7,
       "deepPct": 6.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 9,
-      "deepPct": 3,
-      "sampled": 20755
+      "insidePct": 8.9,
+      "deepPct": 2.9,
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 10.2,
       "deepPct": 4.6,
-      "sampled": 13024
+      "sampled": 13017
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.27,
-      "p999": 2.39,
-      "over2Pct": 0.15,
+      "p999": 2.19,
+      "over2Pct": 0.13,
       "max": 12.22,
       "worst": "Distal part of ileum"
      },
@@ -32220,13 +32125,13 @@
      "ligament": {
       "p99": 3.31,
       "p999": 11.01,
-      "over2Pct": 1.84,
+      "over2Pct": 1.85,
       "max": 71.21,
       "worst": "Right transverse ligament of knee"
      },
      "artery": {
       "p99": 1.29,
-      "p999": 2.97,
+      "p999": 3.03,
       "over2Pct": 0.29,
       "max": 23,
       "worst": "Right inferior epigastric artery"
@@ -32253,9 +32158,9 @@
       "worst": "Left seminal vesicle"
      },
      "vein": {
-      "p99": 1.47,
-      "p999": 3.45,
-      "over2Pct": 0.41,
+      "p99": 1.45,
+      "p999": 3.43,
+      "over2Pct": 0.4,
       "max": 34.68,
       "worst": "Left superficial epigastric vein"
      },
@@ -32274,10 +32179,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.45,
-      "p999": 2.29,
-      "over2Pct": 0.19,
-      "max": 13.14,
+      "p99": 2.47,
+      "p999": 9.23,
+      "over2Pct": 1.18,
+      "max": 10.97,
       "worst": "Skin"
      },
      "bone": {
@@ -32289,21 +32194,21 @@
      },
      "nerve": {
       "p99": 2.47,
-      "p999": 5.41,
+      "p999": 5.43,
       "over2Pct": 1.76,
       "max": 16.69,
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 2.13,
-      "p999": 4.77,
-      "over2Pct": 1.19,
-      "max": 12.72,
+      "p99": 2.09,
+      "p999": 4.53,
+      "over2Pct": 1.12,
+      "max": 16.15,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 42,
      "medianAbsErrSkinnedPct": 16.79,
      "medianAbsErrUniformPct": 8.48,
@@ -32313,20 +32218,14 @@
      "p90AbsErrTaperedPct": 32.08
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0.1,
-     "selfInsidePct": 0,
+     "selfInsidePct": 0.5,
      "minAreaRatio": 0.05,
-     "maxEdgeStretch": 7.21,
-     "stretchedAreaCm2": 185.1
+     "maxEdgeStretch": 10.97,
+     "stretchedAreaCm2": 426.7
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 0.7,
-     "over2mmPct": 0.5,
-     "worstMm": 25.77,
-     "worstPart": "Right cutaneous branch of anterior branch of obturator nerve"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -32334,8 +32233,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -32405,7 +32304,7 @@
      "nerve": {
       "insidePct": 4.6,
       "deepPct": 2.6,
-      "sampled": 32293
+      "sampled": 32294
      },
      "tendon": {
       "insidePct": 4.4,
@@ -32415,22 +32314,22 @@
      "muscle": {
       "insidePct": 11.7,
       "deepPct": 4.9,
-      "sampled": 72548
+      "sampled": 72520
      },
      "artery": {
-      "insidePct": 9,
+      "insidePct": 8.9,
       "deepPct": 2.8,
-      "sampled": 20755
+      "sampled": 20752
      },
      "vein": {
       "insidePct": 10,
-      "deepPct": 4.4,
-      "sampled": 13024
+      "deepPct": 4.5,
+      "sampled": 13017
      }
     },
     "stretch": {
      "organ": {
-      "p99": 1.71,
+      "p99": 1.73,
       "p999": 5.99,
       "over2Pct": 0.73,
       "max": 17.72,
@@ -32438,7 +32337,7 @@
      },
      "muscle": {
       "p99": 1.69,
-      "p999": 3.01,
+      "p999": 2.99,
       "over2Pct": 0.47,
       "max": 19.32,
       "worst": "Right external oblique"
@@ -32452,7 +32351,7 @@
      },
      "fascia": {
       "p99": 1.77,
-      "p999": 5.19,
+      "p999": 5.17,
       "over2Pct": 0.79,
       "max": 13.99,
       "worst": "Mesentery of small intestine"
@@ -32466,8 +32365,8 @@
      },
      "artery": {
       "p99": 1.91,
-      "p999": 5.75,
-      "over2Pct": 0.92,
+      "p999": 5.71,
+      "over2Pct": 0.91,
       "max": 15.97,
       "worst": "Trunk of right coronary artery"
      },
@@ -32480,9 +32379,9 @@
      },
      "space": {
       "p99": 3.05,
-      "p999": 7.07,
-      "over2Pct": 5.45,
-      "max": 7.46,
+      "p999": 6.59,
+      "over2Pct": 5.62,
+      "max": 7.03,
       "worst": "Cavity of left atrium"
      },
      "gland": {
@@ -32493,16 +32392,16 @@
       "worst": "Left adrenal gland"
      },
      "vein": {
-      "p99": 2.49,
-      "p999": 7.49,
-      "over2Pct": 1.43,
+      "p99": 2.47,
+      "p999": 7.45,
+      "over2Pct": 1.42,
       "max": 24.37,
       "worst": "Left portal vein"
      },
      "heart": {
-      "p99": 6.99,
-      "p999": 15.71,
-      "over2Pct": 8.03,
+      "p99": 6.95,
+      "p999": 15.91,
+      "over2Pct": 8.11,
       "max": 28.04,
       "worst": "Anterior leaflet of mitral valve"
      },
@@ -32515,9 +32414,9 @@
      },
      "skin": {
       "p99": 1.01,
-      "p999": 1.01,
+      "p999": 1.31,
       "over2Pct": 0,
-      "max": 1,
+      "max": 2.31,
       "worst": "Skin"
      },
      "bone": {
@@ -32528,22 +32427,22 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 1.33,
-      "p999": 2.33,
-      "over2Pct": 0.18,
+      "p99": 1.31,
+      "p999": 2.23,
+      "over2Pct": 0.16,
       "max": 14.92,
       "worst": "Right tenth intercostal nerve"
      },
      "fat": {
-      "p99": 1.35,
-      "p999": 2.67,
-      "over2Pct": 0.25,
-      "max": 6.23,
+      "p99": 1.29,
+      "p999": 2.51,
+      "over2Pct": 0.2,
+      "max": 6.01,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
     "volume": {
-     "muscles": 227,
+     "muscles": 226,
      "lengthChanged": 20,
      "medianAbsErrSkinnedPct": 15.03,
      "medianAbsErrUniformPct": 2.92,
@@ -32553,20 +32452,14 @@
      "p90AbsErrTaperedPct": 10.31
     },
     "skin": {
-     "flippedPct": 0.1,
+     "flippedPct": 0.3,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 1,
-     "maxEdgeStretch": 1,
-     "stretchedAreaCm2": 0
+     "minAreaRatio": 0.09,
+     "maxEdgeStretch": 2.31,
+     "stretchedAreaCm2": 30.5
     },
-    "poke": {
-     "sampled": 111355,
-     "outsidePct": 1.3,
-     "over2mmPct": 0.9,
-     "worstMm": 42.43,
-     "worstPart": "Left rectus abdominis"
-    },
+    "poke": null,
     "corridors": [
      {
       "what": "ulnar nerve behind the elbow (left)",
@@ -32574,8 +32467,8 @@
       "behindMm": 10,
       "axisDistanceMm": 13,
       "axisDistanceRestMm": 13,
-      "insideBonePct": 1.8,
-      "detail": "1 part(s), 56 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.8 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
+      "insideBonePct": 1.7,
+      "detail": "1 part(s), 58 vertices within 30 mm of the joint at rest. The point nearest the joint axis lies 10 mm to the flexor side (required ≥ 0) and 13 mm from the axis (13 mm at rest); 1.7 % of the vertices are deeper than 1 mm inside bone (allowed 5)."
      },
      {
       "what": "popliteal artery and vein behind the knee (left)",
@@ -32921,12 +32814,12 @@
     "coordinate": "r_elbow_flex 15…130°",
     "osRangeMm": -80.24,
     "osArmMm": 39.98,
-    "lineRangeMm": -70.39,
+    "lineRangeMm": -70.9,
     "lineR": 1,
-    "lineRmsMm": 3.11,
-    "meshRangeMm": -28.19,
+    "lineRmsMm": 2.95,
+    "meshRangeMm": -28.38,
     "meshR": 0.98,
-    "meshRmsMm": 17.93,
+    "meshRmsMm": 17.88,
     "meshNrms": 0.22,
     "note": "OpenSim wrap surfaces ignored: BIClonghh (WrapEllipsoid)"
    },
@@ -32937,12 +32830,12 @@
     "coordinate": "r_elbow_flex 15…130°",
     "osRangeMm": -80.24,
     "osArmMm": 39.98,
-    "lineRangeMm": -26.74,
+    "lineRangeMm": -27.18,
     "lineR": 0.99,
-    "lineRmsMm": 17.97,
-    "meshRangeMm": -20.73,
+    "lineRmsMm": 17.84,
+    "meshRangeMm": -21.62,
     "meshR": 0.96,
-    "meshRmsMm": 19.99,
+    "meshRmsMm": 19.68,
     "meshNrms": 0.25
    },
    {
@@ -32952,13 +32845,13 @@
     "coordinate": "r_elbow_flex 15…130°",
     "osRangeMm": 42.61,
     "osArmMm": 21.23,
-    "lineRangeMm": 14.53,
-    "lineR": 0.86,
-    "lineRmsMm": 9.4,
-    "meshRangeMm": 38.08,
+    "lineRangeMm": 14.74,
+    "lineR": 0.87,
+    "lineRmsMm": 9.31,
+    "meshRangeMm": 37.48,
     "meshR": 1,
-    "meshRmsMm": 1.33,
-    "meshNrms": 0.03,
+    "meshRmsMm": 1.52,
+    "meshNrms": 0.04,
     "note": "OpenSim wrap surfaces ignored: TRIlonghh (WrapEllipsoid)"
    },
    {
@@ -32968,12 +32861,12 @@
     "coordinate": "r_elbow_flex 15…130°",
     "osRangeMm": 42.61,
     "osArmMm": 21.23,
-    "lineRangeMm": 10.53,
-    "lineR": 0.79,
-    "lineRmsMm": 10.56,
-    "meshRangeMm": 38.34,
+    "lineRangeMm": 10.42,
+    "lineR": 0.78,
+    "lineRmsMm": 10.61,
+    "meshRangeMm": 37.62,
     "meshR": 1,
-    "meshRmsMm": 1.22,
+    "meshRmsMm": 1.44,
     "meshNrms": 0.03
    },
    {
@@ -32983,12 +32876,12 @@
     "coordinate": "r_elbow_flex 15…130°",
     "osRangeMm": 42.61,
     "osArmMm": 21.23,
-    "lineRangeMm": 12.37,
-    "lineR": 0.88,
-    "lineRmsMm": 9.73,
-    "meshRangeMm": 23.37,
+    "lineRangeMm": 12.41,
+    "lineR": 0.89,
+    "lineRmsMm": 9.7,
+    "meshRangeMm": 22.73,
     "meshR": 1,
-    "meshRmsMm": 5.86,
+    "meshRmsMm": 6.08,
     "meshNrms": 0.14
    },
    {
@@ -32998,22 +32891,36 @@
     "coordinate": "r_elbow_flex 15…130°",
     "osRangeMm": -37.56,
     "osArmMm": 18.71,
-    "lineRangeMm": -44.99,
+    "lineRangeMm": -44.9,
     "lineR": 1,
-    "lineRmsMm": 2.98,
-    "meshRangeMm": -11.39,
-    "meshR": 0.9,
-    "meshRmsMm": 9.26,
-    "meshNrms": 0.25
+    "lineRmsMm": 2.93,
+    "meshRangeMm": -13.68,
+    "meshR": 0.92,
+    "meshRmsMm": 8.48,
+    "meshNrms": 0.23
    }
   ],
   "opensimNote": "gait2392 (Delp S.L., Loan J.P., Hoy M.G., Zajac F.E., Topp E.L., Rosen J.M., Thelen D.G., …; CC BY 3.0) for the lower limb, arm26 (CC BY 3.0) for the elbow. Lengths come from the path points (conditional and moving points, cylinder wraps) read from the .osim files; OpenSim itself was not run. Curves are compared as length change about the middle of the sweep, in mm, without scaling for body size.",
-  "renders": [],
-  "clamped": {
-   "fist": [
-    "pip3_L[0] 92° → 92°",
-    "pip5_L[0] 89° → 89°"
-   ]
-  }
+  "renders": [
+   "tools/rig/out/male/rest.png",
+   "tools/rig/out/male/elbow90.png",
+   "tools/rig/out/male/elbow140.png",
+   "tools/rig/out/male/pronation.png",
+   "tools/rig/out/male/supination.png",
+   "tools/rig/out/male/shoulderAbd90.png",
+   "tools/rig/out/male/shoulderFlex160.png",
+   "tools/rig/out/male/hipFlex90.png",
+   "tools/rig/out/male/knee90.png",
+   "tools/rig/out/male/knee135.png",
+   "tools/rig/out/male/ankleDorsi.png",
+   "tools/rig/out/male/anklePlantar.png",
+   "tools/rig/out/male/fist.png",
+   "tools/rig/out/male/neckRot60.png",
+   "tools/rig/out/male/trunkFlex60.png",
+   "tools/rig/out/male/squat.png",
+   "tools/rig/out/male/sitting.png",
+   "tools/rig/out/male/inspiration.png"
+  ],
+  "clamped": {}
  }
 }

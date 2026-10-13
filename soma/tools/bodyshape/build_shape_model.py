@@ -265,7 +265,12 @@ def rig_shape(model, meas):
                       'mhrDirectionPerBmiPoint': sf['fatFieldDirectionPerBmiPoint']['mhrIdentityCoefficients1to6']}
         out['sexes'][sex] = {
             'controls': [
-                {'id': 'stature', 'name': {'zh': '身高', 'en': 'Stature'}, 'unit': 'm', 'min': 1.40, 'max': 2.00, 'rest': rest['stature']},
+                {'id': 'stature', 'name': {'zh': '身高', 'en': 'Stature'}, 'unit': 'm', 'min': 1.40, 'max': 2.00, 'rest': rest['stature'],
+                 # 中国参考人群的身高标准差：由 GB/T 10000-1988 的百分位按正态近似反推（男 58.3、女 53.2 mm），见 data/curated/knowledge/citation-audit.json；“±2 SD”即 ±0.117 / ±0.106 m。
+                 # Stature SD of the Chinese reference population, implied by the GB/T 10000-1988 percentiles under a normal approximation (men 58.3, women 53.2 mm), see data/curated/knowledge/citation-audit.json; "+/-2 SD" is +/-0.117 / +/-0.106 m.
+                 'sdM': 0.0583 if sex == 'M' else 0.0532,
+                 'sdSource': {'zh': 'GB/T 10000-1988 百分位（转载表格、目视读数）按正态近似反推；见知识库 citation-audit.json。原先“±2 SD”用的 0.13 / 0.12 m 来自美军样本的量级（ANSUR II：68.6 / 64.2 mm）。',
+                              'en': 'implied by the GB/T 10000-1988 percentiles (reprinted table read by eye) under a normal approximation; see citation-audit.json of the knowledge base. The 0.13 / 0.12 m formerly used for "+/-2 SD" has the magnitude of the US Army sample (ANSUR II: 68.6 / 64.2 mm).'}},
                 {'id': 'bmi', 'name': {'zh': '体重指数（胖瘦）', 'en': 'Body-mass index (fatness)'}, 'unit': 'kg/m2', 'min': 16, 'max': 40, 'rest': rest['bmi']},
                 {'id': 'legLength', 'name': {'zh': '腿长比例', 'en': 'Relative leg length'}, 'unit': 'sd', 'min': -3, 'max': 2, 'rest': rest['legLength']},
                 {'id': 'centralBuild', 'name': {'zh': '体型分布（腰腹型–四肢型）', 'en': 'Mass distribution (waist-heavy vs limb-heavy)'}, 'unit': 'sd', 'min': -2, 'max': 2, 'rest': 0.0}],

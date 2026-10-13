@@ -1,8 +1,7 @@
 // 骨架绑定的构建：读入一个已生成的人体 → 关节、活动范围、绑定、肌肉作用线 → Rig + rig.bin。
 // The rig build: read a generated body → joints, ranges of motion, bindings, muscle lines → Rig + rig.bin.
 
-import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { MuscleLine, Rig, RigBinding } from '../../src/anatomy/types.ts'
 import { type AttachReport, type AttachmentPatch, type BindRules, type BoundPart, bindAll } from './bind.ts'
@@ -10,7 +9,7 @@ import { type Calibration, calibrateMuscles } from './calibrate.ts'
 import { type ExternalWeights, loadExternalWeights } from './external.ts'
 import { BodyField, type FieldStats } from './field.ts'
 import { Surface, mergeMeshes } from './geom.ts'
-import type { Body } from './io.ts'
+import { type Body, hashInput, inputFile } from './io.ts'
 import { type BuiltJoint, type JointExt, type JointFile, type Override, type RomEntry, type Skeleton, blendRadius, buildJoints, expandJointDefs, toContract } from './joints.ts'
 import { BYTES_PER_VERTEX } from './pose.ts'
 
@@ -34,6 +33,8 @@ export interface BuildResult {
   calibration: Calibration[]
   /** 标定前建立的全部作用线（含被去掉的）。 Every line of action established before calibration (dropped ones included). */
   allLines: MuscleLine[]
+  /** 皮肤是按下标绑定的开口皮肤（此时不能用射线奇偶判断内外）。 The skin is an opened skin bound by index (ray parity cannot tell inside from outside then). */
+  skinOpen: boolean
   /** 用到的外部权重包及其关节映射。 External weight packages used, with their joint mapping. */
   external: { dir: string; source: string; vertices: number; mapping: ExternalWeights['mapped'] }[]
   /** 整理好的输入文件哈希（含 data/curated/rig 下的定义）。 Hashes of every input, the curated definitions included. */
@@ -105,7 +106,7 @@ export function loadCurated(bodyId: string): { defs: ReturnType<typeof expandJoi
   const hashes: Record<string, string> = {}
   const read = <T>(name: string): T => {
     const text = readFileSync(join(CURATED, name), 'utf8')
-    hashes[`data/curated/rig/${name}`] = createHash('sha256').update(text).digest('hex').slice(0, 16)
+    hashes[`data/curated/rig/${name}#data`] = hashInput(`data/curated/rig/${name}#data`, join(CURATED, name))
     return JSON.parse(text) as T
   }
   const jf = read<JointFile>('joints.json')
@@ -136,7 +137,30 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
   // 距离场：皮肤取三角形最多的那个皮肤部件；每个关节的骨合并成一个表面
   // distance field: the skin part with most triangles; the bones of each joint merged into one surface
   const skins = body.data.parts.filter((p) => p.tissue === 'skin').sort((a, b) => b.triangles - a.triangles)
-  const skin = skins.length ? [body.meshes.get(skins[0]!.id)!] : []
+  // 外部蒙皮权重（如 MHR 拓扑的新皮肤）：目录存在就读入，并把它的文件计入输入哈希
+  // external skin weights (e.g. the replacement skin in MHR topology): read when the directory exists, its files added to the input hashes
+  const external: (ExternalWeights & { byIndexFor?: string })[] = []
+  const extHashes: Record<string, string> = {}
+  for (const e of opts.genericSkin ? [] : (cur.rules.externalWeights ?? [])) {
+    if (e.body !== body.data.body) continue
+    // 有下标对照、且有开口后的皮肤包时，用开口后的包并按下标取权重
+    // with the index sidecar and an opened package, the opened package is used and weights are taken by index
+    const useOpen = !!body.skinSource && !!e.openDir && existsSync(join(CURATED, '..', '..', '..', e.openDir, 'weights.bin'))
+    const rel = useOpen ? e.openDir! : e.dir
+    const dir = join(CURATED, '..', '..', '..', rel)
+    const w: (ExternalWeights & { byIndexFor?: string }) | null = loadExternalWeights(dir, built.map((j) => ({ id: j.def.id, center: j.center, tail: j.tail })), e.map ?? [])
+    if (!w) continue
+    w.dir = rel
+    if (useOpen && skins[0]) w.byIndexFor = skins[0].id
+    if (w.body !== null && w.body !== body.data.body) continue
+    external.push(w)
+    for (const f of ['weights.bin', 'joints.json', 'skin.obj', 'manifest.json#package']) extHashes[`${rel}/${f}`] = hashInput(f, join(dir, inputFile(f)))
+    log(`external skin weights: ${w.vertexCount} vertices from ${rel} (${w.sourceName})${useOpen ? ', by index' : ''}`)
+  }
+  // 距离场要闭合的皮肤：按下标绑定的开口皮肤改用皮肤包里的闭合伴随表面（口腔袋会在头内造出假的皮肤壁）
+  // the distance field needs a closed skin: for an opened skin bound by index, the package's closed companion is used (the oral pouch would make false skin walls inside the head)
+  const companion = external.find((w) => w.byIndexFor)?.closed() ?? null
+  const skin = companion ? [companion] : skins.length ? [body.meshes.get(skins[0]!.id)!] : []
   const sources = built.flatMap((j, i) => (j.boneIds.length ? [{ joint: i, surface: new Surface(mergeMeshes(j.boneIds.map((b) => body.meshes.get(b)!))) }] : []))
   const field = new BodyField(skin, sources)
   log(`field: ${field.stats.insideVoxels} voxels of ${field.stats.voxel * 1000} mm in ${field.stats.buildMs} ms${field.stats.leaked ? ' (LEAKED: Euclidean fallback)' : ''}`)
@@ -146,22 +170,7 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
   })
 
   const t1 = performance.now()
-  // 外部蒙皮权重（如 MHR 拓扑的新皮肤）：目录存在就读入，并把它的文件计入输入哈希
-  // external skin weights (e.g. the replacement skin in MHR topology): read when the directory exists, its files added to the input hashes
-  const external: ExternalWeights[] = []
-  const extHashes: Record<string, string> = {}
-  for (const e of opts.genericSkin ? [] : (cur.rules.externalWeights ?? [])) {
-    if (e.body !== body.data.body) continue
-    const dir = join(CURATED, '..', '..', '..', e.dir)
-    const w = loadExternalWeights(dir, built.map((j) => ({ id: j.def.id, center: j.center, tail: j.tail })), e.map ?? [])
-    if (!w) continue
-    w.dir = e.dir
-    if (w.body !== null && w.body !== body.data.body) continue
-    external.push(w)
-    for (const f of ['weights.bin', 'joints.json', 'skin.obj', 'manifest.json']) extHashes[`${e.dir}/${f}`] = createHash('sha256').update(new Uint8Array(readFileSync(join(dir, f)))).digest('hex').slice(0, 16)
-    log(`external skin weights: ${w.vertexCount} vertices from ${e.dir} (${w.sourceName})`)
-  }
-  const res = bindAll({ body, joints: built, field, radius, rules: cur.rules, patches: body.patches as AttachmentPatch[], external, log })
+  const res = bindAll({ body, joints: built, field, radius, rules: cur.rules, patches: body.patches as AttachmentPatch[], external, skinSource: body.skinSource, log })
   log(`bindings: ${res.parts.length} parts in ${Math.round(performance.now() - t1)} ms`)
 
   // rig.bin：按 anatomy.json 的部件顺序依次排放 / rig.bin: parts laid out in anatomy.json order
@@ -196,7 +205,7 @@ export function buildRig(body: Body, log: (m: string) => void = () => {}, opts: 
   const calibration = calibrateMuscles(rig, bin, body)
   log(`muscle lines: ${res.muscles.length} established, ${rig.muscles.length} kept after volume calibration in ${Math.round(performance.now() - t2)} ms`)
   return {
-    rig, bin, built, skeleton, field, calibration, allLines, external: external.map((w) => ({ dir: w.dir, source: w.sourceName, vertices: w.vertexCount, mapping: w.mapped })), fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
+    rig, bin, built, skeleton, field, calibration, allLines, skinOpen: external.some((w) => w.byIndexFor), external: external.map((w) => ({ dir: w.dir, source: w.sourceName, vertices: w.vertexCount, mapping: w.mapped })), fieldStats: field.stats, bound: res.parts, attach: res.attach, byMethod: res.byMethod,
     notes: [...romNotes, ...res.notes, ...external.flatMap((w) => w.notes), ...built.flatMap((j) => j.warnings.map((w) => `${j.def.id}: ${w}`))],
     inputs: { ...body.inputs, ...cur.hashes, ...extHashes },
   }

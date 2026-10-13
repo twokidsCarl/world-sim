@@ -16,7 +16,7 @@
 //   · 没有描摹或复制任何照片；条数、尺寸都来自 data/curated/face/wrinkles.json，其中标明了哪些是假设。
 //     No photograph is traced or copied; counts and sizes come from data/curated/face/wrinkles.json, which says what is assumed.
 
-import type { Bilingual, FaceData, FaceDetail, Sourced } from '../../src/face/types.ts'
+import type { Bilingual, FaceData, FaceDetail, FaceOpenings, Sourced } from '../../src/face/types.ts'
 import { Surface } from '../rig/geom.ts'
 import type { Body } from '../rig/io.ts'
 import { type V3, sub } from '../rig/math.ts'
@@ -55,7 +55,7 @@ export interface DetailBuild {
   skipped: string[]
 }
 
-export function buildDetail(body: Body, face: FaceData, faceBin: Uint8Array, cur: WrinklesCurated): DetailBuild {
+export function buildDetail(body: Body, face: FaceData, faceBin: Uint8Array, cur: WrinklesCurated, openings: FaceOpenings | null = null): DetailBuild {
   const skin = body.meshes.get(face.skin)!
   const P = skin.positions
   const nv = P.length / 3
@@ -69,6 +69,8 @@ export function buildDetail(body: Body, face: FaceData, faceBin: Uint8Array, cur
   const moved = new Uint8Array(nv)
   const dv = new DataView(faceBin.buffer, faceBin.byteOffset, faceBin.byteLength)
   for (const ch of face.channels) for (const f of ch.fields) if (f.part === face.skin) for (let i = 0; i < f.count; i++) moved[dv.getUint32(f.offset + i * 4, true)] = 1
+  // 构造物（睑缘内卷、口腔袋）不要细节 / construction aids (lid rims, oral pouch) take no detail
+  if (openings) for (const v of [...openings.lidRims.flatMap((r) => r.vertices), ...openings.oralPouch.upper, ...openings.oralPouch.lower, ...openings.oralPouch.seam]) moved[v] = 0
   const theta = (v: number): number => Math.atan2(P[v * 3]! - axis.x, P[v * 3 + 2]! - axis.z)
   const LIMIT = (75 * Math.PI) / 180
   // 面部的高度范围：眼上 45 mm 到口裂下 45 mm / the height range of the face: 45 mm above the eyes to 45 mm below the oral fissure
@@ -173,7 +175,17 @@ export function buildDetail(body: Body, face: FaceData, faceBin: Uint8Array, cur
       if (!fis || fis.lowerY === undefined || fis.upperY === undefined) return w.ref === 'canthus' || w.ref === 'lowerLid' || w.ref === 'lowerLidMedial' ? null : resolveMouth(w, side, S, f, a, dy)
       const medial = side === 1 ? fis.x0 : fis.x1, lateral = side === 1 ? fis.x1 : fis.x0
       if (w.ref === 'canthus') return [lateral + side * a * MM, (fis.lowerY + fis.upperY) / 2 + dy * MM]
-      if (w.ref === 'lowerLid') return [medial + a * (lateral - medial), fis.lowerY + dy * MM]
+      if (w.ref === 'lowerLid') {
+        const x = medial + a * (lateral - medial)
+        // 有下睑缘折线时按该处的缘高，否则按最低点 / with a lower-margin polyline the margin height at that x is used, else its lowest point
+        const pl = eye.skinFissure?.lower
+        let y = fis.lowerY
+        if (pl && pl.length > 1) {
+          y = x <= pl[0]![0] ? pl[0]![1] : pl[pl.length - 1]![1]
+          for (let k = 0; k + 1 < pl.length; k++) if (x >= pl[k]![0] && x <= pl[k + 1]![0]) y = pl[k]![1] + ((pl[k + 1]![1] - pl[k]![1]) * (x - pl[k]![0])) / (pl[k + 1]![0] - pl[k]![0] || 1)
+        }
+        return [x, y + dy * MM]
+      }
       if (w.ref === 'lowerLidMedial') return [medial + side * a * MM, fis.lowerY + dy * MM]
       return resolveMouth(w, side, S, f, a, dy)
     }

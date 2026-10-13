@@ -1,0 +1,76 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第十部分：女性面部目标，第三轮（female-face-target/）
+
+### 0. 还不对的地方（先说）
+1. 为了去掉沟纹，我放松了对厚度表的贴合：进入变形的点现在与表差 0–3 mm（不是上一轮的 0.3 mm）。差得多的：上第二磨牙处 29.1 / 28.4（表 26.0，厚 3 mm），上唇 10.3（表 13.4，薄 3 mm），鼻根 8.6（表 5.9），颏下点 9.2（表 7.4），颧点 6.1 / 7.0（表 7.5），下颌角点 13.7 / 14.4（表 12.5）。你要的“1 mm 以内”没有做到；做到它的那个版本（诊断图 c 的旧设置）正是有沟纹的那个。
+2. 眉间处皮肤 3.3 mm（表 5.2）：骨现在都在皮肤内（头部的骨上最少覆盖约 0 → 见第 3 条），但眉间仍比表薄 1.9 mm。
+3. “骨不在皮肤外”这一条：头部的骨上我要求留 2.5 mm，实际最薄处是 −0.1 mm（即有个别采样点贴着皮肤面，0.1 mm 在外）。原因是拟合出的头部身份系数让颅部变小，顶骨曾露出 6 mm（上一轮我没有查到，报告里也没有说）；现在把顶骨上的皮肤低通地抬了最多 10 mm（达到上限），所以还差一点。
+4. 外眦到颞部仍有一道短的竖痕（侧面图里看得见），来自眶周内移那一步的边缘，不是来自变形。
+5. 下颌角间宽 / 颧宽回到 0.851（上一轮 0.820，骨 0.749，已安装 0.901）：变形放软以后下颌没有收得那么窄。
+6. 颊的外凸只用一个粗的量检查过（颧点–上磨牙处–口角三点的平面上方 11–12 mm，为正）；没有逐点查曲率。
+7. 厚度表的人群：T-Table 不分年龄、性别、人群；Sonita 2025 是 18–25 岁但不是中国人、没有 BMI。对一个 20–24 岁、BMI 22 的中国女性是否偏瘦或偏老，我没有来源可以判断，也没有超出表值去加厚。
+8. 诊断图里的 (a) 和 (b) 是用变形的旧设置（σ 32 mm）算的，(c) 是新设置（σ 45 mm、正则更强、两遍）；所以 (a) 比现在的设置更难看。
+
+### 1. 瘦削从哪来（diagnostic-front.png / diagnostic-threequarter.png，左 a、中 b、右 c）
+(a) 身份系数留在先验均值、只做变形：最差——鼻旁和颊上有深沟，口角下垂，下颌下一圈棱。(b) 拟合的身份系数、不做变形：最平滑、最年轻，也最像女性；但颏、颏下和颊部比表厚 5–8 mm。结论：沟纹来自变形（在没有约束的鼻子旁边把颊收进去 10–12 mm），不是来自身份系数，也不主要来自保护区的边缘。
+所以最后的组合是：拟合的身份系数（第一个系数 −1.26，其余在 ±0.7 内）加一个更软的变形（σ 45 mm，正则 0.35，两遍），眼睑区的过渡从 5 圈加宽到 9 圈。结果（图 c）：没有鼻唇沟和口角的沟，脸圆润、年轻，下颌向颏收；我的判断是它现在读作一个可信的年轻女性的脸，比上一轮和已安装的都好。
+
+### 2. 唇按厚度表
+唇的两个点进入变形；皮肤不再贴在 Lip 部件上。口裂在上切牙切缘上方 2.75 mm（审计给的范围 2–3.4 mm）。上唇处皮肤到上切牙唇面 10.3 mm（表 13.4，上一轮 5.5），下唇 14.5 mm（表 14.1，上一轮 8.2）。上唇高（鼻下点–口裂）13.4 mm，下唇高（口裂–颏唇沟）28.4 mm（粗量）。口裂宽度没有另外约束，仍是 MHR 的。
+要随皮肤前移的部件（也写在 conflict-list.json 的 lipParts 里）：Lip 部件前三分之一在皮下中位数 5.4 mm，要前移约 4.9 mm；口轮匝肌在皮下中位数 10.2 mm，要前移约 7.2 mm（按肌上留 3 mm 皮肤 + 脂肪）。
+
+### 3. 量度（骨 / 已安装 / 目标，mm）
+颧宽 117.3 / 140.1 / 130.3；下颌角间宽 87.9 / 126.3 / 110.8；比值 0.749 / 0.901 / 0.851；全面高 105.1 / 120.7 / 114.2；下面高占比 0.487 → 0.461；鼻翼宽 41.3 → 34.4；皮肤下颌角 106.3° → 106.4°；颏宽 45.7 → 45.1；额部后倾 1.7° → 3.9°；内眦间距约 27.1 → 24.9；外眦间约 78.1 → 77.4。BMI 21.60。
+
+### 4. 包络和冲突清单（规则同上一轮）
+头颈共 101 个部件有部分在包络外（上一轮 126）。明细在 conflict-list.json 和 face-report.txt；各部件的数值我这一轮只抽看了下面打印的几类，报告里不再逐条抄。
+
+### 5. 为下一次整体重拟合记下的（这一轮没有做）
+a. 女性：头用这个目标（final_female.py --face）；乳房改用中国数值（325–340 mL、切迹到乳头 19.05 cm、乳头间距 20.0 cm——现在是模块里的三个常数 BREAST_ML、NOTCH_TO_NIPPLE、INTERNIPPLE，改数即可）；把皮肤局部抬到现有乳头、乳晕部件上、脐窝（L3–L4 / L4 水平，标为构造的）、会阴抬到 WU_* 结构上：这三项脚本里还没有，需要新写。
+b. 男性：从他自己扫描的皮肤（FJ2810 外壁）转移脐和乳头的局部位移、去掉颈静脉切迹处的坑、鼻梁的棱：都还没有做。
+c. 两个身体：不动 MHR 的唇袋和睑裂处的三角形条带。我读了 tools/skinopen/INTEGRATION.txt 里关于重新发包的部分：它依赖唇间内折的袋和睑缘之间没有内部顶点的条带。我现在的做法是：眼睑区、唇区不外推；变形和低通作用在位移场上而不是位置上，所以不会把袋抹平——但这一轮的唇前移和眼眶内移之后，我没有用 skinopen 实际跑一遍来确认，重拟合时要跑。
+
+### 6. 重新生成
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose] --face --target-only --out female-face-target
+  python tools/bodyshape/face_target_report.py
+  诊断：同一命令加 --no-face-identity --out female-face-diag-a，或加 --no-face-warp --out female-face-diag-b；然后 python tools/bodyshape/face_diag_render.py
+注意：这些参数要分开写；我有一次把它们放在一个 shell 变量里（zsh 不拆分），脚本没有进入 --face / --target-only，往这三个目录里写了一套完整的非目标结果，随后已用正确的命令覆盖；female-face-diag-a/、-b/ 里可能还留有那次的多余文件。
+
+
+## Part 10: the female face target, iteration 3 (female-face-target/)
+
+### 0. What is still wrong (first)
+1. To get rid of the furrows I loosened the fit to the depth table: the points used by the warp are now 0-3 mm off (not 0.3 mm as last round). The larger ones: supra-M2 29.1 / 28.4 (table 26.0, 3 mm thick), upper lip 10.3 (table 13.4, 3 mm thin), nasion 8.6 (table 5.9), menton 9.2 (table 7.4), zygion 6.1 / 7.0 (table 7.5), gonion 13.7 / 14.4 (table 12.5). "Within about 1 mm" is not met; the version that meets it (diagnostic c with the old settings) is the one with the furrows.
+2. Skin at glabella is 3.3 mm (table 5.2): no bone is outside any more (but see item 3), yet glabella is still 1.9 mm thinner than the table.
+3. "Bone never outside the skin": I ask for 2.5 mm over head bone and the least actual cover is -0.1 mm (a few samples lie on the skin surface, 0.1 mm out). The cause: the fitted head identity makes the cranium smaller, and the parietal bones showed by 6 mm (I did not find that last round and the report did not say it); the skin over them is now raised, low-passed, by up to 10 mm (the cap), which is just short.
+4. A short vertical mark remains from the outer canthus to the temple (visible in profile); it comes from the rim of the periorbital shift, not from the warp.
+5. Bigonial / bizygomatic is back at 0.851 (0.820 last round, 0.749 on bone, 0.901 installed): with the softer warp the jaw does not come in as far.
+6. Convexity of the cheek was checked with one coarse measure only (the skin stands 11-12 mm above the plane through zygion, supra-M2 and the mouth corner, so positive); curvature was not checked point by point.
+7. Population of the tables: the T-Table pools ages, sexes and populations; Sonita 2025 is 18-25 years but not Chinese and gives no BMI. Whether that is lean or old for a Chinese woman of 20-24 at BMI 22 I cannot judge from any source, and nothing was thickened beyond the table.
+8. In the diagnostic images (a) and (b) were computed with the old warp settings (sigma 32 mm) and (c) with the new ones (sigma 45 mm, stronger regularisation, two passes), so (a) looks worse than the present settings would.
+
+### 1. Where the gauntness came from (diagnostic-front.png / diagnostic-threequarter.png; a left, b middle, c right)
+(a) identity at the prior mean, warp only: the worst - deep furrows beside the nose and on the cheeks, drooping mouth corners, a ridge under the jaw. (b) fitted identity, no warp: the smoothest, youngest and most female; but chin, under the chin and cheeks are 5-8 mm thicker than the table. Conclusion: the furrows come from the warp (drawing the cheeks in by 10-12 mm beside an unconstrained nose), not from the identity and not mainly from the rims of the protected regions.
+The final combination is therefore the fitted identity (first coefficient -1.26, the rest within +/-0.7) plus a softer warp (sigma 45 mm, regularisation 0.35, two passes), with the transition round the lid regions widened from 5 rings to 9. Result (image c): no nasolabial or mouth-corner furrows, a rounded young face tapering to the chin; my judgement is that it now reads as a believable young woman, better than last round and than the installed skin.
+
+### 2. Lips by the depth table
+Both lip points are used by the warp; the skin no longer sits on the part "Lip". The oral fissure is 2.75 mm above the upper incisal edge (the audit's range is 2-3.4 mm). Skin to the labial face of the upper incisors 10.3 mm (table 13.4; 5.5 last round), lower lip 14.5 mm (table 14.1; 8.2 last round). Upper lip height (subnasale to fissure) 13.4 mm, lower lip height (fissure to labiomentale) 28.4 mm (coarse). Mouth width is not constrained separately and is still MHR's.
+Parts to be carried forward with the skin (also under lipParts in conflict-list.json): the anterior third of the part "Lip" lies a median 5.4 mm under the skin and needs about 4.9 mm forwards; orbicularis oris lies a median 10.2 mm under it and needs about 7.2 mm forwards (leaving 3 mm of skin and fat over the muscle).
+
+### 3. Measurements (bone / installed / target, mm)
+Bizygomatic 117.3 / 140.1 / 130.3; bigonial 87.9 / 126.3 / 110.8; ratio 0.749 / 0.901 / 0.851; total face height 105.1 / 120.7 / 114.2; lower-face share 0.487 -> 0.461; alar width 41.3 -> 34.4; skin gonial angle 106.3 -> 106.4 degrees; chin width 45.7 -> 45.1; forehead slope 1.7 -> 3.9 degrees; intercanthal about 27.1 -> 24.9; between the outer canthi about 78.1 -> 77.4. BMI 21.60.
+
+### 4. Envelope and conflict list (same rule as last round)
+101 parts of head and neck have some surface outside the envelope (126 last round). The detail is in conflict-list.json and face-report.txt; this round I only spot-checked the classes printed below and do not copy them part by part into the report.
+
+### 5. Noted for the next full re-fit (nothing done this round)
+a. Female: this target as the head (final_female.py --face); breasts by the Chinese figures (325-340 mL, notch to nipple 19.05 cm, internipple 20.0 cm - three module constants today, BREAST_ML, NOTCH_TO_NIPPLE and INTERNIPPLE, so a change of numbers); raising the skin locally onto the existing nipple and areola parts, a navel dimple (L3-L4 / L4 level, labelled constructed) and raising the perineum onto the WU_* structures: these three do not exist in the scripts yet and have to be written.
+b. Male: transferring navel and nipples as a local displacement from his own scanned skin (outer wall of FJ2810), removing the pit at the jugular notch, the ridge on the nasal bridge: none done yet.
+c. Both: MHR's lip pocket and the strip of triangles in the palpebral fissure are not to be touched. I read the part of tools/skinopen/INTEGRATION.txt about re-issues: it relies on the pocket folded in between the lips and on a strip without interior vertices between the lid margins. What I do now: no push on lid and lip regions; warp and low-pass act on the displacement field, not on positions, so they do not smooth the pocket away - but after this round's forward move of the lips and the medial shift of the orbits I have not run skinopen to confirm, and that has to be done at the re-fit.
+
+### 6. Regenerating
+  python tools/bodyshape/final_female.py --bmi 21.6 [--reuse-pose] --face --target-only --out female-face-target
+  python tools/bodyshape/face_target_report.py
+  Diagnostics: the same command with --no-face-identity --out female-face-diag-a, or with --no-face-warp --out female-face-diag-b; then python tools/bodyshape/face_diag_render.py
+Note: pass these arguments separately. Once I had them in one shell variable (zsh does not split it), the script entered neither --face nor --target-only and wrote a complete non-target result into these three directories; I then overwrote it with the correct commands, but female-face-diag-a/ and -b/ may still hold stray files from that run.

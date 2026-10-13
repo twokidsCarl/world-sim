@@ -2337,3 +2337,41 @@ div.voice-attrib p + p {
     display: none;
   }
 }
+
+/* 构造物（不是解剖来源）：斜纹色块和虚线框，与三种解剖来源区分开 */
+/* construction (not an anatomical provenance): a striped swatch and a dashed frame set it apart from the three anatomical ones */
+.swatch-construction,
+.piece-construction .swatch {
+  background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.45) 0 2px, transparent 2px 4px) !important;
+}
+
+.prov-construction {
+  border: 1px dashed rgba(208, 79, 160, 0.6);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.badge-construction {
+  color: #f08cc8;
+  border: 1px dashed rgba(208, 79, 160, 0.7);
+}
+
+.composition ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.composition li {
+  padding: 5px 0;
+  border-top: 1px dashed var(--line);
+}
+
+.composition li p {
+  margin: 2px 0 0;
+}
+
+.composition .count {
+  margin-left: 8px;
+  color: var(--text-2);
+}

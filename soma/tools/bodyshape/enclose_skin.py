@@ -400,6 +400,12 @@ def main():
     # Head and face: the push is low-passed there and stays 0 on lids and lips; otherwise the per-vertex push over the nasal cartilages and at the canthi leaves spikes.
     from final_female import head_weight, spread   # 延迟导入，避免循环 / lazy import, avoids a cycle
     whd = head_weight(lod)
+    # 低通的范围含颈部（颌下、颏下的外推否则会在下颌缘下面留一道折痕）/ the low-pass includes the neck (pushes under the jaw and chin otherwise leave a crease below the mandibular border)
+    _vi, _ji, _w, _ = mhrlib.skin_weights(lod)
+    _nk = np.array([nme.startswith('c_neck') for nme in jn])
+    _wn = np.zeros(len(V0))
+    np.add.at(_wn, _vi, _w * _nk[_ji])
+    whd = np.clip(whd + _wn, 0, 1)
     Ah = adjacency(len(V0), F)
     nh = vertex_normals(V0, F)
     for _ in range(3):
@@ -407,19 +413,19 @@ def main():
     nh /= np.maximum(np.linalg.norm(nh, axis=1), 1e-12)[:, None]
     dh = spread(np.einsum('ij,ij->i', V1 - V0, nh).clip(0), Ah, cap, rings=2, smooth=5, final=3) * (1 - face_protect(lod)[0])
     V1 = V1 + whd[:, None] * (V0 + dh[:, None] * nh - V1)
-    # 骨不能露在皮肤外，即使在眼睑、鼻、唇的保护区里（例如眶外缘）：对头部仍露出的骨再做一小遍（至多 2.5 mm，低通），这一遍不受保护区限制。
+    # 骨不能露在皮肤外，即使在眼睑、鼻、唇的保护区里（例如眶外缘）：对头部仍露出的骨再做一小遍（至多 6 mm，低通），这一遍不受保护区限制。
     # Bone may not show outside the skin even inside the protected lid, nose and lip regions (the lateral orbital rim, for
-    # one): a short pass over head bone still outside (at most 2.5 mm, low-passed), not limited by the protection.
+    # one): a short pass over head bone still outside (at most 6 mm, low-passed), not limited by the protection.
     hb = (grp == list(GROUPS).index('bone')) & (classify(Pd, L) == 'head')
     sb = signed_distance(Pd[hb], V1, F)
     if (sb > -0.0005).any():
         globals()['FACE_PROTECT_ON'] = False
         keep_b = globals()['MARGIN']
-        globals()['MARGIN'] = 0.0008
-        Vb_ = enclose(V1, F, Pd[hb][sb > -0.0008], log, np.full(len(V1), 0.0025), passes=4)
+        globals()['MARGIN'] = 0.0015
+        Vb_ = enclose(V1, F, Pd[hb][sb > -0.0015], log, np.full(len(V1), 0.006), passes=5)
         globals()['MARGIN'] = keep_b
         globals()['FACE_PROTECT_ON'] = True
-        db = spread(np.einsum('ij,ij->i', Vb_ - V1, nh).clip(0), Ah, np.full(len(V1), 0.0025), rings=2, smooth=4, final=2)
+        db = spread(np.einsum('ij,ij->i', Vb_ - V1, nh).clip(0), Ah, np.full(len(V1), 0.006), rings=5, smooth=12, final=5)   # 宽的缓坡：鼻骨高出 MHR 的鼻梁 4.6 mm，窄了就是一道横棱 / a wide gentle mound: the nasal bones stand 4.6 mm above MHR's bridge, and a narrow one is a transverse ridge
         V1 = V1 + (whd * db)[:, None] * nh
         log.append(f'  head bone pass: {int((db > 0.0002).sum())} vertices moved, max {db.max() * 1000:.1f} mm; head bone samples outside after: {int((signed_distance(Pd[hb], V1, F) > 0).sum())}')
     regV0 = classify(V0, L)
@@ -472,18 +478,155 @@ def main():
     json.dump(superficial, open(os.path.join(out, 'superficial.json'), 'w'), ensure_ascii=False, indent=1)
     axilla_before = axilla.sheet_gap(V1, F, grpV, L, vertex_normals, vertex_area)
     if '--no-separate' not in sys.argv:
-        if sex == 'F':
-            # 女性：肩、臂、胸侧的皮肤为包住肌肉各自外移后在腋下挤到一起，所以范围向上放到肱骨 26 % 处、单点最多 30 mm、做两轮。
-            # Female: skin of shoulder, arm and side of the chest each moved out over muscle and met in the axilla, so the
-            # range starts higher (26 % of the humerus), a vertex may move 30 mm, and two rounds are run.
-            axilla.T0, axilla.MAX_MOVE, axilla.RAMP = 0.26, 0.030, 0.16   # 起点处用更宽的渐变，免得在腋前襞撕出一道缝 / a wider ramp at the start, so no slit is torn at the anterior axillary fold
-        V1, _ = axilla.open_axilla(V1, F, grpV, fb, L, adjacency, log)
-        if sex == 'F':
+        # 腋下和两大腿之间：不再“各让一半间隙”，而是把相对的两片皮肤的皮下层做薄（axilla.thin_hollow，3.5 mm，假定值），区域外平滑过渡。
+        # Axilla and between the thighs: no more "each gives half the gap"; the subcutaneous layer of the two facing skins is made thin
+        # (axilla.thin_hollow, 3.5 mm, an assumption), with a smooth transition outside the zone.
+        thin_on = '--thin-hollow' in sys.argv
+        if not thin_on:
+            # 默认仍用“各让一半间隙”的整形（open_axilla，两轮）。把皮下层做薄的做法（--thin-hollow）试过：肌肉都包住了，但腋窝里
+            # 鼓出畸形的包、量到的互穿面积反而更大（每侧 34–40 cm2），所以没有采用；渲染存在 male-thin-hollow-attempt/。
+            # The default is still the "each gives half the gap" reshaping (open_axilla, two rounds). Making the subcutaneous layer thin
+            # (--thin-hollow) was tried: every muscle stayed enclosed, but deformed lumps appeared in the axilla and the measured overlap
+            # grew (34-40 cm2 per side), so it is not used; its renders are kept in male-thin-hollow-attempt/.
+            axilla.T0, axilla.MAX_MOVE, axilla.RAMP = 0.26, 0.030, 0.16
             V1, _ = axilla.open_axilla(V1, F, grpV, fb, L, adjacency, log)
+            V1, _ = axilla.open_axilla(V1, F, grpV, fb, L, adjacency, log)
+        for S_, g_ in ((('L', 1), ('R', 2)) if thin_on else ()):
+            Ma_, Mt_ = axilla.deep_sides(fb, S_)
+            sh_, el_ = L['shoulder_' + S_], L['elbow_' + S_]
+            tt = (V1 - sh_) @ (el_ - sh_) / ((el_ - sh_) @ (el_ - sh_))
+            ua, ub = np.clip((tt - 0.08) / 0.14, 0, 1), np.clip((0.95 - tt) / 0.12, 0, 1)
+            wz = ua * ua * (3 - 2 * ua) * ub * ub * (3 - 2 * ub)
+            V1 = axilla.thin_hollow(V1, F, np.where(grpV == g_)[0], np.where(grpV == 0)[0], Ma_, Mt_, wz, adjacency, log, 'axilla ' + S_)
+        # 两大腿：左、右下肢的深部结构（中线上的外生殖器等不算）/ the thighs: deep parts of the left and of the right lower limb (midline parts such as the genitalia excluded)
+        hipy = 0.5 * (L['hip_L'][1] + L['hip_R'][1])
+        legp = lambda sg: (lambda p: p['tissue'] in Body.DEEP and p['system'] != 'integumentary' and p['tissue'] in ('muscle', 'tendon', 'bone')
+                           and sg * float(fb.mesh(p)[0][:, 0].mean()) > 0.03 and float(fb.mesh(p)[0][:, 1].mean()) < hipy - 0.02 and float(fb.mesh(p)[0][:, 1].max()) < hipy + 0.12)
+        Ml_ = tuple(np.ascontiguousarray(x) for x in fb.merged(legp(1)))
+        Mr_ = tuple(np.ascontiguousarray(x) for x in fb.merged(legp(-1)))
+        import igl as _ig
+        gap_legs = float(np.sqrt(_ig.point_mesh_squared_distance(Ml_[0], Mr_[0], Mr_[1])[0].min()))
+        log.append(f'  thighs: least distance between the muscles and bones of the left and of the right lower limb {gap_legs * 1000:.1f} mm')
+        kn_ = 0.5 * (L['knee_L'][1] + L['knee_R'][1])
+        uy = np.clip((V1[:, 1] - kn_) / 0.08, 0, 1) * np.clip((hipy + 0.02 - V1[:, 1]) / 0.05, 0, 1)
+        if thin_on:
+            V1 = axilla.thin_hollow(V1, F, np.where(grpV == 3)[0], np.where(grpV == 4)[0], Ml_, Mr_, np.clip(uy, 0, 1), adjacency, log, 'thighs')
+        perineum_info = None
+        if sex == 'M':
+            # 会阴一带贴到他自己的扫描皮肤上（scan_details.fit_perineum）/ the perineal region is laid onto his own scanned skin (scan_details.fit_perineum)
+            import scan_details as _sd
+            from fit_skin import reference_skin as _rs
+            _SV, _SF = _rs(fb)
+            V_before_perineum = V1.copy()
+            V1, perineum_info = _sd.fit_perineum(V1, F, _SV, _SF, fb, L, adjacency, log)
+        if sex == 'F':
+            # 裆部抬到会阴结构上（scan_details.raise_perineum）/ the crotch is raised to her perineal structures (scan_details.raise_perineum)
+            rimf = os.path.join(RAW, 'out', 'female-skin-grafted', 'vulva-rim-target.json')
+            if os.path.exists(rimf):
+                import scan_details as _sd
+                V1, perineum_info = _sd.raise_perineum(V1, F, json.load(open(rimf)), adjacency, log)
         keep = globals()['MARGIN']
         globals()['MARGIN'] = 0.0008
-        V1 = enclose(V1, F, Pd, log, np.full(len(V1), 0.004), passes=3)
+        V1 = enclose(V1, F, Pd, log, np.full(len(V1), 0.007), passes=5)   # 肌肉不能留在皮肤外：上限 7 mm / muscle may not stay outside the skin: cap 7 mm
         globals()['MARGIN'] = keep
+    if sex == 'M':
+        # 两处局部修整（男性）：颈静脉切迹处 MHR 网格有一道锯齿状的缝和一个尖刺；鼻根处有一道横棱。在这两处对顶点位置做拉普拉斯平滑
+        # （半径 35 mm / 26 mm，边缘渐变，眼睑保护区除外），然后把因此离骨不足 1.5 mm 的地方低通地抬回去。
+        # Two local repairs (male): at the jugular notch the MHR mesh has a jagged slit and a spike; a transverse ridge crosses the nasal
+        # root. Vertex positions are Laplacian-smoothed at both places (radius 35 mm / 26 mm, fading at the rim, protected lid regions
+        # excepted), and wherever that leaves less than 1.5 mm over bone the skin is raised back, low-passed.
+        import face_female as _FFACE
+        import igl as _igl
+        man = fb.verts('Manubrium')
+        xc_ = float(np.median(man[:, 0]))
+        top_ = man[np.abs(man[:, 0] - xc_) < 0.006]
+        notch = np.array([xc_, top_[:, 1].max() + 0.004, top_[top_[:, 1] > top_[:, 1].max() - 0.004][:, 2].max()])
+        nas = _FFACE.landmarks(fb)['nasion']['target'] if 'Left maxilla' in [p['name'] for p in fb.parts] else None
+        Asm = adjacency(len(V1), F)
+        lidw = np.zeros(len(V1))
+        for kk in ('lidsL', 'lidsR'):
+            lidw[face_protect(lod)[1][kk]] = 1.0
+        for _ in range(4):
+            lidw = np.maximum(lidw, (Asm @ lidw > 0).astype(float))
+        wsm = np.zeros(len(V1))
+        for cen, rad in ((notch, 0.035), (nas, 0.026)):
+            if cen is None:
+                continue
+            cs = _igl.point_mesh_squared_distance(np.ascontiguousarray(cen[None]), np.ascontiguousarray(V1), np.ascontiguousarray(F))[2][0]
+            u = np.clip(1 - np.linalg.norm(V1 - cs, axis=1) / rad, 0, 1)
+            wsm = np.maximum(wsm, np.minimum(1.0, 2.5 * u))
+        wsm = wsm * (1 - lidw)
+        Vs_ = V1.copy()
+        for _ in range(90):
+            Vs_ = Vs_ + (0.5 * wsm)[:, None] * (Asm @ Vs_ - Vs_)
+        bn = Pd[grp == list(GROUPS).index('bone')]
+        sbn = signed_distance(bn, Vs_, F)
+        if (sbn > -0.0015).any():
+            globals()['FACE_PROTECT_ON'] = False
+            keep_b2 = globals()['MARGIN']
+            globals()['MARGIN'] = 0.0015
+            Vq_ = enclose(Vs_, F, bn[sbn > -0.003], log, np.where(wsm > 0, 0.006, 0.0), passes=4)
+            globals()['MARGIN'] = keep_b2
+            globals()['FACE_PROTECT_ON'] = True
+            nq_ = vertex_normals(Vs_, F)
+            for _ in range(3):
+                nq_ = 0.5 * nq_ + 0.5 * (Asm @ nq_)
+            nq_ /= np.maximum(np.linalg.norm(nq_, axis=1), 1e-12)[:, None]
+            from final_female import spread as _sp
+            dq_ = _sp(np.einsum('ij,ij->i', Vq_ - Vs_, nq_).clip(0), Asm, np.full(len(V1), 0.006), rings=3, smooth=8, final=4)
+            Vs_ = Vs_ + (dq_ * (wsm > 0))[:, None] * nq_
+        log.append(f'  local repairs (jugular notch, nasal root): {int((wsm > 0).sum())} vertices smoothed, largest move {np.linalg.norm(Vs_ - V1, axis=1).max() * 1000:.1f} mm; '
+                   f'bone samples outside the skin afterwards: {int((signed_distance(bn, Vs_, F) > 0).sum())}')
+        V1 = Vs_
+    head_muscles = None
+    if sex == 'F' and '--push-head' not in sys.argv:
+        # 颈以上：皮肤 = 面部目标（只保证骨上的覆盖），不受软组织外推。把本脚本在头上加的全部位移按 head_blend 撤掉；
+        # 因此略在皮肤外的面肌如实列出（manifest.face.notEnclosedMuscles），其 id 并入 notEnclosed.partIds。
+        # From the neck up the skin is the face target (cover over bone only) with no push from soft tissue: every displacement this
+        # script added on the head is taken back by head_blend; the facial muscles that then lie slightly outside the skin are listed
+        # as they are (manifest.face.notEnclosedMuscles) and their ids join notEnclosed.partIds.
+        from final_female import head_blend
+        hbw = head_blend(lod, adjacency(len(V1), F), V0, fb)
+        V1 = V0 + (1 - hbw)[:, None] * (V1 - V0)
+        head_muscles = []
+        skipped = excluded_face_parts(fb)
+        for p_ in fb.deep_parts():
+            if p_['id'] in skipped:
+                continue
+            v_ = fb.mesh(p_)[0]
+            if v_[:, 1].min() < V1[hbw > 0.5][:, 1].min():
+                continue
+            s_ = signed_distance(v_, V1, F) * 1000
+            if (s_ > 0).any():
+                head_muscles.append({'id': p_['id'], 'name': p_['name'], 'tissue': p_['tissue'], 'shareOutside': round(float((s_ > 0).mean()), 3), 'maxOutsideMm': round(float(s_.max()), 1)})
+        head_muscles.sort(key=lambda r: -r['maxOutsideMm'])
+        log.append(f'  head: no push from soft tissue; {len(head_muscles)} deep parts of the head lie partly outside the skin:')
+        for r in head_muscles:
+            log.append(f'     {r["maxOutsideMm"]:5.1f} mm  {100 * r["shareOutside"]:5.1f} %  {r["name"]} [{r["tissue"]}]')
+    constructed = None
+    if sex == 'F':
+        import scan_details as _sd2
+        V1, nav_ = _sd2.construct_navel(V1, F, fb, L, vertex_normals, log)
+        constructed = {'navel': nav_}
+        if '--no-separate' not in sys.argv and perineum_info is not None:
+            constructed['perineum'] = perineum_info
+    scan_info = None
+    if sex == 'M' and '--no-scan-details' not in sys.argv:
+        # 脐和乳头：从他自己的扫描皮肤转移（scan_details.py）/ navel and nipples transferred from his own scanned skin (scan_details.py)
+        import scan_details
+        from fit_skin import reference_skin
+        SVr, SFr = reference_skin(fb)
+        V_before_scan = V1.copy()
+        V1, scan_info = scan_details.transfer(V1, F, SVr, SFr, L, vertex_normals, log, notch_y=float(notch[1]))
+        scan_details.annotate(scan_info, fb, V1, F, V0, SVr, SFr, vertex_normals, log)
+        if '--no-separate' not in sys.argv and perineum_info is not None:
+            # 最终皮肤（包住检查之后）在会阴区离扫描皮肤多远 / how far the final skin (after the enclosure check) is from the scan in the perineal region
+            import igl as _ig2
+            hipc = 0.5 * (L['hip_L'] + L['hip_R'])
+            core_ = (np.abs(V1[:, 0] - hipc[0]) < 0.05) & (V1[:, 1] < hipc[1] - 0.055) & (V1[:, 1] > hipc[1] - 0.13)
+            dfin = np.sqrt(_ig2.point_mesh_squared_distance(np.ascontiguousarray(V1[core_]), np.ascontiguousarray(SVr), np.ascontiguousarray(SFr))[0])
+            perineum_info['finalSkinToScanMm_wholeBandIncludingGenitalMound'] = {'median': round(float(np.median(dfin) * 1000), 1), 'p95': round(float(np.percentile(dfin, 95) * 1000), 1), 'max': round(float(dfin.max() * 1000), 1)}
+            scan_info['perineum'] = perineum_info
     axilla_after = axilla.sheet_gap(V1, F, grpV, L, vertex_normals, vertex_area)
     log.append('  arm skin against the trunk skin facing it, by share of the humerus (cm2 inside it / within 1 mm / within 6 mm; least and 10th-percentile gap, mm):')
     for S in 'LR':
@@ -614,11 +757,16 @@ def main():
                          'en': 'MHR LOD0 is one closed, singly connected surface: neither the palpebral nor the oral fissure is an opening, and there is no separate eyeball, upper or lower lid margin, lip margin or mouth interior; the lids are one continuous sheet of skin over the place of the globe, and the lips meet in a crease at the oral fissure. So there are no lid-margin or lip-margin vertex loops to give; the mesh was not cut.'},
             'notEnclosed': {'zh': '眼球各部、结膜、泪器、睑板、睑缘处的眼轮匝肌内环（按几何选）、唇、牙、舌、牙龈、鼻软骨不在“必须包住”的集合里；下面的眼睑区、唇区、鼻区顶点不做任何外推，保留 MHR 自己的面。',
                             'en': 'the parts of the eyeball, conjunctiva, lacrimal parts, tarsal plates, the inner ring of orbicularis oculi at the lid margins (chosen by geometry), lips, teeth, tongue, gingiva and the nasal cartilages are not in the set that must be enclosed; the lid, lip and nose vertices below get no push at all and keep MHR\'s own surface.',
-                            'partIds': sorted(excluded_face_parts(fb))},
+                            'partIds': sorted(set(excluded_face_parts(fb)) | {r['id'] for r in (head_muscles or [])})},
+            'notEnclosedMuscles': head_muscles,
             'regions': {k: [int(i) for i in v] for k, v in face_protect(lod)[1].items()},
             'regionsNote': {'zh': 'regions 是顶点下标（skin.obj 的顺序）：lidsL / lidsR 为眼关节 22 mm 内、其前方的皮肤（上下睑和睑裂），lips 为口裂上下约 12 mm 的唇区，nose 为鼻背到鼻尖、鼻翼。它们是区域，不是睑缘或唇缘的环。',
                             'en': 'regions are vertex indices (order of skin.obj): lidsL / lidsR are the skin within 22 mm of an eye joint and in front of it (both lids and the fissure), lips the lip region about 12 mm above and below the oral fissure, nose the dorsum, tip and alae. They are regions, not lid-margin or lip-margin loops.'},
         },
+        'scanDetails': None if scan_info is None else {
+            'what': {'zh': '脐和两个乳头的位置与起伏是从同一个人的扫描皮肤转移来的（扫描数据的转移，不是构造的）', 'en': 'position and relief of the navel and both nipples are transferred from the scanned skin of the same man (a transfer of scanned data, not constructed)'},
+            'source': 'BodyParts3D FJ2810 (skin, outer wall), Copyright (c) The Database Center for Life Science, CC BY-SA 2.1 JP', 'details': scan_info},
+        'constructedDetails': constructed,
         'statureM': round(float(H(V1)), 4), 'bmiByVolume': round(bmi(V1), 2), 'targetBmi': target_bmi,
         'files': {
             'skin.obj': f'{len(V1)} vertices, {len(F)} triangles; vertex order = MHR LOD{lod}; closed: {closed}',

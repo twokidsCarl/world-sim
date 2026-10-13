@@ -17,7 +17,7 @@ import { join } from 'node:path'
 import type { Part, Rig, TissueId } from '../../src/anatomy/types.ts'
 import type { ShapeControl, ShapeControls, ShapeData, ShapeFactor, ShapeFollower, ShapeJointScale } from '../../src/shape/types.ts'
 import { Surface, mergeMeshes } from './geom.ts'
-import { type Body, readBody } from './io.ts'
+import { type Body, hashInput, inputFile, readBody } from './io.ts'
 import { type V3, xfApply } from './math.ts'
 import { type Scales, Poser, jointFrames } from './pose.ts'
 import { type RenderItem, type Rgb, render, sheet } from './render.ts'
@@ -63,10 +63,13 @@ export async function buildShape(bodyId: 'male' | 'female', renders: boolean, lo
   const rigBin = new Uint8Array(readFileSync(join(dir, 'rig.bin')))
   const cur = JSON.parse(readFileSync(join(ROOT, 'data/curated/rig/shape.json'), 'utf8')) as Curated
   const model = (JSON.parse(readFileSync(join(ROOT, 'data/curated/bodyshape/rig-shape.json'), 'utf8')) as { sexes: Record<string, RigShapeSex> }).sexes[bodyId === 'male' ? 'M' : 'F']!
-  const pkgRel = `data/raw/bodyshape/out/${bodyId}-skin`
+  // 有下标对照、且有开口后的皮肤包时，体型场按下标从开口后的包里取（不找最近点：上下唇缘的顶点位置重合）
+  // with the index sidecar and an opened package, the shape fields are taken from it by index (no closest point: the upper and lower lip margins coincide in position)
+  const byIndex = !!body.skinSource && existsSync(join(ROOT, `data/raw/bodyshape/out/${bodyId}-skin-open`, 'shape-fat.f32'))
+  const pkgRel = `data/raw/bodyshape/out/${bodyId}-skin${byIndex ? '-open' : ''}`
   const pkg = join(ROOT, pkgRel)
   const inputs: Record<string, string> = { 'rig.json': sha(join(dir, 'rig.json')), 'rig.bin': sha(join(dir, 'rig.bin')), ...body.inputs }
-  for (const f of ['data/curated/rig/shape.json', 'data/curated/bodyshape/rig-shape.json', `${pkgRel}/skin.obj`, `${pkgRel}/shape-fat.f32`, `${pkgRel}/shape-limit.f32`, `${pkgRel}/shape-fields.json`, `${pkgRel}/manifest.json`]) inputs[f] = sha(join(ROOT, f))
+  for (const f of ['data/curated/rig/shape.json#data', 'data/curated/bodyshape/rig-shape.json#data', `${pkgRel}/skin.obj`, `${pkgRel}/shape-fat.f32`, `${pkgRel}/shape-limit.f32`, `${pkgRel}/manifest.json#package`]) inputs[f] = hashInput(f, join(ROOT, inputFile(f)))
   const notes: string[] = []
   const jointById = new Map(rig.joints.map((j, i) => [j.id, i]))
   const skinPart = body.data.parts.filter((p) => p.tissue === 'skin').sort((a, b) => b.triangles - a.triangles)[0]!
@@ -76,7 +79,12 @@ export async function buildShape(bodyId: 'male' | 'female', renders: boolean, lo
   // 默认值 = 这副身体原样：身高和比例取 rig-shape.json 的 asBuilt 预设；BMI 取胖瘦场倍数为 0 的那个值
   // default = the body as built: stature and proportions from the asBuilt preset of rig-shape.json; BMI is the value at which the fat-field multiplier is 0
   const asBuilt = model.presets.find((p) => p.id === 'asBuilt')?.values ?? {}
-  const manifest = JSON.parse(readFileSync(join(pkg, 'manifest.json'), 'utf8')) as { statureM?: number }
+  const manifest = JSON.parse(readFileSync(join(pkg, 'manifest.json'), 'utf8')) as { statureM?: number; source?: { name?: string } }
+  // 体型场属于皮肤包里的那张皮肤：发布的皮肤不是它（Part.source 对不上）时，不能把场套上去
+  // the shape fields belong to the skin of the package: when the shipped skin is not that skin (its Part.source differs) they must not be applied
+  if ((skinPart.source ?? '') !== (manifest.source?.name ?? '')) {
+    throw new Error(`shape: the skin of ${bodyId} (${skinPart.id}, source "${skinPart.source ?? 'none'}") is not the skin of ${pkgRel} ("${manifest.source?.name}"); shape data are not written for it`)
+  }
   const table = model.fields.bmiToFieldUnits
   let bmi0 = model.fields.fittedAtBmi
   for (let i = 1; i < table.length; i++) {
@@ -151,12 +159,22 @@ export async function buildShape(bodyId: 'male' | 'female', renders: boolean, lo
   if (fatBuf.byteLength !== srcN * 12 || limBuf.byteLength !== srcN * 4) throw new Error(`shape: ${pkgRel}: shape-fat.f32 / shape-limit.f32 do not match the ${srcN} vertices of skin.obj`)
   const srcFat = new Float32Array(fatBuf.buffer.slice(fatBuf.byteOffset, fatBuf.byteOffset + fatBuf.byteLength))
   const srcLim = new Float32Array(limBuf.buffer.slice(limBuf.byteOffset, limBuf.byteOffset + limBuf.byteLength))
-  const source = new Surface({ positions: Float32Array.from(pos), indices: Uint32Array.from(idx) })
+  const source = byIndex ? null : new Surface({ positions: Float32Array.from(pos), indices: Uint32Array.from(idx) })
   const nSkin = skinMesh.positions.length / 3
   const fat = new Float32Array(nSkin * 3), limit = new Float32Array(nSkin)
   let far = 0
+  if (byIndex && body.skinSource!.length !== nSkin) throw new Error(`shape: skin-source.u32 has ${body.skinSource!.length} entries but the skin has ${nSkin} vertices`)
   for (let i = 0; i < nSkin; i++) {
-    const c = source.closestFace([skinMesh.positions[i * 3]!, skinMesh.positions[i * 3 + 1]!, skinMesh.positions[i * 3 + 2]!])!
+    if (byIndex) {
+      const v = body.skinSource![i]!
+      if (v >= srcN) throw new Error(`shape: skin-source.u32 refers to vertex ${v}, but ${pkgRel} has ${srcN}`)
+      fat[i * 3] = srcFat[v * 3]!
+      fat[i * 3 + 1] = srcFat[v * 3 + 1]!
+      fat[i * 3 + 2] = srcFat[v * 3 + 2]!
+      limit[i] = srcLim[v]!
+      continue
+    }
+    const c = source!.closestFace([skinMesh.positions[i * 3]!, skinMesh.positions[i * 3 + 1]!, skinMesh.positions[i * 3 + 2]!])!
     far = Math.max(far, c.distance)
     let lim = 0
     for (let k = 0; k < 3; k++) {
@@ -168,7 +186,7 @@ export async function buildShape(bodyId: 'male' | 'female', renders: boolean, lo
     }
     limit[i] = lim
   }
-  log(`skin fields transferred to ${nSkin} shipped vertices (farthest ${(far * 1000).toFixed(2)} mm from the source surface)`)
+  log(byIndex ? `skin fields taken by index for ${nSkin} shipped vertices from ${pkgRel}` : `skin fields transferred to ${nSkin} shipped vertices (farthest ${(far * 1000).toFixed(2)} mm from the source surface)`)
 
   // ── 跟随皮肤的部件 / parts that follow the skin ─────────────────────────────────────────────
   const skinSurf = new Surface(skinMesh)
@@ -398,9 +416,10 @@ export function shapeStale(bodyDir: string): string[] {
   const rec = (JSON.parse(readFileSync(p, 'utf8')) as { inputs: Record<string, string> }).inputs
   const out: string[] = []
   for (const [name, hash] of Object.entries(rec)) {
-    const path = name.startsWith('data/') ? join(ROOT, name) : join(bodyDir, name)
+    const file = inputFile(name)
+    const path = file.startsWith('data/') ? join(ROOT, file) : join(bodyDir, file)
     if (!existsSync(path)) out.push(`${name}: missing`)
-    else if (sha(path) !== hash) out.push(`${name}: changed`)
+    else if (hashInput(name, path) !== hash) out.push(`${name}: changed`)
   }
   return out
 }

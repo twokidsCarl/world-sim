@@ -4,6 +4,9 @@
 
 import {
   Box3,
+  BufferAttribute,
+  BufferGeometry,
+  MeshBasicNodeMaterial,
   ClippingGroup,
   Color,
   DirectionalLight,
@@ -31,7 +34,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { MeshBVH } from 'three-mesh-bvh'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
-import { TISSUE_COLOR, TISSUE_OPACITY, provenanceColor } from '../anatomy/labels.ts'
+import { CONSTRUCTION_COLOR, TISSUE_COLOR, TISSUE_OPACITY, partLook, provenanceColor } from '../anatomy/labels.ts'
 import type { Part, SystemId } from '../anatomy/types.ts'
 import {
   GHOST,
@@ -51,7 +54,7 @@ import { PartMeshes, centroidTransparentSort } from './meshes.ts'
 import { JointGizmo } from './gizmo.ts'
 import { PoseRuntime } from './posing.ts'
 import { probeSkinnedPositions } from './skinProbe.ts'
-import { SkinningData, type SkinningMode } from './skinning.ts'
+import { SkinningData, positionNodeFor, type SkinningMode } from './skinning.ts'
 import {
   breathingPose,
   dofAxisWorld,
@@ -75,7 +78,9 @@ import { Shaper } from '../../tools/rig/shape.ts'
 import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
 import { FaceDetailLayer, type DetailDebug } from './faceDetail.ts'
-import type { SkinPatch } from './skinPatch.ts'
+import { SkinPatch } from './skinPatch.ts'
+import { fetchJson } from '../anatomy/load.ts'
+import type { FaceOpenings } from '../face/types.ts'
 import { PAIN_COLORS, PainOverlay, PathVisuals, bindPath, boundPositions, resamplePolyline, type PathBinding } from './stimVisuals.ts'
 import { applyStimulus, registerStimHost, releaseStimulus, stimFrame, type ActiveStim, type StimFrame } from '../pain/stim.ts'
 import type { ResolvedSite } from '../pain/stimulus.ts'
@@ -89,6 +94,8 @@ const GHOST_OPACITY = 0.07
 const PICK_OPACITY = 0.4
 const ACCENT_RGB = new Color(ACCENT)
 const PATH_RGB = new Color(PAIN_COLORS.path)
+/** 口腔袋的颜色：近黑、不受光，读作"空腔"而不是组织 / The oral pouch's colour: near black and unlit, reading as a cavity rather than tissue. */
+const POUCH_COLOR = '#120a0c'
 /** 刺激工具：按住这么久（不移动）就算"按住施加" / Stimulus tool: a press held this long without moving applies by pressing. */
 const HOLD_MS = 380
 const WHITE = new Color(0xffffff)
@@ -182,6 +189,7 @@ export type ViewState = Pick<
   | 'cameraRequest'
   | 'face'
   | 'faceDetail'
+  | 'skinHide'
   | 'skinOpaque'
   | 'shape'
   | 'shapeControls'
@@ -277,11 +285,23 @@ export class Viewer {
   /** 已应用到顶点缓冲的表情数据，以及被它改写的部件的原始静止位置 / The face data applied to the vertex buffers, and the original rest positions of the parts it rewrote. */
   private appliedFace: LoadedFace | null = null
   private mainSkin: string | null = null
+  /** 个别部件自己的不透明度（角膜、前房），见 labels.ts 的 PART_LOOK / A few parts' own opacity (cornea, anterior chamber); see PART_LOOK in labels.ts. */
+  private lookOpacity: (number | undefined)[] = []
   /** 已加载的各系统 GLB 的字节哈希（文件名 → sha256 前 16 位）/ Byte hashes of the system GLBs loaded so far (file name → first 16 hex of sha256). */
   private glbHashes = new Map<string, string>()
   /** 贴在皮肤本体上、跟着它变形的覆盖网格（皱纹细节、疼痛分布）/ Overlay meshes on the skin proper that deform with it (wrinkle detail, pain map). */
   private followers: { patch: SkinPatch; setSkinning(mode: SkinningMode): void; dispose(): void }[] = []
   private detailLayer: FaceDetailLayer | null = null
+  // —— 皮肤的开口 / the skin's openings ——
+  private openings: FaceOpenings | null = null
+  private openingsLoad: { token: number; promise: Promise<FaceOpenings | null> } | null = null
+  private pouchTriangles: Uint32Array | null = null
+  private pouch: { patch: SkinPatch; material: MeshBasicNodeMaterial; setSkinning(mode: SkinningMode): void; dispose(): void } | null = null
+  private hideFrom: readonly string[] | null = null
+  private hideSet: ReadonlySet<string> = new Set()
+  private throughShown = false
+  private cornerApplied = 0
+  private cornerOf: { face: unknown; id: string | null } = { face: null, id: null }
   // —— 刺激的可视化（见 stepStim）/ the stimulus visuals (see stepStim) ——
   private stimEval: unknown = null
   private framedStim: unknown = null
@@ -626,6 +646,7 @@ export class Viewer {
 
   private allocate(): void {
     this.mainSkin = this.graph.mainSkinId()
+    this.lookOpacity = this.graph.parts.map((p) => partLook(p.name)?.opacity)
     const n = this.graph.parts.length
     this.inst = new Int32Array(n).fill(-1)
     this.bvh = new Array<MeshBVH | null>(n).fill(null)
@@ -653,6 +674,11 @@ export class Viewer {
     }
     this.followers = []
     this.glbHashes = new Map()
+    this.openings = null
+    this.openingsLoad = null
+    this.pouchTriangles = null
+    this.pouch = null
+    this.throughShown = false
     this.detailLayer = null
     this.painOverlay = null
     this.clearStim()
@@ -776,6 +802,8 @@ export class Viewer {
           })
           const hash = await sha256Prefix(bytes)
           const gltf = await loader.parseAsync(bytes, url.slice(0, url.lastIndexOf('/') + 1))
+          // 皮肤的开口说明要赶在皮肤入场之前到 / the description of the skin's openings must be here before the skin goes in
+          const openings = sys.id === 'integumentary' ? await this.openingsOf(token) : null
           if (this.disposed || token !== this.bodyToken) return
           if (hash) this.glbHashes.set(sys.glb!, hash)
           const baked = this.bake(gltf.scene)
@@ -784,6 +812,9 @@ export class Viewer {
             if (this.inst[i]! >= 0) continue
             const part = graph.parts[i]!
             if (part.tissue === 'skin') {
+              // 皮肤本体带口腔袋时：袋的三角形从皮肤里拿出来另画（深色、不可拾取、不上体表图），皮肤只留其余的
+              // when the skin proper carries an oral pouch, its triangles are taken out to be drawn apart (dark, unpickable, off the maps); the skin keeps the rest
+              if (part.id === this.mainSkin && openings) this.splitPouch(b.geometry, openings)
               // 体表图按 GLB 解码的顶点顺序索引皮肤，这里保留一份
               // skin maps index the skin in GLB decode order, so keep a copy of it
               this.skinGeometry.set(i, {
@@ -865,6 +896,8 @@ export class Viewer {
     if (s.adjacentMode) for (const id of s.selection.ids) for (const a of this.graph.part(id)?.adjacent ?? []) add(a)
     if (s.skinMapMode !== 'off' && s.skinMaps) add(s.skinMaps.part)
     for (const id of this.stimParts) add(id)
+    // 透过皮肤开口看到的牙、舌、眼球所在的系统 / the systems holding the teeth, tongue and eyeballs seen through the skin's openings
+    for (const id of this.throughOpenings(s) ?? []) add(id)
     return need
   }
 
@@ -969,6 +1002,8 @@ export class Viewer {
       p.provenanceHidden !== s.provenanceHidden ||
       p.colorMode !== s.colorMode ||
       this.stimDirty ||
+      p.skinHide !== s.skinHide ||
+      p.peel !== s.peel ||
       p.skinOpaque !== s.skinOpaque ||
       skinDrawnOpaque(p, this.mainSkin) !== skinDrawnOpaque(s, this.mainSkin) ||
       p.selection !== s.selection
@@ -982,6 +1017,11 @@ export class Viewer {
     const hoverChanged = !p || p.hover !== s.hover
     const boostChanged = !p || p.nerveBoost !== s.nerveBoost
     this.syncDetail(s)
+    // 皮肤不透明时要藏哪些部件，写在管线报告里：第一次用到时去取 / which parts to hide under an opaque skin is in the pipeline report: fetched on first use
+    if (this.source === useApp.getState && s.skinHide === undefined && skinDrawnOpaque(s, this.mainSkin)) useApp.getState().ensureSkinReport()
+    // 有真实口裂的皮肤：下颌一张开就需要表情数据里的口角通道（哪怕没开过"疼痛"页）
+    // a skin with a real oral fissure needs the face data's mouth-corner channel as soon as the jaw opens (even if the Pain tab was never opened)
+    if (this.source === useApp.getState && this.openings && !s.face && s.pose.tmj?.some((x) => x !== 0)) void useApp.getState().ensureFace()
     this.syncPose(s, p)
     // 摆姿势时不做爆炸视图（部件各自平移会与关节运动冲突）
     // no explode while posed (per-part translation would fight the joint motion)
@@ -1047,6 +1087,7 @@ export class Viewer {
     if (!displayChanged && this.skinIndex !== skinIndexBefore) {
       for (const i of [skinIndexBefore, this.skinIndex]) if (i >= 0) this.applyPart(i, parts[i]!, s)
     } else if (!displayChanged && skinChanged && this.skinIndex >= 0) this.applyPart(this.skinIndex, parts[this.skinIndex]!, s)
+    if (!displayChanged && skinChanged) this.updatePouch(s)
 
     if (displayChanged) {
       if (!p || p.colorMode !== s.colorMode) this.computeBaseColors(s)
@@ -1061,12 +1102,14 @@ export class Viewer {
           adjacentMode: s.adjacentMode,
           // 通路上的部件像被选中一样总是显示 / parts on the pathway are always shown, like selected ones
           selected: this.stimParts.size ? new Set([...s.selection.set, ...this.stimParts]) : s.selection.set,
-          unfitted: skinDrawnOpaque(s, this.mainSkin) ? this.graph.unfittedAppendages() : null,
+          unfitted: skinDrawnOpaque(s, this.mainSkin) ? this.hideWithOpaqueSkin(s) : null,
+          forced: this.throughOpenings(s),
         },
         this.display,
       )
       for (let i = 0; i < parts.length; i++) this.applyPart(i, parts[i]!, s)
       this.updateDetail()
+      this.updatePouch(s)
     } else if (hoverChanged) {
       for (const id of [p?.hover, s.hover]) {
         if (!id) continue
@@ -1214,6 +1257,128 @@ export class Viewer {
     this.followers = this.followers.filter((x) => x !== f)
     this.root.remove(f.patch.mesh)
     f.dispose()
+  }
+
+  /** 表情数据里口角通道的 id（kind 为 corner）；没有则为 null / The id of the mouth-corner channel in the face data (kind corner); null when it has none. */
+  private cornerChannel(face: { data: { channels: { id: string; kind: string }[] } }): string | null {
+    if (this.cornerOf.face !== face) this.cornerOf = { face, id: face.data.channels.find((c) => c.kind === 'corner')?.id ?? null }
+    return this.cornerOf.id
+  }
+
+  /** 这副人体皮肤的开口说明（face/openings.json）；没有时为 null。每副人体只取一次。 */
+  /** The description of this body's skin openings (face/openings.json); null when it has none. Fetched once per body. */
+  private openingsOf(token: number): Promise<FaceOpenings | null> {
+    if (!this.openingsLoad || this.openingsLoad.token !== token) {
+      const promise = fetchJson<FaceOpenings>(new URL('face/openings.json', new URL(this.baseUrl, location.href)).href)
+        .catch(() => null)
+        .then((o) => {
+          if (token !== this.bodyToken) return null
+          const ok = !!o && o.schema === 1 && o.skin === this.mainSkin && !!o.oralPouch && Array.isArray(o.oralPouch.upper)
+          this.openings = ok ? o : null
+          return this.openings
+        })
+      this.openingsLoad = { token, promise }
+    }
+    return this.openingsLoad.promise
+  }
+
+  /**
+   * 把口腔袋的三角形从皮肤几何的索引里拿出来（顶点不动，顶点顺序是绑定、体型、体表图的依据）。
+   * 凡是用到袋顶点（上半、下半、缝）的三角形都算袋的；睑缘内卷留在皮肤里，按皮肤画。
+   * Take the oral pouch's triangles out of the skin geometry's index (vertices stay: their order is what the rig,
+   * the shape and the maps go by). Any triangle using a pouch vertex (upper, lower, seam) counts as pouch; the lid
+   * rims stay in the skin and are drawn as skin.
+   */
+  private splitPouch(geometry: BufferGeometry, o: FaceOpenings): void {
+    const count = geometry.getAttribute('position').count
+    if (o.vertexCount !== count) {
+      console.warn(`[soma] openings.json is for ${o.vertexCount} skin vertices, the skin has ${count}: ignored`)
+      this.openings = null
+      return
+    }
+    const pouch = new Uint8Array(count)
+    for (const v of [...o.oralPouch.upper, ...o.oralPouch.lower, ...o.oralPouch.seam]) if (v < count) pouch[v] = 1
+    const src = geometry.index!.array
+    const keep: number[] = [], out: number[] = []
+    for (let t = 0; t + 2 < src.length; t += 3) {
+      const a = src[t]!, b = src[t + 1]!, c = src[t + 2]!
+      if (pouch[a] || pouch[b] || pouch[c]) out.push(a, b, c)
+      else keep.push(a, b, c)
+    }
+    geometry.setIndex(new BufferAttribute(Uint32Array.from(keep), 1))
+    this.pouchTriangles = Uint32Array.from(out)
+  }
+
+  /** 口腔袋：深色、不受光、不透明的一块，只在皮肤画成不透明时画（皮肤透明时它只会挡住牙和舌）。 */
+  /** The oral pouch: a dark, unlit, opaque piece, drawn only while the skin is drawn opaque (under a see-through skin it would just hide teeth and tongue). */
+  private syncPouch(): void {
+    const i = this.mainSkinIndex()
+    if (this.pouch || !this.pouchTriangles || i < 0) return
+    const material = new MeshBasicNodeMaterial({ color: POUCH_COLOR })
+    const patch = new SkinPatch(this.skinGeometry.get(i)!, null, material, this.pouchTriangles)
+    this.pouch = {
+      patch,
+      material,
+      setSkinning: (mode) => {
+        material.positionNode = positionNodeFor(this.skinning, mode, false) as typeof material.positionNode
+        material.needsUpdate = true
+      },
+      dispose: () => {
+        patch.dispose()
+        material.dispose()
+      },
+    }
+    this.addFollower(this.pouch)
+  }
+
+  /** 口腔袋的可见性和颜色 / The pouch's visibility and colour. */
+  private updatePouch(s: ViewState): void {
+    this.syncPouch()
+    const p = this.pouch
+    if (!p) return
+    const i = this.mainSkinIndex()
+    // 皮肤画成不透明：不透明开关 / 被选中，或者体表图图层在画它（未透视）
+    // the skin is drawn opaque: by the switch or a selection, or the skin-map layer is drawing it (not see-through)
+    const show = i >= 0 && this.display[i] === NORMAL && (i === this.skinIndex ? this.skinPickable : this.solid[i] === 1)
+    // 按来源着色时用"构造物"的颜色：它不是解剖 / in colour-by-source mode it takes the construction colour: it is not anatomy
+    p.material.color.set(s.colorMode === 'source' ? CONSTRUCTION_COLOR : POUCH_COLOR)
+    if (p.patch.mesh.visible !== show) {
+      p.patch.mesh.visible = show
+      this.dirty = true
+    }
+  }
+
+  /** 开口与口腔袋的状态（验证用）/ State of the openings and the pouch (verification). */
+  openingsState(): { openings: boolean; pouchTriangles: number; pouchVisible: boolean; through: number; hide: string[] } {
+    return {
+      openings: !!this.openings,
+      pouchTriangles: this.pouchTriangles ? this.pouchTriangles.length / 3 : 0,
+      pouchVisible: !!this.pouch?.patch.mesh.visible,
+      through: this.graph.throughOpeningParts().size,
+      hide: [...this.hideWithOpaqueSkin(this.source())],
+    }
+  }
+
+  /** 皮肤不透明时要藏起来的部件：管线报告给了清单就用它，否则按名称（头发、眉毛、阴毛）。 */
+  /** Parts hidden while the skin is opaque: the pipeline report's list when it gives one, else by name (hair, eyebrows, pubic hair). */
+  private hideWithOpaqueSkin(s: ViewState): ReadonlySet<string> {
+    if (Array.isArray(s.skinHide)) {
+      if (s.skinHide !== this.hideFrom) {
+        this.hideFrom = s.skinHide
+        this.hideSet = new Set(s.skinHide)
+      }
+      return this.hideSet
+    }
+    return this.graph.unfittedAppendages()
+  }
+
+  /** 皮肤带真实开口并且此刻画成不透明（没有被剥掉、隔离掉）：透过开口看到的深部部件要画出来 */
+  /** The skin has real openings and is drawn opaque right now (not peeled or isolated away): the deep parts seen through them are to be drawn. */
+  private throughOpenings(s: ViewState): ReadonlySet<string> | null {
+    if (!this.openings || !skinDrawnOpaque(s, this.mainSkin) || s.isolated) return null
+    const skin = this.mainSkin ? this.graph.part(this.mainSkin) : undefined
+    if (!skin || !(s.systems[skin.system]?.visible ?? true) || skin.depth < s.peel || s.hidden.has(skin.id)) return null
+    return this.graph.throughOpeningParts()
   }
 
   /** 皱纹细节层：数据到了（或换了）就重建；权重和可见性另由 updateDetail 管 / The wrinkle detail layer: rebuilt when its data arrives or changes; weights and visibility are updateDetail's job. */
@@ -1787,15 +1952,28 @@ export class Viewer {
     const face = this.appliedFace
     if (!batches) return false
     const frame = face ? painFrame(t) : { aus: {}, animating: false, airflow: 0 }
+    const act = face ? activations(face.data, frame.aus) : { channels: {}, jaw: 0 }
+    // 口角通道（皮肤有真实口裂时才有）：激活 = 下颌张开角 ÷ 最大角，不管下颌是怎么张开的
+    // （表情、发声、姿势面板、反射）；否则只靠关节张口时口裂两端是竖直的，嘴成了方的。
+    // the mouth-corner channel (present when the skin has a real oral fissure): activation = jaw opening ÷ its
+    // maximum, however the jaw came to open (expression, voice, pose panel, reflex); otherwise, opened by the
+    // joint alone, the fissure has vertical ends and the mouth goes square.
+    const corner = face ? this.cornerChannel(face) : null
+    let cornerNow = 0
+    if (face && corner) {
+      const { joint, dof, max } = face.data.jaw
+      const shown = Math.max(this.displayPose[joint]?.[dof] ?? 0, (this.poseTarget[joint]?.[dof] ?? 0) + act.jaw)
+      cornerNow = Math.min(1, Math.max(0, shown / Math.max(1e-6, max)))
+      if (cornerNow > 0) act.channels[corner] = Math.max(act.channels[corner] ?? 0, cornerNow)
+    }
     // "差不多相同"不能挡住最后一步：表情已经完全放松而上次应用的还剩一点点时，必须真的归零，
     // 否则顶点留着亚微米的位移、姿势模式也回不到静止
     // "near enough" must not swallow the last step: when the expression has fully relaxed but a trace is
     // still applied, it has to go to exactly zero, or sub-micron displacements linger and the posed mode never ends
     const settled = Object.keys(frame.aus).length > 0 || Object.keys(this.faceAUs).length === 0
-    if (!this.faceForce && this.restDirty.size === 0 && settled && sameAUs(frame.aus, this.faceAUs)) return frame.animating
+    if (!this.faceForce && this.restDirty.size === 0 && settled && sameAUs(frame.aus, this.faceAUs) && Math.abs(cornerNow - this.cornerApplied) < 1e-3) return frame.animating
     this.faceForce = false
     this.faceAUs = frame.aus
-    const act = face ? activations(face.data, frame.aus) : { channels: {}, jaw: 0 }
     const todo = new Set(this.restDirty)
     this.restDirty.clear()
     const part0 = this.followers.length ? this.mainSkinIndex() : -1
@@ -1846,6 +2024,7 @@ export class Viewer {
       if (this.followers.length && part0 === i) for (const f of this.followers) f.patch.setPositions(buf.position, buf.normal)
     }
     this.faceJaw = act.jaw
+    this.cornerApplied = cornerNow
     this.updateDetail()
     if (todo.size) {
       // 静止几何变了：按旧几何算出的拾取缓存作废 / the rest geometry changed: pick caches computed from the old one are stale
@@ -1984,7 +2163,7 @@ export class Viewer {
       const hex =
         s.colorMode === 'source'
           ? provenanceColor(part.provenance, this.graph.sourceOrdinal(part))
-          : (TISSUE_COLOR[part.tissue] ?? systemColor.get(part.system) ?? '#9aa3ad')
+          : (partLook(part.name)?.color ?? TISSUE_COLOR[part.tissue] ?? systemColor.get(part.system) ?? '#9aa3ad')
       this.baseColor[i]!.set(hex)
     })
   }
@@ -1998,7 +2177,7 @@ export class Viewer {
     // 组织默认值 × 系统滑块；按来源着色时把半透明组织稍微提亮，以便看清颜色
     // tissue default × the system's slider; in colour-by-source mode see-through tissues are
     // lifted a little so their colour can be read
-    let opacity = (TISSUE_OPACITY[part.tissue] ?? 1) * (s.systems[part.system]?.opacity ?? 1)
+    let opacity = (this.lookOpacity[i] ?? TISSUE_OPACITY[part.tissue] ?? 1) * (s.systems[part.system]?.opacity ?? 1)
     if (s.colorMode === 'source' && TISSUE_OPACITY[part.tissue] !== undefined) opacity = Math.min(1, opacity * 1.6)
     // 看表情时把皮肤画成不透明 / the skin is drawn opaque to read the expression
     if (s.skinOpaque && part.id === this.mainSkin) opacity = 1

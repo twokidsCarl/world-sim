@@ -67,13 +67,29 @@ export interface WeightCap {
   why?: { zh: string; en: string }
 }
 
+/** 胸壁皮肤随肋骨的设置。 Settings for chest skin following the ribs. */
+export interface RibFollow {
+  /** 肋关节 id 的正则；被转走份额的关节（胸椎）id 的正则。 Regular expressions: the rib joints, and the joints (thoracic vertebrae) whose share is handed over. */
+  ribs: string
+  from: string
+  /** 到肋骨的距离（米）：near 以内全额，far 以外不转。 Distance to the ribs (metres): full effect within `near`, none beyond `far`. */
+  near: number
+  far: number
+  /** 最多转走的份额（0–1）。 The largest share handed over (0–1). */
+  share: number
+  beta: number
+  /** 改过的顶点上沿网格平滑的遍数。 Smoothing passes over the mesh on the vertices that were changed. */
+  smooth?: number
+  why?: { zh: string; en: string }
+}
+
 export interface BindRules {
   defaults: Record<string, Policy>
   rules: (Policy & { match: string })[]
   attachmentExcludes?: AttachmentExclude[]
   hingeBlend?: HingeBlend[]
   /** 自带外部蒙皮权重的皮肤（见 external.ts）：部件的 Part.source 与权重包 manifest 的 source.name 一致时采用。 Skins that come with external weights (see external.ts): used when the part's Part.source equals source.name of the package manifest. */
-  externalWeights?: { body: string; dir: string; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
+  externalWeights?: { body: string; dir: string; openDir?: string; ribFollow?: RibFollow; map?: ExternalRule[]; caps?: WeightCap[]; generic?: string; genericWhy?: { zh: string; en: string }; why?: { zh: string; en: string } }[]
 }
 
 export interface BoundPart {
@@ -162,6 +178,46 @@ export function weld(positions: Float32Array, indices: Uint32Array): Welded {
     for (const v of [...sets[i]!].sort((x, y) => x - y)) adj[o++] = v
   }
   return { pos: Float32Array.from(pos), n, map, adjStart, adj }
+}
+
+const SKIN_SOURCE_NAME = 'skin-source.u32'
+
+/**
+ * 按来源下标定义唯一顶点（不看位置），并建立邻接表。source[i] 相同的顶点是同一个顶点。
+ * Unique vertices defined by source index (positions are not consulted), with adjacency. Vertices
+ * sharing a source index are one vertex.
+ */
+export function weldByIndex(positions: Float32Array, indices: Uint32Array, source: Uint32Array): Welded & { source: Uint32Array } {
+  const nv = positions.length / 3
+  const map = new Uint32Array(nv)
+  const first = new Map<number, number>()
+  const pos: number[] = [], src: number[] = []
+  for (let i = 0; i < nv; i++) {
+    let u = first.get(source[i]!)
+    if (u === undefined) {
+      u = src.length
+      first.set(source[i]!, u)
+      src.push(source[i]!)
+      pos.push(positions[i * 3]!, positions[i * 3 + 1]!, positions[i * 3 + 2]!)
+    }
+    map[i] = u
+  }
+  const n = src.length
+  const sets: Set<number>[] = Array.from({ length: n }, () => new Set<number>())
+  for (let t = 0; t < indices.length; t += 3) {
+    const a = map[indices[t]!]!, b = map[indices[t + 1]!]!, c = map[indices[t + 2]!]!
+    if (a !== b) sets[a]!.add(b), sets[b]!.add(a)
+    if (b !== c) sets[b]!.add(c), sets[c]!.add(b)
+    if (a !== c) sets[a]!.add(c), sets[c]!.add(a)
+  }
+  const adjStart = new Uint32Array(n + 1)
+  for (let i = 0; i < n; i++) adjStart[i + 1] = adjStart[i]! + sets[i]!.size
+  const adj = new Uint32Array(adjStart[n]!)
+  for (let i = 0; i < n; i++) {
+    let o = adjStart[i]!
+    for (const v of [...sets[i]!].sort((x, y) => x - y)) adj[o++] = v
+  }
+  return { pos: Float32Array.from(pos), n, map, adjStart, adj, source: Uint32Array.from(src) }
 }
 
 /** 稠密权重表：n 个顶点 × 调色板中的 m 个关节。 Dense weight table: n vertices × m palette joints. */
@@ -388,8 +444,10 @@ export interface BindContext {
   /** 每个关节的混合半径（米）。 Blend radius per joint, metres. */
   radius: number[]
   rules: BindRules
-  /** 已读入的外部蒙皮权重包。 External skin-weight packages already loaded. */
-  external?: ExternalWeights[]
+  /** 已读入的外部蒙皮权重包；byIndexFor 是按下标取权重的皮肤部件 id（没有下标对照时不设）。 External skin-weight packages already loaded; byIndexFor is the skin part bound by index (unset without the sidecar). */
+  external?: (ExternalWeights & { byIndexFor?: string })[]
+  /** 皮肤的下标对照（没有时为 null）。 The skin's index sidecar (null when absent). */
+  skinSource?: Uint32Array | null
   /** Z-Anatomy 附着斑块（没有该文件时为空）。 Z-Anatomy attachment patches (empty when the file is absent). */
   patches?: AttachmentPatch[]
   log?: (msg: string) => void
@@ -906,11 +964,19 @@ export function bindAll(ctx: BindContext): BindResult {
     if (ext) {
       const raw = body.meshes.get(p.id)!
       const nv = raw.positions.length / 3
-      const mesh = weld(raw.positions, raw.indices)
-      const t = ext.transfer(mesh.pos)
+      // 有下标对照时：唯一顶点按皮肤包的顶点下标定义，权重按下标取——不按位置焊接、不找最近点，
+      // 所以重合的上下唇缘顶点各是各的，平滑和填补也不会跨过口裂。没有对照文件时照旧。
+      // With the index sidecar: unique vertices are defined by package vertex index and weights are
+      // taken by index — no welding by position, no closest point — so coincident upper and lower
+      // lip-margin vertices stay apart and neither smoothing nor filling can cross the oral fissure.
+      // Without the sidecar: as before.
+      const src = ctx.skinSource && ext.byIndexFor === p.id ? ctx.skinSource : null
+      if (src && src.length !== nv) throw new Error(`rig: ${SKIN_SOURCE_NAME} has ${src.length} entries but skin part ${p.id} has ${nv} vertices`)
+      const mesh: Welded & { source?: Uint32Array } = src ? weldByIndex(raw.positions, raw.indices, src) : weld(raw.positions, raw.indices)
+      const t = src ? { rows: ext.byIndex(mesh.source!), meanMm: 0, maxMm: 0 } : ext.transfer(mesh.pos)
       // 按区域选择：外部权重落在 generic 所列关节上的那部分份额 m，改用距离场的权重（两者按 m 混合，过渡连续）
       // choice by region: for the share m of the external weight that sits on the joints named by `generic`, the distance-field weights are used instead (blended by m, so the transition is continuous)
-      const cfg = (ctx.rules.externalWeights ?? []).find((e) => e.dir === ext.dir)
+      const cfg = (ctx.rules.externalWeights ?? []).find((e) => e.dir === ext.dir || e.openDir === ext.dir)
       let blended = 0
       if (cfg?.generic) {
         const re = new RegExp(cfg.generic)
@@ -963,12 +1029,50 @@ export function bindAll(ctx: BindContext): BindResult {
           capped++
         })
       }
+      // 胸壁皮肤随肋骨：外部骨架没有肋关节，胸部皮肤全挂在胸椎上，吸气时不动。把贴近肋骨的皮肤顶点
+      // 挂在胸椎上的份额，按到肋骨的距离转给距离场给出的肋骨权重。只用顶点位置和距离场，与取权重的方式无关。
+      // Chest skin follows the ribs: the external skeleton has no rib joints, so chest skin hangs on the
+      // thoracic vertebrae and does not move in inspiration. For skin close to the ribs, the share on
+      // the thoracic vertebrae is handed to the rib weights of the distance field according to the
+      // distance to the ribs. Only positions and the field are used, whichever way the weights came.
+      let ribbed = 0
+      const ribFlag = new Uint8Array(mesh.n)
+      if (cfg?.ribFollow) {
+        const rf = cfg.ribFollow
+        const reFrom = new RegExp(rf.from), reRib = new RegExp(rf.ribs)
+        const isFrom = joints.map((j) => reFrom.test(j.def.id)), isRib = joints.map((j) => reRib.test(j.def.id))
+        t.rows.forEach((row, i) => {
+          let m = 0
+          for (const [j, w] of row) if (isFrom[j]) m += w
+          if (m < 0.02) return
+          const q: V3 = [mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!]
+          const c = field.query(q, (j) => isRib[j]!)
+          let dmin = Infinity
+          for (const dd of c.dist) dmin = Math.min(dmin, dd)
+          if (!(dmin < rf.far)) return
+          let fall = dmin <= rf.near ? 1 : 1 - (dmin - rf.near) / (rf.far - rf.near)
+          fall = fall * fall * (3 - 2 * fall) * rf.share
+          weightsFromDistances(c, rf.beta, radius, tmp)
+          if (!tmp.size) return
+          for (const [j, w] of row) if (isFrom[j]) row.set(j, w * (1 - fall))
+          for (const [j, w] of tmp) row.set(j, (row.get(j) ?? 0) + m * fall * w)
+          ribFlag[i] = 1
+          ribbed++
+        })
+      }
       const d = densify(t.rows)
       // 不做整体平滑：外部权重本身是连续的，按 m 的混合也连续；只有个别顶点没取到权重时才由邻居填充
       // no overall smoothing: the external weights are continuous as they are and so is the blend by m; neighbours only fill vertices that got no weight
       smooth(d, mesh, t.rows.some((r) => r.size === 0) ? 2 : 0)
+      // 相邻的肋各转各的，距离场给出的肋权重在肋间有棱：只在改过的胸壁顶点上沿网格平滑几遍，其余顶点锁定不动
+      // neighbouring ribs each turn on their own and the field's rib weights are ridged between them: a few smoothing passes over the mesh on the chest vertices that were changed, every other vertex locked
+      if (ribbed && cfg?.ribFollow?.smooth) {
+        const locked = new Uint8Array(mesh.n)
+        for (let i = 0; i < mesh.n; i++) locked[i] = ribFlag[i] ? 0 : 1
+        smooth(d, mesh, cfg.ribFollow.smooth, locked)
+      }
       finish(p, 'external', mesh, d, nv)
-      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}`)
+      notes.push(`${p.id} "${p.name}": bound with external weights from ${ext.dir}, ${src ? `taken by package vertex index (${SKIN_SOURCE_NAME})` : `transferred by closest point on the original surface (mean ${t.meanMm.toFixed(2)} mm, max ${t.maxMm.toFixed(1)} mm away)`}${ribbed ? `; ${ribbed} chest vertices handed part of their thoracic weight to the ribs` : ''}${blended ? `; ${blended} vertices blended with distance-field weights (generic: ${cfg!.generic})` : ''}${capped ? `; ${capped} vertices had jaw weight handed to the skull (upper lip)` : ''}`)
       if (++done % 400 === 0) ctx.log?.(`bound ${done} field parts`)
       continue
     }

@@ -2100,6 +2100,107 @@
     ],
     "maxMm": 80
    }
+  },
+  "glansSkin": {
+   "at": {
+    "offset": [
+     {
+      "part": "Glans penis"
+     },
+     [
+      0.006,
+      0,
+      0
+     ]
+    ]
+   },
+   "to": "nearestAny"
+  },
+  "penisRoot": {
+   "offset": [
+    "pubicSymphysis",
+    [
+     0.008,
+     -0.02,
+     0.02
+    ]
+   ]
+  },
+  "penisShaftDorsum": {
+   "at": {
+    "lerp": [
+     {
+      "offset": [
+       {
+        "part": "Glans penis"
+       },
+       [
+        0.006,
+        0,
+        0
+       ]
+      ]
+     },
+     "penisRoot",
+     0.5
+    ]
+   },
+   "to": "ant+0.5*sup"
+  },
+  "penisRootDorsum": {
+   "at": "penisRoot",
+   "to": "ant+0.5*sup"
+  },
+  "scrotumAnteriorUpper": {
+   "at": {
+    "part": "{side} testis"
+   },
+   "to": "ant+0.8*sup+0.3*lat"
+  },
+  "scrotumAnterolateral": {
+   "at": {
+    "part": "{side} testis"
+   },
+   "to": "ant+lat"
+  },
+  "scrotumLateral": {
+   "at": {
+    "part": "{side} testis"
+   },
+   "to": "lat+0.3*inf"
+  },
+  "scrotumPosterior": {
+   "at": {
+    "part": "{side} testis"
+   },
+   "to": "post+0.5*inf"
+  },
+  "scrotumBottom": {
+   "at": {
+    "part": "{side} testis"
+   },
+   "to": "inf"
+  },
+  "penisShaftVentral": {
+   "at": {
+    "lerp": [
+     {
+      "offset": [
+       {
+        "part": "Glans penis"
+       },
+       [
+        0.006,
+        0,
+        0
+       ]
+      ]
+     },
+     "penisRoot",
+     0.5
+    ]
+   },
+   "to": "post+0.5*inf"
   }
  },
  "notes": {
@@ -2134,6 +2235,10 @@
   "K_T3 … K_T11": {
    "zh": "锁骨中线第 n 肋间隙的关键感觉点：取第 n 肋间神经中心线与锁骨中线矢状面交点的高度（在中心线两点间插值），在锁骨中线上向前投影到皮肤。原先取“神经径向投影中 X 最接近锁骨中线的皮肤顶点”，在粗网格上会偏离 1–2 cm 且左右不一，使 T8–T10 等带左右面积不等。",
    "en": "Key sensory point in the nth intercostal space at the midclavicular line: the height at which the nth intercostal nerve's centreline crosses the sagittal plane of the midclavicular line (interpolated between centreline points), projected forwards onto the skin on that line. The earlier rule took the skin vertex of the nerve's radial projection whose X came nearest the line, which on a coarse mesh was 1–2 cm off and different on the two sides, making bands such as T8–T10 unequal left and right."
+  },
+  "glansSkin, penisShaftDorsum, penisRootDorsum, scrotum…": {
+   "zh": "男性外生殖器的体表标志：由深层部件（阴茎头、睾丸）和耻骨联合定位，再投影到皮肤（移植的扫描皮肤）。没有这些部件的人体不用这些标志。",
+   "en": "Landmarks of the male external genitalia: placed from deep parts (glans, testes) and the pubic symphysis and projected to the skin (the grafted scanned skin). A body without those parts does not use them."
   }
  }
 }

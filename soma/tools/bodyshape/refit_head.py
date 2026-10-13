@@ -60,6 +60,9 @@ def main():
         band = ((whn > 0.02) & (whn < 0.98))[:, None]
         off2 = np.where(band, 0.5 * off2 + 0.5 * sm, off2)
     V = Vm + off2
+    # 颅盖上的头皮取 5 mm（原来按 6 mm 缩放，量出来中位数 8.1 mm，颅顶显得高而鼓；2023 T-Table：颅顶 5.0、枕后点 6.0 mm）
+    # scalp over the vault taken as 5 mm (scaled for 6 mm before, which measured a median of 8.1 mm and a high, domed crown; 2023 T-Table: vertex 5.0, opisthocranion 6.0 mm)
+    BT.SCALP = 0.0045
     V = BT.head_scale(V, F, P, jn, lod, fb, log)(V)
     V, eye_info = FF.eye_warp(V, F, P, jn, wh, fb, lod, log)
     pivot = 0.5 * (fb.verts('Left vitreous body').mean(0) + fb.verts('Right vitreous body').mean(0))

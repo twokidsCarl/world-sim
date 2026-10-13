@@ -37,10 +37,9 @@ def main():
     DV, DF = fb.merged(lambda p: p['tissue'] in Body.DEEP and p['system'] != 'integumentary' and not p['id'].startswith('HRA_'))
     import igl
     out, lines, xf = {}, [], {}
-    # 导出的 HRA 部件已经带着管线现在施加的那套摆放（breast-placement-installed.json）；先把它撤掉，这样给出的数字仍是针对原始部件的。
-    # The exported HRA parts already carry the placement the pipeline applies now (breast-placement-installed.json); it is
-    # undone first, so the numbers given here still refer to the original parts.
-    inst = json.load(open(os.path.join(d, 'breast-placement-installed.json')))['sides'] if os.path.exists(os.path.join(d, 'breast-placement-installed.json')) else None
+    # HRA 部件按原始位置读：管线在安装皮肤包时才对原始部件施加这里给出的变换（没有匹配的皮肤包时不施加任何摆放）。
+    # The HRA parts are read at their original positions: the pipeline applies the transform given here to the original parts when it installs the package (with no matching package it applies none).
+    inst = None
 
     def mesh0(p):
         v = fb.mesh(p)[0]
@@ -117,7 +116,36 @@ def main():
                      f'the HRA breast {o["hraProjectionMm"]} mm; scale {o["scaleNippleOnApex"]} puts the nipple tip on the apex (gland p99 {o["glandAtThatScale"]["p99Mm"]:+.1f} mm, max {o["glandAtThatScale"]["maxMm"]:+.1f} mm); '
                      f'recommended scale {o["scale"]} gives gland p99 {o["glandAtScale"]["p99Mm"] if best else "n/a"} mm, nipple tip {tip_sd:+.1f} mm from the skin; '
                      f'nipple and areola parts {nip_info["parts"]} get the extra translation {nip_info["extraTranslationM"]} m: areola median {nip_info["areolaToSkinMm"]["median"]:+.1f} mm from the skin, nipple tip {sd_tip:+.1f} mm outside')
-    json.dump({'transform': "p' = aboutPoint + translationM + scale * (p - aboutPoint), applied to every HRA part of that side; the parts listed under nippleAndAreola.parts then also get + extraTranslationM",
+    # 把皮肤局部抬到乳头上：乳头尖按上面的变换（含附加平移）之后在皮肤外 h 处，就在它周围把皮肤沿法线抬一个高斯形的小隆起（高 h，σ 6 mm），
+    # 并改写 skin.obj、fit-state-final.npz、residual-offsets.f32。之后乳头尖在皮肤面上。
+    # Raise the skin locally onto the nipple: with the transform above (extra translation included) the nipple tip stands h outside the
+    # skin; a small Gaussian mound (height h, sigma 6 mm) is raised along the normal round it, and skin.obj, fit-state-final.npz and
+    # residual-offsets.f32 are rewritten. The tip then lies on the skin.
+    if '--raise-nipples' in sys.argv:
+        from fit_skin import vertex_normals, write_obj
+        nrm = vertex_normals(V, F)
+        V2 = V.copy()
+        for S in 'LR':
+            tip = np.array(out[S]['nippleTipAfterMm']['position']) + np.array(out[S]['nippleAndAreola']['extraTranslationM'])
+            h_tot = 0.0
+            for _ in range(5):   # 网格在这里很粗，一次抬不够，重复到乳头尖落在皮肤面上 / the mesh is coarse here and one raise falls short; repeated until the tip lies on the skin
+                h = max(float(signed_distance(tip[None], V2, F)[0]), 0.0)
+                if h < 0.0002:
+                    break
+                c_ = igl.point_mesh_squared_distance(np.ascontiguousarray(tip[None]), np.ascontiguousarray(V2), np.ascontiguousarray(F))[2][0]
+                g = np.exp(-(np.linalg.norm(V2 - c_, axis=1) / 0.006) ** 2 / 2)
+                sel = g > 0.01
+                V2[sel] += (h * g[sel])[:, None] * nrm[sel]
+                h_tot += h
+            out[S]['skinRaisedToNippleMm'] = round(h_tot * 1000, 1)
+            out[S]['nippleTipToSkinAfterRaiseMm'] = round(float(signed_distance(tip[None], V2, F)[0] * 1000), 1)
+        off = st['offsets'] + (V2 - V)
+        np.savez(os.path.join(d, 'fit-state-final.npz'), **{k: (off if k == 'offsets' else st[k]) for k in st.files})
+        off.astype(np.float32).tofile(os.path.join(d, 'residual-offsets.f32'))
+        write_obj(os.path.join(d, 'skin.obj'), V2, F, 'female skin in MHR LOD0 topology (Apache-2.0); metres, Y up, +Z anterior, +X left')
+        lines.append('skin raised onto the nipples (mm): ' + ', '.join(f'{S} {out[S]["skinRaisedToNippleMm"]} (tip then {out[S]["nippleTipToSkinAfterRaiseMm"]:+.1f} from the skin)' for S in 'LR'))
+        V = V2
+    json.dump({'appliesTo': {'zh': '原始的 HRA 乳腺部件（管线在安装时施加）', 'en': 'the original HRA mammary parts (applied by the pipeline at install)'}, 'transform': "p' = aboutPoint + translationM + scale * (p - aboutPoint), applied to every HRA part of that side; the parts listed under nippleAndAreola.parts then also get + extraTranslationM",
                'note': {'zh': '有符号距离：正 = 在皮肤外。skin 为 female-skin/skin.obj。', 'en': 'signed distances: positive = outside the skin. The skin is female-skin/skin.obj.'},
                'sides': out}, open(os.path.join(d, 'breast-placement.json'), 'w'), ensure_ascii=False, indent=1)
     open(os.path.join(d, 'breast-placement.txt'), 'w').write('\n'.join(lines))

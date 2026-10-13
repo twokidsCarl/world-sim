@@ -156,6 +156,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             face: assets.face ?? null,
             // 对照窗格不画皱纹细节 / no wrinkle detail in the compare pane
             faceDetail: null,
+            skinHide: s.skinHide,
             skinOpaque: s.skinOpaque,
             shape: assets.shape ?? null,
             shapeControls: shape.controls,

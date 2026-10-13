@@ -24239,12 +24239,12 @@
    "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
    "pass": true,
    "evaluated": true,
-   "measured": "15.3 mm palmar of the distal radius centre (1.9 mm from its surface); 5.7 mm from the flexor retinaculum, 6.3 mm deep to its centre",
+   "measured": "15.1 mm palmar of the distal radius centre (1.9 mm from its surface); 5.7 mm from the flexor retinaculum, 6.0 mm deep to its centre",
    "values": {
-    "palmarOfRadius": 15.261925931410362,
-    "toRadius": 1.8928309237165553,
-    "toRetinaculum": 5.690445268258687,
-    "deepToRetinaculum": 6.346231028303614
+    "palmarOfRadius": 15.146954570905903,
+    "toRadius": 1.8928192386098242,
+    "toRetinaculum": 5.690413183321446,
+    "deepToRetinaculum": 5.972583829796997
    }
   },
   {
@@ -24253,10 +24253,10 @@
    "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
    "pass": true,
    "evaluated": true,
-   "measured": "closest approach 10.8 mm from the epicondyle tip, 6.4 mm posterior to it",
+   "measured": "closest approach 10.1 mm from the epicondyle tip, 5.8 mm posterior to it",
    "values": {
-    "toEpicondyle": 10.813440471462302,
-    "posterior": 6.443440914154053
+    "toEpicondyle": 10.100639658496462,
+    "posterior": 5.791164934635162
    }
   },
   {
@@ -24292,12 +24292,12 @@
    "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
    "pass": true,
    "evaluated": true,
-   "measured": "mid-shaft: up to 20.6 mm posterior to the shaft axis, 5.0 mm from the bone; 30.4 mm medial of the axis proximally, 5.3 mm lateral distally",
+   "measured": "mid-shaft: up to 20.7 mm posterior to the shaft axis, 4.6 mm from the bone; 31.2 mm medial of the axis proximally, 9.7 mm lateral distally",
    "values": {
-    "posterior": 20.644448973514418,
-    "toBone": 4.994059593211631,
-    "medialProximal": 30.397059736044508,
-    "lateralDistal": 5.34559369592344
+    "posterior": 20.692028984002697,
+    "toBone": 4.596209315333119,
+    "medialProximal": 31.17908624784739,
+    "lateralDistal": 9.712077281858058
    }
   },
   {
@@ -24359,12 +24359,12 @@
    "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
    "pass": true,
    "evaluated": true,
-   "measured": "14.7 mm palmar of the distal radius centre (3.1 mm from its surface); 5.6 mm from the flexor retinaculum, 7.2 mm deep to its centre",
+   "measured": "14.5 mm palmar of the distal radius centre (2.5 mm from its surface); 5.6 mm from the flexor retinaculum, 6.9 mm deep to its centre",
    "values": {
-    "palmarOfRadius": 14.74075531234318,
-    "toRadius": 3.0647823064963102,
-    "toRetinaculum": 5.5677454133025375,
-    "deepToRetinaculum": 7.179620698219961
+    "palmarOfRadius": 14.542445009129564,
+    "toRadius": 2.5032673217130372,
+    "toRetinaculum": 5.5677392805519315,
+    "deepToRetinaculum": 6.851108353254777
    }
   },
   {
@@ -24373,10 +24373,10 @@
    "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
    "pass": true,
    "evaluated": true,
-   "measured": "closest approach 11.1 mm from the epicondyle tip, 6.9 mm posterior to it",
+   "measured": "closest approach 10.3 mm from the epicondyle tip, 6.1 mm posterior to it",
    "values": {
-    "toEpicondyle": 11.078963244980914,
-    "posterior": 6.901971995830536
+    "toEpicondyle": 10.265814323419171,
+    "posterior": 6.12138956785202
    }
   },
   {
@@ -24412,12 +24412,12 @@
    "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
    "pass": true,
    "evaluated": true,
-   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.1 mm from the bone; 30.7 mm medial of the axis proximally, 6.9 mm lateral distally",
+   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.0 mm from the bone; 31.5 mm medial of the axis proximally, 9.7 mm lateral distally",
    "values": {
-    "posterior": 20.88901109021643,
-    "toBone": 5.061239815715619,
-    "medialProximal": 30.731626919337675,
-    "lateralDistal": 6.8906245424467105
+    "posterior": 20.886920775237275,
+    "toBone": 4.988635631730284,
+    "medialProximal": 31.457265955867676,
+    "lateralDistal": 9.685850197323889
    }
   },
   {
@@ -56167,12 +56167,12 @@
    "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
    "pass": true,
    "evaluated": true,
-   "measured": "mid-shaft: up to 20.6 mm posterior to the shaft axis, 5.0 mm from the bone; 29.5 mm medial of the axis proximally, 5.3 mm lateral distally",
+   "measured": "mid-shaft: up to 20.7 mm posterior to the shaft axis, 4.6 mm from the bone; 30.1 mm medial of the axis proximally, 9.7 mm lateral distally",
    "values": {
-    "posterior": 20.642839648105483,
-    "toBone": 4.992418350752745,
-    "medialProximal": 29.508176225203048,
-    "lateralDistal": 5.34559369592344
+    "posterior": 20.691674117395984,
+    "toBone": 4.595844817541446,
+    "medialProximal": 30.1066072543917,
+    "lateralDistal": 9.712086363336166
    }
   },
   {
@@ -56287,12 +56287,12 @@
    "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
    "pass": true,
    "evaluated": true,
-   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.1 mm from the bone; 31.4 mm medial of the axis proximally, 6.9 mm lateral distally",
+   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.0 mm from the bone; 31.3 mm medial of the axis proximally, 9.7 mm lateral distally",
    "values": {
-    "posterior": 20.88802016299704,
-    "toBone": 5.060226192571234,
-    "medialProximal": 31.44442041714987,
-    "lateralDistal": 6.8906245424467105
+    "posterior": 20.885993684108428,
+    "toBone": 4.987759811504587,
+    "medialProximal": 31.27470556480596,
+    "lateralDistal": 9.685822385448638
    }
   },
   {
@@ -64617,7 +64617,7 @@
   ],
   "provenance": {
    "scannedBefore": 2220,
-   "scannedAfter": 2072,
+   "scannedAfter": 2069,
    "relabelledToWarped": 147,
    "relabelledByTissue": {
     "muscle": 56,
@@ -64786,6 +64786,5309 @@
    ]
   }
  },
+ "landmarksBeforeAbduction": [
+  {
+   "id": "median-wrist",
+   "side": "L",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "15.3 mm palmar of the distal radius centre (1.9 mm from its surface); 5.7 mm from the flexor retinaculum, 6.3 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 15.261925931410362,
+    "toRadius": 1.8928309237165553,
+    "toRetinaculum": 5.690445268258687,
+    "deepToRetinaculum": 6.346231028303614
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "L",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 10.8 mm from the epicondyle tip, 6.4 mm posterior to it",
+   "values": {
+    "toEpicondyle": 10.813440471462302,
+    "posterior": 6.443440914154053
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "L",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.2 mm, there 23.9 mm below the muscle's centroid (6.6 mm from its lower border); behind the muscle the nerve stays -4.6 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.1926915603949233,
+    "belowCentroid": 23.878959542147136,
+    "fromLowerBorder": 6.560146808624268
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "L",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 20.6 mm posterior to the shaft axis, ≤ 49.3 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.41…0.55",
+   "values": {
+    "posteriorMin": 20.6265648206075,
+    "fromShaftMax": 49.25945757763905,
+    "betweenMin": 0.41464808267933356,
+    "betweenMax": 0.549095842272761
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "L",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 20.7 mm posterior to the shaft axis, 4.6 mm from the bone; 31.4 mm medial of the axis proximally, 9.7 mm lateral distally",
+   "values": {
+    "posterior": 20.692029423225325,
+    "toBone": 4.596208355623223,
+    "medialProximal": 31.386483850738543,
+    "lateralDistal": 9.712086363324175
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "L",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.7 mm from the fibula 1–5 cm below its tip, 6.2 mm lateral and 14.1 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 4.687796334222193,
+    "lateral": 6.1637129235480455,
+    "posterior": 14.097223390958133
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "L",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "21.2 mm lateral of the artery (22.6 mm apart), 18.9 mm from the ligament; artery 0.2 mm from the ligament",
+   "values": {
+    "lateral": 21.176783740520477,
+    "separation": 22.620594736797994,
+    "toLigament": 18.851688794599717
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "L",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.66 between medius (0) and anterior (1), 1.4 / 1.9 mm from them; C6: 0.61 between medius (0) and anterior (1), 2.0 / 1.8 mm from them; C7: 0.40 between medius (0) and anterior (1), 4.1 / 4.1 mm from them; C8: 0.63 between medius (0) and anterior (1), 3.3 / 3.3 mm from them; T1: 0.66 between medius (0) and anterior (1), 3.8 / 2.7 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 4.059743832533372
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "L",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.7 mm from rib 1 (median), 93% nearer it than rib 2, 79% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 100% below its nearest rib point; 3: 1.1 mm from rib 3 (median), 97% nearer it than rib 4, 98% below its nearest rib point; 4: 1.6 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 90% below its nearest rib point; 6: 1.0 mm from rib 6 (median), 88% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 91% nearer it than rib 8, 96% below its nearest rib point; 8: 0.9 mm from rib 8 (median), 97% nearer it than rib 9, 95% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 89% below its nearest rib point; 10: 1.1 mm from rib 10 (median), 96% nearer it than rib 11, 85% below its nearest rib point; 11: 1.3 mm from rib 11 (median), 100% nearer it than rib 12, 77% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 1.5920717299200722,
+    "meanBelow": 0.9138733237653671
+   }
+  },
+  {
+   "id": "median-wrist",
+   "side": "R",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "14.7 mm palmar of the distal radius centre (3.1 mm from its surface); 5.6 mm from the flexor retinaculum, 7.2 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 14.74075531234318,
+    "toRadius": 3.0647823064963102,
+    "toRetinaculum": 5.5677454133025375,
+    "deepToRetinaculum": 7.179620698219961
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "R",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 11.1 mm from the epicondyle tip, 6.9 mm posterior to it",
+   "values": {
+    "toEpicondyle": 11.078963244980914,
+    "posterior": 6.901971995830536
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "R",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.3 mm, there 11.6 mm below the muscle's centroid (7.7 mm from its lower border); behind the muscle the nerve stays -3.9 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.32537746069570245,
+    "belowCentroid": 11.58836666857721,
+    "fromLowerBorder": 7.675766944885254
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "R",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 19.9 mm posterior to the shaft axis, ≤ 51.0 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.40…0.54",
+   "values": {
+    "posteriorMin": 19.941842293038082,
+    "fromShaftMax": 50.97571673459503,
+    "betweenMin": 0.40081794046033487,
+    "betweenMax": 0.5353341507844723
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "R",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.0 mm from the bone; 31.4 mm medial of the axis proximally, 9.7 mm lateral distally",
+   "values": {
+    "posterior": 20.88692327794561,
+    "toBone": 4.988640795810134,
+    "medialProximal": 31.350529682257005,
+    "lateralDistal": 9.685822385462291
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "R",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.0 mm from the fibula 1–5 cm below its tip, 5.5 mm lateral and 14.7 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 3.9982190241739475,
+    "lateral": 5.467592409023878,
+    "posterior": 14.657930599955419
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "R",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "23.1 mm lateral of the artery (24.1 mm apart), 13.2 mm from the ligament; artery 0.2 mm from the ligament",
+   "values": {
+    "lateral": 23.105772336324055,
+    "separation": 24.120513759417864,
+    "toLigament": 13.225022500941273
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "R",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.70 between medius (0) and anterior (1), 2.0 / 1.9 mm from them; C6: 0.52 between medius (0) and anterior (1), 1.9 / 2.1 mm from them; C7: 0.41 between medius (0) and anterior (1), 4.0 / 4.2 mm from them; C8: 0.62 between medius (0) and anterior (1), 3.2 / 3.2 mm from them; T1: 0.65 between medius (0) and anterior (1), 3.6 / 2.9 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 4.197818753252023
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "R",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 91% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 99% below its nearest rib point; 3: 1.3 mm from rib 3 (median), 98% nearer it than rib 4, 97% below its nearest rib point; 4: 1.6 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.4 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 1.1 mm from rib 6 (median), 86% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 89% nearer it than rib 8, 97% below its nearest rib point; 8: 1.0 mm from rib 8 (median), 97% nearer it than rib 9, 96% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 90% below its nearest rib point; 10: 0.9 mm from rib 10 (median), 96% nearer it than rib 11, 88% below its nearest rib point; 11: 1.2 mm from rib 11 (median), 100% nearer it than rib 12, 79% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 1.640056623610592,
+    "meanBelow": 0.9322908329650861
+   }
+  }
+ ],
+ "armAbduction": {
+  "applied": true,
+  "method": "each free upper limb turned rigidly about the centre of its humeral head, about the antero-posterior (Z) axis, i.e. abducted in the coronal plane; scapula and clavicle stay; soft tissue by a per-vertex share of the rotation angle (attachment sites for parts on bone, a gap-adaptive scalar field for the rest)",
+  "plane": "coronal (rotation about the runtime Z axis): the anatomical position is defined in the coronal plane, and the antero-posterior position of the limb, set by the shoulder correction, is left as it is; elevation in the scapular plane would also carry the hand forwards",
+  "scapula": {
+   "statement": "modelling choice: scapula and clavicle are kept fixed, with no coupled scapular upward rotation, for an abduction of a few degrees",
+   "source": "none opened; the usual attribution for \"little scapular motion in the first 30° of abduction\" is Inman VT, Saunders JB, Abbott LC, J Bone Joint Surg 1944;26:1–30, cited here from memory only",
+   "verified": false
+  },
+  "angleDeg": 6.5,
+  "angleChosen": "smallest multiple of 0.5° at which, on both sides, the deep parts turning with the limb are at least 12 mm from the deep parts that stay (from the band 25–30% of the humerus down to the fingertips) and from the muscles of the axillary folds (from the band 45–50% down: 2 bands below the band in which their insertions on the humerus end; proximal to that the folds meet the arm by anatomy); 1 mm is added to the requirement for the point sampling",
+  "requirement": {
+   "minGapMm": 12,
+   "wallFromBand": "25–30%",
+   "foldsFromBand": "45–50%",
+   "foldInsertionsEndAtFraction": 0.3,
+   "foldInsertions": [
+    {
+     "name": "Abdominal part of right pectoralis major",
+     "fraction": [
+      0.14,
+      0.21
+     ]
+    },
+    {
+     "name": "Abdominal part of left pectoralis major",
+     "fraction": [
+      0.14,
+      0.21
+     ]
+    },
+    {
+     "name": "Clavicular part of right pectoralis major",
+     "fraction": [
+      0.14,
+      0.3
+     ]
+    },
+    {
+     "name": "Clavicular part of left pectoralis major",
+     "fraction": [
+      0.14,
+      0.3
+     ]
+    },
+    {
+     "name": "Sternocostal part of right pectoralis major",
+     "fraction": [
+      0.15,
+      0.27
+     ]
+    },
+    {
+     "name": "Sternocostal part of left pectoralis major",
+     "fraction": [
+      0.15,
+      0.27
+     ]
+    },
+    {
+     "name": "Right infraspinatus muscle",
+     "fraction": [
+      -0.05,
+      0.03
+     ]
+    },
+    {
+     "name": "Left infraspinatus muscle",
+     "fraction": [
+      -0.05,
+      0.03
+     ]
+    },
+    {
+     "name": "Right subscapularis",
+     "fraction": [
+      -0.05,
+      0.05
+     ]
+    },
+    {
+     "name": "Left subscapularis",
+     "fraction": [
+      -0.05,
+      0.05
+     ]
+    },
+    {
+     "name": "Right supraspinatus",
+     "fraction": [
+      -0.08,
+      0
+     ]
+    },
+    {
+     "name": "Left supraspinatus",
+     "fraction": [
+      -0.09,
+      0
+     ]
+    },
+    {
+     "name": "Right teres major",
+     "fraction": [
+      0.11,
+      0.22
+     ]
+    },
+    {
+     "name": "Left teres major",
+     "fraction": [
+      0.11,
+      0.22
+     ]
+    },
+    {
+     "name": "Right teres minor",
+     "fraction": [
+      0.01,
+      0.09
+     ]
+    },
+    {
+     "name": "Left teres minor",
+     "fraction": [
+      0.01,
+      0.09
+     ]
+    },
+    {
+     "name": "Right latissimus dorsi",
+     "fraction": [
+      0.14,
+      0.28
+     ]
+    },
+    {
+     "name": "Left latissimus dorsi",
+     "fraction": [
+      0.14,
+      0.29
+     ]
+    }
+   ]
+  },
+  "criterion": {
+   "rule": "arm ≥ 12 mm from the deep parts that stay from 25% of the humerus down, and ≥ 12 mm from the fold muscles from 2 bands (5% of the humerus each) below the band in which their insertions end",
+   "whyNotFromAQuarter": "a gap from 25% of the humerus cannot be had by abduction: latissimus dorsi, teres major and pectoralis major insert on the humerus down to 30% of its length and lie along the arm below that; the gap between them and the arm opens like a hinge at the distal end of the insertions, so the band just below it stays under 12 mm at any small angle (see gapCurve.foldsClearFrom: the level from which the folds are clear stops rising after the first degrees)",
+   "anatomy": "with the arm at the side the axillary folds lie along the arm and the medial arm skin touches the skin of the chest wall in a living person too; an axilla open from about mid-humerus is the anatomical resting state, and the chest wall itself was never the obstacle (see the wall columns)",
+   "decided": "accepted by the project coordinator on review of the gap-vs-angle curve; the earlier target of 25% was withdrawn"
+  },
+  "travelWithLimb": {
+   "note": "parts not attached to bone that continue into the distal arm with weight 1 are given weight 1 from the lower border of the axilla down (the field's value rising to 1 between 25% and 35% of the humerus); largestRise is the largest weight deficit this removed below that level",
+   "fromFraction": 0.25,
+   "fullFromFraction": 0.35,
+   "parts": [
+    {
+     "id": "ZAAD407384",
+     "name": "Left posterior brachial cutaneous nerve",
+     "side": "L",
+     "verticesRaised": 30,
+     "largestRise": 0.7649
+    },
+    {
+     "id": "ZAB3387F00",
+     "name": "Left brachial fascia",
+     "side": "L",
+     "verticesRaised": 136,
+     "largestRise": 0.5677
+    },
+    {
+     "id": "ZADAC92190",
+     "name": "Left medial antebrachial cutaneous nerve",
+     "side": "L",
+     "verticesRaised": 18,
+     "largestRise": 0.5033
+    },
+    {
+     "id": "ZA3D8B697B",
+     "name": "Right brachial fascia",
+     "side": "R",
+     "verticesRaised": 84,
+     "largestRise": 0.4671
+    },
+    {
+     "id": "ZA413CAA20",
+     "name": "Right posterior brachial cutaneous nerve",
+     "side": "R",
+     "verticesRaised": 13,
+     "largestRise": 0.4486
+    },
+    {
+     "id": "ZAE8AEBCDA",
+     "name": "Right median nerve",
+     "side": "R",
+     "verticesRaised": 8,
+     "largestRise": 0.394
+    },
+    {
+     "id": "FJ2270",
+     "name": "Right basilic vein",
+     "side": "R",
+     "verticesRaised": 3236,
+     "largestRise": 0.3595
+    },
+    {
+     "id": "ZA0AE22AEA",
+     "name": "Right medial antebrachial cutaneous nerve",
+     "side": "R",
+     "verticesRaised": 7,
+     "largestRise": 0.3267
+    },
+    {
+     "id": "FJ2218",
+     "name": "Left basilic vein",
+     "side": "L",
+     "verticesRaised": 3332,
+     "largestRise": 0.294
+    },
+    {
+     "id": "ZABB5BBCEC",
+     "name": "Left median nerve",
+     "side": "L",
+     "verticesRaised": 6,
+     "largestRise": 0.2864
+    },
+    {
+     "id": "ZAB1853041",
+     "name": "Left radial nerve",
+     "side": "L",
+     "verticesRaised": 7,
+     "largestRise": 0.2769
+    },
+    {
+     "id": "ZA001074B3",
+     "name": "Left ulnar nerve",
+     "side": "L",
+     "verticesRaised": 3,
+     "largestRise": 0.2519
+    },
+    {
+     "id": "FJ2271",
+     "name": "Right brachial artery",
+     "side": "R",
+     "verticesRaised": 363,
+     "largestRise": 0.1851
+    },
+    {
+     "id": "ZAFE2CC37B",
+     "name": "Right ulnar nerve",
+     "side": "R",
+     "verticesRaised": 3,
+     "largestRise": 0.1687
+    },
+    {
+     "id": "FJ2219",
+     "name": "Left brachial artery",
+     "side": "L",
+     "verticesRaised": 380,
+     "largestRise": 0.1649
+    },
+    {
+     "id": "ZAEBDEA8DE",
+     "name": "Right radial nerve",
+     "side": "R",
+     "verticesRaised": 8,
+     "largestRise": 0.0574
+    },
+    {
+     "id": "FJ2341",
+     "name": "Right medial brachial vein",
+     "side": "R",
+     "verticesRaised": 314,
+     "largestRise": 0.0251
+    },
+    {
+     "id": "FJ2313",
+     "name": "Left medial brachial vein",
+     "side": "L",
+     "verticesRaised": 333,
+     "largestRise": 0.0085
+    },
+    {
+     "id": "ZA57B0A98D",
+     "name": "Right medial brachial cutaneous nerve",
+     "side": "R",
+     "verticesRaised": 4,
+     "largestRise": 0
+    },
+    {
+     "id": "ZA64D01A00",
+     "name": "Left medial brachial cutaneous nerve",
+     "side": "L",
+     "verticesRaised": 3,
+     "largestRise": 0
+    }
+   ],
+   "lagBelowAxilla": {
+    "note": "deformed field-carried parts other than nerves: largest distance of their vertices below the axilla (and within 5 cm of a limb bone) from the rigid turn of the limb; nerves are in nerves.perNerve",
+    "parts": [
+     {
+      "id": "ZAAFB06D34",
+      "name": "Right investing abdominal fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 173,
+      "largestLagBelowAxillaMm": 19.0368
+     },
+     {
+      "id": "ZAACCC4854",
+      "name": "Left investing abdominal fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 150,
+      "largestLagBelowAxillaMm": 18.7836
+     },
+     {
+      "id": "ZA9DD0D4AA",
+      "name": "Left clavipectoral fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 82,
+      "largestLagBelowAxillaMm": 8.9656
+     },
+     {
+      "id": "ZA4C2A62DC",
+      "name": "Right clavipectoral fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 67,
+      "largestLagBelowAxillaMm": 7.7048
+     },
+     {
+      "id": "FJ2218",
+      "name": "Left basilic vein",
+      "tissue": "vein",
+      "verticesBelowAxilla": 6980,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2219",
+      "name": "Left brachial artery",
+      "tissue": "artery",
+      "verticesBelowAxilla": 1037,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2220",
+      "name": "Left cephalic vein",
+      "tissue": "vein",
+      "verticesBelowAxilla": 6396,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2270",
+      "name": "Right basilic vein",
+      "tissue": "vein",
+      "verticesBelowAxilla": 6969,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2271",
+      "name": "Right brachial artery",
+      "tissue": "artery",
+      "verticesBelowAxilla": 920,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2272",
+      "name": "Right cephalic vein",
+      "tissue": "vein",
+      "verticesBelowAxilla": 6184,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2313",
+      "name": "Left medial brachial vein",
+      "tissue": "vein",
+      "verticesBelowAxilla": 1155,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "FJ2341",
+      "name": "Right medial brachial vein",
+      "tissue": "vein",
+      "verticesBelowAxilla": 1065,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "ZA3D8B697B",
+      "name": "Right brachial fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 1441,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "ZA653B2173",
+      "name": "Right deltoid fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 102,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "ZAAD5022DE",
+      "name": "Left deltoid fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 137,
+      "largestLagBelowAxillaMm": 0
+     },
+     {
+      "id": "ZAB3387F00",
+      "name": "Left brachial fascia",
+      "tissue": "fascia",
+      "verticesBelowAxilla": 1455,
+      "largestLagBelowAxillaMm": 0
+     }
+    ]
+   }
+  },
+  "gapCurve": {
+   "note": "smallest distance (mm, capped at 25) from the deep parts that turn whole with the limb to (wall) the deep parts that stay and (folds) the crossing muscles whose belly lies on the trunk or scapula, turned by their own weights; by band along the humerus (head centre = 0, elbow = 1), then forearm and hand; point samples 3 mm (limb) and 1.5 mm (other side) apart, so values read up to about 1 mm high",
+   "bands": [
+    "0–5%",
+    "5–10%",
+    "10–15%",
+    "15–20%",
+    "20–25%",
+    "25–30%",
+    "30–35%",
+    "35–40%",
+    "40–45%",
+    "45–50%",
+    "50–55%",
+    "55–60%",
+    "60–65%",
+    "65–70%",
+    "70–75%",
+    "75–80%",
+    "80–85%",
+    "85–90%",
+    "90–95%",
+    "95–100%",
+    "forearm",
+    "hand"
+   ],
+   "curve": [
+    {
+     "angleDeg": 0,
+     "left": {
+      "wall": [
+       1.1,
+       3.3,
+       19.1,
+       19.9,
+       19,
+       19.7,
+       23.9,
+       22.8,
+       23.9,
+       24.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.1,
+       0.4,
+       0.1,
+       0.3,
+       0.2,
+       0.2,
+       0.3,
+       0.5,
+       2.6,
+       5.6,
+       7.5,
+       10.6,
+       15.6,
+       22.2,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.2,
+       2.5,
+       18.1,
+       19.9,
+       19,
+       19.7,
+       24,
+       23.2,
+       23.9,
+       24.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.1,
+       0.4,
+       0.1,
+       0.2,
+       0.2,
+       0.1,
+       0.2,
+       0.4,
+       2.6,
+       6.1,
+       8.1,
+       11.5,
+       16.3,
+       22.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 5.6
+    },
+    {
+     "angleDeg": 1,
+     "left": {
+      "wall": [
+       1.2,
+       3.5,
+       19.4,
+       20.8,
+       20,
+       20.9,
+       25,
+       24.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.4,
+       0.1,
+       0.3,
+       0.2,
+       0.1,
+       0.2,
+       0.3,
+       3.1,
+       6.9,
+       9.1,
+       12.6,
+       18,
+       24.8,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.1,
+       2.6,
+       18.4,
+       20.7,
+       20,
+       20.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.1,
+       0.3,
+       0.1,
+       0.2,
+       0.1,
+       0.1,
+       0.3,
+       0.5,
+       3.1,
+       7.4,
+       9.8,
+       13.5,
+       18.7,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 6.9
+    },
+    {
+     "angleDeg": 2,
+     "left": {
+      "wall": [
+       1.1,
+       3.6,
+       19.8,
+       21.6,
+       21.1,
+       22.2,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.4,
+       0.1,
+       0.3,
+       0.3,
+       0.1,
+       0.1,
+       0.2,
+       3.6,
+       8.2,
+       10.7,
+       14.6,
+       20.2,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.1,
+       2.7,
+       18.7,
+       21.5,
+       21,
+       22.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.1,
+       0.2,
+       0.2,
+       0.1,
+       0.2,
+       0.6,
+       3.5,
+       8.7,
+       11.5,
+       15.5,
+       21.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 8.2
+    },
+    {
+     "angleDeg": 3,
+     "left": {
+      "wall": [
+       1.1,
+       3.8,
+       20.1,
+       22.4,
+       22,
+       23.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.4,
+       0.1,
+       0.2,
+       0.2,
+       0.1,
+       0.3,
+       0.5,
+       4.2,
+       9.3,
+       12.3,
+       16.6,
+       22.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.2,
+       2.8,
+       19,
+       22.3,
+       22,
+       23.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.1,
+       0.1,
+       0.2,
+       0.2,
+       0.3,
+       0.6,
+       3.9,
+       10.1,
+       13.1,
+       17.6,
+       23.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 9.3
+    },
+    {
+     "angleDeg": 4,
+     "left": {
+      "wall": [
+       1.1,
+       4.1,
+       20.5,
+       23.2,
+       23,
+       24.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.1,
+       0.2,
+       0.2,
+       0.2,
+       0.4,
+       0.7,
+       4.8,
+       10.6,
+       13.9,
+       18.6,
+       24.7,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.2,
+       3,
+       19.4,
+       23.2,
+       23,
+       24.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.1,
+       0.1,
+       0.2,
+       0.2,
+       0.2,
+       0.5,
+       4.2,
+       11.1,
+       14.7,
+       19.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 10.6
+    },
+    {
+     "angleDeg": 5,
+     "left": {
+      "wall": [
+       1.1,
+       4.3,
+       20.8,
+       24.1,
+       23.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.1,
+       0.3,
+       0.1,
+       0.2,
+       0.2,
+       0.3,
+       0.2,
+       0.6,
+       5.2,
+       11.8,
+       15.4,
+       20.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.1,
+       3.2,
+       19.7,
+       24,
+       24,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.1,
+       0.2,
+       0.1,
+       0.1,
+       0.2,
+       0.3,
+       0.4,
+       0.6,
+       4.6,
+       12,
+       16.3,
+       21.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 11.8
+    },
+    {
+     "angleDeg": 6,
+     "left": {
+      "wall": [
+       1.1,
+       4.6,
+       21.1,
+       24.9,
+       24.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.1,
+       0.3,
+       0.1,
+       0.2,
+       0.2,
+       0.3,
+       0.3,
+       0.7,
+       5.5,
+       13,
+       17,
+       22.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.1,
+       3.4,
+       20,
+       24.9,
+       24.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.1,
+       0.1,
+       0.1,
+       0.2,
+       0.3,
+       0.4,
+       0.4,
+       5,
+       12.9,
+       17.9,
+       23.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 12.9
+    },
+    {
+     "angleDeg": 6.5,
+     "left": {
+      "wall": [
+       1.1,
+       4.7,
+       21.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.1,
+       0.2,
+       0.2,
+       0.3,
+       0.4,
+       0.6,
+       5.7,
+       13.6,
+       17.7,
+       23.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.1,
+       3.5,
+       20.2,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.1,
+       0.1,
+       0.1,
+       0.2,
+       0.3,
+       0.3,
+       0.3,
+       5.2,
+       13.3,
+       18.7,
+       24.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 13.3
+    },
+    {
+     "angleDeg": 7,
+     "left": {
+      "wall": [
+       1.1,
+       4.8,
+       21.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.1,
+       0.2,
+       0.2,
+       0.3,
+       0.5,
+       0.6,
+       5.9,
+       14.1,
+       18.5,
+       24.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.2,
+       3.6,
+       20.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.1,
+       0.1,
+       0.1,
+       0.2,
+       0.3,
+       0.3,
+       0.4,
+       5.5,
+       13.8,
+       19.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 13.8
+    },
+    {
+     "angleDeg": 8,
+     "left": {
+      "wall": [
+       1.2,
+       5.1,
+       21.8,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.2,
+       0.2,
+       0.2,
+       0.3,
+       0.4,
+       0.6,
+       6.3,
+       15,
+       20.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.3,
+       3.9,
+       20.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.1,
+       0.2,
+       0.1,
+       0.2,
+       0.3,
+       0.2,
+       0.5,
+       5.9,
+       14.7,
+       20.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 14.7
+    },
+    {
+     "angleDeg": 9,
+     "left": {
+      "wall": [
+       1.2,
+       5.4,
+       22.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.2,
+       0.2,
+       0.2,
+       0.3,
+       0.4,
+       0.8,
+       6.8,
+       15.8,
+       21.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.5,
+       4.2,
+       21,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.2,
+       0.1,
+       0.2,
+       0.3,
+       0.3,
+       0.5,
+       6.5,
+       15.5,
+       22.5,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 15.5
+    },
+    {
+     "angleDeg": 10,
+     "left": {
+      "wall": [
+       1.2,
+       5.7,
+       22.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.2,
+       0.1,
+       0.2,
+       0.2,
+       0.2,
+       0.9,
+       7.2,
+       16.7,
+       23.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.4,
+       4.5,
+       21.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.2,
+       0.1,
+       0.1,
+       0.2,
+       0.4,
+       0.6,
+       6.9,
+       16.4,
+       24,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 16.4
+    },
+    {
+     "angleDeg": 11,
+     "left": {
+      "wall": [
+       1.3,
+       5.9,
+       22.7,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.3,
+       0.3,
+       0.2,
+       0.1,
+       0.2,
+       0.1,
+       0.2,
+       1.2,
+       7.7,
+       17.5,
+       24.7,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.3,
+       4.8,
+       21.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.2,
+       0.1,
+       0.1,
+       0.1,
+       0.2,
+       0.9,
+       7.3,
+       17.2,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 17.2
+    },
+    {
+     "angleDeg": 12,
+     "left": {
+      "wall": [
+       1.3,
+       6.2,
+       23.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.3,
+       0.3,
+       0.2,
+       0.1,
+       0.1,
+       0.1,
+       0.2,
+       1.4,
+       8.2,
+       18.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.3,
+       5.1,
+       21.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.2,
+       0.1,
+       0.1,
+       0.2,
+       0.3,
+       1.2,
+       7.8,
+       18.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 18.1
+    },
+    {
+     "angleDeg": 13,
+     "left": {
+      "wall": [
+       1.4,
+       6.5,
+       23.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.2,
+       0.1,
+       0.1,
+       0.1,
+       0.1,
+       1.7,
+       8.7,
+       19.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.4,
+       5.4,
+       22.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.2,
+       0.1,
+       0.1,
+       0.2,
+       0.3,
+       1.5,
+       8.3,
+       18.8,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 18.8
+    },
+    {
+     "angleDeg": 14,
+     "left": {
+      "wall": [
+       1.6,
+       6.7,
+       23.7,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.3,
+       0.1,
+       0.1,
+       0.1,
+       0.3,
+       2,
+       9.1,
+       19.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.5,
+       5.7,
+       22.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.3,
+       0.1,
+       0.1,
+       0.1,
+       0.3,
+       1.6,
+       8.8,
+       19.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 19.6
+    },
+    {
+     "angleDeg": 15,
+     "left": {
+      "wall": [
+       1.6,
+       7,
+       24,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.2,
+       0.3,
+       0.2,
+       0.1,
+       0.2,
+       0.5,
+       2.3,
+       9.6,
+       20.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "right": {
+      "wall": [
+       1.5,
+       6,
+       22.9,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0.2,
+       0.3,
+       0.3,
+       0.1,
+       0.1,
+       0.1,
+       0.3,
+       1.7,
+       9.2,
+       20.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "worstRequiredMm": 20.3
+    }
+   ],
+   "foldsClearFrom": [
+    {
+     "angleDeg": 0,
+     "left": "60–65%",
+     "right": "60–65%"
+    },
+    {
+     "angleDeg": 1,
+     "left": "55–60%",
+     "right": "55–60%"
+    },
+    {
+     "angleDeg": 2,
+     "left": "55–60%",
+     "right": "55–60%"
+    },
+    {
+     "angleDeg": 3,
+     "left": "50–55%",
+     "right": "50–55%"
+    },
+    {
+     "angleDeg": 4,
+     "left": "50–55%",
+     "right": "50–55%"
+    },
+    {
+     "angleDeg": 5,
+     "left": "50–55%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 6,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 6.5,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 7,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 8,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 9,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 10,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 11,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 12,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 13,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 14,
+     "left": "45–50%",
+     "right": "45–50%"
+    },
+    {
+     "angleDeg": 15,
+     "left": "45–50%",
+     "right": "45–50%"
+    }
+   ]
+  },
+  "gapBands": [
+   "0–5%",
+   "5–10%",
+   "10–15%",
+   "15–20%",
+   "20–25%",
+   "25–30%",
+   "30–35%",
+   "35–40%",
+   "40–45%",
+   "45–50%",
+   "50–55%",
+   "55–60%",
+   "60–65%",
+   "65–70%",
+   "70–75%",
+   "75–80%",
+   "80–85%",
+   "85–90%",
+   "90–95%",
+   "95–100%",
+   "forearm",
+   "hand"
+  ],
+  "wallGapLimitedBy": {
+   "note": "the staying deep part nearest to the limb in each band, at the chosen angle",
+   "left": [
+    "Left scapula",
+    "Left scapula",
+    "Left scapula",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "right": [
+    "Right scapula",
+    "Right scapula",
+    "Right scapula",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ]
+  },
+  "foldGapLimitedBy": {
+   "note": "the fold muscle nearest to the limb in each band, at the chosen angle",
+   "left": [
+    "Left teres minor",
+    "Left teres minor",
+    "Clavicular part of left pectoralis major",
+    "Sternocostal part of left pectoralis major",
+    "Clavicular part of left pectoralis major",
+    "Left latissimus dorsi",
+    "Left latissimus dorsi",
+    "Left latissimus dorsi",
+    "Left latissimus dorsi",
+    "Left latissimus dorsi",
+    "Left latissimus dorsi",
+    "Left latissimus dorsi",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "right": [
+    "Right teres minor",
+    "Right teres minor",
+    "Clavicular part of right pectoralis major",
+    "Right teres major",
+    "Clavicular part of right pectoralis major",
+    "Clavicular part of right pectoralis major",
+    "Right latissimus dorsi",
+    "Right latissimus dorsi",
+    "Right latissimus dorsi",
+    "Right latissimus dorsi",
+    "Right latissimus dorsi",
+    "Right latissimus dorsi",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ]
+  },
+  "sides": {
+   "left": {
+    "headCentreM": [
+     0.16893,
+     1.28973,
+     0.10154
+    ],
+    "humerusLengthMm": 275.5,
+    "limbBones": 30,
+    "glenohumeralGap": {
+     "before": {
+      "minMm": 1.01,
+      "medianMm": 2.39,
+      "points": 4598
+     },
+     "after": {
+      "minMm": 1,
+      "medianMm": 2.44,
+      "points": 4578
+     }
+    },
+    "elbowM": {
+     "before": [
+      0.21634,
+      1.01846,
+      0.09441
+     ],
+     "after": [
+      0.24675,
+      1.02557,
+      0.09441
+     ]
+    },
+    "wristM": {
+     "before": [
+      0.26244,
+      0.7765,
+      0.14644
+     ],
+     "after": [
+      0.32042,
+      0.79042,
+      0.14649
+     ]
+    },
+    "gapMm": {
+     "before": {
+      "wall": [
+       1,
+       3.2,
+       19,
+       19.8,
+       18.8,
+       19.6,
+       23.8,
+       22.8,
+       23.8,
+       24.6,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0.2,
+       2.6,
+       5.5,
+       7.4,
+       10.6,
+       15.6,
+       22.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "after": {
+      "wall": [
+       1.1,
+       4.7,
+       21.2,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0.1,
+       0.1,
+       5.7,
+       13.6,
+       17.7,
+       23.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     }
+    }
+   },
+   "right": {
+    "headCentreM": [
+     -0.16896,
+     1.28977,
+     0.10127
+    ],
+    "humerusLengthMm": 275.6,
+    "limbBones": 30,
+    "glenohumeralGap": {
+     "before": {
+      "minMm": 0.94,
+      "medianMm": 2.43,
+      "points": 4429
+     },
+     "after": {
+      "minMm": 0.96,
+      "medianMm": 2.51,
+      "points": 4470
+     }
+    },
+    "elbowM": {
+     "before": [
+      -0.21675,
+      1.01843,
+      0.09403
+     ],
+     "after": [
+      -0.24715,
+      1.02558,
+      0.09403
+     ]
+    },
+    "wristM": {
+     "before": [
+      -0.26254,
+      0.77658,
+      0.14602
+     ],
+     "after": [
+      -0.32049,
+      0.79049,
+      0.14614
+     ]
+    },
+    "gapMm": {
+     "before": {
+      "wall": [
+       1.1,
+       2.4,
+       18,
+       19.7,
+       18.9,
+       19.6,
+       24,
+       23.1,
+       23.9,
+       24.8,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0.3,
+       2.5,
+       5.9,
+       8.1,
+       11.4,
+       16.3,
+       22.3,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     },
+     "after": {
+      "wall": [
+       1.1,
+       3.5,
+       20.1,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ],
+      "folds": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0.2,
+       5.3,
+       13.3,
+       18.5,
+       24.4,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25,
+       25
+      ]
+     }
+    }
+   }
+  },
+  "transforms": {
+   "note": "x ↦ rotation·x + translation (row-major, metres, runtime frame), applied after the shoulder correction; `inverse` undoes the abduction. arm_* applies to the humerus and every bone distal to it.",
+   "arm_L": {
+    "rotation": [
+     0.99357186,
+     -0.11320321,
+     0,
+     0.11320321,
+     0.99357186,
+     0,
+     0,
+     0,
+     1
+    ],
+    "translationM": [
+     0.1470875,
+     -0.0108328,
+     0
+    ],
+    "inverse": {
+     "rotation": [
+      0.99357186,
+      0.11320321,
+      0,
+      -0.11320321,
+      0.99357186,
+      0,
+      0,
+      0,
+      1
+     ],
+     "translationM": [
+      -0.1449157,
+      0.027414,
+      0
+     ]
+    }
+   },
+   "arm_R": {
+    "rotation": [
+     0.99357186,
+     0.11320321,
+     0,
+     -0.11320321,
+     0.99357186,
+     0,
+     0,
+     0,
+     1
+    ],
+    "translationM": [
+     -0.1470922,
+     -0.010836,
+     0
+    ],
+    "inverse": {
+     "rotation": [
+      0.99357186,
+      -0.11320321,
+      0,
+      0.11320321,
+      0.99357186,
+      0,
+      0,
+      0,
+      1
+     ],
+     "translationM": [
+      0.14492,
+      0.0274176,
+      0
+     ]
+    }
+   }
+  },
+  "field": {
+   "anchors": 577850,
+   "options": {
+    "epsilon": 0.002,
+    "power": 3,
+    "sharpPower": 6,
+    "radiusFactor": 4,
+    "radiusOffset": 0.004,
+    "maxRadius": 0.1,
+    "switchRadius": 0.04,
+    "coarseSpacing": 0.01,
+    "maxDistance": 0.08
+   },
+   "regionM": [
+    -0.431,
+    0.53,
+    -0.115,
+    0.43,
+    1.432,
+    0.321
+   ],
+   "largestWeightNearBoundary": 0,
+   "jacobian": {
+    "samples": 76622,
+    "min": 0.521,
+    "p1": 0.964,
+    "median": 1,
+    "p99": 1.719,
+    "max": 5.443,
+    "nonPositive": 0,
+    "nonPositiveByLevel": {}
+   }
+  },
+  "parts": {
+   "moved": 566,
+   "rigid": 411,
+   "deformed": 155,
+   "byVia": {
+    "attachment/deformed": 39,
+    "attachment/rigid": 173,
+    "field/rigid": 178,
+    "field/deformed": 74,
+    "bone/rigid": 60,
+    "nerve/deformed": 42
+   },
+   "byTissue": {
+    "muscle": {
+     "rigid": 78,
+     "deformed": 32
+    },
+    "fascia": {
+     "rigid": 10,
+     "deformed": 12
+    },
+    "ligament": {
+     "rigid": 105,
+     "deformed": 7
+    },
+    "artery": {
+     "rigid": 66,
+     "deformed": 25
+    },
+    "vein": {
+     "rigid": 40,
+     "deformed": 20
+    },
+    "skin": {
+     "rigid": 4,
+     "deformed": 1
+    },
+    "bone": {
+     "rigid": 60,
+     "deformed": 0
+    },
+    "nerve": {
+     "rigid": 44,
+     "deformed": 42
+    },
+    "organ": {
+     "rigid": 4,
+     "deformed": 16
+    }
+   },
+   "deformedIds": [
+    "FJ1446",
+    "FJ1446M",
+    "FJ1447",
+    "FJ1447M",
+    "FJ1464",
+    "FJ1464M",
+    "FJ1467",
+    "FJ1467M",
+    "FJ1468",
+    "FJ1468M",
+    "FJ1478",
+    "FJ1478M",
+    "FJ1479",
+    "FJ1479M",
+    "FJ1488",
+    "FJ1488M",
+    "FJ1500",
+    "FJ1500M",
+    "FJ1504",
+    "FJ1504M",
+    "FJ1506",
+    "FJ1506M",
+    "FJ1507",
+    "FJ1507M",
+    "FJ1508",
+    "FJ1508M",
+    "FJ1512",
+    "FJ1512M",
+    "FJ1513",
+    "FJ1513M",
+    "FJ1976",
+    "FJ2211",
+    "FJ2212",
+    "FJ2213",
+    "FJ2216",
+    "FJ2217",
+    "FJ2218",
+    "FJ2219",
+    "FJ2220",
+    "FJ2221",
+    "FJ2222",
+    "FJ2230",
+    "FJ2233",
+    "FJ2239",
+    "FJ2240",
+    "FJ2246",
+    "FJ2247",
+    "FJ2250",
+    "FJ2251",
+    "FJ2253",
+    "FJ2254",
+    "FJ2263",
+    "FJ2264",
+    "FJ2265",
+    "FJ2268",
+    "FJ2269",
+    "FJ2270",
+    "FJ2271",
+    "FJ2272",
+    "FJ2273",
+    "FJ2274",
+    "FJ2282",
+    "FJ2285",
+    "FJ2291",
+    "FJ2292",
+    "FJ2298",
+    "FJ2299",
+    "FJ2302",
+    "FJ2303",
+    "FJ2305",
+    "FJ2306",
+    "FJ2313",
+    "FJ2330",
+    "FJ2341",
+    "FJ2361",
+    "FJ2810",
+    "R3_FMA13358",
+    "R3_FMA13359",
+    "ZACB67E3C5",
+    "ZA8CC2F9A4",
+    "ZA55D3D8F1",
+    "ZA3C63B6E6",
+    "ZAEF6006D4",
+    "ZA9986E674",
+    "ZAB247A349",
+    "ZAED9B410E",
+    "ZAFE3C76C8",
+    "ZADF998971",
+    "ZA91C34B3C",
+    "ZAD8EA5836",
+    "ZA432D8423",
+    "ZA84961D45",
+    "ZA15CC488D",
+    "ZA0C51FB57",
+    "ZA0AE22AEA",
+    "ZADAC92190",
+    "ZA57B0A98D",
+    "ZA64D01A00",
+    "ZA18C17C97",
+    "ZAD5C4F5B9",
+    "ZA75568326",
+    "ZAF0B6FC80",
+    "ZA9585DB96",
+    "ZAFECEA6B0",
+    "ZAE8AEBCDA",
+    "ZABB5BBCEC",
+    "ZA2CB1B22F",
+    "ZA44C11326",
+    "ZAE89EEDD3",
+    "ZA22127EEC",
+    "ZA413CAA20",
+    "ZAAD407384",
+    "ZAEBDEA8DE",
+    "ZAB1853041",
+    "ZA501A7623",
+    "ZA7135DD27",
+    "ZAFE2CC37B",
+    "ZA001074B3",
+    "ZA8FF1C04E",
+    "ZAD5F3F977",
+    "ZA88BD1C05",
+    "ZAE85E6756",
+    "ZA6119A1A0",
+    "ZA75454EE5",
+    "ZA27BD8E99",
+    "ZA205F5350",
+    "ZAB3387F00",
+    "ZA3D8B697B",
+    "ZAC187EFE9",
+    "ZAB095232E",
+    "ZAB11E79F3",
+    "ZA79ECE7C6",
+    "ZA9DD0D4AA",
+    "ZA4C2A62DC",
+    "ZA8BB2028D",
+    "ZADA77DB9E",
+    "ZAAD5022DE",
+    "ZA653B2173",
+    "ZA1417D037",
+    "ZA8CA358EB",
+    "ZAD1BB8DD6",
+    "ZAE78D42E4",
+    "ZAACCC4854",
+    "ZAAFB06D34",
+    "ZA69331931",
+    "ZA8399CF09",
+    "ZA0097D3B5",
+    "ZA0A93A6B4",
+    "ZA85EB9FD9",
+    "ZAB5083BBE",
+    "ZA6DC1AB09",
+    "ZA31BF88E4",
+    "ZAA2D808E8",
+    "ZAA8B611C5",
+    "ZA1B122A1F"
+   ],
+   "attached": {
+    "parts": 469,
+    "atRest": 257,
+    "withLimb": 173,
+    "crossing": 39,
+    "unattached": 43
+   },
+   "mapJacobianAtVertices": {
+    "samples": 12793,
+    "min": 0.834,
+    "p1": 0.914,
+    "median": 1,
+    "p99": 1.095,
+    "nonPositive": 0,
+    "partsWithFolds": []
+   },
+   "thinStructures": {
+    "parts": 73,
+    "triangles": 220730,
+    "reversedTriangles": 8,
+    "partsWithReversedTriangles": [
+     {
+      "id": "FJ2233",
+      "name": "Left lateral thoracic vein",
+      "triangles": 3640,
+      "reversed": 3
+     },
+     {
+      "id": "FJ2361",
+      "name": "Pectoral branch of right thoraco-acromial artery",
+      "triangles": 3400,
+      "reversed": 3
+     },
+     {
+      "id": "FJ2330",
+      "name": "Pectoral branch of left thoraco-acromial artery",
+      "triangles": 3376,
+      "reversed": 2
+     }
+    ]
+   }
+  },
+  "crossing": {
+   "note": "parts attached to both a limb bone and a trunk-side bone (scapula and clavicle included); volume and origin–insertion distance (between the centroids of the two attachment sites) before and after",
+   "parts": [
+    {
+     "id": "FJ1446M",
+     "name": "Abdominal part of left pectoralis major",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      22.8,
+      23.29
+     ],
+     "volumeChange": 0.0213,
+     "originInsertionMm": [
+      196.1,
+      200.3
+     ],
+     "lengthChange": 0.0217,
+     "closestToLimbBoneMm": [
+      0.35,
+      0.35
+     ],
+     "closestToTrunkBoneMm": [
+      0.19,
+      0.19
+     ],
+     "verticesWithLimb": 0.0207,
+     "verticesAtRest": 0.1305
+    },
+    {
+     "id": "FJ1446",
+     "name": "Abdominal part of right pectoralis major",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      22.79,
+      23.32
+     ],
+     "volumeChange": 0.0234,
+     "originInsertionMm": [
+      195.6,
+      199.9
+     ],
+     "lengthChange": 0.0218,
+     "closestToLimbBoneMm": [
+      0.58,
+      0.58
+     ],
+     "closestToTrunkBoneMm": [
+      0.31,
+      0.31
+     ],
+     "verticesWithLimb": 0.009,
+     "verticesAtRest": 0.1357
+    },
+    {
+     "id": "FJ1467M",
+     "name": "Acromial part of left deltoid",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      90.33,
+      88.65
+     ],
+     "volumeChange": -0.0185,
+     "originInsertionMm": [
+      89.3,
+      87.7
+     ],
+     "lengthChange": -0.018,
+     "closestToLimbBoneMm": [
+      0.53,
+      0.53
+     ],
+     "closestToTrunkBoneMm": [
+      0.44,
+      0.38
+     ],
+     "verticesWithLimb": 0.3567,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1467",
+     "name": "Acromial part of right deltoid",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      90.38,
+      88.73
+     ],
+     "volumeChange": -0.0183,
+     "originInsertionMm": [
+      90.2,
+      88.6
+     ],
+     "lengthChange": -0.0177,
+     "closestToLimbBoneMm": [
+      0.14,
+      0.14
+     ],
+     "closestToTrunkBoneMm": [
+      0.35,
+      0.26
+     ],
+     "verticesWithLimb": 0.3567,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1468M",
+     "name": "Clavicular part of left deltoid",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      56.64,
+      56.32
+     ],
+     "volumeChange": -0.0057,
+     "originInsertionMm": [
+      100.5,
+      101.7
+     ],
+     "lengthChange": 0.0119,
+     "closestToLimbBoneMm": [
+      0.29,
+      0.29
+     ],
+     "closestToTrunkBoneMm": [
+      0.16,
+      0.16
+     ],
+     "verticesWithLimb": 0.2327,
+     "verticesAtRest": 0.377
+    },
+    {
+     "id": "FJ1447M",
+     "name": "Clavicular part of left pectoralis major",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      51.32,
+      51.95
+     ],
+     "volumeChange": 0.0123,
+     "originInsertionMm": [
+      161.4,
+      165.1
+     ],
+     "lengthChange": 0.0229,
+     "closestToLimbBoneMm": [
+      0.65,
+      0.6
+     ],
+     "closestToTrunkBoneMm": [
+      0.37,
+      0.37
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0.0021
+    },
+    {
+     "id": "FJ1468",
+     "name": "Clavicular part of right deltoid",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      56.68,
+      56.42
+     ],
+     "volumeChange": -0.0045,
+     "originInsertionMm": [
+      102.5,
+      103.8
+     ],
+     "lengthChange": 0.0122,
+     "closestToLimbBoneMm": [
+      0.21,
+      0.21
+     ],
+     "closestToTrunkBoneMm": [
+      0.15,
+      0.15
+     ],
+     "verticesWithLimb": 0.2336,
+     "verticesAtRest": 0.3789
+    },
+    {
+     "id": "FJ1447",
+     "name": "Clavicular part of right pectoralis major",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      51.33,
+      51.96
+     ],
+     "volumeChange": 0.0123,
+     "originInsertionMm": [
+      160.6,
+      164.3
+     ],
+     "lengthChange": 0.023,
+     "closestToLimbBoneMm": [
+      0.44,
+      0.41
+     ],
+     "closestToTrunkBoneMm": [
+      0.24,
+      0.23
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0.0021
+    },
+    {
+     "id": "ZA27BD8E99",
+     "name": "Left articular capsule of glenohumeral joint",
+     "tissue": "ligament",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      2,
+      1.98
+     ],
+     "volumeChange": -0.0075,
+     "originInsertionMm": [
+      19.8,
+      19.5
+     ],
+     "lengthChange": -0.0133,
+     "closestToLimbBoneMm": [
+      0.09,
+      0.08
+     ],
+     "closestToTrunkBoneMm": [
+      0.34,
+      0.28
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1488M",
+     "name": "Left coracobrachialis",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      21.34,
+      21.59
+     ],
+     "volumeChange": 0.0121,
+     "originInsertionMm": [
+      141.6,
+      144.3
+     ],
+     "lengthChange": 0.0192,
+     "closestToLimbBoneMm": [
+      0.28,
+      0.28
+     ],
+     "closestToTrunkBoneMm": [
+      1.18,
+      1.25
+     ],
+     "verticesWithLimb": 0.5921,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "ZA8BB2028D",
+     "name": "Left coracohumeral ligament",
+     "tissue": "ligament",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      0.16,
+      0.15
+     ],
+     "volumeChange": -0.0408,
+     "originInsertionMm": [
+      32.6,
+      31.2
+     ],
+     "lengthChange": -0.043,
+     "closestToLimbBoneMm": [
+      0.4,
+      0.26
+     ],
+     "closestToTrunkBoneMm": [
+      0.85,
+      0.5
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1500M",
+     "name": "Left infraspinatus muscle",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      101.56,
+      101.78
+     ],
+     "volumeChange": 0.0022,
+     "originInsertionMm": [
+      100.9,
+      101
+     ],
+     "lengthChange": 0.0009,
+     "closestToLimbBoneMm": [
+      0.12,
+      0.05
+     ],
+     "closestToTrunkBoneMm": [
+      0.37,
+      0.45
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "R3_FMA13359",
+     "name": "Left latissimus dorsi",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      343.63,
+      351.51
+     ],
+     "volumeChange": 0.0229,
+     "originInsertionMm": [
+      201.3,
+      205.4
+     ],
+     "lengthChange": 0.0204,
+     "closestToLimbBoneMm": [
+      0.08,
+      0.16
+     ],
+     "closestToTrunkBoneMm": [
+      0.11,
+      0.11
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0.0968
+    },
+    {
+     "id": "FJ1504M",
+     "name": "Left subscapularis",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      48.35,
+      48.54
+     ],
+     "volumeChange": 0.004,
+     "originInsertionMm": [
+      100.9,
+      100.7
+     ],
+     "lengthChange": -0.0018,
+     "closestToLimbBoneMm": [
+      0.39,
+      0.32
+     ],
+     "closestToTrunkBoneMm": [
+      0.57,
+      0.5
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "ZAA8B611C5",
+     "name": "Left superior glenohumeral ligament",
+     "tissue": "ligament",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      0.11,
+      0.11
+     ],
+     "volumeChange": -0.022,
+     "originInsertionMm": [
+      30.7,
+      30.1
+     ],
+     "lengthChange": -0.0178,
+     "closestToLimbBoneMm": [
+      0.6,
+      0.57
+     ],
+     "closestToTrunkBoneMm": [
+      0.95,
+      0.84
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1506M",
+     "name": "Left supraspinatus",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      32.54,
+      31.93
+     ],
+     "volumeChange": -0.0188,
+     "originInsertionMm": [
+      75.1,
+      74.1
+     ],
+     "lengthChange": -0.0133,
+     "closestToLimbBoneMm": [
+      0.17,
+      0.23
+     ],
+     "closestToTrunkBoneMm": [
+      0.21,
+      0.25
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1507M",
+     "name": "Left teres major",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      39.48,
+      41.05
+     ],
+     "volumeChange": 0.0397,
+     "originInsertionMm": [
+      106.8,
+      109.6
+     ],
+     "lengthChange": 0.0264,
+     "closestToLimbBoneMm": [
+      0.19,
+      0.23
+     ],
+     "closestToTrunkBoneMm": [
+      0.74,
+      0.79
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1508M",
+     "name": "Left teres minor",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      30.38,
+      30.94
+     ],
+     "volumeChange": 0.0183,
+     "originInsertionMm": [
+      77.9,
+      79.3
+     ],
+     "lengthChange": 0.0183,
+     "closestToLimbBoneMm": [
+      0.4,
+      0.3
+     ],
+     "closestToTrunkBoneMm": [
+      0.25,
+      0.22
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1478M",
+     "name": "Long head of left biceps brachii",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      95.44,
+      95.41
+     ],
+     "volumeChange": -0.0003,
+     "originInsertionMm": [
+      122.6,
+      123.7
+     ],
+     "lengthChange": 0.0089,
+     "closestToLimbBoneMm": [
+      0.17,
+      0.17
+     ],
+     "closestToTrunkBoneMm": [
+      0.76,
+      1.1
+     ],
+     "verticesWithLimb": 0.9121,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1479M",
+     "name": "Long head of left triceps brachii",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      135.18,
+      137.94
+     ],
+     "volumeChange": 0.0204,
+     "originInsertionMm": [
+      256.6,
+      259.1
+     ],
+     "lengthChange": 0.0098,
+     "closestToLimbBoneMm": [
+      0.26,
+      0.26
+     ],
+     "closestToTrunkBoneMm": [
+      0.38,
+      0.38
+     ],
+     "verticesWithLimb": 0.708,
+     "verticesAtRest": 0.0125
+    },
+    {
+     "id": "FJ1478",
+     "name": "Long head of right biceps brachii",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      95.44,
+      95.41
+     ],
+     "volumeChange": -0.0003,
+     "originInsertionMm": [
+      117.2,
+      118.3
+     ],
+     "lengthChange": 0.0092,
+     "closestToLimbBoneMm": [
+      0.26,
+      0.26
+     ],
+     "closestToTrunkBoneMm": [
+      0.9,
+      0.92
+     ],
+     "verticesWithLimb": 0.9121,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1479",
+     "name": "Long head of right triceps brachii",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      135.14,
+      137.92
+     ],
+     "volumeChange": 0.0205,
+     "originInsertionMm": [
+      256.4,
+      258.9
+     ],
+     "lengthChange": 0.0099,
+     "closestToLimbBoneMm": [
+      0.61,
+      0.61
+     ],
+     "closestToTrunkBoneMm": [
+      0.46,
+      0.46
+     ],
+     "verticesWithLimb": 0.7068,
+     "verticesAtRest": 0.0125
+    },
+    {
+     "id": "ZA205F5350",
+     "name": "Right articular capsule of glenohumeral joint",
+     "tissue": "ligament",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      2.02,
+      2
+     ],
+     "volumeChange": -0.0078,
+     "originInsertionMm": [
+      19.9,
+      19.7
+     ],
+     "lengthChange": -0.0124,
+     "closestToLimbBoneMm": [
+      0.12,
+      0.23
+     ],
+     "closestToTrunkBoneMm": [
+      0.27,
+      0.15
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1488",
+     "name": "Right coracobrachialis",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      21.36,
+      21.61
+     ],
+     "volumeChange": 0.012,
+     "originInsertionMm": [
+      141.5,
+      144.3
+     ],
+     "lengthChange": 0.0197,
+     "closestToLimbBoneMm": [
+      0.31,
+      0.31
+     ],
+     "closestToTrunkBoneMm": [
+      0.98,
+      1.03
+     ],
+     "verticesWithLimb": 0.5965,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "ZADA77DB9E",
+     "name": "Right coracohumeral ligament",
+     "tissue": "ligament",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      0.15,
+      0.14
+     ],
+     "volumeChange": -0.0345,
+     "originInsertionMm": [
+      33,
+      31.7
+     ],
+     "lengthChange": -0.0417,
+     "closestToLimbBoneMm": [
+      0.31,
+      0.37
+     ],
+     "closestToTrunkBoneMm": [
+      1.13,
+      0.64
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1500",
+     "name": "Right infraspinatus muscle",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      101.54,
+      101.74
+     ],
+     "volumeChange": 0.002,
+     "originInsertionMm": [
+      101.1,
+      101.2
+     ],
+     "lengthChange": 0.0008,
+     "closestToLimbBoneMm": [
+      0.15,
+      0.13
+     ],
+     "closestToTrunkBoneMm": [
+      0.24,
+      0.35
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "R3_FMA13358",
+     "name": "Right latissimus dorsi",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      356.46,
+      364.67
+     ],
+     "volumeChange": 0.023,
+     "originInsertionMm": [
+      195.6,
+      199.7
+     ],
+     "lengthChange": 0.021,
+     "closestToLimbBoneMm": [
+      0.18,
+      0.28
+     ],
+     "closestToTrunkBoneMm": [
+      0.27,
+      0.22
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0.0993
+    },
+    {
+     "id": "ZA0097D3B5",
+     "name": "Right middle glenohumeral ligament",
+     "tissue": "ligament",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      0.14,
+      0.14
+     ],
+     "volumeChange": -0.0098,
+     "originInsertionMm": [
+      27.8,
+      27.4
+     ],
+     "lengthChange": -0.014,
+     "closestToLimbBoneMm": [
+      0.34,
+      0.4
+     ],
+     "closestToTrunkBoneMm": [
+      1.46,
+      1.26
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1504",
+     "name": "Right subscapularis",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      48.35,
+      48.53
+     ],
+     "volumeChange": 0.0038,
+     "originInsertionMm": [
+      103.1,
+      102.9
+     ],
+     "lengthChange": -0.002,
+     "closestToLimbBoneMm": [
+      0.06,
+      0.12
+     ],
+     "closestToTrunkBoneMm": [
+      0.42,
+      0.44
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "ZA1B122A1F",
+     "name": "Right superior glenohumeral ligament",
+     "tissue": "ligament",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      0.09,
+      0.09
+     ],
+     "volumeChange": -0.0275,
+     "originInsertionMm": [
+      29.5,
+      28.8
+     ],
+     "lengthChange": -0.023,
+     "closestToLimbBoneMm": [
+      0.38,
+      0.42
+     ],
+     "closestToTrunkBoneMm": [
+      0.62,
+      0.49
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1506",
+     "name": "Right supraspinatus",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      32.58,
+      31.95
+     ],
+     "volumeChange": -0.0193,
+     "originInsertionMm": [
+      74.9,
+      73.9
+     ],
+     "lengthChange": -0.0132,
+     "closestToLimbBoneMm": [
+      0.26,
+      0.14
+     ],
+     "closestToTrunkBoneMm": [
+      0.29,
+      0.32
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1507",
+     "name": "Right teres major",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      39.5,
+      41.08
+     ],
+     "volumeChange": 0.0401,
+     "originInsertionMm": [
+      107.6,
+      110.5
+     ],
+     "lengthChange": 0.0266,
+     "closestToLimbBoneMm": [
+      0.23,
+      0.33
+     ],
+     "closestToTrunkBoneMm": [
+      0.7,
+      0.67
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1508",
+     "name": "Right teres minor",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      30.43,
+      30.95
+     ],
+     "volumeChange": 0.0169,
+     "originInsertionMm": [
+      78.1,
+      79.6
+     ],
+     "lengthChange": 0.0185,
+     "closestToLimbBoneMm": [
+      0.31,
+      0.25
+     ],
+     "closestToTrunkBoneMm": [
+      0.4,
+      0.4
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1512M",
+     "name": "Short head of left biceps brachii",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      74.16,
+      74.18
+     ],
+     "volumeChange": 0.0003,
+     "originInsertionMm": [
+      73.9,
+      75.8
+     ],
+     "lengthChange": 0.0255,
+     "closestToLimbBoneMm": [
+      0.43,
+      0.43
+     ],
+     "closestToTrunkBoneMm": [
+      0.37,
+      0.39
+     ],
+     "verticesWithLimb": 0.8176,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1512",
+     "name": "Short head of right biceps brachii",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      74.16,
+      74.18
+     ],
+     "volumeChange": 0.0003,
+     "originInsertionMm": [
+      72.9,
+      74.8
+     ],
+     "lengthChange": 0.0259,
+     "closestToLimbBoneMm": [
+      0.48,
+      0.48
+     ],
+     "closestToTrunkBoneMm": [
+      1.25,
+      1.27
+     ],
+     "verticesWithLimb": 0.8165,
+     "verticesAtRest": 0
+    },
+    {
+     "id": "FJ1513M",
+     "name": "Spinal part of left deltoid",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      164.54,
+      163.26
+     ],
+     "volumeChange": -0.0078,
+     "originInsertionMm": [
+      133.4,
+      134.8
+     ],
+     "lengthChange": 0.0101,
+     "closestToLimbBoneMm": [
+      0.18,
+      0.18
+     ],
+     "closestToTrunkBoneMm": [
+      0.36,
+      0.36
+     ],
+     "verticesWithLimb": 0.334,
+     "verticesAtRest": 0.278
+    },
+    {
+     "id": "FJ1513",
+     "name": "Spinal part of right deltoid",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly in the arm: turns by a share of the angle, by distance to the limb bones",
+     "volumeMl": [
+      164.43,
+      163.2
+     ],
+     "volumeChange": -0.0075,
+     "originInsertionMm": [
+      134,
+      135.4
+     ],
+     "lengthChange": 0.0102,
+     "closestToLimbBoneMm": [
+      0.28,
+      0.28
+     ],
+     "closestToTrunkBoneMm": [
+      0.25,
+      0.25
+     ],
+     "verticesWithLimb": 0.335,
+     "verticesAtRest": 0.278
+    },
+    {
+     "id": "FJ1464M",
+     "name": "Sternocostal part of left pectoralis major",
+     "tissue": "muscle",
+     "side": "L",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      383.91,
+      392.12
+     ],
+     "volumeChange": 0.0214,
+     "originInsertionMm": [
+      158.4,
+      163.9
+     ],
+     "lengthChange": 0.0348,
+     "closestToLimbBoneMm": [
+      0.44,
+      0.39
+     ],
+     "closestToTrunkBoneMm": [
+      0.22,
+      0.22
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0.0746
+    },
+    {
+     "id": "FJ1464",
+     "name": "Sternocostal part of right pectoralis major",
+     "tissue": "muscle",
+     "side": "R",
+     "rule": "belly on the trunk: displaced by a share of the insertion's displacement, linear between the two sites",
+     "volumeMl": [
+      384.66,
+      392.98
+     ],
+     "volumeChange": 0.0216,
+     "originInsertionMm": [
+      157.2,
+      162.6
+     ],
+     "lengthChange": 0.0347,
+     "closestToLimbBoneMm": [
+      0.2,
+      0.22
+     ],
+     "closestToTrunkBoneMm": [
+      0.17,
+      0.17
+     ],
+     "verticesWithLimb": 0,
+     "verticesAtRest": 0.0774
+    }
+   ]
+  },
+  "attachments": {
+   "note": "closest approach of every crossing part to the limb bones and to the trunk-side bones, before and after",
+   "checked": 78,
+   "movedOffBoneByMoreThan1Mm": 0,
+   "largestIncrease": {
+    "id": "FJ1478M",
+    "name": "Long head of left biceps brachii",
+    "end": "trunk",
+    "mm": 0.34
+   }
+  },
+  "insideBone": {
+   "samples": 212423,
+   "before": 0.03307,
+   "after": 0.03345,
+   "largestIncreases": [
+    {
+     "id": "FJ2221",
+     "name": "Left circumflex scapular artery",
+     "before": 0.1556,
+     "after": 0.1892,
+     "samples": 45
+    },
+    {
+     "id": "ZA1B122A1F",
+     "name": "Right superior glenohumeral ligament",
+     "before": 0,
+     "after": 0.0204,
+     "samples": 52
+    },
+    {
+     "id": "FJ2291",
+     "name": "Right posterior circumflex humeral artery",
+     "before": 0.0185,
+     "after": 0.0385,
+     "samples": 54
+    },
+    {
+     "id": "FJ2239",
+     "name": "Left posterior circumflex humeral artery",
+     "before": 0.02,
+     "after": 0.0392,
+     "samples": 50
+    },
+    {
+     "id": "FJ1506",
+     "name": "Right supraspinatus",
+     "before": 0.2218,
+     "after": 0.2384,
+     "samples": 1222
+    },
+    {
+     "id": "ZAA8B611C5",
+     "name": "Left superior glenohumeral ligament",
+     "before": 0,
+     "after": 0.0164,
+     "samples": 57
+    },
+    {
+     "id": "FJ2212",
+     "name": "Left anterior circumflex humeral artery",
+     "before": 0.0343,
+     "after": 0.0506,
+     "samples": 175
+    },
+    {
+     "id": "FJ2264",
+     "name": "Right anterior circumflex humeral artery",
+     "before": 0.0349,
+     "after": 0.0465,
+     "samples": 172
+    },
+    {
+     "id": "ZA8CA358EB",
+     "name": "Right infraclavicular nodes",
+     "before": 0.2174,
+     "after": 0.2273,
+     "samples": 23
+    },
+    {
+     "id": "FJ2216",
+     "name": "Left axillary artery",
+     "before": 0.0617,
+     "after": 0.0689,
+     "samples": 405
+    },
+    {
+     "id": "FJ1506M",
+     "name": "Left supraspinatus",
+     "before": 0.2225,
+     "after": 0.2287,
+     "samples": 1218
+    },
+    {
+     "id": "FJ2265",
+     "name": "Right anterior circumflex humeral vein",
+     "before": 0.0126,
+     "after": 0.018,
+     "samples": 159
+    }
+   ],
+   "largestDecreases": [
+    {
+     "id": "FJ2273",
+     "name": "Right circumflex scapular artery",
+     "before": 0.2381,
+     "after": 0.1944,
+     "samples": 42
+    },
+    {
+     "id": "FJ2222",
+     "name": "Left circumflex scapular vein",
+     "before": 0.06,
+     "after": 0.0323,
+     "samples": 50
+    },
+    {
+     "id": "FJ2274",
+     "name": "Right circumflex scapular vein",
+     "before": 0.0755,
+     "after": 0.0526,
+     "samples": 53
+    },
+    {
+     "id": "FJ2251",
+     "name": "Left suprascapular artery",
+     "before": 0.4354,
+     "after": 0.4189,
+     "samples": 147
+    },
+    {
+     "id": "FJ1507M",
+     "name": "Left teres major",
+     "before": 0.1137,
+     "after": 0.1017,
+     "samples": 1478
+    },
+    {
+     "id": "FJ1508M",
+     "name": "Left teres minor",
+     "before": 0.1454,
+     "after": 0.1364,
+     "samples": 1107
+    }
+   ]
+  },
+  "nerves": {
+   "rebuilt": 42,
+   "lengthM": 19.26,
+   "inBone": {
+    "before": 0,
+    "afterField": 0,
+    "afterCleanUp": 0
+   },
+   "deepInMuscle": {
+    "before": 0.07068,
+    "after": 0.0713
+   },
+   "perNerve": [
+    {
+     "id": "ZACB67E3C5",
+     "name": "Right thoracodorsal nerve",
+     "pointsBelowAxilla": 5,
+     "largestLagBelowAxillaMm": 9.4395,
+     "lengthMm": 433.1,
+     "lengthAfterMm": 438.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0279,
+      0.0219
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA8CC2F9A4",
+     "name": "Left thoracodorsal nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 431.2,
+     "lengthAfterMm": 436,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0792,
+      0.0754
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA55D3D8F1",
+     "name": "Right anterior divisions of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 154.5,
+     "lengthAfterMm": 154.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA3C63B6E6",
+     "name": "Left anterior divisions of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 172.5,
+     "lengthAfterMm": 172.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAEF6006D4",
+     "name": "Right axillary nerve (with superior lateral brachial cutaneous nerve)",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 669.9,
+     "lengthAfterMm": 669,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.005,
+      0.005
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA9986E674",
+     "name": "Left axillary nerve (with superior lateral brachial cutaneous nerve)",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 670.2,
+     "lengthAfterMm": 668.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0052,
+      0.0052
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAB247A349",
+     "name": "Right lateral cord of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 39.4,
+     "lengthAfterMm": 41.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0229,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAED9B410E",
+     "name": "Left lateral cord of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 37.6,
+     "lengthAfterMm": 39.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAFE3C76C8",
+     "name": "Right lateral pectoral nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 615,
+     "lengthAfterMm": 614.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.321,
+      0.3136
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZADF998971",
+     "name": "Left lateral pectoral nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 583.4,
+     "lengthAfterMm": 583.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.229,
+      0.2522
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA91C34B3C",
+     "name": "Right lateral root of median nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 25.1,
+     "lengthAfterMm": 25.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD8EA5836",
+     "name": "Left lateral root of median nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 23.9,
+     "lengthAfterMm": 24.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA432D8423",
+     "name": "Right long thoracic nerve",
+     "pointsBelowAxilla": 4,
+     "largestLagBelowAxillaMm": 13.8902,
+     "lengthMm": 674.1,
+     "lengthAfterMm": 674.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0485,
+      0.0454
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA84961D45",
+     "name": "Left long thoracic nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 690.7,
+     "lengthAfterMm": 691.4,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0466,
+      0.043
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA15CC488D",
+     "name": "Right inferior subscapular nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 510.5,
+     "lengthAfterMm": 520.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0037,
+      0.0033
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA0C51FB57",
+     "name": "Left inferior subscapular nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 481.2,
+     "lengthAfterMm": 486.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA0AE22AEA",
+     "name": "Right medial antebrachial cutaneous nerve",
+     "pointsBelowAxilla": 251,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 1468.5,
+     "lengthAfterMm": 1472.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZADAC92190",
+     "name": "Left medial antebrachial cutaneous nerve",
+     "pointsBelowAxilla": 257,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 1477.3,
+     "lengthAfterMm": 1481.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA57B0A98D",
+     "name": "Right medial brachial cutaneous nerve",
+     "pointsBelowAxilla": 86,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 626.7,
+     "lengthAfterMm": 631.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA64D01A00",
+     "name": "Left medial brachial cutaneous nerve",
+     "pointsBelowAxilla": 108,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 642.8,
+     "lengthAfterMm": 647.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA18C17C97",
+     "name": "Right medial cord of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 55.9,
+     "lengthAfterMm": 57.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD5C4F5B9",
+     "name": "Left medial cord of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 67.4,
+     "lengthAfterMm": 68.9,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA75568326",
+     "name": "Right medial pectoral nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 487.2,
+     "lengthAfterMm": 492.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0278,
+      0.0275
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAF0B6FC80",
+     "name": "Left medial pectoral nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 451.3,
+     "lengthAfterMm": 457.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0227,
+      0.0265
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA9585DB96",
+     "name": "Right medial root of median nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 23.5,
+     "lengthAfterMm": 25.3,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAFECEA6B0",
+     "name": "Left medial root of median nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 20.6,
+     "lengthAfterMm": 22,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAE8AEBCDA",
+     "name": "Right median nerve",
+     "pointsBelowAxilla": 122,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 662.4,
+     "lengthAfterMm": 663.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0189,
+      0.0189
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZABB5BBCEC",
+     "name": "Left median nerve",
+     "pointsBelowAxilla": 115,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 663.7,
+     "lengthAfterMm": 664.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0197,
+      0.0196
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA2CB1B22F",
+     "name": "Right musculocutaneous nerve",
+     "pointsBelowAxilla": 73,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 512,
+     "lengthAfterMm": 513,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.252,
+      0.2516
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA44C11326",
+     "name": "Left musculocutaneous nerve",
+     "pointsBelowAxilla": 70,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 519.7,
+     "lengthAfterMm": 520.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2473,
+      0.2505
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAE89EEDD3",
+     "name": "Right posterior cord of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 52.7,
+     "lengthAfterMm": 54,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA22127EEC",
+     "name": "Left posterior cord of brachial plexus",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 53.6,
+     "lengthAfterMm": 55.1,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA413CAA20",
+     "name": "Right posterior brachial cutaneous nerve",
+     "pointsBelowAxilla": 46,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 304.3,
+     "lengthAfterMm": 306.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0062,
+      0.0231
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAAD407384",
+     "name": "Left posterior brachial cutaneous nerve",
+     "pointsBelowAxilla": 39,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 335.5,
+     "lengthAfterMm": 338.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAEBDEA8DE",
+     "name": "Right radial nerve",
+     "pointsBelowAxilla": 77,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 791.6,
+     "lengthAfterMm": 795.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0529,
+      0.0539
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAB1853041",
+     "name": "Left radial nerve",
+     "pointsBelowAxilla": 78,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 795.5,
+     "lengthAfterMm": 798.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.0507,
+      0.0505
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA501A7623",
+     "name": "Right suprascapular nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 734.6,
+     "lengthAfterMm": 734,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2938,
+      0.294
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA7135DD27",
+     "name": "Left suprascapular nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 739.4,
+     "lengthAfterMm": 738.8,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.3076,
+      0.3079
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAFE2CC37B",
+     "name": "Right ulnar nerve",
+     "pointsBelowAxilla": 83,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 570.1,
+     "lengthAfterMm": 573.7,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA001074B3",
+     "name": "Left ulnar nerve",
+     "pointsBelowAxilla": 85,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 571.1,
+     "lengthAfterMm": 574.5,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0,
+      0
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZA8FF1C04E",
+     "name": "Right superior subscapular nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 203.3,
+     "lengthAfterMm": 204.2,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.2128,
+      0.2121
+     ],
+     "pointsPushed": 0
+    },
+    {
+     "id": "ZAD5F3F977",
+     "name": "Left superior subscapular nerve",
+     "pointsBelowAxilla": 0,
+     "largestLagBelowAxillaMm": 0,
+     "lengthMm": 212.2,
+     "lengthAfterMm": 213.6,
+     "inBone": [
+      0,
+      0,
+      0
+     ],
+     "deepInMuscle": [
+      0.1494,
+      0.1591
+     ],
+     "pointsPushed": 0
+    }
+   ]
+  },
+  "provenance": {
+   "scannedBefore": 2072,
+   "scannedAfter": 2072,
+   "relabelledToWarped": 0,
+   "relabelledByTissue": {},
+   "relabelledIds": []
+  }
+ },
  "derived": [
   {
    "id": "SOMA_visceral_pleura_L",
@@ -64836,15 +70139,657 @@
    "surfaceInBone": 0
   }
  ],
+ "appendages": {
+  "applied": true,
+  "auricle": {
+   "shown": "skin",
+   "note": "superseded by the skin's ear when the skin is opaque: the anatomical auricle is left geometrically as scanned and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden"
+  },
+  "hideWithOpaqueSkin": [
+   "FJ2811",
+   "FJ2814"
+  ],
+  "options": {
+   "embed": 0.0005,
+   "proud": 0.0002,
+   "radius": {
+    "shell": 0.012,
+    "nail": 0.004
+   },
+   "passes": 3,
+   "facing": 0.2,
+   "maxDistance": 0.05
+  },
+  "parts": [
+   {
+    "id": "FJ2811",
+    "name": "External ear",
+    "kind": "auricle",
+    "before": {
+     "outside": 0.3044,
+     "minMm": -13.5,
+     "medianMm": -3.9,
+     "p99Mm": 8.1,
+     "maxMm": 9
+    },
+    "after": {
+     "outside": 0.3044,
+     "minMm": -13.5,
+     "medianMm": -3.9,
+     "p99Mm": 8.1,
+     "maxMm": 9
+    },
+    "skinSide": {
+     "face": "all",
+     "targetMm": null,
+     "vertices": 1453,
+     "before": {
+      "outside": 0.3044,
+      "minMm": -13.5,
+      "medianMm": -3.9,
+      "p99Mm": 8.1,
+      "maxMm": 9
+     },
+     "after": {
+      "outside": 0.3044,
+      "minMm": -13.5,
+      "medianMm": -3.9,
+      "p99Mm": 8.1,
+      "maxMm": 9
+     }
+    },
+    "supersededBySkin": true,
+    "volumeMl": [
+     20.52,
+     20.52
+    ],
+    "displacementMm": {
+     "median": 0,
+     "max": 0
+    },
+    "verticesOutOfReach": 0,
+    "components": 2
+   },
+   {
+    "id": "FJ2812",
+    "name": "Eyebrow",
+    "kind": "shell",
+    "before": {
+     "outside": 0.9487,
+     "minMm": -0.9,
+     "medianMm": 3.4,
+     "p99Mm": 7.4,
+     "maxMm": 7.7
+    },
+    "after": {
+     "outside": 0.3964,
+     "minMm": -0.9,
+     "medianMm": -0.4,
+     "p99Mm": 2.1,
+     "maxMm": 2.2
+    },
+    "skinSide": {
+     "face": "inner",
+     "targetMm": -0.5,
+     "vertices": 2109,
+     "before": {
+      "outside": 0.8151,
+      "minMm": -0.9,
+      "medianMm": 2.7,
+      "p99Mm": 4.7,
+      "maxMm": 5.3
+     },
+     "after": {
+      "outside": 0,
+      "minMm": -0.5,
+      "medianMm": -0.5,
+      "p99Mm": -0.5,
+      "maxMm": -0.5
+     }
+    },
+    "volumeMl": [
+     0.64,
+     0.69
+    ],
+    "displacementMm": {
+     "median": 3.13,
+     "max": 5.79
+    },
+    "verticesOutOfReach": 0,
+    "components": 563
+   },
+   {
+    "id": "FJ2813",
+    "name": "Hair of head",
+    "kind": "shell",
+    "before": {
+     "outside": 0.4898,
+     "minMm": -15.7,
+     "medianMm": -0.1,
+     "p99Mm": 10.4,
+     "maxMm": 11.8
+    },
+    "after": {
+     "outside": 0.5312,
+     "minMm": -1.8,
+     "medianMm": 1.4,
+     "p99Mm": 10.1,
+     "maxMm": 11.7
+    },
+    "skinSide": {
+     "face": "inner",
+     "targetMm": -0.5,
+     "vertices": 3274,
+     "before": {
+      "outside": 0.3125,
+      "minMm": -15.4,
+      "medianMm": -1.5,
+      "p99Mm": 2.1,
+      "maxMm": 2.6
+     },
+     "after": {
+      "outside": 0,
+      "minMm": -0.5,
+      "medianMm": -0.5,
+      "p99Mm": -0.5,
+      "maxMm": -0.5
+     }
+    },
+    "volumeMl": [
+     395.36,
+     410.23
+    ],
+    "displacementMm": {
+     "median": 1.87,
+     "max": 15.11
+    },
+    "verticesOutOfReach": 0,
+    "components": 1
+   },
+   {
+    "id": "FJ2815",
+    "name": "Pubic hair",
+    "kind": "shell",
+    "before": {
+     "outside": 0.807,
+     "minMm": -8.6,
+     "medianMm": 2.1,
+     "p99Mm": 7,
+     "maxMm": 7.6
+    },
+    "after": {
+     "outside": 0.4838,
+     "minMm": -2.4,
+     "medianMm": -0.1,
+     "p99Mm": 5.5,
+     "maxMm": 6.5
+    },
+    "skinSide": {
+     "face": "inner",
+     "targetMm": -0.5,
+     "vertices": 596,
+     "before": {
+      "outside": 0.8607,
+      "minMm": -9.2,
+      "medianMm": 2.4,
+      "p99Mm": 3,
+      "maxMm": 3.2
+     },
+     "after": {
+      "outside": 0,
+      "minMm": -0.5,
+      "medianMm": -0.5,
+      "p99Mm": -0.5,
+      "maxMm": -0.5
+     }
+    },
+    "volumeMl": [
+     15.58,
+     15.88
+    ],
+    "displacementMm": {
+     "median": 2.93,
+     "max": 8.66
+    },
+    "verticesOutOfReach": 0,
+    "components": 1
+   },
+   {
+    "id": "ZA14BC3763",
+    "name": "Left nail plate (foot)",
+    "kind": "nail",
+    "before": {
+     "outside": 1,
+     "minMm": 0.8,
+     "medianMm": 4.6,
+     "p99Mm": 7.7,
+     "maxMm": 8
+    },
+    "after": {
+     "outside": 0.7076,
+     "minMm": -0.9,
+     "medianMm": 0.2,
+     "p99Mm": 1.6,
+     "maxMm": 2.6
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 474,
+     "before": {
+      "outside": 1,
+      "minMm": 1.3,
+      "medianMm": 4.6,
+      "p99Mm": 8.2,
+      "maxMm": 8.4
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.2,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.2
+     }
+    },
+    "volumeMl": [
+     0.59,
+     0.35
+    ],
+    "displacementMm": {
+     "median": 4.49,
+     "max": 9.19
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZAAC30ACB8",
+    "name": "Right nail plate (foot)",
+    "kind": "nail",
+    "before": {
+     "outside": 1,
+     "minMm": 0.6,
+     "medianMm": 4.6,
+     "p99Mm": 8,
+     "maxMm": 8.4
+    },
+    "after": {
+     "outside": 0.6949,
+     "minMm": -1,
+     "medianMm": 0.2,
+     "p99Mm": 1.1,
+     "maxMm": 2.4
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 478,
+     "before": {
+      "outside": 1,
+      "minMm": 1.4,
+      "medianMm": 4.5,
+      "p99Mm": 8.5,
+      "maxMm": 8.6
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.1,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.3
+     }
+    },
+    "volumeMl": [
+     0.59,
+     0.34
+    ],
+    "displacementMm": {
+     "median": 4.46,
+     "max": 9.35
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZA5997EA05",
+    "name": "Left nail plate",
+    "kind": "nail",
+    "before": {
+     "outside": 0.0217,
+     "minMm": -5.3,
+     "medianMm": -3.3,
+     "p99Mm": 0,
+     "maxMm": 0.6
+    },
+    "after": {
+     "outside": 0.372,
+     "minMm": -1.4,
+     "medianMm": -0.1,
+     "p99Mm": 0.2,
+     "maxMm": 0.5
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 717,
+     "before": {
+      "outside": 0.0502,
+      "minMm": -5.3,
+      "medianMm": -2.7,
+      "p99Mm": 0.5,
+      "maxMm": 0.8
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.2,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.2
+     }
+    },
+    "volumeMl": [
+     0.19,
+     0.34
+    ],
+    "displacementMm": {
+     "median": 3.03,
+     "max": 5.47
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZA8207950D",
+    "name": "Right nail plate",
+    "kind": "nail",
+    "before": {
+     "outside": 0.0438,
+     "minMm": -5.7,
+     "medianMm": -3.1,
+     "p99Mm": 1,
+     "maxMm": 1.7
+    },
+    "after": {
+     "outside": 0.3688,
+     "minMm": -1.5,
+     "medianMm": -0.1,
+     "p99Mm": 0.2,
+     "maxMm": 0.3
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 710,
+     "before": {
+      "outside": 0.0775,
+      "minMm": -5.7,
+      "medianMm": -2.5,
+      "p99Mm": 1.6,
+      "maxMm": 1.9
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.2,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.2
+     }
+    },
+    "volumeMl": [
+     0.2,
+     0.34
+    ],
+    "displacementMm": {
+     "median": 2.72,
+     "max": 6.02
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZA3C9B09E5",
+    "name": "Left perionyx (foot)",
+    "kind": "nail",
+    "before": {
+     "outside": 1,
+     "minMm": 1.9,
+     "medianMm": 5,
+     "p99Mm": 7.5,
+     "maxMm": 7.5
+    },
+    "after": {
+     "outside": 0.8158,
+     "minMm": -0.3,
+     "medianMm": 0.2,
+     "p99Mm": 0.2,
+     "maxMm": 0.2
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 391,
+     "before": {
+      "outside": 1,
+      "minMm": 1.6,
+      "medianMm": 5.2,
+      "p99Mm": 7.6,
+      "maxMm": 7.7
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.2,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.2
+     }
+    },
+    "volumeMl": [
+     0.01,
+     0.01
+    ],
+    "displacementMm": {
+     "median": 4.95,
+     "max": 7.52
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZACE12C340",
+    "name": "Right perionyx (foot)",
+    "kind": "nail",
+    "before": {
+     "outside": 1,
+     "minMm": 2,
+     "medianMm": 4.9,
+     "p99Mm": 7.4,
+     "maxMm": 7.4
+    },
+    "after": {
+     "outside": 0.6538,
+     "minMm": -0.9,
+     "medianMm": 0.2,
+     "p99Mm": 0.2,
+     "maxMm": 0.2
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 400,
+     "before": {
+      "outside": 1,
+      "minMm": 1.5,
+      "medianMm": 5.1,
+      "p99Mm": 7.6,
+      "maxMm": 7.6
+     },
+     "after": {
+      "outside": 0.9975,
+      "minMm": -0.1,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.4
+     }
+    },
+    "volumeMl": [
+     0.03,
+     0.02
+    ],
+    "displacementMm": {
+     "median": 4.84,
+     "max": 7.45
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZA9AD6057D",
+    "name": "Left perionyx",
+    "kind": "nail",
+    "before": {
+     "outside": 0,
+     "minMm": -5.2,
+     "medianMm": -3.1,
+     "p99Mm": -0.4,
+     "maxMm": -0.3
+    },
+    "after": {
+     "outside": 0.1053,
+     "minMm": -1.4,
+     "medianMm": -0.3,
+     "p99Mm": 0.1,
+     "maxMm": 0.2
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 56,
+     "before": {
+      "outside": 0.0179,
+      "minMm": -4.6,
+      "medianMm": -2.6,
+      "p99Mm": -0.2,
+      "maxMm": 0
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.2,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.2
+     }
+    },
+    "volumeMl": [
+     0.05,
+     0.07
+    ],
+    "displacementMm": {
+     "median": 2.52,
+     "max": 4.83
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   },
+   {
+    "id": "ZAC16237A5",
+    "name": "Right perionyx",
+    "kind": "nail",
+    "before": {
+     "outside": 0,
+     "minMm": -5.8,
+     "medianMm": -3.1,
+     "p99Mm": -1,
+     "maxMm": -0.8
+    },
+    "after": {
+     "outside": 0.0909,
+     "minMm": -1.4,
+     "medianMm": -0.3,
+     "p99Mm": 0.1,
+     "maxMm": 0.2
+    },
+    "skinSide": {
+     "face": "outer",
+     "targetMm": 0.2,
+     "vertices": 54,
+     "before": {
+      "outside": 0,
+      "minMm": -5.3,
+      "medianMm": -2.3,
+      "p99Mm": -0.6,
+      "maxMm": -0.4
+     },
+     "after": {
+      "outside": 1,
+      "minMm": 0.2,
+      "medianMm": 0.2,
+      "p99Mm": 0.2,
+      "maxMm": 0.2
+     }
+    },
+    "volumeMl": [
+     0.05,
+     0.07
+    ],
+    "displacementMm": {
+     "median": 2.4,
+     "max": 5.48
+    },
+    "verticesOutOfReach": 0,
+    "components": 5
+   }
+  ],
+  "notHandled": [],
+  "conformedIds": [
+   "FJ2812",
+   "FJ2813",
+   "FJ2815",
+   "ZA14BC3763",
+   "ZAAC30ACB8",
+   "ZA5997EA05",
+   "ZA8207950D",
+   "ZA3C9B09E5",
+   "ZACE12C340",
+   "ZA9AD6057D",
+   "ZAC16237A5"
+  ],
+  "relabelledIds": [
+   "FJ2812",
+   "FJ2813",
+   "FJ2815"
+  ],
+  "deepLip": {
+   "ids": [
+    "FJ2814"
+   ],
+   "note": "the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden"
+  }
+ },
  "skinPackage": {
-  "dir": "data/raw/bodyshape/out/male-skin",
-  "internalsKey": "4bf4e6e4b29d70ad",
+  "dir": "data/raw/bodyshape/out/male-skin-open",
+  "internalsKey": "169209ce67d8bd76",
   "present": true,
   "fittedTo": {
    "body": "male",
-   "key": "4bf4e6e4b29d70ad"
+   "key": "169209ce67d8bd76"
   },
   "installed": true,
+  "openedPackage": {
+   "dir": "data/raw/bodyshape/out/male-skin-open",
+   "fittedTo": {
+    "body": "male",
+    "key": "169209ce67d8bd76"
+   },
+   "used": true,
+   "matchesAuthorPackage": true
+  },
+  "scanDetails": [
+   "navel",
+   "nippleL",
+   "nipplePosition",
+   "nippleR",
+   "perineum"
+  ],
   "notEnclosedPartIds": [
    "FJ1252",
    "FJ1253",
@@ -64931,25 +70876,25 @@
    "R3_FMA46786"
   ],
   "author": {
-   "bmiByVolume": 24.24,
+   "bmiByVolume": 24.28,
    "targetBmi": 23.6,
    "bideltoidMm": null
   },
   "face": {
    "cover": {
     "palpebralOrbicularisOculi": {
-     "minMm": -2.7,
+     "minMm": -2.6,
      "medianMm": 2.6,
      "parts": 2
     },
     "orbitalOrbicularisOculi": {
-     "minMm": -1.8,
-     "medianMm": 4.2,
+     "minMm": -1.9,
+     "medianMm": 4,
      "parts": 2
     },
     "cornea": {
      "minMm": 0.8,
-     "medianMm": 2.8,
+     "medianMm": 2.9,
      "parts": 2
     },
     "lip": {
@@ -64976,9 +70921,9 @@
    "eyeJoint": {
     "L": {
      "distanceMm": 2.6,
-     "lateralMm": 2.2,
+     "lateralMm": 2.3,
      "offsetMm": [
-      2.2,
+      2.3,
       1.3,
       0.5
      ]
@@ -64988,69 +70933,69 @@
      "lateralMm": 2.4,
      "offsetMm": [
       -2.4,
-      1.3,
-      0.5
+      1.2,
+      0.6
      ]
     }
    }
   },
-  "triangles": 147274,
+  "triangles": 183143,
   "fit": {
    "closed": true,
    "nonManifoldEdges": 0,
-   "outside": 0.00019613210251458597,
+   "outside": 0.00007316910456080244,
    "outside5mm": 0,
    "worst": [
     {
+     "name": "Orbital part of left orbicularis oculi",
+     "outside": 0.04142011834319527,
+     "maxMm": 0.7
+    },
+    {
      "name": "Orbital part of right orbicularis oculi",
-     "outside": 0.08176100628930817,
+     "outside": 0.03773584905660377,
      "maxMm": 0.9
     },
     {
-     "name": "Orbital part of left orbicularis oculi",
-     "outside": 0.07100591715976332,
-     "maxMm": 1.1
+     "name": "Left zygomatic bone",
+     "outside": 0.007042253521126761,
+     "maxMm": 0.2
     },
     {
-     "name": "Right zygomaticus minor",
-     "outside": 0.05405405405405406,
-     "maxMm": 0.4
+     "name": "Left extensor digitorum longus",
+     "outside": 0.004329004329004329,
+     "maxMm": 1
     },
     {
-     "name": "Left zygomaticus major",
-     "outside": 0.01639344262295082,
+     "name": "Right extensor digitorum longus",
+     "outside": 0.003278688524590164,
+     "maxMm": 0.7
+    },
+    {
+     "name": "Left extensor digitorum brevis",
+     "outside": 0.0031746031746031746,
      "maxMm": 0.1
     },
     {
-     "name": "Left zygomatic bone",
-     "outside": 0.014084507042253521,
-     "maxMm": 0.4
-    },
-    {
-     "name": "Long head of left triceps brachii",
-     "outside": 0.0065116279069767444,
-     "maxMm": 1.5
+     "name": "Left latissimus dorsi",
+     "outside": 0.0014516421702050445,
+     "maxMm": 1.4
     },
     {
      "name": "Long head of right triceps brachii",
-     "outside": 0.0064516129032258064,
-     "maxMm": 1.6
+     "outside": 0.0009107468123861566,
+     "maxMm": 0.3
     },
     {
      "name": "Right latissimus dorsi",
-     "outside": 0.004815409309791332,
-     "maxMm": 1.9
-    },
-    {
-     "name": "Left latissimus dorsi",
-     "outside": 0.003683241252302026,
-     "maxMm": 2.3
+     "outside": 0.0005262234695667427,
+     "maxMm": 0.8
     }
    ],
    "notEnclosedByDesign": {
     "parts": 83,
-    "outside": 0.02903850290385029,
-    "outside5mm": 0.011400301140030114,
+    "outside": 0.028608302860830288,
+    "outside5mm": 0.011185201118520113,
     "worst": [
      {
       "name": "Right major alar cartilage",
@@ -65060,16 +71005,16 @@
      {
       "name": "Left major alar cartilage",
       "outside": 0.7142857142857143,
-      "maxMm": 11.2
+      "maxMm": 11.1
      },
      {
       "name": "Right lacrimal canaliculus",
       "outside": 0.5,
-      "maxMm": 0.1
+      "maxMm": 0
      },
      {
       "name": "Right lateral nasal cartilage",
-      "outside": 0.4883720930232558,
+      "outside": 0.46511627906976744,
       "maxMm": 10
      },
      {
@@ -65089,8 +71034,8 @@
      },
      {
       "name": "Palpebral part of left orbicularis oculi",
-      "outside": 0.18032786885245902,
-      "maxMm": 2
+      "outside": 0.16393442622950818,
+      "maxMm": 2.1
      }
     ]
    }
@@ -65129,113 +71074,398 @@
    "reachInFrontOfPubisMm": 61.8,
    "lowestBelowPubicSymphysisMm": 62.2
   },
+  "opened": {
+   "dir": "data/raw/bodyshape/out/male-skin-open",
+   "steps": [
+    "genital",
+    "toes",
+    "open"
+   ],
+   "matchesAuthorPackage": true,
+   "package": {
+    "vertices": 94972,
+    "triangles": 183143,
+    "closedVertices": 93759,
+    "closedTriangles": 180846,
+    "boundaryLoops": 2,
+    "boundaryLoopSizes": [
+     67,
+     66
+    ]
+   },
+   "shipped": {
+    "vertices": 50889,
+    "triangles": 101645,
+    "boundaryLoops": 2,
+    "boundaryLoopSizes": [
+     67,
+     66
+    ],
+    "boundaryEdges": 133,
+    "restoredTriangles": 4
+   },
+   "byTag": {
+    "skin": {
+     "shipped": 29376,
+     "inPackage": 70125
+    },
+    "upperLip": {
+     "shipped": 45,
+     "inPackage": 45
+    },
+    "upperLidL": {
+     "shipped": 35,
+     "inPackage": 35
+    },
+    "lowerLidL": {
+     "shipped": 29,
+     "inPackage": 29
+    },
+    "upperLidR": {
+     "shipped": 35,
+     "inPackage": 35
+    },
+    "lowerLidR": {
+     "shipped": 30,
+     "inPackage": 30
+    },
+    "canthus": {
+     "shipped": 4,
+     "inPackage": 4
+    },
+    "mouthCorner": {
+     "shipped": 2,
+     "inPackage": 2
+    },
+    "removed": {
+     "shipped": 0,
+     "inPackage": 3334
+    },
+    "graftConstruction": {
+     "shipped": 363,
+     "inPackage": 363
+    },
+    "graftBlend": {
+     "shipped": 1366,
+     "inPackage": 1366
+    },
+    "graftScanned": {
+     "shipped": 2268,
+     "inPackage": 2268
+    },
+    "graftCurated": {
+     "shipped": 16123,
+     "inPackage": 16123
+    },
+    "lowerLip": {
+     "shipped": 45,
+     "inPackage": 45
+    },
+    "lidRimL": {
+     "shipped": 66,
+     "inPackage": 66
+    },
+    "lidRimR": {
+     "shipped": 67,
+     "inPackage": 67
+    },
+    "oralPouchUpper": {
+     "shipped": 495,
+     "inPackage": 495
+    },
+    "oralPouchLower": {
+     "shipped": 495,
+     "inPackage": 495
+    },
+    "oralPouchSeam": {
+     "shipped": 45,
+     "inPackage": 45
+    }
+   },
+   "lockedVerticesMissing": 0,
+   "grafts": [
+    {
+     "name": "genitalSkin",
+     "provenance": "scanned",
+     "source": {
+      "name": "BodyParts3D 4.0",
+      "url": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html",
+      "file": "isa_BP3D_4.0_obj_99/FJ2810.obj",
+      "license": "The license for this database is specified in the Creative Commons Attribution-Share Alike 2.1 Japan. If you use data from this database, please be sure attribute this database as follows: \"BodyParts3D, (c)  The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan\".",
+      "attribution": "BodyParts3D 4.0 states its licence in two ways; both are quoted here and the difference is not resolved: the OBJ file headers say \"Creative Commons Attribution-Share Alike 2.1 Japan\" (\"BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan\"); its README says CC BY 4.0 (\"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International\")."
+     },
+     "what": {
+      "zh": "男性外生殖器的皮肤。patchVertices：阴茎和阴囊，取自他本人的扫描皮肤（BodyParts3D 4.0 的 FJ2810 外壁），位置一个也没有动（标签 graftScanned）。constructionVertices：拟合皮肤上原来盖着生殖器的隆起被抹平后得到的耻区、会阴和大腿内侧上部的面，是由周围皮肤解双调和方程构造出来的，不是扫描数据，也不是解剖（标签 graftConstruction）；它比扫描的会阴低，阴囊颈部和会阴缝的扫描面因此被它盖在下面，没有用上。blendRingVertices：两者之间新布的一圈过渡顶点（标签 graftBlend，构造物）。",
+      "en": "The skin of the male external genitalia. patchVertices: penis and scrotum from his own scanned skin (outer wall of FJ2810 of BodyParts3D 4.0), not one position changed (tag graftScanned). constructionVertices: the pubic, perineal and upper inner-thigh surface obtained by flattening the mound the fitted skin had over the genitalia; it is constructed from the surrounding skin by the biharmonic equation and is neither scanned data nor anatomy (tag graftConstruction); it lies lower than the scanned perineum, so the scanned neck of the scrotum and perineal raphe are under it and are not used. blendRingVertices: the loop of new vertices meshed between the two (tag graftBlend, construction)."
+     },
+     "shipped": {
+      "patch": 2268,
+      "blendRing": 52,
+      "construction": 363
+     },
+     "inPackage": {
+      "patch": 2268,
+      "blendRing": 52,
+      "construction": 363
+     },
+     "ring": {
+      "triangles": 1024,
+      "longestEdgeMm": {
+       "median": 10.43,
+       "p95": 18.42,
+       "max": 42.36
+      },
+      "dihedralDeg": {
+       "median": 4.9,
+       "p95": 37.6,
+       "max": 172.2,
+       "over45": 56
+      }
+     }
+    },
+    {
+     "name": "toesL",
+     "provenance": "curated",
+     "source": {
+      "name": "Blender Studio \"Human Base Meshes\" asset bundle v1.4.1, asset \"Foot - Realistic\"",
+      "url": "https://www.blender.org/download/demo-files/",
+      "license": "CC0",
+      "attribution": "Dan Ulrich (as stated in the asset) the asset describes itself as \"Realistic scan data model with multiresolution details\"; it is a retopologised base mesh, has no skeleton, and is not this person's foot"
+     },
+     "what": {
+      "zh": "分开的脚趾、趾蹼和趾甲：供体是 CC0 的基础网格（不是这个人的脚，也没有骨骼）。每个趾按本体的趾骨链定位：供体趾尖对到远节趾骨末端加 3 mm 软组织垫，供体趾蹼对到近节趾骨上的蹼位；截面按趾缩放，并在骨上覆盖不足处局部外推。趾蹼之后的面贴在包里原来的皮肤上。全部顶点都被这样变形过（标签 graftCurated）；靠边一圈为过渡环（graftBlend，构造物）。",
+      "en": "Separate toes, web spaces and nails: the donor is a CC0 base mesh (not this person's foot, and without a skeleton). Each toe is placed by this body's chain of toe bones: the donor tip on the end of the distal phalanx plus a 3 mm soft-tissue pad, the donor web on the web station of the proximal phalanx; the cross-section is scaled per toe and pushed out locally where bone cover would be short. Behind the webs the surface lies on the package skin. Every vertex was deformed in this way (tag graftCurated); the band at the rim is the blend ring (graftBlend, construction)."
+     },
+     "shipped": {
+      "patch": 8063,
+      "blendRing": 647,
+      "construction": 0
+     },
+     "inPackage": {
+      "patch": 8063,
+      "blendRing": 647,
+      "construction": 0
+     },
+     "ring": {
+      "triangles": 1579,
+      "longestEdgeMm": {
+       "median": 2.23,
+       "p95": 3.73,
+       "max": 27.41
+      },
+      "dihedralDeg": {
+       "median": 4.1,
+       "p95": 21.4,
+       "max": 180,
+       "over45": 60
+      }
+     }
+    },
+    {
+     "name": "toesR",
+     "provenance": "curated",
+     "source": {
+      "name": "Blender Studio \"Human Base Meshes\" asset bundle v1.4.1, asset \"Foot - Realistic\"",
+      "url": "https://www.blender.org/download/demo-files/",
+      "license": "CC0",
+      "attribution": "Dan Ulrich (as stated in the asset) the asset describes itself as \"Realistic scan data model with multiresolution details\"; it is a retopologised base mesh, has no skeleton, and is not this person's foot"
+     },
+     "what": {
+      "zh": "分开的脚趾、趾蹼和趾甲：供体是 CC0 的基础网格（不是这个人的脚，也没有骨骼）。每个趾按本体的趾骨链定位：供体趾尖对到远节趾骨末端加 3 mm 软组织垫，供体趾蹼对到近节趾骨上的蹼位；截面按趾缩放，并在骨上覆盖不足处局部外推。趾蹼之后的面贴在包里原来的皮肤上。全部顶点都被这样变形过（标签 graftCurated）；靠边一圈为过渡环（graftBlend，构造物）。",
+      "en": "Separate toes, web spaces and nails: the donor is a CC0 base mesh (not this person's foot, and without a skeleton). Each toe is placed by this body's chain of toe bones: the donor tip on the end of the distal phalanx plus a 3 mm soft-tissue pad, the donor web on the web station of the proximal phalanx; the cross-section is scaled per toe and pushed out locally where bone cover would be short. Behind the webs the surface lies on the package skin. Every vertex was deformed in this way (tag graftCurated); the band at the rim is the blend ring (graftBlend, construction)."
+     },
+     "shipped": {
+      "patch": 8060,
+      "blendRing": 667,
+      "construction": 0
+     },
+     "inPackage": {
+      "patch": 8060,
+      "blendRing": 667,
+      "construction": 0
+     },
+     "ring": {
+      "triangles": 1597,
+      "longestEdgeMm": {
+       "median": 2.17,
+       "p95": 3.61,
+       "max": 22.03
+      },
+      "dihedralDeg": {
+       "median": 3.7,
+       "p95": 17.4,
+       "max": 180,
+       "over45": 24
+      }
+     }
+    }
+   ],
+   "quantisation": {
+    "chosen": {
+     "bits": 16,
+     "stepMm": 0.0263,
+     "marginPairs": 45,
+     "marginPairsShippedApart": 45,
+     "marginPairsCoincidentAfter": 45,
+     "walls": {
+      "tested": 224,
+      "crossedInPackage": 147,
+      "gapMm": {
+       "p10": -0.52,
+       "median": -0.147,
+       "p90": 0.671
+      },
+      "flipped": 3,
+      "flippedGapInPackageMmMax": 0.011,
+      "gapChangeMmMax": 0.085,
+      "mergedPositions": 0
+     }
+    },
+    "at14Bits": {
+     "bits": 14,
+     "stepMm": 0.1052,
+     "marginPairs": 45,
+     "marginPairsShippedApart": 45,
+     "marginPairsCoincidentAfter": 45,
+     "walls": {
+      "tested": 224,
+      "crossedInPackage": 147,
+      "gapMm": {
+       "p10": -0.52,
+       "median": -0.147,
+       "p90": 0.671
+      },
+      "flipped": 11,
+      "flippedGapInPackageMmMax": 0.056,
+      "gapChangeMmMax": 0.219,
+      "mergedPositions": 11
+     }
+    }
+   },
+   "closedCounterpart": {
+    "vertices": 49676,
+    "triangles": 99348,
+    "boundaryEdges": 0,
+    "used": true
+   },
+   "toeLengthScale": {
+    "min": 1.286,
+    "max": 1.561
+   },
+   "sidecar": {
+    "file": "skin-source.u32",
+    "vertices": 50889,
+    "maxErrorMm": 0.0132,
+    "stepMm": 0.0263
+   }
+  },
   "resolution": {
    "source": {
-    "vertices": 73639,
-    "triangles": 147274,
+    "vertices": 94972,
+    "triangles": 183143,
     "face": {
-     "vertices": 16242,
-     "triangles": 32256,
-     "meanEdgeMm": 1.83,
-     "p95EdgeMm": 3.83,
+     "vertices": 16324,
+     "triangles": 32201,
+     "meanEdgeMm": 1.81,
+     "p95EdgeMm": 3.8,
      "maxEdgeMm": 10.2
     },
     "rest": {
-     "vertices": 57397,
-     "meanEdgeMm": 5.41
+     "vertices": 78648,
+     "meanEdgeMm": 4.44
     }
    },
    "simplifiedWhole": {
-    "vertices": 14479,
-    "triangles": 28954,
+    "vertices": 14491,
+    "triangles": 28970,
     "face": {
-     "vertices": 1338,
-     "triangles": 2596,
-     "meanEdgeMm": 6.63,
-     "p95EdgeMm": 16.96,
-     "maxEdgeMm": 38.94
+     "vertices": 1147,
+     "triangles": 2215,
+     "meanEdgeMm": 7.15,
+     "p95EdgeMm": 17.46,
+     "maxEdgeMm": 40.45
     },
     "rest": {
-     "vertices": 13141,
-     "meanEdgeMm": 14.11
+     "vertices": 13344,
+     "meanEdgeMm": 13.83
     }
    },
    "shipped": {
-    "vertices": 30218,
-    "triangles": 60432,
+    "vertices": 50889,
+    "triangles": 101645,
     "face": {
-     "vertices": 16242,
-     "triangles": 32327,
-     "meanEdgeMm": 1.84,
-     "p95EdgeMm": 3.85,
-     "maxEdgeMm": 24.56
+     "vertices": 16324,
+     "triangles": 32267,
+     "meanEdgeMm": 1.81,
+     "p95EdgeMm": 3.82,
+     "maxEdgeMm": 22.89
     },
     "rest": {
-     "vertices": 13976,
-     "meanEdgeMm": 13.61
+     "vertices": 34565,
+     "meanEdgeMm": 6.43
     }
    },
    "shippedTopology": {
-    "boundaryEdges": 0,
-    "nonManifoldEdges": 1
+    "boundaryEdges": 133,
+    "nonManifoldEdges": 2
    }
   },
   "fitShipped": {
    "closed": true,
-   "nonManifoldEdges": 1,
-   "outside": 0.00019613210251458597,
+   "nonManifoldEdges": 2,
+   "outside": 0.00007316910456080244,
    "outside5mm": 0,
    "worst": [
     {
+     "name": "Orbital part of left orbicularis oculi",
+     "outside": 0.04142011834319527,
+     "maxMm": 0.7
+    },
+    {
      "name": "Orbital part of right orbicularis oculi",
-     "outside": 0.08176100628930817,
+     "outside": 0.03773584905660377,
      "maxMm": 0.9
     },
     {
-     "name": "Orbital part of left orbicularis oculi",
-     "outside": 0.07100591715976332,
-     "maxMm": 1.1
+     "name": "Left zygomatic bone",
+     "outside": 0.007042253521126761,
+     "maxMm": 0.2
     },
     {
-     "name": "Right zygomaticus minor",
-     "outside": 0.05405405405405406,
-     "maxMm": 0.4
+     "name": "Left extensor digitorum longus",
+     "outside": 0.004329004329004329,
+     "maxMm": 1
     },
     {
-     "name": "Left zygomaticus major",
-     "outside": 0.01639344262295082,
+     "name": "Right extensor digitorum longus",
+     "outside": 0.003278688524590164,
+     "maxMm": 0.7
+    },
+    {
+     "name": "Left extensor digitorum brevis",
+     "outside": 0.0031746031746031746,
      "maxMm": 0.1
     },
     {
-     "name": "Left zygomatic bone",
-     "outside": 0.014084507042253521,
-     "maxMm": 0.4
-    },
-    {
-     "name": "Long head of left triceps brachii",
-     "outside": 0.0065116279069767444,
-     "maxMm": 1.5
+     "name": "Left latissimus dorsi",
+     "outside": 0.0014516421702050445,
+     "maxMm": 1.4
     },
     {
      "name": "Long head of right triceps brachii",
-     "outside": 0.005529953917050691,
-     "maxMm": 1.6
+     "outside": 0.0009107468123861566,
+     "maxMm": 0.3
     },
     {
      "name": "Right latissimus dorsi",
-     "outside": 0.004993757802746567,
-     "maxMm": 1.9
-    },
-    {
-     "name": "Left latissimus dorsi",
-     "outside": 0.003683241252302026,
-     "maxMm": 2.3
+     "outside": 0.0005262234695667427,
+     "maxMm": 0.8
     }
    ],
    "notEnclosedByDesign": {
     "parts": 83,
-    "outside": 0.02903850290385029,
-    "outside5mm": 0.011400301140030114,
+    "outside": 0.028608302860830288,
+    "outside5mm": 0.011185201118520113,
     "worst": [
      {
       "name": "Right major alar cartilage",
@@ -65245,16 +71475,16 @@
      {
       "name": "Left major alar cartilage",
       "outside": 0.7142857142857143,
-      "maxMm": 11.2
+      "maxMm": 11.1
      },
      {
       "name": "Right lacrimal canaliculus",
       "outside": 0.5,
-      "maxMm": 0.1
+      "maxMm": 0
      },
      {
       "name": "Right lateral nasal cartilage",
-      "outside": 0.4883720930232558,
+      "outside": 0.46511627906976744,
       "maxMm": 10
      },
      {
@@ -65274,8 +71504,8 @@
      },
      {
       "name": "Palpebral part of left orbicularis oculi",
-      "outside": 0.18032786885245902,
-      "maxMm": 2
+      "outside": 0.16393442622950818,
+      "maxMm": 2.1
      }
     ]
    }
@@ -65283,8 +71513,8 @@
   "notFitted": {
    "thin": {
     "closed": true,
-    "nonManifoldEdges": 1,
-    "outside": 0.0023959025177349757,
+    "nonManifoldEdges": 2,
+    "outside": 0.004143360265175057,
     "outside5mm": 0,
     "worst": [
      {
@@ -65298,108 +71528,57 @@
       "maxMm": 0.1
      },
      {
-      "name": "Right dorsal digital branches of radial nerve",
-      "outside": 0.36220472440944884,
-      "maxMm": 3.7
-     },
-     {
-      "name": "Left dorsal digital branches of radial nerve",
-      "outside": 0.3553113553113553,
-      "maxMm": 3.9
+      "name": "Right dorsal branch of ulnar nerve",
+      "outside": 0.34146341463414637,
+      "maxMm": 3.4
      },
      {
       "name": "Left dorsal branch of ulnar nerve",
-      "outside": 0.35,
-      "maxMm": 3.2
+      "outside": 0.325,
+      "maxMm": 3.5
      },
      {
-      "name": "Right dorsal branch of ulnar nerve",
-      "outside": 0.3125,
-      "maxMm": 2.8
+      "name": "Set of plantar digital veins",
+      "outside": 0.32340425531914896,
+      "maxMm": 3.3
      },
      {
-      "name": "Right arteria princeps pollicis",
-      "outside": 0.0967741935483871,
-      "maxMm": 0.6
+      "name": "Left dorsal digital branches of radial nerve",
+      "outside": 0.29259259259259257,
+      "maxMm": 4.4
      },
      {
-      "name": "Medial proper palmar digital artery of right index finger",
-      "outside": 0.034482758620689655,
-      "maxMm": 0.3
+      "name": "Set of dorsal digital veins",
+      "outside": 0.2872340425531915,
+      "maxMm": 4.2
      },
      {
-      "name": "Proper palmar digital vein of right index finger",
-      "outside": 0.03225806451612903,
-      "maxMm": 0.3
+      "name": "Right dorsal digital branches of radial nerve",
+      "outside": 0.2862453531598513,
+      "maxMm": 4.4
      },
      {
-      "name": "Left lateral cutaneous branch of iliohypogastric nerve",
-      "outside": 0.03111111111111111,
-      "maxMm": 1.2
+      "name": "Set of plantar digital veins",
+      "outside": 0.2768595041322314,
+      "maxMm": 3.5
+     },
+     {
+      "name": "Set of dorsal digital veins",
+      "outside": 0.24736842105263157,
+      "maxMm": 4.9
      }
     ]
    },
    "surfaceParts": {
     "closed": true,
-    "nonManifoldEdges": 1,
-    "outside": 0.43794525684289465,
-    "outside5mm": 0.13748281464816897,
-    "worst": [
-     {
-      "name": "Eyebrow",
-      "outside": 0.8433734939759037,
-      "maxMm": 7.7
-     },
-     {
-      "name": "Pubic hair",
-      "outside": 0.5920502092050209,
-      "maxMm": 5.5
-     },
-     {
-      "name": "Hair of head",
-      "outside": 0.45521135357851367,
-      "maxMm": 10.6
-     },
-     {
-      "name": "External ear",
-      "outside": 0.30751708428246016,
-      "maxMm": 9
-     },
-     {
-      "name": "Left perionyx (foot)",
-      "outside": 0.2,
-      "maxMm": 0.6
-     },
-     {
-      "name": "Left perionyx",
-      "outside": 0.13636363636363635,
-      "maxMm": 1.7
-     },
-     {
-      "name": "Left nail plate",
-      "outside": 0.12162162162162163,
-      "maxMm": 1.9
-     },
-     {
-      "name": "Right perionyx",
-      "outside": 0.1,
-      "maxMm": 1
-     },
-     {
-      "name": "Right nail plate",
-      "outside": 0.09722222222222222,
-      "maxMm": 1.8
-     },
-     {
-      "name": "Left nail plate (foot)",
-      "outside": 0.07142857142857142,
-      "maxMm": 1.4
-     }
-    ]
+    "nonManifoldEdges": 2,
+    "outside": 0,
+    "outside5mm": 0,
+    "worst": []
    },
    "caution": {
-    "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 0.2% of their surface comes through the skin, by up to 4 mm (dorsal digital branches of radial nerve). Surface parts made for the earlier skin do not sit on this one: eyebrow, pubic hair, hair of head, external ear, perionyx (foot), perionyx, nail plate.",
-    "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 0.2% 露在皮肤之外，最多 4 mm。为旧皮肤制作的体表部件（头发、眉、外耳、甲、阴毛等）与这层皮肤对不上。"
+    "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 0.4% of their surface comes through the skin, by up to 5 mm (set of dorsal digital veins).",
+    "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 0.4% 露在皮肤之外，最多 5 mm。"
    }
   }
  },
@@ -65411,121 +71590,121 @@
    "smooth": 2
   },
   "skinSingleWalled": true,
-  "bodyVolumeL": 67.2,
-  "fatVolumeL": 17.4,
+  "bodyVolumeL": 66.9,
+  "fatVolumeL": 17.1,
   "deepParts": 1359,
   "regions": [
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
     "fma": "FMA53659",
-    "sourceTriangles": 44640,
-    "areaCm2": 1277,
-    "volumeMl": 636,
+    "sourceTriangles": 36208,
+    "areaCm2": 1017,
+    "volumeMl": 576,
     "thicknessMm": {
      "p10": 3,
      "median": 6,
      "p90": 12,
      "max": 30
     },
-    "skinCovered": 0.948,
+    "skinCovered": 0.942,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
     "fma": "FMA53660",
-    "sourceTriangles": 14128,
-    "areaCm2": 399,
-    "volumeMl": 217,
+    "sourceTriangles": 14244,
+    "areaCm2": 406,
+    "volumeMl": 219,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.996,
+    "skinCovered": 0.994,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
     "fma": "FMA50257",
-    "sourceTriangles": 336928,
-    "areaCm2": 10226,
-    "volumeMl": 6498,
+    "sourceTriangles": 334816,
+    "areaCm2": 10159,
+    "volumeMl": 6430,
     "thicknessMm": {
-     "p10": 6,
+     "p10": 3,
      "median": 12,
      "p90": 24,
      "max": 30
     },
-    "skinCovered": 0.987,
-    "verticesPulledIn": 0.0026
+    "skinCovered": 0.996,
+    "verticesPulledIn": 0.0047
    },
    {
     "id": "SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
     "fma": "FMA58392",
-    "sourceTriangles": 85356,
-    "areaCm2": 2571,
-    "volumeMl": 1428,
+    "sourceTriangles": 88752,
+    "areaCm2": 2642,
+    "volumeMl": 1434,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.981,
-    "verticesPulledIn": 0.0011
+    "skinCovered": 0.987,
+    "verticesPulledIn": 0.0003
    },
    {
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
     "fma": "FMA58391",
-    "sourceTriangles": 86524,
-    "areaCm2": 2606,
-    "volumeMl": 1473,
+    "sourceTriangles": 89304,
+    "areaCm2": 2673,
+    "volumeMl": 1458,
+    "thicknessMm": {
+     "p10": 3,
+     "median": 9,
+     "p90": 18,
+     "max": 30
+    },
+    "skinCovered": 0.987,
+    "verticesPulledIn": 0.0008
+   },
+   {
+    "id": "SOMA_fat_lower_limb_L",
+    "name": "Subcutaneous tissue of left lower limb",
+    "fma": "FMA58396",
+    "sourceTriangles": 178892,
+    "areaCm2": 5558,
+    "volumeMl": 3467,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.981,
-    "verticesPulledIn": 0.0006
-   },
-   {
-    "id": "SOMA_fat_lower_limb_L",
-    "name": "Subcutaneous tissue of left lower limb",
-    "fma": "FMA58396",
-    "sourceTriangles": 182496,
-    "areaCm2": 5683,
-    "volumeMl": 3550,
-    "thicknessMm": {
-     "p10": 3,
-     "median": 12,
-     "p90": 21,
-     "max": 30
-    },
-    "skinCovered": 0.994,
-    "verticesPulledIn": 0.0006
+    "skinCovered": 0.989,
+    "verticesPulledIn": 0.0001
    },
    {
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
     "fma": "FMA58395",
-    "sourceTriangles": 183480,
-    "areaCm2": 5706,
-    "volumeMl": 3600,
+    "sourceTriangles": 179992,
+    "areaCm2": 5590,
+    "volumeMl": 3529,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
      "p90": 21,
      "max": 30
     },
-    "skinCovered": 0.996,
-    "verticesPulledIn": 0.0005
+    "skinCovered": 0.992,
+    "verticesPulledIn": 0.0002
    }
   ]
  },
@@ -65914,138 +72093,138 @@
   "FJ1359": 0,
   "FJ1373": 0,
   "FJ1374": 0,
-  "FJ1383": 0.141,
-  "FJ1383M": 0.141,
-  "FJ1384": 0.001,
-  "FJ1384M": 0.001,
-  "FJ1385": 0.026,
-  "FJ1385M": 0.026,
+  "FJ1383": 0.145,
+  "FJ1383M": 0.145,
+  "FJ1384": 0,
+  "FJ1384M": 0,
+  "FJ1385": 0.022,
+  "FJ1385M": 0.022,
   "FJ1386": 0,
   "FJ1386M": 0,
-  "FJ1387": 0.005,
-  "FJ1387M": 0.005,
-  "FJ1388": 0.002,
-  "FJ1388M": 0.002,
-  "FJ1389": 0.008,
-  "FJ1389M": 0.008,
-  "FJ1390": 0.321,
-  "FJ1390M": 0.321,
-  "FJ1391": 0.164,
-  "FJ1391M": 0.164,
-  "FJ1393": 0.065,
-  "FJ1393M": 0.065,
+  "FJ1387": 0.008,
+  "FJ1387M": 0.008,
+  "FJ1388": 0.007,
+  "FJ1388M": 0.007,
+  "FJ1389": 0.012,
+  "FJ1389M": 0.012,
+  "FJ1390": 0.316,
+  "FJ1390M": 0.316,
+  "FJ1391": 0.143,
+  "FJ1391M": 0.143,
+  "FJ1393": 0.061,
+  "FJ1393M": 0.061,
   "FJ1394": 0.464,
   "FJ1394M": 0.464,
-  "FJ1395": 0.432,
-  "FJ1395M": 0.432,
-  "FJ1396": 0.078,
-  "FJ1396M": 0.078,
-  "FJ1397": 0.516,
-  "FJ1397M": 0.516,
+  "FJ1395": 0.433,
+  "FJ1395M": 0.433,
+  "FJ1396": 0.085,
+  "FJ1396M": 0.085,
+  "FJ1397": 0.514,
+  "FJ1397M": 0.514,
   "FJ1398": 0,
   "FJ1398M": 0,
-  "FJ1399": 0.037,
-  "FJ1399M": 0.037,
-  "FJ1400": 0.428,
-  "FJ1400M": 0.428,
+  "FJ1399": 0.051,
+  "FJ1399M": 0.051,
+  "FJ1400": 0.436,
+  "FJ1400M": 0.436,
   "FJ1401": 0,
   "FJ1401M": 0,
-  "FJ1402": 0.12,
-  "FJ1402M": 0.12,
-  "FJ1403": 0.028,
-  "FJ1403M": 0.028,
+  "FJ1402": 0.131,
+  "FJ1402M": 0.131,
+  "FJ1403": 0.036,
+  "FJ1403M": 0.036,
   "FJ1404": 0,
   "FJ1404M": 0,
-  "FJ1405": 0.407,
-  "FJ1405M": 0.407,
-  "FJ1406": 0.292,
-  "FJ1406M": 0.292,
-  "FJ1407": 0.07,
-  "FJ1407M": 0.07,
-  "FJ1408": 0.137,
-  "FJ1408M": 0.137,
-  "FJ1409": 0.147,
-  "FJ1409M": 0.147,
-  "FJ1410": 0.394,
-  "FJ1410M": 0.394,
-  "FJ1411": 0.164,
-  "FJ1411M": 0.164,
-  "FJ1412": 0.001,
-  "FJ1412M": 0.001,
-  "FJ1413": 0.434,
-  "FJ1413M": 0.434,
-  "FJ1414": 0.137,
-  "FJ1414M": 0.137,
-  "FJ1415": 0.069,
-  "FJ1415M": 0.069,
+  "FJ1405": 0.411,
+  "FJ1405M": 0.411,
+  "FJ1406": 0.284,
+  "FJ1406M": 0.284,
+  "FJ1407": 0.066,
+  "FJ1407M": 0.066,
+  "FJ1408": 0.147,
+  "FJ1408M": 0.147,
+  "FJ1409": 0.126,
+  "FJ1409M": 0.126,
+  "FJ1410": 0.392,
+  "FJ1410M": 0.392,
+  "FJ1411": 0.159,
+  "FJ1411M": 0.159,
+  "FJ1412": 0.003,
+  "FJ1412M": 0.003,
+  "FJ1413": 0.455,
+  "FJ1413M": 0.455,
+  "FJ1414": 0.136,
+  "FJ1414M": 0.136,
+  "FJ1415": 0.064,
+  "FJ1415M": 0.064,
   "FJ1416": 0,
   "FJ1416M": 0,
   "FJ1417": 0,
   "FJ1417M": 0,
-  "FJ1418": 0.479,
-  "FJ1418M": 0.479,
-  "FJ1419": 0.277,
-  "FJ1419M": 0.277,
-  "FJ1420": 0.025,
-  "FJ1420M": 0.025,
-  "FJ1421": 0.312,
-  "FJ1421M": 0.312,
-  "FJ1422": 0.032,
-  "FJ1422M": 0.032,
+  "FJ1418": 0.475,
+  "FJ1418M": 0.475,
+  "FJ1419": 0.281,
+  "FJ1419M": 0.281,
+  "FJ1420": 0.024,
+  "FJ1420M": 0.024,
+  "FJ1421": 0.339,
+  "FJ1421M": 0.339,
+  "FJ1422": 0.031,
+  "FJ1422M": 0.031,
   "FJ1425": 0,
   "FJ1425M": 0,
-  "FJ1426": 0,
-  "FJ1426M": 0,
-  "FJ1427": 0.182,
-  "FJ1427M": 0.182,
+  "FJ1426": 0.001,
+  "FJ1426M": 0.001,
+  "FJ1427": 0.185,
+  "FJ1427M": 0.185,
   "FJ1428": 0,
   "FJ1428M": 0,
-  "FJ1429": 0.108,
-  "FJ1429M": 0.108,
-  "FJ1430": 0.011,
-  "FJ1430M": 0.011,
+  "FJ1429": 0.113,
+  "FJ1429M": 0.113,
+  "FJ1430": 0.014,
+  "FJ1430M": 0.014,
   "FJ1431": 0.002,
   "FJ1431M": 0.002,
   "FJ1432": 0,
   "FJ1432M": 0,
-  "FJ1433": 0.378,
-  "FJ1433M": 0.378,
-  "FJ1434": 0.452,
-  "FJ1434M": 0.452,
-  "FJ1435": 0.207,
-  "FJ1435M": 0.207,
-  "FJ1436": 0.426,
-  "FJ1436M": 0.426,
-  "FJ1437": 0.146,
-  "FJ1437M": 0.146,
-  "FJ1438": 0.522,
-  "FJ1438M": 0.522,
-  "FJ1439": 0.417,
-  "FJ1439M": 0.417,
-  "FJ1440": 0.039,
-  "FJ1440M": 0.039,
+  "FJ1433": 0.376,
+  "FJ1433M": 0.376,
+  "FJ1434": 0.455,
+  "FJ1434M": 0.455,
+  "FJ1435": 0.208,
+  "FJ1435M": 0.208,
+  "FJ1436": 0.425,
+  "FJ1436M": 0.425,
+  "FJ1437": 0.148,
+  "FJ1437M": 0.148,
+  "FJ1438": 0.527,
+  "FJ1438M": 0.527,
+  "FJ1439": 0.415,
+  "FJ1439M": 0.415,
+  "FJ1440": 0.038,
+  "FJ1440M": 0.038,
   "FJ1441": 0,
   "FJ1441M": 0,
-  "FJ1442": 0.434,
-  "FJ1442M": 0.434,
+  "FJ1442": 0.433,
+  "FJ1442M": 0.433,
   "FJ1443": 0.219,
   "FJ1443M": 0.219,
-  "FJ1444": 0.052,
-  "FJ1444M": 0.052,
-  "FJ1445": 0.005,
-  "FJ1445M": 0.005,
-  "FJ1446": 0.155,
-  "FJ1446M": 0.155,
-  "FJ1447": 0.268,
-  "FJ1447M": 0.268,
-  "FJ1448": 0.183,
-  "FJ1449M": 0.001,
-  "FJ1450": 0.178,
-  "FJ1450M": 0.178,
+  "FJ1444": 0.05,
+  "FJ1444M": 0.05,
+  "FJ1445": 0,
+  "FJ1445M": 0,
+  "FJ1446": 0.2,
+  "FJ1446M": 0.2,
+  "FJ1447": 0.267,
+  "FJ1447M": 0.267,
+  "FJ1448": 0.179,
+  "FJ1449M": 0,
+  "FJ1450": 0.209,
+  "FJ1450M": 0.209,
   "FJ1451": 0,
   "FJ1451M": 0,
-  "FJ1452": 0.389,
-  "FJ1452M": 0.389,
+  "FJ1452": 0.386,
+  "FJ1452M": 0.386,
   "FJ1453M": 0,
   "FJ1454": 0,
   "FJ1454M": 0,
@@ -66053,7 +72232,7 @@
   "FJ1455M": 0,
   "FJ1456": 0,
   "FJ1456M": 0,
-  "FJ1458M": 0.003,
+  "FJ1458M": 0.005,
   "FJ1459": 0.032,
   "FJ1459M": 0.032,
   "FJ1460": 0,
@@ -66064,116 +72243,116 @@
   "FJ1462M": 0,
   "FJ1463": 0,
   "FJ1463M": 0,
-  "FJ1464": 0.388,
-  "FJ1464M": 0.388,
+  "FJ1464": 0.386,
+  "FJ1464M": 0.386,
   "FJ1465": 0,
   "FJ1465M": 0,
-  "FJ1466": 0.518,
-  "FJ1466M": 0.518,
-  "FJ1467": 0.477,
-  "FJ1467M": 0.477,
-  "FJ1468": 0.43,
-  "FJ1468M": 0.43,
-  "FJ1469": 0.036,
-  "FJ1469M": 0.036,
-  "FJ1470": 0.036,
-  "FJ1470M": 0.036,
-  "FJ1472": 0.13,
-  "FJ1472M": 0.13,
-  "FJ1473": 0.447,
-  "FJ1473M": 0.447,
-  "FJ1474": 0.143,
-  "FJ1474M": 0.143,
-  "FJ1475": 0.106,
-  "FJ1475M": 0.106,
-  "FJ1477": 0.314,
-  "FJ1477M": 0.314,
-  "FJ1478": 0.306,
-  "FJ1478M": 0.306,
-  "FJ1479": 0.351,
-  "FJ1479M": 0.351,
-  "FJ1480": 0.151,
-  "FJ1480M": 0.151,
-  "FJ1481": 0.033,
-  "FJ1481M": 0.033,
-  "FJ1482": 0.073,
-  "FJ1482M": 0.073,
-  "FJ1483": 0.417,
-  "FJ1483M": 0.417,
+  "FJ1466": 0.502,
+  "FJ1466M": 0.502,
+  "FJ1467": 0.479,
+  "FJ1467M": 0.479,
+  "FJ1468": 0.422,
+  "FJ1468M": 0.422,
+  "FJ1469": 0.048,
+  "FJ1469M": 0.048,
+  "FJ1470": 0.037,
+  "FJ1470M": 0.037,
+  "FJ1472": 0.122,
+  "FJ1472M": 0.122,
+  "FJ1473": 0.444,
+  "FJ1473M": 0.444,
+  "FJ1474": 0.147,
+  "FJ1474M": 0.147,
+  "FJ1475": 0.103,
+  "FJ1475M": 0.103,
+  "FJ1477": 0.317,
+  "FJ1477M": 0.317,
+  "FJ1478": 0.309,
+  "FJ1478M": 0.309,
+  "FJ1479": 0.359,
+  "FJ1479M": 0.359,
+  "FJ1480": 0.155,
+  "FJ1480M": 0.155,
+  "FJ1481": 0.036,
+  "FJ1481M": 0.036,
+  "FJ1482": 0.066,
+  "FJ1482M": 0.066,
+  "FJ1483": 0.437,
+  "FJ1483M": 0.437,
   "FJ1484": 0.078,
   "FJ1484M": 0.078,
-  "FJ1485": 0.4,
-  "FJ1485M": 0.4,
-  "FJ1486": 0.157,
-  "FJ1486M": 0.157,
-  "FJ1487": 0.48,
-  "FJ1487M": 0.48,
-  "FJ1488": 0.001,
-  "FJ1488M": 0.001,
-  "FJ1489": 0.066,
-  "FJ1489M": 0.066,
-  "FJ1490": 0.356,
-  "FJ1490M": 0.356,
-  "FJ1491": 0.091,
-  "FJ1491M": 0.091,
-  "FJ1492": 0.439,
-  "FJ1492M": 0.439,
-  "FJ1493": 0.041,
-  "FJ1493M": 0.041,
-  "FJ1494": 0.15,
-  "FJ1494M": 0.15,
+  "FJ1485": 0.392,
+  "FJ1485M": 0.392,
+  "FJ1486": 0.161,
+  "FJ1486M": 0.161,
+  "FJ1487": 0.478,
+  "FJ1487M": 0.478,
+  "FJ1488": 0.006,
+  "FJ1488M": 0.006,
+  "FJ1489": 0.065,
+  "FJ1489M": 0.065,
+  "FJ1490": 0.352,
+  "FJ1490M": 0.352,
+  "FJ1491": 0.089,
+  "FJ1491M": 0.089,
+  "FJ1492": 0.445,
+  "FJ1492M": 0.445,
+  "FJ1493": 0.037,
+  "FJ1493M": 0.037,
+  "FJ1494": 0.156,
+  "FJ1494M": 0.156,
   "FJ1495": 0.094,
   "FJ1495M": 0.094,
-  "FJ1496": 0.35,
-  "FJ1496M": 0.35,
+  "FJ1496": 0.351,
+  "FJ1496M": 0.351,
   "FJ1497": 0.023,
   "FJ1497M": 0.023,
-  "FJ1498": 0.086,
-  "FJ1498M": 0.086,
-  "FJ1499": 0.106,
-  "FJ1499M": 0.106,
+  "FJ1498": 0.082,
+  "FJ1498M": 0.082,
+  "FJ1499": 0.103,
+  "FJ1499M": 0.103,
   "FJ1500": 0.125,
   "FJ1500M": 0.125,
-  "FJ1501": 0.075,
-  "FJ1501M": 0.075,
-  "FJ1502": 0.447,
-  "FJ1502M": 0.447,
-  "FJ1503": 0.056,
-  "FJ1503M": 0.056,
+  "FJ1501": 0.07,
+  "FJ1501M": 0.07,
+  "FJ1502": 0.438,
+  "FJ1502M": 0.438,
+  "FJ1503": 0.051,
+  "FJ1503M": 0.051,
   "FJ1504": 0,
   "FJ1504M": 0,
   "FJ1505": 0,
   "FJ1505M": 0,
   "FJ1506": 0,
   "FJ1506M": 0,
-  "FJ1507": 0.164,
-  "FJ1507M": 0.164,
-  "FJ1508": 0.029,
-  "FJ1508M": 0.029,
-  "FJ1509": 0.239,
-  "FJ1509M": 0.239,
-  "FJ1510": 0.062,
-  "FJ1510M": 0.062,
-  "FJ1511": 0.003,
-  "FJ1511M": 0.003,
-  "FJ1512": 0.364,
-  "FJ1512M": 0.364,
-  "FJ1513": 0.399,
-  "FJ1513M": 0.399,
-  "FJ1514": 0.257,
-  "FJ1514M": 0.257,
-  "FJ1515": 0.118,
-  "FJ1515M": 0.118,
+  "FJ1507": 0.168,
+  "FJ1507M": 0.168,
+  "FJ1508": 0.032,
+  "FJ1508M": 0.032,
+  "FJ1509": 0.225,
+  "FJ1509M": 0.225,
+  "FJ1510": 0.066,
+  "FJ1510M": 0.066,
+  "FJ1511": 0.004,
+  "FJ1511M": 0.004,
+  "FJ1512": 0.37,
+  "FJ1512M": 0.37,
+  "FJ1513": 0.402,
+  "FJ1513M": 0.402,
+  "FJ1514": 0.262,
+  "FJ1514M": 0.262,
+  "FJ1515": 0.108,
+  "FJ1515M": 0.108,
   "FJ1516": 0,
   "FJ1516M": 0,
-  "FJ1517": 0.13,
-  "FJ1517M": 0.13,
-  "FJ1518": 0.36,
-  "FJ1518M": 0.36,
-  "FJ1520": 0.435,
-  "FJ1520M": 0.435,
-  "FJ1521": 0.356,
-  "FJ1521M": 0.356,
+  "FJ1517": 0.122,
+  "FJ1517M": 0.122,
+  "FJ1518": 0.361,
+  "FJ1518M": 0.361,
+  "FJ1520": 0.436,
+  "FJ1520M": 0.436,
+  "FJ1521": 0.36,
+  "FJ1521M": 0.36,
   "FJ1522": 0,
   "FJ1522M": 0,
   "FJ1524": 0,
@@ -66182,24 +72361,24 @@
   "FJ1525M": 0,
   "FJ1526": 0,
   "FJ1526M": 0,
-  "FJ1527": 0.07,
-  "FJ1527M": 0.07,
+  "FJ1527": 0.069,
+  "FJ1527M": 0.069,
   "FJ1528": 0,
   "FJ1528M": 0,
-  "FJ1532": 0.012,
-  "FJ1532M": 0.012,
+  "FJ1532": 0.011,
+  "FJ1532M": 0.011,
   "FJ1533": 0,
   "FJ1533M": 0,
   "FJ1534": 0,
   "FJ1534M": 0,
   "FJ1535": 0,
   "FJ1535M": 0,
-  "FJ1536": 0.008,
-  "FJ1536M": 0.008,
+  "FJ1536": 0.011,
+  "FJ1536M": 0.011,
   "FJ1537": 0,
   "FJ1537M": 0,
-  "FJ1538": 0.014,
-  "FJ1538M": 0.014,
+  "FJ1538": 0.013,
+  "FJ1538M": 0.013,
   "FJ1539": 0,
   "FJ1539M": 0,
   "FJ1540": 0,
@@ -66212,10 +72391,10 @@
   "FJ1543M": 0,
   "FJ1544": 0,
   "FJ1544M": 0,
-  "FJ1545": 0.051,
-  "FJ1545M": 0.051,
-  "FJ1546": 0.006,
-  "FJ1546M": 0.006,
+  "FJ1545": 0.05,
+  "FJ1545M": 0.05,
+  "FJ1546": 0.005,
+  "FJ1546M": 0.005,
   "FJ1547": 0,
   "FJ1547M": 0,
   "FJ1548": 0,
@@ -66230,60 +72409,60 @@
   "FJ1552M": 0,
   "FJ1553": 0,
   "FJ1553M": 0,
-  "FJ1554": 0.343,
-  "FJ1554M": 0.343,
-  "FJ1555": 0.008,
-  "FJ1556": 0.008,
+  "FJ1554": 0.353,
+  "FJ1554M": 0.353,
+  "FJ1555": 0.004,
+  "FJ1556": 0.004,
   "FJ1557": 0,
-  "FJ1558": 0.349,
+  "FJ1558": 0.353,
   "FJ1559": 0,
-  "FJ1560": 0.008,
-  "FJ1561": 0.001,
+  "FJ1560": 0.004,
+  "FJ1561": 0,
   "FJ1562": 0,
   "FJ1563": 0,
-  "FJ1564": 0.008,
-  "FJ1565": 0.004,
+  "FJ1564": 0.018,
+  "FJ1565": 0.005,
   "FJ1566": 0,
-  "FJ1567": 0.051,
+  "FJ1567": 0.046,
   "FJ1568": 0,
   "FJ1569": 0,
-  "FJ1570": 0.002,
-  "FJ1571": 0.026,
+  "FJ1570": 0.001,
+  "FJ1571": 0.027,
   "FJ1572": 0,
-  "FJ1573": 0.159,
+  "FJ1573": 0.157,
   "FJ1574": 0.002,
-  "FJ1575": 0,
+  "FJ1575": 0.001,
   "FJ1576": 0,
   "FJ1577": 0,
-  "FJ1578": 0.008,
-  "FJ1579": 0.008,
+  "FJ1578": 0.004,
+  "FJ1579": 0.004,
   "FJ1580": 0,
   "FJ1581": 0,
-  "FJ1582": 0.001,
+  "FJ1582": 0,
   "FJ1583": 0,
   "FJ1584": 0,
-  "FJ1585": 0.008,
-  "FJ1586": 0.004,
-  "FJ1587": 0.349,
+  "FJ1585": 0.018,
+  "FJ1586": 0.005,
+  "FJ1587": 0.353,
   "FJ1588": 0,
-  "FJ1589": 0.051,
+  "FJ1589": 0.046,
   "FJ1590": 0,
   "FJ1591": 0,
-  "FJ1592": 0.002,
-  "FJ1593": 0.026,
+  "FJ1592": 0.001,
+  "FJ1593": 0.027,
   "FJ1594": 0,
-  "FJ1595": 0.159,
+  "FJ1595": 0.157,
   "FJ1596": 0.002,
-  "FJ1597": 0,
+  "FJ1597": 0.001,
   "FJ1598": 0,
   "FJ1599": 0,
   "FJ1600": 0,
   "FJ1601": 0,
   "FJ2545": 0,
-  "FJ2547": 0.001,
+  "FJ2547": 0,
   "FJ2549": 0,
   "FJ2550": 0,
-  "FJ2551": 0.003,
+  "FJ2551": 0.005,
   "FJ2738": 0,
   "FJ2739": 0,
   "FJ2740": 0,
@@ -66328,16 +72507,16 @@
   "FJ2806": 0,
   "FJ2809": 0,
   "FJ3131": 0,
-  "R3_FMA13358": 0.362,
-  "R3_FMA13359": 0.362,
-  "R3_FMA13377": 0.012,
-  "R3_FMA13378": 0.012,
-  "R3_FMA13892": 0.024,
-  "R3_FMA13893": 0.024,
+  "R3_FMA13358": 0.366,
+  "R3_FMA13359": 0.366,
+  "R3_FMA13377": 0.011,
+  "R3_FMA13378": 0.011,
+  "R3_FMA13892": 0.025,
+  "R3_FMA13893": 0.025,
   "R3_FMA22344": 0.001,
   "R3_FMA22345": 0.001,
-  "R3_FMA22346": 0.017,
-  "R3_FMA22347": 0.017,
+  "R3_FMA22346": 0.014,
+  "R3_FMA22347": 0.014,
   "R3_FMA22348": 0,
   "R3_FMA22349": 0,
   "R3_FMA22781": 0,
@@ -66346,86 +72525,86 @@
   "R3_FMA22879": 0,
   "R3_FMA46283": 0,
   "R3_FMA46287": 0,
-  "R3_FMA46759": 0.306,
-  "R3_FMA46760": 0.306,
-  "R3_FMA46761": 0.255,
-  "R3_FMA46762": 0.255,
-  "R3_FMA46763": 0.441,
-  "R3_FMA46764": 0.441,
-  "R3_FMA46768": 0.377,
-  "R3_FMA46782": 0.225,
-  "R3_FMA46783": 0.225,
-  "R3_FMA46785": 0.273,
-  "R3_FMA46786": 0.273,
-  "R3_FMA46796": 0,
-  "R3_FMA46797": 0,
-  "R3_FMA46803": 0.105,
-  "R3_FMA46804": 0.105,
-  "R3_FMA46806": 0.104,
-  "R3_FMA46807": 0.104,
-  "R3_FMA46812": 0.248,
-  "R3_FMA46813": 0.248,
-  "R3_FMA46814": 0.183,
-  "R3_FMA46815": 0.183,
-  "R3_FMA46817": 0.082,
-  "R3_FMA46818": 0.082,
-  "R3_FMA46823": 0.048,
-  "R3_FMA46824": 0.048,
-  "R3_FMA46826": 0.03,
-  "R3_FMA46827": 0.03,
+  "R3_FMA46759": 0.294,
+  "R3_FMA46760": 0.294,
+  "R3_FMA46761": 0.228,
+  "R3_FMA46762": 0.228,
+  "R3_FMA46763": 0.443,
+  "R3_FMA46764": 0.443,
+  "R3_FMA46768": 0.383,
+  "R3_FMA46782": 0.237,
+  "R3_FMA46783": 0.237,
+  "R3_FMA46785": 0.25,
+  "R3_FMA46786": 0.25,
+  "R3_FMA46796": 0.004,
+  "R3_FMA46797": 0.004,
+  "R3_FMA46803": 0.038,
+  "R3_FMA46804": 0.038,
+  "R3_FMA46806": 0.112,
+  "R3_FMA46807": 0.112,
+  "R3_FMA46812": 0.245,
+  "R3_FMA46813": 0.245,
+  "R3_FMA46814": 0.16,
+  "R3_FMA46815": 0.16,
+  "R3_FMA46817": 0.073,
+  "R3_FMA46818": 0.073,
+  "R3_FMA46823": 0.084,
+  "R3_FMA46824": 0.084,
+  "R3_FMA46826": 0,
+  "R3_FMA46827": 0,
   "R3_FMA46829": 0.15,
   "R3_FMA46830": 0.15,
   "R3_FMA46835": 0.001,
   "R3_FMA46836": 0.001,
-  "R3_FMA46839": 0.3,
-  "R3_FMA46840": 0.3,
-  "R3_FMA46841": 0.268,
-  "R3_FMA49001": 0.008,
-  "R3_FMA49002": 0.008,
-  "R3_FMA49004": 0.124,
-  "R3_FMA49005": 0.124,
-  "R3_FMA49007": 0.109,
-  "R3_FMA49008": 0.109,
+  "R3_FMA46839": 0.254,
+  "R3_FMA46840": 0.254,
+  "R3_FMA46841": 0.257,
+  "R3_FMA49001": 0.005,
+  "R3_FMA49002": 0.005,
+  "R3_FMA49004": 0.137,
+  "R3_FMA49005": 0.137,
+  "R3_FMA49007": 0.106,
+  "R3_FMA49008": 0.106,
   "R3_FMA49012": 0,
   "R3_FMA49013": 0,
   "R3_FMA49022": 0,
   "R3_FMA49023": 0,
   "R3_FMA49024": 0,
   "R3_FMA49025": 0,
-  "R3_FMA51142": 0.124,
-  "R3_FMA51143": 0.124,
-  "R3_FMA55606": 0.222,
-  "R3_FMA55607": 0.222,
-  "R3_FMA55610": 0.102,
-  "R3_FMA55611": 0.102,
-  "R3_FMA74140": 0.068,
-  "R3_FMA74141": 0.068
+  "R3_FMA51142": 0.123,
+  "R3_FMA51143": 0.123,
+  "R3_FMA55606": 0.208,
+  "R3_FMA55607": 0.208,
+  "R3_FMA55610": 0.169,
+  "R3_FMA55611": 0.169,
+  "R3_FMA74140": 0.064,
+  "R3_FMA74141": 0.064
  },
  "adjacency": {
   "thresholdM": 0.002,
   "spacingM": 0.002,
-  "samples": 49412467,
-  "pairs": 30195,
+  "samples": 49405104,
+  "pairs": 30112,
   "envelopes": [
    {
     "id": "FJ2810",
     "name": "Skin",
-    "rawDegree": 203
+    "rawDegree": 245
    },
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "rawDegree": 130
+    "rawDegree": 128
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
-    "rawDegree": 31
+    "rawDegree": 32
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
-    "rawDegree": 279
+    "rawDegree": 270
    },
    {
     "id": "SOMA_fat_upper_limb_L",
@@ -66435,17 +72614,17 @@
    {
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
-    "rawDegree": 193
+    "rawDegree": 194
    },
    {
     "id": "SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
-    "rawDegree": 223
+    "rawDegree": 211
    },
    {
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
-    "rawDegree": 225
+    "rawDegree": 214
    }
   ],
   "degree": {
@@ -66455,7 +72634,7 @@
    "p90": 36,
    "p99": 83,
    "max": 211,
-   "isolated": 4
+   "isolated": 5
   },
   "highest": [
    {
@@ -66495,10 +72674,10 @@
  "triangles": {
   "source": 6681030,
   "importedFromRelease3": 821404,
-  "afterWeldAndMerge": 9673635,
-  "written": 2311461,
+  "afterWeldAndMerge": 9698160,
+  "written": 2352192,
   "simplifiedParts": 2001,
-  "maxErrorM": 0.0007999090012162924,
+  "maxErrorM": 0.0007999120862223208,
   "worstVolumeChange": {
    "id": "FJ2093",
    "name": "Set of dorsal digital arteries",
@@ -66507,7 +72686,7 @@
   "byTissue": {
    "organ": {
     "source": 765324,
-    "written": 194928
+    "written": 194918
    },
    "tooth": {
     "source": 39744,
@@ -66515,11 +72694,11 @@
    },
    "nerve": {
     "source": 462252,
-    "written": 352617
+    "written": 352623
    },
    "ligament": {
     "source": 295530,
-    "written": 156801
+    "written": 156776
    },
    "tendon": {
     "source": 113972,
@@ -66527,7 +72706,7 @@
    },
    "muscle": {
     "source": 3083888,
-    "written": 594864
+    "written": 594662
    },
    "gland": {
     "source": 29988,
@@ -66539,11 +72718,11 @@
    },
    "fascia": {
     "source": 612239,
-    "written": 122992
+    "written": 123125
    },
    "artery": {
     "source": 975594,
-    "written": 310412
+    "written": 310386
    },
    "brain": {
     "source": 503678,
@@ -66551,7 +72730,7 @@
    },
    "vein": {
     "source": 945916,
-    "written": 206464
+    "written": 206438
    },
    "heart": {
     "source": 101562,
@@ -66563,15 +72742,15 @@
    },
    "bone": {
     "source": 512450,
-    "written": 92348
+    "written": 92332
    },
    "skin": {
-    "source": 192604,
-    "written": 70494
+    "source": 228473,
+    "written": 112789
    },
    "fat": {
-    "source": 939396,
-    "written": 52900
+    "source": 928052,
+    "written": 51502
    }
   }
  },
@@ -66594,28 +72773,31 @@
  },
  "output": {
   "parts": 3332,
-  "anatomyJsonBytes": 2283614,
+  "anatomyJsonBytes": 2290193,
   "glbBytes": {
-   "integumentary.glb": 790568,
-   "muscular.glb": 5171236,
-   "skeletal.glb": 2532184,
-   "cardiovascular.glb": 4934712,
-   "nervous.glb": 3840188,
+   "integumentary.glb": 1030416,
+   "muscular.glb": 5172508,
+   "skeletal.glb": 2532048,
+   "cardiovascular.glb": 4935672,
+   "nervous.glb": 3841016,
    "respiratory.glb": 514096,
    "digestive.glb": 885332,
    "urinary.glb": 28060,
    "reproductive.glb": 48848,
    "endocrine.glb": 28168,
-   "lymphatic.glb": 710312
+   "lymphatic.glb": 710168
   },
   "bounds": [
-   -0.337,
-   -0.0787,
-   -0.0411,
-   0.338,
-   1.6512,
-   0.2468
-  ]
+   -0.4027,
+   -0.08,
+   -0.0406,
+   0.4043,
+   1.6526,
+   0.2389
+  ],
+  "skinSourceBytes": 203556,
+  "displayJsonBytes": 875,
+  "skinPiecesBytes": 50889
  },
  "parameters": {
   "SIMPLIFY_ERROR_PER_THICKNESS": 0.08,

@@ -17,17 +17,22 @@ export class SkinPatch {
   private readonly skinIndex: BufferAttribute
   private readonly skinWeight: BufferAttribute
 
-  /** `subset`：要包含的皮肤顶点（升序）；null 为全部。只保留三个顶点都在其中的三角形。 */
-  /** `subset`: the skin vertices to include (ascending); null = all. Only triangles with all three vertices inside are kept. */
-  constructor(source: SkinGeometry, subset: Uint32Array | null, material: Material) {
+  /**
+   * `subset`：要包含的皮肤顶点（升序）；null 为全部。只保留三个顶点都在其中的三角形。
+   * `triangles`：改为直接给出三角形（展平的皮肤顶点下标），顶点就是它们用到的那些。
+   * `subset`: the skin vertices to include (ascending); null = all. Only triangles with all three vertices inside are kept.
+   * `triangles`: give the triangles directly instead (flat skin vertex indices); the vertices are the ones they use.
+   */
+  constructor(source: SkinGeometry, subset: Uint32Array | null, material: Material, triangles?: ArrayLike<number>) {
     const total = source.position.length / 3
-    const vertices = subset ?? Uint32Array.from({ length: total }, (_, i) => i)
+    const index = triangles ?? source.index
+    const vertices = triangles ? Uint32Array.from(new Set(Array.from(triangles))).sort() : (subset ?? Uint32Array.from({ length: total }, (_, i) => i))
     this.vertices = vertices
     const local = new Int32Array(total).fill(-1)
     vertices.forEach((v, i) => (local[v] = i))
     const kept: number[] = []
-    for (let t = 0; t + 2 < source.index.length; t += 3) {
-      const a = local[source.index[t]!]!, b = local[source.index[t + 1]!]!, c = local[source.index[t + 2]!]!
+    for (let t = 0; t + 2 < index.length; t += 3) {
+      const a = local[index[t]!]!, b = local[index[t + 1]!]!, c = local[index[t + 2]!]!
       if (a >= 0 && b >= 0 && c >= 0) kept.push(a, b, c)
     }
     this.triangleCount = kept.length / 3

@@ -1,5 +1,5 @@
 import type { AnatomyGraph } from '../anatomy/graph.ts'
-import { PROVENANCE_LABEL, provenanceColor } from '../anatomy/labels.ts'
+import { CONSTRUCTION_COLOR, CONSTRUCTION_LABEL, PROVENANCE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import { skinDrawnOpaque, type SectionAxis } from '../state/display.ts'
 import { isSolo, useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
@@ -23,7 +23,16 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
   const nerveBoost = useApp((s) => s.nerveBoost)
   const skinOpaque = useApp((s) => s.skinOpaque)
   const mainSkin = graph.mainSkinId()
-  const unfittedHidden = useApp((s) => graph.unfittedAppendages().size > 0 && skinDrawnOpaque(s, mainSkin))
+  const opaqueNow = useApp((s) => skinDrawnOpaque(s, mainSkin))
+  const skinHide = useApp((s) => s.skinHide)
+  // 管线报告给了清单就用它，否则按名称 / the pipeline report's list when it gives one, else the name rule
+  const listed = Array.isArray(skinHide)
+  const hiddenNames = (listed ? skinHide : [...graph.unfittedAppendages()]).map((id) => graph.part(id)).filter((p) => !!p).map((p) => ({ zh: graph.partName(p).primary, en: p.name }))
+  const pieces = (mainSkin ? graph.part(mainSkin)?.composition : undefined) ?? []
+  const constructed = pieces.filter((x) => x.provenance === 'construction')
+  // 皮肤有没有真正的开口：表情数据说了算；它还没加载时看皮肤的组成说明 / whether the skin has real openings: the face data says; before it loads, the skin's composition note
+  const faceOpenings = useApp((s) => !!s.face?.data.openings)
+  const openings = faceOpenings || pieces.some((x) => /real openings/i.test(x.what.en))
   const hasNerves = graph.parts.some((p) => p.tissue === 'nerve')
   const app = useApp.getState()
   const layers = graph.data.layers
@@ -89,10 +98,21 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
               <input type="checkbox" checked={skinOpaque} onChange={(e) => app.setSkinOpaque(e.target.checked)} />
               皮肤不透明 <span className="en">Opaque skin</span>
             </label>
-            {unfittedHidden && (
+            {opaqueNow && hiddenNames.length > 0 && (
               <p className="hint">
-                皮肤不透明时，头发、眉毛和阴毛暂时隐藏：这几个网格还没有贴合新的皮肤，会从皮肤里翘出来。它们仍在结构树里，选中即可单独显示。
-                <span className="en"> While the skin is opaque, the hair, eyebrows and pubic hair are hidden: these meshes are not yet fitted to the new skins and would poke out of them. They are still in the tree, and selecting one shows it.</span>
+                皮肤不透明时暂时隐藏：{hiddenNames.map((n) => n.zh).join('、')}。
+                {listed ? '皮肤自己已经有耳廓和嘴唇，再画深部的那一份只会穿出来。' : '这几个网格还没有贴合这张皮肤，会从皮肤里翘出来。'}
+                它们仍在结构树里，选中即可单独显示。
+                <span className="en">
+                  {' '}
+                  Hidden while the skin is opaque: {hiddenNames.map((n) => n.en).join(', ')}. {listed ? 'The skin has its own ears and lips; drawing the deep ones as well would only show through.' : 'These meshes are not yet fitted to this skin and would poke out of it.'} They are still in the tree, and selecting one shows it.
+                </span>
+              </p>
+            )}
+            {opaqueNow && openings && (
+              <p className="hint">
+                这张皮肤的眼和口是真正的开口：透过它们看到的眼球、牙、牙龈和舌是解剖部件（不管所在系统开没开都会画出来）；口腔深处近黑色的壁和睑缘向里卷的一圈是为开口构造的，不是解剖。
+                <span className="en"> This skin's eyes and mouth are real openings: the eyeballs, teeth, gingiva and tongue seen through them are anatomical parts (drawn whatever their systems' switches say); the near-black wall deep in the mouth and the rim turned in at the lid margins were constructed for the openings and are not anatomy.</span>
               </p>
             )}
           </>
@@ -141,6 +161,23 @@ export function DisplayPanel({ graph }: { graph: AnatomyGraph }) {
               </li>
             )
           })}
+          {constructed.length > 0 && (
+            <li className="prov-construction">
+              <div className="sys-row">
+                <span className="sys-name">
+                  <span className="swatch swatch-construction" style={{ background: CONSTRUCTION_COLOR }} />
+                  <span>
+                    {CONSTRUCTION_LABEL.zh} <span className="en">{CONSTRUCTION_LABEL.en}</span>
+                  </span>
+                </span>
+                <span className="count">{constructed.reduce((a, x) => a + x.vertices, 0).toLocaleString()} 顶点</span>
+              </div>
+              <p className="hint">
+                {CONSTRUCTION_LABEL.hint} 不是一种解剖来源，所以不能按它筛选部件：它只是皮肤这一个部件里的几片（见皮肤的结构信息）。
+                <span className="en"> Not an anatomical provenance, so parts cannot be filtered by it: it is a few pieces inside the one skin part (see the skin's details).</span>
+              </p>
+            </li>
+          )}
         </ul>
       </section>
 

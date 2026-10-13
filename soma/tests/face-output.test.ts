@@ -8,7 +8,9 @@
 //
 // 这里陈述的界限 / Bounds stated here
 //   · 单个通道的位移 ≤ 该通道的 excursion ≤ face.bounds.channel ≤ 12 mm；所有通道全激活时每个顶点位移模长之和 ≤ face.bounds.total ≤ 45 mm。
+//     例外：口角成形通道（kind 'corner'，只有开口的皮肤才有）抵消的是下颌转动的一半，全激活时可达约 25 mm；它不计入上面两个界限。
 //     One channel's displacement ≤ that channel's excursion ≤ face.bounds.channel ≤ 12 mm; the per-vertex sum of magnitudes with every channel fully active ≤ face.bounds.total ≤ 45 mm.
+//     Exception: the corner-shaping channel (kind 'corner', opened skins only) cancels half of the jaw's rotation and reaches about 25 mm at full activation; it is outside the two bounds above.
 //   · 左右对称：线状肌的作用线互为镜像（0.01 mm 内）、幅度相同；眼周的环和眼睑中心镜像后相差 ≤ 2 mm；皮肤上的场，镜像后的平均位移向量相差 ≤ 1 mm，
 //     平均位移模长之比在 0.6–1.67 之间、顶点数之比在 0.5–2 之间（皮肤网格本身左右不对称，面部顶点间距约 5–7 mm，小的场只落在二三十个顶点上）。
 //     Left–right symmetry: lines of linear channels mirror each other (within 0.01 mm) with equal excursion; ring and lid centres round the eyes mirror within 2 mm; on the skin, the mirrored
@@ -19,7 +21,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { AnatomyData, Rig } from '../src/anatomy/types.ts'
-import type { FaceChannel, FaceData } from '../src/face/types.ts'
+import type { FaceChannel, FaceData, FaceOpenings } from '../src/face/types.ts'
 import { buildFace } from '../tools/face/build.ts'
 import { AU_MAX, activations, deform, displacement, painAUs, painExpression, pspi, readField } from '../tools/face/model.ts'
 import { readCurated, stale } from '../tools/face/run.ts'
@@ -41,6 +43,9 @@ for (const bodyId of ['male', 'female'] as const) {
     const byId = new Map(data.parts.map((p) => [p.id, p]))
     const changed = present ? stale(DIR) : ['absent']
     const fresh = changed.length === 0
+    // 皮肤有真实的睑裂和口裂时的开口数据 / the openings data when the skin has real eye and mouth openings
+    const O = (present && face.openings && existsSync(join(DIR, face.openings)) ? JSON.parse(readFileSync(join(DIR, face.openings), 'utf8')) : null) as FaceOpenings | null
+    const cornerMax = present ? Math.max(0, ...face.channels.filter((c) => c.kind === 'corner').map((c) => c.excursion)) : 0
     const chan = (id: string): FaceChannel => face.channels.find((c) => c.id === id)!
     const skinField = (id: string): ReturnType<typeof readField> => readField(bin, chan(id).fields.find((f) => f.part === face.skin)!)
     /** 一个通道在皮肤上的平均位移向量（毫米）。 Mean displacement vector of a channel on the skin (mm). */
@@ -91,7 +96,7 @@ for (const bodyId of ['male', 'female'] as const) {
       for (const p of face.parts) expect(byId.has(p.part), p.part).toBe(true)
       for (const ch of face.channels) {
         // 口裂内陷是皮肤上的几何替代，不是肌肉 / the oral recess is a geometric stand-in on the skin, not a muscle
-        if (ch.kind === 'recess') expect(ch.parts, ch.id).toEqual([])
+        if (ch.kind === 'recess' || ch.kind === 'corner') expect(ch.parts, ch.id).toEqual([])
         else expect(ch.parts.length, ch.id).toBeGreaterThan(0)
         for (const id of ch.parts) expect(byId.get(id)?.tissue, `${ch.id}: ${id}`).toBe('muscle')
         for (const f of ch.fields) expect(listed.has(f.part), `${ch.id}: ${f.part}`).toBe(true)
@@ -117,9 +122,13 @@ for (const bodyId of ['male', 'female'] as const) {
         expect(ids.has(`${m}_R`), `${m}_R`).toBe(true)
       }
       expect(ids.has('orbicularis_oris')).toBe(true)
-      expect(ids.has('oral_recess')).toBe(true)
+      // 替代通道：闭合的皮肤用口裂内陷，开口的皮肤用口角成形，二者只有其一
+      // the stand-in channel: the oral recess on a closed skin, corner shaping on an opened one, never both
+      const standIn = O ? 'mouth_corner' : 'oral_recess'
+      expect(ids.has(standIn)).toBe(true)
+      expect(ids.has(O ? 'oral_recess' : 'mouth_corner')).toBe(false)
       // 口裂内陷只作用于皮肤 / the oral recess acts on the skin only
-      expect(chan('oral_recess').fields.map((f) => f.part)).toEqual([face.skin])
+      expect(chan(standIn).fields.map((f) => f.part)).toEqual([face.skin])
     })
 
     it('uses the tmj joint of the rig for the jaw', () => {
@@ -134,8 +143,9 @@ for (const bodyId of ['male', 'female'] as const) {
 
     it('stores fields that are well-formed, finite and bounded', () => {
       expect(bin.length).toBe(face.binBytes)
-      expect(face.bounds.channel).toBeLessThanOrEqual(12 * MM)
-      expect(face.bounds.total).toBeLessThanOrEqual(45 * MM)
+      expect(Math.max(...face.channels.filter((c) => c.kind !== 'corner').map((c) => c.excursion))).toBeLessThanOrEqual(12 * MM)
+      expect(face.bounds.total).toBeLessThanOrEqual(45 * MM + cornerMax)
+      expect(cornerMax).toBeLessThanOrEqual(30 * MM)
       const counts = new Map(face.parts.map((p) => [p.part, p.vertexCount]))
       const sum = new Map<string, Float64Array>()
       const entries = new Map<string, number>()
@@ -357,7 +367,7 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(face.cautions.some((c) => /disagree with their ring sizes/.test(c.en))).toBe(false)
     })
 
-    it.skipIf(!fresh)('closes the shape of the fissure on the skin at AU43, although the skin has no opening', () => {
+    it.skipIf(!fresh || !!O)('closes the shape of the fissure on the skin at AU43, although the skin has no opening', () => {
       // 皮肤上两睑之间那片皮肤：闭眼后，它的顶点在竖直方向上挤到 1.5 mm 以内（睑裂中部 60% 的宽度内）
       // the patch of skin between the lids: with the eyes closed its vertices are squeezed to within 1.5 mm vertically (over the middle 60% of the fissure's width)
       const pos = body!.meshes.get(face.skin)!.positions
@@ -426,9 +436,136 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(P.timing.offset).toBeGreaterThan(0)
     })
 
+    describe.skipIf(!O)('with real openings in the skin', () => {
+      const all = (aus: Record<string, number>): Float32Array => displacement(face.channels, bin, face.skin, face.parts[0]!.vertexCount, activations(face, aus).channels)
+      const at = (d: Float32Array, v: number): [number, number, number] => [d[v * 3]!, d[v * 3 + 1]!, d[v * 3 + 2]!]
+      const gap = (d: Float32Array, a: number, b: number, rest: Float32Array | null = null): number => {
+        const p = rest ? [rest[a * 3]! - rest[b * 3]!, rest[a * 3 + 1]! - rest[b * 3 + 1]!, rest[a * 3 + 2]! - rest[b * 3 + 2]!] : [0, 0, 0]
+        return Math.hypot(p[0]! + d[a * 3]! - d[b * 3]!, p[1]! + d[a * 3 + 1]! - d[b * 3 + 1]!, p[2]! + d[a * 3 + 2]! - d[b * 3 + 2]!)
+      }
+
+      it('has well-formed openings data for this skin', () => {
+        const n = face.parts[0]!.vertexCount
+        expect(O!.skin).toBe(face.skin)
+        expect(O!.vertexCount).toBe(n)
+        const lists = [...Object.values(O!.margins), ...Object.values(O!.sheets), ...O!.lidRims.flatMap((r) => [r.vertices, r.of]), O!.oralPouch.upper, O!.oralPouch.lower, O!.oralPouch.seam]
+        for (const l of lists) for (const v of l) if (!(Number.isInteger(v) && v >= 0 && v < n)) throw new Error(`bad vertex index ${v}`)
+        expect(O!.margins.upperLip.length).toBe(O!.margins.lowerLip.length)
+        expect(O!.margins.upperLip[0]).toBe(O!.margins.lowerLip[0])
+        expect(O!.margins.upperLip[0]).toBe(O!.points.mouthCornerR)
+        expect(O!.margins.upperLip.at(-1)).toBe(O!.points.mouthCornerL)
+        expect(O!.oralPouch.upper.length).toBe(O!.oralPouch.rows * O!.oralPouch.columns)
+        expect(O!.oralPouch.columns).toBe(O!.margins.upperLip.length - 2)
+        for (const r of O!.lidRims) expect(r.of.length).toBe(r.vertices.length)
+        // 上下唇两片不相交 / the two lip sheets are disjoint
+        const up = new Set(O!.sheets.mouthUpper)
+        expect(O!.sheets.mouthLower.some((v) => up.has(v))).toBe(false)
+      })
+
+      it('keeps the fissure shut under channels that do not tell the lips apart, and parts the lips under those that do', () => {
+        const pairs = O!.margins.upperLip.map((u, i) => [u, O!.margins.lowerLip[i]!] as const).slice(1, -1)
+        for (const aus of [{ AU12: AU_MAX }, { AU20: AU_MAX }, { AU4: AU_MAX }, { AU6: AU_MAX }] as Record<string, number>[]) {
+          const d = all(aus)
+          expect(Math.max(...pairs.map(([a, b]) => gap(d, a, b))), JSON.stringify(aus)).toBeLessThan(0.05 * MM)
+        }
+        // AU10 上提上唇、AU25 下拉下唇：唇缘分开，且没有下颌转动 / AU10 raises the upper lip and AU25 lowers the lower: the margins part, with no jaw rotation
+        expect(activations(face, { AU25: AU_MAX }).jaw).toBe(0)
+        // 1.5 mm：提上唇肌的场到唇缘处已经衰减，唇越厚（女性 1.9 mm，男性更大）唇缘抬得越少
+        // 1.5 mm: the levator's field has decayed by the time it reaches the margin, and the thicker the lip the less the margin rises (1.9 mm in the female, more in the male)
+        expect(Math.max(...pairs.map(([a, b]) => gap(all({ AU10: AU_MAX }), a, b)))).toBeGreaterThan(1.5 * MM)
+        expect(Math.max(...pairs.map(([a, b]) => gap(all({ AU25: AU_MAX }), a, b)))).toBeGreaterThan(1.5 * MM)
+        // 上唇肌只动上唇缘，下唇肌只动下唇缘 / upper-lip muscles move only the upper margin, lower-lip muscles only the lower
+        const d10 = all({ AU10: AU_MAX }), d25 = all({ AU25: AU_MAX })
+        // 口角旁的几对除外：口角顶点两片共用，上下唇的肌肉都带着它 / the pairs next to a corner are left out: the corner vertex belongs to both sheets and muscles of either lip carry it
+        for (const [a, b] of pairs.slice(5, -5)) {
+          // 0.1 mm：褶皱附近的抹匀会从口角带进来一点位移 / 0.1 mm: the evening-out near creases carries a little displacement in from the corners
+          expect(Math.hypot(...at(d10, b))).toBeLessThan(0.1 * MM)
+          expect(Math.hypot(...at(d25, a))).toBeLessThan(0.1 * MM)
+          expect(at(d10, a)[1]).toBeGreaterThanOrEqual(-0.05 * MM)
+          expect(at(d25, b)[1]).toBeLessThanOrEqual(0.05 * MM)
+        }
+      })
+
+      it('moves the lid rims with their margins and the pouch with the lips', () => {
+        const d = all({ AU43: AU_MAX, AU10: AU_MAX, AU20: AU_MAX })
+        for (const r of O!.lidRims) r.vertices.forEach((v, i) => expect(gap(d, v, r.of[i]!), `rim ${v}`).toBeLessThan(0.01 * MM))
+        // 口腔袋的壁跟随它前面的皮肤：上唇上提时上半有顶点在动，位移不超过皮肤的最大位移；缝不动
+        // the pouch wall follows the skin in front of it: with the upper lip raised some of the upper half moves, by no more than the skin's largest displacement; the seam stays
+        const d10 = all({ AU10: AU_MAX })
+        let skinMax = 0
+        // 袋的前壁一直伸到鼻底，所以与整张皮肤的最大位移比较 / the front wall of the pouch reaches up to the base of the nose, hence the comparison with the whole skin
+        const pouch = new Set([...O!.oralPouch.upper, ...O!.oralPouch.lower, ...O!.oralPouch.seam])
+        for (let v = 0; v < face.parts[0]!.vertexCount; v++) if (!pouch.has(v)) skinMax = Math.max(skinMax, Math.hypot(...at(d10, v)))
+        const moved = O!.oralPouch.upper.map((v) => Math.hypot(...at(d10, v)))
+        expect(moved.filter((x) => x > 0.5 * MM).length).toBeGreaterThan(10)
+        expect(Math.max(...moved)).toBeLessThanOrEqual(skinMax + 1e-6)
+        for (const v of O!.oralPouch.seam) expect(Math.hypot(...at(d, v))).toBe(0)
+      })
+
+      it.skipIf(!fresh)('closes the eyes at AU43 by bringing the lid margins together, and narrows them at AU7', () => {
+        const rest = body!.meshes.get(face.skin)!.positions
+        for (const side of ['L', 'R'] as const) {
+          const up = side === 'L' ? O!.margins.upperLidL : O!.margins.upperLidR, lo = side === 'L' ? O!.margins.lowerLidL : O!.margins.lowerLidR
+          /** 上睑缘各顶点到下睑缘（折线顶点）的最大距离 / the largest distance from an upper-margin vertex to the lower margin (its vertices). */
+          const aperture = (aus: Record<string, number>): number => {
+            const d = all(aus)
+            let worst = 0
+            for (const a of up.slice(2, -2)) worst = Math.max(worst, Math.min(...lo.map((b) => gap(d, a, b, rest))))
+            return worst
+          }
+          const open = aperture({}), closed = aperture({ AU43: AU_MAX }), tight = aperture({ AU7: AU_MAX })
+          expect(open / MM, side).toBeGreaterThan(5)
+          expect(closed / MM, `${side}: closed`).toBeLessThan(1.5)
+          expect(tight / open, `${side}: AU7`).toBeGreaterThan(0.3)
+          expect(tight / open, `${side}: AU7`).toBeLessThan(0.8)
+          // 眦不动 / the canthi stay put
+          const d = all({ AU43: AU_MAX })
+          expect(Math.hypot(...at(d, up[0]!))).toBe(0)
+          expect(Math.hypot(...at(d, up.at(-1)!))).toBe(0)
+        }
+      })
+
+      it.skipIf(!fresh)('keeps the closing lid margin outside the globe, half-closed and closed', () => {
+        const rest = body!.meshes.get(face.skin)!.positions
+        for (const e of face.landmarks.eyes) {
+          const sgn = e.side === 'L' ? 1 : -1
+          const globeParts = data.parts.filter((p) => body!.meshes.has(p.id) && /cornea|sclera/i.test(p.name) && (p.centroid[0] - face.landmarks.midX) * sgn > 0)
+          const globe = new Surface(mergeMeshes(globeParts.map((p) => body!.meshes.get(p.id)!)))
+          const up = e.side === 'L' ? O!.margins.upperLidL : O!.margins.upperLidR
+          for (const k of [2.5, AU_MAX]) {
+            const d = all({ AU43: k })
+            for (const v of up.slice(1, -1)) {
+              const p: [number, number, number] = [rest[v * 3]! + d[v * 3]!, rest[v * 3 + 1]! + d[v * 3 + 1]!, rest[v * 3 + 2]! + d[v * 3 + 2]!]
+              const dir = [p[0] - e.globe[0], p[1] - e.globe[1], p[2] - e.globe[2]], l = Math.hypot(dir[0]!, dir[1]!, dir[2]!)
+              const far: [number, number, number] = [e.globe[0] + (dir[0]! / l) * 0.05, e.globe[1] + (dir[1]! / l) * 0.05, e.globe[2] + (dir[2]! / l) * 0.05]
+              const h = globe.firstHit(far, e.globe as [number, number, number])
+              if (h) expect(l - (0.05 - h.distance), `${e.side} AU43 ${k} vertex ${v}`).toBeGreaterThan(0.2 * MM)
+            }
+          }
+        }
+      })
+
+      it.skipIf(!fresh)('rounds the mouth corners when the jaw opens: near a corner both margins follow the jaw by about half', () => {
+        const corner = chan('mouth_corner')
+        expect(corner.kind).toBe('corner')
+        expect(face.aus.find((a) => a.id === 'AU27')!.channels.mouth_corner).toBe(1)
+        expect(face.aus.find((a) => a.id === 'AU26')!.channels.mouth_corner).toBeCloseTo(face.aus.find((a) => a.id === 'AU26')!.jaw! / face.jaw.max, 3)
+        const d = displacement(face.channels, bin, face.skin, face.parts[0]!.vertexCount, { mouth_corner: 1 })
+        const n = O!.margins.upperLip.length, mid = n >> 1
+        // 正中不动；紧挨口角的一对：上唇缘向下、下唇缘向上（在静止空间里，蒙皮之前）
+        // nothing at the middle; the pair next to a corner: upper margin down, lower margin up (in rest space, before skinning)
+        expect(Math.hypot(...at(d, O!.margins.upperLip[mid]!))).toBe(0)
+        expect(Math.hypot(...at(d, O!.margins.lowerLip[mid]!))).toBe(0)
+        for (const i of [1, n - 2]) {
+          expect(at(d, O!.margins.upperLip[i]!)[1]).toBeLessThan(-3 * MM)
+          expect(at(d, O!.margins.lowerLip[i]!)[1]).toBeGreaterThan(3 * MM)
+        }
+      })
+    })
+
     it.skipIf(!fresh)('rebuilds to exactly the same bytes', async () => {
       const inputs: Record<string, string> = {}
-      const built = buildFace(await readBody(DIR), rig, readCurated(inputs), () => {})
+      const built = buildFace(await readBody(DIR), rig, readCurated(inputs), () => {}, { openings: O, rigBin: new Uint8Array(readFileSync(join(DIR, 'rig.bin'))) })
       built.face.inputs = face.inputs
       expect(Buffer.from(built.bin).equals(Buffer.from(bin))).toBe(true)
       expect(JSON.stringify(built.face)).toBe(raw)

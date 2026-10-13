@@ -231,6 +231,27 @@
        "to": "ant"
       }
      ]
+    },
+    {
+     "tags": [
+      4,
+      6
+     ],
+     "pin": true,
+     "note": {
+      "zh": "上睑缘",
+      "en": "upper lid margin"
+     }
+    },
+    {
+     "tags": [
+      13
+     ],
+     "pin": true,
+     "note": {
+      "zh": "内、外眦（上、下睑缘共有的顶点）归 V1：内眦属滑车下神经，外眦属泪腺神经。不固定的话左右两侧会各归一边。",
+      "en": "medial and lateral canthus (the vertices shared by both lid margins) go to V1: infratrochlear nerve at the medial canthus, lacrimal nerve at the lateral. Left unpinned, the two sides came out differently."
+     }
     }
    ]
   },
@@ -294,6 +315,27 @@
        "to": "ant"
       }
      ]
+    },
+    {
+     "tags": [
+      5,
+      7
+     ],
+     "pin": true,
+     "note": {
+      "zh": "下睑缘",
+      "en": "lower lid margin"
+     }
+    },
+    {
+     "tags": [
+      1
+     ],
+     "pin": true,
+     "note": {
+      "zh": "上唇缘：分布区止于口裂",
+      "en": "upper lip margin: the territory stops at the oral fissure"
+     }
     }
    ]
   },
@@ -403,6 +445,26 @@
        "to": "ant"
       }
      ]
+    },
+    {
+     "tags": [
+      2
+     ],
+     "pin": true,
+     "note": {
+      "zh": "下唇缘",
+      "en": "lower lip margin"
+     }
+    },
+    {
+     "tags": [
+      3
+     ],
+     "pin": true,
+     "note": {
+      "zh": "口角（上、下唇缘共有的顶点）归 V3 / 颏神经。不固定的话左右两侧会各归一边。",
+      "en": "mouth corner (the vertex shared by both lip margins) goes to V3 / mental nerve. Left unpinned, the two sides came out differently."
+     }
     }
    ]
   },
@@ -1753,6 +1815,17 @@
       "zh": "只取髂前上棘内侧 3 cm 以内侧、耻骨结节下方 2.5 cm 以上的一段：神经途经髂前上棘处也贴近皮肤，但那里不是它的分布区；再往下归生殖股神经生殖支。",
       "en": "Only the stretch medial to a point 3 cm medial of the anterior superior iliac spine and above 2.5 cm below the pubic tubercle: the nerve also runs close under the skin at the spine, which is not its territory; lower down belongs to the genital branch of the genitofemoral nerve."
      }
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "penisRootDorsum",
+      "scrotumAnteriorUpper"
+     ],
+     "note": {
+      "zh": "阴茎根和阴囊上部前面（Gray）；神经模型的终末段到不了移植的生殖器皮肤，以标志曲线补上",
+      "en": "root of the penis and upper front of the scrotum (Gray); the modelled nerve's terminal stretch does not reach the grafted genital skin, so a landmark curve supplies it"
+     }
     }
    ]
   },
@@ -1835,6 +1908,17 @@
      "note": {
       "zh": "只取耻骨结节下方 2.5 cm 以下的终末段（至阴囊/大阴唇）。其上方与髂腹股沟神经的终末支走在一起，种子会落在同样的皮肤顶点上，故以此高度分界。",
       "en": "Only the terminal stretch more than 2.5 cm below the pubic tubercle (to the scrotum / labium majus). Above that it runs with the terminal branches of the ilioinguinal nerve and would seed the same skin vertices, so the two are divided at this height."
+     }
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "scrotumAnterolateral",
+      "scrotumLateral"
+     ],
+     "note": {
+      "zh": "阴囊前外侧（Gray：至阴囊皮肤的少数细支）",
+      "en": "anterolateral scrotum (Gray: a few filaments to the skin of the scrotum)"
      }
     }
    ]
@@ -2045,13 +2129,39 @@
        "to": "inf+0.2*ant"
       },
       "perineum"
-     ]
+     ],
+     "unlessPart": "Glans penis"
     },
     {
      "curve": [
       "K_S45"
      ],
      "widthMm": 20
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "penisShaftDorsum",
+      "glansSkin",
+      "penisShaftVentral",
+      "scrotumBottom"
+     ],
+     "note": {
+      "zh": "阴茎背神经：阴茎头和阴茎体",
+      "en": "dorsal nerve of penis: glans and shaft"
+     }
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "scrotumBottom",
+      "scrotumPosterior",
+      "perineum"
+     ],
+     "note": {
+      "zh": "阴囊后神经（会阴神经的分支）：阴囊后面和下面、会阴",
+      "en": "posterior scrotal nerves (branches of the perineal nerve): back and underside of the scrotum, perineum"
+     }
     }
    ]
   },
@@ -3139,7 +3249,18 @@
       "{side} infrapatellar branch of saphenous nerve",
       "{side} medial crural cutaneous branches of saphenous nerve"
      ],
-     "maxDepthMm": 15
+     "maxDepthMm": 15,
+     "where": {
+      "frame": "thigh",
+      "t": [
+       0.7,
+       4
+      ]
+     },
+     "note": {
+      "zh": "只取股骨 70% 以远的一段（膝部以下）：隐神经在股上部也有贴近皮肤的地方，但它在膝内侧才穿出深筋膜成为皮神经。",
+      "en": "Only the stretch distal to 70% of the femur (from the knee down): the saphenous nerve also lies close under the skin in the upper thigh, but it becomes cutaneous only at the medial side of the knee, where it pierces the deep fascia."
+     }
     }
    ]
   },
