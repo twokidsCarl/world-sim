@@ -525,6 +525,22 @@ export function toeStretch(packageDir: string): { min: number; max: number } | n
 }
 
 /**
+ * 装入了足趾移植片时写进说明的一句，男女通用：移植片还剩哪些看得见的小毛病。
+ * 这是看图得出的描述（2026-10-13，tools/skinopen 第六、七轮的 toes 步骤做出的包，看工具的 toes-close.png 和装入后的双足渲染），
+ * 不是量出来的；括号里的两个数取自两个身体的 graft-report.json（toes.sides.*.fragments：最凸 0.70–0.77 mm，第二趾上的小凹 1.2–1.5 mm）。
+ * 先前趾尖皱成的小碎片已经没有了。移植片再改之后请改这里的文字。
+ * The sentence the cautions carry when toe grafts are installed, for both bodies: the small visible faults that remain.
+ * It is a description made by looking (2026-10-13, packages made by the toes step of rounds 6 and 7 of tools/skinopen; the
+ * tool's toes-close.png and renders of both feet after installing), not a measurement; the two figures in brackets are from
+ * graft-report.json of the two bodies (toes.sides.*.fragments: most proud 0.70-0.77 mm, hollows of 1.2-1.5 mm on the second toe).
+ * The crumpled fragments at the toe tips of the earlier graft are gone. Change the wording here when the graft changes again.
+ */
+export const TOE_GRAFT_FAULTS = {
+  en: 'The grafted toes still show small faults: near the tips of the second to fifth toes a shallow ring step runs where the tip cap meets the shaft (under 1 mm; a hollow of up to about 1.5 mm on the second toe), a short crease lies beside the nail of the great toe, and a faint step crosses the back of each forefoot where the graft meets the fitted skin.',
+  zh: '移植的足趾仍有看得见的小毛病：第 2–5 趾近趾尖处，趾尖帽与趾身相接的地方有一圈浅台阶（不到 1 mm；第二趾上有一处深约 1.5 mm 的小凹），大趾甲旁有一道短折痕，足背前部移植片与拟合皮肤相接处有一道浅台阶。',
+}
+
+/**
  * 开口和移植带来的说明，男女通用：眼和口是开口、内卷和口腔袋是构造物、各移植片是什么、过渡环量出来的质量。
  * toes 是 toeStretch 的结果。body 只决定足趾那一条里的人称（his / her，他 / 她），缺省为男性，与原先的文字相同。
  * The cautions that openings and grafts bring, for both bodies: eye and mouth are openings, rims and
@@ -542,8 +558,13 @@ export function openedSkinCautions(report: OpenedSkinReport, toes: { min: number
   for (const g of report.grafts.filter((x) => /genital/i.test(x.name))) {
     const r = g.ring
     out.push({
-      en: `The skin of the penis and scrotum is ${g.provenance === 'scanned' ? 'his own scanned skin (BodyParts3D)' : 'a donor surface'}, set into the fitted surface with no vertex moved. The pubic, perineal and upper inner-thigh surface round it and the ring joining the two are constructed, not scanned${r ? `: there the triangles are up to ${r.longestEdgeMm.max.toFixed(0)} mm long (median ${r.longestEdgeMm.median.toFixed(0)} mm) and neighbouring facets meet at up to ${r.dihedralDeg.max.toFixed(0)}° (${r.dihedralDeg.over45} edges above 45°), so the region is coarse and faceted` : ''}. The scanned neck of the scrotum and perineal raphe lie under the constructed surface and are not used; penis and scrotum move rigidly with the pelvis.`,
-      zh: `阴茎和阴囊的皮肤${g.provenance === 'scanned' ? '是他本人的扫描皮肤（BodyParts3D）' : '取自供体'}，原样嵌入拟合的体表。它周围的耻区、会阴和大腿内侧上部的面，以及两者之间的过渡环是构造出来的，不是扫描数据${r ? `：那里的三角形最长 ${r.longestEdgeMm.max.toFixed(0)} mm（中位数 ${r.longestEdgeMm.median.toFixed(0)} mm），相邻小面的夹角最大 ${r.dihedralDeg.max.toFixed(0)}°（${r.dihedralDeg.over45} 条边超过 45°），所以这一带粗糙、有棱面` : ''}。扫描的阴囊颈部和会阴缝被构造面盖住，没有用上；阴茎和阴囊随骨盆刚性运动。`,
+      // 文字说的是 tools/skinopen/genital.py 第七轮的移植片：扫描的阴囊颈部和会阴缝都在供体片里，过渡面是渐变网格的构造面。
+      // “仍看得出的”两处是看渲染图得出的描述，不是量出来的；数值是本次构建在发布的网格上量的。
+      // The wording describes the graft of round 7 of tools/skinopen/genital.py: the scanned neck of the scrotum and perineal
+      // raphe are part of the donor patch, and the blend surface is a constructed, graded mesh. The two things "still visible"
+      // were seen in renders, not measured; the figures are this build's, measured on the shipped mesh.
+      en: `The skin of the penis and scrotum, with the neck of the scrotum, the grooves beside it and the perineal raphe, is ${g.provenance === 'scanned' ? 'his own scanned skin (BodyParts3D)' : 'a donor surface'}, set into the fitted surface with no vertex moved. The blend surface between it and the fitted skin, over the pubic region, the perineum and the upper inner thighs, is constructed, not scanned (a graded mesh, faired towards the scan)${r ? `: measured there, triangles are up to ${r.longestEdgeMm.max.toFixed(0)} mm long (median ${r.longestEdgeMm.median.toFixed(0)} mm) and neighbouring facets meet at up to ${r.dihedralDeg.max.toFixed(0)}° (${r.dihedralDeg.over45} edges above 45°)` : ''}. Still visible: behind the scrotum the roof of the perineum is a few large flat facets (the scan is coarse there), and a shallow faceted fold lies above the root of the penis. Penis and scrotum move rigidly with the pelvis.`,
+      zh: `阴茎和阴囊的皮肤（连同阴囊颈部、阴囊两侧的沟和会阴缝）${g.provenance === 'scanned' ? '是他本人的扫描皮肤（BodyParts3D）' : '取自供体'}，原样嵌入拟合的体表。它与拟合皮肤之间、盖住耻区、会阴和大腿内侧上部的过渡面是构造的，不是扫描数据（网格由细到粗渐变，向扫描面光顺）${r ? `：在那里量，三角形最长 ${r.longestEdgeMm.max.toFixed(0)} mm（中位数 ${r.longestEdgeMm.median.toFixed(0)} mm），相邻小面夹角最大 ${r.dihedralDeg.max.toFixed(0)}°（${r.dihedralDeg.over45} 条边超过 45°）` : ''}。仍看得出：阴囊后方的会阴顶是几块大平面（扫描在那里很粗），阴茎根上方有一道带棱面的浅横褶。阴茎和阴囊随骨盆刚性运动。`,
     })
   }
   const toeGrafts = report.grafts.filter((x) => /^toes/i.test(x.name))

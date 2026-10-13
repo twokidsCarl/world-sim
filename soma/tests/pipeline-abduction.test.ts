@@ -69,6 +69,23 @@ describe.skipIf(!applied)('male arm abduction (public/anatomy/male)', () => {
   const part = (name: string): Part => data.parts.find((p) => p.name === name)!
   const sides = () => [ab.sides.left, ab.sides.right]
 
+  // 发布的数据必须装着开口后的皮肤包（指纹对不上时构建只是悄悄留着旧皮肤），外展角是钉住的那个且仍满足间隙要求。
+  // The shipped data must carry the opened skin package (on a fingerprint mismatch the build merely keeps the old skin),
+  // and the abduction angle is the pinned one, which still meets the gap requirement.
+  it('ships the opened skin package, at the pinned abduction angle', () => {
+    const r = report as unknown as { skinPackage: { installed: boolean; opened?: unknown; internalsKey: string; fittedTo: { key: string } }; armAbduction: { pinned?: boolean; angleDeg: number; automaticWouldChoose?: number; gapAtPinnedAngleMm: number; gapNeededMm: number; reason: { zh: string; en: string }; requirement: { minGapMm: number } } }
+    expect(r.skinPackage.installed).toBe(true)
+    expect(r.skinPackage.opened).toBeDefined()
+    expect(r.skinPackage.fittedTo.key).toBe(r.skinPackage.internalsKey)
+    expect(r.armAbduction.pinned).toBe(true)
+    expect(r.armAbduction.angleDeg).toBe(6.5)
+    expect(typeof r.armAbduction.automaticWouldChoose).toBe('number')
+    expect(r.armAbduction.gapNeededMm).toBe(r.armAbduction.requirement.minGapMm + 1)
+    expect(r.armAbduction.gapAtPinnedAngleMm).toBeGreaterThanOrEqual(r.armAbduction.gapNeededMm)
+    expect(r.armAbduction.reason.zh.length).toBeGreaterThan(10)
+    expect(r.armAbduction.reason.en.length).toBeGreaterThan(10)
+  })
+
   it('abducts both limbs by the same small angle, the smallest that meets the gap requirement', () => {
     expect(ab.angleDeg).toBeGreaterThanOrEqual(5)
     expect(ab.angleDeg).toBeLessThanOrEqual(15)

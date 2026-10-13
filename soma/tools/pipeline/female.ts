@@ -68,12 +68,12 @@ import { settleToes } from './foot.ts'
 import { depthOf, LAYERS } from './layers.ts'
 import { signedVolume } from './meshRepair.ts'
 import { applyRigid, buildDeformation, buildTwoLevelDeformation, fitRigid, fitSimilarity, icp, InsideTester, PointIndex, surfaceDistance, surfacePoints, thinPoints, type Deformation, type Rigid } from './register.ts'
-import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, loadSkinPackage, notFittedAgainstSkin, selectSkinPackage, signedDistanceToSkin, simplifySkinKeepingFace, skinLockMask, skinResolution, SurfaceDistance, usedVertices, type SkinPackage } from './skinPackage.ts'
+import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, loadSkinPackage, notFittedAgainstSkin, selectSkinPackage, signedDistanceToSkin, skinPackageDirFor, simplifySkinKeepingFace, skinLockMask, skinResolution, SurfaceDistance, usedVertices, type SkinPackage } from './skinPackage.ts'
 import { thinOutsideRegion, thinStructuresOutsideSkin, type ThinOutside } from './thinOutside.ts'
 import { loadThinReference, settleThinParts, THIN_DEFAULTS, THIN_RULES, THIN_TISSUES, type ThinPartsResult } from './thinParts.ts'
 import { expandRetiredLipIds, lipPartIds } from './lipSplit.ts'
 import { refitIntercostalNerves, type IntercostalFitReport } from './intercostalFit.ts'
-import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent } from './skinOpened.ts'
+import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent, TOE_GRAFT_FAULTS } from './skinOpened.ts'
 import { abductArms, ABDUCTION_DEFAULTS } from './armAbduction.ts'
 import { APPENDAGE_DEFAULTS, conformAppendages } from './appendages.ts'
 import { shapedInternalsKey, shapeFemale } from './femaleShape.ts'
@@ -158,9 +158,34 @@ const STANDARD = { statureMm: 1606, bmi: 21.6, boneBmi: 22, population: 'China 2
 
 /** 足底软组织厚度（最低的足骨到地面）和头皮厚度：定义骨架的“地面”和“头顶” / sole pad (lowest foot bone to the floor) and scalp: they define the skeleton's floor and vertex */
 const SOLE_PAD = 0.008
-/** 外部皮肤包的位置（相对项目根）和装入后皮肤部件的 id / where the external skin package lives (relative to the project root) and the skin part's id once installed */
-const SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/female-skin'
+/**
+ * 外部皮肤包的位置（相对项目根；环境变量 SOMA_FEMALE_SKIN_PACKAGE 可改用另一个目录，见 skinPackageDirFor）和装入后皮肤部件的 id
+ * where the external skin package lives (relative to the project root; the environment variable SOMA_FEMALE_SKIN_PACKAGE selects another directory, see skinPackageDirFor) and the skin part's id once installed
+ */
+const SKIN_PACKAGE_DIR = skinPackageDirFor('female', 'data/raw/bodyshape/out/female-skin')
 const EXTERNAL_SKIN_ID = 'SOMA_skin'
+/**
+ * 她的上肢外展角钉在 7.5°：皮肤包（female-skin，fittedTo.key 4ff2d7f05743cf10）就是按这个角的骨架拟合的。
+ * 自动判据按 0.5° 取整，她又读男性的输出：2026-10-13 男性换了足趾和外生殖器的移植片（与她的腋窝无关），
+ * 自动结果就从 7.5° 跳到 7°，骨架指纹随之改变，皮肤包被拒收，构建悄悄退回占位皮肤。
+ * 自动判据照样计算并写进报告（armAbduction.automaticWouldChoose）；7.5° 不再满足间隙要求时构建报错。
+ * 环境变量 SOMA_ARM_ABDUCTION 仍然优先。皮肤包按别的角重新拟合后，改这里的数。
+ * Her arm abduction is pinned at 7.5°: the skin package (female-skin, fittedTo.key 4ff2d7f05743cf10) was fitted to
+ * the skeleton at that angle. The automatic criterion is stepped by 0.5° and she reads the male's output: when on
+ * 2026-10-13 the male received new toe and genital grafts (nothing to do with her axillae) the automatic result
+ * jumped from 7.5° to 7°, the skeleton fingerprint changed with it, the skin package was refused and the build fell
+ * back to the placeholder skin without failing. The automatic criterion is still evaluated and reported
+ * (armAbduction.automaticWouldChoose); the build fails if 7.5° ever stops meeting the gap requirement.
+ * The environment variable SOMA_ARM_ABDUCTION still overrides. Change the figure here when the skin package is
+ * re-fitted at another angle.
+ */
+const PINNED_ARM_ABDUCTION = {
+  angleDeg: 7.5,
+  reason: {
+    zh: '钉在皮肤包拟合时所用的角：自动判据按 0.5° 取整，输入稍有变化就会跳一档，骨架指纹随之改变，皮肤包就装不上。',
+    en: 'pinned at the angle the skin package was fitted at: the automatic criterion is stepped by 0.5° and jumps a step on a small change of the input, which changes the skeleton fingerprint so that the skin package no longer installs.',
+  },
+}
 /**
  * 皮肤作者报告、而管线自己量不出来的缺陷，按皮肤包所拟合的内部结构指纹登记（换了一版内部结构就不再引用）。
  * 同一指纹的包重发时这里要跟着改：现在的数取自重发后的包。
@@ -196,21 +221,6 @@ const SKIN_AUTHOR_NOTES: Record<string, { zh: string; en: string }> = {
  * sentence no longer appears (it is not written when a toe graft is present); should the graft be left
  * out for another reason, change the wording here.
  */
-/**
- * 装入了足趾移植片时写进说明的一句：移植片是带着毛病发布的（协调者 2026-10-13 的决定：分开的足趾虽有瑕疵，仍比连成一块好）。
- * 这是看图得出的描述，不是量出来的：从发布的网格渲染双足（上、下、前），第二、三趾的趾尖皱成小碎片，
- * 足背上移植片与拟合皮肤相接处有一道浅台阶。移植片改好之后请改这里的文字。
- * The sentence the cautions carry when the toe grafts are installed: they ship with their faults (the
- * coordinator's decision of 2026-10-13: separate toes with flaws are better than one block). It is a
- * description made by looking, not a measurement: both feet were rendered from the shipped mesh (above,
- * below, front); the tips of the second and third toes are crumpled into small fragments and a faint step
- * runs where the graft meets the fitted skin on the back of the foot. Change the wording here once the
- * graft is repaired.
- */
-const TOE_GRAFT_FAULTS = {
-  en: 'The grafted toes have visible faults: at the tips of the second and third toes the surface is crumpled into small fragments, on both feet, and a faint step runs across the back of each forefoot where the graft meets the fitted skin.',
-  zh: '移植的足趾有看得见的毛病：双足第二、三趾的趾尖表面皱成小碎片，足背前部移植片与拟合皮肤相接处有一道浅台阶。',
-}
 const TOE_GRAFT_WITHHELD = {
   en: ' Separate toes were built from an artist-made foot mesh, but their tips came out torn and crumpled on both feet, so that graft is not used.',
   zh: '分开的足趾用人工建模的足部网格做过，但双足的趾尖有撕裂和皱缩，所以没有采用。',
@@ -2136,7 +2146,7 @@ async function finish(input: FinishInput) {
       }
       const res = abductArms(
         parts.map((p) => ({ id: p.id, fma: p.fma, name: p.name, tissue: p.tissue, system: p.system, mesh: p.mesh, bbox: measure(p.mesh).bbox, ...(p.centrelines ? { centrelines: p.centrelines } : {}) })),
-        { ...ABDUCTION_DEFAULTS, angleDeg: Number.isNaN(given) ? 'auto' : given, limbBoneIds, log: (m) => console.log(`    abduction ${m}`) },
+        { ...ABDUCTION_DEFAULTS, angleDeg: Number.isNaN(given) ? 'auto' : given, pinned: PINNED_ARM_ABDUCTION, limbBoneIds, log: (m) => console.log(`    abduction ${m}`) },
       )
       if (!res) report.armAbduction = { applied: false, reason: 'a bone of the shoulder is missing' }
       else {

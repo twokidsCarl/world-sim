@@ -51,6 +51,17 @@ import { buildTube, mergeMeshes, type Polyline } from './tube.ts'
 export interface AbductionOptions {
   /** 外展角（度）；'auto' = 按几何取满足间隙要求的最小角 / abduction angle (degrees); 'auto' = the smallest angle that meets the gap requirement, from geometry */
   angleDeg: number | 'auto'
+  /**
+   * 钉住的外展角（度），只在 angleDeg 为 'auto' 时起作用：自动判据照样算、照样写进报告，但实际用这个角。
+   * 用途：自动判据按 angleStep 取整，输入稍有变化就可能跳一档；而皮肤包是按某一个角的骨架拟合的，不能跟着跳。
+   * 钉住的角必须仍满足间隙要求，否则构建报错（不悄悄用一个不够的角）。
+   * A pinned abduction angle (degrees), effective only while angleDeg is 'auto': the automatic criterion is still
+   * evaluated and reported, but this angle is the one used. Why: the automatic choice is stepped by angleStep and can
+   * jump a step on a small change of the input, while a skin package is fitted to the skeleton at one angle and
+   * cannot follow. The pinned angle must still meet the gap requirement; otherwise the build fails (an insufficient
+   * angle is never used silently).
+   */
+  pinned?: { angleDeg: number; reason: { zh: string; en: string } }
   /** 自动取角：臂与躯干深部结构之间至少要有这么宽（米）= 2 ×（皮肤 + 皮下脂肪） / auto: the arm and trunk deep parts must be at least this far apart (m) = 2 × (skin + subcutaneous fat) */
   minGap: number
   /** 自动取角：从肱骨长度的这个比例处起往远端都要满足（0 = 肱骨头中心，1 = 肘） / auto: required from this fraction of the humerus downwards (0 = head centre, 1 = elbow) */
@@ -588,6 +599,16 @@ export function abductArms(parts: TissuePart[], opts: AbductionOptions = ABDUCTI
       }
     }
   } else evalAt(opts.angleDeg)
+  // 钉住的角：自动判据的结果留作记录，实际用钉住的角；它必须满足同一个间隙要求
+  // a pinned angle: the automatic result is kept for the record and the pinned angle is used; it must meet the same gap requirement
+  const pin = typeof opts.angleDeg !== 'number' ? opts.pinned : undefined
+  const automaticDeg = chosenDeg
+  let gapAtPinnedMm = NaN
+  if (pin) {
+    gapAtPinnedMm = evalAt(pin.angleDeg)
+    if (!(gapAtPinnedMm >= need)) throw new Error(`arm abduction: the pinned angle of ${pin.angleDeg}° no longer meets the gap requirement (worst required gap ${gapAtPinnedMm} mm, needed ${need} mm; the automatic criterion would choose ${Number.isNaN(automaticDeg) ? 'no angle' : `${automaticDeg}°`}). The inputs have changed: re-fit the skin package to another angle and change the pinned angle, do not lower the requirement.`)
+    chosenDeg = pin.angleDeg
+  }
   // 报告用的曲线：整度数，到 15° 或所取角度之上 4° / the curve for the report: whole degrees, up to 15° or 4° beyond the chosen angle
   if (!Number.isNaN(chosenDeg)) for (let a = 0; a <= Math.max(15, Math.ceil(chosenDeg) + 4) + 1e-9; a += 1) evalAt(a)
   curve.sort((x, y) => x.angleDeg - y.angleDeg)
@@ -604,7 +625,7 @@ export function abductArms(parts: TissuePart[], opts: AbductionOptions = ABDUCTI
   const limitedBy: string[][] = [[], []]
   const foldLimitedBy: string[][] = [[], []]
   gapsAt(theta, limitedBy, foldLimitedBy)
-  log(`angle ${chosenDeg}° (${opts.angleDeg === 'auto' ? 'smallest that meets the gap requirement' : 'given'})`)
+  log(`angle ${chosenDeg}° (${pin ? `pinned; the automatic criterion would choose ${automaticDeg}°` : opts.angleDeg === 'auto' ? 'smallest that meets the gap requirement' : 'given'})`)
 
   // ── 映射 / the map ─────────────────────────────────────────────────────────────────────────
   const turn = (pts: Float32Array, w: Float32Array): Float32Array => turnBy(pts, w, theta)
@@ -1261,6 +1282,7 @@ export function abductArms(parts: TissuePart[], opts: AbductionOptions = ABDUCTI
     plane: 'coronal (rotation about the runtime Z axis): the anatomical position is defined in the coronal plane, and the antero-posterior position of the limb, set by the shoulder correction, is left as it is; elevation in the scapular plane would also carry the hand forwards',
     scapula: SCAPULOHUMERAL_NOTE,
     angleDeg: r2(chosenDeg),
+    ...(pin ? { pinned: true, reason: pin.reason, automaticWouldChoose: r2(automaticDeg), gapAtPinnedAngleMm: gapAtPinnedMm, gapNeededMm: Math.round(need * 1000) / 1000 } : {}),
     angleChosen: opts.angleDeg === 'auto' ? `smallest multiple of ${opts.angleStep}° at which, on both sides, the deep parts turning with the limb are at least ${opts.minGap * 1000} mm from the deep parts that stay (from the band ${BINS[firstBin]![0]} of the humerus down to the fingertips) and from the muscles of the axillary folds (from the band ${BINS[firstFoldBin]![0]} down: ${opts.foldBandsBelowInsertion} bands below the band in which their insertions on the humerus end; proximal to that the folds meet the arm by anatomy); ${opts.samplingAllowance * 1000} mm is added to the requirement for the point sampling` : 'given',
     requirement,
     criterion: {

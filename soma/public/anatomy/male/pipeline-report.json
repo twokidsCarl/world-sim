@@ -64617,7 +64617,7 @@
   ],
   "provenance": {
    "scannedBefore": 2220,
-   "scannedAfter": 2044,
+   "scannedAfter": 2042,
    "relabelledToWarped": 147,
    "relabelledByTissue": {
     "muscle": 56,
@@ -65038,6 +65038,14 @@
    "verified": false
   },
   "angleDeg": 6.5,
+  "pinned": true,
+  "reason": {
+   "zh": "钉在皮肤包拟合时所用的角：自动判据按 0.5° 取整，输入稍有变化就会跳一档，骨架指纹随之改变，皮肤包就装不上。",
+   "en": "pinned at the angle the skin package was fitted at: the automatic criterion is stepped by 0.5° and jumps a step on a small change of the input, which changes the skeleton fingerprint so that the skin package no longer installs."
+  },
+  "automaticWouldChoose": 6.5,
+  "gapAtPinnedAngleMm": 13.3,
+  "gapNeededMm": 13,
   "angleChosen": "smallest multiple of 0.5° at which, on both sides, the deep parts turning with the limb are at least 12 mm from the deep parts that stay (from the band 25–30% of the humerus down to the fingertips) and from the muscles of the axillary folds (from the band 45–50% down: 2 bands below the band in which their insertions on the humerus end; proximal to that the folds meet the arm by anatomy); 1 mm is added to the requirement for the point sampling",
   "requirement": {
    "minGapMm": 12,
@@ -70514,15 +70522,17 @@
    }
   ],
   "candidates": 1935,
-  "treated": 60,
+  "treated": 61,
   "clippedParts": 2,
   "relabelledToWarped": [
    "FJ1423",
    "FJ1423M",
    "FJ2072",
+   "FJ2102",
    "FJ2118",
    "FJ2120",
    "FJ2141",
+   "FJ2144",
    "FJ2173",
    "FJ2175",
    "FJ2185",
@@ -70545,8 +70555,8 @@
    "FJ3618"
   ],
   "outsideCm2": {
-   "before": 130.03,
-   "after": 4.02
+   "before": 125.86,
+   "after": 4.1
   },
   "parts": [
    {
@@ -70587,7 +70597,7 @@
     },
     "moved": null,
     "outsideCm2": {
-     "before": 20.6,
+     "before": 18.35,
      "after": 0
     },
     "areaCm2": {
@@ -70612,7 +70622,7 @@
     },
     "moved": null,
     "outsideCm2": {
-     "before": 19.36,
+     "before": 17.92,
      "after": 0
     },
     "areaCm2": {
@@ -70634,22 +70644,48 @@
     "moved": {
      "how": "vertices",
      "maxMm": 5.2,
-     "share": 0.1694,
+     "share": 0.1717,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 7.56,
+     "before": 6.44,
      "after": 0
     },
     "areaCm2": {
      "before": 1722.22,
-     "after": 1718.63
+     "after": 1719.14
     },
     "provenance": {
      "before": "curated",
      "after": "curated"
     },
     "note": "vertices displaced by a smooth inward field (up to 5.2 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2120",
+    "name": "Set of plantar digital veins",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.2,
+     "share": 0.8457,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 6.41,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 24.89,
+     "after": 20.61
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.2 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "ZA38D8A0B1",
@@ -70660,7 +70696,7 @@
     "moved": {
      "how": "vertices",
      "maxMm": 5.1,
-     "share": 0.1208,
+     "share": 0.0977,
      "unresolved": 0
     },
     "outsideCm2": {
@@ -70669,39 +70705,13 @@
     },
     "areaCm2": {
      "before": 1690.04,
-     "after": 1687.91
+     "after": 1688.13
     },
     "provenance": {
      "before": "curated",
      "after": "curated"
     },
     "note": "vertices displaced by a smooth inward field (up to 5.1 mm), against the reference skin with a 2.5 mm margin"
-   },
-   {
-    "id": "FJ2120",
-    "name": "Set of plantar digital veins",
-    "tissue": "vein",
-    "rule": "digitalVessels",
-    "action": "recourse",
-    "moved": {
-     "how": "vertices",
-     "maxMm": 6.1,
-     "share": 0.8434,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 5.8,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 24.89,
-     "after": 20.68
-    },
-    "provenance": {
-     "before": "scanned",
-     "after": "warped"
-    },
-    "note": "vertices displaced by a smooth inward field (up to 6.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "FJ2175",
@@ -70711,23 +70721,23 @@
     "action": "recourse",
     "moved": {
      "how": "vertices",
-     "maxMm": 6.4,
-     "share": 0.8654,
+     "maxMm": 6.3,
+     "share": 0.8624,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 5.1,
+     "before": 6,
      "after": 0
     },
     "areaCm2": {
      "before": 24.92,
-     "after": 20.88
+     "after": 20.9
     },
     "provenance": {
      "before": "scanned",
      "after": "warped"
     },
-    "note": "vertices displaced by a smooth inward field (up to 6.4 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+    "note": "vertices displaced by a smooth inward field (up to 6.3 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "ZA26CBCD39",
@@ -70782,32 +70792,6 @@
     "note": "centrelines re-coursed and tubes rebuilt (up to 7.3 mm), against the reference skin with a 2.5 mm margin"
    },
    {
-    "id": "FJ2185",
-    "name": "Set of dorsal digital veins",
-    "tissue": "vein",
-    "rule": "digitalVessels",
-    "action": "recourse",
-    "moved": {
-     "how": "vertices",
-     "maxMm": 7.6,
-     "share": 0.8474,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 3.98,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 14.93,
-     "after": 14.74
-    },
-    "provenance": {
-     "before": "scanned",
-     "after": "warped"
-    },
-    "note": "vertices displaced by a smooth inward field (up to 7.6 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
-   },
-   {
     "id": "ZAAFB06D34",
     "name": "Right investing abdominal fascia",
     "tissue": "fascia",
@@ -70834,6 +70818,32 @@
     "note": "vertices displaced by a smooth inward field (up to 10.6 mm), against the reference skin with a 2.5 mm margin"
    },
    {
+    "id": "FJ2185",
+    "name": "Set of dorsal digital veins",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 8.2,
+     "share": 0.8436,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 3.41,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 14.93,
+     "after": 15.64
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 8.2 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
     "id": "FJ2198",
     "name": "Set of dorsal digital veins",
     "tissue": "vein",
@@ -70841,23 +70851,23 @@
     "action": "recourse",
     "moved": {
      "how": "vertices",
-     "maxMm": 8.1,
-     "share": 0.8591,
+     "maxMm": 8.7,
+     "share": 0.8655,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 3.38,
-     "after": 0
+     "before": 2.95,
+     "after": 0.04
     },
     "areaCm2": {
      "before": 14.9,
-     "after": 14.69
+     "after": 16.84
     },
     "provenance": {
      "before": "scanned",
      "after": "warped"
     },
-    "note": "vertices displaced by a smooth inward field (up to 8.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+    "note": "vertices displaced by a smooth inward field (up to 8.7 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "ZA85EB9FD9",
@@ -71068,30 +71078,30 @@
     "note": "centrelines re-coursed and tubes rebuilt (up to 8.6 mm), against the reference skin with a 2.5 mm margin"
    },
    {
-    "id": "ZA71DBFE1D",
-    "name": "Left cutaneous branch of anterior branch of obturator nerve",
-    "tissue": "nerve",
+    "id": "FJ2144",
+    "name": "Right femoral vein",
+    "tissue": "vein",
     "rule": "subcutaneous",
     "action": "inward",
     "moved": {
-     "how": "centrelines",
-     "maxMm": 3.3,
-     "share": 0.4301,
+     "how": "vertices",
+     "maxMm": 2.9,
+     "share": 0.6737,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 0.6,
+     "before": 0.63,
      "after": 0
     },
     "areaCm2": {
-     "before": 24.14,
-     "after": 24.02
+     "before": 112.09,
+     "after": 109.69
     },
     "provenance": {
-     "before": "curated",
-     "after": "curated"
+     "before": "scanned",
+     "after": "warped"
     },
-    "note": "centrelines re-coursed and tubes rebuilt (up to 3.3 mm), against the reference skin with a 2.5 mm margin"
+    "note": "vertices displaced by a smooth inward field (up to 2.9 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "ZAAB1A9D64",
@@ -71302,6 +71312,32 @@
     "note": "centrelines re-coursed and tubes rebuilt (up to 3.6 mm), against the reference skin with a 2.5 mm margin"
    },
    {
+    "id": "FJ2205",
+    "name": "Set of plantar digital arteries proper",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.5,
+     "share": 0.6685,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.22,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 21.83,
+     "after": 19.6
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
     "id": "ZAE4483B83",
     "name": "Right dorsal fascia of hand",
     "tissue": "fascia",
@@ -71336,7 +71372,7 @@
     "moved": {
      "how": "vertices",
      "maxMm": 4.8,
-     "share": 0.0781,
+     "share": 0.0819,
      "unresolved": 0
     },
     "outsideCm2": {
@@ -71345,7 +71381,7 @@
     },
     "areaCm2": {
      "before": 22.59,
-     "after": 22.53
+     "after": 22.52
     },
     "provenance": {
      "before": "scanned",
@@ -71362,7 +71398,7 @@
     "moved": {
      "how": "vertices",
      "maxMm": 4.7,
-     "share": 0.0708,
+     "share": 0.0729,
      "unresolved": 0
     },
     "outsideCm2": {
@@ -71371,7 +71407,7 @@
     },
     "areaCm2": {
      "before": 23.37,
-     "after": 23.28
+     "after": 23.27
     },
     "provenance": {
      "before": "scanned",
@@ -71388,7 +71424,7 @@
     "moved": {
      "how": "vertices",
      "maxMm": 4.3,
-     "share": 0.0686,
+     "share": 0.0695,
      "unresolved": 0
     },
     "outsideCm2": {
@@ -71397,7 +71433,7 @@
     },
     "areaCm2": {
      "before": 22.81,
-     "after": 22.72
+     "after": 22.71
     },
     "provenance": {
      "before": "scanned",
@@ -71414,7 +71450,7 @@
     "moved": {
      "how": "vertices",
      "maxMm": 5,
-     "share": 0.0759,
+     "share": 0.0764,
      "unresolved": 0
     },
     "outsideCm2": {
@@ -71430,6 +71466,32 @@
      "after": "warped"
     },
     "note": "vertices displaced by a smooth inward field (up to 5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2141",
+    "name": "Dorsal digital artery of foot",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 7.4,
+     "share": 0.7194,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.16,
+     "after": 0.03
+    },
+    "areaCm2": {
+     "before": 17.38,
+     "after": 18.37
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 7.4 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "FJ1423M",
@@ -71458,32 +71520,6 @@
     "note": "vertices displaced by a smooth inward field (up to 2.5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
-    "id": "FJ2205",
-    "name": "Set of plantar digital arteries proper",
-    "tissue": "artery",
-    "rule": "digitalVessels",
-    "action": "recourse",
-    "moved": {
-     "how": "vertices",
-     "maxMm": 3.2,
-     "share": 0.6594,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 0.15,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 21.83,
-     "after": 19.55
-    },
-    "provenance": {
-     "before": "scanned",
-     "after": "warped"
-    },
-    "note": "vertices displaced by a smooth inward field (up to 3.2 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
-   },
-   {
     "id": "ZA39545C97",
     "name": "Right inferior clunial nerves",
     "tissue": "nerve",
@@ -71508,32 +71544,6 @@
      "after": "curated"
     },
     "note": "centrelines re-coursed and tubes rebuilt (up to 3.4 mm), against the reference skin with a 2.5 mm margin"
-   },
-   {
-    "id": "FJ2141",
-    "name": "Dorsal digital artery of foot",
-    "tissue": "artery",
-    "rule": "digitalVessels",
-    "action": "recourse",
-    "moved": {
-     "how": "vertices",
-     "maxMm": 2.9,
-     "share": 0.707,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 0.09,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 17.38,
-     "after": 15.77
-    },
-    "provenance": {
-     "before": "scanned",
-     "after": "warped"
-    },
-    "note": "vertices displaced by a smooth inward field (up to 2.9 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
     "id": "FJ2338",
@@ -71562,6 +71572,32 @@
     "note": "vertices displaced by a smooth inward field (up to 2.8 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
    },
    {
+    "id": "FJ2072",
+    "name": "Dorsal digital artery of foot",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.7,
+     "share": 0.7085,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.06,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 17.39,
+     "after": 17.2
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.7 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
     "id": "ZAFC66FDD6",
     "name": "Left dorsal digital branches of superficial fibular nerve",
     "tissue": "nerve",
@@ -71569,23 +71605,23 @@
     "action": "recourse",
     "moved": {
      "how": "centrelines",
-     "maxMm": 3.3,
-     "share": 0.694,
+     "maxMm": 3.7,
+     "share": 0.6828,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 0.09,
-     "after": 0
+     "before": 0.06,
+     "after": 0.01
     },
     "areaCm2": {
      "before": 5.24,
-     "after": 5.26
+     "after": 5.27
     },
     "provenance": {
      "before": "curated",
      "after": "curated"
     },
-    "note": "centrelines re-coursed and tubes rebuilt (up to 3.3 mm), against the reference skin with a 2.5 mm margin"
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.7 mm), against the reference skin with a 2.5 mm margin"
    },
    {
     "id": "ZA0C9ED8A2",
@@ -71595,75 +71631,23 @@
     "action": "inward",
     "moved": {
      "how": "centrelines",
-     "maxMm": 4.6,
+     "maxMm": 4.3,
      "share": 0.1839,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 0.06,
+     "before": 0.05,
      "after": 0
     },
     "areaCm2": {
      "before": 4.26,
-     "after": 4.27
+     "after": 4.28
     },
     "provenance": {
      "before": "curated",
      "after": "curated"
     },
-    "note": "centrelines re-coursed and tubes rebuilt (up to 4.6 mm), against the reference skin with a 2.5 mm margin"
-   },
-   {
-    "id": "FJ2072",
-    "name": "Dorsal digital artery of foot",
-    "tissue": "artery",
-    "rule": "digitalVessels",
-    "action": "recourse",
-    "moved": {
-     "how": "vertices",
-     "maxMm": 3.1,
-     "share": 0.694,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 0.05,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 17.39,
-     "after": 15.7
-    },
-    "provenance": {
-     "before": "scanned",
-     "after": "warped"
-    },
-    "note": "vertices displaced by a smooth inward field (up to 3.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
-   },
-   {
-    "id": "ZAD8DBB93D",
-    "name": "Right lateral dorsal cutaneous nerve (sural part)",
-    "tissue": "nerve",
-    "rule": "subcutaneous",
-    "action": "inward",
-    "moved": {
-     "how": "centrelines",
-     "maxMm": 4.5,
-     "share": 0.1818,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 0.05,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 4.51,
-     "after": 4.52
-    },
-    "provenance": {
-     "before": "curated",
-     "after": "curated"
-    },
-    "note": "centrelines re-coursed and tubes rebuilt (up to 4.5 mm), against the reference skin with a 2.5 mm margin"
+    "note": "centrelines re-coursed and tubes rebuilt (up to 4.3 mm), against the reference skin with a 2.5 mm margin"
    },
    {
     "id": "ZA3F6EE377",
@@ -71673,23 +71657,23 @@
     "action": "recourse",
     "moved": {
      "how": "centrelines",
-     "maxMm": 3.4,
-     "share": 0.7099,
+     "maxMm": 3.6,
+     "share": 0.7023,
      "unresolved": 0
     },
     "outsideCm2": {
-     "before": 0.04,
+     "before": 0.05,
      "after": 0.01
     },
     "areaCm2": {
      "before": 5.21,
-     "after": 5.23
+     "after": 5.25
     },
     "provenance": {
      "before": "curated",
      "after": "curated"
     },
-    "note": "centrelines re-coursed and tubes rebuilt (up to 3.4 mm), against the reference skin with a 2.5 mm margin"
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.6 mm), against the reference skin with a 2.5 mm margin"
    },
    {
     "id": "ZA09021930",
@@ -71716,6 +71700,32 @@
      "after": "curated"
     },
     "note": "centrelines re-coursed and tubes rebuilt (up to 2.7 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAD8DBB93D",
+    "name": "Right lateral dorsal cutaneous nerve (sural part)",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 4.2,
+     "share": 0.1705,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.03,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 4.51,
+     "after": 4.53
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 4.2 mm), against the reference skin with a 2.5 mm margin"
    },
    {
     "id": "FJ2364",
@@ -71788,6 +71798,32 @@
     "areaCm2": {
      "before": 755.35,
      "after": 752.41
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.4 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2102",
+    "name": "Left femoral vein",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.4,
+     "share": 0.5619,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 112.04,
+     "after": 110.38
     },
     "provenance": {
      "before": "scanned",
@@ -71952,32 +71988,6 @@
     "note": "centrelines re-coursed and tubes rebuilt (up to 2.5 mm), against the reference skin with a 2.5 mm margin"
    },
    {
-    "id": "ZA1EA1F6BC",
-    "name": "Right cutaneous branch of anterior branch of obturator nerve",
-    "tissue": "nerve",
-    "rule": "subcutaneous",
-    "action": "inward",
-    "moved": {
-     "how": "centrelines",
-     "maxMm": 2.3,
-     "share": 0.4296,
-     "unresolved": 0
-    },
-    "outsideCm2": {
-     "before": 0,
-     "after": 0
-    },
-    "areaCm2": {
-     "before": 24.07,
-     "after": 23.98
-    },
-    "provenance": {
-     "before": "curated",
-     "after": "curated"
-    },
-    "note": "centrelines re-coursed and tubes rebuilt (up to 2.3 mm), against the reference skin with a 2.5 mm margin"
-   },
-   {
     "id": "ZA413CAA20",
     "name": "Right posterior brachial cutaneous nerve",
     "tissue": "nerve",
@@ -72011,7 +72021,7 @@
     "action": "inward",
     "moved": {
      "how": "vertices",
-     "maxMm": 2.1,
+     "maxMm": 2.3,
      "share": 0.935,
      "unresolved": 0
     },
@@ -72021,13 +72031,39 @@
     },
     "areaCm2": {
      "before": 13.16,
-     "after": 12
+     "after": 12.15
     },
     "provenance": {
      "before": "curated",
      "after": "curated"
     },
-    "note": "vertices displaced by a smooth inward field (up to 2.1 mm), against the reference skin with a 2.5 mm margin"
+    "note": "vertices displaced by a smooth inward field (up to 2.3 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAA63605E4",
+    "name": "Right proper plantar digital branches of lateral plantar nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.6,
+     "share": 0.6937,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 1.94,
+     "after": 1.94
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.6 mm), against the reference skin with a 2.5 mm margin"
    },
    {
     "id": "ZAB3387F00",
@@ -72111,9 +72147,9 @@
   "reference": {
    "dir": "data/raw/bodyshape/out/male-skin-open",
    "file": "skin-closed.obj",
-   "sha1": "1aa13515c2ae66ca9e5e07a7733e604e08fa48ad",
-   "vertices": 93759,
-   "triangles": 180846,
+   "sha1": "1889d18bc05054baeb84158ffb0fa67638027ff4",
+   "vertices": 96363,
+   "triangles": 186360,
    "fittedTo": {
     "body": "male",
     "key": "169209ce67d8bd76"
@@ -72123,9 +72159,9 @@
   "relabelledByTissue": {
    "fascia": 2,
    "artery": 10,
-   "vein": 14
+   "vein": 16
   },
-  "scannedAfter": 2047
+  "scannedAfter": 2045
  },
  "derived": [
   {
@@ -72350,28 +72386,28 @@
     "name": "Pubic hair",
     "kind": "shell",
     "before": {
-     "outside": 0.807,
-     "minMm": -8.6,
-     "medianMm": 2.1,
-     "p99Mm": 7,
-     "maxMm": 7.6
+     "outside": 0.767,
+     "minMm": -3.5,
+     "medianMm": 2,
+     "p99Mm": 5.6,
+     "maxMm": 6.1
     },
     "after": {
-     "outside": 0.4838,
-     "minMm": -2.4,
-     "medianMm": -0.1,
+     "outside": 0.5111,
+     "minMm": -3.3,
+     "medianMm": 0,
      "p99Mm": 5.5,
-     "maxMm": 6.5
+     "maxMm": 6.6
     },
     "skinSide": {
      "face": "inner",
      "targetMm": -0.5,
-     "vertices": 596,
+     "vertices": 602,
      "before": {
-      "outside": 0.8607,
-      "minMm": -9.2,
+      "outside": 0.8654,
+      "minMm": -3.2,
       "medianMm": 2.4,
-      "p99Mm": 3,
+      "p99Mm": 2.9,
       "maxMm": 3.2
      },
      "after": {
@@ -72384,11 +72420,11 @@
     },
     "volumeMl": [
      15.58,
-     15.88
+     17.16
     ],
     "displacementMm": {
-     "median": 2.93,
-     "max": 8.66
+     "median": 2.87,
+     "max": 3.69
     },
     "verticesOutOfReach": 0,
     "components": 1
@@ -72399,28 +72435,28 @@
     "kind": "nail",
     "before": {
      "outside": 1,
-     "minMm": 0.8,
-     "medianMm": 4.6,
-     "p99Mm": 7.7,
-     "maxMm": 8
+     "minMm": 0.2,
+     "medianMm": 4.1,
+     "p99Mm": 7.2,
+     "maxMm": 7.4
     },
     "after": {
-     "outside": 0.7076,
+     "outside": 0.7582,
      "minMm": -0.9,
      "medianMm": 0.2,
-     "p99Mm": 1.6,
-     "maxMm": 2.6
+     "p99Mm": 0.6,
+     "maxMm": 0.7
     },
     "skinSide": {
      "face": "outer",
      "targetMm": 0.2,
-     "vertices": 474,
+     "vertices": 473,
      "before": {
       "outside": 1,
-      "minMm": 1.3,
-      "medianMm": 4.6,
-      "p99Mm": 8.2,
-      "maxMm": 8.4
+      "minMm": 0.2,
+      "medianMm": 4.2,
+      "p99Mm": 7.6,
+      "maxMm": 7.9
      },
      "after": {
       "outside": 1,
@@ -72435,8 +72471,8 @@
      0.35
     ],
     "displacementMm": {
-     "median": 4.49,
-     "max": 9.19
+     "median": 4.09,
+     "max": 7.68
     },
     "verticesOutOfReach": 0,
     "components": 5
@@ -72446,36 +72482,36 @@
     "name": "Right nail plate (foot)",
     "kind": "nail",
     "before": {
-     "outside": 1,
-     "minMm": 0.6,
-     "medianMm": 4.6,
-     "p99Mm": 8,
-     "maxMm": 8.4
+     "outside": 0.9972,
+     "minMm": -0.1,
+     "medianMm": 4.1,
+     "p99Mm": 7.5,
+     "maxMm": 7.7
     },
     "after": {
-     "outside": 0.6949,
-     "minMm": -1,
+     "outside": 0.7478,
+     "minMm": -0.9,
      "medianMm": 0.2,
-     "p99Mm": 1.1,
-     "maxMm": 2.4
+     "p99Mm": 0.4,
+     "maxMm": 0.6
     },
     "skinSide": {
      "face": "outer",
      "targetMm": 0.2,
-     "vertices": 478,
+     "vertices": 480,
      "before": {
       "outside": 1,
-      "minMm": 1.4,
-      "medianMm": 4.5,
-      "p99Mm": 8.5,
-      "maxMm": 8.6
+      "minMm": 0.3,
+      "medianMm": 4.2,
+      "p99Mm": 7.9,
+      "maxMm": 8.2
      },
      "after": {
       "outside": 1,
-      "minMm": 0.1,
+      "minMm": 0.2,
       "medianMm": 0.2,
       "p99Mm": 0.2,
-      "maxMm": 0.3
+      "maxMm": 0.2
      }
     },
     "volumeMl": [
@@ -72483,8 +72519,8 @@
      0.34
     ],
     "displacementMm": {
-     "median": 4.46,
-     "max": 9.35
+     "median": 4.06,
+     "max": 8.04
     },
     "verticesOutOfReach": 0,
     "components": 5
@@ -72591,13 +72627,13 @@
     "kind": "nail",
     "before": {
      "outside": 1,
-     "minMm": 1.9,
-     "medianMm": 5,
+     "minMm": 1.7,
+     "medianMm": 4.6,
      "p99Mm": 7.5,
      "maxMm": 7.5
     },
     "after": {
-     "outside": 0.8158,
+     "outside": 0.7619,
      "minMm": -0.3,
      "medianMm": 0.2,
      "p99Mm": 0.2,
@@ -72606,11 +72642,11 @@
     "skinSide": {
      "face": "outer",
      "targetMm": 0.2,
-     "vertices": 391,
+     "vertices": 429,
      "before": {
       "outside": 1,
-      "minMm": 1.6,
-      "medianMm": 5.2,
+      "minMm": 1.5,
+      "medianMm": 4.8,
       "p99Mm": 7.6,
       "maxMm": 7.7
      },
@@ -72627,8 +72663,8 @@
      0.01
     ],
     "displacementMm": {
-     "median": 4.95,
-     "max": 7.52
+     "median": 4.6,
+     "max": 7.46
     },
     "verticesOutOfReach": 0,
     "components": 5
@@ -72639,35 +72675,35 @@
     "kind": "nail",
     "before": {
      "outside": 1,
-     "minMm": 2,
-     "medianMm": 4.9,
+     "minMm": 1.7,
+     "medianMm": 4.5,
      "p99Mm": 7.4,
      "maxMm": 7.4
     },
     "after": {
-     "outside": 0.6538,
-     "minMm": -0.9,
-     "medianMm": 0.2,
+     "outside": 0.5926,
+     "minMm": -0.8,
+     "medianMm": 0.1,
      "p99Mm": 0.2,
      "maxMm": 0.2
     },
     "skinSide": {
      "face": "outer",
      "targetMm": 0.2,
-     "vertices": 400,
+     "vertices": 425,
      "before": {
       "outside": 1,
-      "minMm": 1.5,
-      "medianMm": 5.1,
-      "p99Mm": 7.6,
+      "minMm": 1.3,
+      "medianMm": 4.7,
+      "p99Mm": 7.5,
       "maxMm": 7.6
      },
      "after": {
-      "outside": 0.9975,
-      "minMm": -0.1,
+      "outside": 1,
+      "minMm": 0.2,
       "medianMm": 0.2,
       "p99Mm": 0.2,
-      "maxMm": 0.4
+      "maxMm": 0.2
      }
     },
     "volumeMl": [
@@ -72675,8 +72711,8 @@
      0.02
     ],
     "displacementMm": {
-     "median": 4.84,
-     "max": 7.45
+     "median": 4.52,
+     "max": 7.39
     },
     "verticesOutOfReach": 0,
     "components": 5
@@ -72986,11 +73022,11 @@
     }
    }
   },
-  "triangles": 183143,
+  "triangles": 188657,
   "fit": {
    "closed": true,
    "nonManifoldEdges": 0,
-   "outside": 0.00007316910456080244,
+   "outside": 0.00008177723450913215,
    "outside5mm": 0,
    "worst": [
     {
@@ -73004,24 +73040,29 @@
      "maxMm": 0.9
     },
     {
+     "name": "Proximal phalanx of right little toe",
+     "outside": 0.03125,
+     "maxMm": 0.5
+    },
+    {
      "name": "Left zygomatic bone",
      "outside": 0.007042253521126761,
      "maxMm": 0.2
     },
     {
-     "name": "Left extensor digitorum longus",
-     "outside": 0.004329004329004329,
-     "maxMm": 1
+     "name": "Right extensor digitorum brevis",
+     "outside": 0.006644518272425249,
+     "maxMm": 0
     },
     {
      "name": "Right extensor digitorum longus",
-     "outside": 0.003278688524590164,
-     "maxMm": 0.7
+     "outside": 0.00546448087431694,
+     "maxMm": 0.9
     },
     {
-     "name": "Left extensor digitorum brevis",
-     "outside": 0.0031746031746031746,
-     "maxMm": 0.1
+     "name": "Left extensor digitorum longus",
+     "outside": 0.004329004329004329,
+     "maxMm": 0.7
     },
     {
      "name": "Left latissimus dorsi",
@@ -73130,10 +73171,10 @@
    ],
    "matchesAuthorPackage": true,
    "package": {
-    "vertices": 94972,
-    "triangles": 183143,
-    "closedVertices": 93759,
-    "closedTriangles": 180846,
+    "vertices": 97576,
+    "triangles": 188657,
+    "closedVertices": 96363,
+    "closedTriangles": 186360,
     "boundaryLoops": 2,
     "boundaryLoopSizes": [
      67,
@@ -73141,20 +73182,20 @@
     ]
    },
    "shipped": {
-    "vertices": 50889,
-    "triangles": 101645,
+    "vertices": 53576,
+    "triangles": 107019,
     "boundaryLoops": 2,
     "boundaryLoopSizes": [
      67,
      66
     ],
     "boundaryEdges": 133,
-    "restoredTriangles": 4
+    "restoredTriangles": 0
    },
    "byTag": {
     "skin": {
-     "shipped": 29376,
-     "inPackage": 70125
+     "shipped": 29459,
+     "inPackage": 70278
     },
     "upperLip": {
      "shipped": 45,
@@ -73186,23 +73227,23 @@
     },
     "removed": {
      "shipped": 0,
-     "inPackage": 3334
+     "inPackage": 3181
     },
     "graftConstruction": {
-     "shipped": 363,
-     "inPackage": 363
-    },
-    "graftBlend": {
-     "shipped": 1366,
-     "inPackage": 1366
+     "shipped": 888,
+     "inPackage": 888
     },
     "graftScanned": {
-     "shipped": 2268,
-     "inPackage": 2268
+     "shipped": 3032,
+     "inPackage": 3032
+    },
+    "graftBlend": {
+     "shipped": 2992,
+     "inPackage": 2992
     },
     "graftCurated": {
-     "shipped": 16123,
-     "inPackage": 16123
+     "shipped": 15812,
+     "inPackage": 15812
     },
     "lowerLip": {
      "shipped": 45,
@@ -73242,31 +73283,31 @@
       "attribution": "BodyParts3D 4.0 states its licence in two ways; both are quoted here and the difference is not resolved: the OBJ file headers say \"Creative Commons Attribution-Share Alike 2.1 Japan\" (\"BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan\"); its README says CC BY 4.0 (\"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International\")."
      },
      "what": {
-      "zh": "男性外生殖器的皮肤。patchVertices：阴茎和阴囊，取自他本人的扫描皮肤（BodyParts3D 4.0 的 FJ2810 外壁），位置一个也没有动（标签 graftScanned）。constructionVertices：拟合皮肤上原来盖着生殖器的隆起被抹平后得到的耻区、会阴和大腿内侧上部的面，是由周围皮肤解双调和方程构造出来的，不是扫描数据，也不是解剖（标签 graftConstruction）；它比扫描的会阴低，阴囊颈部和会阴缝的扫描面因此被它盖在下面，没有用上。blendRingVertices：两者之间新布的一圈过渡顶点（标签 graftBlend，构造物）。",
-      "en": "The skin of the male external genitalia. patchVertices: penis and scrotum from his own scanned skin (outer wall of FJ2810 of BodyParts3D 4.0), not one position changed (tag graftScanned). constructionVertices: the pubic, perineal and upper inner-thigh surface obtained by flattening the mound the fitted skin had over the genitalia; it is constructed from the surrounding skin by the biharmonic equation and is neither scanned data nor anatomy (tag graftConstruction); it lies lower than the scanned perineum, so the scanned neck of the scrotum and perineal raphe are under it and are not used. blendRingVertices: the loop of new vertices meshed between the two (tag graftBlend, construction)."
+      "zh": "男性外生殖器的皮肤。patchVertices：阴茎、阴囊、阴囊颈和会阴缝，取自他本人的扫描皮肤（BodyParts3D 4.0 的 FJ2810 外壁），位置一个也没有动（标签 graftScanned）。blendRingVertices：把扫描片沿一条光滑的线切出来、以及切之前把扫描的长边对半分时，落在扫描三角形的边上的点（标签 graftBlend）；它们在扫描面上，但不是扫描的顶点。constructionVertices：扫描片边缘与拟合皮肤之间的过渡面（耻区、腹股沟、会阴和两大腿内侧上部），是构造物，不是扫描数据，也不是解剖（标签 graftConstruction）：以扫描在这一带的粗网格面为底稿，重新布网后光顺而成，与扫描片和周围的拟合皮肤相切。",
+      "en": "The skin of the male external genitalia. patchVertices: penis, scrotum, scrotal neck and perineal raphe from his own scanned skin (outer wall of FJ2810 of BodyParts3D 4.0), not one position changed (tag graftScanned). blendRingVertices: points put on edges of scan triangles when the patch was cut out along a smooth line and when long scan edges were halved before that (tag graftBlend); they lie on the scanned surface but are not vertices of the scan. constructionVertices: the blend surface between the rim of the patch and the fitted skin (pubic region, groins, perineum and the upper inner thighs); it is construction, neither scanned data nor anatomy (tag graftConstruction): the coarse scan surface of that zone served as a draft, which was re-meshed and faired, tangent to the patch and to the fitted skin round it."
      },
      "shipped": {
-      "patch": 2268,
-      "blendRing": 52,
-      "construction": 363
+      "patch": 3032,
+      "blendRing": 1630,
+      "construction": 888
      },
      "inPackage": {
-      "patch": 2268,
-      "blendRing": 52,
-      "construction": 363
+      "patch": 3032,
+      "blendRing": 1630,
+      "construction": 888
      },
      "ring": {
-      "triangles": 1024,
+      "triangles": 5972,
       "longestEdgeMm": {
-       "median": 10.43,
-       "p95": 18.42,
-       "max": 42.36
+       "median": 3.02,
+       "p95": 7.6,
+       "max": 30.39
       },
       "dihedralDeg": {
-       "median": 4.9,
-       "p95": 37.6,
-       "max": 172.2,
-       "over45": 56
+       "median": 0.8,
+       "p95": 15.1,
+       "max": 57.4,
+       "over45": 9
       }
      }
     },
@@ -73284,27 +73325,27 @@
       "en": "Separate toes, web spaces and nails: the donor is a CC0 base mesh (not this person's foot, and without a skeleton). Each toe is placed by this body's chain of toe bones: the donor tip on the end of the distal phalanx plus a 3 mm soft-tissue pad, the donor web on the web station of the proximal phalanx; the cross-section is scaled per toe and pushed out locally where bone cover would be short. Behind the webs the surface lies on the package skin. Every vertex was deformed in this way (tag graftCurated); the band at the rim is the blend ring (graftBlend, construction)."
      },
      "shipped": {
-      "patch": 8063,
-      "blendRing": 647,
+      "patch": 7904,
+      "blendRing": 678,
       "construction": 0
      },
      "inPackage": {
-      "patch": 8063,
-      "blendRing": 647,
+      "patch": 7904,
+      "blendRing": 678,
       "construction": 0
      },
      "ring": {
-      "triangles": 1579,
+      "triangles": 1617,
       "longestEdgeMm": {
-       "median": 2.23,
-       "p95": 3.73,
-       "max": 27.41
+       "median": 2.36,
+       "p95": 4.05,
+       "max": 9.31
       },
       "dihedralDeg": {
-       "median": 4.1,
-       "p95": 21.4,
-       "max": 180,
-       "over45": 60
+       "median": 5.2,
+       "p95": 24.7,
+       "max": 93.3,
+       "over45": 20
       }
      }
     },
@@ -73322,27 +73363,27 @@
       "en": "Separate toes, web spaces and nails: the donor is a CC0 base mesh (not this person's foot, and without a skeleton). Each toe is placed by this body's chain of toe bones: the donor tip on the end of the distal phalanx plus a 3 mm soft-tissue pad, the donor web on the web station of the proximal phalanx; the cross-section is scaled per toe and pushed out locally where bone cover would be short. Behind the webs the surface lies on the package skin. Every vertex was deformed in this way (tag graftCurated); the band at the rim is the blend ring (graftBlend, construction)."
      },
      "shipped": {
-      "patch": 8060,
-      "blendRing": 667,
+      "patch": 7908,
+      "blendRing": 684,
       "construction": 0
      },
      "inPackage": {
-      "patch": 8060,
-      "blendRing": 667,
+      "patch": 7908,
+      "blendRing": 684,
       "construction": 0
      },
      "ring": {
-      "triangles": 1597,
+      "triangles": 1627,
       "longestEdgeMm": {
-       "median": 2.17,
-       "p95": 3.61,
-       "max": 22.03
+       "median": 2.26,
+       "p95": 3.9,
+       "max": 10.6
       },
       "dihedralDeg": {
-       "median": 3.7,
-       "p95": 17.4,
-       "max": 180,
-       "over45": 24
+       "median": 5.2,
+       "p95": 21.9,
+       "max": 61.9,
+       "over45": 3
       }
      }
     }
@@ -73362,15 +73403,15 @@
        "median": -0.147,
        "p90": 0.671
       },
-      "flipped": 2,
-      "flippedGapInPackageMmMax": 0.007,
-      "gapChangeMmMax": 0.027,
+      "flipped": 6,
+      "flippedGapInPackageMmMax": 0.011,
+      "gapChangeMmMax": 0.024,
       "mergedPositions": 0
      }
     },
     "at14Bits": {
      "bits": 14,
-     "stepMm": 0.1052,
+     "stepMm": 0.1051,
      "marginPairs": 45,
      "marginPairsShippedApart": 45,
      "marginPairsCoincidentAfter": 45,
@@ -73384,32 +73425,32 @@
       },
       "flipped": 10,
       "flippedGapInPackageMmMax": 0.056,
-      "gapChangeMmMax": 0.104,
-      "mergedPositions": 11
+      "gapChangeMmMax": 0.135,
+      "mergedPositions": 12
      }
     }
    },
    "closedCounterpart": {
-    "vertices": 49676,
-    "triangles": 99348,
+    "vertices": 52363,
+    "triangles": 104722,
     "boundaryEdges": 0,
     "used": true
    },
    "toeLengthScale": {
-    "min": 1.286,
-    "max": 1.561
+    "min": 1.252,
+    "max": 1.456
    },
    "sidecar": {
     "file": "skin-source.u32",
-    "vertices": 50889,
+    "vertices": 53576,
     "maxErrorMm": 0.0132,
     "stepMm": 0.0263
    }
   },
   "resolution": {
    "source": {
-    "vertices": 94972,
-    "triangles": 183143,
+    "vertices": 97576,
+    "triangles": 188657,
     "face": {
      "vertices": 16324,
      "triangles": 32201,
@@ -73418,38 +73459,38 @@
      "maxEdgeMm": 10.2
     },
     "rest": {
-     "vertices": 78648,
-     "meanEdgeMm": 4.44
+     "vertices": 81252,
+     "meanEdgeMm": 4.36
     }
    },
    "simplifiedWhole": {
-    "vertices": 14491,
-    "triangles": 28970,
+    "vertices": 14517,
+    "triangles": 29030,
     "face": {
-     "vertices": 1147,
-     "triangles": 2215,
-     "meanEdgeMm": 7.15,
-     "p95EdgeMm": 17.46,
-     "maxEdgeMm": 40.45
+     "vertices": 1118,
+     "triangles": 2162,
+     "meanEdgeMm": 7.2,
+     "p95EdgeMm": 17.4,
+     "maxEdgeMm": 40.14
     },
     "rest": {
-     "vertices": 13344,
+     "vertices": 13399,
      "meanEdgeMm": 13.83
     }
    },
    "shipped": {
-    "vertices": 50889,
-    "triangles": 101645,
+    "vertices": 53576,
+    "triangles": 107019,
     "face": {
      "vertices": 16324,
-     "triangles": 32267,
+     "triangles": 32274,
      "meanEdgeMm": 1.81,
-     "p95EdgeMm": 3.82,
-     "maxEdgeMm": 22.89
+     "p95EdgeMm": 3.83,
+     "maxEdgeMm": 15.48
     },
     "rest": {
-     "vertices": 34565,
-     "meanEdgeMm": 6.43
+     "vertices": 37252,
+     "meanEdgeMm": 6.09
     }
    },
    "shippedTopology": {
@@ -73460,7 +73501,7 @@
   "fitShipped": {
    "closed": true,
    "nonManifoldEdges": 2,
-   "outside": 0.00007316910456080244,
+   "outside": 0.00008177723450913215,
    "outside5mm": 0,
    "worst": [
     {
@@ -73474,24 +73515,29 @@
      "maxMm": 0.9
     },
     {
+     "name": "Proximal phalanx of right little toe",
+     "outside": 0.03125,
+     "maxMm": 0.5
+    },
+    {
      "name": "Left zygomatic bone",
      "outside": 0.007042253521126761,
      "maxMm": 0.2
     },
     {
-     "name": "Left extensor digitorum longus",
-     "outside": 0.004329004329004329,
-     "maxMm": 1
+     "name": "Right extensor digitorum brevis",
+     "outside": 0.006644518272425249,
+     "maxMm": 0
     },
     {
      "name": "Right extensor digitorum longus",
-     "outside": 0.003278688524590164,
-     "maxMm": 0.7
+     "outside": 0.00546448087431694,
+     "maxMm": 0.9
     },
     {
-     "name": "Left extensor digitorum brevis",
-     "outside": 0.0031746031746031746,
-     "maxMm": 0.1
+     "name": "Left extensor digitorum longus",
+     "outside": 0.004329004329004329,
+     "maxMm": 0.7
     },
     {
      "name": "Left latissimus dorsi",
@@ -73561,7 +73607,7 @@
    "thin": {
     "closed": true,
     "nonManifoldEdges": 2,
-    "outside": 0.00006531918628623685,
+    "outside": 0.00006531865296607921,
     "outside5mm": 0,
     "worst": [
      {
@@ -73616,15 +73662,15 @@
   "thinOutside": {
    "spacingM": 0.002,
    "parts": 1949,
-   "samples": 3888943,
+   "samples": 3889102,
    "raysDisagreed": 0,
-   "totalAreaCm2": 46393.13,
-   "outsideCm2": 4.59,
+   "totalAreaCm2": 46397.34,
+   "outsideCm2": 4.67,
    "outsideOver1mmCm2": 1.07,
    "byRegion": {
-    "other": 4.35,
+    "other": 4.34,
     "head": 0.23,
-    "forefoot": 0.01
+    "forefoot": 0.09
    },
    "rows": [
     {
@@ -73686,41 +73732,41 @@
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
     "fma": "FMA53659",
-    "sourceTriangles": 36208,
-    "areaCm2": 1017,
-    "volumeMl": 576,
+    "sourceTriangles": 35928,
+    "areaCm2": 1018,
+    "volumeMl": 575,
     "thicknessMm": {
      "p10": 3,
      "median": 6,
      "p90": 12,
      "max": 30
     },
-    "skinCovered": 0.942,
+    "skinCovered": 0.941,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
     "fma": "FMA53660",
-    "sourceTriangles": 14244,
-    "areaCm2": 406,
-    "volumeMl": 219,
+    "sourceTriangles": 14252,
+    "areaCm2": 407,
+    "volumeMl": 220,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.994,
+    "skinCovered": 0.993,
     "verticesPulledIn": 0
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
     "fma": "FMA50257",
-    "sourceTriangles": 334816,
-    "areaCm2": 10159,
-    "volumeMl": 6430,
+    "sourceTriangles": 335972,
+    "areaCm2": 10194,
+    "volumeMl": 6439,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
@@ -73728,47 +73774,47 @@
      "max": 30
     },
     "skinCovered": 0.996,
-    "verticesPulledIn": 0.0047
+    "verticesPulledIn": 0.005
    },
    {
     "id": "SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
     "fma": "FMA58392",
-    "sourceTriangles": 88752,
-    "areaCm2": 2642,
-    "volumeMl": 1434,
+    "sourceTriangles": 88908,
+    "areaCm2": 2646,
+    "volumeMl": 1435,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.987,
-    "verticesPulledIn": 0.0003
+    "skinCovered": 0.988,
+    "verticesPulledIn": 0.0007
    },
    {
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
     "fma": "FMA58391",
-    "sourceTriangles": 89304,
-    "areaCm2": 2673,
-    "volumeMl": 1458,
+    "sourceTriangles": 89560,
+    "areaCm2": 2678,
+    "volumeMl": 1459,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
      "p90": 18,
      "max": 30
     },
-    "skinCovered": 0.987,
-    "verticesPulledIn": 0.0008
+    "skinCovered": 0.989,
+    "verticesPulledIn": 0.001
    },
    {
     "id": "SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
     "fma": "FMA58396",
-    "sourceTriangles": 178892,
-    "areaCm2": 5558,
-    "volumeMl": 3467,
+    "sourceTriangles": 178920,
+    "areaCm2": 5557,
+    "volumeMl": 3474,
     "thicknessMm": {
      "p10": 3,
      "median": 9,
@@ -73782,9 +73828,9 @@
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
     "fma": "FMA58395",
-    "sourceTriangles": 179992,
+    "sourceTriangles": 179836,
     "areaCm2": 5590,
-    "volumeMl": 3529,
+    "volumeMl": 3532,
     "thicknessMm": {
      "p10": 3,
      "median": 12,
@@ -73792,7 +73838,7 @@
      "max": 30
     },
     "skinCovered": 0.992,
-    "verticesPulledIn": 0.0002
+    "verticesPulledIn": 0.0001
    }
   ]
  },
@@ -74181,110 +74227,110 @@
   "FJ1359": 0,
   "FJ1373": 0,
   "FJ1374": 0,
-  "FJ1383": 0.145,
-  "FJ1383M": 0.145,
+  "FJ1383": 0.143,
+  "FJ1383M": 0.143,
   "FJ1384": 0,
   "FJ1384M": 0,
   "FJ1385": 0.022,
   "FJ1385M": 0.022,
   "FJ1386": 0,
   "FJ1386M": 0,
-  "FJ1387": 0.008,
-  "FJ1387M": 0.008,
-  "FJ1388": 0.007,
-  "FJ1388M": 0.007,
-  "FJ1389": 0.012,
-  "FJ1389M": 0.012,
-  "FJ1390": 0.316,
-  "FJ1390M": 0.316,
-  "FJ1391": 0.143,
-  "FJ1391M": 0.143,
-  "FJ1393": 0.061,
-  "FJ1393M": 0.061,
+  "FJ1387": 0.006,
+  "FJ1387M": 0.006,
+  "FJ1388": 0.001,
+  "FJ1388M": 0.001,
+  "FJ1389": 0.01,
+  "FJ1389M": 0.01,
+  "FJ1390": 0.299,
+  "FJ1390M": 0.299,
+  "FJ1391": 0.171,
+  "FJ1391M": 0.171,
+  "FJ1393": 0.07,
+  "FJ1393M": 0.07,
   "FJ1394": 0.464,
   "FJ1394M": 0.464,
-  "FJ1395": 0.433,
-  "FJ1395M": 0.433,
-  "FJ1396": 0.085,
-  "FJ1396M": 0.085,
+  "FJ1395": 0.432,
+  "FJ1395M": 0.432,
+  "FJ1396": 0.072,
+  "FJ1396M": 0.072,
   "FJ1397": 0.514,
   "FJ1397M": 0.514,
   "FJ1398": 0,
   "FJ1398M": 0,
-  "FJ1399": 0.051,
-  "FJ1399M": 0.051,
-  "FJ1400": 0.436,
-  "FJ1400M": 0.436,
+  "FJ1399": 0.03,
+  "FJ1399M": 0.03,
+  "FJ1400": 0.433,
+  "FJ1400M": 0.433,
   "FJ1401": 0,
   "FJ1401M": 0,
-  "FJ1402": 0.131,
-  "FJ1402M": 0.131,
+  "FJ1402": 0.136,
+  "FJ1402M": 0.136,
   "FJ1403": 0.036,
   "FJ1403M": 0.036,
   "FJ1404": 0,
   "FJ1404M": 0,
   "FJ1405": 0.411,
   "FJ1405M": 0.411,
-  "FJ1406": 0.284,
-  "FJ1406M": 0.284,
-  "FJ1407": 0.066,
-  "FJ1407M": 0.066,
-  "FJ1408": 0.147,
-  "FJ1408M": 0.147,
-  "FJ1409": 0.126,
-  "FJ1409M": 0.126,
-  "FJ1410": 0.392,
-  "FJ1410M": 0.392,
-  "FJ1411": 0.159,
-  "FJ1411M": 0.159,
+  "FJ1406": 0.283,
+  "FJ1406M": 0.283,
+  "FJ1407": 0.07,
+  "FJ1407M": 0.07,
+  "FJ1408": 0.139,
+  "FJ1408M": 0.139,
+  "FJ1409": 0.128,
+  "FJ1409M": 0.128,
+  "FJ1410": 0.39,
+  "FJ1410M": 0.39,
+  "FJ1411": 0.153,
+  "FJ1411M": 0.153,
   "FJ1412": 0.003,
   "FJ1412M": 0.003,
-  "FJ1413": 0.455,
-  "FJ1413M": 0.455,
-  "FJ1414": 0.136,
-  "FJ1414M": 0.136,
-  "FJ1415": 0.064,
-  "FJ1415M": 0.064,
+  "FJ1413": 0.451,
+  "FJ1413M": 0.451,
+  "FJ1414": 0.135,
+  "FJ1414M": 0.135,
+  "FJ1415": 0.071,
+  "FJ1415M": 0.071,
   "FJ1416": 0,
   "FJ1416M": 0,
   "FJ1417": 0,
   "FJ1417M": 0,
-  "FJ1418": 0.475,
-  "FJ1418M": 0.475,
-  "FJ1419": 0.281,
-  "FJ1419M": 0.281,
-  "FJ1420": 0.024,
-  "FJ1420M": 0.024,
-  "FJ1421": 0.339,
-  "FJ1421M": 0.339,
-  "FJ1422": 0.031,
-  "FJ1422M": 0.031,
+  "FJ1418": 0.479,
+  "FJ1418M": 0.479,
+  "FJ1419": 0.286,
+  "FJ1419M": 0.286,
+  "FJ1420": 0.026,
+  "FJ1420M": 0.026,
+  "FJ1421": 0.36,
+  "FJ1421M": 0.36,
+  "FJ1422": 0.032,
+  "FJ1422M": 0.032,
   "FJ1425": 0,
   "FJ1425M": 0,
-  "FJ1426": 0.001,
-  "FJ1426M": 0.001,
-  "FJ1427": 0.185,
-  "FJ1427M": 0.185,
+  "FJ1426": 0,
+  "FJ1426M": 0,
+  "FJ1427": 0.182,
+  "FJ1427M": 0.182,
   "FJ1428": 0,
   "FJ1428M": 0,
-  "FJ1429": 0.113,
-  "FJ1429M": 0.113,
-  "FJ1430": 0.014,
-  "FJ1430M": 0.014,
+  "FJ1429": 0.111,
+  "FJ1429M": 0.111,
+  "FJ1430": 0.011,
+  "FJ1430M": 0.011,
   "FJ1431": 0.002,
   "FJ1431M": 0.002,
   "FJ1432": 0,
   "FJ1432M": 0,
   "FJ1433": 0.376,
   "FJ1433M": 0.376,
-  "FJ1434": 0.455,
-  "FJ1434M": 0.455,
-  "FJ1435": 0.208,
-  "FJ1435M": 0.208,
+  "FJ1434": 0.453,
+  "FJ1434M": 0.453,
+  "FJ1435": 0.207,
+  "FJ1435M": 0.207,
   "FJ1436": 0.425,
   "FJ1436M": 0.425,
-  "FJ1437": 0.148,
-  "FJ1437M": 0.148,
+  "FJ1437": 0.149,
+  "FJ1437M": 0.149,
   "FJ1438": 0.527,
   "FJ1438M": 0.527,
   "FJ1439": 0.415,
@@ -74295,20 +74341,20 @@
   "FJ1441M": 0,
   "FJ1442": 0.433,
   "FJ1442M": 0.433,
-  "FJ1443": 0.219,
-  "FJ1443M": 0.219,
-  "FJ1444": 0.05,
-  "FJ1444M": 0.05,
+  "FJ1443": 0.22,
+  "FJ1443M": 0.22,
+  "FJ1444": 0.051,
+  "FJ1444M": 0.051,
   "FJ1445": 0,
   "FJ1445M": 0,
-  "FJ1446": 0.2,
-  "FJ1446M": 0.2,
+  "FJ1446": 0.196,
+  "FJ1446M": 0.196,
   "FJ1447": 0.267,
   "FJ1447M": 0.267,
-  "FJ1448": 0.179,
+  "FJ1448": 0.181,
   "FJ1449M": 0,
-  "FJ1450": 0.209,
-  "FJ1450M": 0.209,
+  "FJ1450": 0.193,
+  "FJ1450M": 0.193,
   "FJ1451": 0,
   "FJ1451M": 0,
   "FJ1452": 0.386,
@@ -74320,7 +74366,7 @@
   "FJ1455M": 0,
   "FJ1456": 0,
   "FJ1456M": 0,
-  "FJ1458M": 0.005,
+  "FJ1458M": 0.004,
   "FJ1459": 0.032,
   "FJ1459M": 0.032,
   "FJ1460": 0,
@@ -74331,116 +74377,116 @@
   "FJ1462M": 0,
   "FJ1463": 0,
   "FJ1463M": 0,
-  "FJ1464": 0.386,
-  "FJ1464M": 0.386,
+  "FJ1464": 0.384,
+  "FJ1464M": 0.384,
   "FJ1465": 0,
   "FJ1465M": 0,
   "FJ1466": 0.502,
   "FJ1466M": 0.502,
-  "FJ1467": 0.479,
-  "FJ1467M": 0.479,
-  "FJ1468": 0.422,
-  "FJ1468M": 0.422,
-  "FJ1469": 0.048,
-  "FJ1469M": 0.048,
-  "FJ1470": 0.037,
-  "FJ1470M": 0.037,
-  "FJ1472": 0.122,
-  "FJ1472M": 0.122,
-  "FJ1473": 0.444,
-  "FJ1473M": 0.444,
-  "FJ1474": 0.147,
-  "FJ1474M": 0.147,
-  "FJ1475": 0.103,
-  "FJ1475M": 0.103,
+  "FJ1467": 0.472,
+  "FJ1467M": 0.472,
+  "FJ1468": 0.427,
+  "FJ1468M": 0.427,
+  "FJ1469": 0.045,
+  "FJ1469M": 0.045,
+  "FJ1470": 0.032,
+  "FJ1470M": 0.032,
+  "FJ1472": 0.12,
+  "FJ1472M": 0.12,
+  "FJ1473": 0.439,
+  "FJ1473M": 0.439,
+  "FJ1474": 0.148,
+  "FJ1474M": 0.148,
+  "FJ1475": 0.101,
+  "FJ1475M": 0.101,
   "FJ1477": 0.317,
   "FJ1477M": 0.317,
   "FJ1478": 0.309,
   "FJ1478M": 0.309,
-  "FJ1479": 0.359,
-  "FJ1479M": 0.359,
-  "FJ1480": 0.155,
-  "FJ1480M": 0.155,
-  "FJ1481": 0.036,
-  "FJ1481M": 0.036,
-  "FJ1482": 0.066,
-  "FJ1482M": 0.066,
-  "FJ1483": 0.437,
-  "FJ1483M": 0.437,
-  "FJ1484": 0.078,
-  "FJ1484M": 0.078,
-  "FJ1485": 0.392,
-  "FJ1485M": 0.392,
+  "FJ1479": 0.365,
+  "FJ1479M": 0.365,
+  "FJ1480": 0.152,
+  "FJ1480M": 0.152,
+  "FJ1481": 0.028,
+  "FJ1481M": 0.028,
+  "FJ1482": 0.074,
+  "FJ1482M": 0.074,
+  "FJ1483": 0.438,
+  "FJ1483M": 0.438,
+  "FJ1484": 0.085,
+  "FJ1484M": 0.085,
+  "FJ1485": 0.383,
+  "FJ1485M": 0.383,
   "FJ1486": 0.161,
   "FJ1486M": 0.161,
   "FJ1487": 0.478,
   "FJ1487M": 0.478,
-  "FJ1488": 0.006,
-  "FJ1488M": 0.006,
-  "FJ1489": 0.065,
-  "FJ1489M": 0.065,
-  "FJ1490": 0.352,
-  "FJ1490M": 0.352,
+  "FJ1488": 0.004,
+  "FJ1488M": 0.004,
+  "FJ1489": 0.064,
+  "FJ1489M": 0.064,
+  "FJ1490": 0.353,
+  "FJ1490M": 0.353,
   "FJ1491": 0.089,
   "FJ1491M": 0.089,
-  "FJ1492": 0.445,
-  "FJ1492M": 0.445,
-  "FJ1493": 0.037,
-  "FJ1493M": 0.037,
-  "FJ1494": 0.156,
-  "FJ1494M": 0.156,
-  "FJ1495": 0.094,
-  "FJ1495M": 0.094,
-  "FJ1496": 0.351,
-  "FJ1496M": 0.351,
+  "FJ1492": 0.442,
+  "FJ1492M": 0.442,
+  "FJ1493": 0.038,
+  "FJ1493M": 0.038,
+  "FJ1494": 0.147,
+  "FJ1494M": 0.147,
+  "FJ1495": 0.101,
+  "FJ1495M": 0.101,
+  "FJ1496": 0.346,
+  "FJ1496M": 0.346,
   "FJ1497": 0.023,
   "FJ1497M": 0.023,
-  "FJ1498": 0.082,
-  "FJ1498M": 0.082,
-  "FJ1499": 0.103,
-  "FJ1499M": 0.103,
+  "FJ1498": 0.079,
+  "FJ1498M": 0.079,
+  "FJ1499": 0.101,
+  "FJ1499M": 0.101,
   "FJ1500": 0.125,
   "FJ1500M": 0.125,
-  "FJ1501": 0.07,
-  "FJ1501M": 0.07,
-  "FJ1502": 0.438,
-  "FJ1502M": 0.438,
-  "FJ1503": 0.051,
-  "FJ1503M": 0.051,
+  "FJ1501": 0.076,
+  "FJ1501M": 0.076,
+  "FJ1502": 0.439,
+  "FJ1502M": 0.439,
+  "FJ1503": 0.052,
+  "FJ1503M": 0.052,
   "FJ1504": 0,
   "FJ1504M": 0,
   "FJ1505": 0,
   "FJ1505M": 0,
   "FJ1506": 0,
   "FJ1506M": 0,
-  "FJ1507": 0.168,
-  "FJ1507M": 0.168,
-  "FJ1508": 0.032,
-  "FJ1508M": 0.032,
-  "FJ1509": 0.225,
-  "FJ1509M": 0.225,
-  "FJ1510": 0.066,
-  "FJ1510M": 0.066,
+  "FJ1507": 0.162,
+  "FJ1507M": 0.162,
+  "FJ1508": 0.031,
+  "FJ1508M": 0.031,
+  "FJ1509": 0.229,
+  "FJ1509M": 0.229,
+  "FJ1510": 0.059,
+  "FJ1510M": 0.059,
   "FJ1511": 0.004,
   "FJ1511M": 0.004,
-  "FJ1512": 0.37,
-  "FJ1512M": 0.37,
-  "FJ1513": 0.402,
-  "FJ1513M": 0.402,
-  "FJ1514": 0.262,
-  "FJ1514M": 0.262,
-  "FJ1515": 0.108,
-  "FJ1515M": 0.108,
+  "FJ1512": 0.373,
+  "FJ1512M": 0.373,
+  "FJ1513": 0.403,
+  "FJ1513M": 0.403,
+  "FJ1514": 0.243,
+  "FJ1514M": 0.243,
+  "FJ1515": 0.102,
+  "FJ1515M": 0.102,
   "FJ1516": 0,
   "FJ1516M": 0,
-  "FJ1517": 0.122,
-  "FJ1517M": 0.122,
-  "FJ1518": 0.361,
-  "FJ1518M": 0.361,
-  "FJ1520": 0.436,
-  "FJ1520M": 0.436,
-  "FJ1521": 0.36,
-  "FJ1521M": 0.36,
+  "FJ1517": 0.12,
+  "FJ1517M": 0.12,
+  "FJ1518": 0.358,
+  "FJ1518M": 0.358,
+  "FJ1520": 0.438,
+  "FJ1520M": 0.438,
+  "FJ1521": 0.355,
+  "FJ1521M": 0.355,
   "FJ1522": 0,
   "FJ1522M": 0,
   "FJ1524": 0,
@@ -74453,16 +74499,16 @@
   "FJ1527M": 0.069,
   "FJ1528": 0,
   "FJ1528M": 0,
-  "FJ1532": 0.011,
-  "FJ1532M": 0.011,
+  "FJ1532": 0.01,
+  "FJ1532M": 0.01,
   "FJ1533": 0,
   "FJ1533M": 0,
   "FJ1534": 0,
   "FJ1534M": 0,
   "FJ1535": 0,
   "FJ1535M": 0,
-  "FJ1536": 0.011,
-  "FJ1536M": 0.011,
+  "FJ1536": 0.01,
+  "FJ1536M": 0.01,
   "FJ1537": 0,
   "FJ1537M": 0,
   "FJ1538": 0.013,
@@ -74479,8 +74525,8 @@
   "FJ1543M": 0,
   "FJ1544": 0,
   "FJ1544M": 0,
-  "FJ1545": 0.05,
-  "FJ1545M": 0.05,
+  "FJ1545": 0.053,
+  "FJ1545M": 0.053,
   "FJ1546": 0.005,
   "FJ1546M": 0.005,
   "FJ1547": 0,
@@ -74497,33 +74543,33 @@
   "FJ1552M": 0,
   "FJ1553": 0,
   "FJ1553M": 0,
-  "FJ1554": 0.353,
-  "FJ1554M": 0.353,
-  "FJ1555": 0.004,
-  "FJ1556": 0.004,
+  "FJ1554": 0.349,
+  "FJ1554M": 0.349,
+  "FJ1555": 0.006,
+  "FJ1556": 0.006,
   "FJ1557": 0,
-  "FJ1558": 0.353,
+  "FJ1558": 0.35,
   "FJ1559": 0,
-  "FJ1560": 0.004,
+  "FJ1560": 0.006,
   "FJ1561": 0,
   "FJ1562": 0,
   "FJ1563": 0,
   "FJ1564": 0.018,
   "FJ1565": 0.005,
   "FJ1566": 0,
-  "FJ1567": 0.046,
+  "FJ1567": 0.047,
   "FJ1568": 0,
   "FJ1569": 0,
   "FJ1570": 0.001,
-  "FJ1571": 0.027,
+  "FJ1571": 0.028,
   "FJ1572": 0,
-  "FJ1573": 0.157,
+  "FJ1573": 0.159,
   "FJ1574": 0.002,
   "FJ1575": 0.001,
   "FJ1576": 0,
   "FJ1577": 0,
-  "FJ1578": 0.004,
-  "FJ1579": 0.004,
+  "FJ1578": 0.006,
+  "FJ1579": 0.006,
   "FJ1580": 0,
   "FJ1581": 0,
   "FJ1582": 0,
@@ -74531,15 +74577,15 @@
   "FJ1584": 0,
   "FJ1585": 0.018,
   "FJ1586": 0.005,
-  "FJ1587": 0.353,
+  "FJ1587": 0.35,
   "FJ1588": 0,
-  "FJ1589": 0.046,
+  "FJ1589": 0.047,
   "FJ1590": 0,
   "FJ1591": 0,
   "FJ1592": 0.001,
-  "FJ1593": 0.027,
+  "FJ1593": 0.028,
   "FJ1594": 0,
-  "FJ1595": 0.157,
+  "FJ1595": 0.159,
   "FJ1596": 0.002,
   "FJ1597": 0.001,
   "FJ1598": 0,
@@ -74550,7 +74596,7 @@
   "FJ2547": 0,
   "FJ2549": 0,
   "FJ2550": 0,
-  "FJ2551": 0.005,
+  "FJ2551": 0.004,
   "FJ2738": 0,
   "FJ2739": 0,
   "FJ2740": 0,
@@ -74599,12 +74645,12 @@
   "R3_FMA13359": 0.366,
   "R3_FMA13377": 0.011,
   "R3_FMA13378": 0.011,
-  "R3_FMA13892": 0.025,
-  "R3_FMA13893": 0.025,
+  "R3_FMA13892": 0.024,
+  "R3_FMA13893": 0.024,
   "R3_FMA22344": 0.001,
   "R3_FMA22345": 0.001,
-  "R3_FMA22346": 0.014,
-  "R3_FMA22347": 0.014,
+  "R3_FMA22346": 0.016,
+  "R3_FMA22347": 0.016,
   "R3_FMA22348": 0,
   "R3_FMA22349": 0,
   "R3_FMA22781": 0,
@@ -74613,86 +74659,86 @@
   "R3_FMA22879": 0,
   "R3_FMA46283": 0,
   "R3_FMA46287": 0,
-  "R3_FMA46759": 0.294,
-  "R3_FMA46760": 0.294,
-  "R3_FMA46761": 0.228,
-  "R3_FMA46762": 0.228,
-  "R3_FMA46763": 0.443,
-  "R3_FMA46764": 0.443,
-  "R3_FMA46768": 0.383,
-  "R3_FMA46782": 0.237,
-  "R3_FMA46783": 0.237,
-  "R3_FMA46785": 0.25,
-  "R3_FMA46786": 0.25,
-  "R3_FMA46796": 0.004,
-  "R3_FMA46797": 0.004,
-  "R3_FMA46803": 0.038,
-  "R3_FMA46804": 0.038,
-  "R3_FMA46806": 0.112,
-  "R3_FMA46807": 0.112,
-  "R3_FMA46812": 0.245,
-  "R3_FMA46813": 0.245,
-  "R3_FMA46814": 0.16,
-  "R3_FMA46815": 0.16,
-  "R3_FMA46817": 0.073,
-  "R3_FMA46818": 0.073,
-  "R3_FMA46823": 0.084,
-  "R3_FMA46824": 0.084,
+  "R3_FMA46759": 0.293,
+  "R3_FMA46760": 0.293,
+  "R3_FMA46761": 0.225,
+  "R3_FMA46762": 0.225,
+  "R3_FMA46763": 0.442,
+  "R3_FMA46764": 0.442,
+  "R3_FMA46768": 0.375,
+  "R3_FMA46782": 0.232,
+  "R3_FMA46783": 0.232,
+  "R3_FMA46785": 0.256,
+  "R3_FMA46786": 0.256,
+  "R3_FMA46796": 0.002,
+  "R3_FMA46797": 0.002,
+  "R3_FMA46803": 0.04,
+  "R3_FMA46804": 0.04,
+  "R3_FMA46806": 0.133,
+  "R3_FMA46807": 0.133,
+  "R3_FMA46812": 0.239,
+  "R3_FMA46813": 0.239,
+  "R3_FMA46814": 0.168,
+  "R3_FMA46815": 0.168,
+  "R3_FMA46817": 0.078,
+  "R3_FMA46818": 0.078,
+  "R3_FMA46823": 0.083,
+  "R3_FMA46824": 0.083,
   "R3_FMA46826": 0,
   "R3_FMA46827": 0,
-  "R3_FMA46829": 0.15,
-  "R3_FMA46830": 0.15,
-  "R3_FMA46835": 0.001,
-  "R3_FMA46836": 0.001,
-  "R3_FMA46839": 0.254,
-  "R3_FMA46840": 0.254,
-  "R3_FMA46841": 0.257,
-  "R3_FMA49001": 0.005,
-  "R3_FMA49002": 0.005,
-  "R3_FMA49004": 0.137,
-  "R3_FMA49005": 0.137,
-  "R3_FMA49007": 0.106,
-  "R3_FMA49008": 0.106,
+  "R3_FMA46829": 0.133,
+  "R3_FMA46830": 0.133,
+  "R3_FMA46835": 0.004,
+  "R3_FMA46836": 0.004,
+  "R3_FMA46839": 0.232,
+  "R3_FMA46840": 0.232,
+  "R3_FMA46841": 0.251,
+  "R3_FMA49001": 0.008,
+  "R3_FMA49002": 0.008,
+  "R3_FMA49004": 0.132,
+  "R3_FMA49005": 0.132,
+  "R3_FMA49007": 0.104,
+  "R3_FMA49008": 0.104,
   "R3_FMA49012": 0,
   "R3_FMA49013": 0,
   "R3_FMA49022": 0,
   "R3_FMA49023": 0,
   "R3_FMA49024": 0,
   "R3_FMA49025": 0,
-  "R3_FMA51142": 0.123,
-  "R3_FMA51143": 0.123,
-  "R3_FMA55606": 0.208,
-  "R3_FMA55607": 0.208,
-  "R3_FMA55610": 0.169,
-  "R3_FMA55611": 0.169,
-  "R3_FMA74140": 0.064,
-  "R3_FMA74141": 0.064
+  "R3_FMA51142": 0.133,
+  "R3_FMA51143": 0.133,
+  "R3_FMA55606": 0.215,
+  "R3_FMA55607": 0.215,
+  "R3_FMA55610": 0.166,
+  "R3_FMA55611": 0.166,
+  "R3_FMA74140": 0.063,
+  "R3_FMA74141": 0.063
  },
  "adjacency": {
   "thresholdM": 0.002,
   "spacingM": 0.002,
-  "samples": 49376515,
-  "pairs": 30191,
+  "samples": 49392921,
+  "pairs": 30190,
   "envelopes": [
    {
     "id": "FJ2810",
     "name": "Skin",
-    "rawDegree": 207
+    "rawDegree": 216
    },
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "rawDegree": 129
+    "rawDegree": 127
    },
    {
     "id": "SOMA_fat_neck",
     "name": "Subcutaneous tissue of neck",
-    "rawDegree": 32
+    "rawDegree": 31
    },
    {
     "id": "SOMA_fat_trunk",
     "name": "Subcutaneous tissue of trunk",
-    "rawDegree": 270
+    "rawDegree": 268
    },
    {
     "id": "SOMA_fat_upper_limb_L",
@@ -74707,12 +74753,12 @@
    {
     "id": "SOMA_fat_lower_limb_L",
     "name": "Subcutaneous tissue of left lower limb",
-    "rawDegree": 211
+    "rawDegree": 213
    },
    {
     "id": "SOMA_fat_lower_limb_R",
     "name": "Subcutaneous tissue of right lower limb",
-    "rawDegree": 214
+    "rawDegree": 212
    }
   ],
   "degree": {
@@ -74762,10 +74808,10 @@
  "triangles": {
   "source": 6681030,
   "importedFromRelease3": 821404,
-  "afterWeldAndMerge": 9696950,
-  "written": 2351340,
+  "afterWeldAndMerge": 9703854,
+  "written": 2356511,
   "simplifiedParts": 2002,
-  "maxErrorM": 0.0007999120862223208,
+  "maxErrorM": 0.0007999090012162924,
   "worstVolumeChange": {
    "id": "FJ2093",
    "name": "Set of dorsal digital arteries",
@@ -74781,12 +74827,12 @@
     "written": 11200
    },
    "nerve": {
-    "source": 462104,
-    "written": 352043
+    "source": 462326,
+    "written": 352265
    },
    "ligament": {
     "source": 295530,
-    "written": 156775
+    "written": 156769
    },
    "tendon": {
     "source": 113972,
@@ -74806,11 +74852,11 @@
    },
    "fascia": {
     "source": 610545,
-    "written": 124222
+    "written": 124223
    },
    "artery": {
     "source": 975594,
-    "written": 309964
+    "written": 310084
    },
    "brain": {
     "source": 503678,
@@ -74818,7 +74864,7 @@
    },
    "vein": {
     "source": 945916,
-    "written": 205378
+    "written": 205454
    },
    "heart": {
     "source": 101562,
@@ -74833,12 +74879,12 @@
     "written": 92332
    },
    "skin": {
-    "source": 228473,
-    "written": 112789
+    "source": 233987,
+    "written": 117935
    },
    "fat": {
-    "source": 928052,
-    "written": 51502
+    "source": 929220,
+    "written": 51114
    }
   }
  },
@@ -74861,13 +74907,13 @@
  },
  "output": {
   "parts": 3333,
-  "anatomyJsonBytes": 2293990,
+  "anatomyJsonBytes": 2294641,
   "glbBytes": {
-   "integumentary.glb": 1030416,
-   "muscular.glb": 5179392,
-   "skeletal.glb": 2532088,
-   "cardiovascular.glb": 4926060,
-   "nervous.glb": 3837028,
+   "integumentary.glb": 1057792,
+   "muscular.glb": 5179420,
+   "skeletal.glb": 2532028,
+   "cardiovascular.glb": 4927464,
+   "nervous.glb": 3838848,
    "respiratory.glb": 514096,
    "digestive.glb": 887436,
    "urinary.glb": 28060,
@@ -74877,15 +74923,15 @@
   },
   "bounds": [
    -0.4027,
-   -0.08,
+   -0.0792,
    -0.0406,
    0.4043,
    1.6526,
-   0.2389
+   0.2402
   ],
-  "skinSourceBytes": 203556,
+  "skinSourceBytes": 214304,
   "displayJsonBytes": 917,
-  "skinPiecesBytes": 50889
+  "skinPiecesBytes": 53576
  },
  "parameters": {
   "SIMPLIFY_ERROR_PER_THICKNESS": 0.08,
