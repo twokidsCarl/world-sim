@@ -218,13 +218,27 @@ type FaceForMouth = Pick<FaceData, 'aus' | 'jaw' | 'channels'>
  * undoes exactly as much as the jaw has opened, and beyond refJaw the lips cannot meet (the activation saturates at 1);
  * lip_dental = dental, and where the jaw is wider than its refJaw the excess is undone with lip_seal as well; the tongue channels
  * take their weights.
+ *
+ * baseJaw（可选，缺省 0）：下颌已经被别处张开的角度（姿势面板、反射），弧度。口角成形、闭唇和唇齿都按总的下颌角
+ * （baseJaw + 这里算出的张开角，不超过上限）来算；返回的 jaw 仍然只是这里要加上去的那一部分，totalJaw 是总角。
+ * 闭唇能合上的范围是总角 ≤ lip_seal 的 refJaw；超过后激活封顶为 1，唇合不上。
+ * 唇齿：有两个参考通道时（lip_dental 在 refJaw 处求解，lip_dental_closed 在闭颌处求解），总角在 0 到 refJaw 之间按角度线性混合，
+ * 两端都正好到位；超过 refJaw 的部分用 lip_seal 抵消，直到 lip_seal 也到 1（总角 = 两个 refJaw 之和）为止。
+ * baseJaw (optional, default 0): the angle by which the jaw is already opened from elsewhere (pose panel, a reflex), radians.
+ * Corner shaping, seal and dental are all computed for the total jaw angle (baseJaw + the opening computed here, up to the limit);
+ * the returned `jaw` is still only the part to be added here, and `totalJaw` is the total. The lips can seal while the total is
+ * ≤ lip_seal's refJaw; beyond it the activation saturates at 1 and they cannot meet. Dental: with both reference channels
+ * (lip_dental solved at refJaw, lip_dental_closed solved with the jaw closed) the two are mixed linearly in the angle between 0 and
+ * refJaw, landing exactly at both ends; what exceeds refJaw is undone with lip_seal until that too reaches 1 (total = the sum of
+ * both refJaw values).
  */
-export function mouthChannels(face: FaceForMouth, pose: MouthPose): { channels: Activations; jaw: number } {
+export function mouthChannels(face: FaceForMouth, pose: MouthPose, baseJaw = 0): { channels: Activations; jaw: number; totalJaw: number } {
   const closure = clamp(pose.closure, 0, 1), dental = clamp(pose.dental, 0, 1)
   const aus: AUs = {}
   for (const [id, v] of Object.entries(pose.aus)) aus[id] = PARTING.includes(id) ? v * (1 - closure) : v
   const a = activations(face, aus)
-  const jaw = clamp(pose.jaw + a.jaw, 0, face.jaw.max)
+  const base = clamp(baseJaw, 0, face.jaw.max)
+  const jaw = clamp(pose.jaw + a.jaw + base, 0, face.jaw.max)
   const channels = a.channels
   const ch = (id: string): FaceChannel | undefined => face.channels.find((c) => c.id === id)
   const set = (id: string, v: number): void => {
@@ -234,7 +248,10 @@ export function mouthChannels(face: FaceForMouth, pose: MouthPose): { channels: 
   const seal = ch('lip_seal'), dent = ch('lip_dental')
   let sealA = seal?.refJaw ? (closure * jaw) / seal.refJaw : 0
   if (dent?.refJaw) {
-    set('lip_dental', dental)
+    const closed = ch('lip_dental_closed')
+    const k = closed ? clamp(jaw / dent.refJaw, 0, 1) : 1
+    set('lip_dental', dental * k)
+    set('lip_dental_closed', dental * (1 - k))
     if (seal?.refJaw) sealA += (dental * Math.max(0, jaw - dent.refJaw)) / seal.refJaw
   }
   set('lip_seal', sealA)
@@ -242,7 +259,7 @@ export function mouthChannels(face: FaceForMouth, pose: MouthPose): { channels: 
   set('tongue_front_up', pose.tongue.front)
   set('tongue_back_up', pose.tongue.back)
   set('tongue_low', pose.tongue.low)
-  return { channels, jaw }
+  return { channels, jaw: jaw - base, totalJaw: jaw }
 }
 
 /** 视位权重：一组权重，或唇和下颌（含舌）各一组（协同发音的输出）。 Viseme weights: one set, or one for the lips and one for jaw and tongue (the output of co-articulation). */
@@ -491,17 +508,31 @@ export const UPPER_FACE_AUS = ['AU1', 'AU2', 'AU4', 'AU5', 'AU6', 'AU7', 'AU9', 
  * lips sealed, the channels that part them (depressor labii inferioris, levator labii superioris) are multiplied by (1 − closure)
  * and lip_seal is recomputed for the blended jaw angle, so p b m still close the lips under an open-mouthed expression (pain,
  * surprise) as long as the jaw stays within lip_seal's refJaw.
+ *   5. baseJaw（可选，缺省 0）：下颌已经被别处（姿势面板、反射）张开的角度。返回的 jaw 是在它之上还要加的角度
+ *     （baseJaw + jaw 不超过上限）；mouth_corner、lip_seal、lip_dental 按总角计算，所以下颌从别处张开时双唇音仍然合上
+ *     （总角不超过 lip_seal 的 refJaw 时）。
+ * 5. baseJaw (optional, default 0): the angle by which the jaw is already opened from elsewhere (pose panel, a reflex). The returned
+ * `jaw` is what is to be added on top of it (baseJaw + jaw stays within the limit); mouth_corner, lip_seal and lip_dental are computed
+ * for the total, so a bilabial still closes with a jaw opened from elsewhere (while the total stays within lip_seal's refJaw).
  */
-export function blendFace(face: FaceForMouth, input: { speech?: MouthPose | null; speaking?: number; emotion?: AUs; pain?: AUs }): { channels: Activations; jaw: number } {
+export function blendFace(face: FaceForMouth, input: { speech?: MouthPose | null; speaking?: number; emotion?: AUs; pain?: AUs; baseJaw?: number }): { channels: Activations; jaw: number } {
   const expr = mergeAUs(input.emotion ?? {}, input.pain ?? {})
   const s = input.speech ? clamp(input.speaking ?? 1, 0, 1) : 0
   const scaled: AUs = {}
   for (const [id, v] of Object.entries(expr)) scaled[id] = UPPER_FACE_AUS.includes(id) ? v : v * (1 - 0.6 * s)
   const e = activations(face, scaled)
-  if (!input.speech || s === 0) return e
+  const base = clamp(input.baseJaw ?? 0, 0, face.jaw.max)
+  if (!input.speech || s === 0) {
+    if (base === 0) return e
+    // 只有表情：下颌的增量不超过剩余的范围，口角成形按总角 / expression only: the jaw increment stays within what is left of the range, and corner shaping follows the total
+    const jawE = Math.min(e.jaw, face.jaw.max - base)
+    const channels = { ...e.channels }
+    if (face.jaw.max > 0 && face.channels.some((c) => c.id === 'mouth_corner')) channels.mouth_corner = clamp(Math.max(channels.mouth_corner ?? 0, (base + jawE) / face.jaw.max), 0, 1)
+    return { channels, jaw: jawE }
+  }
   const closure = clamp(input.speech.closure, 0, 1) * s
   const jaw = Math.max(e.jaw, input.speech.jaw * s)
-  const sp = mouthChannels(face, { ...input.speech, closure, dental: input.speech.dental * s, jaw })
+  const sp = mouthChannels(face, { ...input.speech, closure, dental: input.speech.dental * s, jaw }, base)
   const channels: Activations = {}
   for (const id of new Set([...Object.keys(e.channels), ...Object.keys(sp.channels)])) {
     const parting = /^(depressor_labii_inferioris|lls)(_|$)/.test(id)

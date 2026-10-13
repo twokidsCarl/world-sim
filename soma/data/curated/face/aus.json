@@ -287,7 +287,8 @@
    },
    "channels": {
     "orbicularis_oris": 1,
-    "lip_protrusion": 0.6
+    "lip_protrusion": 0.6,
+    "lip_purse": 1
    },
    "missing": [
     "incisivus labii superioris",
@@ -327,6 +328,8 @@
    },
    "channels": {
     "lip_protrusion": 1,
+    "lip_evert": 1,
+    "lip_purse": 0.5,
     "orbicularis_oris": 0.5,
     "depressor_labii_inferioris": 0.35,
     "lls": 0.25

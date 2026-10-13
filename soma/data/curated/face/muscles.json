@@ -65,7 +65,8 @@
    "zh": "皮肤之外，只有名字匹配 followers 的部件随眼睑通道移动；否则贴在眼球上的眼外肌止点也会被带着走。",
    "en": "Apart from the skin, only parts whose name matches `followers` move with the lid channels; otherwise the insertions of the extraocular muscles on the globe would be dragged along."
   },
-  "gapMm": 0.4
+  "gapMm": 0.4,
+  "smoothPasses": 12
  },
  "jaw": {
   "joint": "tmj",
@@ -468,7 +469,7 @@
     0,
     -1
    ],
-   "excursionMm": 4,
+   "excursionMm": 6,
    "spreadMm": 10,
    "reachMm": 10,
    "mask": [
@@ -950,6 +951,39 @@
    }
   },
   {
+   "id": "lip_dental_closed",
+   "match": "",
+   "name": {
+    "zh": "下唇贴上切牙切缘（唇齿音，闭颌时的参考）",
+    "en": "lower lip to the upper incisal edge (labiodental, the closed-jaw reference)"
+   },
+   "model": "lip",
+   "lipAction": "dental",
+   "excursionMm": 0,
+   "spreadMm": 7,
+   "reachMm": 6,
+   "mask": [],
+   "refJawFraction": 0,
+   "lip": {
+    "profile": "middle",
+    "bandMm": 14
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "下唇缘中段（正中两侧各 spreadMm，再经 reachMm 渐隐）走到上切牙切缘的前下方，在下颌闭合（refJawFraction = 0）的姿势下求解；与 lip_dental 按下颌角线性混合（见 tools/face/model.ts 的 mouthChannels），下颌比 lip_dental 的参考角闭得更紧时下唇不会顶进牙里。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The middle of the lower lip margin (spreadMm either side of the midline, fading over reachMm) travels to just below and in front of the incisal edge of the upper incisors, solved with the jaw closed (refJawFraction = 0); blended with lip_dental linearly in the jaw angle (see mouthChannels in tools/face/model.ts), so that the lower lip does not run into the tooth when the jaw is more closed than the reference of lip_dental. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
    "id": "lip_protrusion",
    "match": "",
    "name": {
@@ -979,6 +1013,70 @@
    "action": {
     "zh": "两唇沿口的朝向前移，正中最多，口角处为五分之一；与口轮匝肌的缩窄一起构成圆唇。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
     "en": "Both lips move forward along the facing of the mouth, most at the midline and a fifth of that at the corners; with the narrowing of orbicularis oris this makes lip rounding. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_purse",
+   "match": "",
+   "name": {
+     "zh": "唇收拢（口变窄）",
+     "en": "lip pursing (the mouth narrows)"
+   },
+   "model": "lip",
+   "lipAction": "purse",
+   "excursionMm": 5.5,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 22
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+     "zh": "唇缘各点沿唇缘向正中走 excursionMm × s（s 是到正中的弧长比例），口角走得最多，整条唇均匀缩短；口周皮肤在 bandMm 内跟随。口轮匝肌环形纤维缩短约四分之一时口角各内移约 5 mm，这个幅度是按这个估计取的假设，没有出处。几何通道：直接规定唇缘怎样走，不是按肌肉力学算的。只在有真实口裂的皮肤上有。",
+     "en": "Every margin point travels along the margin towards the midline by excursionMm × s (s the arc-length fraction from the middle), the corners most, so the whole lip shortens evenly; the perioral skin follows within bandMm. A shortening of the circular fibres of orbicularis oris by about a quarter moves each corner about 5 mm medially; the excursion is an assumption taken from that estimate and has no source. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_evert",
+   "match": "",
+   "name": {
+     "zh": "唇外翻（漏斗形）",
+     "en": "lip eversion (funnelling)"
+   },
+   "model": "lip",
+   "lipAction": "evert",
+   "excursionMm": 2,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 8
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+     "zh": "上唇缘向前上、下唇缘向前下各走 excursionMm（前 : 上下 = 1 : 0.7），唇在 bandMm 内跟随，口角不动；红唇的内面翻出来。几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+     "en": "The upper margin travels forward and up and the lower forward and down by excursionMm each (forward : vertical = 1 : 0.7), the lip following within bandMm and the corners staying; the inner face of the vermilion turns out. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
    }
   },
   {
@@ -1054,8 +1152,8 @@
    },
    "model": "lip",
    "lipAction": "press",
-   "excursionMm": 0.8,
-   "spreadMm": 5,
+   "excursionMm": 1.5,
+   "spreadMm": 7,
    "reachMm": 0,
    "mask": [],
    "lip": {
@@ -1245,9 +1343,16 @@
   "minAreaRatio": 0.3,
   "maxAreaRatio": 3.5,
   "zoneMm": 16,
+  "regionMm": 6,
+  "smoothMm": 2.5,
+  "marginSmoothing": 3,
+  "sliverMm": 0.1,
+  "shareAtCorner": 0.5,
+  "gapExponent": 1.2,
+  "jawRegionMm": 24,
   "note": {
-   "zh": "口角的交接和保面积处理（开口的皮肤）。上唇肌和下唇肌的场按绕口角的角度坐标做单位分解：上唇份额 = 0.5 + 0.5·S(θ)·ρ(r)，S 在 |θ| ≥ saturationDeg 处饱和，ρ 在离口角 handoverMm 内从 0 升到 1。每个通道算完后，口角 zoneMm 内的三角形若在全激活时翻折或面积比超出 [minAreaRatio, maxAreaRatio]，就把位移向邻居抹匀，最多 foldPasses 遍。全部数值是假设。",
-   "en": "Hand-over and area-preserving treatment at the mouth corners (opened skin). The fields of upper-lip and lower-lip muscles are partitioned in an angular coordinate about the corner: upper share = 0.5 + 0.5·S(θ)·ρ(r), S saturating at |θ| ≥ saturationDeg and ρ rising from 0 to 1 within handoverMm of the corner. After each channel is evaluated, triangles within zoneMm of a corner that fold at full activation or whose area ratio leaves [minAreaRatio, maxAreaRatio] have their displacement evened towards their neighbours, for at most foldPasses passes. All numbers are assumptions."
+   "zh": "口角的交接和口周的抹匀（开口的皮肤）。上唇肌和下唇肌的场按绕口角的角度坐标做单位分解：上唇份额 = 0.5 + 0.5·S(θ)·ρ(r)，S 在 |θ| ≥ saturationDeg 处饱和，ρ 在离口角 handoverMm 内从 0 升到 1。每个肌肉通道算完后，口裂 regionMm 以内和口角 zoneMm 以内的位移在长度 smoothMm 上抹匀（解 (M + smoothMm²·L) u = M·u₀；不分上下唇的通道把口裂焊上一起解，分上下唇的通道唇缘上的值先沿唇缘抹匀 marginSmoothing 遍再固定）。foldPasses、minAreaRatio、maxAreaRatio 现在只用于检查：全激活时口角 zoneMm 内若还有翻折或面积比出界的三角形（高不到 sliverMm 的退化三角形不算），才退回到逐遍抹匀，构建报告的 mouth.foldPasses 记下用了几遍——现在两副身体的所有通道都是 0。口角成形通道：张口时唇缘的下颌份额按 gap(s) = (1 − s²)^gapExponent 分布（s 是到正中的弧长比例），口角的份额是 shareAtCorner；唇和口周皮肤跟随最近的唇缘点，在离口裂 jawRegionMm 内过渡回骨架的权重。全部数值是假设。",
+   "en": "Hand-over at the mouth corners and evening of the perioral fields (opened skin). The fields of upper-lip and lower-lip muscles are partitioned in an angular coordinate about the corner: upper share = 0.5 + 0.5·S(θ)·ρ(r), S saturating at |θ| ≥ saturationDeg and ρ rising from 0 to 1 within handoverMm of the corner. After each muscle channel is evaluated, its displacement within regionMm of the fissure and within zoneMm of a corner is evened over a length of smoothMm (solving (M + smoothMm²·L) u = M·u₀; a channel that does not tell the lips apart is solved with the fissure welded, one that does has its margin values evened along the margin marginSmoothing times and then held). foldPasses, minAreaRatio and maxAreaRatio now serve as a check only: should a triangle within zoneMm of a corner still fold or leave the area band at full activation (degenerate triangles lower than sliverMm excepted), the build falls back to pass-by-pass evening and records the passes in mouth.foldPasses of the build report — currently 0 for every channel of both bodies. Corner-shaping channel: on jaw opening the jaw share of the margins follows gap(s) = (1 − s²)^gapExponent (s the arc-length fraction from the middle) with shareAtCorner at the corner; lips and perioral skin follow the nearest margin point and blend back to the rig weight within jawRegionMm of the fissure. All numbers are assumptions."
   }
  }
 }

@@ -278,7 +278,9 @@ describe.each(['male', 'female'])('real face data: %s', (name) => {
           worst = Math.max(worst, Math.abs(out[i]! - ref[i]!))
           if (out[i] !== 0) moved++
         }
-        expect(worst).toBeLessThan(1e-9)
+        // 两边都是 float32 累加，只是求和次序不同；位移分量到 16–32 mm 时一个 ulp 是 1.86e-9 m，容差取两个 ulp。
+        // Both sides accumulate in float32 in a different order; at components of 16–32 mm one ulp is 1.86e-9 m, so the tolerance is two ulps.
+        expect(worst).toBeLessThan(4e-9)
       }
     }
     expect(moved).toBeGreaterThan(1000)
