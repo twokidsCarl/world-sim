@@ -340,3 +340,31 @@ describe('exaggerating a spike', () => {
     expect(out.distance).toBeCloseTo(170, 3)
   })
 })
+
+describe('the outside of an irregular subject', () => {
+  it('floods from the boundary: outside a closed shell is free, its hollow inside is not', async () => {
+    const { outsideOf, scatter, threads } = await import('../src/infer/environment')
+    // 一个半径 300 的空心球壳，点足够密，在 40 的格子上不漏 / a hollow spherical shell of radius 300, dense enough to be watertight on a grid of 40
+    const pts: number[] = []
+    for (let i = 0; i < 6000; i++) {
+      const z = 1 - (2 * (i + 0.5)) / 6000, r = Math.sqrt(1 - z * z), a = i * 2.399963
+      pts.push(300 * r * Math.cos(a), 300 * r * Math.sin(a), 300 * z)
+    }
+    const free = outsideOf(pts, 40)
+    expect(free([0, 0, 0])).toBe(false)
+    expect(free([300, 0, 0])).toBe(false)
+    expect(free([420, 0, 0])).toBe(true)
+    expect(free([5000, 0, 0])).toBe(true)
+    // 填环境和穿线都只落在外面 / scattering and threading both stay outside
+    let seed = 1
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+    const box = { centre: [0, 0, 0] as [number, number, number], hx: 600, hy: 600, z0: -100, z1: 100, exclude: 0, free }
+    const ops = scatter(200, 10, [0, 0, 0], box, rand, [])
+    expect(ops.length).toBeGreaterThan(100)
+    for (const m of ops) expect(Math.hypot(m[12]!, m[13]!, m[14]!)).toBeGreaterThan(300)
+    const t = threads(6, 1500, 16, box, rand, 0, 0.2)
+    let inside = 0
+    for (let i = 0; i < t.pos.length; i += 3) if (Math.hypot(t.pos[i]!, t.pos[i + 1]!, t.pos[i + 2]!) < 260) inside++
+    expect(inside).toBe(0)
+  })
+})

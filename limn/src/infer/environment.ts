@@ -23,6 +23,57 @@ export interface Box {
   exclude: number
   /** 设了的话，东西只放在这个半径以内（填对象的里面，而不是周围）/ when set, things go only inside this radius (filling the inside of the subject instead of its surroundings) */
   within?: number
+  /** 设了的话，东西只放在它说“空着”的地方（形状不规则的对象的外面，见 outsideOf）/ when set, things go only where it says the place is free (outside a subject of irregular shape, see outsideOf) */
+  free?: (p: V3) => boolean
+}
+
+/**
+ * 形状不规则的对象（一段树突、一个突触）的“外面”：把对象各部分的位置记进一个粗格子，占了的格子向外胀一格，
+ * 再从格子的边界往里灌水，灌得到的空格子就是外面。对象里面的空隙灌不到（只要膜在这个格子大小上是不漏的），所以不会被填上。
+ * 返回一个判断某点是否在外面的函数。
+ *
+ * The "outside" of a subject of irregular shape (a stretch of dendrite, a synapse): the positions of
+ * its parts are entered in a coarse grid, occupied cells are swollen by one cell, and the grid is
+ * flooded from its boundary; the empty cells the flood reaches are the outside. Voids inside the
+ * subject are not reached (so long as its membrane is watertight at this cell size) and so are not
+ * filled. Returns a test of whether a point is outside.
+ */
+export function outsideOf(points: ArrayLike<number>, cell: number): (p: V3) => boolean {
+  const lo: V3 = [Infinity, Infinity, Infinity], hi: V3 = [-Infinity, -Infinity, -Infinity]
+  for (let i = 0; i < points.length; i += 3) for (let k = 0; k < 3; k++) {
+    lo[k] = Math.min(lo[k]!, points[i + k]!)
+    hi[k] = Math.max(hi[k]!, points[i + k]!)
+  }
+  // 四周留三格空的，水从那里灌进来 / three empty cells all round, where the flood comes in
+  const PAD = 3
+  const n = [0, 1, 2].map((k) => Math.ceil((hi[k]! - lo[k]!) / cell) + 1 + PAD * 2) as V3
+  const at = (x: number, y: number, z: number) => (z * n[1] + y) * n[0] + x
+  const solid = new Uint8Array(n[0] * n[1] * n[2])
+  for (let i = 0; i < points.length; i += 3) {
+    const x = Math.floor((points[i]! - lo[0]) / cell) + PAD, y = Math.floor((points[i + 1]! - lo[1]) / cell) + PAD, z = Math.floor((points[i + 2]! - lo[2]) / cell) + PAD
+    for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) solid[at(x + dx, y + dy, z + dz)] = 1
+  }
+  // 2 = 外面 / 2 = outside
+  const stack = [0]
+  solid[0] = 2
+  while (stack.length) {
+    const i = stack.pop()!
+    const x = i % n[0], y = Math.floor(i / n[0]) % n[1], z = Math.floor(i / (n[0] * n[1]))
+    for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]] as const) {
+      const X = x + dx, Y = y + dy, Z = z + dz
+      if (X < 0 || Y < 0 || Z < 0 || X >= n[0] || Y >= n[1] || Z >= n[2]) continue
+      const j = at(X, Y, Z)
+      if (solid[j] === 0) {
+        solid[j] = 2
+        stack.push(j)
+      }
+    }
+  }
+  return (p) => {
+    const x = Math.floor((p[0] - lo[0]) / cell) + PAD, y = Math.floor((p[1] - lo[1]) / cell) + PAD, z = Math.floor((p[2] - lo[2]) / cell) + PAD
+    if (x < 0 || y < 0 || z < 0 || x >= n[0] || y >= n[1] || z >= n[2]) return true
+    return solid[at(x, y, z)] === 2
+  }
 }
 
 /** 均匀的随机旋转（列主序 3x3 的九个数）/ a uniform random rotation (nine numbers of a column-major 3x3) */
@@ -52,6 +103,7 @@ export function scatter(count: number, radius: number, origin: V3, box: Box, ran
     const p: V3 = [box.centre[0] + (rand() * 2 - 1) * box.hx, box.centre[1] + (rand() * 2 - 1) * box.hy, box.centre[2] + box.z0 + rand() * (box.z1 - box.z0)]
     const far = Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2])
     if (far < box.exclude + radius * 0.6 || (box.within !== undefined && far > box.within - radius * 0.8)) continue
+    if (box.free && !box.free(p)) continue
     let clash = false
     for (const q of placed) {
       const d = (q.r + radius) * squeeze
@@ -93,7 +145,7 @@ export function threads(count: number, length: number, step: number, box: Box, r
     for (let t = 0; t < 40; t++) {
       p = [box.centre[0] + (rand() * 2 - 1) * box.hx, box.centre[1] + (rand() * 2 - 1) * box.hy, box.centre[2] + box.z0 + rand() * (box.z1 - box.z0)]
       const far = Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2])
-      if (far > box.exclude + 20 && (box.within === undefined || far < box.within - 20)) break
+      if (far > box.exclude + 20 && (box.within === undefined || far < box.within - 20) && (!box.free || box.free(p))) break
     }
     // 主要在画面平面里走，深度方向只小幅起伏 / it runs mostly in the plane of the picture, wavering only a little in depth
     let d = norm([rand() * 2 - 1, rand() * 2 - 1, (rand() * 2 - 1) * 0.2])
@@ -134,7 +186,10 @@ export function threads(count: number, length: number, step: number, box: Box, r
       if (Math.abs(c[1]) > box.hy) d[1] = -Math.sign(c[1]) * Math.abs(d[1])
       if (c[2] < box.z0) d[2] = Math.abs(d[2])
       if (c[2] > box.z1) d[2] = -Math.abs(d[2])
-      p = [p[0] + d[0] * step, p[1] + d[1] * step, p[2] + d[2] * step]
+      const next: V3 = [p[0] + d[0] * step, p[1] + d[1] * step, p[2] + d[2] * step]
+      // 前面不是空的（撞上了形状不规则的对象）：掉头，这一步不走 / what lies ahead is not free (it has met a subject of irregular shape): turn round and stay put this step
+      if (box.free && !box.free(next)) d = norm([-d[0] + (rand() - 0.5), -d[1] + (rand() - 0.5), d[2]])
+      else p = next
     }
   }
   return { pos: new Float32Array(pos), segments: new Uint32Array(seg) }
