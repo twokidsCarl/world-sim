@@ -1,0 +1,8740 @@
+{
+ "schema": 1,
+ "id": "muscle-curves-opensim",
+ "title": {
+  "zh": "肌肉力臂：我们的模型 vs OpenSim 全身模型（Rajagopal 2016）",
+  "en": "Muscle moment arms: our model vs the OpenSim full-body model (Rajagopal 2016)"
+ },
+ "method": {
+  "zh": "对每一对（肌肉，坐标）：其余关节在解剖学零位，把该坐标在“我们的活动范围 ∩ 参照的范围”内分 9 点扫过，两边各得一条长度—角度曲线。平均力臂 = −(末长 − 初长) / 扫过的弧度，正值表示这个运动使肌肉缩短。我们的长度取变形后肌肉网格的中心线（14 段质心连线，带作用线的肌肉以作用线两端收尾），ourLineArmMm 是只用作用线（起止点直线）得到的值。参照的长度按节段长度之比缩放到我们的身材（下肢：股骨+胫骨；上肢：肱骨+前臂；手：腕到 MCP3 到 PIP3；躯干：L5/S1 到胸锁关节的高度）。多个肌束的参照取平均。上臂抬高用胸肱角（含肩带节律），腰部运动按范围分到五个腰椎关节，参照的躯干主坐标先换算成胸廓相对骶骨的实际转角。",
+  "en": "For every (muscle, coordinate) pair: with the other joints at the anatomical zero, the coordinate is swept in 9 steps over the intersection of our range of motion and the reference range, giving one length-versus-angle curve on each side. Mean moment arm = −(final length − initial length) / swept angle in radians; positive means the movement shortens the muscle. Our length is the centreline of the deformed muscle mesh (centroids of 14 slices, closed by the ends of the line of action where the rig has one); ourLineArmMm is the value from the line of action alone (straight, origin to insertion). Reference lengths are scaled to our body by a ratio of segment lengths (leg: femur + tibia; arm: humerus + forearm; hand: wrist to MCP3 to PIP3; trunk: height from L5/S1 to the sternoclavicular joint). The reference value is the mean over fascicles. Arm elevation is thoracohumeral (girdle rhythm included); lumbar movements are spread over our five lumbar joints by their ranges, and the reference trunk master coordinate is first converted into the actual rotation of the thorax against the sacrum."
+ },
+ "tolerance": {
+  "zh": "|我们 − 参照| ≤ max(8 mm, 参照力臂的 35%) 记为 within。这个容差是本项目定的：参照本身是由少数标本和 MRI 做成的通用模型，不是人群分布；8 mm 约为网格中心线法的分辨率。超出时再分：符号相反（opposite sign）、偏小（too small）、偏大（too large）。",
+  "en": "|ours − reference| ≤ max(8 mm, 35 % of the reference arm) counts as within. The tolerance is this project's choice: the reference is itself a generic model built from a few specimens and MRI, not a population distribution, and 8 mm is about the resolution of the mesh-centreline method. Outside it the row is classed as opposite sign, too small or too large."
+ },
+ "references": [
+  {
+   "id": "opensim-rajagopal",
+   "name": "Rajagopal et al. 2016 full-body OpenSim model (Rajagopal2016.osim) and RajagopalLaiUhlrich2023.osim",
+   "version": "opensim-org/opensim-models commit d9b05d47 (2025-11-05), Models/Rajagopal",
+   "url": "https://simtk.org/projects/full_body",
+   "licence": "MIT (\"MIT Use Agreement\", Copyright (c) 2015, Stanford University)",
+   "clause": "SimTK project page, licence pop-over of the package \"Full Body Model\": \"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software\". The copy in opensim-org/opensim-models carries no licence file of its own; its README says the files \"are modified from the original distribution, which can be found on SimTK.org\".",
+   "opened": "2026-10-13"
+  }
+ ],
+ "ourState": {
+  "male": {
+   "anatomy.json": "b8acc1f6aa9f",
+   "rig.json": "d6f78c4a2637",
+   "rig.bin": "c592ecf76a6d",
+   "face.json": "e5929504ad8e",
+   "face.bin": "a3fbd2d38611",
+   "muscular.glb": "34d6d4fbefac",
+   "skeletal.glb": "b0cb3b0f29f0",
+   "integumentary.glb": "a42b95e41b26"
+  },
+  "female": {
+   "anatomy.json": "03f878a6bcda",
+   "rig.json": "8b11cb7a5713",
+   "rig.bin": "f8cde8d7af4e",
+   "face.json": "7035b5bd1287",
+   "face.bin": "8689765b7261",
+   "muscular.glb": "b5bbda989a8d",
+   "skeletal.glb": "75ef5bae1128",
+   "integumentary.glb": "4d6b3ab8090c"
+  }
+ },
+ "notes": [
+  {
+   "zh": "参照是“量具”不是真值：两个模型都是由少数尸体标本和 MRI 做成的通用成年人模型，肌肉是带途经点和缠绕面的折线。MyoLeg 源自 Rajagopal 模型、MyoArm 源自 MoBL 上肢模型、MyoTorso 源自 SimTK 的腰椎模型，所以下肢的两张表并不独立。我们这一侧，变形后网格的中心线会低估绕过关节的肌肉的长度变化（蒙皮把肌肉沿骨拉伸，不绕行）；表里的差别首先说明“这块肌肉的形状随关节变化得不像参照”，不一定是附着点错了。",
+   "en": "The references are instruments, not ground truth: both are generic adult models built from a few cadaver specimens and MRI, with muscles as polylines through via points and over wrap surfaces. MyoLeg derives from the Rajagopal model, MyoArm from the MoBL upper-extremity model and MyoTorso from the SimTK lumbar spine model, so the two leg tables are not independent. On our side, the centreline of a skinned mesh under-reads the length change of a muscle that wraps round a joint (skinning stretches the muscle along the bone and does not wrap); a disagreement first says that the muscle's shape does not follow the joint as the reference does, not necessarily that an attachment is wrong."
+  },
+  {
+   "zh": "参照的长度由 .osim 的路径点直接算（tools/rig/opensim.ts），没有运行 OpenSim：圆柱缠绕按“无限长圆柱、只缠切入最深的一段”近似，不处理象限限制。这个近似的误差见 instrument-check.json。该模型只有下肢肌肉（每侧 40 条），上肢和躯干是力矩驱动的。",
+   "en": "Reference lengths are computed straight from the path points of the .osim (tools/rig/opensim.ts) without running OpenSim: cylinder wraps are approximated (infinite cylinder, only the most deeply cut segment wraps, no quadrant constraint). The error of that approximation is in instrument-check.json. The model has leg muscles only (40 a side); its arms and trunk are torque-driven."
+  }
+ ],
+ "summary": {
+  "rows": 323,
+  "within": 155,
+  "outside": 168,
+  "oppositeSign": 35,
+  "tooSmall": 82,
+  "tooLarge": 51,
+  "male": 161,
+  "female": 162,
+  "musclesCompared": 31
+ },
+ "rows": [
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "parts": [
+    "VD_adductor_longus_right"
+   ],
+   "reference": [
+    "addlong_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 14.7,
+   "ourArmMm": -43.7,
+   "ourLineArmMm": 2.6,
+   "diffMm": -58.4,
+   "toleranceMm": 8,
+   "shapeR": -0.45,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "parts": [
+    "VD_adductor_longus_left"
+   ],
+   "reference": [
+    "addlong_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 14.6,
+   "ourArmMm": -36.1,
+   "ourLineArmMm": 0.4,
+   "diffMm": -50.7,
+   "toleranceMm": 8,
+   "shapeR": -0.42,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "parts": [
+    "FJ1402"
+   ],
+   "reference": [
+    "addlong_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 16.3,
+   "ourArmMm": -18.7,
+   "ourLineArmMm": 11.5,
+   "diffMm": -35.1,
+   "toleranceMm": 8,
+   "shapeR": -0.07,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "parts": [
+    "VD_adductor_brevis_right"
+   ],
+   "reference": [
+    "addbrev_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 7.3,
+   "ourArmMm": -26,
+   "ourLineArmMm": -1.1,
+   "diffMm": -33.3,
+   "toleranceMm": 8,
+   "shapeR": -0.21,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "W_FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -20.2,
+   "ourArmMm": -53.4,
+   "ourLineArmMm": -48.3,
+   "diffMm": -33.2,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "W_FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 31.1,
+   "ourArmMm": -12.5,
+   "ourLineArmMm": 31.4,
+   "diffMm": -43.6,
+   "toleranceMm": 10.9,
+   "shapeR": -0.96,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "W_FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -20,
+   "ourArmMm": -51.5,
+   "ourLineArmMm": -48.9,
+   "diffMm": -31.5,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 34.5,
+   "ourArmMm": -11,
+   "ourLineArmMm": 24.2,
+   "diffMm": -45.4,
+   "toleranceMm": 12.1,
+   "shapeR": -0.96,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 34.5,
+   "ourArmMm": -10.6,
+   "ourLineArmMm": 22.3,
+   "diffMm": -45.1,
+   "toleranceMm": 12.1,
+   "shapeR": -0.95,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -22.4,
+   "ourArmMm": -52,
+   "ourLineArmMm": -52.7,
+   "diffMm": -29.6,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "W_FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 30.8,
+   "ourArmMm": -8.3,
+   "ourLineArmMm": 30.2,
+   "diffMm": -39.1,
+   "toleranceMm": 10.8,
+   "shapeR": -0.96,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "parts": [
+    "FJ1402M"
+   ],
+   "reference": [
+    "addlong_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 16.3,
+   "ourArmMm": -10.4,
+   "ourLineArmMm": 11.4,
+   "diffMm": -26.8,
+   "toleranceMm": 8,
+   "shapeR": 0.07,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "parts": [
+    "VD_adductor_brevis_left"
+   ],
+   "reference": [
+    "addbrev_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 7.2,
+   "ourArmMm": -18.2,
+   "ourLineArmMm": -0.3,
+   "diffMm": -25.4,
+   "toleranceMm": 8,
+   "shapeR": -0.14,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right soleus",
+   "parts": [
+    "VD_soleus_right"
+   ],
+   "reference": [
+    "soleus_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -39.3,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 39.3,
+   "toleranceMm": 13.7,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right soleus",
+   "parts": [
+    "FJ1437"
+   ],
+   "reference": [
+    "soleus_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -43.5,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 43.5,
+   "toleranceMm": 15.2,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left soleus",
+   "parts": [
+    "FJ1437M"
+   ],
+   "reference": [
+    "soleus_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -43.5,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 43.5,
+   "toleranceMm": 15.2,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left soleus",
+   "parts": [
+    "VD_soleus_left"
+   ],
+   "reference": [
+    "soleus_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -38.9,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 38.9,
+   "toleranceMm": 13.6,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "W_FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 36.6,
+   "ourArmMm": 0.2,
+   "ourLineArmMm": 37.8,
+   "diffMm": -36.4,
+   "toleranceMm": 12.8,
+   "shapeR": 0.27,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 40.6,
+   "ourArmMm": 2.4,
+   "ourLineArmMm": 32.9,
+   "diffMm": -38.2,
+   "toleranceMm": 14.2,
+   "shapeR": 0.85,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 40.6,
+   "ourArmMm": 2.4,
+   "ourLineArmMm": 34.2,
+   "diffMm": -38.2,
+   "toleranceMm": 14.2,
+   "shapeR": 0.82,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "parts": [
+    "FJ1401M"
+   ],
+   "reference": [
+    "addbrev_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 8.1,
+   "ourArmMm": -13.4,
+   "ourLineArmMm": 5.3,
+   "diffMm": -21.5,
+   "toleranceMm": 8,
+   "shapeR": 0.05,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "parts": [
+    "VD_adductor_magnus_left"
+   ],
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -24.7,
+   "ourArmMm": -47.7,
+   "ourLineArmMm": -32.1,
+   "diffMm": -23,
+   "toleranceMm": 8.6,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "parts": [
+    "VD_gluteus_medius_right"
+   ],
+   "reference": [
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -9,
+   "ourArmMm": 12.2,
+   "ourLineArmMm": 15.3,
+   "diffMm": 21.1,
+   "toleranceMm": 8,
+   "shapeR": -0.96,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus medialis",
+   "parts": [
+    "VD_vastus_medialis_left"
+   ],
+   "reference": [
+    "vasmed_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -28.7,
+   "ourArmMm": -2.8,
+   "ourLineArmMm": -9.1,
+   "diffMm": 25.9,
+   "toleranceMm": 10,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -22.4,
+   "ourArmMm": -42.8,
+   "ourLineArmMm": null,
+   "diffMm": -20.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "W_FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 36.3,
+   "ourArmMm": 4.3,
+   "ourLineArmMm": 39.6,
+   "diffMm": -32,
+   "toleranceMm": 12.7,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "parts": [
+    "FJ1401"
+   ],
+   "reference": [
+    "addbrev_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 8.1,
+   "ourArmMm": -11.7,
+   "ourLineArmMm": 5.7,
+   "diffMm": -19.8,
+   "toleranceMm": 8,
+   "shapeR": 0.06,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "parts": [
+    "FJ1428M"
+   ],
+   "reference": [
+    "piri_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 27.5,
+   "ourArmMm": 3.8,
+   "ourLineArmMm": 23,
+   "diffMm": -23.7,
+   "toleranceMm": 9.6,
+   "shapeR": 0.77,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus medius",
+   "parts": [
+    "VD_gluteus_medius_left"
+   ],
+   "reference": [
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -8.9,
+   "ourArmMm": 10.5,
+   "ourLineArmMm": 15.6,
+   "diffMm": 19.4,
+   "toleranceMm": 8,
+   "shapeR": -0.96,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right piriformis",
+   "parts": [
+    "VD_piriformis_right"
+   ],
+   "reference": [
+    "piri_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 24.8,
+   "ourArmMm": 3.8,
+   "ourLineArmMm": 28.5,
+   "diffMm": -21,
+   "toleranceMm": 8.7,
+   "shapeR": 0.7,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right piriformis",
+   "parts": [
+    "FJ1428"
+   ],
+   "reference": [
+    "piri_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 27.5,
+   "ourArmMm": 4.7,
+   "ourLineArmMm": 22.5,
+   "diffMm": -22.8,
+   "toleranceMm": 9.6,
+   "shapeR": 0.82,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "W_FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -39.3,
+   "ourArmMm": -72,
+   "ourLineArmMm": -52.4,
+   "diffMm": -32.7,
+   "toleranceMm": 13.8,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "parts": [
+    "VD_psoas_major_right"
+   ],
+   "reference": [
+    "psoas_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -2.5,
+   "ourArmMm": -21.3,
+   "ourLineArmMm": null,
+   "diffMm": -18.8,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "parts": [
+    "VD_piriformis_left"
+   ],
+   "reference": [
+    "piri_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 24.6,
+   "ourArmMm": 5.7,
+   "ourLineArmMm": 27.4,
+   "diffMm": -18.9,
+   "toleranceMm": 8.6,
+   "shapeR": 0.87,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "FJ1438M"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 65,
+   "ourArmMm": 16,
+   "ourLineArmMm": null,
+   "diffMm": -49.1,
+   "toleranceMm": 22.8,
+   "shapeR": 0.9,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "FJ1438"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 65,
+   "ourArmMm": 16.1,
+   "ourLineArmMm": null,
+   "diffMm": -48.9,
+   "toleranceMm": 22.8,
+   "shapeR": 0.9,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "W_FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -38.9,
+   "ourArmMm": -68,
+   "ourLineArmMm": -51.2,
+   "diffMm": -29.1,
+   "toleranceMm": 13.6,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_left"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -3.7,
+   "ourArmMm": -20.5,
+   "ourLineArmMm": -6.3,
+   "diffMm": -16.8,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_right"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 58.7,
+   "ourArmMm": 17.3,
+   "ourLineArmMm": null,
+   "diffMm": -41.3,
+   "toleranceMm": 20.5,
+   "shapeR": 0.88,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_left"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 58.1,
+   "ourArmMm": 19.2,
+   "ourLineArmMm": null,
+   "diffMm": -38.9,
+   "toleranceMm": 20.3,
+   "shapeR": 0.86,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 39.4,
+   "ourArmMm": 13.2,
+   "ourLineArmMm": 33.1,
+   "diffMm": -26.2,
+   "toleranceMm": 13.8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "parts": [
+    "W_FJ1420M"
+   ],
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 0,
+   "ourArmMm": -14.8,
+   "ourLineArmMm": null,
+   "diffMm": -14.8,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "parts": [
+    "VD_psoas_major_left"
+   ],
+   "reference": [
+    "psoas_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -2.5,
+   "ourArmMm": -17.1,
+   "ourLineArmMm": 11.5,
+   "diffMm": -14.7,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semitendinosus",
+   "parts": [
+    "W_FJ1436"
+   ],
+   "reference": [
+    "semiten_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -31.2,
+   "ourArmMm": -51.2,
+   "ourLineArmMm": -39.5,
+   "diffMm": -20,
+   "toleranceMm": 10.9,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 39.5,
+   "ourArmMm": 14.4,
+   "ourLineArmMm": null,
+   "diffMm": -25,
+   "toleranceMm": 13.8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "parts": [
+    "VD_adductor_brevis_right"
+   ],
+   "reference": [
+    "addbrev_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": 3.3,
+   "ourArmMm": -11.1,
+   "ourLineArmMm": 3.4,
+   "diffMm": -14.4,
+   "toleranceMm": 8,
+   "shapeR": -0.81,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus intermedius",
+   "parts": [
+    "VD_vastus_intermedius_right"
+   ],
+   "reference": [
+    "vasint_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -30.6,
+   "ourArmMm": -11.4,
+   "ourLineArmMm": null,
+   "diffMm": 19.2,
+   "toleranceMm": 10.7,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus medialis",
+   "parts": [
+    "VD_vastus_medialis_right"
+   ],
+   "reference": [
+    "vasmed_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -29,
+   "ourArmMm": -11.1,
+   "ourLineArmMm": -13.3,
+   "diffMm": 17.9,
+   "toleranceMm": 10.1,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "FJ1395M"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -30,
+   "ourArmMm": -48.6,
+   "ourLineArmMm": -45,
+   "diffMm": -18.6,
+   "toleranceMm": 10.5,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semitendinosus",
+   "parts": [
+    "W_FJ1436"
+   ],
+   "reference": [
+    "semiten_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -47.9,
+   "ourArmMm": -77.6,
+   "ourLineArmMm": -52.1,
+   "diffMm": -29.7,
+   "toleranceMm": 16.8,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right piriformis",
+   "parts": [
+    "VD_piriformis_right"
+   ],
+   "reference": [
+    "piri_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -23,
+   "ourArmMm": -37.2,
+   "ourLineArmMm": -28.2,
+   "diffMm": -14.2,
+   "toleranceMm": 8.1,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "W_FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 35.6,
+   "ourArmMm": 13.9,
+   "ourLineArmMm": 38.2,
+   "diffMm": -21.7,
+   "toleranceMm": 12.5,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "FJ1395"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -30,
+   "ourArmMm": -48.2,
+   "ourLineArmMm": -44.1,
+   "diffMm": -18.2,
+   "toleranceMm": 10.5,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "parts": [
+    "FJ1418"
+   ],
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -5.8,
+   "ourArmMm": 7.9,
+   "ourLineArmMm": -34,
+   "diffMm": 13.7,
+   "toleranceMm": 8,
+   "shapeR": -0.99,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left vastus medialis",
+   "parts": [
+    "FJ1443M"
+   ],
+   "reference": [
+    "vasmed_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -32.1,
+   "ourArmMm": -12.9,
+   "ourLineArmMm": -3.6,
+   "diffMm": 19.2,
+   "toleranceMm": 11.3,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semitendinosus",
+   "parts": [
+    "FJ1436M"
+   ],
+   "reference": [
+    "semiten_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 47.8,
+   "ourArmMm": 19.9,
+   "ourLineArmMm": 56.8,
+   "diffMm": -27.9,
+   "toleranceMm": 16.7,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "parts": [
+    "FJ1414"
+   ],
+   "reference": [
+    "fdl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -10,
+   "ourArmMm": -23.2,
+   "ourLineArmMm": null,
+   "diffMm": -13.1,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "parts": [
+    "FJ1414M"
+   ],
+   "reference": [
+    "fdl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -10.1,
+   "ourArmMm": -23.2,
+   "ourLineArmMm": null,
+   "diffMm": -13.1,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "parts": [
+    "W_FJ1420"
+   ],
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 0,
+   "ourArmMm": -13,
+   "ourLineArmMm": null,
+   "diffMm": -13,
+   "toleranceMm": 8,
+   "shapeR": 0.03,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semitendinosus",
+   "parts": [
+    "FJ1436"
+   ],
+   "reference": [
+    "semiten_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 47.7,
+   "ourArmMm": 21.2,
+   "ourLineArmMm": 59,
+   "diffMm": -26.5,
+   "toleranceMm": 16.7,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_right"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -3.8,
+   "ourArmMm": -16.4,
+   "ourLineArmMm": -6.5,
+   "diffMm": -12.6,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "parts": [
+    "W_FJ1394"
+   ],
+   "reference": [
+    "gaslat_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 21.3,
+   "ourArmMm": 8.8,
+   "ourLineArmMm": 12.6,
+   "diffMm": -12.5,
+   "toleranceMm": 8,
+   "shapeR": 0.91,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "parts": [
+    "VD_piriformis_left"
+   ],
+   "reference": [
+    "piri_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -22.8,
+   "ourArmMm": -35.2,
+   "ourLineArmMm": -30.1,
+   "diffMm": -12.4,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semitendinosus",
+   "parts": [
+    "W_FJ1436M"
+   ],
+   "reference": [
+    "semiten_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -47.4,
+   "ourArmMm": -73.1,
+   "ourLineArmMm": -51.5,
+   "diffMm": -25.7,
+   "toleranceMm": 16.6,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "parts": [
+    "FJ1419"
+   ],
+   "reference": [
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 45.7,
+   "ourArmMm": 21.4,
+   "ourLineArmMm": 50,
+   "diffMm": -24.3,
+   "toleranceMm": 16,
+   "shapeR": 0.93,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_left"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -26.8,
+   "ourArmMm": -41,
+   "ourLineArmMm": -39,
+   "diffMm": -14.2,
+   "toleranceMm": 9.4,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "parts": [
+    "W_FJ1420M"
+   ],
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 43.1,
+   "ourArmMm": 20.8,
+   "ourLineArmMm": null,
+   "diffMm": -22.4,
+   "toleranceMm": 15.1,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "parts": [
+    "FJ1418M"
+   ],
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -5.8,
+   "ourArmMm": 6,
+   "ourLineArmMm": -36.7,
+   "diffMm": 11.8,
+   "toleranceMm": 8,
+   "shapeR": -0.95,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "W_FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 35.2,
+   "ourArmMm": 17.1,
+   "ourLineArmMm": 39.3,
+   "diffMm": -18.1,
+   "toleranceMm": 12.3,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Short head of left biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_short_left"
+   ],
+   "reference": [
+    "bfsh_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 27.7,
+   "ourArmMm": 13.4,
+   "ourLineArmMm": 47.7,
+   "diffMm": -14.2,
+   "toleranceMm": 9.7,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus lateralis",
+   "parts": [
+    "VD_vastus_lateralis_left"
+   ],
+   "reference": [
+    "vaslat_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -29.7,
+   "ourArmMm": -14.6,
+   "ourLineArmMm": null,
+   "diffMm": 15.1,
+   "toleranceMm": 10.4,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "parts": [
+    "VD_adductor_brevis_left"
+   ],
+   "reference": [
+    "addbrev_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": 3.3,
+   "ourArmMm": -8.4,
+   "ourLineArmMm": 0.2,
+   "diffMm": -11.6,
+   "toleranceMm": 8,
+   "shapeR": -0.75,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_right"
+   ],
+   "reference": [
+    "recfem_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 36.6,
+   "ourArmMm": 18.1,
+   "ourLineArmMm": null,
+   "diffMm": -18.5,
+   "toleranceMm": 12.8,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Short head of right biceps femoris",
+   "parts": [
+    "FJ1444"
+   ],
+   "reference": [
+    "bfsh_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 31,
+   "ourArmMm": 15.4,
+   "ourLineArmMm": 46.5,
+   "diffMm": -15.6,
+   "toleranceMm": 10.8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left vastus intermedius",
+   "parts": [
+    "VD_vastus_intermedius_left"
+   ],
+   "reference": [
+    "vasint_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -30.3,
+   "ourArmMm": -15,
+   "ourLineArmMm": null,
+   "diffMm": 15.3,
+   "toleranceMm": 10.6,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus medius",
+   "parts": [
+    "FJ1419M"
+   ],
+   "reference": [
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 45.8,
+   "ourArmMm": 22.9,
+   "ourLineArmMm": 49.9,
+   "diffMm": -22.9,
+   "toleranceMm": 16,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semitendinosus",
+   "parts": [
+    "W_FJ1436"
+   ],
+   "reference": [
+    "semiten_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 43.1,
+   "ourArmMm": 21.5,
+   "ourLineArmMm": 59,
+   "diffMm": -21.6,
+   "toleranceMm": 15.1,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right vastus lateralis",
+   "parts": [
+    "VD_vastus_lateralis_right"
+   ],
+   "reference": [
+    "vaslat_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -30,
+   "ourArmMm": -15,
+   "ourLineArmMm": null,
+   "diffMm": 15,
+   "toleranceMm": 10.5,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "parts": [
+    "VD_iliacus_right"
+   ],
+   "reference": [
+    "iliacus_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 34.1,
+   "ourArmMm": 17,
+   "ourLineArmMm": 27.6,
+   "diffMm": -17,
+   "toleranceMm": 11.9,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor hallucis longus",
+   "parts": [
+    "FJ1408"
+   ],
+   "reference": [
+    "ehl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 0.5,
+   "ourArmMm": -10.9,
+   "ourLineArmMm": -29.4,
+   "diffMm": -11.4,
+   "toleranceMm": 8,
+   "shapeR": -0.6,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "parts": [
+    "FJ1439M"
+   ],
+   "reference": [
+    "tibant_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 9,
+   "ourArmMm": -2.4,
+   "ourLineArmMm": null,
+   "diffMm": -11.4,
+   "toleranceMm": 8,
+   "shapeR": -0.99,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left extensor hallucis longus",
+   "parts": [
+    "FJ1408M"
+   ],
+   "reference": [
+    "ehl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 0.5,
+   "ourArmMm": -10.9,
+   "ourLineArmMm": -29.8,
+   "diffMm": -11.4,
+   "toleranceMm": 8,
+   "shapeR": -0.6,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "parts": [
+    "FJ1422M"
+   ],
+   "reference": [
+    "iliacus_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 37.8,
+   "ourArmMm": 19.2,
+   "ourLineArmMm": 27.7,
+   "diffMm": -18.6,
+   "toleranceMm": 13.2,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Short head of left biceps femoris",
+   "parts": [
+    "FJ1444M"
+   ],
+   "reference": [
+    "bfsh_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 31,
+   "ourArmMm": 15.7,
+   "ourLineArmMm": 46.6,
+   "diffMm": -15.3,
+   "toleranceMm": 10.9,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "parts": [
+    "FJ1439"
+   ],
+   "reference": [
+    "tibant_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 9,
+   "ourArmMm": -2.2,
+   "ourLineArmMm": null,
+   "diffMm": -11.2,
+   "toleranceMm": 8,
+   "shapeR": -0.99,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "parts": [
+    "W_FJ1394M"
+   ],
+   "reference": [
+    "gaslat_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 21.1,
+   "ourArmMm": 9.9,
+   "ourLineArmMm": 11.9,
+   "diffMm": -11.2,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "parts": [
+    "FJ1394M"
+   ],
+   "reference": [
+    "gaslat_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 23.7,
+   "ourArmMm": 12,
+   "ourLineArmMm": 12.8,
+   "diffMm": -11.6,
+   "toleranceMm": 8.3,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Short head of right biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_short_right"
+   ],
+   "reference": [
+    "bfsh_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 28,
+   "ourArmMm": 14.4,
+   "ourLineArmMm": 48.2,
+   "diffMm": -13.6,
+   "toleranceMm": 9.8,
+   "shapeR": 0.93,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "parts": [
+    "W_FJ1397"
+   ],
+   "reference": [
+    "gasmed_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 22.9,
+   "ourArmMm": 11.8,
+   "ourLineArmMm": 13.4,
+   "diffMm": -11.1,
+   "toleranceMm": 8,
+   "shapeR": 0.94,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "parts": [
+    "VD_iliacus_left"
+   ],
+   "reference": [
+    "iliacus_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 33.7,
+   "ourArmMm": 17.4,
+   "ourLineArmMm": 22.9,
+   "diffMm": -16.3,
+   "toleranceMm": 11.8,
+   "shapeR": 0.94,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semitendinosus",
+   "parts": [
+    "W_FJ1436M"
+   ],
+   "reference": [
+    "semiten_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -30.9,
+   "ourArmMm": -45.9,
+   "ourLineArmMm": -37.7,
+   "diffMm": -14.9,
+   "toleranceMm": 10.8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus medius",
+   "parts": [
+    "FJ1419M"
+   ],
+   "reference": [
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -9.9,
+   "ourArmMm": -20.9,
+   "ourLineArmMm": -3.8,
+   "diffMm": -11,
+   "toleranceMm": 8,
+   "shapeR": 0.91,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "parts": [
+    "VD_flexor_digitorum_longus_right"
+   ],
+   "reference": [
+    "fdl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -9.1,
+   "ourArmMm": -20.1,
+   "ourLineArmMm": null,
+   "diffMm": -11,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "parts": [
+    "FJ1422"
+   ],
+   "reference": [
+    "iliacus_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 37.8,
+   "ourArmMm": 19.7,
+   "ourLineArmMm": 27.9,
+   "diffMm": -18.1,
+   "toleranceMm": 13.2,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "parts": [
+    "W_FJ1420"
+   ],
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 43.6,
+   "ourArmMm": 22.7,
+   "ourLineArmMm": null,
+   "diffMm": -20.9,
+   "toleranceMm": 15.3,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "parts": [
+    "FJ1419"
+   ],
+   "reference": [
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -9.9,
+   "ourArmMm": -20.8,
+   "ourLineArmMm": -3.4,
+   "diffMm": -10.9,
+   "toleranceMm": 8,
+   "shapeR": 0.91,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "parts": [
+    "FJ1420"
+   ],
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 0,
+   "ourArmMm": -10.7,
+   "ourLineArmMm": null,
+   "diffMm": -10.8,
+   "toleranceMm": 8,
+   "shapeR": 0.01,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "parts": [
+    "FJ1431"
+   ],
+   "reference": [
+    "psoas_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -2.7,
+   "ourArmMm": -13.5,
+   "ourLineArmMm": null,
+   "diffMm": -10.8,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "parts": [
+    "FJ1420M"
+   ],
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 0,
+   "ourArmMm": -10.8,
+   "ourLineArmMm": null,
+   "diffMm": -10.8,
+   "toleranceMm": 8,
+   "shapeR": 0.01,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "parts": [
+    "FJ1431M"
+   ],
+   "reference": [
+    "psoas_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -2.7,
+   "ourArmMm": -13.5,
+   "ourLineArmMm": null,
+   "diffMm": -10.8,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "parts": [
+    "FJ1420"
+   ],
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 48.3,
+   "ourArmMm": 25.5,
+   "ourLineArmMm": null,
+   "diffMm": -22.8,
+   "toleranceMm": 16.9,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "parts": [
+    "FJ1420M"
+   ],
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 48.3,
+   "ourArmMm": 26,
+   "ourLineArmMm": null,
+   "diffMm": -22.4,
+   "toleranceMm": 16.9,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "parts": [
+    "FJ1397"
+   ],
+   "reference": [
+    "gasmed_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 25.3,
+   "ourArmMm": 13.7,
+   "ourLineArmMm": 14.4,
+   "diffMm": -11.7,
+   "toleranceMm": 8.9,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "parts": [
+    "FJ1394"
+   ],
+   "reference": [
+    "gaslat_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 23.6,
+   "ourArmMm": 12.7,
+   "ourLineArmMm": 12.7,
+   "diffMm": -10.9,
+   "toleranceMm": 8.3,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "parts": [
+    "FJ1418"
+   ],
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -17.8,
+   "ourArmMm": -7.4,
+   "ourLineArmMm": -16.2,
+   "diffMm": 10.4,
+   "toleranceMm": 8,
+   "shapeR": 0.95,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "FJ1433M"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 40.6,
+   "ourArmMm": 22.2,
+   "ourLineArmMm": 38.1,
+   "diffMm": -18.3,
+   "toleranceMm": 14.2,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_right"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": 0.5,
+   "ourArmMm": 10.9,
+   "ourLineArmMm": null,
+   "diffMm": 10.3,
+   "toleranceMm": 8,
+   "shapeR": 0.69,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "parts": [
+    "W_FJ1397M"
+   ],
+   "reference": [
+    "gasmed_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 22.6,
+   "ourArmMm": 12.3,
+   "ourLineArmMm": 14.5,
+   "diffMm": -10.3,
+   "toleranceMm": 8,
+   "shapeR": 0.92,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_right"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -27.1,
+   "ourArmMm": -39.2,
+   "ourLineArmMm": -39.2,
+   "diffMm": -12.2,
+   "toleranceMm": 9.5,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_left"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 36.2,
+   "ourArmMm": 20.1,
+   "ourLineArmMm": null,
+   "diffMm": -16.2,
+   "toleranceMm": 12.7,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semitendinosus",
+   "parts": [
+    "FJ1436"
+   ],
+   "reference": [
+    "semiten_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -34.6,
+   "ourArmMm": -49.8,
+   "ourLineArmMm": -46.4,
+   "diffMm": -15.2,
+   "toleranceMm": 12.1,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "parts": [
+    "VD_adductor_longus_right"
+   ],
+   "reference": [
+    "addlong_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": 3.9,
+   "ourArmMm": -6.1,
+   "ourLineArmMm": 3.6,
+   "diffMm": -10,
+   "toleranceMm": 8,
+   "shapeR": -0.29,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_left"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": 0.5,
+   "ourArmMm": 10.5,
+   "ourLineArmMm": null,
+   "diffMm": 10,
+   "toleranceMm": 8,
+   "shapeR": 0.7,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor hallucis longus",
+   "parts": [
+    "VD_extensor_hallucis_longus_left"
+   ],
+   "reference": [
+    "ehl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 0.5,
+   "ourArmMm": -9.6,
+   "ourLineArmMm": null,
+   "diffMm": -10,
+   "toleranceMm": 8,
+   "shapeR": -0.57,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semitendinosus",
+   "parts": [
+    "W_FJ1436M"
+   ],
+   "reference": [
+    "semiten_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 42.6,
+   "ourArmMm": 24.2,
+   "ourLineArmMm": 59.2,
+   "diffMm": -18.4,
+   "toleranceMm": 14.9,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "FJ1395"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 32.6,
+   "ourArmMm": 18.6,
+   "ourLineArmMm": 46.4,
+   "diffMm": -14,
+   "toleranceMm": 11.4,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -43.5,
+   "ourArmMm": -62.1,
+   "ourLineArmMm": -49.4,
+   "diffMm": -18.5,
+   "toleranceMm": 15.2,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "parts": [
+    "FJ1409"
+   ],
+   "reference": [
+    "perbrev_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": -26.6,
+   "ourArmMm": -15.3,
+   "ourLineArmMm": null,
+   "diffMm": 11.3,
+   "toleranceMm": 9.3,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "parts": [
+    "FJ1409M"
+   ],
+   "reference": [
+    "perbrev_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": -26.6,
+   "ourArmMm": -15.3,
+   "ourLineArmMm": null,
+   "diffMm": 11.3,
+   "toleranceMm": 9.3,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "FJ1395M"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 32.6,
+   "ourArmMm": 18.8,
+   "ourLineArmMm": 46.4,
+   "diffMm": -13.8,
+   "toleranceMm": 11.4,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "parts": [
+    "VD_gluteus_maximus_left"
+   ],
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -42.4,
+   "ourArmMm": -60.2,
+   "ourLineArmMm": null,
+   "diffMm": -17.8,
+   "toleranceMm": 14.8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right piriformis",
+   "parts": [
+    "VD_piriformis_right"
+   ],
+   "reference": [
+    "piri_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -7.4,
+   "ourArmMm": -17,
+   "ourLineArmMm": -8.3,
+   "diffMm": -9.6,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semitendinosus",
+   "parts": [
+    "FJ1436M"
+   ],
+   "reference": [
+    "semiten_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -34.6,
+   "ourArmMm": -49.2,
+   "ourLineArmMm": -45.6,
+   "diffMm": -14.5,
+   "toleranceMm": 12.1,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "FJ1438"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -9.5,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 9.5,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "FJ1438M"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -9.5,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 9.5,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "parts": [
+    "VD_tibialis_anterior_right"
+   ],
+   "reference": [
+    "tibant_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": 36.2,
+   "ourArmMm": 21.2,
+   "ourLineArmMm": null,
+   "diffMm": -15,
+   "toleranceMm": 12.7,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "parts": [
+    "FJ1433"
+   ],
+   "reference": [
+    "recfem_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 40.6,
+   "ourArmMm": 23.9,
+   "ourLineArmMm": 35.5,
+   "diffMm": -16.7,
+   "toleranceMm": 14.2,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "FJ1438M"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": 0.6,
+   "ourArmMm": 9.9,
+   "ourLineArmMm": null,
+   "diffMm": 9.4,
+   "toleranceMm": 8,
+   "shapeR": 0.8,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "parts": [
+    "VD_tibialis_anterior_left"
+   ],
+   "reference": [
+    "tibant_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 8.1,
+   "ourArmMm": -1.3,
+   "ourLineArmMm": null,
+   "diffMm": -9.4,
+   "toleranceMm": 8,
+   "shapeR": -0.99,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right fibularis longus",
+   "parts": [
+    "FJ1410"
+   ],
+   "reference": [
+    "perlong_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": -25,
+   "ourArmMm": -14.9,
+   "ourLineArmMm": null,
+   "diffMm": 10.1,
+   "toleranceMm": 8.7,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 55.5,
+   "ourArmMm": 33,
+   "ourLineArmMm": 70.2,
+   "diffMm": -22.5,
+   "toleranceMm": 19.4,
+   "shapeR": 0.95,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "parts": [
+    "FJ1397M"
+   ],
+   "reference": [
+    "gasmed_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 25.3,
+   "ourArmMm": 15.1,
+   "ourLineArmMm": 15.4,
+   "diffMm": -10.3,
+   "toleranceMm": 8.9,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "parts": [
+    "VD_tibialis_anterior_right"
+   ],
+   "reference": [
+    "tibant_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 8.2,
+   "ourArmMm": -1,
+   "ourLineArmMm": null,
+   "diffMm": -9.2,
+   "toleranceMm": 8,
+   "shapeR": -0.97,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "parts": [
+    "VD_gluteus_medius_right"
+   ],
+   "reference": [
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -10.2,
+   "ourArmMm": -1,
+   "ourLineArmMm": -15.1,
+   "diffMm": 9.2,
+   "toleranceMm": 8,
+   "shapeR": 0.13,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "W_FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 50.1,
+   "ourArmMm": 30,
+   "ourLineArmMm": 65.6,
+   "diffMm": -20.1,
+   "toleranceMm": 17.5,
+   "shapeR": 0.95,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor magnus",
+   "parts": [
+    "VD_adductor_magnus_right"
+   ],
+   "reference": [
+    "addmagDist_r",
+    "addmagIsch_r",
+    "addmagMid_r",
+    "addmagProx_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -24.9,
+   "ourArmMm": -34.8,
+   "ourLineArmMm": -19.5,
+   "diffMm": -9.9,
+   "toleranceMm": 8.7,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "FJ1438"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": 0.6,
+   "ourArmMm": 9.7,
+   "ourLineArmMm": null,
+   "diffMm": 9.1,
+   "toleranceMm": 8,
+   "shapeR": 0.81,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "parts": [
+    "W_FJ1409"
+   ],
+   "reference": [
+    "perbrev_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -6.4,
+   "ourArmMm": -15.5,
+   "ourLineArmMm": null,
+   "diffMm": -9.1,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "parts": [
+    "FJ1410M"
+   ],
+   "reference": [
+    "perlong_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": -25,
+   "ourArmMm": -15,
+   "ourLineArmMm": null,
+   "diffMm": 10,
+   "toleranceMm": 8.8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 55.6,
+   "ourArmMm": 33.6,
+   "ourLineArmMm": 69.4,
+   "diffMm": -22,
+   "toleranceMm": 19.4,
+   "shapeR": 0.95,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_right"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -44.3,
+   "ourArmMm": -61.8,
+   "ourLineArmMm": -50.9,
+   "diffMm": -17.5,
+   "toleranceMm": 15.5,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right vastus medialis",
+   "parts": [
+    "FJ1443"
+   ],
+   "reference": [
+    "vasmed_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -32.1,
+   "ourArmMm": -19.5,
+   "ourLineArmMm": null,
+   "diffMm": 12.6,
+   "toleranceMm": 11.2,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "parts": [
+    "VD_extensor_digitorum_longus_right"
+   ],
+   "reference": [
+    "edl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": -13.3,
+   "ourArmMm": -22.4,
+   "ourLineArmMm": null,
+   "diffMm": -9,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis longus",
+   "parts": [
+    "VD_peroneus_longus_right"
+   ],
+   "reference": [
+    "perlong_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": -22.5,
+   "ourArmMm": -13.6,
+   "ourLineArmMm": null,
+   "diffMm": 9,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "parts": [
+    "VD_adductor_longus_left"
+   ],
+   "reference": [
+    "addlong_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": 3.9,
+   "ourArmMm": -5.1,
+   "ourLineArmMm": 3.6,
+   "diffMm": -9,
+   "toleranceMm": 8,
+   "shapeR": -0.24,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "W_FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 49.6,
+   "ourArmMm": 30.1,
+   "ourLineArmMm": 64.1,
+   "diffMm": -19.5,
+   "toleranceMm": 17.4,
+   "shapeR": 0.95,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "parts": [
+    "VD_gluteus_maximus_right"
+   ],
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -5.2,
+   "ourArmMm": 3.7,
+   "ourLineArmMm": 34,
+   "diffMm": 8.9,
+   "toleranceMm": 8,
+   "shapeR": -0.99,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "parts": [
+    "VD_tibialis_anterior_left"
+   ],
+   "reference": [
+    "tibant_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": 35.9,
+   "ourArmMm": 22,
+   "ourLineArmMm": null,
+   "diffMm": -13.9,
+   "toleranceMm": 12.6,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "parts": [
+    "VD_piriformis_left"
+   ],
+   "reference": [
+    "piri_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -7.3,
+   "ourArmMm": -16.1,
+   "ourLineArmMm": -8.9,
+   "diffMm": -8.8,
+   "toleranceMm": 8,
+   "shapeR": 0.95,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "parts": [
+    "W_FJ1409M"
+   ],
+   "reference": [
+    "perbrev_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -6.3,
+   "ourArmMm": -15.2,
+   "ourLineArmMm": null,
+   "diffMm": -8.8,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor hallucis longus",
+   "parts": [
+    "VD_extensor_hallucis_longus_right"
+   ],
+   "reference": [
+    "ehl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 0.5,
+   "ourArmMm": -8.3,
+   "ourLineArmMm": -34.1,
+   "diffMm": -8.7,
+   "toleranceMm": 8,
+   "shapeR": -0.61,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "parts": [
+    "FJ1433"
+   ],
+   "reference": [
+    "recfem_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 21.8,
+   "ourArmMm": 30.4,
+   "ourLineArmMm": 26,
+   "diffMm": 8.6,
+   "toleranceMm": 8,
+   "shapeR": 0.98,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "parts": [
+    "FJ1422"
+   ],
+   "reference": [
+    "iliacus_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": 8.4,
+   "ourArmMm": -0.2,
+   "ourLineArmMm": 1.1,
+   "diffMm": -8.6,
+   "toleranceMm": 8,
+   "shapeR": -0.14,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "parts": [
+    "W_FJ1394"
+   ],
+   "reference": [
+    "gaslat_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 5,
+   "ourArmMm": 13.6,
+   "ourLineArmMm": 12.4,
+   "diffMm": 8.6,
+   "toleranceMm": 8,
+   "shapeR": 0.97,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_right"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -8.6,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 8.6,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "parts": [
+    "FJ1406"
+   ],
+   "reference": [
+    "edl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": -14.8,
+   "ourArmMm": -23.3,
+   "ourLineArmMm": null,
+   "diffMm": -8.5,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_left"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -8.5,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": 8.5,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left vastus intermedius",
+   "parts": [
+    "FJ1441M"
+   ],
+   "reference": [
+    "vasint_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -33.9,
+   "ourArmMm": -21.4,
+   "ourLineArmMm": null,
+   "diffMm": 12.6,
+   "toleranceMm": 11.9,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "parts": [
+    "FJ1402"
+   ],
+   "reference": [
+    "addlong_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -54.3,
+   "ourArmMm": -74.4,
+   "ourLineArmMm": -60.7,
+   "diffMm": -20.1,
+   "toleranceMm": 19,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "parts": [
+    "FJ1406M"
+   ],
+   "reference": [
+    "edl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": -14.8,
+   "ourArmMm": -23.2,
+   "ourLineArmMm": null,
+   "diffMm": -8.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "parts": [
+    "VD_iliacus_right"
+   ],
+   "reference": [
+    "iliacus_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 6.5,
+   "ourArmMm": -2,
+   "ourLineArmMm": 16.3,
+   "diffMm": -8.4,
+   "toleranceMm": 8,
+   "shapeR": -1,
+   "verdict": "outside",
+   "kind": "opposite sign"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "parts": [
+    "VD_peroneus_longus_left"
+   ],
+   "reference": [
+    "perlong_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": -22.3,
+   "ourArmMm": -14,
+   "ourLineArmMm": null,
+   "diffMm": 8.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_left"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 29.1,
+   "ourArmMm": 18.5,
+   "ourLineArmMm": 48.5,
+   "diffMm": -10.6,
+   "toleranceMm": 10.2,
+   "shapeR": 0.99,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "parts": [
+    "W_FJ1397M"
+   ],
+   "reference": [
+    "gasmed_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -37,
+   "ourArmMm": -50.4,
+   "ourLineArmMm": -49.9,
+   "diffMm": -13.4,
+   "toleranceMm": 12.9,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "parts": [
+    "FJ1422M"
+   ],
+   "reference": [
+    "iliacus_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": 8.4,
+   "ourArmMm": 0.1,
+   "ourLineArmMm": 1.1,
+   "diffMm": -8.3,
+   "toleranceMm": 8,
+   "shapeR": 0.01,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "parts": [
+    "W_FJ1397"
+   ],
+   "reference": [
+    "gasmed_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 2.4,
+   "ourArmMm": 10.7,
+   "ourLineArmMm": 10.6,
+   "diffMm": 8.3,
+   "toleranceMm": 8,
+   "shapeR": 0.94,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "parts": [
+    "W_FJ1397"
+   ],
+   "reference": [
+    "gasmed_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -37.4,
+   "ourArmMm": -50.7,
+   "ourLineArmMm": -50,
+   "diffMm": -13.3,
+   "toleranceMm": 13.1,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too large"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right vastus intermedius",
+   "parts": [
+    "FJ1441"
+   ],
+   "reference": [
+    "vasint_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -33.9,
+   "ourArmMm": -22,
+   "ourLineArmMm": null,
+   "diffMm": 11.9,
+   "toleranceMm": 11.9,
+   "shapeR": 1,
+   "verdict": "outside",
+   "kind": "too small"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "parts": [
+    "VD_flexor_hallucis_longus_right"
+   ],
+   "reference": [
+    "fhl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 13.4,
+   "ourArmMm": 5.5,
+   "ourLineArmMm": null,
+   "diffMm": -7.9,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "parts": [
+    "W_FJ1394M"
+   ],
+   "reference": [
+    "gaslat_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 4.9,
+   "ourArmMm": 12.8,
+   "ourLineArmMm": 11.8,
+   "diffMm": 7.9,
+   "toleranceMm": 8,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "parts": [
+    "W_FJ1397M"
+   ],
+   "reference": [
+    "gasmed_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 2.4,
+   "ourArmMm": 10.2,
+   "ourLineArmMm": 10.1,
+   "diffMm": 7.8,
+   "toleranceMm": 8,
+   "shapeR": 0.94,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left vastus lateralis",
+   "parts": [
+    "FJ1442M"
+   ],
+   "reference": [
+    "vaslat_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -33.3,
+   "ourArmMm": -22.2,
+   "ourLineArmMm": null,
+   "diffMm": 11.1,
+   "toleranceMm": 11.6,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "parts": [
+    "FJ1402M"
+   ],
+   "reference": [
+    "addlong_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": 4.3,
+   "ourArmMm": 11.9,
+   "ourLineArmMm": 5.3,
+   "diffMm": 7.6,
+   "toleranceMm": 8,
+   "shapeR": 0.72,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right vastus lateralis",
+   "parts": [
+    "FJ1442"
+   ],
+   "reference": [
+    "vaslat_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -33.3,
+   "ourArmMm": -22.2,
+   "ourLineArmMm": null,
+   "diffMm": 11,
+   "toleranceMm": 11.6,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "parts": [
+    "FJ1433"
+   ],
+   "reference": [
+    "recfem_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -37,
+   "ourArmMm": -24.8,
+   "ourLineArmMm": 12.8,
+   "diffMm": 12.2,
+   "toleranceMm": 12.9,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_left"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 57.7,
+   "ourArmMm": 38.6,
+   "ourLineArmMm": null,
+   "diffMm": -19.1,
+   "toleranceMm": 20.2,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "FJ1433M"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -37,
+   "ourArmMm": -24.9,
+   "ourLineArmMm": 12.5,
+   "diffMm": 12.1,
+   "toleranceMm": 12.9,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "parts": [
+    "VD_extensor_digitorum_longus_left"
+   ],
+   "reference": [
+    "edl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": 30.9,
+   "ourArmMm": 21,
+   "ourLineArmMm": null,
+   "diffMm": -10,
+   "toleranceMm": 10.8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "FJ1433M"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 21.8,
+   "ourArmMm": 29.2,
+   "ourLineArmMm": 27,
+   "diffMm": 7.4,
+   "toleranceMm": 8,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "parts": [
+    "VD_iliacus_left"
+   ],
+   "reference": [
+    "iliacus_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 6.4,
+   "ourArmMm": -1,
+   "ourLineArmMm": 17,
+   "diffMm": -7.4,
+   "toleranceMm": 8,
+   "shapeR": -1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "parts": [
+    "FJ1428M"
+   ],
+   "reference": [
+    "piri_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -8.2,
+   "ourArmMm": -15.4,
+   "ourLineArmMm": -5.3,
+   "diffMm": -7.2,
+   "toleranceMm": 8,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "parts": [
+    "FJ1397"
+   ],
+   "reference": [
+    "gasmed_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 2.7,
+   "ourArmMm": 9.8,
+   "ourLineArmMm": 9.8,
+   "diffMm": 7.1,
+   "toleranceMm": 8,
+   "shapeR": 0.94,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor magnus",
+   "parts": [
+    "FJ1403"
+   ],
+   "reference": [
+    "addmagDist_r",
+    "addmagIsch_r",
+    "addmagMid_r",
+    "addmagProx_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -51.8,
+   "ourArmMm": -67.5,
+   "ourLineArmMm": -70.8,
+   "diffMm": -15.7,
+   "toleranceMm": 18.1,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "parts": [
+    "FJ1402M"
+   ],
+   "reference": [
+    "addlong_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -54.3,
+   "ourArmMm": -70.8,
+   "ourLineArmMm": -61.1,
+   "diffMm": -16.4,
+   "toleranceMm": 19,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "parts": [
+    "FJ1397M"
+   ],
+   "reference": [
+    "gasmed_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 2.7,
+   "ourArmMm": 9.6,
+   "ourLineArmMm": 9.7,
+   "diffMm": 6.9,
+   "toleranceMm": 8,
+   "shapeR": 0.94,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "parts": [
+    "VD_extensor_digitorum_longus_left"
+   ],
+   "reference": [
+    "edl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": -13.2,
+   "ourArmMm": -20.1,
+   "ourLineArmMm": null,
+   "diffMm": -6.9,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "parts": [
+    "FJ1418M"
+   ],
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -17.8,
+   "ourArmMm": -11,
+   "ourLineArmMm": -16.3,
+   "diffMm": 6.8,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "VD_tensor_fasciae_latae_right"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 58.2,
+   "ourArmMm": 40.9,
+   "ourLineArmMm": null,
+   "diffMm": -17.3,
+   "toleranceMm": 20.4,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semitendinosus",
+   "parts": [
+    "FJ1436M"
+   ],
+   "reference": [
+    "semiten_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -53.1,
+   "ourArmMm": -68.8,
+   "ourLineArmMm": -49.8,
+   "diffMm": -15.7,
+   "toleranceMm": 18.6,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "parts": [
+    "FJ1394"
+   ],
+   "reference": [
+    "gaslat_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 5.5,
+   "ourArmMm": 12.2,
+   "ourLineArmMm": 11,
+   "diffMm": 6.7,
+   "toleranceMm": 8,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -4.4,
+   "ourArmMm": 2.2,
+   "ourLineArmMm": 2,
+   "diffMm": 6.7,
+   "toleranceMm": 8,
+   "shapeR": -0.27,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "parts": [
+    "FJ1394M"
+   ],
+   "reference": [
+    "gaslat_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 5.5,
+   "ourArmMm": 12.3,
+   "ourLineArmMm": 11.1,
+   "diffMm": 6.7,
+   "toleranceMm": 8,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -4.4,
+   "ourArmMm": 2.2,
+   "ourLineArmMm": 2.2,
+   "diffMm": 6.7,
+   "toleranceMm": 8,
+   "shapeR": -0.28,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left extensor hallucis longus",
+   "parts": [
+    "VD_extensor_hallucis_longus_left"
+   ],
+   "reference": [
+    "ehl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": 33.1,
+   "ourArmMm": 23.4,
+   "ourLineArmMm": null,
+   "diffMm": -9.7,
+   "toleranceMm": 11.6,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_right"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 29.4,
+   "ourArmMm": 20.8,
+   "ourLineArmMm": 47.4,
+   "diffMm": -8.6,
+   "toleranceMm": 10.3,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "parts": [
+    "W_FJ1409"
+   ],
+   "reference": [
+    "perbrev_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": -24,
+   "ourArmMm": -17,
+   "ourLineArmMm": null,
+   "diffMm": 7,
+   "toleranceMm": 8.4,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "parts": [
+    "VD_gluteus_maximus_right"
+   ],
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -16.1,
+   "ourArmMm": -22.6,
+   "ourLineArmMm": -29.2,
+   "diffMm": -6.6,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "parts": [
+    "VD_flexor_digitorum_longus_left"
+   ],
+   "reference": [
+    "fdl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -9,
+   "ourArmMm": -15.6,
+   "ourLineArmMm": null,
+   "diffMm": -6.6,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis anterior",
+   "parts": [
+    "FJ1439M"
+   ],
+   "reference": [
+    "tibant_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": 40.2,
+   "ourArmMm": 28.6,
+   "ourLineArmMm": null,
+   "diffMm": -11.6,
+   "toleranceMm": 14.1,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis anterior",
+   "parts": [
+    "FJ1439"
+   ],
+   "reference": [
+    "tibant_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": 40.2,
+   "ourArmMm": 28.7,
+   "ourLineArmMm": null,
+   "diffMm": -11.5,
+   "toleranceMm": 14.1,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right piriformis",
+   "parts": [
+    "FJ1428"
+   ],
+   "reference": [
+    "piri_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -8.2,
+   "ourArmMm": -14.6,
+   "ourLineArmMm": -5.4,
+   "diffMm": -6.4,
+   "toleranceMm": 8,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semitendinosus",
+   "parts": [
+    "FJ1436"
+   ],
+   "reference": [
+    "semiten_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -53.1,
+   "ourArmMm": -67.6,
+   "ourLineArmMm": -49.5,
+   "diffMm": -14.5,
+   "toleranceMm": 18.6,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "parts": [
+    "VD_psoas_major_right"
+   ],
+   "reference": [
+    "psoas_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": 0.9,
+   "ourArmMm": 7.1,
+   "ourLineArmMm": null,
+   "diffMm": 6.2,
+   "toleranceMm": 8,
+   "shapeR": 0.33,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "parts": [
+    "FJ1403M"
+   ],
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -51.9,
+   "ourArmMm": -65.7,
+   "ourLineArmMm": -69.8,
+   "diffMm": -13.9,
+   "toleranceMm": 18.1,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "parts": [
+    "VD_flexor_hallucis_longus_left"
+   ],
+   "reference": [
+    "fhl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 13.3,
+   "ourArmMm": 7.1,
+   "ourLineArmMm": null,
+   "diffMm": -6.1,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "parts": [
+    "VD_tibialis_posterior_right"
+   ],
+   "reference": [
+    "tibpost_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 15.7,
+   "ourArmMm": 9.7,
+   "ourLineArmMm": null,
+   "diffMm": -6,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "parts": [
+    "VD_flexor_digitorum_longus_right"
+   ],
+   "reference": [
+    "fdl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 15.4,
+   "ourArmMm": 9.5,
+   "ourLineArmMm": null,
+   "diffMm": -5.9,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "parts": [
+    "VD_psoas_major_left"
+   ],
+   "reference": [
+    "psoas_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": 0.9,
+   "ourArmMm": 6.8,
+   "ourLineArmMm": -5.1,
+   "diffMm": 5.9,
+   "toleranceMm": 8,
+   "shapeR": 0.28,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "parts": [
+    "VD_psoas_major_left"
+   ],
+   "reference": [
+    "psoas_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": 25.8,
+   "ourArmMm": 19.2,
+   "ourLineArmMm": 11.4,
+   "diffMm": -6.6,
+   "toleranceMm": 9,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "parts": [
+    "VD_psoas_major_right"
+   ],
+   "reference": [
+    "psoas_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": 26,
+   "ourArmMm": 19.5,
+   "ourLineArmMm": null,
+   "diffMm": -6.6,
+   "toleranceMm": 9.1,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "parts": [
+    "FJ1402"
+   ],
+   "reference": [
+    "addlong_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": 4.3,
+   "ourArmMm": 10.1,
+   "ourLineArmMm": 5.3,
+   "diffMm": 5.8,
+   "toleranceMm": 8,
+   "shapeR": 0.61,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "parts": [
+    "VD_gluteus_medius_right"
+   ],
+   "reference": [
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 41.3,
+   "ourArmMm": 30.9,
+   "ourLineArmMm": 45.1,
+   "diffMm": -10.4,
+   "toleranceMm": 14.4,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "parts": [
+    "FJ1418M"
+   ],
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -47.5,
+   "ourArmMm": -35.5,
+   "ourLineArmMm": -19.3,
+   "diffMm": 11.9,
+   "toleranceMm": 16.6,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -25.9,
+   "ourArmMm": -19.4,
+   "ourLineArmMm": -5.9,
+   "diffMm": 6.5,
+   "toleranceMm": 9.1,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "VD_biceps_femoris_long_left"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -43.9,
+   "ourArmMm": -54.7,
+   "ourLineArmMm": -50.9,
+   "diffMm": -10.8,
+   "toleranceMm": 15.3,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "parts": [
+    "FJ1410M"
+   ],
+   "reference": [
+    "perlong_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -10,
+   "ourArmMm": -4.4,
+   "ourLineArmMm": null,
+   "diffMm": 5.6,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "parts": [
+    "VD_flexor_digitorum_longus_left"
+   ],
+   "reference": [
+    "fdl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 15.3,
+   "ourArmMm": 9.7,
+   "ourLineArmMm": null,
+   "diffMm": -5.6,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "parts": [
+    "VD_adductor_magnus_left"
+   ],
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -46.3,
+   "ourArmMm": -35.1,
+   "ourLineArmMm": -66,
+   "diffMm": 11.2,
+   "toleranceMm": 16.2,
+   "shapeR": 0.95,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "W_FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -55.3,
+   "ourArmMm": -68.5,
+   "ourLineArmMm": -69.1,
+   "diffMm": -13.2,
+   "toleranceMm": 19.3,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "parts": [
+    "FJ1403M"
+   ],
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -27.6,
+   "ourArmMm": -34.2,
+   "ourLineArmMm": -30.1,
+   "diffMm": -6.6,
+   "toleranceMm": 9.7,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -43.6,
+   "ourArmMm": -54,
+   "ourLineArmMm": null,
+   "diffMm": -10.4,
+   "toleranceMm": 15.3,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "parts": [
+    "FJ1440"
+   ],
+   "reference": [
+    "tibpost_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 17.4,
+   "ourArmMm": 12,
+   "ourLineArmMm": null,
+   "diffMm": -5.4,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "parts": [
+    "W_FJ1409M"
+   ],
+   "reference": [
+    "perbrev_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": -23.7,
+   "ourArmMm": -18.1,
+   "ourLineArmMm": null,
+   "diffMm": 5.6,
+   "toleranceMm": 8.3,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "W_FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -55.8,
+   "ourArmMm": -68.9,
+   "ourLineArmMm": -69.7,
+   "diffMm": -13.1,
+   "toleranceMm": 19.5,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "parts": [
+    "VD_adductor_brevis_right"
+   ],
+   "reference": [
+    "addbrev_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -45.1,
+   "ourArmMm": -55.5,
+   "ourLineArmMm": -57.4,
+   "diffMm": -10.4,
+   "toleranceMm": 15.8,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tensor fasciae latae",
+   "parts": [
+    "FJ1438"
+   ],
+   "reference": [
+    "tfl_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 64.5,
+   "ourArmMm": 49.7,
+   "ourLineArmMm": null,
+   "diffMm": -14.8,
+   "toleranceMm": 22.6,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tensor fasciae latae",
+   "parts": [
+    "FJ1438M"
+   ],
+   "reference": [
+    "tfl_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 64.6,
+   "ourArmMm": 49.8,
+   "ourLineArmMm": null,
+   "diffMm": -14.7,
+   "toleranceMm": 22.6,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "parts": [
+    "FJ1422"
+   ],
+   "reference": [
+    "iliacus_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 7.2,
+   "ourArmMm": 2.1,
+   "ourLineArmMm": 17.9,
+   "diffMm": -5.1,
+   "toleranceMm": 8,
+   "shapeR": 0.95,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -3.2,
+   "ourArmMm": -8.3,
+   "ourLineArmMm": -3,
+   "diffMm": -5.1,
+   "toleranceMm": 8,
+   "shapeR": 0.8,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -3.2,
+   "ourArmMm": -8.3,
+   "ourLineArmMm": -3,
+   "diffMm": -5.1,
+   "toleranceMm": 8,
+   "shapeR": 0.81,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right fibularis longus",
+   "parts": [
+    "FJ1410"
+   ],
+   "reference": [
+    "perlong_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -10,
+   "ourArmMm": -5,
+   "ourLineArmMm": null,
+   "diffMm": 5,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "parts": [
+    "FJ1440M"
+   ],
+   "reference": [
+    "tibpost_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 17.4,
+   "ourArmMm": 12.3,
+   "ourLineArmMm": null,
+   "diffMm": -5,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "parts": [
+    "FJ1422M"
+   ],
+   "reference": [
+    "iliacus_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 7.2,
+   "ourArmMm": 2.1,
+   "ourLineArmMm": 18.4,
+   "diffMm": -5,
+   "toleranceMm": 8,
+   "shapeR": 0.95,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor longus",
+   "parts": [
+    "VD_adductor_longus_right"
+   ],
+   "reference": [
+    "addlong_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -49,
+   "ourArmMm": -59.7,
+   "ourLineArmMm": -63.9,
+   "diffMm": -10.7,
+   "toleranceMm": 17.2,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "FJ1395M"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -4.2,
+   "ourArmMm": -9.1,
+   "ourLineArmMm": -4.8,
+   "diffMm": -4.9,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus medius",
+   "parts": [
+    "VD_gluteus_medius_left"
+   ],
+   "reference": [
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 40.9,
+   "ourArmMm": 32.2,
+   "ourLineArmMm": 48.3,
+   "diffMm": -8.7,
+   "toleranceMm": 14.3,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "parts": [
+    "FJ1431"
+   ],
+   "reference": [
+    "psoas_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": 28.9,
+   "ourArmMm": 22.8,
+   "ourLineArmMm": null,
+   "diffMm": -6.1,
+   "toleranceMm": 10.1,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "parts": [
+    "FJ1431M"
+   ],
+   "reference": [
+    "psoas_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": 28.9,
+   "ourArmMm": 22.7,
+   "ourLineArmMm": null,
+   "diffMm": -6.1,
+   "toleranceMm": 10.1,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "parts": [
+    "FJ1403M"
+   ],
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -0.4,
+   "ourArmMm": 4.4,
+   "ourLineArmMm": 0.9,
+   "diffMm": 4.8,
+   "toleranceMm": 8,
+   "shapeR": -0.89,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -26,
+   "ourArmMm": -20.6,
+   "ourLineArmMm": -7.2,
+   "diffMm": 5.4,
+   "toleranceMm": 9.1,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "parts": [
+    "W_FJ1394M"
+   ],
+   "reference": [
+    "gaslat_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -39.5,
+   "ourArmMm": -47.7,
+   "ourLineArmMm": -47.7,
+   "diffMm": -8.1,
+   "toleranceMm": 13.8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "parts": [
+    "W_FJ1394"
+   ],
+   "reference": [
+    "gaslat_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -39.9,
+   "ourArmMm": -48.2,
+   "ourLineArmMm": -48,
+   "diffMm": -8.2,
+   "toleranceMm": 14,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right piriformis",
+   "parts": [
+    "FJ1428"
+   ],
+   "reference": [
+    "piri_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -25.5,
+   "ourArmMm": -20.3,
+   "ourLineArmMm": -21.4,
+   "diffMm": 5.2,
+   "toleranceMm": 8.9,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "parts": [
+    "FJ1415"
+   ],
+   "reference": [
+    "fhl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 14.8,
+   "ourArmMm": 10.2,
+   "ourLineArmMm": null,
+   "diffMm": -4.6,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "FJ1395"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -4.2,
+   "ourArmMm": -8.6,
+   "ourLineArmMm": -4.5,
+   "diffMm": -4.5,
+   "toleranceMm": 8,
+   "shapeR": 0.95,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "parts": [
+    "FJ1440"
+   ],
+   "reference": [
+    "tibpost_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -11,
+   "ourArmMm": -6.5,
+   "ourLineArmMm": null,
+   "diffMm": 4.5,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left piriformis",
+   "parts": [
+    "FJ1428M"
+   ],
+   "reference": [
+    "piri_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -25.5,
+   "ourArmMm": -20.6,
+   "ourLineArmMm": -20.9,
+   "diffMm": 5,
+   "toleranceMm": 8.9,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "parts": [
+    "FJ1415M"
+   ],
+   "reference": [
+    "fhl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 14.8,
+   "ourArmMm": 10.4,
+   "ourLineArmMm": null,
+   "diffMm": -4.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "parts": [
+    "VD_tibialis_posterior_left"
+   ],
+   "reference": [
+    "tibpost_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -9.8,
+   "ourArmMm": -5.5,
+   "ourLineArmMm": null,
+   "diffMm": 4.3,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right soleus",
+   "parts": [
+    "FJ1437"
+   ],
+   "reference": [
+    "soleus_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 4.2,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": -4.2,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left soleus",
+   "parts": [
+    "FJ1437M"
+   ],
+   "reference": [
+    "soleus_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 4.2,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": -4.2,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "parts": [
+    "FJ1440M"
+   ],
+   "reference": [
+    "tibpost_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -11,
+   "ourArmMm": -6.8,
+   "ourLineArmMm": null,
+   "diffMm": 4.1,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left fibularis longus",
+   "parts": [
+    "VD_peroneus_longus_left"
+   ],
+   "reference": [
+    "perlong_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -8.9,
+   "ourArmMm": -13.1,
+   "ourLineArmMm": null,
+   "diffMm": -4.1,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus medius",
+   "parts": [
+    "FJ1419M"
+   ],
+   "reference": [
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -11.3,
+   "ourArmMm": -7.4,
+   "ourLineArmMm": -8.7,
+   "diffMm": 3.9,
+   "toleranceMm": 8,
+   "shapeR": 0.67,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Long head of right biceps femoris",
+   "parts": [
+    "FJ1395"
+   ],
+   "reference": [
+    "bflh_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -49.1,
+   "ourArmMm": -57.3,
+   "ourLineArmMm": -51.1,
+   "diffMm": -8.2,
+   "toleranceMm": 17.2,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right soleus",
+   "parts": [
+    "VD_soleus_right"
+   ],
+   "reference": [
+    "soleus_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.927,
+   "refArmMm": 3.8,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": -3.8,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_left"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_l",
+   "ourCoordinate": "knee_L.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -33,
+   "ourArmMm": -38.4,
+   "ourLineArmMm": null,
+   "diffMm": -5.4,
+   "toleranceMm": 11.6,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left soleus",
+   "parts": [
+    "VD_soleus_left"
+   ],
+   "reference": [
+    "soleus_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 3.7,
+   "ourArmMm": 0,
+   "ourLineArmMm": null,
+   "diffMm": -3.7,
+   "toleranceMm": 8,
+   "shapeR": 0,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": 29.2,
+   "ourArmMm": 24.5,
+   "ourLineArmMm": 41.5,
+   "diffMm": -4.6,
+   "toleranceMm": 10.2,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "W_FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -4,
+   "ourArmMm": -0.4,
+   "ourLineArmMm": 1.4,
+   "diffMm": 3.6,
+   "toleranceMm": 8,
+   "shapeR": 0.21,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left iliacus",
+   "parts": [
+    "VD_iliacus_left"
+   ],
+   "reference": [
+    "iliacus_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": 7.5,
+   "ourArmMm": 3.8,
+   "ourLineArmMm": -0.4,
+   "diffMm": -3.6,
+   "toleranceMm": 8,
+   "shapeR": 0.83,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Long head of left biceps femoris",
+   "parts": [
+    "FJ1395M"
+   ],
+   "reference": [
+    "bflh_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.028,
+   "refArmMm": -49.1,
+   "ourArmMm": -56.8,
+   "ourLineArmMm": -51.5,
+   "diffMm": -7.6,
+   "toleranceMm": 17.2,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor magnus",
+   "parts": [
+    "VD_adductor_magnus_left"
+   ],
+   "reference": [
+    "addmagDist_l",
+    "addmagIsch_l",
+    "addmagMid_l",
+    "addmagProx_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -0.4,
+   "ourArmMm": 2.9,
+   "ourLineArmMm": -1,
+   "diffMm": 3.3,
+   "toleranceMm": 8,
+   "shapeR": -0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "W_FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -4,
+   "ourArmMm": -0.7,
+   "ourLineArmMm": 1.6,
+   "diffMm": 3.3,
+   "toleranceMm": 8,
+   "shapeR": 0.28,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor hallucis longus",
+   "parts": [
+    "VD_extensor_hallucis_longus_right"
+   ],
+   "reference": [
+    "ehl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": 33.5,
+   "ourArmMm": 28.8,
+   "ourLineArmMm": 60.3,
+   "diffMm": -4.7,
+   "toleranceMm": 11.7,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "parts": [
+    "VD_flexor_hallucis_longus_left"
+   ],
+   "reference": [
+    "fhl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.918,
+   "refArmMm": -14.6,
+   "ourArmMm": -17.8,
+   "ourLineArmMm": null,
+   "diffMm": -3.2,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "parts": [
+    "VD_adductor_brevis_left"
+   ],
+   "reference": [
+    "addbrev_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -44.7,
+   "ourArmMm": -50.8,
+   "ourLineArmMm": -56.2,
+   "diffMm": -6.2,
+   "toleranceMm": 15.6,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "W_FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 26,
+   "ourArmMm": 22.4,
+   "ourLineArmMm": 31.8,
+   "diffMm": -3.6,
+   "toleranceMm": 9.1,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": 29.1,
+   "ourArmMm": 25.2,
+   "ourLineArmMm": 42.2,
+   "diffMm": -3.9,
+   "toleranceMm": 10.2,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "parts": [
+    "FJ1401M"
+   ],
+   "reference": [
+    "addbrev_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -50,
+   "ourArmMm": -56.6,
+   "ourLineArmMm": -55.4,
+   "diffMm": -6.6,
+   "toleranceMm": 17.5,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "W_FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": 0.7,
+   "ourArmMm": 3.7,
+   "ourLineArmMm": 2.1,
+   "diffMm": 3,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "parts": [
+    "FJ1401"
+   ],
+   "reference": [
+    "addbrev_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -50,
+   "ourArmMm": -56.5,
+   "ourLineArmMm": -54.8,
+   "diffMm": -6.5,
+   "toleranceMm": 17.5,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.028,
+   "refArmMm": -61.9,
+   "ourArmMm": -69.9,
+   "ourLineArmMm": -71.3,
+   "diffMm": -8,
+   "toleranceMm": 21.7,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 1.027,
+   "refArmMm": -61.9,
+   "ourArmMm": -69.6,
+   "ourLineArmMm": -71,
+   "diffMm": -7.7,
+   "toleranceMm": 21.7,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "parts": [
+    "FJ1418"
+   ],
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -47.4,
+   "ourArmMm": -41.6,
+   "ourLineArmMm": -17.6,
+   "diffMm": 5.8,
+   "toleranceMm": 16.6,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Medial head of right gastrocnemius",
+   "parts": [
+    "FJ1397"
+   ],
+   "reference": [
+    "gasmed_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -41.4,
+   "ourArmMm": -46.2,
+   "ourLineArmMm": -46,
+   "diffMm": -4.8,
+   "toleranceMm": 14.5,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right tibialis posterior",
+   "parts": [
+    "VD_tibialis_posterior_right"
+   ],
+   "reference": [
+    "tibpost_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -9.9,
+   "ourArmMm": -7.3,
+   "ourLineArmMm": null,
+   "diffMm": 2.6,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left extensor digitorum longus",
+   "parts": [
+    "FJ1406M"
+   ],
+   "reference": [
+    "edl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": 34.6,
+   "ourArmMm": 38.4,
+   "ourLineArmMm": null,
+   "diffMm": 3.8,
+   "toleranceMm": 12.1,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "parts": [
+    "VD_extensor_digitorum_longus_right"
+   ],
+   "reference": [
+    "edl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": 31.2,
+   "ourArmMm": 27.9,
+   "ourLineArmMm": null,
+   "diffMm": -3.4,
+   "toleranceMm": 10.9,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "W_FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 26.3,
+   "ourArmMm": 23.5,
+   "ourLineArmMm": 30.9,
+   "diffMm": -2.8,
+   "toleranceMm": 9.2,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right iliacus",
+   "parts": [
+    "VD_iliacus_right"
+   ],
+   "reference": [
+    "iliacus_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": 7.5,
+   "ourArmMm": 5.2,
+   "ourLineArmMm": 0.2,
+   "diffMm": -2.4,
+   "toleranceMm": 8,
+   "shapeR": 0.88,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right fibularis longus",
+   "parts": [
+    "VD_peroneus_longus_right"
+   ],
+   "reference": [
+    "perlong_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -9,
+   "ourArmMm": -11.4,
+   "ourLineArmMm": null,
+   "diffMm": -2.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Medial head of left gastrocnemius",
+   "parts": [
+    "FJ1397M"
+   ],
+   "reference": [
+    "gasmed_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -41.4,
+   "ourArmMm": -45.7,
+   "ourLineArmMm": -45.6,
+   "diffMm": -4.3,
+   "toleranceMm": 14.5,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left psoas major",
+   "parts": [
+    "FJ1431M"
+   ],
+   "reference": [
+    "psoas_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": 1,
+   "ourArmMm": 3.3,
+   "ourLineArmMm": null,
+   "diffMm": 2.3,
+   "toleranceMm": 8,
+   "shapeR": 0.15,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right psoas major",
+   "parts": [
+    "FJ1431"
+   ],
+   "reference": [
+    "psoas_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": 1,
+   "ourArmMm": 3.2,
+   "ourLineArmMm": null,
+   "diffMm": 2.2,
+   "toleranceMm": 8,
+   "shapeR": 0.12,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor digitorum longus",
+   "parts": [
+    "FJ1406"
+   ],
+   "reference": [
+    "edl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": 34.6,
+   "ourArmMm": 38,
+   "ourLineArmMm": null,
+   "diffMm": 3.3,
+   "toleranceMm": 12.1,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "W_FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": 0.7,
+   "ourArmMm": 2.8,
+   "ourLineArmMm": 2.1,
+   "diffMm": 2.1,
+   "toleranceMm": 8,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right adductor magnus",
+   "parts": [
+    "VD_adductor_magnus_right"
+   ],
+   "reference": [
+    "addmagDist_r",
+    "addmagIsch_r",
+    "addmagMid_r",
+    "addmagProx_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": -46.8,
+   "ourArmMm": -42.5,
+   "ourLineArmMm": -68.7,
+   "diffMm": 4.2,
+   "toleranceMm": 16.4,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left semimembranosus",
+   "parts": [
+    "FJ1435M"
+   ],
+   "reference": [
+    "semimem_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": 0.8,
+   "ourArmMm": 2.8,
+   "ourLineArmMm": null,
+   "diffMm": 2,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left tibialis posterior",
+   "parts": [
+    "VD_tibialis_posterior_left"
+   ],
+   "reference": [
+    "tibpost_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 0.918,
+   "refArmMm": 15.5,
+   "ourArmMm": 13.6,
+   "ourLineArmMm": null,
+   "diffMm": -1.9,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus medius",
+   "parts": [
+    "VD_gluteus_medius_left"
+   ],
+   "reference": [
+    "glmed1_l",
+    "glmed2_l",
+    "glmed3_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -10.1,
+   "ourArmMm": -8.1,
+   "ourLineArmMm": -11.4,
+   "diffMm": 1.9,
+   "toleranceMm": 8,
+   "shapeR": 0.74,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right semimembranosus",
+   "parts": [
+    "FJ1435"
+   ],
+   "reference": [
+    "semimem_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": 0.8,
+   "ourArmMm": 2.7,
+   "ourLineArmMm": 2.7,
+   "diffMm": 1.8,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "parts": [
+    "W_FJ1420"
+   ],
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -1.7,
+   "ourArmMm": -3.5,
+   "ourLineArmMm": null,
+   "diffMm": -1.8,
+   "toleranceMm": 8,
+   "shapeR": 0.92,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "parts": [
+    "W_FJ1420M"
+   ],
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -1.7,
+   "ourArmMm": -3.5,
+   "ourLineArmMm": null,
+   "diffMm": -1.8,
+   "toleranceMm": 8,
+   "shapeR": 0.93,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor hallucis longus",
+   "parts": [
+    "FJ1415M"
+   ],
+   "reference": [
+    "fhl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -16.3,
+   "ourArmMm": -18,
+   "ourLineArmMm": null,
+   "diffMm": -1.7,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_left"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -1.7,
+   "ourArmMm": -3.4,
+   "ourLineArmMm": null,
+   "diffMm": -1.7,
+   "toleranceMm": 8,
+   "shapeR": 0.97,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "parts": [
+    "FJ1415"
+   ],
+   "reference": [
+    "fhl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -16.3,
+   "ourArmMm": -17.9,
+   "ourLineArmMm": null,
+   "diffMm": -1.6,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gracilis",
+   "parts": [
+    "W_FJ1421M"
+   ],
+   "reference": [
+    "grac_l"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_l",
+   "ourCoordinate": "hip_L.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.918,
+   "refArmMm": -23.2,
+   "ourArmMm": -21.5,
+   "ourLineArmMm": -8.9,
+   "diffMm": 1.6,
+   "toleranceMm": 8.1,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus minimus",
+   "parts": [
+    "FJ1420"
+   ],
+   "reference": [
+    "glmin1_r",
+    "glmin2_r",
+    "glmin3_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -1.9,
+   "ourArmMm": -3.3,
+   "ourLineArmMm": null,
+   "diffMm": -1.5,
+   "toleranceMm": 8,
+   "shapeR": 0.94,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right fibularis brevis",
+   "parts": [
+    "FJ1409"
+   ],
+   "reference": [
+    "perbrev_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -7.1,
+   "ourArmMm": -8.6,
+   "ourLineArmMm": null,
+   "diffMm": -1.5,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right gluteus medius",
+   "parts": [
+    "FJ1419"
+   ],
+   "reference": [
+    "glmed1_r",
+    "glmed2_r",
+    "glmed3_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": -11.3,
+   "ourArmMm": -12.6,
+   "ourLineArmMm": -9.2,
+   "diffMm": -1.4,
+   "toleranceMm": 8,
+   "shapeR": 0.86,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right flexor hallucis longus",
+   "parts": [
+    "VD_flexor_hallucis_longus_right"
+   ],
+   "reference": [
+    "fhl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 0.927,
+   "refArmMm": -14.7,
+   "ourArmMm": -16.2,
+   "ourLineArmMm": null,
+   "diffMm": -1.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left sartorius",
+   "parts": [
+    "W_FJ1434M"
+   ],
+   "reference": [
+    "sart_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -2.9,
+   "ourArmMm": -4.2,
+   "ourLineArmMm": -2,
+   "diffMm": -1.3,
+   "toleranceMm": 8,
+   "shapeR": 0.64,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gracilis",
+   "parts": [
+    "W_FJ1421"
+   ],
+   "reference": [
+    "grac_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -23.4,
+   "ourArmMm": -22.2,
+   "ourLineArmMm": -8.9,
+   "diffMm": 1.2,
+   "toleranceMm": 8.2,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Lateral head of right gastrocnemius",
+   "parts": [
+    "FJ1394"
+   ],
+   "reference": [
+    "gaslat_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": -44.3,
+   "ourArmMm": -46.5,
+   "ourLineArmMm": -45.2,
+   "diffMm": -2.2,
+   "toleranceMm": 15.5,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right extensor hallucis longus",
+   "parts": [
+    "FJ1408"
+   ],
+   "reference": [
+    "ehl_r"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_r",
+   "ourCoordinate": "ankle_R.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.027,
+   "refArmMm": 37.1,
+   "ourArmMm": 35.3,
+   "ourLineArmMm": 71.8,
+   "diffMm": -1.8,
+   "toleranceMm": 13,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Lateral head of left gastrocnemius",
+   "parts": [
+    "FJ1394M"
+   ],
+   "reference": [
+    "gaslat_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -44.3,
+   "ourArmMm": -46.4,
+   "ourLineArmMm": -45.1,
+   "diffMm": -2.1,
+   "toleranceMm": 15.5,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right sartorius",
+   "parts": [
+    "W_FJ1434"
+   ],
+   "reference": [
+    "sart_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.927,
+   "refArmMm": -2.9,
+   "ourArmMm": -3.9,
+   "ourLineArmMm": -2,
+   "diffMm": -1,
+   "toleranceMm": 8,
+   "shapeR": 0.58,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left extensor hallucis longus",
+   "parts": [
+    "FJ1408M"
+   ],
+   "reference": [
+    "ehl_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": 37.1,
+   "ourArmMm": 35.6,
+   "ourLineArmMm": 71.9,
+   "diffMm": -1.5,
+   "toleranceMm": 13,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right gluteus maximus",
+   "parts": [
+    "VD_gluteus_maximus_right"
+   ],
+   "reference": [
+    "glmax1_r",
+    "glmax2_r",
+    "glmax3_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -42.8,
+   "ourArmMm": -41.1,
+   "ourLineArmMm": -12.5,
+   "diffMm": 1.7,
+   "toleranceMm": 15,
+   "shapeR": 0.99,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left gluteus minimus",
+   "parts": [
+    "FJ1420M"
+   ],
+   "reference": [
+    "glmin1_l",
+    "glmin2_l",
+    "glmin3_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": -1.9,
+   "ourArmMm": -2.8,
+   "ourLineArmMm": null,
+   "diffMm": -0.9,
+   "toleranceMm": 8,
+   "shapeR": 0.92,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left fibularis brevis",
+   "parts": [
+    "FJ1409M"
+   ],
+   "reference": [
+    "perbrev_l"
+   ],
+   "movement": "ankle dorsiflexion",
+   "refCoordinate": "ankle_angle_l",
+   "ourCoordinate": "ankle_L.0",
+   "sweepDeg": [
+    -40,
+    12.7
+   ],
+   "scale": 1.028,
+   "refArmMm": -7.1,
+   "ourArmMm": -7.8,
+   "ourLineArmMm": null,
+   "diffMm": -0.8,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_right"
+   ],
+   "reference": [
+    "recfem_r"
+   ],
+   "movement": "knee flexion",
+   "refCoordinate": "knee_angle_r",
+   "ourCoordinate": "knee_R.0",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "scale": 0.927,
+   "refArmMm": -33.3,
+   "ourArmMm": -32.2,
+   "ourLineArmMm": null,
+   "diffMm": 1.1,
+   "toleranceMm": 11.7,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left flexor digitorum longus",
+   "parts": [
+    "FJ1414M"
+   ],
+   "reference": [
+    "fdl_l"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_l",
+   "ourCoordinate": "subtalar_L.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.028,
+   "refArmMm": 17.1,
+   "ourArmMm": 16.6,
+   "ourLineArmMm": null,
+   "diffMm": -0.5,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor magnus",
+   "parts": [
+    "FJ1403"
+   ],
+   "reference": [
+    "addmagDist_r",
+    "addmagIsch_r",
+    "addmagMid_r",
+    "addmagProx_r"
+   ],
+   "movement": "hip flexion",
+   "refCoordinate": "hip_flexion_r",
+   "ourCoordinate": "hip_R.0",
+   "sweepDeg": [
+    -17.4,
+    120
+   ],
+   "scale": 1.027,
+   "refArmMm": -27.6,
+   "ourArmMm": -28.2,
+   "ourLineArmMm": -28.5,
+   "diffMm": -0.6,
+   "toleranceMm": 9.7,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right flexor digitorum longus",
+   "parts": [
+    "FJ1414"
+   ],
+   "reference": [
+    "fdl_r"
+   ],
+   "movement": "subtalar inversion",
+   "refCoordinate": "subtalar_angle_r",
+   "ourCoordinate": "subtalar_R.0",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "scale": 1.027,
+   "refArmMm": 17.1,
+   "ourArmMm": 16.7,
+   "ourLineArmMm": null,
+   "diffMm": -0.4,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "muscle": "Left adductor brevis",
+   "parts": [
+    "FJ1401M"
+   ],
+   "reference": [
+    "addbrev_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.028,
+   "refArmMm": 3.6,
+   "ourArmMm": 4,
+   "ourLineArmMm": 6.7,
+   "diffMm": 0.4,
+   "toleranceMm": 8,
+   "shapeR": -0.12,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "muscle": "Right rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_right"
+   ],
+   "reference": [
+    "recfem_r"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_r",
+   "ourCoordinate": "hip_R.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.927,
+   "refArmMm": 19.7,
+   "ourArmMm": 20.1,
+   "ourLineArmMm": null,
+   "diffMm": 0.4,
+   "toleranceMm": 8,
+   "shapeR": 0.98,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "parts": [
+    "VD_gluteus_maximus_left"
+   ],
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -5.2,
+   "ourArmMm": -4.8,
+   "ourLineArmMm": null,
+   "diffMm": 0.4,
+   "toleranceMm": 8,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left adductor longus",
+   "parts": [
+    "VD_adductor_longus_left"
+   ],
+   "reference": [
+    "addlong_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": -48.5,
+   "ourArmMm": -49.3,
+   "ourLineArmMm": -66.3,
+   "diffMm": -0.8,
+   "toleranceMm": 17,
+   "shapeR": 0.96,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "muscle": "Right adductor brevis",
+   "parts": [
+    "FJ1401"
+   ],
+   "reference": [
+    "addbrev_r"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_r",
+   "ourCoordinate": "hip_R.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 1.027,
+   "refArmMm": 3.6,
+   "ourArmMm": 4,
+   "ourLineArmMm": 6.6,
+   "diffMm": 0.3,
+   "toleranceMm": 8,
+   "shapeR": -0.13,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left gluteus maximus",
+   "parts": [
+    "VD_gluteus_maximus_left"
+   ],
+   "reference": [
+    "glmax1_l",
+    "glmax2_l",
+    "glmax3_l"
+   ],
+   "movement": "hip internal rotation",
+   "refCoordinate": "hip_rotation_l",
+   "ourCoordinate": "hip_L.2",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "scale": 0.918,
+   "refArmMm": -15.9,
+   "ourArmMm": -16.2,
+   "ourLineArmMm": null,
+   "diffMm": -0.3,
+   "toleranceMm": 8,
+   "shapeR": 1,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "muscle": "Left rectus femoris",
+   "parts": [
+    "VD_rectus_femoris_left"
+   ],
+   "reference": [
+    "recfem_l"
+   ],
+   "movement": "hip abduction",
+   "refCoordinate": "hip_adduction_l",
+   "ourCoordinate": "hip_L.1",
+   "sweepDeg": [
+    -20,
+    45
+   ],
+   "scale": 0.918,
+   "refArmMm": 19.5,
+   "ourArmMm": 19.5,
+   "ourLineArmMm": null,
+   "diffMm": 0,
+   "toleranceMm": 8,
+   "shapeR": 0.98,
+   "verdict": "within"
+  }
+ ]
+}

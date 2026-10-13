@@ -1,0 +1,959 @@
+{
+ "schema": 1,
+ "id": "instrument-check",
+ "title": {
+  "zh": "量具自检：同一族模型的两种求值",
+  "en": "Instrument check: one model family evaluated two ways"
+ },
+ "method": {
+  "zh": "MyoLeg 是由 Rajagopal 模型转换来的。这里对右下肢每条肌肉、每个坐标，比较“由 .osim 路径点近似算出的平均力臂”和“MuJoCo 对 MyoLeg 求出的平均力臂”。差别来自三处：我们对 OpenSim 缠绕的近似、MyoLeg 转换时的手工改动（它的说明里列了去掉和改换的缠绕面）、以及膝关节耦合的多项式近似。它给出“量具”本身的误差量级。",
+  "en": "MyoLeg was converted from the Rajagopal model. For every right-leg muscle and coordinate this compares the mean moment arm computed approximately from the .osim path points with the one MuJoCo gives for MyoLeg. The differences have three origins: our approximation of OpenSim wrapping, the manual changes made in the MyoLeg conversion (its README lists the wrap surfaces removed or replaced), and the polynomial approximation of the knee coupling. It gives the size of the instrument's own error."
+ },
+ "tolerance": {
+  "zh": "不作判定；用来读其余各表。",
+  "en": "No verdict; it is for reading the other tables."
+ },
+ "references": [
+  {
+   "id": "opensim-rajagopal",
+   "name": "Rajagopal et al. 2016 full-body OpenSim model (Rajagopal2016.osim) and RajagopalLaiUhlrich2023.osim",
+   "version": "opensim-org/opensim-models commit d9b05d47 (2025-11-05), Models/Rajagopal",
+   "url": "https://simtk.org/projects/full_body",
+   "licence": "MIT (\"MIT Use Agreement\", Copyright (c) 2015, Stanford University)",
+   "clause": "SimTK project page, licence pop-over of the package \"Full Body Model\": \"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software\". The copy in opensim-org/opensim-models carries no licence file of its own; its README says the files \"are modified from the original distribution, which can be found on SimTK.org\".",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "myo-sim",
+   "name": "MyoSim (MyoHub/myo_sim): MuJoCo musculoskeletal models MyoLeg, MyoArm, MyoHand, MyoTorso, composed as MyoFullBody",
+   "version": "MyoHub/myo_sim commit 93b0ca8f (2026-09-16); evaluated with the PyPI package myo-sim 0.2.3 (model \"myofullbody\": 123 joints, 416 muscle actuators) in MuJoCo 3.15.0",
+   "url": "https://github.com/MyoHub/myo_sim",
+   "licence": "Apache-2.0",
+   "clause": "LICENSE at the repository root (the README says \"Apache 2.0 — see LICENSE\"): \"2. Grant of Copyright License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.\"",
+   "opened": "2026-10-13"
+  }
+ ],
+ "ourState": {},
+ "notes": [],
+ "summary": {
+  "rows": 83,
+  "medianAbsDiffMm": 0,
+  "p90AbsDiffMm": 4,
+  "maxAbsDiffMm": 6.3
+ },
+ "rows": [
+  {
+   "muscle": "grac_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 39.5,
+   "myoMujocoArmMm": 45.9,
+   "diffMm": -6.3
+  },
+  {
+   "muscle": "bfsh_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 30.2,
+   "myoMujocoArmMm": 36,
+   "diffMm": -5.9
+  },
+  {
+   "muscle": "semimem_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 38.4,
+   "myoMujocoArmMm": 44,
+   "diffMm": -5.6
+  },
+  {
+   "muscle": "semiten_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 46.5,
+   "myoMujocoArmMm": 52,
+   "diffMm": -5.5
+  },
+  {
+   "muscle": "bflh_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 31.7,
+   "myoMujocoArmMm": 37.1,
+   "diffMm": -5.3
+  },
+  {
+   "muscle": "sart_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 33.6,
+   "myoMujocoArmMm": 38.5,
+   "diffMm": -4.9
+  },
+  {
+   "muscle": "glmax1_r+glmax2_r+glmax3_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -47,
+   "myoMujocoArmMm": -42.6,
+   "diffMm": -4.4
+  },
+  {
+   "muscle": "gaslat_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 23,
+   "myoMujocoArmMm": 19,
+   "diffMm": 4
+  },
+  {
+   "muscle": "tfl_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": -9.2,
+   "myoMujocoArmMm": -5.2,
+   "diffMm": -4
+  },
+  {
+   "muscle": "gasmed_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": 24.7,
+   "myoMujocoArmMm": 21.1,
+   "diffMm": 3.6
+  },
+  {
+   "muscle": "gasmed_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -37.4,
+   "myoMujocoArmMm": -40.8,
+   "diffMm": 3.5
+  },
+  {
+   "muscle": "psoas_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 27.8,
+   "myoMujocoArmMm": 25.4,
+   "diffMm": 2.4
+  },
+  {
+   "muscle": "iliacus_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -6.9,
+   "myoMujocoArmMm": -4.7,
+   "diffMm": -2.2
+  },
+  {
+   "muscle": "psoas_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 2.5,
+   "myoMujocoArmMm": 4.3,
+   "diffMm": -1.8
+  },
+  {
+   "muscle": "psoas_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 1,
+   "myoMujocoArmMm": 0.1,
+   "diffMm": 0.9
+  },
+  {
+   "muscle": "gasmed_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 2.6,
+   "myoMujocoArmMm": 2.2,
+   "diffMm": 0.4
+  },
+  {
+   "muscle": "vaslat_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": -32.4,
+   "myoMujocoArmMm": -32.1,
+   "diffMm": -0.3
+  },
+  {
+   "muscle": "iliacus_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 36.6,
+   "myoMujocoArmMm": 36.3,
+   "diffMm": 0.3
+  },
+  {
+   "muscle": "iliacus_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 8.1,
+   "myoMujocoArmMm": 7.8,
+   "diffMm": 0.3
+  },
+  {
+   "muscle": "vasmed_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": -31.3,
+   "myoMujocoArmMm": -31.5,
+   "diffMm": 0.2
+  },
+  {
+   "muscle": "vasint_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": -33,
+   "myoMujocoArmMm": -32.9,
+   "diffMm": -0.2
+  },
+  {
+   "muscle": "glmax1_r+glmax2_r+glmax3_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 5,
+   "myoMujocoArmMm": 5.2,
+   "diffMm": -0.2
+  },
+  {
+   "muscle": "recfem_r",
+   "coordinate": "knee_angle_r",
+   "sweepDeg": [
+    0,
+    120
+   ],
+   "opensimPathPointsArmMm": -36,
+   "myoMujocoArmMm": -35.8,
+   "diffMm": -0.1
+  },
+  {
+   "muscle": "glmax1_r+glmax2_r+glmax3_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -17.4,
+   "myoMujocoArmMm": -17.4,
+   "diffMm": 0.1
+  },
+  {
+   "muscle": "recfem_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 37.7,
+   "myoMujocoArmMm": 37.7,
+   "diffMm": 0
+  },
+  {
+   "muscle": "recfem_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -19.4,
+   "myoMujocoArmMm": -19.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "recfem_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -1.9,
+   "myoMujocoArmMm": -1.9,
+   "diffMm": 0
+  },
+  {
+   "muscle": "bflh_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -46,
+   "myoMujocoArmMm": -46,
+   "diffMm": 0
+  },
+  {
+   "muscle": "bflh_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 26.8,
+   "myoMujocoArmMm": 26.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "bflh_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -4.1,
+   "myoMujocoArmMm": -4.1,
+   "diffMm": 0
+  },
+  {
+   "muscle": "semiten_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -49.2,
+   "myoMujocoArmMm": -49.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "semiten_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 30.8,
+   "myoMujocoArmMm": 30.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "semiten_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 0.4,
+   "myoMujocoArmMm": 0.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "semimem_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -40.8,
+   "myoMujocoArmMm": -40.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "semimem_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 19.7,
+   "myoMujocoArmMm": 19.7,
+   "diffMm": 0
+  },
+  {
+   "muscle": "semimem_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 0.8,
+   "myoMujocoArmMm": 0.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "gaslat_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -41.7,
+   "myoMujocoArmMm": -41.7,
+   "diffMm": 0
+  },
+  {
+   "muscle": "gaslat_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 5.4,
+   "myoMujocoArmMm": 5.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "soleus_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -40.2,
+   "myoMujocoArmMm": -40.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "soleus_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 4.1,
+   "myoMujocoArmMm": 4.1,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tibant_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": 40.2,
+   "myoMujocoArmMm": 40.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tibant_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 8.8,
+   "myoMujocoArmMm": 8.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tibpost_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -9.4,
+   "myoMujocoArmMm": -9.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tibpost_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 16.9,
+   "myoMujocoArmMm": 16.9,
+   "diffMm": 0
+  },
+  {
+   "muscle": "glmed1_r+glmed2_r+glmed3_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -10.6,
+   "myoMujocoArmMm": -10.6,
+   "diffMm": 0
+  },
+  {
+   "muscle": "glmed1_r+glmed2_r+glmed3_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -43.1,
+   "myoMujocoArmMm": -43.1,
+   "diffMm": 0
+  },
+  {
+   "muscle": "glmed1_r+glmed2_r+glmed3_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -11,
+   "myoMujocoArmMm": -11,
+   "diffMm": 0
+  },
+  {
+   "muscle": "glmin1_r+glmin2_r+glmin3_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -0.8,
+   "myoMujocoArmMm": -0.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "glmin1_r+glmin2_r+glmin3_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -45.8,
+   "myoMujocoArmMm": -45.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "glmin1_r+glmin2_r+glmin3_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -1.8,
+   "myoMujocoArmMm": -1.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addbrev_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 9.8,
+   "myoMujocoArmMm": 9.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addbrev_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 48.9,
+   "myoMujocoArmMm": 48.9,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addbrev_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 3.5,
+   "myoMujocoArmMm": 3.5,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addlong_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 18.3,
+   "myoMujocoArmMm": 18.3,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addlong_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 52.2,
+   "myoMujocoArmMm": 52.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addlong_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 4.2,
+   "myoMujocoArmMm": 4.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addmagDist_r+addmagIsch_r+addmagMid_r+addmagProx_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -23.8,
+   "myoMujocoArmMm": -23.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addmagDist_r+addmagIsch_r+addmagMid_r+addmagProx_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 48.3,
+   "myoMujocoArmMm": 48.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "addmagDist_r+addmagIsch_r+addmagMid_r+addmagProx_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -0.4,
+   "myoMujocoArmMm": -0.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "grac_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -20.2,
+   "myoMujocoArmMm": -20.3,
+   "diffMm": 0
+  },
+  {
+   "muscle": "grac_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": 56.5,
+   "myoMujocoArmMm": 56.5,
+   "diffMm": 0
+  },
+  {
+   "muscle": "grac_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -4.3,
+   "myoMujocoArmMm": -4.3,
+   "diffMm": 0
+  },
+  {
+   "muscle": "sart_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 50.1,
+   "myoMujocoArmMm": 50.1,
+   "diffMm": 0
+  },
+  {
+   "muscle": "sart_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -25.7,
+   "myoMujocoArmMm": -25.7,
+   "diffMm": 0
+  },
+  {
+   "muscle": "sart_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -3.2,
+   "myoMujocoArmMm": -3.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tfl_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": 58.5,
+   "myoMujocoArmMm": 58.5,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tfl_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -60.4,
+   "myoMujocoArmMm": -60.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "tfl_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": 0.6,
+   "myoMujocoArmMm": 0.6,
+   "diffMm": 0
+  },
+  {
+   "muscle": "piri_r",
+   "coordinate": "hip_flexion_r",
+   "sweepDeg": [
+    -30,
+    120
+   ],
+   "opensimPathPointsArmMm": -7.9,
+   "myoMujocoArmMm": -7.9,
+   "diffMm": 0
+  },
+  {
+   "muscle": "piri_r",
+   "coordinate": "hip_adduction_r",
+   "sweepDeg": [
+    -50,
+    30
+   ],
+   "opensimPathPointsArmMm": -25.8,
+   "myoMujocoArmMm": -25.8,
+   "diffMm": 0
+  },
+  {
+   "muscle": "piri_r",
+   "coordinate": "hip_rotation_r",
+   "sweepDeg": [
+    -40,
+    40
+   ],
+   "opensimPathPointsArmMm": -24.9,
+   "myoMujocoArmMm": -24.9,
+   "diffMm": 0
+  },
+  {
+   "muscle": "edl_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": 34.5,
+   "myoMujocoArmMm": 34.5,
+   "diffMm": 0
+  },
+  {
+   "muscle": "edl_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": -14.4,
+   "myoMujocoArmMm": -14.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "ehl_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": 37,
+   "myoMujocoArmMm": 37,
+   "diffMm": 0
+  },
+  {
+   "muscle": "ehl_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 0.5,
+   "myoMujocoArmMm": 0.5,
+   "diffMm": 0
+  },
+  {
+   "muscle": "fdl_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -8.4,
+   "myoMujocoArmMm": -8.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "fdl_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 16.7,
+   "myoMujocoArmMm": 16.7,
+   "diffMm": 0
+  },
+  {
+   "muscle": "fhl_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -14.3,
+   "myoMujocoArmMm": -14.3,
+   "diffMm": 0
+  },
+  {
+   "muscle": "fhl_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": 14.4,
+   "myoMujocoArmMm": 14.4,
+   "diffMm": 0
+  },
+  {
+   "muscle": "perbrev_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -6.2,
+   "myoMujocoArmMm": -6.2,
+   "diffMm": 0
+  },
+  {
+   "muscle": "perbrev_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": -25.9,
+   "myoMujocoArmMm": -25.9,
+   "diffMm": 0
+  },
+  {
+   "muscle": "perlong_r",
+   "coordinate": "ankle_angle_r",
+   "sweepDeg": [
+    -40,
+    30
+   ],
+   "opensimPathPointsArmMm": -9.1,
+   "myoMujocoArmMm": -9.1,
+   "diffMm": 0
+  },
+  {
+   "muscle": "perlong_r",
+   "coordinate": "subtalar_angle_r",
+   "sweepDeg": [
+    -20,
+    20
+   ],
+   "opensimPathPointsArmMm": -24.3,
+   "myoMujocoArmMm": -24.3,
+   "diffMm": 0
+  }
+ ]
+}
