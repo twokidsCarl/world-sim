@@ -66,7 +66,7 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(png.length).toBeLessThanOrEqual(2_000_000)
       expect(detail.atlas.width).toBe(detail.atlas.columns * detail.atlas.tile)
       expect(detail.atlas.height).toBe(detail.atlas.rows * detail.atlas.tile)
-      expect(detail.layers.map((l) => l.id)).toEqual(['glabella', 'crowsfeet', 'lowerlid', 'nose', 'nasolabial', 'lipcorner'])
+      expect(detail.layers.map((l) => l.id)).toEqual(['glabella', 'crowsfeet', 'lowerlid', 'nose', 'nasolabial', 'lipcorner', 'forehead'])
       expect(new Set(detail.layers.map((l) => l.tile.join(','))).size).toBe(detail.layers.length)
       const aus = new Set(face.aus.map((a) => a.id))
       for (const l of detail.layers) {

@@ -238,6 +238,54 @@
       "url": "/?body=female&sys=mus,ske&pain=7&cam=0.062,1.412,0.668,0.002,1.392,0.148"
     },
     {
+      "id": "expr-happy",
+      "title": {
+        "zh": "一张高兴的脸：哪些肌肉在动",
+        "en": "A happy face: which muscles are at work"
+      },
+      "hint": {
+        "zh": "下方可以换一种情绪（6 种基本、15 种复合）并调强度。动作单元的组合取自 Du 等 2014，强度是假设；模拟人没有情绪",
+        "en": "Pick another emotion below (6 basic, 15 compound) and change its strength. The action-unit sets are from Du et al. 2014 and the intensities are assumptions; the simulated body has no emotions"
+      },
+      "url": "/?sys=int&skin=1&expr=happy&cam=0.06,1.507,0.671,-0.001,1.487,0.151"
+    },
+    {
+      "id": "f-expr-fearful",
+      "title": {
+        "zh": "女性：恐惧的表情",
+        "en": "Female: a fearful expression"
+      },
+      "hint": {
+        "zh": "眉内侧上抬并聚拢、上睑提起、口角横拉。把强度拉到一半再看；换成“惊讶”比较两者的眉和口",
+        "en": "Inner brows raised and drawn together, upper lids lifted, lip corners stretched sideways. Halve the strength, then switch to “surprised” and compare brows and mouth"
+      },
+      "url": "/?body=female&sys=int&skin=1&expr=fearful&cam=0.062,1.412,0.668,0.002,1.392,0.148"
+    },
+    {
+      "id": "viseme-bilabial",
+      "title": {
+        "zh": "说话的口形：双唇音合上，再换成开口的 a",
+        "en": "Mouth shapes of speech: lips sealed for p b m, then an open a"
+      },
+      "hint": {
+        "zh": "现在保持的是 p b m：下颌微开而两唇合拢。在下方把口形换成“开口 a”，能看到牙和舌；共 17 个口形，数值是假设",
+        "en": "Held now is p b m: the jaw slightly open with the lips sealed. Switch the mouth shape below to “open a” to see teeth and tongue; 17 shapes in all, and their numbers are assumptions"
+      },
+      "url": "/?sys=int&skin=1&vis=PBM&cam=0.03,1.47,0.46,0,1.462,0.15"
+    },
+    {
+      "id": "expr-angry-muscles",
+      "title": {
+        "zh": "肌肉视图里的愤怒：皱眉肌和降眉间肌",
+        "en": "Anger in the muscle view: corrugator and procerus"
+      },
+      "hint": {
+        "zh": "去掉皮肤看表情肌怎样移动：眉头被拉向中间和下方，下睑收紧，双唇压紧。点“看皮肤”对照表面",
+        "en": "The skin is off so the muscles of expression can be watched: the brows drawn inwards and down, the lower lids tightened, the lips pressed. Press “Skin” to compare with the surface"
+      },
+      "url": "/?sys=mus,ske&expr=angry&cam=0.06,1.507,0.671,-0.001,1.487,0.151"
+    },
+    {
       "id": "shape-bmi",
       "title": {
         "zh": "胖瘦：只有皮肤和皮下脂肪在变",

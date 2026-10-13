@@ -482,6 +482,83 @@
      "widthMm": 0.6
     }
    ]
+  },
+  {
+   "id": "forehead",
+   "name": {
+    "zh": "额横纹",
+    "en": "horizontal forehead lines"
+   },
+   "drivers": {
+    "AU1": 0.6,
+    "AU2": 0.6
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设。额肌上提眉毛时，额部皮肤在竖直方向被压短，形成横纹。每侧三条，从正中旁到眉外侧上方，尺寸为假设。内外侧不分层：AU1、AU2 各出一半强度。",
+     "en": "Assumption. As frontalis raises the brows the forehead skin is shortened vertically into transverse furrows. Three per side, from beside the midline to above the lateral brow; dimensions are assumptions. Medial and lateral are not separate layers: AU1 and AU2 each give half the strength."
+    }
+   },
+   "wrinkles": [
+    {
+     "ref": "brow",
+     "points": [
+      [
+       2,
+       22
+      ],
+      [
+       26,
+       25
+      ],
+      [
+       50,
+       21
+      ]
+     ],
+     "depthMm": 0.8,
+     "widthMm": 0.8
+    },
+    {
+     "ref": "brow",
+     "points": [
+      [
+       2,
+       31
+      ],
+      [
+       26,
+       34
+      ],
+      [
+       48,
+       30
+      ]
+     ],
+     "depthMm": 0.8,
+     "widthMm": 0.8
+    },
+    {
+     "ref": "brow",
+     "points": [
+      [
+       2,
+       40
+      ],
+      [
+       24,
+       43
+      ],
+      [
+       44,
+       39
+      ]
+     ],
+     "depthMm": 0.6,
+     "widthMm": 0.8
+    }
+   ]
   }
  ],
  "refs": {

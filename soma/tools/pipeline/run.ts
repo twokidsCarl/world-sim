@@ -20,6 +20,9 @@ import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT
 import { canalFor, isaPathFromFma, localJointWarp, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type JointCacheEntry, type TreePath } from './importZa.ts'
 import { capHoles, envelopeOf } from './derive.ts'
 import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
+import { thinOutsideRegion, thinStructuresOutsideSkin, type ThinOutside } from './thinOutside.ts'
+import { loadThinReference, settleThinParts, THIN_DEFAULTS, THIN_RULES, THIN_TISSUES, type ThinPartsResult } from './thinParts.ts'
+import { expandRetiredLipIds, LIP_HALVES, LIP_PARENT_FMA, lipPartIds, splitLip, WHOLE_LIP_NAME } from './lipSplit.ts'
 import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent } from './skinOpened.ts'
 import { correctShoulderGirdle, SHOULDER_DEFAULTS } from './shoulderTissue.ts'
 import { abductArms, ABDUCTION_DEFAULTS } from './armAbduction.ts'
@@ -1136,6 +1139,98 @@ async function main() {
     lap('arm abduction')
   } else report.armAbduction = { applied: false, reason: 'switched off (SOMA_ARM_ABDUCTION=0)' }
 
+  // ── 3c‴. 深层的唇分成上唇和下唇 / the deep Lip split into an upper and a lower lip ───────────────
+  // BodyParts3D 的 Lip 是跨过口裂的一张连通网格，张口时分不开。沿它自己的口裂切成两个部件并给切口加盖（见 lipSplit.ts）。
+  // 原 id 退役；两半各有自己的 FMA 概念（上唇 FMA59817、下唇 FMA59818，都是 FMA59816 的子类）。SOMA_LIP_SPLIT=0 关闭。
+  // Lip of BodyParts3D is one connected mesh across the oral fissure and cannot part when the mouth opens.
+  // It is cut along its own fissure into two parts with capped cuts (see lipSplit.ts). The original id is
+  // retired; each half has its own FMA concept (upper lip FMA59817, lower lip FMA59818, both subclasses of
+  // FMA59816). SOMA_LIP_SPLIT=0 switches this off.
+  const splitParts: Element[] = []
+  const retiredLips = new Map<string, { upper: string; lower: string }>()
+  if (process.env.SOMA_LIP_SPLIT !== '0') {
+    const rows: Record<string, unknown>[] = []
+    for (const e of kept.filter((x) => WHOLE_LIP_NAME.test(x.name) && x.cls.system !== 'integumentary')) {
+      const res = splitLip(e.mesh)
+      if (!res || !res.report.upper.watertight || !res.report.lower.watertight) {
+        rows.push({ id: e.id, split: false, reason: res ? 'a half is not closed after the cut' : 'no fissure found', ...(res ? { report: res.report } : {}) })
+        continue
+      }
+      const ids = lipPartIds(e.id)
+      const anchor = tables.isa.name.has(e.fma) ? e.fma : tables.isa.name.has(LIP_PARENT_FMA) ? LIP_PARENT_FMA : null
+      const half = (which: 'upper' | 'lower', mesh: Mesh): Element => {
+        const h = LIP_HALVES[which]
+        // 文件头里的体积是整个唇的，不再适用 / the volume in the file header was the whole lip's and no longer applies
+        return {
+          ...e, id: ids[which], name: h.name, fma: h.fma, volume: undefined, mesh, stats: measure(mesh), sourceTriangles: mesh.indices.length / 3, isa: [h.conceptName, ...e.isa],
+          tree: { isa: { path: [[h.fma, h.conceptName]], anchor, how: anchor ? 'FMA is-a chain' : 'none' }, partOf: tables.partOf.name.has(h.fma) ? { path: [], anchor: h.fma, how: 'own concept' } : null },
+        }
+      }
+      const pair = [half('upper', res.upper), half('lower', res.lower)]
+      kept.splice(kept.indexOf(e), 1, ...pair)
+      splitParts.push(...pair)
+      retiredLips.set(e.id, ids)
+      rows.push({
+        id: e.id, split: true, retiredId: e.id, retiredFma: e.fma, retiredName: e.name,
+        parts: pair.map((p) => ({ id: p.id, name: p.name, fma: p.fma, isaParent: anchor, inPartOfTree: !!p.tree!.partOf, provenance: p.provenance })),
+        provenanceNote: `the surface is the ${e.provenance} surface of ${e.id}, unchanged; it was cut along its own oral fissure and the two cut faces were capped with constructed triangles (${res.report.cut.capAreaCm2} cm² each), so each half is a closed mesh. The provenance stays "${e.provenance}".`,
+        ...res.report,
+      })
+      console.log(`\nLip ${e.id} split along its own fissure (y = ${(res.report.fissure.yAtMidlineM * 1000).toFixed(1)} mm at the midline, ${res.report.fissure.grooves} columns with a groove, residual rms ${res.report.fissure.residualMm.rms} mm): ${ids.upper} ${LIP_HALVES.upper.fma} ${res.report.upper.triangles} triangles ${res.report.upper.volumeMl} ml, ${ids.lower} ${LIP_HALVES.lower.fma} ${res.report.lower.triangles} triangles ${res.report.lower.volumeMl} ml; cut loops ${res.report.cut.loops}, cap ${res.report.cut.capAreaCm2} cm²; both closed`)
+    }
+    report.lipSplit = { applied: rows.some((r) => r.split), parts: rows }
+  } else report.lipSplit = { applied: false, reason: 'switched off (SOMA_LIP_SPLIT=0)' }
+
+  // ── 3c⁗. 薄结构收回皮肤之内 / thin structures brought back inside the skin ──────────────────────
+  // 见 thinParts.ts。参考皮肤是皮肤包的闭合皮肤（只读），它的身份写进报告；只有当它声明是按本次骨架拟合的才用
+  // （骨架指纹只看骨，这一步不动骨，所以指纹不变、也没有循环依赖）。结果与皮肤包这一次是否被装入无关
+  // （SOMA_SKIN_OPENED=0 时照样做）。SOMA_THIN_PARTS=0 关闭。
+  // See thinParts.ts. The reference is the closed skin of the skin package (read-only), identified in the
+  // report; it is used only when it says it was fitted to this skeleton (the fingerprint covers bones only
+  // and this step moves no bone, so the fingerprint stays and nothing is circular). The result does not
+  // depend on whether the package is installed in this build (it is done with SOMA_SKIN_OPENED=0 too).
+  // SOMA_THIN_PARTS=0 switches this off.
+  if (process.env.SOMA_THIN_PARTS !== '0') {
+    const ref = loadThinReference(ROOT, MALE_SKIN_PACKAGE_DIR)
+    const boneKey = internalsKey(kept.filter((e) => e.cls.tissue === 'bone').map((e) => ({ name: e.name, bbox: e.stats.bbox })))
+    if (!ref) report.thinParts = { applied: false, reason: 'no reference skin (no skin package on disk)' }
+    else if (ref.identity.fittedTo?.body !== 'male' || ref.identity.fittedTo.key !== boneKey) report.thinParts = { applied: false, reason: 'the reference skin was fitted to other internals', reference: ref.identity, internalsKey: boneKey }
+    else {
+      const res: ThinPartsResult = settleThinParts(
+        kept.filter((e) => THIN_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ id: e.id, name: e.name, tissue: e.cls.tissue, provenance: e.provenance, mesh: e.mesh, ...(e.centrelines ? { centrelines: e.centrelines } : {}), tube: !!e.keepGeometry && !!e.centrelines?.length })),
+        kept.filter((e) => e.cls.tissue === 'bone').map((e) => ({ name: e.name, mesh: e.mesh })),
+        ref.mesh, THIN_RULES.male, THIN_DEFAULTS,
+      )
+      const relabelled: Record<string, number> = {}
+      for (const e of kept) {
+        const m = res.changed.get(e.id)
+        if (!m) continue
+        e.mesh = m.mesh
+        e.stats = measure(m.mesh)
+        if (m.centrelines) e.centrelines = m.centrelines
+        if (e.provenance === 'scanned') {
+          e.provenance = 'warped'
+          relabelled[e.cls.tissue] = (relabelled[e.cls.tissue] ?? 0) + 1
+        }
+      }
+      // 神经标志点检查在移动之后再做一遍（之前的结果另存） / the nerve landmark checks are run once more after the move (the results before it are kept aside)
+      const meshByName = new Map<string, Mesh>()
+      const nerveByName = new Map<string, Polyline[]>()
+      for (const e of kept) {
+        if (!meshByName.has(e.name)) meshByName.set(e.name, e.mesh)
+        if (e.centrelines && !nerveByName.has(e.name)) nerveByName.set(e.name, e.centrelines)
+      }
+      report.landmarksBeforeThinParts = landmarks
+      landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null }, LANDMARK_OPTIONS)
+      report.landmarks = landmarks
+      report.thinParts = { ...res.report, reference: ref.identity, internalsKey: boneKey, relabelledByTissue: relabelled, scannedAfter: kept.filter((e) => e.provenance === 'scanned').length }
+      console.log(`\nThin structures brought inside the reference skin (${ref.identity.dir}/${ref.identity.file}, sha1 ${ref.identity.sha1.slice(0, 12)}; margin ${res.report.marginMm} mm): ${res.report.treated} of ${res.report.candidates} parts treated, ${res.report.clippedParts} clipped at the toe bases, ${res.report.relabelledToWarped.length} scanned parts relabelled warped; area outside of the treated parts ${res.report.outsideCm2.before} → ${res.report.outsideCm2.after} cm²`)
+      for (const r of res.report.parts.slice(0, 24)) console.log(`  ${pad(r.id, 13)}${pad(r.name.slice(0, 52), 54)}${pad(r.rule, 16)}${pad(`${r.outsideCm2.before} → ${r.outsideCm2.after} cm²`, 20)}${r.clipped ? `clipped ${r.clipped.removedCm2} cm²; ` : ''}${r.moved ? `${r.moved.how} moved up to ${r.moved.maxMm} mm (${(r.moved.share * 100).toFixed(0)}%)` : ''}`)
+      console.log(`  nerve landmark checks after it: ${landmarks.filter((r) => r.pass).length} pass, ${landmarks.filter((r) => r.evaluated && !r.pass).length} fail${landmarks.filter((r) => r.evaluated && !r.pass).map((r) => ` [${r.side} ${r.id}: ${r.measured}]`).join('')}`)
+    }
+    lap('thin structures')
+  } else report.thinParts = { applied: false, reason: 'switched off (SOMA_THIN_PARTS=0)' }
+
   // ── 3d. 由我们自身几何推导的结构 / 3d. Structures derived from our own geometry ────────────────────────────────────────────
   // 没有哪个图谱能与本体吻合的薄壳：按它们所覆盖器官的封闭包络计算。
   // 标记为 `curated`，数据源为 "soma (derived)"。
@@ -1242,7 +1337,7 @@ async function main() {
             const lips = kept.filter((e) => DEEP_LIP_NAME.test(e.name) && e.cls.system !== 'integumentary').map((e) => e.id)
             const ap = report.appendages as { hideWithOpaqueSkin: string[]; deepLip?: unknown }
             ap.hideWithOpaqueSkin = [...ap.hideWithOpaqueSkin, ...lips]
-            ap.deepLip = { ids: lips, note: 'the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' }
+            ap.deepLip = { ids: lips, note: retiredLips.size ? 'the deep lip parts (upper and lower lip, split from the Lip part: see lipSplit) lie in the oral opening of the opened skin: both are listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' : 'the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' }
           }
           if (app.report.hideWithOpaqueSkin.length) console.log(`  superseded by the skin's own ear, left as scanned, to be hidden while the skin is opaque: ${app.report.hideWithOpaqueSkin.join(', ')}`)
           console.log(`\nAppendages conformed to the installed skin (${app.moved.size} parts; share of surface outside the skin and largest distance outside, before → after)`)
@@ -1281,9 +1376,12 @@ async function main() {
         if (details.length) row.scanDetails = details.sort()
         // 皮肤作者有意不包住的部件（包的 manifest 里列出）单独报告，不计入“应当包住”的那部分
         // the parts the skin's author deliberately did not enclose (listed in the package manifest) are reported apart from the set that must be enclosed
-        skinNotEnclosed = new Set(pkg.notEnclosed)
+        // 包的 manifest 里还写着已退役的唇 id：换成两半的 id / the package manifest still names the retired lip id: replaced by the ids of its two halves
+        const notEnclosedIds = expandRetiredLipIds(pkg.notEnclosed, retiredLips)
+        skinNotEnclosed = new Set(notEnclosedIds)
         const fit = checkSkinFit(pkg.closedMesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ id: e.id, name: e.name, mesh: e.mesh })), skinNotEnclosed)
-        row.notEnclosedPartIds = [...pkg.notEnclosed].sort()
+        row.notEnclosedPartIds = [...notEnclosedIds].sort()
+        if (retiredLips.size) row.notEnclosedRetiredIds = Object.fromEntries([...retiredLips].filter(([id]) => pkg.notEnclosed.includes(id)).map(([id, h]) => [id, [h.upper, h.lower]]))
         row.author = pkg.author
         // 面部几处结构在皮肤下的深度，以及皮肤模型的眼关节与眼球中心的偏差
         // how deep a few facial structures lie under the skin, and how far the skin model's eye joints are from the centres of the globes
@@ -1534,6 +1632,15 @@ async function main() {
         // 已贴合到这层皮肤上的附属物、以及被皮肤自带的耳取代的耳廓，不再算“为旧皮肤做的体表部件” / appendages already conformed to this skin, and the auricle superseded by the skin's own ear, no longer count as surface parts made for the old one
         kept.filter((x) => x.cls.system === 'integumentary' && x !== e && !isFatPart(x.id) && ![...((report.appendages as { conformedIds?: string[] } | undefined)?.conformedIds ?? []), ...((report.appendages as { hideWithOpaqueSkin?: string[] } | undefined)?.hideWithOpaqueSkin ?? [])].includes(x.id)).map((x) => ({ name: x.name, mesh: x.mesh })),
       )
+      // 薄结构露在皮肤外的面积，逐部件（见 thinOutside.ts：上面 notFitted 的比例和距离看不出横在趾蹼处的筋膜）
+      // area of the thin structures outside the skin, part by part (see thinOutside.ts: the share and distance of notFitted above do not show a fascia lying across the web spaces)
+      {
+        const sb = measure(fitMesh).bbox
+        const hipLow = Math.min(...kept.filter((x) => /hip bone/i.test(x.name)).map((x) => x.stats.bbox[1]))
+        const thin = thinStructuresOutsideSkin(fitMesh, kept.filter((x) => !FAT_DEEP_TISSUES.has(x.cls.tissue) && x.cls.system !== 'integumentary').map((x) => ({ id: x.id, name: x.name, tissue: x.cls.tissue, mesh: x.mesh })), thinOutsideRegion(sb, hipLow))
+        row.thinOutside = thin
+        console.log(`\nThin structures outside the skin, by area: ${thin.outsideCm2} cm² of ${thin.totalAreaCm2} cm² (${thin.outsideOver1mmCm2} cm² more than 1 mm out); by region ${JSON.stringify(thin.byRegion)}; largest: ${thin.rows.slice(0, 8).map((x) => `${x.name} ${x.outsideCm2} cm² (${Object.entries(x.byRegion).map(([g, v]) => `${g} ${v}`).join(', ')}; max ${x.maxMm} mm)`).join('; ')}`)
+      }
       const rs = row.resolution as { simplifiedWhole: { face: { vertices: number; meanEdgeMm: number } }; shipped: { vertices: number; triangles: number; face: { vertices: number; meanEdgeMm: number } }; shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } }
       console.log(`\nSkin: face region kept at source resolution — ${rs.shipped.face.vertices} vertices, mean edge ${rs.shipped.face.meanEdgeMm} mm (simplified as a whole it would keep ${rs.simplifiedWhole.face.vertices} vertices, mean edge ${rs.simplifiedWhole.face.meanEdgeMm} mm); shipped skin ${rs.shipped.vertices} vertices, ${rs.shipped.triangles} triangles, boundary edges ${rs.shippedTopology.boundaryEdges}, non-manifold edges ${rs.shippedTopology.nonManifoldEdges}; deep-part surface outside the shipped skin ${((row.fitShipped as { outside: number }).outside * 100).toFixed(2)}%`)
       simp = { ...kf.mesh, error: kf.error }
@@ -1637,7 +1744,7 @@ async function main() {
     }
     // 来自 Z-Anatomy 包的部件：创建其路径上缺失的概念，子概念在前
     // parts from the Z-Anatomy package: create the missing concepts of their path, child first
-    for (const e of [...importedZa, ...derived]) {
+    for (const e of [...importedZa, ...derived, ...splitParts]) {
       const t = which === 'isa' ? e.tree!.isa : e.tree!.partOf
       if (!t) continue
       const anchor = t.anchor ?? (which === 'isa' ? onto.root : null)
@@ -1880,8 +1987,42 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
       zh: `皮肤上的眼和口都不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶。这些地方的皮肤有意不外推${throughZh.length ? `，因此有结构露出皮肤：${throughZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
     })
   }
-  const nf = (report.skinPackage as { notFitted?: { caution: { zh: string; en: string } } } | undefined)?.notFitted
-  if (nf) out.push(nf.caution)
+  const nf = (report.skinPackage as { notFitted?: { caution: { zh: string; en: string }; surfaceParts: { worst: { name: string; outside: number }[] } }; thinOutside?: ThinOutside } | undefined)
+  const tp = report.thinParts as (ThinPartsResult['report'] & { applied: boolean }) | { applied: false } | undefined
+  if (nf?.notFitted && nf.thinOutside && tp?.applied) {
+    // 薄结构：按面积报告（thinOutside.ts），并说明这一步做了什么（thinParts.ts）；数值都取自本次构建
+    // thin structures: reported by area (thinOutside.ts), with what this stage did (thinParts.ts); every figure is from this build
+    const to = nf.thinOutside
+    const moved = tp.parts.filter((p) => p.moved)
+    const far = Math.max(0, ...moved.map((p) => p.moved!.maxMm))
+    const clip = tp.parts.filter((p) => p.clipped)
+    const clipCm2 = Math.round(clip.reduce((a, p) => a + p.clipped!.removedCm2, 0))
+    const top = to.rows[0]
+    const bare = (n: string) => n.replace(/^(Left|Right) /, '').toLowerCase()
+    const names = [...new Set(nf.notFitted.surfaceParts.worst.filter((w) => w.outside > 0.1).map((w) => bare(w.name)))]
+    const rl = (tp as unknown as { relabelledByTissue?: Record<string, number> }).relabelledByTissue ?? {}
+    const vessels = (rl.artery ?? 0) + (rl.vein ?? 0)
+    const others = tp.relabelledToWarped.length - vessels
+    // 剩下的若主要是腹部包被筋膜在腋襞处的一小片（露出部分在躯干外侧缘），照实说明原因 / when what is left is mostly the patch of the investing abdominal fascia at the axillary folds (the part outside lies at the lateral border of the trunk), the reason is stated
+    const atFold = !!top && /abdominal fascia/i.test(top.name) && Math.min(Math.abs(top.outsideBbox[0]), Math.abs(top.outsideBbox[3])) > 0.14
+    // 分成两条：做了什么；还剩多少（界面里每条说明有长度上限） / two cautions: what was done, and what is left (the UI bounds the length of a caution)
+    out.push({
+      en: `The skin was fitted to enclose muscles, bones, cartilages and organs only; fasciae, cutaneous nerves, superficial vessels and joint capsules were then brought under it by this project. ${moved.length} of them were moved inwards by a smooth displacement to lie at least ${tp.marginMm} mm under the skin (by up to ${far.toFixed(0)} mm; the vessels and nerves of fingers and toes were moved into their own digit)${tp.relabelledToWarped.length ? `, and the ${tp.relabelledToWarped.length} scanned parts among them (${vessels} arteries and veins${others ? `, ${others} other` : ''}) are now marked as warped` : ''}.${clip.length ? ` The crural fascia of each leg, which the atlas draws as a sock down to the toe tips, was cut off at the bases of the toes (${clipCm2} cm² removed): the deep fascia of the leg ends at the ankle and nothing of it spans the web spaces.` : ''} These positions follow the skin, not a scan.`,
+      zh: `皮肤拟合时只保证包住肌、骨、软骨和器官；筋膜、皮神经、浅血管和关节囊是本项目事后收到皮肤之内的。其中 ${moved.length} 个部件用平滑的位移向内移动，使其至少位于皮下 ${tp.marginMm} mm（最多移动 ${far.toFixed(0)} mm；指、趾的血管和神经被移进各自的指、趾之内）${tp.relabelledToWarped.length ? `，其中 ${tp.relabelledToWarped.length} 个扫描得到的部件（动脉和静脉 ${vessels} 个${others ? `，其他 ${others} 个` : ''}）因此改标为“形变”` : ''}。${clip.length ? `两侧的小腿筋膜在图谱里像袜子一样一直包到趾尖，已在趾根处剪掉（共去掉 ${clipCm2} cm²）：小腿深筋膜止于踝部，并不横跨趾蹼。` : ''}这些位置是跟着皮肤定的，不是扫描所得。`,
+    })
+    out.push({
+      en: `Measured by area, ${tp.outsideCm2.before} cm² of the treated thin structures lay outside the skin before and ${tp.outsideCm2.after} cm² after; over all thin structures ${to.outsideCm2} cm² of ${Math.round(to.totalAreaCm2)} cm² (${((100 * to.outsideCm2) / to.totalAreaCm2).toFixed(2)}%) is still outside the shipped skin, ${to.outsideOver1mmCm2} cm² of it by more than 1 mm${top ? `, most of it on the ${bare(top.name)} (${top.outsideCm2} cm², up to ${top.maxMm} mm)${atFold ? ', at the axillary folds, where the skin of arm and chest lie against each other and inside and outside are not well defined' : ''}` : ''}.${names.length ? ` Surface parts made for the earlier skin do not sit on this one: ${names.join(', ')}.` : ''}`,
+      zh: `按面积量：被处理的薄结构原先有 ${tp.outsideCm2.before} cm² 在皮肤外，处理后为 ${tp.outsideCm2.after} cm²；全部薄结构 ${Math.round(to.totalAreaCm2)} cm² 中仍有 ${to.outsideCm2} cm²（${((100 * to.outsideCm2) / to.totalAreaCm2).toFixed(2)}%）在发布的皮肤之外，其中 ${to.outsideOver1mmCm2} cm² 超出 1 mm${top ? `，露出最多的部件是“${top.name}”（${top.outsideCm2} cm²，最多 ${top.maxMm} mm）${atFold ? '，在腋襞处：那里上臂和胸壁的皮肤相贴，内外本来就分不清' : ''}` : ''}。${names.length ? `为旧皮肤制作的体表部件（头发、眉、外耳、甲、阴毛等）与这层皮肤对不上。` : ''}`,
+    })
+  } else if (nf?.notFitted) out.push(nf.notFitted.caution)
+  const ls = report.lipSplit as { applied?: boolean; parts?: { split: boolean; retiredId?: string; parts?: { id: string; name: string }[]; cut?: { capAreaCm2: number } }[] } | undefined
+  const lp = ls?.applied ? ls.parts?.find((p) => p.split) : undefined
+  if (lp?.parts) {
+    out.push({
+      en: `The lips under the skin are two parts, "${lp.parts[0]!.name}" and "${lp.parts[1]!.name}", made by this project from the single scanned part "Lip" (${lp.retiredId}): that thin shell of both vermilions was cut along its own fissure and the cut faces were closed with constructed caps. The scanned surface itself is unchanged; the fissure of this part lies a few millimetres above the mouth opening of the skin, which belongs to another surface.`,
+      zh: `皮肤下的唇是两个部件（上唇、下唇），由本项目把扫描得到的单个部件“Lip”（${lp.retiredId}）切开而成：那是上下唇红连成的一片薄壳，沿它自己的口裂切开，切口用构造的面封上。扫描的表面本身没有改动；这个部件的口裂比皮肤上的口裂高几毫米，因为皮肤是另一层体表。`,
+    })
+  }
   const ap = report.appendages as { applied?: boolean; parts?: { name: string; kind: string; displacementMm: { max: number } }[] } | undefined
   if (ap?.applied && ap.parts?.length) {
     const far = (k: string) => Math.max(0, ...ap.parts!.filter((x) => x.kind === k).map((x) => x.displacementMm.max)).toFixed(0)

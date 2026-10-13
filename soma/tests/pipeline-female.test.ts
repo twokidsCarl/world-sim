@@ -68,7 +68,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
       expect(names, p.id).toContain(p.source)
-      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|VD_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+|WU_[a-z_]+(_[LR])?|SOMA_skin)$/)
+      expect(p.id, p.id).toMatch(/^(W_(FJ\d+M?(_upper|_lower)?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)|VF_[A-Za-z0-9_]+|VD_[A-Za-z0-9_]+|HRA_[A-Za-z0-9_]+|WU_[a-z_]+(_[LR])?|SOMA_skin)$/)
       if (p.id.startsWith('W_')) {
         // 形变后的男性部件：保留男性部件的身份，并标明其几何的来源
         // warped male part: keeps the male part's identity, names where its geometry came from
@@ -692,12 +692,34 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       expect(all).toContain('so that graft is not used')
       expect(comp.every((c) => !/toes/i.test(c.what.en))).toBe(true)
     }
-    // 深层的“唇”部件列在皮肤不透明时要隐藏的名单里，本身没有被改动 / the deep Lip part is on the list to hide while the skin is opaque, and is itself untouched
-    const lip = data.parts.find((p) => /^lip$/i.test(p.name) && p.system !== 'integumentary')
-    expect(lip).toBeDefined()
-    expect(report.appendages.hideWithOpaqueSkin).toContain(lip!.id)
-    expect(report.appendages.deepLip.ids).toEqual([lip!.id])
-    expect(lip!.provenance).toBe('warped')
+    // 深层的唇是两个部件（男性的 Lip 切开后的上唇、下唇，形变而来；见 lipSplit.ts）：原 id 退役，两个都列在皮肤不透明时要隐藏的名单里，
+    // 也都在皮肤有意不包住的名单和 display.json 里；各有自己的 FMA 概念，挂在 FMA59816 之下
+    // the deep lip is two parts (upper and lower lip, the halves of the male Lip, warped; see lipSplit.ts): the original id is retired, both are
+    // on the list to hide while the skin is opaque, on the list the skin deliberately does not enclose and in display.json; each has its own FMA concept under FMA59816
+    expect(byId.has('W_FJ2814')).toBe(false)
+    const up = byId.get('W_FJ2814_upper')!
+    const lo = byId.get('W_FJ2814_lower')!
+    expect([up.name, up.fma, lo.name, lo.fma]).toEqual(['Upper lip', 'FMA59817', 'Lower lip', 'FMA59818'])
+    expect(data.parts.filter((p) => /^(upper |lower )?lip$/i.test(p.name) && p.system !== 'integumentary').map((p) => p.id).sort()).toEqual(['W_FJ2814_lower', 'W_FJ2814_upper'])
+    expect(up.centroid[1]).toBeGreaterThan(lo.centroid[1])
+    for (const p of [up, lo]) {
+      expect(p.provenance).toBe('warped')
+      expect(report.appendages.hideWithOpaqueSkin).toContain(p.id)
+      expect(report.skinPackage.notEnclosedPartIds).toContain(p.id)
+    }
+    expect(report.appendages.deepLip.ids).toEqual(['W_FJ2814_upper', 'W_FJ2814_lower'])
+    expect(report.appendages.deepLip.note).toContain('upper and lower lip')
+    expect(report.skinPackage.notEnclosedPartIds).not.toContain('W_FJ2814')
+    const isaById = new Map(data.trees.isa.map((c) => [c.id, c]))
+    expect(isaById.get('FMA59817')).toMatchObject({ parent: 'FMA59816', parts: ['W_FJ2814_upper'] })
+    expect(isaById.get('FMA59818')).toMatchObject({ parent: 'FMA59816', parts: ['W_FJ2814_lower'] })
+    for (const t of [data.trees.isa, data.trees.partOf]) for (const c of t) expect(c.parts).not.toContain('W_FJ2814')
+    const displayFile = join(DIR, 'display.json')
+    if (existsSync(displayFile)) {
+      const display = JSON.parse(readFileSync(displayFile, 'utf8')) as { hideWithOpaqueSkin: string[] }
+      for (const id of ['W_FJ2814_upper', 'W_FJ2814_lower']) expect(display.hideWithOpaqueSkin).toContain(id)
+      expect(display.hideWithOpaqueSkin).not.toContain('W_FJ2814')
+    }
   }, 120_000)
 
   it('keeps the deformation in bounds and reports where it is not', () => {
@@ -742,6 +764,70 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     // the sciatic nerve is a male structure not refitted to her real hamstrings (Denver): its position between biceps femoris and semimembranosus is borderline
     expect(results.filter((r) => !r.evaluated || !r.pass).map((r) => `${r.side} ${r.id}: ${r.measured}`)).toEqual([])
   }, 120_000)
+
+  it('brings her thin structures under her skin and records how', () => {
+    const tp = report.thinParts
+    if (!tp?.applied) return
+    // 参考皮肤：相对目录、SHA-1；按本次的内部结构拟合（与装入皮肤同一个指纹） / the reference skin: a relative directory, a SHA-1; fitted to these internals (the fingerprint that decides installing)
+    expect(tp.reference.sha1).toMatch(/^[0-9a-f]{40}$/)
+    expect(tp.reference.dir.startsWith('/')).toBe(false)
+    expect(tp.reference.fittedTo).toEqual({ body: 'female', key: report.skinPackage.internalsKey })
+    expect(tp.internalsKey).toBe(report.skinPackage.internalsKey)
+    expect(tp.marginMm).toBe(2.5)
+    // 另一位女性的标本和美术模型不跟着皮肤走 / the other woman's specimen and the artist models do not follow the skin
+    for (const row of tp.parts as { id: string; outsideCm2: { before: number; after: number }; moved: unknown; clipped?: unknown }[]) {
+      expect(/^(WU_|HRA_)/.test(row.id), row.id).toBe(false)
+      expect(byId.has(row.id), row.id).toBe(true)
+      expect(row.moved !== null || row.clipped !== undefined, row.id).toBe(true)
+    }
+    expect(tp.outsideCm2.before).toBeGreaterThan(100)
+    expect(tp.outsideCm2.after).toBeLessThan(0.1 * tp.outsideCm2.before)
+    // 指、趾的血管和神经：收到皮下之后落在骨内的比例比之前最多高 1 个百分点（位移在会进骨的地方被收回）
+    // vessels and nerves of the digits: after being taken under the skin, at most one percentage point more of their surface lies inside bone than before (the move is held back where it would enter bone)
+    expect(tp.insideBone.partsMeasured).toBeGreaterThan(20)
+    // 量得 4.43 % → 4.98 %（不收回位移时是 6.92 %）：顶点都退到了骨外，顶点之间的面仍略有增加
+    // measured 4.43 % → 4.98 % (6.92 % without holding back): every vertex is kept out of bone, the surface between vertices still gains a little
+    expect(tp.insideBone.shareAfter).toBeLessThanOrEqual(tp.insideBone.shareBefore + 0.01)
+    const all = data.cautions!.map((c) => c.en).join(' ')
+    expect(all).toContain('Measured by area')
+    expect(all).not.toContain('were not considered')
+    expect(all).not.toMatch(/sheets of fascia show between the toes/)
+  })
+
+  it('ends the thoraco-abdominal nerves at her xiphoid process and her navel', () => {
+    const ic = report.intercostalNerves
+    if (!ic?.applied) return
+    const L = ic.landmarks as { xiphoidTipY: number; navelY: number; pubicTubercleY: number }
+    // 出处是打开核对过的；脐取自皮肤包的 manifest / the sources were opened; the navel is the one of the skin package's manifest
+    expect(ic.sources.length).toBeGreaterThanOrEqual(2)
+    for (const s of ic.sources as { url: string; name: string }[]) {
+      expect(s.url).toMatch(/^https:\/\//)
+      expect(s.name).toContain('opened')
+    }
+    expect(ic.landmarks.navelFrom).toContain('manifest.json')
+    expect(L.navelY).toBeLessThan(L.xiphoidTipY - 0.12)
+    expect(L.navelY).toBeGreaterThan(L.pubicTubercleY + 0.1)
+    const nerves = JSON.parse(readFileSync(join(DIR, 'nerves.json'), 'utf8')) as NervePath[]
+    for (const side of ['L', 'R']) {
+      const rows = (ic.rows as { id: string; side: string; nerve: number; endYMm: { before: number; target: number; after: number }; inBoneAfter?: number }[]).filter((r) => r.side === side).sort((a, b) => a.nerve - b.nerve)
+      expect(rows.map((r) => r.nerve)).toEqual([7, 8, 9, 10, 11])
+      for (const r of rows) {
+        expect(Math.abs(r.endYMm.after - r.endYMm.target), r.id).toBeLessThan(1.5)
+        expect(r.inBoneAfter ?? 0, r.id).toBe(0)
+        // 报告里的前端就是 nerves.json 里的前端 / the end in the report is the end in nerves.json
+        const b = nerves.find((n) => n.part === r.id)!.branches[0]!
+        expect(Math.abs(b.points[b.points.length - 2]! * 1000 - r.endYMm.after), r.id).toBeLessThan(0.1)
+      }
+      // 第 7 肋间神经止于剑突尖下方 5–15 mm，第 10 止于脐（3 mm 以内），自上而下依次排列
+      // the 7th ends 5–15 mm below the tip of the xiphoid process, the 10th at the navel (within 3 mm), in order from above down
+      expect(L.xiphoidTipY * 1000 - rows[0]!.endYMm.after).toBeGreaterThan(5)
+      expect(L.xiphoidTipY * 1000 - rows[0]!.endYMm.after).toBeLessThan(15)
+      expect(Math.abs(rows[3]!.endYMm.after - L.navelY * 1000)).toBeLessThan(3)
+      for (let i = 1; i < rows.length; i++) expect(rows[i]!.endYMm.after, rows[i]!.id).toBeLessThan(rows[i - 1]!.endYMm.after - 30)
+      expect(rows[4]!.endYMm.after).toBeGreaterThan(L.pubicTubercleY * 1000 + 50)
+    }
+    expect(data.cautions!.map((c) => c.en).join(' ')).toContain('the 10th at the navel of her skin')
+  })
 
   it('ships consistent nerves.json, adjacency and trees', () => {
     const nerves = JSON.parse(readFileSync(join(DIR, 'nerves.json'), 'utf8')) as NervePath[]

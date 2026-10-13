@@ -7,7 +7,7 @@
 // (after the geometry pipeline regenerates the data the rig must be rebuilt).
 
 import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { AnatomyData, Joint, Rig } from '../src/anatomy/types.ts'
 import { type Body, readBody } from '../tools/rig/io.ts'
@@ -20,14 +20,17 @@ const rad = (d: number): number => (d * Math.PI) / 180
 
 for (const bodyId of ['male', 'female'] as const) {
   const DIR = join(import.meta.dirname, '../public/anatomy', bodyId)
-  const present = existsSync(join(DIR, 'rig.json')) && existsSync(join(DIR, 'rig.bin')) && existsSync(join(DIR, 'anatomy.json'))
+  // 环境变量 SOMA_RIG_DIR：改为校验构建到别处的绑定（bun tools/rig/run.ts <body> --out <SOMA_RIG_DIR>/<body>）；几何仍取自 public/anatomy/
+  // SOMA_RIG_DIR: validate a rig built elsewhere instead (bun tools/rig/run.ts <body> --out <SOMA_RIG_DIR>/<body>); geometry still comes from public/anatomy/
+  const RIG = process.env.SOMA_RIG_DIR ? resolve(process.env.SOMA_RIG_DIR, bodyId) : DIR
+  const present = existsSync(join(RIG, 'rig.json')) && existsSync(join(RIG, 'rig.bin')) && existsSync(join(DIR, 'anatomy.json'))
 
   describe.skipIf(!present)(`rig output (public/anatomy/${bodyId})`, () => {
-    const rig = (present ? JSON.parse(readFileSync(join(DIR, 'rig.json'), 'utf8')) : null) as Rig
-    const bin = present ? new Uint8Array(readFileSync(join(DIR, 'rig.bin'))) : new Uint8Array(0)
+    const rig = (present ? JSON.parse(readFileSync(join(RIG, 'rig.json'), 'utf8')) : null) as Rig
+    const bin = present ? new Uint8Array(readFileSync(join(RIG, 'rig.bin'))) : new Uint8Array(0)
     const data = (present ? JSON.parse(readFileSync(join(DIR, 'anatomy.json'), 'utf8')) : null) as AnatomyData
-    const report = present && existsSync(join(DIR, 'rig-report.json')) ? (JSON.parse(readFileSync(join(DIR, 'rig-report.json'), 'utf8')) as { binBytes: number; validation: null | { rest: { maxDisplacementDqsMm: number; maxDisplacementLbsMm: number }; weights: Record<string, number>; postures: { id: string; bones: { a: string; b: string; maxDepthMm: number }[]; skin: { flippedPct: number } }[] } }) : null
-    const changed = present ? stale(DIR) : ['absent']
+    const report = present && existsSync(join(RIG, 'rig-report.json')) ? (JSON.parse(readFileSync(join(RIG, 'rig-report.json'), 'utf8')) as { binBytes: number; validation: null | { rest: { maxDisplacementDqsMm: number; maxDisplacementLbsMm: number }; weights: Record<string, number>; postures: { id: string; bones: { a: string; b: string; maxDepthMm: number }[]; skin: { flippedPct: number } }[] } }) : null
+    const changed = present ? stale(DIR, RIG) : ['absent']
     const fresh = changed.length === 0
     const byId = new Map<string, Joint>(present ? rig.joints.map((j) => [j.id, j]) : [])
     const index = new Map<string, number>(present ? rig.joints.map((j, i) => [j.id, i]) : [])
@@ -282,7 +285,12 @@ for (const bodyId of ['male', 'female'] as const) {
         const r = lengthAt(name, pose)
         if (r === null) continue
         tested++
-        if (want === 'longer') expect(r, name).toBeGreaterThan(1.02)
+        // 比目鱼肌的作用线以前因体积增益为 0 被去掉，这条检查从未执行过；现在作用线保留了（gain 0）。它从腓骨上段到跟骨，
+        // 长约 32 cm，背屈 12° 只拉长约 6 mm（1.9%），所以它的下限是 1.015，其余仍是 1.02。
+        // The soleus line used to be dropped for its zero volume gain, so this check never ran; the line is now kept (gain 0).
+        // It runs some 32 cm from the upper fibula to the calcaneus and 12° of dorsiflexion lengthens it by about 6 mm (1.9 %),
+        // hence a floor of 1.015 for it; the others keep 1.02.
+        if (want === 'longer') expect(r, name).toBeGreaterThan(/soleus/.test(name) ? 1.015 : 1.02)
         else expect(r, name).toBeLessThan(0.95)
       }
       expect(tested).toBeGreaterThanOrEqual(2)

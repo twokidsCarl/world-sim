@@ -23,7 +23,9 @@ const GROUPS: [string, RegExp][] = [
   ['iris', /^(left|right) iris$/i],
   ['tarsalUpper', /^tarsal plate of (left|right) upper eyelid$/i],
   ['tarsalLower', /^tarsal plate of (left|right) lower eyelid$/i],
-  ['lip', /^lip$/i],
+  // 深层的唇：一个部件（"Lip"）或已分成上下两个（"Upper lip"、"Lower lip"），两种状态都接受
+  // the deep lip: one part ("Lip") or already split in two ("Upper lip", "Lower lip"); either state is accepted
+  ['lip', /^(upper |lower )?lip$/i],
   ['upperTeeth', /upper .*tooth$/i],
   ['lowerTeeth', /lower .*tooth$/i],
   ['upperGingiva', /^gingiva of upper jaw$/i],

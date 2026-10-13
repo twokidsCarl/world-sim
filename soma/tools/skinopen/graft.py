@@ -225,6 +225,97 @@ def zipper(VA, A, VB, B):
     return np.array(tris)
 
 
+def zipper_by_parameter(V, A, B):
+    """
+    把两个同向的环缝起来，按“沿 A 的弧长参数”配对：B 的每个顶点取它在 A 上最近点的弧长（沿 B 理成不减的），
+    然后像归并一样，哪一边下一个顶点的参数小就前进哪一边。两条环大致是彼此的等距线时（片缘在洞内留了一圈缝），
+    这样得到的是一条不翻折的带；zipper() 按“新边较短”贪心，环参差时会缝出翻过来的三角形。绕向与 zipper() 相同。
+    Zips two loops that run the same way, pairing them by arc length along A: each vertex of B takes the arc length of
+    its closest point on A (made non-decreasing along B), and then, as in a merge, the side whose next vertex has the
+    smaller parameter advances. When the loops are roughly offsets of one another (the patch rim kept a gap inside
+    the hole) this gives a band without flips; zipper() is greedy on "the shorter new edge" and makes flipped
+    triangles when a rim is ragged. Winding as in zipper().
+    """
+    A, B = list(A), list(B)
+    na, nb = len(A), len(B)
+    pa = V[A]
+    seg = np.linalg.norm(np.roll(pa, -1, axis=0) - pa, axis=1)
+    sA = np.r_[0, np.cumsum(seg)]
+    LA = float(sA[-1])
+    samp, su = [], []
+    for i in range(na):
+        n_ = max(2, int(np.ceil(seg[i] / 0.00025)))
+        t_ = np.arange(n_) / n_
+        samp.append(pa[i] + np.outer(t_, pa[(i + 1) % na] - pa[i]))
+        su.append(sA[i] + t_ * seg[i])
+    uB = np.concatenate(su)[cKDTree(np.vstack(samp)).query(V[B])[1]]
+    wrap = lambda d: (d + LA / 2) % LA - LA / 2
+    j0 = int(np.argmin(np.abs(wrap(uB))))
+    B = B[j0:] + B[:j0]
+    uB = np.r_[uB[j0:], uB[:j0]]
+    u = np.zeros(nb)
+    u[0] = wrap(uB[0])
+    for j in range(1, nb):
+        u[j] = u[j - 1] + max(wrap(uB[j] - uB[j - 1]), 0.0)
+    u = np.minimum(u, u[0] + LA)
+    tris = []
+    i = j = 0
+    while i < na or j < nb:
+        next_a = sA[i + 1] if i < na else np.inf
+        next_b = (u[j + 1] if j + 1 < nb else u[0] + LA) if j < nb else np.inf
+        if next_a <= next_b:
+            tris.append([A[(i + 1) % na], A[i % na], B[j % nb]])
+            i += 1
+        else:
+            tris.append([A[i % na], B[j % nb], B[(j + 1) % nb]])
+            j += 1
+    return np.array(tris)
+
+
+def flip_folded_stitch_edges(V, T, limit_deg=100.0, passes=4):
+    """
+    缝合带内部的边（两侧都是缝合三角形）若折过 limit_deg，而换成四边形的另一条对角线后折得更小，就换。只改缝合三角形的连法，不动顶点、不动两条环。
+    An edge inside the stitch band (stitch triangles on both sides) folded over limit_deg is flipped to the other diagonal of its
+    quadrilateral when that folds less. Only the connectivity of stitch triangles changes; no vertex and neither loop is touched.
+    """
+    T = [list(t) for t in T]
+
+    def nrm(t):
+        n = np.cross(V[t[1]] - V[t[0]], V[t[2]] - V[t[0]])
+        l = np.linalg.norm(n)
+        return n / l if l > 1e-14 else None
+
+    flips = 0
+    for _ in range(passes):
+        he = {}
+        for ti, t in enumerate(T):
+            for c in range(3):
+                he[(t[c], t[(c + 1) % 3])] = (ti, t[(c + 2) % 3])
+        edges = {(min(a, b), max(a, b)) for (a, b) in he}
+        done = set()
+        changed = False
+        for (x, y), (t1, p_) in sorted(he.items()):
+            if (y, x) not in he or t1 in done:
+                continue
+            t2, q_ = he[(y, x)]
+            if t2 in done or t1 == t2:
+                continue
+            n1, n2 = nrm(T[t1]), nrm(T[t2])
+            if n1 is None or n2 is None or n1 @ n2 > np.cos(np.radians(limit_deg)):
+                continue
+            a_, b_ = [x, q_, p_], [q_, y, p_]
+            m1, m2 = nrm(a_), nrm(b_)
+            if m1 is None or m2 is None or (min(p_, q_), max(p_, q_)) in edges or m1 @ m2 <= n1 @ n2:
+                continue
+            T[t1], T[t2] = a_, b_
+            done.update((t1, t2))
+            flips += 1
+            changed = True
+        if not changed:
+            break
+    return np.array(T), flips
+
+
 def harmonic_extension(n_total, edges, lengths, known, unknown):
     """
     稀疏矩阵 M（|unknown| × |known|）：未知顶点的值 = M · 已知顶点的值，为图上的调和延拓（边权 1/长度）。
@@ -406,7 +497,7 @@ class Package:
 
 # ── 通用的移植 / the generic graft ───────────────────────────────────────────────────────────────
 
-def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, blend_mm=10.0, rigid_joint=None, rigid_from_mm=10.0, rigid_full_mm=30.0, tag_patch='graftScanned', donor_include=None, skin_region=None):
+def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, blend_mm=10.0, rigid_joint=None, rigid_from_mm=10.0, rigid_full_mm=30.0, tag_patch='graftScanned', donor_include=None, skin_region=None, rim_gap_mm=None):
     """
     pk 皮肤包状态；DV、DF 供体（已在我们的坐标系里，法线朝外）；seeds 种子点（要换掉的区域围着它们）。
     rigid_joint：离洞口 rigid_full_mm 以外的供体顶点完全跟随这个关节（悬垂的部分）。
@@ -457,6 +548,19 @@ def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, 
         # 调用者指定必须在供体片里的顶点（如游离趾）/ donor vertices the caller requires in the patch (e.g. the free toes)
         dmask = dmask | donor_include
     dmask &= dused
+    if rim_gap_mm is not None:
+        # 供体片的边缘要留在洞内、离洞口环至少 rim_gap_mm：否则两条环在同一张曲面上相交或相贴，缝合三角形就会翻过来（折成 180°）。
+        # 贴在皮肤上（2 mm 以内）而最近点不在被切掉的三角形上的供体顶点在洞外，同样去掉。
+        # The rim of the patch must stay inside the hole, at least rim_gap_mm from the rim of the hole: otherwise the two loops cross or
+        # touch on the same surface and stitch triangles come out flipped (folded through 180°). Donor vertices lying on the skin (within
+        # 2 mm) whose closest point is not on a removed triangle are outside the hole and are dropped as well.
+        rim_pts = []
+        for a_, b_ in zip(loopA, loopA[1:] + loopA[:1]):
+            n_ = max(2, int(np.ceil(np.linalg.norm(V[a_] - V[b_]) / (0.25 * rim_gap_mm * MM))))
+            rim_pts.append(V[a_] + np.outer(np.arange(n_) / n_, V[b_] - V[a_]))
+        d_rim = cKDTree(np.vstack(rim_pts)).query(DV)[0]
+        d_skin = np.sqrt(igl.point_mesh_squared_distance(DVc, Sv, Sf)[0])
+        dmask &= (d_rim > rim_gap_mm * MM) & ~(~cut_live[fi] & (d_skin < 0.002))
     Ad, _ = vertex_graph(nd, DF)
     idx = np.where(dmask)[0]
     ncomp, lab = csgraph.connected_components(Ad[idx][:, idx], directed=False)
@@ -485,11 +589,25 @@ def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, 
     moved = np.linalg.norm(cp - P, axis=1) * wgt
     P = P + (cp - P) * wgt[:, None]
     blend = wgt > 0
+    if rim_gap_mm is not None:
+        # 片缘那一圈顶点（过渡环的最外圈，本来就是构造物）沿环理顺：反复取环上前后两点的平均、再落回皮肤的最近点。
+        # 片缘参差时，缝合三角形会有翻过来的。
+        # The outermost loop of the patch (the outer row of the blend ring, construction in any case) is evened out along itself: repeatedly
+        # the mean with its two neighbours on the loop, then back to the closest point of the skin. With a ragged rim some stitch triangles
+        # come out flipped.
+        rl = np.array(rim_local)
+        for _ in range(5):
+            Q = 0.5 * P[rl] + 0.25 * (P[np.roll(rl, 1)] + P[np.roll(rl, -1)])
+            P[rl] = igl.point_mesh_squared_distance(np.ascontiguousarray(Q), Sv, Sf)[2]
     # 4. 追加顶点，缝合 / append the vertices and zip
     rimA = np.array(loopA)
     Vall = np.vstack([V, P])
     ids = np.arange(nv, nv + len(pv))
-    zf = zipper(Vall, loopA, Vall, list(ids[rim_local]))
+    stitch_flips = 0
+    if rim_gap_mm is not None:
+        zf, stitch_flips = flip_folded_stitch_edges(Vall, zipper_by_parameter(Vall, loopA, list(ids[rim_local])))
+    else:
+        zf = zipper(Vall, loopA, Vall, list(ids[rim_local]))
     patch_faces = ids[pfl]
     # 调和延拓：已知 = 洞口环上的皮肤顶点，未知 = 供体片的全部顶点；图 = 供体片的边 + 缝合三角形的边
     # harmonic extension: known = the skin vertices on the rim of the hole, unknown = every patch vertex; graph = patch edges + zip edges
@@ -561,6 +679,7 @@ def graft(pk, DV, DF, seeds, name, differ_mm=2.5, reach_mm=120.0, grow_rings=3, 
         'unmovedDonorVertices': int((~blend).sum()),
         'donorHolesFilled': {'what': 'triangles added inside the patch to close small holes of the donor mesh (fans over boundary loops of at most 40 edges; construction)', 'trianglesInPatch': filled_in_patch, 'holesInWholeDonor': len(holes)},
         'stitchEdgeMm': {'median': round(float(np.median(zl)) / MM, 2), 'max': round(float(zl.max()) / MM, 2)},
+        'stitchEdgesFlipped': stitch_flips,
         'patchEdgeMm': {'median': round(float(np.median(Ls)) / MM, 2)},
         'rigid': rigid,
     }

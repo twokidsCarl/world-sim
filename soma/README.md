@@ -10,7 +10,7 @@
 
 ## 现在能做什么
 
-- 男女两个体型。男性 3,332 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,372 个（见下文，精度低得多）。
+- 男女两个体型。男性 3,333 个独立部件：骨、肌肉、血管段、器官、神经、韧带、淋巴结、皮下脂肪，按系统分组；女性 3,373 个（见下文，精度低得多）。
 - 按系统显示或隐藏、调透明度；从皮肤到骨骼逐层剥离。
 - 点选部件，查看中/英/拉丁名、FMA 编号、所属层级、相邻结构。
 - 肌肉的起点、止点、神经支配、血供等关系，每条带出处，可点击跳转；神经列出它支配的结构，可一次全选。
@@ -19,12 +19,14 @@
 - 隔离、只看相邻结构、爆炸视图、任意轴向剖切。
 - 两棵层级树（分类 is-a、结构 part-of）和按名称或编号搜索。
 - 男女切换保留视角和选中的结构；对照视图把两个体型的同一系统并排显示，视角联动。
+- 表情与口形：21 种情绪表情（6 种基本、15 种复合）、25 个动作单元、17 个说话的口形，可与疼痛表情叠加；也可以选一段音频，让口形跟着声音走。
+- "数据来源与声明"里有"标定对照"：关节、肌肉力臂、节段比例、器官体积和表情位移与外部开放模型逐项相比的表。
 - 每个体型带一份"使用前请注意"，首次加载时显示。
 
 ### 对照视图、触屏和 WebGL2
 
-- **对照视图**：姿势、呼吸、体型和疼痛表情在左右两个窗格里同时生效。体型按"相对各自默认值的偏移"套到另一副身体上，并限制在它的可用范围内。
-- **皮肤不透明时**头发、眉毛和阴毛暂时隐藏（这几个网格还没有贴合新皮肤）；它们仍在结构树里，选中即可显示。"显示"页有"皮肤不透明"开关。
+- **对照视图**：姿势、呼吸、体型、疼痛表情、情绪表情和口形在左右两个窗格里同时生效。体型按"相对各自默认值的偏移"套到另一副身体上，并限制在它的可用范围内。
+- **皮肤不透明时**隐藏哪些部件由每副人体的 `display.json` 给出（现在是外耳和深部的上、下唇，皮肤自己已经有这些形状；对照窗格用它自己那副人体的清单）；它们仍在结构树里，选中即可显示。眉毛跟皮肤一起画成不透明，用示意性的深色：它只比皮肤高出零点几毫米，半透明时几乎看不见。"显示"页有"皮肤不透明"开关。
 - **触屏**：单指旋转、双指平移和捏合缩放、点按选取；手机上顶栏分两行，详情是底部抽屉。嵌入页里第一次触摸画布之后才接管手势，之前竖向滑动仍然滚动页面。只在设备模拟里验证过，没有在真机上测过。
 - **WebGL2 回退**：每个系统里不透明的部件合成一次绘制（三千多次降到一百多次）；`?chunks=0` 可关掉用于对照。改变身高时相机跟随身体。
 
@@ -42,11 +44,26 @@
 
 **施加刺激。** "疼痛"页顶部的刺激工具：选种类（针刺、钝压、捏夹、热、冷）、量值、时长、是否重复、刺激是否被固定；打开"在皮肤上施加"后点一下皮肤按设定时长施加，按住不动则施加到松手。摆了姿势或改了体型也可以。模拟人的反应包括：皮肤上的疼痛分布层、从皮肤到神经根的通路和沿它走的 Aδ / C 两个标记、退缩反射、表情和（打开声音后的）发声，以及监护条上的心率、血压、呼吸、瞳孔、皮肤电导。解释面板按九个步骤说明原因，每个数字都标明是有出处、是假设还是算出来的。监护条上的数是群体平均的效应量，不能用来推断疼痛。模型在 `src/painmodel/`，数据表和来源在 `data/curated/pain/`。
 
-**有真实开口的皮肤。** 眼和口是真正的开口：皮肤不透明时，透过它们能看到眼球、牙、牙龈和舌（这些是解剖部件，不管所在系统开没开都会画出来）。口腔深处近黑色的壁（口腔袋）和睑缘向里卷的一圈是为开口构造的，不是解剖：口腔袋不能选取，也不上体表图。皮肤不透明时隐藏的部件由管线给出（外耳和深部的"唇"，皮肤自己已经有）。选中皮肤，结构信息里列出它由哪几片拼成；"构造物"单独用一种颜色和虚线标出，不是解剖来源。疼痛页默认看皮肤。
+**有真实开口的皮肤。** 眼和口是真正的开口：皮肤不透明时，透过它们能看到眼球、牙、牙龈和舌（这些是解剖部件，不管所在系统开没开都会画出来）。口腔深处近黑色的壁（口腔袋）和睑缘向里卷的一圈是为开口构造的，不是解剖：口腔袋不能选取，也不上体表图。皮肤不透明时隐藏的部件由管线给出（外耳和深部的上唇、下唇，皮肤自己已经有）。选中皮肤，结构信息里列出它由哪几片拼成；"构造物"单独用一种颜色和虚线标出，不是解剖来源。疼痛页默认看皮肤。
 
 **皱纹细节。** 皮肤不透明时，面部按表情强度叠加一层法线细节（眉间、鱼尾、下睑、鼻根、鼻唇沟、口角）；皱纹是程序化生成的，条数和尺寸是假设。
 
 声音素材的许可见下文"疼痛声音包"。嵌入模式默认静音，任何声音都需要用户点击才会播放。
+
+### 表情与口形
+
+左侧"表情"面板：
+
+- **情绪表情。** 21 种（高兴、悲伤、恐惧、愤怒、惊讶、厌恶 6 种基本情绪，加 15 种复合情绪），每种是一组面部动作单元（AU），带一个 0–1 的强度滑块。每种情绪用到哪些 AU 取自 Du、Tao、Martinez 2014；**各 AU 的强度是本项目的假设**。模拟人没有情绪，这只是把已发表的原型摆出来。
+- **单个动作单元。** 25 个 AU 各一个滑块（0–5，对应 FACS 的 A–E 级），与"疼痛"页里的是同一组。
+- **口形（视位）。** 17 个说话的口形，点一下保持、再点一下松开：双唇音合唇、唇齿音下唇碰上齿、圆唇、展唇、开口等，舌有四个示意姿势。方法取自 JALI（Edwards 等 2016）；**视位表里的数值是假设**。
+- **由音频带动口形。** 选择或拖入一个音频文件，在页面内解码并分析，点"播放"后口形跟着声音走，面板上有一条开口、圆唇、闭合的轨迹。没有语音合成；文件不会上传。**从声音推出的口形只是近似**：开口度较可靠，圆唇一般，闭唇较弱（只当作一般的闭合），唇齿音（f、v）检测不出来。
+
+疼痛、情绪和说话由同一个驱动合成（规则在 `tools/face/model.ts` 的 `blendFace`）：情绪和疼痛在同一个 AU 上取较大者；上半脸（眉、眼）只来自这组 AU；说话时表情的下半脸减弱到四成，再与口形在每个通道上取较大者；下颌取两者中较大的；闭唇的口形优先于张口的表情。
+
+### 标定对照
+
+"数据来源与声明"对话框里的"查看对照表"打开一个只读视图：`data/curated/calibration/` 下的十张表（节段比例、活动范围、肱骨角度、肌肉附着点和力臂、器官体积、表情位移、面部控制的覆盖、量具自检）。每张表先给出容差内外各多少行、差得最多的几行，以及参照的名称、版本、许可和网址，可按人体筛选，整张表点开才显示。这些表（合计近 1 MB）是单独的代码块，打开时才下载。**它们是把外部的开放模型和已发表的统计当作量具所做的对照，不是临床人员的审核**；参照本身也是模型或群体平均，不是真值，容差是本项目定的。
 
 ## 运行
 
@@ -67,7 +84,7 @@ bun run dev        # http://localhost:5183
 |---|---|---|
 | `body` | `male`（默认）、`female` | 体型 |
 | `embed` | `1` | 嵌入模式：只留舞台和必要控件，不弹对话框 |
-| `tab` | `d`、`t`、`p`、`n` | 左侧面板：显示、结构树、姿势、疼痛 |
+| `tab` | `d`、`t`、`p`、`n`、`e` | 左侧面板：显示、结构树、姿势、疼痛、表情 |
 | `sys` | `ske,ner:60` | 可见的系统，可带不透明度百分数；未列出的隐藏。代码：`int mus ske cv ner res dig uri rep end lym oth` |
 | `peel` | `2` | 剥离层数 |
 | `iso` | `FMA7088,FJ1234` | 隔离显示：部件编号或概念编号（概念展开为其下全部部件） |
@@ -88,7 +105,9 @@ bun run dev        # http://localhost:5183
 | `shape` | `h1.80,b28,l0,c0` | 体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 体型分布（SD）；只写不在默认值的项，超出可用范围的值会被截断 |
 | `stim` | `heat,48,8@forearm_L` | 施加刺激：`种类,量值,秒数[,x次数/频率][,held][,热斜率取法]@部位`。量值：针刺毫牛，钝压和捏夹牛，热和冷摄氏度。部位：`fingertip palm handback forearm cheek shin sole` 加 `_L`/`_R`，或静止姿势下的坐标（毫米）`p-182,1034,28` |
 | `pain` | `7` | 把疼痛表情保持在该强度（0–10）；不会自动出声 |
-| `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5） |
+| `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5）；与 `pain`、`expr` 逐项取较大者 |
+| `expr` | `happy`、`fearful:0.6` | 情绪表情：表情 id，可带强度（0–1，省略为 1）。id：`happy sad fearful angry surprised disgusted`，以及 `happily_surprised happily_disgusted sadly_fearful sadly_angry sadly_surprised sadly_disgusted fearfully_angry fearfully_surprised fearfully_disgusted angrily_surprised angrily_disgusted disgustedly_surprised appalled hatred awed` |
+| `vis` | `PBM` | 保持一个口形（视位）。id：`SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX` |
 | `skin` | `1` | 不透明皮肤视图 |
 | `renderer` | `webgl` | 强制用 WebGL2 后端 |
 
@@ -179,6 +198,7 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 - 皮下脂肪是从皮肤内壁和深层结构之间推导出来的，厚度按 3 mm 量化。
 - 男性皮肤是拼成的，逐片标在数据里（选中皮肤可见）：按他的内部结构拟合的参数化体表（Meta MHR，Apache-2.0），不是他本人的皮肤；他自己扫描皮肤上的阴茎和阴囊皮肤（移植片，周围的衔接面是构造的，较粗糙）；CC0 写实人体网格的脚趾（不是他的脚，第 3–5 趾被拉长约 1.3–1.5 倍）；眼和口是剪开的真实开口，睑缘内沿和口腔袋是为此构造的，不是解剖。脐和乳头是从他的扫描皮肤转过来的浅浮雕，网格太粗，几乎看不出。腋窝从肱骨约 45% 处以下是打开的，其上手臂与腋襞本来相贴，皮肤在腋襞处有 15–27 cm² 互相遮挡并有小台阶。头显得又宽又高；眼球的颜色是示意性的。大幅度姿势下（肩外展 90°、前屈 160°、深蹲）皮肤仍有明显拉伸和皱缩。皮肤包不在仓库里，由 `tools/bodyshape/` 和 `tools/skinopen/` 的脚本生成到 `data/raw/bodyshape/out/`。
 - 体表图的边界有 1–3 厘米的锯齿。体表图是构造出来的教学用图，皮节因人而异，已发表的图互相矛盾。
+- 表情和口形：情绪原型的强度和视位的数值是假设；没有眼球转动和单侧动作；舌只有四个示意姿势；张口时口角处的皮肤有小裂口；由音频得到的口形是近似的，唇齿音检测不出来，也没有在真人语音上系统地验证过。眉毛是贴到皮肤上的薄壳（内表面在皮肤下 0.5 毫米），头发仍是一个半透明的壳。
 - 男性的静止姿势被改过两次：肩带（原始扫描是仰卧耸肩，锁骨下降约 10°、肩胛骨沿胸廓转动，两肩关节中心间距 338 mm，没有达到 350 mm 的目标）；上肢在冠状面外展 6.5°，以便形成腋窝（肩胛骨保持不动是建模上的选择，没有打开过出处）。跨越肩部的肌肉、血管由 `scanned` 改标为 `warped`。
 - 女性体型比男性粗糙得多：
   - 骨架来自 Visible Human 女性供体（59 岁、肥胖、六节腰椎），已按标准比例缩放到身高 1.606 m、五节腰椎，所以她的部件都不标为 `scanned`。踝仍偏高约 16 mm；左右肘关节的屈伸轴相差 22.5°（她两侧肱骨远端不同），屈肘时两前臂不对称；脚骨和手指是修正过的男性骨。
@@ -186,8 +206,8 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
   - 下肢的肌肉和膝关节韧带是她自己的（丹佛数据）。神经长度有 2.0% 在她的肌肉内，其中 1.8% 是止于肌肉的运动支，解释不了的 0.07%。
   - 盆底、阴道、子宫、附件和直肠来自另一位女性的标本（Wu 等 2015）。结构之间仍有少量穿插（最差的一对 3.8%）；膀胱（她自己的，空虚）与子宫之间有 16.6 mm 空隙；九条盆腔韧带只有三条（左右宫骶韧带、右主韧带）按两端重新配准放回，其余在现有器官之间没有位置。
   - 没有外阴形态：会阴处的皮肤是抬高过的平滑闭合面。标本的皮肤没能移植（它的切面沿整条裂隙切过两侧的壁）。也没有尿道腔、卵巢和阴道血管、自主神经丛。
-  - 皮肤同样是拼成的：标准女性体型（身高 1.606 m、BMI 21.6）的参数化体表，在肌肉仍超出处放宽，按体积算的 BMI 约 23.7；头部用按她的颅骨和已发表的软组织厚度定出的面容，只保证盖住骨头，所以有九块面肌略露出皮肤（最多约 2–3 mm）。**面容仍偏男性、偏年长**（下颌宽，嘴唇薄，头发和眉毛是男性的部件）。眼和口是真实开口；脚趾来自 CC0 网格，较小几个趾的趾尖有皱缩的碎片；脚趾之间和大腿根部有筋膜薄片露在皮肤外。乳房每侧约 334 mL（中国女性的参考值），腺体部件缩到约 0.5 倍放入；脐是构造的。
-  - 她的肋间神经是从男性变形来的，与她的腹部对不上：体表图上脐在 T8（教科书 T10），剑突在 T5（教科书 T6）。
+  - 皮肤同样是拼成的：标准女性体型（身高 1.606 m、BMI 21.6）的参数化体表，在肌肉仍超出处放宽，按体积算的 BMI 约 23.7；头部用按她的颅骨和已发表的软组织厚度定出的面容，只保证盖住骨头，所以有九块面肌略露出皮肤（最多约 2–3 mm）。**面容仍偏男性、偏年长**（下颌宽，嘴唇薄，头发和眉毛是男性的部件）。眼和口是真实开口；脚趾来自 CC0 网格，较小几个趾的趾尖有皱缩的碎片；原先露在脚趾之间和大腿根部的筋膜薄片已收进皮肤（薄层结构露出面积由 253 降到约 10 cm²，余下的在腋襞）。乳房每侧约 334 mL（中国女性的参考值），腺体部件缩到约 0.5 倍放入；脐是构造的。
+  - 她的肋间神经是从男性变形来的；第 7–11 条出骨性胸廓以后的一段已按她自己的剑突和脐重排（T7 止于剑突尖下方，T10 止于脐；T8、T9、T11 的高度是等间隔插值，不是出处给的）。体表图上脐现在落在 T10；剑突处仍不对（左 T5、右 T7，教科书 T6–T7），右侧 T12 皮节分成两块。模型里没有肋下神经。
   - 右前臂和右手在 CT 里被裁切，用的是左侧镜像。
 
 ## 接下来
@@ -210,7 +230,7 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 
 ## What it does
 
-- Two bodies. Male: 3,332 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,372 (far less accurate; see below).
+- Two bodies. Male: 3,333 separate parts — bones, muscles, vessel segments, organs, nerves, ligaments, lymph nodes, subcutaneous fat — grouped by system. Female: 3,373 (far less accurate; see below).
 - Show, hide and fade systems; peel layers from skin to skeleton.
 - Select a part to see its Chinese / English / Latin names, FMA id, place in the hierarchies and adjacent structures.
 - Origin, insertion, innervation, blood supply and other relations, each with its source, clickable; a nerve lists what it supplies and can select all of it at once.
@@ -219,12 +239,14 @@ The long-term goal is a simulated patient for surgical training: anatomy that is
 - Isolate, show neighbours, exploded view, section plane on any axis.
 - Two hierarchies (is-a and part-of) and search by name or id.
 - Switching between male and female keeps the camera and the selection; the compare view shows one system of both bodies side by side with linked cameras.
+- Expression and mouth shapes: 21 emotion expressions (6 basic, 15 compound), 25 action units and 17 mouth shapes of speech, which combine with the pain expression; an audio file can also drive the mouth.
+- "Attribution & disclaimer" holds a "Calibration" view: tables comparing joints, muscle moment arms, segment proportions, organ volumes and expression displacement with open external models, item by item.
 - Each body carries a list of cautions, shown on first load.
 
 ### Compare view, touch and WebGL2
 
-- **Compare view**: pose, breathing, body shape and the pain expression apply in both panes. Shape is carried to the other body as offsets from its own defaults, within its valid range.
-- **While the skin is opaque**, the hair, eyebrows and pubic hair are hidden (these meshes are not yet fitted to the new skins); they stay in the tree and selecting one shows it. The Display tab has an "Opaque skin" switch.
+- **Compare view**: pose, breathing, body shape, the pain expression, emotion expressions and mouth shapes apply in both panes. Shape is carried to the other body as offsets from its own defaults, within its valid range.
+- **While the skin is opaque**, the parts to hide come from each body's `display.json` (at present the external ear and the deep upper and lower lip, shapes the skin has itself; the compare pane uses its own body's list); they stay in the tree and selecting one shows it. The eyebrows are drawn opaque with the skin, in an illustrative dark colour: they stand only a fraction of a millimetre proud of it and all but vanish when see-through. The Display tab has an "Opaque skin" switch.
 - **Touch**: one finger orbits, two fingers pan and pinch-zoom, a tap picks; on phones the top bar takes two rows and details open as a bottom sheet. In an embed the canvas takes over gestures only after it is first touched; before that a vertical swipe still scrolls the page. Verified in device emulation only, not on a real device.
 - **WebGL2 fallback**: opaque parts of each system are drawn in one call (from over three thousand draws to about a hundred); `?chunks=0` switches this off for comparison. The camera follows the body when stature changes.
 
@@ -242,11 +264,26 @@ This is a computational model of pain **behaviour** for teaching: the simulated 
 
 **Applying a stimulus.** The stimulus tool at the top of the Pain tab: pick the kind (pinprick, pressure, pinch, heat, cold), magnitude, duration, repeats and whether the stimulus is held; with "Apply on the skin" on, a click applies it for the set duration and pressing and holding applies it until release. It works on a posed or reshaped body. The response is shown as a pain map on the skin, the pathway from skin to nerve root with the Aδ and C markers travelling along it, the withdrawal reflex, the expression and (with sound on) the voice, and a monitor with heart rate, blood pressure, respiration, pupil and skin conductance. The explanation panel gives the reason in nine steps and marks every number as sourced, assumed or computed. The monitor shows group-average effect sizes that cannot be used to infer pain. The model is in `src/painmodel/`, its tables and sources in `data/curated/pain/`.
 
-**A skin with real openings.** Eyes and mouth are real openings: with the skin opaque, the eyeballs, teeth, gingiva and tongue are seen through them (anatomical parts, drawn whatever their systems' switches say). The near-black wall deep in the mouth (the oral pouch) and the rim turned in at the lid margins were constructed for the openings and are not anatomy: the pouch cannot be picked and takes no skin-map colour. The parts hidden under an opaque skin come from the pipeline (the external ear and the deep "Lip", which the skin has itself). Select the skin and its details list the pieces it is assembled from; "construction" has its own colour and a dashed mark and is not an anatomical provenance. The Pain tab defaults to the skin view.
+**A skin with real openings.** Eyes and mouth are real openings: with the skin opaque, the eyeballs, teeth, gingiva and tongue are seen through them (anatomical parts, drawn whatever their systems' switches say). The near-black wall deep in the mouth (the oral pouch) and the rim turned in at the lid margins were constructed for the openings and are not anatomy: the pouch cannot be picked and takes no skin-map colour. The parts hidden under an opaque skin come from the pipeline (the external ear and the deep upper and lower lip, which the skin has itself). Select the skin and its details list the pieces it is assembled from; "construction" has its own colour and a dashed mark and is not an anatomical provenance. The Pain tab defaults to the skin view.
 
 **Wrinkle detail.** While the skin is opaque, the face gets a layer of normal detail blended by expression (glabella, crow's feet, lower lid, nasal root, nasolabial fold, lip corner); the wrinkles are procedural and their counts and sizes are assumptions.
 
 For the licence of the sound material see "Pain sound pack" below. Embed mode is muted by default and any sound needs a click.
+
+### Expression and mouth shapes
+
+The "Expression" panel on the left:
+
+- **Emotion expressions.** 21 of them (the six basic ones — happy, sad, fearful, angry, surprised, disgusted — and 15 compound ones), each a set of facial action units (AUs) with a strength slider from 0 to 1. Which AUs make up each emotion is from Du, Tao & Martinez 2014; **the intensity of each AU is an assumption of this project**. The simulated body has no emotions; published prototypes are merely posed.
+- **Single action units.** A slider for each of the 25 AUs (0–5, FACS levels A–E), the same set as in the Pain tab.
+- **Mouth shapes (visemes).** 17 mouth shapes of speech; click to hold, click again to release: lips sealed for bilabials, lower lip to the upper teeth for labiodentals, rounded, spread, open, and four schematic tongue poses. The method is from JALI (Edwards et al. 2016); **the numbers in the viseme table are assumptions**.
+- **Speak from audio.** Choose or drop an audio file; it is decoded and analysed in the page, and after pressing Play the mouth follows the sound, with a strip showing opening, rounding and closure. There is no speech synthesis and the file is never uploaded. **Mouth shapes derived from sound are approximate**: opening is fairly reliable, rounding moderate, lip closure weak (treated as a generic closure), and labiodentals (f, v) are not detected.
+
+Pain, emotion and speech are composed by one driver (the rule is `blendFace` in `tools/face/model.ts`): emotion and pain take the larger value of each AU; the upper face (brows, eyes) comes from that set alone; while speaking the expression's lower face is attenuated to four tenths and then combined with the mouth shape by taking the larger value per channel; the jaw is the larger of the two; a lip closure wins over an open-mouthed expression.
+
+### Calibration
+
+"Open the calibration tables" in the "Attribution & disclaimer" dialog opens a read-only view of the ten tables under `data/curated/calibration/` (segment proportions, range of motion, humeral angles, muscle attachments and moment arms, organ volumes, expression displacement, coverage of facial controls, and an instrument check). Each table first shows how many rows fall within and outside tolerance, the largest disagreements, and each reference's name, version, licence and URL; rows can be filtered by body and the full table appears on demand. The tables (close to 1 MB together) are separate chunks fetched when the view opens. **They are comparisons with open external models and published statistics used as measuring instruments, not validation by a clinician**; the references are models or population averages themselves, not ground truth, and the tolerances were set by this project.
 
 ## Run
 
@@ -267,7 +304,7 @@ The whole view state lives in the query string, so any view can be opened by one
 |---|---|---|
 | `body` | `male` (default), `female` | Which body |
 | `embed` | `1` | Embed mode: stage and essential controls only, no dialogs |
-| `tab` | `d`, `t`, `p`, `n` | Left panel: display, tree, pose, pain |
+| `tab` | `d`, `t`, `p`, `n`, `e` | Left panel: display, tree, pose, pain, expression |
 | `sys` | `ske,ner:60` | Visible systems, each optionally with an opacity percent; unlisted ones are hidden. Codes: `int mus ske cv ner res dig uri rep end lym oth` |
 | `peel` | `2` | Peel depth |
 | `iso` | `FMA7088,FJ1234` | Isolate: part ids or concept ids (a concept expands to all its parts) |
@@ -288,7 +325,9 @@ The whole view state lives in the query string, so any view can be opened by one
 | `shape` | `h1.80,b28,l0,c0` | Body shape: h stature (m), b BMI, l leg length (SD), c mass distribution (SD); only non-default items are written and values outside the valid range are clamped |
 | `stim` | `heat,48,8@forearm_L` | Apply a stimulus: `kind,magnitude,seconds[,xCount/Hz][,held][,heat reading]@site`. Magnitude: mN for pinprick, N for pressure and pinch, °C for heat and cold. Site: `fingertip palm handback forearm cheek shin sole` with `_L`/`_R`, or a rest-pose position in millimetres, `p-182,1034,28` |
 | `pain` | `7` | Hold the pain expression at this level (0–10); never plays sound by itself |
-| `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5) |
+| `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5); combined with `pain` and `expr` by maximum |
+| `expr` | `happy`, `fearful:0.6` | Emotion expression: an expression id, optionally with a strength (0–1; 1 when omitted). Ids: `happy sad fearful angry surprised disgusted`, and `happily_surprised happily_disgusted sadly_fearful sadly_angry sadly_surprised sadly_disgusted fearfully_angry fearfully_surprised fearfully_disgusted angrily_surprised angrily_disgusted disgustedly_surprised appalled hatred awed` |
+| `vis` | `PBM` | Hold one mouth shape (viseme). Ids: `SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX` |
 | `skin` | `1` | Opaque-skin view |
 | `renderer` | `webgl` | Force the WebGL2 backend |
 
@@ -379,6 +418,7 @@ The full list is in each body's `cautions`. The main ones:
 - Subcutaneous fat is derived from the space between the skin's inner wall and the deep structures; thickness is quantised to 3 mm.
 - The male skin is assembled from pieces, each recorded in the data (select the skin to see them): a parametric body surface (Meta MHR, Apache-2.0) fitted to his internals, not his own skin; the penile and scrotal skin of his own scanned skin (a graft; the constructed surface round it is coarse); toes from a CC0 realistic body mesh (not his feet; toes 3–5 stretched about 1.3–1.5×); eyes and mouth are real openings cut into the surface, with lid rims and an oral pouch constructed for them, which are not anatomy. Navel and nipples are low reliefs carried over from his scanned skin and barely visible at this mesh density. The axilla is open from about 45% of the humerus down; above that arm and axillary folds lie together, and 15–27 cm² of skin is covered at the folds, with small steps. The head looks broad and high; eye colours are illustrative. In large poses (90° abduction, 160° flexion, deep squat) the skin still stretches and crumples visibly. The skin package is not in the repository; scripts in `tools/bodyshape/` and `tools/skinopen/` write it to `data/raw/bodyshape/out/`.
 - Skin map boundaries are jagged at 1–3 cm. The skin maps are constructed teaching maps; dermatomes vary between people and published maps disagree.
+- Expression and mouth shapes: the intensities of the emotion prototypes and the viseme numbers are assumptions; there is no eye rotation and no one-sided action; the tongue has four schematic poses only; the skin shows small cracks at the mouth corners when the mouth opens; mouth shapes from audio are approximate, labiodentals are not detected, and nothing has been validated systematically on real speech. The eyebrows are a thin shell fitted onto the skin (its inner face 0.5 mm below the surface), and the hair is still a see-through shell.
 - The male rest posture was changed twice: the shoulder girdle (the scan is supine with shrugged shoulders; clavicles lowered by about 10°, scapulae turned round the rib cage, glenohumeral centres 338 mm apart, short of the 350 mm target), and both upper limbs abducted 6.5° in the coronal plane so that an axilla exists (keeping the scapula fixed is a modelling choice with no opened source). Muscles and vessels spanning the shoulder changed from `scanned` to `warped`.
 - The female body is far coarser than the male:
   - The skeleton is from the Visible Human Female donor (59 years old, obese, six lumbar vertebrae), rescaled to standard proportions at 1.606 m with five lumbar vertebrae, so none of her parts is marked `scanned`. The ankle is still about 16 mm too high; the flexion axes of her two elbows differ by 22.5° (her distal humeri differ), so the forearms do not move symmetrically; foot bones and fingers are corrected male bones.
@@ -386,8 +426,8 @@ The full list is in each body's `cautions`. The main ones:
   - Leg muscles and knee ligaments are her own (Denver data). 2.0% of nerve length lies inside her muscles, 1.8% of it motor branches ending in muscle and 0.07% unexplained.
   - Pelvic floor, vagina, uterus, adnexa and rectum come from another woman's specimen (Wu et al. 2015). Some interpenetration remains (worst pair 3.8%); there is a 16.6 mm gap between the bladder (her own, empty) and the uterus; of nine pelvic ligaments only three (both uterosacral, right cardinal) were re-fitted by their two ends, the others have no room between the present organs.
   - No vulvar anatomy: the perineal skin is a raised, smooth closed surface. The specimen's skin could not be grafted (its cut plane runs through both walls of the cleft). Also missing: urethral lumen, ovarian and vaginal vessels, autonomic plexuses.
-  - Her skin is assembled likewise: a parametric surface of standard female shape (1.606 m, BMI 21.6) relaxed where muscle still lay outside, volume BMI about 23.7; the head follows a face derived from her skull and published soft-tissue depths with cover over bone only, so nine facial muscles lie slightly outside the skin (up to about 2–3 mm). **The face still reads male and older** (wide jaw, thin lips, and the hair and eyebrow parts are male). Eyes and mouth are real openings; toes come from a CC0 mesh, with crumpled fragments at the tips of the lesser toes; sheets of fascia show between the toes and at the root of the thighs. Breasts are about 334 mL a side (a Chinese reference figure) with the gland parts scaled to about 0.5; the navel is constructed.
-  - Her intercostal nerves are warped from the male and do not fit her abdomen: on the skin maps the umbilicus lies in T8 (textbook T10) and the xiphoid in T5 (textbook T6).
+  - Her skin is assembled likewise: a parametric surface of standard female shape (1.606 m, BMI 21.6) relaxed where muscle still lay outside, volume BMI about 23.7; the head follows a face derived from her skull and published soft-tissue depths with cover over bone only, so nine facial muscles lie slightly outside the skin (up to about 2–3 mm). **The face still reads male and older** (wide jaw, thin lips, and the hair and eyebrow parts are male). Eyes and mouth are real openings; toes come from a CC0 mesh, with crumpled fragments at the tips of the lesser toes; the sheets of fascia that showed between the toes and at the root of the thighs are now inside the skin (thin structures outside went from 253 to about 10 cm², the rest at the axillary folds). Breasts are about 334 mL a side (a Chinese reference figure) with the gland parts scaled to about 0.5; the navel is constructed.
+  - Her intercostal nerves are warped from the male; the stretch of nerves 7–11 beyond the bony thorax has been re-laid to her own xiphoid and navel (T7 ends just below the xiphoid tip, T10 at the navel; the levels of T8, T9 and T11 are evenly interpolated, not sourced). On the skin maps the umbilicus now lies in T10; the xiphoid is still off (left T5, right T7; textbook T6–T7) and the right T12 dermatome is in two pieces. The model has no subcostal nerve.
   - The right forearm and hand were clipped in the CT and are a mirrored left.
 
 ## Next

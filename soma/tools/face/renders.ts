@@ -7,6 +7,7 @@ import type { Part, Rig } from '../../src/anatomy/types.ts'
 import type { FaceData, FaceOpenings } from '../../src/face/types.ts'
 import type { Body } from '../rig/io.ts'
 import { Poser } from '../rig/pose.ts'
+import { isLipPart } from './build.ts'
 import { type Image, type RenderItem, type Rgb, type View, render, sheet } from '../rig/render.ts'
 import { type AUs, AU_MAX, activations, deform, displacement, painAUs } from './model.ts'
 
@@ -41,7 +42,8 @@ export function scene(body: Body, rig: Rig, rigBin: Uint8Array, face: FaceData, 
     if (/cornea/i.test(p.name)) return [40, 40, 60]
     if (/sclera/i.test(p.name)) return [245, 245, 245]
     if (/tarsal plate/i.test(p.name)) return [214, 150, 150]
-    if (/^lip$/i.test(p.name)) return [226, 130, 130]
+    // 深层的唇按名字找：一个部件（Lip）或拆开的两个（Upper lip / Lower lip）/ the deep lips are found by name: one part (Lip) or two after the split (Upper lip / Lower lip)
+    if (isLipPart(p)) return [226, 130, 130]
     if (/eyebrow/i.test(p.name)) return [90, 62, 40]
     if (p.tissue === 'cartilage' && p.bbox[5] > skin.bbox[5] - 0.12) return [200, 215, 225]
     return null

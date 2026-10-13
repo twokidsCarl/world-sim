@@ -70,8 +70,8 @@ export function skinPieces(sidecarSource: Uint32Array, pieceOfVertex: Uint8Array
   return out
 }
 
-/** 深层的“唇”部件：皮肤开了口之后它正挡在口裂里，皮肤不透明时应隐藏 / the deep "Lip" part: once the skin has a mouth opening it sits in the fissure and is to be hidden while the skin is opaque */
-export const DEEP_LIP_NAME = /^lip$/i
+/** 深层的“唇”部件（一个 Lip，或切开后的 Upper lip 和 Lower lip，见 lipSplit.ts）：皮肤开了口之后它正挡在口裂里，皮肤不透明时应隐藏 / the deep lip parts (one "Lip", or "Upper lip" and "Lower lip" after the split, see lipSplit.ts): once the skin has a mouth opening they sit in the fissure and are to be hidden while the skin is opaque */
+export const DEEP_LIP_NAME = /^(upper |lower )?lip$/i
 
 export interface SkinSidecar {
   /** 文件内容：小端 uint32，每个发布顶点一个 / the file: little-endian uint32, one per shipped vertex */

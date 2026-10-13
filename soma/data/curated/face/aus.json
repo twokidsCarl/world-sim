@@ -1,7 +1,7 @@
 {
  "_doc": {
-  "zh": "FACS 动作单元（AU）到肌肉通道的对应。只收 UNBC-McMaster 库为疼痛编码的 11 个 AU（见 sources.json 的 egede2017）。channels 的键是 muscles.json 里的肌肉 id（两侧同时激活），值是 AU 强度为 5（E 级，最大）时该肌肉的激活。AU 的名称和肌肉基础取自 wikipedia-facs；权重的具体数值、以及“强度 0–5 与位移成正比”都是本项目的假设（FACS 的强度是序数等级，不是位移量）。jawFraction 是强度为 5 时下颌张开角占颞下颌关节活动范围的比例，也是假设。 oral_recess 不是肌肉：它是皮肤上口裂内陷的几何替代（皮肤没有口裂），权重是假设。 mouth_corner 也不是肌肉：皮肤有真实口裂时用它把张开的口角修成杏仁形，权重等于该 AU 的 jawFraction。oral_recess 只用于闭合的皮肤，mouth_corner 只用于开口的皮肤。",
-  "en": "FACS action units (AUs) as combinations of muscle channels. Only the 11 AUs that the UNBC-McMaster archive codes for pain are included (see egede2017 in sources.json). Keys of `channels` are muscle ids from muscles.json (both sides activate together); values are the muscle's activation at AU intensity 5 (level E, maximum). AU names and muscular basis come from wikipedia-facs; the weight values, and the proportionality of displacement to intensity 0–5, are assumptions of this project (FACS intensities are ordinal grades, not displacements). `jawFraction` is the jaw opening at intensity 5 as a fraction of the temporomandibular range of motion, also an assumption. oral_recess is not a muscle: it is the geometric stand-in for the oral fissure on the skin (which has no opening); its weights are assumptions. mouth_corner is not a muscle either: with a real oral fissure it shapes the opened mouth corners into an almond, and its weight equals the AU's jawFraction. oral_recess applies to a closed skin only and mouth_corner to an opened one only."
+  "zh": "FACS 动作单元（AU）到肌肉通道的对应。疼痛用的 11 个 AU（UNBC-McMaster 库编码的，见 egede2017）之外，另有表情用的 AU1、2、5、14、15、16、17、23、24（肌肉基础见 cmu-facs）。AU11、13、18、22、28 也已加入（见各条的说明）；下颌前伸和侧移没有对应的 AU 条目。channels 的键是 muscles.json 里的肌肉 id（两侧同时激活），值是 AU 强度为 5（E 级，最大）时该肌肉的激活。AU 的名称和肌肉基础取自 wikipedia-facs；权重的具体数值、以及“强度 0–5 与位移成正比”都是本项目的假设（FACS 的强度是序数等级，不是位移量）。jawFraction 是强度为 5 时下颌张开角占颞下颌关节活动范围的比例，也是假设。 oral_recess 不是肌肉：它是皮肤上口裂内陷的几何替代（皮肤没有口裂），权重是假设。 mouth_corner 也不是肌肉：皮肤有真实口裂时用它把张开的口角修成杏仁形，权重等于该 AU 的 jawFraction。oral_recess 只用于闭合的皮肤，mouth_corner 只用于开口的皮肤。",
+  "en": "FACS action units (AUs) as combinations of muscle channels. Besides the 11 AUs used for pain (those coded by the UNBC-McMaster archive, see egede2017) there are AU1, 2, 5, 14, 15, 16, 17, 23 and 24 for expressions (muscular basis per cmu-facs). AU11, 13, 18, 22 and 28 are included too (see each entry); jaw protrusion and lateral movement have no AU entry. Keys of `channels` are muscle ids from muscles.json (both sides activate together); values are the muscle's activation at AU intensity 5 (level E, maximum). AU names and muscular basis come from wikipedia-facs; the weight values, and the proportionality of displacement to intensity 0–5, are assumptions of this project (FACS intensities are ordinal grades, not displacements). `jawFraction` is the jaw opening at intensity 5 as a fraction of the temporomandibular range of motion, also an assumption. oral_recess is not a muscle: it is the geometric stand-in for the oral fissure on the skin (which has no opening); its weights are assumptions. mouth_corner is not a muscle either: with a real oral fissure it shapes the opened mouth corners into an almond, and its weight equals the AU's jawFraction. oral_recess applies to a closed skin only and mouth_corner to an opened one only."
  },
  "intensity": {
   "min": 0,
@@ -18,6 +18,40 @@
  },
  "aus": [
   {
+   "id": "AU1",
+   "name": {
+    "zh": "抬眉内侧",
+    "en": "Inner brow raiser"
+   },
+   "channels": {
+    "frontalis_medial": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：额肌内侧部。内外侧的分界是假设。",
+     "en": "Muscular basis: frontalis, pars medialis. Where medial ends and lateral begins is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU2",
+   "name": {
+    "zh": "抬眉外侧",
+    "en": "Outer brow raiser"
+   },
+   "channels": {
+    "frontalis_lateral": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：额肌外侧部。",
+     "en": "Muscular basis: frontalis, pars lateralis."
+    }
+   }
+  },
+  {
    "id": "AU4",
    "name": {
     "zh": "降眉",
@@ -33,8 +67,25 @@
    "basis": {
     "source": "wikipedia-facs",
     "note": {
-     "zh": "肌肉基础：降眉间肌（depressor glabellae，即 procerus）、降眉肌、皱眉肌。模型里没有降眉肌。",
-     "en": "Muscular basis: depressor glabellae (procerus), depressor supercilii, corrugator supercilii. The model has no depressor supercilii."
+     "zh": "肌肉基础：皱眉肌、降眉肌（cmu-facs 的 1978 年版表）；维基百科的表另列降眉间肌（depressor glabellae，即 procerus）。模型里没有降眉肌。降眉间肌的权重 1 是本项目的建模选择（它把眉内侧端下拉），不是有出处的“肌肉基础”——是假设。",
+     "en": "Muscular basis: corrugator supercilii, depressor supercilii (the 1978 table at cmu-facs); Wikipedia's table adds depressor glabellae (procerus). The model has no depressor supercilii. The weight of 1 for procerus is a modelling choice of this project (it draws the inner brow down), not a sourced muscular basis — an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU5",
+   "name": {
+    "zh": "提上睑",
+    "en": "Upper lid raiser"
+   },
+   "channels": {
+    "levator_palpebrae": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：上睑提肌。实现为上睑缘沿眼球上移（见 muscles.json），只在有真实睑裂的皮肤上有。",
+     "en": "Muscular basis: levator palpebrae superioris. Implemented as the upper lid margin rising along the globe (see muscles.json), only on a skin with a real fissure."
     }
    }
   },
@@ -110,6 +161,23 @@
    }
   },
   {
+   "id": "AU11",
+   "name": {
+    "zh": "鼻唇沟加深",
+    "en": "Nasolabial deepener"
+   },
+   "channels": {
+    "zygomaticus_minor": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：颧小肌（cmu-facs 的表）。只用这一块肌肉全激活；鼻唇沟本身由皱纹层表现。",
+     "en": "Muscular basis: zygomaticus minor (the table at cmu-facs). Just that muscle at full activation; the furrow itself is shown by the wrinkle layer."
+    }
+   }
+  },
+  {
    "id": "AU12",
    "name": {
     "zh": "拉口角",
@@ -123,6 +191,113 @@
     "note": {
      "zh": "肌肉基础：颧大肌。",
      "en": "Muscular basis: zygomaticus major."
+    }
+   }
+  },
+  {
+   "id": "AU13",
+   "name": {
+    "zh": "口角上提（尖笑）",
+    "en": "Sharp lip puller"
+   },
+   "channels": {
+    "levator_anguli_oris": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：提口角肌（cmu-facs 的表把 AU13 写作 Cheek Puffer，肌肉为 levator anguli oris）。名称“sharp lip puller”没有核对到出处。",
+     "en": "Muscular basis: levator anguli oris (the table at cmu-facs lists AU13 as \"Cheek Puffer\" with that muscle). The name \"sharp lip puller\" was not verified against a source."
+    }
+   }
+  },
+  {
+   "id": "AU14",
+   "name": {
+    "zh": "酒窝",
+    "en": "Dimpler"
+   },
+   "channels": {
+    "buccinator": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：颊肌。",
+     "en": "Muscular basis: buccinator."
+    }
+   }
+  },
+  {
+   "id": "AU15",
+   "name": {
+    "zh": "降口角",
+    "en": "Lip corner depressor"
+   },
+   "channels": {
+    "depressor_anguli_oris": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：降口角肌。",
+     "en": "Muscular basis: depressor anguli oris."
+    }
+   }
+  },
+  {
+   "id": "AU16",
+   "name": {
+    "zh": "降下唇",
+    "en": "Lower lip depressor"
+   },
+   "channels": {
+    "depressor_labii_inferioris": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：降下唇肌。",
+     "en": "Muscular basis: depressor labii inferioris."
+    }
+   }
+  },
+  {
+   "id": "AU17",
+   "name": {
+    "zh": "抬颏",
+    "en": "Chin raiser"
+   },
+   "channels": {
+    "mentalis": 1
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：颏肌。",
+     "en": "Muscular basis: mentalis."
+    }
+   }
+  },
+  {
+   "id": "AU18",
+   "name": {
+    "zh": "撅唇",
+    "en": "Lip pucker"
+   },
+   "channels": {
+    "orbicularis_oris": 1,
+    "lip_protrusion": 0.6
+   },
+   "missing": [
+    "incisivus labii superioris",
+    "incisivus labii inferioris"
+   ],
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：上、下唇切牙肌（cmu-facs 的表）；模型里没有这两块肌肉，用口轮匝肌的环形缩窄加唇前突代替。权重是假设。",
+     "en": "Muscular basis: incisivus labii superioris and inferioris (the table at cmu-facs); the model has neither, so the ring narrowing of orbicularis oris plus lip protrusion stands in. Weights are assumptions."
     }
    }
   },
@@ -145,6 +320,64 @@
    }
   },
   {
+   "id": "AU22",
+   "name": {
+    "zh": "唇呈漏斗状",
+    "en": "Lip funneler"
+   },
+   "channels": {
+    "lip_protrusion": 1,
+    "orbicularis_oris": 0.5,
+    "depressor_labii_inferioris": 0.35,
+    "lls": 0.25
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：口轮匝肌（cmu-facs 的表）。实现为唇前突、少量缩窄、两唇分开；没有做唇外翻。权重是假设。",
+     "en": "Muscular basis: orbicularis oris (the table at cmu-facs). Realised as protrusion, a little narrowing and parted lips; no eversion of the lips is modelled. Weights are assumptions."
+    }
+   }
+  },
+  {
+   "id": "AU23",
+   "name": {
+    "zh": "唇收紧",
+    "en": "Lip tightener"
+   },
+   "channels": {
+    "orbicularis_oris": 0.5,
+    "lip_roll_upper": 0.7,
+    "lip_roll_lower": 0.7
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：口轮匝肌。收紧 = 唇缘向内卷、红唇变窄（lip_roll 0.7）加一半的环形缩窄；与 AU24（压紧 = 红唇上下压扁）在几何上不同。权重是假设。",
+     "en": "Muscular basis: orbicularis oris. Tightening = the margins roll in and the vermilion narrows (lip_roll at 0.7) plus half of the ring narrowing; geometrically distinct from AU24 (pressing = the vermilion flattened vertically). Weights are assumptions."
+    }
+   }
+  },
+  {
+   "id": "AU24",
+   "name": {
+    "zh": "唇紧压",
+    "en": "Lip pressor"
+   },
+   "channels": {
+    "orbicularis_oris": 0.3,
+    "lip_press": 1,
+    "mentalis": 0.3
+   },
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：口轮匝肌。压紧 = 两唇互相压、红唇上下压扁（lip_press），加少量环形缩窄和颏肌（下唇上顶）；权重是假设。",
+     "en": "Muscular basis: orbicularis oris. Pressing = the lips pushed against each other and the vermilion flattened vertically (lip_press), with a little ring narrowing and mentalis (the lower lip pushed up); weights are assumptions."
+    }
+   }
+  },
+  {
    "id": "AU25",
    "name": {
     "zh": "分唇",
@@ -152,13 +385,14 @@
    },
    "channels": {
     "depressor_labii_inferioris": 0.6,
+    "lls": 0.15,
     "oral_recess": 0.25
    },
    "basis": {
     "source": "wikipedia-facs",
     "note": {
-     "zh": "肌肉基础：降下唇肌，或颏肌、口轮匝肌放松。这里只用降下唇肌，0.6 是假设。",
-     "en": "Muscular basis: depressor labii inferioris, or relaxation of mentalis or orbicularis oris. Only the depressor is used here; 0.6 is an assumption."
+     "zh": "肌肉基础：降下唇肌，或颏肌、口轮匝肌放松。这里用降下唇肌 0.6 加提上唇肌 0.15（两唇都离开口裂）；两个数是假设。",
+     "en": "Muscular basis: depressor labii inferioris, or relaxation of mentalis or orbicularis oris. Here depressor labii inferioris at 0.6 plus levator labii superioris at 0.15 (both lips leave the fissure); both numbers are assumptions."
     }
    }
   },
@@ -190,10 +424,10 @@
    },
    "channels": {
     "depressor_labii_inferioris": 0.5,
-    "oral_recess": 1.0,
-    "mouth_corner": 1.0
+    "oral_recess": 1,
+    "mouth_corner": 1
    },
-   "jawFraction": 1.0,
+   "jawFraction": 1,
    "missing": [
     "digastric (not a channel)"
    ],
@@ -202,6 +436,27 @@
     "note": {
      "zh": "肌肉基础：翼肌、二腹肌。表现为颞下颌关节张到活动范围的上限；降下唇肌 0.5 是假设。",
      "en": "Muscular basis: pterygoids, digastric. Realised as the temporomandibular joint opened to the end of its range; the 0.5 of the lip depressor is an assumption."
+    }
+   }
+  },
+  {
+   "id": "AU28",
+   "name": {
+    "zh": "吸唇",
+    "en": "Lip suck"
+   },
+   "channels": {
+    "lip_roll_upper": 1,
+    "lip_roll_lower": 1,
+    "lip_press": 0.5,
+    "mouth_corner": 0.06
+   },
+   "jawFraction": 0.06,
+   "basis": {
+    "source": "cmu-facs",
+    "note": {
+     "zh": "肌肉基础：口轮匝肌（cmu-facs 的表）。实现为两唇缘内卷加压扁，下颌略开；唇没有真的卷过牙。权重是假设。",
+     "en": "Muscular basis: orbicularis oris (the table at cmu-facs). Realised as both margins rolled in and flattened with the jaw slightly open; the lips do not really fold over the teeth. Weights are assumptions."
     }
    }
   },
@@ -216,10 +471,10 @@
     "orbicularis_oculi_palpebral_lower": 1
    },
    "basis": {
-    "source": "wikipedia-facs",
+    "source": "cmu-facs",
     "note": {
-     "zh": "肌肉基础：上睑提肌放松（眨眼 AU45 另有眼轮匝肌睑部收缩）。这里用上下睑两个通道到闭合线表示；强度按 0–5 连续取值，5 = 完全闭合，而 FACS 和 PSPI 里 AU43 只有有 / 无。",
-     "en": "Muscular basis: relaxation of levator palpebrae superioris (the blink, AU45, adds contraction of the palpebral orbicularis). Realised as both lid channels travelling to the closure line; the intensity is continuous 0–5 here with 5 = fully closed, whereas in FACS and in the PSPI AU43 is only present or absent."
+     "zh": "肌肉基础：上睑提肌放松、眼轮匝肌睑部（cmu-facs）。这里用上下睑两个睑部通道到闭合线表示；强度按 0–5 连续取值，5 = 完全闭合，而 FACS 和 PSPI 里 AU43 只有有 / 无。",
+     "en": "Muscular basis: relaxation of levator palpebrae superioris, and orbicularis oculi pars palpebralis (cmu-facs). Realised as both palpebral lid channels travelling to the closure line; the intensity is continuous 0–5 here with 5 = fully closed, whereas in FACS and in the PSPI AU43 is only present or absent."
     }
    }
   }

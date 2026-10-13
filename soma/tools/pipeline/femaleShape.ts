@@ -47,6 +47,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { measure, type Mesh } from './geometry.ts'
+import { lipPartIds } from './lipSplit.ts'
 import { signedVolume } from './meshRepair.ts'
 import { InsideTester, PointIndex, surfacePoints, thinPoints } from './register.ts'
 import { SKELETON_031C_BOXES_MM, SKELETON_031C_KEY } from './femaleSkeleton031c.ts'
@@ -362,14 +363,25 @@ export async function shapeFemale(input: FemaleShapeInput): Promise<(Record<stri
         lipRows.push(rowOf(p, 'perioral', p.id === oo.p!.id ? oo.w.coverWantedMm : null, fn))
       }
       for (const w of wanted) {
-        const p = byId.get(w.id)
-        if (!p || p.id === oo.p!.id || carry.has(p.id) || roleOf(p) !== 'driver') continue
-        const v = usedVertices(p.mesh)
+        // 目标包里写的若是已退役的整个唇的 id（唇已切成上唇、下唇，见 lipSplit.ts），就搬运它的两半：
+        // 幅度按两半的顶点合起来算一次，两半用同一个位移函数（它只取决于位置），切口上重合的点仍然重合
+        // when the target package names the retired id of the whole lip (now split into upper and lower lip, see
+        // lipSplit.ts) its two halves are carried: one amount from the vertices of both, one displacement function
+        // for both (it depends on position only), so the coincident points of the cut stay coincident
+        const whole = byId.get(w.id)
+        const halves = lipPartIds(w.id)
+        const group = (whole ? [whole] : [byId.get(halves.upper), byId.get(halves.lower)]).filter((p): p is FemaleShapePart => !!p && p.id !== oo.p!.id && !carry.has(p.id) && roleOf(p) === 'driver')
+        if (!group.length) continue
         const c: number[] = []
-        for (let i = 0; i < v.length; i += 3) c.push(cover(v[i]!, v[i + 1]!, v[i + 2]!))
+        for (const p of group) {
+          const v = usedVertices(p.mesh)
+          for (let i = 0; i < v.length; i += 3) c.push(cover(v[i]!, v[i + 1]!, v[i + 2]!))
+        }
         const fn = fieldOf(Math.max(0, Math.min(LIP_CARRY_MAX, median(c) - w.coverWantedMm / 1000)), true)
-        carry.set(p.id, fn)
-        lipRows.push(rowOf(p, 'lip', w.coverWantedMm, fn))
+        for (const p of group) {
+          carry.set(p.id, fn)
+          lipRows.push(rowOf(p, 'lip', w.coverWantedMm, fn))
+        }
       }
       lipRows.sort((x, y) => (x.id < y.id ? -1 : 1))
       log(`  lip carry: ${r1(A * 1000)} mm along (${n.map((x) => r1(x, 3)).join(', ')}) for orbicularis oris, fading to zero ${LIP_FADE[1] * 1000} mm from it; ${lipRows.length} parts carried`)

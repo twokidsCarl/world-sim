@@ -94,6 +94,8 @@ export function snapshot(s: AppState): UrlState {
   }
   if (s.pain.hold && s.pain.level > 0) out.pain = s.pain.level
   if (Object.keys(s.aus).length) out.au = { ...s.aus }
+  if (s.expr && s.expr.strength > 0) out.expr = { ...s.expr }
+  if (s.viseme) out.vis = s.viseme
   if (s.skinOpaque) out.skin = true
   if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
@@ -177,6 +179,24 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
       for (const [id, v] of Object.entries(state.au)) {
         if (face.data.aus.some((a) => a.id === id)) useApp.getState().setAU(id, v)
         else warnings.push(`au: 模型里没有 ${id} / the model has no ${id}`)
+      }
+    }
+  }
+  if (state.expr || state.vis) {
+    // 表情和口形只靠数据，不出声：链接一打开就自己摆好 / an expression and a mouth shape need data only and make no sound: a link sets them up by itself
+    const face = await useApp.getState().ensureFace()
+    if (!face) warnings.push('expr: 此人体没有表情数据 / this body has no facial expression data')
+    else {
+      if (state.expr) {
+        // id 不分大小写 / ids are matched without regard to case
+        const e = face.data.expressions?.find((x) => x.id.toLowerCase() === state.expr!.id.toLowerCase())
+        if (e) useApp.getState().setExpr({ id: e.id, strength: state.expr.strength })
+        else warnings.push(`expr: 没有表情 "${state.expr.id}"（可用：${(face.data.expressions ?? []).map((e) => e.id).join(' ')}）/ no such expression`)
+      }
+      if (state.vis) {
+        const v = face.data.visemes?.visemes.find((x) => x.id.toLowerCase() === state.vis!.toLowerCase())
+        if (v) useApp.getState().setViseme(v.id)
+        else warnings.push(`vis: 没有视位 "${state.vis}"（可用：${(face.data.visemes?.visemes ?? []).map((v) => v.id).join(' ')}）/ no such viseme`)
       }
     }
   }

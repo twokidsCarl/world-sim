@@ -41,6 +41,14 @@
   "axis": {
    "zh": "hint：作用线方向直接取 hint，不用网格的主轴。颏肌的网格约 14 × 14 × 7 mm，近似一个团块，主轴斜向外上，量出来的作用线把颏部皮肤拉向外侧而不是向上。",
    "en": "hint: the line of action takes the hint direction outright instead of the mesh's principal axis. The mentalis mesh is about 14 × 14 × 7 mm, nearly a blob, whose principal axis runs obliquely up and out, so the measured line pulled the chin skin sideways rather than up."
+  },
+  "split": {
+   "zh": "把场按到正中的距离分成内侧、外侧两个通道（额肌：内侧部 → AU1，外侧部 → AU2）。atMm 是分界到正中的距离，blendMm 是过渡带的半宽；两个数是假设（约在眉的中点）。",
+   "en": "splits the field by distance from the midline into a medial and a lateral channel (frontalis: pars medialis → AU1, pars lateralis → AU2). atMm is the distance of the boundary from the midline and blendMm the half-width of the blend; both are assumptions (about the middle of the brow)."
+  },
+  "lip": {
+   "zh": "沿唇的延续（只用于有真实口裂的皮肤）。corner：止于口角轴的肌肉把整条唇带着走，份额从口角的 1 平滑降到正中的 0，所以口角被拉动时唇跟着伸长而不是在口角内侧断开。middle：唇的提肌 / 降肌的场沿唇缘延伸到正中，到口角降为 0。bandMm 是离口裂多远处降为 0。轮廓和数值都是假设。",
+   "en": "Carry along the lip (opened skin only). corner: a muscle inserting at the modiolus carries the whole lip, its share falling smoothly from 1 at the corner to 0 at the midline, so that a pulled corner stretches the lip instead of breaking off just medial to the corner. middle: the field of a lip elevator / depressor runs along the margin to the midline and falls to 0 at the corner. bandMm is the distance from the fissure at which it reaches 0. Profiles and numbers are assumptions."
   }
  },
  "lid": {
@@ -131,6 +139,10 @@
    "action": {
     "zh": "上提眉毛，额部出现横纹",
     "en": "raises the eyebrow; horizontal forehead furrows"
+   },
+   "split": {
+    "atMm": 28,
+    "blendMm": 8
    }
   },
   {
@@ -280,6 +292,10 @@
    "carryNote": {
     "zh": "肌肉网格的下端止于鼻唇沟一带，没有伸进上唇；真实的肌纤维止于上唇（和鼻翼）的皮肤。carryMm 让权重在越过网格末端后先保持为 1，直到被口裂的 mask 截断，这样被上提的是上唇本身。数值是假设。",
     "en": "The muscle mesh ends near the nasolabial furrow and does not reach into the upper lip, whereas the real fibres insert into the skin of the upper lip (and ala). carryMm keeps the weight at 1 beyond the end of the mesh until the oral-fissure mask cuts it off, so that it is the upper lip itself that is raised. The value is an assumption."
+   },
+   "lip": {
+    "profile": "middle",
+    "bandMm": 18
    }
   },
   {
@@ -355,7 +371,11 @@
     "zh": "把口角向外上方拉",
     "en": "pulls the angle of the mouth up and laterally"
    },
-   "insertAt": "modiolus"
+   "insertAt": "modiolus",
+   "lip": {
+    "profile": "corner",
+    "bandMm": 16
+   }
   },
   {
    "id": "levator_anguli_oris",
@@ -390,7 +410,11 @@
     "zh": "上提口角",
     "en": "raises the angle of the mouth"
    },
-   "insertAt": "modiolus"
+   "insertAt": "modiolus",
+   "lip": {
+    "profile": "corner",
+    "bandMm": 14
+   }
   },
   {
    "id": "risorius",
@@ -425,7 +449,11 @@
     "zh": "把口角向外侧水平拉开",
     "en": "stretches the angle of the mouth straight to the side"
    },
-   "insertAt": "modiolus"
+   "insertAt": "modiolus",
+   "lip": {
+    "profile": "corner",
+    "bandMm": 16
+   }
   },
   {
    "id": "buccinator",
@@ -460,7 +488,11 @@
     "zh": "把颊压向牙列，口角向后收紧",
     "en": "presses the cheek against the teeth; tightens the angle of the mouth backwards"
    },
-   "insertAt": "modiolus"
+   "insertAt": "modiolus",
+   "lip": {
+    "profile": "corner",
+    "bandMm": 12
+   }
   },
   {
    "id": "depressor_anguli_oris",
@@ -493,7 +525,11 @@
     "zh": "把口角向下拉",
     "en": "pulls the angle of the mouth down"
    },
-   "insertAt": "modiolus"
+   "insertAt": "modiolus",
+   "lip": {
+    "profile": "corner",
+    "bandMm": 14
+   }
   },
   {
    "id": "depressor_labii_inferioris",
@@ -527,6 +563,10 @@
    "action": {
     "zh": "把下唇向下、略向外拉",
     "en": "draws the lower lip down and a little laterally"
+   },
+   "lip": {
+    "profile": "middle",
+    "bandMm": 18
    }
   },
   {
@@ -662,7 +702,7 @@
    },
    "ring": "outer",
    "sectors": {
-    "inferior": 1.0,
+    "inferior": 1,
     "lateral": 0.8,
     "superior": 0.4,
     "medial": 0.3
@@ -755,9 +795,9 @@
    "ring": "single",
    "sectors": {
     "inferior": 0.5,
-    "lateral": 1.0,
+    "lateral": 1,
     "superior": 0.5,
-    "medial": 1.0
+    "medial": 1
    }
   },
   {
@@ -813,6 +853,373 @@
     "zh": "皮肤有真实口裂时，骨架把上唇缘绑在颅骨、下唇缘绑在下颌，一直到口角，单靠关节张口时口裂两端是竖直的（方口）。这个通道在离口角 excursionMm 以内让唇缘跟随下颌的份额逐渐过渡到口角处的 0.5，使口裂呈杏仁形。它的激活应等于下颌张开角 / 上限。excursionMm（过渡长度）是假设。",
     "en": "With a real oral fissure the rig binds the upper lip margin to the skull and the lower to the jaw right up to the corners, so opened by the joint alone the fissure has vertical ends (a square mouth). Within excursionMm of a corner this channel eases the jaw share of the lip margins to 0.5 at the corner, giving an almond-shaped aperture. Its activation should equal jaw opening / limit. excursionMm (the taper length) is an assumption."
    }
+  },
+  {
+   "id": "levator_palpebrae",
+   "match": "^(left|right) levator palpebrae superioris$",
+   "name": {
+    "zh": "上睑提肌",
+    "en": "levator palpebrae superioris"
+   },
+   "model": "lid",
+   "lid": "raise",
+   "raiseMm": 4,
+   "excursionMm": 0,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "蝶骨小翼（视神经管上方）",
+     "en": "lesser wing of the sphenoid, above the optic canal"
+    },
+    "insertion": {
+     "zh": "上睑板和上睑皮肤",
+     "en": "superior tarsal plate and skin of the upper eyelid"
+    }
+   },
+   "action": {
+    "zh": "上提上睑。肌肉在眶内、皮肤之下很深，不能像其他表情肌那样按作用线在皮肤上投影；这里实现为上睑缘沿眼球表面上移 raiseMm（中间最多，两眦为 0），睑的皮肤跟随，只在有真实睑裂的皮肤上有。raiseMm 是假设。",
+    "en": "Raises the upper lid. The muscle lies inside the orbit, far below the skin, and cannot be projected onto the skin as a line of action like the other muscles; it is implemented as the upper lid margin rising along the globe by raiseMm (most in the middle, nothing at the canthi) with the lid skin following, only on a skin with a real fissure. raiseMm is an assumption."
+   }
+  },
+  {
+   "id": "lip_seal",
+   "match": "",
+   "name": {
+    "zh": "下唇上抬闭合（双唇闭合）",
+    "en": "lower lip raised to seal (bilabial closure)"
+   },
+   "model": "lip",
+   "lipAction": "seal",
+   "excursionMm": 0,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "refJawFraction": 0.3,
+   "lip": {
+    "profile": "middle",
+    "bandMm": 18
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "下唇缘走到上唇缘上，与下颌是否张开无关：在下颌张开 refJawFraction 的姿势下求解，正好抵消下颌带给下唇的位移。运行时激活 = 闭合量 × 下颌角 / refJaw（不超过 1）。肌肉基础：口轮匝肌、颏肌。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The lower lip margin travels onto the upper whatever the jaw does: solved in the pose with the jaw opened by refJawFraction, it exactly undoes what the jaw does to the lower lip. Run-time activation = closure × jaw angle / refJaw (at most 1). Muscular basis: orbicularis oris, mentalis. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_dental",
+   "match": "",
+   "name": {
+    "zh": "下唇贴上切牙切缘（唇齿音）",
+    "en": "lower lip to the upper incisal edge (labiodental)"
+   },
+   "model": "lip",
+   "lipAction": "dental",
+   "excursionMm": 0,
+   "spreadMm": 7,
+   "reachMm": 6,
+   "mask": [],
+   "refJawFraction": 0.08,
+   "lip": {
+    "profile": "middle",
+    "bandMm": 14
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "下唇缘中段（正中两侧各 spreadMm，再经 reachMm 渐隐）走到上切牙切缘的前下方，在下颌张开 refJawFraction 的姿势下求解。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The middle of the lower lip margin (spreadMm either side of the midline, fading over reachMm) travels to just below and in front of the incisal edge of the upper incisors, solved in the pose with the jaw opened by refJawFraction. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_protrusion",
+   "match": "",
+   "name": {
+    "zh": "唇前突",
+    "en": "lip protrusion"
+   },
+   "model": "lip",
+   "lipAction": "protrude",
+   "excursionMm": 7,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 22
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "两唇沿口的朝向前移，正中最多，口角处为五分之一；与口轮匝肌的缩窄一起构成圆唇。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "Both lips move forward along the facing of the mouth, most at the midline and a fifth of that at the corners; with the narrowing of orbicularis oris this makes lip rounding. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_roll_upper",
+   "match": "",
+   "name": {
+    "zh": "上唇内卷",
+    "en": "upper lip rolled in"
+   },
+   "model": "lip",
+   "lipAction": "rollUpper",
+   "excursionMm": 3,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 9
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "上唇缘向口内退，红唇变窄（AU23 收紧、AU28 吸唇）。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The upper lip margin retreats into the mouth and the vermilion narrows (AU23 tightening, AU28 lip suck). A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_roll_lower",
+   "match": "",
+   "name": {
+    "zh": "下唇内卷",
+    "en": "lower lip rolled in"
+   },
+   "model": "lip",
+   "lipAction": "rollLower",
+   "excursionMm": 3,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 9
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "下唇缘向口内退，红唇变窄。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The lower lip margin retreats into the mouth and the vermilion narrows. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_press",
+   "match": "",
+   "name": {
+    "zh": "压唇",
+    "en": "lip press"
+   },
+   "model": "lip",
+   "lipAction": "press",
+   "excursionMm": 0.8,
+   "spreadMm": 5,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 12
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "两唇互相压紧：红唇上下压扁（离口裂 h 处的顶点向口裂走 0.5 h，唇缘不动），并整体向后贴 excursionMm（AU24）。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The lips are pressed together: the vermilion is flattened vertically (a vertex at height h from the fissure travels 0.5 h towards it; the margins stay) and the whole is pressed back by excursionMm (AU24). A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "lip_upper_depress",
+   "match": "",
+   "name": {
+    "zh": "上唇下移",
+    "en": "upper lip lowered"
+   },
+   "model": "lip",
+   "lipAction": "upperDepress",
+   "excursionMm": 4,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "lip": {
+    "profile": "middle",
+    "bandMm": 14
+   },
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "上唇缘中段下移（下颌张开时上唇向下去够下唇）。下颌闭合时使用会穿进下唇。 几何通道：直接规定唇缘怎样走，不是按肌肉力学算的；幅度和轮廓是假设。只在有真实口裂的皮肤上有。",
+    "en": "The middle of the upper lip margin moves down (the upper lip reaching for the lower with the jaw open). Used with the jaw closed it runs into the lower lip. A geometric channel: it prescribes how the lip margin travels and is not computed from muscle mechanics; excursion and profile are assumptions. Present only on a skin with a real oral fissure."
+   }
+  },
+  {
+   "id": "tongue_tip_up",
+   "match": "",
+   "name": {
+    "zh": "舌尖上抬",
+    "en": "tongue tip raised"
+   },
+   "model": "tongue",
+   "tongue": "tip",
+   "excursionMm": 8,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "舌尖抬向牙槽嵴（t d n l s z）。 示意性的姿势：舌是一个约 200 个顶点的部件，这里只是按沿舌长的位置加权的位移，不是舌肌；幅度是假设。",
+    "en": "The tip rises towards the alveolar ridge (t d n l s z). A schematic pose: the tongue is one part of about 200 vertices and this is only a displacement weighted by position along its length, not the tongue muscles; the excursion is an assumption."
+   }
+  },
+  {
+   "id": "tongue_front_up",
+   "match": "",
+   "name": {
+    "zh": "舌前部上抬",
+    "en": "tongue front raised"
+   },
+   "model": "tongue",
+   "tongue": "front",
+   "excursionMm": 6,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "舌前部抬向硬腭（i e、sh ch j）。 示意性的姿势：舌是一个约 200 个顶点的部件，这里只是按沿舌长的位置加权的位移，不是舌肌；幅度是假设。",
+    "en": "The front rises towards the hard palate (i e; sh ch j). A schematic pose: the tongue is one part of about 200 vertices and this is only a displacement weighted by position along its length, not the tongue muscles; the excursion is an assumption."
+   }
+  },
+  {
+   "id": "tongue_back_up",
+   "match": "",
+   "name": {
+    "zh": "舌后部上抬",
+    "en": "tongue back raised"
+   },
+   "model": "tongue",
+   "tongue": "back",
+   "excursionMm": 7,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "舌后部抬向软腭（k g、u o）。 示意性的姿势：舌是一个约 200 个顶点的部件，这里只是按沿舌长的位置加权的位移，不是舌肌；幅度是假设。",
+    "en": "The back rises towards the soft palate (k g; u o). A schematic pose: the tongue is one part of about 200 vertices and this is only a displacement weighted by position along its length, not the tongue muscles; the excursion is an assumption."
+   }
+  },
+  {
+   "id": "tongue_low",
+   "match": "",
+   "name": {
+    "zh": "舌放低",
+    "en": "tongue low and flat"
+   },
+   "model": "tongue",
+   "tongue": "low",
+   "excursionMm": 5,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "舌整体放低（a）。 示意性的姿势：舌是一个约 200 个顶点的部件，这里只是按沿舌长的位置加权的位移，不是舌肌；幅度是假设。",
+    "en": "The whole tongue lowers (a). A schematic pose: the tongue is one part of about 200 vertices and this is only a displacement weighted by position along its length, not the tongue muscles; the excursion is an assumption."
+   }
   }
  ],
  "bulge": {
@@ -829,6 +1236,18 @@
   "creaseNote": {
    "zh": "creasePasses：褶皱（口裂、鼻旁、睑缘外）附近把每个通道的位移场在网格上抹匀的遍数，用来消除口角和鼻旁的锯齿。数值是假设。",
    "en": "creasePasses: how many times each channel's field is evened out over the mesh near creases (oral fissure, beside the nose, outside the lid margins), to remove the jagged shards at the mouth corners and beside the nose. The value is an assumption."
+  }
+ },
+ "corner": {
+  "handoverMm": 8,
+  "saturationDeg": 60,
+  "foldPasses": 40,
+  "minAreaRatio": 0.3,
+  "maxAreaRatio": 3.5,
+  "zoneMm": 16,
+  "note": {
+   "zh": "口角的交接和保面积处理（开口的皮肤）。上唇肌和下唇肌的场按绕口角的角度坐标做单位分解：上唇份额 = 0.5 + 0.5·S(θ)·ρ(r)，S 在 |θ| ≥ saturationDeg 处饱和，ρ 在离口角 handoverMm 内从 0 升到 1。每个通道算完后，口角 zoneMm 内的三角形若在全激活时翻折或面积比超出 [minAreaRatio, maxAreaRatio]，就把位移向邻居抹匀，最多 foldPasses 遍。全部数值是假设。",
+   "en": "Hand-over and area-preserving treatment at the mouth corners (opened skin). The fields of upper-lip and lower-lip muscles are partitioned in an angular coordinate about the corner: upper share = 0.5 + 0.5·S(θ)·ρ(r), S saturating at |θ| ≥ saturationDeg and ρ rising from 0 to 1 within handoverMm of the corner. After each channel is evaluated, triangles within zoneMm of a corner that fold at full activation or whose area ratio leaves [minAreaRatio, maxAreaRatio] have their displacement evened towards their neighbours, for at most foldPasses passes. All numbers are assumptions."
   }
  }
 }

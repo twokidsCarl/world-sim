@@ -46,6 +46,7 @@ import type { Bilingual, FaceAU, FaceChannel, FaceChannelKind, FaceData, FaceFie
 import { Surface, mergeMeshes } from '../rig/geom.ts'
 import type { Body, RawMesh } from '../rig/io.ts'
 import { type V3, add, cross, dot, len, mul, norm, sub } from '../rig/math.ts'
+import { Poser } from '../rig/pose.ts'
 import { Q } from './model.ts'
 
 export interface MuscleDef {
@@ -66,20 +67,40 @@ export interface MuscleDef {
   attachments: { origin: Bilingual; insertion: Bilingual }
   action: Bilingual
   ring?: 'outer' | 'inner' | 'single'
-  lid?: 'upper' | 'lower'
+  lid?: 'upper' | 'lower' | 'raise'
+  /** 把一块肌肉的场按到正中的距离分成内侧、外侧两个通道（额肌 → AU1 / AU2）/ split one muscle's field by distance from the midline into a medial and a lateral channel (frontalis → AU1 / AU2). */
+  split?: { atMm: number; blendMm: number }
+  raiseMm?: number
   sectors?: { inferior: number; lateral: number; superior: number; medial: number }
+  /**
+   * 沿唇的延续（只用于有真实口裂的皮肤）：'corner' = 止于口角轴的肌肉，把整条唇带着走，份额从口角的 1 降到正中的 0；
+   * 'middle' = 唇的提肌 / 降肌，场沿唇缘一直延伸到正中，到口角降为 0。bandMm 是离口裂多远处降为 0。
+   * Carry along the lip (opened skin only): 'corner' = a muscle inserting at the modiolus carries the whole lip with it, its share
+   * falling from 1 at the corner to 0 at the midline; 'middle' = a lip elevator / depressor whose field runs along the margin
+   * to the midline and falls to 0 at the corner. bandMm is the distance from the fissure at which it reaches 0.
+   */
+  lip?: { profile: 'corner' | 'middle'; bandMm?: number }
+  /** 唇的几何通道（model: 'lip'）做什么 / what a geometric lip channel (model 'lip') does. */
+  lipAction?: 'seal' | 'dental' | 'protrude' | 'rollUpper' | 'rollLower' | 'press' | 'upperDepress'
+  /** seal / dental 通道求解时所用的下颌张开角占活动范围的比例 / the jaw opening, as a fraction of its range, at which a seal / dental channel is solved. */
+  refJawFraction?: number
+  /** 舌的示意姿势（model: 'tongue'）/ the schematic tongue pose (model 'tongue'). */
+  tongue?: 'tip' | 'front' | 'back' | 'low'
 }
 
 export interface Curated {
   muscles: {
     muscles: MuscleDef[]
     bulge?: { gain: number; minMm: number; maxMm: number; limitMm: number; smoothing: number; creasePasses?: number }
+    corner?: { handoverMm: number; saturationDeg: number; foldPasses: number; minAreaRatio: number; maxAreaRatio: number; zoneMm: number }
     lid: { closureFraction: number; upperLidHeightMm: number; lowerLidHeightMm: number; overlapMm?: number; followers?: string; gapMm?: number }
     jaw: { joint: string; dof: number; closers: string[]; openers: string[] }
     missing: { name: string; note: Bilingual }[]
   }
   aus: { aus: { id: string; name: Bilingual; channels: Record<string, number>; jawFraction?: number; missing?: string[]; basis: Sourced }[] }
   pain: { pspi: PainModel['pspi'] & { formula: string }; keyframes: PainModel['keyframes']; mapping: Sourced; timing: PainModel['timing'] }
+  emotions?: { emotions: FaceData['expressions'] }
+  visemes?: FaceData['visemes'] & { _doc?: unknown }
   sources: { sources: FaceSource[] }
 }
 
@@ -94,6 +115,7 @@ export interface FaceReport {
   entries: number
   binBytes: number
   openings: null | { lidClearance: { eye: Side; lid: string; atHalfMm: number; atFullMm: number }[]; rimVertices: number; pouchVertices: number }
+  mouth: null | { widthMm: number; foldPasses: Record<string, number>; sealResidualMm: number | null; dentalResidualMm: number | null; incisalEdge: number[] | null; lipParts: string[]; tongue: string | null }
   symmetry: { muscle: string; countL: number; countR: number; meanMmL: number; meanMmR: number; mirroredMeanDiffMm: number }[]
 }
 
@@ -195,6 +217,25 @@ interface Eye {
 
 const tangent = (v: V3, n: V3): V3 => sub(v, mul(n, dot(v, n)))
 
+/**
+ * 点到折线的最近点：所在线段的两个端点下标 a、b = a ± 1，a 的权重 ka（b 的权重 1 − ka），以及距离。对 p 连续。
+ * The nearest point of a polyline to p: the indices a and b = a ± 1 of the segment's ends, the weight ka of a (1 − ka for b) and the
+ * distance. Continuous in p.
+ */
+function nearestOnPolyline(p: V3, pl: V3[]): { a: number; b: number; ka: number; distance: number } {
+  let best = { a: 0, b: Math.min(1, pl.length - 1), ka: 1, distance: Infinity }
+  for (let i = 0; i + 1 < pl.length; i++) {
+    const e = sub(pl[i + 1]!, pl[i]!), l2 = dot(e, e)
+    const t = l2 > 0 ? Math.min(1, Math.max(0, dot(sub(p, pl[i]!), e) / l2)) : 0
+    const d = len(sub(p, add(pl[i]!, mul(e, t))))
+    if (d < best.distance) best = { a: i, b: i + 1, ka: 1 - t, distance: d }
+  }
+  return best
+}
+
+/** 深层的唇部件：名为 Lip，或拆开后的 Upper lip / Lower lip（不含肌肉、牙）。 The deep lip parts: named Lip or, once split, Upper lip / Lower lip (muscles and teeth excluded). */
+export const isLipPart = (p: Pick<Part, 'name' | 'tissue'>): boolean => p.tissue !== 'muscle' && p.tissue !== 'tooth' && p.tissue !== 'bone' && /^((upper|lower|superior|inferior) )?lips?$|^lips?,? \(?(upper|lower|superior|inferior)/i.test(p.name.trim())
+
 export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: string) => void, opts: { openings?: FaceOpenings | null; rigBin?: Uint8Array | null } = {}): { face: FaceData; bin: Uint8Array; report: FaceReport } {
   const parts = body.data.parts
   const bodyId = body.data.body
@@ -235,6 +276,8 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   let curVertex = -1, curSheet = 0
   /** 当前顶点是否用唇的专用法线（唇的两片、口角及其旁边）/ whether the current vertex uses the lips' own normals (both lip sheets, the corners and what lies beside them). */
   let curLip = false
+  /** 当前顶点的口周权重（0–1）：口裂附近为 1，向外渐隐 / perioral weight of the current vertex (0–1): 1 near the oral fissure, fading outwards. */
+  let curZone = 0
 
   // —— 肌肉部件按精编条目匹配 / muscle parts matched to the curated entries ——
   const defs = curated.muscles.muscles
@@ -243,11 +286,11 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   const unmatched: FaceReport['unmatched'] = []
   for (const d of defs) {
     const re = new RegExp(d.match, 'i')
-    const ps = d.model === 'recess' || d.model === 'corner' ? [] : parts.filter((p) => isMuscle(p) && re.test(p.name)).sort((a, b) => (a.id < b.id ? -1 : 1))
+    const ps = d.model === 'recess' || d.model === 'corner' ? [] : d.model === 'lip' ? parts.filter((p) => isMuscle(p) && /^orbicularis oris$/i.test(p.name)) : d.model === 'tongue' ? parts.filter((p) => /^tongue$/i.test(p.name) && body.meshes.has(p.id)) : parts.filter((p) => isMuscle(p) && re.test(p.name)).sort((a, b) => (a.id < b.id ? -1 : 1))
     matched.set(d.id, ps)
-    if (ps.length === 0 && d.model !== 'recess' && d.model !== 'corner') unmatched.push({ id: d.id, why: `no muscle part matches /${d.match}/i` })
+    if (ps.length === 0 && d.model !== 'recess' && d.model !== 'corner' && d.model !== 'lip') unmatched.push({ id: d.id, why: `no muscle part matches /${d.match}/i` })
   }
-  const facial = [...new Set([...matched.values()].flat())]
+  const facial = [...new Set([...matched.entries()].filter(([id]) => defs.find((x) => x.id === id)!.model !== 'tongue').flatMap(([, v]) => v))]
   if (facial.length === 0) throw new Error('face: no facial muscles found')
   // 头部正中矢状面：成对肌肉质心 x 的平均 / midsagittal plane of the head: mean x of the centroids of paired muscles
   let mxS = 0, mxN = 0
@@ -576,8 +619,22 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   const lidSkin = lidLevels((e) => e.skinMargins ?? e.margins)
   // —— 口裂 / the oral fissure ——
   const oris = parts.filter((p) => isMuscle(p) && /^orbicularis oris$/i.test(p.name))[0] ?? null
-  const lipPart = parts.filter((p) => /^lip$/i.test(p.name) && body.meshes.has(p.id))[0] ?? null
+  // 深层的唇：一个部件（"Lip"）或拆开的两个（上唇、下唇）；按名字找，不按 id / the deep lips: one part ("Lip") or two after the split (upper lip, lower lip); found by name, never by id
+  const lipParts = parts.filter((p) => isLipPart(p) && body.meshes.has(p.id)).sort((a, b) => (a.id < b.id ? -1 : 1))
+  const lipPart = lipParts.length === 1 ? lipParts[0]! : null
   let deepSt: number | null = null
+  if (lipParts.length >= 2) {
+    // 两个部件：正中两旁 ±10 mm 内，上面那个的最低点和下面那个的最高点之间 / two parts: within ±10 mm of the midline, between the lowest point of the upper one and the highest of the lower one
+    const sorted = [...lipParts].sort((a, b) => b.centroid[1] - a.centroid[1])
+    const ext = (p: Part, pick: (a: number, b: number) => number, start: number): number => {
+      const m = body.meshes.get(p.id)!.positions
+      let v = start
+      for (let i = 0; i < m.length; i += 3) if (Math.abs(m[i]! - midX) < 10 * MM) v = pick(v, m[i + 1]!)
+      return v
+    }
+    const lo = ext(sorted[0]!, Math.min, Infinity), hi = ext(sorted[sorted.length - 1]!, Math.max, -Infinity)
+    if (Number.isFinite(lo) && Number.isFinite(hi)) deepSt = (lo + hi) / 2
+  }
   if (lipPart) {
     // 深层：正中附近从前方投射线，唇部件上下两片之间打不到的那一段的中点
     // deep: rays from the front near the midline; the middle of the gap between the two lips of the lip part
@@ -626,7 +683,8 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
 
   if (O) skinSt = P3(O.margins.upperLip[O.margins.upperLip.length >> 1]!)[1]
   // 口角轴到正中的距离：唇部件（没有则口轮匝肌的 0.8）的半宽加 3 mm / distance of the modiolus from the midline: half-width of the lip part (or 0.8 of orbicularis oris) plus 3 mm
-  const modiolusOffset = O ? (Math.abs(P3(O.points.mouthCornerL)[0] - midX) + Math.abs(P3(O.points.mouthCornerR)[0] - midX)) / 2 + 3 * MM : lipPart ? (lipPart.bbox[3] - lipPart.bbox[0]) / 2 + 3 * MM : oris ? ((oris.bbox[3] - oris.bbox[0]) / 2) * 0.8 + 3 * MM : null
+  const lipBox = lipParts.length ? [Math.min(...lipParts.map((p) => p.bbox[0])), Math.max(...lipParts.map((p) => p.bbox[3]))] : null
+  const modiolusOffset = O ? (Math.abs(P3(O.points.mouthCornerL)[0] - midX) + Math.abs(P3(O.points.mouthCornerR)[0] - midX)) / 2 + 3 * MM : lipBox ? (lipBox[1]! - lipBox[0]!) / 2 + 3 * MM : oris ? ((oris.bbox[3] - oris.bbox[0]) / 2) * 0.8 + 3 * MM : null
 
   // 皮肤上两唇相贴的那道褶：每一列（x）前表面最凹处，从正中向两侧逐列跟踪
   // the crease where the lips meet on the skin: the deepest point of the front surface in each column (x), tracked outwards from the midline
@@ -674,8 +732,37 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     return lipCrease.crease[i]! * (1 - t) + lipCrease.crease[i + 1]! * t
   }
 
+  // —— 口角的交接 / the hand-over round the mouth corners ——
+  // 上唇肌和下唇肌的场不再按“上片 / 下片”一刀切开，而是按绕口角的角度坐标做单位分解：
+  //   θ = atan2(v, u)，u 是到口角的外侧距离（口角内侧为负），v 是高出口裂的高度（上唇片取正、下唇片取负）；
+  //   上唇份额 = 0.5 + 0.5 · S(θ) · ρ(r)，S 在 |θ| ≥ saturationDeg 处饱和为 ±1，ρ 在离口角 handoverMm 内从 0 升到 1。
+  // 口角本身各得一半；沿口裂向内，上下唇缘的份额逐渐分开到 1 和 0；口角外侧的颊部按角度平滑过渡。
+  // The fields of upper-lip and lower-lip muscles are no longer cut apart by sheet but partitioned in an angular coordinate about the
+  // corner: θ = atan2(v, u), u the lateral distance from the corner (negative medial to it) and v the height above the fissure
+  // (positive on the upper-lip sheet, negative on the lower); upper share = 0.5 + 0.5 · S(θ) · ρ(r), with S saturating at ±1 for
+  // |θ| ≥ saturationDeg and ρ rising from 0 to 1 within handoverMm of the corner. The corner itself takes half of each; along the
+  // fissure the shares of the two margins part gradually to 1 and 0; lateral to the corner the cheek blends smoothly by angle.
+  const cornerCfg = curated.muscles.corner ?? { handoverMm: 8, saturationDeg: 60, foldPasses: 40, minAreaRatio: 0.3, maxAreaRatio: 3.5, zoneMm: 16 }
+  const cornerL: V3 | null = O ? P3(O.points.mouthCornerL) : null, cornerR: V3 | null = O ? P3(O.points.mouthCornerR) : null
+  const upperShare = (p: V3, sh: number): number => {
+    const left = p[0] >= midX
+    const C = left ? cornerL! : cornerR!
+    const u = (left ? 1 : -1) * (p[0] - C[0])
+    let v = p[1] - stomionAt(p[0])
+    if (sh === 1) v = Math.max(Math.abs(v), 1e-9)
+    else if (sh === 2) v = -Math.max(Math.abs(v), 1e-9)
+    const th = Math.atan2(v, u)
+    const S = Math.sign(th) * smooth(Math.abs(th) / ((cornerCfg.saturationDeg * Math.PI) / 180))
+    return 0.5 + 0.5 * S * smooth(len(sub(p, C)) / (cornerCfg.handoverMm * MM))
+  }
+
   // —— 通道 / channels ——
   interface Chan {
+    /** 深层部件上预先算好的位移（舌的姿势）/ precomputed displacements on deep parts (tongue poses). */
+    deepTables?: Map<string, Map<number, V3>>
+    /** 皮肤上预先算好的位移（唇的几何通道），深层的唇跟随它 / the precomputed skin displacement (geometric lip channels), which the deep lips follow. */
+    skinTable?: Map<number, V3>
+    refJaw?: number
     def: MuscleDef
     id: string
     side: Side
@@ -700,8 +787,8 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       // other along the extension of the fissure and tear a line out from the mouth corner.
       // 皮肤有真实口裂时，口裂附近的顶点按所在的片分，不看高度（上下唇缘的顶点位置相同）
       // with a real oral fissure the vertices near it are split by sheet, not by height (upper and lower margin vertices share positions)
-      if (k === 'aboveStomion') m *= !deep && curSheet === 1 ? 1 : !deep && curSheet === 2 ? 0 : smooth((p[1] - (st - hw)) / (2 * hw))
-      else if (k === 'belowStomion') m *= !deep && curSheet === 2 ? 1 : !deep && curSheet === 1 ? 0 : 1 - smooth((p[1] - (st - hw)) / (2 * hw))
+      if (k === 'aboveStomion') m *= !deep && O ? upperShare(p, curSheet) : smooth((p[1] - (st - hw)) / (2 * hw))
+      else if (k === 'belowStomion') m *= !deep && O ? 1 - upperShare(p, curSheet) : 1 - smooth((p[1] - (st - hw)) / (2 * hw))
       else if (k === 'aboveEye' && !deep && curSheet === 5) m = 0
       else if (k === 'belowEye' && !deep && curSheet === 4) m = 0
       // 眉部肌肉带动的皮肤一直到上睑缘上方（眉下的皮肤是挂在眉上的）；颊部肌肉带动的到下睑缘下方为止
@@ -730,7 +817,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
    * The lid skin (the eye upper / lower sheets of the manifest) follows the two nearest margin vertices, with a weight falling to 0
    * over upperLidHeightMm / lowerLidHeightMm of distance from the margin, and keeps at least its rest distance from the globe centre.
    */
-  const lidOpen = (e: Eye, upper: boolean): Map<number, V3> => {
+  const lidOpen = (e: Eye, upper: boolean, raise = 0): Map<number, V3> => {
     const out = new Map<number, V3>()
     if (!O) return out
     const L = e.side === 'L'
@@ -779,6 +866,8 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       // 上下睑各越过闭合线一点（overlapMm 的一小部分），使缘确实合拢 / each lid goes a little past the line (a fraction of overlapMm) so that the margins really meet
       const dirUL = norm(sub(lo, up))
       M = add(M, mul(dirUL, (upper ? 1 : -1) * Math.min(0.25 * MM, (lidCfg.overlapMm ?? 0) * MM)))
+      // 上睑上提（AU5）：睑缘离开下睑方向上移 raise，中间最多、两眦为 0 / upper-lid raise (AU5): the margin moves away from the lower lid by `raise`, most in the middle and nothing at the canthi
+      if (raise > 0) M = add(p, mul(dirUL, -raise * 4 * t * (1 - t)))
       const lift = (target: V3): V3 => {
         const d = norm(sub(target, G))
         const rho = Math.max(len(sub(target, G)), rGlobe(d) + gap)
@@ -861,6 +950,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       if (O) cornerDefs.push(d)
       continue
     }
+    if (d.model === 'lip' || d.model === 'tongue') continue
     if (d.model === 'recess') {
       // 口裂内陷：沿皮肤上两唇相贴的那道褶（每一列前表面最凹处，从正中向两侧逐列跟踪）把皮肤向口内推
       // oral recess: along the crease where the lips meet on the skin (the deepest point of the front surface in each column, tracked outwards from the midline) the skin is pushed into the mouth
@@ -985,37 +1075,90 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         const e = mul(sub(is, os), 1 / L2)
         nI = meanNormal(is, 12 * MM, nI)
         const R2 = m.halfWidth + d.spreadMm * MM, reach = d.reachMm * MM, carry = (d.carryMm ?? 0) * MM, hang = (d.hangMm ?? 0) * MM, E = d.excursionMm * MM
+        // 沿唇的延续（开口的皮肤）：见 MuscleDef.lip / the carry along the lip (opened skin): see MuscleDef.lip
+        const lipW = (q: V3): number => {
+          if (!O || !d.lip || s === 'M') return 0
+          const C = sgn > 0 ? cornerL! : cornerR!
+          if (q[2] < C[2] - 25 * MM) return 0
+          const Wc = Math.abs(C[0] - midX)
+          const sN = (sgn * (q[0] - midX)) / Wc
+          const v = q[1] - stomionAt(q[0])
+          const Rb = (d.lip.bandMm ?? 16) * MM
+          if (Math.abs(v) >= Rb) return 0
+          const band = (1 - (v * v) / (Rb * Rb)) ** 2
+          if (d.lip.profile === 'corner') {
+            if (sN <= 0) return 0
+            // 口角处为 1，向正中平滑降到 0；口角外侧 6 mm 内交还给作用线自己的场 / 1 at the corner, falling smoothly to 0 at the midline; handed back to the line's own field within 6 mm lateral of the corner
+            return (sN <= 1 ? smooth(sN) : 1 - smooth(((sN - 1) * Wc) / (6 * MM))) * band
+          }
+          return (1 - smooth((Math.abs(sN) - 0.45) / 0.5)) * band * smooth((sgn * (q[0] - midX) + 6 * MM) / (12 * MM))
+        }
         const field: Field = (q, n, p, deep) => {
           const r = sub(q, os)
           const t = dot(r, e)
-          if (t <= 0 || t > L2 + carry + reach) return [0, 0, 0]
-          let perp2 = dot(r, r) - t * t
-          // 作用线下方的皮肤挂在它上面：向下多带 hang 这么远 / skin below the line hangs from it: it is carried `hang` further down
-          if (hang > 0 && r[1] - t * e[1] < 0) perp2 = Math.max(0, Math.sqrt(Math.max(0, perp2)) - hang) ** 2
-          if (perp2 >= R2 * R2) return [0, 0, 0]
-          const along = t <= L2 ? smooth(t / L2) : 1 - smooth((t - L2 - carry) / reach)
-          const lat = (1 - perp2 / (R2 * R2)) ** 2
+          let wC = 0
+          if (t > 0 && t <= L2 + carry + reach) {
+            let perp2 = dot(r, r) - t * t
+            // 作用线下方的皮肤挂在它上面：向下多带 hang 这么远 / skin below the line hangs from it: it is carried `hang` further down
+            if (hang > 0 && r[1] - t * e[1] < 0) perp2 = Math.max(0, Math.sqrt(Math.max(0, perp2)) - hang) ** 2
+            if (perp2 < R2 * R2) wC = (t <= L2 ? smooth(t / L2) : 1 - smooth((t - L2 - carry) / reach)) * (1 - perp2 / (R2 * R2)) ** 2
+          }
           // 只作用于与活动端同一侧的皮肤（法线方向相近），否则宽阔的颈阔肌会带动项部
           // only skin facing the same way as the mobile end (similar normal) is moved; otherwise the wide platysma would drag the nape
           // 唇的内面（口袋壁）法线是反的：唇这两片不按法线筛 / the inner faces of the lips (the pocket walls) have reversed normals: the two lip sheets are not filtered by normal
-          const facing = curLip ? 1 : smooth((dot(n, nI) + 0.2) / 0.7)
+          // 口周（curZone）逐渐不按法线筛，过渡是连续的 / round the mouth (curZone) the filter fades out continuously
+          const f0 = smooth((dot(n, nI) + 0.2) / 0.7)
+          const facing = deep ? f0 : f0 + (1 - f0) * curZone
           // 成对的肌肉在正中线两侧 ±6 mm 内交接，各占一半，免得左右两个场在正中叠成两倍
           // paired muscles hand over within ±6 mm of the midline, half each, so that the left and right fields do not add to double there
           const cross = s === 'M' ? 1 : smooth((sgn * (q[0] - midX) + 6 * MM) / (12 * MM))
-          const w = along * lat * facing * cross * mask(d, p, deep)
+          // 唇内（口角内侧、离口裂 6 mm 内）只用沿唇的延续：上下唇必须一起走，否则作用线偏在口裂上方时上唇被多带走一截，
+          // 两唇相贴的面就翻出来了 / inside the lips (medial to the corner, within 6 mm of the fissure) only the carry along the lip is used: both
+          // lips must travel together, or a line lying above the fissure takes the upper lip further and turns the contact surfaces out
+          let inLip = 0
+          if (O && d.lip?.profile === 'corner' && s !== 'M') {
+            const C = sgn > 0 ? cornerL! : cornerR!
+            const sN = (sgn * (q[0] - midX)) / Math.abs(C[0] - midX)
+            if (q[2] > C[2] - 25 * MM) inLip = (1 - smooth((sN - 0.85) / 0.3)) * (1 - smooth((Math.abs(q[1] - stomionAt(q[0])) - 6 * MM) / (8 * MM)))
+          }
+          const wG = Math.max(wC * cross * (1 - inLip), lipW(q))
+          if (wG <= 0) return [0, 0, 0]
+          const w = wG * facing * mask(d, p, deep)
           if (w <= 0) return [0, 0, 0]
           // 沿皮肤切面滑动整个幅度：切向分量重新归一（皮肤法线几乎与作用线平行时逐渐归零），
           // 否则皮肤离肌肉远、作用线斜穿过软组织时（厚的颊部），位移会被投影吃掉一截。
           // Slide by the full excursion within the tangent plane: the tangential direction is renormalised (fading out where the skin normal
           // is nearly parallel to the line); otherwise, where the skin lies far from the muscle and the line cuts obliquely through
           // soft tissue (a thick cheek), the projection would swallow part of the displacement.
-          const tg = tangent(mul(e, -1), n)
+          // 沿唇延续的部分顺着唇走（去掉作用线的前后分量），口角外侧 8 mm 内过渡回作用线本身的方向：
+          // 唇贴着牙弓滑动，不会被整体向后拉进牙里。
+          // The part carried along the lip travels along the lip (the line's front–back component removed), blending back to the line's own
+          // direction within 8 mm lateral of the corner: the lips slide round the dental arch and are not drawn back into the teeth.
+          let pull = mul(e, -1)
+          if (O && d.lip?.profile === 'corner' && s !== 'M' && !deep) {
+            const C = sgn > 0 ? cornerL! : cornerR!
+            const lateral = sgn * (q[0] - C[0])
+            const f = (1 - smooth(lateral / (8 * MM))) * curZone
+            const flat = norm([pull[0], pull[1], 0])
+            pull = norm(add(mul(pull, 1 - f), mul(flat, f)))
+          }
+          const tg = tangent(pull, n)
           const tl = len(tg)
           if (tl < 1e-6) return [0, 0, 0]
           return mul(tg, (E * w * smooth(tl / 0.5)) / tl)
         }
         const id = s === 'M' ? d.id : `${d.id}_${s}`
-        chans.push({ def: d, id, side: s, parts: ps.filter((p) => p.side === s), line: { origin: o as Vec3, insertion: i as Vec3, originOnSkin: os as Vec3, insertionOnSkin: is as Vec3 }, basis, excursion: E, field })
+        const line = { origin: o as Vec3, insertion: i as Vec3, originOnSkin: os as Vec3, insertionOnSkin: is as Vec3 }
+        if (d.split) {
+          // 内侧、外侧两个通道：同一个场乘以随到正中距离变化的权重，两者之和等于原来的场
+          // a medial and a lateral channel: the same field times a weight that varies with distance from the midline; the two add up to the original field
+          const sp = d.split
+          const lateralShare = (q: V3): number => smooth((Math.abs(q[0] - midX) - (sp.atMm - sp.blendMm) * MM) / (2 * sp.blendMm * MM))
+          for (const part of ['medial', 'lateral'] as const) {
+            const f: Field = (q, n, p, deep) => mul(field(q, n, p, deep), part === 'lateral' ? lateralShare(q) : 1 - lateralShare(q))
+            chans.push({ def: { ...d, id: `${d.id}_${part}`, name: { zh: `${d.name.zh}（${part === 'medial' ? '内侧部' : '外侧部'}）`, en: `${d.name.en}, ${part} part` } }, id: `${d.id}_${part}_${s}`, side: s, parts: ps.filter((p) => p.side === s), line, basis, excursion: E, field: f })
+          }
+        } else chans.push({ def: d, id, side: s, parts: ps.filter((p) => p.side === s), line, basis, excursion: E, field })
         rep.basis = basis
         rep.lengthMm[s] = +(len(sub(i, o)) / MM).toFixed(1)
         rep.pcaVsHintCos[s] = +m.cos.toFixed(3)
@@ -1046,7 +1189,8 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
           const l = len(dir)
           if (l < 1e-9) return [0, 0, 0]
           // 只作用于与环心同一侧的皮肤 / only skin facing the same way as the centre of the ring
-          const facing = curLip ? 1 : smooth((dot(n, nC) + 0.2) / 0.7)
+          const f0 = smooth((dot(n, nC) + 0.2) / 0.7)
+          const facing = deep ? f0 : f0 + (1 - f0) * curZone
           return mul(dir, (E * prof * w * facing * mask(d, p, deep)) / l)
         }
         chans.push({ def: d, id: side === 'M' ? d.id : `${d.id}_${side}`, side, parts: [part], line: { origin: centre as Vec3, insertion: centre as Vec3, originOnSkin: cs as Vec3, insertionOnSkin: cs as Vec3 }, basis: 'landmarks', excursion: E, field })
@@ -1084,6 +1228,21 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     } else {
       const rep: FaceReport['muscles'][number] = { id: d.id, parts: [], basis: 'landmarks', lengthMm: {}, pcaVsHintCos: {}, asymmetryMm: null, skinVertices: {} }
       for (const e of eyes) {
+        if (d.lid === 'raise') {
+          // 上睑提肌：只在有真实睑裂的皮肤上实现为上睑缘沿眼球上移；深层的眼睑部件不动
+          // levator palpebrae superioris: implemented only on a skin with a real fissure, as the upper lid margin rising along the globe; the deep lid parts do not move
+          const own = ps.filter((p) => (p.centroid[0] - midX) * (e.side === 'L' ? 1 : -1) > 0)
+          if (!O || own.length === 0) {
+            unmatched.push({ id: `${d.id}_${e.side}`, why: 'needs a skin with a real palpebral fissure and the levator palpebrae superioris part' })
+            continue
+          }
+          const table = lidOpen(e, true, (d.raiseMm ?? 2.5) * MM)
+          lidClearance.pop()
+          const c: V3 = [e.globe[0], e.globe[1], e.globe[2] + e.radius]
+          chans.push({ def: d, id: `${d.id}_${e.side}`, side: e.side, parts: own, line: { origin: c as Vec3, insertion: c as Vec3, originOnSkin: c as Vec3, insertionOnSkin: c as Vec3 }, basis: 'landmarks', excursion: (d.raiseMm ?? 2.5) * MM, field: tabled(table) })
+          rep.parts.push(...own.map((p) => p.id))
+          continue
+        }
         if (!e.margins || !e.inner) {
           unmatched.push({ id: `${d.id}_${e.side}`, why: 'no palpebral fissure found on the lid meshes' })
           continue
@@ -1182,6 +1341,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   // vertices near a corner should follow the jaw with share t, 0.5 at the corner and back to w at `taper` from it. The rest-space
   // displacement d satisfies (linear blend skinning) (I + w(R − I)) d = (t − w)(R − I) p, with R the rotation by θmax about the
   // temporomandibular axis. Channel activation = θ / θmax; the displacement is linear in it, so intermediate angles are approximate.
+  let cornerTable: Map<number, V3> | null = null
   for (const d of cornerDefs) {
     const jawJ = rig.joints.find((j) => j.id === curated.muscles.jaw.joint)
     const dof = jawJ?.dofs[curated.muscles.jaw.dof]
@@ -1204,6 +1364,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     const taper = d.excursionMm * MM
     const corners = [P3(O.points.mouthCornerL), P3(O.points.mouthCornerR)]
     const table = new Map<number, V3>()
+    cornerTable = table
     let maxD = 0
     for (const v of new Set([...O.sheets.mouthUpper, ...O.sheets.mouthLower, O.points.mouthCornerL, O.points.mouthCornerR])) {
       const p = P3(v)
@@ -1228,6 +1389,165 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     const cc: V3 = [midX, skinSt, corners[0]![2]]
     chans.push({ def: d, id: d.id, side: 'M', parts: [], line: { origin: cc as Vec3, insertion: cc as Vec3, originOnSkin: cc as Vec3, insertionOnSkin: cc as Vec3 }, basis: 'landmarks', excursion: maxD, field: tabled(table) })
     report.push({ id: d.id, parts: [], basis: 'landmarks', lengthMm: { M: +(taper / MM).toFixed(1) }, pcaVsHintCos: {}, asymmetryMm: null, skinVertices: {} })
+  }
+  // —— 唇的几何通道和舌的示意姿势（开口的皮肤）/ geometric lip channels and schematic tongue poses (opened skin) ——
+  // 这些通道不是由肌肉的作用线算出来的，而是直接规定唇缘怎样走，唇的其余部分按到唇缘的距离跟随：
+  //   seal        下唇缘走到上唇缘上（双唇闭合）。在下颌张开 refJawFraction 的姿势下用真实的蒙皮迭代求解，
+  //               所以它正好抵消下颌带给下唇的位移；运行时激活 = 闭合量 × 下颌角 / refJaw。
+  //   dental      下唇缘中段走到上切牙的切缘（唇齿音），同样在 refJawFraction 的姿势下求解。
+  //   protrude    两唇沿口的朝向前移（圆唇时前突）；rollUpper / rollLower 唇缘向口内卷；press 红唇上下压扁；
+  //   upperDepress 上唇缘下移。
+  // 幅度和轮廓都是假设；肌肉基础是口轮匝肌（seal、dental 还有颏肌），但没有按肌肉力学计算。
+  // These channels are not derived from a muscle's line of action: they prescribe how the lip margin travels, and the rest of the lip
+  // follows by distance from the margin. seal: the lower margin travels onto the upper (bilabial closure), solved iteratively with the
+  // real skinning in the pose with the jaw opened by refJawFraction, so that it exactly undoes what the jaw does to the lower lip; at
+  // run time its activation = closure × jaw angle / refJaw. dental: the middle of the lower margin travels to the incisal edge of the
+  // upper incisors (labiodentals), solved in the same way. protrude: both lips move forward along the facing of the mouth;
+  // rollUpper / rollLower: a margin rolls into the mouth; press: the vermilion is flattened vertically; upperDepress: the upper
+  // margin moves down. Excursions and profiles are assumptions; the muscular basis is orbicularis oris (with mentalis for seal and
+  // dental), but no muscle mechanics is computed.
+  const mouthRep: NonNullable<FaceReport['mouth']> = { widthMm: 0, foldPasses: {}, sealResidualMm: null, dentalResidualMm: null, incisalEdge: null, lipParts: lipParts.map((p) => p.id), tongue: null }
+  const lipDefs = defs.filter((d) => d.model === 'lip')
+  /** 口周皮肤顶点在上唇一侧还是下唇一侧 / whether a perioral skin vertex is on the upper-lip or the lower-lip side. */
+  const upperSide = new Map<number, boolean>()
+  {
+    const jawJ = rig.joints.find((j) => j.id === curated.muscles.jaw.joint)
+    const dof = jawJ?.dofs[curated.muscles.jaw.dof]
+    if (O && lipDefs.length && jawJ && dof && opts.rigBin && cornerL && cornerR) {
+      const U = O.margins.upperLip, Lo = O.margins.lowerLip, nM = U.length, midI = nM >> 1
+      const mp = U.map(P3)
+      mouthRep.widthMm = +(len(sub(cornerL, cornerR)) / MM).toFixed(1)
+      const sOf = (x: number): number => Math.min(1, Math.abs(x - midX) / Math.abs((x >= midX ? cornerL : cornerR)[0] - midX))
+      const F = meanNormal(mp[midI]!, 15 * MM, [0, 0, 1])
+      // 跟随者：口裂 26 mm 内的皮肤顶点，记下最近的两个唇缘点 / followers: skin vertices within 26 mm of the fissure, with their two nearest margin points
+      const fol: { v: number; a: number; b: number; ka: number; da: number; upper: boolean; vv: number; s: number }[] = []
+      const onMargin = new Map<number, number>()
+      U.forEach((v, i) => onMargin.set(v, i))
+      Lo.forEach((v, i) => onMargin.set(v, i))
+      for (let v = 0; v < skinN; v++) {
+        if (aid[v]) continue
+        const p = P3(v)
+        if (Math.abs(p[0] - midX) > 0.06 || Math.abs(p[1] - skinSt) > 0.04 || p[2] < cornerL[2] - 25 * MM) continue
+        const own = onMargin.get(v)
+        const np = own !== undefined ? { a: own, b: own === 0 ? 1 : own - 1, ka: 1, distance: 0 } : nearestOnPolyline(p, mp)
+        const { a, b, ka } = np, da = np.distance
+        if (da > 26 * MM) continue
+        const vv = p[1] - stomionAt(p[0])
+        const upper = sheet[v] === 1 ? true : sheet[v] === 2 ? false : vv >= 0
+        upperSide.set(v, upper)
+        fol.push({ v, a, b, ka, da, upper, vv: upper ? Math.abs(vv) : -Math.abs(vv), s: sOf(p[0]) })
+      }
+      const spread = (Dm: V3[], which: 'upper' | 'lower' | 'both', H: number): Map<number, V3> => {
+        const out = new Map<number, V3>()
+        for (const f of fol) {
+          if (which !== 'both' && f.upper !== (which === 'upper')) continue
+          const w = 1 - smooth(f.da / H)
+          if (w <= 0) continue
+          const A = Dm[f.a]!, B = Dm[f.b]!, kb = 1 - f.ka
+          const d: V3 = [(A[0] * f.ka + B[0] * kb) * w, (A[1] * f.ka + B[1] * kb) * w, (A[2] * f.ka + B[2] * kb) * w]
+          if (d[0] !== 0 || d[1] !== 0 || d[2] !== 0) out.set(f.v, d)
+        }
+        return out
+      }
+      const posed = (frac: number, tables: [Map<number, V3>, number][]): Float32Array => {
+        const pos = Float32Array.from(skin.positions)
+        for (const [t, k] of tables) for (const [v, d] of t) (pos[v * 3] = pos[v * 3]! + d[0] * k), (pos[v * 3 + 1] = pos[v * 3 + 1]! + d[1] * k), (pos[v * 3 + 2] = pos[v * 3 + 2]! + d[2] * k)
+        const pose = { [jawJ.id]: Array.from({ length: curated.muscles.jaw.dof + 1 }, (_, k) => (k === curated.muscles.jaw.dof ? frac * dof.max : 0)) }
+        return new Poser(rig, opts.rigBin!, pose).part(skinPart.id, pos, 'dqs', false)
+      }
+      const at = (a: Float32Array, v: number): V3 => [a[v * 3]!, a[v * 3 + 1]!, a[v * 3 + 2]!]
+      const zero = (): V3[] => mp.map(() => [0, 0, 0] as V3)
+      // 上切牙的切缘：每个 x 处最低的点及其唇面 / the incisal edge of the upper incisors: the lowest point at each x and its labial face
+      const upperIncisors = parts.filter((p) => p.tissue === 'tooth' && /upper (central|lateral).*incisor/i.test(p.name) && body.meshes.has(p.id))
+      const incPts = upperIncisors.flatMap((p) => meshPoints(body.meshes.get(p.id)!))
+      const edgeAt = (x: number): V3 | null => {
+        const near = incPts.filter((q) => Math.abs(q[0] - x) < 1.5 * MM)
+        if (near.length === 0) return null
+        const y = Math.min(...near.map((q) => q[1]))
+        return [x, y, Math.max(...near.filter((q) => q[1] < y + 2 * MM).map((q) => q[2]))]
+      }
+      const e0 = edgeAt(midX)
+      mouthRep.incisalEdge = e0 ? e0.map((x) => +x.toFixed(5)) : null
+      const ct = cornerTable ?? new Map<number, V3>()
+      for (const d of lipDefs) {
+        const E = d.excursionMm * MM
+        let table = new Map<number, V3>()
+        const frac = d.refJawFraction ?? 0.1
+        if (d.lipAction === 'seal' || d.lipAction === 'dental') {
+          const base = posed(frac, [[ct, frac]])
+          const goal: (V3 | null)[] = mp.map((_, i) => {
+            if (i === 0 || i === nM - 1) return null
+            if (d.lipAction === 'seal') return at(base, U[i]!)
+            const ed = edgeAt(mp[i]![0])
+            const k = 1 - smooth((Math.abs(mp[i]![0] - midX) - d.spreadMm * MM) / (d.reachMm * MM))
+            if (!ed || k <= 0) return null
+            // 下唇缘停在切缘的前下方一点，不进牙里 / the margin stops just below and in front of the edge, outside the tooth
+            const tgt: V3 = [ed[0], ed[1] - 0.3 * MM, ed[2] + 0.4 * MM], from = at(base, Lo[i]!)
+            return [from[0] + (tgt[0] - from[0]) * k, from[1] + (tgt[1] - from[1]) * k, from[2] + (tgt[2] - from[2]) * k]
+          })
+          const Dm = zero()
+          let res = 0
+          for (let it = 0; it < 8; it++) {
+            table = spread(Dm, 'lower', (d.lip?.bandMm ?? 16) * MM)
+            const cur = posed(frac, [[ct, frac], [table, 1]])
+            res = 0
+            for (let i = 1; i + 1 < nM; i++) {
+              const g = goal[i]
+              if (!g) continue
+              const r = sub(g, at(cur, Lo[i]!))
+              res = Math.max(res, len(r))
+              if (it < 7) Dm[i] = add(Dm[i]!, r)
+            }
+          }
+          if (d.lipAction === 'seal') mouthRep.sealResidualMm = +(res / MM).toFixed(3)
+          else mouthRep.dentalResidualMm = +(res / MM).toFixed(3)
+        } else if (d.lipAction === 'protrude') {
+          table = spread(mp.map((q) => mul(F, E * (1 - 0.8 * smooth(sOf(q[0]))))), 'both', (d.lip?.bandMm ?? 22) * MM)
+        } else if (d.lipAction === 'rollUpper' || d.lipAction === 'rollLower') {
+          const Dm = mp.map((q, i) => (i === 0 || i === nM - 1 ? ([0, 0, 0] as V3) : mul(F, -E * (1 - smooth((sOf(q[0]) - 0.55) / 0.45)))))
+          table = spread(Dm, d.lipAction === 'rollUpper' ? 'upper' : 'lower', (d.lip?.bandMm ?? 9) * MM)
+        } else if (d.lipAction === 'upperDepress') {
+          const Dm = mp.map((q, i) => (i === 0 || i === nM - 1 ? ([0, 0, 0] as V3) : ([0, -E * (1 - smooth((sOf(q[0]) - 0.5) / 0.45)), 0] as V3)))
+          table = spread(Dm, 'upper', (d.lip?.bandMm ?? 14) * MM)
+        } else if (d.lipAction === 'press') {
+          // 红唇向口裂压扁：离口裂 h 处的顶点向口裂走 spreadMm/10 × h（唇缘不动），并整体向后贴 excursionMm
+          // the vermilion is flattened towards the fissure: a vertex at height h travels spreadMm/10 × h towards it (the margins stay), and the whole is pressed back by excursionMm
+          const H = (d.lip?.bandMm ?? 12) * MM
+          for (const f of fol) {
+            const g = 1 - smooth((f.s - 0.55) / 0.45)
+            const w = 1 - smooth(Math.abs(f.vv) / H)
+            if (g <= 0 || w <= 0 || f.da > H) continue
+            const back = mul(F, -E * g * (1 - smooth(f.da / (0.7 * H))))
+            table.set(f.v, [back[0], back[1] - (d.spreadMm / 10) * f.vv * w * g, back[2]])
+          }
+        }
+        let maxD = 0
+        for (const dv of table.values()) maxD = Math.max(maxD, len(dv))
+        const c = mp[midI]!
+        chans.push({ def: d, id: d.id, side: 'M', parts: matched.get(d.id)!, line: { origin: c as Vec3, insertion: c as Vec3, originOnSkin: c as Vec3, insertionOnSkin: c as Vec3 }, basis: 'landmarks', excursion: maxD, field: tabled(table), skinTable: table, ...(d.lipAction === 'seal' || d.lipAction === 'dental' ? { refJaw: +(frac * dof.max).toFixed(5) } : {}) })
+        report.push({ id: d.id, parts: matched.get(d.id)!.map((p) => p.id), basis: 'landmarks', lengthMm: { M: +(maxD / MM).toFixed(2) }, pcaVsHintCos: {}, asymmetryMm: null, skinVertices: {} })
+      }
+    } else for (const d of lipDefs) unmatched.push({ id: d.id, why: 'needs a skin with a real oral fissure, the jaw joint and rig.bin' })
+  }
+  // 舌：一个部件；几个示意的位移姿势，按沿舌长（z）和舌高（y）的归一化坐标加权。不是解剖的舌肌，幅度是假设。
+  // The tongue: one part; a few schematic displacement poses weighted by normalised position along its length (z) and height (y).
+  // Not the anatomical tongue muscles; excursions are assumptions.
+  for (const d of defs.filter((x) => x.model === 'tongue')) {
+    const part = matched.get(d.id)![0]
+    if (!part) continue
+    mouthRep.tongue = part.id
+    const m = body.meshes.get(part.id)!, b = part.bbox, E = d.excursionMm * MM
+    const table = new Map<number, V3>()
+    for (let v = 0; v < m.positions.length / 3; v++) {
+      const tz = (m.positions[v * 3 + 2]! - b[2]) / Math.max(1e-9, b[5] - b[2]), ty = (m.positions[v * 3 + 1]! - b[1]) / Math.max(1e-9, b[4] - b[1])
+      const yw = smooth((ty - 0.2) / 0.5)
+      const g = (c: number, w: number): number => Math.exp(-(((tz - c) / w) ** 2))
+      const dv: V3 = d.tongue === 'tip' ? mul([0, 1, 0.25], E * smooth((tz - 0.6) / 0.4)) : d.tongue === 'front' ? mul([0, 1, 0], E * g(0.65, 0.2) * yw) : d.tongue === 'back' ? mul([0, 1, -0.3], E * g(0.25, 0.22) * yw) : mul([0, -1, 0], E * (0.4 + 0.6 * smooth(tz)) * yw)
+      if (len(dv) > EPS) table.set(v, dv)
+    }
+    const c = part.centroid as V3
+    chans.push({ def: d, id: d.id, side: 'M', parts: [part], line: { origin: c as Vec3, insertion: c as Vec3, originOnSkin: c as Vec3, insertionOnSkin: c as Vec3 }, basis: 'landmarks', excursion: E, field: () => [0, 0, 0], deepTables: new Map([[part.id, table]]) })
+    report.push({ id: d.id, parts: [part.id], basis: 'landmarks', lengthMm: { M: +((b[5] - b[2]) / MM).toFixed(1) }, pcaVsHintCos: {}, asymmetryMm: null, skinVertices: {} })
   }
   chans.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
   log(`${chans.length} channels from ${facial.length} muscle parts; midX ${(midX / MM).toFixed(1)} mm; stomion skin ${skinSt.toFixed(4)} deep ${deepSt?.toFixed(4) ?? 'none'}`)
@@ -1316,39 +1636,143 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
   // 5 mm. The two walls of the pocket have nearly opposite normals and cancel, leaving the facing of the outer lip surface; the
   // coincident upper and lower margin vertices thus get the same normal, and one field cannot pull them apart.
   const lipNormal = new Map<number, V3>()
+  /** 口周权重：离口裂 14 mm 内为 1，到 24 mm 降为 0 / the perioral weight: 1 within 14 mm of the fissure, 0 from 24 mm. */
+  const zoneW = new Float64Array(nr)
   if (O) {
-    const around = [...O.sheets.mouthUpper, ...O.sheets.mouthLower, ...O.sheets.mouthLateral]
-    const pos = around.map(P3)
-    // 口角顶点和口角外侧 8 mm 内的皮肤也在内：口袋在口角处收尾，那里的法线同样不可靠
-    // the corner vertices and the skin within 8 mm lateral of a corner are included: the pocket ends at the corners and normals are just as unreliable there
-    const cornerPts = [P3(O.points.mouthCornerL), P3(O.points.mouthCornerR)]
-    const lipSet = new Set([...O.sheets.mouthUpper, ...O.sheets.mouthLower, O.points.mouthCornerL, O.points.mouthCornerR, ...O.sheets.mouthLateral.filter((v) => Math.min(len(sub(P3(v), cornerPts[0]!)), len(sub(P3(v), cornerPts[1]!))) < 8 * MM)])
-    for (const v of lipSet) {
+    const mpts = O.margins.upperLip.map(P3)
+    const around: number[] = []
+    for (let r = 0; r < nr; r++) {
+      const v = regionVerts[r]!
+      if (aid[v]) continue
       const p = P3(v)
-      const n: V3 = [0, 0, 0]
+      if (Math.abs(p[0] - midX) > 0.07 || Math.abs(p[1] - skinSt) > 0.05 || p[2] < cornerL![2] - 30 * MM) continue
+      let dmin = Infinity
+      for (const q of mpts) dmin = Math.min(dmin, len(sub(p, q)))
+      if (dmin < 32 * MM) around.push(v)
+      zoneW[r] = 1 - smooth((dmin - 14 * MM) / (10 * MM))
+    }
+    const pos = around.map(P3)
+    // 口裂附近（两唇相贴的面、红唇）法线没有意义：上下两个面的法线相反，平均出来朝哪儿全凭运气，沿切面滑动时就会把唇带向口内。
+    // 那里改用牙弓的朝向：过口裂中点和两口角的竖直圆柱面的法线（水平、向外）；离口裂 5 mm 以外逐渐换回皮肤自己的法线。
+    // Near the fissure (the contact surfaces, the vermilion) a normal means nothing: the two surfaces face opposite ways and their mean
+    // points wherever chance has it, so sliding in that tangent plane drags the lips into the mouth. There the facing of the dental arch
+    // is used instead — the normal (horizontal, outward) of the vertical cylinder through the middle of the fissure and both corners —
+    // blending back to the skin's own normal beyond 5 mm from the fissure.
+    const midP = mpts[mpts.length >> 1]!
+    const halfChord = (Math.abs(cornerL![0] - midX) + Math.abs(cornerR![0] - midX)) / 2, sag = Math.max(1 * MM, midP[2] - (cornerL![2] + cornerR![2]) / 2)
+    const archZ = midP[2] - (halfChord * halfChord + sag * sag) / (2 * sag)
+    for (const v of around) {
+      if (zoneW[regionOf[v]!]! <= 0) continue
+      const p = P3(v)
+      let dmin = Infinity
+      for (const q of mpts) dmin = Math.min(dmin, len(sub(p, q)))
+      const core = 1 - smooth((dmin - 5 * MM) / (8 * MM))
+      const nArch = norm([p[0] - midX, 0, p[2] - archZ])
+      // 平滑法线打底，保证互相抵消时也有一个连续的结果 / the smoothed normal as a floor, so that the result stays continuous where the raw ones cancel
+      const n: V3 = [normals[v * 3]! * 0.5, normals[v * 3 + 1]! * 0.5, normals[v * 3 + 2]! * 0.5]
       for (let i = 0; i < around.length; i++) {
         const q = pos[i]!
-        if (Math.abs(q[0] - p[0]) > 5 * MM || Math.abs(q[1] - p[1]) > 5 * MM || len(sub(q, p)) > 5 * MM) continue
+        if (Math.abs(q[0] - p[0]) > 6 * MM || Math.abs(q[1] - p[1]) > 6 * MM || len(sub(q, p)) > 6 * MM) continue
         const u = around[i]! * 3
         ;(n[0] += rawNormals[u]!), (n[1] += rawNormals[u + 1]!), (n[2] += rawNormals[u + 2]!)
       }
-      // 抵消得太干净时退回到朝前 / where they cancel too cleanly, fall back to straight ahead
-      lipNormal.set(v, len(n) > 0.5 ? norm(n) : [0, 0, 1])
+      const nSkin: V3 = len(n) > 1e-6 ? norm(n) : [0, 0, 1]
+      lipNormal.set(v, norm(add(mul(nSkin, 1 - core), mul(nArch, core))))
     }
+  }
+  // 两唇相贴的面（“口袋壁”）：上下唇在口裂后面互相贴着，相距不到 0.3 mm。位移场在相邻顶点之间哪怕只差零点几毫米，
+  // 两个面就会互相穿插，口裂处出现参差的碎片。所以离唇缘 wallMm 内的唇片顶点不用自己的位移，而是照搬最近的唇缘点
+  // （自己那一侧的）的位移，在 wallMm 到 3 × wallMm 之间过渡回自己的。
+  // The surfaces where the lips touch (the "pocket walls"): behind the fissure the lips lie against each other less than 0.3 mm apart.
+  // If the field differs between neighbouring vertices by even a few tenths of a millimetre the two surfaces interpenetrate and
+  // ragged shards appear along the fissure. So lip-sheet vertices within wallMm of the margin do not use their own displacement
+  // but copy that of the nearest margin point (of their own side), blending back to their own between wallMm and 3 × wallMm.
+  const wallFollow: { r: number; a: number; b: number; ka: number; w: number }[] = []
+  if (O) {
+    const WALL = 2 * MM
+    // 口角外侧那一片挨着口角的顶点也照此办理（跟上唇缘；口角处上下唇缘的位移相同），否则片的交界处会差出零点几毫米
+    // vertices of the lateral sheet next to a corner are treated likewise (following the upper margin; at the corner both margins move alike), or a few tenths of a millimetre of mismatch would appear where the sheets meet
+    for (const [list, margin] of [[O.sheets.mouthUpper, O.margins.upperLip], [O.sheets.mouthLower, O.margins.lowerLip], [O.sheets.mouthLateral, O.margins.upperLip]] as [number[], number[]][]) {
+      const mpts = margin.map(P3), own = new Set(margin)
+      for (const v of list) {
+        if (own.has(v) || regionOf[v]! < 0) continue
+        const p = P3(v)
+        const { a, b, ka, distance: da } = nearestOnPolyline(p, mpts)
+        const w = 1 - smooth((da - WALL) / (2 * WALL))
+        if (w > 0 && regionOf[margin[a]!]! >= 0 && regionOf[margin[b]!]! >= 0) wallFollow.push({ r: regionOf[v]!, a: regionOf[margin[a]!]!, b: regionOf[margin[b]!]!, ka, w })
+      }
+    }
+  }
+  // 口角一带的三角形：用来检查折叠 / the triangles round the mouth corners, checked for folds
+  const cornerTris: number[] = []
+  if (O) {
+    const zr = cornerCfg.zoneMm * MM
+    const nearCorner = (r: number): boolean => {
+      const p = P3(regionVerts[r]!)
+      return Math.min(len(sub(p, cornerL!)), len(sub(p, cornerR!))) < zr
+    }
+    // 唇缘上不到 0.1 mm² 的碎三角形不查（一般的三角形约 1.5 mm²）：它们的法线对零点零几毫米的差别都敏感，也看不见 / slivers under 0.1 mm² on the margin are not checked (an ordinary triangle is about 1.5 mm²): their normals react to hundredths of a millimetre and they cannot be seen
+    for (let t = 0; t < ntr; t++) if (area[t]! > 1e-7 && nearCorner(regionTris[t * 3]!) && nearCorner(regionTris[t * 3 + 1]!) && nearCorner(regionTris[t * 3 + 2]!)) cornerTris.push(t)
+  }
+  /**
+   * 口角的保面积处理：激活为 1 时，口角一带的三角形若翻折（法线与静止时相反）或面积比超出 [minAreaRatio, maxAreaRatio]，
+   * 就把这些三角形的顶点及其一圈邻居的位移向邻居的平均抹匀，直到没有这样的三角形（最多 foldPasses 遍）。返回用了几遍。
+   * Area-preserving treatment of the corner: at activation 1, where a triangle round a corner folds (normal reversed against rest) or its
+   * area ratio leaves [minAreaRatio, maxAreaRatio], the displacement of its vertices and their ring of neighbours is evened towards the
+   * neighbours' mean until no such triangle is left (at most foldPasses passes). Returns the number of passes used.
+   */
+  const unfold = (U: Float64Array, after: () => void): number => {
+    const P = skin.positions
+    for (let pass = 0; pass < cornerCfg.foldPasses; pass++) {
+      const bad = new Uint8Array(nr)
+      let any = false
+      for (const t of cornerTris) {
+        const q: V3[] = []
+        for (let k = 0; k < 3; k++) {
+          const r = regionTris[t * 3 + k]!, v = regionVerts[r]! * 3
+          q.push([P[v]! + U[r * 3]!, P[v + 1]! + U[r * 3 + 1]!, P[v + 2]! + U[r * 3 + 2]!])
+        }
+        const a = regionVerts[regionTris[t * 3]!]! * 3, b = regionVerts[regionTris[t * 3 + 1]!]! * 3, c = regionVerts[regionTris[t * 3 + 2]!]! * 3
+        const n0 = cross([P[b]! - P[a]!, P[b + 1]! - P[a + 1]!, P[b + 2]! - P[a + 2]!], [P[c]! - P[a]!, P[c + 1]! - P[a + 1]!, P[c + 2]! - P[a + 2]!])
+        const n1 = cross(sub(q[1]!, q[0]!), sub(q[2]!, q[0]!))
+        const ratio = len(n1) / Math.max(1e-18, len(n0))
+        if (dot(n0, n1) <= 0.2 * len(n0) * len(n1) || ratio < cornerCfg.minAreaRatio || ratio > cornerCfg.maxAreaRatio) {
+          any = true
+          for (let k = 0; k < 3; k++) bad[regionTris[t * 3 + k]!] = 1
+        }
+      }
+      if (!any) return pass
+      const grown = Uint8Array.from(bad)
+      for (let r = 0; r < nr; r++) if (bad[r]) for (const o of neighbours[r]!) grown[o] = 1
+      const next = Float64Array.from(U)
+      for (let r = 0; r < nr; r++) {
+        if (!grown[r]) continue
+        const nb = neighbours[r]!
+        if (nb.length === 0) continue
+        for (let c = 0; c < 3; c++) {
+          let sum = 0
+          for (const o of nb) sum += U[o * 3 + c]!
+          next[r * 3 + c] = 0.5 * U[r * 3 + c]! + 0.5 * (sum / nb.length)
+        }
+      }
+      U.set(next)
+      after()
+    }
+    return cornerCfg.foldPasses
   }
   const pouchNear = new Map<number, { skin: number; k: number }>()
   if (O) {
     const cand = regionVerts.filter((v) => !aid[v] && Math.abs(skin.positions[v * 3 + 1]! - skinSt) < 0.06 && Math.abs(skin.positions[v * 3]! - midX) < 0.06)
     for (const v of [...O.oralPouch.upper, ...O.oralPouch.lower]) {
       const p = P3(v)
-      let best = -1, bd = 9 * MM
+      let best = -1, bd = 16 * MM
       for (const u of cand) {
         const dx = skin.positions[u * 3]! - p[0], dy = skin.positions[u * 3 + 1]! - p[1]
         if (Math.abs(dx) > bd || Math.abs(dy) > bd) continue
         const dd = Math.hypot(dx, dy, skin.positions[u * 3 + 2]! - p[2])
         if (dd < bd) (bd = dd), (best = u)
       }
-      if (best >= 0) pouchNear.set(v, { skin: best, k: 1 - smooth((bd - 3 * MM) / (6 * MM)) })
+      if (best >= 0) pouchNear.set(v, { skin: best, k: 1 - smooth((bd - 10 * MM) / (6 * MM)) })
     }
   }
   for (let ci = 0; ci < chans.length; ci++) {
@@ -1361,13 +1785,13 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       // 构造物（睑缘内卷、口腔袋）不求值，稍后跟随它们的缘顶点 / construction aids (lid rims, oral pouch) are not evaluated; they follow their margin vertices below
       if (aid[v]) continue
       ;(curVertex = v), (curSheet = sheet[v]!)
-      const ln = lipNormal.get(v)
-      curLip = ln !== undefined
-      const d = ch.field(p, ln ?? n, p, false)
+      const ln = lipNormal.get(v), zw = zoneW[r]!
+      ;(curLip = ln !== undefined), (curZone = zw)
+      const d = ch.field(p, ln ? norm(add(mul(n, 1 - zw), mul(ln, zw))) : n, p, false)
       ;(U[r * 3] = d[0]), (U[r * 3 + 1] = d[1]), (U[r * 3 + 2] = d[2])
     }
-    ;(curVertex = -1), (curSheet = 0), (curLip = false)
-    const plain = ch.def.model !== 'lid' && ch.def.model !== 'recess' && ch.def.model !== 'corner'
+    ;(curVertex = -1), (curSheet = 0), (curLip = false), (curZone = 0)
+    const plain = ch.def.model !== 'lid' && ch.def.model !== 'recess' && ch.def.model !== 'corner' && ch.def.model !== 'lip' && ch.def.model !== 'tongue'
     if (plain && bulge.gain > 0) {
       let div = new Float64Array(nr)
       for (let t = 0; t < ntr; t++) {
@@ -1396,7 +1820,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         if (creased[r]) continue
         if (U[r * 3] === 0 && U[r * 3 + 1] === 0 && U[r * 3 + 2] === 0 && Math.abs(div[r]!) < 1e-6) continue
         // 口周的三片不变薄：口腔袋只在皮肤后面 3 mm，皮肤向内让就会露出它 / the three perioral sheets do not thin: the oral pouch lies only 3 mm behind the skin and would show if the skin gave way inwards
-        const w = Math.max(sheet[regionVerts[r]!]! >= 1 && sheet[regionVerts[r]!]! <= 3 ? 0 : -lim, Math.min(lim, -bulge.gain * cover[r]! * div[r]!))
+        const w = Math.max(-lim * (1 - zoneW[r]!), Math.min(lim, -bulge.gain * cover[r]! * div[r]!))
         const v = regionVerts[r]! * 3
         ;(U[r * 3] = U[r * 3]! + w * normals[v]!), (U[r * 3 + 1] = U[r * 3 + 1]! + w * normals[v + 1]!), (U[r * 3 + 2] = U[r * 3 + 2]! + w * normals[v + 2]!)
       }
@@ -1423,14 +1847,23 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
         U.set(next)
       }
     }
-    if (O && plain && !ch.def.mask.includes('aboveStomion') && !ch.def.mask.includes('belowStomion')) {
-      // 不分上下唇的通道：位置重合的上下唇缘顶点取同一个位移（两者的平均），口裂不会被这个通道拉开
-      // a channel that does not tell the lips apart: the coincident upper and lower margin vertices take one displacement (the mean of the two), so this channel cannot pull the fissure open
-      for (let i = 1; i + 1 < O.margins.upperLip.length; i++) {
-        const a = regionOf[O.margins.upperLip[i]!]!, b = regionOf[O.margins.lowerLip[i]!]!
-        if (a < 0 || b < 0) continue
-        for (let c = 0; c < 3; c++) U[a * 3 + c] = U[b * 3 + c] = (U[a * 3 + c]! + U[b * 3 + c]!) / 2
+    if (O && plain) {
+      // 先让唇缘和两唇相贴的面一致，再查折叠，然后再做一遍（抹匀会动到它们）
+      // first make the margins and the contact surfaces consistent, then check for folds, then once more (the evening touches them)
+      const split = ch.def.mask.includes('aboveStomion') || ch.def.mask.includes('belowStomion')
+      const walls = (): void => {
+        // 不分上下唇的通道：位置重合的上下唇缘顶点取同一个位移（两者的平均），口裂不会被这个通道拉开
+        // a channel that does not tell the lips apart: the coincident upper and lower margin vertices take one displacement (the mean of the two), so this channel cannot pull the fissure open
+        if (!split) for (let i = 1; i + 1 < O.margins.upperLip.length; i++) {
+          const a = regionOf[O.margins.upperLip[i]!]!, b = regionOf[O.margins.lowerLip[i]!]!
+          if (a < 0 || b < 0) continue
+          for (let c = 0; c < 3; c++) U[a * 3 + c] = U[b * 3 + c] = (U[a * 3 + c]! + U[b * 3 + c]!) / 2
+        }
+        const src = Float64Array.from(U)
+        for (const f of wallFollow) for (let c = 0; c < 3; c++) U[f.r * 3 + c] = U[f.r * 3 + c]! * (1 - f.w) + (src[f.a * 3 + c]! * f.ka + src[f.b * 3 + c]! * (1 - f.ka)) * f.w
       }
+      walls()
+      mouthRep.foldPasses[ch.id] = unfold(U, walls)
     }
     if (O) {
       // 睑缘内卷的每个顶点照搬它所属睑缘顶点的位移；口腔袋的每一列跟随它的唇缘顶点，从唇缘一行的 1 降到缝处的 0
@@ -1442,10 +1875,10 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       }
       for (const rim of O.lidRims) rim.vertices.forEach((v, i) => copy(v, rim.of[i]!, 1))
       // 口腔袋的壁紧贴在唇和口周皮肤后面约 3 mm（它包着牙和牙龈，前壁一直伸到鼻底）。每个袋顶点跟随它前面最近的皮肤顶点：
-      // 3 mm 以内完全跟随，到 9 mm 处降为 0。这样皮肤滑动或向内让时袋壁始终在皮肤后面，不会从皮肤里露出来；缝和后壁不动。
+      // 10 mm 以内（一个唇厚）完全跟随，到 16 mm 处降为 0。这样皮肤滑动或向内让时袋壁始终在皮肤后面，不会从皮肤里露出来；缝和后壁不动。
       // The pouch wall lies about 3 mm behind the lips and the perioral skin (it encloses teeth and gingiva, and its front wall
-      // reaches up to the base of the nose). Every pouch vertex follows the nearest skin vertex in front of it: fully within 3 mm,
-      // falling to 0 at 9 mm. The wall thus stays behind the skin when the skin slides or gives way inwards and cannot show
+      // reaches up to the base of the nose). Every pouch vertex follows the nearest skin vertex in front of it: fully within 10 mm
+      // (a lip's thickness), falling to 0 at 16 mm. The wall thus stays behind the skin when the skin slides or gives way inwards and cannot show
       // through it; the seam and the back wall do not move.
       for (const [v, near] of pouchNear) copy(v, near.skin, near.k)
     }
@@ -1508,6 +1941,28 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     }
     if (any) (displaced++), (byTissue[part.tissue] = (byTissue[part.tissue] ?? 0) + 1)
   }
+  // 舌的姿势直接写到舌上；唇的几何通道：深层的唇和口轮匝肌跟随同侧最近的皮肤顶点（3 mm 内完全跟随，8 mm 处为 0）
+  // tongue poses are written straight onto the tongue; geometric lip channels: the deep lips and orbicularis oris follow the nearest skin vertex of their own side (fully within 3 mm, nothing at 8 mm)
+  for (const [ci, ch] of chans.entries()) {
+    for (const [part, table] of ch.deepTables ?? []) for (const v of [...table.keys()].sort((a, b) => a - b)) put(ci, part, v, table.get(v)!)
+    if (!ch.skinTable || ch.skinTable.size === 0) continue
+    const keys = [...ch.skinTable.keys()], kp = keys.map(P3)
+    for (const part of parts.filter((p) => body.meshes.has(p.id) && (isLipPart(p) || (isMuscle(p) && /^orbicularis oris$/i.test(p.name)))).sort((a, b) => (a.id < b.id ? -1 : 1))) {
+      const m = body.meshes.get(part.id)!
+      for (let v = 0; v < m.positions.length / 3; v++) {
+        const p: V3 = [m.positions[v * 3]!, m.positions[v * 3 + 1]!, m.positions[v * 3 + 2]!]
+        const up = p[1] > (deepSt ?? skinSt)
+        let best = -1, bd = 8 * MM
+        for (let i = 0; i < keys.length; i++) {
+          const q = kp[i]!
+          if (Math.abs(q[0] - p[0]) > bd || Math.abs(q[1] - p[1]) > bd || upperSide.get(keys[i]!) !== up) continue
+          const dd = len(sub(q, p))
+          if (dd < bd) (bd = dd), (best = i)
+        }
+        if (best >= 0) put(ci, part.id, v, mul(ch.skinTable.get(keys[best]!)!, 1 - smooth((bd - 3 * MM) / (5 * MM))))
+      }
+    }
+  }
   log(`deep parts: ${deep.length} considered, ${displaced} displaced`)
 
   // 深层部件上最大位移不到 0.25 mm 的场不存：看不出来，却会让上百个部件多出一个变形
@@ -1566,6 +2021,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       basis: ch.basis,
       excursion: +Math.max(ch.def.model === 'lid' ? 0 : ch.excursion, fieldMax(ci)).toFixed(6),
       fields: out,
+      ...(ch.refJaw !== undefined ? { refJaw: ch.refJaw } : {}),
     }
   })
 
@@ -1597,7 +2053,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       const cs = channels.filter((c) => c.muscle === muscle)
       // 替代通道（口裂内陷、口角成形）只在各自适用的皮肤上有，缺了不算缺肌肉 / the stand-in channels (oral recess, corner shaping) exist only on the skin they apply to; their absence is not a missing muscle
       const standIn = defs.find((x) => x.id === muscle)?.model
-      if (cs.length === 0 && standIn !== 'recess' && standIn !== 'corner') missing.push(`${muscle} (no channel in this body)`)
+      if (cs.length === 0 && standIn !== 'recess' && standIn !== 'corner' && standIn !== 'lip' && standIn !== 'tongue') missing.push(`${muscle} (no channel in this body)`)
       for (const c of cs) ch[c.id] = w
     }
     return { id: a.id, name: a.name, channels: ch, ...(a.jawFraction ? { jaw: +(a.jawFraction * jawMax).toFixed(5) } : {}), ...(missing.length ? { missing } : {}), basis: a.basis }
@@ -1677,6 +2133,8 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     parts: [...perPart.keys()].sort((a, b) => (a === skinPart.id ? -1 : b === skinPart.id ? 1 : a < b ? -1 : 1)).map((id) => ({ part: id, vertexCount: body.meshes.get(id)!.positions.length / 3, entries: perPart.get(id)! })),
     channels,
     aus,
+    ...(curated.emotions ? { expressions: curated.emotions.emotions } : {}),
+    ...(curated.visemes ? { visemes: { timing: curated.visemes.timing, features: curated.visemes.features, visemes: curated.visemes.visemes } } : {}),
     pain: { pspi: { terms: curated.pain.pspi.terms, binary: curated.pain.pspi.binary, max: curated.pain.pspi.max, basis: curated.pain.pspi.basis }, keyframes: curated.pain.keyframes, mapping: curated.pain.mapping, timing: curated.pain.timing },
     jaw: { joint: curated.muscles.jaw.joint, dof: curated.muscles.jaw.dof, max: jawMax, closers: jawRe(curated.muscles.jaw.closers), openers: jawRe(curated.muscles.jaw.openers) },
     bounds: { channel: +(Math.ceil(Math.max(maxChannel, ...channels.map((c) => c.excursion)) / MM * 10) / 10 * MM).toFixed(4), total: +(Math.ceil(maxTotal / MM * 10) / 10 * MM).toFixed(4) },
@@ -1699,6 +2157,7 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
     entries,
     binBytes: bin.length,
     openings: O ? { lidClearance, rimVertices: O.lidRims.reduce((n, r) => n + r.vertices.length, 0), pouchVertices: O.oralPouch.upper.length + O.oralPouch.lower.length + O.oralPouch.seam.length } : null,
+    mouth: O ? mouthRep : null,
     symmetry,
   }
   return { face, bin, report: rep }

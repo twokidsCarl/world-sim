@@ -5,7 +5,7 @@
 //
 //   body   male | female | fixture | stress      人体 / which body
 //   embed  1                                      嵌入模式：只有舞台和必要控件 / embed mode: stage and essential controls only
-//   tab    d | t | p | n                          左侧面板：显示 / 结构树 / 姿势 / 疼痛反应 / left panel: display / tree / pose / pain response
+//   tab    d | t | p | n | e                      左侧面板：显示 / 结构树 / 姿势 / 疼痛反应 / 表情 / left panel: display / tree / pose / pain response / expression
 //   sys    ske,ner:60,…                           可见的系统，可带不透明度百分数；未列出的隐藏
 //                                                 visible systems, each optionally with an opacity percent; unlisted ones are hidden
 //                                                 代码 / codes: int mus ske cv ner res dig uri rep end lym oth
@@ -29,6 +29,10 @@
 //   pain   7                                      疼痛反应：保持在该强度（0–10）的表情；不会自动出声
 //                                                 pain response: the expression held at this intensity (0–10); never plays sound by itself
 //   au     4:3,43:5                               手动设定的 FACS 动作单元强度（AU 编号:0–5）/ manually set FACS action units (AU number:0–5)
+//   expr   happy | fearful:0.6                    情绪表情（face.json 的 expressions 里的 id）及强度 0–1（省略为 1）；与 pain、au 逐项取较大者
+//                                                 an emotion expression (an id from `expressions` in face.json) with a strength 0–1 (1 when omitted);
+//                                                 combined with pain and au by maximum
+//   vis    PBM                                    保持一个视位（face.json 的 visemes 里的 id）：一个口形 / hold one viseme (an id from `visemes` in face.json): a mouth shape
 //   skin   1                                      皮肤画成不透明（看表情）/ skin drawn opaque (to read the expression)
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
@@ -69,13 +73,13 @@ export const SYSTEM_CODES: Record<SystemId, string> = {
 }
 const CODE_TO_SYSTEM = new Map(Object.entries(SYSTEM_CODES).map(([id, code]) => [code, id as SystemId]))
 
-const TABS = { d: 'display', t: 'tree', p: 'pose', n: 'pain' } as const
-const TAB_CODES = { display: 'd', tree: 't', pose: 'p', pain: 'n' } as const
+const TABS = { d: 'display', t: 'tree', p: 'pose', n: 'pain', e: 'expr' } as const
+const TAB_CODES = { display: 'd', tree: 't', pose: 'p', pain: 'n', expr: 'e' } as const
 const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagittal' }
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -83,7 +87,7 @@ export const MAX_URL_DOFS = 40
 export interface UrlState {
   body?: string
   embed?: boolean
-  tab?: 'display' | 'tree' | 'pose' | 'pain'
+  tab?: 'display' | 'tree' | 'pose' | 'pain' | 'expr'
   /** 给出时：列出的系统可见（带不透明度），其余隐藏 / When given: listed systems are visible (with opacity), the rest hidden. */
   sys?: { id: SystemId; opacity: number }[]
   peel?: number
@@ -104,6 +108,10 @@ export interface UrlState {
   pain?: number
   /** AU id（如 "AU4"）→ 强度 0–5 / AU id (e.g. "AU4") → intensity 0–5. */
   au?: Record<string, number>
+  /** 情绪表情的 id 和强度 0–1 / an emotion expression's id and strength 0–1. */
+  expr?: { id: string; strength: number }
+  /** 保持的视位的 id / the id of the held viseme. */
+  vis?: string
   skin?: boolean
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
@@ -262,6 +270,18 @@ export function parseUrl(search: string): ParsedUrl {
         if (Object.keys(au).length) state.au = au
         break
       }
+      case 'expr': {
+        const m = /^([A-Za-z][A-Za-z0-9_]*)(?::(\d+(?:\.\d+)?))?$/.exec(value)
+        const k = m && m[2] !== undefined ? Number(m[2]) : 1
+        if (!m || k > 1) warn(`expr: 无法解析 "${value}"（形式为 表情id 或 表情id:0–1）/ could not be parsed (form id or id:0–1)`)
+        else if (k > 0) state.expr = { id: m[1]!, strength: Math.round(k * 100) / 100 }
+        break
+      }
+      case 'vis': {
+        if (/^[A-Za-z][A-Za-z0-9_]*$/.test(value)) state.vis = value
+        else warn(`vis: 无法解析 "${value}"（应为视位 id）/ could not be parsed (expected a viseme id)`)
+        break
+      }
       case 'stim': {
         const r = parseStimParam(value)
         if (r) state.stim = r
@@ -333,6 +353,8 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
       .map(([id, v]) => `${id.slice(2)}:${Math.round(v * 10) / 10}`)
     if (items.length) put('au', items.join(','))
   }
+  if (state.expr && state.expr.strength > 0) put('expr', state.expr.id + (Math.round(state.expr.strength * 100) === 100 ? '' : `:${Math.round(state.expr.strength * 100) / 100}`))
+  if (state.vis) put('vis', state.vis)
   if (state.skin) put('skin', '1')
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.stim) put('stim', formatStimParam(state.stim))

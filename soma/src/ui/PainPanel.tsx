@@ -81,6 +81,64 @@ export function faceCamera(data: FaceData): { p: [number, number, number]; t: [n
 
 let presetApplied: AnatomyGraph | null = null
 
+/** 把相机对准面部 / Frame the face. */
+export function focusFace(data: FaceData): void {
+  const view = faceCamera(data)
+  useApp.setState((st) => ({ cameraRequest: { nonce: (st.cameraRequest?.nonce ?? 0) + 1, ...view } }))
+}
+
+/**
+ * 第一次打开看脸的面板（疼痛、表情）时套用一次预设视图并对准面部；每副人体只做一次。
+ * Applies the preset view once and frames the face when a face panel (Pain, Expression) is first opened; once per body.
+ */
+export function useFaceViewPreset(face: { data: FaceData } | null, graph: AnatomyGraph): void {
+  useEffect(() => {
+    if (!face || presetApplied === graph) return
+    presetApplied = graph
+    // 只在显示状态还是默认值时套用预设，不覆盖链接或用户已经设好的视图
+    // the preset applies only while the display state is still the default; a view set by a link or by the user is left alone
+    const st = useApp.getState()
+    const untouched = !st.isolated && st.peel === 0 && Object.values(st.systems).every((x) => x.visible)
+    // 正在看一个刺激（多半在四肢上）时也不动视图 / nor while a stimulus is being looked at (most are on a limb)
+    if (!untouched || st.stim || st.stimStatus !== 'idle' || st.stimArmed) return
+    // 皮肤有真实的睑裂和口裂时，皮肤视图才是更好的视图；否则（闭合的皮肤）看肌肉
+    // with real eye and mouth openings the skin view is the better one; otherwise (a closed skin) the muscles
+    st.setFaceView(face.data.openings ? 'skin' : 'muscle')
+    focusFace(face.data)
+  }, [face, graph])
+}
+
+/**
+ * 逐个动作单元的滑块（疼痛页和表情页共用，改的是同一组手动 AU）。
+ * A slider per action unit (shared by the Pain and Expression tabs; both edit the same manual AUs).
+ */
+export function AUSliders({ data }: { data: FaceData }) {
+  const aus = useApp((s) => s.aus)
+  const setAU = useApp((s) => s.setAU)
+  return (
+    <>
+      {data.aus.map((au) => (
+        <div className="dof-row" key={au.id}>
+          <label title={`${au.basis.note.zh}\n${au.basis.note.en}${au.missing?.length ? `\n模型缺少 / missing: ${au.missing.join(', ')}` : ''}`}>
+            <span className="dof-name">
+              <span>
+                {au.id} {au.name.zh} <span className="en">{au.name.en}</span>
+              </span>
+              {au.basis.source === null && <span className="badge badge-review">假设</span>}
+            </span>
+            <span className="value">{(aus[au.id] ?? 0).toFixed(1)}</span>
+          </label>
+          <input type="range" min={0} max={5} step={0.5} value={aus[au.id] ?? 0} aria-label={`${au.id} ${au.name.zh} / ${au.name.en}`} onChange={(e) => setAU(au.id, Number(e.target.value))} />
+        </div>
+      ))}
+      <p className="hint">
+        强度 0–5 对应 FACS 的 A–E 级。手动设定的值与疼痛、情绪表情逐项取较大者。
+        <span className="en"> Intensities 0–5 are FACS levels A–E; manual values combine with the pain and emotion expressions by maximum.</span>
+      </p>
+    </>
+  )
+}
+
 export function PainPanel({ graph }: { graph: AnatomyGraph }) {
   const face = useApp((s) => s.face)
   const status = useApp((s) => s.faceStatus)
@@ -96,30 +154,8 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
   const [attribOpen, setAttribOpen] = useState(false)
   const app = useApp.getState()
 
-  const focusFace = (): void => {
-    if (!face) return
-    const view = faceCamera(face.data)
-    useApp.setState((st) => ({ cameraRequest: { nonce: (st.cameraRequest?.nonce ?? 0) + 1, ...view } }))
-  }
-
-  // 第一次打开面板：切到肌肉视图并对准面部（皮肤是闭合曲面，眼睑和嘴唇张不开，肌肉上表情读得清）
-  // first time the panel opens: switch to the muscle view and frame the face (the skin is a closed
-  // surface whose lids and lips cannot part; the expression reads clearly on the muscles)
-  useEffect(() => {
-    if (!face || presetApplied === graph) return
-    presetApplied = graph
-    // 只在显示状态还是默认值时套用预设，不覆盖链接或用户已经设好的视图
-    // the preset applies only while the display state is still the default; a view set by a link or by the user is left alone
-    const st = useApp.getState()
-    const untouched = !st.isolated && st.peel === 0 && Object.values(st.systems).every((x) => x.visible)
-    // 正在看一个刺激（多半在四肢上）时也不动视图 / nor while a stimulus is being looked at (most are on a limb)
-    if (!untouched || st.stim || st.stimStatus !== 'idle' || st.stimArmed) return
-    // 皮肤有真实的睑裂和口裂时，皮肤视图才是更好的视图；否则（闭合的皮肤）看肌肉
-    // with real eye and mouth openings the skin view is the better one; otherwise (a closed skin) the muscles
-    app.setFaceView(face.data.openings ? 'skin' : 'muscle')
-    focusFace()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [face, graph])
+  // 第一次打开面板：切到看脸的预设视图并对准面部 / first time the panel opens: switch to the preset face view and frame the face
+  useFaceViewPreset(face, graph)
 
   const statement = (
     <div className="pain-statement">
@@ -236,7 +272,7 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
           <button className={skinOpaque ? 'on' : ''} onClick={() => app.setFaceView('skin')}>
             皮肤视图
           </button>
-          <button onClick={focusFace}>对准面部</button>
+          <button onClick={() => focusFace(face.data)}>对准面部</button>
         </div>
         {face.data.openings ? (
           <p className="hint">
@@ -262,20 +298,7 @@ export function PainPanel({ graph }: { graph: AnatomyGraph }) {
             </button>
           )}
         </h3>
-        {advanced &&
-          face.data.aus.map((au) => (
-            <div className="dof-row" key={au.id}>
-              <label title={`${au.name.en}\n${au.basis.note.zh}\n${au.basis.note.en}${au.missing?.length ? `\n模型缺少 / missing: ${au.missing.join(', ')}` : ''}`}>
-                <span className="dof-name">
-                  {au.id} {au.name.zh}
-                  {au.basis.source === null && <span className="badge badge-review">假设</span>}
-                </span>
-                <span className="value">{(aus[au.id] ?? 0).toFixed(1)}</span>
-              </label>
-              <input type="range" min={0} max={5} step={0.5} value={aus[au.id] ?? 0} aria-label={`${au.id} ${au.name.zh}`} onChange={(e) => app.setAU(au.id, Number(e.target.value))} />
-            </div>
-          ))}
-        {advanced && <p className="hint">强度 0–5 对应 FACS 的 A–E 级。手动设定的值与疼痛表情逐项取较大者。 Intensities 0–5 are FACS levels A–E; manual values combine with the pain expression by maximum.</p>}
+        {advanced && <AUSliders data={face.data} />}
       </section>
 
       <section className="group">

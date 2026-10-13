@@ -152,6 +152,24 @@
       }
     },
     {
+      "match": "^Upper lip$",
+      "method": "rigid",
+      "allow": "^skull$",
+      "why": {
+        "zh": "上唇（深层的唇部件拆成上、下两个之后的上半）附着于上颌，随颅骨，不随下颌。按英文名匹配，不依赖部件 id；还没有拆分的身体上这条规则不匹配任何部件。",
+        "en": "The upper lip (the upper half once the deep lip part is split in two) is attached to the maxilla and moves with the skull, not the jaw. Matched by its English name, not by a part id; on a body where the split has not happened the rule matches nothing."
+      }
+    },
+    {
+      "match": "^Lower lip$",
+      "method": "rigid",
+      "allow": "^tmj$",
+      "why": {
+        "zh": "下唇附着于下颌骨，随下颌（颞下颌关节）运动。同样按英文名匹配。",
+        "en": "The lower lip is attached to the mandible and moves with it (the temporomandibular joint). Matched by its English name as well."
+      }
+    },
+    {
       "match": "^(Hair of head|Eyebrow|External ear)$",
       "method": "rigid",
       "allow": "^skull$",

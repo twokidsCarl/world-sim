@@ -42,14 +42,31 @@ export type SkinExpr =
   | { at: PointExpr; frame: string; deg: number }
   | { frame: string; t: FrameT; deg: number }
   /**
-   * 前正中线上 A、B 之间最深的凹点（脐）。凹陷不足 minDepthMm（皮肤上没有做出脐），或其高度与 near 相差超过
-   * withinMm（找到的是别的凹陷，如乳房下皱襞之间）时，改用 fallback。
-   * Deepest dimple of the anterior midline between A and B (the umbilicus). When it is shallower
-   * than minDepthMm (a skin without a modelled umbilicus), or its height differs from that of
-   * `near` by more than withinMm (some other hollow was found, e.g. between the inframammary
-   * folds), the fallback is used instead.
+   * 前正中线上 A、B 之间的脐。依次取：
+   *  1. 随数据发布的记录位置（Landmarks.recorded.navel，来自 pipeline-report.json 里皮肤作者写下的脐心），
+   *     取离它最近的皮肤顶点；记录位置须在 A、B 之间且 6 mm 内有皮肤顶点，否则不用。
+   *  2. 几何检测：又小又陡的凹坑，即比它上、下、左、右四个方向 5–20 mm 内的皮肤都低的顶点，
+   *     取四个方向中最浅一方的落差最大者；该落差不足 minPitMm（默认 1 mm；皮肤上没有做出脐），
+   *     或其高度与 near 相差超过 withinMm 时，改用 fallback。
+   * 原先取的是“前正中线纵向轮廓上最深的凹点”（与上下 12–35 mm 处相比），在女性身上取到的是腰部那片
+   * 宽而深（约 14 mm）的凹陷，而不是她只有 3–5 mm 深的脐，高了约 6 cm。腰部的凹陷是一道横沟，两侧并不比它高，
+   * 所以四个方向都要求更低就把它排除了。minDepthMm 是旧规则的阈值，现已不用（保留只为读入旧定义）。
+   * The umbilicus on the anterior midline between A and B. Taken, in this order, from:
+   *  1. the position recorded in shipped data (Landmarks.recorded.navel, the navel centre written
+   *     down by the skin's author and carried in pipeline-report.json): the skin vertex nearest to
+   *     it. The recorded position must lie between A and B and have a skin vertex within 6 mm,
+   *     otherwise it is not used.
+   *  2. geometric detection of a small sharp pit: a vertex lower than the skin 5–20 mm above it,
+   *     below it, to its left and to its right; the one whose shallowest side is deepest wins.
+   *     When that depth is under minPitMm (default 1 mm: a skin without a modelled umbilicus), or
+   *     its height differs from that of `near` by more than withinMm, the fallback is used.
+   * The earlier rule took the deepest point of the midline's vertical profile (against the skin
+   * 12–35 mm above and below). On the female that was the broad waist hollow (about 14 mm deep),
+   * not her navel (3–5 mm deep), some 6 cm too high. The waist hollow is a transverse groove with
+   * nothing higher to its sides, so asking for all four sides rules it out. minDepthMm was the
+   * threshold of the earlier rule and is no longer used (still accepted so old definitions load).
    */
-  | { dimple: { between: [PointExpr, PointExpr]; minDepthMm?: number; near?: PointExpr; withinMm?: number; fallback?: SkinExpr } }
+  | { dimple: { between: [PointExpr, PointExpr]; minPitMm?: number; minDepthMm?: number; near?: PointExpr; withinMm?: number; fallback?: SkinExpr } }
   /**
    * 沿坐标架轴线自 t[0] 向 t[1] 逐步前进，在第一个沿 deg 方向 maxMm 以内有皮肤的位置取该皮肤点
    * （如上臂内侧皮肤的最上端，即腋窝顶）。
@@ -110,6 +127,14 @@ export class Landmarks {
   private readonly surfaceCache = new Map<string, V3>()
   private readonly frameCache = new Map<string, Frame>()
   private readonly outerList: number[] = []
+  /**
+   * 随数据发布的记录位置（米）。navel：皮肤作者写下的脐心，由 generate.ts 从 pipeline-report.json 读入；没有记录时为空。
+   * Positions recorded in shipped data (metres). navel: the navel centre written down by the skin's
+   * author, read from pipeline-report.json by generate.ts; absent when nothing was recorded.
+   */
+  recorded: { navel?: V3 } = {}
+  /** 脐是怎么得到的（求值之前为 null）/ How the umbilicus was obtained (null until it has been evaluated). */
+  umbilicusFrom: 'recorded' | 'detected' | 'fallback' | null = null
 
   constructor(
     readonly body: Body,
@@ -459,26 +484,51 @@ export class Landmarks {
     if ('dimple' in e) {
       const a = this.point(e.dimple.between[0], side), b = this.point(e.dimple.between[1], side)
       const y0 = Math.min(a[1], b[1]), y1 = Math.max(a[1], b[1])
-      // 前正中线轮廓；凹点即低于局部轮廓最深的顶点。
-      // Anterior midline profile; the dimple is the vertex lying deepest below the local profile.
+      // 1. 记录位置 / 1. The recorded position.
+      const rec = this.recorded.navel
+      if (rec && rec[1] >= y0 && rec[1] <= y1) {
+        const v = this.nearestVertex(rec, false, 0.006)
+        if (v >= 0) {
+          this.umbilicusFrom = 'recorded'
+          return v
+        }
+      }
+      // 2. 几何检测。候选顶点在正中线两侧 2 cm 以内；用来比较的皮肤取到 4.5 cm，只算朝前的。
+      // 2. Geometric detection. Candidates lie within 2 cm of the midline; the skin they are compared
+      //    with is taken out to 4.5 cm, front-facing only.
       const strip = this.outerList.filter((v) => {
         const p = pos(this.skin, v)
-        return Math.abs(p[0] - this.skin.midX) < 0.012 && p[1] > y0 - 0.04 && p[1] < y1 + 0.04 && nrm(this.skin, v)[2] > 0.3
+        return Math.abs(p[0] - this.skin.midX) < 0.045 && p[1] > y0 - 0.03 && p[1] < y1 + 0.03 && nrm(this.skin, v)[2] > 0.3
       })
-      let best = -1, bs = Infinity
-      for (const v of strip) {
-        const p = pos(this.skin, v)
-        if (p[1] < y0 || p[1] > y1) continue
-        const zs = strip.map((u) => pos(this.skin, u)).filter((q) => Math.abs(q[1] - p[1]) < 0.035 && Math.abs(q[1] - p[1]) > 0.012).map((q) => q[2])
-        if (zs.length < 4) continue
-        const s = p[2] - zs.reduce((x, y) => x + y, 0) / zs.length
-        if (s < bs) { bs = s; best = v }
+      const P = strip.map((v) => pos(this.skin, v))
+      let best = -1, bs = -Infinity
+      for (let i = 0; i < strip.length; i++) {
+        const p = P[i]!
+        if (p[1] < y0 || p[1] > y1 || Math.abs(p[0] - this.skin.midX) > 0.02) continue
+        // 上、下、左、右四个象限里 5–20 mm 处的皮肤比该顶点高出多少（平均）；四个象限都要有皮肤顶点。
+        // How much higher the skin 5–20 mm away is, on average, in the four quadrants (above, below,
+        // left, right); every quadrant must have skin vertices.
+        const sum = [0, 0, 0, 0], cnt = [0, 0, 0, 0]
+        for (const q of P) {
+          const dx = q[0] - p[0], dy = q[1] - p[1], r = Math.hypot(dx, dy)
+          if (r < 0.005 || r > 0.02) continue
+          const k = Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 0 : 1) : (dx > 0 ? 2 : 3)
+          sum[k]! += q[2] - p[2]
+          cnt[k]!++
+        }
+        if (cnt.some((c) => c === 0)) continue
+        const pit = Math.min(sum[0]! / cnt[0]!, sum[1]! / cnt[1]!, sum[2]! / cnt[2]!, sum[3]! / cnt[3]!)
+        if (pit > bs) { bs = pit; best = strip[i]! }
       }
       const off = best >= 0 && e.dimple.near ? Math.abs(this.skin.positions[best * 3 + 1]! - this.point(e.dimple.near, side)[1]) : 0
-      if (best < 0 || bs > -(e.dimple.minDepthMm ?? 0) / 1000 || off > (e.dimple.withinMm ?? Infinity) / 1000) {
-        if (e.dimple.fallback) return this.vertex(e.dimple.fallback, side)
+      if (best < 0 || bs < (e.dimple.minPitMm ?? 1) / 1000 || off > (e.dimple.withinMm ?? Infinity) / 1000) {
+        if (e.dimple.fallback) {
+          this.umbilicusFrom = 'fallback'
+          return this.vertex(e.dimple.fallback, side)
+        }
         throw new Error('no dimple found')
       }
+      this.umbilicusFrom = 'detected'
       return best
     }
     if ('nerveCross' in e) {

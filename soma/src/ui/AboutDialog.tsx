@@ -57,6 +57,22 @@ export function AboutDialog() {
               <CautionList items={graph.cautions} />
             </>
           )}
+          <h3>与外部模型的对照 <span className="en">Calibration against external models</span></h3>
+          <p className="hint">
+            关节、肌肉力臂、节段比例、器官体积和表情位移与公开的外部模型和已发表的统计逐项比过。那些模型是当作量具用的，这不是临床人员的审核。
+            <span className="en"> Joints, muscle moment arms, segment proportions, organ volumes and expression displacements have been compared item by item with open external models and published statistics. Those models serve as measuring instruments; this is not validation by a clinician.</span>
+          </p>
+          <p>
+            <button
+              className="text-btn"
+              onClick={() => {
+                setOpen(false)
+                useApp.getState().setCalibrationOpen(true)
+              }}
+            >
+              查看对照表 <span className="en">Open the calibration tables</span>
+            </button>
+          </p>
           <h3>几何与本体数据 <span className="en">Geometry &amp; ontology</span></h3>
           {graph && graph.data.sources.length > 0 ? (
             <ul className="sources">

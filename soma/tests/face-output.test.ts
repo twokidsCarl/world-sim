@@ -23,7 +23,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import type { AnatomyData, Rig } from '../src/anatomy/types.ts'
 import type { FaceChannel, FaceData, FaceOpenings } from '../src/face/types.ts'
 import { buildFace } from '../tools/face/build.ts'
-import { AU_MAX, activations, deform, displacement, painAUs, painExpression, pspi, readField } from '../tools/face/model.ts'
+import { AU_MAX, activations, deform, displacement, expressionAUs, mergeAUs, painAUs, painExpression, pspi, readField } from '../tools/face/model.ts'
 import { readCurated, stale } from '../tools/face/run.ts'
 import { Surface, mergeMeshes } from '../tools/rig/geom.ts'
 import { type Body, readBody } from '../tools/rig/io.ts'
@@ -98,6 +98,11 @@ for (const bodyId of ['male', 'female'] as const) {
         // 口裂内陷是皮肤上的几何替代，不是肌肉 / the oral recess is a geometric stand-in on the skin, not a muscle
         if (ch.kind === 'recess' || ch.kind === 'corner') expect(ch.parts, ch.id).toEqual([])
         else expect(ch.parts.length, ch.id).toBeGreaterThan(0)
+        // 舌的示意姿势只作用在舌这个部件上（它不是肌肉组织的部件，也不动皮肤）/ a schematic tongue pose acts on the tongue part only (not a part of muscle tissue, and it leaves the skin alone)
+        if (ch.kind === 'tongue') {
+          expect(ch.fields.map((f) => f.part), ch.id).toEqual(ch.parts)
+          continue
+        }
         for (const id of ch.parts) expect(byId.get(id)?.tissue, `${ch.id}: ${id}`).toBe('muscle')
         for (const f of ch.fields) expect(listed.has(f.part), `${ch.id}: ${f.part}`).toBe(true)
         // 每个通道都在皮肤上有位移 / every channel moves the skin
@@ -117,7 +122,7 @@ for (const bodyId of ['male', 'female'] as const) {
     it('has the expected channels on both sides', () => {
       const ids = new Set(face.channels.map((c) => c.id))
       expect(ids.size).toBe(face.channels.length)
-      for (const m of ['frontalis', 'corrugator', 'procerus', 'llsan', 'lls', 'zygomaticus_minor', 'zygomaticus_major', 'levator_anguli_oris', 'risorius', 'buccinator', 'depressor_anguli_oris', 'depressor_labii_inferioris', 'mentalis', 'nasalis', 'platysma', 'orbicularis_oculi_orbital', 'orbicularis_oculi_palpebral_upper', 'orbicularis_oculi_palpebral_lower']) {
+      for (const m of ['frontalis_medial', 'frontalis_lateral', 'corrugator', 'procerus', 'llsan', 'lls', 'zygomaticus_minor', 'zygomaticus_major', 'levator_anguli_oris', 'risorius', 'buccinator', 'depressor_anguli_oris', 'depressor_labii_inferioris', 'mentalis', 'nasalis', 'platysma', 'orbicularis_oculi_orbital', 'orbicularis_oculi_palpebral_upper', 'orbicularis_oculi_palpebral_lower']) {
         expect(ids.has(`${m}_L`), `${m}_L`).toBe(true)
         expect(ids.has(`${m}_R`), `${m}_R`).toBe(true)
       }
@@ -143,8 +148,12 @@ for (const bodyId of ['male', 'female'] as const) {
 
     it('stores fields that are well-formed, finite and bounded', () => {
       expect(bin.length).toBe(face.binBytes)
-      expect(Math.max(...face.channels.filter((c) => c.kind !== 'corner').map((c) => c.excursion))).toBeLessThanOrEqual(12 * MM)
-      expect(face.bounds.total).toBeLessThanOrEqual(45 * MM + cornerMax)
+      // 唇的几何通道（kind 'lip'）同样在界限之外：lip_seal 抵消的是下颌在 refJaw 处带给下唇的全部位移（约 16 mm）
+      // the geometric lip channels (kind 'lip') are outside the bounds too: lip_seal undoes everything the jaw does to the lower lip at refJaw (about 16 mm)
+      const lipKind = face.channels.filter((c) => c.kind === 'lip')
+      expect(Math.max(...face.channels.filter((c) => c.kind !== 'corner' && c.kind !== 'lip').map((c) => c.excursion))).toBeLessThanOrEqual(12 * MM)
+      for (const c of lipKind) expect(c.excursion, c.id).toBeLessThanOrEqual(20 * MM)
+      expect(face.bounds.total).toBeLessThanOrEqual(45 * MM + cornerMax + lipKind.reduce((a, c) => a + c.excursion, 0))
       expect(cornerMax).toBeLessThanOrEqual(30 * MM)
       const counts = new Map(face.parts.map((p) => [p.part, p.vertexCount]))
       const sum = new Map<string, Float64Array>()
@@ -233,7 +242,8 @@ for (const bodyId of ['male', 'female'] as const) {
       const mid = face.landmarks.midX
       // 朝向正中为负（对左侧通道）/ towards the midline is negative (for a left channel)
       const v = (id: string): { lateral: number; up: number } => ({ lateral: meanVec(id)[0], up: meanVec(id)[1] })
-      expect(v('frontalis_L').up).toBeGreaterThan(0.5)
+      expect(v('frontalis_medial_L').up).toBeGreaterThan(0.5)
+      expect(v('frontalis_lateral_L').up).toBeGreaterThan(0.5)
       expect(v('corrugator_L').lateral).toBeLessThan(-0.2)
       expect(v('corrugator_L').up).toBeLessThan(0)
       expect(v('corrugator_R').lateral).toBeGreaterThan(0.2)
@@ -259,7 +269,7 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(v('orbicularis_oculi_palpebral_upper_L').up).toBeLessThan(-0.5)
       expect(v('orbicularis_oculi_palpebral_lower_L').up).toBeGreaterThan(0.1)
       // 作用线：固定端在骨一侧 / lines of action: the fixed end is the bony one
-      expect(chan('frontalis_L').line.origin[1]).toBeGreaterThan(chan('frontalis_L').line.insertion[1])
+      expect(chan('frontalis_medial_L').line.origin[1]).toBeGreaterThan(chan('frontalis_medial_L').line.insertion[1])
       expect(Math.abs(chan('corrugator_L').line.origin[0] - mid)).toBeLessThan(Math.abs(chan('corrugator_L').line.insertion[0] - mid))
       expect(chan('zygomaticus_major_L').line.origin[1]).toBeGreaterThan(chan('zygomaticus_major_L').line.insertion[1])
       expect(chan('zygomaticus_major_L').line.origin[0] - mid).toBeGreaterThan(chan('zygomaticus_major_L').line.insertion[0] - mid)
@@ -285,12 +295,14 @@ for (const bodyId of ['male', 'female'] as const) {
       }
       // 皮肤按它自己那道随 x 起伏的褶分上下唇，这里只知道正中的高度，所以放宽到 6 mm
       // the skin is split along its own crease, which rises and falls with x; only its midline height is known here, hence the 6 mm allowance
-      for (const m of ['lls', 'llsan', 'zygomaticus_minor']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`, true)[0], `${m}_${s}`).toBeGreaterThan(st - 6 * MM)
-      for (const m of ['depressor_labii_inferioris', 'mentalis', 'platysma']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`, true)[1], `${m}_${s}`).toBeLessThan(st + 6 * MM)
+      // 开口的皮肤上，口角 8 mm 内上下唇肌的场是交接的（各占一部分），所以再放宽到 10 mm / on an opened skin the fields of upper-lip and lower-lip muscles hand over within 8 mm of a corner (a share each), hence 10 mm there
+      const allow = face.openings ? 10 * MM : 6 * MM
+      for (const m of ['lls', 'llsan', 'zygomaticus_minor']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`, true)[0], `${m}_${s}`).toBeGreaterThan(st - allow)
+      for (const m of ['depressor_labii_inferioris', 'mentalis', 'platysma']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`, true)[1], `${m}_${s}`).toBeLessThan(st + allow)
       // 眉部的肌肉带动眉下的皮肤，但到上睑缘为止（留 10 mm：睑缘在两眦处比中间低，平滑过的厚度变化还会再越界几毫米）
       // brow muscles carry the skin under the brow, but stop at the upper lid margin (10 mm allowed: the margin is lower at the canthi than in the middle, and the smoothed thickness change spills a few millimetres further)
       const lidTop = Math.max(...face.landmarks.eyes.map((e) => (e.skinFissure ?? e.fissure)!.upperY!))
-      for (const m of ['frontalis', 'corrugator', 'procerus']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`)[0], `${m}_${s}`).toBeGreaterThan(lidTop - 10 * MM)
+      for (const m of ['frontalis_medial', 'frontalis_lateral', 'corrugator', 'procerus']) for (const s of ['L', 'R']) expect(range(`${m}_${s}`)[0], `${m}_${s}`).toBeGreaterThan(lidTop - 10 * MM)
     })
 
     it.skipIf(!fresh)('matches the vertex counts of the meshes it displaces', () => {
@@ -328,7 +340,7 @@ for (const bodyId of ['male', 'female'] as const) {
 
     it('defines every pain-coded AU, each acting through channels or the jaw', () => {
       const ids = face.aus.map((a) => a.id)
-      expect(ids).toEqual(['AU4', 'AU6', 'AU7', 'AU9', 'AU10', 'AU12', 'AU20', 'AU25', 'AU26', 'AU27', 'AU43'])
+      expect(ids).toEqual(['AU1', 'AU2', 'AU4', 'AU5', 'AU6', 'AU7', 'AU9', 'AU10', 'AU11', 'AU12', 'AU13', 'AU14', 'AU15', 'AU16', 'AU17', 'AU18', 'AU20', 'AU22', 'AU23', 'AU24', 'AU25', 'AU26', 'AU27', 'AU28', 'AU43'])
       const channels = new Set(face.channels.map((c) => c.id))
       for (const au of face.aus) {
         expect(Object.keys(au.channels).length + (au.jaw ? 1 : 0), au.id).toBeGreaterThan(0)
@@ -436,6 +448,75 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(P.timing.offset).toBeGreaterThan(0)
     })
 
+    it('splits frontalis into a medial and a lateral channel that add up to the whole, for AU1 and AU2', () => {
+      const pos = present && fresh && body ? body.meshes.get(face.skin)!.positions : null
+      for (const side of ['L', 'R']) {
+        const med = skinField(`frontalis_medial_${side}`), lat = skinField(`frontalis_lateral_${side}`)
+        expect(chan(`frontalis_medial_${side}`).parts).toEqual(chan(`frontalis_lateral_${side}`).parts)
+        if (!pos) continue
+        // 内侧通道的位移重心比外侧通道更靠近正中 / the medial channel's displacement is centred nearer the midline than the lateral one's
+        const cx = (f: typeof med): number => {
+          let sw = 0, sx = 0
+          for (let i = 0; i < f.index.length; i++) {
+            const w = Math.hypot(f.delta[i * 3]!, f.delta[i * 3 + 1]!, f.delta[i * 3 + 2]!)
+            sw += w
+            sx += w * Math.abs(pos[f.index[i]! * 3]! - face.landmarks.midX)
+          }
+          return sx / sw
+        }
+        expect(cx(lat) - cx(med), side).toBeGreaterThan(10 * MM)
+      }
+      expect(Object.keys(face.aus.find((a) => a.id === 'AU1')!.channels).sort()).toEqual(['frontalis_medial_L', 'frontalis_medial_R'])
+      expect(Object.keys(face.aus.find((a) => a.id === 'AU2')!.channels).sort()).toEqual(['frontalis_lateral_L', 'frontalis_lateral_R'])
+    })
+
+    it('has expression prototypes whose AUs exist, scaled by expressionAUs and merged by the larger value', () => {
+      const ex = face.expressions ?? []
+      // 六种基本情绪在前，其后是 15 种复合情绪（du2014 表 1）/ the six basic emotions first, then the 15 compound ones (Table 1 of du2014)
+      expect(ex.slice(0, 6).map((e) => e.id)).toEqual(['happy', 'sad', 'fearful', 'angry', 'surprised', 'disgusted'])
+      expect(ex.length).toBe(21)
+      for (const e of ex) {
+        expect(e.basis.source, e.id).toBe('du2014')
+        for (const au of e.prototypical ?? []) expect(Object.keys(e.aus), `${e.id} ${au}`).toContain(au)
+        for (const v of Object.values(e.variants ?? {})) expect(v > 0 && v < 1, e.id).toBe(true)
+      }
+      const defined = new Set(face.aus.map((a) => a.id))
+      for (const e of ex) {
+        for (const [au, v] of Object.entries(e.aus)) {
+          expect(defined.has(au), `${e.id}: ${au}`).toBe(true)
+          expect(v).toBeGreaterThan(0)
+          expect(v).toBeLessThanOrEqual(AU_MAX)
+        }
+        // 出处没有打开，必须标明是假设 / the source was not opened, so each must say it is an assumption
+        // AU 组合有出处（du2014 表 1），强度是假设，写在 note 里 / the AU set is sourced (Table 1 of du2014); the intensities are assumptions, as the note says
+        expect(e.basis.source).toBe('du2014')
+        expect(e.basis.note.en).toMatch(/assumption/i)
+        expect(e.basis.note.en).toMatch(/[Aa]ssumption|unverified/)
+        expect(expressionAUs(ex, e.id, 0)).toEqual({})
+        const half = expressionAUs(ex, e.id, 0.5), full = expressionAUs(ex, e.id, 1)
+        for (const au of Object.keys(full)) expect(half[au]).toBeCloseTo(full[au]! / 2, 12)
+        // 每种表情都真的动了皮肤 / every expression really moves the skin
+        const d = displacement(face.channels, bin, face.skin, face.parts[0]!.vertexCount, activations(face, full).channels)
+        let max = 0
+        for (let i = 0; i < d.length; i += 3) max = Math.max(max, Math.hypot(d[i]!, d[i + 1]!, d[i + 2]!))
+        expect(max / MM, e.id).toBeGreaterThan(2)
+      }
+      expect(expressionAUs(ex, 'nonsense', 1)).toEqual({})
+      expect(mergeAUs({ AU4: 2, AU7: 1 }, { AU4: 3, AU12: 4 })).toEqual({ AU4: 3, AU7: 1, AU12: 4 })
+    })
+
+    it.skipIf(!O || !fresh)('raises the upper lid margin at AU5 without touching the lower lid or the canthi', () => {
+      const d = displacement(face.channels, bin, face.skin, face.parts[0]!.vertexCount, activations(face, { AU5: AU_MAX }).channels)
+      for (const side of ['L', 'R'] as const) {
+        const up = side === 'L' ? O!.margins.upperLidL : O!.margins.upperLidR, lo = side === 'L' ? O!.margins.lowerLidL : O!.margins.lowerLidR
+        const mid = up[up.length >> 1]!
+        expect(d[mid * 3 + 1]! / MM, side).toBeGreaterThan(1.5)
+        expect(d[mid * 3 + 1]! / MM, side).toBeLessThan(5)
+        expect(Math.hypot(d[up[0]! * 3]!, d[up[0]! * 3 + 1]!, d[up[0]! * 3 + 2]!)).toBe(0)
+        for (const v of lo.slice(1, -1)) expect(Math.hypot(d[v * 3]!, d[v * 3 + 1]!, d[v * 3 + 2]!)).toBe(0)
+      }
+    })
+
     describe.skipIf(!O)('with real openings in the skin', () => {
       const all = (aus: Record<string, number>): Float32Array => displacement(face.channels, bin, face.skin, face.parts[0]!.vertexCount, activations(face, aus).channels)
       const at = (d: Float32Array, v: number): [number, number, number] => [d[v * 3]!, d[v * 3 + 1]!, d[v * 3 + 2]!]
@@ -477,10 +558,16 @@ for (const bodyId of ['male', 'female'] as const) {
         // 上唇肌只动上唇缘，下唇肌只动下唇缘 / upper-lip muscles move only the upper margin, lower-lip muscles only the lower
         const d10 = all({ AU10: AU_MAX }), d25 = all({ AU25: AU_MAX })
         // 口角旁的几对除外：口角顶点两片共用，上下唇的肌肉都带着它 / the pairs next to a corner are left out: the corner vertex belongs to both sheets and muscles of either lip carry it
-        for (const [a, b] of pairs.slice(5, -5)) {
-          // 0.1 mm：褶皱附近的抹匀会从口角带进来一点位移 / 0.1 mm: the evening-out near creases carries a little displacement in from the corners
-          expect(Math.hypot(...at(d10, b))).toBeLessThan(0.1 * MM)
-          expect(Math.hypot(...at(d25, a))).toBeLessThan(0.1 * MM)
+        // 口角 10 mm 内的几对除外：那里上下唇肌的场是交接的 / the pairs within 10 mm of a corner are left out: there the fields of upper-lip and lower-lip muscles hand over
+        const rest = body!.meshes.get(face.skin)!.positions
+        const cornerPts = [O!.points.mouthCornerL, O!.points.mouthCornerR].map((v) => [rest[v * 3]!, rest[v * 3 + 1]!, rest[v * 3 + 2]!])
+        const farFromCorners = ([a]: readonly [number, number]): boolean => cornerPts.every((c) => Math.hypot(rest[a * 3]! - c[0]!, rest[a * 3 + 1]! - c[1]!, rest[a * 3 + 2]! - c[2]!) > 10 * MM)
+        // AU25 里有 0.15 的提上唇肌，所以这里单看降下唇肌 / AU25 carries 0.15 of levator labii superioris, so the depressor is looked at alone here
+        const dDli = displacement(face.channels, bin, face.skin, rest.length / 3, { depressor_labii_inferioris_L: 1, depressor_labii_inferioris_R: 1 })
+        for (const [a, b] of pairs.filter(farFromCorners)) {
+          // 0.2 mm：褶皱附近的抹匀会从口角带进来一点位移 / 0.2 mm: the evening-out near creases carries a little displacement in from the corners
+          expect(Math.hypot(...at(d10, b))).toBeLessThan(0.2 * MM)
+          expect(Math.hypot(...at(dDli, a))).toBeLessThan(0.2 * MM)
           expect(at(d10, a)[1]).toBeGreaterThanOrEqual(-0.05 * MM)
           expect(at(d25, b)[1]).toBeLessThanOrEqual(0.05 * MM)
         }

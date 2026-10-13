@@ -69,6 +69,10 @@ import { depthOf, LAYERS } from './layers.ts'
 import { signedVolume } from './meshRepair.ts'
 import { applyRigid, buildDeformation, buildTwoLevelDeformation, fitRigid, fitSimilarity, icp, InsideTester, PointIndex, surfaceDistance, surfacePoints, thinPoints, type Deformation, type Rigid } from './register.ts'
 import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, loadSkinPackage, notFittedAgainstSkin, selectSkinPackage, signedDistanceToSkin, simplifySkinKeepingFace, skinLockMask, skinResolution, SurfaceDistance, usedVertices, type SkinPackage } from './skinPackage.ts'
+import { thinOutsideRegion, thinStructuresOutsideSkin, type ThinOutside } from './thinOutside.ts'
+import { loadThinReference, settleThinParts, THIN_DEFAULTS, THIN_RULES, THIN_TISSUES, type ThinPartsResult } from './thinParts.ts'
+import { expandRetiredLipIds, lipPartIds } from './lipSplit.ts'
+import { refitIntercostalNerves, type IntercostalFitReport } from './intercostalFit.ts'
 import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent } from './skinOpened.ts'
 import { abductArms, ABDUCTION_DEFAULTS } from './armAbduction.ts'
 import { APPENDAGE_DEFAULTS, conformAppendages } from './appendages.ts'
@@ -1589,6 +1593,50 @@ async function finish(input: FinishInput) {
     const gone: { id: string; name: string }[] = []
     for (let i = parts.length - 1; i >= 0; i--) if (pelvis.drop.has(parts[i]!.id)) gone.push(...parts.splice(i, 1).map((p) => ({ id: p.id, name: p.name })))
     report.pelvis = { ...pelvis.report, dropped: gone.sort((a, b) => a.id.localeCompare(b.id)) }
+    // 宫颈偏向一侧是标本本身的，还是搬运和标准化带来的？在这里量本次构建的子宫（下三分之一）相对骨盆正中面的偏移，
+    // 与原始标本数据里量得的值并列记下。原始数据的值是 2026-10-13 直接从 Wu 等的 OBJ 量的（只读；文件 17 子宫壁、
+    // 19 子宫阴道腔、44 骨盆骨、45 骶尾骨；x 为左右方向，骨的正中面 x = 187.0–187.7 mm，由骶骨各层的中点和耻骨联合定出）：
+    // 子宫下段各层（宫颈）左右范围的中点在 x = 171.3–176.1，即偏向一侧 11–16 mm；该侧的卵巢和输卵管对应本模型的左侧。
+    // 按搬运的比例（放大 1.096、随骨盆横向收窄 0.89）折算为 11–15 mm。所以偏移是标本自己的，不是本项目的处理引入的：保持原样。
+    // Is the cervix off the midline in the specimen itself, or through our carriage and standardisation? The
+    // offset of this build's uterus (its lower third) from the median plane of the pelvis is measured here and
+    // recorded next to what the raw specimen data give. The raw figures were measured on 2026-10-13 directly on
+    // the OBJ files of Wu et al. (read-only; files 17 uterine wall, 19 uterine and vaginal lumen, 44 pelvic
+    // bone, 45 sacral and coccygeal bone; x is left–right; the median plane of the bones is x = 187.0–187.7 mm,
+    // from the mid-points of the sacrum slice by slice and the pubic symphysis): in the lower slices of the
+    // uterus (the cervix) the middle of its left–right extent lies at x = 171.3–176.1, that is 11–16 mm to one
+    // side — the side whose ovary and tube are the left ones of this model. At the scale of the carriage
+    // (enlarged 1.096, narrowed 0.89 with the pelvis) that is 11–15 mm. The offset is therefore the specimen's
+    // own and not introduced by this project: it is left as it is.
+    {
+      const uterus = parts.find((p) => p.id === 'WU_uterine_wall')
+      const hl = byName('Left hip bone')
+      const hr = byName('Right hip bone')
+      if (uterus && hl && hr) {
+        const xMid = (measure(hl.mesh).bbox[0] + measure(hr.mesh).bbox[3]) / 2
+        const ub = measure(uterus.mesh).bbox
+        const slab = 0.008
+        const slices: { yMm: number; midOffsetMm: number }[] = []
+        for (let y0 = ub[1]; y0 < ub[1] + (ub[4] - ub[1]) / 3; y0 += slab) {
+          let lo = Infinity
+          let hi = -Infinity
+          const P = uterus.mesh.positions
+          for (let i = 0; i < P.length; i += 3) if (P[i + 1]! >= y0 && P[i + 1]! < y0 + slab) {
+            lo = Math.min(lo, P[i]!)
+            hi = Math.max(hi, P[i]!)
+          }
+          if (hi > lo) slices.push({ yMm: round((y0 + slab / 2) * 1000, 1), midOffsetMm: round(((lo + hi) / 2 - xMid) * 1000, 1) })
+        }
+        const offs = slices.map((x) => x.midOffsetMm)
+        ;(report.pelvis as Record<string, unknown>).cervixOffset = {
+          question: 'is the cervix off the midline in the specimen itself or through the carriage onto this pelvis?',
+          thisBuild: { rule: 'lower third of the uterine wall in 8 mm slices: middle of its left–right extent minus the median plane of the pelvis (midway between the inner edges of the hip bones); positive = towards the left', medianPlaneXmm: round(xMid * 1000, 1), slices, rangeMm: offs.length ? [Math.min(...offs), Math.max(...offs)] : null },
+          rawSpecimen: { measuredOn: '2026-10-13', files: 'data/raw/female/pelvic_floor/wu2015_obj: 17_Uterine_wall, 19_Uterine_and_vaginal_lumen, 44_Pelvic_bone, 45_Sacral_and_coccygeal_bone (read-only)', bonyMedianPlaneXmm: [187.0, 187.7], uterineWallLowerSlicesMidXmm: [171.3, 176.1], lumenAtCervixMidXmm: [172.1, 175.2], offsetMm: [11, 16], side: 'the side of the ovary and tube that are the left ones here', atCarriageScaleMm: [11, 15], carriageScale: '1.096 enlarged x 0.89 narrowed with the pelvis' },
+          finding: 'the offset is the specimen\'s own (the same size before and after the carriage), not introduced by this project; the uterus is left as in the specimen, and the ligaments that have no room on that side stay absent',
+        }
+        console.log(`  cervix against the median plane of the pelvis: ${offs.length ? `${Math.min(...offs)}…${Math.max(...offs)}` : '?'} mm to the left in this build; 11–16 mm in the raw specimen (11–15 mm at the scale of the carriage): the specimen's own`)
+      }
+    }
   }
   lap('female lesser pelvis reconciled')
 
@@ -2115,6 +2163,113 @@ async function finish(input: FinishInput) {
     lap('nerve courses settled')
   }
 
+  // 本次构建的内部结构指纹（与 5e 装入皮肤时算的是同一个）：骨的名称和包围盒；做过体形重塑时再并入它的版本、包络和参数
+  // this build's internals fingerprint (the one step 5e computes when installing the skin): names and bounding boxes of the bones; with the body-shape stage applied, its version, envelope and options mixed in
+  const internalsKeyNow = (): { boneKey: string; key: string } => {
+    const boneKey = internalsKey(parts.filter((p) => p.tissue === 'bone').map((p) => ({ name: p.name, bbox: measure(p.mesh).bbox })))
+    const shaped = report.bodyShape as { applied?: boolean; envelopeSha1?: string; options?: unknown } | undefined
+    return { boneKey, key: shaped?.applied ? shapedInternalsKey(boneKey, shaped.envelopeSha1!, shaped.options) : boneKey }
+  }
+
+  // ── 5j. 肋间神经在腹壁里的一段按她自己的剑突和脐重新定位（见 intercostalFit.ts）。SOMA_INTERCOSTAL_FIT=0 关闭
+  // 脐取皮肤包 manifest 里记的那一个（constructedDetails.navel.centreOnFinalSkin：皮肤作者在第四腰椎椎体中心的高度构造的小凹），
+  // 只在该包声明是按本次内部结构拟合的时候才用（与装入皮肤同一个判据）；只读。在闭合皮肤的前正中线剖面上核对过：小凹就在那里。
+  // 注意体表图（tools/skinmaps）找脐用的是“前正中线上最深的凹”，在她身上找到的是腰部的浅凹（高约 5–7 cm），不是这个脐。
+  // ── 5j. The stretch of the intercostal nerves in the abdominal wall re-placed by her own xiphoid process and navel (see intercostalFit.ts). SOMA_INTERCOSTAL_FIT=0 switches it off
+  // The navel is the one recorded in the manifest of the skin package (constructedDetails.navel.centreOnFinalSkin:
+  // a dimple the skin's author constructed at the level of the centre of the body of the fourth lumbar vertebra),
+  // used only when that package says it was fitted to these internals (the guard that decides installing); read-only.
+  // Checked on the anterior midline profile of the closed skin: the dimple is there. Note that the skin maps
+  // (tools/skinmaps) look for the navel as "the deepest dimple of the anterior midline" and on her find the
+  // shallow hollow of the waist, 5–7 cm higher, not this navel.
+  if (process.env.SOMA_INTERCOSTAL_FIT !== '0') {
+    const { key } = internalsKeyNow()
+    let navel: { y: number; from: string } | null = null
+    for (const dir of [`${SKIN_PACKAGE_DIR}-open`, SKIN_PACKAGE_DIR]) {
+      try {
+        const mf = JSON.parse(readFileSync(join(ROOT, dir, 'manifest.json'), 'utf8')) as { fittedTo?: { body?: string; key?: string }; constructedDetails?: { navel?: { centreOnFinalSkin?: unknown } } }
+        const c = mf.constructedDetails?.navel?.centreOnFinalSkin
+        if (mf.fittedTo?.body === 'female' && mf.fittedTo.key === key && Array.isArray(c) && c.length === 3 && c.every((v) => typeof v === 'number' && Number.isFinite(v))) {
+          navel = { y: c[1] as number, from: `${dir}/manifest.json, constructedDetails.navel.centreOnFinalSkin (a navel constructed by the skin's author; fittedTo ${key})` }
+          break
+        }
+      } catch {
+        // 没有这个包或读不了：看下一个 / no such package, or unreadable: the next one is tried
+      }
+    }
+    const icf = refitIntercostalNerves(parts.map((p) => ({ id: p.id, name: p.name, tissue: p.tissue, mesh: p.mesh, ...(p.centrelines ? { centrelines: p.centrelines } : {}) })), navel)
+    for (const p of parts) {
+      const lines = icf.changed.get(p.id)
+      const mesh = lines ? nerveTubes(lines) : null
+      if (!lines || !mesh) continue
+      p.centrelines = lines
+      p.mesh = mesh
+    }
+    report.intercostalNerves = icf.report
+    if (icf.report.rows) {
+      const L = icf.report.landmarks!
+      console.log(`\nIntercostal nerves 7–11 re-placed in the abdominal wall (xiphoid tip y ${mm(L.xiphoidTipY)}, navel ${mm(L.navelY)}, pubic tubercles ${mm(L.pubicTubercleY)} mm; midline x ${mm(L.midlineX)} mm)`)
+      for (const r of icf.report.rows) console.log(`  ${r.side} ${pad(r.nerve, 3)}${r.changed ? 'moved' : `kept (${r.reason})`}: end y ${r.endYMm.before} → ${r.endYMm.after} mm (target ${r.endYMm.target}); below the xiphoid tip ${-r.againstMm.xiphoidTip.after}, above the navel ${r.againstMm.navel.after}, above the pubic tubercles ${r.againstMm.pubicTubercle.after} mm${r.seated ? `; seated behind rectus ${r.seated.behindRectus}, on transversus ${r.seated.onTransversus}, free ${r.seated.free} points; in bone ${r.inBoneAfter}` : ''}`)
+    } else console.log(`\nIntercostal nerves: not re-placed (${icf.report.reason})`)
+    lap('intercostal nerves in the abdominal wall')
+  } else report.intercostalNerves = { applied: false, reason: 'switched off (SOMA_INTERCOSTAL_FIT=0)' }
+
+  // ── 5k. 薄结构收回皮肤之内（见 thinParts.ts；与男性同一个函数，规则表 THIN_RULES.female）
+  // 放在所有会移动部件的步骤之后（体形重塑、上肢外展、神经走行、肋间神经），在装入皮肤、推导脂肪、简化和邻接之前。
+  // 参考皮肤是皮肤包的闭合皮肤（只读）。判据与装入皮肤的判据相同：包的 fittedTo.key 等于本次的内部结构指纹——
+  // 她做过体形重塑，指纹是“骨架指纹并入重塑的版本、包络和参数”的那一个（见 5e），不是男性那样单用骨架指纹：
+  // 软组织被重塑过，按另一版软组织拟合的皮肤对这些薄结构同样不适用。这一步不动骨，也不动决定皮肤拟合的肌和器官。
+  // 不处理的：Wu 的盆底标本和 HRA 的美术模型（另一位女性的真实结构和按器官配准的韧带，不该跟着皮肤走；露出多少照常量在 thinOutside 里）。
+  // SOMA_THIN_PARTS=0 关闭。
+  // ── 5k. Thin structures brought back inside the skin (see thinParts.ts; the male's function, rule table THIN_RULES.female)
+  // It runs after every step that moves parts (body shape, arm abduction, nerve courses, intercostal nerves) and
+  // before the skin is installed, the fat derived, and simplification and adjacency. The reference is the closed
+  // skin of the skin package (read-only). The guard is the one that decides installing: the package's
+  // fittedTo.key equals this build's internals fingerprint — with the body-shape stage applied that is the
+  // skeleton fingerprint with the stage's version, envelope and options mixed in (see 5e), not the bare
+  // skeleton fingerprint the male uses: her soft tissue was reshaped, and a skin fitted to another version of
+  // it is no reference for these thin parts either. The step moves no bone and none of the muscles and organs
+  // the skin fit depends on.
+  // Left alone: the Wu pelvic specimen and the HRA artist models (another woman's real structures and ligaments
+  // fitted to organs must not follow the skin; how far they come through is still measured under thinOutside).
+  // SOMA_THIN_PARTS=0 switches this off.
+  if (process.env.SOMA_THIN_PARTS !== '0') {
+    const ref = loadThinReference(ROOT, SKIN_PACKAGE_DIR)
+    const { boneKey, key } = internalsKeyNow()
+    if (!ref) report.thinParts = { applied: false, reason: 'no reference skin (no skin package on disk)' }
+    else if (ref.identity.fittedTo?.body !== 'female' || ref.identity.fittedTo.key !== key) report.thinParts = { applied: false, reason: 'the reference skin was fitted to other internals', reference: ref.identity, internalsKey: key }
+    else {
+      const notHers = new Set([SOURCE_WU.name, SOURCE_HRA.name])
+      const cand = parts.filter((p) => THIN_TISSUES.has(p.tissue) && p.system !== 'integumentary' && !notHers.has(p.source))
+      const res: ThinPartsResult = settleThinParts(
+        cand.map((p) => ({ id: p.id, name: p.name, tissue: p.tissue, provenance: p.provenance, mesh: p.mesh, ...(p.centrelines ? { centrelines: p.centrelines } : {}), tube: p.tissue === 'nerve' && !!p.keepGeometry && !!p.centrelines?.length })),
+        parts.filter((p) => p.tissue === 'bone').map((p) => ({ name: p.name, mesh: p.mesh })),
+        ref.mesh, THIN_RULES.female, THIN_DEFAULTS,
+        // 指、趾的血管和神经被推向指（趾）轴线之后有没有落进指（趾）骨 / whether the vessels and nerves of the digits end up inside a phalanx once pushed towards the axis of the digit
+        { insideBone: { parts: /\bdigital\b|\bmetacarpal vein\b|\bprinceps pollicis\b|\bdorsal branch of ulnar nerve$/i, bones: /phalanx|metacarpal|metatarsal/i }, keepOutOfBone: true },
+      )
+      const relabelled: Record<string, number> = {}
+      for (const p of parts) {
+        const m = res.changed.get(p.id)
+        if (!m) continue
+        p.mesh = m.mesh
+        if (m.centrelines) p.centrelines = m.centrelines
+        // 她自己的（Denver、CT）部件若被形变，不再是“源数据原样”（输出时她的 scanned 本来就一律标为 warped）
+        // one of her own parts (Denver, CT), once deformed, is no longer "as in the source" (her scanned parts are all shipped as warped anyway)
+        if (p.provenance === 'scanned') {
+          p.provenance = 'warped'
+          relabelled[p.tissue] = (relabelled[p.tissue] ?? 0) + 1
+        }
+      }
+      report.thinParts = { ...res.report, reference: ref.identity, internalsKey: key, skeletonKey: boneKey, excludedSources: [...notHers].sort(), relabelledByTissue: relabelled }
+      console.log(`\nThin structures brought inside the reference skin (${ref.identity.dir}/${ref.identity.file}, sha1 ${ref.identity.sha1.slice(0, 12)}; margin ${res.report.marginMm} mm): ${res.report.treated} of ${res.report.candidates} parts treated, ${res.report.clippedParts} clipped at the toe bases, ${res.report.relabelledToWarped.length} scanned parts relabelled warped; area outside of the treated parts ${res.report.outsideCm2.before} → ${res.report.outsideCm2.after} cm²`)
+      for (const r of res.report.parts.slice(0, 30)) console.log(`  ${pad(r.id, 15)}${pad(r.name.slice(0, 52), 54)}${pad(r.rule, 16)}${pad(`${r.outsideCm2.before} → ${r.outsideCm2.after} cm²`, 20)}${r.clipped ? `clipped ${r.clipped.removedCm2} cm²; ` : ''}${r.moved ? `${r.moved.how} moved up to ${r.moved.maxMm} mm (${(r.moved.share * 100).toFixed(0)}%)` : ''}`)
+      const ib = res.report.insideBone
+      if (ib) console.log(`  digital vessels and nerves inside hand and foot bones: ${ib.partsMeasured} parts measured, share of surface samples in bone ${(ib.shareBefore * 100).toFixed(2)} % → ${(ib.shareAfter * 100).toFixed(2)} %; worst after: ${ib.worst.slice(0, 8).map((w) => `${w.name} ${(w.before * 100).toFixed(1)} → ${(w.after * 100).toFixed(1)} % (${w.bone})`).join('; ') || 'none'}`)
+    }
+    lap('thin structures')
+  } else report.thinParts = { applied: false, reason: 'switched off (SOMA_THIN_PARTS=0)' }
+
   // ── 5e. 外部皮肤包：与本次内部结构匹配时装入，替换占位皮肤（见 skinPackage.ts）
   // ── 5e. External skin package: installed when it matches these internals, replacing the placeholder skin (see skinPackage.ts)
   let installedSkin: SkinPackage | null = null
@@ -2126,6 +2281,9 @@ async function finish(input: FinishInput) {
   let shippedOpenedSkin: { id: string; mesh: Mesh; source: Uint32Array; pieceOfVertex: Uint8Array } | null = null
   /** 发布的皮肤对应的闭合曲面（开口皮肤按下标闭合而成），供第 6 步之后判断内外的检查用；装入闭合包或没有装入时为 null / the closed surface that goes with the shipped skin (the opened skin closed by index), for the checks after step 6 that need inside tests; null with a closed package or none */
   let shippedSkinClosed: Mesh | null = null
+  /** 皮肤作者有意不包住的部件 id，已退役的唇 id 已换成两半的 / ids of the parts the skin's author left out of the fit, a retired lip id replaced by its two halves */
+  let notEnclosedIds: string[] = []
+  const retiredLips = new Map<string, { upper: string; lower: string }>()
   {
     // 指纹：骨的名称和包围盒（上肢外展之后的）；做过体形重塑时再并入它的版本、所用包络和参数——软组织变了，按旧软组织拟合的皮肤也就失效。
     // internalsKeyBeforeShape 是体形重塑之前（也在外展之前）的骨架指纹，skeletonKey 是现在的。
@@ -2153,6 +2311,14 @@ async function finish(input: FinishInput) {
       // 管线里用的是闭合的皮肤（开口后的包里是 skin-closed.obj；闭合包里 closedMesh 就是 mesh）；开口的那张只在第 6 步简化、发布
       // the placeholder (the warped male skin) is replaced outright, and the chest raise is not made.
       // The pipeline works with the closed skin (skin-closed.obj of an opened package; with a closed package closedMesh is mesh itself); the opened one is only simplified and shipped, in step 6
+      {
+        const have = new Set(parts.map((p) => p.id))
+        for (const id of pkg.notEnclosed) {
+          const h = lipPartIds(id)
+          if (!have.has(id) && have.has(h.upper) && have.has(h.lower)) retiredLips.set(id, h)
+        }
+        notEnclosedIds = expandRetiredLipIds(pkg.notEnclosed, retiredLips)
+      }
       skin.mesh = pkg.closedMesh
       skin.id = EXTERNAL_SKIN_ID
       skin.provenance = 'curated'
@@ -2177,13 +2343,15 @@ async function finish(input: FinishInput) {
           if (p.provenance === 'scanned') p.provenance = 'warped'
         }
         report.appendages = { applied: true, ...app.report, conformedIds: [...app.moved.keys()] }
-        // 皮肤开了口：深层的“唇”部件正挡在口裂里，皮肤不透明时应隐藏（不切它，见 tools/skinopen/INTEGRATION.txt 第 6 节）
-        // the skin has a mouth opening: the deep "Lip" part sits in the fissure and is to be hidden while the skin is opaque (it is not cut; section 6 of tools/skinopen/INTEGRATION.txt)
+        // 皮肤开了口：深层的唇部件正挡在口裂里，皮肤不透明时应隐藏（见 tools/skinopen/INTEGRATION.txt 第 6 节）。
+        // 男性的 Lip 已切成上唇和下唇（lipSplit.ts），她的两个部件是这两半形变来的，两个都列上
+        // the skin has a mouth opening: the deep lip parts sit in the fissure and are to be hidden while the skin is opaque (section 6 of tools/skinopen/INTEGRATION.txt).
+        // The male Lip is split into an upper and a lower lip (lipSplit.ts); her two parts are those halves warped, and both are listed
         if (pkg.opened) {
           const lips = parts.filter((p) => DEEP_LIP_NAME.test(p.name) && p.system !== 'integumentary').map((p) => p.id)
           const ap = report.appendages as { hideWithOpaqueSkin?: string[]; deepLip?: unknown }
           ap.hideWithOpaqueSkin = [...(ap.hideWithOpaqueSkin ?? []), ...lips]
-          ap.deepLip = { ids: lips, note: 'the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' }
+          ap.deepLip = { ids: lips, note: lips.length > 1 ? 'the deep lip parts (upper and lower lip: the two halves of the male Lip part, split along its own fissure by lipSplit.ts and warped onto her) lie in the oral opening of the opened skin: both are listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' : 'the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' }
         }
         console.log(`\nAppendages conformed to the installed skin (${app.moved.size} parts; share of surface outside the skin and largest distance outside, before → after)`)
         for (const r of app.report.parts) console.log(`  ${pad(r.name, 28)}${pad(r.kind, 9)}outside ${(r.before.outside * 100).toFixed(0)}% → ${(r.after.outside * 100).toFixed(0)}%, max ${r.before.maxMm} → ${r.after.maxMm} mm; ${r.skinSide.face} face ${r.skinSide.before.minMm}…${r.skinSide.before.maxMm} → ${r.skinSide.after.minMm}…${r.skinSide.after.maxMm} mm (target ${r.skinSide.targetMm}); moved up to ${r.displacementMm.max} mm`)
@@ -2236,7 +2404,7 @@ async function finish(input: FinishInput) {
         }
         // 有意不包住的肌（名单上组织为肌的部件）露出皮肤多少：本次构建对闭合的皮肤量
         // how far the muscles deliberately not enclosed (the parts on the list whose tissue is muscle) come through the skin: measured by this build against the closed skin
-        const exemptMuscles = parts.filter((p) => p.tissue === 'muscle' && pkg.notEnclosed.includes(p.id))
+        const exemptMuscles = parts.filter((p) => p.tissue === 'muscle' && notEnclosedIds.includes(p.id))
         if (exemptMuscles.length) {
           const tester = new InsideTester(pkg.closedMesh, 256)
           const surface = new SurfaceDistance(pkg.closedMesh)
@@ -2326,8 +2494,11 @@ async function finish(input: FinishInput) {
       }
       // 皮肤作者有意不包住的部件（包的 manifest 里列出）单独报告，不计入“应当包住”的那部分
       // the parts the skin's author deliberately did not enclose (listed in the package manifest) are reported apart from the set that must be enclosed
-      const fit = checkSkinFit(pkg.closedMesh, deepOf(), new Set(pkg.notEnclosed))
-      row.notEnclosedPartIds = [...pkg.notEnclosed].sort()
+      // 包的 manifest 里还写着已退役的整个唇的 id：换成两半的 id（名单上的 id 不是现有部件、而它的两半都在时才换）
+      // the package manifest still names the retired id of the whole lip: replaced by the ids of its two halves (only for a listed id that is no present part while both of its halves are)
+      const fit = checkSkinFit(pkg.closedMesh, deepOf(), new Set(notEnclosedIds))
+      row.notEnclosedPartIds = [...notEnclosedIds].sort()
+      if (retiredLips.size) row.notEnclosedRetiredIds = Object.fromEntries([...retiredLips].map(([id, h]) => [id, [h.upper, h.lower]]))
       // 面部几处结构在皮肤下的深度，以及皮肤模型的眼关节与眼球中心的偏差
       // how deep a few facial structures lie under the skin, and how far the skin model's eye joints are from the centres of the globes
       row.face = faceAgainstSkin(pkg.closedMesh, parts.map((p) => ({ name: p.name, mesh: p.mesh })), pkg.eyeJoints)
@@ -2497,13 +2668,22 @@ async function finish(input: FinishInput) {
         for (const g of opened.grafts) console.log(`  graft ${g.name} (${g.provenance}; ${g.source.name}): patch ${g.shipped.patch}, blend ring ${g.shipped.blendRing}, construction ${g.shipped.construction}${g.ring ? `; ring triangles ${g.ring.triangles}, longest edge median ${g.ring.longestEdgeMm.median} / max ${g.ring.longestEdgeMm.max} mm, dihedral median ${g.ring.dihedralDeg.median}° / p95 ${g.ring.dihedralDeg.p95}° / max ${g.ring.dihedralDeg.max}° (${g.ring.dihedralDeg.over45} edges over 45°)` : ''}`)
         for (const q of opened.quantisation ? [opened.quantisation.at14Bits, opened.quantisation.chosen] : []) console.log(`  positions at ${q.bits} bits (step ${q.stepMm} mm): lip margin pairs ${q.marginPairs}, shipped under two indices ${q.marginPairsShippedApart}, still coincident ${q.marginPairsCoincidentAfter}; inner-lip walls: ${q.walls.tested} upper-sheet vertices over the lower sheet (gap p10 ${q.walls.gapMm.p10} / median ${q.walls.gapMm.median} / p90 ${q.walls.gapMm.p90} mm, ${q.walls.crossedInPackage} already crossed), order changed at ${q.walls.flipped} (gap there at most ${q.walls.flippedGapInPackageMmMax} mm), largest gap change ${q.walls.gapChangeMmMax} mm, distinct positions merged ${q.walls.mergedPositions}`)
       } else row.resolution = { source: skinResolution(mesh, p.lockVertices), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, kf.inFace), shippedTopology: edgeTopology(kf.mesh) }
-      row.fitShipped = checkSkinFit(fitMesh, parts.filter((q) => FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ id: q.id, name: q.name, mesh: q.mesh })), new Set((installedSkin as SkinPackage | null)?.notEnclosed ?? []))
+      row.fitShipped = checkSkinFit(fitMesh, parts.filter((q) => FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ id: q.id, name: q.name, mesh: q.mesh })), new Set(installedSkin ? notEnclosedIds : []))
       // 不在拟合之列的薄结构和旧体表部件露出多少（见 skinPackage.ts） / how far the thin structures and old surface parts that the fit did not cover come through (see skinPackage.ts)
       row.notFitted = notFittedAgainstSkin(
         fitMesh,
         parts.filter((q) => !FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ name: q.name, mesh: q.mesh })),
         parts.filter((q) => q.system === 'integumentary' && q !== p && !isFatPart(q.id) && q.source !== SOURCE_HRA.name).map((q) => ({ name: q.name, mesh: q.mesh })),
       )
+      // 薄结构露在皮肤外的面积，逐部件（见 thinOutside.ts：上面 notFitted 的比例和距离看不出横在趾蹼、大腿根处的筋膜）
+      // area of the thin structures outside the skin, part by part (see thinOutside.ts: the share and distance of notFitted above do not show a fascia lying across the web spaces or at the thigh roots)
+      {
+        const sb = measure(fitMesh).bbox
+        const hipLow = Math.min(...parts.filter((q) => /hip bone/i.test(q.name)).map((q) => measure(q.mesh).bbox[1]))
+        const thin = thinStructuresOutsideSkin(fitMesh, parts.filter((q) => !FAT_DEEP_TISSUES.has(q.tissue) && q.system !== 'integumentary').map((q) => ({ id: q.id, name: q.name, tissue: q.tissue, mesh: q.mesh })), thinOutsideRegion(sb, hipLow))
+        row.thinOutside = thin
+        console.log(`\nThin structures outside the skin, by area: ${thin.outsideCm2} cm² of ${thin.totalAreaCm2} cm² (${thin.outsideOver1mmCm2} cm² more than 1 mm out); by region ${JSON.stringify(thin.byRegion)}; largest: ${thin.rows.slice(0, 8).map((x) => `${x.name} ${x.outsideCm2} cm² (${Object.entries(x.byRegion).map(([g, v]) => `${g} ${v}`).join(', ')}; max ${x.maxMm} mm)`).join('; ')}`)
+      }
       const rs = row.resolution as { simplifiedWhole: { face: { vertices: number; meanEdgeMm: number } }; shipped: { vertices: number; triangles: number; face: { vertices: number; meanEdgeMm: number } }; shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } }
       console.log(`\nSkin: face region kept at source resolution — ${rs.shipped.face.vertices} vertices, mean edge ${rs.shipped.face.meanEdgeMm} mm (simplified as a whole it would keep ${rs.simplifiedWhole.face.vertices} vertices, mean edge ${rs.simplifiedWhole.face.meanEdgeMm} mm); shipped skin ${rs.shipped.vertices} vertices, ${rs.shipped.triangles} triangles, boundary edges ${rs.shippedTopology.boundaryEdges}, non-manifold edges ${rs.shippedTopology.nonManifoldEdges}; deep-part surface outside the shipped skin ${((row.fitShipped as { outside: number }).outside * 100).toFixed(2)}%`)
       mesh = kf.mesh
@@ -2947,6 +3127,13 @@ async function finish(input: FinishInput) {
     pelvisExtra.en += ` That gap (${pl.uterusBladder.gapMm} mm) lies between the back of the empty bladder and the cervix; tilting the uterine body forwards by up to 30° would not close it, so the uterus was left as in the specimen.`
     pelvisExtra.zh += `这段空隙（${pl.uterusBladder.gapMm} mm）位于空膀胱后壁与宫颈之间，把子宫体前倾 30° 也合不上，所以子宫保持标本中的位置。`
   }
+  {
+    const co = (report.pelvis as { cervixOffset?: { thisBuild: { rangeMm: number[] | null }; rawSpecimen: { offsetMm: number[] } } } | undefined)?.cervixOffset
+    if (co?.thisBuild.rangeMm) {
+      pelvisExtra.en += ` The cervix lies ${co.thisBuild.rangeMm[0]}–${co.thisBuild.rangeMm[1]} mm to the left of the median plane of the pelvis; it does so in the specimen itself (${co.rawSpecimen.offsetMm[0]}–${co.rawSpecimen.offsetMm[1]} mm from the median plane of its own bones, measured in the source data), so it was not straightened, and the ligaments that have no room on that side are absent.`
+      pelvisExtra.zh += `宫颈偏在骨盆正中面左侧 ${co.thisBuild.rangeMm[0]}–${co.thisBuild.rangeMm[1]} mm；标本本身就是这样（在原始数据里量得偏离它自己骨的正中面 ${co.rawSpecimen.offsetMm[0]}–${co.rawSpecimen.offsetMm[1]} mm），所以没有扶正，该侧放不下的韧带仍然缺失。`
+    }
+  }
   if (pl?.rectovaginal) {
     pelvisExtra.en += ` The posterior vaginal wall and the rectum are apposed through the rectovaginal septum (closer than 1 mm over ${pl.rectovaginal.rectalWallAreaMm2.within1mm} mm²).`
     pelvisExtra.zh += `阴道后壁与直肠隔着直肠阴道隔相贴（相距不足 1 mm 的面积为 ${pl.rectovaginal.rectalWallAreaMm2.within1mm} mm²）。`
@@ -3148,8 +3335,40 @@ async function finish(input: FinishInput) {
         zh: '体表上的乳房是皮肤模型的；其内的腺体各部是站立位形态的美术模型（Human Reference Atlas），没有按这层皮肤调整过。',
       })
     }
-    const nf = (report.skinPackage as { notFitted?: { caution: { zh: string; en: string } } }).notFitted
-    if (nf) skinCautions.push(nf.caution)
+    const nf = report.skinPackage as { notFitted?: { caution: { zh: string; en: string }; surfaceParts: { worst: { name: string; outside: number }[] } }; thinOutside?: ThinOutside }
+    const tp = report.thinParts as (ThinPartsResult['report'] & { applied: boolean }) | { applied: false } | undefined
+    if (nf.notFitted && nf.thinOutside && tp?.applied) {
+      // 薄结构：按面积报告（thinOutside.ts），并说明这一步做了什么（thinParts.ts）；数值都取自本次构建。分成两条（每条中文不超过 260 字）
+      // thin structures: reported by area (thinOutside.ts), with what the stage did (thinParts.ts); every figure is this build's. Two cautions (each Chinese text within 260 characters)
+      const to = nf.thinOutside
+      const moved = tp.parts.filter((p) => p.moved)
+      const far = Math.max(0, ...moved.map((p) => p.moved!.maxMm))
+      const lata = tp.parts.filter((p) => /fascia lata/i.test(p.name))
+      const lataCm2 = Math.round(lata.reduce((a, p) => a + p.outsideCm2.before, 0))
+      const ib = tp.insideBone
+      const relieved = tp.parts.reduce((a, p) => a + (p.boneRelief?.points ?? 0), 0)
+      const top = to.rows[0]
+      const bare = (n: string) => n.replace(/^(Left|Right) /, '').toLowerCase()
+      const names = [...new Set(nf.notFitted.surfaceParts.worst.filter((w) => w.outside > 0.1).map((w) => bare(w.name)))]
+      // 剩下的若在躯干外侧缘（腋襞处），照实说明原因 / when what is left lies at the lateral border of the trunk (the axillary folds), the reason is stated
+      const atFold = !!top && Math.min(Math.abs(top.outsideBbox[0]), Math.abs(top.outsideBbox[3])) > 0.14 && top.outsideBbox[1] > 1
+      skinCautions.push({
+        en: `The skin was fitted to enclose muscles, bones, cartilages and organs only; fasciae, cutaneous nerves, superficial vessels and joint capsules were then brought under it by this project. ${moved.length} of them were moved inwards by a smooth displacement to lie at least ${tp.marginMm} mm under the skin (by up to ${far.toFixed(0)} mm)${lata.length ? `, among them the fascia lata, which stood out at the root of each thigh (${lataCm2} cm²)` : ''}. The vessels and nerves of fingers and toes were moved into their own digit${ib ? `; where that would have put them into a finger or toe bone the move was held back (${relieved} points), and ${(ib.shareAfter * 100).toFixed(1)} % of their surface lies inside bone (${(ib.shareBefore * 100).toFixed(1)} % before)` : ''}. These positions follow the skin, not a scan.`,
+        zh: `皮肤拟合时只保证包住肌、骨、软骨和器官；筋膜、皮神经、浅血管和关节囊是本项目事后收到皮肤之内的：${moved.length} 个部件用平滑的位移向内移动，使其至少在皮下 ${tp.marginMm} mm（最多移动 ${far.toFixed(0)} mm）${lata.length ? `，包括原先在两侧大腿根部翻出皮肤的阔筋膜（${lataCm2} cm²）` : ''}。指、趾的血管和神经被移进各自的指、趾${ib ? `；会因此落进指骨、趾骨的地方位移被收回（${relieved} 个点），它们的表面仍有 ${(ib.shareAfter * 100).toFixed(1)} % 在骨内（之前 ${(ib.shareBefore * 100).toFixed(1)} %）` : ''}。这些位置是跟着皮肤定的，不是扫描所得。`,
+      })
+      skinCautions.push({
+        en: `Measured by area, ${tp.outsideCm2.before} cm² of the treated thin structures lay outside the skin before and ${tp.outsideCm2.after} cm² after; over all thin structures ${to.outsideCm2} cm² of ${Math.round(to.totalAreaCm2)} cm² (${((100 * to.outsideCm2) / to.totalAreaCm2).toFixed(2)}%) is still outside the shipped skin, ${to.outsideOver1mmCm2} cm² of it by more than 1 mm${top ? `, most of it on the ${bare(top.name)} (${top.outsideCm2} cm², up to ${top.maxMm} mm)${atFold ? ', at the axillary folds, where the skin of arm and chest lie against each other and inside and outside are not well defined' : ''}` : ''}. The crural fascia arrives already cut off at the bases of the toes (in the male build), so nothing of it spans the web spaces any more.${names.length ? ` Surface parts made for the earlier skin do not sit on this one: ${names.join(', ')}.` : ''}`,
+        zh: `按面积量：被处理的薄结构原先有 ${tp.outsideCm2.before} cm² 在皮肤外，处理后为 ${tp.outsideCm2.after} cm²；全部薄结构 ${Math.round(to.totalAreaCm2)} cm² 中仍有 ${to.outsideCm2} cm²（${((100 * to.outsideCm2) / to.totalAreaCm2).toFixed(2)}%）在发布的皮肤之外，其中 ${to.outsideOver1mmCm2} cm² 超出 1 mm${top ? `，最多的是“${top.name}”（${top.outsideCm2} cm²，最多 ${top.maxMm} mm）${atFold ? '，在腋襞处：那里上臂和胸壁的皮肤相贴，内外分不清' : ''}` : ''}。小腿筋膜在男性构建里已在趾根剪掉，不再横在趾蹼之间。${names.length ? `为旧皮肤做的体表部件（头发、眉、甲等）与这层皮肤对不上。` : ''}`,
+      })
+    } else if (nf.notFitted) skinCautions.push(nf.notFitted.caution)
+    // 唇：两个部件（男性的 Lip 切开后形变而来） / the lips: two parts (the male Lip, split and warped)
+    {
+      const lips = parts.filter((p) => DEEP_LIP_NAME.test(p.name) && p.system !== 'integumentary')
+      if (lips.length === 2) skinCautions.push({
+        en: `The lips under the skin are two parts, "${lips[0]!.name}" and "${lips[1]!.name}": the single scanned "Lip" of the male body, a thin shell of both vermilions, was cut along its own fissure in the male build, the cut faces were closed with constructed caps, and both halves were deformed onto her and moved forwards under the lip surface of her skin. They lie in the mouth opening of the skin and are meant to be hidden while the skin is opaque.`,
+        zh: `皮肤下的唇是两个部件（上唇、下唇）：男性身体上扫描得到的单个“Lip”是上下唇红连成的一片薄壳，在男性构建里沿它自己的口裂切开，切口用构造的面封上；两半再形变到她身上，并前移到她皮肤的唇面之下。它们位于皮肤的口裂处，皮肤不透明时应隐藏。`,
+      })
+    }
   } else {
     skinCautions.push({
       en: 'The body surface is a PLACEHOLDER: the male body surface (itself a parametric model skin fitted to the male) deformed to this skeleton and raised into a smooth envelope over the breasts. It is a male surface and does not show female body shape, external genitalia or fat distribution; a skin fitted to these internals is to replace it. Hair, eyebrows, nails and the external ear are the male parts deformed with it and were not fitted to it. The breasts themselves are a standing-shape artist model.',
@@ -3178,7 +3397,7 @@ async function finish(input: FinishInput) {
         const lips = (bs.lipCarry?.parts ?? []).filter((r) => r.carried && r.coverWantedMm !== null)
         // 随唇搬运的其余口周肌：体积变化最大的一块 / the other perioral muscles carried with the lips: the largest change of volume among them
         const worstVol = Math.max(0, ...(bs.lipCarry?.parts ?? []).filter((r) => r.carried && r.kind === 'perioral').map((r) => Math.abs(r.volumeMl.change ?? 0)))
-        const ZH: Record<string, string> = { Lip: '唇', 'Orbicularis oris': '口轮匝肌' }
+        const ZH: Record<string, string> = { Lip: '唇', 'Upper lip': '上唇', 'Lower lip': '下唇', 'Orbicularis oris': '口轮匝肌' }
         // 胸锁乳突肌在“仍在目标之外最多”的名单里时才提它 / sternocleidomastoid is named only while it is on the list of the parts furthest outside
         const scm = (bs.worstAfter ?? []).some((w) => /sternocleidomastoid/i.test(w.name))
         shapeExtra.en += ` On the head and neck the target surface is a face built on her skull from published soft-tissue depths (${Math.round((bs.outside?.after.head?.outside ?? 0) * 100)} % of the muscle surface of the head and ${Math.round((bs.outside?.after.neck?.outside ?? 0) * 100)} % of that of the neck still lie outside it${scm ? '; sternocleidomastoid, which is her own and comes from a heavier donor, most of all' : ''}).${lips.length ? ` The lips were moved forwards to lie under its lip surface (${lips.map((r) => `${r.name.toLowerCase()} by ${r.displacementMm.median} mm`).join(', ')}, median) as a whole, and the muscles that run into the lips follow at their labial end and keep their bony origins (their volume changed by at most ${Math.round(worstVol * 100)} %).` : ''}`
@@ -3238,6 +3457,20 @@ async function finish(input: FinishInput) {
       en: 'Warped parts are anchored by bone only. Between bones their position is extrapolated: expect errors of 1–3 cm for limb muscles, vessels and nerves, and more in the abdomen and pelvis.',
       zh: '形变部件仅以骨骼为锚点，骨与骨之间的位置靠外推得到：四肢的肌肉、血管和神经误差约 1–3 cm，腹部和盆腔更大。',
     },
+    ...(((): { zh: string; en: string }[] => {
+      const ic = report.intercostalNerves as IntercostalFitReport | undefined
+      if (!ic?.applied || !ic.rows || !ic.landmarks) return []
+      const end = (n: number) => {
+        const r = ic.rows!.filter((x) => x.nerve === n)
+        return r.length ? Math.round(r.reduce((a, x) => a + x.endYMm.after, 0) / r.length) : NaN
+      }
+      const moved = ic.rows.filter((x) => x.changed)
+      const far = Math.max(0, ...moved.map((x) => Math.abs(x.endYMm.after - x.endYMm.before)))
+      return [{
+        en: `The intercostal nerves are male centrelines carried onto her ribs. Along the ribs each lies in its own intercostal space; beyond the costal margin nothing anchored them, so the stretch of nerves 7–11 in the abdominal wall was laid out again by this project (ends moved by up to ${Math.round(far)} mm): the 7th now ends ${Math.round(ic.landmarks.xiphoidTipY * 1000 - end(7))} mm below the tip of her xiphoid process and the 10th at the navel of her skin, as the textbook says; the 8th and 9th are spaced evenly between them and the 11th lies ${Math.round(end(10) - end(11))} mm below the navel (interpolated, an assumption). Each was seated on the outer surface of transversus abdominis and behind rectus abdominis, which it pierces at its end. The navel is a dimple constructed in the skin at the level of the fourth lumbar vertebra, so these levels are constructed too. There is no subcostal nerve, and no lateral cutaneous branches are modelled.`,
+        zh: `肋间神经是男性的中心线搬到她的肋上的。沿肋的一段各在自己的肋间隙里；过了肋弓就没有可依的骨，所以第 7–11 肋间神经在腹壁里的一段由本项目重新布置（前端最多移动 ${Math.round(far)} mm）：第 7 肋间神经现在止于她剑突尖下方 ${Math.round(ic.landmarks.xiphoidTipY * 1000 - end(7))} mm，第 10 肋间神经止于她皮肤上的脐（与教科书一致）；第 8、9 在两者之间等分，第 11 在脐下 ${Math.round(end(10) - end(11))} mm（内插，是假定）。各神经落在腹横肌的外表面、腹直肌的后面，末端穿过腹直肌。脐是在皮肤上按第四腰椎的高度构造的小凹，所以这些高度也是构造出来的。模型里没有肋下神经，也没有外侧皮支。`,
+      }]
+    })()),
     {
       en: `The pelvic floor, the anal and urethral sphincters, the perineal muscles, clitoris and vestibular bulbs, the urethra, vagina, rectum and anal canal, uterus, tubes and ovaries (${nWu} parts) are real female anatomy, but of ANOTHER woman, not of the donor of the skeleton (Wu et al. 2015: a young adult of the Chinese Visible Human series). Her structures were reconstructed from cryosections and smoothed by the authors of that study, enlarged 1.096 times and fitted to this pelvis by its bones (to about 2 mm), then narrowed by 11 % together with the pelvis. Left and right halves were separated by this project, and where neighbouring structures overlapped the less important one was reshaped by up to 8 mm. Do not read sizes, exact positions or left–right differences from these parts.`,
       zh: `盆底肌、肛门括约肌和尿道括约肌、会阴肌、阴蒂和前庭球、尿道、阴道、直肠和肛管、子宫、输卵管和卵巢（共 ${nWu} 个部件）是真实的女性解剖结构，但来自另一位女性，不是这副骨架的供体（Wu 等 2015 年的研究：中国可视化人体数据集中的一位年轻成年女性）。这些结构由该研究的作者根据冰冻切片重建并做过平滑，本模型把它们放大 1.096 倍，按骨性标志配准到这个骨盆上（误差约 2 mm），又随骨盆一起横向收窄 11 %。左右两半是本项目切分的；相邻结构有重叠的地方，次要的一方被重新塑形，最多移动 8 mm。不要据此判断这些结构的大小、精确位置或左右差异。`,
