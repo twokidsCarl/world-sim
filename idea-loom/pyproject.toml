@@ -1,7 +1,7 @@
 [project]
 name = "idea-loom"
 version = "0.1.0"
-description = "world-sim 的想法池：生成、查看、归类、合并 idea，分配开发并跟踪进度"
+description = "想法经纬（idea-loom）：world-sim 的想法池，生成、查看、归类、合并 idea，分配开发并跟踪进度"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.6",

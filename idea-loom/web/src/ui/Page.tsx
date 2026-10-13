@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
-import { useStore } from '../state/store'
+import { useStore, useT } from '../state/store'
 import { parseTab } from './tabs'
 
 // 每个页面都包在这里面：统一的标题和导语，并把页面身份报给全局状态。
@@ -9,10 +9,13 @@ import { parseTab } from './tabs'
 export function Page(props: { title: string; lead?: string; idea?: string; actions?: ReactNode; children: ReactNode }) {
   const setPage = useStore((s) => s.setPage)
   const { title, lead = '' } = props
+  // 页签标题里的产品名跟着界面语言：中文是「想法经纬」，英文是 idea-loom。
+  // The product name in the tab title follows the UI language: 想法经纬 in Chinese, idea-loom in English.
+  const brand = useT()('想法经纬', 'idea-loom')
   useEffect(() => {
     setPage({ title, lead, idea: props.idea })
-    document.title = `${title} · idea-loom`
-  }, [title, lead, props.idea, setPage])
+    document.title = `${title} · ${brand}`
+  }, [title, lead, props.idea, setPage, brand])
   return (
     <div className="page">
       <header className="page-head">

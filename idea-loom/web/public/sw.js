@@ -17,10 +17,10 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {}
   } catch {
-    data = { title: 'idea-loom', body: event.data ? event.data.text() : '' }
+    data = { title: '想法经纬', body: event.data ? event.data.text() : '' }
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || 'idea-loom', {
+    self.registration.showNotification(data.title || '想法经纬', {
       body: data.body || '',
       tag: data.tag || undefined,
       icon: '/icon.svg',
