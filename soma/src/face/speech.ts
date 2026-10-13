@@ -1,6 +1,8 @@
-// "由音频带动口形"：用户选的音频文件在页面里解码、分析成口形轨迹，播放时口形逐帧跟随。没有语音合成，文件不离开页面。
+// "由音频带动口形"：用户选的音频文件在页面里解码、分析成口形轨迹，播放时口形逐帧跟随。文件不离开页面。
+// （由音素带动口形——语音合成和示范片段——在 src/face/say.ts；两者共用这里的 AudioContext，同一时刻只播一个。）
 // "Speak from audio": an audio file the user chose is decoded and analysed into a mouth track in the page, and the mouth
-// follows it frame by frame during playback. There is no speech synthesis, and the file never leaves the page.
+// follows it frame by frame during playback. The file never leaves the page. (Phoneme-driven speech — synthesis and the demo
+// clips — is src/face/say.ts; both share the AudioContext created here and only one plays at a time.)
 //
 // 从声音推出的口形是近似的：开口度可靠，圆唇一般，闭合较弱（只当作一般的闭唇），唇齿音（f、v）检测不出来。
 // 特征 → 口形的规则在 tools/face/model.ts 的 mouthFrameToChannels，这里逐帧调用它，所以应用里的结果与参考实现一致。
@@ -21,11 +23,11 @@ let analysed: AnalysedAudio | null = null
 let playing: { source: AudioBufferSourceNode; startTime: number; endTime: number } | null = null
 let token = 0
 
-/** 逐帧推进的平滑状态：index 是已经算到的帧，before 是算这一帧之前的状态 / The smoothing state advanced frame by frame: `index` is the frame reached, `before` the state before it. */
-let index = -1
-let before: MouthState | undefined
-let state: MouthState | undefined
-let last: { face: FaceData; index: number; out: SpeechSample } | null = null
+/** 另一路说话（src/face/say.ts）登记的停止函数：这边开始播放时先让那边停 / The stop function registered by the other speech route (src/face/say.ts): it is stopped before playback starts here. */
+let stopRival: (() => void) | null = null
+export function setSpeechRival(stop: () => void): void {
+  stopRival = stop
+}
 
 export interface SpeechSample {
   /** 帧下标（每秒 100 帧）/ frame index (100 per second). */
@@ -44,6 +46,55 @@ function ensureContext(): AudioContext | null {
   context ??= new AudioContext()
   return context
 }
+
+/** 说话共用的 AudioContext（没有 Web Audio 时为 null）/ The AudioContext shared by speech (null without Web Audio). */
+export function speechContext(): AudioContext | null {
+  return ensureContext()
+}
+
+/**
+ * 逐帧推进原始特征路线的平滑状态。从第 0 帧逐帧推进，所以第 i 帧的结果与"把 mouthFrameToChannels 从头按每秒 100 帧跑到
+ * 这一帧"完全相同，不随渲染帧率变化；往回跳时从头重算。
+ * Advances the smoothing state of the raw-feature route frame by frame. It steps from frame 0, so frame i is exactly what
+ * running mouthFrameToChannels from the start at 100 frames a second up to that frame gives, whatever the rendering frame
+ * rate; a jump backwards recomputes from the start.
+ */
+export class FeatureStepper {
+  /** index 是已经算到的帧，before 是算这一帧之前的状态 / `index` is the frame reached, `before` the state before it. */
+  private index = -1
+  private before: MouthState | undefined
+  private state: MouthState | undefined
+  private last: { face: FaceData; index: number; out: SpeechSample } | null = null
+
+  reset(): void {
+    this.index = -1
+    this.before = undefined
+    this.state = undefined
+    this.last = null
+  }
+
+  at(face: FaceData, frames: readonly MouthFrame[], i: number): SpeechSample | null {
+    if (i < 0 || i >= frames.length) return null
+    if (this.last && this.last.index === i && this.last.face === face) return this.last.out
+    if (i !== this.index) {
+      let st = i > this.index ? this.state : undefined
+      for (let k = i > this.index && this.index >= 0 ? this.index + 1 : 0; k < i; k++) st = mouthFrameToChannels(face, frames[k]!, st).state
+      this.before = st
+      this.index = i
+    }
+    const r = mouthFrameToChannels(face, frames[i]!, this.before)
+    this.state = r.state
+    const out: SpeechSample = { index: i, frame: frames[i]!, state: r.state, pose: r.pose, channels: r.channels, jaw: r.jaw }
+    this.last = { face, index: i, out }
+    return out
+  }
+
+  lastSample(): SpeechSample | null {
+    return this.last?.out ?? null
+  }
+}
+
+const stepper = new FeatureStepper()
 
 /**
  * 读入并分析一个音频文件。可以不在用户手势里调用（解码不需要）；播放另由 playSpeech 在手势里开始。
@@ -107,6 +158,7 @@ export async function playSpeech(): Promise<boolean> {
     return false
   }
   halt()
+  stopRival?.()
   const p = a.play(ctx.currentTime + 0.05)
   playing = p
   p.source.onended = () => {
@@ -124,10 +176,7 @@ export async function playSpeech(): Promise<boolean> {
 }
 
 function resetTrack(): void {
-  index = -1
-  before = undefined
-  state = undefined
-  last = null
+  stepper.reset()
 }
 
 function halt(): void {
@@ -178,25 +227,12 @@ export function speechFrame(face: FaceData): SpeechSample | null {
   const a = analysed
   const t = speechTime()
   if (!a || t === null) return null
-  const i = Math.floor(t * 100)
-  if (i < 0 || i >= a.frames.length) return null
-  if (last && last.index === i && last.face === face) return last.out
-  if (i !== index) {
-    let st = i > index ? state : undefined
-    for (let k = i > index && index >= 0 ? index + 1 : 0; k < i; k++) st = mouthFrameToChannels(face, a.frames[k]!, st).state
-    before = st
-    index = i
-  }
-  const r = mouthFrameToChannels(face, a.frames[i]!, before)
-  state = r.state
-  const out: SpeechSample = { index: i, frame: a.frames[i]!, state: r.state, pose: r.pose, channels: r.channels, jaw: r.jaw }
-  last = { face, index: i, out }
-  return out
+  return stepper.at(face, a.frames, Math.floor(t * 100))
 }
 
 /** 最近一次算出的口形（验证用）/ The mouth shape last computed (verification). */
 export function lastSpeechSample(): SpeechSample | null {
-  return last?.out ?? null
+  return stepper.lastSample()
 }
 
 /** 界面上的小条用：整条轨迹和播放头 / For the strip in the UI: the whole track and the playhead. */

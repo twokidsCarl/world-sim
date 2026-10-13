@@ -56,10 +56,20 @@
 
 - **情绪表情。** 21 种（高兴、悲伤、恐惧、愤怒、惊讶、厌恶 6 种基本情绪，加 15 种复合情绪），每种是一组面部动作单元（AU），带一个 0–1 的强度滑块。每种情绪用到哪些 AU 取自 Du、Tao、Martinez 2014；**各 AU 的强度是本项目的假设**。模拟人没有情绪，这只是把已发表的原型摆出来。
 - **单个动作单元。** 25 个 AU 各一个滑块（0–5，对应 FACS 的 A–E 级），与"疼痛"页里的是同一组。
-- **口形（视位）。** 17 个说话的口形，点一下保持、再点一下松开：双唇音合唇、唇齿音下唇碰上齿、圆唇、展唇、开口等，舌有四个示意姿势。方法取自 JALI（Edwards 等 2016）；**视位表里的数值是假设**。
-- **由音频带动口形。** 选择或拖入一个音频文件，在页面内解码并分析，点"播放"后口形跟着声音走，面板上有一条开口、圆唇、闭合的轨迹。没有语音合成；文件不会上传。**从声音推出的口形只是近似**：开口度较可靠，圆唇一般，闭唇较弱（只当作一般的闭合），唇齿音（f、v）检测不出来。
+- **口形（视位）。** 22 个说话的口形（英语 17 个，加普通话专用的 5 个：撮口 ü、卷舌 zh ch sh r、龈腭 j q x、卷舌元音 er、软腭擦音 h），点一下保持、再点一下松开：双唇音合唇、唇齿音下唇碰上齿、圆唇、展唇、开口等；舌有五个示意姿势（舌尖、舌面前部、舌根上抬，舌放低，卷舌）。方法取自 JALI（Edwards 等 2016）。每个口形有两套数值，用"风格"开关选：
+  - **正常**：朗读时的开度。**下颌开度是按实测标定的**：电磁发音仪量到的切牙开度，三位英语说话人的均值（USC-TIMIT 一位，CC BY 4.0；MOCHA-TIMIT 两位，**该语料只许研究、教育和个人使用，这里只用了本项目自己算的汇总量，没有带语料本身**）。开口的 a 切牙只分开约 5 毫米，多数辅音 1–3 毫米。部分舌位取自实测的线圈高度。**假设的部分**：唇的动作强度（只按实测的唇开度核对过次序）、舌尖的接触、把"说话时下颌的最高位置"当作闭口；普通话专用的 5 个口形没有任何实测数据。
+  - **夸张**：校准之前的那套大口形（开口的 a 张到最大角的一半），**全部是假设**，好处是各口形分得开。
+  - 开关在"缺省"时，口形按钮用夸张、说话用正常。每个数值的来历写在 `data/curated/face/visemes.json` 的 `calibration` 和各视位的 `provenance` 里。
+- **说一句话（由音素带动口形）。** 一段带音素时间线的声音，口形由"现在在发哪个音"决定，不是从声音里猜的：音素 → 视位（`data/curated/face/phonemes-en.json`、`visemes-zh.json`）→ 协同发音（JALI 的习惯；普通话按音节分组，圆唇不跨音节）→ 口形，和声音走同一个时钟。面板上显示正在说的词和音。
+  - 随仓库带了 12 句示范（英语、普通话各 6 句，`public/voice/tts-demo/`），**不需要后端**。
+  - 语音合成后端在的时候（见"运行"），可以自己输入一句英语或普通话，选声音和语速；后端的拒绝信息和提示原样显示。**声音是机器合成的**（Kokoro-82M，Apache-2.0），界面上写明。
+  - 同一段声音可以切换"按音素"（准确）和"按声音分析"（近似），对比两者的差别。
+  - 没有用户手势时（由链接或卡片打开）浏览器不让出声：口形按页面时钟无声地走（嵌入时循环），点"声音"后带声音从头播一遍。
+- **由音频带动口形。** 选择或拖入一个音频文件，在页面内解码并分析，点"播放"后口形跟着声音走，面板上有一条开口、圆唇、闭合的轨迹。文件不会上传。**从声音推出的口形只是近似**：开口度较可靠，圆唇一般，闭唇较弱（只当作一般的闭合），唇齿音（f、v）检测不出来。
 
-疼痛、情绪和说话由同一个驱动合成（规则在 `tools/face/model.ts` 的 `blendFace`）：情绪和疼痛在同一个 AU 上取较大者；上半脸（眉、眼）只来自这组 AU；说话时表情的下半脸减弱到四成，再与口形在每个通道上取较大者；下颌取两者中较大的；闭唇的口形优先于张口的表情。
+疼痛、情绪和说话由同一个驱动合成（规则在 `tools/face/model.ts` 的 `blendFace`）：情绪和疼痛在同一个 AU 上取较大者；上半脸（眉、眼）只来自这组 AU；说话时表情的下半脸减弱到四成，再与口形在每个通道上取较大者；下颌取两者中较大的；闭唇的口形优先于张口的表情。下颌已经被姿势面板或反射张开时，闭唇和口角按总的下颌角来算，所以双唇音照样合上（总角不超过约 8.7° 时；再大唇就够不着了）。口形有三个来源，优先级从高到低：音素时间线、对音频的分析、保持的口形。
+
+由音素带动时另有两处处理（`src/face/visemeTrack.ts`）：双唇音紧挨着唇齿音时（five more），闭唇和"下唇碰上齿"两个约束会同时接近满值，这里让大的那个胜出，否则唇合不上；闭唇时把"唇成漏斗状"（AU22）减掉，它会把合着的唇顶开约 1 毫米。已知的不足：闭唇按 120 毫秒消退，夹在两个双唇音之间的短元音（"妈妈"）张不开。
 
 ### 标定对照
 
@@ -75,6 +85,17 @@ bun run dev        # http://localhost:5183
 ```
 
 仓库里已经带了生成好的解剖数据（`public/anatomy/`），克隆后可以直接看。
+
+**语音合成后端（可选）。** `server/` 是一个 FastAPI 服务（`POST /api/tts`、`GET /api/tts/voices`、`GET /api/health`），用开源模型 Kokoro-82M（英语 v1.0，普通话 v1.1-zh，都是 Apache-2.0）把一句话合成 24 kHz 的声音，并给出音素时间线。经统一入口（idea-loom）使用时它按需启动，不用管。开发时自己启动：
+
+```sh
+cd server
+uv run --extra model python -m soma_tts.fetch --state <状态目录>      # 第一次：下载模型（约 0.6 GB，逐个校验 sha256），不进 git
+WORLD_SIM_STATE=<状态目录> uv run --extra model uvicorn soma_tts.server:app --host 127.0.0.1 --port <端口>
+cd .. && SOMA_API_PORT=<端口> bun run dev                              # 开发服务器把 /api 转给它
+```
+
+没有后端时界面照常能用："表情"面板里没有输入框，说明合成需要本机的服务，随附的 12 句示范和"选择音频文件"都还在；说话的卡片用的是随附的片段。
 
 ### 地址参数
 
@@ -107,7 +128,9 @@ bun run dev        # http://localhost:5183
 | `pain` | `7` | 把疼痛表情保持在该强度（0–10）；不会自动出声 |
 | `au` | `4:3,43:5` | 手动设定面部动作单元，编号:强度（0–5）；与 `pain`、`expr` 逐项取较大者 |
 | `expr` | `happy`、`fearful:0.6` | 情绪表情：表情 id，可带强度（0–1，省略为 1）。id：`happy sad fearful angry surprised disgusted`，以及 `happily_surprised happily_disgusted sadly_fearful sadly_angry sadly_surprised sadly_disgusted fearfully_angry fearfully_surprised fearfully_disgusted angrily_surprised angrily_disgusted disgustedly_surprised appalled hatred awed` |
-| `vis` | `PBM` | 保持一个口形（视位）。id：`SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX` |
+| `vis` | `PBM` | 保持一个口形（视位）。id：`SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX`，以及普通话专用的 `YU ZHCHSH JQX ER HX` |
+| `say` | `zh-03` | 说一句示范片段：`en-01`…`en-06`、`zh-01`…`zh-06`。口形按音素时间线走；没有用户手势时无声地播，界面上有“声音”按钮。合成用的自由文字不进地址 |
+| `style` | `normal`、`clear` | 说话的风格：正常朗读（按实测标定）或夸张。省略时保持的口形用夸张、说话用正常 |
 | `skin` | `1` | 不透明皮肤视图 |
 | `renderer` | `webgl` | 强制用 WebGL2 后端 |
 
@@ -185,8 +208,14 @@ bun tools/skinmaps/run.ts male   # 体表图；female 同理
 
 - 内容：VIVAE 语料库（Holz、Larrouy-Maestri、Poeppel，[doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)）里"身体疼痛"类的 185 条录音，重采样到 24 kHz，另加本项目做的逐条分析。这些是按指令表演出来的发声，不是真实疼痛时的录音。署名、许可和改动清单在该目录的 `ATTRIBUTION.txt` 和 `LICENSE.txt` 里。
 - 用法：`src/voice/` 在运行时加载它，在录音基础上做变化（换录音、小幅变调变速、连成持续性发声、由女声推出男声）。目录不存在时自动改用参数化合成器。
-- **商业用途的构建或部署不得带这个目录。** 用 `SOMA_COMMERCIAL=1 bunx vite build` 构建：产物里不带 `voice/`，界面改用参数合成的声音，也不显示录音的署名。默认构建不变（带录音包）。
+- **商业用途的构建或部署不得带这个目录。** 用 `SOMA_COMMERCIAL=1 bunx vite build` 构建：产物里不带 `voice/vivae-pain/`（`voice/tts-demo/` 的许可允许商用，照常保留），界面改用参数合成的声音，也不显示录音的署名。默认构建不变（带录音包）。
 - `data/curated/voice/calibration.json` 只含由该语料统计出的汇总量，不含音频。
+
+### 语音合成：模型、示范片段和口形的标定数据
+
+- **模型**不进 git：Kokoro-82M v1.0（英语）和 Kokoro-82M-v1.1-zh（普通话），hexgrad，Apache-2.0。来源、固定的提交、读到的许可条款和每个文件的 sha256 在 `server/models.json`。
+- **示范片段** `public/voice/tts-demo/`：12 句**机器合成**的声音和它们的音素时间线，由上面的模型生成，本项目没有附加限制；署名和生成方式见该目录的 `ATTRIBUTION.txt`、`LICENSE.txt`。没有真人录音。
+- **口形的标定数据**：`data/curated/reference/articulation-summary.json` 是本项目从两个发音语料算出的汇总量（各音的切牙开度、唇开度、线圈高度的均值）。USC-TIMIT 是 CC BY 4.0；**MOCHA-TIMIT 只许研究、教育和个人使用，未经许可不得商用**，仓库里没有它的原始数据，依赖它的数值在 `visemes.json` 里标了 `calibratedAgainstNonCommercialData`。
 
 ## 已知的缺口
 
@@ -276,10 +305,20 @@ The "Expression" panel on the left:
 
 - **Emotion expressions.** 21 of them (the six basic ones — happy, sad, fearful, angry, surprised, disgusted — and 15 compound ones), each a set of facial action units (AUs) with a strength slider from 0 to 1. Which AUs make up each emotion is from Du, Tao & Martinez 2014; **the intensity of each AU is an assumption of this project**. The simulated body has no emotions; published prototypes are merely posed.
 - **Single action units.** A slider for each of the 25 AUs (0–5, FACS levels A–E), the same set as in the Pain tab.
-- **Mouth shapes (visemes).** 17 mouth shapes of speech; click to hold, click again to release: lips sealed for bilabials, lower lip to the upper teeth for labiodentals, rounded, spread, open, and four schematic tongue poses. The method is from JALI (Edwards et al. 2016); **the numbers in the viseme table are assumptions**.
-- **Speak from audio.** Choose or drop an audio file; it is decoded and analysed in the page, and after pressing Play the mouth follows the sound, with a strip showing opening, rounding and closure. There is no speech synthesis and the file is never uploaded. **Mouth shapes derived from sound are approximate**: opening is fairly reliable, rounding moderate, lip closure weak (treated as a generic closure), and labiodentals (f, v) are not detected.
+- **Mouth shapes (visemes).** 22 mouth shapes of speech (17 for English plus 5 for Mandarin only: rounded front ü, retroflex zh ch sh r, alveolo-palatal j q x, the rhotic vowel er and the velar fricative h); click to hold, click again to release: lips sealed for bilabials, lower lip to the upper teeth for labiodentals, rounded, spread, open; the tongue has five schematic poses (tip, front and back raised, lowered, retroflex). The method is from JALI (Edwards et al. 2016). Every shape has two sets of numbers, chosen with the "Style" switch:
+  - **Normal**: the openings of read speech. **The jaw openings are calibrated against measurements**: incisor openings from electromagnetic articulography, the mean of three English speakers (one from USC-TIMIT, CC BY 4.0; two from MOCHA-TIMIT, **a corpus licensed for research, educational and individual use only — only aggregates computed by this project are used and the corpus itself is not included**). An open a parts the incisors by only about 5 mm and most consonants by 1–3 mm. Some tongue weights come from measured coil heights. **What is assumed**: the lip action intensities (checked against the measured lip aperture for order only), contact of the tongue tip, and equating the highest jaw position reached in speech with a closed mouth; the 5 Mandarin-only shapes have no measurements behind them at all.
+  - **Clear**: the wide shapes from before calibration (an open a at half the jaw's range), **assumptions throughout**; their merit is that the shapes can be told apart.
+  - With the switch on "Default" the shape buttons use Clear and speech uses Normal. Where each number comes from is recorded under `calibration` and each viseme's `provenance` in `data/curated/face/visemes.json`.
+- **Say something (phoneme-driven).** Audio that comes with a phoneme timeline; the mouth shape is set by which sound is being made, not guessed from the audio: phonemes → visemes (`data/curated/face/phonemes-en.json`, `visemes-zh.json`) → co-articulation (the JALI habits; Mandarin is grouped by syllable, so rounding does not cross a syllable boundary) → mouth shape, on the same clock as the audio. The panel shows the word and sound being spoken.
+  - 12 demo sentences ship with the repository (6 English, 6 Mandarin, `public/voice/tts-demo/`) and **need no backend**.
+  - With the speech-synthesis backend present (see "Run") you can type an English or Mandarin sentence and choose a voice and a speed; the backend's refusals and warnings are shown verbatim. **The audio is machine-synthesized** (Kokoro-82M, Apache-2.0), and the UI says so.
+  - The same audio can be switched between "By phonemes" (accurate) and "By audio analysis" (approximate) to see the difference.
+  - Without a user gesture (opened by a link or a card) browsers allow no sound: the mouth runs silently on the page clock (looping when embedded), and "Sound" replays it from the start with audio.
+- **Speak from audio.** Choose or drop an audio file; it is decoded and analysed in the page, and after pressing Play the mouth follows the sound, with a strip showing opening, rounding and closure. The file is never uploaded. **Mouth shapes derived from sound are approximate**: opening is fairly reliable, rounding moderate, lip closure weak (treated as a generic closure), and labiodentals (f, v) are not detected.
 
-Pain, emotion and speech are composed by one driver (the rule is `blendFace` in `tools/face/model.ts`): emotion and pain take the larger value of each AU; the upper face (brows, eyes) comes from that set alone; while speaking the expression's lower face is attenuated to four tenths and then combined with the mouth shape by taking the larger value per channel; the jaw is the larger of the two; a lip closure wins over an open-mouthed expression.
+Pain, emotion and speech are composed by one driver (the rule is `blendFace` in `tools/face/model.ts`): emotion and pain take the larger value of each AU; the upper face (brows, eyes) comes from that set alone; while speaking the expression's lower face is attenuated to four tenths and then combined with the mouth shape by taking the larger value per channel; the jaw is the larger of the two; a lip closure wins over an open-mouthed expression. When the pose panel or a reflex has already opened the jaw, lip seal and corner shaping are computed for the total jaw angle, so a bilabial still closes (while the total stays within about 8.7°; beyond that the lips cannot reach). The mouth shape has three sources, in falling precedence: a phoneme timeline, an analysis of audio, a held shape.
+
+Phoneme-driven speech adds two treatments (`src/face/visemeTrack.ts`): where a bilabial touches a labiodental ("five more") the closure and lower-lip-to-teeth constraints both approach full value, and the larger one is made to win, as the lips would not close otherwise; and with the lips sealed the funnel (AU22) is taken off, because it pushes sealed lips apart by about 1 mm. A known shortcoming: the closure decays over 120 ms, so a short vowel between two bilabials (妈妈, "mama") does not open up.
 
 ### Calibration
 
@@ -295,6 +334,17 @@ bun run dev        # http://localhost:5183
 ```
 
 The generated anatomy data (`public/anatomy/`) is in the repository, so a fresh clone runs as is.
+
+**The speech-synthesis backend (optional).** `server/` is a FastAPI service (`POST /api/tts`, `GET /api/tts/voices`, `GET /api/health`) that synthesizes one sentence into 24 kHz audio with a phoneme timeline, using the open model Kokoro-82M (v1.0 for English, v1.1-zh for Mandarin, both Apache-2.0). Through the single entry point (idea-loom) it is started on demand and needs no attention. To start it yourself while developing:
+
+```sh
+cd server
+uv run --extra model python -m soma_tts.fetch --state <state dir>      # first time: download the models (about 0.6 GB, each sha256 verified); not in git
+WORLD_SIM_STATE=<state dir> uv run --extra model uvicorn soma_tts.server:app --host 127.0.0.1 --port <port>
+cd .. && SOMA_API_PORT=<port> bun run dev                              # the dev server proxies /api to it
+```
+
+Without the backend the UI still works: the Expression panel has no text box and says that synthesis needs the local service, while the 12 shipped demo sentences and "choose an audio file" remain; the speech cards use the shipped clips.
 
 ### URL parameters
 
@@ -327,7 +377,9 @@ The whole view state lives in the query string, so any view can be opened by one
 | `pain` | `7` | Hold the pain expression at this level (0–10); never plays sound by itself |
 | `au` | `4:3,43:5` | Manual facial action units, number:intensity (0–5); combined with `pain` and `expr` by maximum |
 | `expr` | `happy`, `fearful:0.6` | Emotion expression: an expression id, optionally with a strength (0–1; 1 when omitted). Ids: `happy sad fearful angry surprised disgusted`, and `happily_surprised happily_disgusted sadly_fearful sadly_angry sadly_surprised sadly_disgusted fearfully_angry fearfully_surprised fearfully_disgusted angrily_surprised angrily_disgusted disgustedly_surprised appalled hatred awed` |
-| `vis` | `PBM` | Hold one mouth shape (viseme). Ids: `SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX` |
+| `vis` | `PBM` | Hold one mouth shape (viseme). Ids: `SIL PBM FV TH TDN L SZ SH KG R W UW OW IY EH AA AX`, and the Mandarin-only `YU ZHCHSH JQX ER HX` |
+| `say` | `zh-03` | Say a demo clip: `en-01`…`en-06`, `zh-01`…`zh-06`. The mouth follows the phoneme timeline; without a user gesture it plays silently and the UI shows a “Sound” button. Free text for synthesis never goes into the URL |
+| `style` | `normal`, `clear` | Style of speech: normal read speech (calibrated against measurements) or exaggerated. When omitted, held shapes use clear and speech uses normal |
 | `skin` | `1` | Opaque-skin view |
 | `renderer` | `webgl` | Force the WebGL2 backend |
 
@@ -405,8 +457,14 @@ About two thirds of the Chinese names are machine-generated from a term lexicon 
 
 - Contents: the 185 physical-pain recordings of the VIVAE corpus (Holz, Larrouy-Maestri, Poeppel, [doi:10.5281/zenodo.4066235](https://doi.org/10.5281/zenodo.4066235)), resampled to 24 kHz, plus a per-clip analysis made by this project. They are vocalisations performed on instruction, not recordings of real pain. Attribution, licence and the list of changes are in `ATTRIBUTION.txt` and `LICENSE.txt` in that directory.
 - Use: `src/voice/` loads it at run time and varies the recordings (clip choice, small pitch and time changes, sequences for sustained pain, a male voice derived from the female recordings). Without the directory it falls back to the parametric synthesizer.
-- **A build or deployment for commercial use must not include this directory.** Build with `SOMA_COMMERCIAL=1 bunx vite build`: `dist/` then has no `voice/`, the app uses the parametric voice and the recordings' attribution is not shown. The default build is unchanged (it includes the pack).
+- **A build or deployment for commercial use must not include this directory.** Build with `SOMA_COMMERCIAL=1 bunx vite build`: `dist/` then has no `voice/vivae-pain/` (`voice/tts-demo/` allows commercial use and stays), the app uses the parametric voice and the recordings' attribution is not shown. The default build is unchanged (it includes the pack).
 - `data/curated/voice/calibration.json` holds only aggregates computed from the corpus, no audio.
+
+### Speech synthesis: models, demo clips and the data behind the mouth shapes
+
+- **The models** are not in git: Kokoro-82M v1.0 (English) and Kokoro-82M-v1.1-zh (Mandarin) by hexgrad, Apache-2.0. Source, pinned commit, the licence clauses as read and the sha256 of every file are in `server/models.json`.
+- **The demo clips** in `public/voice/tts-demo/`: 12 **machine-synthesized** sentences with their phoneme timelines, generated with the models above; this project adds no restriction. Attribution and how they were made are in `ATTRIBUTION.txt` and `LICENSE.txt` in that directory. None is a recording of a person.
+- **The data behind the mouth shapes**: `data/curated/reference/articulation-summary.json` holds aggregates this project computed from two articulatory corpora (mean incisor opening, lip aperture and coil heights per sound). USC-TIMIT is CC BY 4.0; **MOCHA-TIMIT is for research, educational and individual use only and not for commercial use without permission** — none of its raw data is in the repository, and the values depending on it are marked `calibratedAgainstNonCommercialData` in `visemes.json`.
 
 ## Known gaps
 

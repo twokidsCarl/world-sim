@@ -2,7 +2,7 @@
 // Controls on the stage in embed mode (?embed=1): a one-line caution notice, a few controls
 // chosen from the card's state, and "open full UI".
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
 import { triggerPain } from '../pain/controller.ts'
@@ -15,7 +15,8 @@ import { DISCLAIMER } from '../painmodel/index.ts'
 import { replayStimulus } from '../pain/stim.ts'
 import { KINDS, kindSpec } from '../pain/stimulus.ts'
 import { STIM_CAVEATS } from './StimulusPanel.tsx'
-import { EXPRESSION_STATEMENT } from '../face/statements.ts'
+import { enableSaySound, loadDemoClip, loadDemoPacks, playSay, type DemoClip } from '../face/say.ts'
+import { EXPRESSION_STATEMENT, SAY_STATEMENT, VISEME_STATEMENT } from '../face/statements.ts'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 import { ShapeSlider } from './ShapeControls.tsx'
 
@@ -49,6 +50,20 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const exprCard = embedKeys.has('expr') || embedKeys.has('vis')
   const expr = useApp((s) => s.expr)
   const viseme = useApp((s) => s.viseme)
+  // 说话卡片：一句示范片段。没有手势时无声地循环，"声音"按钮从头带声音播一遍
+  // speech cards: one demo clip. Without a gesture it loops silently, and the "sound" button plays it once from the start with audio
+  const sayCard = embedKeys.has('say')
+  const say = useApp((s) => s.say)
+  const speechStyle = useApp((s) => s.speechStyle)
+  const [demoClips, setDemoClips] = useState<DemoClip[]>([])
+  useEffect(() => {
+    if (!sayCard) return
+    let cancelled = false
+    void loadDemoPacks().then((p) => !cancelled && setDemoClips(p.flatMap((x) => x.clips)))
+    return () => {
+      cancelled = true
+    }
+  }, [sayCard])
   const shape = useApp((s) => s.shape)
   const shapeCard = embedKeys.has('shape')
   const shapeStatus = useApp((s) => s.shapeStatus)
@@ -62,7 +77,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const cautions = graph.cautions
   const rigCautions = rig && (embedKeys.has('pose') || embedKeys.has('breath')) ? rig.rig.cautions : []
   // 疼痛卡片：把"这是什么模型"的说明放在最前 / pain cards: the statement of what this model is comes first
-  const all = [...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...(exprCard ? EXPRESSION_STATEMENT : []), ...cautions, ...rigCautions, ...((painCard || exprCard) && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
+  const all = [...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...(exprCard || sayCard ? EXPRESSION_STATEMENT : []), ...(sayCard ? [SAY_STATEMENT, VISEME_STATEMENT] : []), ...cautions, ...rigCautions, ...((painCard || exprCard || sayCard) && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
   // 姿势按钮：静止、卡片指定的预设，再加几个常用的 / pose buttons: rest, the card's preset, and a few common ones
   const presets = useMemo(() => {
     if (!rig) return []
@@ -199,7 +214,60 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
             )}
           </>
         )}
-        {exprCard && !painCard && !face && <span className="embed-note">加载表情数据… Loading…</span>}
+        {(exprCard || sayCard) && !painCard && !face && <span className="embed-note">加载表情数据… Loading…</span>}
+        {sayCard && face && (
+          <>
+            <select
+              className="tool-btn embed-say"
+              value={say.source === 'demo' && say.clip ? say.clip : ''}
+              aria-label="示范句子 / demo sentence"
+              title="换一句示范句子（机器合成的声音，带音素时间线）/ another demo sentence (machine-synthesized audio with a phoneme timeline)"
+              onChange={(e) => {
+                const id = e.target.value
+                if (id) void loadDemoClip(id).then((ok) => ok && playSay({ sound: true }))
+              }}
+            >
+              {!(say.source === 'demo' && say.clip) && <option value="">示范句子 Demo sentence</option>}
+              {demoClips.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.id} · {c.text}
+                </option>
+              ))}
+            </select>
+            <button
+              className={`tool-btn${say.status === 'playing' && say.sound ? ' on' : ''}`}
+              disabled={say.status !== 'ready' && say.status !== 'playing'}
+              aria-pressed={say.status === 'playing' && say.sound}
+              onClick={() => void enableSaySound()}
+              title="带声音从头播一遍（浏览器要有一次点击才允许出声）/ play once from the start with sound (browsers allow sound only after a click)"
+            >
+              声音 <span className="en">Sound</span>
+            </button>
+            {(['normal', 'clear'] as const).map((id) => {
+              const on = (speechStyle ?? 'normal') === id
+              return (
+                <button
+                  key={id}
+                  className={`tool-btn${on ? ' on' : ''}`}
+                  aria-pressed={on}
+                  onClick={() => app.setSpeechStyle(id)}
+                  title={id === 'normal' ? '正常朗读：按实测的切牙开度标定 / read speech: calibrated against measured incisor openings' : '夸张的清晰发音：数值是假设 / exaggerated, clear speech: the numbers are assumptions'}
+                >
+                  {id === 'normal' ? '正常' : '夸张'} <span className="en">{id === 'normal' ? 'Normal' : 'Clear'}</span>
+                </button>
+              )
+            })}
+            {!painCard && !exprCard && (
+              <button className="tool-btn" onClick={() => app.setFaceView(skinOpaque ? 'muscle' : 'skin')}>
+                {skinOpaque ? '看肌肉' : '看皮肤'} <span className="en">{skinOpaque ? 'Muscles' : 'Skin'}</span>
+              </button>
+            )}
+            {say.status === 'loading' && <span className="embed-note">加载声音… Loading…</span>}
+            {say.status === 'error' && <span className="embed-note">{say.message}</span>}
+            {say.status === 'playing' && !say.sound && <span className="embed-note">无声播放中，点“声音” playing silently — press Sound</span>}
+            {say.status === 'playing' && say.sound && <span className="embed-note">机器合成的声音 machine-synthesized audio</span>}
+          </>
+        )}
         {stimCard && (
           <>
             <select

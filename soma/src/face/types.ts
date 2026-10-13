@@ -158,12 +158,36 @@ export interface FaceExpression {
   basis: Sourced
 }
 
-/** 舌的姿势权重（0–1），对应通道 tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low。 Tongue pose weights (0–1) for the channels tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low. */
+/**
+ * 舌的姿势权重（0–1），对应通道 tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low / tongue_retroflex。
+ * Tongue pose weights (0–1) for the channels tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low / tongue_retroflex.
+ */
 export interface TonguePose {
   tip: number
   front: number
   back: number
   low: number
+  /** 舌尖抬起并后缩（卷舌），通道 tongue_retroflex；缺省 0 / tip raised and drawn back (retroflex), channel tongue_retroflex; 0 when absent. */
+  retro?: number
+}
+
+/**
+ * 视位表里一个数值的来历：要么有出处（source 是 FaceData.sources 里的 id），要么是假设（assumption: true）。
+ * Where one number of the viseme table comes from: either a source (`source` is an id into FaceData.sources) or an assumption.
+ */
+export interface VisemeProvenance {
+  source?: string
+  assumption?: true
+  /** 用到的说话人（articulation-summary 里的 id）/ the speakers used (ids of the articulation summary). */
+  speakers?: string[]
+  /** 这些说话人里有许可只限研究、教育用途的语料（MOCHA-TIMIT）/ some of these speakers come from a corpus licensed for research and education only (MOCHA-TIMIT). */
+  calibratedAgainstNonCommercialData?: true
+  /** 下颌：换算前的切牙开度目标和说话人内标准差的均值，毫米 / jaw: the incisor-opening target before conversion and the mean within-speaker SD, millimetres. */
+  targetMm?: number
+  sdMm?: number
+  /** 舌：各说话人的归一化高度（顺序同 speakers），键是姿势 / tongue: the normalised heights per speaker (in the order of `speakers`), keyed by pose. */
+  measured?: Record<string, number[]>
+  note?: Bilingual
 }
 
 /** 构音类别，供协同发音规则使用（JALI 附录 A 的分类）。 Articulation classes used by the co-articulation rules (the classes of JALI's appendix A). */
@@ -178,13 +202,21 @@ export type VisemeClass = 'bilabial' | 'labiodental' | 'sibilant' | 'obstruent' 
 export interface FaceViseme {
   id: string
   name: Bilingual
-  /** 归入这个视位的音（ARPAbet 风格的记号）/ the sounds mapped to this viseme (ARPAbet-style symbols). */
+  /** 归入这个视位的音：ARPAbet 风格的记号；普通话的写成 "zh:" 加拼音声母 / 韵母 / the sounds mapped to this viseme: ARPAbet-style symbols; Mandarin ones are "zh:" plus the pinyin initial / final. */
   phonemes: string[]
   classes: VisemeClass[]
-  /** 下颌张开角占 jaw.max 的比例 / jaw opening as a fraction of jaw.max. */
+  /** 下颌张开角占 jaw.max 的比例：正常朗读语速下的值（风格 1）/ jaw opening as a fraction of jaw.max: the value of normal read speech (style 1). */
   jaw: number
-  /** 唇的动作单元强度（0–5）/ lip action unit intensities (0–5). */
+  /** 唇的动作单元强度（0–5），正常朗读（风格 1）/ lip action unit intensities (0–5), normal read speech (style 1). */
   aus: Record<string, number>
+  /**
+   * 夸张 / 清晰发音（风格 2）时的下颌和唇；没有就与正常相同。风格在 1 和 2 之间线性过渡（见 tools/face/model.ts 的 visemeAUs）。
+   * Jaw and lips of exaggerated / clear speech (style 2); the normal values when absent. Styles between 1 and 2 interpolate linearly
+   * (see visemeAUs in tools/face/model.ts).
+   */
+  clear?: { jaw: number; aus: Record<string, number> }
+  /** 每个数值的来历，键：jaw、aus、constraints、tongue、clear / where each number comes from, keyed jaw, aus, constraints, tongue, clear. */
+  provenance?: Record<string, VisemeProvenance>
   /** 双唇闭合 0–1（通道 lip_seal）/ bilabial closure 0–1 (channel lip_seal). */
   closure: number
   /** 下唇贴上切牙 0–1（通道 lip_dental）/ lower lip to the upper incisors 0–1 (channel lip_dental). */

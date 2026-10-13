@@ -1,6 +1,6 @@
-// "表情"面板：情绪预设和强度、口形（视位）、由音频带动口形、逐个动作单元。
-// The "Expression" panel: emotion presets with a strength, mouth shapes (visemes), speaking from audio, and a slider
-// per action unit.
+// "表情"面板：情绪预设和强度、口形（视位）、说一句话（由音素带动口形）、由音频带动口形、逐个动作单元。
+// The "Expression" panel: emotion presets with a strength, mouth shapes (visemes), saying something (phoneme-driven), speaking
+// from audio, and a slider per action unit.
 //
 // 这些都经同一个驱动（src/face/driver.ts）与疼痛表情合成；这里只改 store 里的设定。
 // All of this is composed with the pain expression by one driver (src/face/driver.ts); this panel only edits settings in the store.
@@ -9,9 +9,10 @@ import { useEffect, useRef, useState, type DragEvent } from 'react'
 import type { AnatomyGraph } from '../anatomy/graph.ts'
 import type { FaceData, FaceExpression } from '../face/types.ts'
 import { clearSpeech, loadSpeech, playSpeech, speechTrack, stopSpeech } from '../face/speech.ts'
-import { EXPRESSION_STATEMENT, SPEECH_STATEMENT } from '../face/statements.ts'
+import { EXPRESSION_STATEMENT, SPEECH_STATEMENT, VISEME_STATEMENT } from '../face/statements.ts'
 import { useApp } from '../state/store.ts'
 import { AUSliders, focusFace, useFaceViewPreset } from './PainPanel.tsx'
+import { SaySection, StyleControl } from './SaySection.tsx'
 
 /** 把表情分成基本和复合两组 / Split the expressions into basic and compound. */
 export function groupExpressions(list: readonly FaceExpression[]): { basic: FaceExpression[]; compound: FaceExpression[] } {
@@ -253,7 +254,7 @@ export function ExpressionPanel({ graph }: { graph: AnatomyGraph }) {
   const groups = groupExpressions(expressions)
   const visemes = data.visemes?.visemes ?? []
   const current = expr ? expressions.find((e) => e.id === expr.id) : undefined
-  const sources = data.sources.filter((s) => ['du2014', 'jali2016', 'cmu-facs', 'wikipedia-facs'].includes(s.id))
+  const sources = data.sources.filter((s) => ['du2014', 'jali2016', 'articulation-summary', 'scp', 'cmu-facs', 'wikipedia-facs'].includes(s.id))
 
   return (
     <div className="panel-body scroll pain-panel expr-panel">
@@ -320,6 +321,7 @@ export function ExpressionPanel({ graph }: { graph: AnatomyGraph }) {
           )}
         </h3>
         {visemes.length === 0 && <p className="hint">这份表情数据没有视位表。 This face data has no viseme table.</p>}
+        {visemes.length > 0 && <StyleControl />}
         <div className="expr-grid viseme-grid">
           {visemes.map((v) => {
             const on = viseme === v.id
@@ -332,10 +334,18 @@ export function ExpressionPanel({ graph }: { graph: AnatomyGraph }) {
           })}
         </div>
         <p className="hint">
-          点一个口形把它保持住，再点一次松开。说话时表情的下半脸减弱，上半脸（眉、眼）不变；闭唇的口形优先于张口的表情。
-          <span className="en"> Click a shape to hold it and again to release. While a mouth shape is held the expression's lower face is attenuated and its upper face (brows, eyes) is unchanged; a lip closure wins over an open-mouthed expression.</span>
+          共 {visemes.length} 个口形。点一个口形把它保持住，再点一次松开。说话时表情的下半脸减弱，上半脸（眉、眼）不变；闭唇的口形优先于张口的表情，下颌被姿势面板张开时也照样合唇（在唇能合上的范围内）。
+          <span className="en">
+            {' '}
+            {visemes.length} shapes. Click a shape to hold it and again to release. While a mouth shape is held the expression's lower face is attenuated and its upper face (brows, eyes) is unchanged; a lip closure wins over an open-mouthed expression, and the lips still seal when the pose panel has opened the jaw (as far as they can reach).
+          </span>
+        </p>
+        <p className="hint">
+          {VISEME_STATEMENT.zh} <span className="en">{VISEME_STATEMENT.en}</span>
         </p>
       </section>
+
+      <SaySection />
 
       <SpeechSection />
 
@@ -375,10 +385,10 @@ export function ExpressionPanel({ graph }: { graph: AnatomyGraph }) {
           {sourcesOpen ? '收起' : '展开'}出处 <span className="en">Sources</span>
         </button>
         <p className="hint">
-          动作单元的组合：Du、Tao、Martinez 2014（PNAS）。口形与协同发音的方法：JALI，Edwards 等 2016。<strong>强度和视位的数值是本项目的假设。</strong>
+          动作单元的组合：Du、Tao、Martinez 2014（PNAS）。口形与协同发音的方法：JALI，Edwards 等 2016。<strong>情绪的强度是本项目的假设；视位的数值一部分按实测标定，其余是假设（见上）。</strong>
           <span className="en">
             {' '}
-            AU sets: Du, Tao &amp; Martinez 2014 (PNAS). Method for mouth shapes and co-articulation: JALI, Edwards et al. 2016. <strong>Intensities and viseme numbers are assumptions of this project.</strong>
+            AU sets: Du, Tao &amp; Martinez 2014 (PNAS). Method for mouth shapes and co-articulation: JALI, Edwards et al. 2016. <strong>Emotion intensities are assumptions of this project; the viseme numbers are partly calibrated against measurements and otherwise assumptions (see above).</strong>
           </span>
         </p>
         {sourcesOpen && (

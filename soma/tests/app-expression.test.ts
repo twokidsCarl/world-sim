@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { activations, blendFace, expressionAUs, mouthFrameToChannels, painAUs, visemeAUs, type MouthPose } from '../tools/face/model.ts'
+import { SPEECH_STYLES, activations, blendFace, expressionAUs, mouthFrameToChannels, painAUs, visemeAUs, type MouthPose } from '../tools/face/model.ts'
 import { AnatomyGraph } from '../src/anatomy/graph.ts'
 import type { AnatomyData, Part } from '../src/anatomy/types.ts'
 import { countRows, disagreement, hasBodies, largestDisagreements, rowLabel, rowValues, rowsFor, type CalibrationTable } from '../src/calibration/summary.ts'
@@ -72,11 +72,14 @@ describe.each(['male', 'female'])('face driver on the real data: %s', (body) => 
   const face = present ? loadFace(body) : (null as unknown as FaceData)
   const none: MouthPose | null = null
 
-  it.skipIf(!present)('has the 21 expressions (6 basic, 15 compound) and 17 visemes the panel lists', () => {
+  it.skipIf(!present)('has the 21 expressions (6 basic, 15 compound) and 22 visemes the panel lists', () => {
     const g = groupExpressions(face.expressions ?? [])
     expect(g.basic.map((e) => e.id).sort()).toEqual(['angry', 'disgusted', 'fearful', 'happy', 'sad', 'surprised'])
     expect(g.compound.length).toBe(15)
-    expect(face.visemes?.visemes.length).toBe(17)
+    expect(face.visemes?.visemes.length).toBe(22)
+    // 英语 17 个，加普通话专用的 5 个 / 17 for English plus the 5 Mandarin-only ones
+    for (const id of ['YU', 'ZHCHSH', 'JQX', 'ER', 'HX']) expect(face.visemes?.visemes.some((v) => v.id === id), id).toBe(true)
+    expect(face.channels.some((c) => c.id === 'tongue_retroflex')).toBe(true)
     expect(face.aus.length).toBe(25)
   })
 
@@ -118,7 +121,16 @@ describe.each(['male', 'female'])('face driver on the real data: %s', (body) => 
   it.skipIf(!present)('an open vowel opens the jaw and a bilabial nearly shuts it; tongue and lip channels are driven', () => {
     const aa = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { AA: 1 }), speaking: 1 })
     const pbm = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { PBM: 1 }), speaking: 1 })
-    expect(aa.jaw).toBeGreaterThan(0.2)
+    // 缺省风格是按实测标定的朗读开度：AA 的切牙开度约 5 mm，即 0.118 × jaw.max ≈ 0.0597 rad（校准前是 0.253）
+    // the default style is the calibrated opening of read speech: about 5 mm at the incisors for AA, i.e. 0.118 × jaw.max ≈ 0.0597 rad (0.253 before calibration)
+    expect(aa.jaw).toBeCloseTo(0.118 * face.jaw.max, 9)
+    expect(aa.jaw).toBeGreaterThan(0.055)
+    expect(aa.jaw).toBeLessThan(0.065)
+    // 夸张风格还是原来的大口形；1 和 2 之间线性过渡 / the clear style keeps the old wide shape; styles between 1 and 2 interpolate linearly
+    const clear = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { AA: 1 }, SPEECH_STYLES.clear), speaking: 1 })
+    expect(clear.jaw).toBeGreaterThan(0.2)
+    expect(clear.jaw).toBeCloseTo(0.5 * face.jaw.max, 9)
+    expect(visemeAUs(face, { AA: 1 }, { jaw: 1.5, lip: 1.5 }).jaw).toBeCloseTo((aa.jaw + clear.jaw) / 2, 9)
     expect(pbm.jaw).toBeLessThan(0.05)
     expect(pbm.channels.lip_seal ?? 0).toBeGreaterThan(0)
     expect(aa.channels.lip_seal ?? 0).toBe(0)
@@ -127,7 +139,11 @@ describe.each(['male', 'female'])('face driver on the real data: %s', (body) => 
     const l = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { L: 1 }), speaking: 1 })
     expect(Object.keys(l.channels).some((id) => kinds.get(id) === 'tongue')).toBe(true)
     const fv = composeFace(face, { pain: {}, emotion: {}, speech: visemeAUs(face, { FV: 1 }), speaking: 1 })
-    expect(fv.channels.lip_dental).toBe(1)
+    // 唇齿的两个参考通道按下颌角混合，合起来正好是 1（标定后的 FV 下颌角小于 lip_dental 的 refJaw）
+    // the two reference channels of the labiodental are mixed by the jaw angle and add up to exactly 1 (the calibrated jaw of FV is below lip_dental's refJaw)
+    const k = Math.min(1, fv.jaw / face.channels.find((c) => c.id === 'lip_dental')!.refJaw!)
+    expect(fv.channels.lip_dental).toBeCloseTo(k, 9)
+    expect((fv.channels.lip_dental ?? 0) + (fv.channels.lip_dental_closed ?? 0)).toBeCloseTo(1, 9)
     // 舌的位移场在舌这个部件上，不在皮肤上 / the tongue's field is on the tongue part, not on the skin
     for (const c of face.channels.filter((x) => x.kind === 'tongue')) expect(c.fields.every((f) => f.part !== face.skin)).toBe(true)
   })

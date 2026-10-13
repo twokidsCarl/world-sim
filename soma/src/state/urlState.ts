@@ -33,6 +33,14 @@
 //                                                 an emotion expression (an id from `expressions` in face.json) with a strength 0–1 (1 when omitted);
 //                                                 combined with pain and au by maximum
 //   vis    PBM                                    保持一个视位（face.json 的 visemes 里的 id）：一个口形 / hold one viseme (an id from `visemes` in face.json): a mouth shape
+//   say    zh-03                                  说一句示范片段（public/voice/ 下各包清单里的片段 id）：口形按音素时间线走。没有用户手势时
+//                                                 无声地播，界面上有"声音"按钮。合成用的自由文字不进 URL。
+//                                                 say a demo clip (a clip id from the pack manifests under public/voice/): the mouth follows
+//                                                 the phoneme timeline. Without a user gesture it plays silently and the UI shows a "sound"
+//                                                 button. Free text for synthesis never goes into the URL.
+//   style  normal | clear                         说话的风格：normal 正常朗读（按实测标定），clear 夸张。省略时保持的口形用 clear、说话用 normal
+//                                                 the style of speech: normal = read speech (calibrated), clear = exaggerated. When omitted,
+//                                                 held shapes use clear and speech uses normal
 //   skin   1                                      皮肤画成不透明（看表情）/ skin drawn opaque (to read the expression)
 //   shape  h1.80,b28,l0,c0                        体型：h 身高（米）、b BMI、l 腿长比例（SD）、c 躯干体格（SD）；只写不在默认值的项，
 //                                                 超出该人体可用范围的值会被截断
@@ -79,7 +87,7 @@ const AXES: Record<string, SectionAxis> = { a: 'axial', c: 'coronal', s: 'sagitt
 const MAPS = { d: 'dermatome', n: 'cutaneousNerve' } as const
 const BODIES = new Set(['male', 'female', 'fixture', 'stress'])
 /** 本模块负责的参数名；其余的原样保留 / Parameter names owned here; all others pass through. */
-export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
+export const URL_KEYS = ['body', 'embed', 'tab', 'sys', 'peel', 'iso', 'hide', 'sel', 'adj', 'focus', 'cam', 'cut', 'xp', 'pose', 'breath', 'map', 'reg', 'see', 'pain', 'au', 'expr', 'vis', 'say', 'style', 'skin', 'shape', 'stim', 'src', 'cmp'] as const
 /** 超过这个数量的部件 id 不写进 URL / Part id lists longer than this are not written to the URL. */
 export const MAX_URL_IDS = 60
 export const MAX_URL_DOFS = 40
@@ -112,6 +120,10 @@ export interface UrlState {
   expr?: { id: string; strength: number }
   /** 保持的视位的 id / the id of the held viseme. */
   vis?: string
+  /** 示范片段的 id / the id of a demo clip. */
+  say?: string
+  /** 说话的风格 / the style of speech. */
+  style?: 'normal' | 'clear'
   skin?: boolean
   /** 体型控制量（未限幅）/ shape controls (not yet clamped). */
   shape?: ShapeControls
@@ -282,6 +294,16 @@ export function parseUrl(search: string): ParsedUrl {
         else warn(`vis: 无法解析 "${value}"（应为视位 id）/ could not be parsed (expected a viseme id)`)
         break
       }
+      case 'say': {
+        if (/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value)) state.say = value
+        else warn(`say: 无法解析 "${value.slice(0, 40)}"（应为示范片段的 id，如 zh-03；自由文字不放进 URL）/ could not be parsed (expected a demo clip id such as zh-03; free text is not carried in the URL)`)
+        break
+      }
+      case 'style': {
+        if (value === 'normal' || value === 'clear') state.style = value
+        else warn(`style: 应为 normal 或 clear "${value.slice(0, 40)}" / expected normal or clear`)
+        break
+      }
       case 'stim': {
         const r = parseStimParam(value)
         if (r) state.stim = r
@@ -355,6 +377,8 @@ export function formatUrl(state: UrlState, passthrough: readonly [string, string
   }
   if (state.expr && state.expr.strength > 0) put('expr', state.expr.id + (Math.round(state.expr.strength * 100) === 100 ? '' : `:${Math.round(state.expr.strength * 100) / 100}`))
   if (state.vis) put('vis', state.vis)
+  if (state.say) put('say', state.say)
+  if (state.style) put('style', state.style)
   if (state.skin) put('skin', '1')
   if (state.shape && Object.keys(state.shape).length) put('shape', formatShapeParam(state.shape))
   if (state.stim) put('stim', formatStimParam(state.stim))

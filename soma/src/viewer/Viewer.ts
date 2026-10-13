@@ -1855,6 +1855,26 @@ export class Viewer {
     return changed
   }
 
+  /**
+   * 姿势面板（含过渡中的值）和退缩反射给下颌的张开角，弧度，不含表情和说话加上去的那部分；没有绑定时为 0。
+   * The jaw opening that the pose panel (its value in transition included) and the withdrawal reflex give, radians, without the
+   * part added by expression and speech; 0 without a rig.
+   */
+  private jawBase(face: LoadedFace): number {
+    const rt = this.poseRt
+    if (!rt) return 0
+    const { joint, dof, max } = face.data.jaw
+    let v = this.poseTarget[joint]?.[dof] ?? 0
+    if (this.poseTween) {
+      const k = Math.min(1, (performance.now() - this.poseTween.t0) / this.poseTween.ms)
+      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2
+      const from = this.poseTween.from[joint]?.[dof] ?? 0, to = this.poseTween.to[joint]?.[dof] ?? 0
+      v = from + (to - from) * e
+    }
+    if (this.reflexKey !== '{}') v += this.reflexPose[joint]?.[dof] ?? 0
+    return Math.min(max, Math.max(0, v))
+  }
+
   /** 表情给出的下颌张开角，写成姿势的形式（没有绑定或没有张口时为 null）。 */
   /** The jaw opening the expression asks for, as a pose (null without a rig or when the mouth is shut). */
   private jawPose(): Pose | null {
@@ -1960,7 +1980,9 @@ export class Viewer {
     if (!batches) return false
     // 疼痛、情绪、说话合成后的通道激活和下颌角（src/face/driver.ts）；对照窗格用它自己那副身体的数据
     // channel activations and jaw angle with pain, emotion and speech composed (src/face/driver.ts); a compare pane uses its own body's data
-    const frame = faceFrame(t, face?.data ?? null)
+    // 下颌已经被姿势面板或反射张开多少：闭唇的口形按总的下颌角合唇（见 blendFace 的 baseJaw）
+    // how far the pose panel or a reflex has already opened the jaw: a lip closure seals for the total jaw angle (baseJaw of blendFace)
+    const frame = faceFrame(t, face?.data ?? null, face ? this.jawBase(face) : 0)
     const act = { channels: { ...frame.channels }, jaw: frame.jaw }
     // 口角通道（皮肤有真实口裂时才有）：激活 = 下颌张开角 ÷ 最大角，不管下颌是怎么张开的
     // （表情、发声、姿势面板、反射）；否则只靠关节张口时口裂两端是竖直的，嘴成了方的。
