@@ -93,6 +93,9 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   // While the backend still runs old code it knows neither "auto" nor the model: grey those controls out and say why, instead of clicks doing nothing.
   const restartNeeded = useRestartNeeded()
   const oldBackend = !!meta && (meta as { model?: string }).model === undefined
+  // 会话是不是独立的进程（后端报了 stale 这一项就是）：是的话重启后端不影响它。
+  // Whether sessions are their own processes (the backend reports `stale` when they are): if so a backend restart leaves them alone.
+  const detached = !!meta && meta.stale !== undefined
   const modes: [string, string, string, string, string][] = [
     ['plan', '先出计划', 'Plan first', '只调研、写计划，不动手；计划等你批准', 'It only investigates and plans; the plan waits for your approval'],
     ['default', '每次问我', 'Ask every time', '改文件、跑命令都先问你', 'File edits and commands all ask you first'],
@@ -124,7 +127,9 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
         <div className="notice warn" role="status">
           {oldBackend
             ? t('后端还在跑旧的代码，所以"自动"模式和模型选择现在用不了。在跑着服务的终端里按 Ctrl+C，再运行 uv run idea-loom serve。这个会话的对话会保留，重启后发一句话就接上。', 'The backend is still running old code, so auto mode and the model choice are unavailable for now. Press Ctrl+C in the terminal running the service, then run uv run idea-loom serve. This conversation is kept and continues with your next message after the restart.')
-            : t('后端的代码有更新，重启后端才生效：在跑着服务的终端里按 Ctrl+C，再运行 uv run idea-loom serve。对话会保留。', 'The backend code has been updated and takes effect after a restart: press Ctrl+C in the terminal running the service, then run uv run idea-loom serve. Conversations are kept.')}
+            : detached
+              ? t('后端的代码有更新，重启后端才生效：在跑着服务的终端里按 Ctrl+C，再运行 uv run idea-loom serve。会话是独立的进程，不受影响，可以放心重启。', 'The backend code has been updated and takes effect after a restart: press Ctrl+C in the terminal running the service, then run uv run idea-loom serve. Sessions are separate processes and are not affected, so restarting is safe.')
+              : t('后端的代码有更新，重启后端才生效：在跑着服务的终端里按 Ctrl+C，再运行 uv run idea-loom serve。这一次重启会打断正在进行的那一轮（对话会保留）；之后会话是独立的进程，重启不再影响它。', 'The backend code has been updated and takes effect after a restart: press Ctrl+C in the terminal running the service, then run uv run idea-loom serve. This one restart interrupts the turn in progress (the conversation is kept); afterwards sessions are separate processes and restarts no longer affect them.')}
         </div>
       )}
       <div className="session-bar">
@@ -148,6 +153,15 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
               {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
             {meta.model_used && meta.model_used !== meta.model && <span className="muted small">{t(`实际在用 ${meta.model_used}`, `actually using ${meta.model_used}`)}</span>}
+            {detached && status !== 'closed' && (
+              <span className="muted small session-process" title={t('每个会话是一个独立的进程，重启后端不会打断它。闲了 30 分钟它会自己歇下来，下一句话接上原来的对话。', 'Each session is its own process and a backend restart does not interrupt it. After 30 idle minutes it rests by itself, and the next message picks the conversation up.')}>
+                {meta.live
+                  ? meta.stale
+                    ? t(`进程 ${meta.pid ?? ''} 在跑 · 用的是旧代码，这一轮做完后自动换成新的`, `process ${meta.pid ?? ''} up · on old code, replaced by itself once this turn is done`)
+                    : t(`进程 ${meta.pid ?? ''} 在跑`, `process ${meta.pid ?? ''} up`)
+                  : t('进程歇着，下一句话接上', 'process resting; the next message resumes it')}
+              </span>
+            )}
           </span>
         )}
         <span className="muted small num">{meta ? `$${meta.cost_usd.toFixed(2)}` : ''}</span>
