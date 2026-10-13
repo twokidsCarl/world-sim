@@ -3,6 +3,7 @@ import { type SessionMeta, api } from '../api'
 import { type Attached, MAX_IMAGES, fromFile, imagesIn } from '../assistant/images'
 import { Markdown } from '../assistant/Markdown'
 import { useT } from '../state/store'
+import { useRestartNeeded } from '../version'
 import { mark, tell } from './notify'
 import { type Item, type Question, type SessionEvent, type View, emptyView, fold, pending } from './view'
 
@@ -88,6 +89,10 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
     setAttached((now) => [...now, ...made].slice(0, MAX_IMAGES))
   }
   const mode = meta?.mode ?? view.mode ?? 'default'
+  // 后端还是旧代码时，它不认识"自动"也不报模型：把这些控件灰掉并说明，而不是点了没反应。
+  // While the backend still runs old code it knows neither "auto" nor the model: grey those controls out and say why, instead of clicks doing nothing.
+  const restartNeeded = useRestartNeeded()
+  const oldBackend = !!meta && (meta as { model?: string }).model === undefined
   const modes: [string, string, string, string, string][] = [
     ['plan', '先出计划', 'Plan first', '只调研、写计划，不动手；计划等你批准', 'It only investigates and plans; the plan waits for your approval'],
     ['default', '每次问我', 'Ask every time', '改文件、跑命令都先问你', 'File edits and commands all ask you first'],
@@ -115,6 +120,13 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
 
   return (
     <div className="session">
+      {(oldBackend || restartNeeded) && (
+        <div className="notice warn" role="status">
+          {oldBackend
+            ? t('后端还在跑旧的代码，所以"自动"模式和模型选择现在用不了。在跑着服务的终端里按 Ctrl+C，再运行 uv run idea-loom serve。这个会话的对话会保留，重启后发一句话就接上。', 'The backend is still running old code, so auto mode and the model choice are unavailable for now. Press Ctrl+C in the terminal running the service, then run uv run idea-loom serve. This conversation is kept and continues with your next message after the restart.')
+            : t('后端的代码有更新，重启后端才生效：在跑着服务的终端里按 Ctrl+C，再运行 uv run idea-loom serve。对话会保留。', 'The backend code has been updated and takes effect after a restart: press Ctrl+C in the terminal running the service, then run uv run idea-loom serve. Conversations are kept.')}
+        </div>
+      )}
       <div className="session-bar">
         <span className={`badge session-status ${status}`}>
           {status === 'running' && <span className="spin" aria-hidden="true">◌</span>}{' '}
@@ -122,12 +134,12 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
         </span>
         <span className="seg" role="group" aria-label={t('模式', 'Mode')}>
           {modes.map(([key, zh, en, hintZh, hintEn]) => (
-            <button key={key} title={t(hintZh, hintEn)} aria-pressed={mode === key} aria-selected={mode === key} disabled={status === 'closed'} onClick={() => void act(() => api.sessionMode(id, key))}>
+            <button key={key} title={t(hintZh, hintEn)} aria-pressed={mode === key} aria-selected={mode === key} disabled={status === 'closed' || (oldBackend && key === 'auto')} onClick={() => void act(() => api.sessionMode(id, key))}>
               {t(zh, en)}
             </button>
           ))}
         </span>
-        {meta && (
+        {meta && !oldBackend && (
           <span className="session-engine" title={t('用哪个模型、想得多深。它闲着的时候才能换；换了之后下一句话生效，对话接着原来的。', 'Which model and how hard it thinks. Changeable only while it is idle; it takes effect on the next message and the conversation carries on.')}>
             <select aria-label={t('模型', 'Model')} value={meta.model} disabled={busy || status === 'closed'} onChange={(e) => void act(() => api.sessionEngine(id, e.target.value, meta.effort))}>
               {(MODELS.includes(meta.model) ? MODELS : [meta.model, ...MODELS]).map((m) => <option key={m} value={m}>{MODEL_NAMES[m] ?? m}</option>)}

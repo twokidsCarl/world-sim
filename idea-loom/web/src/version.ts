@@ -48,6 +48,32 @@ async function fetchVersion(): Promise<Version | null> {
  * 页面运行的东西过时了没有。每 30 秒问一次，标签页重新可见时也问一次；只报告，不自己刷新。
  * Whether what this page runs is out of date. Asks every 30 seconds and when the tab becomes visible again; it only reports and never reloads by itself.
  */
+/**
+ * 后端的代码在磁盘上已经比正在跑的进程新了：要重启后端才生效。每 30 秒问一次。
+ * The backend code on disk is newer than the running process: it only takes effect after a restart. Asked every 30 seconds.
+ */
+export function useRestartNeeded(): boolean {
+  const [needed, setNeeded] = useState(false)
+  useEffect(() => {
+    let stopped = false
+    const check = async () => {
+      try {
+        const reply = (await (await fetch('/api/health', { cache: 'no-store' })).json()) as { code_stale?: unknown }
+        if (!stopped) setNeeded(reply.code_stale === true)
+      } catch {
+        /* 连不上不算 / an unreachable backend does not count */
+      }
+    }
+    void check()
+    const timer = window.setInterval(() => void check(), POLL_MS)
+    return () => {
+      stopped = true
+      window.clearInterval(timer)
+    }
+  }, [])
+  return needed
+}
+
 export function useStale(): boolean {
   const [stale, setStale] = useState(false)
   useEffect(() => {

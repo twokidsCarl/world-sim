@@ -46,3 +46,16 @@ def test_health_carries_version_marks(tmp_path, monkeypatch):
     rebuilt = client.get("/api/health").json()
     assert rebuilt["ui"] == 2_000_000
     assert rebuilt["started"] == first["started"]
+
+
+def test_health_says_when_the_code_on_disk_is_newer_than_the_running_process(seeded, monkeypatch):
+    """改了后端的代码而没重启：页面要能知道。 / The backend code changed without a restart: the page must be able to tell."""
+    from idea_loom import server
+
+    client = TestClient(app, base_url="http://localhost:8767")
+    monkeypatch.setattr(server, "_code_checked", (0.0, False))
+    monkeypatch.setattr(server, "_STARTED", str(2**62))          # 进程比所有文件都新 / the process is newer than every file
+    assert client.get("/api/health").json()["code_stale"] is False
+    monkeypatch.setattr(server, "_code_checked", (0.0, False))
+    monkeypatch.setattr(server, "_STARTED", str(10**18))         # 2001 年启动的进程 / a process started in 2001
+    assert client.get("/api/health").json()["code_stale"] is True
