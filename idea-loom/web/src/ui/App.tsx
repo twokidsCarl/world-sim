@@ -75,7 +75,7 @@ export function App() {
         <div className="mark">
           <span className="nav-full">idea-loom</span>
           <span className="nav-short" aria-hidden="true">il</span>
-          <small>{t('想法池', 'Idea pool')}</small>
+          <small>{t('想法经纬', 'Idea loom')}</small>
         </div>
         {NAV.filter((n) => (owner || !n.owner) && (n.to !== '/sessions' || me?.auth_enabled === false)).map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className="nav-item" title={navNarrow ? t(n.zh, n.en) : undefined}>

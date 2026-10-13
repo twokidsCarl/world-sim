@@ -925,7 +925,7 @@ def push_unsubscribe(body: PushOffBody) -> dict[str, int]:
 
 @app.post("/api/push/test")
 def push_test() -> dict[str, int]:
-    return {"sent": notify.send("idea-loom", "通知是通的。 / Notifications work.", url="/work", tag="test")}
+    return {"sent": notify.send("想法经纬", "通知是通的。 / Notifications work.", url="/work", tag="test")}
 
 
 # ---------- 连续推进 / chains ----------

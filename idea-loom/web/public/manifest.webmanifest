@@ -1,6 +1,6 @@
 {
-  "name": "idea-loom",
-  "short_name": "idea-loom",
+  "name": "想法经纬 idea-loom",
+  "short_name": "想法经纬",
   "description": "world-sim 的想法池和所有模拟的入口 / the idea pool of world-sim and the way into every simulation",
   "start_url": "/play",
   "scope": "/",

@@ -1,8 +1,8 @@
-# idea-loom
+# idea-loom 想法经纬
 
-world-sim 的想法池：生成、查看、归类、合并 idea，分配开发并跟踪进度。
+想法经纬（idea-loom）是 world-sim 的想法池：生成、查看、归类、合并 idea，分配开发并跟踪进度。
 
-The idea pool of world-sim: generate, browse, classify and merge ideas, hand them
+idea-loom (Chinese name 想法经纬, "the warp and weft of ideas") is the idea pool of world-sim: generate, browse, classify and merge ideas, hand them
 to development and follow their progress.
 
 它不是模拟，不占阶梯上的位置。它是 idea 的家：`data/` 里的事件日志是事实来源，根目录的

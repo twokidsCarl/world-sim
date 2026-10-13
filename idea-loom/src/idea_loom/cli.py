@@ -11,7 +11,7 @@ import typer
 from . import ideas, importer, ops, render, store, sync
 from . import wishes as wish_store
 
-app = typer.Typer(help="idea-loom：world-sim 的想法池", no_args_is_help=True)
+app = typer.Typer(help="想法经纬（idea-loom）：world-sim 的想法池 / idea-loom: the idea pool of world-sim", no_args_is_help=True)
 
 
 @app.command("import")
