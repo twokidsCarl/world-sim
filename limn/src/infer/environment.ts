@@ -194,3 +194,115 @@ export function threads(count: number, length: number, step: number, box: Box, r
   }
   return { pos: new Float32Array(pos), segments: new Uint32Array(seg) }
 }
+
+/**
+ * 串珠：给一串“珠子”（比如病毒里一个个核蛋白团块）补上把它们串起来的那条线。珠子的位置是数据里的，线是推断的。
+ * 先按“每次去最近的还没串过的那个”排出顺序，再用样条把它们光滑地连起来；线在每个珠子朝观察者的那一面上经过（否则埋在珠子里看不见），
+ * 并左右摆一摆，像缠在上面。`plane` 是切面的 z：线不超过它，免得被切掉。返回点和把相邻的点连起来的线段。
+ *
+ * Beads on a string: supply the strand that strings a set of "beads" together (the clumps of
+ * nucleoprotein in a virus, say). Where the beads are comes from the data; the strand is inferred.
+ * The beads are ordered by always going to the nearest one not yet strung, then joined smoothly by
+ * a spline; the strand passes over the side of each bead that faces the viewer (or it would lie
+ * hidden inside) and sways from side to side, as if wound on. `plane` is the z of the cut, which
+ * the strand does not pass, so that it is not cut away. Returns points and the segments joining
+ * neighbours.
+ */
+export function stringThrough(beads: V3[], lift: number, plane: number, step = 6): { pos: Float32Array; segments: Uint32Array; order: number[] } {
+  if (beads.length < 2) return { pos: new Float32Array(0), segments: new Uint32Array(0), order: beads.map((_, i) => i) }
+  const left = new Set(beads.map((_, i) => i))
+  // 从最靠边的一个开始，线才不会一上来就把中间穿乱 / start from the outermost bead, so that the strand does not begin by crossing the middle
+  const mean: V3 = [0, 0, 0]
+  for (const b of beads) for (let k = 0; k < 3; k++) mean[k]! += b[k]! / beads.length
+  let at = 0, far = -1
+  beads.forEach((b, i) => {
+    const d = Math.hypot(b[0] - mean[0], b[1] - mean[1], b[2] - mean[2])
+    if (d > far) {
+      far = d
+      at = i
+    }
+  })
+  const order = [at]
+  left.delete(at)
+  while (left.size) {
+    let best = -1, bd = Infinity
+    for (const i of left) {
+      const d = Math.hypot(beads[i]![0] - beads[at]![0], beads[i]![1] - beads[at]![1], beads[i]![2] - beads[at]![2])
+      if (d < bd) {
+        bd = d
+        best = i
+      }
+    }
+    order.push(best)
+    left.delete(best)
+    at = best
+  }
+  // 控制点都在每个珠子朝观察者的那一面上 / the control points all lie on the side of each bead that faces the viewer
+  const ctrl: V3[] = []
+  order.forEach((i, k) => {
+    const b = beads[i]!, prev = beads[order[Math.max(0, k - 1)]!]!, next = beads[order[Math.min(order.length - 1, k + 1)]!]!
+    let dx = next[0] - prev[0], dy = next[1] - prev[1]
+    const l = Math.hypot(dx, dy) || 1
+    dx /= l
+    dy /= l
+    const z = Math.min(b[2] + lift * 0.9, plane - 4), side = (k % 2 ? 1 : -1) * lift * 0.6
+    // 三个点：进、中、出，左右交替，线在珠子上走一个 S 形 / three points, in, middle and out, alternating sides, so that the strand runs an S over the bead
+    for (const [along, across] of [[-0.7, 1], [0, -1], [0.7, 1]] as const) ctrl.push([b[0] + dx * lift * along - dy * side * across, b[1] + dy * lift * along + dx * side * across, z])
+  })
+  // Catmull-Rom 样条 / a Catmull-Rom spline
+  const pos: number[] = [], seg: number[] = []
+  for (let i = 0; i < ctrl.length - 1; i++) {
+    const p0 = ctrl[Math.max(0, i - 1)]!, p1 = ctrl[i]!, p2 = ctrl[i + 1]!, p3 = ctrl[Math.min(ctrl.length - 1, i + 2)]!
+    const n = Math.max(2, Math.round(Math.hypot(p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]) / step))
+    for (let j = 0; j < n; j++) {
+      const t = j / n, t2 = t * t, t3 = t2 * t
+      if (pos.length) seg.push(pos.length / 3 - 1, pos.length / 3)
+      for (let k = 0; k < 3; k++) pos.push(0.5 * (2 * p1[k]! + (-p0[k]! + p2[k]!) * t + (2 * p0[k]! - 5 * p1[k]! + 4 * p2[k]! - p3[k]!) * t2 + (-p0[k]! + 3 * p1[k]! - 3 * p2[k]! + p3[k]!) * t3))
+    }
+  }
+  return { pos: new Float32Array(pos), segments: new Uint32Array(seg), order }
+}
+
+/**
+ * 把一个圆形的截面用一条来回折的波浪线铺满，沿线等间隔地给出“珠子”的位置：核酸串着蛋白、挤满一个腔的画法。
+ * 行与行之间隔 `spacing`，线本身带小波浪（珠子在波峰波谷的另一侧，线从它们之间绕过去），整行再慢慢地起伏，免得像格子。
+ * 返回线上的点、把相邻的点连起来的线段，和珠子的位置。全部是生成的，不是数据。
+ *
+ * Fill a circular section with one wavy line folded back and forth, with "bead" sites at even
+ * intervals along it: the way of drawing nucleic acid strung with protein and packed into a
+ * cavity. Rows are `spacing` apart; the line carries a small wave (beads sit opposite its crests and
+ * troughs, and the line winds between them) and each row drifts slowly as a whole, so that it does not
+ * read as a grid. Returns the points of the line, the segments joining neighbours, and the bead
+ * sites. All of it is generated, none of it data.
+ */
+export function serpentine(centre: V3, radius: number, spacing: number, z: number, rand: () => number, turn = 0): { pos: Float32Array; segments: Uint32Array; beads: V3[] } {
+  const pos: number[] = [], seg: number[] = [], beads: V3[] = []
+  const cos = Math.cos(turn), sin = Math.sin(turn)
+  const put = (x: number, y: number): V3 => [centre[0] + x * cos - y * sin, centre[1] + x * sin + y * cos, centre[2] + z]
+  const rows = Math.max(1, Math.floor((radius * 2) / spacing))
+  const step = 5, wave = spacing * 1.7, amp = spacing * 0.2
+  const phase = rand() * 6.28
+  // 每个波峰、波谷各一个珠子，放在线摆过去的另一侧：线就从珠子之间一左一右地绕过去
+  // one bead at every crest and trough, on the side the line swings away from, so that the line winds between the beads, left and right by turns
+  let along = 0, nextBead = wave / 4
+  for (let r = 0; r < rows; r++) {
+    const y0 = -radius + spacing * (r + 0.5) + (radius * 2 - rows * spacing) / 2
+    const half = Math.sqrt(Math.max(0, radius * radius - y0 * y0)) - spacing * 0.35
+    if (half < spacing * 0.5) continue
+    const dir = r % 2 === 0 ? 1 : -1
+    const n = Math.max(2, Math.round((half * 2) / step))
+    for (let i = 0; i <= n; i++) {
+      const x = dir * (-half + (2 * half * i) / n)
+      // 小波浪加整行的慢起伏 / the small wave plus the slow drift of the whole row
+      const y = y0 + Math.sin((along / wave) * 6.2831853) * amp + Math.sin(x / (radius * 0.45) + phase + r * 0.9) * spacing * 0.18
+      if (pos.length) seg.push(pos.length / 3 - 1, pos.length / 3)
+      pos.push(...put(x, y))
+      if (along >= nextBead) {
+        beads.push(put(x, y0 - Math.sin((along / wave) * 6.2831853) * amp * 1.5 + Math.sin(x / (radius * 0.45) + phase + r * 0.9) * spacing * 0.18))
+        nextBead += wave / 2
+      }
+      along += (2 * half) / n
+    }
+  }
+  return { pos: new Float32Array(pos), segments: new Uint32Array(seg), beads }
+}

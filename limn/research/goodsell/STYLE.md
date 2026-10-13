@@ -262,6 +262,15 @@ limn 这一轮的数：
 - **要照实说的**：他画的是丝状支原体（M. mycoides），有多糖荚膜；这个模型是生殖支原体（M. genitalium），没有查到它有这样的荚膜。这一圈是照他的画加的，不是这个物种的实际样子，来源栏里写了。
 - 仍然不像：他膜上的小瓣是鲜绿色、一格一格的，我们的不显眼；他的线更细更卷。
 
+### T6：新冠里面——一条线串着核蛋白（使用者：“里面的那些部分并不好看”）
+
+（`out/T6-coronavirus.jpg`：之前、现在、他的画；`out/T6-coronavirus-inside.jpg`：里面的局部对照）模型里是 36 个大的核蛋白团块，没有 RNA；他画的是一条浅色的波浪线串着许多小瓣，把腔铺满。
+
+- 第一种做法（`stringThrough`）：保留模型里 36 个团块的位置，补一条把它们按最近邻串起来的线。出图是几条白线乱穿在大块上，不像。工具和测试留着，目前没有条目用它。
+- 第二种做法（`serpentine`，现在用的）：把腔用一条来回折的波浪线铺两层，沿线每个波峰波谷的另一侧放一个珠子（模型里团块的一条链），后面一层用深一号的同色，最后面垫更深的底。**这是重新画的**：珠子的结构取自模型，位置、数量（77 个）和线的走向都是生成的。来源栏写明，Illustrate 画法下是模型原来的 36 个团块。
+- 试了六次。珠子挤得满时连成一片、线看不见；现在的间距下线露出来了，但珠子仍然粘成一片，没有他那种“一个个分开、之间是深色”的样子。**这一项只做到一半。**
+- 一处退步及时发现：里面新加的东西改变了“对象有多大”的计算，病毒周围空出一圈深色。改成里面的东西不参与那个计算。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -514,3 +523,12 @@ The user commented on the 14 comparisons one by one; the comments reduce to five
 - The environment tool gained `fringe`: strands confined to a layer outside the membrane (the threading tool given both an inner and an outer radius), a deeper shade of the same hue laid behind, and the outer edge left to the strands, which reach out raggedly. Three tries: first a slit lay between strands and membrane (the range took the farthest point; now the shell's outer edge); then the ground was too dark, the strands too few, and paper showed between membrane and ground (the centre was the mean of the parts' positions; now the shell's own).
 - **To be said plainly**: he painted Mycoplasma mycoides, which has a polysaccharide capsule; this model is Mycoplasma genitalium, for which no such capsule was found on record. The fringe follows his painting and is not how this species really is, and the sources panel says so.
 - Still unlike his: the small lobes on his membrane are bright green and set like tiles, ours hardly show; his strands are finer and curlier.
+
+### T6: inside the coronavirus — nucleoprotein strung on one strand (the user: "the parts inside are not handsome")
+
+(`out/T6-coronavirus.jpg`: before, now, his painting; `out/T6-coronavirus-inside.jpg`: the inside in detail) The model has 36 large clumps of nucleoprotein and no RNA; he paints a pale wavy line stringing many small lobes that fill the cavity.
+
+- A first way (`stringThrough`): keep the model's 36 clumps where they are and supply a strand joining them nearest neighbour to nearest. The render was a few white lines straying over large lumps, and unlike his. The tool and its test stay; no entry uses it at present.
+- A second way (`serpentine`, the one in use): the cavity is filled with a wavy line folded back and forth in two layers, with a bead (one chain of the model's clump) opposite every crest and trough, the layer behind in a deeper shade and a still deeper ground at the very back. **This is drawn afresh**: the bead's structure is the model's; positions, number (77) and the course of the line are generated. The sources panel says so, and the Illustrate drawing shows the model's own 36 clumps.
+- Six tries. Packed full, the beads join into one mass and the line cannot be seen; at the present spacing the line shows, but the beads still stick together and lack his look of separate lobes with dark between. **This item is half done.**
+- One regression caught in time: the new interior changed the working out of how large the subject is, leaving an empty dark ring round the virus. The interior now takes no part in that.

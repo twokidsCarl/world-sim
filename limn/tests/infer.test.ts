@@ -368,3 +368,38 @@ describe('the outside of an irregular subject', () => {
     expect(inside).toBe(0)
   })
 })
+
+describe('beads on a string', () => {
+  it('serpentine stays inside its circle and puts beads along the line', async () => {
+    const { serpentine } = await import('../src/infer/environment')
+    let seed = 3
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+    const s = serpentine([10, 20, 30], 300, 80, -40, rand, 0.3)
+    expect(s.beads.length).toBeGreaterThan(20)
+    expect(s.segments.length / 2).toBe(s.pos.length / 3 - 1)
+    for (let i = 0; i < s.pos.length; i += 3) {
+      expect(Math.hypot(s.pos[i]! - 10, s.pos[i + 1]! - 20)).toBeLessThan(300 + 80 * 0.4)
+      expect(s.pos[i + 2]).toBeCloseTo(-10)
+    }
+    // 每个珠子离线不远 / every bead lies near the line
+    for (const b of s.beads) {
+      let near = Infinity
+      for (let i = 0; i < s.pos.length; i += 3) near = Math.min(near, Math.hypot(s.pos[i]! - b[0], s.pos[i + 1]! - b[1]))
+      expect(near).toBeLessThan(80 * 0.7)
+    }
+  })
+
+  it('stringThrough visits every bead once and stays behind the cut', async () => {
+    const { stringThrough } = await import('../src/infer/environment')
+    const beads: [number, number, number][] = [[0, 0, -50], [200, 0, -60], [100, 150, -40], [-120, 90, -55], [300, 200, -45]]
+    const t = stringThrough(beads, 30, -20)
+    expect(t.order.slice().sort()).toEqual([0, 1, 2, 3, 4])
+    for (let i = 2; i < t.pos.length; i += 3) expect(t.pos[i]).toBeLessThanOrEqual(-20)
+    // 线经过每个珠子附近 / the strand passes near every bead
+    for (const b of beads) {
+      let near = Infinity
+      for (let i = 0; i < t.pos.length; i += 3) near = Math.min(near, Math.hypot(t.pos[i]! - b[0], t.pos[i + 1]! - b[1]))
+      expect(near).toBeLessThan(40)
+    }
+  })
+})

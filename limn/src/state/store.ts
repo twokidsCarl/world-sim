@@ -22,7 +22,7 @@ import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '..
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
 import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
-import { outsideOf, scatter, threads, type Box } from '../infer/environment'
+import { outsideOf, randomRotation, scatter, serpentine, stringThrough, threads, type Box } from '../infer/environment'
 import { chainCentre, complexes, exaggerate, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -181,6 +181,8 @@ export interface CatalogEntry {
    */
   respike?: { pattern: string; count: number; source: string }
   /** 手绘画法下把膜上的蛋白重排成等间隔的一圈圈，膜换成光滑的球壳（见 arrange）：`pattern` 匹配要排的蛋白，`exclude` 排除，`reach` 是离膜中面多远以内算膜上的（Å），`lining` 是衬在膜里面的一层的颜色（里面的空处露出它，膜的切口才读得出是一条带子）/ in the painted drawing, set the membrane's proteins out afresh in evenly spaced rings and make the membrane a smooth shell (see `arrange`): `pattern` matches the proteins, `exclude` leaves some out, `reach` is how far from the mid-plane still counts as on the membrane, in Å, `lining` the colour of a layer lining the inside (empty space within shows it, so the cut membrane reads as a band) */
+  /** 手绘画法下给名字匹配的一个个团块补上把它们串起来的线（见 strung）/ in the painted drawing, supply the strand that strings together the clumps whose name matches (see `strung`) */
+  string?: { pattern: string; name: string; nameEn: string; fill?: number; beadName?: string; beadNameEn?: string; radius: number; lch: [number, number, number]; basis: string; basisEn: string }
   arrange?: { pattern: string; exclude?: string; reach?: number; lining?: [number, number, number] }
   /**
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
@@ -588,6 +590,123 @@ function arrange(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
       mol: sub, coloring, align: null, keepBack: true,
     },
   ]
+}
+
+/**
+ * 概念“里面：核酸串着蛋白”。模型里有一个个核蛋白团块而没有核酸时，补上把它们串起来的那条线（见 stringThrough）。
+ * 团块的位置是模型的，线是推断的。
+ * The concept "inside: nucleic acid strung with protein". Where a model holds clumps of nucleoprotein
+ * and no nucleic acid, the strand that strings them together is supplied (see stringThrough). Where
+ * the clumps are is the model's; the strand is inferred.
+ */
+function strung(entry: CatalogEntry, model: Molecule, assembly: string, notes: Note[]): Panel[] {
+  const spec = entry.string!
+  const asm = model.assemblies.find((a) => a.id === assembly)
+  if (!asm) return []
+  const re = new RegExp(spec.pattern, 'i')
+  const beads: V3[] = []
+  let reach = 0
+  for (const g of asm.groups) {
+    const chains = g.chains.filter((ci) => re.test(model.entities[model.chains[ci]!.entity]!.description))
+    if (chains.length === 0) continue
+    // 一份拷贝的质心和大小 / the centroid and size of one copy
+    const c: V3 = [0, 0, 0]
+    let n = 0
+    for (const ci of chains) {
+      const ch = model.chains[ci]!
+      for (let i = ch.start; i < ch.start + ch.count; i += 4) {
+        for (let k = 0; k < 3; k++) c[k]! += model.pos[i * 3 + k]!
+        n++
+      }
+    }
+    for (let k = 0; k < 3; k++) c[k]! /= Math.max(1, n)
+    let r2 = 0, m = 0
+    for (const ci of chains) {
+      const ch = model.chains[ci]!
+      for (let i = ch.start; i < ch.start + ch.count; i += 4) {
+        r2 += (model.pos[i * 3]! - c[0]) ** 2 + (model.pos[i * 3 + 1]! - c[1]) ** 2 + (model.pos[i * 3 + 2]! - c[2]) ** 2
+        m++
+      }
+    }
+    reach = Math.max(reach, Math.sqrt(r2 / Math.max(1, m)) * 1.3)
+    for (const op of g.operators) beads.push([op[0]! * c[0] + op[4]! * c[1] + op[8]! * c[2] + op[12]!, op[1]! * c[0] + op[5]! * c[1] + op[9]! * c[2] + op[13]!, op[2]! * c[0] + op[6]! * c[1] + op[10]! * c[2] + op[14]!])
+  }
+  if (beads.length < 2) return []
+  const plane = beads.reduce((z, b) => z + b[2], 0) / beads.length
+  // fill：不用模型里那几十个大团块的位置，把腔用一条来回折的线和沿线的小珠子铺满（他的画法）。珠子取模型里团块的一条链。
+  // fill: the positions of the model's few dozen large clumps are set aside and the cavity is filled with one line folded back and forth and small beads along it (the way he paints it). A bead is one chain of the model's clump.
+  const extra: Panel[] = []
+  let t: { pos: Float32Array; segments: Uint32Array }
+  if (spec.fill) {
+    const mid: V3 = [0, 0, 0]
+    for (const b of beads) for (let k = 0; k < 3; k++) mid[k]! += b[k]! / beads.length
+    const cavity = Math.max(...beads.map((b) => Math.hypot(b[0] - mid[0], b[1] - mid[1], b[2] - mid[2]))) - reach * 0.1
+    const rand = rng(11)
+    const front = serpentine(mid, cavity, spec.fill, -spec.fill * 0.45, rand, 0.3), behind = serpentine(mid, cavity * 0.96, spec.fill, -spec.fill * 1.5, rand, 1.4)
+    const pos = new Float32Array(front.pos.length + behind.pos.length)
+    pos.set(front.pos)
+    pos.set(behind.pos, front.pos.length)
+    // 线抬到珠子朝观察者的那一面上：他画的线是压在珠子上的一道浅色的波浪，埋在珠子中间就看不见了
+    // the line is lifted onto the side of the beads that faces the viewer: he paints it as a pale wave lying over the beads, and buried among them it would not show
+    for (let i = 2; i < pos.length; i += 3) pos[i] = pos[i]! + (i < front.pos.length ? Math.min(reach * 0.4, spec.fill * 0.45 - 6) : reach * 0.4)
+    const segs = new Uint32Array(front.segments.length + behind.segments.length)
+    segs.set(front.segments)
+    behind.segments.forEach((v, k) => (segs[front.segments.length + k] = v + front.pos.length / 3))
+    t = { pos, segments: segs }
+    const g0 = asm.groups.find((g) => g.chains.some((ci) => re.test(model.entities[model.chains[ci]!.entity]!.description)))!
+    const chain = g0.chains.filter((ci) => re.test(model.entities[model.chains[ci]!.entity]!.description)).sort((a, b) => model.chains[b]!.count - model.chains[a]!.count)[0]!
+    const sub = subMolecule(model, [chain], `${model.id}:beads`, spec.nameEn)
+    const c = chainCentre(sub, 0)
+    const place = (b: V3) => {
+      const R = randomRotation(rand)
+      return new Float32Array([R[0]!, R[1]!, R[2]!, 0, R[3]!, R[4]!, R[5]!, 0, R[6]!, R[7]!, R[8]!, 0, b[0] - (R[0]! * c[0] + R[3]! * c[1] + R[6]! * c[2]), b[1] - (R[1]! * c[0] + R[4]! * c[1] + R[7]! * c[2]), b[2] - (R[2]! * c[0] + R[5]! * c[1] + R[8]! * c[2]), 1])
+    }
+    const ops = front.beads.map(place), opsBehind = behind.beads.map(place)
+    sub.assemblies.push({ id: 'inferred', groups: [{ chains: [0], operators: ops }] })
+    const lch = entry.colors?.find(([pattern]) => new RegExp(pattern, 'i').test(sub.entities[0]!.description))?.[1] ?? entry.hues?.['nucleic-binding'] ?? [0.72, 0.12, 290]
+    extra.push({
+      spec: { label: `${spec.beadName ?? spec.name}（推断的排布）`, labelEn: `${spec.beadNameEn ?? spec.nameEn} (inferred arrangement)`, source: { id: `${entry.id}:beads`, kind: 'model', title: spec.nameEn, method: tIn('zh', 'method.inferredCount'), methodEn: tIn('en', 'method.inferredCount'), resolution: null, year: null, tier: 'estimated', licence: entry.licence, attribution: entry.attribution, citation: spec.basisEn, link: entry.link }, assembly: 'inferred', entities: [{ entityId: sub.entities[0]!.id, role: 'nucleic-binding', name: spec.beadName ?? spec.name, nameEn: spec.beadNameEn ?? spec.nameEn, description: sub.entities[0]!.description, organism: '' }], reason: '' },
+      mol: sub, coloring: { roles: ['nucleic-binding'], hueShift: [0], nudge: [0], override: [lch as [number, number, number]] }, align: null, keepBack: true,
+    })
+    // 最后面垫一层更深的同色：珠子之间的空隙里露出的是它，珠子才一个个分得开
+    // a still deeper shade of the same hue lies at the very back: it shows in the gaps between beads, which is what sets them apart one from another
+    {
+      const gops: Float32Array[] = []
+      for (let x = -cavity; x <= cavity; x += 14) for (let y = -cavity; y <= cavity; y += 14) if (Math.hypot(x, y) < cavity) gops.push(new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, mid[0] + x, mid[1] + y, mid[2] - spec.fill * 2.3, 1]))
+      const gm: Molecule = {
+        id: `${model.id}:cavity`, title: 'ground', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([13]),
+        chainOf: new Uint32Array(1), isTrace: new Uint8Array(1), residue: new Int32Array([1]),
+        chains: [{ asymId: 'G', authAsymId: 'G', entity: 0, start: 0, count: 1, model: 1 }], entities: [{ id: 'cavity', description: 'ground', kind: 'protein' }],
+        assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: gops }] }],
+      }
+      const l = lch as number[]
+      extra.push({ ...extra[0]!, spec: { ...extra[0]!.spec, label: '里面的底色', labelEn: 'the ground inside', source: { ...extra[0]!.spec.source, id: `${entry.id}:cavity` }, entities: [{ entityId: 'cavity', role: 'nucleic-binding', name: '里面的底色', nameEn: 'the ground inside', description: 'ground', organism: '' }] }, mol: gm, coloring: { roles: ['nucleic-binding'], hueShift: [0], nudge: [0], override: [[l[0]! - 0.32, l[1]! * 0.9, l[2]!]] }, oneId: true })
+    }
+    // 后面一层用深一号的同色：两层才分得开（整幅画的景深档太粗，分不出相隔几十 Å 的两层）
+    // the layer behind takes a deeper shade of the same hue, which is what tells the two layers apart (the picture's depth steps are too coarse to separate layers a few tens of Å apart)
+    const subBehind = subMolecule(model, [chain], `${model.id}:beads-behind`, spec.nameEn)
+    subBehind.assemblies.push({ id: 'inferred', groups: [{ chains: [0], operators: opsBehind }] })
+    const deep = [(lch as number[])[0]! - 0.1, (lch as number[])[1]!, (lch as number[])[2]!] as [number, number, number]
+    extra.push({ ...extra[0]!, spec: { ...extra[0]!.spec, source: { ...extra[0]!.spec.source, id: `${entry.id}:beads-behind` } }, mol: subBehind, coloring: { roles: ['nucleic-binding'], hueShift: [0], nudge: [0], override: [deep] } })
+    for (const g of asm.groups) g.chains = g.chains.filter((ci) => !re.test(model.entities[model.chains[ci]!.entity]!.description))
+    asm.groups = asm.groups.filter((g) => g.chains.length > 0)
+    notes.push({ key: 'note.strungFill', params: { had: beads.length, count: ops.length + opsBehind.length, basis: spec.basis, basisEn: spec.basisEn } })
+  } else {
+    t = stringThrough(beads, reach, plane)
+    notes.push({ key: 'note.strung', params: { count: beads.length, basis: spec.basis, basisEn: spec.basisEn } })
+  }
+  const n = t.pos.length / 3
+  if (n === 0) return []
+  const m: Molecule = {
+    id: `${model.id}:string`, title: spec.nameEn, atomCount: n, pos: t.pos, element: new Uint8Array(n).fill(El.N), radius: new Float32Array(n).fill(spec.radius),
+    chainOf: new Uint32Array(n), isTrace: new Uint8Array(n).fill(1), residue: new Int32Array(n).fill(1), segments: t.segments,
+    chains: [{ asymId: 'R', authAsymId: 'R', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id: 'string', description: spec.nameEn, kind: 'rna' }],
+    assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: [IDENTITY] }] }],
+  }
+  return [...extra, {
+    spec: { label: `${spec.name}（推断的走向）`, labelEn: `${spec.nameEn} (inferred course)`, source: { id: `${entry.id}:string`, kind: 'model', title: spec.nameEn, method: tIn('zh', 'method.inferredCourse'), methodEn: tIn('en', 'method.inferredCourse'), resolution: null, year: null, tier: 'estimated', licence: 'CC0 1.0', attribution: '', citation: spec.basisEn, link: undefined }, assembly: 'inferred', entities: [{ entityId: 'string', role: 'nucleic', name: spec.name, nameEn: spec.nameEn, description: spec.nameEn, organism: '' }], reason: '' },
+    mol: m, coloring: { roles: ['nucleic'], hueShift: [0], nudge: [0], override: [spec.lch] }, align: null,
+  }]
 }
 
 async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void, idealise: boolean, colors: NonNullable<CatalogEntry['colors']>): Promise<Panel[]> {
@@ -1010,8 +1129,12 @@ export const useStore = create<State>((set, get) => ({
       const respiked = entry.respike && get().drawing === 'painted' ? respike(entry, mol, assembly, notes) : null
       const inferred: Panel[] = respiked ? [respiked] : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
       if (entry.arrange && get().drawing === 'painted') inferred.push(...arrange(entry, mol, assembly, notes))
+      // 里面重画的东西不参与“对象有多大”的计算（否则环境的范围会跟着变），所以放到环境之后再加进来
+      // what is redrawn inside takes no part in working out how large the subject is (or the environment's range would shift with it), so it joins after the environment
+      const interior = entry.string && get().drawing === 'painted' ? strung(entry, mol, assembly, notes) : []
       const surroundings: Panel[] = entry.environment && get().drawing === 'painted' ? await environmentPanels(entry, [mol, ...inferred.map((p) => p.mol)], inferred.map((p) => p.spec.assembly), assembly, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
       inferred.push(...surroundings)
+      inferred.push(...interior)
       const dots = entry.dots && get().drawing === 'painted' && EXAGGERATE() ? entry.dots : 0
       if (dots) notes.push({ key: 'note.dots' })
       const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge, ...(dots ? { dots } : {}) }
@@ -1412,7 +1535,7 @@ export const useStore = create<State>((set, get) => ({
     const entry = sp?.catalog ? (catalog.models as CatalogEntry[]).find((m) => m.id === sp.catalog) : undefined
     // 同样要重新载入的：带示意环境的、小分子画成圆点的、有自己底色的（否则切到 Illustrate 后推断的东西还留在画面里）
     // reloaded likewise: models with a schematic environment, with small molecules as dots, or with a ground of their own (or inferred things would stay in the picture after a switch to Illustrate)
-    if (entry?.infer || entry?.respike || entry?.arrange || entry?.environment || entry?.dots || entry?.ground) {
+    if (entry?.infer || entry?.respike || entry?.arrange || entry?.string || entry?.environment || entry?.dots || entry?.ground) {
       set({ drawing })
       void get().loadCatalog(entry.id)
       return
