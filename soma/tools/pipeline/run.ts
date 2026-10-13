@@ -19,11 +19,11 @@ import { depthOf, EXPOSURE_MAX_DISTANCE, LAYERS, SUPERFICIAL_EXPOSURE, usesExpos
 import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT3_DEFAULTS, overlapWith, pairStructures, placeConcept, pushOutOfSolids, register3to4, SOLID_TISSUES, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
 import { canalFor, isaPathFromFma, localJointWarp, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type JointCacheEntry, type TreePath } from './importZa.ts'
 import { capHoles, envelopeOf } from './derive.ts'
-import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
+import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinPackageDirFor, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
 import { thinOutsideRegion, thinStructuresOutsideSkin, type ThinOutside } from './thinOutside.ts'
 import { loadThinReference, settleThinParts, THIN_DEFAULTS, THIN_RULES, THIN_TISSUES, type ThinPartsResult } from './thinParts.ts'
 import { expandRetiredLipIds, LIP_HALVES, LIP_PARENT_FMA, lipPartIds, splitLip, WHOLE_LIP_NAME } from './lipSplit.ts'
-import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent } from './skinOpened.ts'
+import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent, TOE_GRAFT_FAULTS } from './skinOpened.ts'
 import { correctShoulderGirdle, SHOULDER_DEFAULTS } from './shoulderTissue.ts'
 import { abductArms, ABDUCTION_DEFAULTS } from './armAbduction.ts'
 import { APPENDAGE_DEFAULTS, conformAppendages } from './appendages.ts'
@@ -135,9 +135,34 @@ const SOURCE_O3D: SourceInfo = {
   license: 'CC BY-SA 4.0',
   attribution: 'Open3DModel, Open 3D Model project (LUMC, UMC Utrecht, Maastricht UMC+, KU Leuven KULAK), anatomytool.org - CC BY-SA 4.0; based on Z-Anatomy and BodyParts3D.' + ZA_NOTE,
 }
-/** 男性外部皮肤包的位置（相对项目根） / where the male external skin package lives (relative to the project root) */
-const MALE_SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/male-skin'
+/**
+ * 男性外部皮肤包的位置（相对项目根）；环境变量 SOMA_MALE_SKIN_PACKAGE 可改用另一个目录（见 skinPackageDirFor）
+ * where the male external skin package lives (relative to the project root); the environment variable SOMA_MALE_SKIN_PACKAGE selects another directory (see skinPackageDirFor)
+ */
+const MALE_SKIN_PACKAGE_DIR = skinPackageDirFor('male', 'data/raw/bodyshape/out/male-skin')
 let externalSkinSource: SourceInfo | null = null
+/**
+ * 他的上肢外展角钉在 6.5°：皮肤包（male-skin，fittedTo.key 169209ce67d8bd76）就是按这个角的骨架拟合的。
+ * 自动判据按 0.5° 取整，在 6.5° 处只比要求多 0.3 mm（13.3 对 13 mm），输入稍有变化就可能跳一档，
+ * 骨架指纹随之改变，皮肤包就装不上（女性在 2026-10-13 出过这样的事，见 female.ts 的 PINNED_ARM_ABDUCTION）。
+ * 自动判据照样计算并写进报告（armAbduction.automaticWouldChoose）；6.5° 不再满足间隙要求时构建报错。
+ * 环境变量 SOMA_ARM_ABDUCTION 仍然优先。皮肤包按别的角重新拟合后，改这里的数。
+ * His arm abduction is pinned at 6.5°: the skin package (male-skin, fittedTo.key 169209ce67d8bd76) was fitted to
+ * the skeleton at that angle. The automatic criterion is stepped by 0.5° and at 6.5° clears the requirement by only
+ * 0.3 mm (13.3 against 13 mm), so a small change of the input could make it jump a step, change the skeleton
+ * fingerprint and keep the skin package from installing (this happened to the female on 2026-10-13, see
+ * PINNED_ARM_ABDUCTION in female.ts). The automatic criterion is still evaluated and reported
+ * (armAbduction.automaticWouldChoose); the build fails if 6.5° ever stops meeting the gap requirement.
+ * The environment variable SOMA_ARM_ABDUCTION still overrides. Change the figure here when the skin package is
+ * re-fitted at another angle.
+ */
+const MALE_PINNED_ARM_ABDUCTION = {
+  angleDeg: 6.5,
+  reason: {
+    zh: '钉在皮肤包拟合时所用的角：自动判据按 0.5° 取整，输入稍有变化就会跳一档，骨架指纹随之改变，皮肤包就装不上。',
+    en: 'pinned at the angle the skin package was fitted at: the automatic criterion is stepped by 0.5° and jumps a step on a small change of the input, which changes the skeleton fingerprint so that the skin package no longer installs.',
+  },
+}
 /** 开口后的皮肤带来的其他数据源（移植片的供体） / further sources an opened skin brings (the donors of its grafts) */
 let externalSkinExtraSources: SourceInfo[] = []
 /** 开口后的皮肤由什么构成，写进皮肤部件的记录 / what an opened skin is made of, written into the skin part's record */
@@ -1102,7 +1127,7 @@ async function main() {
     if (abductionEnv !== undefined && abductionEnv !== '' && abductionEnv !== 'auto' && !(given > 0 && given <= 45)) throw new Error(`SOMA_ARM_ABDUCTION must be 0 (off), auto, or an angle in degrees up to 45; got "${abductionEnv}"`)
     const res = abductArms(
       kept.map((e) => ({ id: e.id, fma: e.fma, name: e.name, tissue: e.cls.tissue, system: e.cls.system, mesh: e.mesh, bbox: e.stats.bbox, ...(e.centrelines ? { centrelines: e.centrelines } : {}) })),
-      { ...ABDUCTION_DEFAULTS, angleDeg: Number.isNaN(given) ? 'auto' : given, ...(gl && gr ? { headCentres: { L: gl as [number, number, number], R: gr as [number, number, number] } } : {}), log: (m) => console.log(`    abduction ${m}`) },
+      { ...ABDUCTION_DEFAULTS, angleDeg: Number.isNaN(given) ? 'auto' : given, pinned: MALE_PINNED_ARM_ABDUCTION, ...(gl && gr ? { headCentres: { L: gl as [number, number, number], R: gr as [number, number, number] } } : {}), log: (m) => console.log(`    abduction ${m}`) },
     )
     if (!res) report.armAbduction = { applied: false, reason: 'a bone of the shoulder is missing' }
     else {
@@ -1978,6 +2003,9 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
       // 开口后的皮肤：眼和口是真正的开口，内卷和口腔袋是构造物；各移植片是什么、过渡环量出来怎样（见 skinOpened.ts）
       // an opened skin: eye and mouth are real openings, rims and pouch are construction aids; what each graft is and how its ring measures (see skinOpened.ts)
       out.push(...openedSkinCautions(sk.opened, sk.opened.toeLengthScale ?? null))
+      // 足趾移植片还剩的看得见的小毛病，照实写（见 TOE_GRAFT_FAULTS）
+      // the small visible faults the toe grafts still have, stated as they are (see TOE_GRAFT_FAULTS)
+      if (sk.opened.grafts.some((g) => /^toes/i.test(g.name))) out.push({ ...TOE_GRAFT_FAULTS })
       out.push({
         en: `Round the eyes and the lips the skin was deliberately not pushed out${through.length ? `, and measured against the skin as it was before the openings were cut, what lies under it comes through: ${through.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm), as do the grafted patches; the rest of the skin is simplified.` : ''}`,
         zh: `眼和唇周围的皮肤有意不外推${throughZh.length ? `；按开口之前的皮肤量，有结构露出皮肤：${throughZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），移植片也是；其余皮肤经过简化。` : ''}`,

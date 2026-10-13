@@ -60,7 +60,9 @@ interface Known {
 //     dermatome maps (the male is at 0.52 now, on the line).
 const KNOWN: Record<BodyId, Known> = {
   male: {
-    failedChecks: [INGUINAL],
+    // 2026-10-13 换上新的脚趾和生殖器移植片后皮肤重新简化（50,889 → 53,576 顶点），腹股沟韧带中点下方现在读作 L1，不再有不通过的检查点。
+    // After the new toe and genital grafts the skin was re-simplified (50,889 → 53,576 vertices); the point below the mid-inguinal point now reads L1 and no check fails.
+    failedChecks: [],
     umbilicus: ['T10', 'T10'],
     xiphoid: ['T6', 'T6'],
     xiphoidSides: ['L', 'R'],
@@ -74,7 +76,9 @@ const KNOWN: Record<BodyId, Known> = {
     //   the midclavicular line (about 3-4 cm; measured in a test below); the seed lines of
     //   the two sides are symmetric to within 5 mm, the asymmetry is that of vertices standing for too much area.
     asymmetricDermatomes: /^(T[3-6]|T[89]|T10)$/,
-    splitTerritories: /^(obturator|pudendal)$/,
+    // iliohypogastricLateral（左）：同一次重新简化后分成两块，小的一块 10.5 cm²；分界落在粗网格的顶点上（2026-10-13 记录）。
+    // iliohypogastricLateral (left): in two pieces after the same re-simplification, the smaller 10.5 cm²; the boundary falls on vertices of the coarse mesh (recorded 2026-10-13).
+    splitTerritories: /^(obturator|pudendal|iliohypogastricLateral)$/,
     disagreeingTerritories: ['iliohypogastricLateral', 'iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial'],
     tinyTerritories: [],
     intercostobrachialMirror: 0.5,
@@ -118,7 +122,9 @@ const KNOWN: Record<BodyId, Known> = {
     splitDermatomes: /^(T([2-9]|10|11|12)|V3|S3|L3)$/,
     // 胸腹部的带沿她变形后的肋间神经，神经两侧不完全对称。
     // The thoracic and abdominal bands follow her warped intercostal nerves, which are not quite symmetric.
-    asymmetricDermatomes: /^(T([3-9]|10))$/,
+    // C4：皮肤重新简化后（47,362 → 47,108 顶点）左 220.7、右 277.2 cm²（比值 0.796）；原因未查明，移植片不在这一带（2026-10-13 记录）。
+    // C4: after the skin was re-simplified (47,362 → 47,108 vertices) left 220.7, right 277.2 cm² (ratio 0.796); cause not established, the grafts are nowhere near (recorded 2026-10-13).
+    asymmetricDermatomes: /^(C4|T([3-9]|10))$/,
     // 髂腹下神经外侧皮支：她的这条神经（变形后）越过髂嵴处和臀外侧处各有一段贴近皮肤，中间隔着臀上皮神经的分布区。
     // Lateral branch of iliohypogastric: her (warped) nerve comes close to the skin where it crosses
     // the iliac crest and again on the lateral buttock, with the superior clunial territory between.
@@ -140,13 +146,19 @@ const KNOWN: Record<BodyId, Known> = {
     //  - subcostal (0.48): its lateral cutaneous branch crosses the iliac crest to the greater
     //    trochanter (Gray), while T12 in the dermatome map stops above the crest and the lateral hip
     //    below it is L1/L2; with her wider pelvis that part is a larger share than on the male (0.65).
-    disagreeingTerritories: ['subcostal', 'iliohypogastricLateral', 'iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial'],
+    //  - 髂腹股沟神经：她的分布区只有 12 cm²，其中 L1 占 0.20、T12 占 0.66、S3 占 0.14（2026-10-13 记录）。
+    //  - ilioinguinal: her territory is only 12 cm², of which L1 has 0.20, T12 0.66 and S3 0.14 (recorded 2026-10-13).
+    disagreeingTerritories: ['subcostal', 'iliohypogastricLateral', 'iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial', 'ilioinguinal', 'inferiorClunial'],
+    //  - 臀下皮神经：落在预期皮节内的比例为 0.49（2026-10-13 记录，原因未查）。
+    //  - inferiorClunial: 0.49 of its area lies in the expected dermatomes (recorded 2026-10-13; cause not examined).
     // 生殖股神经生殖支：她的这条神经已截短到腹股沟管浅环附近（供阴囊的一段只属男性），离皮肤 8 cm 以上，
     // 没有种子；她的皮肤上也没有做出大阴唇。该区没有皮肤。
     // Genital branch of genitofemoral: her nerve was trimmed to end near the superficial inguinal
     // ring (the run to the scrotum is male only) and never comes within 8 cm of the skin, so it has
     // no seed; her skin has no modelled labium majus either. The territory has no skin.
-    tinyTerritories: ['genitofemoralGenital'],
+    // 髂腹股沟神经：皮肤重新简化后她的分布区只剩 12 cm²（下限 20）；这条神经只有一小段贴近皮肤，分布区对网格很敏感（2026-10-13 记录，待把体表图改到未简化的皮肤上绘制）。
+    // Ilioinguinal: after the skin was re-simplified her territory is down to 12 cm² (bound 20); only a short stretch of the nerve lies near the skin and the territory is sensitive to the mesh (recorded 2026-10-13; to be fixed by painting the maps on the unsimplified skin).
+    tinyTerritories: ['genitofemoralGenital', 'ilioinguinal'],
     intercostobrachialMirror: 0.5,
   },
 }

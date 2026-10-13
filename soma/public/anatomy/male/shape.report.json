@@ -2,41 +2,41 @@
  "schema": 1,
  "body": "male",
  "inputs": {
-  "rig.json": "1a0c2339a2ba56a5",
-  "rig.bin": "ecfb2e8c656ae94b",
-  "anatomy.json#parts": "749ca1207670f5d6",
-  "integumentary.glb": "a42b95e41b262037",
-  "muscular.glb": "eb7b54ac8a63c2d9",
-  "skeletal.glb": "165fdde4a88aeb62",
-  "cardiovascular.glb": "1ff5fd1b74298f19",
-  "nervous.glb": "51c60bbd3289ea64",
+  "rig.json": "2d82f7f182e5b8e7",
+  "rig.bin": "806f972b83f98a58",
+  "anatomy.json#parts": "74fcb600010e0000",
+  "integumentary.glb": "13ec5fdbb9708dcb",
+  "muscular.glb": "67ee781f73e8cccc",
+  "skeletal.glb": "153a069e1df5416c",
+  "cardiovascular.glb": "04f3e71541f78153",
+  "nervous.glb": "ac75dc5662c86f4e",
   "respiratory.glb": "fa5fd49f2140ec67",
   "digestive.glb": "bd3e5fc3fd262ee9",
   "urinary.glb": "42d0cfcccc3c7951",
   "reproductive.glb": "1dcaaf6e6dfc0c8b",
   "endocrine.glb": "e2b8ff856931a867",
   "lymphatic.glb": "af8ad72d72e9f60f",
-  "nerves.json": "b840760332b804b2",
+  "nerves.json": "32355c17e310b4dd",
   "../knowledge/relations.json#attachments": "f05cb6f5e8ea5879",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
-  "skin-source.u32": "90299c84269593d7",
+  "skin-source.u32": "b7407b92b37146fc",
   "data/curated/rig/shape.json#data": "c0e24566226a4854",
   "data/curated/bodyshape/rig-shape.json#data": "e145fc8d255cc3cd",
-  "data/raw/bodyshape/out/male-skin-open/skin.obj": "fb705d96dcca9997",
-  "data/raw/bodyshape/out/male-skin-open/shape-fat.f32": "3e0aa032bfa954d2",
-  "data/raw/bodyshape/out/male-skin-open/shape-limit.f32": "ee4a9fa96cf0c25d",
+  "data/raw/bodyshape/out/male-skin-open/skin.obj": "3a73b3dccf48c1f8",
+  "data/raw/bodyshape/out/male-skin-open/shape-fat.f32": "fbba1fdcacb3401e",
+  "data/raw/bodyshape/out/male-skin-open/shape-limit.f32": "85de078f92379923",
   "data/raw/bodyshape/out/male-skin-open/manifest.json#package": "21b32d11e24d8baf"
  },
- "binBytes": 1967952,
+ "binBytes": 2008592,
  "notes": [],
  "skin": {
   "part": "FJ2810",
-  "vertices": 50889,
+  "vertices": 53576,
   "farthestFromSourceMm": 0
  },
  "followers": {
-  "parts": 414,
-  "vertices": 113077
+  "parts": 413,
+  "vertices": 113403
  },
  "calibration": [
   {
@@ -546,9 +546,9 @@
   {
    "label": "default",
    "controls": {},
-   "skinHeightM": 1.723,
+   "skinHeightM": 1.7223,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.1,
     "over2mmPct": 1,
     "worstMm": 28.7,
@@ -557,10 +557,10 @@
     "depthP50Mm": 28.4
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 0.5,
+    "sampled": 3088,
+    "outsidePct": 0.6,
     "over2mmPct": 0.4,
-    "worstMm": 6.9
+    "worstMm": 7.5
    }
   },
   {
@@ -568,9 +568,9 @@
    "controls": {
     "stature": 1.5918
    },
-   "skinHeightM": 1.5931,
+   "skinHeightM": 1.5925,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.6,
     "over2mmPct": 1.2,
     "worstMm": 27.2,
@@ -579,10 +579,10 @@
     "depthP50Mm": 26.7
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 6.6,
-    "over2mmPct": 3.3,
-    "worstMm": 11
+    "sampled": 3088,
+    "outsidePct": 6.7,
+    "over2mmPct": 3.2,
+    "worstMm": 9.8
    }
   },
   {
@@ -590,10 +590,10 @@
    "controls": {
     "stature": 1.8518
    },
-   "skinHeightM": 1.8532,
+   "skinHeightM": 1.8525,
    "deep": {
-    "sampled": 111206,
-    "outsidePct": 1.1,
+    "sampled": 111233,
+    "outsidePct": 1.2,
     "over2mmPct": 1,
     "worstMm": 30.2,
     "worstPart": "Left genioglossus",
@@ -601,10 +601,10 @@
     "depthP50Mm": 30.2
    },
    "fat": {
-    "sampled": 3107,
+    "sampled": 3088,
     "outsidePct": 0.4,
     "over2mmPct": 0.2,
-    "worstMm": 4
+    "worstMm": 7.9
    }
   },
   {
@@ -612,21 +612,21 @@
    "controls": {
     "bmi": 18.5
    },
-   "skinHeightM": 1.723,
+   "skinHeightM": 1.7223,
    "deep": {
-    "sampled": 111206,
-    "outsidePct": 9.1,
-    "over2mmPct": 7.1,
-    "worstMm": 31.1,
+    "sampled": 111233,
+    "outsidePct": 9.2,
+    "over2mmPct": 7.2,
+    "worstMm": 30.7,
     "worstPart": "Right external oblique",
     "depthP5Mm": -5.1,
-    "depthP50Mm": 18
+    "depthP50Mm": 17.9
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 28.5,
-    "over2mmPct": 20.4,
-    "worstMm": 26.5
+    "sampled": 3088,
+    "outsidePct": 28.1,
+    "over2mmPct": 19.7,
+    "worstMm": 26.6
    }
   },
   {
@@ -634,21 +634,21 @@
    "controls": {
     "bmi": 21.6
    },
-   "skinHeightM": 1.723,
+   "skinHeightM": 1.7223,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 2.7,
     "over2mmPct": 1.8,
     "worstMm": 28.7,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 2.5,
-    "depthP50Mm": 23.1
+    "depthP50Mm": 23
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 14.3,
-    "over2mmPct": 7.8,
-    "worstMm": 8
+    "sampled": 3088,
+    "outsidePct": 14.2,
+    "over2mmPct": 7.4,
+    "worstMm": 8.1
    }
   },
   {
@@ -656,9 +656,9 @@
    "controls": {
     "bmi": 25
    },
-   "skinHeightM": 1.723,
+   "skinHeightM": 1.7223,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.1,
     "over2mmPct": 1,
     "worstMm": 28.7,
@@ -667,10 +667,10 @@
     "depthP50Mm": 29.8
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 0.5,
+    "sampled": 3088,
+    "outsidePct": 0.6,
     "over2mmPct": 0.4,
-    "worstMm": 6.6
+    "worstMm": 7.5
    }
   },
   {
@@ -678,21 +678,21 @@
    "controls": {
     "bmi": 30
    },
-   "skinHeightM": 1.7229,
+   "skinHeightM": 1.7222,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.2,
     "over2mmPct": 1,
     "worstMm": 28.7,
     "worstPart": "Left genioglossus",
     "depthP5Mm": 3.7,
-    "depthP50Mm": 39.9
+    "depthP50Mm": 39.8
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 0.5,
-    "over2mmPct": 0.3,
-    "worstMm": 7.9
+    "sampled": 3088,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.4,
+    "worstMm": 7.5
    }
   },
   {
@@ -700,21 +700,21 @@
    "controls": {
     "legLength": -1.5
    },
-   "skinHeightM": 1.7228,
+   "skinHeightM": 1.722,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.1,
     "over2mmPct": 1,
     "worstMm": 29.1,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.5,
-    "depthP50Mm": 28.6
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 28.5
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 0.5,
+    "sampled": 3088,
+    "outsidePct": 0.6,
     "over2mmPct": 0.4,
-    "worstMm": 6.7
+    "worstMm": 7.6
    }
   },
   {
@@ -722,9 +722,9 @@
    "controls": {
     "legLength": 1.5
    },
-   "skinHeightM": 1.7278,
+   "skinHeightM": 1.727,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.2,
     "over2mmPct": 0.9,
     "worstMm": 26.9,
@@ -733,10 +733,10 @@
     "depthP50Mm": 27.6
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 3.8,
-    "over2mmPct": 1.6,
-    "worstMm": 5.7
+    "sampled": 3088,
+    "outsidePct": 3.9,
+    "over2mmPct": 1.8,
+    "worstMm": 7
    }
   },
   {
@@ -744,9 +744,9 @@
    "controls": {
     "centralBuild": -1.5
    },
-   "skinHeightM": 1.7246,
+   "skinHeightM": 1.7239,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.2,
     "over2mmPct": 1,
     "worstMm": 28.9,
@@ -755,10 +755,10 @@
     "depthP50Mm": 27.6
    },
    "fat": {
-    "sampled": 3107,
+    "sampled": 3088,
     "outsidePct": 6,
-    "over2mmPct": 2.7,
-    "worstMm": 6.2
+    "over2mmPct": 2.9,
+    "worstMm": 7.6
    }
   },
   {
@@ -766,9 +766,9 @@
    "controls": {
     "centralBuild": 1.5
    },
-   "skinHeightM": 1.7214,
+   "skinHeightM": 1.7207,
    "deep": {
-    "sampled": 111206,
+    "sampled": 111233,
     "outsidePct": 1.1,
     "over2mmPct": 1,
     "worstMm": 28.5,
@@ -777,10 +777,10 @@
     "depthP50Mm": 29.5
    },
    "fat": {
-    "sampled": 3107,
-    "outsidePct": 0.6,
-    "over2mmPct": 0.4,
-    "worstMm": 8.1
+    "sampled": 3088,
+    "outsidePct": 1,
+    "over2mmPct": 0.5,
+    "worstMm": 7.5
    }
   }
  ],
@@ -829,10 +829,5 @@
    "en": "Lower bound: below it the skin would shrink inside muscle and bone — muscles do not thin with BMI, and the share of sampled deep-part vertices more than 2 mm outside the skin would exceed the default (1 %) by more than 1 percentage points; nor below 18.5, the lowest BMI of the fat-field table. Upper bound: 40, the highest BMI of the table."
   }
  },
- "renders": [
-  "tools/rig/out/male/shape-stature.png",
-  "tools/rig/out/male/shape-bmi.png",
-  "tools/rig/out/male/shape-legLength.png",
-  "tools/rig/out/male/shape-centralBuild.png"
- ]
+ "renders": []
 }

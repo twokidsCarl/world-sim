@@ -307,6 +307,26 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(report.skin.verticesRaised / report.skin.ofVertices).toBeLessThan(0.1)
   })
 
+  // 发布的数据必须装着开口后的皮肤包，而不是占位皮肤：指纹对不上时构建只是悄悄退回占位皮肤，其余测试会各自跳过。
+  // 外展角是钉住的那个（皮肤包按它拟合），且仍满足间隙要求；自动判据的结果只作记录。
+  // The shipped data must carry the opened skin package, not the placeholder: on a fingerprint mismatch the build merely
+  // falls back to the placeholder and the other tests skip themselves. The abduction angle is the pinned one (the skin
+  // package was fitted at it) and still meets the gap requirement; the automatic result is on record only.
+  it.skipIf(!present)('ships the opened skin package, at the pinned abduction angle', () => {
+    expect(report.skinPackage.installed).toBe(true)
+    expect(report.skinPackage.opened).toBeDefined()
+    expect(report.skinPackage.fittedTo.key).toBe(report.skinPackage.internalsKey)
+    const ab = report.armAbduction
+    expect(ab.applied).toBe(true)
+    expect(ab.pinned).toBe(true)
+    expect(ab.angleDeg).toBe(7.5)
+    expect(typeof ab.automaticWouldChoose).toBe('number')
+    expect(ab.gapNeededMm).toBe(ab.requirement.minGapMm + 1)
+    expect(ab.gapAtPinnedAngleMm).toBeGreaterThanOrEqual(ab.gapNeededMm)
+    expect(ab.reason.zh.length).toBeGreaterThan(10)
+    expect(ab.reason.en.length).toBeGreaterThan(10)
+  })
+
   it.skipIf(!present || !report?.armAbduction?.applied)('abducts the arms just far enough to open the axillae, with the male\'s criterion', () => {
     const ab = report.armAbduction
     expect(ab.angleDeg).toBeGreaterThan(0)
@@ -676,7 +696,7 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       expect(all).not.toMatch(/\bhis (toe bones|phalanges)\b/)
       // 足趾移植片是带着毛病发布的：说明里写明哪几个趾、什么样，并给出本次构建量的对折小面数；第 3–5 趾被拉长的倍数也在
       // the toe grafts ship with their faults: the cautions say which toes and what it looks like, with this build's count of folded facets; the stretch of toes three to five is stated too
-      expect(all).toContain('The grafted toes have visible faults: at the tips of the second and third toes')
+      expect(all).toContain('The grafted toes still show small faults: near the tips of the second to fifth toes a shallow ring step')
       expect(all).toMatch(/third to fifth toes are stretched \d\.\d\d–\d\.\d\d times/)
       const tg = sp.toeGraftSurface.grafts as Record<string, { triangles: number; over90: number; folded: number }>
       expect(Object.keys(tg).sort()).toEqual(['toesL', 'toesR'])

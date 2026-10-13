@@ -2,32 +2,32 @@
  "schema": 1,
  "body": "male",
  "inputs": {
-  "anatomy.json#parts": "749ca1207670f5d6",
-  "integumentary.glb": "a42b95e41b262037",
-  "muscular.glb": "eb7b54ac8a63c2d9",
-  "skeletal.glb": "165fdde4a88aeb62",
-  "cardiovascular.glb": "1ff5fd1b74298f19",
-  "nervous.glb": "51c60bbd3289ea64",
+  "anatomy.json#parts": "74fcb600010e0000",
+  "integumentary.glb": "13ec5fdbb9708dcb",
+  "muscular.glb": "67ee781f73e8cccc",
+  "skeletal.glb": "153a069e1df5416c",
+  "cardiovascular.glb": "04f3e71541f78153",
+  "nervous.glb": "ac75dc5662c86f4e",
   "respiratory.glb": "fa5fd49f2140ec67",
   "digestive.glb": "bd3e5fc3fd262ee9",
   "urinary.glb": "42d0cfcccc3c7951",
   "reproductive.glb": "1dcaaf6e6dfc0c8b",
   "endocrine.glb": "e2b8ff856931a867",
   "lymphatic.glb": "af8ad72d72e9f60f",
-  "nerves.json": "b840760332b804b2",
+  "nerves.json": "32355c17e310b4dd",
   "../knowledge/relations.json#attachments": "f05cb6f5e8ea5879",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
-  "skin-source.u32": "90299c84269593d7",
+  "skin-source.u32": "b7407b92b37146fc",
   "data/curated/rig/joints.json#data": "4cf0339dc3e6948b",
   "data/curated/rig/rom.json#data": "70e54d91f6449e27",
   "data/curated/rig/bindings.json#data": "c1b2e94e1d948a6c",
   "data/curated/rig/overrides.json#data": "30eec83cd59b485a",
-  "data/raw/bodyshape/out/male-skin-open/weights.bin": "ac997ed66c17f7bb",
+  "data/raw/bodyshape/out/male-skin-open/weights.bin": "ec709fb20d148a3c",
   "data/raw/bodyshape/out/male-skin-open/joints.json": "bb8935a85433c32e",
-  "data/raw/bodyshape/out/male-skin-open/skin.obj": "fb705d96dcca9997",
+  "data/raw/bodyshape/out/male-skin-open/skin.obj": "3a73b3dccf48c1f8",
   "data/raw/bodyshape/out/male-skin-open/manifest.json#package": "21b32d11e24d8baf"
  },
- "binBytes": 12202884,
+ "binBytes": 12234576,
  "joints": [
   {
    "id": "pelvis",
@@ -3473,25 +3473,25 @@
  ],
  "field": {
   "skinWalls": 1,
-  "airVoxelsRemoved": 48447,
-  "stepsClosed": 1866,
+  "airVoxelsRemoved": 48691,
+  "stepsClosed": 2033,
   "plug": 0,
   "voxel": 0.005,
   "dims": [
    168,
    351,
-   62
+   63
   ],
-  "insideVoxels": 563903,
-  "labelledVoxels": 563949,
+  "insideVoxels": 563895,
+  "labelledVoxels": 563926,
   "meanLabels": 8,
   "leaked": false,
-  "buildMs": 6743
+  "buildMs": 6835
  },
  "bindings": {
   "field": {
    "parts": 1834,
-   "vertices": 465264,
+   "vertices": 465110,
    "rigid": 266
   },
   "rigid": {
@@ -3506,12 +3506,12 @@
   },
   "attach": {
    "parts": 646,
-   "vertices": 335399,
+   "vertices": 335396,
    "rigid": 18
   },
   "external": {
    "parts": 1,
-   "vertices": 50889,
+   "vertices": 53576,
    "rigid": 0
   },
   "bone": {
@@ -3521,7 +3521,7 @@
   },
   "centreline": {
    "parts": 405,
-   "vertices": 157772,
+   "vertices": 157883,
    "rigid": 39
   }
  },
@@ -8780,7 +8780,7 @@
   {
    "dir": "data/raw/bodyshape/out/male-skin-open",
    "source": "Momentum Human Rig (MHR) v1.0.1",
-   "vertices": 94972,
+   "vertices": 97576,
    "mapping": [
     {
      "external": "body_world",
@@ -9705,9 +9705,9 @@
   }
  ],
  "fieldQueries": {
-  "direct": 4920517,
-  "tested": 237555,
-  "obstructed": 155107
+  "direct": 4920272,
+  "tested": 234194,
+  "obstructed": 157506
  },
  "attach": [
   {
@@ -33385,7 +33385,7 @@
   "tpip2_R \"flexion / extension\": the rest pose (-0.6° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip3_R \"flexion / extension\": the rest pose (-5.8° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
   "tpip4_R \"flexion / extension\": the rest pose (-5.4° in the anatomical convention) lies outside the normal range −0…35°; range widened to include the rest pose",
-  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1268 chest vertices handed part of their thoracic weight to the ribs; 2409 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)"
+  "FJ2810 \"Skin\": bound with external weights from data/raw/bodyshape/out/male-skin-open, taken by package vertex index (skin-source.u32); 1261 chest vertices handed part of their thoracic weight to the ribs; 2456 vertices blended with distance-field weights (generic: ^(cmc1|mcp[1-5]|pip[2-5]|dip[2-5]|ip1)_[LR]$)"
  ],
  "validation": {
   "rest": {
@@ -33399,11 +33399,11 @@
    "badJointIndices": 0
   },
   "armSkin": {
-   "forearmVerts": 3545,
+   "forearmVerts": 3608,
    "maxTrunkWeightForearm": 0,
-   "upperArmVerts": 468,
+   "upperArmVerts": 470,
    "maxTrunkWeightDistalUpperArm": 0,
-   "trunkVerts": 4060,
+   "trunkVerts": 6194,
    "maxArmWeightTrunkBelowAxilla": 0
   },
   "postures": [
@@ -33416,9 +33416,9 @@
     "bones": [],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.4,
+      "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -33433,12 +33433,12 @@
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.5,
-      "deepPct": 4.6,
-      "sampled": 12884
+      "deepPct": 4.5,
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -33566,7 +33566,7 @@
      "p90AbsErrTaperedPct": 0
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 1,
@@ -33652,7 +33652,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -33667,12 +33667,12 @@
      "artery": {
       "insidePct": 8.9,
       "deepPct": 2.7,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -33762,9 +33762,9 @@
      },
      "skin": {
       "p99": 1.01,
-      "p999": 1.51,
+      "p999": 1.49,
       "over2Pct": 0.02,
-      "max": 2.29,
+      "max": 2.3,
       "worst": "Skin"
      },
      "bone": {
@@ -33783,10 +33783,10 @@
      },
      "fat": {
       "p99": 1.09,
-      "p999": 1.55,
+      "p999": 1.49,
       "over2Pct": 0.01,
-      "max": 2.42,
-      "worst": "Subcutaneous tissue of left upper limb"
+      "max": 3.03,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
@@ -33800,12 +33800,12 @@
      "p90AbsErrTaperedPct": 13.7
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.21,
-     "maxEdgeStretch": 2.29,
-     "stretchedAreaCm2": 29.2
+     "minAreaRatio": 0.03,
+     "maxEdgeStretch": 2.3,
+     "stretchedAreaCm2": 32.7
     },
     "poke": null,
     "corridors": [
@@ -33886,7 +33886,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -33901,12 +33901,12 @@
      "artery": {
       "insidePct": 9,
       "deepPct": 2.7,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -33996,9 +33996,9 @@
      },
      "skin": {
       "p99": 1.01,
-      "p999": 1.87,
-      "over2Pct": 0.08,
-      "max": 3.28,
+      "p999": 1.85,
+      "over2Pct": 0.07,
+      "max": 3.29,
       "worst": "Skin"
      },
      "bone": {
@@ -34017,10 +34017,10 @@
      },
      "fat": {
       "p99": 1.17,
-      "p999": 1.93,
-      "over2Pct": 0.08,
-      "max": 4.56,
-      "worst": "Subcutaneous tissue of left upper limb"
+      "p999": 1.87,
+      "over2Pct": 0.07,
+      "max": 4.95,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
@@ -34034,12 +34034,12 @@
      "p90AbsErrTaperedPct": 25.04
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
-     "minAreaRatio": 0.03,
-     "maxEdgeStretch": 3.28,
-     "stretchedAreaCm2": 146
+     "minAreaRatio": 0.07,
+     "maxEdgeStretch": 3.29,
+     "stretchedAreaCm2": 169.6
     },
     "poke": null,
     "corridors": [
@@ -34154,9 +34154,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.4,
+      "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -34171,12 +34171,12 @@
      "artery": {
       "insidePct": 9.3,
       "deepPct": 2.9,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -34268,7 +34268,7 @@
       "p99": 1.05,
       "p999": 1.59,
       "over2Pct": 0.04,
-      "max": 2.47,
+      "max": 2.48,
       "worst": "Skin"
      },
      "bone": {
@@ -34286,10 +34286,10 @@
       "worst": "Right median nerve"
      },
      "fat": {
-      "p99": 1.49,
-      "p999": 3.17,
-      "over2Pct": 0.4,
-      "max": 7.62,
+      "p99": 1.47,
+      "p999": 3.05,
+      "over2Pct": 0.39,
+      "max": 7.71,
       "worst": "Subcutaneous tissue of right upper limb"
      }
     },
@@ -34304,11 +34304,11 @@
      "p90AbsErrTaperedPct": 34.5
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.2,
-     "maxEdgeStretch": 2.47,
+     "minAreaRatio": 0.22,
+     "maxEdgeStretch": 2.48,
      "stretchedAreaCm2": 63.1
     },
     "poke": null,
@@ -34426,7 +34426,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -34441,12 +34441,12 @@
      "artery": {
       "insidePct": 8.9,
       "deepPct": 2.7,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -34536,9 +34536,9 @@
      },
      "skin": {
       "p99": 1.01,
-      "p999": 1.51,
+      "p999": 1.49,
       "over2Pct": 0.02,
-      "max": 2.29,
+      "max": 2.3,
       "worst": "Skin"
      },
      "bone": {
@@ -34557,10 +34557,10 @@
      },
      "fat": {
       "p99": 1.09,
-      "p999": 1.55,
+      "p999": 1.49,
       "over2Pct": 0.01,
-      "max": 2.42,
-      "worst": "Subcutaneous tissue of left upper limb"
+      "max": 3.05,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
@@ -34574,12 +34574,12 @@
      "p90AbsErrTaperedPct": 13.73
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.21,
-     "maxEdgeStretch": 2.29,
-     "stretchedAreaCm2": 29.2
+     "minAreaRatio": 0.03,
+     "maxEdgeStretch": 2.3,
+     "stretchedAreaCm2": 32.7
     },
     "poke": null,
     "corridors": [
@@ -34640,9 +34640,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.6,
+      "insidePct": 4.5,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -34657,12 +34657,12 @@
      "artery": {
       "insidePct": 9.3,
       "deepPct": 2.9,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -34689,9 +34689,9 @@
      },
      "fascia": {
       "p99": 1.17,
-      "p999": 2.83,
+      "p999": 2.85,
       "over2Pct": 0.22,
-      "max": 23.9,
+      "max": 23.41,
       "worst": "Right investing abdominal fascia"
      },
      "ligament": {
@@ -34717,7 +34717,7 @@
      },
      "space": {
       "p99": 1.05,
-      "p999": 1.25,
+      "p999": 1.23,
       "over2Pct": 0,
       "max": 1.36,
       "worst": "Cavity of right atrium"
@@ -34730,7 +34730,7 @@
       "worst": "Pineal body"
      },
      "vein": {
-      "p99": 1.47,
+      "p99": 1.45,
       "p999": 3.51,
       "over2Pct": 0.43,
       "max": 9.21,
@@ -34738,7 +34738,7 @@
      },
      "heart": {
       "p99": 1.03,
-      "p999": 1.31,
+      "p999": 1.29,
       "over2Pct": 0,
       "max": 2.05,
       "worst": "Wall of right atrium"
@@ -34751,10 +34751,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.15,
-      "p999": 2.59,
+      "p99": 1.13,
+      "p999": 2.51,
       "over2Pct": 0.2,
-      "max": 17.45,
+      "max": 11,
       "worst": "Skin"
      },
      "bone": {
@@ -34766,17 +34766,17 @@
      },
      "nerve": {
       "p99": 1.33,
-      "p999": 3.85,
-      "over2Pct": 0.34,
-      "max": 14.37,
+      "p999": 3.89,
+      "over2Pct": 0.33,
+      "max": 14.55,
       "worst": "Left posterior brachial cutaneous nerve"
      },
      "fat": {
-      "p99": 1.49,
-      "p999": 2.89,
-      "over2Pct": 0.39,
-      "max": 7.71,
-      "worst": "Subcutaneous tissue of trunk"
+      "p99": 1.51,
+      "p999": 3.11,
+      "over2Pct": 0.41,
+      "max": 7.08,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
@@ -34790,12 +34790,12 @@
      "p90AbsErrTaperedPct": 11.94
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.09,
-     "maxEdgeStretch": 13.02,
-     "stretchedAreaCm2": 352
+     "minAreaRatio": 0.21,
+     "maxEdgeStretch": 11,
+     "stretchedAreaCm2": 360.2
     },
     "poke": null,
     "corridors": [
@@ -34856,9 +34856,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.5,
+      "insidePct": 4.4,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -34873,18 +34873,18 @@
      "artery": {
       "insidePct": 9.3,
       "deepPct": 2.9,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.45,
-      "p999": 3.33,
+      "p999": 3.31,
       "over2Pct": 0.46,
       "max": 16.83,
       "worst": "Left posterior basal segmental bronchial tree"
@@ -34905,9 +34905,9 @@
      },
      "fascia": {
       "p99": 1.45,
-      "p999": 6.03,
+      "p999": 6.01,
       "over2Pct": 0.59,
-      "max": 64.28,
+      "max": 63,
       "worst": "Right investing abdominal fascia"
      },
      "ligament": {
@@ -34932,7 +34932,7 @@
       "worst": "Third ventricle"
      },
      "space": {
-      "p99": 1.07,
+      "p99": 1.09,
       "p999": 1.37,
       "over2Pct": 0,
       "max": 1.66,
@@ -34954,7 +34954,7 @@
      },
      "heart": {
       "p99": 1.09,
-      "p999": 1.73,
+      "p999": 1.71,
       "over2Pct": 0.06,
       "max": 3.86,
       "worst": "Anterior cusp of aortic valve"
@@ -34967,10 +34967,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.61,
-      "p999": 5.95,
-      "over2Pct": 0.75,
-      "max": 46.51,
+      "p99": 1.55,
+      "p999": 5.61,
+      "over2Pct": 0.71,
+      "max": 29.74,
       "worst": "Skin"
      },
      "bone": {
@@ -34982,17 +34982,17 @@
      },
      "nerve": {
       "p99": 1.85,
-      "p999": 8.97,
+      "p999": 8.89,
       "over2Pct": 0.85,
-      "max": 43.58,
+      "max": 41.21,
       "worst": "Left posterior brachial cutaneous nerve"
      },
      "fat": {
-      "p99": 2.29,
-      "p999": 5.57,
-      "over2Pct": 1.35,
-      "max": 14.03,
-      "worst": "Subcutaneous tissue of trunk"
+      "p99": 2.35,
+      "p999": 6.07,
+      "over2Pct": 1.4,
+      "max": 18.16,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
@@ -35006,12 +35006,12 @@
      "p90AbsErrTaperedPct": 35.78
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0,
      "selfInsidePct": 0.1,
      "minAreaRatio": 0.02,
-     "maxEdgeStretch": 33.24,
-     "stretchedAreaCm2": 1398.3
+     "maxEdgeStretch": 29.74,
+     "stretchedAreaCm2": 1417.2
     },
     "poke": null,
     "corridors": [
@@ -35081,9 +35081,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.4,
+      "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -35098,17 +35098,17 @@
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.6,
       "deepPct": 4.6,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
      "organ": {
-      "p99": 1.17,
+      "p99": 1.15,
       "p999": 1.79,
       "over2Pct": 0.05,
       "max": 12.22,
@@ -35129,11 +35129,11 @@
       "worst": "Tendinous arch of levator ani"
      },
      "fascia": {
-      "p99": 1.21,
+      "p99": 1.23,
       "p999": 2.71,
       "over2Pct": 0.25,
-      "max": 10.54,
-      "worst": "Greater omentum"
+      "max": 10.66,
+      "worst": "Left fascia lata"
      },
      "ligament": {
       "p99": 1.09,
@@ -35172,7 +35172,7 @@
      },
      "vein": {
       "p99": 1.09,
-      "p999": 2.51,
+      "p999": 2.49,
       "over2Pct": 0.16,
       "max": 34.68,
       "worst": "Left superficial epigastric vein"
@@ -35192,10 +35192,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 1.71,
-      "p999": 5.13,
-      "over2Pct": 0.76,
-      "max": 7.03,
+      "p99": 2.63,
+      "p999": 6.19,
+      "over2Pct": 1.62,
+      "max": 9.92,
       "worst": "Skin"
      },
      "bone": {
@@ -35206,17 +35206,17 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 1.87,
-      "p999": 4.25,
-      "over2Pct": 0.88,
-      "max": 16.69,
-      "worst": "Left anterior branch of obturator nerve"
+      "p99": 1.93,
+      "p999": 4.35,
+      "over2Pct": 0.91,
+      "max": 26.03,
+      "worst": "Right cutaneous branch of anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 1.61,
-      "p999": 3.61,
-      "over2Pct": 0.55,
-      "max": 16.15,
+      "p99": 1.65,
+      "p999": 3.65,
+      "over2Pct": 0.58,
+      "max": 10.19,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -35231,12 +35231,12 @@
      "p90AbsErrTaperedPct": 27.34
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0,
-     "selfInsidePct": 0.5,
+     "selfInsidePct": 0.8,
      "minAreaRatio": 0.05,
-     "maxEdgeStretch": 7.03,
-     "stretchedAreaCm2": 218.8
+     "maxEdgeStretch": 9.92,
+     "stretchedAreaCm2": 244.6
     },
     "poke": null,
     "corridors": [
@@ -35315,9 +35315,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.4,
+      "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -35332,12 +35332,12 @@
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.6,
-      "deepPct": 4.7,
-      "sampled": 12884
+      "deepPct": 4.6,
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -35429,7 +35429,7 @@
       "p99": 1.01,
       "p999": 1.27,
       "over2Pct": 0.02,
-      "max": 2.5,
+      "max": 2.52,
       "worst": "Skin"
      },
      "bone": {
@@ -35450,7 +35450,7 @@
       "p99": 1.07,
       "p999": 1.75,
       "over2Pct": 0.04,
-      "max": 3.92,
+      "max": 4.03,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -35465,12 +35465,12 @@
      "p90AbsErrTaperedPct": 7.82
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 0.26,
-     "maxEdgeStretch": 2.5,
-     "stretchedAreaCm2": 37.7
+     "maxEdgeStretch": 2.52,
+     "stretchedAreaCm2": 39.7
     },
     "poke": null,
     "corridors": [
@@ -35549,9 +35549,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.5,
+      "insidePct": 4.4,
       "deepPct": 2.5,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -35565,13 +35565,13 @@
      },
      "artery": {
       "insidePct": 9.2,
-      "deepPct": 2.8,
-      "sampled": 20701
+      "deepPct": 2.9,
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.7,
+      "insidePct": 10.6,
       "deepPct": 4.7,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -35663,7 +35663,7 @@
       "p99": 1.01,
       "p999": 1.41,
       "over2Pct": 0.04,
-      "max": 3.4,
+      "max": 3.45,
       "worst": "Skin"
      },
      "bone": {
@@ -35682,9 +35682,9 @@
      },
      "fat": {
       "p99": 1.13,
-      "p999": 2.17,
-      "over2Pct": 0.13,
-      "max": 5.75,
+      "p999": 2.23,
+      "over2Pct": 0.15,
+      "max": 5.44,
       "worst": "Subcutaneous tissue of left lower limb"
      }
     },
@@ -35699,12 +35699,12 @@
      "p90AbsErrTaperedPct": 14.91
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 3.4,
-     "stretchedAreaCm2": 112.7
+     "minAreaRatio": 0.03,
+     "maxEdgeStretch": 3.45,
+     "stretchedAreaCm2": 102.8
     },
     "poke": null,
     "corridors": [
@@ -35819,9 +35819,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.4,
+      "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -35836,12 +35836,12 @@
      "artery": {
       "insidePct": 9.3,
       "deepPct": 2.9,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.5,
+      "insidePct": 10.4,
       "deepPct": 4.5,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -35933,7 +35933,7 @@
       "p99": 1.01,
       "p999": 1.09,
       "over2Pct": 0,
-      "max": 1.26,
+      "max": 1.24,
       "worst": "Skin"
      },
      "bone": {
@@ -35952,10 +35952,10 @@
      },
      "fat": {
       "p99": 1.03,
-      "p999": 1.17,
+      "p999": 1.15,
       "over2Pct": 0,
-      "max": 1.56,
-      "worst": "Subcutaneous tissue of right lower limb"
+      "max": 1.54,
+      "worst": "Subcutaneous tissue of left lower limb"
      }
     },
     "volume": {
@@ -35969,11 +35969,11 @@
      "p90AbsErrTaperedPct": 0.8
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.76,
-     "maxEdgeStretch": 1.26,
+     "minAreaRatio": 0.78,
+     "maxEdgeStretch": 1.24,
      "stretchedAreaCm2": 0
     },
     "poke": null,
@@ -36089,9 +36089,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.4,
+      "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -36106,12 +36106,12 @@
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.7,
       "deepPct": 4.7,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -36203,7 +36203,7 @@
       "p99": 1.01,
       "p999": 1.33,
       "over2Pct": 0,
-      "max": 1.8,
+      "max": 1.79,
       "worst": "Skin"
      },
      "bone": {
@@ -36221,11 +36221,11 @@
       "worst": "Left medial dorsal cutaneous nerve of foot"
      },
      "fat": {
-      "p99": 1.09,
+      "p99": 1.11,
       "p999": 1.57,
       "over2Pct": 0.03,
-      "max": 3.36,
-      "worst": "Subcutaneous tissue of left lower limb"
+      "max": 2.75,
+      "worst": "Subcutaneous tissue of right lower limb"
      }
     },
     "volume": {
@@ -36239,11 +36239,11 @@
      "p90AbsErrTaperedPct": 7.96
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.18,
-     "maxEdgeStretch": 1.8,
+     "minAreaRatio": 0.19,
+     "maxEdgeStretch": 1.79,
      "stretchedAreaCm2": 0
     },
     "poke": null,
@@ -36377,9 +36377,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 5,
+      "insidePct": 4.9,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -36394,12 +36394,12 @@
      "artery": {
       "insidePct": 8.7,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.4,
+      "insidePct": 10.3,
       "deepPct": 4.6,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -36489,9 +36489,9 @@
      },
      "skin": {
       "p99": 1.09,
-      "p999": 1.71,
+      "p999": 1.69,
       "over2Pct": 0.03,
-      "max": 3.76,
+      "max": 3.96,
       "worst": "Skin"
      },
      "bone": {
@@ -36509,11 +36509,11 @@
       "worst": "Right proper palmar digital branches of median nerve"
      },
      "fat": {
-      "p99": 1.15,
+      "p99": 1.13,
       "p999": 1.55,
       "over2Pct": 0.03,
-      "max": 4.41,
-      "worst": "Subcutaneous tissue of left upper limb"
+      "max": 4.52,
+      "worst": "Subcutaneous tissue of right upper limb"
      }
     },
     "volume": {
@@ -36527,12 +36527,12 @@
      "p90AbsErrTaperedPct": 31.16
     },
     "skin": {
-     "flippedPct": 0.4,
+     "flippedPct": 0.1,
      "collapsedPct": 0.1,
-     "selfInsidePct": 1.1,
+     "selfInsidePct": 1,
      "minAreaRatio": 0,
-     "maxEdgeStretch": 3.76,
-     "stretchedAreaCm2": 24.5
+     "maxEdgeStretch": 3.96,
+     "stretchedAreaCm2": 18.4
     },
     "poke": null,
     "corridors": [
@@ -36640,7 +36640,7 @@
      "nerve": {
       "insidePct": 4.3,
       "deepPct": 2.4,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -36655,12 +36655,12 @@
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.5,
-      "deepPct": 4.6,
-      "sampled": 12884
+      "deepPct": 4.5,
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -36750,9 +36750,9 @@
      },
      "skin": {
       "p99": 1.07,
-      "p999": 1.97,
-      "over2Pct": 0.09,
-      "max": 4.19,
+      "p999": 1.91,
+      "over2Pct": 0.08,
+      "max": 5.1,
       "worst": "Skin"
      },
      "bone": {
@@ -36771,9 +36771,9 @@
      },
      "fat": {
       "p99": 1.05,
-      "p999": 1.87,
-      "over2Pct": 0.07,
-      "max": 4.95,
+      "p999": 1.67,
+      "over2Pct": 0.05,
+      "max": 4.72,
       "worst": "Subcutaneous tissue of neck"
      }
     },
@@ -36788,12 +36788,12 @@
      "p90AbsErrTaperedPct": 15.67
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.17,
-     "maxEdgeStretch": 4.19,
-     "stretchedAreaCm2": 39.5
+     "minAreaRatio": 0.07,
+     "maxEdgeStretch": 5.1,
+     "stretchedAreaCm2": 28
     },
     "poke": null,
     "corridors": [
@@ -36962,9 +36962,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.3,
+      "insidePct": 4.2,
       "deepPct": 2.3,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -36979,18 +36979,18 @@
      "artery": {
       "insidePct": 9.1,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.6,
+      "insidePct": 10.5,
       "deepPct": 4.6,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
      "organ": {
       "p99": 1.21,
-      "p999": 3.57,
+      "p999": 3.61,
       "over2Pct": 0.33,
       "max": 15.2,
       "worst": "Taenia omentalis"
@@ -37025,9 +37025,9 @@
      },
      "artery": {
       "p99": 1.17,
-      "p999": 2.29,
+      "p999": 2.31,
       "over2Pct": 0.15,
-      "max": 15.68,
+      "max": 15.63,
       "worst": "Left superior epigastric artery"
      },
      "brain": {
@@ -37039,9 +37039,9 @@
      },
      "space": {
       "p99": 1.13,
-      "p999": 1.37,
+      "p999": 1.43,
       "over2Pct": 0.03,
-      "max": 3.13,
+      "max": 3.17,
       "worst": "Cavity of right ventricle"
      },
      "gland": {
@@ -37053,15 +37053,15 @@
      },
      "vein": {
       "p99": 1.25,
-      "p999": 3.11,
+      "p999": 3.13,
       "over2Pct": 0.28,
       "max": 14.15,
       "worst": "Right gastroepiploic vein"
      },
      "heart": {
-      "p99": 1.81,
-      "p999": 4.15,
-      "over2Pct": 0.8,
+      "p99": 1.83,
+      "p999": 4.17,
+      "over2Pct": 0.83,
       "max": 7.23,
       "worst": "Posterior leaflet of tricuspid valve"
      },
@@ -37073,10 +37073,10 @@
       "worst": "Left seventh costal cartilage"
      },
      "skin": {
-      "p99": 1.05,
-      "p999": 1.31,
+      "p99": 1.03,
+      "p999": 1.29,
       "over2Pct": 0,
-      "max": 2.51,
+      "max": 2.4,
       "worst": "Skin"
      },
      "bone": {
@@ -37095,9 +37095,9 @@
      },
      "fat": {
       "p99": 1.23,
-      "p999": 2.43,
+      "p999": 2.39,
       "over2Pct": 0.16,
-      "max": 10.07,
+      "max": 14.5,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
@@ -37112,12 +37112,12 @@
      "p90AbsErrTaperedPct": 9.74
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0,
      "selfInsidePct": 0,
      "minAreaRatio": 0.07,
-     "maxEdgeStretch": 2.51,
-     "stretchedAreaCm2": 18.9
+     "maxEdgeStretch": 2.4,
+     "stretchedAreaCm2": 17
     },
     "poke": null,
     "corridors": [
@@ -37223,9 +37223,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.7,
+      "insidePct": 4.6,
       "deepPct": 2.7,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -37240,12 +37240,12 @@
      "artery": {
       "insidePct": 9.6,
       "deepPct": 3.1,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.9,
       "deepPct": 4.8,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -37272,7 +37272,7 @@
      },
      "fascia": {
       "p99": 2.01,
-      "p999": 4.71,
+      "p999": 4.67,
       "over2Pct": 1.02,
       "max": 16.29,
       "worst": "Right medial patellar retinaculum"
@@ -37286,8 +37286,8 @@
      },
      "artery": {
       "p99": 1.49,
-      "p999": 4.01,
-      "over2Pct": 0.53,
+      "p999": 3.99,
+      "over2Pct": 0.52,
       "max": 27.91,
       "worst": "Right inferior epigastric artery"
      },
@@ -37314,8 +37314,8 @@
      },
      "vein": {
       "p99": 1.69,
-      "p999": 4.43,
-      "over2Pct": 0.69,
+      "p999": 4.37,
+      "over2Pct": 0.67,
       "max": 45.24,
       "worst": "Left superficial epigastric vein"
      },
@@ -37334,10 +37334,10 @@
       "worst": "Intervertebral disk of third lumbar vertebra"
      },
      "skin": {
-      "p99": 3.07,
-      "p999": 12.01,
-      "over2Pct": 1.42,
-      "max": 14.18,
+      "p99": 6.61,
+      "p999": 12.59,
+      "over2Pct": 3.49,
+      "max": 15.74,
       "worst": "Skin"
      },
      "bone": {
@@ -37348,18 +37348,18 @@
       "worst": "Xiphoid process"
      },
      "nerve": {
-      "p99": 3.09,
-      "p999": 6.91,
-      "over2Pct": 2.68,
+      "p99": 3.07,
+      "p999": 6.89,
+      "over2Pct": 2.69,
       "max": 21.76,
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 2.57,
-      "p999": 5.79,
-      "over2Pct": 1.88,
-      "max": 20.93,
-      "worst": "Subcutaneous tissue of left lower limb"
+      "p99": 2.61,
+      "p999": 6.19,
+      "over2Pct": 1.99,
+      "max": 15.47,
+      "worst": "Subcutaneous tissue of right lower limb"
      }
     },
     "volume": {
@@ -37373,12 +37373,12 @@
      "p90AbsErrTaperedPct": 29.1
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.2,
      "collapsedPct": 0.1,
-     "selfInsidePct": 0.7,
-     "minAreaRatio": 0.04,
-     "maxEdgeStretch": 14.18,
-     "stretchedAreaCm2": 1059.4
+     "selfInsidePct": 1.5,
+     "minAreaRatio": 0.02,
+     "maxEdgeStretch": 15.61,
+     "stretchedAreaCm2": 1097.7
     },
     "poke": null,
     "corridors": [
@@ -37466,9 +37466,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.5,
+      "insidePct": 4.4,
       "deepPct": 2.5,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -37483,12 +37483,12 @@
      "artery": {
       "insidePct": 9.2,
       "deepPct": 2.9,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
-      "insidePct": 10.8,
+      "insidePct": 10.7,
       "deepPct": 4.7,
-      "sampled": 12884
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -37514,8 +37514,8 @@
       "worst": "Tendinous arch of levator ani"
      },
      "fascia": {
-      "p99": 1.63,
-      "p999": 3.67,
+      "p99": 1.65,
+      "p999": 3.65,
       "over2Pct": 0.56,
       "max": 12.61,
       "worst": "Mesentery of small intestine"
@@ -37529,8 +37529,8 @@
      },
      "artery": {
       "p99": 1.29,
-      "p999": 2.97,
-      "over2Pct": 0.29,
+      "p999": 2.93,
+      "over2Pct": 0.28,
       "max": 23,
       "worst": "Right inferior epigastric artery"
      },
@@ -37556,9 +37556,9 @@
       "worst": "Left seminal vesicle"
      },
      "vein": {
-      "p99": 1.47,
-      "p999": 3.41,
-      "over2Pct": 0.42,
+      "p99": 1.45,
+      "p999": 3.35,
+      "over2Pct": 0.4,
       "max": 34.68,
       "worst": "Left superficial epigastric vein"
      },
@@ -37577,10 +37577,10 @@
       "worst": "Cricoid cartilage"
      },
      "skin": {
-      "p99": 2.47,
-      "p999": 9.23,
-      "over2Pct": 1.18,
-      "max": 10.97,
+      "p99": 5.11,
+      "p999": 9.65,
+      "over2Pct": 3,
+      "max": 11.94,
       "worst": "Skin"
      },
      "bone": {
@@ -37593,16 +37593,16 @@
      "nerve": {
       "p99": 2.47,
       "p999": 5.39,
-      "over2Pct": 1.74,
+      "over2Pct": 1.73,
       "max": 16.69,
       "worst": "Left anterior branch of obturator nerve"
      },
      "fat": {
-      "p99": 2.09,
-      "p999": 4.53,
-      "over2Pct": 1.12,
-      "max": 16.15,
-      "worst": "Subcutaneous tissue of left lower limb"
+      "p99": 2.11,
+      "p999": 4.87,
+      "over2Pct": 1.16,
+      "max": 12.55,
+      "worst": "Subcutaneous tissue of right lower limb"
      }
     },
     "volume": {
@@ -37616,12 +37616,12 @@
      "p90AbsErrTaperedPct": 23.51
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0.1,
-     "selfInsidePct": 0.5,
-     "minAreaRatio": 0.05,
-     "maxEdgeStretch": 10.97,
-     "stretchedAreaCm2": 426.7
+     "selfInsidePct": 1.2,
+     "minAreaRatio": 0.01,
+     "maxEdgeStretch": 11.94,
+     "stretchedAreaCm2": 483.8
     },
     "poke": null,
     "corridors": [
@@ -37700,9 +37700,9 @@
     ],
     "softInBone": {
      "nerve": {
-      "insidePct": 4.7,
+      "insidePct": 4.6,
       "deepPct": 2.6,
-      "sampled": 32663
+      "sampled": 32683
      },
      "tendon": {
       "insidePct": 4.4,
@@ -37717,12 +37717,12 @@
      "artery": {
       "insidePct": 9.2,
       "deepPct": 2.8,
-      "sampled": 20701
+      "sampled": 20719
      },
      "vein": {
       "insidePct": 10.5,
-      "deepPct": 4.6,
-      "sampled": 12884
+      "deepPct": 4.5,
+      "sampled": 12895
      }
     },
     "stretch": {
@@ -37763,8 +37763,8 @@
      },
      "artery": {
       "p99": 1.91,
-      "p999": 5.71,
-      "over2Pct": 0.91,
+      "p999": 5.73,
+      "over2Pct": 0.92,
       "max": 15.97,
       "worst": "Trunk of right coronary artery"
      },
@@ -37776,11 +37776,11 @@
       "worst": "Anterior horn of spinal cord"
      },
      "space": {
-      "p99": 3.05,
+      "p99": 3.09,
       "p999": 6.59,
-      "over2Pct": 5.62,
-      "max": 7.03,
-      "worst": "Cavity of left atrium"
+      "over2Pct": 5.72,
+      "max": 7.15,
+      "worst": "Cavity of right ventricle"
      },
      "gland": {
       "p99": 1.09,
@@ -37791,15 +37791,15 @@
      },
      "vein": {
       "p99": 2.47,
-      "p999": 7.45,
+      "p999": 7.49,
       "over2Pct": 1.42,
-      "max": 24.37,
+      "max": 24.69,
       "worst": "Left portal vein"
      },
      "heart": {
-      "p99": 6.95,
-      "p999": 15.91,
-      "over2Pct": 8.11,
+      "p99": 7.05,
+      "p999": 15.87,
+      "over2Pct": 8.09,
       "max": 28.04,
       "worst": "Anterior leaflet of mitral valve"
      },
@@ -37814,7 +37814,7 @@
       "p99": 1.01,
       "p999": 1.31,
       "over2Pct": 0,
-      "max": 2.31,
+      "max": 2.04,
       "worst": "Skin"
      },
      "bone": {
@@ -37833,9 +37833,9 @@
      },
      "fat": {
       "p99": 1.29,
-      "p999": 2.51,
-      "over2Pct": 0.2,
-      "max": 6.01,
+      "p999": 2.43,
+      "over2Pct": 0.18,
+      "max": 6.31,
       "worst": "Subcutaneous tissue of trunk"
      }
     },
@@ -37850,12 +37850,12 @@
      "p90AbsErrTaperedPct": 21.11
     },
     "skin": {
-     "flippedPct": 0.3,
+     "flippedPct": 0.1,
      "collapsedPct": 0,
      "selfInsidePct": 0,
-     "minAreaRatio": 0.09,
-     "maxEdgeStretch": 2.31,
-     "stretchedAreaCm2": 30.5
+     "minAreaRatio": 0.01,
+     "maxEdgeStretch": 2.04,
+     "stretchedAreaCm2": 15.7
     },
     "poke": null,
     "corridors": [
