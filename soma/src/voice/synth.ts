@@ -36,6 +36,7 @@ const VOWEL_FACTORS: Record<Vowel, readonly [number, number, number]> = {
   e: [1.06, 1.18, 0.97],
   o: [1.1, 0.56, 0.93],
   u: [0.62, 0.58, 0.88],
+  i: [0.55, 1.47, 1.15],
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
