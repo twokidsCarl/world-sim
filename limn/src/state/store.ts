@@ -183,6 +183,8 @@ export interface CatalogEntry {
   /** 手绘画法下把膜上的蛋白重排成等间隔的一圈圈，膜换成光滑的球壳（见 arrange）：`pattern` 匹配要排的蛋白，`exclude` 排除，`reach` 是离膜中面多远以内算膜上的（Å），`lining` 是衬在膜里面的一层的颜色（里面的空处露出它，膜的切口才读得出是一条带子）/ in the painted drawing, set the membrane's proteins out afresh in evenly spaced rings and make the membrane a smooth shell (see `arrange`): `pattern` matches the proteins, `exclude` leaves some out, `reach` is how far from the mid-plane still counts as on the membrane, in Å, `lining` the colour of a layer lining the inside (empty space within shows it, so the cut membrane reads as a band) */
   /** 手绘画法下给名字匹配的一个个团块补上把它们串起来的线（见 strung）/ in the painted drawing, supply the strand that strings together the clumps whose name matches (see `strung`) */
   string?: { pattern: string; name: string; nameEn: string; fill?: number; beadName?: string; beadNameEn?: string; radius: number; lch: [number, number, number]; basis: string; basisEn: string }
+  /** 手绘画法下把整个对象再画一份，挪到旁边（单位是对象的半径），像正在分裂的两个细胞。数据里只有一个，第二个是示意 / in the painted drawing, draw the whole subject a second time, moved aside (in subject radii), like two cells in division. The data holds one; the second is schematic */
+  twin?: number
   arrange?: { pattern: string; exclude?: string; reach?: number; lining?: [number, number, number] }
   /**
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
@@ -508,7 +510,13 @@ function arrange(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
     if (!g.chains.every(lipid)) continue
     const c0 = chainCentre(model, g.chains[0]!)
     const step = Math.max(1, Math.floor(g.operators.length / 4000))
-    for (let i = 0; i < g.operators.length; i += step) lipidAt.push(at(g.operators[i]!, c0))
+    if (g.operators.length >= 20) for (let i = 0; i < g.operators.length; i += step) lipidAt.push(at(g.operators[i]!, c0))
+    // 一整张不分块的膜（只有一两份、球很多）：取它的球本身 / a membrane in one piece (a copy or two with very many spheres): its spheres themselves are taken
+    else for (const ci of g.chains) {
+      const ch = model.chains[ci]!
+      const skip = Math.max(1, Math.floor(ch.count / 4000))
+      for (const op of g.operators) for (let i = ch.start; i < ch.start + ch.count; i += skip) lipidAt.push(at(op, [model.pos[i * 3]!, model.pos[i * 3 + 1]!, model.pos[i * 3 + 2]!]))
+    }
   }
   if (lipidAt.length < 20) return []
   const centre: V3 = [0, 0, 0]
@@ -1173,6 +1181,20 @@ export const useStore = create<State>((set, get) => ({
       const surroundings: Panel[] = entry.environment && get().drawing === 'painted' ? await environmentPanels(entry, [mol, ...inferred.map((p) => p.mol)], inferred.map((p) => p.spec.assembly), assembly, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
       inferred.push(...surroundings)
       inferred.push(...interior)
+      // twin：整个对象再画一份，绕竖直于画面的轴转半圈后挪到旁边，两个挨着，像正在分裂。第二个不是数据
+      // twin: the whole subject is drawn a second time, turned half a circle about the axis normal to the picture and moved aside, so that the two touch as if dividing. The second is not data
+      const shellOf = inferred.find((p) => p.mol.id.endsWith(':membrane'))?.mol
+      const twins: Panel[] = []
+      if (entry.twin && get().drawing === 'painted' && shellOf) {
+        const c: V3 = [0, 0, 0]
+        for (let i = 0; i < shellOf.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += shellOf.pos[i * 3 + k]! / shellOf.atomCount
+        let rim = 0
+        for (let i = 0; i < shellOf.atomCount; i += 7) rim = Math.max(rim, Math.hypot(shellOf.pos[i * 3]! - c[0], shellOf.pos[i * 3 + 1]! - c[1], shellOf.pos[i * 3 + 2]! - c[2]))
+        const m = new Float32Array([-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 2 * c[0] + rim * entry.twin, 2 * c[1], 0, 1])
+        for (const p of [{ spec, mol, coloring, align: null } as Panel, ...inferred]) twins.push({ ...p, align: m, spec: { ...p.spec, label: `${p.spec.label}（第二个，示意）`, labelEn: `${p.spec.labelEn ?? p.spec.label} (the second, schematic)`, source: { ...p.spec.source, id: `${p.spec.source.id}:twin` } } })
+        inferred.push(...twins)
+        notes.push({ key: 'note.twin' })
+      }
       const dots = entry.dots && get().drawing === 'painted' && EXAGGERATE() ? entry.dots : 0
       if (dots) notes.push({ key: 'note.dots' })
       const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge, ...(dots ? { dots } : {}) }
@@ -1575,7 +1597,7 @@ export const useStore = create<State>((set, get) => ({
     const entry = sp?.catalog ? (catalog.models as CatalogEntry[]).find((m) => m.id === sp.catalog) : undefined
     // 同样要重新载入的：带示意环境的、小分子画成圆点的、有自己底色的（否则切到 Illustrate 后推断的东西还留在画面里）
     // reloaded likewise: models with a schematic environment, with small molecules as dots, or with a ground of their own (or inferred things would stay in the picture after a switch to Illustrate)
-    if (entry?.infer || entry?.respike || entry?.arrange || entry?.string || entry?.environment || entry?.dots || entry?.ground) {
+    if (entry?.infer || entry?.respike || entry?.arrange || entry?.twin || entry?.string || entry?.environment || entry?.dots || entry?.ground) {
       set({ drawing })
       void get().loadCatalog(entry.id)
       return

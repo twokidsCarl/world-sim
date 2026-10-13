@@ -30,9 +30,10 @@ import { refine } from './refine/loop'
  * contact sheet (research/goodsell/sheet.py). It runs in the background, with progress in limn.sheetState.
  */
 const sheetState = { done: 0, total: 0, failed: [] as string[], running: false }
-async function sheet(round: string, size = 520): Promise<void> {
+async function sheet(round: string, size = 520, only?: string[]): Promise<void> {
   if (sheetState.running) return
-  const cards = ((await (await fetch('/sim.json')).json()) as { cards: { id: string; url: string }[] }).cards
+  // only：只出这几张卡（卡片 id）/ only: render just these cards (card ids)
+  const cards = ((await (await fetch('/sim.json')).json()) as { cards: { id: string; url: string }[] }).cards.filter((c) => !only || only.includes(c.id))
   Object.assign(sheetState, { done: 0, total: cards.length, failed: [], running: true })
   for (const c of cards) {
     const q = new URLSearchParams(c.url.split('?')[1] ?? '')
