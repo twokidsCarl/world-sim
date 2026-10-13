@@ -19,10 +19,10 @@ describe('session view', () => {
 
   it('shows the card that awaits an answer and clears it once answered', () => {
     const asked = fold(emptyView(), [ev(1, 'request', { request_id: 'r1', kind: 'plan', tool: 'ExitPlanMode', input: { plan: '# 计划' }, summary: '计划写好了' }), ev(2, 'status', { status: 'waiting', waiting_for: '计划写好了' })])
-    expect(pending(asked)).toMatchObject({ request_id: 'r1', what: 'plan' })
+    expect(pending(asked)).toMatchObject([{ request_id: 'r1', what: 'plan' }])
     expect(asked.waitingFor).toBe('计划写好了')
     const answered = fold(asked, [ev(3, 'resolved', { request_id: 'r1', decision: 'reject', note: '不要动测试' }), ev(4, 'status', { status: 'running' })])
-    expect(pending(answered)).toBeNull()
+    expect(pending(answered)).toEqual([])
     expect(answered.items[0]).toMatchObject({ decision: 'reject', note: '不要动测试' })
   })
 
@@ -31,5 +31,14 @@ describe('session view', () => {
     expect(stopped.items.map((i) => (i.kind === 'note' ? i.code : i.kind))).toEqual(['interrupted'])
     const failed = fold(emptyView(), [ev(1, 'result', { is_error: true, subtype: 'error_max_turns' }), ev(2, 'error', { message: '会话出错了' })])
     expect(failed.items.map((i) => (i.kind === 'note' ? i.code : i.kind))).toEqual(['failed', 'error'])
+  })
+
+  it('keeps every unanswered card answerable when several requests arrive at once', () => {
+    const ask = (seq: number, id: string) => ev(seq, 'request', { request_id: id, kind: 'permission', tool: 'Read', input: { file_path: `/tmp/${id}.png` }, summary: id })
+    const both = fold(emptyView(), [ask(1, 'narrow'), ask(2, 'wide'), ev(3, 'status', { status: 'waiting' })])
+    expect(pending(both).map((p) => p.request_id)).toEqual(['narrow', 'wide'])
+    // 回答了后一张，前一张仍然在等——即使状态一时显示"在跑"。 / After the later one is answered the earlier still waits, even if the status briefly says running.
+    const one = fold(both, [ev(4, 'resolved', { request_id: 'wide', decision: 'allow_always' }), ev(5, 'status', { status: 'running' })])
+    expect(pending(one).map((p) => p.request_id)).toEqual(['narrow'])
   })
 })

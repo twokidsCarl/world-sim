@@ -147,6 +147,38 @@ def test_it_waits_for_the_owner_on_permissions_and_passes_the_reason_back(fake):
     asyncio.run(main())
 
 
+def test_several_requests_at_once_all_wait_and_all_can_be_answered(fake):
+    """它一次发起几个工具调用时，会同时有几个请求在等。曾经只有最后一个能回答，别的永远卡着。
+
+    When it issues several tool calls at once, several requests wait together. Only the last used to be answerable and the rest hung forever.
+    """
+    async def main():
+        class Parallel(Fake):
+            async def receive_response(self):
+                paths = ["/tmp/narrow.png", "/tmp/wide.png", "/tmp/third.png"]
+                results = await asyncio.gather(*(self.can_use_tool("Read", {"file_path": p}, SimpleNamespace(title="", description="")) for p in paths),
+                                               self.can_use_tool("Bash", {"command": "rm x"}, SimpleNamespace(title="", description="")))
+                yield say("、".join(type(r).__name__.removeprefix("PermissionResult") for r in results))
+                yield done()
+
+        sessions.client_factory = Parallel
+        meta = await sessions.start(sessions.NewSession(text="看这几张图", mode="default"))
+        await until(meta.id, "waiting")
+        await asyncio.sleep(0.05)
+        requests = [e for e in sessions.events(meta.id) if e["type"] == "request"]
+        assert [r["input"].get("file_path") or r["input"].get("command") for r in requests] == ["/tmp/narrow.png", "/tmp/wide.png", "/tmp/third.png", "rm x"]
+        await sessions.answer(meta.id, requests[3]["request_id"], "deny")                     # 先回答最后一个 / the last one is answered first
+        await asyncio.sleep(0.05)
+        still = sessions.get(meta.id)
+        assert (still.status, still.waiting_for) == ("waiting", "在读 /tmp/narrow.png")        # 别的还在等，不算"在干活" / others still wait; it is not "working"
+        await sessions.answer(meta.id, requests[1]["request_id"], "allow_always")              # 这一类以后都允许 / always allow this kind
+        meta = await until(meta.id, "idle")
+        assert [e["text"] for e in sessions.events(meta.id) if e["type"] == "text"] == ["Allow、Allow、Allow、Deny"]   # 同类的另外两个一并放行 / the other two of the same kind went through with it
+        assert sorted(e["decision"] for e in sessions.events(meta.id) if e["type"] == "resolved") == ["allow", "allow", "allow_always", "deny"]
+
+    asyncio.run(main())
+
+
 def test_plans_and_questions_are_answered_in_the_page(fake):
     async def main():
         questions = [{"question": "用哪种？", "header": "做法", "multiSelect": False, "options": [{"label": "甲", "description": ""}, {"label": "乙", "description": ""}]}]
