@@ -271,6 +271,17 @@ limn 这一轮的数：
 - 试了六次。珠子挤得满时连成一片、线看不见；现在的间距下线露出来了，但珠子仍然粘成一片，没有他那种“一个个分开、之间是深色”的样子。**这一项只做到一半。**
 - 一处退步及时发现：里面新加的东西改变了“对象有多大”的计算，病毒周围空出一圈深色。改成里面的东西不参与那个计算。
 
+### V1：分瓣的珠子，刺后面的底，环境铺到画面外
+
+使用者说不用停下来问，没做完的接着做。这一步（`out/V1-three-viruses.jpg`：新冠、HIV、流感；总览 `out/sheet-V1.jpg`）：
+
+- **概念“分瓣的珠子”**（`lobed`，`src/infer/idealise.ts`）：把每条链收成两个圆球（沿主轴分成两半）。用在新冠和流感里面成串的核蛋白上。上一步新冠里面“珠子粘成一片”就是这个解决的：现在是一个个圆润的小块，中间穿着浅色的波浪线，是他的画法。流感的八条杆也读得出一串串珠子了。**这是夸张**（真实的蛋白不是两个球），归在“夸张”选项里，来源栏有说明。
+- **刺后面的底**（`groundRing`）：流感的刺后面垫一圈深靛色，柄之间不再露白纸。上一轮“把刺衬在后面”没解决的白洞，这样解决了。
+- **新冠的膜**：用 `arrange` 把 M、E 蛋白排成等间隔的一圈，膜换成光滑的带子，带子上有了一格格粉色的小块。比他的小、稀。
+- **环境铺到画面外**（`SPREAD` 1.5 → 1.8，数量按面积补，画面按同样的比例放大回来）：HIV 画面四边不再露出环境盒子的边。
+- **HIV 的刺 14 → 21 个**：使用者说不够密。21 是文献范围（14 ± 7）的上端，不是平均，来源栏写明。他的画里更密，再多就超出文献了，没有再加。
+- 支原体的 DNA 30 → 60 条。试过在膜里面衬一层深紫红（他的蛋白之间是这个颜色），结果只在边上露出一圈，像第二层膜，去掉了。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -532,3 +543,14 @@ The user commented on the 14 comparisons one by one; the comments reduce to five
 - A second way (`serpentine`, the one in use): the cavity is filled with a wavy line folded back and forth in two layers, with a bead (one chain of the model's clump) opposite every crest and trough, the layer behind in a deeper shade and a still deeper ground at the very back. **This is drawn afresh**: the bead's structure is the model's; positions, number (77) and the course of the line are generated. The sources panel says so, and the Illustrate drawing shows the model's own 36 clumps.
 - Six tries. Packed full, the beads join into one mass and the line cannot be seen; at the present spacing the line shows, but the beads still stick together and lack his look of separate lobes with dark between. **This item is half done.**
 - One regression caught in time: the new interior changed the working out of how large the subject is, leaving an empty dark ring round the virus. The interior now takes no part in that.
+
+### V1: lobed beads, a ground behind spikes, surroundings past the frame
+
+The user said not to stop and ask, and to carry on with what is unfinished. This step (`out/V1-three-viruses.jpg`: coronavirus, HIV, influenza; the sheet is `out/sheet-V1.jpg`):
+
+- **The concept "lobed beads"** (`lobed`, in `src/infer/idealise.ts`): each chain collapses to two round spheres (split in two along its principal axis). Used on the strings of nucleoprotein inside the coronavirus and influenza. This is what resolved "the beads stick together" from the last step: they are now separate rounded pieces with a pale wavy line through them, which is his way of painting it. The eight influenza rods read as strings of beads too. **This is an exaggeration** (the real protein is not two spheres); it belongs to the "exaggerate" option and is stated under sources.
+- **A ground behind the spikes** (`groundRing`): a ring of deep indigo lies behind the influenza spikes, so no paper shows between stalks. This resolved the white holes that "letting the spikes line the back" had not.
+- **The coronavirus membrane**: `arrange` sets the M and E proteins out in evenly spaced rings and the membrane becomes a smooth band, now carrying small pink tiles. Smaller and sparser than his.
+- **Surroundings past the frame** (`SPREAD` 1.5 → 1.8, counts topped up by area, the frame zoomed back by the same ratio): the edges of the environment box no longer show at the border of the HIV picture.
+- **HIV spikes 14 → 21**: the user found them too sparse. 21 is the upper end of the literature's range (14 ± 7) and not its mean, as the sources panel says. His painting is denser still; more would go beyond the literature and was not added.
+- The mycoplasma's DNA goes from 30 strands to 60. A deep purple-red lining inside the membrane was tried (the colour between his proteins); it showed only as a ring at the edge, like a second membrane, and was removed.

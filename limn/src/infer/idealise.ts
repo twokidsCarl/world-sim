@@ -306,3 +306,43 @@ export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number;
   }
   return { ...t, origin: c, distance: t.distance + dot(sub(c, t.origin), t.up) }
 }
+
+/**
+ * “分瓣的珠子”：把每条链收成两个圆球（沿它的主轴分成两半，各取质心，半径取那一半的均方根半径稍大一点）。
+ * Goodsell 把成串的小蛋白（核蛋白）画成一个个两瓣的圆润小块，不画原子的起伏。这是夸张：真实的形状不是两个球。
+ * 就地改 `mol`：每条链的头两个原子变成那两个球，其余原子不画。`skip` 里的链不动。
+ *
+ * "Lobed beads": each chain collapses to two round spheres (split in two along its principal axis,
+ * each half giving a centroid and a radius a little over its root-mean-square radius). Goodsell
+ * paints small proteins in a string (nucleoprotein) as rounded two-lobed pieces, without the relief
+ * of atoms. This is an exaggeration: the real shape is not two spheres. `mol` is changed in place:
+ * the first two atoms of each chain become the two spheres and every other atom is not
+ * drawn. Chains for which `skip` holds are left alone.
+ */
+export function lobed(mol: Molecule, skip: (chain: number) => boolean = () => false, swell = 1.2): void {
+  if (!mol.radius) mol.radius = new Float32Array(mol.atomCount).fill(1.7)
+  mol.chains.forEach((ch, ci) => {
+    if (skip(ci) || ch.count < 4) return
+    const pts = mol.pos.slice(ch.start * 3, (ch.start + ch.count) * 3)
+    const ax = principalAxis(pts)
+    const half: { c: V3; n: number; r2: number }[] = [{ c: [0, 0, 0], n: 0, r2: 0 }, { c: [0, 0, 0], n: 0, r2: 0 }]
+    const side = (i: number) => ((pts[i * 3]! - ax.centre[0]) * ax.axis[0] + (pts[i * 3 + 1]! - ax.centre[1]) * ax.axis[1] + (pts[i * 3 + 2]! - ax.centre[2]) * ax.axis[2] >= 0 ? 1 : 0)
+    for (let i = 0; i < ch.count; i++) {
+      const h = half[side(i)]!
+      for (let k = 0; k < 3; k++) h.c[k]! += pts[i * 3 + k]!
+      h.n++
+    }
+    for (const h of half) for (let k = 0; k < 3; k++) h.c[k]! /= Math.max(1, h.n)
+    for (let i = 0; i < ch.count; i++) {
+      const h = half[side(i)]!
+      h.r2 += (pts[i * 3]! - h.c[0]) ** 2 + (pts[i * 3 + 1]! - h.c[1]) ** 2 + (pts[i * 3 + 2]! - h.c[2]) ** 2
+    }
+    // 负的半径：画的时候丢掉（0 会被当成“没给”，换成元素的默认半径）/ a negative radius is dropped when drawing (0 would count as "not given" and become the element's default)
+    mol.radius!.fill(-1, ch.start, ch.start + ch.count)
+    half.forEach((h, k) => {
+      if (h.n === 0) return
+      mol.pos.set(h.c, (ch.start + k) * 3)
+      mol.radius![ch.start + k] = Math.sqrt(h.r2 / h.n) * swell
+    })
+  })
+}

@@ -403,3 +403,20 @@ describe('beads on a string', () => {
     }
   })
 })
+
+describe('lobed beads', () => {
+  it('collapses each chain to two spheres and hides the rest', async () => {
+    const { lobed } = await import('../src/infer/idealise')
+    // 一条沿 x 伸展的链，20 个原子 / one chain stretched along x, 20 atoms
+    const n = 20
+    const pos = new Float32Array(n * 3)
+    for (let i = 0; i < n; i++) pos[i * 3] = i * 4
+    const mol = { atomCount: n, pos, chains: [{ start: 0, count: n, entity: 0 }], entities: [{ kind: 'protein' }] } as never as import('../src/mol/types').Molecule
+    lobed(mol)
+    const r = Array.from(mol.radius!)
+    expect(r.filter((v) => v > 0).length).toBe(2)
+    expect(r.filter((v) => v < 0).length).toBe(n - 2)
+    // 两个球在链的两半的中间：x = 18 和 58 / the two spheres sit mid-way along each half of the chain: x = 18 and 58
+    expect([mol.pos[0], mol.pos[3]].sort((a, b) => a! - b!).map((v) => Math.round(v!))).toEqual([18, 58])
+  })
+})
