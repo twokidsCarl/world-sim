@@ -504,10 +504,33 @@ async def _run(live: _Live) -> None:
         _live.pop(live.meta.id, None)
 
 
+def _recover(meta: Meta) -> None:
+    """说过话、却没有记下 SDK 会话编号的会话（旧版本要等第一轮说完才记）：按开始的时间到 Claude Code 自己的
+    会话记录里把它找回来，这样重启之后还能接上原来的对话，而不是从头开始。
+
+    A session that has spoken but has no SDK session id recorded (older versions only recorded it once the first
+    turn ended): find it among Claude Code's own stored sessions by its start time, so that after a restart the
+    conversation is picked up instead of starting over.
+    """
+    if meta.sdk_session or client_factory is not None or not events(meta.id):
+        return
+    try:
+        from claude_agent_sdk import list_sessions
+
+        found = list_sessions(directory=str(store.repo_root()), limit=300)
+    except Exception:  # noqa: BLE001 — 找不回来就算了，当成新对话 / if it cannot be found, it is simply a new conversation
+        return
+    near = [s for s in found if s.created_at and abs(s.created_at / 1000 - meta.created_at) < 60]
+    if near:
+        meta.sdk_session = min(near, key=lambda s: abs((s.created_at or 0) / 1000 - meta.created_at)).session_id
+        _save(meta)
+
+
 def _ensure_live(meta: Meta) -> _Live:
     live = _live.get(meta.id)
     if live is not None and live.task is not None and not live.task.done():
         return live
+    _recover(meta)
     if sum(1 for x in _live.values() if x.task is not None and not x.task.done()) >= MAX_LIVE:
         raise SessionError(f"同时最多开 {MAX_LIVE} 个会话，先结束一个")
     live = _Live(meta)

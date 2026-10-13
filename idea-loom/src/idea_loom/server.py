@@ -142,6 +142,28 @@ class Proposals(BaseModel):
 _STARTED = str(time.time_ns())
 
 
+_code_checked: tuple[float, bool] = (0.0, False)
+
+
+def _code_stale() -> bool:
+    """磁盘上后端的代码是不是比这个进程启动时新：是的话，要重启后端新代码才生效。几秒算一次。
+
+    Whether the backend code on disk is newer than when this process started; if so the new code only takes effect after a restart. Recomputed every few seconds.
+    """
+    global _code_checked
+    if time.time() - _code_checked[0] < 5:
+        return _code_checked[1]
+    from pathlib import Path
+
+    started = int(_STARTED) / 1e9
+    try:
+        newest = max((f.stat().st_mtime for f in Path(__file__).resolve().parent.rglob("*.py")), default=0.0)
+    except OSError:
+        newest = 0.0
+    _code_checked = (time.time(), newest > started + 1)
+    return _code_checked[1]
+
+
 @app.get("/api/health")
 def health() -> dict[str, object]:
     """活着就回 ok；另带两个版本记号，页面据此发现自己过时了。
@@ -154,7 +176,7 @@ def health() -> dict[str, object]:
         ui: Optional[int] = int(play_host.ui_dist().joinpath("index.html").stat().st_mtime * 1000)
     except OSError:
         ui = None
-    return {"ok": True, "started": _STARTED, "ui": ui}
+    return {"ok": True, "started": _STARTED, "ui": ui, "code_stale": _code_stale()}
 
 
 @app.get("/api/state", response_model=State)
