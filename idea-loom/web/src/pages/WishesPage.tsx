@@ -8,6 +8,7 @@ import { label, plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { useLang, useT } from '../state/store'
 import { SessionView } from '../sessions/SessionView'
+import { whereLabel } from '../ui/nav'
 import { Empty, Page, Section } from '../ui/Page'
 
 const TONE: Record<string, string> = { open: 'w-open', accepted: 'w-accepted', done: 'w-done', declined: 'w-quiet', withdrawn: 'w-quiet' }
@@ -121,7 +122,7 @@ export function WishesPage() {
                 <tr>
                   <th scope="col">{t('愿望', 'Wish')}</th>
                   <th scope="col">{t('种类', 'Kind')}</th>
-                  <th scope="col">{t('出在哪一页', 'Page it came up on')}</th>
+                  <th scope="col">{t('记于哪页', 'Recorded on')}</th>
                   <th scope="col" className="r">{t('遇到几次', 'Times seen')}</th>
                   <th scope="col">{t('状态', 'Status')}</th>
                   <th scope="col">{t('最近变化', 'Last change')}</th>
@@ -134,7 +135,7 @@ export function WishesPage() {
                       <Link to={`/wishes/${w.wish_id}`}>{w.title}</Link>
                     </td>
                     <td className="muted">{label(lang, 'wishKind', w.kind, w.kind_label)}</td>
-                    <td>{w.where?.url ? <Link to={w.where.url}>{w.where.title || w.where.url}</Link> : <span className="muted">—</span>}</td>
+                    <td>{w.where?.url ? <Link to={w.where.url}>{whereLabel(w.where.url, w.where.title, lang)}</Link> : <span className="muted">—</span>}</td>
                     <td className="r num">{w.occurrences}</td>
                     <td>
                       <WishBadge status={w.status} label={w.status_label} />
@@ -213,7 +214,7 @@ export function WishPage() {
         <span className="muted small">{t('最近变化', 'Last change')} {formatTime(wish.updated_at)}</span>
         {wish.where?.url && (
           <span className="small">
-            {t('出在', 'Came up on')} <Link to={wish.where.url}>{wish.where.title || wish.where.url}</Link>
+            {t('记下时在', 'Recorded while on')} <Link to={wish.where.url}>{whereLabel(wish.where.url, wish.where.title, lang)}</Link>
           </span>
         )}
       </div>
