@@ -6,15 +6,18 @@
 //
 // 这里陈述的容差 / Tolerances stated here
 //   · AU12 = 5：口角上移 ≥ 3 mm、外移 ≥ 1 mm；上唇缘折线对 4 次多项式（y 对 x、z 对 x）的偏差 ≤ max(0.6 mm, 静止时的偏差 + 0.3 mm)；
-//     口角 16 mm 内静止面积 ≥ 0.1 mm² 的皮肤三角形没有翻折（法线不反向），AU20 = 5 亦然。
+//     口角 16 mm 内的皮肤三角形没有翻折（法线不反向；静止和变形后的高都不到 0.1 mm 的退化三角形不算），AU20 = 5 亦然。
 //     AU12 = 5: the corner rises ≥ 3 mm and moves ≥ 1 mm laterally; the upper lip-margin polyline deviates from a quartic (y on x, z on x)
-//     by ≤ max(0.6 mm, its deviation at rest + 0.3 mm); no skin triangle within 16 mm of a corner with a rest area ≥ 0.1 mm² is folded (normal reversed); the same for AU20 = 5.
+//     by ≤ max(0.6 mm, its deviation at rest + 0.3 mm); no skin triangle within 16 mm of a corner is folded (normal reversed; degenerate triangles under 0.1 mm of height both at rest and deformed excepted); the same for AU20 = 5.
 //   · AU25：口角以外每一对唇缘顶点之间的间隙都 > 0（紧挨口角的三对：交叉不超过 0.1 mm），正中 ≥ 2 mm。
 //     AU25: the gap between every pair of margin vertices other than the corners is > 0 (the three pairs next to a corner: crossing by no more than 0.1 mm), and ≥ 2 mm at the midline.
 //   · 双唇音（下颌张开时）：口裂中间 60% 的间隙 ≤ 0.3 mm，下唇缘越过上唇缘不超过 0.3 mm。
 //     Bilabials (with the jaw open): over the middle 60% of the fissure the gap is ≤ 0.3 mm and the lower margin passes the upper by no more than 0.3 mm.
 //   · 唇齿音：下唇缘中点离上切牙切缘 ≤ 1 mm，且不在切缘之后（不进牙）。 Labiodentals: the middle of the lower margin is within 1 mm of the upper incisal edge and not behind it (not inside the tooth).
-//   · 圆唇元音（u、w；o 为 0.5 mm）：口宽缩短 ≥ 2 mm，唇缘中点前移 ≥ 2 mm。 Rounded vowels: mouth width shortens by ≥ 2 mm and the middle of the margin moves forward by ≥ 2 mm.
+//   · 圆唇元音（u、w；o 为 6%）：口宽缩短 ≥ 20%，唇缘中点前移 ≥ 2 mm。 Rounded vowels (u, w; 6% for o): mouth width shortens by ≥ 20% and the middle of the margin moves forward by ≥ 2 mm.
+//   · 唇齿音在下颌闭合、参考角的一半、参考角三处：下唇缘中点离切缘 ≤ 1 mm，不在唇面之后，高出切缘不超过 0.2 mm；0.2 × 上限处 ≤ 2 mm。
+//     Labiodentals with the jaw closed, at half the reference angle and at the reference: the middle of the lower margin within 1 mm of the edge, not behind the labial face and no more than 0.2 mm above the edge; within 2 mm at 0.2 × the limit.
+//   · baseJaw：下颌从别处张开 0.1、0.2 × 上限时，双唇音口裂中间 60% 的间隙 ≤ 0.3 mm。 baseJaw: with the jaw opened from elsewhere by 0.1 and 0.2 × its limit, a bilabial leaves ≤ 0.3 mm over the middle 60% of the fissure.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -108,9 +111,11 @@ for (const bodyId of ['male', 'female'] as const) {
       for (let t = 0; t < indices.length; t += 3) {
         const a = indices[t]!, b = indices[t + 1]!, c = indices[t + 2]!
         if (!near(a) || !near(b) || !near(c)) continue
-        const n0 = nrm(rest, a, b, c)
-        if (Math.hypot(n0[0]!, n0[1]!, n0[2]!) / 2 < 0.1 * MM * MM) continue
-        const n1 = nrm(pos, a, b, c)
+        const n0 = nrm(rest, a, b, c), n1 = nrm(pos, a, b, c)
+        // 高 = 2 × 面积 / 最长边；静止和变形后的高都不到 0.1 mm 的是唇缘上三点共线的退化三角形，不算（理由见 face-corner.test.ts）
+        // height = 2 × area / longest edge; a triangle under 0.1 mm both at rest and deformed is a degenerate one with three collinear points on the margin and is not counted (reasons in face-corner.test.ts)
+        const height = (x: Float32Array, n: number[]): number => Math.hypot(n[0]!, n[1]!, n[2]!) / Math.max(1e-12, dist(P(x, a), P(x, b)), dist(P(x, b), P(x, c)), dist(P(x, c), P(x, a)))
+        if (Math.max(height(rest, n0), height(pos, n1)) < 0.1 * MM) continue
         if (n0[0]! * n1[0]! + n0[1]! * n1[1]! + n0[2]! * n1[2]! <= 0) count++
       }
       return count
@@ -216,14 +221,72 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(dist(P(rest, v), [x, yEdge, zLab])).toBeGreaterThan(dist(P(pos, v), [x, yEdge, zLab]) + 1 * MM)
     })
 
+    it('lands the lower lip on the incisal edge across the jaw range, by mixing two references', () => {
+      const dent = face.channels.find((c) => c.id === 'lip_dental')!, closed = face.channels.find((c) => c.id === 'lip_dental_closed')!
+      expect(closed.refJaw).toBe(0)
+      expect(dent.refJaw!).toBeGreaterThan(0)
+      const teeth = body.data.parts.filter((p) => p.tissue === 'tooth' && /upper (central|lateral).*incisor/i.test(p.name) && body.meshes.has(p.id))
+      const v = O.margins.lowerLip[midI()]!
+      const pose = visemeAUs(face, { FV: 1 })
+      const report: string[] = []
+      // 下颌闭合、参考角的一半、参考角：都应正好到位；再大（0.2 × 上限）由 lip_seal 抵消，是近似的
+      // jaw closed, half the reference, the reference: exact at all three; wider (0.2 × the limit) is undone with lip_seal and approximate
+      for (const [jaw, tol] of [[0, 1], [dent.refJaw! / 2, 1], [dent.refJaw!, 1], [0.2 * face.jaw.max, 2]] as const) {
+        const out = mouthChannels(face, { ...pose, aus: {}, jaw })
+        expect(out.totalJaw).toBeCloseTo(jaw, 9)
+        expect((out.channels.lip_dental ?? 0) + (out.channels.lip_dental_closed ?? 0)).toBeCloseTo(1, 9)
+        const pos = posed(out.channels, jaw)
+        const x = pos[v * 3]!
+        const near: number[][] = []
+        for (const t of teeth) {
+          const m = body.meshes.get(t.id)!.positions
+          for (let i = 0; i < m.length; i += 3) if (Math.abs(m[i]! - x) < 1.5 * MM) near.push([m[i]!, m[i + 1]!, m[i + 2]!])
+        }
+        const yEdge = Math.min(...near.map((q) => q[1]!)), zLab = Math.max(...near.filter((q) => q[1]! < yEdge + 2 * MM).map((q) => q[2]!))
+        report.push(`jaw ${(jaw / face.jaw.max).toFixed(2)}: ${(dist(P(pos, v), [x, yEdge, zLab]) / MM).toFixed(2)} mm, above edge ${((pos[v * 3 + 1]! - yEdge) / MM).toFixed(2)}`)
+        expect(dist(P(pos, v), [x, yEdge, zLab]) / MM, `jaw ${jaw}`).toBeLessThanOrEqual(tol)
+        // 不进牙：不在唇面之后，也不高出切缘 0.2 mm 以上 / not inside the tooth: not behind the labial face and no more than 0.2 mm above the edge
+        expect(pos[v * 3 + 2]!, `jaw ${jaw}`).toBeGreaterThanOrEqual(zLab)
+        if (tol === 1) expect((pos[v * 3 + 1]! - yEdge) / MM, `jaw ${jaw}`).toBeLessThanOrEqual(0.2)
+      }
+      if (process.env.FACE_STATS) console.log(report.join('\n'))
+    })
+
+    it('seals the lips for the total jaw angle when the jaw is opened from elsewhere (baseJaw)', () => {
+      const speech = visemeAUs(face, { PBM: 1 })
+      const refJaw = face.channels.find((c) => c.id === 'lip_seal')!.refJaw!
+      for (const baseFraction of [0.1, 0.2]) {
+        const base = baseFraction * face.jaw.max
+        const out = blendFace(face, { speech, baseJaw: base })
+        const total = base + out.jaw
+        expect(total).toBeLessThanOrEqual(refJaw)
+        expect(out.channels.mouth_corner ?? 0).toBeCloseTo(total / face.jaw.max, 9)
+        const g = gaps(posed(out.channels, total)), n = g.length
+        for (let k = Math.round(n * 0.2); k < Math.round(n * 0.8); k++) expect(Math.abs(g[k]!) / MM, `base ${baseFraction}, pair ${k}`).toBeLessThanOrEqual(0.3)
+        // 不告诉它下颌已经张开，唇就合不上 / without being told that the jaw is open already, the lips do not meet
+        const blind = blendFace(face, { speech })
+        expect(gaps(posed(blind.channels, base + blind.jaw))[midI()]! / MM).toBeGreaterThan(2)
+      }
+      // 缺省与原来一致；增量不超过剩余的范围 / the default is unchanged; the increment stays within what is left of the range
+      expect(blendFace(face, { speech, baseJaw: 0 })).toEqual(blendFace(face, { speech }))
+      const wide = blendFace(face, { emotion: { AU27: 5 }, baseJaw: 0.6 * face.jaw.max })
+      expect(wide.jaw).toBeCloseTo(0.4 * face.jaw.max, 9)
+      expect(wide.channels.mouth_corner).toBeCloseTo(1, 9)
+      // 只有 baseJaw、没有表情：口角成形仍按总角 / baseJaw alone, no expression: corner shaping still follows the total
+      expect(blendFace(face, { baseJaw: 0.3 * face.jaw.max }).channels.mouth_corner).toBeCloseTo(0.3, 9)
+      // 超过 refJaw 时合不上，激活封顶 / beyond refJaw the lips cannot meet and the activation saturates
+      expect(blendFace(face, { speech, baseJaw: 0.6 * face.jaw.max }).channels.lip_seal).toBe(1)
+    })
+
     it('narrows and protrudes the lips for rounded vowels, and opens with the jaw for open vowels', () => {
       const w0 = dist(P(rest, O.points.mouthCornerL), P(rest, O.points.mouthCornerR))
       const mid = O.margins.upperLip[midI()]!
       for (const id of ['UW', 'W', 'OW']) {
         const out = visemeAUs(face, { [id]: 1 })
         const pos = posed(out.channels, out.jaw)
-        // o 的口比 u 开得大、收得少：只要求收窄 0.5 mm / the o is more open and less narrowed than the u: only 0.5 mm of narrowing is asked of it
-        expect((w0 - dist(P(pos, O.points.mouthCornerL), P(pos, O.points.mouthCornerR))) / MM, id).toBeGreaterThanOrEqual(id === 'OW' ? 0.5 : 2)
+        // o 的口比 u 开得大、收得少：只要求收窄 6% / the o is more open and less narrowed than the u: only 6% of narrowing is asked of it
+        const narrowing = 1 - dist(P(pos, O.points.mouthCornerL), P(pos, O.points.mouthCornerR)) / w0
+        expect(narrowing, id).toBeGreaterThanOrEqual(id === 'OW' ? 0.06 : 0.2)
         expect((pos[mid * 3 + 2]! - rest[mid * 3 + 2]!) / MM, id).toBeGreaterThanOrEqual(2)
       }
       const gapOf = (id: string, ja: number): number => {

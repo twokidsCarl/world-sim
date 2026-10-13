@@ -118,9 +118,11 @@ export interface FaceChannel {
   excursion: number
   fields: FaceField[]
   /**
-   * 只有 lip_seal 和 lip_dental 有：求解该通道时的下颌张开角（弧度）。下颌角为 refJaw 时激活 1 正好到位；
+   * lip_dental_closed 是 lip_dental 的第二个参考，在闭颌（refJaw = 0）处求解；两者按下颌角线性混合。
+   * lip_dental_closed is the second reference of lip_dental, solved with the jaw closed (refJaw = 0); the two are mixed linearly in the jaw angle.
+   * 只有 lip_seal、lip_dental、lip_dental_closed 有：求解该通道时的下颌张开角（弧度）。下颌角为 refJaw 时激活 1 正好到位；
    * 其他角度见 tools/face/model.ts 的 mouthChannels。
-   * Only on lip_seal and lip_dental: the jaw opening (radians) at which the channel was solved. At a jaw angle of refJaw an
+   * Only on lip_seal, lip_dental and lip_dental_closed: the jaw opening (radians) at which the channel was solved. At a jaw angle of refJaw an
    * activation of 1 lands exactly; for other angles see mouthChannels in tools/face/model.ts.
    */
   refJaw?: number
