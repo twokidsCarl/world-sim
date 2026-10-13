@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { type SessionList, api } from '../api'
+import { askToNotify, notifyState } from '../sessions/notify'
 import { SessionView } from '../sessions/SessionView'
 import { useT } from '../state/store'
 import { Empty, Page } from '../ui/Page'
@@ -13,6 +14,26 @@ export function SessionsPage() {
   const navigate = useNavigate()
   const [list, setList] = useState<SessionList | null>(null)
   const [draft, setDraft] = useState('')
+  // 起始的模式、模型、努力程度，记住上次选的。 / The starting mode, model and effort, remembered from last time.
+  const [choice, setChoice] = useState(() => {
+    let saved: { mode?: string; model?: string; effort?: string } = {}
+    try {
+      saved = JSON.parse(localStorage.getItem('idea-loom:session-start') ?? '{}')
+    } catch {
+      /* 没有 localStorage 也能用 / works without localStorage */
+    }
+    return { mode: 'plan', model: 'claude-opus-5-5', effort: 'high', ...saved }
+  })
+  const choose = (patch: Partial<typeof choice>) => {
+    const next = { ...choice, ...patch }
+    setChoice(next)
+    try {
+      localStorage.setItem('idea-loom:session-start', JSON.stringify(next))
+    } catch {
+      /* 同上 / as above */
+    }
+  }
+  const [alerts, setAlerts] = useState(notifyState)
   const [error, setError] = useState<string | null>(null)
   const load = () => api.sessions().then(setList, (e: Error) => setError(e.message))
   useEffect(() => {
@@ -23,7 +44,7 @@ export function SessionsPage() {
   const start = async () => {
     setError(null)
     try {
-      const made = await api.startSession({ text: draft, mode: 'plan' })
+      const made = await api.startSession({ text: draft, ...choice })
       setDraft('')
       await load()
       navigate(`/sessions/${made.id}`)
@@ -34,7 +55,7 @@ export function SessionsPage() {
   const label: Record<string, string> = { idle: t('等你说话', 'idle'), running: t('在干活', 'working'), waiting: t('等你回答', 'needs you'), closed: t('已结束', 'closed'), error: t('出错了', 'failed') }
   return (
     <Page
-      title={t('会话', 'Sessions')}
+      title={t('自我进化', 'Self-evolution')}
       lead={t(
         '网页里的 Claude Code：和终端里是同一个，读得到 CLAUDE.md 和记忆，全套工具。它交计划、要改文件、要跑命令、要问你问题的时候，都停下来等你在这里回答。',
         'Claude Code in the page: the same one as in a terminal, with CLAUDE.md, memory and every tool. When it hands in a plan, wants to edit a file, run a command or ask you something, it stops and waits for your answer here.',
@@ -47,7 +68,23 @@ export function SessionsPage() {
         <aside className="sessions-list">
           <div className="form">
             <textarea rows={2} value={draft} placeholder={t('新开一个会话：想让它做什么（例如 /wishes）', 'Start a session: what should it do (e.g. /wishes)')} onChange={(e) => setDraft(e.target.value)} />
-            <button className="primary" disabled={!draft.trim() || !!list?.unavailable} onClick={() => void start()}>{t('开始，先出计划', 'Start, plan first')}</button>
+            <div className="row session-start">
+              <select aria-label={t('起始模式', 'Starting mode')} value={choice.mode} onChange={(e) => choose({ mode: e.target.value })}>
+                <option value="plan">{t('先出计划', 'Plan first')}</option>
+                <option value="default">{t('每次问我', 'Ask every time')}</option>
+                <option value="acceptEdits">{t('改文件不用问', 'Edits without asking')}</option>
+                <option value="auto">{t('自动', 'Auto')}</option>
+              </select>
+              <select aria-label={t('模型', 'Model')} value={choice.model} onChange={(e) => choose({ model: e.target.value })}>
+                {(list?.models ?? [choice.model]).map((m) => <option key={m} value={m}>{m.replace('claude-', '')}</option>)}
+              </select>
+              <select aria-label={t('思考的努力程度', 'Reasoning effort')} value={choice.effort} onChange={(e) => choose({ effort: e.target.value })}>
+                {(list?.efforts ?? [choice.effort]).map((x) => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </div>
+            <button className="primary" disabled={!draft.trim() || !!list?.unavailable} onClick={() => void start()}>{t('开始', 'Start')}</button>
+            {alerts === 'off' && <button onClick={() => void askToNotify().then(setAlerts)} title={t('它需要你、或者做完一轮而你不在这一页时，弹一条系统通知', 'A system notification when it needs you or finishes a turn while you are on another page')}>{t('开通知', 'Turn on alerts')}</button>}
+            {alerts === 'blocked' && <span className="muted small">{t('浏览器里把这个站点的通知禁掉了', 'Notifications for this site are blocked in the browser')}</span>}
           </div>
           {list && list.sessions.length === 0 && <Empty>{t('还没有会话。', 'No sessions yet.')}</Empty>}
           <ul className="plain-list">

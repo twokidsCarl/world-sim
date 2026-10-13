@@ -164,7 +164,7 @@ export function PlayPage({ state }: { state: State }) {
     note(next ? 'like' : 'unlike', card.key, { card: card.key, idea: card.idea ?? '' })
   }
 
-  const title = card ? pick(lang, card.title.zh, card.title.en) : t('玩', 'Play')
+  const title = card ? pick(lang, card.title.zh, card.title.en) : t('无尽探索', 'Explore')
   const lead = useMemo(() => (card ? `${card.sim} · ${pick(lang, card.hint.zh, card.hint.en)}` : ''), [card, lang])
 
   return (

@@ -83,6 +83,12 @@ export function WorkPage({ state }: { state: State }) {
         '把一条 idea 交给一个子项目去做，看它走到哪一步。每个子项目的进度来自它在 GitHub 上的合并请求。',
         'Hand an idea to a subproject and see how far it has got. The progress of each subproject comes from its pull requests on GitHub.',
       )}
+      actions={
+        // 「接入」不占菜单了，从这里进。 / "Connect" is no longer in the menu; this is the way in.
+        <Link className="button inline" to="/connect">
+          {t('接入外面的 Agent', 'Connect outside agents')}
+        </Link>
+      }
     >
       {error && <div className="notice bad" role="alert">{error}</div>}
       <NowRunning onOpen={setOpenJob} />
@@ -227,7 +233,7 @@ export function WorkPage({ state }: { state: State }) {
                     (p.ui_up ? (
                       <a href={p.ui_url} target="_blank" rel="noreferrer">{t('打开它的界面 ↗', 'Open its UI ↗')}</a>
                     ) : (
-                      <span className="muted">{t('还在构建，或者构建失败了（去「玩」页看）', 'Still building, or the build failed (see the Play page)')}</span>
+                      <span className="muted">{t('还在构建，或者构建失败了（去「无尽探索」页看）', 'Still building, or the build failed (see the Explore page)')}</span>
                     ))}
                 </div>
                 <div className="row">

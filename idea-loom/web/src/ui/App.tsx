@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from 'react'
-import { NavLink, Route, Routes } from 'react-router'
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
 import { IdeaPage } from '../pages/IdeaPage'
 import { InboxPage } from '../pages/InboxPage'
 import { LineagePage } from '../pages/LineagePage'
@@ -20,28 +20,18 @@ import { applyLang, plural } from '../i18n'
 import { type PushState, pushState, turnOff, turnOn } from '../push'
 import { useStore, useT } from '../state/store'
 import { useStale } from '../version'
-
-// sz / se 是左侧栏收窄时显示的短标签；英文首字母有重复，所以给两个字母。
-// sz / se are the short labels shown when the navigation is collapsed; English initials collide, hence two letters.
-const NAV = [
-  { to: '/play', sz: '玩', se: 'Pl', zh: '玩', en: 'Play', end: false, owner: false },
-  { to: '/', sz: '图', se: 'Mp', zh: '地图', en: 'Map', end: true, owner: false },
-  { to: '/ideas', sz: '池', se: 'Id', zh: '想法池', en: 'Idea pool', end: false, owner: false },
-  { to: '/inbox', sz: '生', se: 'Gn', zh: '生成与候选', en: 'Generate & candidates', end: false, owner: true },
-  { to: '/lineage', sz: '血', se: 'Ln', zh: '血缘', en: 'Lineage', end: false, owner: false },
-  { to: '/work', sz: '开', se: 'Wk', zh: '开发', en: 'Work', end: false, owner: true },
-  { to: '/wishes', sz: '愿', se: 'Ws', zh: '许愿池', en: 'Wish pool', end: false, owner: true },
-  // 会话只在本机有：它能在这台机器上执行命令。 / Sessions exist locally only: they can run commands on this machine.
-  { to: '/sessions', sz: '话', se: 'Se', zh: '会话', en: 'Sessions', end: false, owner: true },
-  { to: '/stats', sz: '统', se: 'St', zh: '统计', en: 'Statistics', end: false, owner: true },
-  { to: '/connect', sz: '接', se: 'Co', zh: '接入', en: 'Connect', end: false, owner: true },
-]
+import { IDEA_VIEWS, NAV, ideaView, navEntry } from './nav'
 
 export function App() {
   const { me, state, error, load, theme, toggleTheme, lang, toggleLang, navNarrow, toggleNav, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
   const t = useT()
   const openWishes = useAssistant((a) => a.openWishes)
   const owner = me?.role === 'owner'
+  // 现在这一页属于哪个菜单项，是不是「想法」的某个视图。
+  // Which menu entry the current page belongs to, and whether it is one of the views of "Ideas".
+  const { pathname } = useLocation()
+  const here = navEntry(pathname)
+  const view = ideaView(pathname)
   // 后端重启过或界面重新构建过，这一页就过时了；只提示，不自己刷新，免得打断正在写的东西。
   // After a backend restart or a UI rebuild this page is out of date; it only says so and never reloads by itself, so nothing being typed is lost.
   const stale = useStale()
@@ -78,23 +68,17 @@ export function App() {
           <small>{t('想法经纬', 'Idea loom')}</small>
         </div>
         {NAV.filter((n) => (owner || !n.owner) && (n.to !== '/sessions' || me?.auth_enabled === false)).map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.end} className="nav-item" title={navNarrow ? t(n.zh, n.en) : undefined}>
+          <Link key={n.to} to={n.to} className={n === here ? 'nav-item active' : 'nav-item'} aria-current={n === here ? 'page' : undefined} title={navNarrow ? t(n.zh, n.en) : undefined}>
             <span className="nav-full">{t(n.zh, n.en)}</span>
             <span className="nav-short" aria-hidden="true">{t(n.sz, n.se)}</span>
-            {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
+            {n.to === '/' && state && <span className="count num">{state.counts.live}</span>}
             {n.to === '/wishes' && openWishes > 0 && <span className="count pill num">{openWishes}</span>}
-            {n.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
-          </NavLink>
+            {n.to === '/' && owner && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
+          </Link>
         ))}
         {me?.auth_enabled && !owner && (
           <NavLink to="/suggest" className="nav-item nav-new" title={navNarrow ? t('提个愿望', 'Send a wish') : undefined}>
             <span className="nav-full">{t('提个愿望', 'Send a wish')}</span>
-            <span className="nav-short" aria-hidden="true">＋</span>
-          </NavLink>
-        )}
-        {owner && (
-          <NavLink to="/new" className="nav-item nav-new" title={navNarrow ? t('手写一条', 'Write one') : undefined}>
-            <span className="nav-full">{t('＋ 手写一条', '＋ Write one')}</span>
             <span className="nav-short" aria-hidden="true">＋</span>
           </NavLink>
         )}
@@ -199,6 +183,25 @@ export function App() {
           </div>
         )}
         {!state && !error && <p className="muted pad">{t('正在读取想法池…', 'Loading the idea pool…')}</p>}
+        {/* 「想法」的几个视图之间切换；手写一条也从这里进。 */}
+        {/* Switch between the views of "Ideas"; writing one by hand starts here too. */}
+        {state && view && (
+          <div className="views">
+            <div className="seg" role="tablist" aria-label={t('想法的几种看法', 'Views of the ideas')}>
+              {IDEA_VIEWS.filter((v) => owner || !v.owner).map((v) => (
+                <Link key={v.to} to={v.to} role="tab" aria-selected={v.to === view}>
+                  {t(v.zh, v.en)}
+                  {v.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
+                </Link>
+              ))}
+            </div>
+            {owner && (
+              <Link className="button" to="/new">
+                {t('＋ 手写一条', '＋ Write one')}
+              </Link>
+            )}
+          </div>
+        )}
         {state && (
           <Routes>
             <Route path="/" element={<MapPage state={state} />} />
