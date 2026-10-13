@@ -5,12 +5,12 @@ import { describe, expect, it } from 'vitest'
 import { coarticulate } from '../tools/face/model.ts'
 import type { FaceVisemes } from '../src/face/types.ts'
 import { encodeWav } from '../src/voice/wav.ts'
-import { phonemesToVisemeSegments, synthesize, ttsAvailable, TtsError, type PhonemesEn, type TtsPhone, type VisemesZh } from '../src/voice/tts.ts'
+import { phonemesToVisemeGroups, phonemesToVisemeSegments, synthesize, ttsAvailable, TtsError, type PhonemesEn, type TtsPhone, type VisemesZh } from '../src/voice/tts.ts'
 
 const load = <T>(name: string): T => JSON.parse(readFileSync(new URL(`../data/curated/face/${name}`, import.meta.url), 'utf8')) as T
 const visemes = load<FaceVisemes>('visemes.json')
 const en = load<PhonemesEn>('phonemes-en.json')
-const zh = load<VisemesZh & { missingShapes: { id: string; nearest: string }[]; sources: { id: string }[] }>('visemes-zh.json')
+const zh = load<VisemesZh & { mandarinShapes: { id: string; fallback: string; usedBy: string[] }[]; sources: { id: string }[] }>('visemes-zh.json')
 const ids = new Set(visemes.visemes.map((v) => v.id))
 const tables = { en, zh }
 
@@ -42,26 +42,49 @@ describe('phoneme → viseme tables', () => {
     expect(Object.keys(zh.finals).sort()).toEqual([...FINALS].sort())
     expect(zh.erhua.r).toBeDefined()
     const sources = new Set(zh.sources.map((s) => s.id))
-    const missing = new Set(zh.missingShapes.map((m) => m.id))
-    for (const [key, e] of [...Object.entries(zh.initials), ...Object.entries(zh.finals), ...Object.entries(zh.erhua)] as [string, { sequence: { viseme: string; at: number; prefer?: string }[]; source?: string; assumption?: boolean }][]) {
+    // 普通话专用的口形都已经在视位表里；用到它们的每一步带一个也在表里的 fallback / the Mandarin-only shapes are all in the viseme table now; every step using one carries a fallback that is in the table too
+    const mandarin = new Set(zh.mandarinShapes.map((m) => m.id))
+    expect([...mandarin].sort()).toEqual(['ER', 'HX', 'JQX', 'YU', 'ZHCHSH'])
+    for (const id of mandarin) expect(ids.has(id), id).toBe(true)
+    expect(JSON.stringify(zh)).not.toContain('"prefer"')
+    for (const [key, e] of [...Object.entries(zh.initials), ...Object.entries(zh.finals), ...Object.entries(zh.erhua)] as [string, { sequence: { viseme: string; at: number; fallback?: string }[]; source?: string; assumption?: boolean }][]) {
       expect(e.sequence.length, key).toBeGreaterThan(0)
       expect(e.sequence[0]!.at, key).toBe(0)
       e.sequence.forEach((s, i) => {
         expect(ids.has(s.viseme), `${key}: ${s.viseme}`).toBe(true)
         if (i > 0) expect(s.at, key).toBeGreaterThan(e.sequence[i - 1]!.at)
         expect(s.at, key).toBeLessThan(1)
-        if (s.prefer) expect(missing.has(s.prefer), `${key}: ${s.prefer}`).toBe(true)
+        expect(s.fallback !== undefined, `${key}: ${s.viseme}`).toBe(mandarin.has(s.viseme))
+        if (s.fallback) {
+          expect(ids.has(s.fallback), `${key}: ${s.fallback}`).toBe(true)
+          expect(mandarin.has(s.fallback), `${key}: ${s.fallback}`).toBe(false)
+        }
       })
       // 每一条要么有出处，要么标成假设 / every entry has a source or is marked an assumption
       expect(e.assumption === true || (e.source !== undefined && sources.has(e.source)), key).toBe(true)
     }
   })
 
-  it('Mandarin: ü is told apart from u, and retroflex and alveolo-palatal initials name the shape they lack', () => {
-    for (const f of ['v', 've', 'van', 'vn']) expect(zh.finals[f]!.sequence[0]!.prefer, f).toBe('YU')
-    expect(zh.finals.u!.sequence[0]!.prefer).toBeUndefined()
-    for (const i of ['zh', 'ch', 'sh', 'r']) expect(zh.initials[i]!.sequence[0]!.prefer, i).toBe('ZHCHSH')
-    for (const i of ['j', 'q', 'x']) expect(zh.initials[i]!.sequence[0]!.prefer, i).toBe('JQX')
+  it('Mandarin: ü, the retroflex and alveolo-palatal initials, er and h point at their own shapes, with a fallback', () => {
+    for (const f of ['v', 've', 'van', 'vn']) expect(zh.finals[f]!.sequence[0], f).toMatchObject({ viseme: 'YU', fallback: 'UW' })
+    expect(zh.finals.u!.sequence[0]).toEqual({ viseme: 'UW', at: 0 })
+    for (const i of ['zh', 'ch', 'sh']) expect(zh.initials[i]!.sequence[0], i).toMatchObject({ viseme: 'ZHCHSH', fallback: 'SZ' })
+    expect(zh.initials.r!.sequence[0]).toMatchObject({ viseme: 'ZHCHSH', fallback: 'R' })
+    for (const i of ['j', 'q', 'x']) expect(zh.initials[i]!.sequence[0], i).toMatchObject({ viseme: 'JQX', fallback: 'SZ' })
+    expect(zh.initials.h!.sequence[0]).toMatchObject({ viseme: 'HX', fallback: 'KG' })
+    expect(zh.finals.er!.sequence[1]).toMatchObject({ viseme: 'ER', fallback: 'R' })
+    expect(zh.erhua.r!.sequence[0]).toMatchObject({ viseme: 'ER', fallback: 'R' })
+    // 舌尖元音是韵（元音类），不和声母同一个视位、也不是 lipHeavy：否则声母 + 韵母 + 下一个声母会并成一段
+    // the apical vowels are rhymes (vowel class), share no viseme with their initials and are not lip-heavy: otherwise initial + final + the next initial merge into one segment
+    const byId = new Map(visemes.visemes.map((v) => [v.id, v]))
+    for (const [f, initials] of [['iii', ['zh', 'ch', 'sh', 'r']], ['ii', ['z', 'c', 's']]] as const) {
+      const v = byId.get(zh.finals[f]!.sequence[0]!.viseme)!
+      expect(v.classes, f).toContain('vowel')
+      expect(v.classes, f).not.toContain('lipHeavy')
+      expect(v.aus.AU18 ?? 0, f).toBe(0)
+      for (const i of initials) expect(zh.initials[i]!.sequence[0]!.viseme, `${i}${f}`).not.toBe(v.id)
+    }
+    expect(byId.get(zh.finals.iii!.sequence[0]!.viseme)!.tongue.retro ?? 0).toBeGreaterThan(0)
     // 鼻音韵尾：-n 收在舌尖，-ng 收在舌根 / nasal codas: -n ends on the tongue tip, -ng on the tongue back
     for (const [f, e] of Object.entries(zh.finals)) {
       const last = e.sequence[e.sequence.length - 1]!.viseme
@@ -93,12 +116,27 @@ describe('phonemesToVisemeSegments', () => {
     // 绿 lü4 · 院儿 yuanr4 · 的 de5
     const timeline = [phone(0, 0.1, 'l', { part: 'initial', tone: null }), phone(0.1, 0.3, 'v', { part: 'final', tone: 4 }), phone(0.3, 0.5, 'van', { part: 'final', tone: 4 }), phone(0.5, 0.6, 'r', { part: 'erhua', tone: 4 }), phone(0.6, 0.65, 'd', { part: 'initial', tone: null }), phone(0.65, 0.75, 'e', { part: 'final', tone: 5 })]
     const segs = phonemesToVisemeSegments(timeline, 'zh', tables)
-    expect(segs.map((s) => s.viseme)).toEqual(['L', 'UW', 'UW', 'EH', 'TDN', 'R', 'TDN', 'AX'])
+    expect(segs.map((s) => s.viseme)).toEqual(['L', 'YU', 'YU', 'EH', 'TDN', 'ER', 'TDN', 'AX'])
     expect(segs[segs.length - 1]!.power).toBe(zh.power.byTone['5'])
-    // 面部数据里有了 YU 就用它；r 作声母和作儿化是两条 / with YU in the face data it is used; r as an initial and as erhua are two entries
-    const withYu = phonemesToVisemeSegments(timeline, 'zh', tables, { available: ['YU'] })
-    expect(withYu.map((s) => s.viseme).slice(0, 3)).toEqual(['L', 'YU', 'YU'])
-    expect(phonemesToVisemeSegments([phone(0, 0.1, 'r', { part: 'initial', tone: null })], 'zh', tables, { available: ['ER', 'ZHCHSH'] })[0]!.viseme).toBe('ZHCHSH')
+    // 旧的面部数据（17 个视位）没有普通话专用的口形：逐步回退；r 作声母和作儿化是两条
+    // older face data (17 visemes) lacks the Mandarin-only shapes: each step falls back; r as an initial and as erhua are two entries
+    const old = ['SIL', 'PBM', 'FV', 'TH', 'TDN', 'L', 'SZ', 'SH', 'KG', 'R', 'W', 'UW', 'OW', 'IY', 'EH', 'AA', 'AX']
+    expect(phonemesToVisemeSegments(timeline, 'zh', tables, { available: old }).map((s) => s.viseme)).toEqual(['L', 'UW', 'UW', 'EH', 'TDN', 'R', 'TDN', 'AX'])
+    expect(phonemesToVisemeSegments(timeline, 'zh', tables, { available: [...old, 'YU'] }).map((s) => s.viseme).slice(0, 3)).toEqual(['L', 'YU', 'YU'])
+    const r = [phone(0, 0.1, 'r', { part: 'initial', tone: null }), phone(0.1, 0.2, 'iii', { part: 'final', tone: 4 }), phone(0.2, 0.3, 'h', { part: 'initial', tone: null })]
+    expect(phonemesToVisemeSegments(r, 'zh', tables).map((s) => s.viseme)).toEqual(['ZHCHSH', 'ER', 'HX'])
+    expect(phonemesToVisemeSegments(r, 'zh', tables, { available: old }).map((s) => s.viseme)).toEqual(['R', 'SZ', 'KG'])
+  })
+
+  it('groups Mandarin by syllable and English as one utterance', () => {
+    // 吃 chi · 鱼 yu（零声母）· 花儿 huar · 停顿 · 啊 a
+    const zhLine = [phone(0, 0.1, 'ch', { part: 'initial', tone: null }), phone(0.1, 0.2, 'iii', { part: 'final', tone: 1 }), phone(0.2, 0.4, 'v', { part: 'final', tone: 2 }), phone(0.4, 0.5, 'h', { part: 'initial', tone: null }), phone(0.5, 0.6, 'ua', { part: 'final', tone: 1 }), phone(0.6, 0.7, 'r', { part: 'erhua', tone: 1 }), phone(0.7, 0.9, 'sil', { word: null }), phone(0.9, 1, 'a', { part: 'final', tone: 5 })]
+    const groups = phonemesToVisemeGroups(zhLine, 'zh', tables)
+    expect(groups.map((g) => g.map((s) => s.viseme))).toEqual([['ZHCHSH', 'ER'], ['YU'], ['HX', 'W', 'AA', 'ER'], ['AA']])
+    // 分组不改变段本身 / grouping does not change the segments themselves
+    expect(groups.flat()).toEqual(phonemesToVisemeSegments(zhLine, 'zh', tables))
+    const enLine = [phone(0.3, 0.4, 'B', { stress: null }), phone(0.4, 0.6, 'AY', { stress: 1 }), phone(0.6, 0.8, 'sil', { word: null }), phone(0.8, 0.9, 'F', { stress: null })]
+    expect(phonemesToVisemeGroups(enLine, 'en', tables).length).toBe(1)
   })
 
   it('unknown phones and missing tables yield nothing instead of throwing', () => {

@@ -45,7 +45,7 @@ import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { Rig } from '../src/anatomy/types.ts'
 import type { FaceData, FaceOpenings } from '../src/face/types.ts'
-import { AU_MAX, type Activations, activations, deform, expressionAUs, visemeAUs } from '../tools/face/model.ts'
+import { AU_MAX, type Activations, SPEECH_STYLES, activations, deform, expressionAUs, visemeAUs } from '../tools/face/model.ts'
 import { stale } from '../tools/face/run.ts'
 import { type Body, readBody } from '../tools/rig/io.ts'
 import { Poser } from '../tools/rig/pose.ts'
@@ -86,6 +86,9 @@ for (const bodyId of ['male', 'female'] as const) {
       for (const v of face.visemes?.visemes ?? []) {
         const o = visemeAUs(face, { [v.id]: 1 })
         states.push({ name: `viseme ${v.id}`, channels: o.channels, jaw: o.jaw, wide: false })
+        // 夸张风格（校准之前的数值）也要过同样的检验 / the exaggerated style (the values from before calibration) must pass the same checks
+        const c = visemeAUs(face, { [v.id]: 1 }, SPEECH_STYLES.clear)
+        states.push({ name: `viseme ${v.id} (clear)`, channels: c.channels, jaw: c.jaw, wide: false })
       }
       for (const e of face.expressions ?? []) states.push({ name: `emotion ${e.id}`, ...activations(face, expressionAUs(face.expressions, e.id, 1)), wide: false })
       for (const f of [0, 0.25, 0.5, 1]) states.push({ name: `jaw ${f} × max`, channels: f > 0 ? { mouth_corner: f } : {}, jaw: f * face.jaw.max, wide: f === 1 })

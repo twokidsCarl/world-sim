@@ -93,7 +93,7 @@ export interface MuscleDef {
   /** seal / dental 通道求解时所用的下颌张开角占活动范围的比例 / the jaw opening, as a fraction of its range, at which a seal / dental channel is solved. */
   refJawFraction?: number
   /** 舌的示意姿势（model: 'tongue'）/ the schematic tongue pose (model 'tongue'). */
-  tongue?: 'tip' | 'front' | 'back' | 'low'
+  tongue?: 'tip' | 'front' | 'back' | 'low' | 'retro'
 }
 
 export interface Curated {
@@ -1796,7 +1796,9 @@ export function buildFace(body: Body, rig: Rig, curated: Curated, log: (m: strin
       const tz = (m.positions[v * 3 + 2]! - b[2]) / Math.max(1e-9, b[5] - b[2]), ty = (m.positions[v * 3 + 1]! - b[1]) / Math.max(1e-9, b[4] - b[1])
       const yw = smooth((ty - 0.2) / 0.5)
       const g = (c: number, w: number): number => Math.exp(-(((tz - c) / w) ** 2))
-      const dv: V3 = d.tongue === 'tip' ? mul([0, 1, 0.25], E * smooth((tz - 0.6) / 0.4)) : d.tongue === 'front' ? mul([0, 1, 0], E * g(0.65, 0.2) * yw) : d.tongue === 'back' ? mul([0, 1, -0.3], E * g(0.25, 0.22) * yw) : mul([0, -1, 0], E * (0.4 + 0.6 * smooth(tz)) * yw)
+      // 卷舌：舌尖段向上并向后（上 : 后 = 1 : 0.8），越靠舌尖越多；紧挨其后的舌面略降，让舌尖像是翘起来的
+      // retroflex: the tip segment travels up and back (up : back = 1 : 0.8), more towards the tip; the blade just behind it dips a little so that the tip reads as curled
+      const dv: V3 = d.tongue === 'retro' ? add(mul([0, 0.78, -0.62], E * smooth((tz - 0.55) / 0.45)), mul([0, -1, 0], 0.2 * E * g(0.5, 0.12) * yw)) : d.tongue === 'tip' ? mul([0, 1, 0.25], E * smooth((tz - 0.6) / 0.4)) : d.tongue === 'front' ? mul([0, 1, 0], E * g(0.65, 0.2) * yw) : d.tongue === 'back' ? mul([0, 1, -0.3], E * g(0.25, 0.22) * yw) : mul([0, -1, 0], E * (0.4 + 0.6 * smooth(tz)) * yw)
       if (len(dv) > EPS) table.set(v, dv)
     }
     const c = part.centroid as V3

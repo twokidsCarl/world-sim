@@ -33,10 +33,18 @@ function excludeDevDatasets(): Plugin {
   }
 }
 
+// 开发时把 /api 转给本机的语音合成后端（soma/server）：端口从环境变量 SOMA_API_PORT 来，不写死；没设就不转，
+// 界面按"没有后端"工作。正式使用时由统一入口（idea-loom）在同源下转发 /api。
+// In development /api is proxied to the local speech-synthesis backend (soma/server): the port comes from the environment
+// variable SOMA_API_PORT and is not hard-coded; when it is unset nothing is proxied and the UI works as "no backend". In hosted
+// use the single entry point (idea-loom) proxies /api under the same origin.
+const API_PORT = Number(process.env.SOMA_API_PORT)
+const apiProxy = Number.isInteger(API_PORT) && API_PORT > 0 && API_PORT < 65536 ? { '/api': { target: `http://127.0.0.1:${API_PORT}` } } : undefined
+
 export default defineConfig({
   plugins: [react(), excludeDevDatasets()],
   define: { __SOMA_VOICE_PACK__: JSON.stringify(!COMMERCIAL) },
-  server: { port: 5183, strictPort: true },
+  server: { port: 5183, strictPort: true, proxy: apiProxy },
   // 这些测试读入几十兆的真实几何，44 个文件并行跑时，慢机器上单项会超过默认的 5 秒。
   // The tests read tens of megabytes of real geometry; with 44 files in parallel a single test can exceed the default 5 s on a slow machine.
   test: { include: ['tests/**/*.test.ts'], testTimeout: 60_000, hookTimeout: 300_000 },

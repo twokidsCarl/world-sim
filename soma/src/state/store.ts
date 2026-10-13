@@ -44,6 +44,33 @@ export interface SpeechStatus {
   message: string
 }
 
+/**
+ * "说一句话"（由音素带动口形）的状态；声音、时间线和时钟在 src/face/say.ts 里。合成用的文字不放在这里之外的任何地方，也不进 URL。
+ * State of "say something" (phoneme-driven speech); the audio, the timeline and the clock live in src/face/say.ts. Text typed
+ * for synthesis goes nowhere else and never into the URL.
+ */
+export interface SayStatus {
+  status: 'idle' | 'loading' | 'ready' | 'playing' | 'error'
+  /** 示范片段的 id（写进 URL 的 say=）；合成的话为 null / the id of a demo clip (written to the URL as say=); null for synthesized text. */
+  clip: string | null
+  source: 'demo' | 'tts' | null
+  text: string
+  lang: 'en' | 'zh' | null
+  voice: string
+  durationS: number
+  /** 这次播放有没有声音：false = 浏览器没允许出声，口形按时钟走 / whether this playback is audible: false = the browser did not allow sound and the mouth runs on the clock. */
+  sound: boolean
+  /** 口形由什么带动：音素时间线（准确），或对同一段声音做的分析（近似）/ what drives the mouth: the phoneme timeline (accurate) or an analysis of the same audio (approximate). */
+  mode: 'phonemes' | 'audio'
+  /** 出错时后端或页面给的信息，原样显示 / the message of the backend or the page on an error, shown verbatim. */
+  message: string
+  warnings: { word: string; note: string }[]
+  /** 合成这段声音的模型；真人录音时为 null / the model that synthesized the audio; null for a recorded voice. */
+  model: { name: string; version: string; licence: string } | null
+  /** 片段所在的包的许可说明 / the licence statement of the clip's pack. */
+  licence: string
+}
+
 /** 疼痛反应的设定：强度 0–10、起病方式、是否保持、是否静音。 */
 /** Settings of the pain response: intensity 0–10, onset, whether held, whether muted. */
 export interface PainSettings {
@@ -184,6 +211,13 @@ export interface AppState {
   /** 保持的视位（一个口形）的 id；null = 没有 / The id of the held viseme (one mouth shape); null = none. */
   viseme: string | null
   speech: SpeechStatus
+  say: SayStatus
+  /**
+   * 说话的风格：'normal' 正常朗读（按实测标定），'clear' 夸张；null = 缺省（保持的口形用夸张，说话用正常）。
+   * The style of speech: 'normal' read speech (calibrated against measurements), 'clear' exaggerated; null = the default
+   * (clear for held shapes, normal for speech).
+   */
+  speechStyle: 'normal' | 'clear' | null
   /** "标定对照"对话框 / The "Calibration" dialog. */
   calibrationOpen: boolean
   /** 每触发一次加一（让查看器开始逐帧更新）/ Bumped on every trigger (so the viewer starts updating every frame). */
@@ -269,6 +303,7 @@ export interface AppState {
   setExpr(expr: ExprSetting | null): void
   /** 保持（或用 null 松开）一个视位 / Hold (or release with null) a viseme. */
   setViseme(id: string | null): void
+  setSpeechStyle(style: 'normal' | 'clear' | null): void
   setCalibrationOpen(open: boolean): void
   setSkinOpaque(on: boolean): void
   /** 看表情的两种预设视图：肌肉（缺省，表情读得清）或不透明皮肤 / The two preset views for reading the expression: muscles (default, reads clearly) or opaque skin. */
@@ -419,6 +454,8 @@ export const useApp = create<AppState>()((set, get) => ({
   expr: null,
   viseme: null,
   speech: { status: 'idle', name: '', durationS: 0, message: '' },
+  say: { status: 'idle', clip: null, source: null, text: '', lang: null, voice: '', durationS: 0, sound: false, mode: 'phonemes', message: '', warnings: [], model: null, licence: '' },
+  speechStyle: null,
   calibrationOpen: false,
   painNonce: 0,
   stimSettings: defaultSettings(),
@@ -559,9 +596,9 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().skinMapMode !== 'off') void get().ensureSkinMaps()
     if (get().leftTab === 'pose' || !poseIsRest(get().pose) || get().breathing) void get().ensureRig()
     if (get().leftTab === 'pose') void get().ensureShape()
-    if (get().leftTab === 'pain' || get().leftTab === 'expr' || get().pain.hold || Object.keys(get().aus).length > 0 || get().expr || get().viseme) void get().ensureFace()
+    if (get().leftTab === 'pain' || get().leftTab === 'expr' || get().pain.hold || Object.keys(get().aus).length > 0 || get().expr || get().viseme || get().say.status === 'playing') void get().ensureFace()
     // 表情和口形要张口时靠下颌关节 / an expression or mouth shape that opens the mouth needs the jaw joint
-    if (get().expr || get().viseme) void get().ensureRig()
+    if (get().expr || get().viseme || get().say.status === 'playing') void get().ensureRig()
   },
 
   switchBody: (body) => {
@@ -790,6 +827,7 @@ export const useApp = create<AppState>()((set, get) => ({
       void get().ensureRig()
     }
   },
+  setSpeechStyle: (speechStyle) => set({ speechStyle: speechStyle === 'normal' || speechStyle === 'clear' ? speechStyle : null }),
   setCalibrationOpen: (calibrationOpen) => set({ calibrationOpen }),
   setSkinOpaque: (skinOpaque) => {
     set({ skinOpaque })

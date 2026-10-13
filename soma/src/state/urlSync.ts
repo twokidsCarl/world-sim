@@ -4,6 +4,7 @@
 
 import { TREE_KINDS, type AnatomyGraph, type TreeKind } from '../anatomy/graph.ts'
 import { posePresets } from '../anatomy/rig.ts'
+import { loadDemoClip, playSay } from '../face/say.ts'
 import { applyStimulus } from '../pain/stim.ts'
 import { nonDefaultControls } from '../anatomy/shape.ts'
 import type { SystemId } from '../anatomy/types.ts'
@@ -96,6 +97,10 @@ export function snapshot(s: AppState): UrlState {
   if (Object.keys(s.aus).length) out.au = { ...s.aus }
   if (s.expr && s.expr.strength > 0) out.expr = { ...s.expr }
   if (s.viseme) out.vis = s.viseme
+  // 只有示范片段进 URL；合成用的文字不进（链接要短，也不该带着用户输入的话）
+  // only a demo clip goes into the URL; text typed for synthesis does not (links stay short and carry nothing the user wrote)
+  if (s.say.source === 'demo' && s.say.clip) out.say = s.say.clip
+  if (s.speechStyle) out.style = s.speechStyle
   if (s.skinOpaque) out.skin = true
   if (s.stim) out.stim = { settings: s.stim.settings, site: s.stim.siteRef }
   if (Object.keys(s.shapeControls).length) out.shape = s.shape ? nonDefaultControls(s.shape.data, s.shapeControls) : { ...s.shapeControls }
@@ -199,6 +204,17 @@ export async function restoreFromUrl(state: UrlState): Promise<string[]> {
         else warnings.push(`vis: 没有视位 "${state.vis}"（可用：${(face.data.visemes?.visemes ?? []).map((v) => v.id).join(' ')}）/ no such viseme`)
       }
     }
+  }
+  if (state.style) useApp.getState().setSpeechStyle(state.style)
+  if (state.say) {
+    // 链接里的示范片段：装好就自己开始。页面还没有过用户手势时浏览器不让出声，口形按页面时钟无声地走（嵌入时循环），
+    // 界面上有一个"声音"按钮。
+    // a demo clip from a link: it starts by itself once loaded. Before any user gesture the browser allows no sound, so the mouth
+    // runs silently on the page clock (looping when embedded) and the UI offers a "sound" button.
+    const face = await useApp.getState().ensureFace()
+    if (!face) warnings.push('say: 此人体没有表情数据 / this body has no facial expression data')
+    else if (!(await loadDemoClip(state.say))) warnings.push(`say: ${useApp.getState().say.message || '无法装入 / could not be loaded'}`)
+    else void playSay({ sound: true, loop: !!state.embed })
   }
   if (state.tab) app.setLeftTab(state.tab)
   if (state.cmp) {

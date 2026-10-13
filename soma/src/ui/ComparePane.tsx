@@ -96,7 +96,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
         const want = (): void => {
           const s = useApp.getState()
           const shaped = Object.keys(s.shapeControls).length > 0
-          const facing = s.pain.hold || Object.keys(s.aus).length > 0 || s.painNonce !== nonce0 || !!s.expr || !!s.viseme || s.speech.status === 'playing'
+          const facing = s.pain.hold || Object.keys(s.aus).length > 0 || s.painNonce !== nonce0 || !!s.expr || !!s.viseme || s.speech.status === 'playing' || s.say.status === 'playing'
           const got = (): void => {
             if (!cancelled) viewer?.invalidateState()
           }

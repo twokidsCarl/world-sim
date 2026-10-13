@@ -1,7 +1,56 @@
 {
  "_doc": {
-  "zh": "说话用的视位（口形）表。方法取自 JALI（jali2016，已打开）：口形分解为 静止 + JA·（下颌 + 舌）+ LI·唇的动作单元；四条构音约束（双唇音必须闭唇；唇齿音下唇必须碰上齿；咝音下颌几乎合上；非鼻音发音时唇要张开过）；协同发音的习惯（重复的视位并成一个；lipHeavy 的视位提前开始、推迟结束，并取代邻居的唇形，邻居是双唇音 / 唇齿音时则同时发；tongueOnly 的视位不影响唇；很短的塞音 / 鼻音不影响下颌）；视位在音开始前 120 ms 起、结束后 120 ms 消退，唇前突的为 150 ms。音的分类（classes）取自它的附录 A。每个视位具体的下颌开度、AU 强度、舌的姿势都是本项目的假设。音素记号是 ARPAbet 风格的，归并方式也是本项目定的。",
-  "en": "The table of visemes (mouth shapes) for speech. Method from JALI (jali2016, opened): a mouth shape is rest + JA·(jaw + tongue) + LI·lip action units; four articulation constraints (bilabials must close the lips; labiodentals must touch the lower lip to the upper teeth; sibilants nearly close the jaw; non-nasals must open the lips at some point); co-articulation habits (duplicated visemes merge; lip-heavy visemes start early, end late and replace the lip shape of neighbours, or sound together with them when those are bilabial / labiodental; tongue-only visemes do not affect the lips; very short obstruents / nasals do not affect the jaw); a viseme starts 120 ms before its sound and decays over 120 ms after it, 150 ms for lip protrusion. The sound classes (`classes`) follow its appendix A. Each viseme's jaw opening, AU intensities and tongue pose are this project's assumptions. Phoneme symbols are ARPAbet-style and the grouping is this project's too."
+  "zh": "说话用的视位（口形）表。方法取自 JALI（jali2016，已打开）：口形分解为 静止 + JA·（下颌 + 舌）+ LI·唇的动作单元；四条构音约束（双唇音必须闭唇；唇齿音下唇必须碰上齿；咝音下颌几乎合上；非鼻音发音时唇要张开过）；协同发音的习惯（重复的视位并成一个；lipHeavy 的视位提前开始、推迟结束，并取代邻居的唇形，邻居是双唇音 / 唇齿音时则同时发；tongueOnly 的视位不影响唇；很短的塞音 / 鼻音不影响下颌）；视位在音开始前 120 ms 起、结束后 120 ms 消退，唇前突的为 150 ms。音的分类（classes）取自它的附录 A。每个视位有两套下颌和唇的数值：jaw / aus 是正常朗读（风格 1，缺省），clear 是夸张 / 清晰发音（风格 2，即校准之前的那套数值，全部是假设）。正常朗读的下颌开度按电磁发音仪的实测均值标定（见 calibration 和每个视位的 provenance）；唇的 AU 强度仍是假设；舌的权重一部分取自实测的线圈高度，其余是假设。provenance 里每个数值要么写明出处，要么标 assumption。普通话的四个口形（YU、ZHCHSH、JQX、ER）和软腭擦音 HX 没有实测数据，全部是假设。音素记号是 ARPAbet 风格的，归并方式也是本项目定的。",
+  "en": "The table of visemes (mouth shapes) for speech. Method from JALI (jali2016, opened): a mouth shape is rest + JA·(jaw + tongue) + LI·lip action units; four articulation constraints (bilabials must close the lips; labiodentals must touch the lower lip to the upper teeth; sibilants nearly close the jaw; non-nasals must open the lips at some point); co-articulation habits (duplicated visemes merge; lip-heavy visemes start early, end late and replace the lip shape of neighbours, or sound together with them when those are bilabial / labiodental; tongue-only visemes do not affect the lips; very short obstruents / nasals do not affect the jaw); a viseme starts 120 ms before its sound and decays over 120 ms after it, 150 ms for lip protrusion. The sound classes (`classes`) follow its appendix A. Each viseme has two sets of jaw and lip values: `jaw` / `aus` are normal read speech (style 1, the default) and `clear` is exaggerated / clear speech (style 2: the values the table had before calibration, all assumptions). The jaw openings of normal read speech are calibrated against measured means from electromagnetic articulography (see `calibration` and each viseme's `provenance`); the lip AU intensities remain assumptions; some tongue weights are taken from measured coil heights and the rest are assumptions. In `provenance` every number either names its source or is marked `assumption`. The four Mandarin shapes (YU, ZHCHSH, JQX, ER) and the velar fricative HX have no measurements behind them and are assumptions throughout. Phoneme symbols are ARPAbet-style and the grouping is this project's too."
+ },
+ "calibration": {
+  "source": "articulation-summary",
+  "file": "data/curated/reference/articulation-summary.json",
+  "speakers": {
+   "fsew0": "MOCHA-TIMIT, female, Southern English",
+   "msak0": "MOCHA-TIMIT, male, Southern English",
+   "M1": "USC-TIMIT, male, American English (CC BY 4.0)"
+  },
+  "nonCommercial": {
+   "zh": "MOCHA-TIMIT（fsew0、msak0）的许可只限研究、教育和个人使用；这里只用了本项目自己算的汇总量。",
+   "en": "MOCHA-TIMIT (fsew0, msak0) is licensed for research, educational and individual use only; only aggregates computed by this project are used here."
+  },
+  "mmPerJawFraction": 42.2,
+  "geometry": {
+   "jawMaxRad": 0.50615,
+   "male": {
+    "axisToLowerIncisalEdgeMm": 95.5,
+    "forwardLeverMm": 83.7,
+    "incisorDropMmAtFraction": {
+     "1": 34.77,
+     "0.05": 2.1,
+     "0.1": 4.17,
+     "0.5": 19.47
+    }
+   },
+   "female": {
+    "axisToLowerIncisalEdgeMm": 92.2,
+    "forwardLeverMm": 84.3,
+    "incisorDropMmAtFraction": {
+     "1": 36.14,
+     "0.05": 2.12,
+     "0.1": 4.21,
+     "0.5": 19.9
+    }
+   }
+  },
+  "jaw": {
+   "zh": "实测的 jawOpenMm 是下切牙线圈相对上切牙的竖直下降量（相对该说话人说话时的最高位置）。我们的下颌是绕颞下颌关节轴的转角：下切牙切缘在轴前方约 84 mm（男 83.7、女 84.3）、轴下方 46 / 37 mm，离轴 95.5 / 92.2 mm；小角度时切缘的竖直下降 ≈ 转角 × 84 mm，用骨架实算是每 1.0 的 jaw 比例（= 0.50615 rad = 29°）约 42.2 mm（比例 0.05–0.1 处，两副身体 42.0–42.4）。所以 jaw = 目标毫米数 / 42.2。目标 = 三位说话人各自均值的平均；例外：AA 取 aa、ay、aw 三个音素的均值（USC-TIMIT 的 ah 混有弱化元音，MOCHA 的 o 是圆唇的 [ɒ]），AX 只取 MOCHA 的 @（USC-TIMIT 没有单独的弱化元音标签）；SIL 不标定（语料里的停顿包含换气，口是开着的；这里的静止是闭口）。假设：把“说话时的最高位置”当作我们的闭口姿势（上下牙咬合，覆 1.2 mm），两者之间未知的差没有加进去。",
+   "en": "The measured jawOpenMm is the vertical drop of the lower-incisor coil relative to the upper incisor (from the highest position that speaker reaches in speech). Our jaw is an angle about the temporomandibular axis: the lower incisal edge lies about 84 mm in front of the axis (male 83.7, female 84.3) and 46 / 37 mm below it, 95.5 / 92.2 mm away; for small angles its vertical drop ≈ angle × 84 mm, and computed with the rig it is about 42.2 mm per 1.0 of `jaw` fraction (= 0.50615 rad = 29°) at fractions 0.05–0.1 (42.0–42.4 over the two bodies). Hence jaw = target millimetres / 42.2. Target = the mean of the three speakers' means; exceptions: AA uses the phones aa, ay and aw (ah of USC-TIMIT is mixed with reduced vowels and MOCHA's o is the rounded [ɒ]), AX uses MOCHA's @ only (USC-TIMIT has no separate label for reduced vowels); SIL is not calibrated (pauses in the corpora include breaths with the mouth open; rest here is a closed mouth). Assumption: the highest position reached in speech is equated with our closed pose (teeth in occlusion, 1.2 mm of overbite); the unknown difference between the two is not added."
+  },
+  "lips": {
+   "zh": "唇的 AU 强度没有标定，仍是假设：线圈贴在唇红缘外，lipApertureMm 相对闭唇时的线圈距离，和唇内缘的间隙差一个未知的量（三位说话人之间相差一倍）；唇前伸只有 ±1.5 mm，只有次序可信。只做了几处由次序引出的调整（正常风格，仍是假设）：EH 的 AU25 3 → 4（实测唇开度最大的是 EH），IY 2.5 → 3，AA 3 → 2.5，L 2 → 1.5，TH 2 → 1，R 1 → 0.5；OW 从 AU22 3 改为 AU18 2 + AU22 1（实测 OW 的唇开度小于央元音，朗读时是收拢而不是外翻的唇）。没有做到的：实测 W 的唇开度很小（约 2.6 mm）而下颌并不高，模型里 W 的唇间隙偏大。测试核对了两个次序：模型的唇间隙与实测唇开度的秩相关，以及圆唇组比展唇组更靠前。",
+   "en": "Lip AU intensities are not calibrated and remain assumptions: the coils sit outside the vermilion border and lipApertureMm is relative to the coil distance at closure, which differs from the inner lip gap by an unknown amount (and by a factor of two between speakers); lip protrusion spans only ±1.5 mm, so only its order is trusted. A few adjustments suggested by the order were made (normal style, still assumptions): AU25 of EH 3 → 4 (EH has the largest measured lip aperture), IY 2.5 → 3, AA 3 → 2.5, L 2 → 1.5, TH 2 → 1, R 1 → 0.5; OW goes from AU22 3 to AU18 2 + AU22 1 (the measured aperture of OW is below that of schwa: pursed rather than everted lips in read speech). Not achieved: the measured lip aperture of W is very small (about 2.6 mm) although the jaw is not high, and the lip gap of W in the model is too large. Tests check two orders: the rank correlation of the model lip gap with the measured aperture, and that the rounded group lies further forward than the spread group."
+  },
+  "tongue": {
+   "zh": "舌的权重：每位说话人、每个线圈，取 (该视位的高度 − 唇音 PBM、FV 的平均高度) / (最高的视位 − 同一基准)，负值记 0，再对三位说话人平均，四舍五入到 0.05（≤ 0.1 记 0）。tip ← 舌尖线圈的高度，front ← 舌面线圈，back ← 舌背线圈，low ← 舌面线圈低于基准的程度，retro ← 舌尖线圈后缩的程度。只在没有接触约束的地方采用（各视位 provenance.tongue.measured 列出三位说话人的数）；齿龈音、边音的舌尖接触（tip = 1）是假设，因为线圈贴在舌尖后约 1 cm，取的又是音段中间三分之一的平均，看不到接触。仍然是示意的：每个姿势的位移场形状和幅度、舌的前后位置（只有 R 的后缩）、舌的侧缘、和腭的接触；高度是在上颌坐标系里量的，含下颌的贡献。",
+   "en": "Tongue weights: per speaker and coil, (height in that viseme − mean height in the labials PBM and FV) / (the highest viseme − the same anchor), negatives set to 0, then averaged over the three speakers and rounded to 0.05 (0 at ≤ 0.1). tip ← height of the tip coil, front ← body coil, back ← dorsum coil, low ← how far the body coil is below the anchor, retro ← how far back the tip coil is. Adopted only where no contact constraint applies (each viseme's provenance.tongue.measured lists the three speakers' numbers); the tip contact of alveolars and the lateral (tip = 1) is an assumption, because the coil sits about 1 cm behind the tip and the mean of a segment's middle third does not show contact. Still schematic: the shape and excursion of each pose's displacement field, the front-back position of the tongue (only the retraction for R), the sides of the tongue and contact with the palate; heights are measured in the frame of the upper jaw and include the jaw's contribution."
+  }
  },
  "timing": {
   "onset": 0.12,
@@ -56,13 +105,55 @@
     "tip": 0,
     "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0,
+    "aus": {}
+   },
+   "provenance": {
+    "jaw": {
+     "assumption": true,
+     "note": {
+      "zh": "静止：闭口。",
+      "en": "Rest: a closed mouth."
+     }
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "静止。",
+      "en": "Rest."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -82,7 +173,7 @@
     "obstruent",
     "nasal"
    ],
-   "jaw": 0.06,
+   "jaw": 0.059,
    "aus": {
     "AU24": 1.5
    },
@@ -92,13 +183,84 @@
     "tip": 0,
     "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.06,
+    "aus": {
+     "AU24": 1.5
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.49,
+     "sdMm": 1.33
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "source": "jali2016",
+     "note": {
+      "zh": "JALI 的构音约束。",
+      "en": "JALI's articulation constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "tip": [
+       0,
+       0,
+       0
+      ],
+      "front": [
+       0,
+       0,
+       0
+      ],
+      "back": [
+       0,
+       0,
+       0
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：约束“双唇音必须闭唇”取自 JALI。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: the constraint \"bilabials must close the lips\" is JALI's. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：约束“双唇音必须闭唇”取自 JALI。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: the constraint \"bilabials must close the lips\" is JALI's. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -116,7 +278,7 @@
     "labiodental",
     "obstruent"
    ],
-   "jaw": 0.08,
+   "jaw": 0.056,
    "aus": {
     "AU10": 1
    },
@@ -126,13 +288,89 @@
     "tip": 0,
     "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.08,
+    "aus": {
+     "AU10": 1
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.36,
+     "sdMm": 1.21
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "source": "jali2016",
+     "note": {
+      "zh": "JALI 的构音约束。",
+      "en": "JALI's articulation constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "tip": [
+       0.04,
+       0.04,
+       0.09
+      ],
+      "front": [
+       0.06,
+       0.03,
+       0.11
+      ],
+      "back": [
+       0.02,
+       0.03,
+       0.06
+      ],
+      "low": [
+       0,
+       0,
+       0
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：约束“下唇碰上齿”取自 JALI；下颌开度等于 lip_dental 通道求解时的开度。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: the constraint \"lower lip to the upper teeth\" is JALI's; the jaw opening equals the one the lip_dental channel is solved at. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：约束“下唇碰上齿”取自 JALI；下颌开度等于 lip_dental 通道求解时的开度。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: the constraint \"lower lip to the upper teeth\" is JALI's; the jaw opening equals the one the lip_dental channel is solved at. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -149,23 +387,84 @@
    "classes": [
     "obstruent"
    ],
-   "jaw": 0.1,
+   "jaw": 0.066,
    "aus": {
-    "AU25": 2
+    "AU25": 1
    },
    "closure": 0,
    "dental": 0,
    "tongue": {
-    "tip": 0.6,
-    "front": 0.3,
+    "tip": 0.4,
+    "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.1,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.79,
+     "sdMm": 1.4
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "tip": [
+       0.41,
+       0.21,
+       0.6
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -185,7 +484,7 @@
     "obstruent",
     "nasal"
    ],
-   "jaw": 0.08,
+   "jaw": 0.033,
    "aus": {
     "AU25": 1.5
    },
@@ -193,15 +492,76 @@
    "dental": 0,
    "tongue": {
     "tip": 1,
-    "front": 0,
+    "front": 0.4,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.08,
+    "aus": {
+     "AU25": 1.5
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 1.4,
+     "sdMm": 1.21
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "front": [
+       0.42,
+       0.31,
+       0.41
+      ]
+     },
+     "note": {
+      "zh": "tip 是假设（接触约束）；其余没有列在 measured 里的姿势取 0，也是假设。",
+      "en": "tip is an assumption (a contact constraint); poses not listed under measured are 0, assumptions too."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的 LNTD（舌从口腔前部封住上腭）是只动舌的视位。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's LNTD (the tongue seals the palate from the front) is a tongue-only viseme. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的 LNTD（舌从口腔前部封住上腭）是只动舌的视位。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's LNTD (the tongue seals the palate from the front) is a tongue-only viseme. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -217,9 +577,9 @@
    "classes": [
     "tongueOnly"
    ],
-   "jaw": 0.14,
+   "jaw": 0.072,
    "aus": {
-    "AU25": 2
+    "AU25": 1.5
    },
    "closure": 0,
    "dental": 0,
@@ -227,13 +587,61 @@
     "tip": 1,
     "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.14,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 3.05,
+     "sdMm": 1.47
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "假设（接触约束：舌尖抵齿龈）。",
+      "en": "Assumption (a contact constraint: the tip on the alveolar ridge)."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -250,7 +658,7 @@
    "classes": [
     "sibilant"
    ],
-   "jaw": 0.03,
+   "jaw": 0.008,
    "aus": {
     "AU25": 2.5,
     "AU20": 1.5
@@ -258,16 +666,78 @@
    "closure": 0,
    "dental": 0,
    "tongue": {
-    "tip": 0.7,
+    "tip": 0.55,
     "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.03,
+    "aus": {
+     "AU25": 2.5,
+     "AU20": 1.5
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 0.35,
+     "sdMm": 0.6
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "tip": [
+       0.53,
+       0.51,
+       0.54
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：约束“咝音下颌几乎合上”取自 JALI。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: the constraint \"sibilants narrow the jaw greatly\" is JALI's. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：约束“咝音下颌几乎合上”取自 JALI。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: the constraint \"sibilants narrow the jaw greatly\" is JALI's. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -287,7 +757,7 @@
     "sibilant",
     "lipHeavy"
    ],
-   "jaw": 0.04,
+   "jaw": 0.01,
    "aus": {
     "AU22": 3
    },
@@ -295,15 +765,76 @@
    "dental": 0,
    "tongue": {
     "tip": 0,
-    "front": 0.8,
+    "front": 1,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.04,
+    "aus": {
+     "AU22": 3
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 0.42,
+     "sdMm": 0.6
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "front": [
+       1,
+       1,
+       1
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 把 S Z J C 列为咝音和 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI lists S Z J C as sibilant and lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 把 S Z J C 列为咝音和 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI lists S Z J C as sibilant and lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -323,7 +854,7 @@
     "obstruent",
     "nasal"
    ],
-   "jaw": 0.12,
+   "jaw": 0.066,
    "aus": {
     "AU25": 2
    },
@@ -331,15 +862,81 @@
    "dental": 0,
    "tongue": {
     "tip": 0,
-    "front": 0,
+    "front": 0.7,
     "back": 1,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.12,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.8,
+     "sdMm": 1.48
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "back": [
+       1,
+       1,
+       1
+      ],
+      "front": [
+       0.99,
+       0.5,
+       0.6
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的 GK（舌在口腔后部封住气道）是只动舌的视位。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's GK (the tongue seals the airway at the back) is a tongue-only viseme. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的 GK（舌在口腔后部封住气道）是只动舌的视位。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's GK (the tongue seals the airway at the back) is a tongue-only viseme. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -354,24 +951,91 @@
     "er"
    ],
    "classes": [],
-   "jaw": 0.1,
+   "jaw": 0.068,
    "aus": {
     "AU18": 2,
-    "AU25": 1
+    "AU25": 0.5
    },
    "closure": 0,
    "dental": 0,
    "tongue": {
-    "tip": 0.4,
+    "tip": 0,
     "front": 0,
-    "back": 0.3,
-    "low": 0
+    "back": 0,
+    "low": 0,
+    "retro": 0.5
+   },
+   "clear": {
+    "jaw": 0.1,
+    "aus": {
+     "AU18": 2,
+     "AU25": 1
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.87,
+     "sdMm": 1.48
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "retro": [
+       1,
+       1,
+       1
+      ],
+      "tip": [
+       0.45,
+       0.6,
+       0.45
+      ]
+     },
+     "note": {
+      "zh": "三位说话人的 r 都是舌尖线圈后缩最多的音，舌尖高度约为最高值的一半；据此取 retro = 0.5，权重本身是假设。",
+      "en": "In all three speakers r is the sound with the most retracted tip coil, with the tip at about half of its greatest height; retro = 0.5 follows from that, the weight itself being an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -387,7 +1051,7 @@
    "classes": [
     "lipHeavy"
    ],
-   "jaw": 0.06,
+   "jaw": 0.078,
    "aus": {
     "AU18": 4
    },
@@ -396,14 +1060,75 @@
    "tongue": {
     "tip": 0,
     "front": 0,
-    "back": 0.6,
-    "low": 0
+    "back": 0.45,
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.078,
+    "aus": {
+     "AU18": 4
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 3.29,
+     "sdMm": 1.68
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "back": [
+       0.63,
+       0.35,
+       0.32
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 把 w 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI lists w as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 把 w 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI lists w as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -421,7 +1146,7 @@
     "lipHeavy",
     "vowel"
    ],
-   "jaw": 0.1,
+   "jaw": 0.047,
    "aus": {
     "AU18": 3.5,
     "AU25": 1
@@ -430,15 +1155,82 @@
    "dental": 0,
    "tongue": {
     "tip": 0,
-    "front": 0,
-    "back": 0.8,
-    "low": 0
+    "front": 0.6,
+    "back": 0.6,
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.1,
+    "aus": {
+     "AU18": 3.5,
+     "AU25": 1
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2,
+     "sdMm": 1.29
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "front": [
+       0.84,
+       0.58,
+       0.45
+      ],
+      "back": [
+       0.59,
+       0.5,
+       0.65
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 把 UW 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI lists UW as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 把 UW 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI lists UW as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -457,9 +1249,10 @@
     "lipHeavy",
     "vowel"
    ],
-   "jaw": 0.28,
+   "jaw": 0.084,
    "aus": {
-    "AU22": 3,
+    "AU18": 2,
+    "AU22": 1,
     "AU25": 1
    },
    "closure": 0,
@@ -467,14 +1260,81 @@
    "tongue": {
     "tip": 0,
     "front": 0,
-    "back": 0.6,
-    "low": 0
+    "back": 0,
+    "low": 0.45,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.28,
+    "aus": {
+     "AU22": 3,
+     "AU25": 1
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 3.55,
+     "sdMm": 1.5
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "back": [
+       0.34,
+       0,
+       0
+      ],
+      "low": [
+       0,
+       0.47,
+       0.82
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 把 OW、OY 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI lists OW and OY as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 把 OW、OY 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI lists OW and OY as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -492,25 +1352,93 @@
    "classes": [
     "vowel"
    ],
-   "jaw": 0.1,
+   "jaw": 0.053,
    "aus": {
     "AU20": 2,
     "AU12": 1,
-    "AU25": 2.5
+    "AU25": 3
    },
    "closure": 0,
    "dental": 0,
    "tongue": {
     "tip": 0,
-    "front": 1,
-    "back": 0,
-    "low": 0
+    "front": 0.65,
+    "back": 0.5,
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.1,
+    "aus": {
+     "AU20": 2,
+     "AU12": 1,
+     "AU25": 2.5
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.25,
+     "sdMm": 1.34
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "front": [
+       0.87,
+       0.6,
+       0.54
+      ],
+      "back": [
+       0.54,
+       0.41,
+       0.61
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -528,24 +1456,101 @@
    "classes": [
     "vowel"
    ],
-   "jaw": 0.25,
+   "jaw": 0.111,
    "aus": {
     "AU20": 1,
-    "AU25": 3
+    "AU25": 4
    },
    "closure": 0,
    "dental": 0,
    "tongue": {
     "tip": 0,
-    "front": 0.6,
+    "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.25,
+    "aus": {
+     "AU20": 1,
+     "AU25": 3
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 4.68,
+     "sdMm": 1.77
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "front": [
+       0.17,
+       0,
+       0
+      ],
+      "back": [
+       0.15,
+       0,
+       0.1
+      ],
+      "low": [
+       0,
+       0.08,
+       0.13
+      ],
+      "tip": [
+       0,
+       0,
+       0
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -564,9 +1569,9 @@
    "classes": [
     "vowel"
    ],
-   "jaw": 0.5,
+   "jaw": 0.118,
    "aus": {
-    "AU25": 3
+    "AU25": 2.5
    },
    "closure": 0,
    "dental": 0,
@@ -574,13 +1579,74 @@
     "tip": 0,
     "front": 0,
     "back": 0,
-    "low": 1
+    "low": 0.7,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.5,
+    "aus": {
+     "AU25": 3
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 5,
+     "sdMm": 1.54
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；按实测唇开度的次序调整过（见 calibration.lips）。",
+      "en": "Assumption; adjusted to follow the order of the measured lip aperture (see calibration.lips)."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "low": [
+       1,
+       0.66,
+       0.45
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 把 AO、AX、AY、AA 都归到视位 AHH；这里把 AX 另列为央元音。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI maps AO, AX, AY and AA to its viseme AHH; here AX is kept apart as the schwa. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 把 AO、AX、AY、AA 都归到视位 AHH；这里把 AX 另列为央元音。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI maps AO, AX, AY and AA to its viseme AHH; here AX is kept apart as the schwa. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
     }
    }
   },
@@ -597,7 +1663,7 @@
    "classes": [
     "vowel"
    ],
-   "jaw": 0.18,
+   "jaw": 0.05,
    "aus": {
     "AU25": 2
    },
@@ -607,13 +1673,483 @@
     "tip": 0,
     "front": 0,
     "back": 0,
-    "low": 0
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.18,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "targetMm": 2.11,
+     "sdMm": 1.44
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设；只按实测的唇开度和唇前伸核对过次序。",
+      "en": "Assumption; checked only for order against the measured lip aperture and protrusion."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "source": "articulation-summary",
+     "speakers": [
+      "fsew0",
+      "msak0",
+      "M1"
+     ],
+     "calibratedAgainstNonCommercialData": true,
+     "measured": {
+      "front": [
+       0.07,
+       0.02,
+       0
+      ],
+      "back": [
+       0.03,
+       0,
+       0
+      ],
+      "low": [
+       0,
+       0,
+       0.35
+      ],
+      "tip": [
+       0.1,
+       0.15,
+       0
+      ]
+     },
+     "note": {
+      "zh": "没有列在 measured 里的姿势取 0，是假设。",
+      "en": "Poses not listed under measured are 0, which is an assumption."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "校准之前的数值（JALI 的图 4 读不到，本项目自定）。",
+      "en": "The values from before calibration (JALI's Figure 4 could not be read; this project's own)."
+     }
+    }
    },
    "basis": {
     "source": null,
     "note": {
-     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
-     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；夸张风格（clear）的数值和唇的 AU 强度是本项目定的；正常风格的下颌开度（和部分舌位）按实测标定，见 provenance。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; the values of the exaggerated style (`clear`) and the lip AU intensities are this project's; the jaw opening of the normal style (and part of the tongue pose) is calibrated against measurements, see `provenance`."
+    }
+   }
+  },
+  {
+   "id": "YU",
+   "name": {
+    "zh": "撮口 ü",
+    "en": "rounded front ü"
+   },
+   "phonemes": [
+    "zh:v",
+    "zh:ve",
+    "zh:van",
+    "zh:vn"
+   ],
+   "classes": [
+    "lipHeavy",
+    "vowel"
+   ],
+   "jaw": 0.05,
+   "aus": {
+    "AU18": 3.5,
+    "AU25": 1
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0.65,
+    "back": 0.5,
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.09,
+    "aus": {
+     "AU18": 3.5,
+     "AU25": 1
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：没有普通话的实测；取英语 IY 和 UW 标定值的平均。",
+      "en": "Assumption: no Mandarin measurements; the mean of the calibrated English IY and UW."
+     }
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设。",
+      "en": "Assumption."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：舌同 IY（那里的数取自英语实测）。",
+      "en": "Assumption: the tongue of IY (whose numbers come from English measurements)."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：取自 visemes-zh.json 的 missingShapes 里给出的范围。",
+      "en": "Assumption: within the range given under missingShapes in visemes-zh.json."
+     }
+    }
+   },
+   "basis": {
+    "source": "scp",
+    "note": {
+     "zh": "出处只说明 ü 是前、高、圆唇元音（“像法语的 u 或德语的 ü”）；舌同 IY、唇同 UW 的拼法和全部数值是假设。",
+     "en": "The source only says that ü is a close front rounded vowel (\"like French u or German ü\"); composing it from the tongue of IY and the lips of UW, and every number, are assumptions."
+    }
+   }
+  },
+  {
+   "id": "ZHCHSH",
+   "name": {
+    "zh": "卷舌 zh ch sh r",
+    "en": "retroflex zh ch sh r"
+   },
+   "phonemes": [
+    "zh:zh",
+    "zh:ch",
+    "zh:sh",
+    "zh:r",
+    "zh:iii"
+   ],
+   "classes": [
+    "sibilant"
+   ],
+   "jaw": 0.01,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 0,
+    "retro": 1
+   },
+   "clear": {
+    "jaw": 0.05,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：没有普通话的实测；取英语龈后咝音 SH 的标定值（同为咝音，上下齿接近）。",
+      "en": "Assumption: no Mandarin measurements; the calibrated value of the English postalveolar sibilant SH (a sibilant too, teeth close together)."
+     }
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设。",
+      "en": "Assumption."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：新的示意姿势 tongue_retroflex 取满。",
+      "en": "Assumption: the new schematic pose tongue_retroflex at full weight."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：取自 visemes-zh.json 的 missingShapes 里给出的范围。",
+      "en": "Assumption: within the range given under missingShapes in visemes-zh.json."
+     }
+    }
+   },
+   "basis": {
+    "source": "scp",
+    "note": {
+     "zh": "出处说这组音是舌尖音而不是舌尖下音，更准确地说是龈后音；这里的“舌尖抬起后缩”只是示意，唇不圆、数值都是假设。",
+     "en": "The source says this series is apical rather than subapical and more accurately post-alveolar; \"tip raised and drawn back\" here is schematic only, and the unrounded lips and all numbers are assumptions."
+    }
+   }
+  },
+  {
+   "id": "JQX",
+   "name": {
+    "zh": "龈腭音 j q x",
+    "en": "alveolo-palatal j q x"
+   },
+   "phonemes": [
+    "zh:j",
+    "zh:q",
+    "zh:x"
+   ],
+   "classes": [
+    "sibilant"
+   ],
+   "jaw": 0.009,
+   "aus": {
+    "AU20": 1.5,
+    "AU25": 2.5
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 1,
+    "back": 0,
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.04,
+    "aus": {
+     "AU20": 1.5,
+     "AU25": 2.5
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：没有普通话的实测；取英语咝音 SZ 和 SH 标定值的平均。",
+      "en": "Assumption: no Mandarin measurements; the mean of the calibrated English sibilants SZ and SH."
+     }
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设。",
+      "en": "Assumption."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：舌面前部抬到硬腭（front = 1），舌尖放下。",
+      "en": "Assumption: the front of the tongue raised to the hard palate (front = 1) with the tip down."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：取自 visemes-zh.json 的 missingShapes 里给出的范围。",
+      "en": "Assumption: within the range given under missingShapes in visemes-zh.json."
+     }
+    }
+   },
+   "basis": {
+    "source": "scp",
+    "note": {
+     "zh": "出处给出 j q x 是 [tɕ tɕʰ ɕ]，只出现在前高元音或腭介音之前；展唇和全部数值是假设。",
+     "en": "The source gives j q x as [tɕ tɕʰ ɕ], occurring only before high front vowels or palatal glides; the spread lips and all numbers are assumptions."
+    }
+   }
+  },
+  {
+   "id": "ER",
+   "name": {
+    "zh": "卷舌元音 er / 儿化",
+    "en": "rhotic vowel er / erhua"
+   },
+   "phonemes": [
+    "zh:er",
+    "zh:erhua"
+   ],
+   "classes": [
+    "vowel"
+   ],
+   "jaw": 0.05,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 0,
+    "retro": 0.5
+   },
+   "clear": {
+    "jaw": 0.15,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：没有普通话的实测；取英语央元音 AX 的标定值。",
+      "en": "Assumption: no Mandarin measurements; the calibrated value of the English schwa AX."
+     }
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设。",
+      "en": "Assumption."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：tongue_retroflex 取一半（舌较松）。",
+      "en": "Assumption: tongue_retroflex at half weight (a lax tongue)."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：取自 visemes-zh.json 的 missingShapes 里给出的范围。",
+      "en": "Assumption: within the range given under missingShapes in visemes-zh.json."
+     }
+    }
+   },
+   "basis": {
+    "source": "scp",
+    "note": {
+     "zh": "出处说儿化韵尾发音时舌比较松，被描述为“卷舌元音”；一半的卷舌、不撮唇和全部数值是假设。",
+     "en": "The source says the r final is pronounced with a relatively lax tongue and has been described as a \"retroflex vowel\"; the half-weight retroflexion, the absence of pucker and all numbers are assumptions."
+    }
+   }
+  },
+  {
+   "id": "HX",
+   "name": {
+    "zh": "软腭擦音 h",
+    "en": "velar fricative h"
+   },
+   "phonemes": [
+    "zh:h"
+   ],
+   "classes": [
+    "tongueOnly"
+   ],
+   "jaw": 0.066,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0.6,
+    "low": 0,
+    "retro": 0
+   },
+   "clear": {
+    "jaw": 0.12,
+    "aus": {
+     "AU25": 2
+    }
+   },
+   "provenance": {
+    "jaw": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：没有普通话的实测；取英语软腭音 KG 的标定值。",
+      "en": "Assumption: no Mandarin measurements; the calibrated value of the English velars KG."
+     }
+    },
+    "aus": {
+     "assumption": true,
+     "note": {
+      "zh": "假设。",
+      "en": "Assumption."
+     }
+    },
+    "constraints": {
+     "assumption": true,
+     "note": {
+      "zh": "没有闭唇或唇齿约束。",
+      "en": "No closure or dental constraint."
+     }
+    },
+    "tongue": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：舌后部抬起但不闭塞（back = 0.6；KG 是 1）。",
+      "en": "Assumption: the back of the tongue raised without closure (back = 0.6; KG has 1)."
+     }
+    },
+    "clear": {
+     "assumption": true,
+     "note": {
+      "zh": "假设：取自 visemes-zh.json 的 missingShapes 里给出的范围。",
+      "en": "Assumption: within the range given under missingShapes in visemes-zh.json."
+     }
+    }
+   },
+   "basis": {
+    "source": "scp",
+    "note": {
+     "zh": "出处把这个音记作 /x/（[h] ~ [x]），在英语 hat 的 h 和苏格兰语 loch 的 ch 之间变动；这里做成 KG 减弱闭塞的变体：只动舌、不归入塞音，数值都是假设。",
+     "en": "The source writes this sound /x/ ([h] ~ [x]), varying between the h of English hat and the ch of Scottish loch; here it is a variant of KG with reduced closure: tongue only, not classed as an obstruent, all numbers assumptions."
     }
    }
   }

@@ -309,10 +309,46 @@
         "en": "Mouth shapes of speech: lips sealed for p b m, then an open a"
       },
       "hint": {
-        "zh": "现在保持的是 p b m：下颌微开而两唇合拢。在下方把口形换成“开口 a”，能看到牙和舌；共 17 个口形，数值是假设",
-        "en": "Held now is p b m: the jaw slightly open with the lips sealed. Switch the mouth shape below to “open a” to see teeth and tongue; 17 shapes in all, and their numbers are assumptions"
+        "zh": "现在保持的是 p b m：下颌微开而两唇合拢。在下方把口形换成“开口 a”，能看到牙和舌；共 22 个口形；这里用的是夸张风格，数值是假设（正常朗读的开度按实测标定，小得多）",
+        "en": "Held now is p b m: the jaw slightly open with the lips sealed. Switch the mouth shape below to “open a” to see teeth and tongue; 22 shapes in all; the exaggerated style is shown here and its numbers are assumptions (the openings of normal read speech are calibrated against measurements and far smaller)"
       },
       "url": "/?sys=int&skin=1&vis=PBM&cam=0.03,1.47,0.46,0,1.462,0.15"
+    },
+    {
+      "id": "say-en",
+      "title": {
+        "zh": "说一句英语：口形跟着音素走",
+        "en": "An English sentence: the mouth follows the phonemes"
+      },
+      "hint": {
+        "zh": "“Please bring five more books before noon tomorrow.” 看 p、b、m 处两唇合上，f、v 处下唇碰上齿。进来时无声地循环，点“声音”带声音播一遍。声音是机器合成的（Kokoro，Apache-2.0）；开口度是实测的朗读幅度，只有几毫米；模拟人并没有在说话",
+        "en": "“Please bring five more books before noon tomorrow.” Watch the lips meet at p, b and m and the lower lip touch the teeth at f and v. It loops silently on arrival; press “Sound” to hear it once. The audio is machine-synthesized (Kokoro, Apache-2.0); the openings are those measured in read speech, a few millimetres only; the simulated body is not speaking"
+      },
+      "url": "/?sys=int&cam=0.03,1.47,0.46,0,1.462,0.15&say=en-01&skin=1"
+    },
+    {
+      "id": "f-say-zh",
+      "title": {
+        "zh": "女性：说一句普通话：ü 和卷舌音",
+        "en": "Female: a Mandarin sentence: ü and the retroflex initials"
+      },
+      "hint": {
+        "zh": "“小朋友们在学校里学习写字、唱歌。”“学”的 ü 撮圆了唇，“唱”的 ch 卷舌而不圆唇。进来时无声地循环，点“声音”带声音播一遍。声音是机器合成的（Kokoro，Apache-2.0）；普通话专用的口形没有实测数据，是假设",
+        "en": "“小朋友们在学校里学习写字、唱歌。” The ü of 学 rounds the lips, and the ch of 唱 curls the tongue without rounding them. It loops silently on arrival; press “Sound” to hear it once. The audio is machine-synthesized (Kokoro, Apache-2.0); the Mandarin-only shapes have no measurements behind them and are assumptions"
+      },
+      "url": "/?body=female&sys=int&cam=0.032,1.375,0.455,0.002,1.367,0.148&say=zh-03&skin=1"
+    },
+    {
+      "id": "say-clear",
+      "title": {
+        "zh": "同一句话，正常的和夸张的口形",
+        "en": "One sentence, normal and exaggerated mouth shapes"
+      },
+      "hint": {
+        "zh": "“Put the blue cup on the top shelf, above the bread.” 现在是“夸张”：校准之前的大口形，数值是假设。在下方换成“正常”：按电磁发音仪实测的切牙开度标定，开口的元音也只有约 5 毫米。点“声音”带声音播（机器合成）",
+        "en": "“Put the blue cup on the top shelf, above the bread.” Shown now is “Clear”: the wide shapes from before calibration, whose numbers are assumptions. Switch to “Normal” below: calibrated against incisor openings measured by electromagnetic articulography, where even an open vowel is only about 5 mm. Press “Sound” to hear it (machine-synthesized)"
+      },
+      "url": "/?sys=int&cam=0.03,1.47,0.46,0,1.462,0.15&say=en-04&style=clear&skin=1"
     },
     {
       "id": "expr-angry-muscles",
@@ -461,8 +497,8 @@
   ],
   "agent": {
     "summary": {
-      "zh": "三维人体解剖（教学用模型，不是临床依据）：男性 3,332 个、女性 3,369 个解剖部件（带概念编号，多数是 FMA 编号），8,760 条关系（起止点、神经支配、血供等），中文名称，关节活动度，皮节和皮神经分布区。没有模拟可跑，是数据。全部名称和关系都未经人工审校。查\"某块肌肉由什么神经支配\"：先在 parts 里按英文名找到它的 fma 字段，再在 relations 里用 key=<fma>&where=kind=innervatedBy。",
-      "en": "3D human anatomy (a teaching model, not a clinical reference): 3,332 male and 3,369 female anatomical parts (each with a concept id, mostly an FMA id), 8,760 relations (origins, insertions, innervation, blood supply and more), Chinese names, joint ranges of motion, dermatomes and cutaneous nerve territories. Nothing to simulate; this is data. No name or relation has been reviewed by a person. To answer \"which nerve innervates this muscle\": find the `fma` field of the part in `parts` by English name, then query `relations` with key=<fma>&where=kind=innervatedBy."
+      "zh": "三维人体解剖（教学用模型，不是临床依据）：男性 3,332 个、女性 3,369 个解剖部件（带概念编号，多数是 FMA 编号），8,760 条关系（起止点、神经支配、血供等），中文名称，关节活动度，皮节和皮神经分布区。主要是数据；可以调用的计算有一个：tts，把一句英语或普通话合成语音并给出音素时间线（机器合成的声音）。全部名称和关系都未经人工审校。查\"某块肌肉由什么神经支配\"：先在 parts 里按英文名找到它的 fma 字段，再在 relations 里用 key=<fma>&where=kind=innervatedBy。",
+      "en": "3D human anatomy (a teaching model, not a clinical reference): 3,332 male and 3,369 female anatomical parts (each with a concept id, mostly an FMA id), 8,760 relations (origins, insertions, innervation, blood supply and more), Chinese names, joint ranges of motion, dermatomes and cutaneous nerve territories. Mostly data; there is one computation to call: `tts`, which synthesizes one English or Mandarin sentence and returns a phoneme timeline (machine-generated audio). No name or relation has been reviewed by a person. To answer \"which nerve innervates this muscle\": find the `fma` field of the part in `parts` by English name, then query `relations` with key=<fma>&where=kind=innervatedBy."
     },
     "datasets": [
       {

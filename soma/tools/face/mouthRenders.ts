@@ -2,7 +2,13 @@
 // Offline close-ups of the mouth: the corners (AU12 / 20 / 25), every viseme, the emotion prototypes. Reads the published
 // face.json / face.bin and rebuilds nothing.
 //
-//   bun tools/face/mouthRenders.ts [male|female] [corner|visemes|emotions|aus|all]
+//   bun tools/face/mouthRenders.ts [male|female] [corner|visemes|tongue|emotions|aus|all]
+//
+// visemes：每张 6 个视位；四排 = 正常风格正面、正常风格斜侧、夸张风格正面、夸张风格斜侧。tongue：正中矢状切片里的舌（从身体左侧看），
+// 一张是五个示意姿势，另外几张是各视位的舌。
+// visemes: six visemes a sheet; four rows = normal style front, normal three-quarter, exaggerated front, exaggerated three-quarter.
+// tongue: the tongue in a midsagittal slab (seen from the body's left), one sheet with the five schematic poses and further sheets
+// with the tongue of every viseme.
 //
 // 输出在 tools/face/out/<body>/（不入库）/ output goes to tools/face/out/<body>/ (not committed).
 
@@ -13,7 +19,7 @@ import type { FaceData, FaceOpenings } from '../../src/face/types.ts'
 import { readBody } from '../rig/io.ts'
 import { Poser } from '../rig/pose.ts'
 import { type Image, type RenderItem, type View, render, sheet } from '../rig/render.ts'
-import { type AUs, type Activations, activations, expressionAUs, visemeAUs } from './model.ts'
+import { type AUs, type Activations, SPEECH_STYLES, activations, expressionAUs, visemeAUs } from './model.ts'
 import { type FaceScene, posedPart, scene, skinViewItems } from './renders.ts'
 
 const ROOT = join(import.meta.dirname, '..', '..')
@@ -68,12 +74,38 @@ if (import.meta.main) {
     save([...cols.map((c) => renderChannels(sc, c.channels, c.jaw, mouth(0, 420))), ...cols.map((c) => renderChannels(sc, c.channels, c.jaw, mouth(45, 420)))], ids.length, 'mouth-aus.png')
   }
   if ((what === 'visemes' || what === 'all') && face.visemes) {
-    const vs = face.visemes.visemes
-    const half = Math.ceil(vs.length / 2)
-    for (const [k, part] of [vs.slice(0, half), vs.slice(half)].entries()) {
-      const cols = part.map((v) => visemeAUs(face, { [v.id]: 1 }))
-      save([...cols.map((c) => renderChannels(sc, c.channels, c.jaw, mouth(0, 420))), ...cols.map((c) => renderChannels(sc, c.channels, c.jaw, mouth(45, 420)))], part.length, `visemes-${k + 1}.png`)
+    const vs = only ? face.visemes.visemes.filter((v) => only.split(',').includes(v.id)) : face.visemes.visemes
+    const per = 6
+    for (let k = 0; k * per < vs.length; k++) {
+      const part = vs.slice(k * per, (k + 1) * per)
+      const rows = [SPEECH_STYLES.normal, SPEECH_STYLES.clear].flatMap((style) => {
+        const cols = part.map((v) => visemeAUs(face, { [v.id]: 1 }, style))
+        return [cols.map((c) => renderChannels(sc, c.channels, c.jaw, mouth(0, 480))), cols.map((c) => renderChannels(sc, c.channels, c.jaw, mouth(45, 480)))]
+      })
+      save(rows.flat(), part.length, `visemes-${k + 1}.png`)
       console.log('  ', part.map((v) => v.id).join(' '))
+    }
+  }
+  if (what === 'tongue' || what === 'all') {
+    // 正中矢状切片（正中两侧各 6 mm）：舌、牙、骨；从身体左侧看，前方在画面左边 / a midsagittal slab (6 mm either side of the midline): tongue, teeth, bone; seen from the body's left, anterior on the left of the image
+    const tongueCh = face.channels.filter((c) => c.kind === 'tongue')
+    const tonguePart = tongueCh[0]?.fields[0]?.part
+    if (tonguePart) {
+      const tb = body.byId.get(tonguePart)!.bbox
+      const view: View = { yaw: 90, center: [face.landmarks.midX, (tb[1] + tb[4]) / 2 + 0.006, (tb[2] + tb[5]) / 2 + 0.008], halfHeight: 0.036, width: 480, height: 480, slab: [-0.006, 0.006] }
+      const parts = body.data.parts.filter((p) => body.meshes.has(p.id) && p.bbox[4] > tb[1] - 0.03 && p.bbox[1] < tb[4] + 0.04 && (p.id === tonguePart || p.tissue === 'tooth' || p.tissue === 'bone'))
+      const sagittal = (channels: Activations, jaw: number): Image => {
+        const poser = new Poser(rig, sc.rigBin, jaw > 0 ? { [face.jaw.joint]: Array.from({ length: face.jaw.dof + 1 }, (_, k) => (k === face.jaw.dof ? jaw : 0)) } : {})
+        return render(parts.map((p) => ({ positions: posedPart(sc, poser, p.id, channels), indices: body.meshes.get(p.id)!.indices, color: p.id === tonguePart ? ([196, 96, 104] as const) : p.tissue === 'tooth' ? ([246, 244, 232] as const) : ([226, 220, 200] as const) })), view, [40, 40, 46])
+      }
+      save([sagittal({}, 0), ...tongueCh.map((c) => sagittal({ [c.id]: 1 }, 0))], tongueCh.length + 1, 'tongue-poses.png')
+      console.log('   rest', tongueCh.map((c) => c.id).join(' '))
+      const vs = face.visemes?.visemes ?? []
+      for (let k = 0; k * 8 < vs.length; k++) {
+        const part = vs.slice(k * 8, (k + 1) * 8)
+        save(part.map((v) => visemeAUs(face, { [v.id]: 1 })).map((c) => sagittal(c.channels, c.jaw)), part.length, `tongue-visemes-${k + 1}.png`)
+        console.log('  ', part.map((v) => v.id).join(' '))
+      }
     }
   }
   if ((what === 'emotions' || what === 'all') && face.expressions) {

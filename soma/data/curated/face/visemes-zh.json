@@ -1,7 +1,7 @@
 {
   "_doc": {
-    "zh": "普通话的声母、韵母 → 视位序列，给 src/voice/tts.ts 的 phonemesToVisemeSegments 用。键是后端 /api/tts 给出的 phone：21 个声母；韵母按 pypinyin 的写法（ü 写作 v；iou、uei、uen 不缩写；ii 是 zi ci si 的韵母，iii 是 zhi chi shi ri 的韵母）；儿化是单独的一段 r（part 为 erhua）。sequence 里的 at 是各口形在这个音里开始的相对时刻（0 到 1）。ipa 一栏取自出处 scp 的声母表和韵母表（已打开读过）；“IPA → 哪个视位”和 at 的数值都是本项目的假设，所以每一条都标了 assumption。prefer 是这个位置更合适、但视位表里还没有的口形（见 missingShapes）；面部数据里有了那个 id 就用它，否则用 viseme。声调不改变口形，只有轻声（tone 5）幅度减小。",
-    "en": "Mandarin initials and finals → viseme sequences, for phonemesToVisemeSegments in src/voice/tts.ts. Keys are the `phone` values of the backend's /api/tts: the 21 initials; finals spelled as pypinyin does (ü written v; iou, uei, uen unabbreviated; ii is the final of zi ci si and iii that of zhi chi shi ri); erhua is a separate stretch `r` (with `part` erhua). `at` in a sequence is the relative moment (0 to 1) each shape starts within the sound. The `ipa` column is from the initial and final tables of source `scp` (opened and read); which viseme an IPA value maps to, and the `at` numbers, are assumptions of this project, so every entry is marked `assumption`. `prefer` names a shape that would fit better at that place but is not in the viseme table yet (see missingShapes); it is used when the face data has that id, and `viseme` otherwise. Tones do not change the mouth shape; only the neutral tone (tone 5) is reduced in amplitude."
+    "zh": "普通话的声母、韵母 → 视位序列，给 src/voice/tts.ts 的 phonemesToVisemeSegments 用。键是后端 /api/tts 给出的 phone：21 个声母；韵母按 pypinyin 的写法（ü 写作 v；iou、uei、uen 不缩写；ii 是 zi ci si 的韵母，iii 是 zhi chi shi ri 的韵母）；儿化是单独的一段 r（part 为 erhua）。sequence 里的 at 是各口形在这个音里开始的相对时刻（0 到 1）。ipa 一栏取自出处 scp 的声母表和韵母表（已打开读过）；“IPA → 哪个视位”和 at 的数值都是本项目的假设，所以每一条都标了 assumption。viseme 直接写视位表（visemes.json）里的 id；普通话专用的五个口形（YU、ZHCHSH、JQX、ER、HX，见 mandarinShapes）另带一个 fallback：面部数据是旧的、还没有那个 id 时改用它。声调不改变口形，只有轻声（tone 5）幅度减小。",
+    "en": "Mandarin initials and finals → viseme sequences, for phonemesToVisemeSegments in src/voice/tts.ts. Keys are the `phone` values of the backend's /api/tts: the 21 initials; finals spelled as pypinyin does (ü written v; iou, uei, uen unabbreviated; ii is the final of zi ci si and iii that of zhi chi shi ri); erhua is a separate stretch `r` (with `part` erhua). `at` in a sequence is the relative moment (0 to 1) each shape starts within the sound. The `ipa` column is from the initial and final tables of source `scp` (opened and read); which viseme an IPA value maps to, and the `at` numbers, are assumptions of this project, so every entry is marked `assumption`. `viseme` names an id of the viseme table (visemes.json) directly; the five Mandarin-only shapes (YU, ZHCHSH, JQX, ER, HX; see mandarinShapes) also carry a `fallback`, used instead when the face data is older and lacks that id. Tones do not change the mouth shape; only the neutral tone (tone 5) is reduced in amplitude."
   },
   "sources": [
     {
@@ -25,23 +25,23 @@
       }
     }
   ],
-  "missingShapes": [
+  "mandarinShapes": [
     {
       "id": "YU",
       "name": {
         "zh": "撮口 ü",
         "en": "rounded front ü"
       },
-      "nearest": "UW",
+      "fallback": "UW",
       "usedBy": [
         "v",
         "ve",
         "van",
         "vn"
       ],
-      "spec": {
-        "zh": "舌同 IY（tongue.front = 1，其余 0），唇同 UW（AU18 3.5、AU25 1），下颌约 0.08–0.10；classes：lipHeavy、vowel。用现有通道就能拼出来，不需要新的位移通道。",
-        "en": "Tongue as IY (tongue.front = 1, others 0), lips as UW (AU18 3.5, AU25 1), jaw about 0.08–0.10; classes: lipHeavy, vowel. It can be composed from existing channels; no new displacement channel is needed."
+      "note": {
+        "zh": "撮口呼：舌同 i、唇同 u。回退到 UW 时唇形对、舌位（后高）不对。",
+        "en": "The ü series: the tongue of i with the lips of u. Falling back on UW keeps the lips right and gets the tongue (back, high) wrong."
       }
     },
     {
@@ -50,17 +50,16 @@
         "zh": "卷舌 zh ch sh r",
         "en": "retroflex zh ch sh r"
       },
-      "nearest": "SZ (zh ch sh, iii), R (r)",
+      "fallback": "SZ (zh ch sh), R (r)",
       "usedBy": [
         "zh",
         "ch",
         "sh",
-        "r",
-        "iii"
+        "r"
       ],
-      "spec": {
-        "zh": "舌尖抬起并后缩到齿龈后（现有的舌只有 tip、front、back、low 四个示意姿势，没有“舌尖后缩 / 卷起”；需要新的舌姿势，例如 tongue.retroflex），唇不圆、微开（AU25 约 2，不带 AU22 / AU18），下颌约 0.04–0.06，上下齿接近；classes：sibilant（不要 lipHeavy）。",
-        "en": "Tongue tip raised and drawn back behind the alveolar ridge (the tongue now has four schematic poses only — tip, front, back, low — and none for a retracted or curled tip; a new tongue pose is needed, e.g. tongue.retroflex), lips unrounded and slightly parted (AU25 about 2, without AU22 / AU18), jaw about 0.04–0.06 with the teeth close; classes: sibilant (not lipHeavy)."
+      "note": {
+        "zh": "卷舌声母：舌尖抬起并后缩（通道 tongue_retroflex），唇不圆。回退到 SZ 时舌位和 z c s 分不开；r 回退到 R，带一点不该有的撮唇。",
+        "en": "The retroflex initials: tongue tip raised and drawn back (channel tongue_retroflex), lips unrounded. Falling back on SZ the tongue cannot be told from z c s; r falls back on R, with a slight lip pucker that does not belong."
       }
     },
     {
@@ -69,15 +68,15 @@
         "zh": "龈腭音 j q x",
         "en": "alveolo-palatal j q x"
       },
-      "nearest": "SZ",
+      "fallback": "SZ",
       "usedBy": [
         "j",
         "q",
         "x"
       ],
-      "spec": {
-        "zh": "舌面前部抬向硬腭、舌尖放下（tongue.front 约 1、tip 0），唇展（AU20 约 1.5、AU25 约 2.5），下颌约 0.03–0.05；classes：sibilant。用现有通道就能拼出来。",
-        "en": "Front of the tongue body raised to the hard palate with the tip down (tongue.front about 1, tip 0), lips spread (AU20 about 1.5, AU25 about 2.5), jaw about 0.03–0.05; classes: sibilant. It can be composed from existing channels."
+      "note": {
+        "zh": "龈腭音：舌面前部抬向硬腭、舌尖放下，唇展。回退到 SZ 时唇形接近、舌位不对。",
+        "en": "Alveolo-palatals: front of the tongue body to the hard palate with the tip down, lips spread. Falling back on SZ the lips are close and the tongue is wrong."
       }
     },
     {
@@ -86,14 +85,30 @@
         "zh": "卷舌元音 er / 儿化",
         "en": "rhotic vowel er / erhua"
       },
-      "nearest": "R",
+      "fallback": "R (er, erhua), AX (ii), SZ (iii)",
       "usedBy": [
         "er",
-        "r (erhua)"
+        "r (erhua)",
+        "iii"
       ],
-      "spec": {
-        "zh": "央元音的开口（下颌约 0.15，AU25 2），舌尖松弛地上卷（同样需要 tongue.retroflex，幅度约 0.5），唇不撮（不带 AU18）；classes：vowel。",
-        "en": "The opening of a schwa (jaw about 0.15, AU25 2) with the tongue tip curled up loosely (needs tongue.retroflex too, at about 0.5), no lip pucker (no AU18); classes: vowel."
+      "note": {
+        "zh": "卷舌元音和儿化：央元音的开口加松弛的卷舌，不撮唇。也用作 zhi chi shi ri 的韵母 iii（见该条）。回退到 R 时多出撮唇。",
+        "en": "The rhotic vowel and erhua: the opening of a schwa with a lax retroflex tongue and no pucker. Also used for iii, the final of zhi chi shi ri (see that entry). Falling back on R adds a pucker."
+      }
+    },
+    {
+      "id": "HX",
+      "name": {
+        "zh": "软腭擦音 h",
+        "en": "velar fricative h"
+      },
+      "fallback": "KG",
+      "usedBy": [
+        "h"
+      ],
+      "note": {
+        "zh": "软腭擦音：舌根抬向软腭但不闭塞，只动舌、不影响唇。回退到 KG 时舌位是完全闭塞的，略过头。",
+        "en": "The velar fricative: the tongue back rises towards the velum without closing; tongue only, lips unaffected. Falling back on KG the tongue pose is a full closure, slightly too much."
       }
     }
   ],
@@ -116,8 +131,8 @@
     }
   },
   "coarticulation": {
-    "zh": "声母在 u、ü 开头的韵母前会带上圆唇（出处 scp 的 Glides 一节：介音实现为前面辅音的唇化）。这里不另写规则：coarticulate 里 lipHeavy 的视位（W、UW）本来就提前 150 ms 开始并盖过相邻的唇形，只动舌的声母（TDN、L、KG）不影响唇。",
-    "en": "An initial takes on lip rounding before a final that starts with u or ü (source `scp`, section Glides: a medial glide is realised as labialisation of the preceding consonant). No separate rule is written: in `coarticulate` the lip-heavy visemes (W, UW) already start 150 ms early and override neighbouring lip shapes, and tongue-only initials (TDN, L, KG) leave the lips alone."
+    "zh": "声母在 u、ü 开头的韵母前会带上圆唇（出处 scp 的 Glides 一节：介音实现为前面辅音的唇化）。这里不另写规则：coarticulate 里 lipHeavy 的视位（W、UW）本来就提前 150 ms 开始并盖过相邻的唇形，只动舌的声母（TDN、L、KG）不影响唇。音节边界：普通话的音节很紧凑，圆唇只在本音节内提前和延后（src/face/visemeTrack.ts 按音节分组后各自做协同发音，再逐帧取较大者），所以“老师”里 ao 的圆唇收尾不会盖到下一个音节的 sh 上，只按 150 ms 自然消退。",
+    "en": "An initial takes on lip rounding before a final that starts with u or ü (source `scp`, section Glides: a medial glide is realised as labialisation of the preceding consonant). No separate rule is written: in `coarticulate` the lip-heavy visemes (W, UW) already start 150 ms early and override neighbouring lip shapes, and tongue-only initials (TDN, L, KG) leave the lips alone. Syllable boundaries: a Mandarin syllable is compact, and rounding is anticipated and carried over within its own syllable only (src/face/visemeTrack.ts co-articulates each syllable by itself and takes the per-frame maximum), so in 老师 the rounded end of ao does not take over the sh of the next syllable and merely decays over its natural 150 ms."
   },
   "initials": {
     "b": {
@@ -234,127 +249,128 @@
       "ipa": "x",
       "sequence": [
         {
-          "viseme": "KG",
-          "at": 0
+          "viseme": "HX",
+          "at": 0,
+          "fallback": "KG"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "软腭擦音：舌根抬向软腭但不闭塞。取 KG（只动舌、不影响唇）；KG 的舌位是完全闭塞的，略过头。",
-        "en": "A velar fricative: the back of the tongue rises towards the velum without closing. KG is used (tongue only, lips unaffected); its tongue pose is a full closure, slightly too much."
+        "zh": "软腭擦音：舌根抬向软腭但不闭塞。取 HX（只动舌、不影响唇）；回退到 KG 时舌位是完全闭塞的，略过头。",
+        "en": "A velar fricative: the back of the tongue rises towards the velum without closing. HX is used (tongue only, lips unaffected); the fallback KG has a full closure, slightly too much."
       }
     },
     "j": {
       "ipa": "tɕ",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "JQX",
           "at": 0,
-          "prefer": "JQX"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "龈腭音：舌面前部抬向硬腭，舌尖在下齿背后。17 个视位里没有这个舌位，取唇形最近的 SZ（咝音、展唇、上下齿接近）；后面是 ü 类韵母时由韵母的圆唇提前盖过来。",
-        "en": "Alveolo-palatal: the front of the tongue body rises to the hard palate with the tip behind the lower teeth. None of the 17 visemes has this tongue shape; SZ is the nearest for the lips (a sibilant, spread, teeth close together). Before a ü-type final the final's rounding arrives early and overrides it."
+        "zh": "龈腭音：舌面前部抬向硬腭，舌尖在下齿背后，取 JQX（咝音、展唇、上下齿接近）。回退到 SZ 时唇形接近、舌位不对；后面是 ü 类韵母时由韵母的圆唇提前盖过来。",
+        "en": "Alveolo-palatal: the front of the tongue body rises to the hard palate with the tip behind the lower teeth; JQX is used (a sibilant, spread, teeth close together). The fallback SZ is close for the lips and wrong for the tongue. Before a ü-type final the final's rounding arrives early and overrides it."
       }
     },
     "q": {
       "ipa": "tɕʰ",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "JQX",
           "at": 0,
-          "prefer": "JQX"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "龈腭音：舌面前部抬向硬腭，舌尖在下齿背后。17 个视位里没有这个舌位，取唇形最近的 SZ（咝音、展唇、上下齿接近）；后面是 ü 类韵母时由韵母的圆唇提前盖过来。",
-        "en": "Alveolo-palatal: the front of the tongue body rises to the hard palate with the tip behind the lower teeth. None of the 17 visemes has this tongue shape; SZ is the nearest for the lips (a sibilant, spread, teeth close together). Before a ü-type final the final's rounding arrives early and overrides it."
+        "zh": "龈腭音：舌面前部抬向硬腭，舌尖在下齿背后，取 JQX（咝音、展唇、上下齿接近）。回退到 SZ 时唇形接近、舌位不对；后面是 ü 类韵母时由韵母的圆唇提前盖过来。",
+        "en": "Alveolo-palatal: the front of the tongue body rises to the hard palate with the tip behind the lower teeth; JQX is used (a sibilant, spread, teeth close together). The fallback SZ is close for the lips and wrong for the tongue. Before a ü-type final the final's rounding arrives early and overrides it."
       }
     },
     "x": {
       "ipa": "ɕ",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "JQX",
           "at": 0,
-          "prefer": "JQX"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "龈腭音：舌面前部抬向硬腭，舌尖在下齿背后。17 个视位里没有这个舌位，取唇形最近的 SZ（咝音、展唇、上下齿接近）；后面是 ü 类韵母时由韵母的圆唇提前盖过来。",
-        "en": "Alveolo-palatal: the front of the tongue body rises to the hard palate with the tip behind the lower teeth. None of the 17 visemes has this tongue shape; SZ is the nearest for the lips (a sibilant, spread, teeth close together). Before a ü-type final the final's rounding arrives early and overrides it."
+        "zh": "龈腭音：舌面前部抬向硬腭，舌尖在下齿背后，取 JQX（咝音、展唇、上下齿接近）。回退到 SZ 时唇形接近、舌位不对；后面是 ü 类韵母时由韵母的圆唇提前盖过来。",
+        "en": "Alveolo-palatal: the front of the tongue body rises to the hard palate with the tip behind the lower teeth; JQX is used (a sibilant, spread, teeth close together). The fallback SZ is close for the lips and wrong for the tongue. Before a ü-type final the final's rounding arrives early and overrides it."
       }
     },
     "zh": {
       "ipa": "ʈʂ",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "ZHCHSH",
           "at": 0,
-          "prefer": "ZHCHSH"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "卷舌音（舌尖后音）：舌尖抬向齿龈后，唇不圆。视位表的 SH 是英语的龈后音，带唇前突，用在这里会给“是、吃”加上不该有的圆唇，所以取 SZ；舌位无法和 z c s 区分。",
-        "en": "Retroflex (apical post-alveolar): the tongue tip rises behind the alveolar ridge and the lips are not rounded. SH in the viseme table is the English postalveolar with lip protrusion, which would round the lips in syllables like shi and chi, so SZ is used; the tongue shape cannot be told apart from z c s."
+        "zh": "卷舌音（舌尖后音）：舌尖抬向齿龈后，唇不圆。取 ZHCHSH（舌尖抬起后缩，不带唇前突；英语的 SH 带唇前突，用在这里会给“是、吃”加上不该有的圆唇）。面部数据没有 ZHCHSH 时回退到 SZ，舌位就和 z c s 分不开。",
+        "en": "Retroflex (apical post-alveolar): the tongue tip rises behind the alveolar ridge and the lips are not rounded. ZHCHSH is used (tip raised and drawn back, no lip protrusion; the English SH protrudes the lips and would round syllables like shi and chi). Face data without ZHCHSH falls back on SZ, where the tongue cannot be told apart from z c s."
       }
     },
     "ch": {
       "ipa": "ʈʂʰ",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "ZHCHSH",
           "at": 0,
-          "prefer": "ZHCHSH"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "卷舌音（舌尖后音）：舌尖抬向齿龈后，唇不圆。视位表的 SH 是英语的龈后音，带唇前突，用在这里会给“是、吃”加上不该有的圆唇，所以取 SZ；舌位无法和 z c s 区分。",
-        "en": "Retroflex (apical post-alveolar): the tongue tip rises behind the alveolar ridge and the lips are not rounded. SH in the viseme table is the English postalveolar with lip protrusion, which would round the lips in syllables like shi and chi, so SZ is used; the tongue shape cannot be told apart from z c s."
+        "zh": "卷舌音（舌尖后音）：舌尖抬向齿龈后，唇不圆。取 ZHCHSH（舌尖抬起后缩，不带唇前突；英语的 SH 带唇前突，用在这里会给“是、吃”加上不该有的圆唇）。面部数据没有 ZHCHSH 时回退到 SZ，舌位就和 z c s 分不开。",
+        "en": "Retroflex (apical post-alveolar): the tongue tip rises behind the alveolar ridge and the lips are not rounded. ZHCHSH is used (tip raised and drawn back, no lip protrusion; the English SH protrudes the lips and would round syllables like shi and chi). Face data without ZHCHSH falls back on SZ, where the tongue cannot be told apart from z c s."
       }
     },
     "sh": {
       "ipa": "ʂ",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "ZHCHSH",
           "at": 0,
-          "prefer": "ZHCHSH"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "卷舌音（舌尖后音）：舌尖抬向齿龈后，唇不圆。视位表的 SH 是英语的龈后音，带唇前突，用在这里会给“是、吃”加上不该有的圆唇，所以取 SZ；舌位无法和 z c s 区分。",
-        "en": "Retroflex (apical post-alveolar): the tongue tip rises behind the alveolar ridge and the lips are not rounded. SH in the viseme table is the English postalveolar with lip protrusion, which would round the lips in syllables like shi and chi, so SZ is used; the tongue shape cannot be told apart from z c s."
+        "zh": "卷舌音（舌尖后音）：舌尖抬向齿龈后，唇不圆。取 ZHCHSH（舌尖抬起后缩，不带唇前突；英语的 SH 带唇前突，用在这里会给“是、吃”加上不该有的圆唇）。面部数据没有 ZHCHSH 时回退到 SZ，舌位就和 z c s 分不开。",
+        "en": "Retroflex (apical post-alveolar): the tongue tip rises behind the alveolar ridge and the lips are not rounded. ZHCHSH is used (tip raised and drawn back, no lip protrusion; the English SH protrudes the lips and would round syllables like shi and chi). Face data without ZHCHSH falls back on SZ, where the tongue cannot be told apart from z c s."
       }
     },
     "r": {
       "ipa": "ɻ ~ ʐ",
       "sequence": [
         {
-          "viseme": "R",
+          "viseme": "ZHCHSH",
           "at": 0,
-          "prefer": "ZHCHSH"
+          "fallback": "R"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "卷舌的浊音。取 R；R 带一点撮唇（英语 r 的特点），普通话的 r 本身不圆唇。",
-        "en": "The voiced retroflex. R is used; R carries some lip pucker (a trait of English r), while Mandarin r is not rounded by itself."
+        "zh": "卷舌的浊音，取 ZHCHSH（不圆唇）。回退到 R 时带一点撮唇（英语 r 的特点），普通话的 r 本身不圆唇。",
+        "en": "The voiced retroflex; ZHCHSH is used (unrounded). The fallback R carries some lip pucker (a trait of English r), while Mandarin r is not rounded by itself."
       }
     },
     "z": {
@@ -592,16 +608,16 @@
           "at": 0
         },
         {
-          "viseme": "R",
+          "viseme": "ER",
           "at": 0.5,
-          "prefer": "ER"
+          "fallback": "R"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "卷舌元音（二、耳、儿）。后半取 R；R 带撮唇，这里不该有。",
-        "en": "The rhotic vowel (二, 耳, 儿). The second half uses R; R's lip pucker does not belong here."
+        "zh": "卷舌元音（二、耳、儿）。后半取 ER（卷舌、不撮唇）；回退到 R 时带不该有的撮唇。",
+        "en": "The rhotic vowel (二, 耳, 儿). The second half uses ER (retroflex tongue, no pucker); the fallback R adds a lip pucker that does not belong here."
       }
     },
     "i": {
@@ -630,56 +646,56 @@
       "ipa": "y",
       "sequence": [
         {
-          "viseme": "UW",
+          "viseme": "YU",
           "at": 0,
-          "prefer": "YU"
+          "fallback": "UW"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突。17 个视位里没有这个组合，取唇形对的 UW（舌位是后高，不对）；和 u 的区别只在舌，现有视位表达不出来。",
-        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u. The 17 visemes lack this combination; UW is used because its lips are right (its tongue, back and high, is not). The difference from u lies in the tongue only and cannot be expressed with the current visemes."
+        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突，取 YU。回退到 UW 时唇形对、舌位（后高）不对，和 u 就分不开。",
+        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u; YU is used. The fallback UW has the right lips and the wrong tongue (back, high) and is then indistinguishable from u."
       }
     },
     "ii": {
       "ipa": "ɹ̩ ~ z̩",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "AX",
           "at": 0
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "zi ci si 的韵母：声母的咝音位置延续成一个浊的持续音。",
-        "en": "The final of zi ci si: the sibilant's position carried on as a voiced continuant."
+        "zh": "zi ci si 的韵母：声母的咝音位置延续成一个浊的持续音，是这个音节的韵（元音类）。取 AX（唇自然微开、不圆，classes 是 vowel），不再和声母同用 SZ，理由同 iii。舌：视位表里没有“舌尖在齿龈的元音”，AX 的舌是静止的；声母 SZ 的舌尖姿势按 120 ms 的消退时间延续进来，之后就没有了，这一点不准确。",
+        "en": "The final of zi ci si: the sibilant's position carried on as a voiced continuant and the rhyme of its syllable (vowel class). AX is used (lips naturally parted and unrounded, class vowel) instead of sharing SZ with the initial, for the reason given under iii. Tongue: the viseme table has no vowel with the tip at the alveolar ridge and AX leaves the tongue at rest; the tip pose of the initial SZ carries over through its 120 ms decay and is gone after that, which is inaccurate."
       }
     },
     "iii": {
       "ipa": "ɻ̩ ~ ʐ̩",
       "sequence": [
         {
-          "viseme": "SZ",
+          "viseme": "ER",
           "at": 0,
-          "prefer": "ZHCHSH"
+          "fallback": "SZ"
         }
       ],
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "zhi chi shi ri 的韵母：卷舌的浊持续音；同声母一样取 SZ。",
-        "en": "The final of zhi chi shi ri: a retroflex voiced continuant; SZ as for the initials."
+        "zh": "zhi chi shi ri 的韵母：卷舌的浊持续音，是这个音节的韵（元音类）。取 ER：舌延续声母的卷舌（幅度 0.5），唇不圆、微开，classes 是 vowel。不再和声母用同一个视位：否则“声母 + iii + 下一个音节的卷舌声母”会并成一长段，旁边的圆唇元音就把这一整段（约 300 ms）都带圆（“吃水”）。ER 的下颌（0.05）比咝音开一些，是否合适没有实测。回退到 SZ（旧的面部数据）。",
+        "en": "The final of zhi chi shi ri: a retroflex voiced continuant and the rhyme of its syllable (vowel class). ER is used: the tongue continues the initial's retroflexion (at 0.5), the lips are unrounded and slightly parted, and its class is vowel. It no longer shares a viseme with its initial: otherwise initial + iii + the next syllable's retroflex initial merged into one long segment, which a neighbouring rounded vowel then rounded as a whole for about 300 ms (as in 吃水). ER's jaw (0.05) is wider than a sibilant's; whether that is right has not been measured. Falls back on SZ (older face data)."
       }
     },
     "ve": {
       "ipa": "ɥe",
       "sequence": [
         {
-          "viseme": "UW",
+          "viseme": "YU",
           "at": 0,
-          "prefer": "YU"
+          "fallback": "UW"
         },
         {
           "viseme": "EH",
@@ -689,8 +705,8 @@
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突。17 个视位里没有这个组合，取唇形对的 UW（舌位是后高，不对）；和 u 的区别只在舌，现有视位表达不出来。",
-        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u. The 17 visemes lack this combination; UW is used because its lips are right (its tongue, back and high, is not). The difference from u lies in the tongue only and cannot be expressed with the current visemes."
+        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突，取 YU。回退到 UW 时唇形对、舌位（后高）不对，和 u 就分不开。",
+        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u; YU is used. The fallback UW has the right lips and the wrong tongue (back, high) and is then indistinguishable from u."
       }
     },
     "ia": {
@@ -1036,9 +1052,9 @@
       "ipa": "ɥɛn",
       "sequence": [
         {
-          "viseme": "UW",
+          "viseme": "YU",
           "at": 0,
-          "prefer": "YU"
+          "fallback": "UW"
         },
         {
           "viseme": "EH",
@@ -1052,17 +1068,17 @@
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突。17 个视位里没有这个组合，取唇形对的 UW（舌位是后高，不对）；和 u 的区别只在舌，现有视位表达不出来。",
-        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u. The 17 visemes lack this combination; UW is used because its lips are right (its tongue, back and high, is not). The difference from u lies in the tongue only and cannot be expressed with the current visemes."
+        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突，取 YU。回退到 UW 时唇形对、舌位（后高）不对，和 u 就分不开。",
+        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u; YU is used. The fallback UW has the right lips and the wrong tongue (back, high) and is then indistinguishable from u."
       }
     },
     "vn": {
       "ipa": "yn",
       "sequence": [
         {
-          "viseme": "UW",
+          "viseme": "YU",
           "at": 0,
-          "prefer": "YU"
+          "fallback": "UW"
         },
         {
           "viseme": "TDN",
@@ -1072,8 +1088,8 @@
       "source": "scp",
       "assumption": true,
       "note": {
-        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突。17 个视位里没有这个组合，取唇形对的 UW（舌位是后高，不对）；和 u 的区别只在舌，现有视位表达不出来。",
-        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u. The 17 visemes lack this combination; UW is used because its lips are right (its tongue, back and high, is not). The difference from u lies in the tongue only and cannot be expressed with the current visemes."
+        "zh": "撮口呼：舌位同 i（舌面前部高），唇像 u 那样圆而前突，取 YU。回退到 UW 时唇形对、舌位（后高）不对，和 u 就分不开。",
+        "en": "The ü series: the tongue of i (front, high) with the lips rounded and protruded as for u; YU is used. The fallback UW has the right lips and the wrong tongue (back, high) and is then indistinguishable from u."
       }
     }
   },
@@ -1082,16 +1098,16 @@
       "ipa": "ɚ (rhotic coda)",
       "sequence": [
         {
-          "viseme": "R",
+          "viseme": "ER",
           "at": 0,
-          "prefer": "ER"
+          "fallback": "R"
         }
       ],
       "source": "erhua",
       "assumption": true,
       "note": {
-        "zh": "儿化：给前面的韵母加上卷舌色彩；韵尾 i、n 脱落，ng 脱落并鼻化（出处 erhua）。后端把它作为韵母之后单独的一段 r 给出。取 R；出处说这个 r“舌比较松，被称作卷舌元音”，R 的撮唇在这里不该有。",
-        "en": "Erhua: r-colouring added to the final before it; codas i and n are dropped, ng is dropped with nasalisation (source `erhua`). The backend gives it as a separate stretch `r` after the final. R is used; the source says this r \"is pronounced with a relatively lax tongue, and has been described as a retroflex vowel\", and R's lip pucker does not belong here."
+        "zh": "儿化：给前面的韵母加上卷舌色彩；韵尾 i、n 脱落，ng 脱落并鼻化（出处 erhua）。后端把它作为韵母之后单独的一段 r 给出。取 ER；出处说这个 r“舌比较松，被称作卷舌元音”。回退到 R 时带不该有的撮唇。",
+        "en": "Erhua: r-colouring added to the final before it; codas i and n are dropped, ng is dropped with nasalisation (source `erhua`). The backend gives it as a separate stretch `r` after the final. ER is used; the source says this r \"is pronounced with a relatively lax tongue, and has been described as a retroflex vowel\". The fallback R adds a lip pucker that does not belong here."
       }
     }
   }

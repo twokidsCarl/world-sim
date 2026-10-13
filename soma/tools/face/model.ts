@@ -211,7 +211,7 @@ type FaceForMouth = Pick<FaceData, 'aus' | 'jaw' | 'channels'>
  *   · lip_seal = closure × 下颌角 / refJaw（不超过 1）：通道在 refJaw 处求解，对小角度近似线性，所以下颌开多少就抵消多少。
  *     下颌角超过 refJaw 时唇合不上（激活封顶为 1）。
  *   · lip_dental = dental；下颌角大于它的 refJaw 时，多出来的部分再用 lip_seal 抵消。
- *   · 舌：tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low = 各自的权重。
+ *   · 舌：tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low / tongue_retroflex = 各自的权重。
  * MouthPose → channel activations and jaw angle. Rules: lip AUs go through `activations` as usual, the lip-parting ones first
  * multiplied by (1 − closure); mouth_corner = jaw angle / jaw.max (the contract of the corner-shaping channel);
  * lip_seal = closure × jaw angle / refJaw (at most 1) — the channel is solved at refJaw and is nearly linear for small angles, so it
@@ -259,6 +259,7 @@ export function mouthChannels(face: FaceForMouth, pose: MouthPose, baseJaw = 0):
   set('tongue_front_up', pose.tongue.front)
   set('tongue_back_up', pose.tongue.back)
   set('tongue_low', pose.tongue.low)
+  set('tongue_retroflex', pose.tongue.retro ?? 0)
   return { channels, jaw: jaw - base, totalJaw: jaw }
 }
 
@@ -266,12 +267,34 @@ export function mouthChannels(face: FaceForMouth, pose: MouthPose, baseJaw = 0):
 export type VisemeWeights = Record<string, number> | { lips: Record<string, number>; jaw: Record<string, number>; closure?: number; dental?: number }
 
 /**
- * 视位权重 → 口形和通道。权重之和大于 1 时归一；不足 1 的部分是静止。style 是 JALI 的两个轴：jaw 乘下颌和舌，lip 乘唇的 AU
- *（缺省都是 1）；闭唇和唇齿这两个约束不缩放。
- * Viseme weights → mouth shape and channels. Weights summing to more than 1 are normalised; what is short of 1 is rest. `style` holds
- * JALI's two axes: `jaw` multiplies jaw and tongue, `lip` the lip AUs (both default to 1); the closure and dental constraints are not scaled.
+ * 说话的风格：JALI 的两个轴，jaw（JA，下颌和舌）和 lip（LI，唇的 AU），各取 0–2，缺省 1。
+ *   · 1 = 正常朗读：视位表里的 jaw 和 aus（下颌开度按实测的切牙开度标定，见 visemes.json 的 calibration）。
+ *   · 0–1：按比例缩小（含糊、少动）。
+ *   · 2 = 夸张 / 清晰发音：视位表里每个视位的 clear.jaw、clear.aus；1 和 2 之间线性过渡。
+ * 舌只随 jaw 轴在 0–1 之间缩放，超过 1 不再加大；闭唇和唇齿两个约束不缩放。
+ * The style of speech: JALI's two axes, `jaw` (JA; jaw and tongue) and `lip` (LI; the lip AUs), each 0–2 and 1 by default.
+ * 1 = normal read speech: `jaw` and `aus` of the viseme table (jaw openings calibrated against measured incisor openings, see
+ * `calibration` in visemes.json); 0–1 scales them down (mumbling); 2 = exaggerated / clear speech: each viseme's `clear.jaw` and
+ * `clear.aus`, with a linear transition between 1 and 2. The tongue follows the jaw axis between 0 and 1 only and grows no further
+ * beyond 1; the closure and dental constraints are never scaled.
  */
-export function visemeAUs(face: FaceForMouth & Pick<FaceData, 'visemes'>, weights: VisemeWeights, style: { jaw?: number; lip?: number } = {}): MouthPose & { channels: Activations } {
+export interface SpeechStyle {
+  jaw?: number
+  lip?: number
+}
+
+/** 两个有名字的风格 / the two named styles. */
+export const SPEECH_STYLES: Readonly<Record<'normal' | 'clear', Readonly<Required<SpeechStyle>>>> = { normal: { jaw: 1, lip: 1 }, clear: { jaw: 2, lip: 2 } }
+
+/** 风格轴上的取值：s ≤ 1 时 s × normal，1–2 之间从 normal 线性到 clear / the value along a style axis: s × normal up to 1, then linear from normal to clear between 1 and 2. */
+const styled = (normal: number, clear: number, s: number): number => (s <= 1 ? normal * s : normal + (clear - normal) * (s - 1))
+
+/**
+ * 视位权重 → 口形和通道。权重之和大于 1 时归一；不足 1 的部分是静止。style 见 SpeechStyle（缺省是正常朗读）。
+ * Viseme weights → mouth shape and channels. Weights summing to more than 1 are normalised; what is short of 1 is rest. For `style`
+ * see SpeechStyle (normal read speech by default).
+ */
+export function visemeAUs(face: FaceForMouth & Pick<FaceData, 'visemes'>, weights: VisemeWeights, style: SpeechStyle = {}): MouthPose & { channels: Activations } {
   const table = face.visemes?.visemes ?? []
   const split = typeof (weights as { lips?: unknown }).lips === 'object'
   const lipsW = (split ? (weights as { lips: Record<string, number> }).lips : weights) as Record<string, number>
@@ -281,16 +304,20 @@ export function visemeAUs(face: FaceForMouth & Pick<FaceData, 'visemes'>, weight
     const sum = list.reduce((s, [, x]) => s + x, 0)
     return sum > 1 ? list.map(([v, x]) => [v, x / sum]) : list
   }
-  const JA = style.jaw ?? 1, LI = style.lip ?? 1
-  const pose: MouthPose = { aus: {}, closure: 0, dental: 0, jaw: 0, tongue: { tip: 0, front: 0, back: 0, low: 0 } }
+  const JA = clamp(style.jaw ?? 1, 0, 2), LI = clamp(style.lip ?? 1, 0, 2)
+  const pose: MouthPose & { tongue: Required<TonguePose> } = { aus: {}, closure: 0, dental: 0, jaw: 0, tongue: { tip: 0, front: 0, back: 0, low: 0, retro: 0 } }
   for (const [v, w] of norm(lipsW)) {
-    for (const [au, x] of Object.entries(v.aus)) pose.aus[au] = clamp((pose.aus[au] ?? 0) + x * w * LI, 0, AU_MAX)
+    const clear = v.clear?.aus ?? v.aus
+    for (const au of new Set([...Object.keys(v.aus), ...Object.keys(clear)])) {
+      const x = styled(v.aus[au] ?? 0, clear[au] ?? 0, LI) * w
+      if (x > 0) pose.aus[au] = clamp((pose.aus[au] ?? 0) + x, 0, AU_MAX)
+    }
     pose.closure += v.closure * w
     pose.dental += v.dental * w
   }
   for (const [v, w] of norm(jawW)) {
-    pose.jaw += v.jaw * face.jaw.max * w * JA
-    for (const k of ['tip', 'front', 'back', 'low'] as const) pose.tongue[k] = clamp(pose.tongue[k] + v.tongue[k] * w * JA, 0, 1)
+    pose.jaw += styled(v.jaw, v.clear?.jaw ?? v.jaw, JA) * face.jaw.max * w
+    for (const k of ['tip', 'front', 'back', 'low', 'retro'] as const) pose.tongue[k] = clamp(pose.tongue[k] + (v.tongue[k] ?? 0) * w * Math.min(1, JA), 0, 1)
   }
   if (split) {
     const s = weights as { closure?: number; dental?: number }

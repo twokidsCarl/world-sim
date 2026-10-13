@@ -14,7 +14,18 @@
 //   · 双唇音（下颌张开时）：口裂中间 60% 的间隙 ≤ 0.3 mm，下唇缘越过上唇缘不超过 0.3 mm。
 //     Bilabials (with the jaw open): over the middle 60% of the fissure the gap is ≤ 0.3 mm and the lower margin passes the upper by no more than 0.3 mm.
 //   · 唇齿音：下唇缘中点离上切牙切缘 ≤ 1 mm，且不在切缘之后（不进牙）。 Labiodentals: the middle of the lower margin is within 1 mm of the upper incisal edge and not behind it (not inside the tooth).
-//   · 圆唇元音（u、w；o 为 6%）：口宽缩短 ≥ 20%，唇缘中点前移 ≥ 2 mm。 Rounded vowels (u, w; 6% for o): mouth width shortens by ≥ 20% and the middle of the margin moves forward by ≥ 2 mm.
+//   · 圆唇元音（u、w、ü；o 为 6%）：口宽缩短 ≥ 20%，唇缘中点前移 ≥ 2 mm；正常和夸张两种风格都如此。 Rounded vowels (u, w, ü; 6% for o): mouth width shortens by ≥ 20% and the middle of the margin moves forward by ≥ 2 mm, in the normal and in the exaggerated style.
+//   · 标定：正常风格下每个视位的下切牙切缘竖直下降量（用骨架实算，毫米）在实测均值 ± 1 个标准差之内，且离均值不超过 0.25 mm；
+//     均值 = 说话人各自均值的平均，标准差 = 说话人内标准差的平均（规则见 visemes.json 的 calibration.jaw）。
+//     Calibration: in the normal style the vertical drop of the lower incisal edge of every viseme (computed with the rig, millimetres) lies within
+//     the measured mean ± 1 SD and no more than 0.25 mm from the mean; mean = the mean of the speakers' means, SD = the mean of the within-speaker
+//     SDs (the rule is stated under calibration.jaw in visemes.json).
+//   · 次序：模型的唇间隙与实测唇开度的 Spearman 秩相关 ≥ 0.6（现值：男 0.85、女 0.63；女性的唇齿音把这个数拉低，因为那时唇缘间隙量的是上唇到切缘的距离）；圆唇组（SH、UW、W、OW、R）的唇前移都大于展唇和开口组（IY、EH、AA、L、KG）。
+//     Order: the Spearman rank correlation of the model's lip gap with the measured lip aperture is ≥ 0.6 (now 0.85 male and 0.63 female; the female labiodental pulls it down, as the margin gap then measures the distance from the upper lip to the incisal edge); every member of the rounded group
+//     (SH, UW, W, OW, R) lies further forward than every member of the spread and open group (IY, EH, AA, L, KG).
+//   · 普通话：YU 比 IY 窄 ≥ 25%、靠前 ≥ 2 mm，唇与 UW 相同而舌不同；JQX 的口宽 ≥ 静止的 104%；ZHCHSH 的口宽在静止的 ±3% 内、前移 < 1 mm。
+//     Mandarin: YU is ≥ 25% narrower than IY and ≥ 2 mm further forward, with the lips of UW and a different tongue; JQX is at least 104% of the
+//     rest width; ZHCHSH stays within ±3% of the rest width and moves forward by < 1 mm.
 //   · 唇齿音在下颌闭合、参考角的一半、参考角三处：下唇缘中点离切缘 ≤ 1 mm，不在唇面之后，高出切缘不超过 0.2 mm；0.2 × 上限处 ≤ 2 mm。
 //     Labiodentals with the jaw closed, at half the reference angle and at the reference: the middle of the lower margin within 1 mm of the edge, not behind the labial face and no more than 0.2 mm above the edge; within 2 mm at 0.2 × the limit.
 //   · baseJaw：下颌从别处张开 0.1、0.2 × 上限时，双唇音口裂中间 60% 的间隙 ≤ 0.3 mm。 baseJaw: with the jaw opened from elsewhere by 0.1 and 0.2 × its limit, a bilabial leaves ≤ 0.3 mm over the middle 60% of the fissure.
@@ -26,7 +37,7 @@ import type { Rig } from '../src/anatomy/types.ts'
 import type { FaceData, FaceOpenings } from '../src/face/types.ts'
 import type { MouthFrame } from '../src/voice/mouth.ts'
 import { isLipPart } from '../tools/face/build.ts'
-import { AU_MAX, type Activations, type MouthState, UPPER_FACE_AUS, activations, blendFace, coarticulate, deform, mouthChannels, mouthFrameToChannels, painAUs, visemeAUs } from '../tools/face/model.ts'
+import { AU_MAX, type Activations, type MouthState, SPEECH_STYLES, UPPER_FACE_AUS, activations, blendFace, coarticulate, deform, mouthChannels, mouthFrameToChannels, painAUs, readField, visemeAUs } from '../tools/face/model.ts'
 import { stale } from '../tools/face/run.ts'
 import { type Body, readBody } from '../tools/rig/io.ts'
 import { Poser } from '../tools/rig/pose.ts'
@@ -171,7 +182,20 @@ for (const bodyId of ['male', 'female'] as const) {
         const out = visemeAUs(face, { [v.id]: 1 })
         for (const c of Object.keys(out.channels)) expect(chIds.has(c), `${v.id} ${c}`).toBe(true)
       }
-      for (const id of ['lip_seal', 'lip_dental', 'lip_protrusion', 'lip_roll_upper', 'lip_roll_lower', 'lip_press', 'lip_upper_depress', 'tongue_tip_up', 'tongue_front_up', 'tongue_back_up', 'tongue_low']) expect(chIds.has(id), id).toBe(true)
+      for (const id of ['lip_seal', 'lip_dental', 'lip_protrusion', 'lip_roll_upper', 'lip_roll_lower', 'lip_press', 'lip_upper_depress', 'tongue_tip_up', 'tongue_front_up', 'tongue_back_up', 'tongue_low', 'tongue_retroflex']) expect(chIds.has(id), id).toBe(true)
+      // 普通话的口形和软腭擦音 / the Mandarin shapes and the velar fricative
+      for (const id of ['YU', 'ZHCHSH', 'JQX', 'ER', 'HX']) expect(vs.some((v) => v.id === id), id).toBe(true)
+      // 每个数值要么有出处、要么标成假设；用到 MOCHA 的标明不可商用 / every number has a source or is marked an assumption; where MOCHA contributes the value says so
+      const sources = new Set(face.sources.map((s) => s.id))
+      for (const v of vs) {
+        for (const key of ['jaw', 'aus', 'constraints', 'tongue', 'clear']) {
+          const p = v.provenance?.[key]
+          expect(p, `${v.id} ${key}`).toBeDefined()
+          expect(p!.assumption === true || (p!.source !== undefined && sources.has(p!.source)), `${v.id} ${key}`).toBe(true)
+          if (p!.speakers?.some((s) => s === 'fsew0' || s === 'msak0')) expect(p!.calibratedAgainstNonCommercialData, `${v.id} ${key}`).toBe(true)
+        }
+        expect(v.clear!.jaw, v.id).toBeGreaterThanOrEqual(v.jaw)
+      }
       expect(face.channels.find((c) => c.id === 'lip_seal')!.refJaw).toBeGreaterThan(0)
       // JA、LI 两个轴：JA 只缩放下颌和舌，LI 只缩放唇的 AU / the two axes: JA scales jaw and tongue only, LI the lip AUs only
       const full = visemeAUs(face, { OW: 1 }), ja = visemeAUs(face, { OW: 1 }, { jaw: 0.5 }), li = visemeAUs(face, { OW: 1 }, { lip: 0.5 })
@@ -179,6 +203,135 @@ for (const bodyId of ['male', 'female'] as const) {
       expect(ja.aus).toEqual(full.aus)
       expect(li.jaw).toBeCloseTo(full.jaw, 9)
       expect(li.aus.AU22).toBeCloseTo(full.aus.AU22! / 2, 9)
+      // 风格 1 是表里的正常值（缺省），2 是 clear，中间线性；舌不随风格加大，约束不缩放
+      // style 1 is the table's normal value (the default), 2 is `clear`, linear in between; the tongue does not grow with the style and the constraints are not scaled
+      for (const v of vs) {
+        const n = visemeAUs(face, { [v.id]: 1 }), c = visemeAUs(face, { [v.id]: 1 }, SPEECH_STYLES.clear), h = visemeAUs(face, { [v.id]: 1 }, { jaw: 1.5, lip: 1.5 })
+        expect(n).toEqual(visemeAUs(face, { [v.id]: 1 }, SPEECH_STYLES.normal))
+        expect(n.jaw, v.id).toBeCloseTo(v.jaw * face.jaw.max, 9)
+        expect(c.jaw, v.id).toBeCloseTo(v.clear!.jaw * face.jaw.max, 9)
+        expect(h.jaw, v.id).toBeCloseTo((n.jaw + c.jaw) / 2, 9)
+        for (const [au, x] of Object.entries(v.clear!.aus)) expect(c.aus[au], `${v.id} ${au}`).toBeCloseTo(x, 9)
+        for (const [au, x] of Object.entries(v.aus)) expect(n.aus[au], `${v.id} ${au}`).toBeCloseTo(x, 9)
+        expect(c.tongue).toEqual(n.tongue)
+        expect([c.closure, c.dental]).toEqual([n.closure, n.dental])
+      }
+    })
+
+    it('has jaw openings that, converted to millimetres at the incisors, lie within the measured mean ± 1 SD', () => {
+      type Stat = { mean: number; sd: number }
+      type Row = { jawOpenMm: Stat; lipApertureMm: Stat }
+      const sum = JSON.parse(readFileSync(join(import.meta.dirname, '../data/curated/reference/articulation-summary.json'), 'utf8')) as {
+        perViseme: { viseme: string; perSpeaker: Record<string, Row> }[]
+        perPhone: { mochaLabel: string; perSpeaker: Record<string, Row> }[]
+        uscTimit: { perViseme: ({ viseme: string } & Row)[]; perPhone: ({ arpabet: string } & Row)[] }
+      }
+      const avg = (a: number[]): number => a.reduce((x, y) => x + y, 0) / a.length
+      const MOCHA = ['fsew0', 'msak0']
+      /** 每位说话人在这个视位上的行（规则与 visemes.json 的 calibration.jaw 相同）/ each speaker's rows for the viseme (the rule of calibration.jaw in visemes.json). */
+      const rows = (id: string): Row[][] | null => {
+        if (id === 'AA') return [...MOCHA.map((s) => sum.perPhone.filter((p) => ['aa', 'ai', 'ow'].includes(p.mochaLabel)).map((p) => p.perSpeaker[s]!)), sum.uscTimit.perPhone.filter((p) => ['aa', 'ay', 'aw'].includes(p.arpabet))]
+        if (id === 'AX') return MOCHA.map((s) => sum.perPhone.filter((p) => p.mochaLabel === '@').map((p) => p.perSpeaker[s]!))
+        const v = sum.perViseme.find((x) => x.viseme === id), u = sum.uscTimit.perViseme.find((x) => x.viseme === id)
+        return v && u && id !== 'SIL' ? [...MOCHA.map((s) => [v.perSpeaker[s]!]), [u]] : null
+      }
+      const stat = (id: string, key: 'jawOpenMm' | 'lipApertureMm'): Stat | null => {
+        const r = rows(id)
+        return r ? { mean: avg(r.map((sp) => avg(sp.map((x) => x[key].mean)))), sd: avg(r.map((sp) => avg(sp.map((x) => x[key].sd)))) } : null
+      }
+      // 下切牙切缘：下中切牙上最高的顶点；竖直下降量用骨架实算 / the lower incisal edge: the highest vertex of the lower central incisors; its vertical drop is computed with the rig
+      const lower = body.data.parts.filter((p) => p.tissue === 'tooth' && /lower central.*incisor/i.test(p.name) && body.meshes.has(p.id))
+      expect(lower.length).toBeGreaterThanOrEqual(1)
+      let edge = { part: '', v: -1, y: -Infinity }
+      for (const p of lower) {
+        const m = body.meshes.get(p.id)!.positions
+        for (let i = 0; i < m.length; i += 3) if (m[i + 1]! > edge.y) edge = { part: p.id, v: i / 3, y: m[i + 1]! }
+      }
+      const drop = (jaw: number): number => (edge.y - new Poser(rig, rigBin, jaw > 0 ? { [face.jaw.joint]: Array.from({ length: face.jaw.dof + 1 }, (_, k) => (k === face.jaw.dof ? jaw : 0)) } : {}).part(edge.part, body.meshes.get(edge.part)!.positions, 'dqs', false)[edge.v * 3 + 1]!) / MM
+      const report: string[] = []
+      const gap: number[] = [], aperture: number[] = []
+      let covered = 0
+      for (const v of face.visemes!.visemes) {
+        const t = stat(v.id, 'jawOpenMm')
+        if (!t) {
+          // 没有实测的视位必须标成假设 / a viseme without measurements must be marked an assumption
+          expect(v.provenance!.jaw!.assumption, v.id).toBe(true)
+          continue
+        }
+        covered++
+        const out = visemeAUs(face, { [v.id]: 1 })
+        const mm = drop(out.jaw)
+        report.push(`${v.id}: ${mm.toFixed(2)} mm (${((out.jaw * 180) / Math.PI).toFixed(2)}°), measured ${t.mean.toFixed(2)} ± ${t.sd.toFixed(2)}; clear ${drop(visemeAUs(face, { [v.id]: 1 }, SPEECH_STYLES.clear).jaw).toFixed(2)} mm`)
+        expect(Math.abs(mm - t.mean), `${v.id}: ${mm.toFixed(2)} mm vs ${t.mean.toFixed(2)} ± ${t.sd.toFixed(2)}`).toBeLessThanOrEqual(t.sd)
+        expect(Math.abs(mm - t.mean), v.id).toBeLessThanOrEqual(0.25)
+        // 表里记下的目标和这里重新算出的一致 / the target recorded in the table agrees with the one recomputed here
+        expect(v.provenance!.jaw!.targetMm!, v.id).toBeCloseTo(t.mean, 1)
+        expect(v.provenance!.jaw!.sdMm!, v.id).toBeCloseTo(t.sd, 1)
+        gap.push(gaps(posed(out.channels, out.jaw))[midI()]! / MM)
+        aperture.push(stat(v.id, 'lipApertureMm')!.mean)
+      }
+      expect(covered).toBe(16)
+      // 唇开度只核对次序：线圈在唇红缘外，绝对值和唇内缘的间隙差一个未知的量 / lip aperture is checked for order only: the coils sit outside the vermilion border, so absolute values differ from the inner gap by an unknown amount
+      const rank = (a: number[]): number[] => a.map((x) => a.filter((y) => y < x).length + (a.filter((y) => y === x).length - 1) / 2)
+      const ra = rank(gap), rb = rank(aperture), ma = avg(ra), mb = avg(rb)
+      const rho = ra.reduce((s, x, i) => s + (x - ma) * (rb[i]! - mb), 0) / Math.sqrt(ra.reduce((s, x) => s + (x - ma) ** 2, 0) * rb.reduce((s, x) => s + (x - mb) ** 2, 0))
+      report.push(`Spearman(model lip gap, measured lip aperture) = ${rho.toFixed(3)}`)
+      if (process.env.FACE_STATS) console.log(report.join('\n'))
+      expect(rho).toBeGreaterThanOrEqual(0.6)
+      // 夸张风格的 AA 是正常的好几倍 / the exaggerated AA is several times the normal one
+      expect(drop(visemeAUs(face, { AA: 1 }, SPEECH_STYLES.clear).jaw)).toBeGreaterThan(3 * drop(visemeAUs(face, { AA: 1 }).jaw))
+    })
+
+    it('adds the Mandarin shapes: ü narrow and forward with a front tongue, j q x spread, zh ch sh unrounded with the tip curled back', () => {
+      const w0 = dist(P(rest, O.points.mouthCornerL), P(rest, O.points.mouthCornerR))
+      const mid = O.margins.upperLip[midI()]!
+      const shape = (id: string, style = SPEECH_STYLES.normal): { width: number; forward: number; out: ReturnType<typeof visemeAUs> } => {
+        const out = visemeAUs(face, { [id]: 1 }, style)
+        const pos = posed(out.channels, out.jaw)
+        return { width: dist(P(pos, O.points.mouthCornerL), P(pos, O.points.mouthCornerR)) / w0, forward: (pos[mid * 3 + 2]! - rest[mid * 3 + 2]!) / MM, out }
+      }
+      for (const style of [SPEECH_STYLES.normal, SPEECH_STYLES.clear]) {
+        const yu = shape('YU', style), iy = shape('IY', style), uw = shape('UW', style), jqx = shape('JQX', style), zh = shape('ZHCHSH', style), er = shape('ER', style)
+        // ü：比 i 窄、靠前；唇与 u 相同，舌是 i 的（前部抬起）/ ü: narrower and further forward than i; the lips of u with the tongue of i (front raised)
+        expect(yu.width).toBeLessThan(iy.width - 0.25)
+        expect(yu.forward).toBeGreaterThan(iy.forward + 2)
+        expect(yu.out.aus).toEqual(uw.out.aus)
+        expect(yu.out.tongue.front).toBeGreaterThanOrEqual(iy.out.tongue.front)
+        expect(yu.out.tongue).toEqual(iy.out.tongue)
+        expect(yu.out.tongue.front - yu.out.tongue.back).toBeGreaterThan(uw.out.tongue.front - uw.out.tongue.back)
+        // j q x：展唇，舌面前部抬起、舌尖不抬 / j q x: spread lips, front of the tongue raised, tip not raised
+        expect(jqx.width).toBeGreaterThanOrEqual(1.04)
+        expect(jqx.out.tongue).toMatchObject({ front: 1, tip: 0, retro: 0 })
+        // zh ch sh r：不圆唇，舌尖卷起；下颌几乎合上 / zh ch sh r: no rounding, tip curled; jaw nearly closed
+        expect(Math.abs(zh.width - 1)).toBeLessThanOrEqual(0.03)
+        expect(zh.forward).toBeLessThan(1)
+        expect(zh.out.channels.tongue_retroflex).toBe(1)
+        expect(zh.out.channels.lip_protrusion ?? 0).toBe(0)
+        expect(zh.out.jaw).toBeLessThan(shape('AX', style).out.jaw)
+        // er：央元音的开口，舌尖半卷，不撮唇 / er: the opening of a schwa, the tip half curled, no pucker
+        expect(Math.abs(er.out.jaw - shape('AX', style).out.jaw)).toBeLessThanOrEqual(0.04 * face.jaw.max)
+        expect(er.out.channels.tongue_retroflex).toBeCloseTo(0.5, 9)
+        expect(er.out.channels.lip_purse ?? 0).toBe(0)
+      }
+      // 软腭擦音：KG 的变体，舌后部抬起但不到闭塞，不算塞音 / the velar fricative: a variant of KG, back of the tongue raised short of closure, not an obstruent
+      const hx = face.visemes!.visemes.find((v) => v.id === 'HX')!, kg = face.visemes!.visemes.find((v) => v.id === 'KG')!
+      expect(hx.tongue.back).toBeGreaterThan(0.3)
+      expect(hx.tongue.back).toBeLessThan(kg.tongue.back)
+      expect(hx.classes).toEqual(['tongueOnly'])
+      expect(hx.jaw).toBe(kg.jaw)
+      // 卷舌姿势：舌尖段向上、向后 / the retroflex pose: the tip segment travels up and back
+      const ch = face.channels.find((c) => c.id === 'tongue_retroflex')!
+      const tongue = body.meshes.get(ch.fields[0]!.part)!.positions
+      const f = readField(bin, ch.fields[0]!)
+      let tipV = -1
+      for (let i = 0; i < f.index.length; i++) if (tipV < 0 || tongue[f.index[i]! * 3 + 2]! > tongue[f.index[tipV]! * 3 + 2]!) tipV = i
+      expect(f.delta[tipV * 3 + 1]! / MM).toBeGreaterThan(4)
+      expect(f.delta[tipV * 3 + 2]! / MM).toBeLessThan(-3)
+      // 舌尖上抬的姿势则向上、略向前 / the tip-up pose in contrast goes up and slightly forward
+      const tip = face.channels.find((c) => c.id === 'tongue_tip_up')!, ft = readField(bin, tip.fields[0]!)
+      const k = ft.index.indexOf(f.index[tipV]!)
+      expect(k).toBeGreaterThanOrEqual(0)
+      expect(ft.delta[k * 3 + 2]!).toBeGreaterThan(0)
     })
 
     it('closes the lips for bilabials with the teeth apart', () => {
@@ -281,24 +434,39 @@ for (const bodyId of ['male', 'female'] as const) {
     it('narrows and protrudes the lips for rounded vowels, and opens with the jaw for open vowels', () => {
       const w0 = dist(P(rest, O.points.mouthCornerL), P(rest, O.points.mouthCornerR))
       const mid = O.margins.upperLip[midI()]!
-      for (const id of ['UW', 'W', 'OW']) {
-        const out = visemeAUs(face, { [id]: 1 })
-        const pos = posed(out.channels, out.jaw)
-        // o 的口比 u 开得大、收得少：只要求收窄 6% / the o is more open and less narrowed than the u: only 6% of narrowing is asked of it
-        const narrowing = 1 - dist(P(pos, O.points.mouthCornerL), P(pos, O.points.mouthCornerR)) / w0
-        expect(narrowing, id).toBeGreaterThanOrEqual(id === 'OW' ? 0.06 : 0.2)
-        expect((pos[mid * 3 + 2]! - rest[mid * 3 + 2]!) / MM, id).toBeGreaterThanOrEqual(2)
+      const forward: Record<string, number> = {}
+      for (const [style, tag] of [[SPEECH_STYLES.normal, ''], [SPEECH_STYLES.clear, ' (clear)']] as const) {
+        for (const id of ['UW', 'W', 'OW', 'YU']) {
+          const out = visemeAUs(face, { [id]: 1 }, style)
+          const pos = posed(out.channels, out.jaw)
+          // o 的口比 u 开得大、收得少：只要求收窄 6% / the o is more open and less narrowed than the u: only 6% of narrowing is asked of it
+          const narrowing = 1 - dist(P(pos, O.points.mouthCornerL), P(pos, O.points.mouthCornerR)) / w0
+          expect(narrowing, id + tag).toBeGreaterThanOrEqual(id === 'OW' ? 0.06 : 0.2)
+          // 夸张风格的 o 下颌开得大，上唇中点随之略后退，只要求 1.5 mm / the exaggerated o opens the jaw wide, which draws the middle of the upper lip back a little: 1.5 mm is asked of it
+          expect((pos[mid * 3 + 2]! - rest[mid * 3 + 2]!) / MM, id + tag).toBeGreaterThanOrEqual(id === 'OW' && tag ? 1.5 : 2)
+        }
       }
+      // 次序与实测一致：圆唇的一组比展唇和开口的一组靠前（实测的唇前伸只有次序可信）
+      // the order agrees with the measurements: the rounded group lies further forward than the spread and open group (only the order of the measured protrusion is trusted)
+      for (const id of ['SH', 'UW', 'W', 'OW', 'R', 'IY', 'EH', 'AA', 'L', 'KG']) {
+        const out = visemeAUs(face, { [id]: 1 })
+        forward[id] = posed(out.channels, out.jaw)[mid * 3 + 2]! - rest[mid * 3 + 2]!
+      }
+      for (const a of ['SH', 'UW', 'W', 'OW', 'R']) for (const b of ['IY', 'EH', 'AA', 'L', 'KG']) expect(forward[a]!, `${a} > ${b}`).toBeGreaterThan(forward[b]!)
       const gapOf = (id: string, ja: number): number => {
         const out = visemeAUs(face, { [id]: 1 }, { jaw: ja })
         return gaps(posed(out.channels, out.jaw))[midI()]!
       }
-      // 开口度随下颌角单调增大 / the aperture grows monotonically with the jaw angle
-      const g = [0.25, 0.5, 0.75, 1].map((ja) => gapOf('AA', ja))
+      // 开口度随下颌角单调增大（正常风格内，以及从正常到夸张）/ the aperture grows monotonically with the jaw angle (within the normal style, and from normal to exaggerated)
+      const g = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map((ja) => gapOf('AA', ja))
       for (let i = 1; i < g.length; i++) expect(g[i]!).toBeGreaterThan(g[i - 1]! + 1 * MM)
-      expect(gapOf('AA', 1)).toBeGreaterThan(gapOf('EH', 1))
-      expect(gapOf('EH', 1)).toBeGreaterThan(gapOf('IY', 1))
-      expect(visemeAUs(face, { AA: 1 }).jaw).toBeCloseTo(0.5 * face.jaw.max, 6)
+      // 夸张风格：a 比 e 开、e 比 i 开；正常风格：实测 e（含 ae）的唇开度不小于 a，两者都明显大于 i
+      // exaggerated: a opens more than e and e more than i; normal: the measured lip aperture of e (which includes ae) is not below that of a, and both are clearly above i
+      expect(gapOf('AA', 2)).toBeGreaterThan(gapOf('EH', 2))
+      expect(gapOf('EH', 2)).toBeGreaterThan(gapOf('IY', 2))
+      expect(gapOf('AA', 1)).toBeGreaterThan(gapOf('IY', 1) + 2 * MM)
+      expect(gapOf('EH', 1)).toBeGreaterThan(gapOf('IY', 1) + 2 * MM)
+      expect(visemeAUs(face, { AA: 1 }, SPEECH_STYLES.clear).jaw).toBeCloseTo(0.5 * face.jaw.max, 6)
       // 展唇的 i 比圆唇的 u 宽 / the spread i is wider than the rounded u
       const wide = (id: string): number => {
         const out = visemeAUs(face, { [id]: 1 })
@@ -309,7 +477,7 @@ for (const bodyId of ['male', 'female'] as const) {
     })
 
     it('moves only the tongue with the tongue poses (schematic)', () => {
-      for (const id of ['tongue_tip_up', 'tongue_front_up', 'tongue_back_up', 'tongue_low']) {
+      for (const id of ['tongue_tip_up', 'tongue_front_up', 'tongue_back_up', 'tongue_low', 'tongue_retroflex']) {
         const ch = face.channels.find((c) => c.id === id)!
         expect(ch.kind).toBe('tongue')
         expect(ch.fields.length).toBe(1)

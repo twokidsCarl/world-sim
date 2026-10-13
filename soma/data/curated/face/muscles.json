@@ -1318,6 +1318,34 @@
     "zh": "舌整体放低（a）。 示意性的姿势：舌是一个约 200 个顶点的部件，这里只是按沿舌长的位置加权的位移，不是舌肌；幅度是假设。",
     "en": "The whole tongue lowers (a). A schematic pose: the tongue is one part of about 200 vertices and this is only a displacement weighted by position along its length, not the tongue muscles; the excursion is an assumption."
    }
+  },
+  {
+   "id": "tongue_retroflex",
+   "match": "",
+   "name": {
+    "zh": "舌尖上抬后缩（卷舌）",
+    "en": "tongue tip raised and drawn back (retroflex)"
+   },
+   "model": "tongue",
+   "tongue": "retro",
+   "excursionMm": 9,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    },
+    "insertion": {
+     "zh": "（几何通道，没有起止点）",
+     "en": "(geometric channel; no attachments)"
+    }
+   },
+   "action": {
+    "zh": "舌尖抬起并后缩到齿龈之后（普通话 zh ch sh r、er 和儿化，英语 r）。 示意性的姿势：舌是一个约 200 个顶点的部件，这里只是按沿舌长的位置加权的位移（舌尖段向上、向后，其后的舌面略降），不是舌肌，也没有区分舌尖音和舌尖下音；幅度是假设。",
+    "en": "The tip rises and is drawn back behind the alveolar ridge (Mandarin zh ch sh r, er and erhua; English r). A schematic pose: the tongue is one part of about 200 vertices and this is only a displacement weighted by position along its length (the tip segment up and back, the blade behind it slightly down), not the tongue muscles, and apical and subapical articulations are not told apart; the excursion is an assumption."
+   }
   }
  ],
  "bulge": {

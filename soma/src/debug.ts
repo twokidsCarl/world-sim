@@ -2,6 +2,7 @@
 // window.__soma — a handle for driving and inspecting the app from the browser console.
 
 import type { AnatomyGraph } from './anatomy/graph.ts'
+import { lastSaySample, sayClip, sayTime, seekSay } from './face/say.ts'
 import { lastSpeechSample, speechTrack } from './face/speech.ts'
 import { applyStimulus, seekStimulus, stimClock } from './pain/stim.ts'
 import { useApp } from './state/store.ts'
@@ -29,6 +30,8 @@ export interface SomaDebug {
   stim: { clock(): number; seek(seconds: number, freeze?: boolean): void; apply: typeof applyStimulus }
   /** 由音频带动口形（验证用）：整条轨迹、最近用过的一帧 / Speaking from audio (verification): the whole track and the frame last used. */
   speech: { track: typeof speechTrack; last: typeof lastSpeechSample }
+  /** 由音素带动口形（验证用）：装着的时间线、播放头、最近用过的一帧、把播放头定在某一时刻 / Phoneme-driven speech (verification): the loaded timeline, the playhead, the frame last used, and holding the playhead at a time. */
+  say: { clip: typeof sayClip; time: typeof sayTime; last: typeof lastSaySample; seek: typeof seekSay }
 }
 
 declare global {
@@ -49,6 +52,7 @@ export const debug: SomaDebug = {
   screenOf: (id) => debug.viewer?.screenOf(id) ?? null,
   stim: { clock: stimClock, seek: seekStimulus, apply: applyStimulus },
   speech: { track: speechTrack, last: lastSpeechSample },
+  say: { clip: sayClip, time: sayTime, last: lastSaySample, seek: seekSay },
 }
 
 window.__soma = debug

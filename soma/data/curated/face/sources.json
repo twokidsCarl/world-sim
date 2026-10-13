@@ -143,6 +143,26 @@
     "zh": "2026-10-13 下载了作者主页上的 PDF 并读了其中的文字（图读不到）。取用的内容：口形的分解 face = nface + JA·(jd + td) + LI·au 及“腹语奇点”；四条构音约束、三条约定、九条协同发音习惯（第 4.2 节）；视位在音之前 120 ms 起、之后 120 ms 消退，唇前突为 150 ms；附录 A 的音的分类（双唇、唇齿、咝音、塞音、鼻音、只动舌、lipHeavy）和伪代码；LNTD、GK 两个只动舌的视位的描述。图 4（各视位的 AU）是图片，没有读到。",
     "en": "The PDF on the author's page was downloaded on 2026-10-13 and its text read (figures could not be read). Taken from it: the decomposition face = nface + JA·(jd + td) + LI·au and the \"ventriloquist singularity\"; the four articulation constraints, three conventions and nine co-articulation habits (section 4.2); visemes start 120 ms before the sound and decay 120 ms after it, 150 ms for lip protrusion; the sound classes of appendix A (bilabial, labiodental, sibilant, obstruent, nasal, tongue-only, lip-heavy) and its pseudocode; the descriptions of the two tongue-only visemes LNTD and GK. Figure 4 (the AUs of each viseme) is an image and was not read."
    }
+  },
+  {
+   "id": "articulation-summary",
+   "citation": "This project. Articulator position summary: per-phone means from electromagnetic articulography — MOCHA-TIMIT speakers fsew0 and msak0 (A. Wrench, Queen Margaret University College, 1999) and USC-TIMIT speaker M1 (Narayanan et al. 2014, J Acoust Soc Am 136(3), doi:10.1121/1.4890284). data/curated/reference/articulation-summary.json.",
+   "url": "https://zenodo.org/records/19422914",
+   "license": "Aggregates computed by this project. USC-TIMIT: CC BY 4.0. MOCHA-TIMIT (https://data.cstr.ed.ac.uk/mocha/): research, educational and individual use only, not for commercial use without permission; values that depend on it are marked calibratedAgainstNonCommercialData in visemes.json.",
+   "opened": {
+    "zh": "2026-10-13 读了本仓库里的汇总文件全文（方法、注意事项、三位说话人按视位和按音素的均值、标准差和个数）；原始语料没有打开。取用的内容：各视位的下颌开度（下切牙线圈的竖直下降，毫米）用来标定视位表正常风格的 jaw；舌尖、舌面、舌背线圈的高度和舌尖线圈的前后位置用来定一部分舌的权重；唇开度和唇前伸只用来核对次序。汇总文件写明的限制：只有三位说话人；MOCHA 的单位（1/100 mm）是按量级合理推定的；USC-TIMIT 的 ah 混有弱化元音；没有普通话的数据。",
+    "en": "The whole summary file in this repository was read on 2026-10-13 (method, caveats, and the means, SDs and counts per viseme and per phone of three speakers); the raw corpora were not opened. Taken from it: the jaw opening of each viseme (vertical drop of the lower-incisor coil, millimetres), used to calibrate `jaw` of the normal style in the viseme table; the heights of the tongue tip, body and dorsum coils and the front-back position of the tip coil, used for some tongue weights; lip aperture and protrusion, used only to check order. Limits stated in the file: three speakers only; the MOCHA unit (1/100 mm) is inferred from plausible magnitudes; ah of USC-TIMIT is mixed with reduced vowels; no Mandarin data."
+   }
+  },
+  {
+   "id": "scp",
+   "citation": "Wikipedia contributors. Standard Chinese phonology. Revision 1377646072.",
+   "url": "https://en.wikipedia.org/w/index.php?title=Standard_Chinese_phonology&oldid=1377646072",
+   "license": "CC BY-SA (Wikipedia text licence). Facts only; no text is copied beyond short phrases.",
+   "opened": {
+    "zh": "2026-10-13 经网页抓取读了前 10 万字符（全文约 17 万）。取用的内容：卷舌音一组是舌尖音而不是舌尖下音，更准确地说是龈后音；j q x 是 [tɕ tɕʰ ɕ]，只出现在前高元音或腭介音之前；ü 像法语的 u 或德语的 ü；儿化韵尾发音时舌比较松，被描述为“卷舌元音”；h 记作 /x/（[h] ~ [x]）。没有读到任何毫米或角度的数值：普通话几个口形的数值都是本项目的假设。",
+    "en": "The first 100,000 characters (of about 170,000) were read through a page fetch on 2026-10-13. Taken from it: the retroflex series is apical rather than subapical and more accurately post-alveolar; j q x are [tɕ tɕʰ ɕ] and occur only before high front vowels or palatal glides; ü is like French u or German ü; the r final is pronounced with a relatively lax tongue and has been described as a \"retroflex vowel\"; h is written /x/ ([h] ~ [x]). No number in millimetres or degrees was found there: the numbers of the Mandarin mouth shapes are assumptions of this project."
+   }
   }
  ]
 }
