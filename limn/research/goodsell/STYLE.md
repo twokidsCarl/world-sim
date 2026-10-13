@@ -296,6 +296,18 @@ limn 这一轮的数：
 - **两处文献对着检索结果改正**（原先凭记忆写的）：HIV 每个病毒约 14 个刺出自 Zhu 等 Nature 2006；“14 ± 7”这个范围出自同一组的会议摘要（Retrovirology 2006, doi:10.1186/1742-4690-3-S1-S5），不是那篇 Nature。新冠的 Yao 等 Cell 2020 解出的是核糖核蛋白团块的原位结构和排布；“一条线串着”的具体走向那篇文章没有解出，原来写的“看到是一串珠子”说过头了，已改。
 - **核对**：寨卡、HIV、syn3A 切到 Illustrate 后只剩模型本身一个面板，推断的说明都不在。全部 25 张卡的总览：`out/sheet-Y1.jpg`。
 
+### A5：环境改成立体的（使用者：“只有一个视角对，转视角就不对了”），三处收尾
+
+使用者把寨卡转了个角度，背景只是切面后面薄薄的一片，侧面全是空的。原因是我做“填环境”时只在切面后面铺了一层，所有带环境的卡都有这个毛病。
+
+- **环境是立体的**（`out/A5-turned.jpg`：新冠、寨卡、HIV，各是正面和转过 50° 的一张）：环境填满对象周围的一个球（或对象的整个里面），由切面露出剖面。份数按体积补；环境里的蛋白改成每个残基一个球（否则上千万个原子画不动），摆放用了空间格子。穿线不再偏向画面平面，也不许钻进对象的范围。
+- 垫在后面的底色从“一片圆盘”改成“一个球壳”（`groundShell`）：切开后是后面的半只碗，转到哪里都在。新冠里面的珠子从两层改成叠满整个腔。支原体的荚膜是整整一层球壳；里面的 DNA 按整条基因组的长度（330 条，约 198 微米）散在整个细胞里。
+- 线（核酸、长链）的切片和成节的纤维一样深一倍半。
+- 单个结构加环境时（寨卡）结构本身不切，环境切掉朝观察者的一半。
+- 出图的小工具加了“转一个角度再出一张”，以后每次都查这个毛病。
+- **三处收尾**（`out/A5-three-fixes.jpg`）：刺头的扇形分瓣（`exaggerate` 的 `ripple`：头顶的高度随离轴的距离起伏，绕轴对称）；小泡外面的蛋白拉成细长的须（`arrange.whiskers`，夸张，有说明）；syn3A 两个细胞连通（各自越过中间平面的部分去掉）。
+- 仍然不对的：流感转过去之后里面露出一大片蓝色的内壁（八条杆只占腔的一部分）；流感的刺头分瓣不明显；新冠的刺之间还有深色空隙。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -582,3 +594,15 @@ The user said not to stop and ask, and to carry on with what is unfinished. This
 - **The postsynaptic scene** takes his pink-purple family (it was blue-purple with orange). Pre- and postsynaptic remain two cards: the two models are independent data with no common frame, and setting them face to face would mean inventing a synaptic cleft, which was not done.
 - **Two citations corrected against search results** (they had been written from memory): about 14 spikes per HIV virion is from Zhu et al., Nature 2006; the range "14 ± 7" is from the same group's conference abstract (Retrovirology 2006, doi:10.1186/1742-4690-3-S1-S5), not that Nature paper. Yao et al., Cell 2020, resolved the ribonucleoprotein clumps of SARS-CoV-2 in situ and their arrangement; the actual course of a strand through them was not resolved there, so "shows beads on a string" overstated it and has been reworded.
 - **Checks**: Zika, HIV and syn3A show the model's single panel after a switch to Illustrate, with none of the notes on inference. The sheet of all 25 cards: `out/sheet-Y1.jpg`.
+
+### A5: the environment becomes a solid (the user: "right from one angle only; turn it and it is wrong"), and three loose ends
+
+The user turned the Zika card: the background was a thin sheet behind the cut, with nothing at the sides. The cause was mine: the environment tool laid one layer behind the cut, and every card with an environment had the fault.
+
+- **The environment is a solid** (`out/A5-turned.jpg`: coronavirus, Zika, HIV, each from the front and turned by 50°): it fills a ball round the subject (or the whole inside of it), and the cut exposes a section. Counts are topped up by volume; environment proteins are drawn one sphere per residue (tens of millions of atoms could not be drawn otherwise), and placing uses a spatial grid. Threading no longer favours the picture plane, and may not enter the subject's range.
+- The ground laid behind goes from a disc to a spherical shell (`groundShell`): cut open it is the bowl at the back, there from any angle. The beads inside the coronavirus go from two layers to a stack through the whole cavity. The mycoplasma's capsule is a whole shell; its DNA is the length of the whole genome (330 strands, about 198 micrometres) spread through the cell.
+- Lines (nucleic acid, long chains) get the same deeper slab as pieced fibres.
+- A single structure with surroundings (Zika) is itself left whole, with the half of the surroundings towards the viewer cut away.
+- The rendering helper can take a second picture from a turned direction, so this fault is checked every time from now on.
+- **Three loose ends** (`out/A5-three-fixes.jpg`): fanned lobes on spike heads (`ripple` in `exaggerate`: the height of the head rises and falls with distance from the axis, symmetric about it); the proteins outside the vesicle drawn out as whiskers (`arrange.whiskers`, an exaggeration, with a note); the two syn3A cells joined (what of each lay past the plane between them is removed).
+- Still wrong: turned, the influenza virion shows a large area of blue inner wall (the eight rods fill only part of the cavity); the lobes on influenza's spike heads hardly show; dark gaps remain between the coronavirus spikes.

@@ -230,7 +230,9 @@ export function shellMembrane(centre: V3, inner: number, outer: number, id: stri
  * and the foot of the spike stays where it was). `split` is where stalk gives way to head along the
  * spike (0 = foot, 1 = tip).
  */
-export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number; stalk: number; head: number; split: number; lobes?: number; lobeCount?: number }): Template {
+export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number; stalk: number; head: number; split: number; lobes?: number; lobeCount?: number; ripple?: [number, number] }): Template {
+  // ripple [幅度, 波长]：头部的高度随离轴的距离起伏，从侧面看头顶是一排圆瓣（他画的扇形分瓣）；绕轴对称，所以刺怎么转都一样
+  // ripple [amplitude, wavelength]: the height of the head rises and falls with distance from the axis, so that from the side the top is a row of round lobes (the fanned lobes he paints); it is symmetric about the axis, so it looks the same however the spike is turned
   // 分瓣：头部的每个亚基朝自己那一侧推开 `lobes` Å（越靠顶推得越多），头就裂成几瓣，瓣之间有凹口；他画的刺头是这样的。
   // 方向取各条链在头部的质心相对轴的方向；只有一条链时按 `lobeCount` 等分成几个扇区。
   // Lobes: each subunit of the head is pushed `lobes` Å out to its own side (more towards the tip), so the head parts into lobes with notches between, as his spike heads do.
@@ -282,7 +284,10 @@ export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number;
     // 柄到头之间平滑过渡 / a smooth passage from stalk to head
     const u = Math.min(1, Math.max(0, (s - (shape.split - 0.1)) / 0.2))
     const w = shape.stalk + (shape.head - shape.stalk) * u * u * (3 - 2 * u)
-    const h2 = lo + (h - lo) * shape.stretch
+    const rr = Math.hypot(d[0] - t.up[0] * h, d[1] - t.up[1] * h, d[2] - t.up[2] * h) * w
+    // 只动头的上半截，越靠顶动得越多 / only the upper part of the head moves, the more the nearer the tip
+    const top = Math.min(1, Math.max(0, (s - (shape.split + 1) / 2) / Math.max(1e-6, (1 - shape.split) / 2)))
+    const h2 = lo + (h - lo) * shape.stretch + (shape.ripple ? shape.ripple[0] * top * Math.cos((rr / shape.ripple[1]) * 6.2831853) : 0)
     // 这个原子归哪一瓣：它偏离轴的方向和哪一瓣最接近 / which lobe this atom belongs to: the one nearest the direction in which it lies off the axis
     let push: V3 = [0, 0, 0]
     if (lobeDirs.length && u > 0) {
