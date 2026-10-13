@@ -1,0 +1,1265 @@
+{
+ "about": {
+  "zh": "空腔器官的壁厚与腔径。每个数都标明来源；没有打开过出处的一律写 assumption: true，这些数是本项目为了能建模而定的，不是文献值。长度单位毫米。 rest.filling 是出厂几何所在的充盈度：0 = 塌陷到表里的塌陷口径，1 = 充盈到（不动的）壁所允许的最大；食管和胃的“静止时塌陷”有出处，其余是假设。",
+  "en": "Wall thickness and lumen calibre of the hollow organs. Every number names its source; anything for which no source was opened carries assumption: true — such numbers were set by this project so that a model can be built and are not literature values. Lengths in millimetres. rest.filling is the filling at which the shipped geometry stands: 0 = collapsed to the tabled collapsed calibre, 1 = as full as the (unmoving) wall allows; \"collapsed at rest\" is sourced for oesophagus and stomach and an assumption elsewhere."
+ },
+ "sources": {
+  "openstax_23_3": {
+   "name": "OpenStax, Anatomy and Physiology 2e, 23.3 The Mouth, Pharynx, and Esophagus",
+   "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/23-3-the-mouth-pharynx-and-esophagus",
+   "licence": "site footer as fetched: CC BY-NC-SA 4.0; facts only, no text copied",
+   "opened": "page"
+  },
+  "openstax_23_4": {
+   "name": "OpenStax, Anatomy and Physiology 2e, 23.4 The Stomach",
+   "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/23-4-the-stomach",
+   "licence": "site footer as fetched: CC BY-NC-SA 4.0; facts only, no text copied",
+   "opened": "page"
+  },
+  "openstax_23_5": {
+   "name": "OpenStax, Anatomy and Physiology 2e, 23.5 The Small and Large Intestines",
+   "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/23-5-the-small-and-large-intestines",
+   "licence": "site footer as fetched: CC BY-NC-SA 4.0; facts only, no text copied",
+   "opened": "page"
+  },
+  "karmazanovsky2015": {
+   "name": "Karmazanovsky GG et al. World J Gastroenterol 2015;21(29):8878 (PMC4528030)",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4528030",
+   "licence": "CC BY-NC 4.0; facts only",
+   "opened": "full text"
+  },
+  "nylund2012": {
+   "name": "Nylund K, Hausken T, Odegaard S, Eide GE, Gilja OH. Ultraschall Med 2012;33(7):E225. doi:10.1055/s-0031-1299329",
+   "url": "https://doi.org/10.1055/s-0031-1299329",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC; the per-segment numbers were read from a search-engine summary of the abstract, the abstract text returned by Europe PMC is cut at the results"
+  },
+  "wiesner2002": {
+   "name": "Wiesner W, Mortele KJ, Ji H, Ros PR. J Comput Assist Tomogr 2002;26(1):102. doi:10.1097/00004728-200201000-00015",
+   "url": "https://doi.org/10.1097/00004728-200201000-00015",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "rapaccini1988": {
+   "name": "Rapaccini GL et al. Gastrointest Radiol 1988;13:197. doi:10.1007/bf01889058",
+   "url": "https://doi.org/10.1007/bf01889058",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "hakenberg2000": {
+   "name": "Hakenberg OW, Linne C, Manseck A, Wirth MP. Neurourol Urodyn 2000;19(5):585",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/11002301/",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "barnhart2006": {
+   "name": "Barnhart KT et al. Hum Reprod 2006;21(6):1618. doi:10.1093/humrep/del022",
+   "url": "https://doi.org/10.1093/humrep/del022",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "nivatvongs1981": {
+   "name": "Nivatvongs S, Stern HS, Fryd DS. Dis Colon Rectum 1981;24(8):600. doi:10.1007/bf02605754",
+   "url": "https://doi.org/10.1007/bf02605754",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "kohler2008": {
+   "name": "Kohler TS, Yadven M, Manvar A, Liu N, Monga M. Int Braz J Urol 2008;34(4):451. doi:10.1590/s1677-55382008000400007",
+   "url": "https://doi.org/10.1590/s1677-55382008000400007",
+   "licence": "journal is open access (licence not read); facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "zelenko2004": {
+   "name": "Zelenko N, Coll D, Rosenfeld AT, Smith RC. AJR 2004;182(4):1039. doi:10.2214/ajr.182.4.1821039",
+   "url": "https://doi.org/10.2214/ajr.182.4.1821039",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "teitelbaum2013": {
+   "name": "Teitelbaum EN, Vaziri K, Zettervall S, Amdur RL, Orkin BA. Clin Anat 2013;26(7):827. doi:10.1002/ca.22238",
+   "url": "https://doi.org/10.1002/ca.22238",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "tacchino2015": {
+   "name": "Tacchino RM. Surg Obes Relat Dis 2015;11(2):328. doi:10.1016/j.soard.2014.09.016",
+   "url": "https://doi.org/10.1016/j.soard.2014.09.016",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "benacerraf2010": {
+   "name": "Benacerraf BR, Shipp TD, Lyons JG, Bromley B. Obstet Gynecol 2010;116(2):305. doi:10.1097/aog.0b013e3181e6cc10",
+   "url": "https://doi.org/10.1097/aog.0b013e3181e6cc10",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  },
+  "manoliu1982": {
+   "name": "Manoliu RA. Urethral calibre measurements on micturition cystourethrograms in adult males. Part two: subvesical obstruction. Eur J Radiol 1982 (PMID 7151816)",
+   "url": "https://europepmc.org/article/MED/7151816",
+   "licence": "not open access; facts only",
+   "opened": "abstract via Europe PMC"
+  }
+ },
+ "segments": {
+  "oral_cavity": {
+   "wall": {
+    "value": null,
+    "unit": "mm",
+    "source": null,
+    "note": "no wall part; bounded by tongue, palate and cheeks",
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 2,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 30,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "at rest the tongue fills the oral cavity proper",
+    "filling": 1,
+    "fillingNote": "the stored surface is the gap left between this body's tongue, palate and teeth as they stand; nothing is collapsed further",
+    "fillingAssumption": true
+   }
+  },
+  "pharynx": {
+   "wall": {
+    "value": 3,
+    "unit": "mm",
+    "source": null,
+    "note": "constrictor muscle plus mucosa",
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 8,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 25,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "open",
+    "source": null,
+    "assumption": true,
+    "note": "naso- and oropharynx are an open airway; the hypopharynx behind the larynx is closed at rest",
+    "filling": 1,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  },
+  "oesophagus": {
+   "wall": {
+    "value": 4,
+    "unit": "mm",
+    "source": "karmazanovsky2015",
+    "range": [
+     3,
+     5
+    ],
+    "state": "depends on distension",
+    "population": "adults on CT (statement in the text, not a measured cohort)"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 20,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": "openstax_23_3",
+    "note": "remains collapsed when not swallowing",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (sourced)"
+   },
+   "length": {
+    "value": 254,
+    "unit": "mm",
+    "source": "openstax_23_3"
+   }
+  },
+  "stomach": {
+   "wall": {
+    "value": 2.9,
+    "unit": "mm",
+    "source": "nylund2012",
+    "sd": 0.8,
+    "state": "fasting",
+    "population": "122 healthy adults aged 23-79, transabdominal ultrasound, gastric antrum",
+    "note": "used for the whole stomach; body and fundus have no opened value of their own"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 20,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 110,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": "openstax_23_4",
+    "note": "the empty stomach deflates inward and its lining falls into rugae",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (sourced)"
+   },
+   "regions": {
+    "cardia": {
+     "value": 2.9,
+     "unit": "mm",
+     "source": null,
+     "note": "taken as antrum",
+     "assumption": true
+    },
+    "fundus": {
+     "value": 2.9,
+     "unit": "mm",
+     "source": null,
+     "note": "taken as antrum",
+     "assumption": true
+    },
+    "body": {
+     "value": 5.1,
+     "unit": "mm",
+     "source": "rapaccini1988",
+     "sd": 1.1,
+     "range": [
+      0,
+      7
+     ],
+     "state": "not stated",
+     "population": "28 healthy adults, ultrasound, body-antrum",
+     "note": "older, lower-resolution ultrasound; recorded, not used"
+    },
+    "antrum": {
+     "value": 2.9,
+     "unit": "mm",
+     "source": "nylund2012",
+     "sd": 0.8,
+     "state": "fasting",
+     "population": "122 healthy adults"
+    }
+   },
+   "volume": {
+    "empty": {
+     "value": null,
+     "unit": "mL",
+     "source": "openstax_23_4",
+     "note": "\"about the size of your fist\""
+    },
+    "distended": {
+     "value": 4000,
+     "unit": "mL",
+     "source": "openstax_23_4"
+    }
+   }
+  },
+  "duodenum": {
+   "wall": {
+    "value": 1.6,
+    "unit": "mm",
+    "source": "nylund2012",
+    "sd": 0.3,
+    "state": "fasting",
+    "population": "122 healthy adults aged 23-79, ultrasound"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 30,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "empty small bowel lies collapsed between peristaltic waves",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 254,
+    "unit": "mm",
+    "source": "openstax_23_5"
+   },
+   "outerDiameter": {
+    "value": 25.4,
+    "unit": "mm",
+    "source": "openstax_23_5",
+    "note": "given for the small intestine as a whole"
+   }
+  },
+  "jejunum": {
+   "wall": {
+    "value": 1.1,
+    "unit": "mm",
+    "source": "nylund2012",
+    "range": [
+     0.9,
+     1.2
+    ],
+    "sd": 0.3,
+    "state": "fasting",
+    "population": "122 healthy adults aged 23-79, ultrasound; one range reported for jejunum to sigmoid colon"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 30,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "as duodenum",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 900,
+    "unit": "mm",
+    "source": "openstax_23_5",
+    "state": "in life"
+   },
+   "outerDiameter": {
+    "value": 25.4,
+    "unit": "mm",
+    "source": "openstax_23_5"
+   }
+  },
+  "ileum": {
+   "wall": {
+    "value": 1.1,
+    "unit": "mm",
+    "source": "nylund2012",
+    "range": [
+     0.9,
+     1.2
+    ],
+    "sd": 0.3,
+    "state": "fasting",
+    "population": "as jejunum"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 25,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "as duodenum",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 1800,
+    "unit": "mm",
+    "source": "openstax_23_5"
+   },
+   "outerDiameter": {
+    "value": 25.4,
+    "unit": "mm",
+    "source": "openstax_23_5"
+   }
+  },
+  "ascending_colon": {
+   "wall": {
+    "value": 1.1,
+    "unit": "mm",
+    "source": "nylund2012",
+    "range": [
+     0.9,
+     1.2
+    ],
+    "sd": 0.3,
+    "state": "fasting",
+    "population": "as jejunum"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 15,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 70,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "open",
+    "source": null,
+    "assumption": true,
+    "note": "the right colon usually holds gas and stool",
+    "filling": 1,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "caecumLength": {
+    "value": 60,
+    "unit": "mm",
+    "source": "openstax_23_5"
+   },
+   "outerDiameter": {
+    "value": 76,
+    "unit": "mm",
+    "source": "openstax_23_5",
+    "note": "\"about 3 inches\", large intestine as a whole"
+   }
+  },
+  "transverse_colon": {
+   "wall": {
+    "value": 1.1,
+    "unit": "mm",
+    "source": "nylund2012",
+    "range": [
+     0.9,
+     1.2
+    ],
+    "sd": 0.3,
+    "state": "fasting",
+    "population": "as jejunum"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 10,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 60,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "open",
+    "source": null,
+    "assumption": true,
+    "note": "as ascending colon",
+    "filling": 1,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  },
+  "descending_colon": {
+   "wall": {
+    "value": 1.1,
+    "unit": "mm",
+    "source": "nylund2012",
+    "range": [
+     0.9,
+     1.2
+    ],
+    "sd": 0.3,
+    "state": "fasting",
+    "population": "as jejunum; includes the sigmoid colon"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 10,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 50,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "the left colon is often contracted and empty",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  },
+  "colon_wall_by_distension": {
+   "note": "normal wall thickness on CT against local luminal width, 100 patients without bowel disease",
+   "source": "wiesner2002",
+   "rows": [
+    {
+     "lumen_mm": [
+      40,
+      60
+     ],
+     "wall_mm": [
+      0,
+      2
+     ]
+    },
+    {
+     "lumen_mm": [
+      30,
+      40
+     ],
+     "wall_mm": [
+      0.2,
+      2.5
+     ]
+    },
+    {
+     "lumen_mm": [
+      20,
+      30
+     ],
+     "wall_mm": [
+      0.3,
+      4
+     ]
+    },
+    {
+     "lumen_mm": [
+      10,
+      20
+     ],
+     "wall_mm": [
+      0.5,
+      5
+     ]
+    }
+   ],
+   "contracted": "a wall of 6-8 mm may still be normal in a contracted segment"
+  },
+  "rectum": {
+   "wall": {
+    "value": 2.1,
+    "unit": "mm",
+    "source": "nylund2012",
+    "sd": 0.5,
+    "state": "fasting",
+    "population": "122 healthy adults aged 23-79, ultrasound (4 MHz)"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 15,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 60,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "the empty rectum is collapsed front to back; it fills before defaecation",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 203,
+    "unit": "mm",
+    "source": "openstax_23_5"
+   }
+  },
+  "anal_canal": {
+   "wall": {
+    "value": 3,
+    "unit": "mm",
+    "source": null,
+    "note": "internal sphincter plus lining; the endoanal ultrasound study opened (Frudinger 2002, abstract) gives no thickness in its abstract",
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 1,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 30,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "closed by sphincter tone",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 42,
+    "unit": "mm",
+    "source": "nivatvongs1981",
+    "range": [
+     30,
+     53
+    ],
+    "state": "surgical anal canal, anorectal ring to anal verge",
+    "population": "108 men and 103 women aged 18-90; men 44 mm; the abstract prints 49 mm for women with a range of 30-50, which looks like a misprint"
+   },
+   "anatomicLength": {
+    "value": 21,
+    "unit": "mm",
+    "source": "nivatvongs1981",
+    "range": [
+     10,
+     38
+    ],
+    "state": "dentate line to anal verge",
+    "population": "same series"
+   },
+   "lengthTextbook": {
+    "value": null,
+    "unit": "mm",
+    "source": "openstax_23_5",
+    "range": [
+     38,
+     50
+    ]
+   }
+  },
+  "vagina": {
+   "wall": {
+    "value": 3,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 2,
+     "unit": "mm",
+     "source": null,
+     "note": "anterior and posterior walls in contact; the slit is as wide as the vagina",
+     "assumption": true
+    },
+    "distended": {
+     "value": 35,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "a potential space",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 62.7,
+    "unit": "mm",
+    "source": "barnhart2006",
+    "state": "undistended, cervix to introitus, MRI",
+    "population": "28 women of reproductive age, 77 scans"
+   },
+   "width": {
+    "proximal": {
+     "value": 32.5,
+     "unit": "mm",
+     "source": "barnhart2006"
+    },
+    "pelvicDiaphragm": {
+     "value": 27.8,
+     "unit": "mm",
+     "source": "barnhart2006"
+    },
+    "introitus": {
+     "value": 26.2,
+     "unit": "mm",
+     "source": "barnhart2006"
+    }
+   }
+  },
+  "cervical_canal": {
+   "wall": {
+    "value": 8,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 1,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 8,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "a narrow canal filled with mucus",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  },
+  "uterine_cavity": {
+   "wall": {
+    "value": 15,
+    "unit": "mm",
+    "source": null,
+    "note": "myometrium plus endometrium, nonpregnant",
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 1,
+     "unit": "mm",
+     "source": null,
+     "note": "a flat triangular slit; anterior and posterior walls in contact",
+     "assumption": true
+    },
+    "distended": {
+     "value": 30,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "a potential space",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "width": {
+    "value": 27,
+    "unit": "mm",
+    "source": "benacerraf2010",
+    "range": [
+     27,
+     32
+    ],
+    "state": "width at the fundus, 3D ultrasound; 27 nulliparous, 32 after more than one pregnancy",
+    "population": "premenopausal women with a normal uterus"
+   }
+  },
+  "uterine_tube": {
+   "wall": {
+    "value": 1.5,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 0.5,
+     "unit": "mm",
+     "source": null,
+     "note": "isthmus",
+     "assumption": true
+    },
+    "distended": {
+     "value": 6,
+     "unit": "mm",
+     "source": null,
+     "note": "ampulla",
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "lumen filled by mucosal folds",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  },
+  "bladder": {
+   "wall": {
+    "value": 3.3,
+    "unit": "mm",
+    "source": "hakenberg2000",
+    "sd": 1.1,
+    "state": "various volumes; thickness falls only slightly with volume (r = -0.12)",
+    "population": "172 men with normal lower urinary tracts, suprapubic ultrasound; 166 women: 3.0 +/- 1.0 mm"
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 95,
+     "unit": "mm",
+     "source": null,
+     "note": "a sphere of about 450 mL",
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "the empty bladder is a flattened tetrahedron with its walls together",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "wallFemale": {
+    "value": 3,
+    "unit": "mm",
+    "source": "hakenberg2000",
+    "sd": 1,
+    "population": "166 women"
+   },
+   "wallEmpty": {
+    "value": 6,
+    "unit": "mm",
+    "source": null,
+    "note": "the wall of the contracted empty bladder is thicker; no opened value",
+    "assumption": true
+   }
+  },
+  "urethra_male": {
+   "wall": {
+    "value": 2,
+    "unit": "mm",
+    "source": null,
+    "note": "mucosa and submucosa only; spongiosum, prostate and sphincter are separate parts",
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 1,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 6,
+     "unit": "mm",
+     "source": "manoliu1982",
+     "state": "during micturition, bladder outlet on micturition cystourethrograms",
+     "note": "the abstract gives 6 mm or more as compatible with normal micturition and 4 mm or less as abnormally narrowed; 6 is used as the voiding calibre. No resting calibre was found in any source opened."
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "closed except during voiding",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 223,
+    "unit": "mm",
+    "source": "kohler2008",
+    "sd": 24,
+    "range": [
+     150,
+     290
+    ],
+    "state": "penis on gentle stretch, catheter or cystoscope",
+    "population": "109 men with normal anatomy"
+   },
+   "partInThisBody": {
+    "zh": "男性人体里名为 Urethra 的部件 FJ3148 是一条直径 1.6–2.1 mm、长 161 mm 的实心细线：比排尿时的口径（6 mm 以上）细得多，也放不下两层壁，所以它是腔的位置而不是壁。本项目把它当作静止（闭合）状态的尿道腔，不再另建腔。",
+    "en": "The male body's part named Urethra, FJ3148, is a solid thread 1.6–2.1 mm across and 161 mm long: far thinner than the voiding calibre (6 mm or more) and with no room for two walls, so it marks the lumen and not the wall. This project treats it as the urethral lumen at rest (closed) and builds no other lumen."
+   }
+  },
+  "urethra_female": {
+   "wall": {
+    "value": 2,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 1,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 7,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "closed except during voiding",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "length": {
+    "value": 40,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "partInThisBody": {
+    "zh": "女性标本的“尿道黏膜下层”是一个封闭的壳：上段约 20 mm 是薄壁的管，管里有一个从膀胱端开口、到下方封死的孔（半径 0.1–1.4 mm），那就是这一段的腔；下段约 14 mm 到尿道外口是实心的，没有腔。没有黏膜部件，也没有名为尿道的壁部件。",
+    "en": "The female specimen's \"submucous layer of urethra\" is one closed shell: its upper 20 mm or so is a thin-walled tube with a bore open at the bladder end and closed below (radius 0.1–1.4 mm), which is the lumen of that stretch; the lower 14 mm or so down to the external orifice is solid, with no lumen. There is no mucosa part and no wall part named urethra."
+   }
+  },
+  "ureter": {
+   "wall": {
+    "value": 0.6,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 0.5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 3,
+     "unit": "mm",
+     "source": null,
+     "note": "upper limit of normal outer size",
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "collapsed",
+    "source": null,
+    "assumption": true,
+    "note": "closed between peristaltic boluses",
+    "filling": 0,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   },
+   "outerDiameter": {
+    "value": 1.8,
+    "unit": "mm",
+    "source": "zelenko2004",
+    "sd": 0.9,
+    "range": [
+     0,
+     3
+    ],
+    "state": "unobstructed side, unenhanced CT; 3 mm or less in 96%",
+    "population": "212 adults with a stone on the other side"
+   }
+  },
+  "vas_deferens": {
+   "wall": {
+    "value": 1.1,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 0.3,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 0.6,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "open",
+    "source": null,
+    "assumption": true,
+    "note": "a thick muscular wall keeps a small lumen open",
+    "filling": 1,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  },
+  "seminal_vesicle": {
+   "wall": {
+    "value": 1.5,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "calibre": {
+    "collapsed": {
+     "value": 1,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    },
+    "distended": {
+     "value": 5,
+     "unit": "mm",
+     "source": null,
+     "assumption": true
+    }
+   },
+   "rest": {
+    "state": "open",
+    "source": null,
+    "assumption": true,
+    "note": "a coiled sac holding fluid",
+    "filling": 1,
+    "fillingNote": "0 = shipped at the tabled collapsed calibre, 1 = shipped as full as the unmoving wall allows; follows the resting state given here (an assumption)",
+    "fillingAssumption": true
+   }
+  }
+ },
+ "smallIntestineLength": {
+  "textbookLiving": {
+   "value": 3050,
+   "unit": "mm",
+   "source": "openstax_23_5",
+   "state": "living person; about twice as long in a cadaver"
+  },
+  "intraoperative": {
+   "value": 5060,
+   "unit": "mm",
+   "source": "teitelbaum2013",
+   "sd": 1050,
+   "range": [
+    2850,
+    8450
+   ],
+   "state": "ligament of Treitz to ileocaecal valve at laparotomy",
+   "population": "240 patients; men 5330, women 4820"
+  },
+  "intraoperative2": {
+   "value": 6900,
+   "unit": "mm",
+   "source": "tacchino2015",
+   "sd": 937,
+   "range": [
+    3500,
+    10490
+   ],
+   "state": "at laparotomy",
+   "population": "443 patients, 78% women; men 7290, women 6780"
+  }
+ },
+ "sphincters": {
+  "upper_oesophageal": {
+   "where": {
+    "zh": "咽与食管交界，与咽下缩肌相续",
+    "en": "at the junction of pharynx and oesophagus, continuous with the inferior pharyngeal constrictor"
+   },
+   "whereSource": "openstax_23_3",
+   "length": {
+    "value": 30,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "closedRatio": {
+    "value": 0.15,
+    "unit": "ratio of closed to open radius",
+    "source": null,
+    "assumption": true
+   }
+  },
+  "lower_oesophageal": {
+   "where": {
+    "zh": "食管入胃处（贲门）",
+    "en": "where the oesophagus enters the stomach (the cardia)"
+   },
+   "whereSource": "openstax_23_3",
+   "length": {
+    "value": 35,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "closedRatio": {
+    "value": 0.25,
+    "unit": "ratio",
+    "source": null,
+    "assumption": true
+   }
+  },
+  "pyloric": {
+   "where": {
+    "zh": "幽门与十二指肠相接处",
+    "en": "where the pylorus joins the duodenum"
+   },
+   "whereSource": "openstax_23_4",
+   "length": {
+    "value": 20,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "closedRatio": {
+    "value": 0.2,
+    "unit": "ratio",
+    "source": null,
+    "assumption": true
+   }
+  },
+  "ileocaecal": {
+   "where": {
+    "zh": "回肠入盲肠处",
+    "en": "where the ileum enters the caecum"
+   },
+   "whereSource": "openstax_23_5",
+   "length": {
+    "value": 15,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "closedRatio": {
+    "value": 0.3,
+    "unit": "ratio",
+    "source": null,
+    "assumption": true
+   }
+  },
+  "internal_anal": {
+   "where": {
+    "zh": "肛管全长的平滑肌环",
+    "en": "the smooth-muscle ring along the anal canal"
+   },
+   "whereSource": "openstax_23_5",
+   "length": {
+    "value": 30,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "closedRatio": {
+    "value": 0.1,
+    "unit": "ratio",
+    "source": null,
+    "assumption": true
+   }
+  },
+  "external_anal": {
+   "where": {
+    "zh": "包在内括约肌之外、肛管下段的骨骼肌",
+    "en": "skeletal muscle outside the internal sphincter, round the lower anal canal"
+   },
+   "whereSource": "openstax_23_5",
+   "length": {
+    "value": 25,
+    "unit": "mm",
+    "source": null,
+    "assumption": true
+   },
+   "closedRatio": {
+    "value": 0.1,
+    "unit": "ratio",
+    "source": null,
+    "assumption": true
+   }
+  }
+ },
+ "separation": {
+  "septum": {
+   "value": 1,
+   "unit": "mm",
+   "source": null,
+   "assumption": true,
+   "note": "left between two lumina where the scanned walls overlap each other (separateRings)"
+  }
+ }
+}
