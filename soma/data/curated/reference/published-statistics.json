@@ -1,0 +1,1363 @@
+{
+ "schema": 1,
+ "id": "published-statistics",
+ "title": {
+  "zh": "已发表的汇总统计：暂时拿不到原始数据时可以先用的对照数",
+  "en": "Published aggregate statistics: comparison numbers usable while the underlying data cannot be obtained"
+ },
+ "_doc": {
+  "zh": "每一条都是从开放获取论文的表格里取的汇总数（均值、标准差、帧数），由脚本从 Europe PMC 的全文 XML 里解析，没有手抄。原文留在本机 data/raw/reference/open-access-papers/。这些论文都是 CC BY 4.0，引用其中的数字需要署名（见各条的 source）。DISFA、BP4D、UNBC-McMaster、BIWI、VOCASET、SKEL 的原始数据都要签协议才能拿，这里没有它们的任何原始数据。未经专业人员审校。",
+  "en": "Every entry is an aggregate (mean, SD, frame count) taken from a table of an open-access paper, parsed by script from the Europe PMC full-text XML rather than copied by hand. The papers are kept locally under data/raw/reference/open-access-papers/. All of them are CC BY 4.0; numbers quoted from them need attribution (see source in each entry). The raw data of DISFA, BP4D, UNBC-McMaster, BIWI, VOCASET and SKEL are released only under signed agreements and none of it is here. Not reviewed by a specialist."
+ },
+ "retrieved": "2026-10-13",
+ "entries": [
+  {
+   "id": "unbc-pspi-frame-distribution",
+   "quantity": {
+    "zh": "UNBC-McMaster 肩痛表情库：各 PSPI 分值的视频帧数",
+    "en": "UNBC-McMaster shoulder pain archive: number of video frames at each PSPI score"
+   },
+   "units": "frames",
+   "population": {
+    "zh": "25 名肩痛患者，200 段视频，共 48,398 帧（数据库作者逐帧给出的 PSPI，0–15）",
+    "en": "25 patients with shoulder pain, 200 sequences, 48,398 frames (PSPI 0-15 per frame as provided by the database creators)"
+   },
+   "value": {
+    "framesByPspi": {
+     "0": 40029,
+     "1": 2909,
+     "2": 2351,
+     "3": 1412,
+     "4": 802,
+     "5": 242,
+     "6": 270,
+     "7": 53,
+     "8": 79,
+     "9": 32,
+     "10": 67,
+     "11": 76,
+     "12": 48,
+     "13": 22,
+     "14": 1,
+     "15": 5
+    },
+    "total": 48398,
+    "fractionPspi0": 0.8271
+   },
+   "tableRef": "Table 5",
+   "tableCaption": "Frequency distribution of video frames in the UNBC-McMaster and DISFA databases by PSPI scores and PSPI groups.",
+   "source": {
+    "name": "Barua PD et al. 2022, Sci Rep 12:17297, Table 5 (frame counts by PSPI score; counts for the UNBC-McMaster and DISFA databases)",
+    "url": "https://doi.org/10.1038/s41598-022-21380-4",
+    "licence": "CC BY 4.0"
+   },
+   "corroboration": {
+    "name": "Ye X et al. 2022, Bioengineering 9(12):804, Table 1 (same frame counts; 40,029 frames = 82.7439 % at PSPI 0)",
+    "url": "https://doi.org/10.3390/bioengineering9120804",
+    "licence": "CC BY 4.0"
+   },
+   "checks": {
+    "zh": "疼痛表情模型输出的 PSPI（AU4 + max(AU6,AU7) + max(AU9,AU10) + AU43）在“真实患者做活动度检查”这种情境下的分布应当极度偏向 0：约 83% 的帧为 0，PSPI ≥ 6 的帧不到 1.5%。可用来检查我们的疼痛等级到面部动作的映射是否过于夸张。这是二手转述的帧数，不是我们从数据库算的。",
+    "en": "The PSPI (AU4 + max(AU6,AU7) + max(AU9,AU10) + AU43) produced by the pain-expression model, in the setting of real patients doing range-of-motion tests, should be extremely skewed towards 0: about 83 % of frames are 0 and under 1.5 % reach PSPI >= 6. Usable to check whether our mapping from pain level to facial action is exaggerated. These are frame counts quoted from secondary papers, not computed by us from the database."
+   }
+  },
+  {
+   "id": "disfa-pspi-frame-distribution",
+   "quantity": {
+    "zh": "DISFA：按 AU 强度标注换算出的 PSPI 各分值帧数（Barua 等人算的）",
+    "en": "DISFA: number of frames at each PSPI score derived from the AU intensity codes (computed by Barua et al.)"
+   },
+   "units": "frames",
+   "population": {
+    "zh": "27 名成年人看情绪诱发视频的自发表情，共 130,798 帧",
+    "en": "27 adults, spontaneous expressions while watching emotion-eliciting video, 130,798 frames"
+   },
+   "value": {
+    "rawRows": [
+     [
+      "0",
+      "40,029",
+      "2483*",
+      "90,309",
+      "9025*"
+     ],
+     [
+      "1",
+      "2909",
+      "2909",
+      "9973",
+      "9973"
+     ],
+     [
+      "2",
+      "2351",
+      "3763",
+      "12,194",
+      "10,309*"
+     ],
+     [
+      "3",
+      "1412",
+      "8447"
+     ],
+     [
+      "4",
+      "802",
+      "1697",
+      "4127",
+      "9875"
+     ],
+     [
+      "5",
+      "242",
+      "1661"
+     ],
+     [
+      "6",
+      "270",
+      "1526"
+     ],
+     [
+      "7",
+      "53",
+      "996"
+     ],
+     [
+      "8",
+      "79",
+      "435"
+     ],
+     [
+      "9",
+      "32",
+      "503"
+     ],
+     [
+      "10",
+      "67",
+      "317"
+     ],
+     [
+      "11",
+      "76",
+      "169"
+     ],
+     [
+      "12",
+      "48",
+      "108"
+     ],
+     [
+      "13",
+      "22",
+      "33"
+     ],
+     [
+      "14",
+      "1",
+      "0"
+     ],
+     [
+      "15",
+      "5",
+      "0"
+     ],
+     [
+      "Total",
+      "48,398",
+      "10,852",
+      "130,798",
+      "39,182"
+     ]
+    ],
+    "note": {
+     "zh": "原表有合并单元格，这里保留原始各行的单元格，列的含义见 tableCaption 和原文；DISFA 的列在 UNBC 两列之后。",
+     "en": "The source table has merged cells; the raw cells of each row are kept here, column meanings are in tableCaption and the paper; the DISFA columns follow the two UNBC columns."
+    }
+   },
+   "tableRef": "Table 5",
+   "tableCaption": "Frequency distribution of video frames in the UNBC-McMaster and DISFA databases by PSPI scores and PSPI groups.",
+   "source": {
+    "name": "Barua PD et al. 2022, Sci Rep 12:17297, Table 5 (frame counts by PSPI score; counts for the UNBC-McMaster and DISFA databases)",
+    "url": "https://doi.org/10.1038/s41598-022-21380-4",
+    "licence": "CC BY 4.0"
+   },
+   "checks": {
+    "zh": "非疼痛情境（看视频）下与疼痛相关的 AU 组合出现得有多少：可作为我们“无痛时”面部动作基线的对照。",
+    "en": "How often pain-related AU combinations occur in a non-pain setting (watching video): a contrast for our facial-action baseline without pain."
+   }
+  },
+  {
+   "id": "fstt-korean-female-midline-cbct",
+   "quantity": {
+    "zh": "面部软组织厚度（正中 9 个标志点），韩国女性，按骨性分类",
+    "en": "Facial soft-tissue thickness at 9 midline landmarks, Korean females, by skeletal class"
+   },
+   "units": "mm",
+   "population": {
+    "zh": "20–29 岁正畸门诊患者，CBCT，每个骨性分类 18 人",
+    "en": "Orthodontic patients aged 20-29, CBCT, 18 per skeletal class"
+   },
+   "value": {
+    "G": {
+     "classI": {
+      "mean": 5.57,
+      "sd": 0.68
+     },
+     "classII": {
+      "mean": 5.03,
+      "sd": 0.64
+     },
+     "classIII": {
+      "mean": 5.84,
+      "sd": 0.67
+     }
+    },
+    "N": {
+     "classI": {
+      "mean": 6.16,
+      "sd": 1.48
+     },
+     "classII": {
+      "mean": 5.25,
+      "sd": 0.72
+     },
+     "classIII": {
+      "mean": 6.16,
+      "sd": 1.12
+     }
+    },
+    "Rhi": {
+     "classI": {
+      "mean": 3.1,
+      "sd": 1.6
+     },
+     "classII": {
+      "mean": 2.41,
+      "sd": 0.45
+     },
+     "classIII": {
+      "mean": 2.77,
+      "sd": 1.41
+     }
+    },
+    "Sn": {
+     "classI": {
+      "mean": 13.53,
+      "sd": 1.2
+     },
+     "classII": {
+      "mean": 12.29,
+      "sd": 1.24
+     },
+     "classIII": {
+      "mean": 13.93,
+      "sd": 1.62
+     }
+    },
+    "Ls": {
+     "classI": {
+      "mean": 14.19,
+      "sd": 1.69
+     },
+     "classII": {
+      "mean": 13.71,
+      "sd": 2.18
+     },
+     "classIII": {
+      "mean": 14.21,
+      "sd": 1.45
+     }
+    },
+    "Li": {
+     "classI": {
+      "mean": 14.94,
+      "sd": 1.65
+     },
+     "classII": {
+      "mean": 16.4,
+      "sd": 2.32
+     },
+     "classIII": {
+      "mean": 13.2,
+      "sd": 1.92
+     }
+    },
+    "Lbm": {
+     "classI": {
+      "mean": 11.99,
+      "sd": 0.92
+     },
+     "classII": {
+      "mean": 11.48,
+      "sd": 1.82
+     },
+     "classIII": {
+      "mean": 11.15,
+      "sd": 1.33
+     }
+    },
+    "Pog": {
+     "classI": {
+      "mean": 12.44,
+      "sd": 1.83
+     },
+     "classII": {
+      "mean": 11.51,
+      "sd": 2.23
+     },
+     "classIII": {
+      "mean": 11.98,
+      "sd": 2.5
+     }
+    },
+    "Gn": {
+     "classI": {
+      "mean": 7.53,
+      "sd": 1.92
+     },
+     "classII": {
+      "mean": 6.21,
+      "sd": 1.24
+     },
+     "classIII": {
+      "mean": 7.5,
+      "sd": 2.23
+     }
+    }
+   },
+   "landmarks": {
+    "G": "glabella",
+    "N": "nasion",
+    "Rhi": "rhinion",
+    "Sn": "subnasale",
+    "Ls": "labrale superius",
+    "Li": "labrale inferius",
+    "Lbm": "labiomentale",
+    "Pog": "pogonion",
+    "Gn": "gnathion"
+   },
+   "tableRef": "Table 2",
+   "tableCaption": "The differences between three skeletal classes in FSTT in Korean females.",
+   "source": {
+    "name": "Park E, Chang J, Park J. 2023, Int J Environ Res Public Health 20(3):2658",
+    "url": "https://doi.org/10.3390/ijerph20032658",
+    "licence": "CC BY 4.0",
+    "licenceStatement": "© 2023 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access article distributed under the terms and conditions of the Creative Commons Attribution (CC BY) license (https://creativecommons.org/licenses/by/4.0/)."
+   },
+   "checks": {
+    "zh": "头骨到皮肤表面的距离（正中线）：检查我们头部模型里颅骨与皮肤网格在这些标志点的间距。注意：只有正中标志点，没有左右成对的点；样本是正畸患者而不是一般人群。",
+    "en": "Bone-to-skin distance on the midline: checks the gap between skull and skin meshes of our head model at these landmarks. Note: midline landmarks only, no bilateral points; the sample is orthodontic patients, not a general population."
+   }
+  },
+  {
+   "id": "fstt-korean-male-midline-cbct",
+   "quantity": {
+    "zh": "面部软组织厚度（正中 9 个标志点），韩国男性，按骨性分类",
+    "en": "Facial soft-tissue thickness at 9 midline landmarks, Korean males, by skeletal class"
+   },
+   "units": "mm",
+   "population": {
+    "zh": "20–29 岁正畸门诊患者，CBCT，每个骨性分类 16 人",
+    "en": "Orthodontic patients aged 20-29, CBCT, 16 per skeletal class"
+   },
+   "value": {
+    "G": {
+     "classI": {
+      "mean": 5.76,
+      "sd": 0.76
+     },
+     "classII": {
+      "mean": 5.32,
+      "sd": 0.72
+     },
+     "classIII": {
+      "mean": 5.52,
+      "sd": 0.65
+     }
+    },
+    "N": {
+     "classI": {
+      "mean": 6.93,
+      "sd": 0.97
+     },
+     "classII": {
+      "mean": 6.54,
+      "sd": 0.86
+     },
+     "classIII": {
+      "mean": 7.0,
+      "sd": 0.89
+     }
+    },
+    "Rhi": {
+     "classI": {
+      "mean": 2.92,
+      "sd": 0.82
+     },
+     "classII": {
+      "mean": 2.85,
+      "sd": 1.2
+     },
+     "classIII": {
+      "mean": 3.32,
+      "sd": 0.69
+     }
+    },
+    "Sn": {
+     "classI": {
+      "mean": 15.25,
+      "sd": 1.52
+     },
+     "classII": {
+      "mean": 14.58,
+      "sd": 2.15
+     },
+     "classIII": {
+      "mean": 16.26,
+      "sd": 1.79
+     }
+    },
+    "Ls": {
+     "classI": {
+      "mean": 15.16,
+      "sd": 2.4
+     },
+     "classII": {
+      "mean": 14.42,
+      "sd": 2.72
+     },
+     "classIII": {
+      "mean": 16.52,
+      "sd": 2.83
+     }
+    },
+    "Li": {
+     "classI": {
+      "mean": 15.36,
+      "sd": 1.92
+     },
+     "classII": {
+      "mean": 19.13,
+      "sd": 3.23
+     },
+     "classIII": {
+      "mean": 14.43,
+      "sd": 1.69
+     }
+    },
+    "Lbm": {
+     "classI": {
+      "mean": 11.92,
+      "sd": 1.28
+     },
+     "classII": {
+      "mean": 13.34,
+      "sd": 1.82
+     },
+     "classIII": {
+      "mean": 12.29,
+      "sd": 1.56
+     }
+    },
+    "Pog": {
+     "classI": {
+      "mean": 11.27,
+      "sd": 2.6
+     },
+     "classII": {
+      "mean": 11.99,
+      "sd": 2.35
+     },
+     "classIII": {
+      "mean": 11.73,
+      "sd": 1.44
+     }
+    },
+    "Gn": {
+     "classI": {
+      "mean": 7.22,
+      "sd": 1.6
+     },
+     "classII": {
+      "mean": 8.42,
+      "sd": 2.3
+     },
+     "classIII": {
+      "mean": 7.56,
+      "sd": 2.02
+     }
+    }
+   },
+   "landmarks": {
+    "G": "glabella",
+    "N": "nasion",
+    "Rhi": "rhinion",
+    "Sn": "subnasale",
+    "Ls": "labrale superius",
+    "Li": "labrale inferius",
+    "Lbm": "labiomentale",
+    "Pog": "pogonion",
+    "Gn": "gnathion"
+   },
+   "tableRef": "Table 1",
+   "tableCaption": "The differences between three skeletal classes in FSTT in Korean males.",
+   "source": {
+    "name": "Park E, Chang J, Park J. 2023, Int J Environ Res Public Health 20(3):2658",
+    "url": "https://doi.org/10.3390/ijerph20032658",
+    "licence": "CC BY 4.0",
+    "licenceStatement": "© 2023 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access article distributed under the terms and conditions of the Creative Commons Attribution (CC BY) license (https://creativecommons.org/licenses/by/4.0/)."
+   },
+   "checks": {
+    "zh": "头骨到皮肤表面的距离（正中线）：检查我们头部模型里颅骨与皮肤网格在这些标志点的间距。注意：只有正中标志点，没有左右成对的点；样本是正畸患者而不是一般人群。",
+    "en": "Bone-to-skin distance on the midline: checks the gap between skull and skin meshes of our head model at these landmarks. Note: midline landmarks only, no bilateral points; the sample is orthodontic patients, not a general population."
+   }
+  },
+  {
+   "id": "fstt-brazil-by-sex-bilateral-cbct",
+   "quantity": {
+    "zh": "面部软组织厚度：10 个正中点和 11 对左右点，按性别",
+    "en": "Facial soft-tissue thickness: 10 midline and 11 bilateral landmark pairs, by sex"
+   },
+   "units": "mm",
+   "population": {
+    "zh": "巴西成年人 101 人（女 56、男 45；18 岁以上），CBCT，坐位",
+    "en": "101 Brazilian adults (56 female, 45 male; 18 and older), CBCT, seated"
+   },
+   "value": {
+    "Supraglabella": {
+     "female": {
+      "mean": 4.5,
+      "sd": 0.97,
+      "se": 0.14
+     },
+     "male": {
+      "mean": 5.5,
+      "sd": 1.14,
+      "se": 0.23
+     }
+    },
+    "Glabella": {
+     "female": {
+      "mean": 4.9,
+      "sd": 0.77,
+      "se": 0.1
+     },
+     "male": {
+      "mean": 5.9,
+      "sd": 0.95,
+      "se": 0.14
+     }
+    },
+    "Nasion": {
+     "female": {
+      "mean": 6.2,
+      "sd": 0.97,
+      "se": 0.13
+     },
+     "male": {
+      "mean": 8.1,
+      "sd": 1.24,
+      "se": 0.18
+     }
+    },
+    "Rhinion": {
+     "female": {
+      "mean": 1.7,
+      "sd": 0.43,
+      "se": 0.06
+     },
+     "male": {
+      "mean": 2.3,
+      "sd": 0.58,
+      "se": 0.09
+     }
+    },
+    "Mid-Philtrum": {
+     "female": {
+      "mean": 13.1,
+      "sd": 1.82,
+      "se": 0.24
+     },
+     "male": {
+      "mean": 15.7,
+      "sd": 2.22,
+      "se": 0.33
+     }
+    },
+    "Prosthion": {
+     "female": {
+      "mean": 10,
+      "sd": 1.58,
+      "se": 0.21
+     },
+     "male": {
+      "mean": 13.3,
+      "sd": 2,
+      "se": 0.3
+     }
+    },
+    "Infradentale": {
+     "female": {
+      "mean": 9.8,
+      "sd": 1.34,
+      "se": 0.18
+     },
+     "male": {
+      "mean": 11.9,
+      "sd": 1.5,
+      "se": 0.22
+     }
+    },
+    "Supramentale": {
+     "female": {
+      "mean": 11.9,
+      "sd": 1.53,
+      "se": 0.2
+     },
+     "male": {
+      "mean": 12.9,
+      "sd": 1.85,
+      "se": 0.28
+     }
+    },
+    "Pogonion": {
+     "female": {
+      "mean": 9.8,
+      "sd": 2.18,
+      "se": 0.29
+     },
+     "male": {
+      "mean": 11.4,
+      "sd": 2.25,
+      "se": 0.34
+     }
+    },
+    "Menton": {
+     "female": {
+      "mean": 7,
+      "sd": 1.73,
+      "se": 0.24
+     },
+     "male": {
+      "mean": 9,
+      "sd": 2.08,
+      "se": 0.33
+     }
+    },
+    "Frontal Eminence R": {
+     "female": {
+      "mean": 4.1,
+      "sd": 0.89,
+      "se": 0.14
+     },
+     "male": {
+      "mean": 5,
+      "sd": 1.23,
+      "se": 0.33
+     }
+    },
+    "Frontal Eminence L": {
+     "female": {
+      "mean": 4.2,
+      "sd": 1.11,
+      "se": 0.18
+     },
+     "male": {
+      "mean": 4.9,
+      "sd": 1.2,
+      "se": 0.32
+     }
+    },
+    "Mid-supraorbital R": {
+     "female": {
+      "mean": 6.5,
+      "sd": 1.27,
+      "se": 0.17
+     },
+     "male": {
+      "mean": 8.6,
+      "sd": 1.33,
+      "se": 0.2
+     }
+    },
+    "Mid-supraorbital L": {
+     "female": {
+      "mean": 6.4,
+      "sd": 1.37,
+      "se": 0.18
+     },
+     "male": {
+      "mean": 8.7,
+      "sd": 1.33,
+      "se": 0.2
+     }
+    },
+    "Mid-infraorbital R": {
+     "female": {
+      "mean": 5.3,
+      "sd": 1.47,
+      "se": 0.2
+     },
+     "male": {
+      "mean": 5.8,
+      "sd": 1.51,
+      "se": 0.23
+     }
+    },
+    "Mid-infraorbital L": {
+     "female": {
+      "mean": 5.5,
+      "sd": 1.58,
+      "se": 0.21
+     },
+     "male": {
+      "mean": 5.9,
+      "sd": 1.65,
+      "se": 0.25
+     }
+    },
+    "Malar R": {
+     "female": {
+      "mean": 21.4,
+      "sd": 2.57,
+      "se": 0.34
+     },
+     "male": {
+      "mean": 22.8,
+      "sd": 2.75,
+      "se": 0.41
+     }
+    },
+    "Malar L": {
+     "female": {
+      "mean": 21.7,
+      "sd": 2.38,
+      "se": 0.32
+     },
+     "male": {
+      "mean": 22.9,
+      "sd": 2.8,
+      "se": 0.42
+     }
+    },
+    "Lateral Orbital R": {
+     "female": {
+      "mean": 9.1,
+      "sd": 1.73,
+      "se": 0.23
+     },
+     "male": {
+      "mean": 8.3,
+      "sd": 1.46,
+      "se": 0.22
+     }
+    },
+    "Lateral Orbital L": {
+     "female": {
+      "mean": 9.2,
+      "sd": 1.74,
+      "se": 0.23
+     },
+     "male": {
+      "mean": 8.3,
+      "sd": 1.36,
+      "se": 0.2
+     }
+    },
+    "Zygion R": {
+     "female": {
+      "mean": 7.8,
+      "sd": 1.79,
+      "se": 0.24
+     },
+     "male": {
+      "mean": 9.2,
+      "sd": 1.85,
+      "se": 0.28
+     }
+    },
+    "Zygion L": {
+     "female": {
+      "mean": 7.8,
+      "sd": 1.9,
+      "se": 0.25
+     },
+     "male": {
+      "mean": 9.1,
+      "sd": 1.87,
+      "se": 0.28
+     }
+    },
+    "Supraglenoid R": {
+     "female": {
+      "mean": 10.7,
+      "sd": 1.9,
+      "se": 0.25
+     },
+     "male": {
+      "mean": 12.8,
+      "sd": 1.57,
+      "se": 0.23
+     }
+    },
+    "Supraglenoid L": {
+     "female": {
+      "mean": 10.7,
+      "sd": 1.84,
+      "se": 0.25
+     },
+     "male": {
+      "mean": 12.8,
+      "sd": 1.6,
+      "se": 0.24
+     }
+    },
+    "Gonion R": {
+     "female": {
+      "mean": 12.8,
+      "sd": 3.65,
+      "se": 0.49
+     },
+     "male": {
+      "mean": 18.3,
+      "sd": 5.54,
+      "se": 0.83
+     }
+    },
+    "Gonion L": {
+     "female": {
+      "mean": 13,
+      "sd": 3.88,
+      "se": 0.52
+     },
+     "male": {
+      "mean": 17.8,
+      "sd": 5.49,
+      "se": 0.82
+     }
+    },
+    "Ectomolare 2 R": {
+     "female": {
+      "mean": 27,
+      "sd": 3.62,
+      "se": 0.48
+     },
+     "male": {
+      "mean": 30.3,
+      "sd": 3.29,
+      "se": 0.49
+     }
+    },
+    "Ectomolare 2 L": {
+     "female": {
+      "mean": 27.2,
+      "sd": 3.64,
+      "se": 0.49
+     },
+     "male": {
+      "mean": 30.2,
+      "sd": 3.44,
+      "se": 0.51
+     }
+    },
+    "Occlusal Line R": {
+     "female": {
+      "mean": 20.3,
+      "sd": 2.82,
+      "se": 0.38
+     },
+     "male": {
+      "mean": 24.6,
+      "sd": 3.17,
+      "se": 0.47
+     }
+    },
+    "Occlusal Line L": {
+     "female": {
+      "mean": 20.4,
+      "sd": 2.86,
+      "se": 0.38
+     },
+     "male": {
+      "mean": 24.3,
+      "sd": 3.21,
+      "se": 0.48
+     }
+    },
+    "Ectomolare₂ R": {
+     "female": {
+      "mean": 24.9,
+      "sd": 3.06,
+      "se": 0.41
+     },
+     "male": {
+      "mean": 28.2,
+      "sd": 3.96,
+      "se": 0.59
+     }
+    },
+    "Ectomolare₂ L": {
+     "female": {
+      "mean": 24.8,
+      "sd": 3.2,
+      "se": 0.43
+     },
+     "male": {
+      "mean": 28.4,
+      "sd": 3.48,
+      "se": 0.52
+     }
+    }
+   },
+   "tableRef": "Table 3",
+   "tableCaption": "Mean FSTT (millimeters and percentage), SD, and SE divided by sex.",
+   "source": {
+    "name": "Moritsugui DS et al. 2022, PLoS One 17(7):e0270980",
+    "url": "https://doi.org/10.1371/journal.pone.0270980",
+    "licence": "CC BY 4.0"
+   },
+   "checks": {
+    "zh": "带左右成对标志点（颧、眶外侧、下颌角、咬合线、臼齿上下等）的按性别厚度表：检查面颊和下颌角处皮肤到骨的间距，以及左右对称性。原表里有两行名字几乎相同（“Ectomolare 2”和“Ectomolare₂”），应是上、下第二磨牙处，使用前请对照原文表 2。",
+    "en": "A by-sex table with bilateral landmarks (malar, lateral orbit, gonion, occlusal line, supra/infra second molar...): checks skin-to-bone distance at cheek and mandibular angle, and left-right symmetry. Two rows of the source table have almost the same name (\"Ectomolare 2\" and \"Ectomolare₂\"), presumably the upper and lower second molar; check against Table 2 of the paper before use."
+   }
+  },
+  {
+   "id": "fstt-nigerian-female-ct",
+   "quantity": {
+    "zh": "面部软组织厚度：12 个正中点和 19 对左右点，成年女性",
+    "en": "Facial soft-tissue thickness: 12 midline and 19 bilateral points, adult women"
+   },
+   "units": "mm",
+   "population": {
+    "zh": "尼日利亚成年女性 32 人，18–95 岁，CT（仰卧）",
+    "en": "32 Nigerian adult women aged 18-95, CT (supine)"
+   },
+   "value": {
+    "midline": {
+     "Vertex": {
+      "mean": 5.54,
+      "min": 1.18,
+      "max": 9.96,
+      "sd": 2.51,
+      "n": 29
+     },
+     "Supraglabella": {
+      "mean": 3.8,
+      "min": 1.99,
+      "max": 5.28,
+      "sd": 0.96,
+      "n": 32
+     },
+     "Glabella": {
+      "mean": 5.39,
+      "min": 3.17,
+      "max": 8.49,
+      "sd": 1.41,
+      "n": 32
+     },
+     "Nasion": {
+      "mean": 5.33,
+      "min": 3.31,
+      "max": 8.93,
+      "sd": 1.51,
+      "n": 32
+     },
+     "Mid-Nasal": {
+      "mean": 3.25,
+      "min": 1.84,
+      "max": 6.06,
+      "sd": 0.97,
+      "n": 32
+     },
+     "Rhinion": {
+      "mean": 2.59,
+      "min": 1.71,
+      "max": 4.24,
+      "sd": 0.59,
+      "n": 32
+     },
+     "Midphiltrum": {
+      "mean": 10.8,
+      "min": 6.96,
+      "max": 14.7,
+      "sd": 1.93,
+      "n": 32
+     },
+     "Upper lip border": {
+      "mean": 8.65,
+      "min": 5.6,
+      "max": 12,
+      "sd": 1.46,
+      "n": 32
+     },
+     "Lower lip border": {
+      "mean": 10.45,
+      "min": 5.39,
+      "max": 14.5,
+      "sd": 2.76,
+      "n": 31
+     },
+     "Labiomental": {
+      "mean": 11.79,
+      "min": 6.42,
+      "max": 17.2,
+      "sd": 3.66,
+      "n": 30
+     },
+     "Mental eminence": {
+      "mean": 10.81,
+      "min": 6.36,
+      "max": 16.0,
+      "sd": 3.08,
+      "n": 31
+     },
+     "Menton": {
+      "mean": 5.7,
+      "min": 2.66,
+      "max": 11.3,
+      "sd": 2.41,
+      "n": 29
+     }
+    },
+    "bilateral": {
+     "Frontal eminence": {
+      "right": {
+       "mean": 4.36,
+       "sd": 1.4,
+       "n": 32
+      },
+      "left": {
+       "mean": 4.47,
+       "sd": 1.34,
+       "n": 32
+      }
+     },
+     "Supraorbital": {
+      "right": {
+       "mean": 5.43,
+       "sd": 1.48,
+       "n": 32
+      },
+      "left": {
+       "mean": 5.58,
+       "sd": 1.52,
+       "n": 32
+      }
+     },
+     "Infraorbital": {
+      "right": {
+       "mean": 10.41,
+       "sd": 2.88,
+       "n": 32
+      },
+      "left": {
+       "mean": 10.5,
+       "sd": 2.71,
+       "n": 32
+      }
+     },
+     "Supraglenoid": {
+      "right": {
+       "mean": 12.24,
+       "sd": 3.15,
+       "n": 32
+      },
+      "left": {
+       "mean": 12.98,
+       "sd": 3.34,
+       "n": 32
+      }
+     },
+     "Zygomatic arch": {
+      "right": {
+       "mean": 6.76,
+       "sd": 2.62,
+       "n": 32
+      },
+      "left": {
+       "mean": 7.39,
+       "sd": 2.86,
+       "n": 32
+      }
+     },
+     "Lateral Orbit": {
+      "right": {
+       "mean": 7.65,
+       "sd": 2.51,
+       "n": 32
+      },
+      "left": {
+       "mean": 8.13,
+       "sd": 2.5,
+       "n": 32
+      }
+     },
+     "Lateral Glabella": {
+      "right": {
+       "mean": 4.44,
+       "sd": 1.52,
+       "n": 32
+      },
+      "left": {
+       "mean": 4.55,
+       "sd": 1.59,
+       "n": 32
+      }
+     },
+     "Lateral nasal": {
+      "right": {
+       "mean": 6.95,
+       "sd": 1.9,
+       "n": 32
+      },
+      "left": {
+       "mean": 7.4,
+       "sd": 2.19,
+       "n": 32
+      }
+     },
+     "lateral maxilla": {
+      "right": {
+       "mean": 22.2,
+       "sd": 5.18,
+       "n": 31
+      },
+      "left": {
+       "mean": 23.6,
+       "sd": 5.29,
+       "n": 31
+      }
+     },
+     "Lateral nostril": {
+      "right": {
+       "mean": 9.11,
+       "sd": 2.26,
+       "n": 31
+      },
+      "left": {
+       "mean": 9.39,
+       "sd": 2.31,
+       "n": 31
+      }
+     },
+     "Supracanine": {
+      "right": {
+       "mean": 7.59,
+       "sd": 1.97,
+       "n": 31
+      },
+      "left": {
+       "mean": 7.98,
+       "sd": 2.11,
+       "n": 31
+      }
+     },
+     "Infra-canine": {
+      "right": {
+       "mean": 7.58,
+       "sd": 3.04,
+       "n": 28
+      },
+      "left": {
+       "mean": 7.84,
+       "sd": 3.13,
+       "n": 28
+      }
+     },
+     "Mid-lateral orbit": {
+      "right": {
+       "mean": 3.25,
+       "sd": 1.22,
+       "n": 31
+      },
+      "left": {
+       "mean": 3.5,
+       "sd": 1.27,
+       "n": 31
+      }
+     },
+     "Supra-M2": {
+      "right": {
+       "mean": 21.64,
+       "sd": 6.05,
+       "n": 31
+      },
+      "left": {
+       "mean": 23.05,
+       "sd": 7.25,
+       "n": 31
+      }
+     },
+     "Infra-M2": {
+      "right": {
+       "mean": 17.86,
+       "sd": 5.13,
+       "n": 31
+      },
+      "left": {
+       "mean": 19.02,
+       "sd": 5.92,
+       "n": 31
+      }
+     },
+     "Mid-masseter": {
+      "right": {
+       "mean": 20.22,
+       "sd": 5.63,
+       "n": 31
+      },
+      "left": {
+       "mean": 20.98,
+       "sd": 5.28,
+       "n": 31
+      }
+     },
+     "Gonion": {
+      "right": {
+       "mean": 16.75,
+       "sd": 7.0,
+       "n": 29
+      },
+      "left": {
+       "mean": 17.53,
+       "sd": 7.55,
+       "n": 29
+      }
+     },
+     "Occlusal line": {
+      "right": {
+       "mean": 19.61,
+       "sd": 7.57,
+       "n": 29
+      },
+      "left": {
+       "mean": 20.62,
+       "sd": 8.07,
+       "n": 29
+      }
+     },
+     "Mid-mandible": {
+      "right": {
+       "mean": 11.88,
+       "sd": 5.38,
+       "n": 28
+      },
+      "left": {
+       "mean": 12.64,
+       "sd": 5.83,
+       "n": 28
+      }
+     }
+    }
+   },
+   "tableRef": "Tables 5 and 6",
+   "tableCaption": "Mean values of midline FSTT points for the CNFE (mm) / Descriptive data of bilateral FSTT for the CNFE",
+   "source": {
+    "name": "Adegbite N et al. 2026, Int J Legal Med, doi 10.1007/s00414-026-03794-1",
+    "url": "https://doi.org/10.1007/s00414-026-03794-1",
+    "licence": "CC BY 4.0"
+   },
+   "checks": {
+    "zh": "女性、带左右点、点位最多的一张表（含咬肌中部、下颌体中部、鼻旁等）。年龄跨度很大、人数少、仰卧位（面颊软组织会后坠），只适合当量级参照。",
+    "en": "Female, bilateral, and the densest set of points (mid-masseter, mid-mandible, lateral nasal...). Wide age range, small sample and supine posture (cheek tissue sags backwards): a magnitude reference only."
+   }
+  }
+ ],
+ "datasetFacts": [
+  {
+   "dataset": "DISFA",
+   "facts": {
+    "zh": "27 名成年受试者（女 12、男 15）；AU 强度由两名 FACS 专家按 0–5 评分；每帧 66 个面部标志点。",
+    "en": "27 adult subjects (12 female, 15 male); AU intensities scored 0-5 by two FACS experts; 66 facial landmarks per image."
+   },
+   "source": {
+    "name": "DISFA official page",
+    "url": "http://mohammadmahoor.com/pages/databases/disfa/",
+    "licence": "web page, no licence stated"
+   }
+  },
+  {
+   "dataset": "BP4D-Spontaneous / BP4D+",
+   "facts": {
+    "zh": "BP4D：41 人（女 23、男 18），18–29 岁，每人 8 个情绪任务，约 2.6 TB。BP4D+：140 人（女 82、男 58），18–66 岁，每人 10 个任务。",
+    "en": "BP4D: 41 participants (23 women, 18 men) aged 18-29, 8 emotion tasks each, about 2.6 TB. BP4D+: 140 subjects (82 female, 58 male) aged 18-66, 10 tasks each."
+   },
+   "source": {
+    "name": "Binghamton University 3DFE page",
+    "url": "https://www.cs.binghamton.edu/~lijun/Research/3DFE/3DFE_Analysis.html",
+    "licence": "web page, no licence stated"
+   }
+  }
+ ],
+ "notFound": {
+  "zh": [
+   "DISFA / BP4D 各 AU 的强度分布和共现矩阵：这次没有在开放论文里找到可机读的表（Walecki 等 2017 的共现只在图里）。",
+   "VOCASET / BIWI 的唇、下颌位移幅度和时序：两篇数据集论文这次没有打开；我们的发音器官对照数改用 MOCHA-TIMIT 自己算（见 articulation-summary.json）。",
+   "SKEL / BSM 论文里的骨形状常模：这次没有打开论文。",
+   "成年女性头部测量（头长、头宽、颧宽、下颌角宽，带标准差）：ANSUR II 公开 CSV 的官方链接当天返回的是网页而不是数据，没有取到。"
+  ],
+  "en": [
+   "Per-AU intensity distributions and co-occurrence matrices of DISFA / BP4D: no machine-readable table was found in an open paper this time (the co-occurrence in Walecki et al. 2017 is only in a figure).",
+   "Lip and jaw displacement amplitudes and timing from VOCASET / BIWI: the two dataset papers were not opened this time; our articulator comparison numbers are computed from MOCHA-TIMIT instead (see articulation-summary.json).",
+   "Bone shape norms from the SKEL / BSM papers: the papers were not opened this time.",
+   "Adult female head anthropometry (head length, breadth, bizygomatic, bigonial, with SDs): the official links to the ANSUR II public CSVs returned a web page instead of data on the day, so nothing was obtained."
+  ]
+ },
+ "gatedAccess": {
+  "note": {
+   "zh": "下面这些数据集要签协议才能拿，协议保护被试或禁止转给第三方。本项目没有从任何地方下载它们；需要的话请用户本人按官方流程申请。页面上的联系邮箱这里不抄录。",
+   "en": "The datasets below are released only under a signed agreement that protects participants or forbids passing the data on. This project downloaded none of them from anywhere; the user would apply personally through the official procedure. Contact addresses shown on the pages are not copied here."
+  },
+  "datasets": [
+   {
+    "dataset": "DISFA / DISFA+",
+    "officialUrl": "http://mohammadmahoor.com/pages/databases/disfa/",
+    "procedure": {
+     "zh": "官方页面：数据库“可为研究目的分发”，通过页面上的 “Submit A Request” 提交申请；DISFA+ 要另签一份协议。协议正文、谁可以申请、多久回复，页面上没有写（这次没有打开协议表单）。",
+     "en": "Official page: the database is \"available for distribution for research purposes\"; a request is submitted through \"Submit A Request\" on the page, and DISFA+ needs a separate agreement. The agreement text, who may apply and the turnaround are not on the page (the form itself was not opened this time)."
+    }
+   },
+   {
+    "dataset": "BP4D-Spontaneous / BP4D+",
+    "officialUrl": "https://www.cs.binghamton.edu/~lijun/Research/3DFE/3DFE_Analysis.html",
+    "procedure": {
+     "zh": "只提供给非营利研究；学生不能作为接收人（“Students are not eligible to be a recipient. If you are a student, please have your supervisor to make a request.”）；需要接收方与本单位科研管理部门负责人签署书面许可协议；向页面上给出的负责人发邮件申请；商业用途另找该校技术转移办公室。数据量很大（BP4D 约 2.6 TB，BP4D+ 超过 10 TB）。回复时间页面没写。",
+     "en": "Non-profit research only; students cannot be recipients (\"Students are not eligible to be a recipient. If you are a student, please have your supervisor to make a request.\"); a written licence agreement signed with the director of the recipient institution's research administration office is required; the request goes by e-mail to the contact named on the page; commercial use goes through the university's technology transfer office. Very large (BP4D about 2.6 TB, BP4D+ over 10 TB). No turnaround stated."
+    }
+   },
+   {
+    "dataset": "UNBC-McMaster Shoulder Pain Expression Archive",
+    "officialUrl": "https://www.jeffcohn.net/Resources/",
+    "procedure": {
+     "zh": "官方页面：“Requests must come from a university faculty member or research scientist. Commercial use is not permitted.” 通过页面上的 PainArchive 链接申请。原来的 pitt.edu 页面已是 404。协议表单这次没有打开。",
+     "en": "Official page: \"Requests must come from a university faculty member or research scientist. Commercial use is not permitted.\" Requests go through the PainArchive link on that page. The former pitt.edu page is now a 404. The agreement form was not opened this time."
+    }
+   },
+   {
+    "dataset": "BIWI 3D Audiovisual Corpus of Affective Communication (B3D(AC)^2)",
+    "officialUrl": "https://data.vision.ee.ethz.ch/cvl/datasets/b3dac2.en.html",
+    "procedure": {
+     "zh": "官方页面当天返回 HTTP 403，没有读到申请流程。凭记忆（未核实）：需要签署协议后发给 ETH 的课题组。",
+     "en": "The official page answered HTTP 403 on the day, so the procedure could not be read. From memory (not verified): a signed agreement is sent to the ETH group."
+    }
+   },
+   {
+    "dataset": "VOCASET (VOCA)",
+    "officialUrl": "https://voca.is.tue.mpg.de/",
+    "procedure": {
+     "zh": "在网站注册并登录后下载。许可：“Licensor grants you (Licensee) personally a single-user, non-exclusive, non-transferable, free of charge right” 用于 “non-commercial scientific research, non-commercial education, or non-commercial artistic projects”；“The Data and Software and the license herein granted shall not be copied, shared, distributed, re-sold, offered for re-sale, transferred or sub-licensed in whole or in part except that you may make one copy for archive purposes only.”",
+     "en": "Download after registering and signing in on the site. Licence: \"Licensor grants you (Licensee) personally a single-user, non-exclusive, non-transferable, free of charge right\" for \"non-commercial scientific research, non-commercial education, or non-commercial artistic projects\"; \"The Data and Software and the license herein granted shall not be copied, shared, distributed, re-sold, offered for re-sale, transferred or sub-licensed in whole or in part except that you may make one copy for archive purposes only.\""
+    }
+   },
+   {
+    "dataset": "SKEL",
+    "officialUrl": "https://skel.is.tue.mpg.de/",
+    "procedure": {
+     "zh": "在网站注册并登录后下载。许可同为个人、单用户、非商业（科研、教育、艺术）：“Any other use, in particular any use for commercial, pornographic, military, or surveillance, purposes is prohibited.”；“shall not be copied, shared, distributed, re-sold, offered for re-sale, transferred or sub-licensed in whole or in part”（可留一份备份）。",
+     "en": "Download after registering and signing in on the site. The licence is likewise personal, single-user and non-commercial (research, education, art): \"Any other use, in particular any use for commercial, pornographic, military, or surveillance, purposes is prohibited.\"; \"shall not be copied, shared, distributed, re-sold, offered for re-sale, transferred or sub-licensed in whole or in part\" (one backup copy allowed)."
+    }
+   }
+  ]
+ }
+}
