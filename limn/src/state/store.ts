@@ -186,7 +186,7 @@ export interface CatalogEntry {
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
    */
-  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; outside?: boolean; clear?: number; basis: string; basisEn: string }
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; outside?: boolean; clear?: number; fringe?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number]; thickness: number }; basis: string; basisEn: string }
   /** 手绘画法下的底色（场景的缝隙里露出的颜色），缺省是纸白 / the ground in the painted drawing (what shows in the gaps of a scene); paper white by default */
   ground?: [number, number, number]
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
@@ -332,18 +332,58 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       mol: m, coloring: { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => p.lch) }, align: null,
     })
   }
-  if (env.strands) {
-    const t = threads(env.strands.count, env.strands.length, 16, box, rand, env.strands.branches ?? 0, env.strands.wander)
+  type Strands = NonNullable<typeof env.strands>
+  const strandPanel = (def: Strands, where: Box, id: string) => {
+    const t = threads(def.count, def.length, 16, where, rand, def.branches ?? 0, def.wander)
     const n = t.pos.length / 3
     const m: Molecule = {
-      id: 'strands', title: env.strands.nameEn, atomCount: n, pos: t.pos, element: new Uint8Array(n).fill(El.N), radius: new Float32Array(n).fill(env.strands.radius),
+      id, title: def.nameEn, atomCount: n, pos: t.pos, element: new Uint8Array(n).fill(El.N), radius: new Float32Array(n).fill(def.radius),
       chainOf: new Uint32Array(n), isTrace: new Uint8Array(n).fill(1), residue: new Int32Array(n).fill(1), segments: t.segments,
-      chains: [{ asymId: 'S', authAsymId: 'S', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id: 'strands', description: env.strands.nameEn, kind: 'protein' }],
+      chains: [{ asymId: 'S', authAsymId: 'S', entity: 0, start: 0, count: n, model: 1 }], entities: [{ id, description: def.nameEn, kind: 'protein' }],
       assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: [IDENTITY] }] }],
     }
     panels.push({
-      spec: { label: `${env.strands.name}（示意的环境）`, labelEn: `${env.strands.nameEn} (schematic environment)`, source: source(env.strands.nameEn, undefined), assembly: 'inferred', entities: [{ entityId: 'strands', role: 'extracellular', name: env.strands.name, nameEn: env.strands.nameEn, description: env.strands.nameEn, organism: '' }], reason: '' },
-      mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [env.strands.lch] }, align: null,
+      spec: { label: `${def.name}（示意的环境）`, labelEn: `${def.nameEn} (schematic environment)`, source: source(def.nameEn, undefined), assembly: 'inferred', entities: [{ entityId: id, role: 'extracellular', name: def.name, nameEn: def.nameEn, description: def.nameEn, organism: '' }], reason: '' },
+      mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [def.lch] }, align: null,
+    })
+  }
+  if (env.strands) strandPanel(env.strands, box, 'strands')
+  // 外面的一圈乱线（荚膜）：线限在膜外的一层里，贴着对象，杂乱但厚薄均匀
+  // a fringe of tangled strands outside (a capsule): the strands are confined to a layer just outside the membrane, hugging the subject, tangled yet even in thickness
+  if (env.fringe) {
+    // 膜的外沿：有理想化的球壳就取它的，否则取“九成的点以内”的半径 / the membrane's outer edge: that of the idealised shell where there is one, otherwise the radius holding nine tenths of the points
+    const shellMol = mols.find((m) => m.id.endsWith(':membrane'))
+    let rim = near
+    // 中心也取球壳自己的：各部分位置的平均会偏一点，偏了膜和这一圈之间就露一道缝 / the centre is the shell's own too: the mean of the parts' positions is a little off, and then a slit opens between the membrane and the fringe
+    const c0: V3 = [centre[0], centre[1], centre[2]]
+    if (shellMol) {
+      for (let k = 0; k < 3; k++) c0[k] = 0
+      for (let i = 0; i < shellMol.atomCount; i++) for (let k = 0; k < 3; k++) c0[k]! += shellMol.pos[i * 3 + k]! / shellMol.atomCount
+      rim = 0
+      for (let i = 0; i < shellMol.atomCount; i += 7) rim = Math.max(rim, Math.hypot(shellMol.pos[i * 3]! - c0[0], shellMol.pos[i * 3 + 1]! - c0[1], shellMol.pos[i * 3 + 2]! - c0[2]))
+    }
+    const t = env.fringe.thickness, back = -rim * 0.1
+    strandPanel(env.fringe, { centre: c0, hx: rim + t, hy: rim + t, z0: back, z1: -14, exclude: rim - 16, within: rim + t + 14 }, 'fringe')
+    // 乱线后面垫一层深一号的同色：线之间露出的是它，不是白纸（他画的荚膜是一片深绿上的浅绿线）
+    // a layer of the same hue, deeper, lies behind the strands: it shows between them where paper would (he paints the capsule as pale green lines on deep green)
+    const ops: Float32Array[] = []
+    const step = 16
+    for (let x = -(rim + t); x <= rim + t; x += step) for (let y = -(rim + t); y <= rim + t; y += step) {
+      const d = Math.hypot(x, y)
+      // 底只垫到这一圈的八成厚：外沿由线自己参差地伸出去 / the ground reaches eight tenths of the fringe's thickness: the outer edge is left to the strands, which reach out raggedly
+      if (d < rim - 14 || d > rim + t * 0.8) continue
+      ops.push(new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, c0[0] + x, c0[1] + y, c0[2] + back - 24, 1]))
+    }
+    const m: Molecule = {
+      id: 'fringe-ground', title: 'ground', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([step * 0.9]),
+      chainOf: new Uint32Array(1), isTrace: new Uint8Array(1), residue: new Int32Array([1]),
+      chains: [{ asymId: 'G', authAsymId: 'G', entity: 0, start: 0, count: 1, model: 1 }], entities: [{ id: 'fringe-ground', description: 'ground', kind: 'protein' }],
+      assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: ops }] }],
+    }
+    const deep: [number, number, number] = [Math.max(0.2, env.fringe.lch[0] - 0.2), env.fringe.lch[1], env.fringe.lch[2]]
+    panels.push({
+      spec: { label: `${env.fringe.name}：底色`, labelEn: `${env.fringe.nameEn}: ground`, source: source('ground', undefined), assembly: 'inferred', entities: [{ entityId: 'fringe-ground', role: 'extracellular', name: '底色', nameEn: 'ground', description: 'ground', organism: '' }], reason: '' },
+      mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [deep] }, align: null, keepBack: true, oneId: true,
     })
   }
   notes.push({ key: env.replace ? 'note.rethreaded' : env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })

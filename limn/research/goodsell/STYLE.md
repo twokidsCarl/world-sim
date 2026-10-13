@@ -253,6 +253,15 @@ limn 这一轮的数：
 - **背景**：小泡泡在示意的细胞质里（占位的可溶蛋白、大复合体、细丝）。
 - **环境离对象多近**（`environment.clear`）：原来环境从对象最远的一点开始，个别伸得远的蛋白会在周围留一圈空着的底色（使用者在 HIV 上指出的）。现在可以取“九成的点以内”和“最远的点”之间的任意处：HIV 0.45，小泡 0.55，新冠保持 1（取小了黏蛋白和抗体会钻到刺之间）。环境里的蛋白整个放在切面后面，不再探到前面盖住对象伸出来的东西。
 
+### S4：支原体外面的一圈（使用者：“没有绿色的杂乱，但是又有秩序的小的突出线条”）
+
+（`out/S4-mycoplasma-fringe.jpg`：整幅、上沿局部、他的画的同一处）把他那幅放大看才明白这句话指什么：他的细胞外面是一圈厚厚的绿色乱线（荚膜的多糖链），贴着膜，厚薄均匀；膜上是一排整齐的小瓣。
+
+- 膜蛋白用 `arrange` 排成等间隔的一圈（4563 个，118 种），膜换成光滑的球壳。
+- “填环境”工具加了 `fringe`：线限在膜外的一层里（穿线工具同时给内半径和外半径），后面垫一层深一号的同色，外沿由线自己参差地伸出去。试了三次：第一次线和膜之间隔着一道缝（范围取了最远的一点，改成取球壳的外沿）；第二次底色太深、线太少，膜和底之间有白缝（中心取了各部分位置的平均，改成球壳自己的中心）。
+- **要照实说的**：他画的是丝状支原体（M. mycoides），有多糖荚膜；这个模型是生殖支原体（M. genitalium），没有查到它有这样的荚膜。这一圈是照他的画加的，不是这个物种的实际样子，来源栏里写了。
+- 仍然不像：他膜上的小瓣是鲜绿色、一格一格的，我们的不显眼；他的线更细更卷。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -496,3 +505,12 @@ The user commented on the 14 comparisons one by one; the comments reduce to five
 - **A deeper slab for dots** (instance flag 9): small molecules drawn as dots get a slab two and a half times as deep. The vesicle's dots still do not fill it: the model holds only 400 glutamates.
 - **Background**: the vesicle sits in a schematic cytoplasm (stand-in soluble proteins, large complexes, filaments).
 - **How near the environment comes** (`environment.clear`): the environment used to begin at the subject's farthest point, so a few far-reaching proteins left an empty ring of ground (which the user pointed out on HIV). It can now begin anywhere between "nine tenths of the points" and "the farthest point": 0.45 for HIV, 0.55 for the vesicle, and 1 as before for the coronavirus (lower, and mucin and antibodies creep in between the spikes). Environment proteins lie wholly behind the cut and no longer reach in front of it to cover what the subject holds out.
+
+### S4: the fringe outside the mycoplasma (the user: "no green tangle of small, yet orderly, protruding lines")
+
+(`out/S4-mycoplasma-fringe.jpg`: the whole, a detail of the top edge, the same place in his painting) Only on enlarging his painting did the remark become clear: outside his cell lies a thick band of tangled green strands (the capsule's polysaccharide chains), hugging the membrane and even in thickness, with a tidy row of small lobes on the membrane.
+
+- Membrane proteins are set out in evenly spaced rings with `arrange` (4563 of them, 118 kinds) and the membrane becomes a smooth shell.
+- The environment tool gained `fringe`: strands confined to a layer outside the membrane (the threading tool given both an inner and an outer radius), a deeper shade of the same hue laid behind, and the outer edge left to the strands, which reach out raggedly. Three tries: first a slit lay between strands and membrane (the range took the farthest point; now the shell's outer edge); then the ground was too dark, the strands too few, and paper showed between membrane and ground (the centre was the mean of the parts' positions; now the shell's own).
+- **To be said plainly**: he painted Mycoplasma mycoides, which has a polysaccharide capsule; this model is Mycoplasma genitalium, for which no such capsule was found on record. The fringe follows his painting and is not how this species really is, and the sources panel says so.
+- Still unlike his: the small lobes on his membrane are bright green and set like tiles, ours hardly show; his strands are finer and curlier.
