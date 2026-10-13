@@ -209,6 +209,12 @@ limn 这一轮的数：
 - **核酸，横纹**：原来每 110 Å 换一个编号，线上有一道道横纹；他的 DNA 上没有。改成 2000 Å。
 - 仍然不像的：他的 DNA 走得直、稀；模型里的 DNA 弯而密，这是数据本身，没有动。线仍然比他的黑。
 
+### J1：线改轻，刺之间露出后面那一圈
+
+- **概念“线”，再改一次**（`out/J1-ink.jpg`：近黑、填色压到 0.32、压到 0.45 并收细、他的画）：整体模型的线从近黑改成填色的深一号（`inkTint` 0.85，`inkShade` 0.32）。理由和 C 轮的结论不矛盾但取舍变了：他的原图上线确实又细又深，可是我们的图是按缩小后的大小看的，同样一像素的近黑线在这个大小上比他的重得多。每个形状仍然勾一圈。**这改动了使用者早先要的“勾黑线”**，已在回复里说明。
+- **刺之间的空隙**（`out/J1-coronavirus.jpg`：改前、改后、他的画）：重排的刺衬在后面（切片的背面不切），前排刺之间露出的是后面那一圈刺的深一号色调，不再是深色的底。还剩少数几处露底。
+- 全部 25 张卡的总览：`out/sheet-J1.jpg`。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -408,3 +414,9 @@ The four cards of the list not yet compared one by one (Zika, nuclear pore, syna
 - **Nucleic acid, length**: the slab is two and a half times as deep for fibres as for other molecules, so DNA runs long and passes behind the molecules in front and is no longer cut into short pieces.
 - **Nucleic acid, cross-marks**: the id used to change every 110 Å, leaving cross-marks along a strand; his DNA has none. It is now 2000 Å.
 - Still unlike his: his DNA runs straight and sparse; the model's is curved and dense, which is the data itself and was left alone. The lines are still blacker than his.
+
+### J1: lighter line, the ring behind shows between spikes
+
+- **The concept "line", revised again** (`out/J1-ink.jpg`: near-black, the fill deepened to 0.32, deepened to 0.45 and thinner, his painting): lines in mesoscale models go from near-black to a deeper shade of the fill (`inkTint` 0.85, `inkShade` 0.32). This does not contradict what round C found, but the choice changed: on his originals the line is indeed thin and dark, yet our pictures are seen at the reduced size, where a near-black line of one pixel is far heavier than his. Every shape is still outlined. **This alters the "outline in black" the user asked for earlier**, and the reply says so.
+- **Gaps between spikes** (`out/J1-coronavirus.jpg`: before, after, his painting): the rearranged spikes line the back (not cut at the back of the slab), so between the spikes in front the ring behind shows in a deeper tone and not the dark ground. A few spots of ground remain.
+- The sheet of all 25 cards: `out/sheet-J1.jpg`.
