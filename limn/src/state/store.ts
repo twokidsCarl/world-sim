@@ -22,7 +22,7 @@ import { micronsUrl, neuromorphoUrl, neuronMolecule, parseSwc, within } from '..
 import { coarsen } from '../mol/coarse'
 import { preparedMolecule } from '../mol/prepared'
 import { clipToCavity, fibonacciSphere, helicalLayer, layerOnSphere, rnaPath, rnpBundle, shell } from '../infer/influenza'
-import { scatter, threads } from '../infer/environment'
+import { outsideOf, scatter, threads, type Box } from '../infer/environment'
 import { chainCentre, complexes, exaggerate, placeTemplate, ringSites, shellMembrane, subMolecule, templateOf } from '../infer/idealise'
 import { assemblyAtPicks, assemblyAtPoints, readPicks, type TemplateFit } from '../mol/points'
 import { rng } from '../landscape/pack'
@@ -184,7 +184,7 @@ export interface CatalogEntry {
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
    */
-  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; basis: string; basisEn: string }
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; outside?: boolean; basis: string; basisEn: string }
   /** 手绘画法下的底色（场景的缝隙里露出的颜色），缺省是纸白 / the ground in the painted drawing (what shows in the gaps of a scene); paper white by default */
   ground?: [number, number, number]
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
@@ -288,7 +288,12 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   // the frame is square with the subject filling a little over six tenths of its width, as in his painting; the environment lies in one layer behind the cut
   // inside：填对象的里面（数据里只有外壳时），范围取到外壳以内 / inside: fill the inside of the subject (when the data holds only its shell), within the shell
   // replace：线放在切片最靠前的一薄层里，压在蛋白上面（他的画里 DNA 是最上面的一层）/ replace: the strands lie in a thin layer at the very front of the slab, over the proteins (in his painting DNA is the topmost layer)
-  const box = env.inside ? { centre, hx: R, hy: R, z0: env.replace ? -R * 0.07 : -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
+  const box: Box = env.inside ? { centre, hx: R, hy: R, z0: env.replace ? -R * 0.07 : -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
+  // outside：对象的形状不规则（一段树突），环境只填在它外面，范围是放大后的画面 / outside: the subject is of irregular shape (a stretch of dendrite); the environment fills only what lies outside it, over the zoomed frame
+  if (env.outside) {
+    const half = (R / (entry.zoom ?? 1)) * 1.25
+    Object.assign(box, { hx: half, hy: half, z0: -half * 0.12, z1: -18, exclude: 0, within: undefined, free: outsideOf(pts, 70) })
+  }
   const rand = rng(7)
   const placed: { p: V3; r: number }[] = []
   const panels: Panel[] = []
@@ -1217,7 +1222,9 @@ export const useStore = create<State>((set, get) => ({
     const sp = get().spec
     // 带“理想化排布”的模型两种画法用的排布不同，要重新载入 / a model with an idealised arrangement uses a different arrangement in each drawing and has to be reloaded
     const entry = sp?.catalog ? (catalog.models as CatalogEntry[]).find((m) => m.id === sp.catalog) : undefined
-    if (entry?.infer || entry?.respike) {
+    // 同样要重新载入的：带示意环境的、小分子画成圆点的、有自己底色的（否则切到 Illustrate 后推断的东西还留在画面里）
+    // reloaded likewise: models with a schematic environment, with small molecules as dots, or with a ground of their own (or inferred things would stay in the picture after a switch to Illustrate)
+    if (entry?.infer || entry?.respike || entry?.environment || entry?.dots || entry?.ground) {
       set({ drawing })
       void get().loadCatalog(entry.id)
       return

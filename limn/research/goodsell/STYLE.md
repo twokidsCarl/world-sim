@@ -225,6 +225,13 @@ limn 这一轮的数：
 
 这一项推断的成分很大，来源栏照实写了：走向是随机生成的，比真实 DNA 直得多；按基因组长度和切片体积，画面里应有约 42 微米，只画了约 18 微米。Illustrate 画法下仍是模型里原来的 DNA。
 
+### L1：突触后场景的外面填上细胞外基质（使用者定的），切换画法的一处错
+
+- **填不规则形状的外面**（`out/L1-postsynaptic.jpg`，左旧右新）：使用者选了“像他那样把细胞外面也填上”。“填环境”工具原来只会绕着一个球填；加了 `outsideOf`：把对象各部分的位置记进 70 Å 的粗格子，占了的格子胀一格，再从格子边界灌水，灌得到的就是外面。细胞里面的空隙灌不到，不会被填。填的是分叉的长链（透明质酸上挂着蛋白聚糖）和占位的小蛋白。膜外留着一圈一两格宽的空隙，是胀的那一格造成的。
+- **要照实说的**：真实的脑组织里细胞外只是几十纳米宽的缝，这片地方大部分其实是邻近的细胞，模型里没有；用基质填满是为了画面。来源栏里写了这句话。
+- **切换画法的一处错**：带示意环境、圆点或自己底色的模型，从手绘切到 Illustrate 时没有重新载入，推断的东西会留在 Illustrate 的画面里（HIV、syn3A 一直有这个问题，这次核对支原体时才发现）。现在这些模型切换时都重新载入；在支原体上来回切换核对过。
+- 全部 25 张卡的总览：`out/sheet-L1.jpg`。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -440,3 +447,10 @@ The four cards of the list not yet compared one by one (Zika, nuclear pore, syna
 (`out/K7-mycoplasma-dna.jpg`: the whole, the middle, his painting) Of the four questions put to the user, this one was answered "thread it afresh after his painting". The environment tool gained `replace`: in the painted drawing what the model holds under a matching name (here `fibers.DNA`) is taken out and generated strands stand in for it; the threading tool gained `wander` (how far the heading shifts per step). Three tries: 70 strands, almost straight, at the back of the slab, were mostly hidden by protein; moved to a thin layer at the very front they became a pile of crossing sticks, webbed where they crossed; the setting kept is 30 strands, a shift of 0.2 per step, radius 7 Å.
 
 A great deal of this is inference, and the sources panel says so plainly: the courses are generated at random and far straighter than real DNA; by genome length and the slab's volume the picture should hold about 42 micrometres, and only about 18 are drawn. The Illustrate drawing still shows the DNA as the model has it.
+
+### L1: extracellular matrix outside the postsynaptic scene (the user's choice), and a fault in switching drawings
+
+- **Filling outside an irregular shape** (`out/L1-postsynaptic.jpg`, old left, new right): the user chose "fill the outside of the cell as he does". The environment tool could only fill round a sphere; it gained `outsideOf`: the positions of the subject's parts are entered in a coarse grid of 70 Å, occupied cells are swollen by one, and the grid is flooded from its boundary; what the flood reaches is the outside. Voids inside the cell are not reached and not filled. What is filled in is branched chains (hyaluronan carrying proteoglycans) and small stand-in proteins. A gap one or two cells wide remains outside the membrane, from the swelling.
+- **To be said plainly**: in real brain tissue the extracellular space is a cleft a few tens of nanometres wide and most of this area is in fact neighbouring cells, which the model does not hold; filling it with matrix serves the picture. The sources panel says so.
+- **A fault in switching drawings**: a model with a schematic environment, dots or a ground of its own was not reloaded on switching from painted to Illustrate, so inferred things stayed in the Illustrate picture (HIV and syn3A always had this; it was found while checking the mycoplasma). Such models now reload on a switch; checked by switching back and forth on the mycoplasma.
+- The sheet of all 25 cards: `out/sheet-L1.jpg`.
