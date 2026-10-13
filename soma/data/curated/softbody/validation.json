@@ -1,0 +1,185 @@
+{
+ "_doc": {
+  "zh": "用来对照的已发表数据：在体压入的力–位移、体位改变的位移量级。只收本项目打开过原文的数值；找不到的如实写明。",
+  "en": "Published data to compare against: in-vivo indentation force–displacement and the scale of posture-induced displacement. Only numbers whose text this project opened; what was not found is said so."
+ },
+ "indentation": [
+  {
+   "id": "forearm_fat_site",
+   "site": {
+    "zh": "前臂，脂肪最厚处（该文的 P2）",
+    "en": "forearm, the high-fat-thickness site (P2 of the paper)"
+   },
+   "indenter": {
+    "kind": "flat",
+    "diameterMm": 26,
+    "edgeFilletMm": 0.5
+   },
+   "rateMmPerS": 0.5,
+   "depthMm": 4.5,
+   "forceN": 2.83,
+   "forceSdN": 0.12,
+   "source": "forearm2026",
+   "where": "section 2.5 (prescribed 5 mm minus 0.5 mm gap) and the note of Table 8",
+   "caveat": {
+    "zh": "单个受试者；该点在前臂上的确切位置没有在打开的文字里给出，本项目取前臂掌侧中段。",
+    "en": "One subject; the exact position of the site on the forearm is not given in the text opened, so the mid volar forearm is used here."
+   }
+  },
+  {
+   "id": "forearm_muscle_site",
+   "site": {
+    "zh": "前臂，肌肉最厚处（该文的 P3）",
+    "en": "forearm, the high-muscle-thickness site (P3 of the paper)"
+   },
+   "indenter": {
+    "kind": "flat",
+    "diameterMm": 26,
+    "edgeFilletMm": 0.5
+   },
+   "rateMmPerS": 0.5,
+   "depthMm": 3.2,
+   "forceN": 1.43,
+   "forceSdN": 0.06,
+   "source": "forearm2026",
+   "where": "section 2.5 (prescribed 3.5 mm minus 0.3 mm gap) and the note of Table 9",
+   "caveat": {
+    "zh": "同上。",
+    "en": "As above."
+   }
+  },
+  {
+   "id": "hand_skin_site",
+   "site": {
+    "zh": "手，皮肤为主的点（该文的 P1）",
+    "en": "hand, the skin-dominant site (P1 of the paper)"
+   },
+   "indenter": {
+    "kind": "flat",
+    "diameterMm": 26,
+    "edgeFilletMm": 0.5
+   },
+   "rateMmPerS": 0.5,
+   "depthMm": 1.6,
+   "forceN": 0.62,
+   "forceSdN": 0.03,
+   "source": "forearm2026",
+   "where": "section 2.5 and the note of Table 7",
+   "simulated": false,
+   "caveat": {
+    "zh": "没有模拟：手部的软组织比笼子的单元还薄。",
+    "en": "Not simulated: the soft tissue of the hand is thinner than a cage cell."
+   }
+  },
+  {
+   "id": "heel_pad",
+   "site": {
+    "zh": "足跟垫",
+    "en": "heel pad"
+   },
+   "stiffnessNPerMm": {
+    "male": 2.58,
+    "maleSd": 0.5,
+    "female": 3.13,
+    "femaleSd": 0.7
+   },
+   "source": "heelSex2020",
+   "where": "discussion, quoting Borros & Challis 2003",
+   "simulated": false,
+   "caveat": {
+    "zh": "转述的数值，压头和载荷范围未知；足跟垫厚度与笼子单元同量级，没有模拟。",
+    "en": "A quoted value with unknown indenter and load range; the heel pad is about one cage cell thick and was not simulated."
+   }
+  }
+ ],
+ "notFound": {
+  "zh": "大腿、腹部、乳房、臀部的在体压入力–位移曲线：检索了 Europe PMC 的开放获取文献，没有找到可用的，所以这些部位只报告我们自己的数值，没有对照。腹部体位变化（站立与仰卧的腹部轮廓）的已发表数值同样没有找到。",
+  "en": "In-vivo indentation force–displacement curves for thigh, abdomen, breast and buttock: Europe PMC open-access literature was searched and nothing usable found, so for those sites only our own numbers are reported, without a comparison. Published numbers for the abdominal profile standing versus supine were not found either."
+ },
+ "posture": [
+  {
+   "id": "breast_prone_supine",
+   "what": {
+    "zh": "乳房内标志点从俯卧到仰卧的位移（刚性对齐之后）",
+    "en": "displacement of landmarks inside the breast from prone to supine (after rigid alignment)"
+   },
+   "meanMm": 69.7,
+   "cases": 14,
+   "source": "proneSupine2016",
+   "where": "abstract: combined mean TRE before registration, all fourteen clinical data sets",
+   "use": {
+    "zh": "只作方向和量级的对照。俯卧到仰卧重力反转（变化 2g）；站立到仰卧重力转 90°（变化 √2·g），按线性比例约为其 0.71 倍——这个换算是本项目的推算，不是该文的结果。",
+    "en": "For direction and order of magnitude only. Prone to supine reverses gravity (a change of 2g); standing to supine turns it by 90° (a change of √2·g), about 0.71 of that by linear scaling: this conversion is this project's inference, not a result of the paper."
+   }
+  }
+ ],
+ "muscle": [
+  {
+   "id": "vastus_intermedius_shear",
+   "relaxedKPa": [
+    9.5,
+    12.8
+   ],
+   "mvc100MeanKPa": [
+    482.5,
+    877.5
+   ],
+   "exampleKPa": {
+    "rest": 9,
+    "mvc50": 213,
+    "mvc100": [
+     547,
+     574
+    ],
+    "note": {
+     "zh": "该文正文写 547，图注写 574。",
+     "en": "The paper's text says 547 and its figure caption 574."
+    }
+   },
+   "source": "vastus2014",
+   "where": "results and discussion paragraphs; the example is Fig. 3 of the paper"
+  }
+ ],
+ "sources": {
+  "forearm2026": {
+   "citation": "Development and Surface Indentation Assessment of an MRI-Based Subject-Specific Hand–Forearm Finite Element Model: A Preliminary Study. Bioengineering (Basel) 2026.",
+   "url": "https://europepmc.org/article/PMC/PMC13603692",
+   "licence": "CC BY 4.0",
+   "opened": "full text (Europe PMC XML): abstract, section 2.3–2.5, Table 4 and the notes of Tables 7–9",
+   "note": {
+    "zh": "单个健康成年男性受试者；作者自称初步研究。表 4 的本构参数是该文从别的文献里取的候选值，那些原始文献本项目没有打开。",
+    "en": "One healthy adult male volunteer; called a preliminary study by its authors. The constitutive parameters of its Table 4 are candidates taken from other papers, which this project did not open."
+   }
+  },
+  "proneSupine2016": {
+   "citation": "Eiben B et al. Symmetric Biomechanically Guided Prone-to-Supine Breast Image Registration. Ann Biomed Eng 2016.",
+   "url": "https://europepmc.org/article/PMC/PMC4690842",
+   "licence": "CC BY 4.0",
+   "opened": "full text: abstract and the paragraph introducing Table 3",
+   "note": {
+    "zh": "14 组临床影像（9 组俯卧 MRI–仰卧 CT、1 组 CT、4 组 MRI）；刚性对齐后的标志点距离即俯卧到仰卧的组织位移量级。受试者是乳腺癌患者，乳房体积没有在打开的段落里给出。",
+    "en": "Fourteen clinical image pairs (nine prone MRI–supine CT, one CT, four MRI); the landmark distance after rigid alignment is the scale of tissue motion from prone to supine. The subjects are breast cancer patients; breast volume is not given in the passages opened."
+   }
+  },
+  "vastus2014": {
+   "citation": "Shear Modulus Estimation on Vastus Intermedius of Elderly and Young Females over the Entire Range of Isometric Contraction. PLoS One 2014.",
+   "url": "https://europepmc.org/article/PMC/PMC4081795",
+   "licence": "CC BY 4.0",
+   "opened": "full text: results and discussion paragraphs with the shear moduli",
+   "note": {
+    "zh": "振动超声剪切波法，沿肌纤维方向的剪切模量；该文正文两处对老年组和青年组的放松值写法相反（9.5±3.3 与 12.8±5.4 kPa），这里只取范围。",
+    "en": "Vibro-ultrasound shear waves, shear modulus along the fibres; the paper's text assigns the two relaxed values (9.5±3.3 and 12.8±5.4 kPa) to the elderly and the young group inconsistently in two places, so only the range is used here."
+   }
+  },
+  "heelSex2020": {
+   "citation": "Sex differences in heel pad stiffness during in vivo loading and unloading. J Anat 2020.",
+   "url": "https://europepmc.org/article/PMC/PMC7476210",
+   "licence": "CC BY-NC-ND 4.0",
+   "opened": "full text: discussion sentence quoting Borros & Challis 2003",
+   "note": {
+    "zh": "只取了它转述的一组数（足跟垫刚度），压头形状和载荷范围在打开的句子里没有给出。",
+    "en": "Only one quoted pair of numbers (heel pad stiffness) was taken; indenter shape and load range are not given in the sentence opened."
+   }
+  }
+ }
+}

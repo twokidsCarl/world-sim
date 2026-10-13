@@ -1,0 +1,834 @@
+{
+ "_doc": {
+  "zh": "软组织求解器在当前几何上的验证结果（tools/softbody/validate.ts 生成）；literature 是 validation.json 里对应的已发表数值。几何还会改，改后要重跑。",
+  "en": "Validation results of the soft-tissue solver on the current geometry (written by tools/softbody/validate.ts); `literature` holds the matching published numbers of validation.json. The geometry will change, after which this must be rerun."
+ },
+ "literature": {
+  "indentation": [
+   {
+    "id": "forearm_fat_site",
+    "site": {
+     "zh": "前臂，脂肪最厚处（该文的 P2）",
+     "en": "forearm, the high-fat-thickness site (P2 of the paper)"
+    },
+    "indenter": {
+     "kind": "flat",
+     "diameterMm": 26,
+     "edgeFilletMm": 0.5
+    },
+    "rateMmPerS": 0.5,
+    "depthMm": 4.5,
+    "forceN": 2.83,
+    "forceSdN": 0.12,
+    "source": "forearm2026",
+    "where": "section 2.5 (prescribed 5 mm minus 0.5 mm gap) and the note of Table 8",
+    "caveat": {
+     "zh": "单个受试者；该点在前臂上的确切位置没有在打开的文字里给出，本项目取前臂掌侧中段。",
+     "en": "One subject; the exact position of the site on the forearm is not given in the text opened, so the mid volar forearm is used here."
+    }
+   },
+   {
+    "id": "forearm_muscle_site",
+    "site": {
+     "zh": "前臂，肌肉最厚处（该文的 P3）",
+     "en": "forearm, the high-muscle-thickness site (P3 of the paper)"
+    },
+    "indenter": {
+     "kind": "flat",
+     "diameterMm": 26,
+     "edgeFilletMm": 0.5
+    },
+    "rateMmPerS": 0.5,
+    "depthMm": 3.2,
+    "forceN": 1.43,
+    "forceSdN": 0.06,
+    "source": "forearm2026",
+    "where": "section 2.5 (prescribed 3.5 mm minus 0.3 mm gap) and the note of Table 9",
+    "caveat": {
+     "zh": "同上。",
+     "en": "As above."
+    }
+   },
+   {
+    "id": "hand_skin_site",
+    "site": {
+     "zh": "手，皮肤为主的点（该文的 P1）",
+     "en": "hand, the skin-dominant site (P1 of the paper)"
+    },
+    "indenter": {
+     "kind": "flat",
+     "diameterMm": 26,
+     "edgeFilletMm": 0.5
+    },
+    "rateMmPerS": 0.5,
+    "depthMm": 1.6,
+    "forceN": 0.62,
+    "forceSdN": 0.03,
+    "source": "forearm2026",
+    "where": "section 2.5 and the note of Table 7",
+    "simulated": false,
+    "caveat": {
+     "zh": "没有模拟：手部的软组织比笼子的单元还薄。",
+     "en": "Not simulated: the soft tissue of the hand is thinner than a cage cell."
+    }
+   },
+   {
+    "id": "heel_pad",
+    "site": {
+     "zh": "足跟垫",
+     "en": "heel pad"
+    },
+    "stiffnessNPerMm": {
+     "male": 2.58,
+     "maleSd": 0.5,
+     "female": 3.13,
+     "femaleSd": 0.7
+    },
+    "source": "heelSex2020",
+    "where": "discussion, quoting Borros & Challis 2003",
+    "simulated": false,
+    "caveat": {
+     "zh": "转述的数值，压头和载荷范围未知；足跟垫厚度与笼子单元同量级，没有模拟。",
+     "en": "A quoted value with unknown indenter and load range; the heel pad is about one cage cell thick and was not simulated."
+    }
+   }
+  ],
+  "posture": [
+   {
+    "id": "breast_prone_supine",
+    "what": {
+     "zh": "乳房内标志点从俯卧到仰卧的位移（刚性对齐之后）",
+     "en": "displacement of landmarks inside the breast from prone to supine (after rigid alignment)"
+    },
+    "meanMm": 69.7,
+    "cases": 14,
+    "source": "proneSupine2016",
+    "where": "abstract: combined mean TRE before registration, all fourteen clinical data sets",
+    "use": {
+     "zh": "只作方向和量级的对照。俯卧到仰卧重力反转（变化 2g）；站立到仰卧重力转 90°（变化 √2·g），按线性比例约为其 0.71 倍——这个换算是本项目的推算，不是该文的结果。",
+     "en": "For direction and order of magnitude only. Prone to supine reverses gravity (a change of 2g); standing to supine turns it by 90° (a change of √2·g), about 0.71 of that by linear scaling: this conversion is this project's inference, not a result of the paper."
+    }
+   }
+  ]
+ },
+ "ours": {
+  "body": {
+   "cage": {
+    "cell": 0.027,
+    "nodes": 12039,
+    "tets": 55596,
+    "pinnedNodes": 538,
+    "rigidTets": 212,
+    "islandTets": 1,
+    "anchors": 2249,
+    "filledLitres": 70.32,
+    "cageLitres": 91.19,
+    "byMaterial": {
+     "other": {
+      "tets": 10180,
+      "litres": 9.69
+     },
+     "fat": {
+      "tets": 17275,
+      "litres": 17.34
+     },
+     "muscle": {
+      "tets": 15641,
+      "litres": 23.81
+     },
+     "abdomen": {
+      "tets": 6400,
+      "litres": 9.73
+     },
+     "thorax": {
+      "tets": 5922,
+      "litres": 9.49
+     },
+     "bone": {
+      "tets": 178,
+      "litres": 0.25
+     }
+    },
+    "muscles": 272,
+    "musclesWithFibre": 236,
+    "capsules": 43,
+    "skinVerticesEmbedded": 53576,
+    "skinVertices": 53576,
+    "seconds": 1.9
+   },
+   "standing": {
+    "residualMm": 0,
+    "maxSpeed": 2.4090254188835148e-11
+   },
+   "timing": {
+    "substeps": 10,
+    "msPerFrame": 32.555,
+    "msPerSubstep": 3.255,
+    "tets": 55596,
+    "nodes": 12039
+   },
+   "jiggle": {
+    "motion": "hip_L flexion 40° in 0.15 s, then held; largest corrective displacement of any cage node, mm",
+    "withoutGravity": {
+     "peak": 188.17,
+     "at0_25s": 62.85,
+     "at0_5s": 38.65,
+     "at1s": 3.12,
+     "at2s": 0.06,
+     "at4s": 0
+    },
+    "withGravity": {
+     "peak": 176.04,
+     "at1s": 9.76,
+     "at4s": 10.11,
+     "settledSpeed": 8.169049372453856e-7
+    }
+   },
+   "stability": {
+    "substeps": 10000,
+    "finite": true,
+    "largestDisplacementMm": 59.49,
+    "seconds": 56.736
+   },
+   "energyDecay": {
+    "joulesEveryQuarterSecond": [
+     1.675,
+     0.1395,
+     0.01529,
+     0.001997,
+     0.0002666,
+     0.00003689,
+     0.000005276,
+     8.43e-7,
+     1.279e-7,
+     1.879e-8,
+     3.041e-9,
+     5.222e-10
+    ],
+    "risesAfterFirstHalfSecond": 0,
+    "residualMm": 0
+   },
+   "supine": {
+    "abdomenFrontMeanDisplacementMm": {
+     "anterior": -2.64,
+     "cranial": 12.81,
+     "vertices": 152
+    },
+    "largestDisplacementMm": 19.3,
+    "volumeRatioByMaterial": {
+     "fat": 1.0006,
+     "muscle": 1.0009,
+     "abdomen": 0.992,
+     "thorax": 0.9835,
+     "other": 1.0007
+    },
+    "supportForceN": 3.125,
+    "settledSpeed": 2.506709194463049e-7
+   },
+   "forearmCoarse": {
+    "proximalThird": [
+     {
+      "depthMm": 1,
+      "forceN": 0.686,
+      "contactAreaMm2": 63.1,
+      "meanKPa": 10.864
+     },
+     {
+      "depthMm": 2,
+      "forceN": 1.47,
+      "contactAreaMm2": 32.4,
+      "meanKPa": 45.342
+     },
+     {
+      "depthMm": 3.2,
+      "forceN": 2.477,
+      "contactAreaMm2": 20.2,
+      "meanKPa": 122.468
+     },
+     {
+      "depthMm": 4.5,
+      "forceN": 3.659,
+      "contactAreaMm2": 21.2,
+      "meanKPa": 172.586
+     }
+    ],
+    "middle": [
+     {
+      "depthMm": 1,
+      "forceN": 0.448,
+      "contactAreaMm2": 131.5,
+      "meanKPa": 3.406
+     },
+     {
+      "depthMm": 2,
+      "forceN": 1.228,
+      "contactAreaMm2": 74.5,
+      "meanKPa": 16.475
+     },
+     {
+      "depthMm": 3.2,
+      "forceN": 2.263,
+      "contactAreaMm2": 25.3,
+      "meanKPa": 89.314
+     },
+     {
+      "depthMm": 4.5,
+      "forceN": 3.554,
+      "contactAreaMm2": 8,
+      "meanKPa": 444.847
+     }
+    ]
+   },
+   "muscleVolumeRatio40Substeps": 1.0003,
+   "muscle": {
+    "activated": [
+     "Long head of left biceps brachii",
+     "Short head of left biceps brachii"
+    ],
+    "tets": 112,
+    "largestOutwardSkinDisplacementMm": 8.65,
+    "muscleVolumeRatio": 1.0617
+   },
+   "seconds": 182
+  },
+  "forearm": {
+   "cell12mm": {
+    "cage": {
+     "cell": 0.012,
+     "nodes": 1941,
+     "tets": 8753,
+     "pinnedNodes": 379,
+     "rigidTets": 705,
+     "islandTets": 0,
+     "anchors": 10,
+     "filledLitres": 1,
+     "cageLitres": 1.26,
+     "byMaterial": {
+      "other": {
+       "tets": 2703,
+       "litres": 0.22
+      },
+      "fat": {
+       "tets": 3043,
+       "litres": 0.34
+      },
+      "muscle": {
+       "tets": 2988,
+       "litres": 0.43
+      },
+      "bone": {
+       "tets": 19,
+       "litres": 0
+      }
+     },
+     "muscles": 25,
+     "musclesWithFibre": 23,
+     "capsules": 2,
+     "skinVerticesEmbedded": 417,
+     "skinVertices": 53576,
+     "seconds": 0.3
+    },
+    "proximalThird": [
+     {
+      "depthMm": 0.5,
+      "forceN": 0.13,
+      "contactAreaMm2": 251,
+      "meanKPa": 0.518
+     },
+     {
+      "depthMm": 1,
+      "forceN": 0.294,
+      "contactAreaMm2": 225.1,
+      "meanKPa": 1.306
+     },
+     {
+      "depthMm": 1.6,
+      "forceN": 0.519,
+      "contactAreaMm2": 194.4,
+      "meanKPa": 2.672
+     },
+     {
+      "depthMm": 2.4,
+      "forceN": 0.851,
+      "contactAreaMm2": 79.3,
+      "meanKPa": 10.725
+     },
+     {
+      "depthMm": 3.2,
+      "forceN": 1.202,
+      "contactAreaMm2": 53.7,
+      "meanKPa": 22.385
+     },
+     {
+      "depthMm": 4.5,
+      "forceN": 1.794,
+      "contactAreaMm2": 36.2,
+      "meanKPa": 49.57
+     }
+    ],
+    "middle": [
+     {
+      "depthMm": 0.5,
+      "forceN": 0.076,
+      "contactAreaMm2": 92.7,
+      "meanKPa": 0.822
+     },
+     {
+      "depthMm": 1,
+      "forceN": 0.217,
+      "contactAreaMm2": 123.5,
+      "meanKPa": 1.761
+     },
+     {
+      "depthMm": 1.6,
+      "forceN": 0.432,
+      "contactAreaMm2": 101.2,
+      "meanKPa": 4.269
+     },
+     {
+      "depthMm": 2.4,
+      "forceN": 0.759,
+      "contactAreaMm2": 86.8,
+      "meanKPa": 8.749
+     },
+     {
+      "depthMm": 3.2,
+      "forceN": 1.112,
+      "contactAreaMm2": 82,
+      "meanKPa": 13.554
+     },
+     {
+      "depthMm": 4.5,
+      "forceN": 1.749,
+      "contactAreaMm2": 68,
+      "meanKPa": 25.699
+     }
+    ],
+    "substepConvergence": [
+     {
+      "substeps": 4,
+      "forceAt3_2mm": 0.431
+     },
+     {
+      "substeps": 8,
+      "forceAt3_2mm": 0.844
+     },
+     {
+      "substeps": 16,
+      "forceAt3_2mm": 1.199
+     },
+     {
+      "substeps": 32,
+      "forceAt3_2mm": 1.362
+     }
+    ]
+   },
+   "cell8mm": {
+    "cage": {
+     "cell": 0.008,
+     "nodes": 5643,
+     "tets": 27670,
+     "pinnedNodes": 836,
+     "rigidTets": 1726,
+     "islandTets": 0,
+     "anchors": 11,
+     "filledLitres": 1,
+     "cageLitres": 1.18,
+     "byMaterial": {
+      "other": {
+       "tets": 9345,
+       "litres": 0.25
+      },
+      "fat": {
+       "tets": 8500,
+       "litres": 0.33
+      },
+      "muscle": {
+       "tets": 9516,
+       "litres": 0.41
+      },
+      "bone": {
+       "tets": 309,
+       "litres": 0.01
+      }
+     },
+     "muscles": 25,
+     "musclesWithFibre": 23,
+     "capsules": 2,
+     "skinVerticesEmbedded": 417,
+     "skinVertices": 53576,
+     "seconds": 0.6
+    },
+    "proximalThird": [
+     {
+      "depthMm": 0.5,
+      "forceN": 0.073,
+      "contactAreaMm2": 312.3,
+      "meanKPa": 0.235
+     },
+     {
+      "depthMm": 1,
+      "forceN": 0.18,
+      "contactAreaMm2": 344.6,
+      "meanKPa": 0.522
+     },
+     {
+      "depthMm": 1.6,
+      "forceN": 0.335,
+      "contactAreaMm2": 248.4,
+      "meanKPa": 1.35
+     },
+     {
+      "depthMm": 2.4,
+      "forceN": 0.566,
+      "contactAreaMm2": 142.5,
+      "meanKPa": 3.97
+     },
+     {
+      "depthMm": 3.2,
+      "forceN": 0.804,
+      "contactAreaMm2": 96.4,
+      "meanKPa": 8.337
+     },
+     {
+      "depthMm": 4.5,
+      "forceN": 1.209,
+      "contactAreaMm2": 63.6,
+      "meanKPa": 19.017
+     }
+    ],
+    "renderDepthMm": 8,
+    "renderForceN": 2.452,
+    "reboundMmEveryQuarterSecond": [
+     1.06,
+     0.23,
+     0.14,
+     0.06,
+     0.02,
+     0.01
+    ],
+    "middle": [
+     {
+      "depthMm": 0.5,
+      "forceN": 0.046,
+      "contactAreaMm2": 142.7,
+      "meanKPa": 0.325
+     },
+     {
+      "depthMm": 1,
+      "forceN": 0.153,
+      "contactAreaMm2": 179.4,
+      "meanKPa": 0.853
+     },
+     {
+      "depthMm": 1.6,
+      "forceN": 0.31,
+      "contactAreaMm2": 160,
+      "meanKPa": 1.94
+     },
+     {
+      "depthMm": 2.4,
+      "forceN": 0.55,
+      "contactAreaMm2": 103.5,
+      "meanKPa": 5.313
+     },
+     {
+      "depthMm": 3.2,
+      "forceN": 0.805,
+      "contactAreaMm2": 85.4,
+      "meanKPa": 9.426
+     },
+     {
+      "depthMm": 4.5,
+      "forceN": 1.263,
+      "contactAreaMm2": 41.8,
+      "meanKPa": 30.232
+     }
+    ]
+   },
+   "seconds": 46
+  },
+  "sites": {
+   "thighAnteriorMid": {
+    "cage": {
+     "cell": 0.014,
+     "nodes": 7907,
+     "tets": 38090,
+     "pinnedNodes": 1880,
+     "rigidTets": 4423,
+     "islandTets": 0,
+     "anchors": 2,
+     "filledLitres": 7.45,
+     "cageLitres": 8.71,
+     "byMaterial": {
+      "other": {
+       "tets": 5282,
+       "litres": 0.65
+      },
+      "fat": {
+       "tets": 12838,
+       "litres": 2.4
+      },
+      "abdomen": {
+       "tets": 2588,
+       "litres": 0.45
+      },
+      "muscle": {
+       "tets": 17013,
+       "litres": 3.86
+      },
+      "bone": {
+       "tets": 369,
+       "litres": 0.08
+      }
+     },
+     "muscles": 28,
+     "musclesWithFibre": 28,
+     "capsules": 1,
+     "skinVerticesEmbedded": 5528,
+     "skinVertices": 53576,
+     "seconds": 0.5
+    },
+    "punchRadiusMm": 13,
+    "rows": [
+     {
+      "depthMm": 2,
+      "forceN": 0.28,
+      "contactAreaMm2": 67.2,
+      "meanKPa": 4.166
+     },
+     {
+      "depthMm": 5,
+      "forceN": 1.025,
+      "contactAreaMm2": 45.1,
+      "meanKPa": 22.705
+     },
+     {
+      "depthMm": 10,
+      "forceN": 2.612,
+      "contactAreaMm2": 19.7,
+      "meanKPa": 132.544
+     }
+    ]
+   },
+   "abdomenParaumbilical": {
+    "cage": {
+     "cell": 0.016,
+     "nodes": 12849,
+     "tets": 64769,
+     "pinnedNodes": 2879,
+     "rigidTets": 6289,
+     "islandTets": 0,
+     "anchors": 412,
+     "filledLitres": 19.77,
+     "cageLitres": 22.11,
+     "byMaterial": {
+      "other": {
+       "tets": 2832,
+       "litres": 0.38
+      },
+      "fat": {
+       "tets": 13617,
+       "litres": 3.48
+      },
+      "muscle": {
+       "tets": 16419,
+       "litres": 5.53
+      },
+      "abdomen": {
+       "tets": 27431,
+       "litres": 8.88
+      },
+      "bone": {
+       "tets": 788,
+       "litres": 0.27
+      },
+      "thorax": {
+       "tets": 3682,
+       "litres": 1.24
+      }
+     },
+     "muscles": 103,
+     "musclesWithFibre": 82,
+     "capsules": 9,
+     "skinVerticesEmbedded": 2309,
+     "skinVertices": 53576,
+     "seconds": 1.6
+    },
+    "punchRadiusMm": 13,
+    "rows": [
+     {
+      "depthMm": 2,
+      "forceN": 0.8,
+      "contactAreaMm2": 6.6,
+      "meanKPa": 120.7
+     },
+     {
+      "depthMm": 5,
+      "forceN": 1.762,
+      "contactAreaMm2": 11.9,
+      "meanKPa": 147.89
+     },
+     {
+      "depthMm": 10,
+      "forceN": 3.449,
+      "contactAreaMm2": 26.2,
+      "meanKPa": 131.553
+     },
+     {
+      "depthMm": 20,
+      "forceN": 7.175,
+      "contactAreaMm2": 8.4,
+      "meanKPa": 855.846
+     }
+    ]
+   },
+   "seconds": 27
+  },
+  "breast": {
+   "cage": {
+    "cell": 0.014,
+    "nodes": 11823,
+    "tets": 59987,
+    "pinnedNodes": 3139,
+    "rigidTets": 6195,
+    "islandTets": 0,
+    "anchors": 943,
+    "filledLitres": 12.45,
+    "cageLitres": 13.72,
+    "byMaterial": {
+     "other": {
+      "tets": 6498,
+      "litres": 1.05
+     },
+     "fat": {
+      "tets": 14378,
+      "litres": 2.61
+     },
+     "muscle": {
+      "tets": 13282,
+      "litres": 3.03
+     },
+     "thorax": {
+      "tets": 23776,
+      "litres": 5.35
+     },
+     "bone": {
+      "tets": 397,
+      "litres": 0.09
+     },
+     "abdomen": {
+      "tets": 6,
+      "litres": 0
+     },
+     "breast_fat": {
+      "tets": 1650,
+      "litres": 0.32
+     }
+    },
+    "muscles": 102,
+    "musclesWithFibre": 78,
+    "capsules": 19,
+    "skinVerticesEmbedded": 1552,
+    "skinVertices": 47108,
+    "seconds": 1.5
+   },
+   "rest0": {
+    "residualsMm": [
+     3.08,
+     0.17
+    ],
+    "converged": true
+   },
+   "prestress": {
+    "standingResidualMm": 0,
+    "nippleDisplacementMm": [
+     {
+      "side": "L",
+      "lateral": -0.14,
+      "cranial": 1.65,
+      "anterior": -3.71,
+      "magnitude": 4.06
+     },
+     {
+      "side": "R",
+      "lateral": -0.18,
+      "cranial": 0.92,
+      "anterior": -2.29,
+      "magnitude": 2.48
+     }
+    ],
+    "breastVolumeRatio": 1.0031,
+    "volumeRatioByMaterial": {
+     "fat": 1.0006,
+     "muscle": 1.0002,
+     "breast_fat": 1.0031,
+     "abdomen": 1,
+     "thorax": 0.9943,
+     "other": 1.0002
+    },
+    "settledSpeed": 1.4400974991858839e-12
+   },
+   "zeroGravityReference": {
+    "standingResidualMm": 0.67,
+    "nippleDisplacementMm": [
+     {
+      "side": "L",
+      "lateral": -0.14,
+      "cranial": 1.71,
+      "anterior": -3.77,
+      "magnitude": 4.14
+     },
+     {
+      "side": "R",
+      "lateral": -0.18,
+      "cranial": 0.95,
+      "anterior": -2.32,
+      "magnitude": 2.52
+     }
+    ],
+    "breastVolumeRatio": 0.9983,
+    "volumeRatioByMaterial": {
+     "fat": 0.9997,
+     "muscle": 0.9996,
+     "breast_fat": 0.9983,
+     "abdomen": 1,
+     "thorax": 0.9939,
+     "other": 0.9999
+    },
+    "settledSpeed": 1.03954638510984e-11
+   },
+   "prestressWithoutSkinStiffness": {
+    "standingResidualMm": 0,
+    "nippleDisplacementMm": [
+     {
+      "side": "L",
+      "lateral": 0.01,
+      "cranial": 2.38,
+      "anterior": -4.42,
+      "magnitude": 5.01
+     },
+     {
+      "side": "R",
+      "lateral": -0.22,
+      "cranial": 1.39,
+      "anterior": -3.15,
+      "magnitude": 3.45
+     }
+    ],
+    "breastVolumeRatio": 1.0034,
+    "volumeRatioByMaterial": {
+     "fat": 1.0006,
+     "muscle": 1.0003,
+     "breast_fat": 1.0034,
+     "abdomen": 1,
+     "thorax": 0.9942,
+     "other": 1.0003
+    },
+    "settledSpeed": 4.3175654268700004e-12
+   },
+   "breastTets": 1650,
+   "seconds": 103
+  }
+ }
+}
