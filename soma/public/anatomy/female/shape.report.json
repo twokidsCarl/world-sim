@@ -2,24 +2,24 @@
  "schema": 1,
  "body": "female",
  "inputs": {
-  "rig.json": "8b11cb7a571336b9",
-  "rig.bin": "f8cde8d7af4e90bf",
-  "anatomy.json#parts": "24da6176f78479ae",
-  "integumentary.glb": "4d6b3ab8090c9b46",
-  "muscular.glb": "b5bbda989a8d3ff0",
-  "skeletal.glb": "75ef5bae11285abc",
-  "cardiovascular.glb": "9ab59fcdcb39849e",
-  "nervous.glb": "29720d43a1029d5c",
-  "respiratory.glb": "fe1679ab7b8faa16",
-  "digestive.glb": "f1e2272cb76f03c0",
-  "urinary.glb": "c0efb88f636d22d4",
+  "rig.json": "b5fb3562e77fed20",
+  "rig.bin": "8387c38099bef0ac",
+  "anatomy.json#parts": "237df4f3b30888f6",
+  "integumentary.glb": "41908812c4847f0c",
+  "muscular.glb": "1c8b7cea519497d3",
+  "skeletal.glb": "073e92457302984f",
+  "cardiovascular.glb": "de8bc6d3e98b11cd",
+  "nervous.glb": "742833809407c7c1",
+  "respiratory.glb": "1f2e59dd1c5aaec7",
+  "digestive.glb": "29169bffec8b628e",
+  "urinary.glb": "ea3765ef0e588387",
   "reproductive.glb": "b4fda7b4a8aada29",
-  "endocrine.glb": "59fb4b94fe2fdebf",
-  "lymphatic.glb": "21b1104c37440b32",
-  "nerves.json": "3abfab6f7a30757e",
+  "endocrine.glb": "7798bbec813b82e5",
+  "lymphatic.glb": "784b7136bcb1edf5",
+  "nerves.json": "eb74d051afc9f9ea",
   "../knowledge/relations.json#attachments": "f05cb6f5e8ea5879",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
-  "skin-source.u32": "9379a50140987507",
+  "skin-source.u32": "9f35d93757d88c6d",
   "data/curated/rig/shape.json#data": "c0e24566226a4854",
   "data/curated/bodyshape/rig-shape.json#data": "e145fc8d255cc3cd",
   "data/raw/bodyshape/out/female-skin-open/skin.obj": "b126195d6dd1291b",
@@ -27,16 +27,16 @@
   "data/raw/bodyshape/out/female-skin-open/shape-limit.f32": "7990339e0e710ceb",
   "data/raw/bodyshape/out/female-skin-open/manifest.json#package": "9960b2c875581f16"
  },
- "binBytes": 2003060,
+ "binBytes": 1990024,
  "notes": [],
  "skin": {
   "part": "SOMA_skin",
-  "vertices": 47364,
+  "vertices": 47362,
   "farthestFromSourceMm": 0
  },
  "followers": {
-  "parts": 451,
-  "vertices": 117069
+  "parts": 450,
+  "vertices": 115145
  },
  "calibration": [
   {
@@ -548,19 +548,19 @@
    "controls": {},
    "skinHeightM": 1.6143,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.3,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.6,
-    "depthP50Mm": 33.8
+    "depthP5Mm": 3.7,
+    "depthP50Mm": 33.9
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 0.2,
+    "sampled": 3017,
+    "outsidePct": 0.3,
     "over2mmPct": 0.1,
-    "worstMm": 4.6
+    "worstMm": 6.6
    }
   },
   {
@@ -570,19 +570,19 @@
    },
    "skinHeightM": 1.4952,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.8,
+    "over2mmPct": 0.5,
     "worstMm": 26,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.3,
+    "depthP5Mm": 3.4,
     "depthP50Mm": 31.4
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 5.6,
-    "over2mmPct": 2.8,
-    "worstMm": 9.9
+    "sampled": 3017,
+    "outsidePct": 5.1,
+    "over2mmPct": 2.6,
+    "worstMm": 9.1
    }
   },
   {
@@ -592,19 +592,19 @@
    },
    "skinHeightM": 1.7337,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 28.5,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.8,
+    "depthP5Mm": 3.9,
     "depthP50Mm": 36.1
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 0.5,
+    "sampled": 3017,
+    "outsidePct": 0.6,
     "over2mmPct": 0.1,
-    "worstMm": 4.8
+    "worstMm": 7.6
    }
   },
   {
@@ -614,19 +614,19 @@
    },
    "skinHeightM": 1.6141,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 4.8,
-    "over2mmPct": 3,
+    "sampled": 152319,
+    "outsidePct": 4.4,
+    "over2mmPct": 2.9,
     "worstMm": 27.3,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 0.2,
-    "depthP50Mm": 22.4
+    "depthP5Mm": 0.5,
+    "depthP50Mm": 22.5
    },
    "fat": {
-    "sampled": 3028,
+    "sampled": 3017,
     "outsidePct": 21.3,
-    "over2mmPct": 11.5,
-    "worstMm": 13.9
+    "over2mmPct": 11.3,
+    "worstMm": 15.3
    }
   },
   {
@@ -636,19 +636,19 @@
    },
    "skinHeightM": 1.6142,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.3,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.3,
+    "depthP5Mm": 3.4,
     "depthP50Mm": 29.5
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 2.9,
+    "sampled": 3017,
+    "outsidePct": 2.3,
     "over2mmPct": 0.1,
-    "worstMm": 4.6
+    "worstMm": 8.5
    }
   },
   {
@@ -658,19 +658,19 @@
    },
    "skinHeightM": 1.6144,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.3,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.6,
-    "depthP50Mm": 36.3
+    "depthP5Mm": 3.8,
+    "depthP50Mm": 36.4
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 0.2,
+    "sampled": 3017,
+    "outsidePct": 0.3,
     "over2mmPct": 0.1,
-    "worstMm": 4.6
+    "worstMm": 5.5
    }
   },
   {
@@ -680,19 +680,19 @@
    },
    "skinHeightM": 1.6145,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.3,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.8,
+    "depthP5Mm": 4,
     "depthP50Mm": 45.6
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 0.3,
+    "sampled": 3017,
+    "outsidePct": 0.4,
     "over2mmPct": 0.1,
-    "worstMm": 4.6
+    "worstMm": 4.2
    }
   },
   {
@@ -702,19 +702,19 @@
    },
    "skinHeightM": 1.6151,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.6,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.6,
-    "depthP50Mm": 33.9
+    "depthP5Mm": 3.7,
+    "depthP50Mm": 34
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 0.2,
+    "sampled": 3017,
+    "outsidePct": 0.3,
     "over2mmPct": 0.1,
-    "worstMm": 4.6
+    "worstMm": 5.8
    }
   },
   {
@@ -724,19 +724,19 @@
    },
    "skinHeightM": 1.6141,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 25.7,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.5,
+    "depthP5Mm": 3.7,
     "depthP50Mm": 33.3
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 4.1,
+    "sampled": 3017,
+    "outsidePct": 3.9,
     "over2mmPct": 1.4,
-    "worstMm": 7.2
+    "worstMm": 7.3
    }
   },
   {
@@ -746,19 +746,19 @@
    },
    "skinHeightM": 1.6142,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.5,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.6,
+    "depthP5Mm": 3.7,
     "depthP50Mm": 33.5
    },
    "fat": {
-    "sampled": 3028,
-    "outsidePct": 4.6,
-    "over2mmPct": 1.9,
-    "worstMm": 9
+    "sampled": 3017,
+    "outsidePct": 4.2,
+    "over2mmPct": 2,
+    "worstMm": 7.6
    }
   },
   {
@@ -768,71 +768,71 @@
    },
    "skinHeightM": 1.6145,
    "deep": {
-    "sampled": 152616,
-    "outsidePct": 1.1,
-    "over2mmPct": 0.6,
+    "sampled": 152319,
+    "outsidePct": 0.7,
+    "over2mmPct": 0.5,
     "worstMm": 27.1,
     "worstPart": "Left genioglossus",
-    "depthP5Mm": 3.6,
+    "depthP5Mm": 3.7,
     "depthP50Mm": 34
    },
    "fat": {
-    "sampled": 3028,
+    "sampled": 3017,
     "outsidePct": 2,
     "over2mmPct": 0.4,
-    "worstMm": 4.6
+    "worstMm": 5.9
    }
   }
  ],
  "bmiScan": [
   {
    "bmi": 23.5,
-   "over2mmPct": 0.6,
+   "over2mmPct": 0.5,
    "worstMm": 27.3
   },
   {
    "bmi": 23,
-   "over2mmPct": 0.6,
+   "over2mmPct": 0.5,
    "worstMm": 27.3
   },
   {
    "bmi": 22.5,
-   "over2mmPct": 0.6,
+   "over2mmPct": 0.5,
    "worstMm": 27.3
   },
   {
    "bmi": 22,
-   "over2mmPct": 0.6,
+   "over2mmPct": 0.5,
    "worstMm": 27.3
   },
   {
    "bmi": 21.5,
-   "over2mmPct": 0.6,
+   "over2mmPct": 0.5,
    "worstMm": 27.3
   },
   {
    "bmi": 21,
-   "over2mmPct": 0.7,
+   "over2mmPct": 0.6,
    "worstMm": 27.3
   },
   {
    "bmi": 20.5,
-   "over2mmPct": 0.8,
+   "over2mmPct": 0.6,
    "worstMm": 27.3
   },
   {
    "bmi": 20,
-   "over2mmPct": 1,
+   "over2mmPct": 0.9,
    "worstMm": 27.3
   },
   {
    "bmi": 19.5,
-   "over2mmPct": 1.4,
+   "over2mmPct": 1.3,
    "worstMm": 27.3
   },
   {
    "bmi": 19,
-   "over2mmPct": 2.1,
+   "over2mmPct": 2,
    "worstMm": 27.3
   }
  ],
@@ -840,8 +840,8 @@
   "min": 19.5,
   "max": 40,
   "why": {
-   "zh": "下限：BMI 再低，皮肤就会收到肌肉和骨以内——肌肉不随 BMI 变细，深部结构穿出皮肤超过 2 mm 的采样点比例会比默认（0.6%）多出 1 个百分点以上；也不低于胖瘦场表格的最小值 18.5。上限：胖瘦场表格的最大值 40。",
-   "en": "Lower bound: below it the skin would shrink inside muscle and bone — muscles do not thin with BMI, and the share of sampled deep-part vertices more than 2 mm outside the skin would exceed the default (0.6 %) by more than 1 percentage points; nor below 18.5, the lowest BMI of the fat-field table. Upper bound: 40, the highest BMI of the table."
+   "zh": "下限：BMI 再低，皮肤就会收到肌肉和骨以内——肌肉不随 BMI 变细，深部结构穿出皮肤超过 2 mm 的采样点比例会比默认（0.5%）多出 1 个百分点以上；也不低于胖瘦场表格的最小值 18.5。上限：胖瘦场表格的最大值 40。",
+   "en": "Lower bound: below it the skin would shrink inside muscle and bone — muscles do not thin with BMI, and the share of sampled deep-part vertices more than 2 mm outside the skin would exceed the default (0.5 %) by more than 1 percentage points; nor below 18.5, the lowest BMI of the fat-field table. Upper bound: 40, the highest BMI of the table."
   }
  },
  "renders": [

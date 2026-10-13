@@ -274,10 +274,14 @@ describe.skipIf(!present)('male shoulder girdle posture correction (public/anato
     expect(replaced.length).toBe(skinInstalled ? 1 : 0)
     // 之后的两步各自再改标一些：上肢外展（跨盂肱关节的肌、腋血管）和附属物贴合（头发、眉、阴毛、耳廓；只在装入皮肤包时）
     // the two later steps relabel some more, each for itself: the arm abduction (muscles crossing the glenohumeral joint, axillary vessels) and the appendage conforming (hair, eyebrows, pubic hair, auricle; only with a skin package installed)
-    const later = [...(report.armAbduction?.provenance?.relabelledIds ?? []), ...(report.appendages?.relabelledIds ?? [])]
+    // 再往后，薄结构收回皮下那一步（thinParts.ts）又改标一些扫描得到的血管和筋膜；唇被切成两个部件（lipSplit.ts），scanned 的部件因此多一个
+    // later still, the thin-structure stage (thinParts.ts) relabels some scanned vessels and fasciae, and the lip is split into two parts (lipSplit.ts), which adds one scanned part
+    const thin = ((report as unknown as { thinParts?: { relabelledToWarped?: string[] } }).thinParts?.relabelledToWarped ?? []) as string[]
+    const lipExtra = ((report as unknown as { lipSplit?: { parts?: { split: boolean }[] } }).lipSplit?.parts ?? []).filter((p) => p.split).length
+    const later = [...(report.armAbduction?.provenance?.relabelledIds ?? []), ...(report.appendages?.relabelledIds ?? []), ...thin]
     expect(new Set([...pv.relabelledIds, ...later]).size).toBe(pv.relabelledIds.length + later.length)
     expect((report.appendages?.relabelledIds ?? []).length > 0).toBe(skinInstalled)
-    expect(data.parts.filter((p) => p.provenance === 'scanned').length).toBe(pv.scannedBefore - pv.relabelledToWarped - replaced.length - later.length)
+    expect(data.parts.filter((p) => p.provenance === 'scanned').length).toBe(pv.scannedBefore - pv.relabelledToWarped - replaced.length - later.length + lipExtra)
     expect(data.parts.filter((p) => p.id.startsWith('FJ') && p.provenance === 'warped').map((p) => p.id).sort()).toEqual([...pv.relabelledIds, ...later].sort())
     // 只有肌、动脉、静脉和皮肤被改标；骨一块也没有 / only muscles, arteries, veins and the skin are relabelled; not one bone
     expect(Object.keys(pv.relabelledByTissue).sort()).toEqual(skinInstalled ? ['artery', 'muscle', 'vein'] : ['artery', 'muscle', 'skin', 'vein'])

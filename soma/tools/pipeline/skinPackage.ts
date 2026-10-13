@@ -444,7 +444,8 @@ export function faceAgainstSkin(skin: Mesh, parts: { name: string; mesh: Mesh }[
     ['palpebralOrbicularisOculi', /^palpebral part of (left|right) orbicularis oculi$/i],
     ['orbitalOrbicularisOculi', /^orbital part of (left|right) orbicularis oculi$/i],
     ['cornea', /^(left|right) cornea$/i],
-    ['lip', /^lip$/i],
+    // 唇：一个部件，或切开后的上唇和下唇（lipSplit.ts） / the lip: one part, or upper and lower lip after the split (lipSplit.ts)
+    ['lip', /^(upper |lower )?lip$/i],
     ['nasalCartilages', /\b(nasal|alar) cartilage$/i],
     ['orbicularisOris', /^orbicularis oris$/i],
     ['mandible', /^mandible$/i],

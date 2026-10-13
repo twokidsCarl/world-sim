@@ -3770,6 +3770,8 @@
 "FMA59804":{"status":"unreviewed","wikidata":"Q66556219","zh":"右舌下腺","zhSource":"derived:laterality"},
 "FMA59805":{"status":"unreviewed","wikidata":"Q66556220","zh":"左舌下腺","zhSource":"derived:laterality"},
 "FMA59816":{"status":"unreviewed","wikidata":"Q15173","la":"Labrum","ja":"唇","zh":"唇","zhSource":"machine-translation:override"},
+"FMA59817":{"status":"unreviewed","wikidata":"Q3740460","la":"Labium superius","ja":"上唇","zh":"上唇","zhSource":"machine-translation"},
+"FMA59818":{"status":"unreviewed","wikidata":"Q6693954","la":"Labium Inferius Oris","ja":"下唇","zh":"下唇","zhSource":"machine-translation"},
 "FMA59823":{"status":"unreviewed","wikidata":"Q66556231","zh":"副腮腺","zhSource":"machine-translation"},
 "FMA59825":{"status":"unreviewed","wikidata":"Q66556233","zh":"右副腮腺","zhSource":"machine-translation"},
 "FMA59826":{"status":"unreviewed","wikidata":"Q66556234","zh":"左副腮腺","zhSource":"machine-translation"},

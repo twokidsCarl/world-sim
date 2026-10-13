@@ -1,0 +1,621 @@
+{
+ "_doc": {
+  "zh": "说话用的视位（口形）表。方法取自 JALI（jali2016，已打开）：口形分解为 静止 + JA·（下颌 + 舌）+ LI·唇的动作单元；四条构音约束（双唇音必须闭唇；唇齿音下唇必须碰上齿；咝音下颌几乎合上；非鼻音发音时唇要张开过）；协同发音的习惯（重复的视位并成一个；lipHeavy 的视位提前开始、推迟结束，并取代邻居的唇形，邻居是双唇音 / 唇齿音时则同时发；tongueOnly 的视位不影响唇；很短的塞音 / 鼻音不影响下颌）；视位在音开始前 120 ms 起、结束后 120 ms 消退，唇前突的为 150 ms。音的分类（classes）取自它的附录 A。每个视位具体的下颌开度、AU 强度、舌的姿势都是本项目的假设。音素记号是 ARPAbet 风格的，归并方式也是本项目定的。",
+  "en": "The table of visemes (mouth shapes) for speech. Method from JALI (jali2016, opened): a mouth shape is rest + JA·(jaw + tongue) + LI·lip action units; four articulation constraints (bilabials must close the lips; labiodentals must touch the lower lip to the upper teeth; sibilants nearly close the jaw; non-nasals must open the lips at some point); co-articulation habits (duplicated visemes merge; lip-heavy visemes start early, end late and replace the lip shape of neighbours, or sound together with them when those are bilabial / labiodental; tongue-only visemes do not affect the lips; very short obstruents / nasals do not affect the jaw); a viseme starts 120 ms before its sound and decays over 120 ms after it, 150 ms for lip protrusion. The sound classes (`classes`) follow its appendix A. Each viseme's jaw opening, AU intensities and tongue pose are this project's assumptions. Phoneme symbols are ARPAbet-style and the grouping is this project's too."
+ },
+ "timing": {
+  "onset": 0.12,
+  "offset": 0.12,
+  "lipHeavyOnset": 0.15,
+  "lipHeavyOffset": 0.15,
+  "shortSeconds": 0.042,
+  "basis": {
+   "source": "jali2016",
+   "note": {
+    "zh": "120 ms 和 150 ms 取自 JALI 第 4.2 节（已读）。shortSeconds 是“短于一帧”的一帧：原文没有说帧率，这里取 1/24 秒，是假设。",
+    "en": "The 120 ms and 150 ms are from section 4.2 of JALI (read). shortSeconds is the one frame of \"shorter than one frame\": the paper does not state a frame rate in what was read, and 1/24 s is assumed here."
+   }
+  }
+ },
+ "features": {
+  "openJaw": 0.45,
+  "roundViseme": "UW",
+  "spreadViseme": "IY",
+  "sibilantViseme": "SZ",
+  "closureThreshold": 0.5,
+  "confidenceRef": 0.6,
+  "smoothSeconds": 0.05,
+  "levelFloor": 0.03,
+  "basis": {
+   "source": null,
+   "note": {
+    "zh": "假设：由原始声学特征驱动时的参数。open = 1 对应下颌张开 openJaw × jaw.max；round > 0 混入 roundViseme 的唇形，< 0 混入 spreadViseme 的；closure ≥ closureThreshold 视为“有闭合、部位不明”，做成一般的双唇闭合；每个特征的幅度乘以 min(1, 置信度 / confidenceRef)；时间常数 smoothSeconds 的一阶平滑；level 低于 levelFloor 时回到静止。dental 特征不可靠，不使用。",
+    "en": "Assumptions: parameters of the raw-feature route. open = 1 maps to a jaw opening of openJaw × jaw.max; round > 0 blends in the lip shape of roundViseme and < 0 that of spreadViseme; closure ≥ closureThreshold counts as \"a closure of unknown place\" and becomes a generic lip closure; every feature's amplitude is multiplied by min(1, confidence / confidenceRef); a one-pole smoothing with time constant smoothSeconds; below levelFloor the mouth returns to rest. The dental feature is unreliable and is not used."
+   }
+  }
+ },
+ "visemes": [
+  {
+   "id": "SIL",
+   "name": {
+    "zh": "静止",
+    "en": "silence"
+   },
+   "phonemes": [
+    "sil",
+    "sp"
+   ],
+   "classes": [
+    "pause"
+   ],
+   "jaw": 0,
+   "aus": {},
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "PBM",
+   "name": {
+    "zh": "双唇音 p b m",
+    "en": "bilabial p b m"
+   },
+   "phonemes": [
+    "p",
+    "b",
+    "m"
+   ],
+   "classes": [
+    "bilabial",
+    "obstruent",
+    "nasal"
+   ],
+   "jaw": 0.06,
+   "aus": {
+    "AU24": 1.5
+   },
+   "closure": 1,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：约束“双唇音必须闭唇”取自 JALI。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: the constraint \"bilabials must close the lips\" is JALI's. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "FV",
+   "name": {
+    "zh": "唇齿音 f v",
+    "en": "labiodental f v"
+   },
+   "phonemes": [
+    "f",
+    "v"
+   ],
+   "classes": [
+    "labiodental",
+    "obstruent"
+   ],
+   "jaw": 0.08,
+   "aus": {
+    "AU10": 1
+   },
+   "closure": 0,
+   "dental": 1,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：约束“下唇碰上齿”取自 JALI；下颌开度等于 lip_dental 通道求解时的开度。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: the constraint \"lower lip to the upper teeth\" is JALI's; the jaw opening equals the one the lip_dental channel is solved at. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "TH",
+   "name": {
+    "zh": "齿音 th",
+    "en": "dental th"
+   },
+   "phonemes": [
+    "th",
+    "dh"
+   ],
+   "classes": [
+    "obstruent"
+   ],
+   "jaw": 0.1,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0.6,
+    "front": 0.3,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "TDN",
+   "name": {
+    "zh": "齿龈音 t d n",
+    "en": "alveolar t d n"
+   },
+   "phonemes": [
+    "t",
+    "d",
+    "n"
+   ],
+   "classes": [
+    "tongueOnly",
+    "obstruent",
+    "nasal"
+   ],
+   "jaw": 0.08,
+   "aus": {
+    "AU25": 1.5
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 1,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的 LNTD（舌从口腔前部封住上腭）是只动舌的视位。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's LNTD (the tongue seals the palate from the front) is a tongue-only viseme. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "L",
+   "name": {
+    "zh": "边音 l",
+    "en": "lateral l"
+   },
+   "phonemes": [
+    "l"
+   ],
+   "classes": [
+    "tongueOnly"
+   ],
+   "jaw": 0.14,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 1,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "SZ",
+   "name": {
+    "zh": "咝音 s z",
+    "en": "sibilant s z"
+   },
+   "phonemes": [
+    "s",
+    "z"
+   ],
+   "classes": [
+    "sibilant"
+   ],
+   "jaw": 0.03,
+   "aus": {
+    "AU25": 2.5,
+    "AU20": 1.5
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0.7,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：约束“咝音下颌几乎合上”取自 JALI。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: the constraint \"sibilants narrow the jaw greatly\" is JALI's. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "SH",
+   "name": {
+    "zh": "龈后音 sh ch j",
+    "en": "postalveolar sh ch j"
+   },
+   "phonemes": [
+    "sh",
+    "zh",
+    "ch",
+    "jh"
+   ],
+   "classes": [
+    "sibilant",
+    "lipHeavy"
+   ],
+   "jaw": 0.04,
+   "aus": {
+    "AU22": 3
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0.8,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 把 S Z J C 列为咝音和 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI lists S Z J C as sibilant and lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "KG",
+   "name": {
+    "zh": "软腭音 k g",
+    "en": "velar k g"
+   },
+   "phonemes": [
+    "k",
+    "g",
+    "ng"
+   ],
+   "classes": [
+    "tongueOnly",
+    "obstruent",
+    "nasal"
+   ],
+   "jaw": 0.12,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 1,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的 GK（舌在口腔后部封住气道）是只动舌的视位。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's GK (the tongue seals the airway at the back) is a tongue-only viseme. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "R",
+   "name": {
+    "zh": "r",
+    "en": "r"
+   },
+   "phonemes": [
+    "r",
+    "er"
+   ],
+   "classes": [],
+   "jaw": 0.1,
+   "aus": {
+    "AU18": 2,
+    "AU25": 1
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0.4,
+    "front": 0,
+    "back": 0.3,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "W",
+   "name": {
+    "zh": "w",
+    "en": "w"
+   },
+   "phonemes": [
+    "w"
+   ],
+   "classes": [
+    "lipHeavy"
+   ],
+   "jaw": 0.06,
+   "aus": {
+    "AU18": 4
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0.6,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 把 w 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI lists w as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "UW",
+   "name": {
+    "zh": "圆唇 u",
+    "en": "rounded u"
+   },
+   "phonemes": [
+    "uw",
+    "uh"
+   ],
+   "classes": [
+    "lipHeavy",
+    "vowel"
+   ],
+   "jaw": 0.1,
+   "aus": {
+    "AU18": 3.5,
+    "AU25": 1
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0.8,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 把 UW 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI lists UW as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "OW",
+   "name": {
+    "zh": "圆唇 o",
+    "en": "rounded o"
+   },
+   "phonemes": [
+    "ow",
+    "oy",
+    "ao"
+   ],
+   "classes": [
+    "lipHeavy",
+    "vowel"
+   ],
+   "jaw": 0.28,
+   "aus": {
+    "AU22": 3,
+    "AU25": 1
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0.6,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 把 OW、OY 列为 lipHeavy。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI lists OW and OY as lip-heavy. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "IY",
+   "name": {
+    "zh": "展唇 i",
+    "en": "spread i"
+   },
+   "phonemes": [
+    "iy",
+    "ih",
+    "y"
+   ],
+   "classes": [
+    "vowel"
+   ],
+   "jaw": 0.1,
+   "aus": {
+    "AU20": 2,
+    "AU12": 1,
+    "AU25": 2.5
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 1,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "EH",
+   "name": {
+    "zh": "展唇 e",
+    "en": "spread e"
+   },
+   "phonemes": [
+    "eh",
+    "ey",
+    "ae"
+   ],
+   "classes": [
+    "vowel"
+   ],
+   "jaw": 0.25,
+   "aus": {
+    "AU20": 1,
+    "AU25": 3
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0.6,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "AA",
+   "name": {
+    "zh": "开口 a",
+    "en": "open a"
+   },
+   "phonemes": [
+    "aa",
+    "ay",
+    "aw",
+    "ah"
+   ],
+   "classes": [
+    "vowel"
+   ],
+   "jaw": 0.5,
+   "aus": {
+    "AU25": 3
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 1
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 把 AO、AX、AY、AA 都归到视位 AHH；这里把 AX 另列为央元音。JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI maps AO, AX, AY and AA to its viseme AHH; here AX is kept apart as the schwa. JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  },
+  {
+   "id": "AX",
+   "name": {
+    "zh": "央元音",
+    "en": "schwa"
+   },
+   "phonemes": [
+    "ax",
+    "hh"
+   ],
+   "classes": [
+    "vowel"
+   ],
+   "jaw": 0.18,
+   "aus": {
+    "AU25": 2
+   },
+   "closure": 0,
+   "dental": 0,
+   "tongue": {
+    "tip": 0,
+    "front": 0,
+    "back": 0,
+    "low": 0
+   },
+   "basis": {
+    "source": null,
+    "note": {
+     "zh": "假设：JALI 的图 4 给出各视位的 AU，但那是图片，这次读不到；下颌、AU 强度和舌的数值都是本项目定的。",
+     "en": "Assumption: JALI's Figure 4 gives the AUs of each viseme, but it is an image that could not be read this time; jaw, AU intensities and tongue values are this project's."
+    }
+   }
+  }
+ ]
+}

@@ -15,7 +15,14 @@ from scipy.spatial import cKDTree
 
 from open_skin import MM, TAGS, boundary_loops, graph, half_edge_map, read_obj, unique_edges, write_obj
 from graft import fill_holes, graft, ordered_loop, single_loop_region, vertex_graph
-from genital import intersecting_pairs
+from genital import face_components, intersecting_pairs, islands
+from remesh import cut_by_level, edge_table
+
+# 收窄到裂的“顶”时用的数（都写进报告）/ the numbers used in narrowing the patch to the roof of the cleft (all recorded in the report)
+TRIM_ABOVE_PLANE_MM = 3.0   # 外缘从标本截面向上让开这么高（沿真实皮肤切）/ the outer rim is taken this far above the specimen's cut plane (cut through real skin)
+TRIM_REACH_MM = 6.0         # 只在离截面上那段外缘这么近（沿面）的范围内按高度切 / the cut by height applies only this close (along the surface) to the stretch of rim on the plane
+WALL_FROM_MIDLINE_MM = 18.0 # 沿面离中线这么远以外、又朝向中线的面算裂的壁（大腿内侧）/ surface further than this from the midline (along the surface) and facing the midline counts as a wall of the cleft (medial thigh)
+WALL_FACING = -0.3          # 朝向中线：外法线的横向分量（背离中线为正）小于它 / facing the midline: lateral component of the outward normal (positive away from the midline) below this
 
 # ── 步骤：女性外阴的皮肤 / step: the female vulvar skin ──────────────────────────────────────────
 
@@ -190,6 +197,19 @@ def step_vulva(pk, deep, wu_dir, out_dir, max_rim_mm=5.0):
     nc = np.linalg.svd(cp - cp.mean(0))[2][2]
     if (ext.mean(0) - cp.mean(0)) @ nc > 0:
         nc = -nc
+    truncation_full = cut_plane_runs(P, Fp, on_cut, nc, cp.mean(0))
+    full = {'vertices': int(len(P)), 'triangles': int(len(Fp)), 'boundaryVertices': int(len(rim)), 'boundaryVerticesOnACutPlane': int(on_cut[rim].sum()), 'note': 'boundary = the outer rim and the small holes on the cut plane together', 'nonManifoldEdges': int((unique_edges(Fp, len(P))[1] > 2).sum())}
+    # ── 收窄到裂的顶（第 13 节）；做不成就退回整片，并写明原因 ──
+    # ── narrowed to the roof of the cleft (section 13); if that cannot be done the full patch is kept and the reason recorded ──
+    xm0 = float(np.median(np.concatenate([shipped[k] for k in ('perineal_body', 'external_anal_sphincter', 'cavernous_body_of_clitoris') if k in shipped])[:, 0]))
+    rim_kind = np.zeros(len(P), np.int64)
+    try:
+        P, Fp, on_cut, rim_kind, narrowing = narrow_to_roof(P, Fp, on_cut, nc, cp.mean(0), xm0)
+        narrowing['fullPatch'] = full
+        narrowing['cutPlaneRunsOfTheFullPatch'] = truncation_full
+        n_spec = len(P)
+    except RuntimeError as err:
+        narrowing = {'failed': str(err), 'fullPatch': full}
     truncation = cut_plane_runs(P, Fp, on_cut, nc, cp.mean(0))
     # ── 封闭：片内落在截面上的小洞（皱襞的最低处被截面削掉的地方）用光顺的小盖补上，是构造物 ──
     # ── closure: small holes of the patch lying on the cut plane (where the plane sliced the lowest point of a fold off) are closed with a fair cap; construction ──
@@ -211,6 +231,7 @@ def step_vulva(pk, deep, wu_dir, out_dir, max_rim_mm=5.0):
         'cutPlanes': {'what': 'flat cut planes of the specimen slab (not skin), removed', 'planes': caps, 'trianglesRemoved': int(cap_faces.sum()), 'caudalPlaneInBodyFrame': {'point': [round(float(v), 4) for v in cp.mean(0)], 'normalPointingCaudally': [round(float(v), 3) for v in nc]}},
         'patch': {'vertices': int(n_disc), 'triangles': int(len(Fp)), 'specimenVertices': int(n_spec), 'rimVertices': int(len(rim)), 'boundaryLoopsOfTheSpecimenSkinAlone': loops0, 'boundaryLoops': loops_now, 'isDiscWithOneLoop': disc, 'boundaryEdgesOnACutPlane': cut_edges, 'medianEdgeMm': round(float(np.median(edge)) / MM, 2),
                   'rule': 'specimen skin within 35 mm of clitoral body, vestibular bulbs, greater vestibular glands, bulbospongiosus, perineal body and external anal sphincter (as installed)'},
+        'narrowing': narrowing,
         'truncation': truncation,
         'closure': closure,
         'smoothing': {'method': 'Taubin, 10 iterations (λ 0.5, μ −0.53), rim fixed', 'movedMm': {'median': round(float(np.median(moved)) / MM, 2), 'p95': round(float(np.percentile(moved, 95)) / MM, 2), 'max': round(float(moved.max()) / MM, 2)}},
@@ -290,13 +311,29 @@ def step_vulva(pk, deep, wu_dir, out_dir, max_rim_mm=5.0):
         side_ = np.einsum('ij,ij->i', Q - P[j_], vn[j_])
         need[p_['id']] = {'closestToPatchMm': round(float(d_.min()) / MM, 2), 'shareOfVerticesOnTheOuterSide': round(float((side_[d_ < 0.01] > 0).mean()) if (d_ < 0.01).any() else 0.0, 3)}
     n_cut_rim = int(sum(bool(on_cut[i]) for i in outer))
+    KIND = ['edgeOfSelection', 'cutAboveThePlane', 'groove']
+    rk = np.r_[rim_kind, np.zeros(len(P) - len(rim_kind), np.int64)]
+    seg = np.linalg.norm(P[outer] - P[outer[1:] + outer[:1]], axis=1)
+    kseg = np.maximum(rk[outer], rk[outer[1:] + outer[:1]])  # 一段边缘的种类：两端里编号大的 / the kind of a rim segment: the greater of its two ends
+    by_kind = {}
+    for k_, name_ in enumerate(KIND):
+        m_ = kseg == k_
+        row = {'points': int((rk[outer] == k_).sum()), 'lengthMm': round(float(seg[m_].sum()) / MM, 1)}
+        if m_.any():
+            zz = P[np.array(outer)[m_], 2]
+            row['zRangeM'] = [round(float(zz.min()), 4), round(float(zz.max()), 4)]
+            row['absDistanceFromPresentSkinMm'] = {'median': round(float(np.median(np.abs(s[np.array(outer)[rk[outer] == k_]]))) / MM, 1) if (rk[outer] == k_).any() else None}
+        by_kind[name_] = row
+    stats['rimByKind'] = {'what': {'edgeOfSelection': 'where the 35 mm selection of specimen skin ends (in front on the mons, behind in the cleft between the buttocks): real skin that simply continues',
+                                   'cutAboveThePlane': 'a cut through real specimen skin %g mm above the specimen\'s cut plane: the wall of the cleft, or the bottom of a fold, continued below it. Not a natural border; it stands in for the groove where fold and thigh merge at the plane and along the cleft behind the folds. No surface was built there (constructed area 0)' % TRIM_ABOVE_PLANE_MM,
+                                   'groove': 'where the wall lateral to the roof is cut off: along the top of the groove between fold and thigh (where the surface normal turns over), a natural border; behind the folds a few points lie on the wall of the cleft between the buttocks at the stated distance from its apex line instead'}, 'kinds': by_kind}
     target = {
-        'what': {'zh': '女性会阴皮肤片（Wu 等 2015 标本的皮肤，按已装入的 WU_* 结构定位并平滑；片内被截面削出的小洞已用构造物补上）的外缘：皮肤作者把拟合皮肤的会阴抬高时要到达的位置。环是单一的、有序的；位置和法线在本体坐标系里（米，Y 向上，+Z 向前，+X 为身体左侧）；法线指向体外。onCutPlane 为 true 的点在标本皮肤块的截面上：那里的面是标本并拢的大腿内侧（或皱襞的外侧面）陡直向下延续的地方，不是真实的皮肤边缘，不要当作目标（见 cutPlaneRuns）。',
-                 'en': 'The outer rim of the female perineal skin patch (the skin of the specimen of Wu et al. 2015, positioned by the installed WU_* structures and smoothed; small holes the cut plane sliced into the patch are closed by construction): where the crotch of the fitted skin has to arrive when its author raises it. The loop is single and ordered; positions and normals are in the body frame (metres, Y up, +Z anterior, +X the body\'s left); normals point out of the body. Points with onCutPlane true lie on a cut plane of the specimen slab: there the surface is the medial side of the specimen\'s adducted thighs (or the lateral face of a fold) running steeply on downwards; they are not a real edge of skin and are not targets (see cutPlaneRuns).'},
+        'what': {'zh': '女性会阴皮肤片（Wu 等 2015 标本的皮肤，按已装入的 WU_* 结构定位并平滑；片内被截面削出的小洞已用构造物补上）的外缘：皮肤作者把拟合皮肤的会阴抬高时要到达的位置。环是单一的、有序的；位置和法线在本体坐标系里（米，Y 向上，+Z 向前，+X 为身体左侧）；法线指向体外。这一片已收窄到裂的“顶”（两侧并拢的大腿内侧的壁已去掉，见 graft-report.json 的 vulva.narrowing）；rimLoop.kind 说明每个点属于哪种边缘：groove 是皱襞与大腿之间的沟（天然的边界），cutAboveThePlane 是在标本截面之上几毫米处沿真实皮肤切出的线（不是天然边界），edgeOfSelection 是所取皮肤范围的尽头（皮肤在那里照常延续）。onCutPlane 为 true 的点在标本皮肤块的截面上：那里的面是标本并拢的大腿内侧（或皱襞的外侧面）陡直向下延续的地方，不是真实的皮肤边缘，不要当作目标（见 cutPlaneRuns）。',
+                 'en': 'The outer rim of the female perineal skin patch (the skin of the specimen of Wu et al. 2015, positioned by the installed WU_* structures and smoothed; small holes the cut plane sliced into the patch are closed by construction): where the crotch of the fitted skin has to arrive when its author raises it. The loop is single and ordered; positions and normals are in the body frame (metres, Y up, +Z anterior, +X the body\'s left); normals point out of the body. The patch is narrowed to the roof of the cleft (the walls on either side, the medial sides of the adducted thighs, are removed; see vulva.narrowing in graft-report.json); rimLoop.kind says what kind of rim each point is: groove is the groove between fold and thigh (a natural border), cutAboveThePlane a line cut through real skin a few millimetres above the specimen\'s cut plane (not a natural border), edgeOfSelection the end of the stretch of skin taken (the skin simply continues there). Points with onCutPlane true lie on a cut plane of the specimen slab: there the surface is the medial side of the specimen\'s adducted thighs (or the lateral face of a fold) running steeply on downwards; they are not a real edge of skin and are not targets (see cutPlaneRuns).'},
         'source': WU_SOURCE, 'toleranceForGraftingMm': max_rim_mm,
         'graftRule': 'grafted automatically only when (1) the rim lies a median of at most toleranceForGraftingMm from the present skin, (2) the patch is a disc with one boundary loop, (3) no part of the rim lies on a cut plane of the specimen and (4) no edge of the patch is used by more than two triangles; refused otherwise, with the reasons',
         'presentMismatchMm': {'medianAbs': round(rim_abs, 1), 'max': round(float(np.abs(s[rim]).max()) / MM, 1), 'sign': 'the patch lies inside the present skin (the present crotch is too low)'},
-        'rimLoop': {'vertices': len(outer), 'isTheOnlyBoundaryLoop': disc, 'positions': [[round(float(v), 5) for v in P[i]] for i in outer], 'outwardNormals': [[round(float(v), 4) for v in vn[i]] for i in outer], 'onCutPlane': [bool(on_cut[i]) for i in outer],
+        'rimLoop': {'vertices': len(outer), 'isTheOnlyBoundaryLoop': disc, 'positions': [[round(float(v), 5) for v in P[i]] for i in outer], 'outwardNormals': [[round(float(v), 4) for v in vn[i]] for i in outer], 'onCutPlane': [bool(on_cut[i]) for i in outer], 'kind': [KIND[int(rk[i])] for i in outer], 'kinds': stats['rimByKind'],
                     'signedDistanceFromPresentSkinMm': [round(float(s[i]) / MM, 1) for i in outer], 'pointsOnACutPlane': n_cut_rim},
         'cutPlaneRuns': truncation,
         'coverOverDeepParts': {'what': 'closest approach of each installed WU_* anchor part to the patch (mm): the cover the patch gives, which a skin meeting this rim should not undercut', 'parts': need},
@@ -351,6 +388,195 @@ def step_vulva(pk, deep, wu_dir, out_dir, max_rim_mm=5.0):
                      'what': {'zh': '女性会阴部皮肤：取自另一位女性标本（Wu 等 2015）的皮肤面，经放大、按骨配准并平滑，所以不是 scanned。constructionVertices 是构造物：皱襞最低处被标本截面削掉的小洞的封盖，以及通到阴道腔、尿道腔、直肠腔末端的盲管。', 'en': 'The female perineal skin: the skin surface of another woman\'s specimen (Wu et al. 2015), enlarged, fitted by bone and smoothed, hence not scanned. constructionVertices are construction: the caps over the small holes the specimen\'s cut plane sliced into the lowest points of the folds, and the blind canals to the ends of the vaginal, urethral and rectal lumina.'}})
         pk.grafts.append(info)
     pk.report['vulva'] = stats
+
+
+def split_nonmanifold(P, F):
+    """
+    把被两个以上三角形共用的边拆开：这种边的端点处，围着它的三角形按“只经过恰好两个三角形共用的边相连”分成几簇，
+    每多一簇就复制一个顶点（位置不变）。返回 (P, F, 每个顶点原来的下标, 剩下的非流形边数)。
+    标本皮肤上这种边在中线裂两壁相贴的地方：两张面在那里共用了一条边。拆开后两张面仍然贴着，但各有各的顶点。
+    Undoes edges shared by more than two triangles: at an end of such an edge the triangles round the vertex are
+    grouped into fans connected through edges shared by exactly two triangles, and the vertex is duplicated (same
+    position) for every fan beyond the first. Returns (P, F, the old index of every vertex, non-manifold edges left).
+    In the specimen skin these edges are where the two walls of the midline cleft touch: two sheets share an edge
+    there. Afterwards the sheets still touch but each has vertices of its own.
+    """
+    F = np.array(F, np.int64)
+    n = len(P)
+    E, cnt = unique_edges(F, n)
+    bad = set(map(tuple, E[cnt > 2].tolist()))
+    if not bad:
+        return P, F, np.arange(n), 0
+    origin = list(range(n))
+    vf = {}
+    for v in sorted(set(int(v) for e in bad for v in e)):
+        vf[v] = np.where((F == v).any(1))[0]
+    for v, fs in vf.items():
+        # 围着 v 的三角形：经过含 v 的流形边相连 / triangles round v, connected through manifold edges containing v
+        par = {int(f): int(f) for f in fs}
+
+        def find(a):
+            while par[a] != a:
+                par[a] = par[par[a]]
+                a = par[a]
+            return a
+
+        by_other = {}
+        for f in fs:
+            for u in F[f]:
+                if u != v:
+                    by_other.setdefault(int(u), []).append(int(f))
+        for u, lst in by_other.items():
+            if len(lst) == 2 and (min(u, v), max(u, v)) not in bad:
+                par[find(lst[0])] = find(lst[1])
+        roots = sorted(set(find(int(f)) for f in fs))
+        for r in roots[1:]:
+            k = len(origin)
+            origin.append(origin[v])
+            for f in fs:
+                if find(int(f)) == r:
+                    F[f][F[f] == v] = k
+    origin = np.array(origin)
+    P2 = P[origin]
+    left = int((unique_edges(F, len(P2))[1] > 2).sum())
+    return P2, F, origin, left
+
+
+def narrow_to_roof(P, F, on_cut, nc, plane_pt, xm):
+    """
+    把这一片收窄到裂的“顶”：不要两侧的壁（并拢的大腿内侧），外缘不落在标本的截面上。
+      1. 非流形边拆开（split_nonmanifold）。
+      2. 落在截面上的那段外缘：沿真实皮肤、在截面之上 TRIM_ABOVE_PLANE_MM 处切开（等值线切，三角形在自己的平面内被切）。
+      3. 皱襞与大腿之间有沟的地方：沿沟切开，去掉沟外侧的大腿壁。壁 = 朝向中线、沿面离中线超过 WALL_FROM_MIDLINE_MM、
+         并与第 2 步的切线连着的面；它的指示函数在面上平滑几次，取 0.5 等值线（落在沟顶法线转向的地方）。
+    返回新的 (P, F, on_cut)、每个外缘顶点属于哪种边缘（kind）和报告。不构造任何面。
+    Narrows the patch to the roof of the cleft: without the walls on either side (medial sides of the adducted
+    thighs), and with no part of the outer rim on the specimen's cut plane.
+      1. Non-manifold edges are undone (split_nonmanifold).
+      2. The stretch of outer rim on the cut plane: cut through real skin TRIM_ABOVE_PLANE_MM above the plane (a cut along
+         a level line; triangles are cut in their own plane).
+      3. Where there is a groove between fold and thigh: cut along the groove, removing the thigh wall lateral to it.
+         Wall = surface facing the midline, further than WALL_FROM_MIDLINE_MM from the midline along the surface and
+         connected to the cut of step 2; its indicator is smoothed over the surface a few times and the 0.5 level line is
+         taken (it lands where the normal turns over at the top of the groove).
+    Returns the new (P, F, on_cut), the kind of rim each outer rim vertex belongs to, and a report. No surface is built.
+    """
+    n_in = len(P)
+    P, F, origin, nm_left = split_nonmanifold(P, F)
+    nm_split = len(P) - n_in
+    on_cut = on_cut[origin]
+    was_rim = np.zeros(len(P), bool)
+    hm = half_edge_map(F)
+    was_rim[[a for (a, b) in hm if (b, a) not in hm]] = True
+    h = -(P - plane_pt) @ nc
+    # 截面上的外缘（不算片内落在截面上的小洞）/ the outer rim on the plane (small holes of the patch on the plane are not counted)
+    loops = walk_loops(np.array([(a, b) for (a, b) in hm if (b, a) not in hm]))
+    small = set()
+    for lp in loops:
+        if len(lp) <= 12 and on_cut[lp].all():
+            small.update(lp)
+    op = np.array([v for v in np.where(was_rim & on_cut)[0] if v not in small], np.int64)
+    if not len(op):
+        raise RuntimeError('vulva: no part of the outer rim lies on a cut plane; nothing to narrow')
+    E, _ = unique_edges(F, len(P))
+    G = graph(len(P), E, np.linalg.norm(P[E[:, 0]] - P[E[:, 1]], axis=1))
+    d_op = csgraph.dijkstra(G, indices=op, min_only=True)
+    d_op = np.where(np.isfinite(d_op), d_op, 1.0)
+    f1 = (h - TRIM_ABOVE_PLANE_MM * MM) + 0.5 * np.maximum(0.0, d_op - TRIM_REACH_MM * MM)
+    f1[list(small)] = np.maximum(f1[list(small)], 1e-4)
+    V1, Fp1, _, born1, _, _ = cut_by_level(P, F, f1)
+    area = lambda V_, F_: np.linalg.norm(np.cross(V_[F_[:, 1]] - V_[F_[:, 0]], V_[F_[:, 2]] - V_[F_[:, 0]]), axis=1) / 2
+    lab = face_components(Fp1, len(V1))
+    main = np.argmax(np.bincount(lab, weights=area(V1, Fp1)))
+    F1 = Fp1[lab == main]
+    kind = np.zeros(len(V1), np.int64)  # 0 不在新切线上 / not on a new cut; 1 截面之上的切线 / the cut above the plane; 2 沟 / groove
+    hm1 = half_edge_map(F1)
+    rim1 = np.unique([a for (a, b) in hm1 if (b, a) not in hm1])
+    old_rim = np.r_[was_rim, np.zeros(len(V1) - len(P), bool)]
+    kind[rim1[~old_rim[rim1]]] = 1
+    # 壁：朝向中线、离中线远、与第 2 步的切线连着 / walls: facing the midline, far from it, connected to the cut of step 2
+    fn = np.cross(V1[F1[:, 1]] - V1[F1[:, 0]], V1[F1[:, 2]] - V1[F1[:, 0]])
+    vn = np.zeros_like(V1)
+    for k in range(3):
+        np.add.at(vn, F1[:, k], fn)
+    vn /= np.maximum(np.linalg.norm(vn, axis=1, keepdims=True), 1e-20)
+    used1 = np.zeros(len(V1), bool)
+    used1[F1] = True
+    if (vn[used1] @ nc).mean() < 0:
+        vn = -vn  # 外法线：顶朝尾侧 / outward normals: the roof faces caudally
+    E1, _ = unique_edges(F1, len(V1))
+    G1 = graph(len(V1), E1, np.linalg.norm(V1[E1[:, 0]] - V1[E1[:, 1]], axis=1))
+    # 中线取这一片自己的：每 4 mm 一片，中央 ±12 mm 以内最高的那一点（裂的顶），沿前后方向取中值后插值。
+    # 深层结构的中位 x 不能用：标本的裂偏在它的一侧几毫米。
+    # The midline is taken from the patch itself: in slices of 4 mm, the highest point within ±12 mm of the centre (the apex
+    # of the cleft), median-filtered along the fore-aft direction and interpolated. The median x of the deep structures
+    # will not do: the specimen's cleft lies a few millimetres to one side of it.
+    xc = float(np.median(V1[used1, 0]))
+    h1 = -(V1 - plane_pt) @ nc
+    zs, xa = [], []
+    for z0 in np.arange(V1[used1, 2].min(), V1[used1, 2].max(), 0.004):
+        m_ = np.where(used1 & (V1[:, 2] >= z0) & (V1[:, 2] < z0 + 0.004) & (np.abs(V1[:, 0] - xc) < 0.012))[0]
+        if len(m_):
+            zs.append(z0 + 0.002)
+            xa.append(V1[m_[np.argmax(h1[m_])], 0])
+    xa = np.array(xa)
+    xa = np.array([np.median(xa[max(0, i - 2):i + 3]) for i in range(len(xa))])
+    xm = np.interp(V1[:, 2], np.array(zs), xa)
+    mid = np.where(used1 & (np.abs(V1[:, 0] - xm) < 2.5 * MM))[0]
+    g = csgraph.dijkstra(G1, indices=mid, min_only=True)
+    g = np.where(np.isfinite(g), g, 1.0)
+    lateral = np.sign(V1[:, 0] - xm)
+    wall0 = used1 & (vn[:, 0] * lateral < WALL_FACING) & (g > WALL_FROM_MIDLINE_MM * MM)
+    A1 = graph(len(V1), E1, np.ones(len(E1)))
+    idx = np.where(wall0)[0]
+    _, wl = csgraph.connected_components(A1[idx][:, idx], directed=False)
+    touch = np.unique(wl[np.isin(idx, rim1[kind[rim1] == 1])])
+    wall = np.zeros(len(V1), bool)
+    wall[idx[np.isin(wl, touch)]] = True
+    w = wall.astype(np.float64)
+    deg = np.maximum(np.asarray(A1.sum(1)).ravel(), 1)
+    for _ in range(3):
+        w = 0.5 * w + 0.5 * (A1 @ w) / deg
+    if os.environ.get('SKINOPEN_DEBUG'):
+        np.savez(os.path.join(os.environ['SKINOPEN_DEBUG'], 'vulva-debug.npz'), V1=V1, F1=F1, wall0=wall0, wall=wall, w=w, g=g, vn=vn, P=P, F=F, f1=f1, xm=xm, h=h)
+    V2, Fp2, Fn2, born2, _, _ = cut_by_level(V1, F1, 0.5 - w)
+    lab2 = face_components(Fp2, len(V2))
+    main2 = np.argmax(np.bincount(lab2, weights=area(V2, Fp2)))
+    isl = islands(Fp2[lab2 == main2], Fn2, face_components(Fn2, len(V2)), len(V2)) if len(Fn2) else np.zeros(0, bool)
+    # 被圈在里面的小岛并回去；大块的壁不并 / islets enclosed by the kept piece are returned to it; the large pieces of wall are not
+    if len(Fn2):
+        ln2 = face_components(Fn2, len(V2))
+        touch_rim = np.zeros(len(V2), bool)
+        touch_rim[rim1] = True
+        keep_isl = np.zeros(len(Fn2), bool)
+        for c in np.unique(ln2[isl]):
+            m = ln2 == c
+            if not touch_rim[Fn2[m]].any():
+                keep_isl |= m
+        F2 = np.vstack([Fp2[lab2 == main2], Fn2[keep_isl]])
+    else:
+        F2 = Fp2[lab2 == main2]
+    kind = np.r_[kind, np.zeros(len(V2) - len(V1), np.int64)]
+    hm2 = half_edge_map(F2)
+    rim2 = np.unique([a for (a, b) in hm2 if (b, a) not in hm2])
+    was1 = np.zeros(len(V2), bool)
+    was1[rim1] = True
+    kind[rim2[~was1[rim2]]] = 2
+    # 压缩顶点编号 / compact the vertex numbering
+    keep = np.unique(F2)
+    remap = -np.ones(len(V2), np.int64)
+    remap[keep] = np.arange(len(keep))
+    Pn, Fn_ = V2[keep], remap[F2]
+    on_cut_n = np.r_[on_cut, np.zeros(len(V2) - len(P), bool)][keep]
+    kind_n = kind[keep]
+    a_in, a_out = float(area(P, F).sum()), float(area(Pn, Fn_).sum())
+    rep = {'what': 'the patch narrowed to the roof of the cleft: no wall of the cleft lateral to a groove, no rim on the cut plane; nothing is built, real specimen skin is only cut away',
+           'rules': {'cutAboveThePlane': 'within %g mm (along the surface) of the stretch of outer rim on the cut plane, the surface less than %g mm above the plane is cut away along that level line' % (TRIM_REACH_MM, TRIM_ABOVE_PLANE_MM),
+                     'groove': 'wall = surface whose outward normal has a lateral component below %g (i.e. facing the midline), lying more than %g mm along the surface from the midline band (within 2.5 mm of the apex line of the cleft, taken from the patch itself) and connected to the cut above the plane; its indicator is averaged over the mesh 3 times and the patch is cut along the 0.5 level line' % (WALL_FACING, WALL_FROM_MIDLINE_MM)},
+           'nonManifoldEdges': {'verticesDuplicatedToUndoThem': int(nm_split), 'left': int(nm_left)},
+           'specimenSkinAreaMm2': {'before': round(a_in / MM ** 2, 1), 'kept': round(a_out / MM ** 2, 1), 'cutAway': round((a_in - a_out) / MM ** 2, 1)},
+           'pointsPutOnSpecimenEdgesByTheCuts': int((keep >= len(P)).sum())}
+    return Pn, Fn_, on_cut_n, kind_n, rep
 
 
 def walk_loops(bedges):

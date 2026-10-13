@@ -67,6 +67,9 @@ TAGS = {
 
 # ── 读写 / input and output ─────────────────────────────────────────────────────────────────────
 
+EYE_STRIP_MIN = 40        # 一只眼的封膜至少有这么多三角形（现有皮肤上是 62 / 64）/ a membrane over an eye has at least this many triangles (62 / 64 on the present skins)
+EYE_STRIP_REACH_MM = 40   # 封膜离眼关节最远不超过这么多 / the membrane lies no further than this from the eye joint
+
 def read_obj(path):
     """读 OBJ 的顶点和三角形（保留文件里的顺序）/ vertices and triangles of an OBJ, in file order"""
     V, F, head = [], [], []
@@ -492,6 +495,17 @@ def main():
     for side, reg, jname in (('L', 'lidsL', 'l_eye'), ('R', 'lidsR', 'r_eye')):
         strip, loop, ends = find_eye_membrane(V0, F0, np.array(regions[reg]), hm0)
         up, lo = split_lid_margins(V0, loop, ends, mid_x)
+        # 找到的必须真是这只眼的封膜（第 12 节的失败测试：把 face.regions.lidsL 指到别处时，以前会在别处删掉一小片三角形并正常退出）：
+        # 三角形不少于 EYE_STRIP_MIN 个，并且整条带在眼关节 EYE_STRIP_REACH_MM 之内。
+        # What was found must really be the membrane of this eye (the failure test of section 12: with face.regions.lidsL pointed elsewhere
+        # the tool used to remove a few triangles somewhere else and exit normally): at least EYE_STRIP_MIN triangles, and the whole strip
+        # within EYE_STRIP_REACH_MM of the eye joint.
+        if len(strip) < EYE_STRIP_MIN:
+            raise RuntimeError('eye %s: the strip between the lid margins has only %d triangles (expected at least %d) — the membrane over the eye was not found in face.regions.%s' % (side, len(strip), EYE_STRIP_MIN, reg))
+        if jname in jn:
+            far = float(np.linalg.norm(V0[np.unique(F0[strip])] - jpos[jn.index(jname)], axis=1).max())
+            if far > EYE_STRIP_REACH_MM * MM:
+                raise RuntimeError('eye %s: the strip found in face.regions.%s reaches %.0f mm from the joint %s (limit %d mm) — it is not the membrane over this eye' % (side, reg, far / MM, jname, EYE_STRIP_REACH_MM))
         eyes[side] = {'strip': strip, 'loop': loop, 'upper': up, 'lower': lo, 'joint': jpos[jn.index(jname)] if jname in jn else None}
         membrane_faces.append(strip)
     membrane_faces = np.concatenate(membrane_faces)
@@ -828,8 +842,12 @@ def main():
             cmp['cutLineAboveLowerIncisalEdgeMm'] = round(float(pm[:, 1].mean() - li[:, 1].max()) / MM, 2)
             cmp['incisorOverlapMm'] = round(float(li[:, 1].max() - ci[:, 1].min()) / MM, 2)
         if lipp:
-            P = lipp[0]
-            cmp['deepLipPart'] = {'widthMm': round(float(np.ptp(P[:, 0])) / MM, 1), 'skinMouthWidthMm': round(float(abs(V0[path[0], 0] - V0[path[-1], 0])) / MM, 1),
+            # 深层的唇可以是一个部件，也可以是上、下两个：量宽度和中线时合在一起看
+            # the deep lip may be one part or an upper and a lower one: for width and midline they are taken together
+            P = np.concatenate(lipp)
+            lip_ids = [p['id'] for p in deep['parts'] if p['group'] == 'lip']
+            report['deepLipParts'] = {'ids': lip_ids, 'names': [p['name'] for p in deep['parts'] if p['group'] == 'lip'], 'pieces': len(lip_ids)}
+            cmp['deepLipPart'] = {'ids': lip_ids, 'pieces': len(lip_ids), 'widthMm': round(float(np.ptp(P[:, 0])) / MM, 1), 'skinMouthWidthMm': round(float(abs(V0[path[0], 0] - V0[path[-1], 0])) / MM, 1),
                                   'centreXMm': round(float((P[:, 0].max() + P[:, 0].min()) / 2) / MM, 1), 'skinStomionXMm': round(xm / MM, 1)}
         if deep.get('tmj'):
             cmp['tmj'] = deep['tmj']
@@ -1002,6 +1020,9 @@ def main():
         }
     m['opened'] = {
         'by': 'tools/skinopen/open_skin.py',
+        # 深层的唇部件（一个或上下两个）的 id：皮肤一张口，它们要么隐藏、要么跟着动（INTEGRATION.txt 第 6、12 节）
+        # ids of the deep lip part(s) (one, or an upper and a lower): once the skin opens they are either hidden or have to follow (INTEGRATION.txt sections 6 and 12)
+        'deepLipParts': report.get('deepLipParts'),
         'steps': prior_steps + ['open'],
         'stepsNote': {'zh': '各步骤的先后：先在闭合的皮肤上做移植（graft.py 的各步，见 grafted），最后开口裂和睑裂（open）。skin-closed.obj 是开口之前、移植之后的闭合皮肤。', 'en': 'Order of the steps: grafts first, on the closed skin (the steps of graft.py, see grafted), then the mouth and eye openings (open). skin-closed.obj is the closed skin after the grafts and before the openings.'},
         'modification': {
@@ -1083,6 +1104,8 @@ def main():
     checks['licenceFilesPresent'] = all(os.path.exists(os.path.join(out, f)) for f in os.listdir(pkg) if f.upper().startswith(('LICENSE', 'NOTICE'))) and any(f.upper().startswith('LICENSE') for f in os.listdir(out))
     checks['marginsCoincide'] = bool(np.abs(V2[upper_margin] - V2[lower_margin]).max() == 0)
     checks['boundaryLoops'] = loops
+    # 开口后的皮肤恰有两个边界环（两眼内卷的内缘）/ the opened skin has exactly two boundary loops (the inner edges of the two lid rims)
+    checks['exactlyTwoBoundaryLoops'] = len(loops) == 2
     report['checks'] = checks
     json.dump(report, open(os.path.join(out, 'open-report.json'), 'w'), ensure_ascii=False, indent=1)
     print(json.dumps(report, ensure_ascii=False, indent=1))

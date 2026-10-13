@@ -93,6 +93,8 @@ export const PART_LOOK: { match: RegExp; color: string; opacity?: number }[] = [
   { match: /^anterior chamber/i, color: '#cfd8dc', opacity: 0.06 },
   { match: /^gingiva/i, color: '#d98a8a' },
   { match: /^tongue$/i, color: '#c96f6f' },
+  // 眉毛：不给颜色的话与皮肤同色，贴在皮肤上分不出来 / eyebrows: without a colour of their own they take the skin's and cannot be told from it
+  { match: /^eyebrow$/i, color: '#4a382c' },
 ]
 
 export function partLook(name: string): { color: string; opacity?: number } | undefined {

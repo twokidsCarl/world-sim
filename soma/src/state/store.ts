@@ -28,7 +28,21 @@ export interface Selection {
 
 export const EMPTY_SELECTION: Selection = { ids: [], set: new Set(), concept: null }
 
-export type LeftTab = 'display' | 'tree' | 'pose' | 'pain'
+export type LeftTab = 'display' | 'tree' | 'pose' | 'pain' | 'expr'
+
+/** 保持的情绪表情：FaceExpression.id 和强度 0–1 / The held emotion expression: a FaceExpression.id and a strength 0–1. */
+export interface ExprSetting {
+  id: string
+  strength: number
+}
+
+/** "由音频带动口形"的状态；音频本身和口形轨迹在 src/face/speech.ts 里 / State of "speak from audio"; the audio and its mouth track live in src/face/speech.ts. */
+export interface SpeechStatus {
+  status: 'idle' | 'analysing' | 'ready' | 'playing' | 'error'
+  name: string
+  durationS: number
+  message: string
+}
 
 /** 疼痛反应的设定：强度 0–10、起病方式、是否保持、是否静音。 */
 /** Settings of the pain response: intensity 0–10, onset, whether held, whether muted. */
@@ -151,11 +165,11 @@ export interface AppState {
   /** 当前人体的面部表情数据；首次使用"疼痛反应"时才加载 / This body's facial expression data, loaded when the pain response is first used. */
   face: LoadedFace | null
   /**
-   * 皮肤不透明时要隐藏的部件，取自 pipeline-report.json 的 appendages.hideWithOpaqueSkin：
-   * undefined = 还没读；null = 这副人体的报告没有这一节（改用按名称的规则：头发、眉毛、阴毛）；数组 = 报告给的清单。
-   * Parts to hide while the skin is opaque, from appendages.hideWithOpaqueSkin of pipeline-report.json:
-   * undefined = not read yet; null = this body's report has no such section (the name rule applies instead: hair,
-   * eyebrows, pubic hair); an array = the list the report gives.
+   * 皮肤不透明时要隐藏的部件，取自这副人体的 display.json（管线写的一个小文件）的 hideWithOpaqueSkin：
+   * undefined = 还没读；null = 这副人体没有这个文件（改用按名称的规则：头发、眉毛、阴毛）；数组 = 文件给的清单。
+   * Parts to hide while the skin is opaque, from hideWithOpaqueSkin of this body's display.json (a small file the
+   * pipeline writes): undefined = not read yet; null = this body has no such file (the name rule applies instead:
+   * hair, eyebrows, pubic hair); an array = the list the file gives.
    */
   skinHide: readonly string[] | null | undefined
   /** 皱纹细节层（面部 UV + 法线图集）；皮肤画成不透明时才去取 / The wrinkle detail layer (face UV + normal atlas); fetched only once the skin is drawn opaque. */
@@ -165,6 +179,13 @@ export interface AppState {
   pain: PainSettings
   /** 手动设定的 AU 强度（0–5），与疼痛表情逐项取较大者 / Manually set AU intensities (0–5), combined with the pain expression by maximum. */
   aus: AUs
+  /** 保持的情绪表情（与疼痛、手动 AU 逐项取较大者）；null = 没有 / The held emotion expression (combined with pain and manual AUs by maximum); null = none. */
+  expr: ExprSetting | null
+  /** 保持的视位（一个口形）的 id；null = 没有 / The id of the held viseme (one mouth shape); null = none. */
+  viseme: string | null
+  speech: SpeechStatus
+  /** "标定对照"对话框 / The "Calibration" dialog. */
+  calibrationOpen: boolean
   /** 每触发一次加一（让查看器开始逐帧更新）/ Bumped on every trigger (so the viewer starts updating every frame). */
   painNonce: number
   /** 刺激工具的设置；armed 时点（或按住）皮肤就施加刺激，而不是选中 / The stimulus tool's settings; while armed, a click (or press) on the skin applies it instead of selecting. */
@@ -244,6 +265,11 @@ export interface AppState {
   setPain(patch: Partial<PainSettings>): void
   setAU(id: string, intensity: number): void
   clearAUs(): void
+  /** 设定（或用 null 清除）情绪表情；强度限制在 0–1 / Set (or clear with null) the emotion expression; the strength is kept within 0–1. */
+  setExpr(expr: ExprSetting | null): void
+  /** 保持（或用 null 松开）一个视位 / Hold (or release with null) a viseme. */
+  setViseme(id: string | null): void
+  setCalibrationOpen(open: boolean): void
   setSkinOpaque(on: boolean): void
   /** 看表情的两种预设视图：肌肉（缺省，表情读得清）或不透明皮肤 / The two preset views for reading the expression: muscles (default, reads clearly) or opaque skin. */
   setFaceView(view: 'muscle' | 'skin'): void
@@ -290,6 +316,17 @@ export interface AppState {
   setLeftOpen(open: boolean): void
   setRightOpen(open: boolean): void
   setAboutOpen(open: boolean): void
+}
+
+/**
+ * display.json 里皮肤不透明时要隐藏的部件：只留这副人体里确实有的；文件没有或不合规时为 null（改用按名称的规则）。
+ * The parts display.json lists as hidden under an opaque skin: only those this body really has; null when the file is absent or
+ * malformed (the name rule applies instead).
+ */
+export function hideListFrom(display: unknown, has: (id: string) => boolean): string[] | null {
+  const list = (display as { hideWithOpaqueSkin?: unknown } | null)?.hideWithOpaqueSkin
+  if (!Array.isArray(list)) return null
+  return list.filter((id): id is string => typeof id === 'string' && has(id))
 }
 
 function makeSelection(ids: readonly string[], concept: Selection['concept'] = null): Selection {
@@ -379,6 +416,10 @@ export const useApp = create<AppState>()((set, get) => ({
   faceMessage: '',
   pain: { level: 5, onset: 'sudden', hold: false, muted: false, always: false },
   aus: {},
+  expr: null,
+  viseme: null,
+  speech: { status: 'idle', name: '', durationS: 0, message: '' },
+  calibrationOpen: false,
   painNonce: 0,
   stimSettings: defaultSettings(),
   stimArmed: false,
@@ -518,7 +559,9 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().skinMapMode !== 'off') void get().ensureSkinMaps()
     if (get().leftTab === 'pose' || !poseIsRest(get().pose) || get().breathing) void get().ensureRig()
     if (get().leftTab === 'pose') void get().ensureShape()
-    if (get().leftTab === 'pain' || get().pain.hold || Object.keys(get().aus).length > 0) void get().ensureFace()
+    if (get().leftTab === 'pain' || get().leftTab === 'expr' || get().pain.hold || Object.keys(get().aus).length > 0 || get().expr || get().viseme) void get().ensureFace()
+    // 表情和口形要张口时靠下颌关节 / an expression or mouth shape that opens the mouth needs the jaw joint
+    if (get().expr || get().viseme) void get().ensureRig()
   },
 
   switchBody: (body) => {
@@ -675,13 +718,13 @@ export const useApp = create<AppState>()((set, get) => ({
     const { graph, dataset, skinHide } = get()
     if (!graph || skinHide !== undefined || reportTried === graph) return
     reportTried = graph
-    void fetchJson<{ appendages?: { applied?: boolean; hideWithOpaqueSkin?: string[] } }>(`${import.meta.env.BASE_URL}anatomy/${dataset}/pipeline-report.json`)
+    // display.json 只有一千字节左右；同样的清单也在 pipeline-report.json 里，但那个文件有一兆多
+    // display.json is about a kilobyte; the same list is in pipeline-report.json too, but that file is over a megabyte
+    void fetchJson<unknown>(`${import.meta.env.BASE_URL}anatomy/${dataset}/display.json`)
       .catch(() => null)
-      .then((report) => {
+      .then((display) => {
         if (get().graph !== graph) return
-        const a = report?.appendages
-        // 只有管线确实把附属部件贴合到皮肤上（applied）时，才用它的清单 / the list is used only when the pipeline really conformed the appendages to the skin (applied)
-        set({ skinHide: a?.applied && Array.isArray(a.hideWithOpaqueSkin) ? a.hideWithOpaqueSkin.filter((id) => !!graph.part(id)) : null })
+        set({ skinHide: hideListFrom(display, (id) => !!graph.part(id)) })
       })
   },
   ensureFaceDetail: async () => {
@@ -733,6 +776,21 @@ export const useApp = create<AppState>()((set, get) => ({
     if (/^AU2[67]$/.test(id)) void get().ensureRig()
   },
   clearAUs: () => set({ aus: {} }),
+  setExpr: (expr) => {
+    set({ expr: expr && expr.id ? { id: expr.id, strength: Math.min(1, Math.max(0, expr.strength)) } : null })
+    if (get().expr) {
+      void get().ensureFace()
+      void get().ensureRig() // 惊讶等表情要张口 / expressions such as surprise open the mouth
+    }
+  },
+  setViseme: (viseme) => {
+    set({ viseme: viseme || null })
+    if (viseme) {
+      void get().ensureFace()
+      void get().ensureRig()
+    }
+  },
+  setCalibrationOpen: (calibrationOpen) => set({ calibrationOpen }),
   setSkinOpaque: (skinOpaque) => {
     set({ skinOpaque })
     if (skinOpaque && get().face) void get().ensureFaceDetail()
@@ -952,7 +1010,7 @@ export const useApp = create<AppState>()((set, get) => ({
       void get().ensureRig()
       void get().ensureShape()
     }
-    if (leftTab === 'pain') void get().ensureFace()
+    if (leftTab === 'pain' || leftTab === 'expr') void get().ensureFace()
   },
   setTreeTab: (treeTab) => set({ treeTab }),
   toggleExpanded: (tree, id) =>

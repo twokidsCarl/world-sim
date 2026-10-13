@@ -113,6 +113,36 @@
     "zh": "只读了摘要（经 Europe PMC），摘要没有列出分型。四种外眦皱纹分型（全扇形；下睑 / 上颊；上睑到外眦；仅外眦中央）是从网页检索结果里转述的，未能核对原文，也没有拿到各型的比例。卷期页码凭记忆写出，未核对。",
     "en": "Abstract only (via Europe PMC), and the abstract does not list the patterns. The four lateral canthal patterns (full fan; lower lid / upper cheek; upper lid down to the lateral canthus; central zone only) are taken second-hand from web search summaries and could not be checked against the paper; no frequencies were obtained. Volume, issue and pages are written from memory and were not checked."
    }
+  },
+  {
+   "id": "cmu-facs",
+   "citation": "Carnegie Mellon University, Face Group. FACS – Facial Action Coding System (Ekman and Friesen 1978): table of action units with muscular basis.",
+   "url": "https://www.cs.cmu.edu/~face/facs.htm",
+   "license": "Web page; no licence stated. Facts only.",
+   "opened": {
+    "zh": "读了页面（2026-10-13）。表中：AU1 额肌内侧部；AU2 额肌外侧部；AU4 皱眉肌、降眉肌（没有降眉间肌）；AU5 上睑提肌；AU11 颧小肌；AU13 提口角肌；AU14 颊肌；AU15 降口角肌；AU16 降下唇肌；AU17 颏肌；AU18 上下唇切牙肌；AU22、23、24、28 口轮匝肌；AU43 上睑提肌放松、眼轮匝肌睑部。FACS 手册本身没有打开。",
+    "en": "Page read on 2026-10-13. Its table gives: AU1 frontalis, pars medialis; AU2 frontalis, pars lateralis; AU4 corrugator supercilii, depressor supercilii (no procerus); AU5 levator palpebrae superioris; AU11 zygomaticus minor; AU13 levator anguli oris; AU14 buccinator; AU15 depressor anguli oris; AU16 depressor labii inferioris; AU17 mentalis; AU18 incisivii labii superioris and inferioris; AU22, 23, 24, 28 orbicularis oris; AU43 relaxation of levator palpebrae superioris, orbicularis oculi pars palpebralis. The FACS manual itself was not opened."
+   }
+  },
+  {
+   "id": "du2014",
+   "citation": "Du S, Tao Y, Martinez AM. Compound facial expressions of emotion. Proc Natl Acad Sci USA 2014;111(15):E1454–E1462.",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3992629/",
+   "license": "Free to read at PMC (PMC3992629); licence terms not read. Facts and numbers only.",
+   "opened": {
+    "zh": "2026-10-13 在 PMC 页面读到全文（PMC3992629；此前记录的 PMC4157835 是另一篇文章——Tian、Kanade、Cohn 的 AU 识别论文）。表 1 给出 6 种基本情绪和 15 种复合情绪的原型 AU（超过 70% 的受试者）和变体 AU 及其比例；emotions.json 逐条照录。原文没有给 AU 强度。Europe PMC 的全文接口仍返回 500。",
+    "en": "Full text read on the PMC page on 2026-10-13 (PMC3992629; the id recorded earlier, PMC4157835, is a different article — the AU recognition paper by Tian, Kanade and Cohn). Table 1 gives the prototypical AUs (over 70% of subjects) and the variant AUs with their proportions for 6 basic and 15 compound emotions; emotions.json copies it entry by entry. The paper gives no AU intensities. The Europe PMC full-text interface still returned 500."
+   }
+  },
+  {
+   "id": "jali2016",
+   "citation": "Edwards P, Landreth C, Fiume E, Singh K. JALI: An Animator-Centric Viseme Model for Expressive Lip Synchronization. ACM Trans Graph 35(4), SIGGRAPH 2016.",
+   "url": "https://www.dgp.toronto.edu/~elf/JALISIG16.pdf",
+   "license": "© ACM / the authors; author's copy on the university site. Method and facts only.",
+   "opened": {
+    "zh": "2026-10-13 下载了作者主页上的 PDF 并读了其中的文字（图读不到）。取用的内容：口形的分解 face = nface + JA·(jd + td) + LI·au 及“腹语奇点”；四条构音约束、三条约定、九条协同发音习惯（第 4.2 节）；视位在音之前 120 ms 起、之后 120 ms 消退，唇前突为 150 ms；附录 A 的音的分类（双唇、唇齿、咝音、塞音、鼻音、只动舌、lipHeavy）和伪代码；LNTD、GK 两个只动舌的视位的描述。图 4（各视位的 AU）是图片，没有读到。",
+    "en": "The PDF on the author's page was downloaded on 2026-10-13 and its text read (figures could not be read). Taken from it: the decomposition face = nface + JA·(jd + td) + LI·au and the \"ventriloquist singularity\"; the four articulation constraints, three conventions and nine co-articulation habits (section 4.2); visemes start 120 ms before the sound and decay 120 ms after it, 150 ms for lip protrusion; the sound classes of appendix A (bilabial, labiodental, sibilant, obstruent, nasal, tongue-only, lip-heavy) and its pseudocode; the descriptions of the two tongue-only visemes LNTD and GK. Figure 4 (the AUs of each viseme) is an image and was not read."
+   }
   }
  ]
 }

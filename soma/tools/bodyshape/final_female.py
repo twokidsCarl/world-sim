@@ -203,6 +203,15 @@ def face_landmarks(ident, lod):
     return lips, int(cand[np.argmin(V[cand, 1])])
 
 
+def lip_verts(fb):
+    """深层的唇部件的顶点：一个部件（Lip）或两个（Upper lip、Lower lip）都接受。
+    Vertices of the deep lip part: one part (Lip) or two (Upper lip, Lower lip) are both accepted."""
+    vs = [fb.mesh(p)[0] for p in fb.parts if p['name'] in ('Lip', 'Upper lip', 'Lower lip')]
+    if not vs:
+        raise KeyError('no part named Lip, Upper lip or Lower lip')
+    return np.vstack(vs)
+
+
 LIPS_BY_TABLE = False
 CHIN_SOFT = 0.007     # 颏下点处的软组织厚度（假定值）/ soft tissue under the menton (assumption)
 INCISOR_SHOW = 0.002  # 静止时口裂在上中切牙切缘上方 2 mm（临床上常说静止露齿 1–3 mm；假定值，没有核对文献）
@@ -238,7 +247,7 @@ def face_scale(V, F, pivot, wh, fb, log, marks):
         return Y
 
     Y0 = remap(V)
-    lipv = fb.verts('Lip')
+    lipv = lip_verts(fb)
     lipv = lipv[lipv[:, 2] > np.percentile(lipv[:, 2], 70)]
     lip_cover = float(np.percentile(-signed_distance(lipv, Y0, F), 10))
     man = fb.verts('Mandible')

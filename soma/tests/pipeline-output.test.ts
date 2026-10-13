@@ -70,7 +70,7 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
   const skinOpened = skinInstalled && !!pipelineReport.skinPackage?.opened
   // 被非刚性形变而由 scanned 改标为 warped 的部件：肩带校正、上肢外展、附属物贴合三步各自报告
   // parts deformed non-rigidly and relabelled from scanned to warped: reported by the shoulder correction, the arm abduction and the appendage conforming, each for itself
-  const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? (['shoulderGirdle', 'armAbduction', 'appendages'] as const).flatMap((k) => { const r = (JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as Record<string, { provenance?: { relabelledIds?: string[] }; relabelledIds?: string[] } | undefined>)[k]; return r?.provenance?.relabelledIds ?? r?.relabelledIds ?? [] }) : [])
+  const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? (['shoulderGirdle', 'armAbduction', 'appendages', 'thinParts'] as const).flatMap((k) => { const r = (JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as Record<string, { provenance?: { relabelledIds?: string[] }; relabelledIds?: string[]; relabelledToWarped?: string[] } | undefined>)[k]; return r?.provenance?.relabelledIds ?? r?.relabelledIds ?? (Array.isArray(r?.relabelledToWarped) ? r.relabelledToWarped : []) }) : [])
 
   it('has the contract header', () => {
     expect(data.schema).toBe(1)
@@ -85,7 +85,8 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
   it('has unique part ids and well-formed parts', () => {
     expect(byId.size).toBe(data.parts.length)
     for (const p of data.parts) {
-      expect(p.id).toMatch(/^(FJ\d+M?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)$/)
+      // FJ…_upper / FJ…_lower：切开的唇的两半（lipSplit.ts） / FJ…_upper and FJ…_lower: the two halves of the split lip (lipSplit.ts)
+      expect(p.id).toMatch(/^(FJ\d+M?(_upper|_lower)?|R3_FMA\d+|ZA[0-9A-F]{8}|SOMA_[a-z_]+(_[LR])?)$/)
       // FMA id，或者对 FMA 中没有对应类的结构使用合成的 ZAC_… 概念 id
       // FMA ids, or a synthetic ZAC_… concept id for structures FMA has no class for
       expect(p.fma, p.id).toMatch(/^(FMA\d+(_[LR])?|ZAC_[a-z0-9_]+(_[LR])?)$/)
@@ -93,8 +94,8 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
       expect(SYSTEMS, p.id).toContain(p.system)
       expect(TISSUES, p.id).toContain(p.tissue)
       expect(['L', 'R', 'M'], p.id).toContain(p.side)
-      // BodyParts3D 4.0 的部件是 scanned；肩带姿势校正中被非刚性形变的那些改标为 warped（见 pipeline-shoulder.test.ts）
-      // BodyParts3D 4.0 parts are scanned; those deformed non-rigidly by the shoulder posture correction are relabelled warped (see pipeline-shoulder.test.ts)
+      // BodyParts3D 4.0 的部件是 scanned；肩带姿势校正、上肢外展、附属物贴合和薄结构收回皮下（thinParts.ts）中被形变的那些改标为 warped
+      // BodyParts3D 4.0 parts are scanned; those deformed by the shoulder posture correction, the arm abduction, the appendage conforming and the thin-structure stage (thinParts.ts) are relabelled warped
       // 皮肤例外：装入了外部皮肤包时，它是按内部结构拟合的参数化体表（curated，来源为皮肤包），不是扫描皮肤
       // the skin is the exception: with an external skin package installed it is a parametric surface fitted to the internals (curated, sourced from the package), not the scanned skin
       if (p.id === 'FJ2810' && skinInstalled) expect(p.provenance, p.id).toBe('curated')
@@ -463,9 +464,10 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     expect(all).not.toContain('are not openings')
     if (op.grafts.some((g) => /genital/i.test(g.name))) expect(all).not.toContain('faceted mound')
     if (op.grafts.some((g) => /^toes/i.test(g.name))) expect(all).not.toContain('the toes are one block')
-    // 深层的“唇”部件列在皮肤不透明时要隐藏的名单里，本身没有被改动 / the deep Lip part is on the list to hide while the skin is opaque, and is itself untouched
-    const lip = data.parts.find((p) => /^lip$/i.test(p.name) && p.system !== 'integumentary')
-    if (lip) {
+    // 深层的唇（切开后是上唇和下唇两个部件，见 lipSplit.ts）都列在皮肤不透明时要隐藏的名单里；扫描的表面没有被形变，来历不变
+    // the deep lips (two parts after the split, upper and lower lip: see lipSplit.ts) are all on the list to hide while the skin is opaque; the scanned surface is not deformed and the provenance stays
+    const lips = data.parts.filter((p) => /^(upper |lower )?lip$/i.test(p.name) && p.system !== 'integumentary')
+    for (const lip of lips) {
       expect(pipelineReport.appendages!.hideWithOpaqueSkin).toContain(lip.id)
       expect(lip.provenance).toBe(shoulderWarped.has(lip.id) ? 'warped' : 'scanned')
     }

@@ -9,9 +9,11 @@ tools/skinopen —— 给皮肤包开口：集成说明 / opening a skin package
 ------------------------------------------------------------------------
 在 soma/ 目录下：
 
-    tools/skinopen/run.sh male
-    tools/skinopen/run.sh female
+    tools/skinopen/run.sh male "" -next
+    tools/skinopen/run.sh female "" -next
 
+（第三个参数是输出目录的后缀。不带后缀会写已发布的目录，脚本会拒绝，除非设了 SKINOPEN_WRITE_SHIPPED=1；见第 13 节。
+带移植步骤的写法：tools/skinopen/run.sh male genital,toes -next。）
 每次都从头生成，结果是确定的（同样的输入，逐字节相同的输出）。三步：
   1) bun tools/skinopen/export-deep.ts <body> data/raw/bodyshape/out/<body>-skin-open/deep-face.json
      从 public/anatomy/<body>/ 导出面部深层部件和颞下颌关节（只读）。
@@ -423,6 +425,242 @@ export-deep.ts 多导出一个部件 WU_rectal_lumen（分组 wuLumen，不参�
   · 开口的位置是“离腔末端最近的皮肤点”，不是解剖上辨认出来的开口。
   · 两条链在一台负载很重的机器上跑，中途多次长时间停顿；结果是确定的，但没有量运行时间。
 
+12. 第六轮的改动（先读这一节；与第 8–11 节不一致处以这里为准）
+------------------------------------------------------------------------
+本轮做完的：脚趾（两体）、失败测试、确定性核对、深层唇部件一分为二的兼容。没有做的：男性生殖器移植处的重做（第 2 项，只量了前提）、
+女性外阴片收窄（第 3 项）。这两项仍是第 11 节所说的样子，代码没有动（genital.py、vulva.py 与上一轮逐字节相同）。
+它取代的说法：第 10 节 “脚趾” 里的做法（每趾一个长度比例、逐顶点外推、弦高补推、相邻趾各留 0.3 mm、过渡带解位置的双调和方程）、
+验收条件和 “结果 / 看图的结论” 两段；第 6 节 “它是一整块” 一句（见下）。
+
+输出目录的后缀
+  tools/skinopen/run.sh <body> <steps> <suffix>：第三个参数接在两个输出目录名之后，例如
+      tools/skinopen/run.sh male genital,toes -next      →  male-skin-grafted-next/、male-skin-open-next/
+      tools/skinopen/run.sh female vulva,toes -next
+  不给后缀时写的是已发布的 …-skin-grafted/ 和 …-skin-open/（下游直接读它们）。本轮所有运行都带后缀；已发布的四个目录和两个原包在本轮前后
+  逐文件哈希相同。其他脚本没有写死的输出路径：graft.py、open_skin.py、render.ts、render-graft.ts 只在不给 --out / 参数时才用默认目录，
+  run.sh 总是给。manifest.json、open-report.json、open.log 里写有输入目录的名字，所以后缀不同的两次运行在这三个文件里差一个名字，别的逐字节相同。
+
+脚趾（toes.py；graft.py 多了 rim_gap_mm、zipper_by_parameter、flip_folded_stitch_edges，只有 toes 用）
+  上一轮折痕和碎片的来源，按查到的先后：
+    1) 供体趾的中心线每 2 mm 一站，最后一站到不了趾蹼：最后一站与趾蹼之间（至多 2 mm）的顶点全被映到同一个弧长上，再被拉长 1.5 倍左右，
+       趾根一圈被压扁（边长比 0.47），这就是趾根背面那道 “缝合处的台阶”——它不在缝合带上。现在最后一站正好在趾蹼。
+       顺带的结果：供体游离趾的长度量得更准，第 3–5 趾的长度比例从 1.26–1.58 降到 1.22–1.46。
+    2) 覆盖不足处逐顶点沿各自的方向外推，再对骨顶点最近的三角形三个顶点不加平滑地补推：趾尖的碎片和皱起的趾甲由此而来。
+    3) 缝合带：供体片的边缘与洞口环在同一张曲面上相贴、相交，贪心的缝合缝出了翻过来的三角形（接入后每只脚 24–41 条折过 120° 的边，全在缝合带上）。
+  现在的做法：
+    · 长度分段：远段（趾尖到甲根后 1.5 mm：趾腹和趾甲）按该趾的粗细比例等比缩放，拉长全放在趾干上，两段之间在 4 mm 内缓变；趾蹼前后各 3 mm 内比例缓变到 1。
+      远段 / 趾干的比例（大趾 … 小趾）：男 左 0.90/1.15, 1.01/1.00, 1.02/1.40, 1.06/1.74, 1.27/1.53；右 1.00/1.00, 0.99/1.01, 1.02/1.43, 1.11/1.74, 1.30/1.54。
+      女 左 0.93/1.11, 1.02/0.99, 1.02/1.34, 1.05/1.63, 1.26/1.43；右 1.05/0.92, 1.04/1.01, 1.07/1.44, 1.14/1.70, 1.33/1.49。
+      也就是说趾甲和趾腹不再被拉长，但第 3–5 趾的趾干被拉长 1.34–1.74 倍：供体与这两副骨的比例不合，这一点没有变，只是挪了地方。
+    · 骨链的轴线和坐标架在 ±6 mm 内取平均（以前 ±3 mm）。过渡带解的是位移（P − 供体）的双调和方程，趾根最后 3 mm 一并解。
+    · 趾尖帽（远段的全部顶点）作刚体运动：对 “各顶点各自外推后的位置” 求加权最小二乘的刚体变换，不放大、不变形；最后每个趾甲再对回供体趾甲的
+      相似变换（残差 0；这一步修正掉的量：大趾 0.9–1.0 mm，其余 0.25–0.56 mm）。趾甲的顶点因此彼此不相对移动。
+    · 其余顶点的外推量是标量场，在网格上取平滑的上包络（30 次，约 5 圈），方向场低通 8 次；被带动的顶点跟着带动它们的顶点的方向走。
+      趾缝在趾根处留 2.6 mm、向远侧 6 mm 内收到 0.6 mm；分开邻趾时自己骨上的覆盖不低于 1.9 mm。
+    · 折过 108° 的边就地松弛；高出供体细节层 0.8 mm 的顶点就地松弛。主循环 10 + 10 轮，然后是收尾（局部顶起、退出邻趾、松弛，至多 16 轮，
+      取打分最高的一轮）和保底（骨仍离皮肤不到 0.7 mm 时直接顶出，至多 8 轮）。本轮四只脚都没有用到保底。
+    · 缝合：供体片的边缘留在洞内、离洞口环至少 1.5 mm，沿环理顺 5 次；按 “沿洞口环的弧长参数” 归并缝合；缝合带内折过 100° 的对角线翻转。
+  验收（全部通过才接入；每条的数都在 graft-report.json 的 toes.sides.* 和 toes.graft.* 里）：
+    · 原有的：游离趾内趾骨覆盖骨干 ≥ 1.5 mm、骨端 ≥ 1.0 mm；相邻趾互不穿入；趾甲在远节趾骨背侧；片缘离皮肤中位数 ≤ 1 mm。
+    · 新增：改动过的供体面上没有折过 120° 的边（foldedEdges）；游离趾上没有碎片（fragments：细节层 = 顶点高出自己低通 10 次后的曲面的量，
+      与供体自己的细节层按粗细比例比较，高出 1 mm 以上的相连顶点算碎片；低 1 mm 以上的记为 hollows，不算失败——松弛会合理地抹掉供体的皱纹）；
+      趾甲是供体趾甲的相似变换（残差 ≤ 0.001 mm）；接入后缝合带两条环上的顶点离原皮肤 ≤ 0.5 mm（seam.stepMm；缝合三角形重心的弦高另记，不作条件）；
+      接入后这一片连同缝合带上折过 120° 的边不多于保底顶点上容许的数。
+    · 改了的：接入后 “每节趾骨至少的覆盖” 由 1.0 mm 改为 0.5 mm（COVER_SADDLE_MM）。理由照实说：相邻近节趾骨表面相距只有 2.5–4.1 mm
+      （报告里的 gapBetweenTheProximalPhalangesOfNeighbouringToesMm），趾根之间的鞍部从中间穿过，两边不可能各有 1 mm 以上而又不折。
+      保底顶出的顶点上至多容许 4 条折边（LAST_RESORT_FOLDS）：那里 “骨不露出皮外” 与 “没有折边” 不能两全时取前者。本轮实际用到 0 条。
+  结果（-next，男 左/右；女 左/右）：
+    折过 120° 的边  接入前 0/0；0/0（上一轮发布的结果在同一范围内是 173/164；女 99/93 条折过 150°）。最大角 107.8°/107.4°；107.8°/107.9°。接入后 0/0；0/0。
+    碎片            0/0；0/0（细节层偏离供体：中位数 0.04–0.05 mm，99% 分位 0.50–0.59 mm，最高 0.70–0.77 mm）。hollows：第二趾各有一处 1.2–1.5 mm。
+    缝合处台阶      0.0 mm（四只脚）；缝合三角形弦高 0.13/0.21；0.79/0.13 mm；缝合边最长 6.8/8.5；7.0/6.5 mm；缝合带上最大折角 93°/62°；101°/49°。
+    趾骨覆盖        游离趾内最少 2.00/2.16；1.62/1.64 mm。接入后全部趾骨最少 0.60 mm（男，右第四趾近节趾骨在趾蹼之后的骨端）；1.33 mm（女）。
+                    上一轮这一项是 2.11 mm：那是靠把鞍部逐点顶皱换来的。趾蹼之后各近节趾骨的覆盖：男 1.05–5.0 / 0.60–4.5；女 1.33–4.3 / 1.74–4.7 mm。
+    相邻趾          互不穿入（四只脚各对 0 个顶点）。
+    确定性          两条链各跑两次，输出逐字节相同（见上，只差目录名）。
+  看图的结论（renders/toes-close.png：两只脚各从上、前、下三张；toesL.png / toesR.png 照旧）：
+    四只脚的趾尖都是完整的圆头，趾甲是平整的一片，上一轮小趾尖、第二趾尖的碎片没有了，大趾根背面的那道线没有了。仍看得见的毛病：
+    · 第 2–5 趾在趾尖帽与趾干相接处有一圈浅台阶（从下面看像套了个指套，第二趾最明显）：帽是刚体，趾干是逐点外推的。验收查不出它
+      （高出不到 0.8 mm）。
+    · 男性右脚脚背靠趾根一线有几处小棱（收尾时顶起的鞍部）；大趾甲根两侧各有一道浅褶。
+    · 女性：脚底在趾根处的台阶和前脚掌外缘的棱还在——那是她的脚骨和皮肤的问题（第 10 节），不是这一步能改的；她的脚趾本身与男性的质量相当。
+    · 第 3–5 趾的趾干被拉长，趾显得细长。
+    · 女性左脚第二趾趾尖外侧角上有一小处不平，两只大趾甲的甲根旁各有一道细褶（都在趾尖帽与周围相接处）。
+  这一步对输入很敏感：收尾里顶起与松弛互相牵制，换一版皮肤包后停在哪一轮会变。结果仍是确定的，验收不通过时照旧写明原因并跳过接入。
+
+男性生殖器移植处（第 2 项：没有做，只量了前提）
+  -next 报告（皮肤包 10-12 15:18 的一版）：fineScanLeftUnderTheConstructedSurface 548 个顶点、最深 32.3 mm（上一版 513 个、28 mm——没有变好）；
+  rimMismatchMm 中位数 2.33、最大 12.1 mm（上一版 4.9 / 14.0——变好了）。
+  拟合皮肤与扫描皮肤的距离（中线两侧 30 mm 内）：睾丸之后的会阴，离深层部件 40–80 mm 处中位数 0.6 mm（90% 分位 3.1）；离深层部件 10–40 mm 处
+  中位数 9.1 mm（90% 分位 12.5）——那里拟合皮肤仍是包着生殖器的隆起。耻区一侧同样：40–80 mm 处 1.7 mm，10–40 mm 处 6.3 mm。
+  所以 “阴囊颈和会阴缝的扫描面离拟合皮肤约 1 mm 以内就用扫描面” 这个条件现在一处也不满足：睾丸之后的 429 个细网格扫描顶点没有一个在拟合皮肤 2 mm 之内。
+  要用上它们，得改 genital.py 的构造面（让它在环内贴着扫描的会阴而不是由周围皮肤解出来），不是等皮肤作者。构造面重新布网、片缘修成光顺的环、
+  环上 58 条折边，都没有做。现有检查照旧通过（无相交、覆盖不少于扫描、缝合边最长 19.3 mm，限值 19.4 mm）。
+
+女性外阴片（第 3 项：没有做）
+  -next 里照旧拒绝接入，原因和数字（graft-report.json 的 vulva.notGraftedBecause）：片缘离现有皮肤中位数 7.6 mm（限 5.0；上一版 17.1 mm）；
+  154 个缘点里 54 个在标本的截面上；标本皮肤自己有 5 条非流形边。vulva-rim-target.json 仍是第 11 节的那个环，不是收窄后的环。
+
+失败测试（第 4 项）
+  在 data/raw/bodyshape/out/skinopen-scratch/ 里用男性原包的副本做了两个（做完已删掉；做法见下，可以照做）：
+    · 把 face.regions.lips 里的顶点在网格上反复取邻点平均（唇间口袋被抹平，顶点移动中位数 3.4 mm）：open_skin.py 以 1 退出，
+      “oral fissure: fewer than 8 sharp vertices in face.regions.lips — no pocket between the lips found”。这条路径原来就是对的。
+    · 把 face.regions.lidsL 指到别处（没有封膜的地方）：以前 **不报错**——在别处删掉 6 个三角形，写出有三个边界环的皮肤，以 0 退出。
+      现在加了两条：每只眼的封膜不少于 40 个三角形且整条带在眼关节 40 mm 之内，否则报错退出（“eye L: the strip between the lid margins has only 6 triangles …”）；
+      自检里加了 exactlyTwoBoundaryLoops。run.sh 用 set -e，open_skin.py 非 0 退出时整条链停下。
+  没有试的：封膜的拓扑真被改掉（带里多出内部顶点）的包——那要改逐顶点文件的长度，这里只试了 “找不到”。
+
+深层的唇部件一分为二
+  管线把男性的 FJ2814 拆成了 FJ2814_upper（“Upper lip”）和 FJ2814_lower（“Lower lip”），女性随后是 W_FJ2814_upper / _lower。
+  export-deep.ts 现在按 /^(upper |lower )?lip$/i 取，一个或两个部件都接受；open_skin.py 量宽度和中线时把它们合在一起，
+  id 记在 open-report.json 的 deepLipParts 和 manifest.opened.deepLipParts（-next：男 两个部件，女 一个）。
+  第 6 节的建议因此可以直接做：上唇部件绑颅，下唇部件绑下颌，不必再按口裂分顶点；画不透明皮肤时隐藏它们仍是最稳妥的。
+
+所用的状态：男性皮肤包 skin.obj 10-12 14:28（包内最后一个文件 15:19），public/anatomy/male 为拆唇之后的一版；女性皮肤包 10-13 05:06（最后 05:18），
+  public/anatomy/female 为拆唇之前的一版（唇仍是一个部件）。女性的 public/anatomy 之后还会变一次，请重跑。
+
+仍然不对、没有做或没有验证的
+  · 第 2、3 项没有做（见上）。
+  · 脚趾：见 “看图的结论” 的四条；蹼位的取值仍没有公开数据支持；接入后的最少覆盖 0.60 mm（男）低于上一轮的 2.11 mm。
+  · 新包没有经过管线、绑定、体型各步。每只脚的顶点数变了（约 8,600 个新顶点），manifest 的 toeVertices / nailVertices 照旧给出。
+  · 不带后缀运行 run.sh 会覆盖已发布的目录；脚本没有为此设防。
+
+
+13. 第七轮的改动（先读这一节；与第 8–12 节不一致处以这里为准）
+------------------------------------------------------------------------
+这一轮做了：run.sh 的护栏；男性外生殖器移植的重做（genital.py，全部重写）；女性外阴片的收窄版（vulva.py）；
+两条链各跑两遍的确定性核对。足趾只改了 toes.py 的文件头注释和报告里的 method 字符串（几何没有动）；第 12 节说的
+第 2–5 趾趾尖帽处的浅台阶没有做。
+取代：第 11 节“男性外生殖器（genital.py）”整段（做法、结果、图上的样子）；第 12 节“男性外生殖器移植（第 2 项：没有做）”
+和“女性外阴片（第 3 项：没有做）”两段；第 11 节外阴片自动规则里“四条里三条不满足”的说法和 154 点的边缘；
+第 12 节末尾“脚本没有为此设防”一条；第 0 节不带后缀的命令（见下）。
+新文件：tools/skinopen/remesh.py（按等值线切三角网格、分长边、收短边、翻边、切向松弛；genital.py 和 vulva.py 用）。
+
+护栏（run.sh）
+  不带后缀运行会覆盖已发布的 <body>-skin-grafted/ 和 <body>-skin-open/（下游直接读它们）。现在不带后缀时脚本拒绝，
+  退出码 3，除非明确设了环境变量：
+      SKINOPEN_WRITE_SHIPPED=1 tools/skinopen/run.sh male genital,toes
+  平时一律带后缀：
+      tools/skinopen/run.sh male genital,toes -next
+      tools/skinopen/run.sh female vulva,toes -next
+  后缀只许字母、数字、点、下划线和连字符（不许 “..”），人体名只许字母、数字、下划线和连字符。第 0 节里不带后缀的
+  两条命令现在要么加后缀，要么加上面的环境变量。
+  这一轮每次运行都带后缀；四个已发布的目录和两个原包在本轮开始和结束时逐文件哈希相同。
+
+男性外生殖器（genital.py）
+  上一版的毛病出在哪里：（1）构造面是把拟合皮肤的隆起抹平得到的，比扫描的会阴低 20–30 mm，阴囊颈和会阴缝的扫描面被它
+  盖在下面用不上；（2）扫描片按“高出构造面”取，边缘参差，并且从阴茎与阴囊之间穿过，过渡环从那里连到很低的构造面上——
+  这就是阴茎与阴囊之间的“蹼”和阴囊两侧的尖刺；不是补洞，也不是凸包；（3）供体网格上的“洞”其实是没有焊上的缝
+  （两排位置相同的边界顶点），按洞用扇形去补，每条缝上就多出一片背靠背、折成 180° 的三角形。
+  现在的做法：
+    1) 拟合皮肤上要换掉的区域：离龟头、睾丸、附睾 120 mm 以内，与扫描相差超过 2.5 mm 的顶点，或在拟合皮肤自相交的
+       三角形上的顶点（本包这里有 405 对，两大腿内侧在裆下互相穿过），或在拟合皮肤折过 60° 的边上的顶点（101 条）；
+       连成的各块向外扩 1 圈、补洞。洞缘因此落在两张皮肤本来就吻合、拟合皮肤自己也平顺的地方。
+    2) 扫描片的核：扫描上平滑后邻边平均长度不超过 5 mm、离深层部件 60 mm 以内的顶点，加上离深层部件 15 mm 以内的顶点；
+       围着龟头和睾丸连通的一块，补洞；只取洞内、离洞缘至少 12 mm 的部分。供体的缝先焊上（286 个顶点并掉，位置不动），
+       片内不再有任何补洞三角形。
+    3) 片缘：核的边界附近 12 mm 内，扫描三角形的边先对半分到 3 mm（新点在原来的边上，曲面不变）；核的指示函数在扫描面上
+       扩散（尺度 3 mm），沿 0.25 等值线把片切出来（三角形在自己的平面内被切；核上的顶点一个不丢）。片缘是一条光滑的闭合线，
+       扫描顶点一个不动。
+    4) 过渡面（构造物）：底稿是扫描面上从片缘到“洞缘以内 4 mm”那条线之间的一带（扫描在这里是 10–20 mm 的粗网格），
+       用一圈三角形接到洞缘；重新布网（分、收、翻、切向松弛 6 轮），边长从片缘的 2 mm 线性渐变到洞缘的 10.5 mm
+       （洞缘边长的中位数，即拟合皮肤当地的边长）；再光顺：只沿法向挪，取均匀权双拉普拉斯能量的最小值，扫描片和周围
+       三圈拟合皮肤固定，中间以 0.01 的权重拉向扫描面（片缘到洞缘的前 0.7，到 0.95 渐减到 0）。
+       任务书说“按拟合皮肤当地的边长布网”：这里是渐变的，靠拟合皮肤一侧等于它，靠扫描片一侧细到 2 mm，否则 2 mm 的片缘
+       与 10 mm 的网格之间又会出尖刺。
+  结果（-next；男性皮肤包 skin.obj 为 10 月 12 日 14:28 的那一版）：
+    换掉的区域       737 个三角形、328 个顶点；洞缘 83 个顶点。范围 x −79…76、y 656…809、z 26…209 mm（上一版 x ±100、y 580–830）。
+    洞缘在哪里       离深层部件 18–75 mm（中位 41.7）；离片缘 9.8–63.7 mm（中位 22.7）；洞缘上拟合皮肤离扫描中位 1.01、
+                     95% 2.30、最大 2.47 mm。
+    扫描片           3,032 个扫描顶点（标签 15，逐位等于扫描）＋ 1,630 个落在扫描边上的点（标签 16：在扫描面上，但不是扫描顶点）；
+                     8,914 个三角形，203.2 cm²；片缘 408 点，边长中位 1.27 mm。洞内的细网格扫描顶点 2,785 个，不在片内的 6 个
+                     （不经公共边与片相连的零星三角形）。上一版：fineScanLeftUnderTheConstructedSurface 548 个、最深 32.3 mm。
+    过渡面           888 个顶点、2,267 个三角形，167.1 cm²。边长中位 2.97、最长 12.7 mm；
+                     边长 ÷ 当地目标边长 最大 1.90（限 2）。离扫描面：全部 中位 0.17、95% 1.84、最大 6.51 mm；靠片的一半
+                     中位 0.13、95% 1.06、最大 2.08 mm（上一版 rimMismatchMm 中位 2.33、最大 12.1）。
+    折角             过渡面内部最大 57.3°（95% 8.2°）；片缘上最大 47.0°（95% 32.4°）；洞缘上最大 39.6°（95% 33.3°）；
+                     扫描片内部（扫描自己的）最大 51.9°。超过 120° 的：0（上一版环上 58 条近 180°）。
+    自相交           测 12,140 个三角形，0 对（扫描与扫描也是 0）。没有顶点因相交被退回。
+    覆盖             与扫描下相同：海绵体 3.51、尿道海绵体 3.23、龟头 2.93、左/右睾丸 2.96/2.13、左/右附睾 4.56/3.23 mm；没有部件露出。
+    按面积           真实扫描皮肤 203.2 cm²，构造物 167.1 cm²（过渡面；片内补洞 0）；切掉的拟合皮肤 326.9 cm²。
+    离大腿           扫描片（离片缘 15 mm 以外）离剩余拟合皮肤最近 19.7 mm。
+  自检（任何一条不过即以非 0 退出）：扫描顶点逐位等于扫描；边上的点在扫描面上；核的顶点都在片内；过渡面及其两条边缘上没有
+    折过 120° 的边；过渡面的边不超过当地目标边长的 2 倍；没有涉及过渡面或拟合皮肤的相交；各深层部件的覆盖不少于扫描下；
+    扫描片不碰大腿。
+  manifest：genitalSkin 一项里 patchVertices = 扫描顶点（标签 15），blendRingVertices = 落在扫描边上的点（标签 16），
+    constructionVertices = 过渡面（标签 18）；没有 rimOfConstructedSurface 了。分组 genitalSkin（扫描片）、genitalSkinBase（过渡面）；
+    genitalSkinStitch 不再有。
+  在别的包上：同一份代码在 male-skin-prev、male-skin-prev2 和皮肤作者正在做的 male-skin-r2（10 月 13 日 10:28 的状态，只读）
+    上都通过全部自检；r2 上洞缘处拟合皮肤离扫描中位 0.6 mm，折角最大 53°。
+  检查图：renders/genitalSkin.png（三排：按分组着色 / 单一肤色 / 原皮肤；五列：正面、下面、两张斜向、前下方近景）；
+    renders/genitalPerineum.png（只画移植的部分，从后下方、后方、左后、右后、左侧、正下方看；两排：分组着色 / 单一肤色）。
+  图上看到的：阴茎和阴囊从一张平顺的耻区面上长出来；阴囊颈、阴囊两侧与大腿之间的沟、会阴缝都是扫描本来的样子；
+    阴茎与阴囊之间没有蹼，阴囊两侧没有尖刺，阴茎根部没有缺口，会阴中间没有那条竖棱。仍然看得见的，照实说：
+    · 阴囊后面、两大腿之间的会阴“顶”是几块平的大面拼成的（像一个三棱柱形的小洞顶，棱是直的）：扫描在那里本来就只有
+      十来个大三角形，过渡面跟着它走，光顺只把棱磨圆了一点。它藏在两大腿之间，从外面看不到。
+    · 阴茎根部上方有一道横的浅褶，面上看得出 5–10 mm 的小面（拟合皮肤自己也是 10 mm 的网格，平面着色）。
+    · 阴囊两侧的沟口处，片缘在很窄的沟里拐了一个急弯，近看有几道细的明暗条纹；那是扫描的三角形，不是构造物。
+    · 从后面单看移植部分，后端有一片高出来的窄“鳍”：那是两臀之间的缝（两壁相距约 10 mm）向上延续的部分，照着扫描。
+    · 片缘上相切并不完美：95% 的边折角在 32° 以内，最大 47°，在片缘横穿扫描的沟的地方。
+  还不对或没有核实的：
+    · 会阴缝的细网格在洞后面还有一段（z 47–57 mm，85 个扫描顶点）离移植后的皮肤 5–10 mm：那里拟合皮肤的臀间缝比扫描浅，
+      不在这一步换掉的区域里（区域按“与生殖器隆起连成一片”取）。皮肤作者把会阴环贴到扫描上之后重跑即可看它是否消失。
+    · 过渡面覆盖了两大腿内侧上部（到 y 656 mm）：那一带是构造物，以扫描的粗网格为底稿。
+    · 权重没有变：扫描片仍然刚性跟随骨盆，过渡面是洞缘的调和延拓；摆姿态时阴囊不会让开大腿。没有跑过管线、绑定和体型。
+    · 检查自相交仍然只查“边穿过三角形”，共面重叠查不出。
+
+女性外阴片：收窄到裂的“顶”（vulva.py）
+  做了什么（narrow_to_roof，在平滑之后、补小洞和造盲管之前；做不成时退回整片并写明原因）：
+    1) 非流形边：5 条被两个以上三角形共用的边都在中线裂两壁相贴处，也就是在留下的范围之内。把它们拆开：复制 9 个顶点
+       （位置不变），两张面仍然贴着，但各有各的顶点。剩 0 条。
+    2) 落在标本截面上的那段外缘：在离它（沿面）6 mm 以内，沿“截面之上 3 mm”的等值线把真实皮肤切开。
+    3) 皱襞与大腿之间有沟的地方：沿沟顶切开，去掉沟外侧的大腿壁。壁 = 朝向中线、沿面离裂顶线超过 18 mm、并与第 2 步的
+       切线连着的面。裂顶线取自这一片自己（每 4 mm 一片里中央最高的点）；深层结构的中位 x 不能用——标本的裂偏在它一侧约 4 mm。
+    没有构造任何面：只是把真实的标本皮肤切掉一部分。
+  结果（-next；女性皮肤包为 10 月 13 日 05:06 的那一版）：
+    标本皮肤 175.3 cm² → 留下 141.9 cm²，切掉 33.5 cm²（两侧的大腿壁和截面之上 3 mm 以内的一条）。
+    外缘是单一的环，324 个点，没有一个在截面上（原来 154 个点里 54 个在截面上）。按种类：
+      groove（沟顶，天然的边界）              195 点，237 mm，z −17…122 mm（两侧 z 55–122 mm 是皱襞与大腿之间的沟；
+                                              z < 0 的几个点在臀间缝的壁上，不是沟）
+      cutAboveThePlane（截面之上 3 mm 的切线） 51 点，130 mm，z −3…61 mm：皱襞与大腿在截面处并在一起的那一段
+                                              （约 z 45–61 mm）和它后面肛门两侧的缝壁。这就是任务书说的“构造的边界”：
+                                              它是一条人为的切线，不是天然边界；那里没有造任何面（构造面积 0），
+                                              被截面削掉的皱襞底没有补。
+      edgeOfSelection（所取范围的尽头）        78 点，344 mm：前面在阴阜上、后面在臀间缝里，皮肤在那里照常延续。
+    构造物：补截面上那个 5 边小洞的盖 6.8 mm²（1 个顶点、5 个三角形）；三条盲管照旧（阴道口、尿道口、肛门，
+      离腔末端 13.7 / 11.4 / 11.7 mm，洞口半径 1.1 / 1.9 / 3.6 mm）。构造物共 98 个顶点、211 个三角形、934.7 mm²；
+      标本皮肤 14,110.8 mm²。构造物不与任何面相交；整片没有非流形边。
+    自动规则四条：（2）单环圆盘——满足；（3）外缘没有点在截面上——满足；（4）没有非流形边——满足；
+      （1）外缘离现有皮肤中位不超过 5 mm——不满足：中位 11.6 mm（整片时是 7.6 mm：那时外缘大半在大腿壁上，与现有皮肤的
+      大腿内侧本来就近；收窄之后外缘在沟顶和裂壁上，现有皮肤的裆还没有到那里）。按种类：沟 13.1、切线 16.7、范围尽头 6.8 mm。
+      所以这一轮仍然拒绝移植，原因只剩这一条。移植的那条路（graft.py 的通用 graft）至今没有执行过。
+  交给皮肤作者的目标：data/raw/bodyshape/out/female-skin-grafted-next/vulva-rim-target.json（也抄在 female-skin-open-next/ 里）。
+    rimLoop 是那条 324 点的有序单环（位置、向外的法线、kind、到现有皮肤的有符号距离）。容差：toleranceForGraftingMm = 5，
+    即外缘各点到拟合皮肤的距离绝对值的中位数不超过 5 mm 时自动移植。kind 为 groove 和 edgeOfSelection 的点是该对上的目标；
+    cutAboveThePlane 的点在裂壁上，是人为的切线，对不上不必强求（但它们算在中位数里）。
+  面积上什么是真的：标本皮肤 141.1 cm²（另一位女性的标本，放大并按骨配准、平滑过，所以不是这个人的扫描）；构造物 9.3 cm²
+    （盲管 9.28、小洞的盖 0.07）。
+  在这张皮肤上能认出什么、认不出什么：没有变（第 11 节）——能认出中线裂、两侧各一条成对的皱襞、皱襞外侧与大腿之间的沟；
+    大小阴唇的分界、阴蒂头和包皮、尿道口、阴道口、处女膜缘、阴唇后联合、肛门都认不出，三个开口的位置来自腔，不来自皮肤。
+  检查图：renders/vulva.png（同第 11 节；现在画的是收窄后的片）。图上看到的：从下面看是一条前宽后窄的片，前面是阴阜和
+    两条皱襞，中间一条细裂，向后收成肛门两侧的窄条；两侧原来垂下来的大腿壁没有了。皱襞并入截面的那一段，片的边是平的
+    切口，一侧留有一小块凸出的残片。
+  还不对或没有做的：
+    · 被截面削掉的皱襞底没有构造（约 z 45–61 mm，两侧共 130 mm 的切线中的一部分）；要补就是凭空造一段皱襞。
+    · 盲管没有与深层部件的网格缝合，也没有查它们是否与 WU_* 部件相交（同第 11 节）。
+    · 映射的两个没有解释的比例（高 1.036、前后 0.937）没有再查。
+
+足趾
+  几何没有动，-next 的结果与第 12 节相同（四只脚全部接入，自检全过）。toes.py 的文件头注释和报告里的 method 字符串改成了
+  第 12 节的做法。趾尖帽与趾干相接处的浅台阶（第 2–5 趾，不到 0.8 mm）没有做，也没有加查它的检查；接入后每节趾骨最少覆盖
+  的门槛仍是 0.5 mm，没有再降。
+
+确定性和所用的状态
+  两条链各跑两遍（run.sh male genital,toes -next；run.sh female vulva,toes -next），四个输出目录的 213 个文件逐字节相同
+  （这次两遍写的是同一个目录名，所以没有第 12 节说的目录名差异）。每条链约 75 秒。
+  男性：皮肤包 male-skin（skin.obj 10 月 12 日 14:28），public/anatomy/male 唇已分成两件。
+  女性：皮肤包 female-skin（10 月 13 日 05:06），public/anatomy/female 为 10 月 13 日 10:32 重建之后的状态——深层的唇已经是
+  两件（W_FJ2814_upper、W_FJ2814_lower；open-report.json 的 deepLipParts 写着 pieces 2）。
+  调试：环境变量 SKINOPEN_DEBUG=<目录> 现在也让 genital.py 和 vulva.py 写调试用的 npz；平时不要设。
 
 ========================================================================
 English
@@ -432,9 +670,12 @@ English
 ------------------------------------------------------------------------
 From soma/:
 
-    tools/skinopen/run.sh male
-    tools/skinopen/run.sh female
+    tools/skinopen/run.sh male "" -next
+    tools/skinopen/run.sh female "" -next
 
+(The third argument is a suffix for the output directories. Without it the shipped directories would be written, and
+the script refuses unless SKINOPEN_WRITE_SHIPPED=1 is set; see section 13. With graft steps:
+tools/skinopen/run.sh male genital,toes -next.)
 Every run regenerates everything and is deterministic (same inputs, byte-identical outputs). Three steps:
   1) bun tools/skinopen/export-deep.ts <body> data/raw/bodyshape/out/<body>-skin-open/deep-face.json
      exports the deep facial parts and the temporomandibular joint from public/anatomy/<body>/ (read only).
@@ -1016,3 +1257,380 @@ Still wrong, not done or unverified
     whether a canal intersects a WU_* part was not checked.
   · The openings are "the skin point closest to the end of the lumen", not openings identified anatomically.
   · Both chains ran on a heavily loaded machine with long stalls; the results are deterministic, but run times were not measured.
+
+12. Changes of round 6 (read this first; where it differs from sections 8–11, this section holds)
+------------------------------------------------------------------------
+Done in this round: the toes (both bodies), the failure test, the determinism check, and support for the deep lip part
+being split in two. Not done: the rework of the male genital graft (item 2; only its precondition was measured) and
+the narrowed female vulvar patch (item 3). Both remain as section 11 describes them, and their code was not touched
+(genital.py and vulva.py are byte-identical to the last round).
+It supersedes: the method of section 10 "Toes" (one length scale per toe, the vertex-by-vertex push, the chord push,
+0.3 mm kept per toe between neighbours, the biharmonic equation solved for positions in the transition), its acceptance
+conditions and its "Result" and "What the pictures show" paragraphs; and the sentence of section 6 that the lip is one
+piece (see below).
+
+The suffix of the output directories
+  tools/skinopen/run.sh <body> <steps> <suffix>: the third argument is appended to both output directory names, e.g.
+      tools/skinopen/run.sh male genital,toes -next      →  male-skin-grafted-next/, male-skin-open-next/
+      tools/skinopen/run.sh female vulva,toes -next
+  Without a suffix it writes the shipped …-skin-grafted/ and …-skin-open/ (which downstream reads as they are). Every
+  run of this round carried a suffix; the four shipped directories and the two delivered packages have the same
+  per-file hashes before and after the round. No other script has a hard-coded output path: graft.py, open_skin.py,
+  render.ts and render-graft.ts fall back to a default directory only when no --out / argument is given, and run.sh
+  always gives one. manifest.json, open-report.json and open.log contain the name of the input directory, so two runs
+  with different suffixes differ by that name in these three files and are byte-identical otherwise.
+
+The toes (toes.py; graft.py gained rim_gap_mm, zipper_by_parameter and flip_folded_stitch_edges, used by toes only)
+  Where last round's creases and fragments came from, in the order they were found:
+    1) The centreline of a donor toe had a station every 2 mm and the last one stopped short of the web: every vertex
+       between the last station and the web (up to 2 mm) was mapped to one arc length and then stretched by about 1.5,
+       which crushed a ring round the toe base (edge length ratio 0.47). This is the "step along the dorsal seam" at
+       the base of the toes — it is not on the stitch band. The last station now lies exactly at the web. A side
+       effect: the free length of the donor toes is measured better, and the length scale of toes 3–5 fell from
+       1.26–1.58 to 1.22–1.46.
+    2) Where cover was short each vertex was pushed along its own direction, and then the three vertices of the
+       triangle nearest to a bone vertex were pushed once more without any smoothing: the fragments at the toe tips
+       and the wrinkled nails.
+    3) The stitch band: the rim of the donor patch and the rim of the hole lay against or across one another on the
+       same surface, and the greedy zipper made flipped triangles (after grafting, 24–41 edges per foot folded over
+       120°, all of them on the stitch band).
+  What is done now:
+    · Length by segment: the distal part (tip to 1.5 mm behind the nail root: pad and nail) is scaled isotropically
+      by the girth scale of the toe; all stretch goes to the shaft, the rate easing over 4 mm; over 3 mm either side
+      of the web the rate eases to 1. Distal / shaft scales (big … little): male left 0.90/1.15, 1.01/1.00,
+      1.02/1.40, 1.06/1.74, 1.27/1.53; right 1.00/1.00, 0.99/1.01, 1.02/1.43, 1.11/1.74, 1.30/1.54. Female left
+      0.93/1.11, 1.02/0.99, 1.02/1.34, 1.05/1.63, 1.26/1.43; right 1.05/0.92, 1.04/1.01, 1.07/1.44, 1.14/1.70,
+      1.33/1.49. So nail and pad are no longer stretched, but the shafts of toes 3–5 are stretched by 1.34–1.74: the
+      donor's proportions do not fit these bones; that has not changed, it has only been moved.
+    · Axis and frame of the bone chain are averaged over ±6 mm (was ±3 mm). The transition solves the biharmonic
+      equation for the displacement (P − donor), and the last 3 mm of each toe base is solved with it.
+    · A tip cap (every vertex of the distal part) moves as a rigid body: the weighted least-squares rigid transform
+      onto "each vertex pushed on its own", neither enlarged nor deformed; at the end each nail is put back onto a
+      similarity transform of the donor nail (residual 0; what that corrects: 0.9–1.0 mm on the big toes,
+      0.25–0.56 mm on the others). Nail vertices therefore never move relative to each other.
+    · For all other vertices the push is a scalar field replaced by a smooth upper envelope over the mesh (30 passes,
+      about five rings), its direction field low-passed 8 times; vertices that are carried along take the direction
+      of those that carry them. The cleft between two toes is kept 2.6 mm wide at the base, narrowing to 0.6 mm over
+      6 mm; when toes are parted, the cover over a toe's own bone does not fall below 1.9 mm.
+    · Edges folded over 108° are relaxed where they are; so are vertices standing 0.8 mm above the donor's detail
+      layer. The main loop runs 10 + 10 rounds, then come the finishing (local tenting, retreat out of the neighbour,
+      relaxation; at most 16 rounds, the best-scoring round is taken) and a last resort (a straight push where a
+      bone is still within 0.7 mm of the skin; at most 8 rounds). None of the four feet used the last resort.
+    · The stitch: the rim of the donor patch stays inside the hole, at least 1.5 mm from its rim, and is evened out
+      along itself 5 times; the loops are zipped by arc length along the rim of the hole; diagonals inside the band
+      folded over 100° are flipped.
+  Acceptance (all must hold for the graft to be made; every number is in graft-report.json under toes.sides.* and
+  toes.graft.*):
+    · As before: phalanges inside the free toe with ≥ 1.5 mm of cover over the shaft and ≥ 1.0 mm at the ends;
+      neighbouring toes do not interpenetrate; the nail lies dorsal to the distal phalanx; the rim of the patch a
+      median ≤ 1 mm from the skin.
+    · New: no edge folded over 120° on the changed donor surface (foldedEdges); no fragment on the free toes
+      (fragments: detail layer = how far a vertex stands above its own surface low-passed 10 times, compared with
+      the donor's own detail layer at the girth scale; connected vertices more than 1 mm proud are a fragment; more
+      than 1 mm below are listed as hollows and do not fail the step — relaxation legitimately removes donor
+      creases); each nail is a similarity transform of the donor nail (residual ≤ 0.001 mm); after grafting the
+      vertices of both loops of the stitch band lie ≤ 0.5 mm from the delivered skin (seam.stepMm; the sag of the
+      stitch triangles' centroids is recorded and is not a criterion); after grafting the patch with its stitch band
+      has no more edges folded over 120° than are allowed at last-resort vertices.
+    · Changed: "least cover of every phalanx" after grafting is now 0.5 mm, not 1.0 mm (COVER_SADDLE_MM). The plain
+      reason: the surfaces of neighbouring proximal phalanges are only 2.5–4.1 mm apart
+      (gapBetweenTheProximalPhalangesOfNeighbouringToesMm in the report), the saddle between two toe bases passes
+      between them, and it cannot have more than 1 mm on either side without folding. At vertices pushed as a last
+      resort up to 4 folded edges are allowed (LAST_RESORT_FOLDS): where "no bone outside the skin" and "no folded
+      edge" cannot both be had, the former is kept. This round used 0 of them.
+  Result (-next; male left/right; female left/right):
+    edges folded over 120°   before grafting 0/0; 0/0 (the shipped result of last round has 173/164 in the same
+                             zone; the female 99/93 over 150°). Largest angle 107.8°/107.4°; 107.8°/107.9°.
+                             After grafting 0/0; 0/0.
+    fragments                0/0; 0/0 (detail layer against the donor: median 0.04–0.05 mm, 99th percentile
+                             0.50–0.59 mm, most proud 0.70–0.77 mm). Hollows: one of 1.2–1.5 mm on each second toe.
+    step at the seam         0.0 mm (all four feet); sag of stitch triangles 0.13/0.21; 0.79/0.13 mm; longest stitch
+                             edge 6.8/8.5; 7.0/6.5 mm; largest angle on the stitch band 93°/62°; 101°/49°.
+    bone cover               least within the free toes 2.00/2.16; 1.62/1.64 mm. After grafting the least over all
+                             phalanges is 0.60 mm (male: the end of the right fourth proximal phalanx behind the
+                             web); 1.33 mm (female). Last round had 2.11 mm here, bought by pushing the saddles
+                             into creases point by point. Cover of the proximal phalanges behind the webs: male
+                             1.05–5.0 / 0.60–4.5; female 1.33–4.3 / 1.74–4.7 mm.
+    neighbouring toes        no interpenetration (0 vertices for every pair of all four feet).
+    determinism              each chain was run twice, outputs byte-identical (see above; the directory name only).
+  What the pictures show (renders/toes-close.png: each foot from above, the front and below; toesL.png / toesR.png
+  as before):
+    On all four feet the toe tips are whole rounded ends and the nails are flat plates; the fragments at the tips of
+    the little and second toes are gone, and so is the line across the dorsum of the big toe base. Still visible:
+    · On toes 2–5 a shallow step runs round the toe where the tip cap meets the shaft (from below it looks like a
+      thimble, most on the second toe): the cap is rigid and the shaft is pushed point by point. The acceptance does
+      not catch it (it stands less than 0.8 mm proud).
+    · On the male right foot a few small ridges along the toe bases on the dorsum (saddles tented in the finishing);
+      a shallow crease either side of the root of the big toe nail.
+    · Female: the step of the sole at the toe bases and the ridge along the lateral border of the forefoot are still
+      there — that is her foot bones and skin (section 10) and cannot be mended by this step; her toes themselves
+      are of the same quality as the male's.
+    · The shafts of toes 3–5 are stretched and the toes look slender.
+    · On the female left second toe one corner of the tip is slightly uneven, and beside the root of each big toe
+      nail there is a fine crease (both where a tip cap meets its surroundings).
+  The step is sensitive to its input: in the finishing, tenting and relaxation work against each other, and with
+  another issue of the skin package the round at which it settles will change. The result is still deterministic, and
+  when the acceptance fails the step states why and skips the graft, as before.
+
+The male genital graft (item 2: not done; only the precondition was measured)
+  The -next report (skin package of 12 Oct 15:18): fineScanLeftUnderTheConstructedSurface 548 vertices, deepest
+  32.3 mm (513 and 28 mm with the previous package — no better); rimMismatchMm median 2.33, max 12.1 mm (4.9 / 14.0
+  before — better).
+  Distance of the fitted skin from the scanned skin (within 30 mm of the midline): the perineum behind the testes,
+  40–80 mm from the deep parts, median 0.6 mm (90th percentile 3.1); 10–40 mm from the deep parts, median 9.1 mm
+  (90th percentile 12.5) — there the fitted skin is still the mound that wraps the genitalia. Likewise on the pubic
+  side: 1.7 mm at 40–80 mm, 6.3 mm at 10–40 mm.
+  So the condition "use the scanned surface of the scrotal neck and raphe where it lies within about a millimetre of
+  the fitted skin" holds nowhere at present: of the 429 fine scan vertices behind the testes none lies within 2 mm
+  of the fitted skin. To use them the constructed surface of genital.py has to change (follow the scanned perineum
+  inside the ring instead of being solved from the surrounding skin); it is not a matter of waiting for the skin's
+  author. Re-meshing the constructed surface, trimming the rim to a smooth loop and the 58 folded edges of the ring
+  were not done. The existing checks still pass (no intersection, cover no less than under the scan, longest stitch
+  edge 19.3 mm against a limit of 19.4 mm).
+
+The female vulvar patch (item 3: not done)
+  In -next it is refused as before, with these reasons and numbers (vulva.notGraftedBecause in graft-report.json):
+  the rim lies a median 7.6 mm from the present skin (limit 5.0; 17.1 mm with the previous package); 54 of the 154
+  rim points lie on a cut plane of the specimen; the specimen skin itself has 5 non-manifold edges.
+  vulva-rim-target.json is still the loop of section 11, not a narrowed one.
+
+The failure test (item 4)
+  Two were made in data/raw/bodyshape/out/skinopen-scratch/ on copies of the delivered male package (removed
+  afterwards; the recipe below can be repeated):
+    · The vertices of face.regions.lips averaged over their mesh neighbours repeatedly (the pocket between the lips
+      smoothed away, vertices moved a median 3.4 mm): open_skin.py exits with status 1, "oral fissure: fewer than 8
+      sharp vertices in face.regions.lips — no pocket between the lips found". This path was right already.
+    · face.regions.lidsL pointed elsewhere (where there is no membrane): this used **not to fail** — the tool removed
+      6 triangles somewhere else, wrote a skin with three boundary loops and exited with status 0. Two conditions
+      were added: the membrane of each eye has at least 40 triangles and lies wholly within 40 mm of the eye joint,
+      otherwise the tool stops with an error ("eye L: the strip between the lid margins has only 6 triangles …");
+      and the self-checks gained exactlyTwoBoundaryLoops. run.sh uses set -e, so the chain stops when open_skin.py
+      exits non-zero.
+  Not tried: a package whose membrane topology really is changed (interior vertices in the strip) — that needs the
+  per-vertex files lengthened; only "not found" was exercised.
+
+The deep lip part split in two
+  The pipeline has split the male FJ2814 into FJ2814_upper ("Upper lip") and FJ2814_lower ("Lower lip"); the female
+  follows with W_FJ2814_upper / _lower. export-deep.ts now selects /^(upper |lower )?lip$/i and accepts one part or
+  two; open_skin.py takes them together for width and midline, and their ids are recorded in open-report.json
+  (deepLipParts) and in manifest.opened.deepLipParts (-next: two parts for the male, one for the female).
+  The advice of section 6 can therefore be followed directly: the upper lip part goes with the skull, the lower with
+  the jaw, with no need to split vertices at the fissure; hiding them when the skin is drawn opaque remains the
+  safest course.
+
+State used: male skin package skin.obj of 12 Oct 14:28 (last file in the package 15:19), public/anatomy/male after
+  the lip was split; female skin package of 13 Oct 05:06 (last 05:18), public/anatomy/female before the split (the
+  lip is still one part). The female public/anatomy will change once more; run again then.
+
+Still wrong, not done or not verified
+  · Items 2 and 3 were not done (see above).
+  · Toes: the four points under "What the pictures show"; the web station still has no published figure behind it;
+    the least cover after grafting, 0.60 mm (male), is below last round's 2.11 mm.
+  · The new packages have not been through the pipeline, the rig build or the shape build. The vertex count of each
+    foot changed (about 8,600 new vertices); toeVertices / nailVertices in the manifest are given as before.
+  · Running run.sh without a suffix overwrites the shipped directories; the script does not guard against it.
+
+13. Changes of round 7 (read this first; where it differs from sections 8–12, this section holds)
+------------------------------------------------------------------------
+Done in this round: the guard in run.sh; the rework of the male genital graft (genital.py, rewritten); the narrowed
+version of the female vulvar patch (vulva.py); the determinism check of both chains. For the toes only the header
+comment of toes.py and the `method` string of the report were changed (no geometry); the shallow step at the tip cap
+of toes 2–5 described in section 12 was not done.
+It supersedes: the whole paragraph "Male external genitalia (genital.py)" of section 11 (procedure, result, what the
+pictures show); the paragraphs "The male genital graft (item 2: not done)" and "The female vulvar patch (item 3: not
+done)" of section 12; in section 11, the statement that three of the four automatic conditions of the vulvar patch
+fail and the rim of 154 points; the last bullet of section 12 ("the script does not guard against it"); and the
+commands without a suffix in section 0 (see below).
+New file: tools/skinopen/remesh.py (cutting a triangle mesh along a level line, halving long edges, collapsing short
+ones, flipping, tangential relaxation; used by genital.py and vulva.py).
+
+The guard (run.sh)
+  Without a suffix a run would overwrite the shipped <body>-skin-grafted/ and <body>-skin-open/ (which downstream
+  reads as they are). The script now refuses in that case, with exit status 3, unless an environment variable says so:
+      SKINOPEN_WRITE_SHIPPED=1 tools/skinopen/run.sh male genital,toes
+  Normally always give a suffix:
+      tools/skinopen/run.sh male genital,toes -next
+      tools/skinopen/run.sh female vulva,toes -next
+  A suffix may hold only letters, digits, dot, underscore and hyphen (no ".."), a body name only letters, digits,
+  underscore and hyphen. The two commands of section 0 without a suffix now need either a suffix or the variable.
+  Every run of this round carried a suffix; the four shipped directories and the two delivered packages have the same
+  per-file hashes at the start and at the end of the round.
+
+Male external genitalia (genital.py)
+  Where the faults of the previous version came from: (1) the constructed surface was the mound of the fitted skin
+  flattened, and lay 20–30 mm below the scanned perineum, so the scanned neck of the scrotum and perineal raphe were
+  buried under it and could not be used; (2) the scanned patch was chosen as "what stands proud of the constructed
+  surface", its rim was ragged and ran between penis and scrotum, and the transition ring went from there down to
+  the low constructed surface — that ring is the "web" between penis and scrotum and the spikes beside the scrotum;
+  it was neither a hole fill nor a hull; (3) the "holes" of the donor mesh are really unwelded seams (two rows of
+  boundary vertices at identical positions), and filling them as holes put a fin of back-to-back triangles, folded
+  through 180°, on every seam.
+  The procedure now:
+    1) The region of the fitted skin to replace: vertices within 120 mm of glans, testes and epididymides that are
+       more than 2.5 mm from the scan, or lie on triangles of the fitted skin that intersect each other (405 pairs in
+       this package: the inner thighs pass through one another below the crotch), or on edges of the fitted skin
+       folded over 60° (101); the pieces these form, grown by one ring, holes filled. The rim of the hole therefore
+       lies where the two skins agree anyway and where the fitted skin is itself smooth.
+    2) The core of the scanned patch: scan vertices whose smoothed mean incident edge is at most 5 mm within 60 mm of
+       a deep part, together with scan vertices within 15 mm of one; the piece connected round glans and testes,
+       holes filled; limited to what lies inside the hole and at least 12 mm from its rim. The seams of the donor
+       are welded first (286 vertices merged, no position changed); the patch contains no hole-fill triangle any more.
+    3) The rim of the patch: within 12 mm of the border of the core, edges of scan triangles are first halved down
+       to 3 mm (new points on the old edges; the surface is unchanged); the indicator of the core is diffused over
+       the scan surface (length scale 3 mm) and the patch is cut out along its level line 0.25 (triangles are cut in
+       their own plane; no core vertex is lost). The rim is one smooth closed line and no scanned vertex moves.
+    4) The blend surface (construction): its draft is the scan surface between the rim of the patch and the line
+       4 mm inside the rim of the hole (the scan there is a coarse mesh of 10–20 mm), joined to the rim of the hole
+       by a band of triangles; re-meshed (split, collapse, flip, tangential relaxation, 6 rounds) with an edge length
+       rising linearly from 2 mm at the patch to 10.5 mm at the hole (the median edge of its rim, i.e. the local edge
+       of the fitted skin); then faired: displacement along the normal only, minimising the uniform-weight
+       bi-Laplacian energy with the scanned patch and three rings of fitted skin fixed, and a pull of weight 0.01
+       towards the scan surface (over the inner 0.7 of the way from patch to hole, fading to 0 at 0.95).
+       The brief said "meshed at the fitted skin's local edge length": the mesh is graded instead — it equals that
+       length at the fitted skin and is 2 mm at the patch, since a 10 mm mesh against a 2 mm rim makes spikes again.
+  Result (-next; male skin package with skin.obj of 12 Oct 14:28):
+    region replaced      737 triangles, 328 vertices; rim of the hole 83 vertices. Extent x −79…76, y 656…809,
+                         z 26…209 mm (previous version: x ±100, y 580–830).
+    where the rim is     18–75 mm from the deep parts (median 41.7); 9.8–63.7 mm from the rim of the patch (median
+                         22.7); the fitted skin on the rim is a median 1.01 mm from the scan (95% 2.30, max 2.47).
+    scanned patch        3,032 scan vertices (tag 15, bit-identical to the scan) + 1,630 points on edges of the scan
+                         (tag 16: on the scanned surface but not vertices of the scan); 8,914 triangles, 203.2 cm²;
+                         rim 408 points, median edge 1.27 mm. Of the 2,785 finely meshed scan vertices inside the
+                         hole, 6 are not in the patch (stray triangles not connected to it through shared edges).
+                         Previous version: fineScanLeftUnderTheConstructedSurface 548, deepest 32.3 mm.
+    blend surface        888 vertices, 2,267 triangles, 167.1 cm². Edges: median 2.97, longest 12.7 mm; edge ÷ local
+                         target at most 1.90 (limit 2). Distance from the scan surface: all, median 0.17, 95% 1.84,
+                         max 6.51 mm; the half nearer the patch, median 0.13, 95% 1.06, max 2.08 mm (previous
+                         version: rimMismatchMm median 2.33, max 12.1).
+    fold angles          inside the blend surface at most 57.3° (95% 8.2°); at the rim of the patch at most 47.0°
+                         (95% 32.4°); at the rim of the hole at most 39.6° (95% 33.3°); inside the scanned patch
+                         (the scan's own) at most 51.9°. Over 120°: none (previous version: 58 on the ring, near 180°).
+    self-intersection    12,140 triangles tested, 0 pairs (scan against scan 0 as well). No vertex had to be taken
+                         back because of an intersection.
+    cover                as under the scan: corpus cavernosum 3.51, corpus spongiosum 3.23, glans 2.93, left / right
+                         testis 2.96 / 2.13, left / right epididymis 4.56 / 3.23 mm; no part comes through.
+    by area              real scanned skin 203.2 cm², construction 167.1 cm² (the blend surface; hole fills in the
+                         patch 0); fitted skin removed 326.9 cm².
+    thighs               the scanned patch (more than 15 mm from its rim) comes no closer than 19.7 mm to the
+                         remaining fitted skin.
+  Self-checks (any failure ends with a non-zero status): scanned vertices bit-identical to the scan; edge points on
+    the scan surface; every core vertex in the patch; no edge folded over 120° in the blend surface or at its two
+    rims; blend edges at most twice the local target; no intersection involving the blend surface or the fitted skin;
+    cover over every deep part no less than under the scan; the patch does not touch the thighs.
+  Manifest: in the genitalSkin entry patchVertices = scan vertices (tag 15), blendRingVertices = the points on scan
+    edges (tag 16), constructionVertices = the blend surface (tag 18); rimOfConstructedSurface is gone. Groups
+    genitalSkin (scanned patch) and genitalSkinBase (blend surface); genitalSkinStitch no longer exists.
+  On other packages: the same code passes all self-checks on male-skin-prev, male-skin-prev2 and on male-skin-r2, the
+    re-fit the skin's author is working on (its state of 13 Oct 10:28, read only); on r2 the fitted skin on the rim is
+    a median 0.6 mm from the scan and the largest fold is 53°.
+  Check renders: renders/genitalSkin.png (three rows: coloured by group / one skin colour / delivered skin; five
+    columns: front, below, two oblique views, a close-up from front and below); renders/genitalPerineum.png (the graft
+    alone, seen from behind and below, from behind, from behind-left, behind-right, the left and straight below; two
+    rows: coloured by group / one colour).
+  What the pictures show: penis and scrotum come out of a smooth pubic surface; the neck of the scrotum, the grooves
+    between scrotum and thighs and the perineal raphe are as the scan has them; there is no web between penis and
+    scrotum, no spike beside the scrotum, no notch at the root of the penis and no vertical ridge in the middle of
+    the perineum. What is still visible, plainly:
+    · Behind the scrotum, between the thighs, the roof of the perineum is made of a few large flat faces (like the
+      roof of a small prism-shaped tunnel, with straight edges): the scan has only a dozen large triangles there, the
+      blend surface follows it, and the fairing only rounds the edges a little. It is hidden between the thighs and
+      cannot be seen from outside.
+    · Above the root of the penis there is a shallow transverse fold, and facets of 5–10 mm show on the surface (the
+      fitted skin itself is a 10 mm mesh, drawn flat-shaded).
+    · At the mouths of the grooves beside the scrotum the rim of the patch turns sharply inside a very narrow groove;
+      close up a few fine light-and-dark streaks show there. They are triangles of the scan, not construction.
+    · Seen from behind with the graft alone, a narrow "fin" stands up at the back: the cleft between the buttocks
+      continuing upwards (its two walls about 10 mm apart), as the scan has it.
+    · Tangency at the rim of the patch is not perfect: 95% of the rim edges are folded less than 32°, the largest
+      47°, where the rim crosses the scan's own grooves.
+  Still wrong or unverified:
+    · A stretch of the fine mesh of the perineal raphe behind the hole (z 47–57 mm, 85 scan vertices) lies 5–10 mm
+      from the grafted skin: there the cleft between the buttocks of the fitted skin is shallower than the scan, and
+      that place is outside the region this step replaces (which is "what is connected to the genital mound"). Re-run
+      after the skin's author has brought the perineal ring onto the scan and see whether it is gone.
+    · The blend surface covers the upper inner thighs (down to y 656 mm): construction there, drafted on the coarse
+      mesh of the scan.
+    · Weights are as before: the scanned patch follows the pelvis rigidly and the blend surface has a harmonic
+      extension from the rim of the hole; in a pose the scrotum does not give way to the thighs. Nothing was run
+      through the pipeline, the rig build or the shape build.
+    · The intersection test still detects only an edge passing through a triangle; coplanar overlaps are not found.
+
+The female vulvar patch, narrowed to the roof of the cleft (vulva.py)
+  What is done (narrow_to_roof, after the smoothing and before the small hole is closed and the canals are built;
+  if it cannot be done the full patch is kept and the reason recorded):
+    1) Non-manifold edges: the 5 edges used by more than two triangles are all where the two walls of the midline
+       cleft touch, i.e. inside the region kept. They are undone by duplicating 9 vertices (no position changes):
+       the two sheets still touch, but each has vertices of its own. None is left.
+    2) The stretch of outer rim on the specimen's cut plane: within 6 mm of it (along the surface), the real skin is
+       cut along the level line 3 mm above the plane.
+    3) Where there is a groove between fold and thigh: cut along the top of the groove, removing the thigh wall
+       lateral to it. Wall = surface facing the midline, more than 18 mm along the surface from the apex line of the
+       cleft, and connected to the cut of step 2. The apex line is taken from the patch itself (the highest central
+       point of every 4 mm slice); the median x of the deep structures will not do — the specimen's cleft lies about
+       4 mm to one side of it.
+    No surface is built: real specimen skin is only cut away.
+  Result (-next; female skin package of 13 Oct 05:06):
+    Specimen skin 175.3 cm² → 141.9 cm² kept, 33.5 cm² cut away (the thigh walls on both sides and the strip within
+    3 mm of the plane).
+    The outer rim is one loop of 324 points, none of them on the cut plane (54 of 154 before). By kind:
+      groove (top of the groove, a natural border)   195 points, 237 mm, z −17…122 mm (on both sides, z 55–122 mm
+                                                     is the groove between fold and thigh; the few points at z < 0
+                                                     lie on the wall of the cleft between the buttocks, not in a groove)
+      cutAboveThePlane (the cut 3 mm above the plane) 51 points, 130 mm, z −3…61 mm: the stretch where fold and
+                                                     thigh merge at the plane (about z 45–61 mm) and, behind it,
+                                                     the walls of the cleft either side of the anus. This is the
+                                                     "constructed boundary" of the brief: an artificial cut line,
+                                                     not a natural border; no surface was built there (constructed
+                                                     area 0) and the fold bottoms the plane sliced off are not restored.
+      edgeOfSelection (where the selection ends)      78 points, 344 mm: in front on the mons and behind in the
+                                                     cleft between the buttocks; the skin simply continues there.
+    Construction: the cap over the one 5-edge hole on the plane, 6.8 mm² (1 vertex, 5 triangles); the three blind
+      canals as before (vaginal, urethral, anal; 13.7 / 11.4 / 11.7 mm from the ends of the lumina, opening radius
+      1.1 / 1.9 / 3.6 mm). Construction in all 98 vertices, 211 triangles, 934.7 mm²; specimen skin 14,110.8 mm².
+      Construction intersects nothing; the patch has no non-manifold edge.
+    The four automatic conditions: (2) a disc with one loop — met; (3) no rim point on a cut plane — met; (4) no
+      non-manifold edge — met; (1) rim a median of at most 5 mm from the present skin — not met: median 11.6 mm (it
+      was 7.6 mm for the full patch, whose rim lay largely on the thigh walls, close to the medial thighs of the
+      present skin anyway; the narrowed rim lies on the groove tops and the walls of the cleft, where the crotch of
+      the present skin has not arrived). By kind: groove 13.1, cut 16.7, end of selection 6.8 mm. So the graft is
+      still refused, now for this one reason. The grafting path (the generic graft of graft.py) has never been executed.
+  The hand-off to the skin's author: data/raw/bodyshape/out/female-skin-grafted-next/vulva-rim-target.json (also copied
+    to female-skin-open-next/). rimLoop is that single ordered loop of 324 points (positions, outward normals, kind,
+    signed distance from the present skin). Tolerance: toleranceForGraftingMm = 5, i.e. the graft is made
+    automatically when the median absolute distance of the rim points from the fitted skin is at most 5 mm. Points of
+    kind groove and edgeOfSelection are the targets to meet; points of kind cutAboveThePlane lie on the walls of the
+    cleft along an artificial cut and need not be forced (they do count in the median).
+  What is real, by area: specimen skin 141.1 cm² (another woman's specimen, enlarged, fitted by bone and smoothed —
+    not a scan of this person); construction 9.3 cm² (canals 9.28, the cap 0.07).
+  What can and cannot be identified on this skin: unchanged (section 11) — a midline cleft, one paired fold on either
+    side of it and the groove between each fold and the thigh can be identified; the boundary between labia majora
+    and minora, the glans and prepuce of the clitoris, the urethral and vaginal orifices, the hymenal ring, the
+    posterior commissure and the anus cannot, and the positions of the three openings come from the lumina, not
+    from the skin.
+  Check render: renders/vulva.png (as in section 11; it now draws the narrowed patch). What it shows: from below, a
+    patch wide in front and narrow behind — the mons and the two folds in front, a fine cleft down the middle,
+    narrowing behind to a strip either side of the anus; the thigh walls that used to hang down at the sides are
+    gone. Over the stretch where the folds merge with the plane the edge of the patch is a flat cut, and on one side
+    a small projecting remnant is left.
+  Still wrong or not done:
+    · The fold bottoms sliced off by the plane are not constructed (about z 45–61 mm, part of the 130 mm of cut line
+      on both sides together); restoring them would mean inventing a stretch of fold.
+    · The canals are not stitched to the meshes of the deep parts, and whether they intersect a WU_* part was not
+      checked (as in section 11).
+    · The two unexplained scales of the map (1.036 in height, 0.937 fore-aft) were not looked into again.
+
+The toes
+  No geometry changed; the -next results are those of section 12 (all four feet grafted, all checks true). The header
+  comment of toes.py and the `method` string of the report now describe the method of section 12. The shallow step
+  where the tip cap meets the shaft (toes 2–5, under 0.8 mm) was not done, and no check for it was added; the
+  acceptance for the least cover of every phalanx after grafting is still 0.5 mm and was not lowered further.
+
+Determinism and the state used
+  Each chain was run twice (run.sh male genital,toes -next; run.sh female vulva,toes -next): the 213 files of the four
+  output directories are byte-identical (both runs wrote the same directory names this time, so the difference in
+  the embedded directory name that section 12 describes does not arise). A chain takes about 75 seconds.
+  Male: skin package male-skin (skin.obj of 12 Oct 14:28), public/anatomy/male with the lip in two parts.
+  Female: skin package female-skin (13 Oct 05:06), public/anatomy/female as rebuilt on 13 Oct 10:32 — the deep lip
+  is two parts there (W_FJ2814_upper, W_FJ2814_lower; deepLipParts of open-report.json says pieces 2).
+  Debugging: the environment variable SKINOPEN_DEBUG=<directory> now also makes genital.py and vulva.py write npz
+  files for debugging; leave it unset.

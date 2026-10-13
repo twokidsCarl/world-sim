@@ -2375,3 +2375,242 @@ div.voice-attrib p + p {
   margin-left: 8px;
   color: var(--text-2);
 }
+
+
+/* 表情面板 / expression panel */
+.expr-sub {
+  margin: 10px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.expr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.expr-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-height: 38px;
+  padding: 4px 8px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text-2);
+  background: var(--panel-2);
+}
+
+.expr-grid button:hover {
+  color: var(--text);
+  border-color: var(--text-3);
+}
+
+.expr-grid button.on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.expr-grid button .en {
+  margin-left: 0;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.expr-panel .group > h3 .link-btn {
+  font-weight: 400;
+}
+
+.speech-drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+.speech-drop.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.speech-drop input[type='file'] {
+  display: none;
+}
+
+.speech-drop button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+.speech-drop .hint {
+  margin: 0;
+}
+
+.speech-strip canvas {
+  display: block;
+  width: 100%;
+  height: 56px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.speech-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 8px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 标定对照 / calibration */
+.cal-dialog {
+  width: min(980px, 100%);
+  max-height: 90vh;
+}
+
+.cal-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 12px 0 4px;
+}
+
+.cal-filter .hint {
+  margin: 0;
+}
+
+.cal-card {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+.cal-card > h3 {
+  margin: 0 0 6px;
+}
+
+.cal-card h4 {
+  margin: 12px 0 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.cal-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-in {
+  color: #7fc8a0;
+}
+
+.cal-out {
+  color: var(--danger);
+}
+
+.cal-nc {
+  color: var(--text-3);
+}
+
+.cal-bar {
+  display: flex;
+  height: 6px;
+  margin-bottom: 8px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.cal-bar .in {
+  background: #5fae86;
+}
+
+.cal-bar .out {
+  background: var(--danger);
+}
+
+.cal-bar .nc {
+  background: var(--text-3);
+}
+
+.cal-card .hint {
+  margin: 6px 0;
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.cal-refs .cal-url {
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+
+.cal-scroll {
+  overflow-x: auto;
+  margin: 4px 0 8px;
+}
+
+.cal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.cal-table th,
+.cal-table td {
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--line);
+}
+
+.cal-table th {
+  border-top: 0;
+  color: var(--text-3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cal-table td.num {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-note {
+  display: block;
+  color: var(--text-3);
+}
+
+/* 五个页签：中文在上、英文在下，免得有的换行有的不换 / five tabs: Chinese above, English below, so that none wraps differently from the others */
+.tabs > button[role='tab'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.tabs > button[role='tab'] .en {
+  font-size: 10.5px;
+}

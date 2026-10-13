@@ -14,13 +14,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AnatomyGraph, boundsCenter } from '../anatomy/graph.ts'
-import { loadDataset } from '../anatomy/load.ts'
+import { fetchJson, loadDataset } from '../anatomy/load.ts'
 import { loadRig, poseIsRest, type LoadedRig, type Scales } from '../anatomy/rig.ts'
 import { loadShape, mapShapeControls, shapeScales, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
 import { loadFace, type LoadedFace } from '../pain/face.ts'
 import type { SystemId } from '../anatomy/types.ts'
 import { debug } from '../debug.ts'
-import { EMPTY_SELECTION, useApp } from '../state/store.ts'
+import { EMPTY_SELECTION, hideListFrom, useApp } from '../state/store.ts'
 import type { Viewer, ViewState } from '../viewer/Viewer.ts'
 import { Icon } from './Icon.tsx'
 
@@ -47,6 +47,8 @@ interface OtherAssets {
   rig?: LoadedRig | null
   shape?: LoadedShape | null
   face?: LoadedFace | null
+  /** 这副身体自己的"皮肤不透明时隐藏"清单（display.json）；null = 没有，按名称的规则 / This body's own "hide under an opaque skin" list (display.json); null = none, the name rule applies. */
+  hide?: readonly string[] | null
 }
 
 /** 某个系统在人体中的中心：两个联动相机都相对它环绕。 */
@@ -80,12 +82,21 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
         if (cancelled) return
         const base = `${import.meta.env.BASE_URL}anatomy/${other}/`
         const assets: OtherAssets = {}
+        // 主视图的清单是它那副身体的部件 id，这边要用这副身体自己的（文件只有一千字节左右，直接取）
+        // the main view's list holds its own body's part ids; this pane needs this body's own (the file is about a kilobyte, so it is simply fetched)
+        void fetchJson<unknown>(`${base}display.json`)
+          .catch(() => null)
+          .then((display) => {
+            if (cancelled) return
+            assets.hide = hideListFrom(display, (id) => !!g.part(id))
+            viewer?.invalidateState()
+          })
         // 按主视图当前的需要去取另一人体的数据；到了就让对照窗格重新同步
         // fetch what the main view's current state needs for the other body; re-sync the pane when it arrives
         const want = (): void => {
           const s = useApp.getState()
           const shaped = Object.keys(s.shapeControls).length > 0
-          const facing = s.pain.hold || Object.keys(s.aus).length > 0 || s.painNonce !== nonce0
+          const facing = s.pain.hold || Object.keys(s.aus).length > 0 || s.painNonce !== nonce0 || !!s.expr || !!s.viseme || s.speech.status === 'playing'
           const got = (): void => {
             if (!cancelled) viewer?.invalidateState()
           }
@@ -156,7 +167,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             face: assets.face ?? null,
             // 对照窗格不画皱纹细节 / no wrinkle detail in the compare pane
             faceDetail: null,
-            skinHide: s.skinHide,
+            skinHide: assets.hide ?? null,
             skinOpaque: s.skinOpaque,
             shape: assets.shape ?? null,
             shapeControls: shape.controls,

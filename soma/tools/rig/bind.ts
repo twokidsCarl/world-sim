@@ -6,6 +6,11 @@
 //   field       体内距离场 → 紧支撑权重 → 沿网格平滑 / in-body distance field → compact-support weights → smoothing over the mesh
 //   attach      肌肉、肌腱、韧带：附着处锁定在所附着的骨上，其余顶点只在附着骨之间的关节链上取权重
 //               muscles, tendons, ligaments: attachment sites are locked to their bone, every other vertex takes its weights among the joints on the chain between the attachments
+//               肌肉的两端落在一条关节链上时（多数四肢肌），权重不看“最近的骨”，而按顶点沿肌肉（起点 → 止点）的位置给：
+//               在肌肉经过每个关节的地方从近端节段过渡到远端节段（见 bindAttach 里的 pathRows）
+//               where a muscle's attachments lie on one chain of joints (most limb muscles) the weights do not come from the nearest bone
+//               but from the vertex's position along the muscle (origin → insertion): the muscle passes from the proximal to the distal
+//               segment where it crosses each joint (see pathRows in bindAttach)
 //   centreline  神经：在中心线上取权重并沿线平滑，再按最近的中心线段传给管壁顶点
 //               nerves: weights on the centreline, smoothed along it, then handed to tube vertices by their nearest centreline segment
 
@@ -120,6 +125,10 @@ export interface AttachReport {
   /** 两端如何确定。 How the two ends were established. */
   ends: 'knowledge' | 'knowledge+geometry' | 'geometry' | 'none'
   line: boolean
+  /** 权重的求法：path = 沿肌肉的位置（各关节处过渡）；nearest = 关节链上最近的骨；field = 距离场。 How the weights were found: path = position along the muscle (a transition at every joint crossed); nearest = nearest bone on the chain of joints; field = the distance field. */
+  weights?: 'path' | 'nearest' | 'field'
+  /** path 时：各关节处过渡带在肌肉上的位置（毫米，自起点沿中心线）与到关节中心的最近距离。 For `path`: where along the muscle each joint's transition lies (mm from the origin along the centreline) and the closest approach to the joint centre. */
+  crossings?: { joint: string; fromMm: number; toMm: number; passMm: number }[]
   /** 作用线两端的来源。 Where the two ends of the line of action come from. */
   lineEnds?: [string, string]
   why?: string
@@ -136,7 +145,7 @@ export interface BindResult {
 
 // ── 网格工具 / mesh helpers ───────────────────────────────────────────────────────────────────
 
-interface Welded {
+export interface Welded {
   /** 去重后的顶点坐标。 Unique vertex positions. */
   pos: Float32Array
   n: number
@@ -271,6 +280,63 @@ function smooth(d: Dense, mesh: Welded, iterations: number, locked?: Uint8Array,
     ;[cur, next] = [next, cur]
   }
   if (cur !== d.W) d.W.set(cur)
+}
+
+/** 沿网格的边到一组顶点的最短路程（Dijkstra）；到不了的顶点为 Infinity。 Shortest way along the mesh edges to a set of vertices (Dijkstra); Infinity where unreachable. */
+export function geodesic(mesh: Welded, seeds: number[]): Float32Array {
+  const d = new Float32Array(mesh.n).fill(Infinity)
+  // 二叉堆：(距离, 顶点) / binary heap of (distance, vertex)
+  const hd: number[] = [], hv: number[] = []
+  const push = (dist: number, v: number): void => {
+    let i = hd.length
+    hd.push(dist)
+    hv.push(v)
+    while (i > 0) {
+      const q = (i - 1) >> 1
+      if (hd[q]! <= hd[i]!) break
+      ;[hd[q], hd[i]] = [hd[i]!, hd[q]!]
+      ;[hv[q], hv[i]] = [hv[i]!, hv[q]!]
+      i = q
+    }
+  }
+  const pop = (): [number, number] => {
+    const top: [number, number] = [hd[0]!, hv[0]!]
+    const ld = hd.pop()!, lv = hv.pop()!
+    if (hd.length) {
+      hd[0] = ld
+      hv[0] = lv
+      let i = 0
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1
+        let m = i
+        if (l < hd.length && hd[l]! < hd[m]!) m = l
+        if (r < hd.length && hd[r]! < hd[m]!) m = r
+        if (m === i) break
+        ;[hd[m], hd[i]] = [hd[i]!, hd[m]!]
+        ;[hv[m], hv[i]] = [hv[i]!, hv[m]!]
+        i = m
+      }
+    }
+    return top
+  }
+  for (const v of seeds) {
+    if (d[v] === 0) continue
+    d[v] = 0
+    push(0, v)
+  }
+  while (hd.length) {
+    const [dist, v] = pop()
+    if (dist > d[v]!) continue
+    for (let e = mesh.adjStart[v]!; e < mesh.adjStart[v + 1]!; e++) {
+      const w = mesh.adj[e]!
+      const nd = dist + Math.hypot(mesh.pos[w * 3]! - mesh.pos[v * 3]!, mesh.pos[w * 3 + 1]! - mesh.pos[v * 3 + 1]!, mesh.pos[w * 3 + 2]! - mesh.pos[v * 3 + 2]!)
+      if (nd < d[w]!) {
+        d[w] = nd
+        push(nd, w)
+      }
+    }
+  }
+  return d
 }
 
 /** 取最大的 4 个权重并量化为和为 255 的 uint8。 Keeps the 4 largest weights and quantises them to uint8 summing to 255. */
@@ -454,6 +520,21 @@ export interface BindContext {
 }
 
 const TOUCH = 0.003
+/**
+ * 游离端补全：长度不小于 FREE_END_MIN_LENGTH 的肌肉只找到一端的附着时，另一端在 FREE_END_REACH（且不超过肌长的 20%）以内
+ * 最近的骨上取一个附着点——它的腱或腱膜不在网格里（腹直肌下端到耻骨、阔筋膜张肌经髂胫束到大腿）。短肌不补：面肌等止于皮肤。
+ * Free-end completion: a muscle at least FREE_END_MIN_LENGTH long with an attachment found at one end only gets a site on the
+ * nearest bone within FREE_END_REACH (and 20 % of its length) of the other end — its tendon or aponeurosis is not in the mesh
+ * (rectus abdominis to the pubis, tensor fasciae latae through the iliotibial tract to the thigh). Short muscles are left alone:
+ * facial muscles and their like end in skin.
+ */
+const FREE_END_MIN_LENGTH = 0.08
+const FREE_END_REACH = 0.04
+/** 过渡带半宽 = PASS_FACTOR × 肌肉中心线到关节中心的最近距离，限制在 [RAMP_MIN, RAMP_MAX]（米）。 Half-width of a transition = PASS_FACTOR × the closest approach of the muscle's centreline to the joint centre, within [RAMP_MIN, RAMP_MAX] metres. */
+const PASS_FACTOR = 1.5
+const RAMP_MIN = 0.015
+const RAMP_MAX = 0.06
+const PATH_SLICES = 24
 
 export function bindAll(ctx: BindContext): BindResult {
   const { body, joints, field } = ctx
@@ -786,7 +867,51 @@ export function bindAll(ctx: BindContext): BindResult {
       return [c[0] / verts.length, c[1] / verts.length, c[2] / verts.length]
     }
     const sites = new Map<string, Site>()
+    /**
+     * 网格没到骨面时的附着点：从肌肉末端沿主轴向外延长（最多 8 cm），取延长线离骨面最近处在骨面上的最近点。
+     * 直接取“离末端最近的骨面点”会偏向关节一侧（肱二头肌止点会落在桡骨头而不是桡骨粗隆）。axisOf 在主轴算出之后才可用。
+     * The attachment point where the mesh stops short of the bone: the muscle's end is prolonged outwards along its principal
+     * axis (by at most 8 cm) and the point of the bone nearest to where that line comes closest is taken. The bone point nearest
+     * to the end itself is biased towards the joint (the biceps would insert on the radial head, not the tuberosity).
+     */
+    const bridgePoint = (b: string, i: number, axisOf: { dir: V3; t: (q: V3) => number; tMin: number; tMax: number } | null): V3 | null => {
+      const sb = surf(b)
+      const end: V3 = [mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!]
+      const direct = sb.closest(end)
+      if (!axisOf || !direct) return direct ? direct.point : null
+      const ti = axisOf.t(end), sp = Math.max(1e-6, axisOf.tMax - axisOf.tMin)
+      const high = ti > (axisOf.tMin + axisOf.tMax) / 2
+      const c: V3 = [0, 0, 0]
+      let n = 0
+      for (let v = 0; v < nU; v++) {
+        const q: V3 = [mesh.pos[v * 3]!, mesh.pos[v * 3 + 1]!, mesh.pos[v * 3 + 2]!]
+        if ((high ? axisOf.tMax - axisOf.t(q) : axisOf.t(q) - axisOf.tMin) / sp > 0.12) continue
+        ;(c[0] += q[0]), (c[1] += q[1]), (c[2] += q[2])
+        n++
+      }
+      if (!n) return direct.point
+      const sg = high ? 1 : -1
+      let best = Infinity, bq: V3 | null = null
+      for (let t = 0; t <= 0.0801; t += 0.004) {
+        const q: V3 = [c[0] / n + sg * axisOf.dir[0] * t, c[1] / n + sg * axisOf.dir[1] * t, c[2] / n + sg * axisOf.dir[2] * t]
+        const dd = sb.distance(q[0], q[1], q[2], 0.15)
+        if (dd < best - 1e-5) (best = dd), (bq = q)
+      }
+      const cp = bq ? sb.closest(bq) : null
+      return cp ? cp.point : direct.point
+    }
     const tendons = isMuscle ? [...p.adjacent].filter((a) => body.byId.get(a)?.tissue === 'tendon').sort() : []
+
+    // 主轴 / the principal axis
+    const pts: V3[] = []
+    for (let i = 0; i < nU; i++) pts.push([mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!])
+    const pc = pca(pts)
+    const tOf = (q: V3): number => (q[0] - pc.center[0]) * pc.axes[0][0] + (q[1] - pc.center[1]) * pc.axes[0][1] + (q[2] - pc.center[2]) * pc.axes[0][2]
+    const tAx = pts.map(tOf)
+    let tMin = Infinity, tMax = -Infinity
+    for (const t of tAx) (tMin = Math.min(tMin, t)), (tMax = Math.max(tMax, t))
+    const span = Math.max(1e-6, tMax - tMin)
+    const axisOf = { dir: pc.axes[0] as V3, t: tOf, tMin, tMax }
 
     // 1. 知识给出的附着骨 / attachment bones named by knowledge
     for (const [set, kind] of [[K.origin, 'origin'], [K.insertion, 'insertion']] as const) {
@@ -811,9 +936,7 @@ export function bindAll(ctx: BindContext): BindResult {
         } else if (boneJoint.has(b) && mn <= 0.06) {
           // 网格在骨前 6 cm 以内就结束了（腱被并入别的部件）：在骨面上取离肌肉末端最近的点
           // the mesh ends within 6 cm of the bone (its tendon belongs to another part): take the point of the bone nearest to the muscle's end
-          const i = minAt.get(b)!
-          const c = surf(b).closest([mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!])!
-          sites.set(b, { bone: b, kind, verts: [], point: c.point, how: `knowledge, mesh ends ${Math.round(mn * 1000)} mm short of the bone` })
+          sites.set(b, { bone: b, kind, verts: [], point: bridgePoint(b, minAt.get(b)!, axisOf)!, how: `knowledge, mesh ends ${Math.round(mn * 1000)} mm short of the bone` })
           rep.knowledgeMissed.push({ bone: name, kind, mm: Math.round(mn * 1000), via: 'closest point on the bone' })
         } else rep.knowledgeMissed.push({ bone: name, kind, mm: Number.isFinite(mn) ? Math.round(mn * 1000) : -1 })
       }
@@ -824,14 +947,6 @@ export function bindAll(ctx: BindContext): BindResult {
     for (const b of sites.keys()) for (const j of jointsOfBone(b)) kJoints.add(j)
 
     // 2. 几何补充 / completion by geometry
-    const pts: V3[] = []
-    for (let i = 0; i < nU; i++) pts.push([mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!])
-    const pc = pca(pts)
-    const tOf = (q: V3): number => (q[0] - pc.center[0]) * pc.axes[0][0] + (q[1] - pc.center[1]) * pc.axes[0][1] + (q[2] - pc.center[2]) * pc.axes[0][2]
-    const tAx = pts.map(tOf)
-    let tMin = Infinity, tMax = -Infinity
-    for (const t of tAx) (tMin = Math.min(tMin, t)), (tMax = Math.max(tMax, t))
-    const span = Math.max(1e-6, tMax - tMin)
     const needGeometry = !haveK || kJoints.size < 2 || !(kinds.has('origin') && kinds.has('insertion'))
     if (needGeometry) {
       for (const b of [...cand].sort()) {
@@ -859,6 +974,44 @@ export function bindAll(ctx: BindContext): BindResult {
         }
       }
     }
+    // 2b. 游离端补全（见 FREE_END_MIN_LENGTH）/ free-end completion (see FREE_END_MIN_LENGTH)
+    // 条件：某一端 25% 的范围内没有任何附着，且知识没有点名一块网格够不着的骨（那样最近的骨就不是它的附着）
+    // condition: no attachment at all within 25 % of the length from one end, and knowledge names no bone the mesh fails to reach (the nearest bone would then not be its attachment)
+    if (isMuscle && span >= FREE_END_MIN_LENGTH && !rep.knowledgeMissed.some((m) => !m.via)) {
+      const js = new Set<number>()
+      for (const b of sites.keys()) for (const j of jointsOfBone(b)) js.add(j)
+      const lowFree = ![...sites.values()].some((st) => (tOf(st.point) - tMin) / span < 0.25 || st.verts.some((i) => (tAx[i]! - tMin) / span < 0.25))
+      const highFree = ![...sites.values()].some((st) => (tMax - tOf(st.point)) / span < 0.25 || st.verts.some((i) => (tMax - tAx[i]!) / span < 0.25))
+      if (lowFree || highFree) {
+        const reach = Math.min(FREE_END_REACH, 0.2 * span)
+        const tryEnd = (high: boolean): void => {
+          const ev: number[] = []
+          for (let i = 0; i < nU; i++) if ((high ? tMax - tAx[i]! : tAx[i]! - tMin) / span < 0.12) ev.push(i)
+          if (!ev.length) return
+          const c = centroidOf(ev)
+          let best: { bone: string; d: number; at: number } | null = null
+          for (const b of [...boneJoint.keys()].sort()) {
+            if (sites.has(b) || js.has(boneJoint.get(b)!) || denied(b)) continue
+            const bp = body.byId.get(b)
+            if (!bp || !(p.side === 'M' || bp.side === 'M' || bp.side === p.side)) continue
+            const sb = surf(b)
+            if (sb.boxDistance(c[0], c[1], c[2]) > reach + 0.12 * span) continue
+            let mn: number = best ? (best as { d: number }).d : reach, at = -1
+            for (const i of ev) {
+              const dd = sb.distance(mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!, mn)
+              if (dd < mn) (mn = dd), (at = i)
+            }
+            if (at >= 0) best = { bone: b, d: mn, at }
+          }
+          if (!best) return
+          const cp = bridgePoint(best.bone, best.at, axisOf)
+          if (!cp) return
+          sites.set(best.bone, { bone: best.bone, kind: 'end', verts: [], point: cp, how: `geometry, free end of the muscle ${Math.round(best.d * 1000)} mm from the bone` })
+        }
+        if (lowFree) tryEnd(false)
+        if (highFree) tryEnd(true)
+      }
+    }
     const geo = [...sites.values()].some((x) => x.kind === 'end')
     rep.ends = haveK ? (geo ? 'knowledge+geometry' : 'knowledge') : sites.size ? 'geometry' : 'none'
     for (const b of [...cand].sort()) if (!sites.has(b) && (minD.get(b) ?? 1) <= TOUCH && touching(b, TOUCH).length >= 5) rep.touchedOnly.push(body.byId.get(b)!.name)
@@ -879,6 +1032,7 @@ export function bindAll(ctx: BindContext): BindResult {
       const d = densify(rows)
       smooth(d, mesh, pol.smooth ?? 3, locked)
       finish(p, 'attach→field', mesh, d, raw.positions.length / 3)
+      rep.weights = 'field'
       rep.why = attJoints.size === 1 ? 'all attachments on one joint' : 'no attachment to bone found'
       return
     }
@@ -893,14 +1047,241 @@ export function bindAll(ctx: BindContext): BindResult {
       if ((par >= 0 && allowed.has(par)) || [...allowed].some((a) => parentIdx[a] === j)) if (touching(b, TOUCH).length >= 5) allowed.add(j)
     }
     const list = [...allowed].filter((j) => joints[j]!.boneIds.length > 0).sort((a, b) => a - b)
-    const rows = euclidRows(mesh, beta, list)
-    for (let i = 0; i < nU; i++) hingeResplit(rows[i]!, mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!)
+
+    // 肌肉作用线：起点侧与止点侧各取贴附面积最大的那块刚性骨；标签不全时取沿主轴相距最远的两处
+    // line of action: on the origin and on the insertion side the rigid bone with the largest attached patch; with incomplete labels the two sites farthest apart along the principal axis
+    const rigid = [...sites.values()].filter((x) => boneJoint.has(x.bone)).map((x) => ({ ...x, joint: boneJoint.get(x.bone)!, size: Math.max(1, x.verts.length), t: tOf(x.point) }))
+    type RS = (typeof rigid)[number]
+    const largest = (c: RS[]): RS | undefined => [...c].sort((a, b) => b.size - a.size || (a.bone < b.bone ? -1 : 1))[0]
+    const farthest = (c: RS[], from: RS): RS | undefined => [...c].filter((x) => x.joint !== from.joint).sort((a, b) => Math.abs(b.t - from.t) - Math.abs(a.t - from.t) || (a.bone < b.bone ? -1 : 1))[0]
+    let o = isMuscle ? largest(rigid.filter((x) => x.kind === 'origin')) : undefined
+    let ins = isMuscle ? largest(rigid.filter((x) => x.kind === 'insertion' && x.joint !== o?.joint)) : undefined
+    if (isMuscle) {
+      if (o && !ins) ins = farthest(rigid, o)
+      else if (!o && ins) o = farthest(rigid, ins)
+      else if (!o && !ins) {
+        let best = -1
+        for (const a of rigid) {
+          for (const b of rigid) {
+            if (a.joint === b.joint || Math.abs(a.t - b.t) <= best) continue
+            best = Math.abs(a.t - b.t)
+            o = a
+            ins = b
+          }
+        }
+        // 靠近骨架根部的一端作起点 / the end nearer the root of the skeleton is called the origin
+        if (o && ins && (depth[o.joint]! > depth[ins.joint]! || (depth[o.joint] === depth[ins.joint] && o.bone > ins.bone))) [o, ins] = [ins, o]
+      }
+    }
+
+    /**
+     * 沿肌肉的位置定权重。条件：作用线两端已定，且全部附着关节（以及允许的关节）都在两端之间的那条关节链上。
+     *   1. 位置：u = dO / (dO + dI)，dO、dI 是沿网格（边的图）到起点处、止点处顶点的最短路程；网格不连通时退回到
+     *      起点 → 止点直线上的投影。按 u 切成 PATH_SLICES 片，各片质心连成中心线（网格没到骨面的一端延长到附着点），
+     *      每个顶点得到沿中心线的弧长 s。这样绕过踝、腕的肌腱也按它自己的走向编号，而不是按直线。
+     *   2. 每个关节一条过渡带：中心取中心线离关节中心最近处 s_b，半宽 PASS_FACTOR × 最近距离（限 RAMP_MIN…RAMP_MAX），
+     *      并裁剪到游离段内（近端一侧附着区之后、远端一侧附着区之前）。绕节段长轴旋转的关节（桡尺关节）没有“经过处”：
+     *      过渡带放在肌肉离远端一侧的骨比离近端一侧的骨更近的地方。没有自由度的关节不设过渡带。
+     *   3. 顶点依次越过各过渡带，从链上的一个节段换到下一个。同一横截面上的顶点权重相同，肌肉不会被斜着剪开。
+     * 不再做铰链角度混合：过渡带本身就在关节处。
+     * Weights from the position along the muscle. Condition: both ends of the line of action are known and every attachment
+     * joint (and every allowed joint) lies on the chain of joints between them.
+     *   1. Position: u = dO / (dO + dI), with dO and dI the shortest way over the mesh (its edge graph) to the vertices at the
+     *      origin and at the insertion; for a mesh in several pieces, the projection on the straight line origin → insertion
+     *      instead. The mesh is cut into PATH_SLICES slices by u and the slice centroids form a centreline (prolonged to the
+     *      attachment point at an end where the mesh stops short of the bone); every vertex gets its arc length s along it.
+     *      A tendon turning round the ankle or the wrist is thus numbered along its own course, not along a straight line.
+     *   2. One transition per joint, centred where the centreline comes closest to the joint centre, s_b, with half-width
+     *      PASS_FACTOR × that distance (within RAMP_MIN…RAMP_MAX) and clipped to the free span (after the attachment area on
+     *      the proximal side, before the one on the distal side). A joint turning about the long axis of its segment (the
+     *      radioulnar joint) has no place of crossing: its transition lies where the muscle is nearer to the bones of the distal
+     *      side than to those of the proximal side. A joint without degrees of freedom gets no transition.
+     *   3. A vertex moves from one segment of the chain to the next as it passes each transition. Vertices of one cross-section
+     *      get the same weights, so the muscle is not sheared obliquely.
+     * No hinge blend is applied on top: the transition already sits at the joint.
+     */
+    const pathRows = (): Map<number, number>[] | null => {
+      if (!isMuscle || !o || !ins || o.joint === ins.joint) return null
+      // 关节树上 o.joint → ins.joint 的路径，及相邻两节点之间的关节 / the tree path o.joint → ins.joint and the joint between consecutive nodes
+      const up = [o.joint]
+      for (let q = parentIdx[o.joint]!; q >= 0; q = parentIdx[q]!) up.push(q)
+      const down = [ins.joint]
+      for (let q = parentIdx[ins.joint]!; q >= 0; q = parentIdx[q]!) down.push(q)
+      const ai = up.findIndex((j) => down.includes(j))
+      if (ai < 0) return null
+      const bi = down.indexOf(up[ai]!)
+      const nodes = [...up.slice(0, ai + 1), ...down.slice(0, bi).reverse()]
+      const between = nodes.slice(1).map((n, k) => (k < ai ? nodes[k]! : n))
+      const onPath = new Set(nodes)
+      for (const j of attJoints) if (!onPath.has(j)) return null
+      for (const j of list) if (!onPath.has(j)) return null
+      const O = o.point, I = ins.point
+      // 1. 沿肌肉的位置 u / the position u along the muscle
+      const seeds = (st: RS): number[] => {
+        if (st.verts.length) return st.verts
+        let mn = Infinity
+        const d = new Float32Array(nU)
+        for (let i = 0; i < nU; i++) {
+          d[i] = Math.hypot(mesh.pos[i * 3]! - st.point[0], mesh.pos[i * 3 + 1]! - st.point[1], mesh.pos[i * 3 + 2]! - st.point[2])
+          if (d[i]! < mn) mn = d[i]!
+        }
+        const out: number[] = []
+        for (let i = 0; i < nU; i++) if (d[i]! <= mn + 0.008) out.push(i)
+        return out
+      }
+      const dO = geodesic(mesh, seeds(o)), dI = geodesic(mesh, seeds(ins))
+      const u = new Float32Array(nU)
+      let connected = true
+      for (let i = 0; i < nU && connected; i++) if (!Number.isFinite(dO[i]!) || !Number.isFinite(dI[i]!)) connected = false
+      if (connected) {
+        for (let i = 0; i < nU; i++) u[i] = dO[i]! + dI[i]! > 0 ? dO[i]! / (dO[i]! + dI[i]!) : 0
+      } else {
+        const dx = I[0] - O[0], dy = I[1] - O[1], dz = I[2] - O[2]
+        const l2 = dx * dx + dy * dy + dz * dz
+        if (l2 < 1e-8) return null
+        let lo = Infinity, hi = -Infinity
+        for (let i = 0; i < nU; i++) {
+          u[i] = ((mesh.pos[i * 3]! - O[0]) * dx + (mesh.pos[i * 3 + 1]! - O[1]) * dy + (mesh.pos[i * 3 + 2]! - O[2]) * dz) / l2
+          if (u[i]! < lo) lo = u[i]!
+          if (u[i]! > hi) hi = u[i]!
+        }
+        for (let i = 0; i < nU; i++) u[i] = (u[i]! - lo) / Math.max(1e-9, hi - lo)
+      }
+      const slice = new Int32Array(nU)
+      const acc = new Float64Array(PATH_SLICES * 4), cnt = new Int32Array(PATH_SLICES)
+      for (let i = 0; i < nU; i++) {
+        const k = Math.min(PATH_SLICES - 1, Math.floor(u[i]! * PATH_SLICES))
+        slice[i] = k
+        acc[k * 4] = acc[k * 4]! + mesh.pos[i * 3]!
+        acc[k * 4 + 1] = acc[k * 4 + 1]! + mesh.pos[i * 3 + 1]!
+        acc[k * 4 + 2] = acc[k * 4 + 2]! + mesh.pos[i * 3 + 2]!
+        acc[k * 4 + 3] = acc[k * 4 + 3]! + u[i]!
+        cnt[k] = cnt[k]! + 1
+      }
+      // 中心线的节点：(u, 点)；网格没到骨面的一端加上附着点 / centreline nodes (u, point); the attachment point is added at an end where the mesh stops short
+      const cl: { u: number; p: V3; k: number }[] = []
+      for (let k = 0; k < PATH_SLICES; k++) if (cnt[k]) cl.push({ u: acc[k * 4 + 3]! / cnt[k]!, p: [acc[k * 4]! / cnt[k]!, acc[k * 4 + 1]! / cnt[k]!, acc[k * 4 + 2]! / cnt[k]!], k })
+      if (cl.length < 2) return null
+      const pre = o.verts.length ? 0 : Math.hypot(O[0] - cl[0]!.p[0], O[1] - cl[0]!.p[1], O[2] - cl[0]!.p[2])
+      const S = [pre]
+      for (let k = 1; k < cl.length; k++) S.push(S[k - 1]! + Math.hypot(cl[k]!.p[0] - cl[k - 1]!.p[0], cl[k]!.p[1] - cl[k - 1]!.p[1], cl[k]!.p[2] - cl[k - 1]!.p[2]))
+      const last = cl[cl.length - 1]!
+      const total = S[S.length - 1]! + (ins.verts.length ? 0 : Math.hypot(I[0] - last.p[0], I[1] - last.p[1], I[2] - last.p[2]))
+      const sOf = (x: number): number => {
+        if (x <= cl[0]!.u) return S[0]!
+        for (let k = 1; k < cl.length; k++) if (x <= cl[k]!.u) return S[k - 1]! + ((S[k]! - S[k - 1]!) * (x - cl[k - 1]!.u)) / Math.max(1e-9, cl[k]!.u - cl[k - 1]!.u)
+        return S[S.length - 1]!
+      }
+      const line: { p: V3; s: number }[] = [...(pre > 0 ? [{ p: O, s: 0 }] : []), ...cl.map((c, k) => ({ p: c.p, s: S[k]! })), ...(total > S[S.length - 1]! ? [{ p: I, s: total }] : [])]
+      // 各附着处在中心线上的位置，按所在关节在链上的序号归组 / where each attachment sits along the centreline, grouped by the position of its joint on the chain
+      const order = new Map(nodes.map((j, k) => [j, k]))
+      const siteS: number[][] = nodes.map(() => [])
+      for (const [b, st] of sites) {
+        for (const j of jointsOfBone(b)) {
+          const k = order.get(j)
+          if (k === undefined) continue
+          if (st.verts.length) for (const i of st.verts) siteS[k]!.push(sOf(u[i]!))
+          // 网格没到骨面的附着：算在离它近的那一端 / an attachment the mesh does not reach counts at the end it is nearer to
+          else siteS[k]!.push(Math.hypot(st.point[0] - I[0], st.point[1] - I[1], st.point[2] - I[2]) < Math.hypot(st.point[0] - O[0], st.point[1] - O[1], st.point[2] - O[2]) ? total : 0)
+        }
+      }
+      const pct = (a: number[], f: number): number => {
+        const b = [...a].sort((x, y) => x - y)
+        return b[Math.min(b.length - 1, Math.max(0, Math.round(f * (b.length - 1))))]!
+      }
+      // 2. 各关节的过渡带 / the transition of every joint
+      const ramps: { a: number; e: number }[] = []
+      rep.crossings = []
+      between.forEach((jb, k) => {
+        const J = joints[jb]!
+        if (!J.def.dofs.length) {
+          // 没有自由度：两侧永远一起动，不设过渡带 / no degree of freedom: both sides always move as one, no transition
+          ramps.push({ a: -Infinity, e: -Infinity })
+          return
+        }
+        const c = J.center
+        let bestD = Infinity, sb = 0
+        const seg: V3 = [J.tail[0] - c[0], J.tail[1] - c[1], J.tail[2] - c[2]]
+        const sl = Math.hypot(seg[0], seg[1], seg[2])
+        const twist = sl > 1e-6 && J.def.dofs.every((d) => Math.abs((J.axes[d.axis]![0] * seg[0] + J.axes[d.axis]![1] * seg[1] + J.axes[d.axis]![2] * seg[2]) / sl) > 0.8)
+        let h: number
+        if (twist) {
+          // 远端一侧的骨比近端一侧的骨更近的第一片 / the first slice nearer to the bones of the distal side than to those of the proximal side
+          const proxJ = nodes.slice(0, k + 1).filter((j) => joints[j]!.boneIds.length > 0), distJ = nodes.slice(k + 1).filter((j) => joints[j]!.boneIds.length > 0)
+          const nearer = new Int32Array(PATH_SLICES)
+          if (proxJ.length && distJ.length) {
+            for (let i = 0; i < nU; i++) {
+              const q: V3 = [mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!]
+              const a = Math.min(Infinity, ...field.euclid(q, proxJ).dist), b = Math.min(Infinity, ...field.euclid(q, distJ).dist)
+              if (b < a) nearer[slice[i]!] = nearer[slice[i]!]! + 1
+            }
+          }
+          sb = total
+          for (let q = 0; q < cl.length; q++) {
+            if (nearer[cl[q]!.k]! * 2 < cnt[cl[q]!.k]!) continue
+            sb = q > 0 ? (S[q - 1]! + S[q]!) / 2 : S[0]!
+            break
+          }
+          bestD = 0
+          h = 2 * RAMP_MIN
+        } else {
+          // 中心线离关节中心最近处 / the closest approach of the centreline to the joint centre
+          for (let q = 1; q < line.length; q++) {
+            const A = line[q - 1]!.p, B = line[q]!.p
+            const ex = B[0] - A[0], ey = B[1] - A[1], ez = B[2] - A[2]
+            const l2 = ex * ex + ey * ey + ez * ez
+            let f = l2 > 0 ? ((c[0] - A[0]) * ex + (c[1] - A[1]) * ey + (c[2] - A[2]) * ez) / l2 : 0
+            f = f < 0 ? 0 : f > 1 ? 1 : f
+            const dd = Math.hypot(c[0] - A[0] - f * ex, c[1] - A[1] - f * ey, c[2] - A[2] - f * ez)
+            if (dd < bestD) (bestD = dd), (sb = line[q - 1]!.s + f * (line[q]!.s - line[q - 1]!.s))
+          }
+          h = Math.min(RAMP_MAX, Math.max(RAMP_MIN, PASS_FACTOR * bestD))
+        }
+        // 游离段：近端一侧附着区的末尾到远端一侧附着区的开头 / the free span: from the end of the attachments on the proximal side to the start of those on the distal side
+        const prox = siteS.slice(0, k + 1).flat(), dist2 = siteS.slice(k + 1).flat()
+        let sA = prox.length ? pct(prox, 0.9) : 0
+        const sB = dist2.length ? pct(dist2, 0.1) : total
+        // 过渡带不得早于前一个关节的过渡带 / a transition may not start before that of the joint before it
+        for (const r of ramps) if (Number.isFinite(r.a)) sA = Math.max(sA, r.a)
+        let a = Math.max(sA, sb - h), e = Math.min(sB, sb + h)
+        if (e - a < 0.012) {
+          const m = sB > sA ? Math.min(sB, Math.max(sA, sb)) : (sA + sB) / 2
+          a = m - 0.006
+          e = m + 0.006
+        }
+        ramps.push({ a, e })
+        rep.crossings!.push({ joint: J.def.id, fromMm: Math.round(a * 1000), toMm: Math.round(e * 1000), passMm: Math.round(bestD * 1000) })
+      })
+      // 3. 权重 / the weights
+      const out: Map<number, number>[] = []
+      for (let i = 0; i < nU; i++) {
+        const sv = sOf(u[i]!)
+        const row = new Map<number, number>()
+        let passed = 1
+        for (let k = 0; k < ramps.length; k++) {
+          const r = ramps[k]!
+          let f = Number.isFinite(r.a) ? (sv - r.a) / (r.e - r.a) : 1
+          f = f < 0 ? 0 : f > 1 ? 1 : f
+          const next = Math.min(passed, f * f * (3 - 2 * f))
+          if (passed - next > 1e-4) row.set(nodes[k]!, (row.get(nodes[k]!) ?? 0) + passed - next)
+          passed = next
+        }
+        if (passed > 1e-4) row.set(nodes[nodes.length - 1]!, passed)
+        out.push(row)
+      }
+      return out
+    }
+    const byPath = pathRows()
+    const rows = byPath ?? euclidRows(mesh, beta, list)
+    if (!byPath) for (let i = 0; i < nU; i++) hingeResplit(rows[i]!, mesh.pos[i * 3]!, mesh.pos[i * 3 + 1]!, mesh.pos[i * 3 + 2]!)
+    rep.weights = byPath ? 'path' : 'nearest'
     const locked = new Uint8Array(nU)
     // 锁定附着处：贴在刚性骨上的顶点完全跟随该骨 / lock the attachment sites: vertices on a rigid bone follow it fully
     const lockDist = new Float32Array(nU).fill(Infinity)
     for (const [b, st] of sites) {
       if (!boneJoint.has(b)) continue
-      const d = dist.get(b)!
+      const d = dist.get(b)
+      if (!d) continue
       for (const i of st.verts) {
         if (d[i]! >= lockDist[i]!) continue
         lockDist[i] = d[i]!
@@ -913,29 +1294,6 @@ export function bindAll(ctx: BindContext): BindResult {
     finish(p, 'attach', mesh, dense, raw.positions.length / 3)
 
     if (!isMuscle) return
-    // 肌肉作用线：起点侧与止点侧各取贴附面积最大的那块刚性骨；标签不全时取沿主轴相距最远的两处
-    // line of action: on the origin and on the insertion side the rigid bone with the largest attached patch; with incomplete labels the two sites farthest apart along the principal axis
-    const rigid = [...sites.values()].filter((x) => boneJoint.has(x.bone)).map((x) => ({ ...x, joint: boneJoint.get(x.bone)!, size: Math.max(1, x.verts.length), t: tOf(x.point) }))
-    type RS = (typeof rigid)[number]
-    const largest = (c: RS[]): RS | undefined => [...c].sort((a, b) => b.size - a.size || (a.bone < b.bone ? -1 : 1))[0]
-    const farthest = (c: RS[], from: RS): RS | undefined => [...c].filter((x) => x.joint !== from.joint).sort((a, b) => Math.abs(b.t - from.t) - Math.abs(a.t - from.t) || (a.bone < b.bone ? -1 : 1))[0]
-    let o = largest(rigid.filter((x) => x.kind === 'origin'))
-    let ins = largest(rigid.filter((x) => x.kind === 'insertion' && x.joint !== o?.joint))
-    if (o && !ins) ins = farthest(rigid, o)
-    else if (!o && ins) o = farthest(rigid, ins)
-    else if (!o && !ins) {
-      let best = -1
-      for (const a of rigid) {
-        for (const b of rigid) {
-          if (a.joint === b.joint || Math.abs(a.t - b.t) <= best) continue
-          best = Math.abs(a.t - b.t)
-          o = a
-          ins = b
-        }
-      }
-      // 靠近骨架根部的一端作起点 / the end nearer the root of the skeleton is called the origin
-      if (o && ins && (depth[o.joint]! > depth[ins.joint]! || (depth[o.joint] === depth[ins.joint] && o.bone > ins.bone))) [o, ins] = [ins, o]
-    }
     if (!o || !ins || o.joint === ins.joint) {
       rep.why = 'both ends not established on rigid bones of different joints'
       return

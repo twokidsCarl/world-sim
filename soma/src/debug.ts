@@ -2,6 +2,7 @@
 // window.__soma — a handle for driving and inspecting the app from the browser console.
 
 import type { AnatomyGraph } from './anatomy/graph.ts'
+import { lastSpeechSample, speechTrack } from './face/speech.ts'
 import { applyStimulus, seekStimulus, stimClock } from './pain/stim.ts'
 import { useApp } from './state/store.ts'
 import type { BenchResult, Viewer, ViewerStats } from './viewer/Viewer.ts'
@@ -26,6 +27,8 @@ export interface SomaDebug {
   screenOf(partId: string): { x: number; y: number } | null
   /** 刺激时钟（验证用）：读、拨、施加 / The stimulus clock (verification): read, seek, apply. */
   stim: { clock(): number; seek(seconds: number, freeze?: boolean): void; apply: typeof applyStimulus }
+  /** 由音频带动口形（验证用）：整条轨迹、最近用过的一帧 / Speaking from audio (verification): the whole track and the frame last used. */
+  speech: { track: typeof speechTrack; last: typeof lastSpeechSample }
 }
 
 declare global {
@@ -45,6 +48,7 @@ export const debug: SomaDebug = {
   pick: (x, y) => debug.viewer?.pick(x, y) ?? null,
   screenOf: (id) => debug.viewer?.screenOf(id) ?? null,
   stim: { clock: stimClock, seek: seekStimulus, apply: applyStimulus },
+  speech: { track: speechTrack, last: lastSpeechSample },
 }
 
 window.__soma = debug

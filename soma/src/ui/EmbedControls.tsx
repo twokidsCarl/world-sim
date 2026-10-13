@@ -15,6 +15,7 @@ import { DISCLAIMER } from '../painmodel/index.ts'
 import { replayStimulus } from '../pain/stim.ts'
 import { KINDS, kindSpec } from '../pain/stimulus.ts'
 import { STIM_CAVEATS } from './StimulusPanel.tsx'
+import { EXPRESSION_STATEMENT } from '../face/statements.ts'
 import { PAIN_STATEMENT, VoiceAttribution } from './PainPanel.tsx'
 import { ShapeSlider } from './ShapeControls.tsx'
 
@@ -44,6 +45,10 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const voiceProgress = useApp((s) => s.voiceProgress)
   const skinOpaque = useApp((s) => s.skinOpaque)
   const painCard = embedKeys.has('pain') || embedKeys.has('au')
+  // 表情卡片：情绪或口形 / expression cards: an emotion or a mouth shape
+  const exprCard = embedKeys.has('expr') || embedKeys.has('vis')
+  const expr = useApp((s) => s.expr)
+  const viseme = useApp((s) => s.viseme)
   const shape = useApp((s) => s.shape)
   const shapeCard = embedKeys.has('shape')
   const shapeStatus = useApp((s) => s.shapeStatus)
@@ -57,7 +62,7 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
   const cautions = graph.cautions
   const rigCautions = rig && (embedKeys.has('pose') || embedKeys.has('breath')) ? rig.rig.cautions : []
   // 疼痛卡片：把"这是什么模型"的说明放在最前 / pain cards: the statement of what this model is comes first
-  const all = [...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...cautions, ...rigCautions, ...(painCard && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
+  const all = [...(stimCard ? [DISCLAIMER, ...STIM_CAVEATS, ...(stim ? stim.e.trace.caveats : [])] : []), ...(painCard ? PAIN_STATEMENT : []), ...(exprCard ? EXPRESSION_STATEMENT : []), ...cautions, ...rigCautions, ...((painCard || exprCard) && face ? face.data.cautions : []), ...(shapeCard && shape ? shape.data.cautions : [])]
   // 姿势按钮：静止、卡片指定的预设，再加几个常用的 / pose buttons: rest, the card's preset, and a few common ones
   const presets = useMemo(() => {
     if (!rig) return []
@@ -151,6 +156,50 @@ export function EmbedControls({ graph }: { graph: AnatomyGraph }) {
           </>
         )}
         {painCard && !face && <span className="embed-note">加载表情数据…</span>}
+        {exprCard && face && (
+          <>
+            <select
+              className="tool-btn"
+              value={expr?.id ?? ''}
+              aria-label="情绪表情 / emotion expression"
+              title="情绪表情（动作单元的组合取自 Du 等 2014；强度是假设）/ emotion expression (AU sets from Du et al. 2014; intensities are assumptions)"
+              onChange={(e) => app.setExpr(e.target.value ? { id: e.target.value, strength: expr?.strength || 1 } : null)}
+            >
+              <option value="">无表情 Neutral</option>
+              {(face.data.expressions ?? []).map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name.zh} {x.name.en}
+                </option>
+              ))}
+            </select>
+            {expr && (
+              <label className="embed-slider" title="表情强度 Expression strength (0–1)">
+                <span>强度 {expr.strength.toFixed(2)}</span>
+                <input type="range" min={0} max={1} step={0.05} value={expr.strength} aria-label="表情强度 / expression strength" onChange={(e) => app.setExpr({ id: expr.id, strength: Number(e.target.value) })} />
+              </label>
+            )}
+            <select
+              className="tool-btn"
+              value={viseme ?? ''}
+              aria-label="口形（视位）/ mouth shape (viseme)"
+              title="保持一个口形（方法取自 JALI 2016；数值是假设）/ hold one mouth shape (method from JALI 2016; the numbers are assumptions)"
+              onChange={(e) => app.setViseme(e.target.value || null)}
+            >
+              <option value="">口形：静止 Mouth at rest</option>
+              {(face.data.visemes?.visemes ?? []).map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name.zh} {x.name.en}
+                </option>
+              ))}
+            </select>
+            {!painCard && (
+              <button className="tool-btn" onClick={() => app.setFaceView(skinOpaque ? 'muscle' : 'skin')}>
+                {skinOpaque ? '看肌肉' : '看皮肤'} <span className="en">{skinOpaque ? 'Muscles' : 'Skin'}</span>
+              </button>
+            )}
+          </>
+        )}
+        {exprCard && !painCard && !face && <span className="embed-note">加载表情数据… Loading…</span>}
         {stimCard && (
           <>
             <select

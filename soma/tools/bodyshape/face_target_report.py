@@ -146,7 +146,8 @@ def main():
     rep['lipParts'] = []
     lines.append('\nlip parts against the target skin (the skin lips follow the depth table; these parts must be carried forward with it): median and least cover of the anterior third, mm, and the forward displacement needed')
     for nm, want in (('Lip', 0.5), ('Orbicularis oris', 3.0)):
-        ps = [p for p in fb.deep_parts() if p['name'] == nm or (nm == 'Orbicularis oris' and 'orbicularis oris' in p['name'].lower())]
+        # 唇：一个部件（Lip）或两个（Upper lip、Lower lip）都接受 / the lip: one part (Lip) or two (Upper lip, Lower lip) are both accepted
+        ps = [p for p in fb.deep_parts() if p['name'] == nm or (nm == 'Lip' and p['name'] in ('Upper lip', 'Lower lip')) or (nm == 'Orbicularis oris' and 'orbicularis oris' in p['name'].lower())]
         for p in ps:
             v = fb.mesh(p)[0]
             v = v[v[:, 2] > np.percentile(v[:, 2], 67)]

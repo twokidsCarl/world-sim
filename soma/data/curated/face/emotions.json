@@ -1,0 +1,718 @@
+{
+ "_doc": {
+  "zh": "基本情绪和复合情绪的原型动作单元组合，取自 Du、Tao、Martinez 2014（du2014）的表 1：prototypical 是超过 70% 的受试者都出现的 AU，variants 是只有部分受试者使用的 AU 及其比例。各 AU 的强度（0–5）是本项目的假设（见每条的说明）；强度随时间的变化没有定义。这是表情的计算模型，用于教学；模拟人并没有主观感受。",
+  "en": "Prototype action-unit combinations of basic and compound emotions, from Table 1 of Du, Tao & Martinez 2014 (du2014): `prototypical` lists the AUs present in more than 70% of subjects and `variants` those used by only some, with the proportion. The intensity (0–5) of each AU is this project's assumption (see each entry); no time course is defined. This is a computational model of expression for teaching; the simulated body has no subjective experience."
+ },
+ "emotions": [
+  {
+   "id": "happy",
+   "name": {
+    "zh": "高兴",
+    "en": "happy"
+   },
+   "aus": {
+    "AU12": 5,
+    "AU25": 2.5,
+    "AU6": 3
+   },
+   "prototypical": [
+    "AU12",
+    "AU25"
+   ],
+   "variants": {
+    "AU6": 0.51
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：为了在本模型上读得出来而手调的；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: hand-tuned so that the expression reads on this model; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "sad",
+   "name": {
+    "zh": "悲伤",
+    "en": "sad"
+   },
+   "aus": {
+    "AU4": 3,
+    "AU15": 4,
+    "AU1": 4,
+    "AU17": 2.5,
+    "AU6": 1.5
+   },
+   "prototypical": [
+    "AU4",
+    "AU15"
+   ],
+   "variants": {
+    "AU1": 0.6,
+    "AU6": 0.5,
+    "AU11": 0.26,
+    "AU17": 0.67
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：为了在本模型上读得出来而手调的；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: hand-tuned so that the expression reads on this model; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "fearful",
+   "name": {
+    "zh": "恐惧",
+    "en": "fearful"
+   },
+   "aus": {
+    "AU1": 5,
+    "AU4": 3,
+    "AU20": 3,
+    "AU25": 3,
+    "AU2": 3,
+    "AU5": 5
+   },
+   "prototypical": [
+    "AU1",
+    "AU4",
+    "AU20",
+    "AU25"
+   ],
+   "variants": {
+    "AU2": 0.57,
+    "AU5": 0.63,
+    "AU26": 0.33
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：为了在本模型上读得出来而手调的；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: hand-tuned so that the expression reads on this model; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "angry",
+   "name": {
+    "zh": "愤怒",
+    "en": "angry"
+   },
+   "aus": {
+    "AU4": 5,
+    "AU7": 4,
+    "AU24": 5,
+    "AU17": 3
+   },
+   "prototypical": [
+    "AU4",
+    "AU7",
+    "AU24"
+   ],
+   "variants": {
+    "AU10": 0.26,
+    "AU17": 0.52,
+    "AU23": 0.29
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：为了在本模型上读得出来而手调的；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: hand-tuned so that the expression reads on this model; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "surprised",
+   "name": {
+    "zh": "惊讶",
+    "en": "surprised"
+   },
+   "aus": {
+    "AU1": 5,
+    "AU2": 5,
+    "AU25": 3,
+    "AU26": 4,
+    "AU5": 4
+   },
+   "prototypical": [
+    "AU1",
+    "AU2",
+    "AU25",
+    "AU26"
+   ],
+   "variants": {
+    "AU5": 0.66
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：为了在本模型上读得出来而手调的；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: hand-tuned so that the expression reads on this model; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "disgusted",
+   "name": {
+    "zh": "厌恶",
+    "en": "disgusted"
+   },
+   "aus": {
+    "AU9": 5,
+    "AU10": 4,
+    "AU17": 3
+   },
+   "prototypical": [
+    "AU9",
+    "AU10",
+    "AU17"
+   ],
+   "variants": {
+    "AU4": 0.31,
+    "AU24": 0.26
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：为了在本模型上读得出来而手调的；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: hand-tuned so that the expression reads on this model; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "happily_surprised",
+   "name": {
+    "zh": "惊喜",
+    "en": "happily surprised"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU2": 4,
+    "AU12": 4,
+    "AU25": 3,
+    "AU5": 2.4,
+    "AU26": 1.8
+   },
+   "prototypical": [
+    "AU1",
+    "AU2",
+    "AU12",
+    "AU25"
+   ],
+   "variants": {
+    "AU5": 0.64,
+    "AU26": 0.67
+   },
+   "compoundOf": [
+    "happy",
+    "surprised"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "happily_disgusted",
+   "name": {
+    "zh": "又喜又厌",
+    "en": "happily disgusted"
+   },
+   "aus": {
+    "AU10": 4,
+    "AU12": 4,
+    "AU25": 3,
+    "AU6": 1.8,
+    "AU9": 2.4
+   },
+   "prototypical": [
+    "AU10",
+    "AU12",
+    "AU25"
+   ],
+   "variants": {
+    "AU4": 0.32,
+    "AU6": 0.61,
+    "AU9": 0.59
+   },
+   "compoundOf": [
+    "happy",
+    "disgusted"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "sadly_fearful",
+   "name": {
+    "zh": "悲惧",
+    "en": "sadly fearful"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU4": 4,
+    "AU20": 3,
+    "AU25": 3
+   },
+   "prototypical": [
+    "AU1",
+    "AU4",
+    "AU20",
+    "AU25"
+   ],
+   "variants": {
+    "AU2": 0.46,
+    "AU5": 0.24,
+    "AU6": 0.34,
+    "AU15": 0.3
+   },
+   "compoundOf": [
+    "sad",
+    "fearful"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "sadly_angry",
+   "name": {
+    "zh": "悲愤",
+    "en": "sadly angry"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU15": 4,
+    "AU17": 1.8
+   },
+   "prototypical": [
+    "AU4",
+    "AU15"
+   ],
+   "variants": {
+    "AU6": 0.26,
+    "AU7": 0.48,
+    "AU11": 0.2,
+    "AU17": 0.5
+   },
+   "compoundOf": [
+    "sad",
+    "angry"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "sadly_surprised",
+   "name": {
+    "zh": "悲惊",
+    "en": "sadly surprised"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU4": 4,
+    "AU25": 3,
+    "AU26": 3
+   },
+   "prototypical": [
+    "AU1",
+    "AU4",
+    "AU25",
+    "AU26"
+   ],
+   "variants": {
+    "AU2": 0.27,
+    "AU6": 0.31
+   },
+   "compoundOf": [
+    "sad",
+    "surprised"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "sadly_disgusted",
+   "name": {
+    "zh": "悲厌",
+    "en": "sadly disgusted"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU10": 4,
+    "AU6": 1.8,
+    "AU15": 2.4
+   },
+   "prototypical": [
+    "AU4",
+    "AU10"
+   ],
+   "variants": {
+    "AU1": 0.49,
+    "AU6": 0.61,
+    "AU9": 0.2,
+    "AU11": 0.35,
+    "AU15": 0.54,
+    "AU17": 0.47,
+    "AU25": 0.43
+   },
+   "compoundOf": [
+    "sad",
+    "disgusted"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "fearfully_angry",
+   "name": {
+    "zh": "惧怒",
+    "en": "fearfully angry"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU20": 3,
+    "AU25": 3
+   },
+   "prototypical": [
+    "AU4",
+    "AU20",
+    "AU25"
+   ],
+   "variants": {
+    "AU5": 0.4,
+    "AU7": 0.39,
+    "AU10": 0.3,
+    "AU11": 0.33
+   },
+   "compoundOf": [
+    "fearful",
+    "angry"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "fearfully_surprised",
+   "name": {
+    "zh": "惊恐",
+    "en": "fearfully surprised"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU2": 4,
+    "AU5": 4,
+    "AU20": 3,
+    "AU25": 3,
+    "AU26": 1.8
+   },
+   "prototypical": [
+    "AU1",
+    "AU2",
+    "AU5",
+    "AU20",
+    "AU25"
+   ],
+   "variants": {
+    "AU4": 0.47,
+    "AU10": 0.35,
+    "AU11": 0.22,
+    "AU26": 0.51
+   },
+   "compoundOf": [
+    "fearful",
+    "surprised"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "fearfully_disgusted",
+   "name": {
+    "zh": "惧厌",
+    "en": "fearfully disgusted"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU4": 4,
+    "AU10": 4,
+    "AU20": 3,
+    "AU25": 3,
+    "AU2": 2.4,
+    "AU5": 2.4
+   },
+   "prototypical": [
+    "AU1",
+    "AU4",
+    "AU10",
+    "AU20",
+    "AU25"
+   ],
+   "variants": {
+    "AU2": 0.64,
+    "AU5": 0.5,
+    "AU6": 0.26,
+    "AU9": 0.28,
+    "AU15": 0.33
+   },
+   "compoundOf": [
+    "fearful",
+    "disgusted"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "angrily_surprised",
+   "name": {
+    "zh": "惊怒",
+    "en": "angrily surprised"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU25": 3,
+    "AU26": 3,
+    "AU7": 1.8
+   },
+   "prototypical": [
+    "AU4",
+    "AU25",
+    "AU26"
+   ],
+   "variants": {
+    "AU5": 0.35,
+    "AU7": 0.5,
+    "AU10": 0.34
+   },
+   "compoundOf": [
+    "angry",
+    "surprised"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "angrily_disgusted",
+   "name": {
+    "zh": "怒厌",
+    "en": "angrily disgusted"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU10": 4,
+    "AU17": 3,
+    "AU7": 1.8,
+    "AU9": 2.4
+   },
+   "prototypical": [
+    "AU4",
+    "AU10",
+    "AU17"
+   ],
+   "variants": {
+    "AU7": 0.6,
+    "AU9": 0.57,
+    "AU24": 0.36
+   },
+   "compoundOf": [
+    "angry",
+    "disgusted"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "disgustedly_surprised",
+   "name": {
+    "zh": "厌惊",
+    "en": "disgustedly surprised"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU2": 4,
+    "AU5": 4,
+    "AU10": 4,
+    "AU17": 1.8
+   },
+   "prototypical": [
+    "AU1",
+    "AU2",
+    "AU5",
+    "AU10"
+   ],
+   "variants": {
+    "AU4": 0.45,
+    "AU9": 0.37,
+    "AU17": 0.66,
+    "AU24": 0.33
+   },
+   "compoundOf": [
+    "disgusted",
+    "surprised"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "appalled",
+   "name": {
+    "zh": "惊骇",
+    "en": "appalled"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU10": 4,
+    "AU9": 2.4,
+    "AU17": 1.8
+   },
+   "prototypical": [
+    "AU4",
+    "AU10"
+   ],
+   "variants": {
+    "AU6": 0.25,
+    "AU9": 0.56,
+    "AU17": 0.67,
+    "AU24": 0.36
+   },
+   "compoundOf": [
+    "angry",
+    "disgusted"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。原文说它是“愤怒地厌恶”的一种变体。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). The paper calls it a variation of angrily disgusted. Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "hatred",
+   "name": {
+    "zh": "憎恨",
+    "en": "hatred"
+   },
+   "aus": {
+    "AU4": 4,
+    "AU10": 4,
+    "AU7": 1.8,
+    "AU17": 1.8
+   },
+   "prototypical": [
+    "AU4",
+    "AU10"
+   ],
+   "variants": {
+    "AU7": 0.57,
+    "AU9": 0.27,
+    "AU17": 0.63,
+    "AU24": 0.37
+   },
+   "compoundOf": [
+    "angry",
+    "disgusted"
+   ],
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。原文说它是“愤怒地厌恶”的一种变体。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). The paper calls it a variation of angrily disgusted. Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  },
+  {
+   "id": "awed",
+   "name": {
+    "zh": "敬畏",
+    "en": "awed"
+   },
+   "aus": {
+    "AU1": 4,
+    "AU2": 4,
+    "AU5": 4,
+    "AU25": 3,
+    "AU20": 1.8,
+    "AU26": 1.8
+   },
+   "prototypical": [
+    "AU1",
+    "AU2",
+    "AU5",
+    "AU25"
+   ],
+   "variants": {
+    "AU4": 0.21,
+    "AU20": 0.62,
+    "AU26": 0.56
+   },
+   "basis": {
+    "source": "du2014",
+    "note": {
+     "zh": "AU 组合和各变体 AU 的受试者比例取自 du2014 表 1（已打开核对）。强度（0–5）是本项目的假设：始终出现的 AU 取各 AU 的默认强度，比例不低于 50% 的变体 AU 取默认强度的 0.6 倍，其余变体 AU 不用；原文只给出用哪些 AU，没有强度。",
+     "en": "The AU set and the proportion of subjects for each variant AU are Table 1 of du2014 (opened and checked). Intensities (0–5) are this project's assumption: consistently active AUs take a per-AU default, variant AUs used by at least 50% take 0.6 of the default, and the other variant AUs are left out; the paper states which AUs are used, not how strongly."
+    }
+   }
+  }
+ ]
+}

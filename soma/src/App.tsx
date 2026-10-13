@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { Suspense, lazy, useEffect, useRef } from 'react'
 import { AnatomyGraph } from './anatomy/graph.ts'
 import { loadDataset, requestedDataset } from './anatomy/load.ts'
 import { debug } from './debug.ts'
@@ -16,6 +16,11 @@ import { TopBar } from './ui/TopBar.tsx'
 import { TreePanel } from './ui/TreePanel.tsx'
 import { ViewerPane } from './ui/ViewerPane.tsx'
 
+// 标定对照表有近 1 MB，单独成块，打开对话框时才取 / the calibration tables are close to 1 MB: a chunk of their own, fetched when the dialog opens
+const CalibrationDialog = lazy(() => import('./ui/CalibrationDialog.tsx'))
+// 表情面板也按需加载：打开那个页签时才取 / the Expression panel is loaded on demand too: fetched when its tab is opened
+const ExpressionPanel = lazy(() => import('./ui/ExpressionPanel.tsx').then((m) => ({ default: m.ExpressionPanel })))
+
 export function App() {
   const graph = useApp((s) => s.graph)
   const phase = useApp((s) => s.load.phase)
@@ -30,6 +35,7 @@ export function App() {
   const requestedBody = useApp((s) => s.requestedBody)
 
   const embed = useApp((s) => s.embed)
+  const calibrationOpen = useApp((s) => s.calibrationOpen)
 
   // 第一个人体和初始状态由 URL 指定；之后状态的变化写回地址栏
   // the URL names the first body and the initial state; later changes are written back to the address bar
@@ -84,7 +90,8 @@ export function App() {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return
       const app = useApp.getState()
       if (e.key === 'Escape') {
-        if (app.cautionsOpen) app.dismissCautions()
+        if (app.calibrationOpen) app.setCalibrationOpen(false)
+        else if (app.cautionsOpen) app.dismissCautions()
         else if (app.aboutOpen) app.setAboutOpen(false)
         else app.clearSelection()
       } else if (e.key === 'f' || e.key === 'F') app.requestFocus()
@@ -131,11 +138,27 @@ export function App() {
             <button role="tab" aria-selected={leftTab === 'pain'} className={leftTab === 'pain' ? 'active' : ''} onClick={() => setLeftTab('pain')}>
               疼痛 <span className="en">Pain</span>
             </button>
+            <button role="tab" aria-selected={leftTab === 'expr'} className={leftTab === 'expr' ? 'active' : ''} onClick={() => setLeftTab('expr')}>
+              表情 <span className="en">Expression</span>
+            </button>
             <button className="drawer-close" onClick={() => setLeftOpen(false)} aria-label="关闭">
               <Icon name="close" />
             </button>
           </div>
-          {graph && (leftTab === 'display' ? <DisplayPanel graph={graph} /> : leftTab === 'pose' ? <PosePanel graph={graph} /> : leftTab === 'pain' ? <PainPanel graph={graph} /> : <TreePanel graph={graph} />)}
+          {graph &&
+            (leftTab === 'display' ? (
+              <DisplayPanel graph={graph} />
+            ) : leftTab === 'pose' ? (
+              <PosePanel graph={graph} />
+            ) : leftTab === 'pain' ? (
+              <PainPanel graph={graph} />
+            ) : leftTab === 'expr' ? (
+              <Suspense fallback={<div className="panel-body scroll" />}>
+                <ExpressionPanel graph={graph} />
+              </Suspense>
+            ) : (
+              <TreePanel graph={graph} />
+            ))}
         </aside>
 
         <main className="stage">
@@ -167,6 +190,11 @@ export function App() {
       </div>
       <AboutDialog />
       <CautionsDialog />
+      {calibrationOpen && (
+        <Suspense fallback={null}>
+          <CalibrationDialog />
+        </Suspense>
+      )}
     </div>
   )
 }

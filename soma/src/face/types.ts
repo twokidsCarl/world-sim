@@ -68,6 +68,16 @@ export type FaceChannelKind =
    * equal jaw opening / jaw.max (the weights in AU26 and AU27 are set that way); not a muscle, `parts` is empty.
    */
   | 'corner'
+  /**
+   * 唇的几何通道（只作用于有真实口裂的皮肤，深层的唇跟随）：直接规定唇缘怎样走——闭合（lip_seal）、贴上切牙（lip_dental）、
+   * 前突、内卷、压扁、上唇下移。不是按肌肉作用线算的；parts 是口轮匝肌，仅供显示。
+   * A geometric lip channel (on a skin with a real oral fissure; the deep lips follow): it prescribes how the lip margin travels —
+   * seal (lip_seal), to the upper incisors (lip_dental), protrusion, roll-in, press, upper lip down. Not derived from a line of
+   * action; `parts` is orbicularis oris, for display only.
+   */
+  | 'lip'
+  /** 舌的示意姿势：只有舌这一个部件上有位移场。 A schematic tongue pose: a displacement field on the tongue part only. */
+  | 'tongue'
 
 /** 一个通道在一个部件上的稀疏位移场。 The sparse displacement field of one channel on one part. */
 export interface FaceField {
@@ -107,6 +117,13 @@ export interface FaceChannel {
   /** 激活为 1 时的最大位移（含沿法线的厚度变化），米 / largest displacement at activation 1 (thickness change along the normal included), metres. */
   excursion: number
   fields: FaceField[]
+  /**
+   * 只有 lip_seal 和 lip_dental 有：求解该通道时的下颌张开角（弧度）。下颌角为 refJaw 时激活 1 正好到位；
+   * 其他角度见 tools/face/model.ts 的 mouthChannels。
+   * Only on lip_seal and lip_dental: the jaw opening (radians) at which the channel was solved. At a jaw angle of refJaw an
+   * activation of 1 lands exactly; for other angles see mouthChannels in tools/face/model.ts.
+   */
+  refJaw?: number
 }
 
 /** 一个 FACS 动作单元：若干通道的加权组合。 One FACS action unit: a weighted combination of channels. */
@@ -121,6 +138,82 @@ export interface FaceAU {
   /** FACS 所述肌肉基础中模型里没有的部分 / parts of the FACS muscular basis that the model lacks. */
   missing?: string[]
   basis: Sourced
+}
+
+/** 一种表情的原型：各 AU 在全强度时的强度（0–5）。 The prototype of one expression: AU intensities (0–5) at full strength. */
+export interface FaceExpression {
+  id: string
+  name: Bilingual
+  aus: Record<string, number>
+  /** 原型里有、但本模型没有实现的 AU / AUs of the prototype that this model does not implement. */
+  missing?: string[]
+  /** 出处表里“始终出现”的 AU（超过 70% 的受试者）/ the AUs the source lists as consistently active (over 70% of subjects). */
+  prototypical?: string[]
+  /** 只有部分受试者使用的 AU 及其比例（0–1）/ AUs used by only some subjects, with the proportion (0–1). */
+  variants?: Record<string, number>
+  /** 复合情绪由哪两个基本情绪组成 / the two basic categories a compound emotion is made of. */
+  compoundOf?: string[]
+  basis: Sourced
+}
+
+/** 舌的姿势权重（0–1），对应通道 tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low。 Tongue pose weights (0–1) for the channels tongue_tip_up / tongue_front_up / tongue_back_up / tongue_low. */
+export interface TonguePose {
+  tip: number
+  front: number
+  back: number
+  low: number
+}
+
+/** 构音类别，供协同发音规则使用（JALI 附录 A 的分类）。 Articulation classes used by the co-articulation rules (the classes of JALI's appendix A). */
+export type VisemeClass = 'bilabial' | 'labiodental' | 'sibilant' | 'obstruent' | 'nasal' | 'tongueOnly' | 'lipHeavy' | 'vowel' | 'pause'
+
+/**
+ * 一个视位（说话时的一个口形）。按 JALI 的分解：face = 静止 + JA ·（下颌 + 舌）+ LI · 唇的动作单元；
+ * closure / dental 是必须满足的构音约束，不随 JA、LI 缩放。
+ * One viseme (a mouth shape of speech). Decomposed as in JALI: face = rest + JA · (jaw + tongue) + LI · lip action units;
+ * closure / dental are articulatory constraints that must be met and are not scaled by JA or LI.
+ */
+export interface FaceViseme {
+  id: string
+  name: Bilingual
+  /** 归入这个视位的音（ARPAbet 风格的记号）/ the sounds mapped to this viseme (ARPAbet-style symbols). */
+  phonemes: string[]
+  classes: VisemeClass[]
+  /** 下颌张开角占 jaw.max 的比例 / jaw opening as a fraction of jaw.max. */
+  jaw: number
+  /** 唇的动作单元强度（0–5）/ lip action unit intensities (0–5). */
+  aus: Record<string, number>
+  /** 双唇闭合 0–1（通道 lip_seal）/ bilabial closure 0–1 (channel lip_seal). */
+  closure: number
+  /** 下唇贴上切牙 0–1（通道 lip_dental）/ lower lip to the upper incisors 0–1 (channel lip_dental). */
+  dental: number
+  tongue: TonguePose
+  basis: Sourced
+}
+
+/** 视位表和协同发音的时间参数。 The viseme table and the timing of co-articulation. */
+export interface FaceVisemes {
+  /** 起始 / 消退时间（秒）；lipHeavy 的视位用后两个 / onset and offset (seconds); lip-heavy visemes use the second pair. */
+  timing: { onset: number; offset: number; lipHeavyOnset: number; lipHeavyOffset: number; shortSeconds: number; basis: Sourced }
+  /** 由原始声学特征驱动时的参数（见 mouthFrameToChannels）/ parameters of the raw-feature route (see mouthFrameToChannels). */
+  features: { openJaw: number; roundViseme: string; spreadViseme: string; sibilantViseme: string; closureThreshold: number; confidenceRef: number; smoothSeconds: number; levelFloor: number; basis: Sourced }
+  visemes: FaceViseme[]
+}
+
+/**
+ * 原始声学特征的一帧，与 src/voice/mouth.ts 的 MouthFrame 结构相容（那边多出的字段在这里是可选的）。
+ * One frame of raw audio features, structurally compatible with MouthFrame of src/voice/mouth.ts (its extra fields are optional here).
+ */
+export interface MouthFeatureFrame {
+  t: number
+  open: number
+  round: number
+  closure: number
+  dental: number
+  tongue: { low: number; front: number; back: number; tip: number }
+  voiced: boolean
+  level: number
+  confidence?: { open: number; round: number; closure: number; dental: number; tongue: number }
 }
 
 export interface PainKeyframe {
@@ -159,6 +252,10 @@ export interface FaceData {
   parts: { part: string; vertexCount: number; /** 该部件上所有通道的非零项总数 / non-zero entries over all channels. */ entries: number }[]
   channels: FaceChannel[]
   aus: FaceAU[]
+  /** 表情原型（基本情绪）；用 tools/face/model.ts 的 expressionAUs 取某一强度下的 AU / expression prototypes (basic emotions); expressionAUs in tools/face/model.ts gives the AUs at a strength. */
+  expressions?: FaceExpression[]
+  /** 说话的视位表；用 tools/face/model.ts 的 visemeAUs / coarticulate / mouthFrameToChannels / visemes for speech; see visemeAUs, coarticulate and mouthFrameToChannels in tools/face/model.ts. */
+  visemes?: FaceVisemes
   pain: PainModel
   jaw: { joint: string; dof: number; /** 弧度 / radians */ max: number; /** 闭口肌与开口肌的部件，仅供显示 / closers and openers, for display only. */ closers: string[]; openers: string[] }
   /** 单个通道位移的上界，以及所有通道同时全激活时位移之和的上界，米 / bound of one channel's displacement, and of the sum with every channel fully active, metres. */

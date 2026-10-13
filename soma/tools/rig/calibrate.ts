@@ -7,14 +7,18 @@
 // 后体积几乎不变，再修正反而出错。这里对每条作用线摆几个探测姿势，拟合
 //     ln(V / V0) ≈ gain · ln(L / L0)
 // 把 gain 写进 MuscleLine（提议的扩展字段），运行时把横截面缩放 (L0 / L)^(gain / 2)。
-// gain 接近 0 的作用线不起作用，直接去掉。
+// gain 接近 0 的作用线对体积不起作用，但仍然保留（gain 写成 0）：它记录了肌–腱单位的起止点和长度，
+// 肌腹网格自己不跨关节的肌肉（比目鱼肌经跟腱止于跟骨）只有靠它才量得出长度变化。只有探测姿势下长度根本不变的作用线才去掉。
 // The contract's correction assumes volume ∝ line length and scales the cross-section by
 // sqrt(L0 / L). That holds only for a muscle that follows one bone at each end and is stretched
 // evenly in between; a muscle lying along one bone and deforming only where it crosses a joint
 // (quadriceps, triceps …) keeps its volume under skinning, and correcting it does harm. For every
 // line a few probe poses are set and ln(V / V0) ≈ gain · ln(L / L0) is fitted; `gain` is written
 // into the MuscleLine (a proposed extension field) and the runtime scales the cross-section by
-// (L0 / L)^(gain / 2). Lines whose gain is near zero do nothing and are dropped.
+// (L0 / L)^(gain / 2). A line whose gain is near zero does nothing to the volume but is kept, with gain 0:
+// it records the ends and the length of the muscle–tendon unit, and for a muscle whose belly mesh does
+// not itself cross the joint (soleus, inserting through the calcaneal tendon) it is the only thing the
+// length change can be read from. Only lines whose length does not change in any probe pose are dropped.
 
 import type { Joint, Rig } from '../../src/anatomy/types.ts'
 import { meshVolume } from './geom.ts'
@@ -75,8 +79,9 @@ export function calibrateMuscles(rig: Rig, bin: Uint8Array, body: Body): Calibra
       gain = Math.min(1.25, Math.max(0, sxy / sxx))
     }
     const rms = (g: number): number => (xs.length ? 100 * Math.sqrt(xs.reduce((s, x, i) => s + (Math.exp(ys[i]! - g * x) - 1) ** 2, 0) / xs.length) : 0)
-    const keep = xs.length >= 2 && gain >= 0.2
-    gain = Math.round(gain * 100) / 100
+    const keep = xs.length >= 2
+    // 小于 0.2 的 gain 与噪声分不开：写成 0，运行时不修正 / a gain below 0.2 cannot be told from noise: written as 0, no correction at run time
+    gain = gain >= 0.2 ? Math.round(gain * 100) / 100 : 0
     out.push({ part: line.part, gain, probes: xs.length, rmsAfterPct: Math.round(rms(gain) * 10) / 10, rmsBeforePct: Math.round(rms(0) * 10) / 10, kept: keep })
     if (keep) kept.push({ ...line, gain })
   }

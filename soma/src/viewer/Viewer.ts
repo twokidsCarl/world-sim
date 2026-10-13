@@ -72,8 +72,8 @@ import {
   type Scales,
 } from '../anatomy/rig.ts'
 import { clampPose, mergePoses } from '../../tools/rig/pose.ts'
-import { painFrame, setPainPaused } from '../pain/controller.ts'
-import { activations, displacePart, sameAUs, type AUs, type LoadedFace } from '../pain/face.ts'
+import { faceFrame, setFacePaused } from '../face/driver.ts'
+import { displacePart, sameAUs, type AUs, type Activations, type LoadedFace } from '../pain/face.ts'
 import { Shaper } from '../../tools/rig/shape.ts'
 import { shapeIsDefault, type LoadedShape, type ShapeControls } from '../anatomy/shape.ts'
 import { SkinLayer, type SkinGeometry } from './skinLayer.ts'
@@ -287,6 +287,8 @@ export class Viewer {
   private mainSkin: string | null = null
   /** 个别部件自己的不透明度（角膜、前房），见 labels.ts 的 PART_LOOK / A few parts' own opacity (cornea, anterior chamber); see PART_LOOK in labels.ts. */
   private lookOpacity: (number | undefined)[] = []
+  /** 眉毛部件：皮肤画成不透明时它们也画成不透明 / The eyebrow parts: drawn opaque whenever the skin is. */
+  private brows: ReadonlySet<string> = new Set()
   /** 已加载的各系统 GLB 的字节哈希（文件名 → sha256 前 16 位）/ Byte hashes of the system GLBs loaded so far (file name → first 16 hex of sha256). */
   private glbHashes = new Map<string, string>()
   /** 贴在皮肤本体上、跟着它变形的覆盖网格（皱纹细节、疼痛分布）/ Overlay meshes on the skin proper that deform with it (wrinkle detail, pain map). */
@@ -335,6 +337,8 @@ export class Viewer {
   private boxOverride = new Map<number, [number, number, number, number, number, number]>()
   private faceDisplaced = new Set<number>()
   private faceAUs: AUs = {}
+  /** 已应用到顶点上的通道激活 / The channel activations applied to the vertices. */
+  private faceChannels: Activations = {}
   private faceJaw = 0
   private faceForce = false
   private poseDirty = false
@@ -581,7 +585,7 @@ export class Viewer {
     else this.pauseReasons.delete(reason)
     const now = this.pauseReasons.size > 0
     if (was === now || this.disposed) return
-    if (this.source === useApp.getState) setPainPaused(now)
+    if (this.source === useApp.getState) setFacePaused(now)
     if (now) {
       cancelAnimationFrame(this.raf)
       this.pausedAt = performance.now()
@@ -647,6 +651,7 @@ export class Viewer {
   private allocate(): void {
     this.mainSkin = this.graph.mainSkinId()
     this.lookOpacity = this.graph.parts.map((p) => partLook(p.name)?.opacity)
+    this.brows = new Set(this.graph.parts.filter((p) => p.system === 'integumentary' && /eyebrow/i.test(p.name)).map((p) => p.id))
     const n = this.graph.parts.length
     this.inst = new Int32Array(n).fill(-1)
     this.bvh = new Array<MeshBVH | null>(n).fill(null)
@@ -706,6 +711,7 @@ export class Viewer {
     this.boxOverride = new Map()
     this.faceDisplaced = new Set()
     this.faceAUs = {}
+    this.faceChannels = {}
     this.faceJaw = 0
   }
 
@@ -1945,14 +1951,17 @@ export class Viewer {
       this.faceDisplaced.clear()
       this.appliedFace = s.face
       this.faceAUs = {}
+      this.faceChannels = {}
       this.faceJaw = 0
       this.faceForce = true
     }
     if (this.stepShape(s)) this.faceForce = true
     const face = this.appliedFace
     if (!batches) return false
-    const frame = face ? painFrame(t) : { aus: {}, animating: false, airflow: 0 }
-    const act = face ? activations(face.data, frame.aus) : { channels: {}, jaw: 0 }
+    // 疼痛、情绪、说话合成后的通道激活和下颌角（src/face/driver.ts）；对照窗格用它自己那副身体的数据
+    // channel activations and jaw angle with pain, emotion and speech composed (src/face/driver.ts); a compare pane uses its own body's data
+    const frame = faceFrame(t, face?.data ?? null)
+    const act = { channels: { ...frame.channels }, jaw: frame.jaw }
     // 口角通道（皮肤有真实口裂时才有）：激活 = 下颌张开角 ÷ 最大角，不管下颌是怎么张开的
     // （表情、发声、姿势面板、反射）；否则只靠关节张口时口裂两端是竖直的，嘴成了方的。
     // the mouth-corner channel (present when the skin has a real oral fissure): activation = jaw opening ÷ its
@@ -1970,10 +1979,21 @@ export class Viewer {
     // 否则顶点留着亚微米的位移、姿势模式也回不到静止
     // "near enough" must not swallow the last step: when the expression has fully relaxed but a trace is
     // still applied, it has to go to exactly zero, or sub-micron displacements linger and the posed mode never ends
-    const settled = Object.keys(frame.aus).length > 0 || Object.keys(this.faceAUs).length === 0
-    if (!this.faceForce && this.restDirty.size === 0 && settled && sameAUs(frame.aus, this.faceAUs) && Math.abs(cornerNow - this.cornerApplied) < 1e-3) return frame.animating
+    const settled = (Object.keys(act.channels).length > 0 || Object.keys(this.faceChannels).length === 0) && (act.jaw > 0 || this.faceJaw === 0)
+    // 通道激活 0–1：差 4e-4 相当于 AU 强度差 2e-3 / channel activations are 0–1: 4e-4 there is what 2e-3 is on an AU intensity
+    if (!this.faceForce && this.restDirty.size === 0 && settled && sameAUs(act.channels, this.faceChannels, 4e-4) && Math.abs(act.jaw - this.faceJaw) < 1e-4 && Math.abs(cornerNow - this.cornerApplied) < 1e-3) {
+      // 通道已经封顶而 AU 还在走（例如强度超过通道饱和点）：皱纹层的权重仍要跟上
+      // channels can be saturated while the AUs still move (an intensity beyond a channel's ceiling): the wrinkle weights still follow
+      if (!sameAUs(frame.aus, this.faceAUs, 1e-4)) {
+        this.faceAUs = frame.aus
+        this.updateDetail()
+        this.dirty = true
+      }
+      return frame.animating
+    }
     this.faceForce = false
     this.faceAUs = frame.aus
+    this.faceChannels = act.channels
     const todo = new Set(this.restDirty)
     this.restDirty.clear()
     const part0 = this.followers.length ? this.mainSkinIndex() : -1
@@ -2042,8 +2062,8 @@ export class Viewer {
   }
 
   /** 当前应用的 AU 强度与下颌角（验证用）/ The AU intensities and jaw angle currently applied (verification). */
-  faceState(): { aus: AUs; jaw: number; parts: number; loaded: boolean } {
-    return { aus: this.faceAUs, jaw: this.faceJaw, parts: this.faceDisplaced.size, loaded: !!this.appliedFace }
+  faceState(): { aus: AUs; channels: Activations; jaw: number; parts: number; loaded: boolean } {
+    return { aus: this.faceAUs, channels: this.faceChannels, jaw: this.faceJaw, parts: this.faceDisplaced.size, loaded: !!this.appliedFace }
   }
 
   private updateGizmo(): void {
@@ -2181,6 +2201,9 @@ export class Viewer {
     if (s.colorMode === 'source' && TISSUE_OPACITY[part.tissue] !== undefined) opacity = Math.min(1, opacity * 1.6)
     // 看表情时把皮肤画成不透明 / the skin is drawn opaque to read the expression
     if (s.skinOpaque && part.id === this.mainSkin) opacity = 1
+    // 眉毛跟着皮肤：它只比皮肤高出零点几毫米，按皮肤组织的默认透明度（0.14）画在不透明的皮肤上就几乎看不见
+    // the eyebrows follow the skin: they stand only a fraction of a millimetre proud of it, and at the skin tissue's default opacity (0.14) over an opaque skin they all but vanish
+    if (s.skinOpaque && this.brows.has(part.id)) opacity = 1
     // 冲动沿神经传上去的那一小段时间里，皮肤让开 / while the volley travels up the nerve, the skin steps aside
     if (this.stimSee && part.id === this.mainSkin) opacity = Math.min(opacity, 0.22)
     const inPath = this.stimParts.has(part.id)

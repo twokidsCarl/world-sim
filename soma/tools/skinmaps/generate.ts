@@ -65,6 +65,17 @@ export async function loadContext(bodyId: BodyId): Promise<Context> {
   }
   const skin = buildSkin(raw, midX, tags)
   const lm = new Landmarks(body, bones, skin, readJson<LandmarkFile>(join(CURATED, 'landmarks.json')))
+  // 脐的位置：皮肤作者在皮肤包的清单里写下了脐心，几何管线把它抄进了 pipeline-report.json（随数据发布）。
+  // 这里只读发布的那一份，不读 data/raw（快照里没有）。没有记录的人体（男性的脐是扫描来的，报告里只有名目）由几何检测得到。
+  // The navel: the skin's author recorded its centre in the skin package manifest and the geometry
+  // pipeline copied it into pipeline-report.json, which is shipped. Only that shipped copy is read
+  // here, never data/raw (absent from a snapshot). A body without a record (the male's navel is
+  // scanned and his report only names it) gets its umbilicus from geometric detection.
+  const reportPath = join(dir, 'pipeline-report.json')
+  if (existsSync(reportPath)) {
+    const c = readJson<{ skinPackage?: { constructedDetails?: { navel?: { centreOnFinalSkin?: unknown } } } }>(reportPath).skinPackage?.constructedDetails?.navel?.centreOnFinalSkin
+    if (Array.isArray(c) && c.length === 3 && c.every((v) => typeof v === 'number' && Number.isFinite(v))) lm.recorded.navel = [c[0], c[1], c[2]]
+  }
   return { body, skinPart: part.id, skin, skinHash: meshHash(raw), lm, dermatomeDef: readJson(join(CURATED, 'dermatomes.json')), cutaneousDef: readJson(join(CURATED, 'cutaneous.json')) }
 }
 
@@ -121,6 +132,9 @@ export function makeReport(ctx: Context, dermLabels: Uint8Array, cutLabels: Uint
         umbilicus: y('umbilicusAtMcl', side), T10: y('K_T10', side),
         literalXiphisternumIn: dd.regions[dermLabels[lm.vertex('xiphisternumAtMcl', side)]!]?.key,
         literalUmbilicusIn: dd.regions[dermLabels[lm.vertex('umbilicusAtMcl', side)]!]?.key,
+        // 脐本身（正中线旁）的位置，以及它是记录的、检测的还是退路 / The umbilicus itself (beside the midline), and whether it was recorded, detected or the fallback.
+        umbilicusAt: lm.point('umbilicus', side).map(round),
+        umbilicusFrom: lm.umbilicusFrom,
       })),
     },
     cutaneous: {

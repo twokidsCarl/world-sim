@@ -64617,7 +64617,7 @@
   ],
   "provenance": {
    "scannedBefore": 2220,
-   "scannedAfter": 2069,
+   "scannedAfter": 2044,
    "relabelledToWarped": 147,
    "relabelledByTissue": {
     "muscle": 56,
@@ -70089,6 +70089,2044 @@
    "relabelledIds": []
   }
  },
+ "lipSplit": {
+  "applied": true,
+  "parts": [
+   {
+    "id": "FJ2814",
+    "split": true,
+    "retiredId": "FJ2814",
+    "retiredFma": "FMA59816",
+    "retiredName": "Lip",
+    "parts": [
+     {
+      "id": "FJ2814_upper",
+      "name": "Upper lip",
+      "fma": "FMA59817",
+      "isaParent": "FMA59816",
+      "inPartOfTree": false,
+      "provenance": "scanned"
+     },
+     {
+      "id": "FJ2814_lower",
+      "name": "Lower lip",
+      "fma": "FMA59818",
+      "isaParent": "FMA59816",
+      "inPartOfTree": false,
+      "provenance": "scanned"
+     }
+    ],
+    "provenanceNote": "the surface is the scanned surface of FJ2814, unchanged; it was cut along its own oral fissure and the two cut faces were capped with constructed triangles (0.28 cm² each), so each half is a closed mesh. The provenance stays \"scanned\".",
+    "fissure": {
+     "a": 1.457191106163741,
+     "b": 0.003477243584628449,
+     "c": -0.03753840798767769,
+     "columns": 26,
+     "grooves": 21,
+     "corners": 5,
+     "grooveDepthMm": {
+      "median": 0.651,
+      "max": 1.751
+     },
+     "residualMm": {
+      "rms": 0.416,
+      "max": 1.734
+     },
+     "yAtMidlineM": 1.45719,
+     "yAtCornersM": [
+      1.45708,
+      1.45725
+     ],
+     "xRangeM": [
+      -0.02601,
+      0.02479
+     ]
+    },
+    "source": {
+     "triangles": 1340,
+     "components": 20,
+     "watertight": true,
+     "volumeMl": 0.6015,
+     "areaCm2": 15.07
+    },
+    "cut": {
+     "loops": 9,
+     "holes": 0,
+     "capTriangles": 632,
+     "capAreaCm2": 0.28
+    },
+    "specks": {
+     "upper": 11,
+     "lower": 8,
+     "triangles": 50
+    },
+    "upper": {
+     "triangles": 1044,
+     "watertight": true,
+     "boundaryEdges": 0,
+     "volumeMl": 0.3042,
+     "areaCm2": 8.51,
+     "bbox": [
+      -0.02601,
+      1.45708,
+      0.17458,
+      0.02479,
+      1.46516,
+      0.19235
+     ]
+    },
+    "lower": {
+     "triangles": 928,
+     "watertight": true,
+     "boundaryEdges": 0,
+     "volumeMl": 0.2973,
+     "areaCm2": 7.12,
+     "bbox": [
+      -0.02467,
+      1.44861,
+      0.17458,
+      0.02344,
+      1.45725,
+      0.18979
+     ]
+    },
+    "volumeDifferenceMl": 0
+   }
+  ]
+ },
+ "landmarksBeforeThinParts": [
+  {
+   "id": "median-wrist",
+   "side": "L",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "15.1 mm palmar of the distal radius centre (1.9 mm from its surface); 5.7 mm from the flexor retinaculum, 6.0 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 15.146954570905903,
+    "toRadius": 1.8928192386098242,
+    "toRetinaculum": 5.690413183321446,
+    "deepToRetinaculum": 5.972583829796997
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "L",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 10.1 mm from the epicondyle tip, 5.8 mm posterior to it",
+   "values": {
+    "toEpicondyle": 10.100639658496462,
+    "posterior": 5.791164934635162
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "L",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.2 mm, there 23.9 mm below the muscle's centroid (6.6 mm from its lower border); behind the muscle the nerve stays -4.6 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.1926915603949233,
+    "belowCentroid": 23.878959542147136,
+    "fromLowerBorder": 6.560146808624268
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "L",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 20.6 mm posterior to the shaft axis, ≤ 49.3 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.41…0.55",
+   "values": {
+    "posteriorMin": 20.6265648206075,
+    "fromShaftMax": 49.25945757763905,
+    "betweenMin": 0.41464808267933356,
+    "betweenMax": 0.549095842272761
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "L",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 20.7 mm posterior to the shaft axis, 4.6 mm from the bone; 31.2 mm medial of the axis proximally, 9.7 mm lateral distally",
+   "values": {
+    "posterior": 20.692028984002697,
+    "toBone": 4.596209315333119,
+    "medialProximal": 31.17908624784739,
+    "lateralDistal": 9.712077281858058
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "L",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.7 mm from the fibula 1–5 cm below its tip, 6.2 mm lateral and 14.1 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 4.687796334222193,
+    "lateral": 6.1637129235480455,
+    "posterior": 14.097223390958133
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "L",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "21.2 mm lateral of the artery (22.6 mm apart), 18.9 mm from the ligament; artery 0.2 mm from the ligament",
+   "values": {
+    "lateral": 21.176783740520477,
+    "separation": 22.620594736797994,
+    "toLigament": 18.851688794599717
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "L",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.66 between medius (0) and anterior (1), 1.4 / 1.9 mm from them; C6: 0.61 between medius (0) and anterior (1), 2.0 / 1.8 mm from them; C7: 0.40 between medius (0) and anterior (1), 4.1 / 4.1 mm from them; C8: 0.63 between medius (0) and anterior (1), 3.3 / 3.3 mm from them; T1: 0.66 between medius (0) and anterior (1), 3.8 / 2.7 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 4.059743832533372
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "L",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.7 mm from rib 1 (median), 93% nearer it than rib 2, 79% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 100% below its nearest rib point; 3: 1.1 mm from rib 3 (median), 97% nearer it than rib 4, 98% below its nearest rib point; 4: 1.6 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.3 mm from rib 5 (median), 98% nearer it than rib 6, 90% below its nearest rib point; 6: 1.0 mm from rib 6 (median), 88% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 91% nearer it than rib 8, 96% below its nearest rib point; 8: 0.9 mm from rib 8 (median), 97% nearer it than rib 9, 95% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 89% below its nearest rib point; 10: 1.1 mm from rib 10 (median), 96% nearer it than rib 11, 85% below its nearest rib point; 11: 1.3 mm from rib 11 (median), 100% nearer it than rib 12, 77% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 1.5920717299200722,
+    "meanBelow": 0.9138733237653671
+   }
+  },
+  {
+   "id": "median-wrist",
+   "side": "R",
+   "claim": "median nerve passes palmar to the distal radius, deep to the flexor retinaculum",
+   "pass": true,
+   "evaluated": true,
+   "measured": "14.5 mm palmar of the distal radius centre (2.5 mm from its surface); 5.6 mm from the flexor retinaculum, 6.9 mm deep to its centre",
+   "values": {
+    "palmarOfRadius": 14.542445009129564,
+    "toRadius": 2.5032673217130372,
+    "toRetinaculum": 5.5677392805519315,
+    "deepToRetinaculum": 6.851108353254777
+   }
+  },
+  {
+   "id": "ulnar-epicondyle",
+   "side": "R",
+   "claim": "ulnar nerve passes posterior to the medial epicondyle of the humerus",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 10.3 mm from the epicondyle tip, 6.1 mm posterior to it",
+   "values": {
+    "toEpicondyle": 10.265814323419171,
+    "posterior": 6.12138956785202
+   }
+  },
+  {
+   "id": "sciatic-piriformis",
+   "side": "R",
+   "claim": "sciatic nerve leaves the pelvis below piriformis",
+   "pass": true,
+   "evaluated": true,
+   "measured": "closest approach 0.3 mm, there 11.6 mm below the muscle's centroid (7.7 mm from its lower border); behind the muscle the nerve stays -3.9 mm below the centroid",
+   "values": {
+    "toPiriformis": 0.32537746069570245,
+    "belowCentroid": 11.58836666857721,
+    "fromLowerBorder": 7.675766944885254
+   }
+  },
+  {
+   "id": "sciatic-thigh",
+   "side": "R",
+   "claim": "sciatic nerve runs posterior to the femur between biceps femoris and the medial hamstrings",
+   "pass": true,
+   "evaluated": true,
+   "measured": "at 45/55/65% of femur height: ≥ 19.9 mm posterior to the shaft axis, ≤ 51.0 mm from it; position between semimembranosus (0) and biceps femoris (1): 0.40…0.54",
+   "values": {
+    "posteriorMin": 19.941842293038082,
+    "fromShaftMax": 50.97571673459503,
+    "betweenMin": 0.40081794046033487,
+    "betweenMax": 0.5353341507844723
+   }
+  },
+  {
+   "id": "radial-humerus",
+   "side": "R",
+   "claim": "radial nerve wraps round the posterior humeral shaft from medial to lateral",
+   "pass": true,
+   "evaluated": true,
+   "measured": "mid-shaft: up to 20.9 mm posterior to the shaft axis, 5.0 mm from the bone; 31.5 mm medial of the axis proximally, 9.7 mm lateral distally",
+   "values": {
+    "posterior": 20.886920775237275,
+    "toBone": 4.988635631730284,
+    "medialProximal": 31.457265955867676,
+    "lateralDistal": 9.685850197323889
+   }
+  },
+  {
+   "id": "fibular-neck",
+   "side": "R",
+   "claim": "common fibular nerve winds round the neck of the fibula on its lateral side",
+   "pass": true,
+   "evaluated": true,
+   "measured": "4.0 mm from the fibula 1–5 cm below its tip, 5.5 mm lateral and 14.7 mm posterior of the neck's axis",
+   "values": {
+    "toFibula": 3.9982190241739475,
+    "lateral": 5.467592409023878,
+    "posterior": 14.657930599955419
+   }
+  },
+  {
+   "id": "femoral-triangle",
+   "side": "R",
+   "claim": "femoral nerve lies lateral to the femoral artery where they pass under the inguinal ligament",
+   "pass": true,
+   "evaluated": true,
+   "measured": "23.1 mm lateral of the artery (24.1 mm apart), 13.2 mm from the ligament; artery 0.2 mm from the ligament",
+   "values": {
+    "lateral": 23.105772336324055,
+    "separation": 24.120513759417864,
+    "toLigament": 13.225022500941273
+   }
+  },
+  {
+   "id": "plexus-scalenes",
+   "side": "R",
+   "claim": "roots of the brachial plexus emerge between scalenus anterior and scalenus medius",
+   "pass": true,
+   "evaluated": true,
+   "measured": "C5: 0.70 between medius (0) and anterior (1), 2.0 / 1.9 mm from them; C6: 0.52 between medius (0) and anterior (1), 1.9 / 2.1 mm from them; C7: 0.41 between medius (0) and anterior (1), 4.0 / 4.2 mm from them; C8: 0.62 between medius (0) and anterior (1), 3.2 / 3.2 mm from them; T1: 0.65 between medius (0) and anterior (1), 3.6 / 2.9 mm from them",
+   "values": {
+    "rootsBetween": 5,
+    "rootsEvaluated": 5,
+    "worstDistance": 4.197818753252023
+   }
+  },
+  {
+   "id": "intercostal-ribs",
+   "side": "R",
+   "claim": "each intercostal nerve follows the inferior border of its own rib",
+   "pass": true,
+   "evaluated": true,
+   "measured": "1: 0.8 mm from rib 1 (median), 93% nearer it than rib 2, 91% below its nearest rib point; 2: 1.4 mm from rib 2 (median), 92% nearer it than rib 3, 99% below its nearest rib point; 3: 1.3 mm from rib 3 (median), 98% nearer it than rib 4, 97% below its nearest rib point; 4: 1.6 mm from rib 4 (median), 95% nearer it than rib 5, 99% below its nearest rib point; 5: 1.4 mm from rib 5 (median), 98% nearer it than rib 6, 91% below its nearest rib point; 6: 1.1 mm from rib 6 (median), 86% nearer it than rib 7, 98% below its nearest rib point; 7: 0.9 mm from rib 7 (median), 89% nearer it than rib 8, 97% below its nearest rib point; 8: 1.0 mm from rib 8 (median), 97% nearer it than rib 9, 96% below its nearest rib point; 9: 0.9 mm from rib 9 (median), 96% nearer it than rib 10, 90% below its nearest rib point; 10: 0.9 mm from rib 10 (median), 96% nearer it than rib 11, 88% below its nearest rib point; 11: 1.2 mm from rib 11 (median), 100% nearer it than rib 12, 79% below its nearest rib point",
+   "values": {
+    "nerves": 11,
+    "ok": 11,
+    "worstMedianDistance": 1.640056623610592,
+    "meanBelow": 0.9322908329650861
+   }
+  }
+ ],
+ "thinParts": {
+  "applied": true,
+  "marginMm": 2.5,
+  "triggerMm": 0.5,
+  "options": {
+   "margin": 0.0025,
+   "trigger": 0.0005,
+   "rounds": 4,
+   "smoothIterations": 8,
+   "nerveStep": 0.002,
+   "fragmentShare": 0.02,
+   "unchanged": 0.00002,
+   "chordPasses": 3,
+   "chordDepth": 0.0005,
+   "maxDepth": 0.007
+  },
+  "rules": [
+   {
+    "key": "cruralFascia",
+    "pattern": "\\bcrural fascia$",
+    "action": "clipAtToeBases",
+    "reason": {
+     "zh": "小腿筋膜是小腿的深筋膜，向上续于阔筋膜，向下续于踝部的支持带（小腿横韧带和分裂韧带），不延伸到足趾；图谱网格却一直包到趾尖，横在趾蹼之间。在趾根（跖趾关节平面）剪掉，余下的收到皮下。",
+     "en": "The crural fascia is the deep fascia of the leg, continuous above with the fascia lata and below with the retinacula at the ankle (transverse crural and laciniate ligaments); it does not extend onto the toes, whereas the atlas mesh wraps the foot to the toe tips and lies across the web spaces. Clipped at the toe bases (metatarsophalangeal level); the rest is taken under the skin."
+    },
+    "source": {
+     "name": "Gray's Anatomy, 20th ed. (1918), p. 480, as quoted in Wikipedia “Deep fascia of leg”",
+     "url": "https://en.wikipedia.org/wiki/Deep_fascia_of_leg"
+    }
+   },
+   {
+    "key": "digitalVessels",
+    "pattern": "\\bdigital (veins?|arter(y|ies))\\b|\\bmetacarpal vein\\b|\\bprinceps pollicis\\b",
+    "action": "recourse",
+    "reason": {
+     "zh": "趾（指）的静脉起于趾（指）跖（掌）面的静脉丛，在趾蹼处发出头间静脉与背侧的趾静脉相连，再汇成跖静脉；趾背静脉在趾蹼处汇成趾背总静脉。它们沿各自的趾（指）走，所以应在自己的趾（指）之内。",
+     "en": "The digital veins arise from plexuses on the plantar (palmar) surfaces of the digits, send intercapitular veins to the dorsal digital veins at the clefts and unite to form the metatarsal veins; the dorsal digital veins join at the clefts into common digital veins. They run along their own digit, so each must lie inside it."
+    },
+    "source": {
+     "name": "Gray's Anatomy, 20th ed. (1918), p. 671, as quoted in Wikipedia “Plantar digital veins” and “Dorsal digital veins of the foot”",
+     "url": "https://en.wikipedia.org/wiki/Plantar_digital_veins"
+    }
+   },
+   {
+    "key": "digitalNerves",
+    "pattern": "\\bdigital (branch(es)?|nerves?)\\b|\\bdorsal branch of ulnar nerve$",
+    "action": "recourse",
+    "reason": {
+     "zh": "桡神经浅支的指背神经分布到拇指两侧、示指桡侧、示指与中指以及中指与环指的相邻侧的皮肤，尺神经手背支分布到其余的手指：都沿手指侧面的皮下走，所以应在自己的手指（足趾）之内。",
+     "en": "The dorsal digital nerves of the superficial branch of the radial nerve supply the skin of both sides of the thumb, the radial side of the index and the adjoining sides of index–middle and middle–ring fingers, and the dorsal branch of the ulnar nerve supplies the remaining fingers: all run under the skin along the sides of the digits, so each must lie inside its own finger (or toe)."
+    },
+    "source": {
+     "name": "Gray's Anatomy, 20th ed. (1918), p. 944, as quoted in Wikipedia “Superficial branch of radial nerve”",
+     "url": "https://en.wikipedia.org/wiki/Superficial_branch_of_radial_nerve"
+    }
+   },
+   {
+    "key": "fasciaSheets",
+    "pattern": "fascia|aponeurosis|iliotibial tract|retinaculum",
+    "action": "inward",
+    "reason": {
+     "zh": "深筋膜（包被筋膜）、腱膜和髂胫束都在皮肤和皮下组织的深面；略微露出皮肤（多在 2–3 mm 以内）是图谱配准的误差。用平滑的位移场收到皮下。只凭定义，没有另外打开出处。",
+     "en": "Deep (investing) fasciae, aponeuroses and the iliotibial tract lie deep to the skin and the subcutaneous tissue; standing slightly proud of the skin (mostly within 2–3 mm) is an error of the atlas registration. Taken under the skin by a smooth field. By definition only; no further source was opened."
+    },
+    "source": null
+   },
+   {
+    "key": "subcutaneous",
+    "pattern": ".",
+    "action": "inward",
+    "reason": {
+     "zh": "这里管到的其余薄结构（皮神经、浅静脉和浅动脉、指趾的关节囊和韧带、精索内的血管）都在皮肤的深面；露出皮肤是配准误差，或皮肤拟合时没有顾及它们。用平滑的位移场收到皮下。只凭定义，没有另外打开出处。",
+     "en": "Every other thin structure handled here (cutaneous nerves, superficial veins and arteries, capsules and ligaments of the digits, the vessels of the spermatic cord) lies deep to the skin; lying outside it is a registration error, or the skin fit not having considered them. Taken under the skin by a smooth field. By definition only; no further source was opened."
+    },
+    "source": null
+   }
+  ],
+  "candidates": 1935,
+  "treated": 60,
+  "clippedParts": 2,
+  "relabelledToWarped": [
+   "FJ1423",
+   "FJ1423M",
+   "FJ2072",
+   "FJ2118",
+   "FJ2120",
+   "FJ2141",
+   "FJ2173",
+   "FJ2175",
+   "FJ2185",
+   "FJ2198",
+   "FJ2205",
+   "FJ2228",
+   "FJ2280",
+   "FJ2320",
+   "FJ2327",
+   "FJ2333",
+   "FJ2336",
+   "FJ2338",
+   "FJ2350",
+   "FJ2355",
+   "FJ2364",
+   "FJ2371",
+   "FJ3532",
+   "FJ3533",
+   "FJ3617",
+   "FJ3618"
+  ],
+  "outsideCm2": {
+   "before": 130.03,
+   "after": 4.02
+  },
+  "parts": [
+   {
+    "id": "ZAACCC4854",
+    "name": "Left investing abdominal fascia",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 8.6,
+     "share": 0.2596,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 28.45,
+     "after": 1.07
+    },
+    "areaCm2": {
+     "before": 1451.82,
+     "after": 1452.33
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 8.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAE982E04F",
+    "name": "Left crural fascia",
+    "tissue": "fascia",
+    "rule": "cruralFascia",
+    "action": "clipAtToeBases",
+    "clipped": {
+     "removedCm2": 88.8,
+     "fragmentsDropped": 2
+    },
+    "moved": null,
+    "outsideCm2": {
+     "before": 20.6,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 1274.72,
+     "after": 1185.92
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "clipped at the toe bases (88.8 cm² removed), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAFB27CA9E",
+    "name": "Right crural fascia",
+    "tissue": "fascia",
+    "rule": "cruralFascia",
+    "action": "clipAtToeBases",
+    "clipped": {
+     "removedCm2": 88.83,
+     "fragmentsDropped": 2
+    },
+    "moved": null,
+    "outsideCm2": {
+     "before": 19.36,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 1286.14,
+     "after": 1197.32
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "clipped at the toe bases (88.83 cm² removed), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAE8457450",
+    "name": "Left fascia lata",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5.2,
+     "share": 0.1694,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 7.56,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 1722.22,
+     "after": 1718.63
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5.2 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA38D8A0B1",
+    "name": "Right fascia lata",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5.1,
+     "share": 0.1208,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 6.4,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 1690.04,
+     "after": 1687.91
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5.1 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2120",
+    "name": "Set of plantar digital veins",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.1,
+     "share": 0.8434,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 5.8,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 24.89,
+     "after": 20.68
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2175",
+    "name": "Set of plantar digital veins",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.4,
+     "share": 0.8654,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 5.1,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 24.92,
+     "after": 20.88
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.4 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZA26CBCD39",
+    "name": "Left dorsal digital branches of radial nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 7.5,
+     "share": 0.8768,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 4.67,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 16.57,
+     "after": 16.36
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 7.5 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA8C5324BA",
+    "name": "Right dorsal digital branches of radial nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 7.3,
+     "share": 0.8651,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 4.55,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 16.52,
+     "after": 16.31
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 7.3 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2185",
+    "name": "Set of dorsal digital veins",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 7.6,
+     "share": 0.8474,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 3.98,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 14.93,
+     "after": 14.74
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 7.6 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZAAFB06D34",
+    "name": "Right investing abdominal fascia",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 10.6,
+     "share": 0.3014,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 3.84,
+     "after": 2.31
+    },
+    "areaCm2": {
+     "before": 1443.87,
+     "after": 1447.62
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 10.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2198",
+    "name": "Set of dorsal digital veins",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 8.1,
+     "share": 0.8591,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 3.38,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 14.9,
+     "after": 14.69
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 8.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZA85EB9FD9",
+    "name": "Right pectoral fascia",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.5,
+     "share": 0.5548,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 2.75,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 324.24,
+     "after": 322.14
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.5 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA5B749DFD",
+    "name": "Right dorsal branch of ulnar nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5.9,
+     "share": 0.787,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 2.24,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 7,
+     "after": 5.56
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5.9 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAD12E75F0",
+    "name": "Left dorsal branch of ulnar nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5.9,
+     "share": 0.7336,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 2.2,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 7,
+     "after": 5.7
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5.9 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA0CE62DD5",
+    "name": "Right palmar aponeurosis",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 8.5,
+     "share": 0.6943,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 1.03,
+     "after": 0.04
+    },
+    "areaCm2": {
+     "before": 126.36,
+     "after": 127.19
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 8.5 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA6BBA1034",
+    "name": "Left palmar aponeurosis",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.8,
+     "share": 0.5514,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.79,
+     "after": 0.11
+    },
+    "areaCm2": {
+     "before": 126.67,
+     "after": 127.34
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.8 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2350",
+    "name": "Right palmar metacarpal vein",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5.8,
+     "share": 0.6066,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.78,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 3.96,
+     "after": 3.74
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5.8 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2320",
+    "name": "Left palmar metacarpal vein",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5.1,
+     "share": 0.5731,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.71,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 3.93,
+     "after": 3.69
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZAAD407384",
+    "name": "Left posterior brachial cutaneous nerve",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 8.6,
+     "share": 0.2195,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.65,
+     "after": 0.29
+    },
+    "areaCm2": {
+     "before": 8.22,
+     "after": 8.62
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 8.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA71DBFE1D",
+    "name": "Left cutaneous branch of anterior branch of obturator nerve",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 3.3,
+     "share": 0.4301,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.6,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 24.14,
+     "after": 24.02
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.3 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAAB1A9D64",
+    "name": "Left articular capsules of distal interphalangeal joints",
+    "tissue": "ligament",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.1,
+     "share": 0.2813,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.58,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 16.55,
+     "after": 15.93
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.1 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2371",
+    "name": "Right arteria princeps pollicis",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.5,
+     "share": 0.54,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.38,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 3.51,
+     "after": 3.42
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZA3D8B697B",
+    "name": "Right brachial fascia",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 8.4,
+     "share": 0.1575,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.38,
+     "after": 0.08
+    },
+    "areaCm2": {
+     "before": 378.49,
+     "after": 379.15
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 8.4 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA45B0A30D",
+    "name": "Left lateral cutaneous branch of iliohypogastric nerve",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 4,
+     "share": 0.1137,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.32,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 21.14,
+     "after": 21.1
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 4 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2280",
+    "name": "Dorsal venous network of right hand",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.3,
+     "share": 0.3249,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.29,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 15.14,
+     "after": 14.12
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.3 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZAE85F4EFB",
+    "name": "Left dorsal fascia of hand",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.7,
+     "share": 0.7375,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.26,
+     "after": 0.07
+    },
+    "areaCm2": {
+     "before": 146.39,
+     "after": 145.94
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.7 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2228",
+    "name": "Dorsal venous network of left hand",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.2,
+     "share": 0.2813,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.25,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 15.14,
+     "after": 14.24
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.2 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZAB26BFD77",
+    "name": "Right lateral cutaneous branch of iliohypogastric nerve",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 3.6,
+     "share": 0.0892,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.25,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 22.5,
+     "after": 22.47
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAE4483B83",
+    "name": "Right dorsal fascia of hand",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 6.2,
+     "share": 0.7802,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.21,
+     "after": 0.04
+    },
+    "areaCm2": {
+     "before": 146.93,
+     "after": 146.39
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 6.2 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ3532",
+    "name": "Left testicular artery",
+    "tissue": "artery",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 4.8,
+     "share": 0.0781,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.18,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 22.59,
+     "after": 22.53
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 4.8 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ3533",
+    "name": "Left testicular vein",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 4.7,
+     "share": 0.0708,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.18,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 23.37,
+     "after": 23.28
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 4.7 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ3617",
+    "name": "Right testicular artery",
+    "tissue": "artery",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 4.3,
+     "share": 0.0686,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.17,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 22.81,
+     "after": 22.72
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 4.3 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ3618",
+    "name": "Right testicular vein",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 5,
+     "share": 0.0759,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.17,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 21.85,
+     "after": 21.78
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ1423M",
+    "name": "Left iliotibial tract",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.5,
+     "share": 0.1885,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.15,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 755.35,
+     "after": 751.88
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2205",
+    "name": "Set of plantar digital arteries proper",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.2,
+     "share": 0.6594,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.15,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 21.83,
+     "after": 19.55
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.2 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZA39545C97",
+    "name": "Right inferior clunial nerves",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 3.4,
+     "share": 0.1529,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.14,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 14.17,
+     "after": 14.07
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.4 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2141",
+    "name": "Dorsal digital artery of foot",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.9,
+     "share": 0.707,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.09,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 17.38,
+     "after": 15.77
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.9 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2338",
+    "name": "Left arteria princeps pollicis",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.8,
+     "share": 0.464,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.09,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 3.49,
+     "after": 3.28
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.8 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZAFC66FDD6",
+    "name": "Left dorsal digital branches of superficial fibular nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 3.3,
+     "share": 0.694,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.09,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 5.24,
+     "after": 5.26
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.3 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA0C9ED8A2",
+    "name": "Left lateral dorsal cutaneous nerve (sural part)",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 4.6,
+     "share": 0.1839,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.06,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 4.26,
+     "after": 4.27
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 4.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2072",
+    "name": "Dorsal digital artery of foot",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 3.1,
+     "share": 0.694,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.05,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 17.39,
+     "after": 15.7
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 3.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZAD8DBB93D",
+    "name": "Right lateral dorsal cutaneous nerve (sural part)",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 4.5,
+     "share": 0.1818,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.05,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 4.51,
+     "after": 4.52
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 4.5 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA3F6EE377",
+    "name": "Right dorsal digital branches of superficial fibular nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 3.4,
+     "share": 0.7099,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.04,
+     "after": 0.01
+    },
+    "areaCm2": {
+     "before": 5.21,
+     "after": 5.23
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 3.4 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA09021930",
+    "name": "Left inferior clunial nerves",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.7,
+     "share": 0.1404,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.03,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 14.25,
+     "after": 14.18
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.7 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "FJ2364",
+    "name": "Medial proper palmar digital artery of right index finger",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.5,
+     "share": 0.8557,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.02,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 2.61,
+     "after": 2.36
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.5 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2336",
+    "name": "Lateral proper palmar digital artery of left little finger",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.6,
+     "share": 1,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0.01,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 2.07,
+     "after": 1.96
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.6 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ1423",
+    "name": "Right iliotibial tract",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.4,
+     "share": 0.1633,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 755.35,
+     "after": 752.41
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.4 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2118",
+    "name": "Left posterior tibial vein",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.1,
+     "share": 0.1262,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 48.32,
+     "after": 46.77
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2173",
+    "name": "Right posterior tibial vein",
+    "tissue": "vein",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.4,
+     "share": 0.1596,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 48.33,
+     "after": 46.32
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.4 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2327",
+    "name": "Proper palmar digital vein of left ring finger",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.3,
+     "share": 0.8381,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 2.3,
+     "after": 2.13
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.3 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2333",
+    "name": "Medial proper palmar digital artery of left index finger",
+    "tissue": "artery",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.1,
+     "share": 0.842,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 2.6,
+     "after": 2.32
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.1 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "FJ2355",
+    "name": "Proper palmar digital vein of right index finger",
+    "tissue": "vein",
+    "rule": "digitalVessels",
+    "action": "recourse",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.3,
+     "share": 0.6603,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 2.66,
+     "after": 2.44
+    },
+    "provenance": {
+     "before": "scanned",
+     "after": "warped"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.3 mm), against the reference skin with a 2.5 mm margin; scanned geometry changed, so relabelled warped"
+   },
+   {
+    "id": "ZA0D1E1318",
+    "name": "Left superior clunial nerves",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.5,
+     "share": 0.2754,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 32.18,
+     "after": 32.09
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.5 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA1EA1F6BC",
+    "name": "Right cutaneous branch of anterior branch of obturator nerve",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.3,
+     "share": 0.4296,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 24.07,
+     "after": 23.98
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.3 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA413CAA20",
+    "name": "Right posterior brachial cutaneous nerve",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.6,
+     "share": 0.1215,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 7.31,
+     "after": 7.33
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZA4A5317CB",
+    "name": "Right collateral interphalangeal ligaments of foot",
+    "tissue": "ligament",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.1,
+     "share": 0.935,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 13.16,
+     "after": 12
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.1 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAB3387F00",
+    "name": "Left brachial fascia",
+    "tissue": "fascia",
+    "rule": "fasciaSheets",
+    "action": "inward",
+    "moved": {
+     "how": "vertices",
+     "maxMm": 2.6,
+     "share": 0.1092,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 384.73,
+     "after": 384.18
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "vertices displaced by a smooth inward field (up to 2.6 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAD76BC089",
+    "name": "Right superior clunial nerves",
+    "tissue": "nerve",
+    "rule": "subcutaneous",
+    "action": "inward",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.2,
+     "share": 0.25,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 32.58,
+     "after": 32.55
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.2 mm), against the reference skin with a 2.5 mm margin"
+   },
+   {
+    "id": "ZAFDD05AB2",
+    "name": "Left proper palmar digital branches of median nerve",
+    "tissue": "nerve",
+    "rule": "digitalNerves",
+    "action": "recourse",
+    "moved": {
+     "how": "centrelines",
+     "maxMm": 2.6,
+     "share": 0.2531,
+     "unresolved": 0
+    },
+    "outsideCm2": {
+     "before": 0,
+     "after": 0
+    },
+    "areaCm2": {
+     "before": 11.63,
+     "after": 11.62
+    },
+    "provenance": {
+     "before": "curated",
+     "after": "curated"
+    },
+    "note": "centrelines re-coursed and tubes rebuilt (up to 2.6 mm), against the reference skin with a 2.5 mm margin"
+   }
+  ],
+  "reference": {
+   "dir": "data/raw/bodyshape/out/male-skin-open",
+   "file": "skin-closed.obj",
+   "sha1": "1aa13515c2ae66ca9e5e07a7733e604e08fa48ad",
+   "vertices": 93759,
+   "triangles": 180846,
+   "fittedTo": {
+    "body": "male",
+    "key": "169209ce67d8bd76"
+   }
+  },
+  "internalsKey": "169209ce67d8bd76",
+  "relabelledByTissue": {
+   "fascia": 2,
+   "artery": 10,
+   "vein": 14
+  },
+  "scannedAfter": 2047
+ },
  "derived": [
   {
    "id": "SOMA_visceral_pleura_L",
@@ -70147,7 +72185,8 @@
   },
   "hideWithOpaqueSkin": [
    "FJ2811",
-   "FJ2814"
+   "FJ2814_upper",
+   "FJ2814_lower"
   ],
   "options": {
    "embed": 0.0005,
@@ -70760,9 +72799,10 @@
   ],
   "deepLip": {
    "ids": [
-    "FJ2814"
+    "FJ2814_upper",
+    "FJ2814_lower"
    ],
-   "note": "the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden"
+   "note": "the deep lip parts (upper and lower lip, split from the Lip part: see lipSplit) lie in the oral opening of the opened skin: both are listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden"
   }
  },
  "skinPackage": {
@@ -70859,7 +72899,8 @@
    "FJ2761",
    "FJ2765",
    "FJ2767",
-   "FJ2814",
+   "FJ2814_lower",
+   "FJ2814_upper",
    "FJ3241",
    "FJ3244",
    "FJ3247",
@@ -70875,6 +72916,12 @@
    "R3_FMA46785",
    "R3_FMA46786"
   ],
+  "notEnclosedRetiredIds": {
+   "FJ2814": [
+    "FJ2814_upper",
+    "FJ2814_lower"
+   ]
+  },
   "author": {
    "bmiByVolume": 24.28,
    "targetBmi": 23.6,
@@ -70899,8 +72946,8 @@
     },
     "lip": {
      "minMm": -0.3,
-     "medianMm": 2.9,
-     "parts": 1
+     "medianMm": 2.8,
+     "parts": 2
     },
     "nasalCartilages": {
      "minMm": -11.3,
@@ -70993,9 +73040,9 @@
     }
    ],
    "notEnclosedByDesign": {
-    "parts": 83,
-    "outside": 0.028608302860830288,
-    "outside5mm": 0.011185201118520113,
+    "parts": 84,
+    "outside": 0.028583709434773265,
+    "outside5mm": 0.01117558564367075,
     "worst": [
      {
       "name": "Right major alar cartilage",
@@ -71315,9 +73362,9 @@
        "median": -0.147,
        "p90": 0.671
       },
-      "flipped": 3,
-      "flippedGapInPackageMmMax": 0.011,
-      "gapChangeMmMax": 0.085,
+      "flipped": 2,
+      "flippedGapInPackageMmMax": 0.007,
+      "gapChangeMmMax": 0.027,
       "mergedPositions": 0
      }
     },
@@ -71335,9 +73382,9 @@
        "median": -0.147,
        "p90": 0.671
       },
-      "flipped": 11,
+      "flipped": 10,
       "flippedGapInPackageMmMax": 0.056,
-      "gapChangeMmMax": 0.219,
+      "gapChangeMmMax": 0.104,
       "mergedPositions": 11
      }
     }
@@ -71463,9 +73510,9 @@
     }
    ],
    "notEnclosedByDesign": {
-    "parts": 83,
-    "outside": 0.028608302860830288,
-    "outside5mm": 0.011185201118520113,
+    "parts": 84,
+    "outside": 0.028583709434773265,
+    "outside5mm": 0.01117558564367075,
     "worst": [
      {
       "name": "Right major alar cartilage",
@@ -71514,7 +73561,7 @@
    "thin": {
     "closed": true,
     "nonManifoldEdges": 2,
-    "outside": 0.004143360265175057,
+    "outside": 0.00006531918628623685,
     "outside5mm": 0,
     "worst": [
      {
@@ -71528,44 +73575,29 @@
       "maxMm": 0.1
      },
      {
-      "name": "Right dorsal branch of ulnar nerve",
-      "outside": 0.34146341463414637,
-      "maxMm": 3.4
+      "name": "Left posterior brachial cutaneous nerve",
+      "outside": 0.03125,
+      "maxMm": 2.7
      },
      {
-      "name": "Left dorsal branch of ulnar nerve",
-      "outside": 0.325,
-      "maxMm": 3.5
+      "name": "Right clavipectoral fascia",
+      "outside": 0.0007710100231303007,
+      "maxMm": 1.3
      },
      {
-      "name": "Set of plantar digital veins",
-      "outside": 0.32340425531914896,
-      "maxMm": 3.3
+      "name": "Right investing abdominal fascia",
+      "outside": 0.0007160246312473149,
+      "maxMm": 1.3
      },
      {
-      "name": "Left dorsal digital branches of radial nerve",
-      "outside": 0.29259259259259257,
-      "maxMm": 4.4
+      "name": "Left investing abdominal fascia",
+      "outside": 0.000576036866359447,
+      "maxMm": 1.6
      },
      {
-      "name": "Set of dorsal digital veins",
-      "outside": 0.2872340425531915,
-      "maxMm": 4.2
-     },
-     {
-      "name": "Right dorsal digital branches of radial nerve",
-      "outside": 0.2862453531598513,
-      "maxMm": 4.4
-     },
-     {
-      "name": "Set of plantar digital veins",
-      "outside": 0.2768595041322314,
-      "maxMm": 3.5
-     },
-     {
-      "name": "Set of dorsal digital veins",
-      "outside": 0.24736842105263157,
-      "maxMm": 4.9
+      "name": "Right brachial fascia",
+      "outside": 0.0005367686527106817,
+      "maxMm": 0
      }
     ]
    },
@@ -71577,9 +73609,65 @@
     "worst": []
    },
    "caution": {
-    "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 0.4% of their surface comes through the skin, by up to 5 mm (set of dorsal digital veins).",
-    "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 0.4% 露在皮肤之外，最多 5 mm。"
+    "en": "The skin was fitted to enclose muscles, bones, cartilages and organs only. Fasciae, cutaneous nerves and superficial vessels lying on them were not considered, and 0.0% of their surface comes through the skin, by up to 3 mm (posterior brachial cutaneous nerve).",
+    "zh": "皮肤拟合时只保证包住肌、骨、软骨和器官，贴在它们外面的筋膜、皮神经和浅血管没有考虑：这些结构的表面有 0.0% 露在皮肤之外，最多 3 mm。"
    }
+  },
+  "thinOutside": {
+   "spacingM": 0.002,
+   "parts": 1949,
+   "samples": 3888943,
+   "raysDisagreed": 0,
+   "totalAreaCm2": 46393.13,
+   "outsideCm2": 4.59,
+   "outsideOver1mmCm2": 1.07,
+   "byRegion": {
+    "other": 4.35,
+    "head": 0.23,
+    "forefoot": 0.01
+   },
+   "rows": [
+    {
+     "id": "ZAAFB06D34",
+     "name": "Right investing abdominal fascia",
+     "tissue": "fascia",
+     "areaCm2": 1447.62,
+     "outsideCm2": 2.35,
+     "outsideOver1mmCm2": 0.43,
+     "maxMm": 2.5,
+     "outsideBbox": [
+      -0.175,
+      1.163,
+      0.057,
+      -0.167,
+      1.178,
+      0.11
+     ],
+     "byRegion": {
+      "other": 2.35
+     }
+    },
+    {
+     "id": "ZAACCC4854",
+     "name": "Left investing abdominal fascia",
+     "tissue": "fascia",
+     "areaCm2": 1452.33,
+     "outsideCm2": 1.07,
+     "outsideOver1mmCm2": 0.42,
+     "maxMm": 1.8,
+     "outsideBbox": [
+      0.168,
+      1.161,
+      0.081,
+      0.177,
+      1.175,
+      0.106
+     ],
+     "byRegion": {
+      "other": 1.07
+     }
+    }
+   ]
   }
  },
  "fat": {
@@ -71592,7 +73680,7 @@
   "skinSingleWalled": true,
   "bodyVolumeL": 66.9,
   "fatVolumeL": 17.1,
-  "deepParts": 1359,
+  "deepParts": 1360,
   "regions": [
    {
     "id": "SOMA_fat_head",
@@ -71717,7 +73805,7 @@
    "cardiovascular/vein": 395,
    "digestive/fascia": 5,
    "digestive/gland": 10,
-   "digestive/organ": 102,
+   "digestive/organ": 103,
    "digestive/tooth": 28,
    "endocrine/gland": 7,
    "integumentary/fascia": 4,
@@ -71747,7 +73835,7 @@
    "urinary/organ": 6
   },
   "bySignal": {
-   "isa": 3298,
+   "isa": 3299,
    "partOf": 24,
    "none": 10
   },
@@ -71758,7 +73846,7 @@
   "counts": {
    "L": 1533,
    "R": 1567,
-   "M": 232
+   "M": 233
   },
   "fromName": 2774,
   "nameVsCentroidConflicts": [
@@ -72058,7 +74146,7 @@
   {
    "depth": 6,
    "name": "Organs",
-   "parts": 607
+   "parts": 608
   },
   {
    "depth": 7,
@@ -72583,18 +74671,18 @@
  "adjacency": {
   "thresholdM": 0.002,
   "spacingM": 0.002,
-  "samples": 49405104,
-  "pairs": 30112,
+  "samples": 49376515,
+  "pairs": 30191,
   "envelopes": [
    {
     "id": "FJ2810",
     "name": "Skin",
-    "rawDegree": 245
+    "rawDegree": 207
    },
    {
     "id": "SOMA_fat_head",
     "name": "Subcutaneous tissue of head",
-    "rawDegree": 128
+    "rawDegree": 129
    },
    {
     "id": "SOMA_fat_neck",
@@ -72609,12 +74697,12 @@
    {
     "id": "SOMA_fat_upper_limb_L",
     "name": "Subcutaneous tissue of left upper limb",
-    "rawDegree": 191
+    "rawDegree": 192
    },
    {
     "id": "SOMA_fat_upper_limb_R",
     "name": "Subcutaneous tissue of right upper limb",
-    "rawDegree": 194
+    "rawDegree": 195
    },
    {
     "id": "SOMA_fat_lower_limb_L",
@@ -72634,7 +74722,7 @@
    "p90": 36,
    "p99": 83,
    "max": 211,
-   "isolated": 5
+   "isolated": 4
   },
   "highest": [
    {
@@ -72674,9 +74762,9 @@
  "triangles": {
   "source": 6681030,
   "importedFromRelease3": 821404,
-  "afterWeldAndMerge": 9698160,
-  "written": 2352192,
-  "simplifiedParts": 2001,
+  "afterWeldAndMerge": 9696950,
+  "written": 2351340,
+  "simplifiedParts": 2002,
   "maxErrorM": 0.0007999120862223208,
   "worstVolumeChange": {
    "id": "FJ2093",
@@ -72685,20 +74773,20 @@
   },
   "byTissue": {
    "organ": {
-    "source": 765324,
-    "written": 194918
+    "source": 765956,
+    "written": 195032
    },
    "tooth": {
     "source": 39744,
     "written": 11200
    },
    "nerve": {
-    "source": 462252,
-    "written": 352623
+    "source": 462104,
+    "written": 352043
    },
    "ligament": {
     "source": 295530,
-    "written": 156776
+    "written": 156775
    },
    "tendon": {
     "source": 113972,
@@ -72717,12 +74805,12 @@
     "written": 2630
    },
    "fascia": {
-    "source": 612239,
-    "written": 123125
+    "source": 610545,
+    "written": 124222
    },
    "artery": {
     "source": 975594,
-    "written": 310386
+    "written": 309964
    },
    "brain": {
     "source": 503678,
@@ -72730,7 +74818,7 @@
    },
    "vein": {
     "source": 945916,
-    "written": 206438
+    "written": 205378
    },
    "heart": {
     "source": 101562,
@@ -72756,8 +74844,8 @@
  },
  "trees": {
   "isa": {
-   "concepts": 4750,
-   "parts": 3332
+   "concepts": 4752,
+   "parts": 3333
   },
   "partOf": {
    "concepts": 1442,
@@ -72772,16 +74860,16 @@
   "examples": []
  },
  "output": {
-  "parts": 3332,
-  "anatomyJsonBytes": 2290193,
+  "parts": 3333,
+  "anatomyJsonBytes": 2293990,
   "glbBytes": {
    "integumentary.glb": 1030416,
-   "muscular.glb": 5172508,
-   "skeletal.glb": 2532048,
-   "cardiovascular.glb": 4935672,
-   "nervous.glb": 3841016,
+   "muscular.glb": 5179392,
+   "skeletal.glb": 2532088,
+   "cardiovascular.glb": 4926060,
+   "nervous.glb": 3837028,
    "respiratory.glb": 514096,
-   "digestive.glb": 885332,
+   "digestive.glb": 887436,
    "urinary.glb": 28060,
    "reproductive.glb": 48848,
    "endocrine.glb": 28168,
@@ -72796,7 +74884,7 @@
    0.2389
   ],
   "skinSourceBytes": 203556,
-  "displayJsonBytes": 875,
+  "displayJsonBytes": 917,
   "skinPiecesBytes": 50889
  },
  "parameters": {

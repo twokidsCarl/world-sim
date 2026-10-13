@@ -30,7 +30,7 @@ import { sheet } from '../rig/render.ts'
 import { loadOpenings } from './openings.ts'
 
 const ROOT = join(import.meta.dirname, '..', '..')
-const CURATED = ['muscles.json', 'aus.json', 'pain.json', 'sources.json'] as const
+const CURATED = ['muscles.json', 'aus.json', 'pain.json', 'emotions.json', 'visemes.json', 'sources.json'] as const
 const sha = (b: Uint8Array): string => createHash('sha256').update(b).digest('hex').slice(0, 16)
 
 /** face.json 所记录的输入是否与磁盘上的当前文件一致。 Whether the inputs recorded in face.json still match the files on disk. */
@@ -67,7 +67,7 @@ export function readCurated(inputs?: Record<string, string>): Curated {
     if (inputs) inputs[`data/curated/face/${name}`] = sha(b)
     return JSON.parse(new TextDecoder().decode(b))
   }
-  return { muscles: read('muscles.json'), aus: read('aus.json'), pain: read('pain.json'), sources: read('sources.json') } as Curated
+  return { muscles: read('muscles.json'), aus: read('aus.json'), pain: read('pain.json'), emotions: read('emotions.json'), visemes: read('visemes.json'), sources: read('sources.json') } as Curated
 }
 
 if (import.meta.main) {
@@ -167,6 +167,16 @@ if (import.meta.main) {
       const sets: Record<string, number>[] = [{}, { AU25: AU_MAX }, { AU26: AU_MAX }, { AU27: AU_MAX }, { AU10: AU_MAX }, { AU12: AU_MAX }, { AU20: AU_MAX }]
       const im = sets.map((a) => renderSkinDetailed(sc, uv, layers, weightsOf, a, 460, zoom))
       save([...im.map((x) => x[0]!), ...im.map((x) => x[1]!)], sets.length, 'closeup-mouth.png')
+    }
+    // 表情原型：上排皮肤正面，下排肌肉正面；第一列静止 / expression prototypes: skin front view above, muscle front view below; rest in the first column
+    if (face.expressions?.length) {
+      const { renderExpression } = await import('./renders.ts')
+      const { expressionAUs } = await import('./model.ts')
+      const sets: Record<string, number>[] = [{}, ...face.expressions.map((e) => expressionAUs(face.expressions, e.id, 1))]
+      const skinIm = sets.map((a) => renderSkinDetailed(sc, uv, layers, weightsOf, a, 520))
+      const deepIm = sets.map((a) => renderExpression(sc, a, { size: 520 }))
+      save([...skinIm.map((x) => x[0]!), ...skinIm.map((x) => x[1]!)], sets.length, 'emotions-skin.png')
+      save(deepIm.map((x) => x[2]!), sets.length, 'emotions-muscle.png')
     }
     log(`detail renders written`)
     renders = all.map((f) => f.slice(ROOT.length + 1))
