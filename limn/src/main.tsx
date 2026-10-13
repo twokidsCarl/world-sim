@@ -30,7 +30,7 @@ import { refine } from './refine/loop'
  * contact sheet (research/goodsell/sheet.py). It runs in the background, with progress in limn.sheetState.
  */
 const sheetState = { done: 0, total: 0, failed: [] as string[], running: false }
-async function sheet(round: string, size = 520, only?: string[]): Promise<void> {
+async function sheet(round: string, size = 520, only?: string[], turn = 0): Promise<void> {
   if (sheetState.running) return
   // only：只出这几张卡（卡片 id）/ only: render just these cards (card ids)
   const cards = ((await (await fetch('/sim.json')).json()) as { cards: { id: string; url: string }[] }).cards.filter((c) => !only || only.includes(c.id))
@@ -50,7 +50,17 @@ async function sheet(round: string, size = 520, only?: string[]): Promise<void> 
       if ((now.sceneRev !== before && !now.busy) || now.error) break
     }
     await new Promise((r) => setTimeout(r, 1800))
-    if (useStore.getState().sceneRev !== before && !useStore.getState().error) await snap(`${round}-${c.id}`, size)
+    if (useStore.getState().sceneRev !== before && !useStore.getState().error) {
+      await snap(`${round}-${c.id}`, size)
+      // turn：再从转过一个角度的方向出一张，用来查“只有正面一个视角对”的毛病 / turn: a second picture from a turned direction, to catch things that are right from the front only
+      if (turn) {
+        const a = (turn * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a), b = a * 0.6, cb = Math.cos(b), sb = Math.sin(b)
+        // 绕 y 转 a，再绕 x 转 0.6a / turned by a about y, then by 0.6a about x
+        useStore.setState({ rot: new Float32Array([co, si * sb, -si * cb, 0, cb, sb, si, -co * sb, co * cb]) })
+        await new Promise((r) => setTimeout(r, 2500))
+        await snap(`${round}-${c.id}-turned`, size)
+      }
+    }
     else sheetState.failed.push(c.id)
     sheetState.done++
   }

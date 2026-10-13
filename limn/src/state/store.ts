@@ -35,6 +35,8 @@ export interface Panel {
   spec: PanelSpec
   mol: Molecule
   coloring: Coloring
+  /** 单个分子的场景里：这个面板的每份拷贝是一个完整的分子，整个留或整个切（示意的环境）/ in a single-molecule scene: every copy in this panel is a whole molecule, kept or cut whole (a schematic environment) */
+  perCopy?: boolean
   /** 当两个面板共有一种蛋白质时，把本面板转到与第一个一致 / turns this panel to match the first one, when they share a protein */
   align: Float32Array | null
   /** 全景里的膜蛋白：OPM 给出的膜内取向 / for a membrane protein in a landscape: its orientation in the membrane from OPM */
@@ -179,13 +181,13 @@ export interface CatalogEntry {
    * 膜上某种蛋白的数量按文献推断、位置重排成等间隔的环：pattern 是它的实体名，count 是推断的数量，source 是出处。
    * A membrane protein whose number is inferred from the literature and whose copies are re-set in evenly spaced rings: `pattern` names its entity, `count` is the inferred number, `source` where it comes from.
    */
-  respike?: { pattern: string; count: number; source: string }
+  respike?: { pattern: string; count: number; source: string; shape?: Parameters<typeof exaggerate>[2] }
   /** 手绘画法下把膜上的蛋白重排成等间隔的一圈圈，膜换成光滑的球壳（见 arrange）：`pattern` 匹配要排的蛋白，`exclude` 排除，`reach` 是离膜中面多远以内算膜上的（Å），`lining` 是衬在膜里面的一层的颜色（里面的空处露出它，膜的切口才读得出是一条带子）/ in the painted drawing, set the membrane's proteins out afresh in evenly spaced rings and make the membrane a smooth shell (see `arrange`): `pattern` matches the proteins, `exclude` leaves some out, `reach` is how far from the mid-plane still counts as on the membrane, in Å, `lining` the colour of a layer lining the inside (empty space within shows it, so the cut membrane reads as a band) */
   /** 手绘画法下给名字匹配的一个个团块补上把它们串起来的线（见 strung）/ in the painted drawing, supply the strand that strings together the clumps whose name matches (see `strung`) */
   string?: { pattern: string; name: string; nameEn: string; fill?: number; beadName?: string; beadNameEn?: string; radius: number; lch: [number, number, number]; basis: string; basisEn: string }
   /** 手绘画法下把整个对象再画一份，挪到旁边（单位是对象的半径），像正在分裂的两个细胞。数据里只有一个，第二个是示意 / in the painted drawing, draw the whole subject a second time, moved aside (in subject radii), like two cells in division. The data holds one; the second is schematic */
   twin?: number
-  arrange?: { pattern: string; exclude?: string; reach?: number; lining?: [number, number, number] }
+  arrange?: { pattern: string; exclude?: string; reach?: number; lining?: [number, number, number]; whiskers?: [number, number] }
   /**
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
@@ -279,12 +281,16 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   mols.forEach((m, i) => {
     const asm = m.assemblies.find((a) => a.id === (i === 0 ? mainAssembly : assemblies[i - 1])) ?? m.assemblies[m.assemblies.length - 1]
     for (const g of asm?.groups ?? []) {
-      const ch = m.chains[g.chains[0]!]
-      if (!ch) continue
-      const step = Math.max(1, Math.floor(ch.count / 6))
-      for (const op of g.operators) for (let a = ch.start; a < ch.start + ch.count; a += step) {
+      // 每条链都取点（原来只取第一条链的六个原子，量不到刺的顶端，环境就挤进刺之间了）
+      // points are taken from every chain (it used to be six atoms of the first chain only, which missed the tips of spikes and let the environment in among them)
+      for (const ci of g.chains.slice(0, 12)) {
+       const ch = m.chains[ci]
+       if (!ch) continue
+       const step = Math.max(1, Math.floor(ch.count / (g.operators.length > 2000 ? 4 : 24)))
+       for (const op of g.operators) for (let a = ch.start; a < ch.start + ch.count; a += step) {
         const x = m.pos[a * 3]!, y = m.pos[a * 3 + 1]!, z = m.pos[a * 3 + 2]!
         pts.push(op[0]! * x + op[4]! * y + op[8]! * z + op[12]!, op[1]! * x + op[5]! * y + op[9]! * z + op[13]!, op[2]! * x + op[6]! * y + op[10]! * z + op[14]!)
+       }
       }
     }
   })
@@ -300,16 +306,21 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   const near = dist[Math.floor(dist.length * 0.9)] ?? R
   // clear：在“九成的点以内”和“最远的点”之间取多少（1 = 最远的点，缺省；0 = 紧贴着对象）。伸出去的东西少而长时取小些，免得周围空一圈
   // clear: how far between "nine tenths of the points" and "the farthest point" the environment starts (1 = the farthest point, the default; 0 = hard against the subject). Smaller where what sticks out is sparse and long, so that no empty ring is left
-  // 画面是正方形的，对象占画面宽度的六成多，像他那幅；环境铺在切面后面的一层里
-  // the frame is square with the subject filling a little over six tenths of its width, as in his painting; the environment lies in one layer behind the cut
+  // 环境是立体的：填满对象周围的一个球（或对象的整个里面），由切面露出剖面，所以转到哪个角度都成立。
+  // （原来只在切面后面铺薄薄一层，只有正面一个视角是对的。）数量是按那一薄层定的，这里按体积补上。
+  // The environment is a solid: it fills a ball round the subject (or the whole inside of it) and the cut exposes a section, so it holds from any angle.
+  // (It used to be one thin layer behind the cut, right from the front only.) Counts were set for that layer and are topped up by volume here.
   // inside：填对象的里面（数据里只有外壳时），范围取到外壳以内 / inside: fill the inside of the subject (when the data holds only its shell), within the shell
-  // replace：线放在切片最靠前的一薄层里，压在蛋白上面（他的画里 DNA 是最上面的一层）/ replace: the strands lie in a thin layer at the very front of the slab, over the proteins (in his painting DNA is the topmost layer)
-  const box: Box = env.inside ? { centre, hx: R, hy: R, z0: env.replace ? -R * 0.07 : -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * SPREAD, hy: R * SPREAD, z0: -R * 0.42, z1: -18, exclude: near + (R - near) * (env.clear ?? 1) + 6 }
+  const box: Box = env.inside ? { centre, hx: R, hy: R, z0: -R, z1: R, exclude: 0, within: R * 0.9 } : { centre, hx: R * SPREAD, hy: R * SPREAD, z0: -R * SPREAD, z1: R * SPREAD, exclude: near + (R - near) * (env.clear ?? 1) + 6, within: R * SPREAD }
+  let volume = env.inside ? 6 : (SPREAD / 1.5) ** 2 * ((2 * SPREAD) / 0.42) * 0.52
   // outside：对象的形状不规则（一段树突），环境只填在它外面，范围是放大后的画面 / outside: the subject is of irregular shape (a stretch of dendrite); the environment fills only what lies outside it, over the zoomed frame
   if (env.outside) {
     const half = (R / (entry.zoom ?? 1)) * 1.25
-    Object.assign(box, { hx: half, hy: half, z0: -half * 0.12, z1: -18, exclude: 0, within: undefined, free: outsideOf(pts, 70) })
+    Object.assign(box, { hx: half, hy: half, z0: -half * 0.6, z1: half * 0.6, exclude: 0, within: undefined, free: outsideOf(pts, 70) })
+    volume = 10
   }
+  // replace 的条数在目录里直接按整个细胞给 / with `replace`, the catalogue gives the count for the whole cell outright
+  if (env.replace) volume = 1
   const rand = rng(7)
   const placed: { p: V3; r: number }[] = []
   const panels: Panel[] = []
@@ -317,7 +328,10 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   // 大的先摆 / larger ones are placed first
   for (const p of env.proteins) {
     busy(p.pdb)
-    const m = await loadMolecule({ kind: 'pdb', id: p.pdb })
+    // 每个残基一个球：环境里要摆上万份，按原子画不动；平滑之后轮廓差不多
+    // one sphere per residue: the environment holds thousands of copies, too many to draw atom by atom, and after smoothing the outline is much the same
+    const m = coarsen(await loadMolecule({ kind: 'pdb', id: p.pdb }))
+    m.assemblies = m.assemblies.slice()
     const c: V3 = [0, 0, 0]
     for (let i = 0; i < m.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += m.pos[i * 3 + k]! / m.atomCount
     // 占的地方按均方根半径算（再放大一点），不按最远的原子：细长的分子（纤维蛋白原）按最远点算会占掉一个大球，周围什么都放不下
@@ -328,14 +342,13 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       nr++
     }
     const r = Math.sqrt(r2 / Math.max(1, nr)) * 1.25
-    // 整个分子都放在切面后面（中心至少退后一个半径），不然它会探到切面前面，盖住对象伸出来的东西
-    // the whole molecule goes behind the cut (its centre at least one radius back), or it would reach in front of the cut and cover what the subject holds out
-    const ops = scatter(env.inside || env.outside ? p.count : Math.round(p.count * (SPREAD / 1.5) ** 2), r, c, { ...box, z1: Math.min(box.z1, -r), z0: Math.min(box.z0, -r * 2.2) }, rand, placed)
+    // 份数按体积补，但总共不超过一千两百万个球 / copies are topped up by volume, to at most twelve million spheres in all
+    const ops = scatter(Math.min(Math.round(p.count * volume), Math.floor(12_000_000 / Math.max(1, m.atomCount))), r, c, box, rand, placed)
     m.assemblies.push({ id: 'inferred', groups: [{ chains: m.chains.map((_, i) => i), operators: ops }] })
     const roles: Role[] = m.entities.map(() => 'extracellular')
     panels.push({
       spec: { label: `${p.name}（示意的环境）`, labelEn: `${p.nameEn} (schematic environment)`, source: source(`PDB ${p.pdb}`, `https://www.rcsb.org/structure/${p.pdb}`), assembly: 'inferred', entities: m.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: p.name, nameEn: p.nameEn, description: e.description, organism: '' })), reason: '' },
-      mol: m, coloring: { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => p.lch) }, align: null,
+      mol: m, coloring: { roles, hueShift: roles.map(() => 0), nudge: roles.map(() => 0), override: roles.map(() => p.lch) }, align: null, perCopy: true,
     })
   }
   type Strands = NonNullable<typeof env.strands>
@@ -353,7 +366,7 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [def.lch] }, align: null,
     })
   }
-  if (env.strands) strandPanel(env.inside || env.outside ? env.strands : { ...env.strands, count: Math.round(env.strands.count * (SPREAD / 1.5) ** 2) }, box, 'strands')
+  if (env.strands) strandPanel({ ...env.strands, count: Math.min(4000, Math.round(env.strands.count * volume)) }, box, 'strands')
   // 外面的一圈乱线（荚膜）：线限在膜外的一层里，贴着对象，杂乱但厚薄均匀
   // a fringe of tangled strands outside (a capsule): the strands are confined to a layer just outside the membrane, hugging the subject, tangled yet even in thickness
   if (env.fringe) {
@@ -368,29 +381,12 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       rim = 0
       for (let i = 0; i < shellMol.atomCount; i += 7) rim = Math.max(rim, Math.hypot(shellMol.pos[i * 3]! - c0[0], shellMol.pos[i * 3 + 1]! - c0[1], shellMol.pos[i * 3 + 2]! - c0[2]))
     }
-    const t = env.fringe.thickness, back = -rim * 0.1
-    strandPanel(env.fringe, { centre: c0, hx: rim + t, hy: rim + t, z0: back, z1: -14, exclude: rim - 16, within: rim + t + 14 }, 'fringe')
-    // 乱线后面垫一层深一号的同色：线之间露出的是它，不是白纸（他画的荚膜是一片深绿上的浅绿线）
-    // a layer of the same hue, deeper, lies behind the strands: it shows between them where paper would (he paints the capsule as pale green lines on deep green)
-    const ops: Float32Array[] = []
-    const step = 16
-    for (let x = -(rim + t); x <= rim + t; x += step) for (let y = -(rim + t); y <= rim + t; y += step) {
-      const d = Math.hypot(x, y)
-      // 底只垫到这一圈的八成厚：外沿由线自己参差地伸出去 / the ground reaches eight tenths of the fringe's thickness: the outer edge is left to the strands, which reach out raggedly
-      if (d < rim - 14 || d > rim + t * 0.8) continue
-      ops.push(new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, c0[0] + x, c0[1] + y, c0[2] + back - 24, 1]))
-    }
-    const m: Molecule = {
-      id: 'fringe-ground', title: 'ground', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([step * 0.9]),
-      chainOf: new Uint32Array(1), isTrace: new Uint8Array(1), residue: new Int32Array([1]),
-      chains: [{ asymId: 'G', authAsymId: 'G', entity: 0, start: 0, count: 1, model: 1 }], entities: [{ id: 'fringe-ground', description: 'ground', kind: 'protein' }],
-      assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: ops }] }],
-    }
-    const deep: [number, number, number] = [Math.max(0.2, env.fringe.lch[0] - 0.2), env.fringe.lch[1], env.fringe.lch[2]]
-    panels.push({
-      spec: { label: `${env.fringe.name}：底色`, labelEn: `${env.fringe.nameEn}: ground`, source: source('ground', undefined), assembly: 'inferred', entities: [{ entityId: 'fringe-ground', role: 'extracellular', name: '底色', nameEn: 'ground', description: 'ground', organism: '' }], reason: '' },
-      mol: m, coloring: { roles: ['extracellular'], hueShift: [0], nudge: [0], override: [deep] }, align: null, keepBack: true, oneId: true,
-    })
+    // 整整一层球壳，不是切面后面的一圈：线数按体积补 / a whole spherical shell, not a ring behind the cut: the strand count is topped up by volume
+    const t = env.fringe.thickness
+    strandPanel({ ...env.fringe, count: Math.min(7000, Math.round(env.fringe.count * 20)) }, { centre: c0, hx: rim + t, hy: rim + t, z0: -(rim + t), z1: rim + t, exclude: rim - 16, within: rim + t + 14 }, 'fringe')
+    // 乱线后面垫一层深一号的同色（一个球壳，切开后是后面的半个碗）：线之间露出的是它，不是白纸
+    // a deeper shade of the same hue lies behind the strands (a spherical shell, of which the cut leaves the bowl at the back): it shows between them where paper would
+    panels.push(groundShell('fringe-ground', c0, rim + t * 0.8, [Math.max(0.2, env.fringe.lch[0] - 0.2), env.fringe.lch[1], env.fringe.lch[2]], source('ground', undefined)))
   }
   notes.push({ key: env.replace ? 'note.rethreaded' : env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
   return panels
@@ -438,7 +434,7 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
   }
   let template = templateOf(sub, sub.chains.map((_, i) => i), centre)
   if (EXAGGERATE()) {
-    template = exaggerate(sub, template, { stretch: 1, stalk: 0.8, head: 1.15, split: 0.45, lobes: 16 })
+    template = exaggerate(sub, template, entry.respike!.shape ?? { stretch: 1, stalk: 0.8, head: 1.15, split: 0.45, lobes: 16 })
     notes.push({ key: 'note.exaggerated' })
   }
   const had = group.operators.length
@@ -463,18 +459,17 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
 }
 
 /**
- * 一片垫在后面的底色：一个圆环（或圆盘）形的薄层小球，颜色深一号，衬在切片后面。东西之间的空隙里露出的是它，不是白纸。
- * A ground laid behind: a thin layer of small spheres in a ring (or disc), of a deeper colour, lining the back of the slab. Gaps between things show it and not paper.
+ * 垫在后面的底色：一个球壳上的一层小球，颜色深一号。切面把朝观察者的半个切掉，剩下的半个像一只碗衬在后面，
+ * 东西之间的空隙里露出的是它，不是白纸。它是立体的，所以转到哪个角度都成立。
+ * A ground laid behind: one layer of small spheres on a spherical shell, in a deeper colour. The cut
+ * removes the half towards the viewer and the rest lines the back like a bowl, so that gaps between
+ * things show it and not paper. It is a solid, and holds from any angle.
  */
-function groundRing(id: string, centre: V3, inner: number, outer: number, z: number, lch: [number, number, number], source: PanelSpec['source']): Panel {
-  const size = Math.max(10, outer / 40)
-  const ops: Float32Array[] = []
-  for (let x = -outer; x <= outer; x += size) for (let y = -outer; y <= outer; y += size) {
-    const d = Math.hypot(x, y)
-    if (d >= inner && d <= outer) ops.push(new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, centre[0] + x, centre[1] + y, centre[2] + z, 1]))
-  }
+function groundShell(id: string, centre: V3, radius: number, lch: [number, number, number], source: PanelSpec['source']): Panel {
+  const size = Math.max(9, radius / 40)
+  const ops = fibonacciSphere(Math.round((4 * Math.PI * radius * radius) / (size * size))).map((d) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, centre[0] + d[0] * radius, centre[1] + d[1] * radius, centre[2] + d[2] * radius, 1]))
   const m: Molecule = {
-    id, title: 'ground', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([size * 0.95]),
+    id, title: 'ground', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([size * 1.1]),
     chainOf: new Uint32Array(1), isTrace: new Uint8Array(1), residue: new Int32Array([1]),
     chains: [{ asymId: 'G', authAsymId: 'G', entity: 0, start: 0, count: 1, model: 1 }], entities: [{ id: 'ground', description: 'ground', kind: 'protein' }],
     assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: ops }] }],
@@ -575,6 +570,18 @@ function arrange(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
     for (let d = 0; d < 3; d++) c[d]! /= Math.max(1, n)
     const distance = Math.hypot(c[0] - centre[0], c[1] - centre[1], c[2] - centre[2])
     const up: V3 = [(c[0] - centre[0]) / distance, (c[1] - centre[1]) / distance, (c[2] - centre[2]) / distance]
+    // whiskers [拉长, 收细]：膜外的那一截沿法线拉长、横向收细，成一根根细长的须（他画的小泡是这样的）。这是夸张
+    // whiskers [stretch, narrow]: the part outside the membrane is stretched along the normal and narrowed across it, into long thin whiskers (as on the vesicles he paints). This is an exaggeration
+    if (spec.whiskers && EXAGGERATE()) for (const ci of own) {
+      const ch = sub.chains[ci]!
+      for (let i = ch.start; i < ch.start + ch.count; i++) {
+        const q: V3 = [sub.pos[i * 3]! - centre[0], sub.pos[i * 3 + 1]! - centre[1], sub.pos[i * 3 + 2]! - centre[2]]
+        const h = q[0] * up[0] + q[1] * up[1] + q[2] * up[2]
+        const out = Math.max(0, h - (mid + 19))
+        const k = out > 0 ? spec.whiskers[1] : 1
+        for (let d = 0; d < 3; d++) sub.pos[i * 3 + d] = centre[d]! + up[d]! * (h + out * (spec.whiskers[0] - 1)) + (q[d]! - up[d]! * h) * k
+      }
+    }
     groups.push({ chains: own, operators: placeTemplate({ origin: c, up, distance, tilt: 0 }, centre, mine[j]!) })
     k.g.chains = k.g.chains.filter((ci) => !k.chains.includes(ci))
   })
@@ -592,6 +599,7 @@ function arrange(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
     for (const [pattern, lch] of entry.colors ?? []) if (new RegExp(pattern, 'i').test(e.description)) coloring.override[i] = lch
   })
   notes.push({ key: 'note.arranged', params: { count: total, kinds: kinds.length } })
+  if (spec.whiskers && EXAGGERATE()) notes.push({ key: 'note.whiskers' })
   const source = (id: string): PanelSpec['source'] => ({ id, kind: 'model', title: entry.titleEn, method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), resolution: null, year: null, tier: 'estimated', licence: entry.licence, attribution: entry.attribution, citation: entry.citation, link: entry.link })
   const shellMol = shellMembrane(centre, mid - 19, mid + 19, `${model.id}:membrane`)
   shellMol.assemblies.push({ id: 'inferred', groups: [{ chains: [0], operators: [IDENTITY] }] })
@@ -677,16 +685,19 @@ function strung(entry: CatalogEntry, model: Molecule, assembly: string, notes: N
     for (const b of beads) for (let k = 0; k < 3; k++) mid[k]! += b[k]! / beads.length
     const cavity = Math.max(...beads.map((b) => Math.hypot(b[0] - mid[0], b[1] - mid[1], b[2] - mid[2]))) - reach * 0.1
     const rand = rng(11)
-    const front = serpentine(mid, cavity, spec.fill, -spec.fill * 0.45, rand, 0.3), behind = serpentine(mid, cavity * 0.96, spec.fill, -spec.fill * 1.5, rand, 1.4)
-    const pos = new Float32Array(front.pos.length + behind.pos.length)
-    pos.set(front.pos)
-    pos.set(behind.pos, front.pos.length)
-    // 线抬到珠子朝观察者的那一面上：他画的线是压在珠子上的一道浅色的波浪，埋在珠子中间就看不见了
-    // the line is lifted onto the side of the beads that faces the viewer: he paints it as a pale wave lying over the beads, and buried among them it would not show
-    for (let i = 2; i < pos.length; i += 3) pos[i] = pos[i]! + (i < front.pos.length ? Math.min(reach * 0.4, spec.fill * 0.45 - 6) : reach * 0.4)
-    const segs = new Uint32Array(front.segments.length + behind.segments.length)
-    segs.set(front.segments)
-    behind.segments.forEach((v, k) => (segs[front.segments.length + k] = v + front.pos.length / 3))
+    // 一层层叠满整个腔（不是只在切面后面放两层）：每层是一条来回折的线，层与层转一个角度。切面露出哪一层就看见哪一层，转到哪个角度都成立
+    // layers are stacked through the whole cavity (not two layers behind the cut): each is one line folded back and forth, turned from the one before. The cut shows whichever layer it meets, and it holds from any angle
+    const layers: ReturnType<typeof serpentine>[] = []
+    for (let k = 0, z = -spec.fill * 0.45; z > -cavity; k++, z -= spec.fill) layers.push(serpentine(mid, Math.sqrt(cavity * cavity - z * z) * 0.97, spec.fill, z, rand, 0.3 + k * 1.1))
+    for (let k = 0, z = spec.fill * 0.55; z < cavity; k++, z += spec.fill) layers.push(serpentine(mid, Math.sqrt(cavity * cavity - z * z) * 0.97, spec.fill, z, rand, 0.9 + k * 1.1))
+    const pos = new Float32Array(layers.reduce((n, l) => n + l.pos.length, 0)), segs = new Uint32Array(layers.reduce((n, l) => n + l.segments.length, 0))
+    let pa = 0, sa = 0
+    for (const l of layers) {
+      pos.set(l.pos, pa)
+      l.segments.forEach((v, k) => (segs[sa + k] = v + pa / 3))
+      pa += l.pos.length
+      sa += l.segments.length
+    }
     t = { pos, segments: segs }
     const g0 = asm.groups.find((g) => g.chains.some((ci) => re.test(model.entities[model.chains[ci]!.entity]!.description)))!
     const chain = g0.chains.filter((ci) => re.test(model.entities[model.chains[ci]!.entity]!.description)).sort((a, b) => model.chains[b]!.count - model.chains[a]!.count)[0]!
@@ -697,38 +708,23 @@ function strung(entry: CatalogEntry, model: Molecule, assembly: string, notes: N
       const R = randomRotation(rand)
       return new Float32Array([R[0]!, R[1]!, R[2]!, 0, R[3]!, R[4]!, R[5]!, 0, R[6]!, R[7]!, R[8]!, 0, b[0] - (R[0]! * c[0] + R[3]! * c[1] + R[6]! * c[2]), b[1] - (R[1]! * c[0] + R[4]! * c[1] + R[7]! * c[2]), b[2] - (R[2]! * c[0] + R[5]! * c[1] + R[8]! * c[2]), 1])
     }
-    const ops = front.beads.map(place), opsBehind = behind.beads.map(place)
+    const ops = layers.flatMap((l) => l.beads).map(place)
     sub.assemblies.push({ id: 'inferred', groups: [{ chains: [0], operators: ops }] })
     const lch = entry.colors?.find(([pattern]) => new RegExp(pattern, 'i').test(sub.entities[0]!.description))?.[1] ?? entry.hues?.['nucleic-binding'] ?? [0.72, 0.12, 290]
     extra.push({
       spec: { label: `${spec.beadName ?? spec.name}（推断的排布）`, labelEn: `${spec.beadNameEn ?? spec.nameEn} (inferred arrangement)`, source: { id: `${entry.id}:beads`, kind: 'model', title: spec.nameEn, method: tIn('zh', 'method.inferredCount'), methodEn: tIn('en', 'method.inferredCount'), resolution: null, year: null, tier: 'estimated', licence: entry.licence, attribution: entry.attribution, citation: spec.basisEn, link: entry.link }, assembly: 'inferred', entities: [{ entityId: sub.entities[0]!.id, role: 'nucleic-binding', name: spec.beadName ?? spec.name, nameEn: spec.beadNameEn ?? spec.nameEn, description: sub.entities[0]!.description, organism: '' }], reason: '' },
       mol: sub, coloring: { roles: ['nucleic-binding'], hueShift: [0], nudge: [0], override: [lch as [number, number, number]] }, align: null, keepBack: true,
     })
-    // 最后面垫一层更深的同色：珠子之间的空隙里露出的是它，珠子才一个个分得开
-    // a still deeper shade of the same hue lies at the very back: it shows in the gaps between beads, which is what sets them apart one from another
+    // 腔的内壁垫一层更深的同色（见 groundShell）：珠子之间的空隙里露出的是它，珠子才一个个分得开
+    // a still deeper shade of the same hue lines the cavity's wall (see groundShell): it shows in the gaps between beads, which is what sets them apart one from another
     {
-      const gops: Float32Array[] = []
-      for (let x = -cavity; x <= cavity; x += 14) for (let y = -cavity; y <= cavity; y += 14) if (Math.hypot(x, y) < cavity) gops.push(new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, mid[0] + x, mid[1] + y, mid[2] - spec.fill * 2.3, 1]))
-      const gm: Molecule = {
-        id: `${model.id}:cavity`, title: 'ground', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([13]),
-        chainOf: new Uint32Array(1), isTrace: new Uint8Array(1), residue: new Int32Array([1]),
-        chains: [{ asymId: 'G', authAsymId: 'G', entity: 0, start: 0, count: 1, model: 1 }], entities: [{ id: 'cavity', description: 'ground', kind: 'protein' }],
-        assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: gops }] }],
-      }
       const l = lch as number[]
-      extra.push({ ...extra[0]!, spec: { ...extra[0]!.spec, label: '里面的底色', labelEn: 'the ground inside', source: { ...extra[0]!.spec.source, id: `${entry.id}:cavity` }, entities: [{ entityId: 'cavity', role: 'nucleic-binding', name: '里面的底色', nameEn: 'the ground inside', description: 'ground', organism: '' }] }, mol: gm, coloring: { roles: ['nucleic-binding'], hueShift: [0], nudge: [0], override: [[l[0]! - 0.32, l[1]! * 0.9, l[2]!]] }, oneId: true })
+      extra.push(groundShell(`${entry.id}:cavity`, mid, cavity + 8, [l[0]! - 0.2, l[1]! * 0.9, l[2]!], extra[0]!.spec.source))
     }
-    // 后面一层用深一号的同色：两层才分得开（整幅画的景深档太粗，分不出相隔几十 Å 的两层）
-    // the layer behind takes a deeper shade of the same hue, which is what tells the two layers apart (the picture's depth steps are too coarse to separate layers a few tens of Å apart)
-    const subBehind = subMolecule(model, [chain], `${model.id}:beads-behind`, spec.nameEn)
-    if (EXAGGERATE()) lobed(subBehind, undefined, 0.8)
-    subBehind.assemblies.push({ id: 'inferred', groups: [{ chains: [0], operators: opsBehind }] })
-    const deep = [(lch as number[])[0]! - 0.1, (lch as number[])[1]!, (lch as number[])[2]!] as [number, number, number]
-    extra.push({ ...extra[0]!, spec: { ...extra[0]!.spec, source: { ...extra[0]!.spec.source, id: `${entry.id}:beads-behind` } }, mol: subBehind, coloring: { roles: ['nucleic-binding'], hueShift: [0], nudge: [0], override: [deep] } })
     for (const g of asm.groups) g.chains = g.chains.filter((ci) => !re.test(model.entities[model.chains[ci]!.entity]!.description))
     asm.groups = asm.groups.filter((g) => g.chains.length > 0)
     if (EXAGGERATE()) notes.push({ key: 'note.lobed' })
-    notes.push({ key: 'note.strungFill', params: { had: beads.length, count: ops.length + opsBehind.length, basis: spec.basis, basisEn: spec.basisEn } })
+    notes.push({ key: 'note.strungFill', params: { had: beads.length, count: ops.length, basis: spec.basis, basisEn: spec.basisEn } })
   } else {
     t = stringThrough(beads, reach, plane)
     notes.push({ key: 'note.strung', params: { count: beads.length, basis: spec.basis, basisEn: spec.basisEn } })
@@ -840,7 +836,7 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
       const sub = subMolecule(model, [...chosen.g, ...chosen.g.flatMap((ci) => sugarOf.get(ci) ?? [])], `${model.id}:${id}`, titleEn)
       // 糖链和它所在的蛋白同色：他把糖链画成蛋白轮廓的一部分，不另外上色 / glycans take the colour of the protein they sit on: he paints them as part of the protein's outline, not in a colour of their own
       // 夸张：柄拉长收细、头放宽（只有刺，M2 不动）/ exaggeration: stalk stretched and narrowed, head widened (spikes only, not M2)
-      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.75, head: 1.0, split: 0.55, lobes: 6 }) : chosen.t
+      const tpl = EXAGGERATE() && id !== 'M2' ? exaggerate(sub, templateOf(sub, sub.chains.map((_, i) => i).filter((i) => !/glycan/i.test(sub.entities[sub.chains[i]!.entity]!.description)), membrane.centre), id === 'neuraminidase' ? { stretch: 1.25, stalk: 0.5, head: 1.15, split: 0.5 } : { stretch: 1.4, stalk: 0.75, head: 1.0, split: 0.55, lobes: 6, ripple: [9, 26] }) : chosen.t
       const own = lch(sub.entities.find((e) => !/glycan/i.test(e.description)) ?? sub.entities[0]!)
       const panel = make(sub, `${model.id}:${id}`, title, titleEn, placeTemplate(tpl, membrane.centre, where), () => own, (e) => [e.description, e.description])
       panel.spec.source = { ...panel.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
@@ -852,9 +848,9 @@ async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model
     for (const a of model.assemblies) a.groups = []
     outside.unshift(make(shellMembrane(membrane.centre, membrane.mid - 19, membrane.mid + 19, `${model.id}:membrane`), `${model.id}:membrane`, '膜（理想化的球壳）', 'Membrane (idealised shell)', [IDENTITY], () => MEMBRANE_LCH, () => ['膜', 'membrane']))
     outside[0]!.spec.source = { ...outside[0]!.spec.source, kind: 'model', method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), licence: tIn('zh', 'licence.none'), licenceEn: tIn('en', 'licence.none'), attribution: '', citation: '', link: undefined }
-    // 刺的后面垫一圈深靛色：柄之间的缝里露出的是它，不是白纸（他的画里那里是深靛色的后排刺）
-    // a ring of deep indigo lies behind the spikes: the slits between stalks show it and not paper (in his painting the darker rows behind show there)
-    outside.unshift(groundRing(`${model.id}:ground`, membrane.centre, membrane.mid, membrane.mid + 19 + 150, -70, [0.42, 0.09, 285], outside[0]!.spec.source))
+    // 刺的后面垫一只深靛色的碗（见 groundShell）：柄之间的缝里露出的是它，不是白纸（他的画里那里是深靛色的后排刺）
+    // a bowl of deep indigo lies behind the spikes (see groundShell): the slits between stalks show it and not paper (in his painting the darker rows behind show there)
+    outside.unshift(groundShell(`${model.id}:ground`, membrane.centre, membrane.mid + 19 + 168, [0.42, 0.09, 285], outside[0]!.spec.source))
     tilts.sort((a, b) => a - b)
     if (EXAGGERATE()) notes.push({ key: 'note.exaggerated' })
     notes.push({ key: 'note.idealised', params: { ha: ha.length, na: na.length, m2: m2.length, tilt: Math.round(tilts[Math.floor(tilts.length / 2)] ?? 0) } })
@@ -1190,6 +1186,27 @@ export const useStore = create<State>((set, get) => ({
         for (let i = 0; i < shellOf.atomCount; i++) for (let k = 0; k < 3; k++) c[k]! += shellOf.pos[i * 3 + k]! / shellOf.atomCount
         let rim = 0
         for (let i = 0; i < shellOf.atomCount; i += 7) rim = Math.max(rim, Math.hypot(shellOf.pos[i * 3]! - c[0], shellOf.pos[i * 3 + 1]! - c[1], shellOf.pos[i * 3 + 2]! - c[2]))
+        // 两个连通：每个细胞越过两者中间那个平面的部分都去掉（膜、膜上的蛋白、里面的东西），相接处是一个开口，不是两层膜。
+        // 第二个是第一个转了半圈，所以“第一个越过平面的部分”转过去正好是“第二个越过平面的部分”，只需要去一次。
+        // The two are joined: whatever of each cell lies past the plane midway between them is removed (membrane, its proteins, what is inside), so they meet at an opening and not at two membranes.
+        // The second is the first turned half a circle, so "what of the first lies past the plane" turns into "what of the second lies past it", and removing once does for both.
+        const plane = c[0] + (rim * entry.twin) / 2
+        for (const p of [{ mol } as Panel, ...inferred]) {
+          const pm = p.mol
+          for (const a of pm.assemblies) for (const g of a.groups) {
+            if (g.operators.length > 1) {
+              const c0 = chainCentre(pm, g.chains[0]!)
+              g.operators = g.operators.filter((op) => op[0]! * c0[0] + op[4]! * c0[1] + op[8]! * c0[2] + op[12]! <= plane)
+            } else if (g.operators.length === 1) {
+              const op = g.operators[0]!
+              if (!pm.radius) pm.radius = new Float32Array(pm.atomCount).fill(1.7)
+              for (const ci of g.chains) {
+                const ch = pm.chains[ci]!
+                for (let i = ch.start; i < ch.start + ch.count; i++) if (op[0]! * pm.pos[i * 3]! + op[4]! * pm.pos[i * 3 + 1]! + op[8]! * pm.pos[i * 3 + 2]! + op[12]! > plane) pm.radius[i] = -1
+              }
+            }
+          }
+        }
         const m = new Float32Array([-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 2 * c[0] + rim * entry.twin, 2 * c[1], 0, 1])
         for (const p of [{ spec, mol, coloring, align: null } as Panel, ...inferred]) twins.push({ ...p, align: m, spec: { ...p.spec, label: `${p.spec.label}（第二个，示意）`, labelEn: `${p.spec.labelEn ?? p.spec.label} (the second, schematic)`, source: { ...p.spec.source, id: `${p.spec.source.id}:twin` } } })
         inferred.push(...twins)
@@ -1200,16 +1217,18 @@ export const useStore = create<State>((set, get) => ({
       const scene: SceneSpec = { topic: entry.title, kind: mesoscale ? 'model' : 'virus', title: entry.title, titleEn: entry.titleEn, caption: entry.caption, captionEn: entry.captionEn, catalog: entry.id, ...(entry.lining ? { lining: entry.lining } : {}), ...(inferred.length ? { overlay: true } : {}), panels: [spec], notes, mesoscale, merge: entry.merge, ...(dots ? { dots } : {}) }
       set((s) => ({
         spec: scene,
-        panels: [{ spec, mol, coloring, align: null }, ...inferred],
+        // 单个结构加了环境：结构本身不切，环境切掉朝观察者的一半，不然它被挡在环境后面
+        // a single structure with surroundings: the structure itself is left whole and the half of the surroundings towards the viewer is cut away, or it would be hidden behind them
+        panels: [{ spec, mol, coloring, align: null, ...(!mesoscale && surroundings.length ? { noCut: true } : {}) }, ...inferred],
         colorings: [coloring, ...inferred.map((p) => p.coloring)],
         ...freshLook(),
         // 很大的模型默认放大到中间一块：整个画出来时每个分子只有几个像素，什么也看不清
         // a very large model opens zoomed in on its middle: drawn whole, each molecule is a few pixels and nothing can be made out
         // 周围铺了环境的，画面跟着环境变大了，按同样的比例放大回来，对象在画面里的大小不变
         // where surroundings were laid, the frame grew with them; zooming by the same ratio keeps the subject the size it was
-        zoom: (entry.zoom ?? 1) * (surroundings.length && !entry.environment?.inside && !entry.environment?.outside ? SPREAD / 1.5 : 1),
-        cut: entry.cut ?? 0,
-        cutDefault: entry.cut ?? 0,
+        zoom: (entry.zoom ?? 1) * (surroundings.length && !entry.environment?.inside && !entry.environment?.outside ? (SPREAD / 1.5) * 1.1 : 1),
+        cut: entry.cut ?? (!mesoscale && surroundings.length ? 0.5 : 0),
+        cutDefault: entry.cut ?? (!mesoscale && surroundings.length ? 0.5 : 0),
         style: (() => {
           const st = styleFor(mesoscale ? 'mesoscale' : 'molecule', get().drawing)
           // 很大的单个结构（整个衣壳）：每个原子不到一个像素，不平滑就是一片麻点 / a very large single structure (a whole capsid): an atom is under a pixel, and without smoothing it is all speckle

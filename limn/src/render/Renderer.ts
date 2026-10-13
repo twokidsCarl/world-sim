@@ -468,6 +468,9 @@ export class Renderer {
     if (this.items.some((it) => it.seg)) {
       const c = this.capsule
       common(c)
+      // 线（核酸、长链）的切片深一倍半，和成节的纤维一样：线是长长的一股，从前面的分子后面穿过去，不被切成一小段一小段
+      // lines (nucleic acid, long chains) get a slab two and a half times as deep, as pieced fibres do: a strand runs long and passes behind the molecules in front and is not cut into short pieces
+      if (view.clipBack !== undefined && Number.isFinite(view.clipFront)) gl.uniform1f(this.u(c, 'u_clipBack'), view.clipBack - (view.clipFront - view.clipBack) * 1.5)
       gl.uniform1i(this.u(c, 'u_seg'), 5)
       gl.uniform3f(this.u(c, 'u_layer'), layers, span[0], span[1])
       gl.uniform2f(this.u(c, 'u_fogKeep'), style.fog.front, style.fog.back)

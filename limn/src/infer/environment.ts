@@ -97,23 +97,46 @@ export interface Placed {
  * fit is left out, and what was placed is returned, each as a column-major 4x4 that turns at random
  * about `origin` and then carries `origin` to its place.
  */
+/** 已摆好的东西的空间格子，免得每摆一个都把所有的查一遍 / a spatial grid of what is already placed, so that placing one does not mean checking them all */
+const GRIDS = new WeakMap<Placed[], { cell: number; maxR: number; cells: Map<number, Placed[]>; seen: number }>()
+const cellKey = (x: number, y: number, z: number) => (x + 2048) * 16777216 + (y + 2048) * 4096 + (z + 2048)
+
 export function scatter(count: number, radius: number, origin: V3, box: Box, rand: () => number, placed: Placed[], squeeze = 0.75): Float32Array[] {
   const out: Float32Array[] = []
+  let grid = GRIDS.get(placed)
+  if (!grid) GRIDS.set(placed, (grid = { cell: Math.max(40, radius * 2), maxR: 0, cells: new Map(), seen: 0 }))
+  const add = (q: Placed) => {
+    const k = cellKey(Math.floor(q.p[0] / grid!.cell), Math.floor(q.p[1] / grid!.cell), Math.floor(q.p[2] / grid!.cell))
+    const list = grid!.cells.get(k)
+    if (list) list.push(q)
+    else grid!.cells.set(k, [q])
+    grid!.maxR = Math.max(grid!.maxR, q.r)
+  }
+  for (; grid.seen < placed.length; grid.seen++) add(placed[grid.seen]!)
   for (let tries = 0; out.length < count && tries < count * 60; tries++) {
     const p: V3 = [box.centre[0] + (rand() * 2 - 1) * box.hx, box.centre[1] + (rand() * 2 - 1) * box.hy, box.centre[2] + box.z0 + rand() * (box.z1 - box.z0)]
     const far = Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2])
-    if (far < box.exclude + radius * 0.6 || (box.within !== undefined && far > box.within - radius * 0.8)) continue
+    if (far < box.exclude + radius || (box.within !== undefined && far > box.within - radius * 0.8)) continue
     if (box.free && !box.free(p)) continue
     let clash = false
-    for (const q of placed) {
-      const d = (q.r + radius) * squeeze
-      if (Math.abs(q.p[0] - p[0]) < d && Math.abs(q.p[1] - p[1]) < d && Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]) < d) {
-        clash = true
-        break
+    const reach = Math.ceil(((grid.maxR + radius) * squeeze) / grid.cell)
+    const cx = Math.floor(p[0] / grid.cell), cy = Math.floor(p[1] / grid.cell), cz = Math.floor(p[2] / grid.cell)
+    for (let dx = -reach; dx <= reach && !clash; dx++) for (let dy = -reach; dy <= reach && !clash; dy++) for (let dz = -reach; dz <= reach && !clash; dz++) {
+      const list = grid.cells.get(cellKey(cx + dx, cy + dy, cz + dz))
+      if (!list) continue
+      for (const q of list) {
+        const d = (q.r + radius) * squeeze
+        if (Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]) < d) {
+          clash = true
+          break
+        }
       }
     }
     if (clash) continue
-    placed.push({ p, r: radius })
+    const mine = { p, r: radius }
+    placed.push(mine)
+    add(mine)
+    grid.seen = placed.length
     const R = randomRotation(rand)
     out.push(new Float32Array([
       R[0]!, R[1]!, R[2]!, 0, R[3]!, R[4]!, R[5]!, 0, R[6]!, R[7]!, R[8]!, 0,
@@ -147,8 +170,8 @@ export function threads(count: number, length: number, step: number, box: Box, r
       const far = Math.hypot(p[0] - box.centre[0], p[1] - box.centre[1], p[2] - box.centre[2])
       if (far > box.exclude + 20 && (box.within === undefined || far < box.within - 20) && (!box.free || box.free(p))) break
     }
-    // 主要在画面平面里走，深度方向只小幅起伏 / it runs mostly in the plane of the picture, wavering only a little in depth
-    let d = norm([rand() * 2 - 1, rand() * 2 - 1, (rand() * 2 - 1) * 0.2])
+    // 各个方向一样：环境是立体的，从哪个角度看都成立 / the same in every direction: the environment is a solid, and holds from any angle of view
+    let d = norm([rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1])
     const n = Math.round(length / step)
     let last = -1
     for (let i = 0; i < n; i++) {
@@ -168,7 +191,7 @@ export function threads(count: number, length: number, step: number, box: Box, r
       }
       // 方向每步只偏一点：长链是平缓的弯，不是乱团（偏得多时几十条线缠成一张网）
       // the heading shifts only a little each step: a long chain bends gently and does not tangle (with more, a few dozen strands knot into a net)
-      d = norm([d[0] + (rand() * 2 - 1) * wander, d[1] + (rand() * 2 - 1) * wander, d[2] + (rand() * 2 - 1) * wander * 0.3])
+      d = norm([d[0] + (rand() * 2 - 1) * wander, d[1] + (rand() * 2 - 1) * wander, d[2] + (rand() * 2 - 1) * wander])
       // 碰到对象就沿着它的表面滑开；碰到盒子的边就折回 / on meeting the subject it slides off along its surface; on meeting a wall it turns back
       const q: V3 = [p[0] + d[0] * step, p[1] + d[1] * step, p[2] + d[2] * step]
       const c: V3 = [q[0] - box.centre[0], q[1] - box.centre[1], q[2] - box.centre[2]]
@@ -188,8 +211,14 @@ export function threads(count: number, length: number, step: number, box: Box, r
       if (c[2] > box.z1) d[2] = -Math.abs(d[2])
       const next: V3 = [p[0] + d[0] * step, p[1] + d[1] * step, p[2] + d[2] * step]
       // 前面不是空的（撞上了形状不规则的对象）：掉头，这一步不走 / what lies ahead is not free (it has met a subject of irregular shape): turn round and stay put this step
+      // 也不许进对象的范围：贴着表面滑有时滑不开，线就钻进去挡在对象前面了；钻进去的那一步改成朝外走
+      // nor may it enter the subject's range: sliding along the surface sometimes fails and the strand ends up inside, in front of the subject; a step that would enter goes outward instead
+      const nr = Math.hypot(next[0] - box.centre[0], next[1] - box.centre[1], next[2] - box.centre[2])
       if (box.free && !box.free(next)) d = norm([-d[0] + (rand() - 0.5), -d[1] + (rand() - 0.5), d[2]])
-      else p = next
+      else if (box.exclude > 0 && nr < box.exclude + 6) {
+        d = norm([(p[0] - box.centre[0]) / Math.max(1, nr) + (rand() - 0.5) * 0.6, (p[1] - box.centre[1]) / Math.max(1, nr) + (rand() - 0.5) * 0.6, (p[2] - box.centre[2]) / Math.max(1, nr) + (rand() - 0.5) * 0.6])
+        // 分叉也可能伸进去；这里只管主线，分叉很短 / a branch may reach in as well; only the main course is handled here, and branches are short
+      } else p = next
     }
   }
   return { pos: new Float32Array(pos), segments: new Uint32Array(seg) }

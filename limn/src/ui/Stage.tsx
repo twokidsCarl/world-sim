@@ -227,7 +227,7 @@ export function Stage() {
     } else if (st.spec?.mesoscale) {
       r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, TONE_LANDSCAPE, { assembly: p.spec.assembly, molecule: i * 4_000_000, perCopy: true, matrix: p.align ?? undefined, keepBack: p.keepBack, oneId: p.oneId, lining: st.spec?.lining ? new RegExp(st.spec.lining, 'i') : undefined, merge: st.spec?.merge ? new RegExp(st.spec.merge, 'i') : undefined, dots: st.spec?.dots, trueFibre: st.drawing === 'painted' })))
     } else {
-      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, st.drawing === 'painted' ? TONE_PAINTED : TONE_MOLECULE, { assembly: p.spec.assembly, molecule: i, matrix: p.align ?? undefined, noCut: p.noCut }, p.annotation)))
+      r.setScene(panels.map((p, i) => buildItem(p.mol, cs[i] ?? p.coloring, st.drawing === 'painted' ? TONE_PAINTED : TONE_MOLECULE, { assembly: p.spec.assembly, molecule: p.perCopy ? i * 4_000_000 : i, matrix: p.align ?? undefined, noCut: p.noCut, perCopy: p.perCopy }, p.annotation)))
     }
     draw(false)
   }, [sceneRev])
