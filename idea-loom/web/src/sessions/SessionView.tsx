@@ -100,7 +100,7 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
     ['plan', '先出计划', 'Plan first', '只调研、写计划，不动手；计划等你批准', 'It only investigates and plans; the plan waits for your approval'],
     ['default', '每次问我', 'Ask every time', '改文件、跑命令都先问你', 'File edits and commands all ask you first'],
     ['acceptEdits', '改文件不用问', 'Edits without asking', '改文件直接做，跑命令仍然问', 'File edits just happen; commands still ask'],
-    ['auto', '自动', 'Auto', '常规的事直接做，不停下来；删除、推送、往文件里重定向这类仍然每次问你，它有问题要问你时也会停', 'Routine steps just happen without stopping; deleting, pushing, redirecting into files and the like still ask every time, and it stops when it has a question for you'],
+    ['auto', '自动', 'Auto', '常规的事直接做，不停下来；碰到仓库外面的删除和写入、sudo、推送这类仍然每次问你，它有问题要问你时也会停', 'Routine steps just happen without stopping; deleting or writing outside the repository, sudo, pushing and the like still ask every time, and it stops when it has a question for you'],
   ]
   // 需要你、或者做完了：不在这一页时通知，并在标签页标题上做记号。 / Needs you, or done: notify when you are elsewhere and mark the tab title.
   const was = useRef<string>('')
