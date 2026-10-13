@@ -113,12 +113,26 @@ export interface Skin {
   midX: number
   /** 1 = 顶点属身体左侧（+X），0 = 右侧 / 1 = vertex on the body's left (+X), 0 = on its right. */
   left: Uint8Array
+  /** 1 = 构造面顶点（睑缘内卷、口腔袋），不属体表，标签恒为 255 / 1 = construction vertex (lid rim, oral pouch), not body surface, label always 255. */
+  excluded: Uint8Array
+  /** 开口皮肤包的顶点标签（没有则全 0）/ Vertex tags of the opened skin package (all 0 without one). */
+  tags: Uint8Array
 }
 
 export const pos = (s: { positions: Float32Array }, i: number): V3 => [s.positions[i * 3]!, s.positions[i * 3 + 1]!, s.positions[i * 3 + 2]!]
 export const nrm = (s: Skin, i: number): V3 => [s.normals[i * 3]!, s.normals[i * 3 + 1]!, s.normals[i * 3 + 2]!]
 
-export function buildSkin(raw: RawMesh, midX = 0): Skin {
+/**
+ * tags：每个皮肤顶点的标签（开口皮肤包的 vertex-tags.u8，经 skin-source.u32 对应到出厂顶点），没有则不传。
+ * 睑缘内卷（8、9）和口腔袋（10–12）是头内的构造面而不是体表：不参与分区、测地和射线/最近点查询，标签恒为 255。
+ * 封闭的皮肤没有这些顶点，行为不变。
+ * tags: one tag per skin vertex (vertex-tags.u8 of the opened skin package, mapped to shipped
+ * vertices through skin-source.u32), or nothing. Lid rims (8, 9) and the oral pouch (10-12) are
+ * construction surfaces inside the head, not body surface: they take no part in the partition,
+ * the geodesics or the ray / closest-point queries, and their label is always 255. A closed skin
+ * has no such vertices and behaves as before.
+ */
+export function buildSkin(raw: RawMesh, midX = 0, tags?: Uint8Array): Skin {
   const { positions, indices } = raw
   const n = positions.length / 3
   const normals = new Float32Array(n * 3)
@@ -253,6 +267,8 @@ export function buildSkin(raw: RawMesh, midX = 0): Skin {
     }
   }
 
+  const excluded = new Uint8Array(n)
+  if (tags) for (let i = 0; i < n; i++) if (tags[i]! >= 8 && tags[i]! <= 12) { excluded[i] = 1; outer[i] = 0; covered[i] = 0 }
   const outerTris: number[] = []
   for (let t = 0; t < indices.length; t += 3) {
     const a = indices[t]!, b = indices[t + 1]!, c = indices[t + 2]!
@@ -261,7 +277,7 @@ export function buildSkin(raw: RawMesh, midX = 0): Skin {
   const outerBvh = new Bvh(positions, Uint32Array.from(outerTris))
   const outerOf = new Uint32Array(n)
   for (let i = 0; i < n; i++) {
-    if (outer[i]) { outerOf[i] = i; continue }
+    if (outer[i] || excluded[i]) { outerOf[i] = i; continue }
     const p = P(i)
     const c = outerBvh.closest(p)
     let best = -1, bd = Infinity
@@ -339,7 +355,7 @@ export function buildSkin(raw: RawMesh, midX = 0): Skin {
     }
     for (const comp of comps) if (comp.length < 100) for (const v of comp) left[v] = left[v] ? 0 : 1
   }
-  return { n, positions, indices, normals, outer, covered, doubleWalled, area, adjStart, adj, adjLen, geoStart, geo, geoLen, outerOf, outerBvh, midX, left }
+  return { n, positions, indices, normals, outer, covered, doubleWalled, area, adjStart, adj, adjLen, geoStart, geo, geoLen, outerOf, outerBvh, midX, left, excluded, tags: tags ?? new Uint8Array(n) }
 }
 
 export const sideOf = (s: Skin, i: number): 'L' | 'R' => (s.left[i] ? 'L' : 'R')

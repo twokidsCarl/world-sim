@@ -1,0 +1,90 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第十一部分：男性重新拟合（手臂外展后的内部结构，键 169209ce67d8bd76）
+
+male-skin/ 已在磁盘上更换（skin.obj 写于 10 月 12 日 09:54 之后的那次运行；补充渲染稍后重画）。fittedTo = { body: male, key: 169209ce67d8bd76 }。此前安装的那一版存为 male-skin-prev2/。形状场、rig-shape.json、shape-model.json 已重新生成。
+
+### 0. 还不对的地方（先说）
+1. 乳头在渲染里看不出来。转移的起伏只有 +3.0 / +2.8 mm，落在 4–5 个 MHR 顶点上（你说扫描上是 4–4.5 mm）；位置 x = +0.109 / −0.118，y = 1.111 / 1.104 m。那里 MHR 皮肤离扫描皮肤 8.5 mm（不是 1–2 mm：我的皮肤在胸前比扫描的靠外）。位置是按“每侧胸前最突出处 18 mm 内细起伏最高点”找的，我没有别的办法确认那就是乳头。
+2. 脐是一个粗糙的小坑：深 4.7 mm（你量的是 5.3），25 个顶点，渲染里是一个棱角分明的三角形凹陷，不像脐。位置 y = 0.958 m，对得上。
+3. 腋下不是“干净的褶”。上臂皮肤在躯干皮肤之内的面积（肱骨 25–40 / 40–50 / 50–60 / 60–85 %）：左 0.2 / 6.5 / 4.2 / 0，右 0.3 / 9.1 / 1.1 / 0 cm2，每侧约 11 cm2（上一版约 19）。60 % 以下间隙 ≥ 15 mm。腋前襞、腋后襞处各有一个台阶状的缺口，腋窝顶有一小片皱。原因：肌肉之间现在有 13–24 mm，但两层皮肤各带 8–15 mm 的脂肪空间，45–60 % 处还是放不下，腋下整形把它们各自收进去时留下了这些痕迹。
+4. 腋下整形之后有肌肉贴到或露出皮肤：背阔肌 4.0 / 3.6 mm（0.43 % / 0.35 % 的点），肱三头肌长头 1.5 / 0.2 mm。眼轮匝肌外环 1.5 / 1.0 mm（3–4 %），左颧小肌 0.2 mm——后两项和上一版一样，是保留 MHR 眼睑面的结果。
+5. 体积 BMI 24.28（目标 23.6；外推之前 23.60）。包住深部结构和浅层结构加了 0.7。
+6. 鼻根的横棱淡了但还在（正面头部图里是一条细线）；颅顶仍然偏高、偏鼓。颈静脉切迹处的缝和尖刺没有了，但从前下方看颈根部仍有几处小的不平。
+7. 姿势只重解了上臂、肘、前臂、腕的 14 个参数，其余固定。第一次我把全部参数放开，没有皮肤外形约束的足和躯干跑偏了（足部 60 % 的骨和肌肉露出，最远 62 mm，身高 1740 mm）；已改，这一版没有这个问题，但手指关节的残差比上一版略大（指尖 2–6 mm）。
+8. 对旧皮肤的残差偏移没有随手臂转动（小量，忽略了），也没有重新对扫描皮肤做外形拟合。
+9. 我没有用 tools/skinopen/ 在这张皮肤上实际跑一遍；眼睑区、唇区没有外推，鼻根的平滑避开了眼睑区，唇区没有任何平滑。
+10. 两大腿内侧皮肤相贴 21.1 / 26.2 cm2，没有处理。浅层结构仍有 0.28 % 的点在外，最远 4.8 mm。
+
+### 1. 做了什么
+- refit_pose.py（新）：保留身份系数和残差偏移，只重解上肢姿势。关节到 rig 中心（mm）：盂肱 1.7 / 2.1，肘 1.5 / 1.2，腕 2.7 / 2.0，髋 2.7 / 2.3，踝 2.7 / 2.1，膝 16.7 / 16.2（有意的小权重），跖趾 15.0 / 14.9。
+- refit_head.py：同上一版（眼关节到眼球中心 2.5 / 2.7 mm）。
+- enclose_skin.py：腋下整形改用女性的设置（从肱骨 26 % 起、单点至多 30 mm、两轮）；头部骨的那一遍放宽到 6 mm 并加宽；新增两处局部修整（颈静脉切迹 35 mm、鼻根 16 mm 内对顶点位置做拉普拉斯平滑，481 个顶点，最大移动 8.2 mm，之后没有骨在皮肤外）；新增 scan_details.py：脐和乳头从他自己的扫描皮肤（BodyParts3D FJ2810 外壁，即保存的 male-reference-skin.npz）转移，manifest.scanDetails 里标明是扫描数据的转移并给出来源和许可。
+- 外生殖器处仍是简单的包住隆起；脚趾是 MHR 原样。
+
+### 2. 表
+外推之前在皮肤外的深部结构采样点（838,175 个点，1276 个部件；肌 / 骨 / 器官 的比例 %，最远 mm）：头 2.7 / 0.9 / 0.0（7.3）；颈 2.3 / 0.0 / 4.8（10.0）；胸 0.0 / 0.1 / 0.6（37.6，器官）；腹 0.5 / 0.4 / 0.0（5.2）；骨盆 0.2 / 0.0 / 1.4（35.3）；大腿 1.4 / 0.0 / 91.1（23.3，外生殖器）；膝 3.1（7.3）；小腿 2.1（7.3）；足 0.0 / 1.4（3.3）；上臂 0.4（4.4）；前臂 0；手 1.7 / 0.2（3.0）；全部 0.9 / 0.4 / 0.8。
+围度（mm，括号内为标准）：胸 926（968），髂嵴腰 774（883），脐腰 779（831），臀 906（944），大腿根 530（566），大腿中段 516（483），大腿下段 394（380），小腿 393（358），踝 226（220），上臂 333（303），前臂 293（289），腕 176（169），颈 394（374）。身高 1724 mm。
+脂肪空间（皮肤到最近深部结构，p10 / p50 / p90，mm）：头 0.6 / 4.5 / 11.1（21 % 的皮肤不足 2 mm）；颈 3.5 / 6.8 / 14.9；肩 5.9 / 12.5 / 23.4；胸 4.4 / 8.2 / 13.6；腹 5.7 / 8.9 / 15.7；骨盆 6.8 / 15.0 / 27.9；大腿 6.3 / 13.8 / 27.2；膝 6.0 / 13.4 / 21.8；小腿 5.0 / 9.5 / 16.0；足 4.9 / 7.7 / 14.3；上臂 8.5 / 14.9 / 20.0；前臂 5.5 / 8.4 / 15.5；手 3.5 / 6.7 / 10.9。
+皮肤贴皮肤（cm2）：手 2.6 / 2.1，大腿 21.1 / 26.2，上臂（我的另一个量法，贴合在 1.5 mm 内）19.6 / 23.2。
+面部覆盖（最小 / p5 / 中位数）：鼻骨 1.8 / 2.0 / 3.2，眼轮匝肌外环 −1.5 / 0.2 / 3.9，颧小肌 −0.2 / 1.1 / 4.2，唇 0.1 / 0.3 / 3.8，角膜 0.8 / 1.1 / 2.8。
+
+### 3. 我看图看到的（这次都看了）
+- preview-skin.png：手臂外展，全身比例正常，脐是腹部正中一个小点；头偏大偏高。
+- closeup-axilla-below-front.png：从前下方看两侧腋窝是开的，上臂内侧和胸壁之间有清楚的空隙；腋前襞处各有一小片皱；乳头看不见；颈根有小的不平。
+- closeup-axilla-skin.png、closeup-axilla-right-skin.png：正面、侧面、背面。腋前、后襞处是台阶状的缺口，腋窝顶有一小片锯齿；不是干净的褶。
+- closeup-chest-nipples.png：胸肌轮廓清楚；看不出乳头。
+- closeup-navel.png：一个小的三角形凹坑。
+- closeup-neck.png：颈静脉切迹处平滑了，没有缝和尖刺。
+- closeup-head-front.png、closeup-face-skin.png：眼睑和唇平滑；鼻根有一条细的横线；颅顶高。（face-skin 那张是修整之前那次运行时看的；之后的那张我没有再打开。）
+
+### 4. 重新生成
+  bun tools/bodyshape/export-parts.ts male
+  python tools/bodyshape/refit_pose.py male ; python tools/bodyshape/refit_head.py male ; python tools/bodyshape/enclose_skin.py male
+  python tools/bodyshape/face_checks.py male ; python tools/bodyshape/male_renders.py ; python tools/bodyshape/shape_fields.py male ; python tools/bodyshape/build_shape_model.py
+新文件：refit_pose.py、scan_details.py、male_renders.py。注意 enclose_skin.py 里的腋下设置现在对两个身体都生效（女性下次重拟合时也会用）。
+
+
+## Part 11: the male re-fit (internals with abducted arms, key 169209ce67d8bd76)
+
+male-skin/ is replaced on disk (skin.obj written by the run that ended after 09:54 on 12 October; the extra renders were redrawn a little later). fittedTo = { body: male, key: 169209ce67d8bd76 }. The version installed before is kept as male-skin-prev2/. Shape fields, rig-shape.json and shape-model.json are regenerated.
+
+### 0. What is still wrong (first)
+1. The nipples cannot be seen in the renders. The relief transferred is only +3.0 / +2.8 mm on 4-5 MHR vertices (you give 4-4.5 mm on the scan); position x = +0.109 / -0.118, y = 1.111 / 1.104 m. The MHR skin is 8.5 mm from the scanned skin there (not 1-2 mm: my skin stands further out on the chest). The place was found as "the highest fine relief within 18 mm of the most prominent point of each side of the chest"; I have no other way of confirming that it is the nipple.
+2. The navel is a crude little pit: 4.7 mm deep (you measured 5.3), 25 vertices, and in the render an angular triangular dent that does not look like a navel. Its position, y = 0.958 m, agrees.
+3. The axilla is not a "clean fold". Arm skin inside trunk skin (25-40 / 40-50 / 50-60 / 60-85 % of the humerus): left 0.2 / 6.5 / 4.2 / 0, right 0.3 / 9.1 / 1.1 / 0 cm2, about 11 cm2 per side (about 19 before). Below 60 % the gap is at least 15 mm. There is a step-like notch at the anterior and at the posterior axillary fold and a small crumpled patch at the top. Cause: the muscles are now 13-24 mm apart, but each skin carries 8-15 mm of fat room, which still does not fit at 45-60 %, and drawing the two skins in leaves these marks.
+4. After the axilla step some muscle touches or shows through the skin: latissimus dorsi 4.0 / 3.6 mm (0.43 % / 0.35 % of points), long head of triceps 1.5 / 0.2 mm. Outer ring of orbicularis oculi 1.5 / 1.0 mm (3-4 %), left zygomaticus minor 0.2 mm - those two as before, from keeping MHR's lid surface.
+5. BMI by volume 24.28 (target 23.6; 23.60 before the push). Enclosing deep and superficial structures added 0.7.
+6. The transverse ridge at the nasal root is fainter but still there (a thin line in the front view of the head); the crown is still high and domed. The slit and spike at the jugular notch are gone, though from below and in front the base of the neck still shows a few small irregularities.
+7. Only 14 pose parameters (upper arm, elbow, forearm, wrist) were solved again, the rest held. At first I freed everything and the feet and trunk, no longer held by the outline of the skin, drifted (60 % of bone and muscle of the feet outside, up to 62 mm, stature 1740 mm); corrected, and this version does not have it, but finger-joint residuals are slightly larger than before (2-6 mm at the tips).
+8. The residual offsets towards the old skin were not rotated with the arm (small, ignored), and the outline was not fitted to the scanned skin again.
+9. I did not run tools/skinopen/ on this skin; lid and lip regions get no push, the smoothing at the nasal root avoids the lid regions and nothing is smoothed in the lip region.
+10. Skin of the medial thighs lies against itself over 21.1 / 26.2 cm2, not addressed. Superficial structures still have 0.28 % of their points outside, up to 4.8 mm.
+
+### 1. What was done
+- refit_pose.py (new): identity and residual offsets kept, only the pose of the upper limbs solved again. Joints to the rig centres (mm): glenohumeral 1.7 / 2.1, elbow 1.5 / 1.2, wrist 2.7 / 2.0, hip 2.7 / 2.3, ankle 2.7 / 2.1, knee 16.7 / 16.2 (small weight on purpose), metatarsophalangeal 15.0 / 14.9.
+- refit_head.py: as before (eye joint to eyeball centre 2.5 / 2.7 mm).
+- enclose_skin.py: the axilla step now uses the female settings (from 26 % of the humerus, up to 30 mm per vertex, two rounds); the head-bone pass allows 6 mm and is wider; two local repairs are new (Laplacian smoothing of vertex positions within 35 mm of the jugular notch and 16 mm of the nasal root, 481 vertices, largest move 8.2 mm, no bone outside afterwards); scan_details.py is new: navel and nipples transferred from his own scanned skin (outer wall of BodyParts3D FJ2810, the saved male-reference-skin.npz), labelled in manifest.scanDetails as a transfer of scanned data with source and licence.
+- The genital mound is still a simple enclosure; the toes are as MHR has them.
+
+### 2. Tables
+Deep-part samples outside the skin before the push (838,175 samples, 1276 parts; share of muscle / bone / organ in %, furthest mm): head 2.7 / 0.9 / 0.0 (7.3); neck 2.3 / 0.0 / 4.8 (10.0); chest 0.0 / 0.1 / 0.6 (37.6, organ); abdomen 0.5 / 0.4 / 0.0 (5.2); pelvis 0.2 / 0.0 / 1.4 (35.3); thigh 1.4 / 0.0 / 91.1 (23.3, genitalia); knee 3.1 (7.3); calf 2.1 (7.3); foot 0.0 / 1.4 (3.3); upper arm 0.4 (4.4); forearm 0; hand 1.7 / 0.2 (3.0); all 0.9 / 0.4 / 0.8.
+Girths (mm, standard in brackets): chest 926 (968), waist at the iliac crest 774 (883), at the navel 779 (831), buttock 906 (944), proximal thigh 530 (566), mid thigh 516 (483), lower thigh 394 (380), calf 393 (358), ankle 226 (220), upper arm 333 (303), forearm 293 (289), wrist 176 (169), neck 394 (374). Stature 1724 mm.
+Fat room (skin to the nearest deep surface, p10 / p50 / p90, mm): head 0.6 / 4.5 / 11.1 (21 % of the skin under 2 mm); neck 3.5 / 6.8 / 14.9; shoulder 5.9 / 12.5 / 23.4; chest 4.4 / 8.2 / 13.6; abdomen 5.7 / 8.9 / 15.7; pelvis 6.8 / 15.0 / 27.9; thigh 6.3 / 13.8 / 27.2; knee 6.0 / 13.4 / 21.8; calf 5.0 / 9.5 / 16.0; foot 4.9 / 7.7 / 14.3; upper arm 8.5 / 14.9 / 20.0; forearm 5.5 / 8.4 / 15.5; hand 3.5 / 6.7 / 10.9.
+Skin against skin (cm2): hands 2.6 / 2.1, thighs 21.1 / 26.2, upper arm (my other measure, sheets within 1.5 mm) 19.6 / 23.2.
+Cover on the face (min / p5 / median): nasal bones 1.8 / 2.0 / 3.2, outer ring of orbicularis oculi -1.5 / 0.2 / 3.9, zygomaticus minor -0.2 / 1.1 / 4.2, lips 0.1 / 0.3 / 3.8, cornea 0.8 / 1.1 / 2.8.
+
+### 3. What I saw in the renders (all of them this time)
+- preview-skin.png: arms abducted, normal proportions, the navel a small dot on the midline of the abdomen; the head large and high.
+- closeup-axilla-below-front.png: from below and in front both axillae are open, with clear space between the medial arm and the chest wall; a small crumpled patch at each anterior fold; no nipples to be seen; small irregularities at the base of the neck.
+- closeup-axilla-skin.png, closeup-axilla-right-skin.png (front, side, back): step-like notches at the anterior and posterior folds and a small jagged patch at the top of the axilla; not a clean fold.
+- closeup-chest-nipples.png: clear pectoral outline; no nipples discernible.
+- closeup-navel.png: a small triangular pit.
+- closeup-neck.png: the jugular notch is smooth, without slit or spike.
+- closeup-head-front.png, closeup-face-skin.png: smooth lids and lips; a thin transverse line at the nasal root; a high crown. (The face-skin image I looked at is from the run before the repairs; I did not open the later one.)
+
+### 4. Regenerating
+  bun tools/bodyshape/export-parts.ts male
+  python tools/bodyshape/refit_pose.py male ; python tools/bodyshape/refit_head.py male ; python tools/bodyshape/enclose_skin.py male
+  python tools/bodyshape/face_checks.py male ; python tools/bodyshape/male_renders.py ; python tools/bodyshape/shape_fields.py male ; python tools/bodyshape/build_shape_model.py
+New files: refit_pose.py, scan_details.py, male_renders.py. Note that the axilla settings in enclose_skin.py now apply to both bodies (the female will get them at her next re-fit too).

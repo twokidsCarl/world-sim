@@ -22,6 +22,22 @@
 // fingerprint of this build's internals (see internalsKey), otherwise it is not installed — a skin
 // that does not match bones and muscles is worse than keeping the placeholder.
 
+//
+// 开口后的包（tools/skinopen 写出的 <body>-skin-open/，见 tools/skinopen/INTEGRATION.txt）多出：
+//   skin-closed.obj     开口之前（移植之后）的闭合皮肤；凡是判断内外的地方都用它
+//   vertex-tags.u8      每个顶点一个标签（唇缘、睑缘、内卷、口腔袋、移植片……）
+//   source-vertex.u32   每个顶点的逐顶点数据取自闭合皮肤的哪个顶点
+// 这时 skin.obj 不闭合（两眼内卷的内缘是两个边界环），上下唇缘是成对重合的顶点：
+// 这条路径上任何一步都不能按位置合并顶点，对应关系一律按下标。
+//
+// An opened package (<body>-skin-open/ written by tools/skinopen, see tools/skinopen/INTEGRATION.txt) adds:
+//   skin-closed.obj     the closed skin before the openings (after the grafts); every inside test uses it
+//   vertex-tags.u8      one tag per vertex (lip and lid margins, rims, oral pouch, graft patches …)
+//   source-vertex.u32   the vertex of the closed skin each vertex takes its per-vertex data from
+// skin.obj is then not closed (the inner edges of the two lid rims are boundary loops) and the lip
+// margins are coincident vertex pairs: nothing on this path may merge vertices by position, and all
+// correspondence is by index.
+
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -30,8 +46,33 @@ import { MeshoptSimplifier } from 'meshoptimizer'
 import { compact, measure, type Mesh } from './geometry.ts'
 import { InsideTester, PointIndex, surfacePoints, thinPoints } from './register.ts'
 
+/** 开口后的包才有的内容 / what only an opened package carries */
+export interface OpenedSkin {
+  /** vertex-tags.u8：skin.obj 每个顶点一个标签，0 = 普通皮肤 / vertex-tags.u8: one tag per vertex of skin.obj, 0 = ordinary skin */
+  tags: Uint8Array
+  /** 标签名 → 值（manifest.opened.vertexTags） / tag name → value (manifest.opened.vertexTags) */
+  tagNames: Record<string, number>
+  /** source-vertex.u32：每个顶点的逐顶点数据取自 skin-closed.obj 的哪个顶点 / source-vertex.u32: the vertex of skin-closed.obj each vertex takes its per-vertex data from */
+  sourceVertex: Uint32Array
+  /** 闭合皮肤的顶点数；skin.obj 的前这么多个顶点与它相同 / vertex count of the closed skin; the first that many vertices of skin.obj are the same */
+  closedVertices: number
+  /** 从 skin.obj 删去的封住睑裂的三角形（skin.obj 的顶点下标），在 skin-closed.obj 里仍在 / the triangles closing the palpebral fissures that were removed from skin.obj (its vertex indices); still present in skin-closed.obj */
+  eyeMembrane: Uint32Array
+  /** 本包试过的步骤（manifest.opened.steps），最后一项是 open / the steps tried for this package (manifest.opened.steps); the last is `open` */
+  steps: string[]
+}
+
 export interface SkinPackage {
+  /** skin.obj：显示用的皮肤；开口后的包里它不闭合 / skin.obj: the skin that is shown; not closed in an opened package */
   mesh: Mesh
+  /**
+   * 闭合的皮肤：有 skin-closed.obj 就是它，否则就是 mesh 本身。判断内外（射线奇偶）、推导皮下脂肪、贴合附属物都用它。
+   * The closed skin: skin-closed.obj when the package has one, otherwise `mesh` itself. Inside tests (ray
+   * parity), the fat derivation and the appendage conforming all use it.
+   */
+  closedMesh: Mesh
+  /** 开口后的包的标签等；普通（闭合）包为 null / tags and the rest of an opened package; null for an ordinary (closed) one */
+  opened: OpenedSkin | null
   source: SourceInfo
   /** 包声明它所拟合的内部结构；缺省表示未声明 / what the package says it was fitted to; absent when it does not say */
   fittedTo: { body: string; key: string } | null
@@ -68,6 +109,15 @@ export function parseSkinObj(text: string): Mesh {
   return { positions: Float32Array.from(positions), indices: Uint32Array.from(indices) }
 }
 
+/**
+ * vertex-tags.u8 的取值（tools/skinopen/INTEGRATION.txt 第 2、8 节）；包的 manifest.opened.vertexTags 若给出则以它为准。
+ * Values of vertex-tags.u8 (sections 2 and 8 of tools/skinopen/INTEGRATION.txt); manifest.opened.vertexTags of the package wins where it is given.
+ */
+export const DEFAULT_SKIN_TAGS: Record<string, number> = {
+  skin: 0, upperLip: 1, lowerLip: 2, mouthCorner: 3, upperLidL: 4, lowerLidL: 5, upperLidR: 6, lowerLidR: 7, lidRimL: 8, lidRimR: 9,
+  oralPouchUpper: 10, oralPouchLower: 11, oralPouchSeam: 12, canthus: 13, removed: 14, graftScanned: 15, graftBlend: 16, graftCurated: 17, graftConstruction: 18,
+}
+
 /** 读皮肤包；目录或必需文件不存在时返回 null / reads a skin package; null when the directory or a required file is missing */
 export function loadSkinPackage(dir: string): SkinPackage | null {
   const mf = join(dir, 'manifest.json')
@@ -96,11 +146,42 @@ export function loadSkinPackage(dir: string): SkinPackage | null {
   const eyeR = jointAt('r_eye')
   const bd = optional<{ bideltoidBreadthMm?: { target?: number; final?: number } }>('final-checks.json')?.bideltoidBreadthMm
   const ne = ((manifest.face as { notEnclosed?: { partIds?: unknown } } | undefined)?.notEnclosed?.partIds ?? []) as unknown
+  const mesh = parseSkinObj(readFileSync(obj, 'utf8'))
+  // 开口后的包：闭合的那张网格、标签、数据来源三样齐全才算；缺一样就按普通包处理（skin.obj 必须自己闭合）
+  // an opened package needs all three of closed companion, tags and data sources; with any missing it is treated as an ordinary package (whose skin.obj must itself be closed)
+  let closedMesh = mesh
+  let opened: OpenedSkin | null = null
+  const companion = join(dir, 'skin-closed.obj')
+  const tagFile = join(dir, 'vertex-tags.u8')
+  const srcFile = join(dir, 'source-vertex.u32')
+  if (existsSync(companion) && existsSync(tagFile) && existsSync(srcFile)) {
+    closedMesh = parseSkinObj(readFileSync(companion, 'utf8'))
+    const nv = mesh.positions.length / 3
+    const tags = new Uint8Array(readFileSync(tagFile))
+    const sb = readFileSync(srcFile)
+    if (tags.length !== nv) throw new Error(`skin package ${dir}: vertex-tags.u8 has ${tags.length} entries but skin.obj has ${nv} vertices`)
+    if (sb.length !== 4 * nv) throw new Error(`skin package ${dir}: source-vertex.u32 has ${sb.length / 4} entries but skin.obj has ${nv} vertices`)
+    const sourceVertex = new Uint32Array(nv)
+    for (let v = 0; v < nv; v++) sourceVertex[v] = sb.readUInt32LE(4 * v)
+    const closedVertices = closedMesh.positions.length / 3
+    for (let v = 0; v < nv; v++) if (sourceVertex[v]! >= closedVertices) throw new Error(`skin package ${dir}: source-vertex.u32 names vertex ${sourceVertex[v]} but skin-closed.obj has ${closedVertices}`)
+    const op = (manifest.opened ?? {}) as { vertexTags?: Record<string, number>; steps?: string[] }
+    const mem = ((manifest.face as { removedEyeMembrane?: Record<string, unknown> } | undefined)?.removedEyeMembrane ?? {}) as Record<string, unknown>
+    const tri: number[] = []
+    for (const side of Object.keys(mem).sort()) {
+      const list = mem[side]
+      if (!Array.isArray(list)) continue
+      for (const t of list) if (Array.isArray(t) && t.length === 3 && t.every((x) => Number.isInteger(x) && x >= 0 && x < nv)) tri.push(t[0], t[1], t[2])
+    }
+    opened = { tags, tagNames: { ...DEFAULT_SKIN_TAGS, ...(op.vertexTags ?? {}) }, sourceVertex, closedVertices, eyeMembrane: Uint32Array.from(tri), steps: Array.isArray(op.steps) ? op.steps.filter((x): x is string => typeof x === 'string') : [] }
+  }
   return {
+    closedMesh,
+    opened,
     notEnclosed: Array.isArray(ne) ? ne.filter((x): x is string => typeof x === 'string') : [],
     eyeJoints: eyeL && eyeR ? { L: eyeL, R: eyeR } : null,
     author: { bmiByVolume: num(manifest.bmiByVolume), targetBmi: num(manifest.targetBmi), bideltoidMm: num(bd?.target) !== null && num(bd?.final) !== null ? { target: bd!.target!, final: bd!.final! } : null },
-    mesh: parseSkinObj(readFileSync(obj, 'utf8')),
+    mesh,
     source: { name: src.name, url: src.url ?? '', license: src.license, attribution: src.attribution ?? src.name },
     fittedTo: fitted?.body && fitted.key ? { body: fitted.body, key: fitted.key } : null,
     manifest,
@@ -495,6 +576,15 @@ export interface SkinSimplifyResult {
   /** 输出网格的面部掩码（与输入的掩码对应同一批顶点） / face mask of the output mesh (the same vertices as in the input mask) */
   inFace: Uint8Array
   error: number
+  /**
+   * 输出网格的每个顶点在输入网格里的下标。简化器不产生新顶点，所以每个输出顶点都有对应；
+   * 位置重合的顶点（上下唇缘）靠它区分，不靠位置。
+   * For every vertex of the output mesh, its index in the input mesh. The simplifier creates no vertices,
+   * so every output vertex has one; coincident vertices (the two lip margins) are told apart by it, not by position.
+   */
+  source: Uint32Array
+  /** 被简化器丢掉后又原样补回的全锁定三角形数（见函数说明） / fully locked triangles the simplifier dropped and that were put back as they were (see the function) */
+  restoredTriangles: number
 }
 
 /**
@@ -529,17 +619,221 @@ export async function simplifySkinKeepingFace(mesh: Mesh, keep: Uint8Array, maxE
   }
   const floor = Math.max(minTriangles, restArea / (0.433 * maxEdge ** 2))
   const target = 3 * (lockedTriangles + Math.floor(floor))
-  if (target >= mesh.indices.length) return { mesh, inFace: keep, error: 0 }
-  const [idx, err] = MeshoptSimplifier.simplifyWithAttributes(mesh.indices, mesh.positions, 3, new Float32Array(0), 0, [], keep, target, maxError, ['ErrorAbsolute'])
-  if (idx.length === 0 || idx.length >= mesh.indices.length) return { mesh, inFace: keep, error: 0 }
-  // compact 按索引首次出现的次序重排顶点；掩码跟着重排 / compact renumbers vertices in order of first use; the mask follows
   const nv = p.length / 3
+  const identity = (): Uint32Array => Uint32Array.from({ length: nv }, (_, v) => v)
+  if (target >= mesh.indices.length) return { mesh, inFace: keep, error: 0, source: identity(), restoredTriangles: 0 }
+  const [simplified, err] = MeshoptSimplifier.simplifyWithAttributes(mesh.indices, mesh.positions, 3, new Float32Array(0), 0, [], keep, target, maxError, ['ErrorAbsolute'])
+  if (simplified.length === 0 || simplified.length >= mesh.indices.length) return { mesh, inFace: keep, error: 0, source: identity(), restoredTriangles: 0 }
+  // 简化器内部按位置把重合的顶点看成一个：含有两个重合顶点的三角形（面积为零，移植片的供体网格里有）
+  // 在它看来是退化的，即使三个顶点都锁定也会被丢掉，网格上就多出边界边。把这样丢掉的全锁定三角形原样补回，
+  // 让“全锁定的三角形原样保留”这句话成立。锁定的顶点没有移动，补回的三角形与原来的一模一样。
+  // Internally the simplifier treats coincident vertices as one: a triangle with two coincident vertices
+  // (zero area; the donor mesh of a graft has some) is degenerate to it and is dropped even when all three
+  // of its vertices are locked, which leaves boundary edges. Such dropped fully locked triangles are put
+  // back as they were, so that "a fully locked triangle is kept as it is" holds. Locked vertices have not
+  // moved, so a restored triangle is exactly the original.
+  let idx: Uint32Array = simplified
+  let restoredTriangles = 0
+  {
+    const key = (a: number, b: number, c: number): string => {
+      // 旋转到最小下标在前，保留绕向 / rotate the smallest index to the front, keeping the winding
+      if (a <= b && a <= c) return `${a},${b},${c}`
+      if (b <= a && b <= c) return `${b},${c},${a}`
+      return `${c},${a},${b}`
+    }
+    const present = new Set<string>()
+    for (let t = 0; t < simplified.length; t += 3) present.add(key(simplified[t]!, simplified[t + 1]!, simplified[t + 2]!))
+    const missing: number[] = []
+    for (let t = 0; t < mesh.indices.length; t += 3) {
+      const a = mesh.indices[t]!
+      const b = mesh.indices[t + 1]!
+      const c = mesh.indices[t + 2]!
+      if (!(keep[a] && keep[b] && keep[c])) continue
+      const k = key(a, b, c)
+      if (present.has(k)) continue
+      present.add(k)
+      missing.push(a, b, c)
+    }
+    if (missing.length) {
+      restoredTriangles = missing.length / 3
+      const all = new Uint32Array(simplified.length + missing.length)
+      all.set(simplified)
+      all.set(missing, simplified.length)
+      idx = all
+    }
+  }
+  // compact 按索引首次出现的次序重排顶点；掩码跟着重排 / compact renumbers vertices in order of first use; the mask follows
   const map = new Int32Array(nv).fill(-1)
   let n = 0
   for (let k = 0; k < idx.length; k++) if (map[idx[k]!] === -1) map[idx[k]!] = n++
   const inFace = new Uint8Array(n)
-  for (let v = 0; v < nv; v++) if (map[v]! >= 0) inFace[map[v]!] = keep[v]!
-  return { mesh: compact({ positions: mesh.positions, indices: idx }), inFace, error: err }
+  const source = new Uint32Array(n)
+  for (let v = 0; v < nv; v++) if (map[v]! >= 0) {
+    inFace[map[v]!] = keep[v]!
+    source[map[v]!] = v
+  }
+  return { mesh: compact({ positions: mesh.positions, indices: idx }), inFace, error: err, source, restoredTriangles }
+}
+
+// ── 开口后的皮肤 / the opened skin ──────────────────────────────────────────────────────────────────
+
+/**
+ * 边界环：只被一个三角形用到的边连成的环。闭合曲面为 0；开口后的皮肤应为 2（两眼内卷的内缘）。
+ * 环按边界边的连通分量数；sizes 是各环的边数，从大到小。
+ * Boundary loops: the loops formed by edges used by one triangle only. None on a closed surface; two on
+ * an opened skin (the inner edges of the two lid rims). Loops are the connected components of the
+ * boundary edges; `sizes` holds their edge counts, largest first.
+ */
+export function boundaryLoops(mesh: Mesh): { edges: number; loops: number; sizes: number[] } {
+  const nv = mesh.positions.length / 3
+  const count = new Map<number, number>()
+  for (let t = 0; t < mesh.indices.length; t += 3) for (let k = 0; k < 3; k++) {
+    const a = mesh.indices[t + k]!
+    const b = mesh.indices[t + ((k + 1) % 3)]!
+    const key = Math.min(a, b) * nv + Math.max(a, b)
+    count.set(key, (count.get(key) ?? 0) + 1)
+  }
+  const parent = new Map<number, number>()
+  const find = (v: number): number => {
+    let r = v
+    while (parent.get(r) !== r) r = parent.get(r)!
+    let c = v
+    while (parent.get(c) !== r) {
+      const next = parent.get(c)!
+      parent.set(c, r)
+      c = next
+    }
+    return r
+  }
+  const edges: [number, number][] = []
+  for (const [key, c] of count) {
+    if (c !== 1) continue
+    const a = Math.floor(key / nv)
+    const b = key % nv
+    edges.push([a, b])
+    if (!parent.has(a)) parent.set(a, a)
+    if (!parent.has(b)) parent.set(b, b)
+    const ra = find(a)
+    const rb = find(b)
+    if (ra !== rb) parent.set(Math.max(ra, rb), Math.min(ra, rb))
+  }
+  const size = new Map<number, number>()
+  for (const [a] of edges) size.set(find(a), (size.get(find(a)) ?? 0) + 1)
+  const sizes = [...size.values()].sort((x, y) => y - x)
+  return { edges: edges.length, loops: sizes.length, sizes }
+}
+
+/**
+ * 简化时要锁住的顶点：面部区域，加上标签非 0 的全部顶点（唇缘、睑缘、内卷、口腔袋、移植片及其过渡环）。
+ * The vertices the simplifier must leave alone: the face region plus every vertex with a non-zero tag
+ * (lip and lid margins, rims, oral pouch, graft patches and their blend rings).
+ */
+export function skinLockMask(inFace: Uint8Array, tags: Uint8Array | null): Uint8Array {
+  const lock = Uint8Array.from(inFace)
+  if (tags) for (let v = 0; v < lock.length; v++) if (tags[v]) lock[v] = 1
+  return lock
+}
+
+/**
+ * 由发布的（简化后的）开口皮肤得到与它对应的闭合曲面，供判断内外用：去掉内卷和口腔袋的三角形，
+ * 补回封住睑裂的三角形，再把下唇缘的复制顶点并回它的孪生顶点。全部按下标做（source-vertex.u32、
+ * 标签、manifest 里的三角形表），不按位置。睑缘、唇缘顶点在简化时是锁定的，所以一定都在。
+ * 返回的网格若仍有边界边（比如包的标签表与这里的假定不符），调用方应当不用它。
+ * The closed counterpart of the shipped (simplified) opened skin, for inside tests: the triangles of rims
+ * and pouch are removed, the triangles that closed the palpebral fissures are put back, and the duplicated
+ * lower-lip margin vertices are merged into their twins. All of it by index (source-vertex.u32, the tags
+ * and the triangle list of the manifest), nothing by position. Lid and lip margin vertices were locked in
+ * the simplification, so all of them are present. If the result still has boundary edges (the package's
+ * tags not being what is assumed here, say), the caller should not use it.
+ * @param shipped  发布的开口皮肤 / the shipped opened skin
+ * @param source   shipped 的每个顶点在包的 skin.obj 里的下标 / for each vertex of `shipped`, its index in the package's skin.obj
+ */
+export function closeShippedSkin(shipped: Mesh, source: Uint32Array, opened: OpenedSkin): Mesh {
+  const T = opened.tagNames
+  const aid = new Set([T.lidRimL, T.lidRimR, T.oralPouchUpper, T.oralPouchLower, T.oralPouchSeam].filter((x): x is number => x !== undefined))
+  const nv = shipped.positions.length / 3
+  // 包的顶点下标 → 发布的顶点下标 / package vertex index → shipped vertex index
+  const shippedOf = new Map<number, number>()
+  for (let v = 0; v < nv; v++) shippedOf.set(source[v]!, v)
+  // 复制出来的顶点（下标 ≥ closedVertices 且不是构造物）并回它的来源顶点 / duplicated vertices (index ≥ closedVertices, not a construction aid) go back to their source vertex
+  const to = new Uint32Array(nv)
+  for (let v = 0; v < nv; v++) {
+    const s = source[v]!
+    to[v] = v
+    if (s >= opened.closedVertices && !aid.has(opened.tags[s]!)) {
+      const twin = shippedOf.get(opened.sourceVertex[s]!)
+      if (twin !== undefined) to[v] = twin
+    }
+  }
+  const idx: number[] = []
+  for (let t = 0; t < shipped.indices.length; t += 3) {
+    const a = shipped.indices[t]!
+    const b = shipped.indices[t + 1]!
+    const c = shipped.indices[t + 2]!
+    if (aid.has(opened.tags[source[a]!]!) || aid.has(opened.tags[source[b]!]!) || aid.has(opened.tags[source[c]!]!)) continue
+    idx.push(to[a]!, to[b]!, to[c]!)
+  }
+  for (let t = 0; t < opened.eyeMembrane.length; t += 3) {
+    const a = shippedOf.get(opened.eyeMembrane[t]!)
+    const b = shippedOf.get(opened.eyeMembrane[t + 1]!)
+    const c = shippedOf.get(opened.eyeMembrane[t + 2]!)
+    if (a === undefined || b === undefined || c === undefined) continue
+    idx.push(a, b, c)
+  }
+  return compact({ positions: shipped.positions, indices: Uint32Array.from(idx) })
+}
+
+export interface SkinPackageChoice {
+  /** 要装入的包；没有可装的为 null / the package to install; null when there is none to install */
+  pkg: SkinPackage | null
+  /** 它的目录（相对项目根） / its directory (relative to the project root) */
+  dir: string
+  /** 'opened' = 开口后的包；'closed' = 皮肤作者的闭合包；'none' = 都不能装 / 'opened' = the opened package; 'closed' = the author's closed package; 'none' = neither can be installed */
+  state: 'opened' | 'closed' | 'none'
+  /** 不装入的原因（state 为 none 时） / why nothing is installed (when state is 'none') */
+  reason?: string
+  /** 开口后的包的情况；没有那个目录时不出现 / the state of the opened package; absent when that directory does not exist */
+  openedPackage?: { dir: string; fittedTo: { body: string; key: string } | null; used: boolean; reason?: string; matchesAuthorPackage: boolean | null }
+  /** 皮肤作者的包（始终读入，用来报告） / the author's package (always read, for the report) */
+  author: SkinPackage | null
+}
+
+/**
+ * 选要装入的皮肤包，男女通用。`<authorDir>-open/` 存在、是开口后的包、且其 manifest.fittedTo
+ * （由作者的包原样带过来）与本体及本次内部结构指纹一致时装它；否则照旧看作者的闭合包 authorDir。
+ * 还核对开口后的包是不是由磁盘上这一版作者的包做出来的（包里的 skin-delivered.obj，没有移植时是
+ * skin-closed.obj，应与作者的 skin.obj 逐字节相同）：不相同只报告，不拒绝——它仍是按同一指纹拟合的、
+ * 自身一致的包。SOMA_SKIN_OPENED=0 时不看开口后的包（用来核对闭合包的行为没有变）。
+ * Chooses the skin package to install; serves both bodies. `<authorDir>-open/` is installed when it
+ * exists, is an opened package and its manifest.fittedTo (carried over from the author's package) names
+ * this body and this build's internals fingerprint; otherwise the author's closed package `authorDir`
+ * is considered as before. Whether the opened package was made from the author's package now on disk is
+ * checked too (skin-delivered.obj of the package, or skin-closed.obj when nothing was grafted, must equal
+ * the author's skin.obj byte for byte): a mismatch is reported, not refused — it is still a
+ * self-consistent package fitted to the same fingerprint. With SOMA_SKIN_OPENED=0 the opened package is
+ * ignored (to check that the behaviour with a closed package is unchanged).
+ */
+export function selectSkinPackage(root: string, authorDir: string, body: string, key: string): SkinPackageChoice {
+  const author = loadSkinPackage(join(root, authorDir))
+  const openDir = `${authorDir.replace(/\/+$/, '')}-open`
+  const fitsKey = (p: SkinPackage | null): boolean => !!p && p.fittedTo?.body === body && p.fittedTo.key === key
+  const why = (p: SkinPackage | null): string => (!p ? 'no package' : !p.fittedTo ? 'the package does not say which internals it was fitted to (manifest.fittedTo missing)' : 'fitted to other internals')
+  let openedPackage: SkinPackageChoice['openedPackage']
+  if (existsSync(join(root, openDir, 'manifest.json'))) {
+    if (process.env.SOMA_SKIN_OPENED === '0') openedPackage = { dir: openDir, fittedTo: null, used: false, reason: 'ignored (SOMA_SKIN_OPENED=0)', matchesAuthorPackage: null }
+    else {
+      const op = loadSkinPackage(join(root, openDir))
+      let matches: boolean | null = null
+      const authorObj = join(root, authorDir, 'skin.obj')
+      const delivered = [join(root, openDir, 'skin-delivered.obj'), join(root, openDir, 'skin-closed.obj')].find((f) => existsSync(f))
+      if (delivered && existsSync(authorObj)) matches = readFileSync(delivered).equals(readFileSync(authorObj))
+      const reason = !op ? 'manifest.json or skin.obj missing' : !op.opened ? 'not an opened package (skin-closed.obj, vertex-tags.u8 or source-vertex.u32 missing)' : fitsKey(op) ? undefined : why(op)
+      openedPackage = { dir: openDir, fittedTo: op?.fittedTo ?? null, used: !reason, ...(reason ? { reason } : {}), matchesAuthorPackage: matches }
+      if (op && !reason) return { pkg: op, dir: openDir, state: 'opened', openedPackage, author }
+    }
+  }
+  if (fitsKey(author)) return { pkg: author, dir: authorDir, state: 'closed', ...(openedPackage ? { openedPackage } : {}), author }
+  return { pkg: null, dir: authorDir, state: 'none', reason: why(author), ...(openedPackage ? { openedPackage } : {}), author }
 }
 
 /**

@@ -87,10 +87,12 @@ describe('computeDisplay', () => {
   it('adjacent mode ghosts everything but the selection and its neighbours', () => {
     expect(run({ adjacentMode: true, selected: new Set(['bone']) })).toEqual([GHOST, NORMAL, NORMAL, NORMAL])
     expect(run({ adjacentMode: true, selected: new Set(['muscle']) })).toEqual([GHOST, NORMAL, NORMAL, GHOST])
+    // 相邻部件即使所在系统关着也会显示；其余隐藏的部件仍然隐藏
     // neighbours are revealed even when their system is off; other hidden parts stay hidden
     expect(
       run({ adjacentMode: true, selected: new Set(['muscle']), systems: { skeletal: { visible: false, opacity: 1 } }, hidden: new Set(['vessel']) }),
     ).toEqual([GHOST, NORMAL, NORMAL, HIDDEN])
+    // 没有选择：这个模式没有可聚焦的对象
     // no selection: the mode has nothing to focus on
     expect(run({ adjacentMode: true })).toEqual([NORMAL, NORMAL, NORMAL, NORMAL])
   })
@@ -128,6 +130,7 @@ describe('computeExplode', () => {
     expect(o[3]).toBeCloseTo((0.4 - cx) * k)
     expect(o[4]).toBeCloseTo((1 - cy) * k)
     expect(o[9]).toBeCloseTo((-0.4 - cx) * k)
+    // 离中心越远，移动得越远
     // further from the centre moves further
     expect(Math.abs(o[3]!)).toBeGreaterThan(Math.abs(o[6]!))
   })
@@ -172,12 +175,16 @@ describe('section plane', () => {
 
   it('clips a ray to the kept half-space', () => {
     const p = sectionPlane(bounds, { enabled: true, axis: 'axial', position: 0.5, flip: false }) // keep y <= 1
+    // 从上往下看：在 t = 2 进入保留的一半
     // from above, looking down: enters the kept half at t = 2
     expect(clipRay([0, 3, 0], [0, -1, 0], p)).toEqual([2, Infinity])
+    // 从下往上看：在 t = 1 离开
     // from below, looking up: leaves it at t = 1
     expect(clipRay([0, 0, 0], [0, 1, 0], p)).toEqual([0, 1])
+    // 在上方并且继续向上：永远进不去
     // above and looking further up: never enters
     expect(clipRay([0, 3, 0], [0, 1, 0], p)).toBeNull()
+    // 平行的射线要么全在里面，要么全在外面
     // parallel rays are all-or-nothing
     expect(clipRay([0, 0.5, 0], [1, 0, 0], p)).toEqual([0, Infinity])
     expect(clipRay([0, 1.5, 0], [1, 0, 0], p)).toBeNull()
@@ -191,5 +198,22 @@ describe('thin-part picking helpers', () => {
     expect(tubeRadius(Math.PI * r * r * L, 2 * Math.PI * r * L)).toBeCloseTo(r, 9)
     expect(tubeRadius(-1e-6, 0.01)).toBeGreaterThan(0)
     expect(tubeRadius(1, 0)).toBe(0)
+  })
+})
+
+// 皮肤带真实开口时：透过开口看到的部件不管系统开关都显示；用户单独隐藏的仍然隐藏
+// With real openings in the skin: the parts seen through them are shown whatever the system switches say; one the user hid stays hidden
+describe('parts forced through the skin openings', () => {
+  it('shows forced parts despite system switches, peel and isolation, but not a part hidden by hand', () => {
+    const off = { ...base, systems: Object.fromEntries(graph.parts.map((p) => [p.system, { visible: false, opacity: 1 }])) }
+    const all = [...computeDisplay(graph, off)]
+    expect(all.every((x) => x === HIDDEN)).toBe(true)
+    const id = graph.parts[1]!.id
+    const forced = new Set([id])
+    expect([...computeDisplay(graph, { ...off, forced })][1]).toBe(NORMAL)
+    expect([...computeDisplay(graph, { ...off, forced, peel: 99 })][1]).toBe(NORMAL)
+    expect([...computeDisplay(graph, { ...off, forced, isolated: new Set([graph.parts[0]!.id]) })][1]).toBe(NORMAL)
+    expect([...computeDisplay(graph, { ...off, forced, hidden: new Set([id]) })][1]).toBe(HIDDEN)
+    expect([...computeDisplay(graph, { ...off, forced: null })][1]).toBe(HIDDEN)
   })
 })

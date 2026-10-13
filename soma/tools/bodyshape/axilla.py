@@ -138,3 +138,57 @@ def open_axilla(V, F, grp, fb, L, adjacency, log, rounds=8):
                            f'deep parts of arm and trunk lie {np.percentile(D[m], 5) * 1000:.1f} mm apart at the 5th percentile; skin still short of the {GAP * 1000:.0f} mm rule on {100 * (f[m] < GAP * w[sel][m] - 0.0005).mean():.0f} % of these vertices; '
                            f'least cover {np.where(own_arm, da, dt)[m].min() * 1000:.1f} mm')
     return V, total
+
+
+# ---------------------------------------------------------------- 相对的两片皮肤之间：把皮下层做薄 / between two facing skins: a thin subcutaneous layer
+THIN = 0.0035   # 腋窝内（上臂内侧、胸侧壁）和两大腿内侧相对处的“皮肤 + 皮下脂肪”厚度。假定值：没有打开过给出瘦男性这些部位皮下厚度的文献。
+#                 skin + subcutaneous fat where two skins face each other (medial upper arm and lateral chest wall inside the axilla; the
+#                 medial thighs). An assumption: no source giving the subcutaneous thickness at these sites in lean men was opened.
+
+
+def thin_hollow(V, F, ida, idb, Ma, Mb, w, adjacency, log, tag, thin=None, rounds=6):
+    """两片相对的皮肤（a、b 两组顶点，各自的深部网格 Ma、Mb）：在对侧深部结构近的地方，把皮肤收到离自己一侧深部结构 thin 处；
+    两侧深部结构相距不足 2 × thin 的地方，各自只留间距的一半（两片皮肤在那里贴成一条接触带，不互穿）。权重 w（0–1）在区域外平滑过渡到 0，
+    位移场再抹平；不是“各让一半间隙”的硬收，所以边界上不留台阶。
+    Two facing skins (vertex groups a and b with their own deep meshes Ma and Mb): where the deep parts of the other side are near, the
+    skin is brought to `thin` above the deep parts of its own side; where the two deep sides are less than 2 x thin apart each keeps half
+    the distance (the skins meet there in a contact band without crossing). The weight w (0-1) fades smoothly to 0 outside the zone and
+    the displacement field is smoothed; this is not a hard "each gives half the gap" draw-in, so no step is left at its boundary."""
+    thin = THIN if thin is None else thin
+    V = V.copy()
+    V0 = V.copy()
+    sel = np.r_[ida, idb]
+    own_a = np.r_[np.ones(len(ida), bool), np.zeros(len(idb), bool)]
+    sel, own_a = sel[w[sel] > 0], own_a[w[sel] > 0]
+    # 一个顶点属于哪一侧，按它下面哪一侧的深部结构更近来定，不按蒙皮权重的分组：腋后襞、三角肌后部的皮肤在权重上常算作另一侧，
+    # 按分组收会把它拉过三角肌（第一次这样做，三角肌肩胛棘部露出 6.3 mm）。
+    # Which side a vertex belongs to is decided by whose deep parts are nearer beneath it, not by the skin-weight group: skin of the
+    # posterior axillary fold and over the back of the deltoid often counts as the other side by weight, and drawing it in by group
+    # pulls it through the deltoid (the first attempt left the spinal part of the deltoid 6.3 mm outside).
+    da0, _ = _dist(V[sel], Ma)
+    db0, _ = _dist(V[sel], Mb)
+    own_a = da0 <= db0
+    moved = np.zeros(len(sel))
+    for _ in range(rounds):
+        da, ca = _dist(V[sel], Ma)
+        db, cb = _dist(V[sel], Mb)
+        down, other, c = np.where(own_a, da, db), np.where(own_a, db, da), np.where(own_a[:, None], ca, cb)
+        u = np.clip((0.045 - other) / 0.025, 0, 1)
+        h = u * u * (3 - 2 * u)
+        cover = np.clip(np.minimum(thin, (da + db) / 2 - 0.0005), 0.0004, None)
+        step = np.minimum(np.clip(down - cover, 0, None) * w[sel] * h, np.clip(0.020 - moved, 0, None))   # 单个顶点至多 20 mm / at most 20 mm per vertex
+        moved += step
+        V[sel] += step[:, None] * (c - V[sel]) / np.maximum(down, 1e-9)[:, None]
+    A = adjacency(len(V), F)
+    U = V - V0
+    for _ in range(3):
+        U = 0.5 * U + 0.5 * (A @ U)
+    V = V0 + U
+    da, _ = _dist(V[sel], Ma)
+    db, _ = _dist(V[sel], Mb)
+    mv = np.linalg.norm(U[sel], axis=1)
+    near = (da + db) < 0.03
+    log.append(f'  thin layer {tag}: {int((mv > 0.0005).sum())} vertices moved (median {np.median(mv[mv > 0.0005]) * 1000 if (mv > 0.0005).any() else 0:.1f}, max {mv.max() * 1000:.1f} mm); '
+               f'where the two deep sides are under 30 mm apart: cover over the own side median {np.median(np.where(own_a, da, db)[near]) * 1000 if near.any() else 0:.1f} mm; '
+               f'deep sides under {2 * thin * 1000:.0f} mm apart (contact band) on {int(((da + db) < 2 * thin).sum())} vertices; least distance between the two deep sides {((da + db).min()) * 1000:.1f} mm')
+    return V

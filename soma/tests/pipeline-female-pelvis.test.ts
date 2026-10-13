@@ -13,7 +13,8 @@ import type { Mesh } from '../tools/pipeline/geometry.ts'
 import { components, cutByPlane, repairClosed, signedVolume, topology } from '../tools/pipeline/meshRepair.ts'
 import { pelvisChecks, perineumAgainstSkin, pullField, refineWhere, WU_NOT_SHIPPED, WU_PRIORITY, WU_SPECS } from '../tools/pipeline/pelvis.ts'
 
-const DIR = join(import.meta.dirname, '../public/anatomy/female')
+// SOMA_FEMALE_DIR：改为校验另一个目录里的构建（管线的 --out） / SOMA_FEMALE_DIR: validate a build in another directory instead (the pipeline's --out)
+const DIR = process.env.SOMA_FEMALE_DIR ?? join(import.meta.dirname, '../public/anatomy/female')
 const present = existsSync(join(DIR, 'anatomy.json')) && existsSync(join(DIR, 'pipeline-report.json'))
 
 /** 细分的八面体（近似球），半径 r，中心 c / a subdivided octahedron (a rough sphere) of radius r about c */
@@ -173,10 +174,10 @@ describe.skipIf(!present)('female lesser pelvis as shipped (public/anatomy/femal
       if (!t.watertight) open.push(p.id)
       expect(signedVolume(m), p.id).toBeGreaterThan(0)
     }
-    // 已知例外：直肠系膜（作者给出的表面有 150 多条非流形边，修复后仍剩几条）
-    // known exception: the mesorectum (the authors' surface has 150-odd non-manifold edges, a few are left after the repair)
-    expect(open.filter((id) => id !== 'WU_mesorectum')).toEqual([])
-    expect(report.wu.closedManifolds).toBeGreaterThanOrEqual(wu.length - 1)
+    // 直肠系膜（作者给出的表面有 150 多条非流形边）要修两遍才封闭，现在也不例外
+    // the mesorectum (the authors' surface has 150-odd non-manifold edges) takes two repair passes to close and is no longer an exception
+    expect(open).toEqual([])
+    expect(report.wu.closedManifolds).toBe(wu.length)
   })
 
   it('places every Wu part in both trees with a concept of its own', () => {

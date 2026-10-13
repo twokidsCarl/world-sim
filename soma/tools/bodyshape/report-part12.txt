@@ -1,0 +1,70 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第十二部分：男性再做一遍（键 169209ce67d8bd76）
+
+male-skin/ 又在磁盘上换了一次（skin.obj 写于 10 月 12 日 13:28）。形状场、rig-shape.json、shape-model.json 已重新生成。
+
+### 0. 还不对的地方（先说）
+1. 腋下没有按你要的方式解决。我按“把相对的两片皮肤的皮下层做薄（3.5 mm，假定值，没有打开来源）”实现了（axilla.thin_hollow，--thin-hollow），结果不能用：肌肉都包住了，但腋窝里鼓出畸形的包，上臂内侧有隆起，量到的互穿面积反而更大（每侧 34–40 cm2）。渲染和日志留在 data/raw/bodyshape/out/male-thin-hollow-attempt/。所以这一版退回到原来的“各让一半间隙”的整形（两轮）。
+   现在的数：上臂皮肤在躯干皮肤之内，肱骨 25–40 / 40–50 / 50–60 / 60–85 %：左 0.2 / 9.1 / 5.4 / 0，右 0.7 / 18.4 / 6.3 / 0 cm2（上一版约 11 / 侧；这次因为把“肌肉不能露出”的那一遍放宽到 7 mm，皮肤被顶回去一些）。腋前、后襞处的台阶和腋窝顶的一小团皱还在（右侧特写里看得见）。
+   我对这个量本身也没有把握：它按蒙皮权重把顶点分成“上臂”和“躯干”，腋后襞的皮肤在权重上算上臂，会被算成“上臂皮肤在躯干皮肤之内”。两种做法得到的数差别很大，说明量法和分组有关系。
+2. 仍有肌肉贴到或略出皮肤：背阔肌 1.7 / 1.4 mm（0.14 % / 0.05 % 的点），右肱三头肌长头 1.3 mm（0.31 %）。比上一版（4.0 / 3.6 / 1.5）小，但不是 0。眼轮匝肌外环 1.6 / 1.0 mm 如前。
+3. 两大腿：左右下肢的肌肉和骨之间最近 26.8 mm，肌肉没有相贴；皮肤相贴 17.3 / 29.2 cm2 没有解决（做薄的做法在这里也试了，右侧反而到 39 cm2，一并退回）。贴着的地方有一部分是大腿皮肤对外生殖器的隆起。
+4. 乳头：位置重新找了，现在对得上文献——离胸骨上切迹 179.2 / 190.3 mm，两乳头相距 217.0 mm（你转来的参考值 188 ± 13、217 ± 16，我没有打开原文）；高度 y = 1.200 / 1.183 m，在第 5 肋上缘一带（该处第 5 肋 y 1.179–1.200），即第 4 肋间隙下缘。上一版找到的（y 1.11、离切迹 245 / 253 mm）是第 7 肋水平、胸大肌下缘的隆起，不是乳头——那一版报告里的位置是错的。起伏 +2.7 / +2.4 mm，7–9 个顶点，全身正面图里是两个很淡的小点。扫描上分辨不出乳晕。
+5. “皮肤离扫描 8.5 mm”是我报错了：那是到最近 MHR 顶点的距离（胸前顶点间距约 8 mm），不是到曲面的距离。到曲面的距离，外推之前是 3–4 mm（脐 3.0，乳头 4.0 / 3.2），不是 1–2 mm；来自外推和 BMI 的调整，不是手臂重摆。
+6. 会阴：贴到扫描皮肤上以后，全权重的 204 个顶点到扫描的距离从中位数 0.7 / p95 3.7 / 最大 8.9 mm 变为 0.4 / 0.9 / 5.8 mm。我量到的“之前”只有最多 8.9 mm，不是开口工具说的 28 mm：我的区域不含外生殖器的盒子及其周围 6–26 mm 的过渡带，28 mm 多半在阴囊颈那一圈里，那里我没有动。整条带（含隆起）最终到扫描的距离：中位数 1.6，p95 11.9，最大 15.6 mm。请开口工具再量。
+7. 脐：圆滑的凹陷，深 5.3 mm、半高宽 17 mm（取你量的值），32 个顶点；渲染里是一个浅的圆坑，仍然粗。
+8. 头：颅盖上的覆盖现在最小 3.4 / p5 4.6 / 中位数 6.9 mm（原来中位数 8.1）；正面看颅顶仍然显得高而宽，我认为剩下的是他颅骨本身的形状加上没有头发。鼻根的横线在正面图里看不到了，鼻梁中段有一个小的隆起；鼻骨上的覆盖 1.4 / 1.7 / 2.5 mm。
+9. BMI 24.28（目标 23.6，外推前 23.60）。
+10. 这次最后一轮我只看了：全身、自前下方的腋下、右腋下、头部正面、脐。左腋下、胸、颈、面部特写的最后一版没有打开（上一轮看过的是改动之前的）。
+
+### 1. 这次改了什么
+- 手指重新解（含各节长度缩放）：指尖 0.3–1.7 mm，肘 0.8 / 0.8，腕 0.8 / 0.7，盂肱 1.7 / 2.1 mm。
+- 颅盖头皮按 4.5 mm 缩放；鼻根的平滑半径加到 26 mm；头部骨的那一遍如前。
+- scan_details.py：乳头按解剖范围找（切迹下 100–165 mm、离正中 85–130 mm）；脐改为圆滑凹陷；annotate() 把各点在最终皮肤上的中心和法线、扫描上的起伏、切迹到乳头的距离、该处的肋骨高度写进 manifest.scanDetails；fit_perineum() 把会阴一带贴到扫描皮肤上。
+- 腋下整形后的包住检查上限由 4 mm 改为 7 mm。
+
+### 2. skinopen
+bash tools/skinopen/run.sh male genital,toes：退出状态 0。open-report.json 的 checks 全部为 true（顶点、三角形、绕向、权重、各形状场、许可文件、marginsCoincide 等），boundaryLoops = [66, 67]。graft-report.json 的 checks 全部为 true（closedManifold、consistentWinding、keptDeliveredVerticesUnmoved 等）。我没有看它的渲染。
+
+### 3. 我看图看到的
+- preview-skin.png：全身正常，手臂外展；胸前两个很淡的小点（乳头），腹部正中一个浅坑（脐）；腋前襞处各有一个小缺口。
+- closeup-axilla-below-front.png：从前下方看两侧腋窝是开的，襞的边缘有小的皱。
+- closeup-axilla-right-skin.png：腋窝顶有一小团皱褶和一道缝，腋前、后襞是台阶状的；不是干净的褶。
+- closeup-head-front.png：眼睑、唇平滑；鼻根没有横线了；颅顶高而宽。
+- closeup-navel.png：一个浅的圆形凹陷，边缘是几个大三角形。
+
+
+## Part 12: one more pass on the male (key 169209ce67d8bd76)
+
+male-skin/ changed on disk once more (skin.obj written at 13:28 on 12 October). Shape fields, rig-shape.json and shape-model.json are regenerated.
+
+### 0. What is still wrong (first)
+1. The axilla is not solved the way you asked. I implemented "a thin subcutaneous layer on the two facing skins" (3.5 mm, an assumption, no source opened; axilla.thin_hollow, --thin-hollow) and the result is unusable: every muscle stayed enclosed, but deformed lumps stood out in the axilla, the medial arm bulged, and the measured overlap grew (34-40 cm2 per side). Renders and log are kept in data/raw/bodyshape/out/male-thin-hollow-attempt/. This version therefore goes back to the earlier "each gives half the gap" reshaping (two rounds).
+   Numbers now: arm skin inside trunk skin at 25-40 / 40-50 / 50-60 / 60-85 % of the humerus: left 0.2 / 9.1 / 5.4 / 0, right 0.7 / 18.4 / 6.3 / 0 cm2 (about 11 per side last time; the pass that keeps muscle inside was widened to 7 mm and pushes the skin back somewhat). The steps at the anterior and posterior folds and the small crumpled knot at the top are still there (visible in the right close-up).
+   I am not sure of the measure itself: it splits vertices into "arm" and "trunk" by skin weights, and skin of the posterior axillary fold counts as arm by weight, so it is reported as "arm skin inside trunk skin". The two methods give very different numbers, which shows the measure depends on that grouping.
+2. Muscle still touches or just shows through the skin: latissimus dorsi 1.7 / 1.4 mm (0.14 % / 0.05 % of points), long head of right triceps 1.3 mm (0.31 %). Less than before (4.0 / 3.6 / 1.5), not zero. Outer ring of orbicularis oculi 1.6 / 1.0 mm as before.
+3. Thighs: muscles and bones of the left and right lower limbs come no nearer than 26.8 mm, so the muscles do not touch; skin against skin 17.3 / 29.2 cm2 is not solved (the thin-layer method was tried here too and made the right side 39 cm2; reverted with the rest). Part of the contact is thigh skin against the genital mound.
+4. Nipples: located again, and now they agree with the literature - 179.2 / 190.3 mm from the sternal notch and 217.0 mm apart (reference passed on by you: 188 +/- 13 and 217 +/- 16; I did not open the paper); height y = 1.200 / 1.183 m, about the upper edge of the fifth rib (y 1.179-1.200 there), the lower end of the fourth intercostal space. What the previous version found (y 1.11, 245 / 253 mm from the notch) was the bulge at the lower border of pectoralis at the level of the seventh rib, not the nipple - the position in that report was wrong. Relief +2.7 / +2.4 mm on 7-9 vertices; two very faint dots in the front view. The scan does not resolve an areola.
+5. "The skin is 8.5 mm outside the scan" was my misreport: that was the distance to the nearest MHR vertex (vertices are about 8 mm apart on the chest), not to the surface. To the surface it is 3-4 mm before the push (navel 3.0, nipples 4.0 / 3.2), not 1-2 mm; that comes from the push and the BMI adjustment, not from re-posing the arm.
+6. Perineum: after laying it onto the scanned skin the 204 vertices at full weight go from median 0.7 / p95 3.7 / max 8.9 mm from the scan to 0.4 / 0.9 / 5.8 mm. My "before" is at most 8.9 mm, not the 28 mm the opening tool reported: my region leaves out the box of the genitalia and a 6-26 mm transition round it, and the 28 mm is most likely in that ring at the neck of the scrotum, which I did not move. Over the whole band (mound included) the final distance to the scan is median 1.6, p95 11.9, max 15.6 mm. Please have the opening tool measure again.
+7. Navel: a rounded depression 5.3 mm deep and 17 mm wide at half depth (your values), 32 vertices; in the render a shallow round pit, still coarse.
+8. Head: cover over the vault is now min 3.4 / p5 4.6 / median 6.9 mm (median 8.1 before); from the front the crown still looks high and broad, and I think what remains is the shape of his skull plus the lack of hair. The line at the nasal root no longer shows in the front view; there is a small rise in the middle of the nasal bridge; cover over the nasal bones 1.4 / 1.7 / 2.5 mm.
+9. BMI 24.28 (target 23.6; 23.60 before the push).
+10. Of the final run I looked only at: full body, axillae from below and in front, right axilla, head front, navel. The final left-axilla, chest, neck and face close-ups were not opened (those I saw earlier predate these changes).
+
+### 1. What changed this time
+- Fingers solved again (with segment length scales): fingertips 0.3-1.7 mm, elbow 0.8 / 0.8, wrist 0.8 / 0.7, glenohumeral 1.7 / 2.1 mm.
+- Vault scaled for a 4.5 mm scalp; smoothing radius at the nasal root raised to 26 mm; head-bone pass as before.
+- scan_details.py: nipples searched within an anatomical range (100-165 mm below the notch, 85-130 mm from the midline); navel as a rounded depression; annotate() writes centre and normal on the final skin, the scanned relief, notch-to-nipple distances and rib heights into manifest.scanDetails; fit_perineum() lays the perineal region onto the scanned skin.
+- The enclosure check after the axilla step now allows 7 mm instead of 4.
+
+### 2. skinopen
+bash tools/skinopen/run.sh male genital,toes: exit status 0. Every entry of checks in open-report.json is true (vertices, triangles, winding, weights, each shape field, licence files, marginsCoincide and so on), boundaryLoops = [66, 67]. Every entry of checks in graft-report.json is true (closedManifold, consistentWinding, keptDeliveredVerticesUnmoved and so on). I did not look at its renders.
+
+### 3. What I saw in the renders
+- preview-skin.png: a normal body with abducted arms; two very faint dots on the chest (nipples) and a shallow pit on the midline of the abdomen (navel); a small notch at each anterior axillary fold.
+- closeup-axilla-below-front.png: from below and in front both axillae are open, with small crumples along the edges of the folds.
+- closeup-axilla-right-skin.png: a small crumpled knot and a slit at the top of the axilla, step-like anterior and posterior folds; not a clean fold.
+- closeup-head-front.png: smooth lids and lips; no transverse line at the nasal root; a high, broad crown.
+- closeup-navel.png: a shallow round depression edged by a few large triangles.

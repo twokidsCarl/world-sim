@@ -1,0 +1,68 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第十四部分：女性再做一遍（键 4ff2d7f05743cf10）：头用面部目标，只保证骨上的覆盖
+
+### 0. 还不对的地方（先说）
+1. 右胸锁乳突肌有 5.72 % 的点在皮肤外，最远 7.2 mm。它不是面肌，位置在头颈交界的过渡带里（乳突下方）；它没有被列进 manifest.face.notEnclosedMuscles（那个清单只收整个在头部范围内的部件），所以管线“5 mm 以外”的检查会报它。按你定的规则这一项超限：我把包写出来了，但这一条需要先解决或由你决定是否豁免。我把过渡带收窄过一次（8.6 → 7.2 mm），没有解决。
+2. 颅盖上的覆盖没有到 2.5 mm：目标阶段头部的骨上最少 0.8 mm（抬到了 12.3 mm）；最终颅盖最小 3.0 / p5 3.4 / 中位数 5.4 mm（这是按“朝外的一面”取的量，和前一个数不是同一个量法）。骨没有在皮肤外的。
+3. 面肌略在皮肤外的 10 个（都 ≤ 3 mm，已写入 manifest）：口轮匝肌 2.2 mm（4.2 %），左提上唇肌 1.9（22.6 %），左提上唇鼻翼肌 1.6（38.0 %），左眼轮匝肌外环 1.0，左颧小肌 0.8（13.5 %），右提上唇肌 0.7，右眼轮匝肌外环 0.6，右提上唇鼻翼肌 0.2，左提口角肌 0.2，左额肌 0.0。左侧比右侧多。
+4. 会阴：平滑了（自下方看是一个光滑的鞍面，背面臀沟是一道光滑的沟），代价是离环更远：目标点到皮肤 中位数 6.1 / p95 16.5 / 最大 28.4 mm（上一版 3.9 / 11.3 / 20.2）。开口工具量到环离皮肤中位数 7.6 mm。WU_* 各部件上的覆盖我没有逐个核对。两大腿、两臀的皮肤是否互穿没有另外检查（大腿皮肤贴皮肤 0 / 0.4 cm2）。
+5. 腋下：上臂皮肤在躯干皮肤之内，肱骨 25–40 / 40–50 %：左 11.0 / 1.5，右 2.5 / 0 cm2，其下为 0。左、右腋前襞处各有一个小缺口；右腋窝顶有一道细缝。
+6. 乳头：把皮肤抬了 2.7 / 2.9 mm，之后乳头尖仍在皮肤外 1.4 / 0.7 mm，没有完全贴上。
+7. BMI 23.69（目标 21.6；各阶段：21.60 / 22.16 / 23.21 / 23.74）。
+8. 足：MHR 的足没有分开的脚趾，前足是一团，足背有几道浅痕。右手正常；左手上一轮看过。
+9. 脐是一个棱角分明的小坑（网格太粗），构造的。
+10. 我没有看的渲染：侧面头像、带腺体的胸部图（上一轮看过，这一轮摆放的数没有变）、左手、足的另一张特写、skinopen 的渲染。
+
+### 1. 做了什么
+- 头：从颈以上，皮肤 = 面部目标，只对骨抬皮肤，不受软组织外推（final_female.head_blend：头的蒙皮权重为 1 处完全不推，在头颈交界处权重由 1 降到 0 的那一带平滑过渡，再抹平 6 遍）。
+- 会阴的抬高改成更宽的低通场（σ 35 mm，位移抹平 12 遍），再对位置做 25 遍拉普拉斯平滑。
+- breast-placement.json：是针对原始 HRA 部件的（你的推理是对的：没有匹配的皮肤包时管线不施加摆放，所以“现在的位置”就是原始位置）；appliesTo 已改，撤销上一版摆放的逻辑已删。左 A = [0.0992, 1.1134, 0.1404]、T = [-0.0078, -0.0243, 0.0057]，右 A = [-0.0902, 1.1152, 0.1367]、T = [0.0143, -0.0238, 0.0143]，缩放 0.493——这些是上一轮的数；这一轮重算后的数在文件里，我没有再逐项抄。
+- 形状场、rig-shape.json、shape-model.json 已重新生成（在抬乳头之后）。
+
+### 2. skinopen
+bash tools/skinopen/run.sh female vulva,toes：退出状态 0。open-report.json 的 checks 全为 true，boundaryLoops [66, 66]；graft-report.json 的 checks 全为 true。
+外阴没有移植，理由（notGraftedBecause）：片的外缘离现在的皮肤中位数 7.6 mm（上限 5.0 mm）；154 个环点里有 54 个在标本切面上，那里标本的面在切面以下陡直延伸，不是真正的皮肤边缘；片里有 5 条边被两个以上的三角形共用（标本皮肤本身，中线裂隙两壁相贴处），移植后不是封闭流形。
+脚趾：accepted = true，grafted = true，各趾骨上最少覆盖 2.1 mm。渲染我这一轮没有看。
+
+### 3. 我看图看到的
+- preview-skin.png：身体读作女性；乳房对称，脐在正中；腋前襞处各有一个小缺口；背面臀沟平滑了；前臂背面有一道横痕。
+- closeup-head-front / threequarter.png：脸是面部目标的样子——圆润、年轻，下颌向颏收，没有鼻旁的裂缝和下垂的口角；内、外眦处有小折痕，额部有浅的起伏，下颌下有一道浅褶。我的判断：读作一个年轻女性，可以接受。
+- closeup-face-muscles.png：皮肤半透明盖在面肌上；面肌几乎贴着皮肤面，唇（蓝）在皮肤唇的位置，鼻软骨（蓝）露在鼻子里；“略在外面”的地方是上唇两侧和左鼻旁，看上去是肌肉与皮肤面齐平，不是鼓出来。
+- closeup-perineum-below-skin.png：光滑的鞍面，没有上一版的隆起和凹陷。
+- closeup-axilla-skin / axilla-right-skin.png：两侧腋窝是开的；腋前襞处有小的台阶；右腋窝顶有一道细缝。
+- closeup-feet-above.png、closeup-hand-R.png、closeup-navel.png：见第 0 节第 8、9 条；右手手指伸直分开。
+
+
+## Part 14: one more pass on the female (key 4ff2d7f05743cf10): the face target as the head, cover over bone only
+
+### 0. What is still wrong (first)
+1. The right sternocleidomastoid has 5.72 % of its points outside the skin, by up to 7.2 mm. It is not a facial muscle; the place is in the transition band at the junction of head and neck (below the mastoid). It is not in manifest.face.notEnclosedMuscles (that list takes only parts lying wholly within the head), so the pipeline's "more than 5 mm outside" check will report it. By your rule this is over the limit: the package is written, but this item has to be solved first or exempted by you. I narrowed the band once (8.6 -> 7.2 mm) without solving it.
+2. Cover over the vault does not reach 2.5 mm: at the target stage the least cover over head bone is 0.8 mm (the raise reached 12.3 mm); in the final skin the vault has min 3.0 / p5 3.4 / median 5.4 mm (measured on the outward face only, not the same measure as the first number). No bone is outside the skin.
+3. Ten facial muscles lie slightly outside the skin (all within 3 mm; written to the manifest): orbicularis oris 2.2 mm (4.2 %), left levator labii superioris 1.9 (22.6 %), left levator labii superioris alaeque nasi 1.6 (38.0 %), outer ring of left orbicularis oculi 1.0, left zygomaticus minor 0.8 (13.5 %), right levator labii superioris 0.7, outer ring of right orbicularis oculi 0.6, right levator labii superioris alaeque nasi 0.2, left levator anguli oris 0.2, left frontalis 0.0. More on the left than on the right.
+4. Perineum: smooth now (a smooth saddle from below, a smooth groove at the cleft from behind), at the price of standing further from the rim: target to skin median 6.1 / p95 16.5 / max 28.4 mm (3.9 / 11.3 / 20.2 last time). The opening tool measures the rim a median 7.6 mm from the skin. I did not check the cover over each WU_* part. Interpenetration of the two thigh skins and of the two buttock skins was not checked separately (thigh skin against skin 0 / 0.4 cm2).
+5. Axillae: arm skin inside trunk skin at 25-40 / 40-50 % of the humerus: left 11.0 / 1.5, right 2.5 / 0 cm2, nothing below. A small notch at each anterior fold; a thin slit at the top of the right axilla.
+6. Nipples: the skin was raised by 2.7 / 2.9 mm and the tips are still 1.4 / 0.7 mm outside it, so they do not quite meet.
+7. BMI 23.69 (target 21.6; by stage 21.60 / 22.16 / 23.21 / 23.74).
+8. Feet: MHR's foot has no separate toes, the forefoot is one mass, with a few shallow marks on the dorsum. The right hand is normal; the left was seen last round.
+9. The navel is an angular little pit (the mesh is too coarse), constructed.
+10. Renders I did not look at: the head in profile, the chest with the gland parts (seen last round; the placement numbers did not change this round), the left hand, the other foot close-up, the skinopen renders.
+
+### 1. What was done
+- Head: from the neck up the skin is the face target, raised over bone only and not pushed by soft tissue (final_female.head_blend: no push where the head skin weight is 1, a smooth transition across the band at the junction of head and neck where that weight falls from 1 to 0, smoothed 6 times).
+- The perineum raise is a wider low-passed field (sigma 35 mm, the displacement smoothed 12 times), followed by 25 passes of Laplacian smoothing of positions.
+- breast-placement.json: it applies to the original HRA parts (your reasoning is right: with no matching package the pipeline applies no placement, so "as placed now" is the original position); appliesTo is corrected and the logic that undid a previous placement is removed. Left A = [0.0992, 1.1134, 0.1404], T = [-0.0078, -0.0243, 0.0057]; right A = [-0.0902, 1.1152, 0.1367], T = [0.0143, -0.0238, 0.0143]; scale 0.493 - those are last round's numbers; the recomputed ones are in the file and I did not copy them out again.
+- Shape fields, rig-shape.json and shape-model.json are regenerated (after the nipple raise).
+
+### 2. skinopen
+bash tools/skinopen/run.sh female vulva,toes: exit status 0. Every check in open-report.json is true, boundaryLoops [66, 66]; every check in graft-report.json is true.
+The vulva was not grafted; reasons (notGraftedBecause): the rim of the patch lies a median 7.6 mm from the present skin (limit 5.0 mm); 54 of the 154 rim points lie on a cut plane of the specimen, where the specimen surface runs on steeply below the plane and is not a real edge of skin; 5 edges of the patch are used by more than two triangles (in the specimen skin itself, where the walls of the midline cleft touch), so the grafted skin would not be a closed manifold.
+Toes: accepted = true, grafted = true, least cover over any phalanx 2.1 mm. I did not look at their renders this round.
+
+### 3. What I saw in the renders
+- preview-skin.png: the body reads female; symmetric breasts, navel on the midline; a small notch at each anterior axillary fold; the cleft is smooth from behind; a transverse mark on the back of the forearm.
+- closeup-head-front / threequarter.png: the face is that of the face target - rounded and young, tapering to the chin, without the cracks beside the nose or the sagging mouth corners; small creases at inner and outer canthi, shallow undulations on the forehead, a faint crease under the jaw. My judgement: it reads as a young woman and is acceptable.
+- closeup-face-muscles.png: the skin semi-transparent over the facial muscles; the muscles lie almost on the skin surface, the lips (blue) sit at the lips of the skin and the nasal cartilages (blue) show inside the nose; where muscle is "slightly outside", beside the upper lip and beside the left of the nose, it looks flush with the skin, not bulging.
+- closeup-perineum-below-skin.png: a smooth saddle, without the bumps and hollows of the previous version.
+- closeup-axilla-skin / axilla-right-skin.png: both axillae open; small steps at the anterior folds; a thin slit at the top of the right axilla.
+- closeup-feet-above.png, closeup-hand-R.png, closeup-navel.png: items 8 and 9 of section 0; the right hand has straight separate fingers.

@@ -48,15 +48,16 @@
   "upperLidHeightMm": 14,
   "lowerLidHeightMm": 9,
   "note": {
-   "zh": "闭合线取在下睑缘之上、睑裂高度的 closureFraction 处：闭眼主要靠上睑下落，下睑只上抬一点。两睑各越过闭合线 overlapMm，使网格的睑缘确实合拢。四个数都是假设。",
-   "en": "The lids meet at `closureFraction` of the aperture above the lower lid margin: closing is mostly the upper lid coming down, the lower lid rising a little. Each lid travels `overlapMm` past the closure line so that the lid margins of the meshes really meet. All four numbers are assumptions."
+   "zh": "闭合线取在下睑缘之上、睑裂高度的 closureFraction 处：闭眼主要靠上睑下落，下睑只上抬一点。皮肤有真实睑裂时，睑缘到眼球（巩膜、角膜）表面至少留 gapMm；闭合的皮肤和深层的眼睑各越过闭合线 overlapMm（开口的皮肤上最多 0.25 mm）。这些数都是假设。",
+   "en": "The lids meet at `closureFraction` of the aperture above the lower lid margin: closing is mostly the upper lid coming down, the lower lid rising a little. With a real fissure in the skin the margin keeps at least gapMm from the globe surface (sclera, cornea); on a closed skin and for the deep lids each lid travels overlapMm past the closure line (at most 0.25 mm on an opened skin). All these numbers are assumptions."
   },
   "overlapMm": 0.7,
   "followers": "orbicularis oculi|tarsal plate|levator palpebrae|eyelid|eyelash|conjunctiva|subcutaneous",
   "followersNote": {
    "zh": "皮肤之外，只有名字匹配 followers 的部件随眼睑通道移动；否则贴在眼球上的眼外肌止点也会被带着走。",
    "en": "Apart from the skin, only parts whose name matches `followers` move with the lid channels; otherwise the insertions of the extraocular muscles on the globe would be dragged along."
-  }
+  },
+  "gapMm": 0.4
  },
  "jaw": {
   "joint": "tmj",
@@ -763,8 +764,8 @@
    "id": "oral_recess",
    "match": "",
    "name": {
-    "zh": "口裂内陷（皮肤的几何替代）",
-    "en": "oral recess (geometric stand-in on the skin)"
+    "zh": "口裂内陷（闭合皮肤上的几何替代）",
+    "en": "oral recess (geometric stand-in on a closed skin)"
    },
    "model": "recess",
    "excursionMm": 7,
@@ -784,6 +785,33 @@
    "action": {
     "zh": "皮肤是一张闭合的面，唇不能分开。张口时把两唇相贴的那道褶向口内推 excursionMm，褶上下 spreadMm 内渐变，让下颌张开时被拉开的皮肤成为一个凹陷，而不是一张平的膜。两个数都是假设。",
     "en": "The skin is one closed surface and the lips cannot part. On mouth opening the crease where the lips meet is pushed excursionMm into the mouth, fading over spreadMm above and below it, so that the skin stretched by the opening jaw forms a hollow rather than a flat membrane. Both numbers are assumptions."
+   }
+  },
+  {
+   "id": "mouth_corner",
+   "match": "",
+   "name": {
+    "zh": "口角成形（开口皮肤上的几何修正）",
+    "en": "mouth-corner shaping (geometric correction on an opened skin)"
+   },
+   "model": "corner",
+   "excursionMm": 10,
+   "spreadMm": 0,
+   "reachMm": 0,
+   "mask": [],
+   "attachments": {
+    "origin": {
+     "zh": "无（不是肌肉）",
+     "en": "none (not a muscle)"
+    },
+    "insertion": {
+     "zh": "无",
+     "en": "none"
+    }
+   },
+   "action": {
+    "zh": "皮肤有真实口裂时，骨架把上唇缘绑在颅骨、下唇缘绑在下颌，一直到口角，单靠关节张口时口裂两端是竖直的（方口）。这个通道在离口角 excursionMm 以内让唇缘跟随下颌的份额逐渐过渡到口角处的 0.5，使口裂呈杏仁形。它的激活应等于下颌张开角 / 上限。excursionMm（过渡长度）是假设。",
+    "en": "With a real oral fissure the rig binds the upper lip margin to the skull and the lower to the jaw right up to the corners, so opened by the joint alone the fissure has vertical ends (a square mouth). Within excursionMm of a corner this channel eases the jaw share of the lip margins to 0.5 at the corner, giving an almond-shaped aperture. Its activation should equal jaw opening / limit. excursionMm (the taper length) is an assumption."
    }
   }
  ],

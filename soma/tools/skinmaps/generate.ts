@@ -2,7 +2,7 @@
 // Builds the two skin maps (dermatomes, cutaneous nerve territories) from the curated
 // definitions, together with their verification report.
 
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { BodyId, SkinMap, SkinMaps } from '../../src/anatomy/types.ts'
 import { Builder, type BuiltMap, type MapDef } from './build.ts'
@@ -42,10 +42,28 @@ export async function loadContext(bodyId: BodyId): Promise<Context> {
   if (!raw) throw new Error(`skin part ${part.id} missing from integumentary.glb`)
   const bones = await readGlbParts(join(dir, 'skeletal.glb'))
   for (const [k, v] of integ) bones.set(k, v)
+  // 外生殖器的体表标志取自深层部件（阴茎头、睾丸）/ Landmarks of the external genitalia come from deep parts (glans, testes).
+  if (existsSync(join(dir, 'reproductive.glb'))) for (const [k, v] of await readGlbParts(join(dir, 'reproductive.glb'))) bones.set(k, v)
   // 正中矢状面取中线骨骼的平均 X / The median plane is the mean X of the midline bones.
   const mid = body.data.parts.filter((p) => p.system === 'skeletal' && /vertebra$|^Sacrum$|^Manubrium$/.test(p.name))
   const midX = mid.reduce((s, p) => s + p.centroid[0], 0) / (mid.length || 1)
-  const skin = buildSkin(raw, midX)
+  // 开口的皮肤：skin-source.u32 给出每个出厂顶点在皮肤包里的顶点号，皮肤包的 vertex-tags.u8 给出标签。
+  // An opened skin: skin-source.u32 gives each shipped vertex's index in the skin package, whose
+  // vertex-tags.u8 holds the tags.
+  let tags: Uint8Array | undefined
+  const sourcePath = join(dir, 'skin-source.u32')
+  if (existsSync(sourcePath)) {
+    const report = readJson<{ skinPackage?: { opened?: { dir?: string } } }>(join(dir, 'pipeline-report.json'))
+    const pkg = report.skinPackage?.opened?.dir
+    const tagPath = pkg ? join(ROOT, pkg, 'vertex-tags.u8') : ''
+    if (!pkg || !existsSync(tagPath)) throw new Error(`${bodyId}: skin-source.u32 is present but the opened skin package (vertex-tags.u8) was not found; it is needed to tell lid rims and the oral pouch from skin`)
+    const buf = readFileSync(sourcePath)
+    const source = new Uint32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4)
+    const all = new Uint8Array(readFileSync(tagPath))
+    if (source.length !== raw.positions.length / 3) throw new Error(`${bodyId}: skin-source.u32 has ${source.length} entries for ${raw.positions.length / 3} skin vertices`)
+    tags = Uint8Array.from(source, (v) => all[v] ?? 0)
+  }
+  const skin = buildSkin(raw, midX, tags)
   const lm = new Landmarks(body, bones, skin, readJson<LandmarkFile>(join(CURATED, 'landmarks.json')))
   return { body, skinPart: part.id, skin, skinHash: meshHash(raw), lm, dermatomeDef: readJson(join(CURATED, 'dermatomes.json')), cutaneousDef: readJson(join(CURATED, 'cutaneous.json')) }
 }

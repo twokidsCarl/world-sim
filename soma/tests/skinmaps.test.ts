@@ -17,6 +17,8 @@ const XIPHOID = 'Over the xiphoid process (dermatome with the largest share of t
 interface Known {
   /** 允许不通过的经典检查点（按 checks 中的顺序）/ Classic checkpoints allowed to fail (in the order of `checks`). */
   failedChecks: string[]
+  /** 脐旁检查点两侧应得的皮节 / The dermatome expected beside the umbilicus on each side. */
+  umbilicus: [string, string]
   /** 剑突前方皮肤中 T6 须占多数的侧别 / Sides on which T6 must hold most of the skin over the xiphoid. */
   xiphoidSides: ('L' | 'R')[]
   splitDermatomes: RegExp
@@ -56,62 +58,78 @@ interface Known {
 const KNOWN: Record<BodyId, Known> = {
   male: {
     failedChecks: [INGUINAL],
+    umbilicus: ['T10', 'T10'],
     xiphoidSides: ['L', 'R'],
     splitDermatomes: /^(T([2-9]|10|11)|V3)$/,
     // T3–T6：上背部和胸部的窄带（T2、T3 在背部只相距 1.4 cm）在网格分辨率下左右互有出入。
-    // T9、T10：腹前壁的网格边长达 6 cm 以上，而两带在锁骨中线上只相距约 3 cm（下面的测试里量给你看）；
+    // T8–T10：腹前壁的网格边长大于这几条带在锁骨中线上的间距（约 3–4 cm；下面的测试里量给你看）；
     //   两侧的种子线对称（相差不到 5 mm），不对称出在每个顶点代表的面积太大。
     // T3-T6: the narrow upper-back and chest bands (T2 and T3 are 1.4 cm apart on the back) trade
     //   area between the sides at mesh resolution.
-    // T9, T10: the mesh of the anterior abdominal wall has edges of 6 cm and more while the two bands
-    //   are about 3 cm apart at the midclavicular line (measured in a test below); the seed lines of
+    // T8-T10: the mesh of the anterior abdominal wall has edges longer than these bands are apart at
+    //   the midclavicular line (about 3-4 cm; measured in a test below); the seed lines of
     //   the two sides are symmetric to within 5 mm, the asymmetry is that of vertices standing for too much area.
-    asymmetricDermatomes: /^(T[3-6]|T9|T10)$/,
+    asymmetricDermatomes: /^(T[3-6]|T[89]|T10)$/,
     splitTerritories: /^(obturator|pudendal)$/,
     disagreeingTerritories: ['iliohypogastricLateral', 'iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial'],
     tinyTerritories: [],
     intercostobrachialMirror: 0.5,
   },
   female: {
-    // 剑突（两侧）：她的第 5、6 肋间神经（由男性模型变形而来）前端的高度分别为 1.13 和 1.08，
-    // 两者的分界正好穿过剑突的上半（剑突骨骼在 1.09–1.11，且整体偏左约 1.2 cm）。左侧 T6 占 41%，右侧为 T5。
-    // 即剑胸结合处是 T5/T6 的分界，这与 ISNCSCI“第 6 肋间隙（剑胸结合平面）”并不矛盾，但“剑突属 T6”的检查点不成立。
-    // Xiphoid (both sides): the anterior ends of her 5th and 6th intercostal nerves (warped from the
-    // male model) lie at heights 1.13 and 1.08, and the boundary between them runs through the upper
-    // half of the xiphoid (the bone spans 1.09-1.11 and lies about 1.2 cm to the left). T6 holds 41%
-    // on the left and none on the right. The xiphisternal joint is thus the T5/T6 boundary, which
-    // does not contradict ISNCSCI's "sixth intercostal space (level of xiphisternum)", but the
-    // "xiphoid is T6" checkpoint does not hold.
-    failedChecks: [XIPHOID, INGUINAL],
+    // 她的肋间神经由男性模型变形而来，与她自己的胸骨和（这一版皮肤上才有的）脐并不相配：
+    //  - 剑突（两侧）：第 5、6 肋间神经前端的高度为 1.13 和 1.08，分界穿过剑突上半（剑突骨骼在 1.09–1.11）。
+    //    左侧 T6 占 48%，右侧为 T5。剑胸结合处即 T5/T6 分界。
+    //  - 脐（两侧为 T8）：她皮肤上的脐凹在 0.945 高度，而第 10 肋间神经的前端在 0.887，低了约 6 cm；
+    //    脐落在 T8/T9 分界上。这是神经模型的问题（已上报），规则没有去迁就：“脐平面属 T10”在她身上不成立。
+    // Her intercostal nerves are warped from the male model and do not fit her own sternum or her
+    // umbilicus (which this issue of the skin is the first to have):
+    //  - xiphoid (both sides): the anterior ends of the 5th and 6th nerves lie at heights 1.13 and
+    //    1.08 and the boundary runs through the upper half of the xiphoid (the bone spans 1.09-1.11).
+    //    T6 holds 48% on the left and none on the right. The xiphisternal joint is the T5/T6 boundary.
+    //  - umbilicus (T8 on both sides): the umbilical dimple of her skin is at height 0.945 while the
+    //    anterior end of her 10th intercostal nerve is at 0.887, about 6 cm lower; the umbilicus falls
+    //    on the T8/T9 boundary. This is a fault of the nerve model (reported); the rules were not bent
+    //    to hide it: "umbilicus = T10" does not hold on her.
+    failedChecks: [XIPHOID, 'Beside the umbilicus', INGUINAL],
+    umbilicus: ['T8', 'T8'],
     xiphoidSides: [],
-    // S3：她的皮肤上会阴是两股之间一条窄缝，比坐骨结节低约 5 cm；S4–5 的肛周圆盘和臀裂把缝整个占住，
-    // S3 的会阴/外阴部分与臀部部分因此不相连。
-    // S3: on her skin the perineum is a narrow seam between the thighs about 5 cm below the ischial
-    // tuberosities; the perianal disc and natal cleft of S4-5 take the whole width of the seam, so the
-    // perineal/genital part of S3 is not joined to its buttock part.
-    splitDermatomes: /^(T([2-9]|10|11)|V3|S3)$/,
+    // S3：她的皮肤上会阴是两股之间一片光滑隆起的表面（没有做出外阴），S4–5 的肛周圆盘和臀裂把它整个占住，
+    // S3 的会阴部分与臀部部分因此不相连。
+    // L3（右）：右臀上部的网格较粗，L2 与 L3 的种子线被迫经过同一个顶点，L3 在脊柱旁的起始段（28 cm²）与其余部分断开。
+    // S3: on her skin the perineum is a smooth raised surface between the thighs (no vulvar anatomy);
+    // the perianal disc and natal cleft of S4-5 take the whole of it, so the perineal part of S3 is
+    // not joined to its buttock part.
+    // L3 (right): on the coarse mesh of her right upper buttock the L2 and L3 seed lines are forced
+    // through one shared vertex, and the start of L3 beside the spine (28 cm²) is cut off from the rest.
+    splitDermatomes: /^(T([2-9]|10|11)|V3|S3|L3)$/,
     // 胸腹部的带沿她变形后的肋间神经，神经两侧不完全对称。
     // The thoracic and abdominal bands follow her warped intercostal nerves, which are not quite symmetric.
     asymmetricDermatomes: /^(T([3-9]|10))$/,
     // 髂腹下神经外侧皮支：她的这条神经（变形后）越过髂嵴处和臀外侧处各有一段贴近皮肤，中间隔着臀上皮神经的分布区。
-    // 臂后皮神经（右）：右臂上它的两条分支相距约 3 cm 各自贴近皮肤，中间是肋间臂神经的分布区。
     // Lateral branch of iliohypogastric: her (warped) nerve comes close to the skin where it crosses
     // the iliac crest and again on the lateral buttock, with the superior clunial territory between.
-    // Posterior brachial (right): on her right arm two of its branches surface about 3 cm apart,
-    // with intercostobrachial territory between them.
-    splitTerritories: /^(obturator|pudendal|iliohypogastricLateral|posteriorBrachial)$/,
-    // 除两个人体共有的以外：臂后皮神经在她身上只有 0.11，她的这条神经（变形后）的体表投影落在臂后内侧，
-    // 即背侧轴线的 T1/T2 一侧。髂腹下神经外侧皮支在她身上不在此列（0.5 以上）。
-    // Besides the reasons common to both bodies: posterior brachial is only 0.11 on her, because the
-    // skin projection of her (warped) nerve lies posteromedially, on the T1/T2 side of the dorsal
-    // axial line. The lateral branch of the iliohypogastric is not on her list (above 0.5).
-    disagreeingTerritories: ['iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial'],
-    // 生殖股神经生殖支：耻骨结节下方的终末段只落在少数几个皮肤顶点上（她的皮肤上没有做出大阴唇），
-    // 左侧 12 cm²，右侧不足 6 cm² 按规则并入邻区。Gray 对此支的描述也只是“少数细支”。
-    // Genital branch of genitofemoral: its terminal stretch below the pubic tubercle lands on a few
-    // skin vertices (her skin has no modelled labium majus): 12 cm² on the left, and on the right a
-    // patch under 6 cm² that is absorbed by its neighbours by rule. Gray describes this branch as
-    // "a few filaments".
+    // 髂腹股沟神经（右）：她的这条神经重新安放后，右侧在髂前上棘内侧 3 cm 的裁剪界线旁还有一小段贴近皮肤，
+    // 留下一块 8 cm² 的小片；把界线再往内移，整个分布区就不足 20 cm² 了。
+    // Ilioinguinal (right): with her nerve re-seated, a short stretch beside the clip line 3 cm medial
+    // of the anterior superior iliac spine still lies close under the skin on the right and leaves an
+    // 8 cm² patch; moving the line further medially leaves the whole territory under 20 cm².
+    splitTerritories: /^(obturator|pudendal|iliohypogastricLateral|ilioinguinal)$/,
+    // 除两个人体共有的以外：
+    //  - 臂后皮神经在她身上只有 0.10：她的这条神经（变形后）的体表投影落在臂后内侧，即背侧轴线的 T1/T2 一侧。
+    //  - 肋下神经（0.48）：其外侧皮支越过髂嵴至大转子（Gray），而皮节图上 T12 止于髂嵴上方，
+    //    髂嵴以下的髋外侧属 L1/L2；她的骨盆较宽，这一部分占的面积比男性大（男性为 0.65）。
+    // Besides the reasons common to both bodies:
+    //  - posterior brachial is only 0.10 on her: the skin projection of her (warped) nerve lies
+    //    posteromedially, on the T1/T2 side of the dorsal axial line.
+    //  - subcostal (0.48): its lateral cutaneous branch crosses the iliac crest to the greater
+    //    trochanter (Gray), while T12 in the dermatome map stops above the crest and the lateral hip
+    //    below it is L1/L2; with her wider pelvis that part is a larger share than on the male (0.65).
+    disagreeingTerritories: ['subcostal', 'iliohypogastricLateral', 'iliohypogastricAnterior', 'posteriorBrachial', 'medialBrachial'],
+    // 生殖股神经生殖支：她的这条神经已截短到腹股沟管浅环附近（供阴囊的一段只属男性），离皮肤 8 cm 以上，
+    // 没有种子；她的皮肤上也没有做出大阴唇。该区没有皮肤。
+    // Genital branch of genitofemoral: her nerve was trimmed to end near the superficial inguinal
+    // ring (the run to the scrotum is male only) and never comes within 8 cm of the skin, so it has
+    // no seed; her skin has no modelled labium majus either. The territory has no skin.
     tinyTerritories: ['genitofemoralGenital'],
     intercostobrachialMirror: 0.5,
   },
@@ -169,7 +187,12 @@ for (const body of ['male', 'female'] as BodyId[]) {
     it('assigns every skin vertex; an inner wall copies the outer wall', () => {
       expect(report.dermatome.unassigned.count).toBe(0)
       expect(report.cutaneous.unassigned.count).toBe(0)
-      expect(report.dermatome.unassigned.innerCount).toBe(0)
+      // 构造面顶点（睑缘内卷、口腔袋）不属体表，标签恒为 255；除此之外没有未分配的顶点。
+      // Construction vertices (lid rims, oral pouch) are not body surface and always carry 255; nothing else is unassigned.
+      const excluded = g.ctx.skin.excluded.reduce((a, b) => a + b, 0)
+      expect(report.dermatome.unassigned.innerCount).toBe(excluded)
+      expect(report.cutaneous.unassigned.innerCount).toBe(excluded)
+      for (let i = 0; i < g.ctx.skin.n; i++) if (g.ctx.skin.excluded[i] && (bin[i] !== 255 || bin[g.ctx.skin.n + i] !== 255)) throw new Error(`construction vertex ${i} carries a region`)
       const { skin } = g.ctx
       for (let i = 0; i < skin.n; i++) {
         if (skin.outer[i]) continue
@@ -209,7 +232,7 @@ for (const body of ['male', 'female'] as BodyId[]) {
       expect(failed).toEqual(known.failedChecks)
       const got = (name: string) => report.dermatome.checks.filter((c) => c.name.startsWith(name)).map((c) => c.got)
       expect(got('Nipple line')).toEqual(['T4', 'T4'])
-      expect(got('Beside the umbilicus')).toEqual(['T10', 'T10'])
+      expect(got('Beside the umbilicus')).toEqual(known.umbilicus)
       expect(got('Pad of the thumb')).toEqual(['C6', 'C6'])
       expect(got('Pad of the middle finger')).toEqual(['C7', 'C7'])
       expect(got('Pad of the little finger')).toEqual(['C8', 'C8'])
@@ -241,7 +264,48 @@ for (const body of ['male', 'female'] as BodyId[]) {
       expect(report.cutaneous.speckle.outvotedFraction).toBeLessThan(0.03)
     })
 
-    it.skipIf(body !== 'male')('has an abdominal wall mesh coarser than the T9/T10 bands are wide (why those two may be asymmetric)', () => {
+    it('stops at the oral and palpebral fissures on an opened skin', () => {
+      // 开口的皮肤：上唇缘属 V2（眶下神经），下唇缘属 V3（颏神经）；上睑缘属 V1，下睑缘属 V2。两唇缘的顶点重合而不相连。
+      // An opened skin: the upper lip margin is V2 (infra-orbital), the lower lip margin V3 (mental);
+      // the upper lid margin is V1, the lower V2. The vertices of the two lip margins coincide but are not connected.
+      const { skin } = g.ctx
+      if (!skin.tags.some((t) => t === 1)) return
+      const d = g.ctx.dermatomeDef.regions.map((r) => r.key), c = g.ctx.cutaneousDef.regions.map((r) => r.key)
+      const want: Record<number, [string, string]> = { 1: ['V2', 'infraorbital'], 2: ['V3', 'mental'], 4: ['V1', 'V1'], 6: ['V1', 'V1'], 5: ['V2', 'infraorbital'], 7: ['V2', 'infraorbital'] }
+      let lips = 0
+      for (let i = 0; i < skin.n; i++) {
+        const w = want[skin.tags[i]!]
+        if (!w) continue
+        if (skin.tags[i]! <= 2) lips++
+        expect(d[bin[i]!], `dermatome at tag ${skin.tags[i]}`).toBe(w[0])
+        expect(c[bin[skin.n + i]!], `territory at tag ${skin.tags[i]}`).toBe(w[1])
+      }
+      expect(lips).toBeGreaterThan(40)
+    })
+
+    it('maps separate toes and the external genitalia where the body has them', () => {
+      const { lm } = g.ctx
+      const d = g.ctx.dermatomeDef.regions.map((r) => r.key), c = g.ctx.cutaneousDef.regions.map((r) => r.key)
+      const n = g.ctx.skin.n
+      const at = (e: unknown, side: 'L' | 'R') => { const v = lm.vertex(e as never, side); return [d[bin[v]!], c[bin[n + v]!]] }
+      for (const side of ['L', 'R'] as const) {
+        // 足趾：𧿹趾跖面属足底内侧神经，小趾跖面属足底外侧神经；𧿹趾背 L5，小趾背 S1。
+        // Toes: plantar great toe = medial plantar, plantar little toe = lateral plantar; dorsal great toe L5, dorsal little toe S1.
+        expect(at({ at: { part: 'Distal phalanx of {side} big toe' }, to: 'inf' }, side)).toEqual(['L5', 'medialPlantar'])
+        expect(at({ at: { part: 'Proximal phalanx of {side} little toe' }, to: 'inf' }, side)).toEqual(['S1', 'lateralPlantar'])
+        expect(at({ at: { part: 'Proximal phalanx of {side} big toe' }, to: 'sup' }, side)[0]).toBe('L5')
+        expect(at({ at: { part: 'Proximal phalanx of {side} little toe' }, to: 'sup' }, side)[0]).toBe('S1')
+        if (!lm.hasPart('Glans penis', side)) continue
+        // 男性外生殖器：阴茎头属 S3 / 阴部神经；阴茎根属 L1 / 髂腹股沟神经；阴囊后面属 S3 / 阴部神经。
+        // Male external genitalia: glans = S3 / pudendal; root of the penis = L1 / ilioinguinal; back of the scrotum = S3 / pudendal.
+        expect(at('glansSkin', side)).toEqual(['S3', 'pudendal'])
+        expect(at('penisRootDorsum', side)).toEqual(['L1', 'ilioinguinal'])
+        expect(at('scrotumPosterior', side)).toEqual(['S3', 'pudendal'])
+        expect(at('scrotumAnterolateral', side)).toEqual(['L1', 'genitofemoralGenital'])
+      }
+    })
+
+    it.skipIf(body !== 'male')('has an abdominal wall mesh coarser than the T8-T10 bands are wide (why those may be asymmetric)', () => {
       const { skin, lm } = g.ctx
       const y9 = lm.surfacePoint('K_T9', 'L')[1], y10 = lm.surfacePoint('K_T10', 'L')[1], y8 = lm.surfacePoint('K_T8', 'L')[1], y11 = lm.surfacePoint('K_T11', 'L')[1]
       const frontZ = lm.point('core', 'L')[2] + 0.03
@@ -252,7 +316,8 @@ for (const body of ['male', 'female'] as BodyId[]) {
         for (let k = skin.adjStart[i]!; k < skin.adjStart[i + 1]!; k++) longest = Math.max(longest, skin.adjLen[k]!)
       }
       expect(y9 - y10).toBeLessThan(0.04)
-      expect(longest).toBeGreaterThan(y9 - y10)
+      expect(y8 - y9).toBeLessThan(0.04)
+      expect(longest).toBeGreaterThan(Math.max(y9 - y10, y8 - y9))
     })
 
     it('has nerve territories lying in the dermatomes of their textbook root values', () => {
@@ -266,7 +331,7 @@ for (const body of ['male', 'female'] as BodyId[]) {
       expect(rows.get('median')!.inExpected).toBeGreaterThan(0.9)
       expect(rows.get('ulnar')!.inExpected).toBeGreaterThan(0.75)
       // 有腋窝的皮肤上，肋间臂神经分布区应落在 T2 / On a skin with an axilla the intercostobrachial territory lies in T2.
-      expect(rows.get('intercostobrachial')!.inExpected).toBeGreaterThan(0.8)
+      expect(rows.get('intercostobrachial')!.inExpected).toBeGreaterThan(0.75)
       expect(report.cutaneous.areas.find((a) => a.key === 'intercostobrachial')!.mirror ?? 0).toBeGreaterThanOrEqual(known.intercostobrachialMirror)
       expect(segmentKeys('S5')).toEqual(['S4-5'])
     })

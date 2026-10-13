@@ -94,8 +94,41 @@ const missing = (id: string, side: 'L' | 'R', claim: string, what: string): Land
 
 const ORDINALS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth', 'Eleventh', 'Twelfth']
 
+export interface LandmarkOptions {
+  /**
+   * 桡神经沟检查按肱骨干自己的轴线取切片，而不是按水平面（缺省为否，即原来的做法：假定肱骨是竖直的）。
+   * 上肢外展过的身体要打开它：肱骨斜了以后，水平切片切到的不是同一段骨。肱骨恰好竖直时两种做法结果相同。
+   * The radial-groove check takes its slabs perpendicular to the humeral shaft's own axis instead of
+   * horizontally (off by default, which is the earlier behaviour: a vertical humerus is assumed). A
+   * body with abducted arms needs it: on a tilted humerus a horizontal slab is another piece of bone.
+   * For an exactly vertical humerus the two give the same result.
+   */
+  shaftAligned?: boolean
+}
+
+/**
+ * 顶点云的主轴（协方差矩阵最大特征值的方向，幂迭代），朝上；以及质心。
+ * Principal axis of a vertex cloud (direction of the largest eigenvalue of the covariance, by power iteration), pointing up; and the centroid.
+ */
+function principalAxis(mesh: Mesh): { c: V3; u: V3 } {
+  const p = mesh.positions
+  const n = p.length / 3
+  const c: V3 = [0, 0, 0]
+  for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) c[k] = c[k]! + p[i + k]! / n
+  const m = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  for (let i = 0; i < p.length; i += 3) for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) m[3 * a + b] = m[3 * a + b]! + (p[i + a]! - c[a]!) * (p[i + b]! - c[b]!)
+  let u: V3 = [0, 1, 0]
+  for (let it = 0; it < 200; it++) {
+    const v: V3 = [m[0]! * u[0] + m[1]! * u[1] + m[2]! * u[2], m[3]! * u[0] + m[4]! * u[1] + m[5]! * u[2], m[6]! * u[0] + m[7]! * u[1] + m[8]! * u[2]]
+    const l = Math.hypot(v[0], v[1], v[2]) || 1
+    u = [v[0] / l, v[1] / l, v[2] / l]
+  }
+  if (u[1] < 0) u = [-u[0], -u[1], -u[2]]
+  return { c, u }
+}
+
 /** Run every check for both sides. */
-export function runLandmarkChecks(ctx: LandmarkContext): LandmarkResult[] {
+export function runLandmarkChecks(ctx: LandmarkContext, opts: LandmarkOptions = {}): LandmarkResult[] {
   const out: LandmarkResult[] = []
   for (const side of ['L', 'R'] as const) {
     const S = side === 'L' ? 'Left' : 'Right'
@@ -257,10 +290,47 @@ export function runLandmarkChecks(ctx: LandmarkContext): LandmarkResult[] {
       if (isResult(r)) out.push(r)
       else {
         const humerus = r.m[0]!
-        const hb = bboxOf(humerus)
         const idx = surfaceIndex(humerus)
-        const h = hb[4] - hb[1]
-        const axisAt = (y: number) => slabCentroid(humerus, y - 0.01, y + 0.01)
+        // 骨干坐标系：along = 沿骨干向上的坐标，back / inward = 向后、向 +X 的单位方向（都垂直于骨干）。
+        // 缺省（不按骨干对齐）时就是世界坐标的 y、z、x，与原来的做法逐项相同。
+        // The shaft frame: `along` = the coordinate up the shaft, `back` / `inward` = unit directions
+        // backwards and towards +X (both perpendicular to the shaft). By default (not shaft-aligned) they
+        // are the world's y, z and x, term for term what the check did before.
+        let u: V3 = [0, 1, 0]
+        let zp: V3 = [0, 0, 1]
+        let xp: V3 = [1, 0, 0]
+        if (opts.shaftAligned) {
+          u = principalAxis(humerus).u
+          const d = u[2]
+          const l = Math.hypot(-d * u[0], -d * u[1], 1 - d * u[2]) || 1
+          zp = [(-d * u[0]) / l, (-d * u[1]) / l, (1 - d * u[2]) / l]
+          xp = [u[1] * zp[2] - u[2] * zp[1], u[2] * zp[0] - u[0] * zp[2], u[0] * zp[1] - u[1] * zp[0]]
+        }
+        const along = (x: number, y: number, z: number) => x * u[0] + y * u[1] + z * u[2]
+        const hp = humerus.positions
+        let s0 = Infinity
+        let s1 = -Infinity
+        for (let i = 0; i < hp.length; i += 3) {
+          const a = along(hp[i]!, hp[i + 1]!, hp[i + 2]!)
+          if (a < s0) s0 = a
+          if (a > s1) s1 = a
+        }
+        const hb = [0, s0, 0, 0, s1, 0]
+        const h = s1 - s0
+        const axisAt = (sv: number): V3 | null => {
+          if (!opts.shaftAligned) return slabCentroid(humerus, sv - 0.01, sv + 0.01)
+          let n = 0
+          const c: V3 = [0, 0, 0]
+          for (let i = 0; i < hp.length; i += 3) {
+            const a = along(hp[i]!, hp[i + 1]!, hp[i + 2]!)
+            if (a < sv - 0.01 || a > sv + 0.01) continue
+            c[0] += hp[i]!
+            c[1] += hp[i + 1]!
+            c[2] += hp[i + 2]!
+            n++
+          }
+          return n ? [c[0] / n, c[1] / n, c[2] / n] : null
+        }
         // 取贴骨（15 mm 以内）的采样点中最靠后的一个：桡神经沟里的主干。到肱三头肌的分支离骨 2 cm 以上，
         // 它们是否比主干更靠后与“神经绕过肱骨干后面”无关（在男性静息位上两者只差 0.1 mm）。没有贴骨的采样点时退回到全部采样点。
         // The most posterior of the samples lying on the bone (within 15 mm): the trunk in the radial
@@ -270,11 +340,12 @@ export function runLandmarkChecks(ctx: LandmarkContext): LandmarkResult[] {
         let best: { post: number; d: number } | null = null
         let bestNear: { post: number; d: number } | null = null
         for (const q of r.n[0]!) {
-          const f = (q[1] - hb[1]) / h
+          const sq = along(q[0], q[1], q[2])
+          const f = (sq - hb[1]!) / h
           if (f < 0.3 || f > 0.7) continue
-          const a = axisAt(q[1])
+          const a = axisAt(sq)
           if (!a) continue
-          const post = a[2] - q[2]
+          const post = (a[0] - q[0]) * zp[0] + (a[1] - q[1]) * zp[1] + (a[2] - q[2]) * zp[2]
           const d = idx.distance(q[0], q[1], q[2])
           if (!best || post > best.post) best = { post, d }
           if (d < 0.015 && (!bestNear || post > bestNear.post)) bestNear = { post, d }
@@ -283,10 +354,11 @@ export function runLandmarkChecks(ctx: LandmarkContext): LandmarkResult[] {
         const medialAt = (f0: number, f1: number): number | null => {
           const v: number[] = []
           for (const q of r.n[0]!) {
-            const f = (q[1] - hb[1]) / h
+            const sq = along(q[0], q[1], q[2])
+            const f = (sq - hb[1]!) / h
             if (f < f0 || f > f1) continue
-            const a = axisAt(q[1])
-            if (a) v.push((a[0] - q[0]) * lat)
+            const a = axisAt(sq)
+            if (a) v.push(((a[0] - q[0]) * xp[0] + (a[1] - q[1]) * xp[1] + (a[2] - q[2]) * xp[2]) * lat)
           }
           return v.length ? median(v) : null
         }

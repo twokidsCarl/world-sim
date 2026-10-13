@@ -60,6 +60,35 @@ def head_weight(lod):
     return np.clip(wh, 0, 1)
 
 
+def head_blend(lod, A, V=None, fb=None):
+    """头部“不受软组织外推”的权重：只含面部和颅盖，按颅骨的轮廓定。乳突以下、耳后、下颌下缘以下（整个颈部）为 0，照常包住。
+    面部：在乳突前方 20 mm 以前、且在下颌下缘（颏下点到下颌角点的连线）以上；颅盖：乳突尖以上 20 mm 以上。边界处抹平 8 遍。
+    Weight of "no push from soft tissue" on the head: face and vault only, following the outline of the skull. Below the mastoid, behind
+    the ear and below the mandibular border (the whole neck) it is 0 and the normal enclosure applies. Face: more than 20 mm in front of
+    the mastoid and above the mandibular border (the line from menton to gonion); vault: more than 20 mm above the mastoid tip.
+    Smoothed 8 times at the boundary."""
+    vi, ji, w, _ = mhrlib.skin_weights(lod)
+    jn = mhrlib.joint_names(lod)
+    hj = np.array([n.startswith(HEAD_JOINTS) for n in jn]) * 1.0
+    hb = np.zeros(mhrlib.LOD_VERTICES[lod])
+    np.add.at(hb, vi, w * hj[ji])
+    hb = np.clip(hb, 0, 1)
+    if V is not None and fb is not None:
+        import face_female as _F
+        lm = _F.landmarks(fb)
+        tl, tr = fb.verts('Left temporal bone'), fb.verts('Right temporal bone')
+        mast = 0.5 * (tl[np.argmin(tl[:, 1])] + tr[np.argmin(tr[:, 1])])
+        me, go = lm['menton']['bone'], 0.5 * (lm['gonion_L']['bone'] + lm['gonion_R']['bone'])
+        t = np.clip((V[:, 2] - go[2]) / max(me[2] - go[2], 1e-6), 0, 1)
+        border = go[1] + t * (me[1] - go[1])
+        vault = V[:, 1] > mast[1] + 0.020
+        face = (V[:, 2] > mast[2] + 0.020) & (V[:, 1] > border + 0.004)
+        hb = hb * (vault | face)
+    for _ in range(8):
+        hb = 0.5 * hb + 0.5 * (A @ hb)
+    return hb
+
+
 def scale_head(V, P, jn, wh, s):
     """整个头绕头关节等比缩放，按头的蒙皮权重过渡到颈 / isotropic scale of the whole head about the head joint, blended into the neck by the head skin weight"""
     pivot = P[jn.index('c_head')]
@@ -174,6 +203,7 @@ def face_landmarks(ident, lod):
     return lips, int(cand[np.argmin(V[cand, 1])])
 
 
+LIPS_BY_TABLE = False
 CHIN_SOFT = 0.007     # 颏下点处的软组织厚度（假定值）/ soft tissue under the menton (assumption)
 INCISOR_SHOW = 0.002  # 静止时口裂在上中切牙切缘上方 2 mm（临床上常说静止露齿 1–3 mm；假定值，没有核对文献）
 #                       at rest the oral fissure lies 2 mm above the edge of the upper central incisors (a resting incisor
@@ -215,6 +245,8 @@ def face_scale(V, F, pivot, wh, fb, log, marks):
     chin = man[(np.abs(man[:, 0] - np.median(man[:, 0])) < 0.015) & (man[:, 2] > man[:, 2].max() - 0.006)]
     chin_cover = float(np.min(-signed_distance(chin, Y0, F)))
     zk = [float(np.clip(-(lip_cover - 0.001), -0.014, 0.006)), float(np.clip(-(chin_cover - 0.010), -0.012, 0.004))]
+    if LIPS_BY_TABLE:   # 唇的前后位置交给厚度表的变形（face_female.warp），这里不动 / the front-to-back position of the lips is left to the depth-table warp (face_female.warp)
+        zk[0] = 0.0
     log.append(f'  lower face, front to back: the lips (part "Lip") lay {lip_cover * 1000:.1f} mm under the skin and the front of the bony chin had {chin_cover * 1000:.1f} mm of cover; '
                f'skin moved {zk[0] * 1000:+.1f} mm at the mouth and {zk[1] * 1000:+.1f} mm at the chin (+ = forwards)')
     return lambda X: remap(X, zk)
@@ -265,6 +297,10 @@ def eye_warp(V, F, P, jn, wh, fb, lod, log):
 # women (22.1 +/- 1.2 years, BMI 21.8 +/- 3.1), sternal notch to nipple 19.8 +/- 2.5 cm, internipple distance
 # 20.3 +/- 2.3 cm. The population is Saudi, not Chinese; the BMI is close to our default.
 NOTCH_TO_NIPPLE, INTERNIPPLE = 0.198, 0.203
+# 中国女性的数值（知识库审计 data/curated/knowledge/citation-audit.json；本处没有再打开原文）：体积 325–340 mL，切迹到乳头约 19.05 cm，两乳头间距约 20.0 cm。
+# Chinese figures (knowledge audit, data/curated/knowledge/citation-audit.json; the papers were not opened again here): volume 325-340 mL,
+# notch to nipple about 19.05 cm, internipple about 20.0 cm.
+NOTCH_TO_NIPPLE, INTERNIPPLE, BREAST_ML_CN = 0.1905, 0.200, 332.5
 
 
 def place_breasts(Vm, F, L, A, fb, log, volume_ml):
@@ -334,7 +370,7 @@ def place_breasts(Vm, F, L, A, fb, log, volume_ml):
         mask |= ms
     B = flat
     apex0 = {'L': apexL, 'R': apexL * np.array([-1, 1, 1]) + np.array([2 * xc, 0, 0])}
-    info = {'source': 'Al-Qattan et al. 2019, Plast Reconstr Surg Glob Open, PMC6756646: sternal notch to nipple 19.8 +/- 2.5 cm, internipple 20.3 +/- 2.3 cm, 54 young nulliparous Saudi women, BMI 21.8',
+    info = {'source': f'Chinese figures recorded by the knowledge audit (citation-audit.json; not opened again here): notch to nipple {NOTCH_TO_NIPPLE * 100:.2f} cm, internipple {INTERNIPPLE * 100:.1f} cm, volume {volume_ml:.1f} mL per breast (middle of 325-340)',
             'sternalNotch': np.round(notch, 4).tolist(), 'sides': {}}
     for S, sg in (('L', 1), ('R', -1)):
         ms = new_masks[S]
@@ -372,7 +408,14 @@ def by_region(mm, regV, moved=0.5):
 def main():
     bmi_t = float(sys.argv[sys.argv.index('--bmi') + 1]) if '--bmi' in sys.argv else 21.6
     stale_guard('female')
+    # --out <目录>：写到另一个包目录；--face：按她的颅骨和女性软组织厚度做脸（face_female.py）
+    # --out <dir>: write to another package directory; --face: build the face from her skull and female soft-tissue depths (face_female.py)
+    OUT = os.path.join(RAW, 'out', sys.argv[sys.argv.index('--out') + 1]) if '--out' in sys.argv else globals()['OUT']
+    face_on = '--face' in sys.argv
     os.makedirs(OUT, exist_ok=True)
+    if not os.path.exists(os.path.join(OUT, 'pose-cache.npz')) and os.path.exists(os.path.join(globals()['OUT'], 'pose-cache.npz')):
+        import shutil
+        shutil.copy(os.path.join(globals()['OUT'], 'pose-cache.npz'), os.path.join(OUT, 'pose-cache.npz'))
     key = json.load(open('public/anatomy/female/pipeline-report.json'))['skinPackage']['internalsKey']
     fb = Body('female')
     L = bone_landmarks(fb)
@@ -386,12 +429,20 @@ def main():
         log.append('  body pose reused from pose-cache.npz; head fitted again')
         ident, mp, hs, head_info = fit_head(ident, mp, fb, log)
     else:
-        tz = np.load(os.path.join(TARGET, 'pose-cache.npz'))
+        # 起点：上一次女性拟合的姿势（female-skin-prev2/pose-cache.npz）；没有时退回目标的姿势。
+        # 分三段解，其余参数固定：(1) 上臂、肘、前臂、腕；(2) 再放开手指（含各节长度缩放），手指的转动先归零（她的手指已被摆直）；
+        # (3) 下肢和足。一次全部放开、只解 8 步时没有收敛：指尖差 25–57 mm，手和足的骨大片露在皮肤外。
+        # Start: the pose of the previous female fit (female-skin-prev2/pose-cache.npz), or the target's when that is missing.
+        # Solved in three stages with everything else held: (1) upper arm, elbow, forearm, wrist; (2) fingers too (with segment length
+        # scales), finger rotations first set to zero (her fingers were straightened); (3) lower limbs and feet. With everything free and
+        # only 8 steps it did not converge: fingertips 25-57 mm off and the bones of hands and feet largely outside the skin.
+        prev = os.path.join(RAW, 'out', 'female-skin-prev2', 'pose-cache.npz')
+        tz = np.load(prev if os.path.exists(prev) else os.path.join(TARGET, 'pose-cache.npz'))
         ident, mp = tz['identity'].copy(), tz['mp'].copy()
         ident[20:40] = 0.0
         FS.BOUNDS.update({'scale_hip_height': 0.6, 'scale_spine_length': 0.6, 'scale_hip_depth': 0.6})
         jt, _ = joint_targets('female', fb, L)
-        main_w = {'uparm': 4.0, 'lowarm': 8.0, 'wrist': 8.0, 'upleg': 4.0, 'lowleg': FS.KW, 'foot': 4.0}
+        main_w = {'uparm': 8.0, 'lowarm': 8.0, 'wrist': 8.0, 'upleg': 4.0, 'lowleg': FS.KW, 'foot': 6.0}
         jt = [(j, p, main_w.get(j[2:], w)) for j, p, w in jt]
         Pb = fb.merged(lambda p: p['tissue'] == 'bone')[0]
         Pb = Pb[~np.isin(classify(Pb, L), ['hand', 'foot'])]
@@ -399,16 +450,21 @@ def main():
         fit = Fit('female', 'targets', fb, L, jt, bone_pts=Pb, top_floor=(L['vertex'][1], L['floor'][1]), subcut=subcutaneous_points(fb))
         fit.identity = ident.copy()
         fit.bone_weight = 1.0
-        # 左拇指上一次停在一个差的局部解上（末节差 11 mm）；右拇指拟合得好，所以用右手的值作左拇指的起点（MHR 左右参数同号）。
-        # The left thumb stopped in a poor local solution last time (11 mm off at the distal joint); the right thumb fits
-        # well, so the left thumb starts from the right hand's values (MHR uses the same sign left and right).
-        names = mhrlib.param_names()
-        for nme in names:
-            if 'thumb' in nme and (nme.startswith('l_') or '_l_' in nme):
-                other = nme.replace('l_', 'r_', 1) if nme.startswith('l_') else nme.replace('_l_', '_r_', 1)
-                if other in names:
-                    mp[names.index(nme)] = mp[names.index(other)]
-        x = fit.solve(8, log, mp[fit.pidx].copy())
+        fingers = ('thumb', 'index', 'middle', 'ring', 'pinky')
+        x = mp[fit.pidx].copy()
+        for i, n_ in enumerate(fit.pnames):
+            if any(t in n_ for t in fingers) and not n_.startswith('scale'):
+                x[i] = 0.0
+        lo0, hi0 = fit.lo.copy(), fit.hi.copy()
+        arm = lambda n_: any(t in n_ for t in ('uparm', 'elbow', 'lowarm', 'wrist')) and not n_.startswith('scale')
+        fing = lambda n_: any(t in n_ for t in fingers)
+        leg = lambda n_: any(t in n_ for t in ('upleg', 'knee', 'lowleg', 'foot', 'ball', 'ankle'))
+        for tag, rule, iters in (('arms', arm, 10), ('arms and fingers', lambda n_: arm(n_) or fing(n_), 16), ('legs and feet', leg, 10)):
+            free = np.array([rule(n_) for n_ in fit.pnames])
+            fit.lo, fit.hi = lo0.copy(), hi0.copy()
+            fit.lo[~free], fit.hi[~free] = x[~free] - 1e-9, x[~free] + 1e-9
+            log.append(f'  pose stage "{tag}": {int(free.sum())} free parameters')
+            x = fit.solve(iters, log, x)
         mp[fit.pidx] = x
         log.append('  joint residuals after the pose fit (mm): ' + json.dumps(fit.joint_residuals(x)))
         ident, mp, hs, head_info = fit_head(ident, mp, fb, log)
@@ -423,6 +479,27 @@ def main():
     # ---- 3 头、眼、下半张脸；乳房；BMI / head, eyes, lower face; breasts; BMI
     crown = None
     marks = face_landmarks(ident, lod)
+    lm, hb_pts = None, None
+    if face_on:
+        import face_female as FFACE
+        lm = FFACE.landmarks(fb)
+        # 唇按厚度表；口裂在上切牙切缘上方 2.75 mm（知识库审计：文献范围 2–3.4 mm，年轻女性 2.5–3 mm）
+        # lips by the depth table; oral fissure 2.75 mm above the upper incisal edge (knowledge audit: published range 2-3.4 mm, 2.5-3 mm for a young woman)
+        globals()['LIPS_BY_TABLE'] = True
+        globals()['INCISOR_SHOW'] = 0.00275
+        # 先按身份系数为 0 的头做一遍全部变形，量目标点的偏差，再解头部身份系数；之后各变形按新的头重算。
+        # One pass of all deformations with the head identity at 0, to measure how far the targets are off; then the head
+        # identity is solved, and every deformation is computed again for the new head.
+        Vp, Pp, _ = mhrlib.run(ident, mp, lod, True)
+        Vp = BT.head_scale(Vp, F, Pp, jn, lod, fb, [])(Vp)
+        Vp, _ = eye_warp(Vp, F, Pp, jn, wh, fb, lod, [])
+        pv = 0.5 * (fb.verts('Left vitreous body').mean(0) + fb.verts('Right vitreous body').mean(0))
+        Vp = face_scale(Vp, F, pv, wh, fb, [], marks)(Vp)
+        res_before = FFACE.residuals(lm, Vp, F)
+        np.save(os.path.join(OUT, 'face-before.npy'), Vp)
+        if '--no-face-identity' not in sys.argv:   # 诊断用：身份系数留在先验均值 / diagnostic: identity left at the prior mean
+            ident = FFACE.fit_identity(ident, mp, lod, lm, Vp, F, wh, log)
+        marks = face_landmarks(ident, lod)
     for it in range(3):
         Vm0, P, _ = mhrlib.run(ident, mp, lod, True)
         Vm = scale_head(Vm0, P, jn, wh, hs)
@@ -432,13 +509,56 @@ def main():
         Vm, eye_info = eye_warp(Vm, F, P, jn, wh, fb, lod, log if it == 2 else [])
         pivot = 0.5 * (fb.verts('Left vitreous body').mean(0) + fb.verts('Right vitreous body').mean(0))
         Vm = face_scale(Vm, F, pivot, wh, fb, log if it == 2 else [], marks)(Vm)
-        V, B, mask, breast_info = place_breasts(Vm, F, L, A, fb, log if it == 2 else [], BT.BREAST_ML)
+        if face_on:
+            Vi = Vm.copy()
+            for _ in range(0 if '--no-face-warp' in sys.argv else 2):   # --no-face-warp：诊断用 / diagnostic
+                Vm = FFACE.warp(Vm, F, lm, wh, lod, log if it == 2 else [])
+            # 骨不能在皮肤外：头部的骨上至少留 2.5 mm（只对骨，位移低通，至多 10 mm：拟合出的头部身份系数使颅部变小，顶骨曾露出 6 mm）。眉间处皮肤原来薄了 1.6 mm、额骨露出 1.7 mm。
+            # Bone may never be outside the skin: at least 2.5 mm is kept over head bone (bone only, low-passed, at most 10 mm: the fitted head identity makes the cranium smaller, and the parietal bones then showed by 6 mm). The skin was 1.6 mm thin at glabella and the frontal bone showed by 1.7 mm.
+            if hb_pts is None:
+                _Pd, _grp, _, _ = ES.deep_samples(fb)
+                hb_pts = _Pd[(_grp == list(ES.GROUPS).index('bone')) & (classify(_Pd, L) == 'head')]
+            for _rep in range(3):   # 抹平会把抬起的量削掉一些，所以做三遍 / the smoothing takes some of the raise back, hence three passes
+              sb = signed_distance(hb_pts, Vm, F)
+              if (sb > -0.0025).any():
+                  keep_m = ES.MARGIN
+                  ES.MARGIN = 0.0032
+                  Vq = ES.enclose(Vm, F, hb_pts[sb > -0.004], [], np.full(len(Vm), 0.022), passes=8)
+                  ES.MARGIN = keep_m
+                  nq = vertex_normals(Vm, F)
+                  for _ in range(3):
+                      nq = 0.5 * nq + 0.5 * (A @ nq)
+                  nq /= np.maximum(np.linalg.norm(nq, axis=1), 1e-12)[:, None]
+                  dq = spread(np.einsum('ij,ij->i', Vq - Vm, nq).clip(0), A, np.full(len(Vm), 0.022), rings=4, smooth=10, final=5)
+                  Vm = Vm + (wh * dq)[:, None] * nq
+            if True:
+                if it == 2 and 'dq' in dir():
+                    log.append(f'  head bone cover: skin raised on {int((dq > 0.0002).sum())} vertices, max {dq.max() * 1000:.1f} mm; least cover over head bone now {-signed_distance(hb_pts, Vm, F).max() * 1000:.1f} mm')
+            if it == 2:
+                res_id, res_after = FFACE.residuals(lm, Vi, F), FFACE.residuals(lm, Vm, F)
+                FFACE.save(lm, os.path.join(OUT, 'face-landmarks.json'), {'targetToSkinMm': {k: {'meanHead': round(float(res_before[k]), 1), 'afterIdentity': round(float(res_id[k]), 1), 'afterWarp': round(float(res_after[k]), 1)} for k in lm},
+                                                                         'headIdentity20to39': np.round(ident[20:40], 3).tolist()})
+                log.append('  face: target-to-skin distance at the landmarks, mm (+ = skin too thin there): mean head / after identity / after warp')
+                for k in lm:
+                    log.append(f'     {k:20s} {res_before[k]:+6.1f} {res_id[k]:+6.1f} {res_after[k]:+6.1f}')
+        V, B, mask, breast_info = place_breasts(Vm, F, L, A, fb, log if it == 2 else [], BREAST_ML_CN)
         b = bmi_of(V)
         log.append(f'  round {it}: volume BMI {b:.2f}')
         if it < 2:
             ident[0] += (bmi_t - b) / 5.3
     head_info = dict(head_info, eyes=eye_info, breasts=breast_info)
     V_shape = V.copy()     # 目标体型（未放松）/ the target shape before any relaxation
+    if '--target-only' in sys.argv:
+        # 只交付干净的目标：不做任何放松或外推（骨、肌肉都不让皮肤让路），写 skin.obj 就结束。
+        # Deliver the clean target only: no relaxation and no push of any kind (the skin gives way to neither bone nor muscle); write skin.obj and stop.
+        from fit_skin import write_obj
+        write_obj(os.path.join(OUT, 'skin.obj'), V_shape, F, 'female TARGET skin with the face built from her skull (not an installable package); MHR LOD0 topology (Apache-2.0); metres, Y up, +Z anterior, +X left')
+        np.savez(os.path.join(OUT, 'target-shape.npz'), V=V_shape, chestBase=B)
+        np.savez(os.path.join(OUT, 'target-state.npz'), identity=ident, mp=mp, offsets=V_shape - Vm0, lod=lod)
+        json.dump({'internalsKey': key, 'head': head_info, 'bmiByVolume': round(bmi_of(V_shape), 2), 'statureM': round(float(H(V_shape)), 4)}, open(os.path.join(OUT, 'final-fit.json'), 'w'), ensure_ascii=False, indent=1)
+        open(os.path.join(OUT, 'final-fit.txt'), 'w').write('\n'.join(log) + '\n')
+        print('\n'.join(log))
+        return
     regV = classify(V_shape, L)
 
     # ---- 4 骨 / bone
@@ -484,6 +604,8 @@ def main():
     bmi_enclose_only = bmi_of(Vb + spread(d0, A, cap_s)[:, None] * nrm)
     d_soft = spread(d0 + fat_f * extra, A, cap_s)
     d_soft = d_soft * (1 - pw)
+    if face_on:   # 头上不做软组织的外推（协调方的决定）/ no push from soft tissue on the head (the coordinator's decision)
+        d_soft = d_soft * (1 - head_blend(lod, A, Vb, fb))
     V = Vb + d_soft[:, None] * nrm
 
     # ---- 6 两大腿内侧不互穿 / the medial thighs do not interpenetrate

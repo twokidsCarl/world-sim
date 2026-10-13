@@ -83,6 +83,24 @@ export interface Part {
   triangles: number
   /** Ids of parts whose surfaces lie within the adjacency threshold. Symmetric. */
   adjacent: string[]
+  /**
+   * 一个部件由来源不同的几片拼成时（目前只有皮肤：拟合的体表、移植片、构造出来的接缝和内缘），逐片说明。
+   * 各片的顶点数之和等于该部件的顶点数。缺省表示整个部件只有 `provenance` / `source` 一种来历。
+   * When one part is assembled from pieces of different origin (so far only the skin: fitted surface,
+   * grafts, constructed blend rings and rims), one entry per piece. The vertex counts sum to the
+   * part's vertex count. Absent = the whole part has the single origin given by `provenance` / `source`.
+   */
+  composition?: PartPiece[]
+}
+
+/** 部件里来历相同的一片 / One piece of a part with a single origin. */
+export interface PartPiece {
+  what: { zh: string; en: string }
+  /** `construction`：为衔接或开口而构造的几何，不是解剖数据 / geometry built to join or open pieces; not anatomical data. */
+  provenance: Provenance | 'construction'
+  /** `SourceInfo.name`；构造出来的片没有来源（null）/ null for constructed pieces. */
+  source: string | null
+  vertices: number
 }
 
 /** A node of one of the ontology trees. Parts of a concept = its own `parts` plus all descendants'. */

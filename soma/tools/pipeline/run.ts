@@ -14,13 +14,16 @@ import { classify, sideFromName, sideOf, type Classification } from './classify.
 import { RELABELLED, RELEASE3_SWAPPED_GEOMETRY, SIDE_OVERRIDES, SWAPPED_LABELS } from './corrections.ts'
 import { computeExposure, type ExposureRole } from './exposure.ts'
 import { compareNormals, computeNormals, measure, rotateToRuntime, simplifyMesh, sourceToRuntime, weld, type Mesh, type MeshStats } from './geometry.ts'
-import { writeSystemGlb, type GlbPart } from './glb.ts'
+import { OPENED_SKIN_POSITION_BITS, writeSystemGlb, type GlbPart } from './glb.ts'
 import { depthOf, EXPOSURE_MAX_DISTANCE, LAYERS, SUPERFICIAL_EXPOSURE, usesExposure } from './layers.ts'
 import { contentsInside, crossValidate, evaluateCandidates, HARD_TISSUES, IMPORT3_DEFAULTS, overlapWith, pairStructures, placeConcept, pushOutOfSolids, register3to4, SOLID_TISSUES, SurfaceField, type ExistingPart, type Placement } from './import3.ts'
 import { canalFor, isaPathFromFma, localJointWarp, NERVE_BUILD_DEFAULTS, registerZa, syntheticConceptId, warpNerve, type JointCacheEntry, type TreePath } from './importZa.ts'
 import { capHoles, envelopeOf } from './derive.ts'
-import { checkSkinFit, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, loadSkinPackage, notFittedAgainstSkin, simplifySkinKeepingFace, skinResolution } from './skinPackage.ts'
+import { checkSkinFit, closeShippedSkin, edgeTopology, faceAgainstSkin, FACE_MUSCLE_NAME, FACE_REGION_RADIUS, faceRegionOfSkin, internalsKey, notFittedAgainstSkin, selectSkinPackage, simplifySkinKeepingFace, skinLockMask, skinResolution, type SkinPackage } from './skinPackage.ts'
+import { DEEP_LIP_NAME, DISPLAY_FILE, displayJson, openedSkinCautions, openedSkinProvenance, openedSkinReport, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, skinPieces, skinSourceSidecar, toeStretch, type OpenedSkinReport, type SkinComponent } from './skinOpened.ts'
 import { correctShoulderGirdle, SHOULDER_DEFAULTS } from './shoulderTissue.ts'
+import { abductArms, ABDUCTION_DEFAULTS } from './armAbduction.ts'
+import { APPENDAGE_DEFAULTS, conformAppendages } from './appendages.ts'
 import { deriveFat, FAT_DEEP_TISSUES, FAT_OPTIONS, FAT_REGIONS, fatRegionOfBone, isFatPart } from './fat.ts'
 import { PointIndex } from './register.ts'
 import { nerveAgreement, runLandmarkChecks, type LandmarkResult } from './landmarks.ts'
@@ -97,6 +100,11 @@ const IMPORT3_EXCLUDE: Record<string, string> = {
 
 const ROOT = join(import.meta.dirname, '../..')
 /**
+ * 男性构建的神经标志点检查：桡神经沟一项按肱骨干自己的轴线取切片（上肢外展后肱骨不再竖直）。
+ * Landmark checks of the male build: the radial-groove check takes its slabs along the humeral shaft's own axis (after the abduction the humerus is no longer vertical).
+ */
+export const LANDMARK_OPTIONS = { shaftAligned: true }
+/**
  * 从 3.0 版导入的部件的 id 前缀（其文件按概念命名，而非按 FJ id）。
  * Id prefix of parts imported from release 3.0 (whose files are named by concept, not FJ id).
  */
@@ -127,6 +135,12 @@ const SOURCE_O3D: SourceInfo = {
 /** 男性外部皮肤包的位置（相对项目根） / where the male external skin package lives (relative to the project root) */
 const MALE_SKIN_PACKAGE_DIR = 'data/raw/bodyshape/out/male-skin'
 let externalSkinSource: SourceInfo | null = null
+/** 开口后的皮肤带来的其他数据源（移植片的供体） / further sources an opened skin brings (the donors of its grafts) */
+let externalSkinExtraSources: SourceInfo[] = []
+/** 开口后的皮肤由什么构成，写进皮肤部件的记录 / what an opened skin is made of, written into the skin part's record */
+let skinComposition: SkinComponent[] | null = null
+/** 发布的开口皮肤：交给 GLB 写出的那张网格，及其每个顶点在包里的下标 / the shipped opened skin: the mesh handed to the GLB writer and, per vertex, its index in the package */
+let shippedOpenedSkin: { id: string; mesh: Mesh; source: Uint32Array; pieceOfVertex: Uint8Array } | null = null
 /** 装入的皮肤包有意不包住的部件 id / ids of the parts the installed skin package deliberately does not enclose */
 let skinNotEnclosed: ReadonlySet<string> = new Set()
 
@@ -202,6 +216,14 @@ interface Element {
    * vertices the simplifier must leave as they are (1 = keep): the face region of an installed skin, see skinPackage.ts
    */
   lockVertices?: Uint8Array
+  /**
+   * 装入的是开口后的皮肤包时：发布的是 opened.mesh（包的 skin.obj，不闭合），而 mesh 一直是闭合的那张
+   * （skin-closed.obj），管线里凡是要判断内外的步骤都用 mesh。face 是 opened.mesh 上的面部掩码。
+   * When an opened skin package is installed: what ships is opened.mesh (the package's skin.obj, not
+   * closed) while `mesh` stays the closed one (skin-closed.obj), which every step of the pipeline that
+   * needs inside tests uses. `face` is the face mask over opened.mesh.
+   */
+  opened?: { mesh: Mesh; pkg: SkinPackage; dir: string; face: Uint8Array; matchesAuthorPackage: boolean | null }
 }
 
 const capitalise = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s)
@@ -962,7 +984,7 @@ async function main() {
         if (!meshByName.has(e.name)) meshByName.set(e.name, e.mesh)
         if (e.centrelines && !nerveByName.has(e.name)) nerveByName.set(e.name, e.centrelines)
       }
-      landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null })
+      landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null }, LANDMARK_OPTIONS)
       console.log('\nNerve landmark checks')
       for (const r of landmarks) console.log(`  ${r.evaluated ? (r.pass ? 'PASS' : 'FAIL') : 'n/a '} ${r.side} ${pad(r.id, 20)}${r.measured}`)
       console.log(`  ${landmarks.filter((r) => r.pass).length} pass, ${landmarks.filter((r) => r.evaluated && !r.pass).length} fail, ${landmarks.filter((r) => !r.evaluated).length} not evaluated`)
@@ -1048,7 +1070,7 @@ async function main() {
           if (e.centrelines && !nerveByName.has(e.name)) nerveByName.set(e.name, e.centrelines)
         }
         report.landmarksAsScanned = landmarks
-        landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null })
+        landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null }, LANDMARK_OPTIONS)
         report.landmarks = landmarks
         console.log(`\nShoulder girdle: glenohumeral separation ${rep.glenohumeralSeparationMm.before} → ${rep.glenohumeralSeparationMm.after} mm (asked for ${rep.glenohumeralSeparationMm.target}; ${rep.glenohumeralSeparationMm.withoutLateralTarget} without a lateral target); ${res.moved.size} parts moved, ${relabelledCount} of ${scannedBefore} scanned parts deformed and relabelled warped (${Object.entries(relabelled).map(([k, v]) => `${k} ${v}`).join(', ')})`)
         console.log(`  nerve landmark checks after the correction: ${landmarks.filter((r) => r.pass).length} pass, ${landmarks.filter((r) => r.evaluated && !r.pass).length} fail${landmarks.filter((r) => r.evaluated && !r.pass).map((r) => ` [${r.side} ${r.id}: ${r.measured}]`).join('')}`)
@@ -1057,6 +1079,62 @@ async function main() {
     }
     lap('shoulder girdle posture')
   } else report.shoulderGirdle = { applied: false, reason: 'switched off (SOMA_SHOULDER_FIX=0)' }
+  // ── 3c″. 上肢外展 / abduction of the upper limbs ─────────────────────────────────────────────
+  // 仰卧成像时两臂贴在身侧：背阔肌、大圆肌、胸大肌沿上臂贴到肱骨中段，皮肤无从通过。这里把每侧游离上肢绕肱骨头中心
+  // 在冠状面内外展一个小角度（两侧相同，按几何取“刚好让出腋窝”的最小值），见 armAbduction.ts。
+  // SOMA_ARM_ABDUCTION=0 关闭这一步（得到肩带校正后的姿势，与现有皮肤包对得上）；给一个数则按该角度（度）外展。
+  // Imaged supine, the arms lie against the sides: latissimus dorsi, teres major and pectoralis major
+  // run along the arm down to mid-humerus and no skin can pass. Each free limb is abducted here in the
+  // coronal plane about the centre of its humeral head by a small angle (the same on both sides, the
+  // smallest that opens the axilla, from geometry); see armAbduction.ts. SOMA_ARM_ABDUCTION=0 switches
+  // the step off (the posture after the shoulder correction, which the existing skin package fits);
+  // a number abducts by that many degrees.
+  const abductionEnv = process.env.SOMA_ARM_ABDUCTION
+  if (abductionEnv !== '0') {
+    const scannedBefore = kept.filter((e) => e.provenance === 'scanned').length
+    const jc = (report.shoulderGirdle as { applied?: boolean; jointCentresM?: Record<string, number[]> } | undefined)
+    const gl = jc?.applied ? jc.jointCentresM?.glenohumeral_L : undefined
+    const gr = jc?.applied ? jc.jointCentresM?.glenohumeral_R : undefined
+    const given = abductionEnv !== undefined && abductionEnv !== '' && abductionEnv !== 'auto' ? Number(abductionEnv) : NaN
+    if (abductionEnv !== undefined && abductionEnv !== '' && abductionEnv !== 'auto' && !(given > 0 && given <= 45)) throw new Error(`SOMA_ARM_ABDUCTION must be 0 (off), auto, or an angle in degrees up to 45; got "${abductionEnv}"`)
+    const res = abductArms(
+      kept.map((e) => ({ id: e.id, fma: e.fma, name: e.name, tissue: e.cls.tissue, system: e.cls.system, mesh: e.mesh, bbox: e.stats.bbox, ...(e.centrelines ? { centrelines: e.centrelines } : {}) })),
+      { ...ABDUCTION_DEFAULTS, angleDeg: Number.isNaN(given) ? 'auto' : given, ...(gl && gr ? { headCentres: { L: gl as [number, number, number], R: gr as [number, number, number] } } : {}), log: (m) => console.log(`    abduction ${m}`) },
+    )
+    if (!res) report.armAbduction = { applied: false, reason: 'a bone of the shoulder is missing' }
+    else {
+      const relabelled: Record<string, number> = {}
+      const relabelledIds: string[] = []
+      for (const e of kept) {
+        const m = res.moved.get(e.id)
+        if (!m) continue
+        e.mesh = m.mesh
+        e.stats = measure(m.mesh)
+        if (m.centrelines) e.centrelines = m.centrelines
+        if (e.provenance !== 'scanned' || m.motion !== 'deformed') continue
+        e.provenance = 'warped'
+        relabelledIds.push(e.id)
+        relabelled[e.cls.tissue] = (relabelled[e.cls.tissue] ?? 0) + 1
+      }
+      const rep = res.report as { applied: boolean; reason?: string; angleDeg?: number; parts?: { moved: number; rigid: number; deformed: number } }
+      if (rep.applied) {
+        // 神经标志点检查在外展后的几何上再做一遍（外展前的结果另存） / the nerve landmark checks are run once more on the abducted geometry (the results before it are kept aside)
+        const meshByName = new Map<string, Mesh>()
+        const nerveByName = new Map<string, Polyline[]>()
+        for (const e of kept) {
+          if (!meshByName.has(e.name)) meshByName.set(e.name, e.mesh)
+          if (e.centrelines && !nerveByName.has(e.name)) nerveByName.set(e.name, e.centrelines)
+        }
+        report.landmarksBeforeAbduction = landmarks
+        landmarks = runLandmarkChecks({ mesh: (n) => meshByName.get(n) ?? null, nerve: (n) => nerveByName.get(n) ?? null }, LANDMARK_OPTIONS)
+        report.landmarks = landmarks
+        console.log(`\nArm abduction: ${rep.angleDeg}° on both sides; ${rep.parts!.moved} parts moved (${rep.parts!.rigid} rigidly with a limb, ${rep.parts!.deformed} deformed), ${relabelledIds.length} more scanned parts relabelled warped (${Object.entries(relabelled).map(([k, v]) => `${k} ${v}`).join(', ')})`)
+        console.log(`  nerve landmark checks after the abduction: ${landmarks.filter((r) => r.pass).length} pass, ${landmarks.filter((r) => r.evaluated && !r.pass).length} fail${landmarks.filter((r) => r.evaluated && !r.pass).map((r) => ` [${r.side} ${r.id}: ${r.measured}]`).join('')}`)
+      } else console.log(`\nArm abduction: NOT applied — ${rep.reason}`)
+      report.armAbduction = { ...res.report, provenance: { scannedBefore, scannedAfter: scannedBefore - relabelledIds.length, relabelledToWarped: relabelledIds.length, relabelledByTissue: relabelled, relabelledIds } }
+    }
+    lap('arm abduction')
+  } else report.armAbduction = { applied: false, reason: 'switched off (SOMA_ARM_ABDUCTION=0)' }
 
   // ── 3d. 由我们自身几何推导的结构 / 3d. Structures derived from our own geometry ────────────────────────────────────────────
   // 没有哪个图谱能与本体吻合的薄壳：按它们所覆盖器官的封闭包络计算。
@@ -1119,11 +1197,16 @@ async function main() {
     // genital parts reach in front of the pelvis, so that a fitted skin can enclose them.
     if (skinEl) {
       const key = internalsKey(kept.filter((e) => e.cls.tissue === 'bone').map((e) => ({ name: e.name, bbox: e.stats.bbox })))
-      const pkg = loadSkinPackage(join(ROOT, MALE_SKIN_PACKAGE_DIR))
-      const row: Record<string, unknown> = { dir: MALE_SKIN_PACKAGE_DIR, internalsKey: key, present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false }
-      if (pkg && pkg.fittedTo?.body === 'male' && pkg.fittedTo.key === key) {
-        skinEl.mesh = pkg.mesh
-        skinEl.stats = measure(pkg.mesh)
+      // 有开口后的包（<目录>-open，由 tools/skinopen 写出）且对得上就装它，否则照旧看作者的闭合包；见 selectSkinPackage
+      // the opened package (<dir>-open, written by tools/skinopen) is installed when it exists and matches, otherwise the author's closed package is considered as before; see selectSkinPackage
+      const choice = selectSkinPackage(ROOT, MALE_SKIN_PACKAGE_DIR, 'male', key)
+      const pkg = choice.pkg ?? choice.author
+      const row: Record<string, unknown> = { dir: choice.dir, internalsKey: key, present: !!pkg, fittedTo: pkg?.fittedTo ?? null, installed: false, ...(choice.openedPackage ? { openedPackage: choice.openedPackage } : {}) }
+      if (choice.pkg && pkg) {
+        // 管线里用的是闭合的皮肤（开口后的包里是 skin-closed.obj）；开口的那张只在第 8 步简化、发布
+        // the pipeline works with the closed skin (skin-closed.obj of an opened package); the opened one is only simplified and shipped, in step 8
+        skinEl.mesh = pkg.closedMesh
+        skinEl.stats = measure(pkg.closedMesh)
         skinEl.sourceTriangles = pkg.mesh.indices.length / 3
         // 换上的皮肤不是这个人的扫描皮肤，而是按他的内部结构拟合的参数化体表：标为 curated，来源记皮肤包的来源；
         // BodyParts3D 文件头里的体积属于旧皮肤，不再适用。
@@ -1133,6 +1216,38 @@ async function main() {
         skinEl.provenance = 'curated'
         skinEl.source = pkg.source.name
         skinEl.volume = undefined
+        // 体表附属物（头发、眉、阴毛、甲、耳廓）是为旧皮肤做的：贴合到新皮肤上（见 appendages.ts）。
+        // 耳：显示的是皮肤自带的耳，解剖耳廓部件收到皮肤之下。被形变的 scanned 部件改标为 warped。
+        // The appendages (hair of head, eyebrows, pubic hair, nails, auricles) were made for the old skin:
+        // they are conformed to the new one (see appendages.ts). Ears: the skin's own ear is the one shown
+        // and the anatomical auricle part is drawn in under the skin. Deformed `scanned` parts become `warped`.
+        {
+          const list = kept.filter((e) => e.cls.system === 'integumentary' && e.cls.tissue === 'skin' && e !== skinEl)
+          const app = conformAppendages(pkg.closedMesh, list.map((e) => ({ id: e.id, name: e.name, mesh: e.mesh })), APPENDAGE_DEFAULTS)
+          const relabelledIds: string[] = []
+          for (const e of list) {
+            const m = app.moved.get(e.id)
+            if (!m) continue
+            e.mesh = m
+            e.stats = measure(m)
+            if (e.provenance === 'scanned') {
+              e.provenance = 'warped'
+              relabelledIds.push(e.id)
+            }
+          }
+          report.appendages = { applied: true, ...app.report, conformedIds: [...app.moved.keys()], relabelledIds }
+          // 皮肤开了口：深层的“唇”部件正挡在口裂里，皮肤不透明时应隐藏（不切它，见 tools/skinopen/INTEGRATION.txt 第 6 节）
+          // the skin has a mouth opening: the deep "Lip" part sits in the fissure and is to be hidden while the skin is opaque (it is not cut; section 6 of tools/skinopen/INTEGRATION.txt)
+          if (pkg.opened) {
+            const lips = kept.filter((e) => DEEP_LIP_NAME.test(e.name) && e.cls.system !== 'integumentary').map((e) => e.id)
+            const ap = report.appendages as { hideWithOpaqueSkin: string[]; deepLip?: unknown }
+            ap.hideWithOpaqueSkin = [...ap.hideWithOpaqueSkin, ...lips]
+            ap.deepLip = { ids: lips, note: 'the deep Lip part lies in the oral opening of the opened skin: left as it is and listed in hideWithOpaqueSkin, to be hidden while the skin is opaque and shown when the skin is hidden' }
+          }
+          if (app.report.hideWithOpaqueSkin.length) console.log(`  superseded by the skin's own ear, left as scanned, to be hidden while the skin is opaque: ${app.report.hideWithOpaqueSkin.join(', ')}`)
+          console.log(`\nAppendages conformed to the installed skin (${app.moved.size} parts; share of surface outside the skin and largest distance outside, before → after)`)
+          for (const r of app.report.parts) console.log(`  ${pad(r.name, 28)}${pad(r.kind, 9)}outside ${(r.before.outside * 100).toFixed(0)}% → ${(r.after.outside * 100).toFixed(0)}%, max ${r.before.maxMm} → ${r.after.maxMm} mm; ${r.skinSide.face} face ${r.skinSide.before.minMm}…${r.skinSide.before.maxMm} → ${r.skinSide.after.minMm}…${r.skinSide.after.maxMm} mm (target ${r.skinSide.targetMm}); moved up to ${r.displacementMm.max} mm`)
+        }
         // 肩带校正中被形变的旧皮肤已被换掉，不再计入“由 scanned 改标为 warped”的部件
         // the old skin, deformed by the shoulder correction, is gone: it no longer counts among the parts relabelled from scanned to warped
         const pv = (report.shoulderGirdle as { provenance?: { scannedAfter: number; relabelledToWarped: number; relabelledByTissue: Record<string, number>; relabelledIds: string[]; replacedBySkinPackage?: string[] } } | undefined)?.provenance
@@ -1150,22 +1265,36 @@ async function main() {
         // 面部区域（距表情肌 ≤ FACE_REGION_RADIUS 的皮肤顶点）在简化时原样保留，见第 8 步
         // the face region (skin vertices within FACE_REGION_RADIUS of a muscle of facial expression) is left as it is by the simplifier, see step 8
         const facial = kept.filter((e) => e.cls.tissue === 'muscle' && FACE_MUSCLE_NAME.test(e.name))
-        skinEl.lockVertices = faceRegionOfSkin(pkg.mesh, facial.map((e) => e.mesh))
+        const faceMask = faceRegionOfSkin(pkg.mesh, facial.map((e) => e.mesh))
+        // 开口后的皮肤：标签非 0 的顶点（唇缘、睑缘、内卷、口腔袋、移植片）也一并锁住
+        // an opened skin: the vertices with a non-zero tag (lip and lid margins, rims, pouch, grafts) are locked as well
+        skinEl.lockVertices = pkg.opened ? skinLockMask(faceMask, pkg.opened.tags) : faceMask
+        if (pkg.opened) {
+          // 报告面部分辨率时不算构造物（内卷、口腔袋）：它们在面部区域之内，但不是面部的皮肤，网格也粗一些
+          // the face resolution is reported without the construction aids (rims, pouch): they lie inside the face region but are not facial skin, and their mesh is coarser
+          const T = pkg.opened.tagNames
+          const aid = new Set([T.lidRimL, T.lidRimR, T.oralPouchUpper, T.oralPouchLower, T.oralPouchSeam])
+          skinEl.opened = { mesh: pkg.mesh, pkg, dir: choice.dir, face: faceMask.map((f, v) => (aid.has(pkg.opened!.tags[v]!) ? 0 : f)), matchesAuthorPackage: choice.openedPackage?.matchesAuthorPackage ?? null }
+        }
+        // 包里若记着从本人扫描转移来的脐和乳头（manifest.scanDetails），说明里就不能再说“没有” / when the package records a navel and nipples transferred from his own scan (manifest.scanDetails), the cautions must not say there are none
+        const details = Object.keys(((pkg.manifest.scanDetails as { details?: Record<string, unknown> } | undefined)?.details) ?? {})
+        if (details.length) row.scanDetails = details.sort()
         // 皮肤作者有意不包住的部件（包的 manifest 里列出）单独报告，不计入“应当包住”的那部分
         // the parts the skin's author deliberately did not enclose (listed in the package manifest) are reported apart from the set that must be enclosed
         skinNotEnclosed = new Set(pkg.notEnclosed)
-        const fit = checkSkinFit(pkg.mesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ id: e.id, name: e.name, mesh: e.mesh })), skinNotEnclosed)
+        const fit = checkSkinFit(pkg.closedMesh, kept.filter((e) => FAT_DEEP_TISSUES.has(e.cls.tissue) && e.cls.system !== 'integumentary').map((e) => ({ id: e.id, name: e.name, mesh: e.mesh })), skinNotEnclosed)
         row.notEnclosedPartIds = [...pkg.notEnclosed].sort()
         row.author = pkg.author
         // 面部几处结构在皮肤下的深度，以及皮肤模型的眼关节与眼球中心的偏差
         // how deep a few facial structures lie under the skin, and how far the skin model's eye joints are from the centres of the globes
-        row.face = faceAgainstSkin(pkg.mesh, kept.map((e) => ({ name: e.name, mesh: e.mesh })), pkg.eyeJoints)
+        row.face = faceAgainstSkin(pkg.closedMesh, kept.map((e) => ({ name: e.name, mesh: e.mesh })), pkg.eyeJoints)
         Object.assign(row, { installed: true, triangles: pkg.mesh.indices.length / 3, fit, faceRegion: { rule: `skin vertices within ${FACE_REGION_RADIUS * 1000} mm of the surface of a muscle of facial expression`, radiusM: FACE_REGION_RADIUS, muscles: facial.length } })
         const nd = fit.notEnclosedByDesign!
-        console.log(`\nSkin package ${MALE_SKIN_PACKAGE_DIR} installed (${pkg.source.name}); surface of the parts it must enclose outside the skin ${(fit.outside * 100).toFixed(3)}% (${(fit.outside5mm * 100).toFixed(3)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
+        console.log(`\nSkin package ${choice.dir} installed${pkg.opened ? ' (opened: skin.obj is shipped, skin-closed.obj serves every inside test)' : ''} (${pkg.source.name}); surface of the parts it must enclose outside the skin ${(fit.outside * 100).toFixed(3)}% (${(fit.outside5mm * 100).toFixed(3)}% by more than 5 mm); worst: ${fit.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
         console.log(`  not enclosed by design (${nd.parts} parts from the manifest): ${(nd.outside * 100).toFixed(1)}% of their surface outside (${(nd.outside5mm * 100).toFixed(1)}% by more than 5 mm); ${nd.worst.slice(0, 6).map((w) => `${w.name} ${(w.outside * 100).toFixed(1)}% (${w.maxMm} mm)`).join(', ') || '-'}`)
       } else {
-        row.reason = !pkg ? 'no package' : !pkg.fittedTo ? 'the package does not say which internals it was fitted to (manifest.fittedTo missing)' : 'fitted to other internals'
+        report.appendages = { applied: false, reason: 'no skin package installed: the appendages are the ones made for the skin that is kept' }
+        row.reason = choice.reason
         console.log(`\nSkin: BodyParts3D skin kept (${row.reason}); a skin package for these internals must carry "fittedTo": {"body": "male", "key": "${key}"} in its manifest.json`)
       }
       const genital = kept.filter((e) => /penis|scrotum|testis|epididymis/i.test(e.name))
@@ -1364,38 +1493,71 @@ async function main() {
       // the installed skin: the face region keeps its source resolution and the rest follows the rule above; the face resolution of both ways is recorded
       const facial = kept.filter((x) => x.cls.tissue === 'muscle' && FACE_MUSCLE_NAME.test(x.name)).map((x) => x.mesh)
       const whole: Mesh = { positions: simp.positions, indices: simp.indices }
-      const kf = await simplifySkinKeepingFace(e.mesh, e.lockVertices, err, SIMPLIFY_MAX_EDGE, SIMPLIFY_MIN_TRIANGLES)
+      const op = e.opened
+      const kf = await simplifySkinKeepingFace(op ? op.mesh : e.mesh, e.lockVertices, err, SIMPLIFY_MAX_EDGE, SIMPLIFY_MIN_TRIANGLES)
       const row = report.skinPackage as Record<string, unknown>
       const deepParts = kept.filter((x) => FAT_DEEP_TISSUES.has(x.cls.tissue) && x.cls.system !== 'integumentary').map((x) => ({ id: x.id, name: x.name, mesh: x.mesh }))
-      row.resolution = { source: skinResolution(e.mesh, e.lockVertices), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, kf.inFace), shippedTopology: edgeTopology(kf.mesh) }
-      row.fitShipped = checkSkinFit(kf.mesh, deepParts, skinNotEnclosed)
+      // 判断内外用的闭合曲面：闭合包就是发布的那张；开口后的包则由发布的那张按下标闭合而成（去掉内卷和口腔袋、
+      // 补回睑裂的封膜、并回下唇缘的复制顶点）。闭合不成（不该发生）时退回包里的闭合皮肤，并在报告里写明。
+      // The closed surface for the inside tests: with a closed package it is the shipped mesh itself; with an
+      // opened one it is the shipped mesh closed by index (rims and pouch removed, the eye membranes put back,
+      // the duplicated lower-lip vertices merged). Should that not close (it must not happen), the closed
+      // skin of the package is used instead and the report says so.
+      let fitMesh = kf.mesh
+      if (op) {
+        const closed = closeShippedSkin(kf.mesh, kf.source, op.pkg.opened!)
+        const be = edgeTopology(closed).boundaryEdges
+        fitMesh = be === 0 ? closed : e.mesh
+        // 面部掩码跟着顶点走（锁定掩码还包括标签非 0 的顶点，不能当面部掩码用） / the face mask follows the vertices (the lock mask also holds the tagged vertices and cannot serve as one)
+        const face = Uint8Array.from(kf.source, (v) => op.face[v]!)
+        const opened: OpenedSkinReport = openedSkinReport(op.pkg, op.dir, op.matchesAuthorPackage, kf.mesh, kf.source, e.lockVertices, kf.restoredTriangles, OPENED_SKIN_POSITION_BITS)
+        opened.closedCounterpart = { vertices: closed.positions.length / 3, triangles: closed.indices.length / 3, boundaryEdges: be, used: be === 0 }
+        opened.toeLengthScale = toeStretch(join(ROOT, op.dir))
+        row.opened = opened
+        row.resolution = { source: skinResolution(op.mesh, op.face), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, face), shippedTopology: edgeTopology(kf.mesh) }
+        const pv = openedSkinProvenance(op.pkg, opened, [SOURCE, SOURCE3, SOURCE_ZA, SOURCE_O3D, SOURCE_DERIVED].map((x) => x.name))
+        skinComposition = pv.composition
+        externalSkinSource = pv.packageSource
+        externalSkinExtraSources = pv.sources
+        shippedOpenedSkin = { id: e.id, mesh: kf.mesh, source: kf.source, pieceOfVertex: pv.pieceOfVertex }
+        if (opened.lockedVerticesMissing) throw new Error(`opened skin: ${opened.lockedVerticesMissing} locked vertices are missing from the simplified skin`)
+        console.log(`\nOpened skin ${op.dir}: ${opened.package.vertices} vertices / ${opened.package.triangles} triangles in the package, ${opened.shipped.vertices} / ${opened.shipped.triangles} shipped; boundary loops ${opened.shipped.boundaryLoops} (${opened.shipped.boundaryLoopSizes.join(' + ')} edges; expected 2); ${kf.restoredTriangles} fully locked triangles restored; closed counterpart for inside tests ${closed.indices.length / 3} triangles, boundary edges ${be}${op.matchesAuthorPackage === false ? '; WARNING: this opened package was NOT made from the author package now on disk (re-run tools/skinopen/run.sh)' : ''}`)
+        console.log(`  shipped vertices by tag: ${Object.entries(opened.byTag).filter(([, c]) => c.inPackage).map(([k, c]) => `${k} ${c.shipped}/${c.inPackage}`).join(', ')}`)
+        for (const g of opened.grafts) console.log(`  graft ${g.name} (${g.provenance}; ${g.source.name}): patch ${g.shipped.patch}, blend ring ${g.shipped.blendRing}, construction ${g.shipped.construction}${g.ring ? `; ring triangles ${g.ring.triangles}, longest edge median ${g.ring.longestEdgeMm.median} / max ${g.ring.longestEdgeMm.max} mm, dihedral median ${g.ring.dihedralDeg.median}° / p95 ${g.ring.dihedralDeg.p95}° / max ${g.ring.dihedralDeg.max}° (${g.ring.dihedralDeg.over45} edges over 45°)` : ''}`)
+        for (const q of opened.quantisation ? [opened.quantisation.at14Bits, opened.quantisation.chosen] : []) console.log(`  positions at ${q.bits} bits (step ${q.stepMm} mm): lip margin pairs ${q.marginPairs}, shipped under two indices ${q.marginPairsShippedApart}, still coincident ${q.marginPairsCoincidentAfter}; inner-lip walls: ${q.walls.tested} upper-sheet vertices over the lower sheet (gap p10 ${q.walls.gapMm.p10} / median ${q.walls.gapMm.median} / p90 ${q.walls.gapMm.p90} mm, ${q.walls.crossedInPackage} already crossed), order changed at ${q.walls.flipped} (gap there at most ${q.walls.flippedGapInPackageMmMax} mm), largest gap change ${q.walls.gapChangeMmMax} mm, distinct positions merged ${q.walls.mergedPositions}`)
+      } else row.resolution = { source: skinResolution(e.mesh, e.lockVertices), simplifiedWhole: skinResolution(whole, faceRegionOfSkin(whole, facial)), shipped: skinResolution(kf.mesh, kf.inFace), shippedTopology: edgeTopology(kf.mesh) }
+      row.fitShipped = checkSkinFit(fitMesh, deepParts, skinNotEnclosed)
       // 不在拟合之列的薄结构和旧体表部件露出多少（见 skinPackage.ts） / how far the thin structures and old surface parts that the fit did not cover come through (see skinPackage.ts)
       row.notFitted = notFittedAgainstSkin(
-        kf.mesh,
+        fitMesh,
         kept.filter((x) => !FAT_DEEP_TISSUES.has(x.cls.tissue) && x.cls.system !== 'integumentary').map((x) => ({ name: x.name, mesh: x.mesh })),
-        kept.filter((x) => x.cls.system === 'integumentary' && x !== e && !isFatPart(x.id)).map((x) => ({ name: x.name, mesh: x.mesh })),
+        // 已贴合到这层皮肤上的附属物、以及被皮肤自带的耳取代的耳廓，不再算“为旧皮肤做的体表部件” / appendages already conformed to this skin, and the auricle superseded by the skin's own ear, no longer count as surface parts made for the old one
+        kept.filter((x) => x.cls.system === 'integumentary' && x !== e && !isFatPart(x.id) && ![...((report.appendages as { conformedIds?: string[] } | undefined)?.conformedIds ?? []), ...((report.appendages as { hideWithOpaqueSkin?: string[] } | undefined)?.hideWithOpaqueSkin ?? [])].includes(x.id)).map((x) => ({ name: x.name, mesh: x.mesh })),
       )
       const rs = row.resolution as { simplifiedWhole: { face: { vertices: number; meanEdgeMm: number } }; shipped: { vertices: number; triangles: number; face: { vertices: number; meanEdgeMm: number } }; shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } }
       console.log(`\nSkin: face region kept at source resolution — ${rs.shipped.face.vertices} vertices, mean edge ${rs.shipped.face.meanEdgeMm} mm (simplified as a whole it would keep ${rs.simplifiedWhole.face.vertices} vertices, mean edge ${rs.simplifiedWhole.face.meanEdgeMm} mm); shipped skin ${rs.shipped.vertices} vertices, ${rs.shipped.triangles} triangles, boundary edges ${rs.shippedTopology.boundaryEdges}, non-manifold edges ${rs.shippedTopology.nonManifoldEdges}; deep-part surface outside the shipped skin ${((row.fitShipped as { outside: number }).outside * 100).toFixed(2)}%`)
       simp = { ...kf.mesh, error: kf.error }
     }
     const mesh: Mesh = { positions: simp.positions, indices: simp.indices }
-    const stats = simp.indices.length === e.mesh.indices.length ? e.stats : measure(mesh)
-    if (simp.indices.length < e.mesh.indices.length) {
+    // 开口后的皮肤：发布的是另一张网格（e.opened.mesh），三角形数和体积都与它比 / an opened skin: what ships is another mesh (e.opened.mesh), and triangle counts and volume are compared with that one
+    const srcMesh = e.opened && !e.keepGeometry ? e.opened.mesh : e.mesh
+    const srcStats = srcMesh === e.mesh ? e.stats : measure(srcMesh)
+    const stats = srcMesh === e.mesh && simp.indices.length === e.mesh.indices.length ? e.stats : measure(mesh)
+    if (simp.indices.length < srcMesh.indices.length) {
       simplifiedCount++
       maxError = Math.max(maxError, simp.error)
-      if (Math.abs(e.stats.signedVolume) > 1e-7) {
-        const change = Math.abs(stats.signedVolume - e.stats.signedVolume) / Math.abs(e.stats.signedVolume)
+      if (Math.abs(srcStats.signedVolume) > 1e-7) {
+        const change = Math.abs(stats.signedVolume - srcStats.signedVolume) / Math.abs(srcStats.signedVolume)
         if (change > worstVolume.change) worstVolume = { id: e.id, name: e.name, change }
       }
     }
     const triangles = mesh.indices.length / 3
     outTriangles += triangles
     const tt = trisByTissue.get(e.cls.tissue) ?? [0, 0]
-    tt[0] += e.mesh.indices.length / 3
+    tt[0] += srcMesh.indices.length / 3
     tt[1] += triangles
     trisByTissue.set(e.cls.tissue, tt)
-    const part: Part = {
+    const part: Part & { composition?: SkinComponent[] } = {
       id: e.id,
       fma: e.fma,
       name: e.name,
@@ -1410,14 +1572,17 @@ async function main() {
       ...(e.volume !== undefined ? { volume: e.volume } : {}),
       triangles,
       adjacent: neighbours[i]!.map((j) => kept[j]!.id),
+      // 开口后的皮肤：它由哪几样东西构成（拟合的体表、移植片、构造物） / an opened skin: what it is made of (fitted surface, grafts, construction aids)
+      ...(e.opened && skinComposition ? { composition: skinComposition } : {}),
     }
     parts.push(part)
     let list = glbParts.get(e.cls.system)
     if (!list) glbParts.set(e.cls.system, (list = []))
-    list.push({ id: e.id, positions: mesh.positions, normals: computeNormals(mesh), indices: mesh.indices })
+    // 法线只按索引累加，不按位置合并顶点；开口后的皮肤位置取 16 位（见 glb.ts） / normals are accumulated by index only, never merging vertices by position; an opened skin takes 16-bit positions (see glb.ts)
+    list.push({ id: e.id, positions: mesh.positions, normals: computeNormals(mesh), indices: mesh.indices, ...(e.opened && shippedOpenedSkin?.id === e.id ? { positionBits: OPENED_SKIN_POSITION_BITS } : {}) })
   }
   lap(`simplified ${simplifiedCount} of ${kept.length} parts`)
-  const keptSourceTriangles = kept.reduce((s, e) => s + e.mesh.indices.length / 3, 0)
+  const keptSourceTriangles = kept.reduce((s, e) => s + (e.opened && !e.keepGeometry ? e.opened.mesh : e.mesh).indices.length / 3, 0)
   const importedTriangles = imported.reduce((n, e) => n + e.mesh.indices.length / 3, 0)
   console.log(`\nTriangles: ${sourceTriangles} in the 4.0 source${importedTriangles ? ` + ${importedTriangles} in the ${imported.length} parts imported from 3.0` : ''} (${keptSourceTriangles} after welding and merging duplicates) → ${outTriangles} written (${((100 * outTriangles) / keptSourceTriangles).toFixed(1)}%)`)
   console.log(`  error bound = clamp(${SIMPLIFY_ERROR_PER_THICKNESS}·thickness, ${(SIMPLIFY_ERROR_MIN * 1000).toFixed(2)} mm, ${(SIMPLIFY_ERROR_MAX * 1000).toFixed(2)} mm); parts ≤ ${SIMPLIFY_MIN_TRIANGLES} triangles untouched; largest error reported by the simplifier ${(maxError * 1000).toFixed(3)} mm; largest volume change ${(worstVolume.change * 100).toFixed(1)}% (${worstVolume.id} ${worstVolume.name})`)
@@ -1522,6 +1687,18 @@ async function main() {
     if (list.length) {
       glb = `${def.id}.glb`
       glbSizes[glb] = await writeSystemGlb(join(stage, glb), def.id, def.color, list)
+      // 下标对照文件：发布的皮肤的每个顶点（GLB 解码次序）→ 开口后的包里 skin.obj 的顶点下标；写之前读回 GLB 核对
+      // the index sidecar: every vertex of the shipped skin (GLB decode order) → its vertex index in skin.obj of the opened package; checked against the GLB read back before it is written
+      const sk = shippedOpenedSkin
+      if (sk && list.some((p) => p.id === sk.id)) {
+        const sidecar = await skinSourceSidecar(join(stage, glb), sk.id, sk.mesh, sk.source, OPENED_SKIN_POSITION_BITS)
+        writeFileSync(join(stage, SKIN_SOURCE_FILE), sidecar.bytes)
+        // 每个发布顶点属于 composition 的哪一片，供查看器“按来源着色” / the piece of `composition` each shipped vertex belongs to, for the viewer's "colour by source"
+        if (skinComposition) writeFileSync(join(stage, SKIN_PIECES_FILE), skinPieces(sidecar.source, sk.pieceOfVertex, skinComposition))
+        const opened = (report.skinPackage as { opened: OpenedSkinReport }).opened
+        opened.sidecar = { file: SKIN_SOURCE_FILE, vertices: sidecar.vertices, maxErrorMm: sidecar.maxErrorMm, stepMm: sidecar.stepMm }
+        console.log(`  ${SKIN_SOURCE_FILE}: ${sidecar.vertices} entries; skin positions in the GLB within ${sidecar.maxErrorMm} mm of the simplified ones (step ${sidecar.stepMm} mm at ${OPENED_SKIN_POSITION_BITS} bits)`)
+      }
     }
     systems.push({ id: def.id, name: def.name, color: def.color, glb, partCount: list.length })
   }
@@ -1550,7 +1727,7 @@ async function main() {
     schema: 1,
     body: 'male',
     cautions,
-    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : []), ...(derived.length ? [SOURCE_DERIVED] : []), ...(externalSkinSource ? [externalSkinSource] : [])],
+    sources: [SOURCE, ...(imported.length ? [SOURCE3] : []), ...(importedZa.some((e) => e.source === SOURCE_ZA.name) ? [SOURCE_ZA] : []), ...(importedZa.some((e) => e.source === SOURCE_O3D.name) ? [SOURCE_O3D] : []), ...(derived.length ? [SOURCE_DERIVED] : []), ...(externalSkinSource ? [externalSkinSource] : []), ...externalSkinExtraSources],
     systems,
     layers: LAYERS.map((l) => ({ name: l.name })),
     parts,
@@ -1579,15 +1756,24 @@ async function main() {
   console.log(`  GLB total ${(glbTotal / 1024 / 1024).toFixed(2)} MB`)
   const all = parts.reduce((b, p) => [Math.min(b[0]!, p.bbox[0]), Math.min(b[1]!, p.bbox[1]), Math.min(b[2]!, p.bbox[2]), Math.max(b[3]!, p.bbox[3]), Math.max(b[4]!, p.bbox[4]), Math.max(b[5]!, p.bbox[5])], [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity])
   console.log(`  body bounds (m): x ${all[0]!.toFixed(3)}…${all[3]!.toFixed(3)}, y ${all[1]!.toFixed(3)}…${all[4]!.toFixed(3)}, z ${all[2]!.toFixed(3)}…${all[5]!.toFixed(3)}`)
-  report.output = { parts: parts.length, anatomyJsonBytes: json.length, glbBytes: glbSizes, bounds: all.map((v) => round(v, 4)) }
+  report.output = { parts: parts.length, anatomyJsonBytes: json.length, glbBytes: glbSizes, bounds: all.map((v) => round(v, 4)), ...(shippedOpenedSkin ? { skinSourceBytes: 4 * (report.skinPackage as { opened: OpenedSkinReport }).opened.sidecar!.vertices } : {}) }
   report.parameters = {
     SIMPLIFY_ERROR_PER_THICKNESS, SIMPLIFY_ERROR_MIN, SIMPLIFY_ERROR_MAX, SIMPLIFY_MIN_TRIANGLES, SIMPLIFY_MAX_EDGE,
     ADJACENCY_THRESHOLD, ADJACENCY_SPACING, ADJACENCY_MAX_DEGREE, SUPERFICIAL_EXPOSURE, EXPOSURE_MAX_DISTANCE,
   }
+  // display.json：查看器要的几样小数据（见 skinOpened.ts 的 displayJson），报告里的同样数据照旧保留
+  // display.json: the few small things the viewer needs (displayJson in skinOpened.ts); the same data stay in the report
+  {
+    const sp = report.skinPackage as { notEnclosedPartIds?: string[] } | undefined
+    const skinId = kept.find((e) => e.name === 'Skin' && e.cls.tissue === 'skin')?.id ?? null
+    const display = displayJson((report.appendages as { hideWithOpaqueSkin?: string[] } | undefined)?.hideWithOpaqueSkin ?? [], sp?.notEnclosedPartIds ?? [], skinId, !!shippedOpenedSkin, !!(shippedOpenedSkin && skinComposition))
+    writeFileSync(join(stage, DISPLAY_FILE), display)
+    Object.assign(report.output as Record<string, unknown>, { displayJsonBytes: display.length, ...(shippedOpenedSkin && skinComposition ? { skinPiecesBytes: (report.skinPackage as { opened: OpenedSkinReport }).opened.sidecar!.vertices } : {}) })
+  }
   writeFileSync(join(stage, 'pipeline-report.json'), JSON.stringify(report, null, 1))
   const staged = readdirSync(stage).sort((a, b) => Number(a === 'anatomy.json') - Number(b === 'anatomy.json') || a.localeCompare(b))
   for (const f of staged) renameSync(join(stage, f), join(outDir, f))
-  for (const f of readdirSync(outDir)) if ((f.endsWith('.glb') || f === 'nerves.json') && !staged.includes(f)) rmSync(join(outDir, f))
+  for (const f of readdirSync(outDir)) if ((f.endsWith('.glb') || f === 'nerves.json' || f === SKIN_SOURCE_FILE || f === SKIN_PIECES_FILE) && !staged.includes(f)) rmSync(join(outDir, f))
   rmSync(stage, { recursive: true, force: true })
   if (!existsSync(join(outDir, 'anatomy.json'))) throw new Error('output missing')
   lap('done')
@@ -1610,7 +1796,7 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
     const fwd = Math.round((sg.sides.left!.humeralHeadCentreMovedMm[2]! + sg.sides.right!.humeralHeadCentreMovedMm[2]!) / 2)
     const t = sg.provenance.relabelledByTissue
     out.push({
-      en: `The shoulders are not in the posture of the scan. BodyParts3D was imaged lying supine, with the shoulders shrugged and drawn back; the clavicles and scapulae were turned into a standing resting posture (clavicle elevation ${mean('clavicleElevation', 'before')}° → ${mean('clavicleElevation', 'after')}°, retraction ${mean('clavicleRetraction', 'before')}° → ${mean('clavicleRetraction', 'after')}°; scapular internal rotation ${mean('scapulaInternalRotation', 'before')}° → ${mean('scapulaInternalRotation', 'after')}°, upward rotation ${mean('scapulaUpwardRotation', 'before')}° → ${mean('scapulaUpwardRotation', 'after')}°). This lowers the shoulder joints by about ${down} mm, brings them ${fwd} mm forwards and widens the distance between the humeral head centres from ${Math.round(sg.glenohumeralSeparationMm.before)} to ${Math.round(sg.glenohumeralSeparationMm.after)} mm. No bone was scaled, and each upper limb was moved as one rigid block.`,
+      en: `The shoulders are not in the posture of the scan. BodyParts3D was imaged lying supine, with the shoulders shrugged and drawn back; the clavicles and scapulae were turned into a standing resting posture (clavicle elevation ${mean('clavicleElevation', 'before')}° → ${mean('clavicleElevation', 'after')}°, retraction ${mean('clavicleRetraction', 'before')}° → ${mean('clavicleRetraction', 'after')}°; scapular internal rotation ${mean('scapulaInternalRotation', 'before')}° → ${mean('scapulaInternalRotation', 'after')}°, upward rotation ${mean('scapulaUpwardRotation', 'before')}° → ${mean('scapulaUpwardRotation', 'after')}°). This lowers the shoulder joints by about ${down} mm, brings them ${fwd} mm forwards and widens the distance between the humeral head centres from ${Math.round(sg.glenohumeralSeparationMm.before)} to ${Math.round(sg.glenohumeralSeparationMm.after)} mm. No bone was scaled, and each upper limb was translated as one rigid block.`,
       zh: `肩部不是扫描时的姿势。BodyParts3D 为仰卧位成像，双肩耸起并后缩；本模型已把锁骨和肩胛骨摆回站立静息位（锁骨上提 ${mean('clavicleElevation', 'before')}° → ${mean('clavicleElevation', 'after')}°、后缩 ${mean('clavicleRetraction', 'before')}° → ${mean('clavicleRetraction', 'after')}°；肩胛骨内旋 ${mean('scapulaInternalRotation', 'before')}° → ${mean('scapulaInternalRotation', 'after')}°、上回旋 ${mean('scapulaUpwardRotation', 'before')}° → ${mean('scapulaUpwardRotation', 'after')}°）。肩关节因此下降约 ${down} mm、前移约 ${fwd} mm，两侧肱骨头中心的间距由 ${Math.round(sg.glenohumeralSeparationMm.before)} mm 增至 ${Math.round(sg.glenohumeralSeparationMm.after)} mm。没有缩放任何骨，每侧上肢作为一个整体平移。`,
     })
     out.push({
@@ -1618,13 +1804,51 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
       zh: `为跟随肩带的新姿势，跨越该区域的 ${sg.provenance.relabelledToWarped} 个扫描部件发生了形变，并标为“形变”：${t.muscle ?? 0} 块肌（三角肌、胸大肌和胸小肌、斜方肌、前锯肌、菱形肌、肩胛提肌、背阔肌、肩袖各肌、肱二头肌和肱三头肌的起始部）、${(t.artery ?? 0) + (t.vein ?? 0)} 条颈根部、腋窝和肩部的动脉和静脉${t.skin ? '，以及皮肤' : ''}。该区域的神经、韧带、筋膜和淋巴结随周围组织一同移动。肩胛骨的内旋仍小于平均值（约 ${mean('scapulaInternalRotation', 'after')}° 对 41°）：在不离开本模型胸廓的前提下只能转到这里。`,
     })
   }
-  const sk = report.skinPackage as { installed?: boolean; author?: { bmiByVolume: number | null; targetBmi: number | null }; face?: { cover: Record<string, { minMm: number; medianMm: number } | null> }; resolution?: { shipped: { vertices: number; face: { vertices: number; meanEdgeMm: number } } } } | undefined
+  const ab = report.armAbduction as { applied?: boolean; angleDeg?: number; sides?: Record<string, { gapMm: { before: { folds: number[] }; after: { folds: number[] } } }>; gapBands?: string[]; requirement?: { minGapMm: number; foldInsertionsEndAtFraction: number }; provenance?: { relabelledToWarped: number }; parts?: { deformed: number }; crossing?: { parts: { name: string; tissue: string; volumeChange: number; lengthChange: number }[] } } | undefined
+  if (ab?.applied && ab.sides && ab.gapBands && ab.requirement && ab.crossing) {
+    // 腋襞肌从肱骨的哪一档起离臂 ≥ minGap（两侧取较远的一档），外展前后 / the band of the humerus from which the fold muscles are at least minGap from the arm (the more distal of the two sides), before and after
+    const clear = (w: 'before' | 'after') => {
+      let k = 0
+      for (const sd of Object.values(ab.sides!)) {
+        const f = sd.gapMm[w].folds
+        let i = f.length
+        while (i > 0 && f[i - 1]! >= ab.requirement!.minGapMm) i--
+        k = Math.max(k, i)
+      }
+      return (ab.gapBands![k] ?? '').replace(/–.*$/, '')
+    }
+    const muscles = ab.crossing.parts.filter((c) => c.tissue === 'muscle')
+    const stretch = Math.max(0, ...muscles.map((c) => c.lengthChange))
+    const vol = Math.max(0, ...muscles.map((c) => Math.abs(c.volumeChange)))
+    const skinNote = (report.skinPackage as { installed?: boolean } | undefined)?.installed ? { en: '', zh: '' } : { en: ' The skin shown is the BodyParts3D skin stretched to follow the arms (a thick shell that still joins the upper arms to the chest), until a skin fitted to this posture is installed.', zh: '目前显示的是 BodyParts3D 自带的皮肤，被拉伸着跟随上肢（一层厚壳，上臂与胸壁仍连在一起），待按此姿势拟合的皮肤装入后才会换掉。' }
+    out.push({
+      en: `The arms are not where the scan had them. In the scan they lay against the sides; each upper limb was turned outwards (abducted) by ${ab.angleDeg}° about the centre of the humeral head, in the coronal plane, as one rigid block. Keeping scapula and clavicle fixed is a modelling choice for so small an angle, not a finding checked against the literature.`,
+      zh: `上肢不在扫描时的位置。扫描时两臂贴在身侧；本模型把每侧上肢作为一个整体，绕肱骨头中心在冠状面内外展了 ${ab.angleDeg}°。肩胛骨和锁骨保持不动是针对这样小的角度所作的建模选择，并非经文献核对的结论。`,
+    })
+    out.push({
+      en: `The axilla is open only from ${clear('after')}% of the length of the humerus downwards (it was ${clear('before')}% in the scan), not from the armpit. Latissimus dorsi, teres major and pectoralis major insert on the humerus down to ${Math.round(ab.requirement.foldInsertionsEndAtFraction * 100)}% of its length and lie along the arm below that, so the gap opens like a hinge and no small abduction clears them higher up; the chest wall itself is more than ${ab.requirement.minGapMm} mm from the arm throughout. With the arm at the side the folds lie along the arm in a living person too.`,
+      zh: `腋窝只从肱骨长度的 ${clear('after')}% 处往下才是敞开的（扫描时是 ${clear('before')}%），并非从腋顶开始。背阔肌、大圆肌和胸大肌在肱骨上的止点一直延伸到肱骨长度的 ${Math.round(ab.requirement.foldInsertionsEndAtFraction * 100)}% 处，再往下仍沿上臂贴行，间隙像合页一样张开，小角度外展无法让它们在更高处离开上臂；胸壁本身与上臂处处相距 ${ab.requirement.minGapMm} mm 以上。活体上臂垂于体侧时腋襞同样贴着上臂。`,
+    })
+    out.push({
+      en: `To follow the abducted arms, the muscles that cross the shoulder joint (${muscles.length} parts: deltoid, pectoralis major, latissimus dorsi, teres major and minor, supraspinatus, infraspinatus, subscapularis, coracobrachialis, biceps, long head of triceps) were deformed between origin and insertion: their origin-to-insertion distance changed by up to ${(stretch * 100).toFixed(0)}% and their volume by up to ${(vol * 100).toFixed(0)}%. The axillary vessels, brachial plexus, lymph nodes and fasciae were carried by a smooth field. These parts are marked as warped.${skinNote.en}`,
+      zh: `为跟随外展后的上肢，跨肩关节的肌（${muscles.length} 个部件：三角肌、胸大肌、背阔肌、大小圆肌、冈上肌、冈下肌、肩胛下肌、喙肱肌、肱二头肌、肱三头肌长头）在起止点之间发生形变，起止点间距最多改变 ${(stretch * 100).toFixed(0)}%，体积最多改变 ${(vol * 100).toFixed(0)}%；腋血管、臂丛、淋巴结和筋膜随平滑的场移动。这些部件标为“形变”。${skinNote.zh}`,
+    })
+  }
+  const sk = report.skinPackage as { installed?: boolean; opened?: OpenedSkinReport; scanDetails?: string[]; author?: { bmiByVolume: number | null; targetBmi: number | null }; face?: { cover: Record<string, { minMm: number; medianMm: number } | null> }; resolution?: { shipped: { vertices: number; face: { vertices: number; meanEdgeMm: number } } } } | undefined
   if (sk?.installed) {
     // BMI 是皮肤作者按所围体积算的（包的 manifest） / the BMI is the skin author's, from the enclosed volume (the package manifest)
     const bmi = sk.author && sk.author.bmiByVolume !== null && sk.author.targetBmi !== null ? { en: ` By the volume it encloses it comes to BMI ${sk.author.bmiByVolume}, against a target of ${sk.author.targetBmi}.`, zh: `按所围体积算 BMI 为 ${sk.author.bmiByVolume}，目标是 ${sk.author.targetBmi}。` } : { en: '', zh: '' }
+    // 这层通用体表缺什么：有移植片的地方不再缺；包里记着转移来的脐和乳头时也不再说没有
+    // what this generic surface lacks: not where a graft now is, and not navel and nipples when the package records them as transferred
+    const grafts = sk.opened?.grafts ?? []
+    const hasGenital = grafts.some((g) => /genital/i.test(g.name))
+    const hasToes = grafts.some((g) => /^toes/i.test(g.name))
+    const relief = (sk.scanDetails ?? []).some((k) => /navel|nipple/i.test(k))
+    const lacksEn = [hasGenital ? '' : 'the external genital region is a faceted mound, not penile and scrotal skin', hasToes ? '' : 'the toes are one block', relief ? 'navel and nipples are only low reliefs carried over from his scan, without areolae, and there are no skin creases' : 'there are no nipples, navel or skin creases'].filter(Boolean)
+    const lacksZh = [hasGenital ? '' : '外生殖器区只是一个带棱面的隆起，没有阴茎和阴囊的皮肤', hasToes ? '' : '足趾连成一块', relief ? '脐和乳头只是从他的扫描转移来的浅起伏，没有乳晕，也没有皮纹' : '没有乳头、脐和皮纹'].filter(Boolean)
     out.push({
-      en: `The skin is not this man's skin. The skin that came with BodyParts3D (a thick shell that joined the upper arms to the chest) was replaced by a parametric body surface (Momentum Human Rig, MHR) fitted to the bones and muscles of this model and pushed outwards locally until it encloses them; its head and neck were then placed again on his skull.${bmi.en} It is a smooth generic surface: the external genital region is a faceted mound, not penile and scrotal skin; the toes are one block; there are no nipples, navel or skin creases.`,
-      zh: `皮肤不是此人的皮肤。BodyParts3D 自带的皮肤（一层厚壳，上臂与胸壁连在一起）已换成参数化人体表面（Momentum Human Rig，MHR）：先按本模型的骨骼和肌肉拟合，再局部外推到把它们包住，头颈部又按他的颅骨重新摆放过。${bmi.zh}它是光滑的通用体表：外生殖器区只是一个带棱面的隆起，没有阴茎和阴囊的皮肤；足趾连成一块；没有乳头、脐和皮纹。`,
+      en: `The skin is not this man's skin. The skin that came with BodyParts3D (a thick shell that joined the upper arms to the chest) was replaced by a parametric body surface (Momentum Human Rig, MHR) fitted to the bones and muscles of this model and pushed outwards locally until it encloses them; its head and neck were then placed again on his skull.${bmi.en} It is a smooth generic surface: ${lacksEn.join('; ')}.`,
+      zh: `皮肤不是此人的皮肤。BodyParts3D 自带的皮肤（一层厚壳，上臂与胸壁连在一起）已换成参数化人体表面（Momentum Human Rig，MHR）：先按本模型的骨骼和肌肉拟合，再局部外推到把它们包住，头颈部又按他的颅骨重新摆放过。${bmi.zh}它是光滑的通用体表：${lacksZh.join('；')}。`,
     })
     // 面部：数值取自本次构建的测量（report.skinPackage.face、resolution） / the face: figures measured by this build (report.skinPackage.face, resolution)
     const out1 = (k: string) => {
@@ -1643,13 +1867,29 @@ function maleCautions(report: Record<string, unknown>, r3Parts: number, zaParts:
     const through = [ring ? `the inner (palpebral) ring of orbicularis oculi by up to ${ring} mm` : '', outer ? `its outer (orbital) ring by up to ${outer} mm` : '', cornea ? `the cornea by ${cornea} mm` : '', lip ? `the lips by ${lip} mm` : ''].filter(Boolean)
     const throughZh = [ring ? `眼轮匝肌内环（睑部）最多 ${ring} mm` : '', outer ? `外环（眶部）最多 ${outer} mm` : '', cornea ? `角膜 ${cornea} mm` : '', lip ? `唇 ${lip} mm` : ''].filter(Boolean)
     const fv = sk.resolution?.shipped.face
-    out.push({
+    if (sk.opened) {
+      // 开口后的皮肤：眼和口是真正的开口，内卷和口腔袋是构造物；各移植片是什么、过渡环量出来怎样（见 skinOpened.ts）
+      // an opened skin: eye and mouth are real openings, rims and pouch are construction aids; what each graft is and how its ring measures (see skinOpened.ts)
+      out.push(...openedSkinCautions(sk.opened, sk.opened.toeLengthScale ?? null))
+      out.push({
+        en: `Round the eyes and the lips the skin was deliberately not pushed out${through.length ? `, and measured against the skin as it was before the openings were cut, what lies under it comes through: ${through.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm), as do the grafted patches; the rest of the skin is simplified.` : ''}`,
+        zh: `眼和唇周围的皮肤有意不外推${throughZh.length ? `；按开口之前的皮肤量，有结构露出皮肤：${throughZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），移植片也是；其余皮肤经过简化。` : ''}`,
+      })
+    } else out.push({
       en: `The eyes and the mouth of the skin are not openings: the lids are one sheet of skin over the globe and the lips meet in a crease. There the skin was deliberately not pushed out${through.length ? `, and what lies under it comes through: ${through.join(', ')}` : ''}.${fv ? ` The face keeps the full resolution of the surface (${fv.vertices} vertices, mean edge ${fv.meanEdgeMm} mm); the rest of the skin is simplified.` : ''}`,
       zh: `皮肤上的眼和口都不是开口：眼睑是盖在眼球前的一整片皮肤，上下唇在口裂处相贴成一道褶。这些地方的皮肤有意不外推${throughZh.length ? `，因此有结构露出皮肤：${throughZh.join('、')}` : ''}。${fv ? `面部保留体表的原始分辨率（${fv.vertices} 个顶点，平均边长 ${fv.meanEdgeMm} mm），其余皮肤经过简化。` : ''}`,
     })
   }
   const nf = (report.skinPackage as { notFitted?: { caution: { zh: string; en: string } } } | undefined)?.notFitted
   if (nf) out.push(nf.caution)
+  const ap = report.appendages as { applied?: boolean; parts?: { name: string; kind: string; displacementMm: { max: number } }[] } | undefined
+  if (ap?.applied && ap.parts?.length) {
+    const far = (k: string) => Math.max(0, ...ap.parts!.filter((x) => x.kind === k).map((x) => x.displacementMm.max)).toFixed(0)
+    out.push({
+      en: `Hair of the head, eyebrows, pubic hair and nails were made for the earlier skin and were reshaped to lie on this one: the side of each hair shell that faces the skin was put onto the new skin and its outer side moved with it (by up to ${far('shell')} mm), and the nails were lifted or lowered with the fingertip skin (by up to ${far('nail')} mm) without moving along the fingers. The ears that show are the skin model's own; the scanned auricles are kept unchanged under and through that skin and are meant to be shown only when the skin is hidden.`,
+      zh: `头发、眉、阴毛和甲原是配旧皮肤的，已重新贴合到这层皮肤上：毛发壳朝向皮肤的一面落到新皮肤上，外面随之移动（最多 ${far('shell')} mm）；甲随指尖皮肤抬起或落下（最多 ${far('nail')} mm），没有沿手指滑动。露在外面的耳是皮肤模型自带的；扫描得到的耳廓原样保留，与这层皮肤部分重叠，只应在皮肤隐去时显示。`,
+    })
+  }
   const z = report.zAnatomy as { available: boolean; nerves?: { pointsMoved: number; inBoneAfter: number; deepInMuscleAfter: number } } | undefined
   if (z?.available && z.nerves) {
     const moved = Math.round(z.nerves.pointsMoved * 100)

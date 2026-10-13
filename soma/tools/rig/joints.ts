@@ -1063,6 +1063,22 @@ export function buildJoints(body: Body, defs: JointDef[], overrides: Record<stri
       seen.set(b, j.def.id)
     }
   }
+  // 左右对照：把右侧的主轴按正中矢状面镜像后与左侧比较。两侧各自从自己的骨拟合，差得多说明这副身体
+  // 两侧的骨本身不对称（或某一侧拟合不好），摆同一个角度时两侧肢体的走向会不同。
+  // Left against right: the primary axis of the right joint, mirrored in the median plane, is
+  // compared with the left one. Each side is fitted from its own bones, so a large difference means
+  // that the two bones of this body are not mirror images (or that one fit is poor), and the same
+  // angle will carry the two limbs in different directions.
+  for (const l of built.values()) {
+    if (!l.def.id.endsWith('_L')) continue
+    const r = built.get(`${l.def.id.slice(0, -2)}_R`)
+    if (!r || !l.def.dofs.length) continue
+    const a = l.axes[0]!, b = r.axes[0]!
+    const off = deg(Math.acos(Math.min(1, Math.abs(-a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))))
+    if (off > 12) {
+      for (const j of [l, r]) j.warnings.push(`primary axis is ${r1(off)}° from the mirror image of the other side's (${j === l ? r.def.id : l.def.id}); left and right will not move as mirror images`)
+    }
+  }
   return { joints: defs.map((d) => built.get(d.id)!), skeleton: sk }
 }
 

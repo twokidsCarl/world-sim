@@ -10,9 +10,34 @@ import type { AnatomyData, NervePath, Part } from '../src/anatomy/types.ts'
 import { loadBuiltBody } from '../tools/pipeline/body.ts'
 import { runLandmarkChecks } from '../tools/pipeline/landmarks.ts'
 import { LAYERS } from '../tools/pipeline/layers.ts'
-import { edgeTopology, FACE_MUSCLE_NAME, faceRegionOfSkin, skinResolution } from '../tools/pipeline/skinPackage.ts'
+import { boundaryLoops, edgeTopology, FACE_MUSCLE_NAME, faceRegionOfSkin, loadSkinPackage, skinResolution } from '../tools/pipeline/skinPackage.ts'
+import { DISPLAY_FILE, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, type OpenedSkinReport } from '../tools/pipeline/skinOpened.ts'
+import { OPENED_SKIN_POSITION_BITS, positionStep, readGlb } from '../tools/pipeline/glb.ts'
 
-const DIR = join(import.meta.dirname, '../public/anatomy/female')
+// 这组测试接受三种状态，按 pipeline-report.json 自己判断（与 pipeline-output.test.ts 对男性的做法相同）：
+//   A · 没有装入皮肤包（report.skinPackage.installed 为假：包不存在，或是按别的内部结构指纹拟合的）：
+//       身体带的是占位皮肤（形变来的男性皮肤，胸部抬高），附属物不动；
+//   B · 装入了皮肤作者的闭合包（installed 为真，没有 report.skinPackage.opened）：一张闭合的皮肤，
+//       没有 skin-source.u32、skin-pieces.u8，说明里写“眼和口不是开口”；
+//   C · 装入了开口后的包（report.skinPackage.opened 存在；<包>-open 由 tools/skinopen 写出）：发布的皮肤有
+//       眼和口的开口（两个边界环）、移植片，位置取 16 位，旁边有 skin-source.u32 和 skin-pieces.u8；
+//       凡是判断内外的数（fit、fitShipped、notFitted、乳房的摆放、脂肪）都是在闭合的那张皮肤上量的。
+// 三种状态下都有 display.json。
+// These tests accept three states and tell them apart from pipeline-report.json (as pipeline-output.test.ts
+// does for the male):
+//   A · no skin package installed (report.skinPackage.installed false: no package, or one fitted to
+//       another internals fingerprint): the body carries the placeholder skin (the warped male skin,
+//       raised over the chest) and untouched appendages;
+//   B · the author's closed package installed (installed true, no report.skinPackage.opened): one closed
+//       skin, no skin-source.u32 or skin-pieces.u8, and the cautions say eye and mouth are not openings;
+//   C · the opened package installed (report.skinPackage.opened present; <package>-open is written by
+//       tools/skinopen): the shipped skin has eye and mouth openings (two boundary loops) and grafts,
+//       16-bit positions, and skin-source.u32 and skin-pieces.u8 beside it; every figure that needs inside
+//       tests (fit, fitShipped, notFitted, the breast placement, the fat) is measured on the closed skin.
+// display.json is there in all three.
+
+// SOMA_FEMALE_DIR：改为校验另一个目录里的构建（管线的 --out） / SOMA_FEMALE_DIR: validate a build in another directory instead (the pipeline's --out)
+const DIR = process.env.SOMA_FEMALE_DIR ?? join(import.meta.dirname, '../public/anatomy/female')
 const MALE = join(import.meta.dirname, '../public/anatomy/male/anatomy.json')
 const present = existsSync(join(DIR, 'anatomy.json')) && existsSync(MALE)
 
@@ -29,6 +54,9 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     return hits[0]!
   }
   const len = (p: Part) => Math.hypot(p.bbox[3] - p.bbox[0], p.bbox[4] - p.bbox[1], p.bbox[5] - p.bbox[2])
+  const skinInstalled = !!report?.skinPackage?.installed
+  // 状态 C：装入的是开口后的包 / state C: the opened package is the one installed
+  const skinOpened = skinInstalled && !!report?.skinPackage?.opened
 
   it('is a female body with honest sources and provenance', () => {
     expect(data.schema).toBe(1)
@@ -279,6 +307,70 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(report.skin.verticesRaised / report.skin.ofVertices).toBeLessThan(0.1)
   })
 
+  it.skipIf(!present || !report?.armAbduction?.applied)('abducts the arms just far enough to open the axillae, with the male\'s criterion', () => {
+    const ab = report.armAbduction
+    expect(ab.angleDeg).toBeGreaterThan(0)
+    expect(ab.angleDeg).toBeLessThanOrEqual(25)
+    expect(ab.requirement.minGapMm).toBe(12)
+    expect(ab.limbBones).toEqual({ left: 30, right: 30 })
+    const bands: string[] = ab.gapBands
+    const wallFrom = bands.indexOf(ab.requirement.wallFromBand)
+    const foldsFrom = bands.indexOf(ab.requirement.foldsFromBand)
+    expect(wallFrom).toBeGreaterThanOrEqual(0)
+    expect(foldsFrom).toBeGreaterThanOrEqual(wallFrom)
+    for (const side of ['left', 'right']) {
+      const g = ab.sides[side].gapMm
+      // 外展之前这个间隙不够，之后够了；盂肱关节间隙没有变 / the gap was short before and is met after; the glenohumeral gap did not change
+      expect(Math.min(...g.before.folds.slice(foldsFrom)), side).toBeLessThan(12)
+      for (let k = wallFrom; k < bands.length; k++) expect(g.after.wall[k], `${side} wall ${bands[k]}`).toBeGreaterThanOrEqual(12)
+      for (let k = foldsFrom; k < bands.length; k++) expect(g.after.folds[k], `${side} folds ${bands[k]}`).toBeGreaterThanOrEqual(12)
+      expect(Math.abs(ab.sides[side].glenohumeralGap.after.medianMm - ab.sides[side].glenohumeralGap.before.medianMm), side).toBeLessThan(0.5)
+    }
+    expect(ab.attachments.movedOffBoneByMoreThan1Mm).toBe(0)
+    expect(ab.field.jacobian.nonPositive).toBe(0)
+    // 外展之后才算指纹：皮肤包要按外展后的内部结构拟合 / the fingerprint is taken after the abduction: a skin must be fitted to the abducted internals
+    expect(report.skinPackage.skeletonKey).not.toBe(report.skinPackage.internalsKeyBeforeShape)
+    const c = data.cautions!.find((x) => /turned .*° outwards/.test(x.en))
+    expect(c).toBeDefined()
+    expect(c!.zh).toMatch(/向外转了/)
+  })
+
+  it('straightens the fingers to the angles within the male hand', () => {
+    const rows = report.standard.fingerRays.rows as { side: string; finger: string; turnedDeg: number }[]
+    expect(rows.length).toBe(10)
+    // 一只手的五个指列转过的角度应当相近（整排手指相对掌骨歪了同一个角度） / the five rays of one hand turn by about the same angle (the whole row of fingers was off by one angle against the metacarpus)
+    for (const side of ['left', 'right']) {
+      const t = rows.filter((r) => r.side === side).map((r) => r.turnedDeg)
+      expect(Math.max(...t) - Math.min(...t), side).toBeLessThan(5)
+    }
+    // 中指与第三掌骨大致成一线（冠状面内，与男性的手相差不到 6°） / the middle finger roughly in line with the third metacarpal (coronal plane, within 6° of the male hand)
+    const ang = (parts: Part[], a: string, b: string) => {
+      const p = parts.find((x) => x.name === a)!.centroid
+      const q = parts.find((x) => x.name === b)!.centroid
+      return (Math.atan2(q[0] - p[0], q[1] - p[1]) * 180) / Math.PI
+    }
+    for (const [S, s] of [['Left', 'left'], ['Right', 'right']]) {
+      const kink = (parts: Part[]) => ang(parts, `Proximal phalanx of ${s} middle finger`, `Distal phalanx of ${s} middle finger`) - ang(parts, `${S} capitate`, `${S} third metacarpal bone`)
+      expect(Math.abs(kink(data.parts) - kink(male.parts)), S).toBeLessThan(6)
+    }
+  })
+
+  it('conforms hair, eyebrows and nails to an installed skin, and says so when there is none', () => {
+    const app = report.appendages
+    expect(app).toBeDefined()
+    expect(app.applied).toBe(!!report.skinPackage.installed)
+    if (!app.applied) {
+      expect(app.reason).toMatch(/no skin package installed/)
+      return
+    }
+    const rows = app.parts as { id: string; name: string; kind: string; before: { outside: number; maxMm: number }; after: { outside: number; maxMm: number } }[]
+    expect(rows.length).toBeGreaterThanOrEqual(10)
+    for (const id of app.conformedIds) expect(byId.has(id), id).toBe(true)
+    // 外耳不动，列在 hideWithOpaqueSkin 里；乳头、乳晕不是附属物 / the auricle is left alone and listed under hideWithOpaqueSkin; nipple and areola are no appendages
+    expect(app.hideWithOpaqueSkin).toContain(data.parts.find((p) => p.name === 'External ear')!.id)
+    expect(app.conformedIds.some((id: string) => /^HRA_/.test(id))).toBe(false)
+  })
+
   it('reports the glenohumeral gap on both sides', () => {
     expect(report.shoulder.left.differenceMm).toBeDefined()
   })
@@ -329,16 +421,34 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(res.shipped.face.vertices).toBe(res.source.face.vertices)
     expect(res.shipped.face.meanEdgeMm).toBeLessThanOrEqual(2)
     expect(res.simplifiedWhole.face.vertices).toBeLessThan(res.shipped.face.vertices / 5)
-    expect(res.shipped.vertices - res.shipped.face.vertices).toBeLessThan(16_000)
-    expect(res.shippedTopology.boundaryEdges).toBe(0)
+    // 状态 C 下标签非 0 的顶点（移植片等）也原样保留，先从“其余”里减去（有些带标签的顶点在面部区域内，被减了两次，所以这个上限比实际略松）
+    // in state C the tagged vertices (grafts and so on) are kept as they are too and are taken off "the rest" first (some lie in the face region and are taken off twice, so the bound is slightly looser than the truth)
+    const op = sp.opened as OpenedSkinReport | undefined
+    const tagged = op ? Object.entries(op.byTag).filter(([k]) => k !== 'skin').reduce((a, [, c]) => a + c.shipped, 0) : 0
+    expect(res.shipped.vertices - res.shipped.face.vertices - tagged).toBeLessThan(16_000)
+    // B：发布的皮肤是闭合的。C：它有且只有两个边界环（两眼内卷的内缘），另报，不算“闭合”；fit、fitShipped 量的是闭合的那张
+    // B: the shipped skin is closed. C: it has exactly two boundary loops (the inner edges of the two lid rims), reported apart from "closed"; fit and fitShipped are measured on the closed skins
+    if (op) {
+      expect(op.shipped.boundaryLoops).toBe(2)
+      expect(res.shippedTopology.boundaryEdges).toBe(op.shipped.boundaryEdges)
+      expect(op.closedCounterpart).toMatchObject({ boundaryEdges: 0, used: true })
+    } else expect(res.shippedTopology.boundaryEdges).toBe(0)
     expect(skin.triangles).toBe(res.shipped.triangles)
     const body = await loadBuiltBody(DIR, (p) => p.id === skin.id || (p.tissue === 'muscle' && FACE_MUSCLE_NAME.test(p.name)))
     const mesh = body.meshes.get(skin.id)!
-    expect(edgeTopology(mesh).boundaryEdges).toBe(0)
+    if (op) expect(boundaryLoops(mesh)).toMatchObject({ loops: 2, edges: op.shipped.boundaryEdges })
+    else expect(edgeTopology(mesh).boundaryEdges).toBe(0)
     const facial = [...body.parts.values()].filter((p) => p.id !== skin.id && body.meshes.has(p.id)).map((p) => body.meshes.get(p.id)!)
     const shipped = skinResolution(mesh, faceRegionOfSkin(mesh, facial))
-    expect(Math.abs(shipped.face.vertices - res.shipped.face.vertices)).toBeLessThan(400)
-    expect(shipped.face.meanEdgeMm).toBeLessThanOrEqual(2)
+    // 状态 C：报告里的面部不算构造物（内卷、口腔袋），而这里按位置重量的面部区域把它们也算了进去，
+    // 所以顶点数最多多出这些构造物的个数，平均边长也因为口腔袋较粗而略大（上限放到 2.3 mm，只在状态 C；与男性的测试相同）
+    // state C: the face of the report leaves out the construction aids (rims, pouch) while the region measured again
+    // here by position includes them, so the count may exceed the report by up to their number and the mean edge is a
+    // little longer because the pouch is coarser (bound 2.3 mm, in state C only; as in the male's test)
+    const aids = op ? ['lidRimL', 'lidRimR', 'oralPouchUpper', 'oralPouchLower', 'oralPouchSeam'].reduce((a, k) => a + (op.byTag[k]?.shipped ?? 0), 0) : 0
+    expect(shipped.face.vertices - res.shipped.face.vertices).toBeGreaterThan(-400)
+    expect(shipped.face.vertices - res.shipped.face.vertices).toBeLessThan(aids + 400)
+    expect(shipped.face.meanEdgeMm).toBeLessThanOrEqual(op ? 2.3 : 2)
     // 乳房：HRA 各部按皮肤包给的变换缩小并移位；腺体在皮肤之内，乳晕贴着皮肤，乳头尖略微露出
     // breasts: the HRA parts scaled and moved by the transform the package gives; gland inside the skin, areola on it, the tip of the nipple just through it
     for (const side of ['L', 'R'] as const) {
@@ -351,11 +461,52 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       expect(b.againstSkin.mammaryLobes.outside).toBe(0)
       expect(b.againstSkin.mammaryLobes.maxMm).toBeLessThan(-2)
       expect(b.againstSkin.allPartsButNippleAndAreola.outside).toBeLessThan(0.005)
-      expect(Math.abs(b.againstSkin.areola.medianMm)).toBeLessThan(1.5)
+      // 乳晕贴着皮肤或略在其下：皮肤作者最后把皮肤抬到乳头上（breast-placement.txt 的 “skin raised onto the nipples”，3.6–4.9 mm），
+      // 乳头尖因此只露出 0.2 mm，乳晕的中位数落在皮肤下约 2 mm。原先的上限是 |中位数| < 1.5 mm，是为抬高之前的皮肤定的。
+      // the areola lies on the skin or just under it: the skin's author finally raised the skin onto the nipples ("skin raised onto
+      // the nipples" in breast-placement.txt, 3.6–4.9 mm), so the tip of the nipple shows by 0.2 mm only and the median of the areola
+      // lies about 2 mm under the skin. The earlier bound, |median| < 1.5 mm, was set for the skin before that raise.
+      expect(b.againstSkin.areola.medianMm).toBeGreaterThan(-3)
+      expect(b.againstSkin.areola.medianMm).toBeLessThan(1.5)
       expect(b.againstSkin.nippleTip.signedDistanceMm).toBeGreaterThan(0)
       expect(b.againstSkin.nippleTip.signedDistanceMm).toBeLessThan(6)
       // 乳头在腺体前方 / the nipple lies in front of the gland
       expect(byName(`${side === 'L' ? 'Left' : 'Right'} nipple`).centroid[2]).toBeGreaterThan(byName(`${side === 'L' ? 'Left' : 'Right'} mammary lobe`).centroid[2])
+    }
+    // 有意不包住的表情肌（皮肤包 manifest 的豁免名单上组织为肌的部件）：本次构建自己量的露出量，都在名单上，最多几毫米；
+    // 不在名单上的部件露出 5 mm 以上，上面 fit.outside5mm / fit.worst 两项就不通过
+    // the muscles deliberately not enclosed (the parts on the manifest's exemption list whose tissue is muscle): this build's own
+    // measurement of how far they come through, all of them on the list and by a few millimetres at most; a part not on the list
+    // lying more than 5 mm outside fails fit.outside5mm / fit.worst above
+    const mm = sp.notEnclosedMusclesMeasured as { parts: number; outside: number; rows: { id: string; name: string; shareOutside: number; maxOutsideMm: number }[] } | undefined
+    if (mm) {
+      expect(mm.outside).toBe(mm.rows.length)
+      expect(mm.parts).toBeGreaterThanOrEqual(mm.outside)
+      for (const r of mm.rows) {
+        expect(sp.notEnclosedPartIds, r.name).toContain(r.id)
+        expect(byId.get(r.id)!.tissue, r.name).toBe('muscle')
+        expect(r.maxOutsideMm, r.name).toBeGreaterThan(0)
+        expect(r.maxOutsideMm, r.name).toBeLessThan(5)
+      }
+      // 名单上有睑部眼轮匝肌以外的表情肌露出时，说明里写明“只在骨上留覆盖” / when muscles other than the palpebral orbicularis oculi come through, the cautions say the skin kept cover over bone only
+      if (mm.rows.some((r) => !/^palpebral part/i.test(r.name))) expect(data.cautions!.map((c) => c.en).join(' ')).toMatch(/only as far as her bones need cover.*lie partly outside the skin, by up to \d+(\.\d+)? mm in this build/)
+    }
+    // 皮肤上的乳房按什么数值塑形：皮肤包记了就写进说明 / what the breasts of the skin were shaped to: stated in the cautions when the package records it
+    if (sp.breastShape) {
+      expect(sp.breastShape.asBuiltByTheSkinAuthor.apexesApartMm).toBeGreaterThan(150)
+      expect(sp.breastShape.asBuiltByTheSkinAuthor.apexesApartMm).toBeLessThan(250)
+      expect(data.cautions!.map((c) => c.en).join(' ')).toContain('shaped to Chinese reference figures')
+      expect(data.cautions!.map((c) => c.zh).join(' ')).toContain('按中国女性的参考数值塑形')
+    }
+    // 体表的各条说明：每条中文不超过 260 个字（与男性的测试相同的上限），中英文都有
+    // the cautions about the body surface: each Chinese text under 260 characters (the bound of the male's test), both languages present
+    if (report.skinCautions) {
+      expect(report.skinCautions.count).toBeGreaterThanOrEqual(4)
+      for (const c of data.cautions!.slice(report.skinCautions.from, report.skinCautions.from + report.skinCautions.count)) {
+        expect(c.zh.length, c.zh.slice(0, 30)).toBeLessThan(260)
+        expect(c.zh).toMatch(/[\u4e00-\u9fff]/)
+        expect(c.en.length, c.en.slice(0, 30)).toBeGreaterThan(40)
+      }
     }
     const en = data.cautions!.map((c) => c.en).join(' ')
     expect(en).not.toMatch(/PLACEHOLDER|raised into a smooth envelope/)
@@ -363,6 +514,191 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
     expect(en).toMatch(/scaled to 0\.\d\d (\(left\) and 0\.\d\d \(right\) of its size|of its size on both sides)/)
     expect(en).not.toMatch(/They sit too low|horizontal steps/)
   }, 60_000)
+
+  // 早于 display.json 的构建（报告的 output 里没有 displayJsonBytes，目录里也没有这个文件）跳过；报告说写了而文件不在则不通过
+  // a build older than display.json (no displayJsonBytes under `output` of its report and no such file) is skipped; a report that says it was written while the file is missing fails
+  it.skipIf(!present || (report?.output?.displayJsonBytes === undefined && !existsSync(join(DIR, DISPLAY_FILE))))('writes display.json with exactly the fields the viewer reads, in every state', () => {
+    const d = JSON.parse(readFileSync(join(DIR, DISPLAY_FILE), 'utf8'))
+    expect(Object.keys(d).sort()).toEqual(['hideWithOpaqueSkin', 'notEnclosedPartIds', 'skin'])
+    expect(Object.keys(d.skin).sort()).toEqual(['opened', 'part', 'pieces'])
+    expect(d.skin.part).toBe(byName('Skin').id)
+    expect(d.skin.opened).toBe(skinOpened)
+    expect(d.skin.opened).toBe(existsSync(join(DIR, SKIN_SOURCE_FILE)))
+    expect(d.skin.pieces).toBe(existsSync(join(DIR, SKIN_PIECES_FILE)))
+    expect(d.hideWithOpaqueSkin).toEqual(report.appendages.hideWithOpaqueSkin ?? [])
+    expect(d.notEnclosedPartIds).toEqual([...(report.skinPackage.notEnclosedPartIds ?? [])].sort())
+    for (const id of [...d.hideWithOpaqueSkin, ...d.notEnclosedPartIds]) expect(byId.has(id), id).toBe(true)
+    expect(report.output.displayJsonBytes).toBe(readFileSync(join(DIR, DISPLAY_FILE)).length)
+    // A：没有装入皮肤包，两份名单都是空的，说明里写的是占位皮肤 / A: nothing installed, both lists are empty and the cautions speak of the placeholder
+    if (!skinInstalled) {
+      expect(d).toMatchObject({ hideWithOpaqueSkin: [], notEnclosedPartIds: [], skin: { opened: false, pieces: false } })
+      expect(data.cautions!.map((c) => c.en).join(' ')).toContain('The body surface is a PLACEHOLDER')
+    }
+  })
+
+  it.skipIf(!present || !skinInstalled || skinOpened)('ships no index sidecar and no composition with a closed skin package (state B)', () => {
+    expect(existsSync(join(DIR, SKIN_SOURCE_FILE))).toBe(false)
+    expect(existsSync(join(DIR, SKIN_PIECES_FILE))).toBe(false)
+    expect((byName('Skin') as Part & { composition?: unknown }).composition).toBeUndefined()
+    expect(report.skinPackage.dir).not.toMatch(/-open$/)
+    const all = data.cautions!.map((c) => c.en).join(' ')
+    expect(all).toContain('the eyes and mouth are not openings')
+    expect(all).not.toContain('real openings')
+  })
+
+  it.skipIf(!present || !skinOpened)('ships the opened skin with an index sidecar that maps every vertex to the package by index (state C)', async () => {
+    const sp = report.skinPackage
+    const op = sp.opened as OpenedSkinReport
+    const skin = byName('Skin')
+    expect(sp.dir).toBe(op.dir)
+    expect(sp.dir).toMatch(/-open$/)
+    expect(sp.openedPackage).toMatchObject({ dir: op.dir, used: true })
+    // 下标对照文件：小端 uint32，每个发布的皮肤顶点一个，按 GLB 解码次序
+    // the sidecar: little-endian uint32, one per shipped skin vertex, in GLB decode order
+    const bytes = readFileSync(join(DIR, SKIN_SOURCE_FILE))
+    const doc = await readGlb(join(DIR, 'integumentary.glb'))
+    const node = doc.getRoot().listNodes().find((n) => n.getName() === skin.id)!
+    const prim = node.getMesh()!.listPrimitives()[0]!
+    const pos = prim.getAttribute('POSITION')!
+    const nv = pos.getCount()
+    expect(bytes.length).toBe(4 * nv)
+    expect(op.sidecar).toMatchObject({ file: SKIN_SOURCE_FILE, vertices: nv })
+    expect(op.sidecar!.maxErrorMm).toBeLessThanOrEqual(0.5 * op.sidecar!.stepMm + 0.002)
+    expect(report.output.skinSourceBytes).toBe(4 * nv)
+    expect(op.shipped.vertices).toBe(nv)
+    expect(prim.getIndices()!.getCount() / 3).toBe(op.shipped.triangles)
+    const source = new Uint32Array(nv)
+    for (let j = 0; j < nv; j++) source[j] = bytes.readUInt32LE(4 * j)
+    // 每个包顶点至多发布一次 / no package vertex is shipped twice
+    expect(new Set(source).size).toBe(nv)
+    for (const v of source) expect(v).toBeLessThan(op.package.vertices)
+    // 发布的顶点按标签的个数与报告一致；被切掉的顶点（removed）一个也不发布，其余标签非 0 的一个不少
+    // shipped vertices by tag as reported; no removed vertex is shipped and every other tagged vertex is
+    for (const [name, c] of Object.entries(op.byTag)) {
+      if (name === 'removed') expect(c.shipped, name).toBe(0)
+      else if (name !== 'skin') expect(c.shipped, name).toBe(c.inPackage)
+    }
+    expect(op.lockedVerticesMissing).toBe(0)
+    expect(Object.values(op.byTag).reduce((a, c) => a + c.shipped, 0)).toBe(nv)
+    for (const k of ['upperLip', 'lowerLip', 'mouthCorner', 'upperLidL', 'lowerLidL', 'upperLidR', 'lowerLidR', 'canthus', 'lidRimL', 'lidRimR', 'oralPouchUpper', 'oralPouchLower', 'oralPouchSeam']) expect(op.byTag[k]?.shipped ?? 0, k).toBeGreaterThan(0)
+    // 两个边界环，与“闭合”分开报告 / two boundary loops, reported apart from "closed"
+    expect(op.shipped.boundaryLoops).toBe(2)
+    expect(op.package.boundaryLoops).toBe(2)
+    expect(sp.fit.closed).toBe(true)
+    expect(sp.fitShipped.closed).toBe(true)
+    // 位置取 16 位：唇缘的顶点对发布为两个顶点，量化后仍然重合；口区没有不同的位置被量化到一起
+    // 16-bit positions: the lip margin pairs ship as two vertices each and still coincide after quantisation; no distinct positions of the mouth sheets quantise together
+    const q = op.quantisation!.chosen
+    expect(q.bits).toBe(OPENED_SKIN_POSITION_BITS)
+    expect(q.stepMm).toBeLessThan(0.03)
+    expect(q.marginPairs).toBeGreaterThan(30)
+    expect(q.marginPairsShippedApart).toBe(q.marginPairs)
+    expect(q.marginPairsCoincidentAfter).toBe(q.marginPairs)
+    expect(q.walls.mergedPositions).toBe(0)
+    expect(q.walls.flipped).toBeLessThanOrEqual(op.quantisation!.at14Bits.walls.flipped)
+    expect(q.walls.flippedGapInPackageMmMax).toBeLessThan(q.stepMm)
+    expect(pos.getArray()!.constructor.name).toBe('Int16Array')
+    // 包还在磁盘上时，逐顶点核对：GLB 里每个皮肤顶点与它所指的包顶点位置相同（半个量化步长之内）；
+    // 唇缘的每一对在 GLB 里是两个不同的顶点、指向两个不同的包顶点
+    // with the package still on disk, vertex by vertex: every skin vertex of the GLB sits where the package vertex it
+    // names does (within half a quantisation step); each lip margin pair is two vertices of the GLB naming two package vertices
+    const dir = join(import.meta.dirname, '..', op.dir)
+    const pkg = existsSync(join(dir, 'manifest.json')) ? loadSkinPackage(dir) : null
+    if (pkg?.opened && pkg.mesh.positions.length / 3 === op.package.vertices) {
+      const m = node.getWorldMatrix()
+      const el = [0, 0, 0]
+      const shipped = new Float32Array(3 * nv)
+      let max = 0
+      for (let j = 0; j < nv; j++) {
+        pos.getElement(j, el)
+        for (let k = 0; k < 3; k++) {
+          shipped[3 * j + k] = el[k]! * m[5 * k]! + m[12 + k]!
+          max = Math.max(max, Math.abs(shipped[3 * j + k]! - pkg.mesh.positions[3 * source[j]! + k]!))
+        }
+      }
+      expect(max).toBeLessThanOrEqual(0.5 * positionStep(shipped, OPENED_SKIN_POSITION_BITS) + 2e-6)
+      const shippedOf = new Map<number, number>()
+      source.forEach((v, j) => shippedOf.set(v, j))
+      const margins = (pkg.manifest.face as { margins: { upperLip: number[]; lowerLip: number[] } }).margins
+      for (let i = 1; i + 1 < margins.upperLip.length; i++) {
+        const a = shippedOf.get(margins.upperLip[i]!), b = shippedOf.get(margins.lowerLip[i]!)
+        expect(a, `upper margin ${i}`).toBeDefined()
+        expect(b, `lower margin ${i}`).toBeDefined()
+        expect(a).not.toBe(b)
+        expect(source[a!]).not.toBe(source[b!])
+        expect(pos.getElement(a!, [0, 0, 0])).toEqual(pos.getElement(b!, [0, 0, 0]))
+      }
+      for (let j = 0; j < nv; j++) if (pkg.opened.tags[source[j]!] === pkg.opened.tagNames.removed) throw new Error(`shipped vertex ${j} is a removed vertex`)
+    }
+    // 皮肤部件的记录如实说明它由什么构成；数据源带许可 / the skin part's record says what it is made of; the sources carry their licences
+    const comp = (skin as Part & { composition?: { what: { zh: string; en: string }; provenance: string; source: string | null; vertices: number }[] }).composition!
+    expect(comp.length).toBeGreaterThanOrEqual(3)
+    expect(comp.reduce((a, c) => a + c.vertices, 0)).toBe(nv)
+    expect(comp[0]).toMatchObject({ provenance: 'curated', source: skin.source })
+    expect(comp.filter((c) => c.provenance === 'construction').length).toBeGreaterThanOrEqual(2)
+    for (const c of comp) {
+      expect(['scanned', 'curated', 'construction']).toContain(c.provenance)
+      if (c.provenance === 'construction') expect(c.source).toBeNull()
+      else expect(data.sources.find((x) => x.name === c.source)!.license.length, c.source!).toBeGreaterThan(2)
+      expect(c.what.zh).toMatch(/[\u4e00-\u9fff]/)
+    }
+    for (const g of op.grafts) {
+      expect(['scanned', 'curated']).toContain(g.provenance)
+      expect(comp.some((c) => c.provenance === g.provenance && c.vertices === g.shipped.patch), g.name).toBe(true)
+      expect(g.shipped.patch).toBe(g.inPackage.patch)
+    }
+    // skin-pieces.u8：每个发布顶点一个字节，各片的个数与 composition 一致 / skin-pieces.u8: one byte per shipped vertex, and its histogram is the composition
+    const pieces = readFileSync(join(DIR, SKIN_PIECES_FILE))
+    expect(pieces.length).toBe(nv)
+    expect(report.output.skinPiecesBytes).toBe(nv)
+    const hist = new Array<number>(comp.length).fill(0)
+    for (const b of pieces) {
+      expect(b).toBeLessThan(comp.length)
+      hist[b]!++
+    }
+    expect(hist).toEqual(comp.map((c) => c.vertices))
+    // 皮肤包的数据源只列一次，带着修改声明（Apache-2.0 第 4(b) 条） / the package's source is listed once and carries the statement of changes (section 4(b) of the Apache License 2.0)
+    const src = data.sources.filter((x) => x.name === skin.source)
+    expect(src.length).toBe(1)
+    expect(src[0]!.license).toBe('Apache-2.0')
+    expect(src[0]!.attribution).toMatch(/oral fissure cut/)
+    // 说明：眼和口是开口，内卷和口腔袋是构造物；不再说“不是开口”，也不再有占位皮肤的话
+    // cautions: eye and mouth are openings, rims and pouch are construction; "not openings" and the placeholder statements are gone
+    const all = data.cautions!.map((c) => c.en).join(' ')
+    expect(all).toContain('The eyes and the mouth of the skin are real openings')
+    expect(all).toContain('construction aids')
+    expect(all).not.toContain('are not openings')
+    expect(all).not.toMatch(/PLACEHOLDER|placeholder|raised into a smooth envelope/)
+    expect(data.cautions!.map((c) => c.zh).join(' ')).not.toMatch(/占位/)
+    if (op.grafts.some((g) => /^toes/i.test(g.name))) {
+      expect(all).not.toMatch(/toes (of the skin )?are one block/)
+      expect(all).toContain('they are not hers')
+      expect(all).not.toMatch(/\bhis (toe bones|phalanges)\b/)
+      // 足趾移植片是带着毛病发布的：说明里写明哪几个趾、什么样，并给出本次构建量的对折小面数；第 3–5 趾被拉长的倍数也在
+      // the toe grafts ship with their faults: the cautions say which toes and what it looks like, with this build's count of folded facets; the stretch of toes three to five is stated too
+      expect(all).toContain('The grafted toes have visible faults: at the tips of the second and third toes')
+      expect(all).toMatch(/third to fifth toes are stretched \d\.\d\d–\d\.\d\d times/)
+      const tg = sp.toeGraftSurface.grafts as Record<string, { triangles: number; over90: number; folded: number }>
+      expect(Object.keys(tg).sort()).toEqual(['toesL', 'toesR'])
+      for (const g of Object.values(tg)) {
+        expect(g.triangles).toBeGreaterThan(5000)
+        expect(g.over90).toBeGreaterThanOrEqual(g.folded)
+      }
+      expect(all).toContain(`${tg.toesL!.folded} edges of the left graft and ${tg.toesR!.folded} of the right are folded right over`)
+    } else {
+      // 没有足趾移植片：说明里写足趾连成一块，并说明分开的足趾为什么没有采用
+      // no toe graft: the cautions say the toes are one block and why the separate toes are not used
+      expect(all).toMatch(/toes (of the skin )?are one block/)
+      expect(all).toContain('so that graft is not used')
+      expect(comp.every((c) => !/toes/i.test(c.what.en))).toBe(true)
+    }
+    // 深层的“唇”部件列在皮肤不透明时要隐藏的名单里，本身没有被改动 / the deep Lip part is on the list to hide while the skin is opaque, and is itself untouched
+    const lip = data.parts.find((p) => /^lip$/i.test(p.name) && p.system !== 'integumentary')
+    expect(lip).toBeDefined()
+    expect(report.appendages.hideWithOpaqueSkin).toContain(lip!.id)
+    expect(report.appendages.deepLip.ids).toEqual([lip!.id])
+    expect(lip!.provenance).toBe('warped')
+  }, 120_000)
 
   it('keeps the deformation in bounds and reports where it is not', () => {
     const j = report.jacobian
@@ -397,7 +733,8 @@ describe.skipIf(!present)('female body (public/anatomy/female)', () => {
       if (!meshes.has(p.name)) meshes.set(p.name, body.meshes.get(p.id))
       if (body.nerves.has(p.id) && !nerves.has(p.name)) nerves.set(p.name, body.nerves.get(p.id))
     }
-    const results = runLandmarkChecks({ mesh: (n) => meshes.get(n) ?? null, nerve: (n) => nerves.get(n) ?? null })
+    // 上肢外展过时，桡神经沟一项沿肱骨自身的轴取样（与构建时相同） / with the arms abducted the radial-groove check samples along the humerus' own axis (as the build does)
+    const results = runLandmarkChecks({ mesh: (n) => meshes.get(n) ?? null, nerve: (n) => nerves.get(n) ?? null }, { shaftAligned: !!report.armAbduction?.applied })
     expect(results.length).toBe(18)
     // 已知的弱点：左侧第 5–9 肋的 CT 标签不可靠，肋间神经检查可能不过
     // known weakness: the CT labels of left ribs 5–9 are unreliable and the intercostal check may fail

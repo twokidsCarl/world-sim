@@ -416,6 +416,20 @@ export class AnatomyGraph {
     return best?.id ?? null
   }
 
+  private throughIds: ReadonlySet<string> | null = null
+
+  /**
+   * 透过皮肤的开口（睑裂、口裂）能看到的深部部件：牙、牙龈、舌，以及眼球前部（角膜、巩膜、虹膜、晶状体、前房）。
+   * 皮肤带真实开口并画成不透明时，这些部件不管所在系统开没开都要画出来，否则开口里是空的。
+   * Deep parts seen through the skin's openings (eye and mouth): teeth, gingiva, tongue, and the front of the
+   * eyeball (cornea, sclera, iris, lens, anterior chamber). When a skin with real openings is drawn opaque,
+   * these are drawn whatever their systems' switches say; otherwise the openings would be empty.
+   */
+  throughOpeningParts(): ReadonlySet<string> {
+    this.throughIds ??= new Set(this.parts.filter((p) => p.tissue === 'tooth' || /^gingiva|^tongue$|cornea|sclera|\biris\b|\blens\b|anterior chamber/i.test(p.name)).map((p) => p.id))
+    return this.throughIds
+  }
+
   private unfittedIds: ReadonlySet<string> | null = null
 
   /**

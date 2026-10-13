@@ -1,0 +1,82 @@
+（追加到 REPORT.md 的文字 / text to append to REPORT.md）
+
+## 第十三部分：女性拟合（键 4ff2d7f05743cf10）——已写出，但我不建议安装
+
+female-skin/ 已写出（fittedTo.key = 4ff2d7f05743cf10，封闭；此前的一版在 female-skin-prev2/）。skinopen 能跑通。但脸不行，见下。
+
+### 0. 还不对的地方（先说）
+1. 脸：不是被接受的那个目标的样子。包住之后，鼻两侧各有一道裂缝状的深沟，颊和口角下垂，下颌下有一圈棱，眶外侧有折痕；读起来是一张苍老、偏男性的脸，不是年轻女性。原因和上次一样：干净的目标是“不做任何外推”的；装到真实的内部结构上以后，面肌仍要把皮肤顶出去。包住之前在外面的：口轮匝肌（最后仍有 2.78 % 的点在皮肤外，最远 2.2 mm，你问的 −2.1 mm 就在这里——位置我没有定位到具体哪一段）、左提上唇肌 1.0 mm、左颧小肌 0.7 mm、左提上唇鼻翼肌 0.6 mm、眼轮匝肌外环 1.0 / 0.6 mm。口轮匝肌上的覆盖：最小 −2.2 / p5 0.4 / 中位数 4.6 mm——没有达到你要的 ≥ 2.5 mm。
+2. 臀沟和会阴：背面图里臀沟处是一片锯齿状的乱面；自下方看会阴是不规则的。抬高裆部的那一步把皮肤最多移了 31 mm；目标点到皮肤的距离由中位数 9.9 / p95 38.5 / 最大 44.7 mm 变为 3.9 / 11.3 / 20.2 mm——没有到“几毫米以内”。
+3. 腋下：上臂皮肤在躯干皮肤之内（肱骨 25–40 / 40–50 / 50–60 / 60–85 %）：左 11.0 / 1.5 / 0 / 0，右 1.3 / 0 / 0 / 0 cm2。腋前襞处有台阶状的缺口（正面图里看得见）。
+4. BMI 23.74（目标 21.6）：目标体型 21.60，骨上放松后 22.16，只包住肌肉 23.21，补脂肪后 23.76。
+5. 乳房摆放：breast-placement.json 这次是针对“现在已经摆好的”HRA 部件的增量变换，不是针对原始部件的（文件里的 appliesTo 写明了）。我先试了撤掉上一版摆放再算，结果不自洽（量出 HRA 乳房突出 130 mm），说明管线里部件的位置不是我以为的那个公式的结果。增量：左 A = [0.0992, 1.1134, 0.1404]，T = [-0.0078, -0.0243, 0.0057]；右 A = [-0.0902, 1.1152, 0.1367]，T = [0.0143, -0.0238, 0.0143]；两侧缩放 0.493。T 向下 24 mm——而皮肤的乳房顶点在 y 1.092 / 1.089（切迹到顶点 190.6 / 191.6 mm，离正中 99.8 / 99.7 mm，体积 334 / 334 mL，突出 41.5 / 41.3 mm），所以这个向下的平移我没有把握，请不要未经核对就应用。“把皮肤局部抬到乳头、乳晕部件上”没有做：仍是给乳头、乳晕部件一个附加平移。
+6. 手：左手皮肤贴皮肤 5.8 cm2；指尖 0.5–1.7 mm，右拇指掌指关节 10.6 mm。足：踝 2.6 / 1.7 mm，跖趾 2.1 / 7.9 mm。膝 27.7 / 27.9 mm（有意）。
+7. 脐是构造的（L4 椎体中心高度，y = 0.887 m；深 5.3 mm、宽 17 mm 借自男性扫描）。Shin 等的文献我没有打开。
+8. 浅层结构仍有 0.40 % 的点在皮肤外，最远 9.8 mm。
+9. 顶骨上的覆盖：目标阶段头部的骨上最少 0.7 mm（要求 2.5 mm，抬到了 12.6 mm 的上限附近）；最终颅盖上 3.3 / 4.5 / 6.4 mm（最小 / p5 / 中位数）。外眦到颞部的竖痕还在。
+10. 我没有看的渲染：两侧腋下特写、脐、足的特写、右手、胸部皮肤、面部肌肉叠加图，以及 skinopen 的多数渲染。
+
+### 1. 做了什么
+- 姿势分三段解（上肢；上肢加手指；下肢和足），从上一版女性的姿势出发；第一次全部放开只解 8 步，没有收敛（指尖差 25–57 mm），已改。
+- 头按面部目标第三轮的做法；乳房按中国数值（切迹到乳头 19.05 cm、间距 20.0 cm、332.5 mL，取自知识库审计，本处未再打开原文）。
+- 裆部抬到 vulva-rim-target.json 的环上（只用不在截面上的点，加三个孔口中心）；构造的脐；腋下用“各让一半间隙”的整形。manifest.constructedDetails 记了脐和会阴。
+- 形状场、rig-shape.json、shape-model.json 已重新生成。
+
+### 2. 表
+围度（mm，括号内为标准）：髂嵴腰 753（799），脐腰 738（761），臀 971（928），大腿根 536（555），大腿中段 502（456），小腿 357（338），上臂 285（267），前臂 260（245），腕 166（149），胸 977（868）。身高 1616 mm。
+面部覆盖（最小 / p5 / 中位数）：颅盖 3.3 / 4.5 / 6.4；颧大肌 3.5 / 4.3 / 8.8；咬肌 4.1 / 7.1 / 11.2；口轮匝肌 −2.2 / 0.4 / 4.6；唇 0.1 / 0.4 / 3.0；角膜 0.2 / 0.9 / 3.8。
+
+### 3. skinopen
+bash tools/skinopen/run.sh female vulva,toes：退出状态 0。open-report.json 的 checks 全为 true，boundaryLoops [66, 66]；graft-report.json 的 checks 全为 true。外阴那一步是否如预期拒绝、理由是什么，我没有从报告里读出来（只看到 vulva、toes 两个条目存在）。
+脚趾（toesL.png）：五个脚趾分开、与跖骨和趾骨对得上；但趾尖有小的碎片和破口（第 2、3 趾尖），与足背接缝处有一道台阶。我的判断：轮廓可用，趾尖的碎片需要修，还不到可以交付的程度。右脚的图我没有看。
+
+### 4. 我看图看到的
+- preview-skin.png：身体读作女性——肩窄、腰收、臀宽、乳房位置和大小合理且对称，脐在腹部正中。腋前襞处各有一个缺口；前臂后面有一道横痕；背面臀沟处是一片锯齿。头：见第 0 节第 1 条。
+- closeup-head-front / threequarter / profile.png：鼻旁的裂缝状沟、下垂的颊和口角、下颌下的棱；侧面颏和颈的轮廓可以。不是一张可信的年轻女性的脸。
+- closeup-perineum-below-skin.png：会阴中线上有不规则的隆起和凹陷，不是平滑的面。
+- closeup-hand-L.png：手指伸直、分开，形状正常。
+- closeup-chest-gland.png：按增量变换摆放后的腺体在皮肤的乳房里，左右对称，乳头在皮肤面上。
+
+### 5. 建议
+脸的问题不在皮肤这一步能解决的范围内：要么管线把口周、鼻旁的肌肉再收进目标包络（清单在 female-face-target/conflict-list.json 的做法可以对新的内部结构重跑），要么接受头部用“目标皮肤 + 只对骨的覆盖”，让少量面肌留在皮肤外，由表情层处理。这需要你定。
+
+
+## Part 13: the female fit (key 4ff2d7f05743cf10) - written, but I do not recommend installing it
+
+female-skin/ is written (fittedTo.key = 4ff2d7f05743cf10, closed; the previous version is in female-skin-prev2/). skinopen runs on it. But the face is not acceptable, see below.
+
+### 0. What is still wrong (first)
+1. The face is not the accepted target. After the enclosure there is a crack-like deep furrow on each side of the nose, cheeks and mouth corners sag, a ridge runs under the jaw and there are creases beside the orbits; it reads as an old, rather male face, not a young woman. Same cause as before: the clean target has no push at all; on the real internals the facial muscles still push the skin out. Outside before or after: orbicularis oris (2.78 % of its points still outside the skin, up to 2.2 mm - that is where your -2.1 mm is; I did not locate which stretch of the muscle), left levator labii superioris 1.0 mm, left zygomaticus minor 0.7 mm, left levator labii superioris alaeque nasi 0.6 mm, outer ring of orbicularis oculi 1.0 / 0.6 mm. Cover over orbicularis oris: min -2.2 / p5 0.4 / median 4.6 mm - the 2.5 mm you asked for is not met.
+2. Gluteal cleft and perineum: in the back view the cleft is a patch of jagged faces; from below the perineum is irregular. Raising the crotch moved the skin by up to 31 mm; target-to-skin distance went from median 9.9 / p95 38.5 / max 44.7 mm to 3.9 / 11.3 / 20.2 mm - not "within millimetres".
+3. Axillae: arm skin inside trunk skin (25-40 / 40-50 / 50-60 / 60-85 % of the humerus): left 11.0 / 1.5 / 0 / 0, right 1.3 / 0 / 0 / 0 cm2. Step-like notches at the anterior folds (visible in the front view).
+4. BMI 23.74 (target 21.6): target shape 21.60, after the relaxation over bone 22.16, muscle merely enclosed 23.21, with fat added 23.76.
+5. Breast placement: breast-placement.json is this time an incremental transform for the HRA parts as placed now, not for the original parts (stated under appliesTo in the file). I first tried undoing the previous placement and the result was inconsistent (an HRA breast projecting 130 mm), so the parts in the pipeline are not where I assumed that formula puts them. Increment: left A = [0.0992, 1.1134, 0.1404], T = [-0.0078, -0.0243, 0.0057]; right A = [-0.0902, 1.1152, 0.1367], T = [0.0143, -0.0238, 0.0143]; scale 0.493 on both sides. T is 24 mm downwards - while the apex of the skin breast is at y 1.092 / 1.089 (notch to apex 190.6 / 191.6 mm, 99.8 / 99.7 mm from the midline, volume 334 / 334 mL, projection 41.5 / 41.3 mm), so I am not sure of that downward shift; please do not apply it unchecked. "Raise the skin locally to meet the nipple and areola parts" was not done: the nipple and areola parts still get an extra translation.
+6. Hands: 5.8 cm2 of skin against skin on the left; fingertips 0.5-1.7 mm, right thumb metacarpophalangeal joint 10.6 mm. Feet: ankle 2.6 / 1.7 mm, metatarsophalangeal 2.1 / 7.9 mm. Knee 27.7 / 27.9 mm (on purpose).
+7. The navel is constructed (height of the centre of the L4 body, y = 0.887 m; depth 5.3 mm and width 17 mm borrowed from the male scan). I did not open Shin et al.
+8. Superficial structures still have 0.40 % of their points outside the skin, up to 9.8 mm.
+9. Cover over the parietal bones: at the target stage the least cover over head bone is 0.7 mm (2.5 mm asked; the raise reached 12.6 mm, near its cap); in the final skin the vault has 3.3 / 4.5 / 6.4 mm (min / p5 / median). The vertical mark from outer canthus to temple is still there.
+10. Renders I did not look at: both axilla close-ups, navel, feet close-ups, right hand, chest skin, the face overlay with muscles, and most of the skinopen renders.
+
+### 1. What was done
+- The pose is solved in three stages (upper limbs; upper limbs with fingers; lower limbs and feet) from the previous female pose; the first attempt with everything free and 8 steps did not converge (fingertips 25-57 mm off) and was replaced.
+- Head as in iteration 3 of the face target; breasts by the Chinese figures (notch to nipple 19.05 cm, internipple 20.0 cm, 332.5 mL, from the knowledge audit, papers not opened again here).
+- Crotch raised to the loop in vulva-rim-target.json (points off the cut plane plus the three orifice centres); a constructed navel; the "each gives half the gap" axilla step. manifest.constructedDetails records navel and perineum.
+- Shape fields, rig-shape.json and shape-model.json are regenerated.
+
+### 2. Tables
+Girths (mm, standard in brackets): waist at the iliac crest 753 (799), at the navel 738 (761), buttock 971 (928), proximal thigh 536 (555), mid thigh 502 (456), calf 357 (338), upper arm 285 (267), forearm 260 (245), wrist 166 (149), chest 977 (868). Stature 1616 mm.
+Cover on the face (min / p5 / median): vault 3.3 / 4.5 / 6.4; zygomaticus major 3.5 / 4.3 / 8.8; masseter 4.1 / 7.1 / 11.2; orbicularis oris -2.2 / 0.4 / 4.6; lips 0.1 / 0.4 / 3.0; cornea 0.2 / 0.9 / 3.8.
+
+### 3. skinopen
+bash tools/skinopen/run.sh female vulva,toes: exit status 0. Every check in open-report.json is true, boundaryLoops [66, 66]; every check in graft-report.json is true. Whether the vulva step refused as expected, and why, I did not read out of the report (I only saw that entries for vulva and toes exist).
+Toes (toesL.png): five separate toes that line up with metatarsals and phalanges; but there are small fragments and tears at the tips (second and third toes) and a step along the seam with the dorsum. My judgement: the outline is usable, the tips need repair, not shippable yet. I did not look at the right foot.
+
+### 4. What I saw in the renders
+- preview-skin.png: the body reads female - narrow shoulders, a waist, wide hips, breasts of plausible place and size and symmetric, the navel on the midline. A notch at each anterior axillary fold; a transverse mark on the back of the forearm; jagged faces at the gluteal cleft in the back view. The head: item 1 of section 0.
+- closeup-head-front / threequarter / profile.png: crack-like furrows beside the nose, sagging cheeks and mouth corners, a ridge under the jaw; chin and neck are fine in profile. Not a believable young woman's face.
+- closeup-perineum-below-skin.png: irregular bumps and hollows along the midline of the perineum, not a smooth surface.
+- closeup-hand-L.png: straight, separate fingers of normal shape.
+- closeup-chest-gland.png: with the incremental transform the gland lies inside the breast of the skin, symmetric, nipples on the surface.
+
+### 5. Suggestion
+The face cannot be solved at the skin step: either the pipeline brings the perioral and paranasal muscles further into the target envelope (the conflict list of female-face-target/ can be run again on the new internals), or the head keeps "target skin + cover over bone only" and a little facial muscle stays outside the skin, to be handled by the expression layer. That is yours to decide.

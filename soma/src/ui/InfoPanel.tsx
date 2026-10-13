@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { isFmaId, type AnatomyGraph, type DisplayName, type TreeKind } from '../anatomy/graph.ts'
-import { PROVENANCE_LABEL, RELATION_LABEL, SIDE_LABEL, TISSUE_LABEL, provenanceColor } from '../anatomy/labels.ts'
+import { CONSTRUCTION_COLOR, CONSTRUCTION_LABEL, PROVENANCE_LABEL, RELATION_LABEL, SIDE_LABEL, TISSUE_LABEL, provenanceColor } from '../anatomy/labels.ts'
 import type { Concept, Part, Relation } from '../anatomy/types.ts'
 import { useApp } from '../state/store.ts'
 import { Icon } from './Icon.tsx'
@@ -358,6 +358,37 @@ function PartInfo({ graph, part }: { graph: AnatomyGraph; part: Part }) {
           </span>
           {prov && <span className="hint">{prov.hint}</span>}
         </dd>
+        {part.composition && part.composition.length > 0 && (
+          <>
+            <dt>
+              组成 <span className="en">Composition</span>
+            </dt>
+            <dd className="composition">
+              <p className="hint">
+                这个部件由来历不同的几片拼成；上面的"几何来源"只是其中最大的一片。 <span className="en">This part is assembled from pieces of different origin; the provenance above is that of the largest one.</span>
+              </p>
+              <ul>
+                {part.composition.map((piece, k) => {
+                  const built = piece.provenance === 'construction'
+                  const label = built ? CONSTRUCTION_LABEL : PROVENANCE_LABEL[piece.provenance as keyof typeof PROVENANCE_LABEL]
+                  return (
+                    <li key={k} className={built ? 'piece-construction' : ''}>
+                      <span className="swatch" style={{ background: built ? CONSTRUCTION_COLOR : provenanceColor(piece.provenance as keyof typeof PROVENANCE_LABEL, 0) }} />
+                      <span className={`badge badge-${piece.provenance}`}>
+                        {label?.zh ?? piece.provenance} {label?.en}
+                      </span>
+                      <span className="count">{piece.vertices.toLocaleString()} 顶点 vertices</span>
+                      <p>
+                        {piece.what.zh} <span className="en">{piece.what.en}</span>
+                      </p>
+                      <p className="hint">{piece.source ?? (built ? '没有来源：这一片是构造出来的，不是解剖数据 / no source: this piece is constructed, not anatomical data' : '')}</p>
+                    </li>
+                  )
+                })}
+              </ul>
+            </dd>
+          </>
+        )}
         <dt>体积</dt>
         <dd>{part.volume !== undefined ? `${formatVolume(part.volume)} cm³` : '—'}</dd>
         <dt>三角形</dt>

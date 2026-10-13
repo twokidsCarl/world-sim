@@ -15,6 +15,7 @@ import type { SourceInfo, SystemId, TissueId } from '../../src/anatomy/types.ts'
 import { measure, type Mesh } from './geometry.ts'
 import { HARD_TISSUES } from './import3.ts'
 import { components, cutByPlane, repairClosed, signedVolume, topology } from './meshRepair.ts'
+import { endVertices, ligamentAxis, obstacleOf, relayAlongPath, tautPath } from './pelvicLigaments.ts'
 import { applyRigid, buildDeformation, icp, InsideTester, PointIndex, surfacePoints, thinPoints, type Rigid } from './register.ts'
 import { axisParam } from './standard.ts'
 
@@ -107,7 +108,7 @@ export const WU_NOT_SHIPPED: Record<string, string> = {
   bladder_wall: 'her scanned bladder is kept for size and dome position; the Wu bladder (lumen 275 ml in the anchor frame) gives the neck position only',
   bladder_and_urethral_lumen: 'bladder part belongs to the Wu bladder, which is not shipped; the urethral part is not separable without an arbitrary cut',
   ureter: 'pelvic fragments only; the warped ureters are kept whole and joined to her bladder',
-  peritoneum: 'an open sheet of another individual that would not meet the warped abdominal organs',
+  peritoneum: 'an open sheet of another individual that would not meet the warped abdominal organs; examined as a source for the broad ligament and mesosalpinx and found to have no free fold there (see pelvis.pelvicLigaments.peritoneum in the report)',
   fat_tissue: 'unnamed aggregate',
   arteries: 'one unnamed aggregate of all arteries of the slab',
   veins: 'one unnamed aggregate of all veins of the slab (403 fragments)',
@@ -165,7 +166,20 @@ export function buildWuParts(meshOf: (item: string) => Mesh | null, xMid: number
   for (const spec of WU_SPECS) {
     const src = meshOf(spec.item)
     if (!src) continue
-    const rep = repairClosed(src)
+    let rep = repairClosed(src)
+    // 一遍修不干净的（直肠系膜：相切处拆开后又露出新的非流形边）再修，最多三遍；报告里的计数累加
+    // what one pass leaves unclean (the mesorectum: separating touching sheets exposes further non-manifold edges) is repaired again, three passes at most; the counts in the report add up
+    for (let pass = 1; pass < 3 && !rep.report.after.watertight; pass++) {
+      const again = repairClosed(rep.mesh)
+      again.report.trianglesIn = rep.report.trianglesIn
+      again.report.nonManifoldEdgesBefore = rep.report.nonManifoldEdgesBefore
+      again.report.fragmentsRemoved += rep.report.fragmentsRemoved
+      again.report.fragmentTriangles += rep.report.fragmentTriangles
+      again.report.verticesSplit += rep.report.verticesSplit
+      again.report.trianglesPatched += rep.report.trianglesPatched
+      again.report.flipped = again.report.flipped !== rep.report.flipped
+      rep = again
+    }
     const pieces: { side: 'L' | 'R' | 'M'; mesh: Mesh }[] = []
     let note: string | undefined
     if (spec.split === 'whole') pieces.push({ side: 'M', mesh: rep.mesh })
@@ -338,6 +352,8 @@ export interface PelvisPart {
   provenance: string
   side: 'L' | 'R' | 'M'
   source?: string
+  /** 部件的说明（这里写入重配韧带的做法） / a note on the part (the method of a re-fitted ligament is written here) */
+  note?: string
   mesh: Mesh
   centrelines?: { points: Float32Array; radius: Float32Array }[]
 }
@@ -684,6 +700,12 @@ export function refineWhere(mesh: Mesh, where: (x: number, y: number, z: number)
 }
 
 const BOWEL_HANGERS = /colic|sigmoid|rectal|mesenteric|colon/i
+/** 按两端重配的 HRA 韧带 / HRA ligaments re-fitted by their two ends */
+export const TWO_END_LIGAMENT = /^HRA_((left|right)_(uterosacral_ligament|cardinal_ligament_of_uterus)|ovarian_ligament_[LR])$/
+/** 腹膜皱襞：没有“两端”，只能整片判断 / peritoneal folds: they have no two ends and are judged as sheets */
+export const PERITONEAL_SHEET = /^HRA_(broad_ligament|mesosalpinx_[LR])$/
+/** 重配后的韧带短于原长的这个比例就不输出 / a re-fitted ligament shorter than this share of its modelled length is not shipped */
+export const LIGAMENT_MIN_LENGTH_RATIO = 0.5
 const UTERUS_PARTS = /^HRA_(anterior_wall_of_uterus|posterior_wall_of_uterus|body_of_uterus|fundus_of_uterus|cervix|cornua|lower_uterine_segment)$/
 
 /**
@@ -861,6 +883,28 @@ export function reconcilePelvis(input: PelvisInput): { report: Record<string, un
     const near = bones.filter((b) => overlaps(bboxOf(p.mesh), bboxOf(b.mesh)))
     if (near.length && near.some((b) => insideFraction(p.mesh, b.mesh, 0.003) > 0)) slideOut(p, near, { clearance: 0.0003, maxPush: 0.008 }, byId)
   }
+  // 骨那一遍之后阴道与直肠之间再留一次 1 mm；两者本来就隔着直肠阴道隔相贴，这里只报告贴得多近
+  // 1 mm between vagina and rectum once more after the pass against bone; the two are apposed through the rectovaginal septum by nature, and how closely is only reported here
+  slideOut(rectum, [vagina], { clearance: 0.001, maxPush: 0.008, margin: 0.001 }, byId)
+  {
+    const ix = new PointIndex(surfaceSamples(vagina.mesh, 0.0007), 0.004)
+    const pts = surfaceSamples(rectum.mesh, 0.001)
+    let dMin = Infinity
+    const within = [0, 0, 0]
+    for (let i = 0; i < pts.length; i += 3) {
+      const d = ix.distance(pts[i]!, pts[i + 1]!, pts[i + 2]!, 0.003)
+      dMin = Math.min(dMin, d)
+      if (d < 0.0005) within[0] = within[0]! + 1
+      if (d < 0.001) within[1] = within[1]! + 1
+      if (d < 0.002) within[2] = within[2]! + 1
+    }
+    const septum = W('denonvillier_fascia')
+    report.rectovaginal = {
+      what: 'the posterior vaginal wall and the anterior rectal wall are apposed through the rectovaginal septum; the rectal wall was slid to 1 mm from the vaginal wall where it came closer, and what remains closer is reported, not removed',
+      minGapMm: mmOf(dMin, 2), rectalWallAreaMm2: { within0_5mm: within[0], within1mm: within[1], within2mm: within[2] }, note: 'areas from surface samples of about 1 mm² each',
+      septumPresent: !!septum, septumVolumeMl: septum ? volMl(septum.mesh) : null,
+    }
+  }
   const wuAfter = pairTable(wu.filter((p) => p.tissue !== 'space'))
   {
     const vol: Record<string, { beforeMl: number; afterMl: number }> = {}
@@ -921,10 +965,64 @@ export function reconcilePelvis(input: PelvisInput): { report: Record<string, un
     log(`Bladder: neck ${mmOf(near0.distance)} mm from the top of the Wu urethra → ${(report.bladder as { neckToUrethraAfterMm: number }).neckToUrethraAfterMm} mm; volume ${before.volumeMl} → ${volMl(bladder.mesh)} ml`)
   }
 
+  // ── 3b. 子宫与膀胱之间的空隙：只测量、不改动。把子宫体绕峡部的横轴向前下转（空膀胱时子宫本应前倾
+  // 伏在膀胱上）是否能合上这道空隙？下面按 15°、30°、45° 试转并量出结果。
+  // ── 3b. The gap between uterus and bladder: measured, nothing moved. Would turning the uterine body
+  // forwards and down about a transverse axis through the isthmus (with an empty bladder the uterus
+  // should lie anteverted on it) close the gap? Trial rotations by 15°, 30° and 45° are measured below.
+  if (bladder) {
+    const pairOf = (a: Mesh, b: Mesh) => {
+      const ix = new PointIndex(surfaceSamples(b, 0.001), 0.004)
+      const pa = surfaceSamples(a, 0.001)
+      const I = new Int32Array(1)
+      const D = new Float64Array(1)
+      let best = { pa: [0, 0, 0] as Vec3, pb: [0, 0, 0] as Vec3, d: Infinity }
+      for (let i = 0; i < pa.length; i += 3) {
+        if (!ix.nearest(pa[i]!, pa[i + 1]!, pa[i + 2]!, 1, I, D, best.d)) continue
+        if (Math.sqrt(D[0]!) < best.d) best = { pa: [pa[i]!, pa[i + 1]!, pa[i + 2]!], pb: [ix.points[3 * I[0]!]!, ix.points[3 * I[0]! + 1]!, ix.points[3 * I[0]! + 2]!], d: Math.sqrt(D[0]!) }
+      }
+      return best
+    }
+    const ub = bboxOf(uterus.mesh)
+    const lumen = W('uterine_and_vaginal_lumen')
+    const ISTHMUS = 0.4
+    const yI = ub[1] + ISTHMUS * (ub[4] - ub[1])
+    const pivot = meanOf(slabPoints(lumen?.mesh ?? uterus.mesh, yI - 0.003, yI + 0.003)) ?? centroidOf(uterus.mesh)
+    const now = pairOf(uterus.mesh, bladder.mesh)
+    const trials = [15, 30, 45].map((deg) => {
+      const a = (deg * Math.PI) / 180
+      const pos = Float32Array.from(uterus.mesh.positions)
+      let maxMove = 0
+      for (let i = 0; i < pos.length; i += 3) {
+        const y = pos[i + 1]! - pivot[1]
+        const z = pos[i + 2]! - pivot[2]
+        // 峡部以下不动，其上 10 mm 内渐入 / nothing moves below the isthmus; the rotation fades in over the 10 mm above it
+        const t = Math.min(1, Math.max(0, y / 0.01))
+        const th = -a * t * t * (3 - 2 * t)
+        const ny = y * Math.cos(th) + z * Math.sin(th)
+        const nz = -y * Math.sin(th) + z * Math.cos(th)
+        maxMove = Math.max(maxMove, Math.hypot(ny - y, nz - z))
+        pos[i + 1] = pivot[1] + ny
+        pos[i + 2] = pivot[2] + nz
+      }
+      return { rotationDeg: deg, gapMm: mmOf(minGap({ positions: pos, indices: uterus.mesh.indices }, bladder.mesh, 0.0015)), fundusMovesMm: mmOf(maxMove) }
+    })
+    report.uterusBladder = {
+      gapMm: mmOf(now.d), nearestPointOfUterusMm: now.pa.map((v) => mmOf(v)), nearestPointOfBladderMm: now.pb.map((v) => mmOf(v)),
+      nearestPointAtUterineHeightFraction: r1((now.pa[1] - ub[1]) / Math.max(1e-9, ub[4] - ub[1]), 2), isthmusTakenAtHeightFraction: ISTHMUS,
+      bladderVolumeMl: volMl(bladder.mesh), specimenBladderLumenMl: extras.get('bladder_and_urethral_lumen') ? volMl(extras.get('bladder_and_urethral_lumen')!) : null,
+      trialAnteversionAboutIsthmus: trials,
+      decision: 'the uterus is left where the specimen has it and no bladder filling is invented: the gap is narrowest between the back of the empty bladder and the cervix, below the isthmus, so turning the uterine body forwards about the isthmus does not close it (see the trial rotations) while it would carry the fundus, tubes, ovaries and round ligaments of the specimen along by the distances given',
+    }
+    log(`Uterus–bladder gap ${mmOf(now.d)} mm (at ${r1((now.pa[1] - ub[1]) / Math.max(1e-9, ub[4] - ub[1]), 2)} of the uterine height); trial anteversion about the isthmus: ${trials.map((t) => `${t.rotationDeg}° → ${t.gapMm} mm, fundus moves ${t.fundusMovesMm} mm`).join('; ')}`)
+  }
+
   // ── 4. HRA 的盆腔韧带和子宫血管：随 HRA 器官 → Wu 器官的对应关系走 / HRA pelvic ligaments and uterine vessels follow the correspondence HRA organs → Wu organs
   {
     const hra = new Map(input.hraReplaced.map((p) => [p.id, p]))
-    const kept = parts.filter((p) => p.id.startsWith('HRA_') && (p.system === 'reproductive' || p.system === 'cardiovascular'))
+    // 骶子宫韧带、主韧带、卵巢固有韧带按两端重配，阔韧带和输卵管系膜另行判断（第 5b 步），不走这个场
+    // uterosacral, cardinal and ovarian ligaments are re-fitted by their two ends, the broad ligament and the mesosalpinges are judged separately (step 5b); none of them goes through this field
+    const kept = parts.filter((p) => p.id.startsWith('HRA_') && (p.system === 'reproductive' || p.system === 'cardiovascular') && !TWO_END_LIGAMENT.test(p.id) && !PERITONEAL_SHEET.test(p.id))
     const from: Float32Array[] = []
     const to: Float32Array[] = []
     const fits: Record<string, unknown> = {}
@@ -1098,13 +1196,246 @@ export function reconcilePelvis(input: PelvisInput): { report: Record<string, un
     log(`Bowel: joined to the Wu rectum (${JSON.stringify((report.rectosigmoid as { lowerEndOfSigmoidMovedMm?: number }).lowerEndOfSigmoidMovedMm ?? null)} mm), ${shifts.length} shifts off uterus and adnexa; inside the colon before → after ${JSON.stringify(before)} → ${JSON.stringify(insideColon())}`)
   }
 
+  // ── 5b. 盆腔韧带：HRA 的骶子宫韧带、主韧带和卵巢固有韧带按两端重配（见 pelvicLigaments.ts）
+  // 附着点的规则：子宫一端取在 Wu 子宫上与 HRA 模型相同的高度比例处（自子宫最低点到最高点），骶子宫韧带
+  // 在宫颈的后外侧（自横向往后 45°；若从那里出发的路径被直肠挡住，则每次向外侧转 15°），主韧带和卵巢
+  // 固有韧带在外侧面；骨或盆壁一端留在 HRA 给出的位置；卵巢一端取卵巢表面上离子宫附着点最近的一点。
+  // ── 5b. Pelvic ligaments: the HRA uterosacral, cardinal and ovarian ligaments re-fitted by their two ends (see pelvicLigaments.ts)
+  // Attachment rule: the uterine end goes to the same fraction of the uterine height (lowest to highest
+  // point) on the Wu uterus as in the HRA model; a uterosacral ligament on the posterolateral cervix (45°
+  // behind the transverse; turned 15° at a time towards lateral when the rectum blocks the path from
+  // there), cardinal and ovarian ligaments on the lateral surface; the end on bone or on the pelvic wall
+  // stays where HRA put it; the ovarian end is the point of the ovary nearest the uterine attachment.
+  {
+    const hraU = input.hraReplaced.filter((p) => UTERUS_PARTS.test(p.id))
+    const ligs = parts.filter((p) => TWO_END_LIGAMENT.test(p.id)).sort((a, b) => a.id.localeCompare(b.id))
+    const rows: Record<string, unknown>[] = []
+    if (hraU.length && ligs.length) {
+      const hb = bboxOf(union(hraU.map((p) => p.mesh)))
+      const hraIx = new PointIndex(concatF(hraU.map((p) => surfaceSamples(p.mesh, 0.002))), 0.006)
+      const ub = bboxOf(uterus.mesh)
+      const us = surfaceSamples(uterus.mesh, 0.0008)
+      const lumen = W('uterine_and_vaginal_lumen')
+      const ls = lumen ? surfaceSamples(lumen.mesh, 0.0008) : us
+      const slabCentre = (pts: Float32Array, y: number): Vec3 | null => meanOf(slabPoints({ positions: pts, indices: new Uint32Array(0) }, y - 0.002, y + 0.002))
+      // 子宫表面上的附着点：在给定高度，从宫腔（宫颈管）中心沿水平方向 (dx, dz) 走到子宫表面最远处
+      // the attachment point on the uterine surface: at the given height, the farthest surface point from the centre of the cavity (cervical canal) along the horizontal direction (dx, dz)
+      const onUterus = (frac: number, dx: number, dz: number): Vec3 => {
+        const y = ub[1] + Math.min(0.95, Math.max(0.05, frac)) * (ub[4] - ub[1])
+        const c = slabCentre(ls, y) ?? slabCentre(us, y) ?? centroidOf(uterus.mesh)
+        let best: Vec3 = c
+        let far = -Infinity
+        for (let i = 0; i < us.length; i += 3) {
+          if (Math.abs(us[i + 1]! - y) > 0.0025) continue
+          const ax = us[i]! - c[0]
+          const az = us[i + 2]! - c[2]
+          const along = ax * dx + az * dz
+          if (Math.abs(ax * dz - az * dx) < 0.003 && along > far) {
+            far = along
+            best = [us[i]!, us[i + 1]!, us[i + 2]!]
+          }
+        }
+        return best
+      }
+      const colonNow = parts.find((p) => p.name === 'Descending colon' && p.provenance === 'warped' && !drop.has(p.id))
+      const fillOf = (p: PelvisPart) => (FILL[p.id] ?? []).map((id) => byId.get(id)?.mesh).filter((m): m is Mesh => !!m)
+      const blockers = [rectum, uterus, vagina, W('ovary_L'), W('ovary_R'), W('uterine_tube_L'), W('uterine_tube_R'), bladder, colonNow].filter((p): p is PelvisPart => !!p)
+      const obstacles = blockers.map((p) => obstacleOf(p.mesh, fillOf(p)))
+      const solids = [...wuSolid().filter((p) => p.tissue !== 'fascia'), ...(bladder ? [bladder] : []), ...(colonNow ? [colonNow] : []), ...pelvicBones]
+      const indexOf = (list: PelvisPart[]) => new PointIndex(concatF(list.map((q) => surfaceSamples(q.mesh, 0.0015))), 0.006)
+      const minTo = (pts: Float32Array, ix: PointIndex) => {
+        let d = Infinity
+        for (let i = 0; i < pts.length; i += 3) d = Math.min(d, ix.distance(pts[i]!, pts[i + 1]!, pts[i + 2]!, 0.3))
+        return d
+      }
+      const uterusIx = indexOf([uterus])
+      const d3 = (a: Vec3, b: Vec3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])
+      for (const p of ligs) {
+        const left = /left|_L$/.test(p.id)
+        const sgn = left ? 1 : -1
+        const kind = /uterosacral/.test(p.id) ? 'uterosacral' : /cardinal/.test(p.id) ? 'cardinal' : 'ovarian'
+        const Side = left ? 'Left' : 'Right'
+        const ovary = W(`ovary_${left ? 'L' : 'R'}`)
+        const native = p.mesh
+        const ax = ligamentAxis(native)
+        const K = ax.stations.length
+        // 起点一端：骶子宫韧带在骶骨，主韧带在同侧盆壁（髋骨和闭孔内肌），卵巢固有韧带在子宫（HRA 的子宫）
+        // the starting end: on the sacrum (uterosacral), on the pelvic wall of that side (hip bone and obturator internus; cardinal), on the uterus (HRA's; ovarian)
+        const anchorParts = kind === 'uterosacral' ? pelvicBones.filter((b) => b.name === 'Sacrum') : kind === 'cardinal' ? parts.filter((q) => q.name === `${Side} hip bone` || q.name === `${Side} obturator internus`) : []
+        const anchorName = kind === 'uterosacral' ? 'sacrum' : kind === 'cardinal' ? 'pelvic wall' : 'uterus'
+        const otherName = kind === 'ovarian' ? 'ovary' : 'uterus'
+        const anchorIxNative = kind === 'ovarian' ? hraIx : anchorParts.length ? indexOf(anchorParts) : null
+        if (!anchorIxNative || (kind === 'ovarian' && !ovary)) {
+          rows.push({ id: p.id, shipped: false, reason: 'the structure it attaches to is missing' })
+          drop.add(p.id)
+          continue
+        }
+        const gapLo = minTo(endVertices(native, ax, 'lo'), anchorIxNative)
+        const gapHi = minTo(endVertices(native, ax, 'hi'), anchorIxNative)
+        const startEnd: 'lo' | 'hi' = gapLo <= gapHi ? 'lo' : 'hi'
+        const start0 = startEnd === 'lo' ? ax.stations[0]! : ax.stations[K - 1]!
+        const end0 = startEnd === 'lo' ? ax.stations[K - 1]! : ax.stations[0]!
+        // 子宫一端在 HRA 子宫上的高度比例 / height fraction of the uterine end on the HRA uterus
+        const uterineEnd0 = kind === 'ovarian' ? start0 : end0
+        const frac = (uterineEnd0[1] - hb[1]) / Math.max(1e-9, hb[4] - hb[1])
+        const anchorIx = kind === 'ovarian' ? uterusIx : anchorIxNative
+        const otherIx = kind === 'ovarian' ? indexOf([ovary!]) : uterusIx
+        const escape: Vec3 = kind === 'uterosacral' ? [sgn, 0, 0] : [0, -1, 0]
+        let chosen: { from: Vec3; to: Vec3; azimuthDeg: number; path: ReturnType<typeof tautPath> } | null = null
+        for (const az of kind === 'uterosacral' ? [45, 30, 15, 0] : [0]) {
+          const a = (az * Math.PI) / 180
+          const u = onUterus(frac, sgn * Math.cos(a), -Math.sin(a))
+          const from = kind === 'ovarian' ? u : start0
+          const to = kind === 'ovarian' ? nearestOn(ovary!.mesh, u, 0.0008).point : u
+          const path = tautPath(from, to, obstacles, { clearance: 0.003, escape, freeEnd: 0.012 })
+          if (!chosen || path.nodesInside < chosen.path.nodesInside) chosen = { from, to, azimuthDeg: az, path }
+          if (path.nodesInside === 0) break
+        }
+        const fit = relayAlongPath(native, ax, startEnd, chosen!.path.points)
+        const ratio = fit.lengthRatio
+        const row: Record<string, unknown> = {
+          id: p.id, kind,
+          attachment: { uterineHeightFraction: r1(frac, 2), azimuthBehindTransverseDeg: chosen!.azimuthDeg, fromMm: chosen!.from.map((v) => mmOf(v)), toMm: chosen!.to.map((v) => mmOf(v)) },
+          nativeLengthMm: mmOf(fit.nativeLength), spanMm: mmOf(chosen!.path.straight), newLengthMm: mmOf(fit.newLength), lengthRatio: r1(ratio, 2),
+          pathNodesInsideOrgans: chosen!.path.nodesInside, maxBendDeg: r1(fit.maxBendDeg, 0), foldedAreaPct: pct(fit.foldedAreaShare),
+        }
+        const why: string[] = []
+        if (ratio < LIGAMENT_MIN_LENGTH_RATIO) why.push(`only ${mmOf(chosen!.path.straight)} mm between its attachments for a ligament modelled ${mmOf(fit.nativeLength)} mm long (ratio ${r1(ratio, 2)} < ${LIGAMENT_MIN_LENGTH_RATIO})`)
+        if (ratio > 1.5) why.push(`would be stretched to ${r1(ratio, 2)} × its modelled length`)
+        if (chosen!.path.nodesInside > 0) why.push('no path between its attachments that stays out of the organs')
+        if (fit.foldedAreaShare > 0.02) why.push(`${pct(fit.foldedAreaShare)} % of its surface folds over`)
+        if (!why.length) {
+          const areaBefore = measure(native).area
+          p.mesh = fit.mesh
+          slideOut(p, solids, { clearance: 0.0005, maxPush: 0.02, maxEdge: 0.0015, coherent: true }, byId)
+          const insideAfter = solids.filter((q) => overlaps(bboxOf(p.mesh), bboxOf(q.mesh))).reduce((sum, q) => sum + insideFraction(p.mesh, q.mesh, 0.002), 0)
+          const ax2 = ligamentAxis(p.mesh)
+          // 重排之后哪一端是起点：离起点近的那一端 / which end is the start after the re-lay: the one nearer the starting point
+          const lo2 = d3(ax2.stations[0]!, chosen!.from) <= d3(ax2.stations[K - 1]!, chosen!.from) ? 'lo' : 'hi'
+          const startAfter = minTo(endVertices(p.mesh, ax2, lo2, 0.1), anchorIx)
+          const endAfter = minTo(endVertices(p.mesh, ax2, lo2 === 'lo' ? 'hi' : 'lo', 0.1), otherIx)
+          Object.assign(row, {
+            ends: {
+              [anchorName]: { gapBeforeMm: mmOf(Math.min(gapLo, gapHi)), gapAfterMm: mmOf(startAfter), movedMm: mmOf(d3(start0, chosen!.from)) },
+              [otherName]: { gapAfterMm: mmOf(endAfter), movedMm: mmOf(d3(end0, chosen!.to)) },
+            },
+            insideSolidsPct: pct(insideAfter), areaRatio: r1(measure(p.mesh).area / Math.max(1e-12, areaBefore), 2),
+          })
+          if (insideAfter > 0.05) why.push(`${pct(insideAfter)} % of its surface inside organs or bone`)
+          if (startAfter > 0.003) why.push(`its end is ${mmOf(startAfter)} mm from the ${anchorName}`)
+          if (endAfter > 0.003) why.push(`its end is ${mmOf(endAfter)} mm from the ${otherName}`)
+          if (why.length) p.mesh = native
+        }
+        if (why.length) {
+          Object.assign(row, { shipped: false, reason: why.join('; ') })
+          drop.add(p.id)
+        } else {
+          row.shipped = true
+          p.note = `Human Reference Atlas model re-fitted by its two ends: ${kind === 'ovarian' ? 'placed between the uterus and the ovary of the Wu specimen' : `the end on the ${anchorName} kept, the other end moved ${mmOf(d3(end0, chosen!.to), 0)} mm onto the Wu uterus`}; cross-sections kept and re-strung on a taut path${fit.maxBendDeg > 3 ? ' round the organs in between' : ''}, length ${mmOf(fit.nativeLength, 0)} → ${mmOf(fit.newLength, 0)} mm. A schematic band between the attachment sites, not a dissected ligament.`
+          row.note = p.note
+        }
+        rows.push(row)
+      }
+    }
+    // 阔韧带和输卵管系膜是腹膜皱襞：HRA 的那一片是围着 HRA 自己的子宫画的；Wu 标本的腹膜面在这里紧贴着
+    // 输卵管和卵巢，没有可以取作“两层皱襞”的游离部分（数字见下）
+    // The broad ligament and the mesosalpinges are peritoneal folds: HRA's sheet was drawn round HRA's own
+    // uterus, and the peritoneal surface of the Wu specimen lies on the tubes and ovaries here with no free
+    // part that could be taken as a two-leaf fold (numbers below)
+    const sheets = parts.filter((p) => PERITONEAL_SHEET.test(p.id)).sort((a, b) => a.id.localeCompare(b.id))
+    const per = extras.get('peritoneum')
+    let peritoneum: Record<string, unknown> | null = null
+    if (per) {
+      const organs: [string, PelvisPart | undefined][] = [['uterus', uterus], ['ovary', W('ovary_L')], ['ovary', W('ovary_R')], ['uterine tube', W('uterine_tube_L')], ['uterine tube', W('uterine_tube_R')], ['round ligament', W('round_ligament_of_uterus_L')], ['round ligament', W('round_ligament_of_uterus_R')]]
+      const ix = organs.filter(([, q]) => !!q).map(([name, q]) => ({ name, ix: new PointIndex(surfaceSamples(q!.mesh, 0.001), 0.004) }))
+      if (extras.get('bladder_wall')) ix.push({ name: 'the specimen\'s own (full) bladder', ix: new PointIndex(surfaceSamples(extras.get('bladder_wall')!, 0.001), 0.004) })
+      const ub = bboxOf(uterus.mesh)
+      const us = surfaceSamples(uterus.mesh, 0.001)
+      // 子宫在各高度的左右缘 / the lateral borders of the uterus by height
+      const H = 0.003
+      const nb = Math.ceil((ub[4] - ub[1]) / H)
+      const xr = Array.from({ length: nb }, () => [Infinity, -Infinity])
+      for (let i = 0; i < us.length; i += 3) {
+        const k = Math.min(nb - 1, Math.max(0, Math.floor((us[i + 1]! - ub[1]) / H)))
+        xr[k]![0] = Math.min(xr[k]![0]!, us[i]!)
+        xr[k]![1] = Math.max(xr[k]![1]!, us[i]!)
+      }
+      const pp = per.positions
+      const sides: Record<string, unknown> = {}
+      for (const side of ['L', 'R'] as const) {
+        const adn = [W(`ovary_${side}`), W(`uterine_tube_${side}`)].filter((q): q is PelvisPart => !!q).map((q) => bboxOf(q.mesh))
+        if (!adn.length) continue
+        const z0 = Math.min(...adn.map((b) => b[2])) - 0.01
+        const z1 = Math.max(...adn.map((b) => b[5])) + 0.01
+        const on: Record<string, number> = {}
+        let total = 0
+        const freeTris: number[] = []
+        for (let t = 0; t < per.indices.length; t += 3) {
+          const a = 3 * per.indices[t]!
+          const b = 3 * per.indices[t + 1]!
+          const c = 3 * per.indices[t + 2]!
+          const cx = (pp[a]! + pp[b]! + pp[c]!) / 3
+          const cy = (pp[a + 1]! + pp[b + 1]! + pp[c + 1]!) / 3
+          const cz = (pp[a + 2]! + pp[b + 2]! + pp[c + 2]!) / 3
+          if (cy < ub[1] || cy > ub[4] || cz < z0 || cz > z1) continue
+          const k = Math.min(nb - 1, Math.max(0, Math.floor((cy - ub[1]) / H)))
+          if (side === 'L' ? cx <= xr[k]![1]! : cx >= xr[k]![0]!) continue
+          const e1 = [pp[b]! - pp[a]!, pp[b + 1]! - pp[a + 1]!, pp[b + 2]! - pp[a + 2]!]
+          const e2 = [pp[c]! - pp[a]!, pp[c + 1]! - pp[a + 1]!, pp[c + 2]! - pp[a + 2]!]
+          const area = 0.5 * Math.hypot(e1[1]! * e2[2]! - e1[2]! * e2[1]!, e1[2]! * e2[0]! - e1[0]! * e2[2]!, e1[0]! * e2[1]! - e1[1]! * e2[0]!)
+          let best = 'free'
+          let bd = 0.002
+          for (const o of ix) {
+            const d = o.ix.distance(cx, cy, cz, bd)
+            if (d < bd) {
+              bd = d
+              best = o.name
+            }
+          }
+          on[best] = (on[best] ?? 0) + area
+          total += area
+          if (best === 'free') freeTris.push(per.indices[t]!, per.indices[t + 1]!, per.indices[t + 2]!)
+        }
+        const freeComps = freeTris.length ? components({ positions: pp, indices: Uint32Array.from(freeTris) }) : []
+        const largest = freeComps.reduce((m, c) => Math.max(m, measure(c).area), 0)
+        sides[side] = {
+          areaCm2: r1(total * 1e4), lyingOnPct: Object.fromEntries(Object.entries(on).filter(([k]) => k !== 'free').sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, pct(v / Math.max(1e-12, total))])),
+          freePct: pct((on.free ?? 0) / Math.max(1e-12, total)), freePieces: freeComps.length, largestFreePieceCm2: r1(largest * 1e4),
+          tubeToOvaryGapMm: W(`uterine_tube_${side}`) && W(`ovary_${side}`) ? mmOf(minGap(W(`uterine_tube_${side}`)!.mesh, W(`ovary_${side}`)!.mesh, 0.001)) : null,
+          ovaryToUterusGapMm: W(`ovary_${side}`) ? mmOf(minGap(W(`ovary_${side}`)!.mesh, uterus.mesh, 0.001)) : null,
+        }
+      }
+      peritoneum = {
+        what: 'the peritoneal surface of the Wu specimen (not shipped) lateral to the uterus, between the heights of the lowest and highest point of the uterus and within 10 mm in front of and behind the ovary and tube of that side; a triangle "lies on" the nearest organ within 2 mm, else it is free',
+        sides,
+        verdict: 'no broad ligament or mesosalpinx is derived from it: lateral to the uterus this surface is the covering of the tube, the ovary and the round ligament themselves; what is free are separate pieces towards the pelvic wall, not a two-leaf fold between the uterine border and the wall; the tubes lie against the ovaries and the ovaries against or close to the uterus, so the specimen shows no free width of broad ligament here',
+      }
+    }
+    for (const p of sheets) {
+      const side = /_L$/.test(p.id) ? 'L' : /_R$/.test(p.id) ? 'R' : null
+      const s = side && peritoneum ? ((peritoneum.sides as Record<string, { tubeToOvaryGapMm: number | null }>)[side] ?? null) : null
+      rows.push({
+        id: p.id, kind: 'peritoneal fold', shipped: false,
+        reason: side ? `a fold of peritoneum between tube and ovary: the tube lies against the ovary in the Wu specimen (gap ${s?.tubeToOvaryGapMm ?? '?'} mm), so there is no room for a sheet, and the HRA sheet was drawn for HRA's own tube and ovary` : 'a sheet drawn round the HRA uterus, which has no two ends to re-fit; the peritoneal surface of the Wu specimen shows no free fold between the uterine border and the pelvic wall (see peritoneum)',
+      })
+      drop.add(p.id)
+    }
+    const shipped = rows.filter((r) => r.shipped).map((r) => r.id as string)
+    report.pelvicLigaments = {
+      method: 'each HRA ligament is taken as a row of cross-sections on its principal axis; the cross-sections are kept and re-strung on a taut path from one attachment to the other (nodes that fall within 3 mm of an organ give way in one direction: lateral for the uterosacral ligaments, downward for the others), then slid out of organs and bone (0.5 mm). Uterine attachment: same fraction of the uterine height as in the HRA model, posterolateral (uterosacral; turned towards lateral in steps of 15° until the path is clear of the rectum) or lateral (cardinal, ovarian). The end on the sacrum or the pelvic wall stays where HRA put it',
+      rule: `shipped when the new length is ${LIGAMENT_MIN_LENGTH_RATIO}–1.5 × the modelled length, the path is clear of the organs, at most 2 % of the surface folds over, at most 5 % of the surface lies inside organs or bone and both ends come within 3 mm of what they attach to; left and right are judged separately, so one side can be present without the other`,
+      parts: rows, shipped, absent: rows.filter((r) => !r.shipped).map((r) => ({ id: r.id, reason: r.reason })), peritoneum,
+    }
+    log(`Pelvic ligaments re-fitted by two ends: ${shipped.length} shipped (${shipped.join(', ') || 'none'}); absent: ${rows.filter((r) => !r.shipped).map((r) => r.id).join(', ') || 'none'}`)
+  }
+
   // ── 6. 其余形变来的软组织（血管、淋巴结、筋膜、输尿管、肠管表面的残余）：推出 Wu 实体和膀胱
   // ── 6. other warped soft tissue (vessels, nodes, fasciae, ureters, what is left of bowel surface): slid out of the Wu solids and the bladder
   {
     // 筋膜和直肠系膜不算实体：直肠上血管和直肠旁淋巴结本来就在直肠系膜之内
     // fasciae and the mesorectum are not solids here: the superior rectal vessels and pararectal nodes belong inside the mesorectum
     const solids = [...wuSolid().filter((p) => p.tissue !== 'fascia'), ...(bladder ? [bladder] : [])]
-    const rows: { id: string; name: string; beforePct: number; afterPct: number; note?: string }[] = []
+    const rows: { id: string; name: string; beforePct: number; afterPct: number; note?: string; secondPush?: string }[] = []
     const frac = (p: PelvisPart) => {
       const near = solids.filter((q) => overlaps(bboxOf(p.mesh), bboxOf(q.mesh)))
       if (!near.length) return 0
@@ -1122,7 +1453,27 @@ export function reconcilePelvis(input: PelvisInput): { report: Record<string, un
       // 肠管是封闭的管：只整体平移（上一步），不推它的表面 / the bowel is a closed tube: shifted as a whole (previous step), its surface is never pushed
       const tube = p.system === 'digestive' && p.tissue === 'organ'
       if (!tube) slideOut(p, solids, { clearance: 0.0005, maxPush: 0.03, maxEdge: 0.0015, coherent: true }, byId)
-      rows.push({ id: p.id, name: p.name, beforePct: pct(before), afterPct: pct(frac(p)), ...(tube ? { note: 'bowel: not pushed' } : {}) })
+      let after = frac(p)
+      let second: string | undefined
+      if (!tube && after > 0.05) {
+        // 仍有 5 % 以上在器官内：再整段推一次，允许走 50 mm；只有当陷入的比例至少减半、且表面积增加不到三成
+        // （没有被抹开）时才采用，否则保留第一次的结果
+        // still more than 5 % inside: one more coherent push, up to 50 mm; taken only when the share inside at
+        // least halves and the area grows by less than 30 % (the part is not smeared), else the first result stays
+        const first = { mesh: p.mesh, centrelines: p.centrelines }
+        const area = measure(p.mesh).area
+        slideOut(p, solids, { clearance: 0.0005, maxPush: 0.05, maxEdge: 0.0015, coherent: true }, byId)
+        const again = frac(p)
+        if (again <= after / 2 && measure(p.mesh).area < 1.3 * area) {
+          second = `second push (≤ 50 mm): ${pct(after)} → ${pct(again)} %`
+          after = again
+        } else {
+          second = `second push refused: ${pct(after)} → ${pct(again)} %, area × ${r1(measure(p.mesh).area / Math.max(1e-12, area), 2)}`
+          p.mesh = first.mesh
+          p.centrelines = first.centrelines
+        }
+      }
+      rows.push({ id: p.id, name: p.name, beforePct: pct(before), afterPct: pct(after), ...(tube ? { note: 'bowel: not pushed' } : {}), ...(second ? { secondPush: second } : {}) })
     }
     rows.sort((a, b) => b.afterPct - a.afterPct)
     // 推出之后仍有五分之一以上表面在这些器官之内的形变部件放不进女性盆腔（如男性的“膀胱后淋巴结”正落在子宫的位置）：不输出，成对的两侧都去掉

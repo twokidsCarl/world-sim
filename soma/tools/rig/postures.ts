@@ -3,7 +3,7 @@
 // to the model's rest pose. Shared by the validation and the tests.
 
 import type { Joint, JointDof } from '../../src/anatomy/types.ts'
-import { type Pose, mergePoses, shoulderElevation } from './pose.ts'
+import { type Pose, armElevation, mergePoses } from './pose.ts'
 
 type DofExt = JointDof & { neutral?: number }
 
@@ -89,11 +89,18 @@ export const CERVICAL = ['C7', 'C6', 'C5', 'C4', 'C3', 'C2', 'C1', 'skull']
 
 /** 上臂相对躯干抬高到给定角度（含肩肱节律）。 Arm raised against the trunk to the given angle (with scapulohumeral rhythm). */
 function raiseArm(b: PoseBuilder, side: 'L' | 'R', degrees: number, plane: 0 | 1): void {
-  const f = b.dof(`gh_${side}`, plane === 0 ? 1 : 0)
-  if (!f) return
-  // 静止时上臂已有的外展/前屈 / what the arm already has at rest
-  const rest = -(f.d.neutral ?? 0)
-  b.merge(shoulderElevation(side, rad(degrees) - rest, plane))
+  const id = `gh_${side}`
+  if (!b.has(id)) return
+  // 闭环：解出盂肱关节角，使上臂长轴与铅垂线的夹角恰为给定值（静止时已有的外展在其中扣除）
+  // closed loop: the glenohumeral angles are solved so that the upper arm ends at exactly the stated
+  // angle from the vertical (what it is already abducted by at rest is taken off inside)
+  const p = armElevation(b.joints, side, rad(degrees), plane)
+  const gh = p[id]!
+  delete p[id]
+  b.merge(p)
+  // 盂肱关节角经 rel 设定，超出活动范围时照常截断并记录 / set through rel so that the range of motion still clamps and reports
+  b.dof(id, 0) && b.rel(id, 0, gh[b.dof(id, 0)!.k]!)
+  b.dof(id, 1) && b.rel(id, 1, gh[b.dof(id, 1)!.k]!)
 }
 
 export function standardPostures(joints: Joint[]): Posture[] {

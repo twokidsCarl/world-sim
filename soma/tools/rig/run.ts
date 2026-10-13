@@ -10,10 +10,9 @@
 // records a hash of every input, so a rig built from older geometry can be detected (see stale()).
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { buildRig } from './build.ts'
-import { readBody } from './io.ts'
+import { hashInput, inputFile, readBody } from './io.ts'
 import { validate } from './validate.ts'
 
 const ROOT = join(import.meta.dirname, '..', '..')
@@ -25,13 +24,13 @@ export function stale(bodyDir: string): string[] {
   const rec = (JSON.parse(readFileSync(reportPath, 'utf8')) as { inputs: Record<string, string> }).inputs
   const out: string[] = []
   for (const [name, hash] of Object.entries(rec)) {
-    const path = name.startsWith('data/') ? join(ROOT, name) : join(bodyDir, name)
+    const file = inputFile(name)
+    const path = file.startsWith('data/') ? join(ROOT, file) : join(bodyDir, file)
     if (!existsSync(path)) {
       out.push(`${name}: missing`)
       continue
     }
-    const h = createHash('sha256').update(new Uint8Array(readFileSync(path))).digest('hex').slice(0, 16)
-    if (h !== hash) out.push(`${name}: changed`)
+    if (hashInput(name, path) !== hash) out.push(`${name}: changed`)
   }
   return out
 }

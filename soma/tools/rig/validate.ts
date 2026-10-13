@@ -525,7 +525,7 @@ export function validate(body: Body, build: BuildResult, outDir: string | null, 
       stretch: stretchOf(posedOf),
       volume: volumeOf(poser),
       skin: skinPart ? skinOf(posedOf(skinPart)) : { flippedPct: 0, collapsedPct: 0, selfInsidePct: 0, minAreaRatio: 1, maxEdgeStretch: 1, stretchedAreaCm2: 0 },
-      poke: skinPart && build.fieldStats.skinWalls === 1 ? pokeOf(posedOf(skinPart), posedOf) : null,
+      poke: skinPart && build.fieldStats.skinWalls === 1 && !build.skinOpen ? pokeOf(posedOf(skinPart), posedOf) : null,
       corridors,
     }
     reports.push(rep)

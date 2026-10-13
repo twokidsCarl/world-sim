@@ -12,7 +12,15 @@ import { readGlb } from '../tools/pipeline/glb.ts'
 import type { LandmarkResult } from '../tools/pipeline/landmarks.ts'
 import { girdleAngles, girdleLandmarks, RESTING_POSTURE, rotationAngleOf, thoraxFrame, thoraxLandmarks, type GirdleAngles } from '../tools/pipeline/shoulder.ts'
 
-const DIR = join(import.meta.dirname, '../public/anatomy/male')
+// 接受两种状态（见 pipeline-output.test.ts 开头）：默认构建在肩带校正之后还把上肢外展了（report.armAbduction，
+// 另见 pipeline-abduction.test.ts），此时皮肤包不装入；SOMA_ARM_ABDUCTION=0 的构建没有外展、皮肤包装入。
+// report.shoulderGirdle 始终只描述肩带校正这一步。SOMA_MALE_DIR 可把测试指到另一个输出目录。
+// Two states are accepted (see the head of pipeline-output.test.ts): the default build also abducts
+// the arms after the shoulder correction (report.armAbduction, see pipeline-abduction.test.ts) and
+// then installs no skin package; a build with SOMA_ARM_ABDUCTION=0 has no abduction and the skin
+// package installed. report.shoulderGirdle always describes the shoulder correction alone.
+// SOMA_MALE_DIR points the tests at another output directory.
+const DIR = process.env.SOMA_MALE_DIR ?? join(import.meta.dirname, '../public/anatomy/male')
 const present = existsSync(join(DIR, 'anatomy.json')) && existsSync(join(DIR, 'pipeline-report.json'))
 
 interface Gap { minMm: number; medianMm: number }
@@ -52,10 +60,11 @@ interface ShoulderReport {
 
 describe.skipIf(!present)('male shoulder girdle posture correction (public/anatomy/male)', () => {
   const data = (present ? JSON.parse(readFileSync(join(DIR, 'anatomy.json'), 'utf8')) : null) as AnatomyData
-  const report = (present ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : null) as { shoulderGirdle: ShoulderReport; landmarks: LandmarkResult[]; landmarksAsScanned: LandmarkResult[]; skinPackage: { installed?: boolean; internalsKey: string; externalGenitalia: { parts: string[]; bbox: number[]; reachInFrontOfPubisMm: number } } }
+  const report = (present ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : null) as { shoulderGirdle: ShoulderReport; armAbduction?: { applied: boolean; transforms?: Record<string, Transform>; provenance?: { relabelledIds: string[] } }; appendages?: { relabelledIds?: string[] }; landmarks: LandmarkResult[]; landmarksAsScanned: LandmarkResult[]; landmarksBeforeAbduction?: LandmarkResult[]; skinPackage: { installed?: boolean; internalsKey: string; externalGenitalia: { parts: string[]; bbox: number[]; reachInFrontOfPubisMm: number } } }
   const sg = present ? report.shoulderGirdle : (null as unknown as ShoulderReport)
   const sides = () => [sg.sides.left, sg.sides.right]
   const skinInstalled = present && !!report.skinPackage.installed
+  const abducted = present && !!report.armAbduction?.applied
   const part = (name: string): Part => data.parts.find((p) => p.name === name)!
 
   it('is applied, and widens the glenohumeral separation as far as the constraints allow', () => {
@@ -177,7 +186,9 @@ describe.skipIf(!present)('male shoulder girdle posture correction (public/anato
       // posture the extremes are other points), so the three bones are first put back with the inverse
       // transforms of the report, the landmarks picked, and then carried forward again.
       const T = { clavicle: sg.transforms[`clavicle_${s}`]!, scapula: sg.transforms[`scapula_${s}`]!, arm: sg.transforms[`arm_${s}`]! }
-      const back = (name: string, t: Transform): Mesh => ({ positions: apply(t.inverse, M(name).positions), indices: M(name).indices })
+      // 外展过的上肢先用外展的逆变换放回肩带校正后的位置 / an abducted limb is first put back to where the shoulder correction left it, with the inverse of the abduction
+      const ab = abducted ? report.armAbduction!.transforms![`arm_${s}`]! : null
+      const back = (name: string, t: Transform): Mesh => ({ positions: apply(t.inverse, ab && t === T.arm ? apply(ab.inverse, M(name).positions) : M(name).positions), indices: M(name).indices })
       const lm0 = girdleLandmarks(lat, back(`${S} clavicle`, T.clavicle), back(`${S} scapula`, T.scapula), back(`${S} humerus`, T.arm), M('Manubrium'))
       const fwd = (t: Transform, v: [number, number, number]) => Array.from(apply(t, v)) as [number, number, number]
       const lm = { sc: lm0.sc, ac: fwd(T.clavicle, lm0.ac), gh: fwd(T.arm, lm0.gh), aa: fwd(T.scapula, lm0.aa), ts: fwd(T.scapula, lm0.ts), ai: fwd(T.scapula, lm0.ai) }
@@ -236,12 +247,14 @@ describe.skipIf(!present)('male shoulder girdle posture correction (public/anato
   })
 
   it('passes all 18 nerve landmark checks before and after', () => {
-    for (const list of [report.landmarksAsScanned, report.landmarks]) {
+    for (const list of [report.landmarksAsScanned, ...(abducted ? [report.landmarksBeforeAbduction!] : []), report.landmarks]) {
       expect(list.length).toBe(18)
       expect(list.filter((r) => !r.pass).map((r) => `${r.side} ${r.id}: ${r.measured}`)).toEqual([])
     }
     // 桡神经沟里的主干随肱骨刚性移动：校正前后离骨的距离、在骨干后方的距离相差不到 0.3 mm
     // the trunk in the radial groove moves rigidly with the humerus: its distance from the bone and behind the shaft change by less than 0.3 mm
+    // （外展后也一样：这项检查按肱骨干自己的轴线取切片，神经在肱骨中段随肱骨整体转动）
+    // (and the same after the abduction: the check takes its slabs along the humeral shaft's own axis, and at mid-shaft the nerve turns whole with the humerus)
     for (const side of ['L', 'R'] as const) {
       const a = report.landmarksAsScanned.find((r) => r.id === 'radial-humerus' && r.side === side)!.values
       const b = report.landmarks.find((r) => r.id === 'radial-humerus' && r.side === side)!.values
@@ -259,9 +272,13 @@ describe.skipIf(!present)('male shoulder girdle posture correction (public/anato
     // with an external skin package installed, the old skin that had been deformed is gone: neither warped nor scanned any more
     const replaced = pv.replacedBySkinPackage ?? []
     expect(replaced.length).toBe(skinInstalled ? 1 : 0)
-    expect(pv.scannedAfter).toBe(pv.scannedBefore - pv.relabelledToWarped - replaced.length)
-    expect(data.parts.filter((p) => p.provenance === 'scanned').length).toBe(pv.scannedAfter)
-    expect(data.parts.filter((p) => p.id.startsWith('FJ') && p.provenance === 'warped').map((p) => p.id).sort()).toEqual([...pv.relabelledIds].sort())
+    // 之后的两步各自再改标一些：上肢外展（跨盂肱关节的肌、腋血管）和附属物贴合（头发、眉、阴毛、耳廓；只在装入皮肤包时）
+    // the two later steps relabel some more, each for itself: the arm abduction (muscles crossing the glenohumeral joint, axillary vessels) and the appendage conforming (hair, eyebrows, pubic hair, auricle; only with a skin package installed)
+    const later = [...(report.armAbduction?.provenance?.relabelledIds ?? []), ...(report.appendages?.relabelledIds ?? [])]
+    expect(new Set([...pv.relabelledIds, ...later]).size).toBe(pv.relabelledIds.length + later.length)
+    expect((report.appendages?.relabelledIds ?? []).length > 0).toBe(skinInstalled)
+    expect(data.parts.filter((p) => p.provenance === 'scanned').length).toBe(pv.scannedBefore - pv.relabelledToWarped - replaced.length - later.length)
+    expect(data.parts.filter((p) => p.id.startsWith('FJ') && p.provenance === 'warped').map((p) => p.id).sort()).toEqual([...pv.relabelledIds, ...later].sort())
     // 只有肌、动脉、静脉和皮肤被改标；骨一块也没有 / only muscles, arteries, veins and the skin are relabelled; not one bone
     expect(Object.keys(pv.relabelledByTissue).sort()).toEqual(skinInstalled ? ['artery', 'muscle', 'vein'] : ['artery', 'muscle', 'skin', 'vein'])
     expect(data.parts.filter((p) => p.tissue === 'bone' && p.provenance !== 'scanned')).toEqual([])

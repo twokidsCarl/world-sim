@@ -9,6 +9,7 @@ import { loadRig, posePresets, poseIsRest, withDof, type LoadedRig, type Pose, t
 import type { PainSample } from '../painmodel/index.ts'
 import type { ActiveStim } from '../pain/stim.ts'
 import { defaultSettings, kindSpec, withKind, type StimSettings } from '../pain/stimulus.ts'
+import { fetchJson } from '../anatomy/load.ts'
 import { loadDetail, type LoadedDetail } from '../pain/detail.ts'
 import { loadFace, type AUs, type LoadedFace } from '../pain/face.ts'
 import { loadSkinMaps, regionParts, regionsForParts, type LoadedSkinMaps, type SkinMapId } from '../anatomy/skinmaps.ts'
@@ -149,6 +150,14 @@ export interface AppState {
   shapeLimit: { id: ShapeControlId; side: 'min' | 'max' } | null
   /** 当前人体的面部表情数据；首次使用"疼痛反应"时才加载 / This body's facial expression data, loaded when the pain response is first used. */
   face: LoadedFace | null
+  /**
+   * 皮肤不透明时要隐藏的部件，取自 pipeline-report.json 的 appendages.hideWithOpaqueSkin：
+   * undefined = 还没读；null = 这副人体的报告没有这一节（改用按名称的规则：头发、眉毛、阴毛）；数组 = 报告给的清单。
+   * Parts to hide while the skin is opaque, from appendages.hideWithOpaqueSkin of pipeline-report.json:
+   * undefined = not read yet; null = this body's report has no such section (the name rule applies instead: hair,
+   * eyebrows, pubic hair); an array = the list the report gives.
+   */
+  skinHide: readonly string[] | null | undefined
   /** 皱纹细节层（面部 UV + 法线图集）；皮肤画成不透明时才去取 / The wrinkle detail layer (face UV + normal atlas); fetched only once the skin is drawn opaque. */
   faceDetail: LoadedDetail | null
   faceStatus: 'idle' | 'loading' | 'ready' | 'missing' | 'error'
@@ -228,6 +237,7 @@ export interface AppState {
   /** 加载当前人体的表情数据（已加载则直接返回）/ Load this body's expression data (no-op when loaded). */
   ensureFace(): Promise<LoadedFace | null>
   ensureFaceDetail(): Promise<LoadedDetail | null>
+  ensureSkinReport(): void
   setStimSettings(patch: Partial<StimSettings>): void
   setStimArmed(on: boolean): void
   rejectFace(message: string): void
@@ -298,6 +308,7 @@ export function isSolo(systems: Partial<Record<SystemId, SystemState>>, id: Syst
 let pendingFace: { graph: AnatomyGraph; promise: Promise<LoadedFace | null> } | null = null
 let detailLoader = (dataset: string) => loadDetail(`${import.meta.env.BASE_URL}anatomy/${dataset}/`)
 let detailTried: AnatomyGraph | null = null
+let reportTried: AnatomyGraph | null = null
 let pendingDetail: Promise<LoadedDetail | null> = Promise.resolve(null)
 /** 测试用：替换细节层的加载方式 / For tests: replace how the detail layer is loaded. */
 export function setDetailLoader(loader: typeof detailLoader): void {
@@ -362,6 +373,7 @@ export const useApp = create<AppState>()((set, get) => ({
   provenanceHidden: new Set(),
   nerveBoost: true,
   face: null,
+  skinHide: undefined,
   faceDetail: null,
   faceStatus: 'idle',
   faceMessage: '',
@@ -484,6 +496,7 @@ export const useApp = create<AppState>()((set, get) => ({
       rigMessage: '',
       rigProgress: 0,
       face: null,
+      skinHide: undefined,
       faceDetail: null,
       faceStatus: 'idle',
       stim: null,
@@ -657,6 +670,19 @@ export const useApp = create<AppState>()((set, get) => ({
       })
     pendingFace = { graph, promise }
     return promise
+  },
+  ensureSkinReport: () => {
+    const { graph, dataset, skinHide } = get()
+    if (!graph || skinHide !== undefined || reportTried === graph) return
+    reportTried = graph
+    void fetchJson<{ appendages?: { applied?: boolean; hideWithOpaqueSkin?: string[] } }>(`${import.meta.env.BASE_URL}anatomy/${dataset}/pipeline-report.json`)
+      .catch(() => null)
+      .then((report) => {
+        if (get().graph !== graph) return
+        const a = report?.appendages
+        // 只有管线确实把附属部件贴合到皮肤上（applied）时，才用它的清单 / the list is used only when the pipeline really conformed the appendages to the skin (applied)
+        set({ skinHide: a?.applied && Array.isArray(a.hideWithOpaqueSkin) ? a.hideWithOpaqueSkin.filter((id) => !!graph.part(id)) : null })
+      })
   },
   ensureFaceDetail: async () => {
     const { faceDetail, graph, dataset } = get()

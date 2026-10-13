@@ -13,10 +13,34 @@ import type { Polyline } from '../tools/pipeline/tube.ts'
 import { readGlb } from '../tools/pipeline/glb.ts'
 import { loadBuiltBody } from '../tools/pipeline/body.ts'
 import { PointIndex, surfacePoints } from '../tools/pipeline/register.ts'
-import { edgeTopology, FACE_MUSCLE_NAME, faceRegionOfSkin, skinResolution } from '../tools/pipeline/skinPackage.ts'
+import { boundaryLoops, edgeTopology, FACE_MUSCLE_NAME, faceRegionOfSkin, loadSkinPackage, skinResolution } from '../tools/pipeline/skinPackage.ts'
+import { DISPLAY_FILE, SKIN_PIECES_FILE, SKIN_SOURCE_FILE, type OpenedSkinReport } from '../tools/pipeline/skinOpened.ts'
+import { OPENED_SKIN_POSITION_BITS, positionStep } from '../tools/pipeline/glb.ts'
 import { LAYERS } from '../tools/pipeline/layers.ts'
 
-const DIR = join(import.meta.dirname, '../public/anatomy/male')
+// 这组测试接受三种状态，按 pipeline-report.json 自己判断：
+//   A · 没有装入皮肤包（report.skinPackage.installed 为假：包不存在，或是按别的内部结构指纹拟合的）：
+//       身体带的是 BodyParts3D 自带的皮肤（被肩带校正和外展形变过，标为 warped），附属物不动；
+//   B · 装入了皮肤作者的闭合包（installed 为真，没有 report.skinPackage.opened）：一张闭合的皮肤，
+//       附属物贴合到新皮肤上，没有 skin-source.u32；
+//   C · 装入了开口后的包（report.skinPackage.opened 存在；<包>-open 由 tools/skinopen 写出）：发布的皮肤有
+//       眼和口的开口（两个边界环）、移植片，位置取 16 位，旁边有下标对照文件 skin-source.u32；
+//       凡是判断内外的数（fit、fitShipped、notFitted、脂肪）都是在闭合的那张皮肤上量的。
+// 标着 skipIf(!skinInstalled) 的检查在 B、C 下运行，标着 skipIf(!skinOpened) 的只在 C 下运行。
+// SOMA_MALE_DIR 可把测试指到另一个输出目录。
+// These tests accept three states and tell them apart from pipeline-report.json:
+//   A · no skin package installed (report.skinPackage.installed false: no package, or one fitted to
+//       another internals fingerprint): the body carries the BodyParts3D skin (deformed by the shoulder
+//       correction and the abduction, labelled warped) and untouched appendages;
+//   B · the author's closed package installed (installed true, no report.skinPackage.opened): one closed
+//       skin, the appendages conformed to it, no skin-source.u32;
+//   C · the opened package installed (report.skinPackage.opened present; <package>-open is written by
+//       tools/skinopen): the shipped skin has eye and mouth openings (two boundary loops) and grafts,
+//       16-bit positions and the index sidecar skin-source.u32 beside it; every figure that needs inside
+//       tests (fit, fitShipped, notFitted, the fat) is measured on the closed skin.
+// Checks marked skipIf(!skinInstalled) run in B and C, those marked skipIf(!skinOpened) in C only.
+// SOMA_MALE_DIR points the tests at another output directory.
+const DIR = process.env.SOMA_MALE_DIR ?? join(import.meta.dirname, '../public/anatomy/male')
 const FILE = join(DIR, 'anatomy.json')
 const present = existsSync(FILE)
 
@@ -40,9 +64,13 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     return hits[0]!
   }
   const layerOf = (p: Part) => LAYERS[p.depth]!.key
-  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { corrections?: { release3SwappedGeometry?: string[][] }; skinPackage?: { installed?: boolean; fittedTo?: { key: string }; internalsKey?: string; notEnclosedPartIds?: string[]; fit?: FitRow; fitShipped?: FitRow; face?: { cover: Record<string, { minMm: number; medianMm: number } | null>; eyeJoint?: Record<'L' | 'R', { distanceMm: number }> }; notFitted?: { thin: { outside: number } }; resolution?: Record<'source' | 'simplifiedWhole' | 'shipped', { vertices: number; triangles: number; face: { vertices: number; triangles: number; meanEdgeMm: number } }> & { shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } } }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] } }
+  const pipelineReport = (present && existsSync(join(DIR, 'pipeline-report.json')) ? JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) : {}) as { corrections?: { release3SwappedGeometry?: string[][] }; skinPackage?: { installed?: boolean; dir?: string; opened?: OpenedSkinReport; fittedTo?: { key: string }; internalsKey?: string; notEnclosedPartIds?: string[]; fit?: FitRow; fitShipped?: FitRow; face?: { cover: Record<string, { minMm: number; medianMm: number } | null>; eyeJoint?: Record<'L' | 'R', { distanceMm: number }> }; notFitted?: { thin: { outside: number } }; resolution?: Record<'source' | 'simplifiedWhole' | 'shipped', { vertices: number; triangles: number; face: { vertices: number; triangles: number; meanEdgeMm: number } }> & { shippedTopology: { boundaryEdges: number; nonManifoldEdges: number } } }; fat?: { skinSingleWalled?: boolean; regions: { id: string; verticesPulledIn: number }[] }; appendages?: { hideWithOpaqueSkin?: string[] } }
   const skinInstalled = !!pipelineReport.skinPackage?.installed
-  const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? ((JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as { shoulderGirdle?: { provenance?: { relabelledIds?: string[] } } }).shoulderGirdle?.provenance?.relabelledIds ?? []) : [])
+  // 状态 C：装入的是开口后的包 / state C: the opened package is the one installed
+  const skinOpened = skinInstalled && !!pipelineReport.skinPackage?.opened
+  // 被非刚性形变而由 scanned 改标为 warped 的部件：肩带校正、上肢外展、附属物贴合三步各自报告
+  // parts deformed non-rigidly and relabelled from scanned to warped: reported by the shoulder correction, the arm abduction and the appendage conforming, each for itself
+  const shoulderWarped = new Set<string>(present && existsSync(join(DIR, 'pipeline-report.json')) ? (['shoulderGirdle', 'armAbduction', 'appendages'] as const).flatMap((k) => { const r = (JSON.parse(readFileSync(join(DIR, 'pipeline-report.json'), 'utf8')) as Record<string, { provenance?: { relabelledIds?: string[] }; relabelledIds?: string[] } | undefined>)[k]; return r?.provenance?.relabelledIds ?? r?.relabelledIds ?? [] }) : [])
 
   it('has the contract header', () => {
     expect(data.schema).toBe(1)
@@ -256,9 +284,21 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     // 整张简化时面部只剩一成左右，边长是三倍多 / simplified as a whole, about a tenth of them would be left, with edges more than three times as long
     expect(res.simplifiedWhole.face.vertices).toBeLessThan(res.shipped.face.vertices / 5)
     expect(res.simplifiedWhole.face.meanEdgeMm).toBeGreaterThan(5)
-    // 其余部分照旧简化 / the rest is simplified as before
-    expect(res.shipped.vertices - res.shipped.face.vertices).toBeLessThan(16_000)
-    expect(res.shippedTopology.boundaryEdges).toBe(0)
+    // 其余部分照旧简化。状态 C 下标签非 0 的顶点（移植片等）也原样保留，先从“其余”里减去
+    // （有些带标签的顶点在面部区域内，被减了两次，所以这个上限比实际略松）
+    // the rest is simplified as before. In state C the tagged vertices (grafts and so on) are kept as they are too
+    // and are taken off "the rest" first (some tagged vertices lie in the face region and are taken off twice, so the
+    // bound is slightly looser than the truth)
+    const op = sp.opened
+    const tagged = op ? Object.entries(op.byTag).filter(([k]) => k !== 'skin').reduce((a, [, c]) => a + c.shipped, 0) : 0
+    expect(res.shipped.vertices - res.shipped.face.vertices - tagged).toBeLessThan(16_000)
+    // B：发布的皮肤是闭合的。C：它有且只有两个边界环（两眼内卷的内缘），另报，不算“闭合”
+    // B: the shipped skin is closed. C: it has exactly two boundary loops (the inner edges of the two lid rims), reported apart from "closed"
+    if (op) {
+      expect(op.shipped.boundaryLoops).toBe(2)
+      expect(res.shippedTopology.boundaryEdges).toBe(op.shipped.boundaryEdges)
+      expect(op.closedCounterpart).toMatchObject({ boundaryEdges: 0, used: true })
+    } else expect(res.shippedTopology.boundaryEdges).toBe(0)
     // 对写出的 GLB 再量一遍：一个部件、没有边界边、面部的顶点数和边长与报告一致
     // measured again on the written GLB: one part, no boundary edge, face vertices and edge length as reported
     const skin = byName('Skin')
@@ -267,14 +307,22 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     const mesh = body.meshes.get(skin.id)!
     expect(mesh.indices.length / 3).toBe(res.shipped.triangles)
     expect(mesh.positions.length / 3).toBe(res.shipped.vertices)
-    expect(edgeTopology(mesh).boundaryEdges).toBe(0)
+    if (op) expect(boundaryLoops(mesh)).toMatchObject({ loops: 2, edges: op.shipped.boundaryEdges })
+    else expect(edgeTopology(mesh).boundaryEdges).toBe(0)
     const facial = [...body.parts.values()].filter((p) => p.id !== skin.id && body.meshes.has(p.id)).map((p) => body.meshes.get(p.id)!)
     expect(facial.length).toBeGreaterThan(25)
     const shipped = skinResolution(mesh, faceRegionOfSkin(mesh, facial))
     // GLB 里的位置是量化过的，肌也是简化过的：边界上的顶点会有少量出入
     // positions in the GLB are quantised and the muscles simplified: a few vertices on the border fall either way
-    expect(Math.abs(shipped.face.vertices - res.shipped.face.vertices)).toBeLessThan(400)
-    expect(shipped.face.meanEdgeMm).toBeLessThanOrEqual(2)
+    // 状态 C：报告里的面部不算构造物（内卷、口腔袋），而这里按位置重量的面部区域把它们也算了进去，
+    // 所以顶点数最多多出这些构造物的个数，平均边长也因为口腔袋较粗而略大（上限放到 2.3 mm，只在状态 C）
+    // state C: the face of the report leaves out the construction aids (rims, pouch) while the region measured again
+    // here by position includes them, so the count may exceed the report by up to their number and the mean edge is a
+    // little longer because the pouch is coarser (bound 2.3 mm, in state C only)
+    const aids = op ? ['lidRimL', 'lidRimR', 'oralPouchUpper', 'oralPouchLower', 'oralPouchSeam'].reduce((a, k) => a + (op.byTag[k]?.shipped ?? 0), 0) : 0
+    expect(shipped.face.vertices - res.shipped.face.vertices).toBeGreaterThan(-400)
+    expect(shipped.face.vertices - res.shipped.face.vertices).toBeLessThan(aids + 400)
+    expect(shipped.face.meanEdgeMm).toBeLessThanOrEqual(op ? 2.3 : 2)
     // 皮肤仍包得住它应当包住的深部结构：没有任何一处露出 5 mm 以上。
     // 皮肤作者有意不包的部件（眼球各部、睑缘处的眼轮匝肌、唇、牙、舌、鼻软骨）取自皮肤包 manifest 的
     // face.notEnclosed.partIds，不在这里写名字；它们露出多少另行报告（notEnclosedByDesign）。
@@ -284,6 +332,8 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     // teeth, tongue, nasal cartilages) come from face.notEnclosed.partIds in the package manifest, not from names written
     // here; how far they come through is reported apart (notEnclosedByDesign). Any part not on that list lying more than
     // 5 mm outside fails here (the unit test of checkSkinFit is in pipeline.test.ts).
+    // 状态 C 下这两组数量的是闭合的皮肤：fit 是包里的 skin-closed.obj，fitShipped 是发布的皮肤按下标闭合后的那张
+    // in state C both are measured on closed skins: fit on skin-closed.obj of the package, fitShipped on the shipped skin closed by index
     for (const fit of [sp.fit!, sp.fitShipped!]) {
       expect(fit.closed).toBe(true)
       expect(fit.outside).toBeLessThan(0.002)
@@ -307,6 +357,148 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
     expect(sp.notFitted!.thin.outside).toBeLessThan(0.05)
     expect(data.cautions!.map((c) => c.en).join(' ')).toContain('fitted to enclose muscles, bones, cartilages and organs only')
   }, 60_000)
+
+  it.skipIf(!skinInstalled || skinOpened)('ships no index sidecar and no composition with a closed skin package (state B)', () => {
+    expect(existsSync(join(DIR, SKIN_SOURCE_FILE))).toBe(false)
+    expect((byName('Skin') as Part & { composition?: unknown }).composition).toBeUndefined()
+    expect(data.cautions!.map((c) => c.en).join(' ')).toContain('The eyes and the mouth of the skin are not openings')
+  })
+
+  it.skipIf(!skinOpened)('ships the opened skin with an index sidecar that maps every vertex to the package by index (state C)', async () => {
+    const op = pipelineReport.skinPackage!.opened!
+    const skin = byName('Skin')
+    // 下标对照文件：小端 uint32，每个发布的皮肤顶点一个，按 GLB 解码次序
+    // the sidecar: little-endian uint32, one per shipped skin vertex, in GLB decode order
+    const bytes = readFileSync(join(DIR, SKIN_SOURCE_FILE))
+    const doc = await readGlb(join(DIR, 'integumentary.glb'))
+    const node = doc.getRoot().listNodes().find((n) => n.getName() === skin.id)!
+    const prim = node.getMesh()!.listPrimitives()[0]!
+    const pos = prim.getAttribute('POSITION')!
+    const nv = pos.getCount()
+    expect(bytes.length).toBe(4 * nv)
+    expect(op.sidecar).toMatchObject({ file: SKIN_SOURCE_FILE, vertices: nv })
+    expect(op.shipped.vertices).toBe(nv)
+    expect(prim.getIndices()!.getCount() / 3).toBe(op.shipped.triangles)
+    const source = new Uint32Array(nv)
+    for (let j = 0; j < nv; j++) source[j] = bytes.readUInt32LE(4 * j)
+    // 每个包顶点至多发布一次 / no package vertex is shipped twice
+    expect(new Set(source).size).toBe(nv)
+    for (const v of source) expect(v).toBeLessThan(op.package.vertices)
+    // 发布的顶点按标签的个数与报告一致；被切掉的顶点（removed）一个也不发布，其余标签非 0 的一个不少
+    // shipped vertices by tag as reported; no removed vertex is shipped and every other tagged vertex is
+    for (const [name, c] of Object.entries(op.byTag)) {
+      if (name === 'removed') expect(c.shipped, name).toBe(0)
+      else if (name !== 'skin') expect(c.shipped, name).toBe(c.inPackage)
+    }
+    expect(op.lockedVerticesMissing).toBe(0)
+    expect(Object.values(op.byTag).reduce((a, c) => a + c.shipped, 0)).toBe(nv)
+    for (const k of ['upperLip', 'lowerLip', 'mouthCorner', 'upperLidL', 'lowerLidL', 'upperLidR', 'lowerLidR', 'canthus', 'lidRimL', 'lidRimR', 'oralPouchUpper', 'oralPouchLower', 'oralPouchSeam']) expect(op.byTag[k]?.shipped ?? 0, k).toBeGreaterThan(0)
+    // 位置取 16 位：步长约 0.026 mm；唇缘的顶点对发布为两个顶点，量化后仍然重合；口区没有不同的位置被量化到一起
+    // 16-bit positions: a step of about 0.026 mm; the lip margin pairs ship as two vertices each and still coincide after quantisation; no distinct positions of the mouth sheets quantise together
+    const q = op.quantisation!.chosen
+    expect(q.bits).toBe(OPENED_SKIN_POSITION_BITS)
+    expect(q.stepMm).toBeLessThan(0.03)
+    expect(q.marginPairs).toBeGreaterThan(30)
+    expect(q.marginPairsShippedApart).toBe(q.marginPairs)
+    expect(q.marginPairsCoincidentAfter).toBe(q.marginPairs)
+    expect(q.walls.mergedPositions).toBe(0)
+    expect(q.walls.flipped).toBeLessThanOrEqual(op.quantisation!.at14Bits.walls.flipped)
+    // 量化改变两壁次序的地方，原来的间距都不到一步 / wherever the quantisation changes the order of the walls, the gap was below one step
+    expect(q.walls.flippedGapInPackageMmMax).toBeLessThan(q.stepMm)
+    expect(pos.getArray()!.constructor.name).toBe('Int16Array')
+    // 包还在磁盘上时，逐顶点核对：GLB 里每个皮肤顶点与它所指的包顶点位置相同（半个量化步长之内）；
+    // 唇缘的每一对在 GLB 里是两个不同的顶点、指向两个不同的包顶点
+    // with the package still on disk, vertex by vertex: every skin vertex of the GLB sits where the package vertex it
+    // names does (within half a quantisation step); each lip margin pair is two vertices of the GLB naming two package vertices
+    const dir = join(import.meta.dirname, '..', op.dir)
+    const pkg = existsSync(join(dir, 'manifest.json')) ? loadSkinPackage(dir) : null
+    if (pkg?.opened && pkg.mesh.positions.length / 3 === op.package.vertices) {
+      const m = node.getWorldMatrix()
+      const el = [0, 0, 0]
+      const shipped = new Float32Array(3 * nv)
+      let max = 0
+      for (let j = 0; j < nv; j++) {
+        pos.getElement(j, el)
+        for (let k = 0; k < 3; k++) {
+          shipped[3 * j + k] = el[k]! * m[5 * k]! + m[12 + k]!
+          max = Math.max(max, Math.abs(shipped[3 * j + k]! - pkg.mesh.positions[3 * source[j]! + k]!))
+        }
+      }
+      expect(max).toBeLessThanOrEqual(0.5 * positionStep(shipped, OPENED_SKIN_POSITION_BITS) + 2e-6)
+      const shippedOf = new Map<number, number>()
+      source.forEach((v, j) => shippedOf.set(v, j))
+      const margins = (pkg.manifest.face as { margins: { upperLip: number[]; lowerLip: number[] } }).margins
+      for (let i = 1; i + 1 < margins.upperLip.length; i++) {
+        const a = shippedOf.get(margins.upperLip[i]!), b = shippedOf.get(margins.lowerLip[i]!)
+        expect(a, `upper margin ${i}`).toBeDefined()
+        expect(b, `lower margin ${i}`).toBeDefined()
+        expect(a).not.toBe(b)
+        expect(source[a!]).not.toBe(source[b!])
+        expect(pos.getElement(a!, [0, 0, 0])).toEqual(pos.getElement(b!, [0, 0, 0]))
+      }
+      for (let j = 0; j < nv; j++) if (pkg.opened.tags[source[j]!] === pkg.opened.tagNames.removed) throw new Error(`shipped vertex ${j} is a removed vertex`)
+    }
+    // 皮肤部件的记录如实说明它由什么构成；数据源带许可 / the skin part's record says what it is made of; the sources carry their licences
+    const comp = (skin as Part & { composition?: { what: { zh: string; en: string }; provenance: string; source: string | null; vertices: number }[] }).composition!
+    expect(comp.length).toBeGreaterThanOrEqual(3)
+    expect(comp.reduce((a, c) => a + c.vertices, 0)).toBe(nv)
+    expect(comp[0]).toMatchObject({ provenance: 'curated', source: skin.source })
+    expect(comp.filter((c) => c.provenance === 'construction').length).toBeGreaterThanOrEqual(2)
+    for (const c of comp) {
+      expect(['scanned', 'curated', 'construction']).toContain(c.provenance)
+      if (c.provenance === 'construction') expect(c.source).toBeNull()
+      else expect(data.sources.find((x) => x.name === c.source)!.license.length, c.source!).toBeGreaterThan(2)
+      expect(c.what.zh).toMatch(/[\u4e00-\u9fff]/)
+    }
+    for (const g of op.grafts) {
+      expect(['scanned', 'curated']).toContain(g.provenance)
+      expect(comp.some((c) => c.provenance === g.provenance && c.vertices === g.shipped.patch), g.name).toBe(true)
+      expect(g.shipped.patch).toBe(g.inPackage.patch)
+    }
+    expect(data.sources.find((x) => x.name === skin.source)!.license).toBe('Apache-2.0')
+    // 说明：眼和口是开口，内卷和口腔袋是构造物；不再说“不是开口” / cautions: eye and mouth are openings, rims and pouch are construction; "not openings" is gone
+    const all = data.cautions!.map((c) => c.en).join(' ')
+    expect(all).toContain('The eyes and the mouth of the skin are real openings')
+    expect(all).toContain('construction aids')
+    expect(all).not.toContain('are not openings')
+    if (op.grafts.some((g) => /genital/i.test(g.name))) expect(all).not.toContain('faceted mound')
+    if (op.grafts.some((g) => /^toes/i.test(g.name))) expect(all).not.toContain('the toes are one block')
+    // 深层的“唇”部件列在皮肤不透明时要隐藏的名单里，本身没有被改动 / the deep Lip part is on the list to hide while the skin is opaque, and is itself untouched
+    const lip = data.parts.find((p) => /^lip$/i.test(p.name) && p.system !== 'integumentary')
+    if (lip) {
+      expect(pipelineReport.appendages!.hideWithOpaqueSkin).toContain(lip.id)
+      expect(lip.provenance).toBe(shoulderWarped.has(lip.id) ? 'warped' : 'scanned')
+    }
+  }, 120_000)
+
+  it('ships display.json with exactly the fields the viewer reads, agreeing with the report', () => {
+    // display.json：查看器不必去取整份报告；字段恰好是这几个，数据与报告一致
+    // display.json: the viewer need not fetch the whole report; exactly these fields, the same data as the report
+    const display = JSON.parse(readFileSync(join(DIR, DISPLAY_FILE), 'utf8')) as { hideWithOpaqueSkin: string[]; notEnclosedPartIds: string[]; skin: { part: string | null; opened: boolean; pieces: boolean } }
+    expect(Object.keys(display).sort()).toEqual(['hideWithOpaqueSkin', 'notEnclosedPartIds', 'skin'])
+    expect(Object.keys(display.skin).sort()).toEqual(['opened', 'part', 'pieces'])
+    expect(display.hideWithOpaqueSkin).toEqual(pipelineReport.appendages?.hideWithOpaqueSkin ?? [])
+    expect(display.notEnclosedPartIds).toEqual([...(pipelineReport.skinPackage?.notEnclosedPartIds ?? [])].sort())
+    for (const id of [...display.hideWithOpaqueSkin, ...display.notEnclosedPartIds]) expect(byId.has(id), id).toBe(true)
+    expect(display.skin.part).toBe(byName('Skin').id)
+    expect(display.skin.opened).toBe(skinOpened)
+    expect(display.skin.opened).toBe(existsSync(join(DIR, SKIN_SOURCE_FILE)))
+    expect(display.skin.pieces).toBe(existsSync(join(DIR, SKIN_PIECES_FILE)))
+    // skin-pieces.u8：只在皮肤带 composition 时才有；每个发布顶点一个字节，各片的个数与 composition 一致
+    // skin-pieces.u8: only when the skin carries a composition; one byte per shipped vertex, and the count of every piece equals the composition's
+    const comp = (byName('Skin') as Part & { composition?: { vertices: number }[] }).composition
+    expect(display.skin.pieces).toBe(!!comp)
+    if (comp) {
+      const pieces = readFileSync(join(DIR, SKIN_PIECES_FILE))
+      expect(pieces.length).toBe(readFileSync(join(DIR, SKIN_SOURCE_FILE)).length / 4)
+      const n = new Array<number>(comp.length).fill(0)
+      for (const b of pieces) {
+        expect(b).toBeLessThan(comp.length)
+        n[b]!++
+      }
+      expect(n).toEqual(comp.map((c) => c.vertices))
+    }
+  })
 
   it('gets the left femur right', () => {
     const femur = byName('Left femur')
@@ -839,7 +1031,8 @@ describe.skipIf(!present)('pipeline output (public/anatomy/male)', () => {
         }
       }
       const lines = new Map<string, Polyline[]>(nervePaths.map((n) => [byId.get(n.part)!.name, n.branches.map((b) => ({ points: Float32Array.from(b.points), radius: Float32Array.from(b.radius) }))]))
-      const results = runLandmarkChecks({ mesh: (n) => meshes.get(n) ?? null, nerve: (n) => lines.get(n) ?? null })
+      // 与构建相同的选项：桡神经沟一项按肱骨干轴线取切片 / the build's option: the radial-groove check takes its slabs along the humeral shaft
+      const results = runLandmarkChecks({ mesh: (n) => meshes.get(n) ?? null, nerve: (n) => lines.get(n) ?? null }, { shaftAligned: true })
       const get = (id: string, side: 'L' | 'R'): LandmarkResult => results.find((r) => r.id === id && r.side === side)!
       expect(results.length).toBe(18)
       expect(results.filter((r) => !r.evaluated).map((r) => `${r.side} ${r.id}: ${r.measured}`)).toEqual([])

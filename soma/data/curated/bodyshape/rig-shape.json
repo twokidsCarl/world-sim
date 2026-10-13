@@ -24,7 +24,12 @@
      "unit": "m",
      "min": 1.4,
      "max": 2.0,
-     "rest": 1.606
+     "rest": 1.606,
+     "sdM": 0.0532,
+     "sdSource": {
+      "zh": "GB/T 10000-1988 百分位（转载表格、目视读数）按正态近似反推；见知识库 citation-audit.json。原先“±2 SD”用的 0.13 / 0.12 m 来自美军样本的量级（ANSUR II：68.6 / 64.2 mm）。",
+      "en": "implied by the GB/T 10000-1988 percentiles (reprinted table read by eye) under a normal approximation; see citation-audit.json of the knowledge base. The 0.13 / 0.12 m formerly used for \"+/-2 SD\" has the magnitude of the US Army sample (ANSUR II: 68.6 / 64.2 mm)."
+     }
     },
     {
      "id": "bmi",
@@ -576,60 +581,60 @@
     "sex": "shape-sex.f32",
     "limit": "shape-limit.f32",
     "central": "shape-central.f32",
-    "fittedAtBmi": 23.8,
+    "fittedAtBmi": 23.71,
     "bmiToFieldUnits": [
      [
       18.5,
-      -5.73
+      -5.55
      ],
      [
       20.0,
-      -4.0
+      -3.86
      ],
      [
       22.0,
-      -1.83
+      -1.71
      ],
      [
       24.0,
-      0.2
+      0.29
      ],
      [
       26.0,
-      2.17
+      2.22
      ],
      [
       28.0,
-      4.04
+      4.07
      ],
      [
       30.0,
-      5.84
+      5.83
      ],
      [
       32.0,
-      7.54
+      7.49
      ],
      [
       35.0,
-      10.04
+      9.94
      ],
      [
       38.0,
-      12.44
+      12.29
      ],
      [
       40.0,
-      13.99
+      13.78
      ]
     ],
     "mhrDirectionPerBmiPoint": [
-     0.17409,
+     0.17294,
      0.0,
-     -0.10657,
-     0.06336,
-     0.03469,
-     0.08906
+     -0.10547,
+     0.0634,
+     0.03504,
+     0.08884
     ]
    },
    "presets": [
@@ -705,7 +710,12 @@
      "unit": "m",
      "min": 1.4,
      "max": 2.0,
-     "rest": 1.726
+     "rest": 1.726,
+     "sdM": 0.0583,
+     "sdSource": {
+      "zh": "GB/T 10000-1988 百分位（转载表格、目视读数）按正态近似反推；见知识库 citation-audit.json。原先“±2 SD”用的 0.13 / 0.12 m 来自美军样本的量级（ANSUR II：68.6 / 64.2 mm）。",
+      "en": "implied by the GB/T 10000-1988 percentiles (reprinted table read by eye) under a normal approximation; see citation-audit.json of the knowledge base. The 0.13 / 0.12 m formerly used for \"+/-2 SD\" has the magnitude of the US Army sample (ANSUR II: 68.6 / 64.2 mm)."
+     }
     },
     {
      "id": "bmi",
@@ -1257,60 +1267,60 @@
     "sex": "shape-sex.f32",
     "limit": "shape-limit.f32",
     "central": "shape-central.f32",
-    "fittedAtBmi": 24.24,
+    "fittedAtBmi": 24.28,
     "bmiToFieldUnits": [
      [
       18.5,
-      -6.16
+      -6.19
      ],
      [
       20.0,
-      -4.44
+      -4.48
      ],
      [
       22.0,
-      -2.27
+      -2.31
      ],
      [
       24.0,
-      -0.24
+      -0.29
      ],
      [
       26.0,
-      1.72
+      1.67
      ],
      [
       28.0,
-      3.61
+      3.54
      ],
      [
       30.0,
-      5.4
+      5.32
      ],
      [
       32.0,
-      7.12
+      7.01
      ],
      [
       35.0,
-      9.66
+      9.49
      ],
      [
       38.0,
-      12.1
+      11.88
      ],
      [
       40.0,
-      13.67
+      13.4
      ]
     ],
     "mhrDirectionPerBmiPoint": [
-     0.18575,
+     0.18516,
      0.0,
-     -0.06448,
-     0.03547,
-     -0.05285,
-     -0.08398
+     -0.06407,
+     0.03568,
+     -0.0524,
+     -0.0837
     ]
    },
    "presets": [

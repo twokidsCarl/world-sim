@@ -205,7 +205,7 @@ describe.each(['male', 'female'])('real shape data: %s', (bodyName) => {
     const rest = new Float32Array(data.skin.vertexCount * 3)
     expect(new Shaper(data, shape.bin, {}).shapedRest(data.skin.part, rest).every((v) => Math.abs(v) < 1e-7)).toBe(true)
     const fat = new Shaper(data, shape.bin, { bmi: 40 }).shapedRest(data.skin.part, rest)
-    expect(Math.max(...fat.map(Math.abs))).toBeGreaterThan(0.01)
+    expect(fat.reduce((m, x) => Math.max(m, Math.abs(x)), 0)).toBeGreaterThan(0.01)
     expect(resolveControls(data, { bmi: 0 }).bmi).toBe(data.controls.find((c) => c.id === 'bmi')!.valid.min)
     expect(Object.keys(shapeScales(data, { stature: 1.9, legLength: 1 })!).length).toBeGreaterThan(50)
   })

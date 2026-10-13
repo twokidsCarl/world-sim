@@ -168,14 +168,14 @@
     {
       "id": "pain",
       "title": {
-        "zh": "疼痛表情：面部肌肉怎样动",
-        "en": "The pain expression: how the facial muscles move"
+        "zh": "疼痛表情：皱眉、挤眼、张口",
+        "en": "The pain expression: brow, eyes and mouth"
       },
       "hint": {
-        "zh": "拖动强度滑块看皱眉、挤眼、提上唇逐步出现；点“触发”看它按时间出现又消退。声音默认关，打开后再触发才会出声。这是行为的计算模型，模拟人没有感受",
-        "en": "Drag the intensity slider to see brow lowering, eye tightening and lip raising appear step by step; Trigger plays the time course. Sound is off by default and plays only after you turn it on and trigger. A computational model of behaviour: the simulated body feels nothing"
+        "zh": "拖动强度滑块看皱眉、挤眼、提上唇逐步出现；点“触发”看它按时间出现又消退；眼和口是真正的开口，“看肌肉”可以对照肌肉。声音默认关，打开后再触发才会出声。这是行为的计算模型，模拟人没有感受",
+        "en": "Drag the intensity slider to see brow lowering, eye tightening and lip raising appear step by step; Trigger plays the time course; eyes and mouth are real openings, and “看肌肉” compares the muscles. Sound is off by default and plays only after you turn it on and trigger. A computational model of behaviour: the simulated body feels nothing"
       },
-      "url": "/?sys=mus,ske&pain=7&cam=0.06,1.507,0.671,-0.001,1.487,0.151"
+      "url": "/?sys=int&skin=1&pain=7&cam=0.06,1.507,0.671,-0.001,1.487,0.151"
     },
     {
       "id": "f-pelvic-floor",

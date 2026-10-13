@@ -50,6 +50,10 @@ export interface ExternalWeights {
   notes: string[]
   /** 把权重按最近点传到给定顶点（flat xyz）；同时返回到原始表面的距离统计。 Transfers the weights to the given vertices (flat xyz) by closest point, with distance statistics to the original surface. */
   transfer(positions: Float32Array): { rows: Map<number, number>[]; meanMm: number; maxMm: number }
+  /** 按下标取权重：source[i] 是第 i 个顶点在皮肤包里的顶点下标。不看位置，所以重合的上下唇缘顶点不会混。 Weights by index: source[i] is the package vertex of vertex i. Positions are not consulted, so coincident upper and lower lip-margin vertices cannot be confused. */
+  byIndex(source: Uint32Array): Map<number, number>[]
+  /** 闭合的伴随表面（skin-closed.obj），没有时为 null。需要闭合曲面的地方（体内距离场）用它。 The closed companion surface (skin-closed.obj), null when absent; used where a closed surface is needed (the in-body distance field). */
+  closed(): { positions: Float32Array; indices: Uint32Array } | null
 }
 
 interface JointsFile {
@@ -67,6 +71,21 @@ function share(expr: number | string, n: number): number {
   return m[1] ? 1 - v : v
 }
 
+/** 读 OBJ 的顶点和面（多边形按扇形剖成三角形）。 Reads the vertices and faces of an OBJ (polygons fanned into triangles). */
+export function readObj(path: string): { positions: Float32Array; indices: Uint32Array } {
+  const pos: number[] = [], idx: number[] = []
+  for (const line of readFileSync(path, 'utf8').split('\n')) {
+    if (line.startsWith('v ')) {
+      const t = line.split(/\s+/)
+      pos.push(Number(t[1]), Number(t[2]), Number(t[3]))
+    } else if (line.startsWith('f ')) {
+      const t = line.trim().split(/\s+/).slice(1).map((s) => Number(s.split('/')[0]) - 1)
+      for (let k = 1; k + 1 < t.length; k++) idx.push(t[0]!, t[k]!, t[k + 1]!)
+    }
+  }
+  return { positions: Float32Array.from(pos), indices: Uint32Array.from(idx) }
+}
+
 /** 读入外部权重包并映射到本骨架；目录或必需文件不存在时返回 null。 Reads an external weight package and maps it onto this rig; null when the directory or a required file is absent. */
 export function loadExternalWeights(dir: string, joints: RigJointGeom[], rules: ExternalRule[] = []): ExternalWeights | null {
   const need = ['weights.bin', 'joints.json', 'skin.obj', 'manifest.json'].map((f) => join(dir, f))
@@ -77,17 +96,7 @@ export function loadExternalWeights(dir: string, joints: RigJointGeom[], rules: 
   const notes: string[] = []
 
   // 原始表面 / the original surface
-  const pos: number[] = [], idx: number[] = []
-  for (const line of readFileSync(need[2]!, 'utf8').split('\n')) {
-    if (line.startsWith('v ')) {
-      const t = line.split(/\s+/)
-      pos.push(Number(t[1]), Number(t[2]), Number(t[3]))
-    } else if (line.startsWith('f ')) {
-      const t = line.trim().split(/\s+/).slice(1).map((s) => Number(s.split('/')[0]) - 1)
-      for (let k = 1; k + 1 < t.length; k++) idx.push(t[0]!, t[k]!, t[k + 1]!)
-    }
-  }
-  const positions = Float32Array.from(pos), indices = Uint32Array.from(idx)
+  const { positions, indices } = readObj(need[2]!)
   const vertexCount = positions.length / 3
 
   // 每个外部关节的去向：一个函数（顶点位置 → [关节下标, 份额][]）
@@ -210,6 +219,16 @@ export function loadExternalWeights(dir: string, joints: RigJointGeom[], rules: 
   let surface: Surface | null = null
   return {
     dir, sourceName: manifest.source?.name ?? '', body: manifest.fittedTo?.body ?? null, vertexCount, rows, mapped, notes,
+    byIndex(source: Uint32Array) {
+      return Array.from(source, (v) => {
+        if (v >= vertexCount) throw new Error(`rig: skin index sidecar refers to vertex ${v}, but ${dir} has ${vertexCount} vertices`)
+        return new Map(rows[v]!)
+      })
+    },
+    closed() {
+      const p = join(dir, 'skin-closed.obj')
+      return existsSync(p) ? readObj(p) : null
+    },
     transfer(target: Float32Array) {
       surface ??= new Surface({ positions, indices })
       const n = target.length / 3

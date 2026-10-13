@@ -1,7 +1,7 @@
 {
  "_doc": {
-  "zh": "FACS 动作单元（AU）到肌肉通道的对应。只收 UNBC-McMaster 库为疼痛编码的 11 个 AU（见 sources.json 的 egede2017）。channels 的键是 muscles.json 里的肌肉 id（两侧同时激活），值是 AU 强度为 5（E 级，最大）时该肌肉的激活。AU 的名称和肌肉基础取自 wikipedia-facs；权重的具体数值、以及“强度 0–5 与位移成正比”都是本项目的假设（FACS 的强度是序数等级，不是位移量）。jawFraction 是强度为 5 时下颌张开角占颞下颌关节活动范围的比例，也是假设。 oral_recess 不是肌肉：它是皮肤上口裂内陷的几何替代（皮肤没有口裂），权重是假设。",
-  "en": "FACS action units (AUs) as combinations of muscle channels. Only the 11 AUs that the UNBC-McMaster archive codes for pain are included (see egede2017 in sources.json). Keys of `channels` are muscle ids from muscles.json (both sides activate together); values are the muscle's activation at AU intensity 5 (level E, maximum). AU names and muscular basis come from wikipedia-facs; the weight values, and the proportionality of displacement to intensity 0–5, are assumptions of this project (FACS intensities are ordinal grades, not displacements). `jawFraction` is the jaw opening at intensity 5 as a fraction of the temporomandibular range of motion, also an assumption. oral_recess is not a muscle: it is the geometric stand-in for the oral fissure on the skin (which has no opening); its weights are assumptions."
+  "zh": "FACS 动作单元（AU）到肌肉通道的对应。只收 UNBC-McMaster 库为疼痛编码的 11 个 AU（见 sources.json 的 egede2017）。channels 的键是 muscles.json 里的肌肉 id（两侧同时激活），值是 AU 强度为 5（E 级，最大）时该肌肉的激活。AU 的名称和肌肉基础取自 wikipedia-facs；权重的具体数值、以及“强度 0–5 与位移成正比”都是本项目的假设（FACS 的强度是序数等级，不是位移量）。jawFraction 是强度为 5 时下颌张开角占颞下颌关节活动范围的比例，也是假设。 oral_recess 不是肌肉：它是皮肤上口裂内陷的几何替代（皮肤没有口裂），权重是假设。 mouth_corner 也不是肌肉：皮肤有真实口裂时用它把张开的口角修成杏仁形，权重等于该 AU 的 jawFraction。oral_recess 只用于闭合的皮肤，mouth_corner 只用于开口的皮肤。",
+  "en": "FACS action units (AUs) as combinations of muscle channels. Only the 11 AUs that the UNBC-McMaster archive codes for pain are included (see egede2017 in sources.json). Keys of `channels` are muscle ids from muscles.json (both sides activate together); values are the muscle's activation at AU intensity 5 (level E, maximum). AU names and muscular basis come from wikipedia-facs; the weight values, and the proportionality of displacement to intensity 0–5, are assumptions of this project (FACS intensities are ordinal grades, not displacements). `jawFraction` is the jaw opening at intensity 5 as a fraction of the temporomandibular range of motion, also an assumption. oral_recess is not a muscle: it is the geometric stand-in for the oral fissure on the skin (which has no opening); its weights are assumptions. mouth_corner is not a muscle either: with a real oral fissure it shapes the opened mouth corners into an almond, and its weight equals the AU's jawFraction. oral_recess applies to a closed skin only and mouth_corner to an opened one only."
  },
  "intensity": {
   "min": 0,
@@ -170,7 +170,8 @@
    },
    "channels": {
     "depressor_labii_inferioris": 0.3,
-    "oral_recess": 0.7
+    "oral_recess": 0.7,
+    "mouth_corner": 0.35
    },
    "jawFraction": 0.35,
    "basis": {
@@ -189,7 +190,8 @@
    },
    "channels": {
     "depressor_labii_inferioris": 0.5,
-    "oral_recess": 1.0
+    "oral_recess": 1.0,
+    "mouth_corner": 1.0
    },
    "jawFraction": 1.0,
    "missing": [

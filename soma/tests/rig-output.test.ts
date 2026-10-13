@@ -195,9 +195,41 @@ for (const bodyId of ['male', 'female'] as const) {
         expect(moved(`radioulnar_${s}`, 0, rad(150), thumbSide)[0] * lateral).toBeLessThan(-0.02)
       }
       // 左右对称：左肘屈与右肘屈的位移互为镜像 / left and right mirror each other
+      // 两侧的轴各自从自己的骨拟合，骨不对称时位移也不对称：容差取“前臂长 × 两轴（镜像后）夹角的正弦”再加 1 cm。
+      // 夹角本身限制在 30° 以内：符号或左右弄反时它接近 90°–180°，位移之差则有几十厘米。
+      // （女性模型两侧肱骨远端绕骨干相差约 23°，屈肘 90° 时腕的上移量两侧差 3.3 cm；男性两侧相差 1°、2 mm。）
+      // Each side's axis is fitted from its own bones, so asymmetric bones give asymmetric motion: the
+      // tolerance is forearm length × sine of the angle between the two axes (after mirroring), plus
+      // 1 cm. The angle itself must stay under 30°: a wrong sign or swapped sides gives 90°–180° and
+      // displacements that differ by tens of centimetres. (The distal ends of the female model's two
+      // humeri differ by about 23° about the shaft, and at 90° of flexion her wrists rise by amounts
+      // 3.3 cm apart; the male's sides differ by 1° and 2 mm.)
+      const eL = byId.get('elbow_L')!, eR = byId.get('elbow_R')!
+      const aL = eL.axes[0] as V3, aR = eR.axes[0] as V3
+      const between = Math.acos(Math.min(1, Math.abs(-aL[0] * aR[0] + aL[1] * aR[1] + aL[2] * aR[2])))
+      expect(between).toBeLessThan(rad(30))
+      const tL = tailOf('elbow_L')
+      const forearm = Math.hypot(tL[0] - eL.center[0], tL[1] - eL.center[1], tL[2] - eL.center[2])
+      const tol = forearm * Math.sin(between) + 0.01
       const l = moved('elbow_L', 0, rad(90), tailOf('elbow_L')), r = moved('elbow_R', 0, rad(90), tailOf('elbow_R'))
-      expect(Math.abs(l[1] - r[1])).toBeLessThan(0.03)
-      expect(Math.abs(l[2] - r[2])).toBeLessThan(0.03)
+      expect(Math.abs(l[0] + r[0])).toBeLessThan(tol)
+      expect(Math.abs(l[1] - r[1])).toBeLessThan(tol)
+      expect(Math.abs(l[2] - r[2])).toBeLessThan(tol)
+      // 肩外展 90°、前屈 160°：上臂长轴与铅垂线的夹角就是所说的角度，并落在冠状面／矢状面内
+      // shoulder abduction 90° and flexion 160°: the upper arm ends at the stated angle from the vertical, in the frontal / sagittal plane
+      for (const [id, want, plane] of [['shoulderAbd90', 90, 0], ['shoulderFlex160', 160, 1]] as const) {
+        const posture = standardPostures(rig.joints).find((p) => p.id === id)!
+        const xf = jointTransforms(rig.joints, posture.pose)
+        for (const s of ['L', 'R'] as const) {
+          const gh = byId.get(`gh_${s}`)!, k = index.get(`gh_${s}`)!
+          const a = xfApply(xf[k]!, gh.center as V3), b = xfApply(xf[k]!, tailOf(`gh_${s}`))
+          const d: V3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+          const n = Math.hypot(d[0], d[1], d[2])
+          expect(Math.acos(-d[1] / n) / rad(1), `${id} ${s}`).toBeCloseTo(want, 1)
+          expect(Math.abs(d[plane === 0 ? 2 : 0] / n), `${id} ${s} plane`).toBeLessThan(0.01)
+          expect(posture.clamped).toEqual([])
+        }
+      }
       // 张口：颏向下；颈左旋：鼻尖向左 / mouth opening: the chin goes down; neck rotation to the left: the nose goes left
       expect(moved('tmj', 0, rad(20), tailOf('tmj'))[1]).toBeLessThan(-0.01)
       const c1 = byId.get('C1')!

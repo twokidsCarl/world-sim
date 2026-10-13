@@ -772,6 +772,27 @@
       "zh": "鼻背至鼻尖（鼻外支）",
       "en": "dorsum to tip of nose (external nasal branch)"
      }
+    },
+    {
+     "tags": [
+      4,
+      6
+     ],
+     "pin": true,
+     "note": {
+      "zh": "上睑缘（开口皮肤上的标签顶点）：分区止于睑裂",
+      "en": "upper lid margin (tagged vertices of an opened skin): the map stops at the palpebral fissure"
+     }
+    },
+    {
+     "tags": [
+      13
+     ],
+     "pin": true,
+     "note": {
+      "zh": "内、外眦（上、下睑缘共有的顶点）归 V1：内眦属滑车下神经，外眦属泪腺神经。不固定的话左右两侧会各归一边。",
+      "en": "medial and lateral canthus (the vertices shared by both lid margins) go to V1: infratrochlear nerve at the medial canthus, lacrimal nerve at the lateral. Left unpinned, the two sides came out differently."
+     }
     }
    ]
   },
@@ -845,6 +866,27 @@
      "note": {
       "zh": "颧部隆起、颞部前份",
       "en": "prominence of the cheek, anterior temple"
+     }
+    },
+    {
+     "tags": [
+      5,
+      7
+     ],
+     "pin": true,
+     "note": {
+      "zh": "下睑缘",
+      "en": "lower lid margin"
+     }
+    },
+    {
+     "tags": [
+      1
+     ],
+     "pin": true,
+     "note": {
+      "zh": "上唇缘：分区止于口裂",
+      "en": "upper lip margin: the map stops at the oral fissure"
      }
     }
    ]
@@ -932,6 +974,26 @@
      "note": {
       "zh": "耳前向上至颞部（耳颞神经）",
       "en": "in front of the ear and up the temple (auriculotemporal)"
+     }
+    },
+    {
+     "tags": [
+      2
+     ],
+     "pin": true,
+     "note": {
+      "zh": "下唇缘",
+      "en": "lower lip margin"
+     }
+    },
+    {
+     "tags": [
+      3
+     ],
+     "pin": true,
+     "note": {
+      "zh": "口角（上、下唇缘共有的顶点）归 V3 / 颏神经。不固定的话左右两侧会各归一边。",
+      "en": "mouth corner (the vertex shared by both lip margins) goes to V3 / mental nerve. Left unpinned, the two sides came out differently."
      }
     }
    ]
@@ -1952,18 +2014,24 @@
      "curve": [
       {
        "frame": "arm",
-       "t": 0.42,
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.0
+       },
        "deg": 335
       },
       {
        "frame": "arm",
-       "t": 0.58,
+       "t": {
+        "from": "armSkinTop",
+        "plus": 0.08
+       },
        "deg": 335
       }
      ],
      "note": {
-      "zh": "臂前内侧",
-      "en": "anteromedial arm"
+      "zh": "臂前内侧上部：自上臂内侧皮肤最上端起 8%（原先写死在肱骨 42–58% 处，在腋窝较低的皮肤上一直伸到臂内侧皮神经分布区里，使该区落在 T1 的面积由 0.52 降到 0.27）。",
+      "en": "Upper anteromedial arm: 8% of the humerus from the top of the medial arm skin (it used to be fixed at 42-58% of the humerus, which on a skin with a lower axilla reached into the medial brachial cutaneous territory and cut that territory's share in T1 from 0.52 to 0.27)."
      }
     },
     {
@@ -2009,14 +2077,6 @@
         "plus": -0.06
        },
        "deg": 215
-      },
-      {
-       "frame": "arm",
-       "t": {
-        "from": "armSkinTop",
-        "plus": 0.06
-       },
-       "deg": 240
       }
      ],
      "note": {
@@ -2646,6 +2706,18 @@
       "zh": "腰部、髋部、腹股沟韧带下方",
       "en": "loin, over the hip, groin below the inguinal ligament"
      }
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "penisRootDorsum",
+      "scrotumAnteriorUpper",
+      "scrotumAnterolateral"
+     ],
+     "note": {
+      "zh": "阴茎根和阴囊前面（髂腹股沟神经、生殖股神经生殖支，L1–L2；Gray）",
+      "en": "root of the penis and front of the scrotum (ilioinguinal nerve and genital branch of genitofemoral, L1-L2; Gray)"
+     }
     }
    ],
    "basis": "landmark-rule"
@@ -3238,8 +3310,8 @@
     "en": "Ischial tuberosity or infragluteal fold."
    },
    "rule": {
-    "zh": "臀内侧、会阴和外生殖器（与 S4–5 共同支配）；骶骨表面皮肤为推定归入本区。",
-    "en": "Medial buttock, perineum and external genitalia (with S4-5); skin over the sacrum is assigned here by interpolation."
+    "zh": "臀内侧、会阴、阴茎和阴囊后面（与 S2、S4 共同支配）；阴茎根和阴囊前面归 L1。骶骨表面皮肤为推定归入本区。",
+    "en": "Medial buttock, perineum, penis and back of the scrotum (with S2 and S4); the root of the penis and the front of the scrotum are L1. Skin over the sacrum is assigned here by interpolation."
    },
    "cite": [
     "isncsci2011",
@@ -3349,6 +3421,32 @@
      "note": {
       "zh": "阴茎、阴囊和会阴",
       "en": "penis, scrotum and perineum"
+     },
+     "unlessPart": "Glans penis"
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "penisShaftDorsum",
+      "glansSkin",
+      "penisShaftVentral",
+      "scrotumBottom"
+     ],
+     "note": {
+      "zh": "阴茎头和阴茎体（阴部神经的阴茎背神经，S2–S4；本图归 S3）",
+      "en": "glans and shaft of the penis (dorsal nerve of penis from the pudendal nerve, S2-S4; S3 in this map)"
+     }
+    },
+    {
+     "ifPart": "Glans penis",
+     "curve": [
+      "scrotumBottom",
+      "scrotumPosterior",
+      "perineum"
+     ],
+     "note": {
+      "zh": "阴囊后面和下面、会阴（阴囊后神经）",
+      "en": "back and underside of the scrotum, perineum (posterior scrotal nerves)"
      }
     }
    ],

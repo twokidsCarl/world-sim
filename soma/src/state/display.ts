@@ -36,6 +36,12 @@ export interface DisplayInput {
    * yet fitted to the new skins); a selected or isolated one is still shown.
    */
   unfitted?: ReadonlySet<string> | null
+  /**
+   * 不管系统开关、剥层和隔离都要显示的部件（透过皮肤开口看到的牙、舌、眼球）；用户单独隐藏的仍然隐藏。
+   * Parts shown whatever the system switches, peel and isolation say (teeth, tongue and eyeballs seen through
+   * the skin's openings); one the user hid individually stays hidden.
+   */
+  forced?: ReadonlySet<string> | null
 }
 
 /**
@@ -74,6 +80,10 @@ export function computeDisplay(graph: AnatomyGraph, s: DisplayInput, out?: Uint8
     const p = parts[i]!
     if (s.selected.has(p.id) || focus?.has(p.id)) {
       res[i] = NORMAL
+      continue
+    }
+    if (s.forced?.has(p.id) && !s.hidden.has(p.id)) {
+      res[i] = focus ? GHOST : NORMAL
       continue
     }
     const visible = s.isolated

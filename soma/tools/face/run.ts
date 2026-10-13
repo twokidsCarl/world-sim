@@ -27,7 +27,7 @@ import { type WrinklesCurated, buildDetail } from './detailBuild.ts'
 import { renderSkinDetailed } from './detailRender.ts'
 import { AU_MAX, painAUs } from './model.ts'
 import { sheet } from '../rig/render.ts'
-import { readMargins } from './margins.ts'
+import { loadOpenings } from './openings.ts'
 
 const ROOT = join(import.meta.dirname, '..', '..')
 const CURATED = ['muscles.json', 'aus.json', 'pain.json', 'sources.json'] as const
@@ -89,7 +89,20 @@ if (import.meta.main) {
   // rig.bin does not affect the fields, but the renders and the runtime result (skinning of jaw and lips) depend on it, so it is recorded too
   if (existsSync(join(dir, 'rig.bin'))) inputs['rig.bin'] = sha(new Uint8Array(readFileSync(join(dir, 'rig.bin'))))
   const curated = readCurated(inputs)
-  const { face, bin, report } = buildFace(body, rig, curated, log)
+  // 皮肤的开口（有的话）。来自皮肤包时写回 face/openings.json；输入里记下索引旁车文件和开口文件的哈希
+  // the skin's openings, when it has them. Written back to face/openings.json when converted from the package; the index sidecar and the openings file are recorded as inputs
+  const skinGuess = body.data.parts.filter((p) => p.tissue === 'skin' && p.system === 'integumentary' && body.meshes.has(p.id)).sort((a, b) => b.triangles - a.triangles || (a.id < b.id ? -1 : 1))[0]!
+  const loaded = loadOpenings(ROOT, dir, bodyId, skinGuess.id, body.meshes.get(skinGuess.id)!.positions.length / 3)
+  mkdirSync(join(dir, 'face'), { recursive: true })
+  if (loaded) {
+    const text = JSON.stringify(loaded.openings)
+    if (loaded.fromPackage) writeFileSync(join(dir, 'face', 'openings.json'), text)
+    inputs['skin-source.u32'] = sha(new Uint8Array(readFileSync(join(dir, 'skin-source.u32'))))
+    inputs['face/openings.json'] = sha(new TextEncoder().encode(text))
+    log(`openings: ${loaded.fromPackage ? 'converted from the skin package' : 'read from face/openings.json'}; lip margins ${loaded.openings.margins.upperLip.length} / ${loaded.openings.margins.lowerLip.length}, pouch ${loaded.openings.oralPouch.upper.length * 2 + loaded.openings.oralPouch.seam.length}, rims ${loaded.openings.lidRims.map((r) => r.vertices.length).join(' + ')}`)
+  } else log('no openings: the skin is closed; lips and lids are split by the measured crease and fissure')
+  const rigBinBytes = existsSync(join(dir, 'rig.bin')) ? new Uint8Array(readFileSync(join(dir, 'rig.bin'))) : null
+  const { face, bin, report } = buildFace(body, rig, curated, log, { openings: loaded?.openings ?? null, rigBin: rigBinBytes })
   face.inputs = Object.fromEntries(Object.entries(inputs).sort(([a], [b]) => (a < b ? -1 : 1)))
   writeFileSync(join(dir, 'face.json'), JSON.stringify(face))
   writeFileSync(join(dir, 'face.bin'), bin)
@@ -99,7 +112,7 @@ if (import.meta.main) {
   // —— 皱纹细节层 / the wrinkle detail layer ——
   const wrBytes = new Uint8Array(readFileSync(join(ROOT, 'data', 'curated', 'face', 'wrinkles.json')))
   const wrinkles = JSON.parse(new TextDecoder().decode(wrBytes)) as WrinklesCurated
-  const built = buildDetail(body, face, bin, wrinkles)
+  const built = buildDetail(body, face, bin, wrinkles, loaded?.openings ?? null)
   built.detail.inputs = { 'face.bin': sha(bin), 'face.json': sha(new Uint8Array(readFileSync(join(dir, 'face.json')))), 'data/curated/face/wrinkles.json': sha(wrBytes) }
   const detailDir = join(dir, 'face')
   mkdirSync(detailDir, { recursive: true })
@@ -114,7 +127,7 @@ if (import.meta.main) {
   let renders: string[] = []
   if (!args.includes('--no-renders')) {
     const rigBin = new Uint8Array(readFileSync(join(dir, 'rig.bin')))
-    const sc = scene(body, rig, rigBin, face, bin)
+    const sc = scene(body, rig, rigBin, face, bin, loaded?.openings ?? null)
     const all = args.includes('--detail-only') ? [] : renderAll(sc, outDir, log)
     // 带皱纹细节的皮肤图：经由发布的文件（uv.bin、wrinkles.png）解码后合成，与运行时走同一条路
     // skin renders with the wrinkle detail, composited from the published files (uv.bin, wrinkles.png) decoded as the runtime would
@@ -133,12 +146,31 @@ if (import.meta.main) {
     const lv = [0, 2, 4, 6, 8, 10].map((l) => renderSkinDetailed(sc, uv, layers, weightsOf, painAUs(face.pain, l), 640))
     save(lv.map((x) => x[0]!), 3, 'detail-pain-front.png')
     save(lv.map((x) => x[1]!), 3, 'detail-pain-oblique.png')
+    // 肌肉视图：每个 AU 的静止、强度 3、强度 5 / muscle view: rest, intensity 3 and intensity 5 of every AU
+    if (!args.includes('--detail-only')) {
+      const { renderExpression } = await import('./renders.ts')
+      for (const au of face.aus) {
+        const cols = [0, 3, AU_MAX].map((i) => renderExpression(sc, i ? { [au.id]: i } : {}, { size: 520 }))
+        save([...cols.map((c) => c[2]!), ...cols.map((c) => c[3]!)], 3, `muscle-${au.id}.png`)
+      }
+    }
+    // 特写：眼（AU43、AU7）和口（AU25–27、AU10）/ close-ups: the eye (AU43, AU7) and the mouth (AU25–27, AU10)
+    const eye = face.landmarks.eyes[0]
+    if (eye) {
+      const zoom = { center: [eye.globe[0], eye.globe[1], eye.globe[2]] as [number, number, number], halfHeight: 0.024, yaws: [0, 55] as [number, number] }
+      const sets: Record<string, number>[] = [{}, { AU43: 1.5 }, { AU43: 3 }, { AU43: AU_MAX }, { AU7: AU_MAX }, { AU6: AU_MAX }]
+      const im = sets.map((a) => renderSkinDetailed(sc, uv, layers, weightsOf, a, 460, zoom))
+      save([...im.map((x) => x[0]!), ...im.map((x) => x[1]!)], sets.length, 'closeup-eye.png')
+    }
+    {
+      const zoom = { center: [face.landmarks.midX, face.landmarks.stomionY.skin - 0.012, 0.1] as [number, number, number], halfHeight: 0.05, yaws: [0, 45] as [number, number] }
+      const sets: Record<string, number>[] = [{}, { AU25: AU_MAX }, { AU26: AU_MAX }, { AU27: AU_MAX }, { AU10: AU_MAX }, { AU12: AU_MAX }, { AU20: AU_MAX }]
+      const im = sets.map((a) => renderSkinDetailed(sc, uv, layers, weightsOf, a, 460, zoom))
+      save([...im.map((x) => x[0]!), ...im.map((x) => x[1]!)], sets.length, 'closeup-mouth.png')
+    }
     log(`detail renders written`)
     renders = all.map((f) => f.slice(ROOT.length + 1))
   }
-  // 皮肤包清单里的睑缘、唇缘环（有的话）：目前只记录 / lid and lip margin loops from the skin package manifest, when present: only recorded for now
-  const margins = readMargins(ROOT, bodyId, body.meshes.get(face.skin)!.positions)
-  log(margins ? `margins in the skin manifest: ${Object.entries(margins.loops).map(([k, v]) => `${k} ${v!.length}`).join(', ')}; unmatched ${margins.unmatched}` : 'no margins in the skin manifest (closed skin): lips and lids are split by the measured crease and fissure')
-  writeFileSync(join(outDir, 'report.json'), JSON.stringify({ ...report, margins: margins ? { counts: Object.fromEntries(Object.entries(margins.loops).map(([k, v]) => [k, v!.length])), unmatched: margins.unmatched } : null, detail: { uv: built.detail.uv, atlas: built.detail.atlas, skipped: built.skipped }, renders }, null, 1))
+  writeFileSync(join(outDir, 'report.json'), JSON.stringify({ ...report, detail: { uv: built.detail.uv, atlas: built.detail.atlas, skipped: built.skipped }, renders }, null, 1))
   log('done')
 }

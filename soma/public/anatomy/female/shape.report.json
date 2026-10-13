@@ -2,48 +2,48 @@
  "schema": 1,
  "body": "female",
  "inputs": {
-  "rig.json": "e34e8c669f6e4fec",
-  "rig.bin": "add43e6699efa9a2",
-  "anatomy.json": "691689bce58e1a12",
-  "integumentary.glb": "b06a27ea45f300a8",
-  "muscular.glb": "0db35e4eb0832ba1",
-  "skeletal.glb": "19e459169ddeea2a",
-  "cardiovascular.glb": "68100d86041c8458",
-  "nervous.glb": "963056d7332fff5f",
-  "respiratory.glb": "5bd055d2c7ba9224",
-  "digestive.glb": "3961fdbf48f71c49",
-  "urinary.glb": "1ef183c2c688605d",
-  "reproductive.glb": "4a05a063a61d85c4",
-  "endocrine.glb": "e13fc8e81b670807",
-  "lymphatic.glb": "ff0872629c01266e",
-  "nerves.json": "96d095e5d3c3eb80",
-  "../knowledge/relations.json": "903dce7ed75aae4f",
+  "rig.json": "8b11cb7a571336b9",
+  "rig.bin": "f8cde8d7af4e90bf",
+  "anatomy.json#parts": "24da6176f78479ae",
+  "integumentary.glb": "4d6b3ab8090c9b46",
+  "muscular.glb": "b5bbda989a8d3ff0",
+  "skeletal.glb": "75ef5bae11285abc",
+  "cardiovascular.glb": "9ab59fcdcb39849e",
+  "nervous.glb": "29720d43a1029d5c",
+  "respiratory.glb": "fe1679ab7b8faa16",
+  "digestive.glb": "f1e2272cb76f03c0",
+  "urinary.glb": "c0efb88f636d22d4",
+  "reproductive.glb": "b4fda7b4a8aada29",
+  "endocrine.glb": "59fb4b94fe2fdebf",
+  "lymphatic.glb": "21b1104c37440b32",
+  "nerves.json": "3abfab6f7a30757e",
+  "../knowledge/relations.json#attachments": "f05cb6f5e8ea5879",
   "data/raw/z-anatomy/out/import/attachments.json": "3dca935a4c1a054d",
-  "data/curated/rig/shape.json": "9faf893581df66eb",
-  "data/curated/bodyshape/rig-shape.json": "8ad7d54a345a4301",
-  "data/raw/bodyshape/out/female-skin/skin.obj": "1751d618b198452f",
-  "data/raw/bodyshape/out/female-skin/shape-fat.f32": "afad4a04a971e32f",
-  "data/raw/bodyshape/out/female-skin/shape-limit.f32": "95ddf89a4f1ad7df",
-  "data/raw/bodyshape/out/female-skin/shape-fields.json": "4ae6d1181c966ac2",
-  "data/raw/bodyshape/out/female-skin/manifest.json": "7bad292e34a3ace2"
+  "skin-source.u32": "9379a50140987507",
+  "data/curated/rig/shape.json#data": "c0e24566226a4854",
+  "data/curated/bodyshape/rig-shape.json#data": "e145fc8d255cc3cd",
+  "data/raw/bodyshape/out/female-skin-open/skin.obj": "b126195d6dd1291b",
+  "data/raw/bodyshape/out/female-skin-open/shape-fat.f32": "1c53535bae1468ce",
+  "data/raw/bodyshape/out/female-skin-open/shape-limit.f32": "7990339e0e710ceb",
+  "data/raw/bodyshape/out/female-skin-open/manifest.json#package": "9960b2c875581f16"
  },
- "binBytes": 1642392,
+ "binBytes": 2003060,
  "notes": [],
  "skin": {
   "part": "SOMA_skin",
-  "vertices": 28502,
-  "farthestFromSourceMm": 0.09
+  "vertices": 47364,
+  "farthestFromSourceMm": 0
  },
  "followers": {
-  "parts": 432,
-  "vertices": 111813
+  "parts": 451,
+  "vertices": 117069
  },
  "calibration": [
   {
    "factor": "headNeck",
    "from": "C7",
    "to": "skull",
-   "restMm": 126.5,
+   "restMm": 126.7,
    "gain": 1,
    "checkErrorPct": 0
   },
@@ -52,7 +52,7 @@
    "from": "pelvis",
    "to": "C7",
    "restMm": 540.9,
-   "gain": 1.2485,
+   "gain": 1.2486,
    "checkErrorPct": 0
   },
   {
@@ -75,15 +75,15 @@
    "factor": "foot",
    "from": "ankle_L",
    "to": "mtp2_L",
-   "restMm": 128.5,
-   "gain": 1.0114,
+   "restMm": 127.7,
+   "gain": 1.0118,
    "checkErrorPct": 0
   },
   {
    "factor": "upperArm",
    "from": "gh_L",
    "to": "elbow_L",
-   "restMm": 258.1,
+   "restMm": 258.2,
    "gain": 1,
    "checkErrorPct": 0
   },
@@ -91,15 +91,15 @@
    "factor": "forearm",
    "from": "elbow_L",
    "to": "wrist_L",
-   "restMm": 235.7,
-   "gain": 1.0079,
+   "restMm": 236.5,
+   "gain": 1.008,
    "checkErrorPct": 0
   },
   {
    "factor": "hand",
    "from": "wrist_L",
    "to": "mcp3_L",
-   "restMm": 67.2,
+   "restMm": 66.3,
    "gain": 1,
    "checkErrorPct": 0
   },
@@ -107,8 +107,8 @@
    "factor": "shoulderWidth",
    "from": "gh_R",
    "to": "gh_L",
-   "restMm": 355.3,
-   "gain": 1.3231,
+   "restMm": 355.1,
+   "gain": 1.3223,
    "checkErrorPct": 0
   },
   {
@@ -124,141 +124,141 @@
   {
    "control": "stature −2 SD",
    "factor": "headNeck",
-   "expected": 0.9535,
-   "measured": 0.9535,
+   "expected": 0.9534,
+   "measured": 0.9534,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "trunk",
-   "expected": 0.93,
-   "measured": 0.93,
+   "expected": 0.9298,
+   "measured": 0.9298,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "thigh",
-   "expected": 0.9182,
-   "measured": 0.9182,
+   "expected": 0.918,
+   "measured": 0.918,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "shank",
-   "expected": 0.9112,
-   "measured": 0.9112,
+   "expected": 0.911,
+   "measured": 0.911,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "foot",
-   "expected": 0.9319,
-   "measured": 0.9312,
+   "expected": 0.9318,
+   "measured": 0.931,
    "errorPct": -0.08
   },
   {
    "control": "stature −2 SD",
    "factor": "upperArm",
-   "expected": 0.9185,
-   "measured": 0.9185,
+   "expected": 0.9183,
+   "measured": 0.9183,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "forearm",
-   "expected": 0.9205,
-   "measured": 0.9202,
-   "errorPct": -0.03
+   "expected": 0.9203,
+   "measured": 0.92,
+   "errorPct": -0.04
   },
   {
    "control": "stature −2 SD",
    "factor": "hand",
-   "expected": 0.9342,
-   "measured": 0.9342,
+   "expected": 0.9341,
+   "measured": 0.9341,
    "errorPct": 0
   },
   {
    "control": "stature −2 SD",
    "factor": "shoulderWidth",
-   "expected": 0.9478,
-   "measured": 0.9445,
+   "expected": 0.9477,
+   "measured": 0.9443,
    "errorPct": -0.35
   },
   {
    "control": "stature −2 SD",
    "factor": "pelvisWidth",
-   "expected": 0.9444,
-   "measured": 0.9444,
+   "expected": 0.9443,
+   "measured": 0.9443,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "headNeck",
-   "expected": 1.0452,
-   "measured": 1.0452,
+   "expected": 1.0453,
+   "measured": 1.0453,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "trunk",
-   "expected": 1.0697,
-   "measured": 1.0697,
+   "expected": 1.0699,
+   "measured": 1.0699,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "thigh",
-   "expected": 1.0825,
-   "measured": 1.0825,
+   "expected": 1.0826,
+   "measured": 1.0826,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "shank",
-   "expected": 1.0902,
-   "measured": 1.0902,
+   "expected": 1.0904,
+   "measured": 1.0904,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "foot",
-   "expected": 1.0676,
-   "measured": 1.0684,
+   "expected": 1.0678,
+   "measured": 1.0686,
    "errorPct": 0.07
   },
   {
    "control": "stature +2 SD",
    "factor": "upperArm",
-   "expected": 1.0821,
-   "measured": 1.0821,
+   "expected": 1.0823,
+   "measured": 1.0823,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "forearm",
-   "expected": 1.0799,
-   "measured": 1.0803,
+   "expected": 1.0801,
+   "measured": 1.0804,
    "errorPct": 0.03
   },
   {
    "control": "stature +2 SD",
    "factor": "hand",
-   "expected": 1.0652,
-   "measured": 1.0652,
+   "expected": 1.0653,
+   "measured": 1.0653,
    "errorPct": 0
   },
   {
    "control": "stature +2 SD",
    "factor": "shoulderWidth",
-   "expected": 1.051,
-   "measured": 1.0542,
+   "expected": 1.0511,
+   "measured": 1.0544,
    "errorPct": 0.31
   },
   {
    "control": "stature +2 SD",
    "factor": "pelvisWidth",
-   "expected": 1.0545,
-   "measured": 1.0545,
+   "expected": 1.0546,
+   "measured": 1.0546,
    "errorPct": 0
   },
   {
@@ -546,65 +546,65 @@
   {
    "label": "default",
    "controls": {},
-   "skinHeightM": 1.6188,
+   "skinHeightM": 1.6143,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 10.9,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.9,
-    "depthP50Mm": 36.6
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.3,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 33.8
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 0,
-    "over2mmPct": 0,
-    "worstMm": 0
+    "sampled": 3028,
+    "outsidePct": 0.2,
+    "over2mmPct": 0.1,
+    "worstMm": 4.6
    }
   },
   {
    "label": "stature −2 SD",
    "controls": {
-    "stature": 1.499
+    "stature": 1.4954999999999998
    },
-   "skinHeightM": 1.4996,
+   "skinHeightM": 1.4952,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 14.6,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.5,
-    "depthP50Mm": 34.3
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 26,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.3,
+    "depthP50Mm": 31.4
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 5.5,
+    "sampled": 3028,
+    "outsidePct": 5.6,
     "over2mmPct": 2.8,
-    "worstMm": 9.1
+    "worstMm": 9.9
    }
   },
   {
    "label": "stature +2 SD",
    "controls": {
-    "stature": 1.7389999999999999
+    "stature": 1.7355
    },
-   "skinHeightM": 1.7382,
+   "skinHeightM": 1.7337,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 7.8,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 5.2,
-    "depthP50Mm": 38.6
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 28.5,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.8,
+    "depthP50Mm": 36.1
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 0.3,
-    "over2mmPct": 0,
-    "worstMm": 1.6
+    "sampled": 3028,
+    "outsidePct": 0.5,
+    "over2mmPct": 0.1,
+    "worstMm": 4.8
    }
   },
   {
@@ -612,21 +612,21 @@
    "controls": {
     "bmi": 18.5
    },
-   "skinHeightM": 1.6183,
+   "skinHeightM": 1.6141,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 4.3,
-    "over2mmPct": 2.9,
-    "worstMm": 27,
-    "worstPart": "Right ilio-inguinal nerve",
-    "depthP5Mm": 0.6,
-    "depthP50Mm": 26.6
+    "sampled": 152616,
+    "outsidePct": 4.8,
+    "over2mmPct": 3,
+    "worstMm": 27.3,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 0.2,
+    "depthP50Mm": 22.4
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 20.9,
-    "over2mmPct": 11.4,
-    "worstMm": 15.5
+    "sampled": 3028,
+    "outsidePct": 21.3,
+    "over2mmPct": 11.5,
+    "worstMm": 13.9
    }
   },
   {
@@ -634,21 +634,21 @@
    "controls": {
     "bmi": 21.6
    },
-   "skinHeightM": 1.6186,
+   "skinHeightM": 1.6142,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 18.7,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.3,
-    "depthP50Mm": 32.6
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.3,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.3,
+    "depthP50Mm": 29.5
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 2.7,
-    "over2mmPct": 0,
-    "worstMm": 2.3
+    "sampled": 3028,
+    "outsidePct": 2.9,
+    "over2mmPct": 0.1,
+    "worstMm": 4.6
    }
   },
   {
@@ -656,21 +656,21 @@
    "controls": {
     "bmi": 25
    },
-   "skinHeightM": 1.6189,
+   "skinHeightM": 1.6144,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 7,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 5.1,
-    "depthP50Mm": 38.8
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.3,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 36.3
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 0,
-    "over2mmPct": 0,
-    "worstMm": 0
+    "sampled": 3028,
+    "outsidePct": 0.2,
+    "over2mmPct": 0.1,
+    "worstMm": 4.6
    }
   },
   {
@@ -678,21 +678,21 @@
    "controls": {
     "bmi": 30
    },
-   "skinHeightM": 1.6193,
+   "skinHeightM": 1.6145,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.2,
-    "over2mmPct": 0,
-    "worstMm": 4.8,
-    "worstPart": "Left dorsal digital branches of radial nerve",
-    "depthP5Mm": 5.4,
-    "depthP50Mm": 47.6
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.3,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.8,
+    "depthP50Mm": 45.6
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 0.1,
-    "over2mmPct": 0,
-    "worstMm": 0.4
+    "sampled": 3028,
+    "outsidePct": 0.3,
+    "over2mmPct": 0.1,
+    "worstMm": 4.6
    }
   },
   {
@@ -700,21 +700,21 @@
    "controls": {
     "legLength": -1.5
    },
-   "skinHeightM": 1.6197,
+   "skinHeightM": 1.6151,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 10.6,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.9,
-    "depthP50Mm": 36.7
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.6,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 33.9
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 0.1,
-    "over2mmPct": 0,
-    "worstMm": 0.1
+    "sampled": 3028,
+    "outsidePct": 0.2,
+    "over2mmPct": 0.1,
+    "worstMm": 4.6
    }
   },
   {
@@ -722,21 +722,21 @@
    "controls": {
     "legLength": 1.5
    },
-   "skinHeightM": 1.6183,
+   "skinHeightM": 1.6141,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 12.8,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.8,
-    "depthP50Mm": 36.2
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 25.7,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.5,
+    "depthP50Mm": 33.3
    },
    "fat": {
-    "sampled": 2975,
+    "sampled": 3028,
     "outsidePct": 4.1,
-    "over2mmPct": 1.8,
-    "worstMm": 6.6
+    "over2mmPct": 1.4,
+    "worstMm": 7.2
    }
   },
   {
@@ -744,21 +744,21 @@
    "controls": {
     "centralBuild": -1.5
    },
-   "skinHeightM": 1.6187,
+   "skinHeightM": 1.6142,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 12.9,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.9,
-    "depthP50Mm": 36.6
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.5,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 33.5
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 4.7,
-    "over2mmPct": 2.3,
-    "worstMm": 7.6
+    "sampled": 3028,
+    "outsidePct": 4.6,
+    "over2mmPct": 1.9,
+    "worstMm": 9
    }
   },
   {
@@ -766,82 +766,82 @@
    "controls": {
     "centralBuild": 1.5
    },
-   "skinHeightM": 1.619,
+   "skinHeightM": 1.6145,
    "deep": {
-    "sampled": 152118,
-    "outsidePct": 0.3,
-    "over2mmPct": 0.1,
-    "worstMm": 9.1,
-    "worstPart": "Left genital branch of genitofemoral nerve",
-    "depthP5Mm": 4.9,
-    "depthP50Mm": 36.6
+    "sampled": 152616,
+    "outsidePct": 1.1,
+    "over2mmPct": 0.6,
+    "worstMm": 27.1,
+    "worstPart": "Left genioglossus",
+    "depthP5Mm": 3.6,
+    "depthP50Mm": 34
    },
    "fat": {
-    "sampled": 2975,
-    "outsidePct": 1.4,
-    "over2mmPct": 0.1,
-    "worstMm": 2.8
+    "sampled": 3028,
+    "outsidePct": 2,
+    "over2mmPct": 0.4,
+    "worstMm": 4.6
    }
   }
  ],
  "bmiScan": [
   {
    "bmi": 23.5,
-   "over2mmPct": 0.1,
-   "worstMm": 11.9
+   "over2mmPct": 0.6,
+   "worstMm": 27.3
   },
   {
    "bmi": 23,
-   "over2mmPct": 0.1,
-   "worstMm": 13.6
+   "over2mmPct": 0.6,
+   "worstMm": 27.3
   },
   {
    "bmi": 22.5,
-   "over2mmPct": 0.1,
-   "worstMm": 15.4
+   "over2mmPct": 0.6,
+   "worstMm": 27.3
   },
   {
    "bmi": 22,
-   "over2mmPct": 0.1,
-   "worstMm": 17.2
+   "over2mmPct": 0.6,
+   "worstMm": 27.3
   },
   {
    "bmi": 21.5,
-   "over2mmPct": 0.1,
-   "worstMm": 19.1
+   "over2mmPct": 0.6,
+   "worstMm": 27.3
   },
   {
    "bmi": 21,
-   "over2mmPct": 0.1,
-   "worstMm": 21
+   "over2mmPct": 0.7,
+   "worstMm": 27.3
   },
   {
    "bmi": 20.5,
-   "over2mmPct": 0.3,
-   "worstMm": 23
+   "over2mmPct": 0.8,
+   "worstMm": 27.3
   },
   {
    "bmi": 20,
-   "over2mmPct": 0.6,
-   "worstMm": 23.8
+   "over2mmPct": 1,
+   "worstMm": 27.3
   },
   {
    "bmi": 19.5,
-   "over2mmPct": 1.1,
-   "worstMm": 25.3
+   "over2mmPct": 1.4,
+   "worstMm": 27.3
   },
   {
    "bmi": 19,
-   "over2mmPct": 1.9,
-   "worstMm": 26.9
+   "over2mmPct": 2.1,
+   "worstMm": 27.3
   }
  ],
  "validBmi": {
   "min": 19.5,
   "max": 40,
   "why": {
-   "zh": "下限：BMI 再低，皮肤就会收到肌肉和骨以内——肌肉不随 BMI 变细，深部结构穿出皮肤超过 2 mm 的采样点比例会比默认（0.1%）多出 1 个百分点以上；也不低于胖瘦场表格的最小值 18.5。上限：胖瘦场表格的最大值 40。",
-   "en": "Lower bound: below it the skin would shrink inside muscle and bone — muscles do not thin with BMI, and the share of sampled deep-part vertices more than 2 mm outside the skin would exceed the default (0.1 %) by more than 1 percentage points; nor below 18.5, the lowest BMI of the fat-field table. Upper bound: 40, the highest BMI of the table."
+   "zh": "下限：BMI 再低，皮肤就会收到肌肉和骨以内——肌肉不随 BMI 变细，深部结构穿出皮肤超过 2 mm 的采样点比例会比默认（0.6%）多出 1 个百分点以上；也不低于胖瘦场表格的最小值 18.5。上限：胖瘦场表格的最大值 40。",
+   "en": "Lower bound: below it the skin would shrink inside muscle and bone — muscles do not thin with BMI, and the share of sampled deep-part vertices more than 2 mm outside the skin would exceed the default (0.6 %) by more than 1 percentage points; nor below 18.5, the lowest BMI of the fat-field table. Upper bound: 40, the highest BMI of the table."
   }
  },
  "renders": [
