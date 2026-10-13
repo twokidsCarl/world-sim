@@ -69,9 +69,10 @@ export function fold(view: View, events: SessionEvent[]): View {
   return next
 }
 
-// 还在等你回答的那一张卡片；没有就是 null。 / The card still awaiting your answer, or null.
-export function pending(view: View): Extract<Item, { kind: 'request' }> | null {
-  if (view.status !== 'waiting') return null
-  const last = [...view.items].reverse().find((x) => x.kind === 'request')
-  return last?.kind === 'request' && last.decision === null ? last : null
+// 还在等你回答的卡片，可能不止一张：它会一次发起几个工具调用，每个都要你点头。
+// （曾经只认最后一张，别的卡片没有按钮，会话就永远卡在那里。）
+// The cards still awaiting your answer, possibly several: it can issue a few tool calls at once and each needs your nod.
+// (Only the last used to count; the other cards had no buttons and the session hung there forever.)
+export function pending(view: View): Extract<Item, { kind: 'request' }>[] {
+  return view.items.filter((x): x is Extract<Item, { kind: 'request' }> => x.kind === 'request' && x.decision === null)
 }

@@ -64,7 +64,10 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
   // 以服务器说的为准：idea-loom 重启过的话，事件里最后一个状态可能还是"在跑"，其实进程已经不在了。
   // The server's word wins: after an idea-loom restart the last status in the events may still say running although the process is gone.
   const status = meta && !meta.live && meta.status !== 'closed' && meta.status !== 'error' ? 'idle' : (meta?.status ?? view.status)
-  const waiting = status === 'waiting' ? pending(view) : null
+  // 进程还在的时候，每一张没回答的卡片都能回答；进程不在了（重启过、结束了），它们才算"没有回答"。
+  // While the process is up every unanswered card can be answered; only when it is gone (restarted, closed) do they count as "not answered".
+  const alive = !!meta?.live && status !== 'closed' && status !== 'error'
+  const waiting = alive ? pending(view) : []
   const busy = status === 'running' || status === 'waiting'
   const send = () => {
     if ((!draft.trim() && attached.length === 0) || busy) return
@@ -110,9 +113,10 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
         }}
       >
         {view.items.map((item) => (
-          <ItemView key={item.seq} item={item} live={waiting?.seq === item.seq} onAnswer={(decision, note, answers) => void act(() => api.sessionAnswer(id, (item as { request_id: string }).request_id, decision, note, answers))} />
+          <ItemView key={item.seq} item={item} live={waiting.some((w) => w.seq === item.seq)} onAnswer={(decision, note, answers) => void act(() => api.sessionAnswer(id, (item as { request_id: string }).request_id, decision, note, answers))} />
         ))}
-        {status === 'running' && <p className="muted small"><span className="spin" aria-hidden="true">◌</span> {t('它在干活…', 'It is working…')}</p>}
+        {waiting.length > 1 && <p className="session-needs small">{t(`上面有 ${waiting.length} 张卡片在等你回答。`, `${waiting.length} cards above are waiting for your answer.`)}</p>}
+        {status === 'running' && waiting.length === 0 && <p className="muted small"><span className="spin" aria-hidden="true">◌</span> {t('它在干活…', 'It is working…')}</p>}
       </div>
 
       {error && <div className="notice bad" role="alert">{error}</div>}
@@ -140,7 +144,7 @@ export function SessionView({ id, onChange }: { id: string; onChange?: (meta: Se
             rows={2}
             value={draft}
             aria-label={t('对 Claude Code 说', 'Say to Claude Code')}
-            placeholder={waiting ? t('先回答上面那一张卡片…', 'Answer the card above first…') : busy ? t('它在干活；可以先打断', 'It is working; you can interrupt first') : t('接着说…（可以粘贴图片）', 'Go on… (images can be pasted)')}
+            placeholder={waiting.length ? t('先回答上面那一张卡片…', 'Answer the card above first…') : busy ? t('它在干活；可以先打断', 'It is working; you can interrupt first') : t('接着说…（可以粘贴图片）', 'Go on… (images can be pasted)')}
             disabled={busy}
             onChange={(e) => setDraft(e.target.value)}
             onPaste={(e) => {

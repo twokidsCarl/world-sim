@@ -73,6 +73,9 @@ class _Live:
         self.meta = meta
         self.inbox: asyncio.Queue[Optional[dict[str, Any]]] = asyncio.Queue()
         self.pending: dict[str, asyncio.Future[dict[str, Any]]] = {}
+        # 每个还在等的请求的一句话，和它算哪一类。它会同时发起好几个工具调用，所以同时在等的可能不止一个。
+        # A one-line summary of each request still waiting, and the kind it counts as. Several tool calls can be issued at once, so more than one may be waiting.
+        self.waiting: dict[str, tuple[str, str]] = {}
         self.always: set[str] = set()  # 这个会话里说过"以后都允许"的 / what was allowed "from now on" within this session
         self.client: Any = None
         self.task: Optional[asyncio.Task[None]] = None
@@ -180,6 +183,7 @@ async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ct
     request_id = secrets.token_hex(6)
     future: asyncio.Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
     live.pending[request_id] = future
+    live.waiting[request_id] = (summary, _always_key(tool, tool_input) if kind == "permission" else "")
     _emit(live, {"type": "request", "request_id": request_id, "kind": kind, "tool": tool, "input": _clip(tool_input),
                  "title": str(getattr(ctx, "title", None) or ""), "description": str(getattr(ctx, "description", None) or ""), "summary": summary})
     _set(live, "waiting", summary)
@@ -189,8 +193,14 @@ async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ct
         answer = await future
     finally:
         live.pending.pop(request_id, None)
+        live.waiting.pop(request_id, None)
     _emit(live, {"type": "resolved", "request_id": request_id, "decision": answer.get("decision"), "note": _clip(str(answer.get("note") or ""), 500)})
-    _set(live, "running")
+    # 还有别的在等，就仍然是"等你回答"：它一次发了几个请求时，回答完一个不等于可以接着干了。
+    # While others still wait it remains "waiting for your answer": when it issued several requests at once, answering one does not mean it can go on.
+    if live.waiting:
+        _set(live, "waiting", next(iter(live.waiting.values()))[0])
+    else:
+        _set(live, "running")
     return answer
 
 
@@ -238,6 +248,11 @@ def _permission_callback(live: _Live) -> Callable[[str, dict[str, Any], Any], An
         answer = await _ask(live, "permission", tool, tool_input, ctx, summary)
         if answer.get("decision") == "allow_always":
             live.always.add(key)
+            # 同时在等的同一类请求一并放行：说了"这一类以后都允许"，就不该再为它们各点一次。
+            # Requests of the same kind waiting at the same moment are let through with it: having said "always allow this kind", one should not have to click once for each.
+            for other, (_, other_key) in list(live.waiting.items()):
+                if other_key == key and not live.pending[other].done():
+                    live.pending[other].set_result({"decision": "allow", "note": ""})
         if answer.get("decision") in ("allow", "allow_always"):
             return PermissionResultAllow(updated_input=tool_input)
         return deny("declined this action", str(answer.get("note") or ""))
