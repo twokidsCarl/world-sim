@@ -230,7 +230,43 @@ export function shellMembrane(centre: V3, inner: number, outer: number, id: stri
  * and the foot of the spike stays where it was). `split` is where stalk gives way to head along the
  * spike (0 = foot, 1 = tip).
  */
-export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number; stalk: number; head: number; split: number }): Template {
+export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number; stalk: number; head: number; split: number; lobes?: number; lobeCount?: number }): Template {
+  // 分瓣：头部的每个亚基朝自己那一侧推开 `lobes` Å（越靠顶推得越多），头就裂成几瓣，瓣之间有凹口；他画的刺头是这样的。
+  // 方向取各条链在头部的质心相对轴的方向；只有一条链时按 `lobeCount` 等分成几个扇区。
+  // Lobes: each subunit of the head is pushed `lobes` Å out to its own side (more towards the tip), so the head parts into lobes with notches between, as his spike heads do.
+  // The directions are those of each chain's centroid in the head relative to the axis; with a single chain, `lobeCount` equal sectors are used.
+  const lobeDirs: V3[] = []
+  if (shape.lobes) {
+    let lo0 = Infinity, hi0 = -Infinity
+    for (let i = 0; i < mol.atomCount; i++) {
+      const h = (mol.pos[i * 3]! - t.origin[0]) * t.up[0] + (mol.pos[i * 3 + 1]! - t.origin[1]) * t.up[1] + (mol.pos[i * 3 + 2]! - t.origin[2]) * t.up[2]
+      if (h < lo0) lo0 = h
+      if (h > hi0) hi0 = h
+    }
+    for (const ch of mol.chains) {
+      if (ch.count < 200) continue
+      const c: V3 = [0, 0, 0]
+      let k = 0
+      for (let i = ch.start; i < ch.start + ch.count; i++) {
+        const d: V3 = [mol.pos[i * 3]! - t.origin[0], mol.pos[i * 3 + 1]! - t.origin[1], mol.pos[i * 3 + 2]! - t.origin[2]]
+        const h = dot(d, t.up)
+        if ((h - lo0) / Math.max(1e-6, hi0 - lo0) < shape.split) continue
+        for (let j = 0; j < 3; j++) c[j]! += d[j]! - t.up[j]! * h
+        k++
+      }
+      const len = Math.hypot(c[0], c[1], c[2]) / Math.max(1, k)
+      if (k > 0 && len > 3) lobeDirs.push(norm(c))
+    }
+    if (lobeDirs.length < 2) {
+      lobeDirs.length = 0
+      const e1 = norm(cross(Math.abs(t.up[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0], t.up)), e2 = cross(t.up, e1)
+      const count = shape.lobeCount ?? 3
+      for (let q = 0; q < count; q++) {
+        const a = (q / count) * 2 * Math.PI
+        lobeDirs.push([e1[0] * Math.cos(a) + e2[0] * Math.sin(a), e1[1] * Math.cos(a) + e2[1] * Math.sin(a), e1[2] * Math.cos(a) + e2[2] * Math.sin(a)])
+      }
+    }
+  }
   const n = mol.atomCount
   let lo = Infinity, hi = -Infinity
   for (let i = 0; i < n; i++) {
@@ -247,8 +283,23 @@ export function exaggerate(mol: Molecule, t: Template, shape: { stretch: number;
     const u = Math.min(1, Math.max(0, (s - (shape.split - 0.1)) / 0.2))
     const w = shape.stalk + (shape.head - shape.stalk) * u * u * (3 - 2 * u)
     const h2 = lo + (h - lo) * shape.stretch
+    // 这个原子归哪一瓣：它偏离轴的方向和哪一瓣最接近 / which lobe this atom belongs to: the one nearest the direction in which it lies off the axis
+    let push: V3 = [0, 0, 0]
+    if (lobeDirs.length && u > 0) {
+      const perp: V3 = [d[0] - t.up[0] * h, d[1] - t.up[1] * h, d[2] - t.up[2] * h]
+      let best = lobeDirs[0]!, bd = -Infinity
+      for (const l of lobeDirs) {
+        const v = dot(perp, l)
+        if (v > bd) {
+          bd = v
+          best = l
+        }
+      }
+      const amount = shape.lobes! * u * Math.min(1, Math.max(0, (s - shape.split) / Math.max(1e-6, 1 - shape.split)) * 1.5)
+      push = [best[0] * amount, best[1] * amount, best[2] * amount]
+    }
     for (let k = 0; k < 3; k++) {
-      const v = t.origin[k]! + t.up[k]! * h2 + (d[k]! - t.up[k]! * h) * w
+      const v = t.origin[k]! + t.up[k]! * h2 + (d[k]! - t.up[k]! * h) * w + push[k]!
       mol.pos[i * 3 + k] = v
       c[k]! += v / n
     }

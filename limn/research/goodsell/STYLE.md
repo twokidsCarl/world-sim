@@ -236,6 +236,11 @@ limn 这一轮的数：
 
 （`out/M3-influenza.jpg`：改前、改后、他的画）夸张时把血凝素的头放宽到 1.2 倍，相邻的头连在一起，一圈刺成了一条连续的裙边；他的刺是一根根分开的，缝里露出后排深色的刺。头改回原宽（1.0），柄从 0.55 放回 0.75。试过头 0.95、柄 0.5：刺分开了，但柄之间透出许多白纸。把刺衬在后面（切片背面不切）在这里几乎没有效果（两张图只差一千多个像素）：缝是一直透到后面的，不是后排被切掉了。现在还剩一些小白洞，他的画里这些地方是深靛色。
 
+### N2：HIV 的刺重排，刺头分瓣（使用者定的）
+
+- **HIV**（`out/N2-hiv.jpg`：之前、现在、他的画）：模型里有 100 个刺；文献是每个病毒 14 ± 7 个（Zhu 等，Nature 2006）。手绘画法下用“排整齐”工具换成 14 个，等间隔。**等间隔是理想化**：那篇文献里刺的分布并不均匀，来源栏里写了。我原先认为这一项没有依据、不该做，使用者要做。刺的颜色定成他的粉红。
+- **分瓣**（`out/N2-coronavirus.jpg`）：“夸张”工具加了 `lobes`：头部的每个亚基朝自己那一侧推开若干 Å，越靠顶推得越多，头裂成几瓣。方向取各条链在头部的质心相对轴的方向；只有一条链时等分成几个扇区。新冠 16 Å，流感 6 Å（9 Å 时柄之间的白洞变多）。结果：HIV 的头读成三瓣；新冠和流感只在顶上有凹口，离他画的扇形分瓣还远。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -462,3 +467,8 @@ A great deal of this is inference, and the sources panel says so plainly: the co
 ### M3: the influenza spikes stand apart
 
 (`out/M3-influenza.jpg`: before, after, his painting) Exaggeration widened the hemagglutinin head to 1.2, so neighbouring heads joined and the ring of spikes became one continuous skirt; his spikes stand apart, with the darker row behind showing in the slits. The head is back at its own width (1.0) and the stalk goes from 0.55 back to 0.75. A head of 0.95 with a stalk of 0.5 was tried: the spikes parted, but a good deal of paper showed between the stalks. Letting the spikes line the back (not cut at the back of the slab) made almost no difference here (the two renders differ in a thousand-odd pixels): the slits go right through, and it is not that the rows behind were cut away. Some small white holes remain where his painting has deep indigo.
+
+### N2: HIV spikes rearranged, spike heads in lobes (the user's choice)
+
+- **HIV** (`out/N2-hiv.jpg`: before, now, his painting): the model has 100 spikes; the literature gives 14 ± 7 per virion (Zhu et al., Nature 2006). In the painted drawing the arranging tool replaces them by 14, evenly spaced. **The even spacing is an idealisation**: in that paper the spikes are not evenly spread, and the sources panel says so. I had held that this had no grounds and should not be done; the user asked for it. The spikes take his pink-red.
+- **Lobes** (`out/N2-coronavirus.jpg`): the exaggeration tool gained `lobes`: each subunit of the head is pushed some Å out to its own side, more towards the tip, so the head parts into lobes. Directions are those of each chain's centroid in the head relative to the axis; with a single chain, equal sectors are used. 16 Å for the coronavirus and 6 Å for influenza (at 9 Å more paper showed between stalks). Result: the HIV head reads as three lobes; the coronavirus and influenza heads only show notches at the tip, still far from the fanned lobes he paints.
