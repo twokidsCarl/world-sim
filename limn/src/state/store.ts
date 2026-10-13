@@ -180,11 +180,13 @@ export interface CatalogEntry {
    * A membrane protein whose number is inferred from the literature and whose copies are re-set in evenly spaced rings: `pattern` names its entity, `count` is the inferred number, `source` where it comes from.
    */
   respike?: { pattern: string; count: number; source: string }
+  /** 手绘画法下把膜上的蛋白重排成等间隔的一圈圈，膜换成光滑的球壳（见 arrange）：`pattern` 匹配要排的蛋白，`exclude` 排除，`reach` 是离膜中面多远以内算膜上的（Å），`lining` 是衬在膜里面的一层的颜色（里面的空处露出它，膜的切口才读得出是一条带子）/ in the painted drawing, set the membrane's proteins out afresh in evenly spaced rings and make the membrane a smooth shell (see `arrange`): `pattern` matches the proteins, `exclude` leaves some out, `reach` is how far from the mid-plane still counts as on the membrane, in Å, `lining` the colour of a layer lining the inside (empty space within shows it, so the cut membrane reads as a band) */
+  arrange?: { pattern: string; exclude?: string; reach?: number; lining?: [number, number, number] }
   /**
    * 周围的环境（示意）：几种蛋白随机摆在对象周围，外加若干条长链，底色用深色。basis 写明种类的依据。
    * The surrounding environment (schematic): a few proteins scattered round the subject, some long strands besides, on a dark ground. `basis` states the grounds for the kinds.
    */
-  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; outside?: boolean; basis: string; basisEn: string }
+  environment?: { proteins: { pdb: string; name: string; nameEn: string; count: number; lch: [number, number, number] }[]; strands?: { name: string; nameEn: string; count: number; length: number; radius: number; branches?: number; wander?: number; lch: [number, number, number] }; ground?: [number, number, number]; inside?: boolean; replace?: string; outside?: boolean; clear?: number; basis: string; basisEn: string }
   /** 手绘画法下的底色（场景的缝隙里露出的颜色），缺省是纸白 / the ground in the painted drawing (what shows in the gaps of a scene); paper white by default */
   ground?: [number, number, number]
   /** 膜的颜色 [L, C, h]，缺省是浅淡紫 / the membrane's colour [L, C, h]; a pale lavender by default */
@@ -284,11 +286,19 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
   for (let i = 0; i < pts.length; i += 3) for (let k = 0; k < 3; k++) centre[k]! += pts[i + k]! / (pts.length / 3)
   let R = 0
   for (let i = 0; i < pts.length; i += 3) R = Math.max(R, Math.hypot(pts[i]! - centre[0], pts[i + 1]! - centre[1], pts[i + 2]! - centre[2]))
+  // 环境从哪里开始：不取最远的那一点（个别伸得很远的蛋白会在对象周围留下一圈空着的底色），取九成的点都在以内的半径
+  // where the environment begins: not at the farthest point (a few far-reaching proteins would leave an empty ring of ground round the subject) but at the radius that holds nine tenths of the points
+  const dist: number[] = []
+  for (let i = 0; i < pts.length; i += 3) dist.push(Math.hypot(pts[i]! - centre[0], pts[i + 1]! - centre[1], pts[i + 2]! - centre[2]))
+  dist.sort((x, y) => x - y)
+  const near = dist[Math.floor(dist.length * 0.9)] ?? R
+  // clear：在“九成的点以内”和“最远的点”之间取多少（1 = 最远的点，缺省；0 = 紧贴着对象）。伸出去的东西少而长时取小些，免得周围空一圈
+  // clear: how far between "nine tenths of the points" and "the farthest point" the environment starts (1 = the farthest point, the default; 0 = hard against the subject). Smaller where what sticks out is sparse and long, so that no empty ring is left
   // 画面是正方形的，对象占画面宽度的六成多，像他那幅；环境铺在切面后面的一层里
   // the frame is square with the subject filling a little over six tenths of its width, as in his painting; the environment lies in one layer behind the cut
   // inside：填对象的里面（数据里只有外壳时），范围取到外壳以内 / inside: fill the inside of the subject (when the data holds only its shell), within the shell
   // replace：线放在切片最靠前的一薄层里，压在蛋白上面（他的画里 DNA 是最上面的一层）/ replace: the strands lie in a thin layer at the very front of the slab, over the proteins (in his painting DNA is the topmost layer)
-  const box: Box = env.inside ? { centre, hx: R, hy: R, z0: env.replace ? -R * 0.07 : -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: R + 8 }
+  const box: Box = env.inside ? { centre, hx: R, hy: R, z0: env.replace ? -R * 0.07 : -R * 0.3, z1: -18, exclude: 0, within: R * 0.9 } : { centre, hx: R * 1.5, hy: R * 1.5, z0: -R * 0.42, z1: -18, exclude: near + (R - near) * (env.clear ?? 1) + 6 }
   // outside：对象的形状不规则（一段树突），环境只填在它外面，范围是放大后的画面 / outside: the subject is of irregular shape (a stretch of dendrite); the environment fills only what lies outside it, over the zoomed frame
   if (env.outside) {
     const half = (R / (entry.zoom ?? 1)) * 1.25
@@ -312,7 +322,9 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
       nr++
     }
     const r = Math.sqrt(r2 / Math.max(1, nr)) * 1.25
-    const ops = scatter(p.count, r, c, box, rand, placed)
+    // 整个分子都放在切面后面（中心至少退后一个半径），不然它会探到切面前面，盖住对象伸出来的东西
+    // the whole molecule goes behind the cut (its centre at least one radius back), or it would reach in front of the cut and cover what the subject holds out
+    const ops = scatter(p.count, r, c, { ...box, z1: Math.min(box.z1, -r), z0: Math.min(box.z0, -r * 2.2) }, rand, placed)
     m.assemblies.push({ id: 'inferred', groups: [{ chains: m.chains.map((_, i) => i), operators: ops }] })
     const roles: Role[] = m.entities.map(() => 'extracellular')
     panels.push({
@@ -402,6 +414,140 @@ function respike(entry: CatalogEntry, model: Molecule, assembly: string, notes: 
   // 刺衬在后面：切片的背面不切它，前排的刺之间露出的是后面那一圈刺（深一号的色调），不是底色
   // the spikes line the back: the back of the slab does not cut them, so between the spikes in front the ring behind shows (in a deeper tone) and not the ground
   return { spec, mol: sub, coloring, align: null, keepBack: true }
+}
+
+/**
+ * 概念“膜上的一圈突起”：把膜上的各种蛋白重新排成等间隔的一圈圈，膜换成一条光滑均匀的球壳。
+ * 每种蛋白的结构、数量、嵌在膜里的深浅和歪斜都取自模型（取它的第一份拷贝），只有“在球面上的哪里”是重排的。
+ * 原模型里这些蛋白和膜的拷贝去掉，返回两个面板（膜、蛋白）。只对近似球形的对象有意义。
+ *
+ * The concept "a ring of protrusions on a membrane": the proteins of a membrane are set out afresh
+ * in evenly spaced rings and the membrane becomes a smooth, even spherical shell. Each protein's
+ * structure, number, depth in the membrane and tilt are the model's (taken from its first copy);
+ * only where on the sphere it stands is rearranged. The model's own copies of these proteins and
+ * of the membrane are removed, and two panels are returned (membrane, proteins). It makes sense
+ * only for a subject that is roughly a sphere.
+ */
+function arrange(entry: CatalogEntry, model: Molecule, assembly: string, notes: Note[]): Panel[] {
+  const spec = entry.arrange!
+  const asm = model.assemblies.find((a) => a.id === assembly)
+  if (!asm) return []
+  const re = new RegExp(spec.pattern, 'i'), not = spec.exclude ? new RegExp(spec.exclude, 'i') : null
+  const lipid = (ci: number) => model.entities[model.chains[ci]!.entity]!.kind === 'lipid'
+  const at = (m: Float32Array, p: V3): V3 => [m[0]! * p[0] + m[4]! * p[1] + m[8]! * p[2] + m[12]!, m[1]! * p[0] + m[5]! * p[1] + m[9]! * p[2] + m[13]!, m[2]! * p[0] + m[6]! * p[1] + m[10]! * p[2] + m[14]!]
+  // 膜的中心和中面半径：脂质各份拷贝的位置 / the membrane's centre and mid-plane radius, from where the copies of its lipids stand
+  const lipidAt: V3[] = []
+  for (const g of asm.groups) {
+    if (!g.chains.every(lipid)) continue
+    const c0 = chainCentre(model, g.chains[0]!)
+    const step = Math.max(1, Math.floor(g.operators.length / 4000))
+    for (let i = 0; i < g.operators.length; i += step) lipidAt.push(at(g.operators[i]!, c0))
+  }
+  if (lipidAt.length < 20) return []
+  const centre: V3 = [0, 0, 0]
+  for (const p of lipidAt) for (let k = 0; k < 3; k++) centre[k]! += p[k]! / lipidAt.length
+  const radii = lipidAt.map((p) => Math.hypot(p[0] - centre[0], p[1] - centre[1], p[2] - centre[2])).sort((a, b) => a - b)
+  const mid = radii[radii.length >> 1]!
+  // 要排的蛋白：名字匹配、离膜不远的各组 / the proteins to arrange: groups whose name matches and that stand near the membrane
+  const kinds: { g: (typeof asm.groups)[number]; chains: number[]; count: number }[] = []
+  for (const g of asm.groups) {
+    const chains = g.chains.filter((ci) => !lipid(ci) && re.test(model.entities[model.chains[ci]!.entity]!.description) && !not?.test(model.entities[model.chains[ci]!.entity]!.description))
+    if (chains.length === 0 || g.operators.length === 0) continue
+    const c: V3 = [0, 0, 0]
+    for (const ci of chains) {
+      const p = at(g.operators[0]!, chainCentre(model, ci))
+      for (let k = 0; k < 3; k++) c[k]! += p[k]! / chains.length
+    }
+    if (Math.abs(Math.hypot(c[0] - centre[0], c[1] - centre[1], c[2] - centre[2]) - mid) > (spec.reach ?? 160)) continue
+    kinds.push({ g, chains, count: g.operators.length })
+  }
+  const total = kinds.reduce((n, k) => n + k.count, 0)
+  if (total === 0) return []
+  const sub = subMolecule(model, kinds.flatMap((k) => k.chains), `${model.id}:arranged`, entry.titleEn)
+  const sites = ringSites(total, [0, 0, 1])
+  // 各种蛋白在位置上穿插着分：每个位置给“欠得最多”的那一种 / the kinds are interleaved over the sites: each site goes to the kind that is furthest behind its share
+  const given = kinds.map(() => 0), mine: V3[][] = kinds.map(() => [])
+  sites.forEach((site, i) => {
+    let best = 0, lag = -Infinity
+    kinds.forEach((k, j) => {
+      const l = (k.count * (i + 1)) / total - given[j]!
+      if (given[j]! < k.count && l > lag) {
+        lag = l
+        best = j
+      }
+    })
+    given[best]!++
+    mine[best]!.push(site)
+  })
+  let chainAt = 0
+  const groups: Molecule['assemblies'][number]['groups'] = []
+  kinds.forEach((k, j) => {
+    const own = k.chains.map((_, i) => chainAt + i)
+    chainAt += k.chains.length
+    // 样板：这一种的第一份，搬到它在模型里的位置；轴取那里的膜法线，于是它嵌在膜里的深浅和歪斜原样保留
+    // the template: this kind's first copy, carried to where it stands in the model; its axis is the membrane normal there, so its depth in the membrane and its tilt are kept as they are
+    const c: V3 = [0, 0, 0]
+    let n = 0
+    for (const ci of own) {
+      const ch = sub.chains[ci]!
+      for (let i = ch.start; i < ch.start + ch.count; i++) {
+        const q = at(k.g.operators[0]!, [sub.pos[i * 3]!, sub.pos[i * 3 + 1]!, sub.pos[i * 3 + 2]!])
+        sub.pos.set(q, i * 3)
+        for (let d = 0; d < 3; d++) c[d]! += q[d]!
+        n++
+      }
+    }
+    for (let d = 0; d < 3; d++) c[d]! /= Math.max(1, n)
+    const distance = Math.hypot(c[0] - centre[0], c[1] - centre[1], c[2] - centre[2])
+    const up: V3 = [(c[0] - centre[0]) / distance, (c[1] - centre[1]) / distance, (c[2] - centre[2]) / distance]
+    groups.push({ chains: own, operators: placeTemplate({ origin: c, up, distance, tilt: 0 }, centre, mine[j]!) })
+    k.g.chains = k.g.chains.filter((ci) => !k.chains.includes(ci))
+  })
+  sub.assemblies.push({ id: 'inferred', groups })
+  asm.groups = asm.groups.filter((g) => g.chains.length > 0 && !g.chains.every(lipid))
+  const roleOf = (e: Molecule['entities'][number]): Role => {
+    for (const [pattern, role] of entry.roles ?? []) if (new RegExp(pattern!, 'i').test(e.description)) return role as Role
+    return 'soluble'
+  }
+  const roles = sub.entities.map(roleOf)
+  const coloring: Coloring = spreadHues({ ...defaultColoring(sub), roles })
+  sub.entities.forEach((e, i) => {
+    const base = entry.hues?.[roles[i]!]
+    if (base) coloring.override[i] = [base[0] + (i % 3 === 0 ? 0.03 : i % 3 === 1 ? 0 : -0.04), base[1], (base[2] + (coloring.hueShift[i] ?? 0) * 0.3 + 360) % 360]
+    for (const [pattern, lch] of entry.colors ?? []) if (new RegExp(pattern, 'i').test(e.description)) coloring.override[i] = lch
+  })
+  notes.push({ key: 'note.arranged', params: { count: total, kinds: kinds.length } })
+  const source = (id: string): PanelSpec['source'] => ({ id, kind: 'model', title: entry.titleEn, method: tIn('zh', 'method.idealisedPlacement'), methodEn: tIn('en', 'method.idealisedPlacement'), resolution: null, year: null, tier: 'estimated', licence: entry.licence, attribution: entry.attribution, citation: entry.citation, link: entry.link })
+  const shellMol = shellMembrane(centre, mid - 19, mid + 19, `${model.id}:membrane`)
+  shellMol.assemblies.push({ id: 'inferred', groups: [{ chains: [0], operators: [IDENTITY] }] })
+  // 衬里：膜里面贴一层深一号的颜色，一个小球一份拷贝，各自按深度切（只留切面后面的半个）
+  // the lining: a layer of a deeper colour just inside the membrane, one small sphere per copy, each cut by its own depth (only the half behind the cut remains)
+  const liningPanel: Panel[] = []
+  if (spec.lining) {
+    const r = mid - 30, count = Math.round((4 * Math.PI * r * r) / 49)
+    const m: Molecule = {
+      id: `${model.id}:lining`, title: 'lining', atomCount: 1, pos: new Float32Array(3), element: new Uint8Array([El.C]), radius: new Float32Array([7]),
+      chainOf: new Uint32Array(1), isTrace: new Uint8Array(1), residue: new Int32Array([1]),
+      chains: [{ asymId: 'L', authAsymId: 'L', entity: 0, start: 0, count: 1, model: 1 }], entities: [{ id: 'lining', description: 'lining', kind: 'protein' }],
+      assemblies: [{ id: 'inferred', groups: [{ chains: [0], operators: fibonacciSphere(count).map((d) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, centre[0] + d[0] * r, centre[1] + d[1] * r, centre[2] + d[2] * r, 1])) }] }],
+    }
+    liningPanel.push({
+      spec: { label: `${entry.title}：里面的底色`, labelEn: `${entry.titleEn}: the ground inside`, source: source(`${entry.id}:lining`), assembly: 'inferred', entities: [{ entityId: 'lining', role: 'soluble', name: '里面的底色', nameEn: 'the ground inside', description: 'lining', organism: '' }], reason: '' },
+      mol: m, coloring: { roles: ['soluble'], hueShift: [0], nudge: [0], override: [spec.lining] }, align: null, keepBack: true, oneId: true,
+    })
+  }
+  const short = (d: string) => d.split('.').pop()!.replace(/_/g, ' ')
+  return [
+    ...liningPanel,
+    {
+      spec: { label: `${entry.title}：膜（理想化的球壳）`, labelEn: `${entry.titleEn}: membrane (idealised shell)`, source: source(`${entry.id}:membrane`), assembly: 'inferred', entities: [{ entityId: 'membrane', role: 'membrane', name: '膜', nameEn: 'membrane', description: 'membrane', organism: '' }], reason: '' },
+      mol: shellMol, coloring: { roles: ['membrane'], hueShift: [0], nudge: [0], override: [entry.membrane ?? MEMBRANE_LCH] }, align: null,
+    },
+    {
+      spec: { label: `${entry.title}：膜上的蛋白（理想化的排布）`, labelEn: `${entry.titleEn}: membrane proteins (idealised arrangement)`, source: source(`${entry.id}:arranged`), assembly: 'inferred', entities: sub.entities.map((e, i) => ({ entityId: e.id, role: roles[i]!, name: short(e.description), description: e.description, organism: '' })), reason: '' },
+      mol: sub, coloring, align: null, keepBack: true,
+    },
+  ]
 }
 
 async function influenzaInterior(spec: NonNullable<CatalogEntry['infer']>, model: Molecule, notes: Note[], busy: (name: string) => void, idealise: boolean, colors: NonNullable<CatalogEntry['colors']>): Promise<Panel[]> {
@@ -823,6 +969,7 @@ export const useStore = create<State>((set, get) => ({
       // what the data lacks is filled in by inference from known structures, each part a panel of its own in the model's coordinate frame
       const respiked = entry.respike && get().drawing === 'painted' ? respike(entry, mol, assembly, notes) : null
       const inferred: Panel[] = respiked ? [respiked] : entry.infer ? await influenzaInterior(entry.infer, mol, notes, (name) => set({ busy: say('busy.downloading', { name }) }), get().drawing === 'painted', entry.colors ?? []) : []
+      if (entry.arrange && get().drawing === 'painted') inferred.push(...arrange(entry, mol, assembly, notes))
       const surroundings: Panel[] = entry.environment && get().drawing === 'painted' ? await environmentPanels(entry, [mol, ...inferred.map((p) => p.mol)], inferred.map((p) => p.spec.assembly), assembly, notes, (name) => set({ busy: say('busy.downloading', { name }) })) : []
       inferred.push(...surroundings)
       const dots = entry.dots && get().drawing === 'painted' && EXAGGERATE() ? entry.dots : 0
@@ -1225,7 +1372,7 @@ export const useStore = create<State>((set, get) => ({
     const entry = sp?.catalog ? (catalog.models as CatalogEntry[]).find((m) => m.id === sp.catalog) : undefined
     // 同样要重新载入的：带示意环境的、小分子画成圆点的、有自己底色的（否则切到 Illustrate 后推断的东西还留在画面里）
     // reloaded likewise: models with a schematic environment, with small molecules as dots, or with a ground of their own (or inferred things would stay in the picture after a switch to Illustrate)
-    if (entry?.infer || entry?.respike || entry?.environment || entry?.dots || entry?.ground) {
+    if (entry?.infer || entry?.respike || entry?.arrange || entry?.environment || entry?.dots || entry?.ground) {
       set({ drawing })
       void get().loadCatalog(entry.id)
       return
