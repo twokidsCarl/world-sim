@@ -8,7 +8,16 @@
     你发一条消息 → 它干活 →（要确认 / 要问你 / 交计划）→ 你在网页上回答 → 它接着干 → 说完
 
 它说的话、调的工具、等你回答的事，都按顺序追加到 runs/sessions/<编号>/events.jsonl，界面用事件流读，
-断了能续。idea-loom 重启后进程没了，但 SDK 的会话编号存着，下一次发消息时接上。
+断了能续。
+
+每个会话是一个独立的、和后端脱钩的进程（`python -m idea_loom.sessions run <编号>`），所以后端重启不会打断它：
+
+    浏览器 ─▶ 后端 ─写命令文件─▶ runs/sessions/<编号>/inbox/ ─▶ 会话进程 ─▶ Claude Code
+                 ◀─读事件、状态── events.jsonl、meta.json     ◀─写──┘
+
+后端只做两件事：把你的操作（说话、回答、打断、切模式、换模型、结束）各写成 inbox/ 下的一个小文件，和读
+事件、状态。会话进程闲了 30 分钟、或者发现磁盘上的代码比自己新而自己正好闲着，就自己退出；下一句话把它
+拉起来，用存着的 SDK 会话编号接上原来的对话。
 
 只在本机开放，只有主人能用：这个会话能以你的身份在你的机器上执行命令。用的是本机 Claude Code
 已有的登录（订阅）；环境里有 ANTHROPIC_API_KEY 时会改成按量计费，界面上会说明。
@@ -20,8 +29,13 @@ CLAUDE.md and memory, has every tool, can spawn subagents and holds a conversati
 it wants to edit a file, run a command, ask you something or hand in a plan, it stops and
 waits for your answer in the page — as it would in a terminal. What it says, the tools it
 calls and what awaits your answer are appended in order to runs/sessions/<id>/events.jsonl,
-read by the UI as a resumable event stream. After an idea-loom restart the process is gone
-but the SDK's session id is kept, and the next message picks the conversation up again.
+read by the UI as a resumable event stream.
+Each session is its own process, detached from the backend (`python -m idea_loom.sessions run <id>`),
+so restarting the backend does not interrupt it. The backend does two things only: it writes each
+of your actions (say, answer, interrupt, switch mode, change model, close) as a small file under
+inbox/, and it reads events and state. A session process exits by itself after 30 idle minutes, or
+when it finds the code on disk newer than itself while idle; the next message starts it again and
+picks the conversation up with the stored SDK session id.
 Local only and owner only: such a session can run commands on your machine as you. It uses
 the existing login of the local Claude Code (your subscription); with ANTHROPIC_API_KEY in
 the environment it bills per token instead, and the UI says which.
@@ -30,8 +44,13 @@ the environment it bills per token instead, and the UI says which.
 from __future__ import annotations
 
 import asyncio
+import fcntl
+import json
 import os
 import secrets
+import signal
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Literal, Optional
@@ -42,6 +61,27 @@ from . import config, gates, llm, notify, store
 from .assistant.stream import step_label
 
 MAX_LIVE = 3
+POLL = 0.1  # 会话进程多久看一眼 inbox / how often a session process looks at its inbox
+# 会话进程用到的代码：这些文件比进程新了，进程就算"用的是旧代码"，闲下来时自己退出。
+# The code a session process runs on: once any of these is newer than the process, it counts as running old code and exits when idle.
+CODE = ("sessions.py", "store.py", "notify.py", "gates.py", "llm.py", "config.py", "assistant/stream.py")
+
+
+def idle_exit() -> float:
+    """闲多久自己退出（秒）。 / Seconds of idleness after which a session process exits."""
+    return float(os.environ.get("IDEA_LOOM_SESSION_IDLE") or 1800)
+
+
+def code_stamp() -> float:
+    here = Path(__file__).resolve().parent
+    stamps = []
+    for name in CODE:
+        try:
+            stamps.append((here / name).stat().st_mtime)
+        except OSError:
+            continue
+    return max(stamps, default=0.0)
+
 # 先出计划 / 每次问我 / 改文件不用问 / 自动。没有"全部放行"。
 # 自动：Claude Code 自己的安全分类器替主人判断每一步，常规的直接做。实测它防的是"擅自做没被要求的事"，
 # 主人明说要做的危险事它会放行，所以另有一张"每次都问"的单子（见 always_ask），自动模式下也照样出卡片。
@@ -79,7 +119,9 @@ class Meta(BaseModel):
     waiting_for: Optional[str] = None  # 在等你回答什么，一句话 / what awaits your answer, in a sentence
     created_at: float
     updated_at: float
-    live: bool = False  # 进程在不在；不在的话下一条消息会把它接上 / whether the process is up; if not, the next message resumes it
+    live: bool = False  # 会话进程在不在；不在的话下一条消息会把它接上 / whether the session process is up; if not, the next message resumes it
+    stale: bool = False  # 进程用的是不是旧代码；是的话它闲下来会自己换成新的 / whether the process runs old code; if so it replaces itself once idle
+    pid: Optional[int] = None  # 会话进程的进程号 / the session process's pid
 
 
 class _Live:
@@ -94,11 +136,17 @@ class _Live:
         self.waiting: dict[str, tuple[str, str]] = {}
         self.always: set[str] = set()  # 这个会话里说过"以后都允许"的 / what was allowed "from now on" within this session
         self.client: Any = None
-        self.task: Optional[asyncio.Task[None]] = None
+        self.task: Optional[asyncio.Task[None]] = None  # 跑会话循环的那个任务 / the task running the session loop
         self.seq = 0
+        self.busy = False  # 一轮正在进行 / a turn is in progress
+        self.closing = False  # 主人点了"结束"；否则退出只是歇着，状态仍是闲着 / the owner closed it; otherwise an exit is only a rest and the state stays idle
+        self.idle_since = time.monotonic()
+        self.started = time.time()
 
 
-_live: dict[str, _Live] = {}
+# 只在测试里用：没有真的子进程时，会话"进程"是当前事件循环里的一个任务。
+# Tests only: with no real subprocess, a session "process" is a task on the current event loop.
+_tasks: dict[str, "asyncio.Task[None]"] = {}
 
 # 测试时换成假的。真的是 Agent SDK 的 ClaudeSDKClient。
 # Replaced by a fake in tests. The real one is the Agent SDK's ClaudeSDKClient.
@@ -114,7 +162,7 @@ def available() -> Optional[str]:
     """现在能不能开会话：不能就返回原因。 / Whether a session can be opened now; the reason if not."""
     if not config.is_local() or config.role() != "all":
         return "网页里的 Claude Code 会话只在本机开放"
-    if client_factory is None and llm.claude_bin() is None:
+    if client_factory is None and not os.environ.get("IDEA_LOOM_SESSION_CLIENT") and llm.claude_bin() is None:
         return "这台机器上找不到 claude 命令"
     return None
 
@@ -129,21 +177,39 @@ def _dir(session_id: str) -> Path:
 
 def _save(meta: Meta) -> Meta:
     meta.updated_at = time.time()
-    store.write_json(_dir(meta.id) / "meta.json", meta.model_dump(exclude={"live"}))
+    store.write_json(_dir(meta.id) / "meta.json", meta.model_dump(exclude={"live", "stale", "pid"}))
     return meta
 
 
+def _held(session_id: str) -> bool:
+    """会话进程在不在：它活着的时候一直占着 runner.lock 这把锁，进程一没锁就放了，不管它是怎么没的。
+
+    Whether the session process is up: it holds the lock on runner.lock for as long as it lives, and the lock is
+    released the moment the process is gone, however it went.
+    """
+    path = _dir(session_id) / "runner.lock"
+    if not path.exists():
+        return False
+    with path.open("a") as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            return True
+        fcntl.flock(f, fcntl.LOCK_UN)
+    return False
+
+
 def get(session_id: str) -> Meta:
-    live = _live.get(session_id)
-    if live is not None:
-        live.meta.live = live.task is not None and not live.task.done()
-        return live.meta
     raw = store.read_json(_dir(session_id) / "meta.json", None) if session_id.replace("-", "").isalnum() else None
     if raw is None:
         raise SessionError("没有这个会话")
     meta = Meta.model_validate(raw)
-    # 进程不在了：没说完的、在等回答的，都算停在那里。 / The process is gone: anything unfinished or waiting counts as stopped there.
-    if meta.status in ("running", "waiting"):
+    meta.live = _held(session_id)
+    if meta.live:
+        info = store.read_json(_dir(session_id) / "runner.json", None) or {}
+        meta.pid, meta.stale = info.get("pid"), code_stamp() > float(info.get("code") or 0) + 0.001 if info else False
+    elif meta.status in ("running", "waiting"):
+        # 进程不在了：没说完的、在等回答的，都算停在那里。 / The process is gone: anything unfinished or waiting counts as stopped there.
         meta.status, meta.waiting_for = "idle", None
     return meta
 
@@ -231,6 +297,10 @@ ASK_KINDS = {"git push", "git reset", "git clean", "git checkout", "git restore"
 VALUE_FLAGS = {"-C", "-c", "--project", "--cwd", "--directory", "-R", "--repo", "--git-dir", "--work-tree", "--prefix", "-f", "--file"}
 SHELLS = {"sh", "bash", "zsh", "fish", "python", "python3", "node", "perl", "ruby"}
 FETCHERS = {"curl", "wget"}
+# shell 的关键字和只是"带着别的命令跑"的程序：真正要看的是它们后面那条命令。
+# Shell keywords and programs that merely run another command: what matters is the command after them.
+KEYWORDS = {"do", "then", "else", "if", "elif", "while", "until", "!", "time", "{", "("}
+WRAPPERS = {"xargs", "nohup", "command", "exec", "env", "nice", "timeout"}
 
 
 def segments(command: str) -> list[str]:
@@ -267,9 +337,36 @@ def _words(segment: str) -> list[str]:
         words = shlex.split(segment)
     except ValueError:
         words = segment.split()
-    while words and "=" in words[0] and not words[0].startswith(("-", "/", ".")) and words[0].split("=")[0].replace("_", "").isalnum():
-        words = words[1:]  # 开头的 VAR=值 / leading VAR=value
+    while words:
+        if "=" in words[0] and not words[0].startswith(("-", "/", ".")) and words[0].split("=")[0].replace("_", "").isalnum():
+            words = words[1:]  # 开头的 VAR=值 / leading VAR=value
+        elif words[0] in KEYWORDS:
+            words = words[1:]  # for … ; do rm x 里的 do：要看的是 rm / the "do" of "for … ; do rm x": rm is what counts
+        elif words[0] in WRAPPERS:
+            # xargs rm、env X=1 rm、timeout 5 rm：跳过它自己的选项和数字，看它带着跑的那条命令。
+            # xargs rm, env X=1 rm, timeout 5 rm: skip its own options and numbers and look at the command it runs.
+            rest = words[1:]
+            while rest and (rest[0].startswith("-") or rest[0].replace(".", "").isdigit() or ("=" in rest[0] and words[0] == "env")):
+                rest = rest[1:]
+            if not rest:
+                break
+            words = rest
+        else:
+            break
     return words
+
+
+def _runs_stdin(words: list[str]) -> bool:
+    """这个解释器会不会把标准输入当代码执行。`sh`、`bash -s`、`python3 -` 会；`python3 -c "…"`、`bash x.sh`
+    不会——它们执行的是自己带的代码，管道里来的只是数据。
+
+    Whether this interpreter executes its standard input as code. `sh`, `bash -s` and `python3 -` do;
+    `python3 -c "…"` and `bash x.sh` do not: they run the code they were given and the pipe is only data.
+    """
+    args = words[1:]
+    if "-s" in args or "-" in args:
+        return True
+    return not any(a in ("-c", "-e", "-m") or not a.startswith("-") for a in args)
 
 
 def kind_of(segment: str) -> str:
@@ -298,14 +395,24 @@ def always_ask(command: str) -> Optional[str]:
     """这条命令里有没有每次都得问主人的东西；有就返回原因。 / Whether the command contains something the owner must always be asked about; the reason if so."""
     import re
 
+    # $(…) 和反引号里的也是命令，一样要查。 / What sits inside $(…) and backticks is a command too and is checked alike.
+    for inner in re.findall(r"\$\(([^()]*)\)", command) + re.findall(r"`([^`]*)`", command):
+        reason = always_ask(inner)
+        if reason:
+            return reason
     parts = segments(command)
     for n, part in enumerate(parts):
         kind, words = kind_of(part), _words(part)
         program = kind.split(" ")[0]
         if program in ASK_PROGRAMS or kind in ASK_KINDS:
             return f"`{kind}` 每次都要你确认"
-        if program in SHELLS and n > 0 and kind_of(parts[n - 1]).split(" ")[0] in FETCHERS:
+        if program in SHELLS and n > 0 and kind_of(parts[n - 1]).split(" ")[0] in FETCHERS and _runs_stdin(words):
             return "把下载来的东西直接交给解释器执行，每次都要你确认"
+        # sh -c "…"：引号里的那条命令也要查。 / sh -c "…": the command inside the quotes is checked as well.
+        if program in ("sh", "bash", "zsh") and "-c" in words and words.index("-c") + 1 < len(words):
+            reason = always_ask(words[words.index("-c") + 1])
+            if reason:
+                return reason
         # 重定向写文件（2>&1、>/dev/null 这种不算）。 / Redirecting into a file (2>&1 and >/dev/null do not count).
         bare = re.sub(r"'[^']*'|\"[^\"]*\"", "", part)
         for target in re.findall(r"(?<![0-9&])>>?\s*([^\s&|;>]+)", bare) + re.findall(r"&>>?\s*([^\s&|;>]+)", bare):
@@ -476,6 +583,7 @@ async def _run(live: _Live) -> None:
                 message = await live.inbox.get()
                 if message is None:
                     break
+                live.busy = True
                 _emit(live, {"type": "user", "text": message["text"], "images": len(message.get("images") or [])})
                 _set(live, "running")
                 started = time.monotonic()
@@ -484,12 +592,15 @@ async def _run(live: _Live) -> None:
                     _convert(live, item)
                 llm.log_call("session", "claude-code", time.monotonic() - started, {"cost_usd": None}, ok=True)
                 _set(live, "idle")
+                live.busy, live.idle_since = False, time.monotonic()
                 # 自动模式下人多半不在：一轮做完了也说一声。 / In auto mode the owner is probably away: say so when a turn is done, too.
                 notify.send("Claude Code 做完了一轮", live.meta.title[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
+        # 只有主人点了"结束"才算结束；闲置超时、换代码、换模型的退出只是歇着，下一句话会接上。
+        # Only the owner's "close" closes it; exits for idleness, new code or a model change are a rest, and the next message picks it up.
         if live.meta.status != "error":
-            live.meta.status = "closed"
+            live.meta.status = "closed" if live.closing else "idle"
     except asyncio.CancelledError:
-        live.meta.status = "closed"
+        live.meta.status = "closed" if live.closing else "idle"
         raise
     except Exception as e:  # noqa: BLE001 — 会话出错要让界面看到，不能悄悄没了 / a failing session must reach the UI, not vanish
         _emit(live, {"type": "error", "message": f"会话出错了：{e}"[:500]})
@@ -501,7 +612,6 @@ async def _run(live: _Live) -> None:
         live.meta.waiting_for = None
         _save(live.meta)
         _emit(live, {"type": "status", "status": live.meta.status, "waiting_for": None})
-        _live.pop(live.meta.id, None)
 
 
 def _recover(meta: Meta) -> None:
@@ -526,28 +636,213 @@ def _recover(meta: Meta) -> None:
         _save(meta)
 
 
-def _ensure_live(meta: Meta) -> _Live:
-    live = _live.get(meta.id)
-    if live is not None and live.task is not None and not live.task.done():
-        return live
-    _recover(meta)
-    if sum(1 for x in _live.values() if x.task is not None and not x.task.done()) >= MAX_LIVE:
+# ---------- 会话进程这一半 / the session-process half ----------
+
+
+def _inbox(session_id: str) -> Path:
+    return _dir(session_id) / "inbox"
+
+
+def _commands(session_id: str) -> list[Path]:
+    """还没处理的命令，按写入的先后。写到一半的（临时文件）不在里面。 / Commands not yet handled, oldest first. Half-written ones (temp files) are not among them."""
+    try:
+        return sorted(f for f in _inbox(session_id).iterdir() if f.suffix == ".json")
+    except OSError:
+        return []
+
+
+async def _handle(live: _Live, command: dict[str, Any]) -> None:
+    kind = command.get("kind")
+    if kind == "say":
+        # 一收到就算"在跑"：否则界面在它真正开始之前的那一瞬间会以为它闲着，可以再发一条。
+        # It counts as running the moment the message arrives; otherwise, in the instant before it really starts, the UI would think it idle and allow another message.
+        live.busy = True
+        live.meta.status = "running"
+        _save(live.meta)
+        await live.inbox.put({"text": str(command.get("text") or "").strip(), "images": list(command.get("images") or [])[:4]})
+    elif kind == "answer":
+        future = live.pending.get(str(command.get("request_id")))
+        if future is not None and not future.done():
+            future.set_result({"decision": command.get("decision"), "note": str(command.get("note") or ""), "answers": command.get("answers") or {}})
+            await asyncio.sleep(0)
+    elif kind == "interrupt":
+        for future in list(live.pending.values()):
+            if not future.done():
+                future.set_result({"decision": "deny", "note": "The user interrupted."})
+        if live.client is not None and live.busy:
+            await live.client.interrupt()
+        _emit(live, {"type": "interrupted"})
+    elif kind == "mode" and command.get("mode") in MODES:
+        live.meta.mode = command["mode"]
+        _save(live.meta)
+        if live.client is not None:
+            await live.client.set_permission_mode(command["mode"])
+        _emit(live, {"type": "mode", "mode": command["mode"]})
+    elif kind == "retire" and not live.busy:
+        await live.inbox.put(None)  # 换模型：歇下来，下一句话用新的配置接上 / a model change: rest, and the next message resumes with the new settings
+    elif kind == "close":
+        live.closing = True
+        await live.inbox.put(None)
+        if live.busy and live.task is not None:
+            live.task.cancel()
+
+
+async def _watch(live: _Live) -> None:
+    """会话进程的另一半循环：读命令；顺便看自己该不该歇着了。
+
+    The other loop of a session process: read commands, and see whether it is time to rest.
+    """
+    session_id, stamp, checked = live.meta.id, code_stamp(), time.monotonic()
+    while True:
+        for path in _commands(session_id):
+            try:
+                await _handle(live, json.loads(path.read_text()))
+            except Exception as e:  # noqa: BLE001 — 一条坏命令不能把会话带走 / one bad command must not take the session down
+                _emit(live, {"type": "error", "message": f"这一步没做成：{e}"[:500]})
+            finally:
+                path.unlink(missing_ok=True)
+        if not live.busy and live.inbox.empty() and not _commands(session_id):
+            now = time.monotonic()
+            stale = False
+            if now - checked > 2:
+                checked, stale = now, code_stamp() > stamp
+            # 闲得够久了，或者磁盘上的代码比自己新：歇着。这之后才到的命令没人读，后端发现后会另起一个进程。
+            # Idle long enough, or the code on disk is newer than this process: rest. A command arriving after this is read by nobody; the backend notices and starts another process.
+            if stale or now - live.idle_since > idle_exit():
+                await live.inbox.put(None)
+                return
+        await asyncio.sleep(POLL)
+
+
+async def _main(session_id: str) -> None:
+    """一个会话进程的一生：占住锁，开会话循环和读命令的循环，结束时把锁放掉。
+
+    The life of a session process: take the lock, run the session loop and the command loop, release the lock at the end.
+    """
+    _dir(session_id).mkdir(parents=True, exist_ok=True)
+    lock = (_dir(session_id) / "runner.lock").open("a")
+    for attempt in range(40):
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except OSError:
+            # 后端探一下锁只要一瞬间；一直拿不到，就是这个会话已经有一个进程了。
+            # The backend's probe of the lock lasts an instant; never getting it means this session already has a process.
+            if attempt == 39:
+                lock.close()
+                return
+            await asyncio.sleep(0.05)
+    try:
+        live = _Live(Meta.model_validate(store.read_json(_dir(session_id) / "meta.json", None)))
+        store.write_json(_dir(session_id) / "runner.json", {"pid": os.getpid(), "code": code_stamp(), "started": live.started})
+        live.task = asyncio.get_running_loop().create_task(_run(live), name=f"session-{session_id}")
+        watcher = asyncio.get_running_loop().create_task(_watch(live), name=f"session-inbox-{session_id}")
+        try:
+            await live.task
+        except asyncio.CancelledError:
+            if not live.task.done():  # 被取消的是这个进程自己（收到了终止信号）/ it is this process that was cancelled (a termination signal)
+                live.task.cancel()
+                await asyncio.gather(live.task, return_exceptions=True)
+        finally:
+            watcher.cancel()
+    finally:
+        (_dir(session_id) / "runner.json").unlink(missing_ok=True)
+        fcntl.flock(lock, fcntl.LOCK_UN)
+        lock.close()
+        _tasks.pop(session_id, None)
+
+
+def run(session_id: str) -> None:
+    """`python -m idea_loom.sessions run <编号>` 的入口。 / The entry point of `python -m idea_loom.sessions run <id>`."""
+    global client_factory
+    spec = os.environ.get("IDEA_LOOM_SESSION_CLIENT")
+    if spec:  # 测试用：换成假的客户端，写成 "模块:名字" / for tests: a fake client, given as "module:name"
+        import importlib
+
+        module, _, attr = spec.partition(":")
+        client_factory = getattr(importlib.import_module(module), attr)
+
+    async def go() -> None:
+        task = asyncio.current_task()
+        assert task is not None
+        asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, task.cancel)
+        await _main(session_id)
+
+    asyncio.run(go())
+
+
+# ---------- 后端这一半 / the backend half ----------
+
+
+def _command(session_id: str, kind: str, **data: Any) -> Path:
+    """把一个操作写成 inbox/ 下的一个文件。先写临时文件再改名，会话进程读到的都是完整的。
+
+    Write one action as a file under inbox/. A temp file is written and then renamed, so the session process only ever reads whole ones.
+    """
+    _inbox(session_id).mkdir(parents=True, exist_ok=True)
+    name = f"{time.time_ns():020d}-{secrets.token_hex(3)}"
+    tmp = _inbox(session_id) / f".{name}.tmp"
+    tmp.write_text(json.dumps({"kind": kind, **data}, ensure_ascii=False), encoding="utf-8")
+    path = _inbox(session_id) / f"{name}.json"
+    os.replace(tmp, path)
+    return path
+
+
+def _spawn(session_id: str) -> None:
+    if client_factory is not None:
+        _tasks[session_id] = asyncio.get_running_loop().create_task(_main(session_id), name=f"session-main-{session_id}")
+        return
+    # start_new_session：和后端脱钩，在终端里对后端按 Ctrl+C 不会连带把它带走。
+    # start_new_session: detached from the backend, so Ctrl+C on the backend in a terminal does not take it along.
+    with (_dir(session_id) / "runner.log").open("ab") as log:
+        subprocess.Popen([sys.executable, "-m", "idea_loom.sessions", "run", session_id], start_new_session=True,
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=log, cwd=str(store.repo_root()))
+
+
+def _count() -> int:
+    try:
+        return sum(1 for d in root().iterdir() if d.is_dir() and _held(d.name))
+    except OSError:
+        return 0
+
+
+async def _gone(session_id: str, limit: float) -> bool:
+    deadline = time.monotonic() + limit
+    while _held(session_id):
+        if time.monotonic() > deadline:
+            return False
+        await asyncio.sleep(0.02)
+    return True
+
+
+async def _send(session_id: str, kind: str, wake: bool = False, **data: Any) -> None:
+    """发一条命令，等到会话进程收下它。进程不在：wake 时把它拉起来，否则说它没在跑。
+
+    Send a command and wait until the session process has taken it. With no process: start one when `wake` is set, otherwise report that it is not running.
+    """
+    path = _command(session_id, kind, **data)
+    spawned, deadline = 0.0, time.monotonic() + 30
+    while path.exists():
+        now = time.monotonic()
+        if not _held(session_id):
+            if not wake:
+                path.unlink(missing_ok=True)
+                raise SessionError("这个会话现在没有在跑")
+            if now - spawned > 10:
+                _spawn(session_id)
+                spawned = now
+        if now > deadline:
+            path.unlink(missing_ok=True)
+            raise SessionError(f"会话进程没有响应，看 runs/sessions/{session_id}/runner.log")
+        await asyncio.sleep(0.02)
+
+
+def _wake_checks(meta: Meta) -> None:
+    if meta.live:
+        return
+    if _count() >= MAX_LIVE:
         raise SessionError(f"同时最多开 {MAX_LIVE} 个会话，先结束一个")
-    live = _Live(meta)
-    _live[meta.id] = live
-    live.task = asyncio.get_running_loop().create_task(_run(live), name=f"session-{meta.id}")
-    return live
-
-
-# ---------- 界面调的 / what the UI calls ----------
-
-
-async def _enqueue(live: _Live, text: str, images: list[dict[str, str]]) -> None:
-    # 一入队就算"在跑"：否则界面在它真正开始之前的那一瞬间会以为它闲着，可以再发一条。
-    # It counts as running the moment the message is queued; otherwise, in the instant before it really starts, the UI would think it idle and allow another message.
-    live.meta.status = "running"
-    _save(live.meta)
-    await live.inbox.put({"text": text.strip(), "images": images[:4]})
+    _recover(meta)
 
 
 class NewSession(BaseModel):
@@ -566,7 +861,7 @@ async def start(request: NewSession) -> Meta:
         raise SessionError(reason)
     if not request.text.strip():
         raise SessionError("第一句话不能空")
-    if sum(1 for x in _live.values() if x.task is not None and not x.task.done()) >= MAX_LIVE:
+    if _count() >= MAX_LIVE:
         raise SessionError(f"同时最多开 {MAX_LIVE} 个会话，先结束一个")  # 先查，别留下一个开不起来的空会话 / checked first, so no empty session that could not start is left behind
     session_id = f"s-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}"
     if request.model and request.model not in MODELS:
@@ -577,8 +872,7 @@ async def start(request: NewSession) -> Meta:
                 model=request.model or default_model(), effort=request.effort, created_at=time.time(), updated_at=time.time())
     _dir(session_id).mkdir(parents=True, exist_ok=True)
     _save(meta)
-    live = _ensure_live(meta)
-    await _enqueue(live, request.text, request.images)
+    await _send(session_id, "say", wake=True, text=request.text, images=request.images[:4])
     return get(session_id)
 
 
@@ -591,32 +885,32 @@ async def say(session_id: str, text: str, images: Optional[list[dict[str, str]]]
         raise SessionError("要说点什么")
     if meta.status in ("running", "waiting"):
         raise SessionError("它还在忙：等它说完，或者先打断" if meta.status == "running" else "它在等你回答上面那一条")
-    live = _ensure_live(meta)  # 进程不在了就用存着的会话编号接上 / resumes with the stored session id when the process is gone
-    await _enqueue(live, text, images or [])
+    _wake_checks(meta)  # 进程不在了就用存着的会话编号接上 / resumes with the stored session id when the process is gone
+    await _send(session_id, "say", wake=True, text=text, images=(images or [])[:4])
     return get(session_id)
 
 
+def _open_requests(session_id: str) -> set[str]:
+    rows = events(session_id)
+    return {str(e.get("request_id")) for e in rows if e.get("type") == "request"} - {str(e.get("request_id")) for e in rows if e.get("type") == "resolved"}
+
+
 async def answer(session_id: str, request_id: str, decision: str, note: str = "", answers: Optional[dict[str, Any]] = None) -> Meta:
-    live = _live.get(session_id)
-    future = live.pending.get(request_id) if live else None
-    if future is None or future.done():
-        raise SessionError("这一条已经回答过了，或者会话已经不在等它")
     if decision not in ("allow", "allow_always", "deny", "answer", "approve", "approve_edits", "approve_auto", "reject"):
         raise SessionError("不认识的回答")
-    future.set_result({"decision": decision, "note": note, "answers": answers or {}})
-    await asyncio.sleep(0)
+    if request_id not in _open_requests(session_id) or not _held(session_id):
+        raise SessionError("这一条已经回答过了，或者会话已经不在等它")
+    await _send(session_id, "answer", request_id=request_id, decision=decision, note=note, answers=answers or {})
+    for _ in range(40):  # 等它把这一条记成"已回答" / wait for it to record this one as answered
+        if request_id not in _open_requests(session_id):
+            break
+        await asyncio.sleep(0.025)
     return get(session_id)
 
 
 async def interrupt(session_id: str) -> Meta:
-    live = _live.get(session_id)
-    if live is None or live.client is None:
-        raise SessionError("这个会话现在没有在跑")
-    for future in list(live.pending.values()):
-        if not future.done():
-            future.set_result({"decision": "deny", "note": "The user interrupted."})
-    await live.client.interrupt()
-    _emit(live, {"type": "interrupted"})
+    get(session_id)
+    await _send(session_id, "interrupt")
     return get(session_id)
 
 
@@ -624,19 +918,22 @@ async def set_mode(session_id: str, mode: str) -> Meta:
     if mode not in MODES:
         raise SessionError("模式只能是：" + "、".join(MODES))
     meta = get(session_id)
+    if meta.live:
+        try:
+            await _send(session_id, "mode", mode=mode)
+            return get(session_id)
+        except SessionError:
+            meta = get(session_id)  # 正好在这一刻歇下了：直接记下 / it rested at this very moment: record it directly
+    # 会话进程不在时由后端来写；它在的时候只有它自己写 meta.json。
+    # The backend writes when there is no session process; while there is one, only it writes meta.json.
     meta.mode = mode  # type: ignore[assignment]
-    live = _live.get(session_id)
-    if live is not None and live.client is not None:
-        await live.client.set_permission_mode(mode)
-        _emit(live, {"type": "mode", "mode": mode})
-    _save(meta)
-    return get(session_id)
+    return _save(meta)
 
 
 async def set_engine(session_id: str, model: str, effort: str) -> Meta:
-    """换模型或努力程度。要在它闲着的时候换：把现在的进程收掉，下一句话用新的配置接上同一段对话。
+    """换模型或努力程度。要在它闲着的时候换：让现在的进程歇下来，下一句话用新的配置接上同一段对话。
 
-    Change the model or the effort. Done while it is idle: the current process is retired and the next message picks the same conversation up with the new settings.
+    Change the model or the effort. Done while it is idle: the current process is told to rest and the next message picks the same conversation up with the new settings.
     """
     if model not in MODELS:
         raise SessionError("模型只能是：" + "、".join(MODELS))
@@ -645,15 +942,15 @@ async def set_engine(session_id: str, model: str, effort: str) -> Meta:
     meta = get(session_id)
     if meta.status in ("running", "waiting"):
         raise SessionError("它在忙的时候不能换，等它说完或者先打断")
-    live = _live.get(session_id)
-    if live is not None and live.task is not None and not live.task.done():
-        if not live.meta.sdk_session:
+    if meta.live:
+        if not meta.sdk_session:
             raise SessionError("这个会话还没开始说话，等它说完第一句再换")
-        await live.inbox.put(None)
         try:
-            await asyncio.wait_for(asyncio.shield(live.task), 15)
-        except (asyncio.TimeoutError, asyncio.CancelledError, Exception):  # noqa: BLE001
+            await _send(session_id, "retire")
+        except SessionError:
             pass
+        if not await _gone(session_id, 15):
+            raise SessionError("它没能歇下来，过一会儿再换")
         meta = get(session_id)
     meta.model, meta.effort, meta.model_used = model, effort, None
     if meta.status == "closed":
@@ -662,16 +959,40 @@ async def set_engine(session_id: str, model: str, effort: str) -> Meta:
 
 
 async def close(session_id: str) -> Meta:
-    live = _live.get(session_id)
-    if live is not None:
-        await live.inbox.put(None)
-        if live.meta.status in ("running", "waiting") and live.task is not None:
-            live.task.cancel()
-        if live.task is not None:
-            try:
-                await asyncio.wait_for(asyncio.shield(live.task), 10)
-            except (asyncio.TimeoutError, asyncio.CancelledError, Exception):  # noqa: BLE001
-                pass
+    get(session_id)
+    if _held(session_id):
+        try:
+            await _send(session_id, "close")
+        except SessionError:
+            pass
+        if not await _gone(session_id, 10):
+            # 好好说不听，就让它停：先是终止信号，再不行就强杀它那一组进程。
+            # It did not go when asked, so it is stopped: a termination signal first, then killing its process group.
+            task = _tasks.get(session_id)
+            pid = (store.read_json(_dir(session_id) / "runner.json", None) or {}).get("pid")
+            for sig in (signal.SIGTERM, signal.SIGKILL):
+                if task is not None:
+                    task.cancel()
+                elif pid and pid != os.getpid():
+                    try:
+                        os.killpg(int(pid), sig)
+                    except (ProcessLookupError, PermissionError):
+                        pass
+                if await _gone(session_id, 3):
+                    break
+    for path in _commands(session_id):
+        path.unlink(missing_ok=True)
     meta = get(session_id)
     meta.status, meta.waiting_for = "closed", None
     return _save(meta)
+
+
+if __name__ == "__main__":
+    # 用包里的那一份来跑，免得 __main__ 和 idea_loom.sessions 各有一套全局变量。
+    # Run the packaged copy, so that __main__ and idea_loom.sessions do not each hold their own globals.
+    from idea_loom import sessions as _packaged
+
+    if len(sys.argv) == 3 and sys.argv[1] == "run":
+        _packaged.run(sys.argv[2])
+    else:
+        raise SystemExit("用法 / usage: python -m idea_loom.sessions run <编号 / id>")
