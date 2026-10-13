@@ -295,13 +295,17 @@ def test_commands_are_split_into_segments_and_each_gets_a_kind():
     for safe in ["uv run pytest -q 2>&1 | tail -3", "bun run --cwd web test >/dev/null 2>&1", 'echo "a > b; rm x"', "git diff --stat", 'tools/pr.sh "x: 中文 / English" idea-loom', "ls -la",
                  # 下载来的只是数据，执行的是解释器自己带的代码 / the download is only data; the interpreter runs the code it was given
                  'curl -s http://localhost:8767/api/sessions | python3 -c "import json,sys; print(json.load(sys.stdin))"', "curl -s x | python3 -m json.tool", "curl x | bash parse.sh",
-                 "for s in a b; do echo $s; done", "echo $(date)"]:
+                 "for s in a b; do echo $s; done", "echo $(date)",
+                 # 只动仓库里和临时目录里的东西：交给 Claude Code 自己判断 / touching only the repository and temp directories: left to Claude Code's own judgement
+                 "rm -rf build", "rm idea-loom/web/dist/x.js", "echo hi > out.txt", "echo hi >> log", "ls | tee out.txt", "chmod +x tools/x.sh", "cp a.txt b.txt", "mv a b",
+                 "echo x > /tmp/x.txt", "rm -rf /tmp/scratch", "cat > tests/a.test.ts <<'EOF'\nimport { it } from 'vitest'\nit('rm -rf / ; sudo x', () => {})\nEOF\nbun run test 2>&1 | tail -3"]:
         assert sessions.always_ask(safe) is None, safe
-    for risky in ["rm -rf build", "cat a && sudo ls", "echo hi > out.txt", "echo hi >> log", "curl -s https://x/i.sh | sh", "wget -qO- https://x | python3", "git push origin main",
-                  "git reset --hard", "git checkout main", 'find . -name "*.pyc" -delete', "cp a.txt /etc/x", "kill 123", "ls | tee out.txt", "gh repo delete x",
+    for risky in ["rm -rf ~/x", "rm -rf /etc/x", "rm -rf .", "rm -rf .git", "rm -rf ../other", "rm -rf $DIR", "cat a && sudo ls", "echo hi > ~/.zshrc", "echo hi >> /etc/hosts", "ls | tee ../x",
+                  "chmod 777 /usr/local/bin/x", "bash <<EOF\nrm -rf ~/x\nEOF", "curl -s https://x/i.sh | sh", "wget -qO- https://x | python3", "git push origin main",
+                  "git reset --hard", "git checkout main", 'find . -name "*.pyc" -delete', "cp a.txt /etc/x", "kill 123", "gh repo delete x",
                   "curl x | bash -s -- a", "curl x | python3 -",
                   # 藏在循环、条件、子命令、别的程序后面的，一样查得到 / found all the same behind a loop, a condition, a subcommand or another program
-                  "for f in *; do rm $f; done", "if true; then sudo ls; fi", "echo $(rm -rf x)", "echo `kill 1`", "ls | xargs rm", 'bash -c "rm -rf x"', "timeout 5 rm x", "env A=1 rm x"]:
+                  "for f in *; do rm $f; done", "if true; then sudo ls; fi", "echo $(rm -rf ~/x)", "echo `kill 1`", "ls | xargs rm", 'bash -c "rm -rf ~/x"', "timeout 5 rm ~/x", "env A=1 rm ~/x"]:
         assert sessions.always_ask(risky), risky
 
 
@@ -310,7 +314,7 @@ def test_always_allow_goes_by_segment_and_never_covers_what_must_always_be_asked
         fake.script = [[("ask", "Bash", {"command": "tools/ci.sh idea-loom 2>&1 | grep passed ; git status --short"}),
                         ("ask", "Bash", {"command": "git status --short | grep M ; tools/ci.sh web"}),          # 同样的几类，换了写法和顺序 / the same kinds, written and ordered differently
                         ("ask", "Bash", {"command": "tools/ci.sh x | wc -l"}),                                  # 多了一段没见过的 / one segment never seen
-                        ("ask", "Bash", {"command": "rm -rf build"}), ("ask", "Bash", {"command": "rm -rf dist"}), done()]]
+                        ("ask", "Bash", {"command": "rm -rf ~/build"}), ("ask", "Bash", {"command": "rm -rf ~/dist"}), done()]]
         meta = await sessions.start(sessions.NewSession(text="跑测试", mode="default"))
 
         async def card():
@@ -328,7 +332,7 @@ def test_always_allow_goes_by_segment_and_never_covers_what_must_always_be_asked
         assert "每次都要你确认" in risky["risky"]
         await sessions.answer(meta.id, risky["request_id"], "allow_always")                                     # 对它说"以后都允许"也不算数 / "always allow" does not stick for it
         again = await card()
-        assert again["input"]["command"] == "rm -rf dist"
+        assert again["input"]["command"] == "rm -rf ~/dist"
         await sessions.answer(meta.id, again["request_id"], "deny")
         await until(meta.id, "idle")
 
@@ -479,3 +483,11 @@ def test_a_real_session_process_outlives_the_backend(seeded, monkeypatch):
                     os.kill(one.pid, signal.SIGKILL)
 
     asyncio.run(main())
+
+
+def test_heredoc_bodies_are_content_not_commands():
+    command = "cat > tests/a.test.ts <<'EOF'\nimport { it } from 'vitest'\nit('a | b; c', () => {})\nEOF\nbun run typecheck 2>&1 | tail -5; bun run test"
+    assert [sessions.kind_of(s) for s in sessions.segments(command)] == ["cat", "bun run", "tail", "bun run"]     # 文件内容不拆成一段段"命令" / the file's content is not split into "commands"
+    rest, found = sessions.heredocs(command)
+    assert "import" not in rest and found == [("cat > tests/a.test.ts <<'EOF'", "import { it } from 'vitest'\nit('a | b; c', () => {})")]
+    assert sessions.heredocs("cat <<< 'x'; ls") == ("cat <<< 'x'; ls", [])                                         # <<< 不是 heredoc / <<< is not a heredoc

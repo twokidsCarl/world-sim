@@ -291,7 +291,11 @@ async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ct
 TWO_WORD = {"git", "uv", "bun", "bunx", "npm", "npx", "pnpm", "yarn", "gh", "docker", "cargo", "go", "pip", "brew", "kubectl", "make"}
 # 每次都问的：会删东西、会往外发、会改系统、或者把下载来的东西交给 shell 执行。自动模式和"以后都允许"都绕不过去。
 # Always asked about: what deletes, sends outward, changes the system, or hands a download to a shell. Neither auto mode nor "always allow" gets past it.
-ASK_PROGRAMS = {"rm", "rmdir", "sudo", "su", "dd", "mkfs", "chmod", "chown", "kill", "killall", "pkill", "shutdown", "reboot", "launchctl", "osascript", "crontab", "scp", "rsync", "ssh", "nc", "eval"}
+# 只动仓库里的东西时不必每次问的：删除、改权限。目标在仓库外才问（见 _outside）。
+# Not asked about every time while they touch only the repository: deleting and changing permissions. Asked only when a target lies outside it (see _outside).
+PATH_PROGRAMS = {"rm", "rmdir", "chmod", "chown", "mv", "cp", "tee"}
+TEMP_DIRS = ("/tmp/", "/private/tmp/", "/var/folders/", "/private/var/folders/")
+ASK_PROGRAMS = {"sudo", "su", "dd", "mkfs", "kill", "killall", "pkill", "shutdown", "reboot", "launchctl", "osascript", "crontab", "scp", "rsync", "ssh", "nc", "eval"}
 ASK_KINDS = {"git push", "git reset", "git clean", "git checkout", "git restore", "git rebase", "git branch", "git stash", "gh repo", "gh secret", "gh auth", "gh release",
              "npm publish", "docker rm", "docker rmi", "docker system", "brew uninstall", "pip uninstall"}
 VALUE_FLAGS = {"-C", "-c", "--project", "--cwd", "--directory", "-R", "--repo", "--git-dir", "--work-tree", "--prefix", "-f", "--file"}
@@ -303,8 +307,48 @@ KEYWORDS = {"do", "then", "else", "if", "elif", "while", "until", "!", "time", "
 WRAPPERS = {"xargs", "nohup", "command", "exec", "env", "nice", "timeout"}
 
 
+def heredocs(command: str) -> tuple[str, list[tuple[str, str]]]:
+    """把 heredoc 的正文从命令里拿掉：那是喂给程序的内容，不是命令。返回剩下的命令，和每个 heredoc 的
+    （开头那一行，正文）。
+
+    Take heredoc bodies out of a command: they are content fed to a program, not commands. Returns what is left
+    of the command, and for each heredoc (the line that opens it, its body).
+    """
+    import re
+
+    kept: list[str] = []
+    found: list[tuple[str, str]] = []
+    waiting: list[tuple[str, str, list[str]]] = []  # 结束标记、开头那一行、正文 / end marker, opening line, body
+    for line in command.split("\n"):
+        if waiting:
+            if line.strip() == waiting[0][0]:
+                marker, opener, body = waiting.pop(0)
+                found.append((opener, "\n".join(body)))
+            else:
+                waiting[0][2].append(line)
+            continue
+        kept.append(line)
+        for match in re.finditer(r"(?<!<)<<(?!<)-?\s*(['\"]?)([A-Za-z_]\w*)\1", line):
+            waiting.append((match.group(2), line, []))
+    found += [(opener, "\n".join(body)) for _, opener, body in waiting]  # 没写结束标记的 / one never closed
+    return "\n".join(kept), found
+
+
+def _outside(word: str) -> bool:
+    """这个路径是不是在仓库和临时目录之外，或者说不清在哪（带变量）。 / Whether a path lies outside the repository and the temp directories, or cannot be told (it has a variable)."""
+    word = word.strip("'\"")
+    if not word or word in ("/dev/null", "/dev/stdout", "/dev/stderr", "-"):
+        return False
+    if "$" in word or "`" in word or word.startswith("~") or ".." in word.split("/"):
+        return True
+    if word.startswith("/"):
+        return not (word.startswith(str(store.repo_root()) + "/") or word.startswith(TEMP_DIRS))
+    return False
+
+
 def segments(command: str) -> list[str]:
-    """按 | ; && || 把一条命令拆成几段；引号里的不拆。 / Split a command at | ; && || into segments, leaving quoted text alone."""
+    """按 | ; && || 把一条命令拆成几段；引号里的不拆，heredoc 的正文不算。 / Split a command at | ; && || into segments, leaving quoted text alone and heredoc bodies out."""
+    command = heredocs(command)[0]
     out, buf, quote, i = [], "", "", 0
     while i < len(command):
         ch = command[i]
@@ -400,12 +444,32 @@ def always_ask(command: str) -> Optional[str]:
         reason = always_ask(inner)
         if reason:
             return reason
+    # heredoc 喂给 shell 的，正文就是命令，要查；喂给别的程序的（cat > 文件 <<EOF）只是内容。
+    # A heredoc fed to a shell is commands and is checked; fed to anything else (cat > file <<EOF) it is only content.
+    for opener, body in heredocs(command)[1]:
+        if any(kind_of(part).split(" ")[0] in ("sh", "bash", "zsh") for part in segments(opener)):
+            reason = always_ask(body)
+            if reason:
+                return reason
     parts = segments(command)
     for n, part in enumerate(parts):
         kind, words = kind_of(part), _words(part)
         program = kind.split(" ")[0]
         if program in ASK_PROGRAMS or kind in ASK_KINDS:
             return f"`{kind}` 每次都要你确认"
+        # 删除、改权限、复制、移动、tee：只动仓库里（和临时目录里）的东西时，交给 Claude Code 自己的判断；
+        # 碰到仓库外的、或者整个仓库和 .git，才每次都问。
+        # Deleting, changing permissions, copying, moving, tee: while only things inside the repository (and the temp
+        # directories) are touched, Claude Code's own judgement decides; only what reaches outside, or the whole
+        # repository or .git, is asked about every time.
+        if program in PATH_PROGRAMS:
+            targets = [w for w in words[1:] if not w.startswith("-")]
+            if any(_outside(w) for w in targets):
+                return f"`{program}` 涉及仓库外的路径，每次都要你确认"
+            if program in ("rm", "rmdir") and not targets:
+                return f"`{program}` 要删什么看不出来（由别的命令给出），每次都要你确认"
+            if program in ("rm", "rmdir") and any(w.rstrip("/") in (".", "*", "", ".git", str(store.repo_root())) or w.startswith(".git/") for w in targets):
+                return f"`{program}` 要删的是整个目录或 .git，每次都要你确认"
         if program in SHELLS and n > 0 and kind_of(parts[n - 1]).split(" ")[0] in FETCHERS and _runs_stdin(words):
             return "把下载来的东西直接交给解释器执行，每次都要你确认"
         # sh -c "…"：引号里的那条命令也要查。 / sh -c "…": the command inside the quotes is checked as well.
@@ -413,18 +477,14 @@ def always_ask(command: str) -> Optional[str]:
             reason = always_ask(words[words.index("-c") + 1])
             if reason:
                 return reason
-        # 重定向写文件（2>&1、>/dev/null 这种不算）。 / Redirecting into a file (2>&1 and >/dev/null do not count).
+        # 重定向写到仓库外的文件。写仓库里的文件和它用编辑工具写是一回事，不在这里拦。
+        # Redirecting into a file outside the repository. Writing one inside it is the same as its edit tool doing so and is not stopped here.
         bare = re.sub(r"'[^']*'|\"[^\"]*\"", "", part)
-        for target in re.findall(r"(?<![0-9&])>>?\s*([^\s&|;>]+)", bare) + re.findall(r"&>>?\s*([^\s&|;>]+)", bare):
-            if target not in ("/dev/null", "&1", "&2"):
-                return f"用重定向写文件 `{target}`，每次都要你确认"
-        if program == "tee" and any(not w.startswith("-") for w in words[1:]):
-            return "用 tee 写文件，每次都要你确认"
+        for target in re.findall(r"(?<![0-9&<])>>?\s*([^\s&|;><]+)", bare) + re.findall(r"&>>?\s*([^\s&|;><]+)", bare):
+            if target not in ("&1", "&2") and _outside(target):
+                return f"用重定向写仓库外的文件 `{target}`，每次都要你确认"
         if program == "find" and ("-delete" in words or "-exec" in words):
             return "`find` 带 -delete 或 -exec，每次都要你确认"
-        if program == "mv" or program == "cp":
-            if any(w.startswith(("/", "~", "..")) and not w.startswith(str(store.repo_root())) for w in words[1:]):
-                return f"`{program}` 涉及仓库外的路径，每次都要你确认"
     return None
 
 
