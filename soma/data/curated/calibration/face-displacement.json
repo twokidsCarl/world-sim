@@ -1,0 +1,624 @@
+{
+ "schema": 1,
+ "id": "face-displacement",
+ "title": {
+  "zh": "表情位移的量级：我们的 AU（强度 5）vs ICT-FaceKit 的形状（权重 1）",
+  "en": "Magnitude of expression displacement: our AUs (intensity 5) vs ICT-FaceKit shapes (weight 1)"
+ },
+ "method": {
+  "zh": "我们：AU 强度 5（最大）时皮肤顶点的最大位移，用 tools/face/model.ts 的 activations 和 displacement 求得；带 jaw 分量的 AU 再经骨架蒙皮（oursJawMm 是只转下颌时的最大位移）。参照：ICT-FaceKit 通用中性脸与对应表情形状（左右两个同时取 1）之差在“全脸区域”顶点 [0, 9408] 上的最大值，模型单位是厘米。AU ↔ 形状的对应取自 ICT-FaceKit 自己的 FACS 对照表。没有按脸的大小缩放（ICT 通用脸的全脸区域宽 184 mm）。",
+  "en": "Ours: the largest displacement of a skin vertex at AU intensity 5 (the maximum), from `activations` and `displacement` of tools/face/model.ts; AUs with a jaw share are then skinned by the rig (oursJawMm is the largest displacement from the jaw rotation alone). Reference: the largest difference between ICT-FaceKit's generic neutral face and the matching expression shapes (both sides at 1) over the \"full face area\" vertices [0, 9408]; the model is in centimetres. The AU ↔ shape mapping is ICT-FaceKit's own FACS table. Nothing is scaled for face size (the full-face area of the ICT generic face is 184 mm wide)."
+ },
+ "tolerance": {
+  "zh": "只比量级：比值在 0.5–2 之间记 within。ICT 的形状是美术师为一张通用脸做的满幅表情，不是测量值；FACS 的强度是序数等级，不是位移。",
+  "en": "Order of magnitude only: a ratio between 0.5 and 2 counts as within. The ICT shapes are artist-made full-range expressions on a generic face, not measurements, and FACS intensities are ordinal grades, not displacements."
+ },
+ "references": [
+  {
+   "id": "ict-facekit",
+   "name": "ICT-FaceKit (USC Institute for Creative Technologies, Vision and Graphics Lab): morphable face model with 53 expression shapes",
+   "version": "ICT-VGL/ICT-FaceKit commit da5f95a6 (2020-12-01), FaceXModel",
+   "url": "https://github.com/ICT-VGL/ICT-FaceKit",
+   "licence": "MIT (Copyright (c) 2020 USC Institute for Creative Technologies)",
+   "clause": "LICENSE at the repository root: \"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software\"",
+   "opened": "2026-10-13"
+  }
+ ],
+ "ourState": {
+  "male": {
+   "anatomy.json": "b8acc1f6aa9f",
+   "rig.json": "d6f78c4a2637",
+   "rig.bin": "c592ecf76a6d",
+   "face.json": "e5929504ad8e",
+   "face.bin": "a3fbd2d38611",
+   "muscular.glb": "34d6d4fbefac",
+   "skeletal.glb": "b0cb3b0f29f0",
+   "integumentary.glb": "a42b95e41b26"
+  },
+  "female": {
+   "anatomy.json": "03f878a6bcda",
+   "rig.json": "8b11cb7a5713",
+   "rig.bin": "f8cde8d7af4e",
+   "face.json": "7035b5bd1287",
+   "face.bin": "8689765b7261",
+   "muscular.glb": "b5bbda989a8d",
+   "skeletal.glb": "75ef5bae1128",
+   "integumentary.glb": "4d6b3ab8090c"
+  }
+ },
+ "notes": [
+  {
+   "zh": "最大位移是单个顶点的值，对局部的尖峰敏感；它回答的是“量级对不对”，不是“形状像不像”。",
+   "en": "The largest displacement is a single-vertex value and sensitive to local spikes; it answers whether the magnitude is right, not whether the shape is alike."
+  }
+ ],
+ "summary": {
+  "rows": 38,
+  "within": 29,
+  "outside": 9
+ },
+ "rows": [
+  {
+   "body": "male",
+   "au": "AU24",
+   "region": "lip",
+   "ictShapes": [
+    "mouthPress_L",
+    "mouthPress_R"
+   ],
+   "oursMm": 1.8,
+   "oursJawMm": null,
+   "refMm": 5.6,
+   "ratio": 0.33,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "au": "AU17",
+   "region": "chin",
+   "ictShapes": [
+    "mouthShrugLower"
+   ],
+   "oursMm": 4,
+   "oursJawMm": null,
+   "refMm": 11.3,
+   "ratio": 0.35,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "au": "AU17",
+   "region": "chin",
+   "ictShapes": [
+    "mouthShrugLower"
+   ],
+   "oursMm": 4,
+   "oursJawMm": null,
+   "refMm": 11.3,
+   "ratio": 0.36,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "au": "AU18",
+   "region": "lip",
+   "ictShapes": [
+    "mouthPucker"
+   ],
+   "oursMm": 4.7,
+   "oursJawMm": null,
+   "refMm": 12.4,
+   "ratio": 0.38,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "au": "AU28",
+   "region": "lip",
+   "ictShapes": [
+    "mouthRollLower",
+    "mouthRollUpper"
+   ],
+   "oursMm": 5.5,
+   "oursJawMm": 3.6,
+   "refMm": 14.3,
+   "ratio": 0.38,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "au": "AU2",
+   "region": "brow",
+   "ictShapes": [
+    "browOuterUp_L",
+    "browOuterUp_R"
+   ],
+   "oursMm": 3.8,
+   "oursJawMm": null,
+   "refMm": 8.6,
+   "ratio": 0.44,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "au": "AU14",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthDimple_L",
+    "mouthDimple_R"
+   ],
+   "oursMm": 4,
+   "oursJawMm": null,
+   "refMm": 8.9,
+   "ratio": 0.45,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "au": "AU14",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthDimple_L",
+    "mouthDimple_R"
+   ],
+   "oursMm": 4.1,
+   "oursJawMm": null,
+   "refMm": 8.9,
+   "ratio": 0.46,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "au": "AU9",
+   "region": "nose",
+   "ictShapes": [
+    "noseSneer_L",
+    "noseSneer_R"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 10.3,
+   "ratio": 0.49,
+   "toleranceFactor": 2,
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "au": "AU9",
+   "region": "nose",
+   "ictShapes": [
+    "noseSneer_L",
+    "noseSneer_R"
+   ],
+   "oursMm": 5.2,
+   "oursJawMm": null,
+   "refMm": 10.3,
+   "ratio": 0.5,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU2",
+   "region": "brow",
+   "ictShapes": [
+    "browOuterUp_L",
+    "browOuterUp_R"
+   ],
+   "oursMm": 4.5,
+   "oursJawMm": null,
+   "refMm": 8.6,
+   "ratio": 0.52,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU11",
+   "region": "lip",
+   "ictShapes": [
+    "mouthUpperUp_L",
+    "mouthUpperUp_R"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 9.1,
+   "ratio": 0.55,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU12",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthSmile_L",
+    "mouthSmile_R"
+   ],
+   "oursMm": 9,
+   "oursJawMm": null,
+   "refMm": 15.8,
+   "ratio": 0.57,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU12",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthSmile_L",
+    "mouthSmile_R"
+   ],
+   "oursMm": 9.2,
+   "oursJawMm": null,
+   "refMm": 15.8,
+   "ratio": 0.58,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU22",
+   "region": "lip",
+   "ictShapes": [
+    "mouthFunnel"
+   ],
+   "oursMm": 7.3,
+   "oursJawMm": null,
+   "refMm": 11.7,
+   "ratio": 0.63,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU6",
+   "region": "cheek",
+   "ictShapes": [
+    "cheekSquint_L",
+    "cheekSquint_R"
+   ],
+   "oursMm": 4.1,
+   "oursJawMm": null,
+   "refMm": 6.3,
+   "ratio": 0.65,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU6",
+   "region": "cheek",
+   "ictShapes": [
+    "cheekSquint_L",
+    "cheekSquint_R"
+   ],
+   "oursMm": 4.1,
+   "oursJawMm": null,
+   "refMm": 6.3,
+   "ratio": 0.65,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU5",
+   "region": "lid",
+   "ictShapes": [
+    "eyeWide_L",
+    "eyeWide_R"
+   ],
+   "oursMm": 2.5,
+   "oursJawMm": null,
+   "refMm": 3.6,
+   "ratio": 0.7,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU27",
+   "region": "jaw",
+   "ictShapes": [
+    "jawOpen"
+   ],
+   "oursMm": 59.2,
+   "oursJawMm": 59.2,
+   "refMm": 42,
+   "ratio": 1.41,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU7",
+   "region": "lid",
+   "ictShapes": [
+    "eyeSquint_L",
+    "eyeSquint_R"
+   ],
+   "oursMm": 2.6,
+   "oursJawMm": null,
+   "refMm": 3.7,
+   "ratio": 0.71,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU16",
+   "region": "lip",
+   "ictShapes": [
+    "mouthLowerDown_L",
+    "mouthLowerDown_R"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 6.9,
+   "ratio": 0.72,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU16",
+   "region": "lip",
+   "ictShapes": [
+    "mouthLowerDown_L",
+    "mouthLowerDown_R"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 6.9,
+   "ratio": 0.72,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU7",
+   "region": "lid",
+   "ictShapes": [
+    "eyeSquint_L",
+    "eyeSquint_R"
+   ],
+   "oursMm": 2.8,
+   "oursJawMm": null,
+   "refMm": 3.7,
+   "ratio": 0.74,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU24",
+   "region": "lip",
+   "ictShapes": [
+    "mouthPress_L",
+    "mouthPress_R"
+   ],
+   "oursMm": 4.1,
+   "oursJawMm": null,
+   "refMm": 5.6,
+   "ratio": 0.74,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU27",
+   "region": "jaw",
+   "ictShapes": [
+    "jawOpen"
+   ],
+   "oursMm": 56.1,
+   "oursJawMm": 56.1,
+   "refMm": 42,
+   "ratio": 1.34,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU4",
+   "region": "brow",
+   "ictShapes": [
+    "browDown_L",
+    "browDown_R"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 6.5,
+   "ratio": 0.77,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU4",
+   "region": "brow",
+   "ictShapes": [
+    "browDown_L",
+    "browDown_R"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 6.5,
+   "ratio": 0.77,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU43",
+   "region": "lid",
+   "ictShapes": [
+    "eyeBlink_L",
+    "eyeBlink_R"
+   ],
+   "oursMm": 7.5,
+   "oursJawMm": null,
+   "refMm": 9.6,
+   "ratio": 0.78,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU20",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthStretch_L",
+    "mouthStretch_R"
+   ],
+   "oursMm": 8,
+   "oursJawMm": null,
+   "refMm": 10.3,
+   "ratio": 0.78,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU20",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthStretch_L",
+    "mouthStretch_R"
+   ],
+   "oursMm": 8.1,
+   "oursJawMm": null,
+   "refMm": 10.3,
+   "ratio": 0.79,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU1",
+   "region": "brow",
+   "ictShapes": [
+    "browInnerUp_L",
+    "browInnerUp_R"
+   ],
+   "oursMm": 8,
+   "oursJawMm": null,
+   "refMm": 6.3,
+   "ratio": 1.26,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU1",
+   "region": "brow",
+   "ictShapes": [
+    "browInnerUp_L",
+    "browInnerUp_R"
+   ],
+   "oursMm": 8,
+   "oursJawMm": null,
+   "refMm": 6.3,
+   "ratio": 1.26,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU10",
+   "region": "lip",
+   "ictShapes": [
+    "mouthShrugUpper"
+   ],
+   "oursMm": 5,
+   "oursJawMm": null,
+   "refMm": 6.2,
+   "ratio": 0.81,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU43",
+   "region": "lid",
+   "ictShapes": [
+    "eyeBlink_L",
+    "eyeBlink_R"
+   ],
+   "oursMm": 7.9,
+   "oursJawMm": null,
+   "refMm": 9.6,
+   "ratio": 0.82,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU10",
+   "region": "lip",
+   "ictShapes": [
+    "mouthShrugUpper"
+   ],
+   "oursMm": 5.3,
+   "oursJawMm": null,
+   "refMm": 6.2,
+   "ratio": 0.86,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU5",
+   "region": "lid",
+   "ictShapes": [
+    "eyeWide_L",
+    "eyeWide_R"
+   ],
+   "oursMm": 4,
+   "oursJawMm": null,
+   "refMm": 3.6,
+   "ratio": 1.12,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "au": "AU15",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthFrown_L",
+    "mouthFrown_R"
+   ],
+   "oursMm": 6.6,
+   "oursJawMm": null,
+   "refMm": 6.1,
+   "ratio": 1.07,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "au": "AU15",
+   "region": "mouth corner",
+   "ictShapes": [
+    "mouthFrown_L",
+    "mouthFrown_R"
+   ],
+   "oursMm": 6.3,
+   "oursJawMm": null,
+   "refMm": 6.1,
+   "ratio": 1.04,
+   "toleranceFactor": 2,
+   "verdict": "within"
+  }
+ ]
+}

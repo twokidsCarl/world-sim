@@ -1,0 +1,372 @@
+{
+ "schema": 1,
+ "id": "arm-bones",
+ "title": {
+  "zh": "肱骨扭转、提携角和肘屈伸轴",
+  "en": "Humeral torsion, carrying angle and the elbow flexion axis"
+ },
+ "method": {
+  "zh": "由肱骨网格和骨架的关节量出：肱骨头中心取盂肱关节中心（构建骨架时对关节面的球拟合）；骨干轴取肱骨中段顶点的主方向；内外上髁取远端 12% 顶点在垂直骨干平面内最宽方向上的两个极点。后倾角 = 垂直骨干的平面内，“骨干轴 → 肱骨头中心”的方向相对“指向内侧的上髁连线”的夹角，肱骨头偏后为正（即后倾，文献中的常规）。提携角 = 肱骨冠状面（骨干轴与上髁连线张成）内，肘关节中心 → 腕关节中心的方向相对骨干轴向外偏的角；量的是静止姿势（肘约屈 12°、前臂旋后），不是完全伸直。肘屈伸轴取骨架的 elbow 关节的 axes[0]。",
+  "en": "Measured from the humerus mesh and the rig's joints: the head centre is the glenohumeral joint centre (a sphere fitted to the articular surface when the rig was built); the shaft axis is the principal direction of the mid-shaft vertices; the epicondyles are the two extreme points, along the widest direction across the shaft, of the vertices in the distal 12 %. Retroversion = in the plane across the shaft, the angle of the direction \"shaft axis → head centre\" against the medially pointing epicondylar line, positive when the head lies posterior (retroversion, the usual convention). Carrying angle = in the coronal plane of the humerus (spanned by shaft axis and epicondylar line), the lateral deviation of the direction elbow centre → wrist centre from the shaft axis; it is measured in the rest pose (elbow about 12° flexed, forearm supinated), not in full extension. The elbow flexion axis is axes[0] of the rig's elbow joint."
+ },
+ "tolerance": {
+  "zh": "每行的 band 写明区间的来历；有均值和标准差的取 ± 2 SD。没有可核对的个体范围或配对差标准差时记为 not comparable，并说明原因。",
+  "en": "Every row's `band` says where its interval comes from; mean ± 2 SD where a mean and SD exist. Where no verifiable range of individuals or SD of a paired difference exists the row is \"not comparable\", with the reason."
+ },
+ "references": [
+  {
+   "id": "boileau2008",
+   "name": "Boileau et al. 2008, Clin Orthop Relat Res 466:661–669: CT scan method accurately assesses humeral head retroversion",
+   "version": "PMC2505224; 65 fresh cadaveric humeri (52 paired); abstract",
+   "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=2505224",
+   "licence": "Free to read in PMC; © The Association of Bone and Joint Surgeons; no open licence",
+   "clause": "No licence grant; two numbers of the abstract are cited as facts.",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "oswald2026",
+   "name": "Oswald et al. 2026, JSES Int: prediction of humeral torsion from proximal humerus CT",
+   "version": "PMC13571542; statements about earlier literature",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13571542/fullTextXML",
+   "licence": "CC BY 4.0",
+   "clause": "Licence link in the article XML: creativecommons.org/licenses/by/4.0.",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "bhattacharyya2022",
+   "name": "Bhattacharyya et al. 2022, Indian J Orthop: carrying angle of the elbow in a North-East Indian population, a clinico-radiological study",
+   "version": "PMC8854536; 384 adults (214 men, 170 women), 20–74 y; abstract",
+   "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=8854536",
+   "licence": "Free to read in PMC; © Indian Orthopaedics Association; no open licence",
+   "clause": "No licence grant; means and SDs of the abstract are cited as facts.",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "yang2024",
+   "name": "Yang et al. 2024, BMC Musculoskelet Disord: CT-based measurement of distal humerus morphology in healthy adults from Northern China",
+   "version": "PMC11445982; 80 adults, CT with 3D reconstruction",
+   "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11445982/fullTextXML",
+   "licence": "CC BY-NC-ND 4.0",
+   "clause": "Licence link in the article XML: creativecommons.org/licenses/by-nc-nd/4.0. Only the mean and SD of one angle are quoted as facts.",
+   "opened": "2026-10-13"
+  }
+ ],
+ "ourState": {
+  "male": {
+   "anatomy.json": "b8acc1f6aa9f",
+   "rig.json": "d6f78c4a2637",
+   "rig.bin": "c592ecf76a6d",
+   "face.json": "e5929504ad8e",
+   "face.bin": "a3fbd2d38611",
+   "muscular.glb": "34d6d4fbefac",
+   "skeletal.glb": "b0cb3b0f29f0",
+   "integumentary.glb": "a42b95e41b26"
+  },
+  "female": {
+   "anatomy.json": "03f878a6bcda",
+   "rig.json": "8b11cb7a5713",
+   "rig.bin": "f8cde8d7af4e",
+   "face.json": "7035b5bd1287",
+   "face.bin": "8689765b7261",
+   "muscular.glb": "b5bbda989a8d",
+   "skeletal.glb": "75ef5bae1128",
+   "integumentary.glb": "4d6b3ab8090c"
+  }
+ },
+ "notes": [
+  {
+   "zh": "骨的网格很粗（每根肱骨约 650 个三角形），上髁极点和骨干轴各有约 2–3° 的不确定度；女性的右前臂和右手是左侧的镜像，她的右侧提携角因此不是独立的测量。",
+   "en": "The bone meshes are coarse (about 650 triangles per humerus), so the epicondylar points and the shaft axis each carry an uncertainty of about 2–3°; the female's right forearm and hand are a mirrored left, so her right carrying angle is not an independent measurement."
+  },
+  {
+   "zh": "SKEL（skel.is.tue.mpg.de）没有使用：它的许可是“仅限非商业科学研究”的单用户许可，下载即视为接受条款并需要注册；条款写明数据和软件“不得复制、修改或以任何形式提供给第三方”。本项目是公开仓库、不能代用户接受协议，所以没有下载。",
+   "en": "SKEL (skel.is.tue.mpg.de) was not used: its licence is a single-user licence \"for non-commercial scientific research purposes\", accepted by downloading and requiring registration, and it states that the data and software may not be \"reproduced, modified and/or made available in any form to any third party\". This is a public repository and no agreement may be accepted on the user's behalf, so nothing was downloaded."
+  }
+ ],
+ "summary": {
+  "rows": 18,
+  "within": 8,
+  "outside": 4,
+  "notComparable": 6,
+  "male_L": "retroversion 29.3° (vs flexion axis 30.8°), carrying 1.4° (ulna axis -1.8°), axis-to-shaft 90.7°, axis-to-epicondylar 1.7°, epicondylar width 63.7 mm",
+  "male_R": "retroversion 40.1° (vs flexion axis 41.2°), carrying -0.7° (ulna axis -3.6°), axis-to-shaft 90.1°, axis-to-epicondylar 1.1°, epicondylar width 63.6 mm",
+  "female_L": "retroversion 22.9° (vs flexion axis 36.1°), carrying 8.4° (ulna axis 2.8°), axis-to-shaft 93.2°, axis-to-epicondylar 13.5°, epicondylar width 55 mm",
+  "female_R": "retroversion 5.1° (vs flexion axis 10.7°), carrying 8.8° (ulna axis 3.8°), axis-to-shaft 92.4°, axis-to-epicondylar 6.1°, epicondylar width 44.2 mm"
+ },
+ "rows": [
+  {
+   "body": "male",
+   "side": "L",
+   "quantity": "humeral head retroversion against the epicondylar line",
+   "oursDeg": 29.3,
+   "source": "oswald2026",
+   "refCentralDeg": 17.9,
+   "refLowDeg": 12,
+   "refHighDeg": 36,
+   "band": "range of the mean values reported for healthy humeri (12°–36°), not a range of individuals",
+   "quote": "Oswald 2026: \"reported mean healthy humeral torsion values vary widely (range, 12° to 36°)\"; Boileau 2008 (abstract): \"The retroversion with respect to the transepicondylar axis was 17.9°\"",
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "quantity": "carrying angle (forearm axis against humeral shaft, coronal plane of the humerus)",
+   "oursDeg": 1.4,
+   "source": "bhattacharyya2022",
+   "refCentralDeg": 12.27,
+   "refLowDeg": 7.4,
+   "refHighDeg": 17.1,
+   "band": "mean ± 2 SD",
+   "quote": "In males, the mean carrying angle of the right elbow was found to be 12.55 ± 2.3° and of the left was found to be 12.27 ± 2.43°, while in females, the mean carrying angle of the right elbow was found to be 14.53 ± 2.34° and 14.06 ± 3.37° in the left",
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "L",
+   "quantity": "elbow flexion axis against humeral shaft axis",
+   "oursDeg": 89.3,
+   "source": "yang2024",
+   "refCentralDeg": 86.22,
+   "refLowDeg": 79.7,
+   "refHighDeg": 92.8,
+   "band": "mean ± 2 SD",
+   "quote": "HAA (°) 86.22 ± 3.27 (angle formed by the humeral shaft axis and the flexion axis of the distal humerus on the radial side in the coronal plane); Right 85.41 ± 3.07°, Left 86.88 ± 3.31°",
+   "verdict": "within",
+   "note": {
+    "zh": "参照的角在冠状面内、取桡侧；我们的是三维夹角折到 0–90°，所以只在偏离垂直的大小上可比。",
+    "en": "The reference angle is taken in the coronal plane on the radial side; ours is the 3D angle folded to 0–90°, so only the amount off perpendicular is comparable."
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "quantity": "humeral head retroversion against the epicondylar line",
+   "oursDeg": 40.1,
+   "source": "oswald2026",
+   "refCentralDeg": 17.9,
+   "refLowDeg": 12,
+   "refHighDeg": 36,
+   "band": "range of the mean values reported for healthy humeri (12°–36°), not a range of individuals",
+   "quote": "Oswald 2026: \"reported mean healthy humeral torsion values vary widely (range, 12° to 36°)\"; Boileau 2008 (abstract): \"The retroversion with respect to the transepicondylar axis was 17.9°\"",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "落在已发表“均值”的范围之外；个体的正常范围更宽，但没有能逐字核对的公开数值（Boileau 2008 全文里的标准差 13.7°、范围 −6.7° 到 47.5° 只经摘要模型转述，未逐字核对）。负值表示肱骨头指向内外上髁连线的前方，即前倾。是否异常请看左右差那一行。",
+    "en": "Outside the range of published means; the normal range of individuals is wider, but no openly verifiable figure for it was found (the SD of 13.7° and the range −6.7° to 47.5° in the full text of Boileau 2008 were only relayed by a summarising model and not checked verbatim). A negative value means the head points anterior of the epicondylar line, i.e. anteversion. For abnormality see the left-minus-right row."
+   }
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "quantity": "carrying angle (forearm axis against humeral shaft, coronal plane of the humerus)",
+   "oursDeg": -0.7,
+   "source": "bhattacharyya2022",
+   "refCentralDeg": 12.55,
+   "refLowDeg": 8,
+   "refHighDeg": 17.2,
+   "band": "mean ± 2 SD",
+   "quote": "In males, the mean carrying angle of the right elbow was found to be 12.55 ± 2.3° and of the left was found to be 12.27 ± 2.43°, while in females, the mean carrying angle of the right elbow was found to be 14.53 ± 2.34° and 14.06 ± 3.37° in the left",
+   "verdict": "outside"
+  },
+  {
+   "body": "male",
+   "side": "R",
+   "quantity": "elbow flexion axis against humeral shaft axis",
+   "oursDeg": 89.9,
+   "source": "yang2024",
+   "refCentralDeg": 86.22,
+   "refLowDeg": 79.7,
+   "refHighDeg": 92.8,
+   "band": "mean ± 2 SD",
+   "quote": "HAA (°) 86.22 ± 3.27 (angle formed by the humeral shaft axis and the flexion axis of the distal humerus on the radial side in the coronal plane); Right 85.41 ± 3.07°, Left 86.88 ± 3.31°",
+   "verdict": "within",
+   "note": {
+    "zh": "参照的角在冠状面内、取桡侧；我们的是三维夹角折到 0–90°，所以只在偏离垂直的大小上可比。",
+    "en": "The reference angle is taken in the coronal plane on the radial side; ours is the 3D angle folded to 0–90°, so only the amount off perpendicular is comparable."
+   }
+  },
+  {
+   "body": "male",
+   "side": "L−R",
+   "quantity": "side difference of humeral head retroversion",
+   "oursDeg": -10.8,
+   "source": "oswald2026",
+   "refCentralDeg": 6.9,
+   "refLowDeg": 0,
+   "refHighDeg": 17.5,
+   "band": "mean + 2 SD of the absolute bilateral difference (6.9° ± 5.3°)",
+   "quote": "Oswald 2026: \"the previously reported mean bilateral difference in torsion of 6.9° ± 5.3°\" (cited to an earlier 3D-CT study that was not opened); Boileau 2008 (abstract): \"The difference between the right and left humeri was 8.9°.\"",
+   "verdict": "within"
+  },
+  {
+   "body": "male",
+   "side": "L−R",
+   "quantity": "side difference of carrying angle",
+   "oursDeg": 2.1,
+   "source": "bhattacharyya2022",
+   "refCentralDeg": -0.28,
+   "refLowDeg": null,
+   "refHighDeg": null,
+   "band": "difference of the group means only; no paired SD in an open source",
+   "quote": "In males, the mean carrying angle of the right elbow was found to be 12.55 ± 2.3° and of the left was found to be 12.27 ± 2.43°, while in females, the mean carrying angle of the right elbow was found to be 14.53 ± 2.34° and 14.06 ± 3.37° in the left",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "公开来源里没有同一人左右差的标准差，只有两侧均值相差不到 0.5°。",
+    "en": "No open source gives the SD of the within-person side difference; the two group means differ by less than 0.5°."
+   }
+  },
+  {
+   "body": "male",
+   "side": "L−R",
+   "quantity": "angle between the left and right elbow flexion axes, each expressed in its own humerus frame",
+   "oursDeg": 0.8,
+   "source": "yang2024",
+   "refCentralDeg": 1.47,
+   "refLowDeg": null,
+   "refHighDeg": null,
+   "band": "difference of unpaired group means in one plane (86.88° left vs 85.41° right); no paired SD in an open source",
+   "quote": "HAA: Right 85.41 ± 3.07°, Left 86.88 ± 3.31°, P = 0.045",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "参照只有不同人的左、右两组均值之差（一个平面内 1.5°）。另一篇打开过的尸体研究（Schwarz 等 2025，PMC12222642）报告屈伸轴的轴向旋转左右高度相关（r = 0.906）、两侧均值 12.8° 和 13.4°，同样没有配对差的标准差。",
+    "en": "The reference offers only the difference between group means of different people (1.5° in one plane). Another opened cadaver study (Schwarz et al. 2025, PMC12222642) reports that the axial rotation of the flexion axis is highly correlated between sides (r = 0.906) with side means of 12.8° and 13.4°, again without an SD of the paired difference."
+   }
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "quantity": "humeral head retroversion against the epicondylar line",
+   "oursDeg": 22.9,
+   "source": "oswald2026",
+   "refCentralDeg": 17.9,
+   "refLowDeg": 12,
+   "refHighDeg": 36,
+   "band": "range of the mean values reported for healthy humeri (12°–36°), not a range of individuals",
+   "quote": "Oswald 2026: \"reported mean healthy humeral torsion values vary widely (range, 12° to 36°)\"; Boileau 2008 (abstract): \"The retroversion with respect to the transepicondylar axis was 17.9°\"",
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "quantity": "carrying angle (forearm axis against humeral shaft, coronal plane of the humerus)",
+   "oursDeg": 8.4,
+   "source": "bhattacharyya2022",
+   "refCentralDeg": 14.06,
+   "refLowDeg": 7.3,
+   "refHighDeg": 20.8,
+   "band": "mean ± 2 SD",
+   "quote": "In males, the mean carrying angle of the right elbow was found to be 12.55 ± 2.3° and of the left was found to be 12.27 ± 2.43°, while in females, the mean carrying angle of the right elbow was found to be 14.53 ± 2.34° and 14.06 ± 3.37° in the left",
+   "verdict": "within"
+  },
+  {
+   "body": "female",
+   "side": "L",
+   "quantity": "elbow flexion axis against humeral shaft axis",
+   "oursDeg": 86.8,
+   "source": "yang2024",
+   "refCentralDeg": 86.22,
+   "refLowDeg": 79.7,
+   "refHighDeg": 92.8,
+   "band": "mean ± 2 SD",
+   "quote": "HAA (°) 86.22 ± 3.27 (angle formed by the humeral shaft axis and the flexion axis of the distal humerus on the radial side in the coronal plane); Right 85.41 ± 3.07°, Left 86.88 ± 3.31°",
+   "verdict": "within",
+   "note": {
+    "zh": "参照的角在冠状面内、取桡侧；我们的是三维夹角折到 0–90°，所以只在偏离垂直的大小上可比。",
+    "en": "The reference angle is taken in the coronal plane on the radial side; ours is the 3D angle folded to 0–90°, so only the amount off perpendicular is comparable."
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "quantity": "humeral head retroversion against the epicondylar line",
+   "oursDeg": 5.1,
+   "source": "oswald2026",
+   "refCentralDeg": 17.9,
+   "refLowDeg": 12,
+   "refHighDeg": 36,
+   "band": "range of the mean values reported for healthy humeri (12°–36°), not a range of individuals",
+   "quote": "Oswald 2026: \"reported mean healthy humeral torsion values vary widely (range, 12° to 36°)\"; Boileau 2008 (abstract): \"The retroversion with respect to the transepicondylar axis was 17.9°\"",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "落在已发表“均值”的范围之外；个体的正常范围更宽，但没有能逐字核对的公开数值（Boileau 2008 全文里的标准差 13.7°、范围 −6.7° 到 47.5° 只经摘要模型转述，未逐字核对）。负值表示肱骨头指向内外上髁连线的前方，即前倾。是否异常请看左右差那一行。",
+    "en": "Outside the range of published means; the normal range of individuals is wider, but no openly verifiable figure for it was found (the SD of 13.7° and the range −6.7° to 47.5° in the full text of Boileau 2008 were only relayed by a summarising model and not checked verbatim). A negative value means the head points anterior of the epicondylar line, i.e. anteversion. For abnormality see the left-minus-right row."
+   }
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "quantity": "carrying angle (forearm axis against humeral shaft, coronal plane of the humerus)",
+   "oursDeg": 8.8,
+   "source": "bhattacharyya2022",
+   "refCentralDeg": 14.53,
+   "refLowDeg": 9.9,
+   "refHighDeg": 19.2,
+   "band": "mean ± 2 SD",
+   "quote": "In males, the mean carrying angle of the right elbow was found to be 12.55 ± 2.3° and of the left was found to be 12.27 ± 2.43°, while in females, the mean carrying angle of the right elbow was found to be 14.53 ± 2.34° and 14.06 ± 3.37° in the left",
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "R",
+   "quantity": "elbow flexion axis against humeral shaft axis",
+   "oursDeg": 87.6,
+   "source": "yang2024",
+   "refCentralDeg": 86.22,
+   "refLowDeg": 79.7,
+   "refHighDeg": 92.8,
+   "band": "mean ± 2 SD",
+   "quote": "HAA (°) 86.22 ± 3.27 (angle formed by the humeral shaft axis and the flexion axis of the distal humerus on the radial side in the coronal plane); Right 85.41 ± 3.07°, Left 86.88 ± 3.31°",
+   "verdict": "within",
+   "note": {
+    "zh": "参照的角在冠状面内、取桡侧；我们的是三维夹角折到 0–90°，所以只在偏离垂直的大小上可比。",
+    "en": "The reference angle is taken in the coronal plane on the radial side; ours is the 3D angle folded to 0–90°, so only the amount off perpendicular is comparable."
+   }
+  },
+  {
+   "body": "female",
+   "side": "L−R",
+   "quantity": "side difference of humeral head retroversion",
+   "oursDeg": 17.8,
+   "source": "oswald2026",
+   "refCentralDeg": 6.9,
+   "refLowDeg": 0,
+   "refHighDeg": 17.5,
+   "band": "mean + 2 SD of the absolute bilateral difference (6.9° ± 5.3°)",
+   "quote": "Oswald 2026: \"the previously reported mean bilateral difference in torsion of 6.9° ± 5.3°\" (cited to an earlier 3D-CT study that was not opened); Boileau 2008 (abstract): \"The difference between the right and left humeri was 8.9°.\"",
+   "verdict": "outside"
+  },
+  {
+   "body": "female",
+   "side": "L−R",
+   "quantity": "side difference of carrying angle",
+   "oursDeg": -0.4,
+   "source": "bhattacharyya2022",
+   "refCentralDeg": -0.47,
+   "refLowDeg": null,
+   "refHighDeg": null,
+   "band": "difference of the group means only; no paired SD in an open source",
+   "quote": "In males, the mean carrying angle of the right elbow was found to be 12.55 ± 2.3° and of the left was found to be 12.27 ± 2.43°, while in females, the mean carrying angle of the right elbow was found to be 14.53 ± 2.34° and 14.06 ± 3.37° in the left",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "公开来源里没有同一人左右差的标准差，只有两侧均值相差不到 0.5°。",
+    "en": "No open source gives the SD of the within-person side difference; the two group means differ by less than 0.5°."
+   }
+  },
+  {
+   "body": "female",
+   "side": "L−R",
+   "quantity": "angle between the left and right elbow flexion axes, each expressed in its own humerus frame",
+   "oursDeg": 7.5,
+   "source": "yang2024",
+   "refCentralDeg": 1.47,
+   "refLowDeg": null,
+   "refHighDeg": null,
+   "band": "difference of unpaired group means in one plane (86.88° left vs 85.41° right); no paired SD in an open source",
+   "quote": "HAA: Right 85.41 ± 3.07°, Left 86.88 ± 3.31°, P = 0.045",
+   "verdict": "not comparable",
+   "note": {
+    "zh": "参照只有不同人的左、右两组均值之差（一个平面内 1.5°）。另一篇打开过的尸体研究（Schwarz 等 2025，PMC12222642）报告屈伸轴的轴向旋转左右高度相关（r = 0.906）、两侧均值 12.8° 和 13.4°，同样没有配对差的标准差。",
+    "en": "The reference offers only the difference between group means of different people (1.5° in one plane). Another opened cadaver study (Schwarz et al. 2025, PMC12222642) reports that the axial rotation of the flexion axis is highly correlated between sides (r = 0.906) with side means of 12.8° and 13.4°, again without an SD of the paired difference."
+   }
+  }
+ ]
+}

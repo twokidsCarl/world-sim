@@ -1,0 +1,2328 @@
+{
+ "schema": 1,
+ "id": "face-coverage",
+ "title": {
+  "zh": "面部控制的覆盖：ARKit / MediaPipe 的系数 vs 我们的动作单元",
+  "en": "Coverage of facial controls: ARKit / MediaPipe coefficients vs our action units"
+ },
+ "method": {
+  "zh": "逐个系数（ARKit 的 52 个标识符），列出我们哪个 AU 表达同一个动作、这些 AU 在两副身体上驱动哪些肌肉通道；再反过来逐个 AU 列出对应的系数。对应关系是本项目做的，依据系数的一句话定义和 ICT-FaceKit 给自己形状的 FACS 对照表。covered = 有同样的控制；partial = 有，但我们只有双侧同时动（或定义不完全相同）；none = 没有。没有单独对应系数的 AU 列在 summary.ourAusWithout 里（例如 AU23 唇收紧，ARKit 最接近的是 mouthPress；AU25 唇分开，最接近的是 jawOpen 减去 mouthClose）。AU 的集合读自当前的 face.json；对应表里列的 AU 不在其中时该行记为 none。下载存在时，系数名与 Apple 文档 JSON、MediaPipe 源码里的名单逐一核对，结果写在 inArkitDocs / inMediaPipe。",
+  "en": "For each coefficient (the 52 ARKit identifiers): which of our AUs expresses the same movement and which muscle channels those AUs drive on the two bodies; then the reverse, per AU. The mapping is this project's, based on the one-line definition of each coefficient and on the FACS table ICT-FaceKit gives for its own shapes. covered = the same control exists; partial = it exists, but ours moves both sides together (or the definition differs somewhat); none = absent. AUs without a coefficient of their own are listed in summary.ourAusWithout (for example AU23, lip tightener, whose nearest is mouthPress, and AU25, lips part, whose nearest is jawOpen less mouthClose). The set of AUs is read from the current face.json; a row whose mapped AU is not in it becomes none. When the downloads are present the names are checked one by one against Apple's documentation JSON and the list in MediaPipe's source, recorded in inArkitDocs / inMediaPipe."
+ },
+ "tolerance": {
+  "zh": "不是数值比较：covered / partial 记 within，none 记 outside。",
+  "en": "Not a numeric comparison: covered / partial count as within, none as outside."
+ },
+ "references": [
+  {
+   "id": "arkit-docs",
+   "name": "Apple ARKit documentation: ARFaceAnchor.BlendShapeLocation (the names and one-line definitions of the 52 coefficients)",
+   "version": "developer.apple.com documentation JSON as served on 2026-10-13",
+   "url": "https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation",
+   "licence": "No open licence: Apple developer documentation, © Apple Inc. Read as a public definition; only the identifiers (also present in the Apache-2.0 MediaPipe list) and our own paraphrase are used.",
+   "clause": "No licence grant. The page is public documentation; nothing but the coefficient identifiers is carried into the tables, and Apple publishes no metric displacement for them.",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "mediapipe",
+   "name": "MediaPipe Face Landmarker: the list of blendshape categories in face_blendshapes_graph.cc",
+   "version": "google-ai-edge/mediapipe commit 77824f91 (2026-10-12)",
+   "url": "https://github.com/google-ai-edge/mediapipe",
+   "licence": "Apache-2.0",
+   "clause": "LICENSE at the repository root: \"2. Grant of Copyright License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.\"",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "ict-facekit",
+   "name": "ICT-FaceKit (USC Institute for Creative Technologies, Vision and Graphics Lab): morphable face model with 53 expression shapes",
+   "version": "ICT-VGL/ICT-FaceKit commit da5f95a6 (2020-12-01), FaceXModel",
+   "url": "https://github.com/ICT-VGL/ICT-FaceKit",
+   "licence": "MIT (Copyright (c) 2020 USC Institute for Creative Technologies)",
+   "clause": "LICENSE at the repository root: \"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software\"",
+   "opened": "2026-10-13"
+  },
+  {
+   "id": "openriglogic",
+   "name": "OpenRigLogic (EpicGames/openriglogic): the RigLogic and DNA libraries of the MetaHuman facial rig — source and documentation only, no character DNA",
+   "version": "EpicGames/openriglogic commit 9ca65ac0 (2026-09-30), branch main",
+   "url": "https://github.com/EpicGames/openriglogic",
+   "licence": "MIT (Copyright (c) 2026 Epic Games, Inc.)",
+   "clause": "LICENSE at the repository root: \"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software\". The README says sample assets are a separate Fab listing \"available under the Fab Standard License\"; those were not downloaded.",
+   "opened": "2026-10-13"
+  }
+ ],
+ "ourState": {
+  "male": {
+   "aus": "AU1 AU2 AU4 AU5 AU6 AU7 AU9 AU10 AU11 AU12 AU13 AU14 AU15 AU16 AU17 AU18 AU20 AU22 AU23 AU24 AU25 AU26 AU27 AU28 AU43",
+   "channels": "53"
+  },
+  "female": {
+   "aus": "AU1 AU2 AU4 AU5 AU6 AU7 AU9 AU10 AU12 AU14 AU15 AU16 AU17 AU20 AU23 AU24 AU25 AU26 AU27 AU43",
+   "channels": "42"
+  }
+ },
+ "notes": [
+  {
+   "zh": "OpenRigLogic（MetaHuman 面部解算器的开源部分）没有可比的控制名单：仓库里只有读 DNA 文件和求值的代码与文档，原始控制（raw control）和界面控制（GUI control）的名字存在每个角色的 DNA 文件的 Definition 层里（DefinitionReader::getRawControlName / getGUIControlName），仓库里没有任何 .dna 文件，也没有控制名的清单。按要求没有下载 MetaHuman 的 DNA，所以“它有哪些控制、张成怎样的 FACS 集合”这一问没有回答。从它的设计文档能读到的只有结构：输入是表情级的控制值 → PSD（多个控制相乘得到的组合/修正表情）→ 关节变换、混合形状权重、动画贴图系数；没有肌肉层。",
+   "en": "OpenRigLogic (the open part of the MetaHuman facial solver) offers no comparable list of controls: the repository holds only the code and documentation that read a DNA file and evaluate it, while the names of raw controls and GUI controls live in the Definition layer of each character's DNA file (DefinitionReader::getRawControlName / getGUIControlName); the repository contains no .dna file and no list of control names. As instructed, no MetaHuman DNA was downloaded, so the question of which controls exist and what FACS-like set they span is left unanswered. What its design document does give is the structure: expression-level control values in → PSDs (combination / corrective expressions formed as products of controls) → joint transforms, blend-shape weights and animated-map multipliers; there is no muscle layer."
+  },
+  {
+   "zh": "MediaPipe 的名单是 \"_neutral\" 加 51 个 ARKit 名，没有 tongueOut；所以两个“52”不是同一个集合。ICT-FaceKit 没有 tongueOut，另把 browInnerUp、cheekPuff 分成左右，并多出 cheekRaiser、PupilDilate。",
+   "en": "MediaPipe's list is \"_neutral\" plus 51 ARKit names, without tongueOut, so the two \"52\"s are not the same set. ICT-FaceKit has no tongueOut, splits browInnerUp and cheekPuff into left and right, and adds cheekRaiser and PupilDilate."
+  },
+  {
+   "zh": "Apple 的文档只把系数定义为 0.0（中性）到 1.0（最大运动），不给位移的度量；这里只读了索引页的 JSON，没有逐个打开 52 个系数页。",
+   "en": "Apple's documentation defines a coefficient only as 0.0 (neutral) to 1.0 (maximum movement) and gives no metric displacement; only the index page's JSON was read, not the 52 per-coefficient pages."
+  }
+ ],
+ "summary": {
+  "coefficients": 52,
+  "covered": 3,
+  "partial": 29,
+  "none": 20,
+  "ourAus": 25,
+  "ourAusWithCoefficient": 22,
+  "ourAusWithout": "AU13 AU23 AU25",
+  "namesCheckedAgainstArkitDocs": "true",
+  "namesCheckedAgainstMediaPipe": "true",
+  "arkitNamesMissingFromMediaPipe": "tongueOut"
+ },
+ "rows": [
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeBlinkLeft",
+   "facs": "AU45 / AU43",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeBlink_L.obj",
+   "ourAus": [
+    "AU43"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ],
+    "female": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ]
+   },
+   "coefficients": [
+    "eyeBlinkLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "我们只有两眼同时闭合，没有单侧。",
+    "en": "Ours closes both eyes together; there is no one-sided blink."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookDownLeft",
+   "facs": "AU64",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookDown_L.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookDownLeft"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookInLeft",
+   "facs": "AU61 / AU62",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookIn_L.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookInLeft"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookOutLeft",
+   "facs": "AU61 / AU62",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookOut_L.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookOutLeft"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookUpLeft",
+   "facs": "AU63",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookUp_L.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookUpLeft"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeSquintLeft",
+   "facs": "AU7",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeSquint_L.obj",
+   "ourAus": [
+    "AU7"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ],
+    "female": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ]
+   },
+   "coefficients": [
+    "eyeSquintLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeWideLeft",
+   "facs": "AU5",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeWide_L.obj",
+   "ourAus": [
+    "AU5"
+   ],
+   "ourChannels": {
+    "male": [
+     "levator_palpebrae_L",
+     "levator_palpebrae_R"
+    ],
+    "female": [
+     "levator_palpebrae_L",
+     "levator_palpebrae_R"
+    ]
+   },
+   "coefficients": [
+    "eyeWideLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeBlinkRight",
+   "facs": "AU45 / AU43",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeBlink_R.obj",
+   "ourAus": [
+    "AU43"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ],
+    "female": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ]
+   },
+   "coefficients": [
+    "eyeBlinkRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "我们只有两眼同时闭合，没有单侧。",
+    "en": "Ours closes both eyes together; there is no one-sided blink."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookDownRight",
+   "facs": "AU64",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookDown_R.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookDownRight"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookInRight",
+   "facs": "AU61 / AU62",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookIn_R.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookInRight"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookOutRight",
+   "facs": "AU61 / AU62",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookOut_R.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookOutRight"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeLookUpRight",
+   "facs": "AU63",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeLookUp_R.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "eyeLookUpRight"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有眼球转动。",
+    "en": "No eye rotation."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeSquintRight",
+   "facs": "AU7",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeSquint_R.obj",
+   "ourAus": [
+    "AU7"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ],
+    "female": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ]
+   },
+   "coefficients": [
+    "eyeSquintRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "eyeWideRight",
+   "facs": "AU5",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "eyeWide_R.obj",
+   "ourAus": [
+    "AU5"
+   ],
+   "ourChannels": {
+    "male": [
+     "levator_palpebrae_L",
+     "levator_palpebrae_R"
+    ],
+    "female": [
+     "levator_palpebrae_L",
+     "levator_palpebrae_R"
+    ]
+   },
+   "coefficients": [
+    "eyeWideRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "jawForward",
+   "facs": "AU29",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "jawForward.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "jawForward"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "颞下颌关节没有前伸这个自由度。",
+    "en": "The temporomandibular joint has no protrusion dof."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "jawLeft",
+   "facs": "AU30",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": null,
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "jawLeft"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "骨架的 tmj 有侧方运动自由度，但没有 AU 用它。",
+    "en": "The rig's tmj has a lateral dof, but no AU drives it."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "jawRight",
+   "facs": "AU30",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": null,
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "jawRight"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "骨架的 tmj 有侧方运动自由度，但没有 AU 用它。",
+    "en": "The rig's tmj has a lateral dof, but no AU drives it."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "jawOpen",
+   "facs": "AU26 / AU27",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "jawOpen.obj",
+   "ourAus": [
+    "AU26",
+    "AU27"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "mouth_corner"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "mouth_corner"
+    ]
+   },
+   "coefficients": [
+    "jawOpen"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "下颌角由 AU26、AU27 的 jaw 分量给出。",
+    "en": "The jaw angle comes from the jaw share of AU26 and AU27."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthClose",
+   "facs": "(closes the lips while the jaw is open)",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthClose.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthClose"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有“张颌而闭唇”的控制。",
+    "en": "No control that closes the lips over an open jaw."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthFunnel",
+   "facs": "AU22",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthFunnel.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthFunnel"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "对应的 AU22 不在当前的 face.json 里。",
+    "en": "The matching AU22 is not in the current face.json."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthPucker",
+   "facs": "AU18",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthPucker.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthPucker"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "对应的 AU18 不在当前的 face.json 里。",
+    "en": "The matching AU18 is not in the current face.json."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthLeft",
+   "facs": "(no single AU)",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": null,
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthLeft"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有单侧口部运动。",
+    "en": "No one-sided mouth movement."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthRight",
+   "facs": "(no single AU)",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": null,
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthRight"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有单侧口部运动。",
+    "en": "No one-sided mouth movement."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthSmileLeft",
+   "facs": "AU12",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthSmile_L.obj",
+   "ourAus": [
+    "AU12"
+   ],
+   "ourChannels": {
+    "male": [
+     "zygomaticus_major_L",
+     "zygomaticus_major_R"
+    ],
+    "female": [
+     "zygomaticus_major_L",
+     "zygomaticus_major_R"
+    ]
+   },
+   "coefficients": [
+    "mouthSmileLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthSmileRight",
+   "facs": "AU12",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthSmile_R.obj",
+   "ourAus": [
+    "AU12"
+   ],
+   "ourChannels": {
+    "male": [
+     "zygomaticus_major_L",
+     "zygomaticus_major_R"
+    ],
+    "female": [
+     "zygomaticus_major_L",
+     "zygomaticus_major_R"
+    ]
+   },
+   "coefficients": [
+    "mouthSmileRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthFrownLeft",
+   "facs": "AU15",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthFrown_L.obj",
+   "ourAus": [
+    "AU15"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_anguli_oris_L",
+     "depressor_anguli_oris_R"
+    ],
+    "female": [
+     "depressor_anguli_oris_L",
+     "depressor_anguli_oris_R"
+    ]
+   },
+   "coefficients": [
+    "mouthFrownLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthFrownRight",
+   "facs": "AU15",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthFrown_R.obj",
+   "ourAus": [
+    "AU15"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_anguli_oris_L",
+     "depressor_anguli_oris_R"
+    ],
+    "female": [
+     "depressor_anguli_oris_L",
+     "depressor_anguli_oris_R"
+    ]
+   },
+   "coefficients": [
+    "mouthFrownRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthDimpleLeft",
+   "facs": "AU14",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthDimple_L.obj",
+   "ourAus": [
+    "AU14"
+   ],
+   "ourChannels": {
+    "male": [
+     "buccinator_L",
+     "buccinator_R"
+    ],
+    "female": [
+     "buccinator_L",
+     "buccinator_R"
+    ]
+   },
+   "coefficients": [
+    "mouthDimpleLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthDimpleRight",
+   "facs": "AU14",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthDimple_R.obj",
+   "ourAus": [
+    "AU14"
+   ],
+   "ourChannels": {
+    "male": [
+     "buccinator_L",
+     "buccinator_R"
+    ],
+    "female": [
+     "buccinator_L",
+     "buccinator_R"
+    ]
+   },
+   "coefficients": [
+    "mouthDimpleRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthStretchLeft",
+   "facs": "AU20",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthStretch_L.obj",
+   "ourAus": [
+    "AU20"
+   ],
+   "ourChannels": {
+    "male": [
+     "platysma_L",
+     "platysma_R",
+     "risorius_L",
+     "risorius_R"
+    ],
+    "female": [
+     "platysma_L",
+     "platysma_R",
+     "risorius_L",
+     "risorius_R"
+    ]
+   },
+   "coefficients": [
+    "mouthStretchLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthStretchRight",
+   "facs": "AU20",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthStretch_R.obj",
+   "ourAus": [
+    "AU20"
+   ],
+   "ourChannels": {
+    "male": [
+     "platysma_L",
+     "platysma_R",
+     "risorius_L",
+     "risorius_R"
+    ],
+    "female": [
+     "platysma_L",
+     "platysma_R",
+     "risorius_L",
+     "risorius_R"
+    ]
+   },
+   "coefficients": [
+    "mouthStretchRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthRollLower",
+   "facs": "AU28",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthRollLower.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthRollLower"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "对应的 AU28 不在当前的 face.json 里。",
+    "en": "The matching AU28 is not in the current face.json."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthRollUpper",
+   "facs": "AU28",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthRollUpper.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "mouthRollUpper"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "对应的 AU28 不在当前的 face.json 里。",
+    "en": "The matching AU28 is not in the current face.json."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthShrugLower",
+   "facs": "AU17",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthShrugLower.obj",
+   "ourAus": [
+    "AU17"
+   ],
+   "ourChannels": {
+    "male": [
+     "mentalis_L",
+     "mentalis_R"
+    ],
+    "female": [
+     "mentalis_L",
+     "mentalis_R"
+    ]
+   },
+   "coefficients": [
+    "mouthShrugLower"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "ICT-FaceKit 把它对到 AU17。",
+    "en": "ICT-FaceKit maps it to AU17."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthShrugUpper",
+   "facs": "AU10 (per ICT-FaceKit)",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthShrugUpper.obj",
+   "ourAus": [
+    "AU10"
+   ],
+   "ourChannels": {
+    "male": [
+     "lls_L",
+     "lls_R"
+    ],
+    "female": [
+     "lls_L",
+     "lls_R"
+    ]
+   },
+   "coefficients": [
+    "mouthShrugUpper"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "ICT-FaceKit 把它对到 AU10；按定义它更像上唇上推，我们没有单独的控制。",
+    "en": "ICT-FaceKit maps it to AU10; by its definition it is more an upward push of the upper lip, for which we have no separate control."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthPressLeft",
+   "facs": "AU24",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthPress_L.obj",
+   "ourAus": [
+    "AU24"
+   ],
+   "ourChannels": {
+    "male": [
+     "lip_press",
+     "mentalis_L",
+     "mentalis_R",
+     "orbicularis_oris"
+    ],
+    "female": [
+     "orbicularis_oris"
+    ]
+   },
+   "coefficients": [
+    "mouthPressLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthPressRight",
+   "facs": "AU24",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthPress_R.obj",
+   "ourAus": [
+    "AU24"
+   ],
+   "ourChannels": {
+    "male": [
+     "lip_press",
+     "mentalis_L",
+     "mentalis_R",
+     "orbicularis_oris"
+    ],
+    "female": [
+     "orbicularis_oris"
+    ]
+   },
+   "coefficients": [
+    "mouthPressRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthLowerDownLeft",
+   "facs": "AU16",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthLowerDown_L.obj",
+   "ourAus": [
+    "AU16"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ]
+   },
+   "coefficients": [
+    "mouthLowerDownLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthLowerDownRight",
+   "facs": "AU16",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthLowerDown_R.obj",
+   "ourAus": [
+    "AU16"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ]
+   },
+   "coefficients": [
+    "mouthLowerDownRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthUpperUpLeft",
+   "facs": "AU10 (AU11 per ICT-FaceKit)",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthUpperUp_L.obj",
+   "ourAus": [
+    "AU10"
+   ],
+   "ourChannels": {
+    "male": [
+     "lls_L",
+     "lls_R"
+    ],
+    "female": [
+     "lls_L",
+     "lls_R"
+    ]
+   },
+   "coefficients": [
+    "mouthUpperUpLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧；ICT-FaceKit 把它对到 AU11。",
+    "en": "Bilateral only; ICT-FaceKit maps it to AU11."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "mouthUpperUpRight",
+   "facs": "AU10 (AU11 per ICT-FaceKit)",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "mouthUpperUp_R.obj",
+   "ourAus": [
+    "AU10"
+   ],
+   "ourChannels": {
+    "male": [
+     "lls_L",
+     "lls_R"
+    ],
+    "female": [
+     "lls_L",
+     "lls_R"
+    ]
+   },
+   "coefficients": [
+    "mouthUpperUpRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧；ICT-FaceKit 把它对到 AU11。",
+    "en": "Bilateral only; ICT-FaceKit maps it to AU11."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "browDownLeft",
+   "facs": "AU4",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "browDown_L.obj",
+   "ourAus": [
+    "AU4"
+   ],
+   "ourChannels": {
+    "male": [
+     "corrugator_L",
+     "corrugator_R",
+     "procerus_L",
+     "procerus_R"
+    ],
+    "female": [
+     "corrugator_L",
+     "corrugator_R",
+     "procerus_L",
+     "procerus_R"
+    ]
+   },
+   "coefficients": [
+    "browDownLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "browDownRight",
+   "facs": "AU4",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "browDown_R.obj",
+   "ourAus": [
+    "AU4"
+   ],
+   "ourChannels": {
+    "male": [
+     "corrugator_L",
+     "corrugator_R",
+     "procerus_L",
+     "procerus_R"
+    ],
+    "female": [
+     "corrugator_L",
+     "corrugator_R",
+     "procerus_L",
+     "procerus_R"
+    ]
+   },
+   "coefficients": [
+    "browDownRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "browInnerUp",
+   "facs": "AU1",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "browInnerUp_L.obj",
+   "ourAus": [
+    "AU1"
+   ],
+   "ourChannels": {
+    "male": [
+     "frontalis_medial_L",
+     "frontalis_medial_R"
+    ],
+    "female": [
+     "frontalis_medial_L",
+     "frontalis_medial_R"
+    ]
+   },
+   "coefficients": [
+    "browInnerUp"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "browOuterUpLeft",
+   "facs": "AU2",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "browOuterUp_L.obj",
+   "ourAus": [
+    "AU2"
+   ],
+   "ourChannels": {
+    "male": [
+     "frontalis_lateral_L",
+     "frontalis_lateral_R"
+    ],
+    "female": [
+     "frontalis_lateral_L",
+     "frontalis_lateral_R"
+    ]
+   },
+   "coefficients": [
+    "browOuterUpLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "browOuterUpRight",
+   "facs": "AU2",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "browOuterUp_R.obj",
+   "ourAus": [
+    "AU2"
+   ],
+   "ourChannels": {
+    "male": [
+     "frontalis_lateral_L",
+     "frontalis_lateral_R"
+    ],
+    "female": [
+     "frontalis_lateral_L",
+     "frontalis_lateral_R"
+    ]
+   },
+   "coefficients": [
+    "browOuterUpRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "cheekPuff",
+   "facs": "AU33 / AU34",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "cheekPuff_L.obj",
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "cheekPuff"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "没有鼓颊。",
+    "en": "No cheek puff."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "cheekSquintLeft",
+   "facs": "AU6",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "cheekSquint_L.obj",
+   "ourAus": [
+    "AU6"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_orbital_L",
+     "orbicularis_oculi_orbital_R",
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R"
+    ],
+    "female": [
+     "orbicularis_oculi_orbital_L",
+     "orbicularis_oculi_orbital_R",
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R"
+    ]
+   },
+   "coefficients": [
+    "cheekSquintLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "cheekSquintRight",
+   "facs": "AU6",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "cheekSquint_R.obj",
+   "ourAus": [
+    "AU6"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_orbital_L",
+     "orbicularis_oculi_orbital_R",
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R"
+    ],
+    "female": [
+     "orbicularis_oculi_orbital_L",
+     "orbicularis_oculi_orbital_R",
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R"
+    ]
+   },
+   "coefficients": [
+    "cheekSquintRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "noseSneerLeft",
+   "facs": "AU9",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "noseSneer_L.obj",
+   "ourAus": [
+    "AU9"
+   ],
+   "ourChannels": {
+    "male": [
+     "llsan_L",
+     "llsan_R",
+     "procerus_L",
+     "procerus_R"
+    ],
+    "female": [
+     "llsan_L",
+     "llsan_R",
+     "procerus_L",
+     "procerus_R"
+    ]
+   },
+   "coefficients": [
+    "noseSneerLeft"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "noseSneerRight",
+   "facs": "AU9",
+   "inArkitDocs": true,
+   "inMediaPipe": true,
+   "ictShape": "noseSneer_R.obj",
+   "ourAus": [
+    "AU9"
+   ],
+   "ourChannels": {
+    "male": [
+     "llsan_L",
+     "llsan_R",
+     "procerus_L",
+     "procerus_R"
+    ],
+    "female": [
+     "llsan_L",
+     "llsan_R",
+     "procerus_L",
+     "procerus_R"
+    ]
+   },
+   "coefficients": [
+    "noseSneerRight"
+   ],
+   "coverage": "partial",
+   "verdict": "within",
+   "note": {
+    "zh": "只有双侧。",
+    "en": "Bilateral only."
+   }
+  },
+  {
+   "direction": "coefficient → ours",
+   "item": "tongueOut",
+   "facs": "AU19",
+   "inArkitDocs": true,
+   "inMediaPipe": false,
+   "ictShape": null,
+   "ourAus": [],
+   "ourChannels": {
+    "male": [],
+    "female": []
+   },
+   "coefficients": [
+    "tongueOut"
+   ],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "舌不参与表情。",
+    "en": "The tongue takes no part in expressions."
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU1",
+   "facs": "AU1 Inner brow raiser",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU1"
+   ],
+   "ourChannels": {
+    "male": [
+     "frontalis_medial_L",
+     "frontalis_medial_R"
+    ],
+    "female": [
+     "frontalis_medial_L",
+     "frontalis_medial_R"
+    ]
+   },
+   "coefficients": [
+    "browInnerUp"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU2",
+   "facs": "AU2 Outer brow raiser",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU2"
+   ],
+   "ourChannels": {
+    "male": [
+     "frontalis_lateral_L",
+     "frontalis_lateral_R"
+    ],
+    "female": [
+     "frontalis_lateral_L",
+     "frontalis_lateral_R"
+    ]
+   },
+   "coefficients": [
+    "browOuterUpLeft",
+    "browOuterUpRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU4",
+   "facs": "AU4 Brow lowerer",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU4"
+   ],
+   "ourChannels": {
+    "male": [
+     "corrugator_L",
+     "corrugator_R",
+     "procerus_L",
+     "procerus_R"
+    ],
+    "female": [
+     "corrugator_L",
+     "corrugator_R",
+     "procerus_L",
+     "procerus_R"
+    ]
+   },
+   "coefficients": [
+    "browDownLeft",
+    "browDownRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU5",
+   "facs": "AU5 Upper lid raiser",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU5"
+   ],
+   "ourChannels": {
+    "male": [
+     "levator_palpebrae_L",
+     "levator_palpebrae_R"
+    ],
+    "female": [
+     "levator_palpebrae_L",
+     "levator_palpebrae_R"
+    ]
+   },
+   "coefficients": [
+    "eyeWideLeft",
+    "eyeWideRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU6",
+   "facs": "AU6 Cheek raiser",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU6"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_orbital_L",
+     "orbicularis_oculi_orbital_R",
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R"
+    ],
+    "female": [
+     "orbicularis_oculi_orbital_L",
+     "orbicularis_oculi_orbital_R",
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R"
+    ]
+   },
+   "coefficients": [
+    "cheekSquintLeft",
+    "cheekSquintRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU7",
+   "facs": "AU7 Lid tightener",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU7"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ],
+    "female": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ]
+   },
+   "coefficients": [
+    "eyeSquintLeft",
+    "eyeSquintRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU9",
+   "facs": "AU9 Nose wrinkler",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU9"
+   ],
+   "ourChannels": {
+    "male": [
+     "llsan_L",
+     "llsan_R",
+     "procerus_L",
+     "procerus_R"
+    ],
+    "female": [
+     "llsan_L",
+     "llsan_R",
+     "procerus_L",
+     "procerus_R"
+    ]
+   },
+   "coefficients": [
+    "noseSneerLeft",
+    "noseSneerRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU10",
+   "facs": "AU10 Upper lip raiser",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU10"
+   ],
+   "ourChannels": {
+    "male": [
+     "lls_L",
+     "lls_R"
+    ],
+    "female": [
+     "lls_L",
+     "lls_R"
+    ]
+   },
+   "coefficients": [
+    "mouthShrugUpper",
+    "mouthUpperUpLeft",
+    "mouthUpperUpRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU11",
+   "facs": "AU11 Nasolabial deepener",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU11"
+   ],
+   "ourChannels": {
+    "male": [
+     "zygomaticus_minor_L",
+     "zygomaticus_minor_R"
+    ],
+    "female": []
+   },
+   "coefficients": [
+    "mouthUpperUpLeft",
+    "mouthUpperUpRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU12",
+   "facs": "AU12 Lip corner puller",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU12"
+   ],
+   "ourChannels": {
+    "male": [
+     "zygomaticus_major_L",
+     "zygomaticus_major_R"
+    ],
+    "female": [
+     "zygomaticus_major_L",
+     "zygomaticus_major_R"
+    ]
+   },
+   "coefficients": [
+    "mouthSmileLeft",
+    "mouthSmileRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU13",
+   "facs": "AU13 Sharp lip puller",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU13"
+   ],
+   "ourChannels": {
+    "male": [
+     "levator_anguli_oris_L",
+     "levator_anguli_oris_R"
+    ],
+    "female": []
+   },
+   "coefficients": [],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "ARKit 的系数里没有单独对应它的。",
+    "en": "No ARKit coefficient corresponds to it on its own."
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU14",
+   "facs": "AU14 Dimpler",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU14"
+   ],
+   "ourChannels": {
+    "male": [
+     "buccinator_L",
+     "buccinator_R"
+    ],
+    "female": [
+     "buccinator_L",
+     "buccinator_R"
+    ]
+   },
+   "coefficients": [
+    "mouthDimpleLeft",
+    "mouthDimpleRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU15",
+   "facs": "AU15 Lip corner depressor",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU15"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_anguli_oris_L",
+     "depressor_anguli_oris_R"
+    ],
+    "female": [
+     "depressor_anguli_oris_L",
+     "depressor_anguli_oris_R"
+    ]
+   },
+   "coefficients": [
+    "mouthFrownLeft",
+    "mouthFrownRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU16",
+   "facs": "AU16 Lower lip depressor",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU16"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ]
+   },
+   "coefficients": [
+    "mouthLowerDownLeft",
+    "mouthLowerDownRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU17",
+   "facs": "AU17 Chin raiser",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU17"
+   ],
+   "ourChannels": {
+    "male": [
+     "mentalis_L",
+     "mentalis_R"
+    ],
+    "female": [
+     "mentalis_L",
+     "mentalis_R"
+    ]
+   },
+   "coefficients": [
+    "mouthShrugLower"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU18",
+   "facs": "AU18 Lip pucker",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU18"
+   ],
+   "ourChannels": {
+    "male": [
+     "lip_protrusion",
+     "orbicularis_oris"
+    ],
+    "female": []
+   },
+   "coefficients": [
+    "mouthPucker"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU20",
+   "facs": "AU20 Lip stretcher",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU20"
+   ],
+   "ourChannels": {
+    "male": [
+     "platysma_L",
+     "platysma_R",
+     "risorius_L",
+     "risorius_R"
+    ],
+    "female": [
+     "platysma_L",
+     "platysma_R",
+     "risorius_L",
+     "risorius_R"
+    ]
+   },
+   "coefficients": [
+    "mouthStretchLeft",
+    "mouthStretchRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU22",
+   "facs": "AU22 Lip funneler",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU22"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "lip_protrusion",
+     "lls_L",
+     "lls_R",
+     "orbicularis_oris"
+    ],
+    "female": []
+   },
+   "coefficients": [
+    "mouthFunnel"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU23",
+   "facs": "AU23 Lip tightener",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU23"
+   ],
+   "ourChannels": {
+    "male": [
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "orbicularis_oris"
+    ],
+    "female": [
+     "orbicularis_oris"
+    ]
+   },
+   "coefficients": [],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "ARKit 的系数里没有单独对应它的。",
+    "en": "No ARKit coefficient corresponds to it on its own."
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU24",
+   "facs": "AU24 Lip pressor",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU24"
+   ],
+   "ourChannels": {
+    "male": [
+     "lip_press",
+     "mentalis_L",
+     "mentalis_R",
+     "orbicularis_oris"
+    ],
+    "female": [
+     "orbicularis_oris"
+    ]
+   },
+   "coefficients": [
+    "mouthPressLeft",
+    "mouthPressRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU25",
+   "facs": "AU25 Lips part",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU25"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "lls_L",
+     "lls_R"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R"
+    ]
+   },
+   "coefficients": [],
+   "coverage": "none",
+   "verdict": "outside",
+   "note": {
+    "zh": "ARKit 的系数里没有单独对应它的。",
+    "en": "No ARKit coefficient corresponds to it on its own."
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU26",
+   "facs": "AU26 Jaw drop",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU26"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "mouth_corner"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "mouth_corner"
+    ]
+   },
+   "coefficients": [
+    "jawOpen"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU27",
+   "facs": "AU27 Mouth stretch",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU27"
+   ],
+   "ourChannels": {
+    "male": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "mouth_corner"
+    ],
+    "female": [
+     "depressor_labii_inferioris_L",
+     "depressor_labii_inferioris_R",
+     "mouth_corner"
+    ]
+   },
+   "coefficients": [
+    "jawOpen"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU28",
+   "facs": "AU28 Lip suck",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU28"
+   ],
+   "ourChannels": {
+    "male": [
+     "lip_press",
+     "lip_roll_lower",
+     "lip_roll_upper",
+     "mouth_corner"
+    ],
+    "female": []
+   },
+   "coefficients": [
+    "mouthRollLower",
+    "mouthRollUpper"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  },
+  {
+   "direction": "ours → coefficient",
+   "item": "AU43",
+   "facs": "AU43 Eyes closed",
+   "inArkitDocs": null,
+   "inMediaPipe": null,
+   "ictShape": null,
+   "ourAus": [
+    "AU43"
+   ],
+   "ourChannels": {
+    "male": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ],
+    "female": [
+     "orbicularis_oculi_palpebral_lower_L",
+     "orbicularis_oculi_palpebral_lower_R",
+     "orbicularis_oculi_palpebral_upper_L",
+     "orbicularis_oculi_palpebral_upper_R"
+    ]
+   },
+   "coefficients": [
+    "eyeBlinkLeft",
+    "eyeBlinkRight"
+   ],
+   "coverage": "covered",
+   "verdict": "within",
+   "note": {
+    "zh": "",
+    "en": ""
+   }
+  }
+ ]
+}
