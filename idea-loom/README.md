@@ -60,8 +60,8 @@ generated from it.
 
 - **左侧菜单 / The left menu**：六项——无尽探索、想法、开发、许愿池、自我进化、统计。地图、列表（想法池）、生成与候选、血缘是同一批想法的四种看法，合在「想法」一项下面，页面顶上一排切换；每个视图的地址没变（`/`、`/ideas`、`/inbox`、`/lineage`），旧链接照常能用。「手写一条」是这排切换旁边的按钮。「接入」不占菜单，从「开发」页进。
   Six entries: Explore, Ideas, Work, Wish pool, Self-evolution and Statistics. The map, the list (the idea pool), generate & candidates and lineage are four views of the same ideas, so they share the Ideas entry with a switch at the top of the page; each view keeps its address (`/`, `/ideas`, `/inbox`, `/lineage`), so old links go on working. "Write one" is a button beside that switch. Connect is off the menu and is reached from the Work page.
-- **左侧栏可以收窄 / Collapsible navigation**：左下角的 `«` 把导航收成一条窄栏，只留每页的一个字，全名在悬停提示里，`»` 展开；选择记在浏览器里。手机上导航是底部标签栏，不受影响。
-  The `«` at the bottom left collapses the navigation to a narrow rail showing a short label per page, with the full name in the hover title; `»` expands it. The choice is remembered in the browser. On a phone the navigation is a bottom tab bar and is unaffected.
+- **左侧栏可以收窄 / Collapsible navigation**：左下角的 `«` 把导航收成一条窄栏，每页只留一个图标，全名在悬停提示里，`»` 展开；选择记在浏览器里。手机上导航是底部标签栏，不受影响。
+  The `«` at the bottom left collapses the navigation to a narrow rail showing one icon per page, with the full name in the hover title; `»` expands it. The choice is remembered in the browser. On a phone the navigation is a bottom tab bar and is unaffected.
 - **小助手 / Assistant**：右侧的边栏，随时可以问。每次提问自动带上当前页面的文字提纲、最近的操作和许愿池里已有的愿望；在 idea 页时带上那条 idea。它能读仓库、读本工具的接口、记愿望、提议 idea（进候选）、在页面上圈出元素；它不能改任何东西。窗口窄时变成浮层。
   A sidebar on the right, always there to ask. Each question carries a text outline of
   the current page, your recent actions and the existing wishes, plus the idea when you

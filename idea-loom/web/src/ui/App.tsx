@@ -20,6 +20,7 @@ import { applyLang, plural } from '../i18n'
 import { type PushState, pushState, turnOff, turnOn } from '../push'
 import { useStore, useT } from '../state/store'
 import { useStale } from '../version'
+import { Icon } from './icons'
 import { IDEA_VIEWS, NAV, ideaView, navEntry } from './nav'
 
 export function App() {
@@ -64,22 +65,22 @@ export function App() {
       <nav className="nav" aria-label={t('主导航', 'Main navigation')}>
         <div className="mark">
           <span className="nav-full">idea-loom</span>
-          <span className="nav-short" aria-hidden="true">il</span>
+          <span className="nav-short" aria-hidden="true"><Icon name="loom" /></span>
           <small>{t('想法经纬', 'Idea loom')}</small>
         </div>
         {NAV.filter((n) => (owner || !n.owner) && (n.to !== '/sessions' || me?.auth_enabled === false)).map((n) => (
-          <Link key={n.to} to={n.to} className={n === here ? 'nav-item active' : 'nav-item'} aria-current={n === here ? 'page' : undefined} title={navNarrow ? t(n.zh, n.en) : undefined}>
+          <Link key={n.to} to={n.to} className={n === here ? 'nav-item active' : 'nav-item'} aria-current={n === here ? 'page' : undefined} aria-label={t(n.zh, n.en)} title={navNarrow ? t(n.zh, n.en) : undefined}>
             <span className="nav-full">{t(n.zh, n.en)}</span>
-            <span className="nav-short" aria-hidden="true">{t(n.sz, n.se)}</span>
+            <span className="nav-short" aria-hidden="true"><Icon name={n.icon} /></span>
             {n.to === '/' && state && <span className="count num">{state.counts.live}</span>}
             {n.to === '/wishes' && openWishes > 0 && <span className="count pill num">{openWishes}</span>}
             {n.to === '/' && owner && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </Link>
         ))}
         {me?.auth_enabled && !owner && (
-          <NavLink to="/suggest" className="nav-item nav-new" title={navNarrow ? t('提个愿望', 'Send a wish') : undefined}>
+          <NavLink to="/suggest" className="nav-item nav-new" aria-label={t('提个愿望', 'Send a wish')} title={navNarrow ? t('提个愿望', 'Send a wish') : undefined}>
             <span className="nav-full">{t('提个愿望', 'Send a wish')}</span>
-            <span className="nav-short" aria-hidden="true">＋</span>
+            <span className="nav-short" aria-hidden="true"><Icon name="plus" /></span>
           </NavLink>
         )}
         <div className="nav-foot">
@@ -94,9 +95,9 @@ export function App() {
                         ? t('IDEAS.md 需要更新', 'IDEAS.md needs an update')
                         : t('愿望或任务有改动还没进仓库', 'Wish or task changes not in the repository yet')}
                   </div>
-                  <button className="primary" disabled={syncing} onClick={() => void runSync()} title={navNarrow ? t('同步到仓库', 'Sync to repository') : undefined}>
+                  <button className="primary" disabled={syncing} onClick={() => void runSync()} aria-label={syncing ? t('正在同步…', 'Syncing…') : t('同步到仓库', 'Sync to repository')} title={navNarrow ? t('同步到仓库', 'Sync to repository') : undefined}>
                     <span className="nav-full">{syncing ? t('正在同步…', 'Syncing…') : t('同步到仓库', 'Sync to repository')}</span>
-                    <span className="nav-short" aria-hidden="true">{syncing ? '…' : '⇪'}</span>
+                    <span className="nav-short" aria-hidden="true"><Icon name={syncing ? 'dots' : 'upload'} /></span>
                   </button>
                 </>
               ) : (
@@ -107,18 +108,18 @@ export function App() {
           {me?.auth_enabled && (
             <div className="who">
               {me.role === 'guest' ? (
-                <a className="button" href="/auth/login" title={navNarrow ? t('用 GitHub 登录', 'Sign in with GitHub') : undefined}>
+                <a className="button" href="/auth/login" aria-label={t('用 GitHub 登录', 'Sign in with GitHub')} title={navNarrow ? t('用 GitHub 登录', 'Sign in with GitHub') : undefined}>
                   <span className="nav-full">{t('用 GitHub 登录', 'Sign in with GitHub')}</span>
-                  <span className="nav-short" aria-hidden="true">→</span>
+                  <span className="nav-short" aria-hidden="true"><Icon name="login" /></span>
                 </a>
               ) : (
                 <form method="post" action="/auth/logout" className="row">
                   <span className="small who-name nav-full" title={me.role === 'owner' ? t('主人', 'Owner') : t('访客', 'Member')}>
                     {me.name || me.login}
                   </span>
-                  <button type="submit" title={navNarrow ? t('退出', 'Sign out') : undefined}>
+                  <button type="submit" aria-label={t('退出', 'Sign out')} title={navNarrow ? t('退出', 'Sign out') : undefined}>
                     <span className="nav-full">{t('退出', 'Sign out')}</span>
-                    <span className="nav-short" aria-hidden="true">⏻</span>
+                    <span className="nav-short" aria-hidden="true"><Icon name="logout" /></span>
                   </button>
                 </form>
               )}
@@ -128,16 +129,18 @@ export function App() {
             {owner && (push === 'on' || push === 'off') && (
               <button
                 aria-pressed={push === 'on'}
+                aria-label={t('通知', 'Alerts')}
                 title={push === 'on' ? t('通知开着：方案待批、作业结果、访客的愿望会推到这台设备', 'Notifications are on: plans to approve, job results and visitors’ wishes are pushed to this device') : t('打开通知', 'Turn notifications on')}
                 onClick={() => void (push === 'on' ? turnOff() : turnOn()).then(setPush)}
               >
                 <span className="nav-full">{push === 'on' ? t('通知 ✓', 'Alerts ✓') : t('通知', 'Alerts')}</span>
-                <span className="nav-short" aria-hidden="true">{push === 'on' ? '🔔' : '🔕'}</span>
+                <span className="nav-short" aria-hidden="true"><Icon name={push === 'on' ? 'bell' : 'bellOff'} /></span>
               </button>
             )}
             {owner && push === 'blocked' && <span className="muted small nav-full" title={t('浏览器里把这个站点的通知禁掉了，要到浏览器的设置里放开', 'Notifications for this site are blocked in the browser; allow them in its settings')}>{t('通知被禁', 'Alerts blocked')}</span>}
             <button onClick={toggleTheme} aria-label={t('切换昼夜配色', 'Switch between light and dark')}>
-              {theme === 'dark' ? t('昼', 'Light') : t('夜', 'Dark')}
+              <span className="nav-full">{theme === 'dark' ? t('昼', 'Light') : t('夜', 'Dark')}</span>
+              <span className="nav-short" aria-hidden="true"><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></span>
             </button>
             {/* 两种语言都写上，不管现在是哪种都读得懂。 / Both languages, readable whichever is showing. */}
             <button onClick={toggleLang} aria-label="切换到英文 / Switch to Chinese" lang={lang === 'en' ? 'zh-CN' : 'en'}>
@@ -146,7 +149,7 @@ export function App() {
             {/* 收窄 / 展开左侧栏；选择记在浏览器里。手机上导航是底部标签栏，这个按钮不显示。 */}
             {/* Collapse / expand the navigation; the choice is kept in the browser. On a phone the navigation is a bottom tab bar and this button is hidden. */}
             <button className="nav-toggle" onClick={toggleNav} aria-pressed={navNarrow} aria-label={t('收窄或展开左侧栏', 'Collapse or expand the navigation')} title={navNarrow ? t('展开左侧栏', 'Expand the navigation') : t('收窄左侧栏', 'Collapse the navigation')}>
-              {navNarrow ? '»' : '«'}
+              <Icon name={navNarrow ? 'chevronsRight' : 'chevronsLeft'} />
             </button>
           </div>
         </div>
