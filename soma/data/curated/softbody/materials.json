@@ -1,0 +1,454 @@
+{
+ "_doc": {
+  "zh": "软组织材料表。每个数值要么带出处（sources 里的键、所在表格、测试方法、适用的应变范围），要么标 assumption: true。求解器用的是小应变线性化的 E、ν（稳定 neo-Hookean 能量）：软组织其实是强非线性的，这些模量只在应变不超过约 10–15% 时可信；更大的压入会低估反力。",
+  "en": "Soft-tissue material table. Every number either has a source (a key of `sources`, the table, the test method and the strain range) or is marked assumption: true. The solver uses small-strain E and ν (stable neo-Hookean energy): soft tissue is in fact strongly nonlinear and these moduli are credible up to strains of about 10–15 % only; deeper presses underestimate the reaction."
+ },
+ "model": {
+  "energy": "stable neo-Hookean (Smith et al. 2018 form without the log term): Ψ = μ/2·(I_C − 3) + λ′/2·(J − γ)², linearised to E, ν",
+  "honestStrainRange": 0.15,
+  "viscoelasticity": {
+   "zh": "没有：只有速度阻尼。forearm2026 表 4 里的 Prony 松弛参数（皮肤 g = {0.30, 0.35}，τ = {0.37, 5.59} s；脂肪 g1 = 0.39，τ1 = 700 s；肌肉 g = {0.89, 0.05, 0.03}，τ = {0.362, 2.54, 52.0} s）没有用上。",
+   "en": "None: velocity damping only. The Prony relaxation parameters of forearm2026 Table 4 (skin g = {0.30, 0.35}, τ = {0.37, 5.59} s; fat g1 = 0.39, τ1 = 700 s; muscle g = {0.89, 0.05, 0.03}, τ = {0.362, 2.54, 52.0} s) are not used."
+  }
+ },
+ "damping": {
+  "rate": 6,
+  "unit": "1/s",
+  "assumption": true,
+  "note": {
+   "zh": "相对速度的指数衰减率；没有出处，按“抖动在约半秒内消失”取的。",
+   "en": "Exponential decay rate of the relative velocity; unsourced, chosen so that a jiggle dies out in about half a second."
+  }
+ },
+ "gravity": [
+  0,
+  -9.81,
+  0
+ ],
+ "materials": [
+  {
+   "id": "skin",
+   "name": {
+    "zh": "皮肤（混入边界四面体，不单独成层）",
+    "en": "skin (blended into boundary tetrahedra, not a layer of its own)"
+   },
+   "young": 56400,
+   "poisson": 0.49,
+   "density": 1100,
+   "basis": {
+    "young": {
+     "source": "forearm2026",
+     "where": "Table 4, Skin: M-R + P(2), C10 = 9.4 kPa, C11 = 82 kPa",
+     "derivation": "small-strain shear modulus μ = 2·C10 = 18.8 kPa, E = 3μ = 56.4 kPa",
+     "method": {
+      "zh": "该文按前臂压入曲线筛选文献参数；这一组在以皮肤为主的 P1 点拟合最好（R² = 0.972）。",
+      "en": "That paper screens literature parameters against forearm indentation curves; this set fitted best at the skin-dominant site P1 (R² = 0.972)."
+     },
+     "alternatives": "same table: neo-Hookean C10 = 120 kPa (E = 720 kPa); Ogden μ1 = 56.8 kPa, α1 = 13.3",
+     "strainRange": {
+      "zh": "只在小应变下成立：皮肤拉伸几个百分点之后急剧变硬（表中 C11、Ogden 的 α 即为此），本模型没有这一段。",
+      "en": "Small strain only: skin stiffens sharply after a few per cent of stretch (that is what C11 and the Ogden α in the table express); this model has no such branch."
+     }
+    },
+    "thickness": {
+     "value": 0.00113,
+     "source": "forearm2026",
+     "where": "skin-thickness table, volar forearm: 1.13 mm",
+     "assumptionNote": {
+      "zh": "全身都用前臂掌侧这一个厚度，是假设。",
+      "en": "Using this one volar-forearm thickness for the whole body is an assumption."
+     }
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "fat",
+   "name": {
+    "zh": "皮下脂肪",
+    "en": "subcutaneous fat"
+   },
+   "young": 1590,
+   "poisson": 0.49,
+   "density": 920,
+   "basis": {
+    "young": {
+     "source": "forearm2026",
+     "where": "Table 4, Fat: N-H + P(1), μ = 0.53 kPa, g1 = 0.39, τ1 = 700 s",
+     "derivation": "E = 3μ = 1.59 kPa",
+     "strainRange": {
+      "zh": "neo-Hookean 的小应变模量；脂肪在大压缩下变硬，这里没有。松弛项（g1、τ1）没有用。",
+      "en": "The small-strain modulus of a neo-Hookean fit; fat stiffens under large compression, which is absent here. The relaxation term (g1, τ1) is not used."
+     },
+     "alternatives": "same table: 4-term Ogden C = {2.34, 4.08, −0.42, 1.34} kPa (best fit there); breastAnthropometric2015 Table 1: breast fat linear elastic E = 7.3 kPa"
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "muscle",
+   "name": {
+    "zh": "骨骼肌（放松；激活时变硬并沿纤维缩短）",
+    "en": "skeletal muscle (relaxed; stiffens and shortens along the fibre when active)"
+   },
+   "young": 6900,
+   "poisson": 0.49,
+   "density": 1060,
+   "youngActive": 350000,
+   "fibreYoung": 26000,
+   "basis": {
+    "young": {
+     "source": "forearm2026",
+     "where": "Table 4, Muscle: Po(2) + P(3), C10 = 0.6 kPa, C01 = 0.55 kPa",
+     "derivation": "μ = 2·(C10 + C01) = 2.3 kPa, E = 3μ = 6.9 kPa (transverse, quasi-static compression)",
+     "method": {
+      "zh": "该文在肌肉为主的点上这一组拟合最好。",
+      "en": "The best-fitting muscle set at the muscle-dominant sites of that paper."
+     }
+    },
+    "fibreYoung": {
+     "value": 26000,
+     "assumption": true,
+     "derivation": "3 × 11 kPa − 6.9 kPa",
+     "source": "vastus2014",
+     "note": {
+      "zh": "沿纤维的剪切模量（放松，9.5–12.8 kPa）来自 vastus2014；把它换算成沿纤维多出的拉伸模量是本项目的假设。",
+      "en": "The shear modulus along the fibres (relaxed, 9.5–12.8 kPa) is from vastus2014; turning it into an extra tensile modulus along the fibre is this project's assumption."
+     }
+    },
+    "youngActive": {
+     "value": 350000,
+     "assumption": true,
+     "source": "vastus2014",
+     "derivation": "6.9 kPa × (482.5 kPa / 9.5 kPa ≈ 50)",
+     "note": {
+      "zh": "vastus2014：最大随意收缩时沿纤维剪切模量的组均值 482.5±189.6 与 877.5±566.7 kPa，放松时 9.5–12.8 kPa。假设横向模量按同样的倍数变硬。",
+      "en": "vastus2014: group means of the along-fibre shear modulus at maximal voluntary contraction 482.5±189.6 and 877.5±566.7 kPa, relaxed 9.5–12.8 kPa. The transverse modulus is assumed to stiffen by the same factor."
+     }
+    },
+    "activeStrain": {
+     "value": 0.3,
+     "assumption": true,
+     "note": {
+      "zh": "完全激活时静止长度沿纤维缩短 30%，是假设。",
+      "en": "A 30 % shortening of the rest length along the fibre at full activation is an assumption."
+     }
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "breast_gland",
+   "name": {
+    "zh": "乳腺腺体",
+    "en": "breast, glandular"
+   },
+   "young": 2880,
+   "poisson": 0.49,
+   "density": 1040,
+   "basis": {
+    "young": {
+     "source": "breastStiffness2019",
+     "where": "discussion: dense breasts 0.96 kPa (centre slice), MR elastography at 3 T",
+     "derivation": "taken as shear stiffness, E = 3 × 0.96 kPa",
+     "strainRange": {
+      "zh": "弹性成像的微小应变。离体压入给出的值高得多（breastAnthropometric2015 表 1：腺体 42.7 kPa），那是更大应变和不同的方法。",
+      "en": "The tiny strains of elastography. Ex-vivo indentation gives far higher values (breastAnthropometric2015 Table 1: fibroglandular 42.7 kPa) at larger strain and by another method."
+     },
+     "alternatives": "breastFem2025: E_gland = 9.75 kPa (simulation parameter)"
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "breast_fat",
+   "name": {
+    "zh": "乳房脂肪",
+    "en": "breast, adipose"
+   },
+   "young": 2550,
+   "poisson": 0.49,
+   "density": 920,
+   "basis": {
+    "young": {
+     "source": "breastStiffness2019",
+     "where": "discussion: entirely fatty breasts 0.85 kPa (centre slice), MR elastography at 3 T",
+     "derivation": "taken as shear stiffness, E = 3 × 0.85 kPa",
+     "alternatives": "breastAnthropometric2015 Table 1: fat 7.3 kPa linear, neo-Hookean c10 = 3 kPa; breastFem2025: E_adipose = 9.75 kPa, deep adipose 0.10–2.0 kPa tried"
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "abdomen",
+   "name": {
+    "zh": "腹腔内容物（集总的近不可压介质）",
+    "en": "abdominal contents (lumped near-incompressible medium)"
+   },
+   "young": 3000,
+   "poisson": 0.49,
+   "density": 1000,
+   "basis": {
+    "young": {
+     "assumption": true,
+     "note": {
+      "zh": "没有打开出处；取与软的实质组织同量级的值。空腔脏器以后换成薄壁充压管。",
+      "en": "No source opened; a value of the order of soft parenchyma. Hollow organs are to become thin-walled pressurised tubes later."
+     }
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "thorax",
+   "name": {
+    "zh": "胸腔内容物（肋骨围住，集总）",
+    "en": "thoracic contents (enclosed by the ribs, lumped)"
+   },
+   "young": 5000,
+   "poisson": 0.45,
+   "density": 500,
+   "basis": {
+    "young": {
+     "assumption": true,
+     "note": {
+      "zh": "没有打开出处。肺含气，密度和泊松比都取得低一些，也是假设。",
+      "en": "No source opened. The lungs hold air, so density and Poisson ratio are set lower, which is also assumed."
+     }
+    },
+    "poisson": {
+     "value": 0.45,
+     "assumption": true
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "other",
+   "name": {
+    "zh": "其余软组织（未归类的体内空间）",
+    "en": "other soft tissue (interior space not classified)"
+   },
+   "young": 5000,
+   "poisson": 0.49,
+   "density": 1000,
+   "basis": {
+    "young": {
+     "assumption": true,
+     "note": {
+      "zh": "没有打开出处。",
+      "en": "No source opened."
+     }
+    },
+    "poisson": {
+     "value": 0.49,
+     "source": "breastFem2025",
+     "sourceValue": 0.495,
+     "note": {
+      "zh": "文献用 0.495（breastFem2025 的参数表）；这里取 0.49，线性四面体在更接近 0.5 时体积锁死。",
+      "en": "The literature uses 0.495 (parameter table of breastFem2025); 0.49 is used here because linear tetrahedra lock volumetrically closer to 0.5."
+     }
+    },
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    }
+   }
+  },
+  {
+   "id": "bone",
+   "name": {
+    "zh": "骨（运动学刚体，不求解）",
+    "en": "bone (kinematic, not solved)"
+   },
+   "young": 0,
+   "poisson": 0.3,
+   "density": 1800,
+   "rigid": true,
+   "basis": {
+    "density": {
+     "assumption": true,
+     "note": {
+      "zh": "密度取教科书量级的数值，没有打开出处。",
+      "en": "Density is a textbook-order value; no source was opened."
+     }
+    },
+    "note": {
+     "zh": "骨随关节刚性运动；密度只用于被钉住的结点，不影响结果。",
+     "en": "Bone moves rigidly with its joint; the density only gives mass to pinned nodes and does not affect results."
+    }
+   }
+  }
+ ],
+ "sources": {
+  "forearm2026": {
+   "citation": "Development and Surface Indentation Assessment of an MRI-Based Subject-Specific Hand–Forearm Finite Element Model: A Preliminary Study. Bioengineering (Basel) 2026.",
+   "url": "https://europepmc.org/article/PMC/PMC13603692",
+   "licence": "CC BY 4.0",
+   "opened": "full text (Europe PMC XML): abstract, section 2.3–2.5, Table 4 and the notes of Tables 7–9",
+   "note": {
+    "zh": "单个健康成年男性受试者；作者自称初步研究。表 4 的本构参数是该文从别的文献里取的候选值，那些原始文献本项目没有打开。",
+    "en": "One healthy adult male volunteer; called a preliminary study by its authors. The constitutive parameters of its Table 4 are candidates taken from other papers, which this project did not open."
+   }
+  },
+  "breastFem2025": {
+   "citation": "FEM simulation of breast deformation with semi-fluid representation. Int J Comput Assist Radiol Surg 2025.",
+   "url": "https://europepmc.org/article/PMC/PMC12034591",
+   "licence": "CC BY 4.0",
+   "opened": "full text: simulation parameter table and the sentence on deep adipose moduli",
+   "note": {
+    "zh": "数值是该文仿真所用的参数，不是测量值。",
+    "en": "The numbers are the parameters that paper simulates with, not measurements."
+   }
+  },
+  "breastStiffness2019": {
+   "citation": "Evaluation of breast stiffness measured by ultrasound and breast density measured by MRI using a prone-supine deformation model. Biomark Res 2019.",
+   "url": "https://europepmc.org/article/PMC/PMC6737679",
+   "licence": "CC BY 4.0",
+   "opened": "full text: discussion paragraph quoting MR elastography values",
+   "note": {
+    "zh": "0.96 / 0.85 kPa 是该文转述的另一项 3 T 磁共振弹性成像研究（其参考文献 51）的数值，原文没有打开。",
+    "en": "0.96 / 0.85 kPa are values of another 3 T MR elastography study (its reference 51) as quoted there; the original was not opened."
+   }
+  },
+  "breastAnthropometric2015": {
+   "citation": "An Anthropometric-Based Subject-Specific Finite Element Model of the Human Breast for Predicting Large Deformations. Front Bioeng Biotechnol 2015.",
+   "url": "https://europepmc.org/article/PMC/PMC4689784",
+   "licence": "CC BY 4.0",
+   "opened": "full text: material table (Table 1) and the description of the gravity load case",
+   "note": {
+    "zh": "材料表里的数值同样引自更早的离体实验文献（未打开）。该文也是先施加“反重力”再重新施加重力。",
+    "en": "The values of its material table are likewise cited from earlier ex-vivo work (not opened). That paper also applies an “anti-gravity” load first and then gravity again."
+   }
+  },
+  "proneSupine2016": {
+   "citation": "Eiben B et al. Symmetric Biomechanically Guided Prone-to-Supine Breast Image Registration. Ann Biomed Eng 2016.",
+   "url": "https://europepmc.org/article/PMC/PMC4690842",
+   "licence": "CC BY 4.0",
+   "opened": "full text: abstract and the paragraph introducing Table 3",
+   "note": {
+    "zh": "14 组临床影像（9 组俯卧 MRI–仰卧 CT、1 组 CT、4 组 MRI）；刚性对齐后的标志点距离即俯卧到仰卧的组织位移量级。受试者是乳腺癌患者，乳房体积没有在打开的段落里给出。",
+    "en": "Fourteen clinical image pairs (nine prone MRI–supine CT, one CT, four MRI); the landmark distance after rigid alignment is the scale of tissue motion from prone to supine. The subjects are breast cancer patients; breast volume is not given in the passages opened."
+   }
+  },
+  "vastus2014": {
+   "citation": "Shear Modulus Estimation on Vastus Intermedius of Elderly and Young Females over the Entire Range of Isometric Contraction. PLoS One 2014.",
+   "url": "https://europepmc.org/article/PMC/PMC4081795",
+   "licence": "CC BY 4.0",
+   "opened": "full text: results and discussion paragraphs with the shear moduli",
+   "note": {
+    "zh": "振动超声剪切波法，沿肌纤维方向的剪切模量；该文正文两处对老年组和青年组的放松值写法相反（9.5±3.3 与 12.8±5.4 kPa），这里只取范围。",
+    "en": "Vibro-ultrasound shear waves, shear modulus along the fibres; the paper's text assigns the two relaxed values (9.5±3.3 and 12.8±5.4 kPa) to the elderly and the young group inconsistently in two places, so only the range is used here."
+   }
+  },
+  "heelSex2020": {
+   "citation": "Sex differences in heel pad stiffness during in vivo loading and unloading. J Anat 2020.",
+   "url": "https://europepmc.org/article/PMC/PMC7476210",
+   "licence": "CC BY-NC-ND 4.0",
+   "opened": "full text: discussion sentence quoting Borros & Challis 2003",
+   "note": {
+    "zh": "只取了它转述的一组数（足跟垫刚度），压头形状和载荷范围在打开的句子里没有给出。",
+    "en": "Only one quoted pair of numbers (heel pad stiffness) was taken; indenter shape and load range are not given in the sentence opened."
+   }
+  }
+ }
+}
