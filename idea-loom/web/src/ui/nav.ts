@@ -54,6 +54,22 @@ export function navEntry(pathname: string): NavEntry | undefined {
   return NAV.find((n) => n.under.some((u) => covers(u, path)))
 }
 
+// 一个记下来的页面（地址加当时的标题）该怎么称呼：先说是哪个菜单项，详情页再接上它自己的标题。
+// 只写标题的话，一条愿望的详情页会显示成那条愿望的标题，在列表里看着像是另一条愿望。
+// How to name a recorded page (an address plus the title it had): the menu entry first, then the page's own title for a detail page.
+// With the title alone, a wish's detail page shows as that wish's title, which in a list reads like another wish.
+export function whereLabel(url: string, title: string, lang: 'zh' | 'en'): string {
+  const entry = navEntry(url)
+  const own = title.trim()
+  if (!entry) return own || url
+  const name = lang === 'zh' ? entry.zh : entry.en
+  const path = clean(url)
+  // 菜单项自己的那几个地址：有标题就用标题（「想法」下面的视图各有名字）。
+  // The entry's own addresses: use the title when there is one (the views under Ideas each have a name).
+  if (entry.under.includes(path)) return own || name
+  return own && own !== entry.zh && own !== entry.en ? `${name} › ${own}` : name
+}
+
 // 一个地址正好是「想法」的哪个视图；idea 的详情页和手写页不是视图，返回 undefined。
 // Which view of "Ideas" an address is exactly; an idea's own page and the write page are not views and give undefined.
 export function ideaView(pathname: string): string | undefined {
