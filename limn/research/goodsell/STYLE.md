@@ -232,6 +232,10 @@ limn 这一轮的数：
 - **切换画法的一处错**：带示意环境、圆点或自己底色的模型，从手绘切到 Illustrate 时没有重新载入，推断的东西会留在 Illustrate 的画面里（HIV、syn3A 一直有这个问题，这次核对支原体时才发现）。现在这些模型切换时都重新载入；在支原体上来回切换核对过。
 - 全部 25 张卡的总览：`out/sheet-L1.jpg`。
 
+### M3：流感的刺一根根分开
+
+（`out/M3-influenza.jpg`：改前、改后、他的画）夸张时把血凝素的头放宽到 1.2 倍，相邻的头连在一起，一圈刺成了一条连续的裙边；他的刺是一根根分开的，缝里露出后排深色的刺。头改回原宽（1.0），柄从 0.55 放回 0.75。试过头 0.95、柄 0.5：刺分开了，但柄之间透出许多白纸。把刺衬在后面（切片背面不切）在这里几乎没有效果（两张图只差一千多个像素）：缝是一直透到后面的，不是后排被切掉了。现在还剩一些小白洞，他的画里这些地方是深靛色。
+
 ## English
 
 I went through the 49 paintings of the Goodsell Gallery (`gallery/`) and read the description he gives each on its page. The table above lists the practices he uses again and again, and which of them limn now follows. The descriptions are valuable: he says what every colour stands for, as quoted above for the influenza painting.
@@ -454,3 +458,7 @@ A great deal of this is inference, and the sources panel says so plainly: the co
 - **To be said plainly**: in real brain tissue the extracellular space is a cleft a few tens of nanometres wide and most of this area is in fact neighbouring cells, which the model does not hold; filling it with matrix serves the picture. The sources panel says so.
 - **A fault in switching drawings**: a model with a schematic environment, dots or a ground of its own was not reloaded on switching from painted to Illustrate, so inferred things stayed in the Illustrate picture (HIV and syn3A always had this; it was found while checking the mycoplasma). Such models now reload on a switch; checked by switching back and forth on the mycoplasma.
 - The sheet of all 25 cards: `out/sheet-L1.jpg`.
+
+### M3: the influenza spikes stand apart
+
+(`out/M3-influenza.jpg`: before, after, his painting) Exaggeration widened the hemagglutinin head to 1.2, so neighbouring heads joined and the ring of spikes became one continuous skirt; his spikes stand apart, with the darker row behind showing in the slits. The head is back at its own width (1.0) and the stalk goes from 0.55 back to 0.75. A head of 0.95 with a stalk of 0.5 was tried: the spikes parted, but a good deal of paper showed between the stalks. Letting the spikes line the back (not cut at the back of the slab) made almost no difference here (the two renders differ in a thousand-odd pixels): the slits go right through, and it is not that the rows behind were cut away. Some small white holes remain where his painting has deep indigo.
