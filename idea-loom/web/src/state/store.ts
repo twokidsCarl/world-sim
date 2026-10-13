@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { type Me, type Proposals, api } from '../api'
 import type { State, SyncResult, SyncStatus } from '../contract'
 import { type Lang, type T, applyLang, initialLang } from '../i18n'
+import { parseNav } from '../ui/tabs'
 
 type Theme = 'light' | 'dark'
 
@@ -18,6 +19,8 @@ type Store = {
   loading: boolean
   theme: Theme
   lang: Lang
+  // 左侧栏是不是收窄了。 / Whether the left navigation is collapsed.
+  navNarrow: boolean
   page: PageIdentity
   sync: SyncStatus | null
   proposals: Proposals | null
@@ -28,6 +31,7 @@ type Store = {
   load: () => Promise<void>
   toggleTheme: () => void
   toggleLang: () => void
+  toggleNav: () => void
   setPage: (page: PageIdentity) => void
 }
 
@@ -41,6 +45,14 @@ function initialTheme(): Theme {
   return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+function initialNav(): boolean {
+  try {
+    return parseNav(localStorage.getItem('idea-loom:nav'))
+  } catch {
+    return false
+  }
+}
+
 export const useStore = create<Store>((set, get) => ({
   me: null,
   state: null,
@@ -48,6 +60,7 @@ export const useStore = create<Store>((set, get) => ({
   loading: false,
   theme: initialTheme(),
   lang: initialLang(),
+  navNarrow: initialNav(),
   page: { title: '', lead: '' },
   sync: null,
   proposals: null,
@@ -90,6 +103,15 @@ export const useStore = create<Store>((set, get) => ({
     const lang: Lang = get().lang === 'en' ? 'zh' : 'en'
     applyLang(lang)
     set({ lang })
+  },
+  toggleNav: () => {
+    const navNarrow = !get().navNarrow
+    try {
+      localStorage.setItem('idea-loom:nav', navNarrow ? 'narrow' : 'wide')
+    } catch {
+      /* 同上 / as above */
+    }
+    set({ navNarrow })
   },
   setPage: (page) => set({ page }),
 }))

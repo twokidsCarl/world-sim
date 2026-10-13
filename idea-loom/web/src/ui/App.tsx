@@ -21,22 +21,24 @@ import { type PushState, pushState, turnOff, turnOn } from '../push'
 import { useStore, useT } from '../state/store'
 import { useStale } from '../version'
 
+// sz / se 是左侧栏收窄时显示的短标签；英文首字母有重复，所以给两个字母。
+// sz / se are the short labels shown when the navigation is collapsed; English initials collide, hence two letters.
 const NAV = [
-  { to: '/play', zh: '玩', en: 'Play', end: false, owner: false },
-  { to: '/', zh: '地图', en: 'Map', end: true, owner: false },
-  { to: '/ideas', zh: '想法池', en: 'Idea pool', end: false, owner: false },
-  { to: '/inbox', zh: '生成与候选', en: 'Generate & candidates', end: false, owner: true },
-  { to: '/lineage', zh: '血缘', en: 'Lineage', end: false, owner: false },
-  { to: '/work', zh: '开发', en: 'Work', end: false, owner: true },
-  { to: '/wishes', zh: '许愿池', en: 'Wish pool', end: false, owner: true },
+  { to: '/play', sz: '玩', se: 'Pl', zh: '玩', en: 'Play', end: false, owner: false },
+  { to: '/', sz: '图', se: 'Mp', zh: '地图', en: 'Map', end: true, owner: false },
+  { to: '/ideas', sz: '池', se: 'Id', zh: '想法池', en: 'Idea pool', end: false, owner: false },
+  { to: '/inbox', sz: '生', se: 'Gn', zh: '生成与候选', en: 'Generate & candidates', end: false, owner: true },
+  { to: '/lineage', sz: '血', se: 'Ln', zh: '血缘', en: 'Lineage', end: false, owner: false },
+  { to: '/work', sz: '开', se: 'Wk', zh: '开发', en: 'Work', end: false, owner: true },
+  { to: '/wishes', sz: '愿', se: 'Ws', zh: '许愿池', en: 'Wish pool', end: false, owner: true },
   // 会话只在本机有：它能在这台机器上执行命令。 / Sessions exist locally only: they can run commands on this machine.
-  { to: '/sessions', zh: '会话', en: 'Sessions', end: false, owner: true },
-  { to: '/stats', zh: '统计', en: 'Statistics', end: false, owner: true },
-  { to: '/connect', zh: '接入', en: 'Connect', end: false, owner: true },
+  { to: '/sessions', sz: '话', se: 'Se', zh: '会话', en: 'Sessions', end: false, owner: true },
+  { to: '/stats', sz: '统', se: 'St', zh: '统计', en: 'Statistics', end: false, owner: true },
+  { to: '/connect', sz: '接', se: 'Co', zh: '接入', en: 'Connect', end: false, owner: true },
 ]
 
 export function App() {
-  const { me, state, error, load, theme, toggleTheme, lang, toggleLang, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
+  const { me, state, error, load, theme, toggleTheme, lang, toggleLang, navNarrow, toggleNav, sync, syncing, syncResult, runSync, clearSyncResult, proposals } = useStore()
   const t = useT()
   const openWishes = useAssistant((a) => a.openWishes)
   const owner = me?.role === 'owner'
@@ -68,27 +70,32 @@ export function App() {
   }, [lang])
 
   return (
-    <div className="shell">
+    <div className={navNarrow ? 'shell nav-narrow' : 'shell'}>
       <nav className="nav" aria-label={t('主导航', 'Main navigation')}>
         <div className="mark">
-          idea-loom<small>{t('想法池', 'Idea pool')}</small>
+          <span className="nav-full">idea-loom</span>
+          <span className="nav-short" aria-hidden="true">il</span>
+          <small>{t('想法池', 'Idea pool')}</small>
         </div>
         {NAV.filter((n) => (owner || !n.owner) && (n.to !== '/sessions' || me?.auth_enabled === false)).map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.end} className="nav-item">
-            {t(n.zh, n.en)}
+          <NavLink key={n.to} to={n.to} end={n.end} className="nav-item" title={navNarrow ? t(n.zh, n.en) : undefined}>
+            <span className="nav-full">{t(n.zh, n.en)}</span>
+            <span className="nav-short" aria-hidden="true">{t(n.sz, n.se)}</span>
             {n.to === '/ideas' && state && <span className="count num">{state.counts.live}</span>}
             {n.to === '/wishes' && openWishes > 0 && <span className="count pill num">{openWishes}</span>}
             {n.to === '/inbox' && proposals && proposals.open > 0 && <span className="count pill num">{proposals.open}</span>}
           </NavLink>
         ))}
         {me?.auth_enabled && !owner && (
-          <NavLink to="/suggest" className="nav-item nav-new">
-            {t('提个愿望', 'Send a wish')}
+          <NavLink to="/suggest" className="nav-item nav-new" title={navNarrow ? t('提个愿望', 'Send a wish') : undefined}>
+            <span className="nav-full">{t('提个愿望', 'Send a wish')}</span>
+            <span className="nav-short" aria-hidden="true">＋</span>
           </NavLink>
         )}
         {owner && (
-          <NavLink to="/new" className="nav-item nav-new">
-            {t('＋ 手写一条', '＋ Write one')}
+          <NavLink to="/new" className="nav-item nav-new" title={navNarrow ? t('手写一条', 'Write one') : undefined}>
+            <span className="nav-full">{t('＋ 手写一条', '＋ Write one')}</span>
+            <span className="nav-short" aria-hidden="true">＋</span>
           </NavLink>
         )}
         <div className="nav-foot">
@@ -96,34 +103,39 @@ export function App() {
             <div className="sync">
               {sync.can_sync ? (
                 <>
-                  <div className="small">
+                  <div className="small nav-full">
                     {sync.pending > 0
                       ? t(`${sync.pending} 处改动还没进仓库`, `${plural(sync.pending, 'change')} not in the repository yet`)
                       : sync.ideas_md_stale
                         ? t('IDEAS.md 需要更新', 'IDEAS.md needs an update')
                         : t('愿望或任务有改动还没进仓库', 'Wish or task changes not in the repository yet')}
                   </div>
-                  <button className="primary" disabled={syncing} onClick={() => void runSync()}>
-                    {syncing ? t('正在同步…', 'Syncing…') : t('同步到仓库', 'Sync to repository')}
+                  <button className="primary" disabled={syncing} onClick={() => void runSync()} title={navNarrow ? t('同步到仓库', 'Sync to repository') : undefined}>
+                    <span className="nav-full">{syncing ? t('正在同步…', 'Syncing…') : t('同步到仓库', 'Sync to repository')}</span>
+                    <span className="nav-short" aria-hidden="true">{syncing ? '…' : '⇪'}</span>
                   </button>
                 </>
               ) : (
-                <div className="muted small">{sync.reason ?? t('已和仓库同步', 'In sync with the repository')}</div>
+                <div className="muted small nav-full">{sync.reason ?? t('已和仓库同步', 'In sync with the repository')}</div>
               )}
             </div>
           )}
           {me?.auth_enabled && (
             <div className="who">
               {me.role === 'guest' ? (
-                <a className="button" href="/auth/login">
-                  {t('用 GitHub 登录', 'Sign in with GitHub')}
+                <a className="button" href="/auth/login" title={navNarrow ? t('用 GitHub 登录', 'Sign in with GitHub') : undefined}>
+                  <span className="nav-full">{t('用 GitHub 登录', 'Sign in with GitHub')}</span>
+                  <span className="nav-short" aria-hidden="true">→</span>
                 </a>
               ) : (
                 <form method="post" action="/auth/logout" className="row">
-                  <span className="small who-name" title={me.role === 'owner' ? t('主人', 'Owner') : t('访客', 'Member')}>
+                  <span className="small who-name nav-full" title={me.role === 'owner' ? t('主人', 'Owner') : t('访客', 'Member')}>
                     {me.name || me.login}
                   </span>
-                  <button type="submit">{t('退出', 'Sign out')}</button>
+                  <button type="submit" title={navNarrow ? t('退出', 'Sign out') : undefined}>
+                    <span className="nav-full">{t('退出', 'Sign out')}</span>
+                    <span className="nav-short" aria-hidden="true">⏻</span>
+                  </button>
                 </form>
               )}
             </div>
@@ -135,16 +147,22 @@ export function App() {
                 title={push === 'on' ? t('通知开着：方案待批、作业结果、访客的愿望会推到这台设备', 'Notifications are on: plans to approve, job results and visitors’ wishes are pushed to this device') : t('打开通知', 'Turn notifications on')}
                 onClick={() => void (push === 'on' ? turnOff() : turnOn()).then(setPush)}
               >
-                {push === 'on' ? t('通知 ✓', 'Alerts ✓') : t('通知', 'Alerts')}
+                <span className="nav-full">{push === 'on' ? t('通知 ✓', 'Alerts ✓') : t('通知', 'Alerts')}</span>
+                <span className="nav-short" aria-hidden="true">{push === 'on' ? '🔔' : '🔕'}</span>
               </button>
             )}
-            {owner && push === 'blocked' && <span className="muted small" title={t('浏览器里把这个站点的通知禁掉了，要到浏览器的设置里放开', 'Notifications for this site are blocked in the browser; allow them in its settings')}>{t('通知被禁', 'Alerts blocked')}</span>}
+            {owner && push === 'blocked' && <span className="muted small nav-full" title={t('浏览器里把这个站点的通知禁掉了，要到浏览器的设置里放开', 'Notifications for this site are blocked in the browser; allow them in its settings')}>{t('通知被禁', 'Alerts blocked')}</span>}
             <button onClick={toggleTheme} aria-label={t('切换昼夜配色', 'Switch between light and dark')}>
               {theme === 'dark' ? t('昼', 'Light') : t('夜', 'Dark')}
             </button>
             {/* 两种语言都写上，不管现在是哪种都读得懂。 / Both languages, readable whichever is showing. */}
             <button onClick={toggleLang} aria-label="切换到英文 / Switch to Chinese" lang={lang === 'en' ? 'zh-CN' : 'en'}>
               {lang === 'en' ? '中' : 'EN'}
+            </button>
+            {/* 收窄 / 展开左侧栏；选择记在浏览器里。手机上导航是底部标签栏，这个按钮不显示。 */}
+            {/* Collapse / expand the navigation; the choice is kept in the browser. On a phone the navigation is a bottom tab bar and this button is hidden. */}
+            <button className="nav-toggle" onClick={toggleNav} aria-pressed={navNarrow} aria-label={t('收窄或展开左侧栏', 'Collapse or expand the navigation')} title={navNarrow ? t('展开左侧栏', 'Expand the navigation') : t('收窄左侧栏', 'Collapse the navigation')}>
+              {navNarrow ? '»' : '«'}
             </button>
           </div>
         </div>
