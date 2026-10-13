@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
+import { ICON_NAMES } from '../src/ui/icons'
 import { IDEA_VIEWS, NAV, ideaView, navEntry } from '../src/ui/nav'
 
 describe('navEntry', () => {
   it('每个菜单项的地址唯一，并且归自己管 / every entry has a unique address that it covers itself', () => {
     expect(new Set(NAV.map((n) => n.to)).size).toBe(NAV.length)
     for (const n of NAV) expect(navEntry(n.to)).toBe(n)
+  })
+
+  it('每个菜单项有自己的图标，而且图标是画过的 / every entry has an icon of its own, and it is one that exists', () => {
+    expect(new Set(NAV.map((n) => n.icon)).size).toBe(NAV.length)
+    for (const n of NAV) expect(ICON_NAMES).toContain(n.icon)
   })
 
   it('一个地址前缀只归一个菜单项 / a prefix belongs to one entry only', () => {
