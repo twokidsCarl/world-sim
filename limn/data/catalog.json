@@ -64,6 +64,8 @@
       ],
       "hues": {"focus": [0.74, 0.14, 8], "nucleic-binding": [0.68, 0.13, 345], "nucleic": [0.86, 0.15, 90], "soluble": [0.78, 0.11, 25]},
       "membrane": [0.91, 0.04, 350],
+      "colors": [["^gp160$", [0.7, 0.17, 5]]],
+      "respike": {"pattern": "^gp160$", "count": 14, "source": "Zhu et al., Nature 2006, doi:10.1038/nature04817 (14 ± 7 envelope spikes per HIV-1 virion, by cryo-electron tomography; the spikes there are not evenly spread, and the even arrangement drawn here is an idealisation)"},
       "environment": {"proteins": [{"pdb": "3GHG", "name": "纤维蛋白原", "nameEn": "fibrinogen", "count": 40, "lch": [0.72, 0.14, 62]}, {"pdb": "1IGT", "name": "抗体", "nameEn": "antibody", "count": 160, "lch": [0.88, 0.11, 92]}, {"pdb": "1AO6", "name": "血清白蛋白", "nameEn": "serum albumin", "count": 700, "lch": [0.8, 0.11, 84]}], "ground": [0.2, 0.13, 0.07], "basis": "照 Goodsell 的《HIV in Blood Plasma》（doi:10.2210/rcsb_pdb/goodsell-gallery-002），病毒泡在血浆里。血浆里最多的三类蛋白是白蛋白、免疫球蛋白和纤维蛋白原，这里各用一个结构代表（PDB 1AO6、1IGT、3GHG）。", "basisEn": "After Goodsell's \"HIV in Blood Plasma\" (doi:10.2210/rcsb_pdb/goodsell-gallery-002), in which the virus sits in blood plasma. The three most abundant classes of plasma protein are albumin, immunoglobulins and fibrinogen, each stood for here by one structure (PDB 1AO6, 1IGT, 3GHG)."},
       "zoom": 1.22,
       "caption": "成熟 HIV-1 病毒颗粒的原子模型，从中间剖开：包膜上的 gp160 刺突，膜下的基质蛋白，锥形衣壳里是两条基因组 RNA 和逆转录酶、整合酶。",
