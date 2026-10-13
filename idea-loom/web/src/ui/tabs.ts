@@ -5,6 +5,12 @@ export function parseTab<T extends string>(raw: string | null | undefined, allow
   return allowed.find((a) => a === v) ?? fallback
 }
 
+// 左侧栏记在浏览器里的宽窄：只有 'narrow' 算收窄，没记过或乱写的都是宽。
+// The saved width of the left navigation: only 'narrow' means collapsed; nothing saved, or garbage, means wide.
+export function parseNav(raw: string | null | undefined): boolean {
+  return (raw ?? '').trim().toLowerCase() === 'narrow'
+}
+
 // 最近的 n 条：按 last_at 倒序取，不依赖传进来的顺序，也不改原数组。
 // The n most recent: taken by last_at descending, independent of the incoming order, without mutating the input.
 export function recent<T extends { last_at: string }>(items: readonly T[], n: number): T[] {

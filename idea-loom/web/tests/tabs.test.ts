@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseTab, recent } from '../src/ui/tabs'
+import { parseNav, parseTab, recent } from '../src/ui/tabs'
 
 const TABS = ['projects', 'runs', 'attention', 'calls'] as const
 
@@ -16,6 +16,20 @@ describe('parseTab', () => {
   it('accepts a valid value, ignoring case', () => {
     expect(parseTab('runs', TABS)).toBe('runs')
     expect(parseTab('Calls', TABS)).toBe('calls')
+  })
+})
+
+describe('parseNav', () => {
+  it('is wide when nothing was saved or the value is garbage', () => {
+    expect(parseNav(null)).toBe(false)
+    expect(parseNav(undefined)).toBe(false)
+    expect(parseNav('')).toBe(false)
+    expect(parseNav('窄')).toBe(false)
+    expect(parseNav('wide')).toBe(false)
+  })
+  it('is narrow only for the saved narrow value', () => {
+    expect(parseNav('narrow')).toBe(true)
+    expect(parseNav(' Narrow ')).toBe(true)
   })
 })
 

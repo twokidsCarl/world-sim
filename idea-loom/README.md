@@ -58,6 +58,8 @@ generated from it.
   a rewrite marks the English stale until it is translated again). A sync regenerates
   both `IDEAS.md` and `IDEAS.en.md`.
 
+- **左侧栏可以收窄 / Collapsible navigation**：左下角的 `«` 把导航收成一条窄栏，只留每页的一个字，全名在悬停提示里，`»` 展开；选择记在浏览器里。手机上导航是底部标签栏，不受影响。
+  The `«` at the bottom left collapses the navigation to a narrow rail showing a short label per page, with the full name in the hover title; `»` expands it. The choice is remembered in the browser. On a phone the navigation is a bottom tab bar and is unaffected.
 - **小助手 / Assistant**：右侧的边栏，随时可以问。每次提问自动带上当前页面的文字提纲、最近的操作和许愿池里已有的愿望；在 idea 页时带上那条 idea。它能读仓库、读本工具的接口、记愿望、提议 idea（进候选）、在页面上圈出元素；它不能改任何东西。窗口窄时变成浮层。
   A sidebar on the right, always there to ask. Each question carries a text outline of
   the current page, your recent actions and the existing wishes, plus the idea when you
