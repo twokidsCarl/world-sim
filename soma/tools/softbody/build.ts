@@ -35,7 +35,7 @@ export function readMaterials(): MaterialsFile {
 
 /** 求解器用的材料：去掉出处说明，只留数值 / the materials as the solver uses them: numbers only, without the provenance notes */
 export function solverMaterials(file: MaterialsFile): SoftMaterial[] {
-  return file.materials.map(({ id, name, young, poisson, density, youngActive, fibreYoung, rigid }) => ({ id, name, young, poisson, density, ...(youngActive ? { youngActive } : {}), ...(fibreYoung ? { fibreYoung } : {}), ...(rigid ? { rigid } : {}) }))
+  return file.materials.map(({ id, name, young, poisson, density, youngActive, fibreYoung, rigid, stiffening, branchRatio, branchTau }) => ({ id, name, young, poisson, density, ...(youngActive ? { youngActive } : {}), ...(fibreYoung ? { fibreYoung } : {}), ...(rigid ? { rigid } : {}), ...(stiffening ? { stiffening } : {}), ...(branchRatio ? { branchRatio, branchTau } : {}) }))
 }
 
 /** 具名区域的盒子，由关节中心定出 / the box of a named region, from joint centres */
@@ -57,7 +57,17 @@ export function regionBox(rig: Rig, name: string): [number, number, number, numb
     case 'forearm_L': return span(['elbow_L', 'wrist_L'], [0.07, -0.02, 0.07])
     case 'thigh_L': return span(['hip_L', 'knee_L'], [0.12, -0.05, 0.14])
     case 'abdomen': { const b = span(['pelvis', 'T10'], [0.22, 0, 0.3]); b[1] -= 0.04; return b }
-    case 'chest': return span(['T10', 'T2'], [0.24, 0, 0.3])
+    case 'chest': {
+      // T10–T2 只有约 17 cm 高，下切口正好穿过乳房下缘，切口上钉住的结点把乳房拴住了（第一阶段乳房位移小一个量级的主要原因）。
+      // 向下多留 14 cm、向上多留 8 cm。
+      // T10–T2 is only about 17 cm tall and its lower cut passed right through the lower breast, whose pinned cut nodes
+      // tied the breast down (the main reason the breast moved an order of magnitude too little in phase 1). 14 cm
+      // more below and 8 cm more above.
+      const b = span(['T10', 'T2'], [0.24, 0, 0.3])
+      b[1] -= 0.14
+      b[4] += 0.08
+      return b
+    }
   }
   throw new Error(`softbody: unknown region "${name}" (forearm_L, thigh_L, abdomen, chest)`)
 }
@@ -94,7 +104,7 @@ export function withRest0(r: BuildResult, log: (s: string) => void = () => {}): 
 export function reencode(soft: LoadedSoft, rest0: Float32Array | null): { json: SoftData; bin: Uint8Array } {
   const { sections: _s, embedded: _e, nodeCount: _n, tetCount: _t, anchorCount: _a, ...head } = soft.data
   void _s, _e, _n, _t, _a
-  return encodeSoft(head, { nodes: soft.nodes, tets: soft.tets, tetSlot: soft.tetSlot, tetMaterial: soft.tetMaterial, tetFill: soft.tetFill, tetSkin: soft.tetSkin, tetMuscle: soft.tetMuscle, nodePin: soft.nodePin, nodeInfluence: soft.nodeInfluence, anchors: soft.anchors, rest0, embedded: [...soft.embedded].map(([part, points]) => ({ part, points })) })
+  return encodeSoft(head, { nodes: soft.nodes, tets: soft.tets, tetSlot: soft.tetSlot, tetMaterial: soft.tetMaterial, tetFill: soft.tetFill, tetSkin: soft.tetSkin, tetMuscle: soft.tetMuscle, nodePin: soft.nodePin, nodeInfluence: soft.nodeInfluence, anchors: soft.anchors, anchorWeight: soft.anchorWeight, rest0, embedded: [...soft.embedded].map(([part, points]) => ({ part, points })) })
 }
 
 export async function loadBody(bodyId: string): Promise<{ body: Body; rig: Rig; rigBin: Uint8Array }> {

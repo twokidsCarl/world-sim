@@ -1,23 +1,27 @@
 {
  "_doc": {
-  "zh": "软组织材料表。每个数值要么带出处（sources 里的键、所在表格、测试方法、适用的应变范围），要么标 assumption: true。求解器用的是小应变线性化的 E、ν（稳定 neo-Hookean 能量）：软组织其实是强非线性的，这些模量只在应变不超过约 10–15% 时可信；更大的压入会低估反力。",
-  "en": "Soft-tissue material table. Every number either has a source (a key of `sources`, the table, the test method and the strain range) or is marked assumption: true. The solver uses small-strain E and ν (stable neo-Hookean energy): soft tissue is in fact strongly nonlinear and these moduli are credible up to strains of about 10–15 % only; deeper presses underestimate the reaction."
+  "zh": "软组织材料表。每个数值要么带出处（sources 里的键、所在表格、测试方法、适用的应变范围），要么标 assumption: true。求解器用三样东西：小应变的 E、ν（稳定 neo-Hookean 能量），应变硬化系数 stiffening（κ，四次项），以及一个快的 Maxwell 支路（branchRatio、branchTau）。E 取的是秒量级的准静态响应。",
+  "en": "Soft-tissue material table. Every number either has a source (a key of `sources`, the table, the test method and the strain range) or is marked assumption: true. The solver uses three things: small-strain E and ν (stable neo-Hookean energy), a strain-stiffening coefficient `stiffening` (κ, a quartic term) and one fast Maxwell branch (`branchRatio`, `branchTau`). E is the quasi-static response on a time scale of seconds."
  },
  "model": {
-  "energy": "stable neo-Hookean (Smith et al. 2018 form without the log term): Ψ = μ/2·(I_C − 3) + λ′/2·(J − γ)², linearised to E, ν",
-  "honestStrainRange": 0.15,
+  "energy": "Ψ = μ/2·c + μκ/4·c² + Σ_n K_n/2·(J̄_n − 1)², c = I_C + J² − 4J (= I₁ − 3 when incompressible); nodal-average volume term (Bonet & Burton 1998); see src/softbody/solver.ts",
+  "stiffening": {
+   "zh": "κ 是 Yeoh 型二阶项：C₂₀ = μκ/4。由 Mooney–Rivlin 的 C₁₁ 换算：不可压小应变时 (I₁−3)(I₂−3) ≈ (I₁−3)²，故 κ = 2·C₁₁/C₁₀。由一阶 Ogden（Ψ = c/m²·Σ(λᵢᵐ − 1)，μ = c/2）换算：把两种能量按对数应变展开到四阶、在单轴不可压变形下对齐四阶项，得 κ ≈ m²/24 − 1/6。两种换算都是本项目的推导，只在中等应变（c ≲ 0.5）内近似成立；Ogden 的三阶项（拉压不对称）没有对应。",
+   "en": "κ is a Yeoh-type second-order term: C₂₀ = μκ/4. From the C₁₁ of a Mooney–Rivlin fit: (I₁−3)(I₂−3) ≈ (I₁−3)² for small incompressible strain, hence κ = 2·C₁₁/C₁₀. From a first-order Ogden fit (Ψ = c/m²·Σ(λᵢᵐ − 1), μ = c/2): expanding both energies in logarithmic strain to fourth order and matching the fourth-order terms in incompressible uniaxial deformation gives κ ≈ m²/24 − 1/6. Both conversions are this project's derivation and hold approximately at moderate strain only (c ≲ 0.5); the third-order term of Ogden (tension–compression asymmetry) has no counterpart."
+  },
   "viscoelasticity": {
-   "zh": "没有：只有速度阻尼。forearm2026 表 4 里的 Prony 松弛参数（皮肤 g = {0.30, 0.35}，τ = {0.37, 5.59} s；脂肪 g1 = 0.39，τ1 = 700 s；肌肉 g = {0.89, 0.05, 0.03}，τ = {0.362, 2.54, 52.0} s）没有用上。",
-   "en": "None: velocity damping only. The Prony relaxation parameters of forearm2026 Table 4 (skin g = {0.30, 0.35}, τ = {0.37, 5.59} s; fat g1 = 0.39, τ1 = 700 s; muscle g = {0.89, 0.05, 0.03}, τ = {0.362, 2.54, 52.0} s) are not used."
-  }
+   "zh": "每种材料一个 Maxwell 支路，取 forearm2026 表 4 的 Prony 级数里最快的一项。该文在静力分析里没有启用 Prony 项，而表里的超弹性参数直接拟合了 0.5 mm/s、历时约 6 s 的压入，所以这里把表里的模量当作 t ≈ 6 s 时的松弛模量 G(6 s)，支路模量与它之比 = g₁ / (1 − Σ gᵢ·(1 − e^{−6/τᵢ}))。这个解释是本项目的假设（assumption）。较慢的项（τ ≥ 2.5 s）没有模拟：保持数秒以上的应力松弛不会出现。",
+   "en": "One Maxwell branch per material, the fastest term of the Prony series of forearm2026 Table 4. That paper did not activate the Prony terms in its static analyses, and its hyperelastic parameters fit an indentation at 0.5 mm/s lasting about 6 s directly, so the tabulated moduli are taken here as the relaxation modulus at t ≈ 6 s, G(6 s), and the branch modulus over it is g₁ / (1 − Σ gᵢ·(1 − e^{−6/τᵢ})). This reading is this project's assumption. The slower terms (τ ≥ 2.5 s) are not simulated: stress relaxation in holds of seconds or more does not appear."
+  },
+  "honestStrainRange": 0.4
  },
  "damping": {
-  "rate": 6,
+  "rate": 2,
   "unit": "1/s",
   "assumption": true,
   "note": {
-   "zh": "相对速度的指数衰减率；没有出处，按“抖动在约半秒内消失”取的。",
-   "en": "Exponential decay rate of the relative velocity; unsourced, chosen so that a jiggle dies out in about half a second."
+   "zh": "相对速度的指数衰减率，没有出处。第二阶段有了 Maxwell 支路提供与速率有关的耗散，这一项降到 2/s，只用来消掉不带支路的材料（脂肪、乳房）里剩下的振荡。",
+   "en": "Exponential decay rate of the relative velocity; unsourced. With the Maxwell branch of phase 2 supplying rate-dependent dissipation this is lowered to 2/s and only removes what oscillation is left in materials without a branch (fat, breast)."
   }
  },
  "gravity": [
@@ -74,8 +78,27 @@
       "zh": "密度取教科书量级的数值，没有打开出处。",
       "en": "Density is a textbook-order value; no source was opened."
      }
+    },
+    "stiffening": {
+     "value": 17.4,
+     "source": "forearm2026",
+     "where": "Table 4, Skin: M-R + P(2), C10 = 9.4 kPa, C11 = 82 kPa",
+     "derivation": "κ = 2·C11/C10 (see model.stiffening)"
+    },
+    "branch": {
+     "source": "forearm2026",
+     "where": "Table 4, Skin: Prony g = {0.30, 0.35}, τ = {0.37, 5.59} s",
+     "derivation": "G(6 s)/G0 = 1 − 0.30 − 0.35·(1 − e^{−6/5.59}) = 0.470; branchRatio = 0.30/0.470 = 0.64; τ = 0.37 s",
+     "assumption": true,
+     "note": {
+      "zh": "把表里的模量当作 6 s 松弛模量是假设（见 model.viscoelasticity）。",
+      "en": "Taking the tabulated modulus as the 6 s relaxation modulus is an assumption (see model.viscoelasticity)."
+     }
     }
-   }
+   },
+   "stiffening": 17.4,
+   "branchRatio": 0.64,
+   "branchTau": 0.37
   },
   {
    "id": "fat",
@@ -112,8 +135,23 @@
       "zh": "密度取教科书量级的数值，没有打开出处。",
       "en": "Density is a textbook-order value; no source was opened."
      }
+    },
+    "stiffening": {
+     "value": 6,
+     "assumption": true,
+     "note": {
+      "zh": "没有可直接换算的出处：forearm2026 表 4 里脂肪的硬化模型是四项 Ogden，换算不到单个 κ。取 remus2024 腹部集总材料 Ogden 指数范围（m = 12–30 → κ = 5.8–37）的下端。",
+      "en": "No source converts directly: the stiffening fat model of forearm2026 Table 4 is a four-term Ogden fit, which does not reduce to a single κ. The lower end of the range implied by the Ogden exponents of the lumped abdominal material of remus2024 (m = 12–30 → κ = 5.8–37) is used."
+     }
+    },
+    "branch": {
+     "note": {
+      "zh": "没有快的支路：forearm2026 表 4 里脂肪只有一项 τ = 700 s。",
+      "en": "No fast branch: fat has a single term with τ = 700 s in forearm2026 Table 4."
+     }
     }
-   }
+   },
+   "stiffening": 6
   },
   {
    "id": "muscle",
@@ -179,8 +217,29 @@
       "zh": "密度取教科书量级的数值，没有打开出处。",
       "en": "Density is a textbook-order value; no source was opened."
      }
+    },
+    "branch": {
+     "source": "forearm2026",
+     "where": "Table 4, Muscle: Prony g = {0.89, 0.05, 0.03}, τ = {0.362, 2.54, 52.0} s",
+     "derivation": "G(6 s)/G0 = 1 − 0.89 − 0.05·(1 − e^{−6/2.54}) − 0.03·(1 − e^{−6/52}) = 0.0614; branchRatio = 0.89/0.0614 = 14.5; τ = 0.362 s",
+     "assumption": true,
+     "note": {
+      "zh": "把表里的模量当作 6 s 松弛模量是假设。这一项使肌肉在快速运动中比准静态硬约 15 倍。",
+      "en": "Taking the tabulated modulus as the 6 s relaxation modulus is an assumption. This term makes muscle about 15 times stiffer in fast motion than quasi-statically."
+     }
+    },
+    "stiffening": {
+     "value": 0,
+     "source": "forearm2026",
+     "where": "Table 4, Muscle: Po(2) with C10 and C01 only",
+     "note": {
+      "zh": "该组参数没有高阶项。",
+      "en": "That parameter set has no higher-order term."
+     }
     }
-   }
+   },
+   "branchRatio": 14.5,
+   "branchTau": 0.362
   },
   {
    "id": "breast_gland",
@@ -188,17 +247,31 @@
     "zh": "乳腺腺体",
     "en": "breast, glandular"
    },
-   "young": 2880,
+   "young": 1071,
    "poisson": 0.49,
    "density": 1040,
    "basis": {
     "young": {
-     "source": "breastStiffness2019",
-     "where": "discussion: dense breasts 0.96 kPa (centre slice), MR elastography at 3 T",
-     "derivation": "taken as shear stiffness, E = 3 × 0.96 kPa",
-     "strainRange": {
-      "zh": "弹性成像的微小应变。离体压入给出的值高得多（breastAnthropometric2015 表 1：腺体 42.7 kPa），那是更大应变和不同的方法。",
-      "en": "The tiny strains of elastography. Ex-vivo indentation gives far higher values (breastAnthropometric2015 Table 1: fibroglandular 42.7 kPa) at larger strain and by another method."
+     "source": "proneSupine2016",
+     "where": "Table 4: neo-Hookean shear modulus, initial value 357.1 Pa; after per-case optimisation 166.6–357.1 Pa (14 cases)",
+     "derivation": "E = 3μ = 3 × 357.1 Pa",
+     "publishedRangePa": {
+      "shear": [
+       166.6,
+       357.1
+      ]
+     },
+     "method": {
+      "zh": "该文用均质 neo-Hookean 乳房模型做俯卧–仰卧配准，腺体和脂肪不分；乳房可沿胸壁滑动。这里腺体和脂肪也取同一个值。",
+      "en": "That paper registers prone to supine images with a homogeneous neo-Hookean breast, gland and fat not distinguished; the breast may slide along the chest wall. Gland and fat get the same value here as well."
+     },
+     "phase1": {
+      "young": 2880,
+      "basis": "discussion: dense breasts 0.96 kPa (centre slice), MR elastography at 3 T",
+      "note": {
+       "zh": "第一阶段用磁共振弹性成像的数值（breastStiffness2019），比体位模拟文献所用的硬 2.4–5.8 倍。",
+       "en": "Phase 1 used MR elastography values (breastStiffness2019), 2.4–5.8 times stiffer than what posture simulations use."
+      }
      },
      "alternatives": "breastFem2025: E_gland = 9.75 kPa (simulation parameter)"
     },
@@ -226,14 +299,32 @@
     "zh": "乳房脂肪",
     "en": "breast, adipose"
    },
-   "young": 2550,
+   "young": 1071,
    "poisson": 0.49,
    "density": 920,
    "basis": {
     "young": {
-     "source": "breastStiffness2019",
-     "where": "discussion: entirely fatty breasts 0.85 kPa (centre slice), MR elastography at 3 T",
-     "derivation": "taken as shear stiffness, E = 3 × 0.85 kPa",
+     "source": "proneSupine2016",
+     "where": "Table 4: neo-Hookean shear modulus, initial value 357.1 Pa; after per-case optimisation 166.6–357.1 Pa (14 cases)",
+     "derivation": "E = 3μ = 3 × 357.1 Pa",
+     "publishedRangePa": {
+      "shear": [
+       166.6,
+       357.1
+      ]
+     },
+     "method": {
+      "zh": "该文用均质 neo-Hookean 乳房模型做俯卧–仰卧配准，腺体和脂肪不分；乳房可沿胸壁滑动。这里腺体和脂肪也取同一个值。",
+      "en": "That paper registers prone to supine images with a homogeneous neo-Hookean breast, gland and fat not distinguished; the breast may slide along the chest wall. Gland and fat get the same value here as well."
+     },
+     "phase1": {
+      "young": 2550,
+      "basis": "discussion: entirely fatty breasts 0.85 kPa (centre slice), MR elastography at 3 T",
+      "note": {
+       "zh": "第一阶段用磁共振弹性成像的数值（breastStiffness2019），比体位模拟文献所用的硬 2.4–5.8 倍。",
+       "en": "Phase 1 used MR elastography values (breastStiffness2019), 2.4–5.8 times stiffer than what posture simulations use."
+      }
+     },
      "alternatives": "breastAnthropometric2015 Table 1: fat 7.3 kPa linear, neo-Hookean c10 = 3 kPa; breastFem2025: E_adipose = 9.75 kPa, deep adipose 0.10–2.0 kPa tried"
     },
     "poisson": {
@@ -260,15 +351,23 @@
     "zh": "腹腔内容物（集总的近不可压介质）",
     "en": "abdominal contents (lumped near-incompressible medium)"
    },
-   "young": 3000,
+   "young": 10500,
    "poisson": 0.49,
    "density": 1000,
    "basis": {
     "young": {
-     "assumption": true,
+     "source": "remus2024",
+     "where": "Table 6, region R2 (umbilical, relaxed, supine): first-order Ogden c = 7 kPa, m = 17; R1–R5: c = 5–8 kPa, m = 12–30",
+     "derivation": "μ = c/2 = 3.5 kPa, E = 3μ = 10.5 kPa",
+     "publishedRangePa": {
+      "young": [
+       7500,
+       12000
+      ]
+     },
      "note": {
-      "zh": "没有打开出处；取与软的实质组织同量级的值。空腔脏器以后换成薄壁充压管。",
-      "en": "No source opened; a value of the order of soft parenchyma. Hollow organs are to become thin-walled pressurised tubes later."
+      "zh": "该文把皮肤、脂肪、肌肉和其后的结构集总成一种均质材料做反演；这里把它用在腹腔内容物上，腹壁各层另有自己的材料，所以整体会比该文偏硬——见 validation-report.json 的对照。",
+      "en": "That paper lumps skin, fat, muscle and everything behind them into one homogeneous material for its inverse analysis; here it is used for the abdominal contents while the layers of the wall keep their own materials, so the whole comes out stiffer than in that paper: see the comparison in validation-report.json."
      }
     },
     "poisson": {
@@ -286,8 +385,19 @@
       "zh": "密度取教科书量级的数值，没有打开出处。",
       "en": "Density is a textbook-order value; no source was opened."
      }
+    },
+    "stiffening": {
+     "value": 11.9,
+     "source": "remus2024",
+     "where": "Table 6, R2: m = 17 (R1–R5: 12–30)",
+     "derivation": "κ ≈ m²/24 − 1/6 (see model.stiffening)",
+     "publishedRange": [
+      5.8,
+      37.3
+     ]
     }
-   }
+   },
+   "stiffening": 11.9
   },
   {
    "id": "thorax",
@@ -351,8 +461,17 @@
       "zh": "密度取教科书量级的数值，没有打开出处。",
       "en": "Density is a textbook-order value; no source was opened."
      }
+    },
+    "stiffening": {
+     "value": 6,
+     "assumption": true,
+     "note": {
+      "zh": "与脂肪取同一个值。",
+      "en": "The value used for fat."
+     }
     }
-   }
+   },
+   "stiffening": 6
   },
   {
    "id": "bone",
@@ -424,7 +543,7 @@
    "citation": "Eiben B et al. Symmetric Biomechanically Guided Prone-to-Supine Breast Image Registration. Ann Biomed Eng 2016.",
    "url": "https://europepmc.org/article/PMC/PMC4690842",
    "licence": "CC BY 4.0",
-   "opened": "full text: abstract and the paragraph introducing Table 3",
+   "opened": "full text: abstract, Tables 3 and 4 and the surrounding paragraphs",
    "note": {
     "zh": "14 组临床影像（9 组俯卧 MRI–仰卧 CT、1 组 CT、4 组 MRI）；刚性对齐后的标志点距离即俯卧到仰卧的组织位移量级。受试者是乳腺癌患者，乳房体积没有在打开的段落里给出。",
     "en": "Fourteen clinical image pairs (nine prone MRI–supine CT, one CT, four MRI); the landmark distance after rigid alignment is the scale of tissue motion from prone to supine. The subjects are breast cancer patients; breast volume is not given in the passages opened."
@@ -448,6 +567,80 @@
    "note": {
     "zh": "只取了它转述的一组数（足跟垫刚度），压头形状和载荷范围在打开的句子里没有给出。",
     "en": "Only one quoted pair of numbers (heel pad stiffness) was taken; indenter shape and load range are not given in the sentence opened."
+   }
+  },
+  "remus2024": {
+   "citation": "Remus R, et al. Soft tissue material properties based on human abdominal in vivo macro-indenter measurements. Front Bioeng Biotechnol 2024. doi:10.3389/fbioe.2024.1384062",
+   "url": "https://europepmc.org/article/PMC/PMC11157078",
+   "licence": "CC BY 4.0",
+   "opened": "full text XML: sections 2.2 (indenter), 2.7–2.8 (FE model, Ogden energy), Tables 2, 4 and 6",
+   "note": {
+    "zh": "十名健康男性（25–37 岁），半球形压头（半径 10 mm），进给 5 ± 1 mm/s；反演模型是半径和高都为 110 mm 的均质圆柱。",
+    "en": "Ten healthy males (25–37 years), hemispherical tip (radius 10 mm), feed 5 ± 1 mm/s; the inverse model is a homogeneous cylinder with radius and height 110 mm."
+   }
+  }
+ },
+ "numerics": {
+  "_doc": {
+   "zh": "求解器里不是材料常数、但会影响结果的数。都没有文献出处，是本项目定的；各自在哪个解析算例上定的写在 note 里。",
+   "en": "Numbers in the solver that are not material constants but affect results. None has a literature source; all are set by this project, and each note says on which analytic case."
+  },
+  "volumeCap": {
+   "value": 2,
+   "assumption": true,
+   "note": {
+    "zh": "结点体积约束刚度比 h²·w‖∇C‖²·K 的上限；悬臂梁算例里 4 稳定、8 发散，取 2。超过上限的结点体积模量被压低（等效泊松比变小），所以单元细、子步少时结果仍随子步数变化。",
+    "en": "Upper bound of the stiffness ratio h²·w‖∇C‖²·K of nodal volume constraints; in the cantilever case 4 was stable and 8 diverged, so 2 is used. Nodes above it get a lower bulk modulus (a smaller effective Poisson ratio), so with fine cells and few substeps results still depend on the substep count."
+   }
+  },
+  "volumeFloor": {
+   "value": 0.3,
+   "assumption": true,
+   "note": {
+    "zh": "单元体积比的硬下限 J ≥ 0.3（应变极限），防止压头把单元压穿。",
+    "en": "Hard floor J ≥ 0.3 of the element volume ratio (a strain limit), so a probe cannot push through an element."
+   }
+  },
+  "stiffnessFillFloor": {
+   "value": 0.12,
+   "assumption": true,
+   "note": {
+    "zh": "几乎全在体外的四面体的刚度折减系数下限（质量的下限是 0.03）。",
+    "en": "Floor of the stiffness fill factor of tetrahedra almost wholly outside the body (the floor for mass is 0.03)."
+   }
+  },
+  "edgeCompensation": {
+   "value": 0.25,
+   "unit": "cells",
+   "assumption": true,
+   "note": {
+    "zh": "平头压头参与接触的半径缩小 0.25 个单元；在半空间解析算例上标定（见 validation-report.json 的 numerics.pressOnBlock）。",
+    "en": "The contact radius of a flat punch is reduced by 0.25 of a cell; calibrated on the half-space analytic case (numerics.pressOnBlock in validation-report.json)."
+   }
+  },
+  "crushStrain": {
+   "value": 0.6,
+   "assumption": true,
+   "note": {
+    "zh": "press() 力控时轴线压应变超过 0.6 就不再加深，返回带标记的结果。",
+    "en": "In force control press() goes no deeper once the axial compressive strain passes 0.6 and returns a flagged result."
+   }
+  },
+  "anchorStiffness": {
+   "formula": "k = 2·G·cell·φ^(2/3) / (1 − φ^(1/3))",
+   "assumption": true,
+   "note": {
+    "zh": "骨穿过的四面体里锚点的刚度，φ 是骨占四面体的体积比例；本项目的假设（src/softbody/body.ts）。",
+    "en": "Stiffness of the anchor in a tetrahedron crossed by bone, φ being the bone share of the tetrahedron; this project's assumption (src/softbody/body.ts)."
+   }
+  },
+  "validatedRange": {
+   "meanContactPressureKPa": 45,
+   "strain": 0.4,
+   "assumption": true,
+   "note": {
+    "zh": "press() 的有效性标记用的范围：45 kPa 约为 remus2024 放松腹部最大力 13.3 N 除以半径 10 mm 压头的投影面积；应变 0.4 是本模型四次项近似还说得过去的上限。",
+    "en": "The range behind the validity flags of press(): 45 kPa is about the largest relaxed-abdomen force of remus2024, 13.3 N, over the projected area of its 10 mm tip; a strain of 0.4 is where the quartic approximation of this model stops being defensible."
    }
   }
  }

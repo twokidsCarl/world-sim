@@ -78,6 +78,39 @@
 //   · zero-gravity reference (the inverse solve in rest.ts): the reference is the unloaded shape and the body force is
 //     the full m·g.
 
+//
+// ── 第二阶段加的四样东西 / Four things added in phase 2 ────────────────────────────────────────
+// 1. 体积锁死：线性四面体每个单元一条体积约束，BCC 格子里每个结点平均摊到 6 条，而结点只有 3 个自由度，ν → 0.5 时
+//    整个网格被锁住。这里把体积约束从"每个四面体"换成"每个结点"（Bonet & Burton 1998 的平均结点压强）：
+//        J̄_n = Σ_{e∋n} V_e·J_e / Σ_{e∋n} V_e,   Ψ_vol = Σ_n K_n/2·(J̄_n − 1)²,   K_n = Σ_{e∋n} V_e·λ_e / 4
+//    均匀变形时与逐单元的能量相同；约束数从 6N 降到 N。`volumeBlend` 可以留一小部分 λ 在逐单元约束上，
+//    压住结点平均带来的棋盘格压强模态。
+//    Volumetric locking: linear tetrahedra carry one volume constraint each, six per node in a BCC lattice against
+//    three degrees of freedom, so the mesh locks as ν → 0.5. The volume constraint is moved from every tetrahedron
+//    to every node (the average nodal pressure of Bonet & Burton 1998, formula above): the same energy for a uniform
+//    deformation, N constraints instead of 6N. `volumeBlend` may leave a small share of λ on per-tetrahedron
+//    constraints to hold down the checkerboard pressure mode that nodal averaging allows.
+// 2. 压强是跨子步保留的未知量：每个子步开始时先把上一步的压强当作力施加，再做一遍 Gauss–Seidel 修正
+//        Δλ_n = −(C_n + α̃_n·λ_n) / (Σ w‖∇C_n‖² + α̃_n),   λ_n ← λ_n + Δλ_n
+//    不动点处 Δλ_n = 0，即 λ_n = −C_n/α̃_n：压强正好是本构给出的值，与子步长、求解顺序、松弛因子都无关。
+//    （每个子步把 λ 清零的做法，在 h²·w‖∇C‖² ≫ α 时稳态偏软，第一阶段的压入力随子步数变三倍就是这个原因。）
+//    The pressure is an unknown kept across substeps: a substep first applies the previous pressure as a force and
+//    then corrects it by one Gauss–Seidel sweep (formula above). At the fixed point Δλ_n = 0, i.e. λ_n = −C_n/α̃_n:
+//    the pressure is exactly the constitutive one whatever the step, the order of the sweep or the relaxation.
+//    (Resetting λ every substep is too soft at steady state once h²·w‖∇C‖² ≫ α; that is why the indentation force
+//    of phase 1 changed threefold with the number of substeps.)
+// 3. 应变硬化：Ψ_dev = μ/2·c + μ·κ/4·c²，c = C_D²（不可压时 c = I₁ − 3，即 Yeoh 的二阶项，C₂₀ = μκ/4）。
+//    约束形式不变，柔度除以 (1 + κ·c)。
+//    Strain stiffening: Ψ_dev = μ/2·c + μ·κ/4·c² with c = C_D² (c = I₁ − 3 when incompressible, so this is the
+//    second-order Yeoh term, C₂₀ = μκ/4). The constraint keeps its form; its compliance is divided by (1 + κ·c).
+// 4. 粘弹性：每个四面体一个 Maxwell 支路（Prony 级数里最快的一项），内变量是参考构形里的粘性应变 E_v（偏量）：
+//        Ψ_v = G₁·‖dev E − E_v‖²,   Ė_v = (dev E − E_v)/τ,   E = (FᵀF − I)/2
+//    静止和长时间保持时这一项为零（长期响应就是上面的超弹性）；快速运动时组织按 μ + G₁ 响应。
+//    Viscoelasticity: one Maxwell branch per tetrahedron (the fastest term of the Prony series) whose internal
+//    variable is the viscous strain E_v (deviatoric) in the reference frame (formulas above). The branch vanishes at
+//    rest and in a long hold (the long-term response is the hyperelastic one above); in fast motion tissue answers
+//    with μ + G₁.
+
 export type Vec3 = [number, number, number]
 
 export interface PointSet {
@@ -92,6 +125,8 @@ export type ProbeShape =
   | { kind: 'sphere'; center: Vec3; radius: number }
   /** 平头圆柱压头：`center` 是端面中心，`axis` 是压入方向（单位向量）/ flat-ended cylinder: `center` is the centre of the end face, `axis` the unit direction of pressing */
   | { kind: 'flat'; center: Vec3; axis: Vec3; radius: number }
+  /** 半球头的圆杆：`center` 是半球的球心，杆身从球心向 −axis 延伸 / a rod with a hemispherical tip: `center` is the centre of the hemisphere and the shaft runs from it along −axis */
+  | { kind: 'rod'; center: Vec3; axis: Vec3; radius: number }
 
 export interface Probe {
   shape: ProbeShape
@@ -141,6 +176,13 @@ export interface SolverInput {
   activeStiffening?: ArrayLike<number>
   /** 嵌入式锚点：四面体内的一点跟随参考构形（骨穿过、但没有结点落在骨内的四面体）/ embedded anchors: a point inside a tetrahedron follows the reference (tetrahedra crossed by bone without a node inside it) */
   anchors?: PointSet
+  /** 每个锚点的刚度，N/m；省略或 Infinity = 硬约束 / stiffness of every anchor, N/m; omitted or Infinity = a hard constraint */
+  anchorStiffness?: ArrayLike<number>
+  /** 每个四面体的应变硬化系数 κ（无量纲，见文件头第 3 条）/ per tetrahedron strain-stiffening coefficient κ (dimensionless, header item 3) */
+  stiffening?: ArrayLike<number>
+  /** 每个四面体的 Maxwell 支路：模量 G₁（帕）和松弛时间 τ（秒）；G₁ = 0 表示没有 / per tetrahedron Maxwell branch: modulus G₁ (Pa) and relaxation time τ (s); G₁ = 0 = none */
+  branchModulus?: ArrayLike<number>
+  branchTau?: ArrayLike<number>
 }
 
 export interface SolverOptions {
@@ -154,7 +196,43 @@ export interface SolverOptions {
   damping?: number
   /** 激活量为 1 时纤维方向静止长度缩短的比例（假设）/ fraction by which the rest length along the fibre shortens at activation 1 (an assumption) */
   activeStrain?: number
+  /** 体积约束放在哪里：'node'（缺省，不锁死）或 'tet'（第一阶段的做法，留作对照）/ where the volume constraint lives: 'node' (default, no locking) or 'tet' (phase 1, kept for comparison) */
+  volume?: 'node' | 'tet'
+  /** 'node' 时留在逐单元约束上的 λ 的比例（0–1）/ with 'node', the share of λ left on per-tetrahedron constraints (0–1) */
+  volumeBlend?: number
+  /**
+   * 结点体积约束的"刚度比" h²·w‖∇C‖²·K 的上限。保留的压强相当于滞后一步的力，这个比值太大时不稳定；超过上限的结点
+   * 把体积模量降到上限（等效泊松比变小，结果仍是一个确定的本构的精确不动点）。
+   * Upper bound of the "stiffness ratio" h²·w‖∇C‖²·K of a nodal volume constraint. A kept pressure acts like a force
+   * one step late, which is unstable when this ratio is large; a node above the bound has its bulk modulus lowered
+   * to it (a smaller effective Poisson ratio; the result is still the exact fixed point of a definite material).
+   */
+  volumeCap?: number
+  /**
+   * 被蒙皮压坏的参考四面体怎么办。'drop'（缺省）：刚度按 q_e 折减到零（r 在 [0.5, 2] 之外线性过渡，r ≤ 0.25 或 ≥ 4 为零），
+   * 姿势保持不动时修正位移回到零；代价是一整层都坏掉时组织会与骨脱开。'rest'：换成随骨转动的静止形状（repairReference），
+   * 不会脱开，但在弯着的关节处会留下几厘米的静态修正位移（全身算例里髋屈 40° 时皮肤上 98 mm），所以不是缺省。
+   * What to do with reference tetrahedra wrecked by skinning. 'drop' (default): stiffness is scaled by q_e down to
+   * zero (linear outside r ∈ [0.5, 2], zero for r ≤ 0.25 or ≥ 4) and the corrective displacement returns to zero in a
+   * held pose; the price is that tissue comes off the bone where a whole layer is wrecked. 'rest': replaced by the
+   * rest shape turned with the bone (repairReference); nothing comes off, but a bent joint keeps centimetres of static
+   * corrective displacement (98 mm on the skin at 40° of hip flexion in the whole-body case), hence not the default.
+   */
+  referenceRepair?: 'drop' | 'rest'
+  /** 'gs' = Gauss–Seidel（缺省）；'jacobi' = 同时求解再合并（GPU 的做法，见 solveJacobi）/ 'gs' = Gauss–Seidel (default); 'jacobi' = solve all at once, then merge (the GPU scheme, see solveJacobi) */
+  mode?: 'gs' | 'jacobi'
+  /** Jacobi 的松弛因子 / relaxation factor of the Jacobi mode */
+  relaxation?: number
 }
+
+/**
+ * 单元体积比的下限（应变极限）：近不可压的组织里 J 本来就在 1 附近，只有被压头压到底或数值出问题时才会碰到。
+ * 没有它，不带对数项的能量在 J = 0 处是有限的，压头可以把单元压穿。数值是假设。
+ * Floor of the element volume ratio (a strain limit): in nearly incompressible tissue J stays near 1 anyway, so it
+ * is reached only when a probe bottoms out or the numerics go wrong. Without it the energy (no logarithmic term) is
+ * finite at J = 0 and a probe can push through an element. The value is an assumption.
+ */
+export const J_MIN = 0.3
 
 const det3 = (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): number => a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
 
@@ -182,6 +260,8 @@ export class SoftSolver {
   damping: number
   activeStrain: number
   probe: Probe | null = null
+  /** 运动学结点相对参考构形的给定位移（扁平 xyz，米）；弹性参考不变，所以这是真正的位移边界条件。null = 没有 / prescribed displacement of kinematic nodes relative to the reference (flat xyz, metres); the elastic reference stays, so this is a true displacement boundary condition. null = none */
+  pinOffset: Float64Array | null = null
   planes: Plane[] = []
   /** 骨的胶囊代理及各自要检查的结点 / capsule proxies of bones with the nodes each one checks */
   capsules: { capsule: Capsule; nodes: Uint32Array }[] = []
@@ -211,6 +291,39 @@ export class SoftSolver {
   private dirty = true
   private started = false
   private readonly pinned: Uint8Array
+  volumeMode: 'node' | 'tet'
+  volumeBlend: number
+  volumeCap: number
+  referenceRepair: 'drop' | 'rest'
+  mode: 'gs' | 'jacobi'
+  relaxation: number
+  /** 结点的"压强乘子" P_n = λ_n/h²，焦耳；压强 = −P_n / V_n / 结点体积系数 / the nodal multiplier P_n = λ_n/h², joules (kept across substeps) */
+  readonly nodalMultiplier: Float64Array
+  /** 每个结点周围参与求解的四面体（CSR）/ the solved tetrahedra around every node (CSR) */
+  private readonly ringStart: Uint32Array
+  private readonly ringTets: Uint32Array
+  /** Σ_{e∋n} V_e 和 K_n = Σ V_e·λ_e/4 / Σ_{e∋n} V_e and K_n = Σ V_e·λ_e/4 */
+  private readonly ringVolume: Float64Array
+  /** Σ_{e∋n} V_e（静止笼子）/ Σ_{e∋n} V_e (cage at rest) */
+  private readonly ringRest: Float64Array
+  private readonly ringK: Float64Array
+  /** V_e·det B_e：J_e·V_e = kdet_e·det Ds_e / V_e·det B_e, so that J_e·V_e = kdet_e·det Ds_e */
+  private readonly kdet: Float64Array
+  private readonly gacc: Float64Array
+  private readonly qual: Float64Array
+  private readonly invMass0: Float64Array
+  private readonly fint: Float64Array
+  private readonly stamp: Int32Array
+  private readonly touched: Int32Array
+  private readonly kappa: Float64Array | null
+  private readonly branchG: Float64Array | null
+  private readonly branchTau: Float64Array | null
+  /** Maxwell 支路的粘性应变（对称偏量，6 个分量：xx yy zz xy xz yz）/ viscous strain of the Maxwell branch (symmetric deviatoric, six components: xx yy zz xy xz yz) */
+  readonly viscous: Float64Array | null
+  private readonly anchorK: Float64Array | null
+  /** Jacobi 模式的累加器 / accumulators of the Jacobi mode */
+  private jdx: Float64Array | null = null
+  private jcount: Float64Array | null = null
 
   constructor(input: SolverInput, opts: SolverOptions = {}) {
     const n = (this.nodeCount = input.nodes.length / 3)
@@ -263,6 +376,46 @@ export class SoftSolver {
     this.fibreK = anyFibre && input.fibreModulus ? Float64Array.from(input.fibreModulus) : null
     this.muscle = input.muscle ? Int32Array.from(input.muscle) : null
     this.stiffen = input.activeStiffening ? Float64Array.from(input.activeStiffening) : null
+    this.volumeMode = opts.volume ?? 'node'
+    this.volumeBlend = opts.volumeBlend ?? 0
+    this.volumeCap = opts.volumeCap ?? 2
+    this.referenceRepair = opts.referenceRepair ?? 'drop'
+    this.mode = opts.mode ?? 'gs'
+    this.relaxation = opts.relaxation ?? 1
+    let any = false
+    if (input.stiffening) for (let e = 0; e < t; e++) if (input.stiffening[e]! > 0) any = true
+    this.kappa = any ? Float64Array.from(input.stiffening!) : null
+    any = false
+    if (input.branchModulus && input.branchTau) for (let e = 0; e < t; e++) if (input.branchModulus[e]! > 0) any = true
+    this.branchG = any ? Float64Array.from(input.branchModulus!) : null
+    this.branchTau = any ? Float64Array.from(input.branchTau!) : null
+    this.viscous = any ? new Float64Array(t * 6) : null
+    this.anchorK = this.anchors && input.anchorStiffness ? Float64Array.from(input.anchorStiffness) : null
+    // 结点周围的四面体 / the tetrahedra around every node
+    this.ringStart = new Uint32Array(n + 1)
+    for (let k = 0; k < this.active.length; k++) for (let c = 0; c < 4; c++) this.ringStart[this.tets[this.active[k]! * 4 + c]! + 1]!++
+    for (let i = 0; i < n; i++) this.ringStart[i + 1] = this.ringStart[i + 1]! + this.ringStart[i]!
+    this.ringTets = new Uint32Array(this.active.length * 4)
+    const fillAt = Uint32Array.from(this.ringStart.subarray(0, n))
+    this.ringVolume = new Float64Array(n)
+    for (let k = 0; k < this.active.length; k++) {
+      const e = this.active[k]!
+      for (let c = 0; c < 4; c++) {
+        const i = this.tets[e * 4 + c]!
+        this.ringTets[fillAt[i]!++] = e
+        this.ringVolume[i] = this.ringVolume[i]! + this.restVolume[e]!
+      }
+    }
+    this.ringK = new Float64Array(n)
+    this.ringRest = Float64Array.from(this.ringVolume)
+    this.kdet = new Float64Array(t)
+    this.nodalMultiplier = new Float64Array(n)
+    this.gacc = new Float64Array(n * 3)
+    this.qual = new Float64Array(t).fill(1)
+    this.invMass0 = Float64Array.from(this.invMass)
+    this.fint = new Float64Array(n * 3)
+    this.stamp = new Int32Array(n).fill(-1)
+    this.touched = new Int32Array(256)
   }
 
   /** 是否为运动学结点 / whether a node is kinematic */
@@ -329,6 +482,8 @@ export class SoftSolver {
     this.x.set(this.ref)
     this.refPrev.set(this.ref)
     this.v.fill(0)
+    this.nodalMultiplier.fill(0)
+    this.viscous?.fill(0)
   }
 
   /**
@@ -343,8 +498,12 @@ export class SoftSolver {
     if (!this.dirty) return
     this.dirty = false
     this.inverseRest(this.ref, this.B)
+    this.repairReference()
     const f0 = this.fibre0, f = this.fibre
-    if (!f0 || !f) return
+    if (!f0 || !f) {
+      this.prepareVolume()
+      return
+    }
     const T = this.tets, r = this.ref, B0 = this.B0, B = this.B
     for (let e = 0; e < this.tetCount; e++) {
       const dx = f0[e * 3]!, dy = f0[e * 3 + 1]!, dz = f0[e * 3 + 2]!
@@ -380,11 +539,109 @@ export class SoftSolver {
         B[o + row * 3 + 2] = k0 * B[o + row * 3 + 2]! + k1 * bd * fz
       }
     }
+    this.prepareVolume()
+  }
+
+  /**
+   * 被蒙皮压坏的参考四面体换成"随骨转动的静止形状"。参考体积与静止体积之比 r 在 [0.5, 2] 之内的不动；
+   * r ≤ 0.25 或 r ≥ 4（含翻转）的完全换掉；之间按 q 线性混合边矩阵：Dm = q·Dm(ref) + (1 − q)·R·Dm(rest)，
+   * R 取该四面体第一个结点随骨架的转动（`rotations`，没有则为单位阵）。能量对转动不变，所以 R 只需大致正确。
+   * 这样坏掉的四面体不再从求解里消失（那会把组织从骨上切下来），而是把自己拉回没被压扁的形状。
+   * Reference tetrahedra wrecked by skinning are replaced by "the rest shape turned with the bone". Those whose
+   * ratio r of reference to rest volume lies in [0.5, 2] are left alone; those with r ≤ 0.25 or r ≥ 4 (inverted
+   * included) are replaced outright; in between the edge matrices are blended linearly by q:
+   * Dm = q·Dm(ref) + (1 − q)·R·Dm(rest), with R the rotation of the tetrahedron's first node with the skeleton
+   * (`rotations`; identity without). The energy is invariant under rotation, so R need only be roughly right. A
+   * wrecked tetrahedron thus stays in the solve (dropping it would cut tissue off the bone) and pulls itself back
+   * towards its uncrushed shape.
+   */
+  private repairReference(): void {
+    if (this.referenceRepair !== 'rest') return
+    const B = this.B, T = this.tets, ref = this.ref, rest = this.rest, R = this.rotations
+    const m = new Float64Array(9)
+    for (let k = 0; k < this.active.length; k++) {
+      const e = this.active[k]!, o = e * 9
+      const db = det3(B[o]!, B[o + 1]!, B[o + 2]!, B[o + 3]!, B[o + 4]!, B[o + 5]!, B[o + 6]!, B[o + 7]!, B[o + 8]!)
+      const r = db > 0 && Number.isFinite(db) ? 1 / (6 * db * this.restVolume[e]!) : 0
+      if (r >= 0.5 && r <= 2) continue
+      const q = r < 0.5 ? Math.min(1, Math.max(0, (r - 0.25) / 0.25)) : Math.min(1, Math.max(0, (4 - r) / 2))
+      const a = T[e * 4]! * 3
+      const ro = R ? T[e * 4]! * 9 : -1
+      for (let c = 0; c < 3; c++) {
+        const n = T[e * 4 + c + 1]! * 3
+        const ex = rest[n]! - rest[a]!, ey = rest[n + 1]! - rest[a + 1]!, ez = rest[n + 2]! - rest[a + 2]!
+        for (let row = 0; row < 3; row++) {
+          const turned = ro >= 0 ? R![ro + row * 3]! * ex + R![ro + row * 3 + 1]! * ey + R![ro + row * 3 + 2]! * ez : row === 0 ? ex : row === 1 ? ey : ez
+          m[row * 3 + c] = q * (ref[n + row]! - ref[a + row]!) + (1 - q) * turned
+        }
+      }
+      const c00 = m[4]! * m[8]! - m[5]! * m[7]!, c01 = m[5]! * m[6]! - m[3]! * m[8]!, c02 = m[3]! * m[7]! - m[4]! * m[6]!
+      const det = m[0]! * c00 + m[1]! * c01 + m[2]! * c02
+      const inv = Math.abs(det) > 1e-30 ? 1 / det : 0
+      B[o] = c00 * inv; B[o + 1] = (m[2]! * m[7]! - m[1]! * m[8]!) * inv; B[o + 2] = (m[1]! * m[5]! - m[2]! * m[4]!) * inv
+      B[o + 3] = c01 * inv; B[o + 4] = (m[0]! * m[8]! - m[2]! * m[6]!) * inv; B[o + 5] = (m[2]! * m[3]! - m[0]! * m[5]!) * inv
+      B[o + 6] = c02 * inv; B[o + 7] = (m[1]! * m[6]! - m[0]! * m[7]!) * inv; B[o + 8] = (m[0]! * m[3]! - m[1]! * m[4]!) * inv
+    }
+  }
+
+  /**
+   * 每帧一次：四面体的"参考质量" q_e、结点周围的参考体积和体积刚度。
+   * 蒙皮会把关节附近的笼子四面体压扁甚至翻转（髋屈 40° 时全身约有 200 个翻转、100 个体积不到四分之一），拿这样的
+   * 形状当弹性参考是没有意义的：repairReference 已经把它们换成随骨转动的静止形状。这里的 q_e 只是保险：参考体积与
+   * 静止体积之比仍然离谱（< 0.2 或 > 5）的四面体不参与求解；周围四面体全都失效的自由结点这一帧改为运动学结点。
+   * 结点的体积比用参考体积加权：J̄_n = Σ q_e·vol_e(x) / Σ q_e·vol_e(ref)，退化的四面体对两边的贡献都趋于零。
+   * Once per frame: the "reference quality" q_e of every tetrahedron, and the reference volume and bulk stiffness
+   * around every node. Skinning flattens or even inverts cage tetrahedra near a joint (at 40° of hip flexion about 200
+   * are inverted and 100 keep under a quarter of their volume), and such a shape is meaningless as an elastic
+   * reference: repairReference has already replaced them by the rest shape turned with the bone. q_e here is a
+   * safeguard only: a tetrahedron whose ratio of reference to rest volume is still absurd (< 0.2 or > 5) is left out
+   * of the solve, and a free node whose tetrahedra have all failed becomes kinematic for the frame. The nodal volume
+   * ratio is weighted by reference volume: J̄_n = Σ q_e·vol_e(x) / Σ q_e·vol_e(ref), so a degenerate tetrahedron
+   * contributes next to nothing to either sum.
+   */
+  private prepareVolume(): void {
+    const B = this.B, T = this.tets, q = this.qual, sup = this.gacc
+    this.ringK.fill(0)
+    this.ringVolume.fill(0)
+    sup.fill(0, 0, this.nodeCount)
+    for (let k = 0; k < this.active.length; k++) {
+      const e = this.active[k]!, o = e * 9
+      const db = det3(B[o]!, B[o + 1]!, B[o + 2]!, B[o + 3]!, B[o + 4]!, B[o + 5]!, B[o + 6]!, B[o + 7]!, B[o + 8]!)
+      const vref = db > 0 && Number.isFinite(db) ? 1 / (6 * db) : 0
+      const r = vref / this.restVolume[e]!
+      // repairReference 之后 r 都在合理范围内，q_e 只在数值意外时才小于 1 / after repairReference r is always sane; q_e drops below 1 only on a numerical accident
+      const qe = this.referenceRepair === 'rest' ? (r < 0.2 || r > 5 ? 0 : 1) : r < 0.5 ? Math.min(1, Math.max(0, (r - 0.25) / 0.25)) : r > 2 ? Math.min(1, Math.max(0, (4 - r) / 2)) : 1
+      q[e] = qe
+      this.kdet[e] = qe / 6
+      const kk = (this.restVolume[e]! * this.lam[e]! * this.actScale[e]! * qe) / 4
+      for (let c = 0; c < 4; c++) {
+        const i = T[e * 4 + c]!
+        this.ringK[i] = this.ringK[i]! + kk
+        this.ringVolume[i] = this.ringVolume[i]! + qe * vref
+        sup[i] = sup[i]! + qe
+      }
+    }
+    for (let i = 0; i < this.nodeCount; i++) {
+      const has = this.ringStart[i + 1]! > this.ringStart[i]!
+      this.invMass[i] = has && sup[i]! < 0.25 ? 0 : this.invMass0[i]!
+      // 周围的参考体积塌到静止时的十分之一以下：这个结点不设体积约束 / reference volume round the node collapsed below a tenth of its rest value: no volume constraint here
+      if (this.ringVolume[i]! < 0.1 * this.ringRest[i]!) {
+        this.ringVolume[i] = 0
+        this.nodalMultiplier[i] = 0
+      }
+    }
+    sup.fill(0, 0, this.nodeCount)
   }
 
   /** 四面体的约束 C_D、C_H、C_f，一遍 Gauss–Seidel（公式见文件头）。 The constraints C_D, C_H, C_f of every tetrahedron, one Gauss–Seidel sweep (formulas in the header). */
   private solveTets(h: number): void {
     const T = this.tets, x = this.x, w = this.invMass, B = this.B, V = this.restVolume
+    // Jacobi：读 x、写累加器，分母用"分摊后的质量"；Gauss–Seidel：两者都是 x 和真实的逆质量
+    // Jacobi: reads x and writes the accumulator, denominators use the "split" masses; Gauss–Seidel: both are x and the true inverse masses
+    const jac = this.mode === 'jacobi'
+    const wsol = jac ? this.jcount! : w, out = jac ? this.jdx! : x
+    const share = this.volumeMode === 'tet' ? 1 : this.volumeBlend
+    const kap = this.kappa, bG = this.branchG, bT = this.branchTau, Ev = this.viscous
     const ih2 = 1 / (h * h)
     const fib = this.fibre, fk = this.fibreK
     const act = this.active
@@ -393,13 +650,20 @@ export class SoftSolver {
       const i0 = T[e * 4]!, i1 = T[e * 4 + 1]!, i2 = T[e * 4 + 2]!, i3 = T[e * 4 + 3]!
       const a = i0 * 3, b = i1 * 3, c = i2 * 3, d = i3 * 3
       const w0 = w[i0]!, w1 = w[i1]!, w2 = w[i2]!, w3 = w[i3]!
+      const m0 = wsol[i0]!, m1 = wsol[i1]!, m2 = wsol[i2]!, m3 = wsol[i3]!
       const o = e * 9
       const b00 = B[o]!, b01 = B[o + 1]!, b02 = B[o + 2]!, b10 = B[o + 3]!, b11 = B[o + 4]!, b12 = B[o + 5]!, b20 = B[o + 6]!, b21 = B[o + 7]!, b22 = B[o + 8]!
       const vol = V[e]!
       // 激活时 μ 和 λ 乘同一个倍数：泊松比不变，体积照样守恒 / activation scales μ and λ alike: the Poisson ratio stays and volume is kept as before
-      const mu = this.mu[e]! * this.actScale[e]!, la = this.lam[e]! * this.actScale[e]!
-      for (let pass = 0; pass < 2; pass++) {
-        if (pass === 1 && !(la > 0)) break
+      const qe = this.qual[e]!
+      if (qe === 0) continue
+      const mu = this.mu[e]! * this.actScale[e]! * qe, la = this.lam[e]! * this.actScale[e]! * share * qe
+      const g1m = bG ? bG[e]! * qe : 0
+      let jPrev = 1
+      for (let pass = 0; pass < 3; pass++) {
+        // 结点体积模式下，逐单元这一遍只在单元快被压扁时才需要（体积下限）/ with nodal volume constraints the per-tetrahedron pass is needed only when the element is nearly crushed (the volume floor)
+        if (pass === 1 && !(la > 0) && jPrev > 0.5) continue
+        if (pass === 2 && !(g1m > 0)) break
         const d00 = x[b]! - x[a]!, d01 = x[c]! - x[a]!, d02 = x[d]! - x[a]!
         const d10 = x[b + 1]! - x[a + 1]!, d11 = x[c + 1]! - x[a + 1]!, d12 = x[d + 1]! - x[a + 1]!
         const d20 = x[b + 2]! - x[a + 2]!, d21 = x[c + 2]! - x[a + 2]!, d22 = x[d + 2]! - x[a + 2]!
@@ -415,6 +679,7 @@ export class SoftSolver {
         let p00: number, p01: number, p02: number, p10: number, p11: number, p12: number, p20: number, p21: number, p22: number
         let c2: number, comp: number
         if (pass === 0) {
+          jPrev = J
           // C_D：P = F + (J − 2)·cof F，"C²" = I_C + J² − 4J
           c2 = f00 * f00 + f01 * f01 + f02 * f02 + f10 * f10 + f11 * f11 + f12 * f12 + f20 * f20 + f21 * f21 + f22 * f22 + J * J - 4 * J
           if (!(c2 > 0)) continue
@@ -422,37 +687,60 @@ export class SoftSolver {
           p00 = f00 + q * h00; p01 = f01 + q * h01; p02 = f02 + q * h02
           p10 = f10 + q * h10; p11 = f11 + q * h11; p12 = f12 + q * h12
           p20 = f20 + q * h20; p21 = f21 + q * h21; p22 = f22 + q * h22
-          comp = (c2 * ih2) / (mu * vol)
-        } else {
+          comp = (c2 * ih2) / (mu * (kap ? 1 + kap[e]! * c2 : 1) * vol)
+        } else if (pass === 1) {
           // C_H = J − 1：P = cof F；写成同一个更新式时 "C²" 换成 C、柔度项是 α̃
           // C_H = J − 1: P = cof F; in the same update form "C²" becomes C and the compliance term α̃
-          c2 = J - 1
-          if (c2 === 0) continue
+          if (J < J_MIN) {
+            // 体积下限：硬的单边约束 J ≥ J_MIN，单元不会被压穿或翻转 / the volume floor: a hard unilateral constraint J ≥ J_MIN, so no element is crushed through or inverted
+            c2 = J - J_MIN
+            comp = 0
+          } else if (la > 0) {
+            c2 = J - 1
+            if (c2 === 0) continue
+            comp = ih2 / (la * vol)
+          } else continue
           p00 = h00; p01 = h01; p02 = h02
           p10 = h10; p11 = h11; p12 = h12
           p20 = h20; p21 = h21; p22 = h22
-          comp = ih2 / (la * vol)
+        } else {
+          // Maxwell 支路：Q = dev E − E_v，"C²" = Q:Q，P = F·Q，柔度 1/(2·G₁·V)
+          // the Maxwell branch: Q = dev E − E_v, "C²" = Q:Q, P = F·Q, compliance 1/(2·G₁·V)
+          const e00 = 0.5 * (f00 * f00 + f10 * f10 + f20 * f20 - 1), e11 = 0.5 * (f01 * f01 + f11 * f11 + f21 * f21 - 1), e22 = 0.5 * (f02 * f02 + f12 * f12 + f22 * f22 - 1)
+          const e01 = 0.5 * (f00 * f01 + f10 * f11 + f20 * f21), e02 = 0.5 * (f00 * f02 + f10 * f12 + f20 * f22), e12 = 0.5 * (f01 * f02 + f11 * f12 + f21 * f22)
+          const tr = (e00 + e11 + e22) / 3, o6 = e * 6
+          const q00 = e00 - tr - Ev![o6]!, q11 = e11 - tr - Ev![o6 + 1]!, q22 = e22 - tr - Ev![o6 + 2]!, q01 = e01 - Ev![o6 + 3]!, q02 = e02 - Ev![o6 + 4]!, q12 = e12 - Ev![o6 + 5]!
+          // 粘性应变向当前应变松弛（用求解前的应变，滞后一个子步）/ the viscous strain relaxes towards the present strain (taken before the solve: one substep late)
+          const kr = 1 - Math.exp(-h / bT![e]!)
+          Ev![o6] = Ev![o6]! + kr * q00; Ev![o6 + 1] = Ev![o6 + 1]! + kr * q11; Ev![o6 + 2] = Ev![o6 + 2]! + kr * q22
+          Ev![o6 + 3] = Ev![o6 + 3]! + kr * q01; Ev![o6 + 4] = Ev![o6 + 4]! + kr * q02; Ev![o6 + 5] = Ev![o6 + 5]! + kr * q12
+          c2 = q00 * q00 + q11 * q11 + q22 * q22 + 2 * (q01 * q01 + q02 * q02 + q12 * q12)
+          if (!(c2 > 1e-24)) continue
+          p00 = f00 * q00 + f01 * q01 + f02 * q02; p01 = f00 * q01 + f01 * q11 + f02 * q12; p02 = f00 * q02 + f01 * q12 + f02 * q22
+          p10 = f10 * q00 + f11 * q01 + f12 * q02; p11 = f10 * q01 + f11 * q11 + f12 * q12; p12 = f10 * q02 + f11 * q12 + f12 * q22
+          p20 = f20 * q00 + f21 * q01 + f22 * q02; p21 = f20 * q01 + f21 * q11 + f22 * q12; p22 = f20 * q02 + f21 * q12 + f22 * q22
+          comp = (c2 * ih2) / (2 * g1m * vol)
         }
         // 结点 k 的梯度 = P·(B 的第 k−1 行)ᵀ / gradient of node k = P·(row k−1 of B)ᵀ
         const g1x = p00 * b00 + p01 * b01 + p02 * b02, g1y = p10 * b00 + p11 * b01 + p12 * b02, g1z = p20 * b00 + p21 * b01 + p22 * b02
         const g2x = p00 * b10 + p01 * b11 + p02 * b12, g2y = p10 * b10 + p11 * b11 + p12 * b12, g2z = p20 * b10 + p21 * b11 + p22 * b12
         const g3x = p00 * b20 + p01 * b21 + p02 * b22, g3y = p10 * b20 + p11 * b21 + p12 * b22, g3z = p20 * b20 + p21 * b21 + p22 * b22
         const g0x = -g1x - g2x - g3x, g0y = -g1y - g2y - g3y, g0z = -g1z - g2z - g3z
-        const den = w0 * (g0x * g0x + g0y * g0y + g0z * g0z) + w1 * (g1x * g1x + g1y * g1y + g1z * g1z) + w2 * (g2x * g2x + g2y * g2y + g2z * g2z) + w3 * (g3x * g3x + g3y * g3y + g3z * g3z) + comp
+        const den = m0 * (g0x * g0x + g0y * g0y + g0z * g0z) + m1 * (g1x * g1x + g1y * g1y + g1z * g1z) + m2 * (g2x * g2x + g2y * g2y + g2z * g2z) + m3 * (g3x * g3x + g3y * g3y + g3z * g3z) + comp
         if (!(den > 1e-300)) continue
         const l = -c2 / den
-        x[a] = x[a]! + w0 * l * g0x
-        x[a + 1] = x[a + 1]! + w0 * l * g0y
-        x[a + 2] = x[a + 2]! + w0 * l * g0z
-        x[b] = x[b]! + w1 * l * g1x
-        x[b + 1] = x[b + 1]! + w1 * l * g1y
-        x[b + 2] = x[b + 2]! + w1 * l * g1z
-        x[c] = x[c]! + w2 * l * g2x
-        x[c + 1] = x[c + 1]! + w2 * l * g2y
-        x[c + 2] = x[c + 2]! + w2 * l * g2z
-        x[d] = x[d]! + w3 * l * g3x
-        x[d + 1] = x[d + 1]! + w3 * l * g3y
-        x[d + 2] = x[d + 2]! + w3 * l * g3z
+        out[a] = out[a]! + w0 * l * g0x
+        out[a + 1] = out[a + 1]! + w0 * l * g0y
+        out[a + 2] = out[a + 2]! + w0 * l * g0z
+        out[b] = out[b]! + w1 * l * g1x
+        out[b + 1] = out[b + 1]! + w1 * l * g1y
+        out[b + 2] = out[b + 2]! + w1 * l * g1z
+        out[c] = out[c]! + w2 * l * g2x
+        out[c + 1] = out[c + 1]! + w2 * l * g2y
+        out[c + 2] = out[c + 2]! + w2 * l * g2z
+        out[d] = out[d]! + w3 * l * g3x
+        out[d + 1] = out[d + 1]! + w3 * l * g3y
+        out[d + 2] = out[d + 2]! + w3 * l * g3z
       }
       // 纤维约束 C_f = ‖F·d‖ − 1 / the fibre constraint
       if (fib && fk && fk[e]! > 0) {
@@ -469,24 +757,120 @@ export class SoftSolver {
             uy /= len
             uz /= len
             const s0 = -s1 - s2 - s3
-            const ws = w0 * s0 * s0 + w1 * s1 * s1 + w2 * s2 * s2 + w3 * s3 * s3
-            const dl = -(len - 1) / (ws + ih2 / (fk[e]! * this.actScale[e]! * vol))
-            x[a] = x[a]! + w0 * s0 * dl * ux
-            x[a + 1] = x[a + 1]! + w0 * s0 * dl * uy
-            x[a + 2] = x[a + 2]! + w0 * s0 * dl * uz
-            x[b] = x[b]! + w1 * s1 * dl * ux
-            x[b + 1] = x[b + 1]! + w1 * s1 * dl * uy
-            x[b + 2] = x[b + 2]! + w1 * s1 * dl * uz
-            x[c] = x[c]! + w2 * s2 * dl * ux
-            x[c + 1] = x[c + 1]! + w2 * s2 * dl * uy
-            x[c + 2] = x[c + 2]! + w2 * s2 * dl * uz
-            x[d] = x[d]! + w3 * s3 * dl * ux
-            x[d + 1] = x[d + 1]! + w3 * s3 * dl * uy
-            x[d + 2] = x[d + 2]! + w3 * s3 * dl * uz
+            const ws = m0 * s0 * s0 + m1 * s1 * s1 + m2 * s2 * s2 + m3 * s3 * s3
+            const dl = -(len - 1) / (ws + ih2 / (fk[e]! * this.actScale[e]! * qe * vol))
+            out[a] = out[a]! + w0 * s0 * dl * ux
+            out[a + 1] = out[a + 1]! + w0 * s0 * dl * uy
+            out[a + 2] = out[a + 2]! + w0 * s0 * dl * uz
+            out[b] = out[b]! + w1 * s1 * dl * ux
+            out[b + 1] = out[b + 1]! + w1 * s1 * dl * uy
+            out[b + 2] = out[b + 2]! + w1 * s1 * dl * uz
+            out[c] = out[c]! + w2 * s2 * dl * ux
+            out[c + 1] = out[c + 1]! + w2 * s2 * dl * uy
+            out[c + 2] = out[c + 2]! + w2 * s2 * dl * uz
+            out[d] = out[d]! + w3 * s3 * dl * ux
+            out[d + 1] = out[d + 1]! + w3 * s3 * dl * uy
+            out[d + 2] = out[d + 2]! + w3 * s3 * dl * uz
           }
         }
       }
     }
+  }
+
+  /**
+   * 结点体积约束，一遍（文件头第 1、2 条）。C_n = Σ_e kdet_e·det Ds_e / V_n − 1，乘子跨子步保留。
+   * The nodal volume constraints, one sweep (header items 1 and 2). C_n = Σ_e kdet_e·det Ds_e / V_n − 1; the
+   * multipliers are kept across substeps.
+   */
+  private solveVolumes(h: number): void {
+    if (this.volumeMode !== 'node' || this.volumeBlend >= 1) return
+    const T = this.tets, x = this.x, w = this.invMass, g = this.gacc, st = this.stamp, tl = this.touched
+    const jac = this.mode === 'jacobi'
+    const wsol = jac ? this.jcount! : w, out = jac ? this.jdx! : x
+    const h2 = h * h, ih2 = 1 / h2, share = 1 - this.volumeBlend, relax = jac ? this.relaxation : 1
+    const P = this.nodalMultiplier, rs = this.ringStart, rt = this.ringTets, kd = this.kdet
+    const cap = this.volumeCap
+    for (let n = 0; n < this.nodeCount; n++) {
+      const from = rs[n]!, to = rs[n + 1]!
+      const K = this.ringK[n]! * share
+      if (from === to || !(K > 0) || !(this.ringVolume[n]! > 1e-15)) continue
+      let S = 0, cnt = 0
+      for (let q = from; q < to; q++) {
+        const e = rt[q]!, k = kd[e]!
+        const i0 = T[e * 4]!, i1 = T[e * 4 + 1]!, i2 = T[e * 4 + 2]!, i3 = T[e * 4 + 3]!
+        const a = i0 * 3, b = i1 * 3, c = i2 * 3, d = i3 * 3
+        const ax = x[a]!, ay = x[a + 1]!, az = x[a + 2]!
+        const ux = x[b]! - ax, uy = x[b + 1]! - ay, uz = x[b + 2]! - az
+        const vx = x[c]! - ax, vy = x[c + 1]! - ay, vz = x[c + 2]! - az
+        const qx = x[d]! - ax, qy = x[d + 1]! - ay, qz = x[d + 2]! - az
+        // ∂det/∂x₁ = v×q, ∂det/∂x₂ = q×u, ∂det/∂x₃ = u×v
+        const c1x = (vy * qz - vz * qy) * k, c1y = (vz * qx - vx * qz) * k, c1z = (vx * qy - vy * qx) * k
+        const c2x = (qy * uz - qz * uy) * k, c2y = (qz * ux - qx * uz) * k, c2z = (qx * uy - qy * ux) * k
+        const c3x = (uy * vz - uz * vy) * k, c3y = (uz * vx - ux * vz) * k, c3z = (ux * vy - uy * vx) * k
+        S += ux * c1x + uy * c1y + uz * c1z
+        if (st[i0] !== n) { st[i0] = n; tl[cnt++] = i0; g[a] = g[a + 1] = g[a + 2] = 0 }
+        if (st[i1] !== n) { st[i1] = n; tl[cnt++] = i1; g[b] = g[b + 1] = g[b + 2] = 0 }
+        if (st[i2] !== n) { st[i2] = n; tl[cnt++] = i2; g[c] = g[c + 1] = g[c + 2] = 0 }
+        if (st[i3] !== n) { st[i3] = n; tl[cnt++] = i3; g[d] = g[d + 1] = g[d + 2] = 0 }
+        g[b] = g[b]! + c1x; g[b + 1] = g[b + 1]! + c1y; g[b + 2] = g[b + 2]! + c1z
+        g[c] = g[c]! + c2x; g[c + 1] = g[c + 1]! + c2y; g[c + 2] = g[c + 2]! + c2z
+        g[d] = g[d]! + c3x; g[d + 1] = g[d + 1]! + c3y; g[d + 2] = g[d + 2]! + c3z
+        g[a] = g[a]! - c1x - c2x - c3x; g[a + 1] = g[a + 1]! - c1y - c2y - c3y; g[a + 2] = g[a + 2]! - c1z - c2z - c3z
+      }
+      const iv = 1 / this.ringVolume[n]!
+      let A = 0
+      for (let k = 0; k < cnt; k++) {
+        const i = tl[k]!, o = i * 3
+        A += wsol[i]! * (g[o]! * g[o]! + g[o + 1]! * g[o + 1]! + g[o + 2]! * g[o + 2]!)
+      }
+      A *= iv * iv
+      if (!(A > 0)) continue
+      // 步长分辨不了的体积刚度按 A/cap 封顶（见 volumeCap）/ bulk stiffness the step cannot resolve is capped at A/cap (see volumeCap)
+      const alpha = Math.max(ih2 / K, A / cap)
+      const dl = (-(S * iv - 1 + alpha * P[n]! * h2) / (A + alpha)) * relax
+      // 压强不超过体积模量的 1.5 倍（单元翻转时 C 可以到 −1 以下，不让乘子无限增长）
+      // the pressure never exceeds 1.5 × the bulk modulus (C can fall below −1 when elements invert; the multiplier must not grow without bound)
+      const lim = 1.5 * K
+      let pn = P[n]! + dl * ih2
+      if (pn > lim) pn = lim
+      else if (pn < -lim) pn = -lim
+      const dq = (pn - P[n]!) * h2
+      P[n] = pn
+      const sc = dq * iv
+      for (let k = 0; k < cnt; k++) {
+        const i = tl[k]!, o = i * 3, f = w[i]! * sc
+        out[o] = out[o]! + f * g[o]!
+        out[o + 1] = out[o + 1]! + f * g[o + 1]!
+        out[o + 2] = out[o + 2]! + f * g[o + 2]!
+      }
+    }
+  }
+
+  /** 上一步的结点压强作为力，写入 fint（牛）。 The nodal pressures of the previous step as forces, into fint (newtons). */
+  private pressureForces(): boolean {
+    if (this.volumeMode !== 'node' || this.volumeBlend >= 1) return false
+    const T = this.tets, x = this.x, f = this.fint, P = this.nodalMultiplier, V = this.ringVolume, kd = this.kdet
+    f.fill(0)
+    for (let m = 0; m < this.active.length; m++) {
+      const e = this.active[m]!
+      const i0 = T[e * 4]!, i1 = T[e * 4 + 1]!, i2 = T[e * 4 + 2]!, i3 = T[e * 4 + 3]!
+      if (kd[e] === 0) continue
+      const k = ((V[i0]! > 1e-15 ? P[i0]! / V[i0]! : 0) + (V[i1]! > 1e-15 ? P[i1]! / V[i1]! : 0) + (V[i2]! > 1e-15 ? P[i2]! / V[i2]! : 0) + (V[i3]! > 1e-15 ? P[i3]! / V[i3]! : 0)) * kd[e]!
+      if (k === 0) continue
+      const a = i0 * 3, b = i1 * 3, c = i2 * 3, d = i3 * 3
+      const ax = x[a]!, ay = x[a + 1]!, az = x[a + 2]!
+      const ux = x[b]! - ax, uy = x[b + 1]! - ay, uz = x[b + 2]! - az
+      const vx = x[c]! - ax, vy = x[c + 1]! - ay, vz = x[c + 2]! - az
+      const qx = x[d]! - ax, qy = x[d + 1]! - ay, qz = x[d + 2]! - az
+      const c1x = (vy * qz - vz * qy) * k, c1y = (vz * qx - vx * qz) * k, c1z = (vx * qy - vy * qx) * k
+      const c2x = (qy * uz - qz * uy) * k, c2y = (qz * ux - qx * uz) * k, c2z = (qx * uy - qy * ux) * k
+      const c3x = (uy * vz - uz * vy) * k, c3y = (uz * vx - ux * vz) * k, c3z = (ux * vy - uy * vx) * k
+      f[b] = f[b]! + c1x; f[b + 1] = f[b + 1]! + c1y; f[b + 2] = f[b + 2]! + c1z
+      f[c] = f[c]! + c2x; f[c + 1] = f[c + 1]! + c2y; f[c + 2] = f[c + 2]! + c2z
+      f[d] = f[d]! + c3x; f[d + 1] = f[d + 1]! + c3y; f[d + 2] = f[d + 2]! + c3z
+      f[a] = f[a]! - c1x - c2x - c3x; f[a + 1] = f[a + 1]! - c1y - c2y - c3y; f[a + 2] = f[a + 2]! - c1z - c2z - c3z
+    }
+    return true
   }
 
   /** 嵌入点此刻的位置 / the present position of an embedded point */
@@ -510,7 +894,7 @@ export class SoftSolver {
   }
 
   /** 把嵌入点沿 (nx,ny,nz) 移动 c（按逆质量和重心坐标分给四个结点）；返回 Δλ。 Moves an embedded point by c along (nx,ny,nz), shared out to its four nodes by inverse mass and barycentric weight; returns Δλ. */
-  private pushPoint(set: PointSet, i: number, nx: number, ny: number, nz: number, c: number): number {
+  private pushPoint(set: PointSet, i: number, nx: number, ny: number, nz: number, c: number, alpha = 0): number {
     const e = set.tet[i]! * 4
     let ws = 0
     for (let k = 0; k < 4; k++) {
@@ -518,7 +902,7 @@ export class SoftSolver {
       ws += this.invMass[this.tets[e + k]!]! * bk * bk
     }
     if (!(ws > 0)) return 0
-    const dl = c / ws
+    const dl = c / (ws + alpha)
     for (let k = 0; k < 4; k++) {
       const n = this.tets[e + k]!, s = this.invMass[n]! * set.bary[i * 4 + k]! * dl
       this.x[n * 3] = this.x[n * 3]! + s * nx
@@ -528,9 +912,10 @@ export class SoftSolver {
     return dl
   }
 
-  private solveAnchors(tau: number): void {
+  private solveAnchors(tau: number, h: number): void {
     const set = this.anchors
     if (!set) return
+    const K = this.anchorK, ih2 = 1 / (h * h)
     const q = [0, 0, 0], r0 = [0, 0, 0], r1 = [0, 0, 0]
     for (let i = 0; i < set.tet.length; i++) {
       this.pointAt(set, i, this.x, q)
@@ -538,7 +923,9 @@ export class SoftSolver {
       this.pointAt(set, i, this.ref, r1)
       const cx = r0[0]! + (r1[0]! - r0[0]!) * tau - q[0]!, cy = r0[1]! + (r1[1]! - r0[1]!) * tau - q[1]!, cz = r0[2]! + (r1[2]! - r0[2]!) * tau - q[2]!
       const l = Math.hypot(cx, cy, cz)
-      if (l > 0) this.pushPoint(set, i, cx / l, cy / l, cz / l, l)
+      // 有限刚度的锚点：柔度 1/k / an anchor of finite stiffness: compliance 1/k
+      const k = K ? K[i]! : Infinity
+      if (l > 0 && k > 0) this.pushPoint(set, i, cx / l, cy / l, cz / l, l, Number.isFinite(k) ? ih2 / k : 0)
     }
   }
 
@@ -554,7 +941,18 @@ export class SoftSolver {
         this.pointAt(set, i, this.x, q)
         let c = 0, nx = 0, ny = 0, nz = 0
         const rx = q[0]! - s.center[0], ry = q[1]! - s.center[1], rz = q[2]! - s.center[2]
-        if (s.kind === 'sphere') {
+        if (s.kind === 'rod' && rx * s.axis[0] + ry * s.axis[1] + rz * s.axis[2] < 0) {
+          // 球心之后是杆身：沿径向推到杆的表面 / behind the centre lies the shaft: pushed radially to its surface
+          const along = rx * s.axis[0] + ry * s.axis[1] + rz * s.axis[2]
+          if (along < -6 * s.radius) continue
+          const ox = rx - along * s.axis[0], oy = ry - along * s.axis[1], oz = rz - along * s.axis[2]
+          const l = Math.hypot(ox, oy, oz)
+          if (l >= s.radius || l < 1e-12) continue
+          c = s.radius - l
+          nx = ox / l
+          ny = oy / l
+          nz = oz / l
+        } else if (s.kind === 'sphere' || s.kind === 'rod') {
           const l = Math.hypot(rx, ry, rz)
           if (l >= s.radius || l < 1e-12) continue
           c = s.radius - l
@@ -646,6 +1044,34 @@ export class SoftSolver {
     this.capsules.push({ capsule, nodes: Uint32Array.from(nodes) })
   }
 
+  /**
+   * Jacobi 模式的"质量分摊"（Tonge 等 2012）：结点 i 参与 n_i 条约束，每条约束把它看成质量 m_i/n_i 的一份，
+   * 各自求解后把位置改变量相加。约束软（α̃ ≫ w‖∇C‖²）时与逐条施力完全相同；约束硬时每条都偏保守，不会过冲。
+   * "Mass splitting" for the Jacobi mode (Tonge et al. 2012): node i takes part in n_i constraints, each of which
+   * sees it as a piece of mass m_i/n_i; all are solved independently and the position changes summed. For a soft
+   * constraint (α̃ ≫ w‖∇C‖²) this equals applying its force; for a stiff one each solve is conservative, so nothing overshoots.
+   */
+  private prepareJacobi(): void {
+    if (this.jdx) return
+    const N = this.nodeCount, T = this.tets
+    this.jdx = new Float64Array(N * 3)
+    const cnt = new Float64Array(N)
+    const perTet = 1 + (this.volumeMode === 'tet' || this.volumeBlend > 0 ? 1 : 0) + (this.branchG ? 1 : 0) + (this.fibreK ? 1 : 0)
+    const nodal = this.volumeMode === 'node' && this.volumeBlend < 1
+    const seen = new Int32Array(N).fill(-1)
+    for (let i = 0; i < N; i++) {
+      const from = this.ringStart[i]!, to = this.ringStart[i + 1]!
+      let c = (to - from) * perTet
+      if (nodal) for (let q = from; q < to; q++) for (let k = 0; k < 4; k++) {
+        // 结点 i 出现在它每个邻居（含自己）的体积约束里 / node i appears in the volume constraint of every neighbour (itself included)
+        const j = T[this.ringTets[q]! * 4 + k]!
+        if (seen[j] !== i) (seen[j] = i), c++
+      }
+      cnt[i] = Math.max(1, c) * this.invMass[i]!
+    }
+    this.jcount = cnt
+  }
+
   /** 前进一帧（dt 秒）。 Advances one frame (dt seconds). */
   step(dt: number): void {
     this.prepare()
@@ -657,8 +1083,12 @@ export class SoftSolver {
     const acc = { probe: [0, 0, 0], planes: this.planes.map(() => 0) }
     if (this.probe && this.probePointForce.length !== this.probe.points.tet.length) this.probePointForce = new Float32Array(this.probe.points.tet.length)
     this.probePointForce.fill(0)
+    const fint = this.fint, off = this.pinOffset
+    const jac = this.mode === 'jacobi'
+    if (jac) this.prepareJacobi()
     for (let s = 1; s <= n; s++) {
       const tau = s / n
+      const warm = this.pressureForces()
       for (let i = 0; i < N; i++) {
         const o = i * 3
         p[o] = x[o]!
@@ -668,6 +1098,11 @@ export class SoftSolver {
           x[o] = r0[o]! + (ref[o]! - r0[o]!) * tau
           x[o + 1] = r0[o + 1]! + (ref[o + 1]! - r0[o + 1]!) * tau
           x[o + 2] = r0[o + 2]! + (ref[o + 2]! - r0[o + 2]!) * tau
+          if (off) {
+            x[o] = x[o]! + off[o]!
+            x[o + 1] = x[o + 1]! + off[o + 1]!
+            x[o + 2] = x[o + 2]! + off[o + 2]!
+          }
           continue
         }
         let ax = g[0], ay = g[1], az = g[2]
@@ -685,15 +1120,22 @@ export class SoftSolver {
         }
         // 相对于参考构形速度的那部分才被阻尼 / only the velocity relative to the reference's is damped
         const ux = (ref[o]! - r0[o]!) / dt, uy = (ref[o + 1]! - r0[o + 1]!) / dt, uz = (ref[o + 2]! - r0[o + 2]!) / dt
-        const vx = ux + (v[o]! - ux) * keep + h * (ax + this.force[o]! * w[i]!)
-        const vy = uy + (v[o + 1]! - uy) * keep + h * (ay + this.force[o + 1]! * w[i]!)
-        const vz = uz + (v[o + 2]! - uz) * keep + h * (az + this.force[o + 2]! * w[i]!)
+        const fx = warm ? this.force[o]! + fint[o]! : this.force[o]!, fy = warm ? this.force[o + 1]! + fint[o + 1]! : this.force[o + 1]!, fz = warm ? this.force[o + 2]! + fint[o + 2]! : this.force[o + 2]!
+        const vx = ux + (v[o]! - ux) * keep + h * (ax + fx * w[i]!)
+        const vy = uy + (v[o + 1]! - uy) * keep + h * (ay + fy * w[i]!)
+        const vz = uz + (v[o + 2]! - uz) * keep + h * (az + fz * w[i]!)
         x[o] = x[o]! + h * vx
         x[o + 1] = x[o + 1]! + h * vy
         x[o + 2] = x[o + 2]! + h * vz
       }
+      if (jac) this.jdx!.fill(0)
       this.solveTets(h)
-      this.solveAnchors(tau)
+      this.solveVolumes(h)
+      if (jac) {
+        const d = this.jdx!
+        for (let i = 0; i < N * 3; i++) x[i] = x[i]! + d[i]!
+      }
+      this.solveAnchors(tau, h)
       this.solveContacts(h, acc)
       const ih = 1 / h
       for (let i = 0; i < N * 3; i++) v[i] = (x[i]! - p[i]!) * ih
@@ -751,6 +1193,7 @@ export class SoftSolver {
   energy(): { kinetic: number; elastic: number; potential: number; total: number } {
     this.prepare()
     let kin = 0, pot = 0, el = 0
+    const nodalS = new Float64Array(this.nodeCount)
     const x = this.x, v = this.v, T = this.tets, B = this.B
     const g = this.gravity, g0 = this.prestressGravity, R = this.rotations
     for (let i = 0; i < this.nodeCount; i++) {
@@ -775,8 +1218,28 @@ export class SoftSolver {
       for (let r = 0; r < 3; r++) for (let q = 0; q < 3; q++) F.push(D[r * 3]! * B[o + q]! + D[r * 3 + 1]! * B[o + 3 + q]! + D[r * 3 + 2]! * B[o + 6 + q]!)
       const i1 = F.reduce((s, f) => s + f * f, 0)
       const J = det3(F[0]!, F[1]!, F[2]!, F[3]!, F[4]!, F[5]!, F[6]!, F[7]!, F[8]!)
-      const mu = this.mu[e]! * this.actScale[e]!, la = this.lam[e]! * this.actScale[e]!
-      el += this.restVolume[e]! * (0.5 * mu * (i1 + J * J - 4 * J) + 0.5 * la * (J - 1) * (J - 1))
+      const mu = this.mu[e]! * this.actScale[e]! * this.qual[e]!, la = this.lam[e]! * this.actScale[e]! * this.qual[e]!
+      const c2 = i1 + J * J - 4 * J, share = this.volumeMode === 'tet' ? 1 : this.volumeBlend
+      el += this.restVolume[e]! * (0.5 * mu * c2 * (1 + 0.5 * (this.kappa ? this.kappa[e]! : 0) * c2) + 0.5 * la * share * (J - 1) * (J - 1))
+      if (this.branchG && this.branchG[e]! > 0) {
+        // Maxwell 支路里存着的能量 G₁·V·‖dev E − E_v‖² / energy stored in the Maxwell branch
+        const E = [0, 0, 0, 0, 0, 0]
+        const ij = [[0, 0], [1, 1], [2, 2], [0, 1], [0, 2], [1, 2]]
+        ij.forEach(([r, q], k) => (E[k] = 0.5 * (F[r!]! * F[q!]! + F[3 + r!]! * F[3 + q!]! + F[6 + r!]! * F[6 + q!]! - (r === q ? 1 : 0))))
+        const tr = (E[0]! + E[1]! + E[2]!) / 3
+        let qq = 0
+        for (let k = 0; k < 6; k++) {
+          const dq = E[k]! - (k < 3 ? tr : 0) - this.viscous![e * 6 + k]!
+          qq += (k < 3 ? 1 : 2) * dq * dq
+        }
+        el += this.restVolume[e]! * this.branchG[e]! * this.qual[e]! * qq
+      }
+      if (share < 1) for (let k = 0; k < 4; k++) nodalS[T[e * 4 + k]!] = nodalS[T[e * 4 + k]!]! + this.kdet[e]! * det3(D[0]!, D[1]!, D[2]!, D[3]!, D[4]!, D[5]!, D[6]!, D[7]!, D[8]!)
+    }
+    if (this.volumeMode === 'node' && this.volumeBlend < 1) for (let i = 0; i < this.nodeCount; i++) {
+      if (!(this.ringVolume[i]! > 1e-15)) continue
+      const c = nodalS[i]! / this.ringVolume[i]! - 1
+      el += 0.5 * this.ringK[i]! * (1 - this.volumeBlend) * c * c
     }
     return { kinetic: kin, elastic: el, potential: pot, total: kin + el + pot }
   }

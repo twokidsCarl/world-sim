@@ -4,7 +4,7 @@
 // data/raw/softbody/out/validation/ (not committed) and a summary (our numbers and the literature's only) to
 // data/curated/softbody/validation-report.json.
 //
-//   bun tools/softbody/validate.ts [body|forearm|sites|breast|all]
+//   bun tools/softbody/validate.ts [numerics|body|forearm|abdomen|breast|all]
 //
 // 每一组都从 GLB 重新建笼子，不依赖以前的输出。一次只跑一组重的。
 // Every group rebuilds its cage from the GLBs and depends on no earlier output. Run one heavy group at a time.
@@ -12,13 +12,17 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Rig } from '../../src/anatomy/types.ts'
-import { type LoadedSoft, SoftBody, decodeSoft, embedPoints } from '../../src/softbody/body.ts'
-import type { PointSet } from '../../src/softbody/solver.ts'
+import { type LoadedSoft, type MixOptions, SoftBody, decodeSoft, embedPoints } from '../../src/softbody/body.ts'
+import type { PointSet, SolverOptions } from '../../src/softbody/solver.ts'
 import { computeNormals } from '../pipeline/geometry.ts'
 import type { Body, RawMesh } from '../rig/io.ts'
 import { jointFrames } from '../rig/pose.ts'
 import { type RenderItem, render, sheet } from '../rig/render.ts'
+import { couple, press, surfaceSamples } from '../../src/softbody/press.ts'
 import { OUT, ROOT, build, loadBody, readMaterials, withRest0 } from './build.ts'
+import { bodyInside } from './cage.ts'
+import { blockDomain, cantilever, framesToWithin, punch } from './numerics.ts'
+import { type Site, buildSite, linkToCoarse } from './site.ts'
 
 const DIR = join(OUT, 'validation')
 const REPORT = join(ROOT, 'data', 'curated', 'softbody', 'validation-report.json')
@@ -61,7 +65,9 @@ async function load(bodyId: string, cell: number, region?: string, rest0 = false
   return { body, rig, soft, skin, skinPoints: soft.embedded.get(soft.data.skin.part)!, normals: computeNormals(skin), area, stats: r.stats, ...(info ? { rest0: info } : {}) }
 }
 
-const newBody = (L: Loaded, substeps = 10, useRest0 = false, skin: 'voigt' | 'none' = 'voigt'): SoftBody => new SoftBody(L.soft, { substeps, damping: readMaterials().damping.rate }, { useRest0, skin })
+const newBody = (L: Loaded, substeps = 10, mix: MixOptions = {}, opts: SolverOptions = {}): SoftBody => new SoftBody(L.soft, { substeps, damping: readMaterials().damping.rate, ...opts }, mix)
+/** 第一阶段的做法，留作对照：逐单元体积约束、硬锚点、没有硬化和粘弹性 / phase 1, kept for comparison: per-tetrahedron volume constraints, hard anchors, no stiffening, no viscoelasticity */
+const PHASE1: [MixOptions, SolverOptions] = [{ anchors: 'hard', stiffening: false, viscous: false }, { volume: 'tet', damping: 6 }]
 
 /** 皮肤顶点的子集（仍是嵌入点）/ a subset of the skin vertices (still embedded points) */
 function subset(L: Loaded, keep: (i: number, x: number, y: number, z: number) => boolean): { points: PointSet; verts: number[] } {
@@ -229,22 +235,40 @@ async function wholeBody(): Promise<Record<string, unknown>> {
   // inertia: left hip flexes 40° within 0.15 s, then holds. First without gravity (pure inertia: it must return to zero), then with
   // gravity (in the new pose tissue sags relative to bone as it should; that is not drift).
   const pose = (a: number): ReturnType<typeof jointFrames> => jointFrames(L.rig.joints, { hip_L: [a, 0, 0] })
-  const swing = (b: SoftBody): number[] => {
-    const lag: number[] = []
+  // 量两样：皮肤顶点的位移（看得见的），和笼子结点的位移（含几乎全在体外的结点，那些只是数值上的东西）
+  // two measures: displacement of skin vertices (what is seen) and of cage nodes (including nodes almost wholly outside the body, which are numerical only)
+  const skinMax = (b: SoftBody): number => {
+    const pos = displacedSkin(L, b)
+    let m = 0
+    for (let i = 0; i < pos.length; i += 3) m = Math.max(m, Math.hypot(pos[i]! - L.skin.positions[i]!, pos[i + 1]! - L.skin.positions[i + 1]!, pos[i + 2]! - L.skin.positions[i + 2]!))
+    return m
+  }
+  const p99 = (b: SoftBody): number => {
+    const d = b.displacement, mags = new Float32Array(d.length / 3)
+    for (let i = 0; i < mags.length; i++) mags[i] = Math.hypot(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!)
+    return mags.sort()[Math.floor(mags.length * 0.99)]!
+  }
+  const swing = (b: SoftBody): { skin: number[]; node: number[]; node99: number[] } => {
+    const skin: number[] = [], node: number[] = [], node99: number[] = []
     for (let f = 0; f < 240; f++) {
       b.step(DT, pose(Math.min(1, (f + 1) / 9) * (40 * Math.PI) / 180))
-      lag.push(mm(maxDisplacement(b)))
+      skin.push(mm(skinMax(b)))
+      node.push(mm(maxDisplacement(b)))
+      node99.push(mm(p99(b)))
     }
-    return lag
+    return { skin, node, node99 }
   }
-  const free = newBody(L)
-  free.solver.gravity = [0, 0, 0]
-  free.solver.prestressGravity = null
-  const lag0 = swing(free), lag1 = swing(sb)
+  const noG = (b: SoftBody): SoftBody => {
+    b.solver.gravity = [0, 0, 0]
+    b.solver.prestressGravity = null
+    return b
+  }
+  const lag0 = swing(noG(newBody(L))), lagP1 = swing(noG(newBody(L, 10, PHASE1[0], PHASE1[1]))), lagNoBranch = swing(noG(newBody(L, 10, { viscous: false }))), lag1 = swing(sb)
+  const row = (l: { skin: number[]; node: number[]; node99: number[] }): unknown => ({ skinPeak: Math.max(...l.skin), skinAt0_5s: l.skin[29], skinAt1s: l.skin[59], skinAt2s: l.skin[119], skinAt4s: l.skin[239], nodePeak: Math.max(...l.node), node99thPercentilePeak: Math.max(...l.node99), nodeAt4s: l.node[239] })
   out.jiggle = {
-    motion: 'hip_L flexion 40° in 0.15 s, then held; largest corrective displacement of any cage node, mm',
-    withoutGravity: { peak: Math.max(...lag0), at0_25s: lag0[14], at0_5s: lag0[29], at1s: lag0[59], at2s: lag0[119], at4s: lag0[239] },
-    withGravity: { peak: Math.max(...lag1), at1s: lag1[59], at4s: lag1[239], settledSpeed: sb.solver.maxSpeed() },
+    motion: 'hip_L flexion 40° in 0.15 s, then held; corrective displacement in mm: of skin vertices (largest), of cage nodes (largest and 99th percentile)',
+    withoutGravity: row(lag0), withoutGravityNoMaxwellBranch: row(lagNoBranch), withoutGravityPhase1Solver: row(lagP1),
+    withGravity: { ...(row(lag1) as object), settledSpeed: sb.solver.maxSpeed() },
   }
   console.log('jiggle', JSON.stringify(out.jiggle))
   for (let f = 0; f < 30; f++) sb.step(DT, pose(0))
@@ -292,11 +316,12 @@ async function wholeBody(): Promise<Record<string, unknown>> {
   const view = { yaw: 90, center: [0, 1.05, 0.05] as [number, number, number], halfHeight: 0.42, width: 420, height: 560 }
   sheet([render([base], view), render([lying], view), render([base], { ...view, yaw: 0 }), render([lying], { ...view, yaw: 0 })], 4).save(join(DIR, 'male-standing-vs-supine.png'))
 
-  // 6. 全身粗笼子上的压入（与区域细笼子对照，看网格依赖）/ indentation on the coarse whole-body cage (against the fine regional cage, to see the mesh dependence)
-  const fb = newBody(L)
+  // 6. 全身粗笼子上的压入（与细笼子上的 press() 对照，看网格依赖）；第二行是第一阶段的硬锚点
+  // indentation on the coarse whole-body cage (against press() on a fine cage, to see the mesh dependence); the second line uses the hard anchors of phase 1
   const sites = forearmSites(L)
-  out.forearmCoarse = Object.fromEntries(Object.entries(sites).map(([k, v]) => [k, indent(L, fb, v, 0.013, [1, 2, 3.2, 4.5])]))
-  console.log('forearm coarse', JSON.stringify(out.forearmCoarse))
+  out.forearmCoarse = Object.fromEntries(Object.entries(sites).map(([k, v]) => [k, indent(L, newBody(L), v, 0.013, [3.2, 4.5])]))
+  out.forearmCoarsePhase1 = Object.fromEntries(Object.entries(sites).map(([k, v]) => [k, indent(L, newBody(L, 10, PHASE1[0], PHASE1[1]), v, 0.013, [3.2, 4.5])]))
+  console.log('forearm coarse', JSON.stringify(out.forearmCoarse), JSON.stringify(out.forearmCoarsePhase1))
 
   // 7. 肌肉激活：左肱二头肌 / muscle activation: left biceps
   const mb = newBody(L)
@@ -318,6 +343,10 @@ async function wholeBody(): Promise<Record<string, unknown>> {
   }
   // 子步加到 40 再算一次体积：看体积误差是不是求解没收敛造成的 / the volume once more with 40 substeps: is the volume error a matter of convergence?
   const mb2 = newBody(L, 40)
+  const mbP1 = newBody(L, 10, PHASE1[0], PHASE1[1])
+  mbP1.solver.setActivation(act)
+  for (let f = 0; f < 120; f++) mbP1.step(DT)
+  out.muscleVolumeRatioPhase1Solver = hit.length ? Math.round((mbP1.solver.volume(ofMuscle) / mbP1.solver.referenceVolume(ofMuscle)) * 1e4) / 1e4 : null
   mb2.solver.setActivation(act)
   for (let f = 0; f < 60; f++) mb2.step(DT)
   out.muscleVolumeRatio40Substeps = hit.length ? Math.round((mb2.solver.volume(ofMuscle) / mb2.solver.referenceVolume(ofMuscle)) * 1e4) / 1e4 : null
@@ -335,115 +364,294 @@ function forearmSites(L: Loaded): Record<string, number> {
   return { proximalThird: nearestSkinVertex(L, at(0.3), [0, 0, 1]), middle: nearestSkinVertex(L, at(0.5), [0, 0, 1]) }
 }
 
-// ── 前臂区域（细笼子）/ the forearm region (fine cage) ────────────────────────────────────────
+// ── 解析算例：锁死、收敛、Jacobi / analytic cases: locking, convergence, Jacobi ───────────────
+async function numerics(): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {}
+  const locking: unknown[] = []
+  for (const cells of [2, 4]) for (const nu of [0.3, 0.49]) for (const volume of ['tet', 'node'] as const) locking.push({ cellsAcross: cells, poisson: nu, volume, deflectionOverBeamTheory: r3(cantilever(cells, nu, volume).ratio) })
+  out.cantilever = { what: 'tip deflection of a cantilever under its own weight over Euler–Bernoulli theory (which has no ν in it)', rows: locking }
+  console.log('locking', JSON.stringify(locking))
+  // 平头压头，a = 12 mm，方块 72 × 48 × 72 mm（a/h = 0.25），F ÷ 2·E·a·δ/(1 − ν²)
+  const rows: unknown[] = []
+  for (const [cell, substeps, volume] of [[0.012, 16, 'node'], [0.012, 32, 'node'], [0.008, 32, 'node'], [0.006, 32, 'node'], [0.006, 64, 'node'], [0.012, 16, 'tet'], [0.012, 32, 'tet'], [0.006, 32, 'tet'], [0.006, 64, 'tet']] as const) {
+    const p = punch(cell, { substeps, volume, size: 0.072, depth: 0.048, maxFrames: 600 })
+    rows.push({ cellMm: cell * 1000, substeps, volume, forceOverHalfSpace: r3(p.ratio), frames: p.frames })
+  }
+  out.punchDynamicSolver = { what: 'flat punch a = 12 mm on a bonded block 72 × 48 × 72 mm, ν = 0.49, real density: F ÷ 2·E·a·δ/(1 − ν²)', rows }
+  console.log('punch', JSON.stringify(rows))
+  // press()：质量缩放的准静态解，有无边缘补偿 / press(): the mass-scaled quasi-static solve, with and without edge compensation
+  const pr: unknown[] = []
+  for (const cell of [0.008, 0.006, 0.004, 0.003]) for (const edge of [true, false]) {
+    const { d, young, nu, nodes } = blockDomain(cell, 0.072, 0.048, 0.012)
+    const t0 = performance.now()
+    const r = press(d, { kind: 'flat', radiusMm: 12 }, { depthMm: 1 }, { edgeCompensation: edge })
+    pr.push({ cellMm: cell * 1000, radiusOverCell: 12 / (cell * 1000), edgeCompensation: edge, forceOverHalfSpace: r3(r.forceN / ((2 * young * 0.012 * 1e-3) / (1 - nu * nu))), frames: r.frames, seconds: r3((performance.now() - t0) / 1000), nodes, centrePressureOverMean: r3(r.pressureProfile[0]!.kPa / r.meanPressureKPa) })
+  }
+  out.pressOnBlock = { what: 'the same case through press(); the half-space centre pressure is half the mean', rows: pr }
+  console.log('press', JSON.stringify(pr))
+  // Jacobi（质量分摊）与 Gauss–Seidel：悬臂梁的静力解随子步数的变化；压入算例里到最终值 ±2% 要多少遍
+  // Jacobi (mass splitting) against Gauss–Seidel: the static cantilever answer against the number of substeps; sweeps needed in the punch case to stay within ±2 % of the final value
+  const gsBeam = cantilever(2, 0.49, 'node', 20)
+  const jb: unknown[] = [{ mode: 'gs', substeps: 20, deflectionOverBeamTheory: r3(gsBeam.ratio), sweeps: gsBeam.frames * 20 }]
+  for (const sub of [20, 40, 80, 160]) {
+    const j = cantilever(2, 0.49, 'node', sub, 0, 2, 'jacobi', 6000)
+    jb.push({ mode: 'jacobi', substeps: sub, deflectionOverBeamTheory: r3(j.ratio), errorAgainstGs: r3(j.ratio / gsBeam.ratio - 1), sweeps: j.frames * sub })
+  }
+  const jac: unknown[] = []
+  for (const [mode, substeps] of [['gs', 32], ['jacobi', 32], ['jacobi', 128]] as const) {
+    const p = punch(0.008, { substeps, mode, size: 0.072, depth: 0.048, maxFrames: mode === 'gs' ? 600 : 1500 })
+    jac.push({ mode, substeps, forceOverHalfSpace: r3(p.ratio), frames: p.frames, sweepsToWithin2PercentOfOwnFinal: framesToWithin(p.history) * substeps, msPerSweep: r3(p.msPerFrame / substeps) })
+  }
+  out.jacobi = { what: 'the Jacobi mode with mass splitting against Gauss–Seidel: (a) static cantilever, cell = half the depth, ν = 0.49; (b) flat punch, cell 8 mm (700 nodes)', cantilever: jb, punch: jac }
+  console.log('jacobi', JSON.stringify(out.jacobi))
+  return out
+}
+
+/** 压入点周围细分过的一片皮肤（三角形汤），画凹痕用 / a subdivided patch of skin round a site (a triangle soup), for drawing the dent */
+function dentPatch(S: Site, skin: RawMesh, radius: number, spacing: number): { rest: Float32Array; pos: Float32Array; indices: Uint32Array } {
+  const p = skin.positions, idx = skin.indices, site = S.domain.site
+  const rest: number[] = []
+  for (let t = 0; t < idx.length; t += 3) {
+    const a = idx[t]! * 3, b = idx[t + 1]! * 3, d = idx[t + 2]! * 3
+    const far = [a, b, d].every((v) => Math.hypot(p[v]! - site[0], p[v + 1]! - site[1], p[v + 2]! - site[2]) > radius * 1.6)
+    if (far) continue
+    const e = Math.max(Math.hypot(p[b]! - p[a]!, p[b + 1]! - p[a + 1]!, p[b + 2]! - p[a + 2]!), Math.hypot(p[d]! - p[a]!, p[d + 1]! - p[a + 1]!, p[d + 2]! - p[a + 2]!))
+    const k = Math.max(1, Math.ceil(e / spacing))
+    const at = (i: number, j: number): [number, number, number] => [0, 1, 2].map((c) => p[a + c]! + ((p[b + c]! - p[a + c]!) * i + (p[d + c]! - p[a + c]!) * j) / k) as [number, number, number]
+    for (let i = 0; i < k; i++) for (let j = 0; j < k - i; j++) {
+      rest.push(...at(i, j), ...at(i + 1, j), ...at(i, j + 1))
+      if (j < k - i - 1) rest.push(...at(i + 1, j), ...at(i + 1, j + 1), ...at(i, j + 1))
+    }
+  }
+  const R = Float32Array.from(rest), em = S.domain.embed(R), s = S.domain.solver
+  const pos = Float32Array.from(R)
+  for (let i = 0; i < R.length / 3; i++) {
+    if (!em.inside[i]) continue
+    for (let k = 0; k < 4; k++) {
+      const n = s.tets[em.tet[i]! * 4 + k]! * 3, w = em.bary[i * 4 + k]!
+      for (let c = 0; c < 3; c++) pos[i * 3 + c] = pos[i * 3 + c]! + w * (s.x[n + c]! - s.ref[n + c]!)
+    }
+  }
+  return { rest: R, pos, indices: Uint32Array.from({ length: R.length / 3 }, (_, i) => i) }
+}
+
+function patchItem(rest: Float32Array, pos: Float32Array, indices: Uint32Array, scale: number): RenderItem {
+  const n = pos.length / 3, col = new Uint8Array(n * 3)
+  for (let i = 0; i < n; i++) {
+    const d = Math.min(1, Math.hypot(pos[i * 3]! - rest[i * 3]!, pos[i * 3 + 1]! - rest[i * 3 + 1]!, pos[i * 3 + 2]! - rest[i * 3 + 2]!) / scale)
+    col.set([222 + 33 * d, 190 - 150 * d, 170 - 140 * d], i * 3)
+  }
+  return { positions: pos, indices, color: [222, 190, 170], vertexColors: col }
+}
+
+const pressRow = (r: ReturnType<typeof press>): Record<string, unknown> => ({ depthMm: r.depthMm, forceN: r.forceN, meanPressureKPa: r.meanPressureKPa, peakPressureKPa: r.peakPressureKPa, contactAreaMm2: r.contactAreaMm2, peakStrain: r.peakStrain, strainAt2_5_10mm: [2, 5, 10].map((z) => r3(r.strainAtDepth(z))), valid: r.valid, flags: r.flags, frames: r.frames })
+
+// ── 前臂：细笼子上的 press()，对照 forearm2026 / the forearm: press() on a fine cage against forearm2026 ──────────
 async function forearm(): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = {}
-  const depths = [0.5, 1, 1.6, 2.4, 3.2, 4.5]
-  for (const cell of [0.012, 0.008]) {
-    const L = await load('male', cell, 'forearm_L')
-    const sites = forearmSites(L)
-    const res: Record<string, unknown> = { cage: L.stats }
-    for (const [name, v] of Object.entries(sites)) {
-      const sb = newBody(L, 16)
-      res[name] = indent(L, sb, v, 0.013, depths)
-      console.log(cell, name, JSON.stringify(res[name]))
-      if (cell === 0.008 && name === 'proximalThird') {
-        // 渲染：压到 4.5 mm 时的前臂 / render: the forearm pressed to 4.5 mm
-        const p = L.skin.positions
-        sb.solver.probe = { shape: { kind: 'flat', center: [p[v * 3]! - L.normals[v * 3]! * 0.008, p[v * 3 + 1]! - L.normals[v * 3 + 1]! * 0.008, p[v * 3 + 2]! - L.normals[v * 3 + 2]! * 0.008], axis: [-L.normals[v * 3]!, -L.normals[v * 3 + 1]!, -L.normals[v * 3 + 2]!], radius: 0.013 }, points: contactSamples(L, [p[v * 3]!, p[v * 3 + 1]!, p[v * 3 + 2]!], 0.035).points }
-        for (let f = 0; f < 90; f++) sb.step(DT)
-        const pos = displacedSkin(L, sb)
-        const view = { yaw: 60, pitch: 10, center: [p[v * 3]!, p[v * 3 + 1]!, p[v * 3 + 2]!] as [number, number, number], halfHeight: 0.11, width: 520, height: 520 }
-        sheet([render([skinItem(L, L.skin.positions, 0.006)], view), render([skinItem(L, pos, 0.006)], view), render([skinItem(L, pos, 0.006)], { ...view, yaw: 150 })], 3).save(join(DIR, 'forearm-pressed-8mm.png'))
-        res.renderDepthMm = 8
-        res.renderForceN = r3(Math.hypot(...sb.solver.probeForce))
-        // 松手后的回弹 / rebound after release
-        sb.solver.probe = null
+  const L = await load('male', 0.027)
+  const { body, rig } = L
+  const rigBin = (await loadBody('male')).rigBin
+  let t0 = performance.now()
+  const inBody = bodyInside(L.skin)
+  out.insideTestBuildMs = Math.round(performance.now() - t0)
+  const sites = forearmSites(L)
+  const at = (v: number): { site: [number, number, number]; normal: [number, number, number] } => ({ site: [L.skin.positions[v * 3]!, L.skin.positions[v * 3 + 1]!, L.skin.positions[v * 3 + 2]!], normal: [L.normals[v * 3]!, L.normals[v * 3 + 1]!, L.normals[v * 3 + 2]!] })
+  const published: Record<string, [number, number]> = { proximalThird: [3.2, 1.43], middle: [4.5, 2.83] }
+  for (const [name, v] of Object.entries(sites)) {
+    const { site, normal } = at(v)
+    const res: Record<string, unknown> = { published: { depthMm: published[name]![0], forceN: published[name]![1] } }
+    for (const cell of name === 'proximalThird' ? [0.0065, 0.0043] : [0.0043]) {
+      const S = buildSite(body, rig, rigBin, site, normal, 0.013, { cell, inBody })
+      t0 = performance.now()
+      const rows = [1.6, 3.2, 4.5].map((d) => pressRow(press(S.domain, { kind: 'flat', radiusMm: 13 }, { depthMm: d })))
+      res[`cell${(cell * 1000).toFixed(2)}mm`] = { tets: S.stats.tets, nodes: S.stats.nodes, buildMs: S.ms, massScale: r3(S.massScale), tissueThicknessMm: mm(S.domain.thickness ?? 0), solveSeconds: r3((performance.now() - t0) / 1000), rows }
+      console.log(name, cell, JSON.stringify(res[`cell${(cell * 1000).toFixed(2)}mm`]))
+      if (cell === 0.0043 && name === 'proximalThird') {
+        // 两级耦合：细笼子的反力加到粗笼子上，粗笼子的位移回到细笼子的切口 / two-level coupling: the fine reaction goes to the coarse cage, whose displacement returns to the cuts of the fine one
+        const coarse = newBody(L).solver
+        coarse.gravity = [0, 0, 0]
+        coarse.prestressGravity = null
+        const link = linkToCoarse(S, L.soft)
+        const before = press(S.domain, { kind: 'flat', radiusMm: 13 }, { depthMm: 3.2 })
+        const shift = couple(S.domain, coarse, link, before.forceN)
+        const after = press(S.domain, { kind: 'flat', radiusMm: 13 }, { depthMm: 3.2 })
+        res.twoLevel = { cutNodes: link.nodes.length, forceBeforeN: before.forceN, largestCutNodeDisplacementMm: mm(shift), forceAfterN: after.forceN }
+        console.log('two-level', JSON.stringify(res.twoLevel))
+        S.domain.solver.pinOffset = null
+        // 渲染：压到 8 mm / render: pressed to 8 mm
+        const s = S.domain.solver, a = 0.013, n = S.domain.inward
+        s.probe = { shape: { kind: 'flat', center: [site[0] + n[0] * 0.008, site[1] + n[1] * 0.008, site[2] + n[2] * 0.008], axis: [...n], radius: a }, points: S.domain.samples.points }
+        for (let f = 0; f < 200; f++) s.step(DT)
+        const patch = dentPatch(S, L.skin, 0.045, 0.003)
+        const view = { yaw: 60, pitch: 10, center: site, halfHeight: 0.07, width: 520, height: 520 }
+        const base = skinItem(L, L.skin.positions, 0.006)
+        sheet([render([base], view), render([base, patchItem(patch.rest, patch.pos, patch.indices, 0.008)], view), render([patchItem(patch.rest, patch.pos, patch.indices, 0.008)], { ...view, yaw: 150, halfHeight: 0.05 })], 3).save(join(DIR, 'forearm-pressed-8mm.png'))
+        s.probe = null
         const back: number[] = []
         for (let f = 0; f < 90; f++) {
-          sb.step(DT)
-          if (f % 15 === 14) back.push(mm(maxDisplacement(sb)))
+          s.step(DT)
+          if (f % 15 === 14) {
+            let m = 0
+            for (let i = 0; i < s.nodeCount * 3; i++) m = Math.max(m, Math.abs(s.x[i]! - s.ref[i]!))
+            back.push(mm(m))
+          }
         }
-        res.reboundMmEveryQuarterSecond = back
+        res.reboundMmEveryQuarterSecondPseudoTime = back
       }
     }
-    // 子步收敛：同一个压入，子步数不同 / convergence in substeps: the same press with different substep counts
-    if (cell === 0.012) res.substepConvergence = [4, 8, 16, 32].map((n) => ({ substeps: n, forceAt3_2mm: indent(L, newBody(L, n), sites.proximalThird!, 0.013, [3.2])[0]!.forceN }))
-    out[`cell${cell * 1000}mm`] = res
+    // 表 4 里皮肤的另一组候选参数：neo-Hookean C10 = 120 kPa（E = 720 kPa），以及没有皮肤刚度的情形，看皮肤的影响有多大
+    // the other skin candidate of Table 4: neo-Hookean C10 = 120 kPa (E = 720 kPa), and no skin stiffness at all, to see how much the skin matters
+    for (const [vn, mix] of [['skinNeoHookean720kPa', { scale: { skin: 720000 / 56400 }, kappa: { skin: 0 } }], ['withoutSkinStiffness', { skin: 'none' }]] as [string, MixOptions][]) {
+      const S = buildSite(body, rig, rigBin, site, normal, 0.013, { cell: 0.0065, inBody, mix })
+      res[vn] = { cellMm: 6.5, rows: [3.2, 4.5].map((d) => pressRow(press(S.domain, { kind: 'flat', radiusMm: 13 }, { depthMm: d }))) }
+      console.log(name, vn, JSON.stringify((res[vn] as { rows: { depthMm: number; forceN: number }[] }).rows.map((r) => [r.depthMm, r.forceN])))
+    }
+    out[name] = res
+  }
+  // 疼痛工具的小压头：半径 5.64 mm（100 mm²），5 N 和 50 N / the pain tool's small probe: radius 5.64 mm (100 mm²), 5 N and 50 N
+  {
+    const { site, normal } = at(sites.proximalThird!)
+    const S = buildSite(body, rig, rigBin, site, normal, 0.00564, { inBody })
+    t0 = performance.now()
+    const r5 = press(S.domain, { kind: 'flat', radiusMm: 5.64 }, { forceN: 5 })
+    const patch = dentPatch(S, L.skin, 0.02, 0.0012)
+    const r50 = press(S.domain, { kind: 'flat', radiusMm: 5.64 }, { forceN: 50 })
+    out.painProbe = { radiusMm: 5.64, cellMm: mm(S.domain.cell), tets: S.stats.tets, buildMs: S.ms, tissueThicknessMm: mm(S.domain.thickness ?? 0), solveSeconds: r3((performance.now() - t0) / 1000), at5N: { ...pressRow(r5), pressureProfile: r5.pressureProfile }, at50N: { ...pressRow(r50), pressureProfile: r50.pressureProfile } }
+    console.log('pain probe', JSON.stringify(out.painProbe))
+    // 5 N 时的凹痕特写：左 = 静止，中 = 压入后斜看，右 = 沿前臂轴向看剖面 / close-up of the dent at 5 N: rest, pressed (oblique), pressed (looking along the forearm)
+    const view = { yaw: 40, pitch: 35, center: site, halfHeight: 0.022, width: 520, height: 520 }
+    const flat = patchItem(patch.rest, patch.rest, patch.indices, 0.004), dent = patchItem(patch.rest, patch.pos, patch.indices, 0.004)
+    sheet([render([flat], view), render([dent], view), render([dent], { ...view, yaw: 90, pitch: 2 })], 3).save(join(DIR, 'probe-dent-closeup.png'))
   }
   return out
 }
 
-// ── 其他部位的压入：只有我们的数 / indentation elsewhere: our numbers only ────────────────────
-async function otherSites(): Promise<Record<string, unknown>> {
+// ── 腹部：半球头压头对照 Remus 2024 / the abdomen: a hemispherical tip against Remus 2024 ────────────────
+async function abdomen(): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = {}
-  const depths = [2, 5, 10]
-  {
-    const L = await load('male', 0.014, 'thigh_L')
-    const c = (id: string): [number, number, number] => L.rig.joints.find((j) => j.id === id)!.center
-    const h = c('hip_L'), k = c('knee_L')
-    const v = nearestSkinVertex(L, [(h[0] + k[0]) / 2, (h[1] + k[1]) / 2, (h[2] + k[2]) / 2 + 0.1], [0, 0, 1])
-    out.thighAnteriorMid = { cage: L.stats, punchRadiusMm: 13, rows: indent(L, newBody(L, 16), v, 0.013, depths) }
-    console.log('thigh', JSON.stringify(out.thighAnteriorMid))
+  const L = await load('male', 0.027)
+  const rigBin = (await loadBody('male')).rigBin
+  const inBody = bodyInside(L.skin)
+  // 该文表 4 的平均力–位移多项式（牛，毫米）/ the mean force–displacement polynomials of its Table 4 (N, mm)
+  const fits: Record<string, { max: number; f: (d: number) => number; rmse: number }> = {
+    R2: { max: 30, rmse: 0.963, f: (d) => -2.937e-6 * d ** 4 + 2.59e-4 * d ** 3 + 2.479e-3 * d * d + 0.2163 * d },
+    R3: { max: 30, rmse: 0.512, f: (d) => 8.604e-3 * d * d + 0.126 * d },
   }
-  {
-    const L = await load('male', 0.016, 'abdomen')
-    const c = L.rig.joints.find((j) => j.id === 'L3')!.center
-    const v = nearestSkinVertex(L, [0.04, c[1], c[2] + 0.15], [0, 0, 1])
-    out.abdomenParaumbilical = { cage: L.stats, punchRadiusMm: 13, rows: indent(L, newBody(L, 16), v, 0.013, [...depths, 20]) }
-    console.log('abdomen', JSON.stringify(out.abdomenParaumbilical))
+  const c = (id: string): [number, number, number] => L.rig.joints.find((j) => j.id === id)!.center
+  // R2：腹直肌中央、脐的高度；R3：再往下约 6 cm（结节间平面以下 1 cm）。位置按关节高度估计。
+  // R2: centre of the rectus abdominis at the level of the umbilicus; R3: about 6 cm lower (1 cm below the intertubercular plane). Heights estimated from joints.
+  const yUmb = (c('L3')[1] + c('L5')[1]) / 2
+  const sitesAt: Record<string, [number, number, number]> = { R2: [-0.04, yUmb, c('L3')[2] + 0.15], R3: [-0.04, yUmb - 0.06, c('L3')[2] + 0.15] }
+  const depths = [5, 10, 15, 20, 25, 30]
+  for (const [name, target] of Object.entries(sitesAt)) {
+    const v = nearestSkinVertex(L, target, [0, 0, 1])
+    const site: [number, number, number] = [L.skin.positions[v * 3]!, L.skin.positions[v * 3 + 1]!, L.skin.positions[v * 3 + 2]!]
+    const normal: [number, number, number] = [L.normals[v * 3]!, L.normals[v * 3 + 1]!, L.normals[v * 3 + 2]!]
+    const variants: [string, MixOptions][] = name === 'R2' ? [['default', {}], ['withoutStiffening', { stiffening: false }], ['softerWallAndContents', { scale: { abdomen: 7500 / 10500 }, kappa: { abdomen: 5.8 } }]] : [['default', {}]]
+    const res: Record<string, unknown> = { site }
+    for (const [vn, mix] of variants) {
+      const S = buildSite(L.body, L.rig, rigBin, site, normal, 0.01, { cell: 0.007, extent: 0.065, inBody, mix })
+      const t0 = performance.now()
+      const rows = depths.map((d) => {
+        const r = press(S.domain, { kind: 'hemisphere', radiusMm: 10 }, { depthMm: d }, { maxFrames: 300 })
+        console.log(name, vn, d, r.forceN, r3(fits[name]!.f(d)), r.flags.join('+'))
+        return { ...pressRow(r), publishedMeanN: r3(fits[name]!.f(d)), ratio: r3(r.forceN / fits[name]!.f(d)) }
+      })
+      res[vn] = { tets: S.stats.tets, buildMs: S.ms, tissueThicknessMm: mm(S.domain.thickness ?? 0), byMaterial: S.stats.byMaterial, solveSeconds: r3((performance.now() - t0) / 1000), rows }
+    }
+    res.publishedRmse = fits[name]!.rmse
+    out[name] = res
   }
   return out
 }
 
-// ── 女性胸部：乳房的重力位移，预应力与零重力参考两种做法 / female chest: gravity displacement of the breast, by pre-stress and by the zero-gravity reference ──
+// ── 女性胸部：乳房在站立、仰卧、俯卧之间的重力位移 / female chest: gravity displacement of the breast between standing, supine and prone ──
 async function breast(): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = {}
-  const L = await load('female', 0.014, 'chest', true)
-  out.cage = L.stats
-  out.rest0 = L.rest0
-  // 乳头处：每侧乳房最靠前的皮肤顶点 / at the nipple: the most anterior skin vertex of each breast
-  const nip = (side: number): number => {
-    let best = -1, bz = -Infinity
-    const p = L.skin.positions
-    for (const v of subset(L, (_i, x, y) => x * side > 0.04 && x * side < 0.16 && y > 1.05 && y < 1.3).verts) if (p[v * 3 + 2]! > bz) (bz = p[v * 3 + 2]!), (best = v)
-    return best
-  }
-  const nipples = [nip(1), nip(-1)]
-  const breastMat = new Set(L.soft.data.materials.map((m, i) => (m.id.startsWith('breast') ? i : -1)).filter((i) => i >= 0))
-  const ofBreast = (e: number): boolean => breastMat.has(L.soft.tetMaterial[e]!)
-  const images = []
-  // 第三种：不把皮肤刚度混进边界四面体，看皮肤的贡献有多大 / a third variant without skin stiffness in the boundary tetrahedra, to see how much the skin contributes
-  for (const variant of ['prestress', 'zeroGravityReference', 'prestressWithoutSkinStiffness'] as const) {
-    const useRest0 = variant === 'zeroGravityReference'
-    const key = variant
-    const sb = newBody(L, 12, useRest0, variant === 'prestressWithoutSkinStiffness' ? 'none' : 'voigt')
-    for (let f = 0; f < 240; f++) sb.step(DT)
-    const standing = mm(maxDisplacement(sb))
-    const pos0 = displacedSkin(L, sb)
-    lieSupine(L, sb)
-    for (let f = 0; f < 360; f++) sb.step(DT)
-    const pos = displacedSkin(L, sb)
-    const d = nipples.map((v) => [pos[v * 3]! - pos0[v * 3]!, pos[v * 3 + 1]! - pos0[v * 3 + 1]!, pos[v * 3 + 2]! - pos0[v * 3 + 2]!])
-    out[key] = {
-      standingResidualMm: standing,
-      nippleDisplacementMm: d.map((u, i) => ({ side: i === 0 ? 'L' : 'R', lateral: mm(u[0]! * (i === 0 ? 1 : -1)), cranial: mm(u[1]!), anterior: mm(u[2]!), magnitude: mm(Math.hypot(u[0]!, u[1]!, u[2]!)) })),
-      breastVolumeRatio: Math.round((sb.solver.volume(ofBreast) / sb.solver.referenceVolume(ofBreast)) * 1e4) / 1e4,
-      volumeRatioByMaterial: volumesByMaterial(L, sb), settledSpeed: sb.solver.maxSpeed(),
+  const images: ReturnType<typeof render>[] = [], chest: ReturnType<typeof render>[] = []
+  for (const cell of [0.014]) {
+    const L = await load('female', cell, 'chest')
+    // 乳头处：每侧乳房最靠前的皮肤顶点 / at the nipple: the most anterior skin vertex of each breast
+    const nip = (side: number): number => {
+      let best = -1, bz = -Infinity
+      const p = L.skin.positions
+      for (const v of subset(L, (_i, x, y) => x * side > 0.04 && x * side < 0.16 && y > 1.05 && y < 1.3).verts) if (p[v * 3 + 2]! > bz) (bz = p[v * 3 + 2]!), (best = v)
+      return best
     }
-    console.log(key, JSON.stringify(out[key]))
-    const view = { yaw: 90, center: [0, 1.18, 0.08] as [number, number, number], halfHeight: 0.2, width: 380, height: 420 }
-    images.push(render([skinItem(L, pos0, 0.03)], view), render([skinItem(L, pos, 0.03)], view), render([skinItem(L, pos, 0.03)], { ...view, yaw: 0 }))
+    const nipples = [nip(1), nip(-1)]
+    const breastMat = new Set(L.soft.data.materials.map((m, i) => (m.id.startsWith('breast') ? i : -1)).filter((i) => i >= 0))
+    const ofBreast = (e: number): boolean => breastMat.has(L.soft.tetMaterial[e]!)
+    // 乳房内的"标志点"：乳房四面体的结点，按所属乳房四面体的体积加权 / "landmarks" inside the breast: nodes of breast tetrahedra, weighted by the breast volume they carry
+    const weight = new Float64Array(L.soft.data.nodeCount)
+    let breastTets = 0, litres = 0
+    for (let e = 0; e < L.soft.data.tetCount; e++) if (ofBreast(e)) {
+      breastTets++
+      litres += ((cell ** 3 / 12) * L.soft.tetFill[e]!) / 255 * 1000
+      for (let k = 0; k < 4; k++) weight[L.soft.tets[e * 4 + k]!] = weight[L.soft.tets[e * 4 + k]!]! + L.soft.tetFill[e]! / 255
+    }
+    const res: Record<string, unknown> = { cage: L.stats, breastTets, breastLitresBothSides: r3(litres) }
+    const softest = 166.6 / 357.1
+    const variants: [string, MixOptions, SolverOptions][] = [
+      ['phase2', {}, {}],
+      ['phase2SoftestPublished', { scale: { breast_fat: softest, breast_gland: softest } }, {}],
+      ['phase2WithoutSkinStiffness', { skin: 'none' }, {}],
+      ['phase1NumericsAndModuli', { ...PHASE1[0], scale: { breast_fat: 2550 / 1071, breast_gland: 2880 / 1071 } }, PHASE1[1]],
+    ]
+    for (const [name, mix, opts] of variants) {
+      if (cell !== 0.014 && name !== 'phase2') continue
+      const sb = newBody(L, 12, mix, opts)
+      const settle = (g: [number, number, number]): Float64Array => {
+        sb.solver.gravity = g
+        let prev = Infinity
+        for (let f = 0; f < 600; f++) {
+          sb.step(DT)
+          if (f % 30 === 29) {
+            const m = maxDisplacement(sb)
+            if (Math.abs(m - prev) < 2e-5) break
+            prev = m
+          }
+        }
+        return Float64Array.from(sb.solver.x)
+      }
+      const stand = settle([0, -9.81, 0]), pos0 = displacedSkin(L, sb)
+      const standing = mm(maxDisplacement(sb))
+      const sup = settle([0, 0, -9.81]), posS = displacedSkin(L, sb)
+      const volSup = sb.solver.volume(ofBreast) / sb.solver.referenceVolume(ofBreast)
+      const pro = settle([0, 0, 9.81]), posP = displacedSkin(L, sb)
+      const meanShift = (a: Float64Array, b: Float64Array): number => {
+        let s = 0, w = 0
+        for (let i = 0; i < weight.length; i++) if (weight[i]! > 0) (s += weight[i]! * Math.hypot(a[i * 3]! - b[i * 3]!, a[i * 3 + 1]! - b[i * 3 + 1]!, a[i * 3 + 2]! - b[i * 3 + 2]!)), (w += weight[i]!)
+        return mm(s / w)
+      }
+      const nipShift = (a: Float32Array, b: Float32Array): unknown => nipples.map((v, i) => ({ side: i === 0 ? 'L' : 'R', lateral: mm((b[v * 3]! - a[v * 3]!) * (i === 0 ? 1 : -1)), cranial: mm(b[v * 3 + 1]! - a[v * 3 + 1]!), anterior: mm(b[v * 3 + 2]! - a[v * 3 + 2]!), magnitude: mm(Math.hypot(b[v * 3]! - a[v * 3]!, b[v * 3 + 1]! - a[v * 3 + 1]!, b[v * 3 + 2]! - a[v * 3 + 2]!)) }))
+      res[name] = {
+        standingResidualMm: standing,
+        standingToSupine: { nipple: nipShift(pos0, posS), meanBreastTissueMm: meanShift(stand, sup) },
+        standingToProne: { nipple: nipShift(pos0, posP), meanBreastTissueMm: meanShift(stand, pro) },
+        proneToSupine: { nipple: nipShift(posP, posS), meanBreastTissueMm: meanShift(pro, sup) },
+        breastVolumeRatioSupine: Math.round(volSup * 1e4) / 1e4,
+      }
+      console.log(cell, name, JSON.stringify(res[name]))
+      if (cell === 0.014 && (name === 'phase2' || name === 'phase2SoftestPublished')) {
+        const view = { yaw: 90, center: [0, 1.18, 0.08] as [number, number, number], halfHeight: 0.2, width: 380, height: 420 }
+        const row = [pos0, posS, posP].flatMap((p) => [render([skinItem(L, p, 0.03)], view), render([skinItem(L, p, 0.03)], { ...view, yaw: 0 })])
+        images.push(...row)
+        if (name === 'phase2') chest.push(row[0]!, row[2]!, row[3]!)
+      }
+    }
+    out[`cell${cell * 1000}mm`] = res
   }
-  sheet(images, 3).save(join(DIR, 'female-chest-standing-vs-supine.png'))
-  out.breastTets = L.soft.tetMaterial.reduce((s, m) => s + (breastMat.has(m) ? 1 : 0), 0)
+  // 每行：站立、仰卧、俯卧，各有侧面和正面；第一行是缺省材料，第二行是文献里最软的乳房 / each row: standing, supine, prone, side and front; row 1 the default material, row 2 the softest published breast
+  sheet(images, 6).save(join(DIR, 'female-breast-standing-supine-prone.png'))
+  sheet(chest, 3).save(join(DIR, 'female-chest-standing-vs-supine.png'))
   return out
 }
 
 if (import.meta.main) {
   mkdirSync(DIR, { recursive: true })
   const which = process.argv[2] ?? 'all'
-  const groups: Record<string, () => Promise<Record<string, unknown>>> = { body: wholeBody, forearm, sites: otherSites, breast }
+  const groups: Record<string, () => Promise<Record<string, unknown>>> = { numerics, body: wholeBody, forearm, abdomen, breast }
   for (const [name, run] of Object.entries(groups)) {
     if (which !== 'all' && which !== name) continue
     const t0 = performance.now()
@@ -453,7 +661,22 @@ if (import.meta.main) {
   // 汇总：把已有的各组结果和文献数值并到一个文件里 / summary: merges the group results present with the literature numbers
   const got: Record<string, unknown> = {}
   for (const name of Object.keys(groups)) if (existsSync(join(DIR, `${name}.json`))) got[name] = JSON.parse(readFileSync(join(DIR, `${name}.json`), 'utf8'))
-  const lit = JSON.parse(readFileSync(join(ROOT, 'data', 'curated', 'softbody', 'validation.json'), 'utf8')) as { indentation: unknown[]; posture: unknown[] }
-  writeFileSync(REPORT, JSON.stringify({ _doc: { zh: '软组织求解器在当前几何上的验证结果（tools/softbody/validate.ts 生成）；literature 是 validation.json 里对应的已发表数值。几何还会改，改后要重跑。', en: 'Validation results of the soft-tissue solver on the current geometry (written by tools/softbody/validate.ts); `literature` holds the matching published numbers of validation.json. The geometry will change, after which this must be rerun.' }, literature: { indentation: lit.indentation, posture: lit.posture }, ours: got }, null, 1))
+  const lit = JSON.parse(readFileSync(join(ROOT, 'data', 'curated', 'softbody', 'validation.json'), 'utf8')) as Record<string, unknown>
+  const report = {
+    _doc: {
+      zh: '软组织求解器在当前几何上的验证结果（tools/softbody/validate.ts 生成）；literature 是 validation.json 里对应的已发表数值；phase1 是第一阶段报告过的数（当时的求解器和笼子），留作前后对照。几何还会改，改后要重跑。',
+      en: 'Validation results of the soft-tissue solver on the current geometry (written by tools/softbody/validate.ts); `literature` holds the matching published numbers of validation.json; `phase1` holds the numbers reported in phase 1 (the solver and cages of that time), kept for comparison. The geometry will change, after which this must be rerun.',
+    },
+    literature: { indentation: lit.indentation, posture: lit.posture, analytic: lit.analytic, softTissueMotion: lit.softTissueMotion },
+    phase1: {
+      forearmFlatPunch3_2mmForceN: { published: 1.43, cell12mmBySubsteps: { 4: 0.43, 8: 0.84, 16: 1.2, 32: 1.36 }, cell8mmAt16Substeps: 0.8, wholeBodyCell27mm: [2.3, 2.5] },
+      breastStandingToSupineNippleMm: [2.5, 4.1],
+      hipFlexionLargestNodeDisplacementMm: 188,
+      muscleVolumeErrorAt10Substeps: 0.062,
+      msPerFrameAt10Substeps: 32,
+    },
+    ours: got,
+  }
+  writeFileSync(REPORT, JSON.stringify(report, null, 1))
   console.log('wrote', REPORT.slice(ROOT.length + 1))
 }

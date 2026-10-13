@@ -21,6 +21,21 @@
 //      在骨的位置放一个嵌入式锚点。
 //      Bone: nodes inside rigid parts (bone, cartilage, teeth whose binding has a joint) are pinned to that joint;
 //      a tetrahedron crossed by bone without a node inside gets an embedded anchor where the bone is.
+//   4b. 骨穿过的四面体里的锚点带一个权重 = 骨占四面体的体积比例（9 个采样点里落在骨内的个数）；求解器据此给锚点
+//      一个有限的刚度，骨只擦过一角的四面体不再被整个拴死（刚度公式在 src/softbody/body.ts 的 anchorStiffness）。
+//      The anchor of a tetrahedron crossed by bone carries a weight = the share of the tetrahedron taken by bone (the
+//      number of its nine samples inside bone); the solver gives the anchor a finite stiffness from it, so a
+//      tetrahedron merely grazed by bone is no longer tied down as a whole (formula: anchorStiffness in src/softbody/body.ts).
+//   4c. 不跨气隙粘连：两个相邻四面体共用的面如果整个在体外（三个角点和面上的采样点都不在体内），它们在这个面上
+//      不相连；一个格点周围的四面体按"经由体内的面相连"分成几组，每组各用自己的一份结点（结点分裂）。
+//      手指之间、上臂与胸壁、两大腿之间、乳房下皱襞因此不再共用结点。一个四面体自己同时含有两侧组织时仍然粘着
+//      （气隙比单元窄的地方），这只能靠更细的单元解决。
+//      No gluing across an air gap: when the face shared by two tetrahedra lies wholly outside the body (its three
+//      corners and the samples on it are all outside), the two are not connected through it; the tetrahedra around a
+//      lattice node fall into groups "connected through faces inside the body" and each group gets its own copy of
+//      the node (node splitting). Fingers, arm and chest wall, the two thighs and the fold under the breast thus stop
+//      sharing nodes. A single tetrahedron holding tissue of both sides (a gap narrower than a cell) still glues
+//      them; only finer cells cure that.
 //   5. 结点的蒙皮权重取自附近软部件顶点的权重；肌肉纤维方向取绑定里的作用线。
 //      Node skinning weights come from nearby vertices of soft parts; muscle fibre directions from the rig's lines of action.
 
@@ -43,6 +58,8 @@ export interface CageOptions {
   gravity: [number, number, number]
   materials: SoftMaterial[]
   skinThickness: number
+  /** 已经建好的"是否在体内"判断（bodyInside 的结果），按需建区域笼子时复用，省掉大半时间 / a ready inside-the-body test (the result of bodyInside), reused when regional cages are built on demand: most of the time is saved */
+  inBody?: (x: number, y: number, z: number) => boolean
 }
 
 export interface CageStats {
@@ -51,6 +68,12 @@ export interface CageStats {
   tets: number
   pinnedNodes: number
   rigidTets: number
+  /** 为了不跨气隙粘连而分裂出来的结点数 / nodes created by splitting so that nothing is glued across an air gap */
+  splitNodes: number
+  /** 被体内组织包住、因而改判为体内的"体外"格点数 / lattice nodes judged outside but enclosed by tissue, and therefore reclassified as inside */
+  filledVoids: number
+  /** 被判为"在体外"的共用面数 / shared faces judged to lie outside the body */
+  openFaces: number
   /** 没有任何约束、因而整块钉住的四面体数 / tetrahedra held by nothing and therefore pinned as a whole */
   islandTets: number
   anchors: number
@@ -98,7 +121,7 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
   const skinPart = parts.filter((p) => p.tissue === 'skin').sort((a, b) => b.triangles - a.triangles)[0]
   if (!skinPart) throw new Error('softbody: the body has no skin part')
   const skin = body.meshes.get(skinPart.id)!
-  const inBody = bodyInside(skin)
+  const inBody = opts.inBody ?? bodyInside(skin)
   const jointIndex = new Map(rig.joints.map((j, i) => [j.id, i]))
   const bindingOf = new Map(rig.bindings.map((b) => [b.part, b]))
   const partIndex = new Map(parts.map((p, i) => [p.id, i]))
@@ -180,6 +203,15 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     sbAll[k] = Math.min(sbAll[k]!, skin.positions[i + k]!)
     sbAll[k + 3] = Math.max(sbAll[k + 3]!, skin.positions[i + k]!)
   }
+  // 区域笼子：格子要盖住整个区域盒子（与全身皮肤包围盒的交），而不只是盒内皮肤顶点的包围盒——否则小区域的笼子
+  // 只有表面那片皮肤那么深，底下是空的、也没有钉住，压上去偏软。
+  // A regional cage: the lattice must cover the whole region box (cut to the bounds of the whole skin), not just the
+  // bounds of the skin vertices inside it; otherwise the cage of a small region is only as deep as its patch of skin,
+  // with nothing below and nothing pinned, and it presses too soft.
+  if (opts.region) for (let k = 0; k < 3; k++) {
+    sb[k] = Math.min(sb[k]!, Math.max(opts.region[k]!, sbAll[k]!))
+    sb[k + 3] = Math.max(sb[k + 3]!, Math.min(opts.region[k + 3]!, sbAll[k + 3]!))
+  }
   const a = opts.cell
   const lattice: Lattice = {
     origin: [Math.floor(sb[0]! / a - 1.5) * a, Math.floor(sb[1]! / a - 1.5) * a, Math.floor(sb[2]! / a - 1.5) * a],
@@ -199,6 +231,79 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
       nodeClass.set(id, c)
     }
     return c
+  }
+  // 封闭的空洞填上：皮肤网格上有自相交的小褶子，射线奇偶性在那里判错，细笼子里会出现体内的"体外"口袋（前臂掌侧
+  // 6 mm 深处就有一个，1.9 mm 的笼子在那里断开）。从格子边界出发沿 BCC 邻接把真正的体外结点走一遍，走不到的"体外"
+  // 结点其实在体内，改归"其余软组织"。
+  // Enclosed voids are filled: the skin mesh has small self-intersecting folds where ray parity goes wrong, leaving
+  // pockets of "outside" inside the body in a fine cage (one lies 6 mm under the volar forearm, where a 1.9 mm cage
+  // came apart). The true outside is walked from the lattice boundary along BCC adjacency; "outside" nodes it does
+  // not reach are inside the body and are reclassified as "other soft tissue".
+  let filledVoids = 0
+  {
+    const [nx, ny, nz] = lattice.dims
+    const nc = (nx + 1) * (ny + 1) * (nz + 1), total = nc + nx * ny * nz
+    const cls = new Uint32Array(total)
+    for (let id = 0; id < total; id++) cls[id] = classOfNode(id)
+    // 先做一次"闭运算"：8 个 BCC 邻居里至少 6 个在体内的"体外"结点改判为体内。皮肤自相交处的假空隙是通到体外的薄片，
+    // 泛洪填不掉它，但它只有一个结点厚；真正的气隙（指缝、腋下）比这宽。
+    // First a "closing": an "outside" node with at least 6 of its 8 BCC neighbours inside becomes inside. The false gap
+    // at a self-intersection of the skin is a thin sheet open to the outside, which the flood fill cannot remove, but
+    // it is one node thick; true air gaps (between fingers, the armpit) are wider.
+    const flip: number[] = []
+    for (let id = 0; id < total; id++) {
+      if (cls[id] !== 0) continue
+      let inside = 0
+      if (id < nc) {
+        const i = id % (nx + 1), j = Math.floor(id / (nx + 1)) % (ny + 1), k = Math.floor(id / ((nx + 1) * (ny + 1)))
+        for (let c = 0; c < 8; c++) {
+          const ci = i - (c & 1), cj = j - ((c >> 1) & 1), ck = k - (c >> 2)
+          if (ci >= 0 && cj >= 0 && ck >= 0 && ci < nx && cj < ny && ck < nz && cls[nc + ci + nx * (cj + ny * ck)] !== 0) inside++
+        }
+      } else {
+        const c = id - nc, i = c % nx, j = Math.floor(c / nx) % ny, k = Math.floor(c / (nx * ny))
+        for (let q = 0; q < 8; q++) if (cls[i + (q & 1) + (nx + 1) * (j + ((q >> 1) & 1) + (ny + 1) * (k + (q >> 2)))] !== 0) inside++
+      }
+      if (inside >= 6) flip.push(id)
+    }
+    for (const id of flip) {
+      cls[id] = CLS.other
+      nodeClass.set(id, CLS.other)
+      filledVoids++
+    }
+    const seen = new Uint8Array(total)
+    const stack: number[] = []
+    const visit = (id: number): void => {
+      if (seen[id] || cls[id] !== 0) return
+      seen[id] = 1
+      stack.push(id)
+    }
+    // 种子：格子最外一层的角点 / seeds: the corners of the outermost layer of the lattice
+    for (let k = 0; k <= nz; k++) for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) if (i === 0 || j === 0 || k === 0 || i === nx || j === ny || k === nz) visit(i + (nx + 1) * (j + (ny + 1) * k))
+    while (stack.length) {
+      const id = stack.pop()!
+      if (id < nc) {
+        const i = id % (nx + 1), j = Math.floor(id / (nx + 1)) % (ny + 1), k = Math.floor(id / ((nx + 1) * (ny + 1)))
+        // 角点的邻居：周围 8 个单元的中心，以及 6 个轴向的角点 / neighbours of a corner: the centres of the 8 cells round it and the 6 axial corners
+        for (let c = 0; c < 8; c++) {
+          const ci = i - (c & 1), cj = j - ((c >> 1) & 1), ck = k - (c >> 2)
+          if (ci >= 0 && cj >= 0 && ck >= 0 && ci < nx && cj < ny && ck < nz) visit(nc + ci + nx * (cj + ny * ck))
+        }
+        if (i > 0) visit(id - 1)
+        if (i < nx) visit(id + 1)
+        if (j > 0) visit(id - (nx + 1))
+        if (j < ny) visit(id + (nx + 1))
+        if (k > 0) visit(id - (nx + 1) * (ny + 1))
+        if (k < nz) visit(id + (nx + 1) * (ny + 1))
+      } else {
+        const c = id - nc, i = c % nx, j = Math.floor(c / nx) % ny, k = Math.floor(c / (nx * ny))
+        for (let q = 0; q < 8; q++) visit(i + (q & 1) + (nx + 1) * (j + ((q >> 1) & 1) + (ny + 1) * (k + (q >> 2))))
+      }
+    }
+    for (let id = 0; id < total; id++) if (cls[id] === 0 && !seen[id]) {
+      nodeClass.set(id, CLS.other)
+      filledVoids++
+    }
   }
   // 皮肤顶点所在的槽位一定保留（嵌入要用）/ slots holding skin vertices are always kept (the embedding needs them)
   const skinSlot = new Int32Array(skin.positions.length / 3).fill(-1)
@@ -241,7 +346,98 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     votes.push(v)
   }
   const mesh = meshFromSlots(lattice, slots)
-  const N = mesh.nodes.length / 3, T = slots.length
+  const T = slots.length
+  // ── 结点分裂（见文件头 4c）/ node splitting (header 4c) ──
+  let splitNodes = 0, openFaces = 0
+  {
+    const N0 = mesh.nodes.length / 3
+    const inside = new Uint8Array(N0)
+    for (let i = 0; i < N0; i++) inside[i] = (nodeClass.get(mesh.latticeId[i]!) ?? 0) !== 0 ? 1 : 0
+    // 每个四面体四个面对面的邻居；−1 = 没有，−2 = 有但面在体外 / the neighbour across each of the four faces; −1 = none, −2 = present but the face is outside the body
+    const adj = new Int32Array(T * 4).fill(-1)
+    const faceOwner = new Map<number, number>()
+    const M = N0 + 1
+    const nd = mesh.nodes
+    for (let e = 0; e < T; e++) for (let k = 0; k < 4; k++) {
+      const f = [0, 1, 2, 3].filter((c) => c !== k).map((c) => mesh.tets[e * 4 + c]!).sort((x, y) => x - y)
+      const key = (f[0]! * M + f[1]!) * M + f[2]!
+      const o = faceOwner.get(key)
+      if (o === undefined) {
+        faceOwner.set(key, e * 4 + k)
+        continue
+      }
+      let open = inside[f[0]!]! + inside[f[1]!]! + inside[f[2]!]! > 0
+      if (!open) {
+        // 面上的 10 个采样点：重心、靠三个角、三条边的中点、边中点与重心之间 / ten samples on the face: centroid, near the corners, edge midpoints, between midpoints and centroid
+        const a = f[0]! * 3, b = f[1]! * 3, c = f[2]! * 3
+        const W = [[1, 1, 1], [4, 1, 1], [1, 4, 1], [1, 1, 4], [1, 1, 0], [1, 0, 1], [0, 1, 1], [2, 2, 1], [2, 1, 2], [1, 2, 2]]
+        for (const w of W) {
+          const t = w[0]! + w[1]! + w[2]!
+          if (inBody((nd[a]! * w[0]! + nd[b]! * w[1]! + nd[c]! * w[2]!) / t, (nd[a + 1]! * w[0]! + nd[b + 1]! * w[1]! + nd[c + 1]! * w[2]!) / t, (nd[a + 2]! * w[0]! + nd[b + 2]! * w[1]! + nd[c + 2]! * w[2]!) / t)) {
+            open = true
+            break
+          }
+        }
+      }
+      if (!open) openFaces++
+      adj[e * 4 + k] = open ? o >> 2 : -2
+      adj[o] = open ? e : -2
+    }
+    const tetsOf: number[][] = Array.from({ length: N0 }, () => [])
+    for (let e = 0; e < T; e++) for (let k = 0; k < 4; k++) tetsOf[mesh.tets[e * 4 + k]!]!.push(e * 4 + k)
+    const extraPos: number[] = [], extraId: number[] = []
+    const group = new Map<number, number>()
+    for (let i = 0; i < N0; i++) {
+      const inc = tetsOf[i]!
+      if (inc.length < 2) continue
+      group.clear()
+      let groups = 0
+      for (const start of inc) {
+        if (group.has(start >> 2)) continue
+        const gi = groups++
+        const stack = [start]
+        group.set(start >> 2, gi)
+        while (stack.length) {
+          const ec = stack.pop()!, e = ec >> 2, c = ec & 3
+          // 含结点 i 的三个面 = 对着另外三个角的面 / the three faces containing node i = those opposite the other three corners
+          for (let k = 0; k < 4; k++) {
+            if (k === c) continue
+            const o = adj[e * 4 + k]!
+            if (o < 0 || group.has(o)) continue
+            group.set(o, gi)
+            let oc = 0
+            for (let q = 0; q < 4; q++) if (mesh.tets[o * 4 + q] === i) oc = q
+            stack.push(o * 4 + oc)
+          }
+        }
+      }
+      if (groups < 2) continue
+      // 第 0 组留用原结点，其余各组各得一份 / group 0 keeps the node, every other group gets a copy
+      const copy = new Int32Array(groups).fill(-1)
+      for (const ec of inc) {
+        const gi = group.get(ec >> 2)!
+        if (gi === 0) continue
+        if (copy[gi]! < 0) {
+          copy[gi] = N0 + extraId.length
+          extraPos.push(nd[i * 3]!, nd[i * 3 + 1]!, nd[i * 3 + 2]!)
+          extraId.push(mesh.latticeId[i]!)
+        }
+        mesh.tets[ec] = copy[gi]!
+      }
+    }
+    splitNodes = extraId.length
+    if (splitNodes) {
+      const nodes = new Float32Array((N0 + splitNodes) * 3)
+      nodes.set(mesh.nodes)
+      nodes.set(extraPos, N0 * 3)
+      const ids = new Uint32Array(N0 + splitNodes)
+      ids.set(mesh.latticeId)
+      ids.set(extraId, N0)
+      mesh.nodes = nodes
+      mesh.latticeId = ids
+    }
+  }
+  const N = mesh.nodes.length / 3
   const matIndex = new Map(opts.materials.map((m, i) => [m.id, i]))
   const mat = (id: string): number => {
     const i = matIndex.get(id)
@@ -321,16 +517,18 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
   let embedded = 0
   // 落在被丢弃的四面体里的皮肤顶点：外推到共用格点的相邻四面体里（取最负的重心坐标最接近零的那个）
   // skin vertices inside a dropped tetrahedron: extrapolated from a kept neighbour sharing a lattice node (the one whose most negative barycentric coordinate is closest to zero)
-  const nodeOfLattice = new Map<number, number>()
-  mesh.latticeId.forEach((id, i) => nodeOfLattice.set(id, i))
+  const nodeOfLattice = new Map<number, number[]>()
+  mesh.latticeId.forEach((id, i) => {
+    const l = nodeOfLattice.get(id)
+    if (l) l.push(i)
+    else nodeOfLattice.set(id, [i])
+  })
   const tetsOfNode: number[][] = Array.from({ length: N }, () => [])
   for (let e = 0; e < T; e++) for (let k = 0; k < 4; k++) tetsOfNode[mesh.tets[e * 4 + k]!]!.push(e)
   const neighbour = (slot: number, x: number, y: number, z: number): number | undefined => {
     let best: number | undefined, bw = -Infinity
     for (const id of slotNodes(lattice, slot) ?? []) {
-      const n = nodeOfLattice.get(id)
-      if (n === undefined) continue
-      for (const e of tetsOfNode[n]!) {
+      for (const n of nodeOfLattice.get(id) ?? []) for (const e of tetsOfNode[n]!) {
         barycentric(mesh.nodes, mesh.tets[e * 4]!, mesh.tets[e * 4 + 1]!, mesh.tets[e * 4 + 2]!, mesh.tets[e * 4 + 3]!, x, y, z, b4)
         const w = Math.min(b4[0]!, b4[1]!, b4[2]!, b4[3]!)
         if (w > bw) (bw = w), (best = e)
@@ -373,7 +571,12 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
   }
   const anchorTets = [...anchorSum.keys()].sort((x, y) => x - y)
   const anchors: PointSet = { tet: Uint32Array.from(anchorTets), bary: new Float32Array(anchorTets.length * 4) }
+  const anchorWeight = new Float32Array(anchorTets.length)
   anchorTets.forEach((e, i) => {
+    let bone = 0
+    for (let k = 0; k < 9; k++) if ((votes[e]![k]! & 15) === CLS.bone) bone++
+    // 九个采样点都没落在骨内（骨比采样间距细）：按半个采样点算 / none of the nine samples inside bone (bone thinner than the sampling): counted as half a sample
+    anchorWeight[i] = Math.max(0.5, bone) / 9
     const s = anchorSum.get(e)!
     barycentric(mesh.nodes, mesh.tets[e * 4]!, mesh.tets[e * 4 + 1]!, mesh.tets[e * 4 + 2]!, mesh.tets[e * 4 + 3]!, s[0]! / s[3]!, s[1]! / s[3]!, s[2]! / s[3]!, b4)
     anchors.bary.set(b4, i * 4)
@@ -479,7 +682,8 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     for (let i = 0; i < n * 3; i++) c[i % 3] = c[i % 3]! + m.positions[i]! / n
     const cov = new Float64Array(9)
     for (let i = 0; i < n; i++) for (let r = 0; r < 3; r++) for (let s = 0; s < 3; s++) cov[r * 3 + s] = cov[r * 3 + s]! + ((m.positions[i * 3 + r]! - c[r]!) * (m.positions[i * 3 + s]! - c[s]!)) / n
-    const ax = eigSym(cov, 3).vectors[2]!
+    const eig = eigSym(cov, 3)
+    const ax = eig.vectors[2]!
     let lo = Infinity, hi = -Infinity
     const rad: number[] = []
     for (let i = 0; i < n; i++) {
@@ -494,6 +698,16 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     // 只给细长的骨（长度 ≥ 8 cm，长径比 ≥ 6）：扁骨和不规则骨用胶囊代表不了，靠钉住的结点和锚点
     // long bones only (length ≥ 8 cm, aspect ≥ 6): flat and irregular bones cannot be stood for by a capsule and rely on pins and anchors
     if (hi - lo < 0.08 || hi - lo < 6 * r) continue
+    // 还要是直的：弯的骨（肋骨、锁骨）表面有一部分贴着甚至穿过主轴，绕弦线的"胶囊"会把整片胸壁的组织挡住
+    // （第一阶段乳房几乎不动，原因之一就是肋骨的胶囊）。直骨的表面离轴线都有一段距离：第 5 百分位 ≥ 中位数的 35%。
+    // and straight: the surface of a curved bone (rib, clavicle) partly touches or crosses the principal axis, and a
+    // "capsule" about its chord would block the tissue of the whole chest wall (rib capsules were one reason the
+    // breast hardly moved in phase 1). The surface of a straight bone keeps its distance from the axis: 5th
+    // percentile ≥ 35 % of the median.
+    if (rad[Math.floor(rad.length * 0.05)]! < 0.35 * r) continue
+    // 肋骨的主轴从弧的内侧经过，上面的判据拦不住它；再要求横截面两个方向的散布相近（中间特征值 ≤ 4 × 最小特征值）
+    // the principal axis of a rib passes inside its arc, which the test above does not catch; the spread across the axis must also be similar in both directions (middle eigenvalue ≤ 4 × the smallest)
+    if (eig.values[1]! > 4 * eig.values[0]!) continue
     const pt = (t: number): [number, number, number] => [c[0]! + ax[0]! * t, c[1]! + ax[1]! * t, c[2]! + ax[2]! * t]
     capsules.push({ part: p.id, joint: bindingOf.get(p.id)!.joint!, a: pt(lo + r), b: pt(hi - r), radius: r })
   }
@@ -512,7 +726,7 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     if (all) rigidTets++
   }
   for (const m of Object.values(byMaterial)) m.litres = Math.round(m.litres * 100) / 100
-  const arrays: SoftArrays = { nodes: mesh.nodes, tets: mesh.tets, tetSlot: mesh.slots, tetMaterial, tetFill, tetSkin, tetMuscle, nodePin, nodeInfluence, anchors, embedded: [{ part: skinPart.id, points: emb }] }
+  const arrays: SoftArrays = { nodes: mesh.nodes, tets: mesh.tets, tetSlot: mesh.slots, tetMaterial, tetFill, tetSkin, tetMuscle, nodePin, nodeInfluence, anchors, anchorWeight, embedded: [{ part: skinPart.id, points: emb }] }
   const { json, bin } = encodeSoft({
     schema: 1,
     body: body.data.body,
@@ -526,14 +740,14 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     capsules,
     cautions: [
       { zh: '笼子的单元比皮肤、皮下脂肪和细小的骨都粗：表面的力学分辨率就是单元大小，比单元小的压头得到的刚度不可靠。', en: 'A cage cell is coarser than skin, subcutaneous fat and slender bones: the mechanical resolution of the surface is the cell size, and stiffness under an indenter smaller than a cell is not reliable.' },
-      { zh: '相距不到一个单元的两处体表（手指之间、上臂与胸壁、两大腿根部）共用四面体，力学上是连在一起的；没有自碰撞。', en: 'Two skin surfaces closer than one cell (between fingers, arm and chest wall, the roots of the thighs) share tetrahedra and are mechanically joined; there is no self-collision.' },
+      { zh: '隔着气隙的两处体表（手指之间、上臂与胸壁、两大腿根部）不再共用结点；但气隙比一个四面体还窄的地方，同一个四面体里含有两侧的组织，仍然粘着。分开的表面之间没有碰撞：它们可以互相穿过。', en: 'Two skin surfaces across an air gap (between fingers, arm and chest wall, the roots of the thighs) no longer share nodes; where the gap is narrower than a tetrahedron, one tetrahedron still holds tissue of both sides and glues them. There is no contact between the separated surfaces: they can pass through each other.' },
       { zh: '材料按部件归类，脏器之间和肌间隙的空间按所在区域归类；数值的出处和假设见 data/curated/softbody/materials.json。', en: 'Materials follow the parts, and space between viscera or muscles is classified by where it is; for sources and assumptions of the numbers see data/curated/softbody/materials.json.' },
     ],
   }, arrays)
   let pinned = 0
   for (let i = 0; i < N; i++) if (nodePin[i]! >= 0) pinned++
   const stats: CageStats = {
-    cell: a, nodes: N, tets: T, pinnedNodes: pinned, rigidTets, islandTets, anchors: anchorTets.length,
+    cell: a, nodes: N, tets: T, pinnedNodes: pinned, rigidTets, splitNodes, openFaces, filledVoids, islandTets, anchors: anchorTets.length,
     filledLitres: Math.round(filled * 1e5) / 100, cageLitres: Math.round(T * tetVol * 1e5) / 100, byMaterial,
     muscles: muscles.length, musclesWithFibre: muscles.filter((m) => m.fibre).length, capsules: capsules.length,
     skinVerticesEmbedded: embedded, skinVertices: nv, seconds: Math.round((performance.now() - t0) / 100) / 10,
