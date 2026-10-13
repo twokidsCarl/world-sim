@@ -114,7 +114,9 @@ export function threads(count: number, length: number, step: number, box: Box, r
           pos.push(p[0] + side[0] * step * 0.8 * b, p[1] + side[1] * step * 0.8 * b, p[2] + side[2] * step * 0.8 * b)
         }
       }
-      d = norm([d[0] + (rand() * 2 - 1) * 0.45, d[1] + (rand() * 2 - 1) * 0.45, d[2] + (rand() * 2 - 1) * 0.15])
+      // 方向每步只偏一点：长链是平缓的弯，不是乱团（偏得多时几十条线缠成一张网）
+      // the heading shifts only a little each step: a long chain bends gently and does not tangle (with more, a few dozen strands knot into a net)
+      d = norm([d[0] + (rand() * 2 - 1) * 0.32, d[1] + (rand() * 2 - 1) * 0.32, d[2] + (rand() * 2 - 1) * 0.1])
       // 碰到对象就沿着它的表面滑开；碰到盒子的边就折回 / on meeting the subject it slides off along its surface; on meeting a wall it turns back
       const q: V3 = [p[0] + d[0] * step, p[1] + d[1] * step, p[2] + d[2] * step]
       const c: V3 = [q[0] - box.centre[0], q[1] - box.centre[1], q[2] - box.centre[2]]
