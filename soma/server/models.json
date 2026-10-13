@@ -1,0 +1,278 @@
+{
+  "_doc": {
+    "zh": "语音合成用到的模型和依赖：来源、固定的版本、许可、读到的原文条款、每个下载文件的 sha256。模型文件不进 git；由 `uv run --extra model python -m soma_tts.fetch --state <目录>` 下载到状态目录并逐个校验。许可证据是 2026-10-13 打开各来源读到的。",
+    "en": "The models and dependencies of speech synthesis: source, pinned version, licence, the clause as read, and the sha256 of every downloaded file. Model files are not in git; `uv run --extra model python -m soma_tts.fetch --state <dir>` downloads them into the state directory and verifies each one. The licence evidence is what was read at each source on 2026-10-13."
+  },
+  "models": [
+    {
+      "id": "kokoro-v1.0",
+      "name": "Kokoro-82M",
+      "version": "v1.0",
+      "lang": "en",
+      "source": "https://huggingface.co/hexgrad/Kokoro-82M",
+      "commit": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "base": "https://huggingface.co/hexgrad/Kokoro-82M/resolve/f3ff3571791e39611d31c381e3a41a3af07b4987/",
+      "licence": "Apache-2.0",
+      "evidence": {
+        "declared": "model card front matter: `license: apache-2.0`",
+        "localUse": "model card: \"With Apache-licensed weights, Kokoro can be deployed anywhere from production environments to personal projects.\"",
+        "generatedAudio": "The model card and the Apache License 2.0 place no condition on the model's output; the card says: \"This is an Apache-licensed model, and Kokoro has been deployed in numerous projects and commercial APIs. We welcome the deployment of the model in real use cases.\" Apache-2.0 section 2 (the grant, for the weights themselves): \"2. Grant of Copyright License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.\"",
+        "trainingData": "model card: \"Kokoro was trained exclusively on permissive/non-copyrighted audio data and IPA phoneme labels.\" It lists public-domain audio, Apache/MIT audio, synthetic audio from closed TTS models of large providers, and CC BY audio (Koniwa `tnc`, CC BY 3.0; SIWIS, CC BY 4.0)."
+      },
+      "config": "config.json",
+      "weights": "kokoro-v1_0.pth",
+      "defaultVoice": "af_heart",
+      "voices": [
+        {
+          "id": "af_heart",
+          "sex": "female",
+          "accent": "en-US",
+          "grade": "A"
+        },
+        {
+          "id": "af_bella",
+          "sex": "female",
+          "accent": "en-US",
+          "grade": "A-"
+        },
+        {
+          "id": "am_michael",
+          "sex": "male",
+          "accent": "en-US",
+          "grade": "C+"
+        },
+        {
+          "id": "am_fenrir",
+          "sex": "male",
+          "accent": "en-US",
+          "grade": "C+"
+        }
+      ],
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 2351,
+          "sha256": "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f"
+        },
+        {
+          "path": "kokoro-v1_0.pth",
+          "bytes": 327212226,
+          "sha256": "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4"
+        },
+        {
+          "path": "voices/af_heart.pt",
+          "bytes": 523425,
+          "sha256": "0ab5709b8ffab19bfd849cd11d98f75b60af7733253ad0d67b12382a102cb4ff"
+        },
+        {
+          "path": "voices/af_bella.pt",
+          "bytes": 523425,
+          "sha256": "8cb64e02fcc8de0327a8e13817e49c76c945ecf0052ceac97d3081480e8e48d6"
+        },
+        {
+          "path": "voices/am_michael.pt",
+          "bytes": 523435,
+          "sha256": "9a443b79a4b22489a5b0ab7c651a0bcd1a30bef675c28333f06971abbd47bd37"
+        },
+        {
+          "path": "voices/am_fenrir.pt",
+          "bytes": 523430,
+          "sha256": "98e507eca1db08230ae3b6232d59c10aec9630022d19accac4f5d12fcec3c37a"
+        }
+      ]
+    },
+    {
+      "id": "kokoro-v1.1-zh",
+      "name": "Kokoro-82M-v1.1-zh",
+      "version": "v1.1-zh",
+      "lang": "zh",
+      "source": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh",
+      "commit": "01e7505bd6a7a2ac4975463114c3a7650a9f7218",
+      "base": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh/resolve/01e7505bd6a7a2ac4975463114c3a7650a9f7218/",
+      "licence": "Apache-2.0",
+      "evidence": {
+        "declared": "model card front matter: `license: apache-2.0`",
+        "localUse": "model card: \"Kokoro is an open-weight series of small but powerful TTS models.\" and \"This Apache licensed model ...\"",
+        "generatedAudio": "The model card and the Apache License 2.0 place no condition on the model's output. Apache-2.0 section 2 (the grant, for the weights themselves): \"2. Grant of Copyright License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.\"",
+        "trainingData": "model card: \"This model is the result of a short training run that added 100 Chinese speakers from a professional dataset. The Chinese data was freely and permissively granted to us by LongMaoData, a professional dataset company.\" It also names 3 hours of crowdsourced synthetic English."
+      },
+      "config": "config.json",
+      "weights": "kokoro-v1_1-zh.pth",
+      "defaultVoice": "zf_001",
+      "voices": [
+        {
+          "id": "zf_001",
+          "sex": "female",
+          "accent": "zh-CN",
+          "grade": null
+        },
+        {
+          "id": "zf_002",
+          "sex": "female",
+          "accent": "zh-CN",
+          "grade": null
+        },
+        {
+          "id": "zm_010",
+          "sex": "male",
+          "accent": "zh-CN",
+          "grade": null
+        },
+        {
+          "id": "zm_009",
+          "sex": "male",
+          "accent": "zh-CN",
+          "grade": null
+        }
+      ],
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 3228,
+          "sha256": "bc333efa5ce4ceff433c8c8e5d027a1eca0166001e4e4a62bea2d26ff7a46890"
+        },
+        {
+          "path": "kokoro-v1_1-zh.pth",
+          "bytes": 327247856,
+          "sha256": "b1d8410fa44dfb5c15471fd6c4225ea6b4e9ac7fa03c98e8bea47a9928476e2b"
+        },
+        {
+          "path": "voices/zf_001.pt",
+          "bytes": 523331,
+          "sha256": "9bdc9a87e13e9bb1ea3e7803259c2ecbfebaeeb2ff80b5d0c76df1a464c1c962"
+        },
+        {
+          "path": "voices/zf_002.pt",
+          "bytes": 523331,
+          "sha256": "2c8cf221ff2e0915fc807cac5f233f42798ee8e2bd58bc5ad0259fd95e405a26"
+        },
+        {
+          "path": "voices/zm_010.pt",
+          "bytes": 523331,
+          "sha256": "d2eeba86192eee269f600ca6821038034abd017532a1fe68ff7b0e86c2983b2a"
+        },
+        {
+          "path": "voices/zm_009.pt",
+          "bytes": 523331,
+          "sha256": "eff75f26089f9f986b547985a420f901661057a951088ac7c7d8473a8d6327bd"
+        }
+      ]
+    }
+  ],
+  "software": [
+    {
+      "name": "kokoro",
+      "version": "0.9.4",
+      "source": "https://github.com/hexgrad/kokoro",
+      "licence": "Apache-2.0",
+      "role": {
+        "zh": "模型的推理代码（KModel）",
+        "en": "the model's inference code (KModel)"
+      },
+      "evidence": "LICENSE in the repository and in the wheel: Apache License, Version 2.0"
+    },
+    {
+      "name": "misaki",
+      "version": "0.9.4",
+      "source": "https://github.com/hexgrad/misaki",
+      "licence": "Apache-2.0",
+      "role": {
+        "zh": "文字转音素：英文用词典（us_gold / us_silver）加 spaCy 词性；中文用 jieba、pypinyin 和取自 PaddleSpeech（Apache-2.0）的变调与儿化规则",
+        "en": "grapheme to phoneme: English from dictionaries (us_gold / us_silver) with spaCy tagging; Mandarin from jieba, pypinyin and the tone-sandhi and erhua rules taken from PaddleSpeech (Apache-2.0)"
+      },
+      "evidence": "PyPI classifier `License :: OSI Approved :: Apache Software License`; LICENSE file in the wheel"
+    },
+    {
+      "name": "pypinyin",
+      "version": "0.55.0",
+      "source": "https://github.com/mozillazg/python-pinyin",
+      "licence": "MIT",
+      "evidence": "PyPI metadata `License: MIT`"
+    },
+    {
+      "name": "pypinyin-dict",
+      "version": "0.9.0",
+      "source": "https://github.com/mozillazg/pypinyin-dict",
+      "licence": "MIT",
+      "evidence": "PyPI classifier `License :: OSI Approved :: MIT License`"
+    },
+    {
+      "name": "jieba",
+      "version": "0.42.1",
+      "source": "https://github.com/fxsjy/jieba",
+      "licence": "MIT",
+      "evidence": "PyPI metadata `License: MIT`"
+    },
+    {
+      "name": "cn2an",
+      "version": "0.5.24",
+      "source": "https://github.com/Ailln/cn2an",
+      "licence": "MIT",
+      "evidence": "PyPI metadata `License: MIT License`"
+    },
+    {
+      "name": "spacy",
+      "version": "3.8.16",
+      "source": "https://spacy.io",
+      "licence": "MIT",
+      "evidence": "PyPI metadata `License: MIT`"
+    },
+    {
+      "name": "en-core-web-sm",
+      "version": "3.8.0",
+      "source": "https://github.com/explosion/spacy-models/releases/tag/en_core_web_sm-3.8.0",
+      "licence": "MIT",
+      "evidence": "wheel METADATA `License: MIT`; the wheel also carries LICENSES_SOURCES for its training corpora. Used locally for tagging only; not redistributed by this repository."
+    },
+    {
+      "name": "num2words",
+      "version": "0.5.14",
+      "source": "https://github.com/savoirfairelinux/num2words",
+      "licence": "LGPL-2.1",
+      "evidence": "PyPI metadata `License: LGPL`; installed unmodified as a separate library and not redistributed by this repository."
+    },
+    {
+      "name": "torch",
+      "version": "2.14.1",
+      "source": "https://pytorch.org",
+      "licence": "BSD-3-Clause",
+      "evidence": "not re-read this time; licence as stated in the package metadata"
+    }
+  ],
+  "excluded": [
+    {
+      "name": "espeakng-loader / espeak-ng",
+      "licence": "GPL-3.0",
+      "why": {
+        "zh": "misaki[en] 的可选兜底（词典外的英文单词）。本服务不安装它（pyproject 里的 exclude-dependencies），词典外的单词改用自己的拼读规则，并在返回里的 warnings 写明。",
+        "en": "The optional fallback of misaki[en] for out-of-dictionary English words. This service does not install it (exclude-dependencies in pyproject); such words go through the service's own letter-to-sound rules and are listed under `warnings` in the reply."
+      }
+    },
+    {
+      "name": "phonemizer-fork",
+      "licence": "GPL-3.0",
+      "why": {
+        "zh": "同上，只被 espeak 兜底使用。",
+        "en": "As above; only used by the espeak fallback."
+      }
+    }
+  ],
+  "considered": [
+    {
+      "name": "Piper",
+      "source": "https://github.com/rhasspy/piper",
+      "verdict": {
+        "zh": "没有采用。仓库的 README 写着开发已迁到 OHF-Voice/piper1-gpl，后者的 COPYING 是 GNU GPL v3；它内嵌 espeak-ng 做音素化（README：\"embeds espeak-ng for phonemization\"）。各声音的许可不一。",
+        "en": "Not chosen. The repository's README says development has moved to OHF-Voice/piper1-gpl, whose COPYING is the GNU GPL v3; it embeds espeak-ng for phonemization (README: \"embeds espeak-ng for phonemization\"). Voices carry various licences."
+      }
+    },
+    {
+      "name": "MeloTTS",
+      "source": "https://github.com/myshell-ai/MeloTTS",
+      "verdict": {
+        "zh": "没有采用。LICENSE 是 MIT（README：\"free for both commercial and non-commercial use\"）。但依赖很重且钉死旧版本（transformers==4.27.4、librosa==0.9.1、mecab、unidic 等），没有在这台机器上试装；接口不返回音素时长。",
+        "en": "Not chosen. The LICENSE is MIT (README: \"free for both commercial and non-commercial use\"). Its dependencies are heavy and pinned to old versions (transformers==4.27.4, librosa==0.9.1, mecab, unidic and more); it was not installed on this machine, and its interface returns no phoneme durations."
+      }
+    }
+  ]
+}

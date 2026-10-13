@@ -1,0 +1,19 @@
+语音合成示范片段 / Speech-synthesis demo clips
+
+模型 / Models
+  Kokoro-82M v1.0 (hexgrad) — Apache-2.0 — https://huggingface.co/hexgrad/Kokoro-82M
+    提交 / commit f3ff3571791e39611d31c381e3a41a3af07b4987；声音 / voices: af_heart, am_michael
+  Kokoro-82M-v1.1-zh (hexgrad) — Apache-2.0 — https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh
+    提交 / commit 01e7505bd6a7a2ac4975463114c3a7650a9f7218；声音 / voices: zf_001, zm_010
+    模型卡说明：中文训练数据由龙猫数据（LongMaoData）免费并以宽松条件提供。
+    The model card states that the Chinese training data was freely and permissively granted by LongMaoData.
+
+文字转音素 / Grapheme to phoneme
+  misaki 0.9.4 (hexgrad) — Apache-2.0；pypinyin — MIT；jieba — MIT；spaCy 与 en_core_web_sm — MIT
+
+生成方式 / How they were made
+  cd soma/server && uv run --extra model python -m soma_tts.demo --state <state directory> --out ../public/voice/tts-demo
+  每个文件的文字、声音、时长、sha256 和音素时间线见 manifest.json。
+  The text, voice, duration, sha256 and phoneme timeline of every file are in manifest.json.
+
+所有声音都是机器合成的，不是真人录音。 / All audio is machine-generated; none of it is a recording of a person.
