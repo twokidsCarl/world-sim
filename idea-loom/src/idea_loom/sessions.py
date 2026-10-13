@@ -42,8 +42,21 @@ from . import config, gates, llm, notify, store
 from .assistant.stream import step_label
 
 MAX_LIVE = 3
-MODES = ("plan", "default", "acceptEdits")  # 先出计划 / 每次问我 / 改文件不用问。没有"全部放行"。 / plan first / ask every time / edits without asking. There is no "allow everything".
-Mode = Literal["plan", "default", "acceptEdits"]
+# 先出计划 / 每次问我 / 改文件不用问 / 自动。没有"全部放行"。
+# 自动：Claude Code 自己的安全分类器替主人判断每一步，常规的直接做。实测它防的是"擅自做没被要求的事"，
+# 主人明说要做的危险事它会放行，所以另有一张"每次都问"的单子（见 always_ask），自动模式下也照样出卡片。
+# plan first / ask every time / edits without asking / auto. There is no "allow everything".
+# Auto: Claude Code's own safety classifier judges each step for the owner and routine ones just happen. Tried for
+# real, it guards against doing things nobody asked for and lets through dangerous things the owner asked for, so
+# a separate "always ask" list (see always_ask) still raises a card even in auto mode.
+MODES = ("plan", "default", "acceptEdits", "auto")
+Mode = Literal["plan", "default", "acceptEdits", "auto"]
+MODELS = ("claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1")
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+
+
+def default_model() -> str:
+    return os.environ.get("IDEA_LOOM_SESSION_MODEL") or MODELS[0]
 CLIP = 4000
 
 
@@ -56,6 +69,9 @@ class Meta(BaseModel):
     title: str
     wish_id: Optional[str] = None
     mode: Mode = "plan"
+    model: str = ""  # 要它用的模型 / the model asked for
+    effort: str = "high"  # 思考的努力程度 / the reasoning effort
+    model_used: Optional[str] = None  # Claude Code 报的实际在用的模型 / the model Claude Code reports it is actually using
     status: Literal["idle", "running", "waiting", "closed", "error"] = "idle"
     sdk_session: Optional[str] = None  # SDK 的会话编号，重启后靠它接上 / the SDK's session id, used to pick up after a restart
     cost_usd: float = 0
@@ -175,7 +191,7 @@ def _set(live: _Live, status: str, waiting_for: Optional[str] = None) -> None:
 # ---------- 等你回答 / waiting for your answer ----------
 
 
-async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ctx: Any, summary: str) -> dict[str, Any]:
+async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ctx: Any, summary: str, key: str = "", extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """写一条"待回答"的事件，然后挂起，直到界面给出回答。不设超时：它等你，就像终端里那样。
 
     Write a "needs an answer" event and suspend until the UI answers. No timeout: it waits for you, as a terminal would.
@@ -183,9 +199,9 @@ async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ct
     request_id = secrets.token_hex(6)
     future: asyncio.Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
     live.pending[request_id] = future
-    live.waiting[request_id] = (summary, _always_key(tool, tool_input) if kind == "permission" else "")
+    live.waiting[request_id] = (summary, key)
     _emit(live, {"type": "request", "request_id": request_id, "kind": kind, "tool": tool, "input": _clip(tool_input),
-                 "title": str(getattr(ctx, "title", None) or ""), "description": str(getattr(ctx, "description", None) or ""), "summary": summary})
+                 "title": str(getattr(ctx, "title", None) or ""), "description": str(getattr(ctx, "description", None) or ""), "summary": summary, **(extra or {})})
     _set(live, "waiting", summary)
     notify.send({"plan": "计划写好了，等你批准", "question": "Claude 有问题要问你", "permission": "Claude 在等你确认"}[kind],
                 f"{live.meta.title}：{summary}"[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
@@ -204,12 +220,120 @@ async def _ask(live: _Live, kind: str, tool: str, tool_input: dict[str, Any], ct
     return answer
 
 
-def _always_key(tool: str, tool_input: dict[str, Any]) -> str:
-    """"以后都允许"记的是什么：命令按第一个词记，别的工具按工具名记。 / What "from now on" remembers: a command by its first word, other tools by name."""
+# ---------- 一条命令算哪一类 / what kind a command is ----------
+
+TWO_WORD = {"git", "uv", "bun", "bunx", "npm", "npx", "pnpm", "yarn", "gh", "docker", "cargo", "go", "pip", "brew", "kubectl", "make"}
+# 每次都问的：会删东西、会往外发、会改系统、或者把下载来的东西交给 shell 执行。自动模式和"以后都允许"都绕不过去。
+# Always asked about: what deletes, sends outward, changes the system, or hands a download to a shell. Neither auto mode nor "always allow" gets past it.
+ASK_PROGRAMS = {"rm", "rmdir", "sudo", "su", "dd", "mkfs", "chmod", "chown", "kill", "killall", "pkill", "shutdown", "reboot", "launchctl", "osascript", "crontab", "scp", "rsync", "ssh", "nc", "eval"}
+ASK_KINDS = {"git push", "git reset", "git clean", "git checkout", "git restore", "git rebase", "git branch", "git stash", "gh repo", "gh secret", "gh auth", "gh release",
+             "npm publish", "docker rm", "docker rmi", "docker system", "brew uninstall", "pip uninstall"}
+VALUE_FLAGS = {"-C", "-c", "--project", "--cwd", "--directory", "-R", "--repo", "--git-dir", "--work-tree", "--prefix", "-f", "--file"}
+SHELLS = {"sh", "bash", "zsh", "fish", "python", "python3", "node", "perl", "ruby"}
+FETCHERS = {"curl", "wget"}
+
+
+def segments(command: str) -> list[str]:
+    """按 | ; && || 把一条命令拆成几段；引号里的不拆。 / Split a command at | ; && || into segments, leaving quoted text alone."""
+    out, buf, quote, i = [], "", "", 0
+    while i < len(command):
+        ch = command[i]
+        if quote:
+            buf += ch
+            if ch == "\\" and quote == '"' and i + 1 < len(command):
+                buf += command[i + 1]
+                i += 1
+            elif ch == quote:
+                quote = ""
+        elif ch in "'\"":
+            quote, buf = ch, buf + ch
+        elif command.startswith(("&&", "||"), i):
+            out.append(buf)
+            buf, i = "", i + 1
+        elif ch in "|;\n" or (ch == "&" and not command.startswith("&>", i) and not buf.rstrip().endswith((">", "2>", "<"))):
+            out.append(buf)
+            buf = ""
+        else:
+            buf += ch
+        i += 1
+    out.append(buf)
+    return [s.strip() for s in out if s.strip()]
+
+
+def _words(segment: str) -> list[str]:
+    import shlex
+
+    try:
+        words = shlex.split(segment)
+    except ValueError:
+        words = segment.split()
+    while words and "=" in words[0] and not words[0].startswith(("-", "/", ".")) and words[0].split("=")[0].replace("_", "").isalnum():
+        words = words[1:]  # 开头的 VAR=值 / leading VAR=value
+    return words
+
+
+def kind_of(segment: str) -> str:
+    """这一段算哪一类：程序名，像 git、uv 这种再加上子命令。 / The kind of a segment: the program, plus the subcommand for tools like git and uv."""
+    words = _words(segment)
+    if not words:
+        return ""
+    program = words[0].rsplit("/", 1)[-1] if words[0].startswith("/") else words[0]
+    if program in TWO_WORD:
+        # 跳过选项；带值的选项（git -C <目录>、uv --project <目录>）连它的值一起跳过。
+        # Options are skipped, and those taking a value (git -C <dir>, uv --project <dir>) are skipped with it.
+        sub, skip = "", False
+        for word in words[1:]:
+            if skip:
+                skip = False
+            elif word in VALUE_FLAGS:
+                skip = True
+            elif not word.startswith("-"):
+                sub = word
+                break
+        return f"{program} {sub}".strip()
+    return program
+
+
+def always_ask(command: str) -> Optional[str]:
+    """这条命令里有没有每次都得问主人的东西；有就返回原因。 / Whether the command contains something the owner must always be asked about; the reason if so."""
+    import re
+
+    parts = segments(command)
+    for n, part in enumerate(parts):
+        kind, words = kind_of(part), _words(part)
+        program = kind.split(" ")[0]
+        if program in ASK_PROGRAMS or kind in ASK_KINDS:
+            return f"`{kind}` 每次都要你确认"
+        if program in SHELLS and n > 0 and kind_of(parts[n - 1]).split(" ")[0] in FETCHERS:
+            return "把下载来的东西直接交给解释器执行，每次都要你确认"
+        # 重定向写文件（2>&1、>/dev/null 这种不算）。 / Redirecting into a file (2>&1 and >/dev/null do not count).
+        bare = re.sub(r"'[^']*'|\"[^\"]*\"", "", part)
+        for target in re.findall(r"(?<![0-9&])>>?\s*([^\s&|;>]+)", bare) + re.findall(r"&>>?\s*([^\s&|;>]+)", bare):
+            if target not in ("/dev/null", "&1", "&2"):
+                return f"用重定向写文件 `{target}`，每次都要你确认"
+        if program == "tee" and any(not w.startswith("-") for w in words[1:]):
+            return "用 tee 写文件，每次都要你确认"
+        if program == "find" and ("-delete" in words or "-exec" in words):
+            return "`find` 带 -delete 或 -exec，每次都要你确认"
+        if program == "mv" or program == "cp":
+            if any(w.startswith(("/", "~", "..")) and not w.startswith(str(store.repo_root())) for w in words[1:]):
+                return f"`{program}` 涉及仓库外的路径，每次都要你确认"
+    return None
+
+
+def _kinds(tool: str, tool_input: dict[str, Any]) -> list[str]:
+    """"以后都允许"记的是什么：命令的每一段各记一类，别的工具按工具名记。
+
+    What "always allow" remembers: one kind per segment of a command; other tools by name.
+    """
     if tool == "Bash":
-        words = str(tool_input.get("command") or "").split()
-        return f"Bash:{words[0] if words else ''}"
-    return tool
+        return [f"Bash:{kind_of(part)}" for part in segments(str(tool_input.get("command") or ""))] or ["Bash:"]
+    return [tool]
+
+
+def _breakdown(live: "_Live", tool_input: dict[str, Any]) -> list[dict[str, Any]]:
+    """给卡片看的：命令的每一段、算哪一类、以前允许过没有。 / For the card: each segment of the command, its kind and whether it was allowed before."""
+    return [{"text": part, "kind": kind_of(part), "known": f"Bash:{kind_of(part)}" in live.always} for part in segments(str(tool_input.get("command") or ""))]
 
 
 def _permission_callback(live: _Live) -> Callable[[str, dict[str, Any], Any], Any]:
@@ -231,27 +355,31 @@ def _permission_callback(live: _Live) -> Callable[[str, dict[str, Any], Any], An
             return PermissionResultAllow(updated_input={"questions": questions, "answers": answer.get("answers") or {}})
         if tool == "ExitPlanMode":
             answer = await _ask(live, "plan", tool, tool_input, ctx, "计划写好了")
-            if answer.get("decision") not in ("approve", "approve_edits"):
+            after = {"approve": "default", "approve_edits": "acceptEdits", "approve_auto": "auto"}.get(str(answer.get("decision")))
+            if after is None:
                 return deny("did not approve this plan", str(answer.get("note") or ""))
-            # 批准之后它自己离开计划模式；选了"改文件不用问"的，再切一下。
-            # After approval it leaves plan mode by itself; "edits without asking" needs one more switch.
-            live.meta.mode = "acceptEdits" if answer["decision"] == "approve_edits" else "default"
+            # 批准之后它自己离开计划模式；选了"改文件不用问"或"之后自动"的，再切一下。
+            # After approval it leaves plan mode by itself; "edits without asking" and "auto from here" need one more switch.
+            live.meta.mode = after  # type: ignore[assignment]
             _save(live.meta)
             _emit(live, {"type": "mode", "mode": live.meta.mode})
-            if answer["decision"] == "approve_edits":
-                asyncio.get_running_loop().create_task(live.client.set_permission_mode("acceptEdits"))
+            if after != "default":
+                asyncio.get_running_loop().create_task(live.client.set_permission_mode(after))
             return PermissionResultAllow(updated_input=tool_input)
-        key = _always_key(tool, tool_input)
-        if key in live.always:
+        kinds = _kinds(tool, tool_input)
+        risky = always_ask(str(tool_input.get("command") or "")) if tool == "Bash" else None
+        # 每一段都允许过、而且里面没有"每次都问"的东西，才不再问。 / Not asked again only when every segment was allowed before and nothing in it is on the always-ask list.
+        if not risky and all(k in live.always for k in kinds):
             return PermissionResultAllow(updated_input=tool_input)
         summary = step_label(tool, tool_input, str(store.repo_root()))
-        answer = await _ask(live, "permission", tool, tool_input, ctx, summary)
-        if answer.get("decision") == "allow_always":
-            live.always.add(key)
-            # 同时在等的同一类请求一并放行：说了"这一类以后都允许"，就不该再为它们各点一次。
-            # Requests of the same kind waiting at the same moment are let through with it: having said "always allow this kind", one should not have to click once for each.
+        extra = {"risky": risky, "segments": _breakdown(live, tool_input)} if tool == "Bash" else {}
+        answer = await _ask(live, "permission", tool, tool_input, ctx, summary, key="|".join(sorted(kinds)) if not risky else "", extra=extra)
+        if answer.get("decision") == "allow_always" and not risky:
+            live.always.update(kinds)
+            # 同时在等的请求里，现在每一段都允许了的，一并放行：说了"这一类以后都允许"，就不该再为它们各点一次。
+            # Among the requests waiting at the same moment, those whose every segment is now allowed go through with it: having said "always allow this kind", one should not have to click once for each.
             for other, (_, other_key) in list(live.waiting.items()):
-                if other_key == key and not live.pending[other].done():
+                if other_key and all(k in live.always for k in other_key.split("|")) and not live.pending[other].done():
                     live.pending[other].set_result({"decision": "allow", "note": ""})
         if answer.get("decision") in ("allow", "allow_always"):
             return PermissionResultAllow(updated_input=tool_input)
@@ -263,17 +391,35 @@ def _permission_callback(live: _Live) -> Callable[[str, dict[str, Any], Any], An
 # ---------- 会话的循环 / the session loop ----------
 
 
+async def _guard(input_data: dict[str, Any], tool_use_id: Any, context: Any) -> dict[str, Any]:
+    """命令执行之前的钩子："每次都问"的那些，不管什么模式都交回给主人确认。
+
+    实测过：自动模式下常规命令不会来问宿主，主人明说要做的危险命令也会被放行；这个钩子返回 ask 之后，
+    它们会照常走权限回调，出一张卡片。
+
+    The hook before a command runs: what is on the always-ask list goes back to the owner whatever the mode.
+    Tried for real: in auto mode routine commands never reach the host and dangerous ones the owner asked for
+    are let through; once this hook returns "ask" they go through the permission callback and raise a card.
+    """
+    reason = always_ask(str((input_data.get("tool_input") or {}).get("command") or ""))
+    if reason is None:
+        return {}
+    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": reason}}
+
+
 def _client(live: _Live) -> Any:
     callback = _permission_callback(live)
+    model, effort = live.meta.model or default_model(), live.meta.effort if live.meta.effort in EFFORTS else "high"
     if client_factory is not None:
-        return client_factory(cwd=str(store.repo_root()), mode=live.meta.mode, resume=live.meta.sdk_session, can_use_tool=callback)
-    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+        return client_factory(cwd=str(store.repo_root()), mode=live.meta.mode, resume=live.meta.sdk_session, can_use_tool=callback, model=model, effort=effort)
+    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient, HookMatcher
 
-    # 配置得和终端里一样：读用户、项目、本机三处设置；工具不砍；模型不指定，用 Claude Code 的默认。
-    # Configured as in a terminal: user, project and local settings are read; no tool is removed; the model is left to Claude Code's default.
+    # 配置得和终端里一样：读用户、项目、本机三处设置；工具不砍。模型和努力程度由主人在界面上选。
+    # Configured as in a terminal: user, project and local settings are read; no tool is removed. The model and the effort are the owner's choice in the UI.
     return ClaudeSDKClient(options=ClaudeAgentOptions(
         cwd=str(store.repo_root()), setting_sources=["user", "project", "local"], permission_mode=live.meta.mode,
-        resume=live.meta.sdk_session, can_use_tool=callback, model=os.environ.get("IDEA_LOOM_SESSION_MODEL") or None,
+        resume=live.meta.sdk_session, can_use_tool=callback, model=model, effort=effort,  # type: ignore[arg-type]
+        hooks={"PreToolUse": [HookMatcher(matcher="Bash", hooks=[_guard])]},
     ))
 
 
@@ -290,7 +436,16 @@ def _convert(live: _Live, message: Any) -> None:
     """
     kind = type(message).__name__
     repo = str(store.repo_root())
-    if kind == "AssistantMessage":
+    if kind == "SystemMessage" and getattr(message, "subtype", "") == "init":
+        # 一开始就记下会话编号和实际在用的模型：第一轮还没说完时进程没了，也能接上。
+        # The session id and the model actually in use are recorded at the very start, so the conversation can be picked up even if the process dies before the first turn ends.
+        data = getattr(message, "data", None) or {}
+        used, session = data.get("model"), data.get("session_id")
+        if (used and used != live.meta.model_used) or (session and session != live.meta.sdk_session):
+            live.meta.model_used, live.meta.sdk_session = used or live.meta.model_used, session or live.meta.sdk_session
+            _save(live.meta)
+            _emit(live, {"type": "init", "model": live.meta.model_used, "effort": live.meta.effort})
+    elif kind == "AssistantMessage":
         for block in message.content:
             name = type(block).__name__
             if name == "TextBlock" and block.text.strip():
@@ -329,7 +484,10 @@ async def _run(live: _Live) -> None:
                     _convert(live, item)
                 llm.log_call("session", "claude-code", time.monotonic() - started, {"cost_usd": None}, ok=True)
                 _set(live, "idle")
-        live.meta.status = "closed" if live.meta.status != "error" else "error"
+                # 自动模式下人多半不在：一轮做完了也说一声。 / In auto mode the owner is probably away: say so when a turn is done, too.
+                notify.send("Claude Code 做完了一轮", live.meta.title[:200], url=f"/sessions/{live.meta.id}", tag=live.meta.id)
+        if live.meta.status != "error":
+            live.meta.status = "closed"
     except asyncio.CancelledError:
         live.meta.status = "closed"
         raise
@@ -375,6 +533,8 @@ class NewSession(BaseModel):
     mode: Mode = "plan"
     wish_id: Optional[str] = None
     images: list[dict[str, str]] = Field(default_factory=list)
+    model: str = ""
+    effort: str = "high"
 
 
 async def start(request: NewSession) -> Meta:
@@ -386,8 +546,12 @@ async def start(request: NewSession) -> Meta:
     if sum(1 for x in _live.values() if x.task is not None and not x.task.done()) >= MAX_LIVE:
         raise SessionError(f"同时最多开 {MAX_LIVE} 个会话，先结束一个")  # 先查，别留下一个开不起来的空会话 / checked first, so no empty session that could not start is left behind
     session_id = f"s-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}"
+    if request.model and request.model not in MODELS:
+        raise SessionError("模型只能是：" + "、".join(MODELS))
+    if request.effort not in EFFORTS:
+        raise SessionError("努力程度只能是：" + "、".join(EFFORTS))
     meta = Meta(id=session_id, title=(request.title.strip() or request.text.strip().splitlines()[0])[:80], wish_id=request.wish_id, mode=request.mode,
-                created_at=time.time(), updated_at=time.time())
+                model=request.model or default_model(), effort=request.effort, created_at=time.time(), updated_at=time.time())
     _dir(session_id).mkdir(parents=True, exist_ok=True)
     _save(meta)
     live = _ensure_live(meta)
@@ -414,7 +578,7 @@ async def answer(session_id: str, request_id: str, decision: str, note: str = ""
     future = live.pending.get(request_id) if live else None
     if future is None or future.done():
         raise SessionError("这一条已经回答过了，或者会话已经不在等它")
-    if decision not in ("allow", "allow_always", "deny", "answer", "approve", "approve_edits", "reject"):
+    if decision not in ("allow", "allow_always", "deny", "answer", "approve", "approve_edits", "approve_auto", "reject"):
         raise SessionError("不认识的回答")
     future.set_result({"decision": decision, "note": note, "answers": answers or {}})
     await asyncio.sleep(0)
@@ -444,6 +608,34 @@ async def set_mode(session_id: str, mode: str) -> Meta:
         _emit(live, {"type": "mode", "mode": mode})
     _save(meta)
     return get(session_id)
+
+
+async def set_engine(session_id: str, model: str, effort: str) -> Meta:
+    """换模型或努力程度。要在它闲着的时候换：把现在的进程收掉，下一句话用新的配置接上同一段对话。
+
+    Change the model or the effort. Done while it is idle: the current process is retired and the next message picks the same conversation up with the new settings.
+    """
+    if model not in MODELS:
+        raise SessionError("模型只能是：" + "、".join(MODELS))
+    if effort not in EFFORTS:
+        raise SessionError("努力程度只能是：" + "、".join(EFFORTS))
+    meta = get(session_id)
+    if meta.status in ("running", "waiting"):
+        raise SessionError("它在忙的时候不能换，等它说完或者先打断")
+    live = _live.get(session_id)
+    if live is not None and live.task is not None and not live.task.done():
+        if not live.meta.sdk_session:
+            raise SessionError("这个会话还没开始说话，等它说完第一句再换")
+        await live.inbox.put(None)
+        try:
+            await asyncio.wait_for(asyncio.shield(live.task), 15)
+        except (asyncio.TimeoutError, asyncio.CancelledError, Exception):  # noqa: BLE001
+            pass
+        meta = get(session_id)
+    meta.model, meta.effort, meta.model_used = model, effort, None
+    if meta.status == "closed":
+        meta.status = "idle"
+    return _save(meta)
 
 
 async def close(session_id: str) -> Meta:

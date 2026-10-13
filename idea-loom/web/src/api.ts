@@ -45,8 +45,8 @@ export type WorkerStatus = {
   maintenance: { enabled: boolean; below: number; window_minutes: number; check_seconds: number; per_day: number; last_check: { at?: number; why_not?: string | null }; recent: { at: number; item: string; directory: string; job_id: string }[] }
 }
 export type AgentToken = { id: string; name: string; scopes: string[]; created_at: number; revoked: boolean; token?: string }
-export type SessionMeta = { id: string; title: string; wish_id: string | null; mode: string; status: 'idle' | 'running' | 'waiting' | 'closed' | 'error'; cost_usd: number; turns: number; waiting_for: string | null; created_at: number; updated_at: number; live: boolean }
-export type SessionList = { sessions: SessionMeta[]; unavailable: string | null; billing: 'subscription' | 'api_key'; modes: string[] }
+export type SessionMeta = { id: string; title: string; wish_id: string | null; mode: string; model: string; effort: string; model_used: string | null; status: 'idle' | 'running' | 'waiting' | 'closed' | 'error'; cost_usd: number; turns: number; waiting_for: string | null; created_at: number; updated_at: number; live: boolean }
+export type SessionList = { sessions: SessionMeta[]; unavailable: string | null; billing: 'subscription' | 'api_key'; modes: string[]; models: string[]; efforts: string[]; default_model: string }
 export type GenTarget = { level?: string; thread?: string; kernel?: string; like?: string; text?: string }
 export type Proposals = { proposals: Proposal[]; open: number; model_ready: boolean }
 export type Wish = {
@@ -151,11 +151,12 @@ export const api = {
   revokeAgentToken: (id: string) => call<{ revoked: boolean }>(`/api/agent-tokens/${id}/revoke`, {}),
   sessions: () => call<SessionList>('/api/sessions'),
   session: (id: string) => call<SessionMeta>(`/api/sessions/${id}`),
-  startSession: (body: { text: string; mode: string; title?: string; wish_id?: string }) => call<SessionMeta>('/api/sessions', body),
+  startSession: (body: { text: string; mode: string; title?: string; wish_id?: string; model?: string; effort?: string }) => call<SessionMeta>('/api/sessions', body),
   sessionSay: (id: string, text: string, images: { media_type: string; data: string; name: string }[] = []) => call<SessionMeta>(`/api/sessions/${id}/message`, { text, images }),
   sessionAnswer: (id: string, request_id: string, decision: string, note = '', answers: Record<string, string | string[]> = {}) => call<SessionMeta>(`/api/sessions/${id}/answer`, { request_id, decision, note, answers }),
   sessionInterrupt: (id: string) => call<SessionMeta>(`/api/sessions/${id}/interrupt`, {}),
   sessionMode: (id: string, mode: string) => call<SessionMeta>(`/api/sessions/${id}/mode`, { mode }),
+  sessionEngine: (id: string, model: string, effort: string) => call<SessionMeta>(`/api/sessions/${id}/engine`, { model, effort }),
   sessionClose: (id: string) => call<SessionMeta>(`/api/sessions/${id}/close`, {}),
   worker: () => call<WorkerStatus>('/api/worker'),
   chain: (directory: string, steps: number) => call<Record<string, number>>('/api/chains', { directory, steps }),

@@ -41,4 +41,14 @@ describe('session view', () => {
     const one = fold(both, [ev(4, 'resolved', { request_id: 'wide', decision: 'allow_always' }), ev(5, 'status', { status: 'running' })])
     expect(pending(one).map((p) => p.request_id)).toEqual(['narrow'])
   })
+
+  it('carries the parts of a command and why it must always be asked about', () => {
+    const view = fold(emptyView(), [
+      ev(1, 'request', { request_id: 'r1', kind: 'permission', tool: 'Bash', input: { command: 'tools/ci.sh x | wc -l' }, summary: '在跑', risky: null, segments: [{ text: 'tools/ci.sh x', kind: 'tools/ci.sh', known: true }, { text: 'wc -l', kind: 'wc', known: false }] }),
+      ev(2, 'request', { request_id: 'r2', kind: 'permission', tool: 'Bash', input: { command: 'rm -rf build' }, summary: '在跑', risky: '`rm` 每次都要你确认', segments: [{ text: 'rm -rf build', kind: 'rm', known: false }] }),
+    ])
+    const [first, second] = pending(view)
+    expect(first!.segments.map((s) => [s.kind, s.known])).toEqual([['tools/ci.sh', true], ['wc', false]])
+    expect([first!.risky, second!.risky]).toEqual([null, '`rm` 每次都要你确认'])
+  })
 })

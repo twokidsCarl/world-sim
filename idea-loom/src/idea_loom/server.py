@@ -1212,7 +1212,8 @@ class ModeBody(BaseModel):
 @app.get("/api/sessions")
 def list_sessions(request: Request) -> dict:
     _session_guard(request)
-    return {"sessions": [m.model_dump() for m in code_sessions.listing()], "unavailable": code_sessions.available(), "billing": code_sessions.billing(), "modes": list(code_sessions.MODES)}
+    return {"sessions": [m.model_dump() for m in code_sessions.listing()], "unavailable": code_sessions.available(), "billing": code_sessions.billing(), "modes": list(code_sessions.MODES),
+            "models": list(code_sessions.MODELS), "efforts": list(code_sessions.EFFORTS), "default_model": code_sessions.default_model()}
 
 
 @app.post("/api/sessions")
@@ -1280,6 +1281,17 @@ async def session_interrupt(session_id: str, request: Request) -> dict:
 async def session_mode(session_id: str, body: ModeBody, request: Request) -> dict:
     _session_guard(request)
     return (await _session(code_sessions.set_mode, session_id, body.mode)).model_dump()
+
+
+class EngineBody(BaseModel):
+    model: str
+    effort: str
+
+
+@app.post("/api/sessions/{session_id}/engine")
+async def session_engine(session_id: str, body: EngineBody, request: Request) -> dict:
+    _session_guard(request)
+    return (await _session(code_sessions.set_engine, session_id, body.model, body.effort)).model_dump()
 
 
 @app.post("/api/sessions/{session_id}/close")

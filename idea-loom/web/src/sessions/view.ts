@@ -5,11 +5,14 @@ export type SessionEvent = { seq: number; type: string; [key: string]: unknown }
 
 export type Question = { question: string; header?: string; multiSelect?: boolean; options: { label: string; description?: string }[] }
 
+// 命令的一段：算哪一类、以前允许过没有。 / One segment of a command: its kind and whether it was allowed before.
+export type Segment = { text: string; kind: string; known: boolean }
+
 export type Item =
   | { kind: 'user'; seq: number; text: string; images: number }
   | { kind: 'text'; seq: number; text: string }
   | { kind: 'tool'; seq: number; id: string; name: string; label: string; input: Record<string, unknown>; state: 'running' | 'done' | 'failed'; result: string }
-  | { kind: 'request'; seq: number; request_id: string; what: 'permission' | 'question' | 'plan'; tool: string; input: Record<string, unknown>; summary: string; decision: string | null; note: string }
+  | { kind: 'request'; seq: number; request_id: string; what: 'permission' | 'question' | 'plan'; tool: string; input: Record<string, unknown>; summary: string; decision: string | null; note: string; risky: string | null; segments: Segment[] }
   | { kind: 'note'; seq: number; tone: 'muted' | 'bad'; code: 'interrupted' | 'error' | 'failed'; message: string }
 
 export type View = {
@@ -47,7 +50,7 @@ export function fold(view: View, events: SessionEvent[]): View {
       const item = next.items[i]
       if (item?.kind === 'tool') next.items[i] = { ...item, state: e.error ? 'failed' : 'done', result: String(e.text ?? '') }
     } else if (e.type === 'request') {
-      next.items.push({ kind: 'request', seq: e.seq, request_id: String(e.request_id), what: e.kind as 'permission' | 'question' | 'plan', tool: String(e.tool ?? ''), input: (e.input as Record<string, unknown>) ?? {}, summary: String(e.summary ?? ''), decision: null, note: '' })
+      next.items.push({ kind: 'request', seq: e.seq, request_id: String(e.request_id), what: e.kind as 'permission' | 'question' | 'plan', tool: String(e.tool ?? ''), input: (e.input as Record<string, unknown>) ?? {}, summary: String(e.summary ?? ''), decision: null, note: '', risky: typeof e.risky === 'string' ? e.risky : null, segments: Array.isArray(e.segments) ? (e.segments as Segment[]) : [] })
     } else if (e.type === 'resolved') {
       const i = lastIndex(next.items, (x) => x.kind === 'request' && x.request_id === e.request_id)
       const item = next.items[i]
