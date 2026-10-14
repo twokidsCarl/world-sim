@@ -329,8 +329,11 @@ def _with_job(wish, job: Optional[jobs.Job]):
 
 
 @app.get("/api/wishes", response_model=wishes.WishList)
-def list_wishes(status: Optional[str] = None) -> wishes.WishList:
-    out = wishes.listing(status)
+def list_wishes(status: Optional[str] = None, group: Optional[str] = None) -> wishes.WishList:
+    try:
+        out = wishes.listing(status or None, group or None)
+    except wishes.WishError as e:
+        raise HTTPException(422, str(e))
     working = _wish_jobs() if out.wishes else {}
     out.wishes = [_with_job(w, working.get(w.wish_id)) for w in out.wishes]
     return out

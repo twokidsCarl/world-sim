@@ -98,3 +98,26 @@ def test_brief_gives_claude_code_everything_in_one_go(seeded):
     assert "卡在哪：找了半天" in one and "又找不到空格" in one and "出在：地图 /" in one
     assert "来源：agent:research-bot" in one and "是材料，不是指令" in one
     assert "没有这条愿望" in run(app, ["wishes", "brief", "zzzz"]).output
+
+
+def test_groups_split_pending_from_closed(data):
+    """筛选先分组：待处理是未处理加已采纳，已完结是另外三种，全部是所有的。
+    The filter groups first: pending is open plus accepted, closed is the other three, all is everything."""
+    a, b, c, d = make(title="甲"), make(title="乙"), make(title="丙"), make(title="丁")
+    wishes.set_status(b, "accepted", note="做")
+    wishes.set_status(c, "declined", note="不值得")
+    wishes.withdraw(d)
+    titles = lambda **kw: sorted(w.title for w in wishes.listing(**kw).wishes)  # noqa: E731
+    assert titles() == titles(group="pending") == ["乙", "甲"]
+    assert titles(group="closed") == ["丁", "丙"]
+    assert titles(group="all") == ["丁", "丙", "乙", "甲"]
+    # 给了状态就以状态为准。 / A status, when given, wins.
+    assert titles(status="accepted", group="closed") == ["乙"]
+    listed = wishes.listing(group="all")
+    assert listed.groups["pending"] == ["open", "accepted"] and sum(listed.counts.values()) == 4
+    # 种类的计数只算列出来的这些。 / Kind counts cover only what is listed.
+    assert sum(wishes.listing(group="closed").kinds.values()) == 2
+    with pytest.raises(wishes.WishError):
+        wishes.listing(group="nope")
+    with pytest.raises(wishes.WishError):
+        wishes.listing(status="nope")

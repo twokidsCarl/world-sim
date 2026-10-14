@@ -31,6 +31,9 @@ EVENT_LABELS: dict[str, str] = {
     "recorded": "记下", "seen": "又遇到一次", "edited": "改写", "withdrawn": "撤销", "restored": "恢复",
     "status": "改状态", "noted": "说明", "linked": "关联",
 }
+# 状态分成两组：待处理的和已完结的。界面的筛选先选组，再在组里选状态。
+# Statuses fall into two groups, pending and closed. The UI filter picks a group first, then a status within it.
+GROUPS: dict[str, tuple[str, ...]] = {"pending": ("open", "accepted"), "closed": ("done", "declined", "withdrawn"), "all": tuple(STATUS_LABELS)}
 MAX_TITLE, MAX_TEXT = 200, 2000
 
 
@@ -113,6 +116,7 @@ class WishList(BaseModel):
     kinds: dict[str, int]
     statuses: dict[str, str]
     kind_labels: dict[str, str]
+    groups: dict[str, list[str]] = Field(default_factory=dict)  # 每一组里有哪些状态 / the statuses in each group
     unreadable: int = 0
 
 
@@ -193,17 +197,26 @@ def load() -> tuple[dict[str, WishDetail], int]:
     return fold(rows), bad
 
 
-def listing(status: Optional[str] = None) -> WishList:
+def listing(status: Optional[str] = None, group: Optional[str] = None) -> WishList:
+    """列出愿望。给了 status 就只列这个状态；否则列 group 这一组（pending、closed、all），缺省是待处理。
+
+    List wishes. With a status, only that status; otherwise the given group (pending, closed, all), pending by default.
+    """
+    if status and status not in STATUS_LABELS:
+        raise WishError("status 只能是：" + "、".join(STATUS_LABELS))
+    if group and group not in GROUPS:
+        raise WishError("group 只能是：" + "、".join(GROUPS))
     wishes, bad = load()
     items = list(wishes.values())
     counts = {s: sum(w.status == s for w in items) for s in STATUS_LABELS}
-    shown = [w for w in items if (w.status == status if status else w.status in ("open", "accepted"))]
+    wanted = (status,) if status else GROUPS[group or "pending"]
+    shown = [w for w in items if w.status in wanted]
     shown.sort(key=lambda w: (-w.occurrences, w.updated_at), reverse=False)
     shown.sort(key=lambda w: w.updated_at, reverse=True)
     shown.sort(key=lambda w: -w.occurrences)
     kinds = {k: sum(w.kind == k for w in shown) for k in KIND_LABELS}
     return WishList(wishes=[Wish(**w.model_dump(include=set(Wish.model_fields))) for w in shown], counts=counts, kinds=kinds,
-                    statuses=STATUS_LABELS, kind_labels=KIND_LABELS, unreadable=bad)
+                    statuses=STATUS_LABELS, kind_labels=KIND_LABELS, groups={k: list(v) for k, v in GROUPS.items()}, unreadable=bad)
 
 
 def get(wish_id: str) -> WishDetail:

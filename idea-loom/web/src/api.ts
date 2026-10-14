@@ -64,7 +64,7 @@ export type WishDetail = Wish & {
   links: { at: string; kind: string; pr: number | null; url: string | null; title: string }[]
   history: { at: string; event?: string; event_label: string; by?: string; by_label: string; text: string }[]
 }
-export type WishList = { wishes: Wish[]; counts: Record<string, number>; kinds: Record<string, number>; statuses: Record<string, string>; kind_labels: Record<string, string>; unreadable: number }
+export type WishList = { wishes: Wish[]; counts: Record<string, number>; kinds: Record<string, number>; statuses: Record<string, string>; kind_labels: Record<string, string>; groups?: Record<string, string[]>; unreadable: number }
 export type PullRequest = { number: number; title: string; scope: string; state: string; created_at: string; merged_at: string | null; additions: number; deletions: number; url: string }
 export type ProjectView = {
   dir: string; tagline: string; level: string | null; ideas: string[]; linked: string[]; ui_url: string | null; ui_up: boolean
@@ -130,7 +130,7 @@ export const api = {
   translate: () => call<{ translated: string[] }>('/api/ops/translate', { idea_ids: null }),
   accept: (id: string, body: { as_new?: boolean; title?: string; body?: string } = {}) => call<Proposal>(`/api/proposals/${id}/accept`, body),
   dismiss: (id: string) => call<Proposal>(`/api/proposals/${id}/dismiss`, {}),
-  wishes: (status = '') => call<WishList>(`/api/wishes${status && `?status=${status}`}`),
+  wishes: (status = '', group = '') => call<WishList>(`/api/wishes?${new URLSearchParams({ ...(status && { status }), ...(group && { group }) }).toString()}`),
   wish: (id: string) => call<WishDetail>(`/api/wishes/${id}`),
   editWish: (id: string, body: { title?: string; kind?: string; stuck?: string; suggestion?: string }) => call<WishDetail>(`/api/wishes/${id}/edit`, body),
   withdrawWish: (id: string) => call<WishDetail>(`/api/wishes/${id}/withdraw`, {}),
