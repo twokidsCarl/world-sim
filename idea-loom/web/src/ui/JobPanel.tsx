@@ -4,6 +4,7 @@ import { Markdown } from '../assistant/Markdown'
 import { label, plural } from '../i18n'
 import { formatTime } from '../state/derive'
 import { useLang, useT } from '../state/store'
+import { RestartNotice } from './RestartNotice'
 import { usageLine, usageTitle } from './viz'
 
 const ACTIVE = ['planning', 'running', 'testing', 'pr']
@@ -115,9 +116,10 @@ export function JobPanel({ jobId, onChange }: { jobId: string; onChange?: () => 
         <div className="notice good" role="status">
           {t('已合并', 'Merged')}{job.pr_url && <>{t('：', ': ')}<a href={job.pr_url} target="_blank" rel="noreferrer">{t(`合并请求 #${job.pr}`, `pull request #${job.pr}`)}</a></>}{t('。', '.')}
           {summary && ` ${summary}`}
-          {job.restart_needed && t(' 后端的代码变了，重启后端之后才生效。', ' The backend code changed; it takes effect after the backend is restarted.')}
         </div>
       )}
+      {/* 这个作业改了后端的代码：后端还没换上新代码时说明并给重启的按钮。 / This job changed backend code: while the backend has not picked it up, say so and offer the restart button. */}
+      {job.phase === 'merged' && job.restart_needed && <RestartNotice />}
 
       {job.plan && (
         <details open={job.phase === 'plan_ready'} className="job-plan">

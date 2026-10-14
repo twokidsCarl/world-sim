@@ -375,38 +375,12 @@ def worker_(once: bool = typer.Option(False, help="只看一遍队列就退出 /
         w.loop()
 
 
-def _ui_stale() -> bool:
-    """界面要不要重新构建：还没构建过，或者源码比构建产物新。 / Whether the UI needs building: never built, or the sources are newer than the build."""
-    from .play import host as play_host
-
-    built = play_host.ui_dist() / "index.html"
-    if not built.is_file():
-        return True
-    web = store.repo_root() / "idea-loom" / "web"
-    sources = [web / "index.html", web / "package.json", web / "vite.config.ts", *(web / "src").rglob("*"), *(web / "public").rglob("*")]
-    newest = max((f.stat().st_mtime for f in sources if f.is_file()), default=0.0)
-    return newest > built.stat().st_mtime
-
-
-def _build_ui() -> bool:
-    import subprocess
-
-    web = store.repo_root() / "idea-loom" / "web"
-    for command in (["bun", "install"], ["bunx", "vite", "build"]):
-        typer.echo("$ " + " ".join(command))
-        try:
-            if subprocess.run(command, cwd=web).returncode != 0:
-                return False
-        except FileNotFoundError:
-            typer.echo("找不到 bun，界面构建不了。 / bun was not found, so the UI cannot be built.", err=True)
-            return False
-    return True
-
-
 @app.command("build-ui")
 def build_ui() -> None:
     """把 idea-loom 自己的界面构建成静态文件。平时不用单独跑：serve 会自己判断。 / Build idea-loom's own UI into static files. Rarely needed by hand: serve decides by itself."""
-    if not _build_ui():
+    from . import serving
+
+    if not serving.build_ui():
         raise typer.Exit(1)
     typer.echo("好了。")
 
@@ -432,10 +406,13 @@ def _already_running(host: str, port: int) -> Optional[bool]:
 
 @app.command()
 def serve(port: int = 8767, host: str = "127.0.0.1", build: bool = typer.Option(True, help="界面有变化就先构建 / build the UI first when it has changed")) -> None:
-    """启动：界面需要构建就先构建，然后起后端。一个命令就够。 / Start: build the UI if it needs it, then run the backend. One command is all it takes."""
+    """启动：界面需要构建就先构建，然后起后端。一个命令就够。后端的代码或界面变了，它自己重启、自己重新构建（见 serving.py）。
+
+    Start: build the UI if it needs it, then run the backend. One command is all it takes. When the backend code or the UI changes it restarts and rebuilds by itself (see serving.py).
+    """
     import os
 
-    import uvicorn
+    from . import serving
 
     running = _already_running(host, port)
     if running is True:
@@ -444,13 +421,9 @@ def serve(port: int = 8767, host: str = "127.0.0.1", build: bool = typer.Option(
     if running is False:
         typer.echo(f"端口 {port} 被别的程序占着。换一个：uv run idea-loom serve --port {port + 1} / Port {port} is taken by another program; pick another with --port.", err=True)
         raise typer.Exit(1)
-    if build and _ui_stale():
-        typer.echo("界面有变化，先构建… / The UI has changed; building it first…")
-        if not _build_ui():
-            typer.echo("界面没有构建成功，后端照常启动（界面可能是旧的或者打不开）。 / The UI build failed; the backend starts anyway (the UI may be stale or missing).", err=True)
     typer.echo(f"打开 http://localhost:{port}")
     os.environ.setdefault("IDEA_LOOM_API", f"http://{host}:{port}")  # 小助手的工具要回调这个地址 / the assistant's tools call back here
-    uvicorn.run("idea_loom.server:app", host=host, port=port, log_level="warning")
+    serving.keep(host, port, build)
 
 
 if __name__ == "__main__":

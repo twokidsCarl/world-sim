@@ -14,7 +14,7 @@ from fastapi import Body, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import auth, config, edits, github, notify, suggestions, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
+from . import auth, config, edits, github, notify, serving, suggestions, ideas, jobs, llm, ops, review, stats, sync, tasks, trail, wishes
 from .assistant import turns
 from .play import host as play_host
 from .play import manifest as play_manifest
@@ -50,6 +50,7 @@ async def _lifespan(_app: FastAPI):
 
 app = FastAPI(title="idea-loom", lifespan=_lifespan)
 app.add_middleware(play_host.HostRouter)
+app.add_middleware(serving.InFlight)  # 数正在处理的请求，自己重启时等它们做完 / count requests being handled, so a self-restart waits for them
 
 
 class CreateBody(BaseModel):
@@ -156,14 +157,7 @@ def _code_stale() -> bool:
     global _code_checked
     if time.time() - _code_checked[0] < 5:
         return _code_checked[1]
-    from pathlib import Path
-
-    started = int(_STARTED) / 1e9
-    try:
-        newest = max((f.stat().st_mtime for f in Path(__file__).resolve().parent.rglob("*.py")), default=0.0)
-    except OSError:
-        newest = 0.0
-    _code_checked = (time.time(), newest > started + 1)
+    _code_checked = (time.time(), serving.newest_code() > int(_STARTED) / 1e9 + 1)
     return _code_checked[1]
 
 
@@ -174,12 +168,29 @@ def health() -> dict[str, object]:
 
     started：进程启动的时刻。ui：磁盘上界面构建的 index.html 的修改时间（毫秒），没有构建时是 None。
     started: when the process started. ui: modification time in milliseconds of the built index.html on disk, None when there is no build.
+
+    code_stale：磁盘上的后端代码比进程新。self_restart：这个进程会自己重启（由 idea-loom serve 起的本机进程）。
+    restart_waiting：要重启了，在等什么；不在等是 None。
+    code_stale: the backend code on disk is newer than the process. self_restart: this process restarts itself (a local process started by idea-loom serve).
+    restart_waiting: what a pending restart is waiting for; None when nothing is pending.
     """
     try:
         ui: Optional[int] = int(play_host.ui_dist().joinpath("index.html").stat().st_mtime * 1000)
     except OSError:
         ui = None
-    return {"ok": True, "started": _STARTED, "ui": ui, "code_stale": _code_stale()}
+    return {"ok": True, "started": _STARTED, "ui": ui, "code_stale": _code_stale(), "self_restart": serving.supervised(), "restart_waiting": serving.waiting()}
+
+
+@app.post("/api/restart")
+def restart(request: Request) -> dict[str, object]:
+    """立即重启后端（在下一个安全的时刻）。只在本机、只接受本机来的请求。
+
+    Restart the backend now (at the next safe moment). Local only, and only for requests from this machine.
+    """
+    _session_guard(request)
+    if not serving.supervised():
+        raise HTTPException(409, "这个后端不是用 idea-loom serve 起的，不能自己重启：请手动重启。 / This backend was not started with idea-loom serve and cannot restart itself; restart it by hand.")
+    return {"restarting": True, "waiting": serving.request()}
 
 
 @app.get("/api/state", response_model=State)
