@@ -94,6 +94,10 @@
       "zh": "把表里的模量当作 6 s 松弛模量是假设（见 model.viscoelasticity）。",
       "en": "Taking the tabulated modulus as the 6 s relaxation modulus is an assumption (see model.viscoelasticity)."
      }
+    },
+    "blend": {
+     "zh": "皮肤太薄，不单独成层：皮肤层（面积 × 厚度）按三角形面积细分后分到它所在的四面体（tools/softbody/cage.ts 的 shareSkinByArea），每个四面体的模量按体积比例混合：E = (fill − fs)·E_组织 + fs·E_皮肤（Voigt，面内受拉时的上界；src/softbody/body.ts）。第三阶段按顶点分、混合式里皮肤又乘了一次 fill：前臂上皮肤网格边长中位数 26 mm，2 mm 的细笼子在压头 8 mm 内只剩应有皮肤 E·V 的约 0.1 %，等于没有皮肤。",
+     "en": "The skin is too thin to be a layer of its own: the skin layer (area × thickness) is shared out to the tetrahedra it lies in by subdivided triangle area (shareSkinByArea in tools/softbody/cage.ts), and each tetrahedron's modulus is a volume-share mix E = (fill − fs)·E_tissue + fs·E_skin (Voigt, the upper bound, right for in-plane tension; src/softbody/body.ts). Phase 3 shared it by vertex and multiplied the skin by fill once more in the blend: with a median skin-mesh edge of 26 mm on the forearm, a 2 mm fine cage kept about 0.1 % of the skin's E·V within 8 mm of a probe, i.e. no skin."
     }
    },
    "stiffening": 17.4,
@@ -667,8 +671,8 @@
    "value": 0.6,
    "assumption": true,
    "note": {
-    "zh": "press() 力控时轴线压应变超过 0.6 就不再加深，返回带标记的结果。",
-    "en": "In force control press() goes no deeper once the axial compressive strain passes 0.6 and returns a flagged result."
+    "zh": "press() 力控时轴线压应变超过 0.6 就不再加深：在上一个深度和超限的深度之间二分四次，报告应变不超过 0.6 的最深处的力，结果带标记（第四阶段；第三阶段直接退回上一个割线步，报告的力偏低）。",
+    "en": "In force control press() goes no deeper once the axial compressive strain passes 0.6: it bisects four times between the previous depth and the one beyond the limit and reports the force at the deepest depth within 0.6, flagged (phase 4; phase 3 went straight back to the last secant step and under-reported the force)."
    }
   },
   "anchorStiffness": {
@@ -686,6 +690,14 @@
    "note": {
     "zh": "press() 的有效性标记用的范围：45 kPa 约为 remus2024 放松腹部最大力 13.3 N 除以半径 10 mm 压头的投影面积；应变 0.4 是本模型四次项近似还说得过去的上限。",
     "en": "The range behind the validity flags of press(): 45 kPa is about the largest relaxed-abdomen force of remus2024, 13.3 N, over the projected area of its 10 mm tip; a strain of 0.4 is where the quartic approximation of this model stops being defensible."
+   }
+  },
+  "substeps": {
+   "rule": "substeps ≥ dt·sqrt(Π₉₉/0.5) and ≥ 8, Π = h²·μ̃·V·Σw‖∇N‖² (SoftSolver.substepsFor); SoftBody applies it when no substep count is given",
+   "assumption": true,
+   "note": {
+    "zh": "偏量约束的乘子每个子步从零开始，稳态时每个四面体的刚度按约 1/(1 + Π) 打折。自重悬臂梁（截面 4 或 8 个单元）：Π = 8 时挠度多 66–85 %，Π = 2 时多 13–15 %，Π = 0.5 时多 1.3–1.6 %；上限 0.5 是按这个算例定的。乳房体模混入皮肤后在 16 个子步（低于要求）时停不下来。press() 用质量缩放，子步数不影响它的稳态（4–32 个子步的力相同）。",
+    "en": "The deviatoric multipliers restart from zero every substep, so at steady state each tetrahedron's stiffness is discounted by about 1/(1 + Π). Self-weight cantilever (4 or 8 cells across): 66–85 % too much deflection at Π = 8, 13–15 % at Π = 2, 1.3–1.6 % at Π = 0.5; the bound 0.5 is set on this case. The breast phantom with skin blended in never comes to rest at 16 substeps (below the rule). press() uses mass scaling, so its steady state does not depend on the substep count (the same force from 4 to 32 substeps)."
    }
   }
  }

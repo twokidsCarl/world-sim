@@ -58,6 +58,8 @@ export interface CageOptions {
   gravity: [number, number, number]
   materials: SoftMaterial[]
   skinThickness: number
+  /** 皮肤层的体积怎么分到四面体：'area'（缺省，第四阶段，按三角形面积细分）或 'vertex'（第三阶段，按顶点，只为对照）/ how the skin layer's volume is shared out: 'area' (default, phase 4, by subdivided triangle area) or 'vertex' (phase 3, by vertex; for comparison only) */
+  skinShare?: 'area' | 'vertex'
   /** 已经建好的"是否在体内"判断（bodyInside 的结果），按需建区域笼子时复用，省掉大半时间 / a ready inside-the-body test (the result of bodyInside), reused when regional cages are built on demand: most of the time is saved */
   inBody?: (x: number, y: number, z: number) => boolean
 }
@@ -501,19 +503,10 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
   const slotTet = new Map<number, number>()
   mesh.slots.forEach((s, i) => slotTet.set(s, i))
   const nv = skin.positions.length / 3
-  const area = new Float32Array(nv)
-  for (let t = 0; t < skin.indices.length; t += 3) {
-    const i0 = skin.indices[t]! * 3, i1 = skin.indices[t + 1]! * 3, i2 = skin.indices[t + 2]! * 3
-    const p = skin.positions
-    const ux = p[i1]! - p[i0]!, uy = p[i1 + 1]! - p[i0 + 1]!, uz = p[i1 + 2]! - p[i0 + 2]!, vx = p[i2]! - p[i0]!, vy = p[i2 + 1]! - p[i0 + 1]!, vz = p[i2 + 2]! - p[i0 + 2]!
-    const ar = Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) / 6
-    area[i0 / 3] = area[i0 / 3]! + ar
-    area[i1 / 3] = area[i1 / 3]! + ar
-    area[i2 / 3] = area[i2 / 3]! + ar
-  }
   const emb: PointSet = { tet: new Uint32Array(nv), bary: new Float32Array(nv * 4) }
   const b4 = [0, 0, 0, 0]
   const skinVol = new Float32Array(T)
+  const embOk = new Uint8Array(nv)
   let embedded = 0
   // 落在被丢弃的四面体里的皮肤顶点：外推到共用格点的相邻四面体里（取最负的重心坐标最接近零的那个）
   // skin vertices inside a dropped tetrahedron: extrapolated from a kept neighbour sharing a lattice node (the one whose most negative barycentric coordinate is closest to zero)
@@ -543,8 +536,30 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     barycentric(mesh.nodes, mesh.tets[e * 4]!, mesh.tets[e * 4 + 1]!, mesh.tets[e * 4 + 2]!, mesh.tets[e * 4 + 3]!, skin.positions[i * 3]!, skin.positions[i * 3 + 1]!, skin.positions[i * 3 + 2]!, b4)
     emb.tet[i] = e
     emb.bary.set(b4, i * 4)
-    skinVol[e] = skinVol[e]! + area[i]! * opts.skinThickness
+    embOk[i] = 1
     embedded++
+  }
+  if (opts.skinShare === 'vertex') {
+    // 第三阶段的做法，只为前后对照保留 / the phase-3 way, kept only for before/after comparison
+    const p = skin.positions, idx = skin.indices
+    for (let t = 0; t < idx.length; t += 3) {
+      const i0 = idx[t]! * 3, i1 = idx[t + 1]! * 3, i2 = idx[t + 2]! * 3
+      const ux = p[i1]! - p[i0]!, uy = p[i1 + 1]! - p[i0 + 1]!, uz = p[i1 + 2]! - p[i0 + 2]!, vx = p[i2]! - p[i0]!, vy = p[i2 + 1]! - p[i0 + 1]!, vz = p[i2 + 2]! - p[i0 + 2]!
+      const ar = (Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) / 6) * opts.skinThickness
+      for (const v of [i0 / 3, i1 / 3, i2 / 3]) if (embOk[v]) skinVol[emb.tet[v]!] = skinVol[emb.tet[v]!]! + ar
+    }
+  } else {
+    // 皮肤层的体积按三角形的面积分到四面体里：每个三角形切成边长不超过三分之一个单元的小块，每块的面积 × 厚度
+    // 放进块中心沿内法线向里、皮肤厚度之内那些点所在的四面体。第三阶段以前按顶点分（顶点的面积 × 厚度全放进顶点
+    // 所在的那一个四面体，再截到 1）：皮肤网格在前臂上边长中位数 26 mm，单元 2 mm 时压头下 1 cm 内只有两个四面体
+    // 有皮肤，皮肤的 E·V 只剩应有的 0.1 %（4.3 mm 时 1 %），细笼子上等于没有皮肤。
+    // The volume of the skin layer is shared out to tetrahedra by triangle area: every triangle is cut into pieces no
+    // longer than a third of a cell, and the area × thickness of a piece goes to the tetrahedra holding the points
+    // inward of its centre within the skin thickness. Up to phase 3 it went by vertex (a vertex's area × thickness all into the
+    // one tetrahedron holding the vertex, then clipped at 1): the skin mesh has a median edge of 26 mm on the forearm, so
+    // with 2 mm cells only two tetrahedra within 1 cm of a probe had skin and the skin's E·V was 0.1 % of what it should
+    // be (1 % at 4.3 mm): the fine cages had no skin to speak of.
+    shareSkinByArea(lattice, slotTet, skin, opts.skinThickness, skinVol, inRegion, [0, 1, 2].map((k) => Math.max(sb[k]!, opts.region ? opts.region[k]! : -Infinity) - a).concat([0, 1, 2].map((k) => Math.min(sb[k + 3]!, opts.region ? opts.region[k + 3]! : Infinity) + a)) as [number, number, number, number, number, number])
   }
   const tetVol = a ** 3 / 12
   for (let e = 0; e < T; e++) tetSkin[e] = Math.round(Math.min(1, skinVol[e]! / tetVol) * 255)
@@ -753,4 +768,47 @@ export function buildCage(body: Body, rig: Rig, rigBin: Uint8Array, opts: CageOp
     skinVerticesEmbedded: embedded, skinVertices: nv, seconds: Math.round((performance.now() - t0) / 100) / 10,
   }
   return { json, bin, stats }
+}
+
+/**
+ * 皮肤层的体积按三角形面积分到四面体（第四阶段）：每个三角形切成边长不超过三分之一个单元的小块，沿厚度再分几层
+ * （层厚不超过四分之一个单元，细单元时皮肤不会全挤进同一层四面体），每份的面积 × 层厚放进"块中心沿内法线向里该层
+ * 深度处"那一点所在的四面体。结果累加到 skinVol（m³，按四面体）。`box` 之外的三角形跳过。
+ * The skin layer's volume shared out to tetrahedra by triangle area (phase 4): every triangle is cut into pieces no
+ * longer than a third of a cell and into layers through the thickness (each at most a quarter of a cell, so with fine
+ * cells the skin is not crammed into one layer of tetrahedra); each piece's area × layer thickness goes to the
+ * tetrahedron holding the point that far inward of the piece's centre. Results are added to skinVol (m³, by
+ * tetrahedron). Triangles outside `box` are skipped.
+ */
+export function shareSkinByArea(lattice: Lattice, slotTet: Map<number, number>, skin: { positions: ArrayLike<number>; indices: ArrayLike<number> }, thickness: number, skinVol: Float32Array | Float64Array, inRegion: (x: number, y: number, z: number) => boolean = () => true, box: [number, number, number, number, number, number] = [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity]): void {
+  const a = lattice.cell
+  const p = skin.positions, idx = skin.indices, spacing = a / 3, layers = Math.max(1, Math.ceil(thickness / (a / 4)))
+  for (let t = 0; t < idx.length; t += 3) {
+    const i0 = idx[t]! * 3, i1 = idx[t + 1]! * 3, i2 = idx[t + 2]! * 3
+    let out = false
+    for (let k = 0; k < 3 && !out; k++) {
+      const m0 = Math.min(p[i0 + k]!, p[i1 + k]!, p[i2 + k]!), m1 = Math.max(p[i0 + k]!, p[i1 + k]!, p[i2 + k]!)
+      if (m1 < box[k]! || m0 > box[k + 3]!) out = true
+    }
+    if (out) continue
+    const ux = p[i1]! - p[i0]!, uy = p[i1 + 1]! - p[i0 + 1]!, uz = p[i1 + 2]! - p[i0 + 2]!, vx = p[i2]! - p[i0]!, vy = p[i2 + 1]! - p[i0 + 1]!, vz = p[i2 + 2]! - p[i0 + 2]!
+    const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx, cl = Math.hypot(cx, cy, cz)
+    if (!(cl > 0)) continue
+    // (b − a) × (c − a) 指向体外（与 computeNormals 同向），内法线取它的反向 / (b − a) × (c − a) points outward (as in computeNormals); the inward normal is its opposite
+    const nx = -cx / cl, ny = -cy / cl, nz = -cz / cl
+    const e = Math.max(Math.hypot(ux, uy, uz), Math.hypot(vx, vy, vz), Math.hypot(vx - ux, vy - uy, vz - uz))
+    const k = Math.max(1, Math.ceil(e / spacing))
+    const piece = ((cl / 2) * thickness) / (k * k * layers)
+    for (let i = 0; i < k; i++) for (let j = 0; j < k - i; j++) for (let up = 0; up < 2; up++) {
+      if (up && j >= k - i - 1) continue
+      const s = (i + (up ? 2 : 1) / 3) / k, r = (j + (up ? 2 : 1) / 3) / k
+      for (let l = 0; l < layers; l++) {
+        const dz = ((l + 0.5) / layers) * thickness
+        const x = p[i0]! + ux * s + vx * r + nx * dz, y = p[i0 + 1]! + uy * s + vy * r + ny * dz, z = p[i0 + 2]! + uz * s + vz * r + nz * dz
+        if (!inRegion(x, y, z)) continue
+        const te = slotTet.get(locateSlot(lattice, x, y, z))
+        if (te !== undefined) skinVol[te] = skinVol[te]! + piece
+      }
+    }
+  }
 }

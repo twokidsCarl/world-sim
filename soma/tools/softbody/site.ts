@@ -18,6 +18,8 @@ export interface SiteOptions {
   mix?: MixOptions
   solver?: SolverOptions
   inBody?: (x: number, y: number, z: number) => boolean
+  /** 皮肤层怎么分到四面体（见 cage.ts 的 CageOptions.skinShare）/ how the skin layer is shared out (see CageOptions.skinShare in cage.ts) */
+  skinShare?: 'area' | 'vertex'
 }
 
 export interface Site {
@@ -37,7 +39,7 @@ export function buildSite(body: Body, rig: Rig, rigBin: Uint8Array, site: Vec3, 
   const ext = o.extent ?? Math.max(3 * a, a + 5 * cell)
   const region: Site['region'] = [site[0] - ext, site[1] - ext, site[2] - ext, site[0] + ext, site[1] + ext, site[2] + ext]
   const file = readMaterials()
-  const r = buildCage(body, rig, rigBin, { cell, region, regionPin: cell, gravity: file.gravity, materials: solverMaterials(file), skinThickness: file.materials.find((m) => m.id === 'skin')?.basis.thickness?.value ?? 0.0015, ...(o.inBody ? { inBody: o.inBody } : {}) })
+  const r = buildCage(body, rig, rigBin, { cell, region, regionPin: cell, gravity: file.gravity, materials: solverMaterials(file), skinThickness: file.materials.find((m) => m.id === 'skin')?.basis.thickness?.value ?? 0.0015, ...(o.inBody ? { inBody: o.inBody } : {}), ...(o.skinShare ? { skinShare: o.skinShare } : {}) })
   const soft = decodeSoft(r.json, r.bin)
   const t1 = performance.now()
   const input = solverInput(soft, o.mix ?? {})
