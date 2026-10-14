@@ -37,6 +37,8 @@ export interface Panel {
   coloring: Coloring
   /** 单个分子的场景里：这个面板的每份拷贝是一个完整的分子，整个留或整个切（示意的环境）/ in a single-molecule scene: every copy in this panel is a whole molecule, kept or cut whole (a schematic environment) */
   perCopy?: boolean
+  /** 示意的环境：拖动时不画（见 RenderItem.decor）/ a schematic environment: not drawn while dragging (see RenderItem.decor) */
+  decor?: boolean
   /** 当两个面板共有一种蛋白质时，把本面板转到与第一个一致 / turns this panel to match the first one, when they share a protein */
   align: Float32Array | null
   /** 全景里的膜蛋白：OPM 给出的膜内取向 / for a membrane protein in a landscape: its orientation in the membrane from OPM */
@@ -389,7 +391,8 @@ async function environmentPanels(entry: CatalogEntry, mols: Molecule[], assembli
     panels.push(groundShell('fringe-ground', c0, rim + t * 0.8, [Math.max(0.2, env.fringe.lch[0] - 0.2), env.fringe.lch[1], env.fringe.lch[2]], source('ground', undefined)))
   }
   notes.push({ key: env.replace ? 'note.rethreaded' : env.inside ? 'note.filledInside' : 'note.environment', params: { basis: env.basis, basisEn: env.basisEn } })
-  return panels
+  // 填在对象里面的（inside、replace）是对象的一部分，拖动时照画；周围的是陪衬 / what fills the subject's inside (inside, replace) is part of it and drawn while dragging; what surrounds it is decoration
+  return env.inside || env.replace ? panels.map((p) => (p.mol.id.startsWith('fringe') ? { ...p, decor: true } : p)) : panels.map((p) => ({ ...p, decor: true }))
 }
 
 /**

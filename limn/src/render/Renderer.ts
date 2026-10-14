@@ -65,6 +65,8 @@ export interface RenderItem {
    * branches of a neuron). Drawn for the first instance only.
    */
   segments?: Uint32Array
+  /** 陪衬（示意的环境）：拖动时的快速绘制里不画，松手后才画 / decoration (a schematic environment): left out of the quick drawing while dragging, drawn once it settles */
+  decor?: boolean
   /**
    * 三角网格：每个三角形三个原子下标，顶点就是这些原子的位置（密度图和细胞器的表面）。
    * 有网格时这一项的球不画，只用来取景和上色。只按第一个实例画。
@@ -141,6 +143,7 @@ interface GpuItem {
   /** 列主序 4x4，在绘制矩阵之后施加 / column-major 4x4 applied after the draw matrices */
   place: Float32Array
   seg: WebGLTexture | null
+  decor: boolean
   segCount: number
   tri: WebGLBuffer | null
   triCount: number
@@ -285,6 +288,7 @@ export class Renderer {
         tri: it.triangles?.length ? this.indexBuffer(it.triangles) : null,
         triCount: it.triangles?.length ?? 0,
         solid: !!it.solid,
+        decor: !!it.decor,
       }
     })
     this.bounds = this.placedBounds()
@@ -449,6 +453,9 @@ export class Renderer {
     for (const it of this.items) {
       // 有网格的项，球只用来取景 / an item with a mesh keeps its spheres for framing only
       if (it.tri) continue
+      // 拖动时陪衬不画：几百万个环境里的球会把拖动拖慢，而且转来转去它看上去都一样，挡住了对象本身的转动
+      // decoration is skipped while dragging: millions of environment spheres slow the drag, and since it looks the same from every side it hides the subject's own turning
+      if (fast && it.decor) continue
       bindItem(p, it)
       for (const d of it.draws) {
         if (d.count <= 0 || d.opCount <= 0) continue
@@ -475,7 +482,7 @@ export class Renderer {
       gl.uniform3f(this.u(c, 'u_layer'), layers, span[0], span[1])
       gl.uniform2f(this.u(c, 'u_fogKeep'), style.fog.front, style.fog.back)
       for (const it of this.items) {
-        if (!it.seg) continue
+        if (!it.seg || (fast && it.decor)) continue
         bindItem(c, it)
         gl.activeTexture(gl.TEXTURE5)
         gl.bindTexture(gl.TEXTURE_2D, it.seg)
