@@ -8,6 +8,7 @@ import { formatTime } from '../state/derive'
 import { useStore, useT } from '../state/store'
 import { Markdown } from './Markdown'
 import { clearRefs, snapshot } from './pageSnapshot'
+import { clearPicks, insertAt, referenceText, startPicking } from './pick'
 import { MAX_WIDTH, MIN_WIDTH, useAssistant } from './store'
 import { stuck } from './stuck'
 import { arrive, install, note, recentActions, subscribe } from './trail'
@@ -126,10 +127,30 @@ export function AssistantDock() {
     if (shot) setAttached((now) => [...now, shot].slice(0, MAX_IMAGES))
     else setImageNote(t('没有截到（取消了，或者浏览器不支持）。也可以直接把截图粘贴进来。', 'Nothing was captured (cancelled, or the browser lacks support). You can also paste a screenshot in.'))
   }
+  // 点选：点到的元素的引用插在光标处。 / Picking: a reference to what was picked goes in at the cursor.
+  const [picking, setPicking] = useState(false)
+  const box = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (!picking || !a.open) return
+    return startPicking(
+      (picks) => {
+        const el = box.current
+        if (!el) return
+        const { value, cursor } = insertAt(el.value, el.selectionStart, el.selectionEnd, referenceText(picks, t))
+        setDraft(value)
+        requestAnimationFrame(() => (el.focus(), el.setSelectionRange(cursor, cursor)))
+      },
+      () => setPicking(false),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picking, a.open])
+
   const ask = (question: string) => {
     if ((!question.trim() && attached.length === 0) || a.running) return
     const main = document.querySelector('main.main')
     const snap = snapshot(main, page, url)
+    clearPicks() // 这一问已经带上了；下一问重新点选 / this question carries them; the next one picks afresh
+    setPicking(false)
     follow.current = true
     setDraft('')
     const images = attached
@@ -307,7 +328,13 @@ export function AssistantDock() {
           </div>
         )}
         {imageNote && <p className="muted small" role="status">{imageNote}</p>}
+        {picking && (
+          <p className="small a-pick-note" role="status">
+            {t('点选：点页面上的一个元素，或拖一个框选几个，引用会插在光标处。Esc 退出。', 'Picking: click an element on the page, or drag a box around several; a reference goes in at the cursor. Esc leaves.')}
+          </p>
+        )}
         <textarea
+          ref={box}
           aria-label={t('问小助手', 'Ask the assistant')}
           rows={2}
           value={draft}
@@ -334,6 +361,14 @@ export function AssistantDock() {
             {canCapture() && (
               <button type="button" title={t('把当前这一页截下来带上，嵌着的模拟也截得到；浏览器会问一次要不要共享这个标签页', 'Capture this page and send it along, embedded simulations included; the browser asks once whether to share this tab')} onClick={() => void capture()}>{t('截这一页', 'Capture page')}</button>
             )}
+            <button
+              type="button"
+              aria-pressed={picking}
+              title={t('在页面上点一个元素或拖一个框，把它的引用插进问题里；小助手会知道你指的是哪一个', 'Click an element on the page or drag a box, and a reference to it goes into the question; the assistant will know which one you mean')}
+              onClick={() => setPicking(!picking)}
+            >
+              ⌖ {t('点选', 'Pick')}
+            </button>
           </span>
           <span className="muted small a-hint">{t('Enter 发出 · 会带上这一页的内容', 'Enter to send · the content of this page goes along')}</span>
           {a.running ? (
