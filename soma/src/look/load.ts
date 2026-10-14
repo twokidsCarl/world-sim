@@ -2,7 +2,8 @@
 // Reads the UV mesh of the lifelike skin (look/skin-uv.json + .bin; the format is in types.ts).
 
 import { fetchJson } from '../anatomy/load.ts'
-import { type SkinUvData, UV_SCALE } from './types.ts'
+import { decodePngRgba } from './png.ts'
+import { type SkinColourData, type SkinUvData, UV_SCALE } from './types.ts'
 
 export interface LoadedSkinUv {
   data: SkinUvData
@@ -12,6 +13,36 @@ export interface LoadedSkinUv {
   uv: Float32Array
   /** 三角形（覆盖网格顶点下标），与皮肤的三角形一一对应 / triangles (overlay vertex indices), one to one with the skin's */
   index: Uint32Array
+  /** 颜色数据（查找表和部位贴图）；没有或坏了是 null，材质退回均匀底色 / the colour data (table and region map); null when absent or broken, and the material falls back to a uniform albedo */
+  colour?: LoadedSkinColour | null
+}
+
+export interface LoadedSkinColour {
+  data: SkinColourData
+  /** 查找表，RGBA half-float 位模式 / the table, RGBA half-float bit patterns */
+  lut: Uint16Array
+  /** 部位贴图 RGBA8，第 0 行是 v = 0 / the region map, RGBA8, row 0 is v = 0 */
+  regions: { width: number; height: number; data: Uint8Array }
+}
+
+/** 核对颜色数据的尺寸；不对就抛错 / Check the sizes of the colour data; throws when they are wrong. */
+export function checkSkinColour(data: SkinColourData, lutBin: Uint8Array, regions: { width: number; height: number; data: Uint8Array }): LoadedSkinColour {
+  if (data?.schema !== 1 || !data.lut || !data.regions || !data.tone) throw new Error('skin-colour.json 不是 SkinColourData / skin-colour.json is not a SkinColourData')
+  const n = data.lut.size
+  if (lutBin.byteLength !== n * n * 8) throw new Error(`skin-lut.bin has ${lutBin.byteLength} bytes, ${n}×${n} RGBA half-float needs ${n * n * 8}`)
+  if (regions.width !== data.regions.size || regions.height !== data.regions.size) throw new Error(`skin-regions.png is ${regions.width}×${regions.height}, skin-colour.json says ${data.regions.size}`)
+  const lut = new Uint16Array(lutBin.slice().buffer)
+  return { data, lut, regions }
+}
+
+/** 取一个人体的皮肤颜色数据；没有时返回 null / Fetch a body's skin colour data; null when it has none. */
+export async function loadSkinColour(dataset: string): Promise<LoadedSkinColour | null> {
+  const base = `${import.meta.env.BASE_URL}anatomy/${dataset}/look/`
+  const data = await fetchJson<SkinColourData>(`${base}skin-colour.json`).catch(() => null)
+  if (!data || data.schema !== 1) return null
+  const [lut, png] = await Promise.all([fetch(`${base}${data.lut.file}`), fetch(`${base}${data.regions.file}`)])
+  if (!lut.ok || !png.ok) return null
+  return checkSkinColour(data, new Uint8Array(await lut.arrayBuffer()), await decodePngRgba(new Uint8Array(await png.arrayBuffer())))
 }
 
 /** 解码 .bin；长度或下标不对就抛错 / Decode the .bin; throws on a wrong length or index. */
@@ -31,12 +62,26 @@ export function decodeSkinUv(data: SkinUvData, bin: Uint8Array): LoadedSkinUv {
   return { data, skinVertex, uv, index }
 }
 
-/** 取一个人体的写实皮肤 UV；没有这份数据时返回 null / Fetch a body's lifelike-skin UVs; null when it has none. */
+/**
+ * 取一个人体的写实皮肤 UV 和颜色数据；没有 UV 时返回 null。颜色数据是附加的：坏了只告警，UV 照用。
+ * Fetch a body's lifelike-skin UVs and colour data; null when it has no UVs. The colour data are an extra:
+ * when broken they only warn and the UVs are still used.
+ */
 export async function loadSkinUv(dataset: string): Promise<LoadedSkinUv | null> {
   const base = `${import.meta.env.BASE_URL}anatomy/${dataset}/look/`
+  const colour = loadSkinColour(dataset).catch((e: unknown) => {
+    console.warn('[soma] lifelike skin colour unavailable:', e)
+    return null
+  })
   const data = await fetchJson<SkinUvData>(`${base}skin-uv.json`).catch(() => null)
   if (!data || data.schema !== 1) return null
   const res = await fetch(`${base}skin-uv.bin`)
   if (!res.ok) return null
-  return decodeSkinUv(data, new Uint8Array(await res.arrayBuffer()))
+  const uv = decodeSkinUv(data, new Uint8Array(await res.arrayBuffer()))
+  uv.colour = await colour
+  if (uv.colour && uv.colour.data.skin !== data.skin) {
+    console.warn(`[soma] lifelike skin colour is for ${uv.colour.data.skin}, the UVs for ${data.skin}: not used`)
+    uv.colour = null
+  }
+  return uv
 }

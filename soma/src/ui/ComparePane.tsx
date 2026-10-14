@@ -170,6 +170,7 @@ export function ComparePane({ graph, dataset, system }: { graph: AnatomyGraph; d
             // 对照窗格暂不画写实外观 / the compare pane does not draw the lifelike look yet
             skinUv: null,
             look: false,
+            tone: null,
             skinHide: assets.hide ?? null,
             skinOpaque: s.skinOpaque,
             shape: assets.shape ?? null,

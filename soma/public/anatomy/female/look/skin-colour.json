@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "skin": "SOMA_skin",
+ "lut": {
+  "file": "skin-lut.bin",
+  "size": 64,
+  "cmMax": 0.5,
+  "chdMax": 0.3
+ },
+ "regions": {
+  "file": "skin-regions.png",
+  "size": 1024,
+  "logScale": 32.0,
+  "rowOrder": "row 0 is v = 0",
+  "palmMelanin": 0.01789
+ },
+ "tone": {
+  "cmMax": 0.3126,
+  "default": 12,
+  "nistMax": 45.6,
+  "bloodChd": 0.03119
+ },
+ "surfaceReflection": 0.02778,
+ "source": {
+  "zh": "底色由两层皮肤光谱模型算出，模型按 NIST 人体皮肤反射参考数据（Cooksey 等 2017）拟合；各部位的倍数部分由文献的色度数据反推、部分是假设，详见 data/curated/look/skin-colour.json。由 tools/look/skin_colour.py 和 skin_regions.py 生成。",
+  "en": "The albedo comes from a two-layer spectral skin model fitted to the NIST reference data set of human skin reflectance (Cooksey et al. 2017); the region multipliers are partly inverted from published colorimetry and partly assumed, see data/curated/look/skin-colour.json. Built by tools/look/skin_colour.py and skin_regions.py."
+ }
+}
