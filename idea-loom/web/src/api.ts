@@ -93,7 +93,7 @@ export type Attention = {
 }
 export type Stats = {
   generated_at: string; projects: ProjectStats[]; sessions: Session[]; days: { day: string; project: string; merged: number; additions: number; output_tokens: number }[]
-  totals: Tokens; attention: Attention; own: { calls: number; cost_usd: number; output_tokens: number; by_purpose: Record<string, number> }
+  totals: Tokens; attention: Attention; own: { calls: number; cost_usd: number; output_tokens: number; tokens?: Tokens; by_purpose: Record<string, number>; in_transcripts?: number }
   transcripts_found: boolean; notes: string[]
 }
 export type Job = {

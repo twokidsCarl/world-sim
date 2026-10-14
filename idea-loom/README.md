@@ -111,6 +111,11 @@ generated from it.
   - 你的注意力：在每条 idea、每一格、每个页面上停了多久，哪些 idea 从没打开过，候选留下了多少。
     Your attention: time spent per idea, per cell and per page, which ideas were never
     opened, and how many candidates were kept.
+  - 模型调用：idea-loom 自己的调用（`runs/llm.jsonl`）和这个仓库里 Claude Code 的会话并排，再加一行合计，都按 token（输入、输出、缓存读、缓存写）算，不写美元。网页里的会话也会被 Claude Code 记进自己的会话记录，所以按会话编号认出来，只算在 Claude Code 那一行。
+    Model calls: idea-loom's own calls (`runs/llm.jsonl`) beside Claude Code's sessions in
+    this repository, plus a total row, all in tokens (input, output, cache read, cache
+    write) rather than dollars. In-page sessions are also kept in Claude Code's own
+    transcripts, so they are recognised by session id and counted in the Claude Code row only.
 
   token 和运行情况读的是本机 `~/.claude/projects` 下属于这个仓库的会话记录，只在本机算，只显示汇总数字。从根目录启动的会话，大部分记录落在哪个子目录就归哪个；说不清的列为"未归属"，可以在 `data/sessions.json` 里按会话编号指定：`{"<会话编号>": "<项目目录>"}`。
 
